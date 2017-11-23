@@ -51,7 +51,7 @@ PostgreSQL documentation
 
   <para>
    This reference page does not describe the embedded SQL language.
-   See <xref linkend="ecpg"> for more information on that topic.
+   See <xref linkend="ecpg"/> for more information on that topic.
   </para>
  </refsect1>
 
@@ -235,7 +235,7 @@ PostgreSQL documentation
   <para>
    The value of either of these directories that is appropriate for
    the installation can be found out using <xref
-   linkend="app-pgconfig">.
+   linkend="app-pgconfig"/>.
   </para>
  </refsect1>
 

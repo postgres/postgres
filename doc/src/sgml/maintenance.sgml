@@ -28,20 +28,20 @@
    after a catastrophe (disk failure, fire, mistakenly dropping a critical
    table, etc.).  The backup and recovery mechanisms available in
    <productname>PostgreSQL</productname> are discussed at length in
-   <xref linkend="backup">.
+   <xref linkend="backup"/>.
   </para>
 
   <para>
    The other main category of maintenance task is periodic <quote>vacuuming</quote>
    of the database.  This activity is discussed in
-   <xref linkend="routine-vacuuming">.  Closely related to this is updating
+   <xref linkend="routine-vacuuming"/>.  Closely related to this is updating
    the statistics that will be used by the query planner, as discussed in
-   <xref linkend="vacuum-for-statistics">.
+   <xref linkend="vacuum-for-statistics"/>.
   </para>
 
   <para>
    Another task that might need periodic attention is log file management.
-   This is discussed in <xref linkend="logfile-maintenance">.
+   This is discussed in <xref linkend="logfile-maintenance"/>.
   </para>
 
   <para>
@@ -70,7 +70,7 @@
    <productname>PostgreSQL</productname> databases require periodic
    maintenance known as <firstterm>vacuuming</firstterm>.  For many installations, it
    is sufficient to let vacuuming be performed by the <firstterm>autovacuum
-   daemon</firstterm>, which is described in <xref linkend="autovacuum">.  You might
+   daemon</firstterm>, which is described in <xref linkend="autovacuum"/>.  You might
    need to adjust the autovacuuming parameters described there to obtain best
    results for your situation.  Some database administrators will want to
    supplement or replace the daemon's activities with manually-managed
@@ -87,7 +87,7 @@
 
    <para>
     <productname>PostgreSQL</productname>'s
-    <xref linkend="sql-vacuum"> command has to
+    <xref linkend="sql-vacuum"/> command has to
     process each table on a regular basis for several reasons:
 
     <orderedlist>
@@ -140,7 +140,7 @@
     traffic, which can cause poor performance for other active sessions.
     There are configuration parameters that can be adjusted to reduce the
     performance impact of background vacuuming &mdash; see
-    <xref linkend="runtime-config-resource-vacuum-cost">.
+    <xref linkend="runtime-config-resource-vacuum-cost"/>.
    </para>
   </sect2>
 
@@ -156,7 +156,7 @@
     <command>UPDATE</command> or <command>DELETE</command> of a row does not
     immediately remove the old version of the row.
     This approach is necessary to gain the benefits of multiversion
-    concurrency control (<acronym>MVCC</acronym>, see <xref linkend="mvcc">): the row version
+    concurrency control (<acronym>MVCC</acronym>, see <xref linkend="mvcc"/>): the row version
     must not be deleted while it is still potentially visible to other
     transactions. But eventually, an outdated or deleted row version is no
     longer of interest to any transaction. The space it occupies must then be
@@ -217,7 +217,7 @@
     their busiest tables as often as once every few minutes.) If you have
     multiple databases in a cluster, don't forget to
     <command>VACUUM</command> each one; the program <xref
-    linkend="app-vacuumdb"> might be helpful.
+    linkend="app-vacuumdb"/> might be helpful.
    </para>
 
    <tip>
@@ -227,9 +227,9 @@
     massive update or delete activity.  If you have such a table and
     you need to reclaim the excess disk space it occupies, you will need
     to use <command>VACUUM FULL</command>, or alternatively
-    <xref linkend="sql-cluster">
+    <xref linkend="sql-cluster"/>
     or one of the table-rewriting variants of
-    <xref linkend="sql-altertable">.
+    <xref linkend="sql-altertable"/>.
     These commands rewrite an entire new copy of the table and build
     new indexes for it.  All these options require exclusive lock.  Note that
     they also temporarily use extra disk space approximately equal to the size
@@ -242,7 +242,7 @@
    <para>
     If you have a table whose entire contents are deleted on a periodic
     basis, consider doing it with
-    <xref linkend="sql-truncate"> rather
+    <xref linkend="sql-truncate"/> rather
     than using <command>DELETE</command> followed by
     <command>VACUUM</command>. <command>TRUNCATE</command> removes the
     entire content of the table immediately, without requiring a
@@ -269,7 +269,7 @@
     The <productname>PostgreSQL</productname> query planner relies on
     statistical information about the contents of tables in order to
     generate good plans for queries.  These statistics are gathered by
-    the <xref linkend="sql-analyze"> command,
+    the <xref linkend="sql-analyze"/> command,
     which can be invoked by itself or
     as an optional step in <command>VACUUM</command>.  It is important to have
     reasonably accurate statistics, otherwise poor choices of plans might
@@ -323,7 +323,7 @@
      clauses and have highly irregular data distributions might require a
      finer-grain data histogram than other columns.  See <command>ALTER TABLE
      SET STATISTICS</command>, or change the database-wide default using the <xref
-     linkend="guc-default-statistics-target"> configuration parameter.
+     linkend="guc-default-statistics-target"/> configuration parameter.
     </para>
 
     <para>
@@ -453,7 +453,7 @@
    </note>
 
    <para>
-    <xref linkend="guc-vacuum-freeze-min-age">
+    <xref linkend="guc-vacuum-freeze-min-age"/>
     controls how old an XID value has to be before rows bearing that XID will be
     frozen.  Increasing this setting may avoid unnecessary work if the
     rows that would otherwise be frozen will soon be modified again,
@@ -471,7 +471,7 @@
     Periodically, <command>VACUUM</command> will perform an <firstterm>aggressive
     vacuum</firstterm>, skipping only those pages which contain neither dead rows nor
     any unfrozen XID or MXID values.
-    <xref linkend="guc-vacuum-freeze-table-age">
+    <xref linkend="guc-vacuum-freeze-table-age"/>
     controls when <command>VACUUM</command> does that: all-visible but not all-frozen
     pages are scanned if the number of transactions that have passed since the
     last such scan is greater than <varname>vacuum_freeze_table_age</varname> minus
@@ -488,7 +488,7 @@
     that, data loss could result.  To ensure that this does not happen,
     autovacuum is invoked on any table that might contain unfrozen rows with
     XIDs older than the age specified by the configuration parameter <xref
-    linkend="guc-autovacuum-freeze-max-age">.  (This will happen even if
+    linkend="guc-autovacuum-freeze-max-age"/>.  (This will happen even if
     autovacuum is disabled.)
    </para>
 
@@ -636,7 +636,7 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     execute commands once it has gone into the safety shutdown mode,
     the only way to do this is to stop the server and start the server in single-user
     mode to execute <command>VACUUM</command>.  The shutdown mode is not enforced
-    in single-user mode.  See the <xref linkend="app-postgres"> reference
+    in single-user mode.  See the <xref linkend="app-postgres"/> reference
     page for details about using single-user mode.
    </para>
 
@@ -673,13 +673,13 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     <para>
      Whenever <command>VACUUM</command> scans any part of a table, it will replace
      any multixact ID it encounters which is older than
-     <xref linkend="guc-vacuum-multixact-freeze-min-age">
+     <xref linkend="guc-vacuum-multixact-freeze-min-age"/>
      by a different value, which can be the zero value, a single
      transaction ID, or a newer multixact ID.  For each table,
      <structname>pg_class</structname>.<structfield>relminmxid</structfield> stores the oldest
      possible multixact ID still appearing in any tuple of that table.
      If this value is older than
-     <xref linkend="guc-vacuum-multixact-freeze-table-age">, an aggressive
+     <xref linkend="guc-vacuum-multixact-freeze-table-age"/>, an aggressive
      vacuum is forced.  As discussed in the previous section, an aggressive
      vacuum means that only those pages which are known to be all-frozen will
      be skipped.  <function>mxid_age()</function> can be used on
@@ -697,7 +697,7 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     <para>
      As a safety device, an aggressive vacuum scan will occur for any table
      whose multixact-age is greater than
-     <xref linkend="guc-autovacuum-multixact-freeze-max-age">.  Aggressive
+     <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>.  Aggressive
      vacuum scans will also occur progressively for all tables, starting with
      those that have the oldest multixact-age, if the amount of used member
      storage space exceeds the amount 50% of the addressable storage space.
@@ -723,7 +723,7 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     tables that have had a large number of inserted, updated or deleted
     tuples.  These checks use the statistics collection facility;
     therefore, autovacuum cannot be used unless <xref
-    linkend="guc-track-counts"> is set to <literal>true</literal>.
+    linkend="guc-track-counts"/> is set to <literal>true</literal>.
     In the default configuration, autovacuuming is enabled and the related
     configuration parameters are appropriately set.
    </para>
@@ -734,17 +734,17 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     <firstterm>autovacuum launcher</firstterm>, which is in charge of starting
     <firstterm>autovacuum worker</firstterm> processes for all databases. The
     launcher will distribute the work across time, attempting to start one
-    worker within each database every <xref linkend="guc-autovacuum-naptime">
+    worker within each database every <xref linkend="guc-autovacuum-naptime"/>
     seconds.  (Therefore, if the installation has <replaceable>N</replaceable> databases,
     a new worker will be launched every
     <varname>autovacuum_naptime</varname>/<replaceable>N</replaceable> seconds.)
-    A maximum of <xref linkend="guc-autovacuum-max-workers"> worker processes
+    A maximum of <xref linkend="guc-autovacuum-max-workers"/> worker processes
     are allowed to run at the same time. If there are more than
     <varname>autovacuum_max_workers</varname> databases to be processed,
     the next database will be processed as soon as the first worker finishes.
     Each worker process will check each table within its database and
     execute <command>VACUUM</command> and/or <command>ANALYZE</command> as needed.
-    <xref linkend="guc-log-autovacuum-min-duration"> can be set to monitor
+    <xref linkend="guc-log-autovacuum-min-duration"/> can be set to monitor
     autovacuum workers' activity.
    </para>
 
@@ -756,13 +756,13 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     available. There is no limit on how many workers might be in a
     single database, but workers do try to avoid repeating work that has
     already been done by other workers. Note that the number of running
-    workers does not count towards <xref linkend="guc-max-connections"> or
-    <xref linkend="guc-superuser-reserved-connections"> limits.
+    workers does not count towards <xref linkend="guc-max-connections"/> or
+    <xref linkend="guc-superuser-reserved-connections"/> limits.
    </para>
 
    <para>
     Tables whose <structfield>relfrozenxid</structfield> value is more than
-    <xref linkend="guc-autovacuum-freeze-max-age"> transactions old are always
+    <xref linkend="guc-autovacuum-freeze-max-age"/> transactions old are always
     vacuumed (this also applies to those tables whose freeze max age has
     been modified via storage parameters; see below).  Otherwise, if the
     number of tuples obsoleted since the last
@@ -772,9 +772,9 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
 vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuples
 </programlisting>
     where the vacuum base threshold is
-    <xref linkend="guc-autovacuum-vacuum-threshold">,
+    <xref linkend="guc-autovacuum-vacuum-threshold"/>,
     the vacuum scale factor is
-    <xref linkend="guc-autovacuum-vacuum-scale-factor">,
+    <xref linkend="guc-autovacuum-vacuum-scale-factor"/>,
     and the number of tuples is
     <structname>pg_class</structname>.<structfield>reltuples</structfield>.
     The number of obsolete tuples is obtained from the statistics
@@ -808,16 +808,16 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     <filename>postgresql.conf</filename>, but it is possible to override them
     (and many other autovacuum control parameters) on a per-table basis; see
     <xref linkend="sql-createtable-storage-parameters"
-    endterm="sql-createtable-storage-parameters-title"> for more information.
+    endterm="sql-createtable-storage-parameters-title"/> for more information.
     If a setting has been changed via a table's storage parameters, that value
     is used when processing that table; otherwise the global settings are
-    used. See <xref linkend="runtime-config-autovacuum"> for more details on
+    used. See <xref linkend="runtime-config-autovacuum"/> for more details on
     the global settings.
    </para>
 
    <para>
     When multiple workers are running, the autovacuum cost delay parameters
-    (see <xref linkend="runtime-config-resource-vacuum-cost">) are
+    (see <xref linkend="runtime-config-resource-vacuum-cost"/>) are
     <quote>balanced</quote> among all the running workers, so that the
     total I/O impact on the system is the same regardless of the number
     of workers actually running.  However, any workers processing tables whose
@@ -838,7 +838,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 
   <para>
    In some situations it is worthwhile to rebuild indexes periodically
-   with the <xref linkend="sql-reindex"> command or a series of individual
+   with the <xref linkend="sql-reindex"/> command or a series of individual
    rebuilding steps.
 
   </para>
@@ -868,16 +868,16 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
   </para>
 
   <para>
-   <xref linkend="sql-reindex"> can be used safely and easily in all cases.
+   <xref linkend="sql-reindex"/> can be used safely and easily in all cases.
    But since the command requires an exclusive table lock, it is
    often preferable to execute an index rebuild with a sequence of
    creation and replacement steps.  Index types that support
-   <xref linkend="sql-createindex"> with the <literal>CONCURRENTLY</literal>
+   <xref linkend="sql-createindex"/> with the <literal>CONCURRENTLY</literal>
    option can instead be recreated that way. If that is successful and the
    resulting index is valid, the original index can then be replaced by
-   the newly built one using a combination of <xref linkend="sql-alterindex">
-   and <xref linkend="sql-dropindex">. When an index is used to enforce
-   uniqueness or other constraints, <xref linkend="sql-altertable"> might
+   the newly built one using a combination of <xref linkend="sql-alterindex"/>
+   and <xref linkend="sql-dropindex"/>. When an index is used to enforce
+   uniqueness or other constraints, <xref linkend="sql-altertable"/> might
    be necessary to swap the existing constraint with one enforced by
    the new index. Review this alternate multistep rebuild approach
    carefully before using it as there are limitations on which
@@ -922,7 +922,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    setting the configuration parameter <varname>logging_collector</varname> to
    <literal>true</literal> in <filename>postgresql.conf</filename>.  The control
    parameters for this program are described in <xref
-   linkend="runtime-config-logging-where">. You can also use this approach
+   linkend="runtime-config-logging-where"/>. You can also use this approach
    to capture the log data in machine readable <acronym>CSV</acronym>
    (comma-separated values) format.
   </para>

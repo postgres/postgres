@@ -14,7 +14,7 @@
  </para>
 
  <para>
-  See also <xref linkend="postgres-fdw">, which provides roughly the same
+  See also <xref linkend="postgres-fdw"/>, which provides roughly the same
   functionality using a more modern and standards-compliant infrastructure.
  </para>
 
@@ -58,8 +58,8 @@ dblink_connect(text connname, text connstr) returns text
     server.  It is recommended to use the foreign-data wrapper
     <literal>dblink_fdw</literal> when defining the foreign
     server.  See the example below, as well as
-    <xref linkend="sql-createserver"> and
-    <xref linkend="sql-createusermapping">.
+    <xref linkend="sql-createserver"/> and
+    <xref linkend="sql-createusermapping"/>.
    </para>
 
   </refsect1>
@@ -84,7 +84,7 @@ dblink_connect(text connname, text connstr) returns text
       <para><application>libpq</application>-style connection info string, for example
        <literal>hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres
        password=mypasswd</literal>.
-       For details see <xref linkend="libpq-connstring">.
+       For details see <xref linkend="libpq-connstring"/>.
        Alternatively, the name of a foreign server.
       </para>
      </listitem>
@@ -1340,7 +1340,7 @@ dblink_get_notify(text connname) returns setof (notify_name text, be_pid int, ex
     the unnamed connection, or on a named connection if specified.
     To receive notifications via dblink, <function>LISTEN</function> must
     first be issued, using <function>dblink_exec</function>.
-    For details see <xref linkend="sql-listen"> and <xref linkend="sql-notify">.
+    For details see <xref linkend="sql-listen"/> and <xref linkend="sql-notify"/>.
    </para>
 
   </refsect1>

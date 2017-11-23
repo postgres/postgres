@@ -12,7 +12,7 @@
   <para>
    This release contains a variety of fixes from 9.0.22.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <para>
@@ -30,7 +30,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.18,
-    see <xref linkend="release-9-0-18">.
+    see <xref linkend="release-9-0-18"/>.
    </para>
 
   </sect2>
@@ -509,7 +509,7 @@
   <para>
    This release contains a small number of fixes from 9.0.21.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <para>
@@ -527,7 +527,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.18,
-    see <xref linkend="release-9-0-18">.
+    see <xref linkend="release-9-0-18"/>.
    </para>
 
   </sect2>
@@ -583,7 +583,7 @@
   <para>
    This release contains a small number of fixes from 9.0.20.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <para>
@@ -601,7 +601,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.18,
-    see <xref linkend="release-9-0-18">.
+    see <xref linkend="release-9-0-18"/>.
    </para>
 
   </sect2>
@@ -677,7 +677,7 @@
   <para>
    This release contains a variety of fixes from 9.0.19.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <para>
@@ -695,7 +695,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.18,
-    see <xref linkend="release-9-0-18">.
+    see <xref linkend="release-9-0-18"/>.
    </para>
 
   </sect2>
@@ -1121,7 +1121,7 @@
   <para>
    This release contains a variety of fixes from 9.0.18.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -1133,7 +1133,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.18,
-    see <xref linkend="release-9-0-18">.
+    see <xref linkend="release-9-0-18"/>.
    </para>
 
   </sect2>
@@ -1847,7 +1847,7 @@
   <para>
    This release contains a variety of fixes from 9.0.17.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -1865,7 +1865,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.0.15,
-    see <xref linkend="release-9-0-15">.
+    see <xref linkend="release-9-0-15"/>.
    </para>
 
   </sect2>
@@ -2069,7 +2069,7 @@
     <listitem>
      <para>
       On Windows, allow new sessions to absorb values of PGC_BACKEND
-      parameters (such as <xref linkend="guc-log-connections">) from the
+      parameters (such as <xref linkend="guc-log-connections"/>) from the
       configuration file (Amit Kapila)
      </para>
 
@@ -2193,7 +2193,7 @@
   <para>
    This release contains a variety of fixes from 9.0.16.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -2205,7 +2205,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.15,
-    see <xref linkend="release-9-0-15">.
+    see <xref linkend="release-9-0-15"/>.
    </para>
 
   </sect2>
@@ -2346,7 +2346,7 @@
   <para>
    This release contains a variety of fixes from 9.0.15.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -2358,7 +2358,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.15,
-    see <xref linkend="release-9-0-15">.
+    see <xref linkend="release-9-0-15"/>.
    </para>
 
   </sect2>
@@ -2847,7 +2847,7 @@
   <para>
    This release contains a variety of fixes from 9.0.14.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -2865,7 +2865,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.0.13,
-    see <xref linkend="release-9-0-13">.
+    see <xref linkend="release-9-0-13"/>.
    </para>
 
   </sect2>
@@ -3085,7 +3085,7 @@
   <para>
    This release contains a variety of fixes from 9.0.13.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -3097,7 +3097,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.13,
-    see <xref linkend="release-9-0-13">.
+    see <xref linkend="release-9-0-13"/>.
    </para>
 
   </sect2>
@@ -3351,7 +3351,7 @@
   <para>
    This release contains a variety of fixes from 9.0.12.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -3370,7 +3370,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.0.6,
-    see <xref linkend="release-9-0-6">.
+    see <xref linkend="release-9-0-6"/>.
    </para>
 
   </sect2>
@@ -3648,7 +3648,7 @@
   <para>
    This release contains a variety of fixes from 9.0.11.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -3660,7 +3660,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see <xref linkend="release-9-0-6">.
+    see <xref linkend="release-9-0-6"/>.
    </para>
 
   </sect2>
@@ -3910,7 +3910,7 @@
   <para>
    This release contains a variety of fixes from 9.0.10.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -3922,7 +3922,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see <xref linkend="release-9-0-6">.
+    see <xref linkend="release-9-0-6"/>.
    </para>
 
   </sect2>
@@ -4288,7 +4288,7 @@
   <para>
    This release contains a variety of fixes from 9.0.9.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -4300,7 +4300,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see <xref linkend="release-9-0-6">.
+    see <xref linkend="release-9-0-6"/>.
    </para>
 
   </sect2>
@@ -4430,7 +4430,7 @@
   <para>
    This release contains a variety of fixes from 9.0.8.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -4442,7 +4442,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see <xref linkend="release-9-0-6">.
+    see <xref linkend="release-9-0-6"/>.
    </para>
 
   </sect2>
@@ -4736,7 +4736,7 @@
   <para>
    This release contains a variety of fixes from 9.0.7.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -4748,7 +4748,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see <xref linkend="release-9-0-6">.
+    see <xref linkend="release-9-0-6"/>.
    </para>
 
   </sect2>
@@ -5056,7 +5056,7 @@
   <para>
    This release contains a variety of fixes from 9.0.6.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -5068,7 +5068,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see <xref linkend="release-9-0-6">.
+    see <xref linkend="release-9-0-6"/>.
    </para>
 
   </sect2>
@@ -5572,7 +5572,7 @@
   <para>
    This release contains a variety of fixes from 9.0.5.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -5591,7 +5591,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.0.4,
-    see <xref linkend="release-9-0-4">.
+    see <xref linkend="release-9-0-4"/>.
    </para>
 
   </sect2>
@@ -5956,7 +5956,7 @@
   <para>
    This release contains a variety of fixes from 9.0.4.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -5968,7 +5968,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.4,
-    see <xref linkend="release-9-0-4">.
+    see <xref linkend="release-9-0-4"/>.
    </para>
 
   </sect2>
@@ -6606,7 +6606,7 @@
   <para>
    This release contains a variety of fixes from 9.0.3.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -6947,7 +6947,7 @@
   <para>
    This release contains a variety of fixes from 9.0.2.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -7123,7 +7123,7 @@
   <para>
    This release contains a variety of fixes from 9.0.1.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>
@@ -7570,7 +7570,7 @@
   <para>
    This release contains a variety of fixes from 9.0.0.
    For information about new features in the 9.0 major release, see
-   <xref linkend="release-9-0">.
+   <xref linkend="release-9-0"/>.
   </para>
 
   <sect2>

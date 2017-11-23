@@ -31,7 +31,7 @@
  <para>
   <application>pg_archivecleanup</application> is designed to be used as an
   <literal>archive_cleanup_command</literal> to clean up WAL file archives when
-  running as a standby server (see <xref linkend="warm-standby">).
+  running as a standby server (see <xref linkend="warm-standby"/>).
   <application>pg_archivecleanup</application> can also be used as a standalone program to
   clean WAL file archives.
  </para>
@@ -47,7 +47,7 @@ archive_cleanup_command = 'pg_archivecleanup <replaceable>archivelocation</repla
    files should be removed.
   </para>
   <para>
-   When used within <xref linkend="archive-cleanup-command">, all WAL files
+   When used within <xref linkend="archive-cleanup-command"/>, all WAL files
    logically preceding the value of the <literal>%r</literal> argument will be removed
    from <replaceable>archivelocation</replaceable>. This minimizes the number of files
    that need to be retained, while preserving crash-restart capability.  Use of
@@ -194,7 +194,7 @@ archive_cleanup_command = 'pg_archivecleanup -d /mnt/standby/archive %r 2>>clean
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="pgstandby"></member>
+   <member><xref linkend="pgstandby"/></member>
   </simplelist>
  </refsect1>
 </refentry>

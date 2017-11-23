@@ -60,7 +60,7 @@ DISCARD { ALL | PLANS | SEQUENCES | TEMPORARY | TEMP }
       including <function>currval()</function>/<function>lastval()</function>
       information and any preallocated sequence values that have not
       yet been returned by <function>nextval()</function>.
-      (See <xref linkend="sql-createsequence"> for a description of
+      (See <xref linkend="sql-createsequence"/> for a description of
       preallocated sequence values.)
      </para>
     </listitem>

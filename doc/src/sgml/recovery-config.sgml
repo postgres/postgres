@@ -58,7 +58,7 @@
         to truncate the archive to just the minimum required to support
         restarting from the current restore. <literal>%r</literal> is typically only
         used by warm-standby configurations
-        (see <xref linkend="warm-standby">).
+        (see <xref linkend="warm-standby"/>).
         Write <literal>%%</literal> to embed an actual <literal>%</literal> character.
        </para>
 
@@ -99,7 +99,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         may be safely removed.
         This information can be used to truncate the archive to just the
         minimum required to support restart from the current restore.
-        The <xref linkend="pgarchivecleanup"> module
+        The <xref linkend="pgarchivecleanup"/> module
         is often used in <varname>archive_cleanup_command</varname> for
         single-standby configurations, for example:
 <programlisting>archive_cleanup_command = 'pg_archivecleanup /mnt/server/archivedir %r'</programlisting>
@@ -107,7 +107,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         same archive directory, you will need to ensure that you do not delete
         WAL files until they are no longer needed by any of the servers.
         <varname>archive_cleanup_command</varname> would typically be used in a
-        warm-standby configuration (see <xref linkend="warm-standby">).
+        warm-standby configuration (see <xref linkend="warm-standby"/>).
         Write <literal>%%</literal> to embed an actual <literal>%</literal> character in the
         command.
        </para>
@@ -133,7 +133,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         <varname>recovery_end_command</varname> is to provide a mechanism for cleanup
         following replication or recovery.
         Any <literal>%r</literal> is replaced by the name of the file containing the
-        last valid restart point, like in <xref linkend="archive-cleanup-command">.
+        last valid restart point, like in <xref linkend="archive-cleanup-command"/>.
        </para>
        <para>
         If the command returns a nonzero exit status then a warning log
@@ -209,7 +209,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         This parameter specifies the time stamp up to which recovery
         will proceed.
         The precise stopping point is also influenced by
-        <xref linkend="recovery-target-inclusive">.
+        <xref linkend="recovery-target-inclusive"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -229,7 +229,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         The transactions that will be recovered are those that committed
         before (and optionally including) the specified one.
         The precise stopping point is also influenced by
-        <xref linkend="recovery-target-inclusive">.
+        <xref linkend="recovery-target-inclusive"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -244,7 +244,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         This parameter specifies the LSN of the write-ahead log location up
         to which recovery will proceed. The precise stopping point is also
-        influenced by <xref linkend="recovery-target-inclusive">. This
+        influenced by <xref linkend="recovery-target-inclusive"/>. This
         parameter is parsed using the system data type
         <link linkend="datatype-pg-lsn"><type>pg_lsn</type></link>.
        </para>
@@ -270,9 +270,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         Specifies whether to stop just after the specified recovery target
         (<literal>true</literal>), or just before the recovery target
         (<literal>false</literal>).
-        Applies when <xref linkend="recovery-target-lsn">,
-        <xref linkend="recovery-target-time">, or
-        <xref linkend="recovery-target-xid"> is specified.
+        Applies when <xref linkend="recovery-target-lsn"/>,
+        <xref linkend="recovery-target-time"/>, or
+        <xref linkend="recovery-target-xid"/> is specified.
         This setting controls whether transactions
         having exactly the target WAL location (LSN), commit time, or transaction ID, respectively, will
         be included in the recovery.  Default is <literal>true</literal>.
@@ -296,7 +296,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         a standby server. Other than that you only need to set this parameter
         in complex re-recovery situations, where you need to return to
         a state that itself was reached after a point-in-time recovery.
-        See <xref linkend="backup-timelines"> for discussion.
+        See <xref linkend="backup-timelines"/> for discussion.
        </para>
       </listitem>
      </varlistentry>
@@ -323,7 +323,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         is the most desirable point for recovery.
         The paused state can be resumed by
         using <function>pg_wal_replay_resume()</function> (see
-        <xref linkend="functions-recovery-control-table">), which then
+        <xref linkend="functions-recovery-control-table"/>), which then
         causes recovery to end. If this recovery target is not the
         desired stopping point, then shut down the server, change the
         recovery target settings to a later target and restart to
@@ -344,7 +344,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </para>
        <para>
         This setting has no effect if no recovery target is set.
-        If <xref linkend="guc-hot-standby"> is not enabled, a setting of
+        If <xref linkend="guc-hot-standby"/> is not enabled, a setting of
         <literal>pause</literal> will act the same as <literal>shutdown</literal>.
        </para>
       </listitem>
@@ -386,9 +386,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
          <para>
           Specifies a connection string to be used for the standby server
           to connect with the primary. This string is in the format
-          described in <xref linkend="libpq-connstring">. If any option is
+          described in <xref linkend="libpq-connstring"/>. If any option is
           unspecified in this string, then the corresponding environment
-          variable (see <xref linkend="libpq-envars">) is checked. If the
+          variable (see <xref linkend="libpq-envars"/>) is checked. If the
           environment variable is not set either, then
           defaults are used.
          </para>
@@ -398,7 +398,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
           the same as the standby server's default.
           Also specify a user name corresponding to a suitably-privileged role
           on the primary (see
-          <xref linkend="streaming-replication-authentication">).
+          <xref linkend="streaming-replication-authentication"/>).
           A password needs to be provided too, if the primary demands password
           authentication.  It can be provided in the
           <varname>primary_conninfo</varname> string, or in a separate
@@ -423,7 +423,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
           Optionally specifies an existing replication slot to be used when
           connecting to the primary via streaming replication to control
           resource removal on the upstream node
-          (see <xref linkend="streaming-replication-slots">).
+          (see <xref linkend="streaming-replication-slots"/>).
           This setting has no effect if <varname>primary_conninfo</varname> is not
           set.
          </para>

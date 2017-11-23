@@ -80,7 +80,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form adds a new constraint to a domain using the same syntax as
-      <xref linkend="sql-createdomain">.
+      <xref linkend="sql-createdomain"/>.
       When a new constraint is added to a domain, all columns using that
       domain will be checked against the newly added constraint.  These
       checks can be suppressed by adding the new constraint using the
@@ -214,7 +214,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
        <para>
         Automatically drop objects that depend on the constraint,
         and in turn all objects that depend on those objects
-        (see <xref linkend="ddl-depend">).
+        (see <xref linkend="ddl-depend"/>).
        </para>
       </listitem>
      </varlistentry>
@@ -342,8 +342,8 @@ ALTER DOMAIN zipcode SET SCHEMA customers;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdomain"></member>
-   <member><xref linkend="sql-dropdomain"></member>
+   <member><xref linkend="sql-createdomain"/></member>
+   <member><xref linkend="sql-dropdomain"/></member>
   </simplelist>
  </refsect1>
 

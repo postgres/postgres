@@ -54,7 +54,7 @@ su - postgres
    In general, a modern Unix-compatible platform should be able to run
    <productname>PostgreSQL</productname>.
    The platforms that had received specific testing at the
-   time of release are listed in <xref linkend="supported-platforms">
+   time of release are listed in <xref linkend="supported-platforms"/>
    below. In the <filename>doc</filename> subdirectory of the distribution
    there are several platform-specific <acronym>FAQ</acronym> documents you
    might wish to consult if you are having trouble.
@@ -193,7 +193,7 @@ su - postgres
       required version is <productname>Python</productname> 2.4.
       <productname>Python 3</productname> is supported if it's
       version 3.1 or later; but see
-      <xref linkend="plpython-python23">
+      <xref linkend="plpython-python23"/>
       when using Python 3.
      </para>
 
@@ -262,7 +262,7 @@ su - postgres
      <para>
       To build the <productname>PostgreSQL</productname> documentation,
       there is a separate set of requirements; see
-      <xref linkend="docguide-toolsets">.
+      <xref linkend="docguide-toolsets"/>.
      </para>
     </listitem>
    </itemizedlist>
@@ -358,7 +358,7 @@ su - postgres
 
   <para>
    You can also get the source directly from the version control repository, see
-   <xref linkend="sourcerepo">.
+   <xref linkend="sourcerepo"/>.
   </para>
  </sect1>
 
@@ -835,8 +835,8 @@ su - postgres
         <para>
          Build with <acronym>LDAP</acronym><indexterm><primary>LDAP</primary></indexterm>
          support for authentication and connection parameter lookup (see
-         <phrase id="install-ldap-links"><xref linkend="libpq-ldap"> and
-         <xref linkend="auth-ldap"></phrase> for more information). On Unix,
+         <phrase id="install-ldap-links"><xref linkend="libpq-ldap"/> and
+         <xref linkend="auth-ldap"/></phrase> for more information). On Unix,
          this requires the <productname>OpenLDAP</productname> package to be
          installed. On Windows, the default <productname>WinLDAP</productname>
          library is used.  <filename>configure</filename> will check for the required
@@ -855,7 +855,7 @@ su - postgres
          for <application>systemd</application><indexterm><primary>systemd</primary></indexterm>
          service notifications.  This improves integration if the server binary
          is started under <application>systemd</application> but has no impact
-         otherwise<phrase condition="standalone-ignore">; see <xref linkend="server-start"> for more
+         otherwise<phrase condition="standalone-ignore">; see <xref linkend="server-start"/> for more
          information</phrase>.  <application>libsystemd</application> and the
          associated header files need to be installed to be able to use this
          option.
@@ -901,7 +901,7 @@ su - postgres
        <term><option>--with-uuid=<replaceable>LIBRARY</replaceable></option></term>
        <listitem>
         <para>
-         Build the <xref linkend="uuid-ossp"> module
+         Build the <xref linkend="uuid-ossp"/> module
          (which provides functions to generate UUIDs), using the specified
          UUID library.<indexterm><primary>UUID</primary></indexterm>
          <replaceable>LIBRARY</replaceable> must be one of:
@@ -968,7 +968,7 @@ su - postgres
        <listitem>
         <para>
          Use libxslt when building the
-         <xref linkend="xml2">
+         <xref linkend="xml2"/>
          module.  <application>xml2</application> relies on this library
          to perform XSL transformations of XML.
         </para>
@@ -1084,7 +1084,7 @@ su - postgres
          has no support for strong random numbers on the platform.
          A source of random numbers is needed for some authentication
          protocols, as well as some routines in the
-         <xref linkend="pgcrypto">
+         <xref linkend="pgcrypto"/>
          module. <option>--disable-strong-random</option> disables functionality that
          requires cryptographically strong random numbers, and substitutes
          a weak pseudo-random-number-generator for the generation of
@@ -1188,7 +1188,7 @@ su - postgres
          code coverage testing instrumentation.  When run, they
          generate files in the build directory with code coverage
          metrics.
-         <phrase condition="standalone-ignore">See <xref linkend="regress-coverage">
+         <phrase condition="standalone-ignore">See <xref linkend="regress-coverage"/>
          for more information.</phrase> This option is for use only with GCC
          and when doing development work.
         </para>
@@ -1249,7 +1249,7 @@ su - postgres
          </indexterm>
          Compiles <productname>PostgreSQL</productname> with support for the
          dynamic tracing tool DTrace.
-         <phrase condition="standalone-ignore">See <xref linkend="dynamic-trace">
+         <phrase condition="standalone-ignore">See <xref linkend="dynamic-trace"/>
          for more information.</phrase>
         </para>
 
@@ -1285,7 +1285,7 @@ su - postgres
         <para>
          Enable tests using the Perl TAP tools.  This requires a Perl
          installation and the Perl module <literal>IPC::Run</literal>.
-         <phrase condition="standalone-ignore">See <xref linkend="regress-tap"> for more information.</phrase>
+         <phrase condition="standalone-ignore">See <xref linkend="regress-tap"/> for more information.</phrase>
         </para>
        </listitem>
       </varlistentry>
@@ -1442,7 +1442,7 @@ su - postgres
          whether Python 2 or 3 is specified here (or otherwise
          implicitly chosen) determines which variant of the PL/Python
          language becomes available.  See
-         <xref linkend="plpython-python23">
+         <xref linkend="plpython-python23"/>
          for more information.
         </para>
        </listitem>
@@ -1569,7 +1569,7 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
 <userinput>make check</userinput>
 </screen>
     (This won't work as root; do it as an unprivileged user.)
-    See <xref linkend="regress"> for
+    See <xref linkend="regress"/> for
     detailed information about interpreting the test results. You can
     repeat this test at any later time by issuing the same command.
    </para>
@@ -1581,7 +1581,7 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
    <note>
     <para>
      If you are upgrading an existing system be sure to read
-     <xref linkend="upgrading">,
+     <xref linkend="upgrading"/>,
      which has instructions about upgrading a
      cluster.
     </para>
@@ -1593,7 +1593,7 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
 <userinput>make install</userinput>
 </screen>
     This will install files into the directories that were specified
-    in <xref linkend="configure">. Make sure that you have appropriate
+    in <xref linkend="configure"/>. Make sure that you have appropriate
     permissions to write into that area. Normally you need to do this
     step as root. Alternatively, you can create the target
     directories in advance and arrange for appropriate permissions to
@@ -1727,7 +1727,7 @@ export LD_LIBRARY_PATH
 setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 </programlisting>
     Replace <literal>/usr/local/pgsql/lib</literal> with whatever you set
-    <option><literal>--libdir</literal></option> to in <xref linkend="configure">.
+    <option><literal>--libdir</literal></option> to in <xref linkend="configure"/>.
     You should put these commands into a shell start-up file such as
     <filename>/etc/profile</filename> or <filename>~/.bash_profile</filename>.  Some
     good information about the caveats associated with this method can
@@ -1793,7 +1793,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
     If you installed into <filename>/usr/local/pgsql</filename> or some other
     location that is not searched for programs by default, you should
     add <filename>/usr/local/pgsql/bin</filename> (or whatever you set
-    <option><literal>--bindir</literal></option> to in <xref linkend="configure">)
+    <option><literal>--bindir</literal></option> to in <xref linkend="configure"/>)
     into your <envar>PATH</envar>.  Strictly speaking, this is not
     necessary, but it will make the use of <productname>PostgreSQL</productname>
     much more convenient.
@@ -1873,7 +1873,7 @@ export MANPATH
    Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
    a given operating system will work.  Look in
-   <xref linkend="installation-platform-notes"> below to see if
+   <xref linkend="installation-platform-notes"/> below to see if
    there is information
    specific to your operating system, particularly if using an older system.
   </para>
@@ -1895,8 +1895,8 @@ export MANPATH
    This section documents additional platform-specific issues
    regarding the installation and setup of PostgreSQL.  Be sure to
    read the installation instructions, and in
-   particular <xref linkend="install-requirements"> as well.  Also,
-   check <xref linkend="regress"> regarding the
+   particular <xref linkend="install-requirements"/> as well.  Also,
+   check <xref linkend="regress"/> regarding the
    interpretation of regression test results.
   </para>
 
@@ -2247,7 +2247,7 @@ ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
    <para>
     PostgreSQL can be built using Cygwin, a Linux-like environment for
     Windows, but that method is inferior to the native Windows build
-    <phrase condition="standalone-ignore">(see <xref linkend="install-windows">)</phrase> and
+    <phrase condition="standalone-ignore">(see <xref linkend="install-windows"/>)</phrase> and
     running a server under Cygwin is no longer recommended.
    </para>
 
@@ -2441,7 +2441,7 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
     Microsoft's <productname>Visual C++</productname> compiler suite.
     The MinGW build variant uses the normal build system described in
     this chapter; the Visual C++ build works completely differently
-    and is described in <xref linkend="install-windows">.
+    and is described in <xref linkend="install-windows"/>.
     It is a fully native build and uses no additional software like
     MinGW.  A ready-made installer is available on the main
     PostgreSQL web site.
@@ -2602,7 +2602,7 @@ LIBOBJS = snprintf.o
     <title>Using DTrace for Tracing PostgreSQL</title>
 
     <para>
-     Yes, using DTrace is possible.  See <xref linkend="dynamic-trace"> for
+     Yes, using DTrace is possible.  See <xref linkend="dynamic-trace"/> for
      further information.
     </para>
 

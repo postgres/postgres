@@ -25,7 +25,7 @@
   <title>Data Types</title>
 
   <para>
-   <xref linkend="isn-datatypes"> shows the data types provided by
+   <xref linkend="isn-datatypes"/> shows the data types provided by
    the <filename>isn</filename> module.
   </para>
 
@@ -222,7 +222,7 @@
   <para>
    The <filename>isn</filename> module provides the standard comparison operators,
    plus B-tree and hash indexing support for all these data types.  In
-   addition there are several specialized functions; shown in <xref linkend="isn-functions">.
+   addition there are several specialized functions; shown in <xref linkend="isn-functions"/>.
    In this table,
    <type>isn</type> means any one of the module's data types.
   </para>

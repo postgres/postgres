@@ -54,7 +54,7 @@ ROLLBACK [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-commit"> to
+   Use <xref linkend="sql-commit"/> to
    successfully terminate a transaction.
   </para>
 
@@ -88,9 +88,9 @@ ROLLBACK;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-commit"></member>
-   <member><xref linkend="sql-rollback-to"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-commit"/></member>
+   <member><xref linkend="sql-rollback-to"/></member>
   </simplelist>
  </refsect1>
 </refentry>

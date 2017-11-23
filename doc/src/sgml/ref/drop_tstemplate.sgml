@@ -65,7 +65,7 @@ DROP TEXT SEARCH TEMPLATE [ IF EXISTS ] <replaceable class="parameter">name</rep
      <para>
       Automatically drop objects that depend on the text search template,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -111,8 +111,8 @@ DROP TEXT SEARCH TEMPLATE thesaurus;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertstemplate"></member>
-   <member><xref linkend="sql-createtstemplate"></member>
+   <member><xref linkend="sql-altertstemplate"/></member>
+   <member><xref linkend="sql-createtstemplate"/></member>
   </simplelist>
  </refsect1>
 

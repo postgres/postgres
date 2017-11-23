@@ -30,7 +30,7 @@ DROP GROUP [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ..
 
   <para>
    <command>DROP GROUP</command> is now an alias for
-   <xref linkend="sql-droprole">.
+   <xref linkend="sql-droprole"/>.
   </para>
  </refsect1>
 
@@ -46,7 +46,7 @@ DROP GROUP [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ..
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-droprole"></member>
+   <member><xref linkend="sql-droprole"/></member>
   </simplelist>
  </refsect1>
 

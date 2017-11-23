@@ -187,7 +187,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       This presently makes no difference in <productname>PostgreSQL</productname>
       and is deprecated; see
       <xref linkend="sql-createtable-compatibility"
-      endterm="sql-createtable-compatibility-title">.
+      endterm="sql-createtable-compatibility-title"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -198,7 +198,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       If specified, the table is created as an unlogged table.  Data written
       to unlogged tables is not written to the write-ahead log (see <xref
-      linkend="wal">), which makes them considerably faster than ordinary
+      linkend="wal"/>), which makes them considerably faster than ordinary
       tables.  However, they are not crash-safe: an unlogged table is
       automatically truncated after a crash or unclean shutdown.  The contents
       of an unlogged table are also not replicated to standby servers.
@@ -296,7 +296,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       are valid values of the corresponding partition key columns for this
       partition, whereas those in the <literal>TO</literal> list are
       not.  Note that this statement must be understood according to the
-      rules of row-wise comparison (<xref linkend="row-wise-comparison">).
+      rules of row-wise comparison (<xref linkend="row-wise-comparison"/>).
       For example, given <literal>PARTITION BY RANGE (x,y)</literal>, a partition
       bound <literal>FROM (1, 2) TO (3, 4)</literal>
       allows <literal>x=1</literal> with any <literal>y&gt;=2</literal>,
@@ -438,7 +438,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       The data type of the column. This can include array
       specifiers. For more information on the data types supported by
       <productname>PostgreSQL</productname>, refer to <xref
-      linkend="datatype">.
+      linkend="datatype"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -532,7 +532,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       specified explicitly, the default operator class of the appropriate
       type will be used; if no default operator class exists, an error will
       be raised.  When hash partitioning is used, the operator class used
-      must implement support function 2 (see <xref linkend="xindex-support">
+      must implement support function 2 (see <xref linkend="xindex-support"/>
       for details).
      </para>
 
@@ -607,7 +607,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       default behavior is to exclude <literal>STORAGE</literal> settings, resulting
       in the copied columns in the new table having type-specific default
       settings.  For more on <literal>STORAGE</literal> settings, see
-      <xref linkend="storage-toast">.
+      <xref linkend="storage-toast"/>.
      </para>
      <para>
       Comments for the copied columns, constraints, and indexes
@@ -749,7 +749,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       only accepted if the <command>INSERT</command> statement
       specifies <literal>OVERRIDING SYSTEM VALUE</literal>.  If <literal>BY
       DEFAULT</literal> is specified, then the user-specified value takes
-      precedence.  See <xref linkend="sql-insert"> for details.  (In
+      precedence.  See <xref linkend="sql-insert"/> for details.  (In
       the <command>COPY</command> command, user-specified values are always
       used regardless of this setting.)
      </para>
@@ -757,7 +757,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       The optional <replaceable>sequence_options</replaceable> clause can be
       used to override the options of the sequence.
-      See <xref linkend="sql-createsequence"> for details.
+      See <xref linkend="sql-createsequence"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -832,7 +832,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       constraints that are more general than simple equality.
       For example, you can specify a constraint that
       no two rows in the table contain overlapping circles
-      (see <xref linkend="datatype-geometric">) by using the
+      (see <xref linkend="datatype-geometric"/>) by using the
       <literal>&amp;&amp;</literal> operator.
      </para>
 
@@ -840,18 +840,18 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       Exclusion constraints are implemented using
       an index, so each specified operator must be associated with an
       appropriate operator class
-      (see <xref linkend="indexes-opclass">) for the index access
+      (see <xref linkend="indexes-opclass"/>) for the index access
       method <replaceable>index_method</replaceable>.
       The operators are required to be commutative.
       Each <replaceable class="parameter">exclude_element</replaceable>
       can optionally specify an operator class and/or ordering options;
       these are described fully under
-      <xref linkend="sql-createindex">.
+      <xref linkend="sql-createindex"/>.
      </para>
 
      <para>
       The access method must support <literal>amgettuple</literal> (see <xref
-      linkend="indexam">); at present this means <acronym>GIN</acronym>
+      linkend="indexam"/>); at present this means <acronym>GIN</acronym>
       cannot be used.  Although it's allowed, there is little point in using
       B-tree or hash indexes with an exclusion constraint, because this
       does nothing that an ordinary unique constraint doesn't do better.
@@ -1001,7 +1001,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       constraint that is not deferrable will be checked immediately
       after every command.  Checking of constraints that are
       deferrable can be postponed until the end of the transaction
-      (using the <xref linkend="sql-set-constraints"> command).
+      (using the <xref linkend="sql-set-constraints"/> command).
       <literal>NOT DEFERRABLE</literal> is the default.
       Currently, only <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>,
       <literal>EXCLUDE</literal>, and
@@ -1025,7 +1025,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       statement. This is the default.  If the constraint is
       <literal>INITIALLY DEFERRED</literal>, it is checked only at the
       end of the transaction.  The constraint check time can be
-      altered with the <xref linkend="sql-set-constraints"> command.
+      altered with the <xref linkend="sql-set-constraints"/> command.
      </para>
     </listitem>
    </varlistentry>
@@ -1036,14 +1036,14 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       This clause specifies optional storage parameters for a table or index;
       see <xref linkend="sql-createtable-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title"> for more
+      endterm="sql-createtable-storage-parameters-title"/> for more
       information.  The <literal>WITH</literal> clause for a
       table can also include <literal>OIDS=TRUE</literal> (or just <literal>OIDS</literal>)
       to specify that rows of the new table
       should have OIDs (object identifiers) assigned to them, or
       <literal>OIDS=FALSE</literal> to specify that the rows should not have OIDs.
       If <literal>OIDS</literal> is not specified, the default setting depends upon
-      the <xref linkend="guc-default-with-oids"> configuration parameter.
+      the <xref linkend="guc-default-with-oids"/> configuration parameter.
       (If the new table inherits from any tables that have OIDs, then
       <literal>OIDS=TRUE</literal> is forced even if the command says
       <literal>OIDS=FALSE</literal>.)
@@ -1063,7 +1063,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       To remove OIDs from a table after it has been created, use <xref
-      linkend="sql-altertable">.
+      linkend="sql-altertable"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -1106,7 +1106,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
          <para>
           All rows in the temporary table will be deleted at the end
           of each transaction block.  Essentially, an automatic <xref
-          linkend="sql-truncate"> is done
+          linkend="sql-truncate"/> is done
           at each commit.
          </para>
         </listitem>
@@ -1132,8 +1132,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       The <replaceable class="parameter">tablespace_name</replaceable> is the name
       of the tablespace in which the new table is to be created.
       If not specified,
-      <xref linkend="guc-default-tablespace"> is consulted, or
-      <xref linkend="guc-temp-tablespaces"> if the table is temporary.
+      <xref linkend="guc-default-tablespace"/> is consulted, or
+      <xref linkend="guc-temp-tablespaces"/> if the table is temporary.
      </para>
     </listitem>
    </varlistentry>
@@ -1146,8 +1146,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       associated with a <literal>UNIQUE</literal>, <literal>PRIMARY
       KEY</literal>, or <literal>EXCLUDE</literal> constraint will be created.
       If not specified,
-      <xref linkend="guc-default-tablespace"> is consulted, or
-      <xref linkend="guc-temp-tablespaces"> if the table is temporary.
+      <xref linkend="guc-default-tablespace"/> is consulted, or
+      <xref linkend="guc-temp-tablespaces"/> if the table is temporary.
      </para>
     </listitem>
    </varlistentry>
@@ -1166,13 +1166,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     for tables, and for indexes associated with a <literal>UNIQUE</literal>,
     <literal>PRIMARY KEY</literal>, or <literal>EXCLUDE</literal> constraint.
     Storage parameters for
-    indexes are documented in <xref linkend="sql-createindex">.
+    indexes are documented in <xref linkend="sql-createindex"/>.
     The storage parameters currently
     available for tables are listed below.  For many of these parameters, as
     shown, there is an additional parameter with the same name prefixed with
     <literal>toast.</literal>, which controls the behavior of the
     table's secondary <acronym>TOAST</acronym> table, if any
-    (see <xref linkend="storage-toast"> for more information about TOAST).
+    (see <xref linkend="storage-toast"/> for more information about TOAST).
     If a table parameter value is set and the
     equivalent <literal>toast.</literal> parameter is not, the TOAST table
     will use the table's parameter value.
@@ -1229,7 +1229,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       scan of this table.  If not set, the system will determine a value based
       on the relation size.  The actual number of workers chosen by the planner
       may be less, for example due to
-      the setting of <xref linkend="guc-max-worker-processes">.
+      the setting of <xref linkend="guc-max-worker-processes"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -1241,12 +1241,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      Enables or disables the autovacuum daemon for a particular table.
      If true, the autovacuum daemon will perform automatic <command>VACUUM</command>
      and/or <command>ANALYZE</command> operations on this table following the rules
-     discussed in <xref linkend="autovacuum">.
+     discussed in <xref linkend="autovacuum"/>.
      If false, this table will not be autovacuumed, except to prevent
-     transaction ID wraparound. See <xref linkend="vacuum-for-wraparound"> for
+     transaction ID wraparound. See <xref linkend="vacuum-for-wraparound"/> for
      more about wraparound prevention.
      Note that the autovacuum daemon does not run at all (except to prevent
-     transaction ID wraparound) if the <xref linkend="guc-autovacuum">
+     transaction ID wraparound) if the <xref linkend="guc-autovacuum"/>
      parameter is false; setting individual tables' storage parameters does
      not override that.  Therefore there is seldom much point in explicitly
      setting this storage parameter to <literal>true</literal>, only
@@ -1259,7 +1259,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_vacuum_threshold</literal>, <literal>toast.autovacuum_vacuum_threshold</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-autovacuum-vacuum-threshold">
+      Per-table value for <xref linkend="guc-autovacuum-vacuum-threshold"/>
       parameter.
      </para>
     </listitem>
@@ -1269,7 +1269,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_vacuum_scale_factor</literal>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>float4</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-autovacuum-vacuum-scale-factor">
+      Per-table value for <xref linkend="guc-autovacuum-vacuum-scale-factor"/>
       parameter.
      </para>
     </listitem>
@@ -1279,7 +1279,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_analyze_threshold</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-autovacuum-analyze-threshold">
+      Per-table value for <xref linkend="guc-autovacuum-analyze-threshold"/>
       parameter.
      </para>
     </listitem>
@@ -1289,7 +1289,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_analyze_scale_factor</literal> (<type>float4</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-autovacuum-analyze-scale-factor">
+      Per-table value for <xref linkend="guc-autovacuum-analyze-scale-factor"/>
       parameter.
      </para>
     </listitem>
@@ -1299,7 +1299,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_vacuum_cost_delay</literal>, <literal>toast.autovacuum_vacuum_cost_delay</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-autovacuum-vacuum-cost-delay">
+      Per-table value for <xref linkend="guc-autovacuum-vacuum-cost-delay"/>
       parameter.
      </para>
     </listitem>
@@ -1309,7 +1309,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_vacuum_cost_limit</literal>, <literal>toast.autovacuum_vacuum_cost_limit</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-autovacuum-vacuum-cost-limit">
+      Per-table value for <xref linkend="guc-autovacuum-vacuum-cost-limit"/>
       parameter.
      </para>
     </listitem>
@@ -1319,11 +1319,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_freeze_min_age</literal>, <literal>toast.autovacuum_freeze_min_age</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-vacuum-freeze-min-age">
+      Per-table value for <xref linkend="guc-vacuum-freeze-min-age"/>
       parameter.  Note that autovacuum will ignore
       per-table <literal>autovacuum_freeze_min_age</literal> parameters that are
       larger than half the
-      system-wide <xref linkend="guc-autovacuum-freeze-max-age"> setting.
+      system-wide <xref linkend="guc-autovacuum-freeze-max-age"/> setting.
      </para>
     </listitem>
    </varlistentry>
@@ -1332,7 +1332,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_freeze_max_age</literal>, <literal>toast.autovacuum_freeze_max_age</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-autovacuum-freeze-max-age">
+      Per-table value for <xref linkend="guc-autovacuum-freeze-max-age"/>
       parameter.  Note that autovacuum will ignore
       per-table <literal>autovacuum_freeze_max_age</literal> parameters that are
       larger than the system-wide setting (it can only be set smaller).
@@ -1344,7 +1344,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_freeze_table_age</literal>, <literal>toast.autovacuum_freeze_table_age</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-vacuum-freeze-table-age">
+      Per-table value for <xref linkend="guc-vacuum-freeze-table-age"/>
       parameter.
      </para>
     </listitem>
@@ -1354,11 +1354,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>autovacuum_multixact_freeze_min_age</literal>, <literal>toast.autovacuum_multixact_freeze_min_age</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-vacuum-multixact-freeze-min-age">
+      Per-table value for <xref linkend="guc-vacuum-multixact-freeze-min-age"/>
       parameter.  Note that autovacuum will ignore
       per-table <literal>autovacuum_multixact_freeze_min_age</literal> parameters
       that are larger than half the
-      system-wide <xref linkend="guc-autovacuum-multixact-freeze-max-age">
+      system-wide <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>
       setting.
      </para>
     </listitem>
@@ -1369,7 +1369,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       Per-table value
-      for <xref linkend="guc-autovacuum-multixact-freeze-max-age"> parameter.
+      for <xref linkend="guc-autovacuum-multixact-freeze-max-age"/> parameter.
       Note that autovacuum will ignore
       per-table <literal>autovacuum_multixact_freeze_max_age</literal> parameters
       that are larger than the system-wide setting (it can only be set
@@ -1383,7 +1383,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       Per-table value
-      for <xref linkend="guc-vacuum-multixact-freeze-table-age"> parameter.
+      for <xref linkend="guc-vacuum-multixact-freeze-table-age"/> parameter.
      </para>
     </listitem>
    </varlistentry>
@@ -1392,7 +1392,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>log_autovacuum_min_duration</literal>, <literal>toast.log_autovacuum_min_duration</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-      Per-table value for <xref linkend="guc-log-autovacuum-min-duration">
+      Per-table value for <xref linkend="guc-log-autovacuum-min-duration"/>
       parameter.
      </para>
     </listitem>
@@ -1404,7 +1404,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       Declare the table as an additional catalog table for purposes of
       logical replication. See
-      <xref linkend="logicaldecoding-capabilities"> for details.
+      <xref linkend="logicaldecoding-capabilities"/> for details.
       This parameter cannot be set for TOAST tables.
      </para>
     </listitem>
@@ -1445,7 +1445,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      index for each unique constraint and primary key constraint to
      enforce uniqueness.  Thus, it is not necessary to create an
      index explicitly for primary key columns.  (See <xref
-     linkend="sql-createindex"> for more information.)
+     linkend="sql-createindex"/> for more information.)
     </para>
 
     <para>
@@ -2006,11 +2006,11 @@ CREATE TABLE cities_partdef
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertable"></member>
-   <member><xref linkend="sql-droptable"></member>
-   <member><xref linkend="sql-createtableas"></member>
-   <member><xref linkend="sql-createtablespace"></member>
-   <member><xref linkend="sql-createtype"></member>
+   <member><xref linkend="sql-altertable"/></member>
+   <member><xref linkend="sql-droptable"/></member>
+   <member><xref linkend="sql-createtableas"/></member>
+   <member><xref linkend="sql-createtablespace"/></member>
+   <member><xref linkend="sql-createtype"/></member>
   </simplelist>
  </refsect1>
 </refentry>

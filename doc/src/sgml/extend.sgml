@@ -15,32 +15,32 @@
    <itemizedlist spacing="compact" mark="bullet">
     <listitem>
      <para>
-      functions (starting in <xref linkend="xfunc">)
+      functions (starting in <xref linkend="xfunc"/>)
      </para>
     </listitem>
     <listitem>
      <para>
-      aggregates (starting in <xref linkend="xaggr">)
+      aggregates (starting in <xref linkend="xaggr"/>)
      </para>
     </listitem>
     <listitem>
      <para>
-      data types (starting in <xref linkend="xtypes">)
+      data types (starting in <xref linkend="xtypes"/>)
      </para>
     </listitem>
     <listitem>
      <para>
-      operators (starting in <xref linkend="xoper">)
+      operators (starting in <xref linkend="xoper"/>)
      </para>
     </listitem>
     <listitem>
      <para>
-      operator classes for indexes (starting in <xref linkend="xindex">)
+      operator classes for indexes (starting in <xref linkend="xindex"/>)
      </para>
     </listitem>
     <listitem>
      <para>
-      packages of related objects (starting in <xref linkend="extend-extensions">)
+      packages of related objects (starting in <xref linkend="extend-extensions"/>)
      </para>
     </listitem>
    </itemizedlist>
@@ -132,14 +132,14 @@
      types through functions provided by the user and only understands
      the behavior of such types to the extent that the user describes
      them.
-     The built-in base types are described in <xref linkend="datatype">.
+     The built-in base types are described in <xref linkend="datatype"/>.
     </para>
 
     <para>
      Enumerated (enum) types can be considered as a subcategory of base
      types.  The main difference is that they can be created using
      just <acronym>SQL</acronym> commands, without any low-level programming.
-     Refer to <xref linkend="datatype-enum"> for more information.
+     Refer to <xref linkend="datatype-enum"/> for more information.
     </para>
    </sect2>
 
@@ -157,25 +157,25 @@
      type is automatically created for each base type, composite type, range
      type, and domain type.  But there are no arrays of arrays.  So far as
      the type system is concerned, multi-dimensional arrays are the same as
-     one-dimensional arrays.  Refer to <xref linkend="arrays"> for more
+     one-dimensional arrays.  Refer to <xref linkend="arrays"/> for more
      information.
     </para>
 
     <para>
      Composite types, or row types, are created whenever the user
      creates a table. It is also possible to use <xref
-     linkend="sql-createtype"> to
+     linkend="sql-createtype"/> to
      define a <quote>stand-alone</quote> composite type with no associated
      table.  A composite type is simply a list of types with
      associated field names.  A value of a composite type is a row or
-     record of field values.  Refer to <xref linkend="rowtypes">
+     record of field values.  Refer to <xref linkend="rowtypes"/>
      for more information.
     </para>
 
     <para>
      A range type can hold two values of the same type, which are the lower
      and upper bounds of the range.  Range types are user-created, although
-     a few built-in ones exist.  Refer to <xref linkend="rangetypes">
+     a few built-in ones exist.  Refer to <xref linkend="rangetypes"/>
      for more information.
     </para>
    </sect2>
@@ -188,8 +188,8 @@
      is interchangeable with its underlying type.  However, a domain can have
      constraints that restrict its valid values to a subset of what the
      underlying type would allow.  Domains are created using
-     the <acronym>SQL</acronym> command <xref linkend="sql-createdomain">.
-     Refer to <xref linkend="domains"> for more information.
+     the <acronym>SQL</acronym> command <xref linkend="sql-createdomain"/>.
+     Refer to <xref linkend="domains"/> for more information.
     </para>
    </sect2>
 
@@ -202,7 +202,7 @@
      container types, but they can be used to declare the argument and
      result types of functions.  This provides a mechanism within the
      type system to identify special classes of functions.  <xref
-     linkend="datatype-pseudotypes-table"> lists the existing
+     linkend="datatype-pseudotypes-table"/> lists the existing
      pseudo-types.
     </para>
    </sect2>
@@ -300,7 +300,7 @@
 
     <para>
      A variadic function (one taking a variable number of arguments, as in
-     <xref linkend="xfunc-sql-variadic-functions">) can be
+     <xref linkend="xfunc-sql-variadic-functions"/>) can be
      polymorphic: this is accomplished by declaring its last parameter as
      <literal>VARIADIC</literal> <type>anyarray</type>.  For purposes of argument
      matching and determining the actual result type, such a function behaves
@@ -337,7 +337,7 @@
     of the extension itself.  If the extension includes C code, there
     will typically also be a shared library file into which the C code
     has been built.  Once you have these files, a simple
-    <xref linkend="sql-createextension"> command loads the objects into
+    <xref linkend="sql-createextension"/> command loads the objects into
     your database.
    </para>
 
@@ -346,7 +346,7 @@
     <acronym>SQL</acronym> script to load a bunch of <quote>loose</quote> objects
     into your database, is that <productname>PostgreSQL</productname> will then
     understand that the objects of the extension go together.  You can
-    drop all the objects with a single <xref linkend="sql-dropextension">
+    drop all the objects with a single <xref linkend="sql-dropextension"/>
     command (no need to maintain a separate <quote>uninstall</quote> script).
     Even more useful, <application>pg_dump</application> knows that it should not
     dump the individual member objects of the extension &mdash; it will
@@ -366,7 +366,7 @@
     by <application>pg_dump</application>.  Such a change is usually only sensible if
     you concurrently make the same change in the extension's script file.
     (But there are special provisions for tables containing configuration
-    data; see <xref linkend="extend-extensions-config-tables">.)
+    data; see <xref linkend="extend-extensions-config-tables"/>.)
     In production situations, it's generally better to create an extension
     update script to perform changes to extension member objects.
    </para>
@@ -405,7 +405,7 @@
 
    <para>
     The kinds of SQL objects that can be members of an extension are shown in
-    the description of <xref linkend="sql-alterextension">.  Notably, objects
+    the description of <xref linkend="sql-alterextension"/>.  Notably, objects
     that are database-cluster-wide, such as databases, roles, and tablespaces,
     cannot be extension members since an extension is only known within one
     database.  (Although an extension script is not prohibited from creating
@@ -438,7 +438,7 @@
    </indexterm>
 
     <para>
-     The <xref linkend="sql-createextension"> command relies on a control
+     The <xref linkend="sql-createextension"/> command relies on a control
      file for each extension, which must be named the same as the extension
      with a suffix of <literal>.control</literal>, and must be placed in the
      installation's <literal>SHAREDIR/extension</literal> directory.  There
@@ -499,7 +499,7 @@
         when initially creating an extension, but not during extension updates
         (since that might override user-added comments).  Alternatively,
         the extension's comment can be set by writing
-        a <xref linkend="sql-comment"> command in the script file.
+        a <xref linkend="sql-comment"/> command in the script file.
        </para>
       </listitem>
      </varlistentry>
@@ -562,7 +562,7 @@
         its contained objects into a different schema after initial creation
         of the extension.  The default is <literal>false</literal>, i.e. the
         extension is not relocatable.
-        See <xref linkend="extend-extensions-relocation"> for more information.
+        See <xref linkend="extend-extensions-relocation"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -576,7 +576,7 @@
         and not any other.
         The <varname>schema</varname> parameter is consulted only when
         initially creating an extension, not during extension updates.
-        See <xref linkend="extend-extensions-relocation"> for more information.
+        See <xref linkend="extend-extensions-relocation"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -609,7 +609,7 @@
      comments) by the extension mechanism.  This provision is commonly used
      to throw an error if the script file is fed to <application>psql</application>
      rather than being loaded via <command>CREATE EXTENSION</command> (see example
-     script in <xref linkend="extend-extensions-example">).
+     script in <xref linkend="extend-extensions-example"/>).
      Without that, users might accidentally load the
      extension's contents as <quote>loose</quote> objects rather than as an
      extension, a state of affairs that's a bit tedious to recover from.
@@ -687,7 +687,7 @@
 
     <para>
      In all cases, the script file will be executed with
-     <xref linkend="guc-search-path"> initially set to point to the target
+     <xref linkend="guc-search-path"/> initially set to point to the target
      schema; that is, <command>CREATE EXTENSION</command> does the equivalent of
      this:
 <programlisting>
@@ -1031,14 +1031,14 @@ include $(PGXS)
 </programlisting>
 
      This makefile relies on <acronym>PGXS</acronym>, which is described
-     in <xref linkend="extend-pgxs">.  The command <literal>make install</literal>
+     in <xref linkend="extend-pgxs"/>.  The command <literal>make install</literal>
      will install the control and script files into the correct
      directory as reported by <application>pg_config</application>.
     </para>
 
     <para>
      Once the files are installed, use the
-     <xref linkend="sql-createextension"> command to load the objects into
+     <xref linkend="sql-createextension"/> command to load the objects into
      any particular database.
     </para>
    </sect2>

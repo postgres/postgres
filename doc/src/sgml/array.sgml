@@ -128,7 +128,7 @@ CREATE TABLE tictactoe (
   <para>
    (These kinds of array constants are actually only a special case of
    the generic type constants discussed in <xref
-   linkend="sql-syntax-constants-generic">.  The constant is initially
+   linkend="sql-syntax-constants-generic"/>.  The constant is initially
    treated as a string and passed to the array input conversion
    routine.  An explicit type specification might be necessary.)
   </para>
@@ -192,7 +192,7 @@ INSERT INTO sal_emp
   expressions; for instance, string literals are single quoted, instead of
   double quoted as they would be in an array literal.  The <literal>ARRAY</literal>
   constructor syntax is discussed in more detail in
-  <xref linkend="sql-syntax-array-constructors">.
+  <xref linkend="sql-syntax-array-constructors"/>.
  </para>
  </sect2>
 
@@ -616,7 +616,7 @@ SELECT * FROM sal_emp WHERE pay_by_quarter[1] = 10000 OR
 
   However, this quickly becomes tedious for large arrays, and is not
   helpful if the size of the array is unknown. An alternative method is
-  described in <xref linkend="functions-comparisons">. The above
+  described in <xref linkend="functions-comparisons"/>. The above
   query could be replaced by:
 
 <programlisting>
@@ -644,7 +644,7 @@ SELECT * FROM
  WHERE pay_by_quarter[s] = 10000;
 </programlisting>
 
-  This function is described in <xref linkend="functions-srf-subscripts">.
+  This function is described in <xref linkend="functions-srf-subscripts"/>.
  </para>
 
  <para>
@@ -657,8 +657,8 @@ SELECT * FROM sal_emp WHERE pay_by_quarter &amp;&amp; ARRAY[10000];
 </programlisting>
 
   This and other array operators are further described in
-  <xref linkend="functions-array">.  It can be accelerated by an appropriate
-  index, as described in <xref linkend="indexes-types">.
+  <xref linkend="functions-array"/>.  It can be accelerated by an appropriate
+  index, as described in <xref linkend="indexes-types"/>.
  </para>
 
  <para>
@@ -755,7 +755,7 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
    or backslashes disables this and allows the literal string value
    <quote>NULL</quote> to be entered.  Also, for backward compatibility with
    pre-8.2 versions of <productname>PostgreSQL</productname>, the <xref
-   linkend="guc-array-nulls"> configuration parameter can be turned
+   linkend="guc-array-nulls"/> configuration parameter can be turned
    <literal>off</literal> to suppress recognition of <literal>NULL</literal> as a NULL.
   </para>
 
@@ -797,7 +797,7 @@ INSERT ... VALUES (E'{"\\\\","\\""}');
    with a data type whose input routine also treated backslashes specially,
    <type>bytea</type> for example, we might need as many as eight backslashes
    in the command to get one backslash into the stored array element.)
-   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting">) can be
+   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting"/>) can be
    used to avoid the need to double backslashes.
   </para>
  </note>
@@ -805,7 +805,7 @@ INSERT ... VALUES (E'{"\\\\","\\""}');
  <tip>
   <para>
    The <literal>ARRAY</literal> constructor syntax (see
-   <xref linkend="sql-syntax-array-constructors">) is often easier to work
+   <xref linkend="sql-syntax-array-constructors"/>) is often easier to work
    with than the array-literal syntax when writing array values in SQL
    commands. In <literal>ARRAY</literal>, individual element values are written the
    same way they would be written when not members of an array.

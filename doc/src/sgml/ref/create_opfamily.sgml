@@ -64,7 +64,7 @@ CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <
   </para>
 
   <para>
-   Refer to <xref linkend="xindex"> for further information.
+   Refer to <xref linkend="xindex"/> for further information.
   </para>
  </refsect1>
 
@@ -108,11 +108,11 @@ CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteropfamily"></member>
-   <member><xref linkend="sql-dropopfamily"></member>
-   <member><xref linkend="sql-createopclass"></member>
-   <member><xref linkend="sql-alteropclass"></member>
-   <member><xref linkend="sql-dropopclass"></member>
+   <member><xref linkend="sql-alteropfamily"/></member>
+   <member><xref linkend="sql-dropopfamily"/></member>
+   <member><xref linkend="sql-createopclass"/></member>
+   <member><xref linkend="sql-alteropclass"/></member>
+   <member><xref linkend="sql-dropopclass"/></member>
   </simplelist>
  </refsect1>
 </refentry>

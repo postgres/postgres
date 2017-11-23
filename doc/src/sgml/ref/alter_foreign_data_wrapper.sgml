@@ -180,8 +180,8 @@ ALTER FOREIGN DATA WRAPPER dbi VALIDATOR bob.myvalidator;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createforeigndatawrapper"></member>
-   <member><xref linkend="sql-dropforeigndatawrapper"></member>
+   <member><xref linkend="sql-createforeigndatawrapper"/></member>
+   <member><xref linkend="sql-dropforeigndatawrapper"/></member>
   </simplelist>
  </refsect1>
 

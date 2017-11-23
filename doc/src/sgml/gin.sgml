@@ -68,8 +68,8 @@
  <para>
   The core <productname>PostgreSQL</productname> distribution
   includes the <acronym>GIN</acronym> operator classes shown in
-  <xref linkend="gin-builtin-opclasses-table">.
-  (Some of the optional modules described in <xref linkend="contrib">
+  <xref linkend="gin-builtin-opclasses-table"/>.
+  (Some of the optional modules described in <xref linkend="contrib"/>
   provide additional <acronym>GIN</acronym> operator classes.)
  </para>
 
@@ -127,7 +127,7 @@
   Of the two operator classes for type <type>jsonb</type>, <literal>jsonb_ops</literal>
   is the default.  <literal>jsonb_path_ops</literal> supports fewer operators but
   offers better performance for those operators.
-  See <xref linkend="json-indexing"> for details.
+  See <xref linkend="json-indexing"/> for details.
  </para>
 
 </sect1>
@@ -182,7 +182,7 @@
        <literal>query</literal> is the value on the right-hand side of an
        indexable operator whose left-hand side is the indexed column.
        <literal>n</literal> is the strategy number of the operator within the
-       operator class (see <xref linkend="xindex-strategies">).
+       operator class (see <xref linkend="xindex-strategies"/>).
        Often, <function>extractQuery</function> will need
        to consult <literal>n</literal> to determine the data type of
        <literal>query</literal> and the method it should use to extract key values.
@@ -406,7 +406,7 @@
   provide the <function>comparePartial</function> method, and its
   <function>extractQuery</function> method must set the <literal>pmatch</literal>
   parameter when a partial-match query is encountered.  See
-  <xref linkend="gin-partial-match"> for details.
+  <xref linkend="gin-partial-match"/> for details.
  </para>
 
  <para>
@@ -466,7 +466,7 @@
    When the table is vacuumed or autoanalyzed, or when
    <function>gin_clean_pending_list</function> function is called, or if the
    pending list becomes larger than
-   <xref linkend="guc-gin-pending-list-limit">, the entries are moved to the
+   <xref linkend="guc-gin-pending-list-limit"/>, the entries are moved to the
    main <acronym>GIN</acronym> data structure using the same bulk insert
    techniques used during initial index creation.  This greatly improves
    <acronym>GIN</acronym> index update speed, even counting the additional
@@ -488,7 +488,7 @@
    If consistent response time is more important than update speed,
    use of pending entries can be disabled by turning off the
    <literal>fastupdate</literal> storage parameter for a
-   <acronym>GIN</acronym> index.  See <xref linkend="sql-createindex">
+   <acronym>GIN</acronym> index.  See <xref linkend="sql-createindex"/>
    for details.
   </para>
  </sect2>
@@ -531,14 +531,14 @@
     <para>
      As of <productname>PostgreSQL</productname> 8.4, this advice is less
      necessary since delayed indexing is used (see <xref
-     linkend="gin-fast-update"> for details).  But for very large updates
+     linkend="gin-fast-update"/> for details).  But for very large updates
      it may still be best to drop and recreate the index.
     </para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term><xref linkend="guc-maintenance-work-mem"></term>
+   <term><xref linkend="guc-maintenance-work-mem"/></term>
    <listitem>
     <para>
      Build time for a <acronym>GIN</acronym> index is very sensitive to
@@ -549,7 +549,7 @@
   </varlistentry>
 
   <varlistentry>
-   <term><xref linkend="guc-gin-pending-list-limit"></term>
+   <term><xref linkend="guc-gin-pending-list-limit"/></term>
    <listitem>
     <para>
      During a series of insertions into an existing <acronym>GIN</acronym>
@@ -574,7 +574,7 @@
   </varlistentry>
 
   <varlistentry>
-   <term><xref linkend="guc-gin-fuzzy-search-limit"></term>
+   <term><xref linkend="guc-gin-fuzzy-search-limit"/></term>
    <listitem>
     <para>
      The primary goal of developing <acronym>GIN</acronym> indexes was
@@ -631,7 +631,7 @@
  <para>
   The core <productname>PostgreSQL</productname> distribution
   includes the <acronym>GIN</acronym> operator classes previously shown in
-  <xref linkend="gin-builtin-opclasses-table">.
+  <xref linkend="gin-builtin-opclasses-table"/>.
   The following <filename>contrib</filename> modules also contain
   <acronym>GIN</acronym> operator classes:
 

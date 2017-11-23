@@ -40,10 +40,10 @@ LOAD '<replaceable class="parameter">filename</replaceable>'
   <para>
    The library file name is typically given as just a bare file name,
    which is sought in the server's library search path (set
-   by <xref linkend="guc-dynamic-library-path">).  Alternatively it can be
+   by <xref linkend="guc-dynamic-library-path"/>).  Alternatively it can be
    given as a full path name.  In either case the platform's standard shared
    library file name extension may be omitted.
-   See <xref linkend="xfunc-c-dynload"> for more information on this topic.
+   See <xref linkend="xfunc-c-dynload"/> for more information on this topic.
   </para>
 
   <indexterm>
@@ -74,7 +74,7 @@ LOAD '<replaceable class="parameter">filename</replaceable>'
   <title>See Also</title>
 
   <para>
-   <xref linkend="sql-createfunction">
+   <xref linkend="sql-createfunction"/>
   </para>
  </refsect1>
 </refentry>

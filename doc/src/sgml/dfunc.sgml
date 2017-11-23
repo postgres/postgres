@@ -226,7 +226,7 @@ gcc -G -o foo.so foo.o
  </para>
 
  <para>
-  Refer back to <xref linkend="xfunc-c-dynload"> about where the
+  Refer back to <xref linkend="xfunc-c-dynload"/> about where the
   server expects to find the shared library files.
  </para>
 

@@ -17,7 +17,7 @@
    <para>
      The current implementation has significant limitations, and does not
      enforce mandatory access control for all actions.  See
-     <xref linkend="sepgsql-limitations">.
+     <xref linkend="sepgsql-limitations"/>.
    </para>
  </warning>
 
@@ -51,7 +51,7 @@
   </para>
 
   <para>
-   The <xref linkend="sql-security-label"> statement allows assignment of
+   The <xref linkend="sql-security-label"/> statement allows assignment of
    a security label to a database object.
   </para>
 
@@ -93,7 +93,7 @@ Policy from config file:        targeted
 
   <para>
    To use this module, you must include <literal>sepgsql</literal>
-   in the <xref linkend="guc-shared-preload-libraries"> parameter in
+   in the <xref linkend="guc-shared-preload-libraries"/> parameter in
    <filename>postgresql.conf</filename>.  The module will not function correctly
    if loaded in any other manner.  Once the module is loaded, you
    should execute <filename>sepgsql.sql</filename> in each database.
@@ -161,7 +161,7 @@ $ for DBNAME in template0 template1 postgres; do
 
   <para>
    First, set up <filename>sepgsql</filename> in a working database
-   according to the instructions in <xref linkend="sepgsql-installation">.
+   according to the instructions in <xref linkend="sepgsql-installation"/>.
    Note that the current operating system user must be able to connect to the
    database as superuser without password authentication.
   </para>
@@ -215,7 +215,7 @@ unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
 </screen>
 
   <para>
-   See <xref linkend="sepgsql-resources"> for details on adjusting your
+   See <xref linkend="sepgsql-resources"/> for details on adjusting your
    working domain, if necessary.
   </para>
 
@@ -448,7 +448,7 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    <itemizedlist>
     <listitem>
      <para>
-      <xref linkend="sql-createdatabase"> additionally requires
+      <xref linkend="sql-createdatabase"/> additionally requires
       <literal>getattr</literal> permission for the source or template database.
      </para>
     </listitem>
@@ -506,7 +506,7 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
     </listitem>
     <listitem>
      <para>
-      Using <xref linkend="sql-security-label"> on an object additionally
+      Using <xref linkend="sql-security-label"/> on an object additionally
       requires <literal>relabelfrom</literal> permission for the object in
       conjunction with its old security label and <literal>relabelto</literal>
       permission for the object in conjunction with its new security label.
@@ -641,7 +641,7 @@ ERROR:  SELinux: security policy violation
   <sect3>
    <title>Miscellaneous</title>
    <para>
-    We reject the <xref linkend="sql-load"> command across the board, because
+    We reject the <xref linkend="sql-load"/> command across the board, because
     any module loaded could easily circumvent security policy enforcement.
    </para>
 
@@ -651,7 +651,7 @@ ERROR:  SELinux: security policy violation
  <sect2 id="sepgsql-functions">
   <title>Sepgsql Functions</title>
   <para>
-   <xref linkend="sepgsql-functions-table"> shows the available functions.
+   <xref linkend="sepgsql-functions-table"/> shows the available functions.
   </para>
 
   <table id="sepgsql-functions-table">

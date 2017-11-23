@@ -473,7 +473,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
             <para><literal>prepared</literal>: use extended query protocol with prepared statements.</para>
            </listitem>
           </itemizedlist>
-        The default is simple query protocol.  (See <xref linkend="protocol">
+        The default is simple query protocol.  (See <xref linkend="protocol"/>
         for more information.)
        </para>
       </listitem>
@@ -854,7 +854,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
    explained above, or by the meta commands explained below.
    In addition to any variables preset by <option>-D</option> command-line options,
    there are a few variables that are preset automatically, listed in
-   <xref linkend="pgbench-automatic-variables">. A value specified for these
+   <xref linkend="pgbench-automatic-variables"/>. A value specified for these
    variables using <option>-D</option> takes precedence over the automatic presets.
    Once set, a variable's
    value can be inserted into a SQL command by writing
@@ -1000,7 +1000,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
   <title>Built-In Functions</title>
 
   <para>
-   The functions listed in <xref linkend="pgbench-functions"> are built
+   The functions listed in <xref linkend="pgbench-functions"/> are built
    into <application>pgbench</application> and may be used in expressions appearing in
    <link linkend="pgbench-metacommand-set"><literal>\set</literal></link>.
   </para>

@@ -52,7 +52,7 @@ make check
 </computeroutput>
 </screen>
    or otherwise a note about which tests failed.  See <xref
-   linkend="regress-evaluation"> below before assuming that a
+   linkend="regress-evaluation"/> below before assuming that a
    <quote>failure</quote> represents a serious problem.
   </para>
 
@@ -97,9 +97,9 @@ make MAX_CONNECTIONS=10 check
    <title>Running the Tests Against an Existing Installation</title>
 
   <para>
-   To run the tests after installation (see <xref linkend="installation">),
+   To run the tests after installation (see <xref linkend="installation"/>),
    initialize a data area and start the
-   server as explained in <xref linkend="runtime">, then type:
+   server as explained in <xref linkend="runtime"/>, then type:
 <screen>
 make installcheck
 </screen>
@@ -193,7 +193,7 @@ make installcheck-world
    <listitem>
     <para>
      Tests of client programs under <filename>src/bin</filename>.  See
-     also <xref linkend="regress-tap">.
+     also <xref linkend="regress-tap"/>.
     </para>
    </listitem>
   </itemizedlist>
@@ -371,7 +371,7 @@ make standbycheck
     for a given test, but inspection of the output convinces you that
     the result is valid, you can add a new comparison file to silence
     the failure report in future test runs.  See
-    <xref linkend="regress-variant"> for details.
+    <xref linkend="regress-variant"/> for details.
    </para>
 
    <sect2>
@@ -521,7 +521,7 @@ exclusion of those that don't.
      If the <literal>errors</literal> test results in a server crash
      at the <literal>select infinite_recurse()</literal> command, it means that
      the platform's limit on process stack size is smaller than the
-     <xref linkend="guc-max-stack-depth"> parameter indicates.  This
+     <xref linkend="guc-max-stack-depth"/> parameter indicates.  This
      can be fixed by running the server under a higher stack
      size limit (4MB is recommended with the default value of
      <varname>max_stack_depth</varname>).  If you are unable to do that, an

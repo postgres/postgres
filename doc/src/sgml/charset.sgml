@@ -15,8 +15,8 @@
       Using the locale features of the operating system to provide
       locale-specific collation order, number formatting, translated
       messages, and other aspects.
-      This is covered in <xref linkend="locale"> and
-      <xref linkend="collation">.
+      This is covered in <xref linkend="locale"/> and
+      <xref linkend="collation"/>.
      </para>
     </listitem>
 
@@ -25,7 +25,7 @@
       Providing a number of different character sets to support storing text
       in all kinds of languages, and providing character set translation
       between client and server.
-      This is covered in <xref linkend="multibyte">.
+      This is covered in <xref linkend="multibyte"/>.
      </para>
     </listitem>
    </itemizedlist>
@@ -146,7 +146,7 @@ initdb --locale=sv_SE
     the sort order of indexes, so they must be kept fixed, or indexes on
     text columns would become corrupt.
     (But you can alleviate this restriction using collations, as discussed
-    in <xref linkend="collation">.)
+    in <xref linkend="collation"/>.)
     The default values for these
     categories are determined when <command>initdb</command> is run, and
     those values are used when new databases are created, unless
@@ -157,7 +157,7 @@ initdb --locale=sv_SE
     The other locale categories can be changed whenever desired
     by setting the server configuration parameters
     that have the same name as the locale categories (see <xref
-    linkend="runtime-config-client-format"> for details).  The values
+    linkend="runtime-config-client-format"/> for details).  The values
     that are chosen by <command>initdb</command> are actually only written
     into the configuration file <filename>postgresql.conf</filename> to
     serve as defaults when the server is started.  If you remove these
@@ -267,10 +267,10 @@ initdb --locale=sv_SE
     with <literal>LIKE</literal> clauses under a non-C locale, several custom
     operator classes exist. These allow the creation of an index that
     performs a strict character-by-character comparison, ignoring
-    locale comparison rules. Refer to <xref linkend="indexes-opclass">
+    locale comparison rules. Refer to <xref linkend="indexes-opclass"/>
     for more information.  Another approach is to create indexes using
     the <literal>C</literal> collation, as discussed in
-    <xref linkend="collation">.
+    <xref linkend="collation"/>.
    </para>
   </sect2>
 
@@ -316,7 +316,7 @@ initdb --locale=sv_SE
     <productname>PostgreSQL</productname> speak their preferred language well.
     If messages in your language are currently not available or not fully
     translated, your assistance would be appreciated.  If you want to
-    help, refer to <xref linkend="nls"> or write to the developers'
+    help, refer to <xref linkend="nls"/> or write to the developers'
     mailing list.
    </para>
   </sect2>
@@ -524,7 +524,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     these under one concept than to create another infrastructure for
     setting <symbol>LC_CTYPE</symbol> per expression.)  Also,
     a <literal>libc</literal> collation
-    is tied to a character set encoding (see <xref linkend="multibyte">).
+    is tied to a character set encoding (see <xref linkend="multibyte"/>).
     The same collation name may exist for different encodings.
    </para>
 
@@ -605,7 +605,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     for <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>, or if new
     locales are installed in the operating system after the database system
     was initialized, then a new collation may be created using
-    the <xref linkend="sql-createcollation"> command.
+    the <xref linkend="sql-createcollation"/> command.
     New operating system locales can also be imported en masse using
     the <link linkend="functions-admin-collation"><function>pg_import_system_collations()</function></link> function.
    </para>
@@ -702,7 +702,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
    <para>
     If the standard and predefined collations are not sufficient, users can
     create their own collation objects using the SQL
-    command <xref linkend="sql-createcollation">.
+    command <xref linkend="sql-createcollation"/>.
    </para>
 
    <para>
@@ -730,7 +730,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
      defined in the operating system when the database instance is
      initialized, it is not often necessary to manually create new ones.
      Reasons might be if a different naming system is desired (in which case
-     see also <xref linkend="collation-copy">) or if the operating system has
+     see also <xref linkend="collation-copy"/>) or if the operating system has
      been upgraded to provide new locale definitions (in which case see
      also <link linkend="functions-admin-collation"><function>pg_import_system_collations()</function></link>).
     </para>
@@ -871,7 +871,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
    <title>Copying Collations</title>
 
    <para>
-    The command <xref linkend="sql-createcollation"> can also be used to
+    The command <xref linkend="sql-createcollation"/> can also be used to
     create a new collation from an existing collation, which can be useful to
     be able to use operating-system-independent collation names in
     applications, create compatibility names, or use an ICU-provided collation
@@ -924,7 +924,7 @@ CREATE COLLATION french FROM "fr-x-icu";
     <title>Supported Character Sets</title>
 
     <para>
-     <xref linkend="charset-table"> shows the character sets available
+     <xref linkend="charset-table"/> shows the character sets available
      for use in <productname>PostgreSQL</productname>.
     </para>
 
@@ -1392,7 +1392,7 @@ CREATE DATABASE korean WITH ENCODING 'EUC_KR' LC_COLLATE='ko_KR.euckr' LC_CTYPE=
      database.  When copying any other database, the encoding and locale
      settings cannot be changed from those of the source database, because
      that might result in corrupt data.  For more information see
-     <xref linkend="manage-ag-templatedbs">.
+     <xref linkend="manage-ag-templatedbs"/>.
     </para>
 
     <para>
@@ -1449,7 +1449,7 @@ $ <userinput>psql -l</userinput>
      character set combinations. The conversion information is stored in the
      <literal>pg_conversion</literal> system catalog.  <productname>PostgreSQL</productname>
      comes with some predefined conversions, as shown in <xref
-     linkend="multibyte-translation-table">. You can create a new
+     linkend="multibyte-translation-table"/>. You can create a new
      conversion using the SQL command <command>CREATE CONVERSION</command>.
     </para>
 
@@ -1763,7 +1763,7 @@ $ <userinput>psql -l</userinput>
 
       <listitem>
        <para>
-        <application>libpq</application> (<xref linkend="libpq-control">) has functions to control the client encoding.
+        <application>libpq</application> (<xref linkend="libpq-control"/>) has functions to control the client encoding.
        </para>
       </listitem>
 
@@ -1812,7 +1812,7 @@ RESET client_encoding;
       <listitem>
       <para>
        Using the configuration variable <xref
-       linkend="guc-client-encoding">. If the
+       linkend="guc-client-encoding"/>. If the
        <varname>client_encoding</varname> variable is set, that client
        encoding is automatically selected when a connection to the
        server is made.  (This can subsequently be overridden using any

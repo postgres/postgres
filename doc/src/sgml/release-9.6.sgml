@@ -12,7 +12,7 @@
   <para>
    This release contains a variety of fixes from 9.6.5.
    For information about new features in the 9.6 major release, see
-   <xref linkend="release-9-6">.
+   <xref linkend="release-9-6"/>.
   </para>
 
   <sect2>
@@ -28,7 +28,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.6.4,
-    see <xref linkend="release-9-6-4">.
+    see <xref linkend="release-9-6-4"/>.
    </para>
   </sect2>
 
@@ -591,7 +591,7 @@ Branch: REL9_2_STABLE [1317d1301] 2017-10-23 17:54:09 -0400
   <para>
    This release contains a small number of fixes from 9.6.4.
    For information about new features in the 9.6 major release, see
-   <xref linkend="release-9-6">.
+   <xref linkend="release-9-6"/>.
   </para>
 
   <sect2>
@@ -603,7 +603,7 @@ Branch: REL9_2_STABLE [1317d1301] 2017-10-23 17:54:09 -0400
 
    <para>
     However, if you are upgrading from a version earlier than 9.6.4,
-    see <xref linkend="release-9-6-4">.
+    see <xref linkend="release-9-6-4"/>.
    </para>
   </sect2>
 
@@ -870,7 +870,7 @@ Branch: REL9_5_STABLE [a784d5f21] 2017-08-09 12:06:14 -0400
   <para>
    This release contains a variety of fixes from 9.6.3.
    For information about new features in the 9.6 major release, see
-   <xref linkend="release-9-6">.
+   <xref linkend="release-9-6"/>.
   </para>
 
   <sect2>
@@ -887,7 +887,7 @@ Branch: REL9_5_STABLE [a784d5f21] 2017-08-09 12:06:14 -0400
 
    <para>
     Also, if you are upgrading from a version earlier than 9.6.3,
-    see <xref linkend="release-9-6-3">.
+    see <xref linkend="release-9-6-3"/>.
    </para>
   </sect2>
 
@@ -1217,7 +1217,7 @@ Branch: REL9_3_STABLE [cc154d9a0] 2017-06-28 12:30:16 -0400
 Branch: REL9_2_STABLE [5e7447132] 2017-06-28 12:30:16 -0400
 -->
      <para>
-      Fix code for setting <xref linkend="guc-tcp-keepalives-idle"> on
+      Fix code for setting <xref linkend="guc-tcp-keepalives-idle"/> on
       Solaris (Tom Lane)
      </para>
     </listitem>
@@ -1950,7 +1950,7 @@ Branch: REL9_2_STABLE [65beccae5] 2017-06-20 13:20:02 -0400
 -->
      <para>
       Fix <application>pg_upgrade</application> to ensure that the ending WAL record
-      does not have <xref linkend="guc-wal-level"> = <literal>minimum</literal>
+      does not have <xref linkend="guc-wal-level"/> = <literal>minimum</literal>
       (Bruce Momjian)
      </para>
 
@@ -2151,7 +2151,7 @@ Branch: REL9_4_STABLE [9c3f502b4] 2017-07-16 11:27:15 -0400
   <para>
    This release contains a variety of fixes from 9.6.2.
    For information about new features in the 9.6 major release, see
-   <xref linkend="release-9-6">.
+   <xref linkend="release-9-6"/>.
   </para>
 
   <sect2>
@@ -2173,7 +2173,7 @@ Branch: REL9_4_STABLE [9c3f502b4] 2017-07-16 11:27:15 -0400
 
    <para>
     Also, if you are upgrading from a version earlier than 9.6.2,
-    see <xref linkend="release-9-6-2">.
+    see <xref linkend="release-9-6-2"/>.
    </para>
   </sect2>
 
@@ -2216,7 +2216,7 @@ Branch: REL9_2_STABLE [99cbb0bd9] 2017-05-08 07:24:28 -0700
       By itself, this patch will only fix the behavior in newly initdb'd
       databases.  If you wish to apply this change in an existing database,
       follow the corrected procedure shown in the changelog entry for
-      CVE-2017-7547, in <xref linkend="release-9-6-4">.
+      CVE-2017-7547, in <xref linkend="release-9-6-4"/>.
      </para>
     </listitem>
 
@@ -3181,7 +3181,7 @@ Branch: REL9_2_STABLE [82e7d3dfd] 2017-05-07 11:57:41 -0400
       will use the current and historical DST transition dates of
       the <literal>US/Eastern</literal> zone.  If you don't want that, remove
       the <filename>posixrules</filename> file, or replace it with a copy of some
-      other zone file (see <xref linkend="datatype-timezones">).  Note that
+      other zone file (see <xref linkend="datatype-timezones"/>).  Note that
       due to caching, you may need to restart the server to get such changes
       to take effect.
      </para>
@@ -3203,7 +3203,7 @@ Branch: REL9_2_STABLE [82e7d3dfd] 2017-05-07 11:57:41 -0400
   <para>
    This release contains a variety of fixes from 9.6.1.
    For information about new features in the 9.6 major release, see
-   <xref linkend="release-9-6">.
+   <xref linkend="release-9-6"/>.
   </para>
 
   <sect2>
@@ -3221,7 +3221,7 @@ Branch: REL9_2_STABLE [82e7d3dfd] 2017-05-07 11:57:41 -0400
 
    <para>
     Also, if you are upgrading from a version earlier than 9.6.1,
-    see <xref linkend="release-9-6-1">.
+    see <xref linkend="release-9-6-1"/>.
    </para>
   </sect2>
 
@@ -3312,7 +3312,7 @@ Branch: REL9_2_STABLE [a00ac6299] 2016-12-08 14:19:25 -0500
      </para>
 
      <para>
-      Previously, this was skipped when <xref linkend="guc-wal-level">
+      Previously, this was skipped when <xref linkend="guc-wal-level"/>
       = <literal>minimal</literal>, but actually it's necessary even in that case
       to ensure that the unlogged table is properly reset to empty after a
       crash.
@@ -3396,7 +3396,7 @@ Branch: REL9_6_STABLE [6c75fb6b3] 2016-12-17 02:25:47 +0900
 -->
      <para>
       Disallow setting the <replaceable>num_sync</replaceable> field to zero in
-      <xref linkend="guc-synchronous-standby-names"> (Fujii Masao)
+      <xref linkend="guc-synchronous-standby-names"/> (Fujii Masao)
      </para>
 
      <para>
@@ -3475,7 +3475,7 @@ Branch: REL9_2_STABLE [05975ab0a] 2016-11-23 13:45:56 -0500
 
      <para>
       Previously, non-default settings
-      of <xref linkend="guc-default-tablespace"> could result in broken
+      of <xref linkend="guc-default-tablespace"/> could result in broken
       indexes.
      </para>
     </listitem>
@@ -4620,7 +4620,7 @@ Branch: REL9_2_STABLE [ef878cc2c] 2017-01-30 11:41:09 -0500
   <para>
    This release contains a variety of fixes from 9.6.0.
    For information about new features in the 9.6 major release, see
-   <xref linkend="release-9-6">.
+   <xref linkend="release-9-6"/>.
   </para>
 
   <sect2>
@@ -4781,7 +4781,7 @@ Branch: REL9_2_STABLE [f17c26dbd] 2016-10-20 17:18:14 -0400
 -->
      <para>
       Fix <command>EXPLAIN</command> to emit valid XML when
-      <xref linkend="guc-track-io-timing"> is on (Markus Winand)
+      <xref linkend="guc-track-io-timing"/> is on (Markus Winand)
      </para>
 
      <para>
@@ -4899,7 +4899,7 @@ Branch: REL9_5_STABLE [7a2fa5774] 2016-10-24 09:38:28 -0300
      </para>
 
      <para>
-      With <xref linkend="guc-track-commit-timestamp"> turned on, old
+      With <xref linkend="guc-track-commit-timestamp"/> turned on, old
       commit timestamps became inaccessible after a clean server restart.
      </para>
     </listitem>
@@ -5275,8 +5275,8 @@ Branch: REL9_1_STABLE [22cf97635] 2016-10-19 17:57:06 -0400
   <title>Migration to Version 9.6</title>
 
    <para>
-    A dump/restore using <xref linkend="app-pg-dumpall">, or use of <xref
-    linkend="pgupgrade">, is required for those wishing to migrate data
+    A dump/restore using <xref linkend="app-pg-dumpall"/>, or use of <xref
+    linkend="pgupgrade"/>, is required for those wishing to migrate data
     from any previous release.
    </para>
 
@@ -5593,12 +5593,12 @@ and many others in the same vein
        <para>
         Parallel query execution is not (yet) enabled by default.
         To allow it, set the new configuration
-        parameter <xref linkend="guc-max-parallel-workers-per-gather"> to a
+        parameter <xref linkend="guc-max-parallel-workers-per-gather"/> to a
         value larger than zero.  Additional control over use of parallelism
         is available through other new configuration parameters
-        <xref linkend="guc-force-parallel-mode">,
-        <xref linkend="guc-parallel-setup-cost">, <xref
-        linkend="guc-parallel-tuple-cost">, and
+        <xref linkend="guc-force-parallel-mode"/>,
+        <xref linkend="guc-parallel-setup-cost"/>, <xref
+        linkend="guc-parallel-tuple-cost"/>, and
         <literal>min_parallel_relation_size</literal>.
        </para>
       </listitem>
@@ -5628,7 +5628,7 @@ and many others in the same vein
 -->
        <para>
         Allow <link linkend="gin"><acronym>GIN</acronym></link> index builds to
-        make effective use of <xref linkend="guc-maintenance-work-mem">
+        make effective use of <xref linkend="guc-maintenance-work-mem"/>
         settings larger than 1 GB (Robert Abraham, Teodor Sigaev)
        </para>
       </listitem>
@@ -5991,7 +5991,7 @@ and many others in the same vein
         time can thus cause considerable table bloat because
         space cannot be recycled.  This feature allows setting
         a time-based limit, via the new configuration parameter
-        <xref linkend="guc-old-snapshot-threshold">, on how long an
+        <xref linkend="guc-old-snapshot-threshold"/>, on how long an
         <acronym>MVCC</acronym> snapshot is guaranteed to be valid.  After that,
         dead tuples are candidates for removal.  A transaction using an
         outdated snapshot will get an error if it attempts to read a page
@@ -6094,10 +6094,10 @@ and many others in the same vein
 
        <para>
         The new configuration parameters <xref
-        linkend="guc-backend-flush-after">, <xref
-        linkend="guc-bgwriter-flush-after">, <xref
-        linkend="guc-checkpoint-flush-after">, and <xref
-        linkend="guc-wal-writer-flush-after"> control this behavior.
+        linkend="guc-backend-flush-after"/>, <xref
+        linkend="guc-bgwriter-flush-after"/>, <xref
+        linkend="guc-checkpoint-flush-after"/>, and <xref
+        linkend="guc-wal-writer-flush-after"/> control this behavior.
        </para>
       </listitem>
 
@@ -6249,7 +6249,7 @@ and many others in the same vein
 2016-08-17 [9b33c7e80] Disable update_process_title by default on Windows
 -->
        <para>
-        Disable <xref linkend="guc-update-process-title"> by default on
+        Disable <xref linkend="guc-update-process-title"/> by default on
         Windows (Takayuki Tsunakawa)
        </para>
 
@@ -6497,7 +6497,7 @@ and many others in the same vein
 
        <para>
         This behavior is controlled by the new configuration parameter
-        <xref linkend="guc-idle-in-transaction-session-timeout">.  It can
+        <xref linkend="guc-idle-in-transaction-session-timeout"/>.  It can
         be useful to prevent forgotten transactions from holding locks
         or preventing vacuum cleanup for too long.
        </para>
@@ -6509,7 +6509,7 @@ and many others in the same vein
 -->
        <para>
         Raise the maximum allowed value
-        of <xref linkend="guc-checkpoint-timeout"> to 24 hours (Simon Riggs)
+        of <xref linkend="guc-checkpoint-timeout"/> to 24 hours (Simon Riggs)
        </para>
       </listitem>
 
@@ -6530,7 +6530,7 @@ and many others in the same vein
 2015-09-07 [b1e1862a1] Coordinate log_line_prefix options 'm' and 'n' to share
 -->
        <para>
-        Add <xref linkend="guc-log-line-prefix"> option <literal>%n</literal> to
+        Add <xref linkend="guc-log-line-prefix"/> option <literal>%n</literal> to
         print the current time in Unix epoch form, with milliseconds (Tomas
         Vondra, Jeff Davis)
        </para>
@@ -6542,8 +6542,8 @@ and many others in the same vein
 2016-03-16 [fc201dfd9] Add syslog_split_messages parameter
 -->
        <para>
-        Add <xref linkend="guc-syslog-sequence-numbers"> and <xref
-        linkend="guc-syslog-split-messages"> configuration parameters
+        Add <xref linkend="guc-syslog-sequence-numbers"/> and <xref
+        linkend="guc-syslog-split-messages"/> configuration parameters
         to provide more control over the message format when logging to
         <systemitem>syslog</systemitem> (Peter Eisentraut)
        </para>
@@ -6555,7 +6555,7 @@ and many others in the same vein
 -->
        <para>
         Merge the <literal>archive</literal> and <literal>hot_standby</literal> values
-        of the <xref linkend="guc-wal-level"> configuration parameter
+        of the <xref linkend="guc-wal-level"/> configuration parameter
         into a single new value <literal>replica</literal> (Peter Eisentraut)
        </para>
 
@@ -6717,7 +6717,7 @@ XXX this is pending backpatch, may need to remove
        <para>
         The number of standby servers that must acknowledge a commit
         before it is considered complete is now configurable as part of
-        the <xref linkend="guc-synchronous-standby-names"> parameter.
+        the <xref linkend="guc-synchronous-standby-names"/> parameter.
        </para>
       </listitem>
 
@@ -6727,7 +6727,7 @@ XXX this is pending backpatch, may need to remove
 -->
        <para>
         Add new setting <literal>remote_apply</literal> for configuration
-        parameter <xref linkend="guc-synchronous-commit"> (Thomas Munro)
+        parameter <xref linkend="guc-synchronous-commit"/> (Thomas Munro)
        </para>
 
        <para>
@@ -7871,7 +7871,7 @@ This commit is also listed under psql and PL/pgSQL
     </itemizedlist>
 
      <sect4>
-      <title><xref linkend="app-psql"></title>
+      <title><xref linkend="app-psql"/></title>
 
       <itemizedlist>
 
@@ -8073,7 +8073,7 @@ This commit is also listed under libpq and PL/pgSQL
     </sect4>
 
     <sect4>
-     <title><xref linkend="pgbench"></title>
+     <title><xref linkend="pgbench"/></title>
 
      <itemizedlist>
 

@@ -52,7 +52,7 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
     <listitem>
      <para>
       This form adds a new attribute to a composite type, using the same syntax as
-      <xref linkend="sql-createtype">.
+      <xref linkend="sql-createtype"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -368,8 +368,8 @@ ALTER TYPE colors RENAME VALUE 'purple' TO 'mauve';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtype"></member>
-   <member><xref linkend="sql-droptype"></member>
+   <member><xref linkend="sql-createtype"/></member>
+   <member><xref linkend="sql-droptype"/></member>
   </simplelist>
  </refsect1>
 </refentry>

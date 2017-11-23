@@ -40,8 +40,8 @@ DROP ROLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...
    of the cluster; an error will be raised if so.  Before dropping the role,
    you must drop all the objects it owns (or reassign their ownership)
    and revoke any privileges the role has been granted on other objects.
-   The <xref linkend="sql-reassign-owned"> and <xref linkend="sql-drop-owned">
-   commands can be useful for this purpose; see <xref linkend="role-removal">
+   The <xref linkend="sql-reassign-owned"/> and <xref linkend="sql-drop-owned"/>
+   commands can be useful for this purpose; see <xref linkend="role-removal"/>
    for more discussion.
   </para>
 
@@ -83,7 +83,7 @@ DROP ROLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...
 
   <para>
    <productname>PostgreSQL</productname> includes a program <xref
-   linkend="app-dropuser"> that has the
+   linkend="app-dropuser"/> that has the
    same functionality as this command (in fact, it calls this command)
    but can be run from the command shell.
   </para>
@@ -113,9 +113,9 @@ DROP ROLE jonathan;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createrole"></member>
-   <member><xref linkend="sql-alterrole"></member>
-   <member><xref linkend="sql-set-role"></member>
+   <member><xref linkend="sql-createrole"/></member>
+   <member><xref linkend="sql-alterrole"/></member>
+   <member><xref linkend="sql-set-role"/></member>
   </simplelist>
  </refsect1>
 

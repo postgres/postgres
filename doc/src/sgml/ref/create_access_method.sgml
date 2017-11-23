@@ -78,7 +78,7 @@ CREATE ACCESS METHOD <replaceable class="parameter">name</replaceable>
       for <literal>INDEX</literal> access methods, it must
       be <type>index_am_handler</type>.  The C-level API that the handler
       function must implement varies depending on the type of access method.
-      The index access method API is described in <xref linkend="indexam">.
+      The index access method API is described in <xref linkend="indexam"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -109,9 +109,9 @@ CREATE ACCESS METHOD heptree TYPE INDEX HANDLER heptree_handler;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-drop-access-method"></member>
-   <member><xref linkend="sql-createopclass"></member>
-   <member><xref linkend="sql-createopfamily"></member>
+   <member><xref linkend="sql-drop-access-method"/></member>
+   <member><xref linkend="sql-createopclass"/></member>
+   <member><xref linkend="sql-createopfamily"/></member>
   </simplelist>
  </refsect1>
 

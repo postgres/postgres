@@ -52,7 +52,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   <para>
    The fourth variant of this command listed in the synopsis can change
    all of the publication properties specified in
-   <xref linkend="sql-createpublication">.  Properties not mentioned in the
+   <xref linkend="sql-createpublication"/>.  Properties not mentioned in the
    command retain their previous settings.
   </para>
 
@@ -101,7 +101,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
     <listitem>
      <para>
       This clause alters publication parameters originally set by
-      <xref linkend="sql-createpublication">.  See there for more information.
+      <xref linkend="sql-createpublication"/>.  See there for more information.
      </para>
     </listitem>
    </varlistentry>
@@ -156,10 +156,10 @@ ALTER PUBLICATION mypublication ADD TABLE users, departments;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createpublication"></member>
-   <member><xref linkend="sql-droppublication"></member>
-   <member><xref linkend="sql-createsubscription"></member>
-   <member><xref linkend="sql-altersubscription"></member>
+   <member><xref linkend="sql-createpublication"/></member>
+   <member><xref linkend="sql-droppublication"/></member>
+   <member><xref linkend="sql-createsubscription"/></member>
+   <member><xref linkend="sql-altersubscription"/></member>
   </simplelist>
  </refsect1>
 </refentry>

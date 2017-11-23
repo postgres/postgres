@@ -93,7 +93,7 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</
 
   <para>
    While the default index for future
-   <xref linkend="sql-cluster">
+   <xref linkend="sql-cluster"/>
    operations is retained, <command>REFRESH MATERIALIZED VIEW</command> does not
    order the generated rows based on this property. If you want the data
    to be ordered upon generation, you must use an <literal>ORDER BY</literal>
@@ -135,9 +135,9 @@ REFRESH MATERIALIZED VIEW annual_statistics_basis WITH NO DATA;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-creatematerializedview"></member>
-   <member><xref linkend="sql-altermaterializedview"></member>
-   <member><xref linkend="sql-dropmaterializedview"></member>
+   <member><xref linkend="sql-creatematerializedview"/></member>
+   <member><xref linkend="sql-altermaterializedview"/></member>
+   <member><xref linkend="sql-dropmaterializedview"/></member>
   </simplelist>
  </refsect1>
 

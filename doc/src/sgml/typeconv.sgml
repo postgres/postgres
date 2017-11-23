@@ -26,7 +26,7 @@ can be tailored by using <emphasis>explicit</emphasis> type conversion.
 <para>
 This chapter introduces the <productname>PostgreSQL</productname>
 type conversion mechanisms and conventions.
-Refer to the relevant sections in <xref linkend="datatype"> and <xref linkend="functions">
+Refer to the relevant sections in <xref linkend="datatype"/> and <xref linkend="functions"/>
 for more information on specific data types and allowed functions and
 operators.
 </para>
@@ -139,7 +139,7 @@ and for the <function>GREATEST</function> and <function>LEAST</function> functio
 The system catalogs store information about which conversions, or
 <firstterm>casts</firstterm>, exist between which data types, and how to
 perform those conversions.  Additional casts can be added by the user
-with the <xref linkend="sql-createcast">
+with the <xref linkend="sql-createcast"/>
 command.  (This is usually
 done in conjunction with defining new data types.  The set of casts
 between built-in types has been carefully crafted and is best not
@@ -158,7 +158,7 @@ Data types are divided into several basic <firstterm>type
 categories</firstterm>, including <type>boolean</type>, <type>numeric</type>,
 <type>string</type>, <type>bitstring</type>, <type>datetime</type>,
 <type>timespan</type>, <type>geometric</type>, <type>network</type>, and
-user-defined.  (For a list see <xref linkend="catalog-typcategory-table">;
+user-defined.  (For a list see <xref linkend="catalog-typcategory-table"/>;
 but note it is also possible to create custom type categories.)  Within each
 category there can be one or more <firstterm>preferred types</firstterm>, which
 are preferred when there is a choice of possible types.  With careful selection
@@ -213,7 +213,7 @@ should use this new function and no longer do implicit conversion to use the old
    Note that this procedure is indirectly affected
    by the precedence of the operators involved, since that will determine
    which sub-expressions are taken to be the inputs of which operators.
-   See <xref linkend="sql-precedence"> for more information.
+   See <xref linkend="sql-precedence"/> for more information.
   </para>
 
 <procedure>
@@ -225,7 +225,7 @@ Select the operators to be considered from the
 <classname>pg_operator</classname> system catalog.  If a non-schema-qualified
 operator name was used (the usual case), the operators
 considered are those with the matching name and argument count that are
-visible in the current search path (see <xref linkend="ddl-schemas-path">).
+visible in the current search path (see <xref linkend="ddl-schemas-path"/>).
 If a qualified operator name was given, only operators in the specified
 schema are considered.
 </para>
@@ -490,9 +490,9 @@ could possibly accept an integer array on the left-hand side are
 array inclusion (<type>anyarray</type> <literal>&lt;@</literal> <type>anyarray</type>)
 and range inclusion (<type>anyelement</type> <literal>&lt;@</literal> <type>anyrange</type>).
 Since none of these polymorphic pseudo-types (see <xref
-linkend="datatype-pseudo">) are considered preferred, the parser cannot
+linkend="datatype-pseudo"/>) are considered preferred, the parser cannot
 resolve the ambiguity on that basis.
-However, <xref linkend="op-resol-last-unknown"> tells
+However, <xref linkend="op-resol-last-unknown"/> tells
 it to assume that the unknown-type literal is of the same type as the other
 input, that is, integer array.  Now only one of the two operators can match,
 so array inclusion is selected.  (Had range inclusion been selected, we would
@@ -519,10 +519,10 @@ SELECT * FROM mytable WHERE val = 'foo';
 </screen>
 This query will not use the custom operator.  The parser will first see if
 there is a <type>mytext</type> <literal>=</literal> <type>mytext</type> operator
-(<xref linkend="op-resol-exact-unknown">), which there is not;
+(<xref linkend="op-resol-exact-unknown"/>), which there is not;
 then it will consider the domain's base type <type>text</type>, and see if
 there is a <type>text</type> <literal>=</literal> <type>text</type> operator
-(<xref linkend="op-resol-exact-domain">), which there is;
+(<xref linkend="op-resol-exact-domain"/>), which there is;
 so it resolves the <type>unknown</type>-type literal as <type>text</type> and
 uses the <type>text</type> <literal>=</literal> <type>text</type> operator.
 The only way to get the custom operator to be used is to explicitly cast
@@ -564,7 +564,7 @@ Select the functions to be considered from the
 <classname>pg_proc</classname> system catalog.  If a non-schema-qualified
 function name was used, the functions
 considered are those with the matching name and argument count that are
-visible in the current search path (see <xref linkend="ddl-schemas-path">).
+visible in the current search path (see <xref linkend="ddl-schemas-path"/>).
 If a qualified function name was given, only functions in the specified
 schema are considered.
 </para>
@@ -633,7 +633,7 @@ the function call is treated as a form of <literal>CAST</literal> specification.
     in cases where there is not an actual cast function.  If there is a cast
     function, it is conventionally named after its output type, and so there
     is no need to have a special case.  See
-    <xref linkend="sql-createcast">
+    <xref linkend="sql-createcast"/>
     for additional commentary.
    </para>
   </footnote>
@@ -846,7 +846,7 @@ Check for an exact match with the target.
 <para>
 Otherwise, try to convert the expression to the target type.  This is possible
 if an <firstterm>assignment cast</firstterm> between the two types is registered in the
-<structname>pg_cast</structname> catalog (see <xref linkend="sql-createcast">).
+<structname>pg_cast</structname> catalog (see <xref linkend="sql-createcast"/>).
 Alternatively, if the expression is an unknown-type literal, the contents of
 the literal string will be fed to the input conversion routine for the target
 type.

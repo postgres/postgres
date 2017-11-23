@@ -50,14 +50,14 @@ ALTER GROUP <replaceable class="parameter">group_name</replaceable> RENAME TO <r
    <quote>group</quote> for this purpose.)  These variants are effectively
    equivalent to granting or revoking membership in the role named as the
    <quote>group</quote>; so the preferred way to do this is to use
-   <xref linkend="sql-grant"> or
-   <xref linkend="sql-revoke">.
+   <xref linkend="sql-grant"/> or
+   <xref linkend="sql-revoke"/>.
   </para>
 
   <para>
    The third variant changes the name of the group.  This is exactly
    equivalent to renaming the role with
-   <xref linkend="sql-alterrole">.
+   <xref linkend="sql-alterrole"/>.
   </para>
  </refsect1>
 
@@ -125,9 +125,9 @@ ALTER GROUP workers DROP USER beth;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-grant"></member>
-   <member><xref linkend="sql-revoke"></member>
-   <member><xref linkend="sql-alterrole"></member>
+   <member><xref linkend="sql-grant"/></member>
+   <member><xref linkend="sql-revoke"/></member>
+   <member><xref linkend="sql-alterrole"/></member>
   </simplelist>
  </refsect1>
 

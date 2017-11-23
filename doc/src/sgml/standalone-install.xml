@@ -14,10 +14,10 @@ in the stand-alone version.
   <productname>PostgreSQL</productname> using this source code distribution.
  </para>
 
- <xi:include href="postgres.xml" xpointer="install-short" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- <xi:include href="postgres.xml" xpointer="install-requirements" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- <xi:include href="postgres.xml" xpointer="install-procedure" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- <xi:include href="postgres.xml" xpointer="install-post" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+ <xi:include href="postgres.sgml" xpointer="install-short" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+ <xi:include href="postgres.sgml" xpointer="install-requirements" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+ <xi:include href="postgres.sgml" xpointer="install-procedure" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+ <xi:include href="postgres.sgml" xpointer="install-post" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
  <sect1 id="install-getting-started">
   <title>Getting Started</title>
@@ -162,6 +162,6 @@ postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</useri
   </para>
  </sect1>
 
- <xi:include href="postgres.xml" xpointer="supported-platforms" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- <xi:include href="postgres.xml" xpointer="installation-platform-notes" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+ <xi:include href="postgres.sgml" xpointer="supported-platforms" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+ <xi:include href="postgres.sgml" xpointer="installation-platform-notes" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 </article>

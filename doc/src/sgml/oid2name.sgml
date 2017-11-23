@@ -30,7 +30,7 @@
   <application>oid2name</application> is a utility program that helps administrators to
   examine the file structure used by PostgreSQL.  To make use of it, you need
   to be familiar with the database file structure, which is described in
-  <xref linkend="storage">.
+  <xref linkend="storage"/>.
  </para>
 
  <note>

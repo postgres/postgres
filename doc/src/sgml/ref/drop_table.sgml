@@ -32,8 +32,8 @@ DROP TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ..
    <command>DROP TABLE</command> removes tables from the database.
    Only the table owner, the schema owner, and superuser can drop a
    table.  To empty a table of rows
-   without destroying the table, use <xref linkend="sql-delete">
-   or <xref linkend="sql-truncate">.
+   without destroying the table, use <xref linkend="sql-delete"/>
+   or <xref linkend="sql-truncate"/>.
   </para>
 
   <para>
@@ -77,7 +77,7 @@ DROP TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ..
       Automatically drop objects that depend on the table (such as
       views),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -121,8 +121,8 @@ DROP TABLE films, distributors;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertable"></member>
-   <member><xref linkend="sql-createtable"></member>
+   <member><xref linkend="sql-altertable"/></member>
+   <member><xref linkend="sql-createtable"/></member>
   </simplelist>
  </refsect1>
 

@@ -44,7 +44,7 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
    number of elements.  The data types of the resulting table's columns are
    determined by combining the explicit or inferred types of the expressions
    appearing in that column, using the same rules as for <literal>UNION</literal>
-   (see <xref linkend="typeconv-union-case">).
+   (see <xref linkend="typeconv-union-case"/>).
   </para>
 
   <para>
@@ -85,7 +85,7 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
       rows.  This expression can refer to the columns of the
       <command>VALUES</command> result as <literal>column1</literal>, <literal>column2</literal>,
       etc.  For more details see
-      <xref linkend="sql-orderby" endterm="sql-orderby-title">.
+      <xref linkend="sql-orderby" endterm="sql-orderby-title"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -95,7 +95,7 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
     <listitem>
      <para>
       A sorting operator.  For details see
-      <xref linkend="sql-orderby" endterm="sql-orderby-title">.
+      <xref linkend="sql-orderby" endterm="sql-orderby-title"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -105,7 +105,7 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
     <listitem>
      <para>
       The maximum number of rows to return.  For details see
-      <xref linkend="sql-limit" endterm="sql-limit-title">.
+      <xref linkend="sql-limit" endterm="sql-limit-title"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -116,7 +116,7 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
      <para>
       The number of rows to skip before starting to return rows.
       For details see
-      <xref linkend="sql-limit" endterm="sql-limit-title">.
+      <xref linkend="sql-limit" endterm="sql-limit-title"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -233,7 +233,7 @@ WHERE ip_address IN (VALUES('192.168.0.1'::inet), ('192.168.0.10'), ('192.168.1.
   <para><command>VALUES</command> conforms to the SQL standard.
    <literal>LIMIT</literal> and <literal>OFFSET</literal> are
    <productname>PostgreSQL</productname> extensions; see also
-   under <xref linkend="sql-select">.
+   under <xref linkend="sql-select"/>.
   </para>
  </refsect1>
 
@@ -241,8 +241,8 @@ WHERE ip_address IN (VALUES('192.168.0.1'::inet), ('192.168.0.10'), ('192.168.1.
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-insert"></member>
-   <member><xref linkend="sql-select"></member>
+   <member><xref linkend="sql-insert"/></member>
+   <member><xref linkend="sql-select"/></member>
   </simplelist>
  </refsect1>
 </refentry>

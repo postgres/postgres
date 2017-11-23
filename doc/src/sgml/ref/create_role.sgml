@@ -53,8 +53,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
    an entity that can own database objects and have database privileges;
    a role can be considered a <quote>user</quote>, a <quote>group</quote>, or both
    depending on how it is used.  Refer to
-   <xref linkend="user-manag"> and <xref
-   linkend="client-authentication"> for information about managing
+   <xref linkend="user-manag"/> and <xref
+   linkend="client-authentication"/> for information about managing
    users and authentication.  You must have <literal>CREATEROLE</literal>
    privilege or be a database superuser to use this command.
   </para>
@@ -157,7 +157,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
         If not specified,
         <literal>NOLOGIN</literal> is the default, except when
         <command>CREATE ROLE</command> is invoked through its alternative spelling
-        <xref linkend="sql-createuser">.
+        <xref linkend="sql-createuser"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -237,7 +237,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
         The password is always stored encrypted in the system catalogs. The
         <literal>ENCRYPTED</literal> keyword has no effect, but is accepted for
         backwards compatibility. The method of encryption is determined
-        by the configuration parameter <xref linkend="guc-password-encryption">.
+        by the configuration parameter <xref linkend="guc-password-encryption"/>.
         If the presented password string is already in MD5-encrypted or
         SCRAM-encrypted format, then it is stored as-is regardless of
         <varname>password_encryption</varname> (since the system cannot decrypt
@@ -329,8 +329,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-alterrole"> to
-   change the attributes of a role, and <xref linkend="sql-droprole">
+   Use <xref linkend="sql-alterrole"/> to
+   change the attributes of a role, and <xref linkend="sql-droprole"/>
    to remove a role.  All the attributes
    specified by <command>CREATE ROLE</command> can be modified by later
    <command>ALTER ROLE</command> commands.
@@ -339,8 +339,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
   <para>
    The preferred way to add and remove members of roles that are being
    used as groups is to use
-   <xref linkend="sql-grant"> and
-   <xref linkend="sql-revoke">.
+   <xref linkend="sql-grant"/> and
+   <xref linkend="sql-revoke"/>.
   </para>
 
   <para>
@@ -358,7 +358,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
    a member of a role with <literal>CREATEDB</literal> privilege does not immediately
    grant the ability to create databases, even if <literal>INHERIT</literal> is set;
    it would be necessary to become that role via
-   <xref linkend="sql-set-role"> before
+   <xref linkend="sql-set-role"/> before
    creating a database.
   </para>
 
@@ -385,7 +385,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
 
   <para>
    <productname>PostgreSQL</productname> includes a program <xref
-   linkend="app-createuser"> that has
+   linkend="app-createuser"/> that has
    the same functionality as <command>CREATE ROLE</command> (in fact,
    it calls this command) but can be run from the command shell.
   </para>
@@ -402,8 +402,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
    with this command.  The password will be transmitted to the server
    in cleartext, and it might also be logged in the client's command
    history or the server log.  The command <xref
-   linkend="app-createuser">, however, transmits
-   the password encrypted.  Also, <xref linkend="app-psql">
+   linkend="app-createuser"/>, however, transmits
+   the password encrypted.  Also, <xref linkend="app-psql"/>
    contains a command
    <command>\password</command> that can be used to safely change the
    password later.
@@ -480,12 +480,12 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ WITH ADMIN <repl
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-set-role"></member>
-   <member><xref linkend="sql-alterrole"></member>
-   <member><xref linkend="sql-droprole"></member>
-   <member><xref linkend="sql-grant"></member>
-   <member><xref linkend="sql-revoke"></member>
-   <member><xref linkend="app-createuser"></member>
+   <member><xref linkend="sql-set-role"/></member>
+   <member><xref linkend="sql-alterrole"/></member>
+   <member><xref linkend="sql-droprole"/></member>
+   <member><xref linkend="sql-grant"/></member>
+   <member><xref linkend="sql-revoke"/></member>
+   <member><xref linkend="app-createuser"/></member>
   </simplelist>
  </refsect1>
 </refentry>

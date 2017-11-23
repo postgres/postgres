@@ -25,15 +25,15 @@
   those written for C++, Perl, Python, Tcl and <application>ECPG</application>.
   So some aspects of <application>libpq</application>'s behavior will be
   important to you if you use one of those packages.  In particular,
-  <xref linkend="libpq-envars">,
-  <xref linkend="libpq-pgpass"> and
-  <xref linkend="libpq-ssl">
+  <xref linkend="libpq-envars"/>,
+  <xref linkend="libpq-pgpass"/> and
+  <xref linkend="libpq-ssl"/>
   describe behavior that is visible to the user of any application
   that uses <application>libpq</application>.
  </para>
 
  <para>
-  Some short programs are included at the end of this chapter (<xref linkend="libpq-example">) to show how
+  Some short programs are included at the end of this chapter (<xref linkend="libpq-example"/>) to show how
   to write programs that use <application>libpq</application>.  There are also several
   complete examples of <application>libpq</application> applications in the
   directory <filename>src/test/examples</filename> in the source code distribution.
@@ -118,7 +118,7 @@ PGconn *PQconnectdbParams(const char * const *keywords,
 
       <para>
        The currently recognized parameter key words are listed in
-       <xref linkend="libpq-paramkeywords">.
+       <xref linkend="libpq-paramkeywords"/>.
       </para>
 
       <para>
@@ -128,7 +128,7 @@ PGconn *PQconnectdbParams(const char * const *keywords,
        <parameter>dbname</parameter> is expanded this way, any subsequent
        <parameter>dbname</parameter> value is processed as plain database name. More
        details on the possible connection string formats appear in
-       <xref linkend="libpq-connstring">.
+       <xref linkend="libpq-connstring"/>.
       </para>
 
       <para>
@@ -140,7 +140,7 @@ PGconn *PQconnectdbParams(const char * const *keywords,
 
       <para>
        If  any  parameter is <symbol>NULL</symbol> or an empty string, the corresponding
-       environment variable (see <xref linkend="libpq-envars">) is checked.
+       environment variable (see <xref linkend="libpq-envars"/>) is checked.
        If the  environment  variable is not set either, then the indicated
        built-in defaults are used.
       </para>
@@ -176,7 +176,7 @@ PGconn *PQconnectdb(const char *conninfo);
        The passed string can be empty to use all default parameters, or it can
        contain one or more parameter settings separated by whitespace,
        or it can contain a <acronym>URI</acronym>.
-       See <xref linkend="libpq-connstring"> for details.
+       See <xref linkend="libpq-connstring"/> for details.
      </para>
 
 
@@ -289,7 +289,7 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
          <para>
           The <literal>hostaddr</literal> and <literal>host</literal> parameters are used appropriately to ensure that
           name and reverse name queries are not made. See the documentation of
-          these parameters in <xref linkend="libpq-paramkeywords"> for details.
+          these parameters in <xref linkend="libpq-paramkeywords"/> for details.
          </para>
         </listitem>
 
@@ -802,7 +802,7 @@ host=localhost port=5432 dbname=mydb connect_timeout=10
 
    <para>
     The recognized parameter key words are listed in <xref
-    linkend="libpq-paramkeywords">.
+    linkend="libpq-paramkeywords"/>.
    </para>
    </sect3>
 
@@ -847,7 +847,7 @@ postgresql:///mydb?host=localhost&amp;port=5433
 
    <para>
     Any connection parameters not corresponding to key words listed in <xref
-    linkend="libpq-paramkeywords"> are ignored and a warning message about them
+    linkend="libpq-paramkeywords"/> are ignored and a warning message about them
     is sent to <filename>stderr</filename>.
    </para>
 
@@ -867,7 +867,7 @@ postgresql://[2001:db8::1234]/database
 
    <para>
     The host component is interpreted as described for the parameter <xref
-    linkend="libpq-connect-host">.  In particular, a Unix-domain socket
+    linkend="libpq-connect-host"/>.  In particular, a Unix-domain socket
     connection is chosen if the host part is either empty or starts with a
     slash, otherwise a TCP/IP connection is initiated.  Note, however, that the
     slash is a reserved character in the hierarchical part of the URI.  So, to
@@ -954,7 +954,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        <para>
         A comma-separated list of host names is also accepted, in which case
         each host name in the list is tried in order. See
-        <xref linkend="libpq-multiple-hosts"> for details.
+        <xref linkend="libpq-multiple-hosts"/> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -1006,13 +1006,13 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         is not the name of the server at network address <literal>hostaddr</literal>.
         Also, note that <literal>host</literal> rather than <literal>hostaddr</literal>
         is used to identify the connection in a password file (see
-        <xref linkend="libpq-pgpass">).
+        <xref linkend="libpq-pgpass"/>).
        </para>
 
        <para>
         A comma-separated list of <literal>hostaddrs</literal> is also accepted, in
         which case each host in the list is tried in order. See
-        <xref linkend="libpq-multiple-hosts"> for details.
+        <xref linkend="libpq-multiple-hosts"/> for details.
        </para>
        <para>
         Without either a host name or host address,
@@ -1044,7 +1044,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <para>
        The database name.  Defaults to be the same as the user name.
        In certain contexts, the value is checked for extended
-       formats; see <xref linkend="libpq-connstring"> for more details on
+       formats; see <xref linkend="libpq-connstring"/> for more details on
        those.
       </para>
       </listitem>
@@ -1075,7 +1075,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <listitem>
       <para>
        Specifies the name of the file used to store passwords
-       (see <xref linkend="libpq-pgpass">).
+       (see <xref linkend="libpq-pgpass"/>).
        Defaults to <filename>~/.pgpass</filename>, or
        <filename>%APPDATA%\postgresql\pgpass.conf</filename> on Microsoft Windows.
        (No error is reported if this file does not exist.)
@@ -1125,7 +1125,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         separate command-line arguments, unless escaped with a backslash
         (<literal>\</literal>); write <literal>\\</literal> to represent a literal
         backslash.  For a detailed discussion of the available
-        options, consult <xref linkend="runtime-config">.
+        options, consult <xref linkend="runtime-config"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -1134,7 +1134,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>application_name</literal></term>
       <listitem>
        <para>
-        Specifies a value for the <xref linkend="guc-application-name">
+        Specifies a value for the <xref linkend="guc-application-name"/>
         configuration parameter.
        </para>
       </listitem>
@@ -1145,7 +1145,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <listitem>
        <para>
         Specifies a fallback value for the <xref
-        linkend="guc-application-name"> configuration parameter.
+        linkend="guc-application-name"/> configuration parameter.
         This value will be used if no value has been given for
         <literal>application_name</literal> via a connection parameter or the
         <envar>PGAPPNAME</envar> environment variable.  Specifying
@@ -1295,7 +1295,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
          </varlistentry>
         </variablelist>
 
-        See <xref linkend="libpq-ssl"> for a detailed description of how
+        See <xref linkend="libpq-ssl"/> for a detailed description of how
         these options work.
        </para>
 
@@ -1430,7 +1430,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         to ensure that you are connected to a server run by a trusted user.)
         This option is only supported on platforms for which the
         <literal>peer</literal> authentication method is implemented; see
-        <xref linkend="auth-peer">.
+        <xref linkend="auth-peer"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -1442,7 +1442,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Kerberos service name to use when authenticating with GSSAPI.
         This must match the service name specified in the server
         configuration for Kerberos authentication to succeed. (See also
-        <xref linkend="gssapi-auth">.)
+        <xref linkend="gssapi-auth"/>.)
        </para>
       </listitem>
      </varlistentry>
@@ -1465,7 +1465,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Service name to use for additional parameters.  It specifies a service
         name in <filename>pg_service.conf</filename> that holds additional connection parameters.
         This allows applications to specify only a service name so connection parameters
-        can be centrally maintained. See <xref linkend="libpq-pgservice">.
+        can be centrally maintained. See <xref linkend="libpq-pgservice"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -2225,7 +2225,7 @@ PGresult *PQexec(PGconn *conn, const char *command);
     <function>PQexec</function> call are processed in a single transaction, unless
     there are explicit <command>BEGIN</command>/<command>COMMIT</command>
     commands included in the query string to divide it into multiple
-    transactions.  (See <xref linkend="protocol-flow-multi-statement">
+    transactions.  (See <xref linkend="protocol-flow-multi-statement"/>
     for more details about how the server handles multi-query strings.)
     Note however that the returned
     <structname>PGresult</structname> structure describes only the result
@@ -2447,7 +2447,7 @@ PGresult *PQprepare(PGconn *conn,
         <function>PQprepare</function> creates a prepared statement for later
         execution with <function>PQexecPrepared</function>.  This feature allows
         commands to be executed repeatedly without being parsed and
-        planned each time;  see <xref linkend="sql-prepare"> for details.
+        planned each time;  see <xref linkend="sql-prepare"/> for details.
         <function>PQprepare</function> is supported only in protocol 3.0 and later
         connections; it will fail when using protocol 2.0.
        </para>
@@ -2489,10 +2489,10 @@ PGresult *PQprepare(PGconn *conn,
     </variablelist>
 
     Prepared statements for use with <function>PQexecPrepared</function> can also
-    be created by executing SQL <xref linkend="sql-prepare">
+    be created by executing SQL <xref linkend="sql-prepare"/>
     statements.  Also, although there is no <application>libpq</application>
     function for deleting a prepared statement, the SQL <xref
-    linkend="sql-deallocate"> statement
+    linkend="sql-deallocate"/> statement
     can be used for that purpose.
    </para>
 
@@ -2746,7 +2746,7 @@ ExecStatusType PQresultStatus(const PGresult *res);
             The <structname>PGresult</structname> contains a single result tuple
             from the current command.  This status occurs only when
             single-row mode has been selected for the query
-            (see <xref linkend="libpq-single-row-mode">).
+            (see <xref linkend="libpq-single-row-mode"/>).
            </para>
           </listitem>
          </varlistentry>
@@ -2770,7 +2770,7 @@ ExecStatusType PQresultStatus(const PGresult *res);
         never be returned directly by <function>PQexec</function> or other
         query execution functions; results of this kind are instead passed
         to the notice processor (see <xref
-        linkend="libpq-notice-processing">).
+        linkend="libpq-notice-processing"/>).
        </para>
       </listitem>
      </varlistentry>
@@ -2941,7 +2941,7 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
             front-end applications to perform specific operations (such
             as error handling) in response to a particular database error.
             For a list of the possible SQLSTATE codes, see <xref
-            linkend="errcodes-appendix">. This field is not localizable,
+            linkend="errcodes-appendix"/>. This field is not localizable,
             and is always present.
            </para>
           </listitem>
@@ -3118,7 +3118,7 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
         <para>
          The fields for schema name, table name, column name, data type name,
          and constraint name are supplied only for a limited number of error
-         types; see <xref linkend="errcodes-appendix">.  Do not assume that
+         types; see <xref linkend="errcodes-appendix"/>.  Do not assume that
          the presence of any of these fields guarantees the presence of
          another field.  Core error sources observe the interrelationships
          noted above, but user-defined functions may use these fields in other
@@ -4075,7 +4075,7 @@ unsigned char *PQescapeByteaConn(PGconn *conn,
        <type>bytea</type> literal in an <acronym>SQL</acronym> statement.
        <function>PQescapeByteaConn</function> escapes bytes using
        either hex encoding or backslash escaping.  See <xref
-       linkend="datatype-binary"> for more information.
+       linkend="datatype-binary"/> for more information.
       </para>
 
       <para>
@@ -4508,7 +4508,7 @@ PGresult *PQgetResult(PGconn *conn);
    Another frequently-desired feature that can be obtained with
    <function>PQsendQuery</function> and <function>PQgetResult</function>
    is retrieving large query results a row at a time.  This is discussed
-   in <xref linkend="libpq-single-row-mode">.
+   in <xref linkend="libpq-single-row-mode"/>.
   </para>
 
   <para>
@@ -4600,14 +4600,14 @@ int PQisBusy(PGconn *conn);
    <function>PQgetResult</function> if <function>PQisBusy</function>
    returns false (0).  It can also call <function>PQnotifies</function>
    to detect <command>NOTIFY</command> messages (see <xref
-   linkend="libpq-notify">).
+   linkend="libpq-notify"/>).
   </para>
 
   <para>
    A client that uses
    <function>PQsendQuery</function>/<function>PQgetResult</function>
    can also attempt to cancel a command that is still being processed
-   by the server; see <xref linkend="libpq-cancel">.  But regardless of
+   by the server; see <xref linkend="libpq-cancel"/>.  But regardless of
    the return value of <function>PQcancel</function>, the application
    must continue with the normal result-reading sequence using
    <function>PQgetResult</function>.  A successful cancellation will
@@ -4753,7 +4753,7 @@ int PQflush(PGconn *conn);
    (or a sibling function).  This mode selection is effective only for the
    currently executing query.  Then call <function>PQgetResult</function>
    repeatedly, until it returns null, as documented in <xref
-   linkend="libpq-async">.  If the query returns any rows, they are returned
+   linkend="libpq-async"/>.  If the query returns any rows, they are returned
    as individual <structname>PGresult</structname> objects, which look like
    normal query results except for having status code
    <literal>PGRES_SINGLE_TUPLE</literal> instead of
@@ -5119,7 +5119,7 @@ typedef struct pgNotify
   </para>
 
   <para>
-   <xref linkend="libpq-example-2"> gives a sample program that illustrates
+   <xref linkend="libpq-example-2"/> gives a sample program that illustrates
    the use of asynchronous notification.
   </para>
 
@@ -5242,7 +5242,7 @@ typedef struct pgNotify
        0 indicates the overall copy format is textual (rows separated by
        newlines, columns separated by separator characters, etc).  1
        indicates the overall copy format is binary.  See <xref
-       linkend="sql-copy"> for more information.
+       linkend="sql-copy"/> for more information.
       </para>
      </listitem>
     </varlistentry>
@@ -5322,7 +5322,7 @@ int PQputCopyData(PGconn *conn,
        into buffer loads of any convenient size.  Buffer-load boundaries
        have no semantic significance when sending.  The contents of the
        data stream must match the data format expected by the
-       <command>COPY</command> command; see <xref linkend="sql-copy"> for details.
+       <command>COPY</command> command; see <xref linkend="sql-copy"/> for details.
       </para>
      </listitem>
     </varlistentry>
@@ -5982,7 +5982,7 @@ char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, 
       version 10, and will not work correctly with older server versions. If
       <parameter>algorithm</parameter> is <symbol>NULL</symbol>, this function will query
       the server for the current value of the
-      <xref linkend="guc-password-encryption"> setting. That can block, and
+      <xref linkend="guc-password-encryption"/> setting. That can block, and
       will fail if the current transaction is aborted, or if the connection
       is busy executing another query. If you wish to use the default
       algorithm for the server but want to avoid blocking, query
@@ -6072,7 +6072,7 @@ PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
     <listitem>
      <para>
       Fires a <literal>PGEVT_RESULTCREATE</literal> event (see <xref
-      linkend="libpq-events">) for each event procedure registered in the
+      linkend="libpq-events"/>) for each event procedure registered in the
       <structname>PGresult</structname> object.  Returns non-zero for success,
       zero if any event procedure fails.
 
@@ -7004,7 +7004,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGHOST</envar></primary>
       </indexterm>
       <envar>PGHOST</envar> behaves the same as the <xref
-      linkend="libpq-connect-host"> connection parameter.
+      linkend="libpq-connect-host"/> connection parameter.
      </para>
     </listitem>
 
@@ -7014,7 +7014,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGHOSTADDR</envar></primary>
       </indexterm>
       <envar>PGHOSTADDR</envar> behaves the same as the <xref
-      linkend="libpq-connect-hostaddr"> connection parameter.
+      linkend="libpq-connect-hostaddr"/> connection parameter.
       This can be set instead of or in addition to <envar>PGHOST</envar>
       to avoid DNS lookup overhead.
      </para>
@@ -7026,7 +7026,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGPORT</envar></primary>
       </indexterm>
       <envar>PGPORT</envar> behaves the same as the <xref
-      linkend="libpq-connect-port"> connection parameter.
+      linkend="libpq-connect-port"/> connection parameter.
      </para>
     </listitem>
 
@@ -7036,7 +7036,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGDATABASE</envar></primary>
       </indexterm>
       <envar>PGDATABASE</envar> behaves the same as the <xref
-      linkend="libpq-connect-dbname"> connection parameter.
+      linkend="libpq-connect-dbname"/> connection parameter.
       </para>
     </listitem>
 
@@ -7046,7 +7046,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGUSER</envar></primary>
       </indexterm>
       <envar>PGUSER</envar> behaves the same as the <xref
-      linkend="libpq-connect-user"> connection parameter.
+      linkend="libpq-connect-user"/> connection parameter.
      </para>
     </listitem>
 
@@ -7056,12 +7056,12 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGPASSWORD</envar></primary>
       </indexterm>
       <envar>PGPASSWORD</envar> behaves the same as the <xref
-      linkend="libpq-connect-password"> connection parameter.
+      linkend="libpq-connect-password"/> connection parameter.
       Use of this environment variable
       is not recommended for security reasons, as some operating systems
       allow non-root users to see process environment variables via
       <application>ps</application>; instead consider using a password file
-      (see <xref linkend="libpq-pgpass">).
+      (see <xref linkend="libpq-pgpass"/>).
      </para>
     </listitem>
 
@@ -7071,7 +7071,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGPASSFILE</envar></primary>
       </indexterm>
       <envar>PGPASSFILE</envar> behaves the same as the <xref
-      linkend="libpq-connect-passfile"> connection parameter.
+      linkend="libpq-connect-passfile"/> connection parameter.
      </para>
     </listitem>
 
@@ -7081,7 +7081,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSERVICE</envar></primary>
       </indexterm>
       <envar>PGSERVICE</envar> behaves the same as the <xref
-      linkend="libpq-connect-service"> connection parameter.
+      linkend="libpq-connect-service"/> connection parameter.
      </para>
     </listitem>
 
@@ -7093,7 +7093,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <envar>PGSERVICEFILE</envar> specifies the name of the per-user
       connection service file.  If not set, it defaults
       to <filename>~/.pg_service.conf</filename>
-      (see <xref linkend="libpq-pgservice">).
+      (see <xref linkend="libpq-pgservice"/>).
      </para>
     </listitem>
 
@@ -7103,7 +7103,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGOPTIONS</envar></primary>
       </indexterm>
       <envar>PGOPTIONS</envar> behaves the same as the <xref
-      linkend="libpq-connect-options"> connection parameter.
+      linkend="libpq-connect-options"/> connection parameter.
      </para>
     </listitem>
 
@@ -7113,7 +7113,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGAPPNAME</envar></primary>
       </indexterm>
       <envar>PGAPPNAME</envar> behaves the same as the <xref
-      linkend="libpq-connect-application-name"> connection parameter.
+      linkend="libpq-connect-application-name"/> connection parameter.
      </para>
     </listitem>
 
@@ -7123,7 +7123,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSSLMODE</envar></primary>
       </indexterm>
       <envar>PGSSLMODE</envar> behaves the same as the <xref
-      linkend="libpq-connect-sslmode"> connection parameter.
+      linkend="libpq-connect-sslmode"/> connection parameter.
      </para>
     </listitem>
 
@@ -7133,7 +7133,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGREQUIRESSL</envar></primary>
       </indexterm>
       <envar>PGREQUIRESSL</envar> behaves the same as the <xref
-      linkend="libpq-connect-requiressl"> connection parameter.
+      linkend="libpq-connect-requiressl"/> connection parameter.
       This environment variable is deprecated in favor of the
       <envar>PGSSLMODE</envar> variable; setting both variables suppresses the
       effect of this one.
@@ -7146,7 +7146,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSSLCOMPRESSION</envar></primary>
       </indexterm>
       <envar>PGSSLCOMPRESSION</envar> behaves the same as the <xref
-      linkend="libpq-connect-sslcompression"> connection parameter.
+      linkend="libpq-connect-sslcompression"/> connection parameter.
      </para>
     </listitem>
 
@@ -7156,7 +7156,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSSLCERT</envar></primary>
       </indexterm>
       <envar>PGSSLCERT</envar> behaves the same as the <xref
-      linkend="libpq-connect-sslcert"> connection parameter.
+      linkend="libpq-connect-sslcert"/> connection parameter.
      </para>
     </listitem>
 
@@ -7166,7 +7166,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSSLKEY</envar></primary>
       </indexterm>
       <envar>PGSSLKEY</envar> behaves the same as the <xref
-      linkend="libpq-connect-sslkey"> connection parameter.
+      linkend="libpq-connect-sslkey"/> connection parameter.
      </para>
     </listitem>
 
@@ -7176,7 +7176,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSSLROOTCERT</envar></primary>
       </indexterm>
       <envar>PGSSLROOTCERT</envar>  behaves the same as the <xref
-      linkend="libpq-connect-sslrootcert"> connection parameter.
+      linkend="libpq-connect-sslrootcert"/> connection parameter.
      </para>
     </listitem>
 
@@ -7186,7 +7186,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSSLCRL</envar></primary>
       </indexterm>
       <envar>PGSSLCRL</envar>  behaves the same as the <xref
-      linkend="libpq-connect-sslcrl"> connection parameter.
+      linkend="libpq-connect-sslcrl"/> connection parameter.
      </para>
     </listitem>
 
@@ -7196,7 +7196,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGREQUIREPEER</envar></primary>
       </indexterm>
       <envar>PGREQUIREPEER</envar> behaves the same as the <xref
-      linkend="libpq-connect-requirepeer"> connection parameter.
+      linkend="libpq-connect-requirepeer"/> connection parameter.
      </para>
     </listitem>
 
@@ -7206,7 +7206,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGKRBSRVNAME</envar></primary>
       </indexterm>
       <envar>PGKRBSRVNAME</envar>  behaves the same as the <xref
-      linkend="libpq-connect-krbsrvname"> connection parameter.
+      linkend="libpq-connect-krbsrvname"/> connection parameter.
      </para>
     </listitem>
 
@@ -7216,7 +7216,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGGSSLIB</envar></primary>
       </indexterm>
       <envar>PGGSSLIB</envar> behaves the same as the <xref
-      linkend="libpq-connect-gsslib"> connection parameter.
+      linkend="libpq-connect-gsslib"/> connection parameter.
      </para>
     </listitem>
 
@@ -7226,7 +7226,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGCONNECT_TIMEOUT</envar></primary>
       </indexterm>
       <envar>PGCONNECT_TIMEOUT</envar>  behaves the same as the <xref
-      linkend="libpq-connect-connect-timeout"> connection parameter.
+      linkend="libpq-connect-connect-timeout"/> connection parameter.
      </para>
     </listitem>
 
@@ -7236,7 +7236,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGCLIENTENCODING</envar></primary>
       </indexterm>
       <envar>PGCLIENTENCODING</envar> behaves the same as the <xref
-      linkend="libpq-connect-client-encoding"> connection parameter.
+      linkend="libpq-connect-client-encoding"/> connection parameter.
      </para>
     </listitem>
 
@@ -7246,7 +7246,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGTARGETSESSIONATTRS</envar></primary>
       </indexterm>
       <envar>PGTARGETSESSIONATTRS</envar> behaves the same as the <xref
-      linkend="libpq-connect-target-session-attrs"> connection parameter.
+      linkend="libpq-connect-target-session-attrs"/> connection parameter.
      </para>
     </listitem>
    </itemizedlist>
@@ -7255,8 +7255,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   <para>
    The following environment variables can be used to specify default
    behavior for each <productname>PostgreSQL</productname> session.  (See
-   also the <xref linkend="sql-alterrole">
-   and <xref linkend="sql-alterdatabase">
+   also the <xref linkend="sql-alterrole"/>
+   and <xref linkend="sql-alterdatabase"/>
    commands for ways to set default behavior on a per-user or per-database
    basis.)
 
@@ -7293,7 +7293,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     </listitem>
    </itemizedlist>
 
-   Refer to the <acronym>SQL</acronym> command <xref linkend="sql-set">
+   Refer to the <acronym>SQL</acronym> command <xref linkend="sql-set"/>
    for information on correct values for these
    environment variables.
   </para>
@@ -7348,7 +7348,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    <filename>%APPDATA%</filename> refers to the Application Data subdirectory in
    the user's profile).
    Alternatively, a password file can be specified
-   using the connection parameter <xref linkend="libpq-connect-passfile">
+   using the connection parameter <xref linkend="libpq-connect-passfile"/>
    or the environment variable <envar>PGPASSFILE</envar>.
   </para>
 
@@ -7422,7 +7422,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   <para>
    The file uses an <quote>INI file</quote> format where the section
    name is the service name and the parameters are connection
-   parameters; see <xref linkend="libpq-paramkeywords"> for a list.  For
+   parameters; see <xref linkend="libpq-paramkeywords"/> for a list.  For
    example:
 <programlisting>
 # comment
@@ -7456,7 +7456,7 @@ user=admin
   <para>
    LDAP connection parameter lookup uses the connection service file
    <filename>pg_service.conf</filename> (see <xref
-   linkend="libpq-pgservice">).  A line in a
+   linkend="libpq-pgservice"/>).  A line in a
    <filename>pg_service.conf</filename> stanza that starts with
    <literal>ldap://</literal> will be recognized as an LDAP URL and an
    LDAP query will be performed. The result must be a list of
@@ -7528,7 +7528,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   <para>
    <productname>PostgreSQL</productname> has native support for using <acronym>SSL</acronym>
    connections to encrypt client/server communications for increased
-   security. See <xref linkend="ssl-tcp"> for details about the server-side
+   security. See <xref linkend="ssl-tcp"/> for details about the server-side
    <acronym>SSL</acronym> functionality.
   </para>
 
@@ -7643,7 +7643,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    file, then its parent authority's certificate, and so on up to a certificate
    authority, <quote>root</quote> or <quote>intermediate</quote>, that is trusted by
    the server, i.e. signed by a certificate in the server's root CA file
-   (<xref linkend="guc-ssl-ca-file">).
+   (<xref linkend="guc-ssl-ca-file"/>).
   </para>
 
   <para>
@@ -7728,7 +7728,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   <para>
    All <acronym>SSL</acronym> options carry overhead in the form of encryption and
    key-exchange, so there is a trade-off that has to be made between performance
-   and security. <xref linkend="libpq-ssl-sslmode-statements">
+   and security. <xref linkend="libpq-ssl-sslmode-statements"/>
    illustrates the risks the different <literal>sslmode</literal> values
    protect against, and what statement they make about security and overhead.
   </para>
@@ -7828,7 +7828,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   <title>SSL Client File Usage</title>
 
   <para>
-   <xref linkend="libpq-ssl-file-usage"> summarizes the files that are
+   <xref linkend="libpq-ssl-file-usage"/> summarizes the files that are
    relevant to the SSL setup on the client.
   </para>
 
@@ -8027,7 +8027,7 @@ int PQisthreadsafe();
    <structname>PGresult</structname> objects are normally read-only after creation,
    and so can be passed around freely between threads.  However, if you use
    any of the <structname>PGresult</structname>-modifying functions described in
-   <xref linkend="libpq-misc"> or <xref linkend="libpq-events">, it's up
+   <xref linkend="libpq-misc"/> or <xref linkend="libpq-events"/>, it's up
    to you to avoid concurrent operations on the same <structname>PGresult</structname>,
    too.
   </para>

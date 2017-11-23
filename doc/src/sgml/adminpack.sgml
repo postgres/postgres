@@ -16,9 +16,9 @@
  </para>
 
  <para>
-  The functions shown in <xref linkend="functions-adminpack-table"> provide
+  The functions shown in <xref linkend="functions-adminpack-table"/> provide
   write access to files on the machine hosting the server.  (See also the
-  functions in <xref linkend="functions-admin-genfile-table">, which
+  functions in <xref linkend="functions-admin-genfile-table"/>, which
   provide read-only access.)
   Only files within the database cluster directory can be accessed, but
   either a relative or absolute path is allowable.
@@ -107,18 +107,18 @@
  </indexterm>
  <para>
   <function>pg_logdir_ls</function> returns the start timestamps and path
-  names of all the log files in the <xref linkend="guc-log-directory">
-  directory.  The <xref linkend="guc-log-filename"> parameter must have its
+  names of all the log files in the <xref linkend="guc-log-directory"/>
+  directory.  The <xref linkend="guc-log-filename"/> parameter must have its
   default setting (<literal>postgresql-%Y-%m-%d_%H%M%S.log</literal>) to use this
   function.
  </para>
 
  <para>
   The functions shown
-  in <xref linkend="functions-adminpack-deprecated-table"> are deprecated
+  in <xref linkend="functions-adminpack-deprecated-table"/> are deprecated
   and should not be used in new applications; instead use those shown
-  in <xref linkend="functions-admin-signal-table">
-  and <xref linkend="functions-admin-genfile-table">.  These functions are
+  in <xref linkend="functions-admin-signal-table"/>
+  and <xref linkend="functions-admin-genfile-table"/>.  These functions are
   provided in <filename>adminpack</filename> only for compatibility with old
   versions of <application>pgAdmin</application>.
  </para>

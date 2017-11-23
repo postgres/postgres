@@ -24,7 +24,7 @@
   <para>
    The process of retrieving or the command to retrieve data from a
    database is called a <firstterm>query</firstterm>.  In SQL the
-   <xref linkend="sql-select"> command is
+   <xref linkend="sql-select"/> command is
    used to specify queries.  The general syntax of the
    <command>SELECT</command> command is
 <synopsis>
@@ -59,7 +59,7 @@ SELECT a, b + c FROM table1;
 </programlisting>
   (assuming that <literal>b</literal> and <literal>c</literal> are of a numerical
   data type).
-  See <xref linkend="queries-select-lists"> for more details.
+  See <xref linkend="queries-select-lists"/> for more details.
  </para>
 
  <para>
@@ -110,7 +110,7 @@ SELECT random();
    <title>The <literal>FROM</literal> Clause</title>
 
    <para>
-    The <xref linkend="sql-from" endterm="sql-from-title"> derives a
+    The <xref linkend="sql-from" endterm="sql-from-title"/> derives a
     table from one or more other tables given in a comma-separated
     table reference list.
 <synopsis>
@@ -589,7 +589,7 @@ SELECT * FROM my_table AS m WHERE my_table.a &gt; 5;    -- wrong
 SELECT * FROM people AS mother JOIN people AS child ON mother.id = child.mother_id;
 </programlisting>
      Additionally, an alias is required if the table reference is a
-     subquery (see <xref linkend="queries-subqueries">).
+     subquery (see <xref linkend="queries-subqueries"/>).
     </para>
 
     <para>
@@ -640,7 +640,7 @@ SELECT a.* FROM (my_table AS a JOIN your_table AS b ON ...) AS c
     <para>
      Subqueries specifying a derived table must be enclosed in
      parentheses and <emphasis>must</emphasis> be assigned a table
-     alias name (as in <xref linkend="queries-table-aliases">).  For
+     alias name (as in <xref linkend="queries-table-aliases"/>).  For
      example:
 <programlisting>
 FROM (SELECT * FROM table1) AS alias_name
@@ -662,7 +662,7 @@ FROM (VALUES ('anne', 'smith'), ('bob', 'jones'), ('joe', 'blow'))
 </programlisting>
      Again, a table alias is required.  Assigning alias names to the columns
      of the <command>VALUES</command> list is optional, but is good practice.
-     For more information see <xref linkend="queries-values">.
+     For more information see <xref linkend="queries-values"/>.
     </para>
    </sect3>
 
@@ -713,7 +713,7 @@ ROWS FROM( <replaceable>function_call</replaceable> <optional>, ... </optional> 
      The special table function <literal>UNNEST</literal> may be called with
      any number of array parameters, and it returns a corresponding number of
      columns, as if <literal>UNNEST</literal>
-     (<xref linkend="functions-array">) had been called on each parameter
+     (<xref linkend="functions-array"/>) had been called on each parameter
      separately and combined using the <literal>ROWS FROM</literal> construct.
     </para>
 
@@ -795,8 +795,8 @@ SELECT *
       AS t1(proname name, prosrc text)
     WHERE proname LIKE 'bytea%';
 </programlisting>
-     The <xref linkend="contrib-dblink-function"> function
-     (part of the <xref linkend="dblink"> module) executes
+     The <xref linkend="contrib-dblink-function"/> function
+     (part of the <xref linkend="dblink"/> module) executes
      a remote query.  It is declared to return
      <type>record</type> since it might be used for any kind of query.
      The actual column set must be specified in the calling query so
@@ -908,12 +908,12 @@ WHERE pname IS NULL;
 
    <para>
     The syntax of the <xref linkend="sql-where"
-    endterm="sql-where-title"> is
+    endterm="sql-where-title"/> is
 <synopsis>
 WHERE <replaceable>search_condition</replaceable>
 </synopsis>
     where <replaceable>search_condition</replaceable> is any value
-    expression (see <xref linkend="sql-expressions">) that
+    expression (see <xref linkend="sql-expressions"/>) that
     returns a value of type <type>boolean</type>.
    </para>
 
@@ -1014,7 +1014,7 @@ SELECT <replaceable>select_list</replaceable>
 </synopsis>
 
    <para>
-    The <xref linkend="sql-groupby" endterm="sql-groupby-title"> is
+    The <xref linkend="sql-groupby" endterm="sql-groupby-title"/> is
     used to group together those rows in a table that have the same
     values in all the columns listed. The order in which the columns
     are listed does not matter.  The effect is to combine each set
@@ -1066,7 +1066,7 @@ SELECT <replaceable>select_list</replaceable>
     Here <literal>sum</literal> is an aggregate function that
     computes a single value over the entire group.  More information
     about the available aggregate functions can be found in <xref
-    linkend="functions-aggregate">.
+    linkend="functions-aggregate"/>.
    </para>
 
    <tip>
@@ -1074,7 +1074,7 @@ SELECT <replaceable>select_list</replaceable>
      Grouping without aggregate expressions effectively calculates the
      set of distinct values in a column.  This can also be achieved
      using the <literal>DISTINCT</literal> clause (see <xref
-     linkend="queries-distinct">).
+     linkend="queries-distinct"/>).
     </para>
    </tip>
 
@@ -1236,7 +1236,7 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
     References to the grouping columns or expressions are replaced
     by null values in result rows for grouping sets in which those
     columns do not appear.  To distinguish which grouping a particular output
-    row resulted from, see <xref linkend="functions-grouping-table">.
+    row resulted from, see <xref linkend="functions-grouping-table"/>.
    </para>
 
    <para>
@@ -1366,9 +1366,9 @@ GROUP BY GROUPING SETS (
 
    <para>
     If the query contains any window functions (see
-    <xref linkend="tutorial-window">,
-    <xref linkend="functions-window"> and
-    <xref linkend="syntax-window-functions">), these functions are evaluated
+    <xref linkend="tutorial-window"/>,
+    <xref linkend="functions-window"/> and
+    <xref linkend="syntax-window-functions"/>), these functions are evaluated
     after any grouping, aggregation, and <literal>HAVING</literal> filtering is
     performed.  That is, if the query uses any aggregates, <literal>GROUP
     BY</literal>, or <literal>HAVING</literal>, then the rows seen by the window functions
@@ -1430,7 +1430,7 @@ GROUP BY GROUPING SETS (
     The simplest kind of select list is <literal>*</literal> which
     emits all columns that the table expression produces.  Otherwise,
     a select list is a comma-separated list of value expressions (as
-    defined in <xref linkend="sql-expressions">).  For instance, it
+    defined in <xref linkend="sql-expressions"/>).  For instance, it
     could be a list of column names:
 <programlisting>
 SELECT a, b, c FROM ...
@@ -1438,7 +1438,7 @@ SELECT a, b, c FROM ...
      The columns names <literal>a</literal>, <literal>b</literal>, and <literal>c</literal>
      are either the actual names of the columns of tables referenced
      in the <literal>FROM</literal> clause, or the aliases given to them as
-     explained in <xref linkend="queries-table-aliases">.  The name
+     explained in <xref linkend="queries-table-aliases"/>.  The name
      space available in the select list is the same as in the
      <literal>WHERE</literal> clause, unless grouping is used, in which case
      it is the same as in the <literal>HAVING</literal> clause.
@@ -1455,7 +1455,7 @@ SELECT tbl1.a, tbl2.a, tbl1.b FROM ...
 <programlisting>
 SELECT tbl1.*, tbl2.a FROM ...
 </programlisting>
-    See <xref linkend="rowtypes-usage"> for more about
+    See <xref linkend="rowtypes-usage"/> for more about
     the <replaceable>table_name</replaceable><literal>.*</literal> notation.
    </para>
 
@@ -1499,7 +1499,7 @@ SELECT a AS value, b + c AS sum FROM ...
     The <literal>AS</literal> keyword is optional, but only if the new column
     name does not match any
     <productname>PostgreSQL</productname> keyword (see <xref
-    linkend="sql-keywords-appendix">).  To avoid an accidental match to
+    linkend="sql-keywords-appendix"/>).  To avoid an accidental match to
     a keyword, you can double-quote the column name.  For example,
     <literal>VALUE</literal> is a keyword, so this does not work:
 <programlisting>
@@ -1518,7 +1518,7 @@ SELECT a "value", b + c AS sum FROM ...
     <para>
      The naming of output columns here is different from that done in
      the <literal>FROM</literal> clause (see <xref
-     linkend="queries-table-aliases">).  It is possible
+     linkend="queries-table-aliases"/>).  It is possible
      to rename the same column twice, but the name assigned in
      the select list is the one that will be passed on.
     </para>
@@ -1663,7 +1663,7 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
    queries, the two queries must be <quote>union compatible</quote>,
    which means that they return the same number of columns and
    the corresponding columns have compatible data types, as
-   described in <xref linkend="typeconv-union-case">.
+   described in <xref linkend="typeconv-union-case"/>.
   </para>
  </sect1>
 
@@ -1861,7 +1861,7 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
    of columns in the table), and corresponding entries in each list must
    have compatible data types.  The actual data type assigned to each column
    of the result is determined using the same rules as for <literal>UNION</literal>
-   (see <xref linkend="typeconv-union-case">).
+   (see <xref linkend="typeconv-union-case"/>).
   </para>
 
   <para>
@@ -1912,7 +1912,7 @@ SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression
   </para>
 
   <para>
-   For more information see <xref linkend="sql-values">.
+   For more information see <xref linkend="sql-values"/>.
   </para>
 
  </sect1>
@@ -2261,7 +2261,7 @@ SELECT * FROM moved_rows;
 
    <para>
     Data-modifying statements in <literal>WITH</literal> usually have
-    <literal>RETURNING</literal> clauses (see <xref linkend="dml-returning">),
+    <literal>RETURNING</literal> clauses (see <xref linkend="dml-returning"/>),
     as shown in the example above.
     It is the output of the <literal>RETURNING</literal> clause, <emphasis>not</emphasis> the
     target table of the data-modifying statement, that forms the temporary
@@ -2317,7 +2317,7 @@ DELETE FROM parts
     each other and with the main query.  Therefore, when using data-modifying
     statements in <literal>WITH</literal>, the order in which the specified updates
     actually happen is unpredictable.  All the statements are executed with
-    the same <firstterm>snapshot</firstterm> (see <xref linkend="mvcc">), so they
+    the same <firstterm>snapshot</firstterm> (see <xref linkend="mvcc"/>), so they
     cannot <quote>see</quote> one another's effects on the target tables.  This
     alleviates the effects of the unpredictability of the actual order of row
     updates, and means that <literal>RETURNING</literal> data is the only way to

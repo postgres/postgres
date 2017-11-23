@@ -16,11 +16,11 @@
    <productname>PostgreSQL</productname> has a rich set of native data
    types available to users.  Users can add new types to
    <productname>PostgreSQL</productname> using the <xref
-   linkend="sql-createtype"> command.
+   linkend="sql-createtype"/> command.
   </para>
 
   <para>
-   <xref linkend="datatype-table"> shows all the built-in general-purpose data
+   <xref linkend="datatype-table"/> shows all the built-in general-purpose data
    types. Most of the alternative names listed in the
    <quote>Aliases</quote> column are the names used internally by
    <productname>PostgreSQL</productname> for historical reasons.  In
@@ -336,7 +336,7 @@
    <para>
     Numeric types consist of two-, four-, and eight-byte integers,
     four- and eight-byte floating-point numbers, and selectable-precision
-    decimals.  <xref linkend="datatype-numeric-table"> lists the
+    decimals.  <xref linkend="datatype-numeric-table"/> lists the
     available types.
    </para>
 
@@ -424,9 +424,9 @@
 
    <para>
     The syntax of constants for the numeric types is described in
-    <xref linkend="sql-syntax-constants">.  The numeric types have a
+    <xref linkend="sql-syntax-constants"/>.  The numeric types have a
     full set of corresponding arithmetic operators and
-    functions. Refer to <xref linkend="functions"> for more
+    functions. Refer to <xref linkend="functions"/> for more
     information.  The following sections describe the types in detail.
    </para>
 
@@ -559,7 +559,7 @@ NUMERIC
       The maximum allowed precision when explicitly specified in the
       type declaration is 1000; <type>NUMERIC</type> without a specified
       precision is subject to the limits described in <xref
-      linkend="datatype-numeric-table">.
+      linkend="datatype-numeric-table"/>.
      </para>
     </note>
 
@@ -728,7 +728,7 @@ FROM generate_series(-3.5, 3.5, 1) as x;
 
     <note>
      <para>
-      The <xref linkend="guc-extra-float-digits"> setting controls the
+      The <xref linkend="guc-extra-float-digits"/> setting controls the
       number of extra significant digits included when a floating point
       value is converted to text for output.  With the default value of
       <literal>0</literal>, the output is the same on every platform
@@ -841,7 +841,7 @@ FROM generate_series(-3.5, 3.5, 1) as x;
      <para>
       This section describes a PostgreSQL-specific way to create an
       autoincrementing column.  Another way is to use the SQL-standard
-      identity column feature, described at <xref linkend="sql-createtable">.
+      identity column feature, described at <xref linkend="sql-createtable"/>.
      </para>
     </note>
 
@@ -888,7 +888,7 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
         from the sequence is still "used up" even if a row containing that
         value is never successfully inserted into the table column.  This
         may happen, for example, if the inserting transaction rolls back.
-        See <literal>nextval()</literal> in <xref linkend="functions-sequence">
+        See <literal>nextval()</literal> in <xref linkend="functions-sequence"/>
         for details.
       </para>
     </note>
@@ -929,8 +929,8 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
    <para>
     The <type>money</type> type stores a currency amount with a fixed
     fractional precision; see <xref
-    linkend="datatype-money-table">.  The fractional precision is
-    determined by the database's <xref linkend="guc-lc-monetary"> setting.
+    linkend="datatype-money-table"/>.  The fractional precision is
+    determined by the database's <xref linkend="guc-lc-monetary"/> setting.
     The range shown in the table assumes there are two fractional digits.
     Input is accepted in a variety of formats, including integer and
     floating-point literals, as well as typical
@@ -1063,7 +1063,7 @@ SELECT '52093.89'::money::numeric::float8;
     </table>
 
    <para>
-    <xref linkend="datatype-character-table"> shows the
+    <xref linkend="datatype-character-table"/> shows the
     general-purpose character types available in
     <productname>PostgreSQL</productname>.
    </para>
@@ -1166,12 +1166,12 @@ SELECT '52093.89'::money::numeric::float8;
    </tip>
 
    <para>
-    Refer to <xref linkend="sql-syntax-strings"> for information about
-    the syntax of string literals, and to <xref linkend="functions">
+    Refer to <xref linkend="sql-syntax-strings"/> for information about
+    the syntax of string literals, and to <xref linkend="functions"/>
     for information about available operators and functions. The
     database character set determines the character set used to store
     textual values; for more information on character set support,
-    refer to <xref linkend="multibyte">.
+    refer to <xref linkend="multibyte"/>.
    </para>
 
    <example>
@@ -1180,7 +1180,7 @@ SELECT '52093.89'::money::numeric::float8;
 <programlisting>
 CREATE TABLE test1 (a character(4));
 INSERT INTO test1 VALUES ('ok');
-SELECT a, char_length(a) FROM test1; -- <co id="co.datatype-char">
+SELECT a, char_length(a) FROM test1; -- <co id="co.datatype-char"/>
 <computeroutput>
   a   | char_length
 ------+-------------
@@ -1206,7 +1206,7 @@ SELECT b, char_length(b) FROM test2;
      <callout arearefs="co.datatype-char">
       <para>
        The <function>char_length</function> function is discussed in
-       <xref linkend="functions-string">.
+       <xref linkend="functions-string"/>.
       </para>
      </callout>
     </calloutlist>
@@ -1215,7 +1215,7 @@ SELECT b, char_length(b) FROM test2;
    <para>
     There are two other fixed-length character types in
     <productname>PostgreSQL</productname>, shown in <xref
-    linkend="datatype-character-special-table">. The <type>name</type>
+    linkend="datatype-character-special-table"/>. The <type>name</type>
     type exists <emphasis>only</emphasis> for the storage of identifiers
     in the internal system catalogs and is not intended for use by the general user. Its
     length is currently defined as 64 bytes (63 usable characters plus
@@ -1269,7 +1269,7 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     The <type>bytea</type> data type allows storage of binary strings;
-    see <xref linkend="datatype-binary-table">.
+    see <xref linkend="datatype-binary-table"/>.
    </para>
 
    <table id="datatype-binary-table">
@@ -1313,7 +1313,7 @@ SELECT b, char_length(b) FROM test2;
     input and output: <productname>PostgreSQL</productname>'s historical
     <quote>escape</quote> format, and <quote>hex</quote> format.  Both
     of these are always accepted on input.  The output format depends
-    on the configuration parameter <xref linkend="guc-bytea-output">;
+    on the configuration parameter <xref linkend="guc-bytea-output"/>;
     the default is hex.  (Note that the hex format was introduced in
     <productname>PostgreSQL</productname> 9.0; earlier versions and some
     tools don't understand it.)
@@ -1384,7 +1384,7 @@ SELECT E'\\xDEADBEEF';
     literal using escape string syntax).
     Backslash itself (octet value 92) can alternatively be represented by
     double backslashes.
-    <xref linkend="datatype-binary-sqlesc">
+    <xref linkend="datatype-binary-sqlesc"/>
     shows the characters that must be escaped, and gives the alternative
     escape sequences where applicable.
    </para>
@@ -1443,14 +1443,14 @@ SELECT E'\\xDEADBEEF';
     The requirement to escape <emphasis>non-printable</emphasis> octets
     varies depending on locale settings. In some instances you can get away
     with leaving them unescaped. Note that the result in each of the examples
-    in <xref linkend="datatype-binary-sqlesc"> was exactly one octet in
+    in <xref linkend="datatype-binary-sqlesc"/> was exactly one octet in
     length, even though the output representation is sometimes
     more than one character.
    </para>
 
    <para>
     The reason multiple backslashes are required, as shown
-    in <xref linkend="datatype-binary-sqlesc">, is that an input
+    in <xref linkend="datatype-binary-sqlesc"/>, is that an input
     string written as a string literal must pass through two parse
     phases in the <productname>PostgreSQL</productname> server.
     The first backslash of each pair is interpreted as an escape
@@ -1467,7 +1467,7 @@ SELECT E'\\xDEADBEEF';
     to a single octet with a decimal value of 1.  Note that the
     single-quote character is not treated specially by <type>bytea</type>,
     so it follows the normal rules for string literals.  (See also
-    <xref linkend="sql-syntax-strings">.)
+    <xref linkend="sql-syntax-strings"/>.)
    </para>
 
    <para>
@@ -1477,7 +1477,7 @@ SELECT E'\\xDEADBEEF';
     Most <quote>printable</quote> octets are represented by their standard
     representation in the client character set. The octet with decimal
     value 92 (backslash) is doubled in the output.
-    Details are in <xref linkend="datatype-binary-resesc">.
+    Details are in <xref linkend="datatype-binary-resesc"/>.
    </para>
 
    <table id="datatype-binary-resesc">
@@ -1571,12 +1571,12 @@ SELECT E'\\xDEADBEEF';
    <para>
     <productname>PostgreSQL</productname> supports the full set of
     <acronym>SQL</acronym> date and time types, shown in <xref
-    linkend="datatype-datetime-table">.  The operations available
+    linkend="datatype-datetime-table"/>.  The operations available
     on these data types are described in
-    <xref linkend="functions-datetime">.
+    <xref linkend="functions-datetime"/>.
     Dates are counted according to the Gregorian calendar, even in
     years before that calendar was introduced (see <xref
-    linkend="datetime-units-history"> for more information).
+    linkend="datetime-units-history"/> for more information).
    </para>
 
     <table id="datatype-datetime-table">
@@ -1716,7 +1716,7 @@ MINUTE TO SECOND
      traditional <productname>POSTGRES</productname>, and others.
      For some formats, ordering of day, month, and year in date input is
      ambiguous and there is support for specifying the expected
-     ordering of these fields.  Set the <xref linkend="guc-datestyle"> parameter
+     ordering of these fields.  Set the <xref linkend="guc-datestyle"/> parameter
      to <literal>MDY</literal> to select month-day-year interpretation,
      <literal>DMY</literal> to select day-month-year interpretation, or
      <literal>YMD</literal> to select year-month-day interpretation.
@@ -1726,7 +1726,7 @@ MINUTE TO SECOND
      <productname>PostgreSQL</productname> is more flexible in
      handling date/time input than the
      <acronym>SQL</acronym> standard requires.
-     See <xref linkend="datetime-appendix">
+     See <xref linkend="datetime-appendix"/>
      for the exact parsing rules of date/time input and for the
      recognized text fields including months, days of the week, and
      time zones.
@@ -1735,7 +1735,7 @@ MINUTE TO SECOND
     <para>
      Remember that any date or time literal input needs to be enclosed
      in single quotes, like text strings.  Refer to
-     <xref linkend="sql-syntax-constants-generic"> for more
+     <xref linkend="sql-syntax-constants-generic"/> for more
      information.
      <acronym>SQL</acronym> requires the following syntax
 <synopsis>
@@ -1759,7 +1759,7 @@ MINUTE TO SECOND
     </indexterm>
 
     <para>
-     <xref linkend="datatype-datetime-date-table"> shows some possible
+     <xref linkend="datatype-datetime-date-table"/> shows some possible
      inputs for the <type>date</type> type.
     </para>
 
@@ -1872,8 +1872,8 @@ MINUTE TO SECOND
      <para>
       Valid input for these types consists of a time of day followed
       by an optional time zone. (See <xref
-      linkend="datatype-datetime-time-table">
-      and <xref linkend="datatype-timezone-table">.)  If a time zone is
+      linkend="datatype-datetime-time-table"/>
+      and <xref linkend="datatype-timezone-table"/>.)  If a time zone is
       specified in the input for <type>time without time zone</type>,
       it is silently ignored. You can also specify a date but it will
       be ignored, except when you use a time zone name that involves a
@@ -1993,7 +1993,7 @@ MINUTE TO SECOND
       </table>
 
      <para>
-     Refer to <xref linkend="datatype-timezones"> for more information on how
+     Refer to <xref linkend="datatype-timezones"/> for more information on how
      to specify time zones.
     </para>
     </sect3>
@@ -2074,7 +2074,7 @@ January 8 04:05:06 1999 PST
       time zone specified is converted to UTC using the appropriate offset
       for that time zone.  If no time zone is stated in the input string,
       then it is assumed to be in the time zone indicated by the system's
-      <xref linkend="guc-timezone"> parameter, and is converted to UTC using the
+      <xref linkend="guc-timezone"/> parameter, and is converted to UTC using the
       offset for the <varname>timezone</varname> zone.
      </para>
 
@@ -2084,7 +2084,7 @@ January 8 04:05:06 1999 PST
       current <varname>timezone</varname> zone, and displayed as local time in that
       zone.  To see the time in another time zone, either change
       <varname>timezone</varname> or use the <literal>AT TIME ZONE</literal> construct
-      (see <xref linkend="functions-datetime-zoneconvert">).
+      (see <xref linkend="functions-datetime-zoneconvert"/>).
      </para>
 
      <para>
@@ -2112,7 +2112,7 @@ January 8 04:05:06 1999 PST
      <para>
       <productname>PostgreSQL</productname> supports several
       special date/time input values for convenience, as shown in <xref
-      linkend="datatype-datetime-special-table">.  The values
+      linkend="datatype-datetime-special-table"/>.  The values
       <literal>infinity</literal> and <literal>-infinity</literal>
       are specially represented inside the system and will be displayed
       unchanged; but the others are simply notational shorthands
@@ -2186,7 +2186,7 @@ January 8 04:05:06 1999 PST
       <literal>CURRENT_TIMESTAMP</literal>, <literal>LOCALTIME</literal>,
       <literal>LOCALTIMESTAMP</literal>.  The latter four accept an
       optional subsecond precision specification.  (See <xref
-      linkend="functions-datetime-current">.)  Note that these are
+      linkend="functions-datetime-current"/>.)  Note that these are
       SQL functions and are <emphasis>not</emphasis> recognized in data input strings.
      </para>
 
@@ -2218,7 +2218,7 @@ January 8 04:05:06 1999 PST
      <acronym>SQL</acronym> standard requires the use of the ISO 8601
      format.  The name of the <quote>SQL</quote> output format is a
      historical accident.)  <xref
-     linkend="datatype-datetime-output-table"> shows examples of each
+     linkend="datatype-datetime-output-table"/> shows examples of each
      output style.  The output of the <type>date</type> and
      <type>time</type> types is generally only the date or time part
      in accordance with the given examples.  However, the
@@ -2275,9 +2275,9 @@ January 8 04:05:06 1999 PST
      In the <acronym>SQL</acronym> and POSTGRES styles, day appears before
      month if DMY field ordering has been specified, otherwise month appears
      before day.
-     (See <xref linkend="datatype-datetime-input">
+     (See <xref linkend="datatype-datetime-input"/>
      for how this setting also affects interpretation of input values.)
-     <xref linkend="datatype-datetime-output2-table"> shows examples.
+     <xref linkend="datatype-datetime-output2-table"/> shows examples.
     </para>
 
      <table id="datatype-datetime-output2-table">
@@ -2313,7 +2313,7 @@ January 8 04:05:06 1999 PST
     <para>
      The date/time style can be selected by the user using the
      <command>SET datestyle</command> command, the <xref
-     linkend="guc-datestyle"> parameter in the
+     linkend="guc-datestyle"/> parameter in the
      <filename>postgresql.conf</filename> configuration file, or the
      <envar>PGDATESTYLE</envar> environment variable on the server or
      client.
@@ -2321,7 +2321,7 @@ January 8 04:05:06 1999 PST
 
     <para>
      The formatting function <function>to_char</function>
-     (see <xref linkend="functions-formatting">) is also available as
+     (see <xref linkend="functions-formatting"/>) is also available as
      a more flexible way to format date/time output.
     </para>
    </sect2>
@@ -2391,7 +2391,7 @@ January 8 04:05:06 1999 PST
     <para>
      All timezone-aware dates and times are stored internally in
      <acronym>UTC</acronym>.  They are converted to local time
-     in the zone specified by the <xref linkend="guc-timezone"> configuration
+     in the zone specified by the <xref linkend="guc-timezone"/> configuration
      parameter before being displayed to the client.
     </para>
 
@@ -2404,7 +2404,7 @@ January 8 04:05:06 1999 PST
         A full time zone name, for example <literal>America/New_York</literal>.
         The recognized time zone names are listed in the
         <literal>pg_timezone_names</literal> view (see <xref
-        linkend="view-pg-timezone-names">).
+        linkend="view-pg-timezone-names"/>).
         <productname>PostgreSQL</productname> uses the widely-used IANA
         time zone data for this purpose, so the same time zone
         names are also recognized by much other software.
@@ -2417,9 +2417,9 @@ January 8 04:05:06 1999 PST
         contrast to full time zone names which can imply a set of daylight
         savings transition-date rules as well.  The recognized abbreviations
         are listed in the <literal>pg_timezone_abbrevs</literal> view (see <xref
-        linkend="view-pg-timezone-abbrevs">).  You cannot set the
-        configuration parameters <xref linkend="guc-timezone"> or
-        <xref linkend="guc-log-timezone"> to a time
+        linkend="view-pg-timezone-abbrevs"/>).  You cannot set the
+        configuration parameters <xref linkend="guc-timezone"/> or
+        <xref linkend="guc-log-timezone"/> to a time
         zone abbreviation, but you can use abbreviations in
         date/time input values and with the <literal>AT TIME ZONE</literal>
         operator.
@@ -2499,13 +2499,13 @@ January 8 04:05:06 1999 PST
      they are obtained from configuration files stored under
      <filename>.../share/timezone/</filename> and <filename>.../share/timezonesets/</filename>
      of the installation directory
-     (see <xref linkend="datetime-config-files">).
+     (see <xref linkend="datetime-config-files"/>).
     </para>
 
     <para>
-     The <xref linkend="guc-timezone"> configuration parameter can
+     The <xref linkend="guc-timezone"/> configuration parameter can
      be set in the file <filename>postgresql.conf</filename>, or in any of the
-     other standard ways described in <xref linkend="runtime-config">.
+     other standard ways described in <xref linkend="runtime-config"/>.
      There are also some special ways to set it:
 
      <itemizedlist>
@@ -2556,7 +2556,7 @@ January 8 04:05:06 1999 PST
      of the different units are implicitly added with appropriate
      sign accounting.  <literal>ago</literal> negates all the fields.
      This syntax is also used for interval output, if
-     <xref linkend="guc-intervalstyle"> is set to
+     <xref linkend="guc-intervalstyle"/> is set to
      <literal>postgres_verbose</literal>.
     </para>
 
@@ -2582,7 +2582,7 @@ P <replaceable>quantity</replaceable> <replaceable>unit</replaceable> <optional>
       The string must start with a <literal>P</literal>, and may include a
       <literal>T</literal> that introduces the time-of-day units.  The
       available unit abbreviations are given in <xref
-      linkend="datatype-interval-iso8601-units">.  Units may be
+      linkend="datatype-interval-iso8601-units"/>.  Units may be
       omitted, and may be specified in any order, but units smaller than
       a day must appear after <literal>T</literal>.  In particular, the meaning of
       <literal>M</literal> depends on whether it is before or after
@@ -2696,7 +2696,7 @@ P <optional> <replaceable>years</replaceable>-<replaceable>months</replaceable>-
     </para>
 
     <para>
-     <xref linkend="datatype-interval-input-examples"> shows some examples
+     <xref linkend="datatype-interval-input-examples"/> shows some examples
      of valid <type>interval</type> input.
     </para>
 
@@ -2751,7 +2751,7 @@ P <optional> <replaceable>years</replaceable>-<replaceable>months</replaceable>-
      <literal>postgres_verbose</literal>, or <literal>iso_8601</literal>,
      using the command <literal>SET intervalstyle</literal>.
      The default is the <literal>postgres</literal> format.
-     <xref linkend="interval-style-output-table"> shows examples of each
+     <xref linkend="interval-style-output-table"/> shows examples of each
      output style.
     </para>
 
@@ -2768,7 +2768,7 @@ P <optional> <replaceable>years</replaceable>-<replaceable>months</replaceable>-
     <para>
      The output of the <literal>postgres</literal> style matches the output of
      <productname>PostgreSQL</productname> releases prior to 8.4 when the
-     <xref linkend="guc-datestyle"> parameter was set to <literal>ISO</literal>.
+     <xref linkend="guc-datestyle"/> parameter was set to <literal>ISO</literal>.
     </para>
 
     <para>
@@ -2846,7 +2846,7 @@ P <optional> <replaceable>years</replaceable>-<replaceable>months</replaceable>-
    <para>
     <productname>PostgreSQL</productname> provides the
     standard <acronym>SQL</acronym> type <type>boolean</type>;
-    see <xref linkend="datatype-boolean-table">.
+    see <xref linkend="datatype-boolean-table"/>.
     The <type>boolean</type> type can have several states:
     <quote>true</quote>, <quote>false</quote>, and a third state,
     <quote>unknown</quote>, which is represented by the
@@ -2902,7 +2902,7 @@ P <optional> <replaceable>years</replaceable>-<replaceable>months</replaceable>-
    </para>
 
    <para>
-    <xref linkend="datatype-boolean-example"> shows that
+    <xref linkend="datatype-boolean-example"/> shows that
     <type>boolean</type> values are output using the letters
     <literal>t</literal> and <literal>f</literal>.
    </para>
@@ -2954,7 +2954,7 @@ SELECT * FROM test1 WHERE a;
 
     <para>
      Enum types are created using the <xref
-     linkend="sql-createtype"> command,
+     linkend="sql-createtype"/> command,
      for example:
 
 <programlisting>
@@ -3087,7 +3087,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 
    <para>
     Geometric data types represent two-dimensional spatial
-    objects. <xref linkend="datatype-geo-table"> shows the geometric
+    objects. <xref linkend="datatype-geo-table"/> shows the geometric
     types available in <productname>PostgreSQL</productname>.
    </para>
 
@@ -3158,7 +3158,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
    <para>
     A rich set of functions and operators is available to perform various geometric
     operations such as scaling, translation, rotation, and determining
-    intersections.  They are explained in <xref linkend="functions-geometry">.
+    intersections.  They are explained in <xref linkend="functions-geometry"/>.
    </para>
 
    <sect2>
@@ -3410,11 +3410,11 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 
    <para>
     <productname>PostgreSQL</productname> offers data types to store IPv4, IPv6, and MAC
-    addresses, as shown in <xref linkend="datatype-net-types-table">.  It
+    addresses, as shown in <xref linkend="datatype-net-types-table"/>.  It
     is better to use these types instead of plain text types to store
     network addresses, because
     these types offer input error checking and specialized
-    operators and functions (see <xref linkend="functions-net">).
+    operators and functions (see <xref linkend="functions-net"/>).
    </para>
 
     <table tocentry="1" id="datatype-net-types-table">
@@ -3526,7 +3526,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
 
     <para>
-     <xref linkend="datatype-net-cidr-table"> shows some examples.
+     <xref linkend="datatype-net-cidr-table"/> shows some examples.
     </para>
 
      <table id="datatype-net-cidr-table">
@@ -3809,10 +3809,10 @@ SELECT macaddr8_set7bit('08:00:2b:01:02:03');
 
    <para>
     Refer to <xref
-    linkend="sql-syntax-bit-strings"> for information about the syntax
+    linkend="sql-syntax-bit-strings"/> for information about the syntax
     of bit string constants.  Bit-logical operators and string
     manipulation functions are available; see <xref
-    linkend="functions-bitstring">.
+    linkend="functions-bitstring"/>.
    </para>
 
    <example>
@@ -3840,7 +3840,7 @@ SELECT * FROM test;
     A bit string value requires 1 byte for each group of 8 bits, plus
     5 or 8 bytes overhead depending on the length of the string
     (but long values may be compressed or moved out-of-line, as explained
-    in <xref linkend="datatype-character"> for character strings).
+    in <xref linkend="datatype-character"/> for character strings).
    </para>
   </sect1>
 
@@ -3865,8 +3865,8 @@ SELECT * FROM test;
     The <type>tsvector</type> type represents a document in a form optimized
     for text search; the <type>tsquery</type> type similarly represents
     a text query.
-    <xref linkend="textsearch"> provides a detailed explanation of this
-    facility, and <xref linkend="functions-textsearch"> summarizes the
+    <xref linkend="textsearch"/> provides a detailed explanation of this
+    facility, and <xref linkend="functions-textsearch"/> summarizes the
     related functions and operators.
    </para>
 
@@ -3881,7 +3881,7 @@ SELECT * FROM test;
      A <type>tsvector</type> value is a sorted list of distinct
      <firstterm>lexemes</firstterm>, which are words that have been
      <firstterm>normalized</firstterm> to merge different variants of the same word
-     (see <xref linkend="textsearch"> for details).  Sorting and
+     (see <xref linkend="textsearch"/> for details).  Sorting and
      duplicate-elimination are done automatically during input, as shown in
      this example:
 
@@ -3975,7 +3975,7 @@ SELECT to_tsvector('english', 'The Fat Rats');
  'fat':2 'rat':3
 </programlisting>
 
-     Again, see <xref linkend="textsearch"> for more detail.
+     Again, see <xref linkend="textsearch"/> for more detail.
     </para>
 
    </sect2>
@@ -4140,9 +4140,9 @@ a0ee-bc99-9c0b-4ef8-bb6d-6bb9-bd38-0a11
     functions for UUIDs, but the core database does not include any
     function for generating UUIDs, because no single algorithm is well
     suited for every application.  The <xref
-    linkend="uuid-ossp"> module
+    linkend="uuid-ossp"/> module
     provides functions that implement several standard algorithms.
-    The <xref linkend="pgcrypto"> module also provides a generation
+    The <xref linkend="pgcrypto"/> module also provides a generation
     function for random UUIDs.
     Alternatively, UUIDs could be generated by client applications or
     other libraries invoked through a server-side function.
@@ -4161,7 +4161,7 @@ a0ee-bc99-9c0b-4ef8-bb6d-6bb9-bd38-0a11
     advantage over storing XML data in a <type>text</type> field is that it
     checks the input values for well-formedness, and there are support
     functions to perform type-safe operations on it; see <xref
-    linkend="functions-xml">.  Use of this data type requires the
+    linkend="functions-xml"/>.  Use of this data type requires the
     installation to have been built with <command>configure
     --with-libxml</command>.
    </para>
@@ -4267,7 +4267,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
     results to the client (which is the normal mode), PostgreSQL
     converts all character data passed between the client and the
     server and vice versa to the character encoding of the respective
-    end; see <xref linkend="multibyte">.  This includes string
+    end; see <xref linkend="multibyte"/>.  This includes string
     representations of XML values, such as in the above examples.
     This would ordinarily mean that encoding declarations contained in
     XML data can become invalid as the character data is converted
@@ -4408,7 +4408,7 @@ INSERT INTO mytable VALUES(-1);  -- fails
    </para>
 
    <para>
-    For additional information see <xref linkend="sql-createdomain">.
+    For additional information see <xref linkend="sql-createdomain"/>.
    </para>
   </sect1>
 
@@ -4473,14 +4473,14 @@ INSERT INTO mytable VALUES(-1);  -- fails
     <productname>PostgreSQL</productname> as primary keys for various
     system tables.  OIDs are not added to user-created tables, unless
     <literal>WITH OIDS</literal> is specified when the table is
-    created, or the <xref linkend="guc-default-with-oids">
+    created, or the <xref linkend="guc-default-with-oids"/>
     configuration variable is enabled.  Type <type>oid</type> represents
     an object identifier.  There are also several alias types for
     <type>oid</type>: <type>regproc</type>, <type>regprocedure</type>,
     <type>regoper</type>, <type>regoperator</type>, <type>regclass</type>,
     <type>regtype</type>, <type>regrole</type>, <type>regnamespace</type>,
     <type>regconfig</type>, and <type>regdictionary</type>.
-    <xref linkend="datatype-oid-table"> shows an overview.
+    <xref linkend="datatype-oid-table"/> shows an overview.
    </para>
 
    <para>
@@ -4677,7 +4677,7 @@ SELECT * FROM pg_attribute
 
    <para>
     (The system columns are further explained in <xref
-    linkend="ddl-system-columns">.)
+    linkend="ddl-system-columns"/>.)
    </para>
   </sect1>
 
@@ -4795,7 +4795,7 @@ SELECT * FROM pg_attribute
     useful in situations where a function's behavior does not
     correspond to simply taking or returning a value of a specific
     <acronym>SQL</acronym> data type.  <xref
-    linkend="datatype-pseudotypes-table"> lists the existing
+    linkend="datatype-pseudotypes-table"/> lists the existing
     pseudo-types.
    </para>
 
@@ -4818,33 +4818,33 @@ SELECT * FROM pg_attribute
        <row>
         <entry><type>anyelement</type></entry>
         <entry>Indicates that a function accepts any data type
-        (see <xref linkend="extend-types-polymorphic">).</entry>
+        (see <xref linkend="extend-types-polymorphic"/>).</entry>
        </row>
 
        <row>
         <entry><type>anyarray</type></entry>
         <entry>Indicates that a function accepts any array data type
-        (see <xref linkend="extend-types-polymorphic">).</entry>
+        (see <xref linkend="extend-types-polymorphic"/>).</entry>
        </row>
 
        <row>
         <entry><type>anynonarray</type></entry>
         <entry>Indicates that a function accepts any non-array data type
-        (see <xref linkend="extend-types-polymorphic">).</entry>
+        (see <xref linkend="extend-types-polymorphic"/>).</entry>
        </row>
 
        <row>
         <entry><type>anyenum</type></entry>
         <entry>Indicates that a function accepts any enum data type
-        (see <xref linkend="extend-types-polymorphic"> and
-        <xref linkend="datatype-enum">).</entry>
+        (see <xref linkend="extend-types-polymorphic"/> and
+        <xref linkend="datatype-enum"/>).</entry>
        </row>
 
        <row>
         <entry><type>anyrange</type></entry>
         <entry>Indicates that a function accepts any range data type
-        (see <xref linkend="extend-types-polymorphic"> and
-        <xref linkend="rangetypes">).</entry>
+        (see <xref linkend="extend-types-polymorphic"/> and
+        <xref linkend="rangetypes"/>).</entry>
        </row>
 
        <row>

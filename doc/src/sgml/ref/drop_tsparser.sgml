@@ -64,7 +64,7 @@ DROP TEXT SEARCH PARSER [ IF EXISTS ] <replaceable class="parameter">name</repla
      <para>
       Automatically drop objects that depend on the text search parser,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -110,8 +110,8 @@ DROP TEXT SEARCH PARSER my_parser;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsparser"></member>
-   <member><xref linkend="sql-createtsparser"></member>
+   <member><xref linkend="sql-altertsparser"/></member>
+   <member><xref linkend="sql-createtsparser"/></member>
   </simplelist>
  </refsect1>
 

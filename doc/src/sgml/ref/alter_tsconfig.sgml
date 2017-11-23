@@ -182,8 +182,8 @@ ALTER TEXT SEARCH CONFIGURATION my_config
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtsconfig"></member>
-   <member><xref linkend="sql-droptsconfig"></member>
+   <member><xref linkend="sql-createtsconfig"/></member>
+   <member><xref linkend="sql-droptsconfig"/></member>
   </simplelist>
  </refsect1>
 </refentry>

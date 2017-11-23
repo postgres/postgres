@@ -55,7 +55,7 @@ COMMIT [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-rollback"> to
+   Use <xref linkend="sql-rollback"/> to
    abort a transaction.
   </para>
 
@@ -89,8 +89,8 @@ COMMIT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-rollback"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-rollback"/></member>
   </simplelist>
  </refsect1>
 </refentry>

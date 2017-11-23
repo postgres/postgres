@@ -138,7 +138,7 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
       </para>
 
       <para>
-       See also <xref linkend="sql-altercollation"> for how to handle
+       See also <xref linkend="sql-altercollation"/> for how to handle
        collation version mismatches.
       </para>
      </listitem>
@@ -167,13 +167,13 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
   </para>
 
   <para>
-   See <xref linkend="collation-create"> for more information on how to create collations.
+   See <xref linkend="collation-create"/> for more information on how to create collations.
   </para>
 
   <para>
    When using the <literal>libc</literal> collation provider, the locale must
    be applicable to the current database encoding.
-   See <xref linkend="sql-createdatabase"> for the precise rules.
+   See <xref linkend="sql-createdatabase"/> for the precise rules.
   </para>
  </refsect1>
 
@@ -223,8 +223,8 @@ CREATE COLLATION german FROM "de_DE";
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altercollation"></member>
-   <member><xref linkend="sql-dropcollation"></member>
+   <member><xref linkend="sql-altercollation"/></member>
+   <member><xref linkend="sql-dropcollation"/></member>
   </simplelist>
  </refsect1>
 

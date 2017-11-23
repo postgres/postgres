@@ -116,8 +116,8 @@ ALTER USER MAPPING FOR bob SERVER foo OPTIONS (SET password 'public');
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createusermapping"></member>
-   <member><xref linkend="sql-dropusermapping"></member>
+   <member><xref linkend="sql-createusermapping"/></member>
+   <member><xref linkend="sql-dropusermapping"/></member>
   </simplelist>
  </refsect1>
 

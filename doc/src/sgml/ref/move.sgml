@@ -60,7 +60,7 @@ MOVE [ <replaceable class="parameter">direction</replaceable> [ FROM | IN ] ] <r
   <para>
    The parameters for the <command>MOVE</command> command are identical to
    those of the <command>FETCH</command> command; refer to
-   <xref linkend="sql-fetch">
+   <xref linkend="sql-fetch"/>
    for details on syntax and usage.
   </para>
  </refsect1>
@@ -116,9 +116,9 @@ COMMIT WORK;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-close"></member>
-   <member><xref linkend="sql-declare"></member>
-   <member><xref linkend="sql-fetch"></member>
+   <member><xref linkend="sql-close"/></member>
+   <member><xref linkend="sql-declare"/></member>
+   <member><xref linkend="sql-fetch"/></member>
   </simplelist>
  </refsect1>
 </refentry>

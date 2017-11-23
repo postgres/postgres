@@ -27,15 +27,15 @@
   <para>
    There are currently four procedural languages available in the
    standard <productname>PostgreSQL</productname> distribution:
-   <application>PL/pgSQL</application> (<xref linkend="plpgsql">),
-   <application>PL/Tcl</application> (<xref linkend="pltcl">),
-   <application>PL/Perl</application> (<xref linkend="plperl">), and
-   <application>PL/Python</application> (<xref linkend="plpython">).
+   <application>PL/pgSQL</application> (<xref linkend="plpgsql"/>),
+   <application>PL/Tcl</application> (<xref linkend="pltcl"/>),
+   <application>PL/Perl</application> (<xref linkend="plperl"/>), and
+   <application>PL/Python</application> (<xref linkend="plpython"/>).
    There are additional procedural languages available that are not
-   included in the core distribution. <xref linkend="external-projects">
+   included in the core distribution. <xref linkend="external-projects"/>
    has information about finding them. In addition other languages can
    be defined by users; the basics of developing a new procedural
-   language are covered in <xref linkend="plhandler">.
+   language are covered in <xref linkend="plhandler"/>.
   </para>
 
   <sect1 id="xplang-install">
@@ -79,7 +79,7 @@
       The shared object for the language handler must be compiled and
       installed into an appropriate library directory.  This works in the same
       way as building and installing modules with regular user-defined C
-      functions does; see <xref linkend="dfunc">.  Often, the language
+      functions does; see <xref linkend="dfunc"/>.  Often, the language
       handler will depend on an external library that provides the actual
       programming language engine; if so, that must be installed as well.
      </para>
@@ -105,7 +105,7 @@ CREATE FUNCTION <replaceable>handler_function_name</replaceable>()
      <para>
       Optionally, the language handler can provide an <quote>inline</quote>
       handler function that executes anonymous code blocks
-      (<xref linkend="sql-do"> commands)
+      (<xref linkend="sql-do"/> commands)
       written in this language.  If an inline handler function
       is provided by the language, declare it with a command like
 <synopsis>
@@ -165,7 +165,7 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <re
    </procedure>
 
    <para>
-    <xref linkend="xplang-install-example"> shows how the manual
+    <xref linkend="xplang-install-example"/> shows how the manual
     installation procedure would work with the language
     <application>PL/Perl</application>.
    </para>

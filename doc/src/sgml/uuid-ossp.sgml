@@ -17,7 +17,7 @@
   <title><literal>uuid-ossp</literal> Functions</title>
 
   <para>
-   <xref linkend="uuid-ossp-functions"> shows the functions available to
+   <xref linkend="uuid-ossp-functions"/> shows the functions available to
    generate UUIDs.
    The relevant standards ITU-T Rec. X.667, ISO/IEC 9834-8:2005, and RFC
    4122 specify four algorithms for generating UUIDs, identified by the
@@ -64,7 +64,7 @@
         This function generates a version 3 UUID in the given namespace using
         the specified input name.  The namespace should be one of the special
         constants produced by the <function>uuid_ns_*()</function> functions shown
-        in <xref linkend="uuid-ossp-constants">.  (It could be any UUID in theory.)  The name is an identifier
+        in <xref linkend="uuid-ossp-constants"/>.  (It could be any UUID in theory.)  The name is an identifier
         in the selected namespace.
        </para>
 
@@ -186,7 +186,7 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
    <para>
     If you only need randomly-generated (version 4) UUIDs,
     consider using the <function>gen_random_uuid()</function> function
-    from the <xref linkend="pgcrypto"> module instead.
+    from the <xref linkend="pgcrypto"/> module instead.
    </para>
   </note>
  </sect2>

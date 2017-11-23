@@ -91,7 +91,7 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
    actions on a remote host.  Note that if the remote replication slot still
    exists, it should then be dropped manually; otherwise it will continue to
    reserve WAL and might eventually cause the disk to fill up.  See
-   also <xref linkend="logical-replication-subscription-slot">.
+   also <xref linkend="logical-replication-subscription-slot"/>.
   </para>
 
   <para>
@@ -123,8 +123,8 @@ DROP SUBSCRIPTION mysub;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createsubscription"></member>
-   <member><xref linkend="sql-altersubscription"></member>
+   <member><xref linkend="sql-createsubscription"/></member>
+   <member><xref linkend="sql-altersubscription"/></member>
   </simplelist>
  </refsect1>
 </refentry>

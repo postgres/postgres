@@ -144,7 +144,7 @@ CREATE [ OR REPLACE ] TRANSFORM FOR <replaceable>type_name</replaceable> LANGUAG
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-droptransform"> to remove transforms.
+   Use <xref linkend="sql-droptransform"/> to remove transforms.
   </para>
  </refsect1>
 
@@ -201,10 +201,10 @@ CREATE TRANSFORM FOR hstore LANGUAGE plpythonu (
   <title>See Also</title>
 
   <para>
-   <xref linkend="sql-createfunction">,
-   <xref linkend="sql-createlanguage">,
-   <xref linkend="sql-createtype">,
-   <xref linkend="sql-droptransform">
+   <xref linkend="sql-createfunction"/>,
+   <xref linkend="sql-createlanguage"/>,
+   <xref linkend="sql-createtype"/>,
+   <xref linkend="sql-droptransform"/>
   </para>
  </refsect1>
 

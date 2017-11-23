@@ -100,7 +100,7 @@
      Shared hardware functionality is common in network storage devices.
      Using a network file system is also possible, though care must be
      taken that the file system has full <acronym>POSIX</acronym> behavior (see <xref
-     linkend="creating-cluster-nfs">).  One significant limitation of this
+     linkend="creating-cluster-nfs"/>).  One significant limitation of this
      method is that if the shared disk array fails or becomes corrupt, the
      primary and standby servers are both nonfunctional.  Another issue is
      that the standby server should never access the shared storage while
@@ -151,9 +151,9 @@ protocol to make nodes agree on a serializable transactional order.
     </para>
     <para>
      A standby server can be implemented using file-based log shipping
-     (<xref linkend="warm-standby">) or streaming replication (see
-     <xref linkend="streaming-replication">), or a combination of both. For
-     information on hot standby, see <xref linkend="hot-standby">.
+     (<xref linkend="warm-standby"/>) or streaming replication (see
+     <xref linkend="streaming-replication"/>), or a combination of both. For
+     information on hot standby, see <xref linkend="hot-standby"/>.
     </para>
    </listitem>
   </varlistentry>
@@ -169,8 +169,8 @@ protocol to make nodes agree on a serializable transactional order.
      individual tables to be replicated.  Logical replication doesn't require
      a particular server to be designated as a master or a replica but allows
      data to flow in multiple directions.  For more information on logical
-     replication, see <xref linkend="logical-replication">.  Through the
-     logical decoding interface (<xref linkend="logicaldecoding">),
+     replication, see <xref linkend="logical-replication"/>.  Through the
+     logical decoding interface (<xref linkend="logicaldecoding"/>),
      third-party extensions can also provide similar functionality.
     </para>
    </listitem>
@@ -224,8 +224,8 @@ protocol to make nodes agree on a serializable transactional order.
      standby servers via master-standby replication, not by the replication
      middleware.  Care must also be taken that all
      transactions either commit or abort on all servers, perhaps
-     using two-phase commit (<xref linkend="sql-prepare-transaction">
-     and <xref linkend="sql-commit-prepared">).
+     using two-phase commit (<xref linkend="sql-prepare-transaction"/>
+     and <xref linkend="sql-commit-prepared"/>).
      <productname>Pgpool-II</productname> and <productname>Continuent Tungsten</productname>
      are examples of this type of replication.
     </para>
@@ -272,8 +272,8 @@ protocol to make nodes agree on a serializable transactional order.
     <para>
      <productname>PostgreSQL</productname> does not offer this type of replication,
      though <productname>PostgreSQL</productname> two-phase commit (<xref
-     linkend="sql-prepare-transaction"> and <xref
-     linkend="sql-commit-prepared">)
+     linkend="sql-prepare-transaction"/> and <xref
+     linkend="sql-commit-prepared"/>)
      can be used to implement this in application code or middleware.
     </para>
    </listitem>
@@ -295,7 +295,7 @@ protocol to make nodes agree on a serializable transactional order.
  </variablelist>
 
  <para>
-  <xref linkend="high-availability-matrix"> summarizes
+  <xref linkend="high-availability-matrix"/> summarizes
   the capabilities of the various solutions listed above.
  </para>
 
@@ -522,7 +522,7 @@ protocol to make nodes agree on a serializable transactional order.
    varies according to the transaction rate of the primary server.
    Record-based log shipping is more granular and streams WAL changes
    incrementally over a network connection (see <xref
-   linkend="streaming-replication">).
+   linkend="streaming-replication"/>).
   </para>
 
   <para>
@@ -534,7 +534,7 @@ protocol to make nodes agree on a serializable transactional order.
    <varname>archive_timeout</varname> parameter, which can be set as low
    as a few seconds.  However such a low setting will
    substantially increase the bandwidth required for file shipping.
-   Streaming replication (see <xref linkend="streaming-replication">)
+   Streaming replication (see <xref linkend="streaming-replication"/>)
    allows a much smaller window of data loss.
   </para>
 
@@ -547,7 +547,7 @@ protocol to make nodes agree on a serializable transactional order.
    rollforward will take considerably longer, so that technique only
    offers a solution for disaster recovery, not high availability.
    A standby server can also be used for read-only queries, in which case
-   it is called a Hot Standby server. See <xref linkend="hot-standby"> for
+   it is called a Hot Standby server. See <xref linkend="hot-standby"/> for
    more information.
   </para>
 
@@ -585,7 +585,7 @@ protocol to make nodes agree on a serializable transactional order.
     associated with tablespaces will be passed across unmodified, so both
     primary and standby servers must have the same mount paths for
     tablespaces if that feature is used.  Keep in mind that if
-    <xref linkend="sql-createtablespace">
+    <xref linkend="sql-createtablespace"/>
     is executed on the primary, any new mount point needed for it must
     be created on the primary and all standby servers before the command
     is executed. Hardware need not be exactly the same, but experience shows
@@ -618,7 +618,7 @@ protocol to make nodes agree on a serializable transactional order.
    <para>
     In standby mode, the server continuously applies WAL received from the
     master server. The standby server can read WAL from a WAL archive
-    (see <xref linkend="restore-command">) or directly from the master
+    (see <xref linkend="restore-command"/>) or directly from the master
     over a TCP connection (streaming replication). The standby server will
     also attempt to restore any WAL found in the standby cluster's
     <filename>pg_wal</filename> directory. That typically happens after a server
@@ -657,7 +657,7 @@ protocol to make nodes agree on a serializable transactional order.
    <para>
     Set up continuous archiving on the primary to an archive directory
     accessible from the standby, as described
-    in <xref linkend="continuous-archiving">. The archive location should be
+    in <xref linkend="continuous-archiving"/>. The archive location should be
     accessible from the standby even when the master is down, i.e. it should
     reside on the standby server itself or another trusted server, not on
     the master server.
@@ -676,7 +676,7 @@ protocol to make nodes agree on a serializable transactional order.
    </para>
 
    <para>
-    Take a base backup as described in <xref linkend="backup-base-backup">
+    Take a base backup as described in <xref linkend="backup-base-backup"/>
     to bootstrap the standby server.
    </para>
   </sect2>
@@ -686,7 +686,7 @@ protocol to make nodes agree on a serializable transactional order.
 
    <para>
     To set up the standby server, restore the base backup taken from primary
-    server (see <xref linkend="backup-pitr-recovery">). Create a recovery
+    server (see <xref linkend="backup-pitr-recovery"/>). Create a recovery
     command file <filename>recovery.conf</filename> in the standby's cluster data
     directory, and turn on <varname>standby_mode</varname>. Set
     <varname>restore_command</varname> to a simple command to copy files from
@@ -701,7 +701,7 @@ protocol to make nodes agree on a serializable transactional order.
      Do not use pg_standby or similar tools with the built-in standby mode
      described here. <varname>restore_command</varname> should return immediately
      if the file does not exist; the server will retry the command again if
-     necessary. See <xref linkend="log-shipping-alternative">
+     necessary. See <xref linkend="log-shipping-alternative"/>
      for using tools like pg_standby.
     </para>
    </note>
@@ -724,11 +724,11 @@ protocol to make nodes agree on a serializable transactional order.
 
    <para>
     If you're using a WAL archive, its size can be minimized using the <xref
-    linkend="archive-cleanup-command"> parameter to remove files that are no
+    linkend="archive-cleanup-command"/> parameter to remove files that are no
     longer required by the standby server.
     The <application>pg_archivecleanup</application> utility is designed specifically to
     be used with <varname>archive_cleanup_command</varname> in typical single-standby
-    configurations, see <xref linkend="pgarchivecleanup">.
+    configurations, see <xref linkend="pgarchivecleanup"/>.
     Note however, that if you're using the archive for backup purposes, you
     need to retain files needed to recover from at least the latest base
     backup, even if they're no longer needed by the standby.
@@ -768,7 +768,7 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
 
    <para>
     Streaming replication is asynchronous by default
-    (see <xref linkend="synchronous-replication">), in which case there is
+    (see <xref linkend="synchronous-replication"/>), in which case there is
     a small delay between committing a transaction in the primary and the
     changes becoming visible in the standby. This delay is however much
     smaller than with file-based log shipping, typically under one second
@@ -791,27 +791,27 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
 
    <para>
     To use streaming replication, set up a file-based log-shipping standby
-    server as described in <xref linkend="warm-standby">. The step that
+    server as described in <xref linkend="warm-standby"/>. The step that
     turns a file-based log-shipping standby into streaming replication
     standby is setting <varname>primary_conninfo</varname> setting in the
     <filename>recovery.conf</filename> file to point to the primary server. Set
-    <xref linkend="guc-listen-addresses"> and authentication options
+    <xref linkend="guc-listen-addresses"/> and authentication options
     (see <filename>pg_hba.conf</filename>) on the primary so that the standby server
     can connect to the <literal>replication</literal> pseudo-database on the primary
-    server (see <xref linkend="streaming-replication-authentication">).
+    server (see <xref linkend="streaming-replication-authentication"/>).
    </para>
 
    <para>
     On systems that support the keepalive socket option, setting
-    <xref linkend="guc-tcp-keepalives-idle">,
-    <xref linkend="guc-tcp-keepalives-interval"> and
-    <xref linkend="guc-tcp-keepalives-count"> helps the primary promptly
+    <xref linkend="guc-tcp-keepalives-idle"/>,
+    <xref linkend="guc-tcp-keepalives-interval"/> and
+    <xref linkend="guc-tcp-keepalives-count"/> helps the primary promptly
     notice a broken connection.
    </para>
 
    <para>
     Set the maximum number of concurrent connections from the standby servers
-    (see <xref linkend="guc-max-wal-senders"> for details).
+    (see <xref linkend="guc-max-wal-senders"/> for details).
    </para>
 
    <para>
@@ -882,15 +882,15 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      standby. These locations can be retrieved using
      <function>pg_current_wal_lsn</function> on the primary and
      <function>pg_last_wal_receive_lsn</function> on the standby,
-     respectively (see <xref linkend="functions-admin-backup-table"> and
-     <xref linkend="functions-recovery-info-table"> for details).
+     respectively (see <xref linkend="functions-admin-backup-table"/> and
+     <xref linkend="functions-recovery-info-table"/> for details).
      The last WAL receive location in the standby is also displayed in the
      process status of the WAL receiver process, displayed using the
-     <command>ps</command> command (see <xref linkend="monitoring-ps"> for details).
+     <command>ps</command> command (see <xref linkend="monitoring-ps"/> for details).
     </para>
     <para>
      You can retrieve a list of WAL sender processes via the
-     <xref linkend="pg-stat-replication-view"> view. Large differences between
+     <xref linkend="pg-stat-replication-view"/> view. Large differences between
      <function>pg_current_wal_lsn</function> and the view's <literal>sent_lsn</literal> field
      might indicate that the master server is under heavy load, while
      differences between <literal>sent_lsn</literal> and
@@ -899,7 +899,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     </para>
     <para>
      On a hot standby, the status of the WAL receiver process can be retrieved
-     via the <xref linkend="pg-stat-wal-receiver-view"> view.  A large
+     via the <xref linkend="pg-stat-wal-receiver-view"/> view.  A large
      difference between <function>pg_last_wal_replay_lsn</function> and the
      view's <literal>received_lsn</literal> indicates that WAL is being
      received faster than it can be replayed.
@@ -922,9 +922,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
    <para>
     In lieu of using replication slots, it is possible to prevent the removal
-    of old WAL segments using <xref linkend="guc-wal-keep-segments">, or by
+    of old WAL segments using <xref linkend="guc-wal-keep-segments"/>, or by
     storing the segments in an archive using
-    <xref linkend="guc-archive-command">.
+    <xref linkend="guc-archive-command"/>.
     However, these methods often result in retaining more WAL segments than
     required, whereas replication slots retain only the number of segments
     known to be needed.  An advantage of these methods is that they bound
@@ -932,8 +932,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     to do this using replication slots.
    </para>
    <para>
-    Similarly, <xref linkend="guc-hot-standby-feedback">
-    and <xref linkend="guc-vacuum-defer-cleanup-age"> provide protection against
+    Similarly, <xref linkend="guc-hot-standby-feedback"/>
+    and <xref linkend="guc-vacuum-defer-cleanup-age"/> provide protection against
     relevant rows being removed by vacuum, but the former provides no
     protection during any time period when the standby is not connected,
     and the latter often needs to be set to a high value to provide adequate
@@ -952,8 +952,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     </para>
     <para>
      Slots can be created and dropped either via the streaming replication
-     protocol (see <xref linkend="protocol-replication">) or via SQL
-     functions (see <xref linkend="functions-replication">).
+     protocol (see <xref linkend="protocol-replication"/>) or via SQL
+     functions (see <xref linkend="functions-replication"/>).
     </para>
    </sect3>
    <sect3 id="streaming-replication-slots-config">
@@ -1017,7 +1017,7 @@ primary_slot_name = 'node_a_slot'
 
    <para>
     Cascading replication is currently asynchronous. Synchronous replication
-    (see <xref linkend="synchronous-replication">) settings have no effect on
+    (see <xref linkend="synchronous-replication"/>) settings have no effect on
     cascading replication at present.
    </para>
 
@@ -1034,7 +1034,7 @@ primary_slot_name = 'node_a_slot'
    <para>
     To use cascading replication, set up the cascading standby so that it can
     accept replication connections (that is, set
-    <xref linkend="guc-max-wal-senders"> and <xref linkend="guc-hot-standby">,
+    <xref linkend="guc-max-wal-senders"/> and <xref linkend="guc-hot-standby"/>,
     and configure
     <link linkend="auth-pg-hba-conf">host-based authentication</link>).
     You will also need to set <varname>primary_conninfo</varname> in the downstream
@@ -1109,11 +1109,11 @@ primary_slot_name = 'node_a_slot'
    <para>
     Once streaming replication has been configured, configuring synchronous
     replication requires only one additional configuration step:
-    <xref linkend="guc-synchronous-standby-names"> must be set to
+    <xref linkend="guc-synchronous-standby-names"/> must be set to
     a non-empty value.  <varname>synchronous_commit</varname> must also be set to
     <literal>on</literal>, but since this is the default value, typically no change is
-    required.  (See <xref linkend="runtime-config-wal-settings"> and
-    <xref linkend="runtime-config-replication-master">.)
+    required.  (See <xref linkend="runtime-config-wal-settings"/> and
+    <xref linkend="runtime-config-replication-master"/>.)
     This configuration will cause each commit to wait for
     confirmation that the standby has written the commit record to durable
     storage.
@@ -1451,7 +1451,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     and might stay down.  To return to normal operation, a standby server
     must be recreated,
     either on the former primary system when it comes up, or on a third,
-    possibly new, system. The <xref linkend="app-pgrewind"> utility can be
+    possibly new, system. The <xref linkend="app-pgrewind"/> utility can be
     used to speed up this process on large clusters.
     Once complete, the primary and standby can be
     considered to have switched roles. Some people choose to use a third
@@ -1491,7 +1491,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     This was the only option available in versions 8.4 and below. In this
     setup, set <varname>standby_mode</varname> off, because you are implementing
     the polling required for standby operation yourself. See the
-    <xref linkend="pgstandby"> module for a reference
+    <xref linkend="pgstandby"/> module for a reference
     implementation of this.
    </para>
 
@@ -1551,7 +1551,7 @@ if (!triggered)
 
    <para>
     A working example of a waiting <varname>restore_command</varname> is provided
-    in the <xref linkend="pgstandby"> module. It
+    in the <xref linkend="pgstandby"/> module. It
     should be used as a reference on how to correctly implement the logic
     described above. It can also be extended as needed to support specific
     configurations and environments.
@@ -1592,17 +1592,17 @@ if (!triggered)
       <para>
        Set up continuous archiving from the primary to a WAL archive
        directory on the standby server. Ensure that
-       <xref linkend="guc-archive-mode">,
-       <xref linkend="guc-archive-command"> and
-       <xref linkend="guc-archive-timeout">
+       <xref linkend="guc-archive-mode"/>,
+       <xref linkend="guc-archive-command"/> and
+       <xref linkend="guc-archive-timeout"/>
        are set appropriately on the primary
-       (see <xref linkend="backup-archiving-wal">).
+       (see <xref linkend="backup-archiving-wal"/>).
       </para>
      </listitem>
      <listitem>
       <para>
        Make a base backup of the primary server (see <xref
-       linkend="backup-base-backup">), and load this data onto the standby.
+       linkend="backup-base-backup"/>), and load this data onto the standby.
       </para>
      </listitem>
      <listitem>
@@ -1610,7 +1610,7 @@ if (!triggered)
        Begin recovery on the standby server from the local WAL
        archive, using a <filename>recovery.conf</filename> that specifies a
        <varname>restore_command</varname> that waits as described
-       previously (see <xref linkend="backup-pitr-recovery">).
+       previously (see <xref linkend="backup-pitr-recovery"/>).
       </para>
      </listitem>
     </orderedlist>
@@ -1644,7 +1644,7 @@ if (!triggered)
 
    <para>
     An external program can call the <function>pg_walfile_name_offset()</function>
-    function (see <xref linkend="functions-admin">)
+    function (see <xref linkend="functions-admin"/>)
     to find out the file name and the exact byte offset within it of
     the current end of WAL.  It can then access the WAL file directly
     and copy the data from the last known end of WAL through the current end
@@ -1663,7 +1663,7 @@ if (!triggered)
 
    <para>
     Starting with <productname>PostgreSQL</productname> version 9.0, you can use
-    streaming replication (see <xref linkend="streaming-replication">) to
+    streaming replication (see <xref linkend="streaming-replication"/>) to
     achieve the same benefits with less effort.
    </para>
   </sect2>
@@ -1697,7 +1697,7 @@ if (!triggered)
    <title>User's Overview</title>
 
    <para>
-    When the <xref linkend="guc-hot-standby"> parameter is set to true on a
+    When the <xref linkend="guc-hot-standby"/> parameter is set to true on a
     standby server, it will begin accepting connections once the recovery has
     brought the system to a consistent state.  All such connections are
     strictly read-only; not even temporary tables may be written.
@@ -1713,7 +1713,7 @@ if (!triggered)
     made by that transaction will be visible to any new snapshots taken on
     the standby.  Snapshots may be taken at the start of each query or at the
     start of each transaction, depending on the current transaction isolation
-    level.  For more details, see <xref linkend="transaction-iso">.
+    level.  For more details, see <xref linkend="transaction-iso"/>.
    </para>
 
    <para>
@@ -1891,7 +1891,7 @@ if (!triggered)
    <para>
     Users will be able to tell whether their session is read-only by
     issuing <command>SHOW transaction_read_only</command>.  In addition, a set of
-    functions (<xref linkend="functions-recovery-info-table">) allow users to
+    functions (<xref linkend="functions-recovery-info-table"/>) allow users to
     access information about the standby server. These allow you to write
     programs that are aware of the current state of the database. These
     can be used to monitor the progress of recovery, or to allow you to
@@ -1986,8 +1986,8 @@ if (!triggered)
     When a conflicting query is short, it's typically desirable to allow it to
     complete by delaying WAL application for a little bit; but a long delay in
     WAL application is usually not desirable.  So the cancel mechanism has
-    parameters, <xref linkend="guc-max-standby-archive-delay"> and <xref
-    linkend="guc-max-standby-streaming-delay">, that define the maximum
+    parameters, <xref linkend="guc-max-standby-archive-delay"/> and <xref
+    linkend="guc-max-standby-streaming-delay"/>, that define the maximum
     allowed delay in WAL application.  Conflicting queries will be canceled
     once it has taken longer than the relevant delay setting to apply any
     newly-received WAL data.  There are two parameters so that different delay
@@ -2082,7 +2082,7 @@ if (!triggered)
    </para>
 
    <para>
-    Another option is to increase <xref linkend="guc-vacuum-defer-cleanup-age">
+    Another option is to increase <xref linkend="guc-vacuum-defer-cleanup-age"/>
     on the primary server, so that dead rows will not be cleaned up as quickly
     as they normally would be.  This will allow more time for queries to
     execute before they are canceled on the standby, without having to set
@@ -2189,8 +2189,8 @@ LOG:  database system is ready to accept read only connections
 
    <para>
     It is important that the administrator select appropriate settings for
-    <xref linkend="guc-max-standby-archive-delay"> and <xref
-    linkend="guc-max-standby-streaming-delay">.  The best choices vary
+    <xref linkend="guc-max-standby-archive-delay"/> and <xref
+    linkend="guc-max-standby-streaming-delay"/>.  The best choices vary
     depending on business priorities.  For example if the server is primarily
     tasked as a High Availability server, then you will want low delay
     settings, perhaps even zero, though that is a very aggressive setting. If
@@ -2382,23 +2382,23 @@ LOG:  database system is ready to accept read only connections
 
    <para>
     Various parameters have been mentioned above in
-    <xref linkend="hot-standby-conflict"> and
-    <xref linkend="hot-standby-admin">.
+    <xref linkend="hot-standby-conflict"/> and
+    <xref linkend="hot-standby-admin"/>.
    </para>
 
    <para>
-    On the primary, parameters <xref linkend="guc-wal-level"> and
-    <xref linkend="guc-vacuum-defer-cleanup-age"> can be used.
-    <xref linkend="guc-max-standby-archive-delay"> and
-    <xref linkend="guc-max-standby-streaming-delay"> have no effect if set on
+    On the primary, parameters <xref linkend="guc-wal-level"/> and
+    <xref linkend="guc-vacuum-defer-cleanup-age"/> can be used.
+    <xref linkend="guc-max-standby-archive-delay"/> and
+    <xref linkend="guc-max-standby-streaming-delay"/> have no effect if set on
     the primary.
    </para>
 
    <para>
-    On the standby, parameters <xref linkend="guc-hot-standby">,
-    <xref linkend="guc-max-standby-archive-delay"> and
-    <xref linkend="guc-max-standby-streaming-delay"> can be used.
-    <xref linkend="guc-vacuum-defer-cleanup-age"> has no effect
+    On the standby, parameters <xref linkend="guc-hot-standby"/>,
+    <xref linkend="guc-max-standby-archive-delay"/> and
+    <xref linkend="guc-max-standby-streaming-delay"/> can be used.
+    <xref linkend="guc-vacuum-defer-cleanup-age"/> has no effect
     as long as the server remains in standby mode, though it will
     become relevant if the standby becomes primary.
    </para>
@@ -2452,8 +2452,8 @@ LOG:  database system is ready to accept read only connections
    <listitem>
     <para>
      The Serializable transaction isolation level is not yet available in hot
-     standby.  (See <xref linkend="xact-serializable"> and
-     <xref linkend="serializable-consistency"> for details.)
+     standby.  (See <xref linkend="xact-serializable"/> and
+     <xref linkend="serializable-consistency"/> for details.)
      An attempt to set a transaction to the serializable isolation level in
      hot standby mode will generate an error.
     </para>

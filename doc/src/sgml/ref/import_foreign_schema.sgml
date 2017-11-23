@@ -159,8 +159,8 @@ IMPORT FOREIGN SCHEMA foreign_films LIMIT TO (actors, directors)
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createforeigntable"></member>
-   <member><xref linkend="sql-createserver"></member>
+   <member><xref linkend="sql-createforeigntable"/></member>
+   <member><xref linkend="sql-createserver"/></member>
   </simplelist>
  </refsect1>
 </refentry>

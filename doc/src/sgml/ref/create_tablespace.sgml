@@ -54,7 +54,7 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
   <warning>
    <para>
     A tablespace cannot be used independently of the cluster in which it
-    is defined;  see <xref linkend="manage-ag-tablespaces">.
+    is defined;  see <xref linkend="manage-ag-tablespaces"/>.
    </para>
   </warning>
 
@@ -109,9 +109,9 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
         Setting either value for a particular tablespace will override the
         planner's usual estimate of the cost of reading pages from tables in
         that tablespace, as established by the configuration parameters of the
-        same name (see <xref linkend="guc-seq-page-cost">,
-        <xref linkend="guc-random-page-cost">,
-        <xref linkend="guc-effective-io-concurrency">).  This may be useful if
+        same name (see <xref linkend="guc-seq-page-cost"/>,
+        <xref linkend="guc-random-page-cost"/>,
+        <xref linkend="guc-effective-io-concurrency"/>).  This may be useful if
         one tablespace is located on a disk which is faster or slower than the
         remainder of the I/O subsystem.
        </para>
@@ -164,11 +164,11 @@ CREATE TABLESPACE indexspace OWNER genevieve LOCATION '/data/indexes';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdatabase"></member>
-   <member><xref linkend="sql-createtable"></member>
-   <member><xref linkend="sql-createindex"></member>
-   <member><xref linkend="sql-droptablespace"></member>
-   <member><xref linkend="sql-altertablespace"></member>
+   <member><xref linkend="sql-createdatabase"/></member>
+   <member><xref linkend="sql-createtable"/></member>
+   <member><xref linkend="sql-createindex"/></member>
+   <member><xref linkend="sql-droptablespace"/></member>
+   <member><xref linkend="sql-altertablespace"/></member>
   </simplelist>
  </refsect1>
 

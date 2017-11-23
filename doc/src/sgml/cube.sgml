@@ -16,7 +16,7 @@
   <title>Syntax</title>
 
   <para>
-   <xref linkend="cube-repr-table"> shows the valid external
+   <xref linkend="cube-repr-table"/> shows the valid external
    representations for the <type>cube</type>
    type.  <replaceable>x</replaceable>, <replaceable>y</replaceable>, etc. denote
    floating-point numbers.
@@ -106,7 +106,7 @@
   <title>Usage</title>
 
   <para>
-   <xref linkend="cube-operators-table"> shows the operators provided for
+   <xref linkend="cube-operators-table"/> shows the operators provided for
    type <type>cube</type>.
   </para>
 
@@ -268,7 +268,7 @@ SELECT c FROM test ORDER BY c ~&gt; 3 DESC LIMIT 5;
   </para>
 
   <para>
-   <xref linkend="cube-functions-table"> shows the available functions.
+   <xref linkend="cube-functions-table"/> shows the available functions.
   </para>
 
   <table id="cube-functions-table">

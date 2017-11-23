@@ -29,7 +29,7 @@
     special pseudo-type identifies the function as a call handler and
     prevents it from being called directly in SQL commands.
     For more details on C language calling conventions and dynamic loading,
-    see <xref linkend="xfunc-c">.
+    see <xref linkend="xfunc-c"/>.
    </para>
 
    <para>
@@ -144,7 +144,7 @@ plsample_call_handler(PG_FUNCTION_ARGS)
 
    <para>
     After having compiled the handler function into a loadable module
-    (see <xref linkend="dfunc">), the following commands then
+    (see <xref linkend="dfunc"/>), the following commands then
     register the sample procedural language:
 <programlisting>
 CREATE FUNCTION plsample_call_handler() RETURNS language_handler
@@ -162,9 +162,9 @@ CREATE LANGUAGE plsample
     are a <firstterm>validator</firstterm> and an
     <firstterm>inline handler</firstterm>.  A validator can be provided
     to allow language-specific checking to be done during
-    <xref linkend="sql-createfunction">.
+    <xref linkend="sql-createfunction"/>.
     An inline handler can be provided to allow the language to support
-    anonymous code blocks executed via the <xref linkend="sql-do"> command.
+    anonymous code blocks executed via the <xref linkend="sql-do"/> command.
    </para>
 
    <para>
@@ -191,7 +191,7 @@ CREATE LANGUAGE plsample
 
    <para>
     Validator functions should typically honor the <xref
-    linkend="guc-check-function-bodies"> parameter: if it is turned off then
+    linkend="guc-check-function-bodies"/> parameter: if it is turned off then
     any expensive or context-sensitive checking should be skipped.  If the
     language provides for code execution at compilation time, the validator
     must suppress checks that would induce such execution.  In particular,
@@ -230,7 +230,7 @@ CREATE LANGUAGE plsample
     as well as the <command>CREATE LANGUAGE</command> command itself, into
     an <firstterm>extension</firstterm> so that a simple <command>CREATE EXTENSION</command>
     command is sufficient to install the language.  See
-    <xref linkend="extend-extensions"> for information about writing
+    <xref linkend="extend-extensions"/> for information about writing
     extensions.
    </para>
 
@@ -238,7 +238,7 @@ CREATE LANGUAGE plsample
     The procedural languages included in the standard distribution
     are good references when trying to write your own language handler.
     Look into the <filename>src/pl</filename> subdirectory of the source tree.
-    The <xref linkend="sql-createlanguage">
+    The <xref linkend="sql-createlanguage"/>
     reference page also has some useful details.
    </para>
 

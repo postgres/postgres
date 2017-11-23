@@ -58,8 +58,8 @@
 
   <para>
    The functions provided by the <filename>pg_trgm</filename> module
-   are shown in <xref linkend="pgtrgm-func-table">, the operators
-   in <xref linkend="pgtrgm-op-table">.
+   are shown in <xref linkend="pgtrgm-func-table"/>, the operators
+   in <xref linkend="pgtrgm-op-table"/>.
   </para>
 
   <table id="pgtrgm-func-table">

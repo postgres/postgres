@@ -12,7 +12,7 @@
   <para>
    This release contains a variety of fixes from 9.2.23.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <para>
@@ -30,7 +30,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.22,
-    see <xref linkend="release-9-2-22">.
+    see <xref linkend="release-9-2-22"/>.
    </para>
 
   </sect2>
@@ -213,7 +213,7 @@
   <para>
    This release contains a small number of fixes from 9.2.22.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <para>
@@ -231,7 +231,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.22,
-    see <xref linkend="release-9-2-22">.
+    see <xref linkend="release-9-2-22"/>.
    </para>
 
   </sect2>
@@ -382,7 +382,7 @@ CREATE OR REPLACE VIEW table_privileges AS
   <para>
    This release contains a variety of fixes from 9.2.21.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <para>
@@ -405,7 +405,7 @@ CREATE OR REPLACE VIEW table_privileges AS
 
    <para>
     Also, if you are upgrading from a version earlier than 9.2.20,
-    see <xref linkend="release-9-2-20">.
+    see <xref linkend="release-9-2-20"/>.
    </para>
 
   </sect2>
@@ -575,7 +575,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
 
     <listitem>
      <para>
-      Fix code for setting <xref linkend="guc-tcp-keepalives-idle"> on
+      Fix code for setting <xref linkend="guc-tcp-keepalives-idle"/> on
       Solaris (Tom Lane)
      </para>
     </listitem>
@@ -776,7 +776,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
     <listitem>
      <para>
       Fix <application>pg_upgrade</application> to ensure that the ending WAL record
-      does not have <xref linkend="guc-wal-level"> = <literal>minimum</literal>
+      does not have <xref linkend="guc-wal-level"/> = <literal>minimum</literal>
       (Bruce Momjian)
      </para>
 
@@ -848,7 +848,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
   <para>
    This release contains a variety of fixes from 9.2.20.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <para>
@@ -871,7 +871,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
 
    <para>
     Also, if you are upgrading from a version earlier than 9.2.20,
-    see <xref linkend="release-9-2-20">.
+    see <xref linkend="release-9-2-20"/>.
    </para>
 
   </sect2>
@@ -906,7 +906,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
       By itself, this patch will only fix the behavior in newly initdb'd
       databases.  If you wish to apply this change in an existing database,
       follow the corrected procedure shown in the changelog entry for
-      CVE-2017-7547, in <xref linkend="release-9-2-22">.
+      CVE-2017-7547, in <xref linkend="release-9-2-22"/>.
      </para>
     </listitem>
 
@@ -1206,7 +1206,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
       will use the current and historical DST transition dates of
       the <literal>US/Eastern</literal> zone.  If you don't want that, remove
       the <filename>posixrules</filename> file, or replace it with a copy of some
-      other zone file (see <xref linkend="datatype-timezones">).  Note that
+      other zone file (see <xref linkend="datatype-timezones"/>).  Note that
       due to caching, you may need to restart the server to get such changes
       to take effect.
      </para>
@@ -1228,7 +1228,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
   <para>
    This release contains a variety of fixes from 9.2.19.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -1246,7 +1246,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
 
    <para>
     Also, if you are upgrading from a version earlier than 9.2.11,
-    see <xref linkend="release-9-2-11">.
+    see <xref linkend="release-9-2-11"/>.
    </para>
 
   </sect2>
@@ -1281,7 +1281,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
      </para>
 
      <para>
-      Previously, this was skipped when <xref linkend="guc-wal-level">
+      Previously, this was skipped when <xref linkend="guc-wal-level"/>
       = <literal>minimal</literal>, but actually it's necessary even in that case
       to ensure that the unlogged table is properly reset to empty after a
       crash.
@@ -1351,7 +1351,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
 
      <para>
       Previously, non-default settings
-      of <xref linkend="guc-default-tablespace"> could result in broken
+      of <xref linkend="guc-default-tablespace"/> could result in broken
       indexes.
      </para>
     </listitem>
@@ -1640,7 +1640,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
   <para>
    This release contains a variety of fixes from 9.2.18.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -1652,7 +1652,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.11,
-    see <xref linkend="release-9-2-11">.
+    see <xref linkend="release-9-2-11"/>.
    </para>
 
   </sect2>
@@ -1691,7 +1691,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
     <listitem>
      <para>
       Fix <command>EXPLAIN</command> to emit valid XML when
-      <xref linkend="guc-track-io-timing"> is on (Markus Winand)
+      <xref linkend="guc-track-io-timing"/> is on (Markus Winand)
      </para>
 
      <para>
@@ -1906,7 +1906,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
   <para>
    This release contains a variety of fixes from 9.2.17.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -1918,7 +1918,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.11,
-    see <xref linkend="release-9-2-11">.
+    see <xref linkend="release-9-2-11"/>.
    </para>
 
   </sect2>
@@ -2247,7 +2247,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
   <para>
    This release contains a variety of fixes from 9.2.16.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -2259,7 +2259,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.11,
-    see <xref linkend="release-9-2-11">.
+    see <xref linkend="release-9-2-11"/>.
    </para>
 
   </sect2>
@@ -2443,7 +2443,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
   <para>
    This release contains a variety of fixes from 9.2.15.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -2455,7 +2455,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.11,
-    see <xref linkend="release-9-2-11">.
+    see <xref linkend="release-9-2-11"/>.
    </para>
 
   </sect2>
@@ -2649,7 +2649,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
   <para>
    This release contains a variety of fixes from 9.2.14.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -2661,7 +2661,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.11,
-    see <xref linkend="release-9-2-11">.
+    see <xref linkend="release-9-2-11"/>.
    </para>
 
   </sect2>
@@ -3193,7 +3193,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
   <para>
    This release contains a variety of fixes from 9.2.13.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -3205,7 +3205,7 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.11,
-    see <xref linkend="release-9-2-11">.
+    see <xref linkend="release-9-2-11"/>.
    </para>
 
   </sect2>
@@ -3790,7 +3790,7 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
   <para>
    This release contains a small number of fixes from 9.2.12.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -3802,7 +3802,7 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.11,
-    see <xref linkend="release-9-2-11">.
+    see <xref linkend="release-9-2-11"/>.
    </para>
 
   </sect2>
@@ -3858,7 +3858,7 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
   <para>
    This release contains a small number of fixes from 9.2.11.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -3870,7 +3870,7 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.11,
-    see <xref linkend="release-9-2-11">.
+    see <xref linkend="release-9-2-11"/>.
    </para>
 
   </sect2>
@@ -3953,7 +3953,7 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
   <para>
    This release contains a variety of fixes from 9.2.10.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -3971,7 +3971,7 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
 
    <para>
     Also, if you are upgrading from a version earlier than 9.2.10,
-    see <xref linkend="release-9-2-10">.
+    see <xref linkend="release-9-2-10"/>.
    </para>
 
   </sect2>
@@ -4535,7 +4535,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.9.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -4556,7 +4556,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
    <para>
     Also, if you are upgrading from a version earlier than 9.2.9,
-    see <xref linkend="release-9-2-9">.
+    see <xref linkend="release-9-2-9"/>.
    </para>
 
   </sect2>
@@ -5452,7 +5452,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.8.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -5470,7 +5470,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
    <para>
     Also, if you are upgrading from a version earlier than 9.2.6,
-    see <xref linkend="release-9-2-6">.
+    see <xref linkend="release-9-2-6"/>.
    </para>
 
   </sect2>
@@ -5528,7 +5528,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
     <listitem>
      <para>
-      Fix feedback status when <xref linkend="guc-hot-standby-feedback"> is
+      Fix feedback status when <xref linkend="guc-hot-standby-feedback"/> is
       turned off on-the-fly (Simon Riggs)
      </para>
     </listitem>
@@ -5650,7 +5650,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
     <listitem>
      <para>
       Prevent foreign tables from being created with OIDS
-      when <xref linkend="guc-default-with-oids"> is true
+      when <xref linkend="guc-default-with-oids"/> is true
       (Etsuro Fujita)
      </para>
     </listitem>
@@ -5769,7 +5769,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
     <listitem>
      <para>
       On Windows, allow new sessions to absorb values of PGC_BACKEND
-      parameters (such as <xref linkend="guc-log-connections">) from the
+      parameters (such as <xref linkend="guc-log-connections"/>) from the
       configuration file (Amit Kapila)
      </para>
 
@@ -5933,7 +5933,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.7.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -5945,7 +5945,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.6,
-    see <xref linkend="release-9-2-6">.
+    see <xref linkend="release-9-2-6"/>.
    </para>
 
   </sect2>
@@ -6122,7 +6122,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.6.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -6134,7 +6134,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.6,
-    see <xref linkend="release-9-2-6">.
+    see <xref linkend="release-9-2-6"/>.
    </para>
 
   </sect2>
@@ -6729,7 +6729,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.5.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -6747,7 +6747,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
    <para>
     Also, if you are upgrading from a version earlier than 9.2.4,
-    see <xref linkend="release-9-2-4">.
+    see <xref linkend="release-9-2-4"/>.
    </para>
 
   </sect2>
@@ -7066,7 +7066,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.4.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -7078,7 +7078,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.4,
-    see <xref linkend="release-9-2-4">.
+    see <xref linkend="release-9-2-4"/>.
    </para>
 
   </sect2>
@@ -7485,7 +7485,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.3.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -7504,7 +7504,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
    <para>
     Also, if you are upgrading from a version earlier than 9.2.2,
-    see <xref linkend="release-9-2-2">.
+    see <xref linkend="release-9-2-2"/>.
    </para>
 
   </sect2>
@@ -7892,7 +7892,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.2.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -7904,7 +7904,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
    <para>
     However, if you are upgrading from a version earlier than 9.2.2,
-    see <xref linkend="release-9-2-2">.
+    see <xref linkend="release-9-2-2"/>.
    </para>
 
   </sect2>
@@ -8343,7 +8343,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.1.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>
@@ -8361,7 +8361,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
    <para>
     Also, if you are upgrading from version 9.2.0,
-    see <xref linkend="release-9-2-1">.
+    see <xref linkend="release-9-2-1"/>.
    </para>
 
   </sect2>
@@ -9067,7 +9067,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
   <para>
    This release contains a variety of fixes from 9.2.0.
    For information about new features in the 9.2 major release, see
-   <xref linkend="release-9-2">.
+   <xref linkend="release-9-2"/>.
   </para>
 
   <sect2>

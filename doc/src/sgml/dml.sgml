@@ -33,10 +33,10 @@
   </para>
 
   <para>
-   To create a new row, use the <xref linkend="sql-insert">
+   To create a new row, use the <xref linkend="sql-insert"/>
    command.  The command requires the
    table name and column values.  For
-   example, consider the products table from <xref linkend="ddl">:
+   example, consider the products table from <xref linkend="ddl"/>:
 <programlisting>
 CREATE TABLE products (
     product_no integer,
@@ -107,16 +107,16 @@ INSERT INTO products (product_no, name, price)
     WHERE release_date = 'today';
 </programlisting>
    This provides the full power of the SQL query mechanism (<xref
-   linkend="queries">) for computing the rows to be inserted.
+   linkend="queries"/>) for computing the rows to be inserted.
   </para>
 
   <tip>
    <para>
     When inserting a lot of data at the same time, considering using
-    the <xref linkend="sql-copy"> command.
-    It is not as flexible as the <xref linkend="sql-insert">
+    the <xref linkend="sql-copy"/> command.
+    It is not as flexible as the <xref linkend="sql-insert"/>
     command, but is more efficient. Refer
-    to <xref linkend="populate"> for more information on improving
+    to <xref linkend="populate"/> for more information on improving
     bulk loading performance.
    </para>
   </tip>
@@ -141,7 +141,7 @@ INSERT INTO products (product_no, name, price)
   </para>
 
   <para>
-   To update existing rows, use the <xref linkend="sql-update">
+   To update existing rows, use the <xref linkend="sql-update"/>
    command.  This requires
    three pieces of information:
    <orderedlist spacing="compact">
@@ -160,7 +160,7 @@ INSERT INTO products (product_no, name, price)
   </para>
 
   <para>
-   Recall from <xref linkend="ddl"> that SQL does not, in general,
+   Recall from <xref linkend="ddl"/> that SQL does not, in general,
    provide a unique identifier for rows.  Therefore it is not
    always possible to directly specify which row to update.
    Instead, you specify which conditions a row must meet in order to
@@ -203,7 +203,7 @@ UPDATE products SET price = price * 1.10;
    this does not create any ambiguity.  Of course, the
    <literal>WHERE</literal> condition does
    not have to be an equality test.  Many other operators are
-   available (see <xref linkend="functions">).  But the expression
+   available (see <xref linkend="functions"/>).  But the expression
    needs to evaluate to a Boolean result.
   </para>
 
@@ -243,7 +243,7 @@ UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a &gt; 0;
   </para>
 
   <para>
-   You use the <xref linkend="sql-delete">
+   You use the <xref linkend="sql-delete"/>
    command to remove rows; the syntax is very similar to the
    <command>UPDATE</command> command.  For instance, to remove all
    rows from the products table that have a price of 10, use:
@@ -296,7 +296,7 @@ DELETE FROM products;
   <para>
    The allowed contents of a <literal>RETURNING</literal> clause are the same as
    a <command>SELECT</command> command's output list
-   (see <xref linkend="queries-select-lists">).  It can contain column
+   (see <xref linkend="queries-select-lists"/>).  It can contain column
    names of the command's target table, or value expressions using those
    columns.  A common shorthand is <literal>RETURNING *</literal>, which selects
    all columns of the target table in order.
@@ -340,7 +340,7 @@ DELETE FROM products
   </para>
 
   <para>
-   If there are triggers (<xref linkend="triggers">) on the target table,
+   If there are triggers (<xref linkend="triggers"/>) on the target table,
    the data available to <literal>RETURNING</literal> is the row as modified by
    the triggers.  Thus, inspecting columns computed by triggers is another
    common use-case for <literal>RETURNING</literal>.

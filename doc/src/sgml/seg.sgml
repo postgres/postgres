@@ -86,13 +86,13 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
    Optional certainty indicators (<literal>&lt;</literal>,
    <literal>&gt;</literal> or <literal>~</literal>) can be stored as well.
    (Certainty indicators are ignored by all the built-in operators, however.)
-   <xref linkend="seg-repr-table"> gives an overview of allowed
-   representations; <xref linkend="seg-input-examples"> shows some
+   <xref linkend="seg-repr-table"/> gives an overview of allowed
+   representations; <xref linkend="seg-input-examples"/> shows some
    examples.
   </para>
 
   <para>
-   In <xref linkend="seg-repr-table">, <replaceable>x</replaceable>, <replaceable>y</replaceable>, and
+   In <xref linkend="seg-repr-table"/>, <replaceable>x</replaceable>, <replaceable>y</replaceable>, and
    <replaceable>delta</replaceable> denote
    floating-point numbers.  <replaceable>x</replaceable> and <replaceable>y</replaceable>, but
    not <replaceable>delta</replaceable>, can be preceded by a certainty indicator.
@@ -237,7 +237,7 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   <para>
    The <filename>seg</filename> module includes a GiST index operator class for
    <type>seg</type> values.
-   The operators supported by the GiST operator class are shown in <xref linkend="seg-gist-operators">.
+   The operators supported by the GiST operator class are shown in <xref linkend="seg-gist-operators"/>.
   </para>
 
   <table id="seg-gist-operators">

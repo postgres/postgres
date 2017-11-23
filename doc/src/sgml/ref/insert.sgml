@@ -78,7 +78,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
    <literal>ON CONFLICT</literal> can be used to specify an alternative
    action to raising a unique constraint or exclusion constraint
    violation error. (See <xref linkend="sql-on-conflict"
-   endterm="sql-on-conflict-title"> below.)
+   endterm="sql-on-conflict-title"/> below.)
   </para>
 
   <para>
@@ -145,7 +145,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
        <para>
         The <literal>WITH</literal> clause allows you to specify one or more
         subqueries that can be referenced by name in the <command>INSERT</command>
-        query. See <xref linkend="queries-with"> and <xref linkend="sql-select">
+        query. See <xref linkend="queries-with"/> and <xref linkend="sql-select"/>
         for details.
        </para>
        <para>
@@ -270,7 +270,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
        <para>
         A query (<command>SELECT</command> statement) that supplies the
         rows to be inserted.  Refer to the
-        <xref linkend="sql-select">
+        <xref linkend="sql-select"/>
         statement for a description of the syntax.
        </para>
       </listitem>
@@ -754,7 +754,7 @@ INSERT INTO distributors (did, dname) VALUES (10, 'Conrad International')
   <para>
    Possible limitations of the <replaceable
    class="parameter">query</replaceable> clause are documented under
-   <xref linkend="sql-select">.
+   <xref linkend="sql-select"/>.
   </para>
  </refsect1>
 </refentry>

@@ -188,7 +188,7 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
        </para>
 
        <para>
-        See <xref linkend="sql-set"> and <xref linkend="runtime-config">
+        See <xref linkend="sql-set"/> and <xref linkend="runtime-config"/>
         for more information about allowed parameter names
         and values.
        </para>
@@ -203,7 +203,7 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
   <para>
    It is also possible to tie a session default to a specific role
    rather than to a database; see
-   <xref linkend="sql-alterrole">.
+   <xref linkend="sql-alterrole"/>.
    Role-specific settings override database-specific
    ones if there is a conflict.
   </para>
@@ -234,10 +234,10 @@ ALTER DATABASE test SET enable_indexscan TO off;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdatabase"></member>
-   <member><xref linkend="sql-dropdatabase"></member>
-   <member><xref linkend="sql-set"></member>
-   <member><xref linkend="sql-createtablespace"></member>
+   <member><xref linkend="sql-createdatabase"/></member>
+   <member><xref linkend="sql-dropdatabase"/></member>
+   <member><xref linkend="sql-set"/></member>
+   <member><xref linkend="sql-createtablespace"/></member>
   </simplelist>
  </refsect1>
 </refentry>

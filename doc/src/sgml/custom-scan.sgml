@@ -123,7 +123,7 @@ Plan *(*PlanCustomPath) (PlannerInfo *root,
 </programlisting>
     Convert a custom path to a finished plan.  The return value will generally
     be a <literal>CustomScan</literal> object, which the callback must allocate and
-    initialize.  See <xref linkend="custom-scan-plan"> for more details.
+    initialize.  See <xref linkend="custom-scan-plan"/> for more details.
    </para>
   </sect2>
  </sect1>

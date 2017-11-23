@@ -35,8 +35,8 @@ PostgreSQL documentation
 
   <para>
    It creates a replication-mode connection, so it is subject to the same
-   constraints as <xref linkend="app-pgreceivewal">, plus those for logical
-   replication (see <xref linkend="logicaldecoding">).
+   constraints as <xref linkend="app-pgreceivewal"/>, plus those for logical
+   replication (see <xref linkend="logicaldecoding"/>).
   </para>
 
   <para>
@@ -182,8 +182,8 @@ PostgreSQL documentation
        <para>
         In <option>--start</option> mode, start replication from the given
         LSN.  For details on the effect of this, see the documentation
-        in <xref linkend="logicaldecoding">
-        and <xref linkend="protocol-replication">. Ignored in other modes.
+        in <xref linkend="logicaldecoding"/>
+        and <xref linkend="protocol-replication"/>. Ignored in other modes.
        </para>
       </listitem>
      </varlistentry>
@@ -226,7 +226,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         When creating a slot, use the specified logical decoding output
-        plugin. See <xref linkend="logicaldecoding">. This option has no
+        plugin. See <xref linkend="logicaldecoding"/>. This option has no
         effect if the slot already exists.
        </para>
       </listitem>
@@ -238,7 +238,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option has the same effect as the option of the same name
-        in <xref linkend="app-pgreceivewal">.  See the description there.
+        in <xref linkend="app-pgreceivewal"/>.  See the description there.
        </para>
       </listitem>
      </varlistentry>
@@ -279,7 +279,7 @@ PostgreSQL documentation
         <para>
          The database to connect to.  See the description of the actions for
          what this means in detail.  This can be a <application>libpq</application> connection string;
-         see <xref linkend="libpq-connstring"> for more information.  Defaults
+         see <xref linkend="libpq-connstring"/> for more information.  Defaults
          to user name.
         </para>
        </listitem>
@@ -395,7 +395,7 @@ PostgreSQL documentation
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
  </refsect1>
 
@@ -403,7 +403,7 @@ PostgreSQL documentation
   <title>Examples</title>
 
   <para>
-   See <xref linkend="logicaldecoding-example"> for an example.
+   See <xref linkend="logicaldecoding-example"/> for an example.
   </para>
  </refsect1>
 
@@ -411,7 +411,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-pgreceivewal"></member>
+   <member><xref linkend="app-pgreceivewal"/></member>
   </simplelist>
  </refsect1>
 </refentry>

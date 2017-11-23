@@ -260,7 +260,7 @@ ROLLBACK;
     The command's result is a textual description of the plan selected
     for the <replaceable class="parameter">statement</replaceable>,
     optionally annotated with execution statistics.
-    <xref linkend="using-explain"> describes the information provided.
+    <xref linkend="using-explain"/> describes the information provided.
    </para>
  </refsect1>
 
@@ -276,7 +276,7 @@ ROLLBACK;
    the <link linkend="autovacuum">autovacuum daemon</link> will take care
    of that automatically.  But if a table has recently had substantial
    changes in its contents, you might need to do a manual
-   <xref linkend="sql-analyze"> rather than wait for autovacuum to catch up
+   <xref linkend="sql-analyze"/> rather than wait for autovacuum to catch up
    with the changes.
   </para>
 
@@ -450,7 +450,7 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-analyze"></member>
+   <member><xref linkend="sql-analyze"/></member>
   </simplelist>
  </refsect1>
 </refentry>

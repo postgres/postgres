@@ -13,7 +13,7 @@
   files in the server's file system, or to execute programs on the server
   and read their output.  The data file or program output must be in a format
   that can be read by <command>COPY FROM</command>;
-  see <xref linkend="sql-copy"> for details.
+  see <xref linkend="sql-copy"/> for details.
   Access to data files is currently read-only.
  </para>
 

@@ -102,8 +102,8 @@ DROP USER MAPPING IF EXISTS FOR bob SERVER foo;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createusermapping"></member>
-   <member><xref linkend="sql-alterusermapping"></member>
+   <member><xref linkend="sql-createusermapping"/></member>
+   <member><xref linkend="sql-alterusermapping"/></member>
   </simplelist>
  </refsect1>
 

@@ -168,7 +168,7 @@ NOTIFY <replaceable class="parameter">channel</replaceable> [ , <replaceable cla
   <para>
    The function <function>pg_notification_queue_usage</function> returns the
    fraction of the queue that is currently occupied by pending notifications.
-   See <xref linkend="functions-info"> for more information.
+   See <xref linkend="functions-info"/> for more information.
   </para>
   <para>
    A transaction that has executed <command>NOTIFY</command> cannot be
@@ -226,8 +226,8 @@ Asynchronous notification "foo" with payload "payload" received from server proc
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-listen"></member>
-   <member><xref linkend="sql-unlisten"></member>
+   <member><xref linkend="sql-listen"/></member>
+   <member><xref linkend="sql-unlisten"/></member>
   </simplelist>
  </refsect1>
 </refentry>

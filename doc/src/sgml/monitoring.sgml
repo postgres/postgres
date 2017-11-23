@@ -27,8 +27,8 @@
    <command>ps</command>, <command>top</command>, <command>iostat</command>, and <command>vmstat</command>.
    Also, once one has identified a
    poorly-performing query, further investigation might be needed using
-   <productname>PostgreSQL</productname>'s <xref linkend="sql-explain"> command.
-   <xref linkend="using-explain"> discusses <command>EXPLAIN</command>
+   <productname>PostgreSQL</productname>'s <xref linkend="sql-explain"/> command.
+   <xref linkend="using-explain"/> discusses <command>EXPLAIN</command>
    and other methods for understanding the behavior of an individual
    query.
   </para>
@@ -92,7 +92,7 @@ postgres: <replaceable>user</replaceable> <replaceable>database</replaceable> <r
   </para>
 
   <para>
-   If <xref linkend="guc-cluster-name"> has been configured the
+   If <xref linkend="guc-cluster-name"/> has been configured the
    cluster name will also be shown in <command>ps</command> output:
 <screen>
 $ psql -c 'SHOW cluster_name'
@@ -108,7 +108,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </para>
 
   <para>
-   If you have turned off <xref linkend="guc-update-process-title"> then the
+   If you have turned off <xref linkend="guc-update-process-title"/> then the
    activity indicator is not updated; the process title is set only once
    when a new process is launched.  On some platforms this saves a measurable
    amount of per-command overhead;  on others it's insignificant.
@@ -161,27 +161,27 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    Since collection of statistics adds some overhead to query execution,
    the system can be configured to collect or not collect information.
    This is controlled by configuration parameters that are normally set in
-   <filename>postgresql.conf</filename>.  (See <xref linkend="runtime-config"> for
+   <filename>postgresql.conf</filename>.  (See <xref linkend="runtime-config"/> for
    details about setting configuration parameters.)
   </para>
 
   <para>
-   The parameter <xref linkend="guc-track-activities"> enables monitoring
+   The parameter <xref linkend="guc-track-activities"/> enables monitoring
    of the current command being executed by any server process.
   </para>
 
   <para>
-   The parameter <xref linkend="guc-track-counts"> controls whether
+   The parameter <xref linkend="guc-track-counts"/> controls whether
    statistics are collected about table and index accesses.
   </para>
 
   <para>
-   The parameter <xref linkend="guc-track-functions"> enables tracking of
+   The parameter <xref linkend="guc-track-functions"/> enables tracking of
    usage of user-defined functions.
   </para>
 
   <para>
-   The parameter <xref linkend="guc-track-io-timing"> enables monitoring
+   The parameter <xref linkend="guc-track-io-timing"/> enables monitoring
    of block read and write times.
   </para>
 
@@ -189,7 +189,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    Normally these parameters are set in <filename>postgresql.conf</filename> so
    that they apply to all server processes, but it is possible to turn
    them on or off in individual sessions using the <xref
-   linkend="sql-set"> command. (To prevent
+   linkend="sql-set"/> command. (To prevent
    ordinary users from hiding their activity from the administrator,
    only superusers are allowed to change these parameters with
    <command>SET</command>.)
@@ -199,7 +199,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    The statistics collector transmits the collected information to other
    <productname>PostgreSQL</productname> processes through temporary files.
    These files are stored in the directory named by the
-   <xref linkend="guc-stats-temp-directory"> parameter,
+   <xref linkend="guc-stats-temp-directory"/> parameter,
    <filename>pg_stat_tmp</filename> by default.
    For better performance, <varname>stats_temp_directory</varname> can be
    pointed at a RAM-based file system, decreasing physical I/O requirements.
@@ -217,13 +217,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
   <para>
    Several predefined views, listed in <xref
-   linkend="monitoring-stats-dynamic-views-table">, are available to show
+   linkend="monitoring-stats-dynamic-views-table"/>, are available to show
    the current state of the system. There are also several other
    views, listed in <xref
-   linkend="monitoring-stats-views-table">, available to show the results
+   linkend="monitoring-stats-views-table"/>, available to show the results
    of statistics collection.  Alternatively, one can
    build custom views using the underlying statistics functions, as discussed
-   in <xref linkend="monitoring-stats-functions">.
+   in <xref linkend="monitoring-stats-functions"/>.
   </para>
 
   <para>
@@ -288,7 +288,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row per server process, showing information related to
        the current activity of that process, such as state and current query.
-       See <xref linkend="pg-stat-activity-view"> for details.
+       See <xref linkend="pg-stat-activity-view"/> for details.
       </entry>
      </row>
 
@@ -296,7 +296,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_replication</structname><indexterm><primary>pg_stat_replication</primary></indexterm></entry>
       <entry>One row per WAL sender process, showing statistics about
        replication to that sender's connected standby server.
-       See <xref linkend="pg-stat-replication-view"> for details.
+       See <xref linkend="pg-stat-replication-view"/> for details.
       </entry>
      </row>
 
@@ -304,7 +304,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_wal_receiver</structname><indexterm><primary>pg_stat_wal_receiver</primary></indexterm></entry>
       <entry>Only one row, showing statistics about the WAL receiver from
        that receiver's connected server.
-       See <xref linkend="pg-stat-wal-receiver-view"> for details.
+       See <xref linkend="pg-stat-wal-receiver-view"/> for details.
       </entry>
      </row>
 
@@ -312,7 +312,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_subscription</structname><indexterm><primary>pg_stat_subscription</primary></indexterm></entry>
       <entry>At least one row per subscription, showing information about
        the subscription workers.
-       See <xref linkend="pg-stat-subscription"> for details.
+       See <xref linkend="pg-stat-subscription"/> for details.
       </entry>
      </row>
 
@@ -320,7 +320,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_ssl</structname><indexterm><primary>pg_stat_ssl</primary></indexterm></entry>
       <entry>One row per connection (regular and replication), showing information about
        SSL used on this connection.
-       See <xref linkend="pg-stat-ssl-view"> for details.
+       See <xref linkend="pg-stat-ssl-view"/> for details.
       </entry>
      </row>
 
@@ -328,7 +328,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_progress_vacuum</structname><indexterm><primary>pg_stat_progress_vacuum</primary></indexterm></entry>
       <entry>One row for each backend (including autovacuum worker processes) running
        <command>VACUUM</command>, showing current progress.
-       See <xref linkend='vacuum-progress-reporting'>.
+       See <xref linkend='vacuum-progress-reporting'/>.
       </entry>
      </row>
 
@@ -352,7 +352,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_archiver</structname><indexterm><primary>pg_stat_archiver</primary></indexterm></entry>
       <entry>One row only, showing statistics about the
        WAL archiver process's activity. See
-       <xref linkend="pg-stat-archiver-view"> for details.
+       <xref linkend="pg-stat-archiver-view"/> for details.
       </entry>
      </row>
 
@@ -360,14 +360,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_bgwriter</structname><indexterm><primary>pg_stat_bgwriter</primary></indexterm></entry>
       <entry>One row only, showing statistics about the
        background writer process's activity. See
-       <xref linkend="pg-stat-bgwriter-view"> for details.
+       <xref linkend="pg-stat-bgwriter-view"/> for details.
      </entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_database</structname><indexterm><primary>pg_stat_database</primary></indexterm></entry>
       <entry>One row per database, showing database-wide statistics. See
-       <xref linkend="pg-stat-database-view"> for details.
+       <xref linkend="pg-stat-database-view"/> for details.
       </entry>
      </row>
 
@@ -376,7 +376,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row per database, showing database-wide statistics about
        query cancels due to conflict with recovery on standby servers.
-       See <xref linkend="pg-stat-database-conflicts-view"> for details.
+       See <xref linkend="pg-stat-database-conflicts-view"/> for details.
       </entry>
      </row>
 
@@ -385,7 +385,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each table in the current database, showing statistics
        about accesses to that specific table.
-       See <xref linkend="pg-stat-all-tables-view"> for details.
+       See <xref linkend="pg-stat-all-tables-view"/> for details.
       </entry>
      </row>
 
@@ -427,7 +427,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each index in the current database, showing statistics
        about accesses to that specific index.
-       See <xref linkend="pg-stat-all-indexes-view"> for details.
+       See <xref linkend="pg-stat-all-indexes-view"/> for details.
       </entry>
      </row>
 
@@ -448,7 +448,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each table in the current database, showing statistics
        about I/O on that specific table.
-       See <xref linkend="pg-statio-all-tables-view"> for details.
+       See <xref linkend="pg-statio-all-tables-view"/> for details.
       </entry>
      </row>
 
@@ -469,7 +469,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each index in the current database,
        showing statistics about I/O on that specific index.
-       See <xref linkend="pg-statio-all-indexes-view"> for details.
+       See <xref linkend="pg-statio-all-indexes-view"/> for details.
       </entry>
      </row>
 
@@ -490,7 +490,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry>
        One row for each sequence in the current database,
        showing statistics about I/O on that specific sequence.
-       See <xref linkend="pg-statio-all-sequences-view"> for details.
+       See <xref linkend="pg-statio-all-sequences-view"/> for details.
      </entry>
      </row>
 
@@ -512,7 +512,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each tracked function, showing statistics
        about executions of that function. See
-       <xref linkend="pg-stat-user-functions-view"> for details.
+       <xref linkend="pg-stat-user-functions-view"/> for details.
       </entry>
      </row>
 
@@ -609,7 +609,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry>Host name of the connected client, as reported by a
       reverse DNS lookup of <structfield>client_addr</structfield>. This field will
       only be non-null for IP connections, and only when <xref
-      linkend="guc-log-hostname"> is enabled.
+      linkend="guc-log-hostname"/> is enabled.
      </entry>
     </row>
     <row>
@@ -731,7 +731,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry><structfield>wait_event</structfield></entry>
      <entry><type>text</type></entry>
      <entry>Wait event name if backend is currently waiting, otherwise NULL.
-     See <xref linkend="wait-event-table"> for details.
+     See <xref linkend="wait-event-table"/> for details.
      </entry>
     </row>
     <row>
@@ -772,7 +772,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <listitem>
            <para>
            <literal>disabled</literal>: This state is reported if <xref
-           linkend="guc-track-activities"> is disabled in this backend.
+           linkend="guc-track-activities"/> is disabled in this backend.
           </para>
          </listitem>
        </itemizedlist>
@@ -796,7 +796,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       currently executing query. In all other states, it shows the last query
       that was executed. By default the query text is truncated at 1024
       characters; this value can be changed via the parameter
-      <xref linkend="guc-track-activity-query-size">.
+      <xref linkend="guc-track-activity-query-size"/>.
      </entry>
     </row>
     <row>
@@ -1683,7 +1683,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry>Host name of the connected client, as reported by a
       reverse DNS lookup of <structfield>client_addr</structfield>. This field will
       only be non-null for IP connections, and only when <xref
-      linkend="guc-log-hostname"> is enabled.
+      linkend="guc-log-hostname"/> is enabled.
      </entry>
     </row>
     <row>
@@ -1704,7 +1704,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry><structfield>backend_xmin</structfield></entry>
      <entry><type>xid</type></entry>
      <entry>This standby's <literal>xmin</literal> horizon reported
-     by <xref linkend="guc-hot-standby-feedback">.</entry>
+     by <xref linkend="guc-hot-standby-feedback"/>.</entry>
     </row>
     <row>
      <entry><structfield>state</structfield></entry>
@@ -2347,7 +2347,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry><type>bigint</type></entry>
      <entry>Number of queries canceled due to conflicts with recovery
       in this database. (Conflicts occur only on standby servers; see
-      <xref linkend="pg-stat-database-conflicts-view"> for details.)
+      <xref linkend="pg-stat-database-conflicts-view"/> for details.)
      </entry>
     </row>
     <row>
@@ -2356,7 +2356,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry>Number of temporary files created by queries in this database.
       All temporary files are counted, regardless of why the temporary file
       was created (e.g., sorting or hashing), and regardless of the
-      <xref linkend="guc-log-temp-files"> setting.
+      <xref linkend="guc-log-temp-files"/> setting.
      </entry>
     </row>
     <row>
@@ -2365,7 +2365,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry>Total amount of data written to temporary files by queries in
       this database. All temporary files are counted, regardless of why
       the temporary file was created, and
-      regardless of the <xref linkend="guc-log-temp-files"> setting.
+      regardless of the <xref linkend="guc-log-temp-files"/> setting.
      </entry>
     </row>
     <row>
@@ -2942,7 +2942,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
   <para>
    The <structname>pg_stat_user_functions</structname> view will contain
    one row for each tracked function, showing statistics about executions of
-   that function.  The <xref linkend="guc-track-functions"> parameter
+   that function.  The <xref linkend="guc-track-functions"/> parameter
    controls exactly which functions are tracked.
   </para>
 
@@ -2967,7 +2967,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <para>
    Additional functions related to statistics collection are listed in <xref
-   linkend="monitoring-stats-funcs-table">.
+   linkend="monitoring-stats-funcs-table"/>.
   </para>
 
   <table id="monitoring-stats-funcs-table">
@@ -3074,7 +3074,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    Sometimes it may be more convenient to obtain just a subset of this
    information.  In such cases, an older set of per-backend statistics
    access functions can be used; these are shown in <xref
-   linkend="monitoring-stats-backend-funcs-table">.
+   linkend="monitoring-stats-backend-funcs-table"/>.
    These access functions use a backend ID number, which ranges from one
    to the number of currently active backends.
    The function <function>pg_stat_get_backend_idset</function> provides a
@@ -3162,7 +3162,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        <entry><literal><function>pg_stat_get_backend_wait_event_type(integer)</function></literal></entry>
        <entry><type>text</type></entry>
         <entry>Wait event type name if backend is currently waiting, otherwise NULL.
-        See <xref linkend="wait-event-table"> for details.
+        See <xref linkend="wait-event-table"/> for details.
         </entry>
       </row>
 
@@ -3170,7 +3170,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <entry><literal><function>pg_stat_get_backend_wait_event(integer)</function></literal></entry>
       <entry><type>text</type></entry>
        <entry>Wait event name if backend is currently waiting, otherwise NULL.
-       See <xref linkend="wait-event-table"> for details.
+       See <xref linkend="wait-event-table"/> for details.
        </entry>
      </row>
 
@@ -3230,9 +3230,9 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    </itemizedlist>
 
    Details of the <structname>pg_locks</structname> view appear in
-   <xref linkend="view-pg-locks">.
+   <xref linkend="view-pg-locks"/>.
    For more information on locking and managing concurrency with
-   <productname>PostgreSQL</productname>, refer to <xref linkend="mvcc">.
+   <productname>PostgreSQL</productname>, refer to <xref linkend="mvcc"/>.
   </para>
  </sect1>
 
@@ -3296,7 +3296,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry><structfield>phase</structfield></entry>
      <entry><type>text</type></entry>
      <entry>
-       Current processing phase of vacuum.  See <xref linkend='vacuum-phases'>.
+       Current processing phase of vacuum.  See <xref linkend='vacuum-phases'/>.
      </entry>
     </row>
     <row>
@@ -3343,7 +3343,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>
       Number of dead tuples that we can store before needing to perform
       an index vacuum cycle, based on
-      <xref linkend="guc-maintenance-work-mem">.
+      <xref linkend="guc-maintenance-work-mem"/>.
      </entry>
     </row>
     <row>
@@ -3390,7 +3390,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        <command>VACUUM</command> is currently vacuuming the indexes.  If a table has
        any indexes, this will happen at least once per vacuum, after the heap
        has been completely scanned.  It may happen multiple times per vacuum
-       if <xref linkend="guc-maintenance-work-mem"> is insufficient to
+       if <xref linkend="guc-maintenance-work-mem"/> is insufficient to
        store the number of dead tuples found.
      </entry>
     </row>
@@ -3478,7 +3478,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    explicitly tell the configure script to make the probes available
    in <productname>PostgreSQL</productname>. To include DTrace support
    specify <option>--enable-dtrace</option> to configure.  See <xref
-   linkend="install-procedure"> for further information.
+   linkend="install-procedure"/> for further information.
   </para>
   </sect2>
 
@@ -3487,8 +3487,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
   <para>
    A number of standard probes are provided in the source code,
-   as shown in <xref linkend="dtrace-probe-point-table">;
-   <xref linkend="typedefs-table">
+   as shown in <xref linkend="dtrace-probe-point-table"/>;
+   <xref linkend="typedefs-table"/>
    shows the types used in the probes.  More probes can certainly be
    added to enhance <productname>PostgreSQL</productname>'s observability.
   </para>
@@ -3752,7 +3752,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid)</literal></entry>
      <entry>Probe that fires when a server process begins to write a dirty
       buffer.  (If this happens often, it implies that
-      <xref linkend="guc-shared-buffers"> is too
+      <xref linkend="guc-shared-buffers"/> is too
       small or the background writer control parameters need adjustment.)
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
@@ -3770,7 +3770,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>Probe that fires when a server process begins to write a
       dirty WAL buffer because no more WAL buffer space is available.
       (If this happens often, it implies that
-      <xref linkend="guc-wal-buffers"> is too small.)</entry>
+      <xref linkend="guc-wal-buffers"/> is too small.)</entry>
     </row>
     <row>
      <entry><literal>wal-buffer-write-dirty-done</literal></entry>

@@ -172,11 +172,11 @@ CREATE FOREIGN DATA WRAPPER mywrapper
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterforeigndatawrapper"></member>
-   <member><xref linkend="sql-dropforeigndatawrapper"></member>
-   <member><xref linkend="sql-createserver"></member>
-   <member><xref linkend="sql-createusermapping"></member>
-   <member><xref linkend="sql-createforeigntable"></member>
+   <member><xref linkend="sql-alterforeigndatawrapper"/></member>
+   <member><xref linkend="sql-dropforeigndatawrapper"/></member>
+   <member><xref linkend="sql-createserver"/></member>
+   <member><xref linkend="sql-createusermapping"/></member>
+   <member><xref linkend="sql-createforeigntable"/></member>
   </simplelist>
  </refsect1>
 

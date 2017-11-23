@@ -10,7 +10,7 @@
  <para>
   The <filename>tsm_system_rows</filename> module provides the table sampling method
   <literal>SYSTEM_ROWS</literal>, which can be used in
-  the <literal>TABLESAMPLE</literal> clause of a <xref linkend="sql-select">
+  the <literal>TABLESAMPLE</literal> clause of a <xref linkend="sql-select"/>
   command.
  </para>
 

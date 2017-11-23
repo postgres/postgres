@@ -22,7 +22,7 @@
    <application>flex</application>, and <application>Perl</application>. These tools are not needed
    to build from a distribution tarball, because the files that these tools
    are used to build are included in the tarball.  Other tool requirements
-   are the same as shown in <xref linkend="install-requirements">.
+   are the same as shown in <xref linkend="install-requirements"/>.
   </para>
 
  <sect1 id="git">

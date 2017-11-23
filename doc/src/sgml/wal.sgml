@@ -35,7 +35,7 @@
    frequently requested disk blocks and combines disk writes. Fortunately,
    all operating systems give applications a way to force writes from
    the buffer cache to disk, and <productname>PostgreSQL</productname> uses those
-   features.  (See the <xref linkend="guc-wal-sync-method"> parameter
+   features.  (See the <xref linkend="guc-wal-sync-method"/> parameter
    to adjust how this is done.)
   </para>
 
@@ -133,7 +133,7 @@
    (<acronym>BBU</acronym>) disk controllers.  In such setups, the synchronize
    command forces all data from the controller cache to the disks,
    eliminating much of the benefit of the BBU.  You can run the
-   <xref linkend="pgtestfsync"> program to see
+   <xref linkend="pgtestfsync"/> program to see
    if you are affected.  If you are affected, the performance benefits
    of the BBU can be regained by turning off write barriers in
    the file system or reconfiguring the disk controller, if that is
@@ -174,7 +174,7 @@
    restore partially-written pages from WAL.  If you have file-system software
    that prevents partial page writes (e.g., ZFS),  you can turn off
    this page imaging by turning off the <xref
-   linkend="guc-full-page-writes"> parameter. Battery-Backed Unit
+   linkend="guc-full-page-writes"/> parameter. Battery-Backed Unit
    (BBU) disk controllers do not prevent partial page writes unless
    they guarantee that data is written to the BBU as full (8kB) pages.
   </para>
@@ -290,7 +290,7 @@
    <para>
     <acronym>WAL</acronym> also makes it possible to support on-line
     backup and point-in-time recovery, as described in <xref
-    linkend="continuous-archiving">.  By archiving the WAL data we can support
+    linkend="continuous-archiving"/>.  By archiving the WAL data we can support
     reverting to any time instant covered by the available WAL data:
     we simply install a prior physical backup of the database, and
     replay the WAL log just as far as the desired time.  What's more,
@@ -367,7 +367,7 @@
    transactions running concurrently.  This allows flexible trade-offs
    between performance and certainty of transaction durability.
    The commit mode is controlled by the user-settable parameter
-   <xref linkend="guc-synchronous-commit">, which can be changed in any of
+   <xref linkend="guc-synchronous-commit"/>, which can be changed in any of
    the ways that a configuration parameter can be set.  The mode used for
    any one transaction depends on the value of
    <varname>synchronous_commit</varname> when transaction commit begins.
@@ -390,7 +390,7 @@
    The duration of the
    risk window is limited because a background process (the <quote>WAL
    writer</quote>) flushes unwritten <acronym>WAL</acronym> records to disk
-   every <xref linkend="guc-wal-writer-delay"> milliseconds.
+   every <xref linkend="guc-wal-writer-delay"/> milliseconds.
    The actual maximum duration of the risk window is three times
    <varname>wal_writer_delay</varname> because the WAL writer is
    designed to favor writing whole pages at a time during busy periods.
@@ -405,7 +405,7 @@
 
   <para>
    Asynchronous commit provides behavior different from setting
-   <xref linkend="guc-fsync"> = off.
+   <xref linkend="guc-fsync"/> = off.
    <varname>fsync</varname> is a server-wide
    setting that will alter the behavior of all transactions.  It disables
    all logic within <productname>PostgreSQL</productname> that attempts to synchronize
@@ -419,7 +419,7 @@
   </para>
 
   <para>
-   <xref linkend="guc-commit-delay"> also sounds very similar to
+   <xref linkend="guc-commit-delay"/> also sounds very similar to
    asynchronous commit, but it is actually a synchronous commit method
    (in fact, <varname>commit_delay</varname> is ignored during an
    asynchronous commit).  <varname>commit_delay</varname> causes a delay
@@ -439,7 +439,7 @@
   <para>
    There are several <acronym>WAL</acronym>-related configuration parameters that
    affect database performance. This section explains their use.
-   Consult <xref linkend="runtime-config"> for general information about
+   Consult <xref linkend="runtime-config"/> for general information about
    setting server configuration parameters.
   </para>
 
@@ -472,15 +472,15 @@
   <para>
    The server's checkpointer process automatically performs
    a checkpoint every so often.  A checkpoint is begun every <xref
-   linkend="guc-checkpoint-timeout"> seconds, or if
-   <xref linkend="guc-max-wal-size"> is about to be exceeded,
+   linkend="guc-checkpoint-timeout"/> seconds, or if
+   <xref linkend="guc-max-wal-size"/> is about to be exceeded,
    whichever comes first.
    The default settings are 5 minutes and 1 GB, respectively.
    If no WAL has been written since the previous checkpoint, new checkpoints
    will be skipped even if <varname>checkpoint_timeout</varname> has passed.
    (If WAL archiving is being used and you want to put a lower limit on how
    often files are archived in order to bound potential data loss, you should
-   adjust the <xref linkend="guc-archive-timeout"> parameter rather than the
+   adjust the <xref linkend="guc-archive-timeout"/> parameter rather than the
    checkpoint parameters.)
    It is also possible to force a checkpoint by using the SQL
    command <command>CHECKPOINT</command>.
@@ -492,7 +492,7 @@
    more often. This allows faster after-crash recovery, since less work
    will need to be redone. However, one must balance this against the
    increased cost of flushing dirty data pages more often. If
-   <xref linkend="guc-full-page-writes"> is set (as is the default), there is
+   <xref linkend="guc-full-page-writes"/> is set (as is the default), there is
    another factor to consider. To ensure data page consistency,
    the first modification of a data page after each checkpoint results in
    logging the entire page content. In that case,
@@ -507,7 +507,7 @@
    extra subsequent WAL traffic as discussed above.  It is therefore
    wise to set the checkpointing parameters high enough so that checkpoints
    don't happen too often.  As a simple sanity check on your checkpointing
-   parameters, you can set the <xref linkend="guc-checkpoint-warning">
+   parameters, you can set the <xref linkend="guc-checkpoint-warning"/>
    parameter.  If checkpoints happen closer together than
    <varname>checkpoint_warning</varname> seconds,
    a message will be output to the server log recommending increasing
@@ -523,7 +523,7 @@
    To avoid flooding the I/O system with a burst of page writes,
    writing dirty buffers during a checkpoint is spread over a period of time.
    That period is controlled by
-   <xref linkend="guc-checkpoint-completion-target">, which is
+   <xref linkend="guc-checkpoint-completion-target"/>, which is
    given as a fraction of the checkpoint interval.
    The I/O rate is adjusted so that the checkpoint finishes when the
    given fraction of
@@ -546,14 +546,14 @@
   </para>
 
   <para>
-   On Linux and POSIX platforms <xref linkend="guc-checkpoint-flush-after">
+   On Linux and POSIX platforms <xref linkend="guc-checkpoint-flush-after"/>
    allows to force the OS that pages written by the checkpoint should be
    flushed to disk after a configurable number of bytes.  Otherwise, these
    pages may be kept in the OS's page cache, inducing a stall when
    <literal>fsync</literal> is issued at the end of a checkpoint.  This setting will
    often help to reduce transaction latency, but it also can an adverse effect
    on performance; particularly for workloads that are bigger than
-   <xref linkend="guc-shared-buffers">, but smaller than the OS's page cache.
+   <xref linkend="guc-shared-buffers"/>, but smaller than the OS's page cache.
   </para>
 
   <para>
@@ -578,14 +578,14 @@
 
   <para>
    Independently of <varname>max_wal_size</varname>,
-   <xref linkend="guc-wal-keep-segments"> + 1 most recent WAL files are
+   <xref linkend="guc-wal-keep-segments"/> + 1 most recent WAL files are
    kept at all times. Also, if WAL archiving is used, old segments can not be
    removed or recycled until they are archived. If WAL archiving cannot keep up
    with the pace that WAL is generated, or if <varname>archive_command</varname>
    fails repeatedly, old WAL files will accumulate in <filename>pg_wal</filename>
    until the situation is resolved. A slow or failed standby server that
    uses a replication slot will have the same effect (see
-   <xref linkend="streaming-replication-slots">).
+   <xref linkend="streaming-replication-slots"/>).
   </para>
 
   <para>
@@ -629,21 +629,21 @@
    not occur often enough to prevent <function>XLogInsertRecord</function>
    from having to do writes.  On such systems
    one should increase the number of <acronym>WAL</acronym> buffers by
-   modifying the <xref linkend="guc-wal-buffers"> parameter.  When
-   <xref linkend="guc-full-page-writes"> is set and the system is very busy,
+   modifying the <xref linkend="guc-wal-buffers"/> parameter.  When
+   <xref linkend="guc-full-page-writes"/> is set and the system is very busy,
    setting <varname>wal_buffers</varname> higher will help smooth response times
    during the period immediately following each checkpoint.
   </para>
 
   <para>
-   The <xref linkend="guc-commit-delay"> parameter defines for how many
+   The <xref linkend="guc-commit-delay"/> parameter defines for how many
    microseconds a group commit leader process will sleep after acquiring a
    lock within <function>XLogFlush</function>, while group commit
    followers queue up behind the leader.  This delay allows other server
    processes to add their commit records to the WAL buffers so that all of
    them will be flushed by the leader's eventual sync operation.  No sleep
-   will occur if <xref linkend="guc-fsync"> is not enabled, or if fewer
-   than <xref linkend="guc-commit-siblings"> other sessions are currently
+   will occur if <xref linkend="guc-fsync"/> is not enabled, or if fewer
+   than <xref linkend="guc-commit-siblings"/> other sessions are currently
    in active transactions; this avoids sleeping when it's unlikely that
    any other session will commit soon.  Note that on some platforms, the
    resolution of a sleep request is ten milliseconds, so that any nonzero
@@ -661,7 +661,7 @@
    be chosen intelligently.  The higher that cost is, the more effective
    <varname>commit_delay</varname> is expected to be in increasing
    transaction throughput, up to a point.  The <xref
-   linkend="pgtestfsync"> program can be used to measure the average time
+   linkend="pgtestfsync"/> program can be used to measure the average time
    in microseconds that a single WAL flush operation takes.  A value of
    half of the average time the program reports it takes to flush after a
    single 8kB write operation is often the most effective setting for
@@ -698,7 +698,7 @@
   </para>
 
   <para>
-   The <xref linkend="guc-wal-sync-method"> parameter determines how
+   The <xref linkend="guc-wal-sync-method"/> parameter determines how
    <productname>PostgreSQL</productname> will ask the kernel to force
    <acronym>WAL</acronym> updates out to disk.
    All the options should be the same in terms of reliability, with
@@ -706,13 +706,13 @@
    force a flush of the disk cache even when other options do not do so.
    However, it's quite platform-specific which one will be the fastest.
    You can test the speeds of different options using the <xref
-   linkend="pgtestfsync"> program.
+   linkend="pgtestfsync"/> program.
    Note that this parameter is irrelevant if <varname>fsync</varname>
    has been turned off.
   </para>
 
   <para>
-   Enabling the <xref linkend="guc-wal-debug"> configuration parameter
+   Enabling the <xref linkend="guc-wal-debug"/> configuration parameter
    (provided that <productname>PostgreSQL</productname> has been
    compiled with support for it) will result in each
    <function>XLogInsertRecord</function> and <function>XLogFlush</function>
@@ -733,7 +733,7 @@
    required from the administrator except ensuring that the
    disk-space requirements for the <acronym>WAL</acronym> logs are met,
    and that any necessary tuning is done (see <xref
-   linkend="wal-configuration">).
+   linkend="wal-configuration"/>).
   </para>
 
   <para>
@@ -781,7 +781,7 @@
    irrecoverable data corruption.  Administrators should try to ensure
    that disks holding <productname>PostgreSQL</productname>'s
    <acronym>WAL</acronym> log files do not make such false reports.
-   (See <xref linkend="wal-reliability">.)
+   (See <xref linkend="wal-reliability"/>.)
   </para>
 
   <para>
@@ -793,7 +793,7 @@
    scanning forward from the log location indicated in the checkpoint
    record.  Because the entire content of data pages is saved in the
    log on the first page modification after a checkpoint (assuming
-   <xref linkend="guc-full-page-writes"> is not disabled), all pages
+   <xref linkend="guc-full-page-writes"/> is not disabled), all pages
    changed since the checkpoint will be restored to a consistent
    state.
   </para>

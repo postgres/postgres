@@ -36,15 +36,15 @@ PostgreSQL documentation
    log is streamed using the streaming replication protocol, and is written
    to a local directory of files. This directory can be used as the archive
    location for doing a restore using point-in-time recovery (see
-   <xref linkend="continuous-archiving">).
+   <xref linkend="continuous-archiving"/>).
   </para>
 
   <para>
    <application>pg_receivewal</application> streams the write-ahead
    log in real time as it's being generated on the server, and does not wait
-   for segments to complete like <xref linkend="guc-archive-command"> does.
+   for segments to complete like <xref linkend="guc-archive-command"/> does.
    For this reason, it is not necessary to set
-   <xref linkend="guc-archive-timeout"> when using
+   <xref linkend="guc-archive-timeout"/> when using
     <application>pg_receivewal</application>.
   </para>
 
@@ -60,9 +60,9 @@ PostgreSQL documentation
    <productname>PostgreSQL</productname> connection and uses the replication
    protocol. The connection must be made with a superuser or a user
    having <literal>REPLICATION</literal> permissions (see
-   <xref linkend="role-attributes">), and <filename>pg_hba.conf</filename>
+   <xref linkend="role-attributes"/>), and <filename>pg_hba.conf</filename>
    must permit the replication connection. The server must also be
-   configured with <xref linkend="guc-max-wal-senders"> set high enough to
+   configured with <xref linkend="guc-max-wal-senders"/> set high enough to
    leave at least one session available for the stream.
   </para>
 
@@ -172,7 +172,7 @@ PostgreSQL documentation
       <listitem>
         <para>
          Require <application>pg_receivewal</application> to use an existing
-         replication slot (see <xref linkend="streaming-replication-slots">).
+         replication slot (see <xref linkend="streaming-replication-slots"/>).
          When this option is used, <application>pg_receivewal</application> will report
          a flush position to the server, indicating when each segment has been
          synchronized to disk so that the server can remove that segment if it
@@ -244,7 +244,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies parameters used to connect to the server, as a connection
-        string. See <xref linkend="libpq-connstring"> for more information.
+        string. See <xref linkend="libpq-connstring"/> for more information.
        </para>
        <para>
         The option is called <literal>--dbname</literal> for consistency with other
@@ -405,7 +405,7 @@ PostgreSQL documentation
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -415,11 +415,11 @@ PostgreSQL documentation
 
   <para>
    When using <application>pg_receivewal</application> instead of
-   <xref linkend="guc-archive-command"> as the main WAL backup method, it is
+   <xref linkend="guc-archive-command"/> as the main WAL backup method, it is
    strongly recommended to use replication slots.  Otherwise, the server is
    free to recycle or remove write-ahead log files before they are backed up,
    because it does not have any information, either
-   from <xref linkend="guc-archive-command"> or the replication slots, about
+   from <xref linkend="guc-archive-command"/> or the replication slots, about
    how far the WAL stream has been archived.  Note, however, that a
    replication slot will fill up the server's disk space if the receiver does
    not keep up with fetching the WAL data.
@@ -443,7 +443,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-pgbasebackup"></member>
+   <member><xref linkend="app-pgbasebackup"/></member>
   </simplelist>
  </refsect1>
 

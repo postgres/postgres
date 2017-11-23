@@ -9,7 +9,7 @@
   </indexterm>
 
   <para>
-   As described in <xref linkend="extend-type-system">,
+   As described in <xref linkend="extend-type-system"/>,
    <productname>PostgreSQL</productname> can be extended to support new
    data types.  This section describes how to define new base types,
    which are data types defined below the level of the <acronym>SQL</acronym>
@@ -246,7 +246,7 @@ CREATE TYPE complex (
 
  <para>
   For further details see the description of the
-  <xref linkend="sql-createtype"> command.
+  <xref linkend="sql-createtype"/> command.
  </para>
 
  <sect2 id="xtypes-toast">
@@ -259,7 +259,7 @@ CREATE TYPE complex (
  <para>
   If the values of your data type vary in size (in internal form), it's
   usually desirable to make the data type <acronym>TOAST</acronym>-able (see <xref
-  linkend="storage-toast">). You should do this even if the values are always
+  linkend="storage-toast"/>). You should do this even if the values are always
   too small to be compressed or stored externally, because
   <acronym>TOAST</acronym> can save space on small data too, by reducing header
   overhead.

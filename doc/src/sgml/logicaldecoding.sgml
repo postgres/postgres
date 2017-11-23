@@ -24,17 +24,17 @@
    by <command>INSERT</command> and the new row version created
    by <command>UPDATE</command>.  Availability of old row versions for
    <command>UPDATE</command> and <command>DELETE</command> depends on
-   the configured replica identity (see <xref linkend="sql-createtable-replica-identity">).
+   the configured replica identity (see <xref linkend="sql-createtable-replica-identity"/>).
   </para>
 
   <para>
    Changes can be consumed either using the streaming replication protocol
-   (see <xref linkend="protocol-replication"> and
-   <xref linkend="logicaldecoding-walsender">), or by calling functions
-   via SQL (see <xref linkend="logicaldecoding-sql">). It is also possible
+   (see <xref linkend="protocol-replication"/> and
+   <xref linkend="logicaldecoding-walsender"/>), or by calling functions
+   via SQL (see <xref linkend="logicaldecoding-sql"/>). It is also possible
    to write additional methods of consuming the output of a replication slot
    without modifying core code
-   (see <xref linkend="logicaldecoding-writer">).
+   (see <xref linkend="logicaldecoding-writer"/>).
   </para>
 
   <sect1 id="logicaldecoding-example">
@@ -47,8 +47,8 @@
 
    <para>
     Before you can use logical decoding, you must set
-    <xref linkend="guc-wal-level"> to <literal>logical</literal> and
-    <xref linkend="guc-max-replication-slots"> to at least 1.  Then, you
+    <xref linkend="guc-wal-level"/> to <literal>logical</literal> and
+    <xref linkend="guc-max-replication-slots"/> to at least 1.  Then, you
     should connect to the target database (in the example
     below, <literal>postgres</literal>) as a superuser.
    </para>
@@ -146,10 +146,10 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
    <para>
     The following example shows how logical decoding is controlled over the
     streaming replication protocol, using the
-    program <xref linkend="app-pgrecvlogical"> included in the PostgreSQL
+    program <xref linkend="app-pgrecvlogical"/> included in the PostgreSQL
     distribution.  This requires that client authentication is set up to allow
     replication connections
-    (see <xref linkend="streaming-replication-authentication">) and
+    (see <xref linkend="streaming-replication-authentication"/>) and
     that <varname>max_wal_senders</varname> is set sufficiently high to allow
     an additional connection.
    </para>
@@ -208,7 +208,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
 
     <note>
      <para><productname>PostgreSQL</productname> also has streaming replication slots
-     (see <xref linkend="streaming-replication">), but they are used somewhat
+     (see <xref linkend="streaming-replication"/>), but they are used somewhat
      differently there.
      </para>
     </note>
@@ -272,9 +272,9 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
     <title>Exported Snapshots</title>
     <para>
      When a new replication slot is created using the streaming replication
-     interface (see <xref linkend="protocol-replication-create-slot">), a
+     interface (see <xref linkend="protocol-replication-create-slot"/>), a
      snapshot is exported
-     (see <xref linkend="functions-snapshot-synchronization">), which will show
+     (see <xref linkend="functions-snapshot-synchronization"/>), which will show
      exactly the state of the database after which all changes will be
      included in the change stream. This can be used to create a new replica by
      using <link linkend="sql-set-transaction"><literal>SET TRANSACTION
@@ -313,11 +313,11 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
     are used to create, drop, and stream changes from a replication
     slot, respectively. These commands are only available over a replication
     connection; they cannot be used via SQL.
-    See <xref linkend="protocol-replication"> for details on these commands.
+    See <xref linkend="protocol-replication"/> for details on these commands.
    </para>
 
    <para>
-    The command <xref linkend="app-pgrecvlogical"> can be used to control
+    The command <xref linkend="app-pgrecvlogical"/> can be used to control
     logical decoding over a streaming replication connection.  (It uses
     these commands internally.)
    </para>
@@ -327,12 +327,12 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
    <title>Logical Decoding <acronym>SQL</acronym> Interface</title>
 
    <para>
-     See <xref linkend="functions-replication"> for detailed documentation on
+     See <xref linkend="functions-replication"/> for detailed documentation on
      the SQL-level API for interacting with logical decoding.
    </para>
 
    <para>
-    Synchronous replication (see <xref linkend="synchronous-replication">) is
+    Synchronous replication (see <xref linkend="synchronous-replication"/>) is
     only supported on replication slots used over the streaming replication interface. The
     function interface and additional, non-core interfaces do not support
     synchronous replication.
@@ -489,7 +489,7 @@ typedef struct OutputPluginOptions
       <literal>output_type</literal> has to either be set to
       <literal>OUTPUT_PLUGIN_TEXTUAL_OUTPUT</literal>
       or <literal>OUTPUT_PLUGIN_BINARY_OUTPUT</literal>. See also
-      <xref linkend="logicaldecoding-output-mode">.
+      <xref linkend="logicaldecoding-output-mode"/>.
      </para>
 
      <para>
@@ -576,8 +576,8 @@ typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
      <note>
       <para>
        Only changes in user defined tables that are not unlogged
-       (see <xref linkend="sql-createtable-unlogged">) and not temporary
-       (see <xref linkend="sql-createtable-temporary">) can be extracted using
+       (see <xref linkend="sql-createtable-unlogged"/>) and not temporary
+       (see <xref linkend="sql-createtable-temporary"/>) can be extracted using
        logical decoding.
       </para>
      </note>
@@ -685,7 +685,7 @@ OutputPluginWrite(ctx, true);
     <filename>src/backend/replication/logical/logicalfuncs.c</filename>.
     Essentially, three functions need to be provided: one to read WAL, one to
     prepare writing output, and one to write the output
-    (see <xref linkend="logicaldecoding-output-plugin-output">).
+    (see <xref linkend="logicaldecoding-output-plugin-output"/>).
    </para>
   </sect1>
 
@@ -698,9 +698,9 @@ OutputPluginWrite(ctx, true);
     replication</link> solutions with the same user interface as synchronous
     replication for <link linkend="streaming-replication">streaming
     replication</link>.  To do this, the streaming replication interface
-    (see <xref linkend="logicaldecoding-walsender">) must be used to stream out
+    (see <xref linkend="logicaldecoding-walsender"/>) must be used to stream out
     data. Clients have to send <literal>Standby status update (F)</literal>
-    (see <xref linkend="protocol-replication">) messages, just like streaming
+    (see <xref linkend="protocol-replication"/>) messages, just like streaming
     replication clients do.
    </para>
 

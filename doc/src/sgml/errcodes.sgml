@@ -32,7 +32,7 @@
  </para>
 
  <para>
-  <xref linkend="errcodes-table"> lists all the error codes defined in
+  <xref linkend="errcodes-table"/> lists all the error codes defined in
   <productname>PostgreSQL</productname> &version;.  (Some are not actually
   used at present, but are defined by the SQL standard.)
   The error classes are also shown.  For each error class there is a
@@ -66,9 +66,9 @@
  <title><productname>PostgreSQL</productname> Error Codes</title>
 
  <tgroup cols="2">
-  <colspec colnum="1" colname="errorcode">
-  <colspec colnum="2" colname="condname">
-  <spanspec namest="errorcode" nameend="condname" spanname="span12">
+  <colspec colnum="1" colname="errorcode"/>
+  <colspec colnum="2" colname="condname"/>
+  <spanspec namest="errorcode" nameend="condname" spanname="span12"/>
 
   <thead>
    <row>

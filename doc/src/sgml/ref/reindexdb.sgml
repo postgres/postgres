@@ -93,7 +93,7 @@ PostgreSQL documentation
 
   <para>
    <application>reindexdb</application> is a wrapper around the SQL
-   command <xref linkend="sql-reindex">.
+   command <xref linkend="sql-reindex"/>.
    There is no effective difference between reindexing databases via
    this utility and via other methods for accessing the server.
   </para>
@@ -347,7 +347,7 @@ PostgreSQL documentation
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -357,8 +357,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="sql-reindex">
-   and <xref linkend="app-psql"> for
+   In case of difficulty, see <xref linkend="sql-reindex"/>
+   and <xref linkend="app-psql"/> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -377,7 +377,7 @@ PostgreSQL documentation
    times to the <productname>PostgreSQL</productname> server, asking
    for a password each time. It is convenient to have a
    <filename>~/.pgpass</filename> file in such cases. See <xref
-   linkend="libpq-pgpass"> for more information.
+   linkend="libpq-pgpass"/> for more information.
   </para>
  </refsect1>
 
@@ -405,7 +405,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-reindex"></member>
+   <member><xref linkend="sql-reindex"/></member>
   </simplelist>
  </refsect1>
 

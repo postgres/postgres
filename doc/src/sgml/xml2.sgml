@@ -34,7 +34,7 @@
   <title>Description of Functions</title>
 
   <para>
-   <xref linkend="xml2-functions-table"> shows the functions provided by this module.
+   <xref linkend="xml2-functions-table"/> shows the functions provided by this module.
    These functions provide straightforward XML parsing and XPath queries.
    All arguments are of type <type>text</type>, so for brevity that is not shown.
   </para>
@@ -211,7 +211,7 @@ xpath_table(text key, text document, text relation, text xpaths, text criteria) 
    table. The primary key field from the original document table is returned
    as the first column of the result so that the result set
    can readily be used in joins.  The parameters are described in
-   <xref linkend="xml2-xpath-table-parameters">.
+   <xref linkend="xml2-xpath-table-parameters"/>.
   </para>
 
   <table id="xml2-xpath-table-parameters">

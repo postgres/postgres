@@ -55,7 +55,7 @@ CREATE TEXT SEARCH PARSER <replaceable class="parameter">name</replaceable> (
   </para>
 
   <para>
-   Refer to <xref linkend="textsearch"> for further information.
+   Refer to <xref linkend="textsearch"/> for further information.
   </para>
  </refsect1>
 
@@ -146,8 +146,8 @@ CREATE TEXT SEARCH PARSER <replaceable class="parameter">name</replaceable> (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsparser"></member>
-   <member><xref linkend="sql-droptsparser"></member>
+   <member><xref linkend="sql-altertsparser"/></member>
+   <member><xref linkend="sql-droptsparser"/></member>
   </simplelist>
  </refsect1>
 </refentry>

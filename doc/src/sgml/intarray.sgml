@@ -29,8 +29,8 @@
 
   <para>
    The functions provided by the <filename>intarray</filename> module
-   are shown in <xref linkend="intarray-func-table">, the operators
-   in <xref linkend="intarray-op-table">.
+   are shown in <xref linkend="intarray-func-table"/>, the operators
+   in <xref linkend="intarray-op-table"/>.
   </para>
 
   <table id="intarray-func-table">

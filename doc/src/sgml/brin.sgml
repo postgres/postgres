@@ -95,7 +95,7 @@
  <para>
   The core <productname>PostgreSQL</productname> distribution
   includes the <acronym>BRIN</acronym> operator classes shown in
-  <xref linkend="brin-builtin-opclasses-table">.
+  <xref linkend="brin-builtin-opclasses-table"/>.
  </para>
 
  <para>
@@ -590,7 +590,7 @@ typedef struct BrinOpcInfo
   To write an operator class for a data type that implements a totally
   ordered set, it is possible to use the minmax support procedures
   alongside the corresponding operators, as shown in
-  <xref linkend="brin-extensibility-minmax-table">.
+  <xref linkend="brin-extensibility-minmax-table"/>.
   All operator class members (procedures and operators) are mandatory.
  </para>
 
@@ -648,7 +648,7 @@ typedef struct BrinOpcInfo
   To write an operator class for a complex data type which has values
   included within another type, it's possible to use the inclusion support
   procedures alongside the corresponding operators, as shown
-  in <xref linkend="brin-extensibility-inclusion-table">.  It requires
+  in <xref linkend="brin-extensibility-inclusion-table"/>.  It requires
   only a single additional function, which can be written in any language.
   More functions can be defined for additional functionality.  All operators
   are optional.  Some operators require other operators, as shown as
@@ -821,7 +821,7 @@ typedef struct BrinOpcInfo
     additional data types to be supported by defining extra sets
     of operators.  Inclusion operator class operator strategies are dependent
     on another operator strategy as shown in
-    <xref linkend="brin-extensibility-inclusion-table">, or the same
+    <xref linkend="brin-extensibility-inclusion-table"/>, or the same
     operator strategy as themselves.  They require the dependency
     operator to be defined with the <literal>STORAGE</literal> data type as the
     left-hand-side argument and the other supported data type to be the

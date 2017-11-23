@@ -63,7 +63,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <listitem>
      <para>
       Ignored for compatibility.  Use of these keywords is deprecated;
-      refer to <xref linkend="sql-createtable"> for details.
+      refer to <xref linkend="sql-createtable"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -75,7 +75,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <listitem>
      <para>
       If specified, the table is created as a temporary table.
-      Refer to <xref linkend="sql-createtable"> for details.
+      Refer to <xref linkend="sql-createtable"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -85,7 +85,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <listitem>
      <para>
       If specified, the table is created as an unlogged table.
-      Refer to <xref linkend="sql-createtable"> for details.
+      Refer to <xref linkend="sql-createtable"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -95,7 +95,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <listitem>
      <para>
       Do not throw an error if a relation with the same name already exists.
-      A notice is issued in this case. Refer to <xref linkend="sql-createtable">
+      A notice is issued in this case. Refer to <xref linkend="sql-createtable"/>
       for details.
      </para>
     </listitem>
@@ -126,13 +126,13 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      <para>
       This clause specifies optional storage parameters for the new table;
       see <xref linkend="sql-createtable-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title"> for more
+      endterm="sql-createtable-storage-parameters-title"/> for more
       information.  The <literal>WITH</literal> clause
       can also include <literal>OIDS=TRUE</literal> (or just <literal>OIDS</literal>)
       to specify that rows of the new table
       should have OIDs (object identifiers) assigned to them, or
       <literal>OIDS=FALSE</literal> to specify that the rows should not have OIDs.
-      See <xref linkend="sql-createtable"> for more information.
+      See <xref linkend="sql-createtable"/> for more information.
      </para>
     </listitem>
    </varlistentry>
@@ -175,7 +175,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
          <para>
           All rows in the temporary table will be deleted at the end
           of each transaction block.  Essentially, an automatic <xref
-          linkend="sql-truncate"> is done
+          linkend="sql-truncate"/> is done
           at each commit.
          </para>
         </listitem>
@@ -201,8 +201,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       The <replaceable class="parameter">tablespace_name</replaceable> is the name
       of the tablespace in which the new table is to be created.
       If not specified,
-      <xref linkend="guc-default-tablespace"> is consulted, or
-      <xref linkend="guc-temp-tablespaces"> if the table is temporary.
+      <xref linkend="guc-default-tablespace"/> is consulted, or
+      <xref linkend="guc-temp-tablespaces"/> if the table is temporary.
      </para>
     </listitem>
    </varlistentry>
@@ -211,9 +211,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <term><replaceable>query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select">, <link
-      linkend="sql-table">TABLE</link>, or <xref linkend="sql-values">
-      command, or an <xref linkend="sql-execute"> command that runs a
+      A <xref linkend="sql-select"/>, <link
+      linkend="sql-table">TABLE</link>, or <xref linkend="sql-values"/>
+      command, or an <xref linkend="sql-execute"/> command that runs a
       prepared <command>SELECT</command>, <command>TABLE</command>, or
       <command>VALUES</command> query.
      </para>
@@ -239,7 +239,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
   <para>
    This command is functionally similar to <xref
-   linkend="sql-selectinto">, but it is
+   linkend="sql-selectinto"/>, but it is
    preferred since it is less likely to be confused with other uses of
    the <command>SELECT INTO</command> syntax. Furthermore, <command>CREATE
    TABLE AS</command> offers a superset of the functionality offered
@@ -250,7 +250,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    The <command>CREATE TABLE AS</command> command allows the user to
    explicitly specify whether OIDs should be included. If the
    presence of OIDs is not explicitly specified,
-   the <xref linkend="guc-default-with-oids"> configuration variable is
+   the <xref linkend="guc-default-with-oids"/> configuration variable is
    used.
   </para>
  </refsect1>
@@ -317,7 +317,7 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
     <listitem>
      <para><productname>PostgreSQL</productname> handles temporary tables in a way
       rather different from the standard; see
-      <xref linkend="sql-createtable">
+      <xref linkend="sql-createtable"/>
       for details.
      </para>
     </listitem>
@@ -343,12 +343,12 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-creatematerializedview"></member>
-   <member><xref linkend="sql-createtable"></member>
-   <member><xref linkend="sql-execute"></member>
-   <member><xref linkend="sql-select"></member>
-   <member><xref linkend="sql-selectinto"></member>
-   <member><xref linkend="sql-values"></member>
+   <member><xref linkend="sql-creatematerializedview"/></member>
+   <member><xref linkend="sql-createtable"/></member>
+   <member><xref linkend="sql-execute"/></member>
+   <member><xref linkend="sql-select"/></member>
+   <member><xref linkend="sql-selectinto"/></member>
+   <member><xref linkend="sql-values"/></member>
   </simplelist>
  </refsect1>
 

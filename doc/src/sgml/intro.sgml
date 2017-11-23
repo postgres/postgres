@@ -23,13 +23,13 @@
   <itemizedlist>
    <listitem>
     <para>
-     <xref linkend="tutorial"> is an informal introduction for new users.
+     <xref linkend="tutorial"/> is an informal introduction for new users.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     <xref linkend="sql"> documents the <acronym>SQL</acronym> query
+     <xref linkend="sql"/> documents the <acronym>SQL</acronym> query
      language environment, including data types and functions, as well
      as user-level performance tuning.  Every
      <productname>PostgreSQL</productname> user should read this.
@@ -38,7 +38,7 @@
 
    <listitem>
     <para>
-     <xref linkend="admin"> describes the installation and
+     <xref linkend="admin"/> describes the installation and
      administration of the server.  Everyone who runs a
      <productname>PostgreSQL</productname> server, be it for private
      use or for others, should read this part.
@@ -47,7 +47,7 @@
 
    <listitem>
     <para>
-     <xref linkend="client-interfaces"> describes the programming
+     <xref linkend="client-interfaces"/> describes the programming
      interfaces for <productname>PostgreSQL</productname> client
      programs.
     </para>
@@ -56,7 +56,7 @@
 
    <listitem>
     <para>
-     <xref linkend="server-programming"> contains information for
+     <xref linkend="server-programming"/> contains information for
      advanced users about the extensibility capabilities of the
      server.  Topics include user-defined data types and
      functions.
@@ -65,7 +65,7 @@
 
    <listitem>
     <para>
-     <xref linkend="reference"> contains reference information about
+     <xref linkend="reference"/> contains reference information about
      SQL commands, client and server programs.  This part supports
      the other parts with structured information sorted by command or
      program.
@@ -74,7 +74,7 @@
 
    <listitem>
     <para>
-     <xref linkend="internals"> contains assorted information that might be of
+     <xref linkend="internals"/> contains assorted information that might be of
      use to <productname>PostgreSQL</productname> developers.
     </para>
    </listitem>

@@ -170,7 +170,7 @@ shared_buffers = 128MB
      <filename>postgresql.auto.conf</filename><indexterm><primary>postgresql.auto.conf</primary></indexterm>,
      which has the same format as <filename>postgresql.conf</filename> but should
      never be edited manually.  This file holds settings provided through
-     the <xref linkend="sql-altersystem"> command.  This file is automatically
+     the <xref linkend="sql-altersystem"/> command.  This file is automatically
      read whenever <filename>postgresql.conf</filename> is, and its settings take
      effect in the same way.  Settings in <filename>postgresql.auto.conf</filename>
      override those in <filename>postgresql.conf</filename>.
@@ -191,7 +191,7 @@ shared_buffers = 128MB
      <para>
       <productname>PostgreSQL</productname> provides three SQL
       commands to establish configuration defaults.
-      The already-mentioned <xref linkend="sql-altersystem"> command
+      The already-mentioned <xref linkend="sql-altersystem"/> command
       provides a SQL-accessible means of changing global defaults; it is
       functionally equivalent to editing <filename>postgresql.conf</filename>.
       In addition, there are two commands that allow setting of defaults
@@ -201,14 +201,14 @@ shared_buffers = 128MB
      <itemizedlist>
      <listitem>
       <para>
-       The <xref linkend="sql-alterdatabase"> command allows global
+       The <xref linkend="sql-alterdatabase"/> command allows global
        settings to be overridden on a per-database basis.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       The <xref linkend="sql-alterrole"> command allows both global and
+       The <xref linkend="sql-alterrole"/> command allows both global and
        per-database settings to be overridden with user-specific values.
       </para>
      </listitem>
@@ -232,7 +232,7 @@ shared_buffers = 128MB
     <itemizedlist>
      <listitem>
      <para>
-      The <xref linkend="sql-show"> command allows inspection of the
+      The <xref linkend="sql-show"/> command allows inspection of the
       current value of all parameters.  The corresponding function is
       <function>current_setting(setting_name text)</function>.
      </para>
@@ -240,7 +240,7 @@ shared_buffers = 128MB
 
      <listitem>
       <para>
-       The <xref linkend="sql-set"> command allows modification of the
+       The <xref linkend="sql-set"/> command allows modification of the
        current value of those parameters that can be set locally to a
        session; it has no effect on other sessions.
        The corresponding function is
@@ -266,7 +266,7 @@ shared_buffers = 128MB
 
      <listitem>
       <para>
-       Using <xref linkend="sql-update"> on this view, specifically
+       Using <xref linkend="sql-update"/> on this view, specifically
        updating the <structname>setting</structname> column, is the equivalent
        of issuing <command>SET</command> commands.  For example, the equivalent of
 <programlisting>
@@ -470,7 +470,7 @@ include_dir 'conf.d'
       already mentioned, <productname>PostgreSQL</productname> uses
       two other manually-edited configuration files, which control
       client authentication (their use is discussed in <xref
-      linkend="client-authentication">).  By default, all three
+      linkend="client-authentication"/>).  By default, all three
       configuration files are stored in the database cluster's data
       directory.  The parameters described in this section allow the
       configuration files to be placed elsewhere.  (Doing so can ease
@@ -535,7 +535,7 @@ include_dir 'conf.d'
          Specifies the configuration file for user name mapping
          (customarily called <filename>pg_ident.conf</filename>).
          This parameter can only be set at server start.
-         See also <xref linkend="auth-username-maps">.
+         See also <xref linkend="auth-username-maps"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -625,7 +625,7 @@ include_dir 'conf.d'
          The default value is <systemitem class="systemname">localhost</systemitem>,
          which allows only local TCP/IP <quote>loopback</quote> connections to be
          made.  While client authentication (<xref
-         linkend="client-authentication">) allows fine-grained control
+         linkend="client-authentication"/>) allows fine-grained control
          over who can access the server, <varname>listen_addresses</varname>
          controls which interfaces accept connection attempts, which
          can help prevent repeated malicious connection requests on
@@ -685,7 +685,7 @@ include_dir 'conf.d'
        <para>
         Determines the number of connection <quote>slots</quote> that
         are reserved for connections by <productname>PostgreSQL</productname>
-        superusers.  At most <xref linkend="guc-max-connections">
+        superusers.  At most <xref linkend="guc-max-connections"/>
         connections can ever be active simultaneously.  Whenever the
         number of active concurrent connections is at least
         <varname>max_connections</varname> minus
@@ -794,7 +794,7 @@ include_dir 'conf.d'
 
        <para>
         This access control mechanism is independent of the one
-        described in <xref linkend="client-authentication">.
+        described in <xref linkend="client-authentication"/>.
        </para>
 
        <para>
@@ -959,7 +959,7 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Enables <acronym>SSL</acronym> connections. Please read
-        <xref linkend="ssl-tcp"> before using this.
+        <xref linkend="ssl-tcp"/> before using this.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
         The default is <literal>off</literal>.
@@ -1180,8 +1180,8 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        When a password is specified in <xref linkend="sql-createrole"> or
-        <xref linkend="sql-alterrole">, this parameter determines the algorithm
+        When a password is specified in <xref linkend="sql-createrole"/> or
+        <xref linkend="sql-alterrole"/>, this parameter determines the algorithm
         to use to encrypt the password. The default value is <literal>md5</literal>,
         which stores the password as an MD5 hash (<literal>on</literal> is also
         accepted, as alias for <literal>md5</literal>). Setting this parameter to
@@ -1190,7 +1190,7 @@ include_dir 'conf.d'
        <para>
         Note that older clients might lack support for the SCRAM authentication
         mechanism, and hence not work with passwords encrypted with
-        SCRAM-SHA-256.  See <xref linkend="auth-password"> for more details.
+        SCRAM-SHA-256.  See <xref linkend="auth-password"/> for more details.
        </para>
       </listitem>
      </varlistentry>
@@ -1228,7 +1228,7 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Sets the location of the Kerberos server key file. See
-        <xref linkend="gssapi-auth">
+        <xref linkend="gssapi-auth"/>
         for details. This parameter can only be set in the
         <filename>postgresql.conf</filename> file or on the server command line.
        </para>
@@ -1376,7 +1376,7 @@ include_dir 'conf.d'
        <para>
         The use of huge pages results in smaller page tables and less CPU time
         spent on memory management, increasing performance. For more details,
-        see <xref linkend="linux-huge-pages">.
+        see <xref linkend="linux-huge-pages"/>.
        </para>
 
        <para>
@@ -1428,7 +1428,7 @@ include_dir 'conf.d'
        <para>
         Sets the maximum number of transactions that can be in the
         <quote>prepared</quote> state simultaneously (see <xref
-        linkend="sql-prepare-transaction">).
+        linkend="sql-prepare-transaction"/>).
         Setting this parameter to zero (which is the default)
         disables the prepared-transaction feature.
         This parameter can only be set at server start.
@@ -1439,7 +1439,7 @@ include_dir 'conf.d'
         should be set to zero to prevent accidental creation of prepared
         transactions.  If you are using prepared transactions, you will
         probably want <varname>max_prepared_transactions</varname> to be at
-        least as large as <xref linkend="guc-max-connections">, so that every
+        least as large as <xref linkend="guc-max-connections"/>, so that every
         session can have a prepared transaction pending.
        </para>
 
@@ -1497,10 +1497,10 @@ include_dir 'conf.d'
        </para>
        <para>
         Note that when autovacuum runs, up to
-        <xref linkend="guc-autovacuum-max-workers"> times this memory
+        <xref linkend="guc-autovacuum-max-workers"/> times this memory
         may be allocated, so be careful not to set the default value
         too high.  It may be useful to control for this by separately
-        setting <xref linkend="guc-autovacuum-work-mem">.
+        setting <xref linkend="guc-autovacuum-work-mem"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -1515,7 +1515,7 @@ include_dir 'conf.d'
        <para>
         Specifies the maximum amount of memory to be used by each
         autovacuum worker process.  It defaults to -1, indicating that
-        the value of <xref linkend="guc-maintenance-work-mem"> should
+        the value of <xref linkend="guc-maintenance-work-mem"/> should
         be used instead.  The setting has no effect on the behavior of
         <command>VACUUM</command> when run in other contexts.
        </para>
@@ -1649,8 +1649,8 @@ include_dir 'conf.d'
      <title>Cost-based Vacuum Delay</title>
 
      <para>
-      During the execution of <xref linkend="sql-vacuum">
-      and <xref linkend="sql-analyze">
+      During the execution of <xref linkend="sql-vacuum"/>
+      and <xref linkend="sql-analyze"/>
       commands, the system maintains an
       internal counter that keeps track of the estimated cost of the
       various I/O operations that are performed.  When the accumulated
@@ -1893,7 +1893,7 @@ include_dir 'conf.d'
          the OS writes data back in larger batches in the background.  Often
          that will result in greatly reduced transaction latency, but there
          also are some cases, especially with workloads that are bigger than
-         <xref linkend="guc-shared-buffers">, but smaller than the OS's page
+         <xref linkend="guc-shared-buffers"/>, but smaller than the OS's page
          cache, where performance might degrade.  This setting may have no
          effect on some platforms.  The valid range is between
          <literal>0</literal>, which disables forced writeback, and
@@ -1962,7 +1962,7 @@ include_dir 'conf.d'
          The default is 1 on supported systems, otherwise 0.  This value can
          be overridden for tables in a particular tablespace by setting the
          tablespace parameter of the same name (see
-         <xref linkend="sql-altertablespace">).
+         <xref linkend="sql-altertablespace"/>).
         </para>
        </listitem>
       </varlistentry>
@@ -1988,8 +1988,8 @@ include_dir 'conf.d'
 
         <para>
          When changing this value, consider also adjusting
-         <xref linkend="guc-max-parallel-workers"> and
-         <xref linkend="guc-max-parallel-workers-per-gather">.
+         <xref linkend="guc-max-parallel-workers"/> and
+         <xref linkend="guc-max-parallel-workers-per-gather"/>.
         </para>
        </listitem>
       </varlistentry>
@@ -2005,8 +2005,8 @@ include_dir 'conf.d'
          Sets the maximum number of workers that can be started by a single
          <literal>Gather</literal> or <literal>Gather Merge</literal> node.
          Parallel workers are taken from the pool of processes established by
-         <xref linkend="guc-max-worker-processes">, limited by
-         <xref linkend="guc-max-parallel-workers">.  Note that the requested
+         <xref linkend="guc-max-worker-processes"/>, limited by
+         <xref linkend="guc-max-parallel-workers"/>.  Note that the requested
          number of workers may not actually be available at run time.  If this
          occurs, the plan will run with fewer workers than expected, which may
          be inefficient.  The default value is 2.  Setting this value to 0
@@ -2020,7 +2020,7 @@ include_dir 'conf.d'
          system as an additional user session.  This should be taken into
          account when choosing a value for this setting, as well as when
          configuring other settings that control resource utilization, such
-         as <xref linkend="guc-work-mem">.  Resource limits such as
+         as <xref linkend="guc-work-mem"/>.  Resource limits such as
          <varname>work_mem</varname> are applied individually to each worker,
          which means the total utilization may be much higher across all
          processes than it would normally be for any single process.
@@ -2031,7 +2031,7 @@ include_dir 'conf.d'
 
         <para>
          For more information on parallel query, see
-         <xref linkend="parallel-query">.
+         <xref linkend="parallel-query"/>.
         </para>
        </listitem>
       </varlistentry>
@@ -2047,9 +2047,9 @@ include_dir 'conf.d'
          Sets the maximum number of workers that the system can support for
          parallel queries.  The default value is 8.  When increasing or
          decreasing this value, consider also adjusting
-         <xref linkend="guc-max-parallel-workers-per-gather">.
+         <xref linkend="guc-max-parallel-workers-per-gather"/>.
          Also, note that a setting for this value which is higher than
-         <xref linkend="guc-max-worker-processes"> will have no effect,
+         <xref linkend="guc-max-worker-processes"/> will have no effect,
          since parallel workers are taken from the pool of worker processes
          established by that setting.
         </para>
@@ -2072,7 +2072,7 @@ include_dir 'conf.d'
          checkpoint, or when the OS writes data back in larger batches in the
          background.  Often that will result in greatly reduced transaction
          latency, but there also are some cases, especially with workloads
-         that are bigger than <xref linkend="guc-shared-buffers">, but smaller
+         that are bigger than <xref linkend="guc-shared-buffers"/>, but smaller
          than the OS's page cache, where performance might degrade.  This
          setting may have no effect on some platforms.  The valid range is
          between <literal>0</literal>, which disables forced writeback,
@@ -2148,7 +2148,7 @@ include_dir 'conf.d'
 
    <para>
     For additional information on tuning these settings,
-    see <xref linkend="wal-configuration">.
+    see <xref linkend="wal-configuration"/>.
    </para>
 
     <sect2 id="runtime-config-wal-settings">
@@ -2176,7 +2176,7 @@ include_dir 'conf.d'
        <para>
         In <literal>minimal</literal> level, WAL-logging of some bulk
         operations can be safely skipped, which can make those
-        operations much faster (see <xref linkend="populate-pitr">).
+        operations much faster (see <xref linkend="populate-pitr"/>).
         Operations in which this optimization can be applied include:
         <simplelist>
          <member><command>CREATE TABLE AS</command></member>
@@ -2188,7 +2188,7 @@ include_dir 'conf.d'
         But minimal WAL does not contain enough information to reconstruct the
         data from a base backup and the WAL logs, so <literal>replica</literal> or
         higher must be used to enable WAL archiving
-        (<xref linkend="guc-archive-mode">) and streaming replication.
+        (<xref linkend="guc-archive-mode"/>) and streaming replication.
        </para>
        <para>
         In <literal>logical</literal> level, the same information is logged as
@@ -2218,7 +2218,7 @@ include_dir 'conf.d'
         If this parameter is on, the <productname>PostgreSQL</productname> server
         will try to make sure that updates are physically written to
         disk, by issuing <function>fsync()</function> system calls or various
-        equivalent methods (see <xref linkend="guc-wal-sync-method">).
+        equivalent methods (see <xref linkend="guc-wal-sync-method"/>).
         This ensures that the database cluster can recover to a
         consistent state after an operating system or hardware crash.
        </para>
@@ -2254,7 +2254,7 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        In many situations, turning off <xref linkend="guc-synchronous-commit">
+        In many situations, turning off <xref linkend="guc-synchronous-commit"/>
         for noncritical transactions can provide much of the potential
         performance benefit of turning off <varname>fsync</varname>, without
         the attendant risks of data corruption.
@@ -2264,7 +2264,7 @@ include_dir 'conf.d'
         <varname>fsync</varname> can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
         If you turn this parameter off, also consider turning off
-        <xref linkend="guc-full-page-writes">.
+        <xref linkend="guc-full-page-writes"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -2285,8 +2285,8 @@ include_dir 'conf.d'
         is <literal>on</literal>.  When <literal>off</literal>, there can be a delay between
         when success is reported to the client and when the transaction is
         really guaranteed to be safe against a server crash.  (The maximum
-        delay is three times <xref linkend="guc-wal-writer-delay">.)  Unlike
-        <xref linkend="guc-fsync">, setting this parameter to <literal>off</literal>
+        delay is three times <xref linkend="guc-wal-writer-delay"/>.)  Unlike
+        <xref linkend="guc-fsync"/>, setting this parameter to <literal>off</literal>
         does not create any risk of database inconsistency: an operating
         system or database crash might
         result in some recent allegedly-committed transactions being lost, but
@@ -2294,10 +2294,10 @@ include_dir 'conf.d'
         been aborted cleanly.  So, turning <varname>synchronous_commit</varname> off
         can be a useful alternative when performance is more important than
         exact certainty about the durability of a transaction.  For more
-        discussion see <xref linkend="wal-async-commit">.
+        discussion see <xref linkend="wal-async-commit"/>.
        </para>
        <para>
-        If <xref linkend="guc-synchronous-standby-names"> is non-empty, this
+        If <xref linkend="guc-synchronous-standby-names"/> is non-empty, this
         parameter also controls whether or not transaction commits will wait
         for their WAL records to be replicated to the standby server(s).
         When set to <literal>on</literal>, commits will wait until replies
@@ -2389,7 +2389,7 @@ include_dir 'conf.d'
         necessary to change this setting or other aspects of your system
         configuration in order to create a crash-safe configuration or
         achieve optimal performance.
-        These aspects are discussed in <xref linkend="wal-reliability">.
+        These aspects are discussed in <xref linkend="wal-reliability"/>.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
        </para>
@@ -2432,7 +2432,7 @@ include_dir 'conf.d'
        <para>
         Turning off this parameter does not affect use of
         WAL archiving for point-in-time recovery (PITR)
-        (see <xref linkend="continuous-archiving">).
+        (see <xref linkend="continuous-archiving"/>).
        </para>
 
        <para>
@@ -2480,7 +2480,7 @@ include_dir 'conf.d'
        <para>
         When this parameter is <literal>on</literal>, the <productname>PostgreSQL</productname>
         server compresses a full page image written to WAL when
-        <xref linkend="guc-full-page-writes"> is on or during a base backup.
+        <xref linkend="guc-full-page-writes"/> is on or during a base backup.
         A compressed page image will be decompressed during WAL replay.
         The default value is <literal>off</literal>.
         Only superusers can change this setting.
@@ -2505,7 +2505,7 @@ include_dir 'conf.d'
        <para>
         The amount of shared memory used for WAL data that has not yet been
         written to disk.  The default setting of -1 selects a size equal to
-        1/32nd (about 3%) of <xref linkend="guc-shared-buffers">, but not less
+        1/32nd (about 3%) of <xref linkend="guc-shared-buffers"/>, but not less
         than <literal>64kB</literal> nor more than the size of one WAL
         segment, typically <literal>16MB</literal>.  This value can be set
         manually if the automatic choice is too large or too small,
@@ -2682,7 +2682,7 @@ include_dir 'conf.d'
         checkpoint, or when the OS writes data back in larger batches in the
         background.  Often that will result in greatly reduced transaction
         latency, but there also are some cases, especially with workloads
-        that are bigger than <xref linkend="guc-shared-buffers">, but smaller
+        that are bigger than <xref linkend="guc-shared-buffers"/>, but smaller
         than the OS's page cache, where performance might degrade.  This
         setting may have no effect on some platforms.  The valid range is
         between <literal>0</literal>, which disables forced writeback,
@@ -2772,14 +2772,14 @@ include_dir 'conf.d'
        <para>
         When <varname>archive_mode</varname> is enabled, completed WAL segments
         are sent to archive storage by setting
-        <xref linkend="guc-archive-command">. In addition to <literal>off</literal>,
+        <xref linkend="guc-archive-command"/>. In addition to <literal>off</literal>,
         to disable, there are two modes: <literal>on</literal>, and
         <literal>always</literal>. During normal operation, there is no
         difference between the two modes, but when set to <literal>always</literal>
         the WAL archiver is enabled also during archive recovery or standby
         mode. In <literal>always</literal> mode, all files restored from the archive
         or streamed with streaming replication will be archived (again). See
-        <xref linkend="continuous-archiving-in-standby"> for details.
+        <xref linkend="continuous-archiving-in-standby"/> for details.
        </para>
        <para>
         <varname>archive_mode</varname> and <varname>archive_command</varname> are
@@ -2809,7 +2809,7 @@ include_dir 'conf.d'
         Use <literal>%%</literal> to embed an actual <literal>%</literal> character in the
         command.  It is important for the command to return a zero
         exit status only if it succeeds. For more information see
-        <xref linkend="backup-archiving-wal">.
+        <xref linkend="backup-archiving-wal"/>.
        </para>
        <para>
         This parameter can only be set in the <filename>postgresql.conf</filename>
@@ -2836,7 +2836,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        The <xref linkend="guc-archive-command"> is only invoked for
+        The <xref linkend="guc-archive-command"/> is only invoked for
         completed WAL segments. Hence, if your server generates little WAL
         traffic (or has slack periods where it does so), there could be a
         long delay between the completion of a transaction and its safe
@@ -2872,10 +2872,10 @@ include_dir 'conf.d'
     <para>
      These settings control the behavior of the built-in
      <firstterm>streaming replication</firstterm> feature (see
-     <xref linkend="streaming-replication">).  Servers will be either a
+     <xref linkend="streaming-replication"/>).  Servers will be either a
      Master or a Standby server.  Masters can send data, while Standby(s)
      are always receivers of replicated data.  When cascading replication
-     (see <xref linkend="cascading-replication">) is used, Standby server(s)
+     (see <xref linkend="cascading-replication"/>) is used, Standby server(s)
      can also be senders, as well as receivers.
      Parameters are mainly for Sending and Standby servers, though some
      parameters have meaning only on the Master server.  Settings may vary
@@ -2909,7 +2909,7 @@ include_dir 'conf.d'
         processes). The default is 10. The value 0 means replication is
         disabled. WAL sender processes count towards the total number
         of connections, so the parameter cannot be set higher than
-        <xref linkend="guc-max-connections">.  Abrupt streaming client
+        <xref linkend="guc-max-connections"/>.  Abrupt streaming client
         disconnection might cause an orphaned connection slot until
         a timeout is reached, so this parameter should be set slightly
         higher than the maximum number of expected clients so disconnected
@@ -2930,7 +2930,7 @@ include_dir 'conf.d'
        <listitem>
         <para>
          Specifies the maximum number of replication slots
-         (see <xref linkend="streaming-replication-slots">) that the server
+         (see <xref linkend="streaming-replication-slots"/>) that the server
          can support. The default is 10.  This parameter can only be set at
          server start.
          <varname>wal_level</varname> must be set
@@ -3021,9 +3021,9 @@ include_dir 'conf.d'
       These parameters can be set on the master/primary server that is
       to send replication data to one or more standby servers.
       Note that in addition to these parameters,
-      <xref linkend="guc-wal-level"> must be set appropriately on the master
+      <xref linkend="guc-wal-level"/> must be set appropriately on the master
       server, and optionally WAL archiving can be enabled as
-      well (see <xref linkend="runtime-config-wal-archiving">).
+      well (see <xref linkend="runtime-config-wal-archiving"/>).
       The values of these parameters on standby servers are irrelevant,
       although you may wish to set them there in preparation for the
       possibility of a standby becoming the master.
@@ -3041,7 +3041,7 @@ include_dir 'conf.d'
        <para>
         Specifies a list of standby servers that can support
         <firstterm>synchronous replication</firstterm>, as described in
-        <xref linkend="synchronous-replication">.
+        <xref linkend="synchronous-replication"/>.
         There will be one or more active synchronous standbys;
         transactions waiting for commit will be allowed to proceed after
         these standby servers confirm receipt of their data.
@@ -3148,7 +3148,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         replication.  This is the default configuration.  Even when
         synchronous replication is enabled, individual transactions can be
         configured not to wait for replication by setting the
-        <xref linkend="guc-synchronous-commit"> parameter to
+        <xref linkend="guc-synchronous-commit"/> parameter to
         <literal>local</literal> or <literal>off</literal>.
        </para>
        <para>
@@ -3172,7 +3172,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         removed as soon as possible, that is, as soon as they are no longer
         visible to any open transaction.  You may wish to set this to a
         non-zero value on a primary server that is supporting hot standby
-        servers, as described in <xref linkend="hot-standby">.  This allows
+        servers, as described in <xref linkend="hot-standby"/>.  This allows
         more time for queries on the standby to complete without incurring
         conflicts due to early cleanup of rows.  However, since the value
         is measured in terms of number of write transactions occurring on the
@@ -3215,7 +3215,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Specifies whether or not you can connect and run queries during
-        recovery, as described in <xref linkend="hot-standby">.
+        recovery, as described in <xref linkend="hot-standby"/>.
         The default value is <literal>on</literal>.
         This parameter can only be set at server start. It only has effect
         during archive recovery or in standby mode.
@@ -3234,7 +3234,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         When Hot Standby is active, this parameter determines how long the
         standby server should wait before canceling standby queries that
         conflict with about-to-be-applied WAL entries, as described in
-        <xref linkend="hot-standby-conflict">.
+        <xref linkend="hot-standby-conflict"/>.
         <varname>max_standby_archive_delay</varname> applies when WAL data is
         being read from WAL archive (and is therefore not current).
         The default is 30 seconds. Units are milliseconds if not specified.
@@ -3265,7 +3265,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         When Hot Standby is active, this parameter determines how long the
         standby server should wait before canceling standby queries that
         conflict with about-to-be-applied WAL entries, as described in
-        <xref linkend="hot-standby-conflict">.
+        <xref linkend="hot-standby-conflict"/>.
         <varname>max_standby_streaming_delay</varname> applies when WAL data is
         being received via streaming replication.
         The default is 30 seconds. Units are milliseconds if not specified.
@@ -3484,10 +3484,10 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        choose a different plan.
        Better ways to improve the quality of the
        plans chosen by the optimizer include adjusting the planner cost
-       constants (see <xref linkend="runtime-config-query-constants">),
-       running <xref linkend="sql-analyze"> manually, increasing
+       constants (see <xref linkend="runtime-config-query-constants"/>),
+       running <xref linkend="sql-analyze"/> manually, increasing
        the value of the <xref
-       linkend="guc-default-statistics-target"> configuration parameter,
+       linkend="guc-default-statistics-target"/> configuration parameter,
        and increasing the amount of statistics collected for
        specific columns using <command>ALTER TABLE SET
        STATISTICS</command>.
@@ -3579,7 +3579,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Enables or disables the query planner's use of index-only-scan plan
-        types (see <xref linkend="indexes-index-only-scans">).
+        types (see <xref linkend="indexes-index-only-scans"/>).
         The default is <literal>on</literal>.
        </para>
       </listitem>
@@ -3745,7 +3745,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         that is part of a series of sequential fetches.  The default is 1.0.
         This value can be overridden for tables and indexes in a particular
         tablespace by setting the tablespace parameter of the same name
-        (see <xref linkend="sql-altertablespace">).
+        (see <xref linkend="sql-altertablespace"/>).
        </para>
       </listitem>
      </varlistentry>
@@ -3762,7 +3762,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         non-sequentially-fetched disk page.  The default is 4.0.
         This value can be overridden for tables and indexes in a particular
         tablespace by setting the tablespace parameter of the same name
-        (see <xref linkend="sql-altertablespace">).
+        (see <xref linkend="sql-altertablespace"/>).
        </para>
 
        <para>
@@ -3960,7 +3960,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       complex queries (those joining many relations), at the cost of producing
       plans that are sometimes inferior to those found by the normal
       exhaustive-search algorithm.
-      For more information see <xref linkend="geqo">.
+      For more information see <xref linkend="geqo"/>.
      </para>
 
      <variablelist>
@@ -4124,7 +4124,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         do <command>ANALYZE</command>, but might improve the quality of the
         planner's estimates. The default is 100. For more information
         on the use of statistics by the <productname>PostgreSQL</productname>
-        query planner, refer to <xref linkend="planner-stats">.
+        query planner, refer to <xref linkend="planner-stats"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -4180,7 +4180,7 @@ SELECT * FROM parent WHERE key = 2400;
        </para>
 
        <para>
-        Refer to <xref linkend="ddl-partitioning-constraint-exclusion"> for
+        Refer to <xref linkend="ddl-partitioning-constraint-exclusion"/> for
         more information on using constraint exclusion and partitioning.
        </para>
       </listitem>
@@ -4219,13 +4219,13 @@ SELECT * FROM parent WHERE key = 2400;
         resulting <literal>FROM</literal> list would have no more than
         this many items.  Smaller values reduce planning time but might
         yield inferior query plans.  The default is eight.
-        For more information see <xref linkend="explicit-joins">.
+        For more information see <xref linkend="explicit-joins"/>.
        </para>
 
        <para>
-        Setting this value to <xref linkend="guc-geqo-threshold"> or more
+        Setting this value to <xref linkend="guc-geqo-threshold"/> or more
         may trigger use of the GEQO planner, resulting in non-optimal
-        plans.  See <xref linkend="runtime-config-query-geqo">.
+        plans.  See <xref linkend="runtime-config-query-geqo"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -4255,13 +4255,13 @@ SELECT * FROM parent WHERE key = 2400;
         the optimal join order, advanced users can elect to
         temporarily set this variable to 1, and then specify the join
         order they desire explicitly.
-        For more information see <xref linkend="explicit-joins">.
+        For more information see <xref linkend="explicit-joins"/>.
        </para>
 
        <para>
-        Setting this value to <xref linkend="guc-geqo-threshold"> or more
+        Setting this value to <xref linkend="guc-geqo-threshold"/> or more
         may trigger use of the GEQO planner, resulting in non-optimal
-        plans.  See <xref linkend="runtime-config-query-geqo">.
+        plans.  See <xref linkend="runtime-config-query-geqo"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -4386,8 +4386,8 @@ SELECT * FROM parent WHERE key = 2400;
         log entries are output in <quote>comma separated
         value</quote> (<acronym>CSV</acronym>) format, which is convenient for
         loading logs into programs.
-        See <xref linkend="runtime-config-logging-csvlog"> for details.
-        <xref linkend="guc-logging-collector"> must be enabled to generate
+        See <xref linkend="runtime-config-logging-csvlog"/> for details.
+        <xref linkend="guc-logging-collector"/> must be enabled to generate
         CSV-format log output.
        </para>
        <para>
@@ -4420,7 +4420,7 @@ csvlog log/postgresql.csv
          <varname>log_destination</varname>.  <productname>PostgreSQL</productname>
          can log to <application>syslog</application> facilities
          <literal>LOCAL0</literal> through <literal>LOCAL7</literal> (see <xref
-         linkend="guc-syslog-facility">), but the default
+         linkend="guc-syslog-facility"/>), but the default
          <application>syslog</application> configuration on most platforms
          will discard all such messages.  You will need to add something like:
 <programlisting>
@@ -4435,7 +4435,7 @@ local0.*    /var/log/postgresql
          register an event source and its library with the operating
          system so that the Windows Event Viewer can display event
          log messages cleanly.
-         See <xref linkend="event-log-registration"> for details.
+         See <xref linkend="event-log-registration"/> for details.
         </para>
        </note>
       </listitem>
@@ -4522,7 +4522,7 @@ local0.*    /var/log/postgresql
         file names.  (Note that if there are
         any time-zone-dependent <literal>%</literal>-escapes, the computation
         is done in the zone specified
-        by <xref linkend="guc-log-timezone">.)
+        by <xref linkend="guc-log-timezone"/>.)
         The supported <literal>%</literal>-escapes are similar to those
         listed in the Open Group's <ulink
         url="http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html">strftime
@@ -4576,7 +4576,7 @@ local0.*    /var/log/postgresql
         server owner can read or write the log files.  The other commonly
         useful setting is <literal>0640</literal>, allowing members of the owner's
         group to read the files.  Note however that to make use of such a
-        setting, you'll need to alter <xref linkend="guc-log-directory"> to
+        setting, you'll need to alter <xref linkend="guc-log-directory"/> to
         store the files somewhere outside the cluster data directory.  In
         any case, it's unwise to make the log files world-readable, since
         they might contain sensitive data.
@@ -4897,13 +4897,13 @@ local0.*    /var/log/postgresql
        <note>
         <para>
          When using this option together with
-         <xref linkend="guc-log-statement">,
+         <xref linkend="guc-log-statement"/>,
          the text of statements that are logged because of
          <varname>log_statement</varname> will not be repeated in the
          duration log message.
          If you are not using <application>syslog</application>, it is recommended
          that you log the PID or session ID using
-         <xref linkend="guc-log-line-prefix">
+         <xref linkend="guc-log-line-prefix"/>
          so that you can link the statement message to the later
          duration message using the process ID or session ID.
         </para>
@@ -4914,7 +4914,7 @@ local0.*    /var/log/postgresql
      </variablelist>
 
     <para>
-     <xref linkend="runtime-config-severity-levels"> explains the message
+     <xref linkend="runtime-config-severity-levels"/> explains the message
      severity levels used by <productname>PostgreSQL</productname>.  If logging output
      is sent to <systemitem>syslog</systemitem> or Windows'
      <systemitem>eventlog</systemitem>, the severity levels are translated
@@ -5019,7 +5019,7 @@ local0.*    /var/log/postgresql
         It is typically set by an application upon connection to the server.
         The name will be displayed in the <structname>pg_stat_activity</structname> view
         and included in CSV log entries.  It can also be included in regular
-        log entries via the <xref linkend="guc-log-line-prefix"> parameter.
+        log entries via the <xref linkend="guc-log-line-prefix"/> parameter.
         Only printable ASCII characters may be used in the
         <varname>application_name</varname> value. Other characters will be
         replaced with question marks (<literal>?</literal>).
@@ -5051,8 +5051,8 @@ local0.*    /var/log/postgresql
         These messages are emitted at <literal>LOG</literal> message level, so by
         default they will appear in the server log but will not be sent to the
         client.  You can change that by adjusting
-        <xref linkend="guc-client-min-messages"> and/or
-        <xref linkend="guc-log-min-messages">.
+        <xref linkend="guc-client-min-messages"/> and/or
+        <xref linkend="guc-log-min-messages"/>.
         These parameters are off by default.
        </para>
       </listitem>
@@ -5159,7 +5159,7 @@ local0.*    /var/log/postgresql
        <note>
         <para>
          The difference between setting this option and setting
-         <xref linkend="guc-log-min-duration-statement"> to zero is that
+         <xref linkend="guc-log-min-duration-statement"/> to zero is that
          exceeding <varname>log_min_duration_statement</varname> forces the text of
          the query to be logged, but this option doesn't.  Thus, if
          <varname>log_duration</varname> is <literal>on</literal> and
@@ -5187,7 +5187,7 @@ local0.*    /var/log/postgresql
         the logging of <literal>DETAIL</literal>, <literal>HINT</literal>,
         <literal>QUERY</literal>, and <literal>CONTEXT</literal> error information.
         <literal>VERBOSE</literal> output includes the <symbol>SQLSTATE</symbol> error
-        code (see also <xref linkend="errcodes-appendix">) and the source code file name, function name,
+        code (see also <xref linkend="errcodes-appendix"/>) and the source code file name, function name,
         and line number that generated the error.
         Only superusers can change this setting.
        </para>
@@ -5397,7 +5397,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
       <listitem>
        <para>
         Controls whether a log message is produced when a session waits
-        longer than <xref linkend="guc-deadlock-timeout"> to acquire a
+        longer than <xref linkend="guc-deadlock-timeout"/> to acquire a
         lock.  This is useful in determining if lock waits are causing
         poor performance.  The default is <literal>off</literal>.
         Only superusers can change this setting.
@@ -5459,7 +5459,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
       <listitem>
        <para>
         Causes each replication command to be logged in the server log.
-        See <xref linkend="protocol-replication"> for more information about
+        See <xref linkend="protocol-replication"/> for more information about
         replication command. The default value is <literal>off</literal>.
         Only superusers can change this setting.
        </para>
@@ -5496,12 +5496,12 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
       <listitem>
        <para>
         Sets the time zone used for timestamps written in the server log.
-        Unlike <xref linkend="guc-timezone">, this value is cluster-wide,
+        Unlike <xref linkend="guc-timezone"/>, this value is cluster-wide,
         so that all sessions will report timestamps consistently.
         The built-in default is <literal>GMT</literal>, but that is typically
         overridden in <filename>postgresql.conf</filename>; <application>initdb</application>
         will install a setting there corresponding to its system environment.
-        See <xref linkend="datatype-timezones"> for more information.
+        See <xref linkend="datatype-timezones"/> for more information.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
        </para>
@@ -5641,7 +5641,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      These settings control how process titles of server processes are
      modified.  Process titles are typically viewed using programs like
      <application>ps</application> or, on Windows, <application>Process Explorer</application>.
-     See <xref linkend="monitoring-ps"> for details.
+     See <xref linkend="monitoring-ps"/> for details.
     </para>
 
     <variablelist>
@@ -5697,7 +5697,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       When statistics collection is enabled, the data that is produced can be
       accessed via the <structname>pg_stat</structname> and
       <structname>pg_statio</structname> family of system views.
-      Refer to <xref linkend="monitoring"> for more information.
+      Refer to <xref linkend="monitoring"/> for more information.
      </para>
 
      <variablelist>
@@ -5766,12 +5766,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Enables timing of database I/O calls.  This parameter is off by
         default, because it will repeatedly query the operating system for
         the current time, which may cause significant overhead on some
-        platforms.  You can use the <xref linkend="pgtesttiming"> tool to
+        platforms.  You can use the <xref linkend="pgtesttiming"/> tool to
         measure the overhead of timing on your system.
         I/O timing information is
-        displayed in <xref linkend="pg-stat-database-view">, in the output of
-        <xref linkend="sql-explain"> when the <literal>BUFFERS</literal> option is
-        used, and by <xref linkend="pgstatstatements">.  Only superusers can
+        displayed in <xref linkend="pg-stat-database-view"/>, in the output of
+        <xref linkend="sql-explain"/> when the <literal>BUFFERS</literal> option is
+        used, and by <xref linkend="pgstatstatements"/>.  Only superusers can
         change this setting.
        </para>
       </listitem>
@@ -5878,10 +5878,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
      <para>
       These settings control the behavior of the <firstterm>autovacuum</firstterm>
-      feature.  Refer to <xref linkend="autovacuum"> for more information.
+      feature.  Refer to <xref linkend="autovacuum"/> for more information.
       Note that many of these settings can be overridden on a per-table
       basis; see <xref linkend="sql-createtable-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title">.
+      endterm="sql-createtable-storage-parameters-title"/>.
      </para>
 
     <variablelist>
@@ -5896,7 +5896,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         Controls whether the server should run the
         autovacuum launcher daemon.  This is on by default; however,
-        <xref linkend="guc-track-counts"> must also be enabled for
+        <xref linkend="guc-track-counts"/> must also be enabled for
         autovacuum to work.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line; however, autovacuuming can be
@@ -5906,7 +5906,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Note that even when this parameter is disabled, the system
         will launch autovacuum processes if necessary to
         prevent transaction ID wraparound.  See <xref
-        linkend="vacuum-for-wraparound"> for more information.
+        linkend="vacuum-for-wraparound"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -6071,7 +6071,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         This parameter can only be set at server start, but the setting
         can be reduced for individual tables by
         changing table storage parameters.
-        For more information see <xref linkend="vacuum-for-wraparound">.
+        For more information see <xref linkend="vacuum-for-wraparound"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6099,7 +6099,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         400 million multixacts.
         This parameter can only be set at server start, but the setting can
         be reduced for individual tables by changing table storage parameters.
-        For more information see <xref linkend="vacuum-for-multixact-wraparound">.
+        For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6114,7 +6114,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         Specifies the cost delay value that will be used in automatic
         <command>VACUUM</command> operations.  If -1 is specified, the regular
-        <xref linkend="guc-vacuum-cost-delay"> value will be used.
+        <xref linkend="guc-vacuum-cost-delay"/> value will be used.
         The default value is 20 milliseconds.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line;
@@ -6135,7 +6135,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Specifies the cost limit value that will be used in automatic
         <command>VACUUM</command> operations.  If -1 is specified (which is the
         default), the regular
-        <xref linkend="guc-vacuum-cost-limit"> value will be used.  Note that
+        <xref linkend="guc-vacuum-cost-limit"/> value will be used.  Note that
         the value is distributed proportionally among the running autovacuum
         workers, if there is more than one, so that the sum of the limits for
         each worker does not exceed the value of this variable.
@@ -6230,7 +6230,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         The current effective value of the search path can be examined
         via the <acronym>SQL</acronym> function
         <function>current_schemas</function>
-        (see <xref linkend="functions-info">).
+        (see <xref linkend="functions-info"/>).
         This is not quite the same as
         examining the value of <varname>search_path</varname>, since
         <function>current_schemas</function> shows how the items
@@ -6238,7 +6238,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
-        For more information on schema handling, see <xref linkend="ddl-schemas">.
+        For more information on schema handling, see <xref linkend="ddl-schemas"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6264,7 +6264,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         For more information on row security policies,
-        see <xref linkend="sql-createpolicy">.
+        see <xref linkend="sql-createpolicy"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6295,7 +6295,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         This variable is not used for temporary tables; for them,
-        <xref linkend="guc-temp-tablespaces"> is consulted instead.
+        <xref linkend="guc-temp-tablespaces"/> is consulted instead.
        </para>
 
        <para>
@@ -6306,7 +6306,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         For more information on tablespaces,
-        see <xref linkend="manage-ag-tablespaces">.
+        see <xref linkend="manage-ag-tablespaces"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6355,7 +6355,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
-        See also <xref linkend="guc-default-tablespace">.
+        See also <xref linkend="guc-default-tablespace"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6370,7 +6370,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         This parameter is normally on. When set to <literal>off</literal>, it
         disables validation of the function body string during <xref
-        linkend="sql-createfunction">.  Disabling validation avoids side
+        linkend="sql-createfunction"/>.  Disabling validation avoids side
         effects of the validation process and avoids false positives due
         to problems such as forward references.  Set this parameter
         to <literal>off</literal> before loading functions on behalf of other
@@ -6400,8 +6400,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
-        Consult <xref linkend="mvcc"> and <xref
-        linkend="sql-set-transaction"> for more information.
+        Consult <xref linkend="mvcc"/> and <xref
+        linkend="sql-set-transaction"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -6424,7 +6424,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
-        Consult <xref linkend="sql-set-transaction"> for more information.
+        Consult <xref linkend="sql-set-transaction"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -6458,7 +6458,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
-        Consult <xref linkend="sql-set-transaction"> for more information.
+        Consult <xref linkend="sql-set-transaction"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -6477,7 +6477,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         superuser privilege and results in discarding any previously cached
         query plans.  Possible values are <literal>origin</literal> (the default),
         <literal>replica</literal> and <literal>local</literal>.
-        See <xref linkend="sql-altertable"> for
+        See <xref linkend="sql-altertable"/> for
         more information.
        </para>
       </listitem>
@@ -6553,7 +6553,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        longer than the specified duration in milliseconds. This allows any
        locks held by that session to be released and the connection slot to be reused;
        it also allows tuples visible only to this transaction to be vacuumed.  See
-       <xref linkend="routine-vacuuming"> for more details about this.
+       <xref linkend="routine-vacuuming"/> for more details about this.
        </para>
        <para>
        The default value of 0 disables this feature.
@@ -6577,11 +6577,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         tuples.  The default is 150 million transactions.  Although users can
         set this value anywhere from zero to two billions, <command>VACUUM</command>
         will silently limit the effective value to 95% of
-        <xref linkend="guc-autovacuum-freeze-max-age">, so that a
+        <xref linkend="guc-autovacuum-freeze-max-age"/>, so that a
         periodical manual <command>VACUUM</command> has a chance to run before an
         anti-wraparound autovacuum is launched for the table. For more
         information see
-        <xref linkend="vacuum-for-wraparound">.
+        <xref linkend="vacuum-for-wraparound"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6600,10 +6600,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         The default is 50 million transactions.  Although
         users can set this value anywhere from zero to one billion,
         <command>VACUUM</command> will silently limit the effective value to half
-        the value of <xref linkend="guc-autovacuum-freeze-max-age">, so
+        the value of <xref linkend="guc-autovacuum-freeze-max-age"/>, so
         that there is not an unreasonably short time between forced
         autovacuums.  For more information see <xref
-        linkend="vacuum-for-wraparound">.
+        linkend="vacuum-for-wraparound"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6624,10 +6624,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         tuples.  The default is 150 million multixacts.
         Although users can set this value anywhere from zero to two billions,
         <command>VACUUM</command> will silently limit the effective value to 95% of
-        <xref linkend="guc-autovacuum-multixact-freeze-max-age">, so that a
+        <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>, so that a
         periodical manual <command>VACUUM</command> has a chance to run before an
         anti-wraparound is launched for the table.
-        For more information see <xref linkend="vacuum-for-multixact-wraparound">.
+        For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6646,10 +6646,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         is 5 million multixacts.
         Although users can set this value anywhere from zero to one billion,
         <command>VACUUM</command> will silently limit the effective value to half
-        the value of <xref linkend="guc-autovacuum-multixact-freeze-max-age">,
+        the value of <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>,
         so that there is not an unreasonably short time between forced
         autovacuums.
-        For more information see <xref linkend="vacuum-for-multixact-wraparound">.
+        For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6665,7 +6665,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Sets the output format for values of type <type>bytea</type>.
         Valid values are <literal>hex</literal> (the default)
         and <literal>escape</literal> (the traditional PostgreSQL
-        format).  See <xref linkend="datatype-binary"> for more
+        format).  See <xref linkend="datatype-binary"/> for more
         information.  The <type>bytea</type> type always
         accepts both formats on input, regardless of this setting.
        </para>
@@ -6687,7 +6687,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <literal>base64</literal> and <literal>hex</literal>, which
         are both defined in the XML Schema standard.  The default is
         <literal>base64</literal>.  For further information about
-        XML-related functions, see <xref linkend="functions-xml">.
+        XML-related functions, see <xref linkend="functions-xml"/>.
        </para>
 
        <para>
@@ -6717,7 +6717,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Sets whether <literal>DOCUMENT</literal> or
         <literal>CONTENT</literal> is implicit when converting between
         XML and character string values.  See <xref
-        linkend="datatype-xml"> for a description of this.  Valid
+        linkend="datatype-xml"/> for a description of this.  Valid
         values are <literal>DOCUMENT</literal> and
         <literal>CONTENT</literal>.  The default is
         <literal>CONTENT</literal>.
@@ -6748,7 +6748,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         The default is four megabytes (<literal>4MB</literal>). This setting
         can be overridden for individual GIN indexes by changing
         index storage parameters.
-         See <xref linkend="gin-fast-update"> and <xref linkend="gin-tips">
+         See <xref linkend="gin-fast-update"/> and <xref linkend="gin-tips"/>
          for more information.
        </para>
       </listitem>
@@ -6780,7 +6780,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         and <literal>European</literal> are synonyms for <literal>DMY</literal>; the
         keywords <literal>US</literal>, <literal>NonEuro</literal>, and
         <literal>NonEuropean</literal> are synonyms for <literal>MDY</literal>. See
-        <xref linkend="datatype-datetime"> for more information. The
+        <xref linkend="datatype-datetime"/> for more information. The
         built-in default is <literal>ISO, MDY</literal>, but
         <application>initdb</application> will initialize the
         configuration file with a setting that corresponds to the
@@ -6802,7 +6802,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         output matching <acronym>SQL</acronym> standard interval literals.
         The value <literal>postgres</literal> (which is the default) will produce
         output matching <productname>PostgreSQL</productname> releases prior to 8.4
-        when the <xref linkend="guc-datestyle">
+        when the <xref linkend="guc-datestyle"/>
         parameter was set to <literal>ISO</literal>.
         The value <literal>postgres_verbose</literal> will produce output
         matching <productname>PostgreSQL</productname> releases prior to 8.4
@@ -6815,7 +6815,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
        <para>
         The <varname>IntervalStyle</varname> parameter also affects the
         interpretation of ambiguous interval input.  See
-        <xref linkend="datatype-interval-input"> for more information.
+        <xref linkend="datatype-interval-input"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -6833,7 +6833,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         The built-in default is <literal>GMT</literal>, but that is typically
         overridden in <filename>postgresql.conf</filename>; <application>initdb</application>
         will install a setting there corresponding to its system environment.
-        See <xref linkend="datatype-timezones"> for more information.
+        See <xref linkend="datatype-timezones"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -6852,7 +6852,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         which is a collection that works in most of the world; there are
         also <literal>'Australia'</literal> and <literal>'India'</literal>,
         and other collections can be defined for a particular installation.
-        See <xref linkend="datetime-config-files"> for more information.
+        See <xref linkend="datetime-config-files"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -6880,7 +6880,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         partially-significant digits; this is especially useful for dumping
         float data that needs to be restored exactly.  Or it can be set
         negative to suppress unwanted digits.
-        See also <xref linkend="datatype-float">.
+        See also <xref linkend="datatype-float"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6897,7 +6897,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         Sets the client-side encoding (character set).
         The default is to use the database encoding.
         The character sets supported by the <productname>PostgreSQL</productname>
-        server are described in <xref linkend="multibyte-charset-supported">.
+        server are described in <xref linkend="multibyte-charset-supported"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -6911,7 +6911,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <listitem>
        <para>
         Sets the language in which messages are displayed.  Acceptable
-        values are system-dependent; see <xref linkend="locale"> for
+        values are system-dependent; see <xref linkend="locale"/> for
         more information.  If this variable is set to the empty string
         (which is the default) then the value is inherited from the
         execution environment of the server in a system-dependent way.
@@ -6945,7 +6945,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         Sets the locale to use for formatting monetary amounts, for
         example with the <function>to_char</function> family of
         functions.  Acceptable values are system-dependent; see <xref
-        linkend="locale"> for more information.  If this variable is
+        linkend="locale"/> for more information.  If this variable is
         set to the empty string (which is the default) then the value
         is inherited from the execution environment of the server in a
         system-dependent way.
@@ -6964,7 +6964,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         Sets the locale to use for formatting numbers, for example
         with the <function>to_char</function> family of
         functions. Acceptable values are system-dependent; see <xref
-        linkend="locale"> for more information.  If this variable is
+        linkend="locale"/> for more information.  If this variable is
         set to the empty string (which is the default) then the value
         is inherited from the execution environment of the server in a
         system-dependent way.
@@ -6983,7 +6983,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         Sets the locale to use for formatting dates and times, for example
         with the <function>to_char</function> family of
         functions. Acceptable values are system-dependent; see <xref
-        linkend="locale"> for more information.  If this variable is
+        linkend="locale"/> for more information.  If this variable is
         set to the empty string (which is the default) then the value
         is inherited from the execution environment of the server in a
         system-dependent way.
@@ -7002,7 +7002,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         Selects the text search configuration that is used by those variants
         of the text search functions that do not have an explicit argument
         specifying the configuration.
-        See <xref linkend="textsearch"> for further information.
+        See <xref linkend="textsearch"/> for further information.
         The built-in default is <literal>pg_catalog.simple</literal>, but
         <application>initdb</application> will initialize the
         configuration file with a setting that corresponds to the
@@ -7067,7 +7067,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         This variable specifies one or more shared libraries that are to be
         preloaded at connection start.
         It contains a comma-separated list of library names, where each name
-        is interpreted as for the <xref linkend="sql-load"> command.
+        is interpreted as for the <xref linkend="sql-load"/> command.
         Whitespace between entries is ignored; surround a library name with
         double quotes if you need to include whitespace or commas in the name.
         The parameter value only takes effect at the start of the connection.
@@ -7101,7 +7101,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
        <para>
         However, unless a module is specifically designed to be used in this way by
         non-superusers, this is usually not the right setting to use.  Look
-        at <xref linkend="guc-session-preload-libraries"> instead.
+        at <xref linkend="guc-session-preload-libraries"/> instead.
        </para>
       </listitem>
      </varlistentry>
@@ -7118,7 +7118,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         This variable specifies one or more shared libraries that are to be
         preloaded at connection start.
         It contains a comma-separated list of library names, where each name
-        is interpreted as for the <xref linkend="sql-load"> command.
+        is interpreted as for the <xref linkend="sql-load"/> command.
         Whitespace between entries is ignored; surround a library name with
         double quotes if you need to include whitespace or commas in the name.
         The parameter value only takes effect at the start of the connection.
@@ -7132,7 +7132,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         performance-measurement libraries to be loaded into specific sessions
         without an explicit
         <command>LOAD</command> command being given.  For
-        example, <xref linkend="auto-explain"> could be enabled for all
+        example, <xref linkend="auto-explain"/> could be enabled for all
         sessions under a given user name by setting this parameter
         with <command>ALTER ROLE SET</command>.  Also, this parameter can be changed
         without restarting the server (but changes only take effect when a new
@@ -7141,7 +7141,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
        </para>
 
        <para>
-        Unlike <xref linkend="guc-shared-preload-libraries">, there is no large
+        Unlike <xref linkend="guc-shared-preload-libraries"/>, there is no large
         performance advantage to loading a library at session start rather than
         when it is first used.  There is some advantage, however, when
         connection pooling is used.
@@ -7160,7 +7160,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         This variable specifies one or more shared libraries to be preloaded at
         server start.
         It contains a comma-separated list of library names, where each name
-        is interpreted as for the <xref linkend="sql-load"> command.
+        is interpreted as for the <xref linkend="sql-load"/> command.
         Whitespace between entries is ignored; surround a library name with
         double quotes if you need to include whitespace or commas in the name.
         This parameter can only be set at server start.  If a specified
@@ -7183,7 +7183,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         parameter is recommended only for libraries that will be used in most
         sessions.  Also, changing this parameter requires a server restart, so
         this is not the right setting to use for short-term debugging tasks,
-        say.  Use <xref linkend="guc-session-preload-libraries"> for that
+        say.  Use <xref linkend="guc-session-preload-libraries"/> for that
         instead.
        </para>
 
@@ -7269,7 +7269,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         Soft upper limit of the size of the set returned by GIN index scans. For more
-        information see <xref linkend="gin-tips">.
+        information see <xref linkend="gin-tips"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -7317,7 +7317,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        When <xref linkend="guc-log-lock-waits"> is set,
+        When <xref linkend="guc-log-lock-waits"/> is set,
         this parameter also determines the length of time to wait before
         a log message is issued about the lock wait.  If you are trying
         to investigate locking delays you might want to set a shorter than
@@ -7336,8 +7336,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         The shared lock table tracks locks on
         <varname>max_locks_per_transaction</varname> * (<xref
-        linkend="guc-max-connections"> + <xref
-        linkend="guc-max-prepared-transactions">) objects (e.g.,  tables);
+        linkend="guc-max-connections"/> + <xref
+        linkend="guc-max-prepared-transactions"/>) objects (e.g.,  tables);
         hence, no more than this many distinct objects can be locked at
         any one time.  This parameter controls the average number of object
         locks allocated for each transaction;  individual transactions
@@ -7368,8 +7368,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         The shared predicate lock table tracks locks on
         <varname>max_pred_locks_per_transaction</varname> * (<xref
-        linkend="guc-max-connections"> + <xref
-        linkend="guc-max-prepared-transactions">) objects (e.g., tables);
+        linkend="guc-max-connections"/> + <xref
+        linkend="guc-max-prepared-transactions"/>) objects (e.g., tables);
         hence, no more than this many distinct objects can be locked at
         any one time.  This parameter controls the average number of object
         locks allocated for each transaction;  individual transactions
@@ -7396,7 +7396,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         predicate-locked before the lock is promoted to covering the whole
         relation.  Values greater than or equal to zero mean an absolute
         limit, while negative values
-        mean <xref linkend="guc-max-pred-locks-per-transaction"> divided by
+        mean <xref linkend="guc-max-pred-locks-per-transaction"/> divided by
         the absolute value of this setting.  The default is -2, which keeps
         the behavior from previous versions of <productname>PostgreSQL</productname>.
         This parameter can only be set in the <filename>postgresql.conf</filename>
@@ -7589,7 +7589,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        See <xref linkend="sql-precedence"> for more information.
+        See <xref linkend="sql-precedence"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -7607,7 +7607,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         output of <command>EXPLAIN</command> as well as the results of functions
         like <function>pg_get_viewdef</function>.  See also the
         <option>--quote-all-identifiers</option> option of
-        <xref linkend="app-pgdump"> and <xref linkend="app-pg-dumpall">.
+        <xref linkend="app-pgdump"/> and <xref linkend="app-pg-dumpall"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -7630,7 +7630,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         parameter to determine how string literals will be processed.
         The presence of this parameter can also be taken as an indication
         that the escape string syntax (<literal>E'...'</literal>) is supported.
-        Escape string syntax (<xref linkend="sql-syntax-strings-escape">)
+        Escape string syntax (<xref linkend="sql-syntax-strings-escape"/>)
         should be used if an application desires
         backslashes to be treated as escape characters.
        </para>
@@ -7710,7 +7710,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        Refer to <xref linkend="functions-comparison"> for related information.
+        Refer to <xref linkend="functions-comparison"/> for related information.
        </para>
       </listitem>
      </varlistentry>
@@ -7788,9 +7788,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Reports the size of a disk block.  It is determined by the value
         of <literal>BLCKSZ</literal> when building the server. The default
         value is 8192 bytes.  The meaning of some configuration
-        variables (such as <xref linkend="guc-shared-buffers">) is
+        variables (such as <xref linkend="guc-shared-buffers"/>) is
         influenced by <varname>block_size</varname>. See <xref
-        linkend="runtime-config-resource"> for information.
+        linkend="runtime-config-resource"/> for information.
        </para>
       </listitem>
      </varlistentry>
@@ -7804,7 +7804,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         Reports whether data checksums are enabled for this cluster.
-        See <xref linkend="app-initdb-data-checksums"> for more information.
+        See <xref linkend="app-initdb-data-checksums"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -7853,7 +7853,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         Reports the locale in which sorting of textual data is done.
-        See <xref linkend="locale"> for more information.
+        See <xref linkend="locale"/> for more information.
         This value is determined when a database is created.
        </para>
       </listitem>
@@ -7868,7 +7868,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         Reports the locale that determines character classifications.
-        See <xref linkend="locale"> for more information.
+        See <xref linkend="locale"/> for more information.
         This value is determined when a database is created.
         Ordinarily this will be the same as <varname>lc_collate</varname>,
         but for special applications it might be set differently.
@@ -7953,7 +7953,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Reports the database encoding (character set).
         It is determined when the database is created.  Ordinarily,
         clients need only be concerned with the value of <xref
-        linkend="guc-client-encoding">.
+        linkend="guc-client-encoding"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -8012,7 +8012,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Reports the number of blocks (pages) in a WAL segment file.
         The total size of a WAL segment file in bytes is equal to
         <varname>wal_segment_size</varname> multiplied by <varname>wal_block_size</varname>;
-        by default this is 16MB.  See <xref linkend="wal-configuration"> for
+        by default this is 16MB.  See <xref linkend="wal-configuration"/> for
         more information.
        </para>
       </listitem>
@@ -8140,8 +8140,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         Generates a great amount of debugging output for the
         <command>LISTEN</command> and <command>NOTIFY</command>
-        commands.  <xref linkend="guc-client-min-messages"> or
-        <xref linkend="guc-log-min-messages"> must be
+        commands.  <xref linkend="guc-client-min-messages"/> or
+        <xref linkend="guc-log-min-messages"/> must be
         <literal>DEBUG1</literal> or lower to send this output to the
         client or server logs, respectively.
        </para>
@@ -8158,7 +8158,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         Enables logging of recovery-related debugging output that otherwise
         would not be logged. This parameter allows the user to override the
-        normal setting of <xref linkend="guc-log-min-messages">, but only for
+        normal setting of <xref linkend="guc-log-min-messages"/>, but only for
         specific messages. This is intended for use in debugging Hot Standby.
         Valid values are <literal>DEBUG5</literal>, <literal>DEBUG4</literal>,
         <literal>DEBUG3</literal>, <literal>DEBUG2</literal>, <literal>DEBUG1</literal>, and
@@ -8401,7 +8401,7 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </term>
       <listitem>
        <para>
-        Only has effect if <xref linkend="app-initdb-data-checksums"> are enabled.
+        Only has effect if <xref linkend="app-initdb-data-checksums"/> are enabled.
        </para>
        <para>
         Detection of a checksum failure during a read normally causes
@@ -8452,7 +8452,7 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
    <para>
     For convenience there are also single letter command-line option
     switches available for some parameters.  They are described in
-    <xref linkend="runtime-config-short-table">.  Some of these
+    <xref linkend="runtime-config-short-table"/>.  Some of these
     options exist for historical reasons, and their presence as a
     single-letter option does not necessarily indicate an endorsement
     to use the option heavily.

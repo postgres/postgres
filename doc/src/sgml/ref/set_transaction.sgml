@@ -119,7 +119,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    <command>INSERT</command>, <command>DELETE</command>,
    <command>UPDATE</command>, <command>FETCH</command>, or
    <command>COPY</command>) of a transaction has been executed.  See
-   <xref linkend="mvcc"> for more information about transaction
+   <xref linkend="mvcc"/> for more information about transaction
    isolation and concurrency control.
   </para>
 
@@ -156,7 +156,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    transaction to run with the same <firstterm>snapshot</firstterm> as an existing
    transaction.  The pre-existing transaction must have exported its snapshot
    with the <literal>pg_export_snapshot</literal> function (see <xref
-   linkend="functions-snapshot-synchronization">).  That function returns a
+   linkend="functions-snapshot-synchronization"/>).  That function returns a
    snapshot identifier, which must be given to <literal>SET TRANSACTION
    SNAPSHOT</literal> to specify which snapshot is to be imported.  The
    identifier must be written as a string literal in this command, for example
@@ -199,13 +199,13 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
 
   <para>
    The session default transaction modes can also be set by setting the
-   configuration parameters <xref linkend="guc-default-transaction-isolation">,
-   <xref linkend="guc-default-transaction-read-only">, and
-   <xref linkend="guc-default-transaction-deferrable">.
+   configuration parameters <xref linkend="guc-default-transaction-isolation"/>,
+   <xref linkend="guc-default-transaction-read-only"/>, and
+   <xref linkend="guc-default-transaction-deferrable"/>.
    (In fact <command>SET SESSION CHARACTERISTICS</command> is just a
    verbose equivalent for setting these variables with <command>SET</command>.)
    This means the defaults can be set in the configuration file, via
-   <command>ALTER DATABASE</command>, etc.  Consult <xref linkend="runtime-config">
+   <command>ALTER DATABASE</command>, etc.  Consult <xref linkend="runtime-config"/>
    for more information.
   </para>
  </refsect1>

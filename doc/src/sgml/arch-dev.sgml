@@ -7,7 +7,7 @@
    <title>Author</title>
    <para>
     This chapter originated as part of
-    <xref linkend="sim98">, Stefan Simkovics'
+    <xref linkend="sim98"/>, Stefan Simkovics'
     Master's Thesis prepared at Vienna University of Technology under the direction
     of O.Univ.Prof.Dr. Georg Gottlob and Univ.Ass. Mag. Katrin Seyr.
    </para>
@@ -136,7 +136,7 @@
    <para>
     The client process can be any program that understands the
     <productname>PostgreSQL</productname> protocol described in
-    <xref linkend="protocol">.  Many clients are based on the
+    <xref linkend="protocol"/>.  Many clients are based on the
     C-language library <application>libpq</application>, but several independent
     implementations of the protocol exist, such as the Java
     <application>JDBC</application> driver.
@@ -317,7 +317,7 @@
 
    <para>
     The query rewriter is discussed in some detail in
-    <xref linkend="rules">, so there is no need to cover it here.
+    <xref linkend="rules"/>, so there is no need to cover it here.
     We will only point out that both the input and the output of the
     rewriter are query trees, that is, there is no change in the
     representation or level of semantic detail in the trees.  Rewriting
@@ -347,8 +347,8 @@
      involving large numbers of join operations. In order to determine
      a reasonable (not necessarily optimal) query plan in a reasonable amount
      of time, <productname>PostgreSQL</productname> uses a <firstterm>Genetic
-     Query Optimizer</firstterm> (see <xref linkend="geqo">) when the number of joins
-     exceeds a threshold (see <xref linkend="guc-geqo-threshold">).
+     Query Optimizer</firstterm> (see <xref linkend="geqo"/>) when the number of joins
+     exceeds a threshold (see <xref linkend="guc-geqo-threshold"/>).
     </para>
    </note>
 
@@ -438,7 +438,7 @@
     </para>
 
     <para>
-     If the query uses fewer than <xref linkend="guc-geqo-threshold">
+     If the query uses fewer than <xref linkend="guc-geqo-threshold"/>
      relations, a near-exhaustive search is conducted to find the best
      join sequence.  The planner preferentially considers joins between any
      two relations for which there exist a corresponding join clause in the
@@ -454,7 +454,7 @@
     <para>
      When <varname>geqo_threshold</varname> is exceeded, the join
      sequences considered are determined by heuristics, as described
-     in <xref linkend="geqo">.  Otherwise the process is the same.
+     in <xref linkend="geqo"/>.  Otherwise the process is the same.
     </para>
 
     <para>

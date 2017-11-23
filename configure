@@ -630,12 +630,10 @@ vpath_build
 PG_VERSION_NUM
 PROVE
 FOP
-OSX
 XSLTPROC
-XMLLINT
 DBTOEPUB
 have_docbook
-NSGMLS
+XMLLINT
 TCL_SHLIB_LD_LIBS
 TCL_SHARED_BUILD
 TCL_LIB_SPEC
@@ -16132,19 +16130,19 @@ fi
 #
 # Check for DocBook and tools
 #
-if test -z "$NSGMLS"; then
-  for ac_prog in onsgmls nsgmls
+if test -z "$XMLLINT"; then
+  for ac_prog in xmllint
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_NSGMLS+:} false; then :
+if ${ac_cv_path_XMLLINT+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  case $NSGMLS in
+  case $XMLLINT in
   [\\/]* | ?:[\\/]*)
-  ac_cv_path_NSGMLS="$NSGMLS" # Let the user override the test with a path.
+  ac_cv_path_XMLLINT="$XMLLINT" # Let the user override the test with a path.
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -16154,7 +16152,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_NSGMLS="$as_dir/$ac_word$ac_exec_ext"
+    ac_cv_path_XMLLINT="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -16165,35 +16163,35 @@ IFS=$as_save_IFS
   ;;
 esac
 fi
-NSGMLS=$ac_cv_path_NSGMLS
-if test -n "$NSGMLS"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NSGMLS" >&5
-$as_echo "$NSGMLS" >&6; }
+XMLLINT=$ac_cv_path_XMLLINT
+if test -n "$XMLLINT"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XMLLINT" >&5
+$as_echo "$XMLLINT" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
 
 
-  test -n "$NSGMLS" && break
+  test -n "$XMLLINT" && break
 done
 
 else
-  # Report the value of NSGMLS in configure's output in all cases.
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NSGMLS" >&5
-$as_echo_n "checking for NSGMLS... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NSGMLS" >&5
-$as_echo "$NSGMLS" >&6; }
+  # Report the value of XMLLINT in configure's output in all cases.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XMLLINT" >&5
+$as_echo_n "checking for XMLLINT... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XMLLINT" >&5
+$as_echo "$XMLLINT" >&6; }
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for DocBook V4.2" >&5
-$as_echo_n "checking for DocBook V4.2... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for DocBook XML V4.2" >&5
+$as_echo_n "checking for DocBook XML V4.2... " >&6; }
 if ${pgac_cv_check_docbook+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.sgml <<EOF
-<!doctype book PUBLIC "-//OASIS//DTD DocBook V4.2//EN">
+  cat >conftest.xml <<EOF
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 <book>
  <title>test</title>
  <chapter>
@@ -16208,13 +16206,13 @@ EOF
 
 pgac_cv_check_docbook=no
 
-if test -n "$NSGMLS"; then
-  $NSGMLS -s conftest.sgml 1>&5 2>&1
+if test -n "$XMLLINT"; then
+  $XMLLINT --noout --valid conftest.xml 1>&5 2>&1
   if test $? -eq 0; then
     pgac_cv_check_docbook=yes
   fi
 fi
-rm -f conftest.sgml
+rm -f conftest.xml
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_check_docbook" >&5
 $as_echo "$pgac_cv_check_docbook" >&6; }
@@ -16276,60 +16274,6 @@ $as_echo_n "checking for DBTOEPUB... " >&6; }
 $as_echo "$DBTOEPUB" >&6; }
 fi
 
-if test -z "$XMLLINT"; then
-  for ac_prog in xmllint
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_XMLLINT+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $XMLLINT in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_XMLLINT="$XMLLINT" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_XMLLINT="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-XMLLINT=$ac_cv_path_XMLLINT
-if test -n "$XMLLINT"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XMLLINT" >&5
-$as_echo "$XMLLINT" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$XMLLINT" && break
-done
-
-else
-  # Report the value of XMLLINT in configure's output in all cases.
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XMLLINT" >&5
-$as_echo_n "checking for XMLLINT... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XMLLINT" >&5
-$as_echo "$XMLLINT" >&6; }
-fi
-
 if test -z "$XSLTPROC"; then
   for ac_prog in xsltproc
 do
@@ -16382,60 +16326,6 @@ else
 $as_echo_n "checking for XSLTPROC... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XSLTPROC" >&5
 $as_echo "$XSLTPROC" >&6; }
-fi
-
-if test -z "$OSX"; then
-  for ac_prog in osx sgml2xml sx
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_OSX+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $OSX in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_OSX="$OSX" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_OSX="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-OSX=$ac_cv_path_OSX
-if test -n "$OSX"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OSX" >&5
-$as_echo "$OSX" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$OSX" && break
-done
-
-else
-  # Report the value of OSX in configure's output in all cases.
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OSX" >&5
-$as_echo_n "checking for OSX... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OSX" >&5
-$as_echo "$OSX" >&6; }
 fi
 
 if test -z "$FOP"; then

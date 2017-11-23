@@ -272,7 +272,7 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
        open file %s</literal>) should probably not start with a
        capital letter (if your language distinguishes letter case) or
        end with a period (if your language uses punctuation marks).
-       It might help to read <xref linkend="error-style-guide">.
+       It might help to read <xref linkend="error-style-guide"/>.
       </para>
      </listitem>
 

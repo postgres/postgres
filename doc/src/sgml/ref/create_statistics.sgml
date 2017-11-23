@@ -86,8 +86,8 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
       dependency statistics.
       If this clause is omitted, all supported statistics kinds are
       included in the statistics object.
-      For more information, see <xref linkend="planner-stats-extended">
-      and <xref linkend="multivariate-statistics-examples">.
+      For more information, see <xref linkend="planner-stats-extended"/>
+      and <xref linkend="multivariate-statistics-examples"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -178,8 +178,8 @@ EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 0);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterstatistics"></member>
-   <member><xref linkend="sql-dropstatistics"></member>
+   <member><xref linkend="sql-alterstatistics"/></member>
+   <member><xref linkend="sql-dropstatistics"/></member>
   </simplelist>
  </refsect1>
 </refentry>

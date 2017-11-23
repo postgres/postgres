@@ -64,7 +64,7 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-release-savepoint"> to destroy a savepoint
+   Use <xref linkend="sql-release-savepoint"/> to destroy a savepoint
    without discarding the effects of commands executed after it was
    established.
   </para>
@@ -148,11 +148,11 @@ COMMIT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-commit"></member>
-   <member><xref linkend="sql-release-savepoint"></member>
-   <member><xref linkend="sql-rollback"></member>
-   <member><xref linkend="sql-savepoint"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-commit"/></member>
+   <member><xref linkend="sql-release-savepoint"/></member>
+   <member><xref linkend="sql-rollback"/></member>
+   <member><xref linkend="sql-savepoint"/></member>
   </simplelist>
  </refsect1>
 </refentry>

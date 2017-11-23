@@ -49,20 +49,20 @@
    resources, they should be put in the same database but possibly
    into separate schemas.  Schemas are a purely logical structure and who can
    access what is managed by the privilege system.  More information about
-   managing schemas is in <xref linkend="ddl-schemas">.
+   managing schemas is in <xref linkend="ddl-schemas"/>.
   </para>
 
   <para>
    Databases are created with the <command>CREATE DATABASE</command> command
-   (see <xref linkend="manage-ag-createdb">) and destroyed with the
+   (see <xref linkend="manage-ag-createdb"/>) and destroyed with the
    <command>DROP DATABASE</command> command
-   (see <xref linkend="manage-ag-dropdb">).
+   (see <xref linkend="manage-ag-dropdb"/>).
    To determine the set of existing databases, examine the
    <structname>pg_database</structname> system catalog, for example
 <synopsis>
 SELECT datname FROM pg_database;
 </synopsis>
-   The <xref linkend="app-psql"> program's <literal>\l</literal> meta-command
+   The <xref linkend="app-psql"/> program's <literal>\l</literal> meta-command
    and <option>-l</option> command-line option are also useful for listing the
    existing databases.
   </para>
@@ -83,12 +83,12 @@ SELECT datname FROM pg_database;
   <para>
    In order to create a database, the <productname>PostgreSQL</productname>
    server must be up and running (see <xref
-   linkend="server-start">).
+   linkend="server-start"/>).
   </para>
 
   <para>
    Databases are created with the SQL command
-   <xref linkend="sql-createdatabase">:
+   <xref linkend="sql-createdatabase"/>:
 <synopsis>
 CREATE DATABASE <replaceable>name</replaceable>;
 </synopsis>
@@ -101,7 +101,7 @@ CREATE DATABASE <replaceable>name</replaceable>;
 
   <para>
    The creation of databases is a restricted operation. See <xref
-   linkend="role-attributes"> for how to grant permission.
+   linkend="role-attributes"/> for how to grant permission.
   </para>
 
   <para>
@@ -110,7 +110,7 @@ CREATE DATABASE <replaceable>name</replaceable>;
    question remains how the <emphasis>first</emphasis> database at any given
    site can be created. The first database is always created by the
    <command>initdb</command> command when the data storage area is
-   initialized. (See <xref linkend="creating-cluster">.)  This
+   initialized. (See <xref linkend="creating-cluster"/>.)  This
    database is called
    <literal>postgres</literal>.<indexterm><primary>postgres</primary></indexterm> So to
    create the first <quote>ordinary</quote> database you can connect to
@@ -127,7 +127,7 @@ CREATE DATABASE <replaceable>name</replaceable>;
    propagated to all subsequently created databases. Because of this,
    avoid creating objects in <literal>template1</literal> unless you want them
    propagated to every newly created database.  More details
-   appear in <xref linkend="manage-ag-templatedbs">.
+   appear in <xref linkend="manage-ag-templatedbs"/>.
   </para>
 
   <para>
@@ -142,14 +142,14 @@ createdb <replaceable class="parameter">dbname</replaceable>
    <command>createdb</command> does no magic. It connects to the <literal>postgres</literal>
    database and issues the <command>CREATE DATABASE</command> command,
    exactly as described above.
-   The <xref linkend="app-createdb"> reference page contains the invocation
+   The <xref linkend="app-createdb"/> reference page contains the invocation
    details. Note that <command>createdb</command> without any arguments will create
    a database with the current user name.
   </para>
 
   <note>
    <para>
-    <xref linkend="client-authentication"> contains information about
+    <xref linkend="client-authentication"/> contains information about
     how to restrict who can connect to a given database.
    </para>
   </note>
@@ -283,7 +283,7 @@ createdb -T template0 <replaceable>dbname</replaceable>
   <title>Database Configuration</title>
 
   <para>
-   Recall from <xref linkend="runtime-config"> that the
+   Recall from <xref linkend="runtime-config"/> that the
    <productname>PostgreSQL</productname> server provides a large number of
    run-time configuration variables.  You can set database-specific
    default values for many of these settings.
@@ -315,7 +315,7 @@ ALTER DATABASE mydb SET geqo TO off;
 
   <para>
    Databases are destroyed with the command
-   <xref linkend="sql-dropdatabase">:<indexterm><primary>DROP DATABASE</primary></indexterm>
+   <xref linkend="sql-dropdatabase"/>:<indexterm><primary>DROP DATABASE</primary></indexterm>
 <synopsis>
 DROP DATABASE <replaceable>name</replaceable>;
 </synopsis>
@@ -337,7 +337,7 @@ DROP DATABASE <replaceable>name</replaceable>;
 
   <para>
    For convenience, there is also a shell program to drop
-   databases, <xref linkend="app-dropdb">:<indexterm><primary>dropdb</primary></indexterm>
+   databases, <xref linkend="app-dropdb"/>:<indexterm><primary>dropdb</primary></indexterm>
 <synopsis>
 dropdb <replaceable class="parameter">dbname</replaceable>
 </synopsis>
@@ -396,7 +396,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
 
   <para>
    To define a tablespace, use the <xref
-   linkend="sql-createtablespace">
+   linkend="sql-createtablespace"/>
    command, for example:<indexterm><primary>CREATE TABLESPACE</primary></indexterm>:
 <programlisting>
 CREATE TABLESPACE fastspace LOCATION '/ssd1/postgresql/data';
@@ -438,7 +438,7 @@ CREATE TABLE foo(i int) TABLESPACE space1;
   </para>
 
   <para>
-   Alternatively, use the <xref linkend="guc-default-tablespace"> parameter:
+   Alternatively, use the <xref linkend="guc-default-tablespace"/> parameter:
 <programlisting>
 SET default_tablespace = space1;
 CREATE TABLE foo(i int);
@@ -450,7 +450,7 @@ CREATE TABLE foo(i int);
   </para>
 
   <para>
-   There is also a <xref linkend="guc-temp-tablespaces"> parameter, which
+   There is also a <xref linkend="guc-temp-tablespaces"/> parameter, which
    determines the placement of temporary tables and indexes, as well as
    temporary files that are used for purposes such as sorting large data
    sets.  This can be a list of tablespace names, rather than only one,
@@ -490,7 +490,7 @@ CREATE TABLE foo(i int);
 
   <para>
    To remove an empty tablespace, use the <xref
-   linkend="sql-droptablespace">
+   linkend="sql-droptablespace"/>
    command.
   </para>
 
@@ -501,7 +501,7 @@ CREATE TABLE foo(i int);
 <synopsis>
 SELECT spcname FROM pg_tablespace;
 </synopsis>
-   The <xref linkend="app-psql"> program's <literal>\db</literal> meta-command
+   The <xref linkend="app-psql"/> program's <literal>\db</literal> meta-command
    is also useful for listing the existing tablespaces.
   </para>
 

@@ -86,8 +86,8 @@ ALTER TEXT SEARCH TEMPLATE <replaceable>name</replaceable> SET SCHEMA <replaceab
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtstemplate"></member>
-   <member><xref linkend="sql-droptstemplate"></member>
+   <member><xref linkend="sql-createtstemplate"/></member>
+   <member><xref linkend="sql-droptstemplate"/></member>
   </simplelist>
  </refsect1>
 </refentry>

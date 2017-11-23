@@ -52,7 +52,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
       patterns. <command>REINDEX</command> provides a way to reduce
       the space consumption of the index by writing a new version of
       the index without the dead pages. See <xref
-      linkend="routine-reindex"> for more information.
+      linkend="routine-reindex"/> for more information.
      </para>
     </listitem>
 
@@ -192,7 +192,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
    doubt, use <command>REINDEX SYSTEM</command> to select
    reconstruction of all system indexes in the database.  Then quit
    the single-user server session and restart the regular server.
-   See the <xref linkend="app-postgres"> reference page for more
+   See the <xref linkend="app-postgres"/> reference page for more
    information about how to interact with the single-user server
    interface.
   </para>

@@ -65,7 +65,7 @@ DROP FOREIGN DATA WRAPPER [ IF EXISTS ] <replaceable class="parameter">name</rep
       Automatically drop objects that depend on the foreign-data
       wrapper (such as foreign tables and servers),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -106,8 +106,8 @@ DROP FOREIGN DATA WRAPPER dbi;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createforeigndatawrapper"></member>
-   <member><xref linkend="sql-alterforeigndatawrapper"></member>
+   <member><xref linkend="sql-createforeigndatawrapper"/></member>
+   <member><xref linkend="sql-alterforeigndatawrapper"/></member>
   </simplelist>
  </refsect1>
 

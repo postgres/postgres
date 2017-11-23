@@ -110,7 +110,7 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggr
       Automatically drop objects that depend on the aggregate function
       (such as views using it),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -132,7 +132,7 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggr
 
    <para>
     Alternative syntaxes for referencing ordered-set aggregates
-    are described under <xref linkend="sql-alteraggregate">.
+    are described under <xref linkend="sql-alteraggregate"/>.
    </para>
  </refsect1>
 
@@ -176,8 +176,8 @@ DROP AGGREGATE myavg(integer), myavg(bigint);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteraggregate"></member>
-   <member><xref linkend="sql-createaggregate"></member>
+   <member><xref linkend="sql-alteraggregate"/></member>
+   <member><xref linkend="sql-createaggregate"/></member>
   </simplelist>
  </refsect1>
 

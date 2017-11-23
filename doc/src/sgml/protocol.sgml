@@ -207,7 +207,7 @@
   <para>
    This section describes the message flow and the semantics of each
    message type.  (Details of the exact representation of each message
-   appear in <xref linkend="protocol-message-formats">.)  There are
+   appear in <xref linkend="protocol-message-formats"/>.)  There are
    several different sub-protocols depending on the state of the
    connection: start-up, query, function call,
    <command>COPY</command>, and termination.  There are also special
@@ -383,7 +383,7 @@
         SASLInitialResponse with the name of the selected mechanism, and the
         first part of the SASL data stream in response to this. If further
         messages are needed, the server will respond with
-        AuthenticationSASLContinue. See <xref linkend="sasl-authentication">
+        AuthenticationSASLContinue. See <xref linkend="sasl-authentication"/>
         for details.
        </para>
       </listitem>
@@ -478,9 +478,9 @@
        <para>
         This message informs the frontend about the current (initial)
          setting of backend parameters, such as <xref
-         linkend="guc-client-encoding"> or <xref linkend="guc-datestyle">.
+         linkend="guc-client-encoding"/> or <xref linkend="guc-datestyle"/>.
          The frontend can ignore this message, or record the settings
-         for its future use; see <xref linkend="protocol-async"> for
+         for its future use; see <xref linkend="protocol-async"/> for
          more details.  The frontend should not respond to this
          message, but should continue listening for a ReadyForQuery
          message.
@@ -564,7 +564,7 @@
       <listitem>
        <para>
         The backend is ready to copy data from the frontend to a
-        table; see <xref linkend="protocol-copy">.
+        table; see <xref linkend="protocol-copy"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -574,7 +574,7 @@
       <listitem>
        <para>
         The backend is ready to copy data from a table to the
-        frontend; see <xref linkend="protocol-copy">.
+        frontend; see <xref linkend="protocol-copy"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -654,7 +654,7 @@
     normally consists of RowDescription, zero or more
     DataRow messages, and then CommandComplete.
     <command>COPY</command> to or from the frontend invokes special protocol
-    as described in <xref linkend="protocol-copy">.
+    as described in <xref linkend="protocol-copy"/>.
     All other query types normally produce only
     a CommandComplete message.
    </para>
@@ -691,7 +691,7 @@
    <para>
     A frontend must be prepared to accept ErrorResponse and
     NoticeResponse messages whenever it is expecting any other type of
-    message.  See also <xref linkend="protocol-async"> concerning messages
+    message.  See also <xref linkend="protocol-async"/> concerning messages
     that the backend might generate due to outside events.
    </para>
 
@@ -1198,7 +1198,7 @@ SELCT 1/0;
     It is possible for NoticeResponse and ParameterStatus messages to be
     interspersed between CopyData messages; frontends must handle these cases,
     and should be prepared for other asynchronous message types as well (see
-    <xref linkend="protocol-async">).  Otherwise, any message type other than
+    <xref linkend="protocol-async"/>).  Otherwise, any message type other than
     CopyData or CopyDone may be treated as terminating copy-out mode.
    </para>
 
@@ -1221,7 +1221,7 @@ SELCT 1/0;
     until a Sync message is received, and then issue ReadyForQuery and return
     to normal processing.  The frontend should treat receipt of ErrorResponse
     as terminating the copy in both directions; no CopyDone should be sent
-    in this case.  See <xref linkend="protocol-replication"> for more
+    in this case.  See <xref linkend="protocol-replication"/> for more
     information on the subprotocol transmitted over copy-both mode.
    </para>
 
@@ -1435,7 +1435,7 @@ SELCT 1/0;
     communication security in environments where attackers might be
     able to capture the session traffic. For more information on
     encrypting <productname>PostgreSQL</productname> sessions with
-    <acronym>SSL</acronym>, see <xref linkend="ssl-tcp">.
+    <acronym>SSL</acronym>, see <xref linkend="ssl-tcp"/>.
    </para>
 
    <para>
@@ -1635,7 +1635,7 @@ of <literal>true</literal> tells the backend to go into walsender mode, wherein 
 small set of replication commands can be issued instead of SQL statements. Only
 the simple query protocol can be used in walsender mode.
 Replication commands are logged in the server log when
-<xref linkend="guc-log-replication-commands"> is enabled.
+<xref linkend="guc-log-replication-commands"/> is enabled.
 Passing <literal>database</literal> as the value instructs walsender to connect to
 the database specified in the <literal>dbname</literal> parameter, which will allow
 the connection to be used for logical replication from that database.
@@ -1649,8 +1649,8 @@ the connection to be used for logical replication from that database.
 psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
 </programlisting>
  However, it is often more useful to use
- <xref linkend="app-pgreceivewal"> (for physical replication) or
- <xref linkend="app-pgrecvlogical"> (for logical replication).
+ <xref linkend="app-pgreceivewal"/> (for physical replication) or
+ <xref linkend="app-pgrecvlogical"/> (for logical replication).
 </para>
 
 <para>
@@ -1728,7 +1728,7 @@ The commands accepted in walsender mode are:
     <listitem>
      <para>
       Requests the server to send the current setting of a run-time parameter.
-      This is similar to the SQL command <xref linkend="sql-show">.
+      This is similar to the SQL command <xref linkend="sql-show"/>.
      </para>
 
      <variablelist>
@@ -1737,7 +1737,7 @@ The commands accepted in walsender mode are:
        <listitem>
          <para>
           The name of a run-time parameter. Available parameters are documented
-          in <xref linkend="runtime-config">.
+          in <xref linkend="runtime-config"/>.
          </para>
        </listitem>
       </varlistentry>
@@ -1792,7 +1792,7 @@ The commands accepted in walsender mode are:
     <listitem>
      <para>
       Create a physical or logical replication
-      slot. See <xref linkend="streaming-replication-slots"> for more about
+      slot. See <xref linkend="streaming-replication-slots"/> for more about
       replication slots.
      </para>
      <variablelist>
@@ -1801,7 +1801,7 @@ The commands accepted in walsender mode are:
        <listitem>
          <para>
           The name of the slot to create. Must be a valid replication slot
-          name (see <xref linkend="streaming-replication-slots-manipulation">).
+          name (see <xref linkend="streaming-replication-slots-manipulation"/>).
          </para>
        </listitem>
       </varlistentry>
@@ -1811,7 +1811,7 @@ The commands accepted in walsender mode are:
        <listitem>
          <para>
           The name of the output plugin used for logical decoding
-          (see <xref linkend="logicaldecoding-output-plugin">).
+          (see <xref linkend="logicaldecoding-output-plugin"/>).
          </para>
        </listitem>
       </varlistentry>
@@ -2378,7 +2378,7 @@ The commands accepted in walsender mode are:
           Sets the label of the backup. If none is specified, a backup label
           of <literal>base backup</literal> will be used. The quoting rules
           for the label are the same as a standard SQL string with
-          <xref linkend="guc-standard-conforming-strings"> turned on.
+          <xref linkend="guc-standard-conforming-strings"/> turned on.
          </para>
         </listitem>
        </varlistentry>
@@ -2642,7 +2642,7 @@ The commands accepted in walsender mode are:
   <para>
    The individual protocol messages are discussed in the following
    subsections. Individual messages are described in
-   <xref linkend="protocol-logicalrep-message-formats">.
+   <xref linkend="protocol-logicalrep-message-formats"/>.
   </para>
 
   <para>
@@ -4006,7 +4006,7 @@ CopyInResponse (B)
                 characters, etc).
                 1 indicates the overall copy format is binary (similar
                 to DataRow format).
-                See <xref linkend="sql-copy">
+                See <xref linkend="sql-copy"/>
                 for more information.
 </para>
 </listitem>
@@ -4080,7 +4080,7 @@ CopyOutResponse (B)
                 is textual (rows separated by newlines, columns
                 separated by separator characters, etc). 1 indicates
                 the overall copy format is binary (similar to DataRow
-                format). See <xref linkend="sql-copy"> for more information.
+                format). See <xref linkend="sql-copy"/> for more information.
 </para>
 </listitem>
 </varlistentry>
@@ -4153,7 +4153,7 @@ CopyBothResponse (B)
                 is textual (rows separated by newlines, columns
                 separated by separator characters, etc). 1 indicates
                 the overall copy format is binary (similar to DataRow
-                format). See <xref linkend="sql-copy"> for more information.
+                format). See <xref linkend="sql-copy"/> for more information.
 </para>
 </listitem>
 </varlistentry>
@@ -4394,7 +4394,7 @@ ErrorResponse (B)
                 A code identifying the field type; if zero, this is
                 the message terminator and no string follows.
                 The presently defined field types are listed in
-                <xref linkend="protocol-error-fields">.
+                <xref linkend="protocol-error-fields"/>.
                 Since more field types might be added in future,
                 frontends should silently ignore fields of unrecognized
                 type.
@@ -4886,7 +4886,7 @@ NoticeResponse (B)
                 A code identifying the field type; if zero, this is
                 the message terminator and no string follows.
                 The presently defined field types are listed in
-                <xref linkend="protocol-error-fields">.
+                <xref linkend="protocol-error-fields"/>.
                 Since more field types might be added in future,
                 frontends should silently ignore fields of unrecognized
                 type.
@@ -5757,7 +5757,7 @@ StartupMessage (F)
                         <literal>true</literal>, <literal>false</literal>, or
                         <literal>database</literal>, and the default is
                         <literal>false</literal>. See
-                        <xref linkend="protocol-replication"> for details.
+                        <xref linkend="protocol-replication"/> for details.
 </para>
 </listitem>
 </varlistentry>
@@ -5919,7 +5919,7 @@ message.
 <listitem>
 <para>
         Code: the SQLSTATE code for the error (see <xref
-        linkend="errcodes-appendix">).  Not localizable.  Always present.
+        linkend="errcodes-appendix"/>).  Not localizable.  Always present.
 </para>
 </listitem>
 </varlistentry>
@@ -6124,7 +6124,7 @@ message.
  <para>
   The fields for schema name, table name, column name, data type name, and
   constraint name are supplied only for a limited number of error types;
-  see <xref linkend="errcodes-appendix">.  Frontends should not assume that
+  see <xref linkend="errcodes-appendix"/>.  Frontends should not assume that
   the presence of any of these fields guarantees the presence of another
   field.  Core error sources observe the interrelationships noted above, but
   user-defined functions may use these fields in other ways.  In the same
@@ -6149,7 +6149,7 @@ not line breaks.
 This section describes the detailed format of each logical replication message.
 These messages are returned either by the replication slot SQL interface or are
 sent by a walsender. In case of a walsender they are encapsulated inside the replication
-protocol WAL messages as described in <xref linkend="protocol-replication">
+protocol WAL messages as described in <xref linkend="protocol-replication"/>
 and generally obey same message flow as physical replication.
 </para>
 

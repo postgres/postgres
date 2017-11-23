@@ -219,8 +219,8 @@ CREATE VIEW hollywood.winners AS
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterschema"></member>
-   <member><xref linkend="sql-dropschema"></member>
+   <member><xref linkend="sql-alterschema"/></member>
+   <member><xref linkend="sql-dropschema"/></member>
  </simplelist>
  </refsect1>
 

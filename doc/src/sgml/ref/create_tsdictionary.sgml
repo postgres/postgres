@@ -50,7 +50,7 @@ CREATE TEXT SEARCH DICTIONARY <replaceable class="parameter">name</replaceable> 
   </para>
 
   <para>
-   Refer to <xref linkend="textsearch"> for further information.
+   Refer to <xref linkend="textsearch"/> for further information.
   </para>
  </refsect1>
 
@@ -134,8 +134,8 @@ CREATE TEXT SEARCH DICTIONARY my_russian (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsdictionary"></member>
-   <member><xref linkend="sql-droptsdictionary"></member>
+   <member><xref linkend="sql-altertsdictionary"/></member>
+   <member><xref linkend="sql-droptsdictionary"/></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -65,7 +65,7 @@ DROP EVENT TRIGGER [ IF EXISTS ] <replaceable class="parameter">name</replaceabl
      <para>
       Automatically drop objects that depend on the trigger,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -107,8 +107,8 @@ DROP EVENT TRIGGER snitch;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createeventtrigger"></member>
-   <member><xref linkend="sql-altereventtrigger"></member>
+   <member><xref linkend="sql-createeventtrigger"/></member>
+   <member><xref linkend="sql-altereventtrigger"/></member>
   </simplelist>
  </refsect1>
 

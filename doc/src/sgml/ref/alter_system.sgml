@@ -70,7 +70,7 @@ ALTER SYSTEM RESET ALL
     <listitem>
      <para>
       Name of a settable configuration parameter.  Available parameters are
-      documented in <xref linkend="runtime-config">.
+      documented in <xref linkend="runtime-config"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -94,13 +94,13 @@ ALTER SYSTEM RESET ALL
   <title>Notes</title>
 
   <para>
-   This command can't be used to set <xref linkend="guc-data-directory">,
+   This command can't be used to set <xref linkend="guc-data-directory"/>,
    nor parameters that are not allowed in <filename>postgresql.conf</filename>
    (e.g., <link linkend="runtime-config-preset">preset options</link>).
   </para>
 
   <para>
-   See <xref linkend="config-setting"> for other ways to set the parameters.
+   See <xref linkend="config-setting"/> for other ways to set the parameters.
   </para>
  </refsect1>
 
@@ -135,8 +135,8 @@ ALTER SYSTEM RESET wal_level;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-set"></member>
-   <member><xref linkend="sql-show"></member>
+   <member><xref linkend="sql-set"/></member>
+   <member><xref linkend="sql-show"/></member>
   </simplelist>
  </refsect1>
 

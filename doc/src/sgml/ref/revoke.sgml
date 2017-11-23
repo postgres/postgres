@@ -122,7 +122,7 @@ REVOKE [ ADMIN OPTION FOR ]
   </para>
 
   <para>
-   See the description of the <xref linkend="sql-grant"> command for
+   See the description of the <xref linkend="sql-grant"/> command for
    the meaning of the privilege types.
   </para>
 
@@ -178,9 +178,9 @@ REVOKE [ ADMIN OPTION FOR ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="app-psql">'s <command>\dp</command> command to
+   Use <xref linkend="app-psql"/>'s <command>\dp</command> command to
    display the privileges granted on existing tables and columns.  See <xref
-   linkend="sql-grant"> for information about the
+   linkend="sql-grant"/> for information about the
    format.  For non-table objects there are other <command>\d</command> commands
    that can display their privileges.
   </para>
@@ -282,7 +282,7 @@ REVOKE admins FROM joe;
   <title>Compatibility</title>
 
    <para>
-    The compatibility notes of the <xref linkend="sql-grant"> command
+    The compatibility notes of the <xref linkend="sql-grant"/> command
     apply analogously to <command>REVOKE</command>.
     The keyword <literal>RESTRICT</literal> or <literal>CASCADE</literal>
     is required according to the standard, but <productname>PostgreSQL</productname>
@@ -294,7 +294,7 @@ REVOKE admins FROM joe;
   <title>See Also</title>
 
   <simpara>
-   <xref linkend="sql-grant">
+   <xref linkend="sql-grant"/>
   </simpara>
  </refsect1>
 

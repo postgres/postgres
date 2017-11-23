@@ -42,7 +42,7 @@ RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
    Destroying a savepoint makes it unavailable as a rollback point,
    but it has no other user visible behavior.  It does not undo the
    effects of commands executed after the savepoint was established.
-   (To do that, see <xref linkend="sql-rollback-to">.)
+   (To do that, see <xref linkend="sql-rollback-to"/>.)
    Destroying a savepoint when
    it is no longer needed allows the system to reclaim some resources
    earlier than transaction end.
@@ -120,11 +120,11 @@ COMMIT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-commit"></member>
-   <member><xref linkend="sql-rollback"></member>
-   <member><xref linkend="sql-rollback-to"></member>
-   <member><xref linkend="sql-savepoint"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-commit"/></member>
+   <member><xref linkend="sql-rollback"/></member>
+   <member><xref linkend="sql-rollback-to"/></member>
+   <member><xref linkend="sql-savepoint"/></member>
   </simplelist>
  </refsect1>
 </refentry>

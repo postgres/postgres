@@ -129,7 +129,7 @@ CREATE TABLE inventory_item (
   <para>
    (These constants are actually only a special case of
    the generic type constants discussed in <xref
-   linkend="sql-syntax-constants-generic">.  The constant is initially
+   linkend="sql-syntax-constants-generic"/>.  The constant is initially
    treated as a string and passed to the composite-type input conversion
    routine.  An explicit type specification might be necessary to tell
    which type to convert the constant to.)
@@ -152,7 +152,7 @@ ROW('', 42, NULL)
 ('', 42, NULL)
 </programlisting>
   The <literal>ROW</literal> expression syntax is discussed in more detail in <xref
-  linkend="sql-syntax-row-constructors">.
+  linkend="sql-syntax-row-constructors"/>.
  </para>
  </sect2>
 
@@ -204,7 +204,7 @@ SELECT (my_func(...)).field FROM ...
 
  <para>
   The special field name <literal>*</literal> means <quote>all fields</quote>, as
-  further explained in <xref linkend="rowtypes-usage">.
+  further explained in <xref linkend="rowtypes-usage"/>.
  </para>
  </sect2>
 
@@ -384,7 +384,7 @@ SELECT * FROM inventory_item c ORDER BY ROW(c.*);
 </programlisting>
    All of these <literal>ORDER BY</literal> clauses specify the row's composite
    value, resulting in sorting the rows according to the rules described
-   in <xref linkend="composite-type-comparison">.  However,
+   in <xref linkend="composite-type-comparison"/>.  However,
    if <structname>inventory_item</structname> contained a column
    named <structfield>c</structfield>, the first case would be different from the
    others, as it would mean to sort by that column only.  Given the column
@@ -517,7 +517,7 @@ INSERT ... VALUES (E'("\\"\\\\")');
    with a data type whose input routine also treated backslashes specially,
    <type>bytea</type> for example, we might need as many as eight backslashes
    in the command to get one backslash into the stored composite field.)
-   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting">) can be
+   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting"/>) can be
    used to avoid the need to double backslashes.
   </para>
  </note>

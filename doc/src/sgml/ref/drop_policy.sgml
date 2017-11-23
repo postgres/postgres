@@ -111,8 +111,8 @@ DROP POLICY p1 ON my_table;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createpolicy"></member>
-   <member><xref linkend="sql-alterpolicy"></member>
+   <member><xref linkend="sql-createpolicy"/></member>
+   <member><xref linkend="sql-alterpolicy"/></member>
   </simplelist>
  </refsect1>
 

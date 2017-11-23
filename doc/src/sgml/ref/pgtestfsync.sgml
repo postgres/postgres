@@ -28,7 +28,7 @@
 
  <para>
   <application>pg_test_fsync</application> is intended to give you a reasonable
-  idea of what the fastest <xref linkend="guc-wal-sync-method"> is on your
+  idea of what the fastest <xref linkend="guc-wal-sync-method"/> is on your
   specific system,
   as well as supplying diagnostic information in the event of an identified I/O
   problem.  However, differences shown by
@@ -37,7 +37,7 @@
   are not speed-limited by their write-ahead logs.
   <application>pg_test_fsync</application> reports average file sync operation
   time in microseconds for each <literal>wal_sync_method</literal>, which can also be used to
-  inform efforts to optimize the value of <xref linkend="guc-commit-delay">.
+  inform efforts to optimize the value of <xref linkend="guc-commit-delay"/>.
  </para>
  </refsect1>
 
@@ -107,7 +107,7 @@
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-postgres"></member>
+   <member><xref linkend="app-postgres"/></member>
   </simplelist>
  </refsect1>
 </refentry>

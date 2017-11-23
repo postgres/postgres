@@ -65,7 +65,7 @@ LISTEN <replaceable class="parameter">channel</replaceable>
   </para>
 
   <para>
-   <xref linkend="sql-notify">
+   <xref linkend="sql-notify"/>
    contains a more extensive
    discussion of the use of <command>LISTEN</command> and
    <command>NOTIFY</command>.
@@ -129,8 +129,8 @@ Asynchronous notification "virtual" received from server process with PID 8448.
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-notify"></member>
-   <member><xref linkend="sql-unlisten"></member>
+   <member><xref linkend="sql-notify"/></member>
+   <member><xref linkend="sql-unlisten"/></member>
   </simplelist>
  </refsect1>
 </refentry>

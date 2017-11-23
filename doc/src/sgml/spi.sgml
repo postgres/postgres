@@ -887,11 +887,11 @@ SPIPlanPtr SPI_prepare(const char * <parameter>command</parameter>, int <paramet
    force re-analysis and re-planning of the statement before using it
    whenever database objects used in the statement have undergone
    definitional (DDL) changes since the previous use of the prepared
-   statement.  Also, if the value of <xref linkend="guc-search-path"> changes
+   statement.  Also, if the value of <xref linkend="guc-search-path"/> changes
    from one use to the next, the statement will be re-parsed using the new
    <varname>search_path</varname>.  (This latter behavior is new as of
    <productname>PostgreSQL</productname> 9.3.)  See <xref
-   linkend="sql-prepare"> for more information about the behavior of prepared
+   linkend="sql-prepare"/> for more information about the behavior of prepared
    statements.
   </para>
 
@@ -2308,7 +2308,7 @@ void SPI_scroll_cursor_fetch(Portal <parameter>portal</parameter>, FetchDirectio
   <title>Notes</title>
 
   <para>
-   See the SQL <xref linkend="sql-fetch"> command
+   See the SQL <xref linkend="sql-fetch"/> command
    for details of the interpretation of the
    <parameter>direction</parameter> and
    <parameter>count</parameter> parameters.
@@ -2409,7 +2409,7 @@ void SPI_scroll_cursor_move(Portal <parameter>portal</parameter>, FetchDirection
   <title>Notes</title>
 
   <para>
-   See the SQL <xref linkend="sql-fetch"> command
+   See the SQL <xref linkend="sql-fetch"/> command
    for details of the interpretation of the
    <parameter>direction</parameter> and
    <parameter>count</parameter> parameters.
@@ -4396,7 +4396,7 @@ INSERT INTO a SELECT * FROM a;
    that were processed by the command.  You can find more complex
    examples for SPI in the source tree in
    <filename>src/test/regress/regress.c</filename> and in the
-   <xref linkend="contrib-spi"> module.
+   <xref linkend="contrib-spi"/> module.
   </para>
 
 <programlisting>
@@ -4462,7 +4462,7 @@ execq(text *sql, int cnt)
 
   <para>
    This is how you declare the function after having compiled it into
-   a shared library (details are in <xref linkend="dfunc">.):
+   a shared library (details are in <xref linkend="dfunc"/>.):
 
 <programlisting>
 CREATE FUNCTION execq(text, integer) RETURNS int8

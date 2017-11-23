@@ -33,7 +33,7 @@ method_name(internal) RETURNS tsm_handler
   type <type>TsmRoutine</type>, which contains pointers to support functions for
   the sampling method.  These support functions are plain C functions and
   are not visible or callable at the SQL level.  The support functions are
-  described in <xref linkend="tablesample-support-functions">.
+  described in <xref linkend="tablesample-support-functions"/>.
  </para>
 
  <para>

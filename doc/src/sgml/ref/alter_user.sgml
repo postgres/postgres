@@ -56,7 +56,7 @@ ALTER USER { <replaceable class="parameter">role_specification</replaceable> | A
 
   <para>
    <command>ALTER USER</command> is now an alias for
-   <xref linkend="sql-alterrole">.
+   <xref linkend="sql-alterrole"/>.
   </para>
  </refsect1>
 
@@ -74,7 +74,7 @@ ALTER USER { <replaceable class="parameter">role_specification</replaceable> | A
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterrole"></member>
+   <member><xref linkend="sql-alterrole"/></member>
   </simplelist>
  </refsect1>
 </refentry>

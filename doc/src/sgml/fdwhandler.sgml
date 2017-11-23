@@ -22,7 +22,7 @@
     The foreign data wrappers included in the standard distribution are good
     references when trying to write your own.  Look into the
     <filename>contrib</filename> subdirectory of the source tree.
-    The <xref linkend="sql-createforeigndatawrapper"> reference page also has
+    The <xref linkend="sql-createforeigndatawrapper"/> reference page also has
     some useful details.
    </para>
 
@@ -43,7 +43,7 @@
      a validator function. Both functions must be written in a compiled
      language such as C, using the version-1 interface.
      For details on C language calling conventions and dynamic loading,
-     see <xref linkend="xfunc-c">.
+     see <xref linkend="xfunc-c"/>.
     </para>
 
     <para>
@@ -57,7 +57,7 @@
      returning the special pseudo-type <type>fdw_handler</type>.  The
      callback functions are plain C functions and are not visible or
      callable at the SQL level.  The callback functions are described in
-     <xref linkend="fdw-callbacks">.
+     <xref linkend="fdw-callbacks"/>.
     </para>
 
     <para>
@@ -126,7 +126,7 @@ GetForeignRelSize(PlannerInfo *root,
     </para>
 
     <para>
-     See <xref linkend="fdw-planning"> for additional information.
+     See <xref linkend="fdw-planning"/> for additional information.
     </para>
 
     <para>
@@ -157,7 +157,7 @@ GetForeignPaths(PlannerInfo *root,
     </para>
 
     <para>
-     See <xref linkend="fdw-planning"> for additional information.
+     See <xref linkend="fdw-planning"/> for additional information.
     </para>
 
     <para>
@@ -193,7 +193,7 @@ GetForeignPlan(PlannerInfo *root,
     </para>
 
     <para>
-     See <xref linkend="fdw-planning"> for additional information.
+     See <xref linkend="fdw-planning"/> for additional information.
     </para>
 
     <para>
@@ -341,7 +341,7 @@ GetForeignJoinPaths(PlannerInfo *root,
     </para>
 
     <para>
-     See <xref linkend="fdw-planning"> for additional information.
+     See <xref linkend="fdw-planning"/> for additional information.
     </para>
    </sect2>
 
@@ -388,7 +388,7 @@ GetForeignUpperPaths(PlannerInfo *root,
     </para>
 
     <para>
-     See <xref linkend="fdw-planning"> for additional information.
+     See <xref linkend="fdw-planning"/> for additional information.
     </para>
    </sect2>
 
@@ -477,7 +477,7 @@ PlanForeignModify(PlannerInfo *root,
     </para>
 
     <para>
-     See <xref linkend="fdw-planning"> for additional information.
+     See <xref linkend="fdw-planning"/> for additional information.
     </para>
 
     <para>
@@ -759,7 +759,7 @@ PlanDirectModify(PlannerInfo *root,
     </para>
 
     <para>
-     See <xref linkend="fdw-planning"> for additional information.
+     See <xref linkend="fdw-planning"/> for additional information.
     </para>
 
     <para>
@@ -872,7 +872,7 @@ EndDirectModify(ForeignScanState *node);
 
     <para>
      If an FDW wishes to support <firstterm>late row locking</firstterm> (as described
-     in <xref linkend="fdw-row-locking">), it must provide the following
+     in <xref linkend="fdw-row-locking"/>), it must provide the following
      callback functions:
     </para>
 
@@ -905,7 +905,7 @@ GetForeignRowMarkType(RangeTblEntry *rte,
     </para>
 
     <para>
-     See <xref linkend="fdw-row-locking"> for more information.
+     See <xref linkend="fdw-row-locking"/> for more information.
     </para>
 
     <para>
@@ -964,7 +964,7 @@ RefetchForeignRow(EState *estate,
     </para>
 
     <para>
-     See <xref linkend="fdw-row-locking"> for more information.
+     See <xref linkend="fdw-row-locking"/> for more information.
     </para>
 
     <para>
@@ -1093,7 +1093,7 @@ AnalyzeForeignTable(Relation relation,
                     BlockNumber *totalpages);
 </programlisting>
 
-     This function is called when <xref linkend="sql-analyze"> is executed on
+     This function is called when <xref linkend="sql-analyze"/> is executed on
      a foreign table.  If the FDW can collect statistics for this
      foreign table, it should return <literal>true</literal>, and provide a pointer
      to a function that will collect sample rows from the table in
@@ -1139,10 +1139,10 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid);
 </programlisting>
 
      Obtain a list of foreign table creation commands.  This function is
-     called when executing <xref linkend="sql-importforeignschema">, and is
+     called when executing <xref linkend="sql-importforeignschema"/>, and is
      passed the parse tree for that statement, as well as the OID of the
      foreign server to use.  It should return a list of C strings, each of
-     which must contain a <xref linkend="sql-createforeigntable"> command.
+     which must contain a <xref linkend="sql-createforeigntable"/> command.
      These strings will be parsed and executed by the core server.
     </para>
 
@@ -1605,7 +1605,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
 
     <para>
      <function>PlanForeignModify</function> and the other callbacks described in
-     <xref linkend="fdw-callbacks-update"> are designed around the assumption
+     <xref linkend="fdw-callbacks-update"/> are designed around the assumption
      that the foreign relation will be scanned in the usual way and then
      individual row updates will be driven by a local <literal>ModifyTable</literal>
      plan node.  This approach is necessary for the general case where an
@@ -1616,7 +1616,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      compete against the <literal>ModifyTable</literal> approach.  This approach
      could also be used to implement remote <literal>SELECT FOR UPDATE</literal>,
      rather than using the row locking callbacks described in
-     <xref linkend="fdw-callbacks-row-locking">.  Keep in mind that a path
+     <xref linkend="fdw-callbacks-row-locking"/>.  Keep in mind that a path
      inserted into <literal>UPPERREL_FINAL</literal> is responsible for
      implementing <emphasis>all</emphasis> behavior of the query.
     </para>
@@ -1676,7 +1676,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      By default, <productname>PostgreSQL</productname> ignores locking considerations
      when interfacing to FDWs, but an FDW can perform early locking without
      any explicit support from the core code.  The API functions described
-     in <xref linkend="fdw-callbacks-row-locking">, which were added
+     in <xref linkend="fdw-callbacks-row-locking"/>, which were added
      in <productname>PostgreSQL</productname> 9.5, allow an FDW to use late locking if
      it wishes.
     </para>
@@ -1720,7 +1720,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      again perform early locking by fetching tuples with the equivalent
      of <command>SELECT FOR UPDATE/SHARE</command>.  To perform late locking
      instead, provide the callback functions defined
-     in <xref linkend="fdw-callbacks-row-locking">.
+     in <xref linkend="fdw-callbacks-row-locking"/>.
      In <function>GetForeignRowMarkType</function>, select rowmark option
      <literal>ROW_MARK_EXCLUSIVE</literal>, <literal>ROW_MARK_NOKEYEXCLUSIVE</literal>,
      <literal>ROW_MARK_SHARE</literal>, or <literal>ROW_MARK_KEYSHARE</literal> depending

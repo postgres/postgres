@@ -15,7 +15,7 @@
    <productname>PostgreSQL</productname> provides a large number of
    functions and operators for the built-in data types.  Users can also
    define their own functions and operators, as described in
-   <xref linkend="server-programming">.  The
+   <xref linkend="server-programming"/>.  The
    <application>psql</application> commands <command>\df</command> and
    <command>\do</command> can be used to list all
    available functions and operators, respectively.
@@ -176,7 +176,7 @@
     The operators <literal>AND</literal> and <literal>OR</literal> are
     commutative, that is, you can switch the left and right operand
     without affecting the result.  But see <xref
-    linkend="syntax-express-eval"> for more information about the
+    linkend="syntax-express-eval"/> for more information about the
     order of evaluation of subexpressions.
    </para>
   </sect1>
@@ -191,7 +191,7 @@
 
    <para>
     The usual comparison operators are available, as shown in <xref
-    linkend="functions-comparison-op-table">.
+    linkend="functions-comparison-op-table"/>.
    </para>
 
    <table id="functions-comparison-op-table">
@@ -258,7 +258,7 @@
 
    <para>
     There are also some comparison predicates, as shown in <xref
-    linkend="functions-comparison-pred-table">.  These behave much like
+    linkend="functions-comparison-pred-table"/>.  These behave much like
     operators, but have special syntax mandated by the SQL standard.
    </para>
 
@@ -455,7 +455,7 @@
     returns true if <replaceable>expression</replaceable> evaluates to
     the null value.  It is highly recommended that these applications
     be modified to comply with the SQL standard. However, if that
-    cannot be done the <xref linkend="guc-transform-null-equals">
+    cannot be done the <xref linkend="guc-transform-null-equals"/>
     configuration variable is available. If it is enabled,
     <productname>PostgreSQL</productname> will convert <literal>x =
     NULL</literal> clauses to <literal>x IS NULL</literal>.
@@ -536,7 +536,7 @@
 
    <para>
     Some comparison-related functions are also available, as shown in <xref
-    linkend="functions-comparison-func-table">.
+    linkend="functions-comparison-func-table"/>.
    </para>
 
   <table id="functions-comparison-func-table">
@@ -591,7 +591,7 @@
    </para>
 
    <para>
-    <xref linkend="functions-math-op-table"> shows the available mathematical operators.
+    <xref linkend="functions-math-op-table"/> shows the available mathematical operators.
    </para>
 
    <table id="functions-math-op-table">
@@ -736,11 +736,11 @@
     the others are available for all numeric data types.  The bitwise
     operators are also available for the bit
     string types <type>bit</type> and <type>bit varying</type>, as
-    shown in <xref linkend="functions-bit-string-op-table">.
+    shown in <xref linkend="functions-bit-string-op-table"/>.
    </para>
 
   <para>
-   <xref linkend="functions-math-func-table"> shows the available
+   <xref linkend="functions-math-func-table"/> shows the available
    mathematical functions.  In the table, <literal>dp</literal>
    indicates <type>double precision</type>.  Many of these functions
    are provided in multiple forms with different argument types.
@@ -1093,7 +1093,7 @@
    </table>
 
   <para>
-    <xref linkend="functions-math-random-table"> shows functions for
+    <xref linkend="functions-math-random-table"/> shows functions for
     generating random numbers.
   </para>
 
@@ -1139,11 +1139,11 @@
    The characteristics of the values returned by
    <literal><function>random()</function></literal> depend
    on the system implementation. It is not suitable for cryptographic
-   applications; see <xref linkend="pgcrypto"> module for an alternative.
+   applications; see <xref linkend="pgcrypto"/> module for an alternative.
    </para>
 
   <para>
-   Finally, <xref linkend="functions-math-trig-table"> shows the
+   Finally, <xref linkend="functions-math-trig-table"/> shows the
    available trigonometric functions.  All trigonometric functions
    take arguments and return values of type <type>double
    precision</type>.  Each of the trigonometric functions comes in
@@ -1328,10 +1328,10 @@
     <acronym>SQL</acronym> defines some string functions that use
     key words, rather than commas, to separate
     arguments.  Details are in
-    <xref linkend="functions-string-sql">.
+    <xref linkend="functions-string-sql"/>.
     <productname>PostgreSQL</productname> also provides versions of these functions
     that use the regular function invocation syntax
-    (see <xref linkend="functions-string-other">).
+    (see <xref linkend="functions-string-other"/>).
    </para>
 
    <note>
@@ -1343,7 +1343,7 @@
      caused surprising behaviors.  However, the string concatenation operator
      (<literal>||</literal>) still accepts non-string input, so long as at least one
      input is of a string type, as shown in <xref
-     linkend="functions-string-sql">.  For other cases, insert an explicit
+     linkend="functions-string-sql"/>.  For other cases, insert an explicit
      coercion to <type>text</type> if you need to duplicate the previous behavior.
     </para>
    </note>
@@ -1504,7 +1504,7 @@
        <entry><type>text</type></entry>
        <entry>
         Extract substring matching POSIX regular expression. See
-        <xref linkend="functions-matching"> for more information on pattern
+        <xref linkend="functions-matching"/> for more information on pattern
         matching.
        </entry>
        <entry><literal>substring('Thomas' from '...$')</literal></entry>
@@ -1516,7 +1516,7 @@
        <entry><type>text</type></entry>
        <entry>
         Extract substring matching <acronym>SQL</acronym> regular expression.
-        See <xref linkend="functions-matching"> for more information on
+        See <xref linkend="functions-matching"/> for more information on
         pattern matching.
        </entry>
        <entry><literal>substring('Thomas' from '%#"o_a#"_' for '#')</literal></entry>
@@ -1577,8 +1577,8 @@
 
    <para>
     Additional string manipulation functions are available and are
-    listed in <xref linkend="functions-string-other">.  Some of them are used internally to implement the
-    <acronym>SQL</acronym>-standard string functions listed in <xref linkend="functions-string-sql">.
+    listed in <xref linkend="functions-string-other"/>.  Some of them are used internally to implement the
+    <acronym>SQL</acronym>-standard string functions listed in <xref linkend="functions-string-sql"/>.
    </para>
 
    <table id="functions-string-other">
@@ -1702,7 +1702,7 @@
         <parameter>string</parameter> must be valid in this encoding.
         Conversions can be defined by <command>CREATE CONVERSION</command>.
         Also there are some predefined conversions. See <xref
-        linkend="conversion-names"> for available conversions.
+        linkend="conversion-names"/> for available conversions.
        </entry>
        <entry><literal>convert('text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
        <entry><literal>text_in_utf8</literal> represented in Latin-1
@@ -1792,7 +1792,7 @@
        <entry>
          Format arguments according to a format string.
          This function is similar to the C function <function>sprintf</function>.
-         See <xref linkend="functions-string-format">.
+         See <xref linkend="functions-string-format"/>.
        </entry>
        <entry><literal>format('Hello %s, %1$s', 'World')</literal></entry>
        <entry><literal>Hello World, World</literal></entry>
@@ -1968,7 +1968,7 @@
         Quotes are added only if necessary (i.e., if the string contains
         non-identifier characters or would be case-folded).
         Embedded quotes are properly doubled.
-        See also <xref linkend="plpgsql-quote-literal-example">.
+        See also <xref linkend="plpgsql-quote-literal-example"/>.
        </entry>
        <entry><literal>quote_ident('Foo bar')</literal></entry>
        <entry><literal>"Foo bar"</literal></entry>
@@ -1989,7 +1989,7 @@
         Note that <function>quote_literal</function> returns null on null
         input; if the argument might be null,
         <function>quote_nullable</function> is often more suitable.
-        See also <xref linkend="plpgsql-quote-literal-example">.
+        See also <xref linkend="plpgsql-quote-literal-example"/>.
        </entry>
        <entry><literal>quote_literal(E'O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
@@ -2019,7 +2019,7 @@
         in an <acronym>SQL</acronym> statement string; or, if the argument
         is null, return <literal>NULL</literal>.
         Embedded single-quotes and backslashes are properly doubled.
-        See also <xref linkend="plpgsql-quote-literal-example">.
+        See also <xref linkend="plpgsql-quote-literal-example"/>.
        </entry>
        <entry><literal>quote_nullable(NULL)</literal></entry>
        <entry><literal>NULL</literal></entry>
@@ -2048,7 +2048,7 @@
        <entry>
         Return captured substring(s) resulting from the first match of a POSIX
         regular expression to the <parameter>string</parameter>. See
-        <xref linkend="functions-posix-regexp"> for more information.
+        <xref linkend="functions-posix-regexp"/> for more information.
        </entry>
        <entry><literal>regexp_match('foobarbequebaz', '(bar)(beque)')</literal></entry>
        <entry><literal>{bar,beque}</literal></entry>
@@ -2065,7 +2065,7 @@
        <entry>
         Return captured substring(s) resulting from matching a POSIX regular
         expression to the <parameter>string</parameter>. See
-        <xref linkend="functions-posix-regexp"> for more information.
+        <xref linkend="functions-posix-regexp"/> for more information.
        </entry>
        <entry><literal>regexp_matches('foobarbequebaz', 'ba.', 'g')</literal></entry>
        <entry><literal>{bar}</literal><para><literal>{baz}</literal></para> (2 rows)</entry>
@@ -2081,7 +2081,7 @@
        <entry><type>text</type></entry>
        <entry>
         Replace substring(s) matching a POSIX regular expression. See
-        <xref linkend="functions-posix-regexp"> for more information.
+        <xref linkend="functions-posix-regexp"/> for more information.
        </entry>
        <entry><literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal></entry>
        <entry><literal>ThM</literal></entry>
@@ -2097,7 +2097,7 @@
        <entry><type>text[]</type></entry>
        <entry>
         Split <parameter>string</parameter> using a POSIX regular expression as
-        the delimiter.  See <xref linkend="functions-posix-regexp"> for more
+        the delimiter.  See <xref linkend="functions-posix-regexp"/> for more
         information.
        </entry>
        <entry><literal>regexp_split_to_array('hello world', E'\\s+')</literal></entry>
@@ -2114,7 +2114,7 @@
        <entry><type>setof text</type></entry>
        <entry>
         Split <parameter>string</parameter> using a POSIX regular expression as
-        the delimiter.  See <xref linkend="functions-posix-regexp"> for more
+        the delimiter.  See <xref linkend="functions-posix-regexp"/> for more
         information.
        </entry>
        <entry><literal>regexp_split_to_table('hello world', E'\\s+')</literal></entry>
@@ -2339,7 +2339,7 @@
     <function>format</function> functions are variadic, so it is possible to
     pass the values to be concatenated or formatted as an array marked with
     the <literal>VARIADIC</literal> keyword (see <xref
-    linkend="xfunc-sql-variadic-functions">).  The array's elements are
+    linkend="xfunc-sql-variadic-functions"/>).  The array's elements are
     treated as if they were separate ordinary arguments to the function.
     If the variadic array argument is NULL, <function>concat</function>
     and <function>concat_ws</function> return NULL, but
@@ -2348,7 +2348,7 @@
 
    <para>
    See also the aggregate function <function>string_agg</function> in
-   <xref linkend="functions-aggregate">.
+   <xref linkend="functions-aggregate"/>.
    </para>
 
    <table id="conversion-names">
@@ -3351,7 +3351,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
     <para>
      The <literal>%I</literal> and <literal>%L</literal> format specifiers are particularly
      useful for safely constructing dynamic SQL statements.  See
-     <xref linkend="plpgsql-quote-literal-example">.
+     <xref linkend="plpgsql-quote-literal-example"/>.
     </para>
    </sect2>
 
@@ -3375,10 +3375,10 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
     <acronym>SQL</acronym> defines some string functions that use
     key words, rather than commas, to separate
     arguments.  Details are in
-    <xref linkend="functions-binarystring-sql">.
+    <xref linkend="functions-binarystring-sql"/>.
     <productname>PostgreSQL</productname> also provides versions of these functions
     that use the regular function invocation syntax
-    (see <xref linkend="functions-binarystring-other">).
+    (see <xref linkend="functions-binarystring-other"/>).
    </para>
 
    <note>
@@ -3498,10 +3498,10 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
 
    <para>
     Additional binary string manipulation functions are available and
-    are listed in <xref linkend="functions-binarystring-other">.  Some
+    are listed in <xref linkend="functions-binarystring-other"/>.  Some
     of them are used internally to implement the
     <acronym>SQL</acronym>-standard string functions listed in <xref
-    linkend="functions-binarystring-sql">.
+    linkend="functions-binarystring-sql"/>.
    </para>
 
    <table id="functions-binarystring-other">
@@ -3688,8 +3688,8 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
 
   <para>
    See also the aggregate function <function>string_agg</function> in
-   <xref linkend="functions-aggregate"> and the large object functions
-   in <xref linkend="lo-funcs">.
+   <xref linkend="functions-aggregate"/> and the large object functions
+   in <xref linkend="lo-funcs"/>.
   </para>
  </sect1>
 
@@ -3707,7 +3707,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
     manipulating bit strings, that is values of the types
     <type>bit</type> and <type>bit varying</type>.  Aside from the
     usual comparison operators, the operators
-    shown in <xref linkend="functions-bit-string-op-table"> can be used.
+    shown in <xref linkend="functions-bit-string-op-table"/> can be used.
     Bit string operands of <literal>&amp;</literal>, <literal>|</literal>,
     and <literal>#</literal> must be of equal length.  When bit
     shifting, the original length of the string is preserved, as shown
@@ -3935,9 +3935,9 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 
    <note>
     <para>
-     If you have <xref linkend="guc-standard-conforming-strings"> turned off,
+     If you have <xref linkend="guc-standard-conforming-strings"/> turned off,
      any backslashes you write in literal string constants will need to be
-     doubled.  See <xref linkend="sql-syntax-strings"> for more information.
+     doubled.  See <xref linkend="sql-syntax-strings"/> for more information.
     </para>
    </note>
 
@@ -4144,7 +4144,7 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
    </indexterm>
 
    <para>
-    <xref linkend="functions-posix-table"> lists the available
+    <xref linkend="functions-posix-table"/> lists the available
     operators for pattern matching using POSIX regular expressions.
    </para>
 
@@ -4277,7 +4277,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
      matching, while flag <literal>g</literal> specifies replacement of each matching
      substring rather than only the first one.  Supported flags (though
      not <literal>g</literal>) are
-     described in <xref linkend="posix-embedded-options-table">.
+     described in <xref linkend="posix-embedded-options-table"/>.
     </para>
 
    <para>
@@ -4311,7 +4311,7 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
      The <replaceable>flags</replaceable> parameter is an optional text string
      containing zero or more single-letter flags that change the function's
      behavior.  Supported flags are described
-     in <xref linkend="posix-embedded-options-table">.
+     in <xref linkend="posix-embedded-options-table"/>.
     </para>
 
    <para>
@@ -4353,7 +4353,7 @@ SELECT (regexp_match('foobarbequebaz', 'bar.*que'))[1];
      subexpressions of the <replaceable>pattern</replaceable>, just as described above
      for <function>regexp_match</function>.
      <function>regexp_matches</function> accepts all the flags shown
-     in <xref linkend="posix-embedded-options-table">, plus
+     in <xref linkend="posix-embedded-options-table"/>, plus
      the <literal>g</literal> flag which commands it to return all matches, not
      just the first one.
     </para>
@@ -4407,7 +4407,7 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
      The <replaceable>flags</replaceable> parameter is an optional text string containing
      zero or more single-letter flags that change the function's behavior.
      <function>regexp_split_to_table</function> supports the flags described in
-     <xref linkend="posix-embedded-options-table">.
+     <xref linkend="posix-embedded-options-table"/>.
     </para>
 
     <para>
@@ -4513,7 +4513,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
      <productname>PostgreSQL</productname> always initially presumes that a regular
      expression follows the ARE rules.  However, the more limited ERE or
      BRE rules can be chosen by prepending an <firstterm>embedded option</firstterm>
-     to the RE pattern, as described in <xref linkend="posix-metasyntax">.
+     to the RE pattern, as described in <xref linkend="posix-metasyntax"/>.
      This can be useful for compatibility with applications that expect
      exactly the <acronym>POSIX</acronym> 1003.2 rules.
     </para>
@@ -4539,9 +4539,9 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     Without a quantifier, it matches a match for the atom.
     With a quantifier, it can match some number of matches of the atom.
     An <firstterm>atom</firstterm> can be any of the possibilities
-    shown in <xref linkend="posix-atoms-table">.
+    shown in <xref linkend="posix-atoms-table"/>.
     The possible quantifiers and their meanings are shown in
-    <xref linkend="posix-quantifiers-table">.
+    <xref linkend="posix-quantifiers-table"/>.
    </para>
 
    <para>
@@ -4549,7 +4549,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     specific conditions are met.  A constraint can be used where an atom
     could be used, except it cannot be followed by a quantifier.
     The simple constraints are shown in
-    <xref linkend="posix-constraints-table">;
+    <xref linkend="posix-constraints-table"/>;
     some more constraints are described later.
    </para>
 
@@ -4589,7 +4589,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <entry> <literal>[</literal><replaceable>chars</replaceable><literal>]</literal> </entry>
        <entry> a <firstterm>bracket expression</firstterm>,
        matching any one of the <replaceable>chars</replaceable> (see
-       <xref linkend="posix-bracket-expressions"> for more detail) </entry>
+       <xref linkend="posix-bracket-expressions"/> for more detail) </entry>
        </row>
 
        <row>
@@ -4603,7 +4603,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <entry> <literal>\</literal><replaceable>c</replaceable> </entry>
        <entry> where <replaceable>c</replaceable> is alphanumeric
        (possibly followed by other characters)
-       is an <firstterm>escape</firstterm>, see <xref linkend="posix-escape-sequences">
+       is an <firstterm>escape</firstterm>, see <xref linkend="posix-escape-sequences"/>
        (AREs only; in EREs and BREs, this matches <replaceable>c</replaceable>) </entry>
        </row>
 
@@ -4630,9 +4630,9 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
    <note>
     <para>
-     If you have <xref linkend="guc-standard-conforming-strings"> turned off,
+     If you have <xref linkend="guc-standard-conforming-strings"/> turned off,
      any backslashes you write in literal string constants will need to be
-     doubled.  See <xref linkend="sql-syntax-strings"> for more information.
+     doubled.  See <xref linkend="sql-syntax-strings"/> for more information.
     </para>
    </note>
 
@@ -4727,7 +4727,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
      same possibilities as their corresponding normal (<firstterm>greedy</firstterm>)
      counterparts, but prefer the smallest number rather than the largest
      number of matches.
-     See <xref linkend="posix-matching-rules"> for more detail.
+     See <xref linkend="posix-matching-rules"/> for more detail.
    </para>
 
    <note>
@@ -4795,7 +4795,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
    <para>
     Lookahead and lookbehind constraints cannot contain <firstterm>back
-    references</firstterm> (see <xref linkend="posix-escape-sequences">),
+    references</firstterm> (see <xref linkend="posix-escape-sequences"/>),
     and all parentheses within them are considered non-capturing.
    </para>
    </sect3>
@@ -4926,27 +4926,27 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
    <para>
     <firstterm>Character-entry escapes</firstterm> exist to make it easier to specify
     non-printing and other inconvenient characters in REs.  They are
-    shown in <xref linkend="posix-character-entry-escapes-table">.
+    shown in <xref linkend="posix-character-entry-escapes-table"/>.
    </para>
 
    <para>
     <firstterm>Class-shorthand escapes</firstterm> provide shorthands for certain
     commonly-used character classes.  They are
-    shown in <xref linkend="posix-class-shorthand-escapes-table">.
+    shown in <xref linkend="posix-class-shorthand-escapes-table"/>.
    </para>
 
    <para>
     A <firstterm>constraint escape</firstterm> is a constraint,
     matching the empty string if specific conditions are met,
     written as an escape.  They are
-    shown in <xref linkend="posix-constraint-escapes-table">.
+    shown in <xref linkend="posix-constraint-escapes-table"/>.
    </para>
 
    <para>
     A <firstterm>back reference</firstterm> (<literal>\</literal><replaceable>n</replaceable>) matches the
     same string matched by the previous parenthesized subexpression specified
     by the number <replaceable>n</replaceable>
-    (see <xref linkend="posix-constraint-backref-table">).  For example,
+    (see <xref linkend="posix-constraint-backref-table"/>).  For example,
     <literal>([bc])\1</literal> matches <literal>bb</literal> or <literal>cc</literal>
     but not <literal>bc</literal> or <literal>cb</literal>.
     The subexpression must entirely precede the back reference in the RE.
@@ -5167,7 +5167,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <row>
        <entry> <literal>\A</literal> </entry>
        <entry> matches only at the beginning of the string
-       (see <xref linkend="posix-matching-rules"> for how this differs from
+       (see <xref linkend="posix-matching-rules"/> for how this differs from
        <literal>^</literal>) </entry>
        </row>
 
@@ -5195,7 +5195,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <row>
        <entry> <literal>\Z</literal> </entry>
        <entry> matches only at the end of the string
-       (see <xref linkend="posix-matching-rules"> for how this differs from
+       (see <xref linkend="posix-matching-rules"/> for how this differs from
        <literal>$</literal>) </entry>
        </row>
       </tbody>
@@ -5284,7 +5284,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     a regex operator, or the <replaceable>flags</replaceable> parameter to a regex
     function.
     The available option letters are
-    shown in <xref linkend="posix-embedded-options-table">.
+    shown in <xref linkend="posix-embedded-options-table"/>.
     Note that these same option letters are used in the <replaceable>flags</replaceable>
     parameters of regex functions.
    </para>
@@ -5319,7 +5319,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <row>
        <entry> <literal>i</literal> </entry>
        <entry> case-insensitive matching (see
-       <xref linkend="posix-matching-rules">) (overrides operator type) </entry>
+       <xref linkend="posix-matching-rules"/>) (overrides operator type) </entry>
        </row>
 
        <row>
@@ -5330,13 +5330,13 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <row>
        <entry> <literal>n</literal> </entry>
        <entry> newline-sensitive matching (see
-       <xref linkend="posix-matching-rules">) </entry>
+       <xref linkend="posix-matching-rules"/>) </entry>
        </row>
 
        <row>
        <entry> <literal>p</literal> </entry>
        <entry> partial newline-sensitive matching (see
-       <xref linkend="posix-matching-rules">) </entry>
+       <xref linkend="posix-matching-rules"/>) </entry>
        </row>
 
        <row>
@@ -5358,7 +5358,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <row>
        <entry> <literal>w</literal> </entry>
        <entry> inverse partial newline-sensitive (<quote>weird</quote>) matching
-       (see <xref linkend="posix-matching-rules">) </entry>
+       (see <xref linkend="posix-matching-rules"/>) </entry>
        </row>
 
        <row>
@@ -5735,7 +5735,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     provide a powerful set of tools for converting various data types
     (date/time, integer, floating point, numeric) to formatted strings
     and for converting from formatted strings to specific data types.
-    <xref linkend="functions-formatting-table"> lists them.
+    <xref linkend="functions-formatting-table"/> lists them.
     These functions all follow a common calling convention: the first
     argument is the value to be formatted and the second argument is a
     template that defines the output or input format.
@@ -5829,7 +5829,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
    <note>
     <para>
      There is also a single-argument <function>to_timestamp</function>
-     function; see <xref linkend="functions-datetime-table">.
+     function; see <xref linkend="functions-datetime-table"/>.
     </para>
    </note>
 
@@ -5857,7 +5857,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
    </para>
 
   <para>
-   <xref linkend="functions-formatting-datetime-table"> shows the
+   <xref linkend="functions-formatting-datetime-table"/> shows the
    template patterns available for formatting date and time values.
   </para>
 
@@ -6087,7 +6087,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     behavior.  For example, <literal>FMMonth</literal>
     is the <literal>Month</literal> pattern with the
     <literal>FM</literal> modifier.
-    <xref linkend="functions-formatting-datetimemod-table"> shows the
+    <xref linkend="functions-formatting-datetimemod-table"/> shows the
     modifier patterns for date/time formatting.
    </para>
 
@@ -6125,7 +6125,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        <row>
         <entry><literal>TM</literal> prefix</entry>
         <entry>translation mode (print localized day and month names based on
-         <xref linkend="guc-lc-time">)</entry>
+         <xref linkend="guc-lc-time"/>)</entry>
         <entry><literal>TMMonth</literal></entry>
        </row>
        <row>
@@ -6291,7 +6291,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         specifications like <literal>YYYY-MM-DD (IYYY-IDDD)</literal> can be
         useful.  But avoid writing something like <literal>IYYY-MM-DD</literal>;
         that would yield surprising results near the start of the year.
-        (See <xref linkend="functions-datetime-extract"> for more
+        (See <xref linkend="functions-datetime-extract"/> for more
         information.)
        </para>
       </caution>
@@ -6345,7 +6345,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
    </para>
 
   <para>
-   <xref linkend="functions-formatting-numeric-table"> shows the
+   <xref linkend="functions-formatting-numeric-table"/> shows the
    template patterns available for formatting numeric values.
   </para>
 
@@ -6447,8 +6447,8 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        The pattern characters <literal>S</literal>, <literal>L</literal>, <literal>D</literal>,
        and <literal>G</literal> represent the sign, currency symbol, decimal point,
        and thousands separator characters defined by the current locale
-       (see <xref linkend="guc-lc-monetary">
-       and <xref linkend="guc-lc-numeric">).  The pattern characters period
+       (see <xref linkend="guc-lc-monetary"/>
+       and <xref linkend="guc-lc-numeric"/>).  The pattern characters period
        and comma represent those exact characters, with the meanings of
        decimal point and thousands separator, regardless of locale.
       </para>
@@ -6535,7 +6535,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     behavior.  For example, <literal>FM99.99</literal>
     is the <literal>99.99</literal> pattern with the
     <literal>FM</literal> modifier.
-    <xref linkend="functions-formatting-numericmod-table"> shows the
+    <xref linkend="functions-formatting-numericmod-table"/> shows the
     modifier patterns for numeric formatting.
    </para>
 
@@ -6570,7 +6570,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     </table>
 
   <para>
-   <xref linkend="functions-formatting-examples-table"> shows some
+   <xref linkend="functions-formatting-examples-table"/> shows some
    examples of the use of the <function>to_char</function> function.
   </para>
 
@@ -6747,15 +6747,15 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
    <title>Date/Time Functions and Operators</title>
 
   <para>
-   <xref linkend="functions-datetime-table"> shows the available
+   <xref linkend="functions-datetime-table"/> shows the available
    functions for date/time value processing, with details appearing in
    the following subsections.  <xref
-   linkend="operators-datetime-table"> illustrates the behaviors of
+   linkend="operators-datetime-table"/> illustrates the behaviors of
    the basic arithmetic operators (<literal>+</literal>,
    <literal>*</literal>, etc.).  For formatting functions, refer to
-   <xref linkend="functions-formatting">.  You should be familiar with
+   <xref linkend="functions-formatting"/>.  You should be familiar with
    the background information on date/time data types from <xref
-   linkend="datatype-datetime">.
+   linkend="datatype-datetime"/>.
   </para>
 
   <para>
@@ -6943,7 +6943,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>timestamp with time zone</type></entry>
         <entry>Current date and time (changes during statement execution);
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -6958,7 +6958,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>date</type></entry>
         <entry>Current date;
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -6973,7 +6973,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>time with time zone</type></entry>
         <entry>Current time of day;
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -6988,7 +6988,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>timestamp with time zone</type></entry>
         <entry>Current date and time (start of current transaction);
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -7003,7 +7003,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>double precision</type></entry>
         <entry>Get subfield (equivalent to <function>extract</function>);
-         see <xref linkend="functions-datetime-extract">
+         see <xref linkend="functions-datetime-extract"/>
         </entry>
         <entry><literal>date_part('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
         <entry><literal>20</literal></entry>
@@ -7013,7 +7013,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry><literal><function>date_part(<type>text</type>, <type>interval</type>)</function></literal></entry>
         <entry><type>double precision</type></entry>
         <entry>Get subfield (equivalent to
-         <function>extract</function>); see <xref linkend="functions-datetime-extract">
+         <function>extract</function>); see <xref linkend="functions-datetime-extract"/>
         </entry>
         <entry><literal>date_part('month', interval '2 years 3 months')</literal></entry>
         <entry><literal>3</literal></entry>
@@ -7027,7 +7027,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
          <literal><function>date_trunc(<type>text</type>, <type>timestamp</type>)</function></literal>
         </entry>
         <entry><type>timestamp</type></entry>
-        <entry>Truncate to specified precision; see also <xref linkend="functions-datetime-trunc">
+        <entry>Truncate to specified precision; see also <xref linkend="functions-datetime-trunc"/>
         </entry>
         <entry><literal>date_trunc('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
         <entry><literal>2001-02-16 20:00:00</literal></entry>
@@ -7036,7 +7036,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        <row>
         <entry><literal><function>date_trunc(<type>text</type>, <type>interval</type>)</function></literal></entry>
         <entry><type>interval</type></entry>
-        <entry>Truncate to specified precision; see also <xref linkend="functions-datetime-trunc">
+        <entry>Truncate to specified precision; see also <xref linkend="functions-datetime-trunc"/>
         </entry>
         <entry><literal>date_trunc('hour', interval '2 days 3 hours 40 minutes')</literal></entry>
         <entry><literal>2 days 03:00:00</literal></entry>
@@ -7051,7 +7051,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
          <type>timestamp</type>)</literal>
         </entry>
         <entry><type>double precision</type></entry>
-        <entry>Get subfield; see <xref linkend="functions-datetime-extract">
+        <entry>Get subfield; see <xref linkend="functions-datetime-extract"/>
         </entry>
         <entry><literal>extract(hour from timestamp '2001-02-16 20:38:40')</literal></entry>
         <entry><literal>20</literal></entry>
@@ -7061,7 +7061,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry><literal><function>extract</function>(<parameter>field</parameter> from
          <type>interval</type>)</literal></entry>
         <entry><type>double precision</type></entry>
-        <entry>Get subfield; see <xref linkend="functions-datetime-extract">
+        <entry>Get subfield; see <xref linkend="functions-datetime-extract"/>
         </entry>
         <entry><literal>extract(month from interval '2 years 3 months')</literal></entry>
         <entry><literal>3</literal></entry>
@@ -7144,7 +7144,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>time</type></entry>
         <entry>Current time of day;
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -7159,7 +7159,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>timestamp</type></entry>
         <entry>Current date and time (start of current transaction);
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -7293,7 +7293,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>timestamp with time zone</type></entry>
         <entry>Current date and time (start of current transaction);
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -7308,7 +7308,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>timestamp with time zone</type></entry>
         <entry>Current date and time (start of current statement);
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -7324,7 +7324,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry><type>text</type></entry>
         <entry>Current date and time
          (like <function>clock_timestamp</function>, but as a <type>text</type> string);
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -7339,7 +7339,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry><type>timestamp with time zone</type></entry>
         <entry>Current date and time (start of current transaction);
-         see <xref linkend="functions-datetime-current">
+         see <xref linkend="functions-datetime-current"/>
         </entry>
         <entry></entry>
         <entry></entry>
@@ -7886,7 +7886,7 @@ SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
    <para>
     The <function>extract</function> function is primarily intended
     for computational processing.  For formatting date/time values for
-    display, see <xref linkend="functions-formatting">.
+    display, see <xref linkend="functions-formatting"/>.
    </para>
 
    <para>
@@ -7986,7 +7986,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
    <para>
     The <literal>AT TIME ZONE</literal> construct allows conversions
     of time stamps to different time zones.  <xref
-    linkend="functions-datetime-zoneconvert-table"> shows its
+    linkend="functions-datetime-zoneconvert-table"/> shows its
     variants.
    </para>
 
@@ -8035,7 +8035,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
     specified either as a text string (e.g., <literal>'PST'</literal>)
     or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
     In the text case, a time zone name can be specified in any of the ways
-    described in <xref linkend="datatype-timezones">.
+    described in <xref linkend="datatype-timezones"/>.
    </para>
 
    <para>
@@ -8279,10 +8279,10 @@ SELECT pg_sleep_until('tomorrow 03:00');
   <title>Enum Support Functions</title>
 
   <para>
-   For enum types (described in <xref linkend="datatype-enum">),
+   For enum types (described in <xref linkend="datatype-enum"/>),
    there are several functions that allow cleaner programming without
    hard-coding particular values of an enum type.
-   These are listed in <xref linkend="functions-enum-table">. The examples
+   These are listed in <xref linkend="functions-enum-table"/>. The examples
    assume an enum type created as:
 
 <programlisting>
@@ -8379,9 +8379,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
     <type>lseg</type>, <type>line</type>, <type>path</type>,
     <type>polygon</type>, and <type>circle</type> have a large set of
     native support functions and operators, shown in <xref
-    linkend="functions-geometry-op-table">, <xref
-    linkend="functions-geometry-func-table">, and <xref
-    linkend="functions-geometry-conv-table">.
+    linkend="functions-geometry-op-table"/>, <xref
+    linkend="functions-geometry-func-table"/>, and <xref
+    linkend="functions-geometry-conv-table"/>.
    </para>
 
    <caution>
@@ -8912,7 +8912,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
   <title>Network Address Functions and Operators</title>
 
   <para>
-   <xref linkend="cidr-inet-operators-table"> shows the operators
+   <xref linkend="cidr-inet-operators-table"/> shows the operators
    available for the <type>cidr</type> and <type>inet</type> types.
    The operators <literal>&lt;&lt;</literal>,
    <literal>&lt;&lt;=</literal>, <literal>&gt;&gt;</literal>,
@@ -9024,7 +9024,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
     </table>
 
   <para>
-   <xref linkend="cidr-inet-functions-table"> shows the functions
+   <xref linkend="cidr-inet-functions-table"/> shows the functions
    available for use with the <type>cidr</type> and <type>inet</type>
    types.  The <function>abbrev</function>, <function>host</function>,
    and <function>text</function>
@@ -9225,7 +9225,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
   </para>
 
   <para>
-   <xref linkend="macaddr-functions-table"> shows the functions
+   <xref linkend="macaddr-functions-table"/> shows the functions
    available for use with the <type>macaddr</type> type.  The function
    <literal><function>trunc(<type>macaddr</type>)</function></literal> returns a MAC
    address with the last 3 bytes set to zero.  This can be used to
@@ -9270,7 +9270,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    </para>
 
    <para>
-   <xref linkend="macaddr8-functions-table"> shows the functions
+   <xref linkend="macaddr8-functions-table"/> shows the functions
    available for use with the <type>macaddr8</type> type.  The function
    <literal><function>trunc(<type>macaddr8</type>)</function></literal> returns a MAC
    address with the last 5 bytes set to zero.  This can be used to
@@ -9342,11 +9342,11 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    </indexterm>
 
   <para>
-   <xref linkend="textsearch-operators-table">,
-   <xref linkend="textsearch-functions-table"> and
-   <xref linkend="textsearch-functions-debug-table">
+   <xref linkend="textsearch-operators-table"/>,
+   <xref linkend="textsearch-functions-table"/> and
+   <xref linkend="textsearch-functions-debug-table"/>
    summarize the functions and operators that are provided
-   for full text searching.  See <xref linkend="textsearch"> for a detailed
+   for full text searching.  See <xref linkend="textsearch"/> for a detailed
    explanation of <productname>PostgreSQL</productname>'s text search
    facility.
   </para>
@@ -9797,14 +9797,14 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    <para>
     All the text search functions that accept an optional <type>regconfig</type>
     argument will use the configuration specified by
-    <xref linkend="guc-default-text-search-config">
+    <xref linkend="guc-default-text-search-config"/>
     when that argument is omitted.
    </para>
   </note>
 
   <para>
    The functions in
-   <xref linkend="textsearch-functions-debug-table">
+   <xref linkend="textsearch-functions-debug-table"/>
    are listed separately because they are not usually used in everyday text
    searching operations.  They are helpful for development and debugging
    of new text search configurations.
@@ -9910,7 +9910,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
   <para>
    The functions and function-like expressions described in this
    section operate on values of type <type>xml</type>.  Check <xref
-   linkend="datatype-xml"> for information about the <type>xml</type>
+   linkend="datatype-xml"/> for information about the <type>xml</type>
    type.  The function-like expressions <function>xmlparse</function>
    and <function>xmlserialize</function> for converting to and from
    type <type>xml</type> are not repeated here.  Use of most of these
@@ -10107,7 +10107,7 @@ SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
      and &amp; will be converted to entities.  Binary data (data type
      <type>bytea</type>) will be represented in base64 or hex
      encoding, depending on the setting of the configuration parameter
-     <xref linkend="guc-xmlbinary">.  The particular behavior for
+     <xref linkend="guc-xmlbinary"/>.  The particular behavior for
      individual data types is expected to evolve in order to align the
      SQL and PostgreSQL data types with the XML Schema specification,
      at which point a more precise description will appear.
@@ -10249,7 +10249,7 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
      input values to the aggregate function call,
      much like <function>xmlconcat</function> does, except that concatenation
      occurs across rows rather than across expressions in a single row.
-     See <xref linkend="functions-aggregate"> for additional information
+     See <xref linkend="functions-aggregate"/> for additional information
      about aggregate functions.
     </para>
 
@@ -10269,7 +10269,7 @@ SELECT xmlagg(x) FROM test;
     <para>
      To determine the order of the concatenation, an <literal>ORDER BY</literal>
      clause may be added to the aggregate call as described in
-     <xref linkend="syntax-aggregates">. For example:
+     <xref linkend="syntax-aggregates"/>. For example:
 
 <screen><![CDATA[
 SELECT xmlagg(x ORDER BY y DESC) FROM test;
@@ -10317,7 +10317,7 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
      The expression <literal>IS DOCUMENT</literal> returns true if the
      argument XML value is a proper XML document, false if it is not
      (that is, it is a content fragment), or null if the argument is
-     null.  See <xref linkend="datatype-xml"> about the difference
+     null.  See <xref linkend="datatype-xml"/> about the difference
      between documents and content fragments.
     </para>
    </sect3>
@@ -10391,7 +10391,7 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Tor
      <function>xml_is_well_formed_document</function> checks for a well-formed
      document, while <function>xml_is_well_formed_content</function> checks
      for well-formed content.  <function>xml_is_well_formed</function> does
-     the former if the <xref linkend="guc-xmloption"> configuration
+     the former if the <xref linkend="guc-xmloption"/> configuration
      parameter is set to <literal>DOCUMENT</literal>, or the latter if it is set to
      <literal>CONTENT</literal>.  This means that
      <function>xml_is_well_formed</function> is useful for seeing whether
@@ -10975,7 +10975,7 @@ table2-mapping
 
    <para>
     As an example of using the output produced by these functions,
-    <xref linkend="xslt-xml-html"> shows an XSLT stylesheet that
+    <xref linkend="xslt-xml-html"/> shows an XSLT stylesheet that
     converts the output of
     <function>table_to_xml_and_xmlschema</function> to an HTML
     document containing a tabular rendition of the table data.  In a
@@ -11044,9 +11044,9 @@ table2-mapping
   </indexterm>
 
    <para>
-   <xref linkend="functions-json-op-table"> shows the operators that
+   <xref linkend="functions-json-op-table"/> shows the operators that
    are available for use with the two JSON data types (see <xref
-   linkend="datatype-json">).
+   linkend="datatype-json"/>).
   </para>
 
   <table id="functions-json-op-table">
@@ -11127,18 +11127,18 @@ table2-mapping
   </note>
   <para>
    The standard comparison operators shown in  <xref
-   linkend="functions-comparison-op-table"> are available for
+   linkend="functions-comparison-op-table"/> are available for
    <type>jsonb</type>, but not for <type>json</type>. They follow the
    ordering rules for B-tree operations outlined at <xref
-   linkend="json-indexing">.
+   linkend="json-indexing"/>.
   </para>
   <para>
    Some further operators also exist only for <type>jsonb</type>, as shown
-   in <xref linkend="functions-jsonb-op-table">.
+   in <xref linkend="functions-jsonb-op-table"/>.
    Many of these operators can be indexed by
    <type>jsonb</type> operator classes.  For a full description of
    <type>jsonb</type> containment and existence semantics, see <xref
-   linkend="json-containment">.  <xref linkend="json-indexing">
+   linkend="json-containment"/>.  <xref linkend="json-indexing"/>
    describes how these operators can be used to effectively index
    <type>jsonb</type> data.
   </para>
@@ -11240,7 +11240,7 @@ table2-mapping
   </note>
 
   <para>
-   <xref linkend="functions-json-creation-table"> shows the functions that are
+   <xref linkend="functions-json-creation-table"/> shows the functions that are
    available for creating <type>json</type> and <type>jsonb</type> values.
    (There are no equivalent functions for <type>jsonb</type>, of the <literal>row_to_json</literal>
    and <literal>array_to_json</literal> functions. However, the <literal>to_jsonb</literal>
@@ -11394,7 +11394,7 @@ table2-mapping
 
   <note>
     <para>
-     The <xref linkend="hstore"> extension has a cast
+     The <xref linkend="hstore"/> extension has a cast
      from <type>hstore</type> to <type>json</type>, so that
      <type>hstore</type> values converted via the JSON creation functions
      will be represented as JSON objects, not as primitive string values.
@@ -11402,7 +11402,7 @@ table2-mapping
   </note>
 
   <para>
-   <xref linkend="functions-json-processing-table"> shows the functions that
+   <xref linkend="functions-json-processing-table"/> shows the functions that
    are available for processing <type>json</type> and <type>jsonb</type> values.
   </para>
 
@@ -11843,7 +11843,7 @@ table2-mapping
       JSON strings to the appropriate single character.  This is a non-issue
       if the input is type <type>jsonb</type>, because the conversion was already
       done; but for <type>json</type> input, this may result in throwing an error,
-      as noted in <xref linkend="datatype-json">.
+      as noted in <xref linkend="datatype-json"/>.
     </para>
   </note>
 
@@ -11902,7 +11902,7 @@ table2-mapping
   </note>
 
   <para>
-    See also <xref linkend="functions-aggregate"> for the aggregate
+    See also <xref linkend="functions-aggregate"/> for the aggregate
     function <function>json_agg</function> which aggregates record
     values as JSON, and the aggregate function
     <function>json_object_agg</function> which aggregates pairs of values
@@ -11935,10 +11935,10 @@ table2-mapping
    This section describes functions for operating on <firstterm>sequence
    objects</firstterm>, also called sequence generators or just sequences.
    Sequence objects are special single-row tables created with <xref
-   linkend="sql-createsequence">.
+   linkend="sql-createsequence"/>.
    Sequence objects are commonly used to generate unique identifiers
    for rows of a table.  The sequence functions, listed in <xref
-   linkend="functions-sequence-table">, provide simple, multiuser-safe
+   linkend="functions-sequence-table"/>, provide simple, multiuser-safe
    methods for obtaining successive sequence values from sequence
    objects.
   </para>
@@ -12003,7 +12003,7 @@ nextval('myschema.foo')     <lineannotation>operates on <literal>myschema.foo</l
 nextval('"myschema".foo')   <lineannotation>same as above</lineannotation>
 nextval('foo')              <lineannotation>searches search path for <literal>foo</literal></lineannotation>
 </programlisting>
-   See <xref linkend="datatype-oid"> for more information about
+   See <xref linkend="datatype-oid"/> for more information about
    <type>regclass</type>.
   </para>
 
@@ -12061,7 +12061,7 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         If a sequence object has been created with default parameters,
         successive <function>nextval</function> calls will return successive
         values beginning with 1.  Other behaviors can be obtained by using
-        special parameters in the <xref linkend="sql-createsequence"> command;
+        special parameters in the <xref linkend="sql-createsequence"/> command;
         see its command reference page for more information.
        </para>
 
@@ -12262,7 +12262,7 @@ SELECT a,
   <para>
    The data types of all the <replaceable>result</replaceable>
    expressions must be convertible to a single output type.
-   See <xref linkend="typeconv-union-case"> for more details.
+   See <xref linkend="typeconv-union-case"/> for more details.
   </para>
 
   <para>
@@ -12316,7 +12316,7 @@ SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
 
    <note>
     <para>
-     As described in <xref linkend="syntax-express-eval">, there are various
+     As described in <xref linkend="syntax-express-eval"/>, there are various
      situations in which subexpressions of an expression are evaluated at
      different times, so that the principle that <quote><token>CASE</token>
      evaluates only necessary subexpressions</quote> is not ironclad.  For
@@ -12419,7 +12419,7 @@ SELECT NULLIF(value, '(none)') ...
     largest or smallest value from a list of any number of expressions.
     The expressions must all be convertible to a common data type, which
     will be the type of the result
-    (see <xref linkend="typeconv-union-case"> for details).  NULL values
+    (see <xref linkend="typeconv-union-case"/> for details).  NULL values
     in the list are ignored.  The result will be NULL only if all the
     expressions evaluate to NULL.
    </para>
@@ -12437,7 +12437,7 @@ SELECT NULLIF(value, '(none)') ...
   <title>Array Functions and Operators</title>
 
   <para>
-   <xref linkend="array-operators-table"> shows the operators
+   <xref linkend="array-operators-table"/> shows the operators
    available for array types.
   </para>
 
@@ -12561,14 +12561,14 @@ SELECT NULLIF(value, '(none)') ...
   </para>
 
   <para>
-   See <xref linkend="arrays"> for more details about array operator
-   behavior.  See <xref linkend="indexes-types"> for more details about
+   See <xref linkend="arrays"/> for more details about array operator
+   behavior.  See <xref linkend="indexes-types"/> for more details about
    which operators support indexed operations.
   </para>
 
   <para>
-   <xref linkend="array-functions-table"> shows the functions
-   available for use with array types. See <xref linkend="arrays">
+   <xref linkend="array-functions-table"/> shows the functions
+   available for use with array types. See <xref linkend="arrays"/>
    for more information  and examples of the use of these functions.
   </para>
 
@@ -12843,7 +12843,7 @@ SELECT NULLIF(value, '(none)') ...
         <entry><type>setof anyelement, anyelement [, ...]</type></entry>
         <entry>expand multiple arrays (possibly of different types) to a set
          of rows.  This is only allowed in the FROM clause; see
-         <xref linkend="queries-tablefunctions"></entry>
+         <xref linkend="queries-tablefunctions"/></entry>
         <entry><literal>unnest(ARRAY[1,2],ARRAY['foo','bar','baz'])</literal></entry>
         <entry><literallayout class="monospaced">1    foo
 2    bar
@@ -12899,7 +12899,7 @@ NULL baz</literallayout>(3 rows)</entry>
    </note>
 
    <para>
-    See also <xref linkend="functions-aggregate"> about the aggregate
+    See also <xref linkend="functions-aggregate"/> about the aggregate
     function <function>array_agg</function> for use with arrays.
    </para>
   </sect1>
@@ -12908,11 +12908,11 @@ NULL baz</literallayout>(3 rows)</entry>
   <title>Range Functions and Operators</title>
 
   <para>
-   See <xref linkend="rangetypes"> for an overview of range types.
+   See <xref linkend="rangetypes"/> for an overview of range types.
   </para>
 
   <para>
-   <xref linkend="range-operators-table"> shows the operators
+   <xref linkend="range-operators-table"/> shows the operators
    available for range types.
   </para>
 
@@ -13087,7 +13087,7 @@ NULL baz</literallayout>(3 rows)</entry>
   </para>
 
   <para>
-   <xref linkend="range-functions-table"> shows the functions
+   <xref linkend="range-functions-table"/> shows the functions
    available for use with range types.
   </para>
 
@@ -13238,18 +13238,18 @@ NULL baz</literallayout>(3 rows)</entry>
   <para>
    <firstterm>Aggregate functions</firstterm> compute a single result
    from a set of input values.  The built-in general-purpose aggregate
-   functions are listed in <xref linkend="functions-aggregate-table">
+   functions are listed in <xref linkend="functions-aggregate-table"/>
    and statistical aggregates in <xref
-   linkend="functions-aggregate-statistics-table">.
+   linkend="functions-aggregate-statistics-table"/>.
    The built-in within-group ordered-set aggregate functions
-   are listed in <xref linkend="functions-orderedset-table">
+   are listed in <xref linkend="functions-orderedset-table"/>
    while the built-in within-group hypothetical-set ones are in <xref
-   linkend="functions-hypothetical-table">.  Grouping operations,
+   linkend="functions-hypothetical-table"/>.  Grouping operations,
    which are closely related to aggregate functions, are listed in
-   <xref linkend="functions-grouping-table">.
+   <xref linkend="functions-grouping-table"/>.
    The special syntax considerations for aggregate
-   functions are explained in <xref linkend="syntax-aggregates">.
-   Consult <xref linkend="tutorial-agg"> for additional introductory
+   functions are explained in <xref linkend="syntax-aggregates"/>.
+   Consult <xref linkend="tutorial-agg"/> for additional introductory
    information.
   </para>
 
@@ -13597,7 +13597,7 @@ NULL baz</literallayout>(3 rows)</entry>
        <type>xml</type>
       </entry>
       <entry>No</entry>
-      <entry>concatenation of XML values (see also <xref linkend="functions-xml-xmlagg">)</entry>
+      <entry>concatenation of XML values (see also <xref linkend="functions-xml-xmlagg"/>)</entry>
      </row>
     </tbody>
    </tgroup>
@@ -13669,7 +13669,7 @@ SELECT count(*) FROM sometable;
    depending on the order of the input values.  This ordering is
    unspecified by default, but can be controlled by writing an
    <literal>ORDER BY</literal> clause within the aggregate call, as shown in
-   <xref linkend="syntax-aggregates">.
+   <xref linkend="syntax-aggregates"/>.
    Alternatively, supplying the input values from a sorted subquery
    will usually work.  For example:
 
@@ -13683,7 +13683,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
   </para>
 
   <para>
-   <xref linkend="functions-aggregate-statistics-table"> shows
+   <xref linkend="functions-aggregate-statistics-table"/> shows
    aggregate functions typically used in statistical analysis.
    (These are separated out merely to avoid cluttering the listing
    of more-commonly-used aggregates.)  Where the description mentions
@@ -14102,7 +14102,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
   </table>
 
   <para>
-   <xref linkend="functions-orderedset-table"> shows some
+   <xref linkend="functions-orderedset-table"/> shows some
    aggregate functions that use the <firstterm>ordered-set aggregate</firstterm>
    syntax.  These functions are sometimes referred to as <quote>inverse
    distribution</quote> functions.
@@ -14252,7 +14252,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
   </table>
 
   <para>
-   All the aggregates listed in <xref linkend="functions-orderedset-table">
+   All the aggregates listed in <xref linkend="functions-orderedset-table"/>
    ignore null values in their sorted input.  For those that take
    a <replaceable>fraction</replaceable> parameter, the fraction value must be
    between 0 and 1; an error is thrown if not.  However, a null fraction value
@@ -14266,9 +14266,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
 
   <para>
    Each of the aggregates listed in
-   <xref linkend="functions-hypothetical-table"> is associated with a
+   <xref linkend="functions-hypothetical-table"/> is associated with a
    window function of the same name defined in
-   <xref linkend="functions-window">.  In each case, the aggregate result
+   <xref linkend="functions-window"/>.  In each case, the aggregate result
    is the value that the associated window function would have
    returned for the <quote>hypothetical</quote> row constructed from
    <replaceable>args</replaceable>, if such a row had been added to the sorted
@@ -14433,7 +14433,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
 
    <para>
     Grouping operations are used in conjunction with grouping sets (see
-    <xref linkend="queries-grouping-sets">) to distinguish result rows.  The
+    <xref linkend="queries-grouping-sets"/>) to distinguish result rows.  The
     arguments to the <literal>GROUPING</literal> operation are not actually evaluated,
     but they must match exactly expressions given in the <literal>GROUP BY</literal>
     clause of the associated query level.  Bits are assigned with the rightmost
@@ -14477,14 +14477,14 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
   <para>
    <firstterm>Window functions</firstterm> provide the ability to perform
    calculations across sets of rows that are related to the current query
-   row.  See <xref linkend="tutorial-window"> for an introduction to this
-   feature, and <xref linkend="syntax-window-functions"> for syntax
+   row.  See <xref linkend="tutorial-window"/> for an introduction to this
+   feature, and <xref linkend="syntax-window-functions"/> for syntax
    details.
   </para>
 
   <para>
    The built-in window functions are listed in
-   <xref linkend="functions-window-table">.  Note that these functions
+   <xref linkend="functions-window-table"/>.  Note that these functions
    <emphasis>must</emphasis> be invoked using window function syntax, i.e., an
    <literal>OVER</literal> clause is required.
   </para>
@@ -14494,7 +14494,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    general-purpose or statistical
    aggregate (i.e., not ordered-set or hypothetical-set aggregates)
    can be used as a window function; see
-   <xref linkend="functions-aggregate"> for a list of the built-in aggregates.
+   <xref linkend="functions-aggregate"/> for a list of the built-in aggregates.
    Aggregate functions act as window functions only when an <literal>OVER</literal>
    clause follows the call; otherwise they act as non-window aggregates
    and return a single row for the entire set.
@@ -14706,7 +14706,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
 
   <para>
    All of the functions listed in
-   <xref linkend="functions-window-table"> depend on the sort ordering
+   <xref linkend="functions-window-table"/> depend on the sort ordering
    specified by the <literal>ORDER BY</literal> clause of the associated window
    definition.  Rows that are not distinct when considering only the
    <literal>ORDER BY</literal> columns are said to be <firstterm>peers</firstterm>.
@@ -14723,7 +14723,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    sometimes also <function>nth_value</function>.  You can redefine the frame by
    adding a suitable frame specification (<literal>RANGE</literal> or
    <literal>ROWS</literal>) to the <literal>OVER</literal> clause.
-   See <xref linkend="syntax-window-functions"> for more information
+   See <xref linkend="syntax-window-functions"/> for more information
    about frame specifications.
   </para>
 
@@ -14887,7 +14887,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
 
   <para>
    The left-hand side of this form of <token>IN</token> is a row constructor,
-   as described in <xref linkend="sql-syntax-row-constructors">.
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
    The right-hand side is a parenthesized
    subquery, which must return exactly as many columns as there are
    expressions in the left-hand row.  The left-hand expressions are
@@ -14943,7 +14943,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
 
   <para>
    The left-hand side of this form of <token>NOT IN</token> is a row constructor,
-   as described in <xref linkend="sql-syntax-row-constructors">.
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
    The right-hand side is a parenthesized
    subquery, which must return exactly as many columns as there are
    expressions in the left-hand row.  The left-hand expressions are
@@ -15008,7 +15008,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
 
   <para>
    The left-hand side of this form of <token>ANY</token> is a row constructor,
-   as described in <xref linkend="sql-syntax-row-constructors">.
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
    The right-hand side is a parenthesized
    subquery, which must return exactly as many columns as there are
    expressions in the left-hand row.  The left-hand expressions are
@@ -15024,7 +15024,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
   </para>
 
   <para>
-   See <xref linkend="row-wise-comparison"> for details about the meaning
+   See <xref linkend="row-wise-comparison"/> for details about the meaning
    of a row constructor comparison.
   </para>
   </sect2>
@@ -15064,7 +15064,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
 
   <para>
    The left-hand side of this form of <token>ALL</token> is a row constructor,
-   as described in <xref linkend="sql-syntax-row-constructors">.
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
    The right-hand side is a parenthesized
    subquery, which must return exactly as many columns as there are
    expressions in the left-hand row.  The left-hand expressions are
@@ -15080,7 +15080,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
   </para>
 
   <para>
-   See <xref linkend="row-wise-comparison"> for details about the meaning
+   See <xref linkend="row-wise-comparison"/> for details about the meaning
    of a row constructor comparison.
   </para>
   </sect2>
@@ -15099,7 +15099,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
 
   <para>
    The left-hand side is a row constructor,
-   as described in <xref linkend="sql-syntax-row-constructors">.
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
    The right-hand side is a parenthesized subquery, which must return exactly
    as many columns as there are expressions in the left-hand row. Furthermore,
    the subquery cannot return more than one row.  (If it returns zero rows,
@@ -15108,7 +15108,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
   </para>
 
   <para>
-   See <xref linkend="row-wise-comparison"> for details about the meaning
+   See <xref linkend="row-wise-comparison"/> for details about the meaning
    of a row constructor comparison.
   </para>
   </sect2>
@@ -15327,7 +15327,7 @@ AND
 
   <para>
    Each side is a row constructor,
-   as described in <xref linkend="sql-syntax-row-constructors">.
+   as described in <xref linkend="sql-syntax-row-constructors"/>.
    The two row values must have the same number of fields.
    Each side is evaluated and they are compared row-wise.  Row constructor
    comparisons are allowed when the <replaceable>operator</replaceable> is
@@ -15419,8 +15419,8 @@ AND
    result depends on comparing two NULL values or a NULL and a non-NULL.
    <productname>PostgreSQL</productname> does this only when comparing the
    results of two row constructors (as in
-   <xref linkend="row-wise-comparison">) or comparing a row constructor
-   to the output of a subquery (as in <xref linkend="functions-subquery">).
+   <xref linkend="row-wise-comparison"/>) or comparing a row constructor
+   to the output of a subquery (as in <xref linkend="functions-subquery"/>).
    In other contexts where two composite-type values are compared, two
    NULL field values are considered equal, and a NULL is considered larger
    than a non-NULL.  This is necessary in order to have consistent sorting
@@ -15441,7 +15441,7 @@ AND
    class, or is the negator of the <literal>=</literal> member of a B-tree operator
    class.)  The default behavior of the above operators is the same as for
    <literal>IS [ NOT ] DISTINCT FROM</literal> for row constructors (see
-   <xref linkend="row-wise-comparison">).
+   <xref linkend="row-wise-comparison"/>).
   </para>
 
   <para>
@@ -15481,10 +15481,10 @@ AND
   <para>
    This section describes functions that possibly return more than one row.
    The most widely used functions in this class are series generating
-   functions, as detailed in <xref linkend="functions-srf-series"> and
-   <xref linkend="functions-srf-subscripts">.  Other, more specialized
+   functions, as detailed in <xref linkend="functions-srf-series"/> and
+   <xref linkend="functions-srf-subscripts"/>.  Other, more specialized
    set-returning functions are described elsewhere in this manual.
-   See <xref linkend="queries-tablefunctions"> for ways to combine multiple
+   See <xref linkend="queries-tablefunctions"/> for ways to combine multiple
    set-returning functions.
   </para>
 
@@ -15738,14 +15738,14 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
   <title>System Information Functions</title>
 
   <para>
-   <xref linkend="functions-info-session-table"> shows several
+   <xref linkend="functions-info-session-table"/> shows several
    functions that extract session and system information.
   </para>
 
   <para>
    In addition to the functions listed in this section, there are a number of
    functions related to the statistics system that also provide system
-   information. See <xref linkend="monitoring-stats-views"> for more
+   information. See <xref linkend="monitoring-stats-views"/> for more
    information.
   </para>
 
@@ -15910,7 +15910,7 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       <row>
        <entry><literal><function>version()</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry><productname>PostgreSQL</productname> version information. See also <xref linkend="guc-server-version-num"> for a machine-readable version.</entry>
+       <entry><productname>PostgreSQL</productname> version information. See also <xref linkend="guc-server-version-num"/> for a machine-readable version.</entry>
       </row>
      </tbody>
     </tgroup>
@@ -15988,11 +15988,11 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
    <para>
     The <function>session_user</function> is normally the user who initiated
     the current database connection; but superusers can change this setting
-    with <xref linkend="sql-set-session-authorization">.
+    with <xref linkend="sql-set-session-authorization"/>.
     The <function>current_user</function> is the user identifier
     that is applicable for permission checking. Normally it is equal
     to the session user, but it can be changed with
-    <xref linkend="sql-set-role">.
+    <xref linkend="sql-set-role"/>.
     It also changes during the execution of
     functions with the attribute <literal>SECURITY DEFINER</literal>.
     In Unix parlance, the session user is the <quote>real user</quote> and
@@ -16111,7 +16111,7 @@ SET search_path TO <replaceable>schema</replaceable> <optional>, <replaceable>sc
    <para>
     <function>pg_current_logfile</function> returns, as <type>text</type>,
     the path of the log file(s) currently in use by the logging collector.
-    The path includes the <xref linkend="guc-log-directory"> directory
+    The path includes the <xref linkend="guc-log-directory"/> directory
     and the log file name.  Log collection must be enabled or the return value
     is <literal>NULL</literal>.  When multiple log files exist, each in a
     different format, <function>pg_current_logfile</function> called
@@ -16122,7 +16122,7 @@ SET search_path TO <replaceable>schema</replaceable> <optional>, <replaceable>sc
     either <systemitem>csvlog</systemitem> or <systemitem>stderr</systemitem> as the value of the
     optional parameter. The return value is <literal>NULL</literal> when the
     log format requested is not a configured
-    <xref linkend="guc-log-destination">.  The
+    <xref linkend="guc-log-destination"/>.  The
     <function>pg_current_logfiles</function> reflects the contents of the
     <filename>current_logfiles</filename> file.
    </para>
@@ -16160,7 +16160,7 @@ SET search_path TO <replaceable>schema</replaceable> <optional>, <replaceable>sc
     fraction of the total available space for notifications currently
     occupied by notifications that are waiting to be processed, as a
     <type>double</type> in the range 0-1.
-    See <xref linkend="sql-listen"> and <xref linkend="sql-notify">
+    See <xref linkend="sql-listen"/> and <xref linkend="sql-notify"/>
     for more information.
    </para>
 
@@ -16186,7 +16186,7 @@ SET search_path TO <replaceable>schema</replaceable> <optional>, <replaceable>sc
     running a <literal>SERIALIZABLE</literal> transaction blocks
     a <literal>SERIALIZABLE READ ONLY DEFERRABLE</literal> transaction from
     acquiring a snapshot until the latter determines that it is safe to avoid
-    taking any predicate locks.  See <xref linkend="xact-serializable"> for
+    taking any predicate locks.  See <xref linkend="xact-serializable"/> for
     more information about serializable and deferrable transactions.  Frequent
     calls to this function could have some impact on database performance,
     because it needs access to the predicate lock manager's shared
@@ -16200,10 +16200,10 @@ SET search_path TO <replaceable>schema</replaceable> <optional>, <replaceable>sc
    <para>
     <function>version</function> returns a string describing the
     <productname>PostgreSQL</productname> server's version. You can also
-    get this information from <xref linkend="guc-server-version"> or
-    for a machine-readable version, <xref linkend="guc-server-version-num">.
+    get this information from <xref linkend="guc-server-version"/> or
+    for a machine-readable version, <xref linkend="guc-server-version-num"/>.
     Software developers should use <literal>server_version_num</literal>
-    (available since 8.2) or <xref linkend="libpq-pqserverversion"> instead
+    (available since 8.2) or <xref linkend="libpq-pqserverversion"/> instead
     of parsing the text version.
    </para>
 
@@ -16213,9 +16213,9 @@ SET search_path TO <replaceable>schema</replaceable> <optional>, <replaceable>sc
   </indexterm>
 
   <para>
-   <xref linkend="functions-info-access-table"> lists functions that
+   <xref linkend="functions-info-access-table"/> lists functions that
    allow the user to query object access privileges programmatically.
-   See <xref linkend="ddl-priv"> for more information about
+   See <xref linkend="ddl-priv"/> for more information about
    privileges.
   </para>
 
@@ -16569,7 +16569,7 @@ SELECT has_table_privilege('joe', 'mytable', 'INSERT, SELECT WITH GRANT OPTION')
     are analogous to <function>has_table_privilege</function>.
     When specifying a function by a text string rather than by OID,
     the allowed input is the same as for the <type>regprocedure</type> data type
-    (see <xref linkend="datatype-oid">).
+    (see <xref linkend="datatype-oid"/>).
     The desired access privilege type must evaluate to
     <literal>EXECUTE</literal>.
     An example is:
@@ -16631,7 +16631,7 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     are analogous to <function>has_table_privilege</function>.
     When specifying a type by a text string rather than by OID,
     the allowed input is the same as for the <type>regtype</type> data type
-    (see <xref linkend="datatype-oid">).
+    (see <xref linkend="datatype-oid"/>).
     The desired access privilege type must evaluate to
     <literal>USAGE</literal>.
    </para>
@@ -16659,7 +16659,7 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
    </para>
 
   <para>
-   <xref linkend="functions-info-schema-table"> shows functions that
+   <xref linkend="functions-info-schema-table"/> shows functions that
    determine whether a certain object is <firstterm>visible</firstterm> in the
    current schema search path.
    For example, a table is said to be visible if its
@@ -16957,7 +16957,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
   <para>
-   <xref linkend="functions-info-catalog-table"> lists functions that
+   <xref linkend="functions-info-catalog-table"/> lists functions that
    extract information from the system catalogs.
   </para>
 
@@ -17250,7 +17250,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    second parameter, being just a column name, is treated as double-quoted and
    has its case preserved.  The function returns a value suitably formatted
    for passing to sequence functions
-   (see <xref linkend="functions-sequence">).  A typical use is in reading the
+   (see <xref linkend="functions-sequence"/>).  A typical use is in reading the
    current value of a sequence for an identity or serial column, for example:
 <programlisting>
 SELECT currval(pg_get_serial_sequence('sometable', 'id'));
@@ -17270,9 +17270,9 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
    property. <literal>NULL</literal> is returned if the property name is not
    known or does not apply to the particular object, or if the OID or column
    number does not identify a valid object.  Refer to
-   <xref linkend="functions-info-index-column-props"> for column properties,
-   <xref linkend="functions-info-index-props"> for index properties, and
-   <xref linkend="functions-info-indexam-props"> for access method properties.
+   <xref linkend="functions-info-index-column-props"/> for column properties,
+   <xref linkend="functions-info-index-props"/> for index properties, and
+   <xref linkend="functions-info-indexam-props"/> for access method properties.
    (Note that extension access methods can define additional property names
    for their indexes.)
   </para>
@@ -17423,7 +17423,7 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
    value that is passed to it.  This can be helpful for troubleshooting or
    dynamically constructing SQL queries.  The function is declared as
    returning <type>regtype</type>, which is an OID alias type (see
-   <xref linkend="datatype-oid">); this means that it is the same as an
+   <xref linkend="datatype-oid"/>); this means that it is the same as an
    OID for comparison purposes but displays as a type name.  For example:
 <programlisting>
 SELECT pg_typeof(33);
@@ -17496,7 +17496,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
    </indexterm>
 
   <para>
-   <xref linkend="functions-info-object-table"> lists functions related to
+   <xref linkend="functions-info-object-table"/> lists functions related to
    database object identification and addressing.
   </para>
 
@@ -17603,8 +17603,8 @@ SELECT collation for ('foo' COLLATE "de_DE");
    </indexterm>
 
    <para>
-    The functions shown in <xref linkend="functions-info-comment-table">
-    extract comments previously stored with the <xref linkend="sql-comment">
+    The functions shown in <xref linkend="functions-info-comment-table"/>
+    extract comments previously stored with the <xref linkend="sql-comment"/>
     command.  A null value is returned if no
     comment could be found for the specified parameters.
    </para>
@@ -17701,7 +17701,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
    </indexterm>
 
    <para>
-    The functions shown in <xref linkend="functions-txid-snapshot">
+    The functions shown in <xref linkend="functions-txid-snapshot"/>
     provide server transaction information in an exportable form.  The main
     use of these functions is to determine which transactions were committed
     between two snapshots.
@@ -17767,7 +17767,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
     The data type used by these functions, <type>txid_snapshot</type>,
     stores information about transaction ID
     visibility at a particular moment in time.  Its components are
-    described in <xref linkend="functions-txid-snapshot-parts">.
+    described in <xref linkend="functions-txid-snapshot-parts"/>.
    </para>
 
    <table id="functions-txid-snapshot-parts">
@@ -17843,11 +17843,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
    </para>
 
    <para>
-    The functions shown in <xref linkend="functions-commit-timestamp">
+    The functions shown in <xref linkend="functions-commit-timestamp"/>
     provide information about transactions that have been already committed.
     These functions mainly provide information about when the transactions
     were committed. They only provide useful data when
-    <xref linkend="guc-track-commit-timestamp"> configuration option is enabled
+    <xref linkend="guc-track-commit-timestamp"/> configuration option is enabled
     and only for transactions that were committed after it was enabled.
    </para>
 
@@ -17881,13 +17881,13 @@ SELECT collation for ('foo' COLLATE "de_DE");
    </table>
 
    <para>
-    The functions shown in <xref linkend="functions-controldata">
+    The functions shown in <xref linkend="functions-controldata"/>
     print information initialized during <command>initdb</command>, such
     as the catalog version. They also show information about write-ahead
     logging and checkpoint processing. This information is cluster-wide,
     and not specific to any one database. They provide most of the same
     information, from the same source, as
-    <xref linkend="app-pgcontroldata">, although in a form better suited
+    <xref linkend="app-pgcontroldata"/>, although in a form better suited
     to <acronym>SQL</acronym> functions.
    </para>
 
@@ -17949,7 +17949,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
    <para>
     <function>pg_control_checkpoint</function> returns a record, shown in
-    <xref linkend="functions-pg-control-checkpoint">
+    <xref linkend="functions-pg-control-checkpoint"/>
    </para>
 
    <table id="functions-pg-control-checkpoint">
@@ -18060,7 +18060,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
    <para>
     <function>pg_control_system</function> returns a record, shown in
-    <xref linkend="functions-pg-control-system">
+    <xref linkend="functions-pg-control-system"/>
    </para>
 
    <table id="functions-pg-control-system">
@@ -18101,7 +18101,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
    <para>
     <function>pg_control_init</function> returns a record, shown in
-    <xref linkend="functions-pg-control-init">
+    <xref linkend="functions-pg-control-init"/>
    </para>
 
    <table id="functions-pg-control-init">
@@ -18182,7 +18182,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
    <para>
     <function>pg_control_recovery</function> returns a record, shown in
-    <xref linkend="functions-pg-control-recovery">
+    <xref linkend="functions-pg-control-recovery"/>
    </para>
 
    <table id="functions-pg-control-recovery">
@@ -18240,7 +18240,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
    <title>Configuration Settings Functions</title>
 
    <para>
-    <xref linkend="functions-admin-set-table"> shows the functions
+    <xref linkend="functions-admin-set-table"/> shows the functions
     available to query and alter run-time configuration parameters.
    </para>
 
@@ -18356,7 +18356,7 @@ SELECT set_config('log_statement_stats', 'off', false);
 
    <para>
     The functions shown in <xref
-    linkend="functions-admin-signal-table"> send control signals to
+    linkend="functions-admin-signal-table"/> send control signals to
     other server processes.  Use of these functions is restricted to
     superusers by default but access may be granted to others using
     <command>GRANT</command>, with noted exceptions.
@@ -18491,7 +18491,7 @@ SELECT set_config('log_statement_stats', 'off', false);
 
    <para>
     The functions shown in <xref
-    linkend="functions-admin-backup-table"> assist in making on-line backups.
+    linkend="functions-admin-backup-table"/> assist in making on-line backups.
     These functions cannot be executed during recovery (except
     <function>pg_is_in_backup</function>, <function>pg_backup_start_time</function>
     and <function>pg_wal_lsn_diff</function>).
@@ -18674,7 +18674,7 @@ postgres=# select pg_start_backup('label_goes_here');
     <function>pg_create_restore_point</function> creates a named write-ahead log
     record that can be used as recovery target, and returns the corresponding
     write-ahead log location.  The given name can then be used with
-    <xref linkend="recovery-target-name"> to specify the point up to which
+    <xref linkend="recovery-target-name"/> to specify the point up to which
     recovery will proceed.  Avoid creating multiple restore points with the
     same name, since recovery will stop at the first one whose name matches
     the recovery target.
@@ -18719,12 +18719,12 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     <function>pg_wal_lsn_diff</function> calculates the difference in bytes
     between two write-ahead log locations. It can be used with
     <structname>pg_stat_replication</structname> or some functions shown in
-    <xref linkend="functions-admin-backup-table"> to get the replication lag.
+    <xref linkend="functions-admin-backup-table"/> to get the replication lag.
    </para>
 
    <para>
     For details about proper usage of these functions, see
-    <xref linkend="continuous-archiving">.
+    <xref linkend="continuous-archiving"/>.
    </para>
 
   </sect2>
@@ -18747,7 +18747,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
 
    <para>
     The functions shown in <xref
-    linkend="functions-recovery-info-table"> provide information
+    linkend="functions-recovery-info-table"/> provide information
     about the current status of the standby.
     These functions may be executed both during recovery and in normal running.
    </para>
@@ -18828,7 +18828,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
 
    <para>
     The functions shown in <xref
-    linkend="functions-recovery-control-table"> control the progress of recovery.
+    linkend="functions-recovery-control-table"/> control the progress of recovery.
     These functions may be executed only during recovery.
    </para>
 
@@ -18919,8 +18919,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
 
    <para>
     Snapshots are exported with the <function>pg_export_snapshot</function> function,
-    shown in <xref linkend="functions-snapshot-synchronization-table">, and
-    imported with the <xref linkend="sql-set-transaction"> command.
+    shown in <xref linkend="functions-snapshot-synchronization-table"/>, and
+    imported with the <xref linkend="sql-set-transaction"/> command.
    </para>
 
    <table id="functions-snapshot-synchronization-table">
@@ -18953,11 +18953,11 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     COMMITTED</literal> transactions, since in <literal>REPEATABLE READ</literal> and
     higher isolation levels, transactions use the same snapshot throughout
     their lifetime.  Once a transaction has exported any snapshots, it cannot
-    be prepared with <xref linkend="sql-prepare-transaction">.
+    be prepared with <xref linkend="sql-prepare-transaction"/>.
    </para>
 
    <para>
-    See  <xref linkend="sql-set-transaction"> for details of how to use an
+    See  <xref linkend="sql-set-transaction"/> for details of how to use an
     exported snapshot.
    </para>
   </sect2>
@@ -18967,25 +18967,25 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
 
    <para>
     The functions shown
-    in <xref linkend="functions-replication-table"> are for
+    in <xref linkend="functions-replication-table"/> are for
     controlling and interacting with replication features.
-    See <xref linkend="streaming-replication">,
-    <xref linkend="streaming-replication-slots">, and
-    <xref linkend="replication-origins">
+    See <xref linkend="streaming-replication"/>,
+    <xref linkend="streaming-replication-slots"/>, and
+    <xref linkend="replication-origins"/>
     for information about the underlying features.  Use of these
     functions is restricted to superusers.
    </para>
 
    <para>
     Many of these functions have equivalent commands in the replication
-    protocol; see <xref linkend="protocol-replication">.
+    protocol; see <xref linkend="protocol-replication"/>.
    </para>
 
    <para>
     The functions described in
-    <xref linkend="functions-admin-backup">,
-    <xref linkend="functions-recovery-control">, and
-    <xref linkend="functions-snapshot-synchronization">
+    <xref linkend="functions-admin-backup"/>,
+    <xref linkend="functions-recovery-control"/>, and
+    <xref linkend="functions-snapshot-synchronization"/>
     are also relevant for replication.
    </para>
 
@@ -19018,7 +19018,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         the <acronym>LSN</acronym> is reserved on first connection from a streaming
         replication client. Streaming changes from a physical slot is only
         possible with the streaming-replication protocol &mdash;
-        see <xref linkend="protocol-replication">. The optional third
+        see <xref linkend="protocol-replication"/>. The optional third
         parameter, <parameter>temporary</parameter>, when set to true, specifies that
         the slot should not be permanently stored to disk and is only meant
         for use by current session. Temporary slots are also
@@ -19386,7 +19386,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    <title>Database Object Management Functions</title>
 
    <para>
-    The functions shown in <xref linkend="functions-admin-dbsize"> calculate
+    The functions shown in <xref linkend="functions-admin-dbsize"/> calculate
     the disk space usage of database objects.
    </para>
 
@@ -19598,13 +19598,13 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
      <listitem>
       <para>
        <literal>'fsm'</literal> returns the size of the Free Space Map
-       (see <xref linkend="storage-fsm">) associated with the relation.
+       (see <xref linkend="storage-fsm"/>) associated with the relation.
       </para>
      </listitem>
      <listitem>
       <para>
        <literal>'vm'</literal> returns the size of the Visibility Map
-       (see <xref linkend="storage-vm">) associated with the relation.
+       (see <xref linkend="storage-vm"/>) associated with the relation.
       </para>
      </listitem>
      <listitem>
@@ -19656,7 +19656,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
-    The functions shown in <xref linkend="functions-admin-dblocation"> assist
+    The functions shown in <xref linkend="functions-admin-dblocation"/> assist
     in identifying the specific disk files associated with database objects.
    </para>
 
@@ -19714,7 +19714,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     <function>pg_relation_filenode</function> accepts the OID or name of a table,
     index, sequence, or toast table, and returns the <quote>filenode</quote> number
     currently assigned to it.  The filenode is the base component of the file
-    name(s) used for the relation (see <xref linkend="storage-file-layout">
+    name(s) used for the relation (see <xref linkend="storage-file-layout"/>
     for more information).  For most tables the result is the same as
     <structname>pg_class</structname>.<structfield>relfilenode</structfield>, but for certain
     system catalogs <structfield>relfilenode</structfield> is zero and this function must
@@ -19737,7 +19737,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
-    <xref linkend="functions-admin-collation"> lists functions used to manage
+    <xref linkend="functions-admin-collation"/> lists functions used to manage
     collations.
    </para>
 
@@ -19775,7 +19775,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     operating system.  If this is different from the value
     in <literal>pg_collation.collversion</literal>, then objects depending on
     the collation might need to be rebuilt.  See also
-    <xref linkend="sql-altercollation">.
+    <xref linkend="sql-altercollation"/>.
    </para>
 
    <para>
@@ -19783,7 +19783,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     catalog <literal>pg_collation</literal> based on all the
     locales it finds in the operating system.  This is
     what <command>initdb</command> uses;
-    see <xref linkend="collation-managing"> for more details.  If additional
+    see <xref linkend="collation-managing"/> for more details.  If additional
     locales are installed into the operating system later on, this function
     can be run again to add collations for the new locales.  Locales that
     match existing entries in <literal>pg_collation</literal> will be skipped.
@@ -19817,7 +19817,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    </indexterm>
 
    <para>
-    <xref linkend="functions-admin-index-table"> shows the functions
+    <xref linkend="functions-admin-index-table"/> shows the functions
     available for index maintenance tasks.
     These functions cannot be executed during recovery.
     Use of these functions is restricted to superusers and the owner
@@ -19882,7 +19882,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     Note that if the argument is a GIN index built with
     the <literal>fastupdate</literal> option disabled, no cleanup happens and the
     return value is 0, because the index doesn't have a pending list.
-    Please see <xref linkend="gin-fast-update"> and <xref linkend="gin-tips">
+    Please see <xref linkend="gin-fast-update"/> and <xref linkend="gin-tips"/>
     for details of the pending list and <literal>fastupdate</literal> option.
    </para>
 
@@ -19893,7 +19893,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
 
    <para>
     The functions shown in <xref
-    linkend="functions-admin-genfile-table"> provide native access to
+    linkend="functions-admin-genfile-table"/> provide native access to
     files on the machine hosting the server. Only files within the
     database cluster directory and the <varname>log_directory</varname> can be
     accessed.  Use a relative path for files in the cluster directory,
@@ -20064,9 +20064,9 @@ SELECT (pg_stat_file('filename')).modification;
    <title>Advisory Lock Functions</title>
 
    <para>
-    The functions shown in <xref linkend="functions-advisory-locks-table">
+    The functions shown in <xref linkend="functions-advisory-locks-table"/>
     manage advisory locks.  For details about proper use of these functions,
-    see <xref linkend="advisory-locks">.
+    see <xref linkend="advisory-locks"/>.
    </para>
 
    <table id="functions-advisory-locks-table">
@@ -20392,7 +20392,7 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
     </para>
     <para>
        For more information about creating triggers, see
-        <xref linkend="sql-createtrigger">.
+        <xref linkend="sql-createtrigger"/>.
     </para>
   </sect1>
 
@@ -20406,7 +20406,7 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
 
    <para>
     For more information about event triggers,
-    see <xref linkend="event-triggers">.
+    see <xref linkend="event-triggers"/>.
    </para>
 
   <sect2 id="pg-event-trigger-ddl-command-end-functions">
@@ -20645,7 +20645,7 @@ CREATE EVENT TRIGGER test_event_trigger_for_drops
 
    <para>
     The functions shown in
-    <xref linkend="functions-event-trigger-table-rewrite">
+    <xref linkend="functions-event-trigger-table-rewrite"/>
     provide information about a table for which a
     <literal>table_rewrite</literal> event has just been called.
     If called in any other context, an error is raised.

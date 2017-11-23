@@ -515,7 +515,7 @@ AND
 
   <para>
    Additional discussion and practical examples can be found
-   in <xref linkend="ddl-rowsecurity">.
+   in <xref linkend="ddl-rowsecurity"/>.
   </para>
 
  </refsect1>
@@ -533,9 +533,9 @@ AND
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterpolicy"></member>
-   <member><xref linkend="sql-droppolicy"></member>
-   <member><xref linkend="sql-altertable"></member>
+   <member><xref linkend="sql-alterpolicy"/></member>
+   <member><xref linkend="sql-droppolicy"/></member>
+   <member><xref linkend="sql-altertable"/></member>
   </simplelist>
  </refsect1>
 

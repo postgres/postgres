@@ -195,7 +195,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
 
   <para>
    For information about writing new extensions, see
-   <xref linkend="extend-extensions">.
+   <xref linkend="extend-extensions"/>.
   </para>
  </refsect1>
 
@@ -234,8 +234,8 @@ CREATE EXTENSION hstore SCHEMA public FROM unpackaged;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterextension"></member>
-   <member><xref linkend="sql-dropextension"></member>
+   <member><xref linkend="sql-alterextension"/></member>
+   <member><xref linkend="sql-dropextension"/></member>
   </simplelist>
  </refsect1>
 

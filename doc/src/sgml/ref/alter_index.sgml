@@ -70,7 +70,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
       this command, use <command>ALTER DATABASE</command> or explicit
       <command>ALTER INDEX</command> invocations instead if desired.
       See also
-      <xref linkend="sql-createtablespace">.
+      <xref linkend="sql-createtablespace"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -91,11 +91,11 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
      <para>
       This form changes one or more index-method-specific storage parameters
       for the index.  See
-      <xref linkend="sql-createindex">
+      <xref linkend="sql-createindex"/>
       for details on the available parameters.  Note that the index contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rebuild the index with
-      <xref linkend="sql-reindex">
+      <xref linkend="sql-reindex"/>
       to get the desired effects.
      </para>
     </listitem>
@@ -117,16 +117,16 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
     <listitem>
      <para>
       This form sets the per-column statistics-gathering target for
-      subsequent <xref linkend="sql-analyze"> operations, though can
+      subsequent <xref linkend="sql-analyze"/> operations, though can
       be used only on index columns that are defined as an expression.
       Since expressions lack a unique name, we refer to them using the
       ordinal number of the index column. 
       The target can be set in the range 0 to 10000; alternatively, set it
       to -1 to revert to using the system default statistics
-      target (<xref linkend="guc-default-statistics-target">).
+      target (<xref linkend="guc-default-statistics-target"/>).
       For more information on the use of statistics by the
       <productname>PostgreSQL</productname> query planner, refer to
-      <xref linkend="planner-stats">.
+      <xref linkend="planner-stats"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -225,7 +225,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
 
    <para>
     These operations are also possible using
-    <xref linkend="sql-altertable">.
+    <xref linkend="sql-altertable"/>.
     <command>ALTER INDEX</command> is in fact just an alias for the forms
     of <command>ALTER TABLE</command> that apply to indexes.
    </para>
@@ -290,8 +290,8 @@ ALTER INDEX coord_idx ALTER COLUMN 3 SET STATISTICS 1000;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createindex"></member>
-   <member><xref linkend="sql-reindex"></member>
+   <member><xref linkend="sql-createindex"/></member>
+   <member><xref linkend="sql-reindex"/></member>
   </simplelist>
  </refsect1>
 </refentry>

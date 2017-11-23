@@ -153,7 +153,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     ambiguity that cannot be avoided as above.  The parser has a fallback
     heuristic based on <firstterm>type categories</firstterm> and <firstterm>preferred
     types</firstterm> that can help to provide desired behavior in such cases.  See
-    <xref linkend="sql-createtype"> for
+    <xref linkend="sql-createtype"/> for
     more information.
    </para>
   </note>
@@ -301,7 +301,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-dropcast"> to remove user-defined casts.
+   Use <xref linkend="sql-dropcast"/> to remove user-defined casts.
   </para>
 
   <para>
@@ -412,9 +412,9 @@ CREATE CAST (bigint AS int4) WITH FUNCTION int4(bigint) AS ASSIGNMENT;
   <title>See Also</title>
 
   <para>
-   <xref linkend="sql-createfunction">,
-   <xref linkend="sql-createtype">,
-   <xref linkend="sql-dropcast">
+   <xref linkend="sql-createfunction"/>,
+   <xref linkend="sql-createtype"/>,
+   <xref linkend="sql-dropcast"/>
   </para>
  </refsect1>
 

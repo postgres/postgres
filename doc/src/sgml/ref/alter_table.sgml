@@ -120,7 +120,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form adds a new column to the table, using the same syntax as
-      <xref linkend="sql-createtable">. If <literal>IF NOT EXISTS</literal>
+      <xref linkend="sql-createtable"/>. If <literal>IF NOT EXISTS</literal>
       is specified and a column already exists with this name,
       no error is thrown.
      </para>
@@ -209,7 +209,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       These forms change whether a column is an identity column or change the
       generation attribute of an existing identity column.
-      See <xref linkend="sql-createtable"> for details.
+      See <xref linkend="sql-createtable"/> for details.
      </para>
 
      <para>
@@ -227,7 +227,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       These forms alter the sequence that underlies an existing identity
       column.  <replaceable>sequence_option</replaceable> is an option
-      supported by <xref linkend="sql-altersequence"> such
+      supported by <xref linkend="sql-altersequence"/> such
       as <literal>INCREMENT BY</literal>.
      </para>
     </listitem>
@@ -239,13 +239,13 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       This form
       sets the per-column statistics-gathering target for subsequent
-      <xref linkend="sql-analyze"> operations.
+      <xref linkend="sql-analyze"/> operations.
       The target can be set in the range 0 to 10000; alternatively, set it
       to -1 to revert to using the system default statistics
-      target (<xref linkend="guc-default-statistics-target">).
+      target (<xref linkend="guc-default-statistics-target"/>).
       For more information on the use of statistics by the
       <productname>PostgreSQL</productname> query planner, refer to
-      <xref linkend="planner-stats">.
+      <xref linkend="planner-stats"/>.
      </para>
      <para>
       <literal>SET STATISTICS</literal> acquires a
@@ -263,7 +263,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       defined per-attribute options are <literal>n_distinct</literal> and
       <literal>n_distinct_inherited</literal>, which override the
       number-of-distinct-values estimates made by subsequent
-      <xref linkend="sql-analyze">
+      <xref linkend="sql-analyze"/>
       operations.  <literal>n_distinct</literal> affects the statistics for the table
       itself, while <literal>n_distinct_inherited</literal> affects the statistics
       gathered for the table plus its inheritance children.  When set to a
@@ -281,7 +281,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       until query planning time.  Specify a value of 0 to revert to estimating
       the number of distinct values normally.  For more information on the use
       of statistics by the <productname>PostgreSQL</productname> query
-      planner, refer to <xref linkend="planner-stats">.
+      planner, refer to <xref linkend="planner-stats"/>.
      </para>
      <para>
       Changing per-attribute options acquires a
@@ -315,7 +315,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       at the penalty of increased storage space.  Note that
       <literal>SET STORAGE</literal> doesn't itself change anything in the table,
       it just sets the strategy to be pursued during future table updates.
-      See <xref linkend="storage-toast"> for more information.
+      See <xref linkend="storage-toast"/> for more information.
      </para>
     </listitem>
    </varlistentry>
@@ -325,7 +325,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form adds a new constraint to a table using the same syntax as
-      <xref linkend="sql-createtable">, plus the option <literal>NOT
+      <xref linkend="sql-createtable"/>, plus the option <literal>NOT
       VALID</literal>, which is currently only allowed for foreign key
       and CHECK constraints.
       If the constraint is marked <literal>NOT VALID</literal>, the
@@ -457,7 +457,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       of course the integrity of the constraint cannot be guaranteed if the
       triggers are not executed.
       The trigger firing mechanism is also affected by the configuration
-      variable <xref linkend="guc-session-replication-role">. Simply enabled
+      variable <xref linkend="guc-session-replication-role"/>. Simply enabled
       triggers will fire when the replication role is <quote>origin</quote>
       (the default) or <quote>local</quote>. Triggers configured as <literal>ENABLE
       REPLICA</literal> will only fire if the session is in <quote>replica</quote>
@@ -494,7 +494,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       even if row level security is disabled - in this case, the policies will
       NOT be applied and the policies will be ignored.
       See also
-      <xref linkend="sql-createpolicy">.
+      <xref linkend="sql-createpolicy"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -509,7 +509,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       disabled (the default) then row level security will not be applied when
       the user is the table owner.
       See also
-      <xref linkend="sql-createpolicy">.
+      <xref linkend="sql-createpolicy"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -519,7 +519,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form selects the default index for future
-      <xref linkend="sql-cluster">
+      <xref linkend="sql-cluster"/>
       operations.  It does not actually re-cluster the table.
      </para>
      <para>
@@ -533,7 +533,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form removes the most recently used
-      <xref linkend="sql-cluster">
+      <xref linkend="sql-cluster"/>
       index specification from the table.  This affects
       future cluster operations that don't specify an index.
      </para>
@@ -548,7 +548,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form adds an <literal>oid</literal> system column to the
-      table (see <xref linkend="ddl-system-columns">).
+      table (see <xref linkend="ddl-system-columns"/>).
       It does nothing if the table already has OIDs.
      </para>
 
@@ -593,7 +593,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       <literal>information_schema</literal> relations are not considered part
       of the system catalogs and will be moved.
       See also
-      <xref linkend="sql-createtablespace">.
+      <xref linkend="sql-createtablespace"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -603,7 +603,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form changes the table from unlogged to logged or vice-versa
-      (see <xref linkend="sql-createtable-unlogged">).  It cannot be applied
+      (see <xref linkend="sql-createtable-unlogged"/>).  It cannot be applied
       to a temporary table.
      </para>
     </listitem>
@@ -615,12 +615,12 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       This form changes one or more storage parameters for the table.  See
       <xref linkend="sql-createtable-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title">
+      endterm="sql-createtable-storage-parameters-title"/>
       for details on the available parameters.  Note that the table contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rewrite the table to get the desired effects.
       That can be done with <link linkend="sql-vacuum">VACUUM
-      FULL</link>, <xref linkend="sql-cluster"> or one of the forms
+      FULL</link>, <xref linkend="sql-cluster"/> or one of the forms
       of <command>ALTER TABLE</command> that forces a table rewrite.
       For planner related parameters, changes will take effect from the next
       time the table is locked so currently executing queries will not be
@@ -789,7 +789,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       A partition using <literal>FOR VALUES</literal> uses same syntax for
       <replaceable class="parameter">partition_bound_spec</replaceable> as
-      <xref linkend="sql-createtable">.  The partition bound specification
+      <xref linkend="sql-createtable"/>.  The partition bound specification
       must correspond to the partitioning strategy and partition key of the
       target table.  The table to be attached must have all the same columns
       as the target table and no more; moreover, the column types must also
@@ -821,7 +821,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       If the new partition is a foreign table, nothing is done to verify
       that all the rows in the foreign table obey the partition constraint.
-      (See the discussion in <xref linkend="sql-createforeigntable"> about
+      (See the discussion in <xref linkend="sql-createforeigntable"/> about
       constraints on the foreign table.)
      </para>
 
@@ -972,7 +972,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
         Automatically drop objects that depend on the dropped column
         or constraint (for example, views referencing the column),
         and in turn all objects that depend on those objects
-        (see <xref linkend="ddl-depend">).
+        (see <xref linkend="ddl-depend"/>).
        </para>
       </listitem>
      </varlistentry>
@@ -1099,7 +1099,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       <listitem>
        <para>
         The partition bound specification for a new partition.  Refer to
-        <xref linkend="sql-createtable"> for more details on the syntax of the same.
+        <xref linkend="sql-createtable"/> for more details on the syntax of the same.
        </para>
       </listitem>
      </varlistentry>
@@ -1177,7 +1177,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     The rewriting forms of <command>ALTER TABLE</command> are not MVCC-safe.
     After a table rewrite, the table will appear empty to concurrent
     transactions, if they are using a snapshot taken before the rewrite
-    occurred.  See <xref linkend="mvcc-caveats"> for more details.
+    occurred.  See <xref linkend="mvcc-caveats"/> for more details.
    </para>
 
    <para>
@@ -1239,8 +1239,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
    </para>
 
    <para>
-    Refer to <xref linkend="sql-createtable"> for a further description of valid
-    parameters. <xref linkend="ddl"> has further information on
+    Refer to <xref linkend="sql-createtable"/> for a further description of valid
+    parameters. <xref linkend="ddl"/> has further information on
     inheritance.
    </para>
  </refsect1>
@@ -1472,7 +1472,7 @@ ALTER TABLE measurement
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtable"></member>
+   <member><xref linkend="sql-createtable"/></member>
   </simplelist>
  </refsect1>
 </refentry>

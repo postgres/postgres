@@ -12,7 +12,7 @@
   <para>
    This release contains a variety of fixes from 8.0.25.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <para>
@@ -27,7 +27,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see <xref linkend="release-8-0-22">.
+    see <xref linkend="release-8-0-22"/>.
    </para>
 
   </sect2>
@@ -216,7 +216,7 @@
   <para>
    This release contains a variety of fixes from 8.0.24.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <para>
@@ -231,7 +231,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see <xref linkend="release-8-0-22">.
+    see <xref linkend="release-8-0-22"/>.
    </para>
 
   </sect2>
@@ -376,7 +376,7 @@
   <para>
    This release contains a variety of fixes from 8.0.23.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <para>
@@ -391,7 +391,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see <xref linkend="release-8-0-22">.
+    see <xref linkend="release-8-0-22"/>.
    </para>
 
   </sect2>
@@ -553,7 +553,7 @@
   <para>
    This release contains a variety of fixes from 8.0.22.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -562,7 +562,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see <xref linkend="release-8-0-22">.
+    see <xref linkend="release-8-0-22"/>.
    </para>
 
   </sect2>
@@ -708,7 +708,7 @@
   <para>
    This release contains a variety of fixes from 8.0.21.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -719,7 +719,7 @@
     However, if you have any hash indexes on <type>interval</type> columns,
     you must <command>REINDEX</command> them after updating to 8.0.22.
     Also, if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -872,7 +872,7 @@
   <para>
    This release contains a variety of fixes from 8.0.20.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -881,7 +881,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -952,7 +952,7 @@
   <para>
    This release contains a variety of fixes from 8.0.19.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -961,7 +961,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -1038,7 +1038,7 @@
   <para>
    This release contains a variety of fixes from 8.0.18.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -1047,7 +1047,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -1149,7 +1149,7 @@
   <para>
    This release contains a variety of fixes from 8.0.17.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -1158,7 +1158,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -1283,7 +1283,7 @@
   <para>
    This release contains one serious bug fix over 8.0.16.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -1292,7 +1292,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -1337,7 +1337,7 @@
   <para>
    This release contains a variety of fixes from 8.0.15.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -1346,7 +1346,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -1575,7 +1575,7 @@
    This release contains a variety of fixes from 8.0.14,
    including fixes for significant security issues.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <para>
@@ -1593,7 +1593,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -1790,7 +1790,7 @@
   <para>
    This release contains a variety of fixes from 8.0.13.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -1799,7 +1799,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -1899,7 +1899,7 @@
    This release contains a variety of fixes from 8.0.12,
    including a security fix.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -1908,7 +1908,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -1975,7 +1975,7 @@
   <para>
    This release contains one fix from 8.0.11.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -1984,7 +1984,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -2018,7 +2018,7 @@
    This release contains a variety of fixes from 8.0.10, including
    a security fix.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -2027,7 +2027,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -2088,7 +2088,7 @@
   <para>
    This release contains a variety of fixes from 8.0.9.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -2097,7 +2097,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -2207,7 +2207,7 @@
   <para>
    This release contains a variety of fixes from 8.0.8.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -2216,7 +2216,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
   </sect2>
@@ -2264,7 +2264,7 @@ Wieland)</para></listitem>
    This release contains a variety of fixes from 8.0.7,
    including patches for extremely serious security issues.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -2273,7 +2273,7 @@ Wieland)</para></listitem>
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
 
    <para>
@@ -2377,7 +2377,7 @@ Fuhr)</para></listitem>
   <para>
    This release contains a variety of fixes from 8.0.6.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -2386,7 +2386,7 @@ Fuhr)</para></listitem>
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.6,
-    see <xref linkend="release-8-0-6">.
+    see <xref linkend="release-8-0-6"/>.
    </para>
   </sect2>
 
@@ -2476,7 +2476,7 @@ and <function>isinf</function> during configure (Tom)</para></listitem>
   <para>
    This release contains a variety of fixes from 8.0.5.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -2485,7 +2485,7 @@ and <function>isinf</function> during configure (Tom)</para></listitem>
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.3,
-    see <xref linkend="release-8-0-3">.
+    see <xref linkend="release-8-0-3"/>.
     Also, you might need to <command>REINDEX</command> indexes on textual
     columns after updating, if you are affected by the locale or
     <application>plperl</application> issues described below.
@@ -2561,7 +2561,7 @@ what's actually returned by the query (Joe)</para></listitem>
   <para>
    This release contains a variety of fixes from 8.0.4.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -2570,7 +2570,7 @@ what's actually returned by the query (Joe)</para></listitem>
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.3,
-    see <xref linkend="release-8-0-3">.
+    see <xref linkend="release-8-0-3"/>.
    </para>
   </sect2>
 
@@ -2643,7 +2643,7 @@ to subquery results</para></listitem>
   <para>
    This release contains a variety of fixes from 8.0.3.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -2652,7 +2652,7 @@ to subquery results</para></listitem>
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
     if you are upgrading from a version earlier than 8.0.3,
-    see <xref linkend="release-8-0-3">.
+    see <xref linkend="release-8-0-3"/>.
    </para>
   </sect2>
 
@@ -2741,7 +2741,7 @@ code</para></listitem>
    This release contains a variety of fixes from 8.0.2, including several
    security-related issues.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -2860,7 +2860,7 @@ data types</para></listitem>
   <para>
    This release contains a variety of fixes from 8.0.1.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>
@@ -3018,7 +3018,7 @@ addresses in <type>INET</type> data types (Tom)</para></listitem>
    This release contains a variety of fixes from 8.0.0, including several
    security-related issues.
    For information about new features in the 8.0 major release, see
-   <xref linkend="release-8-0">.
+   <xref linkend="release-8-0"/>.
   </para>
 
   <sect2>

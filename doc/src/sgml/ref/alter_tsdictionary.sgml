@@ -163,8 +163,8 @@ ALTER TEXT SEARCH DICTIONARY my_dict ( dummy );
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtsdictionary"></member>
-   <member><xref linkend="sql-droptsdictionary"></member>
+   <member><xref linkend="sql-createtsdictionary"/></member>
+   <member><xref linkend="sql-droptsdictionary"/></member>
   </simplelist>
  </refsect1>
 </refentry>

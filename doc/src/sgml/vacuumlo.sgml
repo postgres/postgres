@@ -37,7 +37,7 @@
 
  <para>
   If you use this, you may also be interested in the <function>lo_manage</function>
-  trigger in the <xref linkend="lo"> module.
+  trigger in the <xref linkend="lo"/> module.
   <function>lo_manage</function> is useful to try
   to avoid creating orphaned LOs in the first place.
  </para>
@@ -61,7 +61,7 @@
       Remove no more than <replaceable>limit</replaceable> large objects per
       transaction (default 1000).  Since the server acquires a lock per LO
       removed, removing too many LOs in one transaction risks exceeding
-      <xref linkend="guc-max-locks-per-transaction">.  Set the limit to
+      <xref linkend="guc-max-locks-per-transaction"/>.  Set the limit to
       zero if you want all removals done in a single transaction.
      </para>
     </listitem>

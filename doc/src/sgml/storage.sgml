@@ -29,7 +29,7 @@ managed by different server instances, can exist on the same machine.
 
 <para>
 The <varname>PGDATA</varname> directory contains several subdirectories and control
-files, as shown in <xref linkend="pgdata-contents-table">.  In addition to
+files, as shown in <xref linkend="pgdata-contents-table"/>.  In addition to
 these required items, the cluster configuration files
 <filename>postgresql.conf</filename>, <filename>pg_hba.conf</filename>, and
 <filename>pg_ident.conf</filename> are traditionally stored in
@@ -197,14 +197,14 @@ for temporary relations, the file name is of the form
 is the backend ID of the backend which created the file, and <replaceable>FFF</replaceable>
 is the filenode number.  In either case, in addition to the main file (a/k/a
 main fork), each table and index has a <firstterm>free space map</firstterm> (see <xref
-linkend="storage-fsm">), which stores information about free space available in
+linkend="storage-fsm"/>), which stores information about free space available in
 the relation.  The free space map is stored in a file named with the filenode
 number plus the suffix <literal>_fsm</literal>.  Tables also have a
 <firstterm>visibility map</firstterm>, stored in a fork with the suffix <literal>_vm</literal>,
 to track which pages are known to have no dead tuples.  The visibility map is
-described further in <xref linkend="storage-vm">.  Unlogged tables and indexes
+described further in <xref linkend="storage-vm"/>.  Unlogged tables and indexes
 have a third fork, known as the initialization fork, which is stored in a fork
-with the suffix <literal>_init</literal> (see <xref linkend="storage-init">).
+with the suffix <literal>_init</literal> (see <xref linkend="storage-init"/>).
 </para>
 
 <caution>
@@ -240,12 +240,12 @@ associated <firstterm>TOAST</firstterm> table, which is used for out-of-line sto
 field values that are too large to keep in the table rows proper.
 <structname>pg_class</structname>.<structfield>reltoastrelid</structfield> links from a table to
 its <acronym>TOAST</acronym> table, if any.
-See <xref linkend="storage-toast"> for more information.
+See <xref linkend="storage-toast"/> for more information.
 </para>
 
 <para>
 The contents of tables and indexes are discussed further in
-<xref linkend="storage-page-layout">.
+<xref linkend="storage-page-layout"/>.
 </para>
 
 <para>
@@ -335,7 +335,7 @@ actually consist of a four-byte length word and contents until after it's
 been <firstterm>detoasted</firstterm>.  (This is normally done by invoking
 <function>PG_DETOAST_DATUM</function> before doing anything with an input value,
 but in some cases more efficient approaches are possible.
-See <xref linkend="xtypes-toast"> for more detail.)
+See <xref linkend="xtypes-toast"/> for more detail.)
 </para>
 
 <para>
@@ -376,12 +376,12 @@ associated with, the table containing the <acronym>TOAST</acronym> pointer datum
 itself.  These <firstterm>on-disk</firstterm> pointer datums are created by the
 <acronym>TOAST</acronym> management code (in <filename>access/heap/tuptoaster.c</filename>)
 when a tuple to be stored on disk is too large to be stored as-is.
-Further details appear in <xref linkend="storage-toast-ondisk">.
+Further details appear in <xref linkend="storage-toast-ondisk"/>.
 Alternatively, a <acronym>TOAST</acronym> pointer datum can contain a pointer to
 out-of-line data that appears elsewhere in memory.  Such datums are
 necessarily short-lived, and will never appear on-disk, but they are very
 useful for avoiding copying and redundant processing of large data values.
-Further details appear in <xref linkend="storage-toast-inmemory">.
+Further details appear in <xref linkend="storage-toast-inmemory"/>.
 </para>
 
 <para>
@@ -611,7 +611,7 @@ at the root.
 <para>
 See <filename>src/backend/storage/freespace/README</filename> for more details on
 how the <acronym>FSM</acronym> is structured, and how it's updated and searched.
-The <xref linkend="pgfreespacemap"> module
+The <xref linkend="pgfreespacemap"/> module
 can be used to examine the information stored in free space maps.
 </para>
 
@@ -657,7 +657,7 @@ cleared by any data-modifying operations on a page.
 </para>
 
 <para>
-The <xref linkend="pgvisibility"> module can be used to examine the
+The <xref linkend="pgvisibility"/> module can be used to examine the
 information stored in the visibility map.
 </para>
 
@@ -718,7 +718,7 @@ within the index, depending on the index access method.
 </para>
 
 <para>
-<xref linkend="page-table"> shows the overall layout of a page.
+<xref linkend="page-table"/> shows the overall layout of a page.
 There are five parts to each page.
 </para>
 
@@ -774,9 +774,9 @@ data. Empty in ordinary tables.</entry>
 
   The first 24 bytes of each page consists of a page header
   (<structname>PageHeaderData</structname>). Its format is detailed in <xref
-  linkend="pageheaderdata-table">. The first field tracks the most
+  linkend="pageheaderdata-table"/>. The first field tracks the most
   recent WAL entry related to this page. The second field contains
-  the page checksum if <xref linkend="app-initdb-data-checksums"> are
+  the page checksum if <xref linkend="app-initdb-data-checksums"/> are
   enabled.  Next is a 2-byte field containing flag bits. This is followed
   by three 2-byte integer fields (<structfield>pd_lower</structfield>,
   <structfield>pd_upper</structfield>, and
@@ -918,7 +918,7 @@ data. Empty in ordinary tables.</entry>
   header (occupying 23 bytes on most machines), followed by an optional null
   bitmap, an optional object ID field, and the user data. The header is
   detailed
-  in <xref linkend="heaptupleheaderdata-table">.  The actual user data
+  in <xref linkend="heaptupleheaderdata-table"/>.  The actual user data
   (columns of the row) begins at the offset indicated by
   <structfield>t_hoff</structfield>, which must always be a multiple of the MAXALIGN
   distance for the platform.
@@ -1032,7 +1032,7 @@ data. Empty in ordinary tables.</entry>
   <type>struct varlena</type>, which includes the total length of the stored
   value and some flag bits.  Depending on the flags, the data can be either
   inline or in a <acronym>TOAST</acronym> table;
-  it might be compressed, too (see <xref linkend="storage-toast">).
+  it might be compressed, too (see <xref linkend="storage-toast"/>).
 
  </para>
 </sect1>

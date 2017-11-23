@@ -35,8 +35,8 @@ PostgreSQL documentation
    (<quote>dumping</quote>) all <productname>PostgreSQL</productname> databases
    of a cluster into one script file.  The script file contains
    <acronym>SQL</acronym> commands that can be used as input to <xref
-   linkend="app-psql"> to restore the databases.  It does this by
-   calling <xref linkend="app-pgdump"> for each database in a cluster.
+   linkend="app-psql"/> to restore the databases.  It does this by
+   calling <xref linkend="app-pgdump"/> for each database in a cluster.
    <application>pg_dumpall</application> also dumps global objects
    that are common to all databases.
    (<application>pg_dump</application> does not save these objects.)
@@ -64,7 +64,7 @@ PostgreSQL documentation
   database).  If you use password authentication it will ask for
   a password each time. It is convenient to have a
   <filename>~/.pgpass</filename> file in such cases. See <xref
-  linkend="libpq-pgpass"> for more information.
+  linkend="libpq-pgpass"/> for more information.
   </para>
 
  </refsect1>
@@ -495,7 +495,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies parameters used to connect to the server, as a connection
-        string. See <xref linkend="libpq-connstring"> for more information.
+        string. See <xref linkend="libpq-connstring"/> for more information.
        </para>
        <para>
         The option is called <literal>--dbname</literal> for consistency with other
@@ -642,7 +642,7 @@ PostgreSQL documentation
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -699,7 +699,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <para>
-    Check <xref linkend="app-pgdump"> for details on possible
+    Check <xref linkend="app-pgdump"/> for details on possible
     error conditions.
   </para>
  </refsect1>

@@ -41,7 +41,7 @@
    <para>
     Users of source packages must specially enable the build of
     PL/Perl during the installation process.  (Refer to <xref
-    linkend="installation"> for more information.)  Users of
+    linkend="installation"/> for more information.)  Users of
     binary packages might find PL/Perl in a separate subpackage.
    </para>
   </note>
@@ -51,7 +51,7 @@
 
   <para>
    To create a function in the PL/Perl language, use the standard
-   <xref linkend="sql-createfunction">
+   <xref linkend="sql-createfunction"/>
    syntax:
 
 <programlisting>
@@ -69,7 +69,7 @@ $$ LANGUAGE plperl;
 
   <para>
    PL/Perl also supports anonymous code blocks called with the
-   <xref linkend="sql-do"> statement:
+   <xref linkend="sql-do"/> statement:
 
 <programlisting>
 DO $$
@@ -99,11 +99,11 @@ $$ LANGUAGE plperl;
    The syntax of the <command>CREATE FUNCTION</command> command requires
    the function body to be written as a string constant.  It is usually
    most convenient to use dollar quoting (see <xref
-   linkend="sql-syntax-dollar-quoting">) for the string constant.
+   linkend="sql-syntax-dollar-quoting"/>) for the string constant.
    If you choose to use escape string syntax <literal>E''</literal>,
    you must double any single quote marks (<literal>'</literal>) and backslashes
    (<literal>\</literal>) used in the body of the function
-   (see <xref linkend="sql-syntax-strings">).
+   (see <xref linkend="sql-syntax-strings"/>).
   </para>
 
   <para>
@@ -686,9 +686,9 @@ SELECT release_hosts_query();
         priority levels.
         Whether messages of a particular priority are reported to the client,
         written to the server log, or both is controlled by the
-        <xref linkend="guc-log-min-messages"> and
-        <xref linkend="guc-client-min-messages"> configuration
-        variables. See <xref linkend="runtime-config"> for more
+        <xref linkend="guc-log-min-messages"/> and
+        <xref linkend="guc-client-min-messages"/> configuration
+        variables. See <xref linkend="runtime-config"/> for more
         information.
       </para>
      </listitem>
@@ -792,7 +792,7 @@ SELECT release_hosts_query();
      <listitem>
       <para>
         Returns the contents of the referenced array as a string in array literal format
-        (see <xref linkend="arrays-input">).
+        (see <xref linkend="arrays-input"/>).
         Returns the argument value unaltered if it's not a reference to an array.
         The delimiter used between elements of the array literal defaults to "<literal>, </literal>"
         if a delimiter is not specified or is undef.
@@ -828,7 +828,7 @@ SELECT release_hosts_query();
      <listitem>
       <para>
         Returns the contents of the referenced array as a string in array constructor format
-        (see <xref linkend="sql-syntax-array-constructors">).
+        (see <xref linkend="sql-syntax-array-constructors"/>).
         Individual values are quoted using <function>quote_nullable</function>.
         Returns the argument value, quoted using <function>quote_nullable</function>,
         if it's not a reference to an array.
@@ -1336,7 +1336,7 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' LANGUAGE plperl;
        </para>
        <para>
         Initialization will happen in the postmaster if the <literal>plperl</literal> library is
-        included in <xref linkend="guc-shared-preload-libraries">, in which
+        included in <xref linkend="guc-shared-preload-libraries"/>, in which
         case extra consideration should be given to the risk of destabilizing
         the postmaster.  The principal reason for making use of this feature
         is that Perl modules loaded by <literal>plperl.on_init</literal> need be

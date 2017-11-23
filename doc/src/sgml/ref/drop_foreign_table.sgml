@@ -60,7 +60,7 @@ DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceabl
      <para>
       Automatically drop objects that depend on the foreign table (such as
       views), and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -104,8 +104,8 @@ DROP FOREIGN TABLE films, distributors;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterforeigntable"></member>
-   <member><xref linkend="sql-createforeigntable"></member>
+   <member><xref linkend="sql-alterforeigntable"/></member>
+   <member><xref linkend="sql-createforeigntable"/></member>
   </simplelist>
  </refsect1>
 

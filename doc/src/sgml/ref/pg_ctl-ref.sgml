@@ -140,7 +140,7 @@ PostgreSQL documentation
    <application>pg_ctl</application> is a utility for initializing a
    <productname>PostgreSQL</productname> database cluster, starting,
    stopping, or restarting the <productname>PostgreSQL</productname>
-   database server (<xref linkend="app-postgres">), or displaying the
+   database server (<xref linkend="app-postgres"/>), or displaying the
    status of a running server.  Although the server can be started
    manually, <application>pg_ctl</application> encapsulates tasks such
    as redirecting log output and properly detaching from the terminal
@@ -153,7 +153,7 @@ PostgreSQL documentation
    <productname>PostgreSQL</productname> database cluster, that is,
    a collection of databases that will be managed by a single
    server instance.  This mode invokes the <command>initdb</command>
-   command.  See <xref linkend="app-initdb"> for details.
+   command.  See <xref linkend="app-initdb"/> for details.
   </para>
 
   <para>
@@ -475,7 +475,7 @@ PostgreSQL documentation
        default is <literal>PostgreSQL</literal>.  Note that this only controls
        messages sent from <application>pg_ctl</application> itself; once
        started, the server will use the event source specified
-       by its <xref linkend="guc-event-source"> parameter.  Should the server
+       by its <xref linkend="guc-event-source"/> parameter.  Should the server
        fail very early in startup, before that parameter has been set,
        it might also log using the default event
        source name <literal>PostgreSQL</literal>.
@@ -567,12 +567,12 @@ PostgreSQL documentation
    <command>pg_ctl</command>, like most other <productname>PostgreSQL</productname>
    utilities,
    also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
   <para>
    For additional variables that affect the server,
-   see <xref linkend="app-postgres">.
+   see <xref linkend="app-postgres"/>.
   </para>
  </refsect1>
 
@@ -691,8 +691,8 @@ pg_ctl: server is running (PID: 13718)
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-initdb"></member>
-   <member><xref linkend="app-postgres"></member>
+   <member><xref linkend="app-initdb"/></member>
+   <member><xref linkend="app-postgres"/></member>
   </simplelist>
  </refsect1>
 

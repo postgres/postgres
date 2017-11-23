@@ -287,7 +287,7 @@ make prefix=/usr/local/pgsql.new install
      <command>pg_upgrade</command> will connect to the old and new servers several
      times, so you might want to set authentication to <literal>peer</literal>
      in <filename>pg_hba.conf</filename> or use a <filename>~/.pgpass</filename> file
-     (see <xref linkend="libpq-pgpass">).
+     (see <xref linkend="libpq-pgpass"/>).
     </para>
    </step>
 
@@ -321,7 +321,7 @@ NET STOP postgresql-&majorversion;
 
     <para>
      If you are upgrading standby servers using methods outlined in section <xref
-     linkend="pgupgrade-step-replicas">, verify that the old standby
+     linkend="pgupgrade-step-replicas"/>, verify that the old standby
      servers are caught up by running <application>pg_controldata</application>
      against the old primary and standby clusters.  Verify that the
      <quote>Latest checkpoint location</quote> values match in all clusters.
@@ -404,7 +404,7 @@ pg_upgrade.exe
 
     <para>
      If an error occurs while restoring the database schema, <command>pg_upgrade</command> will
-     exit and you will have to revert to the old cluster as outlined in <xref linkend="pgupgrade-step-revert">
+     exit and you will have to revert to the old cluster as outlined in <xref linkend="pgupgrade-step-revert"/>
      below. To try <command>pg_upgrade</command> again, you will need to modify the old
      cluster so the pg_upgrade schema restore succeeds. If the problem is a
      <filename>contrib</filename> module, you might need to uninstall the <filename>contrib</filename> module from
@@ -418,8 +418,8 @@ pg_upgrade.exe
 
     <para>
      If you used link mode and have Streaming Replication (see <xref
-     linkend="streaming-replication">) or Log-Shipping (see <xref
-     linkend="warm-standby">) standby servers, you can follow these steps to
+     linkend="streaming-replication"/>) or Log-Shipping (see <xref
+     linkend="warm-standby"/>) standby servers, you can follow these steps to
      quickly upgrade them.  You will not be running <application>pg_upgrade</application> on
      the standby servers, but rather <application>rsync</application> on the primary.
      Do not start any servers yet.
@@ -730,7 +730,7 @@ psql --username=postgres --file=script.sql postgres
    is necessary because <command>rsync</command> only has file modification-time
    granularity of one second.)  You might want to exclude some
    files, e.g. <filename>postmaster.pid</filename>, as documented in <xref
-   linkend="backup-lowlevel-base-backup">.  If your file system supports
+   linkend="backup-lowlevel-base-backup"/>.  If your file system supports
    file system snapshots or copy-on-write file copies, you can use that
    to make a backup of the old cluster and tablespaces, though the snapshot
    and copies must be created simultaneously or while the database server
@@ -743,10 +743,10 @@ psql --username=postgres --file=script.sql postgres
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-initdb"></member>
-   <member><xref linkend="app-pg-ctl"></member>
-   <member><xref linkend="app-pgdump"></member>
-   <member><xref linkend="app-postgres"></member>
+   <member><xref linkend="app-initdb"/></member>
+   <member><xref linkend="app-pg-ctl"/></member>
+   <member><xref linkend="app-pgdump"/></member>
+   <member><xref linkend="app-postgres"/></member>
   </simplelist>
  </refsect1>
 </refentry>

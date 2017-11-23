@@ -109,8 +109,8 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createstatistics"></member>
-   <member><xref linkend="sql-dropstatistics"></member>
+   <member><xref linkend="sql-createstatistics"/></member>
+   <member><xref linkend="sql-dropstatistics"/></member>
   </simplelist>
  </refsect1>
 

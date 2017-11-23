@@ -171,7 +171,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
        null. <literal>RETURNS NULL ON NULL INPUT</literal> or
        <literal>STRICT</literal> changes the function so that it is not
        invoked if any of its arguments are null; instead, a null result
-       is assumed automatically.  See <xref linkend="sql-createfunction">
+       is assumed automatically.  See <xref linkend="sql-createfunction"/>
        for more information.
       </para>
      </listitem>
@@ -185,7 +185,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
      <listitem>
       <para>
        Change the volatility of the function to the specified setting.
-       See <xref linkend="sql-createfunction"> for details.
+       See <xref linkend="sql-createfunction"/> for details.
       </para>
     </listitem>
    </varlistentry>
@@ -198,7 +198,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
      <para>
       Change whether the function is a security definer or not. The
       key word <literal>EXTERNAL</literal> is ignored for SQL
-      conformance. See <xref linkend="sql-createfunction"> for more information about
+      conformance. See <xref linkend="sql-createfunction"/> for more information about
       this capability.
      </para>
     </listitem>
@@ -210,7 +210,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
     <listitem>
      <para>
       Change whether the function is deemed safe for parallelism.
-      See <xref linkend="sql-createfunction"> for details.
+      See <xref linkend="sql-createfunction"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -220,7 +220,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
     <listitem>
      <para>
       Change whether the function is considered leakproof or not.
-      See <xref linkend="sql-createfunction"> for more information about
+      See <xref linkend="sql-createfunction"/> for more information about
       this capability.
      </para>
     </listitem>
@@ -232,7 +232,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
      <listitem>
       <para>
        Change the estimated execution cost of the function.
-       See <xref linkend="sql-createfunction"> for more information.
+       See <xref linkend="sql-createfunction"/> for more information.
       </para>
      </listitem>
    </varlistentry>
@@ -243,7 +243,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
      <listitem>
       <para>
        Change the estimated number of rows returned by a set-returning
-       function.  See <xref linkend="sql-createfunction"> for more information.
+       function.  See <xref linkend="sql-createfunction"/> for more information.
       </para>
      </listitem>
    </varlistentry>
@@ -266,8 +266,8 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
        </para>
 
        <para>
-        See <xref linkend="sql-set"> and
-        <xref linkend="runtime-config">
+        See <xref linkend="sql-set"/> and
+        <xref linkend="runtime-config"/>
         for more information about allowed parameter names and values.
        </para>
       </listitem>
@@ -357,8 +357,8 @@ ALTER FUNCTION check_password(text) RESET search_path;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction"></member>
-   <member><xref linkend="sql-dropfunction"></member>
+   <member><xref linkend="sql-createfunction"/></member>
+   <member><xref linkend="sql-dropfunction"/></member>
   </simplelist>
  </refsect1>
 </refentry>

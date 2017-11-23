@@ -48,7 +48,7 @@ PostgreSQL documentation
 
   <para>
    <application>createdb</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="sql-createdatabase">.
+   <acronym>SQL</acronym> command <xref linkend="sql-createdatabase"/>.
    There is no effective difference between creating databases via
    this utility and via other methods for accessing the server.
   </para>
@@ -115,7 +115,7 @@ PostgreSQL documentation
         Specifies the character encoding scheme to be used in this
         database. The character sets supported by the
         <productname>PostgreSQL</productname> server are described in
-        <xref linkend="multibyte-charset-supported">.
+        <xref linkend="multibyte-charset-supported"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -199,7 +199,7 @@ PostgreSQL documentation
     The options <option>-D</option>, <option>-l</option>, <option>-E</option>,
     <option>-O</option>, and
     <option>-T</option> correspond to options of the underlying
-    SQL command <xref linkend="sql-createdatabase">; see there for more information
+    SQL command <xref linkend="sql-createdatabase"/>; see there for more information
     about them.
    </para>
 
@@ -327,7 +327,7 @@ PostgreSQL documentation
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -337,8 +337,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="sql-createdatabase">
-   and <xref linkend="app-psql"> for
+   In case of difficulty, see <xref linkend="sql-createdatabase"/>
+   and <xref linkend="app-psql"/> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -376,8 +376,8 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-dropdb"></member>
-   <member><xref linkend="sql-createdatabase"></member>
+   <member><xref linkend="app-dropdb"/></member>
+   <member><xref linkend="sql-createdatabase"/></member>
   </simplelist>
  </refsect1>
 

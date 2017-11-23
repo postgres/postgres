@@ -37,8 +37,8 @@
  <para>
   Building using <productname>MinGW</productname> or
   <productname>Cygwin</productname> uses the normal build system, see
-  <xref linkend="installation"> and the specific notes in
-  <xref linkend="installation-notes-mingw"> and <xref linkend="installation-notes-cygwin">.
+  <xref linkend="installation"/> and the specific notes in
+  <xref linkend="installation-notes-mingw"/> and <xref linkend="installation-notes-cygwin"/>.
   To produce native 64 bit binaries in these environments, use the tools from
   <productname>MinGW-w64</productname>. These tools can also be used to
   cross-compile for 32 bit and 64 bit <productname>Windows</productname>
@@ -457,7 +457,7 @@ $ENV{CONFIG}="Debug";
 </screen>
 
    For more information about the regression tests, see
-   <xref linkend="regress">.
+   <xref linkend="regress"/>.
   </para>
 
   <para>

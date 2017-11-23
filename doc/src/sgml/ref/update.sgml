@@ -81,7 +81,7 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
      <para>
       The <literal>WITH</literal> clause allows you to specify one or more
       subqueries that can be referenced by name in the <command>UPDATE</command>
-      query. See <xref linkend="queries-with"> and <xref linkend="sql-select">
+      query. See <xref linkend="queries-with"/> and <xref linkend="sql-select"/>
       for details.
      </para>
     </listitem>
@@ -171,7 +171,7 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
       to appear in the <literal>WHERE</literal> condition and the update
       expressions. This is similar to the list of tables that can be
       specified in the <xref linkend="sql-from"
-      endterm="sql-from-title"> of a <command>SELECT</command>
+      endterm="sql-from-title"/> of a <command>SELECT</command>
       statement.  Note that the target table must not appear in the
       <replaceable>from_list</replaceable>, unless you intend a self-join (in which
       case it must appear with an alias in the <replaceable>from_list</replaceable>).
@@ -200,7 +200,7 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
       query on the <command>UPDATE</command>'s target table.
       Note that <literal>WHERE CURRENT OF</literal> cannot be
       specified together with a Boolean condition.  See
-      <xref linkend="sql-declare">
+      <xref linkend="sql-declare"/>
       for more information about using cursors with
       <literal>WHERE CURRENT OF</literal>.
      </para>

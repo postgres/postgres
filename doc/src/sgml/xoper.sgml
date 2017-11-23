@@ -32,7 +32,7 @@
   <para>
    Here is an example of creating an operator for adding two complex
    numbers.  We assume we've already created the definition of type
-   <type>complex</type> (see <xref linkend="xtypes">).  First we need a
+   <type>complex</type> (see <xref linkend="xtypes"/>).  First we need a
    function that does the work, then we can define the operator:
 
 <programlisting>

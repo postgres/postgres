@@ -105,7 +105,7 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
     <listitem>
      <para>
       The <literal>USING</literal> expression for the policy.
-      See <xref linkend="sql-createpolicy"> for details.
+      See <xref linkend="sql-createpolicy"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -115,7 +115,7 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
     <listitem>
      <para>
       The <literal>WITH CHECK</literal> expression for the policy.
-      See <xref linkend="sql-createpolicy"> for details.
+      See <xref linkend="sql-createpolicy"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -135,8 +135,8 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createpolicy"></member>
-   <member><xref linkend="sql-droppolicy"></member>
+   <member><xref linkend="sql-createpolicy"/></member>
+   <member><xref linkend="sql-droppolicy"/></member>
   </simplelist>
  </refsect1>
 

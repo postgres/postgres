@@ -180,7 +180,7 @@
    <title>Date/Time Key Words</title>
 
    <para>
-    <xref linkend="datetime-month-table"> shows the tokens that are
+    <xref linkend="datetime-month-table"/> shows the tokens that are
     recognized as names of months.
    </para>
 
@@ -247,7 +247,7 @@
     </table>
 
     <para>
-     <xref linkend="datetime-dow-table"> shows the tokens that are
+     <xref linkend="datetime-dow-table"/> shows the tokens that are
      recognized as names of days of the week.
     </para>
 
@@ -294,7 +294,7 @@
      </table>
 
    <para>
-    <xref linkend="datetime-mod-table"> shows the tokens that serve
+    <xref linkend="datetime-mod-table"/> shows the tokens that serve
     various modifier purposes.
    </para>
 
@@ -349,7 +349,7 @@
     Since timezone abbreviations are not well standardized,
     <productname>PostgreSQL</productname> provides a means to customize
     the set of abbreviations accepted by the server.  The
-    <xref linkend="guc-timezone-abbreviations"> run-time parameter
+    <xref linkend="guc-timezone-abbreviations"/> run-time parameter
     determines the active set of abbreviations.  While this parameter
     can be altered by any database user, the possible values for it
     are under the control of the database administrator &mdash; they

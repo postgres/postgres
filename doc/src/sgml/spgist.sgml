@@ -59,7 +59,7 @@
  <para>
   The core <productname>PostgreSQL</productname> distribution
   includes the <acronym>SP-GiST</acronym> operator classes shown in
-  <xref linkend="spgist-builtin-opclasses-table">.
+  <xref linkend="spgist-builtin-opclasses-table"/>.
  </para>
 
   <table id="spgist-builtin-opclasses-table">
@@ -206,7 +206,7 @@
   in a radix tree the node label could be the next character of the string
   value.  (Alternatively, an operator class can omit the node labels, if it
   works with a fixed set of nodes for all inner tuples;
-  see <xref linkend="spgist-null-labels">.)
+  see <xref linkend="spgist-null-labels"/>.)
   Optionally, an inner tuple can have a <firstterm>prefix</firstterm> value
   that describes all its members.  In a radix tree this could be the common
   prefix of the represented strings.  The prefix value is not necessarily
@@ -303,7 +303,7 @@ typedef struct spgConfigOut
       <structfield>longValuesOK</structfield> should be set true only when the
       <structfield>attType</structfield> is of variable length and the operator
       class is capable of segmenting long values by repeated suffixing
-      (see <xref linkend="spgist-limits">).
+      (see <xref linkend="spgist-limits"/>).
      </para>
      </listitem>
     </varlistentry>
@@ -392,7 +392,7 @@ typedef struct spgChooseOut
        zero for the root level.
        <structfield>allTheSame</structfield> is true if the current inner tuple is
        marked as containing multiple equivalent nodes
-       (see <xref linkend="spgist-all-the-same">).
+       (see <xref linkend="spgist-all-the-same"/>).
        <structfield>hasPrefix</structfield> is true if the current inner tuple contains
        a prefix; if so,
        <structfield>prefixDatum</structfield> is its value.
@@ -547,7 +547,7 @@ typedef struct spgPickSplitOut
        <literal>allTheSame</literal> to signify that this has happened.  The
        <function>choose</function> and <function>inner_consistent</function> functions
        must take suitable care with such inner tuples.
-       See <xref linkend="spgist-all-the-same"> for more information.
+       See <xref linkend="spgist-all-the-same"/> for more information.
       </para>
 
       <para>
@@ -557,7 +557,7 @@ typedef struct spgPickSplitOut
        value has been supplied.  In this case the point of the operation is
        to strip off a prefix and produce a new, shorter leaf datum value.
        The call will be repeated until a leaf datum short enough to fit on
-       a page has been produced.  See <xref linkend="spgist-limits"> for
+       a page has been produced.  See <xref linkend="spgist-limits"/> for
        more information.
       </para>
      </listitem>
@@ -638,7 +638,7 @@ typedef struct spgInnerConsistentOut
        <structfield>allTheSame</structfield> is true if the current inner tuple is
        marked <quote>all-the-same</quote>; in this case all the nodes have the
        same label (if any) and so either all or none of them match the query
-       (see <xref linkend="spgist-all-the-same">).
+       (see <xref linkend="spgist-all-the-same"/>).
        <structfield>hasPrefix</structfield> is true if the current inner tuple contains
        a prefix; if so,
        <structfield>prefixDatum</structfield> is its value.
@@ -817,7 +817,7 @@ typedef struct spgLeafConsistentOut
    tuple <emphasis>must</emphasis> divide the set of leaf values into more than one
    node group.  If the operator class's <function>picksplit</function> function
    fails to do that, the <acronym>SP-GiST</acronym> core resorts to
-   extraordinary measures described in <xref linkend="spgist-all-the-same">.
+   extraordinary measures described in <xref linkend="spgist-all-the-same"/>.
   </para>
  </sect2>
 
@@ -894,7 +894,7 @@ typedef struct spgLeafConsistentOut
  <para>
   The <productname>PostgreSQL</productname> source distribution includes
   several examples of index operator classes for <acronym>SP-GiST</acronym>,
-  as described in <xref linkend="spgist-builtin-opclasses-table">.  Look
+  as described in <xref linkend="spgist-builtin-opclasses-table"/>.  Look
   into <filename>src/backend/access/spgist/</filename>
   and <filename>src/backend/utils/adt/</filename> to see the code.
  </para>

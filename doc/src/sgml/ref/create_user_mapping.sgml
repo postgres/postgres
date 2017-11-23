@@ -122,10 +122,10 @@ CREATE USER MAPPING FOR bob SERVER foo OPTIONS (user 'bob', password 'secret');
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterusermapping"></member>
-   <member><xref linkend="sql-dropusermapping"></member>
-   <member><xref linkend="sql-createforeigndatawrapper"></member>
-   <member><xref linkend="sql-createserver"></member>
+   <member><xref linkend="sql-alterusermapping"/></member>
+   <member><xref linkend="sql-dropusermapping"/></member>
+   <member><xref linkend="sql-createforeigndatawrapper"/></member>
+   <member><xref linkend="sql-createserver"/></member>
   </simplelist>
  </refsect1>
 

@@ -237,7 +237,7 @@
     choices made during both the initial population selection and subsequent
     <quote>mutation</quote> of the best candidates.  To avoid surprising changes
     of the selected plan, each run of the GEQO algorithm restarts its
-    random number generator with the current <xref linkend="guc-geqo-seed">
+    random number generator with the current <xref linkend="guc-geqo-seed"/>
     parameter setting.  As long as <varname>geqo_seed</varname> and the other
     GEQO parameters are kept fixed, the same plan will be generated for a
     given query (and other planner inputs such as statistics).  To experiment
@@ -320,13 +320,13 @@
 
     <listitem>
      <para>
-      <xref linkend="elma04">
+      <xref linkend="elma04"/>
      </para>
     </listitem>
 
     <listitem>
      <para>
-      <xref linkend="fong">
+      <xref linkend="fong"/>
      </para>
     </listitem>
    </itemizedlist>

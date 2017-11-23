@@ -66,7 +66,7 @@ DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] <replaceable class="parameter">name
      <para>
       Automatically drop objects that depend on the text search configuration,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -113,8 +113,8 @@ DROP TEXT SEARCH CONFIGURATION my_english;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsconfig"></member>
-   <member><xref linkend="sql-createtsconfig"></member>
+   <member><xref linkend="sql-altertsconfig"/></member>
+   <member><xref linkend="sql-createtsconfig"/></member>
   </simplelist>
  </refsect1>
 

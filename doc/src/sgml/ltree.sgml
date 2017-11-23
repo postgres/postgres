@@ -183,7 +183,7 @@ Europe &amp; Russia*@ &amp; !Transportation
    <literal>&lt;</literal>, <literal>&gt;</literal>, <literal>&lt;=</literal>, <literal>&gt;=</literal>.
    Comparison sorts in the order of a tree traversal, with the children
    of a node sorted by label text.  In addition, the specialized
-   operators shown in <xref linkend="ltree-op-table"> are available.
+   operators shown in <xref linkend="ltree-op-table"/> are available.
   </para>
 
   <table id="ltree-op-table">
@@ -362,7 +362,7 @@ Europe &amp; Russia*@ &amp; !Transportation
   </para>
 
   <para>
-   The available functions are shown in <xref linkend="ltree-func-table">.
+   The available functions are shown in <xref linkend="ltree-func-table"/>.
   </para>
 
   <table id="ltree-func-table">
@@ -672,7 +672,7 @@ ltreetest=&gt; SELECT ins_label(path,2,'Space') FROM test WHERE path &lt;@ 'Top.
    the <type>ltree</type> type for PL/Python.  The extensions are
    called <literal>ltree_plpythonu</literal>, <literal>ltree_plpython2u</literal>,
    and <literal>ltree_plpython3u</literal>
-   (see <xref linkend="plpython-python23"> for the PL/Python naming
+   (see <xref linkend="plpython-python23"/> for the PL/Python naming
    convention).  If you install these transforms and specify them when
    creating a function, <type>ltree</type> values are mapped to Python lists.
    (The reverse is currently not supported, however.)

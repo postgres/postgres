@@ -133,7 +133,7 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
           <literal>cascaded</literal>, and is equivalent to specifying
           <literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</literal> (see below).
           This option can be changed on existing views using <xref
-          linkend="sql-alterview">.
+          linkend="sql-alterview"/>.
          </para>
         </listitem>
        </varlistentry>
@@ -143,7 +143,7 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
         <listitem>
          <para>
           This should be used if the view is intended to provide row-level
-          security.  See <xref linkend="rules-privileges"> for full details.
+          security.  See <xref linkend="rules-privileges"/> for full details.
          </para>
         </listitem>
        </varlistentry>
@@ -156,8 +156,8 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select"> or
-      <xref linkend="sql-values"> command
+      A <xref linkend="sql-select"/> or
+      <xref linkend="sql-values"/> command
       which will provide the columns and rows of the view.
      </para>
     </listitem>
@@ -241,7 +241,7 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
   <title>Notes</title>
 
    <para>
-    Use the <xref linkend="sql-dropview">
+    Use the <xref linkend="sql-dropview"/>
     statement to drop views.
    </para>
 
@@ -264,7 +264,7 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     Access to tables referenced in the view is determined by permissions of
     the view owner.  In some cases, this can be used to provide secure but
     restricted access to the underlying tables.  However, not all views are
-    secure against tampering; see <xref linkend="rules-privileges"> for
+    secure against tampering; see <xref linkend="rules-privileges"/> for
     details.  Functions called in the view are treated the same as if they had
     been called directly from the query using the view.  Therefore the user of
     a view must have permissions to call all functions used by the view.
@@ -360,7 +360,7 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     <literal>security_barrier</literal> property then all the view's <literal>WHERE</literal>
     conditions (and any conditions using operators which are marked as <literal>LEAKPROOF</literal>)
     will always be evaluated before any conditions that a user of the view has
-    added.   See <xref linkend="rules-privileges"> for full details.  Note that,
+    added.   See <xref linkend="rules-privileges"/> for full details.  Note that,
     due to this, rows which are not ultimately returned (because they do not
     pass the user's <literal>WHERE</literal> conditions) may still end up being locked.
     <command>EXPLAIN</command> can be used to see which conditions are
@@ -375,8 +375,8 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     creating <literal>INSTEAD OF</literal> triggers on the view, which must
     convert attempted inserts, etc. on the view into appropriate actions
     on other tables.  For more information see <xref
-    linkend="sql-createtrigger">.  Another possibility is to create rules
-    (see <xref linkend="sql-createrule">), but in practice triggers are
+    linkend="sql-createtrigger"/>.  Another possibility is to create rules
+    (see <xref linkend="sql-createrule"/>), but in practice triggers are
     easier to understand and use correctly.
    </para>
 
@@ -386,7 +386,7 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     view.  In addition the view's owner must have the relevant privileges on
     the underlying base relations, but the user performing the update does
     not need any permissions on the underlying base relations (see
-    <xref linkend="rules-privileges">).
+    <xref linkend="rules-privileges"/>).
    </para>
   </refsect2>
  </refsect1>
@@ -490,9 +490,9 @@ UNION ALL
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterview"></member>
-   <member><xref linkend="sql-dropview"></member>
-   <member><xref linkend="sql-creatematerializedview"></member>
+   <member><xref linkend="sql-alterview"/></member>
+   <member><xref linkend="sql-dropview"/></member>
+   <member><xref linkend="sql-creatematerializedview"/></member>
   </simplelist>
  </refsect1>
 </refentry>

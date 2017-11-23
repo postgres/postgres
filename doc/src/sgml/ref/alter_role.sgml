@@ -62,11 +62,11 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   <para>
    The first variant of this command listed in the synopsis can change
    many of the role attributes that can be specified in
-   <xref linkend="sql-createrole">.
+   <xref linkend="sql-createrole"/>.
    (All the possible attributes are covered,
    except that there are no options for adding or removing memberships; use
-   <xref linkend="sql-grant"> and
-   <xref linkend="sql-revoke"> for that.)
+   <xref linkend="sql-grant"/> and
+   <xref linkend="sql-revoke"/> for that.)
    Attributes not mentioned in the command retain their previous settings.
    Database superusers can change any of these settings for any role.
    Roles having <literal>CREATEROLE</literal> privilege can change any of these
@@ -102,8 +102,8 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    default, overriding whatever setting is present in
    <filename>postgresql.conf</filename> or has been received from the <command>postgres</command>
    command line. This only happens at login time; executing
-   <xref linkend="sql-set-role"> or
-   <xref linkend="sql-set-session-authorization"> does not cause new
+   <xref linkend="sql-set-role"/> or
+   <xref linkend="sql-set-session-authorization"/> does not cause new
    configuration values to be set.
    Settings set for all databases are overridden by database-specific settings
    attached to a role.  Settings for specific databases or specific roles override
@@ -173,7 +173,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       <listitem>
        <para>
         These clauses alter attributes originally set by
-        <xref linkend="sql-createrole">. For more information, see the
+        <xref linkend="sql-createrole"/>. For more information, see the
         <command>CREATE ROLE</command> reference page.
        </para>
       </listitem>
@@ -217,14 +217,14 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
 
        <para>
         Role-specific variable settings take effect only at login;
-        <xref linkend="sql-set-role"> and
-        <xref linkend="sql-set-session-authorization">
+        <xref linkend="sql-set-role"/> and
+        <xref linkend="sql-set-session-authorization"/>
         do not process role-specific variable settings.
        </para>
 
        <para>
-        See <xref linkend="sql-set"> and <xref
-        linkend="runtime-config"> for more information about allowed
+        See <xref linkend="sql-set"/> and <xref
+        linkend="runtime-config"/> for more information about allowed
         parameter names and values.
        </para>
       </listitem>
@@ -236,14 +236,14 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-createrole">
-   to add new roles, and <xref linkend="sql-droprole"> to remove a role.
+   Use <xref linkend="sql-createrole"/>
+   to add new roles, and <xref linkend="sql-droprole"/> to remove a role.
   </para>
 
   <para>
    <command>ALTER ROLE</command> cannot change a role's memberships.
-   Use <xref linkend="sql-grant"> and
-   <xref linkend="sql-revoke">
+   Use <xref linkend="sql-grant"/> and
+   <xref linkend="sql-revoke"/>
    to do that.
   </para>
 
@@ -251,7 +251,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    Caution must be exercised when specifying an unencrypted password
    with this command.  The password will be transmitted to the server
    in cleartext, and it might also be logged in the client's command
-   history or the server log.  <xref linkend="app-psql">
+   history or the server log.  <xref linkend="app-psql"/>
    contains a command
    <command>\password</command> that can be used to change a
    role's password without exposing the cleartext password.
@@ -260,7 +260,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   <para>
    It is also possible to tie a
    session default to a specific database rather than to a role; see
-   <xref linkend="sql-alterdatabase">.
+   <xref linkend="sql-alterdatabase"/>.
    If there is a conflict, database-role-specific settings override role-specific
    ones, which in turn override database-specific ones.
   </para>
@@ -311,7 +311,7 @@ ALTER ROLE miriam CREATEROLE CREATEDB;
 
   <para>
    Give a role a non-default setting of the
-   <xref linkend="guc-maintenance-work-mem"> parameter:
+   <xref linkend="guc-maintenance-work-mem"/> parameter:
 
 <programlisting>
 ALTER ROLE worker_bee SET maintenance_work_mem = 100000;
@@ -320,7 +320,7 @@ ALTER ROLE worker_bee SET maintenance_work_mem = 100000;
 
   <para>
    Give a role a non-default, database-specific setting of the
-   <xref linkend="guc-client-min-messages"> parameter:
+   <xref linkend="guc-client-min-messages"/> parameter:
 
 <programlisting>
 ALTER ROLE fred IN DATABASE devel SET client_min_messages = DEBUG;
@@ -340,10 +340,10 @@ ALTER ROLE fred IN DATABASE devel SET client_min_messages = DEBUG;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createrole"></member>
-   <member><xref linkend="sql-droprole"></member>
-   <member><xref linkend="sql-alterdatabase"></member>
-   <member><xref linkend="sql-set"></member>
+   <member><xref linkend="sql-createrole"/></member>
+   <member><xref linkend="sql-droprole"/></member>
+   <member><xref linkend="sql-alterdatabase"/></member>
+   <member><xref linkend="sql-set"/></member>
   </simplelist>
  </refsect1>
 </refentry>

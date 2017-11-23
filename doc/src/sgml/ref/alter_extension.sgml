@@ -119,7 +119,7 @@ ALTER EXTENSION <replaceable class="parameter">name</replaceable> DROP <replacea
    </varlistentry>
    </variablelist>
 
-   See <xref linkend="extend-extensions"> for more information about these
+   See <xref linkend="extend-extensions"/> for more information about these
    operations.
   </para>
 
@@ -323,8 +323,8 @@ ALTER EXTENSION hstore ADD FUNCTION populate_record(anyelement, hstore);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createextension"></member>
-   <member><xref linkend="sql-dropextension"></member>
+   <member><xref linkend="sql-createextension"/></member>
+   <member><xref linkend="sql-dropextension"/></member>
   </simplelist>
  </refsect1>
 </refentry>

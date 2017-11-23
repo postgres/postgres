@@ -75,7 +75,7 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
    a <token>SET</token> token to appear in a certain position, and
    this particular variation of <command>INSERT</command> also
    requires a <token>VALUES</token> in order to be complete.  The
-   precise syntax rules for each command are described in <xref linkend="reference">.
+   precise syntax rules for each command are described in <xref linkend="reference"/>.
   </para>
 
   <sect2 id="sql-syntax-identifiers">
@@ -109,7 +109,7 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
     same lexical structure, meaning that one cannot know whether a
     token is an identifier or a key word without knowing the language.
     A complete list of key words can be found in <xref
-    linkend="sql-keywords-appendix">.
+    linkend="sql-keywords-appendix"/>.
    </para>
 
    <para>
@@ -353,7 +353,7 @@ SELECT 'foo'      'bar';
      Within an escape string, a backslash character (<literal>\</literal>) begins a
      C-like <firstterm>backslash escape</firstterm> sequence, in which the combination
      of backslash and following character(s) represent a special byte
-     value, as shown in <xref linkend="sql-backslash-table">.
+     value, as shown in <xref linkend="sql-backslash-table"/>.
     </para>
 
      <table id="sql-backslash-table">
@@ -430,7 +430,7 @@ SELECT 'foo'      'bar';
      valid characters in the server character set encoding.  When the
      server encoding is UTF-8, then the Unicode escapes or the
      alternative Unicode escape syntax, explained
-     in <xref linkend="sql-syntax-strings-uescape">, should be used
+     in <xref linkend="sql-syntax-strings-uescape"/>, should be used
      instead.  (The alternative would be doing the UTF-8 encoding by
      hand and writing out the bytes, which would be very cumbersome.)
     </para>
@@ -451,7 +451,7 @@ SELECT 'foo'      'bar';
     <caution>
     <para>
      If the configuration parameter
-     <xref linkend="guc-standard-conforming-strings"> is <literal>off</literal>,
+     <xref linkend="guc-standard-conforming-strings"/> is <literal>off</literal>,
      then <productname>PostgreSQL</productname> recognizes backslash escapes
      in both regular and escape string constants.  However, as of
      <productname>PostgreSQL</productname> 9.1, the default is <literal>on</literal>, meaning
@@ -466,8 +466,8 @@ SELECT 'foo'      'bar';
 
     <para>
      In addition to <varname>standard_conforming_strings</varname>, the configuration
-     parameters <xref linkend="guc-escape-string-warning"> and
-     <xref linkend="guc-backslash-quote"> govern treatment of backslashes
+     parameters <xref linkend="guc-escape-string-warning"/> and
+     <xref linkend="guc-backslash-quote"/> govern treatment of backslashes
      in string constants.
     </para>
     </caution>
@@ -539,7 +539,7 @@ U&amp;'d!0061t!+000061' UESCAPE '!'
     <para>
      Also, the Unicode escape syntax for string constants only works
      when the configuration
-     parameter <xref linkend="guc-standard-conforming-strings"> is
+     parameter <xref linkend="guc-standard-conforming-strings"/> is
      turned on.  This is because otherwise this syntax could confuse
      clients that parse the SQL statements to the point that it could
      lead to SQL injections and similar security issues.  If the
@@ -772,14 +772,14 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 <replaceable>typename</replaceable> ( '<replaceable>string</replaceable>' )
 </synopsis>
      but not all type names can be used in this way; see <xref
-     linkend="sql-syntax-type-casts"> for details.
+     linkend="sql-syntax-type-casts"/> for details.
     </para>
 
     <para>
      The <literal>::</literal>, <literal>CAST()</literal>, and
      function-call syntaxes can also be used to specify run-time type
      conversions of arbitrary expressions, as discussed in <xref
-     linkend="sql-syntax-type-casts">.  To avoid syntactic ambiguity, the
+     linkend="sql-syntax-type-casts"/>.  To avoid syntactic ambiguity, the
      <literal><replaceable>type</replaceable> '<replaceable>string</replaceable>'</literal>
      syntax can only be used to specify the type of a simple literal constant.
      Another restriction on the
@@ -885,7 +885,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <listitem>
      <para>
       Brackets (<literal>[]</literal>) are used to select the elements
-      of an array.  See <xref linkend="arrays"> for more information
+      of an array.  See <xref linkend="arrays"/> for more information
       on arrays.
      </para>
     </listitem>
@@ -909,7 +909,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      <para>
       The colon (<literal>:</literal>) is used to select
       <quote>slices</quote> from arrays. (See <xref
-      linkend="arrays">.)  In certain SQL dialects (such as Embedded
+      linkend="arrays"/>.)  In certain SQL dialects (such as Embedded
       SQL), the colon is used to prefix variable names.
      </para>
     </listitem>
@@ -980,7 +980,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </indexterm>
 
    <para>
-    <xref linkend="sql-precedence-table"> shows the precedence and
+    <xref linkend="sql-precedence-table"/> shows the precedence and
     associativity of the operators in <productname>PostgreSQL</productname>.
     Most operators have the same precedence and are left-associative.
     The precedence and associativity of the operators is hard-wired
@@ -1126,7 +1126,7 @@ SELECT (5 !) - 6;
 SELECT 3 OPERATOR(pg_catalog.+) 4;
 </programlisting>
     the <literal>OPERATOR</literal> construct is taken to have the default precedence
-    shown in <xref linkend="sql-precedence-table"> for
+    shown in <xref linkend="sql-precedence-table"/> for
     <quote>any other operator</quote>.  This is true no matter
     which specific operator appears inside <literal>OPERATOR()</literal>.
    </para>
@@ -1148,7 +1148,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
      change behavior without any parsing error being reported.  If you are
      concerned about whether these changes have silently broken something,
      you can test your application with the configuration
-     parameter <xref linkend="guc-operator-precedence-warning"> turned on
+     parameter <xref linkend="guc-operator-precedence-warning"/> turned on
      to see if any warnings are logged.
     </para>
    </note>
@@ -1290,13 +1290,13 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    be classified as an expression but do not follow any general syntax
    rules.  These generally have the semantics of a function or
    operator and are explained in the appropriate location in <xref
-   linkend="functions">.  An example is the <literal>IS NULL</literal>
+   linkend="functions"/>.  An example is the <literal>IS NULL</literal>
    clause.
   </para>
 
   <para>
    We have already discussed constants in <xref
-   linkend="sql-syntax-constants">.  The following sections discuss
+   linkend="sql-syntax-constants"/>.  The following sections discuss
    the remaining options.
   </para>
 
@@ -1319,7 +1319,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     table (possibly qualified with a schema name), or an alias for a table
     defined by means of a <literal>FROM</literal> clause.
     The correlation name and separating dot can be omitted if the column name
-    is unique across all the tables being used in the current query.  (See also <xref linkend="queries">.)
+    is unique across all the tables being used in the current query.  (See also <xref linkend="queries"/>.)
    </para>
   </sect2>
 
@@ -1402,7 +1402,7 @@ $1[10:42]
 </programlisting>
 
     The parentheses in the last example are required.
-    See <xref linkend="arrays"> for more about arrays.
+    See <xref linkend="arrays"/> for more about arrays.
    </para>
   </sect2>
 
@@ -1455,7 +1455,7 @@ $1.somecolumn
 (compositecol).*
 </programlisting>
     This notation behaves differently depending on context;
-    see <xref linkend="rowtypes-usage"> for details.
+    see <xref linkend="rowtypes-usage"/> for details.
    </para>
   </sect2>
 
@@ -1475,7 +1475,7 @@ $1.somecolumn
      <member><replaceable>expression</replaceable> <replaceable>operator</replaceable> (unary postfix operator)</member>
     </simplelist>
     where the <replaceable>operator</replaceable> token follows the syntax
-    rules of <xref linkend="sql-syntax-operators">, or is one of the
+    rules of <xref linkend="sql-syntax-operators"/>, or is one of the
     key words <token>AND</token>, <token>OR</token>, and
     <token>NOT</token>, or is a qualified operator name in the form:
 <synopsis>
@@ -1483,7 +1483,7 @@ $1.somecolumn
 </synopsis>
     Which particular operators exist and whether
     they are unary or binary depends on what operators have been
-    defined by the system or the user.  <xref linkend="functions">
+    defined by the system or the user.  <xref linkend="functions"/>
     describes the built-in operators.
    </para>
   </sect2>
@@ -1514,13 +1514,13 @@ sqrt(2)
    </para>
 
    <para>
-    The list of built-in functions is in <xref linkend="functions">.
+    The list of built-in functions is in <xref linkend="functions"/>.
     Other functions can be added by the user.
    </para>
 
    <para>
     The arguments can optionally have names attached.
-    See <xref linkend="sql-syntax-calling-funcs"> for details.
+    See <xref linkend="sql-syntax-calling-funcs"/> for details.
    </para>
 
    <note>
@@ -1532,7 +1532,7 @@ sqrt(2)
      interchangeable.  This behavior is not SQL-standard but is provided
      in <productname>PostgreSQL</productname> because it allows use of functions to
      emulate <quote>computed fields</quote>.  For more information see
-     <xref linkend="rowtypes-usage">.
+     <xref linkend="rowtypes-usage"/>.
     </para>
    </note>
   </sect2>
@@ -1622,7 +1622,7 @@ sqrt(2)
     such an aggregate, the optional <replaceable>order_by_clause</replaceable> can be
     used to specify the desired ordering.  The <replaceable>order_by_clause</replaceable>
     has the same syntax as for a query-level <literal>ORDER BY</literal> clause, as
-    described in <xref linkend="queries-order">, except that its expressions
+    described in <xref linkend="queries-order"/>, except that its expressions
     are always just expressions and cannot be output-column names or numbers.
     For example:
 <programlisting>
@@ -1736,7 +1736,7 @@ FROM generate_series(1,10) AS s(i);
 
    <para>
     The predefined aggregate functions are described in <xref
-    linkend="functions-aggregate">.  Other aggregate functions can be added
+    linkend="functions-aggregate"/>.  Other aggregate functions can be added
     by the user.
    </para>
 
@@ -1750,8 +1750,8 @@ FROM generate_series(1,10) AS s(i);
 
    <para>
     When an aggregate expression appears in a subquery (see
-    <xref linkend="sql-syntax-scalar-subqueries"> and
-    <xref linkend="functions-subquery">), the aggregate is normally
+    <xref linkend="sql-syntax-scalar-subqueries"/> and
+    <xref linkend="functions-subquery"/>), the aggregate is normally
     evaluated over the rows of the subquery.  But an exception occurs
     if the aggregate's arguments (and <replaceable>filter_clause</replaceable>
     if any) contain only outer-level variables:
@@ -1830,7 +1830,7 @@ UNBOUNDED FOLLOWING
     Alternatively, a full <replaceable>window_definition</replaceable> can
     be given within parentheses, using the same syntax as for defining a
     named window in the <literal>WINDOW</literal> clause; see the
-    <xref linkend="sql-select"> reference page for details.  It's worth
+    <xref linkend="sql-select"/> reference page for details.  It's worth
     pointing out that <literal>OVER wname</literal> is not exactly equivalent to
     <literal>OVER (wname ...)</literal>; the latter implies copying and modifying the
     window definition, and will be rejected if the referenced window
@@ -1921,7 +1921,7 @@ UNBOUNDED FOLLOWING
 
    <para>
     The built-in window functions are described in <xref
-    linkend="functions-window-table">.  Other window functions can be added by
+    linkend="functions-window-table"/>.  Other window functions can be added by
     the user.  Also, any built-in or user-defined general-purpose or
     statistical aggregate can be used as a window function.  (Ordered-set
     and hypothetical-set aggregates cannot presently be used as window functions.)
@@ -1944,9 +1944,9 @@ UNBOUNDED FOLLOWING
 
    <para>
     More information about window functions can be found in
-    <xref linkend="tutorial-window">,
-    <xref linkend="functions-window">, and
-    <xref linkend="queries-window">.
+    <xref linkend="tutorial-window"/>,
+    <xref linkend="functions-window"/>, and
+    <xref linkend="queries-window"/>.
    </para>
   </sect2>
 
@@ -1984,7 +1984,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     represents a run-time type conversion.  The cast will succeed only
     if a suitable type conversion operation has been defined.  Notice that this
     is subtly different from the use of casts with constants, as shown in
-    <xref linkend="sql-syntax-constants-generic">.  A cast applied to an
+    <xref linkend="sql-syntax-constants-generic"/>.  A cast applied to an
     unadorned string literal represents the initial assignment of a type
     to a literal constant value, and so it will succeed for any type
     (if the contents of the string literal are acceptable input syntax for the
@@ -2028,7 +2028,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
      syntax</quote> is nothing more than a direct invocation of the underlying
      conversion function.  Obviously, this is not something that a portable
      application should rely on.  For further details see
-     <xref linkend="sql-createcast">.
+     <xref linkend="sql-createcast"/>.
     </para>
    </note>
   </sect2>
@@ -2079,7 +2079,7 @@ SELECT * FROM tbl WHERE a &gt; 'foo' COLLATE "C";
     arguments, and an explicit <literal>COLLATE</literal> clause will override the
     collations of all other arguments.  (Attaching non-matching
     <literal>COLLATE</literal> clauses to more than one argument, however, is an
-    error.  For more details see <xref linkend="collation">.)
+    error.  For more details see <xref linkend="collation"/>.)
     Thus, this gives the same result as the previous example:
 <programlisting>
 SELECT * FROM tbl WHERE a COLLATE "C" &gt; 'foo';
@@ -2104,7 +2104,7 @@ SELECT * FROM tbl WHERE (a &gt; 'foo') COLLATE "C";
    <para>
     A scalar subquery is an ordinary
     <command>SELECT</command> query in parentheses that returns exactly one
-    row with one column.  (See <xref linkend="queries"> for information about writing queries.)
+    row with one column.  (See <xref linkend="queries"/> for information about writing queries.)
     The <command>SELECT</command> query is executed
     and the single returned value is used in the surrounding value expression.
     It is an error to use a query that
@@ -2113,7 +2113,7 @@ SELECT * FROM tbl WHERE (a &gt; 'foo') COLLATE "C";
     there is no error; the scalar result is taken to be null.)
     The subquery can refer to variables from the surrounding query,
     which will act as constants during any one evaluation of the subquery.
-    See also <xref linkend="functions-subquery"> for other expressions involving subqueries.
+    See also <xref linkend="functions-subquery"/> for other expressions involving subqueries.
    </para>
 
    <para>
@@ -2156,7 +2156,7 @@ SELECT ARRAY[1,2,3+4];
     By default,
     the array element type is the common type of the member expressions,
     determined using the same rules as for <literal>UNION</literal> or
-    <literal>CASE</literal> constructs (see <xref linkend="typeconv-union-case">).
+    <literal>CASE</literal> constructs (see <xref linkend="typeconv-union-case"/>).
     You can override this by explicitly casting the array constructor to the
     desired type, for example:
 <programlisting>
@@ -2168,7 +2168,7 @@ SELECT ARRAY[1,2,22.7]::integer[];
 </programlisting>
     This has the same effect as casting each expression to the array
     element type individually.
-    For more on casting, see <xref linkend="sql-syntax-type-casts">.
+    For more on casting, see <xref linkend="sql-syntax-type-casts"/>.
    </para>
 
    <para>
@@ -2259,7 +2259,7 @@ SELECT ARRAY(SELECT ARRAY[i, i*2] FROM generate_series(1,5) AS a(i));
   <para>
    The subscripts of an array value built with <literal>ARRAY</literal>
    always begin with one.  For more information about arrays, see
-   <xref linkend="arrays">.
+   <xref linkend="arrays"/>.
   </para>
 
   </sect2>
@@ -2300,7 +2300,7 @@ SELECT ROW(1,2.5,'this is a test');
     <replaceable>rowvalue</replaceable><literal>.*</literal>,
     which will be expanded to a list of the elements of the row value,
     just as occurs when the <literal>.*</literal> syntax is used at the top level
-    of a <command>SELECT</command> list (see <xref linkend="rowtypes-usage">).
+    of a <command>SELECT</command> list (see <xref linkend="rowtypes-usage"/>).
     For example, if table <literal>t</literal> has
     columns <literal>f1</literal> and <literal>f2</literal>, these are the same:
 <programlisting>
@@ -2372,9 +2372,9 @@ SELECT ROW(1,2.5,'this is a test') = ROW(1, 3, 'not the same');
 
 SELECT ROW(table.*) IS NULL FROM table;  -- detect all-null rows
 </programlisting>
-   For more detail see <xref linkend="functions-comparisons">.
+   For more detail see <xref linkend="functions-comparisons"/>.
    Row constructors can also be used in connection with subqueries,
-   as discussed in <xref linkend="functions-subquery">.
+   as discussed in <xref linkend="functions-subquery"/>.
   </para>
 
   </sect2>
@@ -2422,7 +2422,7 @@ SELECT somefunc() OR true;
 
    <para>
     When it is essential to force evaluation order, a <literal>CASE</literal>
-    construct (see <xref linkend="functions-conditional">) can be
+    construct (see <xref linkend="functions-conditional"/>) can be
     used.  For example, this is an untrustworthy way of trying to
     avoid division by zero in a <literal>WHERE</literal> clause:
 <programlisting>
@@ -2442,7 +2442,7 @@ SELECT ... WHERE CASE WHEN x &gt; 0 THEN y/x &gt; 1.5 ELSE false END;
     <literal>CASE</literal> is not a cure-all for such issues, however.
     One limitation of the technique illustrated above is that it does not
     prevent early evaluation of constant subexpressions.
-    As described in <xref linkend="xfunc-volatility">, functions and
+    As described in <xref linkend="xfunc-volatility"/>, functions and
     operators marked <literal>IMMUTABLE</literal> can be evaluated when
     the query is planned rather than when it is executed.  Thus for example
 <programlisting>
@@ -2547,7 +2547,7 @@ LANGUAGE SQL IMMUTABLE STRICT;
     <literal>b</literal> inputs will be concatenated, and forced to either
     upper or lower case depending on the <literal>uppercase</literal>
     parameter.  The remaining details of this function
-    definition are not important here (see <xref linkend="extend"> for
+    definition are not important here (see <xref linkend="extend"/> for
     more information).
    </para>
 

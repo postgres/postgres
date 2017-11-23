@@ -88,8 +88,8 @@ DROP STATISTICS IF EXISTS
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterstatistics"></member>
-   <member><xref linkend="sql-createstatistics"></member>
+   <member><xref linkend="sql-alterstatistics"/></member>
+   <member><xref linkend="sql-createstatistics"/></member>
   </simplelist>
  </refsect1>
 

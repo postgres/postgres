@@ -34,9 +34,9 @@ PostgreSQL documentation
    <application>pg_basebackup</application> is used to take base backups of
    a running <productname>PostgreSQL</productname> database cluster. These
    are taken without affecting other clients to the database, and can be used
-   both for point-in-time recovery (see <xref linkend="continuous-archiving">)
+   both for point-in-time recovery (see <xref linkend="continuous-archiving"/>)
    and as the starting point for a log shipping or streaming replication standby
-   servers (see <xref linkend="warm-standby">).
+   servers (see <xref linkend="warm-standby"/>).
   </para>
 
   <para>
@@ -45,17 +45,17 @@ PostgreSQL documentation
    out of backup mode automatically. Backups are always taken of the entire
    database cluster; it is not possible to back up individual databases or
    database objects. For individual database backups, a tool such as
-   <xref linkend="app-pgdump"> must be used.
+   <xref linkend="app-pgdump"/> must be used.
   </para>
 
   <para>
    The backup is made over a regular <productname>PostgreSQL</productname>
    connection, and uses the replication protocol. The connection must be made
    with a superuser or a user having <literal>REPLICATION</literal>
-   permissions (see <xref linkend="role-attributes">),
+   permissions (see <xref linkend="role-attributes"/>),
    and <filename>pg_hba.conf</filename> must explicitly permit the replication
    connection. The server must also be configured
-   with <xref linkend="guc-max-wal-senders"> set high enough to leave at least
+   with <xref linkend="guc-max-wal-senders"/> set high enough to leave at least
    one session available for the backup and one for WAL streaming (if used).
   </para>
 
@@ -69,9 +69,9 @@ PostgreSQL documentation
    <application>pg_basebackup</application> can make a base backup from
    not only the master but also the standby. To take a backup from the standby,
    set up the standby so that it can accept replication connections (that is, set
-   <varname>max_wal_senders</varname> and <xref linkend="guc-hot-standby">,
+   <varname>max_wal_senders</varname> and <xref linkend="guc-hot-standby"/>,
    and configure <link linkend="auth-pg-hba-conf">host-based authentication</link>).
-   You will also need to enable <xref linkend="guc-full-page-writes"> on the master.
+   You will also need to enable <xref linkend="guc-full-page-writes"/> on the master.
   </para>
 
   <para>
@@ -299,7 +299,7 @@ PostgreSQL documentation
            <para>
             The write-ahead log files are collected at the end of the backup.
             Therefore, it is necessary for the
-            <xref linkend="guc-wal-keep-segments"> parameter to be set high
+            <xref linkend="guc-wal-keep-segments"/> parameter to be set high
              enough that the log is not removed before the end of the backup.
              If the log has been rotated when it's time to transfer it, the
              backup will fail and be unusable.
@@ -320,7 +320,7 @@ PostgreSQL documentation
             open a second connection to the server and start streaming the
             write-ahead log in parallel while running the backup. Therefore,
             it will use up two connections configured by the
-            <xref linkend="guc-max-wal-senders"> parameter. As long as the
+            <xref linkend="guc-max-wal-senders"/> parameter. As long as the
              client can keep up with write-ahead log received, using this mode
              requires no extra write-ahead logs to be saved on the master.
            </para>
@@ -377,7 +377,7 @@ PostgreSQL documentation
       <term><option>--checkpoint=<replaceable class="parameter">fast|spread</replaceable></option></term>
       <listitem>
        <para>
-        Sets checkpoint mode to fast (immediate) or spread (default) (see <xref linkend="backup-lowlevel-base-backup">).
+        Sets checkpoint mode to fast (immediate) or spread (default) (see <xref linkend="backup-lowlevel-base-backup"/>).
        </para>
       </listitem>
      </varlistentry>
@@ -531,7 +531,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies parameters used to connect to the server, as a connection
-        string. See <xref linkend="libpq-connstring"> for more information.
+        string. See <xref linkend="libpq-connstring"/> for more information.
        </para>
        <para>
         The option is called <literal>--dbname</literal> for consistency with other
@@ -667,7 +667,7 @@ PostgreSQL documentation
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -691,7 +691,7 @@ PostgreSQL documentation
    symbolic links used for tablespaces are preserved.  Symbolic links pointing
    to certain directories known to PostgreSQL are copied as empty directories.
    Other symbolic links and special device files are skipped.
-   See <xref linkend="protocol-replication"> for the precise details.
+   See <xref linkend="protocol-replication"/> for the precise details.
   </para>
 
   <para>
@@ -768,7 +768,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-pgdump"></member>
+   <member><xref linkend="app-pgdump"/></member>
   </simplelist>
  </refsect1>
 

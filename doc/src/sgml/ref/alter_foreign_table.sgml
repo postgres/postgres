@@ -72,7 +72,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form adds a new column to the foreign table, using the same syntax as
-      <xref linkend="sql-createforeigntable">.
+      <xref linkend="sql-createforeigntable"/>.
       Unlike the case when adding a column to a regular table, nothing happens
       to the underlying storage: this action simply declares that
       some new column is now accessible through the foreign table.
@@ -134,8 +134,8 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
      <para>
       This form
       sets the per-column statistics-gathering target for subsequent
-      <xref linkend="sql-analyze"> operations.
-      See the similar form of <xref linkend="sql-altertable">
+      <xref linkend="sql-analyze"/> operations.
+      See the similar form of <xref linkend="sql-altertable"/>
       for more details.
      </para>
     </listitem>
@@ -147,7 +147,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form sets or resets per-attribute options.
-      See the similar form of <xref linkend="sql-altertable">
+      See the similar form of <xref linkend="sql-altertable"/>
       for more details.
      </para>
     </listitem>
@@ -160,7 +160,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form sets the storage mode for a column.
-      See the similar form of <xref linkend="sql-altertable">
+      See the similar form of <xref linkend="sql-altertable"/>
       for more details.
       Note that the storage mode has no effect unless the table's
       foreign-data wrapper chooses to pay attention to it.
@@ -173,7 +173,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form adds a new constraint to a foreign table, using the same
-      syntax as <xref linkend="sql-createforeigntable">.
+      syntax as <xref linkend="sql-createforeigntable"/>.
       Currently only <literal>CHECK</literal> constraints are supported.
      </para>
 
@@ -182,7 +182,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
       done to verify the constraint is correct; rather, this action simply
       declares that some new condition should be assumed to hold for all rows
       in the foreign table.  (See the discussion
-      in <xref linkend="sql-createforeigntable">.)
+      in <xref linkend="sql-createforeigntable"/>.)
       If the constraint is marked <literal>NOT VALID</literal>, then it isn't
       assumed to hold, but is only recorded for possible future use.
      </para>
@@ -217,7 +217,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       These forms configure the firing of trigger(s) belonging to the foreign
-      table.  See the similar form of <xref linkend="sql-altertable"> for more
+      table.  See the similar form of <xref linkend="sql-altertable"/> for more
       details.
      </para>
     </listitem>
@@ -228,7 +228,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form adds an <literal>oid</literal> system column to the
-      table (see <xref linkend="ddl-system-columns">).
+      table (see <xref linkend="ddl-system-columns"/>).
       It does nothing if the table already has OIDs.
       Unless the table's foreign-data wrapper supports OIDs, this column
       will simply read as zeroes.
@@ -261,7 +261,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
      <para>
       This form adds the target foreign table as a new child of the specified
       parent table.
-      See the similar form of <xref linkend="sql-altertable">
+      See the similar form of <xref linkend="sql-altertable"/>
       for more details.
      </para>
     </listitem>
@@ -433,7 +433,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
         Automatically drop objects that depend on the dropped column
         or constraint (for example, views referencing the column),
         and in turn all objects that depend on those objects
-        (see <xref linkend="ddl-depend">).
+        (see <xref linkend="ddl-depend"/>).
        </para>
       </listitem>
      </varlistentry>
@@ -525,7 +525,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
    </para>
 
    <para>
-    Refer to <xref linkend="sql-createforeigntable"> for a further description of valid
+    Refer to <xref linkend="sql-createforeigntable"/> for a further description of valid
     parameters.
    </para>
  </refsect1>
@@ -571,8 +571,8 @@ ALTER FOREIGN TABLE myschema.distributors OPTIONS (ADD opt1 'value', SET opt2 'v
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createforeigntable"></member>
-   <member><xref linkend="sql-dropforeigntable"></member>
+   <member><xref linkend="sql-createforeigntable"/></member>
+   <member><xref linkend="sql-dropforeigntable"/></member>
   </simplelist>
  </refsect1>
 </refentry>

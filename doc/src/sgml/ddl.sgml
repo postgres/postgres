@@ -39,7 +39,7 @@
    SQL does not make any guarantees about the order of the rows in a
    table.  When a table is read, the rows will appear in an unspecified order,
    unless sorting is explicitly requested.  This is covered in <xref
-   linkend="queries">.  Furthermore, SQL does not assign unique
+   linkend="queries"/>.  Furthermore, SQL does not assign unique
    identifiers to rows, so it is possible to have several completely
    identical rows in a table.  This is a consequence of the
    mathematical model that underlies SQL but is usually not desirable.
@@ -64,7 +64,7 @@
    built-in data types that fit many applications.  Users can also
    define their own data types.  Most built-in data types have obvious
    names and semantics, so we defer a detailed explanation to <xref
-   linkend="datatype">.  Some of the frequently used data types are
+   linkend="datatype"/>.  Some of the frequently used data types are
    <type>integer</type> for whole numbers, <type>numeric</type> for
    possibly fractional numbers, <type>text</type> for character
    strings, <type>date</type> for dates, <type>time</type> for
@@ -79,7 +79,7 @@
 
   <para>
    To create a table, you use the aptly named <xref
-   linkend="sql-createtable"> command.
+   linkend="sql-createtable"/> command.
    In this command you specify at least a name for the new table, the
    names of the columns and the data type of each column.  For
    example:
@@ -95,7 +95,7 @@ CREATE TABLE my_first_table (
    <type>text</type>; the second column has the name
    <literal>second_column</literal> and the type <type>integer</type>.
    The table and column names follow the identifier syntax explained
-   in <xref linkend="sql-syntax-identifiers">.  The type names are
+   in <xref linkend="sql-syntax-identifiers"/>.  The type names are
    usually also identifiers, but there are some exceptions.  Note that the
    column list is comma-separated and surrounded by parentheses.
   </para>
@@ -139,7 +139,7 @@ CREATE TABLE products (
 
   <para>
    If you no longer need a table, you can remove it using the <xref
-   linkend="sql-droptable"> command.
+   linkend="sql-droptable"/> command.
    For example:
 <programlisting>
 DROP TABLE my_first_table;
@@ -155,7 +155,7 @@ DROP TABLE products;
 
   <para>
    If you need to modify a table that already exists, see <xref
-   linkend="ddl-alter"> later in this chapter.
+   linkend="ddl-alter"/> later in this chapter.
   </para>
 
   <para>
@@ -163,7 +163,7 @@ DROP TABLE products;
    tables.  The remainder of this chapter is concerned with adding
    features to the table definition to ensure data integrity,
    security, or convenience.  If you are eager to fill your tables with
-   data now you can skip ahead to <xref linkend="dml"> and read the
+   data now you can skip ahead to <xref linkend="dml"/> and read the
    rest of this chapter later.
   </para>
  </sect1>
@@ -181,7 +181,7 @@ DROP TABLE products;
    columns will be filled with their respective default values.  A
    data manipulation command can also request explicitly that a column
    be set to its default value, without having to know what that value is.
-   (Details about data manipulation commands are in <xref linkend="dml">.)
+   (Details about data manipulation commands are in <xref linkend="dml"/>.)
   </para>
 
   <para>
@@ -220,7 +220,7 @@ CREATE TABLE products (
 </programlisting>
    where the <literal>nextval()</literal> function supplies successive values
    from a <firstterm>sequence object</firstterm> (see <xref
-   linkend="functions-sequence">). This arrangement is sufficiently common
+   linkend="functions-sequence"/>). This arrangement is sufficiently common
    that there's a special shorthand for it:
 <programlisting>
 CREATE TABLE products (
@@ -229,7 +229,7 @@ CREATE TABLE products (
 );
 </programlisting>
    The <literal>SERIAL</literal> shorthand is discussed further in <xref
-   linkend="datatype-serial">.
+   linkend="datatype-serial"/>.
   </para>
  </sect1>
 
@@ -876,9 +876,9 @@ CREATE TABLE order_items (
 
    <para>
     More information about updating and deleting data is in <xref
-    linkend="dml">.  Also see the description of foreign key constraint
+    linkend="dml"/>.  Also see the description of foreign key constraint
     syntax in the reference documentation for
-    <xref linkend="sql-createtable">.
+    <xref linkend="sql-createtable"/>.
    </para>
   </sect2>
 
@@ -948,10 +948,10 @@ CREATE TABLE circles (
       </indexterm>
       The object identifier (object ID) of a row. This column is only
       present if the table was created using <literal>WITH
-      OIDS</literal>, or if the <xref linkend="guc-default-with-oids">
+      OIDS</literal>, or if the <xref linkend="guc-default-with-oids"/>
       configuration variable was set at the time. This column is of type
       <type>oid</type> (same name as the column); see <xref
-      linkend="datatype-oid"> for more information about the type.
+      linkend="datatype-oid"/> for more information about the type.
      </para>
     </listitem>
    </varlistentry>
@@ -966,7 +966,7 @@ CREATE TABLE circles (
      <para>
       The OID of the table containing this row.  This column is
       particularly handy for queries that select from inheritance
-      hierarchies (see <xref linkend="ddl-inherit">), since without it,
+      hierarchies (see <xref linkend="ddl-inherit"/>), since without it,
       it's difficult to tell which individual table a row came from.  The
       <structfield>tableoid</structfield> can be joined against the
       <structfield>oid</structfield> column of
@@ -1100,7 +1100,7 @@ CREATE TABLE circles (
     Transaction identifiers are also 32-bit quantities.  In a
     long-lived database it is possible for transaction IDs to wrap
     around.  This is not a fatal problem given appropriate maintenance
-    procedures; see <xref linkend="maintenance"> for details.  It is
+    procedures; see <xref linkend="maintenance"/> for details.  It is
     unwise, however, to depend on the uniqueness of transaction IDs
     over the long term (more than one billion transactions).
    </para>
@@ -1167,7 +1167,7 @@ CREATE TABLE circles (
    </itemizedlist>
 
    All these actions are performed using the
-   <xref linkend="sql-altertable">
+   <xref linkend="sql-altertable"/>
    command, whose reference page contains details beyond those given
    here.
   </para>
@@ -1238,7 +1238,7 @@ ALTER TABLE products DROP COLUMN description;
 <programlisting>
 ALTER TABLE products DROP COLUMN description CASCADE;
 </programlisting>
-    See <xref linkend="ddl-depend"> for a description of the general
+    See <xref linkend="ddl-depend"/> for a description of the general
     mechanism behind this.
    </para>
   </sect2>
@@ -1446,7 +1446,7 @@ ALTER TABLE products RENAME TO items;
    object vary depending on the object's type (table, function, etc).
    For complete information on the different types of privileges
    supported by <productname>PostgreSQL</productname>, refer to the
-   <xref linkend="sql-grant"> reference
+   <xref linkend="sql-grant"/> reference
    page.  The following sections and chapters will also show you how
    those privileges are used.
   </para>
@@ -1459,7 +1459,7 @@ ALTER TABLE products RENAME TO items;
   <para>
    An object can be assigned to a new owner with an <command>ALTER</command>
    command of the appropriate kind for the object, e.g. <xref
-   linkend="sql-altertable">.  Superusers can always do
+   linkend="sql-altertable"/>.  Superusers can always do
    this; ordinary roles can only do it if they are both the current owner
    of the object (or a member of the owning role) and a member of the new
    owning role.
@@ -1482,7 +1482,7 @@ GRANT UPDATE ON accounts TO joe;
    be used to grant a privilege to every role on the system.  Also,
    <quote>group</quote> roles can be set up to help manage privileges when
    there are many users of a database &mdash; for details see
-   <xref linkend="user-manag">.
+   <xref linkend="user-manag"/>.
   </para>
 
   <para>
@@ -1506,8 +1506,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
    the right to grant it in turn to others.  If the grant option is
    subsequently revoked then all who received the privilege from that
    recipient (directly or through a chain of grants) will lose the
-   privilege.  For details see the <xref linkend="sql-grant"> and
-   <xref linkend="sql-revoke"> reference pages.
+   privilege.  For details see the <xref linkend="sql-grant"/> and
+   <xref linkend="sql-revoke"/> reference pages.
   </para>
  </sect1>
 
@@ -1524,7 +1524,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
   <para>
    In addition to the SQL-standard <link linkend="ddl-priv">privilege
-   system</link> available through <xref linkend="sql-grant">,
+   system</link> available through <xref linkend="sql-grant"/>,
    tables can have <firstterm>row security policies</firstterm> that restrict,
    on a per-user basis, which rows can be returned by normal queries
    or inserted, updated, or deleted by data modification commands.
@@ -1584,11 +1584,11 @@ REVOKE ALL ON accounts FROM PUBLIC;
   </para>
 
   <para>
-   Policies are created using the <xref linkend="sql-createpolicy">
-   command, altered using the <xref linkend="sql-alterpolicy"> command,
-   and dropped using the <xref linkend="sql-droppolicy"> command.  To
+   Policies are created using the <xref linkend="sql-createpolicy"/>
+   command, altered using the <xref linkend="sql-alterpolicy"/> command,
+   and dropped using the <xref linkend="sql-droppolicy"/> command.  To
    enable and disable row security for a given table, use the
-   <xref linkend="sql-altertable"> command.
+   <xref linkend="sql-altertable"/> command.
   </para>
 
   <para>
@@ -1829,7 +1829,7 @@ UPDATE 0
    not being applied.  For example, when taking a backup, it could be
    disastrous if row security silently caused some rows to be omitted
    from the backup.  In such a situation, you can set the
-   <xref linkend="guc-row-security"> configuration parameter
+   <xref linkend="guc-row-security"/> configuration parameter
    to <literal>off</literal>.  This does not in itself bypass row security;
    what it does is throw an error if any query's results would get filtered
    by a policy.  The reason for the error can then be investigated and
@@ -1951,8 +1951,8 @@ SELECT * FROM information WHERE group_id = 2 FOR UPDATE;
   </para>
 
   <para>
-   For additional details see <xref linkend="sql-createpolicy">
-   and <xref linkend="sql-altertable">.
+   For additional details see <xref linkend="sql-createpolicy"/>
+   and <xref linkend="sql-altertable"/>.
   </para>
 
  </sect1>
@@ -2034,7 +2034,7 @@ SELECT * FROM information WHERE group_id = 2 FOR UPDATE;
    </indexterm>
 
    <para>
-    To create a schema, use the <xref linkend="sql-createschema">
+    To create a schema, use the <xref linkend="sql-createschema"/>
     command.  Give the schema a name
     of your choice.  For example:
 <programlisting>
@@ -2099,7 +2099,7 @@ DROP SCHEMA myschema;
 <programlisting>
 DROP SCHEMA myschema CASCADE;
 </programlisting>
-    See <xref linkend="ddl-depend"> for a description of the general
+    See <xref linkend="ddl-depend"/> for a description of the general
     mechanism behind this.
    </para>
 
@@ -2112,7 +2112,7 @@ CREATE SCHEMA <replaceable>schema_name</replaceable> AUTHORIZATION <replaceable>
 </programlisting>
     You can even omit the schema name, in which case the schema name
     will be the same as the user name.  See <xref
-    linkend="ddl-schemas-patterns"> for how this can be useful.
+    linkend="ddl-schemas-patterns"/> for how this can be useful.
    </para>
 
    <para>
@@ -2242,7 +2242,7 @@ SET search_path TO myschema;
    </para>
 
    <para>
-    See also <xref linkend="functions-info"> for other ways to manipulate
+    See also <xref linkend="functions-info"/> for other ways to manipulate
     the schema search path.
    </para>
 
@@ -2297,7 +2297,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
     <quote>public</quote> means <quote>every user</quote>.  In the
     first sense it is an identifier, in the second sense it is a
     key word, hence the different capitalization; recall the
-    guidelines from <xref linkend="sql-syntax-identifiers">.)
+    guidelines from <xref linkend="sql-syntax-identifiers"/>.)
    </para>
   </sect2>
 
@@ -2483,7 +2483,7 @@ SELECT name, altitude
 </programlisting>
 
    Given the sample data from the <productname>PostgreSQL</productname>
-   tutorial (see <xref linkend="tutorial-sql-intro">), this returns:
+   tutorial (see <xref linkend="tutorial-sql-intro"/>), this returns:
 
 <programlisting>
    name    | altitude
@@ -2602,7 +2602,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
    <structname>capitals</structname> table, but this does not happen:
    <command>INSERT</command> always inserts into exactly the table
    specified.  In some cases it is possible to redirect the insertion
-   using a rule (see <xref linkend="rules">).  However that does not
+   using a rule (see <xref linkend="rules"/>).  However that does not
    help for the above case because the <structname>cities</structname> table
    does not contain the column <structfield>state</structfield>, and so the
    command will be rejected before the rule can be applied.
@@ -2633,11 +2633,11 @@ VALUES ('Albany', NULL, NULL, 'NY');
   <para>
    Table inheritance is typically established when the child table is
    created, using the <literal>INHERITS</literal> clause of the
-   <xref linkend="sql-createtable">
+   <xref linkend="sql-createtable"/>
    statement.
    Alternatively, a table which is already defined in a compatible way can
    have a new parent relationship added, using the <literal>INHERIT</literal>
-   variant of <xref linkend="sql-altertable">.
+   variant of <xref linkend="sql-altertable"/>.
    To do this the new child table must already include columns with
    the same names and types as the columns of the parent. It must also include
    check constraints with the same names and check expressions as those of the
@@ -2645,7 +2645,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
    <literal>NO INHERIT</literal> variant of <command>ALTER TABLE</command>.
    Dynamically adding and removing inheritance links like this can be useful
    when the inheritance relationship is being used for table
-   partitioning (see <xref linkend="ddl-partitioning">).
+   partitioning (see <xref linkend="ddl-partitioning"/>).
   </para>
 
   <para>
@@ -2665,11 +2665,11 @@ VALUES ('Albany', NULL, NULL, 'NY');
    if they are inherited
    from any parent tables. If you wish to remove a table and all of its
    descendants, one easy way is to drop the parent table with the
-   <literal>CASCADE</literal> option (see <xref linkend="ddl-depend">).
+   <literal>CASCADE</literal> option (see <xref linkend="ddl-depend"/>).
   </para>
 
   <para>
-   <xref linkend="sql-altertable"> will
+   <xref linkend="sql-altertable"/> will
    propagate any changes in column data definitions and check
    constraints down the inheritance hierarchy.  Again, dropping
    columns that are depended on by other tables is only possible when using
@@ -2687,7 +2687,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
    that the data is (also) in the parent table.  But
    the <structname>capitals</structname> table could not be updated directly
    without an additional grant.  In a similar way, the parent table's row
-   security policies (see <xref linkend="ddl-rowsecurity">) are applied to
+   security policies (see <xref linkend="ddl-rowsecurity"/>) are applied to
    rows coming from child tables during an inherited query.  A child table's
    policies, if any, are applied only when it is the table explicitly named
    in the query; and in that case, any policies attached to its parent(s) are
@@ -2695,7 +2695,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
   </para>
 
   <para>
-   Foreign tables (see <xref linkend="ddl-foreign-data">) can also
+   Foreign tables (see <xref linkend="ddl-foreign-data"/>) can also
    be part of inheritance hierarchies, either as parent or child
    tables, just as regular tables can be.  If a foreign table is part
    of an inheritance hierarchy then any operations not supported by
@@ -2719,7 +2719,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
    typically only work on individual, physical tables and do not
    support recursing over inheritance hierarchies.  The respective
    behavior of each individual command is documented in its reference
-   page (<xref linkend="sql-commands">).
+   page (<xref linkend="sql-commands"/>).
   </para>
 
   <para>
@@ -2923,7 +2923,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
     called <firstterm>sub-partitioning</firstterm>.  Partitions may have their
     own indexes, constraints and default values, distinct from those of other
     partitions.  Indexes must be created separately for each partition.  See
-    <xref linkend="sql-createtable"> for more details on creating partitioned
+    <xref linkend="sql-createtable"/> for more details on creating partitioned
     tables and partitions.
    </para>
 
@@ -2932,7 +2932,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
     vice versa.  However, it is possible to add a regular or partitioned table
     containing data as a partition of a partitioned table, or remove a
     partition from a partitioned table turning it into a standalone table;
-    see <xref linkend="sql-altertable"> to learn more about the
+    see <xref linkend="sql-altertable"/> to learn more about the
     <command>ATTACH PARTITION</command> and <command>DETACH PARTITION</command>
     sub-commands.
    </para>
@@ -2948,7 +2948,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
     inheritance with regular tables.  Since a partition hierarchy consisting
     of the partitioned table and its partitions is still an inheritance
     hierarchy, all the normal rules of inheritance apply as described in
-    <xref linkend="ddl-inherit"> with some exceptions, most notably:
+    <xref linkend="ddl-inherit"/> with some exceptions, most notably:
 
     <itemizedlist>
      <listitem>
@@ -2999,7 +2999,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
    <para>
     Partitions can also be foreign tables
-    (see <xref linkend="sql-createforeigntable">),
+    (see <xref linkend="sql-createforeigntable"/>),
     although these have some limitations that normal tables do not.  For
     example, data inserted into the partitioned table is not routed to
     foreign table partitions.
@@ -3158,7 +3158,7 @@ CREATE INDEX ON measurement_y2008m01 (logdate);
 
       <listitem>
        <para>
-        Ensure that the <xref linkend="guc-constraint-exclusion">
+        Ensure that the <xref linkend="guc-constraint-exclusion"/>
         configuration parameter is not disabled in <filename>postgresql.conf</filename>.
         If it is, queries will not be optimized as desired.
        </para>
@@ -3595,7 +3595,7 @@ DO INSTEAD
 
        <listitem>
         <para>
-         Ensure that the <xref linkend="guc-constraint-exclusion">
+         Ensure that the <xref linkend="guc-constraint-exclusion"/>
          configuration parameter is not disabled in
          <filename>postgresql.conf</filename>.
          If it is, queries will not be optimized as desired.
@@ -3806,7 +3806,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
 
    <para>
     The default (and recommended) setting of
-    <xref linkend="guc-constraint-exclusion"> is actually neither
+    <xref linkend="guc-constraint-exclusion"/> is actually neither
     <literal>on</literal> nor <literal>off</literal>, but an intermediate setting
     called <literal>partition</literal>, which causes the technique to be
     applied only to queries that are likely to be working on partitioned
@@ -3889,10 +3889,10 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     library that can communicate with an external data source, hiding the
     details of connecting to the data source and obtaining data from it.
     There are some foreign data wrappers available as <filename>contrib</filename>
-    modules; see <xref linkend="contrib">.  Other kinds of foreign data
+    modules; see <xref linkend="contrib"/>.  Other kinds of foreign data
     wrappers might be found as third party products.  If none of the existing
     foreign data wrappers suit your needs, you can write your own; see <xref
-    linkend="fdwhandler">.
+    linkend="fdwhandler"/>.
    </para>
 
    <para>
@@ -3918,11 +3918,11 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
 
    <para>
     For additional information, see
-    <xref linkend="sql-createforeigndatawrapper">,
-    <xref linkend="sql-createserver">,
-    <xref linkend="sql-createusermapping">,
-    <xref linkend="sql-createforeigntable">, and
-    <xref linkend="sql-importforeignschema">.
+    <xref linkend="sql-createforeigndatawrapper"/>,
+    <xref linkend="sql-createserver"/>,
+    <xref linkend="sql-createusermapping"/>,
+    <xref linkend="sql-createforeigntable"/>, and
+    <xref linkend="sql-importforeignschema"/>.
    </para>
  </sect1>
 
@@ -3966,7 +3966,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
 
   <para>
    Detailed information on
-   these topics appears in <xref linkend="server-programming">.
+   these topics appears in <xref linkend="server-programming"/>.
   </para>
  </sect1>
 
@@ -3996,7 +3996,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    <productname>PostgreSQL</productname> makes sure that you cannot
    drop objects that other objects still depend on.  For example,
    attempting to drop the products table we considered in <xref
-   linkend="ddl-constraints-fk">, with the orders table depending on
+   linkend="ddl-constraints-fk"/>, with the orders table depending on
    it, would result in an error message like this:
 <screen>
 DROP TABLE products;
@@ -4066,7 +4066,7 @@ CREATE FUNCTION get_color_note (rainbow) RETURNS text AS
   LANGUAGE SQL;
 </programlisting>
 
-   (See <xref linkend="xfunc-sql"> for an explanation of SQL-language
+   (See <xref linkend="xfunc-sql"/> for an explanation of SQL-language
    functions.)  <productname>PostgreSQL</productname> will be aware that
    the <function>get_color_note</function> function depends on the <type>rainbow</type>
    type: dropping the type would force dropping the function, because its

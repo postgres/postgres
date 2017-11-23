@@ -41,7 +41,7 @@ RESET SESSION AUTHORIZATION
    identifier is normally equal to the session user identifier, but
    might change temporarily in the context of <literal>SECURITY DEFINER</literal>
    functions and similar mechanisms; it can also be changed by
-   <xref linkend="sql-set-role">.
+   <xref linkend="sql-set-role"/>.
    The current user identifier is relevant for permission checking.
   </para>
 
@@ -54,7 +54,7 @@ RESET SESSION AUTHORIZATION
 
   <para>
    The <literal>SESSION</literal> and <literal>LOCAL</literal> modifiers act the same
-   as for the regular <xref linkend="sql-set">
+   as for the regular <xref linkend="sql-set"/>
    command.
   </para>
 
@@ -120,7 +120,7 @@ SELECT SESSION_USER, CURRENT_USER;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-set-role"></member>
+   <member><xref linkend="sql-set-role"/></member>
   </simplelist>
  </refsect1>
 </refentry>

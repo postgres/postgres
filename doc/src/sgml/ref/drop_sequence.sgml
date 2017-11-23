@@ -63,7 +63,7 @@ DROP SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [,
      <para>
       Automatically drop objects that depend on the sequence,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -107,8 +107,8 @@ DROP SEQUENCE serial;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createsequence"></member>
-   <member><xref linkend="sql-altersequence"></member>
+   <member><xref linkend="sql-createsequence"/></member>
+   <member><xref linkend="sql-altersequence"/></member>
   </simplelist>
  </refsect1>
 

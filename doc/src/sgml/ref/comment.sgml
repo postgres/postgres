@@ -105,7 +105,7 @@ COMMENT ON
     the same built-in functions that <application>psql</application> uses, namely
     <function>obj_description</function>, <function>col_description</function>,
     and <function>shobj_description</function>
-    (see <xref linkend="functions-info-comment-table">).
+    (see <xref linkend="functions-info-comment-table"/>).
   </para>
  </refsect1>
 

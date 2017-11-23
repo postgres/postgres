@@ -76,7 +76,7 @@ DROP TRANSFORM [ IF EXISTS ] FOR <replaceable>type_name</replaceable> LANGUAGE <
       <para>
        Automatically drop objects that depend on the transform,
        and in turn all objects that depend on those objects
-       (see <xref linkend="ddl-depend">).
+       (see <xref linkend="ddl-depend"/>).
       </para>
      </listitem>
     </varlistentry>
@@ -110,7 +110,7 @@ DROP TRANSFORM FOR hstore LANGUAGE plpythonu;
   <para>
    This form of <command>DROP TRANSFORM</command> is a
    <productname>PostgreSQL</productname> extension.  See <xref
-   linkend="sql-createtransform"> for details.
+   linkend="sql-createtransform"/> for details.
   </para>
  </refsect1>
 
@@ -118,7 +118,7 @@ DROP TRANSFORM FOR hstore LANGUAGE plpythonu;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtransform"></member>
+   <member><xref linkend="sql-createtransform"/></member>
   </simplelist>
  </refsect1>
 

@@ -38,8 +38,8 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
    <command>BEGIN</command> initiates a transaction block, that is,
    all statements after a <command>BEGIN</command> command will be
    executed in a single transaction until an explicit <xref
-   linkend="sql-commit"> or <xref
-   linkend="sql-rollback"> is given.
+   linkend="sql-commit"/> or <xref
+   linkend="sql-rollback"/> is given.
    By default (without <command>BEGIN</command>),
    <productname>PostgreSQL</productname> executes
    transactions in <quote>autocommit</quote> mode, that is, each
@@ -60,7 +60,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   <para>
    If the isolation level, read/write mode, or deferrable mode is specified, the new
    transaction has those characteristics, as if
-   <xref linkend="sql-set-transaction">
+   <xref linkend="sql-set-transaction"/>
    was executed.
   </para>
  </refsect1>
@@ -81,7 +81,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   </variablelist>
 
   <para>
-   Refer to <xref linkend="sql-set-transaction"> for information on the meaning
+   Refer to <xref linkend="sql-set-transaction"/> for information on the meaning
    of the other parameters to this statement.
   </para>
  </refsect1>
@@ -90,13 +90,13 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   <title>Notes</title>
 
   <para>
-   <xref linkend="sql-start-transaction"> has the same functionality
+   <xref linkend="sql-start-transaction"/> has the same functionality
    as <command>BEGIN</command>.
   </para>
 
   <para>
-   Use <xref linkend="sql-commit"> or
-   <xref linkend="sql-rollback">
+   Use <xref linkend="sql-commit"/> or
+   <xref linkend="sql-rollback"/>
    to terminate a transaction block.
   </para>
 
@@ -104,7 +104,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
    Issuing <command>BEGIN</command> when already inside a transaction block will
    provoke a warning message.  The state of the transaction is not affected.
    To nest transactions within a transaction block, use savepoints
-   (see <xref linkend="sql-savepoint">).
+   (see <xref linkend="sql-savepoint"/>).
   </para>
 
   <para>
@@ -131,7 +131,7 @@ BEGIN;
   <para>
    <command>BEGIN</command> is a <productname>PostgreSQL</productname>
    language extension.  It is equivalent to the SQL-standard command
-   <xref linkend="sql-start-transaction">, whose reference page
+   <xref linkend="sql-start-transaction"/>, whose reference page
    contains additional compatibility information.
   </para>
 
@@ -152,10 +152,10 @@ BEGIN;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-commit"></member>
-   <member><xref linkend="sql-rollback"></member>
-   <member><xref linkend="sql-start-transaction"></member>
-   <member><xref linkend="sql-savepoint"></member>
+   <member><xref linkend="sql-commit"/></member>
+   <member><xref linkend="sql-rollback"/></member>
+   <member><xref linkend="sql-start-transaction"/></member>
+   <member><xref linkend="sql-savepoint"/></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -57,7 +57,7 @@ CLUSTER [VERBOSE]
    <command>CLUSTER <replaceable class="parameter">table_name</replaceable></command>
    reclusters the table using the same index as before.  You can also
    use the <literal>CLUSTER</literal> or <literal>SET WITHOUT CLUSTER</literal>
-   forms of <xref linkend="sql-altertable"> to set the index to be used for
+   forms of <xref linkend="sql-altertable"/> to set the index to be used for
    future cluster operations, or to clear any previous setting.
   </para>
 
@@ -148,18 +148,18 @@ CLUSTER [VERBOSE]
     as double the table size, plus the index sizes.  This method is often
     faster than the index scan method, but if the disk space requirement is
     intolerable, you can disable this choice by temporarily setting <xref
-    linkend="guc-enable-sort"> to <literal>off</literal>.
+    linkend="guc-enable-sort"/> to <literal>off</literal>.
    </para>
 
    <para>
-    It is advisable to set <xref linkend="guc-maintenance-work-mem"> to
+    It is advisable to set <xref linkend="guc-maintenance-work-mem"/> to
     a reasonably large value (but not more than the amount of RAM you can
     dedicate to the <command>CLUSTER</command> operation) before clustering.
    </para>
 
    <para>
     Because the planner records statistics about the ordering of
-    tables, it is advisable to run <xref linkend="sql-analyze">
+    tables, it is advisable to run <xref linkend="sql-analyze"/>
     on the newly clustered table.
     Otherwise, the planner might make poor choices of query plans.
    </para>
@@ -221,7 +221,7 @@ CLUSTER <replaceable class="parameter">index_name</replaceable> ON <replaceable 
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-clusterdb"></member>
+   <member><xref linkend="app-clusterdb"/></member>
   </simplelist>
  </refsect1>
 </refentry>

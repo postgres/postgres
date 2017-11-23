@@ -38,7 +38,7 @@ SHOW ALL
    <application>libpq</application> or a <application>libpq</application>-based
    application), or through command-line flags when starting the
    <command>postgres</command> server.  See <xref
-   linkend="runtime-config"> for details.
+   linkend="runtime-config"/> for details.
   </para>
  </refsect1>
 
@@ -51,8 +51,8 @@ SHOW ALL
     <listitem>
      <para>
       The name of a run-time parameter.  Available parameters are
-      documented in <xref linkend="runtime-config"> and on the <xref
-      linkend="sql-set"> reference page.  In
+      documented in <xref linkend="runtime-config"/> and on the <xref
+      linkend="sql-set"/> reference page.  In
       addition, there are a few parameters that can be shown but not
       set:
 
@@ -129,7 +129,7 @@ SHOW ALL
 
   <para>
    The function <function>current_setting</function> produces
-   equivalent output; see <xref linkend="functions-admin">.
+   equivalent output; see <xref linkend="functions-admin"/>.
    Also, the
    <link linkend="view-pg-settings"><structname>pg_settings</structname></link>
    system view produces the same information.
@@ -192,8 +192,8 @@ SHOW ALL;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-set"></member>
-   <member><xref linkend="sql-reset"></member>
+   <member><xref linkend="sql-set"/></member>
+   <member><xref linkend="sql-reset"/></member>
   </simplelist>
  </refsect1>
 

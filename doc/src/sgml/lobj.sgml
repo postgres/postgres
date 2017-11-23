@@ -83,8 +83,8 @@
    <para>
     As of <productname>PostgreSQL</productname> 9.0, large objects have an owner
     and a set of access permissions, which can be managed using
-    <xref linkend="sql-grant"> and
-    <xref linkend="sql-revoke">.
+    <xref linkend="sql-grant"/> and
+    <xref linkend="sql-revoke"/>.
     <literal>SELECT</literal> privileges are required to read a large
     object, and
     <literal>UPDATE</literal> privileges are required to write or
@@ -92,7 +92,7 @@
     Only the large object's owner (or a database superuser) can delete,
     comment on, or change the owner of a large object.
     To adjust this behavior for compatibility with prior releases, see the
-    <xref linkend="guc-lo-compat-privileges"> run-time parameter.
+    <xref linkend="guc-lo-compat-privileges"/> run-time parameter.
    </para>
   </sect1>
 
@@ -301,7 +301,7 @@ int lo_open(PGconn *conn, Oid lobjId, int mode);
      checks were instead performed at the first actual read or write call
      using the descriptor.)
      These privilege checks can be disabled with the
-     <xref linkend="guc-lo-compat-privileges"> run-time parameter.
+     <xref linkend="guc-lo-compat-privileges"/> run-time parameter.
     </para>
 
     <para>
@@ -539,7 +539,7 @@ int lo_unlink(PGconn *conn, Oid lobjId);
 
   <para>
    Server-side functions tailored for manipulating large objects from SQL are
-   listed in <xref linkend="lo-funcs-table">.
+   listed in <xref linkend="lo-funcs-table"/>.
   </para>
 
   <table id="lo-funcs-table">
@@ -656,7 +656,7 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
 
   <caution>
    <para>
-    It is possible to <xref linkend="sql-grant"> use of the
+    It is possible to <xref linkend="sql-grant"/> use of the
     server-side <function>lo_import</function>
     and <function>lo_export</function> functions to non-superusers, but
     careful consideration of the security implications is required.  A
@@ -688,7 +688,7 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
 <title>Example Program</title>
 
 <para>
-     <xref linkend="lo-example"> is a sample program which shows how the large object
+     <xref linkend="lo-example"/> is a sample program which shows how the large object
      interface
      in <application>libpq</application> can be used.  Parts of the program are
      commented out but are left in the source for  the  reader's

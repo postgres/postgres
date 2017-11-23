@@ -46,8 +46,8 @@
  <para>
   The core <productname>PostgreSQL</productname> distribution
   includes the <acronym>GiST</acronym> operator classes shown in
-  <xref linkend="gist-builtin-opclasses-table">.
-  (Some of the optional modules described in <xref linkend="contrib">
+  <xref linkend="gist-builtin-opclasses-table"/>.
+  (Some of the optional modules described in <xref linkend="contrib"/>
   provide additional <acronym>GiST</acronym> operator classes.)
  </para>
 
@@ -985,7 +985,7 @@ my_fetch(PG_FUNCTION_ARGS)
 
   <para>
    By default, a GiST index build switches to the buffering method when the
-   index size reaches <xref linkend="guc-effective-cache-size">. It can
+   index size reaches <xref linkend="guc-effective-cache-size"/>. It can
    be manually turned on or off by the <literal>buffering</literal> parameter
    to the CREATE INDEX command. The default behavior is good for most cases,
    but turning buffering off might speed up the build somewhat if the input

@@ -131,7 +131,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
       The data type of the column. This can include array
       specifiers. For more information on the data types supported by
       <productname>PostgreSQL</productname>, refer to <xref
-      linkend="datatype">.
+      linkend="datatype"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -155,7 +155,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
       tables from which the new foreign table automatically inherits
       all columns.  Parent tables can be plain tables or foreign tables.
       See the similar form of
-      <xref linkend="sql-createtable"> for more details.
+      <xref linkend="sql-createtable"/> for more details.
      </para>
     </listitem>
    </varlistentry>
@@ -252,7 +252,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
      <para>
       The name of an existing foreign server to use for the foreign table.
       For details on defining a server, see <xref
-      linkend="sql-createserver">.
+      linkend="sql-createserver"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -361,11 +361,11 @@ CREATE FOREIGN TABLE measurement_y2016m07
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterforeigntable"></member>
-   <member><xref linkend="sql-dropforeigntable"></member>
-   <member><xref linkend="sql-createtable"></member>
-   <member><xref linkend="sql-createserver"></member>
-   <member><xref linkend="sql-importforeignschema"></member>
+   <member><xref linkend="sql-alterforeigntable"/></member>
+   <member><xref linkend="sql-dropforeigntable"/></member>
+   <member><xref linkend="sql-createtable"/></member>
+   <member><xref linkend="sql-createserver"/></member>
+   <member><xref linkend="sql-importforeignschema"/></member>
   </simplelist>
  </refsect1>
 </refentry>

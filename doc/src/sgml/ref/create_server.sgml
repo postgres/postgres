@@ -122,9 +122,9 @@ CREATE SERVER [IF NOT EXISTS] <replaceable class="parameter">server_name</replac
   <title>Notes</title>
 
   <para>
-   When using the <xref linkend="dblink"> module,
+   When using the <xref linkend="dblink"/> module,
    a foreign server's name can be used
-   as an argument of the <xref linkend="contrib-dblink-connect">
+   as an argument of the <xref linkend="contrib-dblink-connect"/>
    function to indicate the connection parameters.  It is necessary to have
    the <literal>USAGE</literal> privilege on the foreign server to be
    able to use it in this way.
@@ -140,7 +140,7 @@ CREATE SERVER [IF NOT EXISTS] <replaceable class="parameter">server_name</replac
 <programlisting>
 CREATE SERVER myserver FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host 'foo', dbname 'foodb', port '5432');
 </programlisting>
-   See <xref linkend="postgres-fdw"> for more details.
+   See <xref linkend="postgres-fdw"/> for more details.
   </para>
  </refsect1>
 
@@ -156,11 +156,11 @@ CREATE SERVER myserver FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host 'foo', db
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterserver"></member>
-   <member><xref linkend="sql-dropserver"></member>
-   <member><xref linkend="sql-createforeigndatawrapper"></member>
-   <member><xref linkend="sql-createforeigntable"></member>
-   <member><xref linkend="sql-createusermapping"></member>
+   <member><xref linkend="sql-alterserver"/></member>
+   <member><xref linkend="sql-dropserver"/></member>
+   <member><xref linkend="sql-createforeigndatawrapper"/></member>
+   <member><xref linkend="sql-createforeigntable"/></member>
+   <member><xref linkend="sql-createusermapping"/></member>
   </simplelist>
  </refsect1>
 

@@ -77,7 +77,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    than a sequential table scan.  But you might have to run the
    <command>ANALYZE</command> command regularly to update
    statistics to allow the query planner to make educated decisions.
-   See <xref linkend="performance-tips"> for information about
+   See <xref linkend="performance-tips"/> for information about
    how to find out whether an index is used and when and why the
    planner might choose <emphasis>not</emphasis> to use an index.
   </para>
@@ -99,7 +99,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    It is possible to allow writes to occur in parallel with index
    creation, but there are several caveats to be aware of &mdash;
    for more information see <xref linkend="sql-createindex-concurrently"
-   endterm="sql-createindex-concurrently-title">.
+   endterm="sql-createindex-concurrently-title"/>.
   </para>
 
   <para>
@@ -161,7 +161,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    <literal>col LIKE '%bar'</literal>. However, if your database does not
    use the C locale you will need to create the index with a special
    operator class to support indexing of pattern-matching queries; see
-   <xref linkend="indexes-opclass"> below. It is also possible to use
+   <xref linkend="indexes-opclass"/> below. It is also possible to use
    B-tree indexes for <literal>ILIKE</literal> and
    <literal>~*</literal>, but only if the pattern starts with
    non-alphabetic characters, i.e., characters that are not affected by
@@ -226,13 +226,13 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     <member><literal>&amp;&amp;</literal></member>
    </simplelist>
 
-   (See <xref linkend="functions-geometry"> for the meaning of
+   (See <xref linkend="functions-geometry"/> for the meaning of
    these operators.)
    The GiST operator classes included in the standard distribution are
-   documented in <xref linkend="gist-builtin-opclasses-table">.
+   documented in <xref linkend="gist-builtin-opclasses-table"/>.
    Many other GiST operator
    classes are available in the <literal>contrib</literal> collection or as separate
-   projects.  For more information see <xref linkend="gist">.
+   projects.  For more information see <xref linkend="gist"/>.
   </para>
 
   <para>
@@ -244,7 +244,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 </programlisting>
    which finds the ten places closest to a given target point.  The ability
    to do this is again dependent on the particular operator class being used.
-   In <xref linkend="gist-builtin-opclasses-table">, operators that can be
+   In <xref linkend="gist-builtin-opclasses-table"/>, operators that can be
    used in this way are listed in the column <quote>Ordering Operators</quote>.
   </para>
 
@@ -274,11 +274,11 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
     <member><literal>&gt;^</literal></member>
    </simplelist>
 
-   (See <xref linkend="functions-geometry"> for the meaning of
+   (See <xref linkend="functions-geometry"/> for the meaning of
    these operators.)
    The SP-GiST operator classes included in the standard distribution are
-   documented in <xref linkend="spgist-builtin-opclasses-table">.
-   For more information see <xref linkend="spgist">.
+   documented in <xref linkend="spgist-builtin-opclasses-table"/>.
+   For more information see <xref linkend="spgist"/>.
   </para>
 
   <para>
@@ -313,13 +313,13 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
     <member><literal>&amp;&amp;</literal></member>
    </simplelist>
 
-   (See <xref linkend="functions-array"> for the meaning of
+   (See <xref linkend="functions-array"/> for the meaning of
    these operators.)
    The GIN operator classes included in the standard distribution are
-   documented in <xref linkend="gin-builtin-opclasses-table">.
+   documented in <xref linkend="gin-builtin-opclasses-table"/>.
    Many other GIN operator
    classes are available in the <literal>contrib</literal> collection or as separate
-   projects.  For more information see <xref linkend="gin">.
+   projects.  For more information see <xref linkend="gin"/>.
   </para>
 
   <para>
@@ -351,8 +351,8 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    </simplelist>
 
    The BRIN operator classes included in the standard distribution are
-   documented in <xref linkend="brin-builtin-opclasses-table">.
-   For more information see <xref linkend="brin">.
+   documented in <xref linkend="brin-builtin-opclasses-table"/>.
+   For more information see <xref linkend="brin"/>.
   </para>
  </sect1>
 
@@ -454,8 +454,8 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    an index on a single column is sufficient and saves space and time.
    Indexes with more than three columns are unlikely to be helpful
    unless the usage of the table is extremely stylized.  See also
-   <xref linkend="indexes-bitmap-scans"> and
-   <xref linkend="indexes-index-only-scans"> for some discussion of the
+   <xref linkend="indexes-bitmap-scans"/> and
+   <xref linkend="indexes-index-only-scans"/> for some discussion of the
    merits of different index configurations.
   </para>
  </sect1>
@@ -609,7 +609,7 @@ CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
    process the queries that use both columns.  You could also create a
    multicolumn index on <literal>(x, y)</literal>.  This index would typically be
    more efficient than index combination for queries involving both
-   columns, but as discussed in <xref linkend="indexes-multicolumn">, it
+   columns, but as discussed in <xref linkend="indexes-multicolumn"/>, it
    would be almost useless for queries involving only <literal>y</literal>, so it
    should not be the only index.  A combination of the multicolumn index
    and a separate index on <literal>y</literal> would serve reasonably well.  For
@@ -762,7 +762,7 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
    index at all.  This reduces the size of the index, which will speed
    up those queries that do use the index.  It will also speed up many table
    update operations because the index does not need to be
-   updated in all cases.  <xref linkend="indexes-partial-ex1"> shows a
+   updated in all cases.  <xref linkend="indexes-partial-ex1"/> shows a
    possible application of this idea.
   </para>
 
@@ -827,7 +827,7 @@ WHERE client_ip = inet '192.168.100.23';
    Another possible use for a partial index is to exclude values from the
    index that the
    typical query workload is not interested in; this is shown in <xref
-   linkend="indexes-partial-ex2">.  This results in the same
+   linkend="indexes-partial-ex2"/>.  This results in the same
    advantages as listed above, but it prevents the
    <quote>uninteresting</quote> values from being accessed via that
    index, even if an index scan might be profitable in that
@@ -878,7 +878,7 @@ SELECT * FROM orders WHERE order_nr = 3501;
   </example>
 
   <para>
-   <xref linkend="indexes-partial-ex2"> also illustrates that the
+   <xref linkend="indexes-partial-ex2"/> also illustrates that the
    indexed column and the column used in the predicate do not need to
    match.  <productname>PostgreSQL</productname> supports partial
    indexes with arbitrary predicates, so long as only columns of the
@@ -909,7 +909,7 @@ SELECT * FROM orders WHERE order_nr = 3501;
    A third possible use for partial indexes does not require the
    index to be used in queries at all.  The idea here is to create
    a unique index over a subset of a table, as in <xref
-   linkend="indexes-partial-ex3">.  This enforces uniqueness
+   linkend="indexes-partial-ex3"/>.  This enforces uniqueness
    among the rows that satisfy the index predicate, without constraining
    those that do not.
   </para>
@@ -962,8 +962,8 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
 
   <para>
    More information about partial indexes can be found in <xref
-   linkend="ston89b">, <xref linkend="olson93">, and <xref
-   linkend="seshadri95">.
+   linkend="ston89b"/>, <xref linkend="olson93"/>, and <xref
+   linkend="seshadri95"/>.
   </para>
  </sect1>
 
@@ -1157,7 +1157,7 @@ CREATE INDEX test1c_content_y_index ON test1c (content COLLATE "y");
    the index, the table rows they reference might be anywhere in the heap.
    The heap-access portion of an index scan thus involves a lot of random
    access into the heap, which can be slow, particularly on traditional
-   rotating media.  (As described in <xref linkend="indexes-bitmap-scans">,
+   rotating media.  (As described in <xref linkend="indexes-bitmap-scans"/>,
    bitmap scans try to alleviate this cost by doing the heap accesses in
    sorted order, but that only goes so far.)
   </para>
@@ -1212,7 +1212,7 @@ SELECT x FROM tab WHERE x = 'key' AND z &lt; 42;
    is physically possible.  But there is an additional requirement for any
    table scan in <productname>PostgreSQL</productname>: it must verify that each
    retrieved row be <quote>visible</quote> to the query's MVCC snapshot, as
-   discussed in <xref linkend="mvcc">.  Visibility information is not stored
+   discussed in <xref linkend="mvcc"/>.  Visibility information is not stored
    in index entries, only in heap entries; so at first glance it would seem
    that every row retrieval would require a heap access anyway.  And this is
    indeed the case, if the table row has been modified recently.  However,
@@ -1289,7 +1289,7 @@ SELECT f(x) FROM tab WHERE f(x) &lt; 1;
 
   <para>
    Partial indexes also have interesting interactions with index-only scans.
-   Consider the partial index shown in <xref linkend="indexes-partial-ex3">:
+   Consider the partial index shown in <xref linkend="indexes-partial-ex3"/>:
 <programlisting>
 CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
     WHERE success;
@@ -1325,11 +1325,11 @@ SELECT target FROM tests WHERE subject = 'some-subject' AND success;
    maintenance or tuning, it is still important to check
    which indexes are actually used by the real-life query workload.
    Examining index usage for an individual query is done with the
-   <xref linkend="sql-explain">
+   <xref linkend="sql-explain"/>
    command; its application for this purpose is
-   illustrated in <xref linkend="using-explain">.
+   illustrated in <xref linkend="using-explain"/>.
    It is also possible to gather overall statistics about index usage
-   in a running server, as described in <xref linkend="monitoring-stats">.
+   in a running server, as described in <xref linkend="monitoring-stats"/>.
   </para>
 
   <para>
@@ -1343,7 +1343,7 @@ SELECT target FROM tests WHERE subject = 'some-subject' AND success;
   <itemizedlist>
    <listitem>
     <para>
-     Always run <xref linkend="sql-analyze">
+     Always run <xref linkend="sql-analyze"/>
      first.  This command
      collects statistics about the distribution of the values in the
      table.  This information is required to estimate the number of rows
@@ -1353,8 +1353,8 @@ SELECT target FROM tests WHERE subject = 'some-subject' AND success;
      almost certain to be inaccurate.  Examining an application's
      index usage without having run <command>ANALYZE</command> is
      therefore a lost cause.
-     See <xref linkend="vacuum-for-statistics">
-     and <xref linkend="autovacuum"> for more information.
+     See <xref linkend="vacuum-for-statistics"/>
+     and <xref linkend="autovacuum"/> for more information.
     </para>
    </listitem>
 
@@ -1386,7 +1386,7 @@ SELECT target FROM tests WHERE subject = 'some-subject' AND success;
     <para>
      When indexes are not used, it can be useful for testing to force
      their use.  There are run-time parameters that can turn off
-     various plan types (see <xref linkend="runtime-config-query-enable">).
+     various plan types (see <xref linkend="runtime-config-query-enable"/>).
      For instance, turning off sequential scans
      (<varname>enable_seqscan</varname>) and nested-loop joins
      (<varname>enable_nestloop</varname>), which are the most basic plans,
@@ -1417,11 +1417,11 @@ SELECT target FROM tests WHERE subject = 'some-subject' AND success;
      per-row costs of each plan node times the selectivity estimate of
      the plan node.  The costs estimated for the plan nodes can be adjusted
      via run-time parameters (described in <xref
-     linkend="runtime-config-query-constants">).
+     linkend="runtime-config-query-constants"/>).
      An inaccurate selectivity estimate is due to
      insufficient statistics.  It might be possible to improve this by
      tuning the statistics-gathering parameters (see
-     <xref linkend="sql-altertable">).
+     <xref linkend="sql-altertable"/>).
     </para>
 
     <para>

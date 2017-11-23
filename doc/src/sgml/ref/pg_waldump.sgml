@@ -230,7 +230,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="wal-internals"></member>
+   <member><xref linkend="wal-internals"/></member>
   </simplelist>
  </refsect1>
 

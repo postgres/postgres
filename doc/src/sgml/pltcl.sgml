@@ -79,7 +79,7 @@
 
     <para>
      To create a function in the <application>PL/Tcl</application> language, use
-     the standard <xref linkend="sql-createfunction"> syntax:
+     the standard <xref linkend="sql-createfunction"/> syntax:
 
 <programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$
@@ -483,7 +483,7 @@ $$ LANGUAGE pltcl;
         executed within a SQL subtransaction.  If the script returns an
         error, that entire subtransaction is rolled back before returning the
         error out to the surrounding Tcl code.
-        See <xref linkend="pltcl-subtransactions"> for more details and an
+        See <xref linkend="pltcl-subtransactions"/> for more details and an
         example.
        </para>
       </listitem>
@@ -559,10 +559,10 @@ SELECT 'doesn''t' AS ret
         priority levels.
         Whether messages of a particular priority are reported to the client,
         written to the server log, or both is controlled by the
-        <xref linkend="guc-log-min-messages"> and
-        <xref linkend="guc-client-min-messages"> configuration
-        variables. See <xref linkend="runtime-config">
-        and <xref linkend="pltcl-error-handling">
+        <xref linkend="guc-log-min-messages"/> and
+        <xref linkend="guc-client-min-messages"/> configuration
+        variables. See <xref linkend="runtime-config"/>
+        and <xref linkend="pltcl-error-handling"/>
         for more information.
        </para>
       </listitem>
@@ -888,7 +888,7 @@ CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE PROCEDURE tclsnit
      Fields <varname>SQLSTATE</varname>, <varname>condition</varname>,
      and <varname>message</varname> are always supplied
      (the first two represent the error code and condition name as shown
-     in <xref linkend="errcodes-appendix">).
+     in <xref linkend="errcodes-appendix"/>).
      Fields that may be present include
      <varname>detail</varname>, <varname>hint</varname>, <varname>context</varname>,
      <varname>schema</varname>, <varname>table</varname>, <varname>column</varname>,
@@ -929,7 +929,7 @@ if {[catch { spi_exec $sql_command }]} {
 
     <para>
      Recovering from errors caused by database access as described in
-     <xref linkend="pltcl-error-handling"> can lead to an undesirable
+     <xref linkend="pltcl-error-handling"/> can lead to an undesirable
      situation where some operations succeed before one of them fails,
      and after recovering from that error the data is left in an
      inconsistent state.  PL/Tcl offers a solution to this problem in

@@ -26,7 +26,7 @@
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.13,
-    see <xref linkend="release-7-3-13">.
+    see <xref linkend="release-7-3-13"/>.
    </para>
 
   </sect2>
@@ -131,7 +131,7 @@
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.13,
-    see <xref linkend="release-7-3-13">.
+    see <xref linkend="release-7-3-13"/>.
    </para>
 
   </sect2>
@@ -193,7 +193,7 @@
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.13,
-    see <xref linkend="release-7-3-13">.
+    see <xref linkend="release-7-3-13"/>.
    </para>
 
   </sect2>
@@ -249,7 +249,7 @@
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.13,
-    see <xref linkend="release-7-3-13">.
+    see <xref linkend="release-7-3-13"/>.
    </para>
 
   </sect2>
@@ -310,7 +310,7 @@
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.13,
-    see <xref linkend="release-7-3-13">.
+    see <xref linkend="release-7-3-13"/>.
    </para>
 
   </sect2>
@@ -366,7 +366,7 @@
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.13,
-    see <xref linkend="release-7-3-13">.
+    see <xref linkend="release-7-3-13"/>.
    </para>
 
   </sect2>
@@ -409,7 +409,7 @@
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.13,
-    see <xref linkend="release-7-3-13">.
+    see <xref linkend="release-7-3-13"/>.
    </para>
 
    <para>
@@ -500,7 +500,7 @@ Fuhr)</para></listitem>
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.13,
-    see <xref linkend="release-7-3-13">.
+    see <xref linkend="release-7-3-13"/>.
    </para>
   </sect2>
 
@@ -557,7 +557,7 @@ and <function>isinf</function> during configure (Tom)</para></listitem>
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.10,
-    see <xref linkend="release-7-3-10">.
+    see <xref linkend="release-7-3-10"/>.
     Also, you might need to <command>REINDEX</command> indexes on textual
     columns after updating, if you are affected by the locale or
     <application>plperl</application> issues described below.
@@ -619,7 +619,7 @@ what's actually returned by the query (Joe)</para></listitem>
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.10,
-    see <xref linkend="release-7-3-10">.
+    see <xref linkend="release-7-3-10"/>.
    </para>
   </sect2>
 
@@ -666,7 +666,7 @@ table has been dropped</para></listitem>
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
     if you are upgrading from a version earlier than 7.3.10,
-    see <xref linkend="release-7-3-10">.
+    see <xref linkend="release-7-3-10"/>.
    </para>
   </sect2>
 

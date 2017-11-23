@@ -92,8 +92,8 @@ ALTER SCHEMA <replaceable>name</replaceable> OWNER TO { <replaceable>new_owner</
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createschema"></member>
-   <member><xref linkend="sql-dropschema"></member>
+   <member><xref linkend="sql-createschema"/></member>
+   <member><xref linkend="sql-dropschema"/></member>
   </simplelist>
  </refsect1>
 

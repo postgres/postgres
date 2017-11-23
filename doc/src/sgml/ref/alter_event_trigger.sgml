@@ -78,7 +78,7 @@ ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> RENAME TO 
      <para>
       These forms configure the firing of event triggers.  A disabled trigger
       is still known to the system, but is not executed when its triggering
-      event occurs.  See also <xref linkend="guc-session-replication-role">.
+      event occurs.  See also <xref linkend="guc-session-replication-role"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -98,8 +98,8 @@ ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> RENAME TO 
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createeventtrigger"></member>
-   <member><xref linkend="sql-dropeventtrigger"></member>
+   <member><xref linkend="sql-createeventtrigger"/></member>
+   <member><xref linkend="sql-dropeventtrigger"/></member>
   </simplelist>
  </refsect1>
 </refentry>

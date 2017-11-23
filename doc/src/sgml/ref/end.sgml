@@ -33,7 +33,7 @@ END [ WORK | TRANSACTION ]
    made by the transaction become visible to others and are guaranteed
    to be durable if a crash occurs.  This command is a
    <productname>PostgreSQL</productname> extension
-   that is equivalent to <xref linkend="sql-commit">.
+   that is equivalent to <xref linkend="sql-commit"/>.
   </para>
  </refsect1>
 
@@ -57,7 +57,7 @@ END [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-rollback"> to
+   Use <xref linkend="sql-rollback"/> to
    abort a transaction.
   </para>
 
@@ -83,7 +83,7 @@ END;
   <para>
    <command>END</command> is a <productname>PostgreSQL</productname>
    extension that provides functionality equivalent to <xref
-   linkend="sql-commit">, which is
+   linkend="sql-commit"/>, which is
    specified in the SQL standard.
   </para>
  </refsect1>
@@ -92,9 +92,9 @@ END;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-commit"></member>
-   <member><xref linkend="sql-rollback"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-commit"/></member>
+   <member><xref linkend="sql-rollback"/></member>
   </simplelist>
  </refsect1>
 </refentry>

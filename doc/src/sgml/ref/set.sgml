@@ -32,7 +32,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
   <para>
    The <command>SET</command> command changes run-time configuration
    parameters.  Many of the run-time parameters listed in
-   <xref linkend="runtime-config"> can be changed on-the-fly with
+   <xref linkend="runtime-config"/> can be changed on-the-fly with
    <command>SET</command>.
    (But some require superuser privileges to change, and others cannot
    be changed after server or session start.)
@@ -67,7 +67,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
   <para>
    If <command>SET LOCAL</command> is used within a function that has a
    <literal>SET</literal> option for the same variable (see
-   <xref linkend="sql-createfunction">),
+   <xref linkend="sql-createfunction"/>),
    the effects of the <command>SET LOCAL</command> command disappear at
    function exit; that is, the value in effect when the function was called is
    restored anyway.  This allows <command>SET LOCAL</command> to be used for
@@ -122,7 +122,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
     <listitem>
      <para>
       Name of a settable run-time parameter.  Available parameters are
-      documented in <xref linkend="runtime-config"> and below.
+      documented in <xref linkend="runtime-config"/> and below.
      </para>
     </listitem>
    </varlistentry>
@@ -145,7 +145,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
 
   <para>
    Besides the configuration parameters documented in <xref
-   linkend="runtime-config">, there are a few that can only be
+   linkend="runtime-config"/>, there are a few that can only be
    adjusted using the <command>SET</command> command or that have a
    special syntax:
 
@@ -253,7 +253,7 @@ SELECT setseed(<replaceable>value</replaceable>);
       </para>
 
       <para>
-       See <xref linkend="datatype-timezones"> for more information
+       See <xref linkend="datatype-timezones"/> for more information
        about time zones.
       </para>
      </listitem>
@@ -267,7 +267,7 @@ SELECT setseed(<replaceable>value</replaceable>);
 
   <para>
    The function <function>set_config</function> provides equivalent
-   functionality; see <xref linkend="functions-admin">.
+   functionality; see <xref linkend="functions-admin"/>.
    Also, it is possible to UPDATE the
    <link linkend="view-pg-settings"><structname>pg_settings</structname></link>
    system view to perform the equivalent of <command>SET</command>.
@@ -323,8 +323,8 @@ SET TIME ZONE 'Europe/Rome';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-reset"></member>
-   <member><xref linkend="sql-show"></member>
+   <member><xref linkend="sql-reset"/></member>
+   <member><xref linkend="sql-show"/></member>
   </simplelist>
  </refsect1>
 </refentry>

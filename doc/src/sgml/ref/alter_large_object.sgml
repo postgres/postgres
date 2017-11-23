@@ -73,7 +73,7 @@ ALTER LARGE OBJECT <replaceable class="parameter">large_object_oid</replaceable>
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="largeobjects"></member>
+   <member><xref linkend="largeobjects"/></member>
   </simplelist>
  </refsect1>
 

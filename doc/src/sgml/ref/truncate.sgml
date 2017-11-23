@@ -144,7 +144,7 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ 
    <command>TRUNCATE</command> is not MVCC-safe.  After truncation, the table will
    appear empty to concurrent transactions, if they are using a snapshot
    taken before the truncation occurred.
-   See <xref linkend="mvcc-caveats"> for more details.
+   See <xref linkend="mvcc-caveats"/> for more details.
   </para>
 
   <para>
@@ -225,7 +225,7 @@ TRUNCATE othertable CASCADE;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-delete"></member>
+   <member><xref linkend="sql-delete"/></member>
   </simplelist>
  </refsect1>
 </refentry>

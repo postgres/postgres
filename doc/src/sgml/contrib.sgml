@@ -16,14 +16,14 @@
 
  <para>
   This appendix covers extensions and other server plug-in modules found in
-  <literal>contrib</literal>.  <xref linkend="contrib-prog"> covers utility
+  <literal>contrib</literal>.  <xref linkend="contrib-prog"/> covers utility
   programs.
  </para>
 
  <para>
   When building from the source distribution, these components are not built
   automatically, unless you build the "world" target
-  (see <xref linkend="build">).
+  (see <xref linkend="build"/>).
   You can build and install all of them by running:
 <screen>
 <userinput>make</userinput>
@@ -55,7 +55,7 @@
   To make use of one of these modules, after you have installed the code
   you need to register the new SQL objects in the database system.
   In <productname>PostgreSQL</productname> 9.1 and later, this is done by executing
-  a <xref linkend="sql-createextension"> command.  In a fresh database,
+  a <xref linkend="sql-createextension"/> command.  In a fresh database,
   you can simply do
 
 <programlisting>
@@ -89,16 +89,16 @@ CREATE EXTENSION <replaceable>module_name</replaceable> FROM unpackaged;
 
   This will update the pre-9.1 objects of the module into a proper
   <firstterm>extension</firstterm> object.  Future updates to the module will be
-  managed by <xref linkend="sql-alterextension">.
+  managed by <xref linkend="sql-alterextension"/>.
   For more information about extension updates, see
-  <xref linkend="extend-extensions">.
+  <xref linkend="extend-extensions"/>.
  </para>
 
  <para>
   Note, however, that some of these modules are not <quote>extensions</quote>
   in this sense, but are loaded into the server in some other way, for instance
   by way of
-  <xref linkend="guc-shared-preload-libraries">.  See the documentation of each
+  <xref linkend="guc-shared-preload-libraries"/>.  See the documentation of each
   module for details.
  </para>
 
@@ -163,7 +163,7 @@ pages.
  <para>
   This appendix and the previous one contain information regarding the modules that
   can be found in the <literal>contrib</literal> directory of the
-  <productname>PostgreSQL</productname> distribution.  See <xref linkend="contrib"> for
+  <productname>PostgreSQL</productname> distribution.  See <xref linkend="contrib"/> for
   more information about the <literal>contrib</literal> section in general and
   server extensions and plug-ins found in <literal>contrib</literal>
   specifically.
@@ -184,7 +184,7 @@ pages.
    This section covers <productname>PostgreSQL</productname> client
    applications in <literal>contrib</literal>.  They can be run from anywhere,
    independent of where the database server resides.  See
-   also <xref linkend="reference-client"> for information about client
+   also <xref linkend="reference-client"/> for information about client
    applications that part of the core <productname>PostgreSQL</productname>
    distribution.
   </para>
@@ -200,7 +200,7 @@ pages.
    This section covers <productname>PostgreSQL</productname> server-related
    applications in <literal>contrib</literal>.  They are typically run on the
    host where the database server resides.  See also <xref
-   linkend="reference-server"> for information about server applications that
+   linkend="reference-server"/> for information about server applications that
    part of the core <productname>PostgreSQL</productname> distribution.
   </para>
 

@@ -10,7 +10,7 @@
  <para>
   The <filename>auto_explain</filename> module provides a means for
   logging execution plans of slow statements automatically, without
-  having to run <xref linkend="sql-explain">
+  having to run <xref linkend="sql-explain"/>
   by hand.  This is especially helpful for tracking down un-optimized queries
   in large applications.
  </para>
@@ -25,8 +25,8 @@ LOAD 'auto_explain';
 
   (You must be superuser to do that.)  More typical usage is to preload
   it into some or all sessions by including <literal>auto_explain</literal> in
-  <xref linkend="guc-session-preload-libraries"> or
-  <xref linkend="guc-shared-preload-libraries"> in
+  <xref linkend="guc-session-preload-libraries"/> or
+  <xref linkend="guc-shared-preload-libraries"/> in
   <filename>postgresql.conf</filename>.  Then you can track unexpectedly slow queries
   no matter when they happen.  Of course there is a price in overhead for
   that.

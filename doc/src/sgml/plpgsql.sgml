@@ -125,14 +125,14 @@
      It is also possible to declare a <application>PL/pgSQL</application>
      function as returning <type>record</type>, which means that the result
      is a row type whose columns are determined by specification in the
-     calling query, as discussed in <xref linkend="queries-tablefunctions">.
+     calling query, as discussed in <xref linkend="queries-tablefunctions"/>.
     </para>
 
     <para>
      <application>PL/pgSQL</application> functions can be declared to accept a variable
      number of arguments by using the <literal>VARIADIC</literal> marker.  This
      works exactly the same way as for SQL functions, as discussed in
-     <xref linkend="xfunc-sql-variadic-functions">.
+     <xref linkend="xfunc-sql-variadic-functions"/>.
     </para>
 
     <para>
@@ -141,8 +141,8 @@
      <type>anyelement</type>, <type>anyarray</type>, <type>anynonarray</type>,
      <type>anyenum</type>, and <type>anyrange</type>.  The actual
      data types handled by a polymorphic function can vary from call to
-     call, as discussed in <xref linkend="extend-types-polymorphic">.
-     An example is shown in <xref linkend="plpgsql-declaration-parameters">.
+     call, as discussed in <xref linkend="extend-types-polymorphic"/>.
+     An example is shown in <xref linkend="plpgsql-declaration-parameters"/>.
     </para>
 
     <para>
@@ -170,8 +170,8 @@
 
     <para>
      Specific examples appear in
-     <xref linkend="plpgsql-declaration-parameters"> and
-     <xref linkend="plpgsql-statements-returning">.
+     <xref linkend="plpgsql-declaration-parameters"/> and
+     <xref linkend="plpgsql-statements-returning"/>.
     </para>
   </sect2>
  </sect1>
@@ -181,7 +181,7 @@
 
   <para>
    Functions written in <application>PL/pgSQL</application> are defined
-   to the server by executing <xref linkend="sql-createfunction"> commands.
+   to the server by executing <xref linkend="sql-createfunction"/> commands.
    Such a command would normally look like, say,
 <programlisting>
 CREATE FUNCTION somefunc(integer, text) RETURNS integer
@@ -190,7 +190,7 @@ LANGUAGE plpgsql;
 </programlisting>
    The function body is simply a string literal so far as <command>CREATE
    FUNCTION</command> is concerned.  It is often helpful to use dollar quoting
-   (see <xref linkend="sql-syntax-dollar-quoting">) to write the function
+   (see <xref linkend="sql-syntax-dollar-quoting"/>) to write the function
    body, rather than the normal single quote syntax.  Without dollar quoting,
    any single quotes or backslashes in the function body must be escaped by
    doubling them.  Almost all the examples in this chapter use dollar-quoted
@@ -289,7 +289,7 @@ $$ LANGUAGE plpgsql;
       of any <application>PL/pgSQL</application> function.  This block provides the
       declarations of the function's parameters (if any), as well as some
       special variables such as <literal>FOUND</literal> (see
-      <xref linkend="plpgsql-statements-diagnostics">).  The outer block is
+      <xref linkend="plpgsql-statements-diagnostics"/>).  The outer block is
       labeled with the function's name, meaning that parameters and special
       variables can be qualified with the function's name.
      </para>
@@ -308,7 +308,7 @@ $$ LANGUAGE plpgsql;
      However, a block containing an <literal>EXCEPTION</literal> clause effectively
      forms a subtransaction that can be rolled back without affecting the
      outer transaction.  For more about that see <xref
-     linkend="plpgsql-error-trapping">.
+     linkend="plpgsql-error-trapping"/>.
     </para>
   </sect1>
 
@@ -356,7 +356,7 @@ arow RECORD;
       assigned to after initialization, so that its value will remain constant
       for the duration of the block.
       The <literal>COLLATE</literal> option specifies a collation to use for the
-      variable (see <xref linkend="plpgsql-declaration-collation">).
+      variable (see <xref linkend="plpgsql-declaration-collation"/>).
       If <literal>NOT NULL</literal>
       is specified, an assignment of a null value results in a run-time
       error. All variables declared as <literal>NOT NULL</literal>
@@ -491,7 +491,7 @@ END;
 $$ LANGUAGE plpgsql;
 </programlisting>
 
-      As discussed in <xref linkend="xfunc-output-parameters">, this
+      As discussed in <xref linkend="xfunc-output-parameters"/>, this
       effectively creates an anonymous record type for the function's
       results.  If a <literal>RETURNS</literal> clause is given, it must say
       <literal>RETURNS record</literal>.
@@ -523,9 +523,9 @@ $$ LANGUAGE plpgsql;
       or <type>anyrange</type>), a special parameter <literal>$0</literal>
       is created.  Its data type is the actual return type of the function,
       as deduced from the actual input types (see <xref
-      linkend="extend-types-polymorphic">).
+      linkend="extend-types-polymorphic"/>).
       This allows the function to access its actual return type
-      as shown in <xref linkend="plpgsql-declaration-type">.
+      as shown in <xref linkend="plpgsql-declaration-type"/>.
       <literal>$0</literal> is initialized to null and can be modified by
       the function, so it can be used to hold the return value if desired,
       though that is not required.  <literal>$0</literal> can also be
@@ -740,7 +740,7 @@ SELECT merge_fields(t.*) FROM table1 t WHERE ... ;
     When a <application>PL/pgSQL</application> function has one or more
     parameters of collatable data types, a collation is identified for each
     function call depending on the collations assigned to the actual
-    arguments, as described in <xref linkend="collation">.  If a collation is
+    arguments, as described in <xref linkend="collation"/>.  If a collation is
     successfully identified (i.e., there are no conflicts of implicit
     collations among the arguments) then all the collatable parameters are
     treated as having that collation implicitly.  This will affect the
@@ -841,7 +841,7 @@ SELECT <replaceable>expression</replaceable>
      to the main SQL engine.  While forming the <command>SELECT</command> command,
      any occurrences of <application>PL/pgSQL</application> variable names
      are replaced by parameters, as discussed in detail in
-     <xref linkend="plpgsql-var-subst">.
+     <xref linkend="plpgsql-var-subst"/>.
      This allows the query plan for the <command>SELECT</command> to
      be prepared just once and then reused for subsequent
      evaluations with different values of the variables.  Thus, what
@@ -861,7 +861,7 @@ PREPARE <replaceable>statement_name</replaceable>(integer, integer) AS SELECT $1
      parameter values.  Normally these details are
      not important to a <application>PL/pgSQL</application> user, but
      they are useful to know when trying to diagnose a problem.
-     More information appears in <xref linkend="plpgsql-plan-caching">.
+     More information appears in <xref linkend="plpgsql-plan-caching"/>.
     </para>
   </sect1>
 
@@ -874,8 +874,8 @@ PREPARE <replaceable>statement_name</replaceable>(integer, integer) AS SELECT $1
     <application>PL/pgSQL</application>.
     Anything not recognized as one of these statement types is presumed
     to be an SQL command and is sent to the main database engine to execute,
-    as described in <xref linkend="plpgsql-statements-sql-noresult">
-    and <xref linkend="plpgsql-statements-sql-onerow">.
+    as described in <xref linkend="plpgsql-statements-sql-noresult"/>
+    and <xref linkend="plpgsql-statements-sql-onerow"/>.
    </para>
 
    <sect2 id="plpgsql-statements-assignment">
@@ -900,7 +900,7 @@ PREPARE <replaceable>statement_name</replaceable>(integer, integer) AS SELECT $1
     <para>
      If the expression's result data type doesn't match the variable's
      data type, the value will be coerced as though by an assignment cast
-     (see <xref linkend="typeconv-query">).  If no assignment cast is known
+     (see <xref linkend="typeconv-query"/>).  If no assignment cast is known
      for the pair of data types involved, the <application>PL/pgSQL</application>
      interpreter will attempt to convert the result value textually, that is
      by applying the result type's output function followed by the variable
@@ -933,14 +933,14 @@ my_record.user_id := 20;
      in the command text is treated as a parameter, and then the
      current value of the variable is provided as the parameter value
      at run time.  This is exactly like the processing described earlier
-     for expressions; for details see <xref linkend="plpgsql-var-subst">.
+     for expressions; for details see <xref linkend="plpgsql-var-subst"/>.
     </para>
 
     <para>
      When executing a SQL command in this way,
      <application>PL/pgSQL</application> may cache and re-use the execution
      plan for the command, as discussed in
-     <xref linkend="plpgsql-plan-caching">.
+     <xref linkend="plpgsql-plan-caching"/>.
     </para>
 
     <para>
@@ -966,7 +966,7 @@ PERFORM <replaceable>query</replaceable>;
      and the plan is cached in the same way.  Also, the special variable
      <literal>FOUND</literal> is set to true if the query produced at
      least one row, or false if it produced no rows (see
-     <xref linkend="plpgsql-statements-diagnostics">).
+     <xref linkend="plpgsql-statements-diagnostics"/>).
     </para>
 
     <note>
@@ -1067,7 +1067,7 @@ DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRIC
      well-defined unless you've used <literal>ORDER BY</literal>.)  Any result rows
      after the first row are discarded.
      You can check the special <literal>FOUND</literal> variable (see
-     <xref linkend="plpgsql-statements-diagnostics">) to
+     <xref linkend="plpgsql-statements-diagnostics"/>) to
      determine whether a row was returned:
 
 <programlisting>
@@ -1147,7 +1147,7 @@ CONTEXT:  PL/pgSQL function get_userid(text) line 6 at SQL statement
 
     <para>
      To handle cases where you need to process multiple result rows
-     from a SQL query, see <xref linkend="plpgsql-records-iterating">.
+     from a SQL query, see <xref linkend="plpgsql-records-iterating"/>.
     </para>
 
    </sect2>
@@ -1161,7 +1161,7 @@ CONTEXT:  PL/pgSQL function get_userid(text) line 6 at SQL statement
      that will involve different tables or different data types each
      time they are executed.  <application>PL/pgSQL</application>'s
      normal attempts to cache plans for commands (as discussed in
-     <xref linkend="plpgsql-plan-caching">) will not work in such
+     <xref linkend="plpgsql-plan-caching"/>) will not work in such
      scenarios.  To handle this sort of problem, the
      <command>EXECUTE</command> statement is provided:
 
@@ -1283,7 +1283,7 @@ EXECUTE format('SELECT count(*) FROM %I '
     <para>
      The <application>PL/pgSQL</application>
      <command>EXECUTE</command> statement is not related to the
-     <xref linkend="sql-execute"> SQL
+     <xref linkend="sql-execute"/> SQL
      statement supported by the
      <productname>PostgreSQL</productname> server. The server's
      <command>EXECUTE</command> statement cannot be used directly within
@@ -1319,7 +1319,7 @@ EXECUTE format('SELECT count(*) FROM %I '
      of single quotes.  The recommended method for quoting fixed text in your
      function body is dollar quoting.  (If you have legacy code that does
      not use dollar quoting, please refer to the
-     overview in <xref linkend="plpgsql-quote-tips">, which can save you
+     overview in <xref linkend="plpgsql-quote-tips"/>, which can save you
      some effort when translating said code to a more reasonable scheme.)
     </para>
 
@@ -1347,7 +1347,7 @@ EXECUTE 'UPDATE tbl SET '
      This example demonstrates the use of the
      <function>quote_ident</function> and
      <function>quote_literal</function> functions (see <xref
-     linkend="functions-string">).  For safety, expressions containing column
+     linkend="functions-string"/>).  For safety, expressions containing column
      or table identifiers should be passed through
      <function>quote_ident</function> before insertion in a dynamic query.
      Expressions containing values that should be literal strings in the
@@ -1394,7 +1394,7 @@ EXECUTE 'UPDATE tbl SET '
 </programlisting>
      (At present, <literal>IS NOT DISTINCT FROM</literal> is handled much less
      efficiently than <literal>=</literal>, so don't do this unless you must.
-     See <xref linkend="functions-comparison"> for
+     See <xref linkend="functions-comparison"/> for
      more information on nulls and <literal>IS DISTINCT</literal>.)
     </para>
 
@@ -1420,7 +1420,7 @@ EXECUTE 'UPDATE tbl SET '
     <para>
      Dynamic SQL statements can also be safely constructed using the
      <function>format</function> function (see <xref
-     linkend="functions-string">). For example:
+     linkend="functions-string"/>). For example:
 <programlisting>
 EXECUTE format('UPDATE tbl SET %I = %L '
    'WHERE key = %L', colname, newvalue, keyvalue);
@@ -1442,7 +1442,7 @@ EXECUTE format('UPDATE tbl SET %I = $1 WHERE key = $2', colname)
     <para>
      A much larger example of a dynamic command and
      <command>EXECUTE</command> can be seen in <xref
-     linkend="plpgsql-porting-ex2">, which builds and executes a
+     linkend="plpgsql-porting-ex2"/>, which builds and executes a
      <command>CREATE FUNCTION</command> command to define a new function.
     </para>
    </sect2>
@@ -1461,12 +1461,12 @@ GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceabl
 
      This command allows retrieval of system status indicators.
      <literal>CURRENT</literal> is a noise word (but see also <command>GET STACKED
-     DIAGNOSTICS</command> in <xref linkend="plpgsql-exception-diagnostics">).
+     DIAGNOSTICS</command> in <xref linkend="plpgsql-exception-diagnostics"/>).
      Each <replaceable>item</replaceable> is a key word identifying a status
      value to be assigned to the specified <replaceable>variable</replaceable>
      (which should be of the right data type to receive it).  The currently
      available status items are shown
-     in <xref linkend="plpgsql-current-diagnostics-values">.  Colon-equal
+     in <xref linkend="plpgsql-current-diagnostics-values"/>.  Colon-equal
      (<literal>:=</literal>) can be used instead of the SQL-standard <literal>=</literal>
      token.  An example:
 <programlisting>
@@ -1503,7 +1503,7 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
          <entry><literal>PG_CONTEXT</literal></entry>
          <entry><type>text</type></entry>
          <entry>line(s) of text describing the current call stack
-          (see <xref linkend="plpgsql-call-stack">)</entry>
+          (see <xref linkend="plpgsql-call-stack"/>)</entry>
         </row>
        </tbody>
       </tgroup>
@@ -1856,7 +1856,7 @@ SELECT * FROM get_available_flightid(CURRENT_DATE);
        allow users to define set-returning functions
        that do not have this limitation.  Currently, the point at
        which data begins being written to disk is controlled by the
-       <xref linkend="guc-work-mem">
+       <xref linkend="guc-work-mem"/>
        configuration variable.  Administrators who have sufficient
        memory to store larger result sets in memory should consider
        increasing this parameter.
@@ -2440,8 +2440,8 @@ $$ LANGUAGE plpgsql;
     <para>
      <application>PL/pgSQL</application> variables are substituted into the query text,
      and the query plan is cached for possible re-use, as discussed in
-     detail in <xref linkend="plpgsql-var-subst"> and
-     <xref linkend="plpgsql-plan-caching">.
+     detail in <xref linkend="plpgsql-var-subst"/> and
+     <xref linkend="plpgsql-plan-caching"/>.
     </para>
 
     <para>
@@ -2465,7 +2465,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
     <para>
      Another way to specify the query whose results should be iterated
      through is to declare it as a cursor.  This is described in
-     <xref linkend="plpgsql-cursor-for-loop">.
+     <xref linkend="plpgsql-cursor-for-loop"/>.
     </para>
    </sect2>
 
@@ -2605,7 +2605,7 @@ END;
 
     <para>
      The <replaceable>condition</replaceable> names can be any of
-     those shown in <xref linkend="errcodes-appendix">.  A category
+     those shown in <xref linkend="errcodes-appendix"/>.  A category
      name matches any error within its category.  The special
      condition name <literal>OTHERS</literal> matches every error type except
      <literal>QUERY_CANCELED</literal> and <literal>ASSERT_FAILURE</literal>.
@@ -2729,7 +2729,7 @@ SELECT merge_db(1, 'dennis');
     <para>
      Within an exception handler, the special variable
      <varname>SQLSTATE</varname> contains the error code that corresponds to
-     the exception that was raised (refer to <xref linkend="errcodes-table">
+     the exception that was raised (refer to <xref linkend="errcodes-table"/>
      for a list of possible error codes). The special variable
      <varname>SQLERRM</varname> contains the error message associated with the
      exception. These variables are undefined outside exception handlers.
@@ -2748,7 +2748,7 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replacea
      value to be assigned to the specified <replaceable>variable</replaceable>
      (which should be of the right data type to receive it).  The currently
      available status items are shown
-     in <xref linkend="plpgsql-exception-diagnostics-values">.
+     in <xref linkend="plpgsql-exception-diagnostics-values"/>.
     </para>
 
      <table id="plpgsql-exception-diagnostics-values">
@@ -2811,7 +2811,7 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replacea
          <entry><literal>PG_EXCEPTION_CONTEXT</literal></entry>
          <entry><type>text</type></entry>
          <entry>line(s) of text describing the call stack at the time of the
-          exception (see <xref linkend="plpgsql-call-stack">)</entry>
+          exception (see <xref linkend="plpgsql-call-stack"/>)</entry>
         </row>
        </tbody>
       </tgroup>
@@ -2847,7 +2847,7 @@ END;
 
    <para>
     The <command>GET DIAGNOSTICS</command> command, previously described
-    in <xref linkend="plpgsql-statements-diagnostics">, retrieves information
+    in <xref linkend="plpgsql-statements-diagnostics"/>, retrieves information
     about current execution state (whereas the <command>GET STACKED
     DIAGNOSTICS</command> command discussed above reports information about
     the execution state as of a previous error).  Its <literal>PG_CONTEXT</literal>
@@ -2978,7 +2978,7 @@ DECLARE
      <para>
       Bound cursor variables can also be used without explicitly opening the cursor,
       via the <command>FOR</command> statement described in
-      <xref linkend="plpgsql-cursor-for-loop">.
+      <xref linkend="plpgsql-cursor-for-loop"/>.
      </para>
     </note>
 
@@ -3031,7 +3031,7 @@ OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </opt
           <type>refcursor</type> variable).  The query is specified as a string
           expression, in the same way as in the <command>EXECUTE</command>
           command.  As usual, this gives flexibility so the query plan can vary
-          from one run to the next (see <xref linkend="plpgsql-plan-caching">),
+          from one run to the next (see <xref linkend="plpgsql-plan-caching"/>),
           and it also means that variable substitution is not done on the
           command string. As with <command>EXECUTE</command>, parameter values
           can be inserted into the dynamic command via
@@ -3082,7 +3082,7 @@ OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <optional> <replace
           notation, all arguments are specified in order.  In named notation,
           each argument's name is specified using <literal>:=</literal> to
           separate it from the argument expression. Similar to calling
-          functions, described in <xref linkend="sql-syntax-calling-funcs">, it
+          functions, described in <xref linkend="sql-syntax-calling-funcs"/>, it
           is also allowed to mix positional and named notation.
          </para>
 
@@ -3160,7 +3160,7 @@ FETCH <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> 
 
     <para>
      The <replaceable>direction</replaceable> clause can be any of the
-     variants allowed in the SQL <xref linkend="sql-fetch">
+     variants allowed in the SQL <xref linkend="sql-fetch"/>
      command except the ones that can fetch
      more than one row; namely, it can be
      <literal>NEXT</literal>,
@@ -3212,7 +3212,7 @@ MOVE <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> <
 
     <para>
      The <replaceable>direction</replaceable> clause can be any of the
-     variants allowed in the SQL <xref linkend="sql-fetch">
+     variants allowed in the SQL <xref linkend="sql-fetch"/>
      command, namely
      <literal>NEXT</literal>,
      <literal>PRIOR</literal>,
@@ -3255,7 +3255,7 @@ DELETE FROM <replaceable>table</replaceable> WHERE CURRENT OF <replaceable>curso
         restrictions on what the cursor's query can be (in particular,
         no grouping) and it's best to use <literal>FOR UPDATE</literal> in the
         cursor.  For more information see the
-        <xref linkend="sql-declare">
+        <xref linkend="sql-declare"/>
         reference page.
        </para>
 
@@ -3422,7 +3422,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      expressions must appear if and only if the cursor was declared to take
      arguments.  These values will be substituted in the query, in just
      the same way as during an <command>OPEN</command> (see <xref
-     linkend="plpgsql-open-bound-cursor">).
+     linkend="plpgsql-open-bound-cursor"/>).
    </para>
 
    <para>
@@ -3475,9 +3475,9 @@ RAISE ;
     priority levels.
     Whether messages of a particular priority are reported to the client,
     written to the server log, or both is controlled by the
-    <xref linkend="guc-log-min-messages"> and
-    <xref linkend="guc-client-min-messages"> configuration
-    variables. See <xref linkend="runtime-config"> for more
+    <xref linkend="guc-log-min-messages"/> and
+    <xref linkend="guc-client-min-messages"/> configuration
+    variables. See <xref linkend="runtime-config"/> for more
     information.
    </para>
 
@@ -3541,7 +3541,7 @@ RAISE NOTICE 'Calling cs_create_job(%)', v_job_id;
       <term><literal>ERRCODE</literal></term>
       <listitem>
        <para>Specifies the error code (SQLSTATE) to report, either by condition
-        name, as shown in <xref linkend="errcodes-appendix">, or directly as a
+        name, as shown in <xref linkend="errcodes-appendix"/>, or directly as a
         five-character SQLSTATE code.</para>
       </listitem>
      </varlistentry>
@@ -3928,7 +3928,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
    </para>
 
    <para>
-    <xref linkend="plpgsql-trigger-example"> shows an example of a
+    <xref linkend="plpgsql-trigger-example"/> shows an example of a
     trigger procedure in <application>PL/pgSQL</application>.
    </para>
 
@@ -3981,7 +3981,7 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
     Another way to log changes to a table involves creating a new table that
     holds a row for each insert, update, or delete that occurs. This approach
     can be thought of as auditing changes to a table.
-    <xref linkend="plpgsql-trigger-audit-example"> shows an example of an
+    <xref linkend="plpgsql-trigger-audit-example"/> shows an example of an
     audit trigger procedure in <application>PL/pgSQL</application>.
    </para>
 
@@ -4038,7 +4038,7 @@ AFTER INSERT OR UPDATE OR DELETE ON emp
     approach still records the full audit trail of changes to the table,
     but also presents a simplified view of the audit trail, showing just
     the last modified timestamp derived from the audit trail for each entry.
-    <xref linkend="plpgsql-view-trigger-audit-example"> shows an example
+    <xref linkend="plpgsql-view-trigger-audit-example"/> shows an example
     of an audit trigger on a view in <application>PL/pgSQL</application>.
    </para>
 
@@ -4118,7 +4118,7 @@ INSTEAD OF INSERT OR UPDATE OR DELETE ON emp_view
     times.
     This technique is commonly used in Data Warehousing, where the tables
     of measured or observed data (called fact tables) might be extremely large.
-    <xref linkend="plpgsql-trigger-summary-example"> shows an example of a
+    <xref linkend="plpgsql-trigger-summary-example"/> shows an example of a
     trigger procedure in <application>PL/pgSQL</application> that maintains
     a summary table for a fact table in a data warehouse.
    </para>
@@ -4272,7 +4272,7 @@ SELECT * FROM sales_summary_bytime;
     statement.  The <command>CREATE TRIGGER</command> command assigns names to one
     or both transition tables, and then the function can refer to those names
     as though they were read-only temporary tables.
-    <xref linkend="plpgsql-trigger-audit-transition-example"> shows an example.
+    <xref linkend="plpgsql-trigger-audit-transition-example"/> shows an example.
    </para>
 
    <example id="plpgsql-trigger-audit-transition-example">
@@ -4280,7 +4280,7 @@ SELECT * FROM sales_summary_bytime;
 
     <para>
      This example produces the same results as
-     <xref linkend="plpgsql-trigger-audit-example">, but instead of using a
+     <xref linkend="plpgsql-trigger-audit-example"/>, but instead of using a
      trigger that fires for every row, it uses a trigger that fires once
      per statement, after collecting the relevant information in a transition
      table.  This can be significantly faster than the row-trigger approach
@@ -4383,7 +4383,7 @@ CREATE TRIGGER emp_audit_del
   </para>
 
    <para>
-    <xref linkend="plpgsql-event-trigger-example"> shows an example of an
+    <xref linkend="plpgsql-event-trigger-example"/> shows an example of an
     event trigger procedure in <application>PL/pgSQL</application>.
    </para>
 
@@ -4482,7 +4482,7 @@ INSERT INTO dest (col) SELECT foo + bar FROM src;
     In the above example, <literal>src.foo</literal> would be an unambiguous reference
     to the table column.  To create an unambiguous reference to a variable,
     declare it in a labeled block and use the block's label
-    (see <xref linkend="plpgsql-structure">).  For example,
+    (see <xref linkend="plpgsql-structure"/>).  For example,
 <programlisting>
 &lt;&lt;block&gt;&gt;
 DECLARE
@@ -4575,7 +4575,7 @@ $$ LANGUAGE plpgsql;
     to <command>EXECUTE</command> or one of its variants.  If you need to
     insert a varying value into such a command, do so as part of
     constructing the string value, or use <literal>USING</literal>, as illustrated in
-    <xref linkend="plpgsql-statements-executing-dyn">.
+    <xref linkend="plpgsql-statements-executing-dyn"/>.
    </para>
 
    <para>
@@ -4636,7 +4636,7 @@ $$ LANGUAGE plpgsql;
     this will happen only if the execution plan is not very sensitive to
     the values of the <application>PL/pgSQL</application> variables referenced in it.
     If it is, generating a plan each time is a net win.  See <xref
-    linkend="sql-prepare"> for more information about the behavior of
+    linkend="sql-prepare"/> for more information about the behavior of
     prepared statements.
    </para>
 
@@ -4796,7 +4796,7 @@ $$ LANGUAGE plpgsql;
     easily find yourself needing half a dozen or more adjacent quote marks.
     It's recommended that you instead write the function body as a
     <quote>dollar-quoted</quote> string literal (see <xref
-    linkend="sql-syntax-dollar-quoting">).  In the dollar-quoting
+    linkend="sql-syntax-dollar-quoting"/>).  In the dollar-quoting
     approach, you never double any quote marks, but instead take care to
     choose a different dollar-quoting delimiter for each level of
     nesting you need.  For example, you might write the <command>CREATE
@@ -4907,7 +4907,7 @@ a_output := a_output || $$ AND name LIKE 'foobar'$$
       accounts for 8 quotation marks) and this is adjacent to the end of that
       string constant (2 more).  You will probably only need that if
       you are writing a function that generates other functions, as in
-      <xref linkend="plpgsql-porting-ex2">.
+      <xref linkend="plpgsql-porting-ex2"/>.
       For example:
 <programlisting>
 a_output := a_output || '' if v_'' ||
@@ -5029,7 +5029,7 @@ CREATE FUNCTION
        to <application>PL/pgSQL</application>'s
        <literal>plpgsql.variable_conflict</literal> = <literal>use_column</literal>
        behavior, which is not the default,
-       as explained in <xref linkend="plpgsql-var-subst">.
+       as explained in <xref linkend="plpgsql-var-subst"/>.
        It's often best to avoid such ambiguities in the first place,
        but if you have to port a large amount of code that depends on
        this behavior, setting <literal>variable_conflict</literal> may be the
@@ -5042,7 +5042,7 @@ CREATE FUNCTION
        In <productname>PostgreSQL</productname> the function body must be written as
        a string literal.  Therefore you need to use dollar quoting or escape
        single quotes in the function body. (See <xref
-       linkend="plpgsql-quote-tips">.)
+       linkend="plpgsql-quote-tips"/>.)
       </para>
      </listitem>
 
@@ -5080,7 +5080,7 @@ CREATE FUNCTION
        from the first number to the second, requiring the loop bounds
        to be swapped when porting.  This incompatibility is unfortunate
        but is unlikely to be changed. (See <xref
-       linkend="plpgsql-integer-for">.)
+       linkend="plpgsql-integer-for"/>.)
       </para>
      </listitem>
 
@@ -5108,7 +5108,7 @@ CREATE FUNCTION
    <title>Porting Examples</title>
 
    <para>
-    <xref linkend="pgsql-porting-ex1"> shows how to port a simple
+    <xref linkend="pgsql-porting-ex1"/> shows how to port a simple
     function from <application>PL/SQL</application> to <application>PL/pgSQL</application>.
    </para>
 
@@ -5197,7 +5197,7 @@ $$ LANGUAGE plpgsql;
    </example>
 
    <para>
-    <xref linkend="plpgsql-porting-ex2"> shows how to port a
+    <xref linkend="plpgsql-porting-ex2"/> shows how to port a
     function that creates another function and how to handle the
     ensuing quoting problems.
    </para>
@@ -5292,12 +5292,12 @@ $func$ LANGUAGE plpgsql;
    </example>
 
    <para>
-    <xref linkend="plpgsql-porting-ex3"> shows how to port a function
+    <xref linkend="plpgsql-porting-ex3"/> shows how to port a function
     with <literal>OUT</literal> parameters and string manipulation.
     <productname>PostgreSQL</productname> does not have a built-in
     <function>instr</function> function, but you can create one
     using a combination of other
-    functions. In <xref linkend="plpgsql-porting-appendix"> there is a
+    functions. In <xref linkend="plpgsql-porting-appendix"/> there is a
     <application>PL/pgSQL</application> implementation of
     <function>instr</function> that you can use to make your porting
     easier.
@@ -5406,7 +5406,7 @@ SELECT * FROM cs_parse_url('http://foobar.com/query.cgi?baz');
    </example>
 
    <para>
-    <xref linkend="plpgsql-porting-ex4"> shows how to port a procedure
+    <xref linkend="plpgsql-porting-ex4"/> shows how to port a procedure
     that uses numerous features that are specific to Oracle.
    </para>
 
@@ -5419,14 +5419,14 @@ SELECT * FROM cs_parse_url('http://foobar.com/query.cgi?baz');
 <programlisting>
 CREATE OR REPLACE PROCEDURE cs_create_job(v_job_id IN INTEGER) IS
     a_running_job_count INTEGER;
-    PRAGMA AUTONOMOUS_TRANSACTION; -- <co id="co.plpgsql-porting-pragma">
+    PRAGMA AUTONOMOUS_TRANSACTION; -- <co id="co.plpgsql-porting-pragma"/>
 BEGIN
-    LOCK TABLE cs_jobs IN EXCLUSIVE MODE; -- <co id="co.plpgsql-porting-locktable">
+    LOCK TABLE cs_jobs IN EXCLUSIVE MODE; -- <co id="co.plpgsql-porting-locktable"/>
 
     SELECT count(*) INTO a_running_job_count FROM cs_jobs WHERE end_stamp IS NULL;
 
     IF a_running_job_count &gt; 0 THEN
-        COMMIT; -- free lock <co id="co.plpgsql-porting-commit">
+        COMMIT; -- free lock <co id="co.plpgsql-porting-commit"/>
         raise_application_error(-20000,
                  'Unable to create a new job: a job is currently running.');
     END IF;
@@ -5493,7 +5493,7 @@ BEGIN
     SELECT count(*) INTO a_running_job_count FROM cs_jobs WHERE end_stamp IS NULL;
 
     IF a_running_job_count &gt; 0 THEN
-        RAISE EXCEPTION 'Unable to create a new job: a job is currently running'; -- <co id="co.plpgsql-porting-raise">
+        RAISE EXCEPTION 'Unable to create a new job: a job is currently running'; -- <co id="co.plpgsql-porting-raise"/>
     END IF;
 
     DELETE FROM cs_active_job;
@@ -5502,7 +5502,7 @@ BEGIN
     BEGIN
         INSERT INTO cs_jobs (job_id, start_stamp) VALUES (v_job_id, now());
     EXCEPTION
-        WHEN unique_violation THEN -- <co id="co.plpgsql-porting-exception">
+        WHEN unique_violation THEN -- <co id="co.plpgsql-porting-exception"/>
             -- don't worry if it already exists
     END;
 END;
@@ -5522,7 +5522,7 @@ $$ LANGUAGE plpgsql;
       <para>
        The exception names supported by <application>PL/pgSQL</application> are
        different from Oracle's.  The set of built-in exception names
-       is much larger (see <xref linkend="errcodes-appendix">).  There
+       is much larger (see <xref linkend="errcodes-appendix"/>).  There
        is not currently a way to declare user-defined exception names,
        although you can throw user-chosen SQLSTATE values instead.
       </para>
@@ -5588,7 +5588,7 @@ END;
      <application>PL/SQL</application> version, but you have to remember to use
      <function>quote_literal</function> and
      <function>quote_ident</function> as described in <xref
-     linkend="plpgsql-statements-executing-dyn">.  Constructs of the
+     linkend="plpgsql-statements-executing-dyn"/>.  Constructs of the
      type <literal>EXECUTE 'SELECT * FROM $1';</literal> will not work
      reliably unless you use these functions.
     </para>
@@ -5603,7 +5603,7 @@ END;
      the function always returns the same result when given the same
      arguments) and <quote>strictness</quote> (whether the function
      returns null if any argument is null).  Consult the <xref
-     linkend="sql-createfunction">
+     linkend="sql-createfunction"/>
      reference page for details.
     </para>
 

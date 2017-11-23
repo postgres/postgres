@@ -92,11 +92,11 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
      <para>
       This clause specifies optional storage parameters for the new
       materialized view; see <xref linkend="sql-createtable-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title"> for more
+      endterm="sql-createtable-storage-parameters-title"/> for more
       information.  All parameters supported for <literal>CREATE
       TABLE</literal> are also supported for <literal>CREATE MATERIALIZED
       VIEW</literal> with the exception of <literal>OIDS</literal>.
-      See <xref linkend="sql-createtable"> for more information.
+      See <xref linkend="sql-createtable"/> for more information.
      </para>
     </listitem>
    </varlistentry>
@@ -107,7 +107,7 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
      <para>
       The <replaceable class="parameter">tablespace_name</replaceable> is the name
       of the tablespace in which the new materialized view is to be created.
-      If not specified, <xref linkend="guc-default-tablespace"> is consulted.
+      If not specified, <xref linkend="guc-default-tablespace"/> is consulted.
      </para>
     </listitem>
    </varlistentry>
@@ -116,8 +116,8 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
     <term><replaceable>query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select">, <link linkend="sql-table">TABLE</link>,
-      or <xref linkend="sql-values"> command.  This query will run within a
+      A <xref linkend="sql-select"/>, <link linkend="sql-table">TABLE</link>,
+      or <xref linkend="sql-values"/> command.  This query will run within a
       security-restricted operation; in particular, calls to functions that
       themselves create temporary tables will fail.
      </para>
@@ -152,11 +152,11 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altermaterializedview"></member>
-   <member><xref linkend="sql-createtableas"></member>
-   <member><xref linkend="sql-createview"></member>
-   <member><xref linkend="sql-dropmaterializedview"></member>
-   <member><xref linkend="sql-refreshmaterializedview"></member>
+   <member><xref linkend="sql-altermaterializedview"/></member>
+   <member><xref linkend="sql-createtableas"/></member>
+   <member><xref linkend="sql-createview"/></member>
+   <member><xref linkend="sql-dropmaterializedview"/></member>
+   <member><xref linkend="sql-refreshmaterializedview"/></member>
   </simplelist>
  </refsect1>
 

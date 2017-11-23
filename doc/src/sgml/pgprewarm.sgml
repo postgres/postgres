@@ -13,7 +13,7 @@
   or the <productname>PostgreSQL</productname> buffer cache.  Prewarming
   can be performed manually using the <filename>pg_prewarm</filename> function,
   or can be performed automatically by including <literal>pg_prewarm</literal> in
-  <xref linkend="guc-shared-preload-libraries">.  In the latter case, the
+  <xref linkend="guc-shared-preload-libraries"/>.  In the latter case, the
   system will run a background worker which periodically records the contents
   of shared buffers in a file called <filename>autoprewarm.blocks</filename> and
   will, using 2 background workers, reload those same blocks after a restart.

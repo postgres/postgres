@@ -55,7 +55,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
    in which the parameter is used (if possible). When executing the
    statement, specify the actual values for these parameters in the
    <command>EXECUTE</command> statement.  Refer to <xref
-   linkend="sql-execute"> for more
+   linkend="sql-execute"/> for more
    information about that.
   </para>
 
@@ -66,7 +66,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
    also means that a single  prepared statement cannot be used by
    multiple simultaneous database clients; however, each client can create
    their own prepared statement to use.  Prepared statements can be
-   manually cleaned up using the <xref linkend="sql-deallocate"> command.
+   manually cleaned up using the <xref linkend="sql-deallocate"/> command.
   </para>
 
   <para>
@@ -154,7 +154,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
 
   <para>
    To examine the query plan <productname>PostgreSQL</productname> is using
-   for a prepared statement, use <xref linkend="sql-explain">, e.g.
+   for a prepared statement, use <xref linkend="sql-explain"/>, e.g.
    <command>EXPLAIN EXECUTE</command>.
    If a generic plan is in use, it will contain parameter symbols
    <literal>$<replaceable>n</replaceable></literal>, while a custom plan will have the
@@ -166,7 +166,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
   <para>
    For more information on query planning and the statistics collected
    by <productname>PostgreSQL</productname> for that purpose, see
-   the <xref linkend="sql-analyze">
+   the <xref linkend="sql-analyze"/>
    documentation.
   </para>
 
@@ -176,7 +176,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
    force re-analysis and re-planning of the statement before using it
    whenever database objects used in the statement have undergone
    definitional (DDL) changes since the previous use of the prepared
-   statement.  Also, if the value of <xref linkend="guc-search-path"> changes
+   statement.  Also, if the value of <xref linkend="guc-search-path"/> changes
    from one use to the next, the statement will be re-parsed using the new
    <varname>search_path</varname>.  (This latter behavior is new as of
    <productname>PostgreSQL</productname> 9.3.)  These rules make use of a
@@ -240,8 +240,8 @@ EXECUTE usrrptplan(1, current_date);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-deallocate"></member>
-   <member><xref linkend="sql-execute"></member>
+   <member><xref linkend="sql-deallocate"/></member>
+   <member><xref linkend="sql-execute"/></member>
   </simplelist>
  </refsect1>
 </refentry>

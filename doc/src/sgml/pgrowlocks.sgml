@@ -33,7 +33,7 @@ pgrowlocks(text) returns setof record
   <para>
    The parameter is the name of a table.  The result is a set of records,
    with one row for each locked row within the table.  The output columns
-   are shown in <xref linkend="pgrowlocks-columns">.
+   are shown in <xref linkend="pgrowlocks-columns"/>.
   </para>
 
   <table id="pgrowlocks-columns">

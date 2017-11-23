@@ -141,7 +141,7 @@ CREATE AGGREGATE avg (float8)
 
   <para>
    For further details see the
-   <xref linkend="sql-createaggregate">
+   <xref linkend="sql-createaggregate"/>
    command.
   </para>
 
@@ -161,8 +161,8 @@ CREATE AGGREGATE avg (float8)
    Aggregate functions can optionally support <firstterm>moving-aggregate
    mode</firstterm>, which allows substantially faster execution of aggregate
    functions within windows with moving frame starting points.
-   (See <xref linkend="tutorial-window">
-   and <xref linkend="syntax-window-functions"> for information about use of
+   (See <xref linkend="tutorial-window"/>
+   and <xref linkend="syntax-window-functions"/> for information about use of
    aggregate functions as window functions.)
    The basic idea is that in addition to a normal <quote>forward</quote>
    transition function, the aggregate provides an <firstterm>inverse
@@ -290,7 +290,7 @@ FROM (VALUES (1, 1.0e20::float8),
    Aggregate functions can use polymorphic
    state transition functions or final functions, so that the same functions
    can be used to implement multiple aggregates.
-   See <xref linkend="extend-types-polymorphic">
+   See <xref linkend="extend-types-polymorphic"/>
    for an explanation of polymorphic functions.
    Going a step further, the aggregate function itself can be specified
    with polymorphic input type(s) and state type, allowing a single
@@ -384,7 +384,7 @@ CREATE AGGREGATE array_agg (anynonarray)
    An aggregate function can be made to accept a varying number of arguments
    by declaring its last argument as a <literal>VARIADIC</literal> array, in much
    the same fashion as for regular functions; see
-   <xref linkend="xfunc-sql-variadic-functions">.  The aggregate's transition
+   <xref linkend="xfunc-sql-variadic-functions"/>.  The aggregate's transition
    function(s) must have the same array type as their last argument.  The
    transition function(s) typically would also be marked <literal>VARIADIC</literal>,
    but this is not strictly required.
@@ -393,7 +393,7 @@ CREATE AGGREGATE array_agg (anynonarray)
   <note>
    <para>
     Variadic aggregates are easily misused in connection with
-    the <literal>ORDER BY</literal> option (see <xref linkend="syntax-aggregates">),
+    the <literal>ORDER BY</literal> option (see <xref linkend="syntax-aggregates"/>),
     since the parser cannot tell whether the wrong number of actual arguments
     have been given in such a combination.  Keep in mind that everything to
     the right of <literal>ORDER BY</literal> is a sort key, not an argument to the
@@ -490,7 +490,7 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
    Also, because the final function performs the sort, it is not possible
    to continue adding input rows by executing the transition function again
    later.  This means the final function is not <literal>READ_ONLY</literal>;
-   it must be declared in <xref linkend="sql-createaggregate">
+   it must be declared in <xref linkend="sql-createaggregate"/>
    as <literal>READ_WRITE</literal>, or as <literal>SHARABLE</literal> if it's
    possible for additional final-function calls to make use of the
    already-sorted state.
@@ -636,7 +636,7 @@ if (AggCheckCallContext(fcinfo, NULL))
    (While aggregate transition functions are always allowed to modify
    the transition value in-place, aggregate final functions are generally
    discouraged from doing so; if they do so, the behavior must be declared
-   when creating the aggregate.  See <xref linkend="sql-createaggregate">
+   when creating the aggregate.  See <xref linkend="sql-createaggregate"/>
    for more detail.)
   </para>
 
@@ -644,7 +644,7 @@ if (AggCheckCallContext(fcinfo, NULL))
    The second argument of <function>AggCheckCallContext</function> can be used to
    retrieve the memory context in which aggregate state values are being kept.
    This is useful for transition functions that wish to use <quote>expanded</quote>
-   objects (see <xref linkend="xtypes-toast">) as their state values.
+   objects (see <xref linkend="xtypes-toast"/>) as their state values.
    On first call, the transition function should return an expanded object
    whose memory context is a child of the aggregate state context, and then
    keep returning the same expanded object on subsequent calls.  See

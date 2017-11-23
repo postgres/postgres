@@ -16,24 +16,24 @@
     <listitem>
      <para>
       query language functions (functions written in
-      <acronym>SQL</acronym>) (<xref linkend="xfunc-sql">)
+      <acronym>SQL</acronym>) (<xref linkend="xfunc-sql"/>)
      </para>
     </listitem>
     <listitem>
      <para>
       procedural language functions (functions written in, for
       example, <application>PL/pgSQL</application> or <application>PL/Tcl</application>)
-      (<xref linkend="xfunc-pl">)
+      (<xref linkend="xfunc-pl"/>)
      </para>
     </listitem>
     <listitem>
      <para>
-      internal functions (<xref linkend="xfunc-internal">)
+      internal functions (<xref linkend="xfunc-internal"/>)
      </para>
     </listitem>
     <listitem>
      <para>
-      C-language functions (<xref linkend="xfunc-c">)
+      C-language functions (<xref linkend="xfunc-c"/>)
      </para>
     </listitem>
    </itemizedlist>
@@ -63,7 +63,7 @@
 
   <para>
    Throughout this chapter, it can be useful to look at the reference
-   page of the <xref linkend="sql-createfunction"> command to
+   page of the <xref linkend="sql-createfunction"/> command to
    understand the examples better.  Some examples from this chapter
    can be found in <filename>funcs.sql</filename> and
    <filename>funcs.c</filename> in the <filename>src/tutorial</filename>
@@ -162,11 +162,11 @@ SELECT clean_emp();
     The syntax of the <command>CREATE FUNCTION</command> command requires
     the function body to be written as a string constant.  It is usually
     most convenient to use dollar quoting (see <xref
-    linkend="sql-syntax-dollar-quoting">) for the string constant.
+    linkend="sql-syntax-dollar-quoting"/>) for the string constant.
     If you choose to use regular single-quoted string constant syntax,
     you must double single quote marks (<literal>'</literal>) and backslashes
     (<literal>\</literal>) (assuming escape string syntax) in the body of
-    the function (see <xref linkend="sql-syntax-strings">).
+    the function (see <xref linkend="sql-syntax-strings"/>).
    </para>
 
    <sect2 id="xfunc-sql-function-arguments">
@@ -430,7 +430,7 @@ SELECT name, double_salary(emp) AS dream
     WHERE emp.cubicle ~= point '(2,1)';
 </screen>
      but this usage is deprecated since it's easy to get confused.
-     (See <xref linkend="rowtypes-usage"> for details about these
+     (See <xref linkend="rowtypes-usage"/> for details about these
      two notations for the composite value of a table row.)
     </para>
 
@@ -536,7 +536,7 @@ SELECT * FROM new_emp();
 </screen>
 
      The second way is described more fully in <xref
-     linkend="xfunc-sql-table-functions">.
+     linkend="xfunc-sql-table-functions"/>.
     </para>
 
     <para>
@@ -574,7 +574,7 @@ SELECT name(new_emp());
  None
 </screen>
 
-     As explained in <xref linkend="rowtypes-usage">, the field notation and
+     As explained in <xref linkend="rowtypes-usage"/>, the field notation and
      functional notation are equivalent.
     </para>
 
@@ -621,7 +621,7 @@ SELECT add_em(3,7);
 </screen>
 
      This is not essentially different from the version of <literal>add_em</literal>
-     shown in <xref linkend="xfunc-sql-base-functions">.  The real value of
+     shown in <xref linkend="xfunc-sql-base-functions"/>.  The real value of
      output parameters is that they provide a convenient way of defining
      functions that return several columns.  For example,
 
@@ -762,7 +762,7 @@ SELECT mleast(VARIADIC ARRAY[]::numeric[]);
      The array element parameters generated from a variadic parameter are
      treated as not having any names of their own.  This means it is not
      possible to call a variadic function using named arguments (<xref
-     linkend="sql-syntax-calling-funcs">), except when you specify
+     linkend="sql-syntax-calling-funcs"/>), except when you specify
      <literal>VARIADIC</literal>.  For example, this will work:
 
 <screen>
@@ -950,7 +950,7 @@ SELECT * FROM sum_n_product_with_tab(10);
      set-returning function multiple times, with the parameters for each
      invocation coming from successive rows of a table or subquery.  The
      preferred way to do this is to use the <literal>LATERAL</literal> key word,
-     which is described in <xref linkend="queries-lateral">.
+     which is described in <xref linkend="queries-lateral"/>.
      Here is an example using a set-returning function to enumerate
      elements of a tree structure:
 
@@ -1197,7 +1197,7 @@ $$ LANGUAGE SQL;
      return the polymorphic types <type>anyelement</type>,
      <type>anyarray</type>, <type>anynonarray</type>,
      <type>anyenum</type>, and <type>anyrange</type>.  See <xref
-     linkend="extend-types-polymorphic"> for a more detailed
+     linkend="extend-types-polymorphic"/> for a more detailed
      explanation of polymorphic functions. Here is a polymorphic
      function <function>make_array</function> that builds up an array
      from two arbitrary data type elements:
@@ -1311,7 +1311,7 @@ SELECT concat_values('|', 1, 4, 2);
      When a SQL function has one or more parameters of collatable data types,
      a collation is identified for each function call depending on the
      collations assigned to the actual arguments, as described in <xref
-     linkend="collation">.  If a collation is successfully identified
+     linkend="collation"/>.  If a collation is successfully identified
      (i.e., there are no conflicts of implicit collations among the arguments)
      then all the collatable parameters are treated as having that collation
      implicitly.  This will affect the behavior of collation-sensitive
@@ -1384,7 +1384,7 @@ CREATE FUNCTION test(smallint, double precision) RETURNS ...
     it is not immediately clear which function would be called with
     some trivial input like <literal>test(1, 1.5)</literal>.  The
     currently implemented resolution rules are described in
-    <xref linkend="typeconv">, but it is unwise to design a system that subtly
+    <xref linkend="typeconv"/>, but it is unwise to design a system that subtly
     relies on this behavior.
    </para>
 
@@ -1457,7 +1457,7 @@ CREATE FUNCTION test(int, int) RETURNS int
     Every function has a <firstterm>volatility</firstterm> classification, with
     the possibilities being <literal>VOLATILE</literal>, <literal>STABLE</literal>, or
     <literal>IMMUTABLE</literal>.  <literal>VOLATILE</literal> is the default if the
-    <xref linkend="sql-createfunction">
+    <xref linkend="sql-createfunction"/>
     command does not specify a category.  The volatility category is a
     promise to the optimizer about the behavior of the function:
 
@@ -1539,7 +1539,7 @@ CREATE FUNCTION test(int, int) RETURNS int
     been made by the SQL command that is calling the function.  A
     <literal>VOLATILE</literal> function will see such changes, a <literal>STABLE</literal>
     or <literal>IMMUTABLE</literal> function will not.  This behavior is implemented
-    using the snapshotting behavior of MVCC (see <xref linkend="mvcc">):
+    using the snapshotting behavior of MVCC (see <xref linkend="mvcc"/>):
     <literal>STABLE</literal> and <literal>IMMUTABLE</literal> functions use a snapshot
     established as of the start of the calling query, whereas
     <literal>VOLATILE</literal> functions obtain a fresh snapshot at the start of
@@ -1577,7 +1577,7 @@ CREATE FUNCTION test(int, int) RETURNS int
     A common error is to label a function <literal>IMMUTABLE</literal> when its
     results depend on a configuration parameter.  For example, a function
     that manipulates timestamps might well have results that depend on the
-    <xref linkend="guc-timezone"> setting.  For safety, such functions should
+    <xref linkend="guc-timezone"/> setting.  For safety, such functions should
     be labeled <literal>STABLE</literal> instead.
    </para>
 
@@ -1606,7 +1606,7 @@ CREATE FUNCTION test(int, int) RETURNS int
     Procedural languages aren't built into the
     <productname>PostgreSQL</productname> server; they are offered
     by loadable modules.
-    See <xref linkend="xplang"> and following chapters for more
+    See <xref linkend="xplang"/> and following chapters for more
     information.
    </para>
   </sect1>
@@ -1630,7 +1630,7 @@ CREATE FUNCTION test(int, int) RETURNS int
    <para>
     Normally, all internal functions present in the
     server are declared during the initialization of the database cluster
-    (see <xref linkend="creating-cluster">),
+    (see <xref linkend="creating-cluster"/>),
     but a user could use <command>CREATE FUNCTION</command>
     to create additional alias names for an internal function.
     Internal functions are declared in <command>CREATE FUNCTION</command>
@@ -1726,7 +1726,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
       <para>
        If the name does not contain a directory part, the file is
        searched for in the path specified by the configuration variable
-       <xref linkend="guc-dynamic-library-path">.<indexterm><primary>dynamic_library_path</primary></indexterm>
+       <xref linkend="guc-dynamic-library-path"/>.<indexterm><primary>dynamic_library_path</primary></indexterm>
       </para>
      </listitem>
 
@@ -1775,7 +1775,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
      <productname>PostgreSQL</productname> will not compile a C function
      automatically.  The object file must be compiled before it is referenced
      in a <command>CREATE
-     FUNCTION</command> command.  See <xref linkend="dfunc"> for additional
+     FUNCTION</command> command.  See <xref linkend="dfunc"/> for additional
      information.
     </para>
    </note>
@@ -1899,7 +1899,7 @@ typedef int int4;
      means <replaceable>XX</replaceable> <emphasis>bits</emphasis>.  Note
      therefore also that the C type <type>int8</type> is 1 byte in size.  The
      SQL type <type>int8</type> is called <type>int64</type> in C.  See also
-     <xref linkend="xfunc-c-type-table">.)
+     <xref linkend="xfunc-c-type-table"/>.)
     </para>
 
     <para>
@@ -1952,7 +1952,7 @@ typedef struct
       value.  If you do so you are likely to corrupt on-disk data, since
       the pointer you are given might point directly into a disk buffer.
       The sole exception to this rule is explained in
-      <xref linkend="xaggr">.
+      <xref linkend="xaggr"/>.
      </para>
     </warning>
 
@@ -1998,7 +1998,7 @@ memcpy(destination->data, buffer, 40);
     </para>
 
     <para>
-     <xref linkend="xfunc-c-type-table"> specifies which C type
+     <xref linkend="xfunc-c-type-table"/> specifies which C type
      corresponds to which SQL type when writing a C-language function
      that uses a built-in type of <productname>PostgreSQL</productname>.
      The <quote>Defined In</quote> column gives the header file that
@@ -2433,10 +2433,10 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
 
     <para>
      Finally, the version-1 function call conventions make it possible
-     to return set results (<xref linkend="xfunc-c-return-set">) and
-     implement trigger functions (<xref linkend="triggers">) and
+     to return set results (<xref linkend="xfunc-c-return-set"/>) and
+     implement trigger functions (<xref linkend="triggers"/>) and
      procedural-language call handlers (<xref
-     linkend="plhandler">).  For more details
+     linkend="plhandler"/>).  For more details
      see <filename>src/backend/utils/fmgr/README</filename> in the
      source distribution.
     </para>
@@ -2477,7 +2477,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
        <para>
         Compiling and linking your code so that it can be dynamically
         loaded into <productname>PostgreSQL</productname> always
-        requires special flags.  See <xref linkend="dfunc"> for a
+        requires special flags.  See <xref linkend="dfunc"/> for a
         detailed explanation of how to do it for your particular
         operating system.
        </para>
@@ -2486,7 +2486,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
       <listitem>
        <para>
         Remember to define a <quote>magic block</quote> for your shared library,
-        as described in <xref linkend="xfunc-c-dynload">.
+        as described in <xref linkend="xfunc-c-dynload"/>.
        </para>
       </listitem>
 
@@ -3122,7 +3122,7 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
      return the polymorphic types
      <type>anyelement</type>, <type>anyarray</type>, <type>anynonarray</type>,
      <type>anyenum</type>, and <type>anyrange</type>.
-     See <xref linkend="extend-types-polymorphic"> for a more detailed explanation
+     See <xref linkend="extend-types-polymorphic"/> for a more detailed explanation
      of polymorphic functions. When function arguments or return types
      are defined as polymorphic types, the function author cannot know
      in advance what data type it will be called with, or
@@ -3268,7 +3268,7 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
      Add-ins can reserve LWLocks and an allocation of shared memory on server
      startup.  The add-in's shared library must be preloaded by specifying
      it in
-     <xref linkend="guc-shared-preload-libraries"><indexterm><primary>shared_preload_libraries</primary></indexterm>.
+     <xref linkend="guc-shared-preload-libraries"/><indexterm><primary>shared_preload_libraries</primary></indexterm>.
      Shared memory is reserved by calling:
 <programlisting>
 void RequestAddinShmemSpace(int size)

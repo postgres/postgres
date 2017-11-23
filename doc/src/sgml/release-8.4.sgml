@@ -12,7 +12,7 @@
   <para>
    This release contains a variety of fixes from 8.4.21.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <para>
@@ -36,7 +36,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.4.19,
-    see <xref linkend="release-8-4-19">.
+    see <xref linkend="release-8-4-19"/>.
    </para>
 
   </sect2>
@@ -216,7 +216,7 @@
     <listitem>
      <para>
       On Windows, allow new sessions to absorb values of PGC_BACKEND
-      parameters (such as <xref linkend="guc-log-connections">) from the
+      parameters (such as <xref linkend="guc-log-connections"/>) from the
       configuration file (Amit Kapila)
      </para>
 
@@ -331,7 +331,7 @@
   <para>
    This release contains a variety of fixes from 8.4.20.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <para>
@@ -349,7 +349,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.19,
-    see <xref linkend="release-8-4-19">.
+    see <xref linkend="release-8-4-19"/>.
    </para>
 
   </sect2>
@@ -450,7 +450,7 @@
   <para>
    This release contains a variety of fixes from 8.4.19.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <para>
@@ -468,7 +468,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.19,
-    see <xref linkend="release-8-4-19">.
+    see <xref linkend="release-8-4-19"/>.
    </para>
 
   </sect2>
@@ -909,7 +909,7 @@
   <para>
    This release contains a variety of fixes from 8.4.18.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -927,7 +927,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.4.17,
-    see <xref linkend="release-8-4-17">.
+    see <xref linkend="release-8-4-17"/>.
    </para>
 
   </sect2>
@@ -1110,7 +1110,7 @@
   <para>
    This release contains a variety of fixes from 8.4.17.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -1122,7 +1122,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.17,
-    see <xref linkend="release-8-4-17">.
+    see <xref linkend="release-8-4-17"/>.
    </para>
 
   </sect2>
@@ -1310,7 +1310,7 @@
   <para>
    This release contains a variety of fixes from 8.4.16.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -1329,7 +1329,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.4.10,
-    see <xref linkend="release-8-4-10">.
+    see <xref linkend="release-8-4-10"/>.
    </para>
 
   </sect2>
@@ -1539,7 +1539,7 @@
   <para>
    This release contains a variety of fixes from 8.4.15.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -1551,7 +1551,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see <xref linkend="release-8-4-10">.
+    see <xref linkend="release-8-4-10"/>.
    </para>
 
   </sect2>
@@ -1749,7 +1749,7 @@
   <para>
    This release contains a variety of fixes from 8.4.14.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -1761,7 +1761,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see <xref linkend="release-8-4-10">.
+    see <xref linkend="release-8-4-10"/>.
    </para>
 
   </sect2>
@@ -2051,7 +2051,7 @@
   <para>
    This release contains a variety of fixes from 8.4.13.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -2063,7 +2063,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see <xref linkend="release-8-4-10">.
+    see <xref linkend="release-8-4-10"/>.
    </para>
 
   </sect2>
@@ -2167,7 +2167,7 @@
   <para>
    This release contains a variety of fixes from 8.4.12.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -2179,7 +2179,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see <xref linkend="release-8-4-10">.
+    see <xref linkend="release-8-4-10"/>.
    </para>
 
   </sect2>
@@ -2401,7 +2401,7 @@
   <para>
    This release contains a variety of fixes from 8.4.11.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -2413,7 +2413,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see <xref linkend="release-8-4-10">.
+    see <xref linkend="release-8-4-10"/>.
    </para>
 
   </sect2>
@@ -2686,7 +2686,7 @@
   <para>
    This release contains a variety of fixes from 8.4.10.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -2698,7 +2698,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see <xref linkend="release-8-4-10">.
+    see <xref linkend="release-8-4-10"/>.
    </para>
 
   </sect2>
@@ -3048,7 +3048,7 @@
   <para>
    This release contains a variety of fixes from 8.4.9.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -3067,7 +3067,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.4.8,
-    see <xref linkend="release-8-4-8">.
+    see <xref linkend="release-8-4-8"/>.
    </para>
 
   </sect2>
@@ -3363,7 +3363,7 @@
   <para>
    This release contains a variety of fixes from 8.4.8.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -3375,7 +3375,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.8,
-    see <xref linkend="release-8-4-8">.
+    see <xref linkend="release-8-4-8"/>.
    </para>
 
   </sect2>
@@ -3888,7 +3888,7 @@
   <para>
    This release contains a variety of fixes from 8.4.7.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -3911,7 +3911,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.4.2,
-    see <xref linkend="release-8-4-2">.
+    see <xref linkend="release-8-4-2"/>.
    </para>
 
   </sect2>
@@ -4133,7 +4133,7 @@
   <para>
    This release contains a variety of fixes from 8.4.6.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -4142,7 +4142,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see <xref linkend="release-8-4-2">.
+    see <xref linkend="release-8-4-2"/>.
    </para>
 
   </sect2>
@@ -4265,7 +4265,7 @@
   <para>
    This release contains a variety of fixes from 8.4.5.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -4274,7 +4274,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see <xref linkend="release-8-4-2">.
+    see <xref linkend="release-8-4-2"/>.
    </para>
 
   </sect2>
@@ -4576,7 +4576,7 @@
   <para>
    This release contains a variety of fixes from 8.4.4.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -4585,7 +4585,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see <xref linkend="release-8-4-2">.
+    see <xref linkend="release-8-4-2"/>.
    </para>
 
   </sect2>
@@ -5098,7 +5098,7 @@
   <para>
    This release contains a variety of fixes from 8.4.3.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -5107,7 +5107,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see <xref linkend="release-8-4-2">.
+    see <xref linkend="release-8-4-2"/>.
    </para>
 
   </sect2>
@@ -5389,7 +5389,7 @@
   <para>
    This release contains a variety of fixes from 8.4.2.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -5398,7 +5398,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see <xref linkend="release-8-4-2">.
+    see <xref linkend="release-8-4-2"/>.
    </para>
 
   </sect2>
@@ -5856,7 +5856,7 @@
   <para>
    This release contains a variety of fixes from 8.4.1.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>
@@ -6387,7 +6387,7 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
   <para>
    This release contains a variety of fixes from 8.4.
    For information about new features in the 8.4 major release, see
-   <xref linkend="release-8-4">.
+   <xref linkend="release-8-4"/>.
   </para>
 
   <sect2>

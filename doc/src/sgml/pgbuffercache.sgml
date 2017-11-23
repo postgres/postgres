@@ -33,7 +33,7 @@
   <title>The <structname>pg_buffercache</structname> View</title>
 
   <para>
-   The definitions of the columns exposed by the view are shown in <xref linkend="pgbuffercache-columns">.
+   The definitions of the columns exposed by the view are shown in <xref linkend="pgbuffercache-columns"/>.
   </para>
 
   <table id="pgbuffercache-columns">

@@ -106,7 +106,7 @@ REVOKE [ GRANT OPTION FOR ]
   </para>
 
   <para>
-   As explained under <xref linkend="sql-grant">,
+   As explained under <xref linkend="sql-grant"/>,
    the default privileges for any object type normally grant all grantable
    permissions to the object owner, and may grant some privileges to
    <literal>PUBLIC</literal> as well.  However, this behavior can be changed by
@@ -150,8 +150,8 @@ REVOKE [ GRANT OPTION FOR ]
       This parameter, and all the other parameters in
       <replaceable class="parameter">abbreviated_grant_or_revoke</replaceable>,
       act as described under
-      <xref linkend="sql-grant"> or
-      <xref linkend="sql-revoke">,
+      <xref linkend="sql-grant"/> or
+      <xref linkend="sql-revoke"/>,
       except that one is setting permissions for a whole class of objects
       rather than specific named objects.
      </para>
@@ -165,11 +165,11 @@ REVOKE [ GRANT OPTION FOR ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="app-psql">'s <command>\ddp</command> command
+   Use <xref linkend="app-psql"/>'s <command>\ddp</command> command
    to obtain information about existing assignments of default privileges.
    The meaning of the privilege values is the same as explained for
    <command>\dp</command> under
-   <xref linkend="sql-grant">.
+   <xref linkend="sql-grant"/>.
   </para>
 
   <para>
@@ -226,8 +226,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE admin REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-grant"></member>
-   <member><xref linkend="sql-revoke"></member>
+   <member><xref linkend="sql-grant"/></member>
+   <member><xref linkend="sql-revoke"/></member>
   </simplelist>
  </refsect1>
 

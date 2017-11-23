@@ -5,7 +5,7 @@
 
   <para>
    This chapter builds on the material covered in <xref
-   linkend="using-explain"> and <xref linkend="planner-stats"> to show some
+   linkend="using-explain"/> and <xref linkend="planner-stats"/> to show some
    additional details about how the planner uses the
    system statistics to estimate the number of rows each part of a query might
    return. This is a significant part of the planning process,
@@ -49,7 +49,7 @@ EXPLAIN SELECT * FROM tenk1;
 </programlisting>
 
    How the planner determines the cardinality of <structname>tenk1</structname>
-   is covered in <xref linkend="planner-stats">, but is repeated here for
+   is covered in <xref linkend="planner-stats"/>, but is repeated here for
    completeness. The number of pages and rows is looked up in
    <structname>pg_class</structname>:
 
@@ -468,7 +468,7 @@ INSERT INTO t SELECT i % 100, i % 100 FROM generate_series(1, 10000) s(i);
 ANALYZE t;
 </programlisting>
 
-    As explained in <xref linkend="planner-stats">, the planner can determine
+    As explained in <xref linkend="planner-stats"/>, the planner can determine
     cardinality of <structname>t</structname> using the number of pages and
     rows obtained from <structname>pg_class</structname>:
 

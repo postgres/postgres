@@ -18,7 +18,7 @@
   the JSON data types have the advantage of enforcing that each
   stored value is valid according to the JSON rules.  There are also
   assorted JSON-specific functions and operators available for data stored
-  in these data types; see <xref linkend="functions-json">.
+  in these data types; see <xref linkend="functions-json"/>.
  </para>
 
  <para>
@@ -82,7 +82,7 @@
  <note>
   <para>
    Many of the JSON processing functions described
-   in <xref linkend="functions-json"> will convert Unicode escapes to
+   in <xref linkend="functions-json"/> will convert Unicode escapes to
    regular characters, and will therefore throw the same types of errors
    just described even if their input is of type <type>json</type>
    not <type>jsonb</type>. The fact that the <type>json</type> input function does
@@ -98,7 +98,7 @@
   When converting textual JSON input into <type>jsonb</type>, the primitive
   types described by <acronym>RFC</acronym> 7159 are effectively mapped onto
   native <productname>PostgreSQL</productname> types, as shown
-  in <xref linkend="json-type-mapping-table">.
+  in <xref linkend="json-type-mapping-table"/>.
   Therefore, there are some minor additional constraints on what
   constitutes valid <type>jsonb</type> data that do not apply to
   the <type>json</type> type, nor to JSON in the abstract, corresponding
@@ -380,7 +380,7 @@ SELECT doc-&gt;'site_name' FROM websites
   <para>
     The various containment and existence operators, along with all other
     JSON operators and functions are documented
-    in <xref linkend="functions-json">.
+    in <xref linkend="functions-json"/>.
   </para>
  </sect2>
 
@@ -404,7 +404,7 @@ SELECT doc-&gt;'site_name' FROM websites
     and <literal>?|</literal> operators and path/value-exists operator
     <literal>@&gt;</literal>.
     (For details of the semantics that these operators
-    implement, see <xref linkend="functions-jsonb-op-table">.)
+    implement, see <xref linkend="functions-jsonb-op-table"/>.)
     An example of creating an index with this operator class is:
 <programlisting>
 CREATE INDEX idxgin ON api USING GIN (jdoc);
@@ -465,7 +465,7 @@ CREATE INDEX idxgintags ON api USING GIN ((jdoc -&gt; 'tags'));
     operator <literal>?</literal> to the indexed
     expression <literal>jdoc -&gt; 'tags'</literal>.
     (More information on expression indexes can be found in <xref
-    linkend="indexes-expressional">.)
+    linkend="indexes-expressional"/>.)
   </para>
   <para>
     Another approach to querying is to exploit containment, for example:

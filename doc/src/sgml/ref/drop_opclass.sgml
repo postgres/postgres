@@ -80,7 +80,7 @@ DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="parameter">name</replaceab
      <para>
       Automatically drop objects that depend on the operator class (such as
       indexes), and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -140,9 +140,9 @@ DROP OPERATOR CLASS widget_ops USING btree;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteropclass"></member>
-   <member><xref linkend="sql-createopclass"></member>
-   <member><xref linkend="sql-dropopfamily"></member>
+   <member><xref linkend="sql-alteropclass"/></member>
+   <member><xref linkend="sql-createopclass"/></member>
+   <member><xref linkend="sql-dropopfamily"/></member>
   </simplelist>
  </refsect1>
 

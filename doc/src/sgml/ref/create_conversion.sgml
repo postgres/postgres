@@ -161,9 +161,9 @@ CREATE CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterconversion"></member>
-   <member><xref linkend="sql-createfunction"></member>
-   <member><xref linkend="sql-dropconversion"></member>
+   <member><xref linkend="sql-alterconversion"/></member>
+   <member><xref linkend="sql-createfunction"/></member>
+   <member><xref linkend="sql-dropconversion"/></member>
   </simplelist>
  </refsect1>
 

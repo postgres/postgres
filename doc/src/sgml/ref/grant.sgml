@@ -178,7 +178,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    creates the object; then there is no window in which another user
    can use the object.)
    Also, these initial default privilege settings can be changed using the
-   <xref linkend="sql-alterdefaultprivileges">
+   <xref linkend="sql-alterdefaultprivileges"/>
    command.
   </para>
 
@@ -190,14 +190,14 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <term><literal>SELECT</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-select"> from
+       Allows <xref linkend="sql-select"/> from
        any column, or the specific columns listed, of the specified table,
        view, or sequence.
        Also allows the use of
-       <xref linkend="sql-copy"> TO.
+       <xref linkend="sql-copy"/> TO.
        This privilege is also needed to reference existing column values in
-       <xref linkend="sql-update"> or
-       <xref linkend="sql-delete">.
+       <xref linkend="sql-update"/> or
+       <xref linkend="sql-delete"/>.
        For sequences, this privilege also allows the use of the
        <function>currval</function> function.
        For large objects, this privilege allows the object to be read.
@@ -209,11 +209,11 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <term><literal>INSERT</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-insert"> of a new
+       Allows <xref linkend="sql-insert"/> of a new
        row into the specified table.  If specific columns are listed,
        only those columns may be assigned to in the <command>INSERT</command>
        command (other columns will therefore receive default values).
-       Also allows <xref linkend="sql-copy"> FROM.
+       Also allows <xref linkend="sql-copy"/> FROM.
       </para>
      </listitem>
     </varlistentry>
@@ -222,7 +222,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <term><literal>UPDATE</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-update"> of any
+       Allows <xref linkend="sql-update"/> of any
        column, or the specific columns listed, of the specified table.
        (In practice, any nontrivial <command>UPDATE</command> command will require
        <literal>SELECT</literal> privilege as well, since it must reference table
@@ -244,7 +244,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <term><literal>DELETE</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-delete"> of a row
+       Allows <xref linkend="sql-delete"/> of a row
        from the specified table.
        (In practice, any nontrivial <command>DELETE</command> command will require
        <literal>SELECT</literal> privilege as well, since it must reference table
@@ -257,7 +257,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <term><literal>TRUNCATE</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-truncate"> on
+       Allows <xref linkend="sql-truncate"/> on
        the specified table.
       </para>
      </listitem>
@@ -269,7 +269,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
       <para>
        Allows creation of a foreign key constraint referencing the specified
        table, or specified column(s) of the table.  (See the
-       <xref linkend="sql-createtable"> statement.)
+       <xref linkend="sql-createtable"/> statement.)
       </para>
      </listitem>
     </varlistentry>
@@ -279,7 +279,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <listitem>
       <para>
        Allows the creation of a trigger on the specified table.  (See the
-       <xref linkend="sql-createtrigger"> statement.)
+       <xref linkend="sql-createtrigger"/> statement.)
       </para>
      </listitem>
     </varlistentry>
@@ -433,7 +433,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   <title>Notes</title>
 
    <para>
-    The <xref linkend="sql-revoke"> command is used
+    The <xref linkend="sql-revoke"/> command is used
     to revoke access privileges.
    </para>
 
@@ -515,7 +515,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    </para>
 
    <para>
-    Use <xref linkend="app-psql">'s <command>\dp</command> command
+    Use <xref linkend="app-psql"/>'s <command>\dp</command> command
     to obtain information about existing privileges for tables and
     columns.  For example:
 <programlisting>
@@ -682,8 +682,8 @@ GRANT admins TO joe;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-revoke"></member>
-   <member><xref linkend="sql-alterdefaultprivileges"></member>
+   <member><xref linkend="sql-revoke"/></member>
+   <member><xref linkend="sql-alterdefaultprivileges"/></member>
   </simplelist>
  </refsect1>
 

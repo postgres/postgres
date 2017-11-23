@@ -41,7 +41,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   <para>
    A publication is essentially a group of tables whose data changes are
    intended to be replicated through logical replication.  See
-   <xref linkend="logical-replication-publication"> for details about how
+   <xref linkend="logical-replication-publication"/> for details about how
    publications fit into the logical replication setup.
    </para>
  </refsect1>
@@ -212,8 +212,8 @@ CREATE PUBLICATION insert_only FOR TABLE mydata
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterpublication"></member>
-   <member><xref linkend="sql-droppublication"></member>
+   <member><xref linkend="sql-alterpublication"/></member>
+   <member><xref linkend="sql-droppublication"/></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -12,7 +12,7 @@
     tutorial is only intended to give you an introduction and is in no
     way a complete tutorial on <acronym>SQL</acronym>.  Numerous books
     have been written on <acronym>SQL</acronym>, including <xref
-    linkend="melt93"> and <xref linkend="date97">.
+    linkend="melt93"/> and <xref linkend="date97"/>.
     You should be aware that some <productname>PostgreSQL</productname>
     language features are extensions to the standard.
    </para>
@@ -267,7 +267,7 @@ COPY weather FROM '/home/user/weather.txt';
     where the file name for the source file must be available on the
     machine running the backend process, not the client, since the backend process
     reads the file directly.  You can read more about the
-    <command>COPY</command> command in <xref linkend="sql-copy">.
+    <command>COPY</command> command in <xref linkend="sql-copy"/>.
    </para>
   </sect1>
 
@@ -754,7 +754,7 @@ SELECT city, max(temp_lo)
 <programlisting>
 SELECT city, max(temp_lo)
     FROM weather
-    WHERE city LIKE 'S%'            -- <co id="co.tutorial-agg-like">
+    WHERE city LIKE 'S%'            -- <co id="co.tutorial-agg-like"/>
     GROUP BY city
     HAVING max(temp_lo) &lt; 40;
 </programlisting>
@@ -762,7 +762,7 @@ SELECT city, max(temp_lo)
     <callout arearefs="co.tutorial-agg-like">
      <para>
       The <literal>LIKE</literal> operator does pattern matching and
-      is explained in <xref linkend="functions-matching">.
+      is explained in <xref linkend="functions-matching"/>.
      </para>
     </callout>
    </calloutlist>

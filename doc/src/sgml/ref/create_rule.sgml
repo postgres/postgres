@@ -55,7 +55,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    transformation happens before the execution of the command starts.
    If you actually want an operation that fires independently for each
    physical row, you probably want to use a trigger, not a rule.
-   More information about the rules system is in <xref linkend="rules">.
+   More information about the rules system is in <xref linkend="rules"/>.
   </para>
 
   <para>
@@ -101,7 +101,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
   <note>
    <para>
     A view that is simple enough to be automatically updatable (see <xref
-    linkend="sql-createview">) does not require a user-created rule in
+    linkend="sql-createview"/>) does not require a user-created rule in
     order to be updatable.  While you can create an explicit rule anyway,
     the automatic update transformation will generally outperform an
     explicit rule.
@@ -109,7 +109,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 
    <para>
     Another alternative worth considering is to use <literal>INSTEAD OF</literal>
-    triggers (see <xref linkend="sql-createtrigger">) in place of rules.
+    triggers (see <xref linkend="sql-createtrigger"/>) in place of rules.
    </para>
   </note>
  </refsect1>
@@ -297,8 +297,8 @@ UPDATE mytable SET name = 'foo' WHERE id = 42;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterrule"></member>
-   <member><xref linkend="sql-droprule"></member>
+   <member><xref linkend="sql-alterrule"/></member>
+   <member><xref linkend="sql-droprule"/></member>
   </simplelist>
  </refsect1>
 

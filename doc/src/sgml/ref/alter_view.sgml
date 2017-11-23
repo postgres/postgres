@@ -194,8 +194,8 @@ INSERT INTO a_view(id) VALUES(2);  -- ts will receive the current time
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createview"></member>
-   <member><xref linkend="sql-dropview"></member>
+   <member><xref linkend="sql-createview"/></member>
+   <member><xref linkend="sql-dropview"/></member>
   </simplelist>
  </refsect1>
 </refentry>

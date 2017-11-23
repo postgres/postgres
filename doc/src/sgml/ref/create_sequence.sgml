@@ -56,7 +56,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE [ IF NOT EXISTS ] <replaceable class="param
    <function>currval</function>, and
    <function>setval</function>
    to operate on the sequence.  These functions are documented in
-   <xref linkend="functions-sequence">.
+   <xref linkend="functions-sequence"/>.
   </para>
 
   <para>
@@ -383,8 +383,8 @@ END;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altersequence"></member>
-   <member><xref linkend="sql-dropsequence"></member>
+   <member><xref linkend="sql-altersequence"/></member>
+   <member><xref linkend="sql-dropsequence"/></member>
   </simplelist>
  </refsect1>
 

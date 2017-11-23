@@ -36,7 +36,7 @@
    described in <classname>pg_am</classname>.  It is possible to add a
    new index access method by writing the necessary code and
    then creating a row in <classname>pg_am</classname> &mdash; but that is
-   beyond the scope of this chapter (see <xref linkend="indexam">).
+   beyond the scope of this chapter (see <xref linkend="indexam"/>).
   </para>
 
   <para>
@@ -101,7 +101,7 @@
 
   <para>
    The B-tree index method defines five strategies, shown in <xref
-   linkend="xindex-btree-strat-table">.
+   linkend="xindex-btree-strat-table"/>.
   </para>
 
    <table tocentry="1" id="xindex-btree-strat-table">
@@ -140,7 +140,7 @@
 
   <para>
    Hash indexes support only equality comparisons, and so they use only one
-   strategy, shown in <xref linkend="xindex-hash-strat-table">.
+   strategy, shown in <xref linkend="xindex-hash-strat-table"/>.
   </para>
 
    <table tocentry="1" id="xindex-hash-strat-table">
@@ -168,7 +168,7 @@
    however it likes.  As an example, several of the built-in GiST index
    operator classes index two-dimensional geometric objects, providing
    the <quote>R-tree</quote> strategies shown in
-   <xref linkend="xindex-rtree-strat-table">.  Four of these are true
+   <xref linkend="xindex-rtree-strat-table"/>.  Four of these are true
    two-dimensional tests (overlaps, same, contains, contained by);
    four of them consider only the X direction; and the other four
    provide the same tests in the Y direction.
@@ -242,7 +242,7 @@
    class interpret the strategy numbers according to the operator class's
    definition. As an example, the strategy numbers used by the built-in
    operator classes for points are shown in <xref
-   linkend="xindex-spgist-point-strat-table">.
+   linkend="xindex-spgist-point-strat-table"/>.
   </para>
 
    <table tocentry="1" id="xindex-spgist-point-strat-table">
@@ -289,7 +289,7 @@
    each operator class interpret the strategy numbers according to the
    operator class's definition. As an example, the strategy numbers used by
    the built-in operator class for arrays are shown in
-   <xref linkend="xindex-gin-array-strat-table">.
+   <xref linkend="xindex-gin-array-strat-table"/>.
   </para>
 
    <table tocentry="1" id="xindex-gin-array-strat-table">
@@ -328,7 +328,7 @@
    of each operator class interpret the strategy numbers according to the
    operator class's definition. As an example, the strategy numbers used by
    the built-in <literal>Minmax</literal> operator classes are shown in
-   <xref linkend="xindex-brin-minmax-strat-table">.
+   <xref linkend="xindex-brin-minmax-strat-table"/>.
   </para>
 
    <table tocentry="1" id="xindex-brin-minmax-strat-table">
@@ -372,7 +372,7 @@
    level of a <literal>WHERE</literal> clause to be used with an index.
    (Some index access methods also support <firstterm>ordering operators</firstterm>,
    which typically don't return Boolean values; that feature is discussed
-   in <xref linkend="xindex-ordering-ops">.)
+   in <xref linkend="xindex-ordering-ops"/>.)
   </para>
  </sect2>
 
@@ -403,7 +403,7 @@
   <para>
    B-trees require a single support function, and allow a second one to be
    supplied at the operator class author's option, as shown in <xref
-   linkend="xindex-btree-support-table">.
+   linkend="xindex-btree-support-table"/>.
   </para>
 
    <table tocentry="1" id="xindex-btree-support-table">
@@ -438,7 +438,7 @@
   <para>
    Hash indexes require one support function, and allow a second one to be
    supplied at the operator class author's option, as shown in <xref
-   linkend="xindex-hash-support-table">.
+   linkend="xindex-hash-support-table"/>.
   </para>
 
    <table tocentry="1" id="xindex-hash-support-table">
@@ -469,8 +469,8 @@
 
   <para>
    GiST indexes have nine support functions, two of which are optional,
-   as shown in <xref linkend="xindex-gist-support-table">.
-   (For more information see <xref linkend="gist">.)
+   as shown in <xref linkend="xindex-gist-support-table"/>.
+   (For more information see <xref linkend="gist"/>.)
   </para>
 
    <table tocentry="1" id="xindex-gist-support-table">
@@ -541,8 +541,8 @@
 
   <para>
    SP-GiST indexes require five support functions, as
-   shown in <xref linkend="xindex-spgist-support-table">.
-   (For more information see <xref linkend="spgist">.)
+   shown in <xref linkend="xindex-spgist-support-table"/>.
+   (For more information see <xref linkend="spgist"/>.)
   </para>
 
    <table tocentry="1" id="xindex-spgist-support-table">
@@ -589,8 +589,8 @@
 
   <para>
    GIN indexes have six support functions, three of which are optional,
-   as shown in <xref linkend="xindex-gin-support-table">.
-   (For more information see <xref linkend="gin">.)
+   as shown in <xref linkend="xindex-gin-support-table"/>.
+   (For more information see <xref linkend="gin"/>.)
   </para>
 
    <table tocentry="1" id="xindex-gin-support-table">
@@ -655,9 +655,9 @@
 
   <para>
    BRIN indexes have four basic support functions, as shown in
-   <xref linkend="xindex-brin-support-table">; those basic functions
+   <xref linkend="xindex-brin-support-table"/>; those basic functions
    may require additional support functions to be provided.
-   (For more information see <xref linkend="brin-extensibility">.)
+   (For more information see <xref linkend="brin-extensibility"/>.)
   </para>
 
    <table tocentry="1" id="xindex-brin-support-table">
@@ -726,7 +726,7 @@
    operators that sort complex numbers in absolute value order, so we
    choose the name <literal>complex_abs_ops</literal>.  First, we need
    a set of operators.  The procedure for defining operators was
-   discussed in <xref linkend="xoper">.  For an operator class on
+   discussed in <xref linkend="xoper"/>.  For an operator class on
    B-trees, the operators we require are:
 
    <itemizedlist spacing="compact">

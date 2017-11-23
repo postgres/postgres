@@ -207,7 +207,7 @@ ereport(ERROR,
      <replaceable>n</replaceable> is the integer value that determines which plural
      form is needed, and the remaining arguments are formatted according
      to the selected format string.  For more information see
-     <xref linkend="nls-guidelines">.
+     <xref linkend="nls-guidelines"/>.
     </para>
    </listitem>
    <listitem>
@@ -234,7 +234,7 @@ ereport(ERROR,
      <function>errdetail_plural(const char *fmt_singular, const char *fmt_plural,
      unsigned long n, ...)</function> is like <function>errdetail</function>, but with
      support for various plural forms of the message.
-     For more information see <xref linkend="nls-guidelines">.
+     For more information see <xref linkend="nls-guidelines"/>.
     </para>
    </listitem>
    <listitem>
@@ -255,7 +255,7 @@ ereport(ERROR,
      *fmt_plural, unsigned long n, ...)</function> is like
      <function>errdetail_log</function>, but with support for various plural forms of
      the message.
-     For more information see <xref linkend="nls-guidelines">.
+     For more information see <xref linkend="nls-guidelines"/>.
     </para>
    </listitem>
    <listitem>
@@ -404,7 +404,7 @@ ereport(level, (errmsg_internal("format string", ...)));
 
    <para>
     Advice about writing good error messages can be found in
-    <xref linkend="error-style-guide">.
+    <xref linkend="error-style-guide"/>.
    </para>
   </sect1>
 
@@ -853,7 +853,7 @@ BETTER: unrecognized node type: 42
 
    <para>
     Keep in mind that error message texts need to be translated into other
-    languages.  Follow the guidelines in <xref linkend="nls-guidelines">
+    languages.  Follow the guidelines in <xref linkend="nls-guidelines"/>
     to avoid making life difficult for translators.
    </para>
   </simplesect>

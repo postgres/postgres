@@ -160,12 +160,12 @@
   <para>
    A data type <type>tsvector</type> is provided for storing preprocessed
    documents, along with a type <type>tsquery</type> for representing processed
-   queries (<xref linkend="datatype-textsearch">).  There are many
+   queries (<xref linkend="datatype-textsearch"/>).  There are many
    functions and operators available for these data types
-   (<xref linkend="functions-textsearch">), the most important of which is
+   (<xref linkend="functions-textsearch"/>), the most important of which is
    the match operator <literal>@@</literal>, which we introduce in
-   <xref linkend="textsearch-matching">.  Full text searches can be accelerated
-   using indexes (<xref linkend="textsearch-indexes">).
+   <xref linkend="textsearch-matching"/>.  Full text searches can be accelerated
+   using indexes (<xref linkend="textsearch-indexes"/>).
   </para>
 
 
@@ -264,7 +264,7 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     text, any more than a <type>tsvector</type> is.  A <type>tsquery</type>
     contains search terms, which must be already-normalized lexemes, and
     may combine multiple terms using AND, OR, NOT, and FOLLOWED BY operators.
-    (For syntax details see <xref linkend="datatype-tsquery">.)  There are
+    (For syntax details see <xref linkend="datatype-tsquery"/>.)  There are
     functions <function>to_tsquery</function>, <function>plainto_tsquery</function>,
     and <function>phraseto_tsquery</function>
     that are helpful in converting user-written text into a proper
@@ -420,7 +420,7 @@ SELECT phraseto_tsquery('the cats ate the rats');
 
    <para>
     During installation an appropriate configuration is selected and
-    <xref linkend="guc-default-text-search-config"> is set accordingly
+    <xref linkend="guc-default-text-search-config"/> is set accordingly
     in <filename>postgresql.conf</filename>.  If you are using the same text search
     configuration for the entire cluster you can use the value in
     <filename>postgresql.conf</filename>.  To use different configurations
@@ -530,7 +530,7 @@ WHERE to_tsvector(body) @@ to_tsquery('friend');
 </programlisting>
 
     This query will use the configuration set by <xref
-    linkend="guc-default-text-search-config">.
+    linkend="guc-default-text-search-config"/>.
    </para>
 
    <para>
@@ -565,7 +565,7 @@ LIMIT 10;
 
    <para>
     We can create a <acronym>GIN</acronym> index (<xref
-    linkend="textsearch-indexes">) to speed up text searches:
+    linkend="textsearch-indexes"/>) to speed up text searches:
 
 <programlisting>
 CREATE INDEX pgweb_idx ON pgweb USING GIN (to_tsvector('english', body));
@@ -573,9 +573,9 @@ CREATE INDEX pgweb_idx ON pgweb USING GIN (to_tsvector('english', body));
 
     Notice that the 2-argument version of <function>to_tsvector</function> is
     used.  Only text search functions that specify a configuration name can
-    be used in expression indexes (<xref linkend="indexes-expressional">).
+    be used in expression indexes (<xref linkend="indexes-expressional"/>).
     This is because the index contents must be unaffected by <xref
-    linkend="guc-default-text-search-config">.  If they were affected, the
+    linkend="guc-default-text-search-config"/>.  If they were affected, the
     index contents might be inconsistent because different entries could
     contain <type>tsvector</type>s that were created with different text search
     configurations, and there would be no way to guess which was which.  It
@@ -653,7 +653,7 @@ LIMIT 10;
     representation,
     it is necessary to create a trigger to keep the <type>tsvector</type>
     column current anytime <literal>title</literal> or <literal>body</literal> changes.
-    <xref linkend="textsearch-update-triggers"> explains how to do that.
+    <xref linkend="textsearch-update-triggers"/> explains how to do that.
    </para>
 
    <para>
@@ -665,7 +665,7 @@ LIMIT 10;
     searches will be faster, since it will not be necessary to redo the
     <function>to_tsvector</function> calls to verify index matches.  (This is more
     important when using a GiST index than a GIN index; see <xref
-    linkend="textsearch-indexes">.)  The expression-index approach is
+    linkend="textsearch-indexes"/>.)  The expression-index approach is
     simpler to set up, however, and it requires less disk space since the
     <type>tsvector</type> representation is not stored explicitly.
    </para>
@@ -732,14 +732,14 @@ SELECT to_tsvector('english', 'a fat  cat sat on a mat - it ate a fat rats');
     The <function>to_tsvector</function> function internally calls a parser
     which breaks the document text into tokens and assigns a type to
     each token.  For each token, a list of
-    dictionaries (<xref linkend="textsearch-dictionaries">) is consulted,
+    dictionaries (<xref linkend="textsearch-dictionaries"/>) is consulted,
     where the list can vary depending on the token type.  The first dictionary
     that <firstterm>recognizes</firstterm> the token emits one or more normalized
     <firstterm>lexemes</firstterm> to represent the token.  For example,
     <literal>rats</literal> became <literal>rat</literal> because one of the
     dictionaries recognized that the word <literal>rats</literal> is a plural
     form of <literal>rat</literal>.  Some words are recognized as
-    <firstterm>stop words</firstterm> (<xref linkend="textsearch-stopwords">), which
+    <firstterm>stop words</firstterm> (<xref linkend="textsearch-stopwords"/>), which
     causes them to be ignored since they occur too frequently to be useful in
     searching.  In our example these are
     <literal>a</literal>, <literal>on</literal>, and <literal>it</literal>.
@@ -749,7 +749,7 @@ SELECT to_tsvector('english', 'a fat  cat sat on a mat - it ate a fat rats');
     (<literal>Space symbols</literal>), meaning space tokens will never be
     indexed. The choices of parser, dictionaries and which types of tokens to
     index are determined by the selected text search configuration (<xref
-    linkend="textsearch-configuration">).  It is possible to have
+    linkend="textsearch-configuration"/>).  It is possible to have
     many different configurations in the same database, and predefined
     configurations are available for various languages. In our example
     we used the default configuration <literal>english</literal> for the
@@ -785,7 +785,7 @@ UPDATE tt SET ti =
     of each lexeme in the finished <type>tsvector</type>, and then merged
     the labeled <type>tsvector</type> values using the <type>tsvector</type>
     concatenation operator <literal>||</literal>.  (<xref
-    linkend="textsearch-manipulate-tsvector"> gives details about these
+    linkend="textsearch-manipulate-tsvector"/> gives details about these
     operations.)
    </para>
 
@@ -823,7 +823,7 @@ to_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>
     using parentheses.  In other words, the input to
     <function>to_tsquery</function> must already follow the general rules for
     <type>tsquery</type> input, as described in <xref
-    linkend="datatype-tsquery">.  The difference is that while basic
+    linkend="datatype-tsquery"/>.  The difference is that while basic
     <type>tsquery</type> input takes the tokens at face value,
     <function>to_tsquery</function> normalizes each token into a lexeme using
     the specified or default configuration, and discards any tokens that are
@@ -1030,7 +1030,7 @@ SELECT phraseto_tsquery('english', 'The Fat &amp; Rats:C');
         its calculation.  Therefore, it ignores any <quote>stripped</quote>
         lexemes in the <type>tsvector</type>.  If there are no unstripped
         lexemes in the input, the result will be zero.  (See <xref
-        linkend="textsearch-manipulate-tsvector"> for more information
+        linkend="textsearch-manipulate-tsvector"/> for more information
         about the <function>strip</function> function and positional information
         in <type>tsvector</type>s.)
        </para>
@@ -1333,7 +1333,7 @@ query.',
    <title>Manipulating Documents</title>
 
    <para>
-    <xref linkend="textsearch-parsing-documents"> showed how raw textual
+    <xref linkend="textsearch-parsing-documents"/> showed how raw textual
     documents can be converted into <type>tsvector</type> values.
     <productname>PostgreSQL</productname> also provides functions and
     operators that can be used to manipulate documents that are already
@@ -1455,7 +1455,7 @@ query.',
 
    <para>
     A full list of <type>tsvector</type>-related functions is available
-    in <xref linkend="textsearch-functions-table">.
+    in <xref linkend="textsearch-functions-table"/>.
    </para>
 
   </sect2>
@@ -1464,7 +1464,7 @@ query.',
    <title>Manipulating Queries</title>
 
    <para>
-    <xref linkend="textsearch-parsing-queries"> showed how raw textual
+    <xref linkend="textsearch-parsing-queries"/> showed how raw textual
     queries can be converted into <type>tsquery</type> values.
     <productname>PostgreSQL</productname> also provides functions and
     operators that can be used to manipulate queries that are already
@@ -1651,7 +1651,7 @@ SELECT querytree(to_tsquery('!defined'));
      (e.g., <literal>new york</literal>, <literal>big apple</literal>, <literal>nyc</literal>,
      <literal>gotham</literal>) or narrow the search to direct the user to some hot
      topic.  There is some overlap in functionality between this feature
-     and thesaurus dictionaries (<xref linkend="textsearch-thesaurus">).
+     and thesaurus dictionaries (<xref linkend="textsearch-thesaurus"/>).
      However, you can modify a set of rewrite rules on-the-fly without
      reindexing, whereas updating a thesaurus requires reindexing to be
      effective.
@@ -1962,7 +1962,7 @@ LIMIT 10;
 
   <para>
    The built-in parser is named <literal>pg_catalog.default</literal>.
-   It recognizes 23 token types, shown in <xref linkend="textsearch-default-parser">.
+   It recognizes 23 token types, shown in <xref linkend="textsearch-default-parser"/>.
   </para>
 
   <table id="textsearch-default-parser">
@@ -2295,7 +2295,7 @@ ALTER TEXT SEARCH CONFIGURATION astro_en
    end where it'd be useless.  Filtering dictionaries are useful to partially
    normalize words to simplify the task of later dictionaries.  For example,
    a filtering dictionary could be used to remove accents from accented
-   letters, as is done by the <xref linkend="unaccent"> module.
+   letters, as is done by the <xref linkend="unaccent"/> module.
   </para>
 
   <sect2 id="textsearch-stopwords">
@@ -2453,7 +2453,7 @@ SELECT ts_lexize('public.simple_dict','The');
    <para>
     This dictionary template is used to create dictionaries that replace a
     word with a synonym. Phrases are not supported (use the thesaurus
-    template (<xref linkend="textsearch-thesaurus">) for that).  A synonym
+    template (<xref linkend="textsearch-thesaurus"/>) for that).  A synonym
     dictionary can be used to overcome linguistic problems, for example, to
     prevent an English stemmer dictionary from reducing the word <quote>Paris</quote> to
     <quote>pari</quote>.  It is enough to have a <literal>Paris paris</literal> line in the
@@ -2511,7 +2511,7 @@ SELECT * FROM ts_debug('english', 'Paris');
     <function>to_tsvector()</function>, but when it is used in
     <function>to_tsquery()</function>, the result will be a query item with
     the prefix match marker (see
-    <xref linkend="textsearch-parsing-queries">).
+    <xref linkend="textsearch-parsing-queries"/>).
     For example, suppose we have these entries in
     <filename>$SHAREDIR/tsearch_data/synonym_sample.syn</filename>:
 <programlisting>
@@ -3042,7 +3042,7 @@ CREATE TEXT SEARCH DICTIONARY english_stem (
     <function>to_tsvector</function> or <function>to_tsquery</function>
     needs a text search configuration to perform its processing.
     The configuration parameter
-    <xref linkend="guc-default-text-search-config">
+    <xref linkend="guc-default-text-search-config"/>
     specifies the name of the default configuration, which is the
     one used by text search functions if an explicit configuration
     parameter is omitted.
@@ -3055,7 +3055,7 @@ CREATE TEXT SEARCH DICTIONARY english_stem (
     you can create custom configurations easily.  To facilitate management
     of text search objects, a set of <acronym>SQL</acronym> commands
     is available, and there are several <application>psql</application> commands that display information
-    about text search objects (<xref linkend="textsearch-psql">).
+    about text search objects (<xref linkend="textsearch-psql"/>).
    </para>
 
    <para>
@@ -3324,7 +3324,7 @@ SELECT * FROM ts_debug('public.english','The Brightest supernovaes');
   <para>
    The word <literal>The</literal> was recognized by the
    <literal>english_ispell</literal> dictionary as a stop word (<xref
-   linkend="textsearch-stopwords">) and will not be indexed.
+   linkend="textsearch-stopwords"/>) and will not be indexed.
    The spaces are discarded too, since the configuration provides no
    dictionaries at all for them.
   </para>
@@ -3604,7 +3604,7 @@ SELECT plainto_tsquery('supernovae stars');
 
   <para>
    Note that <acronym>GIN</acronym> index build time can often be improved
-   by increasing <xref linkend="guc-maintenance-work-mem">, while
+   by increasing <xref linkend="guc-maintenance-work-mem"/>, while
    <acronym>GiST</acronym> index build time is not sensitive to that
    parameter.
   </para>
@@ -3614,7 +3614,7 @@ SELECT plainto_tsquery('supernovae stars');
    allows the implementation of very fast searches with online update.
    Partitioning can be done at the database level using table inheritance,
    or by distributing documents over
-   servers and collecting search results using the <xref linkend="dblink">
+   servers and collecting search results using the <xref linkend="dblink"/>
    module. The latter is possible because ranking functions use
    only local information.
   </para>

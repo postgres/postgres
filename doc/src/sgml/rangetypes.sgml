@@ -65,7 +65,7 @@
     </listitem>
   </itemizedlist>
   In addition, you can define your own range types;
-  see <xref linkend="sql-createtype"> for more information.
+  see <xref linkend="sql-createtype"/> for more information.
  </para>
  </sect2>
 
@@ -94,8 +94,8 @@ SELECT int4range(10, 20) * int4range(15, 25);
 SELECT isempty(numrange(1, 5));
 </programlisting>
 
-   See <xref linkend="range-operators-table">
-   and <xref linkend="range-functions-table"> for complete lists of
+   See <xref linkend="range-operators-table"/>
+   and <xref linkend="range-functions-table"/> for complete lists of
    operators and functions on range types.
   </para>
  </sect2>
@@ -117,7 +117,7 @@ SELECT isempty(numrange(1, 5));
    represented by <quote><literal>(</literal></quote>. Likewise, an inclusive upper bound is represented by
    <quote><literal>]</literal></quote>, while an exclusive upper bound is
    represented by <quote><literal>)</literal></quote>.
-   (See <xref linkend="rangetypes-io"> for more details.)
+   (See <xref linkend="rangetypes-io"/> for more details.)
   </para>
 
   <para>
@@ -214,7 +214,7 @@ empty
   <note>
    <para>
     These rules are very similar to those for writing field values in
-    composite-type literals.  See <xref linkend="rowtypes-io-syntax"> for
+    composite-type literals.  See <xref linkend="rowtypes-io-syntax"/> for
     additional commentary.
    </para>
   </note>
@@ -406,7 +406,7 @@ SELECT '[11:10, 23:00]'::timerange;
 </programlisting>
 
   <para>
-   See <xref linkend="sql-createtype"> for more information about creating
+   See <xref linkend="sql-createtype"/> for more information about creating
    range types.
   </para>
  </sect2>
@@ -435,7 +435,7 @@ CREATE INDEX reservation_idx ON reservation USING GIST (during);
    <literal>-|-</literal>,
    <literal>&amp;&lt;</literal>, and
    <literal>&amp;&gt;</literal>
-   (see <xref linkend="range-operators-table"> for more information).
+   (see <xref linkend="range-operators-table"/> for more information).
   </para>
 
   <para>

@@ -40,7 +40,7 @@ digest(data bytea, type text) returns bytea
     <literal>sha384</literal> and <literal>sha512</literal>.
     If <filename>pgcrypto</filename> was built with
     OpenSSL, more algorithms are available, as detailed in
-    <xref linkend="pgcrypto-with-without-openssl">.
+    <xref linkend="pgcrypto-with-without-openssl"/>.
    </para>
 
    <para>
@@ -129,7 +129,7 @@ hmac(data bytea, key text, type text) returns bytea
   </orderedlist>
 
   <para>
-   <xref linkend="pgcrypto-crypt-algorithms"> lists the algorithms
+   <xref linkend="pgcrypto-crypt-algorithms"/> lists the algorithms
    supported by the <function>crypt()</function> function.
   </para>
 
@@ -247,7 +247,7 @@ gen_salt(type text [, iter_count integer ]) returns text
     &mdash; which is somewhat impractical.  If the <parameter>iter_count</parameter>
     parameter is omitted, the default iteration count is used.
     Allowed values for <parameter>iter_count</parameter> depend on the algorithm and
-    are shown in <xref linkend="pgcrypto-icfc-table">.
+    are shown in <xref linkend="pgcrypto-icfc-table"/>.
    </para>
 
    <table id="pgcrypto-icfc-table">
@@ -292,7 +292,7 @@ gen_salt(type text [, iter_count integer ]) returns text
    </para>
 
    <para>
-    <xref linkend="pgcrypto-hash-speed-table"> gives an overview of the relative slowness
+    <xref linkend="pgcrypto-hash-speed-table"/> gives an overview of the relative slowness
     of different hashing algorithms.
     The table shows how much time it would take to try all
     combinations of characters in an 8-character password, assuming

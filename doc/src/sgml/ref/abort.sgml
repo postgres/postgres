@@ -33,7 +33,7 @@ ABORT [ WORK | TRANSACTION ]
    all the updates made by the transaction to be discarded.
    This command is identical
    in behavior to the standard <acronym>SQL</acronym> command
-   <xref linkend="sql-rollback">,
+   <xref linkend="sql-rollback"/>,
    and is present only for historical reasons.
   </para>
  </refsect1>
@@ -58,7 +58,7 @@ ABORT [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-commit"> to
+   Use <xref linkend="sql-commit"/> to
    successfully terminate a transaction.
   </para>
 
@@ -92,9 +92,9 @@ ABORT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-commit"></member>
-   <member><xref linkend="sql-rollback"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-commit"/></member>
+   <member><xref linkend="sql-rollback"/></member>
   </simplelist>
  </refsect1>
 </refentry>

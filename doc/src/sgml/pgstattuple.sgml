@@ -55,7 +55,7 @@ dead_tuple_percent | 0.69
 free_space         | 8932
 free_percent       | 1.95
 </programlisting>
-     The output columns are described in <xref linkend="pgstattuple-columns">.
+     The output columns are described in <xref linkend="pgstattuple-columns"/>.
     </para>
 
     <table id="pgstattuple-columns">
@@ -509,7 +509,7 @@ dead_tuple_percent   | 0
 approx_free_space    | 11996
 approx_free_percent  | 2.09
 </programlisting>
-      The output columns are described in <xref linkend="pgstatapprox-columns">.
+      The output columns are described in <xref linkend="pgstatapprox-columns"/>.
      </para>
 
      <para>

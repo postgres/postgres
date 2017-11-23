@@ -96,8 +96,8 @@ DROP CONVERSION myname;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterconversion"></member>
-   <member><xref linkend="sql-createconversion"></member>
+   <member><xref linkend="sql-alterconversion"/></member>
+   <member><xref linkend="sql-createconversion"/></member>
   </simplelist>
  </refsect1>
 

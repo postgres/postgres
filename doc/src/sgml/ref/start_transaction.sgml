@@ -37,8 +37,8 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
   <para>
    This command begins a new transaction block. If the isolation level,
    read/write mode, or deferrable mode is specified, the new transaction has those
-   characteristics, as if <xref linkend="sql-set-transaction"> was executed. This is the same
-   as the <xref linkend="sql-begin"> command.
+   characteristics, as if <xref linkend="sql-set-transaction"/> was executed. This is the same
+   as the <xref linkend="sql-begin"/> command.
   </para>
  </refsect1>
 
@@ -46,7 +46,7 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
   <title>Parameters</title>
 
   <para>
-   Refer to <xref linkend="sql-set-transaction"> for information on the meaning
+   Refer to <xref linkend="sql-set-transaction"/> for information on the meaning
    of the parameters to this statement.
   </para>
  </refsect1>
@@ -79,7 +79,7 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
   </para>
 
   <para>
-   See also the compatibility section of <xref linkend="sql-set-transaction">.
+   See also the compatibility section of <xref linkend="sql-set-transaction"/>.
   </para>
  </refsect1>
 
@@ -87,11 +87,11 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-commit"></member>
-   <member><xref linkend="sql-rollback"></member>
-   <member><xref linkend="sql-savepoint"></member>
-   <member><xref linkend="sql-set-transaction"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-commit"/></member>
+   <member><xref linkend="sql-rollback"/></member>
+   <member><xref linkend="sql-savepoint"/></member>
+   <member><xref linkend="sql-set-transaction"/></member>
   </simplelist>
  </refsect1>
 </refentry>

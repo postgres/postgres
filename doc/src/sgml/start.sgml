@@ -29,7 +29,7 @@
 
    <para>
     If you are installing <productname>PostgreSQL</productname>
-    yourself, then refer to <xref linkend="installation">
+    yourself, then refer to <xref linkend="installation"/>
     for instructions on installation, and return to
     this guide when the installation is complete.  Be sure to follow
     closely the section about setting up the appropriate environment
@@ -194,7 +194,7 @@ createdb: could not connect to database postgres: FATAL:  role "joe" does not ex
     administrator has not created a <productname>PostgreSQL</productname> user account
     for you.  (<productname>PostgreSQL</productname> user accounts are distinct from
     operating system user accounts.)  If you are the administrator, see
-    <xref linkend="user-manag"> for help creating accounts.  You will need to
+    <xref linkend="user-manag"/> for help creating accounts.  You will need to
     become the operating system user under which <productname>PostgreSQL</productname>
     was installed (usually <literal>postgres</literal>) to create the first user
     account.  It could also be that you were assigned a
@@ -268,7 +268,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
 
    <para>
     More about <command>createdb</command> and <command>dropdb</command> can
-    be found in <xref linkend="app-createdb"> and <xref linkend="app-dropdb">
+    be found in <xref linkend="app-createdb"/> and <xref linkend="app-dropdb"/>
     respectively.
    </para>
   </sect1>
@@ -308,7 +308,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
       <para>
        Writing a custom application, using one of the several
        available language bindings.  These possibilities are discussed
-       further in <xref linkend="client-interfaces">.
+       further in <xref linkend="client-interfaces"/>.
       </para>
      </listitem>
     </itemizedlist>
@@ -402,7 +402,7 @@ mydb=#
     command shell. (For more internal commands, type
     <literal>\?</literal> at the <command>psql</command> prompt.)  The
     full capabilities of <command>psql</command> are documented in
-    <xref linkend="app-psql">.  In this tutorial we will not use these
+    <xref linkend="app-psql"/>.  In this tutorial we will not use these
     features explicitly, but you can use them yourself when it is helpful.
    </para>
 

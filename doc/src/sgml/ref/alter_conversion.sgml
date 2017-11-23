@@ -120,8 +120,8 @@ ALTER CONVERSION iso_8859_1_to_utf8 OWNER TO joe;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createconversion"></member>
-   <member><xref linkend="sql-dropconversion"></member>
+   <member><xref linkend="sql-createconversion"/></member>
+   <member><xref linkend="sql-dropconversion"/></member>
   </simplelist>
  </refsect1>
 </refentry>

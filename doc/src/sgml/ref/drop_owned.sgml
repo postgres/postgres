@@ -57,7 +57,7 @@ DROP OWNED BY { <replaceable class="parameter">name</replaceable> | CURRENT_USER
      <para>
       Automatically drop objects that depend on the affected objects,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -90,7 +90,7 @@ DROP OWNED BY { <replaceable class="parameter">name</replaceable> | CURRENT_USER
   </para>
 
   <para>
-   The <xref linkend="sql-reassign-owned"> command is an alternative that
+   The <xref linkend="sql-reassign-owned"/> command is an alternative that
    reassigns the ownership of all the database objects owned by one or
    more roles.  However, <command>REASSIGN OWNED</command> does not deal with
    privileges for other objects.
@@ -101,7 +101,7 @@ DROP OWNED BY { <replaceable class="parameter">name</replaceable> | CURRENT_USER
   </para>
 
   <para>
-   See <xref linkend="role-removal"> for more discussion.
+   See <xref linkend="role-removal"/> for more discussion.
   </para>
  </refsect1>
 
@@ -118,8 +118,8 @@ DROP OWNED BY { <replaceable class="parameter">name</replaceable> | CURRENT_USER
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-reassign-owned"></member>
-   <member><xref linkend="sql-droprole"></member>
+   <member><xref linkend="sql-reassign-owned"/></member>
+   <member><xref linkend="sql-droprole"/></member>
   </simplelist>
  </refsect1>
 

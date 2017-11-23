@@ -170,7 +170,7 @@
        form of the message.  In <application>psql</application>, say <literal>\set
        VERBOSITY verbose</literal> beforehand.  If you are extracting the message
        from the server log, set the run-time parameter
-       <xref linkend="guc-log-error-verbosity"> to <literal>verbose</literal> so that all
+       <xref linkend="guc-log-error-verbosity"/> to <literal>verbose</literal> so that all
        details are logged.
       </para>
      </note>

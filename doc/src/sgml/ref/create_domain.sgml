@@ -255,8 +255,8 @@ CREATE TABLE us_snail_addy (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterdomain"></member>
-   <member><xref linkend="sql-dropdomain"></member>
+   <member><xref linkend="sql-alterdomain"/></member>
+   <member><xref linkend="sql-dropdomain"/></member>
   </simplelist>
  </refsect1>
 

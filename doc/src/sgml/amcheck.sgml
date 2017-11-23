@@ -31,7 +31,7 @@
   index scans themselves, which may be user-defined operator class
   code.  For example, B-Tree index verification relies on comparisons
   made with one or more B-Tree support function 1 routines.  See <xref
-  linkend="xindex-support"> for details of operator class support
+  linkend="xindex-support"/> for details of operator class support
   functions.
  </para>
  <para>
@@ -192,7 +192,7 @@ ORDER BY c.relpages DESC LIMIT 10;
      index that is ordered using an affected collation, simply because
      <emphasis>indexed</emphasis> values might happen to have the same
      absolute ordering regardless of the behavioral inconsistency. See
-     <xref linkend="locale"> and <xref linkend="collation"> for
+     <xref linkend="locale"/> and <xref linkend="collation"/> for
      further details about how <productname>PostgreSQL</productname> uses
      operating system locales and collations.
     </para>
@@ -210,7 +210,7 @@ ORDER BY c.relpages DESC LIMIT 10;
      logical inconsistency to be introduced.  One obvious testing
      strategy is to call <filename>amcheck</filename> functions continuously
      when running the standard regression tests.  See <xref
-     linkend="regress-run"> for details on running the tests.
+     linkend="regress-run"/> for details on running the tests.
     </para>
    </listitem>
    <listitem>
@@ -263,7 +263,7 @@ ORDER BY c.relpages DESC LIMIT 10;
   There is no general method of repairing problems that
   <filename>amcheck</filename> detects.  An explanation for the root cause of
   an invariant violation should be sought.  <xref
-  linkend="pageinspect"> may play a useful role in diagnosing
+  linkend="pageinspect"/> may play a useful role in diagnosing
   corruption that <filename>amcheck</filename> detects.  A <command>REINDEX</command>
   may not be effective in repairing corruption.
  </para>

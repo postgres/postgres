@@ -94,7 +94,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       in the <literal>FROM</literal> list.  A <literal>WITH</literal> query
       that is referenced more than once in <literal>FROM</literal> is
       computed only once.
-      (See <xref linkend="sql-with" endterm="sql-with-title"> below.)
+      (See <xref linkend="sql-with" endterm="sql-with-title"/> below.)
      </para>
     </listitem>
 
@@ -104,7 +104,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       (Each element in the <literal>FROM</literal> list is a real or
       virtual table.)  If more than one element is specified in the
       <literal>FROM</literal> list, they are cross-joined together.
-      (See <xref linkend="sql-from" endterm="sql-from-title"> below.)
+      (See <xref linkend="sql-from" endterm="sql-from-title"/> below.)
      </para>
     </listitem>
 
@@ -113,7 +113,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       If the <literal>WHERE</literal> clause is specified, all rows
       that do not satisfy the condition are eliminated from the
       output.  (See <xref linkend="sql-where"
-      endterm="sql-where-title"> below.)
+      endterm="sql-where-title"/> below.)
      </para>
     </listitem>
 
@@ -125,8 +125,8 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       values, and the results of aggregate functions are computed.
       If the <literal>HAVING</literal> clause is present, it
       eliminates groups that do not satisfy the given condition.  (See
-      <xref linkend="sql-groupby" endterm="sql-groupby-title"> and
-      <xref linkend="sql-having" endterm="sql-having-title"> below.)
+      <xref linkend="sql-groupby" endterm="sql-groupby-title"/> and
+      <xref linkend="sql-having" endterm="sql-having-title"/> below.)
      </para>
     </listitem>
 
@@ -135,7 +135,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       The actual output rows are computed using the
       <command>SELECT</command> output expressions for each selected
       row or row group.  (See
-      <xref linkend="sql-select-list" endterm="sql-select-list-title">
+      <xref linkend="sql-select-list" endterm="sql-select-list-title"/>
       below.)
      </para>
     </listitem>
@@ -146,7 +146,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       match on all the specified expressions.  <literal>SELECT ALL</literal>
       (the default) will return all candidate rows, including
       duplicates.  (See <xref linkend="sql-distinct"
-      endterm="sql-distinct-title"> below.)
+      endterm="sql-distinct-title"/> below.)
      </para>
     </listitem>
 
@@ -167,9 +167,9 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       eliminating duplicate rows.  Notice that <literal>DISTINCT</literal> is
       the default behavior here, even though <literal>ALL</literal> is
       the default for <command>SELECT</command> itself.  (See
-      <xref linkend="sql-union" endterm="sql-union-title">, <xref
-      linkend="sql-intersect" endterm="sql-intersect-title">, and
-      <xref linkend="sql-except" endterm="sql-except-title"> below.)
+      <xref linkend="sql-union" endterm="sql-union-title"/>, <xref
+      linkend="sql-intersect" endterm="sql-intersect-title"/>, and
+      <xref linkend="sql-except" endterm="sql-except-title"/> below.)
      </para>
     </listitem>
 
@@ -179,7 +179,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       returned rows are sorted in the specified order.  If
       <literal>ORDER BY</literal> is not given, the rows are returned
       in whatever order the system finds fastest to produce.  (See
-      <xref linkend="sql-orderby" endterm="sql-orderby-title"> below.)
+      <xref linkend="sql-orderby" endterm="sql-orderby-title"/> below.)
      </para>
     </listitem>
 
@@ -188,7 +188,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       If the <literal>LIMIT</literal> (or <literal>FETCH FIRST</literal>) or <literal>OFFSET</literal>
       clause is specified, the <command>SELECT</command> statement
       only returns a subset of the result rows. (See <xref
-      linkend="sql-limit" endterm="sql-limit-title"> below.)
+      linkend="sql-limit" endterm="sql-limit-title"/> below.)
      </para>
     </listitem>
 
@@ -199,7 +199,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       is specified, the
       <command>SELECT</command> statement locks the selected rows
       against concurrent updates.  (See <xref linkend="sql-for-update-share"
-      endterm="sql-for-update-share-title"> below.)
+      endterm="sql-for-update-share-title"/> below.)
      </para>
     </listitem>
    </orderedlist>
@@ -258,7 +258,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
     is permitted per query.  Recursive data-modifying statements are not
     supported, but you can use the results of a recursive
     <command>SELECT</command> query in
-    a data-modifying statement.  See <xref linkend="queries-with"> for
+    a data-modifying statement.  See <xref linkend="queries-with"/> for
     an example.
    </para>
 
@@ -291,7 +291,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
    </para>
 
    <para>
-    See <xref linkend="queries-with"> for additional information.
+    See <xref linkend="queries-with"/> for additional information.
    </para>
   </refsect2>
 
@@ -410,7 +410,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         sub-<command>SELECT</command> must be surrounded by
         parentheses, and an alias <emphasis>must</emphasis> be
         provided for it.  A
-        <xref linkend="sql-values"> command
+        <xref linkend="sql-values"/> command
         can also be used here.
        </para>
       </listitem>
@@ -714,7 +714,7 @@ GROUP BY <replaceable class="parameter">grouping_element</replaceable> [, ...]
     equivalent to constructing a <literal>UNION ALL</literal> between
     subqueries with the individual grouping sets as their
     <literal>GROUP BY</literal> clauses.  For further details on the handling
-    of grouping sets see <xref linkend="queries-grouping-sets">.
+    of grouping sets see <xref linkend="queries-grouping-sets"/>.
    </para>
 
    <para>
@@ -725,7 +725,7 @@ GROUP BY <replaceable class="parameter">grouping_element</replaceable> [, ...]
     the selected rows.)
     The set of rows fed to each aggregate function can be further filtered by
     attaching a <literal>FILTER</literal> clause to the aggregate function
-    call; see <xref linkend="syntax-aggregates"> for more information.  When
+    call; see <xref linkend="syntax-aggregates"/> for more information.  When
     a <literal>FILTER</literal> clause is present, only those rows matching it
     are included in the input to that aggregate function.
    </para>
@@ -747,7 +747,7 @@ GROUP BY <replaceable class="parameter">grouping_element</replaceable> [, ...]
     evaluating any <quote>scalar</quote> expressions in the <literal>HAVING</literal>
     clause or <literal>SELECT</literal> list.  This means that, for example,
     a <literal>CASE</literal> expression cannot be used to skip evaluation of
-    an aggregate function; see <xref linkend="syntax-express-eval">.
+    an aggregate function; see <xref linkend="syntax-express-eval"/>.
    </para>
 
    <para>
@@ -834,7 +834,7 @@ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceabl
    <para>
     The elements of the <literal>PARTITION BY</literal> list are interpreted in
     much the same fashion as elements of a
-    <xref linkend="sql-groupby" endterm="sql-groupby-title">, except that
+    <xref linkend="sql-groupby" endterm="sql-groupby-title"/>, except that
     they are always simple expressions and never the name or number of an
     output column.
     Another difference is that these expressions can contain aggregate
@@ -846,7 +846,7 @@ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceabl
    <para>
     Similarly, the elements of the <literal>ORDER BY</literal> list are interpreted
     in much the same fashion as elements of an
-    <xref linkend="sql-orderby" endterm="sql-orderby-title">, except that
+    <xref linkend="sql-orderby" endterm="sql-orderby-title"/>, except that
     the expressions are always taken as simple expressions and never the name
     or number of an output column.
    </para>
@@ -920,8 +920,8 @@ UNBOUNDED FOLLOWING
    <para>
     The purpose of a <literal>WINDOW</literal> clause is to specify the
     behavior of <firstterm>window functions</firstterm> appearing in the query's
-    <xref linkend="sql-select-list" endterm="sql-select-list-title"> or
-    <xref linkend="sql-orderby" endterm="sql-orderby-title">.  These functions
+    <xref linkend="sql-select-list" endterm="sql-select-list-title"/> or
+    <xref linkend="sql-orderby" endterm="sql-orderby-title"/>.  These functions
     can reference the <literal>WINDOW</literal> clause entries by name
     in their <literal>OVER</literal> clauses.  A <literal>WINDOW</literal> clause
     entry does not have to be referenced anywhere, however; if it is not
@@ -941,9 +941,9 @@ UNBOUNDED FOLLOWING
 
    <para>
     Window functions are described in detail in
-    <xref linkend="tutorial-window">,
-    <xref linkend="syntax-window-functions">, and
-    <xref linkend="queries-window">.
+    <xref linkend="tutorial-window"/>,
+    <xref linkend="syntax-window-functions"/>, and
+    <xref linkend="queries-window"/>.
    </para>
   </refsect2>
 
@@ -969,7 +969,7 @@ UNBOUNDED FOLLOWING
     after the column's expression.  (You can omit <literal>AS</literal>,
     but only if the desired output name does not match any
     <productname>PostgreSQL</productname> keyword (see <xref
-    linkend="sql-keywords-appendix">).  For protection against possible
+    linkend="sql-keywords-appendix"/>).  For protection against possible
     future keyword additions, it is recommended that you always either
     write <literal>AS</literal> or double-quote the output name.)
     If you do not specify a column name, a name is chosen automatically
@@ -1311,8 +1311,8 @@ SELECT name FROM distributors ORDER BY code;
     a <literal>COLLATE</literal> clause in the
     <replaceable class="parameter">expression</replaceable>, for example
     <literal>ORDER BY mycolumn COLLATE "en_US"</literal>.
-    For more information see <xref linkend="sql-syntax-collate-exprs"> and
-    <xref linkend="collation">.
+    For more information see <xref linkend="sql-syntax-collate-exprs"/> and
+    <xref linkend="collation"/>.
    </para>
   </refsect2>
 
@@ -1425,7 +1425,7 @@ KEY SHARE
 
    <para>
     For more information on each row-level lock mode, refer to
-    <xref linkend="locking-rows">.
+    <xref linkend="locking-rows"/>.
    </para>
 
    <para>
@@ -1441,8 +1441,8 @@ KEY SHARE
     Note that <literal>NOWAIT</literal> and <literal>SKIP LOCKED</literal> apply only
     to the row-level lock(s) &mdash; the required <literal>ROW SHARE</literal>
     table-level lock is still taken in the ordinary way (see
-    <xref linkend="mvcc">).  You can use
-    <xref linkend="sql-lock">
+    <xref linkend="mvcc"/>).  You can use
+    <xref linkend="sql-lock"/>
     with the <literal>NOWAIT</literal> option first,
     if you need to acquire the table-level lock without waiting.
    </para>
@@ -1791,7 +1791,7 @@ SELECT distance, employee_name FROM employee_recursive;
    an initial condition, followed by <literal>UNION</literal>,
    followed by the recursive part of the query. Be sure that the
    recursive part of the query will eventually return no tuples, or
-   else the query will loop indefinitely.  (See <xref linkend="queries-with">
+   else the query will loop indefinitely.  (See <xref linkend="queries-with"/>
    for more examples.)
   </para>
 
@@ -2001,7 +2001,7 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     used by <productname>MySQL</productname>.  The SQL:2008 standard
     has introduced the clauses <literal>OFFSET ... FETCH {FIRST|NEXT}
     ...</literal> for the same functionality, as shown above
-    in <xref linkend="sql-limit" endterm="sql-limit-title">.  This
+    in <xref linkend="sql-limit" endterm="sql-limit-title"/>.  This
     syntax is also used by <productname>IBM DB2</productname>.
     (Applications written for <productname>Oracle</productname>
     frequently use a workaround involving the automatically

@@ -60,7 +60,7 @@
    during initialization is called
    <literal>template1</literal>.  As the name suggests, this will be used
    as a template for subsequently created databases; it should not be
-   used for actual work.  (See <xref linkend="managing-databases"> for
+   used for actual work.  (See <xref linkend="managing-databases"/> for
    information about creating new databases within a cluster.)
   </para>
 
@@ -73,7 +73,7 @@
    <filename>/usr/local/pgsql/data</filename> or
    <filename>/var/lib/pgsql/data</filename> are popular. To initialize a
    database cluster, use the command <xref
-   linkend="app-initdb">,<indexterm><primary>initdb</primary></indexterm> which is
+   linkend="app-initdb"/>,<indexterm><primary>initdb</primary></indexterm> which is
    installed with <productname>PostgreSQL</productname>. The desired
    file system location of your database cluster is indicated by the
    <option>-D</option> option, for example:
@@ -95,14 +95,14 @@
 
   <para>
    Alternatively, you can run <command>initdb</command> via
-   the <xref linkend="app-pg-ctl">
+   the <xref linkend="app-pg-ctl"/>
    program<indexterm><primary>pg_ctl</primary></indexterm> like so:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -D /usr/local/pgsql/data initdb</userinput>
 </screen>
    This may be more intuitive if you are
    using <command>pg_ctl</command> for starting and stopping the
-   server (see <xref linkend="server-start">), so
+   server (see <xref linkend="server-start"/>), so
    that <command>pg_ctl</command> would be the sole command you use
    for managing the database server instance.
   </para>
@@ -158,7 +158,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    <emphasis>before</emphasis> you start the server for the first time. (Other
    reasonable approaches include using <literal>peer</literal> authentication
    or file system permissions to restrict connections. See <xref
-   linkend="client-authentication"> for more information.)
+   linkend="client-authentication"/> for more information.)
   </para>
 
   <para>
@@ -167,7 +167,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    Normally, it will just take the locale settings in the environment
    and apply them to the initialized database.  It is possible to
    specify a different locale for the database; more information about
-   that can be found in <xref linkend="locale">.  The default sort order used
+   that can be found in <xref linkend="locale"/>.  The default sort order used
    within the particular database cluster is set by
    <command>initdb</command>, and while you can create new databases using
    different sort order, the order used in the template databases that initdb
@@ -180,7 +180,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
   <para>
    <command>initdb</command> also sets the default character set encoding
    for the database cluster.  Normally this should be chosen to match the
-   locale setting.  For details see <xref linkend="multibyte">.
+   locale setting.  For details see <xref linkend="multibyte"/>.
   </para>
 
   <para>
@@ -284,21 +284,21 @@ $ <userinput>postgres -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;</us
    It is important to store the server's <systemitem>stdout</systemitem> and
    <systemitem>stderr</systemitem> output somewhere, as shown above. It will help
    for auditing purposes and to diagnose problems. (See <xref
-   linkend="logfile-maintenance"> for a more thorough discussion of log
+   linkend="logfile-maintenance"/> for a more thorough discussion of log
    file handling.)
   </para>
 
   <para>
    The <command>postgres</command> program also takes a number of other
    command-line options. For more information, see the
-   <xref linkend="app-postgres"> reference page
-   and <xref linkend="runtime-config"> below.
+   <xref linkend="app-postgres"/> reference page
+   and <xref linkend="runtime-config"/> below.
   </para>
 
   <para>
    This shell syntax can get tedious quickly.  Therefore the wrapper
    program
-   <xref linkend="app-pg-ctl"><indexterm><primary>pg_ctl</primary></indexterm>
+   <xref linkend="app-pg-ctl"/><indexterm><primary>pg_ctl</primary></indexterm>
    is provided to simplify some tasks.  For example:
 <programlisting>
 pg_ctl start -l logfile
@@ -494,7 +494,7 @@ DETAIL:  Failed system call was shmget(key=5440001, size=4011376640, 03600).
      mean that you do not have System-V-style shared memory support
      configured into your kernel at all. As a temporary workaround, you
      can try starting the server with a smaller-than-normal number of
-     buffers (<xref linkend="guc-shared-buffers">). You will eventually want
+     buffers (<xref linkend="guc-shared-buffers"/>). You will eventually want
      to reconfigure your kernel to increase the allowed shared memory
      size. You might also see this message when trying to start multiple
      servers on the same machine, if their total space requested
@@ -513,7 +513,7 @@ DETAIL:  Failed system call was semget(5440126, 17, 03600).
      <productname>PostgreSQL</productname> wants to create. As above,
      you might be able to work around the problem by starting the
      server with a reduced number of allowed connections
-     (<xref linkend="guc-max-connections">), but you'll eventually want to
+     (<xref linkend="guc-max-connections"/>), but you'll eventually want to
      increase the kernel limit.
     </para>
 
@@ -526,7 +526,7 @@ DETAIL:  Failed system call was semget(5440126, 17, 03600).
 
     <para>
      Details about configuring <systemitem class="osname">System V</systemitem>
-     <acronym>IPC</acronym> facilities are given in <xref linkend="sysvipc">.
+     <acronym>IPC</acronym> facilities are given in <xref linkend="sysvipc"/>.
     </para>
    </sect2>
 
@@ -574,7 +574,7 @@ psql: could not connect to server: No such file or directory
      does <emphasis>not</emphasis> mean that the server got your
      connection request and rejected it. That case will produce a
      different message, as shown in <xref
-     linkend="client-authentication-problems">.) Other error messages
+     linkend="client-authentication-problems"/>.) Other error messages
      such as <computeroutput>Connection timed out</computeroutput> might
      indicate more fundamental problems, like lack of network
      connectivity.
@@ -648,9 +648,9 @@ psql: could not connect to server: No such file or directory
     the server will refuse to start and
     should leave an instructive error message describing the problem
     and what to do about it. (See also <xref
-    linkend="server-start-failures">.) The relevant kernel
+    linkend="server-start-failures"/>.) The relevant kernel
     parameters are named consistently across different systems; <xref
-    linkend="sysvipc-parameters"> gives an overview. The methods to set
+    linkend="sysvipc-parameters"/> gives an overview. The methods to set
     them, however, vary. Suggestions for some platforms are given below.
    </para>
 
@@ -756,9 +756,9 @@ psql: could not connect to server: No such file or directory
    <para>
     When using System V semaphores,
     <productname>PostgreSQL</productname> uses one semaphore per allowed connection
-    (<xref linkend="guc-max-connections">), allowed autovacuum worker process
-    (<xref linkend="guc-autovacuum-max-workers">) and allowed background
-    process (<xref linkend="guc-max-worker-processes">), in sets of 16.
+    (<xref linkend="guc-max-connections"/>), allowed autovacuum worker process
+    (<xref linkend="guc-autovacuum-max-workers"/>) and allowed background
+    process (<xref linkend="guc-max-worker-processes"/>), in sets of 16.
     Each such set will
     also contain a 17th semaphore which contains a <quote>magic
     number</quote>, to detect collision with semaphore sets used by
@@ -768,7 +768,7 @@ psql: could not connect to server: No such file or directory
     <varname>autovacuum_max_workers</varname> plus <varname>max_worker_processes</varname>,
     plus one extra for each 16
     allowed connections plus workers (see the formula in <xref
-    linkend="sysvipc-parameters">).  The parameter <varname>SEMMNI</varname>
+    linkend="sysvipc-parameters"/>).  The parameter <varname>SEMMNI</varname>
     determines the limit on the number of semaphore sets that can
     exist on the system at one time.  Hence this parameter must be at
     least <literal>ceil((max_connections + autovacuum_max_workers + max_worker_processes + 5) / 16)</literal>.
@@ -800,9 +800,9 @@ psql: could not connect to server: No such file or directory
    <para>
     When using POSIX semaphores, the number of semaphores needed is the
     same as for System V, that is one semaphore per allowed connection
-    (<xref linkend="guc-max-connections">), allowed autovacuum worker process
-    (<xref linkend="guc-autovacuum-max-workers">) and allowed background
-    process (<xref linkend="guc-max-worker-processes">).
+    (<xref linkend="guc-max-connections"/>), allowed autovacuum worker process
+    (<xref linkend="guc-autovacuum-max-workers"/>) and allowed background
+    process (<xref linkend="guc-max-worker-processes"/>).
     On the platforms where this option is preferred, there is no specific
     kernel limit on the number of POSIX semaphores.
    </para>
@@ -1321,7 +1321,7 @@ default:\
     processes do so then the system-wide limit can easily be exceeded.
     If you find this happening, and you do not want to alter the
     system-wide limit, you can set <productname>PostgreSQL</productname>'s <xref
-    linkend="guc-max-files-per-process"> configuration parameter to
+    linkend="guc-max-files-per-process"/> configuration parameter to
     limit the consumption of open files.
    </para>
   </sect2>
@@ -1465,7 +1465,7 @@ export PG_OOM_ADJUST_VALUE=0
    <para>
     Using huge pages reduces overhead when using large contiguous chunks of
     memory, as <productname>PostgreSQL</productname> does, particularly when
-    using large values of <xref linkend="guc-shared-buffers">.  To use this
+    using large values of <xref linkend="guc-shared-buffers"/>.  To use this
     feature in <productname>PostgreSQL</productname> you need a kernel
     with <varname>CONFIG_HUGETLBFS=y</varname> and
     <varname>CONFIG_HUGETLB_PAGE=y</varname>. You will also have to adjust
@@ -1517,7 +1517,7 @@ $ <userinput>grep Huge /proc/meminfo</userinput>
     The default behavior for huge pages in
     <productname>PostgreSQL</productname> is to use them when possible and
     to fall back to normal pages when failing. To enforce the use of huge
-    pages, you can set <xref linkend="guc-huge-pages">
+    pages, you can set <xref linkend="guc-huge-pages"/>
     to <literal>on</literal> in <filename>postgresql.conf</filename>.
     Note that with this setting <productname>PostgreSQL</productname> will fail to
     start if not enough huge pages are available.
@@ -1600,7 +1600,7 @@ $ <userinput>grep Huge /proc/meminfo</userinput>
   </para>
 
   <para>
-   The <xref linkend="app-pg-ctl"> program provides a convenient
+   The <xref linkend="app-pg-ctl"/> program provides a convenient
    interface for sending these signals to shut down the server.
    Alternatively, you can send the signal directly using <command>kill</command>
    on non-Windows systems.
@@ -1629,7 +1629,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   <para>
    To terminate an individual session while allowing other sessions to
    continue, use <function>pg_terminate_backend()</function> (see <xref
-   linkend="functions-admin-signal-table">) or send a
+   linkend="functions-admin-signal-table"/>) or send a
    <systemitem>SIGTERM</systemitem> signal to the child process associated with
    the session.
   </para>
@@ -1680,7 +1680,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    internal data storage format is subject to change, thus complicating
    upgrades.  The traditional method for moving data to a new major version
    is to dump and reload the database, though this can be slow.  A
-   faster method is <xref linkend="pgupgrade">.  Replication methods are
+   faster method is <xref linkend="pgupgrade"/>.  Replication methods are
    also available, as discussed below.
   </para>
 
@@ -1688,7 +1688,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    New major versions also typically introduce some user-visible
    incompatibilities, so application programming changes might be required.
    All user-visible changes are listed in the release notes (<xref
-   linkend="release">);  pay particular attention to the section
+   linkend="release"/>);  pay particular attention to the section
    labeled "Migration".  If you are upgrading across several major
    versions, be sure to read the release notes for each intervening
    version.
@@ -1794,7 +1794,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
       data would of course not be included. If necessary, edit the
       permissions in the file <filename>/usr/local/pgsql/data/pg_hba.conf</filename>
       (or equivalent) to disallow access from everyone except you.
-      See <xref linkend="client-authentication"> for additional information on
+      See <xref linkend="client-authentication"/> for additional information on
       access control.
      </para>
 
@@ -1813,7 +1813,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      <para>
       To make the backup, you can use the <application>pg_dumpall</application>
       command from the version you are currently running;  see <xref
-      linkend="backup-dump-all"> for more details.  For best
+      linkend="backup-dump-all"/> for more details.  For best
       results, however, try to use the <application>pg_dumpall</application>
       command from <productname>PostgreSQL</productname> &version;,
       since this version contains bug fixes and improvements over older
@@ -1839,7 +1839,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 <screen>
 <userinput>/etc/rc.d/init.d/postgresql stop</userinput>
 </screen>
-      See <xref linkend="runtime"> for details about starting and
+      See <xref linkend="runtime"/> for details about starting and
       stopping the server.
      </para>
     </step>
@@ -1863,7 +1863,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
     <step>
      <para>
       Install the new version of <productname>PostgreSQL</productname> as
-      outlined in <xref linkend="install-procedure">.
+      outlined in <xref linkend="install-procedure"/>.
      </para>
     </step>
 
@@ -1923,7 +1923,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <title>Upgrading Data via <application>pg_upgrade</application></title>
 
    <para>
-    The <xref linkend="pgupgrade"> module allows an installation to
+    The <xref linkend="pgupgrade"/> module allows an installation to
     be migrated in-place from one major <productname>PostgreSQL</productname>
     version to another.  Upgrades can be performed in minutes,
     particularly with <option>--link</option> mode.  It requires steps similar to
@@ -1975,7 +1975,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   <para>
    One way to prevent spoofing of <literal>local</literal>
    connections is to use a Unix domain socket directory (<xref
-   linkend="guc-unix-socket-directories">) that has write permission only
+   linkend="guc-unix-socket-directories"/>) that has write permission only
    for a trusted local user.  This prevents a malicious user from creating
    their own socket file in that directory.  If you are concerned that
    some applications might still reference <filename>/tmp</filename> for the
@@ -1997,11 +1997,11 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    SSL certificates and make sure that clients check the server's certificate.
    To do that, the server
    must be configured to accept only <literal>hostssl</literal> connections (<xref
-   linkend="auth-pg-hba-conf">) and have SSL key and certificate files
-   (<xref linkend="ssl-tcp">). The TCP client must connect using
+   linkend="auth-pg-hba-conf"/>) and have SSL key and certificate files
+   (<xref linkend="ssl-tcp"/>). The TCP client must connect using
    <literal>sslmode=verify-ca</literal> or
    <literal>verify-full</literal> and have the appropriate root certificate
-   file installed (<xref linkend="libq-ssl-certificates">).
+   file installed (<xref linkend="libq-ssl-certificates"/>).
   </para>
  </sect1>
 
@@ -2042,7 +2042,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
 
    <listitem>
     <para>
-     The <xref linkend="pgcrypto"> module allows certain fields to be
+     The <xref linkend="pgcrypto"/> module allows certain fields to be
      stored encrypted.
      This is useful if only some of the data is sensitive.
      The client supplies the decryption key and the data is decrypted
@@ -2171,19 +2171,19 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    for increased security. This requires that
    <productname>OpenSSL</productname> is installed on both client and
    server systems and that support in <productname>PostgreSQL</productname> is
-   enabled at build time (see <xref linkend="installation">).
+   enabled at build time (see <xref linkend="installation"/>).
   </para>
 
   <para>
    With <acronym>SSL</acronym> support compiled in, the
    <productname>PostgreSQL</productname> server can be started with
    <acronym>SSL</acronym> enabled by setting the parameter
-   <xref linkend="guc-ssl"> to <literal>on</literal> in
+   <xref linkend="guc-ssl"/> to <literal>on</literal> in
    <filename>postgresql.conf</filename>.  The server will listen for both normal
    and <acronym>SSL</acronym> connections on the same TCP port, and will negotiate
    with any connecting client on whether to use <acronym>SSL</acronym>.  By
    default, this is at the client's option; see <xref
-   linkend="auth-pg-hba-conf"> about how to set up the server to require
+   linkend="auth-pg-hba-conf"/> about how to set up the server to require
    use of <acronym>SSL</acronym> for some or all connections.
   </para>
 
@@ -2201,7 +2201,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    and authentication algorithms, of varying strength.  While a list of
    ciphers can be specified in the <productname>OpenSSL</productname>
    configuration file, you can specify ciphers specifically for use by
-   the database server by modifying <xref linkend="guc-ssl-ciphers"> in
+   the database server by modifying <xref linkend="guc-ssl-ciphers"/> in
    <filename>postgresql.conf</filename>.
   </para>
 
@@ -2221,8 +2221,8 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    and private key must exist.  By default, these files are expected to be
    named <filename>server.crt</filename> and <filename>server.key</filename>, respectively, in
    the server's data directory, but other names and locations can be specified
-   using the configuration parameters <xref linkend="guc-ssl-cert-file">
-   and <xref linkend="guc-ssl-key-file">.
+   using the configuration parameters <xref linkend="guc-ssl-cert-file"/>
+   and <xref linkend="guc-ssl-key-file"/>.
   </para>
 
   <para>
@@ -2264,12 +2264,12 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    To require the client to supply a trusted certificate, place
    certificates of the certificate authorities (<acronym>CA</acronym>s)
    you trust in a file named <filename>root.crt</filename> in the data
-   directory, set the parameter <xref linkend="guc-ssl-ca-file"> in
+   directory, set the parameter <xref linkend="guc-ssl-ca-file"/> in
    <filename>postgresql.conf</filename> to <literal>root.crt</literal>,
    and add the authentication option <literal>clientcert=1</literal> to the
    appropriate <literal>hostssl</literal> line(s) in <filename>pg_hba.conf</filename>.
    A certificate will then be requested from the client during
-   SSL connection startup.  (See <xref linkend="libpq-ssl"> for a
+   SSL connection startup.  (See <xref linkend="libpq-ssl"/> for a
    description of how to set up certificates on the client.)  The server will
    verify that the client's certificate is signed by one of the trusted
    certificate authorities.
@@ -2280,7 +2280,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <filename>root.crt</filename>, the file must also contain certificate
    chains to their root <acronym>CA</acronym>s.  Certificate Revocation List
    (CRL) entries
-   are also checked if the parameter <xref linkend="guc-ssl-crl-file"> is set.
+   are also checked if the parameter <xref linkend="guc-ssl-crl-file"/> is set.
    <!-- If this URL changes replace it with a URL to www.archive.org. -->
    (See <ulink
    url="http://h71000.www7.hp.com/doc/83final/ba554_90007/ch04s02.html"></ulink>
@@ -2308,7 +2308,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    If you are setting up client certificates, you may wish to use
    the <literal>cert</literal> authentication method, so that the certificates
    control user authentication as well as providing connection security.
-   See <xref linkend="auth-cert"> for details.  (It is not necessary to
+   See <xref linkend="auth-cert"/> for details.  (It is not necessary to
    specify <literal>clientcert=1</literal> explicitly when using
    the <literal>cert</literal> authentication method.)
   </para>
@@ -2318,7 +2318,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <title>SSL Server File Usage</title>
 
    <para>
-    <xref linkend="ssl-file-usage"> summarizes the files that are
+    <xref linkend="ssl-file-usage"/> summarizes the files that are
     relevant to the SSL setup on the server.  (The shown file names are default
     names.  The locally configured names could be different.)
    </para>
@@ -2337,27 +2337,27 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
     <tbody>
 
      <row>
-      <entry><xref linkend="guc-ssl-cert-file"> (<filename>$PGDATA/server.crt</filename>)</entry>
+      <entry><xref linkend="guc-ssl-cert-file"/> (<filename>$PGDATA/server.crt</filename>)</entry>
       <entry>server certificate</entry>
       <entry>sent to client to indicate server's identity</entry>
      </row>
 
      <row>
-      <entry><xref linkend="guc-ssl-key-file"> (<filename>$PGDATA/server.key</filename>)</entry>
+      <entry><xref linkend="guc-ssl-key-file"/> (<filename>$PGDATA/server.key</filename>)</entry>
       <entry>server private key</entry>
       <entry>proves server certificate was sent by the owner; does not indicate
       certificate owner is trustworthy</entry>
      </row>
 
      <row>
-      <entry><xref linkend="guc-ssl-ca-file"></entry>
+      <entry><xref linkend="guc-ssl-ca-file"/></entry>
       <entry>trusted certificate authorities</entry>
       <entry>checks that client certificate is
       signed by a trusted certificate authority</entry>
      </row>
 
      <row>
-      <entry><xref linkend="guc-ssl-crl-file"></entry>
+      <entry><xref linkend="guc-ssl-crl-file"/></entry>
       <entry>certificates revoked by certificate authorities</entry>
       <entry>client certificate must not be on this list</entry>
      </row>
@@ -2532,7 +2532,7 @@ ssh -L 63333:db.foo.com:5432 joe@shell.foo.com
 
   <para>
    To specify a different event source name (see
-   <xref linkend="guc-event-source">), use the <literal>/n</literal>
+   <xref linkend="guc-event-source"/>), use the <literal>/n</literal>
    and <literal>/i</literal> options:
 <screen>
 <userinput>regsvr32 /n /i:<replaceable>event_source_name</replaceable> <replaceable>pgsql_library_directory</replaceable>/pgevent.dll</userinput>
@@ -2550,7 +2550,7 @@ ssh -L 63333:db.foo.com:5432 joe@shell.foo.com
   <note>
    <para>
     To enable event logging in the database server, modify
-    <xref linkend="guc-log-destination"> to include
+    <xref linkend="guc-log-destination"/> to include
     <literal>eventlog</literal> in <filename>postgresql.conf</filename>.
    </para>
   </note>

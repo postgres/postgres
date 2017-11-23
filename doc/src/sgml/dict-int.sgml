@@ -71,7 +71,7 @@ mydb# select ts_lexize('intdict', '12345678');
 </programlisting>
 
    but real-world usage will involve including it in a text search
-   configuration as described in <xref linkend="textsearch">.
+   configuration as described in <xref linkend="textsearch"/>.
    That might look like this:
 
 <programlisting>

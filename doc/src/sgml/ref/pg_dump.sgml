@@ -48,7 +48,7 @@ PostgreSQL documentation
   <para>
    <application>pg_dump</application> only dumps a single database.  To backup
    global objects that are common to all databases in a cluster, such as roles
-   and tablespaces, use <xref linkend="app-pg-dumpall">.
+   and tablespaces, use <xref linkend="app-pg-dumpall"/>.
   </para>
 
   <para>
@@ -56,7 +56,7 @@ PostgreSQL documentation
    dumps are plain-text files containing the SQL commands required
    to reconstruct the database to the state it was in at the time it was
    saved. To restore from such a script, feed it to <xref
-   linkend="app-psql">. Script files
+   linkend="app-psql"/>. Script files
    can be used to reconstruct the database even on other machines and
    other architectures; with some modifications, even on other SQL
    database products.
@@ -64,7 +64,7 @@ PostgreSQL documentation
 
   <para>
    The alternative archive file formats must be used with
-   <xref linkend="app-pgrestore"> to rebuild the database.  They
+   <xref linkend="app-pgrestore"/> to rebuild the database.  They
    allow <application>pg_restore</application> to be selective about
    what is restored, or even to reorder the items prior to being
    restored.
@@ -316,7 +316,7 @@ PostgreSQL documentation
         can write their data at the same time.
        </para>
        <para><application>pg_dump</application> will open <replaceable class="parameter">njobs</replaceable>
-        + 1 connections to the database, so make sure your <xref linkend="guc-max-connections">
+        + 1 connections to the database, so make sure your <xref linkend="guc-max-connections"/>
         setting is high enough to accommodate all connections.
        </para>
        <para>
@@ -375,11 +375,11 @@ PostgreSQL documentation
         <replaceable class="parameter">schema</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
         <application>psql</application>'s <literal>\d</literal> commands (see <xref
-        linkend="app-psql-patterns" endterm="app-psql-patterns-title">),
+        linkend="app-psql-patterns" endterm="app-psql-patterns-title"/>),
         so multiple schemas can also be selected by writing wildcard characters
         in the pattern.  When using wildcards, be careful to quote the pattern
         if needed to prevent the shell from expanding the wildcards;  see
-        <xref linkend="pg-dump-examples" endterm="pg-dump-examples-title">.
+        <xref linkend="pg-dump-examples" endterm="pg-dump-examples-title"/>.
        </para>
 
        <note>
@@ -526,11 +526,11 @@ PostgreSQL documentation
         <replaceable class="parameter">table</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
         <application>psql</application>'s <literal>\d</literal> commands (see <xref
-        linkend="app-psql-patterns" endterm="app-psql-patterns-title">),
+        linkend="app-psql-patterns" endterm="app-psql-patterns-title"/>),
         so multiple tables can also be selected by writing wildcard characters
         in the pattern.  When using wildcards, be careful to quote the pattern
         if needed to prevent the shell from expanding the wildcards;  see
-        <xref linkend="pg-dump-examples" endterm="pg-dump-examples-title">.
+        <xref linkend="pg-dump-examples" endterm="pg-dump-examples-title"/>.
        </para>
 
        <para>
@@ -712,11 +712,11 @@ PostgreSQL documentation
        <para>
         This option is relevant only when dumping the contents of a table
         which has row security.  By default, <application>pg_dump</application> will set
-        <xref linkend="guc-row-security"> to off, to ensure
+        <xref linkend="guc-row-security"/> to off, to ensure
         that all data is dumped from the table.  If the user does not have
         sufficient privileges to bypass row security, then an error is thrown.
         This parameter instructs <application>pg_dump</application> to set
-        <xref linkend="guc-row-security"> to on instead, allowing the user
+        <xref linkend="guc-row-security"/> to on instead, allowing the user
         to dump the parts of the contents of the table that they have access to.
        </para>
 
@@ -933,7 +933,7 @@ PostgreSQL documentation
         states; but do this by waiting for a point in the transaction stream
         at which no anomalies can be present, so that there isn't a risk of
         the dump failing or causing other transactions to roll back with a
-        <literal>serialization_failure</literal>.  See <xref linkend="mvcc">
+        <literal>serialization_failure</literal>.  See <xref linkend="mvcc"/>
         for more information about transaction isolation and concurrency
         control.
        </para>
@@ -965,12 +965,12 @@ PostgreSQL documentation
          <para>
           Use the specified synchronized snapshot when making a dump of the
           database (see
-          <xref linkend="functions-snapshot-synchronization-table"> for more
+          <xref linkend="functions-snapshot-synchronization-table"/> for more
           details).
          </para>
          <para>
           This option is useful when needing to synchronize the dump with
-          a logical replication slot (see <xref linkend="logicaldecoding">)
+          a logical replication slot (see <xref linkend="logicaldecoding"/>)
           or with a concurrent session.
          </para>
          <para>
@@ -1050,7 +1050,7 @@ PostgreSQL documentation
        with a valid <acronym>URI</acronym> prefix
        (<literal>postgresql://</literal>
        or <literal>postgres://</literal>), it is treated as a
-       <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"> for more information.
+       <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"/> for more information.
       </para>
       </listitem>
      </varlistentry>
@@ -1171,7 +1171,7 @@ PostgreSQL documentation
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -1184,7 +1184,7 @@ PostgreSQL documentation
    <command>SELECT</command> statements. If you have problems running
    <application>pg_dump</application>, make sure you are able to
    select information from the database using, for example, <xref
-   linkend="app-psql">.  Also, any default connection settings and environment
+   linkend="app-psql"/>.  Also, any default connection settings and environment
    variables used by the <application>libpq</application> front-end
    library will apply.
   </para>
@@ -1229,11 +1229,11 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    does not contain the statistics used by the optimizer to make
    query planning decisions.  Therefore, it is wise to run
    <command>ANALYZE</command> after restoring from a dump file
-   to ensure optimal performance; see <xref linkend="vacuum-for-statistics">
-   and <xref linkend="autovacuum"> for more information.
+   to ensure optimal performance; see <xref linkend="vacuum-for-statistics"/>
+   and <xref linkend="autovacuum"/> for more information.
    The dump file also does not
    contain any <command>ALTER DATABASE ... SET</command> commands;
-   these settings are dumped by <xref linkend="app-pg-dumpall">,
+   these settings are dumped by <xref linkend="app-pg-dumpall"/>,
    along with database users and other installation-wide settings.
   </para>
 
@@ -1374,7 +1374,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    To specify an upper-case or mixed-case name in <option>-t</option> and related
    switches, you need to double-quote the name; else it will be folded to
    lower case (see <xref
-   linkend="app-psql-patterns" endterm="app-psql-patterns-title">).  But
+   linkend="app-psql-patterns" endterm="app-psql-patterns-title"/>).  But
    double quotes are special to the shell, so in turn they must be quoted.
    Thus, to dump a single table with a mixed-case name, you need something
    like
@@ -1389,9 +1389,9 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-pg-dumpall"></member>
-   <member><xref linkend="app-pgrestore"></member>
-   <member><xref linkend="app-psql"></member>
+   <member><xref linkend="app-pg-dumpall"/></member>
+   <member><xref linkend="app-pgrestore"/></member>
+   <member><xref linkend="app-psql"/></member>
   </simplelist>
  </refsect1>
 

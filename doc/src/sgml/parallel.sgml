@@ -64,10 +64,10 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     worker processes</link> equal to the number
     of workers chosen by the planner.  The number of background workers that
     the planner will consider using is limited to at most
-    <xref linkend="guc-max-parallel-workers-per-gather">.  The total number
+    <xref linkend="guc-max-parallel-workers-per-gather"/>.  The total number
     of background workers that can exist at any one time is limited by both
-    <xref linkend="guc-max-worker-processes"> and
-    <xref linkend="guc-max-parallel-workers">.  Therefore, it is possible for a
+    <xref linkend="guc-max-worker-processes"/> and
+    <xref linkend="guc-max-parallel-workers"/>.  Therefore, it is possible for a
     parallel query to run with fewer workers than planned, or even with
     no workers at all.  The optimal plan may depend on the number of workers
     that are available, so this can result in poor query performance.  If this
@@ -118,7 +118,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
   <itemizedlist>
     <listitem>
       <para>
-        <xref linkend="guc-max-parallel-workers-per-gather"> must be set to a
+        <xref linkend="guc-max-parallel-workers-per-gather"/> must be set to a
         value which is greater than zero. This is a special case of the more
         general principle that no more workers should be used than the number
         configured via <varname>max_parallel_workers_per_gather</varname>.
@@ -127,7 +127,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
     <listitem>
       <para>
-        <xref linkend="guc-dynamic-shared-memory-type"> must be set to a
+        <xref linkend="guc-dynamic-shared-memory-type"/> must be set to a
         value other than <literal>none</literal>.  Parallel query requires dynamic
         shared memory in order to pass data between cooperating processes.
       </para>
@@ -178,7 +178,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         Most system-defined functions are <literal>PARALLEL SAFE</literal>,
         but user-defined functions are marked <literal>PARALLEL
         UNSAFE</literal> by default. See the discussion of
-        <xref linkend="parallel-safety">.
+        <xref linkend="parallel-safety"/>.
       </para>
     </listitem>
 
@@ -215,7 +215,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
       <para>
         No background workers can be obtained because of the limitation that
         the total number of background workers cannot exceed
-        <xref linkend="guc-max-worker-processes">.
+        <xref linkend="guc-max-worker-processes"/>.
       </para>
     </listitem>
 
@@ -223,7 +223,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
       <para>
         No background workers can be obtained because of the limitation that
         the total number of background workers launched for purposes of
-        parallel query cannot exceed <xref linkend="guc-max-parallel-workers">.
+        parallel query cannot exceed <xref linkend="guc-max-parallel-workers"/>.
       </para>
     </listitem>
 
@@ -236,7 +236,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         send such a message, this can only occur when using a client that
         does not rely on libpq.  If this is a frequent
         occurrence, it may be a good idea to set
-        <xref linkend="guc-max-parallel-workers-per-gather"> to zero in
+        <xref linkend="guc-max-parallel-workers-per-gather"/> to zero in
         sessions where it is likely, so as to avoid generating query plans
         that may be suboptimal when run serially.
       </para>
@@ -374,7 +374,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     must be <link linkend="parallel-safety">safe</link> for parallelism and must
     have a combine function.  If the aggregate has a transition state of type
     <literal>internal</literal>, it must have serialization and deserialization
-    functions.  See <xref linkend="sql-createaggregate"> for more details.
+    functions.  See <xref linkend="sql-createaggregate"/> for more details.
     Parallel aggregation is not supported if any aggregate function call
     contains <literal>DISTINCT</literal> or <literal>ORDER BY</literal> clause and is also
     not supported for ordered set aggregates or when  the query involves
@@ -389,15 +389,15 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
   <para>
     If a query that is expected to do so does not produce a parallel plan,
-    you can try reducing <xref linkend="guc-parallel-setup-cost"> or
-    <xref linkend="guc-parallel-tuple-cost">.  Of course, this plan may turn
+    you can try reducing <xref linkend="guc-parallel-setup-cost"/> or
+    <xref linkend="guc-parallel-tuple-cost"/>.  Of course, this plan may turn
     out to be slower than the serial plan which the planner preferred, but
     this will not always be the case.  If you don't get a parallel
     plan even with very small values of these settings (e.g. after setting
     them both to zero), there may be some reason why the query planner is
     unable to generate a parallel plan for your query.  See
-    <xref linkend="when-can-parallel-query-be-used"> and
-    <xref linkend="parallel-safety"> for information on why this may be
+    <xref linkend="when-can-parallel-query-be-used"/> and
+    <xref linkend="parallel-safety"/> for information on why this may be
     the case.
   </para>
 
@@ -473,11 +473,11 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     where it conceivably be done, we do not try, since this would be expensive
     and error-prone.  Instead, all user-defined functions are assumed to
     be parallel unsafe unless otherwise marked.  When using
-    <xref linkend="sql-createfunction"> or
-    <xref linkend="sql-alterfunction">, markings can be set by specifying
+    <xref linkend="sql-createfunction"/> or
+    <xref linkend="sql-alterfunction"/>, markings can be set by specifying
     <literal>PARALLEL SAFE</literal>, <literal>PARALLEL RESTRICTED</literal>, or
     <literal>PARALLEL UNSAFE</literal> as appropriate.  When using
-    <xref linkend="sql-createaggregate">, the
+    <xref linkend="sql-createaggregate"/>, the
     <literal>PARALLEL</literal> option can be specified with <literal>SAFE</literal>,
     <literal>RESTRICTED</literal>, or <literal>UNSAFE</literal> as the corresponding value.
   </para>

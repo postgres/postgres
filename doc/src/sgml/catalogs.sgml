@@ -27,7 +27,7 @@
   <title>Overview</title>
 
   <para>
-   <xref linkend="catalog-table"> lists the system catalogs.
+   <xref linkend="catalog-table"/> lists the system catalogs.
    More detailed documentation of each catalog follows below.
   </para>
 
@@ -567,8 +567,8 @@
 
   <para>
    New aggregate functions are registered with the <xref
-   linkend="sql-createaggregate">
-   command.  See <xref linkend="xaggr"> for more information about
+   linkend="sql-createaggregate"/>
+   command.  See <xref linkend="xaggr"/> for more information about
    writing aggregate functions and the meaning of the transition
    functions, etc.
   </para>
@@ -588,7 +588,7 @@
    relation access methods.  There is one row for each access method supported
    by the system.
    Currently, only indexes have access methods.  The requirements for index
-   access methods are discussed in detail in <xref linkend="indexam">.
+   access methods are discussed in detail in <xref linkend="indexam"/>.
   </para>
 
   <table>
@@ -649,7 +649,7 @@
     methods.  That data is now only directly visible at the C code level.
     However, <function>pg_index_column_has_property()</function> and related
     functions have been added to allow SQL queries to inspect index access
-    method properties; see <xref linkend="functions-info-catalog-table">.
+    method properties; see <xref linkend="functions-info-catalog-table"/>.
    </para>
   </note>
 
@@ -1034,7 +1034,7 @@
       <entry>
        <structfield>attstattarget</structfield> controls the level of detail
        of statistics accumulated for this column by
-       <xref linkend="sql-analyze">.
+       <xref linkend="sql-analyze"/>.
        A zero value indicates that no statistics should be collected.
        A negative value says to use the system default statistics target.
        The exact meaning of positive values is data type-dependent.
@@ -1270,7 +1270,7 @@
   </para>
 
   <para>
-   <xref linkend="user-manag"> contains detailed information about user and
+   <xref linkend="user-manag"/> contains detailed information about user and
    privilege management.
   </para>
 
@@ -1356,7 +1356,7 @@
       <entry><type>bool</type></entry>
       <entry>
        Role bypasses every row level security policy, see
-       <xref linkend="ddl-rowsecurity"> for more information.
+       <xref linkend="ddl-rowsecurity"/> for more information.
       </entry>
      </row>
 
@@ -1964,8 +1964,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -2015,7 +2015,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    The catalog <structname>pg_collation</structname> describes the
    available collations, which are essentially mappings from an SQL
    name to operating system locale categories.
-   See <xref linkend="collation"> for more information.
+   See <xref linkend="collation"/> for more information.
   </para>
 
   <table>
@@ -2424,7 +2424,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_conversion</structname> describes
-   encoding conversion procedures.  See <xref linkend="sql-createconversion">
+   encoding conversion procedures.  See <xref linkend="sql-createconversion"/>
    for more information.
   </para>
 
@@ -2516,8 +2516,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_database</structname> stores information about
    the available databases.  Databases are created with the <xref
-   linkend="sql-createdatabase"> command.
-   Consult <xref linkend="managing-databases"> for details about the meaning
+   linkend="sql-createdatabase"/> command.
+   Consult <xref linkend="managing-databases"/> for details about the meaning
    of some of the parameters.
   </para>
 
@@ -2675,8 +2675,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -3053,7 +3053,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_description</structname> stores optional descriptions
    (comments) for each database object.  Descriptions can be manipulated
-   with the <xref linkend="sql-comment"> command and viewed with
+   with the <xref linkend="sql-comment"/> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
    Descriptions of many built-in system objects are provided in the initial
    contents of <structname>pg_description</structname>.
@@ -3208,7 +3208,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_event_trigger</structname> stores event triggers.
-   See <xref linkend="event-triggers"> for more information.
+   See <xref linkend="event-triggers"/> for more information.
   </para>
 
   <table>
@@ -3258,7 +3258,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       Controls in which <xref linkend="guc-session-replication-role"> modes
+       Controls in which <xref linkend="guc-session-replication-role"/> modes
        the event trigger fires.
        <literal>O</literal> = trigger fires in <quote>origin</quote> and <quote>local</quote> modes,
        <literal>D</literal> = trigger is disabled,
@@ -3291,7 +3291,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_extension</structname> stores information
-   about the installed extensions.  See <xref linkend="extend-extensions">
+   about the installed extensions.  See <xref linkend="extend-extensions"/>
    for details about extensions.
   </para>
 
@@ -3463,8 +3463,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -3559,8 +3559,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -4011,8 +4011,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        The initial access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -4034,8 +4034,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_language</structname> registers
    languages in which you can write functions or stored procedures.
-   See <xref linkend="sql-createlanguage">
-   and <xref linkend="xplang"> for more information about language handlers.
+   See <xref linkend="sql-createlanguage"/>
+   and <xref linkend="xplang"/> for more information about language handlers.
   </para>
 
   <table>
@@ -4117,7 +4117,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry>
        This references a function that is responsible for executing
        <quote>inline</quote> anonymous code blocks
-       (<xref linkend="sql-do"> blocks).
+       (<xref linkend="sql-do"/> blocks).
        Zero if inline blocks are not supported.
       </entry>
      </row>
@@ -4139,8 +4139,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -4279,8 +4279,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -4346,8 +4346,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -4377,7 +4377,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
-   Operator classes are described at length in <xref linkend="xindex">.
+   Operator classes are described at length in <xref linkend="xindex"/>.
   </para>
 
   <table>
@@ -4481,8 +4481,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_operator</structname> stores information about operators.
-   See <xref linkend="sql-createoperator">
-   and <xref linkend="xoper"> for more information.
+   See <xref linkend="sql-createoperator"/>
+   and <xref linkend="xoper"/> for more information.
   </para>
 
   <table>
@@ -4639,7 +4639,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
-   Operator families are described at length in <xref linkend="xindex">.
+   Operator families are described at length in <xref linkend="xindex"/>.
   </para>
 
   <table>
@@ -5040,8 +5040,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_proc</structname> stores information about functions (or procedures).
-   See <xref linkend="sql-createfunction">
-   and <xref linkend="xfunc"> for more information.
+   See <xref linkend="sql-createfunction"/>
+   and <xref linkend="xfunc"/> for more information.
   </para>
 
   <para>
@@ -5106,7 +5106,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>float4</type></entry>
       <entry></entry>
       <entry>Estimated execution cost (in units of
-       <xref linkend="guc-cpu-operator-cost">); if <structfield>proretset</structfield>,
+       <xref linkend="guc-cpu-operator-cost"/>); if <structfield>proretset</structfield>,
        this is cost per row returned</entry>
      </row>
 
@@ -5130,7 +5130,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Calls to this function can be simplified by this other function
-       (see <xref linkend="xfunc-transform-functions">)</entry>
+       (see <xref linkend="xfunc-transform-functions"/>)</entry>
      </row>
 
      <row>
@@ -5359,8 +5359,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -5390,7 +5390,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_publication</structname> contains all
    publications created in the database.  For more on publications see
-   <xref linkend="logical-replication-publication">.
+   <xref linkend="logical-replication-publication"/>.
   </para>
 
   <table>
@@ -5475,7 +5475,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_publication_rel</structname> contains the
    mapping between relations and publications in the database.  This is a
-   many-to-many mapping.  See also <xref linkend="view-pg-publication-tables">
+   many-to-many mapping.  See also <xref linkend="view-pg-publication-tables"/>
    for a more user-friendly view of this information.
   </para>
 
@@ -5605,7 +5605,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The <structname>pg_replication_origin</structname> catalog contains
    all replication origins created.  For more on replication origins
-   see <xref linkend="replication-origins">.
+   see <xref linkend="replication-origins"/>.
   </para>
 
   <table>
@@ -5705,7 +5705,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       Controls in which <xref linkend="guc-session-replication-role"> modes
+       Controls in which <xref linkend="guc-session-replication-role"/> modes
        the rule fires.
        <literal>O</literal> = rule fires in <quote>origin</quote> and <quote>local</quote> modes,
        <literal>D</literal> = rule is disabled,
@@ -5765,8 +5765,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_seclabel</structname> stores security
    labels on database objects.  Security labels can be manipulated
-   with the <xref linkend="sql-security-label"> command.  For an easier
-   way to view security labels, see <xref linkend="view-pg-seclabels">.
+   with the <xref linkend="sql-security-label"/> command.  For an easier
+   way to view security labels, see <xref linkend="view-pg-seclabels"/>.
   </para>
 
   <para>
@@ -6093,7 +6093,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_shdescription</structname> stores optional
    descriptions (comments) for shared database objects.  Descriptions can be
-   manipulated with the <xref linkend="sql-comment"> command and viewed with
+   manipulated with the <xref linkend="sql-comment"/> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
   </para>
 
@@ -6160,8 +6160,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_shseclabel</structname> stores security
    labels on shared database objects.  Security labels can be manipulated
-   with the <xref linkend="sql-security-label"> command.  For an easier
-   way to view security labels, see <xref linkend="view-pg-seclabels">.
+   with the <xref linkend="sql-security-label"/> command.  For an easier
+   way to view security labels, see <xref linkend="view-pg-seclabels"/>.
   </para>
 
   <para>
@@ -6228,7 +6228,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_statistic</structname> stores
    statistical data about the contents of the database.  Entries are
-   created by <xref linkend="sql-analyze">
+   created by <xref linkend="sql-analyze"/>
    and subsequently used by the query planner.  Note that all the
    statistical data is inherently approximate, even assuming that it
    is up-to-date.
@@ -6408,7 +6408,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    The catalog <structname>pg_statistic_ext</structname>
    holds extended planner statistics.
    Each row in this catalog corresponds to a <firstterm>statistics object</firstterm>
-   created with <xref linkend="sql-createstatistics">.
+   created with <xref linkend="sql-createstatistics"/>.
   </para>
 
   <table>
@@ -6521,7 +6521,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_subscription</structname> contains all existing
    logical replication subscriptions.  For more information about logical
-   replication see <xref linkend="logical-replication">.
+   replication see <xref linkend="logical-replication"/>.
   </para>
 
   <para>
@@ -6616,7 +6616,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>Array of subscribed publication names. These reference the
        publications on the publisher server. For more on publications
-       see <xref linkend="logical-replication-publication">.
+       see <xref linkend="logical-replication-publication"/>.
       </entry>
      </row>
     </tbody>
@@ -6758,8 +6758,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -6788,7 +6788,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_transform</structname> stores information about
    transforms, which are a mechanism to adapt data types to procedural
-   languages.  See <xref linkend="sql-createtransform"> for more information.
+   languages.  See <xref linkend="sql-createtransform"/> for more information.
   </para>
 
   <table>
@@ -6856,7 +6856,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_trigger</structname> stores triggers on tables
    and views.
-   See <xref linkend="sql-createtrigger">
+   See <xref linkend="sql-createtrigger"/>
    for more information.
   </para>
 
@@ -6914,7 +6914,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       Controls in which <xref linkend="guc-session-replication-role"> modes
+       Controls in which <xref linkend="guc-session-replication-role"/> modes
        the trigger fires.
        <literal>O</literal> = trigger fires in <quote>origin</quote> and <quote>local</quote> modes,
        <literal>D</literal> = trigger is disabled,
@@ -7066,7 +7066,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    <productname>PostgreSQL</productname>'s text search features are
-   described at length in <xref linkend="textsearch">.
+   described at length in <xref linkend="textsearch"/>.
   </para>
 
   <table>
@@ -7141,7 +7141,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    <productname>PostgreSQL</productname>'s text search features are
-   described at length in <xref linkend="textsearch">.
+   described at length in <xref linkend="textsearch"/>.
   </para>
 
   <table>
@@ -7212,7 +7212,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    <productname>PostgreSQL</productname>'s text search features are
-   described at length in <xref linkend="textsearch">.
+   described at length in <xref linkend="textsearch"/>.
   </para>
 
   <table>
@@ -7295,7 +7295,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    <productname>PostgreSQL</productname>'s text search features are
-   described at length in <xref linkend="textsearch">.
+   described at length in <xref linkend="textsearch"/>.
   </para>
 
   <table>
@@ -7392,7 +7392,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    <productname>PostgreSQL</productname>'s text search features are
-   described at length in <xref linkend="textsearch">.
+   described at length in <xref linkend="textsearch"/>.
   </para>
 
   <table>
@@ -7461,9 +7461,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_type</structname> stores information about data
    types.  Base types and enum types (scalar types) are created with
-   <xref linkend="sql-createtype">, and
+   <xref linkend="sql-createtype"/>, and
    domains with
-   <xref linkend="sql-createdomain">.
+   <xref linkend="sql-createdomain"/>.
    A composite type is automatically created for each table in the database, to
    represent the row structure of the table.  It is also possible to create
    composite types with <command>CREATE TYPE AS</command>.
@@ -7567,7 +7567,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>typcategory</structfield> is an arbitrary classification
        of data types that is used by the parser to determine which implicit
        casts should be <quote>preferred</quote>.
-       See <xref linkend="catalog-typcategory-table">.
+       See <xref linkend="catalog-typcategory-table"/>.
       </entry>
      </row>
 
@@ -7871,8 +7871,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant"> and
-       <xref linkend="sql-revoke">
+       <xref linkend="sql-grant"/> and
+       <xref linkend="sql-revoke"/>
        for details
       </entry>
      </row>
@@ -7881,7 +7881,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </table>
 
   <para>
-   <xref linkend="catalog-typcategory-table"> lists the system-defined values
+   <xref linkend="catalog-typcategory-table"/> lists the system-defined values
    of <structfield>typcategory</structfield>.  Any future additions to this list will
    also be upper-case ASCII letters.  All other ASCII characters are reserved
    for user-defined categories.
@@ -8043,7 +8043,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
-   The information schema (<xref linkend="information-schema">) provides
+   The information schema (<xref linkend="information-schema"/>) provides
    an alternative set of views which overlap the functionality of the system
    views.  Since the information schema is SQL-standard whereas the views
    described here are <productname>PostgreSQL</productname>-specific,
@@ -8052,11 +8052,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
-   <xref linkend="view-table"> lists the system views described here.
+   <xref linkend="view-table"/> lists the system views described here.
    More detailed documentation of each view follows below.
    There are some additional views that provide access to the results of
    the statistics collector; they are described in <xref
-   linkend="monitoring-stats-views-table">.
+   linkend="monitoring-stats-views-table"/>.
   </para>
 
   <para>
@@ -8389,7 +8389,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    be used by software packages that want to interface to
    <productname>PostgreSQL</productname> to facilitate finding the required header
    files and libraries. It provides the same basic information as the
-   <xref linkend="app-pgconfig"> <productname>PostgreSQL</productname> client
+   <xref linkend="app-pgconfig"/> <productname>PostgreSQL</productname> client
    application.
   </para>
 
@@ -8440,7 +8440,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    <itemizedlist>
     <listitem>
      <para>
-      via the <xref linkend="sql-declare">
+      via the <xref linkend="sql-declare"/>
       statement in SQL
      </para>
     </listitem>
@@ -8448,14 +8448,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
     <listitem>
      <para>
       via the Bind message in the frontend/backend protocol, as
-      described in <xref linkend="protocol-flow-ext-query">
+      described in <xref linkend="protocol-flow-ext-query"/>
      </para>
     </listitem>
 
     <listitem>
      <para>
       via the Server Programming Interface (SPI), as described in
-      <xref linkend="spi-interface">
+      <xref linkend="spi-interface"/>
      </para>
     </listitem>
    </itemizedlist>
@@ -8648,7 +8648,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
-   See <xref linkend="config-setting"> for more information about the various
+   See <xref linkend="config-setting"/> for more information about the various
    ways to change run-time parameters.
   </para>
 
@@ -8813,7 +8813,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
-   See <xref linkend="client-authentication"> for more information about
+   See <xref linkend="client-authentication"/> for more information about
    client authentication configuration.
   </para>
  </sect1>
@@ -8890,7 +8890,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The view <structname>pg_locks</structname> provides access to
    information about the locks held by active processes within the
-   database server.  See <xref linkend="mvcc"> for more discussion
+   database server.  See <xref linkend="mvcc"/> for more discussion
    of locking.
   </para>
 
@@ -9053,7 +9053,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>Name of the lock mode held or desired by this process (see <xref
-      linkend="locking-tables"> and <xref linkend="xact-serializable">)</entry>
+      linkend="locking-tables"/> and <xref linkend="xact-serializable"/>)</entry>
      </row>
      <row>
       <entry><structfield>granted</structfield></entry>
@@ -9164,7 +9164,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    queues, nor information about which processes are parallel workers running
    on behalf of which other client sessions.  It is better to use
    the <function>pg_blocking_pids()</function> function
-   (see <xref linkend="functions-info-session-table">) to identify which
+   (see <xref linkend="functions-info-session-table"/>) to identify which
    process(es) a waiting process is blocked behind.
   </para>
 
@@ -9369,7 +9369,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    The <structname>pg_prepared_statements</structname> view displays
    all the prepared statements that are available in the current
-   session. See <xref linkend="sql-prepare"> for more information about prepared
+   session. See <xref linkend="sql-prepare"/> for more information about prepared
    statements.
   </para>
 
@@ -9377,7 +9377,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    <structname>pg_prepared_statements</structname> contains one row
    for each prepared statement. Rows are added to the view when a new
    prepared statement is created and removed when a prepared statement
-   is released (for example, via the <xref linkend="sql-deallocate"> command).
+   is released (for example, via the <xref linkend="sql-deallocate"/> command).
   </para>
 
   <table>
@@ -9457,7 +9457,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    The view <structname>pg_prepared_xacts</structname> displays
    information about transactions that are currently prepared for two-phase
-   commit (see <xref linkend="sql-prepare-transaction"> for details).
+   commit (see <xref linkend="sql-prepare-transaction"/> for details).
   </para>
 
   <para>
@@ -9601,7 +9601,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    The <structname>pg_replication_origin_status</structname> view
    contains information about how far replay for a certain origin has
    progressed.  For more on replication origins
-   see <xref linkend="replication-origins">.
+   see <xref linkend="replication-origins"/>.
   </para>
 
   <table>
@@ -9670,7 +9670,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    For more on replication slots,
-   see <xref linkend="streaming-replication-slots"> and <xref linkend="logicaldecoding">.
+   see <xref linkend="streaming-replication-slots"/> and <xref linkend="logicaldecoding"/>.
   </para>
 
   <table>
@@ -9917,7 +9917,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry></entry>
       <entry>
        Role bypasses every row level security policy, see
-       <xref linkend="ddl-rowsecurity"> for more information.
+       <xref linkend="ddl-rowsecurity"/> for more information.
       </entry>
      </row>
 
@@ -10203,8 +10203,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    The view <structname>pg_settings</structname> provides access to
    run-time parameters of the server.  It is essentially an alternative
-   interface to the <xref linkend="sql-show">
-   and <xref linkend="sql-set"> commands.
+   interface to the <xref linkend="sql-show"/>
+   and <xref linkend="sql-set"/> commands.
    It also provides access to some facts about each parameter that are
    not directly available from <command>SHOW</command>, such as minimum and
    maximum values.
@@ -10441,7 +10441,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </variablelist>
 
   <para>
-   See <xref linkend="config-setting"> for more information about the various
+   See <xref linkend="config-setting"/> for more information about the various
    ways to change these parameters.
   </para>
 
@@ -10449,7 +10449,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    The <structname>pg_settings</structname> view cannot be inserted into or
    deleted from, but it can be updated.  An <command>UPDATE</command> applied
    to a row of <structname>pg_settings</structname> is equivalent to executing
-   the <xref linkend="sql-set"> command on that named
+   the <xref linkend="sql-set"/> command on that named
    parameter. The change only affects the value used by the current
    session. If an <command>UPDATE</command> is issued within a transaction
    that is later aborted, the effects of the <command>UPDATE</command> command
@@ -10543,7 +10543,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry></entry>
       <entry>
        User bypasses every row level security policy, see
-       <xref linkend="ddl-rowsecurity"> for more information.
+       <xref linkend="ddl-rowsecurity"/> for more information.
       </entry>
      </row>
 
@@ -10763,7 +10763,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    The maximum number of entries in the array fields can be controlled on a
    column-by-column basis using the <command>ALTER TABLE SET STATISTICS</command>
    command, or globally by setting the
-   <xref linkend="guc-default-statistics-target"> run-time parameter.
+   <xref linkend="guc-default-statistics-target"/> run-time parameter.
   </para>
 
  </sect1>
@@ -10858,7 +10858,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    The view <structname>pg_timezone_abbrevs</structname> provides a list
    of time zone abbreviations that are currently recognized by the datetime
    input routines.  The contents of this view change when the
-   <xref linkend="guc-timezone-abbreviations"> run-time parameter is modified.
+   <xref linkend="guc-timezone-abbreviations"/> run-time parameter is modified.
   </para>
 
   <table>
@@ -10895,7 +10895,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    While most timezone abbreviations represent fixed offsets from UTC,
    there are some that have historically varied in value
-   (see <xref linkend="datetime-config-files"> for more information).
+   (see <xref linkend="datetime-config-files"/> for more information).
    In such cases this view presents their current meaning.
   </para>
 
@@ -11025,7 +11025,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>bool</type></entry>
       <entry>
        User bypasses every row level security policy, see
-       <xref linkend="ddl-rowsecurity"> for more information.
+       <xref linkend="ddl-rowsecurity"/> for more information.
       </entry>
      </row>
 

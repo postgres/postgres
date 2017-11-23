@@ -45,7 +45,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
   <para>
    To create a database, you must be a superuser or have the special
    <literal>CREATEDB</literal> privilege.
-   See <xref linkend="sql-createrole">.
+   See <xref linkend="sql-createrole"/>.
   </para>
 
   <para>
@@ -106,7 +106,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         to use the default encoding (namely, the encoding of the
         template database). The character sets supported by the
         <productname>PostgreSQL</productname> server are described in
-        <xref linkend="multibyte-charset-supported">. See below for
+        <xref linkend="multibyte-charset-supported"/>. See below for
         additional restrictions.
        </para>
       </listitem>
@@ -143,7 +143,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         template database's tablespace. This
         tablespace will be the default tablespace used for objects
         created in this database. See
-        <xref linkend="sql-createtablespace">
+        <xref linkend="sql-createtablespace"/>
         for more information.
        </para>
       </listitem>
@@ -203,17 +203,17 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
    </para>
 
    <para>
-    Use <xref linkend="sql-dropdatabase"> to remove a database.
+    Use <xref linkend="sql-dropdatabase"/> to remove a database.
    </para>
 
    <para>
-    The program <xref linkend="app-createdb"> is a
+    The program <xref linkend="app-createdb"/> is a
     wrapper program around this command, provided for convenience.
    </para>
 
    <para>
     Database-level configuration parameters (set via <xref
-    linkend="sql-alterdatabase">) are not copied from the template
+    linkend="sql-alterdatabase"/>) are not copied from the template
     database.
    </para>
 
@@ -226,7 +226,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
    DATABASE</command> will fail if any other connection exists when it starts;
    otherwise, new connections to the template database are locked out
    until <command>CREATE DATABASE</command> completes.
-   See <xref linkend="manage-ag-templatedbs"> for more information.
+   See <xref linkend="manage-ag-templatedbs"/> for more information.
   </para>
 
   <para>
@@ -328,8 +328,8 @@ CREATE DATABASE music2
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterdatabase"></member>
-   <member><xref linkend="sql-dropdatabase"></member>
+   <member><xref linkend="sql-alterdatabase"/></member>
+   <member><xref linkend="sql-dropdatabase"/></member>
   </simplelist>
  </refsect1>
 

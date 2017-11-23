@@ -72,7 +72,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     can improve performance by creating an index on just that portion.
     Another possible application is to use <literal>WHERE</literal> with
     <literal>UNIQUE</literal> to enforce uniqueness over a subset of a
-    table.  See <xref linkend="indexes-partial"> for more discussion.
+    table.  See <xref linkend="indexes-partial"/> for more discussion.
   </para>
 
   <para>
@@ -121,7 +121,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
         locks out writes (but not reads) on the table until it's done.
         There are several caveats to be aware of when using this option
         &mdash; see <xref linkend="sql-createindex-concurrently"
-        endterm="sql-createindex-concurrently-title">.
+        endterm="sql-createindex-concurrently-title"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -259,7 +259,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
       <listitem>
        <para>
         The name of an index-method-specific storage parameter.  See
-        <xref linkend="sql-createindex-storage-parameters" endterm="sql-createindex-storage-parameters-title">
+        <xref linkend="sql-createindex-storage-parameters" endterm="sql-createindex-storage-parameters-title"/>
         for details.
        </para>
       </listitem>
@@ -270,8 +270,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
       <listitem>
        <para>
         The tablespace in which to create the index.  If not specified,
-        <xref linkend="guc-default-tablespace"> is consulted, or
-        <xref linkend="guc-temp-tablespaces"> for indexes on temporary
+        <xref linkend="guc-default-tablespace"/> is consulted, or
+        <xref linkend="guc-temp-tablespaces"/> for indexes on temporary
         tables.
        </para>
       </listitem>
@@ -331,10 +331,10 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     <listitem>
     <para>
      Determines whether the buffering build technique described in
-     <xref linkend="gist-buffering-build"> is used to build the index. With
+     <xref linkend="gist-buffering-build"/> is used to build the index. With
      <literal>OFF</literal> it is disabled, with <literal>ON</literal> it is enabled, and
      with <literal>AUTO</literal> it is initially disabled, but turned on
-     on-the-fly once the index size reaches <xref linkend="guc-effective-cache-size">. The default is <literal>AUTO</literal>.
+     on-the-fly once the index size reaches <xref linkend="guc-effective-cache-size"/>. The default is <literal>AUTO</literal>.
     </para>
     </listitem>
    </varlistentry>
@@ -350,10 +350,10 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     <listitem>
     <para>
      This setting controls usage of the fast update technique described in
-     <xref linkend="gin-fast-update">.  It is a Boolean parameter:
+     <xref linkend="gin-fast-update"/>.  It is a Boolean parameter:
      <literal>ON</literal> enables fast update, <literal>OFF</literal> disables it.
      (Alternative spellings of <literal>ON</literal> and <literal>OFF</literal> are
-     allowed as described in <xref linkend="config-setting">.)  The
+     allowed as described in <xref linkend="config-setting"/>.)  The
      default is <literal>ON</literal>.
     </para>
 
@@ -374,7 +374,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     <term><literal>gin_pending_list_limit</literal></term>
     <listitem>
     <para>
-     Custom <xref linkend="guc-gin-pending-list-limit"> parameter.
+     Custom <xref linkend="guc-gin-pending-list-limit"/> parameter.
      This value is specified in kilobytes.
     </para>
     </listitem>
@@ -391,7 +391,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     <listitem>
     <para>
      Defines the number of table blocks that make up one block range for
-     each entry of a <acronym>BRIN</acronym> index (see <xref linkend="brin-intro">
+     each entry of a <acronym>BRIN</acronym> index (see <xref linkend="brin-intro"/>
      for more details).  The default is <literal>128</literal>.
     </para>
     </listitem>
@@ -450,7 +450,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     two more transactions.  Before each table scan, the index build must
     wait for existing transactions that have modified the table to terminate.
     After the second scan, the index build must wait for any transactions
-    that have a snapshot (see <xref linkend="mvcc">) predating the second
+    that have a snapshot (see <xref linkend="mvcc"/>) predating the second
     scan to terminate.  Then finally the index can be marked ready for use,
     and the <command>CREATE INDEX</command> command terminates.
     Even then, however, the index may not be immediately usable for queries:
@@ -515,7 +515,7 @@ Indexes:
   <title>Notes</title>
 
   <para>
-   See <xref linkend="indexes"> for information about when indexes can
+   See <xref linkend="indexes"/> for information about when indexes can
    be used, when they are not used, and in which particular situations
    they can be useful.
   </para>
@@ -541,8 +541,8 @@ Indexes:
    type either by absolute value or by real part. We could do this by
    defining two operator classes for the data type and then selecting
    the proper class when making an index.  More information about
-   operator classes is in <xref linkend="indexes-opclass"> and in <xref
-   linkend="xindex">.
+   operator classes is in <xref linkend="indexes-opclass"/> and in <xref
+   linkend="xindex"/>.
   </para>
 
   <para>
@@ -562,14 +562,14 @@ Indexes:
 
   <para>
    For most index methods, the speed of creating an index is
-   dependent on the setting of <xref linkend="guc-maintenance-work-mem">.
+   dependent on the setting of <xref linkend="guc-maintenance-work-mem"/>.
    Larger values will reduce the time needed for index creation, so long
    as you don't make it larger than the amount of memory really available,
    which would drive the machine into swapping.
   </para>
 
   <para>
-   Use <xref linkend="sql-dropindex">
+   Use <xref linkend="sql-dropindex"/>
    to remove an index.
   </para>
 
@@ -675,8 +675,8 @@ CREATE INDEX CONCURRENTLY sales_quantity_index ON sales_table (quantity);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterindex"></member>
-   <member><xref linkend="sql-dropindex"></member>
+   <member><xref linkend="sql-alterindex"/></member>
+   <member><xref linkend="sql-dropindex"/></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -343,8 +343,8 @@ ALTER SEQUENCE serial RESTART WITH 105;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createsequence"></member>
-   <member><xref linkend="sql-dropsequence"></member>
+   <member><xref linkend="sql-createsequence"/></member>
+   <member><xref linkend="sql-dropsequence"/></member>
   </simplelist>
  </refsect1>
 

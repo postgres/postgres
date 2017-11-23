@@ -154,8 +154,8 @@ ALTER OPERATOR &amp;&amp; (_int4, _int4) SET (RESTRICT = _int_contsel, JOIN = _i
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createoperator"></member>
-   <member><xref linkend="sql-dropoperator"></member>
+   <member><xref linkend="sql-createoperator"/></member>
+   <member><xref linkend="sql-dropoperator"/></member>
   </simplelist>
  </refsect1>
 </refentry>

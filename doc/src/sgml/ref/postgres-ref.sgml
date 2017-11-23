@@ -51,8 +51,8 @@ PostgreSQL documentation
    <option>-D</option> option or the <envar>PGDATA</envar> environment
    variable; there is no default.  Typically, <option>-D</option> or
    <envar>PGDATA</envar> points directly to the data area directory
-   created by <xref linkend="app-initdb">.  Other possible file layouts are
-   discussed in <xref linkend="runtime-config-file-locations">.
+   created by <xref linkend="app-initdb"/>.  Other possible file layouts are
+   discussed in <xref linkend="runtime-config-file-locations"/>.
   </para>
 
   <para>
@@ -65,7 +65,7 @@ PostgreSQL documentation
   <para>
    The <command>postgres</command> command can also be called in
    single-user mode.  The primary use for this mode is during
-   bootstrapping by <xref linkend="app-initdb">.  Sometimes it is used
+   bootstrapping by <xref linkend="app-initdb"/>.  Sometimes it is used
    for debugging or disaster recovery;  note that running a single-user
    server is not truly suitable for debugging the server, since no
    realistic interprocess communication and locking will happen.
@@ -87,7 +87,7 @@ PostgreSQL documentation
    <para>
     <command>postgres</command> accepts the following command-line
     arguments.  For a detailed discussion of the options consult <xref
-    linkend="runtime-config">.  You can save typing most of these
+    linkend="runtime-config"/>.  You can save typing most of these
     options by setting up a configuration file.  Some (safe) options
     can also be set from the connecting client in an
     application-dependent way to apply only for that session.  For
@@ -109,7 +109,7 @@ PostgreSQL documentation
         processes.  The default value of this parameter is chosen
         automatically by <application>initdb</application>.
         Specifying this option is equivalent to setting the
-        <xref linkend="guc-shared-buffers"> configuration parameter.
+        <xref linkend="guc-shared-buffers"/> configuration parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -120,7 +120,7 @@ PostgreSQL documentation
        <para>
         Sets a named run-time parameter. The configuration parameters
         supported by <productname>PostgreSQL</productname> are
-        described in <xref linkend="runtime-config">. Most of the
+        described in <xref linkend="runtime-config"/>. Most of the
         other command line options are in fact short forms of such a
         parameter assignment.  <option>-c</option> can appear multiple times
         to set multiple parameters.
@@ -142,9 +142,9 @@ PostgreSQL documentation
 
        <para>
         This option is meant for other programs that interact with a server
-        instance, such as <xref linkend="app-pg-ctl">, to query configuration
+        instance, such as <xref linkend="app-pg-ctl"/>, to query configuration
         parameter values.  User-facing applications should instead use <xref
-        linkend="sql-show"> or the <structname>pg_settings</structname> view.
+        linkend="sql-show"/> or the <structname>pg_settings</structname> view.
        </para>
       </listitem>
      </varlistentry>
@@ -169,7 +169,7 @@ PostgreSQL documentation
        <para>
         Specifies the file system location of the database
         configuration files.  See
-        <xref linkend="runtime-config-file-locations"> for details.
+        <xref linkend="runtime-config-file-locations"/> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -181,7 +181,7 @@ PostgreSQL documentation
         Sets the default date style to <quote>European</quote>, that is
         <literal>DMY</literal> ordering of input date fields.  This also causes
         the day to be printed before the month in certain date output formats.
-        See <xref linkend="datatype-datetime"> for more information.
+        See <xref linkend="datatype-datetime"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -193,7 +193,7 @@ PostgreSQL documentation
         Disables <function>fsync</function> calls for improved
         performance, at the risk of data corruption in the event of a
         system crash.  Specifying this option is equivalent to
-        disabling the <xref linkend="guc-fsync"> configuration
+        disabling the <xref linkend="guc-fsync"/> configuration
         parameter. Read the detailed documentation before using this!
        </para>
       </listitem>
@@ -213,7 +213,7 @@ PostgreSQL documentation
         server.  Defaults to listening only on
         <systemitem class="systemname">localhost</systemitem>.
         Specifying this option is equivalent to setting the <xref
-        linkend="guc-listen-addresses"> configuration parameter.
+        linkend="guc-listen-addresses"/> configuration parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -230,7 +230,7 @@ PostgreSQL documentation
        </para>
        <para>
         This option is deprecated since it does not allow access to the
-        full functionality of <xref linkend="guc-listen-addresses">.
+        full functionality of <xref linkend="guc-listen-addresses"/>.
         It's usually better to set <varname>listen_addresses</varname> directly.
        </para>
       </listitem>
@@ -249,7 +249,7 @@ PostgreSQL documentation
         The default value is normally
         <filename>/tmp</filename>, but that can be changed at build time.
         Specifying this option is equivalent to setting the <xref
-        linkend="guc-unix-socket-directories"> configuration parameter.
+        linkend="guc-unix-socket-directories"/> configuration parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -262,7 +262,7 @@ PostgreSQL documentation
         <productname>PostgreSQL</productname> must have been compiled with
         support for <acronym>SSL</acronym> for this option to be
         available. For more information on using <acronym>SSL</acronym>,
-        refer to <xref linkend="ssl-tcp">.
+        refer to <xref linkend="ssl-tcp"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -275,7 +275,7 @@ PostgreSQL documentation
         server will accept.  The default value of this parameter is chosen
         automatically by <application>initdb</application>.
         Specifying this option is equivalent to setting the
-        <xref linkend="guc-max-connections"> configuration parameter.
+        <xref linkend="guc-max-connections"/> configuration parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -341,7 +341,7 @@ PostgreSQL documentation
         Specifies the amount of memory to be used by internal sorts and hashes
         before resorting to temporary disk files.  See the description of the
         <varname>work_mem</varname> configuration parameter in <xref
-        linkend="runtime-config-resource-memory">.
+        linkend="runtime-config-resource-memory"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -531,7 +531,7 @@ PostgreSQL documentation
     <para>
      The following options only apply to the single-user mode
      (see <xref linkend="app-postgres-single-user"
-     endterm="app-postgres-single-user-title">).
+     endterm="app-postgres-single-user-title"/>).
     </para>
 
     <variablelist>
@@ -620,7 +620,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default value of the <xref linkend="guc-datestyle"> run-time
+      Default value of the <xref linkend="guc-datestyle"/> run-time
       parameter.  (The use of this environment variable is deprecated.)
      </para>
     </listitem>
@@ -646,11 +646,11 @@ PostgreSQL documentation
     A failure message mentioning <literal>semget</literal> or
     <literal>shmget</literal> probably indicates you need to configure your
     kernel to provide adequate shared memory and semaphores.  For more
-    discussion see <xref linkend="kernel-resources">.  You might be able
+    discussion see <xref linkend="kernel-resources"/>.  You might be able
     to postpone reconfiguring your kernel by decreasing <xref
-    linkend="guc-shared-buffers"> to reduce the shared memory
+    linkend="guc-shared-buffers"/> to reduce the shared memory
     consumption of <productname>PostgreSQL</productname>, and/or by reducing
-    <xref linkend="guc-max-connections"> to reduce the semaphore
+    <xref linkend="guc-max-connections"/> to reduce the semaphore
     consumption.
    </para>
 
@@ -689,7 +689,7 @@ PostgreSQL documentation
   <title>Notes</title>
 
   <para>
-   The utility command <xref linkend="app-pg-ctl"> can be used to
+   The utility command <xref linkend="app-pg-ctl"/> can be used to
    start and shut down the <command>postgres</command> server
    safely and comfortably.
   </para>
@@ -726,7 +726,7 @@ PostgreSQL documentation
    to the process running that command. To terminate a backend process
    cleanly, send <literal>SIGTERM</literal> to that process. See
    also <function>pg_cancel_backend</function> and <function>pg_terminate_backend</function>
-   in <xref linkend="functions-admin-signal"> for the SQL-callable equivalents
+   in <xref linkend="functions-admin-signal"/> for the SQL-callable equivalents
    of these two actions.
   </para>
 
@@ -857,8 +857,8 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <para>
-   <xref linkend="app-initdb">,
-   <xref linkend="app-pg-ctl">
+   <xref linkend="app-initdb"/>,
+   <xref linkend="app-pg-ctl"/>
   </para>
  </refsect1>
 </refentry>

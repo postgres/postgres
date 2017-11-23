@@ -31,7 +31,7 @@
     plan to match the query structure and the properties of the data
     is absolutely critical for good performance, so the system includes
     a complex <firstterm>planner</firstterm> that tries to choose good plans.
-    You can use the <xref linkend="sql-explain"> command
+    You can use the <xref linkend="sql-explain"/> command
     to see what query plan the planner creates for any query.
     Plan-reading is an art that requires some experience to master,
     but this section attempts to cover the basics.
@@ -132,9 +132,9 @@ EXPLAIN SELECT * FROM tenk1;
 
    <para>
     The costs are measured in arbitrary units determined by the planner's
-    cost parameters (see <xref linkend="runtime-config-query-constants">).
+    cost parameters (see <xref linkend="runtime-config-query-constants"/>).
     Traditional practice is to measure the costs in units of disk page
-    fetches; that is, <xref linkend="guc-seq-page-cost"> is conventionally
+    fetches; that is, <xref linkend="guc-seq-page-cost"/> is conventionally
     set to <literal>1.0</literal> and the other cost parameters are set relative
     to that.  The examples in this section are run with the default cost
     parameters.
@@ -182,8 +182,8 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
 
     you will find that <classname>tenk1</classname> has 358 disk
     pages and 10000 rows.  The estimated cost is computed as (disk pages read *
-    <xref linkend="guc-seq-page-cost">) + (rows scanned *
-    <xref linkend="guc-cpu-tuple-cost">).  By default,
+    <xref linkend="guc-seq-page-cost"/>) + (rows scanned *
+    <xref linkend="guc-cpu-tuple-cost"/>).  By default,
     <varname>seq_page_cost</varname> is 1.0 and <varname>cpu_tuple_cost</varname> is 0.01,
     so the estimated cost is (358 * 1.0) + (10000 * 0.01) = 458.
    </para>
@@ -209,7 +209,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
     <literal>WHERE</literal> clause.
     However, the scan will still have to visit all 10000 rows, so the cost
     hasn't decreased; in fact it has gone up a bit (by 10000 * <xref
-    linkend="guc-cpu-operator-cost">, to be exact) to reflect the extra CPU
+    linkend="guc-cpu-operator-cost"/>, to be exact) to reflect the extra CPU
     time spent checking the <literal>WHERE</literal> condition.
    </para>
 
@@ -508,9 +508,9 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
    <para>
     One way to look at variant plans is to force the planner to disregard
     whatever strategy it thought was the cheapest, using the enable/disable
-    flags described in <xref linkend="runtime-config-query-enable">.
+    flags described in <xref linkend="runtime-config-query-enable"/>.
     (This is a crude tool, but useful.  See
-    also <xref linkend="explicit-joins">.)
+    also <xref linkend="explicit-joins"/>.)
     For example, if we're unconvinced that sequential-scan-and-sort is the best way to
     deal with table <literal>onek</literal> in the previous example, we could try
 
@@ -828,7 +828,7 @@ EXPLAIN UPDATE parent SET f2 = f2 + 1 WHERE f1 = 101;
     Second, the measurement overhead added by <command>EXPLAIN
     ANALYZE</command> can be significant, especially on machines with slow
     <function>gettimeofday()</function> operating-system calls. You can use the
-    <xref linkend="pgtesttiming"> tool to measure the overhead of timing
+    <xref linkend="pgtesttiming"/> tool to measure the overhead of timing
     on your system.
    </para>
 
@@ -1032,7 +1032,7 @@ WHERE tablename = 'road';
    arrays for each column, can be set on a
    column-by-column basis using the <command>ALTER TABLE SET STATISTICS</command>
    command, or globally by setting the
-   <xref linkend="guc-default-statistics-target"> configuration variable.
+   <xref linkend="guc-default-statistics-target"/> configuration variable.
    The default limit is presently 100 entries.  Raising the limit
    might allow more accurate planner estimates to be made, particularly for
    columns with irregular data distributions, at the price of consuming
@@ -1043,7 +1043,7 @@ WHERE tablename = 'road';
 
   <para>
    Further details about the planner's use of statistics can be found in
-   <xref linkend="planner-stats-details">.
+   <xref linkend="planner-stats-details"/>.
   </para>
   </sect2>
 
@@ -1087,7 +1087,7 @@ WHERE tablename = 'road';
 
    <para>
     Statistics objects are created using
-    <xref linkend="sql-createstatistics">, which see for more details.
+    <xref linkend="sql-createstatistics"/>, which see for more details.
     Creation of such an object merely creates a catalog entry expressing
     interest in the statistics.  Actual data collection is performed
     by <command>ANALYZE</command> (either a manual command, or background
@@ -1323,7 +1323,7 @@ SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
    <productname>PostgreSQL</productname> planner will switch from exhaustive
    search to a <firstterm>genetic</firstterm> probabilistic search
    through a limited number of possibilities.  (The switch-over threshold is
-   set by the <xref linkend="guc-geqo-threshold"> run-time
+   set by the <xref linkend="guc-geqo-threshold"/> run-time
    parameter.)
    The genetic search takes less time, but it won't
    necessarily find the best possible plan.
@@ -1379,7 +1379,7 @@ SELECT * FROM a JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
   <para>
    To force the planner to follow the join order laid out by explicit
    <literal>JOIN</literal>s,
-   set the <xref linkend="guc-join-collapse-limit"> run-time parameter to 1.
+   set the <xref linkend="guc-join-collapse-limit"/> run-time parameter to 1.
    (Other possible values are discussed below.)
   </para>
 
@@ -1436,8 +1436,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
   </para>
 
   <para>
-   <xref linkend="guc-from-collapse-limit"> and <xref
-   linkend="guc-join-collapse-limit">
+   <xref linkend="guc-from-collapse-limit"/> and <xref
+   linkend="guc-join-collapse-limit"/>
    are similarly named because they do almost the same thing: one controls
    when the planner will <quote>flatten out</quote> subqueries, and the
    other controls when it will flatten out explicit joins.  Typically
@@ -1488,7 +1488,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <title>Use <command>COPY</command></title>
 
    <para>
-    Use <xref linkend="sql-copy"> to load
+    Use <xref linkend="sql-copy"/> to load
     all the rows in one command, instead of using a series of
     <command>INSERT</command> commands.  The <command>COPY</command>
     command is optimized for loading large numbers of rows; it is less
@@ -1500,7 +1500,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
    <para>
     If you cannot use <command>COPY</command>, it might help to use <xref
-    linkend="sql-prepare"> to create a
+    linkend="sql-prepare"/> to create a
     prepared <command>INSERT</command> statement, and then use
     <command>EXECUTE</command> as many times as required.  This avoids
     some of the overhead of repeatedly parsing and planning
@@ -1523,7 +1523,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     needs to be written, because in case of an error, the files
     containing the newly loaded data will be removed anyway.
     However, this consideration only applies when
-    <xref linkend="guc-wal-level"> is <literal>minimal</literal> as all commands
+    <xref linkend="guc-wal-level"/> is <literal>minimal</literal> as all commands
     must write WAL otherwise.
    </para>
 
@@ -1581,7 +1581,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <title>Increase <varname>maintenance_work_mem</varname></title>
 
    <para>
-    Temporarily increasing the <xref linkend="guc-maintenance-work-mem">
+    Temporarily increasing the <xref linkend="guc-maintenance-work-mem"/>
     configuration variable when loading large amounts of data can
     lead to improved performance.  This will help to speed up <command>CREATE
     INDEX</command> commands and <command>ALTER TABLE ADD FOREIGN KEY</command> commands.
@@ -1594,7 +1594,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <title>Increase <varname>max_wal_size</varname></title>
 
    <para>
-    Temporarily increasing the <xref linkend="guc-max-wal-size">
+    Temporarily increasing the <xref linkend="guc-max-wal-size"/>
     configuration variable can also
     make large data loads faster.  This is because loading a large
     amount of data into <productname>PostgreSQL</productname> will
@@ -1617,9 +1617,9 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     new base backup after the load has completed than to process a large
     amount of incremental WAL data.  To prevent incremental WAL logging
     while loading, disable archiving and streaming replication, by setting
-    <xref linkend="guc-wal-level"> to <literal>minimal</literal>,
-    <xref linkend="guc-archive-mode"> to <literal>off</literal>, and
-    <xref linkend="guc-max-wal-senders"> to zero.
+    <xref linkend="guc-wal-level"/> to <literal>minimal</literal>,
+    <xref linkend="guc-archive-mode"/> to <literal>off</literal>, and
+    <xref linkend="guc-max-wal-senders"/> to zero.
     But note that changing these settings requires a server restart.
    </para>
 
@@ -1668,7 +1668,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
    <para>
     Whenever you have significantly altered the distribution of data
-    within a table, running <xref linkend="sql-analyze"> is strongly recommended. This
+    within a table, running <xref linkend="sql-analyze"/> is strongly recommended. This
     includes bulk loading large amounts of data into the table.  Running
     <command>ANALYZE</command> (or <command>VACUUM ANALYZE</command>)
     ensures that the planner has up-to-date statistics about the
@@ -1677,8 +1677,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     performance on any tables with inaccurate or nonexistent
     statistics.  Note that if the autovacuum daemon is enabled, it might
     run <command>ANALYZE</command> automatically; see
-    <xref linkend="vacuum-for-statistics">
-    and <xref linkend="autovacuum"> for more information.
+    <xref linkend="vacuum-for-statistics"/>
+    and <xref linkend="autovacuum"/> for more information.
    </para>
   </sect2>
 
@@ -1779,8 +1779,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     <varname>maintenance_work_mem</varname>; rather, you'd do that while
     manually recreating indexes and foreign keys afterwards.
     And don't forget to <command>ANALYZE</command> when you're done; see
-    <xref linkend="vacuum-for-statistics">
-    and <xref linkend="autovacuum"> for more information.
+    <xref linkend="vacuum-for-statistics"/>
+    and <xref linkend="autovacuum"/> for more information.
    </para>
   </sect2>
   </sect1>
@@ -1816,14 +1816,14 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
      <listitem>
       <para>
-       Turn off <xref linkend="guc-fsync">;  there is no need to flush
+       Turn off <xref linkend="guc-fsync"/>;  there is no need to flush
        data to disk.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Turn off <xref linkend="guc-synchronous-commit">;  there might be no
+       Turn off <xref linkend="guc-synchronous-commit"/>;  there might be no
        need to force <acronym>WAL</acronym> writes to disk on every
        commit.  This setting does risk transaction loss (though not data
        corruption) in case of a crash of the <emphasis>database</emphasis>.
@@ -1832,15 +1832,15 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
      <listitem>
       <para>
-       Turn off <xref linkend="guc-full-page-writes">;  there is no need
+       Turn off <xref linkend="guc-full-page-writes"/>;  there is no need
        to guard against partial page writes.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Increase <xref linkend="guc-max-wal-size"> and <xref
-       linkend="guc-checkpoint-timeout">; this reduces the frequency
+       Increase <xref linkend="guc-max-wal-size"/> and <xref
+       linkend="guc-checkpoint-timeout"/>; this reduces the frequency
        of checkpoints, but increases the storage requirements of
        <filename>/pg_wal</filename>.
       </para>

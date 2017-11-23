@@ -64,7 +64,7 @@ DROP ACCESS METHOD [ IF EXISTS ] <replaceable class="parameter">name</replaceabl
       Automatically drop objects that depend on the access method
       (such as operator classes, operator families, and indexes),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -104,7 +104,7 @@ DROP ACCESS METHOD heptree;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-create-access-method"></member>
+   <member><xref linkend="sql-create-access-method"/></member>
   </simplelist>
  </refsect1>
 

@@ -52,7 +52,7 @@ EXECUTE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
 
   <para>
    For more information on the creation and usage of prepared statements,
-   see <xref linkend="sql-prepare">.
+   see <xref linkend="sql-prepare"/>.
   </para>
  </refsect1>
 
@@ -95,8 +95,8 @@ EXECUTE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
   <title>Examples</title>
   <para>
     Examples are given in the <xref linkend="sql-prepare-examples"
-    endterm="sql-prepare-examples-title"> section of the <xref
-    linkend="sql-prepare"> documentation.
+    endterm="sql-prepare-examples-title"/> section of the <xref
+    linkend="sql-prepare"/> documentation.
    </para>
  </refsect1>
 
@@ -115,8 +115,8 @@ EXECUTE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-deallocate"></member>
-   <member><xref linkend="sql-prepare"></member>
+   <member><xref linkend="sql-deallocate"/></member>
+   <member><xref linkend="sql-prepare"/></member>
   </simplelist>
  </refsect1>
 </refentry>

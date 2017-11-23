@@ -12,7 +12,7 @@
   <para>
    This release contains a variety of fixes from 8.2.22.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <para>
@@ -37,7 +37,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.2.14,
-    see <xref linkend="release-8-2-14">.
+    see <xref linkend="release-8-2-14"/>.
    </para>
 
   </sect2>
@@ -240,7 +240,7 @@
   <para>
    This release contains a variety of fixes from 8.2.21.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <para>
@@ -255,7 +255,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.14,
-    see <xref linkend="release-8-2-14">.
+    see <xref linkend="release-8-2-14"/>.
    </para>
 
   </sect2>
@@ -547,7 +547,7 @@
   <para>
    This release contains a variety of fixes from 8.2.20.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -556,7 +556,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.14,
-    see <xref linkend="release-8-2-14">.
+    see <xref linkend="release-8-2-14"/>.
    </para>
 
   </sect2>
@@ -679,7 +679,7 @@
   <para>
    This release contains a variety of fixes from 8.2.19.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -688,7 +688,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.14,
-    see <xref linkend="release-8-2-14">.
+    see <xref linkend="release-8-2-14"/>.
    </para>
 
   </sect2>
@@ -811,7 +811,7 @@
   <para>
    This release contains a variety of fixes from 8.2.18.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -820,7 +820,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.14,
-    see <xref linkend="release-8-2-14">.
+    see <xref linkend="release-8-2-14"/>.
    </para>
 
   </sect2>
@@ -1055,7 +1055,7 @@
   <para>
    This release contains a variety of fixes from 8.2.17.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -1064,7 +1064,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.14,
-    see <xref linkend="release-8-2-14">.
+    see <xref linkend="release-8-2-14"/>.
    </para>
 
   </sect2>
@@ -1341,7 +1341,7 @@
   <para>
    This release contains a variety of fixes from 8.2.16.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -1350,7 +1350,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.14,
-    see <xref linkend="release-8-2-14">.
+    see <xref linkend="release-8-2-14"/>.
    </para>
 
   </sect2>
@@ -1542,7 +1542,7 @@
   <para>
    This release contains a variety of fixes from 8.2.15.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -1551,7 +1551,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.14,
-    see <xref linkend="release-8-2-14">.
+    see <xref linkend="release-8-2-14"/>.
    </para>
 
   </sect2>
@@ -1813,7 +1813,7 @@
   <para>
    This release contains a variety of fixes from 8.2.14.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -1822,7 +1822,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.14,
-    see <xref linkend="release-8-2-14">.
+    see <xref linkend="release-8-2-14"/>.
    </para>
 
   </sect2>
@@ -2057,7 +2057,7 @@
   <para>
    This release contains a variety of fixes from 8.2.13.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -2068,7 +2068,7 @@
     However, if you have any hash indexes on <type>interval</type> columns,
     you must <command>REINDEX</command> them after updating to 8.2.14.
     Also, if you are upgrading from a version earlier than 8.2.11,
-    see <xref linkend="release-8-2-11">.
+    see <xref linkend="release-8-2-11"/>.
    </para>
 
   </sect2>
@@ -2287,7 +2287,7 @@
   <para>
    This release contains a variety of fixes from 8.2.12.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -2296,7 +2296,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.11,
-    see <xref linkend="release-8-2-11">.
+    see <xref linkend="release-8-2-11"/>.
    </para>
 
   </sect2>
@@ -2453,7 +2453,7 @@
   <para>
    This release contains a variety of fixes from 8.2.11.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -2462,7 +2462,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.11,
-    see <xref linkend="release-8-2-11">.
+    see <xref linkend="release-8-2-11"/>.
    </para>
 
   </sect2>
@@ -2632,7 +2632,7 @@
   <para>
    This release contains a variety of fixes from 8.2.10.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -2641,7 +2641,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.7,
-    see <xref linkend="release-8-2-7">.  Also, if you were running a previous
+    see <xref linkend="release-8-2-7"/>.  Also, if you were running a previous
     8.2.X release, it is recommended to <command>REINDEX</command> all GiST
     indexes after the upgrade.
    </para>
@@ -2816,7 +2816,7 @@
   <para>
    This release contains a variety of fixes from 8.2.9.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -2825,7 +2825,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.7,
-    see <xref linkend="release-8-2-7">.
+    see <xref linkend="release-8-2-7"/>.
    </para>
 
   </sect2>
@@ -3048,7 +3048,7 @@
   <para>
    This release contains one serious and one minor bug fix over 8.2.8.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -3057,7 +3057,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.7,
-    see <xref linkend="release-8-2-7">.
+    see <xref linkend="release-8-2-7"/>.
    </para>
 
   </sect2>
@@ -3115,7 +3115,7 @@
   <para>
    This release contains a variety of fixes from 8.2.7.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -3124,7 +3124,7 @@
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.7,
-    see <xref linkend="release-8-2-7">.
+    see <xref linkend="release-8-2-7"/>.
    </para>
 
   </sect2>
@@ -3310,7 +3310,7 @@
   <para>
    This release contains a variety of fixes from 8.2.6.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -3580,7 +3580,7 @@
    This release contains a variety of fixes from 8.2.5,
    including fixes for significant security issues.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -3870,7 +3870,7 @@
   <para>
    This release contains a variety of fixes from 8.2.4.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -4048,7 +4048,7 @@
    This release contains a variety of fixes from 8.2.3,
    including a security fix.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -4191,7 +4191,7 @@
   <para>
    This release contains two fixes from 8.2.2.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -4238,7 +4238,7 @@
    This release contains a variety of fixes from 8.2.1, including
    a security fix.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>
@@ -4395,7 +4395,7 @@
   <para>
    This release contains a variety of fixes from 8.2.
    For information about new features in the 8.2 major release, see
-   <xref linkend="release-8-2">.
+   <xref linkend="release-8-2"/>.
   </para>
 
   <sect2>

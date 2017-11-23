@@ -15,7 +15,7 @@
  <para>
   To install PL/Python in a particular database, use
   <literal>CREATE EXTENSION plpythonu</literal> (but
-  see also <xref linkend="plpython-python23">).
+  see also <xref linkend="plpython-python23"/>).
  </para>
 
   <tip>
@@ -103,7 +103,7 @@
     The built variant depends on which Python version was found during
     the installation or which version was explicitly set using
     the <envar>PYTHON</envar> environment variable;
-    see <xref linkend="install-procedure">.  To make both variants of
+    see <xref linkend="install-procedure"/>.  To make both variants of
     PL/Python available in one installation, the source tree has to be
     configured and built twice.
    </para>
@@ -186,7 +186,7 @@
 
   <para>
    Functions in PL/Python are declared via the
-   standard <xref linkend="sql-createfunction"> syntax:
+   standard <xref linkend="sql-createfunction"/> syntax:
 
 <programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-list</replaceable>)
@@ -420,7 +420,7 @@ $$ LANGUAGE plpythonu;
    sortas="PL/Python">in PL/Python</secondary></indexterm> is passed to a
    function, the argument value will appear as <symbol>None</symbol> in
    Python. For example, the function definition of <function>pymax</function>
-   shown in <xref linkend="plpython-funcs"> will return the wrong answer for null
+   shown in <xref linkend="plpython-funcs"/> will return the wrong answer for null
    inputs. We could add <literal>STRICT</literal> to the function definition
    to make <productname>PostgreSQL</productname> do something more reasonable:
    if a null value is passed, the function will not be called at all,
@@ -774,7 +774,7 @@ SELECT * FROM multiout_simple_setof(3);
 
   <para>
    PL/Python also supports anonymous code blocks called with the
-   <xref linkend="sql-do"> statement:
+   <xref linkend="sql-do"/> statement:
 
 <programlisting>
 DO $$
@@ -1056,16 +1056,16 @@ rv = plan.execute(["name"], 5)
 
      <para>
       Query parameters and result row fields are converted between PostgreSQL
-      and Python data types as described in <xref linkend="plpython-data">.
+      and Python data types as described in <xref linkend="plpython-data"/>.
      </para>
 
      <para>
       When you prepare a plan using the PL/Python module it is automatically
-      saved.  Read the SPI documentation (<xref linkend="spi">) for a
+      saved.  Read the SPI documentation (<xref linkend="spi"/>) for a
       description of what this means.  In order to make effective use of this
       across function calls one needs to use one of the persistent storage
       dictionaries <literal>SD</literal> or <literal>GD</literal> (see
-      <xref linkend="plpython-sharing">). For example:
+      <xref linkend="plpython-sharing"/>). For example:
 <programlisting>
 CREATE FUNCTION usesavedplan() RETURNS trigger AS $$
     if "plan" in SD:
@@ -1190,7 +1190,7 @@ $$ LANGUAGE plpythonu;
    <para>
     The actual class of the exception being raised corresponds to the
     specific condition that caused the error.  Refer
-    to <xref linkend="errcodes-table"> for a list of possible
+    to <xref linkend="errcodes-table"/> for a list of possible
     conditions.  The module
     <literal>plpy.spiexceptions</literal> defines an exception class
     for each <productname>PostgreSQL</productname> condition, deriving
@@ -1241,7 +1241,7 @@ $$ LANGUAGE plpythonu;
 
   <para>
    Recovering from errors caused by database access as described in
-   <xref linkend="plpython-trapping"> can lead to an undesirable
+   <xref linkend="plpython-trapping"/> can lead to an undesirable
    situation where some operations succeed before one of them fails,
    and after recovering from that error the data is left in an
    inconsistent state.  PL/Python offers a solution to this problem in
@@ -1391,9 +1391,9 @@ $$ LANGUAGE plpythonu;
    The other functions only generate messages of different priority levels.
    Whether messages of a particular priority are reported to the client,
    written to the server log, or both is controlled by the
-   <xref linkend="guc-log-min-messages"> and
-   <xref linkend="guc-client-min-messages"> configuration
-   variables. See <xref linkend="runtime-config"> for more information.
+   <xref linkend="guc-log-min-messages"/> and
+   <xref linkend="guc-client-min-messages"/> configuration
+   variables. See <xref linkend="runtime-config"/> for more information.
   </para>
 
   <para>
@@ -1442,9 +1442,9 @@ PL/Python function "raise_custom_exception"
    <literal>plpy.quote_nullable(<replaceable>string</replaceable>)</literal>, and
    <literal>plpy.quote_ident(<replaceable>string</replaceable>)</literal>.  They
    are equivalent to the built-in quoting functions described in <xref
-   linkend="functions-string">.  They are useful when constructing
+   linkend="functions-string"/>.  They are useful when constructing
    ad-hoc queries.  A PL/Python equivalent of dynamic SQL from <xref
-   linkend="plpgsql-quote-literal-example"> would be:
+   linkend="plpgsql-quote-literal-example"/> would be:
 <programlisting>
 plpy.execute("UPDATE tbl SET %s = %s WHERE key = %s" % (
     plpy.quote_ident(colname),

@@ -48,7 +48,7 @@ RESET ROLE
 
   <para>
    The <literal>SESSION</literal> and <literal>LOCAL</literal> modifiers act the same
-   as for the regular <xref linkend="sql-set">
+   as for the regular <xref linkend="sql-set"/>
    command.
   </para>
 
@@ -82,7 +82,7 @@ RESET ROLE
 
   <para>
    <command>SET ROLE</command> has effects comparable to
-   <xref linkend="sql-set-session-authorization">, but the privilege
+   <xref linkend="sql-set-session-authorization"/>, but the privilege
    checks involved are quite different.  Also,
    <command>SET SESSION AUTHORIZATION</command> determines which roles are
    allowable for later <command>SET ROLE</command> commands, whereas changing
@@ -92,7 +92,7 @@ RESET ROLE
 
   <para>
    <command>SET ROLE</command> does not process session variables as specified by
-   the role's <xref linkend="sql-alterrole"> settings;  this only happens during
+   the role's <xref linkend="sql-alterrole"/> settings;  this only happens during
    login.
   </para>
 
@@ -142,7 +142,7 @@ SELECT SESSION_USER, CURRENT_USER;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-set-session-authorization"></member>
+   <member><xref linkend="sql-set-session-authorization"/></member>
   </simplelist>
  </refsect1>
 </refentry>

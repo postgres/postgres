@@ -78,7 +78,7 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
    The statement subforms and actions available for
    <command>ALTER MATERIALIZED VIEW</command> are a subset of those available
    for <command>ALTER TABLE</command>, and have the same meaning when used for
-   materialized views.  See the descriptions for <xref linkend="sql-altertable">
+   materialized views.  See the descriptions for <xref linkend="sql-altertable"/>
    for details.
   </para>
  </refsect1>
@@ -177,9 +177,9 @@ ALTER MATERIALIZED VIEW foo RENAME TO bar;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-creatematerializedview"></member>
-   <member><xref linkend="sql-dropmaterializedview"></member>
-   <member><xref linkend="sql-refreshmaterializedview"></member>
+   <member><xref linkend="sql-creatematerializedview"/></member>
+   <member><xref linkend="sql-dropmaterializedview"/></member>
+   <member><xref linkend="sql-refreshmaterializedview"/></member>
   </simplelist>
  </refsect1>
 </refentry>

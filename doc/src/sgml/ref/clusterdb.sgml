@@ -60,7 +60,7 @@ PostgreSQL documentation
 
   <para>
    <application>clusterdb</application> is a wrapper around the SQL
-   command <xref linkend="sql-cluster">.
+   command <xref linkend="sql-cluster"/>.
    There is no effective difference between clustering databases via
    this utility and via other methods for accessing the server.
   </para>
@@ -279,7 +279,7 @@ PostgreSQL documentation
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -289,8 +289,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="sql-cluster">
-   and <xref linkend="app-psql"> for
+   In case of difficulty, see <xref linkend="sql-cluster"/>
+   and <xref linkend="app-psql"/> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -325,7 +325,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-cluster"></member>
+   <member><xref linkend="sql-cluster"/></member>
   </simplelist>
  </refsect1>
 

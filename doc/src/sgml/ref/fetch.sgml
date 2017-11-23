@@ -99,7 +99,7 @@ FETCH [ <replaceable class="parameter">direction</replaceable> [ FROM | IN ] ] <
     This page describes usage of cursors at the SQL command level.
     If you are trying to use cursors inside a <application>PL/pgSQL</application>
     function, the rules are different &mdash;
-    see <xref linkend="plpgsql-cursors">.
+    see <xref linkend="plpgsql-cursors"/>.
    </para>
   </note>
  </refsect1>
@@ -335,9 +335,9 @@ FETCH <replaceable class="parameter">count</replaceable>
   </para>
 
   <para>
-   <xref linkend="sql-declare">
+   <xref linkend="sql-declare"/>
    is used to define a cursor.  Use
-   <xref linkend="sql-move">
+   <xref linkend="sql-move"/>
    to change cursor position without retrieving data.
   </para>
  </refsect1>
@@ -410,9 +410,9 @@ COMMIT WORK;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-close"></member>
-   <member><xref linkend="sql-declare"></member>
-   <member><xref linkend="sql-move"></member>
+   <member><xref linkend="sql-close"/></member>
+   <member><xref linkend="sql-declare"/></member>
+   <member><xref linkend="sql-move"/></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -20,18 +20,18 @@
    stored. If the table has any columns with potentially-wide values,
    there also might be a <acronym>TOAST</acronym> file associated with the table,
    which is used to store values too wide to fit comfortably in the main
-   table (see <xref linkend="storage-toast">).  There will be one valid index
+   table (see <xref linkend="storage-toast"/>).  There will be one valid index
    on the <acronym>TOAST</acronym> table, if present. There also might be indexes
    associated with the base table.  Each table and index is stored in a
    separate disk file &mdash; possibly more than one file, if the file would
    exceed one gigabyte.  Naming conventions for these files are described
-   in <xref linkend="storage-file-layout">.
+   in <xref linkend="storage-file-layout"/>.
   </para>
 
   <para>
    You can monitor disk space in three ways:
-   using the SQL functions listed in <xref linkend="functions-admin-dbsize">,
-   using the <xref linkend="oid2name"> module, or
+   using the SQL functions listed in <xref linkend="functions-admin-dbsize"/>,
+   using the <xref linkend="oid2name"/> module, or
    using manual inspection of the system catalogs.
    The SQL functions are the easiest to use and are generally recommended.
    The remainder of this section shows how to do it by inspection of the
@@ -124,7 +124,7 @@ ORDER BY relpages DESC;
    If you cannot free up additional space on the disk by deleting
    other things, you can move some of the database files to other file
    systems by making use of tablespaces. See <xref
-   linkend="manage-ag-tablespaces"> for more information about that.
+   linkend="manage-ag-tablespaces"/> for more information about that.
   </para>
 
   <tip>

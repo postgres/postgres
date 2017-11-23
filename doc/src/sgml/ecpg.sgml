@@ -31,7 +31,7 @@
    specially marked sections.  To build the program, the source code (<filename>*.pgc</filename>)
    is first passed through the embedded SQL preprocessor, which converts it
    to an ordinary C program (<filename>*.c</filename>), and afterwards it can be processed by a C
-   compiler.  (For details about the compiling and linking see <xref linkend="ecpg-process">).
+   compiler.  (For details about the compiling and linking see <xref linkend="ecpg-process"/>).
    Converted ECPG applications call functions in the libpq library
    through the embedded SQL library (ecpglib), and communicate with
    the PostgreSQL server using the normal frontend-backend protocol.
@@ -397,9 +397,9 @@ EXEC SQL COMMIT;
    row can also be executed using
    <literal>EXEC SQL</literal> directly.  To handle result sets with
    multiple rows, an application has to use a cursor;
-   see <xref linkend="ecpg-cursors"> below.  (As a special case, an
+   see <xref linkend="ecpg-cursors"/> below.  (As a special case, an
    application can fetch multiple rows at once into an array host
-   variable; see <xref linkend="ecpg-variables-arrays">.)
+   variable; see <xref linkend="ecpg-variables-arrays"/>.)
   </para>
 
   <para>
@@ -422,7 +422,7 @@ EXEC SQL SHOW search_path INTO :var;
    <literal>:<replaceable>something</replaceable></literal> are
    <firstterm>host variables</firstterm>, that is, they refer to
    variables in the C program.  They are explained in <xref
-   linkend="ecpg-variables">.
+   linkend="ecpg-variables"/>.
   </para>
   </sect2>
 
@@ -452,8 +452,8 @@ EXEC SQL COMMIT;
 
   <para>
    For more details about declaration of the cursor,
-   see <xref linkend="ecpg-sql-declare">, and
-   see <xref linkend="sql-fetch"> for <literal>FETCH</literal> command
+   see <xref linkend="ecpg-sql-declare"/>, and
+   see <xref linkend="sql-fetch"/> for <literal>FETCH</literal> command
    details.
   </para>
 
@@ -477,7 +477,7 @@ EXEC SQL COMMIT;
    interface also supports autocommit of transactions (similar to
    <application>psql</application>'s default behavior) via the <option>-t</option>
    command-line option to <command>ecpg</command> (see <xref
-   linkend="app-ecpg">) or via the <literal>EXEC SQL SET AUTOCOMMIT TO
+   linkend="app-ecpg"/>) or via the <literal>EXEC SQL SET AUTOCOMMIT TO
    ON</literal> statement. In autocommit mode, each command is
    automatically committed unless it is inside an explicit transaction
    block. This mode can be explicitly turned off using <literal>EXEC
@@ -617,8 +617,8 @@ EXEC SQL DEALLOCATE PREPARE <replaceable>name</replaceable>;
 
    <para>
     For more details about <literal>PREPARE</literal>,
-    see <xref linkend="ecpg-sql-prepare">. Also
-    see <xref linkend="ecpg-dynamic"> for more details about using
+    see <xref linkend="ecpg-sql-prepare"/>. Also
+    see <xref linkend="ecpg-dynamic"/> for more details about using
     placeholders and input parameters.
    </para>
   </sect2>
@@ -628,7 +628,7 @@ EXEC SQL DEALLOCATE PREPARE <replaceable>name</replaceable>;
   <title>Using Host Variables</title>
 
   <para>
-   In <xref linkend="ecpg-commands"> you saw how you can execute SQL
+   In <xref linkend="ecpg-commands"/> you saw how you can execute SQL
    statements from an embedded SQL program.  Some of those statements
    only used fixed values and did not provide a way to insert
    user-supplied values into statements or have the program process
@@ -646,7 +646,7 @@ EXEC SQL DEALLOCATE PREPARE <replaceable>name</replaceable>;
   <para>
    Another way to exchange values between PostgreSQL backends and ECPG
    applications is the use of SQL descriptors, described
-   in <xref linkend="ecpg-descriptors">.
+   in <xref linkend="ecpg-descriptors"/>.
   </para>
 
   <sect2 id="ecpg-variables-overview">
@@ -812,11 +812,11 @@ do
     directly.  Other PostgreSQL data types, such
     as <type>timestamp</type> and <type>numeric</type> can only be
     accessed through special library functions; see
-    <xref linkend="ecpg-special-types">.
+    <xref linkend="ecpg-special-types"/>.
    </para>
 
    <para>
-    <xref linkend="ecpg-datatype-hostvars-table"> shows which PostgreSQL
+    <xref linkend="ecpg-datatype-hostvars-table"/> shows which PostgreSQL
     data types correspond to which C data types.  When you wish to
     send or receive a value of a given PostgreSQL data type, you
     should declare a C variable of the corresponding C data type in
@@ -851,12 +851,12 @@ do
 
       <row>
        <entry><type>decimal</type></entry>
-       <entry><type>decimal</type><footnote id="ecpg-datatype-table-fn"><para>This type can only be accessed through special library functions; see <xref linkend="ecpg-special-types">.</para></footnote></entry>
+       <entry><type>decimal</type><footnote id="ecpg-datatype-table-fn"><para>This type can only be accessed through special library functions; see <xref linkend="ecpg-special-types"/>.</para></footnote></entry>
       </row>
 
       <row>
        <entry><type>numeric</type></entry>
-       <entry><type>numeric</type><footnoteref linkend="ecpg-datatype-table-fn"></entry>
+       <entry><type>numeric</type><footnoteref linkend="ecpg-datatype-table-fn"/></entry>
       </row>
 
       <row>
@@ -901,17 +901,17 @@ do
 
       <row>
        <entry><type>timestamp</type></entry>
-       <entry><type>timestamp</type><footnoteref linkend="ecpg-datatype-table-fn"></entry>
+       <entry><type>timestamp</type><footnoteref linkend="ecpg-datatype-table-fn"/></entry>
       </row>
 
       <row>
        <entry><type>interval</type></entry>
-       <entry><type>interval</type><footnoteref linkend="ecpg-datatype-table-fn"></entry>
+       <entry><type>interval</type><footnoteref linkend="ecpg-datatype-table-fn"/></entry>
       </row>
 
       <row>
        <entry><type>date</type></entry>
-       <entry><type>date</type><footnoteref linkend="ecpg-datatype-table-fn"></entry>
+       <entry><type>date</type><footnoteref linkend="ecpg-datatype-table-fn"/></entry>
       </row>
 
       <row>
@@ -1002,7 +1002,7 @@ struct varchar_var { int len; char arr[180]; } var;
      structure.  Applications deal with these types by declaring host
      variables in special types and accessing them using functions in
      the pgtypes library.  The pgtypes library, described in detail
-     in <xref linkend="ecpg-pgtypes"> contains basic functions to deal
+     in <xref linkend="ecpg-pgtypes"/> contains basic functions to deal
      with those types, such that you do not need to send a query to
      the SQL server just for adding an interval to a time stamp for
      example.
@@ -1011,7 +1011,7 @@ struct varchar_var { int len; char arr[180]; } var;
     <para>
      The follow subsections describe these special data types. For
      more details about pgtypes library functions,
-     see <xref linkend="ecpg-pgtypes">.
+     see <xref linkend="ecpg-pgtypes"/>.
     </para>
 
     <sect4>
@@ -1062,7 +1062,7 @@ ts = 2010-06-27 18:03:56.949343
       program has to include <filename>pgtypes_date.h</filename>, declare a host variable
       as the date type and convert a DATE value into a text form using
       <function>PGTYPESdate_to_asc()</function> function. For more details about the
-      pgtypes library functions, see <xref linkend="ecpg-pgtypes">.
+      pgtypes library functions, see <xref linkend="ecpg-pgtypes"/>.
      </para>
     </sect4>
 
@@ -1117,7 +1117,7 @@ EXEC SQL END DECLARE SECTION;
       allocating some memory space on the heap, and accessing the
       variable using the pgtypes library functions.  For more details
       about the pgtypes library functions,
-      see <xref linkend="ecpg-pgtypes">.
+      see <xref linkend="ecpg-pgtypes"/>.
      </para>
 
      <para>
@@ -1193,7 +1193,7 @@ EXEC SQL END DECLARE SECTION;
       There are two use cases for arrays as host variables.  The first
       is a way to store some text string in <type>char[]</type>
       or <type>VARCHAR[]</type>, as
-      explained in <xref linkend="ecpg-char">.  The second use case is to
+      explained in <xref linkend="ecpg-char"/>.  The second use case is to
       retrieve multiple rows from a query result without using a
       cursor.  Without an array, to process a query result consisting
       of multiple rows, it is required to use a cursor and
@@ -1378,7 +1378,7 @@ EXEC SQL TYPE serial_t IS long;
      <para>
       You can declare pointers to the most common types. Note however
       that you cannot use pointers as target variables of queries
-      without auto-allocation. See <xref linkend="ecpg-descriptors">
+      without auto-allocation. See <xref linkend="ecpg-descriptors"/>
       for more information on auto-allocation.
      </para>
 
@@ -1520,7 +1520,7 @@ while (1)
      Another workaround is to store arrays in their external string
      representation in host variables of type <type>char[]</type>
      or <type>VARCHAR[]</type>.  For more details about this
-     representation, see <xref linkend="arrays-input">.  Note that
+     representation, see <xref linkend="arrays-input"/>.  Note that
      this means that the array cannot be accessed naturally as an
      array in the host program (without further processing that parses
      the text representation).
@@ -1578,7 +1578,7 @@ EXEC SQL CLOSE cur1;
      To enhance this example, the host variables to store values in
      the <command>FETCH</command> command can be gathered into one
      structure.  For more details about the host variable in the
-     structure form, see <xref linkend="ecpg-variables-struct">.
+     structure form, see <xref linkend="ecpg-variables-struct"/>.
      To switch to the structure, the example can be modified as below.
      The two host variables, <varname>intval</varname>
      and <varname>textval</varname>, become members of
@@ -1659,12 +1659,12 @@ while (1)
 
     <para>
      Here is an example using the data type <type>complex</type> from
-     the example in <xref linkend="xtypes">.  The external string
+     the example in <xref linkend="xtypes"/>.  The external string
      representation of that type is <literal>(%lf,%lf)</literal>,
      which is defined in the
      functions <function>complex_in()</function>
      and <function>complex_out()</function> functions
-     in <xref linkend="xtypes">.  The following example inserts the
+     in <xref linkend="xtypes"/>.  The following example inserts the
      complex type values <literal>(1,1)</literal>
      and <literal>(3,3)</literal> into the
      columns <literal>a</literal> and <literal>b</literal>, and select
@@ -1875,7 +1875,7 @@ EXEC SQL EXECUTE mystmt INTO :v1, :v2, :v3 USING 37;
    <para>
     If a query is expected to return more than one result row, a
     cursor should be used, as in the following example.
-    (See <xref linkend="ecpg-cursors"> for more details about the
+    (See <xref linkend="ecpg-cursors"/> for more details about the
     cursor.)
 <programlisting>
 EXEC SQL BEGIN DECLARE SECTION;
@@ -1941,7 +1941,7 @@ free(out);
    <title>The numeric Type</title>
    <para>
     The numeric type offers to do calculations with arbitrary precision. See
-    <xref linkend="datatype-numeric"> for the equivalent type in the
+    <xref linkend="datatype-numeric"/> for the equivalent type in the
     <productname>PostgreSQL</productname> server. Because of the arbitrary precision this
     variable needs to be able to expand and shrink dynamically. That's why you
     can only create numeric variables on the heap, by means of the
@@ -2264,7 +2264,7 @@ int PGTYPESnumeric_from_decimal(decimal *src, numeric *dst);
    <title>The date Type</title>
    <para>
     The date type in C enables your programs to deal with data of the SQL type
-    date. See <xref linkend="datatype-datetime"> for the equivalent type in the
+    date. See <xref linkend="datatype-datetime"/> for the equivalent type in the
     <productname>PostgreSQL</productname> server.
    </para>
    <para>
@@ -2303,7 +2303,7 @@ date PGTYPESdate_from_asc(char *str, char **endptr);
         currently no variable to change that within ECPG.
        </para>
        <para>
-        <xref linkend="ecpg-pgtypesdate-from-asc-table"> shows the allowed input formats.
+        <xref linkend="ecpg-pgtypesdate-from-asc-table"/> shows the allowed input formats.
        </para>
         <table id="ecpg-pgtypesdate-from-asc-table">
          <title>Valid Input Formats for <function>PGTYPESdate_from_asc</function></title>
@@ -2558,7 +2558,7 @@ int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);
         All other characters are copied 1:1 to the output string.
        </para>
        <para>
-        <xref linkend="ecpg-pgtypesdate-fmt-asc-example-table"> indicates a few possible formats. This will give
+        <xref linkend="ecpg-pgtypesdate-fmt-asc-example-table"/> indicates a few possible formats. This will give
         you an idea of how to use this function. All output lines are based on
         the same date: November 23, 1959.
        </para>
@@ -2649,7 +2649,7 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
         day.
        </para>
        <para>
-        <xref linkend="ecpg-rdefmtdate-example-table"> indicates a few possible formats. This will give
+        <xref linkend="ecpg-rdefmtdate-example-table"/> indicates a few possible formats. This will give
         you an idea of how to use this function.
        </para>
         <table id="ecpg-rdefmtdate-example-table">
@@ -2741,7 +2741,7 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
    <title>The timestamp Type</title>
    <para>
     The timestamp type in C enables your programs to deal with data of the SQL
-    type timestamp. See <xref linkend="datatype-datetime"> for the equivalent
+    type timestamp. See <xref linkend="datatype-datetime"/> for the equivalent
     type in the <productname>PostgreSQL</productname> server.
    </para>
    <para>
@@ -2766,7 +2766,7 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
        <para>
         The function returns the parsed timestamp on success. On error,
         <literal>PGTYPESInvalidTimestamp</literal> is returned and <varname>errno</varname> is
-        set to <literal>PGTYPES_TS_BAD_TIMESTAMP</literal>. See <xref linkend="pgtypesinvalidtimestamp"> for important notes on this value.
+        set to <literal>PGTYPES_TS_BAD_TIMESTAMP</literal>. See <xref linkend="pgtypesinvalidtimestamp"/> for important notes on this value.
        </para>
        <para>
         In general, the input string can contain any combination of an allowed
@@ -2777,7 +2777,7 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
         specifiers are silently discarded.
        </para>
        <para>
-        <xref linkend="ecpg-pgtypestimestamp-from-asc-example-table"> contains a few examples for input strings.
+        <xref linkend="ecpg-pgtypestimestamp-from-asc-example-table"/> contains a few examples for input strings.
        </para>
         <table id="ecpg-pgtypestimestamp-from-asc-example-table">
          <title>Valid Input Formats for <function>PGTYPEStimestamp_from_asc</function></title>
@@ -3217,7 +3217,7 @@ int PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d);
        </para>
        <para>
         This is the reverse function to <xref
-        linkend="pgtypestimestampfmtasc">.  See the documentation there in
+        linkend="pgtypestimestampfmtasc"/>.  See the documentation there in
         order to find out about the possible formatting mask entries.
        </para>
       </listitem>
@@ -3270,7 +3270,7 @@ int PGTYPEStimestamp_sub_interval(timestamp *tin, interval *span, timestamp *tou
    <title>The interval Type</title>
    <para>
     The interval type in C enables your programs to deal with data of the SQL
-    type interval. See <xref linkend="datatype-datetime"> for the equivalent
+    type interval. See <xref linkend="datatype-datetime"/> for the equivalent
     type in the <productname>PostgreSQL</productname> server.
    </para>
    <para>
@@ -3364,7 +3364,7 @@ int PGTYPESinterval_copy(interval *intvlsrc, interval *intvldest);
      <function>PGTYPESdecimal_free</function>).
      There are a lot of other functions that deal with the decimal type in the
      <productname>Informix</productname> compatibility mode described in <xref
-     linkend="ecpg-informix-compat">.
+     linkend="ecpg-informix-compat"/>.
    </para>
    <para>
     The following functions can be used to work with the decimal type and are
@@ -3632,7 +3632,7 @@ EXEC SQL DESCRIBE stmt1 INTO SQL DESCRIPTOR mydesc;
     so using <literal>DESCRIPTOR</literal> and <literal>SQL DESCRIPTOR</literal>
     produced named SQL Descriptor Areas. Now it is mandatory, omitting
     the <literal>SQL</literal> keyword produces SQLDA Descriptor Areas,
-    see <xref linkend="ecpg-sqlda-descriptors">.
+    see <xref linkend="ecpg-sqlda-descriptors"/>.
    </para>
 
    <para>
@@ -3853,7 +3853,7 @@ EXEC SQL FETCH 3 FROM mycursor INTO DESCRIPTOR mysqlda;
 </programlisting>
     Note that the <literal>SQL</literal> keyword is omitted. The paragraphs about
     the use cases of the <literal>INTO</literal> and <literal>USING</literal>
-    keywords in <xref linkend="ecpg-named-descriptors"> also apply here with an addition.
+    keywords in <xref linkend="ecpg-named-descriptors"/> also apply here with an addition.
     In a <command>DESCRIBE</command> statement the <literal>DESCRIPTOR</literal>
     keyword can be completely omitted if the <literal>INTO</literal> keyword is used:
 <programlisting>
@@ -4038,7 +4038,7 @@ typedef struct sqlvar_struct sqlvar_t;
           <listitem>
            <para>
             Points to the data.  The format of the data is described
-            in <xref linkend="ecpg-variables-type-mapping">.
+            in <xref linkend="ecpg-variables-type-mapping"/>.
            </para>
           </listitem>
          </varlistentry>
@@ -4447,7 +4447,7 @@ main(void)
 
     <para>
      The whole program is shown
-     in <xref linkend="ecpg-sqlda-example-example">.
+     in <xref linkend="ecpg-sqlda-example-example"/>.
     </para>
 
     <example id="ecpg-sqlda-example-example">
@@ -5016,7 +5016,7 @@ sqlstate: 42P01
     <literal>SQLSTATE</literal> error codes; therefore a high degree
     of consistency can be achieved by using this error code scheme
     throughout all applications.  For further information see
-    <xref linkend="errcodes-appendix">.
+    <xref linkend="errcodes-appendix"/>.
    </para>
 
    <para>
@@ -5037,7 +5037,7 @@ sqlstate: 42P01
     <literal>SQLSTATE</literal> is also listed.  There is, however, no
     one-to-one or one-to-many mapping between the two schemes (indeed
     it is many-to-many), so you should consult the global
-    <literal>SQLSTATE</literal> listing in <xref linkend="errcodes-appendix">
+    <literal>SQLSTATE</literal> listing in <xref linkend="errcodes-appendix"/>
     in each case.
    </para>
 
@@ -5767,7 +5767,7 @@ ECPG = ecpg
 
   <para>
    The complete syntax of the <command>ecpg</command> command is
-   detailed in <xref linkend="app-ecpg">.
+   detailed in <xref linkend="app-ecpg"/>.
   </para>
 
   <para>
@@ -5835,7 +5835,7 @@ ECPG = ecpg
      <para>
        <function>ECPGtransactionStatus(const char *<replaceable>connection_name</replaceable>)</function>
        returns the current transaction status of the given connection identified by <replaceable>connection_name</replaceable>.
-       See <xref linkend="libpq-status"> and libpq's <function>PQtransactionStatus()</function> for details about the returned status codes.
+       See <xref linkend="libpq-status"/> and libpq's <function>PQtransactionStatus()</function> for details about the returned status codes.
      </para>
    </listitem>
 
@@ -5867,8 +5867,8 @@ ECPG = ecpg
 
   <para>
    For more details about the <function>ECPGget_PGconn()</function>, see
-   <xref linkend="ecpg-library">.  For information about the large
-   object function interface, see <xref linkend="largeobjects">.
+   <xref linkend="ecpg-library"/>.  For information about the large
+   object function interface, see <xref linkend="largeobjects"/>.
   </para>
 
   <para>
@@ -5878,7 +5878,7 @@ ECPG = ecpg
   </para>
 
   <para>
-   <xref linkend="ecpg-lo-example"> shows an example program that
+   <xref linkend="ecpg-lo-example"/> shows an example program that
    illustrates how to create, write, and read a large object in an
    ECPG application.
   </para>
@@ -5997,7 +5997,7 @@ main(void)
    A safe way to use the embedded SQL code in a C++ application is
    hiding the ECPG calls in a C module, which the C++ application code
    calls into to access the database, and linking that together with
-   the rest of the C++ code.  See <xref linkend="ecpg-cpp-and-c">
+   the rest of the C++ code.  See <xref linkend="ecpg-cpp-and-c"/>
    about that.
   </para>
 
@@ -6252,7 +6252,7 @@ c++ test_cpp.o test_mod.o -lecpg -o test_cpp
   <para>
    This section describes all SQL commands that are specific to
    embedded SQL.  Also refer to the SQL commands listed
-   in <xref linkend="sql-commands">, which can also be used in
+   in <xref linkend="sql-commands"/>, which can also be used in
    embedded SQL, unless stated otherwise.
   </para>
 
@@ -6320,9 +6320,9 @@ EXEC SQL ALLOCATE DESCRIPTOR mydesc;
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-deallocate-descriptor"></member>
-     <member><xref linkend="ecpg-sql-get-descriptor"></member>
-     <member><xref linkend="ecpg-sql-set-descriptor"></member>
+     <member><xref linkend="ecpg-sql-deallocate-descriptor"/></member>
+     <member><xref linkend="ecpg-sql-get-descriptor"/></member>
+     <member><xref linkend="ecpg-sql-set-descriptor"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -6539,8 +6539,8 @@ EXEC SQL END DECLARE SECTION;
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-disconnect"></member>
-     <member><xref linkend="ecpg-sql-set-connection"></member>
+     <member><xref linkend="ecpg-sql-disconnect"/></member>
+     <member><xref linkend="ecpg-sql-set-connection"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -6604,9 +6604,9 @@ EXEC SQL DEALLOCATE DESCRIPTOR mydesc;
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-allocate-descriptor"></member>
-     <member><xref linkend="ecpg-sql-get-descriptor"></member>
-     <member><xref linkend="ecpg-sql-set-descriptor"></member>
+     <member><xref linkend="ecpg-sql-allocate-descriptor"/></member>
+     <member><xref linkend="ecpg-sql-get-descriptor"/></member>
+     <member><xref linkend="ecpg-sql-set-descriptor"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -6668,8 +6668,8 @@ DECLARE <replaceable class="parameter">cursor_name</replaceable> [ BINARY ] [ IN
       <term><replaceable class="parameter">query</replaceable></term>
       <listitem>
        <para>
-        A <xref linkend="sql-select"> or
-        <xref linkend="sql-values"> command which will provide the
+        A <xref linkend="sql-select"/> or
+        <xref linkend="sql-values"/> command which will provide the
         rows to be returned by the cursor.
        </para>
       </listitem>
@@ -6678,7 +6678,7 @@ DECLARE <replaceable class="parameter">cursor_name</replaceable> [ BINARY ] [ IN
 
     <para>
      For the meaning of the cursor options,
-     see <xref linkend="sql-declare">.
+     see <xref linkend="sql-declare"/>.
     </para>
    </refsect1>
 
@@ -6715,9 +6715,9 @@ EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-open"></member>
-     <member><xref linkend="sql-close"></member>
-     <member><xref linkend="sql-declare"></member>
+     <member><xref linkend="ecpg-sql-open"/></member>
+     <member><xref linkend="sql-close"/></member>
+     <member><xref linkend="sql-declare"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -6805,8 +6805,8 @@ EXEC SQL DEALLOCATE DESCRIPTOR mydesc;
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-allocate-descriptor"></member>
-     <member><xref linkend="ecpg-sql-get-descriptor"></member>
+     <member><xref linkend="ecpg-sql-allocate-descriptor"/></member>
+     <member><xref linkend="ecpg-sql-get-descriptor"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -6915,8 +6915,8 @@ main(void)
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-connect"></member>
-     <member><xref linkend="ecpg-sql-set-connection"></member>
+     <member><xref linkend="ecpg-sql-connect"/></member>
+     <member><xref linkend="ecpg-sql-set-connection"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -7056,7 +7056,7 @@ GET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> VALU
       <listitem>
        <para>
         A token identifying which item of information about a column
-        to retrieve.  See <xref linkend="ecpg-named-descriptors"> for
+        to retrieve.  See <xref linkend="ecpg-named-descriptors"/> for
         a list of supported items.
        </para>
       </listitem>
@@ -7164,8 +7164,8 @@ d_data                  = testdb
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-allocate-descriptor"></member>
-     <member><xref linkend="ecpg-sql-set-descriptor"></member>
+     <member><xref linkend="ecpg-sql-allocate-descriptor"/></member>
+     <member><xref linkend="ecpg-sql-set-descriptor"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -7258,8 +7258,8 @@ EXEC SQL OPEN :curname1;
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-declare"></member>
-     <member><xref linkend="sql-close"></member>
+     <member><xref linkend="ecpg-sql-declare"/></member>
+     <member><xref linkend="sql-close"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -7282,8 +7282,8 @@ PREPARE <replaceable class="parameter">name</replaceable> FROM <replaceable clas
     <para>
      <command>PREPARE</command> prepares a statement dynamically
      specified as a string for execution.  This is different from the
-     direct SQL statement <xref linkend="sql-prepare">, which can also
-     be used in embedded programs.  The <xref linkend="sql-execute">
+     direct SQL statement <xref linkend="sql-prepare"/>, which can also
+     be used in embedded programs.  The <xref linkend="sql-execute"/>
      command is used to execute either kind of prepared statement.
     </para>
    </refsect1>
@@ -7338,7 +7338,7 @@ EXEC SQL EXECUTE foo USING SQL DESCRIPTOR indesc INTO SQL DESCRIPTOR outdesc;
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="sql-execute"></member>
+     <member><xref linkend="sql-execute"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -7445,8 +7445,8 @@ EXEC SQL SET CONNECTION = con1;
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-connect"></member>
-     <member><xref linkend="ecpg-sql-disconnect"></member>
+     <member><xref linkend="ecpg-sql-connect"/></member>
+     <member><xref linkend="ecpg-sql-disconnect"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -7520,7 +7520,7 @@ SET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> VALU
       <listitem>
        <para>
         A token identifying which item of information to set in the
-        descriptor.  See <xref linkend="ecpg-named-descriptors"> for a
+        descriptor.  See <xref linkend="ecpg-named-descriptors"/> for a
         list of supported items.
        </para>
       </listitem>
@@ -7561,8 +7561,8 @@ EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2null, DATA = :val2;
     <title>See Also</title>
 
     <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-allocate-descriptor"></member>
-     <member><xref linkend="ecpg-sql-get-descriptor"></member>
+     <member><xref linkend="ecpg-sql-allocate-descriptor"/></member>
+     <member><xref linkend="ecpg-sql-get-descriptor"/></member>
     </simplelist>
    </refsect1>
   </refentry>
@@ -7796,7 +7796,7 @@ WHENEVER { NOT FOUND | SQLERROR | SQLWARNING } <replaceable class="parameter">ac
     <title>Parameters</title>
 
     <para>
-     See <xref linkend="ecpg-whenever"> for a description of the
+     See <xref linkend="ecpg-whenever"/> for a description of the
      parameters.
     </para>
    </refsect1>
@@ -7979,7 +7979,7 @@ EXEC SQL CLOSE DATABASE;
    <title>Informix-compatible SQLDA Descriptor Areas</title>
    <para>
     Informix-compatible mode supports a different structure than the one described in
-    <xref linkend="ecpg-sqlda-descriptors">. See below:
+    <xref linkend="ecpg-sqlda-descriptors"/>. See below:
 <programlisting>
 struct sqlvar_compat
 {
@@ -8653,7 +8653,7 @@ void rtoday(date *d);
         that it sets to the current date.
        </para>
        <para>
-        Internally this function uses the <xref linkend="pgtypesdatetoday">
+        Internally this function uses the <xref linkend="pgtypesdatetoday"/>
         function.
        </para>
       </listitem>
@@ -8678,7 +8678,7 @@ int rjulmdy(date d, short mdy[3]);
         The function always returns 0 at the moment.
        </para>
        <para>
-        Internally the function uses the <xref linkend="pgtypesdatejulmdy">
+        Internally the function uses the <xref linkend="pgtypesdatejulmdy"/>
         function.
        </para>
       </listitem>
@@ -8748,7 +8748,7 @@ int rdefmtdate(date *d, char *fmt, char *str);
        </para>
        <para>
         Internally this function is implemented to use the <xref
-        linkend="pgtypesdatedefmtasc"> function. See the reference there for a
+        linkend="pgtypesdatedefmtasc"/> function. See the reference there for a
         table of example input.
        </para>
       </listitem>
@@ -8771,7 +8771,7 @@ int rfmtdate(date d, char *fmt, char *str);
         On success, 0 is returned and a negative value if an error occurred.
        </para>
        <para>
-        Internally this function uses the <xref linkend="pgtypesdatefmtasc">
+        Internally this function uses the <xref linkend="pgtypesdatefmtasc"/>
         function, see the reference there for examples.
        </para>
       </listitem>
@@ -8795,7 +8795,7 @@ int rmdyjul(short mdy[3], date *d);
        </para>
        <para>
         Internally the function is implemented to use the function <xref
-        linkend="pgtypesdatemdyjul">.
+        linkend="pgtypesdatemdyjul"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -8851,7 +8851,7 @@ int rdayofweek(date d);
        </para>
        <para>
         Internally the function is implemented to use the function <xref
-        linkend="pgtypesdatedayofweek">.
+        linkend="pgtypesdatedayofweek"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -8889,7 +8889,7 @@ int dtcvasc(char *str, timestamp *ts);
        </para>
        <para>
         Internally this function uses the <xref
-        linkend="pgtypestimestampfromasc"> function. See the reference there
+        linkend="pgtypestimestampfromasc"/> function. See the reference there
         for a table with example inputs.
        </para>
       </listitem>
@@ -8911,7 +8911,7 @@ dtcvfmtasc(char *inbuf, char *fmtstr, timestamp *dtvalue)
        </para>
        <para>
         This function is implemented by means of the <xref
-        linkend="pgtypestimestampdefmtasc"> function. See the documentation
+        linkend="pgtypestimestampdefmtasc"/> function. See the documentation
         there for a list of format specifiers that can be used.
        </para>
        <para>
@@ -8983,7 +8983,7 @@ int dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr);
        </para>
        <para>
         Internally, this function uses the <xref
-        linkend="pgtypestimestampfmtasc"> function. See the reference there for
+        linkend="pgtypestimestampfmtasc"/> function. See the reference there for
         information on what format mask specifiers can be used.
        </para>
       </listitem>
@@ -9289,7 +9289,7 @@ int risnull(int t, char *ptr);
         The function receives the type of the variable to test (<literal>t</literal>)
         as well a pointer to this variable (<literal>ptr</literal>). Note that the
         latter needs to be cast to a char*. See the function <xref
-        linkend="rsetnull"> for a list of possible variable types.
+        linkend="rsetnull"/> for a list of possible variable types.
        </para>
        <para>
         Here is an example of how to use this function:

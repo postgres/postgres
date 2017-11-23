@@ -22,7 +22,7 @@
    pages so that they can use the regular storage manager and buffer manager
    to access the index contents.  (All the existing index access methods
    furthermore use the standard page layout described in <xref
-   linkend="storage-page-layout">, and most use the same format for index
+   linkend="storage-page-layout"/>, and most use the same format for index
    tuple headers; but these decisions are not forced on an access method.)
   </para>
 
@@ -31,7 +31,7 @@
    <firstterm>tuple identifiers</firstterm>, or <acronym>TIDs</acronym>, of row versions
    (tuples) in the index's parent table.  A TID consists of a
    block number and an item number within that block (see <xref
-   linkend="storage-page-layout">).  This is sufficient
+   linkend="storage-page-layout"/>).  This is sufficient
    information to fetch a particular row version from the table.
    Indexes are not directly aware that under MVCC, there might be multiple
    extant versions of the same logical row; to an index, each tuple is
@@ -52,8 +52,8 @@
    system catalog.  The <structname>pg_am</structname> entry
    specifies a name and a <firstterm>handler function</firstterm> for the access
    method.  These entries can be created and deleted using the
-   <xref linkend="sql-create-access-method"> and
-   <xref linkend="sql-drop-access-method"> SQL commands.
+   <xref linkend="sql-create-access-method"/> and
+   <xref linkend="sql-drop-access-method"/> SQL commands.
   </para>
 
   <para>
@@ -71,7 +71,7 @@
    functions for the access method, which do all of the real work to access
    indexes.  These support functions are plain C functions and are not
    visible or callable at the SQL level.  The support functions are described
-   in <xref linkend="index-functions">.
+   in <xref linkend="index-functions"/>.
   </para>
 
   <para>
@@ -153,7 +153,7 @@ typedef struct IndexAmRoutine
    These entries allow the planner
    to determine what kinds of query qualifications can be used with
    indexes of this access method.  Operator families and classes are described
-   in <xref linkend="xindex">, which is prerequisite material for reading
+   in <xref linkend="xindex"/>, which is prerequisite material for reading
    this chapter.
   </para>
 
@@ -177,7 +177,7 @@ typedef struct IndexAmRoutine
   <para>
    Some of the flag fields of <structname>IndexAmRoutine</structname> have nonobvious
    implications.  The requirements of <structfield>amcanunique</structfield>
-   are discussed in <xref linkend="index-unique-checks">.
+   are discussed in <xref linkend="index-unique-checks"/>.
    The <structfield>amcanmulticol</structfield> flag asserts that the
    access method supports multicolumn indexes, while
    <structfield>amoptionalkey</structfield> asserts that it allows scans
@@ -271,7 +271,7 @@ aminsert (Relation indexRelation,
    <structfield>amcanunique</structfield> flag is true) then
    <literal>checkUnique</literal> indicates the type of uniqueness check to
    perform.  This varies depending on whether the unique constraint is
-   deferrable; see <xref linkend="index-unique-checks"> for details.
+   deferrable; see <xref linkend="index-unique-checks"/> for details.
    Normally the access method only needs the <literal>heapRelation</literal>
    parameter when performing uniqueness checking (since then it will have to
    look into the heap to verify tuple liveness).
@@ -386,7 +386,7 @@ amcostestimate (PlannerInfo *root,
                 double *indexCorrelation);
 </programlisting>
    Estimate the costs of an index scan.  This function is described fully
-   in <xref linkend="index-cost-estimation">, below.
+   in <xref linkend="index-cost-estimation"/>, below.
   </para>
 
   <para>
@@ -480,7 +480,7 @@ amvalidate (Oid opclassoid);
    The purpose of an index, of course, is to support scans for tuples matching
    an indexable <literal>WHERE</literal> condition, often called a
    <firstterm>qualifier</firstterm> or <firstterm>scan key</firstterm>.  The semantics of
-   index scanning are described more fully in <xref linkend="index-scanning">,
+   index scanning are described more fully in <xref linkend="index-scanning"/>,
    below.  An index access method can support <quote>plain</quote> index scans,
    <quote>bitmap</quote> index scans, or both.  The scan-related functions that an
    index access method must or may provide are:
@@ -594,7 +594,7 @@ amgetbitmap (IndexScanDesc scan,
    <function>amgetbitmap</function> and
    <function>amgettuple</function> cannot be used in the same index scan; there
    are other restrictions too when using <function>amgetbitmap</function>, as explained
-   in <xref linkend="index-scanning">.
+   in <xref linkend="index-scanning"/>.
   </para>
 
   <para>
@@ -852,7 +852,7 @@ amparallelrescan (IndexScanDesc scan);
    index tuples.
    Finally, <function>amgetbitmap</function>
    does not guarantee any locking of the returned tuples, with implications
-   spelled out in <xref linkend="index-locking">.
+   spelled out in <xref linkend="index-locking"/>.
   </para>
 
   <para>
@@ -901,7 +901,7 @@ amparallelrescan (IndexScanDesc scan);
        A new heap entry is made before making its index entries.  (Therefore
        a concurrent index scan is likely to fail to see the heap entry.
        This is okay because the index reader would be uninterested in an
-       uncommitted row anyway.  But see <xref linkend="index-unique-checks">.)
+       uncommitted row anyway.  But see <xref linkend="index-unique-checks"/>.)
       </para>
      </listitem>
      <listitem>

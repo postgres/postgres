@@ -77,7 +77,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
   </para>
 
   <para>
-   Refer to <xref linkend="xindex"> for further information.
+   Refer to <xref linkend="xindex"/> for further information.
   </para>
  </refsect1>
 
@@ -283,7 +283,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
   <para>
    The following example command defines a GiST index operator class
    for the data type <literal>_int4</literal> (array of <type>int4</type>).  See the
-   <xref linkend="intarray"> module for the complete example.
+   <xref linkend="intarray"/> module for the complete example.
   </para>
 
 <programlisting>
@@ -319,10 +319,10 @@ CREATE OPERATOR CLASS gist__int_ops
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteropclass"></member>
-   <member><xref linkend="sql-dropopclass"></member>
-   <member><xref linkend="sql-createopfamily"></member>
-   <member><xref linkend="sql-alteropfamily"></member>
+   <member><xref linkend="sql-alteropclass"/></member>
+   <member><xref linkend="sql-dropopclass"/></member>
+   <member><xref linkend="sql-createopfamily"/></member>
+   <member><xref linkend="sql-alteropfamily"/></member>
   </simplelist>
  </refsect1>
 </refentry>

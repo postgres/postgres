@@ -18,7 +18,7 @@
   <title>Functions Provided</title>
 
   <para>
-   <xref linkend="tablefunc-functions"> shows the functions provided
+   <xref linkend="tablefunc-functions"/> shows the functions provided
    by the <filename>tablefunc</filename> module.
   </para>
 
@@ -646,7 +646,7 @@ connectby(text relname, text keyid_fld, text parent_keyid_fld
    </para>
 
    <para>
-    <xref linkend="tablefunc-connectby-parameters"> explains the
+    <xref linkend="tablefunc-connectby-parameters"/> explains the
     parameters.
    </para>
 

@@ -78,7 +78,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
   <para>
    This command cannot be executed while connected to the target
    database. Thus, it might be more convenient to use the program
-   <xref linkend="app-dropdb"> instead,
+   <xref linkend="app-dropdb"/> instead,
    which is a wrapper around this command.
   </para>
  </refsect1>
@@ -95,7 +95,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdatabase"></member>
+   <member><xref linkend="sql-createdatabase"/></member>
   </simplelist>
  </refsect1>
 </refentry>

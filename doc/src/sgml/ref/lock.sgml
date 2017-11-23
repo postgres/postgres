@@ -98,7 +98,7 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
 
   <para>
    More information about the lock modes and locking strategies can be
-   found in <xref linkend="explicit-locking">.
+   found in <xref linkend="explicit-locking"/>.
   </para>
  </refsect1>
 
@@ -132,7 +132,7 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
     <listitem>
      <para>
       The lock mode specifies which locks this lock conflicts with.
-      Lock modes are described in <xref linkend="explicit-locking">.
+      Lock modes are described in <xref linkend="explicit-locking"/>.
      </para>
 
      <para>
@@ -174,9 +174,9 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
     <productname>PostgreSQL</productname> reports an error if <command>LOCK</command>
     is used outside a transaction block.
     Use
-    <xref linkend="sql-begin"> and
-    <xref linkend="sql-commit">
-    (or <xref linkend="sql-rollback">)
+    <xref linkend="sql-begin"/> and
+    <xref linkend="sql-commit"/>
+    (or <xref linkend="sql-rollback"/>)
     to define a transaction block.
    </para>
 
@@ -189,9 +189,9 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
    mind that all the lock modes have identical semantics so far as
    <command>LOCK TABLE</command> is concerned, differing only in the rules
    about which modes conflict with which. For information on how to
-   acquire an actual row-level lock, see <xref linkend="locking-rows">
+   acquire an actual row-level lock, see <xref linkend="locking-rows"/>
    and the <xref linkend="sql-for-update-share"
-   endterm="sql-for-update-share-title"> in the <command>SELECT</command>
+   endterm="sql-for-update-share-title"/> in the <command>SELECT</command>
    reference documentation.
   </para>
  </refsect1>
@@ -236,7 +236,7 @@ COMMIT WORK;
    There is no <command>LOCK TABLE</command> in the SQL standard,
    which instead uses <command>SET TRANSACTION</command> to specify
    concurrency levels on transactions.  <productname>PostgreSQL</productname> supports that too;
-   see <xref linkend="sql-set-transaction"> for details.
+   see <xref linkend="sql-set-transaction"/> for details.
   </para>
 
   <para>

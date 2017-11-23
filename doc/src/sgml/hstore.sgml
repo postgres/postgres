@@ -70,7 +70,7 @@ key =&gt; NULL
    constant, then any single-quote characters and (depending on the setting of
    the <varname>standard_conforming_strings</varname> configuration parameter)
    backslash characters need to be escaped correctly. See
-   <xref linkend="sql-syntax-strings"> for more on the handling of string
+   <xref linkend="sql-syntax-strings"/> for more on the handling of string
    constants.
   </para>
   </note>
@@ -87,8 +87,8 @@ key =&gt; NULL
 
   <para>
    The operators provided by the <literal>hstore</literal> module are
-   shown in <xref linkend="hstore-op-table">, the functions
-   in <xref linkend="hstore-func-table">.
+   shown in <xref linkend="hstore-op-table"/>, the functions
+   in <xref linkend="hstore-func-table"/>.
   </para>
 
   <table id="hstore-op-table">
@@ -629,7 +629,7 @@ ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
    extensions for PL/Python are
    called <literal>hstore_plpythonu</literal>, <literal>hstore_plpython2u</literal>,
    and <literal>hstore_plpython3u</literal>
-   (see <xref linkend="plpython-python23"> for the PL/Python naming
+   (see <xref linkend="plpython-python23"/> for the PL/Python naming
    convention).  If you use them, <type>hstore</type> values are mapped to
    Python dictionaries.
   </para>

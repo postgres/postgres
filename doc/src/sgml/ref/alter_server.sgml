@@ -136,8 +136,8 @@ ALTER SERVER foo VERSION '8.4' OPTIONS (SET host 'baz');
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createserver"></member>
-   <member><xref linkend="sql-dropserver"></member>
+   <member><xref linkend="sql-createserver"/></member>
+   <member><xref linkend="sql-dropserver"/></member>
   </simplelist>
  </refsect1>
 

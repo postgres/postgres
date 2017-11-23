@@ -24,7 +24,7 @@
  <para>
   This chapter describes how to create and manage roles.
   More information about the effects of role privileges on various
-  database objects can be found in <xref linkend="ddl-priv">.
+  database objects can be found in <xref linkend="ddl-priv"/>.
  </para>
 
  <sect1 id="database-roles">
@@ -52,7 +52,7 @@
    maintain a correspondence, but this is not required. Database roles
    are global across a database cluster installation (and not
    per individual database). To create a role use the <xref
-   linkend="sql-createrole"> SQL command:
+   linkend="sql-createrole"/> SQL command:
 <synopsis>
 CREATE ROLE <replaceable>name</replaceable>;
 </synopsis>
@@ -61,7 +61,7 @@ CREATE ROLE <replaceable>name</replaceable>;
    double-quoted.  (In practice, you will usually want to add additional
    options, such as <literal>LOGIN</literal>, to the command.  More details appear
    below.)  To remove an existing role, use the analogous
-   <xref linkend="sql-droprole"> command:
+   <xref linkend="sql-droprole"/> command:
 <synopsis>
 DROP ROLE <replaceable>name</replaceable>;
 </synopsis>
@@ -76,8 +76,8 @@ DROP ROLE <replaceable>name</replaceable>;
   </indexterm>
 
   <para>
-   For convenience, the programs <xref linkend="app-createuser">
-   and <xref linkend="app-dropuser"> are provided as wrappers
+   For convenience, the programs <xref linkend="app-createuser"/>
+   and <xref linkend="app-dropuser"/> are provided as wrappers
    around these SQL commands that can be called from the shell command
    line:
 <synopsis>
@@ -92,7 +92,7 @@ dropuser <replaceable>name</replaceable>
 <synopsis>
 SELECT rolname FROM pg_roles;
 </synopsis>
-   The <xref linkend="app-psql"> program's <literal>\du</literal> meta-command
+   The <xref linkend="app-psql"/> program's <literal>\du</literal> meta-command
    is also useful for listing the existing roles.
   </para>
 
@@ -126,7 +126,7 @@ SELECT rolname FROM pg_roles;
   <para>
    The set of database roles a given client connection can connect as
    is determined by the client authentication setup, as explained in
-   <xref linkend="client-authentication">. (Thus, a client is not
+   <xref linkend="client-authentication"/>. (Thus, a client is not
    limited to connect as the role matching
    its operating system user, just as a person's login name
    need not match his or her real name.)  Since the role
@@ -240,8 +240,8 @@ CREATE USER <replaceable>name</replaceable>;
 
     A role's attributes can be modified after creation with
     <command>ALTER ROLE</command>.<indexterm><primary>ALTER ROLE</primary></indexterm>
-    See the reference pages for the <xref linkend="sql-createrole">
-    and <xref linkend="sql-alterrole"> commands for details.
+    See the reference pages for the <xref linkend="sql-createrole"/>
+    and <xref linkend="sql-alterrole"/> commands for details.
    </para>
 
   <tip>
@@ -257,7 +257,7 @@ CREATE USER <replaceable>name</replaceable>;
   <para>
    A role can also have role-specific defaults for many of the run-time
    configuration settings described in <xref
-   linkend="runtime-config">.  For example, if for some reason you
+   linkend="runtime-config"/>.  For example, if for some reason you
    want to disable index scans (hint: not a good idea) anytime you
    connect, you can use:
 <programlisting>
@@ -303,8 +303,8 @@ CREATE ROLE <replaceable>name</replaceable>;
 
   <para>
    Once the group role exists, you can add and remove members using the
-   <xref linkend="sql-grant"> and
-   <xref linkend="sql-revoke"> commands:
+   <xref linkend="sql-grant"/> and
+   <xref linkend="sql-revoke"/> commands:
 <synopsis>
 GRANT <replaceable>group_role</replaceable> TO <replaceable>role1</replaceable>, ... ;
 REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceable>, ... ;
@@ -319,7 +319,7 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
   <para>
    The members of a group role can use the privileges of the role in two
    ways.  First, every member of a group can explicitly do
-   <xref linkend="sql-set-role"> to
+   <xref linkend="sql-set-role"/> to
    temporarily <quote>become</quote> the group role.  In this state, the
    database session has access to the privileges of the group role rather
    than the original login role, and any database objects created are
@@ -403,7 +403,7 @@ RESET ROLE;
 
   <para>
    To destroy a group role, use <xref
-   linkend="sql-droprole">:
+   linkend="sql-droprole"/>:
 <synopsis>
 DROP ROLE <replaceable>name</replaceable>;
 </synopsis>
@@ -418,7 +418,7 @@ DROP ROLE <replaceable>name</replaceable>;
   <para>
    Because roles can own database objects and can hold privileges
    to access other objects, dropping a role is often not just a matter of a
-   quick <xref linkend="sql-droprole">.  Any objects owned by the role must
+   quick <xref linkend="sql-droprole"/>.  Any objects owned by the role must
    first be dropped or reassigned to other owners; and any permissions
    granted to the role must be revoked.
   </para>
@@ -429,7 +429,7 @@ DROP ROLE <replaceable>name</replaceable>;
 <programlisting>
 ALTER TABLE bobs_table OWNER TO alice;
 </programlisting>
-   Alternatively, the <xref linkend="sql-reassign-owned"> command can be
+   Alternatively, the <xref linkend="sql-reassign-owned"/> command can be
    used to reassign ownership of all objects owned by the role-to-be-dropped
    to a single other role.  Because <command>REASSIGN OWNED</command> cannot access
    objects in other databases, it is necessary to run it in each database
@@ -442,7 +442,7 @@ ALTER TABLE bobs_table OWNER TO alice;
   <para>
    Once any valuable objects have been transferred to new owners, any
    remaining objects owned by the role-to-be-dropped can be dropped with
-   the <xref linkend="sql-drop-owned"> command.  Again, this command cannot
+   the <xref linkend="sql-drop-owned"/> command.  Again, this command cannot
    access objects in other databases, so it is necessary to run it in each
    database that contains objects owned by the role.  Also, <command>DROP
    OWNED</command> will not drop entire databases or tablespaces, so it is
@@ -499,7 +499,7 @@ DROP ROLE doomed_role;
   </para>
 
   <para>
-   The default roles are described in <xref linkend="default-roles-table">.
+   The default roles are described in <xref linkend="default-roles-table"/>.
    Note that the specific permissions for each of the default roles may
    change in the future as additional capabilities are added.  Administrators
    should monitor the release notes for changes.

@@ -47,22 +47,10 @@
   <para>
    The documentation sources are written in
    <firstterm>DocBook</firstterm>, which is a markup language
-   superficially similar to <acronym>HTML</acronym>.  Both of these
-   languages are applications of the <firstterm>Standard Generalized
-   Markup Language</firstterm>, <acronym>SGML</acronym>, which is
-   essentially a language for describing other languages.  In what
-   follows, the terms DocBook and <acronym>SGML</acronym> are both
+   defined in <acronym>XML</acronym>.  In what
+   follows, the terms DocBook and <acronym>XML</acronym> are both
    used, but technically they are not interchangeable.
   </para>
-
-  <note>
-   <para>
-    The PostgreSQL documentation is currently being transitioned from DocBook
-    SGML and DSSSL style sheets to DocBook XML and XSLT style sheets.  Be
-    careful to look at the instructions relating to the PostgreSQL version you
-    are dealing with, as the procedures and required tools will change.
-   </para>
-  </note>
 
   <para>
   <productname>DocBook</productname> allows an author to specify the
@@ -97,19 +85,8 @@
       <para>
        This is the definition of DocBook itself.  We currently use version
        4.2; you cannot use later or earlier versions.  You need
-       the <acronym>SGML</acronym> and the <acronym>XML</acronym> variant of
-       the DocBook DTD of the same version.  These will usually be in separate
-       packages.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><ulink url="http://www.oasis-open.org/cover/ISOEnts.zip">ISO 8879 character entities</ulink></term>
-     <listitem>
-      <para>
-       These are required by DocBook SGML but are distributed separately
-       because they are maintained by ISO.
+       the <acronym>XML</acronym> variant of the DocBook DTD, not
+       the <acronym>SGML</acronym> variant.
       </para>
      </listitem>
     </varlistentry>
@@ -126,17 +103,6 @@
       <para>
        The minimum required version is currently 1.77.0, but it is recommended
        to use the latest available version for best results.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><ulink url="http://openjade.sourceforge.net">OpenSP</ulink></term>
-     <listitem>
-      <para>
-       This is the base package of <acronym>SGML</acronym> processing.  Note
-       that we no longer need OpenJade, the <acronym>DSSSL</acronym>
-       processor, only the OpenSP package for converting SGML to XML.
       </para>
      </listitem>
     </varlistentry>
@@ -201,7 +167,7 @@
    <para>
     To install the required packages, use:
 <programlisting>
-yum install docbook-dtds docbook-style-xsl fop libxslt opensp
+yum install docbook-dtds docbook-style-xsl fop libxslt
 </programlisting>
    </para>
   </sect2>
@@ -210,40 +176,9 @@ yum install docbook-dtds docbook-style-xsl fop libxslt opensp
    <title>Installation on FreeBSD</title>
 
    <para>
-    The FreeBSD Documentation Project is itself a heavy user of
-    DocBook, so it comes as no surprise that there is a full set of
-    <quote>ports</quote> of the documentation tools available on
-    FreeBSD.  The following ports need to be installed to build the
-    documentation on FreeBSD.
-    <itemizedlist>
-     <listitem>
-      <para><filename>textproc/docbook-sgml</filename></para>
-     </listitem>
-     <listitem>
-      <para><filename>textproc/docbook-xml</filename></para>
-     </listitem>
-     <listitem>
-      <para><filename>textproc/docbook-xsl</filename></para>
-     </listitem>
-     <listitem>
-      <para><filename>textproc/dsssl-docbook-modular</filename></para>
-     </listitem>
-     <listitem>
-      <para><filename>textproc/libxslt</filename></para>
-     </listitem>
-     <listitem>
-      <para><filename>textproc/fop</filename></para>
-     </listitem>
-     <listitem>
-      <para><filename>textproc/opensp</filename></para>
-     </listitem>
-    </itemizedlist>
-   </para>
-
-   <para>
     To install the required packages with <command>pkg</command>, use:
 <programlisting>
-pkg install docbook-sgml docbook-xml docbook-xsl fop libxslt opensp
+pkg install docbook-xml docbook-xsl fop libxslt
 </programlisting>
    </para>
 
@@ -268,7 +203,7 @@ pkg install docbook-sgml docbook-xml docbook-xsl fop libxslt opensp
     available for <productname>Debian GNU/Linux</productname>.
     To install, simply use:
 <programlisting>
-apt-get install docbook docbook-xml docbook-xsl fop libxml2-utils opensp xsltproc
+apt-get install docbook-xml docbook-xsl fop libxml2-utils xsltproc
 </programlisting>
    </para>
   </sect2>
@@ -277,117 +212,21 @@ apt-get install docbook docbook-xml docbook-xsl fop libxml2-utils opensp xsltpro
    <title>macOS</title>
 
    <para>
-    If you use MacPorts, the following will get you set up:
-<programlisting>
-sudo port install docbook-sgml-4.2 docbook-xml-4.2 docbook-xsl fop libxslt opensp
-</programlisting>
+    On macOS, you can build the HTML and man documentation without installing
+    anything extra.  If you want to build PDFs or want to install a local copy
+    of DocBook, you can get those from your preferred package manager.
    </para>
-  </sect2>
-
-  <sect2>
-   <title>Manual Installation from Source</title>
 
    <para>
-    The manual installation process of the DocBook tools is somewhat
-    complex, so if you have pre-built packages available, use them.
-    We describe here only a standard setup, with reasonably standard
-    installation paths, and no <quote>fancy</quote> features.  For
-    details, you should study the documentation of the respective
-    package, and read <acronym>SGML</acronym> introductory material.
+    If you use MacPorts, the following will get you set up:
+<programlisting>
+sudo port install docbook-xml-4.2 docbook-xsl fop
+</programlisting>
+    If you use Homebrew, use this:
+<programlisting>
+brew install docbook docbook-xsl fop
+</programlisting>
    </para>
-
-   <sect3>
-    <title>Installing OpenSP</title>
-
-    <para>
-     The installation of OpenSP offers a GNU-style
-     <literal>./configure; make; make install</literal> build process.
-     Details can be found in the OpenSP source distribution. In a nutshell:
-<synopsis>
-./configure --enable-default-catalog=/usr/local/etc/sgml/catalog
-make
-make install
-</synopsis>
-     Be sure to remember where you put the <quote>default catalog</quote>; you
-     will need it below.  You can also leave it off, but then you will have to
-     set the environment variable <envar>SGML_CATALOG_FILES</envar> to point
-     to the file whenever you use any programs from OpenSP later on.  (This
-     method is also an option if OpenSP is already installed and you want to
-     install the rest of the toolchain locally.)
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Installing the <productname>DocBook</productname> <acronym>DTD</acronym> Kit</title>
-
-    <procedure>
-     <step>
-      <para>
-       Obtain the <ulink url="http://www.docbook.org/sgml/4.2/docbook-4.2.zip">
-       DocBook V4.2 distribution</ulink>.
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Create the directory
-       <filename>/usr/local/share/sgml/docbook-4.2</filename> and change
-       to it. (The exact location is irrelevant, but this one is
-       reasonable within the layout we are following here.)
-<screen>
-<prompt>$ </prompt><userinput>mkdir /usr/local/share/sgml/docbook-4.2</userinput>
-<prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook-4.2</userinput>
-</screen>
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Unpack the archive:
-<screen>
-<prompt>$ </prompt><userinput>unzip -a ...../docbook-4.2.zip</userinput>
-</screen>
-       (The archive will unpack its files into the current directory.)
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Edit the file
-       <filename>/usr/local/share/sgml/catalog</filename> (or whatever
-       you told jade during installation) and put a line like this
-       into it:
-<programlisting>
-CATALOG "docbook-4.2/docbook.cat"
-</programlisting>
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Download the <ulink url="http://www.oasis-open.org/cover/ISOEnts.zip">
-       ISO 8879 character entities archive</ulink>, unpack it, and put the
-       files in the same directory you put the DocBook files in:
-<screen>
-<prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook-4.2</userinput>
-<prompt>$ </prompt><userinput>unzip ...../ISOEnts.zip</userinput>
-</screen>
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Run the following command in the directory with the DocBook and ISO files:
-<programlisting>
-perl -pi -e 's/iso-(.*).gml/ISO\1/g' docbook.cat
-</programlisting>
-       (This fixes a mixup between the names used in the DocBook
-       catalog file and the actual names of the ISO character entity
-       files.)
-      </para>
-     </step>
-    </procedure>
-   </sect3>
   </sect2>
 
   <sect2 id="docguide-toolsets-configure">
@@ -400,26 +239,14 @@ perl -pi -e 's/iso-(.*).gml/ISO\1/g' docbook.cat
    Check the output near the end of the run, it should look something
    like this:
 <screen>
-<computeroutput>
-checking for onsgmls... onsgmls
-checking for DocBook V4.2... yes
-checking for dbtoepub... dbtoepub
 checking for xmllint... xmllint
+checking for DocBook XML V4.2... yes
+checking for dbtoepub... dbtoepub
 checking for xsltproc... xsltproc
-checking for osx... osx
 checking for fop... fop
-</computeroutput>
 </screen>
-   If neither <filename>onsgmls</filename> nor
-   <filename>nsgmls</filename> were found then some of the following tests
-   will be skipped.  <filename>nsgmls</filename> is part of the OpenSP
-   package.  You can pass the environment variable
-   <envar>NSGMLS</envar> to configure to point
-   to the programs if they are not found automatically.  If
-   <quote>DocBook V4.2</quote> was not found then you did not install
-   the DocBook DTD kit in a place where OpenSP can find it, or you have
-   not set up the catalog files correctly.  See the installation hints
-   above.
+   If <filename>xmllint</filename> was not found then some of the following
+   tests will be skipped.
   </para>
 
   </sect2>
@@ -464,9 +291,7 @@ checking for fop... fop
    We use the DocBook XSL stylesheets to
    convert <productname>DocBook</productname>
    <sgmltag>refentry</sgmltag> pages to *roff output suitable for man
-   pages.  The man pages are also distributed as a tar archive,
-   similar to the <acronym>HTML</acronym> version.  To create the man
-   pages, use the commands:
+   pages.  To create the man pages, use the command:
 <screen>
 <prompt>doc/src/sgml$ </prompt><userinput>make man</userinput>
 </screen>
@@ -536,7 +361,7 @@ ADDITIONAL_FLAGS='-Xmx1000m'
     The installation instructions are also distributed as plain text,
     in case they are needed in a situation where better reading tools
     are not available.  The <filename>INSTALL</filename> file
-    corresponds to <xref linkend="installation">, with some minor
+    corresponds to <xref linkend="installation"/>, with some minor
     changes to account for the different context.  To recreate the
     file, change to the directory <filename>doc/src/sgml</filename>
     and enter <userinput>make INSTALL</userinput>.

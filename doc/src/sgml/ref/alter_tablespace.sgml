@@ -88,9 +88,9 @@ ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="par
       Setting either value for a particular tablespace will override the
       planner's usual estimate of the cost of reading pages from tables in
       that tablespace, as established by the configuration parameters of the
-      same name (see <xref linkend="guc-seq-page-cost">,
-      <xref linkend="guc-random-page-cost">,
-      <xref linkend="guc-effective-io-concurrency">).  This may be useful if
+      same name (see <xref linkend="guc-seq-page-cost"/>,
+      <xref linkend="guc-random-page-cost"/>,
+      <xref linkend="guc-effective-io-concurrency"/>).  This may be useful if
       one tablespace is located on a disk which is faster or slower than the
       remainder of the I/O subsystem.
      </para>
@@ -130,8 +130,8 @@ ALTER TABLESPACE index_space OWNER TO mary;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtablespace"></member>
-   <member><xref linkend="sql-droptablespace"></member>
+   <member><xref linkend="sql-createtablespace"/></member>
+   <member><xref linkend="sql-droptablespace"/></member>
   </simplelist>
  </refsect1>
 </refentry>

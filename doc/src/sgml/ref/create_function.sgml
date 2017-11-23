@@ -141,7 +141,7 @@ CREATE [ OR REPLACE ] FUNCTION
        name of an input argument is just extra documentation, so far as
        the function itself is concerned; but you can use input argument names
        when calling a function to improve readability (see <xref
-       linkend="sql-syntax-calling-funcs">).  In any case, the name
+       linkend="sql-syntax-calling-funcs"/>).  In any case, the name
        of an output argument is significant, because it defines the column
        name in the result row type.  (If you omit the name for an output
        argument, the system will choose a default column name.)
@@ -269,7 +269,7 @@ CREATE [ OR REPLACE ] FUNCTION
       <para>
        Lists which transforms a call to the function should apply.  Transforms
        convert between SQL types and language-specific data types;
-       see <xref linkend="sql-createtransform">.  Procedural language
+       see <xref linkend="sql-createtransform"/>.  Procedural language
        implementations usually have hardcoded knowledge of the built-in types,
        so those don't need to be listed here.  If a procedural language
        implementation does not know how to handle a type and no transform is
@@ -338,7 +338,7 @@ CREATE [ OR REPLACE ] FUNCTION
       </para>
 
       <para>
-       For additional details see <xref linkend="xfunc-volatility">.
+       For additional details see <xref linkend="xfunc-volatility"/>.
       </para>
      </listitem>
     </varlistentry>
@@ -363,7 +363,7 @@ CREATE [ OR REPLACE ] FUNCTION
        In addition, functions which do not take arguments or which are not
        passed any arguments from the security barrier view or table do not have
        to be marked as leakproof to be executed before security conditions.  See
-       <xref linkend="sql-createview"> and <xref linkend="rules-privileges">.
+       <xref linkend="sql-createview"/> and <xref linkend="rules-privileges"/>.
        This option can only be set by the superuser.
       </para>
      </listitem>
@@ -455,7 +455,7 @@ CREATE [ OR REPLACE ] FUNCTION
      <listitem>
       <para>
        A positive number giving the estimated execution cost for the function,
-       in units of <xref linkend="guc-cpu-operator-cost">.  If the function
+       in units of <xref linkend="guc-cpu-operator-cost"/>.  If the function
        returns a set, this is the cost per returned row.  If the cost is
        not specified, 1 unit is assumed for C-language and internal functions,
        and 100 units for functions in all other languages.  Larger values
@@ -504,8 +504,8 @@ CREATE [ OR REPLACE ] FUNCTION
       </para>
 
       <para>
-       See <xref linkend="sql-set"> and
-       <xref linkend="runtime-config">
+       See <xref linkend="sql-set"/> and
+       <xref linkend="runtime-config"/>
        for more information about allowed parameter names and values.
       </para>
      </listitem>
@@ -523,7 +523,7 @@ CREATE [ OR REPLACE ] FUNCTION
 
       <para>
        It is often helpful to use dollar quoting (see <xref
-       linkend="sql-syntax-dollar-quoting">) to write the function definition
+       linkend="sql-syntax-dollar-quoting"/>) to write the function definition
        string, rather than the normal single quote syntax.  Without dollar
        quoting, any single quotes or backslashes in the function definition must
        be escaped by doubling them.
@@ -543,7 +543,7 @@ CREATE [ OR REPLACE ] FUNCTION
        the SQL function. The string <replaceable
        class="parameter">obj_file</replaceable> is the name of the shared
        library file containing the compiled C function, and is interpreted
-       as for the <xref linkend="sql-load"> command.  The string
+       as for the <xref linkend="sql-load"/> command.  The string
        <replaceable class="parameter">link_symbol</replaceable> is the
        function's link symbol, that is, the name of the function in the C
        language source code.  If the link symbol is omitted, it is assumed
@@ -598,7 +598,7 @@ CREATE [ OR REPLACE ] FUNCTION
    </variablelist>
 
    <para>
-    Refer to <xref linkend="xfunc"> for further information on writing
+    Refer to <xref linkend="xfunc"/> for further information on writing
     functions.
    </para>
 
@@ -681,7 +681,7 @@ CREATE FUNCTION foo(int, int default 42) ...
 
   <para>
    Here are some trivial examples to help you get started.  For more
-   information and examples, see <xref linkend="xfunc">.
+   information and examples, see <xref linkend="xfunc"/>.
 <programlisting>
 CREATE FUNCTION add(integer, integer) RETURNS integer
     AS 'select $1 + $2;'
@@ -750,7 +750,7 @@ SELECT * FROM dup(42);
     Because a <literal>SECURITY DEFINER</literal> function is executed
     with the privileges of the user that owns it, care is needed to
     ensure that the function cannot be misused.  For security,
-    <xref linkend="guc-search-path"> should be set to exclude any schemas
+    <xref linkend="guc-search-path"/> should be set to exclude any schemas
     writable by untrusted users.  This prevents
     malicious users from creating objects (e.g., tables, functions, and
     operators) that mask objects intended to be used by the function.
@@ -795,7 +795,7 @@ $$  LANGUAGE plpgsql
    <para>
     Another point to keep in mind is that by default, execute privilege
     is granted to <literal>PUBLIC</literal> for newly created functions
-    (see <xref linkend="sql-grant"> for more
+    (see <xref linkend="sql-grant"/> for more
     information).  Frequently you will wish to restrict use of a security
     definer function to only some users.  To do that, you must revoke
     the default <literal>PUBLIC</literal> privileges and then grant execute
@@ -843,11 +843,11 @@ COMMIT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterfunction"></member>
-   <member><xref linkend="sql-dropfunction"></member>
-   <member><xref linkend="sql-grant"></member>
-   <member><xref linkend="sql-load"></member>
-   <member><xref linkend="sql-revoke"></member>
+   <member><xref linkend="sql-alterfunction"/></member>
+   <member><xref linkend="sql-dropfunction"/></member>
+   <member><xref linkend="sql-grant"/></member>
+   <member><xref linkend="sql-load"/></member>
+   <member><xref linkend="sql-revoke"/></member>
   </simplelist>
  </refsect1>
 

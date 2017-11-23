@@ -286,6 +286,6 @@ typedef struct BackgroundWorker
 
   <para>
    The maximum number of registered background workers is limited by
-   <xref linkend="guc-max-worker-processes">.
+   <xref linkend="guc-max-worker-processes"/>.
   </para>
 </chapter>

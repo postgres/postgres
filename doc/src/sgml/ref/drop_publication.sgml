@@ -98,8 +98,8 @@ DROP PUBLICATION mypublication;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createpublication"></member>
-   <member><xref linkend="sql-alterpublication"></member>
+   <member><xref linkend="sql-createpublication"/></member>
+   <member><xref linkend="sql-alterpublication"/></member>
   </simplelist>
  </refsect1>
 </refentry>

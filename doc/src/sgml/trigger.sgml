@@ -11,10 +11,10 @@
    This chapter provides general information about writing trigger functions.
    Trigger functions can be written in most of the available procedural
    languages, including
-   <application>PL/pgSQL</application> (<xref linkend="plpgsql">),
-   <application>PL/Tcl</application> (<xref linkend="pltcl">),
-   <application>PL/Perl</application> (<xref linkend="plperl">), and
-   <application>PL/Python</application> (<xref linkend="plpython">).
+   <application>PL/pgSQL</application> (<xref linkend="plpgsql"/>),
+   <application>PL/Tcl</application> (<xref linkend="pltcl"/>),
+   <application>PL/Perl</application> (<xref linkend="plperl"/>), and
+   <application>PL/Python</application> (<xref linkend="plpython"/>).
    After reading this chapter, you should consult the chapter for
    your favorite procedural language to find out the language-specific
    details of writing a trigger in it.
@@ -76,7 +76,7 @@
    <para>
     Once a suitable trigger function has been created, the trigger is
     established with
-    <xref linkend="sql-createtrigger">.
+    <xref linkend="sql-createtrigger"/>.
     The same trigger function can be used for multiple triggers.
    </para>
 
@@ -397,8 +397,8 @@
 
    <para>
     Further information about data visibility rules can be found in
-    <xref linkend="spi-visibility">.  The example in <xref
-    linkend="trigger-example"> contains a demonstration of these rules.
+    <xref linkend="spi-visibility"/>.  The example in <xref
+    linkend="trigger-example"/> contains a demonstration of these rules.
    </para>
   </sect1>
 
@@ -715,7 +715,7 @@ typedef struct Trigger
 
    <para>
     To allow queries issued through SPI to reference transition tables, see
-    <xref linkend="spi-spi-register-trigger-data">.
+    <xref linkend="spi-spi-register-trigger-data"/>.
    </para>
 
    <para>
@@ -835,7 +835,7 @@ trigf(PG_FUNCTION_ARGS)
 
    <para>
     After you have compiled the source code (see <xref
-    linkend="dfunc">), declare the function and the triggers:
+    linkend="dfunc"/>), declare the function and the triggers:
 <programlisting>
 CREATE FUNCTION trigf() RETURNS trigger
     AS '<replaceable>filename</replaceable>'
@@ -921,7 +921,7 @@ DELETE 2
    <para>
     There are more complex examples in
     <filename>src/test/regress/regress.c</filename> and
-    in <xref linkend="contrib-spi">.
+    in <xref linkend="contrib-spi"/>.
    </para>
   </sect1>
  </chapter>

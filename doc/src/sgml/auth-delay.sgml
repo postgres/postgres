@@ -18,7 +18,7 @@
 
  <para>
   In order to function, this module must be loaded via
-  <xref linkend="guc-shared-preload-libraries"> in <filename>postgresql.conf</filename>.
+  <xref linkend="guc-shared-preload-libraries"/> in <filename>postgresql.conf</filename>.
  </para>
 
  <sect2>

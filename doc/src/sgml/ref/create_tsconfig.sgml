@@ -57,7 +57,7 @@ CREATE TEXT SEARCH CONFIGURATION <replaceable class="parameter">name</replaceabl
   </para>
 
   <para>
-   Refer to <xref linkend="textsearch"> for further information.
+   Refer to <xref linkend="textsearch"/> for further information.
   </para>
  </refsect1>
 
@@ -119,8 +119,8 @@ CREATE TEXT SEARCH CONFIGURATION <replaceable class="parameter">name</replaceabl
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsconfig"></member>
-   <member><xref linkend="sql-droptsconfig"></member>
+   <member><xref linkend="sql-altertsconfig"/></member>
+   <member><xref linkend="sql-droptsconfig"/></member>
   </simplelist>
  </refsect1>
 </refentry>

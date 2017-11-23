@@ -38,7 +38,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <para>
-   <xref linkend="app-postgres">
+   <xref linkend="app-postgres"/>
   </para>
  </refsect1>
 </refentry>

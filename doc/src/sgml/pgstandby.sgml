@@ -41,7 +41,7 @@
   <varname>restore_command</varname>, which is needed to turn a standard
   archive recovery into a warm standby operation.  Other
   configuration is required as well, all of which is described in the main
-  server manual (see <xref linkend="warm-standby">).
+  server manual (see <xref linkend="warm-standby"/>).
  </para>
 
   <para>
@@ -180,7 +180,7 @@ restore_command = 'pg_standby <replaceable>archiveDir</replaceable> %f %p %r'
         Set the number of seconds (up to 60, default 5) to sleep between
         tests to see if the WAL file to be restored is available in
         the archive yet.  The default setting is not necessarily
-        recommended; consult <xref linkend="warm-standby"> for discussion.
+        recommended; consult <xref linkend="warm-standby"/> for discussion.
        </para>
       </listitem>
      </varlistentry>
@@ -216,7 +216,7 @@ restore_command = 'pg_standby <replaceable>archiveDir</replaceable> %f %p %r'
         after which a fast failover will be performed.
         A setting of zero (the default) means wait forever.
         The default setting is not necessarily recommended;
-        consult <xref linkend="warm-standby"> for discussion.
+        consult <xref linkend="warm-standby"/> for discussion.
        </para>
       </listitem>
      </varlistentry>
@@ -388,7 +388,7 @@ recovery_end_command = 'del C:\pgsql.trigger.5442'
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="pgarchivecleanup"></member>
+   <member><xref linkend="pgarchivecleanup"/></member>
   </simplelist>
  </refsect1>
 </refentry>

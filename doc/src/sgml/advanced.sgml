@@ -18,12 +18,12 @@
 
    <para>
     This chapter will on occasion refer to examples found in <xref
-    linkend="tutorial-sql"> to change or improve them, so it will be
+    linkend="tutorial-sql"/> to change or improve them, so it will be
     useful to have read that chapter.  Some examples from
     this chapter can also be found in
     <filename>advanced.sql</filename> in the tutorial directory.  This
     file also contains some sample data to load, which is not
-    repeated here.  (Refer to <xref linkend="tutorial-sql-intro"> for
+    repeated here.  (Refer to <xref linkend="tutorial-sql-intro"/> for
     how to use the file.)
    </para>
   </sect1>
@@ -37,7 +37,7 @@
    </indexterm>
 
    <para>
-    Refer back to the queries in <xref linkend="tutorial-join">.
+    Refer back to the queries in <xref linkend="tutorial-join"/>.
     Suppose the combined listing of weather records and city location
     is of particular interest to your application, but you do not want
     to type the query each time you need it.  You can create a
@@ -82,7 +82,7 @@ SELECT * FROM myview;
    <para>
     Recall the <classname>weather</classname> and
     <classname>cities</classname> tables from <xref
-    linkend="tutorial-sql">.  Consider the following problem:  You
+    linkend="tutorial-sql"/>.  Consider the following problem:  You
     want to make sure that no one can insert rows in the
     <classname>weather</classname> table that do not have a matching
     entry in the <classname>cities</classname> table.  This is called
@@ -129,7 +129,7 @@ DETAIL:  Key (city)=(Berkeley) is not present in table "cities".
    <para>
     The behavior of foreign keys can be finely tuned to your
     application.  We will not go beyond this simple example in this
-    tutorial, but just refer you to <xref linkend="ddl">
+    tutorial, but just refer you to <xref linkend="ddl"/>
     for more information.  Making correct use of
     foreign keys will definitely improve the quality of your database
     applications, so you are strongly encouraged to learn about them.
@@ -447,7 +447,7 @@ FROM empsalary;
       <para>
        There are options to define the window frame in other ways, but
        this tutorial does not cover them.  See
-       <xref linkend="syntax-window-functions"> for details.
+       <xref linkend="syntax-window-functions"/> for details.
       </para>
      </footnote>
     Here is an example using <function>sum</function>:
@@ -554,10 +554,10 @@ SELECT sum(salary) OVER w, avg(salary) OVER w
 
    <para>
     More details about window functions can be found in
-    <xref linkend="syntax-window-functions">,
-    <xref linkend="functions-window">,
-    <xref linkend="queries-window">, and the
-    <xref linkend="sql-select"> reference page.
+    <xref linkend="syntax-window-functions"/>,
+    <xref linkend="functions-window"/>,
+    <xref linkend="queries-window"/>, and the
+    <xref linkend="sql-select"/> reference page.
    </para>
   </sect1>
 
@@ -692,7 +692,7 @@ SELECT name, altitude
     <para>
      Although inheritance is frequently useful, it has not been integrated
      with unique constraints or foreign keys, which limits its usefulness.
-     See <xref linkend="ddl-inherit"> for more detail.
+     See <xref linkend="ddl-inherit"/> for more detail.
     </para>
    </note>
   </sect1>

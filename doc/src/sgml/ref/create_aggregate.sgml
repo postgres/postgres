@@ -91,7 +91,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
    <command>CREATE AGGREGATE</command> defines a new aggregate
    function. Some basic and commonly-used aggregate functions are
    included with the distribution; they are documented in <xref
-   linkend="functions-aggregate">. If one defines new types or needs
+   linkend="functions-aggregate"/>. If one defines new types or needs
    an aggregate function not already provided, then <command>CREATE
    AGGREGATE</command> can be used to provide the desired features.
   </para>
@@ -110,7 +110,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
    the name and input data type(s) of every ordinary function in the same
    schema.
    This behavior is identical to overloading of ordinary function names
-   (see <xref linkend="sql-createfunction">).
+   (see <xref linkend="sql-createfunction"/>).
   </para>
 
   <para>
@@ -199,7 +199,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
 
   <para>
    An aggregate can optionally support <firstterm>moving-aggregate mode</firstterm>,
-   as described in <xref linkend="xaggr-moving-aggregates">.  This requires
+   as described in <xref linkend="xaggr-moving-aggregates"/>.  This requires
    specifying the <literal>MSFUNC</literal>, <literal>MINVFUNC</literal>,
    and <literal>MSTYPE</literal> parameters, and optionally
    the <literal>MSPACE</literal>, <literal>MFINALFUNC</literal>,
@@ -228,7 +228,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
 
   <para>
    An aggregate can optionally support <firstterm>partial aggregation</firstterm>,
-   as described in <xref linkend="xaggr-partial-aggregates">.
+   as described in <xref linkend="xaggr-partial-aggregates"/>.
    This requires specifying the <literal>COMBINEFUNC</literal> parameter.
    If the <replaceable class="parameter">state_data_type</replaceable>
    is <type>internal</type>, it's usually also appropriate to provide the
@@ -379,7 +379,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       The planner uses this value to estimate the memory required for a
       grouped aggregate query.  The planner will consider using hash
       aggregation for such a query only if the hash table is estimated to fit
-      in <xref linkend="guc-work-mem">; therefore, large values of this
+      in <xref linkend="guc-work-mem"/>; therefore, large values of this
       parameter discourage use of hash aggregation.
      </para>
     </listitem>
@@ -426,7 +426,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       that does not modify its arguments.  <literal>READ_ONLY</literal> indicates
       it does not; the other two values indicate that it may change the
       transition state value.  See <xref linkend="sql-createaggregate-notes"
-      endterm="sql-createaggregate-notes-title"> below for more detail.  The
+      endterm="sql-createaggregate-notes-title"/> below for more detail.  The
       default is <literal>READ_ONLY</literal>, except for ordered-set aggregates,
       for which the default is <literal>READ_WRITE</literal>.
      </para>
@@ -623,7 +623,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       The meanings of <literal>PARALLEL SAFE</literal>, <literal>PARALLEL
       RESTRICTED</literal>, and <literal>PARALLEL UNSAFE</literal> are the same as
-      in <xref linkend="sql-createfunction">.  An aggregate will not be
+      in <xref linkend="sql-createfunction"/>.  An aggregate will not be
       considered for parallelization if it is marked <literal>PARALLEL
       UNSAFE</literal> (which is the default!) or <literal>PARALLEL RESTRICTED</literal>.
       Note that the parallel-safety markings of the aggregate's support
@@ -773,7 +773,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
   <title>Examples</title>
 
   <para>
-   See <xref linkend="xaggr">.
+   See <xref linkend="xaggr"/>.
   </para>
  </refsect1>
 
@@ -791,8 +791,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteraggregate"></member>
-   <member><xref linkend="sql-dropaggregate"></member>
+   <member><xref linkend="sql-alteraggregate"/></member>
+   <member><xref linkend="sql-dropaggregate"/></member>
   </simplelist>
  </refsect1>
 </refentry>

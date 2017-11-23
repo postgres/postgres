@@ -89,10 +89,10 @@ PostgreSQL documentation
 
   <para>
    <application>pg_rewind</application> requires that the target server either has
-   the <xref linkend="guc-wal-log-hints"> option enabled
+   the <xref linkend="guc-wal-log-hints"/> option enabled
    in <filename>postgresql.conf</filename> or data checksums enabled when
    the cluster was initialized with <application>initdb</application>.  Neither of these
-   are currently on by default.  <xref linkend="guc-full-page-writes">
+   are currently on by default.  <xref linkend="guc-full-page-writes"/>
    must also be set to <literal>on</literal>, but is enabled by default.
   </para>
  </refsect1>
@@ -194,7 +194,7 @@ PostgreSQL documentation
   <para>
    When <option>--source-server</option> option is used,
    <application>pg_rewind</application> also uses the environment variables
-   supported by <application>libpq</application> (see <xref linkend="libpq-envars">).
+   supported by <application>libpq</application> (see <xref linkend="libpq-envars"/>).
   </para>
  </refsect1>
 

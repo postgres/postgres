@@ -264,7 +264,7 @@
     <productname>PostgreSQL</productname> server applications and
     support utilities.  These commands can only be run usefully on the
     host where the database server resides.  Other utility programs
-    are listed in <xref linkend="reference-client">.
+    are listed in <xref linkend="reference-client"/>.
    </para>
   </partintro>
 

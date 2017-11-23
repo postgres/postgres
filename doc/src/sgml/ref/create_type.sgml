@@ -116,7 +116,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
 
    <para>
     The second form of <command>CREATE TYPE</command> creates an enumerated
-    (enum) type, as described in <xref linkend="datatype-enum">.
+    (enum) type, as described in <xref linkend="datatype-enum"/>.
     Enum types take a list of one or more quoted labels, each of which
     must be less than <symbol>NAMEDATALEN</symbol> bytes long (64 bytes in a
     standard <productname>PostgreSQL</productname> build).
@@ -128,7 +128,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
 
    <para>
     The third form of <command>CREATE TYPE</command> creates a new
-    range type, as described in <xref linkend="rangetypes">.
+    range type, as described in <xref linkend="rangetypes"/>.
    </para>
 
    <para>
@@ -148,7 +148,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     function must take one argument of the range type being defined, and
     return a value of the same type.  This is used to convert range values
     to a canonical form, when applicable.  See <xref
-    linkend="rangetypes-defining"> for more information.  Creating a
+    linkend="rangetypes-defining"/> for more information.  Creating a
     <replaceable class="parameter">canonical</replaceable> function
     is a bit tricky, since it must be defined before the range type can be
     declared.  To do this, you must first create a shell type, which is a
@@ -167,7 +167,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     and return a <type>double precision</type> value representing the
     difference between the two given values.  While this is optional,
     providing it allows much greater efficiency of GiST indexes on columns of
-    the range type.  See <xref linkend="rangetypes-defining"> for more
+    the range type.  See <xref linkend="rangetypes-defining"/> for more
     information.
    </para>
   </refsect2>
@@ -330,7 +330,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    by setting <literal>typlen</literal> to -1.)  The internal representation of all
    variable-length types must start with a 4-byte integer giving the total
    length of this value of the type.  (Note that the length field is often
-   encoded, as described in <xref linkend="storage-toast">; it's unwise
+   encoded, as described in <xref linkend="storage-toast"/>; it's unwise
    to access it directly.)
   </para>
 
@@ -373,7 +373,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    All <replaceable class="parameter">storage</replaceable> values other
    than <literal>plain</literal> imply that the functions of the data type
    can handle values that have been <firstterm>toasted</firstterm>, as described
-   in <xref linkend="storage-toast"> and <xref linkend="xtypes-toast">.
+   in <xref linkend="storage-toast"/> and <xref linkend="xtypes-toast"/>.
    The specific other value given merely determines the default TOAST
    storage strategy for columns of a toastable data type; users can pick
    other strategies for individual columns using <literal>ALTER TABLE
@@ -404,7 +404,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    category.  The parser will prefer casting to preferred types (but only from
    other types within the same category) when this rule is helpful in
    resolving overloaded functions or operators.  For more details see <xref
-   linkend="typeconv">.  For types that have no implicit casts to or from any
+   linkend="typeconv"/>.  For types that have no implicit casts to or from any
    other types, it is sufficient to leave these settings at the defaults.
    However, for a group of related types that have implicit casts, it is often
    helpful to mark them all as belonging to a category and select one or two
@@ -709,7 +709,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
       The category code (a single ASCII character) for this type.
       The default is <literal>'U'</literal> for <quote>user-defined type</quote>.
       Other standard category codes can be found in
-      <xref linkend="catalog-typcategory-table">.  You may also choose
+      <xref linkend="catalog-typcategory-table"/>.  You may also choose
       other ASCII characters in order to create custom categories.
      </para>
     </listitem>
@@ -924,7 +924,7 @@ CREATE TABLE big_objs (
 
   <para>
    More examples, including suitable input and output functions, are
-   in <xref linkend="xtypes">.
+   in <xref linkend="xtypes"/>.
   </para>
  </refsect1>
 
@@ -951,10 +951,10 @@ CREATE TABLE big_objs (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertype"></member>
-   <member><xref linkend="sql-createdomain"></member>
-   <member><xref linkend="sql-createfunction"></member>
-   <member><xref linkend="sql-droptype"></member>
+   <member><xref linkend="sql-altertype"/></member>
+   <member><xref linkend="sql-createdomain"/></member>
+   <member><xref linkend="sql-createfunction"/></member>
+   <member><xref linkend="sql-droptype"/></member>
   </simplelist>
  </refsect1>
 

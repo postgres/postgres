@@ -38,7 +38,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
   <para>
    <command>ALTER SUBSCRIPTION</command> can change most of the subscription
    properties that can be specified
-   in <xref linkend="sql-createsubscription">.
+   in <xref linkend="sql-createsubscription"/>.
   </para>
 
   <para>
@@ -68,7 +68,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <listitem>
      <para>
       This clause alters the connection property originally set by
-      <xref linkend="sql-createsubscription">.  See there for more
+      <xref linkend="sql-createsubscription"/>.  See there for more
       information.
      </para>
     </listitem>
@@ -79,7 +79,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <listitem>
      <para>
       Changes list of subscribed publications. See
-      <xref linkend="sql-createsubscription"> for more information.
+      <xref linkend="sql-createsubscription"/> for more information.
       By default this command will also act like <literal>REFRESH
       PUBLICATION</literal>.
      </para>
@@ -162,7 +162,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <listitem>
      <para>
       This clause alters parameters originally set by
-      <xref linkend="sql-createsubscription">.  See there for more
+      <xref linkend="sql-createsubscription"/>.  See there for more
       information.  The allowed options are <literal>slot_name</literal> and
       <literal>synchronous_commit</literal>
      </para>
@@ -220,10 +220,10 @@ ALTER SUBSCRIPTION mysub DISABLE;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createsubscription"></member>
-   <member><xref linkend="sql-dropsubscription"></member>
-   <member><xref linkend="sql-createpublication"></member>
-   <member><xref linkend="sql-alterpublication"></member>
+   <member><xref linkend="sql-createsubscription"/></member>
+   <member><xref linkend="sql-dropsubscription"/></member>
+   <member><xref linkend="sql-createpublication"/></member>
+   <member><xref linkend="sql-alterpublication"/></member>
   </simplelist>
  </refsect1>
 </refentry>

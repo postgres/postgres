@@ -36,7 +36,7 @@ CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
    Whenever the designated event occurs and the <literal>WHEN</literal> condition
    associated with the trigger, if any, is satisfied, the trigger function
    will be executed.  For a general introduction to event triggers, see
-   <xref linkend="event-triggers">.  The user who creates an event trigger
+   <xref linkend="event-triggers"/>.  The user who creates an event trigger
    becomes its owner.
   </para>
  </refsect1>
@@ -60,7 +60,7 @@ CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       The name of the event that triggers a call to the given function.
-      See <xref linkend="event-trigger-definition"> for more information
+      See <xref linkend="event-trigger-definition"/> for more information
       on event names.
      </para>
     </listitem>
@@ -113,7 +113,7 @@ CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
 
   <para>
    Event triggers are disabled in single-user mode (see <xref
-   linkend="app-postgres">).  If an erroneous event trigger disables the
+   linkend="app-postgres"/>).  If an erroneous event trigger disables the
    database so much that you can't even drop the trigger, restart in
    single-user mode and you'll be able to do that.
   </para>
@@ -154,9 +154,9 @@ CREATE EVENT TRIGGER abort_ddl ON ddl_command_start
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altereventtrigger"></member>
-   <member><xref linkend="sql-dropeventtrigger"></member>
-   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-altereventtrigger"/></member>
+   <member><xref linkend="sql-dropeventtrigger"/></member>
+   <member><xref linkend="sql-createfunction"/></member>
   </simplelist>
  </refsect1>
 </refentry>

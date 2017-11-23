@@ -8,7 +8,7 @@
   </indexterm>
 
   <para>
-   To supplement the trigger mechanism discussed in <xref linkend="triggers">,
+   To supplement the trigger mechanism discussed in <xref linkend="triggers"/>,
    <productname>PostgreSQL</productname> also provides event triggers.  Unlike regular
    triggers, which are attached to a single table and capture only DML events,
    event triggers are global to a particular database and are capable of
@@ -57,7 +57,7 @@
     operations that took place, use the set-returning function
     <literal>pg_event_trigger_ddl_commands()</literal> from the
     <literal>ddl_command_end</literal> event trigger code (see
-    <xref linkend="functions-event-triggers">).  Note that the trigger fires
+    <xref linkend="functions-event-triggers"/>).  Note that the trigger fires
     after the actions have taken place (but before the transaction commits),
     and thus the system catalogs can be read as already changed.
    </para>
@@ -68,7 +68,7 @@
     database objects.  To list the objects that have been dropped, use the
     set-returning function <literal>pg_event_trigger_dropped_objects()</literal> from the
     <literal>sql_drop</literal> event trigger code (see
-    <xref linkend="functions-event-triggers">). Note that
+    <xref linkend="functions-event-triggers"/>). Note that
     the trigger is executed after the objects have been deleted from the
     system catalogs, so it's not possible to look them up anymore.
    </para>
@@ -96,11 +96,11 @@
 
    <para>
      For a complete list of commands supported by the event trigger mechanism,
-     see <xref linkend="event-trigger-matrix">.
+     see <xref linkend="event-trigger-matrix"/>.
    </para>
 
    <para>
-     Event triggers are created using the command <xref linkend="sql-createeventtrigger">.
+     Event triggers are created using the command <xref linkend="sql-createeventtrigger"/>.
      In order to create an event trigger, you must first create a function with
      the special return type <literal>event_trigger</literal>.  This function
      need not (and may not) return a value; the return type serves merely as
@@ -125,7 +125,7 @@
    <title>Event Trigger Firing Matrix</title>
 
    <para>
-     <xref linkend="event-trigger-by-command-tag"> lists all commands
+     <xref linkend="event-trigger-by-command-tag"/> lists all commands
      for which event triggers are supported.
    </para>
 
@@ -953,7 +953,7 @@ typedef struct EventTriggerData
         Describes the event for which the function is called, one of
         <literal>"ddl_command_start"</literal>, <literal>"ddl_command_end"</literal>,
         <literal>"sql_drop"</literal>, <literal>"table_rewrite"</literal>.
-        See <xref linkend="event-trigger-definition"> for the meaning of these
+        See <xref linkend="event-trigger-definition"/> for the meaning of these
         events.
        </para>
       </listitem>
@@ -1003,7 +1003,7 @@ typedef struct EventTriggerData
     The event trigger definition associated the function with
     the <literal>ddl_command_start</literal> event.  The effect is that all DDL
     commands (with the exceptions mentioned
-    in <xref linkend="event-trigger-definition">) are prevented from running.
+    in <xref linkend="event-trigger-definition"/>) are prevented from running.
    </para>
 
    <para>
@@ -1037,7 +1037,7 @@ noddl(PG_FUNCTION_ARGS)
    </para>
 
    <para>
-    After you have compiled the source code (see <xref linkend="dfunc">),
+    After you have compiled the source code (see <xref linkend="dfunc"/>),
     declare the function and the triggers:
 <programlisting>
 CREATE FUNCTION noddl() RETURNS event_trigger

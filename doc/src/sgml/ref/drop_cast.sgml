@@ -107,7 +107,7 @@ DROP CAST (text AS int);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createcast"></member>
+   <member><xref linkend="sql-createcast"/></member>
   </simplelist>
  </refsect1>
 

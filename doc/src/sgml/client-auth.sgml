@@ -13,13 +13,13 @@
   wants to connect as, much the same way one logs into a Unix computer
   as a particular user. Within the SQL environment the active database
   user name determines access privileges to database objects &mdash; see
-  <xref linkend="user-manag"> for more information. Therefore, it is
+  <xref linkend="user-manag"/> for more information. Therefore, it is
   essential to restrict which database users can connect.
  </para>
 
  <note>
   <para>
-   As explained in <xref linkend="user-manag">,
+   As explained in <xref linkend="user-manag"/>,
    <productname>PostgreSQL</productname> actually does privilege
    management in terms of <quote>roles</quote>.  In this chapter, we
    consistently use <firstterm>database user</firstterm> to mean <quote>role with the
@@ -70,7 +70,7 @@
    <filename>pg_hba.conf</filename> file is installed when the data
    directory is initialized by <command>initdb</command>.  It is
    possible to place the authentication configuration file elsewhere,
-   however; see the <xref linkend="guc-hba-file"> configuration parameter.
+   however; see the <xref linkend="guc-hba-file"/> configuration parameter.
   </para>
 
   <para>
@@ -136,7 +136,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        Remote TCP/IP connections will not be possible unless
        the server is started with an appropriate value for the
-       <xref linkend="guc-listen-addresses"> configuration parameter,
+       <xref linkend="guc-listen-addresses"/> configuration parameter,
        since the default behavior is to listen for TCP/IP connections
        only on the local loopback address <literal>localhost</literal>.
       </para>
@@ -157,8 +157,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        To make use of this option the server must be built with
        <acronym>SSL</acronym> support. Furthermore,
        <acronym>SSL</acronym> must be enabled
-       by setting the <xref linkend="guc-ssl"> configuration parameter (see
-       <xref linkend="ssl-tcp"> for more information).
+       by setting the <xref linkend="guc-ssl"/> configuration parameter (see
+       <xref linkend="ssl-tcp"/> for more information).
        Otherwise, the <literal>hostssl</literal> record is ignored except for
        logging a warning that it cannot match any connections.
       </para>
@@ -381,7 +381,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        Specifies the authentication method to use when a connection matches
        this record. The possible choices are summarized here; details
-       are in <xref linkend="auth-methods">.
+       are in <xref linkend="auth-methods"/>.
 
        <variablelist>
         <varlistentry>
@@ -393,7 +393,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
           <productname>PostgreSQL</productname> database server to login as
           any <productname>PostgreSQL</productname> user they wish,
           without the need for a password or any other authentication.  See <xref
-          linkend="auth-trust"> for details.
+          linkend="auth-trust"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -416,7 +416,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <listitem>
          <para>
           Perform SCRAM-SHA-256 authentication to verify the user's
-          password. See <xref linkend="auth-password"> for details.
+          password. See <xref linkend="auth-password"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -426,7 +426,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <listitem>
          <para>
           Perform SCRAM-SHA-256 or MD5 authentication to verify the
-          user's password. See <xref linkend="auth-password">
+          user's password. See <xref linkend="auth-password"/>
           for details.
          </para>
         </listitem>
@@ -440,7 +440,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
           authentication.
           Since the password is sent in clear text over the
           network, this should not be used on untrusted networks.
-          See <xref linkend="auth-password"> for details.
+          See <xref linkend="auth-password"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -451,7 +451,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
          <para>
           Use GSSAPI to authenticate the user. This is only
           available for TCP/IP connections. See <xref
-          linkend="gssapi-auth"> for details.
+          linkend="gssapi-auth"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -462,7 +462,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
          <para>
           Use SSPI to authenticate the user. This is only
           available on Windows. See <xref
-          linkend="sspi-auth"> for details.
+          linkend="sspi-auth"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -477,7 +477,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
           Ident authentication can only be used on TCP/IP
           connections. When specified for local connections, peer
           authentication will be used instead.
-          See <xref linkend="auth-ident"> for details.
+          See <xref linkend="auth-ident"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -489,7 +489,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
           Obtain the client's operating system user name from the operating
           system and check if it matches the requested database user name.
           This is only available for local connections.
-          See <xref linkend="auth-peer"> for details.
+          See <xref linkend="auth-peer"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -499,7 +499,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <listitem>
          <para>
           Authenticate using an <acronym>LDAP</acronym> server. See <xref
-          linkend="auth-ldap"> for details.
+          linkend="auth-ldap"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -509,7 +509,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <listitem>
          <para>
           Authenticate using a RADIUS server. See <xref
-          linkend="auth-radius"> for details.
+          linkend="auth-radius"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -519,7 +519,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <listitem>
          <para>
           Authenticate using SSL client certificates. See
-          <xref linkend="auth-cert"> for details.
+          <xref linkend="auth-cert"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -530,7 +530,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
          <para>
           Authenticate using the Pluggable Authentication Modules
           (PAM) service provided by the operating system.  See <xref
-          linkend="auth-pam"> for details.
+          linkend="auth-pam"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -540,7 +540,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <listitem>
          <para>
           Authenticate using the BSD Authentication service provided by the
-          operating system. See <xref linkend="auth-bsd"> for details.
+          operating system. See <xref linkend="auth-bsd"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -638,7 +638,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 
   <para>
    Some examples of <filename>pg_hba.conf</filename> entries are shown in
-   <xref linkend="example-pg-hba.conf">. See the next section for details on the
+   <xref linkend="example-pg-hba.conf"/>. See the next section for details on the
    different authentication methods.
   </para>
 
@@ -763,7 +763,7 @@ local   db1,db2,@demodbs  all                                   md5
    <filename>pg_ident.conf</filename><indexterm><primary>pg_ident.conf</primary></indexterm>
    and is stored in the
    cluster's data directory.  (It is possible to place the map file
-   elsewhere, however; see the <xref linkend="guc-ident-file">
+   elsewhere, however; see the <xref linkend="guc-ident-file"/>
    configuration parameter.)
    The ident map file contains lines of the general form:
 <synopsis>
@@ -790,7 +790,7 @@ local   db1,db2,@demodbs  all                                   md5
   <para>
    If the <replaceable>system-username</replaceable> field starts with a slash (<literal>/</literal>),
    the remainder of the field is treated as a regular expression.
-   (See <xref linkend="posix-syntax-details"> for details of
+   (See <xref linkend="posix-syntax-details"/> for details of
    <productname>PostgreSQL</productname>'s regular expression syntax.)  The regular
    expression can include a single capture, or parenthesized subexpression,
    which can then be referenced in the <replaceable>database-username</replaceable>
@@ -828,8 +828,8 @@ mymap   /^(.*)@otherdomain\.com$   guest
   <para>
    A <filename>pg_ident.conf</filename> file that could be used in
    conjunction with the <filename>pg_hba.conf</filename> file in <xref
-   linkend="example-pg-hba.conf"> is shown in <xref
-   linkend="example-pg-ident.conf">. In this example, anyone
+   linkend="example-pg-hba.conf"/> is shown in <xref
+   linkend="example-pg-ident.conf"/>. In this example, anyone
    logged in to a machine on the 192.168 network that does not have the
    operating system user name <literal>bryanh</literal>, <literal>ann</literal>, or
    <literal>robert</literal> would not be granted access. Unix user
@@ -885,7 +885,7 @@ omicron         bryanh                  guest1
     Unix-domain socket file using file-system permissions.  To do this, set the
     <varname>unix_socket_permissions</varname> (and possibly
     <varname>unix_socket_group</varname>) configuration parameters as
-    described in <xref linkend="runtime-config-connection">.  Or you
+    described in <xref linkend="runtime-config-connection"/>.  Or you
     could set the <varname>unix_socket_directories</varname>
     configuration parameter to place the socket file in a suitably
     restricted directory.
@@ -965,7 +965,7 @@ omicron         bryanh                  guest1
 
       <para>
        The <literal>md5</literal> method cannot be used with
-       the <xref linkend="guc-db-user-namespace"> feature.
+       the <xref linkend="guc-db-user-namespace"/> feature.
       </para>
 
       <para>
@@ -998,8 +998,8 @@ omicron         bryanh                  guest1
     separate from operating system user passwords. The password for
     each database user is stored in the <literal>pg_authid</literal> system
     catalog. Passwords can be managed with the SQL commands
-    <xref linkend="sql-createrole"> and
-    <xref linkend="sql-alterrole">,
+    <xref linkend="sql-createrole"/> and
+    <xref linkend="sql-alterrole"/>,
     e.g., <userinput>CREATE ROLE foo WITH LOGIN PASSWORD 'secret'</userinput>,
     or the <application>psql</application>
     command <literal>\password</literal>.
@@ -1011,7 +1011,7 @@ omicron         bryanh                  guest1
     The availability of the different password-based authentication methods
     depends on how a user's password on the server is encrypted (or hashed,
     more accurately).  This is controlled by the configuration
-    parameter <xref linkend="guc-password-encryption"> at the time the
+    parameter <xref linkend="guc-password-encryption"/> at the time the
     password is set.  If a password was encrypted using
     the <literal>scram-sha-256</literal> setting, then it can be used for the
     authentication methods <literal>scram-sha-256</literal>
@@ -1061,7 +1061,7 @@ omicron         bryanh                  guest1
 
    <para>
     GSSAPI support has to be enabled when <productname>PostgreSQL</productname> is built;
-    see <xref linkend="installation"> for more information.
+    see <xref linkend="installation"/> for more information.
    </para>
 
    <para>
@@ -1072,7 +1072,7 @@ omicron         bryanh                  guest1
     The PostgreSQL server will accept any principal that is included in the keytab used by
     the server, but care needs to be taken to specify the correct principal details when
     making the connection from the client using the <literal>krbsrvname</literal> connection parameter. (See
-    also <xref linkend="libpq-paramkeywords">.) The installation default can be
+    also <xref linkend="libpq-paramkeywords"/>.) The installation default can be
     changed from the default <literal>postgres</literal> at build time using
     <literal>./configure --with-krb-srvnam=</literal><replaceable>whatever</replaceable>.
     In most environments,
@@ -1112,9 +1112,9 @@ omicron         bryanh                  guest1
    <para>
     Make sure that your server keytab file is readable (and preferably
     only readable, not writable) by the <productname>PostgreSQL</productname>
-    server account.  (See also <xref linkend="postgres-user">.) The location
+    server account.  (See also <xref linkend="postgres-user"/>.) The location
     of the key file is specified by the <xref
-    linkend="guc-krb-server-keyfile"> configuration
+    linkend="guc-krb-server-keyfile"/> configuration
     parameter. The default is
     <filename>/usr/local/pgsql/etc/krb5.keytab</filename> (or whatever
     directory was specified as <varname>sysconfdir</varname> at build time).
@@ -1138,7 +1138,7 @@ omicron         bryanh                  guest1
     database user name <literal>fred</literal>, principal
     <literal>fred@EXAMPLE.COM</literal> would be able to connect. To also allow
     principal <literal>fred/users.example.com@EXAMPLE.COM</literal>, use a user name
-    map, as described in <xref linkend="auth-username-maps">.
+    map, as described in <xref linkend="auth-username-maps"/>.
    </para>
 
    <para>
@@ -1150,7 +1150,7 @@ omicron         bryanh                  guest1
        <para>
         If set to 0, the realm name from the authenticated user principal is
         stripped off before being passed through the user name mapping
-        (<xref linkend="auth-username-maps">). This is discouraged and is
+        (<xref linkend="auth-username-maps"/>). This is discouraged and is
         primarily available for backwards compatibility, as it is not secure
         in multi-realm environments unless <literal>krb_realm</literal> is
         also used.  It is recommended to
@@ -1166,7 +1166,7 @@ omicron         bryanh                  guest1
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"> for details.  For a GSSAPI/Kerberos
+        <xref linkend="auth-username-maps"/> for details.  For a GSSAPI/Kerberos
         principal, such as <literal>username@EXAMPLE.COM</literal> (or, less
         commonly, <literal>username/hostbased@EXAMPLE.COM</literal>), the
         user name used for mapping is
@@ -1217,7 +1217,7 @@ omicron         bryanh                  guest1
    <para>
     When using <productname>Kerberos</productname> authentication,
     <productname>SSPI</productname> works the same way
-    <productname>GSSAPI</productname> does; see <xref linkend="gssapi-auth">
+    <productname>GSSAPI</productname> does; see <xref linkend="gssapi-auth"/>
     for details.
    </para>
 
@@ -1231,7 +1231,7 @@ omicron         bryanh                  guest1
        <para>
         If set to 0, the realm name from the authenticated user principal is
         stripped off before being passed through the user name mapping
-        (<xref linkend="auth-username-maps">). This is discouraged and is
+        (<xref linkend="auth-username-maps"/>). This is discouraged and is
         primarily available for backwards compatibility, as it is not secure
         in multi-realm environments unless <literal>krb_realm</literal> is
         also used.  It is recommended to
@@ -1284,7 +1284,7 @@ omicron         bryanh                  guest1
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"> for details.  For a SSPI/Kerberos
+        <xref linkend="auth-username-maps"/> for details.  For a SSPI/Kerberos
         principal, such as <literal>username@EXAMPLE.COM</literal> (or, less
         commonly, <literal>username/hostbased@EXAMPLE.COM</literal>), the
         user name used for mapping is
@@ -1329,7 +1329,7 @@ omicron         bryanh                  guest1
    <note>
     <para>
      When ident is specified for a local (non-TCP/IP) connection,
-     peer authentication (see <xref linkend="auth-peer">) will be
+     peer authentication (see <xref linkend="auth-peer"/>) will be
      used instead.
     </para>
    </note>
@@ -1342,7 +1342,7 @@ omicron         bryanh                  guest1
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"> for details.
+        <xref linkend="auth-username-maps"/> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -1415,7 +1415,7 @@ omicron         bryanh                  guest1
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"> for details.
+        <xref linkend="auth-username-maps"/> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -1828,7 +1828,7 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"> for details.
+        <xref linkend="auth-username-maps"/> for details.
        </para>
       </listitem>
      </varlistentry>

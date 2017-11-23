@@ -292,7 +292,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-pgcontroldata"></member>
+   <member><xref linkend="app-pgcontroldata"/></member>
   </simplelist>
  </refsect1>
 </refentry>

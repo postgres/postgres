@@ -46,7 +46,7 @@ CREATE GROUP <replaceable class="parameter">name</replaceable> [ [ WITH ] <repla
 
   <para>
    <command>CREATE GROUP</command> is now an alias for
-   <xref linkend="sql-createrole">.
+   <xref linkend="sql-createrole"/>.
   </para>
  </refsect1>
 
@@ -63,7 +63,7 @@ CREATE GROUP <replaceable class="parameter">name</replaceable> [ [ WITH ] <repla
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createrole"></member>
+   <member><xref linkend="sql-createrole"/></member>
   </simplelist>
  </refsect1>
 </refentry>

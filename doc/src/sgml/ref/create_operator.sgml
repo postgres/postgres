@@ -101,7 +101,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
 
   <para>
    The other clauses specify optional operator optimization clauses.
-   Their meaning is detailed in <xref linkend="xoper-optimization">.
+   Their meaning is detailed in <xref linkend="xoper-optimization"/>.
   </para>
 
   <para>
@@ -228,13 +228,13 @@ COMMUTATOR = OPERATOR(myschema.===) ,
   <title>Notes</title>
 
   <para>
-   Refer to <xref linkend="xoper"> for further information.
+   Refer to <xref linkend="xoper"/> for further information.
   </para>
 
   <para>
    It is not possible to specify an operator's lexical precedence in
    <command>CREATE OPERATOR</command>, because the parser's precedence behavior
-   is hard-wired.  See <xref linkend="sql-precedence"> for precedence details.
+   is hard-wired.  See <xref linkend="sql-precedence"/> for precedence details.
   </para>
 
   <para>
@@ -248,8 +248,8 @@ COMMUTATOR = OPERATOR(myschema.===) ,
   </para>
 
   <para>
-   Use <xref linkend="sql-dropoperator"> to delete user-defined operators
-   from a database.  Use <xref linkend="sql-alteroperator"> to modify operators in a
+   Use <xref linkend="sql-dropoperator"/> to delete user-defined operators
+   from a database.  Use <xref linkend="sql-alteroperator"/> to modify operators in a
    database.
   </para>
  </refsect1>
@@ -288,9 +288,9 @@ CREATE OPERATOR === (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteroperator"></member>
-   <member><xref linkend="sql-createopclass"></member>
-   <member><xref linkend="sql-dropoperator"></member>
+   <member><xref linkend="sql-alteroperator"/></member>
+   <member><xref linkend="sql-createopclass"/></member>
+   <member><xref linkend="sql-dropoperator"/></member>
   </simplelist>
  </refsect1>
 </refentry>

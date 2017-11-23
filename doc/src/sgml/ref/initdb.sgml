@@ -100,12 +100,12 @@ PostgreSQL documentation
    default for all locale categories, including collation order and
    character set classes. All server locale values (<literal>lc_*</literal>) can
    be displayed via <command>SHOW ALL</command>.
-   More details can be found in <xref linkend="locale">.
+   More details can be found in <xref linkend="locale"/>.
   </para>
 
   <para>
    To alter the default encoding, use the <option>--encoding</option>.
-   More details can be found in <xref linkend="multibyte">.
+   More details can be found in <xref linkend="multibyte"/>.
   </para>
 
  </refsect1>
@@ -183,7 +183,7 @@ PostgreSQL documentation
         unless you override it there.  The default is derived from the locale, or
         <literal>SQL_ASCII</literal> if that does not work. The character sets supported by
         the <productname>PostgreSQL</productname> server are described
-        in <xref linkend="multibyte-charset-supported">.
+        in <xref linkend="multibyte-charset-supported"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -209,7 +209,7 @@ PostgreSQL documentation
         Sets the default locale for the database cluster.  If this
         option is not specified, the locale is inherited from the
         environment that <command>initdb</command> runs in. Locale
-        support is described in <xref linkend="locale">.
+        support is described in <xref linkend="locale"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -281,7 +281,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Sets the default text search configuration.
-        See <xref linkend="guc-default-text-search-config"> for further information.
+        See <xref linkend="guc-default-text-search-config"/> for further information.
        </para>
       </listitem>
      </varlistentry>
@@ -442,7 +442,7 @@ PostgreSQL documentation
      <para>
       Specifies the default time zone of the created database cluster.  The
       value should be a full time zone name
-      (see <xref linkend="datatype-timezones">).
+      (see <xref linkend="datatype-timezones"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -451,7 +451,7 @@ PostgreSQL documentation
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -469,8 +469,8 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-pg-ctl"></member>
-   <member><xref linkend="app-postgres"></member>
+   <member><xref linkend="app-pg-ctl"/></member>
+   <member><xref linkend="app-postgres"/></member>
   </simplelist>
  </refsect1>
 

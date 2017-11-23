@@ -12,7 +12,7 @@
   <para>
    This release contains a variety of fixes from 10.0.
    For information about new features in major release 10, see
-   <xref linkend="release-10">.
+   <xref linkend="release-10"/>.
   </para>
 
   <sect2>
@@ -781,8 +781,8 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
   <title>Migration to Version 10</title>
 
    <para>
-    A dump/restore using <xref linkend="app-pg-dumpall">, or use of <xref
-    linkend="pgupgrade">, is required for those wishing to migrate data
+    A dump/restore using <xref linkend="app-pg-dumpall"/>, or use of <xref
+    linkend="pgupgrade"/>, is required for those wishing to migrate data
     from any previous release.
    </para>
 
@@ -893,7 +893,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
       functions' periods.  In addition, set-returning functions are now
       disallowed within <literal>CASE</literal> and <literal>COALESCE</literal> constructs.
       For more information
-      see <xref linkend="xfunc-sql-functions-returning-set">.
+      see <xref linkend="xfunc-sql-functions-returning-set"/>.
      </para>
     </listitem>
 
@@ -1003,7 +1003,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2017-01-04 [9a4d51077] Make wal streaming the default mode for pg_basebackup
 -->
      <para>
-      Make <application><xref linkend="app-pgbasebackup"></application> stream the
+      Make <application><xref linkend="app-pgbasebackup"/></application> stream the
       <acronym>WAL</acronym> needed to restore the backup by default (Magnus
       Hagander)
      </para>
@@ -1043,7 +1043,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2017-01-14 [05cd12ed5] pg_ctl: Change default to wait for all actions
 -->
     <para>
-     Make all <application><xref linkend="app-pg-ctl"></application> actions wait
+     Make all <application><xref linkend="app-pg-ctl"/></application> actions wait
      for completion by default (Peter Eisentraut)
     </para>
 
@@ -1058,7 +1058,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2017-03-27 [3371e4d9b] Change default of log_directory to 'log'
 -->
      <para>
-      Change the default value of the <xref linkend="guc-log-directory">
+      Change the default value of the <xref linkend="guc-log-directory"/>
       server parameter from <filename>pg_log</filename> to <filename>log</filename>
       (Andreas Karlsson)
      </para>
@@ -1069,7 +1069,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2017-07-31 [c0a15e07c] Always use 2048 bit DH parameters for OpenSSL ephemeral
 -->
      <para>
-      Add configuration option <xref linkend="guc-ssl-dh-params-file"> to
+      Add configuration option <xref linkend="guc-ssl-dh-params-file"/> to
       specify file name for custom OpenSSL DH parameters (Heikki Linnakangas)
      </para>
 
@@ -1098,7 +1098,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
       DH parameters longer than 1024 bits, and hence will not be able to
       connect over SSL.  If it's necessary to support such old clients, you
       can use custom 1024-bit DH parameters instead of the compiled-in
-      defaults.  See <xref linkend="guc-ssl-dh-params-file">.
+      defaults.  See <xref linkend="guc-ssl-dh-params-file"/>.
      </para>
     </listitem>
 
@@ -1112,7 +1112,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
     </para>
 
     <para>
-     The <xref linkend="guc-password-encryption"> server parameter
+     The <xref linkend="guc-password-encryption"/> server parameter
      no longer supports <literal>off</literal> or <literal>plain</literal>.
      The <literal>UNENCRYPTED</literal> option is no longer supported in
      <command>CREATE/ALTER USER ... PASSWORD</command>.  Similarly, the
@@ -1129,8 +1129,8 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2017-02-15 [51ee6f316] Replace min_parallel_relation_size with two new GUCs.
 -->
     <para>
-     Add <xref linkend="guc-min-parallel-table-scan-size">
-     and <xref linkend="guc-min-parallel-index-scan-size"> server
+     Add <xref linkend="guc-min-parallel-table-scan-size"/>
+     and <xref linkend="guc-min-parallel-index-scan-size"/> server
      parameters to control parallel queries (Amit Kapila, Robert Haas)
     </para>
 
@@ -1146,7 +1146,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 -->
     <para>
      Don't downcase unquoted text
-     within <xref linkend="guc-shared-preload-libraries"> and related
+     within <xref linkend="guc-shared-preload-libraries"/> and related
      server parameters (QL Zhuo)
     </para>
 
@@ -1205,8 +1205,8 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 
     <para>
      This functionality has been replaced by new server
-     parameters <xref linkend="guc-pltcl-start-proc">
-     and <xref linkend="guc-pltclu-start-proc">, which are easier to use
+     parameters <xref linkend="guc-pltcl-start-proc"/>
+     and <xref linkend="guc-pltclu-start-proc"/>, which are easier to use
      and more similar to features available in other PLs.
     </para>
     </listitem>
@@ -1398,14 +1398,14 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2016-12-05 [2b959d495] Reduce the default for max_worker_processes back to 8.
 -->
        <para>
-        Add <xref linkend="guc-max-parallel-workers"> server parameter
+        Add <xref linkend="guc-max-parallel-workers"/> server parameter
         to limit the number of worker processes that can be used for
         query parallelism (Julien Rouhaud)
        </para>
 
        <para>
         This parameter can be set lower than <xref
-        linkend="guc-max-worker-processes"> to reserve worker processes
+        linkend="guc-max-worker-processes"/> to reserve worker processes
         for purposes other than parallel queries.
        </para>
       </listitem>
@@ -1548,7 +1548,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 
        <para>
         For example, changing a table's <xref
-        linkend="guc-effective-io-concurrency"> setting can now be done
+        linkend="guc-effective-io-concurrency"/> setting can now be done
         with a more lightweight lock.
        </para>
       </listitem>
@@ -1565,8 +1565,8 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
        <para>
         Lock promotion can now be controlled through two new server
         parameters, <xref
-        linkend="guc-max-pred-locks-per-relation"> and
-        <xref linkend="guc-max-pred-locks-per-page">.
+        linkend="guc-max-pred-locks-per-relation"/> and
+        <xref linkend="guc-max-pred-locks-per-page"/>.
        </para>
       </listitem>
 
@@ -1768,7 +1768,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2016-10-17 [7d3235ba4] By default, set log_line_prefix = '%m [%p] '.
 -->
         <para>
-         Change the default value of <xref linkend="guc-log-line-prefix">
+         Change the default value of <xref linkend="guc-log-line-prefix"/>
          to include current timestamp (with milliseconds) and the process ID
          in each line of postmaster log output (Christoph Berg)
         </para>
@@ -1845,12 +1845,12 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
         <para>
          Reduce message verbosity of lower-numbered debug levels
          controlled by
-         <xref linkend="guc-log-min-messages"> (Robert Haas)
+         <xref linkend="guc-log-min-messages"/> (Robert Haas)
         </para>
 
         <para>
          This also changes the verbosity of <xref
-         linkend="guc-client-min-messages"> debug levels.
+         linkend="guc-client-min-messages"/> debug levels.
         </para>
        </listitem>
 
@@ -1957,7 +1957,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2016-09-28 [babe05bc2] Turn password_encryption GUC into an enum.
 -->
        <para>
-        Change the <xref linkend="guc-password-encryption"> server parameter
+        Change the <xref linkend="guc-password-encryption"/> server parameter
         from <type>boolean</type> to <type>enum</type> (Michael Paquier)
        </para>
 
@@ -2034,7 +2034,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 -->
        <para>
         Make the maximum value of <xref
-        linkend="guc-bgwriter-lru-maxpages"> effectively unlimited
+        linkend="guc-bgwriter-lru-maxpages"/> effectively unlimited
         (Jim Nasby)
        </para>
       </listitem>
@@ -2085,7 +2085,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2017-03-14 [bb4a39637] hash: Support WAL consistency checking.
 -->
         <para>
-         Add <xref linkend="guc-wal-consistency-checking"> server parameter
+         Add <xref linkend="guc-wal-consistency-checking"/> server parameter
          to add details to <acronym>WAL</acronym> that can be sanity-checked on
          the standby (Kuntal Ghosh, Robert Haas)
         </para>
@@ -2106,7 +2106,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 
         <para>
          A larger <acronym>WAL</acronym> segment size allows for fewer
-         <xref linkend="guc-archive-command"> invocations and fewer
+         <xref linkend="guc-archive-command"/> invocations and fewer
          <acronym>WAL</acronym> files to manage.
         </para>
        </listitem>
@@ -2150,7 +2150,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
       <para>
        Allow waiting for commit acknowledgement from standby
        servers irrespective of the order they appear in <xref
-       linkend="guc-synchronous-standby-names"> (Masahiko Sawada)
+       linkend="guc-synchronous-standby-names"/> (Masahiko Sawada)
       </para>
 
       <para>
@@ -2174,9 +2174,9 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 
       <para>
        Specifically, the defaults were changed for <xref
-       linkend="guc-wal-level">, <xref linkend="guc-max-wal-senders">,
-       <xref linkend="guc-max-replication-slots">, and <xref
-       linkend="guc-hot-standby"> to make them suitable for these usages
+       linkend="guc-wal-level"/>, <xref linkend="guc-max-wal-senders"/>,
+       <xref linkend="guc-max-replication-slots"/>, and <xref
+       linkend="guc-hot-standby"/> to make them suitable for these usages
        out-of-the-box.
       </para>
      </listitem>
@@ -2194,7 +2194,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
       <para>
        Previously <filename>pg_hba.conf</filename>'s replication connection
        lines were commented out by default.  This is particularly useful for
-       <application><xref linkend="app-pgbasebackup"></application>.
+       <application><xref linkend="app-pgbasebackup"/></application>.
       </para>
      </listitem>
 
@@ -2497,7 +2497,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 
       <para>
        This information is also included in <xref
-       linkend="guc-log-autovacuum-min-duration"> output.
+       linkend="guc-log-autovacuum-min-duration"/> output.
       </para>
      </listitem>
 
@@ -2830,8 +2830,8 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2017-03-07 [0d2b1f305] Invent start_proc parameters for PL/Tcl.
 -->
        <para>
-        Add server parameters <xref linkend="guc-pltcl-start-proc">
-        and <xref linkend="guc-pltclu-start-proc">, to allow initialization
+        Add server parameters <xref linkend="guc-pltcl-start-proc"/>
+        and <xref linkend="guc-pltclu-start-proc"/>, to allow initialization
         functions to be called on PL/Tcl startup (Tom Lane)
        </para>
       </listitem>
@@ -2939,7 +2939,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
     <title>Client Applications</title>
 
     <sect4>
-     <title><xref linkend="app-psql"></title>
+     <title><xref linkend="app-psql"/></title>
 
      <itemizedlist>
 
@@ -3080,7 +3080,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
     </sect4>
 
     <sect4>
-     <title><xref linkend="pgbench"></title>
+     <title><xref linkend="pgbench"/></title>
 
      <itemizedlist>
 
@@ -3258,7 +3258,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 
     <sect4>
 
-    <title><xref linkend="app-pgbasebackup"></title>
+    <title><xref linkend="app-pgbasebackup"/></title>
 
      <itemizedlist>
 
@@ -3331,7 +3331,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
     </sect4>
 
     <sect4>
-     <title><application><xref linkend="app-pg-ctl"></application></title>
+     <title><application><xref linkend="app-pg-ctl"/></application></title>
 
      <itemizedlist>
 
@@ -3340,7 +3340,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 2016-09-21 [e7010ce47] pg_ctl: Add wait option to promote action
 -->
        <para>
-        Add wait option for <application><xref linkend="app-pg-ctl"></application>'s
+        Add wait option for <application><xref linkend="app-pg-ctl"/></application>'s
         promote operation (Peter Eisentraut)
        </para>
       </listitem>

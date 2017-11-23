@@ -165,7 +165,7 @@
      <primary>transaction isolation level</primary>
     </indexterm>
     The SQL standard and PostgreSQL-implemented transaction isolation levels
-    are described in <xref linkend="mvcc-isolevel-table">.
+    are described in <xref linkend="mvcc-isolevel-table"/>.
    </para>
 
     <table tocentry="1" id="mvcc-isolevel-table">
@@ -286,7 +286,7 @@
 
    <para>
     To set the transaction isolation level of a transaction, use the
-    command <xref linkend="sql-set-transaction">.
+    command <xref linkend="sql-set-transaction"/>.
    </para>
 
    <important>
@@ -296,8 +296,8 @@
        made to a sequence (and therefore the counter of a
        column declared using <type>serial</type>) are immediately visible
        to all other transactions and are not rolled back if the transaction
-       that made the changes aborts.  See <xref linkend="functions-sequence">
-       and <xref linkend="datatype-serial">.
+       that made the changes aborts.  See <xref linkend="functions-sequence"/>
+       and <xref linkend="datatype-serial"/>.
      </para>
    </important>
 
@@ -461,7 +461,7 @@ COMMIT;
     even though they are not yet committed.)  This is a stronger
     guarantee than is required by the <acronym>SQL</acronym> standard
     for this isolation level, and prevents all of the phenomena described
-    in <xref linkend="mvcc-isolevel-table"> except for serialization
+    in <xref linkend="mvcc-isolevel-table"/> except for serialization
     anomalies.  As mentioned above, this is
     specifically allowed by the standard, which only describes the
     <emphasis>minimum</emphasis> protections each isolation level must
@@ -748,7 +748,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
       <para>
        Don't leave connections dangling <quote>idle in transaction</quote>
        longer than necessary.  The configuration parameter
-       <xref linkend="guc-idle-in-transaction-session-timeout"> may be used to
+       <xref linkend="guc-idle-in-transaction-session-timeout"/> may be used to
        automatically disconnect lingering sessions.
       </para>
      </listitem>
@@ -765,9 +765,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
        locks into a single relation-level predicate lock because the predicate
        lock table is short of memory, an increase in the rate of serialization
        failures may occur.  You can avoid this by increasing
-       <xref linkend="guc-max-pred-locks-per-transaction">,
-       <xref linkend="guc-max-pred-locks-per-relation">, and/or
-       <xref linkend="guc-max-pred-locks-per-page">.
+       <xref linkend="guc-max-pred-locks-per-transaction"/>,
+       <xref linkend="guc-max-pred-locks-per-relation"/>, and/or
+       <xref linkend="guc-max-pred-locks-per-page"/>.
       </para>
      </listitem>
      <listitem>
@@ -775,8 +775,8 @@ ERROR:  could not serialize access due to read/write dependencies among transact
        A sequential scan will always necessitate a relation-level predicate
        lock.  This can result in an increased rate of serialization failures.
        It may be helpful to encourage the use of index scans by reducing
-       <xref linkend="guc-random-page-cost"> and/or increasing
-       <xref linkend="guc-cpu-tuple-cost">.  Be sure to weigh any decrease
+       <xref linkend="guc-random-page-cost"/> and/or increasing
+       <xref linkend="guc-cpu-tuple-cost"/>.  Be sure to weigh any decrease
        in transaction rollbacks and restarts against any overall change in
        query execution time.
       </para>
@@ -811,7 +811,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     server, use the
     <link linkend="view-pg-locks"><structname>pg_locks</structname></link>
     system view. For more information on monitoring the status of the lock
-    manager subsystem, refer to <xref linkend="monitoring">.
+    manager subsystem, refer to <xref linkend="monitoring"/>.
    </para>
 
   <sect2 id="locking-tables">
@@ -826,14 +826,14 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     which they are used automatically by
     <productname>PostgreSQL</productname>.  You can also acquire any
     of these locks explicitly with the command <xref
-    linkend="sql-lock">.
+    linkend="sql-lock"/>.
     Remember that all of these lock modes are table-level locks,
     even if the name contains the word
     <quote>row</quote>; the names of the lock modes are historical.
     To some extent the names reflect the typical usage of each lock
     mode &mdash; but the semantics are all the same.  The only real difference
     between one lock mode and another is the set of lock modes with
-    which each conflicts (see <xref linkend="table-lock-compatibility">).
+    which each conflicts (see <xref linkend="table-lock-compatibility"/>).
     Two transactions cannot hold locks of conflicting
     modes on the same table at the same time.  (However, a transaction
     never conflicts with itself.  For example, it might acquire
@@ -929,7 +929,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
          <command>CREATE STATISTICS</command> and
          <command>ALTER TABLE VALIDATE</command> and other
          <command>ALTER TABLE</command> variants (for full details see
-         <xref linkend="sql-altertable">).
+         <xref linkend="sql-altertable"/>).
         </para>
        </listitem>
       </varlistentry>
@@ -972,7 +972,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by <command>CREATE COLLATION</command>,
          <command>CREATE TRIGGER</command>, and many forms of
-         <command>ALTER TABLE</command> (see <xref linkend="sql-altertable">).
+         <command>ALTER TABLE</command> (see <xref linkend="sql-altertable"/>).
         </para>
        </listitem>
       </varlistentry>
@@ -1053,9 +1053,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     <table tocentry="1" id="table-lock-compatibility">
      <title> Conflicting Lock Modes</title>
      <tgroup cols="9">
-      <colspec colnum="2" colname="lockst">
-      <colspec colnum="9" colname="lockend">
-      <spanspec namest="lockst" nameend="lockend" spanname="lockreq">
+      <colspec colnum="2" colname="lockst"/>
+      <colspec colnum="9" colname="lockend"/>
+      <spanspec namest="lockst" nameend="lockend" spanname="lockreq"/>
       <thead>
        <row>
         <entry morerows="1">Requested Lock Mode</entry>
@@ -1173,7 +1173,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
      In addition to table-level locks, there are row-level locks, which
      are listed as below with the contexts in which they are used
      automatically by <productname>PostgreSQL</productname>.  See
-     <xref linkend="row-lock-compatibility"> for a complete table of
+     <xref linkend="row-lock-compatibility"/> for a complete table of
      row-level lock conflicts.  Note that a transaction can hold
      conflicting locks on the same row, even in different subtransactions;
      but other than that, two transactions can never hold conflicting locks
@@ -1208,7 +1208,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
          <literal>SERIALIZABLE</literal> transaction,
          however, an error will be thrown if a row to be locked has changed
          since the transaction started.  For further discussion see
-         <xref linkend="applevel-consistency">.
+         <xref linkend="applevel-consistency"/>.
         </para>
         <para>
          The <literal>FOR UPDATE</literal> lock mode
@@ -1286,9 +1286,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     <table tocentry="1" id="row-lock-compatibility">
      <title>Conflicting Row-level Locks</title>
      <tgroup cols="5">
-      <colspec colnum="2" colname="lockst">
-      <colspec colnum="5" colname="lockend">
-      <spanspec namest="lockst" nameend="lockend" spanname="lockreq">
+      <colspec colnum="2" colname="lockst"/>
+      <colspec colnum="5" colname="lockend"/>
+      <spanspec namest="lockst" nameend="lockend" spanname="lockreq"/>
       <thead>
        <row>
         <entry morerows="1">Requested Lock Mode</entry>
@@ -1495,8 +1495,8 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     <para>
      Both advisory locks and regular locks are stored in a shared memory
      pool whose size is defined by the configuration variables
-     <xref linkend="guc-max-locks-per-transaction"> and
-     <xref linkend="guc-max-connections">.
+     <xref linkend="guc-max-locks-per-transaction"/> and
+     <xref linkend="guc-max-connections"/>.
      Care must be taken not to exhaust this
      memory or the server will be unable to grant any locks at all.
      This imposes an upper limit on the number of advisory locks
@@ -1529,7 +1529,7 @@ SELECT pg_advisory_lock(q.id) FROM
 
     <para>
      The functions provided to manipulate advisory locks are described in
-     <xref linkend="functions-advisory-locks">.
+     <xref linkend="functions-advisory-locks"/>.
     </para>
    </sect2>
 
@@ -1565,7 +1565,7 @@ SELECT pg_advisory_lock(q.id) FROM
    </para>
 
    <para>
-    As mentioned in <xref linkend="xact-serializable">, Serializable
+    As mentioned in <xref linkend="xact-serializable"/>, Serializable
     transactions are just Repeatable Read transactions which add
     nonblocking monitoring for dangerous patterns of read/write conflicts.
     When a pattern is detected which could cause a cycle in the apparent
@@ -1598,13 +1598,13 @@ SELECT pg_advisory_lock(q.id) FROM
     </para>
 
     <para>
-     See <xref linkend="xact-serializable"> for performance suggestions.
+     See <xref linkend="xact-serializable"/> for performance suggestions.
     </para>
 
     <warning>
      <para>
       This level of integrity protection using Serializable transactions
-      does not yet extend to hot standby mode (<xref linkend="hot-standby">).
+      does not yet extend to hot standby mode (<xref linkend="hot-standby"/>).
       Because of that, those using hot standby may want to use Repeatable
       Read and explicit locking on the master.
      </para>
@@ -1687,8 +1687,8 @@ SELECT pg_advisory_lock(q.id) FROM
    <title>Caveats</title>
 
    <para>
-    Some DDL commands, currently only <xref linkend="sql-truncate"> and the
-    table-rewriting forms of <xref linkend="sql-altertable">, are not
+    Some DDL commands, currently only <xref linkend="sql-truncate"/> and the
+    table-rewriting forms of <xref linkend="sql-altertable"/>, are not
     MVCC-safe.  This means that after the truncation or rewrite commits, the
     table will appear empty to concurrent transactions, if they are using a
     snapshot taken before the DDL command committed.  This will only be an
@@ -1705,7 +1705,7 @@ SELECT pg_advisory_lock(q.id) FROM
    <para>
     Support for the Serializable transaction isolation level has not yet
     been added to Hot Standby replication targets (described in
-    <xref linkend="hot-standby">).  The strictest isolation level currently
+    <xref linkend="hot-standby"/>).  The strictest isolation level currently
     supported in hot standby mode is Repeatable Read.  While performing all
     permanent database writes within Serializable transactions on the
     master will ensure that all standbys will eventually reach a consistent

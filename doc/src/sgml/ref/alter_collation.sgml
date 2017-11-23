@@ -94,7 +94,7 @@ ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sche
      <para>
       Update the collation's version.
       See <xref linkend="sql-altercollation-notes"
-      endterm="sql-altercollation-notes-title"> below.
+      endterm="sql-altercollation-notes-title"/> below.
      </para>
     </listitem>
    </varlistentry>
@@ -176,8 +176,8 @@ ALTER COLLATION "en_US" OWNER TO joe;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createcollation"></member>
-   <member><xref linkend="sql-dropcollation"></member>
+   <member><xref linkend="sql-createcollation"/></member>
+   <member><xref linkend="sql-dropcollation"/></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -32,7 +32,7 @@
    commands that, when fed back to the server, will recreate the
    database in the same state as it was at the time of the dump.
    <productname>PostgreSQL</productname> provides the utility program
-   <xref linkend="app-pgdump"> for this purpose. The basic usage of this
+   <xref linkend="app-pgdump"/> for this purpose. The basic usage of this
    command is:
 <synopsis>
 pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable class="parameter">outfile</replaceable>
@@ -79,7 +79,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
    environment variable <envar>PGUSER</envar>. Remember that
    <application>pg_dump</application> connections are subject to the normal
    client authentication mechanisms (which are described in <xref
-   linkend="client-authentication">).
+   linkend="client-authentication"/>).
   </para>
 
   <para>
@@ -120,9 +120,9 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     class="parameter">dbname</replaceable></literal>).  <application>psql</application>
     supports options similar to <application>pg_dump</application> for specifying
     the database server to connect to and the user name to use. See
-    the <xref linkend="app-psql"> reference page for more information.
+    the <xref linkend="app-psql"/> reference page for more information.
     Non-text file dumps are restored using the <xref
-    linkend="app-pgrestore"> utility.
+    linkend="app-pgrestore"/> utility.
    </para>
 
    <para>
@@ -178,13 +178,13 @@ pg_dump -h <replaceable>host1</replaceable> <replaceable>dbname</replaceable> | 
 
    <para>
     After restoring a backup, it is wise to run <xref
-    linkend="sql-analyze"> on each
+    linkend="sql-analyze"/> on each
     database so the query optimizer has useful statistics;
-    see <xref linkend="vacuum-for-statistics">
-    and <xref linkend="autovacuum"> for more information.
+    see <xref linkend="vacuum-for-statistics"/>
+    and <xref linkend="autovacuum"/> for more information.
     For more advice on how to load large amounts of data
     into <productname>PostgreSQL</productname> efficiently, refer to <xref
-    linkend="populate">.
+    linkend="populate"/>.
    </para>
   </sect2>
 
@@ -196,7 +196,7 @@ pg_dump -h <replaceable>host1</replaceable> <replaceable>dbname</replaceable> | 
     and it does not dump information about roles or tablespaces
     (because those are cluster-wide rather than per-database).
     To support convenient dumping of the entire contents of a database
-    cluster, the <xref linkend="app-pg-dumpall"> program is provided.
+    cluster, the <xref linkend="app-pg-dumpall"/> program is provided.
     <application>pg_dumpall</application> backs up each database in a given
     cluster, and also preserves cluster-wide data such as role and
     tablespace definitions. The basic usage of this command is:
@@ -308,8 +308,8 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> &gt; <replaceabl
 pg_restore -d <replaceable class="parameter">dbname</replaceable> <replaceable class="parameter">filename</replaceable>
 </programlisting>
 
-     See the <xref linkend="app-pgdump"> and <xref
-     linkend="app-pgrestore"> reference pages for details.
+     See the <xref linkend="app-pgdump"/> and <xref
+     linkend="app-pgrestore"/> reference pages for details.
     </para>
    </formalpara>
 
@@ -345,7 +345,7 @@ pg_dump -j <replaceable class="parameter">num</replaceable> -F d -f <replaceable
   <para>
    An alternative backup strategy is to directly copy the files that
    <productname>PostgreSQL</productname> uses to store the data in the database;
-   <xref linkend="creating-cluster"> explains where these files
+   <xref linkend="creating-cluster"/> explains where these files
    are located.  You can use whatever method you prefer
    for doing file system backups; for example:
 
@@ -369,7 +369,7 @@ tar -cf backup.tar /usr/local/pgsql/data
       an atomic snapshot of the state of the file system,
       but also because of internal buffering within the server).
       Information about stopping the server can be found in
-      <xref linkend="server-shutdown">.  Needless to say, you
+      <xref linkend="server-shutdown"/>.  Needless to say, you
       also need to shut down the server before restoring the data.
      </para>
     </listitem>
@@ -428,10 +428,10 @@ tar -cf backup.tar /usr/local/pgsql/data
    If simultaneous snapshots are not possible, one option is to shut down
    the database server long enough to establish all the frozen snapshots.
    Another option is to perform a continuous archiving base backup (<xref
-   linkend="backup-base-backup">) because such backups are immune to file
+   linkend="backup-base-backup"/>) because such backups are immune to file
    system changes during the backup.  This requires enabling continuous
    archiving just during the backup process; restore is done using
-   continuous archive recovery (<xref linkend="backup-pitr-recovery">).
+   continuous archive recovery (<xref linkend="backup-pitr-recovery"/>).
   </para>
 
   <para>
@@ -591,11 +591,11 @@ tar -cf backup.tar /usr/local/pgsql/data
    </para>
 
    <para>
-    To enable WAL archiving, set the <xref linkend="guc-wal-level">
+    To enable WAL archiving, set the <xref linkend="guc-wal-level"/>
     configuration parameter to <literal>replica</literal> or higher,
-    <xref linkend="guc-archive-mode"> to <literal>on</literal>,
+    <xref linkend="guc-archive-mode"/> to <literal>on</literal>,
     and specify the shell command to use in the <xref
-    linkend="guc-archive-command"> configuration parameter.  In practice
+    linkend="guc-archive-command"/> configuration parameter.  In practice
     these settings will always be placed in the
     <filename>postgresql.conf</filename> file.
     In <varname>archive_command</varname>,
@@ -705,7 +705,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
     than through SQL operations.
     You might wish to keep the configuration files in a location that will
     be backed up by your regular file system backup procedures.  See
-    <xref linkend="runtime-config-file-locations"> for how to relocate the
+    <xref linkend="runtime-config-file-locations"/> for how to relocate the
     configuration files.
    </para>
 
@@ -715,7 +715,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
     where it does so), there could be a long delay between the completion
     of a transaction and its safe recording in archive storage.  To put
     a limit on how old unarchived data can be, you can set
-    <xref linkend="guc-archive-timeout"> to force the server to switch
+    <xref linkend="guc-archive-timeout"/> to force the server to switch
     to a new WAL segment file at least that often.  Note that archived
     files that are archived early due to a forced switch are still the same
     length as completely full files.  It is therefore unwise to set a very
@@ -729,13 +729,13 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
     <function>pg_switch_wal</function> if you want to ensure that a
     just-finished transaction is archived as soon as possible.  Other utility
     functions related to WAL management are listed in <xref
-    linkend="functions-admin-backup-table">.
+    linkend="functions-admin-backup-table"/>.
    </para>
 
    <para>
     When <varname>wal_level</varname> is <literal>minimal</literal> some SQL commands
     are optimized to avoid WAL logging, as described in <xref
-    linkend="populate-pitr">.  If archiving or streaming replication were
+    linkend="populate-pitr"/>.  If archiving or streaming replication were
     turned on during execution of one of these statements, WAL would not
     contain enough information for archive recovery.  (Crash recovery is
     unaffected.)  For this reason, <varname>wal_level</varname> can only be changed at
@@ -753,11 +753,11 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
 
    <para>
     The easiest way to perform a base backup is to use the
-    <xref linkend="app-pgbasebackup"> tool. It can create
+    <xref linkend="app-pgbasebackup"/> tool. It can create
     a base backup either as regular files or as a tar archive. If more
-    flexibility than <xref linkend="app-pgbasebackup"> can provide is
+    flexibility than <xref linkend="app-pgbasebackup"/> can provide is
     required, you can also make a base backup using the low level API
-    (see <xref linkend="backup-lowlevel-base-backup">).
+    (see <xref linkend="backup-lowlevel-base-backup"/>).
    </para>
 
    <para>
@@ -791,7 +791,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
 
    <para>
     The backup history file is just a small text file. It contains the
-    label string you gave to <xref linkend="app-pgbasebackup">, as well as
+    label string you gave to <xref linkend="app-pgbasebackup"/>, as well as
     the starting and ending times and WAL segments of the backup.
     If you used the label to identify the associated dump file,
     then the archived history file is enough to tell you which dump file to
@@ -814,7 +814,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    <para>
     The procedure for making a base backup using the low level
     APIs contains a few more steps than
-    the <xref linkend="app-pgbasebackup"> method, but is relatively
+    the <xref linkend="app-pgbasebackup"/> method, but is relatively
     simple. It is very important that these steps are executed in
     sequence, and that the success of a step is verified before
     proceeding to the next step.
@@ -830,7 +830,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
      A non-exclusive low level backup is one that allows other
      concurrent backups to be running (both those started using
      the same backup API and those started using
-     <xref linkend="app-pgbasebackup">).
+     <xref linkend="app-pgbasebackup"/>).
     </para>
     <para>
   <orderedlist>
@@ -859,7 +859,7 @@ SELECT pg_start_backup('label', false, false);
      required for the checkpoint will be spread out over a significant
      period of time, by default half your inter-checkpoint interval
      (see the configuration parameter
-     <xref linkend="guc-checkpoint-completion-target">).  This is
+     <xref linkend="guc-checkpoint-completion-target"/>).  This is
      usually what you want, because it minimizes the impact on query
      processing.  If you want to start the backup as soon as
      possible, change the second parameter to <literal>true</literal>, which will
@@ -879,7 +879,7 @@ SELECT pg_start_backup('label', false, false);
      <application>pg_dumpall</application>).  It is neither
      necessary nor desirable to stop normal operation of the database
      while you do this. See
-     <xref linkend="backup-lowlevel-base-backup-data"> for things to
+     <xref linkend="backup-lowlevel-base-backup-data"/> for things to
      consider during this backup.
     </para>
    </listitem>
@@ -989,7 +989,7 @@ SELECT pg_start_backup('label');
      required for the checkpoint will be spread out over a significant
      period of time, by default half your inter-checkpoint interval
      (see the configuration parameter
-     <xref linkend="guc-checkpoint-completion-target">).  This is
+     <xref linkend="guc-checkpoint-completion-target"/>).  This is
      usually what you want, because it minimizes the impact on query
      processing.  If you want to start the backup as soon as
      possible, use:
@@ -1007,7 +1007,7 @@ SELECT pg_start_backup('label', true);
      <application>pg_dumpall</application>).  It is neither
      necessary nor desirable to stop normal operation of the database
      while you do this. See
-     <xref linkend="backup-lowlevel-base-backup-data"> for things to
+     <xref linkend="backup-lowlevel-base-backup-data"/> for things to
      consider during this backup.
     </para>
     <para>
@@ -1119,7 +1119,7 @@ SELECT pg_stop_backup();
     <filename>pg_snapshots/</filename>, <filename>pg_stat_tmp/</filename>,
     and <filename>pg_subtrans/</filename> (but not the directories themselves) can be
     omitted from the backup as they will be initialized on postmaster startup.
-    If <xref linkend="guc-stats-temp-directory"> is set and is under the data
+    If <xref linkend="guc-stats-temp-directory"/> is set and is under the data
     directory then the contents of that directory can also be omitted.
    </para>
 
@@ -1221,7 +1221,7 @@ SELECT pg_stop_backup();
    <listitem>
     <para>
      Create a recovery command file <filename>recovery.conf</filename> in the cluster
-     data directory (see <xref linkend="recovery-config">). You might
+     data directory (see <xref linkend="recovery-config"/>). You might
      also want to temporarily modify <filename>pg_hba.conf</filename> to prevent
      ordinary users from connecting until you are sure the recovery was successful.
     </para>
@@ -1310,7 +1310,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     at the start of recovery for a file named something like
     <filename>00000001.history</filename>.  This is also normal and does not
     indicate a problem in simple recovery situations; see
-    <xref linkend="backup-timelines"> for discussion.
+    <xref linkend="backup-timelines"/> for discussion.
    </para>
 
    <para>
@@ -1440,7 +1440,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
 
      <para>
       As with base backups, the easiest way to produce a standalone
-      hot backup is to use the <xref linkend="app-pgbasebackup">
+      hot backup is to use the <xref linkend="app-pgbasebackup"/>
       tool. If you include the <literal>-X</literal> parameter when calling
       it, all the write-ahead log required to use the backup will be
       included in the backup automatically, and no special action is
@@ -1548,7 +1548,7 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
      <tip>
       <para>
        When using an <varname>archive_command</varname> script, it's desirable
-       to enable <xref linkend="guc-logging-collector">.
+       to enable <xref linkend="guc-logging-collector"/>.
        Any messages written to <systemitem>stderr</systemitem> from the script will then
        appear in the database server log, allowing complex configurations to
        be diagnosed easily if they fail.
@@ -1567,7 +1567,7 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
   <itemizedlist>
    <listitem>
     <para>
-     If a <xref linkend="sql-createdatabase">
+     If a <xref linkend="sql-createdatabase"/>
      command is executed while a base backup is being taken, and then
      the template database that the <command>CREATE DATABASE</command> copied
      is modified while the base backup is still in progress, it is
@@ -1580,7 +1580,7 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
 
    <listitem>
     <para>
-     <xref linkend="sql-createtablespace">
+     <xref linkend="sql-createtablespace"/>
      commands are WAL-logged with the literal absolute path, and will
      therefore be replayed as tablespace creations with the same
      absolute path.  This might be undesirable if the log is being
@@ -1603,8 +1603,8 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
     your system hardware and software, the risk of partial writes might
     be small enough to ignore, in which case you can significantly
     reduce the total volume of archived logs by turning off page
-    snapshots using the <xref linkend="guc-full-page-writes">
-    parameter.  (Read the notes and warnings in <xref linkend="wal">
+    snapshots using the <xref linkend="guc-full-page-writes"/>
+    parameter.  (Read the notes and warnings in <xref linkend="wal"/>
     before you do so.)  Turning off page snapshots does not prevent
     use of the logs for PITR operations.  An area for future
     development is to compress archived WAL data by removing

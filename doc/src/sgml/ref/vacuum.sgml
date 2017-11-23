@@ -61,7 +61,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
    <command>VACUUM ANALYZE</command> performs a <command>VACUUM</command>
    and then an <command>ANALYZE</command> for each selected table.  This
    is a handy combination form for routine maintenance scripts.  See
-   <xref linkend="sql-analyze">
+   <xref linkend="sql-analyze"/>
    for more details about its processing.
   </para>
 
@@ -113,8 +113,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       Selects aggressive <quote>freezing</quote> of tuples.
       Specifying <literal>FREEZE</literal> is equivalent to performing
       <command>VACUUM</command> with the
-      <xref linkend="guc-vacuum-freeze-min-age"> and
-      <xref linkend="guc-vacuum-freeze-table-age"> parameters
+      <xref linkend="guc-vacuum-freeze-min-age"/> and
+      <xref linkend="guc-vacuum-freeze-table-age"/> parameters
       set to zero.  Aggressive freezing is always performed when the
       table is rewritten, so this option is redundant when <literal>FULL</literal>
       is specified.
@@ -215,7 +215,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     For tables with <acronym>GIN</acronym> indexes, <command>VACUUM</command> (in
     any form) also completes any pending index insertions, by moving pending
     index entries to the appropriate places in the main <acronym>GIN</acronym> index
-    structure.  See <xref linkend="gin-fast-update"> for details.
+    structure.  See <xref linkend="gin-fast-update"/> for details.
    </para>
 
    <para>
@@ -243,14 +243,14 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     <command>VACUUM</command> causes a substantial increase in I/O traffic,
     which might cause poor performance for other active sessions.  Therefore,
     it is sometimes advisable to use the cost-based vacuum delay feature.
-    See <xref linkend="runtime-config-resource-vacuum-cost"> for details.
+    See <xref linkend="runtime-config-resource-vacuum-cost"/> for details.
    </para>
 
    <para>
     <productname>PostgreSQL</productname> includes an <quote>autovacuum</quote>
     facility which can automate routine vacuum maintenance.  For more
     information about automatic and manual vacuuming, see
-    <xref linkend="routine-vacuuming">.
+    <xref linkend="routine-vacuuming"/>.
    </para>
  </refsect1>
 
@@ -278,9 +278,9 @@ VACUUM (VERBOSE, ANALYZE) onek;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-vacuumdb"></member>
-   <member><xref linkend="runtime-config-resource-vacuum-cost"></member>
-   <member><xref linkend="autovacuum"></member>
+   <member><xref linkend="app-vacuumdb"/></member>
+   <member><xref linkend="runtime-config-resource-vacuum-cost"/></member>
+   <member><xref linkend="autovacuum"/></member>
   </simplelist>
  </refsect1>
 </refentry>

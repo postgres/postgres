@@ -36,7 +36,7 @@
   <para>
    <application>pg_restore</application> is a utility for restoring a
    <productname>PostgreSQL</productname> database from an archive
-   created by <xref linkend="app-pgdump"> in one of the non-plain-text
+   created by <xref linkend="app-pgdump"/> in one of the non-plain-text
    formats.  It will issue the commands necessary to reconstruct the
    database to the state it was in at the time it was saved.  The
    archive files also allow <application>pg_restore</application> to
@@ -531,11 +531,11 @@
        <para>
         This option is relevant only when restoring the contents of a table
         which has row security.  By default, <application>pg_restore</application> will set
-        <xref linkend="guc-row-security"> to off, to ensure
+        <xref linkend="guc-row-security"/> to off, to ensure
         that all data is restored in to the table.  If the user does not have
         sufficient privileges to bypass row security, then an error is thrown.
         This parameter instructs <application>pg_restore</application> to set
-        <xref linkend="guc-row-security"> to on instead, allowing the user to attempt to restore
+        <xref linkend="guc-row-security"/> to on instead, allowing the user to attempt to restore
         the contents of the table with row security enabled.  This might still
         fail if the user does not have the right to insert the rows from the
         dump into the table.
@@ -801,7 +801,7 @@
   <para>
    This utility, like most other <productname>PostgreSQL</productname> utilities,
    also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).  However, it does not read
+   (see <xref linkend="libpq-envars"/>).  However, it does not read
    <envar>PGDATABASE</envar> when a database name is not supplied.
   </para>
 
@@ -817,7 +817,7 @@
    internally executes <acronym>SQL</acronym> statements. If you have
    problems running <application>pg_restore</application>, make sure
    you are able to select information from the database using, for
-   example, <xref linkend="app-psql">.  Also, any default connection
+   example, <xref linkend="app-psql"/>.  Also, any default connection
    settings and environment variables used by the
    <application>libpq</application> front-end library will apply.
   </para>
@@ -867,15 +867,15 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   See also the <xref linkend="app-pgdump"> documentation for details on
+   See also the <xref linkend="app-pgdump"/> documentation for details on
    limitations of <application>pg_dump</application>.
   </para>
 
   <para>
    Once restored, it is wise to run <command>ANALYZE</command> on each
    restored table so the optimizer has useful statistics; see
-   <xref linkend="vacuum-for-statistics"> and
-   <xref linkend="autovacuum"> for more information.
+   <xref linkend="vacuum-for-statistics"/> and
+   <xref linkend="autovacuum"/> for more information.
   </para>
 
  </refsect1>
@@ -976,9 +976,9 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-pgdump"></member>
-   <member><xref linkend="app-pg-dumpall"></member>
-   <member><xref linkend="app-psql"></member>
+   <member><xref linkend="app-pgdump"/></member>
+   <member><xref linkend="app-pg-dumpall"/></member>
+   <member><xref linkend="app-psql"/></member>
   </simplelist>
  </refsect1>
 </refentry>

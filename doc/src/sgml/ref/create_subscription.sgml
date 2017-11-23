@@ -50,8 +50,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
   <para>
    Additional info about subscriptions and logical replication as a whole
-   can is available at <xref linkend="logical-replication-subscription"> and
-   <xref linkend="logical-replication">.
+   can is available at <xref linkend="logical-replication-subscription"/> and
+   <xref linkend="logical-replication"/>.
   </para>
 
  </refsect1>
@@ -74,7 +74,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
     <listitem>
      <para>
       The connection string to the publisher.  For details
-      see <xref linkend="libpq-connstring">.
+      see <xref linkend="libpq-connstring"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -152,7 +152,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         <listitem>
          <para>
           The value of this parameter overrides the
-          <xref linkend="guc-synchronous-commit"> setting.  The default
+          <xref linkend="guc-synchronous-commit"/> setting.  The default
           value is <literal>off</literal>.
          </para>
 
@@ -217,7 +217,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
   <title>Notes</title>
 
   <para>
-   See <xref linkend="logical-replication-security"> for details on
+   See <xref linkend="logical-replication-security"/> for details on
    how to configure access control between the subscription and the
    publication instance.
   </para>
@@ -281,10 +281,10 @@ CREATE SUBSCRIPTION mysub
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altersubscription"></member>
-   <member><xref linkend="sql-dropsubscription"></member>
-   <member><xref linkend="sql-createpublication"></member>
-   <member><xref linkend="sql-alterpublication"></member>
+   <member><xref linkend="sql-altersubscription"/></member>
+   <member><xref linkend="sql-dropsubscription"/></member>
+   <member><xref linkend="sql-createpublication"/></member>
+   <member><xref linkend="sql-alterpublication"/></member>
   </simplelist>
  </refsect1>
 </refentry>

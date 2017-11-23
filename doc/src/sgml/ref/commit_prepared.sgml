@@ -99,8 +99,8 @@ COMMIT PREPARED 'foobar';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-prepare-transaction"></member>
-   <member><xref linkend="sql-rollback-prepared"></member>
+   <member><xref linkend="sql-prepare-transaction"/></member>
+   <member><xref linkend="sql-rollback-prepared"/></member>
   </simplelist>
  </refsect1>
 

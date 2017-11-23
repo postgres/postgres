@@ -86,8 +86,8 @@ ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> SET SCHEMA <replaceable
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtsparser"></member>
-   <member><xref linkend="sql-droptsparser"></member>
+   <member><xref linkend="sql-createtsparser"/></member>
+   <member><xref linkend="sql-droptsparser"/></member>
   </simplelist>
  </refsect1>
 </refentry>

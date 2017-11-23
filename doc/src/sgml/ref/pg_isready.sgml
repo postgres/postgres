@@ -55,7 +55,7 @@ PostgreSQL documentation
        (<literal>postgresql://</literal>
        or <literal>postgres://</literal>), it is treated as a
        <parameter>conninfo</parameter> string. See <xref
-       linkend="libpq-connstring"> for more information.
+       linkend="libpq-connstring"/> for more information.
       </para>
       </listitem>
     </varlistentry>
@@ -162,7 +162,7 @@ PostgreSQL documentation
    <command>pg_isready</command>, like most other <productname>PostgreSQL</productname>
    utilities,
    also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars"/>).
   </para>
  </refsect1>
 

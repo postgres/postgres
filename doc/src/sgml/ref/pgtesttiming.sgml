@@ -294,7 +294,7 @@ Histogram of timing durations:
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-explain"></member>
+   <member><xref linkend="sql-explain"/></member>
   </simplelist>
  </refsect1>
 </refentry>

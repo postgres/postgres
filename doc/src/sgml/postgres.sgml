@@ -1,6 +1,8 @@
 <!-- doc/src/sgml/postgres.sgml -->
 
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+[
 
 <!ENTITY % version SYSTEM "version.sgml">
 %version;
@@ -42,11 +44,11 @@
 
    <para>
     After you have worked through this tutorial you might want to move
-    on to reading <xref linkend="sql"> to gain a more formal knowledge
-    of the SQL language, or <xref linkend="client-interfaces"> for
+    on to reading <xref linkend="sql"/> to gain a more formal knowledge
+    of the SQL language, or <xref linkend="client-interfaces"/> for
     information about developing applications for
     <productname>PostgreSQL</productname>.  Those who set up and
-    manage their own server should also read <xref linkend="admin">.
+    manage their own server should also read <xref linkend="admin"/>.
    </para>
   </partintro>
 
@@ -80,14 +82,14 @@
     chapters individually as they choose.  The information in this
     part is presented in a narrative fashion in topical units.
     Readers looking for a complete description of a particular command
-    should see <xref linkend="reference">.
+    should see <xref linkend="reference"/>.
    </para>
 
    <para>
     Readers of this part should know how to connect to a
     <productname>PostgreSQL</productname> database and issue
     <acronym>SQL</acronym> commands.  Readers that are unfamiliar with
-    these issues are encouraged to read <xref linkend="tutorial">
+    these issues are encouraged to read <xref linkend="tutorial"/>
     first.  <acronym>SQL</acronym> commands are typically entered
     using the <productname>PostgreSQL</productname> interactive terminal
     <application>psql</application>, but other programs that have
@@ -130,7 +132,7 @@
     self-contained and can be read individually as desired.  The
     information in this part is presented in a narrative fashion in
     topical units.  Readers looking for a complete description of a
-    particular command should see <xref linkend="reference">.
+    particular command should see <xref linkend="reference"/>.
    </para>
 
    <para>
@@ -140,8 +142,8 @@
     The rest of this part is about tuning and management; that material
     assumes that the reader is familiar with the general use of
     the <productname>PostgreSQL</productname> database system.  Readers are
-    encouraged to look at <xref linkend="tutorial"> and <xref
-    linkend="sql"> for additional information.
+    encouraged to look at <xref linkend="tutorial"/> and <xref
+    linkend="sql"/> for additional information.
    </para>
   </partintro>
 
@@ -174,10 +176,10 @@
     with <productname>PostgreSQL</productname>.  Each of these chapters can be
     read independently.  Note that there are many other programming
     interfaces for client programs that are distributed separately and
-    contain their own documentation (<xref linkend="external-projects">
+    contain their own documentation (<xref linkend="external-projects"/>
     lists some of the more popular ones).  Readers of this part should be
     familiar with using <acronym>SQL</acronym> commands to manipulate
-    and query the database (see <xref linkend="sql">) and of course
+    and query the database (see <xref linkend="sql"/>) and of course
     with the programming language that the interface uses.
    </para>
   </partintro>
@@ -203,7 +205,7 @@
     <productname>PostgreSQL</productname> distribution as well as
     general issues concerning server-side programming languages.  It
     is essential to read at least the earlier sections of <xref
-    linkend="extend"> (covering functions) before diving into the
+    linkend="extend"/> (covering functions) before diving into the
     material about server-side programming languages.
    </para>
   </partintro>

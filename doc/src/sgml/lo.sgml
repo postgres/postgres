@@ -102,7 +102,7 @@ CREATE TRIGGER t_raster BEFORE UPDATE OR DELETE ON image
 
     <para>
      If you already have, or suspect you have, orphaned large objects, see the
-     <xref linkend="vacuumlo"> module to help
+     <xref linkend="vacuumlo"/> module to help
      you clean them up.  It's a good idea to run <application>vacuumlo</application>
      occasionally as a back-stop to the <function>lo_manage</function> trigger.
     </para>
