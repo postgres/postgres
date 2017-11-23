@@ -3457,7 +3457,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
      </para>
 
      <para>
-      Note that <varname>wal_receiver_timeout</varname> and
+      Note that <varname>wal_receiver_timeout</varname>,
+      <varname>wal_receiver_status_interval</varname> and
       <varname>wal_retrieve_retry_interval</varname> configuration parameters
       affect the logical replication workers as well.
      </para>
