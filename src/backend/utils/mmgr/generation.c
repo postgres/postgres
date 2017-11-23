@@ -9,7 +9,7 @@
  * Portions Copyright (c) 2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/utils/mmgr/Generation.c
+ *	  src/backend/utils/mmgr/generation.c
  *
  *
  *	This memory context is based on the assumption that the chunks are freed
@@ -21,8 +21,8 @@
  *	The memory context uses a very simple approach to free space management.
  *	Instead of a complex global freelist, each block tracks a number
  *	of allocated and freed chunks. Freed chunks are not reused, and once all
- *	chunks on a block are freed, the whole block is thrown away. When the
- *	chunks allocated on the same block have similar lifespan, this works
+ *	chunks in a block are freed, the whole block is thrown away. When the
+ *	chunks allocated in the same block have similar lifespan, this works
  *	very well and is very cheap.
  *
  *	The current implementation only uses a fixed block size - maybe it should
@@ -38,15 +38,15 @@
 
 #include "postgres.h"
 
+#include "lib/ilist.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
-#include "lib/ilist.h"
 
 
 #define Generation_BLOCKHDRSZ	MAXALIGN(sizeof(GenerationBlock))
 #define Generation_CHUNKHDRSZ	sizeof(GenerationChunk)
 
-/* Portion of Generation_CHUNKHDRSZ examined outside Generation.c. */
+/* Portion of Generation_CHUNKHDRSZ examined outside generation.c. */
 #define Generation_CHUNK_PUBLIC	\
 	(offsetof(GenerationChunk, size) + sizeof(Size))
 
@@ -65,36 +65,35 @@ typedef struct GenerationChunk GenerationChunk;
 typedef void *GenerationPointer;
 
 /*
- * GenerationContext is a simple memory context not reusing allocated chunks, and
- * freeing blocks once all chunks are freed.
+ * GenerationContext is a simple memory context not reusing allocated chunks,
+ * and freeing blocks once all chunks are freed.
  */
 typedef struct GenerationContext
 {
 	MemoryContextData header;	/* Standard memory-context fields */
 
-	/* Generationerational context parameters */
+	/* Generational context parameters */
 	Size		blockSize;		/* block size */
 
 	GenerationBlock	*block;		/* current (most recently allocated) block */
 	dlist_head	blocks;			/* list of blocks */
-
 }	GenerationContext;
 
 /*
  * GenerationBlock
- *		A GenerationBlock is the unit of memory that is obtained by Generation.c
+ *		GenerationBlock is the unit of memory that is obtained by generation.c
  *		from malloc().  It contains one or more GenerationChunks, which are
  *		the units requested by palloc() and freed by pfree().  GenerationChunks
  *		cannot be returned to malloc() individually, instead pfree()
- *		updates a free counter on a block and when all chunks on a block
- *		are freed the whole block is returned to malloc().
+ *		updates the free counter of the block and when all chunks in a block
+ *		are free the whole block is returned to malloc().
  *
- *		GenerationBloc is the header data for a block --- the usable space
+ *		GenerationBlock is the header data for a block --- the usable space
  *		within the block begins at the next alignment boundary.
  */
 struct GenerationBlock
 {
-	dlist_node	node;			/* doubly-linked list */
+	dlist_node	node;			/* doubly-linked list of blocks */
 	int			nchunks;		/* number of chunks in the block */
 	int			nfree;			/* number of free chunks */
 	char	   *freeptr;		/* start of free space in this block */
@@ -103,7 +102,7 @@ struct GenerationBlock
 
 /*
  * GenerationChunk
- *		The prefix of each piece of memory in an GenerationBlock
+ *		The prefix of each piece of memory in a GenerationBlock
  */
 struct GenerationChunk
 {
@@ -116,9 +115,17 @@ struct GenerationChunk
 	/* when debugging memory usage, also store actual requested size */
 	/* this is zero in a free chunk */
 	Size		requested_size;
-#endif   /* MEMORY_CONTEXT_CHECKING */
+#define GENERATIONCHUNK_RAWSIZE  (SIZEOF_VOID_P * 2 + SIZEOF_SIZE_T * 2)
+#else
+#define GENERATIONCHUNK_RAWSIZE  (SIZEOF_VOID_P * 2 + SIZEOF_SIZE_T)
+#endif							/* MEMORY_CONTEXT_CHECKING */
 
-	GenerationContext *context;		/* owning context */
+	/* ensure proper alignment by adding padding if needed */
+#if (GENERATIONCHUNK_RAWSIZE % MAXIMUM_ALIGNOF) != 0
+	char		padding[MAXIMUM_ALIGNOF - (GENERATIONCHUNK_RAWSIZE % MAXIMUM_ALIGNOF)];
+#endif
+
+	GenerationContext *context; /* owning context */
 	/* there must not be any padding to reach a MAXALIGN boundary here! */
 };
 
