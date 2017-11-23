@@ -15,6 +15,13 @@ OBJS =  specparse.o isolationtester.o $(WIN32RES)
 
 all: isolationtester$(X) pg_isolation_regress$(X)
 
+# Though we don't install these binaries, build them during installation
+# (including temp-install).  Otherwise, "make -j check-world" and "make -j
+# installcheck-world" would spawn multiple, concurrent builds in this
+# directory.  Later builds would overwrite files while earlier builds are
+# reading them, causing occasional failures.
+install: | all
+
 submake-regress:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress.o
 
