@@ -75,7 +75,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    default for newly created policies is that they apply for all commands and
    roles, unless otherwise specified.  Multiple policies may apply to a single
    command; see below for more details.
-   <xref linkend="sql-createpolicy-summary"> summarizes how the different types
+   <xref linkend="sql-createpolicy-summary"/> summarizes how the different types
    of policy apply to specific commands.
   </para>
 
@@ -398,9 +398,9 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    <table id="sql-createpolicy-summary">
     <title>Policies Applied by Command Type</title>
     <tgroup cols="6">
-     <colspec colnum="4" colname="update-using">
-     <colspec colnum="5" colname="update-check">
-     <spanspec namest="update-using" nameend="update-check" spanname="update">
+     <colspec colnum="4" colname="update-using"/>
+     <colspec colnum="5" colname="update-check"/>
+     <spanspec namest="update-using" nameend="update-check" spanname="update"/>
      <thead>
       <row>
        <entry morerows="1">Command</entry>
@@ -463,7 +463,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        <entry><command>UPDATE</command></entry>
        <entry>
         Existing &amp; new rows
-        <footnoteref linkend="rls-select-priv">
+        <footnoteref linkend="rls-select-priv"/>
        </entry>
        <entry>&mdash;</entry>
        <entry>Existing row</entry>
@@ -474,7 +474,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        <entry><command>DELETE</command></entry>
        <entry>
         Existing row
-        <footnoteref linkend="rls-select-priv">
+        <footnoteref linkend="rls-select-priv"/>
        </entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
