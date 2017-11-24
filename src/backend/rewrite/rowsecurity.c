@@ -408,11 +408,7 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 	*permissive_policies = NIL;
 	*restrictive_policies = NIL;
 
-	/*
-	 * First find all internal policies for the relation.  CREATE POLICY does
-	 * not currently support defining restrictive policies, so for now all
-	 * internal policies are permissive.
-	 */
+	/* First find all internal policies for the relation. */
 	foreach(item, relation->rd_rsdesc->policies)
 	{
 		bool		cmd_matches = false;
@@ -450,7 +446,7 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 		}
 
 		/*
-		 * Add this policy to the list of permissive policies if it applies to
+		 * Add this policy to the relevant list of policies if it applies to
 		 * the specified role.
 		 */
 		if (cmd_matches && check_role_for_policy(policy->roles, user_id))
