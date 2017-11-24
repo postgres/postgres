@@ -868,7 +868,7 @@ CREATE AGGREGATE balk(
     "PARALLEL" = SAFE,
     INITCOND = '0');
 
-SELECT balk(1) FROM tenk1;
+SELECT balk(hundred) FROM tenk1;
 
 ROLLBACK;
 
@@ -902,7 +902,7 @@ ALTER TABLE tenk1 set (parallel_workers = 4);
 SET LOCAL parallel_setup_cost=0;
 SET LOCAL max_parallel_workers_per_gather=4;
 
-EXPLAIN (COSTS OFF) SELECT balk(1) FROM tenk1;
-SELECT balk(1) FROM tenk1;
+EXPLAIN (COSTS OFF) SELECT balk(hundred) FROM tenk1;
+SELECT balk(hundred) FROM tenk1;
 
 ROLLBACK;
