@@ -860,7 +860,7 @@ CREATE AGGREGATE balk(
     "PARALLEL" = SAFE,
     INITCOND = '0');
 
-SELECT balk(1) FROM tenk1;
+SELECT balk(hundred) FROM tenk1;
 
 ROLLBACK;
 
@@ -896,7 +896,7 @@ SET LOCAL max_parallel_workers_per_gather=4;
 SET LOCAL enable_indexscan = off;
 SET LOCAL enable_bitmapscan = off;
 
-EXPLAIN (COSTS OFF) SELECT balk(1) FROM tenk1;
-SELECT balk(1) FROM tenk1;
+EXPLAIN (COSTS OFF) SELECT balk(hundred) FROM tenk1;
+SELECT balk(hundred) FROM tenk1;
 
 ROLLBACK;

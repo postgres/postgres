@@ -1994,7 +1994,7 @@ CREATE AGGREGATE balk(
     STYPE = int8,
     "PARALLEL" = SAFE,
     INITCOND = '0');
-SELECT balk(1) FROM tenk1;
+SELECT balk(hundred) FROM tenk1;
  balk 
 ------
      
@@ -2030,7 +2030,7 @@ SET LOCAL parallel_setup_cost=0;
 SET LOCAL max_parallel_workers_per_gather=4;
 SET LOCAL enable_indexscan = off;
 SET LOCAL enable_bitmapscan = off;
-EXPLAIN (COSTS OFF) SELECT balk(1) FROM tenk1;
+EXPLAIN (COSTS OFF) SELECT balk(hundred) FROM tenk1;
                   QUERY PLAN                  
 ----------------------------------------------
  Finalize Aggregate
@@ -2040,7 +2040,7 @@ EXPLAIN (COSTS OFF) SELECT balk(1) FROM tenk1;
                ->  Parallel Seq Scan on tenk1
 (5 rows)
 
-SELECT balk(1) FROM tenk1;
+SELECT balk(hundred) FROM tenk1;
  balk 
 ------
      
