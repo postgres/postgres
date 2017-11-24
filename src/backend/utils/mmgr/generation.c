@@ -46,19 +46,6 @@
 #define Generation_BLOCKHDRSZ	MAXALIGN(sizeof(GenerationBlock))
 #define Generation_CHUNKHDRSZ	sizeof(GenerationChunk)
 
-/* Portion of Generation_CHUNKHDRSZ examined outside generation.c. */
-#define Generation_CHUNK_PUBLIC	\
-	(offsetof(GenerationChunk, size) + sizeof(Size))
-
-/* Portion of Generation_CHUNKHDRSZ excluding trailing padding. */
-#ifdef MEMORY_CONTEXT_CHECKING
-#define Generation_CHUNK_USED	\
-	(offsetof(GenerationChunk, requested_size) + sizeof(Size))
-#else
-#define Generation_CHUNK_USED	\
-	(offsetof(GenerationChunk, size) + sizeof(Size))
-#endif
-
 typedef struct GenerationBlock GenerationBlock;	/* forward reference */
 typedef struct GenerationChunk GenerationChunk;
 
@@ -103,28 +90,35 @@ struct GenerationBlock
 /*
  * GenerationChunk
  *		The prefix of each piece of memory in a GenerationBlock
+ *
+ * Note: to meet the memory context APIs, the payload area of the chunk must
+ * be maxaligned, and the "context" link must be immediately adjacent to the
+ * payload area (cf. GetMemoryChunkContext).  We simplify matters for this
+ * module by requiring sizeof(GenerationChunk) to be maxaligned, and then
+ * we can ensure things work by adding any required alignment padding before
+ * the pointer fields.  There is a static assertion below that the alignment
+ * is done correctly.
  */
 struct GenerationChunk
 {
-	/* block owning this chunk */
-	void	   *block;
-
 	/* size is always the size of the usable space in the chunk */
 	Size		size;
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* when debugging memory usage, also store actual requested size */
 	/* this is zero in a free chunk */
 	Size		requested_size;
-#define GENERATIONCHUNK_RAWSIZE  (SIZEOF_VOID_P * 2 + SIZEOF_SIZE_T * 2)
+
+#define GENERATIONCHUNK_RAWSIZE  (SIZEOF_SIZE_T * 2 + SIZEOF_VOID_P * 2)
 #else
-#define GENERATIONCHUNK_RAWSIZE  (SIZEOF_VOID_P * 2 + SIZEOF_SIZE_T)
+#define GENERATIONCHUNK_RAWSIZE  (SIZEOF_SIZE_T + SIZEOF_VOID_P * 2)
 #endif							/* MEMORY_CONTEXT_CHECKING */
 
 	/* ensure proper alignment by adding padding if needed */
 #if (GENERATIONCHUNK_RAWSIZE % MAXIMUM_ALIGNOF) != 0
-	char		padding[MAXIMUM_ALIGNOF - (GENERATIONCHUNK_RAWSIZE % MAXIMUM_ALIGNOF)];
+	char		padding[MAXIMUM_ALIGNOF - GENERATIONCHUNK_RAWSIZE % MAXIMUM_ALIGNOF];
 #endif
 
+	GenerationBlock *block;		/* block owning this chunk */
 	GenerationContext *context; /* owning context */
 	/* there must not be any padding to reach a MAXALIGN boundary here! */
 };
@@ -210,8 +204,11 @@ GenerationContextCreate(MemoryContext parent,
 {
 	GenerationContext  *set;
 
+	/* Assert we padded GenerationChunk properly */
+	StaticAssertStmt(Generation_CHUNKHDRSZ == MAXALIGN(Generation_CHUNKHDRSZ),
+					 "sizeof(GenerationChunk) is not maxaligned");
 	StaticAssertStmt(offsetof(GenerationChunk, context) + sizeof(MemoryContext) ==
-					 MAXALIGN(sizeof(GenerationChunk)),
+					 Generation_CHUNKHDRSZ,
 					 "padding calculation in GenerationChunk is wrong");
 
 	/*
@@ -318,7 +315,6 @@ GenerationAlloc(MemoryContext context, Size size)
 	GenerationContext  *set = (GenerationContext *) context;
 	GenerationBlock	   *block;
 	GenerationChunk	   *chunk;
-
 	Size		chunk_size = MAXALIGN(size);
 
 	/* is it an over-sized chunk? if yes, allocate special block */
@@ -338,6 +334,7 @@ GenerationAlloc(MemoryContext context, Size size)
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
 		chunk = (GenerationChunk *) (((char *) block) + Generation_BLOCKHDRSZ);
+		chunk->block = block;
 		chunk->context = set;
 		chunk->size = chunk_size;
 
@@ -356,17 +353,16 @@ GenerationAlloc(MemoryContext context, Size size)
 		/* add the block to the list of allocated blocks */
 		dlist_push_head(&set->blocks, &block->node);
 
-		GenerationAllocInfo(set, chunk);
-
 		/*
-		 * Chunk header public fields remain DEFINED.  The requested
-		 * allocation itself can be NOACCESS or UNDEFINED; our caller will
-		 * soon make it UNDEFINED.  Make extra space at the end of the chunk,
-		 * if any, NOACCESS.
+		 * Chunk header fields remain DEFINED.  The requested allocation
+		 * itself can be NOACCESS or UNDEFINED; our caller will soon make it
+		 * UNDEFINED.  Make extra space at the end of the chunk, if any,
+		 * NOACCESS.
 		 */
-		VALGRIND_MAKE_MEM_NOACCESS((char *) chunk + Generation_CHUNK_PUBLIC,
-							 chunk_size + Generation_CHUNKHDRSZ - Generation_CHUNK_PUBLIC);
+		VALGRIND_MAKE_MEM_NOACCESS((char *) chunk + Generation_CHUNKHDRSZ + size,
+								   chunk_size - size);
 
+		GenerationAllocInfo(set, chunk);
 		return GenerationChunkGetPointer(chunk);
 	}
 
@@ -442,8 +438,8 @@ GenerationAlloc(MemoryContext context, Size size)
 
 /*
  * GenerationFree
- *		Update number of chunks on the block, and if all chunks on the block
- *		are freeed then discard the block.
+ *		Update number of chunks in the block, and if all chunks in the block
+ *		are now free then discard the block.
  */
 static void
 GenerationFree(MemoryContext context, void *pointer)

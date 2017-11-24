@@ -91,12 +91,18 @@ typedef struct SlabBlock
 
 /*
  * SlabChunk
- *		The prefix of each piece of memory in an SlabBlock
+ *		The prefix of each piece of memory in a SlabBlock
+ *
+ * Note: to meet the memory context APIs, the payload area of the chunk must
+ * be maxaligned, and the "slab" link must be immediately adjacent to the
+ * payload area (cf. GetMemoryChunkContext).  Since we support no machines on
+ * which MAXALIGN is more than twice sizeof(void *), this happens without any
+ * special hacking in this struct declaration.  But there is a static
+ * assertion below that the alignment is done correctly.
  */
 typedef struct SlabChunk
 {
-	/* block owning this chunk */
-	void	   *block;
+	SlabBlock  *block;			/* block owning this chunk */
 	SlabContext *slab;			/* owning context */
 	/* there must not be any padding to reach a MAXALIGN boundary here! */
 } SlabChunk;
@@ -190,8 +196,11 @@ SlabContextCreate(MemoryContext parent,
 	Size		freelistSize;
 	SlabContext *slab;
 
+	/* Assert we padded SlabChunk properly */
+	StaticAssertStmt(sizeof(SlabChunk) == MAXALIGN(sizeof(SlabChunk)),
+					 "sizeof(SlabChunk) is not maxaligned");
 	StaticAssertStmt(offsetof(SlabChunk, slab) + sizeof(MemoryContext) ==
-					 MAXALIGN(sizeof(SlabChunk)),
+					 sizeof(SlabChunk),
 					 "padding calculation in SlabChunk is wrong");
 
 	/* Make sure the linked list node fits inside a freed chunk */
@@ -199,7 +208,7 @@ SlabContextCreate(MemoryContext parent,
 		chunkSize = sizeof(int);
 
 	/* chunk, including SLAB header (both addresses nicely aligned) */
-	fullChunkSize = MAXALIGN(sizeof(SlabChunk) + MAXALIGN(chunkSize));
+	fullChunkSize = sizeof(SlabChunk) + MAXALIGN(chunkSize);
 
 	/* Make sure the block can store at least one chunk. */
 	if (blockSize - sizeof(SlabBlock) < fullChunkSize)
@@ -443,7 +452,7 @@ SlabAlloc(MemoryContext context, Size size)
 	/* Prepare to initialize the chunk header. */
 	VALGRIND_MAKE_MEM_UNDEFINED(chunk, sizeof(SlabChunk));
 
-	chunk->block = (void *) block;
+	chunk->block = block;
 	chunk->slab = slab;
 
 #ifdef MEMORY_CONTEXT_CHECKING
