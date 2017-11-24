@@ -409,8 +409,13 @@ GenerationAlloc(MemoryContext context, Size size)
 
 	chunk = (GenerationChunk *) block->freeptr;
 
+	/* Prepare to initialize the chunk header. */
+	VALGRIND_MAKE_MEM_UNDEFINED(chunk, Generation_CHUNKHDRSZ);
+
 	block->nchunks += 1;
 	block->freeptr += (Generation_CHUNKHDRSZ + chunk_size);
+
+	Assert(block->freeptr <= block->endptr);
 
 	chunk->block = block;
 
