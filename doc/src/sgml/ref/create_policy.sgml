@@ -73,7 +73,10 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   <para>
    Policies can be applied for specific commands or for specific roles.  The
    default for newly created policies is that they apply for all commands and
-   roles, unless otherwise specified.
+   roles, unless otherwise specified.  Multiple policies may apply to a single
+   command; see below for more details.
+   <xref linkend="sql-createpolicy-summary"> summarizes how the different types
+   of policy apply to specific commands.
   </para>
 
   <para>
@@ -391,6 +394,105 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
      </varlistentry>
 
    </variablelist>
+
+   <table id="sql-createpolicy-summary">
+    <title>Policies Applied by Command Type</title>
+    <tgroup cols="6">
+     <colspec colnum="4" colname="update-using">
+     <colspec colnum="5" colname="update-check">
+     <spanspec namest="update-using" nameend="update-check" spanname="update">
+     <thead>
+      <row>
+       <entry morerows="1">Command</entry>
+       <entry><literal>SELECT/ALL policy</literal></entry>
+       <entry><literal>INSERT/ALL policy</literal></entry>
+       <entry spanname="update"><literal>UPDATE/ALL policy</literal></entry>
+       <entry><literal>DELETE/ALL policy</literal></entry>
+      </row>
+      <row>
+       <entry><literal>USING expression</literal></entry>
+       <entry><literal>WITH CHECK expression</literal></entry>
+       <entry><literal>USING expression</literal></entry>
+       <entry><literal>WITH CHECK expression</literal></entry>
+       <entry><literal>USING expression</literal></entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry><command>SELECT</command></entry>
+       <entry>Existing row</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>SELECT FOR UPDATE/SHARE</command></entry>
+       <entry>Existing row</entry>
+       <entry>&mdash;</entry>
+       <entry>Existing row</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>INSERT</command></entry>
+       <entry>&mdash;</entry>
+       <entry>New row</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>INSERT ... RETURNING</command></entry>
+       <entry>
+        New row
+        <footnote id="rls-select-priv">
+         <para>
+          If read access is required to the existing or new row (for example,
+          a <literal>WHERE</literal> or <literal>RETURNING</literal> clause
+          that refers to columns from the relation).
+         </para>
+        </footnote>
+       </entry>
+       <entry>New row</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>UPDATE</command></entry>
+       <entry>
+        Existing &amp; new rows
+        <footnoteref linkend="rls-select-priv">
+       </entry>
+       <entry>&mdash;</entry>
+       <entry>Existing row</entry>
+       <entry>New row</entry>
+       <entry>&mdash;</entry>
+      </row>
+      <row>
+       <entry><command>DELETE</command></entry>
+       <entry>
+        Existing row
+        <footnoteref linkend="rls-select-priv">
+       </entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>&mdash;</entry>
+       <entry>Existing row</entry>
+      </row>
+      <row>
+       <entry><command>ON CONFLICT DO UPDATE</command></entry>
+       <entry>Existing &amp; new rows</entry>
+       <entry>&mdash;</entry>
+       <entry>Existing row</entry>
+       <entry>New row</entry>
+       <entry>&mdash;</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
   </refsect2>
 
   <refsect2>
