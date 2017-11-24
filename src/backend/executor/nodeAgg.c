@@ -1246,6 +1246,17 @@ advance_combine_function(AggState *aggstate,
 			pergroupstate->noTransValue = false;
 			return;
 		}
+
+		if (pergroupstate->transValueIsNull)
+		{
+			/*
+			 * Don't call a strict function with NULL inputs.  Note it is
+			 * possible to get here despite the above tests, if the combinefn
+			 * is strict *and* returned a NULL on a prior cycle. If that
+			 * happens we will propagate the NULL all the way to the end.
+			 */
+			return;
+		}
 	}
 
 	/* We run the combine functions in per-input-tuple memory context */
