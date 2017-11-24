@@ -83,12 +83,19 @@ AC_DEFUN([PGAC_CHECK_PERL_EMBED_LDFLAGS],
 [AC_REQUIRE([PGAC_PATH_PERL])
 AC_MSG_CHECKING(for flags to link embedded Perl)
 if test "$PORTNAME" = "win32" ; then
-perl_lib=`basename $perl_archlibexp/CORE/perl[[5-9]]*.lib .lib`
-test -e "$perl_archlibexp/CORE/$perl_lib.lib" && perl_embed_ldflags="-L$perl_archlibexp/CORE -l$perl_lib"
+	perl_lib=`basename $perl_archlibexp/CORE/perl[[5-9]]*.lib .lib`
+	if test -e "$perl_archlibexp/CORE/$perl_lib.lib"; then
+		perl_embed_ldflags="-L$perl_archlibexp/CORE -l$perl_lib"
+	else
+		perl_lib=`basename $perl_archlibexp/CORE/libperl[[5-9]]*.a .a | sed 's/^lib//'`
+		if test -e "$perl_archlibexp/CORE/lib$perl_lib.a"; then
+			perl_embed_ldflags="-L$perl_archlibexp/CORE -l$perl_lib"
+		fi
+	fi
 else
-pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
-pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
-perl_embed_ldflags=`echo X"$pgac_tmp1" | sed -e "s/^X//" -e "s%$pgac_tmp2%%" -e ["s/ -arch [-a-zA-Z0-9_]*//g"]`
+	pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
+	pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
+	perl_embed_ldflags=`echo X"$pgac_tmp1" | sed -e "s/^X//" -e "s%$pgac_tmp2%%" -e ["s/ -arch [-a-zA-Z0-9_]*//g"]`
 fi
 AC_SUBST(perl_embed_ldflags)dnl
 if test -z "$perl_embed_ldflags" ; then

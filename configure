@@ -7874,12 +7874,19 @@ $as_echo "$perl_embed_ccflags" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for flags to link embedded Perl" >&5
 $as_echo_n "checking for flags to link embedded Perl... " >&6; }
 if test "$PORTNAME" = "win32" ; then
-perl_lib=`basename $perl_archlibexp/CORE/perl[5-9]*.lib .lib`
-test -e "$perl_archlibexp/CORE/$perl_lib.lib" && perl_embed_ldflags="-L$perl_archlibexp/CORE -l$perl_lib"
+	perl_lib=`basename $perl_archlibexp/CORE/perl[5-9]*.lib .lib`
+	if test -e "$perl_archlibexp/CORE/$perl_lib.lib"; then
+		perl_embed_ldflags="-L$perl_archlibexp/CORE -l$perl_lib"
+	else
+		perl_lib=`basename $perl_archlibexp/CORE/libperl[5-9]*.a .a | sed 's/^lib//'`
+		if test -e "$perl_archlibexp/CORE/lib$perl_lib.a"; then
+			perl_embed_ldflags="-L$perl_archlibexp/CORE -l$perl_lib"
+		fi
+	fi
 else
-pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
-pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
-perl_embed_ldflags=`echo X"$pgac_tmp1" | sed -e "s/^X//" -e "s%$pgac_tmp2%%" -e "s/ -arch [-a-zA-Z0-9_]*//g"`
+	pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
+	pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
+	perl_embed_ldflags=`echo X"$pgac_tmp1" | sed -e "s/^X//" -e "s%$pgac_tmp2%%" -e "s/ -arch [-a-zA-Z0-9_]*//g"`
 fi
 if test -z "$perl_embed_ldflags" ; then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
