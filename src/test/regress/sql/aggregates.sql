@@ -837,3 +837,66 @@ create aggregate my_half_sum(int4)
 select my_sum(one),my_half_sum(one) from (values(1),(2),(3),(4)) t(one);
 
 rollback;
+
+
+-- test that the aggregate transition logic correctly handles
+-- transition / combine functions returning NULL
+
+-- First test the case of a normal transition function returning NULL
+BEGIN;
+CREATE FUNCTION balkifnull(int8, int4)
+RETURNS int8
+STRICT
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF $1 IS NULL THEN
+       RAISE 'erroneously called with NULL argument';
+    END IF;
+    RETURN NULL;
+END$$;
+
+CREATE AGGREGATE balk(
+    BASETYPE = int4,
+    SFUNC = balkifnull(int8, int4),
+    STYPE = int8,
+    "PARALLEL" = SAFE,
+    INITCOND = '0');
+
+SELECT balk(1) FROM tenk1;
+
+ROLLBACK;
+
+-- Secondly test the case of a parallel aggregate combiner function
+-- returning NULL. For that use normal transition function, but a
+-- combiner function returning NULL.
+BEGIN ISOLATION LEVEL REPEATABLE READ;
+CREATE FUNCTION balkifnull(int8, int8)
+RETURNS int8
+PARALLEL SAFE
+STRICT
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF $1 IS NULL THEN
+       RAISE 'erroneously called with NULL argument';
+    END IF;
+    RETURN NULL;
+END$$;
+
+CREATE AGGREGATE balk(
+    BASETYPE = int4,
+    SFUNC = int4_sum(int8, int4),
+    STYPE = int8,
+    COMBINEFUNC = balkifnull(int8, int8),
+    "PARALLEL" = SAFE,
+    INITCOND = '0'
+);
+
+-- force use of parallelism
+ALTER TABLE tenk1 set (parallel_workers = 4);
+SET LOCAL parallel_setup_cost=0;
+SET LOCAL max_parallel_workers_per_gather=4;
+
+EXPLAIN (COSTS OFF) SELECT balk(1) FROM tenk1;
+SELECT balk(1) FROM tenk1;
+
+ROLLBACK;
