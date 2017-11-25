@@ -316,8 +316,8 @@ sub GenerateTimezoneFiles
 	my $mf     = read_file("src/timezone/Makefile");
 	$mf =~ s{\\\s*[\r\n]+}{}mg;
 
-	$mf =~ /^TZDATA\s*:?=\s*(.*)$/m
-	  || die "Could not find TZDATA line in timezone makefile\n";
+	$mf =~ /^TZDATAFILES\s*:?=\s*(.*)$/m
+	  || die "Could not find TZDATAFILES line in timezone makefile\n";
 	my @tzfiles = split /\s+/, $1;
 
 	$mf =~ /^POSIXRULES\s*:?=\s*(.*)$/m
@@ -332,7 +332,8 @@ sub GenerateTimezoneFiles
 	foreach (@tzfiles)
 	{
 		my $tzfile = $_;
-		push(@args, "src/timezone/data/$tzfile")
+		$tzfile =~ s|\$\(srcdir\)|src/timezone|;
+		push(@args, $tzfile);
 	}
 
 	system(@args);
