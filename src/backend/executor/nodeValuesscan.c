@@ -92,6 +92,7 @@ ValuesNext(ValuesScanState *node)
 	if (exprlist)
 	{
 		MemoryContext oldContext;
+		List	   *oldsubplans;
 		List	   *exprstatelist;
 		Datum	   *values;
 		bool	   *isnull;
@@ -114,12 +115,22 @@ ValuesNext(ValuesScanState *node)
 		oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 		/*
-		 * Pass NULL, not my plan node, because we don't want anything in this
-		 * transient state linking into permanent state.  The only possibility
-		 * is a SubPlan, and there shouldn't be any (any subselects in the
-		 * VALUES list should be InitPlans).
+		 * The expressions might contain SubPlans (this is currently only
+		 * possible if there's a sub-select containing a LATERAL reference,
+		 * otherwise sub-selects in a VALUES list should be InitPlans). Those
+		 * subplans will want to hook themselves into our subPlan list, which
+		 * would result in a corrupted list after we delete the eval state. We
+		 * can work around this by saving and restoring the subPlan list.
+		 * (There's no need for the functionality that would be enabled by
+		 * having the list entries, since the SubPlans aren't going to be
+		 * re-executed anyway.)
 		 */
-		exprstatelist = ExecInitExprList(exprlist, NULL);
+		oldsubplans = node->ss.ps.subPlan;
+		node->ss.ps.subPlan = NIL;
+
+		exprstatelist = ExecInitExprList(exprlist, &node->ss.ps);
+
+		node->ss.ps.subPlan = oldsubplans;
 
 		/* parser should have checked all sublists are the same length */
 		Assert(list_length(exprstatelist) == slot->tts_tupleDescriptor->natts);

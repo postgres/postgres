@@ -473,6 +473,16 @@ create temp table nocolumns();
 select exists(select * from nocolumns);
 
 --
+-- Check behavior with a SubPlan in VALUES (bug #14924)
+--
+select val.x
+  from generate_series(1,10) as s(i),
+  lateral (
+    values ((select s.i + 1)), (s.i + 101)
+  ) as val(x)
+where s.i < 10 and (select val.x) < 110;
+
+--
 -- Check sane behavior with nested IN SubLinks
 --
 explain (verbose, costs off)

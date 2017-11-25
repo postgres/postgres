@@ -841,6 +841,36 @@ select exists(select * from nocolumns);
 (1 row)
 
 --
+-- Check behavior with a SubPlan in VALUES (bug #14924)
+--
+select val.x
+  from generate_series(1,10) as s(i),
+  lateral (
+    values ((select s.i + 1)), (s.i + 101)
+  ) as val(x)
+where s.i < 10 and (select val.x) < 110;
+  x  
+-----
+   2
+ 102
+   3
+ 103
+   4
+ 104
+   5
+ 105
+   6
+ 106
+   7
+ 107
+   8
+ 108
+   9
+ 109
+  10
+(17 rows)
+
+--
 -- Check sane behavior with nested IN SubLinks
 --
 explain (verbose, costs off)
