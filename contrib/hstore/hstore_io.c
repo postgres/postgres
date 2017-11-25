@@ -340,7 +340,8 @@ hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen)
 		{
 			*buflen += res->keylen + ((res->isnull) ? 0 : res->vallen);
 			res++;
-			memcpy(res, ptr, sizeof(Pairs));
+			if (res != ptr)
+				memcpy(res, ptr, sizeof(Pairs));
 		}
 
 		ptr++;
