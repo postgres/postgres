@@ -744,8 +744,8 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
 bool
 query_supports_distinctness(Query *query)
 {
-	/* we don't cope with SRFs, see comment below */
-	if (query->hasTargetSRFs)
+	/* SRFs break distinctness except with DISTINCT, see below */
+	if (query->hasTargetSRFs && query->distinctClause == NIL)
 		return false;
 
 	/* check for features we can prove distinctness with */
@@ -787,20 +787,10 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	Assert(list_length(colnos) == list_length(opids));
 
 	/*
-	 * A set-returning function in the query's targetlist can result in
-	 * returning duplicate rows, if the SRF is evaluated after the
-	 * de-duplication step; so we play it safe and say "no" if there are any
-	 * SRFs.  (We could be certain that it's okay if SRFs appear only in the
-	 * specified columns, since those must be evaluated before de-duplication;
-	 * but it doesn't presently seem worth the complication to check that.)
-	 */
-	if (query->hasTargetSRFs)
-		return false;
-
-	/*
 	 * DISTINCT (including DISTINCT ON) guarantees uniqueness if all the
 	 * columns in the DISTINCT clause appear in colnos and operator semantics
-	 * match.
+	 * match.  This is true even if there are SRFs in the DISTINCT columns or
+	 * elsewhere in the tlist.
 	 */
 	if (query->distinctClause)
 	{
@@ -818,6 +808,16 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 		if (l == NULL)			/* had matches for all? */
 			return true;
 	}
+
+	/*
+	 * Otherwise, a set-returning function in the query's targetlist can
+	 * result in returning duplicate rows, despite any grouping that might
+	 * occur before tlist evaluation.  (If all tlist SRFs are within GROUP BY
+	 * columns, it would be safe because they'd be expanded before grouping.
+	 * But it doesn't currently seem worth the effort to check for that.)
+	 */
+	if (query->hasTargetSRFs)
+		return false;
 
 	/*
 	 * Similarly, GROUP BY without GROUPING SETS guarantees uniqueness if all
