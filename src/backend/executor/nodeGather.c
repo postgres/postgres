@@ -104,18 +104,18 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	outerPlanState(gatherstate) = ExecInitNode(outerNode, estate, eflags);
 
 	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&gatherstate->ps);
-	ExecAssignProjectionInfo(&gatherstate->ps, NULL);
-
-	/*
 	 * Initialize funnel slot to same tuple descriptor as outer plan.
 	 */
 	if (!ExecContextForcesOids(outerPlanState(gatherstate), &hasoid))
 		hasoid = false;
 	tupDesc = ExecTypeFromTL(outerNode->targetlist, hasoid);
 	ExecSetSlotDescriptor(gatherstate->funnel_slot, tupDesc);
+
+	/*
+	 * Initialize result tuple type and projection info.
+	 */
+	ExecAssignResultTypeFromTL(&gatherstate->ps);
+	ExecConditionalAssignProjectionInfo(&gatherstate->ps, tupDesc, OUTER_VAR);
 
 	return gatherstate;
 }
@@ -220,6 +220,10 @@ ExecGather(PlanState *pstate)
 	slot = gather_getnext(node);
 	if (TupIsNull(slot))
 		return NULL;
+
+	/* If no projection is required, we're done. */
+	if (node->ps.ps_ProjInfo == NULL)
+		return slot;
 
 	/*
 	 * Form the result tuple using ExecProject(), and return it.

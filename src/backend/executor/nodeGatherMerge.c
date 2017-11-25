@@ -116,10 +116,19 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	outerPlanState(gm_state) = ExecInitNode(outerNode, estate, eflags);
 
 	/*
+	 * Store the tuple descriptor into gather merge state, so we can use it
+	 * while initializing the gather merge slots.
+	 */
+	if (!ExecContextForcesOids(outerPlanState(gm_state), &hasoid))
+		hasoid = false;
+	tupDesc = ExecTypeFromTL(outerNode->targetlist, hasoid);
+	gm_state->tupDesc = tupDesc;
+
+	/*
 	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&gm_state->ps);
-	ExecAssignProjectionInfo(&gm_state->ps, NULL);
+	ExecConditionalAssignProjectionInfo(&gm_state->ps, tupDesc, OUTER_VAR);
 
 	/*
 	 * initialize sort-key information
@@ -150,15 +159,6 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 			PrepareSortSupportFromOrderingOp(node->sortOperators[i], sortKey);
 		}
 	}
-
-	/*
-	 * Store the tuple descriptor into gather merge state, so we can use it
-	 * while initializing the gather merge slots.
-	 */
-	if (!ExecContextForcesOids(outerPlanState(gm_state), &hasoid))
-		hasoid = false;
-	tupDesc = ExecTypeFromTL(outerNode->targetlist, hasoid);
-	gm_state->tupDesc = tupDesc;
 
 	/* Now allocate the workspace for gather merge */
 	gather_merge_setup(gm_state);
@@ -256,6 +256,10 @@ ExecGatherMerge(PlanState *pstate)
 	slot = gather_merge_getnext(node);
 	if (TupIsNull(slot))
 		return NULL;
+
+	/* If no projection is required, we're done. */
+	if (node->ps.ps_ProjInfo == NULL)
+		return slot;
 
 	/*
 	 * Form the result tuple using ExecProject(), and return it.

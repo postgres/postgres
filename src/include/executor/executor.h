@@ -485,6 +485,8 @@ extern void ExecAssignResultTypeFromTL(PlanState *planstate);
 extern TupleDesc ExecGetResultType(PlanState *planstate);
 extern void ExecAssignProjectionInfo(PlanState *planstate,
 						 TupleDesc inputDesc);
+extern void ExecConditionalAssignProjectionInfo(PlanState *planstate,
+									TupleDesc inputDesc, Index varno);
 extern void ExecFreeExprContext(PlanState *planstate);
 extern void ExecAssignScanType(ScanState *scanstate, TupleDesc tupDesc);
 extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
