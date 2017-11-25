@@ -2,10 +2,12 @@ src/timezone/README
 
 This is a PostgreSQL adapted version of the IANA timezone library from
 
-	http://www.iana.org/time-zones
+	https://www.iana.org/time-zones
 
-The latest versions of both the tzdata and tzcode tarballs are normally
-available right from that page.  Historical versions can be found
+The latest version of the timezone data and library source code is
+available right from that page.  It's best to get the merged file
+tzdb-NNNNX.tar.lz, since the other archive formats omit tzdata.zi.
+Historical versions, as well as release announcements, can be found
 elsewhere on the site.
 
 Since time zone rules change frequently in some parts of the world,
@@ -17,11 +19,14 @@ changes that might affect interpretation of the data files.
 Time Zone data
 ==============
 
-The data files under data/ are an exact copy of the latest tzdata set,
-except that we omit some files that are not of interest for our purposes.
+We distribute the time zone source data as-is under src/timezone/data/.
+Currently, we distribute just the abbreviated single-file format
+"tzdata.zi", to reduce the size of our tarballs as well as churn
+in our git repo.  Feeding that file to zic produces the same compiled
+output as feeding the bulkier individual data files would do.
 
-While the files under data/ can just be duplicated when updating, manual
-effort is needed to update the time zone abbreviation lists under tznames/.
+While data/tzdata.zi can just be duplicated when updating, manual effort
+is needed to update the time zone abbreviation lists under tznames/.
 These need to be changed whenever new abbreviations are invented or the
 UTC offset associated with an existing abbreviation changes.  To detect
 if this has happened, after installing new files under data/ do
