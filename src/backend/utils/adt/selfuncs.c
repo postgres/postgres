@@ -3270,6 +3270,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 					List **pgset)
 {
 	List	   *varinfos = NIL;
+	double		srf_multiplier = 1.0;
 	double		numdistinct;
 	ListCell   *l;
 	int			i;
@@ -3303,6 +3304,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 	foreach(l, groupExprs)
 	{
 		Node	   *groupexpr = (Node *) lfirst(l);
+		double		this_srf_multiplier;
 		VariableStatData vardata;
 		List	   *varshere;
 		ListCell   *l2;
@@ -3310,6 +3312,21 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		/* is expression in this grouping set? */
 		if (pgset && !list_member_int(*pgset, i++))
 			continue;
+
+		/*
+		 * Set-returning functions in grouping columns are a bit problematic.
+		 * The code below will effectively ignore their SRF nature and come up
+		 * with a numdistinct estimate as though they were scalar functions.
+		 * We compensate by scaling up the end result by the largest SRF
+		 * rowcount estimate.  (This will be an overestimate if the SRF
+		 * produces multiple copies of any output value, but it seems best to
+		 * assume the SRF's outputs are distinct.  In any case, it's probably
+		 * pointless to worry too much about this without much better
+		 * estimates for SRF output rowcounts than we have today.)
+		 */
+		this_srf_multiplier = expression_returns_set_rows(groupexpr);
+		if (srf_multiplier < this_srf_multiplier)
+			srf_multiplier = this_srf_multiplier;
 
 		/* Short-circuit for expressions returning boolean */
 		if (exprType(groupexpr) == BOOLOID)
@@ -3376,9 +3393,15 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 	 */
 	if (varinfos == NIL)
 	{
+		/* Apply SRF multiplier as we would do in the long path */
+		numdistinct *= srf_multiplier;
+		/* Round off */
+		numdistinct = ceil(numdistinct);
 		/* Guard against out-of-range answers */
 		if (numdistinct > input_rows)
 			numdistinct = input_rows;
+		if (numdistinct < 1.0)
+			numdistinct = 1.0;
 		return numdistinct;
 	}
 
@@ -3547,6 +3570,10 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		varinfos = newvarinfos;
 	} while (varinfos != NIL);
 
+	/* Now we can account for the effects of any SRFs */
+	numdistinct *= srf_multiplier;
+
+	/* Round off */
 	numdistinct = ceil(numdistinct);
 
 	/* Guard against out-of-range answers */
