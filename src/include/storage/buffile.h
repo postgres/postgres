@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * buffile.h
- *	  Management of large buffered files, primarily temporary files.
+ *	  Management of large buffered temporary files.
  *
  * The BufFile routines provide a partial replacement for stdio atop
  * virtual file descriptors managed by fd.c.  Currently they only support
