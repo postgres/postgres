@@ -2242,8 +2242,11 @@ convert_sequence_priv_string(text *priv_type_text)
 {
 	static const priv_map sequence_priv_map[] = {
 		{"USAGE", ACL_USAGE},
+		{"USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE)},
 		{"SELECT", ACL_SELECT},
+		{"SELECT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_SELECT)},
 		{"UPDATE", ACL_UPDATE},
+		{"UPDATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_UPDATE)},
 		{NULL, 0}
 	};
 
