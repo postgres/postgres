@@ -1277,7 +1277,22 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 		{
 			if (state->main_data)
 				pfree(state->main_data);
-			state->main_data_bufsz = state->main_data_len;
+
+			/*
+			 * main_data_bufsz must be MAXALIGN'ed.  In many xlog record
+			 * types, we omit trailing struct padding on-disk to save a few
+			 * bytes; but compilers may generate accesses to the xlog struct
+			 * that assume that padding bytes are present.  If the palloc
+			 * request is not large enough to include such padding bytes then
+			 * we'll get valgrind complaints due to otherwise-harmless fetches
+			 * of the padding bytes.
+			 *
+			 * In addition, force the initial request to be reasonably large
+			 * so that we don't waste time with lots of trips through this
+			 * stanza.  BLCKSZ / 2 seems like a good compromise choice.
+			 */
+			state->main_data_bufsz = MAXALIGN(Max(state->main_data_len,
+												  BLCKSZ / 2));
 			state->main_data = palloc(state->main_data_bufsz);
 		}
 		memcpy(state->main_data, ptr, state->main_data_len);
