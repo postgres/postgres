@@ -339,13 +339,7 @@ typedef struct xl_heap_new_cid
 	TransactionId top_xid;
 	CommandId	cmin;
 	CommandId	cmax;
-
-	/*
-	 * don't really need the combocid since we have the actual values right in
-	 * this struct, but the padding makes it free and its useful for
-	 * debugging.
-	 */
-	CommandId	combocid;
+	CommandId	combocid;		/* just for debugging */
 
 	/*
 	 * Store the relfilenode/ctid pair to facilitate lookups.
