@@ -1264,7 +1264,13 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 			{
 				if (blk->data)
 					pfree(blk->data);
-				blk->data_bufsz = blk->data_len;
+
+				/*
+				 * Force the initial request to be BLCKSZ so that we don't
+				 * waste time with lots of trips through this stanza as a
+				 * result of WAL compression.
+				 */
+				blk->data_bufsz = MAXALIGN(Max(blk->data_len, BLCKSZ));
 				blk->data = palloc(blk->data_bufsz);
 			}
 			memcpy(blk->data, ptr, blk->data_len);
