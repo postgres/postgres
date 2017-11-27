@@ -1200,7 +1200,7 @@ inheritance_planner(PlannerInfo *root)
 		/* although dummy, it must have a valid tlist for executor */
 		List	   *tlist;
 
-		tlist = preprocess_targetlist(root, parse->targetList);
+		tlist = preprocess_targetlist(root);
 		return (Plan *) make_result(root,
 									tlist,
 									(Node *) list_make1(makeBoolConst(false,
@@ -1262,7 +1262,7 @@ static Plan *
 grouping_planner(PlannerInfo *root, double tuple_fraction)
 {
 	Query	   *parse = root->parse;
-	List	   *tlist = parse->targetList;
+	List	   *tlist;
 	int64		offset_est = 0;
 	int64		count_est = 0;
 	double		limit_tuples = -1.0;
@@ -1327,7 +1327,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		Assert(parse->commandType == CMD_SELECT);
 
 		tlist = postprocess_setop_tlist(copyObject(result_plan->targetlist),
-										tlist);
+										parse->targetList);
 
 		/*
 		 * Can't handle FOR [KEY] UPDATE/SHARE here (parser should have
@@ -1364,7 +1364,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		bool		use_hashed_grouping = false;
 		WindowFuncLists *wflists = NULL;
 		List	   *activeWindows = NIL;
-		OnConflictExpr *onconfl;
 		int			maxref = 0;
 		int		   *tleref_to_colnum_map;
 		List	   *rollup_lists = NIL;
@@ -1453,14 +1452,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		numGroupCols = list_length(parse->groupClause);
 
 		/* Preprocess targetlist */
-		tlist = preprocess_targetlist(root, tlist);
-
-		onconfl = parse->onConflict;
-		if (onconfl)
-			onconfl->onConflictSet =
-				preprocess_onconflict_targetlist(onconfl->onConflictSet,
-												 parse->resultRelation,
-												 parse->rtable);
+		tlist = preprocess_targetlist(root);
 
 		/*
 		 * Expand any rangetable entries that have security barrier quals.
