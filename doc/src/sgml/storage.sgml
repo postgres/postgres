@@ -429,7 +429,7 @@ when a row value to be stored in a table is wider than
 <symbol>TOAST_TUPLE_THRESHOLD</symbol> bytes (normally 2 kB).
 The <acronym>TOAST</acronym> code will compress and/or move
 field values out-of-line until the row value is shorter than
-<symbol>TOAST_TUPLE_TARGET</symbol> bytes (also normally 2 kB)
+<symbol>TOAST_TUPLE_TARGET</symbol> bytes (also normally 2 kB, adjustable)
 or no more gains can be had.  During an UPDATE
 operation, values of unchanged fields are normally preserved as-is; so an
 UPDATE of a row with out-of-line values incurs no <acronym>TOAST</acronym> costs if
@@ -481,6 +481,11 @@ for storing <acronym>TOAST</acronym>-able columns on disk:
 Each <acronym>TOAST</acronym>-able data type specifies a default strategy for columns
 of that data type, but the strategy for a given table column can be altered
 with <link linkend="sql-altertable"><command>ALTER TABLE ... SET STORAGE</command></link>.
+</para>
+
+<para>
+<symbol>TOAST_TUPLE_TARGET</symbol> can be adjusted for each table using
+<link linkend="sql-altertable"><command>ALTER TABLE ... SET (toast_tuple_target = N)</command></link>
 </para>
 
 <para>
