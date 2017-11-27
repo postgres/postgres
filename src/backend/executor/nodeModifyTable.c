@@ -1564,7 +1564,7 @@ ExecModifyTable(PlanState *pstate)
 	JunkFilter *junkfilter;
 	TupleTableSlot *slot;
 	TupleTableSlot *planSlot;
-	ItemPointer tupleid = NULL;
+	ItemPointer tupleid;
 	ItemPointerData tuple_ctid;
 	HeapTupleData oldtupdata;
 	HeapTuple	oldtuple;
@@ -1687,6 +1687,7 @@ ExecModifyTable(PlanState *pstate)
 		EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
 		slot = planSlot;
 
+		tupleid = NULL;
 		oldtuple = NULL;
 		if (junkfilter != NULL)
 		{

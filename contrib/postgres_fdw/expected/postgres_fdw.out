@@ -7022,6 +7022,63 @@ update bar set f2 = f2 + 100 returning *;
   7 | 277
 (6 rows)
 
+-- Test that UPDATE/DELETE with inherited target works with row-level triggers
+CREATE TRIGGER trig_row_before
+BEFORE UPDATE OR DELETE ON bar2
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+CREATE TRIGGER trig_row_after
+AFTER UPDATE OR DELETE ON bar2
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+explain (verbose, costs off)
+update bar set f2 = f2 + 100;
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Update on public.bar
+   Update on public.bar
+   Foreign Update on public.bar2
+     Remote SQL: UPDATE public.loct2 SET f2 = $2 WHERE ctid = $1 RETURNING f1, f2, f3
+   ->  Seq Scan on public.bar
+         Output: bar.f1, (bar.f2 + 100), bar.ctid
+   ->  Foreign Scan on public.bar2
+         Output: bar2.f1, (bar2.f2 + 100), bar2.f3, bar2.ctid, bar2.*
+         Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR UPDATE
+(9 rows)
+
+update bar set f2 = f2 + 100;
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON bar2
+NOTICE:  OLD: (3,333,33),NEW: (3,433,33)
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON bar2
+NOTICE:  OLD: (4,344,44),NEW: (4,444,44)
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON bar2
+NOTICE:  OLD: (7,277,77),NEW: (7,377,77)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON bar2
+NOTICE:  OLD: (3,333,33),NEW: (3,433,33)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON bar2
+NOTICE:  OLD: (4,344,44),NEW: (4,444,44)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON bar2
+NOTICE:  OLD: (7,277,77),NEW: (7,377,77)
+explain (verbose, costs off)
+delete from bar where f2 < 400;
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Delete on public.bar
+   Delete on public.bar
+   Foreign Delete on public.bar2
+     Remote SQL: DELETE FROM public.loct2 WHERE ctid = $1 RETURNING f1, f2, f3
+   ->  Seq Scan on public.bar
+         Output: bar.ctid
+         Filter: (bar.f2 < 400)
+   ->  Foreign Scan on public.bar2
+         Output: bar2.ctid, bar2.*
+         Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 WHERE ((f2 < 400)) FOR UPDATE
+(10 rows)
+
+delete from bar where f2 < 400;
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW DELETE ON bar2
+NOTICE:  OLD: (7,377,77)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW DELETE ON bar2
+NOTICE:  OLD: (7,377,77)
+-- cleanup
 drop table foo cascade;
 NOTICE:  drop cascades to foreign table foo2
 drop table bar cascade;
