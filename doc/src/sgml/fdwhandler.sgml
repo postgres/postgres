@@ -429,11 +429,14 @@ AddForeignUpdateTargets(Query *parsetree,
      <literal>wholerow</literal>, or
      <literal>wholerow<replaceable>N</replaceable></literal>, as the core system can
      generate junk columns of these names.
+     If the extra expressions are more complex than simple Vars, they
+     must be run through <function>eval_const_expressions</function>
+     before adding them to the targetlist.
     </para>
 
     <para>
-     This function is called in the rewriter, not the planner, so the
-     information available is a bit different from that available to the
+     Although this function is called during planning, the
+     information provided is a bit different from that available to other
      planning routines.
      <literal>parsetree</literal> is the parse tree for the <command>UPDATE</command> or
      <command>DELETE</command> command, while <literal>target_rte</literal> and
