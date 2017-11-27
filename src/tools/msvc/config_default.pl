@@ -12,7 +12,7 @@ our $config = {
 	  # wal_segsize => 16,      # --with-wal-segsize, 16MB by default
 	ldap    => 1,        # --with-ldap
 	nls     => undef,    # --enable-nls=<path>
-	tcl     => undef,    # --with-tls=<path>
+	tcl     => undef,    # --with-tcl=<path>
 	perl    => undef,    # --with-perl
 	python  => undef,    # --with-python=<path>
 	krb5    => undef,    # --with-krb5=<path>
