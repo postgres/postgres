@@ -167,12 +167,12 @@
 
     <para>
         <command>DELETE</command> commands don't need a normal target list
-        because they don't produce any result.  Instead, the rule system
+        because they don't produce any result.  Instead, the planner
         adds a special <acronym>CTID</> entry to the empty target list,
         to allow the executor to find the row to be deleted.
         (<acronym>CTID</> is added when the result relation is an ordinary
-        table.  If it is a view, a whole-row variable is added instead,
-        as described in <xref linkend="rules-views-update">.)
+        table.  If it is a view, a whole-row variable is added instead, by
+        the rule system, as described in <xref linkend="rules-views-update">.)
     </para>
 
     <para>
@@ -194,7 +194,7 @@
         column = expression</literal> part of the command.  The planner will
         handle missing columns by inserting expressions that copy the values
         from the old row into the new one.  Just as for <command>DELETE</>,
-        the rule system adds a <acronym>CTID</> or whole-row variable so that
+        a <acronym>CTID</> or whole-row variable is added so that
         the executor can identify the old row to be updated.
     </para>
 
