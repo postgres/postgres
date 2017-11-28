@@ -14111,6 +14111,9 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	classRel = heap_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy1(RELOID,
 								ObjectIdGetDatum(RelationGetRelid(partRel)));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u",
+			 RelationGetRelid(partRel));
 	Assert(((Form_pg_class) GETSTRUCT(tuple))->relispartition);
 
 	(void) SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relpartbound,
