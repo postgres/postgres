@@ -1164,7 +1164,7 @@ RecordTransactionCommit(void)
 		 * vacuum.  Hence we emit a bespoke record for the invalidations. We
 		 * don't want to use that in case a commit record is emitted, so they
 		 * happen synchronously with commits (besides not wanting to emit more
-		 * WAL recoreds).
+		 * WAL records).
 		 */
 		if (nmsgs != 0)
 		{
