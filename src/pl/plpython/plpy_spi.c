@@ -361,7 +361,10 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 
 	result = (PLyResultObject *) PLy_result_new();
 	if (!result)
+	{
+		SPI_freetuptable(tuptable);
 		return NULL;
+	}
 	Py_DECREF(result->status);
 	result->status = PyInt_FromLong(status);
 
@@ -414,7 +417,9 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 				if (!result->rows)
 				{
 					Py_DECREF(result);
-					result = NULL;
+					MemoryContextDelete(cxt);
+					SPI_freetuptable(tuptable);
+					return NULL;
 				}
 				else
 				{
