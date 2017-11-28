@@ -1769,6 +1769,8 @@ heap_drop_with_catalog(Oid relid)
 	 * shared-cache-inval notice that will make them update their index lists.
 	 */
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
 	if (((Form_pg_class) GETSTRUCT(tuple))->relispartition)
 	{
 		parentOid = get_partition_parent(relid);
@@ -3104,9 +3106,6 @@ StorePartitionKey(Relation rel,
 	ObjectAddress referenced;
 
 	Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
-
-	tuple = SearchSysCache1(PARTRELID,
-							ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	/* Copy the partition attribute numbers, opclass OIDs into arrays */
 	partattrs_vec = buildint2vector(partattrs, partnatts);
