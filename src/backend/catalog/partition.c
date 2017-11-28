@@ -2553,11 +2553,10 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 				 */
 				for (i = 0; i < key->partnatts; i++)
 				{
-					if (isnull[i] &&
-						partition_bound_has_default(partdesc->boundinfo))
+					if (isnull[i])
 					{
 						range_partkey_has_null = true;
-						part_index = partdesc->boundinfo->default_index;
+						break;
 					}
 				}
 

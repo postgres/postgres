@@ -421,6 +421,9 @@ create table mcrparted3 partition of mcrparted for values from (11, 1, 1) to (20
 create table mcrparted4 partition of mcrparted for values from (21, minvalue, minvalue) to (30, 20, maxvalue);
 create table mcrparted5 partition of mcrparted for values from (30, 21, 20) to (maxvalue, maxvalue, maxvalue);
 
+-- null not allowed in range partition
+insert into mcrparted values (null, null, null);
+
 -- routed to mcrparted0
 insert into mcrparted values (0, 1, 1);
 insert into mcrparted0 values (0, 1, 1);
