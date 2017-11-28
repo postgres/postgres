@@ -204,6 +204,8 @@ create_estate_for_relation(LogicalRepRelMapEntry *rel)
 	estate->es_num_result_relations = 1;
 	estate->es_result_relation_info = resultRelInfo;
 
+	estate->es_output_cid = GetCurrentCommandId(true);
+
 	/* Triggers might need a slot */
 	if (resultRelInfo->ri_TrigDesc)
 		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
