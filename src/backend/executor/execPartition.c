@@ -472,7 +472,7 @@ FormPartitionKeyDatum(PartitionDispatch pd,
 }
 
 /*
- * BuildSlotPartitionKeyDescription
+ * ExecBuildSlotPartitionKeyDescription
  *
  * This works very much like BuildIndexValueDescription() and is currently
  * used for building error messages when ExecFindPartition() fails to find
