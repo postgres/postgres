@@ -399,9 +399,10 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 	fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED, false);
 	fps->last_xlog_end = 0;
 
-	/* Recreate error queues. */
+	/* Recreate error queues (if they exist). */
 	error_queue_space =
-		shm_toc_lookup(pcxt->toc, PARALLEL_KEY_ERROR_QUEUE, false);
+		shm_toc_lookup(pcxt->toc, PARALLEL_KEY_ERROR_QUEUE, true);
+	Assert(pcxt->nworkers == 0 || error_queue_space != NULL);
 	for (i = 0; i < pcxt->nworkers; ++i)
 	{
 		char	   *start;
