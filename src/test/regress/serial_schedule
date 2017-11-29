@@ -180,6 +180,7 @@ test: with
 test: xml
 test: identity
 test: partition_join
+test: partition_prune
 test: reloptions
 test: hash_part
 test: event_trigger
