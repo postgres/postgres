@@ -90,6 +90,7 @@ extern bool bms_is_empty(const Bitmapset *a);
 extern Bitmapset *bms_add_member(Bitmapset *a, int x);
 extern Bitmapset *bms_del_member(Bitmapset *a, int x);
 extern Bitmapset *bms_add_members(Bitmapset *a, const Bitmapset *b);
+extern Bitmapset *bms_add_range(Bitmapset *a, int lower, int upper);
 extern Bitmapset *bms_int_members(Bitmapset *a, const Bitmapset *b);
 extern Bitmapset *bms_del_members(Bitmapset *a, const Bitmapset *b);
 extern Bitmapset *bms_join(Bitmapset *a, Bitmapset *b);

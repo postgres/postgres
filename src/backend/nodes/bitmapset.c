@@ -785,6 +785,78 @@ bms_add_members(Bitmapset *a, const Bitmapset *b)
 }
 
 /*
+ * bms_add_range
+ *		Add members in the range of 'lower' to 'upper' to the set.
+ *
+ * Note this could also be done by calling bms_add_member in a loop, however,
+ * using this function will be faster when the range is large as we work with
+ * at the bitmapword level rather than at bit level.
+ */
+Bitmapset *
+bms_add_range(Bitmapset *a, int lower, int upper)
+{
+	int			lwordnum,
+				lbitnum,
+				uwordnum,
+				ushiftbits,
+				wordnum;
+
+	if (lower < 0 || upper < 0)
+		elog(ERROR, "negative bitmapset member not allowed");
+	if (lower > upper)
+		elog(ERROR, "lower range must not be above upper range");
+	uwordnum = WORDNUM(upper);
+
+	if (a == NULL)
+	{
+		a = (Bitmapset *) palloc0(BITMAPSET_SIZE(uwordnum + 1));
+		a->nwords = uwordnum + 1;
+	}
+
+	/* ensure we have enough words to store the upper bit */
+	else if (uwordnum >= a->nwords)
+	{
+		int			oldnwords = a->nwords;
+		int			i;
+
+		a = (Bitmapset *) repalloc(a, BITMAPSET_SIZE(uwordnum + 1));
+		a->nwords = uwordnum + 1;
+		/* zero out the enlarged portion */
+		for (i = oldnwords; i < a->nwords; i++)
+			a->words[i] = 0;
+	}
+
+	wordnum = lwordnum = WORDNUM(lower);
+
+	lbitnum = BITNUM(lower);
+	ushiftbits = BITS_PER_BITMAPWORD - (BITNUM(upper) + 1);
+
+	/*
+	 * Special case when lwordnum is the same as uwordnum we must perform the
+	 * upper and lower masking on the word.
+	 */
+	if (lwordnum == uwordnum)
+	{
+		a->words[lwordnum] |= ~(bitmapword) (((bitmapword) 1 << lbitnum) - 1)
+							  & (~(bitmapword) 0) >> ushiftbits;
+	}
+	else
+	{
+		/* turn on lbitnum and all bits left of it */
+		a->words[wordnum++] |= ~(bitmapword) (((bitmapword) 1 << lbitnum) - 1);
+
+		/* turn on all bits for any intermediate words */
+		while (wordnum < uwordnum)
+			a->words[wordnum++] = ~(bitmapword) 0;
+
+		/* turn on upper's bit and all bits right of it. */
+		a->words[uwordnum] |= (~(bitmapword) 0) >> ushiftbits;
+	}
+
+	return a;
+}
+
+/*
  * bms_int_members - like bms_intersect, but left input is recycled
  */
 Bitmapset *
