@@ -95,15 +95,16 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		 */
 		stats = lookup_var_attr_stats(onerel, stat->columns,
 									  natts, vacattrstats);
-		if (!stats && !IsAutoVacuumWorkerProcess())
+		if (!stats)
 		{
-			ereport(WARNING,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("statistics object \"%s.%s\" could not be computed for relation \"%s.%s\"",
-							stat->schema, stat->name,
-							get_namespace_name(onerel->rd_rel->relnamespace),
-							RelationGetRelationName(onerel)),
-					 errtable(onerel)));
+			if (!IsAutoVacuumWorkerProcess())
+				ereport(WARNING,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("statistics object \"%s.%s\" could not be computed for relation \"%s.%s\"",
+								stat->schema, stat->name,
+								get_namespace_name(onerel->rd_rel->relnamespace),
+								RelationGetRelationName(onerel)),
+						 errtable(onerel)));
 			continue;
 		}
 
