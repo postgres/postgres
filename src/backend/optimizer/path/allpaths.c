@@ -2840,9 +2840,11 @@ targetIsInAllPartitionLists(TargetEntry *tle, Query *query)
  *
  * Conditions checked here:
  *
- * 1. The qual must not contain any subselects (mainly because I'm not sure
- * it will work correctly: sublinks will already have been transformed into
- * subplans in the qual, but not in the subquery).
+ * 1. The qual must not contain any SubPlans (mainly because I'm not sure
+ * it will work correctly: SubLinks will already have been transformed into
+ * SubPlans in the qual, but not in the subquery).  Note that SubLinks that
+ * transform to initplans are safe, and will be accepted here because what
+ * we'll see in the qual is just a Param referencing the initplan output.
  *
  * 2. If unsafeVolatile is set, the qual must not contain any volatile
  * functions.
