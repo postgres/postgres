@@ -1795,7 +1795,7 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 static void
 set_param_references(PlannerInfo *root, Plan *plan)
 {
-	Assert(IsA(plan, Gather) || IsA(plan, GatherMerge));
+	Assert(IsA(plan, Gather) ||IsA(plan, GatherMerge));
 
 	if (plan->lefttree->extParam)
 	{

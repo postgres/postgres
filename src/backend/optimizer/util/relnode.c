@@ -873,11 +873,11 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 			continue;
 
 		/*
-		 * Otherwise, anything in a baserel or joinrel targetlist ought to be a
-		 * Var. Children of a partitioned table may have ConvertRowtypeExpr
-		 * translating whole-row Var of a child to that of the parent. Children
-		 * of an inherited table or subquery child rels can not directly
-		 * participate in a join, so other kinds of nodes here.
+		 * Otherwise, anything in a baserel or joinrel targetlist ought to be
+		 * a Var. Children of a partitioned table may have ConvertRowtypeExpr
+		 * translating whole-row Var of a child to that of the parent.
+		 * Children of an inherited table or subquery child rels can not
+		 * directly participate in a join, so other kinds of nodes here.
 		 */
 		if (IsA(var, Var))
 		{
@@ -901,7 +901,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 				child_expr = (ConvertRowtypeExpr *) childvar;
 				childvar = (Var *) child_expr->arg;
 			}
-			Assert(IsA(childvar, Var) && childvar->varattno == 0);
+			Assert(IsA(childvar, Var) &&childvar->varattno == 0);
 
 			baserel = find_base_rel(root, childvar->varno);
 			ndx = 0 - baserel->min_attr;
@@ -1666,18 +1666,19 @@ build_joinrel_partition_info(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 	partnatts = joinrel->part_scheme->partnatts;
 	joinrel->partexprs = (List **) palloc0(sizeof(List *) * partnatts);
 	joinrel->nullable_partexprs =
-		(List **) palloc0(sizeof(List *) *partnatts);
+		(List **) palloc0(sizeof(List *) * partnatts);
 
 	/*
 	 * Construct partition keys for the join.
 	 *
 	 * An INNER join between two partitioned relations can be regarded as
-	 * partitioned by either key expression.  For example, A INNER JOIN B ON A.a =
-	 * B.b can be regarded as partitioned on A.a or on B.b; they are equivalent.
+	 * partitioned by either key expression.  For example, A INNER JOIN B ON
+	 * A.a = B.b can be regarded as partitioned on A.a or on B.b; they are
+	 * equivalent.
 	 *
 	 * For a SEMI or ANTI join, the result can only be regarded as being
-	 * partitioned in the same manner as the outer side, since the inner columns
-	 * are not retained.
+	 * partitioned in the same manner as the outer side, since the inner
+	 * columns are not retained.
 	 *
 	 * An OUTER join like (A LEFT JOIN B ON A.a = B.b) may produce rows with
 	 * B.b NULL. These rows may not fit the partitioning conditions imposed on
@@ -1686,11 +1687,12 @@ build_joinrel_partition_info(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 	 * expressions from the OUTER side only.  However, because all
 	 * commonly-used comparison operators are strict, the presence of nulls on
 	 * the outer side doesn't cause any problem; they can't match anything at
-	 * future join levels anyway.  Therefore, we track two sets of expressions:
-	 * those that authentically partition the relation (partexprs) and those
-	 * that partition the relation with the exception that extra nulls may be
-	 * present (nullable_partexprs).  When the comparison operator is strict,
-	 * the latter is just as good as the former.
+	 * future join levels anyway.  Therefore, we track two sets of
+	 * expressions: those that authentically partition the relation
+	 * (partexprs) and those that partition the relation with the exception
+	 * that extra nulls may be present (nullable_partexprs).  When the
+	 * comparison operator is strict, the latter is just as good as the
+	 * former.
 	 */
 	for (cnt = 0; cnt < partnatts; cnt++)
 	{

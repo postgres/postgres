@@ -33,9 +33,9 @@ extern PGconn *GetConnection(void);
 
 /* Replication commands */
 extern bool CreateReplicationSlot(PGconn *conn, const char *slot_name,
-								  const char *plugin, bool is_temporary,
-								  bool is_physical, bool reserve_wal,
-								  bool slot_exists_ok);
+					  const char *plugin, bool is_temporary,
+					  bool is_physical, bool reserve_wal,
+					  bool slot_exists_ok);
 extern bool DropReplicationSlot(PGconn *conn, const char *slot_name);
 extern bool RunIdentifySystem(PGconn *conn, char **sysid,
 				  TimeLineID *starttli,

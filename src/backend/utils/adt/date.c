@@ -2231,7 +2231,7 @@ timetz_hash_extended(PG_FUNCTION_ARGS)
 											   Int64GetDatumFast(key->time),
 											   seed));
 	thash ^= DatumGetUInt64(hash_uint32_extended(key->zone,
-							DatumGetInt64(seed)));
+												 DatumGetInt64(seed)));
 	PG_RETURN_UINT64(thash);
 }
 

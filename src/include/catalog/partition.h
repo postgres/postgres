@@ -69,6 +69,6 @@ extern List *get_proposed_default_constraint(List *new_part_constaints);
 
 /* For tuple routing */
 extern int get_partition_for_tuple(Relation relation, Datum *values,
-							bool *isnull);
+						bool *isnull);
 
 #endif							/* PARTITION_H */

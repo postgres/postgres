@@ -149,7 +149,7 @@ extern void appendBinaryStringInfo(StringInfo str,
  * if necessary. Does not ensure a trailing null-byte exists.
  */
 extern void appendBinaryStringInfoNT(StringInfo str,
-					   const char *data, int datalen);
+						 const char *data, int datalen);
 
 /*------------------------
  * enlargeStringInfo

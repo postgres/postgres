@@ -660,7 +660,7 @@ typedef struct RelOptInfo
 	struct RelOptInfo **part_rels;	/* Array of RelOptInfos of partitions,
 									 * stored in the same order of bounds */
 	List	  **partexprs;		/* Non-nullable partition key expressions. */
-	List	  **nullable_partexprs;	/* Nullable partition key expressions. */
+	List	  **nullable_partexprs; /* Nullable partition key expressions. */
 } RelOptInfo;
 
 /*

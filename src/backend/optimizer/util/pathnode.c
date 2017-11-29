@@ -2412,7 +2412,7 @@ apply_projection_to_path(PlannerInfo *root,
 	 * workers can help project.  But if there is something that is not
 	 * parallel-safe in the target expressions, then we can't.
 	 */
-	if ((IsA(path, GatherPath) || IsA(path, GatherMergePath)) &&
+	if ((IsA(path, GatherPath) ||IsA(path, GatherMergePath)) &&
 		is_parallel_safe(root, (Node *) target->exprs))
 	{
 		/*
@@ -2421,9 +2421,9 @@ apply_projection_to_path(PlannerInfo *root,
 		 * It seems unlikely at present that there could be any other
 		 * references to the subpath, but better safe than sorry.
 		 *
-		 * Note that we don't change the parallel path's cost estimates; it might
-		 * be appropriate to do so, to reflect the fact that the bulk of the
-		 * target evaluation will happen in workers.
+		 * Note that we don't change the parallel path's cost estimates; it
+		 * might be appropriate to do so, to reflect the fact that the bulk of
+		 * the target evaluation will happen in workers.
 		 */
 		if (IsA(path, GatherPath))
 		{

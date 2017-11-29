@@ -157,8 +157,8 @@ extern MemoryContext SlabContextCreate(MemoryContext parent,
 
 /* generation.c */
 extern MemoryContext GenerationContextCreate(MemoryContext parent,
-				 const char *name,
-				 Size blockSize);
+						const char *name,
+						Size blockSize);
 
 /*
  * Recommended default alloc parameters, suitable for "ordinary" contexts

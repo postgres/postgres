@@ -802,7 +802,7 @@ void
 XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wantLength)
 {
 	const XLogRecPtr lastReadPage = state->readSegNo *
-		state->wal_segment_size + state->readOff;
+	state->wal_segment_size + state->readOff;
 
 	Assert(wantPage != InvalidXLogRecPtr && wantPage % XLOG_BLCKSZ == 0);
 	Assert(wantLength <= XLOG_BLCKSZ);

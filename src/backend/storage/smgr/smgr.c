@@ -601,7 +601,7 @@ smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		   char *buffer, bool skipFsync)
 {
 	smgrsw[reln->smgr_which].smgr_extend(reln, forknum, blocknum,
-											   buffer, skipFsync);
+										 buffer, skipFsync);
 }
 
 /*
@@ -648,7 +648,7 @@ smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		  char *buffer, bool skipFsync)
 {
 	smgrsw[reln->smgr_which].smgr_write(reln, forknum, blocknum,
-											  buffer, skipFsync);
+										buffer, skipFsync);
 }
 
 
@@ -661,7 +661,7 @@ smgrwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			  BlockNumber nblocks)
 {
 	smgrsw[reln->smgr_which].smgr_writeback(reln, forknum, blocknum,
-												  nblocks);
+											nblocks);
 }
 
 /*

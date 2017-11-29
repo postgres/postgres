@@ -2134,7 +2134,7 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 
 		if (or_expr_args != NIL)
 		{
-			Expr   *other_parts_constr;
+			Expr	   *other_parts_constr;
 
 			/*
 			 * Combine the constraints obtained for non-default partitions
@@ -2143,20 +2143,20 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 			 * useless repetition).  Add the same now.
 			 */
 			other_parts_constr =
-						makeBoolExpr(AND_EXPR,
-							lappend(get_range_nulltest(key),
-									list_length(or_expr_args) > 1
-										? makeBoolExpr(OR_EXPR, or_expr_args,
-													   -1)
-										: linitial(or_expr_args)),
-									-1);
+				makeBoolExpr(AND_EXPR,
+							 lappend(get_range_nulltest(key),
+									 list_length(or_expr_args) > 1
+									 ? makeBoolExpr(OR_EXPR, or_expr_args,
+													-1)
+									 : linitial(or_expr_args)),
+							 -1);
 
 			/*
 			 * Finally, the default partition contains everything *NOT*
 			 * contained in the non-default partitions.
 			 */
 			result = list_make1(makeBoolExpr(NOT_EXPR,
-										list_make1(other_parts_constr), -1));
+											 list_make1(other_parts_constr), -1));
 		}
 
 		return result;
@@ -2502,9 +2502,9 @@ generate_partition_qual(Relation rel)
 int
 get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 {
-	int		bound_offset;
-	int		part_index = -1;
-	PartitionKey  key = RelationGetPartitionKey(relation);
+	int			bound_offset;
+	int			part_index = -1;
+	PartitionKey key = RelationGetPartitionKey(relation);
 	PartitionDesc partdesc = RelationGetPartitionDesc(relation);
 
 	/* Route as appropriate based on partitioning strategy. */
@@ -2513,8 +2513,8 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 		case PARTITION_STRATEGY_HASH:
 			{
 				PartitionBoundInfo boundinfo = partdesc->boundinfo;
-				int		greatest_modulus = get_greatest_modulus(boundinfo);
-				uint64	rowHash = compute_hash_value(key, values, isnull);
+				int			greatest_modulus = get_greatest_modulus(boundinfo);
+				uint64		rowHash = compute_hash_value(key, values, isnull);
 
 				part_index = boundinfo->indexes[rowHash % greatest_modulus];
 			}
@@ -2548,8 +2548,7 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 
 				/*
 				 * No range includes NULL, so this will be accepted by the
-				 * default partition if there is one, and otherwise
-				 * rejected.
+				 * default partition if there is one, and otherwise rejected.
 				 */
 				for (i = 0; i < key->partnatts; i++)
 				{
@@ -2563,7 +2562,7 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 				if (!range_partkey_has_null)
 				{
 					bound_offset = partition_bound_bsearch(key,
-													   partdesc->boundinfo,
+														   partdesc->boundinfo,
 														   values,
 														   false,
 														   &equal);
@@ -2585,8 +2584,8 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 	}
 
 	/*
-	 * part_index < 0 means we failed to find a partition of this parent.
-	 * Use the default partition, if there is one.
+	 * part_index < 0 means we failed to find a partition of this parent. Use
+	 * the default partition, if there is one.
 	 */
 	if (part_index < 0)
 		part_index = partdesc->boundinfo->default_index;
@@ -3125,7 +3124,7 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 		bool		variadic_typbyval;
 		char		variadic_typalign;
 		FmgrInfo	partsupfunc[PARTITION_MAX_KEYS];
-	}			ColumnsHashData;
+	} ColumnsHashData;
 	Oid			parentId;
 	int			modulus;
 	int			remainder;

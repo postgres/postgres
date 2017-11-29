@@ -2161,8 +2161,8 @@ retry1:
 		/*
 		 * If the client requested a newer protocol version or if the client
 		 * requested any protocol options we didn't recognize, let them know
-		 * the newest minor protocol version we do support and the names of any
-		 * unrecognized options.
+		 * the newest minor protocol version we do support and the names of
+		 * any unrecognized options.
 		 */
 		if (PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST) ||
 			unrecognized_protocol_options != NIL)
@@ -4316,8 +4316,8 @@ BackendInitialize(Port *port)
 	 *
 	 * postgres: walsender <user> <host> <activity>
 	 *
-	 * To achieve that, we pass "walsender" as username and username
-	 * as dbname to init_ps_display(). XXX: should add a new variant of
+	 * To achieve that, we pass "walsender" as username and username as dbname
+	 * to init_ps_display(). XXX: should add a new variant of
 	 * init_ps_display() to avoid abusing the parameters like this.
 	 */
 	if (am_walsender)

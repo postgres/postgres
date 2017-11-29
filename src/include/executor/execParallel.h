@@ -28,7 +28,7 @@ typedef struct ParallelExecutorInfo
 	BufferUsage *buffer_usage;	/* points to bufusage area in DSM */
 	SharedExecutorInstrumentation *instrumentation; /* optional */
 	dsa_area   *area;			/* points to DSA area in DSM */
-	dsa_pointer	param_exec;		/* serialized PARAM_EXEC parameters */
+	dsa_pointer param_exec;		/* serialized PARAM_EXEC parameters */
 	bool		finished;		/* set true by ExecParallelFinish */
 	/* These two arrays have pcxt->nworkers_launched entries: */
 	shm_mq_handle **tqueue;		/* tuple queues for worker output */

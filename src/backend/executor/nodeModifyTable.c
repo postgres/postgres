@@ -1518,8 +1518,8 @@ ExecSetupTransitionCaptureState(ModifyTableState *mtstate, EState *estate)
 		if (mtstate->mt_partition_dispatch_info != NULL)
 		{
 			/*
-			 * For tuple routing among partitions, we need TupleDescs based
-			 * on the partition routing table.
+			 * For tuple routing among partitions, we need TupleDescs based on
+			 * the partition routing table.
 			 */
 			ResultRelInfo **resultRelInfos = mtstate->mt_partitions;
 

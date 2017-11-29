@@ -496,7 +496,8 @@ main(int argc, char **argv)
 	int			c;
 	int			option_index;
 	char	   *db_name;
-	uint32		hi, lo;
+	uint32		hi,
+				lo;
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_basebackup"));

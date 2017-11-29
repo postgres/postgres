@@ -1118,7 +1118,7 @@ is_parallel_safe(PlannerInfo *root, Node *node)
 
 			foreach(l2, initsubplan->setParam)
 				context.safe_param_ids = lcons_int(lfirst_int(l2),
-											context.safe_param_ids);
+												   context.safe_param_ids);
 		}
 	}
 

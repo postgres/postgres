@@ -133,7 +133,7 @@ typedef struct HashScanPosData
 	int			itemIndex;		/* current index in items[] */
 
 	HashScanPosItem items[MaxIndexTuplesPerPage];	/* MUST BE LAST */
-}			HashScanPosData;
+} HashScanPosData;
 
 #define HashScanPosIsPinned(scanpos) \
 ( \

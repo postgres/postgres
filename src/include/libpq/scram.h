@@ -15,7 +15,7 @@
 
 /* Name of SCRAM mechanisms per IANA */
 #define SCRAM_SHA256_NAME "SCRAM-SHA-256"
-#define SCRAM_SHA256_PLUS_NAME "SCRAM-SHA-256-PLUS"	/* with channel binding */
+#define SCRAM_SHA256_PLUS_NAME "SCRAM-SHA-256-PLUS" /* with channel binding */
 
 /* Channel binding types */
 #define SCRAM_CHANNEL_BINDING_TLS_UNIQUE	"tls-unique"
@@ -27,8 +27,8 @@
 
 /* Routines dedicated to authentication */
 extern void *pg_be_scram_init(const char *username, const char *shadow_pass,
-					 bool ssl_in_use, const char *tls_finished_message,
-					 size_t tls_finished_len);
+				 bool ssl_in_use, const char *tls_finished_message,
+				 size_t tls_finished_len);
 extern int pg_be_scram_exchange(void *opaq, char *input, int inputlen,
 					 char **output, int *outputlen, char **logdetail);
 

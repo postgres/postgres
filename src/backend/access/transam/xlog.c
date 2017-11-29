@@ -6586,10 +6586,10 @@ StartupXLOG(void)
 		else
 		{
 			/*
-			 * We used to attempt to go back to a secondary checkpoint
-			 * record here, but only when not in standby_mode. We now
-			 * just fail if we can't read the last checkpoint because
-			 * this allows us to simplify processing around checkpoints.
+			 * We used to attempt to go back to a secondary checkpoint record
+			 * here, but only when not in standby_mode. We now just fail if we
+			 * can't read the last checkpoint because this allows us to
+			 * simplify processing around checkpoints.
 			 */
 			ereport(PANIC,
 					(errmsg("could not locate a valid checkpoint record")));
@@ -8888,7 +8888,8 @@ CreateCheckPoint(int flags)
 				(errmsg("concurrent write-ahead log activity while database system is shutting down")));
 
 	/*
-	 * Remember the prior checkpoint's redo ptr for UpdateCheckPointDistanceEstimate()
+	 * Remember the prior checkpoint's redo ptr for
+	 * UpdateCheckPointDistanceEstimate()
 	 */
 	PriorRedoPtr = ControlFile->checkPointCopy.redo;
 
@@ -9211,7 +9212,8 @@ CreateRestartPoint(int flags)
 	CheckPointGuts(lastCheckPoint.redo, flags);
 
 	/*
-	 * Remember the prior checkpoint's redo ptr for UpdateCheckPointDistanceEstimate()
+	 * Remember the prior checkpoint's redo ptr for
+	 * UpdateCheckPointDistanceEstimate()
 	 */
 	PriorRedoPtr = ControlFile->checkPointCopy.redo;
 

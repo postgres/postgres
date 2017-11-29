@@ -1825,7 +1825,7 @@ set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 							Relation relation)
 {
 	PartitionDesc partdesc;
-	PartitionKey  partkey;
+	PartitionKey partkey;
 
 	Assert(relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
@@ -1890,8 +1890,8 @@ find_partition_scheme(PlannerInfo *root, Relation relation)
 
 	/*
 	 * Did not find matching partition scheme. Create one copying relevant
-	 * information from the relcache. We need to copy the contents of the array
-	 * since the relcache entry may not survive after we have closed the
+	 * information from the relcache. We need to copy the contents of the
+	 * array since the relcache entry may not survive after we have closed the
 	 * relation.
 	 */
 	part_scheme = (PartitionScheme) palloc0(sizeof(PartitionSchemeData));

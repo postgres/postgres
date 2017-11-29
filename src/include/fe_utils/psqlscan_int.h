@@ -143,6 +143,6 @@ extern void psqlscan_escape_variable(PsqlScanState state,
 						 const char *txt, int len,
 						 PsqlScanQuoteType quote);
 extern void psqlscan_test_variable(PsqlScanState state,
-								   const char *txt, int len);
+					   const char *txt, int len);
 
 #endif							/* PSQLSCAN_INT_H */

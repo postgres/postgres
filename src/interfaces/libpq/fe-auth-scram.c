@@ -491,9 +491,9 @@ build_client_final_message(fe_scram_state *state, PQExpBuffer errormessage)
 		free(cbind_input);
 	}
 	else if (state->ssl_in_use)
-		appendPQExpBuffer(&buf, "c=eSws"); /* base64 of "y,," */
+		appendPQExpBuffer(&buf, "c=eSws");	/* base64 of "y,," */
 	else
-		appendPQExpBuffer(&buf, "c=biws"); /* base64 of "n,," */
+		appendPQExpBuffer(&buf, "c=biws");	/* base64 of "n,," */
 
 	if (PQExpBufferDataBroken(buf))
 		goto oom_error;

@@ -184,10 +184,10 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 	parent = pd[0];
 	while (true)
 	{
-		PartitionDesc	partdesc;
+		PartitionDesc partdesc;
 		TupleTableSlot *myslot = parent->tupslot;
 		TupleConversionMap *map = parent->tupmap;
-		int		cur_index = -1;
+		int			cur_index = -1;
 
 		rel = parent->reldesc;
 		partdesc = RelationGetPartitionDesc(rel);

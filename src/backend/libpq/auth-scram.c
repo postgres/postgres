@@ -791,6 +791,7 @@ read_client_first_message(scram_state *state, char *input)
 	switch (*input)
 	{
 		case 'n':
+
 			/*
 			 * The client does not support channel binding or has simply
 			 * decided to not use it.  In that case just let it go.
@@ -805,6 +806,7 @@ read_client_first_message(scram_state *state, char *input)
 			input++;
 			break;
 		case 'y':
+
 			/*
 			 * The client supports channel binding and thinks that the server
 			 * does not.  In this case, the server must fail authentication if
@@ -827,12 +829,13 @@ read_client_first_message(scram_state *state, char *input)
 			input++;
 			break;
 		case 'p':
+
 			/*
 			 * The client requires channel binding.  Channel binding type
 			 * follows, e.g., "p=tls-unique".
 			 */
 			{
-				char *channel_binding_type;
+				char	   *channel_binding_type;
 
 				if (!state->ssl_in_use)
 				{
@@ -1139,8 +1142,8 @@ read_client_final_message(scram_state *state, char *input)
 		b64_message[b64_message_len] = '\0';
 
 		/*
-		 * Compare the value sent by the client with the value expected by
-		 * the server.
+		 * Compare the value sent by the client with the value expected by the
+		 * server.
 		 */
 		if (strcmp(channel_binding, b64_message) != 0)
 			ereport(ERROR,

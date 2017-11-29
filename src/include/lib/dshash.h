@@ -81,7 +81,7 @@ extern void dshash_delete_entry(dshash_table *hash_table, void *entry);
 extern void dshash_release_lock(dshash_table *hash_table, void *entry);
 
 /* Convenience hash and compare functions wrapping memcmp and tag_hash. */
-extern int dshash_memcmp(const void *a, const void *b, size_t size, void *arg);
+extern int	dshash_memcmp(const void *a, const void *b, size_t size, void *arg);
 extern dshash_hash dshash_memhash(const void *v, size_t size, void *arg);
 
 /* Debugging support. */

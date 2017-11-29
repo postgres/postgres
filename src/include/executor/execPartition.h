@@ -38,13 +38,13 @@
  */
 typedef struct PartitionDispatchData
 {
-	Relation		reldesc;
-	PartitionKey 	key;
-	List		   *keystate;		/* list of ExprState */
-	PartitionDesc	partdesc;
+	Relation	reldesc;
+	PartitionKey key;
+	List	   *keystate;		/* list of ExprState */
+	PartitionDesc partdesc;
 	TupleTableSlot *tupslot;
 	TupleConversionMap *tupmap;
-	int			   *indexes;
+	int		   *indexes;
 } PartitionDispatchData;
 
 typedef struct PartitionDispatchData *PartitionDispatch;

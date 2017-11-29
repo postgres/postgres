@@ -1591,8 +1591,7 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 		case TSS_BUILDRUNS:
 
 			/*
-			 * Save the tuple into the unsorted array (there must be
-			 * space)
+			 * Save the tuple into the unsorted array (there must be space)
 			 */
 			state->memtuples[state->memtupcount++] = *tuple;
 
@@ -2742,8 +2741,8 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 	int			i;
 
 	/*
-	 * Nothing to do if we still fit in available memory and have array
-	 * slots, unless this is the final call during initial run generation.
+	 * Nothing to do if we still fit in available memory and have array slots,
+	 * unless this is the final call during initial run generation.
 	 */
 	if (state->memtupcount < state->memtupsize && !LACKMEM(state) &&
 		!alltuples)

@@ -355,7 +355,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 									   params->log_min_duration))
 		{
 			StringInfoData buf;
-			char *msgfmt;
+			char	   *msgfmt;
 
 			TimestampDifference(starttime, endtime, &secs, &usecs);
 

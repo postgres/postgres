@@ -1253,7 +1253,7 @@ GetBackgroundWorkerTypeByPid(pid_t pid)
 {
 	int			slotno;
 	bool		found = false;
-	static char	result[BGW_MAXLEN];
+	static char result[BGW_MAXLEN];
 
 	LWLockAcquire(BackgroundWorkerLock, LW_SHARED);
 

@@ -534,7 +534,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		 */
 		if (conn->ssl_in_use &&
 			strcmp(mechanism_buf.data, SCRAM_SHA256_PLUS_NAME) == 0)
-				selected_mechanism = SCRAM_SHA256_PLUS_NAME;
+			selected_mechanism = SCRAM_SHA256_PLUS_NAME;
 		else if (strcmp(mechanism_buf.data, SCRAM_SHA256_NAME) == 0 &&
 				 !selected_mechanism)
 			selected_mechanism = SCRAM_SHA256_NAME;
@@ -569,6 +569,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 	}
 
 #ifdef USE_SSL
+
 	/*
 	 * Get data for channel binding.
 	 */
@@ -581,8 +582,8 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 #endif
 
 	/*
-	 * Initialize the SASL state information with all the information
-	 * gathered during the initial exchange.
+	 * Initialize the SASL state information with all the information gathered
+	 * during the initial exchange.
 	 *
 	 * Note: Only tls-unique is supported for the moment.
 	 */

@@ -246,8 +246,8 @@ ReorderBufferAllocate(void)
 											sizeof(ReorderBufferTXN));
 
 	buffer->tup_context = GenerationContextCreate(new_ctx,
-										   "Tuples",
-										   SLAB_LARGE_BLOCK_SIZE);
+												  "Tuples",
+												  SLAB_LARGE_BLOCK_SIZE);
 
 	hash_ctl.keysize = sizeof(TransactionId);
 	hash_ctl.entrysize = sizeof(ReorderBufferTXNByIdEnt);

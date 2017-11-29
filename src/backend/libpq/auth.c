@@ -100,7 +100,8 @@ static struct pam_conv pam_passw_conv = {
 	NULL
 };
 
-static const char *pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
+static const char *pam_passwd = NULL;	/* Workaround for Solaris 2.6
+										 * brokenness */
 static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 								 * pam_passwd_conv_proc */
 #endif							/* USE_PAM */
@@ -914,6 +915,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	pfree(sasl_mechs);
 
 #ifdef USE_SSL
+
 	/*
 	 * Get data for channel binding.
 	 */
@@ -2343,7 +2345,7 @@ CheckBSDAuth(Port *port, char *user)
  */
 #ifdef USE_LDAP
 
-static int errdetail_for_ldap(LDAP *ldap);
+static int	errdetail_for_ldap(LDAP *ldap);
 
 /*
  * Initialize a connection to the LDAP server, including setting up
@@ -2514,7 +2516,7 @@ CheckLDAPAuth(Port *port)
 		char	   *filter;
 		LDAPMessage *search_message;
 		LDAPMessage *entry;
-		char	   *attributes[] = { LDAP_NO_ATTRS, NULL };
+		char	   *attributes[] = {LDAP_NO_ATTRS, NULL};
 		char	   *dn;
 		char	   *c;
 		int			count;

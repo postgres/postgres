@@ -2374,8 +2374,8 @@ exec_describe_statement_message(const char *stmt_name)
 	/*
 	 * First describe the parameters...
 	 */
-	pq_beginmessage_reuse(&row_description_buf, 't'); /* parameter description
-													   * message type */
+	pq_beginmessage_reuse(&row_description_buf, 't');	/* parameter description
+														 * message type */
 	pq_sendint16(&row_description_buf, psrc->num_params);
 
 	for (i = 0; i < psrc->num_params; i++)
@@ -2952,14 +2952,14 @@ ProcessInterrupts(void)
 	/*
 	 * Don't allow query cancel interrupts while reading input from the
 	 * client, because we might lose sync in the FE/BE protocol.  (Die
-	 * interrupts are OK, because we won't read any further messages from
-	 * the client in that case.)
+	 * interrupts are OK, because we won't read any further messages from the
+	 * client in that case.)
 	 */
 	if (QueryCancelPending && QueryCancelHoldoffCount != 0)
 	{
 		/*
-		 * Re-arm InterruptPending so that we process the cancel request
-		 * as soon as we're done reading the message.
+		 * Re-arm InterruptPending so that we process the cancel request as
+		 * soon as we're done reading the message.
 		 */
 		InterruptPending = true;
 	}
@@ -4494,10 +4494,10 @@ ShowUsage(const char *title)
 	appendStringInfo(&str,
 					 "!\t%ld kB max resident size\n",
 #if defined(__darwin__)
-					 /* in bytes on macOS */
-					 r.ru_maxrss/1024
+	/* in bytes on macOS */
+					 r.ru_maxrss / 1024
 #else
-					 /* in kilobytes on most other platforms */
+	/* in kilobytes on most other platforms */
 					 r.ru_maxrss
 #endif
 		);

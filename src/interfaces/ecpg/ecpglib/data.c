@@ -55,7 +55,8 @@ garbage_left(enum ARRAY_TYPE isarray, char **scan_length, enum COMPAT_MODE compa
 		if (INFORMIX_MODE(compat) && **scan_length == '.')
 		{
 			/* skip invalid characters */
-			do {
+			do
+			{
 				(*scan_length)++;
 			} while (isdigit((unsigned char) **scan_length));
 		}

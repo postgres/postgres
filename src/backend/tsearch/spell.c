@@ -202,7 +202,7 @@ static int
 cmpspellaffix(const void *s1, const void *s2)
 {
 	return strcmp((*(SPELL *const *) s1)->p.flag,
-				   (*(SPELL *const *) s2)->p.flag);
+				  (*(SPELL *const *) s2)->p.flag);
 }
 
 static int

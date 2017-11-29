@@ -1314,8 +1314,8 @@ brinsummarize(Relation index, Relation heapRel, BlockNumber pageRange,
 
 		/*
 		 * Unless requested to summarize even a partial range, go away now if
-		 * we think the next range is partial.  Caller would pass true when
-		 * it is typically run once bulk data loading is done
+		 * we think the next range is partial.  Caller would pass true when it
+		 * is typically run once bulk data loading is done
 		 * (brin_summarize_new_values), and false when it is typically the
 		 * result of arbitrarily-scheduled maintenance command (vacuuming).
 		 */

@@ -80,23 +80,23 @@ static volatile int errno2_set = 0;
 #ifndef HAVE_STRERROR_R
 static char *strerror_p1;
 static char *strerror_p2;
-static int strerror_threadsafe = 0;
+static int	strerror_threadsafe = 0;
 #endif
 
 #if !defined(WIN32) && !defined(HAVE_GETPWUID_R)
 static struct passwd *passwd_p1;
 static struct passwd *passwd_p2;
-static int getpwuid_threadsafe = 0;
+static int	getpwuid_threadsafe = 0;
 #endif
 
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
 static struct hostent *hostent_p1;
 static struct hostent *hostent_p2;
 static char myhostname[MAXHOSTNAMELEN];
-static int gethostbyname_threadsafe = 0;
+static int	gethostbyname_threadsafe = 0;
 #endif
 
-static int platform_is_threadsafe = 1;
+static int	platform_is_threadsafe = 1;
 
 int
 main(int argc, char *argv[])

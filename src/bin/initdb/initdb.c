@@ -148,7 +148,7 @@ static int	wal_segment_size_mb;
 
 /* internal vars */
 static const char *progname;
-static int encodingid;
+static int	encodingid;
 static char *bki_file;
 static char *desc_file;
 static char *shdesc_file;
@@ -239,7 +239,7 @@ static void writefile(char *path, char **lines);
 static FILE *popen_check(const char *command, const char *mode);
 static void exit_nicely(void) pg_attribute_noreturn();
 static char *get_id(void);
-static int get_encoding_id(const char *encoding_name);
+static int	get_encoding_id(const char *encoding_name);
 static void set_input(char **dest, const char *filename);
 static void check_input(char *path);
 static void write_version_file(const char *extrapath);

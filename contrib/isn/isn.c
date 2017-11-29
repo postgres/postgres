@@ -925,7 +925,7 @@ eantoobig:
  * Exported routines.
  *---------------------------------------------------------*/
 
-void _PG_init(void);
+void		_PG_init(void);
 
 void
 _PG_init(void)

@@ -2939,7 +2939,7 @@ describeOneTableDetails(const char *schemaname,
 				}
 				else
 				{
-					char *partitioned_note;
+					char	   *partitioned_note;
 
 					if (*PQgetvalue(result, i, 2) == RELKIND_PARTITIONED_TABLE)
 						partitioned_note = ", PARTITIONED";

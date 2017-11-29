@@ -1109,7 +1109,7 @@ ecpg_build_params(struct statement *stmt)
 	struct variable *var;
 	int			desc_counter = 0;
 	int			position = 0;
-	const char	   *value;
+	const char *value;
 	bool		std_strings = false;
 
 	/* Get standard_conforming_strings setting. */

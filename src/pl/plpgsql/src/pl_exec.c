@@ -6617,8 +6617,8 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 			if (IsA(tle_expr, Const))
 				break;
 			/* Otherwise, it had better be a Param or an outer Var */
-			Assert(IsA(tle_expr, Param) || (IsA(tle_expr, Var) &&
-					((Var *) tle_expr)->varno == OUTER_VAR));
+			Assert(IsA(tle_expr, Param) ||(IsA(tle_expr, Var) &&
+										   ((Var *) tle_expr)->varno == OUTER_VAR));
 			/* Descend to the child node */
 			plan = plan->lefttree;
 		}

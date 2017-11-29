@@ -34,6 +34,9 @@ AfterTriggerEventList
 AfterTriggerShared
 AfterTriggerSharedData
 AfterTriggersData
+AfterTriggersQueryData
+AfterTriggersTableData
+AfterTriggersTransData
 Agg
 AggClauseCosts
 AggInfo
@@ -125,7 +128,6 @@ ArrayMetaState
 ArrayParseState
 ArrayRef
 ArrayRefState
-ArrayRemapInfo
 ArrayType
 AsyncQueueControl
 AsyncQueueEntry
@@ -143,7 +145,6 @@ AutoVacOpts
 AutoVacuumShmemStruct
 AutoVacuumWorkItem
 AutoVacuumWorkItemType
-AutovacWorkItems
 AuxProcType
 BF_ctx
 BF_key
@@ -274,6 +275,8 @@ BuiltinScript
 BulkInsertState
 CACHESIGN
 CAC_state
+CCFastEqualFN
+CCHashFN
 CEOUC_WAIT_MODE
 CFuncHashTabEntry
 CHAR
@@ -302,8 +305,6 @@ CatCache
 CatCacheHeader
 CatalogId
 CatalogIndexState
-CCHashFN
-CCFastEqualFN
 ChangeVarNodes_context
 CheckPoint
 CheckPointStmt
@@ -344,6 +345,7 @@ ColumnCompareData
 ColumnDef
 ColumnIOData
 ColumnRef
+ColumnsHashData
 CombinationGenerator
 ComboCidEntry
 ComboCidEntryData
@@ -632,9 +634,9 @@ FieldStore
 File
 FileFdwExecutionState
 FileFdwPlanState
-FileName
 FileNameMap
 FindSplitData
+FixedParallelExecutorState
 FixedParallelState
 FixedParamState
 FlagMode
@@ -824,6 +826,10 @@ GatherMergeState
 GatherPath
 GatherState
 Gene
+GenerationBlock
+GenerationChunk
+GenerationContext
+GenerationPointer
 GenericCosts
 GenericXLogState
 GeqoPrivateData
@@ -941,6 +947,7 @@ HashPageStat
 HashPath
 HashScanOpaque
 HashScanOpaqueData
+HashScanPosData
 HashScanPosItem
 HashSkewBucket
 HashState
@@ -1021,13 +1028,13 @@ InsertStmt
 Instrumentation
 Int128AggState
 Int8TransTypeData
+IntRBTreeNode
 InternalDefaultACL
 InternalGrant
 Interval
 IntoClause
 InvalidationChunk
 InvalidationListHeader
-InvertedWalkNextStep
 IpcMemoryId
 IpcMemoryKey
 IpcSemaphoreId
@@ -1217,6 +1224,7 @@ MergeJoinClause
 MergeJoinState
 MergePath
 MergeScanSelCache
+MetaCommand
 MinMaxAggInfo
 MinMaxAggPath
 MinMaxExpr
@@ -1454,13 +1462,18 @@ PLpgSQL_var
 PLpgSQL_variable
 PLwdatum
 PLword
+PLyArrayToOb
 PLyCursorObject
 PLyDatumToOb
 PLyDatumToObFunc
 PLyExceptionEntry
 PLyExecutionContext
+PLyObToArray
 PLyObToDatum
 PLyObToDatumFunc
+PLyObToDomain
+PLyObToScalar
+PLyObToTransform
 PLyObToTuple
 PLyObject_AsString_t
 PLyPlanObject
@@ -1470,12 +1483,11 @@ PLyProcedureKey
 PLyResultObject
 PLySRFState
 PLySavedArgs
+PLyScalarToOb
 PLySubtransactionData
 PLySubtransactionObject
+PLyTransformToOb
 PLyTupleToOb
-PLyTypeInfo
-PLyTypeInput
-PLyTypeOutput
 PLyUnicode_FromStringAndSize_t
 PMINIDUMP_CALLBACK_INFORMATION
 PMINIDUMP_EXCEPTION_INFORMATION
@@ -1565,12 +1577,13 @@ PartitionDescData
 PartitionDispatch
 PartitionDispatchData
 PartitionElem
-PartitionKey
 PartitionHashBound
+PartitionKey
 PartitionListValue
 PartitionRangeBound
 PartitionRangeDatum
 PartitionRangeDatumKind
+PartitionScheme
 PartitionSpec
 PartitionedChildRelInfo
 PasswordType
@@ -1670,6 +1683,7 @@ Pool
 PopulateArrayContext
 PopulateArrayState
 PopulateRecordCache
+PopulateRecordsetCache
 PopulateRecordsetState
 Port
 Portal
@@ -1781,7 +1795,6 @@ RangeBox
 RangeFunction
 RangeIOData
 RangeQueryClause
-RangeRemapInfo
 RangeSubselect
 RangeTableFunc
 RangeTableFuncCol
@@ -1794,6 +1807,7 @@ RangeVar
 RangeVarGetRelidCallback
 RawColumnDefault
 RawStmt
+ReInitializeDSMForeignScan_function
 ReScanForeignScan_function
 ReadBufPtrType
 ReadBufferMode
@@ -1805,8 +1819,6 @@ RecheckForeignScan_function
 RecordCacheEntry
 RecordCompareData
 RecordIOData
-RecordRemapInfo
-RecordTypmodMap
 RecoveryTargetAction
 RecoveryTargetType
 RectBox
@@ -1866,6 +1878,7 @@ ReorderBufferTupleCidEnt
 ReorderBufferTupleCidKey
 ReorderTuple
 RepOriginId
+ReparameterizeForeignPathByChild_function
 ReplaceVarsFromTargetList_context
 ReplaceVarsNoMatchOption
 ReplicaIdentityStmt
@@ -2020,9 +2033,10 @@ SharedInvalRelmapMsg
 SharedInvalSmgrMsg
 SharedInvalSnapshotMsg
 SharedInvalidationMessage
-SharedRecordTableKey
 SharedRecordTableEntry
+SharedRecordTableKey
 SharedRecordTypmodRegistry
+SharedSortInfo
 SharedTypmodTableEntry
 ShellTypeInfo
 ShippableCacheEntry
@@ -2297,9 +2311,10 @@ TupleHashEntryData
 TupleHashIterator
 TupleHashTable
 TupleQueueReader
-TupleRemapClass
-TupleRemapInfo
 TupleTableSlot
+TuplesortInstrumentation
+TuplesortMethod
+TuplesortSpaceType
 Tuplesortstate
 Tuplestorestate
 TwoPhaseCallback
@@ -2329,7 +2344,6 @@ UChar
 UCharIterator
 UCollator
 UConverter
-UEnumeration
 UErrorCode
 UINT
 ULARGE_INTEGER
@@ -2353,6 +2367,7 @@ UserOpts
 VacAttrStats
 VacAttrStatsP
 VacuumParams
+VacuumRelation
 VacuumStmt
 Value
 ValuesScan
@@ -2547,6 +2562,7 @@ bgworker_main_type
 binaryheap
 binaryheap_comparator
 bitmapword
+bits16
 bits32
 bits8
 bool
@@ -2561,7 +2577,6 @@ check_network_data
 check_object_relabel_type
 check_password_hook_type
 check_ungrouped_columns_context
-chkpass
 chr
 clock_t
 cmpEntriesArg
@@ -2612,7 +2627,9 @@ dsa_pointer
 dsa_segment_header
 dsa_segment_index
 dsa_segment_map
+dshash_compare_function
 dshash_hash
+dshash_hash_function
 dshash_parameters
 dshash_partition
 dshash_table

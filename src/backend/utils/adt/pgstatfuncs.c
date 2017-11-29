@@ -921,8 +921,8 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 	int32		beid = PG_GETARG_INT32(0);
 	PgBackendStatus *beentry;
 	const char *activity;
-	char *clipped_activity;
-	text *ret;
+	char	   *clipped_activity;
+	text	   *ret;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		activity = "<backend information not available>";

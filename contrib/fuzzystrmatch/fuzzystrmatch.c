@@ -104,7 +104,7 @@ soundex_code(char letter)
 #define  TH		'0'
 
 static char Lookahead(char *word, int how_far);
-static void	_metaphone(char *word, int max_phonemes, char **phoned_word);
+static void _metaphone(char *word, int max_phonemes, char **phoned_word);
 
 /* Metachar.h ... little bits about characters for metaphone */
 

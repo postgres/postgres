@@ -46,7 +46,7 @@
 #define Generation_BLOCKHDRSZ	MAXALIGN(sizeof(GenerationBlock))
 #define Generation_CHUNKHDRSZ	sizeof(GenerationChunk)
 
-typedef struct GenerationBlock GenerationBlock;	/* forward reference */
+typedef struct GenerationBlock GenerationBlock; /* forward reference */
 typedef struct GenerationChunk GenerationChunk;
 
 typedef void *GenerationPointer;
@@ -62,9 +62,9 @@ typedef struct GenerationContext
 	/* Generational context parameters */
 	Size		blockSize;		/* standard block size */
 
-	GenerationBlock	*block;		/* current (most recently allocated) block */
+	GenerationBlock *block;		/* current (most recently allocated) block */
 	dlist_head	blocks;			/* list of blocks */
-}	GenerationContext;
+} GenerationContext;
 
 /*
  * GenerationBlock
@@ -155,7 +155,7 @@ static void GenerationDelete(MemoryContext context);
 static Size GenerationGetChunkSpace(MemoryContext context, void *pointer);
 static bool GenerationIsEmpty(MemoryContext context);
 static void GenerationStats(MemoryContext context, int level, bool print,
-		 MemoryContextCounters *totals);
+				MemoryContextCounters *totals);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void GenerationCheck(MemoryContext context);
@@ -207,10 +207,10 @@ static MemoryContextMethods GenerationMethods = {
  */
 MemoryContext
 GenerationContextCreate(MemoryContext parent,
-				 const char *name,
-				 Size blockSize)
+						const char *name,
+						Size blockSize)
 {
-	GenerationContext  *set;
+	GenerationContext *set;
 
 	/* Assert we padded GenerationChunk properly */
 	StaticAssertStmt(Generation_CHUNKHDRSZ == MAXALIGN(Generation_CHUNKHDRSZ),
@@ -233,10 +233,10 @@ GenerationContextCreate(MemoryContext parent,
 
 	/* Do the type-independent part of context creation */
 	set = (GenerationContext *) MemoryContextCreate(T_GenerationContext,
-									sizeof(GenerationContext),
-									&GenerationMethods,
-									parent,
-									name);
+													sizeof(GenerationContext),
+													&GenerationMethods,
+													parent,
+													name);
 
 	set->blockSize = blockSize;
 
@@ -250,7 +250,7 @@ GenerationContextCreate(MemoryContext parent,
 static void
 GenerationInit(MemoryContext context)
 {
-	GenerationContext  *set = (GenerationContext *) context;
+	GenerationContext *set = (GenerationContext *) context;
 
 	set->block = NULL;
 	dlist_init(&set->blocks);
@@ -266,7 +266,7 @@ GenerationInit(MemoryContext context)
 static void
 GenerationReset(MemoryContext context)
 {
-	GenerationContext  *set = (GenerationContext *) context;
+	GenerationContext *set = (GenerationContext *) context;
 	dlist_mutable_iter miter;
 
 	AssertArg(GenerationIsValid(set));
@@ -324,9 +324,9 @@ GenerationDelete(MemoryContext context)
 static void *
 GenerationAlloc(MemoryContext context, Size size)
 {
-	GenerationContext  *set = (GenerationContext *) context;
-	GenerationBlock	   *block;
-	GenerationChunk	   *chunk;
+	GenerationContext *set = (GenerationContext *) context;
+	GenerationBlock *block;
+	GenerationChunk *chunk;
 	Size		chunk_size = MAXALIGN(size);
 
 	/* is it an over-sized chunk? if yes, allocate special block */
@@ -460,9 +460,9 @@ GenerationAlloc(MemoryContext context, Size size)
 static void
 GenerationFree(MemoryContext context, void *pointer)
 {
-	GenerationContext  *set = (GenerationContext *) context;
-	GenerationChunk	   *chunk = GenerationPointerGetChunk(pointer);
-	GenerationBlock	   *block;
+	GenerationContext *set = (GenerationContext *) context;
+	GenerationChunk *chunk = GenerationPointerGetChunk(pointer);
+	GenerationBlock *block;
 
 	/* Allow access to private part of chunk header. */
 	VALGRIND_MAKE_MEM_DEFINED(chunk, GENERATIONCHUNK_PRIVATE_LEN);
@@ -474,7 +474,7 @@ GenerationFree(MemoryContext context, void *pointer)
 	if (chunk->requested_size < chunk->size)
 		if (!sentinel_ok(pointer, chunk->requested_size))
 			elog(WARNING, "detected write past chunk end in %s %p",
-				 ((MemoryContext)set)->name, chunk);
+				 ((MemoryContext) set)->name, chunk);
 #endif
 
 #ifdef CLOBBER_FREED_MEMORY
@@ -520,9 +520,9 @@ GenerationFree(MemoryContext context, void *pointer)
 static void *
 GenerationRealloc(MemoryContext context, void *pointer, Size size)
 {
-	GenerationContext  *set = (GenerationContext *) context;
-	GenerationChunk	   *chunk = GenerationPointerGetChunk(pointer);
-	GenerationPointer	newPointer;
+	GenerationContext *set = (GenerationContext *) context;
+	GenerationChunk *chunk = GenerationPointerGetChunk(pointer);
+	GenerationPointer newPointer;
 	Size		oldsize;
 
 	/* Allow access to private part of chunk header. */
@@ -535,7 +535,7 @@ GenerationRealloc(MemoryContext context, void *pointer, Size size)
 	if (chunk->requested_size < oldsize)
 		if (!sentinel_ok(pointer, chunk->requested_size))
 			elog(WARNING, "detected write past chunk end in %s %p",
-				 ((MemoryContext)set)->name, chunk);
+				 ((MemoryContext) set)->name, chunk);
 #endif
 
 	/*
@@ -652,7 +652,7 @@ GenerationGetChunkSpace(MemoryContext context, void *pointer)
 static bool
 GenerationIsEmpty(MemoryContext context)
 {
-	GenerationContext  *set = (GenerationContext *) context;
+	GenerationContext *set = (GenerationContext *) context;
 
 	return dlist_is_empty(&set->blocks);
 }
@@ -670,9 +670,9 @@ GenerationIsEmpty(MemoryContext context)
  */
 static void
 GenerationStats(MemoryContext context, int level, bool print,
-		 MemoryContextCounters *totals)
+				MemoryContextCounters *totals)
 {
-	GenerationContext  *set = (GenerationContext *) context;
+	GenerationContext *set = (GenerationContext *) context;
 	Size		nblocks = 0;
 	Size		nchunks = 0;
 	Size		nfreechunks = 0;
@@ -698,8 +698,8 @@ GenerationStats(MemoryContext context, int level, bool print,
 		for (i = 0; i < level; i++)
 			fprintf(stderr, "  ");
 		fprintf(stderr,
-			"Generation: %s: %zu total in %zd blocks (%zd chunks); %zu free (%zd chunks); %zu used\n",
-				((MemoryContext)set)->name, totalspace, nblocks, nchunks, freespace,
+				"Generation: %s: %zu total in %zd blocks (%zd chunks); %zu free (%zd chunks); %zu used\n",
+				((MemoryContext) set)->name, totalspace, nblocks, nchunks, freespace,
 				nfreechunks, totalspace - freespace);
 	}
 
@@ -726,7 +726,7 @@ GenerationStats(MemoryContext context, int level, bool print,
 static void
 GenerationCheck(MemoryContext context)
 {
-	GenerationContext  *gen = (GenerationContext *) context;
+	GenerationContext *gen = (GenerationContext *) context;
 	char	   *name = context->name;
 	dlist_iter	iter;
 
@@ -818,4 +818,4 @@ GenerationCheck(MemoryContext context)
 	}
 }
 
-#endif   /* MEMORY_CONTEXT_CHECKING */
+#endif							/* MEMORY_CONTEXT_CHECKING */
