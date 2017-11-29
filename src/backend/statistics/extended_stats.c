@@ -301,9 +301,9 @@ statext_store(Relation pg_stext, Oid statOid,
 	bool		nulls[Natts_pg_statistic_ext];
 	bool		replaces[Natts_pg_statistic_ext];
 
-	memset(nulls, 1, Natts_pg_statistic_ext * sizeof(bool));
-	memset(replaces, 0, Natts_pg_statistic_ext * sizeof(bool));
-	memset(values, 0, Natts_pg_statistic_ext * sizeof(Datum));
+	memset(nulls, true, sizeof(nulls));
+	memset(replaces, false, sizeof(replaces));
+	memset(values, 0, sizeof(values));
 
 	/*
 	 * Construct a new pg_statistic_ext tuple, replacing the calculated stats.
