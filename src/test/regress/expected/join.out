@@ -1846,6 +1846,28 @@ SELECT '' AS "xxx", *
 (1 row)
 
 --
+-- semijoin selectivity for <>
+--
+explain (costs off)
+select * from int4_tbl i4, tenk1 a
+where exists(select * from tenk1 b
+             where a.twothousand = b.twothousand and a.fivethous <> b.fivethous)
+      and i4.f1 = a.tenthous;
+                  QUERY PLAN                  
+----------------------------------------------
+ Hash Semi Join
+   Hash Cond: (a.twothousand = b.twothousand)
+   Join Filter: (a.fivethous <> b.fivethous)
+   ->  Hash Join
+         Hash Cond: (a.tenthous = i4.f1)
+         ->  Seq Scan on tenk1 a
+         ->  Hash
+               ->  Seq Scan on int4_tbl i4
+   ->  Hash
+         ->  Seq Scan on tenk1 b
+(10 rows)
+
+--
 -- More complicated constructs
 --
 --
