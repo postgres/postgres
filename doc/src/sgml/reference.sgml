@@ -54,8 +54,10 @@
    &alterOperatorClass;
    &alterOperatorFamily;
    &alterPolicy;
+   &alterProcedure;
    &alterPublication;
    &alterRole;
+   &alterRoutine;
    &alterRule;
    &alterSchema;
    &alterSequence;
@@ -76,6 +78,7 @@
    &alterView;
    &analyze;
    &begin;
+   &call;
    &checkpoint;
    &close;
    &cluster;
@@ -103,6 +106,7 @@
    &createOperatorClass;
    &createOperatorFamily;
    &createPolicy;
+   &createProcedure;
    &createPublication;
    &createRole;
    &createRule;
@@ -150,8 +154,10 @@
    &dropOperatorFamily;
    &dropOwned;
    &dropPolicy;
+   &dropProcedure;
    &dropPublication;
    &dropRole;
+   &dropRoutine;
    &dropRule;
    &dropSchema;
    &dropSequence;

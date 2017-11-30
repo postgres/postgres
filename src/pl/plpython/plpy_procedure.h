@@ -30,7 +30,8 @@ typedef struct PLyProcedure
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
 	bool		fn_readonly;
-	bool		is_setof;		/* true, if procedure returns result set */
+	bool		is_setof;		/* true, if function returns result set */
+	bool		is_procedure;
 	PLyObToDatum result;		/* Function result output conversion info */
 	PLyDatumToOb result_in;		/* For converting input tuples in a trigger */
 	char	   *src;			/* textual procedure code, after mangling */

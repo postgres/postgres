@@ -442,12 +442,21 @@ SET SESSION AUTHORIZATION regress_user1;
 GRANT USAGE ON LANGUAGE sql TO regress_user2; -- fail
 CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
 CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+CREATE AGGREGATE testagg1(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testproc1(int) AS 'select $1;' LANGUAGE sql;
 
-REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int) TO regress_user2;
+REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) TO regress_user2;
+REVOKE ALL ON FUNCTION testproc1(int) FROM PUBLIC; -- fail, not a function
+REVOKE ALL ON PROCEDURE testproc1(int) FROM PUBLIC;
+GRANT EXECUTE ON PROCEDURE testproc1(int) TO regress_user2;
 GRANT USAGE ON FUNCTION testfunc1(int) TO regress_user3; -- semantic error
+GRANT USAGE ON FUNCTION testagg1(int) TO regress_user3; -- semantic error
+GRANT USAGE ON PROCEDURE testproc1(int) TO regress_user3; -- semantic error
 GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regress_user4;
 GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regress_user4;
+GRANT ALL PRIVILEGES ON FUNCTION testagg1(int) TO regress_user4;
+GRANT ALL PRIVILEGES ON PROCEDURE testproc1(int) TO regress_user4;
 
 CREATE FUNCTION testfunc4(boolean) RETURNS text
   AS 'select col1 from atest2 where col2 = $1;'
@@ -457,16 +466,24 @@ GRANT EXECUTE ON FUNCTION testfunc4(boolean) TO regress_user3;
 SET SESSION AUTHORIZATION regress_user2;
 SELECT testfunc1(5), testfunc2(5); -- ok
 CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
+SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+CALL testproc1(6); -- ok
 
 SET SESSION AUTHORIZATION regress_user3;
 SELECT testfunc1(5); -- fail
+SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- fail
+CALL testproc1(6); -- fail
 SELECT col1 FROM atest2 WHERE col2 = true; -- fail
 SELECT testfunc4(true); -- ok
 
 SET SESSION AUTHORIZATION regress_user4;
 SELECT testfunc1(5); -- ok
+SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+CALL testproc1(6); -- ok
 
 DROP FUNCTION testfunc1(int); -- fail
+DROP AGGREGATE testagg1(int); -- fail
+DROP PROCEDURE testproc1(int); -- fail
 
 \c -
 
@@ -931,17 +948,29 @@ SELECT has_schema_privilege('regress_user2', 'testns5', 'CREATE'); -- no
 SET ROLE regress_user1;
 
 CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
+CREATE AGGREGATE testns.agg1(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testns.bar() AS 'select 1' LANGUAGE sql;
 
 SELECT has_function_privilege('regress_user2', 'testns.foo()', 'EXECUTE'); -- no
+SELECT has_function_privilege('regress_user2', 'testns.agg1(int)', 'EXECUTE'); -- no
+SELECT has_function_privilege('regress_user2', 'testns.bar()', 'EXECUTE'); -- no
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT EXECUTE ON FUNCTIONS to public;
+ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT EXECUTE ON ROUTINES to public;
 
 DROP FUNCTION testns.foo();
 CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
+DROP AGGREGATE testns.agg1(int);
+CREATE AGGREGATE testns.agg1(int) (sfunc = int4pl, stype = int4);
+DROP PROCEDURE testns.bar();
+CREATE PROCEDURE testns.bar() AS 'select 1' LANGUAGE sql;
 
 SELECT has_function_privilege('regress_user2', 'testns.foo()', 'EXECUTE'); -- yes
+SELECT has_function_privilege('regress_user2', 'testns.agg1(int)', 'EXECUTE'); -- yes
+SELECT has_function_privilege('regress_user2', 'testns.bar()', 'EXECUTE'); -- yes (counts as function here)
 
 DROP FUNCTION testns.foo();
+DROP AGGREGATE testns.agg1(int);
+DROP PROCEDURE testns.bar();
 
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_user1 REVOKE USAGE ON TYPES FROM public;
 
@@ -995,12 +1024,28 @@ SELECT has_table_privilege('regress_user1', 'testns.t1', 'SELECT'); -- false
 SELECT has_table_privilege('regress_user1', 'testns.t2', 'SELECT'); -- false
 
 CREATE FUNCTION testns.testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+CREATE AGGREGATE testns.testagg(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testns.testproc(int) AS 'select 3' LANGUAGE sql;
 
 SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true by default
+SELECT has_function_privilege('regress_user1', 'testns.testagg(int)', 'EXECUTE'); -- true by default
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- true by default
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA testns FROM PUBLIC;
 
 SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'); -- false
+SELECT has_function_privilege('regress_user1', 'testns.testagg(int)', 'EXECUTE'); -- false
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- still true, not a function
+
+REVOKE ALL ON ALL PROCEDURES IN SCHEMA testns FROM PUBLIC;
+
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- now false
+
+GRANT ALL ON ALL ROUTINES IN SCHEMA testns TO PUBLIC;
+
+SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_user1', 'testns.testagg(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- true
 
 \set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
@@ -1064,8 +1109,10 @@ drop table dep_priv_test;
 
 drop sequence x_seq;
 
+DROP AGGREGATE testagg1(int);
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);
+DROP PROCEDURE testproc1(int);
 
 DROP VIEW atestv0;
 DROP VIEW atestv1;

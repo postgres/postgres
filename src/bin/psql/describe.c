@@ -353,6 +353,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 						  " CASE\n"
 						  "  WHEN p.proisagg THEN '%s'\n"
 						  "  WHEN p.proiswindow THEN '%s'\n"
+						  "  WHEN p.prorettype = 0 THEN '%s'\n"
 						  "  WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN '%s'\n"
 						  "  ELSE '%s'\n"
 						  " END as \"%s\"",
@@ -361,8 +362,9 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		/* translator: "agg" is short for "aggregate" */
 						  gettext_noop("agg"),
 						  gettext_noop("window"),
+						  gettext_noop("proc"),
 						  gettext_noop("trigger"),
-						  gettext_noop("normal"),
+						  gettext_noop("func"),
 						  gettext_noop("Type"));
 	else if (pset.sversion >= 80100)
 		appendPQExpBuffer(&buf,
@@ -407,7 +409,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		/* translator: "agg" is short for "aggregate" */
 						  gettext_noop("agg"),
 						  gettext_noop("trigger"),
-						  gettext_noop("normal"),
+						  gettext_noop("func"),
 						  gettext_noop("Type"));
 	else
 		appendPQExpBuffer(&buf,
@@ -424,7 +426,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		/* translator: "agg" is short for "aggregate" */
 						  gettext_noop("agg"),
 						  gettext_noop("trigger"),
-						  gettext_noop("normal"),
+						  gettext_noop("func"),
 						  gettext_noop("Type"));
 
 	if (verbose)

@@ -33,7 +33,6 @@ static const ScanKeyword ECPGScanKeywords[] = {
 	{"autocommit", SQL_AUTOCOMMIT, 0},
 	{"bool", SQL_BOOL, 0},
 	{"break", SQL_BREAK, 0},
-	{"call", SQL_CALL, 0},
 	{"cardinality", SQL_CARDINALITY, 0},
 	{"connect", SQL_CONNECT, 0},
 	{"count", SQL_COUNT, 0},

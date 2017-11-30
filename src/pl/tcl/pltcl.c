@@ -146,6 +146,7 @@ typedef struct pltcl_proc_desc
 	Oid			result_typid;	/* OID of fn's result type */
 	FmgrInfo	result_in_func; /* input function for fn's result type */
 	Oid			result_typioparam;	/* param to pass to same */
+	bool		fn_is_procedure;/* true if this is a procedure */
 	bool		fn_retisset;	/* true if function returns a set */
 	bool		fn_retistuple;	/* true if function returns composite */
 	bool		fn_retisdomain; /* true if function returns domain */
@@ -968,7 +969,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 		retval = (Datum) 0;
 		fcinfo->isnull = true;
 	}
-	else if (fcinfo->isnull)
+	else if (fcinfo->isnull && !prodesc->fn_is_procedure)
 	{
 		retval = InputFunctionCall(&prodesc->result_in_func,
 								   NULL,
@@ -1026,11 +1027,13 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 									   call_state);
 		retval = HeapTupleGetDatum(tup);
 	}
-	else
+	else if (!prodesc->fn_is_procedure)
 		retval = InputFunctionCall(&prodesc->result_in_func,
 								   utf_u2e(Tcl_GetStringResult(interp)),
 								   prodesc->result_typioparam,
 								   -1);
+	else
+		retval = 0;
 
 	return retval;
 }
@@ -1506,7 +1509,9 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		 * Get the required information for input conversion of the
 		 * return value.
 		 ************************************************************/
-		if (!is_trigger && !is_event_trigger)
+		prodesc->fn_is_procedure = (procStruct->prorettype == InvalidOid);
+
+		if (!is_trigger && !is_event_trigger && procStruct->prorettype)
 		{
 			Oid			rettype = procStruct->prorettype;
 
@@ -2199,7 +2204,7 @@ pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
 				tuplestore_puttuple(call_state->tuple_store, tuple);
 			}
 		}
-		else
+		else if (!prodesc->fn_is_procedure)
 		{
 			Datum		retval;
 			bool		isNull = false;

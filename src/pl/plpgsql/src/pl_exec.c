@@ -462,7 +462,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	estate.err_text = NULL;
 	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
 	rc = exec_stmt_block(&estate, func->action);
-	if (rc != PLPGSQL_RC_RETURN)
+	if (rc != PLPGSQL_RC_RETURN && func->fn_rettype)
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = NULL;
@@ -509,6 +509,12 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	}
 	else if (!estate.retisnull)
 	{
+		if (!func->fn_rettype)
+		{
+			ereport(ERROR,
+					(errmsg("cannot return a value from a procedure")));
+		}
+
 		if (estate.retistuple)
 		{
 			/*

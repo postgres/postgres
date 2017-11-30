@@ -189,6 +189,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		proc->fn_tid = procTup->t_self;
 		proc->fn_readonly = (procStruct->provolatile != PROVOLATILE_VOLATILE);
 		proc->is_setof = procStruct->proretset;
+		proc->is_procedure = (procStruct->prorettype == InvalidOid);
 		proc->src = NULL;
 		proc->argnames = NULL;
 		proc->args = NULL;
@@ -206,9 +207,9 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 		/*
 		 * get information required for output conversion of the return value,
-		 * but only if this isn't a trigger.
+		 * but only if this isn't a trigger or procedure.
 		 */
-		if (!is_trigger)
+		if (!is_trigger && procStruct->prorettype)
 		{
 			Oid			rettype = procStruct->prorettype;
 			HeapTuple	rvTypeTup;

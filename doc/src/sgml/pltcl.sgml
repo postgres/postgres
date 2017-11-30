@@ -97,7 +97,8 @@ $$ LANGUAGE pltcl;
      Tcl script as variables named <literal>1</literal>
      ... <literal><replaceable>n</replaceable></literal>.  The result is
      returned from the Tcl code in the usual way, with
-     a <literal>return</literal> statement.
+     a <literal>return</literal> statement.  In a procedure, the return value
+     from the Tcl code is ignored.
     </para>
 
     <para>

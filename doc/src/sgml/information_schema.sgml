@@ -3972,8 +3972,8 @@ ORDER BY c.ordinal_position;
   <title><literal>routines</literal></title>
 
   <para>
-   The view <literal>routines</literal> contains all functions in the
-   current database.  Only those functions are shown that the current
+   The view <literal>routines</literal> contains all functions and procedures in the
+   current database.  Only those functions and procedures are shown that the current
    user has access to (by way of being the owner or having some
    privilege).
   </para>
@@ -4037,8 +4037,8 @@ ORDER BY c.ordinal_position;
       <entry><literal>routine_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       Always <literal>FUNCTION</literal> (In the future there might
-       be other types of routines.)
+       <literal>FUNCTION</literal> for a
+       function, <literal>PROCEDURE</literal> for a procedure
       </entry>
      </row>
 
@@ -4087,7 +4087,7 @@ ORDER BY c.ordinal_position;
        the view <literal>element_types</literal>), else
        <literal>USER-DEFINED</literal> (in that case, the type is
        identified in <literal>type_udt_name</literal> and associated
-       columns).
+       columns).  Null for a procedure.
       </entry>
      </row>
 
@@ -4180,7 +4180,7 @@ ORDER BY c.ordinal_position;
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the database that the return data type of the function
-       is defined in (always the current database)
+       is defined in (always the current database).  Null for a procedure.
       </entry>
      </row>
 
@@ -4189,7 +4189,7 @@ ORDER BY c.ordinal_position;
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the schema that the return data type of the function is
-       defined in
+       defined in.  Null for a procedure.
       </entry>
      </row>
 
@@ -4197,7 +4197,7 @@ ORDER BY c.ordinal_position;
       <entry><literal>type_udt_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       Name of the return data type of the function
+       Name of the return data type of the function.  Null for a procedure.
       </entry>
      </row>
 
@@ -4314,7 +4314,7 @@ ORDER BY c.ordinal_position;
       <entry>
        If the function automatically returns null if any of its
        arguments are null, then <literal>YES</literal>, else
-       <literal>NO</literal>.
+       <literal>NO</literal>.  Null for a procedure.
       </entry>
      </row>
 

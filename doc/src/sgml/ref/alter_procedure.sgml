@@ -1,0 +1,281 @@
+<!--
+doc/src/sgml/ref/alter_procedure.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-alterprocedure">
+ <indexterm zone="sql-alterprocedure">
+  <primary>ALTER PROCEDURE</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>ALTER PROCEDURE</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER PROCEDURE</refname>
+  <refpurpose>change the definition of a procedure</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    <replaceable class="parameter">action</replaceable> [ ... ] [ RESTRICT ]
+ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    RENAME TO <replaceable>new_name</replaceable>
+ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    SET SCHEMA <replaceable>new_schema</replaceable>
+ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
+
+<phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
+
+    [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+    SET <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | DEFAULT }
+    SET <replaceable class="parameter">configuration_parameter</replaceable> FROM CURRENT
+    RESET <replaceable class="parameter">configuration_parameter</replaceable>
+    RESET ALL
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER PROCEDURE</command> changes the definition of a
+   procedure.
+  </para>
+
+  <para>
+   You must own the procedure to use <command>ALTER PROCEDURE</command>.
+   To change a procedure's schema, you must also have <literal>CREATE</literal>
+   privilege on the new schema.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the procedure's schema.  (These restrictions enforce that altering the owner
+   doesn't do anything you couldn't do by dropping and recreating the procedure.
+   However, a superuser can alter ownership of any procedure anyway.)
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing procedure.  If no
+      argument list is specified, the name must be unique in its schema.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argmode</replaceable></term>
+
+    <listitem>
+     <para>
+      The mode of an argument: <literal>IN</literal>  or <literal>VARIADIC</literal>.
+      If omitted, the default is <literal>IN</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argname</replaceable></term>
+
+    <listitem>
+     <para>
+      The name of an argument.
+      Note that <command>ALTER PROCEDURE</command> does not actually pay
+      any attention to argument names, since only the argument data
+      types are needed to determine the procedure's identity.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argtype</replaceable></term>
+
+    <listitem>
+     <para>
+      The data type(s) of the procedure's arguments (optionally
+      schema-qualified), if any.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name of the procedure.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the procedure.  Note that if the procedure is
+      marked <literal>SECURITY DEFINER</literal>, it will subsequently
+      execute as the new owner.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the procedure.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">extension_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the extension that the procedure is to depend on.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal><optional> EXTERNAL </optional> SECURITY INVOKER</literal></term>
+    <term><literal><optional> EXTERNAL </optional> SECURITY DEFINER</literal></term>
+
+    <listitem>
+     <para>
+      Change whether the procedure is a security definer or not. The
+      key word <literal>EXTERNAL</literal> is ignored for SQL
+      conformance. See <xref linkend="sql-createprocedure"/> for more information about
+      this capability.
+     </para>
+    </listitem>
+   </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>configuration_parameter</replaceable></term>
+      <term><replaceable>value</replaceable></term>
+      <listitem>
+       <para>
+        Add or change the assignment to be made to a configuration parameter
+        when the procedure is called.  If
+        <replaceable>value</replaceable> is <literal>DEFAULT</literal>
+        or, equivalently, <literal>RESET</literal> is used, the procedure-local
+        setting is removed, so that the procedure executes with the value
+        present in its environment.  Use <literal>RESET
+        ALL</literal> to clear all procedure-local settings.
+        <literal>SET FROM CURRENT</literal> saves the value of the parameter that
+        is current when <command>ALTER PROCEDURE</command> is executed as the value
+        to be applied when the procedure is entered.
+       </para>
+
+       <para>
+        See <xref linkend="sql-set"/> and
+        <xref linkend="runtime-config"/>
+        for more information about allowed parameter names and values.
+       </para>
+      </listitem>
+     </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+
+    <listitem>
+     <para>
+      Ignored for conformance with the SQL standard.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To rename the procedure <literal>insert_data</literal> with two arguments
+   of type <type>integer</type> to <literal>insert_record</literal>:
+<programlisting>
+ALTER PROCEDURE insert_data(integer, integer) RENAME TO insert_record;
+</programlisting>
+  </para>
+
+  <para>
+   To change the owner of the procedure <literal>insert_data</literal> with
+   two arguments of type <type>integer</type> to <literal>joe</literal>:
+<programlisting>
+ALTER PROCEDURE insert_data(integer, integer) OWNER TO joe;
+</programlisting>
+  </para>
+
+  <para>
+   To change the schema of the procedure <literal>insert_data</literal> with
+   two arguments of type <type>integer</type>
+   to <literal>accounting</literal>:
+<programlisting>
+ALTER PROCEDURE insert_data(integer, integer) SET SCHEMA accounting;
+</programlisting>
+  </para>
+
+  <para>
+   To mark the procedure <literal>insert_data(integer, integer)</literal> as
+   being dependent on the extension <literal>myext</literal>:
+<programlisting>
+ALTER PROCEDURE insert_data(integer, integer) DEPENDS ON EXTENSION myext;
+</programlisting>
+  </para>
+
+  <para>
+   To adjust the search path that is automatically set for a procedure:
+<programlisting>
+ALTER PROCEDURE check_password(text) SET search_path = admin, pg_temp;
+</programlisting>
+  </para>
+
+  <para>
+   To disable automatic setting of <varname>search_path</varname> for a procedure:
+<programlisting>
+ALTER PROCEDURE check_password(text) RESET search_path;
+</programlisting>
+   The procedure will now execute with whatever search path is used by its
+   caller.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   This statement is partially compatible with the <command>ALTER
+   PROCEDURE</command> statement in the SQL standard. The standard allows more
+   properties of a procedure to be modified, but does not provide the
+   ability to rename a procedure, make a procedure a security definer,
+   attach configuration parameter values to a procedure,
+   or change the owner, schema, or volatility of a procedure. The standard also
+   requires the <literal>RESTRICT</literal> key word, which is optional in
+   <productname>PostgreSQL</productname>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createprocedure"/></member>
+   <member><xref linkend="sql-dropprocedure"/></member>
+   <member><xref linkend="sql-alterfunction"/></member>
+   <member><xref linkend="sql-alterroutine"/></member>
+  </simplelist>
+ </refsect1>
+</refentry>

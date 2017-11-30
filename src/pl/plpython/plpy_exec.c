@@ -199,12 +199,19 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		error_context_stack = &plerrcontext;
 
 		/*
-		 * If the function is declared to return void, the Python return value
+		 * For a procedure or function declared to return void, the Python return value
 		 * must be None. For void-returning functions, we also treat a None
 		 * return value as a special "void datum" rather than NULL (as is the
 		 * case for non-void-returning functions).
 		 */
-		if (proc->result.typoid == VOIDOID)
+		if (proc->is_procedure)
+		{
+			if (plrv != Py_None)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("PL/Python procedure did not return None")));
+		}
+		else if (proc->result.typoid == VOIDOID)
 		{
 			if (plrv != Py_None)
 				ereport(ERROR,
@@ -672,7 +679,8 @@ plpython_return_error_callback(void *arg)
 {
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 
-	if (exec_ctx->curr_proc)
+	if (exec_ctx->curr_proc &&
+		!exec_ctx->curr_proc->is_procedure)
 		errcontext("while creating return value");
 }
 

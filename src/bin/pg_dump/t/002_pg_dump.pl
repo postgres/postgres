@@ -3654,6 +3654,44 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 			section_data             => 1,
 			section_post_data        => 1, }, },
 
+	'CREATE PROCEDURE dump_test.ptest1' => {
+		all_runs     => 1,
+		create_order => 41,
+		create_sql   => 'CREATE PROCEDURE dump_test.ptest1(a int)
+					   LANGUAGE SQL AS $$ INSERT INTO dump_test.test_table (col1) VALUES (a) $$;',
+		regexp => qr/^
+			\QCREATE PROCEDURE ptest1(a integer)\E
+			\n\s+\QLANGUAGE sql\E
+			\n\s+AS\ \$\$\Q INSERT INTO dump_test.test_table (col1) VALUES (a) \E\$\$;
+			/xm,
+		like => {
+			binary_upgrade          => 1,
+			clean                   => 1,
+			clean_if_exists         => 1,
+			createdb                => 1,
+			defaults                => 1,
+			exclude_test_table      => 1,
+			exclude_test_table_data => 1,
+			no_blobs                => 1,
+			no_privs                => 1,
+			no_owner                => 1,
+			only_dump_test_schema   => 1,
+			pg_dumpall_dbprivs      => 1,
+			schema_only             => 1,
+			section_pre_data        => 1,
+			test_schema_plus_blobs  => 1,
+			with_oids               => 1, },
+		unlike => {
+			column_inserts           => 1,
+			data_only                => 1,
+			exclude_dump_test_schema => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			role                     => 1,
+			section_data             => 1,
+			section_post_data        => 1, }, },
+
 	'CREATE TYPE dump_test.int42 populated' => {
 		all_runs     => 1,
 		create_order => 42,

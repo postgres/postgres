@@ -207,7 +207,11 @@ $$ LANGUAGE plpythonu;
    <literal>yield</literal> (in case of a result-set statement).  If
    you do not provide a return value, Python returns the default
    <symbol>None</symbol>. <application>PL/Python</application> translates
-   Python's <symbol>None</symbol> into the SQL null value.
+   Python's <symbol>None</symbol> into the SQL null value.  In a procedure,
+   the result from the Python code must be <symbol>None</symbol> (typically
+   achieved by ending the procedure without a <literal>return</literal>
+   statement or by using a <literal>return</literal> statement without
+   argument); otherwise, an error will be raised.
   </para>
 
   <para>

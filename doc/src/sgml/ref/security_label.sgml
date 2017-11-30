@@ -34,8 +34,10 @@ SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
   LARGE OBJECT <replaceable class="parameter">large_object_oid</replaceable> |
   MATERIALIZED VIEW <replaceable class="parameter">object_name</replaceable> |
   [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">object_name</replaceable> |
+  PROCEDURE <replaceable class="parameter">procedure_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
   PUBLICATION <replaceable class="parameter">object_name</replaceable> |
   ROLE <replaceable class="parameter">object_name</replaceable> |
+  ROUTINE <replaceable class="parameter">routine_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
   SCHEMA <replaceable class="parameter">object_name</replaceable> |
   SEQUENCE <replaceable class="parameter">object_name</replaceable> |
   SUBSCRIPTION <replaceable class="parameter">object_name</replaceable> |
@@ -93,10 +95,12 @@ SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
     <term><replaceable class="parameter">table_name.column_name</replaceable></term>
     <term><replaceable class="parameter">aggregate_name</replaceable></term>
     <term><replaceable class="parameter">function_name</replaceable></term>
+    <term><replaceable class="parameter">procedure_name</replaceable></term>
+    <term><replaceable class="parameter">routine_name</replaceable></term>
     <listitem>
      <para>
       The name of the object to be labeled.  Names of tables,
-      aggregates, domains, foreign tables, functions, sequences, types, and
+      aggregates, domains, foreign tables, functions, procedures, routines, sequences, types, and
       views can be schema-qualified.
      </para>
     </listitem>
@@ -119,7 +123,7 @@ SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
 
     <listitem>
      <para>
-      The mode of a function or aggregate
+      The mode of a function, procedure, or aggregate
       argument: <literal>IN</literal>, <literal>OUT</literal>,
       <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
       If omitted, the default is <literal>IN</literal>.
@@ -137,7 +141,7 @@ SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
 
     <listitem>
      <para>
-      The name of a function or aggregate argument.
+      The name of a function, procedure, or aggregate argument.
       Note that <command>SECURITY LABEL</command> does not actually
       pay any attention to argument names, since only the argument data
       types are needed to determine the function's identity.
@@ -150,7 +154,7 @@ SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
 
     <listitem>
      <para>
-      The data type of a function or aggregate argument.
+      The data type of a function, procedure, or aggregate argument.
      </para>
     </listitem>
    </varlistentry>

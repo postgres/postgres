@@ -1460,13 +1460,13 @@ action : CONTINUE_P
 			$<action>$.command = NULL;
 			$<action>$.str = mm_strdup("continue");
 		}
-		| SQL_CALL name '(' c_args ')'
+		| CALL name '(' c_args ')'
 		{
 			$<action>$.code = W_DO;
 			$<action>$.command = cat_str(4, $2, mm_strdup("("), $4, mm_strdup(")"));
 			$<action>$.str = cat2_str(mm_strdup("call"), mm_strdup($<action>$.command));
 		}
-		| SQL_CALL name
+		| CALL name
 		{
 			$<action>$.code = W_DO;
 			$<action>$.command = cat2_str($2, mm_strdup("()"));
@@ -1482,7 +1482,6 @@ ECPGKeywords: ECPGKeywords_vanames	{ $$ = $1; }
 		;
 
 ECPGKeywords_vanames:  SQL_BREAK		{ $$ = mm_strdup("break"); }
-		| SQL_CALL						{ $$ = mm_strdup("call"); }
 		| SQL_CARDINALITY				{ $$ = mm_strdup("cardinality"); }
 		| SQL_COUNT						{ $$ = mm_strdup("count"); }
 		| SQL_DATETIME_INTERVAL_CODE	{ $$ = mm_strdup("datetime_interval_code"); }

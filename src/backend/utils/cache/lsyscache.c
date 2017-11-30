@@ -1615,6 +1615,25 @@ func_parallel(Oid funcid)
 }
 
 /*
+ * get_func_isagg
+ *	   Given procedure id, return the function's proisagg field.
+ */
+bool
+get_func_isagg(Oid funcid)
+{
+	HeapTuple	tp;
+	bool		result;
+
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	result = ((Form_pg_proc) GETSTRUCT(tp))->proisagg;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
  * get_func_leakproof
  *	   Given procedure id, return the function's leakproof field.
  */

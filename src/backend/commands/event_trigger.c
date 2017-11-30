@@ -106,8 +106,10 @@ static event_trigger_support_data event_trigger_support[] = {
 	{"OPERATOR CLASS", true},
 	{"OPERATOR FAMILY", true},
 	{"POLICY", true},
+	{"PROCEDURE", true},
 	{"PUBLICATION", true},
 	{"ROLE", false},
+	{"ROUTINE", true},
 	{"RULE", true},
 	{"SCHEMA", true},
 	{"SEQUENCE", true},
@@ -1103,8 +1105,10 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_OPERATOR:
 		case OBJECT_OPFAMILY:
 		case OBJECT_POLICY:
+		case OBJECT_PROCEDURE:
 		case OBJECT_PUBLICATION:
 		case OBJECT_PUBLICATION_REL:
+		case OBJECT_ROUTINE:
 		case OBJECT_RULE:
 		case OBJECT_SCHEMA:
 		case OBJECT_SEQUENCE:
@@ -1215,6 +1219,8 @@ EventTriggerSupportsGrantObjectType(GrantObjectType objtype)
 		case ACL_OBJECT_LANGUAGE:
 		case ACL_OBJECT_LARGEOBJECT:
 		case ACL_OBJECT_NAMESPACE:
+		case ACL_OBJECT_PROCEDURE:
+		case ACL_OBJECT_ROUTINE:
 		case ACL_OBJECT_TYPE:
 			return true;
 
@@ -2243,6 +2249,10 @@ stringify_grantobjtype(GrantObjectType objtype)
 			return "LARGE OBJECT";
 		case ACL_OBJECT_NAMESPACE:
 			return "SCHEMA";
+		case ACL_OBJECT_PROCEDURE:
+			return "PROCEDURE";
+		case ACL_OBJECT_ROUTINE:
+			return "ROUTINE";
 		case ACL_OBJECT_TABLESPACE:
 			return "TABLESPACE";
 		case ACL_OBJECT_TYPE:
@@ -2285,6 +2295,10 @@ stringify_adefprivs_objtype(GrantObjectType objtype)
 			return "LARGE OBJECTS";
 		case ACL_OBJECT_NAMESPACE:
 			return "SCHEMAS";
+		case ACL_OBJECT_PROCEDURE:
+			return "PROCEDURES";
+		case ACL_OBJECT_ROUTINE:
+			return "ROUTINES";
 		case ACL_OBJECT_TABLESPACE:
 			return "TABLESPACES";
 		case ACL_OBJECT_TYPE:

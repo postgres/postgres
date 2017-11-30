@@ -915,10 +915,10 @@ select dfunc();
 
 -- verify it lists properly
 \df dfunc
-                                           List of functions
- Schema | Name  | Result data type |                    Argument data types                    |  Type  
---------+-------+------------------+-----------------------------------------------------------+--------
- public | dfunc | integer          | a integer DEFAULT 1, OUT sum integer, b integer DEFAULT 2 | normal
+                                          List of functions
+ Schema | Name  | Result data type |                    Argument data types                    | Type 
+--------+-------+------------------+-----------------------------------------------------------+------
+ public | dfunc | integer          | a integer DEFAULT 1, OUT sum integer, b integer DEFAULT 2 | func
 (1 row)
 
 drop function dfunc(int, int);
@@ -1083,10 +1083,10 @@ $$ select array_upper($1, 1) $$ language sql;
 ERROR:  cannot remove parameter defaults from existing function
 HINT:  Use DROP FUNCTION dfunc(integer[]) first.
 \df dfunc
-                                      List of functions
- Schema | Name  | Result data type |               Argument data types               |  Type  
---------+-------+------------------+-------------------------------------------------+--------
- public | dfunc | integer          | VARIADIC a integer[] DEFAULT ARRAY[]::integer[] | normal
+                                     List of functions
+ Schema | Name  | Result data type |               Argument data types               | Type 
+--------+-------+------------------+-------------------------------------------------+------
+ public | dfunc | integer          | VARIADIC a integer[] DEFAULT ARRAY[]::integer[] | func
 (1 row)
 
 drop function dfunc(a variadic int[]);

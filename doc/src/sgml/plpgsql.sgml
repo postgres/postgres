@@ -156,7 +156,8 @@
 
     <para>
      Finally, a <application>PL/pgSQL</application> function can be declared to return
-     <type>void</type> if it has no useful return value.
+     <type>void</type> if it has no useful return value.  (Alternatively, it
+     could be written as a procedure in that case.)
     </para>
 
     <para>
@@ -1863,6 +1864,18 @@ SELECT * FROM get_available_flightid(CURRENT_DATE);
       </para>
      </note>
     </sect3>
+   </sect2>
+
+   <sect2 id="plpgsql-statements-returning-procedure">
+    <title>Returning From a Procedure</title>
+
+    <para>
+     A procedure does not have a return value.  A procedure can therefore end
+     without a <command>RETURN</command> statement.  If
+     a <command>RETURN</command> statement is desired to exit the code early,
+     then <symbol>NULL</symbol> must be returned.  Returning any other value
+     will result in an error.
+    </para>
    </sect2>
 
    <sect2 id="plpgsql-conditionals">
@@ -5244,7 +5257,7 @@ show errors;
     <para>
      Here is how this function would end up in <productname>PostgreSQL</productname>:
 <programlisting>
-CREATE OR REPLACE FUNCTION cs_update_referrer_type_proc() RETURNS void AS $func$
+CREATE OR REPLACE PROCEDURE cs_update_referrer_type_proc() AS $func$
 DECLARE
     referrer_keys CURSOR IS
         SELECT * FROM cs_referrer_keys

@@ -39,7 +39,7 @@ GRANT { { USAGE | SELECT | UPDATE }
     TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
-    ON FUNCTIONS
+    ON { FUNCTIONS | ROUTINES }
     TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
@@ -66,7 +66,7 @@ REVOKE [ GRANT OPTION FOR ]
 
 REVOKE [ GRANT OPTION FOR ]
     { EXECUTE | ALL [ PRIVILEGES ] }
-    ON FUNCTIONS
+    ON { FUNCTIONS | ROUTINES }
     FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
@@ -93,7 +93,13 @@ REVOKE [ GRANT OPTION FOR ]
    affect privileges assigned to already-existing objects.)  Currently,
    only the privileges for schemas, tables (including views and foreign
    tables), sequences, functions, and types (including domains) can be
-   altered.
+   altered.  For this command, functions include aggregates and procedures.
+   The words <literal>FUNCTIONS</literal> and <literal>ROUTINES</literal> are
+   equivalent in this command.  (<literal>ROUTINES</literal> is preferred
+   going forward as the standard term for functions and procedures taken
+   together.  In earlier PostgreSQL releases, only the
+   word <literal>FUNCTIONS</literal> was allowed.  It is not possible to set
+   default privileges for functions and procedures separately.)
   </para>
 
   <para>

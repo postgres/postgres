@@ -71,7 +71,7 @@ static Node *ParseComplexProjection(ParseState *pstate, const char *funcname,
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  Node *last_srf, FuncCall *fn, int location)
+				  Node *last_srf, FuncCall *fn, bool proc_call, int location)
 {
 	bool		is_column = (fn == NULL);
 	List	   *agg_order = (fn ? fn->agg_order : NIL);
@@ -263,7 +263,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 						   actual_arg_types[0], rettype, -1,
 						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL, location);
 	}
-	else if (fdresult == FUNCDETAIL_NORMAL)
+	else if (fdresult == FUNCDETAIL_NORMAL || fdresult == FUNCDETAIL_PROCEDURE)
 	{
 		/*
 		 * Normal function found; was there anything indicating it must be an
@@ -305,6 +305,26 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("OVER specified, but %s is not a window function nor an aggregate function",
 							NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
+
+		if (fdresult == FUNCDETAIL_NORMAL && proc_call)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("%s is not a procedure",
+							func_signature_string(funcname, nargs,
+												  argnames,
+												  actual_arg_types)),
+					 errhint("To call a function, use SELECT."),
+					 parser_errposition(pstate, location)));
+
+		if (fdresult == FUNCDETAIL_PROCEDURE && !proc_call)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("%s is a procedure",
+							func_signature_string(funcname, nargs,
+												  argnames,
+												  actual_arg_types)),
+					 errhint("To call a procedure, use CALL."),
 					 parser_errposition(pstate, location)));
 	}
 	else if (fdresult == FUNCDETAIL_AGGREGATE)
@@ -635,7 +655,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		check_srf_call_placement(pstate, last_srf, location);
 
 	/* build the appropriate output structure */
-	if (fdresult == FUNCDETAIL_NORMAL)
+	if (fdresult == FUNCDETAIL_NORMAL || fdresult == FUNCDETAIL_PROCEDURE)
 	{
 		FuncExpr   *funcexpr = makeNode(FuncExpr);
 
@@ -1589,6 +1609,8 @@ func_get_detail(List *funcname,
 			result = FUNCDETAIL_AGGREGATE;
 		else if (pform->proiswindow)
 			result = FUNCDETAIL_WINDOWFUNC;
+		else if (pform->prorettype == InvalidOid)
+			result = FUNCDETAIL_PROCEDURE;
 		else
 			result = FUNCDETAIL_NORMAL;
 		ReleaseSysCache(ftup);
@@ -1984,16 +2006,28 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 
 /*
  * LookupFuncWithArgs
- *		Like LookupFuncName, but the argument types are specified by a
- *		ObjectWithArgs node.
+ *
+ * Like LookupFuncName, but the argument types are specified by a
+ * ObjectWithArgs node.  Also, this function can check whether the result is a
+ * function, procedure, or aggregate, based on the objtype argument.  Pass
+ * OBJECT_ROUTINE to accept any of them.
+ *
+ * For historical reasons, we also accept aggregates when looking for a
+ * function.
  */
 Oid
-LookupFuncWithArgs(ObjectWithArgs *func, bool noError)
+LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool noError)
 {
 	Oid			argoids[FUNC_MAX_ARGS];
 	int			argcount;
 	int			i;
 	ListCell   *args_item;
+	Oid			oid;
+
+	Assert(objtype == OBJECT_AGGREGATE ||
+		   objtype == OBJECT_FUNCTION ||
+		   objtype == OBJECT_PROCEDURE ||
+		   objtype == OBJECT_ROUTINE);
 
 	argcount = list_length(func->objargs);
 	if (argcount > FUNC_MAX_ARGS)
@@ -2013,89 +2047,99 @@ LookupFuncWithArgs(ObjectWithArgs *func, bool noError)
 		args_item = lnext(args_item);
 	}
 
-	return LookupFuncName(func->objname, func->args_unspecified ? -1 : argcount, argoids, noError);
-}
+	/*
+	 * When looking for a function or routine, we pass noError through to
+	 * LookupFuncName and let it make any error messages.  Otherwise, we make
+	 * our own errors for the aggregate and procedure cases.
+	 */
+	oid = LookupFuncName(func->objname, func->args_unspecified ? -1 : argcount, argoids,
+						 (objtype == OBJECT_FUNCTION || objtype == OBJECT_ROUTINE) ? noError : true);
 
-/*
- * LookupAggWithArgs
- *		Find an aggregate function from a given ObjectWithArgs node.
- *
- * This is almost like LookupFuncWithArgs, but the error messages refer
- * to aggregates rather than plain functions, and we verify that the found
- * function really is an aggregate.
- */
-Oid
-LookupAggWithArgs(ObjectWithArgs *agg, bool noError)
-{
-	Oid			argoids[FUNC_MAX_ARGS];
-	int			argcount;
-	int			i;
-	ListCell   *lc;
-	Oid			oid;
-	HeapTuple	ftup;
-	Form_pg_proc pform;
-
-	argcount = list_length(agg->objargs);
-	if (argcount > FUNC_MAX_ARGS)
-		ereport(ERROR,
-				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg_plural("functions cannot have more than %d argument",
-							   "functions cannot have more than %d arguments",
-							   FUNC_MAX_ARGS,
-							   FUNC_MAX_ARGS)));
-
-	i = 0;
-	foreach(lc, agg->objargs)
+	if (objtype == OBJECT_FUNCTION)
 	{
-		TypeName   *t = (TypeName *) lfirst(lc);
-
-		argoids[i] = LookupTypeNameOid(NULL, t, noError);
-		i++;
-	}
-
-	oid = LookupFuncName(agg->objname, argcount, argoids, true);
-
-	if (!OidIsValid(oid))
-	{
-		if (noError)
-			return InvalidOid;
-		if (argcount == 0)
+		/* Make sure it's a function, not a procedure */
+		if (oid && get_func_rettype(oid) == InvalidOid)
+		{
+			if (noError)
+				return InvalidOid;
 			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("aggregate %s(*) does not exist",
-							NameListToString(agg->objname))));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("aggregate %s does not exist",
-							func_signature_string(agg->objname, argcount,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("%s is not a function",
+							func_signature_string(func->objname, argcount,
 												  NIL, argoids))));
+		}
 	}
-
-	/* Make sure it's an aggregate */
-	ftup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oid));
-	if (!HeapTupleIsValid(ftup))	/* should not happen */
-		elog(ERROR, "cache lookup failed for function %u", oid);
-	pform = (Form_pg_proc) GETSTRUCT(ftup);
-
-	if (!pform->proisagg)
+	else if (objtype == OBJECT_PROCEDURE)
 	{
-		ReleaseSysCache(ftup);
-		if (noError)
-			return InvalidOid;
-		/* we do not use the (*) notation for functions... */
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("function %s is not an aggregate",
-						func_signature_string(agg->objname, argcount,
-											  NIL, argoids))));
-	}
+		if (!OidIsValid(oid))
+		{
+			if (noError)
+				return InvalidOid;
+			else if (func->args_unspecified)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not find a procedure named \"%s\"",
+								NameListToString(func->objname))));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("procedure %s does not exist",
+								func_signature_string(func->objname, argcount,
+													  NIL, argoids))));
+		}
 
-	ReleaseSysCache(ftup);
+		/* Make sure it's a procedure */
+		if (get_func_rettype(oid) != InvalidOid)
+		{
+			if (noError)
+				return InvalidOid;
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("%s is not a procedure",
+							func_signature_string(func->objname, argcount,
+												  NIL, argoids))));
+		}
+	}
+	else if (objtype == OBJECT_AGGREGATE)
+	{
+		if (!OidIsValid(oid))
+		{
+			if (noError)
+				return InvalidOid;
+			else if (func->args_unspecified)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not find a aggregate named \"%s\"",
+								NameListToString(func->objname))));
+			else if (argcount == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("aggregate %s(*) does not exist",
+								NameListToString(func->objname))));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("aggregate %s does not exist",
+								func_signature_string(func->objname, argcount,
+													  NIL, argoids))));
+		}
+
+		/* Make sure it's an aggregate */
+		if (!get_func_isagg(oid))
+		{
+			if (noError)
+				return InvalidOid;
+			/* we do not use the (*) notation for functions... */
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("function %s is not an aggregate",
+							func_signature_string(func->objname, argcount,
+												  NIL, argoids))));
+		}
+	}
 
 	return oid;
 }
-
 
 /*
  * check_srf_call_placement
@@ -2235,6 +2279,9 @@ check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 			break;
 		case EXPR_KIND_PARTITION_EXPRESSION:
 			err = _("set-returning functions are not allowed in partition key expressions");
+			break;
+		case EXPR_KIND_CALL:
+			err = _("set-returning functions are not allowed in CALL arguments");
 			break;
 
 			/*

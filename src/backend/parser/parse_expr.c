@@ -480,6 +480,7 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 										  list_make1(result),
 										  last_srf,
 										  NULL,
+										  false,
 										  location);
 			if (newresult == NULL)
 				unknown_attribute(pstate, result, strVal(n), location);
@@ -629,6 +630,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 											 list_make1(node),
 											 pstate->p_last_srf,
 											 NULL,
+											 false,
 											 cref->location);
 				}
 				break;
@@ -676,6 +678,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 											 list_make1(node),
 											 pstate->p_last_srf,
 											 NULL,
+											 false,
 											 cref->location);
 				}
 				break;
@@ -736,6 +739,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 											 list_make1(node),
 											 pstate->p_last_srf,
 											 NULL,
+											 false,
 											 cref->location);
 				}
 				break;
@@ -1477,6 +1481,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 							 targs,
 							 last_srf,
 							 fn,
+							 false,
 							 fn->location);
 }
 
@@ -1812,6 +1817,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_RETURNING:
 		case EXPR_KIND_VALUES:
 		case EXPR_KIND_VALUES_SINGLE:
+		case EXPR_KIND_CALL:
 			/* okay */
 			break;
 		case EXPR_KIND_CHECK_CONSTRAINT:
@@ -3462,6 +3468,8 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "WHEN";
 		case EXPR_KIND_PARTITION_EXPRESSION:
 			return "PARTITION BY";
+		case EXPR_KIND_CALL:
+			return "CALL";
 
 			/*
 			 * There is intentionally no default: case here, so that the

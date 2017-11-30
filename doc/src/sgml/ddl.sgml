@@ -3947,7 +3947,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
 
    <listitem>
     <para>
-     Functions and operators
+     Functions, procedures, and operators
     </para>
    </listitem>
 

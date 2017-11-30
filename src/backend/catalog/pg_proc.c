@@ -857,7 +857,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 
 	/* Disallow pseudotype result */
 	/* except for RECORD, VOID, or polymorphic */
-	if (get_typtype(proc->prorettype) == TYPTYPE_PSEUDO &&
+	if (proc->prorettype &&
+		get_typtype(proc->prorettype) == TYPTYPE_PSEUDO &&
 		proc->prorettype != RECORDOID &&
 		proc->prorettype != VOIDOID &&
 		!IsPolymorphicType(proc->prorettype))

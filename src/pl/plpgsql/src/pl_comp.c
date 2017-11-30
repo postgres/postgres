@@ -275,7 +275,6 @@ do_compile(FunctionCallInfo fcinfo,
 	bool		isnull;
 	char	   *proc_source;
 	HeapTuple	typeTup;
-	Form_pg_type typeStruct;
 	PLpgSQL_variable *var;
 	PLpgSQL_rec *rec;
 	int			i;
@@ -531,53 +530,58 @@ do_compile(FunctionCallInfo fcinfo,
 			/*
 			 * Lookup the function's return type
 			 */
-			typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettypeid));
-			if (!HeapTupleIsValid(typeTup))
-				elog(ERROR, "cache lookup failed for type %u", rettypeid);
-			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-
-			/* Disallow pseudotype result, except VOID or RECORD */
-			/* (note we already replaced polymorphic types) */
-			if (typeStruct->typtype == TYPTYPE_PSEUDO)
+			if (rettypeid)
 			{
-				if (rettypeid == VOIDOID ||
-					rettypeid == RECORDOID)
-					 /* okay */ ;
-				else if (rettypeid == TRIGGEROID || rettypeid == EVTTRIGGEROID)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("trigger functions can only be called as triggers")));
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("PL/pgSQL functions cannot return type %s",
-									format_type_be(rettypeid))));
-			}
+				Form_pg_type typeStruct;
 
-			if (typeStruct->typrelid != InvalidOid ||
-				rettypeid == RECORDOID)
-				function->fn_retistuple = true;
-			else
-			{
-				function->fn_retbyval = typeStruct->typbyval;
-				function->fn_rettyplen = typeStruct->typlen;
+				typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettypeid));
+				if (!HeapTupleIsValid(typeTup))
+					elog(ERROR, "cache lookup failed for type %u", rettypeid);
+				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
-				/*
-				 * install $0 reference, but only for polymorphic return
-				 * types, and not when the return is specified through an
-				 * output parameter.
-				 */
-				if (IsPolymorphicType(procStruct->prorettype) &&
-					num_out_args == 0)
+				/* Disallow pseudotype result, except VOID or RECORD */
+				/* (note we already replaced polymorphic types) */
+				if (typeStruct->typtype == TYPTYPE_PSEUDO)
 				{
-					(void) plpgsql_build_variable("$0", 0,
-												  build_datatype(typeTup,
-																 -1,
-																 function->fn_input_collation),
-												  true);
+					if (rettypeid == VOIDOID ||
+						rettypeid == RECORDOID)
+						/* okay */ ;
+					else if (rettypeid == TRIGGEROID || rettypeid == EVTTRIGGEROID)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("trigger functions can only be called as triggers")));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("PL/pgSQL functions cannot return type %s",
+										format_type_be(rettypeid))));
 				}
+
+				if (typeStruct->typrelid != InvalidOid ||
+					rettypeid == RECORDOID)
+					function->fn_retistuple = true;
+				else
+				{
+					function->fn_retbyval = typeStruct->typbyval;
+					function->fn_rettyplen = typeStruct->typlen;
+
+					/*
+					 * install $0 reference, but only for polymorphic return
+					 * types, and not when the return is specified through an
+					 * output parameter.
+					 */
+					if (IsPolymorphicType(procStruct->prorettype) &&
+						num_out_args == 0)
+					{
+						(void) plpgsql_build_variable("$0", 0,
+													  build_datatype(typeTup,
+																	 -1,
+																	 function->fn_input_collation),
+													  true);
+					}
+				}
+				ReleaseSysCache(typeTup);
 			}
-			ReleaseSysCache(typeTup);
 			break;
 
 		case PLPGSQL_DML_TRIGGER:

@@ -359,6 +359,8 @@ ALTER FUNCTION check_password(text) RESET search_path;
   <simplelist type="inline">
    <member><xref linkend="sql-createfunction"/></member>
    <member><xref linkend="sql-dropfunction"/></member>
+   <member><xref linkend="sql-alterprocedure"/></member>
+   <member><xref linkend="sql-alterroutine"/></member>
   </simplelist>
  </refsect1>
 </refentry>

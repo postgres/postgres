@@ -1413,7 +1413,8 @@ CREATE VIEW routines AS
            CAST(current_database() AS sql_identifier) AS routine_catalog,
            CAST(n.nspname AS sql_identifier) AS routine_schema,
            CAST(p.proname AS sql_identifier) AS routine_name,
-           CAST('FUNCTION' AS character_data) AS routine_type,
+           CAST(CASE WHEN p.prorettype <> 0 THEN 'FUNCTION' ELSE 'PROCEDURE' END
+             AS character_data) AS routine_type,
            CAST(null AS sql_identifier) AS module_catalog,
            CAST(null AS sql_identifier) AS module_schema,
            CAST(null AS sql_identifier) AS module_name,
@@ -1422,7 +1423,8 @@ CREATE VIEW routines AS
            CAST(null AS sql_identifier) AS udt_name,
 
            CAST(
-             CASE WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
+             CASE WHEN p.prorettype = 0 THEN NULL
+                  WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
                   WHEN nt.nspname = 'pg_catalog' THEN format_type(t.oid, null)
                   ELSE 'USER-DEFINED' END AS character_data)
              AS data_type,
@@ -1440,7 +1442,7 @@ CREATE VIEW routines AS
            CAST(null AS cardinal_number) AS datetime_precision,
            CAST(null AS character_data) AS interval_type,
            CAST(null AS cardinal_number) AS interval_precision,
-           CAST(current_database() AS sql_identifier) AS type_udt_catalog,
+           CAST(CASE WHEN p.prorettype <> 0 THEN current_database() END AS sql_identifier) AS type_udt_catalog,
            CAST(nt.nspname AS sql_identifier) AS type_udt_schema,
            CAST(t.typname AS sql_identifier) AS type_udt_name,
            CAST(null AS sql_identifier) AS scope_catalog,
@@ -1462,7 +1464,8 @@ CREATE VIEW routines AS
            CAST('GENERAL' AS character_data) AS parameter_style,
            CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_deterministic,
            CAST('MODIFIES' AS character_data) AS sql_data_access,
-           CAST(CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_null_call,
+           CAST(CASE WHEN p.prorettype <> 0 THEN
+             CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS yes_or_no) AS is_null_call,
            CAST(null AS character_data) AS sql_path,
            CAST('YES' AS yes_or_no) AS schema_level_routine,
            CAST(0 AS cardinal_number) AS max_dynamic_result_sets,
@@ -1503,13 +1506,15 @@ CREATE VIEW routines AS
            CAST(null AS cardinal_number) AS result_cast_maximum_cardinality,
            CAST(null AS sql_identifier) AS result_cast_dtd_identifier
 
-    FROM pg_namespace n, pg_proc p, pg_language l,
-         pg_type t, pg_namespace nt
+    FROM (pg_namespace n
+          JOIN pg_proc p ON n.oid = p.pronamespace
+          JOIN pg_language l ON p.prolang = l.oid)
+         LEFT JOIN
+         (pg_type t JOIN pg_namespace nt ON t.typnamespace = nt.oid)
+         ON p.prorettype = t.oid
 
-    WHERE n.oid = p.pronamespace AND p.prolang = l.oid
-          AND p.prorettype = t.oid AND t.typnamespace = nt.oid
-          AND (pg_has_role(p.proowner, 'USAGE')
-               OR has_function_privilege(p.oid, 'EXECUTE'));
+    WHERE (pg_has_role(p.proowner, 'USAGE')
+           OR has_function_privilege(p.oid, 'EXECUTE'));
 
 GRANT SELECT ON routines TO PUBLIC;
 

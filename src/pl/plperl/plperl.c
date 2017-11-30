@@ -1915,7 +1915,7 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	desc.fn_retistuple = false;
 	desc.fn_retisset = false;
 	desc.fn_retisarray = false;
-	desc.result_oid = VOIDOID;
+	desc.result_oid = InvalidOid;
 	desc.nargs = 0;
 	desc.reference = NULL;
 
@@ -2481,7 +2481,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		}
 		retval = (Datum) 0;
 	}
-	else
+	else if (prodesc->result_oid)
 	{
 		retval = plperl_sv_to_datum(perlret,
 									prodesc->result_oid,
@@ -2826,7 +2826,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 		 * Get the required information for input conversion of the
 		 * return value.
 		 ************************************************************/
-		if (!is_trigger && !is_event_trigger)
+		if (!is_trigger && !is_event_trigger && procStruct->prorettype)
 		{
 			Oid			rettype = procStruct->prorettype;
 
@@ -3343,7 +3343,7 @@ plperl_return_next_internal(SV *sv)
 
 		tuplestore_puttuple(current_call_data->tuple_store, tuple);
 	}
-	else
+	else if (prodesc->result_oid)
 	{
 		Datum		ret[1];
 		bool		isNull[1];

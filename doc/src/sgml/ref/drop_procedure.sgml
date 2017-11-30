@@ -1,0 +1,162 @@
+<!--
+doc/src/sgml/ref/drop_procedure.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-dropprocedure">
+ <indexterm zone="sql-dropprocedure">
+  <primary>DROP PROCEDURE</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>DROP PROCEDURE</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP PROCEDURE</refname>
+  <refpurpose>remove a procedure</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP PROCEDURE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] [, ...]
+    [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP PROCEDURE</command> removes the definition of an existing
+   procedure. To execute this command the user must be the
+   owner of the procedure. The argument types to the
+   procedure must be specified, since several different procedures
+   can exist with the same name and different argument lists.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+    <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the procedure does not exist. A notice is issued
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing procedure.  If no
+      argument list is specified, the name must be unique in its schema.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argmode</replaceable></term>
+
+    <listitem>
+     <para>
+      The mode of an argument: <literal>IN</literal> or <literal>VARIADIC</literal>.
+      If omitted, the default is <literal>IN</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argname</replaceable></term>
+
+    <listitem>
+     <para>
+      The name of an argument.
+      Note that <command>DROP PROCEDURE</command> does not actually pay
+      any attention to argument names, since only the argument data
+      types are needed to determine the procedure's identity.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argtype</replaceable></term>
+
+    <listitem>
+     <para>
+      The data type(s) of the procedure's arguments (optionally
+      schema-qualified), if any.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the procedure,
+      and in turn all objects that depend on those objects
+      (see <xref linkend="ddl-depend"/>).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the procedure if any objects depend on it.  This
+      is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-dropprocedure-examples">
+  <title>Examples</title>
+
+<programlisting>
+DROP PROCEDURE do_db_maintenance();
+</programlisting>
+ </refsect1>
+
+ <refsect1 id="sql-dropprocedure-compatibility">
+  <title>Compatibility</title>
+
+  <para>
+   This command conforms to the SQL standard, with
+   these <productname>PostgreSQL</productname> extensions:
+   <itemizedlist>
+    <listitem>
+     <para>The standard only allows one procedure to be dropped per command.</para>
+    </listitem>
+    <listitem>
+     <para>The <literal>IF EXISTS</literal> option</para>
+    </listitem>
+    <listitem>
+     <para>The ability to specify argument modes and names</para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createprocedure"/></member>
+   <member><xref linkend="sql-alterprocedure"/></member>
+   <member><xref linkend="sql-dropfunction"/></member>
+   <member><xref linkend="sql-droproutine"/></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

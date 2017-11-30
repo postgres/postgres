@@ -397,7 +397,7 @@ static const SchemaQuery Query_for_list_of_functions = {
 	/* catname */
 	"pg_catalog.pg_proc p",
 	/* selcondition */
-	NULL,
+	"p.prorettype <> 0",
 	/* viscondition */
 	"pg_catalog.pg_function_is_visible(p.oid)",
 	/* namespace */
@@ -419,6 +419,36 @@ static const SchemaQuery Query_for_list_of_indexes = {
 	"c.relnamespace",
 	/* result */
 	"pg_catalog.quote_ident(c.relname)",
+	/* qualresult */
+	NULL
+};
+
+static const SchemaQuery Query_for_list_of_procedures = {
+	/* catname */
+	"pg_catalog.pg_proc p",
+	/* selcondition */
+	"p.prorettype = 0",
+	/* viscondition */
+	"pg_catalog.pg_function_is_visible(p.oid)",
+	/* namespace */
+	"p.pronamespace",
+	/* result */
+	"pg_catalog.quote_ident(p.proname)",
+	/* qualresult */
+	NULL
+};
+
+static const SchemaQuery Query_for_list_of_routines = {
+	/* catname */
+	"pg_catalog.pg_proc p",
+	/* selcondition */
+	NULL,
+	/* viscondition */
+	"pg_catalog.pg_function_is_visible(p.oid)",
+	/* namespace */
+	"p.pronamespace",
+	/* result */
+	"pg_catalog.quote_ident(p.proname)",
 	/* qualresult */
 	NULL
 };
@@ -1032,8 +1062,10 @@ static const pgsql_thing_t words_after_create[] = {
 	{"OWNED", NULL, NULL, THING_NO_CREATE | THING_NO_ALTER},	/* for DROP OWNED BY ... */
 	{"PARSER", Query_for_list_of_ts_parsers, NULL, THING_NO_SHOW},
 	{"POLICY", NULL, NULL},
+	{"PROCEDURE", NULL, &Query_for_list_of_procedures},
 	{"PUBLICATION", Query_for_list_of_publications},
 	{"ROLE", Query_for_list_of_roles},
+	{"ROUTINE", NULL, &Query_for_list_of_routines, THING_NO_CREATE},
 	{"RULE", "SELECT pg_catalog.quote_ident(rulename) FROM pg_catalog.pg_rules WHERE substring(pg_catalog.quote_ident(rulename),1,%d)='%s'"},
 	{"SCHEMA", Query_for_list_of_schemas},
 	{"SEQUENCE", NULL, &Query_for_list_of_sequences},
@@ -1407,7 +1439,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* Known command-starting keywords. */
 	static const char *const sql_commands[] = {
-		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER",
+		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CALL", "CHECKPOINT", "CLOSE", "CLUSTER",
 		"COMMENT", "COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE",
 		"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN",
 		"FETCH", "GRANT", "IMPORT", "INSERT", "LISTEN", "LOAD", "LOCK",
@@ -1520,11 +1552,11 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER TABLE,INDEX,MATERIALIZED VIEW ALL IN TABLESPACE xxx OWNED BY xxx */
 	else if (TailMatches7("ALL", "IN", "TABLESPACE", MatchAny, "OWNED", "BY", MatchAny))
 		COMPLETE_WITH_CONST("SET TABLESPACE");
-	/* ALTER AGGREGATE,FUNCTION <name> */
-	else if (Matches3("ALTER", "AGGREGATE|FUNCTION", MatchAny))
+	/* ALTER AGGREGATE,FUNCTION,PROCEDURE,ROUTINE <name> */
+	else if (Matches3("ALTER", "AGGREGATE|FUNCTION|PROCEDURE|ROUTINE", MatchAny))
 		COMPLETE_WITH_CONST("(");
-	/* ALTER AGGREGATE,FUNCTION <name> (...) */
-	else if (Matches4("ALTER", "AGGREGATE|FUNCTION", MatchAny, MatchAny))
+	/* ALTER AGGREGATE,FUNCTION,PROCEDURE,ROUTINE <name> (...) */
+	else if (Matches4("ALTER", "AGGREGATE|FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny))
 	{
 		if (ends_with(prev_wd, ')'))
 			COMPLETE_WITH_LIST3("OWNER TO", "RENAME TO", "SET SCHEMA");
@@ -2145,6 +2177,11 @@ psql_completion(const char *text, int start, int end)
 /* ROLLBACK */
 	else if (Matches1("ROLLBACK"))
 		COMPLETE_WITH_LIST4("WORK", "TRANSACTION", "TO SAVEPOINT", "PREPARED");
+/* CALL */
+	else if (Matches1("CALL"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_procedures, NULL);
+	else if (Matches2("CALL", MatchAny))
+		COMPLETE_WITH_CONST("(");
 /* CLUSTER */
 	else if (Matches1("CLUSTER"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, "UNION SELECT 'VERBOSE'");
@@ -2176,6 +2213,7 @@ psql_completion(const char *text, int start, int end)
 			"SERVER", "INDEX", "LANGUAGE", "POLICY", "PUBLICATION", "RULE",
 			"SCHEMA", "SEQUENCE", "STATISTICS", "SUBSCRIPTION",
 			"TABLE", "TYPE", "VIEW", "MATERIALIZED VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
+			"PROCEDURE", "ROUTINE",
 			"OPERATOR", "TRIGGER", "CONSTRAINT", "DOMAIN", "LARGE OBJECT",
 		"TABLESPACE", "TEXT SEARCH", "ROLE", NULL};
 
@@ -2685,7 +2723,7 @@ psql_completion(const char *text, int start, int end)
 					  "COLLATION|CONVERSION|DOMAIN|EXTENSION|LANGUAGE|PUBLICATION|SCHEMA|SEQUENCE|SERVER|SUBSCRIPTION|STATISTICS|TABLE|TYPE|VIEW",
 					  MatchAny) ||
 			 Matches4("DROP", "ACCESS", "METHOD", MatchAny) ||
-			 (Matches4("DROP", "AGGREGATE|FUNCTION", MatchAny, MatchAny) &&
+			 (Matches4("DROP", "AGGREGATE|FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny) &&
 			  ends_with(prev_wd, ')')) ||
 			 Matches4("DROP", "EVENT", "TRIGGER", MatchAny) ||
 			 Matches5("DROP", "FOREIGN", "DATA", "WRAPPER", MatchAny) ||
@@ -2694,9 +2732,9 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST2("CASCADE", "RESTRICT");
 
 	/* help completing some of the variants */
-	else if (Matches3("DROP", "AGGREGATE|FUNCTION", MatchAny))
+	else if (Matches3("DROP", "AGGREGATE|FUNCTION|PROCEDURE|ROUTINE", MatchAny))
 		COMPLETE_WITH_CONST("(");
-	else if (Matches4("DROP", "AGGREGATE|FUNCTION", MatchAny, "("))
+	else if (Matches4("DROP", "AGGREGATE|FUNCTION|PROCEDURE|ROUTINE", MatchAny, "("))
 		COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	else if (Matches2("DROP", "FOREIGN"))
 		COMPLETE_WITH_LIST2("DATA WRAPPER", "TABLE");
@@ -2893,10 +2931,12 @@ psql_completion(const char *text, int start, int end)
 		 * objects supported.
 		 */
 		if (HeadMatches3("ALTER", "DEFAULT", "PRIVILEGES"))
-			COMPLETE_WITH_LIST5("TABLES", "SEQUENCES", "FUNCTIONS", "TYPES", "SCHEMAS");
+			COMPLETE_WITH_LIST7("TABLES", "SEQUENCES", "FUNCTIONS", "PROCEDURES", "ROUTINES", "TYPES", "SCHEMAS");
 		else
 			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf,
 									   " UNION SELECT 'ALL FUNCTIONS IN SCHEMA'"
+									   " UNION SELECT 'ALL PROCEDURES IN SCHEMA'"
+									   " UNION SELECT 'ALL ROUTINES IN SCHEMA'"
 									   " UNION SELECT 'ALL SEQUENCES IN SCHEMA'"
 									   " UNION SELECT 'ALL TABLES IN SCHEMA'"
 									   " UNION SELECT 'DATABASE'"
@@ -2906,6 +2946,8 @@ psql_completion(const char *text, int start, int end)
 									   " UNION SELECT 'FUNCTION'"
 									   " UNION SELECT 'LANGUAGE'"
 									   " UNION SELECT 'LARGE OBJECT'"
+									   " UNION SELECT 'PROCEDURE'"
+									   " UNION SELECT 'ROUTINE'"
 									   " UNION SELECT 'SCHEMA'"
 									   " UNION SELECT 'SEQUENCE'"
 									   " UNION SELECT 'TABLE'"
@@ -2913,7 +2955,10 @@ psql_completion(const char *text, int start, int end)
 									   " UNION SELECT 'TYPE'");
 	}
 	else if (TailMatches4("GRANT|REVOKE", MatchAny, "ON", "ALL"))
-		COMPLETE_WITH_LIST3("FUNCTIONS IN SCHEMA", "SEQUENCES IN SCHEMA",
+		COMPLETE_WITH_LIST5("FUNCTIONS IN SCHEMA",
+							"PROCEDURES IN SCHEMA",
+							"ROUTINES IN SCHEMA",
+							"SEQUENCES IN SCHEMA",
 							"TABLES IN SCHEMA");
 	else if (TailMatches4("GRANT|REVOKE", MatchAny, "ON", "FOREIGN"))
 		COMPLETE_WITH_LIST2("DATA WRAPPER", "SERVER");
@@ -2934,6 +2979,10 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
 		else if (TailMatches1("LANGUAGE"))
 			COMPLETE_WITH_QUERY(Query_for_list_of_languages);
+		else if (TailMatches1("PROCEDURE"))
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_procedures, NULL);
+		else if (TailMatches1("ROUTINE"))
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_routines, NULL);
 		else if (TailMatches1("SCHEMA"))
 			COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
 		else if (TailMatches1("SEQUENCE"))
@@ -3163,7 +3212,7 @@ psql_completion(const char *text, int start, int end)
 		static const char *const list_SECURITY_LABEL[] =
 		{"TABLE", "COLUMN", "AGGREGATE", "DATABASE", "DOMAIN",
 			"EVENT TRIGGER", "FOREIGN TABLE", "FUNCTION", "LARGE OBJECT",
-			"MATERIALIZED VIEW", "LANGUAGE", "PUBLICATION", "ROLE", "SCHEMA",
+			"MATERIALIZED VIEW", "LANGUAGE", "PUBLICATION", "PROCEDURE", "ROLE", "ROUTINE", "SCHEMA",
 		"SEQUENCE", "SUBSCRIPTION", "TABLESPACE", "TYPE", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_SECURITY_LABEL);
@@ -3233,8 +3282,8 @@ psql_completion(const char *text, int start, int end)
 	/* Complete SET <var> with "TO" */
 	else if (Matches2("SET", MatchAny))
 		COMPLETE_WITH_CONST("TO");
-	/* Complete ALTER DATABASE|FUNCTION|ROLE|USER ... SET <name> */
-	else if (HeadMatches2("ALTER", "DATABASE|FUNCTION|ROLE|USER") &&
+	/* Complete ALTER DATABASE|FUNCTION||PROCEDURE|ROLE|ROUTINE|USER ... SET <name> */
+	else if (HeadMatches2("ALTER", "DATABASE|FUNCTION|PROCEDURE|ROLE|ROUTINE|USER") &&
 			 TailMatches2("SET", MatchAny))
 		COMPLETE_WITH_LIST2("FROM CURRENT", "TO");
 	/* Suggest possible variable values */

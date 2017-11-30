@@ -1,0 +1,341 @@
+<!--
+doc/src/sgml/ref/create_procedure.sgml
+-->
+
+<refentry id="sql-createprocedure">
+ <indexterm zone="sql-createprocedure">
+  <primary>CREATE PROCEDURE</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>CREATE PROCEDURE</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE PROCEDURE</refname>
+  <refpurpose>define a new procedure</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE [ OR REPLACE ] PROCEDURE
+    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">default_expr</replaceable> ] [, ...] ] )
+  { LANGUAGE <replaceable class="parameter">lang_name</replaceable>
+    | TRANSFORM { FOR TYPE <replaceable class="parameter">type_name</replaceable> } [, ... ]
+    | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+    | SET <replaceable class="parameter">configuration_parameter</replaceable> { TO <replaceable class="parameter">value</replaceable> | = <replaceable class="parameter">value</replaceable> | FROM CURRENT }
+    | AS '<replaceable class="parameter">definition</replaceable>'
+    | AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
+  } ...
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="sql-createprocedure-description">
+  <title>Description</title>
+
+  <para>
+   <command>CREATE PROCEDURE</command> defines a new procedure.
+   <command>CREATE OR REPLACE PROCEDURE</command> will either create a
+   new procedure, or replace an existing definition.
+   To be able to define a procedure, the user must have the
+   <literal>USAGE</literal> privilege on the language.
+  </para>
+
+  <para>
+   If a schema name is included, then the procedure is created in the
+   specified schema.  Otherwise it is created in the current schema.
+   The name of the new procedure must not match any existing procedure or function
+   with the same input argument types in the same schema.  However,
+   procedures and functions of different argument types can share a name (this is
+   called <firstterm>overloading</firstterm>).
+  </para>
+
+  <para>
+   To replace the current definition of an existing procedure, use
+   <command>CREATE OR REPLACE PROCEDURE</command>.  It is not possible
+   to change the name or argument types of a procedure this way (if you
+   tried, you would actually be creating a new, distinct procedure).
+  </para>
+
+  <para>
+   When <command>CREATE OR REPLACE PROCEDURE</command> is used to replace an
+   existing procedure, the ownership and permissions of the procedure
+   do not change.  All other procedure properties are assigned the
+   values specified or implied in the command.  You must own the procedure
+   to replace it (this includes being a member of the owning role).
+  </para>
+
+  <para>
+   The user that creates the procedure becomes the owner of the procedure.
+  </para>
+
+  <para>
+   To be able to create a procedure, you must have <literal>USAGE</literal>
+   privilege on the argument types.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><replaceable class="parameter">name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name (optionally schema-qualified) of the procedure to create.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">argmode</replaceable></term>
+
+     <listitem>
+      <para>
+       The mode of an argument: <literal>IN</literal> or <literal>VARIADIC</literal>.
+       If omitted, the default is <literal>IN</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">argname</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of an argument.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">argtype</replaceable></term>
+
+     <listitem>
+      <para>
+       The data type(s) of the procedure's arguments (optionally
+       schema-qualified), if any. The argument types can be base, composite,
+       or domain types, or can reference the type of a table column.
+      </para>
+      <para>
+       Depending on the implementation language it might also be allowed
+       to specify <quote>pseudo-types</quote> such as <type>cstring</type>.
+       Pseudo-types indicate that the actual argument type is either
+       incompletely specified, or outside the set of ordinary SQL data types.
+      </para>
+      <para>
+       The type of a column is referenced by writing
+       <literal><replaceable
+       class="parameter">table_name</replaceable>.<replaceable
+       class="parameter">column_name</replaceable>%TYPE</literal>.
+       Using this feature can sometimes help make a procedure independent of
+       changes to the definition of a table.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">default_expr</replaceable></term>
+
+     <listitem>
+      <para>
+       An expression to be used as default value if the parameter is
+       not specified.  The expression has to be coercible to the
+       argument type of the parameter.
+       All input parameters following a
+       parameter with a default value must have default values as well.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">lang_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the language that the procedure is implemented in.
+       It can be <literal>sql</literal>, <literal>c</literal>,
+       <literal>internal</literal>, or the name of a user-defined
+       procedural language, e.g. <literal>plpgsql</literal>.  Enclosing the
+       name in single quotes is deprecated and requires matching case.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TRANSFORM { FOR TYPE <replaceable class="parameter">type_name</replaceable> } [, ... ] }</literal></term>
+
+     <listitem>
+      <para>
+       Lists which transforms a call to the procedure should apply.  Transforms
+       convert between SQL types and language-specific data types;
+       see <xref linkend="sql-createtransform"/>.  Procedural language
+       implementations usually have hardcoded knowledge of the built-in types,
+       so those don't need to be listed here.  If a procedural language
+       implementation does not know how to handle a type and no transform is
+       supplied, it will fall back to a default behavior for converting data
+       types, but this depends on the implementation.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   <varlistentry>
+    <term><literal><optional>EXTERNAL</optional> SECURITY INVOKER</literal></term>
+    <term><literal><optional>EXTERNAL</optional> SECURITY DEFINER</literal></term>
+
+    <listitem>
+     <para><literal>SECURITY INVOKER</literal> indicates that the procedure
+      is to be executed with the privileges of the user that calls it.
+      That is the default.  <literal>SECURITY DEFINER</literal>
+      specifies that the procedure is to be executed with the
+      privileges of the user that owns it.
+     </para>
+
+     <para>
+      The key word <literal>EXTERNAL</literal> is allowed for SQL
+      conformance, but it is optional since, unlike in SQL, this feature
+      applies to all procedures not only external ones.
+     </para>
+    </listitem>
+   </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>configuration_parameter</replaceable></term>
+     <term><replaceable>value</replaceable></term>
+     <listitem>
+      <para>
+       The <literal>SET</literal> clause causes the specified configuration
+       parameter to be set to the specified value when the procedure is
+       entered, and then restored to its prior value when the procedure exits.
+       <literal>SET FROM CURRENT</literal> saves the value of the parameter that
+       is current when <command>CREATE PROCEDURE</command> is executed as the value
+       to be applied when the procedure is entered.
+      </para>
+
+      <para>
+       If a <literal>SET</literal> clause is attached to a procedure, then
+       the effects of a <command>SET LOCAL</command> command executed inside the
+       procedure for the same variable are restricted to the procedure: the
+       configuration parameter's prior value is still restored at procedure exit.
+       However, an ordinary
+       <command>SET</command> command (without <literal>LOCAL</literal>) overrides the
+       <literal>SET</literal> clause, much as it would do for a previous <command>SET
+       LOCAL</command> command: the effects of such a command will persist after
+       procedure exit, unless the current transaction is rolled back.
+      </para>
+
+      <para>
+       See <xref linkend="sql-set"/> and
+       <xref linkend="runtime-config"/>
+       for more information about allowed parameter names and values.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">definition</replaceable></term>
+
+     <listitem>
+      <para>
+       A string constant defining the procedure; the meaning depends on the
+       language.  It can be an internal procedure name, the path to an
+       object file, an SQL command, or text in a procedural language.
+      </para>
+
+      <para>
+       It is often helpful to use dollar quoting (see <xref
+       linkend="sql-syntax-dollar-quoting"/>) to write the procedure definition
+       string, rather than the normal single quote syntax.  Without dollar
+       quoting, any single quotes or backslashes in the procedure definition must
+       be escaped by doubling them.
+      </para>
+
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal><replaceable class="parameter">obj_file</replaceable>, <replaceable class="parameter">link_symbol</replaceable></literal></term>
+
+     <listitem>
+      <para>
+       This form of the <literal>AS</literal> clause is used for
+       dynamically loadable C language procedures when the procedure name
+       in the C language source code is not the same as the name of
+       the SQL procedure. The string <replaceable
+       class="parameter">obj_file</replaceable> is the name of the shared
+       library file containing the compiled C procedure, and is interpreted
+       as for the <xref linkend="sql-load"/> command.  The string
+       <replaceable class="parameter">link_symbol</replaceable> is the
+       procedure's link symbol, that is, the name of the procedure in the C
+       language source code.  If the link symbol is omitted, it is assumed
+       to be the same as the name of the SQL procedure being defined.
+      </para>
+
+      <para>
+       When repeated <command>CREATE PROCEDURE</command> calls refer to
+       the same object file, the file is only loaded once per session.
+       To unload and
+       reload the file (perhaps during development), start a new session.
+      </para>
+
+     </listitem>
+    </varlistentry>
+   </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-createprocedure-notes">
+  <title>Notes</title>
+
+  <para>
+   See <xref linkend="sql-createfunction"/> for more details on function
+   creation that also apply to procedures.
+  </para>
+
+  <para>
+   Use <xref linkend="sql-call"/> to execute a procedure.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-createprocedure-examples">
+  <title>Examples</title>
+
+<programlisting>
+CREATE PROCEDURE insert_data(a integer, b integer)
+LANGUAGE SQL
+AS $$
+INSERT INTO tbl VALUES (a);
+INSERT INTO tbl VALUES (b);
+$$;
+
+CALL insert_data(1, 2);
+</programlisting>
+ </refsect1>
+
+ <refsect1 id="sql-createprocedure-compat">
+  <title>Compatibility</title>
+
+  <para>
+   A <command>CREATE PROCEDURE</command> command is defined in the SQL
+   standard.  The <productname>PostgreSQL</productname> version is similar but
+   not fully compatible.  For details see
+   also <xref linkend="sql-createfunction"/>.
+  </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterprocedure"/></member>
+   <member><xref linkend="sql-dropprocedure"/></member>
+   <member><xref linkend="sql-call"/></member>
+   <member><xref linkend="sql-createfunction"/></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

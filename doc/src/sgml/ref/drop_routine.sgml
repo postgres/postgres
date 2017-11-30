@@ -1,0 +1,94 @@
+<!--
+doc/src/sgml/ref/drop_routine.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-droproutine">
+ <indexterm zone="sql-droproutine">
+  <primary>DROP ROUTINE</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>DROP ROUTINE</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP ROUTINE</refname>
+  <refpurpose>remove a routine</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP ROUTINE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] [, ...]
+    [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP ROUTINE</command> removes the definition of an existing
+   routine, which can be an aggregate function, a normal function, or a
+   procedure.  See
+   under <xref linkend="sql-dropaggregate"/>, <xref linkend="sql-dropfunction"/>,
+   and <xref linkend="sql-dropprocedure"/> for the description of the
+   parameters, more examples, and further details.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-droproutine-examples">
+  <title>Examples</title>
+
+  <para>
+   To drop the routine <literal>foo</literal> for type
+   <type>integer</type>:
+<programlisting>
+DROP ROUTINE foo(integer);
+</programlisting>
+   This command will work independent of whether <literal>foo</literal> is an
+   aggregate, function, or procedure.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-droproutine-compatibility">
+  <title>Compatibility</title>
+
+  <para>
+   This command conforms to the SQL standard, with
+   these <productname>PostgreSQL</productname> extensions:
+   <itemizedlist>
+    <listitem>
+     <para>The standard only allows one routine to be dropped per command.</para>
+    </listitem>
+    <listitem>
+     <para>The <literal>IF EXISTS</literal> option</para>
+    </listitem>
+    <listitem>
+     <para>The ability to specify argument modes and names</para>
+    </listitem>
+    <listitem>
+     <para>Aggregate functions are an extension.</para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-dropaggregate"/></member>
+   <member><xref linkend="sql-dropfunction"/></member>
+   <member><xref linkend="sql-dropprocedure"/></member>
+   <member><xref linkend="sql-alterroutine"/></member>
+  </simplelist>
+
+  <para>
+   Note that there is no <literal>CREATE ROUTINE</literal> command.
+  </para>
+ </refsect1>
+
+</refentry>

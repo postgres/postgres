@@ -390,6 +390,7 @@ sql_fn_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 								  list_make1(param),
 								  pstate->p_last_srf,
 								  NULL,
+								  false,
 								  cref->location);
 	}
 
@@ -658,7 +659,8 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	fcache->rettype = rettype;
 
 	/* Fetch the typlen and byval info for the result type */
-	get_typlenbyval(rettype, &fcache->typlen, &fcache->typbyval);
+	if (rettype)
+		get_typlenbyval(rettype, &fcache->typlen, &fcache->typbyval);
 
 	/* Remember whether we're returning setof something */
 	fcache->returnsSet = procedureStruct->proretset;
@@ -1321,8 +1323,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* Should only get here for VOID functions */
-			Assert(fcache->rettype == VOIDOID);
+			/* Should only get here for procedures and VOID functions */
+			Assert(fcache->rettype == InvalidOid || fcache->rettype == VOIDOID);
 			fcinfo->isnull = true;
 			result = (Datum) 0;
 		}
@@ -1546,7 +1548,10 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	if (modifyTargetList)
 		*modifyTargetList = false;	/* initialize for no change */
 	if (junkFilter)
-		*junkFilter = NULL;		/* initialize in case of VOID result */
+		*junkFilter = NULL;		/* initialize in case of procedure/VOID result */
+
+	if (!rettype)
+		return false;
 
 	/*
 	 * Find the last canSetTag query in the list.  This isn't necessarily the
@@ -1591,7 +1596,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	else
 	{
 		/* Empty function body, or last statement is a utility command */
-		if (rettype != VOIDOID)
+		if (rettype && rettype != VOIDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("return type mismatch in function declared to return %s",

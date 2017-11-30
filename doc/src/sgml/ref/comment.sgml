@@ -46,8 +46,10 @@ COMMENT ON
   OPERATOR FAMILY <replaceable class="parameter">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
   POLICY <replaceable class="parameter">policy_name</replaceable> ON <replaceable class="parameter">table_name</replaceable> |
   [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">object_name</replaceable> |
+  PROCEDURE <replaceable class="parameter">procedure_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
   PUBLICATION <replaceable class="parameter">object_name</replaceable> |
   ROLE <replaceable class="parameter">object_name</replaceable> |
+  ROUTINE <replaceable class="parameter">routine_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
   RULE <replaceable class="parameter">rule_name</replaceable> ON <replaceable class="parameter">table_name</replaceable> |
   SCHEMA <replaceable class="parameter">object_name</replaceable> |
   SEQUENCE <replaceable class="parameter">object_name</replaceable> |
@@ -121,13 +123,15 @@ COMMENT ON
     <term><replaceable class="parameter">function_name</replaceable></term>
     <term><replaceable class="parameter">operator_name</replaceable></term>
     <term><replaceable class="parameter">policy_name</replaceable></term>
+    <term><replaceable class="parameter">procedure_name</replaceable></term>
+    <term><replaceable class="parameter">routine_name</replaceable></term>
     <term><replaceable class="parameter">rule_name</replaceable></term>
     <term><replaceable class="parameter">trigger_name</replaceable></term>
     <listitem>
      <para>
       The name of the object to be commented.  Names of tables,
       aggregates, collations, conversions, domains, foreign tables, functions,
-      indexes, operators, operator classes, operator families, sequences,
+      indexes, operators, operator classes, operator families, procedures, routines, sequences,
       statistics, text search objects, types, and views can be
       schema-qualified. When commenting on a column,
       <replaceable class="parameter">relation_name</replaceable> must refer
@@ -170,7 +174,7 @@ COMMENT ON
     <term><replaceable class="parameter">argmode</replaceable></term>
     <listitem>
      <para>
-      The mode of a function or aggregate
+      The mode of a function, procedure, or aggregate
       argument: <literal>IN</literal>, <literal>OUT</literal>,
       <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
       If omitted, the default is <literal>IN</literal>.
@@ -187,7 +191,7 @@ COMMENT ON
     <term><replaceable class="parameter">argname</replaceable></term>
     <listitem>
      <para>
-      The name of a function or aggregate argument.
+      The name of a function, procedure, or aggregate argument.
       Note that <command>COMMENT</command> does not actually pay
       any attention to argument names, since only the argument data
       types are needed to determine the function's identity.
@@ -199,7 +203,7 @@ COMMENT ON
     <term><replaceable class="parameter">argtype</replaceable></term>
     <listitem>
      <para>
-      The data type of a function or aggregate argument.
+      The data type of a function, procedure, or aggregate argument.
      </para>
     </listitem>
    </varlistentry>
@@ -325,6 +329,7 @@ COMMENT ON OPERATOR - (NONE, integer) IS 'Unary minus';
 COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for btrees';
 COMMENT ON OPERATOR FAMILY integer_ops USING btree IS 'all integer operators for btrees';
 COMMENT ON POLICY my_policy ON mytable IS 'Filter rows by users';
+COMMENT ON PROCEDURE my_proc (integer, integer) IS 'Runs a report';
 COMMENT ON ROLE my_role IS 'Administration group for finance tables';
 COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';

@@ -24,6 +24,7 @@ typedef enum
 	FUNCDETAIL_NOTFOUND,		/* no matching function */
 	FUNCDETAIL_MULTIPLE,		/* too many matching functions */
 	FUNCDETAIL_NORMAL,			/* found a matching regular function */
+	FUNCDETAIL_PROCEDURE,		/* found a matching procedure */
 	FUNCDETAIL_AGGREGATE,		/* found a matching aggregate function */
 	FUNCDETAIL_WINDOWFUNC,		/* found a matching window function */
 	FUNCDETAIL_COERCION			/* it's a type coercion request */
@@ -31,7 +32,8 @@ typedef enum
 
 
 extern Node *ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  Node *last_srf, FuncCall *fn, int location);
+							   Node *last_srf, FuncCall *fn, bool proc_call,
+							   int location);
 
 extern FuncDetailCode func_get_detail(List *funcname,
 				List *fargs, List *fargnames,
@@ -62,10 +64,8 @@ extern const char *func_signature_string(List *funcname, int nargs,
 
 extern Oid LookupFuncName(List *funcname, int nargs, const Oid *argtypes,
 			   bool noError);
-extern Oid LookupFuncWithArgs(ObjectWithArgs *func,
+extern Oid LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func,
 				   bool noError);
-extern Oid LookupAggWithArgs(ObjectWithArgs *agg,
-				  bool noError);
 
 extern void check_srf_call_placement(ParseState *pstate, Node *last_srf,
 						 int location);

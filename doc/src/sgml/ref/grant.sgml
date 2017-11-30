@@ -55,8 +55,8 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
-    ON { FUNCTION <replaceable>function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_type</replaceable> [, ...] ] ) ] [, ...]
-         | ALL FUNCTIONS IN SCHEMA <replaceable class="parameter">schema_name</replaceable> [, ...] }
+    ON { { FUNCTION | PROCEDURE | ROUTINE } <replaceable>routine_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_type</replaceable> [, ...] ] ) ] [, ...]
+         | ALL { FUNCTIONS | PROCEDURES | ROUTINES } IN SCHEMA <replaceable class="parameter">schema_name</replaceable> [, ...] }
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
@@ -96,7 +96,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   <para>
    The <command>GRANT</command> command has two basic variants: one
    that grants privileges on a database object (table, column, view, foreign
-   table, sequence, database, foreign-data wrapper, foreign server, function,
+   table, sequence, database, foreign-data wrapper, foreign server, function, procedure,
    procedural language, schema, or tablespace), and one that grants
    membership in a role.  These variants are similar in many ways, but
    they are different enough to be described separately.
@@ -115,8 +115,11 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   <para>
    There is also an option to grant privileges on all objects of the same
    type within one or more schemas.  This functionality is currently supported
-   only for tables, sequences, and functions (but note that <literal>ALL
-   TABLES</literal> is considered to include views and foreign tables).
+   only for tables, sequences, functions, and procedures.  <literal>ALL
+   TABLES</literal> also affects views and foreign tables, just like the
+   specific-object <command>GRANT</command> command.  <literal>ALL
+   FUNCTIONS</literal> also affects aggregate functions, but not procedures,
+   again just like the specific-object <command>GRANT</command> command.
   </para>
 
   <para>
@@ -169,7 +172,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    granted to <literal>PUBLIC</literal> are as follows:
    <literal>CONNECT</literal> and <literal>TEMPORARY</literal> (create
    temporary tables) privileges for databases;
-   <literal>EXECUTE</literal> privilege for functions; and
+   <literal>EXECUTE</literal> privilege for functions and procedures; and
    <literal>USAGE</literal> privilege for languages and data types
    (including domains).
    The object owner can, of course, <command>REVOKE</command>
@@ -329,10 +332,12 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <term><literal>EXECUTE</literal></term>
      <listitem>
       <para>
-       Allows the use of the specified function and the use of any
-       operators that are implemented on top of the function.  This is
-       the only type of privilege that is applicable to functions.
-       (This syntax works for aggregate functions, as well.)
+       Allows the use of the specified function or procedure and the use of
+       any operators that are implemented on top of the function.  This is the
+       only type of privilege that is applicable to functions and procedures.
+       The <literal>FUNCTION</literal> syntax also works for aggregate
+       functions.  Alternatively, use <literal>ROUTINE</literal> to refer to a function,
+       aggregate function, or procedure regardless of what it is.
       </para>
      </listitem>
     </varlistentry>

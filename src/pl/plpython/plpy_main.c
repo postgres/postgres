@@ -389,8 +389,14 @@ plpython_error_callback(void *arg)
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 
 	if (exec_ctx->curr_proc)
-		errcontext("PL/Python function \"%s\"",
-				   PLy_procedure_name(exec_ctx->curr_proc));
+	{
+		if (exec_ctx->curr_proc->is_procedure)
+			errcontext("PL/Python procedure \"%s\"",
+					   PLy_procedure_name(exec_ctx->curr_proc));
+		else
+			errcontext("PL/Python function \"%s\"",
+					   PLy_procedure_name(exec_ctx->curr_proc));
+	}
 }
 
 static void

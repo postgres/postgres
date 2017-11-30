@@ -78,6 +78,7 @@ REGRESS = \
 	plpython_spi \
 	plpython_newline \
 	plpython_void \
+	plpython_call \
 	plpython_params \
 	plpython_setof \
 	plpython_record \

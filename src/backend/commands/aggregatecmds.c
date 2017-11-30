@@ -307,7 +307,7 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 		interpret_function_parameter_list(pstate,
 										  args,
 										  InvalidOid,
-										  true, /* is an aggregate */
+										  OBJECT_AGGREGATE,
 										  &parameterTypes,
 										  &allParameterTypes,
 										  &parameterModes,

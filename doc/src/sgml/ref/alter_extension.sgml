@@ -45,6 +45,8 @@ ALTER EXTENSION <replaceable class="parameter">name</replaceable> DROP <replacea
   OPERATOR CLASS <replaceable class="parameter">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
   OPERATOR FAMILY <replaceable class="parameter">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
   [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">object_name</replaceable> |
+  PROCEDURE <replaceable class="parameter">procedure_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  ROUTINE <replaceable class="parameter">routine_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
   SCHEMA <replaceable class="parameter">object_name</replaceable> |
   SEQUENCE <replaceable class="parameter">object_name</replaceable> |
   SERVER <replaceable class="parameter">object_name</replaceable> |
@@ -170,12 +172,14 @@ ALTER EXTENSION <replaceable class="parameter">name</replaceable> DROP <replacea
      <term><replaceable class="parameter">aggregate_name</replaceable></term>
      <term><replaceable class="parameter">function_name</replaceable></term>
      <term><replaceable class="parameter">operator_name</replaceable></term>
+     <term><replaceable class="parameter">procedure_name</replaceable></term>
+     <term><replaceable class="parameter">routine_name</replaceable></term>
      <listitem>
       <para>
        The name of an object to be added to or removed from the extension.
        Names of tables,
        aggregates, domains, foreign tables, functions, operators,
-       operator classes, operator families, sequences, text search objects,
+       operator classes, operator families, procedures, routines, sequences, text search objects,
        types, and views can be schema-qualified.
       </para>
      </listitem>
@@ -204,7 +208,7 @@ ALTER EXTENSION <replaceable class="parameter">name</replaceable> DROP <replacea
 
      <listitem>
       <para>
-       The mode of a function or aggregate
+       The mode of a function, procedure, or aggregate
        argument: <literal>IN</literal>, <literal>OUT</literal>,
        <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
        If omitted, the default is <literal>IN</literal>.
@@ -222,7 +226,7 @@ ALTER EXTENSION <replaceable class="parameter">name</replaceable> DROP <replacea
 
      <listitem>
       <para>
-       The name of a function or aggregate argument.
+       The name of a function, procedure, or aggregate argument.
        Note that <command>ALTER EXTENSION</command> does not actually pay
        any attention to argument names, since only the argument data
        types are needed to determine the function's identity.
@@ -235,7 +239,7 @@ ALTER EXTENSION <replaceable class="parameter">name</replaceable> DROP <replacea
 
      <listitem>
       <para>
-       The data type of a function or aggregate argument.
+       The data type of a function, procedure, or aggregate argument.
       </para>
      </listitem>
     </varlistentry>

@@ -2691,6 +2691,12 @@ pg_get_function_result(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(proctup))
 		PG_RETURN_NULL();
 
+	if (((Form_pg_proc) GETSTRUCT(proctup))->prorettype == InvalidOid)
+	{
+		ReleaseSysCache(proctup);
+		PG_RETURN_NULL();
+	}
+
 	initStringInfo(&buf);
 
 	print_function_rettype(&buf, proctup);

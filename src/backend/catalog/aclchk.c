@@ -482,6 +482,14 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
 			errormsg = gettext_noop("invalid privilege type %s for schema");
 			break;
+		case ACL_OBJECT_PROCEDURE:
+			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
+			errormsg = gettext_noop("invalid privilege type %s for procedure");
+			break;
+		case ACL_OBJECT_ROUTINE:
+			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
+			errormsg = gettext_noop("invalid privilege type %s for routine");
+			break;
 		case ACL_OBJECT_TABLESPACE:
 			all_privileges = ACL_ALL_RIGHTS_TABLESPACE;
 			errormsg = gettext_noop("invalid privilege type %s for tablespace");
@@ -584,6 +592,8 @@ ExecGrantStmt_oids(InternalGrant *istmt)
 			ExecGrant_ForeignServer(istmt);
 			break;
 		case ACL_OBJECT_FUNCTION:
+		case ACL_OBJECT_PROCEDURE:
+		case ACL_OBJECT_ROUTINE:
 			ExecGrant_Function(istmt);
 			break;
 		case ACL_OBJECT_LANGUAGE:
@@ -671,7 +681,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				ObjectWithArgs *func = (ObjectWithArgs *) lfirst(cell);
 				Oid			funcid;
 
-				funcid = LookupFuncWithArgs(func, false);
+				funcid = LookupFuncWithArgs(OBJECT_FUNCTION, func, false);
 				objects = lappend_oid(objects, funcid);
 			}
 			break;
@@ -707,6 +717,26 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 
 				oid = get_namespace_oid(nspname, false);
 				objects = lappend_oid(objects, oid);
+			}
+			break;
+		case ACL_OBJECT_PROCEDURE:
+			foreach(cell, objnames)
+			{
+				ObjectWithArgs *func = (ObjectWithArgs *) lfirst(cell);
+				Oid			procid;
+
+				procid = LookupFuncWithArgs(OBJECT_PROCEDURE, func, false);
+				objects = lappend_oid(objects, procid);
+			}
+			break;
+		case ACL_OBJECT_ROUTINE:
+			foreach(cell, objnames)
+			{
+				ObjectWithArgs *func = (ObjectWithArgs *) lfirst(cell);
+				Oid			routid;
+
+				routid = LookupFuncWithArgs(OBJECT_ROUTINE, func, false);
+				objects = lappend_oid(objects, routid);
 			}
 			break;
 		case ACL_OBJECT_TABLESPACE:
@@ -785,19 +815,39 @@ objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
 				objects = list_concat(objects, objs);
 				break;
 			case ACL_OBJECT_FUNCTION:
+			case ACL_OBJECT_PROCEDURE:
+			case ACL_OBJECT_ROUTINE:
 				{
-					ScanKeyData key[1];
+					ScanKeyData key[2];
+					int			keycount;
 					Relation	rel;
 					HeapScanDesc scan;
 					HeapTuple	tuple;
 
-					ScanKeyInit(&key[0],
+					keycount = 0;
+					ScanKeyInit(&key[keycount++],
 								Anum_pg_proc_pronamespace,
 								BTEqualStrategyNumber, F_OIDEQ,
 								ObjectIdGetDatum(namespaceId));
 
+					/*
+					 * When looking for functions, check for return type <>0.
+					 * When looking for procedures, check for return type ==0.
+					 * When looking for routines, don't check the return type.
+					 */
+					if (objtype == ACL_OBJECT_FUNCTION)
+						ScanKeyInit(&key[keycount++],
+									Anum_pg_proc_prorettype,
+									BTEqualStrategyNumber, F_OIDNE,
+									InvalidOid);
+					else if (objtype == ACL_OBJECT_PROCEDURE)
+						ScanKeyInit(&key[keycount++],
+									Anum_pg_proc_prorettype,
+									BTEqualStrategyNumber, F_OIDEQ,
+									InvalidOid);
+
 					rel = heap_open(ProcedureRelationId, AccessShareLock);
-					scan = heap_beginscan_catalog(rel, 1, key);
+					scan = heap_beginscan_catalog(rel, keycount, key);
 
 					while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 					{
@@ -954,6 +1004,14 @@ ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivilegesStmt *s
 		case ACL_OBJECT_FUNCTION:
 			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
 			errormsg = gettext_noop("invalid privilege type %s for function");
+			break;
+		case ACL_OBJECT_PROCEDURE:
+			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
+			errormsg = gettext_noop("invalid privilege type %s for procedure");
+			break;
+		case ACL_OBJECT_ROUTINE:
+			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
+			errormsg = gettext_noop("invalid privilege type %s for routine");
 			break;
 		case ACL_OBJECT_TYPE:
 			all_privileges = ACL_ALL_RIGHTS_TYPE;
@@ -1423,7 +1481,7 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 				istmt.objtype = ACL_OBJECT_TYPE;
 				break;
 			case ProcedureRelationId:
-				istmt.objtype = ACL_OBJECT_FUNCTION;
+				istmt.objtype = ACL_OBJECT_ROUTINE;
 				break;
 			case LanguageRelationId:
 				istmt.objtype = ACL_OBJECT_LANGUAGE;

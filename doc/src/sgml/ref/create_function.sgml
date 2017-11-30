@@ -55,9 +55,9 @@ CREATE [ OR REPLACE ] FUNCTION
   <para>
    If a schema name is included, then the function is created in the
    specified schema.  Otherwise it is created in the current schema.
-   The name of the new function must not match any existing function
+   The name of the new function must not match any existing function or procedure
    with the same input argument types in the same schema.  However,
-   functions of different argument types can share a name (this is
+   functions and procedures of different argument types can share a name (this is
    called <firstterm>overloading</firstterm>).
   </para>
 
@@ -450,7 +450,7 @@ CREATE [ OR REPLACE ] FUNCTION
    </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="parameter">execution_cost</replaceable></term>
+     <term><literal>COST</literal> <replaceable class="parameter">execution_cost</replaceable></term>
 
      <listitem>
       <para>
@@ -466,7 +466,7 @@ CREATE [ OR REPLACE ] FUNCTION
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="parameter">result_rows</replaceable></term>
+     <term><literal>ROWS</literal> <replaceable class="parameter">result_rows</replaceable></term>
 
      <listitem>
       <para>
@@ -818,7 +818,7 @@ COMMIT;
   <title>Compatibility</title>
 
   <para>
-   A <command>CREATE FUNCTION</command> command is defined in SQL:1999 and later.
+   A <command>CREATE FUNCTION</command> command is defined in the SQL standard.
    The <productname>PostgreSQL</productname> version is similar but
    not fully compatible.  The attributes are not portable, neither are the
    different available languages.

@@ -1642,9 +1642,11 @@ typedef enum ObjectType
 	OBJECT_OPERATOR,
 	OBJECT_OPFAMILY,
 	OBJECT_POLICY,
+	OBJECT_PROCEDURE,
 	OBJECT_PUBLICATION,
 	OBJECT_PUBLICATION_REL,
 	OBJECT_ROLE,
+	OBJECT_ROUTINE,
 	OBJECT_RULE,
 	OBJECT_SCHEMA,
 	OBJECT_SEQUENCE,
@@ -1856,6 +1858,8 @@ typedef enum GrantObjectType
 	ACL_OBJECT_LANGUAGE,		/* procedural language */
 	ACL_OBJECT_LARGEOBJECT,		/* largeobject */
 	ACL_OBJECT_NAMESPACE,		/* namespace */
+	ACL_OBJECT_PROCEDURE,		/* procedure */
+	ACL_OBJECT_ROUTINE,			/* routine */
 	ACL_OBJECT_TABLESPACE,		/* tablespace */
 	ACL_OBJECT_TYPE				/* type */
 } GrantObjectType;
@@ -2749,6 +2753,7 @@ typedef struct CreateFunctionStmt
 	List	   *funcname;		/* qualified name of function to create */
 	List	   *parameters;		/* a list of FunctionParameter */
 	TypeName   *returnType;		/* the return type */
+	bool		is_procedure;
 	List	   *options;		/* a list of DefElem */
 	List	   *withClause;		/* a list of DefElem */
 } CreateFunctionStmt;
@@ -2775,6 +2780,7 @@ typedef struct FunctionParameter
 typedef struct AlterFunctionStmt
 {
 	NodeTag		type;
+	ObjectType	objtype;
 	ObjectWithArgs *func;		/* name and args of function */
 	List	   *actions;		/* list of DefElem */
 } AlterFunctionStmt;
@@ -2798,6 +2804,16 @@ typedef struct InlineCodeBlock
 	Oid			langOid;		/* OID of selected language */
 	bool		langIsTrusted;	/* trusted property of the language */
 } InlineCodeBlock;
+
+/* ----------------------
+ *		CALL statement
+ * ----------------------
+ */
+typedef struct CallStmt
+{
+	NodeTag		type;
+	FuncCall   *funccall;
+} CallStmt;
 
 /* ----------------------
  *		Alter Object Rename Statement

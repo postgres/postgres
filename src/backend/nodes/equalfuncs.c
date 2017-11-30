@@ -1202,6 +1202,14 @@ _equalClosePortalStmt(const ClosePortalStmt *a, const ClosePortalStmt *b)
 }
 
 static bool
+_equalCallStmt(const CallStmt *a, const CallStmt *b)
+{
+	COMPARE_NODE_FIELD(funccall);
+
+	return true;
+}
+
+static bool
 _equalClusterStmt(const ClusterStmt *a, const ClusterStmt *b)
 {
 	COMPARE_NODE_FIELD(relation);
@@ -1364,6 +1372,7 @@ _equalCreateFunctionStmt(const CreateFunctionStmt *a, const CreateFunctionStmt *
 	COMPARE_NODE_FIELD(funcname);
 	COMPARE_NODE_FIELD(parameters);
 	COMPARE_NODE_FIELD(returnType);
+	COMPARE_SCALAR_FIELD(is_procedure);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(withClause);
 
@@ -1384,6 +1393,7 @@ _equalFunctionParameter(const FunctionParameter *a, const FunctionParameter *b)
 static bool
 _equalAlterFunctionStmt(const AlterFunctionStmt *a, const AlterFunctionStmt *b)
 {
+	COMPARE_SCALAR_FIELD(objtype);
 	COMPARE_NODE_FIELD(func);
 	COMPARE_NODE_FIELD(actions);
 
@@ -3245,6 +3255,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_ClosePortalStmt:
 			retval = _equalClosePortalStmt(a, b);
+			break;
+		case T_CallStmt:
+			retval = _equalCallStmt(a, b);
 			break;
 		case T_ClusterStmt:
 			retval = _equalClusterStmt(a, b);

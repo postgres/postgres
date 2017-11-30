@@ -53,7 +53,7 @@ test: copy copyselect copydml
 # ----------
 # More groups of parallel tests
 # ----------
-test: create_misc create_operator
+test: create_misc create_operator create_procedure
 # These depend on the above two
 test: create_index create_view
 

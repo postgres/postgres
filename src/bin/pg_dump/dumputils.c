@@ -33,7 +33,7 @@ static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
  *	name: the object name, in the form to use in the commands (already quoted)
  *	subname: the sub-object name, if any (already quoted); NULL if none
  *	type: the object type (as seen in GRANT command: must be one of
- *		TABLE, SEQUENCE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, TABLESPACE,
+ *		TABLE, SEQUENCE, FUNCTION, PROCEDURE, LANGUAGE, SCHEMA, DATABASE, TABLESPACE,
  *		FOREIGN DATA WRAPPER, SERVER, or LARGE OBJECT)
  *	acls: the ACL string fetched from the database
  *	racls: the ACL string of any initial-but-now-revoked privileges
@@ -523,6 +523,9 @@ do { \
 	}
 	else if (strcmp(type, "FUNCTION") == 0 ||
 			 strcmp(type, "FUNCTIONS") == 0)
+		CONVERT_PRIV('X', "EXECUTE");
+	else if (strcmp(type, "PROCEDURE") == 0 ||
+			 strcmp(type, "PROCEDURES") == 0)
 		CONVERT_PRIV('X', "EXECUTE");
 	else if (strcmp(type, "LANGUAGE") == 0)
 		CONVERT_PRIV('U', "USAGE");

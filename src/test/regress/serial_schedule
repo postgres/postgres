@@ -63,6 +63,7 @@ test: copyselect
 test: copydml
 test: create_misc
 test: create_operator
+test: create_procedure
 test: create_index
 test: create_view
 test: create_aggregate

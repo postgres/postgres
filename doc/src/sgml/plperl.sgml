@@ -68,6 +68,10 @@ $$ LANGUAGE plperl;
   </para>
 
   <para>
+   In a PL/Perl procedure, any return value from the Perl code is ignored.
+  </para>
+
+  <para>
    PL/Perl also supports anonymous code blocks called with the
    <xref linkend="sql-do"/> statement:
 

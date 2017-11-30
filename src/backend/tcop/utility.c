@@ -657,6 +657,10 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			}
 			break;
 
+		case T_CallStmt:
+			ExecuteCallStmt(pstate, castNode(CallStmt, parsetree));
+			break;
+
 		case T_ClusterStmt:
 			/* we choose to allow this during "read only" transactions */
 			PreventCommandDuringRecovery("CLUSTER");
@@ -1957,8 +1961,14 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 		case OBJECT_POLICY:
 			tag = "ALTER POLICY";
 			break;
+		case OBJECT_PROCEDURE:
+			tag = "ALTER PROCEDURE";
+			break;
 		case OBJECT_ROLE:
 			tag = "ALTER ROLE";
+			break;
+		case OBJECT_ROUTINE:
+			tag = "ALTER ROUTINE";
 			break;
 		case OBJECT_RULE:
 			tag = "ALTER RULE";
@@ -2261,6 +2271,12 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_FUNCTION:
 					tag = "DROP FUNCTION";
 					break;
+				case OBJECT_PROCEDURE:
+					tag = "DROP PROCEDURE";
+					break;
+				case OBJECT_ROUTINE:
+					tag = "DROP ROUTINE";
+					break;
 				case OBJECT_AGGREGATE:
 					tag = "DROP AGGREGATE";
 					break;
@@ -2359,7 +2375,20 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_AlterFunctionStmt:
-			tag = "ALTER FUNCTION";
+			switch (((AlterFunctionStmt *) parsetree)->objtype)
+			{
+				case OBJECT_FUNCTION:
+					tag = "ALTER FUNCTION";
+					break;
+				case OBJECT_PROCEDURE:
+					tag = "ALTER PROCEDURE";
+					break;
+				case OBJECT_ROUTINE:
+					tag = "ALTER ROUTINE";
+					break;
+				default:
+					tag = "???";
+			}
 			break;
 
 		case T_GrantStmt:
@@ -2438,7 +2467,10 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_CreateFunctionStmt:
-			tag = "CREATE FUNCTION";
+			if (((CreateFunctionStmt *) parsetree)->is_procedure)
+				tag = "CREATE PROCEDURE";
+			else
+				tag = "CREATE FUNCTION";
 			break;
 
 		case T_IndexStmt:
@@ -2491,6 +2523,10 @@ CreateCommandTag(Node *parsetree)
 
 		case T_LoadStmt:
 			tag = "LOAD";
+			break;
+
+		case T_CallStmt:
+			tag = "CALL";
 			break;
 
 		case T_ClusterStmt:
@@ -3113,6 +3149,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_LoadStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_CallStmt:
 			lev = LOGSTMT_ALL;
 			break;
 
