@@ -789,8 +789,8 @@ bms_add_members(Bitmapset *a, const Bitmapset *b)
  *		Add members in the range of 'lower' to 'upper' to the set.
  *
  * Note this could also be done by calling bms_add_member in a loop, however,
- * using this function will be faster when the range is large as we work with
- * at the bitmapword level rather than at bit level.
+ * using this function will be faster when the range is large as we work at
+ * the bitmapword level rather than at bit level.
  */
 Bitmapset *
 bms_add_range(Bitmapset *a, int lower, int upper)
