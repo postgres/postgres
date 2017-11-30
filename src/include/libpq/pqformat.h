@@ -51,7 +51,7 @@ pq_writeint8(StringInfoData *pg_restrict buf, int8 i)
 {
 	int8		ni = i;
 
-	Assert(buf->len + sizeof(int8) <= buf->maxlen);
+	Assert(buf->len + (int) sizeof(int8) <= buf->maxlen);
 	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int8));
 	buf->len += sizeof(int8);
 }
@@ -65,7 +65,7 @@ pq_writeint16(StringInfoData *pg_restrict buf, int16 i)
 {
 	int16		ni = pg_hton16(i);
 
-	Assert(buf->len + sizeof(int16) <= buf->maxlen);
+	Assert(buf->len + (int) sizeof(int16) <= buf->maxlen);
 	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int16));
 	buf->len += sizeof(int16);
 }
@@ -79,7 +79,7 @@ pq_writeint32(StringInfoData *pg_restrict buf, int32 i)
 {
 	int32		ni = pg_hton32(i);
 
-	Assert(buf->len + sizeof(int32) <= buf->maxlen);
+	Assert(buf->len + (int) sizeof(int32) <= buf->maxlen);
 	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int32));
 	buf->len += sizeof(int32);
 }
@@ -93,7 +93,7 @@ pq_writeint64(StringInfoData *pg_restrict buf, int64 i)
 {
 	int64		ni = pg_hton64(i);
 
-	Assert(buf->len + sizeof(int64) <= buf->maxlen);
+	Assert(buf->len + (int) sizeof(int64) <= buf->maxlen);
 	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int64));
 	buf->len += sizeof(int64);
 }
