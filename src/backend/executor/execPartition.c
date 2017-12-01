@@ -206,13 +206,6 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 			slot = myslot;
 		}
 
-		/* Quick exit */
-		if (partdesc->nparts == 0)
-		{
-			result = -1;
-			break;
-		}
-
 		/*
 		 * Extract partition key from tuple. Expression evaluation machinery
 		 * that FormPartitionKeyDatum() invokes expects ecxt_scantuple to
@@ -223,6 +216,17 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		 */
 		ecxt->ecxt_scantuple = slot;
 		FormPartitionKeyDatum(parent, slot, estate, values, isnull);
+
+		/*
+		 * Nothing for get_partition_for_tuple() to do if there are no
+		 * partitions to begin with.
+		 */
+		if (partdesc->nparts == 0)
+		{
+			result = -1;
+			break;
+		}
+
 		cur_index = get_partition_for_tuple(rel, values, isnull);
 
 		/*

@@ -90,6 +90,10 @@ create table range_parted (
 	a text,
 	b int
 ) partition by range (a, (b+0));
+
+-- no partitions, so fail
+insert into range_parted values ('a', 11);
+
 create table part1 partition of range_parted for values from ('a', 1) to ('a', 10);
 create table part2 partition of range_parted for values from ('a', 10) to ('a', 20);
 create table part3 partition of range_parted for values from ('b', 1) to ('b', 10);
