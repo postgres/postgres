@@ -829,7 +829,7 @@ drop operator public.<^(int, int);
 -- Input relation to aggregate push down hook is not safe to pushdown and thus
 -- the aggregate cannot be pushed down to foreign server.
 explain (verbose, costs off)
-select count(t1.c3) from ft1 t1, ft1 t2 where t1.c1 = postgres_fdw_abs(t1.c2);
+select count(t1.c3) from ft2 t1 left join ft2 t2 on (t1.c1 = random() * t2.c2);
 
 -- Subquery in FROM clause having aggregate
 explain (verbose, costs off)

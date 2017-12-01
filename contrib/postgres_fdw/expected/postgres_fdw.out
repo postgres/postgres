@@ -3160,21 +3160,23 @@ drop operator public.<^(int, int);
 -- Input relation to aggregate push down hook is not safe to pushdown and thus
 -- the aggregate cannot be pushed down to foreign server.
 explain (verbose, costs off)
-select count(t1.c3) from ft1 t1, ft1 t2 where t1.c1 = postgres_fdw_abs(t1.c2);
-                                                QUERY PLAN                                                
-----------------------------------------------------------------------------------------------------------
+select count(t1.c3) from ft2 t1 left join ft2 t2 on (t1.c1 = random() * t2.c2);
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
  Aggregate
    Output: count(t1.c3)
-   ->  Nested Loop
+   ->  Nested Loop Left Join
          Output: t1.c3
-         ->  Foreign Scan on public.ft1 t2
-               Remote SQL: SELECT NULL FROM "S 1"."T 1"
+         Join Filter: ((t1.c1)::double precision = (random() * (t2.c2)::double precision))
+         ->  Foreign Scan on public.ft2 t1
+               Output: t1.c3, t1.c1
+               Remote SQL: SELECT "C 1", c3 FROM "S 1"."T 1"
          ->  Materialize
-               Output: t1.c3
-               ->  Foreign Scan on public.ft1 t1
-                     Output: t1.c3
-                     Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" = public.postgres_fdw_abs(c2)))
-(11 rows)
+               Output: t2.c2
+               ->  Foreign Scan on public.ft2 t2
+                     Output: t2.c2
+                     Remote SQL: SELECT c2 FROM "S 1"."T 1"
+(13 rows)
 
 -- Subquery in FROM clause having aggregate
 explain (verbose, costs off)
