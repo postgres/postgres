@@ -751,15 +751,13 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
 
 	if (b1->strategy == PARTITION_STRATEGY_HASH)
 	{
-		int			greatest_modulus;
+		int			greatest_modulus = get_greatest_modulus(b1);
 
 		/*
 		 * If two hash partitioned tables have different greatest moduli,
-		 * their partition schemes don't match.  For hash partitioned table,
-		 * the greatest modulus is given by the last datum and number of
-		 * partitions is given by ndatums.
+		 * their partition schemes don't match.
 		 */
-		if (b1->datums[b1->ndatums - 1][0] != b2->datums[b2->ndatums - 1][0])
+		if (greatest_modulus != get_greatest_modulus(b2))
 			return false;
 
 		/*
@@ -773,7 +771,6 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
 		 * their indexes array will be same.  So, it suffices to compare
 		 * indexes array.
 		 */
-		greatest_modulus = get_greatest_modulus(b1);
 		for (i = 0; i < greatest_modulus; i++)
 			if (b1->indexes[i] != b2->indexes[i])
 				return false;
