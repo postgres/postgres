@@ -1953,7 +1953,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		int			num_parted,
 					num_partitions;
 
-		ExecSetupPartitionTupleRouting(rel,
+		ExecSetupPartitionTupleRouting(mtstate,
+									   rel,
 									   node->nominalRelation,
 									   estate,
 									   &partition_dispatch_info,

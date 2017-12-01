@@ -2478,7 +2478,8 @@ CopyFrom(CopyState cstate)
 		int			num_parted,
 					num_partitions;
 
-		ExecSetupPartitionTupleRouting(cstate->rel,
+		ExecSetupPartitionTupleRouting(NULL,
+									   cstate->rel,
 									   1,
 									   estate,
 									   &partition_dispatch_info,

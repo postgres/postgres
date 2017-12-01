@@ -49,7 +49,8 @@ typedef struct PartitionDispatchData
 
 typedef struct PartitionDispatchData *PartitionDispatch;
 
-extern void ExecSetupPartitionTupleRouting(Relation rel,
+extern void ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
+							   Relation rel,
 							   Index resultRTindex,
 							   EState *estate,
 							   PartitionDispatch **pd,

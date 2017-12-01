@@ -847,16 +847,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 	/* Process ON CONFLICT, if any. */
 	if (stmt->onConflictClause)
-	{
-		/* Bail out if target relation is partitioned table */
-		if (pstate->p_target_rangetblentry->relkind == RELKIND_PARTITIONED_TABLE)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("ON CONFLICT clause is not supported with partitioned tables")));
-
 		qry->onConflict = transformOnConflictClause(pstate,
 													stmt->onConflictClause);
-	}
 
 	/*
 	 * If we have a RETURNING clause, we need to add the target relation to

@@ -63,7 +63,8 @@ static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
  * RowExclusiveLock mode upon return from this function.
  */
 void
-ExecSetupPartitionTupleRouting(Relation rel,
+ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
+							   Relation rel,
 							   Index resultRTindex,
 							   EState *estate,
 							   PartitionDispatch **pd,
@@ -133,13 +134,17 @@ ExecSetupPartitionTupleRouting(Relation rel,
 		CheckValidResultRel(leaf_part_rri, CMD_INSERT);
 
 		/*
-		 * Open partition indices (remember we do not support ON CONFLICT in
-		 * case of partitioned tables, so we do not need support information
-		 * for speculative insertion)
+		 * Open partition indices.  The user may have asked to check for
+		 * conflicts within this leaf partition and do "nothing" instead of
+		 * throwing an error.  Be prepared in that case by initializing the
+		 * index information needed by ExecInsert() to perform speculative
+		 * insertions.
 		 */
 		if (leaf_part_rri->ri_RelationDesc->rd_rel->relhasindex &&
 			leaf_part_rri->ri_IndexRelationDescs == NULL)
-			ExecOpenIndices(leaf_part_rri, false);
+			ExecOpenIndices(leaf_part_rri,
+							mtstate != NULL &&
+							mtstate->mt_onconflict != ONCONFLICT_NONE);
 
 		estate->es_leaf_result_relations =
 			lappend(estate->es_leaf_result_relations, leaf_part_rri);
