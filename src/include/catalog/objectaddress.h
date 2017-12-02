@@ -62,7 +62,7 @@ extern AttrNumber get_object_attnum_name(Oid class_id);
 extern AttrNumber get_object_attnum_namespace(Oid class_id);
 extern AttrNumber get_object_attnum_owner(Oid class_id);
 extern AttrNumber get_object_attnum_acl(Oid class_id);
-extern AclObjectKind get_object_aclkind(Oid class_id);
+extern ObjectType get_object_type(Oid class_id, Oid object_id);
 extern bool get_object_namensp_unique(Oid class_id);
 
 extern HeapTuple get_catalog_object_by_oid(Relation catalog,
@@ -77,5 +77,7 @@ extern char *getObjectIdentity(const ObjectAddress *address);
 extern char *getObjectIdentityParts(const ObjectAddress *address,
 					   List **objname, List **objargs);
 extern ArrayType *strlist_to_textarray(List *list);
+
+extern ObjectType get_relkind_objtype(char relkind);
 
 #endif							/* OBJECTADDRESS_H */

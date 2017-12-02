@@ -358,7 +358,7 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 			/* Must be owner */
 			if (!pg_foreign_server_ownercheck(srvId, GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
+				aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FOREIGN_SERVER,
 							   NameStr(form->srvname));
 
 			/* Must be able to become new owner */
@@ -370,7 +370,7 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 			{
 				ForeignDataWrapper *fdw = GetForeignDataWrapper(form->srvfdw);
 
-				aclcheck_error(aclresult, ACL_KIND_FDW, fdw->fdwname);
+				aclcheck_error(aclresult, OBJECT_FDW, fdw->fdwname);
 			}
 		}
 
@@ -907,7 +907,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 
 	aclresult = pg_foreign_data_wrapper_aclcheck(fdw->fdwid, ownerId, ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_FDW, fdw->fdwname);
+		aclcheck_error(aclresult, OBJECT_FDW, fdw->fdwname);
 
 	/*
 	 * Insert tuple into pg_foreign_server.
@@ -1010,7 +1010,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	 * Only owner or a superuser can ALTER a SERVER.
 	 */
 	if (!pg_foreign_server_ownercheck(srvId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FOREIGN_SERVER,
 					   stmt->servername);
 
 	memset(repl_val, 0, sizeof(repl_val));
@@ -1119,10 +1119,10 @@ user_mapping_ddl_aclcheck(Oid umuserid, Oid serverid, const char *servername)
 
 			aclresult = pg_foreign_server_aclcheck(serverid, curuserid, ACL_USAGE);
 			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_FOREIGN_SERVER, servername);
+				aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, servername);
 		}
 		else
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
+			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FOREIGN_SERVER,
 						   servername);
 	}
 }
@@ -1477,7 +1477,7 @@ CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid)
 	server = GetForeignServerByName(stmt->servername, false);
 	aclresult = pg_foreign_server_aclcheck(server->serverid, ownerId, ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_FOREIGN_SERVER, server->servername);
+		aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, server->servername);
 
 	fdw = GetForeignDataWrapper(server->fdwid);
 
@@ -1536,7 +1536,7 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt)
 	server = GetForeignServerByName(stmt->server_name, false);
 	aclresult = pg_foreign_server_aclcheck(server->serverid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_FOREIGN_SERVER, server->servername);
+		aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, server->servername);
 
 	/* Check that the schema exists and we have CREATE permissions on it */
 	(void) LookupCreationNamespace(stmt->local_schema);

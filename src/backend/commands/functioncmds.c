@@ -146,7 +146,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
 										  ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+			aclcheck_error(aclresult, OBJECT_SCHEMA,
 						   get_namespace_name(namespaceId));
 		address = TypeShellMake(typname, namespaceId, GetUserId());
 		rettype = address.objectId;
@@ -953,7 +953,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(namespaceId));
 
 	/* default attributes */
@@ -995,14 +995,14 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 
 		aclresult = pg_language_aclcheck(languageOid, GetUserId(), ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_LANGUAGE,
+			aclcheck_error(aclresult, OBJECT_LANGUAGE,
 						   NameStr(languageStruct->lanname));
 	}
 	else
 	{
 		/* if untrusted language, must be superuser */
 		if (!superuser())
-			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_LANGUAGE,
+			aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_LANGUAGE,
 						   NameStr(languageStruct->lanname));
 	}
 
@@ -1254,7 +1254,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 
 	/* Permission check: must own function */
 	if (!pg_proc_ownercheck(funcOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+		aclcheck_error(ACLCHECK_NOT_OWNER, stmt->objtype,
 					   NameListToString(stmt->func->objname));
 
 	if (procForm->proisagg)
@@ -1911,7 +1911,7 @@ CreateTransform(CreateTransformStmt *stmt)
 
 	aclresult = pg_language_aclcheck(langid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_LANGUAGE, stmt->lang);
+		aclcheck_error(aclresult, OBJECT_LANGUAGE, stmt->lang);
 
 	/*
 	 * Get the functions
@@ -1921,11 +1921,11 @@ CreateTransform(CreateTransformStmt *stmt)
 		fromsqlfuncid = LookupFuncWithArgs(OBJECT_FUNCTION, stmt->fromsql, false);
 
 		if (!pg_proc_ownercheck(fromsqlfuncid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->fromsql->objname));
+			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION, NameListToString(stmt->fromsql->objname));
 
 		aclresult = pg_proc_aclcheck(fromsqlfuncid, GetUserId(), ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_PROC, NameListToString(stmt->fromsql->objname));
+			aclcheck_error(aclresult, OBJECT_FUNCTION, NameListToString(stmt->fromsql->objname));
 
 		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(fromsqlfuncid));
 		if (!HeapTupleIsValid(tuple))
@@ -1947,11 +1947,11 @@ CreateTransform(CreateTransformStmt *stmt)
 		tosqlfuncid = LookupFuncWithArgs(OBJECT_FUNCTION, stmt->tosql, false);
 
 		if (!pg_proc_ownercheck(tosqlfuncid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->tosql->objname));
+			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION, NameListToString(stmt->tosql->objname));
 
 		aclresult = pg_proc_aclcheck(tosqlfuncid, GetUserId(), ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_PROC, NameListToString(stmt->tosql->objname));
+			aclcheck_error(aclresult, OBJECT_FUNCTION, NameListToString(stmt->tosql->objname));
 
 		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(tosqlfuncid));
 		if (!HeapTupleIsValid(tuple))
@@ -2209,14 +2209,14 @@ ExecuteDoStmt(DoStmt *stmt)
 		aclresult = pg_language_aclcheck(codeblock->langOid, GetUserId(),
 										 ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_LANGUAGE,
+			aclcheck_error(aclresult, OBJECT_LANGUAGE,
 						   NameStr(languageStruct->lanname));
 	}
 	else
 	{
 		/* if untrusted language, must be superuser */
 		if (!superuser())
-			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_LANGUAGE,
+			aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_LANGUAGE,
 						   NameStr(languageStruct->lanname));
 	}
 
@@ -2270,7 +2270,7 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt)
 
 	aclresult = pg_proc_aclcheck(fexpr->funcid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(fexpr->funcid));
+		aclcheck_error(aclresult, OBJECT_PROCEDURE, get_func_name(fexpr->funcid));
 	InvokeFunctionExecuteHook(fexpr->funcid);
 
 	nargs = list_length(fexpr->args);

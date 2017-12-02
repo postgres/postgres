@@ -38,7 +38,7 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
 (1 row)
 
 INSERT INTO lr_test VALUES('lr_superuser_init');
-ERROR:  permission denied for relation lr_test
+ERROR:  permission denied for table lr_test
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
  data 
 ------
@@ -56,7 +56,7 @@ SET ROLE regress_lr_normal;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 ERROR:  must be superuser or replication role to use replication slots
 INSERT INTO lr_test VALUES('lr_superuser_init');
-ERROR:  permission denied for relation lr_test
+ERROR:  permission denied for table lr_test
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 ERROR:  must be superuser or replication role to use replication slots
 SELECT pg_drop_replication_slot('regression_slot');

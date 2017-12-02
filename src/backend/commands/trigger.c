@@ -284,7 +284,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 									  ACL_TRIGGER);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_CLASS,
+			aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind),
 						   RelationGetRelationName(rel));
 
 		if (OidIsValid(constrrelid))
@@ -292,7 +292,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			aclresult = pg_class_aclcheck(constrrelid, GetUserId(),
 										  ACL_TRIGGER);
 			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_CLASS,
+				aclcheck_error(aclresult, get_relkind_objtype(get_rel_relkind(constrrelid)),
 							   get_rel_name(constrrelid));
 		}
 	}
@@ -592,7 +592,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	{
 		aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_PROC,
+			aclcheck_error(aclresult, OBJECT_FUNCTION,
 						   NameListToString(stmt->funcname));
 	}
 	funcrettype = get_func_rettype(funcoid);
@@ -1422,7 +1422,7 @@ RangeVarCallbackForRenameTrigger(const RangeVar *rv, Oid relid, Oid oldrelid,
 
 	/* you must own the table to rename one of its triggers */
 	if (!pg_class_ownercheck(relid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS, rv->relname);
+		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relid)), rv->relname);
 	if (!allowSystemTableMods && IsSystemClass(relid, form))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

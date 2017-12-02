@@ -198,7 +198,7 @@ GRANT CREATE ON DATABASE regression TO regress_publication_user2;
 SET ROLE regress_publication_user2;
 CREATE PUBLICATION testpub2;  -- ok
 ALTER PUBLICATION testpub2 ADD TABLE testpub_tbl1;  -- fail
-ERROR:  must be owner of relation testpub_tbl1
+ERROR:  must be owner of table testpub_tbl1
 SET ROLE regress_publication_user;
 GRANT regress_publication_user TO regress_publication_user2;
 SET ROLE regress_publication_user2;

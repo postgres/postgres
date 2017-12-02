@@ -74,7 +74,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 
 	aclresult = pg_namespace_aclcheck(collNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(collNamespace));
 
 	foreach(pl, parameters)
@@ -278,7 +278,7 @@ AlterCollation(AlterCollationStmt *stmt)
 	collOid = get_collation_oid(stmt->collname, false);
 
 	if (!pg_collation_ownercheck(collOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_COLLATION,
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_COLLATION,
 					   NameListToString(stmt->collname));
 
 	tup = SearchSysCacheCopy1(COLLOID, ObjectIdGetDatum(collOid));

@@ -1,5 +1,15 @@
 --
 -- ALTER_TABLE
+--
+
+-- Clean up in case a prior regression run failed
+SET client_min_messages TO 'warning';
+DROP ROLE IF EXISTS regress_alter_user1;
+RESET client_min_messages;
+
+CREATE USER regress_alter_user1;
+
+--
 -- add attribute
 --
 
@@ -209,9 +219,18 @@ ALTER INDEX IF EXISTS __tmp_onek_unique1 RENAME TO onek_unique1;
 
 ALTER INDEX onek_unique1 RENAME TO tmp_onek_unique1;
 ALTER INDEX tmp_onek_unique1 RENAME TO onek_unique1;
+
+SET ROLE regress_alter_user1;
+ALTER INDEX onek_unique1 RENAME TO fail;  -- permission denied
+RESET ROLE;
+
 -- renaming views
 CREATE VIEW tmp_view (unique1) AS SELECT unique1 FROM tenk1;
 ALTER TABLE tmp_view RENAME TO tmp_view_new;
+
+SET ROLE regress_alter_user1;
+ALTER VIEW tmp_view_new RENAME TO fail;  -- permission denied
+RESET ROLE;
 
 -- hack to ensure we get an indexscan here
 set enable_seqscan to off;
@@ -2546,3 +2565,5 @@ ALTER TABLE tmp ALTER COLUMN i SET (n_distinct = 1, n_distinct_inherited = 2);
 ALTER TABLE tmp ALTER COLUMN i RESET (n_distinct_inherited);
 ANALYZE tmp;
 DROP TABLE tmp;
+
+DROP USER regress_alter_user1;

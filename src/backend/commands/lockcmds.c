@@ -96,7 +96,7 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 	/* Check permissions. */
 	aclresult = LockTableAclCheck(relid, lockmode);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_CLASS, rv->relname);
+		aclcheck_error(aclresult, get_relkind_objtype(get_rel_relkind(relid)), rv->relname);
 }
 
 /*
@@ -127,7 +127,7 @@ LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait)
 
 			if (!relname)
 				continue;		/* child concurrently dropped, just skip it */
-			aclcheck_error(aclresult, ACL_KIND_CLASS, relname);
+			aclcheck_error(aclresult, get_relkind_objtype(get_rel_relkind(childreloid)), relname);
 		}
 
 		/* We have enough rights to lock the relation; do so. */

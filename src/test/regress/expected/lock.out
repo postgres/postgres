@@ -45,7 +45,7 @@ GRANT UPDATE ON TABLE lock_tbl1 TO regress_rol_lock1;
 SET ROLE regress_rol_lock1;
 BEGIN;
 LOCK TABLE lock_tbl1 * IN ACCESS EXCLUSIVE MODE;
-ERROR:  permission denied for relation lock_tbl2
+ERROR:  permission denied for table lock_tbl2
 ROLLBACK;
 BEGIN;
 LOCK TABLE ONLY lock_tbl1;

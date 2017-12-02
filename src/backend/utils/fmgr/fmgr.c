@@ -2124,7 +2124,7 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 	aclresult = pg_language_aclcheck(procStruct->prolang, GetUserId(),
 									 ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_LANGUAGE,
+		aclcheck_error(aclresult, OBJECT_LANGUAGE,
 					   NameStr(langStruct->lanname));
 
 	/*
@@ -2134,7 +2134,7 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 	 */
 	aclresult = pg_proc_aclcheck(functionOid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_PROC, NameStr(procStruct->proname));
+		aclcheck_error(aclresult, OBJECT_FUNCTION, NameStr(procStruct->proname));
 
 	ReleaseSysCache(procTup);
 	ReleaseSysCache(langTup);

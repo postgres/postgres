@@ -22,15 +22,15 @@ GRANT ALL ON SCHEMA selinto_schema TO public;
 SET SESSION AUTHORIZATION regress_selinto_user;
 SELECT * INTO TABLE selinto_schema.tmp1
 	  FROM pg_class WHERE relname like '%a%';	-- Error
-ERROR:  permission denied for relation tmp1
+ERROR:  permission denied for table tmp1
 SELECT oid AS clsoid, relname, relnatts + 10 AS x
 	  INTO selinto_schema.tmp2
 	  FROM pg_class WHERE relname like '%b%';	-- Error
-ERROR:  permission denied for relation tmp2
+ERROR:  permission denied for table tmp2
 CREATE TABLE selinto_schema.tmp3 (a,b,c)
 	   AS SELECT oid,relname,relacl FROM pg_class
 	   WHERE relname like '%c%';	-- Error
-ERROR:  permission denied for relation tmp3
+ERROR:  permission denied for table tmp3
 RESET SESSION AUTHORIZATION;
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_selinto_user
 	  GRANT INSERT ON TABLES TO regress_selinto_user;

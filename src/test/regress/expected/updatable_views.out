@@ -990,26 +990,26 @@ SELECT * FROM rw_view2; -- ok
 (2 rows)
 
 INSERT INTO base_tbl VALUES (3, 'Row 3', 3.0); -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 INSERT INTO rw_view1 VALUES ('Row 3', 3.0, 3); -- not allowed
-ERROR:  permission denied for relation rw_view1
+ERROR:  permission denied for view rw_view1
 INSERT INTO rw_view2 VALUES ('Row 3', 3.0, 3); -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 UPDATE base_tbl SET a=a, c=c; -- ok
 UPDATE base_tbl SET b=b; -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 UPDATE rw_view1 SET bb=bb, cc=cc; -- ok
 UPDATE rw_view1 SET aa=aa; -- not allowed
-ERROR:  permission denied for relation rw_view1
+ERROR:  permission denied for view rw_view1
 UPDATE rw_view2 SET aa=aa, cc=cc; -- ok
 UPDATE rw_view2 SET bb=bb; -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 DELETE FROM base_tbl; -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 DELETE FROM rw_view1; -- not allowed
-ERROR:  permission denied for relation rw_view1
+ERROR:  permission denied for view rw_view1
 DELETE FROM rw_view2; -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 RESET SESSION AUTHORIZATION;
 SET SESSION AUTHORIZATION regress_view_user1;
 GRANT INSERT, DELETE ON base_tbl TO regress_view_user2;
@@ -1017,11 +1017,11 @@ RESET SESSION AUTHORIZATION;
 SET SESSION AUTHORIZATION regress_view_user2;
 INSERT INTO base_tbl VALUES (3, 'Row 3', 3.0); -- ok
 INSERT INTO rw_view1 VALUES ('Row 4', 4.0, 4); -- not allowed
-ERROR:  permission denied for relation rw_view1
+ERROR:  permission denied for view rw_view1
 INSERT INTO rw_view2 VALUES ('Row 4', 4.0, 4); -- ok
 DELETE FROM base_tbl WHERE a=1; -- ok
 DELETE FROM rw_view1 WHERE aa=2; -- not allowed
-ERROR:  permission denied for relation rw_view1
+ERROR:  permission denied for view rw_view1
 DELETE FROM rw_view2 WHERE aa=2; -- ok
 SELECT * FROM base_tbl;
  a |   b   | c 
@@ -1037,15 +1037,15 @@ GRANT INSERT, DELETE ON rw_view1 TO regress_view_user2;
 RESET SESSION AUTHORIZATION;
 SET SESSION AUTHORIZATION regress_view_user2;
 INSERT INTO base_tbl VALUES (5, 'Row 5', 5.0); -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 INSERT INTO rw_view1 VALUES ('Row 5', 5.0, 5); -- ok
 INSERT INTO rw_view2 VALUES ('Row 6', 6.0, 6); -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 DELETE FROM base_tbl WHERE a=3; -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 DELETE FROM rw_view1 WHERE aa=3; -- ok
 DELETE FROM rw_view2 WHERE aa=4; -- not allowed
-ERROR:  permission denied for relation base_tbl
+ERROR:  permission denied for table base_tbl
 SELECT * FROM base_tbl;
  a |   b   | c 
 ---+-------+---

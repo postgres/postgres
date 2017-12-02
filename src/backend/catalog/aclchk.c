@@ -132,9 +132,9 @@ static const char *privilege_to_string(AclMode privilege);
 static AclMode restrict_and_check_grant(bool is_grant, AclMode avail_goptions,
 						 bool all_privs, AclMode privileges,
 						 Oid objectId, Oid grantorId,
-						 AclObjectKind objkind, const char *objname,
+						 ObjectType objtype, const char *objname,
 						 AttrNumber att_number, const char *colname);
-static AclMode pg_aclmask(AclObjectKind objkind, Oid table_oid, AttrNumber attnum,
+static AclMode pg_aclmask(ObjectType objtype, Oid table_oid, AttrNumber attnum,
 		   Oid roleid, AclMode mask, AclMaskHow how);
 static void recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid,
 						Acl *new_acl);
@@ -236,56 +236,56 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 static AclMode
 restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 						 AclMode privileges, Oid objectId, Oid grantorId,
-						 AclObjectKind objkind, const char *objname,
+						 ObjectType objtype, const char *objname,
 						 AttrNumber att_number, const char *colname)
 {
 	AclMode		this_privileges;
 	AclMode		whole_mask;
 
-	switch (objkind)
+	switch (objtype)
 	{
-		case ACL_KIND_COLUMN:
+		case OBJECT_COLUMN:
 			whole_mask = ACL_ALL_RIGHTS_COLUMN;
 			break;
-		case ACL_KIND_CLASS:
+		case OBJECT_TABLE:
 			whole_mask = ACL_ALL_RIGHTS_RELATION;
 			break;
-		case ACL_KIND_SEQUENCE:
+		case OBJECT_SEQUENCE:
 			whole_mask = ACL_ALL_RIGHTS_SEQUENCE;
 			break;
-		case ACL_KIND_DATABASE:
+		case OBJECT_DATABASE:
 			whole_mask = ACL_ALL_RIGHTS_DATABASE;
 			break;
-		case ACL_KIND_PROC:
+		case OBJECT_FUNCTION:
 			whole_mask = ACL_ALL_RIGHTS_FUNCTION;
 			break;
-		case ACL_KIND_LANGUAGE:
+		case OBJECT_LANGUAGE:
 			whole_mask = ACL_ALL_RIGHTS_LANGUAGE;
 			break;
-		case ACL_KIND_LARGEOBJECT:
+		case OBJECT_LARGEOBJECT:
 			whole_mask = ACL_ALL_RIGHTS_LARGEOBJECT;
 			break;
-		case ACL_KIND_NAMESPACE:
+		case OBJECT_SCHEMA:
 			whole_mask = ACL_ALL_RIGHTS_SCHEMA;
 			break;
-		case ACL_KIND_TABLESPACE:
+		case OBJECT_TABLESPACE:
 			whole_mask = ACL_ALL_RIGHTS_TABLESPACE;
 			break;
-		case ACL_KIND_FDW:
+		case OBJECT_FDW:
 			whole_mask = ACL_ALL_RIGHTS_FDW;
 			break;
-		case ACL_KIND_FOREIGN_SERVER:
+		case OBJECT_FOREIGN_SERVER:
 			whole_mask = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			break;
-		case ACL_KIND_EVENT_TRIGGER:
+		case OBJECT_EVENT_TRIGGER:
 			elog(ERROR, "grantable rights not supported for event triggers");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
-		case ACL_KIND_TYPE:
+		case OBJECT_TYPE:
 			whole_mask = ACL_ALL_RIGHTS_TYPE;
 			break;
 		default:
-			elog(ERROR, "unrecognized object kind: %d", objkind);
+			elog(ERROR, "unrecognized object type: %d", objtype);
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
 	}
@@ -297,14 +297,14 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 	 */
 	if (avail_goptions == ACL_NO_RIGHTS)
 	{
-		if (pg_aclmask(objkind, objectId, att_number, grantorId,
+		if (pg_aclmask(objtype, objectId, att_number, grantorId,
 					   whole_mask | ACL_GRANT_OPTION_FOR(whole_mask),
 					   ACLMASK_ANY) == ACL_NO_RIGHTS)
 		{
-			if (objkind == ACL_KIND_COLUMN && colname)
-				aclcheck_error_col(ACLCHECK_NO_PRIV, objkind, objname, colname);
+			if (objtype == OBJECT_COLUMN && colname)
+				aclcheck_error_col(ACLCHECK_NO_PRIV, objtype, objname, colname);
 			else
-				aclcheck_error(ACLCHECK_NO_PRIV, objkind, objname);
+				aclcheck_error(ACLCHECK_NO_PRIV, objtype, objname);
 		}
 	}
 
@@ -320,7 +320,7 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 	{
 		if (this_privileges == 0)
 		{
-			if (objkind == ACL_KIND_COLUMN && colname)
+			if (objtype == OBJECT_COLUMN && colname)
 				ereport(WARNING,
 						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
 						 errmsg("no privileges were granted for column \"%s\" of relation \"%s\"",
@@ -333,7 +333,7 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		}
 		else if (!all_privs && this_privileges != privileges)
 		{
-			if (objkind == ACL_KIND_COLUMN && colname)
+			if (objtype == OBJECT_COLUMN && colname)
 				ereport(WARNING,
 						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
 						 errmsg("not all privileges were granted for column \"%s\" of relation \"%s\"",
@@ -349,7 +349,7 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 	{
 		if (this_privileges == 0)
 		{
-			if (objkind == ACL_KIND_COLUMN && colname)
+			if (objtype == OBJECT_COLUMN && colname)
 				ereport(WARNING,
 						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
 						 errmsg("no privileges could be revoked for column \"%s\" of relation \"%s\"",
@@ -362,7 +362,7 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		}
 		else if (!all_privs && this_privileges != privileges)
 		{
-			if (objkind == ACL_KIND_COLUMN && colname)
+			if (objtype == OBJECT_COLUMN && colname)
 				ereport(WARNING,
 						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
 						 errmsg("not all privileges could be revoked for column \"%s\" of relation \"%s\"",
@@ -1721,7 +1721,7 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 		restrict_and_check_grant(istmt->is_grant, avail_goptions,
 								 (col_privileges == ACL_ALL_RIGHTS_COLUMN),
 								 col_privileges,
-								 relOid, grantorId, ACL_KIND_COLUMN,
+								 relOid, grantorId, OBJECT_COLUMN,
 								 relname, attnum,
 								 NameStr(pg_attribute_tuple->attname));
 
@@ -1976,7 +1976,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 			bool		replaces[Natts_pg_class];
 			int			nnewmembers;
 			Oid		   *newmembers;
-			AclObjectKind aclkind;
+			ObjectType	objtype;
 
 			/* Determine ID to do the grant as, and available grant options */
 			select_best_grantor(GetUserId(), this_privileges,
@@ -1986,10 +1986,10 @@ ExecGrant_Relation(InternalGrant *istmt)
 			switch (pg_class_tuple->relkind)
 			{
 				case RELKIND_SEQUENCE:
-					aclkind = ACL_KIND_SEQUENCE;
+					objtype = OBJECT_SEQUENCE;
 					break;
 				default:
-					aclkind = ACL_KIND_CLASS;
+					objtype = OBJECT_TABLE;
 					break;
 			}
 
@@ -2000,7 +2000,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 			this_privileges =
 				restrict_and_check_grant(istmt->is_grant, avail_goptions,
 										 istmt->all_privs, this_privileges,
-										 relOid, grantorId, aclkind,
+										 relOid, grantorId, objtype,
 										 NameStr(pg_class_tuple->relname),
 										 0, NULL);
 
@@ -2194,7 +2194,7 @@ ExecGrant_Database(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 datId, grantorId, ACL_KIND_DATABASE,
+									 datId, grantorId, OBJECT_DATABASE,
 									 NameStr(pg_database_tuple->datname),
 									 0, NULL);
 
@@ -2316,7 +2316,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 fdwid, grantorId, ACL_KIND_FDW,
+									 fdwid, grantorId, OBJECT_FDW,
 									 NameStr(pg_fdw_tuple->fdwname),
 									 0, NULL);
 
@@ -2442,7 +2442,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 srvid, grantorId, ACL_KIND_FOREIGN_SERVER,
+									 srvid, grantorId, OBJECT_FOREIGN_SERVER,
 									 NameStr(pg_server_tuple->srvname),
 									 0, NULL);
 
@@ -2566,7 +2566,7 @@ ExecGrant_Function(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 funcId, grantorId, ACL_KIND_PROC,
+									 funcId, grantorId, OBJECT_FUNCTION,
 									 NameStr(pg_proc_tuple->proname),
 									 0, NULL);
 
@@ -2697,7 +2697,7 @@ ExecGrant_Language(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 langId, grantorId, ACL_KIND_LANGUAGE,
+									 langId, grantorId, OBJECT_LANGUAGE,
 									 NameStr(pg_language_tuple->lanname),
 									 0, NULL);
 
@@ -2836,7 +2836,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 loid, grantorId, ACL_KIND_LARGEOBJECT,
+									 loid, grantorId, OBJECT_LARGEOBJECT,
 									 loname, 0, NULL);
 
 		/*
@@ -2961,7 +2961,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 nspid, grantorId, ACL_KIND_NAMESPACE,
+									 nspid, grantorId, OBJECT_SCHEMA,
 									 NameStr(pg_namespace_tuple->nspname),
 									 0, NULL);
 
@@ -3085,7 +3085,7 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 tblId, grantorId, ACL_KIND_TABLESPACE,
+									 tblId, grantorId, OBJECT_TABLESPACE,
 									 NameStr(pg_tablespace_tuple->spcname),
 									 0, NULL);
 
@@ -3219,7 +3219,7 @@ ExecGrant_Type(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 typId, grantorId, ACL_KIND_TYPE,
+									 typId, grantorId, OBJECT_TYPE,
 									 NameStr(pg_type_tuple->typname),
 									 0, NULL);
 
@@ -3348,114 +3348,8 @@ privilege_to_string(AclMode privilege)
  * Note: we do not double-quote the %s's below, because many callers
  * supply strings that might be already quoted.
  */
-
-static const char *const no_priv_msg[MAX_ACL_KIND] =
-{
-	/* ACL_KIND_COLUMN */
-	gettext_noop("permission denied for column %s"),
-	/* ACL_KIND_CLASS */
-	gettext_noop("permission denied for relation %s"),
-	/* ACL_KIND_SEQUENCE */
-	gettext_noop("permission denied for sequence %s"),
-	/* ACL_KIND_DATABASE */
-	gettext_noop("permission denied for database %s"),
-	/* ACL_KIND_PROC */
-	gettext_noop("permission denied for function %s"),
-	/* ACL_KIND_OPER */
-	gettext_noop("permission denied for operator %s"),
-	/* ACL_KIND_TYPE */
-	gettext_noop("permission denied for type %s"),
-	/* ACL_KIND_LANGUAGE */
-	gettext_noop("permission denied for language %s"),
-	/* ACL_KIND_LARGEOBJECT */
-	gettext_noop("permission denied for large object %s"),
-	/* ACL_KIND_NAMESPACE */
-	gettext_noop("permission denied for schema %s"),
-	/* ACL_KIND_OPCLASS */
-	gettext_noop("permission denied for operator class %s"),
-	/* ACL_KIND_OPFAMILY */
-	gettext_noop("permission denied for operator family %s"),
-	/* ACL_KIND_COLLATION */
-	gettext_noop("permission denied for collation %s"),
-	/* ACL_KIND_CONVERSION */
-	gettext_noop("permission denied for conversion %s"),
-	/* ACL_KIND_STATISTICS */
-	gettext_noop("permission denied for statistics object %s"),
-	/* ACL_KIND_TABLESPACE */
-	gettext_noop("permission denied for tablespace %s"),
-	/* ACL_KIND_TSDICTIONARY */
-	gettext_noop("permission denied for text search dictionary %s"),
-	/* ACL_KIND_TSCONFIGURATION */
-	gettext_noop("permission denied for text search configuration %s"),
-	/* ACL_KIND_FDW */
-	gettext_noop("permission denied for foreign-data wrapper %s"),
-	/* ACL_KIND_FOREIGN_SERVER */
-	gettext_noop("permission denied for foreign server %s"),
-	/* ACL_KIND_EVENT_TRIGGER */
-	gettext_noop("permission denied for event trigger %s"),
-	/* ACL_KIND_EXTENSION */
-	gettext_noop("permission denied for extension %s"),
-	/* ACL_KIND_PUBLICATION */
-	gettext_noop("permission denied for publication %s"),
-	/* ACL_KIND_SUBSCRIPTION */
-	gettext_noop("permission denied for subscription %s"),
-};
-
-static const char *const not_owner_msg[MAX_ACL_KIND] =
-{
-	/* ACL_KIND_COLUMN */
-	gettext_noop("must be owner of relation %s"),
-	/* ACL_KIND_CLASS */
-	gettext_noop("must be owner of relation %s"),
-	/* ACL_KIND_SEQUENCE */
-	gettext_noop("must be owner of sequence %s"),
-	/* ACL_KIND_DATABASE */
-	gettext_noop("must be owner of database %s"),
-	/* ACL_KIND_PROC */
-	gettext_noop("must be owner of function %s"),
-	/* ACL_KIND_OPER */
-	gettext_noop("must be owner of operator %s"),
-	/* ACL_KIND_TYPE */
-	gettext_noop("must be owner of type %s"),
-	/* ACL_KIND_LANGUAGE */
-	gettext_noop("must be owner of language %s"),
-	/* ACL_KIND_LARGEOBJECT */
-	gettext_noop("must be owner of large object %s"),
-	/* ACL_KIND_NAMESPACE */
-	gettext_noop("must be owner of schema %s"),
-	/* ACL_KIND_OPCLASS */
-	gettext_noop("must be owner of operator class %s"),
-	/* ACL_KIND_OPFAMILY */
-	gettext_noop("must be owner of operator family %s"),
-	/* ACL_KIND_COLLATION */
-	gettext_noop("must be owner of collation %s"),
-	/* ACL_KIND_CONVERSION */
-	gettext_noop("must be owner of conversion %s"),
-	/* ACL_KIND_STATISTICS */
-	gettext_noop("must be owner of statistics object %s"),
-	/* ACL_KIND_TABLESPACE */
-	gettext_noop("must be owner of tablespace %s"),
-	/* ACL_KIND_TSDICTIONARY */
-	gettext_noop("must be owner of text search dictionary %s"),
-	/* ACL_KIND_TSCONFIGURATION */
-	gettext_noop("must be owner of text search configuration %s"),
-	/* ACL_KIND_FDW */
-	gettext_noop("must be owner of foreign-data wrapper %s"),
-	/* ACL_KIND_FOREIGN_SERVER */
-	gettext_noop("must be owner of foreign server %s"),
-	/* ACL_KIND_EVENT_TRIGGER */
-	gettext_noop("must be owner of event trigger %s"),
-	/* ACL_KIND_EXTENSION */
-	gettext_noop("must be owner of extension %s"),
-	/* ACL_KIND_PUBLICATION */
-	gettext_noop("must be owner of publication %s"),
-	/* ACL_KIND_SUBSCRIPTION */
-	gettext_noop("must be owner of subscription %s"),
-};
-
-
 void
-aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
+aclcheck_error(AclResult aclerr, ObjectType objtype,
 			   const char *objectname)
 {
 	switch (aclerr)
@@ -3464,15 +3358,272 @@ aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
 			/* no error, so return to caller */
 			break;
 		case ACLCHECK_NO_PRIV:
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg(no_priv_msg[objectkind], objectname)));
-			break;
+			{
+				const char *msg;
+
+				switch (objtype)
+				{
+					case OBJECT_AGGREGATE:
+						msg = gettext_noop("permission denied for aggregate %s");
+						break;
+					case OBJECT_COLLATION:
+						msg = gettext_noop("permission denied for collation %s");
+						break;
+					case OBJECT_COLUMN:
+						msg = gettext_noop("permission denied for column %s");
+						break;
+					case OBJECT_CONVERSION:
+						msg = gettext_noop("permission denied for conversion %s");
+						break;
+					case OBJECT_DATABASE:
+						msg = gettext_noop("permission denied for database %s");
+						break;
+					case OBJECT_DOMAIN:
+						msg = gettext_noop("permission denied for domain %s");
+						break;
+					case OBJECT_EVENT_TRIGGER:
+						msg = gettext_noop("permission denied for event trigger %s");
+						break;
+					case OBJECT_EXTENSION:
+						msg = gettext_noop("permission denied for extension %s");
+						break;
+					case OBJECT_FDW:
+						msg = gettext_noop("permission denied for foreign-data wrapper %s");
+						break;
+					case OBJECT_FOREIGN_SERVER:
+						msg = gettext_noop("permission denied for foreign server %s");
+						break;
+					case OBJECT_FOREIGN_TABLE:
+						msg = gettext_noop("permission denied for foreign table %s");
+						break;
+					case OBJECT_FUNCTION:
+						msg = gettext_noop("permission denied for function %s");
+						break;
+					case OBJECT_INDEX:
+						msg = gettext_noop("permission denied for index %s");
+						break;
+					case OBJECT_LANGUAGE:
+						msg = gettext_noop("permission denied for language %s");
+						break;
+					case OBJECT_LARGEOBJECT:
+						msg = gettext_noop("permission denied for large object %s");
+						break;
+					case OBJECT_MATVIEW:
+						msg = gettext_noop("permission denied for materialized view %s");
+						break;
+					case OBJECT_OPCLASS:
+						msg = gettext_noop("permission denied for operator class %s");
+						break;
+					case OBJECT_OPERATOR:
+						msg = gettext_noop("permission denied for operator %s");
+						break;
+					case OBJECT_OPFAMILY:
+						msg = gettext_noop("permission denied for operator family %s");
+						break;
+					case OBJECT_POLICY:
+						msg = gettext_noop("permission denied for policy %s");
+						break;
+					case OBJECT_PROCEDURE:
+						msg = gettext_noop("permission denied for procedure %s");
+						break;
+					case OBJECT_PUBLICATION:
+						msg = gettext_noop("permission denied for publication %s");
+						break;
+					case OBJECT_ROUTINE:
+						msg = gettext_noop("permission denied for routine %s");
+						break;
+					case OBJECT_SCHEMA:
+						msg = gettext_noop("permission denied for schema %s");
+						break;
+					case OBJECT_SEQUENCE:
+						msg = gettext_noop("permission denied for sequence %s");
+						break;
+					case OBJECT_STATISTIC_EXT:
+						msg = gettext_noop("permission denied for statistics object %s");
+						break;
+					case OBJECT_SUBSCRIPTION:
+						msg = gettext_noop("permission denied for subscription %s");
+						break;
+					case OBJECT_TABLE:
+						msg = gettext_noop("permission denied for table %s");
+						break;
+					case OBJECT_TABLESPACE:
+						msg = gettext_noop("permission denied for tablespace %s");
+						break;
+					case OBJECT_TSCONFIGURATION:
+						msg = gettext_noop("permission denied for text search configuration %s");
+						break;
+					case OBJECT_TSDICTIONARY:
+						msg = gettext_noop("permission denied for text search dictionary %s");
+						break;
+					case OBJECT_TYPE:
+						msg = gettext_noop("permission denied for type %s");
+						break;
+					case OBJECT_VIEW:
+						msg = gettext_noop("permission denied for view %s");
+						break;
+					/* these currently aren't used */
+					case OBJECT_ACCESS_METHOD:
+					case OBJECT_AMOP:
+					case OBJECT_AMPROC:
+					case OBJECT_ATTRIBUTE:
+					case OBJECT_CAST:
+					case OBJECT_DEFAULT:
+					case OBJECT_DEFACL:
+					case OBJECT_DOMCONSTRAINT:
+					case OBJECT_PUBLICATION_REL:
+					case OBJECT_ROLE:
+					case OBJECT_RULE:
+					case OBJECT_TABCONSTRAINT:
+					case OBJECT_TRANSFORM:
+					case OBJECT_TRIGGER:
+					case OBJECT_TSPARSER:
+					case OBJECT_TSTEMPLATE:
+					case OBJECT_USER_MAPPING:
+						elog(ERROR, "unsupported object type %d", objtype);
+						msg = "???";
+				}
+
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg(msg, objectname)));
+				break;
+			}
 		case ACLCHECK_NOT_OWNER:
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg(not_owner_msg[objectkind], objectname)));
-			break;
+			{
+				const char *msg;
+
+				switch (objtype)
+				{
+					case OBJECT_AGGREGATE:
+						msg = gettext_noop("must be owner of aggregate %s");
+						break;
+					case OBJECT_COLLATION:
+						msg = gettext_noop("must be owner of collation %s");
+						break;
+					case OBJECT_CONVERSION:
+						msg = gettext_noop("must be owner of conversion %s");
+						break;
+					case OBJECT_DATABASE:
+						msg = gettext_noop("must be owner of database %s");
+						break;
+					case OBJECT_DOMAIN:
+						msg = gettext_noop("must be owner of domain %s");
+						break;
+					case OBJECT_EVENT_TRIGGER:
+						msg = gettext_noop("must be owner of event trigger %s");
+						break;
+					case OBJECT_EXTENSION:
+						msg = gettext_noop("must be owner of extension %s");
+						break;
+					case OBJECT_FDW:
+						msg = gettext_noop("must be owner of foreign-data wrapper %s");
+						break;
+					case OBJECT_FOREIGN_SERVER:
+						msg = gettext_noop("must be owner of foreign server %s");
+						break;
+					case OBJECT_FOREIGN_TABLE:
+						msg = gettext_noop("must be owner of foreign table %s");
+						break;
+					case OBJECT_FUNCTION:
+						msg = gettext_noop("must be owner of function %s");
+						break;
+					case OBJECT_INDEX:
+						msg = gettext_noop("must be owner of index %s");
+						break;
+					case OBJECT_LANGUAGE:
+						msg = gettext_noop("must be owner of language %s");
+						break;
+					case OBJECT_LARGEOBJECT:
+						msg = gettext_noop("must be owner of large object %s");
+						break;
+					case OBJECT_MATVIEW:
+						msg = gettext_noop("must be owner of materialized view %s");
+						break;
+					case OBJECT_OPCLASS:
+						msg = gettext_noop("must be owner of operator class %s");
+						break;
+					case OBJECT_OPERATOR:
+						msg = gettext_noop("must be owner of operator %s");
+						break;
+					case OBJECT_OPFAMILY:
+						msg = gettext_noop("must be owner of operator family %s");
+						break;
+					case OBJECT_PROCEDURE:
+						msg = gettext_noop("must be owner of procedure %s");
+						break;
+					case OBJECT_PUBLICATION:
+						msg = gettext_noop("must be owner of publication %s");
+						break;
+					case OBJECT_ROUTINE:
+						msg = gettext_noop("must be owner of routine %s");
+						break;
+					case OBJECT_SEQUENCE:
+						msg = gettext_noop("must be owner of sequence %s");
+						break;
+					case OBJECT_SUBSCRIPTION:
+						msg = gettext_noop("must be owner of subscription %s");
+						break;
+					case OBJECT_TABLE:
+						msg = gettext_noop("must be owner of table %s");
+						break;
+					case OBJECT_TYPE:
+						msg = gettext_noop("must be owner of type %s");
+						break;
+					case OBJECT_VIEW:
+						msg = gettext_noop("must be owner of view %s");
+						break;
+					case OBJECT_SCHEMA:
+						msg = gettext_noop("must be owner of schema %s");
+						break;
+					case OBJECT_STATISTIC_EXT:
+						msg = gettext_noop("must be owner of statistics object %s");
+						break;
+					case OBJECT_TABLESPACE:
+						msg = gettext_noop("must be owner of tablespace %s");
+						break;
+					case OBJECT_TSCONFIGURATION:
+						msg = gettext_noop("must be owner of text search configuration %s");
+						break;
+					case OBJECT_TSDICTIONARY:
+						msg = gettext_noop("must be owner of text search dictionary %s");
+						break;
+					/*
+					 * Special cases: For these, the error message talks about
+					 * "relation", because that's where the ownership is
+					 * attached.  See also check_object_ownership().
+					 */
+					case OBJECT_COLUMN:
+					case OBJECT_POLICY:
+					case OBJECT_RULE:
+					case OBJECT_TABCONSTRAINT:
+					case OBJECT_TRIGGER:
+						msg = gettext_noop("must be owner of relation %s");
+						break;
+					/* these currently aren't used */
+					case OBJECT_ACCESS_METHOD:
+					case OBJECT_AMOP:
+					case OBJECT_AMPROC:
+					case OBJECT_ATTRIBUTE:
+					case OBJECT_CAST:
+					case OBJECT_DEFAULT:
+					case OBJECT_DEFACL:
+					case OBJECT_DOMCONSTRAINT:
+					case OBJECT_PUBLICATION_REL:
+					case OBJECT_ROLE:
+					case OBJECT_TRANSFORM:
+					case OBJECT_TSPARSER:
+					case OBJECT_TSTEMPLATE:
+					case OBJECT_USER_MAPPING:
+						elog(ERROR, "unsupported object type %d", objtype);
+						msg = "???";
+				}
+
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg(msg, objectname)));
+				break;
+			}
 		default:
 			elog(ERROR, "unrecognized AclResult: %d", (int) aclerr);
 			break;
@@ -3481,7 +3632,7 @@ aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
 
 
 void
-aclcheck_error_col(AclResult aclerr, AclObjectKind objectkind,
+aclcheck_error_col(AclResult aclerr, ObjectType objtype,
 				   const char *objectname, const char *colname)
 {
 	switch (aclerr)
@@ -3497,9 +3648,7 @@ aclcheck_error_col(AclResult aclerr, AclObjectKind objectkind,
 			break;
 		case ACLCHECK_NOT_OWNER:
 			/* relation msg is OK since columns don't have separate owners */
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg(not_owner_msg[objectkind], objectname)));
+			aclcheck_error(aclerr, objtype, objectname);
 			break;
 		default:
 			elog(ERROR, "unrecognized AclResult: %d", (int) aclerr);
@@ -3517,7 +3666,7 @@ aclcheck_error_type(AclResult aclerr, Oid typeOid)
 {
 	Oid			element_type = get_element_type(typeOid);
 
-	aclcheck_error(aclerr, ACL_KIND_TYPE, format_type_be(element_type ? element_type : typeOid));
+	aclcheck_error(aclerr, OBJECT_TYPE, format_type_be(element_type ? element_type : typeOid));
 }
 
 
@@ -3525,48 +3674,48 @@ aclcheck_error_type(AclResult aclerr, Oid typeOid)
  * Relay for the various pg_*_mask routines depending on object kind
  */
 static AclMode
-pg_aclmask(AclObjectKind objkind, Oid table_oid, AttrNumber attnum, Oid roleid,
+pg_aclmask(ObjectType objtype, Oid table_oid, AttrNumber attnum, Oid roleid,
 		   AclMode mask, AclMaskHow how)
 {
-	switch (objkind)
+	switch (objtype)
 	{
-		case ACL_KIND_COLUMN:
+		case OBJECT_COLUMN:
 			return
 				pg_class_aclmask(table_oid, roleid, mask, how) |
 				pg_attribute_aclmask(table_oid, attnum, roleid, mask, how);
-		case ACL_KIND_CLASS:
-		case ACL_KIND_SEQUENCE:
+		case OBJECT_TABLE:
+		case OBJECT_SEQUENCE:
 			return pg_class_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_DATABASE:
+		case OBJECT_DATABASE:
 			return pg_database_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_PROC:
+		case OBJECT_FUNCTION:
 			return pg_proc_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_LANGUAGE:
+		case OBJECT_LANGUAGE:
 			return pg_language_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_LARGEOBJECT:
+		case OBJECT_LARGEOBJECT:
 			return pg_largeobject_aclmask_snapshot(table_oid, roleid,
 												   mask, how, NULL);
-		case ACL_KIND_NAMESPACE:
+		case OBJECT_SCHEMA:
 			return pg_namespace_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_STATISTICS:
+		case OBJECT_STATISTIC_EXT:
 			elog(ERROR, "grantable rights not supported for statistics objects");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
-		case ACL_KIND_TABLESPACE:
+		case OBJECT_TABLESPACE:
 			return pg_tablespace_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_FDW:
+		case OBJECT_FDW:
 			return pg_foreign_data_wrapper_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_FOREIGN_SERVER:
+		case OBJECT_FOREIGN_SERVER:
 			return pg_foreign_server_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_EVENT_TRIGGER:
+		case OBJECT_EVENT_TRIGGER:
 			elog(ERROR, "grantable rights not supported for event triggers");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
-		case ACL_KIND_TYPE:
+		case OBJECT_TYPE:
 			return pg_type_aclmask(table_oid, roleid, mask, how);
 		default:
-			elog(ERROR, "unrecognized objkind: %d",
-				 (int) objkind);
+			elog(ERROR, "unrecognized objtype: %d",
+				 (int) objtype);
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
 	}

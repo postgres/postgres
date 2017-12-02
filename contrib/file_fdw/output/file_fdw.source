@@ -393,7 +393,7 @@ SELECT * FROM agg_text ORDER BY a;
 
 SET ROLE regress_no_priv_user;
 SELECT * FROM agg_text ORDER BY a;   -- ERROR
-ERROR:  permission denied for relation agg_text
+ERROR:  permission denied for foreign table agg_text
 SET ROLE regress_file_fdw_user;
 \t on
 EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0;

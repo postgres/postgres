@@ -785,7 +785,7 @@ ROLLBACK;
 BEGIN;
 SET LOCAL SESSION AUTHORIZATION regress_seq_user;
 ALTER SEQUENCE sequence_test2 START WITH 1;
-ERROR:  must be owner of relation sequence_test2
+ERROR:  must be owner of sequence sequence_test2
 ROLLBACK;
 -- Sequences should get wiped out as well:
 DROP TABLE serialTest1, serialTest2;

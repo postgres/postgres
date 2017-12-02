@@ -521,12 +521,12 @@ RESET SESSION AUTHORIZATION;
 SET SESSION AUTHORIZATION regress_rls_copy_user_colperms;
 -- attempt all columns (should fail)
 COPY rls_t1 TO stdout;
-ERROR:  permission denied for relation rls_t1
+ERROR:  permission denied for table rls_t1
 COPY rls_t1 (a, b, c) TO stdout;
-ERROR:  permission denied for relation rls_t1
+ERROR:  permission denied for table rls_t1
 -- try to copy column with no privileges (should fail)
 COPY rls_t1 (c) TO stdout;
-ERROR:  permission denied for relation rls_t1
+ERROR:  permission denied for table rls_t1
 -- subset of columns (should succeed)
 COPY rls_t1 (a) TO stdout;
 2

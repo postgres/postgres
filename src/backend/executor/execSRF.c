@@ -682,7 +682,7 @@ init_sexpr(Oid foid, Oid input_collation, Expr *node,
 	/* Check permission to call function */
 	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(foid));
+		aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
 	InvokeFunctionExecuteHook(foid);
 
 	/*

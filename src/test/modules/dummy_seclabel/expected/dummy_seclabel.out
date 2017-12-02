@@ -30,14 +30,14 @@ SECURITY LABEL FOR 'dummy' ON TABLE dummy_seclabel_tbl1 IS 'unclassified';	-- OK
 SECURITY LABEL FOR 'unknown_seclabel' ON TABLE dummy_seclabel_tbl1 IS 'classified';	-- fail
 ERROR:  security label provider "unknown_seclabel" is not loaded
 SECURITY LABEL ON TABLE dummy_seclabel_tbl2 IS 'unclassified';	-- fail (not owner)
-ERROR:  must be owner of relation dummy_seclabel_tbl2
+ERROR:  must be owner of table dummy_seclabel_tbl2
 SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'secret';		-- fail (not superuser)
 ERROR:  only superuser can set 'secret' label
 SECURITY LABEL ON TABLE dummy_seclabel_tbl3 IS 'unclassified';	-- fail (not found)
 ERROR:  relation "dummy_seclabel_tbl3" does not exist
 SET SESSION AUTHORIZATION regress_dummy_seclabel_user2;
 SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'unclassified';		-- fail
-ERROR:  must be owner of relation dummy_seclabel_tbl1
+ERROR:  must be owner of table dummy_seclabel_tbl1
 SECURITY LABEL ON TABLE dummy_seclabel_tbl2 IS 'classified';			-- OK
 --
 -- Test for shared database object
