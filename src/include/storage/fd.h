@@ -79,6 +79,14 @@ extern int	FileGetRawDesc(File file);
 extern int	FileGetRawFlags(File file);
 extern mode_t FileGetRawMode(File file);
 
+/* Operations used for sharing named temporary files */
+extern File PathNameCreateTemporaryFile(const char *name, bool error_on_failure);
+extern File PathNameOpenTemporaryFile(const char *name);
+extern bool PathNameDeleteTemporaryFile(const char *name, bool error_on_failure);
+extern void PathNameCreateTemporaryDir(const char *base, const char *name);
+extern void PathNameDeleteTemporaryDir(const char *name);
+extern void TempTablespacePath(char *path, Oid tablespace);
+
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);
 extern int	FreeFile(FILE *file);
@@ -107,6 +115,7 @@ extern void set_max_safe_fds(void);
 extern void closeAllVfds(void);
 extern void SetTempTablespaces(Oid *tableSpaces, int numSpaces);
 extern bool TempTablespacesAreSet(void);
+extern int	GetTempTablespaces(Oid *tableSpaces, int numSpaces);
 extern Oid	GetNextTempTableSpace(void);
 extern void AtEOXact_Files(void);
 extern void AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
@@ -124,7 +133,7 @@ extern int	durable_unlink(const char *fname, int loglevel);
 extern int	durable_link_or_rename(const char *oldfile, const char *newfile, int loglevel);
 extern void SyncDataDirectory(void);
 
-/* Filename components for OpenTemporaryFile */
+/* Filename components */
 #define PG_TEMP_FILES_DIR "pgsql_tmp"
 #define PG_TEMP_FILE_PREFIX "pgsql_tmp"
 
