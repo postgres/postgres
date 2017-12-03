@@ -210,6 +210,8 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("PL/Python procedure did not return None")));
+			fcinfo->isnull = false;
+			rv = (Datum) 0;
 		}
 		else if (proc->result.typoid == VOIDOID)
 		{
