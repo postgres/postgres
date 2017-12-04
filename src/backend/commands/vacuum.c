@@ -1330,6 +1330,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+	bool		rel_lock = true;
 
 	Assert(params != NULL);
 
@@ -1400,16 +1401,52 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	else
 	{
 		onerel = NULL;
-		if (relation &&
-			IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
-			ereport(LOG,
-					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-					 errmsg("skipping vacuum of \"%s\" --- lock not available",
-							relation->relname)));
+		rel_lock = false;
 	}
 
+	/*
+	 * If we failed to open or lock the relation, emit a log message before
+	 * exiting.
+	 */
 	if (!onerel)
 	{
+		int			elevel = 0;
+
+		/*
+		 * Determine the log level.
+		 *
+		 * If the RangeVar is not defined, we do not have enough information
+		 * to provide a meaningful log statement.  Chances are that
+		 * vacuum_rel's caller has intentionally not provided this information
+		 * so that this logging is skipped, anyway.
+		 *
+		 * Otherwise, for autovacuum logs, we emit a LOG if
+		 * log_autovacuum_min_duration is not disabled.  For manual VACUUM, we
+		 * emit a WARNING to match the log statements in the permission
+		 * checks.
+		 */
+		if (relation != NULL)
+		{
+			if (!IsAutoVacuumWorkerProcess())
+				elevel = WARNING;
+			else if (params->log_min_duration >= 0)
+				elevel = LOG;
+		}
+
+		if (elevel != 0)
+		{
+			if (!rel_lock)
+				ereport(elevel,
+						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+						 errmsg("skipping vacuum of \"%s\" --- lock not available",
+								relation->relname)));
+			else
+				ereport(elevel,
+						(errcode(ERRCODE_UNDEFINED_TABLE),
+						 errmsg("skipping vacuum of \"%s\" --- relation no longer exists",
+								relation->relname)));
+		}
+
 		PopActiveSnapshot();
 		CommitTransactionCommand();
 		return false;
