@@ -736,91 +736,104 @@ pg_dependencies_send(PG_FUNCTION_ARGS)
  * dependency_is_compatible_clause
  *		Determines if the clause is compatible with functional dependencies
  *
- * Only OpExprs with two arguments using an equality operator are supported.
- * When returning True attnum is set to the attribute number of the Var within
- * the supported clause.
- *
- * Currently we only support Var = Const, or Const = Var. It may be possible
- * to expand on this later.
+ * Only clauses that have the form of equality to a pseudoconstant, or can be
+ * interpreted that way, are currently accepted.  Furthermore the variable
+ * part of the clause must be a simple Var belonging to the specified
+ * relation, whose attribute number we return in *attnum on success.
  */
 static bool
 dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 {
 	RestrictInfo *rinfo = (RestrictInfo *) clause;
+	Var		   *var;
 
 	if (!IsA(rinfo, RestrictInfo))
 		return false;
 
-	/* Pseudoconstants are not really interesting here. */
+	/* Pseudoconstants are not interesting (they couldn't contain a Var) */
 	if (rinfo->pseudoconstant)
 		return false;
 
-	/* clauses referencing multiple varnos are incompatible */
+	/* Clauses referencing multiple, or no, varnos are incompatible */
 	if (bms_membership(rinfo->clause_relids) != BMS_SINGLETON)
 		return false;
 
 	if (is_opclause(rinfo->clause))
 	{
+		/* If it's an opclause, check for Var = Const or Const = Var. */
 		OpExpr	   *expr = (OpExpr *) rinfo->clause;
-		Var		   *var;
-		bool		varonleft = true;
-		bool		ok;
 
-		/* Only expressions with two arguments are considered compatible. */
+		/* Only expressions with two arguments are candidates. */
 		if (list_length(expr->args) != 2)
 			return false;
 
-		/* see if it actually has the right */
-		ok = (NumRelids((Node *) expr) == 1) &&
-			(is_pseudo_constant_clause(lsecond(expr->args)) ||
-			 (varonleft = false,
-			  is_pseudo_constant_clause(linitial(expr->args))));
-
-		/* unsupported structure (two variables or so) */
-		if (!ok)
+		/* Make sure non-selected argument is a pseudoconstant. */
+		if (is_pseudo_constant_clause(lsecond(expr->args)))
+			var = linitial(expr->args);
+		else if (is_pseudo_constant_clause(linitial(expr->args)))
+			var = lsecond(expr->args);
+		else
 			return false;
 
 		/*
-		 * If it's not "=" operator, just ignore the clause, as it's not
+		 * If it's not an "=" operator, just ignore the clause, as it's not
 		 * compatible with functional dependencies.
 		 *
 		 * This uses the function for estimating selectivity, not the operator
 		 * directly (a bit awkward, but well ...).
+		 *
+		 * XXX this is pretty dubious; probably it'd be better to check btree
+		 * or hash opclass membership, so as not to be fooled by custom
+		 * selectivity functions, and to be more consistent with decisions
+		 * elsewhere in the planner.
 		 */
 		if (get_oprrest(expr->opno) != F_EQSEL)
 			return false;
 
-		var = (varonleft) ? linitial(expr->args) : lsecond(expr->args);
-
+		/* OK to proceed with checking "var" */
+	}
+	else if (not_clause((Node *) rinfo->clause))
+	{
 		/*
-		 * We may ignore any RelabelType node above the operand.  (There won't
-		 * be more than one, since eval_const_expressions() has been applied
-		 * already.)
+		 * "NOT x" can be interpreted as "x = false", so get the argument and
+		 * proceed with seeing if it's a suitable Var.
 		 */
-		if (IsA(var, RelabelType))
-			var = (Var *) ((RelabelType *) var)->arg;
-
-		/* We only support plain Vars for now */
-		if (!IsA(var, Var))
-			return false;
-
-		/* Ensure var is from the correct relation */
-		if (var->varno != relid)
-			return false;
-
-		/* we also better ensure the Var is from the current level */
-		if (var->varlevelsup > 0)
-			return false;
-
-		/* Also skip system attributes (we don't allow stats on those). */
-		if (!AttrNumberIsForUserDefinedAttr(var->varattno))
-			return false;
-
-		*attnum = var->varattno;
-		return true;
+		var = (Var *) get_notclausearg(rinfo->clause);
+	}
+	else
+	{
+		/*
+		 * A boolean expression "x" can be interpreted as "x = true", so
+		 * proceed with seeing if it's a suitable Var.
+		 */
+		var = (Var *) rinfo->clause;
 	}
 
-	return false;
+	/*
+	 * We may ignore any RelabelType node above the operand.  (There won't be
+	 * more than one, since eval_const_expressions has been applied already.)
+	 */
+	if (IsA(var, RelabelType))
+		var = (Var *) ((RelabelType *) var)->arg;
+
+	/* We only support plain Vars for now */
+	if (!IsA(var, Var))
+		return false;
+
+	/* Ensure Var is from the correct relation */
+	if (var->varno != relid)
+		return false;
+
+	/* We also better ensure the Var is from the current level */
+	if (var->varlevelsup != 0)
+		return false;
+
+	/* Also ignore system attributes (we don't allow stats on those) */
+	if (!AttrNumberIsForUserDefinedAttr(var->varattno))
+		return false;
+
+	*attnum = var->varattno;
+	return true;
 }
 
 /*
@@ -891,12 +904,12 @@ find_strongest_dependency(StatisticExtInfo *stats, MVDependencies *dependencies,
 
 /*
  * dependencies_clauselist_selectivity
- *		Return the estimated selectivity of the given clauses using
- *		functional dependency statistics, or 1.0 if no useful functional
+ *		Return the estimated selectivity of (a subset of) the given clauses
+ *		using functional dependency statistics, or 1.0 if no useful functional
  *		dependency statistic exists.
  *
  * 'estimatedclauses' is an output argument that gets a bit set corresponding
- * to the (zero-based) list index of clauses that are included in the
+ * to the (zero-based) list index of each clause that is included in the
  * estimated selectivity.
  *
  * Given equality clauses on attributes (a,b) we find the strongest dependency
@@ -931,6 +944,9 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	MVDependencies *dependencies;
 	AttrNumber *list_attnums;
 	int			listidx;
+
+	/* initialize output argument */
+	*estimatedclauses = NULL;
 
 	/* check if there's any stats that might be useful for us. */
 	if (!has_stats_of_kind(rel->statlist, STATS_EXT_DEPENDENCIES))
