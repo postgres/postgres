@@ -1735,8 +1735,8 @@ restoreTwoPhaseData(void)
 	DIR		   *cldir;
 	struct dirent *clde;
 
-	cldir = AllocateDir(TWOPHASE_DIR);
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
+	cldir = AllocateDir(TWOPHASE_DIR);
 	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&

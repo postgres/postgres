@@ -367,9 +367,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		XLogFileName(lastoff, ThisTimeLineID, endsegno, wal_segment_size);
 
 		dir = AllocateDir("pg_wal");
-		if (!dir)
-			ereport(ERROR,
-					(errmsg("could not open directory \"%s\": %m", "pg_wal")));
 		while ((de = ReadDir(dir, "pg_wal")) != NULL)
 		{
 			/* Does it look like a WAL segment, and is it in the range? */
@@ -713,7 +710,9 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	dir = AllocateDir("pg_tblspc");
 	if (!dir)
 		ereport(ERROR,
-				(errmsg("could not open directory \"%s\": %m", "pg_tblspc")));
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m",
+						"pg_tblspc")));
 
 	perform_base_backup(&opt, dir);
 

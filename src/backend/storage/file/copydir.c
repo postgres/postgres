@@ -47,10 +47,6 @@ copydir(char *fromdir, char *todir, bool recurse)
 				 errmsg("could not create directory \"%s\": %m", todir)));
 
 	xldir = AllocateDir(fromdir);
-	if (xldir == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m", fromdir)));
 
 	while ((xlde = ReadDir(xldir, fromdir)) != NULL)
 	{
@@ -90,10 +86,6 @@ copydir(char *fromdir, char *todir, bool recurse)
 		return;
 
 	xldir = AllocateDir(todir);
-	if (xldir == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m", todir)));
 
 	while ((xlde = ReadDir(xldir, todir)) != NULL)
 	{

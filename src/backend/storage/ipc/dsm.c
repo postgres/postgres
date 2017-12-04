@@ -294,14 +294,9 @@ dsm_cleanup_for_mmap(void)
 	DIR		   *dir;
 	struct dirent *dent;
 
-	/* Open the directory; can't use AllocateDir in postmaster. */
-	if ((dir = AllocateDir(PG_DYNSHMEM_DIR)) == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m",
-						PG_DYNSHMEM_DIR)));
+	/* Scan the directory for something with a name of the correct format. */
+	dir = AllocateDir(PG_DYNSHMEM_DIR);
 
-	/* Scan for something with a name of the correct format. */
 	while ((dent = ReadDir(dir, PG_DYNSHMEM_DIR)) != NULL)
 	{
 		if (strncmp(dent->d_name, PG_DYNSHMEM_MMAP_FILE_PREFIX,
@@ -315,17 +310,9 @@ dsm_cleanup_for_mmap(void)
 
 			/* We found a matching file; so remove it. */
 			if (unlink(buf) != 0)
-			{
-				int			save_errno;
-
-				save_errno = errno;
-				closedir(dir);
-				errno = save_errno;
-
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not remove file \"%s\": %m", buf)));
-			}
 		}
 	}
 

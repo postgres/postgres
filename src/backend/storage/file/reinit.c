@@ -111,9 +111,10 @@ ResetUnloggedRelationsInTablespaceDir(const char *tsdirname, int op)
 	{
 		/* anything except ENOENT is fishy */
 		if (errno != ENOENT)
-			elog(LOG,
-				 "could not open tablespace directory \"%s\": %m",
-				 tsdirname);
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not open directory \"%s\": %m",
+							tsdirname)));
 		return;
 	}
 
@@ -164,9 +165,10 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		dbspace_dir = AllocateDir(dbspacedirname);
 		if (dbspace_dir == NULL)
 		{
-			elog(LOG,
-				 "could not open dbspace directory \"%s\": %m",
-				 dbspacedirname);
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not open directory \"%s\": %m",
+							dbspacedirname)));
 			return;
 		}
 
@@ -226,9 +228,10 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		dbspace_dir = AllocateDir(dbspacedirname);
 		if (dbspace_dir == NULL)
 		{
-			elog(LOG,
-				 "could not open dbspace directory \"%s\": %m",
-				 dbspacedirname);
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not open directory \"%s\": %m",
+							dbspacedirname)));
 			hash_destroy(hash);
 			return;
 		}
@@ -296,9 +299,10 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		if (dbspace_dir == NULL)
 		{
 			/* we just saw this directory, so it really ought to be there */
-			elog(LOG,
-				 "could not open dbspace directory \"%s\": %m",
-				 dbspacedirname);
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not open directory \"%s\": %m",
+							dbspacedirname)));
 			return;
 		}
 
@@ -349,9 +353,10 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		if (dbspace_dir == NULL)
 		{
 			/* we just saw this directory, so it really ought to be there */
-			elog(LOG,
-				 "could not open dbspace directory \"%s\": %m",
-				 dbspacedirname);
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not open directory \"%s\": %m",
+							dbspacedirname)));
 			return;
 		}
 

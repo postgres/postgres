@@ -26,6 +26,7 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
+#include "commands/tablespace.h"
 #include "common/keywords.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -425,9 +426,9 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 
 	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
 	{
-		char	   *subdir;
-		DIR		   *dirdesc;
 		Oid			datOid = atooid(de->d_name);
+		char	   *subdir;
+		bool		isempty;
 
 		/* this test skips . and .., but is awfully weak */
 		if (!datOid)
@@ -436,16 +437,10 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		/* if database subdir is empty, don't report tablespace as used */
 
 		subdir = psprintf("%s/%s", fctx->location, de->d_name);
-		dirdesc = AllocateDir(subdir);
-		while ((de = ReadDir(dirdesc, subdir)) != NULL)
-		{
-			if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
-				break;
-		}
-		FreeDir(dirdesc);
+		isempty = directory_is_empty(subdir);
 		pfree(subdir);
 
-		if (!de)
+		if (isempty)
 			continue;			/* indeed, nothing in it */
 
 		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(datOid));

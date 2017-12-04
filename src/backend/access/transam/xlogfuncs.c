@@ -89,7 +89,9 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	dir = AllocateDir("pg_tblspc");
 	if (!dir)
 		ereport(ERROR,
-				(errmsg("could not open directory \"%s\": %m", "pg_tblspc")));
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m",
+						"pg_tblspc")));
 
 	if (exclusive)
 	{

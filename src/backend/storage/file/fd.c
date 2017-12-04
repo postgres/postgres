@@ -318,7 +318,6 @@ static int	FileAccess(File file);
 static File OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError);
 static bool reserveAllocatedDesc(void);
 static int	FreeDesc(AllocateDesc *desc);
-static struct dirent *ReadDirExtended(DIR *dir, const char *dirname, int elevel);
 
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
@@ -2587,6 +2586,10 @@ CloseTransientFile(int fd)
  * necessary to open the directory, and with closing it after an elog.
  * When done, call FreeDir rather than closedir.
  *
+ * Returns NULL, with errno set, on failure.  Note that failure detection
+ * is commonly left to the following call of ReadDir or ReadDirExtended;
+ * see the comments for ReadDir.
+ *
  * Ideally this should be the *only* direct call of opendir() in the backend.
  */
 DIR *
@@ -2649,8 +2652,8 @@ TryAgain:
  *		FreeDir(dir);
  *
  * since a NULL dir parameter is taken as indicating AllocateDir failed.
- * (Make sure errno hasn't been changed since AllocateDir if you use this
- * shortcut.)
+ * (Make sure errno isn't changed between AllocateDir and ReadDir if you
+ * use this shortcut.)
  *
  * The pathname passed to AllocateDir must be passed to this routine too,
  * but it is only used for error reporting.
@@ -2662,10 +2665,15 @@ ReadDir(DIR *dir, const char *dirname)
 }
 
 /*
- * Alternate version that allows caller to specify the elevel for any
- * error report.  If elevel < ERROR, returns NULL on any error.
+ * Alternate version of ReadDir that allows caller to specify the elevel
+ * for any error report (whether it's reporting an initial failure of
+ * AllocateDir or a subsequent directory read failure).
+ *
+ * If elevel < ERROR, returns NULL after any error.  With the normal coding
+ * pattern, this will result in falling out of the loop immediately as
+ * though the directory contained no (more) entries.
  */
-static struct dirent *
+struct dirent *
 ReadDirExtended(DIR *dir, const char *dirname, int elevel)
 {
 	struct dirent *dent;
@@ -2695,13 +2703,21 @@ ReadDirExtended(DIR *dir, const char *dirname, int elevel)
 /*
  * Close a directory opened with AllocateDir.
  *
- * Note we do not check closedir's return value --- it is up to the caller
- * to handle close errors.
+ * Returns closedir's return value (with errno set if it's not 0).
+ * Note we do not check the return value --- it is up to the caller
+ * to handle close errors if wanted.
+ *
+ * Does nothing if dir == NULL; we assume that directory open failure was
+ * already reported if desired.
  */
 int
 FreeDir(DIR *dir)
 {
 	int			i;
+
+	/* Nothing to do if AllocateDir failed */
+	if (dir == NULL)
+		return 0;
 
 	DO_DB(elog(LOG, "FreeDir: Allocated %d", numAllocatedDescs));
 
@@ -3043,9 +3059,10 @@ RemovePgTempFilesInDir(const char *tmpdirname, bool unlink_all)
 	{
 		/* anything except ENOENT is fishy */
 		if (errno != ENOENT)
-			elog(LOG,
-				 "could not open temporary-files directory \"%s\": %m",
-				 tmpdirname);
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not open directory \"%s\": %m",
+							tmpdirname)));
 		return;
 	}
 
@@ -3099,9 +3116,10 @@ RemovePgTempRelationFiles(const char *tsdirname)
 	{
 		/* anything except ENOENT is fishy */
 		if (errno != ENOENT)
-			elog(LOG,
-				 "could not open tablespace directory \"%s\": %m",
-				 tsdirname);
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not open directory \"%s\": %m",
+							tsdirname)));
 		return;
 	}
 
@@ -3136,16 +3154,8 @@ RemovePgTempRelationFilesInDbspace(const char *dbspacedirname)
 	char		rm_path[MAXPGPATH * 2];
 
 	dbspace_dir = AllocateDir(dbspacedirname);
-	if (dbspace_dir == NULL)
-	{
-		/* we just saw this directory, so it really ought to be there */
-		elog(LOG,
-			 "could not open dbspace directory \"%s\": %m",
-			 dbspacedirname);
-		return;
-	}
 
-	while ((de = ReadDir(dbspace_dir, dbspacedirname)) != NULL)
+	while ((de = ReadDirExtended(dbspace_dir, dbspacedirname, LOG)) != NULL)
 	{
 		if (!looks_like_temp_rel_name(de->d_name))
 			continue;
@@ -3310,13 +3320,6 @@ walkdir(const char *path,
 	struct dirent *de;
 
 	dir = AllocateDir(path);
-	if (dir == NULL)
-	{
-		ereport(elevel,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m", path)));
-		return;
-	}
 
 	while ((de = ReadDirExtended(dir, path, elevel)) != NULL)
 	{
@@ -3356,9 +3359,11 @@ walkdir(const char *path,
 	/*
 	 * It's important to fsync the destination directory itself as individual
 	 * file fsyncs don't guarantee that the directory entry for the file is
-	 * synced.
+	 * synced.  However, skip this if AllocateDir failed; the action function
+	 * might not be robust against that.
 	 */
-	(*action) (path, true, elevel);
+	if (dir)
+		(*action) (path, true, elevel);
 }
 
 
