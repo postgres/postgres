@@ -2994,6 +2994,10 @@ CleanupTempFiles(bool isProcExit)
  * the temp files for debugging purposes.  This does however mean that
  * OpenTemporaryFile had better allow for collision with an existing temp
  * file name.
+ *
+ * NOTE: this function and its subroutines generally report syscall failures
+ * with ereport(LOG) and keep going.  Removing temp files is not so critical
+ * that we should fail to start the database when we can't do it.
  */
 void
 RemovePgTempFiles(void)
@@ -3014,7 +3018,7 @@ RemovePgTempFiles(void)
 	 */
 	spc_dir = AllocateDir("pg_tblspc");
 
-	while ((spc_de = ReadDir(spc_dir, "pg_tblspc")) != NULL)
+	while ((spc_de = ReadDirExtended(spc_dir, "pg_tblspc", LOG)) != NULL)
 	{
 		if (strcmp(spc_de->d_name, ".") == 0 ||
 			strcmp(spc_de->d_name, "..") == 0)
@@ -3055,18 +3059,8 @@ RemovePgTempFilesInDir(const char *tmpdirname, bool unlink_all)
 	char		rm_path[MAXPGPATH * 2];
 
 	temp_dir = AllocateDir(tmpdirname);
-	if (temp_dir == NULL)
-	{
-		/* anything except ENOENT is fishy */
-		if (errno != ENOENT)
-			ereport(LOG,
-					(errcode_for_file_access(),
-					 errmsg("could not open directory \"%s\": %m",
-							tmpdirname)));
-		return;
-	}
 
-	while ((temp_de = ReadDir(temp_dir, tmpdirname)) != NULL)
+	while ((temp_de = ReadDirExtended(temp_dir, tmpdirname, LOG)) != NULL)
 	{
 		if (strcmp(temp_de->d_name, ".") == 0 ||
 			strcmp(temp_de->d_name, "..") == 0)
@@ -3082,22 +3076,38 @@ RemovePgTempFilesInDir(const char *tmpdirname, bool unlink_all)
 		{
 			struct stat statbuf;
 
-			/* note that we ignore any error here and below */
 			if (lstat(rm_path, &statbuf) < 0)
+			{
+				ereport(LOG,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m", rm_path)));
 				continue;
+			}
 
 			if (S_ISDIR(statbuf.st_mode))
 			{
+				/* recursively remove contents, then directory itself */
 				RemovePgTempFilesInDir(rm_path, true);
-				rmdir(rm_path);
+
+				if (rmdir(rm_path) < 0)
+					ereport(LOG,
+							(errcode_for_file_access(),
+							 errmsg("could not remove directory \"%s\": %m",
+									rm_path)));
 			}
 			else
-				unlink(rm_path);
+			{
+				if (unlink(rm_path) < 0)
+					ereport(LOG,
+							(errcode_for_file_access(),
+							 errmsg("could not remove file \"%s\": %m",
+									rm_path)));
+			}
 		}
 		else
-			elog(LOG,
-				 "unexpected file found in temporary-files directory: \"%s\"",
-				 rm_path);
+			ereport(LOG,
+					(errmsg("unexpected file found in temporary-files directory: \"%s\"",
+							rm_path)));
 	}
 
 	FreeDir(temp_dir);
@@ -3112,29 +3122,15 @@ RemovePgTempRelationFiles(const char *tsdirname)
 	char		dbspace_path[MAXPGPATH * 2];
 
 	ts_dir = AllocateDir(tsdirname);
-	if (ts_dir == NULL)
-	{
-		/* anything except ENOENT is fishy */
-		if (errno != ENOENT)
-			ereport(LOG,
-					(errcode_for_file_access(),
-					 errmsg("could not open directory \"%s\": %m",
-							tsdirname)));
-		return;
-	}
 
-	while ((de = ReadDir(ts_dir, tsdirname)) != NULL)
+	while ((de = ReadDirExtended(ts_dir, tsdirname, LOG)) != NULL)
 	{
-		int			i = 0;
-
 		/*
 		 * We're only interested in the per-database directories, which have
 		 * numeric names.  Note that this code will also (properly) ignore "."
 		 * and "..".
 		 */
-		while (isdigit((unsigned char) de->d_name[i]))
-			++i;
-		if (de->d_name[i] != '\0' || i == 0)
+		if (strspn(de->d_name, "0123456789") != strlen(de->d_name))
 			continue;
 
 		snprintf(dbspace_path, sizeof(dbspace_path), "%s/%s",
@@ -3163,7 +3159,11 @@ RemovePgTempRelationFilesInDbspace(const char *dbspacedirname)
 		snprintf(rm_path, sizeof(rm_path), "%s/%s",
 				 dbspacedirname, de->d_name);
 
-		unlink(rm_path);		/* note we ignore any error */
+		if (unlink(rm_path) < 0)
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m",
+							rm_path)));
 	}
 
 	FreeDir(dbspace_dir);
