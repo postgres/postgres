@@ -609,7 +609,7 @@ load_tuple_array(GatherMergeState *gm_state, int reader)
 								  &tuple_buffer->done);
 		if (!HeapTupleIsValid(tuple))
 			break;
-		tuple_buffer->tuple[i] = heap_copytuple(tuple);
+		tuple_buffer->tuple[i] = tuple;
 		tuple_buffer->nTuples++;
 	}
 }
@@ -673,7 +673,6 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 								&tuple_buffer->done);
 		if (!HeapTupleIsValid(tup))
 			return false;
-		tup = heap_copytuple(tup);
 
 		/*
 		 * Attempt to read more tuples in nowait mode and store them in the
@@ -703,20 +702,13 @@ gm_readnext_tuple(GatherMergeState *gm_state, int nreader, bool nowait,
 {
 	TupleQueueReader *reader;
 	HeapTuple	tup;
-	MemoryContext oldContext;
-	MemoryContext tupleContext;
 
 	/* Check for async events, particularly messages from workers. */
 	CHECK_FOR_INTERRUPTS();
 
 	/* Attempt to read a tuple. */
 	reader = gm_state->reader[nreader - 1];
-
-	/* Run TupleQueueReaders in per-tuple context */
-	tupleContext = gm_state->ps.ps_ExprContext->ecxt_per_tuple_memory;
-	oldContext = MemoryContextSwitchTo(tupleContext);
 	tup = TupleQueueReaderNext(reader, nowait, done);
-	MemoryContextSwitchTo(oldContext);
 
 	return tup;
 }

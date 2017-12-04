@@ -131,7 +131,6 @@ static TupleTableSlot *
 ExecGather(PlanState *pstate)
 {
 	GatherState *node = castNode(GatherState, pstate);
-	TupleTableSlot *fslot = node->funnel_slot;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
 
@@ -205,11 +204,8 @@ ExecGather(PlanState *pstate)
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  This will also clear
-	 * any previous tuple returned by a TupleQueueReader; to make sure we
-	 * don't leave a dangling pointer around, clear the working slot first.
+	 * storage allocated in the previous tuple cycle.
 	 */
-	ExecClearTuple(fslot);
 	econtext = node->ps.ps_ExprContext;
 	ResetExprContext(econtext);
 
@@ -258,7 +254,6 @@ gather_getnext(GatherState *gatherstate)
 	PlanState  *outerPlan = outerPlanState(gatherstate);
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *fslot = gatherstate->funnel_slot;
-	MemoryContext tupleContext = gatherstate->ps.ps_ExprContext->ecxt_per_tuple_memory;
 	HeapTuple	tup;
 
 	while (gatherstate->nreaders > 0 || gatherstate->need_to_scan_locally)
@@ -267,12 +262,7 @@ gather_getnext(GatherState *gatherstate)
 
 		if (gatherstate->nreaders > 0)
 		{
-			MemoryContext oldContext;
-
-			/* Run TupleQueueReaders in per-tuple context */
-			oldContext = MemoryContextSwitchTo(tupleContext);
 			tup = gather_readnext(gatherstate);
-			MemoryContextSwitchTo(oldContext);
 
 			if (HeapTupleIsValid(tup))
 			{
@@ -280,7 +270,7 @@ gather_getnext(GatherState *gatherstate)
 							   fslot,	/* slot in which to store the tuple */
 							   InvalidBuffer,	/* buffer associated with this
 												 * tuple */
-							   false);	/* slot should not pfree tuple */
+							   true);	/* pfree tuple when done with it */
 				return fslot;
 			}
 		}

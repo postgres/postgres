@@ -161,6 +161,8 @@ DestroyTupleQueueReader(TupleQueueReader *reader)
  * is set to true when there are no remaining tuples and otherwise to false.
  *
  * The returned tuple, if any, is allocated in CurrentMemoryContext.
+ * Note that this routine must not leak memory!  (We used to allow that,
+ * but not any more.)
  *
  * Even when shm_mq_receive() returns SHM_MQ_WOULD_BLOCK, this can still
  * accumulate bytes from a partially-read message, so it's useful to call
