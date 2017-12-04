@@ -75,7 +75,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	bool		exclusive = PG_GETARG_BOOL(2);
 	char	   *backupidstr;
 	XLogRecPtr	startpoint;
-	DIR		   *dir;
 	SessionBackupState status = get_backup_status();
 
 	backupidstr = text_to_cstring(backupid);
@@ -85,18 +84,10 @@ pg_start_backup(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("a backup is already in progress in this session")));
 
-	/* Make sure we can open the directory with tablespaces in it */
-	dir = AllocateDir("pg_tblspc");
-	if (!dir)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m",
-						"pg_tblspc")));
-
 	if (exclusive)
 	{
 		startpoint = do_pg_start_backup(backupidstr, fast, NULL, NULL,
-										dir, NULL, NULL, false, true);
+										NULL, NULL, false, true);
 	}
 	else
 	{
@@ -112,12 +103,10 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldcontext);
 
 		startpoint = do_pg_start_backup(backupidstr, fast, NULL, label_file,
-										dir, NULL, tblspc_map_file, false, true);
+										NULL, tblspc_map_file, false, true);
 
 		before_shmem_exit(nonexclusive_base_backup_cleanup, (Datum) 0);
 	}
-
-	FreeDir(dir);
 
 	PG_RETURN_LSN(startpoint);
 }

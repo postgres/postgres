@@ -64,7 +64,7 @@ static int64 _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *sta
 static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
 static void base_backup_cleanup(int code, Datum arg);
-static void perform_base_backup(basebackup_options *opt, DIR *tblspcdir);
+static void perform_base_backup(basebackup_options *opt);
 static void parse_basebackup_options(List *options, basebackup_options *opt);
 static void SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli);
 static int	compareWalFileNames(const void *a, const void *b);
@@ -188,7 +188,7 @@ base_backup_cleanup(int code, Datum arg)
  * clobbered by longjmp" from stupider versions of gcc.
  */
 static void
-perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
+perform_base_backup(basebackup_options *opt)
 {
 	XLogRecPtr	startptr;
 	TimeLineID	starttli;
@@ -207,7 +207,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	tblspc_map_file = makeStringInfo();
 
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
-								  labelfile, tblspcdir, &tablespaces,
+								  labelfile, &tablespaces,
 								  tblspc_map_file,
 								  opt->progress, opt->sendtblspcmapfile);
 
@@ -690,7 +690,6 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 void
 SendBaseBackup(BaseBackupCmd *cmd)
 {
-	DIR		   *dir;
 	basebackup_options opt;
 
 	parse_basebackup_options(cmd->options, &opt);
@@ -706,17 +705,7 @@ SendBaseBackup(BaseBackupCmd *cmd)
 		set_ps_display(activitymsg, false);
 	}
 
-	/* Make sure we can open the directory with tablespaces in it */
-	dir = AllocateDir("pg_tblspc");
-	if (!dir)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m",
-						"pg_tblspc")));
-
-	perform_base_backup(&opt, dir);
-
-	FreeDir(dir);
+	perform_base_backup(&opt);
 }
 
 static void

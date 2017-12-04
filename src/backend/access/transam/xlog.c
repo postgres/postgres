@@ -10206,7 +10206,7 @@ XLogFileNameP(TimeLineID tli, XLogSegNo segno)
  */
 XLogRecPtr
 do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
-				   StringInfo labelfile, DIR *tblspcdir, List **tablespaces,
+				   StringInfo labelfile, List **tablespaces,
 				   StringInfo tblspcmapfile, bool infotbssize,
 				   bool needtblspcmapfile)
 {
@@ -10297,6 +10297,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
 	{
 		bool		gotUniqueStartpoint = false;
+		DIR		   *tblspcdir;
 		struct dirent *de;
 		tablespaceinfo *ti;
 		int			datadirpathlen;
@@ -10428,6 +10429,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		datadirpathlen = strlen(DataDir);
 
 		/* Collect information about all tablespaces */
+		tblspcdir = AllocateDir("pg_tblspc");
 		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
 		{
 			char		fullpath[MAXPGPATH + 10];
@@ -10476,7 +10478,6 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 				appendStringInfoChar(&buflinkpath, *s++);
 			}
 
-
 			/*
 			 * Relpath holds the relative path of the tablespace directory
 			 * when it's located within PGDATA, or NULL if it's located
@@ -10511,6 +10512,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 					 errmsg("tablespaces are not supported on this platform")));
 #endif
 		}
+		FreeDir(tblspcdir);
 
 		/*
 		 * Construct backup label file
