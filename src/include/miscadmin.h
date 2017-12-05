@@ -150,13 +150,13 @@ extern PGDLLIMPORT bool IsUnderPostmaster;
 extern bool IsBackgroundWorker;
 extern bool IsBinaryUpgrade;
 
-extern bool ExitOnAnyError;
+extern PGDLLIMPORT bool ExitOnAnyError;
 
 extern PGDLLIMPORT char *DataDir;
 
 extern PGDLLIMPORT int NBuffers;
-extern int	MaxBackends;
-extern int	MaxConnections;
+extern PGDLLIMPORT int MaxBackends;
+extern PGDLLIMPORT int MaxConnections;
 
 extern PGDLLIMPORT int MyProcPid;
 extern PGDLLIMPORT pg_time_t MyStartTime;
@@ -244,7 +244,7 @@ extern int	CTimeZone;
 #define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
 
 extern bool enableFsync;
-extern bool allowSystemTableMods;
+extern PGDLLIMPORT bool allowSystemTableMods;
 extern PGDLLIMPORT int work_mem;
 extern PGDLLIMPORT int maintenance_work_mem;
 

@@ -20,9 +20,9 @@
 
 extern bool FirstSnapshotSet;
 
-extern TransactionId TransactionXmin;
-extern TransactionId RecentXmin;
-extern TransactionId RecentGlobalXmin;
+extern PGDLLIMPORT TransactionId TransactionXmin;
+extern PGDLLIMPORT TransactionId RecentXmin;
+extern PGDLLIMPORT TransactionId RecentGlobalXmin;
 
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);

@@ -52,7 +52,7 @@ typedef int File;
 
 
 /* GUC parameter */
-extern int	max_files_per_process;
+extern PGDLLIMPORT int max_files_per_process;
 
 /*
  * This is private to fd.c, but exported for save/restore_backend_variables()
