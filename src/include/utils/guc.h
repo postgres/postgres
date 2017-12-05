@@ -226,8 +226,8 @@ extern bool default_with_oids;
 extern bool SQL_inheritance;
 
 extern int	log_min_error_statement;
-extern int	log_min_messages;
-extern int	client_min_messages;
+extern PGDLLIMPORT int log_min_messages;
+extern PGDLLIMPORT int client_min_messages;
 extern int	log_min_duration_statement;
 extern int	log_temp_files;
 
@@ -236,7 +236,7 @@ extern int	temp_file_limit;
 extern int	num_temp_buffers;
 
 extern char *data_directory;
-extern char *ConfigFileName;
+extern PGDLLIMPORT char *ConfigFileName;
 extern char *HbaFileName;
 extern char *IdentFileName;
 extern char *external_pid_file;
