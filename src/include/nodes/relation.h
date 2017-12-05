@@ -1255,6 +1255,9 @@ typedef struct CustomPath
  * AppendPath represents an Append plan, ie, successive execution of
  * several member plans.
  *
+ * For partial Append, 'subpaths' contains non-partial subpaths followed by
+ * partial subpaths.
+ *
  * Note: it is possible for "subpaths" to contain only one, or even no,
  * elements.  These cases are optimized during create_append_plan.
  * In particular, an AppendPath with no subpaths is a "dummy" path that
@@ -1266,6 +1269,9 @@ typedef struct AppendPath
 	/* RT indexes of non-leaf tables in a partition tree */
 	List	   *partitioned_rels;
 	List	   *subpaths;		/* list of component Paths */
+
+	/* Index of first partial path in subpaths */
+	int			first_partial_path;
 } AppendPath;
 
 #define IS_DUMMY_PATH(p) \

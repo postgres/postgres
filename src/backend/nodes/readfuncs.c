@@ -1600,6 +1600,7 @@ _readAppend(void)
 
 	READ_NODE_FIELD(partitioned_rels);
 	READ_NODE_FIELD(appendplans);
+	READ_INT_FIELD(first_partial_plan);
 
 	READ_DONE();
 }

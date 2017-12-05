@@ -248,6 +248,7 @@ typedef struct Append
 	/* RT indexes of non-leaf tables in a partition tree */
 	List	   *partitioned_rels;
 	List	   *appendplans;
+	int			first_partial_plan;
 } Append;
 
 /* ----------------

@@ -51,6 +51,8 @@ typedef enum
 #define STD_FUZZ_FACTOR 1.01
 
 static List *translate_sub_tlist(List *tlist, int relid);
+static int	append_total_cost_compare(const void *a, const void *b);
+static int	append_startup_cost_compare(const void *a, const void *b);
 static List *reparameterize_pathlist_by_child(PlannerInfo *root,
 								 List *pathlist,
 								 RelOptInfo *child_rel);
@@ -1208,44 +1210,50 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
  * Note that we must handle subpaths = NIL, representing a dummy access path.
  */
 AppendPath *
-create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer,
-				   int parallel_workers, List *partitioned_rels)
+create_append_path(RelOptInfo *rel,
+				   List *subpaths, List *partial_subpaths,
+				   Relids required_outer,
+				   int parallel_workers, bool parallel_aware,
+				   List *partitioned_rels, double rows)
 {
 	AppendPath *pathnode = makeNode(AppendPath);
 	ListCell   *l;
+
+	Assert(!parallel_aware || parallel_workers > 0);
 
 	pathnode->path.pathtype = T_Append;
 	pathnode->path.parent = rel;
 	pathnode->path.pathtarget = rel->reltarget;
 	pathnode->path.param_info = get_appendrel_parampathinfo(rel,
 															required_outer);
-	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_aware = parallel_aware;
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = parallel_workers;
 	pathnode->path.pathkeys = NIL;	/* result is always considered unsorted */
 	pathnode->partitioned_rels = list_copy(partitioned_rels);
-	pathnode->subpaths = subpaths;
 
 	/*
-	 * We don't bother with inventing a cost_append(), but just do it here.
-	 *
-	 * Compute rows and costs as sums of subplan rows and costs.  We charge
-	 * nothing extra for the Append itself, which perhaps is too optimistic,
-	 * but since it doesn't do any selection or projection, it is a pretty
-	 * cheap node.
+	 * For parallel append, non-partial paths are sorted by descending total
+	 * costs. That way, the total time to finish all non-partial paths is
+	 * minimized.  Also, the partial paths are sorted by descending startup
+	 * costs.  There may be some paths that require to do startup work by a
+	 * single worker.  In such case, it's better for workers to choose the
+	 * expensive ones first, whereas the leader should choose the cheapest
+	 * startup plan.
 	 */
-	pathnode->path.rows = 0;
-	pathnode->path.startup_cost = 0;
-	pathnode->path.total_cost = 0;
+	if (pathnode->path.parallel_aware)
+	{
+		subpaths = list_qsort(subpaths, append_total_cost_compare);
+		partial_subpaths = list_qsort(partial_subpaths,
+									  append_startup_cost_compare);
+	}
+	pathnode->first_partial_path = list_length(subpaths);
+	pathnode->subpaths = list_concat(subpaths, partial_subpaths);
+
 	foreach(l, subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(l);
 
-		pathnode->path.rows += subpath->rows;
-
-		if (l == list_head(subpaths))	/* first node? */
-			pathnode->path.startup_cost = subpath->startup_cost;
-		pathnode->path.total_cost += subpath->total_cost;
 		pathnode->path.parallel_safe = pathnode->path.parallel_safe &&
 			subpath->parallel_safe;
 
@@ -1253,7 +1261,51 @@ create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer,
 		Assert(bms_equal(PATH_REQ_OUTER(subpath), required_outer));
 	}
 
+	Assert(!parallel_aware || pathnode->path.parallel_safe);
+
+	cost_append(pathnode);
+
+	/* If the caller provided a row estimate, override the computed value. */
+	if (rows >= 0)
+		pathnode->path.rows = rows;
+
 	return pathnode;
+}
+
+/*
+ * append_total_cost_compare
+ *	  list_qsort comparator for sorting append child paths by total_cost
+ */
+static int
+append_total_cost_compare(const void *a, const void *b)
+{
+	Path	   *path1 = (Path *) lfirst(*(ListCell **) a);
+	Path	   *path2 = (Path *) lfirst(*(ListCell **) b);
+
+	if (path1->total_cost > path2->total_cost)
+		return -1;
+	if (path1->total_cost < path2->total_cost)
+		return 1;
+
+	return 0;
+}
+
+/*
+ * append_startup_cost_compare
+ *	  list_qsort comparator for sorting append child paths by startup_cost
+ */
+static int
+append_startup_cost_compare(const void *a, const void *b)
+{
+	Path	   *path1 = (Path *) lfirst(*(ListCell **) a);
+	Path	   *path2 = (Path *) lfirst(*(ListCell **) b);
+
+	if (path1->startup_cost > path2->startup_cost)
+		return -1;
+	if (path1->startup_cost < path2->startup_cost)
+		return 1;
+
+	return 0;
 }
 
 /*

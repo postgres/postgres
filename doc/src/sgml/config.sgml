@@ -3633,6 +3633,20 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-enable-parallel-append" xreflabel="enable_parallel_append">
+      <term><varname>enable_parallel_append</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_parallel_append</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of parallel-aware
+        append plan types. The default is <literal>on</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-partition-wise-join" xreflabel="enable_partition_wise_join">
       <term><varname>enable_partition_wise_join</varname> (<type>boolean</type>)
       <indexterm>

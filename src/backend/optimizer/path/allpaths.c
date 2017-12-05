@@ -101,7 +101,8 @@ static void generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 static Path *get_cheapest_parameterized_child_path(PlannerInfo *root,
 									  RelOptInfo *rel,
 									  Relids required_outer);
-static List *accumulate_append_subpath(List *subpaths, Path *path);
+static void accumulate_append_subpath(Path *path,
+						  List **subpaths, List **special_subpaths);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -1331,13 +1332,17 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	List	   *subpaths = NIL;
 	bool		subpaths_valid = true;
 	List	   *partial_subpaths = NIL;
+	List	   *pa_partial_subpaths = NIL;
+	List	   *pa_nonpartial_subpaths = NIL;
 	bool		partial_subpaths_valid = true;
+	bool		pa_subpaths_valid = enable_parallel_append;
 	List	   *all_child_pathkeys = NIL;
 	List	   *all_child_outers = NIL;
 	ListCell   *l;
 	List	   *partitioned_rels = NIL;
 	RangeTblEntry *rte;
 	bool		build_partitioned_rels = false;
+	double		partial_rows = -1;
 
 	if (IS_SIMPLE_REL(rel))
 	{
@@ -1388,6 +1393,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	{
 		RelOptInfo *childrel = lfirst(l);
 		ListCell   *lcp;
+		Path	   *cheapest_partial_path = NULL;
 
 		/*
 		 * If we need to build partitioned_rels, accumulate the partitioned
@@ -1408,17 +1414,68 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		 * If not, there's no workable unparameterized path.
 		 */
 		if (childrel->cheapest_total_path->param_info == NULL)
-			subpaths = accumulate_append_subpath(subpaths,
-												 childrel->cheapest_total_path);
+			accumulate_append_subpath(childrel->cheapest_total_path,
+									  &subpaths, NULL);
 		else
 			subpaths_valid = false;
 
 		/* Same idea, but for a partial plan. */
 		if (childrel->partial_pathlist != NIL)
-			partial_subpaths = accumulate_append_subpath(partial_subpaths,
-														 linitial(childrel->partial_pathlist));
+		{
+			cheapest_partial_path = linitial(childrel->partial_pathlist);
+			accumulate_append_subpath(cheapest_partial_path,
+									  &partial_subpaths, NULL);
+		}
 		else
 			partial_subpaths_valid = false;
+
+		/*
+		 * Same idea, but for a parallel append mixing partial and non-partial
+		 * paths.
+		 */
+		if (pa_subpaths_valid)
+		{
+			Path	   *nppath = NULL;
+
+			nppath =
+				get_cheapest_parallel_safe_total_inner(childrel->pathlist);
+
+			if (cheapest_partial_path == NULL && nppath == NULL)
+			{
+				/* Neither a partial nor a parallel-safe path?  Forget it. */
+				pa_subpaths_valid = false;
+			}
+			else if (nppath == NULL ||
+					 (cheapest_partial_path != NULL &&
+					  cheapest_partial_path->total_cost < nppath->total_cost))
+			{
+				/* Partial path is cheaper or the only option. */
+				Assert(cheapest_partial_path != NULL);
+				accumulate_append_subpath(cheapest_partial_path,
+										  &pa_partial_subpaths,
+										  &pa_nonpartial_subpaths);
+
+			}
+			else
+			{
+				/*
+				 * Either we've got only a non-partial path, or we think that
+				 * a single backend can execute the best non-partial path
+				 * faster than all the parallel backends working together can
+				 * execute the best partial path.
+				 *
+				 * It might make sense to be more aggressive here.  Even if
+				 * the best non-partial path is more expensive than the best
+				 * partial path, it could still be better to choose the
+				 * non-partial path if there are several such paths that can
+				 * be given to different workers.  For now, we don't try to
+				 * figure that out.
+				 */
+				accumulate_append_subpath(nppath,
+										  &pa_nonpartial_subpaths,
+										  NULL);
+			}
+		}
 
 		/*
 		 * Collect lists of all the available path orderings and
@@ -1491,11 +1548,13 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	 * if we have zero or one live subpath due to constraint exclusion.)
 	 */
 	if (subpaths_valid)
-		add_path(rel, (Path *) create_append_path(rel, subpaths, NULL, 0,
-												  partitioned_rels));
+		add_path(rel, (Path *) create_append_path(rel, subpaths, NIL,
+												  NULL, 0, false,
+												  partitioned_rels, -1));
 
 	/*
-	 * Consider an append of partial unordered, unparameterized partial paths.
+	 * Consider an append of unordered, unparameterized partial paths.  Make
+	 * it parallel-aware if possible.
 	 */
 	if (partial_subpaths_valid)
 	{
@@ -1503,12 +1562,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		ListCell   *lc;
 		int			parallel_workers = 0;
 
-		/*
-		 * Decide on the number of workers to request for this append path.
-		 * For now, we just use the maximum value from among the members.  It
-		 * might be useful to use a higher number if the Append node were
-		 * smart enough to spread out the workers, but it currently isn't.
-		 */
+		/* Find the highest number of workers requested for any subpath. */
 		foreach(lc, partial_subpaths)
 		{
 			Path	   *path = lfirst(lc);
@@ -1517,9 +1571,78 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		}
 		Assert(parallel_workers > 0);
 
+		/*
+		 * If the use of parallel append is permitted, always request at least
+		 * log2(# of children) paths.  We assume it can be useful to have
+		 * extra workers in this case because they will be spread out across
+		 * the children.  The precise formula is just a guess, but we don't
+		 * want to end up with a radically different answer for a table with N
+		 * partitions vs. an unpartitioned table with the same data, so the
+		 * use of some kind of log-scaling here seems to make some sense.
+		 */
+		if (enable_parallel_append)
+		{
+			parallel_workers = Max(parallel_workers,
+								   fls(list_length(live_childrels)));
+			parallel_workers = Min(parallel_workers,
+								   max_parallel_workers_per_gather);
+		}
+		Assert(parallel_workers > 0);
+
 		/* Generate a partial append path. */
-		appendpath = create_append_path(rel, partial_subpaths, NULL,
-										parallel_workers, partitioned_rels);
+		appendpath = create_append_path(rel, NIL, partial_subpaths, NULL,
+										parallel_workers,
+										enable_parallel_append,
+										partitioned_rels, -1);
+
+		/*
+		 * Make sure any subsequent partial paths use the same row count
+		 * estimate.
+		 */
+		partial_rows = appendpath->path.rows;
+
+		/* Add the path. */
+		add_partial_path(rel, (Path *) appendpath);
+	}
+
+	/*
+	 * Consider a parallel-aware append using a mix of partial and non-partial
+	 * paths.  (This only makes sense if there's at least one child which has
+	 * a non-partial path that is substantially cheaper than any partial path;
+	 * otherwise, we should use the append path added in the previous step.)
+	 */
+	if (pa_subpaths_valid && pa_nonpartial_subpaths != NIL)
+	{
+		AppendPath *appendpath;
+		ListCell   *lc;
+		int			parallel_workers = 0;
+
+		/*
+		 * Find the highest number of workers requested for any partial
+		 * subpath.
+		 */
+		foreach(lc, pa_partial_subpaths)
+		{
+			Path	   *path = lfirst(lc);
+
+			parallel_workers = Max(parallel_workers, path->parallel_workers);
+		}
+
+		/*
+		 * Same formula here as above.  It's even more important in this
+		 * instance because the non-partial paths won't contribute anything to
+		 * the planned number of parallel workers.
+		 */
+		parallel_workers = Max(parallel_workers,
+							   fls(list_length(live_childrels)));
+		parallel_workers = Min(parallel_workers,
+							   max_parallel_workers_per_gather);
+		Assert(parallel_workers > 0);
+
+		appendpath = create_append_path(rel, pa_nonpartial_subpaths,
+										pa_partial_subpaths,
+										NULL, parallel_workers, true,
+										partitioned_rels, partial_rows);
 		add_partial_path(rel, (Path *) appendpath);
 	}
 
@@ -1567,13 +1690,14 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 				subpaths_valid = false;
 				break;
 			}
-			subpaths = accumulate_append_subpath(subpaths, subpath);
+			accumulate_append_subpath(subpath, &subpaths, NULL);
 		}
 
 		if (subpaths_valid)
 			add_path(rel, (Path *)
-					 create_append_path(rel, subpaths, required_outer, 0,
-										partitioned_rels));
+					 create_append_path(rel, subpaths, NIL,
+										required_outer, 0, false,
+										partitioned_rels, -1));
 	}
 }
 
@@ -1657,10 +1781,10 @@ generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 			if (cheapest_startup != cheapest_total)
 				startup_neq_total = true;
 
-			startup_subpaths =
-				accumulate_append_subpath(startup_subpaths, cheapest_startup);
-			total_subpaths =
-				accumulate_append_subpath(total_subpaths, cheapest_total);
+			accumulate_append_subpath(cheapest_startup,
+									  &startup_subpaths, NULL);
+			accumulate_append_subpath(cheapest_total,
+									  &total_subpaths, NULL);
 		}
 
 		/* ... and build the MergeAppend paths */
@@ -1756,7 +1880,7 @@ get_cheapest_parameterized_child_path(PlannerInfo *root, RelOptInfo *rel,
 
 /*
  * accumulate_append_subpath
- *		Add a subpath to the list being built for an Append or MergeAppend
+ *		Add a subpath to the list being built for an Append or MergeAppend.
  *
  * It's possible that the child is itself an Append or MergeAppend path, in
  * which case we can "cut out the middleman" and just add its child paths to
@@ -1767,26 +1891,53 @@ get_cheapest_parameterized_child_path(PlannerInfo *root, RelOptInfo *rel,
  * omitting a sort step, which seems fine: if the parent is to be an Append,
  * its result would be unsorted anyway, while if the parent is to be a
  * MergeAppend, there's no point in a separate sort on a child.
+ * its result would be unsorted anyway.
+ *
+ * Normally, either path is a partial path and subpaths is a list of partial
+ * paths, or else path is a non-partial plan and subpaths is a list of those.
+ * However, if path is a parallel-aware Append, then we add its partial path
+ * children to subpaths and the rest to special_subpaths.  If the latter is
+ * NULL, we don't flatten the path at all (unless it contains only partial
+ * paths).
  */
-static List *
-accumulate_append_subpath(List *subpaths, Path *path)
+static void
+accumulate_append_subpath(Path *path, List **subpaths, List **special_subpaths)
 {
 	if (IsA(path, AppendPath))
 	{
 		AppendPath *apath = (AppendPath *) path;
 
-		/* list_copy is important here to avoid sharing list substructure */
-		return list_concat(subpaths, list_copy(apath->subpaths));
+		if (!apath->path.parallel_aware || apath->first_partial_path == 0)
+		{
+			/* list_copy is important here to avoid sharing list substructure */
+			*subpaths = list_concat(*subpaths, list_copy(apath->subpaths));
+			return;
+		}
+		else if (special_subpaths != NULL)
+		{
+			List	   *new_special_subpaths;
+
+			/* Split Parallel Append into partial and non-partial subpaths */
+			*subpaths = list_concat(*subpaths,
+									list_copy_tail(apath->subpaths,
+												   apath->first_partial_path));
+			new_special_subpaths =
+				list_truncate(list_copy(apath->subpaths),
+							  apath->first_partial_path);
+			*special_subpaths = list_concat(*special_subpaths,
+											new_special_subpaths);
+		}
 	}
 	else if (IsA(path, MergeAppendPath))
 	{
 		MergeAppendPath *mpath = (MergeAppendPath *) path;
 
 		/* list_copy is important here to avoid sharing list substructure */
-		return list_concat(subpaths, list_copy(mpath->subpaths));
+		*subpaths = list_concat(*subpaths, list_copy(mpath->subpaths));
+		return;
 	}
-	else
-		return lappend(subpaths, path);
+
+	*subpaths = lappend(*subpaths, path);
 }
 
 /*
@@ -1809,7 +1960,8 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 	rel->pathlist = NIL;
 	rel->partial_pathlist = NIL;
 
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0, NIL));
+	add_path(rel, (Path *) create_append_path(rel, NIL, NIL, NULL,
+											  0, false, NIL, -1));
 
 	/*
 	 * We set the cheapest path immediately, to ensure that IS_DUMMY_REL()

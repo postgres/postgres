@@ -15,9 +15,38 @@ set parallel_tuple_cost=0;
 set min_parallel_table_scan_size=0;
 set max_parallel_workers_per_gather=4;
 
+-- Parallel Append with partial-subplans
 explain (costs off)
-  select count(*) from a_star;
-select count(*) from a_star;
+  select round(avg(aa)), sum(aa) from a_star;
+select round(avg(aa)), sum(aa) from a_star;
+
+-- Parallel Append with both partial and non-partial subplans
+alter table c_star set (parallel_workers = 0);
+alter table d_star set (parallel_workers = 0);
+explain (costs off)
+  select round(avg(aa)), sum(aa) from a_star;
+
+-- Parallel Append with only non-partial subplans
+alter table a_star set (parallel_workers = 0);
+alter table b_star set (parallel_workers = 0);
+alter table e_star set (parallel_workers = 0);
+alter table f_star set (parallel_workers = 0);
+explain (costs off)
+  select round(avg(aa)), sum(aa) from a_star;
+select round(avg(aa)), sum(aa) from a_star;
+
+-- Disable Parallel Append
+alter table a_star reset (parallel_workers);
+alter table b_star reset (parallel_workers);
+alter table c_star reset (parallel_workers);
+alter table d_star reset (parallel_workers);
+alter table e_star reset (parallel_workers);
+alter table f_star reset (parallel_workers);
+set enable_parallel_append to off;
+explain (costs off)
+  select round(avg(aa)), sum(aa) from a_star;
+select round(avg(aa)), sum(aa) from a_star;
+reset enable_parallel_append;
 
 -- test with leader participation disabled
 set parallel_leader_participation = off;

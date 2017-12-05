@@ -399,6 +399,7 @@ _outAppend(StringInfo str, const Append *node)
 
 	WRITE_NODE_FIELD(partitioned_rels);
 	WRITE_NODE_FIELD(appendplans);
+	WRITE_INT_FIELD(first_partial_plan);
 }
 
 static void

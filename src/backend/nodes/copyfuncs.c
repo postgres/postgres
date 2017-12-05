@@ -242,6 +242,7 @@ _copyAppend(const Append *from)
 	 */
 	COPY_NODE_FIELD(partitioned_rels);
 	COPY_NODE_FIELD(appendplans);
+	COPY_SCALAR_FIELD(first_partial_plan);
 
 	return newnode;
 }

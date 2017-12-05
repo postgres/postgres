@@ -845,7 +845,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="62"><literal>LWLock</literal></entry>
+        <entry morerows="63"><literal>LWLock</literal></entry>
         <entry><literal>ShmemIndexLock</literal></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
@@ -1115,6 +1115,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>tbm</literal></entry>
          <entry>Waiting for TBM shared iterator lock.</entry>
+        </row>
+        <row>
+         <entry><literal>parallel_append</literal></entry>
+         <entry>Waiting to choose the next subplan during Parallel Append plan
+         execution.</entry>
         </row>
         <row>
          <entry morerows="9"><literal>Lock</literal></entry>
