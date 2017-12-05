@@ -361,7 +361,10 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 
 	result = (PLyResultObject *) PLy_result_new();
 	if (!result)
+	{
+		SPI_freetuptable(tuptable);
 		return NULL;
+	}
 	Py_DECREF(result->status);
 	result->status = PyInt_FromLong(status);
 
@@ -411,12 +414,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 
 				Py_DECREF(result->rows);
 				result->rows = PyList_New(rows);
-				if (!result->rows)
-				{
-					Py_DECREF(result);
-					result = NULL;
-				}
-				else
+				if (result->rows)
 				{
 					PLy_input_setup_tuple(&ininfo, tuptable->tupdesc,
 										  exec_ctx->curr_proc);
@@ -455,6 +453,13 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 
 		MemoryContextDelete(cxt);
 		SPI_freetuptable(tuptable);
+
+		/* in case PyList_New() failed above */
+		if (!result->rows)
+		{
+			Py_DECREF(result);
+			result = NULL;
+		}
 	}
 
 	return (PyObject *) result;
