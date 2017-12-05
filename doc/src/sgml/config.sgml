@@ -3636,13 +3636,13 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
      <varlistentry id="guc-enable-parallel-append" xreflabel="enable_parallel_append">
       <term><varname>enable_parallel_append</varname> (<type>boolean</type>)
       <indexterm>
-       <primary><varname>enable_parallel_append</> configuration parameter</primary>
+       <primary><varname>enable_parallel_append</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of parallel-aware
-        append plan types. The default is <literal>on</>.
+        append plan types. The default is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
