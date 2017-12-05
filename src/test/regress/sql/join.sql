@@ -2159,6 +2159,17 @@ rollback to settings;
 
 -- A couple of other hash join tests unrelated to work_mem management.
 
+-- Check that EXPLAIN ANALYZE has data even if the leader doesn't participate
+savepoint settings;
+set local max_parallel_workers_per_gather = 2;
+set local work_mem = '4MB';
+set local parallel_leader_participation = off;
+select * from hash_join_batches(
+$$
+  select count(*) from simple r join simple s using (id);
+$$);
+rollback to settings;
+
 -- A full outer join where every record is matched.
 
 -- non-parallel
