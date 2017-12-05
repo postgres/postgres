@@ -28,7 +28,7 @@
  * them from the extension first.
  */
 extern PGDLLIMPORT bool creating_extension;
-extern Oid	CurrentExtensionObject;
+extern PGDLLIMPORT Oid CurrentExtensionObject;
 
 
 extern ObjectAddress CreateExtension(ParseState *pstate, CreateExtensionStmt *stmt);

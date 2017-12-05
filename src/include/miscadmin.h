@@ -150,14 +150,14 @@ extern PGDLLIMPORT bool IsUnderPostmaster;
 extern PGDLLIMPORT bool IsBackgroundWorker;
 extern PGDLLIMPORT bool IsBinaryUpgrade;
 
-extern bool ExitOnAnyError;
+extern PGDLLIMPORT bool ExitOnAnyError;
 
 extern PGDLLIMPORT char *DataDir;
 
 extern PGDLLIMPORT int NBuffers;
-extern int	MaxBackends;
-extern int	MaxConnections;
-extern int	max_worker_processes;
+extern PGDLLIMPORT int MaxBackends;
+extern PGDLLIMPORT int MaxConnections;
+extern PGDLLIMPORT int max_worker_processes;
 extern int	max_parallel_workers;
 
 extern PGDLLIMPORT int MyProcPid;
@@ -238,7 +238,7 @@ extern PGDLLIMPORT int IntervalStyle;
 #define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
 
 extern bool enableFsync;
-extern bool allowSystemTableMods;
+extern PGDLLIMPORT bool allowSystemTableMods;
 extern PGDLLIMPORT int work_mem;
 extern PGDLLIMPORT int maintenance_work_mem;
 extern PGDLLIMPORT int replacement_sort_tuples;

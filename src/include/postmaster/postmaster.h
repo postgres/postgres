@@ -16,7 +16,7 @@
 /* GUC options */
 extern bool EnableSSL;
 extern int	ReservedBackends;
-extern int	PostPortNumber;
+extern PGDLLIMPORT int PostPortNumber;
 extern int	Unix_socket_permissions;
 extern char *Unix_socket_group;
 extern char *Unix_socket_directories;
@@ -44,7 +44,7 @@ extern int	postmaster_alive_fds[2];
 #define POSTMASTER_FD_OWN		1	/* kept open by postmaster only */
 #endif
 
-extern const char *progname;
+extern PGDLLIMPORT const char *progname;
 
 extern void PostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
 extern void ClosePostmasterPorts(bool am_syslogger);
