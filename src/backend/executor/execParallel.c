@@ -612,6 +612,19 @@ ExecParallelReinitialize(PlanState *planstate,
 	/* Old workers must already be shut down */
 	Assert(pei->finished);
 
+	/* Clear the instrumentation space from the last round. */
+	if (pei->instrumentation)
+	{
+		Instrumentation *instrument;
+		SharedExecutorInstrumentation *sh_instr;
+		int			i;
+
+		sh_instr = pei->instrumentation;
+		instrument = GetInstrumentationArray(sh_instr);
+		for (i = 0; i < sh_instr->num_workers * sh_instr->num_plan_nodes; ++i)
+			InstrInit(&instrument[i], pei->planstate->state->es_instrument);
+	}
+
 	ReinitializeParallelDSM(pei->pcxt);
 	pei->tqueue = ExecParallelSetupTupleQueues(pei->pcxt, true);
 	pei->reader = NULL;
@@ -699,21 +712,33 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 	for (n = 0; n < instrumentation->num_workers; ++n)
 		InstrAggNode(planstate->instrument, &instrument[n]);
 
-	/*
-	 * Also store the per-worker detail.
-	 *
-	 * Worker instrumentation should be allocated in the same context as the
-	 * regular instrumentation information, which is the per-query context.
-	 * Switch into per-query memory context.
-	 */
-	oldcontext = MemoryContextSwitchTo(planstate->state->es_query_cxt);
-	ibytes = mul_size(instrumentation->num_workers, sizeof(Instrumentation));
-	planstate->worker_instrument =
-		palloc(ibytes + offsetof(WorkerInstrumentation, instrument));
-	MemoryContextSwitchTo(oldcontext);
+	if (!planstate->worker_instrument)
+	{
+		/*
+		 * Allocate space for the per-worker detail.
+		 *
+		 * Worker instrumentation should be allocated in the same context as
+		 * the regular instrumentation information, which is the per-query
+		 * context. Switch into per-query memory context.
+		 */
+		oldcontext = MemoryContextSwitchTo(planstate->state->es_query_cxt);
+		ibytes =
+			mul_size(instrumentation->num_workers, sizeof(Instrumentation));
+		planstate->worker_instrument =
+			palloc(ibytes + offsetof(WorkerInstrumentation, instrument));
+		MemoryContextSwitchTo(oldcontext);
+
+		for (n = 0; n < instrumentation->num_workers; ++n)
+			InstrInit(&planstate->worker_instrument->instrument[n],
+					  planstate->state->es_instrument);
+	}
 
 	planstate->worker_instrument->num_workers = instrumentation->num_workers;
-	memcpy(&planstate->worker_instrument->instrument, instrument, ibytes);
+
+	/* Accumulate the per-worker detail. */
+	for (n = 0; n < instrumentation->num_workers; ++n)
+		InstrAggNode(&planstate->worker_instrument->instrument[n],
+					 &instrument[n]);
 
 	return planstate_tree_walker(planstate, ExecParallelRetrieveInstrumentation,
 								 instrumentation);
