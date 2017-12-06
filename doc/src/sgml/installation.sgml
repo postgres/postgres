@@ -289,7 +289,7 @@ su - postgres
        <primary>yacc</primary>
       </indexterm>
 
-      GNU <application>Flex</application> and <application>Bison</application>
+      <application>Flex</application> and <application>Bison</application>
       are needed to build from a Git checkout, or if you changed the actual
       scanner and parser definition files. If you need them, be sure
       to get <application>Flex</application> 2.5.31 or later and
