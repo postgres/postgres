@@ -29,7 +29,7 @@ explain (costs off)
                      ->  Parallel Seq Scan on f_star
 (11 rows)
 
-select round(avg(aa)), sum(aa) from a_star;
+select round(avg(aa)), sum(aa) from a_star a1;
  round | sum 
 -------+-----
     14 | 355
@@ -55,6 +55,12 @@ explain (costs off)
                      ->  Parallel Seq Scan on f_star
 (11 rows)
 
+select round(avg(aa)), sum(aa) from a_star a2;
+ round | sum 
+-------+-----
+    14 | 355
+(1 row)
+
 -- Parallel Append with only non-partial subplans
 alter table a_star set (parallel_workers = 0);
 alter table b_star set (parallel_workers = 0);
@@ -77,7 +83,7 @@ explain (costs off)
                      ->  Seq Scan on a_star
 (11 rows)
 
-select round(avg(aa)), sum(aa) from a_star;
+select round(avg(aa)), sum(aa) from a_star a3;
  round | sum 
 -------+-----
     14 | 355
@@ -108,7 +114,7 @@ explain (costs off)
                      ->  Parallel Seq Scan on f_star
 (11 rows)
 
-select round(avg(aa)), sum(aa) from a_star;
+select round(avg(aa)), sum(aa) from a_star a4;
  round | sum 
 -------+-----
     14 | 355
