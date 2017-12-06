@@ -506,8 +506,16 @@ choose_next_subplan_for_worker(AppendState *node)
 	node->as_whichplan = pstate->pa_next_plan++;
 	if (pstate->pa_next_plan >= node->as_nplans)
 	{
-		Assert(append->first_partial_plan < node->as_nplans);
-		pstate->pa_next_plan = append->first_partial_plan;
+		if (append->first_partial_plan < node->as_nplans)
+			pstate->pa_next_plan = append->first_partial_plan;
+		else
+		{
+			/*
+			 * We have only non-partial plans, and we already chose the last
+			 * one; so arrange for the other workers to immediately bail out.
+			 */
+			pstate->pa_next_plan = INVALID_SUBPLAN_INDEX;
+		}
 	}
 
 	/* If non-partial, immediately mark as finished. */
