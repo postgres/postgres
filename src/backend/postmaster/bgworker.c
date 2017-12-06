@@ -1034,14 +1034,18 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
  * Get the PID of a dynamically-registered background worker.
  *
  * If the worker is determined to be running, the return value will be
- * BGWH_STARTED and *pidp will get the PID of the worker process.
- * Otherwise, the return value will be BGWH_NOT_YET_STARTED if the worker
- * hasn't been started yet, and BGWH_STOPPED if the worker was previously
- * running but is no longer.
+ * BGWH_STARTED and *pidp will get the PID of the worker process.  If the
+ * postmaster has not yet attempted to start the worker, the return value will
+ * be BGWH_NOT_YET_STARTED.  Otherwise, the return value is BGWH_STOPPED.
  *
- * In the latter case, the worker may be stopped temporarily (if it is
- * configured for automatic restart and exited non-zero) or gone for
- * good (if it exited with code 0 or if it is configured not to restart).
+ * BGWH_STOPPED can indicate either that the worker is temporarily stopped
+ * (because it is configured for automatic restart and exited non-zero),
+ * or that the worker is permanently stopped (because it exited with exit
+ * code 0, or was not configured for automatic restart), or even that the
+ * worker was unregistered without ever starting (either because startup
+ * failed and the worker is not configured for automatic restart, or because
+ * TerminateBackgroundWorker was used before the worker was successfully
+ * started).
  */
 BgwHandleStatus
 GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pid_t *pidp)
@@ -1066,8 +1070,11 @@ GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pid_t *pidp)
 	 * time, but we assume such changes are atomic.  So the value we read
 	 * won't be garbage, but it might be out of date by the time the caller
 	 * examines it (but that's unavoidable anyway).
+	 *
+	 * The in_use flag could be in the process of changing from true to false,
+	 * but if it is already false then it can't change further.
 	 */
-	if (handle->generation != slot->generation)
+	if (handle->generation != slot->generation || !slot->in_use)
 		pid = 0;
 	else
 		pid = slot->pid;
