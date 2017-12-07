@@ -3,74 +3,74 @@ Parsed test spec with 2 sessions
 starting permutation: lock vac_specified drop_and_commit
 step lock: 
 	BEGIN;
-	LOCK test1 IN SHARE MODE;
+	LOCK part1 IN SHARE MODE;
 
-step vac_specified: VACUUM test1, test2; <waiting ...>
+step vac_specified: VACUUM part1, part2; <waiting ...>
 step drop_and_commit: 
-	DROP TABLE test2;
+	DROP TABLE part2;
 	COMMIT;
 
-WARNING:  skipping vacuum of "test2" --- relation no longer exists
+WARNING:  skipping vacuum of "part2" --- relation no longer exists
 step vac_specified: <... completed>
 
-starting permutation: lock vac_all drop_and_commit
+starting permutation: lock vac_all_parts drop_and_commit
 step lock: 
 	BEGIN;
-	LOCK test1 IN SHARE MODE;
+	LOCK part1 IN SHARE MODE;
 
-step vac_all: VACUUM; <waiting ...>
+step vac_all_parts: VACUUM parted; <waiting ...>
 step drop_and_commit: 
-	DROP TABLE test2;
+	DROP TABLE part2;
 	COMMIT;
 
-step vac_all: <... completed>
+step vac_all_parts: <... completed>
 
 starting permutation: lock analyze_specified drop_and_commit
 step lock: 
 	BEGIN;
-	LOCK test1 IN SHARE MODE;
+	LOCK part1 IN SHARE MODE;
 
-step analyze_specified: ANALYZE test1, test2; <waiting ...>
+step analyze_specified: ANALYZE part1, part2; <waiting ...>
 step drop_and_commit: 
-	DROP TABLE test2;
+	DROP TABLE part2;
 	COMMIT;
 
-WARNING:  skipping analyze of "test2" --- relation no longer exists
+WARNING:  skipping analyze of "part2" --- relation no longer exists
 step analyze_specified: <... completed>
 
-starting permutation: lock analyze_all drop_and_commit
+starting permutation: lock analyze_all_parts drop_and_commit
 step lock: 
 	BEGIN;
-	LOCK test1 IN SHARE MODE;
+	LOCK part1 IN SHARE MODE;
 
-step analyze_all: ANALYZE; <waiting ...>
+step analyze_all_parts: ANALYZE parted; <waiting ...>
 step drop_and_commit: 
-	DROP TABLE test2;
+	DROP TABLE part2;
 	COMMIT;
 
-step analyze_all: <... completed>
+step analyze_all_parts: <... completed>
 
 starting permutation: lock vac_analyze_specified drop_and_commit
 step lock: 
 	BEGIN;
-	LOCK test1 IN SHARE MODE;
+	LOCK part1 IN SHARE MODE;
 
-step vac_analyze_specified: VACUUM ANALYZE test1, test2; <waiting ...>
+step vac_analyze_specified: VACUUM ANALYZE part1, part2; <waiting ...>
 step drop_and_commit: 
-	DROP TABLE test2;
+	DROP TABLE part2;
 	COMMIT;
 
-WARNING:  skipping vacuum of "test2" --- relation no longer exists
+WARNING:  skipping vacuum of "part2" --- relation no longer exists
 step vac_analyze_specified: <... completed>
 
-starting permutation: lock vac_analyze_all drop_and_commit
+starting permutation: lock vac_analyze_all_parts drop_and_commit
 step lock: 
 	BEGIN;
-	LOCK test1 IN SHARE MODE;
+	LOCK part1 IN SHARE MODE;
 
-step vac_analyze_all: VACUUM ANALYZE; <waiting ...>
+step vac_analyze_all_parts: VACUUM ANALYZE parted; <waiting ...>
 step drop_and_commit: 
-	DROP TABLE test2;
+	DROP TABLE part2;
 	COMMIT;
 
-step vac_analyze_all: <... completed>
+step vac_analyze_all_parts: <... completed>
