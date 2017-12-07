@@ -248,23 +248,32 @@ sub taptest
 
 sub plcheck
 {
-	chdir "../../pl";
+	chdir "$topdir/src/pl";
 
-	foreach my $pl (glob("*"))
+	foreach my $dir (glob("*/src *"))
 	{
-		next unless -d "$pl/sql" && -d "$pl/expected";
-		my $lang = $pl eq 'tcl' ? 'pltcl' : $pl;
+		next unless -d "$dir/sql" && -d "$dir/expected";
+		my $lang;
+		if ($dir eq 'plpgsql/src') {
+			$lang = 'plpgsql';
+		}
+		elsif ($dir eq 'tcl') {
+			$lang = 'pltcl';
+		}
+		else {
+			$lang = $dir;
+		}
 		if ($lang eq 'plpython')
 		{
-			next unless -d "../../$Config/plpython2";
+			next unless -d "$topdir/$Config/plpython2";
 			$lang = 'plpythonu';
 		}
 		else
 		{
-			next unless -d "../../$Config/$lang";
+			next unless -d "$topdir/$Config/$lang";
 		}
 		my @lang_args = ("--load-extension=$lang");
-		chdir $pl;
+		chdir $dir;
 		my @tests = fetchTests();
 		if ($lang eq 'plperl')
 		{
@@ -285,16 +294,16 @@ sub plcheck
 		  "============================================================\n";
 		print "Checking $lang\n";
 		my @args = (
-			"../../../$Config/pg_regress/pg_regress",
-			"--bindir=../../../$Config/psql",
+			"$topdir/$Config/pg_regress/pg_regress",
+			"--bindir=$topdir/$Config/psql",
 			"--dbname=pl_regression", @lang_args, @tests);
 		system(@args);
 		my $status = $? >> 8;
 		exit $status if $status;
-		chdir "..";
+		chdir "$topdir/src/pl";
 	}
 
-	chdir "../../..";
+	chdir "$topdir";
 }
 
 sub subdircheck

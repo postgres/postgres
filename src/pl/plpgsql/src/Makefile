@@ -24,6 +24,8 @@ OBJS = pl_gram.o pl_handler.o pl_comp.o pl_exec.o \
 
 DATA = plpgsql.control plpgsql--1.0.sql plpgsql--unpackaged--1.0.sql
 
+REGRESS = plpgsql_call
+
 all: all-lib
 
 # Shared library stuff
@@ -64,6 +66,18 @@ pl_gram.c: BISONFLAGS += -d
 # generate plerrcodes.h from src/backend/utils/errcodes.txt
 plerrcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-plerrcodes.pl
 	$(PERL) $(srcdir)/generate-plerrcodes.pl $< > $@
+
+
+check: submake
+	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
+
+installcheck: submake
+	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
+
+.PHONY: submake
+submake:
+	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
+
 
 distprep: pl_gram.h pl_gram.c plerrcodes.h
 

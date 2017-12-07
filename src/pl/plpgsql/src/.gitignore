@@ -1,3 +1,6 @@
 /pl_gram.c
 /pl_gram.h
 /plerrcodes.h
+/log/
+/results/
+/tmp_check/
