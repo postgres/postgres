@@ -130,7 +130,7 @@ PG_FUNCTION_INFO_V1(hstore_fetchval);
 Datum
 hstore_fetchval(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	HEntry	   *entries = ARRPTR(hs);
 	text	   *out;
@@ -151,7 +151,7 @@ PG_FUNCTION_INFO_V1(hstore_exists);
 Datum
 hstore_exists(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	int			idx = hstoreFindKey(hs, NULL,
 									VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
@@ -164,7 +164,7 @@ PG_FUNCTION_INFO_V1(hstore_exists_any);
 Datum
 hstore_exists_any(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	ArrayType  *keys = PG_GETARG_ARRAYTYPE_P(1);
 	int			nkeys;
 	Pairs	   *key_pairs = hstoreArrayToPairs(keys, &nkeys);
@@ -198,7 +198,7 @@ PG_FUNCTION_INFO_V1(hstore_exists_all);
 Datum
 hstore_exists_all(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	ArrayType  *keys = PG_GETARG_ARRAYTYPE_P(1);
 	int			nkeys;
 	Pairs	   *key_pairs = hstoreArrayToPairs(keys, &nkeys);
@@ -232,7 +232,7 @@ PG_FUNCTION_INFO_V1(hstore_defined);
 Datum
 hstore_defined(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	HEntry	   *entries = ARRPTR(hs);
 	int			idx = hstoreFindKey(hs, NULL,
@@ -247,7 +247,7 @@ PG_FUNCTION_INFO_V1(hstore_delete);
 Datum
 hstore_delete(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	char	   *keyptr = VARDATA_ANY(key);
 	int			keylen = VARSIZE_ANY_EXHDR(key);
@@ -294,7 +294,7 @@ PG_FUNCTION_INFO_V1(hstore_delete_array);
 Datum
 hstore_delete_array(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	HStore	   *out = palloc(VARSIZE(hs));
 	int			hs_count = HS_COUNT(hs);
 	char	   *ps,
@@ -373,8 +373,8 @@ PG_FUNCTION_INFO_V1(hstore_delete_hstore);
 Datum
 hstore_delete_hstore(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
-	HStore	   *hs2 = PG_GETARG_HS(1);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
+	HStore	   *hs2 = PG_GETARG_HSTORE_P(1);
 	HStore	   *out = palloc(VARSIZE(hs));
 	int			hs_count = HS_COUNT(hs);
 	int			hs2_count = HS_COUNT(hs2);
@@ -473,8 +473,8 @@ PG_FUNCTION_INFO_V1(hstore_concat);
 Datum
 hstore_concat(PG_FUNCTION_ARGS)
 {
-	HStore	   *s1 = PG_GETARG_HS(0);
-	HStore	   *s2 = PG_GETARG_HS(1);
+	HStore	   *s1 = PG_GETARG_HSTORE_P(0);
+	HStore	   *s2 = PG_GETARG_HSTORE_P(1);
 	HStore	   *out = palloc(VARSIZE(s1) + VARSIZE(s2));
 	char	   *ps1,
 			   *ps2,
@@ -571,7 +571,7 @@ PG_FUNCTION_INFO_V1(hstore_slice_to_array);
 Datum
 hstore_slice_to_array(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	HEntry	   *entries = ARRPTR(hs);
 	char	   *ptr = STRPTR(hs);
 	ArrayType  *key_array = PG_GETARG_ARRAYTYPE_P(1);
@@ -634,7 +634,7 @@ PG_FUNCTION_INFO_V1(hstore_slice_to_hstore);
 Datum
 hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	HEntry	   *entries = ARRPTR(hs);
 	char	   *ptr = STRPTR(hs);
 	ArrayType  *key_array = PG_GETARG_ARRAYTYPE_P(1);
@@ -696,7 +696,7 @@ PG_FUNCTION_INFO_V1(hstore_akeys);
 Datum
 hstore_akeys(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	Datum	   *d;
 	ArrayType  *a;
 	HEntry	   *entries = ARRPTR(hs);
@@ -731,7 +731,7 @@ PG_FUNCTION_INFO_V1(hstore_avals);
 Datum
 hstore_avals(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	Datum	   *d;
 	bool	   *nulls;
 	ArrayType  *a;
@@ -827,7 +827,7 @@ PG_FUNCTION_INFO_V1(hstore_to_array);
 Datum
 hstore_to_array(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	ArrayType  *out = hstore_to_array_internal(hs, 1);
 
 	PG_RETURN_POINTER(out);
@@ -837,7 +837,7 @@ PG_FUNCTION_INFO_V1(hstore_to_matrix);
 Datum
 hstore_to_matrix(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	ArrayType  *out = hstore_to_array_internal(hs, 2);
 
 	PG_RETURN_POINTER(out);
@@ -891,7 +891,7 @@ hstore_skeys(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		hs = PG_GETARG_HS(0);
+		hs = PG_GETARG_HSTORE_P(0);
 		funcctx = SRF_FIRSTCALL_INIT();
 		setup_firstcall(funcctx, hs, NULL);
 	}
@@ -925,7 +925,7 @@ hstore_svals(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		hs = PG_GETARG_HS(0);
+		hs = PG_GETARG_HSTORE_P(0);
 		funcctx = SRF_FIRSTCALL_INIT();
 		setup_firstcall(funcctx, hs, NULL);
 	}
@@ -967,8 +967,8 @@ PG_FUNCTION_INFO_V1(hstore_contains);
 Datum
 hstore_contains(PG_FUNCTION_ARGS)
 {
-	HStore	   *val = PG_GETARG_HS(0);
-	HStore	   *tmpl = PG_GETARG_HS(1);
+	HStore	   *val = PG_GETARG_HSTORE_P(0);
+	HStore	   *tmpl = PG_GETARG_HSTORE_P(1);
 	bool		res = true;
 	HEntry	   *te = ARRPTR(tmpl);
 	char	   *tstr = STRPTR(tmpl);
@@ -1032,7 +1032,7 @@ hstore_each(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		hs = PG_GETARG_HS(0);
+		hs = PG_GETARG_HSTORE_P(0);
 		funcctx = SRF_FIRSTCALL_INIT();
 		setup_firstcall(funcctx, hs, fcinfo);
 	}
@@ -1087,8 +1087,8 @@ PG_FUNCTION_INFO_V1(hstore_cmp);
 Datum
 hstore_cmp(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs1 = PG_GETARG_HS(0);
-	HStore	   *hs2 = PG_GETARG_HS(1);
+	HStore	   *hs1 = PG_GETARG_HSTORE_P(0);
+	HStore	   *hs2 = PG_GETARG_HSTORE_P(1);
 	int			hcount1 = HS_COUNT(hs1);
 	int			hcount2 = HS_COUNT(hs2);
 	int			res = 0;
@@ -1235,7 +1235,7 @@ PG_FUNCTION_INFO_V1(hstore_hash);
 Datum
 hstore_hash(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	Datum		hval = hash_any((unsigned char *) VARDATA(hs),
 								VARSIZE(hs) - VARHDRSZ);
 

@@ -32,6 +32,8 @@ static YY_BUFFER_STATE scanbufhandle;
 
 static StringInfoData xdbuf;
 
+/* LCOV_EXCL_START */
+
 %}
 
 %option 8bit
@@ -112,6 +114,7 @@ xdinside		[^"]+
 .			{ return JUNK; }
 %%
 
+/* LCOV_EXCL_STOP */
 
 /* Needs to be here for access to yytext */
 void

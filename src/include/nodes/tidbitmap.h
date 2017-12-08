@@ -70,5 +70,6 @@ extern void tbm_end_iterate(TBMIterator *iterator);
 extern void tbm_end_shared_iterate(TBMSharedIterator *iterator);
 extern TBMSharedIterator *tbm_attach_shared_iterate(dsa_area *dsa,
 						  dsa_pointer dp);
+extern long tbm_calculate_entries(double maxbytes);
 
 #endif							/* TIDBITMAP_H */

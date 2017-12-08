@@ -112,7 +112,7 @@ typedef struct
 	int			prettyFlags;	/* enabling of pretty-print functions */
 	int			wrapColumn;		/* max line length, or -1 for no limit */
 	int			indentLevel;	/* current indent level for prettyprint */
-	bool		varprefix;		/* TRUE to print prefixes on Vars */
+	bool		varprefix;		/* true to print prefixes on Vars */
 	ParseExprKind special_exprkind; /* set only for exprkinds needing special
 									 * handling */
 } deparse_context;
@@ -130,7 +130,7 @@ typedef struct
  * rtable_columns holds the column alias names to be used for each RTE.
  *
  * In some cases we need to make names of merged JOIN USING columns unique
- * across the whole query, not only per-RTE.  If so, unique_using is TRUE
+ * across the whole query, not only per-RTE.  If so, unique_using is true
  * and using_names is a list of C strings representing names already assigned
  * to USING columns.
  *
@@ -343,7 +343,7 @@ static void set_relation_column_names(deparse_namespace *dpns,
 						  deparse_columns *colinfo);
 static void set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 					  deparse_columns *colinfo);
-static bool colname_is_unique(char *colname, deparse_namespace *dpns,
+static bool colname_is_unique(const char *colname, deparse_namespace *dpns,
 				  deparse_columns *colinfo);
 static char *make_colname_unique(char *colname, deparse_namespace *dpns,
 					deparse_columns *colinfo);
@@ -416,6 +416,9 @@ static void get_rule_expr(Node *node, deparse_context *context,
 			  bool showimplicit);
 static void get_rule_expr_toplevel(Node *node, deparse_context *context,
 					   bool showimplicit);
+static void get_rule_expr_funccall(Node *node, deparse_context *context,
+					   bool showimplicit);
+static bool looks_like_function(Node *node);
 static void get_oper_expr(OpExpr *expr, deparse_context *context);
 static void get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit);
@@ -457,6 +460,7 @@ static char *generate_function_name(Oid funcid, int nargs,
 					   bool has_variadic, bool *use_variadic_p,
 					   ParseExprKind special_exprkind);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
+static char *generate_qualified_type_name(Oid typid);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
 
@@ -1308,8 +1312,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			if (!colno || colno == keyno + 1)
 			{
 				/* Need parens if it's not a bare function call */
-				if (indexkey && IsA(indexkey, FuncExpr) &&
-					((FuncExpr *) indexkey)->funcformat == COERCE_EXPLICIT_CALL)
+				if (looks_like_function(indexkey))
 					appendStringInfoString(&buf, str);
 				else
 					appendStringInfo(&buf, "(%s)", str);
@@ -1548,7 +1551,7 @@ pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
  *
  * Returns the partition key specification, ie, the following:
  *
- * PARTITION BY { RANGE | LIST } (column opt_collation opt_opclass [, ...])
+ * PARTITION BY { RANGE | LIST | HASH } (column opt_collation opt_opclass [, ...])
  */
 Datum
 pg_get_partkeydef(PG_FUNCTION_ARGS)
@@ -1652,13 +1655,17 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 
 	switch (form->partstrat)
 	{
+		case PARTITION_STRATEGY_HASH:
+			if (!attrsOnly)
+				appendStringInfo(&buf, "HASH");
+			break;
 		case PARTITION_STRATEGY_LIST:
 			if (!attrsOnly)
-				appendStringInfo(&buf, "LIST");
+				appendStringInfoString(&buf, "LIST");
 			break;
 		case PARTITION_STRATEGY_RANGE:
 			if (!attrsOnly)
-				appendStringInfo(&buf, "RANGE");
+				appendStringInfoString(&buf, "RANGE");
 			break;
 		default:
 			elog(ERROR, "unexpected partition strategy: %d",
@@ -1666,7 +1673,7 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 	}
 
 	if (!attrsOnly)
-		appendStringInfo(&buf, " (");
+		appendStringInfoString(&buf, " (");
 	sep = "";
 	for (keyno = 0; keyno < form->partnatts; keyno++)
 	{
@@ -1698,11 +1705,16 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 				elog(ERROR, "too few entries in partexprs list");
 			partkey = (Node *) lfirst(partexpr_item);
 			partexpr_item = lnext(partexpr_item);
+
 			/* Deparse */
 			str = deparse_expression_pretty(partkey, context, false, false,
-											0, 0);
+											prettyFlags, 0);
+			/* Need parens if it's not a bare function call */
+			if (looks_like_function(partkey))
+				appendStringInfoString(&buf, str);
+			else
+				appendStringInfo(&buf, "(%s)", str);
 
-			appendStringInfoString(&buf, str);
 			keycoltype = exprType(partkey);
 			keycolcollation = exprCollation(partkey);
 		}
@@ -1743,7 +1755,7 @@ pg_get_partition_constraintdef(PG_FUNCTION_ARGS)
 
 	constr_expr = get_partition_qual_relid(relationId);
 
-	/* Quick exit if not a partition */
+	/* Quick exit if no partition constraint */
 	if (constr_expr == NULL)
 		PG_RETURN_NULL();
 
@@ -1860,15 +1872,27 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 	if (fullCommand)
 	{
-		/*
-		 * Currently, callers want ALTER TABLE (without ONLY) for CHECK
-		 * constraints, and other types of constraints don't inherit anyway so
-		 * it doesn't matter whether we say ONLY or not.  Someday we might
-		 * need to let callers specify whether to put ONLY in the command.
-		 */
-		appendStringInfo(&buf, "ALTER TABLE %s ADD CONSTRAINT %s ",
-						 generate_qualified_relation_name(conForm->conrelid),
-						 quote_identifier(NameStr(conForm->conname)));
+		if (OidIsValid(conForm->conrelid))
+		{
+			/*
+			 * Currently, callers want ALTER TABLE (without ONLY) for CHECK
+			 * constraints, and other types of constraints don't inherit
+			 * anyway so it doesn't matter whether we say ONLY or not. Someday
+			 * we might need to let callers specify whether to put ONLY in the
+			 * command.
+			 */
+			appendStringInfo(&buf, "ALTER TABLE %s ADD CONSTRAINT %s ",
+							 generate_qualified_relation_name(conForm->conrelid),
+							 quote_identifier(NameStr(conForm->conname)));
+		}
+		else
+		{
+			/* Must be a domain constraint */
+			Assert(OidIsValid(conForm->contypid));
+			appendStringInfo(&buf, "ALTER DOMAIN %s ADD CONSTRAINT %s ",
+							 generate_qualified_type_name(conForm->contypid),
+							 quote_identifier(NameStr(conForm->conname)));
+		}
 	}
 
 	switch (conForm->contype)
@@ -2315,7 +2339,7 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 
 /*
  * pg_get_serial_sequence
- *		Get the name of the sequence used by a serial column,
+ *		Get the name of the sequence used by an identity or serial column,
  *		formatted suitably for passing to setval, nextval or currval.
  *		First parameter is not treated as double-quoted, second parameter
  *		is --- see documentation for reason.
@@ -2373,13 +2397,14 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
 
 		/*
-		 * We assume any auto dependency of a sequence on a column must be
-		 * what we are looking for.  (We need the relkind test because indexes
-		 * can also have auto dependencies on columns.)
+		 * Look for an auto dependency (serial column) or internal dependency
+		 * (identity column) of a sequence on a column.  (We need the relkind
+		 * test because indexes can also have auto dependencies on columns.)
 		 */
 		if (deprec->classid == RelationRelationId &&
 			deprec->objsubid == 0 &&
-			deprec->deptype == DEPENDENCY_AUTO &&
+			(deprec->deptype == DEPENDENCY_AUTO ||
+			 deprec->deptype == DEPENDENCY_INTERNAL) &&
 			get_rel_relkind(deprec->objid) == RELKIND_SEQUENCE)
 		{
 			sequenceId = deprec->objid;
@@ -2665,6 +2690,12 @@ pg_get_function_result(PG_FUNCTION_ARGS)
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(proctup))
 		PG_RETURN_NULL();
+
+	if (((Form_pg_proc) GETSTRUCT(proctup))->prorettype == InvalidOid)
+	{
+		ReleaseSysCache(proctup);
+		PG_RETURN_NULL();
+	}
 
 	initStringInfo(&buf);
 
@@ -2991,9 +3022,9 @@ deparse_expression(Node *expr, List *dpcontext,
  * for interpreting Vars in the node tree.  It can be NIL if no Vars are
  * expected.
  *
- * forceprefix is TRUE to force all Vars to be prefixed with their table names.
+ * forceprefix is true to force all Vars to be prefixed with their table names.
  *
- * showimplicit is TRUE to force all implicit casts to be shown explicitly.
+ * showimplicit is true to force all implicit casts to be shown explicitly.
  *
  * Tries to pretty up the output according to prettyFlags and startIndent.
  *
@@ -3566,7 +3597,7 @@ set_using_names(deparse_namespace *dpns, Node *jtnode, List *parentUsing)
 		 * If there's a USING clause, select the USING column names and push
 		 * those names down to the children.  We have two strategies:
 		 *
-		 * If dpns->unique_using is TRUE, we force all USING names to be
+		 * If dpns->unique_using is true, we force all USING names to be
 		 * unique across the whole query level.  In principle we'd only need
 		 * the names of dangerous USING columns to be globally unique, but to
 		 * safely assign all USING names in a single pass, we have to enforce
@@ -3579,7 +3610,7 @@ set_using_names(deparse_namespace *dpns, Node *jtnode, List *parentUsing)
 		 * this simplifies the logic and seems likely to lead to less aliasing
 		 * overall.
 		 *
-		 * If dpns->unique_using is FALSE, we only need USING names to be
+		 * If dpns->unique_using is false, we only need USING names to be
 		 * unique within their own join RTE.  We still need to honor
 		 * pushed-down names, though.
 		 *
@@ -3691,10 +3722,12 @@ set_relation_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 
 		for (i = 0; i < ncolumns; i++)
 		{
-			if (tupdesc->attrs[i]->attisdropped)
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+			if (attr->attisdropped)
 				real_colnames[i] = NULL;
 			else
-				real_colnames[i] = pstrdup(NameStr(tupdesc->attrs[i]->attname));
+				real_colnames[i] = pstrdup(NameStr(attr->attname));
 		}
 		relation_close(rel, AccessShareLock);
 	}
@@ -4090,7 +4123,7 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
  * dpns is query-wide info, colinfo is for the column's RTE
  */
 static bool
-colname_is_unique(char *colname, deparse_namespace *dpns,
+colname_is_unique(const char *colname, deparse_namespace *dpns,
 				  deparse_columns *colinfo)
 {
 	int			i;
@@ -4583,6 +4616,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	char	   *ev_qual;
 	char	   *ev_action;
 	List	   *actions = NIL;
+	Relation	ev_relation;
+	TupleDesc	viewResultDesc = NULL;
 	int			fno;
 	Datum		dat;
 	bool		isnull;
@@ -4619,6 +4654,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	if (ev_action != NULL)
 		actions = (List *) stringToNode(ev_action);
 
+	ev_relation = heap_open(ev_class, AccessShareLock);
+
 	/*
 	 * Build the rules definition text
 	 */
@@ -4635,6 +4672,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	{
 		case '1':
 			appendStringInfoString(buf, "SELECT");
+			viewResultDesc = RelationGetDescr(ev_relation);
 			break;
 
 		case '2':
@@ -4724,7 +4762,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		foreach(action, actions)
 		{
 			query = (Query *) lfirst(action);
-			get_query_def(query, buf, NIL, NULL,
+			get_query_def(query, buf, NIL, viewResultDesc,
 						  prettyFlags, WRAP_COLUMN_DEFAULT, 0);
 			if (prettyFlags)
 				appendStringInfoString(buf, ";\n");
@@ -4742,10 +4780,12 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		Query	   *query;
 
 		query = (Query *) linitial(actions);
-		get_query_def(query, buf, NIL, NULL,
+		get_query_def(query, buf, NIL, viewResultDesc,
 					  prettyFlags, WRAP_COLUMN_DEFAULT, 0);
 		appendStringInfoChar(buf, ';');
 	}
+
+	heap_close(ev_relation, AccessShareLock);
 }
 
 
@@ -4767,20 +4807,28 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	List	   *actions = NIL;
 	Relation	ev_relation;
 	int			fno;
+	Datum		dat;
 	bool		isnull;
 
 	/*
 	 * Get the attribute values from the rules tuple
 	 */
 	fno = SPI_fnumber(rulettc, "ev_type");
-	ev_type = (char) SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	Assert(!isnull);
+	ev_type = DatumGetChar(dat);
 
 	fno = SPI_fnumber(rulettc, "ev_class");
-	ev_class = (Oid) SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	Assert(!isnull);
+	ev_class = DatumGetObjectId(dat);
 
 	fno = SPI_fnumber(rulettc, "is_instead");
-	is_instead = (bool) SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	Assert(!isnull);
+	is_instead = DatumGetBool(dat);
 
+	/* these could be nulls */
 	fno = SPI_fnumber(rulettc, "ev_qual");
 	ev_qual = SPI_getvalue(ruletup, rulettc, fno);
 
@@ -5129,7 +5177,7 @@ get_simple_values_rte(Query *query)
 	ListCell   *lc;
 
 	/*
-	 * We want to return TRUE even if the Query also contains OLD or NEW rule
+	 * We want to return true even if the Query also contains OLD or NEW rule
 	 * RTEs.  So the idea is to scan the rtable and see if there is only one
 	 * inFromCl RTE that is a VALUES RTE.
 	 */
@@ -5369,7 +5417,7 @@ get_target_list(List *targetList, deparse_context *context,
 		 * Otherwise, just use what we can find in the TLE.
 		 */
 		if (resultDesc && colno <= resultDesc->natts)
-			colname = NameStr(resultDesc->attrs[colno - 1]->attname);
+			colname = NameStr(TupleDescAttr(resultDesc, colno - 1)->attname);
 		else
 			colname = tle->resname;
 
@@ -5613,10 +5661,10 @@ get_rule_sortgroupclause(Index ref, List *tlist, bool force_colno,
 								  ||IsA(expr, WindowFunc));
 
 		if (need_paren)
-			appendStringInfoString(context->buf, "(");
+			appendStringInfoChar(context->buf, '(');
 		get_rule_expr(expr, context, true);
 		if (need_paren)
-			appendStringInfoString(context->buf, ")");
+			appendStringInfoChar(context->buf, ')');
 	}
 
 	return expr;
@@ -5643,7 +5691,7 @@ get_rule_groupingset(GroupingSet *gset, List *targetlist,
 		case GROUPING_SET_SIMPLE:
 			{
 				if (!omit_parens || list_length(gset->content) != 1)
-					appendStringInfoString(buf, "(");
+					appendStringInfoChar(buf, '(');
 
 				foreach(l, gset->content)
 				{
@@ -5656,7 +5704,7 @@ get_rule_groupingset(GroupingSet *gset, List *targetlist,
 				}
 
 				if (!omit_parens || list_length(gset->content) != 1)
-					appendStringInfoString(buf, ")");
+					appendStringInfoChar(buf, ')');
 			}
 			return;
 
@@ -5679,7 +5727,7 @@ get_rule_groupingset(GroupingSet *gset, List *targetlist,
 		sep = ", ";
 	}
 
-	appendStringInfoString(buf, ")");
+	appendStringInfoChar(buf, ')');
 }
 
 /*
@@ -6206,8 +6254,11 @@ get_update_query_targetlist_def(Query *query, List *targetList,
 			/*
 			 * We must dig down into the expr to see if it's a PARAM_MULTIEXPR
 			 * Param.  That could be buried under FieldStores and ArrayRefs
-			 * (cf processIndirection()), and underneath those there could be
-			 * an implicit type coercion.
+			 * and CoerceToDomains (cf processIndirection()), and underneath
+			 * those there could be an implicit type coercion.  Because we
+			 * would ignore implicit type coercions anyway, we don't need to
+			 * be as careful as processIndirection() is about descending past
+			 * implicit CoerceToDomains.
 			 */
 			expr = (Node *) tle->expr;
 			while (expr)
@@ -6225,6 +6276,14 @@ get_update_query_targetlist_def(Query *query, List *targetList,
 					if (aref->refassgnexpr == NULL)
 						break;
 					expr = (Node *) aref->refassgnexpr;
+				}
+				else if (IsA(expr, CoerceToDomain))
+				{
+					CoerceToDomain *cdomain = (CoerceToDomain *) expr;
+
+					if (cdomain->coercionformat != COERCE_IMPLICIT_CAST)
+						break;
+					expr = (Node *) cdomain->arg;
 				}
 				else
 					break;
@@ -6367,7 +6426,7 @@ get_utility_query_def(Query *query, deparse_context *context)
  * the Var's varlevelsup has to be interpreted with respect to a context
  * above the current one; levelsup indicates the offset.
  *
- * If istoplevel is TRUE, the Var is at the top level of a SELECT's
+ * If istoplevel is true, the Var is at the top level of a SELECT's
  * targetlist, which means we need special treatment of whole-row Vars.
  * Instead of the normal "tab.*", we'll print "tab.*::typename", which is a
  * dirty hack to prevent "tab.*" from being expanded into multiple columns.
@@ -6695,20 +6754,15 @@ get_name_for_var_field(Var *var, int fieldno,
 
 	/*
 	 * If it's a Var of type RECORD, we have to find what the Var refers to;
-	 * if not, we can use get_expr_result_type. If that fails, we try
-	 * lookup_rowtype_tupdesc, which will probably fail too, but will ereport
-	 * an acceptable message.
+	 * if not, we can use get_expr_result_tupdesc().
 	 */
 	if (!IsA(var, Var) ||
 		var->vartype != RECORDOID)
 	{
-		if (get_expr_result_type((Node *) var, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-			tupleDesc = lookup_rowtype_tupdesc_copy(exprType((Node *) var),
-													exprTypmod((Node *) var));
-		Assert(tupleDesc);
+		tupleDesc = get_expr_result_tupdesc((Node *) var, false);
 		/* Got the tupdesc, so we can extract the field name */
 		Assert(fieldno >= 1 && fieldno <= tupleDesc->natts);
-		return NameStr(tupleDesc->attrs[fieldno - 1]->attname);
+		return NameStr(TupleDescAttr(tupleDesc, fieldno - 1)->attname);
 	}
 
 	/* Find appropriate nesting depth */
@@ -6811,8 +6865,8 @@ get_name_for_var_field(Var *var, int fieldno,
 		case RTE_NAMEDTUPLESTORE:
 
 			/*
-			 * This case should not occur: a column of a table or values list
-			 * shouldn't have type RECORD.  Fall through and fail (most
+			 * This case should not occur: a column of a table, values list,
+			 * or ENR shouldn't have type RECORD.  Fall through and fail (most
 			 * likely) at the bottom.
 			 */
 			break;
@@ -7008,17 +7062,12 @@ get_name_for_var_field(Var *var, int fieldno,
 
 	/*
 	 * We now have an expression we can't expand any more, so see if
-	 * get_expr_result_type() can do anything with it.  If not, pass to
-	 * lookup_rowtype_tupdesc() which will probably fail, but will give an
-	 * appropriate error message while failing.
+	 * get_expr_result_tupdesc() can do anything with it.
 	 */
-	if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-		tupleDesc = lookup_rowtype_tupdesc_copy(exprType(expr),
-												exprTypmod(expr));
-	Assert(tupleDesc);
+	tupleDesc = get_expr_result_tupdesc(expr, false);
 	/* Got the tupdesc, so we can extract the field name */
 	Assert(fieldno >= 1 && fieldno <= tupleDesc->natts);
-	return NameStr(tupleDesc->attrs[fieldno - 1]->attname);
+	return NameStr(TupleDescAttr(tupleDesc, fieldno - 1)->attname);
 }
 
 /*
@@ -7265,6 +7314,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 		case T_MinMaxExpr:
 		case T_SQLValueFunction:
 		case T_XmlExpr:
+		case T_NextValueExpr:
 		case T_NullIfExpr:
 		case T_Aggref:
 		case T_WindowFunc:
@@ -8146,7 +8196,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					Node	   *e = (Node *) lfirst(arg);
 
 					if (tupdesc == NULL ||
-						!tupdesc->attrs[i]->attisdropped)
+						!TupleDescAttr(tupdesc, i)->attisdropped)
 					{
 						appendStringInfoString(buf, sep);
 						/* Whole-row Vars need special treatment here */
@@ -8159,7 +8209,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				{
 					while (i < tupdesc->natts)
 					{
-						if (!tupdesc->attrs[i]->attisdropped)
+						if (!TupleDescAttr(tupdesc, i)->attisdropped)
 						{
 							appendStringInfoString(buf, sep);
 							appendStringInfoString(buf, "NULL");
@@ -8594,6 +8644,22 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
+		case T_NextValueExpr:
+			{
+				NextValueExpr *nvexpr = (NextValueExpr *) node;
+
+				/*
+				 * This isn't exactly nextval(), but that seems close enough
+				 * for EXPLAIN's purposes.
+				 */
+				appendStringInfoString(buf, "nextval(");
+				simple_quote_literal(buf,
+									 generate_relation_name(nvexpr->seqid,
+															NIL));
+				appendStringInfoChar(buf, ')');
+			}
+			break;
+
 		case T_InferenceElem:
 			{
 				InferenceElem *iexpr = (InferenceElem *) node;
@@ -8647,8 +8713,23 @@ get_rule_expr(Node *node, deparse_context *context,
 				ListCell   *cell;
 				char	   *sep;
 
+				if (spec->is_default)
+				{
+					appendStringInfoString(buf, "DEFAULT");
+					break;
+				}
+
 				switch (spec->strategy)
 				{
+					case PARTITION_STRATEGY_HASH:
+						Assert(spec->modulus > 0 && spec->remainder >= 0);
+						Assert(spec->modulus > spec->remainder);
+
+						appendStringInfoString(buf, "FOR VALUES");
+						appendStringInfo(buf, " WITH (modulus %d, remainder %d)",
+										 spec->modulus, spec->remainder);
+						break;
+
 					case PARTITION_STRATEGY_LIST:
 						Assert(spec->listdatums != NIL);
 
@@ -8663,7 +8744,7 @@ get_rule_expr(Node *node, deparse_context *context,
 							sep = ", ";
 						}
 
-						appendStringInfoString(buf, ")");
+						appendStringInfoChar(buf, ')');
 						break;
 
 					case PARTITION_STRATEGY_RANGE:
@@ -8672,43 +8753,9 @@ get_rule_expr(Node *node, deparse_context *context,
 							   list_length(spec->lowerdatums) ==
 							   list_length(spec->upperdatums));
 
-						appendStringInfoString(buf, "FOR VALUES FROM (");
-						sep = "";
-						foreach(cell, spec->lowerdatums)
-						{
-							PartitionRangeDatum *datum =
-							castNode(PartitionRangeDatum, lfirst(cell));
-
-							appendStringInfoString(buf, sep);
-							if (datum->infinite)
-								appendStringInfoString(buf, "UNBOUNDED");
-							else
-							{
-								Const	   *val = castNode(Const, datum->value);
-
-								get_const_expr(val, context, -1);
-							}
-							sep = ", ";
-						}
-						appendStringInfoString(buf, ") TO (");
-						sep = "";
-						foreach(cell, spec->upperdatums)
-						{
-							PartitionRangeDatum *datum =
-							castNode(PartitionRangeDatum, lfirst(cell));
-
-							appendStringInfoString(buf, sep);
-							if (datum->infinite)
-								appendStringInfoString(buf, "UNBOUNDED");
-							else
-							{
-								Const	   *val = castNode(Const, datum->value);
-
-								get_const_expr(val, context, -1);
-							}
-							sep = ", ";
-						}
-						appendStringInfoString(buf, ")");
+						appendStringInfo(buf, "FOR VALUES FROM %s TO %s",
+										 get_range_partbound_string(spec->lowerdatums),
+										 get_range_partbound_string(spec->upperdatums));
 						break;
 
 					default:
@@ -8763,6 +8810,64 @@ get_rule_expr_toplevel(Node *node, deparse_context *context,
 		(void) get_variable((Var *) node, 0, true, context);
 	else
 		get_rule_expr(node, context, showimplicit);
+}
+
+/*
+ * get_rule_expr_funccall		- Parse back a function-call expression
+ *
+ * Same as get_rule_expr(), except that we guarantee that the output will
+ * look like a function call, or like one of the things the grammar treats as
+ * equivalent to a function call (see the func_expr_windowless production).
+ * This is needed in places where the grammar uses func_expr_windowless and
+ * you can't substitute a parenthesized a_expr.  If what we have isn't going
+ * to look like a function call, wrap it in a dummy CAST() expression, which
+ * will satisfy the grammar --- and, indeed, is likely what the user wrote to
+ * produce such a thing.
+ */
+static void
+get_rule_expr_funccall(Node *node, deparse_context *context,
+					   bool showimplicit)
+{
+	if (looks_like_function(node))
+		get_rule_expr(node, context, showimplicit);
+	else
+	{
+		StringInfo	buf = context->buf;
+
+		appendStringInfoString(buf, "CAST(");
+		/* no point in showing any top-level implicit cast */
+		get_rule_expr(node, context, false);
+		appendStringInfo(buf, " AS %s)",
+						 format_type_with_typemod(exprType(node),
+												  exprTypmod(node)));
+	}
+}
+
+/*
+ * Helper function to identify node types that satisfy func_expr_windowless.
+ * If in doubt, "false" is always a safe answer.
+ */
+static bool
+looks_like_function(Node *node)
+{
+	if (node == NULL)
+		return false;			/* probably shouldn't happen */
+	switch (nodeTag(node))
+	{
+		case T_FuncExpr:
+			/* OK, unless it's going to deparse as a cast */
+			return (((FuncExpr *) node)->funcformat == COERCE_EXPLICIT_CALL);
+		case T_NullIfExpr:
+		case T_CoalesceExpr:
+		case T_MinMaxExpr:
+		case T_SQLValueFunction:
+		case T_XmlExpr:
+			/* these are all accepted by func_expr_common_subexpr */
+			return true;
+		default:
+			break;
+	}
+	return false;
 }
 
 
@@ -9738,7 +9843,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				if (list_length(rte->functions) == 1 &&
 					(rtfunc1->funccolnames == NIL || !rte->funcordinality))
 				{
-					get_rule_expr(rtfunc1->funcexpr, context, true);
+					get_rule_expr_funccall(rtfunc1->funcexpr, context, true);
 					/* we'll print the coldeflist below, if it has one */
 				}
 				else
@@ -9801,7 +9906,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 
 							if (funcno > 0)
 								appendStringInfoString(buf, ", ");
-							get_rule_expr(rtfunc->funcexpr, context, true);
+							get_rule_expr_funccall(rtfunc->funcexpr, context, true);
 							if (rtfunc->funccolnames != NIL)
 							{
 								/* Reconstruct the column definition list */
@@ -9988,6 +10093,11 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			get_rule_expr(j->quals, context, false);
 			if (!PRETTY_PAREN(context))
 				appendStringInfoChar(buf, ')');
+		}
+		else if (j->jointype != JOIN_INNER)
+		{
+			/* If we didn't say CROSS JOIN above, we must provide an ON */
+			appendStringInfoString(buf, " ON TRUE");
 		}
 
 		if (!PRETTY_PAREN(context) || j->alias != NULL)
@@ -10185,13 +10295,17 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
  *
  * We strip any top-level FieldStore or assignment ArrayRef nodes that
  * appear in the input, printing them as decoration for the base column
- * name (which we assume the caller just printed).  Return the subexpression
- * that's to be assigned.
+ * name (which we assume the caller just printed).  We might also need to
+ * strip CoerceToDomain nodes, but only ones that appear above assignment
+ * nodes.
+ *
+ * Returns the subexpression that's to be assigned.
  */
 static Node *
 processIndirection(Node *node, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
+	CoerceToDomain *cdomain = NULL;
 
 	for (;;)
 	{
@@ -10239,9 +10353,27 @@ processIndirection(Node *node, deparse_context *context)
 			 */
 			node = (Node *) aref->refassgnexpr;
 		}
+		else if (IsA(node, CoerceToDomain))
+		{
+			cdomain = (CoerceToDomain *) node;
+			/* If it's an explicit domain coercion, we're done */
+			if (cdomain->coercionformat != COERCE_IMPLICIT_CAST)
+				break;
+			/* Tentatively descend past the CoerceToDomain */
+			node = (Node *) cdomain->arg;
+		}
 		else
 			break;
 	}
+
+	/*
+	 * If we descended past a CoerceToDomain whose argument turned out not to
+	 * be a FieldStore or array assignment, back up to the CoerceToDomain.
+	 * (This is not enough to be fully correct if there are nested implicit
+	 * CoerceToDomains, but such cases shouldn't ever occur.)
+	 */
+	if (cdomain && node == (Node *) cdomain->arg)
+		node = (Node *) cdomain;
 
 	return node;
 }
@@ -10499,7 +10631,7 @@ generate_qualified_relation_name(Oid relid)
  * means a FuncExpr or Aggref, not some other way of calling a function), then
  * has_variadic must specify whether variadic arguments have been merged,
  * and *use_variadic_p will be set to indicate whether to print VARIADIC in
- * the output.  For non-FuncExpr cases, has_variadic should be FALSE and
+ * the output.  For non-FuncExpr cases, has_variadic should be false and
  * use_variadic_p can be NULL.
  *
  * The result includes all necessary quoting and schema-prefixing.
@@ -10679,6 +10811,42 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 }
 
 /*
+ * generate_qualified_type_name
+ *		Compute the name to display for a type specified by OID
+ *
+ * This is different from format_type_be() in that we unconditionally
+ * schema-qualify the name.  That also means no special syntax for
+ * SQL-standard type names ... although in current usage, this should
+ * only get used for domains, so such cases wouldn't occur anyway.
+ */
+static char *
+generate_qualified_type_name(Oid typid)
+{
+	HeapTuple	tp;
+	Form_pg_type typtup;
+	char	   *typname;
+	char	   *nspname;
+	char	   *result;
+
+	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for type %u", typid);
+	typtup = (Form_pg_type) GETSTRUCT(tp);
+	typname = NameStr(typtup->typname);
+
+	nspname = get_namespace_name(typtup->typnamespace);
+	if (!nspname)
+		elog(ERROR, "cache lookup failed for namespace %u",
+			 typtup->typnamespace);
+
+	result = quote_qualified_identifier(nspname, typname);
+
+	ReleaseSysCache(tp);
+
+	return result;
+}
+
+/*
  * generate_collation_name
  *		Compute the name to display for a collation specified by OID
  *
@@ -10803,4 +10971,44 @@ flatten_reloptions(Oid relid)
 	ReleaseSysCache(tuple);
 
 	return result;
+}
+
+/*
+ * get_one_range_partition_bound_string
+ *		A C string representation of one range partition bound
+ */
+char *
+get_range_partbound_string(List *bound_datums)
+{
+	deparse_context context;
+	StringInfo	buf = makeStringInfo();
+	ListCell   *cell;
+	char	   *sep;
+
+	memset(&context, 0, sizeof(deparse_context));
+	context.buf = buf;
+
+	appendStringInfoString(buf, "(");
+	sep = "";
+	foreach(cell, bound_datums)
+	{
+		PartitionRangeDatum *datum =
+		castNode(PartitionRangeDatum, lfirst(cell));
+
+		appendStringInfoString(buf, sep);
+		if (datum->kind == PARTITION_RANGE_DATUM_MINVALUE)
+			appendStringInfoString(buf, "MINVALUE");
+		else if (datum->kind == PARTITION_RANGE_DATUM_MAXVALUE)
+			appendStringInfoString(buf, "MAXVALUE");
+		else
+		{
+			Const	   *val = castNode(Const, datum->value);
+
+			get_const_expr(val, &context, -1);
+		}
+		sep = ", ";
+	}
+	appendStringInfoChar(buf, ')');
+
+	return buf->data;
 }

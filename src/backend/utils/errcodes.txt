@@ -400,7 +400,6 @@ Section: Class 55 - Object Not In Prerequisite State
 55006    E    ERRCODE_OBJECT_IN_USE                                          object_in_use
 55P02    E    ERRCODE_CANT_CHANGE_RUNTIME_PARAM                              cant_change_runtime_param
 55P03    E    ERRCODE_LOCK_NOT_AVAILABLE                                     lock_not_available
-55P04    E    ERRCODE_UNSAFE_NEW_ENUM_VALUE_USAGE                            unsafe_new_enum_value_usage
 
 Section: Class 57 - Operator Intervention
 

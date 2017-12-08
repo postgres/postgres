@@ -1,0 +1,20 @@
+src/test/ldap/README
+
+Tests for LDAP functionality
+============================
+
+This directory contains a test suite for LDAP functionality.  This
+requires a full OpenLDAP installation, including server and client
+tools, and is therefore kept separate and not run by default.  You
+might need to adjust some paths in the test file to have it find
+OpenLDAP in a place that hadn't been thought of yet.
+
+Also, this test suite creates an LDAP server that listens for TCP/IP
+connections on localhost without any real access control, so it is not
+safe to run this on a system where there might be untrusted local
+users.
+
+Running the tests
+=================
+
+    make check

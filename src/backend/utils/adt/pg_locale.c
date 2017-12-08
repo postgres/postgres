@@ -1227,13 +1227,23 @@ lc_ctype_is_c(Oid collation)
 static void
 report_newlocale_failure(const char *localename)
 {
-	/* copy errno in case one of the ereport auxiliary functions changes it */
-	int			save_errno = errno;
+	int			save_errno;
+
+	/*
+	 * Windows doesn't provide any useful error indication from
+	 * _create_locale(), and BSD-derived platforms don't seem to feel they
+	 * need to set errno either (even though POSIX is pretty clear that
+	 * newlocale should do so).  So, if errno hasn't been set, assume ENOENT
+	 * is what to report.
+	 */
+	if (errno == 0)
+		errno = ENOENT;
 
 	/*
 	 * ENOENT means "no such locale", not "no such file", so clarify that
 	 * errno with an errdetail message.
 	 */
+	save_errno = errno;			/* auxiliary funcs might change errno */
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			 errmsg("could not create locale \"%s\": %m",
@@ -1282,7 +1292,8 @@ pg_newlocale_from_collation(Oid collid)
 		Form_pg_collation collform;
 		const char *collcollate;
 		const char *collctype pg_attribute_unused();
-		pg_locale_t result;
+		struct pg_locale_struct result;
+		pg_locale_t resultp;
 		Datum		collversion;
 		bool		isnull;
 
@@ -1294,9 +1305,9 @@ pg_newlocale_from_collation(Oid collid)
 		collcollate = NameStr(collform->collcollate);
 		collctype = NameStr(collform->collctype);
 
-		result = malloc(sizeof(*result));
-		memset(result, 0, sizeof(*result));
-		result->provider = collform->collprovider;
+		/* We'll fill in the result struct locally before allocating memory */
+		memset(&result, 0, sizeof(result));
+		result.provider = collform->collprovider;
 
 		if (collform->collprovider == COLLPROVIDER_LIBC)
 		{
@@ -1306,6 +1317,7 @@ pg_newlocale_from_collation(Oid collid)
 			if (strcmp(collcollate, collctype) == 0)
 			{
 				/* Normal case where they're the same */
+				errno = 0;
 #ifndef WIN32
 				loc = newlocale(LC_COLLATE_MASK | LC_CTYPE_MASK, collcollate,
 								NULL);
@@ -1321,9 +1333,11 @@ pg_newlocale_from_collation(Oid collid)
 				/* We need two newlocale() steps */
 				locale_t	loc1;
 
+				errno = 0;
 				loc1 = newlocale(LC_COLLATE_MASK, collcollate, NULL);
 				if (!loc1)
 					report_newlocale_failure(collcollate);
+				errno = 0;
 				loc = newlocale(LC_CTYPE_MASK, collctype, loc1);
 				if (!loc)
 					report_newlocale_failure(collctype);
@@ -1340,7 +1354,7 @@ pg_newlocale_from_collation(Oid collid)
 #endif
 			}
 
-			result->info.lt = loc;
+			result.info.lt = loc;
 #else							/* not HAVE_LOCALE_T */
 			/* platform that doesn't support locale_t */
 			ereport(ERROR,
@@ -1366,8 +1380,10 @@ pg_newlocale_from_collation(Oid collid)
 						(errmsg("could not open collator for locale \"%s\": %s",
 								collcollate, u_errorName(status))));
 
-			result->info.icu.locale = strdup(collcollate);
-			result->info.icu.ucol = collator;
+			/* We will leak this string if we get an error below :-( */
+			result.info.icu.locale = MemoryContextStrdup(TopMemoryContext,
+														 collcollate);
+			result.info.icu.ucol = collator;
 #else							/* not USE_ICU */
 			/* could get here if a collation was created by a build with ICU */
 			ereport(ERROR,
@@ -1414,7 +1430,11 @@ pg_newlocale_from_collation(Oid collid)
 
 		ReleaseSysCache(tp);
 
-		cache_entry->locale = result;
+		/* We'll keep the pg_locale_t structures in TopMemoryContext */
+		resultp = MemoryContextAlloc(TopMemoryContext, sizeof(*resultp));
+		*resultp = result;
+
+		cache_entry->locale = resultp;
 	}
 
 	return cache_entry->locale;
@@ -1567,14 +1587,13 @@ icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar)
 
 	return len_result;
 }
+
 #endif							/* USE_ICU */
 
 /*
  * These functions convert from/to libc's wchar_t, *not* pg_wchar_t.
  * Therefore we keep them here rather than with the mbutils code.
  */
-
-#ifdef USE_WIDE_UPPER_LOWER
 
 /*
  * wchar2char --- convert wide characters to multibyte format
@@ -1742,5 +1761,3 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 
 	return result;
 }
-
-#endif							/* USE_WIDE_UPPER_LOWER */

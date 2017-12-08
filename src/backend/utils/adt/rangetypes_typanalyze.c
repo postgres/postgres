@@ -144,7 +144,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		total_width += VARSIZE_ANY(DatumGetPointer(value));
 
 		/* Get range and deserialize it for further analysis. */
-		range = DatumGetRangeType(value);
+		range = DatumGetRangeTypeP(value);
 		range_deserialize(typcache, range, &lower, &upper, &empty);
 
 		if (!empty)

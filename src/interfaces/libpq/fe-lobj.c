@@ -33,12 +33,11 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <sys/stat.h>
-#include <netinet/in.h>			/* for ntohl/htonl */
-#include <arpa/inet.h>
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "libpq/libpq-fs.h"		/* must come after sys/stat.h */
+#include "port/pg_bswap.h"
 
 #define LO_BUFSIZE		  8192
 
@@ -1070,11 +1069,11 @@ lo_hton64(pg_int64 host64)
 
 	/* High order half first, since we're doing MSB-first */
 	t = (uint32) (host64 >> 32);
-	swap.i32[0] = htonl(t);
+	swap.i32[0] = pg_hton32(t);
 
 	/* Now the low order half */
 	t = (uint32) host64;
-	swap.i32[1] = htonl(t);
+	swap.i32[1] = pg_hton32(t);
 
 	return swap.i64;
 }
@@ -1095,9 +1094,9 @@ lo_ntoh64(pg_int64 net64)
 
 	swap.i64 = net64;
 
-	result = (uint32) ntohl(swap.i32[0]);
+	result = (uint32) pg_ntoh32(swap.i32[0]);
 	result <<= 32;
-	result |= (uint32) ntohl(swap.i32[1]);
+	result |= (uint32) pg_ntoh32(swap.i32[1]);
 
 	return result;
 }

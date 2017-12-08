@@ -95,17 +95,17 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 	ssize_t		size;
 	XLogSegNo	segno;
 
-	XLByteToSeg(startpoint, segno);
-	XLogFileName(current_walfile_name, stream->timeline, segno);
+	XLByteToSeg(startpoint, segno, WalSegSz);
+	XLogFileName(current_walfile_name, stream->timeline, segno, WalSegSz);
 
 	snprintf(fn, sizeof(fn), "%s%s", current_walfile_name,
 			 stream->partial_suffix ? stream->partial_suffix : "");
 
 	/*
 	 * When streaming to files, if an existing file exists we verify that it's
-	 * either empty (just created), or a complete XLogSegSize segment (in
-	 * which case it has been created and padded). Anything else indicates a
-	 * corrupt file.
+	 * either empty (just created), or a complete WalSegSz segment (in which
+	 * case it has been created and padded). Anything else indicates a corrupt
+	 * file.
 	 *
 	 * When streaming to tar, no file with this name will exist before, so we
 	 * never have to verify a size.
@@ -120,7 +120,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 					progname, fn, stream->walmethod->getlasterror());
 			return false;
 		}
-		if (size == XLogSegSize)
+		if (size == WalSegSz)
 		{
 			/* Already padded file. Open it for use */
 			f = stream->walmethod->open_for_write(current_walfile_name, stream->partial_suffix, 0);
@@ -136,7 +136,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			if (stream->walmethod->sync(f) != 0)
 			{
 				fprintf(stderr,
-						_("%s: could not sync existing write-ahead log file \"%s\": %s\n"),
+						_("%s: could not fsync existing write-ahead log file \"%s\": %s\n"),
 						progname, fn, stream->walmethod->getlasterror());
 				stream->walmethod->close(f, CLOSE_UNLINK);
 				return false;
@@ -151,8 +151,10 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			if (errno == 0)
 				errno = ENOSPC;
 			fprintf(stderr,
-					_("%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"),
-					progname, fn, (int) size, XLogSegSize);
+					ngettext("%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n",
+							 "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n",
+							 size),
+					progname, fn, (int) size, WalSegSz);
 			return false;
 		}
 		/* File existed and was empty, so fall through and open */
@@ -160,7 +162,8 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 
 	/* No file existed, so create one */
 
-	f = stream->walmethod->open_for_write(current_walfile_name, stream->partial_suffix, XLogSegSize);
+	f = stream->walmethod->open_for_write(current_walfile_name,
+										  stream->partial_suffix, WalSegSz);
 	if (f == NULL)
 	{
 		fprintf(stderr,
@@ -201,7 +204,7 @@ close_walfile(StreamCtl *stream, XLogRecPtr pos)
 
 	if (stream->partial_suffix)
 	{
-		if (currpos == XLOG_SEG_SIZE)
+		if (currpos == WalSegSz)
 			r = stream->walmethod->close(walfile, CLOSE_NORMAL);
 		else
 		{
@@ -229,7 +232,7 @@ close_walfile(StreamCtl *stream, XLogRecPtr pos)
 	 * new node. This is in line with walreceiver.c always doing a
 	 * XLogArchiveForceDone() after a complete segment.
 	 */
-	if (currpos == XLOG_SEG_SIZE && stream->mark_done)
+	if (currpos == WalSegSz && stream->mark_done)
 	{
 		/* writes error message if failed */
 		if (!mark_file_as_archived(stream, current_walfile_name))
@@ -520,24 +523,6 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 	}
 
 	/*
-	 * Create temporary replication slot if one is needed
-	 */
-	if (stream->temp_slot)
-	{
-		snprintf(query, sizeof(query),
-				 "CREATE_REPLICATION_SLOT \"%s\" TEMPORARY PHYSICAL RESERVE_WAL",
-				 stream->replication_slot);
-		res = PQexec(conn, query);
-		if (PQresultStatus(res) != PGRES_TUPLES_OK)
-		{
-			fprintf(stderr, _("%s: could not create temporary replication slot \"%s\": %s"),
-					progname, stream->replication_slot, PQerrorMessage(conn));
-			PQclear(res);
-			return false;
-		}
-	}
-
-	/*
 	 * initialize flush position to starting point, it's the caller's
 	 * responsibility that that's sane.
 	 */
@@ -674,7 +659,8 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			 * start streaming at the beginning of a segment.
 			 */
 			stream->timeline = newtimeline;
-			stream->startpos = stream->startpos - (stream->startpos % XLOG_SEG_SIZE);
+			stream->startpos = stream->startpos -
+				XLogSegmentOffset(stream->startpos, WalSegSz);
 			continue;
 		}
 		else if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -761,7 +747,7 @@ ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos, uint32 *timeline)
 
 /*
  * The main loop of ReceiveXlogStream. Handles the COPY stream after
- * initiating streaming with the START_STREAMING command.
+ * initiating streaming with the START_REPLICATION command.
  *
  * If the COPY ends (not necessarily successfully) due a message from the
  * server, returns a PGresult and sets *stoppos to the last byte written.
@@ -1109,7 +1095,7 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 	*blockpos = fe_recvint64(&copybuf[1]);
 
 	/* Extract WAL location for this block */
-	xlogoff = *blockpos % XLOG_SEG_SIZE;
+	xlogoff = XLogSegmentOffset(*blockpos, WalSegSz);
 
 	/*
 	 * Verify that the initial location in the stream matches where we think
@@ -1146,11 +1132,11 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 		int			bytes_to_write;
 
 		/*
-		 * If crossing a WAL boundary, only write up until we reach
-		 * XLOG_SEG_SIZE.
+		 * If crossing a WAL boundary, only write up until we reach wal
+		 * segment size.
 		 */
-		if (xlogoff + bytes_left > XLOG_SEG_SIZE)
-			bytes_to_write = XLOG_SEG_SIZE - xlogoff;
+		if (xlogoff + bytes_left > WalSegSz)
+			bytes_to_write = WalSegSz - xlogoff;
 		else
 			bytes_to_write = bytes_left;
 
@@ -1180,7 +1166,7 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 		xlogoff += bytes_to_write;
 
 		/* Did we reach the end of a WAL segment? */
-		if (*blockpos % XLOG_SEG_SIZE == 0)
+		if (XLogSegmentOffset(*blockpos, WalSegSz) == 0)
 		{
 			if (!close_walfile(stream, *blockpos))
 				/* Error message written in close_walfile() */

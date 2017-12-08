@@ -18,6 +18,7 @@
 #include <limits.h>
 
 #include "access/genam.h"
+#include "access/hash.h"
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "access/htup_details.h"
@@ -238,7 +239,7 @@ get_opclass_oid(Oid amID, List *opclassname, bool missing_ok)
  * Caller must have done permissions checks etc. already.
  */
 static ObjectAddress
-CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
+CreateOpFamily(const char *amname, const char *opfname, Oid namespaceoid, Oid amoid)
 {
 	Oid			opfamilyoid;
 	Relation	rel;
@@ -519,7 +520,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							 errmsg("invalid procedure number %d,"
 									" must be between 1 and %d",
 									item->number, maxProcNumber)));
-				funcOid = LookupFuncWithArgs(item->name, false);
+				funcOid = LookupFuncWithArgs(OBJECT_FUNCTION, item->name, false);
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own function */
@@ -893,7 +894,7 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 							 errmsg("invalid procedure number %d,"
 									" must be between 1 and %d",
 									item->number, maxProcNumber)));
-				funcOid = LookupFuncWithArgs(item->name, false);
+				funcOid = LookupFuncWithArgs(OBJECT_FUNCTION, item->name, false);
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own function */
@@ -1129,7 +1130,8 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	/*
 	 * btree comparison procs must be 2-arg procs returning int4, while btree
 	 * sortsupport procs must take internal and return void.  hash support
-	 * procs must be 1-arg procs returning int4.  Otherwise we don't know.
+	 * proc 1 must be a 1-arg proc returning int4, while proc 2 must be a
+	 * 2-arg proc returning int8.  Otherwise we don't know.
 	 */
 	if (amoid == BTREE_AM_OID)
 	{
@@ -1172,14 +1174,28 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	}
 	else if (amoid == HASH_AM_OID)
 	{
-		if (procform->pronargs != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("hash procedures must have one argument")));
-		if (procform->prorettype != INT4OID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("hash procedures must return integer")));
+		if (member->number == HASHSTANDARD_PROC)
+		{
+			if (procform->pronargs != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("hash procedure 1 must have one argument")));
+			if (procform->prorettype != INT4OID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("hash procedure 1 must return integer")));
+		}
+		else if (member->number == HASHEXTENDED_PROC)
+		{
+			if (procform->pronargs != 2)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("hash procedure 2 must have two arguments")));
+			if (procform->prorettype != INT8OID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("hash procedure 2 must return bigint")));
+		}
 
 		/*
 		 * If lefttype/righttype isn't specified, use the proc's input type

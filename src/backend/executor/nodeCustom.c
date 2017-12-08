@@ -15,10 +15,15 @@
 #include "executor/nodeCustom.h"
 #include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
+#include "miscadmin.h"
 #include "parser/parsetree.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+
+
+static TupleTableSlot *ExecCustomScan(PlanState *pstate);
+
 
 CustomScanState *
 ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
@@ -44,6 +49,7 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	/* fill up fields of ScanState */
 	css->ss.ps.plan = &cscan->scan.plan;
 	css->ss.ps.state = estate;
+	css->ss.ps.ExecProcNode = ExecCustomScan;
 
 	/* create expression context for node */
 	ExecAssignExprContext(estate, &css->ss.ps);
@@ -101,9 +107,13 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	return css;
 }
 
-TupleTableSlot *
-ExecCustomScan(CustomScanState *node)
+static TupleTableSlot *
+ExecCustomScan(PlanState *pstate)
 {
+	CustomScanState *node = castNode(CustomScanState, pstate);
+
+	CHECK_FOR_INTERRUPTS();
+
 	Assert(node->methods->ExecCustomScan != NULL);
 	return node->methods->ExecCustomScan(node);
 }
@@ -185,7 +195,23 @@ ExecCustomScanInitializeDSM(CustomScanState *node, ParallelContext *pcxt)
 }
 
 void
-ExecCustomScanInitializeWorker(CustomScanState *node, shm_toc *toc)
+ExecCustomScanReInitializeDSM(CustomScanState *node, ParallelContext *pcxt)
+{
+	const CustomExecMethods *methods = node->methods;
+
+	if (methods->ReInitializeDSMCustomScan)
+	{
+		int			plan_node_id = node->ss.ps.plan->plan_node_id;
+		void	   *coordinate;
+
+		coordinate = shm_toc_lookup(pcxt->toc, plan_node_id, false);
+		methods->ReInitializeDSMCustomScan(node, pcxt, coordinate);
+	}
+}
+
+void
+ExecCustomScanInitializeWorker(CustomScanState *node,
+							   ParallelWorkerContext *pwcxt)
 {
 	const CustomExecMethods *methods = node->methods;
 
@@ -194,8 +220,8 @@ ExecCustomScanInitializeWorker(CustomScanState *node, shm_toc *toc)
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 		void	   *coordinate;
 
-		coordinate = shm_toc_lookup(toc, plan_node_id, false);
-		methods->InitializeWorkerCustomScan(node, toc, coordinate);
+		coordinate = shm_toc_lookup(pwcxt->toc, plan_node_id, false);
+		methods->InitializeWorkerCustomScan(node, pwcxt->toc, coordinate);
 	}
 }
 

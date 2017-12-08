@@ -41,7 +41,7 @@
 
 #define AllocSizeIsValid(size)	((Size) (size) <= MaxAllocSize)
 
-#define MaxAllocHugeSize	((Size) -1 >> 1)	/* SIZE_MAX / 2 */
+#define MaxAllocHugeSize	(SIZE_MAX / 2)
 
 #define AllocHugeSizeIsValid(size)	((Size) (size) <= MaxAllocHugeSize)
 
@@ -154,6 +154,11 @@ extern MemoryContext SlabContextCreate(MemoryContext parent,
 				  const char *name,
 				  Size blockSize,
 				  Size chunkSize);
+
+/* generation.c */
+extern MemoryContext GenerationContextCreate(MemoryContext parent,
+						const char *name,
+						Size blockSize);
 
 /*
  * Recommended default alloc parameters, suitable for "ordinary" contexts

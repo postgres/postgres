@@ -1,0 +1,4 @@
+comment = 'Test code for red-black tree library'
+default_version = '1.0'
+module_pathname = '$libdir/test_rbtree'
+relocatable = true

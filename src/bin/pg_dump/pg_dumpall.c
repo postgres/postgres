@@ -80,6 +80,7 @@ static int	no_subscriptions = 0;
 static int	no_unlogged_table_data = 0;
 static int	no_role_passwords = 0;
 static int	server_version;
+static int	load_via_partition_root = 0;
 
 static char role_catalog[10];
 #define PG_AUTHID "pg_authid"
@@ -96,6 +97,7 @@ main(int argc, char *argv[])
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"clean", no_argument, NULL, 'c'},
+		{"encoding", required_argument, NULL, 'E'},
 		{"file", required_argument, NULL, 'f'},
 		{"globals-only", no_argument, NULL, 'g'},
 		{"host", required_argument, NULL, 'h'},
@@ -128,6 +130,7 @@ main(int argc, char *argv[])
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
+		{"load-via-partition-root", no_argument, &load_via_partition_root, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-publications", no_argument, &no_publications, 1},
@@ -145,6 +148,7 @@ main(int argc, char *argv[])
 	char	   *pguser = NULL;
 	char	   *pgdb = NULL;
 	char	   *use_role = NULL;
+	const char *dumpencoding = NULL;
 	trivalue	prompt_password = TRI_DEFAULT;
 	bool		data_only = false;
 	bool		globals_only = false;
@@ -202,7 +206,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-	while ((c = getopt_long(argc, argv, "acd:f:gh:l:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acd:E:f:gh:l:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -217,6 +221,12 @@ main(int argc, char *argv[])
 
 			case 'd':
 				connstr = pg_strdup(optarg);
+				break;
+
+			case 'E':
+				dumpencoding = pg_strdup(optarg);
+				appendPQExpBufferStr(pgdumpopts, " -E ");
+				appendShellString(pgdumpopts, optarg);
 				break;
 
 			case 'f':
@@ -385,6 +395,8 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(pgdumpopts, " --no-tablespaces");
 	if (quote_all_identifiers)
 		appendPQExpBufferStr(pgdumpopts, " --quote-all-identifiers");
+	if (load_via_partition_root)
+		appendPQExpBufferStr(pgdumpopts, " --load-via-partition-root");
 	if (use_setsessauth)
 		appendPQExpBufferStr(pgdumpopts, " --use-set-session-authorization");
 	if (no_publications)
@@ -448,6 +460,19 @@ main(int argc, char *argv[])
 	}
 	else
 		OPF = stdout;
+
+	/*
+	 * Set the client encoding if requested.
+	 */
+	if (dumpencoding)
+	{
+		if (PQsetClientEncoding(conn, dumpencoding) < 0)
+		{
+			fprintf(stderr, _("%s: invalid client encoding \"%s\" specified\n"),
+					progname, dumpencoding);
+			exit_nicely(1);
+		}
+	}
 
 	/*
 	 * Get the active encoding and the standard_conforming_strings setting, so
@@ -584,6 +609,7 @@ help(void)
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only              dump only the data, not the schema\n"));
 	printf(_("  -c, --clean                  clean (drop) databases before recreating\n"));
+	printf(_("  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"));
 	printf(_("  -g, --globals-only           dump only global objects, no databases\n"));
 	printf(_("  -o, --oids                   include OIDs in dump\n"));
 	printf(_("  -O, --no-owner               skip restoration of object ownership\n"));
@@ -606,6 +632,7 @@ help(void)
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
+	printf(_("  --load-via-partition-root    load partitions via the root table\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
@@ -1570,7 +1597,7 @@ dumpDatabaseConfig(PGconn *conn, const char *dbname)
 		appendStringLiteralConn(buf, dbname, conn);
 
 		if (server_version >= 90000)
-			appendPQExpBuffer(buf, ")");
+			appendPQExpBufferChar(buf, ')');
 
 		res = executeQuery(conn, buf->data);
 		if (PQntuples(res) == 1 &&

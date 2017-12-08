@@ -23,15 +23,17 @@
  * mask_page_lsn
  *
  * In consistency checks, the LSN of the two pages compared will likely be
- * different because of concurrent operations when the WAL is generated
- * and the state of the page when WAL is applied.
+ * different because of concurrent operations when the WAL is generated and
+ * the state of the page when WAL is applied. Also, mask out checksum as
+ * masking anything else on page means checksum is not going to match as well.
  */
 void
-mask_page_lsn(Page page)
+mask_page_lsn_and_checksum(Page page)
 {
 	PageHeader	phdr = (PageHeader) page;
 
 	PageXLogRecPtrSet(phdr->pd_lsn, (uint64) MASK_MARKER);
+	phdr->pd_checksum = MASK_MARKER;
 }
 
 /*

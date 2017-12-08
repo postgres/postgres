@@ -79,7 +79,7 @@ deccall2(decimal *arg1, decimal *arg2, int (*ptr) (numeric *, numeric *))
 	PGTYPESnumeric_free(a1);
 	PGTYPESnumeric_free(a2);
 
-	return (i);
+	return i;
 }
 
 static int
@@ -143,7 +143,7 @@ deccall3(decimal *arg1, decimal *arg2, decimal *result, int (*ptr) (numeric *, n
 	PGTYPESnumeric_free(a1);
 	PGTYPESnumeric_free(a2);
 
-	return (i);
+	return i;
 }
 
 /* we start with the numeric functions */
@@ -166,7 +166,7 @@ decadd(decimal *arg1, decimal *arg2, decimal *sum)
 int
 deccmp(decimal *arg1, decimal *arg2)
 {
-	return (deccall2(arg1, arg2, PGTYPESnumeric_cmp));
+	return deccall2(arg1, arg2, PGTYPESnumeric_cmp);
 }
 
 void
@@ -195,7 +195,7 @@ ecpg_strndup(const char *str, size_t len)
 }
 
 int
-deccvasc(char *cp, int len, decimal *np)
+deccvasc(const char *cp, int len, decimal *np)
 {
 	char	   *str;
 	int			ret = 0;
@@ -261,7 +261,7 @@ deccvdbl(double dbl, decimal *np)
 		result = PGTYPESnumeric_to_decimal(nres, np);
 
 	PGTYPESnumeric_free(nres);
-	return (result);
+	return result;
 }
 
 int
@@ -283,7 +283,7 @@ deccvint(int in, decimal *np)
 		result = PGTYPESnumeric_to_decimal(nres, np);
 
 	PGTYPESnumeric_free(nres);
-	return (result);
+	return result;
 }
 
 int
@@ -305,7 +305,7 @@ deccvlong(long lng, decimal *np)
 		result = PGTYPESnumeric_to_decimal(nres, np);
 
 	PGTYPESnumeric_free(nres);
-	return (result);
+	return result;
 }
 
 int
@@ -520,7 +520,7 @@ rdatestr(date d, char *str)
 *
 */
 int
-rstrdate(char *str, date * d)
+rstrdate(const char *str, date * d)
 {
 	return rdefmtdate(d, "mm/dd/yyyy", str);
 }
@@ -545,7 +545,7 @@ rjulmdy(date d, short mdy[3])
 }
 
 int
-rdefmtdate(date * d, char *fmt, char *str)
+rdefmtdate(date * d, const char *fmt, const char *str)
 {
 	/* TODO: take care of DBCENTURY environment variable */
 	/* PGSQL functions allow all centuries */
@@ -571,7 +571,7 @@ rdefmtdate(date * d, char *fmt, char *str)
 }
 
 int
-rfmtdate(date d, char *fmt, char *str)
+rfmtdate(date d, const char *fmt, char *str)
 {
 	errno = 0;
 	if (PGTYPESdate_fmt_asc(d, fmt, str) == 0)
@@ -598,7 +598,7 @@ rmdyjul(short mdy[3], date * d)
 int
 rdayofweek(date d)
 {
-	return (PGTYPESdate_dayofweek(d));
+	return PGTYPESdate_dayofweek(d);
 }
 
 /* And the datetime stuff */
@@ -747,7 +747,7 @@ initValue(long lng_val)
 
 /* return the position oft the right-most dot in some string */
 static int
-getRightMostDot(char *str)
+getRightMostDot(const char *str)
 {
 	size_t		len = strlen(str);
 	int			i,
@@ -765,7 +765,7 @@ getRightMostDot(char *str)
 
 /* And finally some misc functions */
 int
-rfmtlong(long lng_val, char *fmt, char *outbuf)
+rfmtlong(long lng_val, const char *fmt, char *outbuf)
 {
 	size_t		fmt_len = strlen(fmt);
 	size_t		temp_len;
@@ -1047,7 +1047,7 @@ rsetnull(int t, char *ptr)
 }
 
 int
-risnull(int t, char *ptr)
+risnull(int t, const char *ptr)
 {
-	return (ECPGis_noind_null(t, ptr));
+	return ECPGis_noind_null(t, ptr);
 }

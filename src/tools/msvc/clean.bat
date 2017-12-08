@@ -34,6 +34,7 @@ if exist src\timezone\win32ver.rc del /q src\timezone\win32ver.rc
 for /d %%f in (src\interfaces\ecpg\*) do if exist %%f\win32ver.rc del /q %%f\win32ver.rc
 for /d %%f in (contrib\*) do if exist %%f\win32ver.rc del /q %%f\win32ver.rc
 for /d %%f in (src\backend\utils\mb\conversion_procs\*) do if exist %%f\win32ver.rc del /q %%f\win32ver.rc
+for /d %%f in (src\test\modules\*) do if exist %%f\win32ver.rc del /q %%f\win32ver.rc
 
 REM Delete files created with GenerateFiles() in Solution.pm
 if exist src\include\pg_config.h del /q src\include\pg_config.h
@@ -44,11 +45,24 @@ if %DIST%==1 if exist src\backend\parser\gram.h del /q src\backend\parser\gram.h
 if exist src\include\utils\errcodes.h del /q src\include\utils\errcodes.h
 if exist src\include\utils\fmgroids.h del /q src\include\utils\fmgroids.h
 if exist src\include\utils\fmgrprotos.h del /q src\include\utils\fmgrprotos.h
+if exist src\include\storage\lwlocknames.h del /q src\include\storage\lwlocknames.h
 if exist src\include\utils\probes.h del /q src\include\utils\probes.h
+if exist src\include\catalog\schemapg.h del /q src\include\catalog\schemapg.h
+if exist doc\src\sgml\version.sgml del /q doc\src\sgml\version.sgml
 
 if %DIST%==1 if exist src\backend\utils\fmgroids.h del /q src\backend\utils\fmgroids.h
 if %DIST%==1 if exist src\backend\utils\fmgrprotos.h del /q src\backend\utils\fmgrprotos.h
 if %DIST%==1 if exist src\backend\utils\fmgrtab.c del /q src\backend\utils\fmgrtab.c
+if %DIST%==1 if exist src\backend\storage\lmgr\lwlocknames.c del /q src\backend\storage\lmgr\lwlocknames.c
+if %DIST%==1 if exist src\backend\storage\lmgr\lwlocknames.h del /q src\backend\storage\lmgr\lwlocknames.h
+if %DIST%==1 if exist src\pl\plpython\spiexceptions.h del /q src\pl\plpython\spiexceptions.h
+if %DIST%==1 if exist src\backend\utils\errcodes.h del /q src\backend\utils\errcodes.h
+if %DIST%==1 if exist src\pl\plpgsql\src\plerrcodes.h del /q src\pl\plpgsql\src\plerrcodes.h
+if %DIST%==1 if exist src\pl\tcl\pltclerrcodes.h del /q src\pl\tcl\pltclerrcodes.h
+if %DIST%==1 if exist src\backend\utils\sort\qsort_tuple.c del /q src\backend\utils\sort\qsort_tuple.c
+if %DIST%==1 if exist src\bin\psql\sql_help.c del /q src\bin\psql\sql_help.c
+if %DIST%==1 if exist src\bin\psql\sql_help.h del /q src\bin\psql\sql_help.h
+if %DIST%==1 if exist src\interfaces\ecpg\preproc\preproc.y del /q src\interfaces\ecpg\preproc\preproc.y
 if %DIST%==1 if exist src\backend\catalog\postgres.bki del /q src\backend\catalog\postgres.bki
 if %DIST%==1 if exist src\backend\catalog\postgres.description del /q src\backend\catalog\postgres.description
 if %DIST%==1 if exist src\backend\catalog\postgres.shdescription del /q src\backend\catalog\postgres.shdescription
@@ -58,9 +72,11 @@ if %DIST%==1 if exist src\backend\parser\gram.c del /q src\backend\parser\gram.c
 if %DIST%==1 if exist src\backend\bootstrap\bootscanner.c del /q src\backend\bootstrap\bootscanner.c
 if %DIST%==1 if exist src\backend\bootstrap\bootparse.c del /q src\backend\bootstrap\bootparse.c
 if %DIST%==1 if exist src\backend\utils\misc\guc-file.c del /q src\backend\utils\misc\guc-file.c
+if %DIST%==1 if exist src\backend\replication\repl_scanner.c del /q src\backend\replication\repl_scanner.c
+if %DIST%==1 if exist src\backend\replication\repl_gram.c del /q src\backend\replication\repl_gram.c
+if %DIST%==1 if exist src\backend\replication\syncrep_scanner.c del /q src\backend\replication\syncrep_scanner.c
+if %DIST%==1 if exist src\backend\replication\syncrep_gram.c del /q src\backend\replication\syncrep_gram.c
 
-
-if exist src\bin\psql\sql_help.h del /q src\bin\psql\sql_help.h
 
 if exist src\interfaces\libpq\libpq.rc del /q src\interfaces\libpq\libpq.rc
 if exist src\interfaces\libpq\libpqdll.def del /q src\interfaces\libpq\libpqdll.def
@@ -74,12 +90,17 @@ if %DIST%==1 if exist src\interfaces\ecpg\preproc\preproc.h del /q src\interface
 
 if exist src\port\pg_config_paths.h del /q src\port\pg_config_paths.h
 
-if exist src\pl\plperl\spi.c del /q src\pl\plperl\spi.c
+if exist src\pl\plperl\SPI.c del /q src\pl\plperl\SPI.c
+if exist src\pl\plperl\Util.c del /q src\pl\plperl\Util.c
+if exist src\pl\plperl\perlchunks.h del /q src\pl\plperl\perlchunks.h
+if exist src\pl\plperl\plperl_opmask.h del /q src\pl\plperl\plperl_opmask.h
 if %DIST%==1 if exist src\pl\plpgsql\src\pl_gram.c del /q src\pl\plpgsql\src\pl_gram.c
 if %DIST%==1 if exist src\pl\plpgsql\src\pl_gram.h del /q src\pl\plpgsql\src\pl_gram.h
 
 if %DIST%==1 if exist src\fe_utils\psqlscan.c del /q src\fe_utils\psqlscan.c
 if %DIST%==1 if exist src\bin\psql\psqlscanslash.c del /q src\bin\psql\psqlscanslash.c
+if %DIST%==1 if exist src\bin\pgbench\exprscan.c del /q src\bin\pgbench\exprscan.c
+if %DIST%==1 if exist src\bin\pgbench\exprparse.c del /q src\bin\pgbench\exprparse.c
 
 if %DIST%==1 if exist contrib\cube\cubescan.c del /q contrib\cube\cubescan.c
 if %DIST%==1 if exist contrib\cube\cubeparse.c del /q contrib\cube\cubeparse.c
@@ -92,6 +113,8 @@ if exist contrib\spi\autoinc.dll del /q contrib\spi\autoinc.dll
 if exist src\test\regress\regress.dll del /q src\test\regress\regress.dll
 if exist src\test\regress\refint.dll del /q src\test\regress\refint.dll
 if exist src\test\regress\autoinc.dll del /q src\test\regress\autoinc.dll
+if %DIST%==1 if exist src\test\isolation\specscanner.c del /q src\test\isolation\specscanner.c
+if %DIST%==1 if exist src\test\isolation\specparse.c del /q src\test\isolation\specparse.c
 
 if exist src\bin\initdb\tmp_check rd /s /q src\bin\initdb\tmp_check
 if exist src\bin\pg_basebackup\tmp_check rd /s /q src\bin\pg_basebackup\tmp_check

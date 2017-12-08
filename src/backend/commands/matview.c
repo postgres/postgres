@@ -727,6 +727,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 			for (i = 0; i < numatts; i++)
 			{
 				int			attnum = indexStruct->indkey.values[i];
+				Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
 				Oid			type;
 				Oid			op;
 				const char *colname;
@@ -745,7 +746,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 				if (foundUniqueIndex)
 					appendStringInfoString(&querybuf, " AND ");
 
-				colname = quote_identifier(NameStr((tupdesc->attrs[attnum - 1])->attname));
+				colname = quote_identifier(NameStr(attr->attname));
 				appendStringInfo(&querybuf, "newdata.%s ", colname);
 				type = attnumTypeId(matviewRel, attnum);
 				op = lookup_type_cache(type, TYPECACHE_EQ_OPR)->eq_opr;

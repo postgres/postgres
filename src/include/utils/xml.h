@@ -65,14 +65,14 @@ extern xmltype *xmlelement(XmlExpr *xexpr,
 		   Datum *named_argvalue, bool *named_argnull,
 		   Datum *argvalue, bool *argnull);
 extern xmltype *xmlparse(text *data, XmlOptionType xmloption, bool preserve_whitespace);
-extern xmltype *xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null);
+extern xmltype *xmlpi(const char *target, text *arg, bool arg_is_null, bool *result_is_null);
 extern xmltype *xmlroot(xmltype *data, text *version, int standalone);
 extern bool xml_is_document(xmltype *arg);
 extern text *xmltotext_with_xmloption(xmltype *data, XmlOptionType xmloption_arg);
 extern char *escape_xml(const char *str);
 
-extern char *map_sql_identifier_to_xml_name(char *ident, bool fully_escaped, bool escape_period);
-extern char *map_xml_name_to_sql_identifier(char *name);
+extern char *map_sql_identifier_to_xml_name(const char *ident, bool fully_escaped, bool escape_period);
+extern char *map_xml_name_to_sql_identifier(const char *name);
 extern char *map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings);
 
 extern int	xmlbinary;			/* XmlBinaryType, but int for guc enum */

@@ -118,6 +118,34 @@ SELECT q1 FROM int8_tbl EXCEPT ALL SELECT q1 FROM int8_tbl FOR NO KEY UPDATE;
 (SELECT 1,2,3 UNION SELECT 4,5,6) EXCEPT SELECT 4,5,6;
 (SELECT 1,2,3 UNION SELECT 4,5,6 ORDER BY 1,2) EXCEPT SELECT 4,5,6;
 
+-- exercise both hashed and sorted implementations of INTERSECT/EXCEPT
+
+set enable_hashagg to on;
+
+explain (costs off)
+select count(*) from
+  ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
+select count(*) from
+  ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
+
+explain (costs off)
+select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+
+set enable_hashagg to off;
+
+explain (costs off)
+select count(*) from
+  ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
+select count(*) from
+  ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
+
+explain (costs off)
+select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+
+reset enable_hashagg;
+
 --
 -- Mixed types
 --

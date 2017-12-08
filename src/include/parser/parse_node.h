@@ -67,7 +67,8 @@ typedef enum ParseExprKind
 	EXPR_KIND_EXECUTE_PARAMETER,	/* parameter value in EXECUTE */
 	EXPR_KIND_TRIGGER_WHEN,		/* WHEN condition in CREATE TRIGGER */
 	EXPR_KIND_POLICY,			/* USING or WITH CHECK expr in policy */
-	EXPR_KIND_PARTITION_EXPRESSION	/* PARTITION BY expression */
+	EXPR_KIND_PARTITION_EXPRESSION,	/* PARTITION BY expression */
+	EXPR_KIND_CALL				/* CALL argument */
 } ParseExprKind;
 
 
@@ -111,7 +112,7 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * namespace for table and column lookup.  (The RTEs listed here may be just
  * a subset of the whole rtable.  See ParseNamespaceItem comments below.)
  *
- * p_lateral_active: TRUE if we are currently parsing a LATERAL subexpression
+ * p_lateral_active: true if we are currently parsing a LATERAL subexpression
  * of this parse level.  This makes p_lateral_only namespace items visible,
  * whereas they are not visible when p_lateral_active is FALSE.
  *

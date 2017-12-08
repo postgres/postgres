@@ -4,7 +4,7 @@ exec sql include ../regression;
 
 exec sql whenever sqlerror sqlprint;
 
-static void print(char *msg)
+static void print(const char *msg)
 {
         fprintf(stderr, "Error in statement '%s':\n", msg);
         sqlprint();

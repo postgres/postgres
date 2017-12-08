@@ -86,15 +86,6 @@ typedef struct
 #define MAXNUMPOS	(256)
 #define LIMITPOS(x) ( ( (x) >= MAXENTRYPOS ) ? (MAXENTRYPOS-1) : (x) )
 
-/*
- * In case if a TSVector contains several parts and we want to treat them as
- * separate, it's necessary to add an artificial increment to position of each
- * lexeme from every next part. It's required to avoid the situation when
- * tsquery can find a phrase consisting of lexemes from two of such parts.
- * TS_JUMP defined a value of this increment.
- */
-#define TS_JUMP 1
-
 /* This struct represents a complete tsvector datum */
 typedef struct
 {

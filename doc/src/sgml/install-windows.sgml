@@ -19,10 +19,10 @@
  <para>
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
-  Microsoft tools is to install <productname>Visual Studio Express 2015
+  Microsoft tools is to install <productname>Visual Studio Express 2017
   for Windows Desktop</productname> and use the included
   compiler. It is also possible to build with the full
-  <productname>Microsoft Visual C++ 2005 to 2015</productname>.
+  <productname>Microsoft Visual C++ 2005 to 2017</productname>.
   In some cases that requires the installation of the
   <productname>Windows SDK</productname> in addition to the compiler.
  </para>
@@ -37,8 +37,8 @@
  <para>
   Building using <productname>MinGW</productname> or
   <productname>Cygwin</productname> uses the normal build system, see
-  <xref linkend="installation"> and the specific notes in
-  <xref linkend="installation-notes-mingw"> and <xref linkend="installation-notes-cygwin">.
+  <xref linkend="installation"/> and the specific notes in
+  <xref linkend="installation-notes-mingw"/> and <xref linkend="installation-notes-cygwin"/>.
   To produce native 64 bit binaries in these environments, use the tools from
   <productname>MinGW-w64</productname>. These tools can also be used to
   cross-compile for 32 bit and 64 bit <productname>Windows</productname>
@@ -69,26 +69,28 @@
   <productname>Visual Studio Express</productname> or some versions of the
   <productname>Microsoft Windows SDK</productname>. If you do not already have a
   <productname>Visual Studio</productname> environment set up, the easiest
-  ways are to use the compilers from <productname>Visual Studio Express 2015
+  ways are to use the compilers from <productname>Visual Studio Express 2017
   for Windows Desktop</productname> or those in the <productname>Windows SDK
-  7.1</productname>, which are both free downloads from Microsoft.
+  8.1</productname>, which are both free downloads from Microsoft.
  </para>
 
  <para>
   Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
   32-bit PostgreSQL builds are possible with
   <productname>Visual Studio 2005</productname> to
-  <productname>Visual Studio 2015</productname> (including Express editions),
-  as well as standalone Windows SDK releases 6.0 to 7.1.
+  <productname>Visual Studio 2017</productname> (including Express editions),
+  as well as standalone Windows SDK releases 6.0 to 8.1.
   64-bit PostgreSQL builds are supported with
-  <productname>Microsoft Windows SDK</productname> version 6.0a to 7.1 or
+  <productname>Microsoft Windows SDK</productname> version 6.0a to 8.1 or
   <productname>Visual Studio 2008</productname> and above. Compilation
   is supported down to <productname>Windows XP</productname> and
-  <productname>Windows Server 2003</> when building with
-  <productname>Visual Studio 2005</> to
+  <productname>Windows Server 2003</productname> when building with
+  <productname>Visual Studio 2005</productname> to
   <productname>Visual Studio 2013</productname>. Building with
   <productname>Visual Studio 2015</productname> is supported down to
-  <productname>Windows Vista</> and <productname>Windows Server 2008</>.
+  <productname>Windows Vista</productname> and <productname>Windows Server 2008</productname>.
+   Building with <productname>Visual Studio 2017</productname> is supported
+   down to <productname>Windows 7 SP1</productname> and <productname>Windows Server 2008 R2 SP1</productname>.
  </para>
 
  <para>
@@ -161,7 +163,7 @@ $ENV{MSBFLAGS}="/m";
       <productname>Microsoft Windows SDK</productname> it
       is recommended that you upgrade to the latest version (currently
       version 7.1), available for download from
-      <ulink url="https://www.microsoft.com/download"></>.
+      <ulink url="https://www.microsoft.com/download"></ulink>.
      </para>
      <para>
       You must always include the
@@ -180,7 +182,8 @@ $ENV{MSBFLAGS}="/m";
       ActiveState Perl is required to run the build generation scripts. MinGW
       or Cygwin Perl will not work. It must also be present in the PATH.
       Binaries can be downloaded from
-      <ulink url="http://www.activestate.com"></> (Note: version 5.8 or later is required,
+      <ulink url="http://www.activestate.com"></ulink>
+      (Note: version 5.8.3 or later is required,
       the free Standard Distribution is sufficient).
      </para></listitem>
     </varlistentry>
@@ -216,7 +219,7 @@ $ENV{MSBFLAGS}="/m";
      <para>
       Both <productname>Bison</productname> and <productname>Flex</productname>
       are included in the <productname>msys</productname> tool suite, available
-      from <ulink url="http://www.mingw.org/wiki/MSYS"></> as part of the
+      from <ulink url="http://www.mingw.org/wiki/MSYS"></ulink> as part of the
       <productname>MinGW</productname> compiler suite.
      </para>
 
@@ -256,7 +259,7 @@ $ENV{MSBFLAGS}="/m";
      <term><productname>Diff</productname></term>
      <listitem><para>
       Diff is required to run the regression tests, and can be downloaded
-      from <ulink url="http://gnuwin32.sourceforge.net"></>.
+      from <ulink url="http://gnuwin32.sourceforge.net"></ulink>.
      </para></listitem>
     </varlistentry>
 
@@ -264,7 +267,7 @@ $ENV{MSBFLAGS}="/m";
      <term><productname>Gettext</productname></term>
      <listitem><para>
       Gettext is required to build with NLS support, and can be downloaded
-      from <ulink url="http://gnuwin32.sourceforge.net"></>. Note that binaries,
+      from <ulink url="http://gnuwin32.sourceforge.net"></ulink>. Note that binaries,
       dependencies and developer files are all needed.
      </para></listitem>
     </varlistentry>
@@ -274,7 +277,7 @@ $ENV{MSBFLAGS}="/m";
      <listitem><para>
       Required for GSSAPI authentication support. MIT Kerberos can be
       downloaded from
-      <ulink url="http://web.mit.edu/Kerberos/dist/index.html"></>.
+      <ulink url="http://web.mit.edu/Kerberos/dist/index.html"></ulink>.
      </para></listitem>
     </varlistentry>
 
@@ -283,8 +286,8 @@ $ENV{MSBFLAGS}="/m";
       <productname>libxslt</productname></term>
      <listitem><para>
       Required for XML support. Binaries can be downloaded from
-      <ulink url="http://zlatkovic.com/pub/libxml"></> or source from
-      <ulink url="http://xmlsoft.org"></>. Note that libxml2 requires iconv,
+      <ulink url="http://zlatkovic.com/pub/libxml"></ulink> or source from
+      <ulink url="http://xmlsoft.org"></ulink>. Note that libxml2 requires iconv,
       which is available from the same download location.
      </para></listitem>
     </varlistentry>
@@ -293,8 +296,8 @@ $ENV{MSBFLAGS}="/m";
      <term><productname>openssl</productname></term>
      <listitem><para>
       Required for SSL support. Binaries can be downloaded from
-      <ulink url="http://www.slproweb.com/products/Win32OpenSSL.html"></>
-      or source from <ulink url="http://www.openssl.org"></>.
+      <ulink url="http://www.slproweb.com/products/Win32OpenSSL.html"></ulink>
+      or source from <ulink url="http://www.openssl.org"></ulink>.
      </para></listitem>
     </varlistentry>
 
@@ -303,7 +306,7 @@ $ENV{MSBFLAGS}="/m";
      <listitem><para>
       Required for UUID-OSSP support (contrib only). Source can be
       downloaded from
-      <ulink url="http://www.ossp.org/pkg/lib/uuid/"></>.
+      <ulink url="http://www.ossp.org/pkg/lib/uuid/"></ulink>.
      </para></listitem>
     </varlistentry>
 
@@ -311,7 +314,7 @@ $ENV{MSBFLAGS}="/m";
      <term><productname>Python</productname></term>
      <listitem><para>
       Required for building <application>PL/Python</application>. Binaries can
-      be downloaded from <ulink url="http://www.python.org"></>.
+      be downloaded from <ulink url="http://www.python.org"></ulink>.
      </para></listitem>
     </varlistentry>
 
@@ -320,7 +323,7 @@ $ENV{MSBFLAGS}="/m";
      <listitem><para>
       Required for compression support in <application>pg_dump</application>
       and <application>pg_restore</application>. Binaries can be downloaded
-      from <ulink url="http://www.zlib.net"></>.
+      from <ulink url="http://www.zlib.net"></ulink>.
      </para></listitem>
     </varlistentry>
 
@@ -344,8 +347,8 @@ $ENV{MSBFLAGS}="/m";
   </para>
 
   <para>
-   To use a server-side third party library such as <productname>python</> or
-   <productname>openssl</>, this library <emphasis>must</emphasis> also be
+   To use a server-side third party library such as <productname>python</productname> or
+   <productname>openssl</productname>, this library <emphasis>must</emphasis> also be
    64-bit. There is no support for loading a 32-bit library in a 64-bit
    server. Several of the third party libraries that PostgreSQL supports may
    only be available in 32-bit versions, in which case they cannot be used with
@@ -454,25 +457,25 @@ $ENV{CONFIG}="Debug";
 </screen>
 
    For more information about the regression tests, see
-   <xref linkend="regress">.
+   <xref linkend="regress"/>.
   </para>
 
   <para>
    Running the regression tests on client programs, with
-   <command>vcregress bincheck</>, or on recovery tests, with
-   <command>vcregress recoverycheck</>, requires an additional Perl module
+   <command>vcregress bincheck</command>, or on recovery tests, with
+   <command>vcregress recoverycheck</command>, requires an additional Perl module
    to be installed:
    <variablelist>
     <varlistentry>
      <term><productname>IPC::Run</productname></term>
      <listitem><para>
-      As of this writing, <literal>IPC::Run</> is not included in the
+      As of this writing, <literal>IPC::Run</literal> is not included in the
       ActiveState Perl installation, nor in the ActiveState Perl Package
       Manager (PPM) library. To install, download the
-      <filename>IPC-Run-&lt;version&gt;.tar.gz</> source archive from CPAN,
-      at <ulink url="http://search.cpan.org/dist/IPC-Run/"></>, and
-      uncompress. Edit the <filename>buildenv.pl</> file, and add a PERL5LIB
-      variable to point to the <filename>lib</> subdirectory from the
+      <filename>IPC-Run-&lt;version&gt;.tar.gz</filename> source archive from CPAN,
+      at <ulink url="http://search.cpan.org/dist/IPC-Run/"></ulink>, and
+      uncompress. Edit the <filename>buildenv.pl</filename> file, and add a PERL5LIB
+      variable to point to the <filename>lib</filename> subdirectory from the
       extracted archive. For example:
 <programlisting>
 $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
@@ -495,7 +498,7 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
      <term>OpenJade 1.3.1-2</term>
      <listitem><para>
       Download from
-      <ulink url="http://sourceforge.net/projects/openjade/files/openjade/1.3.1/openjade-1_3_1-2-bin.zip/download"></>
+      <ulink url="http://sourceforge.net/projects/openjade/files/openjade/1.3.1/openjade-1_3_1-2-bin.zip/download"></ulink>
       and uncompress in the subdirectory <filename>openjade-1.3.1</filename>.
      </para></listitem>
     </varlistentry>
@@ -504,7 +507,7 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
      <term>DocBook DTD 4.2</term>
      <listitem><para>
       Download from
-      <ulink url="http://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip"></>
+      <ulink url="http://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip"></ulink>
       and uncompress in the subdirectory <filename>docbook</filename>.
      </para></listitem>
     </varlistentry>
@@ -513,7 +516,7 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
      <term>ISO character entities</term>
      <listitem><para>
       Download from
-      <ulink url="http://www.oasis-open.org/cover/ISOEnts.zip"></> and
+      <ulink url="http://www.oasis-open.org/cover/ISOEnts.zip"></ulink> and
       uncompress in the subdirectory <filename>docbook</filename>.
      </para></listitem>
     </varlistentry>

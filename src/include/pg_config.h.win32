@@ -34,6 +34,9 @@
 /* The alignment requirement of a `long long int'. */
 #define ALIGNOF_LONG_LONG_INT 8
 
+/* The normal alignment of `PG_INT128_TYPE', in bytes. */
+#undef ALIGNOF_PG_INT128_TYPE
+
 /* The alignment requirement of a `short'. */
 #define ALIGNOF_SHORT 2
 
@@ -98,6 +101,10 @@
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #define HAVE_DECL_SNPRINTF 1
+
+/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRNLEN 1
 
 /* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
    don't. */
@@ -223,12 +230,6 @@
 /* Define to 1 if you have the `z' library (-lz). */
 /* #undef HAVE_LIBZ */
 
-/* Define to 1 if constants of type 'long long int' should have the suffix LL.
-   */
-#if (_MSC_VER > 1200)
-#define HAVE_LL_CONSTANTS 1
-#endif
-
 /* Define to 1 if the system has the type `locale_t'. */
 #define HAVE_LOCALE_T 1
 
@@ -237,7 +238,7 @@
 
 /* Define to 1 if `long long int' works and is 64 bits. */
 #if (_MSC_VER > 1200)
-#define HAVE_LONG_LONG_INT_64
+#define HAVE_LONG_LONG_INT_64 1
 #endif
 
 /* Define to 1 if you have the `mbstowcs_l' function. */
@@ -261,11 +262,17 @@
 /* Define to 1 if you have the <pam/pam_appl.h> header file. */
 /* #undef HAVE_PAM_PAM_APPL_H */
 
+/* Define to 1 if you have the `strnlen' function. */
+#define HAVE_STRNLEN 1
+
 /* Define to 1 if you have the `poll' function. */
 /* #undef HAVE_POLL */
 
 /* Define to 1 if you have the <poll.h> header file. */
 /* #undef HAVE_POLL_H */
+
+/* Define to 1 if you have the `posix_fallocate' function. */
+/* #undef HAVE_POSIX_FALLOCATE */
 
 /* Define to 1 if you have the `pstat' function. */
 /* #undef HAVE_PSTAT */
@@ -448,17 +455,11 @@
    `HAVE_STRUCT_TM_TM_ZONE' instead. */
 /* #undef HAVE_TM_ZONE */
 
-/* Define to 1 if you have the `towlower' function. */
-#define HAVE_TOWLOWER 1
-
 /* Define to 1 if your compiler understands `typeof' or something similar. */
 /* #undef HAVE_TYPEOF */
 
 /* Define to 1 if you have the external array `tzname'. */
 /* #undef HAVE_TZNAME */
-
-/* Define to 1 if you have the `ucol_strcollUTF8' function. */
-#define HAVE_UCOL_STRCOLLUTF8 1
 
 /* Define to 1 if the system has the type `uint64'. */
 /* #undef HAVE_UINT64 */
@@ -493,9 +494,6 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
-/* Define to 1 if you have the `wcstombs' function. */
-#define HAVE_WCSTOMBS 1
-
 /* Define to 1 if you have the `wcstombs_l' function. */
 #define HAVE_WCSTOMBS_L 1
 
@@ -504,6 +502,9 @@
 
 /* Define to 1 if you have the <winldap.h> header file. */
 /* #undef HAVE_WINLDAP_H */
+
+/* Define to 1 if your compiler understands __builtin_bswap16. */
+/* #undef HAVE__BUILTIN_BSWAP16 */
 
 /* Define to 1 if your compiler understands __builtin_bswap32. */
 /* #undef HAVE__BUILTIN_BSWAP32 */
@@ -554,10 +555,10 @@
 #define PACKAGE_NAME "PostgreSQL"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PostgreSQL 10beta1"
+#define PACKAGE_STRING "PostgreSQL 11devel"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "10beta1"
+#define PACKAGE_VERSION "11devel"
 
 /* Define to the name of a signed 128-bit integer type. */
 #undef PG_INT128_TYPE
@@ -566,10 +567,10 @@
 #define PG_INT64_TYPE long long int
 
 /* PostgreSQL version as a string */
-#define PG_VERSION "10beta1"
+#define PG_VERSION "11devel"
 
 /* PostgreSQL version as a number */
-#define PG_VERSION_NUM 100000
+#define PG_VERSION_NUM 110000
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "postgresql"
@@ -682,6 +683,20 @@
 #ifndef __cplusplus
 #define inline __inline
 #endif
+
+/* Define to keyword to use for C99 restrict support, or to nothing if this is
+   not supported */
+/* Works for C and C++ in Visual Studio 2008 and upwards */
+#if (_MSC_VER >= 1500)
+#define pg_restrict __restrict
+#else
+#define pg_restrict
+#endif
+
+/* Define to the equivalent of the C99 'restrict' keyword, or to
+   nothing if this is not supported.  Do not define if restrict is
+   supported directly.  */
+/* not defined, because it'd conflict with __declspec(restrict) */
 
 /* Define to empty if the C compiler does not understand signed types. */
 /* #undef signed */

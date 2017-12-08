@@ -78,6 +78,7 @@
 %type <str> opt_bit_field
 %type <str> opt_connection_name
 %type <str> opt_database_name
+%type <str> opt_ecpg_into
 %type <str> opt_ecpg_fetch_into
 %type <str> opt_ecpg_using
 %type <str> opt_initializer

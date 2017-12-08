@@ -73,7 +73,7 @@ extern pg_crc32c (*pg_comp_crc32c) (pg_crc32c crc, const void *data, size_t len)
 #define COMP_CRC32C(crc, data, len) \
 	((crc) = pg_comp_crc32c_sb8((crc), (data), (len)))
 #ifdef WORDS_BIGENDIAN
-#define FIN_CRC32C(crc) ((crc) = BSWAP32(crc) ^ 0xFFFFFFFF)
+#define FIN_CRC32C(crc) ((crc) = pg_bswap32(crc) ^ 0xFFFFFFFF)
 #else
 #define FIN_CRC32C(crc) ((crc) ^= 0xFFFFFFFF)
 #endif

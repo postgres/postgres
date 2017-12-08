@@ -79,7 +79,7 @@ static const gbtree_vinfo tinfo =
 {
 	gbt_t_numeric,
 	0,
-	FALSE,
+	false,
 	gbt_numeric_gt,
 	gbt_numeric_ge,
 	gbt_numeric_eq,

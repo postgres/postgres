@@ -574,7 +574,7 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 		TransactionId safeXid;
 
 		LWLockAcquire(ProcArrayLock, LW_SHARED);
-		safeXid = GetOldestSafeDecodingTransactionId(true);
+		safeXid = GetOldestSafeDecodingTransactionId(false);
 		LWLockRelease(ProcArrayLock);
 
 		Assert(TransactionIdPrecedesOrEquals(safeXid, snap->xmin));
@@ -1116,10 +1116,10 @@ SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn, xl_running_xact
 	 * so, because we only need to do it for catalog transactions since we
 	 * only ever look at those.
 	 *
-	 * NB: Because of that xmax can be lower than xmin, because we only
-	 * increase xmax when a catalog modifying transaction commits. While odd
-	 * looking, it's correct and actually more efficient this way since we hit
-	 * fast paths in tqual.c.
+	 * NB: We only increase xmax when a catalog modifying transaction commits
+	 * (see SnapBuildCommitTxn).  Because of this, xmax can be lower than
+	 * xmin, which looks odd but is correct and actually more efficient, since
+	 * we hit fast paths in tqual.c.
 	 */
 	builder->xmin = running->oldestRunningXid;
 
@@ -1597,8 +1597,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* we have valid data now, open tempfile and write it there */
 	fd = OpenTransientFile(tmppath,
-						   O_CREAT | O_EXCL | O_WRONLY | PG_BINARY,
-						   S_IRUSR | S_IWUSR);
+						   O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
 				(errmsg("could not open file \"%s\": %m", path)));
@@ -1682,7 +1681,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
 			(uint32) (lsn >> 32), (uint32) lsn);
 
-	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
+	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 
 	if (fd < 0 && errno == ENOENT)
 		return false;

@@ -96,6 +96,9 @@ typedef struct CustomPathMethods
 									List *tlist,
 									List *clauses,
 									List *custom_plans);
+	struct List *(*ReparameterizeCustomPathByChild) (PlannerInfo *root,
+													 List *custom_private,
+													 RelOptInfo *child_rel);
 }			CustomPathMethods;
 
 /*
@@ -136,6 +139,9 @@ typedef struct CustomExecMethods
 	void		(*InitializeDSMCustomScan) (CustomScanState *node,
 											ParallelContext *pcxt,
 											void *coordinate);
+	void		(*ReInitializeDSMCustomScan) (CustomScanState *node,
+											  ParallelContext *pcxt,
+											  void *coordinate);
 	void		(*InitializeWorkerCustomScan) (CustomScanState *node,
 											   shm_toc *toc,
 											   void *coordinate);

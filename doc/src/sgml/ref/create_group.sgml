@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_group.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEGROUP">
+<refentry id="sql-creategroup">
  <indexterm zone="sql-creategroup">
   <primary>CREATE GROUP</primary>
  </indexterm>
@@ -21,23 +21,23 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
+CREATE GROUP <replaceable class="parameter">name</replaceable> [ [ WITH ] <replaceable class="parameter">option</replaceable> [ ... ] ]
 
-<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
+<phrase>where <replaceable class="parameter">option</replaceable> can be:</phrase>
 
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
-    | [ ENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
-    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
-    | IN ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | IN GROUP <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | ADMIN <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | USER <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | SYSID <replaceable class="PARAMETER">uid</replaceable>
+    | [ ENCRYPTED ] PASSWORD '<replaceable class="parameter">password</replaceable>'
+    | VALID UNTIL '<replaceable class="parameter">timestamp</replaceable>'
+    | IN ROLE <replaceable class="parameter">role_name</replaceable> [, ...]
+    | IN GROUP <replaceable class="parameter">role_name</replaceable> [, ...]
+    | ROLE <replaceable class="parameter">role_name</replaceable> [, ...]
+    | ADMIN <replaceable class="parameter">role_name</replaceable> [, ...]
+    | USER <replaceable class="parameter">role_name</replaceable> [, ...]
+    | SYSID <replaceable class="parameter">uid</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -46,7 +46,7 @@ CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <repla
 
   <para>
    <command>CREATE GROUP</command> is now an alias for
-   <xref linkend="sql-createrole">.
+   <xref linkend="sql-createrole"/>.
   </para>
  </refsect1>
 
@@ -63,7 +63,7 @@ CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <repla
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createrole"></member>
+   <member><xref linkend="sql-createrole"/></member>
   </simplelist>
  </refsect1>
 </refentry>

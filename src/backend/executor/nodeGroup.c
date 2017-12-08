@@ -24,6 +24,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"
+#include "miscadmin.h"
 
 
 /*
@@ -31,14 +32,17 @@
  *
  *		Return one tuple for each group of matching input tuples.
  */
-TupleTableSlot *
-ExecGroup(GroupState *node)
+static TupleTableSlot *
+ExecGroup(PlanState *pstate)
 {
+	GroupState *node = castNode(GroupState, pstate);
 	ExprContext *econtext;
 	int			numCols;
 	AttrNumber *grpColIdx;
 	TupleTableSlot *firsttupleslot;
 	TupleTableSlot *outerslot;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get state info from node
@@ -69,7 +73,7 @@ ExecGroup(GroupState *node)
 		if (TupIsNull(outerslot))
 		{
 			/* empty input, so return nothing */
-			node->grp_done = TRUE;
+			node->grp_done = true;
 			return NULL;
 		}
 		/* Copy tuple into firsttupleslot */
@@ -112,7 +116,7 @@ ExecGroup(GroupState *node)
 			if (TupIsNull(outerslot))
 			{
 				/* no more groups, so we're done */
-				node->grp_done = TRUE;
+				node->grp_done = true;
 				return NULL;
 			}
 
@@ -172,7 +176,8 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	grpstate = makeNode(GroupState);
 	grpstate->ss.ps.plan = (Plan *) node;
 	grpstate->ss.ps.state = estate;
-	grpstate->grp_done = FALSE;
+	grpstate->ss.ps.ExecProcNode = ExecGroup;
+	grpstate->grp_done = false;
 
 	/*
 	 * create expression context
@@ -241,7 +246,7 @@ ExecReScanGroup(GroupState *node)
 {
 	PlanState  *outerPlan = outerPlanState(node);
 
-	node->grp_done = FALSE;
+	node->grp_done = false;
 	/* must clear first tuple */
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 

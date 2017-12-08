@@ -362,7 +362,7 @@ typedef struct ExprEvalStep
 			SQLValueFunction *svf;
 		}			sqlvaluefunction;
 
-		/* for EEOP_NEXTVALUEXPR */
+		/* for EEOP_NEXTVALUEEXPR */
 		struct
 		{
 			Oid			seqid;
@@ -385,10 +385,8 @@ typedef struct ExprEvalStep
 		/* for EEOP_ARRAYCOERCE */
 		struct
 		{
-			ArrayCoerceExpr *coerceexpr;
+			ExprState  *elemexprstate;	/* null if no per-element work */
 			Oid			resultelemtype; /* element type of result array */
-			FmgrInfo   *elemfunc;	/* lookup info for element coercion
-									 * function */
 			struct ArrayMapState *amstate;	/* workspace for array_map */
 		}			arraycoerce;
 
@@ -611,16 +609,19 @@ extern ExprEvalOp ExecEvalStepOp(ExprState *state, ExprEvalStep *op);
  */
 extern void ExecEvalParamExec(ExprState *state, ExprEvalStep *op,
 				  ExprContext *econtext);
+extern void ExecEvalParamExecParams(Bitmapset *params, EState *estate);
 extern void ExecEvalParamExtern(ExprState *state, ExprEvalStep *op,
 					ExprContext *econtext);
 extern void ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op);
+extern void ExecEvalNextValueExpr(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalRowNull(ExprState *state, ExprEvalStep *op,
 				ExprContext *econtext);
 extern void ExecEvalRowNotNull(ExprState *state, ExprEvalStep *op,
 				   ExprContext *econtext);
 extern void ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op);
-extern void ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op);
+extern void ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op,
+					ExprContext *econtext);
 extern void ExecEvalRow(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalMinMax(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op,

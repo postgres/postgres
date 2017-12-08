@@ -231,6 +231,38 @@ $$ LANGUAGE plperl;
 
 SELECT * FROM foo_set_bad();
 
+CREATE DOMAIN orderedfootype AS footype CHECK ((VALUE).x <= (VALUE).y);
+
+CREATE OR REPLACE FUNCTION foo_ordered() RETURNS orderedfootype AS $$
+    return {x => 3, y => 4};
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_ordered();
+
+CREATE OR REPLACE FUNCTION foo_ordered() RETURNS orderedfootype AS $$
+    return {x => 5, y => 4};
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_ordered();  -- fail
+
+CREATE OR REPLACE FUNCTION foo_ordered_set() RETURNS SETOF orderedfootype AS $$
+return [
+    {x => 3, y => 4},
+    {x => 4, y => 7}
+];
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_ordered_set();
+
+CREATE OR REPLACE FUNCTION foo_ordered_set() RETURNS SETOF orderedfootype AS $$
+return [
+    {x => 3, y => 4},
+    {x => 9, y => 7}
+];
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_ordered_set();  -- fail
+
 --
 -- Check passing a tuple argument
 --
@@ -242,6 +274,23 @@ $$ LANGUAGE plperl;
 SELECT perl_get_field((11,12), 'x');
 SELECT perl_get_field((11,12), 'y');
 SELECT perl_get_field((11,12), 'z');
+
+CREATE OR REPLACE FUNCTION perl_get_cfield(orderedfootype, text) RETURNS integer AS $$
+    return $_[0]->{$_[1]};
+$$ LANGUAGE plperl;
+
+SELECT perl_get_cfield((11,12), 'x');
+SELECT perl_get_cfield((11,12), 'y');
+SELECT perl_get_cfield((12,11), 'x');  -- fail
+
+CREATE OR REPLACE FUNCTION perl_get_rfield(record, text) RETURNS integer AS $$
+    return $_[0]->{$_[1]};
+$$ LANGUAGE plperl;
+
+SELECT perl_get_rfield((11,12), 'f1');
+SELECT perl_get_rfield((11,12)::footype, 'y');
+SELECT perl_get_rfield((11,12)::orderedfootype, 'x');
+SELECT perl_get_rfield((12,11)::orderedfootype, 'x');  -- fail
 
 --
 -- Test return_next

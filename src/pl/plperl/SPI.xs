@@ -9,42 +9,14 @@
 
 /* this must be first: */
 #include "postgres.h"
-#include "mb/pg_wchar.h"       /* for GetDatabaseEncoding */
 
 /* Defined by Perl */
 #undef _
 
 /* perl stuff */
+#define PG_NEED_PERL_XSUB_H
 #include "plperl.h"
 #include "plperl_helpers.h"
-
-
-/*
- * Interface routine to catch ereports and punt them to Perl
- */
-static void
-do_plperl_return_next(SV *sv)
-{
-	MemoryContext oldcontext = CurrentMemoryContext;
-
-	PG_TRY();
-	{
-		plperl_return_next(sv);
-	}
-	PG_CATCH();
-	{
-		ErrorData  *edata;
-
-		/* Must reset elog.c's state */
-		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
-		FlushErrorState();
-
-		/* Punt the error to Perl */
-		croak_cstr(edata->message);
-	}
-	PG_END_TRY();
-}
 
 
 MODULE = PostgreSQL::InServer::SPI PREFIX = spi_
@@ -76,7 +48,7 @@ void
 spi_return_next(rv)
 	SV *rv;
 	CODE:
-		do_plperl_return_next(rv);
+		plperl_return_next(rv);
 
 SV *
 spi_spi_query(sv)

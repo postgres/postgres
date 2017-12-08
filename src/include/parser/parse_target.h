@@ -28,7 +28,7 @@ extern TargetEntry *transformTargetEntry(ParseState *pstate,
 					 char *colname, bool resjunk);
 extern Expr *transformAssignedExpr(ParseState *pstate, Expr *expr,
 					  ParseExprKind exprKind,
-					  char *colname,
+					  const char *colname,
 					  int attrno,
 					  List *indirection,
 					  int location);

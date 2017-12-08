@@ -347,7 +347,7 @@ ExecBuildProjectionInfo(List *targetList,
 				isSafeVar = true;	/* can't check, just assume OK */
 			else if (attnum <= inputDesc->natts)
 			{
-				Form_pg_attribute attr = inputDesc->attrs[attnum - 1];
+				Form_pg_attribute attr = TupleDescAttr(inputDesc, attnum - 1);
 
 				/*
 				 * If user attribute is dropped or has a type mismatch, don't
@@ -1116,6 +1116,18 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					 * field assignment can't be within a CASE either.  (So
 					 * saving and restoring innermost_caseval is just
 					 * paranoia, but let's do it anyway.)
+					 *
+					 * Another non-obvious point is that it's safe to use the
+					 * field's values[]/nulls[] entries as both the caseval
+					 * source and the result address for this subexpression.
+					 * That's okay only because (1) both FieldStore and
+					 * ArrayRef evaluate their arg or refexpr inputs first,
+					 * and (2) any such CaseTestExpr is directly the arg or
+					 * refexpr input.  So any read of the caseval will occur
+					 * before there's a chance to overwrite it.  Also, if
+					 * multiple entries in the newvals/fieldnums lists target
+					 * the same field, they'll effectively be applied
+					 * left-to-right which is what we want.
 					 */
 					save_innermost_caseval = state->innermost_caseval;
 					save_innermost_casenull = state->innermost_casenull;
@@ -1213,6 +1225,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 			{
 				ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) node;
 				Oid			resultelemtype;
+				ExprState  *elemstate;
 
 				/* evaluate argument into step's result area */
 				ExecInitExprRec(acoerce->arg, parent, state, resv, resnull);
@@ -1222,42 +1235,49 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("target type is not an array")));
-				/* Arrays over domains aren't supported yet */
-				Assert(getBaseType(resultelemtype) == resultelemtype);
+
+				/*
+				 * Construct a sub-expression for the per-element expression;
+				 * but don't ready it until after we check it for triviality.
+				 * We assume it hasn't any Var references, but does have a
+				 * CaseTestExpr representing the source array element values.
+				 */
+				elemstate = makeNode(ExprState);
+				elemstate->expr = acoerce->elemexpr;
+				elemstate->innermost_caseval = (Datum *) palloc(sizeof(Datum));
+				elemstate->innermost_casenull = (bool *) palloc(sizeof(bool));
+
+				ExecInitExprRec(acoerce->elemexpr, parent, elemstate,
+								&elemstate->resvalue, &elemstate->resnull);
+
+				if (elemstate->steps_len == 1 &&
+					elemstate->steps[0].opcode == EEOP_CASE_TESTVAL)
+				{
+					/* Trivial, so we need no per-element work at runtime */
+					elemstate = NULL;
+				}
+				else
+				{
+					/* Not trivial, so append a DONE step */
+					scratch.opcode = EEOP_DONE;
+					ExprEvalPushStep(elemstate, &scratch);
+					/* and ready the subexpression */
+					ExecReadyExpr(elemstate);
+				}
 
 				scratch.opcode = EEOP_ARRAYCOERCE;
-				scratch.d.arraycoerce.coerceexpr = acoerce;
+				scratch.d.arraycoerce.elemexprstate = elemstate;
 				scratch.d.arraycoerce.resultelemtype = resultelemtype;
 
-				if (OidIsValid(acoerce->elemfuncid))
+				if (elemstate)
 				{
-					AclResult	aclresult;
-
-					/* Check permission to call function */
-					aclresult = pg_proc_aclcheck(acoerce->elemfuncid,
-												 GetUserId(),
-												 ACL_EXECUTE);
-					if (aclresult != ACLCHECK_OK)
-						aclcheck_error(aclresult, ACL_KIND_PROC,
-									   get_func_name(acoerce->elemfuncid));
-					InvokeFunctionExecuteHook(acoerce->elemfuncid);
-
-					/* Set up the primary fmgr lookup information */
-					scratch.d.arraycoerce.elemfunc =
-						(FmgrInfo *) palloc0(sizeof(FmgrInfo));
-					fmgr_info(acoerce->elemfuncid,
-							  scratch.d.arraycoerce.elemfunc);
-					fmgr_info_set_expr((Node *) acoerce,
-									   scratch.d.arraycoerce.elemfunc);
-
 					/* Set up workspace for array_map */
 					scratch.d.arraycoerce.amstate =
 						(ArrayMapState *) palloc0(sizeof(ArrayMapState));
 				}
 				else
 				{
-					/* Don't need workspace if there's no conversion func */
-					scratch.d.arraycoerce.elemfunc = NULL;
+					/* Don't need workspace if there's no subexpression */
 					scratch.d.arraycoerce.amstate = NULL;
 				}
 
@@ -1480,7 +1500,6 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				RowExpr    *rowexpr = (RowExpr *) node;
 				int			nelems = list_length(rowexpr->args);
 				TupleDesc	tupdesc;
-				Form_pg_attribute *attrs;
 				int			i;
 				ListCell   *l;
 
@@ -1527,13 +1546,13 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				memset(scratch.d.row.elemnulls, true, sizeof(bool) * nelems);
 
 				/* Set up evaluation, skipping any deleted columns */
-				attrs = tupdesc->attrs;
 				i = 0;
 				foreach(l, rowexpr->args)
 				{
+					Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 					Expr	   *e = (Expr *) lfirst(l);
 
-					if (!attrs[i]->attisdropped)
+					if (!att->attisdropped)
 					{
 						/*
 						 * Guard against ALTER COLUMN TYPE on rowtype since
@@ -1541,12 +1560,12 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 						 * typmod too?	Not sure we can be sure it'll be the
 						 * same.
 						 */
-						if (exprType((Node *) e) != attrs[i]->atttypid)
+						if (exprType((Node *) e) != att->atttypid)
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("ROW() column has type %s instead of type %s",
 											format_type_be(exprType((Node *) e)),
-											format_type_be(attrs[i]->atttypid))));
+											format_type_be(att->atttypid))));
 					}
 					else
 					{
@@ -1628,6 +1647,9 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 											 lefttype,
 											 righttype,
 											 BTORDER_PROC);
+					if (!OidIsValid(proc))
+						elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
+							 BTORDER_PROC, lefttype, righttype, opfamily);
 
 					/* Set up the primary fmgr lookup information */
 					finfo = palloc0(sizeof(FmgrInfo));
@@ -2443,14 +2465,14 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref, PlanState *parent,
 		 * refassgnexpr is itself a FieldStore or ArrayRef that needs to
 		 * obtain and modify the previous value of the array element or slice
 		 * being replaced.  If so, we have to extract that value from the
-		 * array and pass it down via the CaseTextExpr mechanism.  It's safe
+		 * array and pass it down via the CaseTestExpr mechanism.  It's safe
 		 * to reuse the CASE mechanism because there cannot be a CASE between
 		 * here and where the value would be needed, and an array assignment
 		 * can't be within a CASE either.  (So saving and restoring
 		 * innermost_caseval is just paranoia, but let's do it anyway.)
 		 *
 		 * Since fetching the old element might be a nontrivial expense, do it
-		 * only if the argument appears to actually need it.
+		 * only if the argument actually needs it.
 		 */
 		if (isAssignmentIndirectionExpr(aref->refassgnexpr))
 		{
@@ -2506,10 +2528,16 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref, PlanState *parent,
 
 /*
  * Helper for preparing ArrayRef expressions for evaluation: is expr a nested
- * FieldStore or ArrayRef that might need the old element value passed down?
+ * FieldStore or ArrayRef that needs the old element value passed down?
  *
  * (We could use this in FieldStore too, but in that case passing the old
  * value is so cheap there's no need.)
+ *
+ * Note: it might seem that this needs to recurse, but it does not; the
+ * CaseTestExpr, if any, will be directly the arg or refexpr of the top-level
+ * node.  Nested-assignment situations give rise to expression trees in which
+ * each level of assignment has its own CaseTestExpr, and the recursive
+ * structure appears within the newvals or refassgnexpr field.
  */
 static bool
 isAssignmentIndirectionExpr(Expr *expr)

@@ -580,7 +580,7 @@ setRedirectionTuple(SPPageDesc *current, OffsetNumber position,
  * Test to see if the user-defined picksplit function failed to do its job,
  * ie, it put all the leaf tuples into the same node.
  * If so, randomly divide the tuples into several nodes (all with the same
- * label) and return TRUE to select allTheSame mode for this inner tuple.
+ * label) and return true to select allTheSame mode for this inner tuple.
  *
  * (This code is also used to forcibly select allTheSame mode for nulls.)
  *

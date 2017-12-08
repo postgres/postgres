@@ -95,7 +95,7 @@
  * set up until the first attempt to create something in it.  (The reason for
  * klugery is that we can't create the temp namespace outside a transaction,
  * but initial GUC processing of search_path happens outside a transaction.)
- * activeTempCreationPending is TRUE if "pg_temp" appears first in the string
+ * activeTempCreationPending is true if "pg_temp" appears first in the string
  * but is not reflected in activeCreationNamespace because the namespace isn't
  * set up yet.
  *
@@ -136,7 +136,7 @@ static List *activeSearchPath = NIL;
 /* default place to create stuff; if InvalidOid, no default */
 static Oid	activeCreationNamespace = InvalidOid;
 
-/* if TRUE, activeCreationNamespace is wrong, it should be temp namespace */
+/* if true, activeCreationNamespace is wrong, it should be temp namespace */
 static bool activeTempCreationPending = false;
 
 /* These variables are the values last derived from namespace_search_path: */
@@ -3802,14 +3802,14 @@ InitTempTableNamespace(void)
 						get_database_name(MyDatabaseId))));
 
 	/*
-	 * Do not allow a Hot Standby slave session to make temp tables.  Aside
-	 * from problems with modifying the system catalogs, there is a naming
+	 * Do not allow a Hot Standby session to make temp tables.  Aside from
+	 * problems with modifying the system catalogs, there is a naming
 	 * conflict: pg_temp_N belongs to the session with BackendId N on the
-	 * master, not to a slave session with the same BackendId.  We should not
-	 * be able to get here anyway due to XactReadOnly checks, but let's just
-	 * make real sure.  Note that this also backstops various operations that
-	 * allow XactReadOnly transactions to modify temp tables; they'd need
-	 * RecoveryInProgress checks if not for this.
+	 * master, not to a hot standby session with the same BackendId.  We
+	 * should not be able to get here anyway due to XactReadOnly checks, but
+	 * let's just make real sure.  Note that this also backstops various
+	 * operations that allow XactReadOnly transactions to modify temp tables;
+	 * they'd need RecoveryInProgress checks if not for this.
 	 */
 	if (RecoveryInProgress())
 		ereport(ERROR,

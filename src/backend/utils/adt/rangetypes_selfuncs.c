@@ -203,7 +203,7 @@ rangesel(PG_FUNCTION_ARGS)
 		/* Both sides are the same range type */
 		typcache = range_get_typcache(fcinfo, vardata.vartype);
 
-		constrange = DatumGetRangeType(((Const *) other)->constvalue);
+		constrange = DatumGetRangeTypeP(((Const *) other)->constvalue);
 	}
 
 	/*
@@ -406,7 +406,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	hist_upper = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
 	for (i = 0; i < nhist; i++)
 	{
-		range_deserialize(typcache, DatumGetRangeType(hslot.values[i]),
+		range_deserialize(typcache, DatumGetRangeTypeP(hslot.values[i]),
 						  &hist_lower[i], &hist_upper[i], &empty);
 		/* The histogram should not contain any empty ranges */
 		if (empty)

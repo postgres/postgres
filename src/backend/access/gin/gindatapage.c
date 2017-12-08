@@ -235,9 +235,9 @@ dataIsMoveRight(GinBtree btree, Page page)
 	ItemPointer iptr = GinDataPageGetRightBound(page);
 
 	if (GinPageRightMost(page))
-		return FALSE;
+		return false;
 
-	return (ginCompareItemPointers(&btree->itemptr, iptr) > 0) ? TRUE : FALSE;
+	return (ginCompareItemPointers(&btree->itemptr, iptr) > 0) ? true : false;
 }
 
 /*
@@ -1875,9 +1875,9 @@ ginPrepareDataScan(GinBtree btree, Relation index, BlockNumber rootBlkno)
 	btree->fillRoot = ginDataFillRoot;
 	btree->prepareDownlink = dataPrepareDownlink;
 
-	btree->isData = TRUE;
-	btree->fullScan = FALSE;
-	btree->isBuild = FALSE;
+	btree->isData = true;
+	btree->fullScan = false;
+	btree->isBuild = false;
 }
 
 /*
@@ -1919,9 +1919,9 @@ ginScanBeginPostingTree(GinBtree btree, Relation index, BlockNumber rootBlkno,
 
 	ginPrepareDataScan(btree, index, rootBlkno);
 
-	btree->fullScan = TRUE;
+	btree->fullScan = true;
 
-	stack = ginFindLeafPage(btree, TRUE, snapshot);
+	stack = ginFindLeafPage(btree, true, snapshot);
 
 	return stack;
 }

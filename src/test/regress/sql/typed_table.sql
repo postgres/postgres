@@ -1,10 +1,3 @@
--- Clean up in case a prior regression run failed
-SET client_min_messages TO 'warning';
-
-DROP TYPE IF EXISTS person_type CASCADE;
-
-RESET client_min_messages;
-
 CREATE TABLE ttable1 OF nothing;
 
 CREATE TYPE person_type AS (id int, name text);

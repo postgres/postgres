@@ -289,5 +289,5 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	/* All the memory will anyway be freed at the end */
-    return( 0 );
+    return 0;
 }

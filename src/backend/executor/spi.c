@@ -71,8 +71,8 @@ static void _SPI_cursor_operation(Portal portal,
 static SPIPlanPtr _SPI_make_plan_non_temp(SPIPlanPtr plan);
 static SPIPlanPtr _SPI_save_plan(SPIPlanPtr plan);
 
-static int	_SPI_begin_call(bool execmem);
-static int	_SPI_end_call(bool procmem);
+static int	_SPI_begin_call(bool use_exec);
+static int	_SPI_end_call(bool use_exec);
 static MemoryContext _SPI_execmem(void);
 static MemoryContext _SPI_procmem(void);
 static bool _SPI_checktuples(void);
@@ -118,6 +118,7 @@ SPI_connect(void)
 	_SPI_current->processed = 0;
 	_SPI_current->lastoid = InvalidOid;
 	_SPI_current->tuptable = NULL;
+	_SPI_current->execSubid = InvalidSubTransactionId;
 	slist_init(&_SPI_current->tuptables);
 	_SPI_current->procCxt = NULL;	/* in case we fail to create 'em */
 	_SPI_current->execCxt = NULL;
@@ -149,7 +150,7 @@ SPI_finish(void)
 {
 	int			res;
 
-	res = _SPI_begin_call(false);	/* live in procedure memory */
+	res = _SPI_begin_call(false);	/* just check we're connected */
 	if (res < 0)
 		return res;
 
@@ -268,8 +269,15 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 	{
 		slist_mutable_iter siter;
 
-		/* free Executor memory the same as _SPI_end_call would do */
-		MemoryContextResetAndDeleteChildren(_SPI_current->execCxt);
+		/*
+		 * Throw away executor state if current executor operation was started
+		 * within current subxact (essentially, force a _SPI_end_call(true)).
+		 */
+		if (_SPI_current->execSubid >= mySubid)
+		{
+			_SPI_current->execSubid = InvalidSubTransactionId;
+			MemoryContextResetAndDeleteChildren(_SPI_current->execCxt);
+		}
 
 		/* throw away any tuple tables created within current subxact */
 		slist_foreach_modify(siter, &_SPI_current->tuptables)
@@ -293,8 +301,6 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 				MemoryContextDelete(tuptable->tuptabcxt);
 			}
 		}
-		/* in particular we should have gotten rid of any in-progress table */
-		Assert(_SPI_current->tuptable == NULL);
 	}
 }
 
@@ -765,8 +771,10 @@ SPI_fnumber(TupleDesc tupdesc, const char *fname)
 
 	for (res = 0; res < tupdesc->natts; res++)
 	{
-		if (namestrcmp(&tupdesc->attrs[res]->attname, fname) == 0 &&
-			!tupdesc->attrs[res]->attisdropped)
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, res);
+
+		if (namestrcmp(&attr->attname, fname) == 0 &&
+			!attr->attisdropped)
 			return res + 1;
 	}
 
@@ -793,7 +801,7 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 	}
 
 	if (fnumber > 0)
-		att = tupdesc->attrs[fnumber - 1];
+		att = TupleDescAttr(tupdesc, fnumber - 1);
 	else
 		att = SystemAttributeDefinition(fnumber, true);
 
@@ -823,7 +831,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 		return NULL;
 
 	if (fnumber > 0)
-		typoid = tupdesc->attrs[fnumber - 1]->atttypid;
+		typoid = TupleDescAttr(tupdesc, fnumber - 1)->atttypid;
 	else
 		typoid = (SystemAttributeDefinition(fnumber, true))->atttypid;
 
@@ -865,7 +873,7 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 	}
 
 	if (fnumber > 0)
-		typoid = tupdesc->attrs[fnumber - 1]->atttypid;
+		typoid = TupleDescAttr(tupdesc, fnumber - 1)->atttypid;
 	else
 		typoid = (SystemAttributeDefinition(fnumber, true))->atttypid;
 
@@ -901,7 +909,7 @@ SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 	}
 
 	if (fnumber > 0)
-		return tupdesc->attrs[fnumber - 1]->atttypid;
+		return TupleDescAttr(tupdesc, fnumber - 1)->atttypid;
 	else
 		return (SystemAttributeDefinition(fnumber, true))->atttypid;
 }
@@ -1899,9 +1907,9 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
  * snapshot: query snapshot to use, or InvalidSnapshot for the normal
  *		behavior of taking a new snapshot for each query.
  * crosscheck_snapshot: for RI use, all others pass InvalidSnapshot
- * read_only: TRUE for read-only execution (no CommandCounterIncrement)
- * fire_triggers: TRUE to fire AFTER triggers at end of query (normal case);
- *		FALSE means any AFTER triggers are postponed to end of outer query
+ * read_only: true for read-only execution (no CommandCounterIncrement)
+ * fire_triggers: true to fire AFTER triggers at end of query (normal case);
+ *		false means any AFTER triggers are postponed to end of outer query
  * tcount: execution tuple-count limit, or 0 for none
  */
 static int
@@ -2444,15 +2452,24 @@ _SPI_procmem(void)
 
 /*
  * _SPI_begin_call: begin a SPI operation within a connected procedure
+ *
+ * use_exec is true if we intend to make use of the procedure's execCxt
+ * during this SPI operation.  We'll switch into that context, and arrange
+ * for it to be cleaned up at _SPI_end_call or if an error occurs.
  */
 static int
-_SPI_begin_call(bool execmem)
+_SPI_begin_call(bool use_exec)
 {
 	if (_SPI_current == NULL)
 		return SPI_ERROR_UNCONNECTED;
 
-	if (execmem)				/* switch to the Executor memory context */
+	if (use_exec)
+	{
+		/* remember when the Executor operation started */
+		_SPI_current->execSubid = GetCurrentSubTransactionId();
+		/* switch to the Executor memory context */
 		_SPI_execmem();
+	}
 
 	return 0;
 }
@@ -2460,14 +2477,19 @@ _SPI_begin_call(bool execmem)
 /*
  * _SPI_end_call: end a SPI operation within a connected procedure
  *
+ * use_exec must be the same as in the previous _SPI_begin_call
+ *
  * Note: this currently has no failure return cases, so callers don't check
  */
 static int
-_SPI_end_call(bool procmem)
+_SPI_end_call(bool use_exec)
 {
-	if (procmem)				/* switch to the procedure memory context */
+	if (use_exec)
 	{
+		/* switch to the procedure memory context */
 		_SPI_procmem();
+		/* mark Executor context no longer in use */
+		_SPI_current->execSubid = InvalidSubTransactionId;
 		/* and free Executor memory */
 		MemoryContextResetAndDeleteChildren(_SPI_current->execCxt);
 	}

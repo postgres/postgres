@@ -67,7 +67,7 @@ ecpg_get_connection_nr(const char *connection_name)
 		ret = con;
 	}
 
-	return (ret);
+	return ret;
 }
 
 struct connection *
@@ -106,7 +106,7 @@ ecpg_get_connection(const char *connection_name)
 #endif
 	}
 
-	return (ret);
+	return ret;
 }
 
 static void
@@ -168,7 +168,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 	PGresult   *results;
 
 	if (!ecpg_init(con, connection_name, lineno))
-		return (false);
+		return false;
 
 	ecpg_log("ECPGsetcommit on line %d: action \"%s\"; connection \"%s\"\n", lineno, mode, con->name);
 
@@ -204,7 +204,7 @@ ECPGsetconn(int lineno, const char *connection_name)
 	struct connection *con = ecpg_get_connection(connection_name);
 
 	if (!ecpg_init(con, connection_name, lineno))
-		return (false);
+		return false;
 
 #ifdef ENABLE_THREAD_SAFETY
 	pthread_setspecific(actual_connection_key, con);
@@ -675,7 +675,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	{
 		ecpg_raise(lineno, ECPG_OUT_OF_MEMORY,
 				   ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
-		return (false);
+		return false;
 	}
 
 #ifdef ENABLE_THREAD_SAFETY
@@ -702,7 +702,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 #ifdef ENABLE_THREAD_SAFETY
 			pthread_mutex_unlock(&connections_mutex);
 #endif
-			return (false);
+			return false;
 		}
 		else
 			ecpg_finish(con);

@@ -81,3 +81,14 @@ SELECT opcname, amvalidate(opc.oid)
 FROM pg_opclass opc JOIN pg_am am ON am.oid = opcmethod
 WHERE amname = 'bloom'
 ORDER BY 1;
+
+--
+-- relation options
+--
+DROP INDEX bloomidx;
+CREATE INDEX bloomidx ON tst USING bloom (i, t) WITH (length=7, col1=4);
+SELECT reloptions FROM pg_class WHERE oid = 'bloomidx'::regclass;
+-- check for min and max values
+\set VERBOSITY terse
+CREATE INDEX bloomidx2 ON tst USING bloom (i, t) WITH (length=0);
+CREATE INDEX bloomidx2 ON tst USING bloom (i, t) WITH (col1=0);

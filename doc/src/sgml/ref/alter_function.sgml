@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_function.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERFUNCTION">
+<refentry id="sql-alterfunction">
  <indexterm zone="sql-alterfunction">
   <primary>ALTER FUNCTION</primary>
  </indexterm>
@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
-    <replaceable class="PARAMETER">action</replaceable> [ ... ] [ RESTRICT ]
+    <replaceable class="parameter">action</replaceable> [ ... ] [ RESTRICT ]
 ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
     RENAME TO <replaceable>new_name</replaceable>
 ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
@@ -32,7 +32,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
 ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
     DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
 
-<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
+<phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
     CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
     IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
@@ -56,8 +56,8 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
   </para>
 
   <para>
-   You must own the function to use <command>ALTER FUNCTION</>.
-   To change a function's schema, you must also have <literal>CREATE</>
+   You must own the function to use <command>ALTER FUNCTION</command>.
+   To change a function's schema, you must also have <literal>CREATE</literal>
    privilege on the new schema.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
@@ -86,14 +86,14 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
 
     <listitem>
      <para>
-      The mode of an argument: <literal>IN</>, <literal>OUT</>,
-      <literal>INOUT</>, or <literal>VARIADIC</>.
-      If omitted, the default is <literal>IN</>.
+      The mode of an argument: <literal>IN</literal>, <literal>OUT</literal>,
+      <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
+      If omitted, the default is <literal>IN</literal>.
       Note that <command>ALTER FUNCTION</command> does not actually pay
-      any attention to <literal>OUT</> arguments, since only the input
+      any attention to <literal>OUT</literal> arguments, since only the input
       arguments are needed to determine the function's identity.
-      So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
-      and <literal>VARIADIC</> arguments.
+      So it is sufficient to list the <literal>IN</literal>, <literal>INOUT</literal>,
+      and <literal>VARIADIC</literal> arguments.
      </para>
     </listitem>
    </varlistentry>
@@ -171,7 +171,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
        null. <literal>RETURNS NULL ON NULL INPUT</literal> or
        <literal>STRICT</literal> changes the function so that it is not
        invoked if any of its arguments are null; instead, a null result
-       is assumed automatically.  See <xref linkend="sql-createfunction">
+       is assumed automatically.  See <xref linkend="sql-createfunction"/>
        for more information.
       </para>
      </listitem>
@@ -185,7 +185,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
      <listitem>
       <para>
        Change the volatility of the function to the specified setting.
-       See <xref linkend="sql-createfunction"> for details.
+       See <xref linkend="sql-createfunction"/> for details.
       </para>
     </listitem>
    </varlistentry>
@@ -198,7 +198,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
      <para>
       Change whether the function is a security definer or not. The
       key word <literal>EXTERNAL</literal> is ignored for SQL
-      conformance. See <xref linkend="sql-createfunction"> for more information about
+      conformance. See <xref linkend="sql-createfunction"/> for more information about
       this capability.
      </para>
     </listitem>
@@ -210,7 +210,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
     <listitem>
      <para>
       Change whether the function is deemed safe for parallelism.
-      See <xref linkend="sql-createfunction"> for details.
+      See <xref linkend="sql-createfunction"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -220,7 +220,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
     <listitem>
      <para>
       Change whether the function is considered leakproof or not.
-      See <xref linkend="sql-createfunction"> for more information about
+      See <xref linkend="sql-createfunction"/> for more information about
       this capability.
      </para>
     </listitem>
@@ -232,7 +232,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
      <listitem>
       <para>
        Change the estimated execution cost of the function.
-       See <xref linkend="sql-createfunction"> for more information.
+       See <xref linkend="sql-createfunction"/> for more information.
       </para>
      </listitem>
    </varlistentry>
@@ -243,7 +243,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
      <listitem>
       <para>
        Change the estimated number of rows returned by a set-returning
-       function.  See <xref linkend="sql-createfunction"> for more information.
+       function.  See <xref linkend="sql-createfunction"/> for more information.
       </para>
      </listitem>
    </varlistentry>
@@ -260,14 +260,14 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
         setting is removed, so that the function executes with the value
         present in its environment.  Use <literal>RESET
         ALL</literal> to clear all function-local settings.
-        <literal>SET FROM CURRENT</> saves the value of the parameter that
-        is current when <command>ALTER FUNCTION</> is executed as the value
+        <literal>SET FROM CURRENT</literal> saves the value of the parameter that
+        is current when <command>ALTER FUNCTION</command> is executed as the value
         to be applied when the function is entered.
        </para>
 
        <para>
-        See <xref linkend="sql-set"> and
-        <xref linkend="runtime-config">
+        See <xref linkend="sql-set"/> and
+        <xref linkend="runtime-config"/>
         for more information about allowed parameter names and values.
        </para>
       </listitem>
@@ -329,7 +329,7 @@ ALTER FUNCTION check_password(text) SET search_path = admin, pg_temp;
   </para>
 
   <para>
-   To disable automatic setting of <varname>search_path</> for a function:
+   To disable automatic setting of <varname>search_path</varname> for a function:
 <programlisting>
 ALTER FUNCTION check_password(text) RESET search_path;
 </programlisting>
@@ -343,13 +343,13 @@ ALTER FUNCTION check_password(text) RESET search_path;
 
   <para>
    This statement is partially compatible with the <command>ALTER
-   FUNCTION</> statement in the SQL standard. The standard allows more
+   FUNCTION</command> statement in the SQL standard. The standard allows more
    properties of a function to be modified, but does not provide the
    ability to rename a function, make a function a security definer,
    attach configuration parameter values to a function,
    or change the owner, schema, or volatility of a function. The standard also
-   requires the <literal>RESTRICT</> key word, which is optional in
-   <productname>PostgreSQL</>.
+   requires the <literal>RESTRICT</literal> key word, which is optional in
+   <productname>PostgreSQL</productname>.
   </para>
  </refsect1>
 
@@ -357,8 +357,10 @@ ALTER FUNCTION check_password(text) RESET search_path;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction"></member>
-   <member><xref linkend="sql-dropfunction"></member>
+   <member><xref linkend="sql-createfunction"/></member>
+   <member><xref linkend="sql-dropfunction"/></member>
+   <member><xref linkend="sql-alterprocedure"/></member>
+   <member><xref linkend="sql-alterroutine"/></member>
   </simplelist>
  </refsect1>
 </refentry>

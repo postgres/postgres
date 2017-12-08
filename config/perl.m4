@@ -4,10 +4,7 @@
 # PGAC_PATH_PERL
 # --------------
 AC_DEFUN([PGAC_PATH_PERL],
-[# Let the user override the search
-if test -z "$PERL"; then
-  AC_PATH_PROG(PERL, perl)
-fi
+[PGAC_PATH_PROGS(PERL, perl)
 
 if test "$PERL"; then
   pgac_perl_version=`$PERL -v 2>/dev/null | sed -n ['s/This is perl.*v[a-z ]*\([0-9]\.[0-9][0-9.]*\).*$/\1/p']`
@@ -49,6 +46,33 @@ AC_DEFUN([PGAC_CHECK_PERL_CONFIGS],
 [m4_foreach([pgac_item], [$1], [PGAC_CHECK_PERL_CONFIG(pgac_item)])])
 
 
+# PGAC_CHECK_PERL_EMBED_CCFLAGS
+# -----------------------------
+# We selectively extract stuff from $Config{ccflags}.  We don't really need
+# anything except -D switches, and other sorts of compiler switches can
+# actively break things if Perl was compiled with a different compiler.
+# Moreover, although Perl likes to put stuff like -D_LARGEFILE_SOURCE and
+# -D_FILE_OFFSET_BITS=64 here, it would be fatal to try to compile PL/Perl
+# to a different libc ABI than core Postgres uses.  The available information
+# says that all the symbols that affect Perl's own ABI begin with letters,
+# so it should be sufficient to adopt -D switches for symbols not beginning
+# with underscore.  An exception is that we need to let through
+# -D_USE_32BIT_TIME_T if it's present.  (We probably could restrict that to
+# only get through on Windows, but for the moment we let it through always.)
+# For debugging purposes, let's have the configure output report the raw
+# ccflags value as well as the set of flags we chose to adopt.
+AC_DEFUN([PGAC_CHECK_PERL_EMBED_CCFLAGS],
+[AC_REQUIRE([PGAC_PATH_PERL])
+AC_MSG_CHECKING([for CFLAGS recommended by Perl])
+perl_ccflags=`$PERL -MConfig -e ['print $Config{ccflags}']`
+AC_MSG_RESULT([$perl_ccflags])
+AC_MSG_CHECKING([for CFLAGS to compile embedded Perl])
+perl_embed_ccflags=`$PERL -MConfig -e ['foreach $f (split(" ",$Config{ccflags})) {print $f, " " if ($f =~ /^-D[^_]/ || $f =~ /^-D_USE_32BIT_TIME_T/)}']`
+AC_SUBST(perl_embed_ccflags)dnl
+AC_MSG_RESULT([$perl_embed_ccflags])
+])# PGAC_CHECK_PERL_EMBED_CCFLAGS
+
+
 # PGAC_CHECK_PERL_EMBED_LDFLAGS
 # -----------------------------
 # We are after Embed's ldopts, but without the subset mentioned in
@@ -59,12 +83,19 @@ AC_DEFUN([PGAC_CHECK_PERL_EMBED_LDFLAGS],
 [AC_REQUIRE([PGAC_PATH_PERL])
 AC_MSG_CHECKING(for flags to link embedded Perl)
 if test "$PORTNAME" = "win32" ; then
-perl_lib=`basename $perl_archlibexp/CORE/perl[[5-9]]*.lib .lib`
-test -e "$perl_archlibexp/CORE/$perl_lib.lib" && perl_embed_ldflags="-L$perl_archlibexp/CORE -l$perl_lib"
+	perl_lib=`basename $perl_archlibexp/CORE/perl[[5-9]]*.lib .lib`
+	if test -e "$perl_archlibexp/CORE/$perl_lib.lib"; then
+		perl_embed_ldflags="-L$perl_archlibexp/CORE -l$perl_lib"
+	else
+		perl_lib=`basename $perl_archlibexp/CORE/libperl[[5-9]]*.a .a | sed 's/^lib//'`
+		if test -e "$perl_archlibexp/CORE/lib$perl_lib.a"; then
+			perl_embed_ldflags="-L$perl_archlibexp/CORE -l$perl_lib"
+		fi
+	fi
 else
-pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
-pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
-perl_embed_ldflags=`echo X"$pgac_tmp1" | sed -e "s/^X//" -e "s%$pgac_tmp2%%" -e ["s/ -arch [-a-zA-Z0-9_]*//g"]`
+	pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
+	pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
+	perl_embed_ldflags=`echo X"$pgac_tmp1" | sed -e "s/^X//" -e "s%$pgac_tmp2%%" -e ["s/ -arch [-a-zA-Z0-9_]*//g"]`
 fi
 AC_SUBST(perl_embed_ldflags)dnl
 if test -z "$perl_embed_ldflags" ; then

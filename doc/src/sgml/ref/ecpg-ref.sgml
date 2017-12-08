@@ -3,7 +3,7 @@ doc/src/sgml/ref/ecpg-ref.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-ECPG">
+<refentry id="app-ecpg">
  <indexterm zone="app-ecpg">
   <primary>ecpg</primary>
  </indexterm>
@@ -28,7 +28,7 @@ PostgreSQL documentation
  </refsynopsisdiv>
 
 
- <refsect1 id="APP-ECPG-description">
+ <refsect1 id="app-ecpg-description">
   <title>Description</title>
 
   <para>
@@ -51,7 +51,7 @@ PostgreSQL documentation
 
   <para>
    This reference page does not describe the embedded SQL language.
-   See <xref linkend="ecpg"> for more information on that topic.
+   See <xref linkend="ecpg"/> for more information on that topic.
   </para>
  </refsect1>
 
@@ -220,9 +220,9 @@ PostgreSQL documentation
 
   <para>
    When compiling the preprocessed C code files, the compiler needs to
-   be able to find the <application>ECPG</> header files in the
-   <productname>PostgreSQL</> include directory.  Therefore, you might
-   have to use the <option>-I</> option when invoking the compiler
+   be able to find the <application>ECPG</application> header files in the
+   <productname>PostgreSQL</productname> include directory.  Therefore, you might
+   have to use the <option>-I</option> option when invoking the compiler
    (e.g., <literal>-I/usr/local/pgsql/include</literal>).
   </para>
 
@@ -235,7 +235,7 @@ PostgreSQL documentation
   <para>
    The value of either of these directories that is appropriate for
    the installation can be found out using <xref
-   linkend="app-pgconfig">.
+   linkend="app-pgconfig"/>.
   </para>
  </refsect1>
 

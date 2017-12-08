@@ -209,7 +209,7 @@ sub mkvcbuild
 		$pltcl->AddIncludeDir($solution->{options}->{tcl} . '/include');
 		$pltcl->AddReference($postgres);
 
-		for my $tclver (qw(86t 85 84))
+		for my $tclver (qw(86t 86 85 84))
 		{
 			my $tcllib = $solution->{options}->{tcl} . "/lib/tcl$tclver.lib";
 			if (-e $tcllib)
@@ -451,7 +451,6 @@ sub mkvcbuild
 			'imath.c');
 	}
 	$pgcrypto->AddReference($postgres);
-	$pgcrypto->AddReference($libpgcommon);
 	$pgcrypto->AddLibrary('ws2_32.lib');
 	my $mf = Project::read_file('contrib/pgcrypto/Makefile');
 	GenerateContribSqlFiles('pgcrypto', $mf);
@@ -518,7 +517,39 @@ sub mkvcbuild
 		my $plperl =
 		  $solution->AddProject('plperl', 'dll', 'PLs', 'src/pl/plperl');
 		$plperl->AddIncludeDir($solution->{options}->{perl} . '/lib/CORE');
-		$plperl->AddDefine('PLPERL_HAVE_UID_GID');
+
+		# Add defines from Perl's ccflags; see PGAC_CHECK_PERL_EMBED_CCFLAGS
+		my @perl_embed_ccflags;
+		foreach my $f (split(" ", $Config{ccflags}))
+		{
+			if (   $f =~ /^-D[^_]/
+				|| $f =~ /^-D_USE_32BIT_TIME_T/)
+			{
+				$f =~ s/\-D//;
+				push(@perl_embed_ccflags, $f);
+			}
+		}
+
+		# Perl versions before 5.13.4 don't provide -D_USE_32BIT_TIME_T
+		# regardless of how they were built.  On 32-bit Windows, assume
+		# such a version was built with a pre-MSVC-2005 compiler, and
+		# define the symbol anyway, so that we are compatible if we're
+		# being built with a later MSVC version.
+		push(@perl_embed_ccflags, '_USE_32BIT_TIME_T')
+		  if $solution->{platform} eq 'Win32'
+			  && $Config{PERL_REVISION} == 5
+			  && ($Config{PERL_VERSION} < 13
+				  || (   $Config{PERL_VERSION} == 13
+					  && $Config{PERL_SUBVERSION} < 4));
+
+		# Also, a hack to prevent duplicate definitions of uid_t/gid_t
+		push(@perl_embed_ccflags, 'PLPERL_HAVE_UID_GID');
+
+		foreach my $f (@perl_embed_ccflags)
+		{
+			$plperl->AddDefine($f);
+		}
+
 		foreach my $xs ('SPI.xs', 'Util.xs')
 		{
 			(my $xsc = $xs) =~ s/\.xs/.c/;
@@ -584,9 +615,10 @@ sub mkvcbuild
 			}
 		}
 		$plperl->AddReference($postgres);
-		my $perl_path = $solution->{options}->{perl} . '\lib\CORE\perl*.lib';
+		my $perl_path = $solution->{options}->{perl} . '\lib\CORE\*perl*';
+		# ActivePerl 5.16 provided perl516.lib; 5.18 provided libperl518.a
 		my @perl_libs =
-		  grep { /perl\d+.lib$/ } glob($perl_path);
+		  grep { /perl\d+\.lib$|libperl\d+\.a$/ } glob($perl_path);
 		if (@perl_libs == 1)
 		{
 			$plperl->AddLibrary($perl_libs[0]);
@@ -602,7 +634,11 @@ sub mkvcbuild
 			'hstore_plperl', 'contrib/hstore_plperl',
 			'plperl',        'src/pl/plperl',
 			'hstore',        'contrib/hstore');
-		$hstore_plperl->AddDefine('PLPERL_HAVE_UID_GID');
+
+		foreach my $f (@perl_embed_ccflags)
+		{
+			$hstore_plperl->AddDefine($f);
+		}
 	}
 
 	$mf =

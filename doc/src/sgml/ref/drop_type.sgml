@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_type.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTYPE">
+<refentry id="sql-droptype">
  <indexterm zone="sql-droptype">
   <primary>DROP TYPE</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP TYPE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -49,7 +49,7 @@ DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the data type to remove.
@@ -64,7 +64,7 @@ DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
       Automatically drop objects that depend on the type (such as
       table columns, functions, and operators),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -81,7 +81,7 @@ DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
   </variablelist>
  </refsect1>
 
- <refsect1 id="SQL-DROPTYPE-examples">
+ <refsect1 id="sql-droptype-examples">
   <title>Examples</title>
 
   <para>
@@ -91,25 +91,25 @@ DROP TYPE box;
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="SQL-DROPTYPE-compatibility">
+ <refsect1 id="sql-droptype-compatibility">
   <title>Compatibility</title>
 
   <para>
    This command is similar to the corresponding command in the SQL
-   standard, apart from the <literal>IF EXISTS</>
-   option, which is a <productname>PostgreSQL</> extension.
+   standard, apart from the <literal>IF EXISTS</literal>
+   option, which is a <productname>PostgreSQL</productname> extension.
    But note that much of the <command>CREATE TYPE</command> command
    and the data type extension mechanisms in
    <productname>PostgreSQL</productname> differ from the SQL standard.
   </para>
  </refsect1>
 
- <refsect1 id="SQL-DROPTYPE-see-also">
+ <refsect1 id="sql-droptype-see-also">
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertype"></member>
-   <member><xref linkend="sql-createtype"></member>
+   <member><xref linkend="sql-altertype"/></member>
+   <member><xref linkend="sql-createtype"/></member>
   </simplelist>
  </refsect1>
 

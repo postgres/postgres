@@ -46,9 +46,7 @@
 extern PATH *poly2path(POLYGON *poly);
 extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 
-#ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
-#endif
 
 
 /*
@@ -614,7 +612,7 @@ ttdummy(PG_FUNCTION_ARGS)
 		/* Prepare plan for query */
 		pplan = SPI_prepare(query, natts, ctypes);
 		if (pplan == NULL)
-			elog(ERROR, "ttdummy (%s): SPI_prepare returned %d", relname, SPI_result);
+			elog(ERROR, "ttdummy (%s): SPI_prepare returned %s", relname, SPI_result_code_string(SPI_result));
 
 		if (SPI_keepplan(pplan))
 			elog(ERROR, "ttdummy (%s): SPI_keepplan failed", relname);
@@ -770,9 +768,9 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 		struct varatt_indirect redirect_pointer;
 
 		/* only work on existing, not-null varlenas */
-		if (tupdesc->attrs[i]->attisdropped ||
+		if (TupleDescAttr(tupdesc, i)->attisdropped ||
 			nulls[i] ||
-			tupdesc->attrs[i]->attlen != -1)
+			TupleDescAttr(tupdesc, i)->attlen != -1)
 			continue;
 
 		attr = (struct varlena *) DatumGetPointer(values[i]);
@@ -1097,4 +1095,11 @@ test_atomic_ops(PG_FUNCTION_ARGS)
 	test_atomic_uint64();
 
 	PG_RETURN_BOOL(true);
+}
+
+PG_FUNCTION_INFO_V1(test_fdw_handler);
+Datum
+test_fdw_handler(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_NULL();
 }

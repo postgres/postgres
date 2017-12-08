@@ -66,7 +66,7 @@ gin_compare_jsonb(PG_FUNCTION_ARGS)
 Datum
 gin_extract_jsonb(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jb = (Jsonb *) PG_GETARG_JSONB(0);
+	Jsonb	   *jb = (Jsonb *) PG_GETARG_JSONB_P(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	int			total = 2 * JB_ROOT_COUNT(jb);
 	JsonbIterator *it;
@@ -196,7 +196,7 @@ gin_consistent_jsonb(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 
-	/* Jsonb	   *query = PG_GETARG_JSONB(2); */
+	/* Jsonb	   *query = PG_GETARG_JSONB_P(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
@@ -268,7 +268,7 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 
-	/* Jsonb	   *query = PG_GETARG_JSONB(2); */
+	/* Jsonb	   *query = PG_GETARG_JSONB_P(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
@@ -329,7 +329,7 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 Datum
 gin_extract_jsonb_path(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	int			total = 2 * JB_ROOT_COUNT(jb);
 	JsonbIterator *it;
@@ -454,7 +454,7 @@ gin_consistent_jsonb_path(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 
-	/* Jsonb	   *query = PG_GETARG_JSONB(2); */
+	/* Jsonb	   *query = PG_GETARG_JSONB_P(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
@@ -492,7 +492,7 @@ gin_triconsistent_jsonb_path(PG_FUNCTION_ARGS)
 	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 
-	/* Jsonb	   *query = PG_GETARG_JSONB(2); */
+	/* Jsonb	   *query = PG_GETARG_JSONB_P(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */

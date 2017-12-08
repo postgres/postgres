@@ -263,4 +263,29 @@ set       toc,title
   </xsl:if>
 </xsl:template>
 
+
+<!-- upper case HTML anchors for backward compatibility -->
+
+<xsl:template name="object.id">
+  <xsl:param name="object" select="."/>
+  <xsl:choose>
+    <xsl:when test="$object/@id">
+      <xsl:value-of select="translate($object/@id, &lowercase;, &uppercase;)"/>
+    </xsl:when>
+    <xsl:when test="$object/@xml:id">
+      <xsl:value-of select="$object/@xml:id"/>
+    </xsl:when>
+    <xsl:when test="$generate.consistent.ids != 0">
+      <!-- Make $object the current node -->
+      <xsl:for-each select="$object">
+        <xsl:text>id-</xsl:text>
+        <xsl:number level="multiple" count="*"/>
+      </xsl:for-each>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="generate-id($object)"/>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 </xsl:stylesheet>

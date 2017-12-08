@@ -838,12 +838,12 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
  *
  * If skip_nonnative_saop is non-NULL, we ignore ScalarArrayOpExpr clauses
  * unless the index AM supports them directly, and we set *skip_nonnative_saop
- * to TRUE if we found any such clauses (caller must initialize the variable
- * to FALSE).  If it's NULL, we do not ignore ScalarArrayOpExpr clauses.
+ * to true if we found any such clauses (caller must initialize the variable
+ * to false).  If it's NULL, we do not ignore ScalarArrayOpExpr clauses.
  *
  * If skip_lower_saop is non-NULL, we ignore ScalarArrayOpExpr clauses for
- * non-first index columns, and we set *skip_lower_saop to TRUE if we found
- * any such clauses (caller must initialize the variable to FALSE).  If it's
+ * non-first index columns, and we set *skip_lower_saop to true if we found
+ * any such clauses (caller must initialize the variable to false).  If it's
  * NULL, we do not ignore non-first ScalarArrayOpExpr clauses, but they will
  * result in considering the scan's output to be unordered.
  *
@@ -3978,13 +3978,13 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 			expr_op = get_opfamily_member(opfam, lefttype, righttype,
 										  op_strategy);
 			if (!OidIsValid(expr_op))	/* should not happen */
-				elog(ERROR, "could not find member %d(%u,%u) of opfamily %u",
+				elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 					 op_strategy, lefttype, righttype, opfam);
 			if (!var_on_left)
 			{
 				expr_op = get_commutator(expr_op);
 				if (!OidIsValid(expr_op))	/* should not happen */
-					elog(ERROR, "could not find commutator of member %d(%u,%u) of opfamily %u",
+					elog(ERROR, "could not find commutator of operator %d(%u,%u) of opfamily %u",
 						 op_strategy, lefttype, righttype, opfam);
 			}
 			new_ops = lappend_oid(new_ops, expr_op);

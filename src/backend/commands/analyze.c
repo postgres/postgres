@@ -106,6 +106,10 @@ static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
 /*
  *	analyze_rel() -- analyze one relation
+ *
+ * relid identifies the relation to analyze.  If relation is supplied, use
+ * the name therein for reporting any failure to open/lock the rel; do not
+ * use it once we've successfully opened the rel, since it might be stale.
  */
 void
 analyze_rel(Oid relid, RangeVar *relation, int options,
@@ -116,6 +120,7 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	int			elevel;
 	AcquireSampleRowsFunc acquirefunc = NULL;
 	BlockNumber relpages = 0;
+	bool		rel_lock = true;
 
 	/* Select logging level */
 	if (options & VACOPT_VERBOSE)
@@ -145,14 +150,50 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	else
 	{
 		onerel = NULL;
-		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
-			ereport(LOG,
+		rel_lock = false;
+	}
+
+	/*
+	 * If we failed to open or lock the relation, emit a log message before
+	 * exiting.
+	 */
+	if (!onerel)
+	{
+		/*
+		 * If the RangeVar is not defined, we do not have enough information
+		 * to provide a meaningful log statement.  Chances are that
+		 * analyze_rel's caller has intentionally not provided this
+		 * information so that this logging is skipped, anyway.
+		 */
+		if (relation == NULL)
+			return;
+
+		/*
+		 * Determine the log level.  For autovacuum logs, we emit a LOG if
+		 * log_autovacuum_min_duration is not disabled.  For manual ANALYZE,
+		 * we emit a WARNING to match the log statements in the permissions
+		 * checks.
+		 */
+		if (!IsAutoVacuumWorkerProcess())
+			elevel = WARNING;
+		else if (params->log_min_duration >= 0)
+			elevel = LOG;
+		else
+			return;
+
+		if (!rel_lock)
+			ereport(elevel,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 					 errmsg("skipping analyze of \"%s\" --- lock not available",
 							relation->relname)));
-	}
-	if (!onerel)
+		else
+			ereport(elevel,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("skipping analyze of \"%s\" --- relation no longer exists",
+							relation->relname)));
+
 		return;
+	}
 
 	/*
 	 * Check permissions --- this should match vacuum's check!
@@ -202,9 +243,7 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	}
 
 	/*
-	 * Check that it's a plain table, materialized view, or foreign table; we
-	 * used to do this in get_rel_oids() but seems safer to check after we've
-	 * locked the relation.
+	 * Check that it's of an analyzable relkind, and set up appropriately.
 	 */
 	if (onerel->rd_rel->relkind == RELKIND_RELATION ||
 		onerel->rd_rel->relkind == RELKIND_MATVIEW)
@@ -370,10 +409,14 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	/*
 	 * Determine which columns to analyze
 	 *
-	 * Note that system attributes are never analyzed.
+	 * Note that system attributes are never analyzed, so we just reject them
+	 * at the lookup stage.  We also reject duplicate column mentions.  (We
+	 * could alternatively ignore duplicates, but analyzing a column twice
+	 * won't work; we'd end up making a conflicting update in pg_statistic.)
 	 */
 	if (va_cols != NIL)
 	{
+		Bitmapset  *unique_cols = NULL;
 		ListCell   *le;
 
 		vacattrstats = (VacAttrStats **) palloc(list_length(va_cols) *
@@ -389,6 +432,13 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("column \"%s\" of relation \"%s\" does not exist",
 								col, RelationGetRelationName(onerel))));
+			if (bms_is_member(i, unique_cols))
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" appears more than once",
+								col, RelationGetRelationName(onerel))));
+			unique_cols = bms_add_member(unique_cols, i);
+
 			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
@@ -526,10 +576,10 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 
 			stats->rows = rows;
 			stats->tupDesc = onerel->rd_att;
-			(*stats->compute_stats) (stats,
-									 std_fetch_func,
-									 numrows,
-									 totalrows);
+			stats->compute_stats(stats,
+								 std_fetch_func,
+								 numrows,
+								 totalrows);
 
 			/*
 			 * If the appropriate flavor of the n_distinct option is
@@ -830,10 +880,10 @@ compute_index_stats(Relation onerel, double totalrows,
 				stats->exprvals = exprvals + i;
 				stats->exprnulls = exprnulls + i;
 				stats->rowstride = attr_cnt;
-				(*stats->compute_stats) (stats,
-										 ind_fetch_func,
-										 numindexrows,
-										 totalindexrows);
+				stats->compute_stats(stats,
+									 ind_fetch_func,
+									 numindexrows,
+									 totalindexrows);
 
 				/*
 				 * If the n_distinct option is specified, it overrides the
@@ -871,7 +921,7 @@ compute_index_stats(Relation onerel, double totalrows,
 static VacAttrStats *
 examine_attribute(Relation onerel, int attnum, Node *index_expr)
 {
-	Form_pg_attribute attr = onerel->rd_att->attrs[attnum - 1];
+	Form_pg_attribute attr = TupleDescAttr(onerel->rd_att, attnum - 1);
 	HeapTuple	typtuple;
 	VacAttrStats *stats;
 	int			i;

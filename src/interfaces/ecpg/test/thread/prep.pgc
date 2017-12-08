@@ -13,6 +13,7 @@ main(void)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <process.h>
+#include <locale.h>
 #else
 #include <pthread.h>
 #endif
@@ -40,6 +41,12 @@ static void* fn(void* arg)
 	char name[100];
 	char query[256] = "INSERT INTO T VALUES ( ? )";
 	EXEC SQL END DECLARE SECTION;
+
+#ifdef WIN32
+#ifdef _MSC_VER                /* requires MSVC */
+	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+#endif
 
 	value = (long)arg;
 	sprintf(name, "Connection: %d", value);

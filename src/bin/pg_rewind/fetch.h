@@ -24,7 +24,7 @@
  * config options.
  */
 extern void fetchSourceFileList(void);
-extern char *fetchFile(char *filename, size_t *filesize);
+extern char *fetchFile(const char *filename, size_t *filesize);
 extern void executeFileMap(void);
 
 /* in libpq_fetch.c */

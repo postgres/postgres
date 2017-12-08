@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_policy.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERPOLICY">
+<refentry id="sql-alterpolicy">
  <indexterm zone="sql-alterpolicy">
   <primary>ALTER POLICY</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 
 ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
     [ TO { <replaceable class="parameter">role_name</replaceable> | PUBLIC | CURRENT_USER | SESSION_USER } [, ...] ]
@@ -105,7 +105,7 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
     <listitem>
      <para>
       The <literal>USING</literal> expression for the policy.
-      See <xref linkend="sql-createpolicy"> for details.
+      See <xref linkend="sql-createpolicy"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -115,7 +115,7 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
     <listitem>
      <para>
       The <literal>WITH CHECK</literal> expression for the policy.
-      See <xref linkend="sql-createpolicy"> for details.
+      See <xref linkend="sql-createpolicy"/> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -135,8 +135,8 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createpolicy"></member>
-   <member><xref linkend="sql-droppolicy"></member>
+   <member><xref linkend="sql-createpolicy"/></member>
+   <member><xref linkend="sql-droppolicy"/></member>
   </simplelist>
  </refsect1>
 

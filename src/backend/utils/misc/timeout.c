@@ -302,7 +302,7 @@ handle_sig_alarm(SIGNAL_ARGS)
 				this_timeout->indicator = true;
 
 				/* And call its handler function */
-				(*this_timeout->timeout_handler) ();
+				this_timeout->timeout_handler();
 
 				/*
 				 * The handler might not take negligible time (CheckDeadLock

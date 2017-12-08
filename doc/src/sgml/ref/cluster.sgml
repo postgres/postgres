@@ -3,7 +3,7 @@ doc/src/sgml/ref/cluster.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CLUSTER">
+<refentry id="sql-cluster">
  <indexterm zone="sql-cluster">
   <primary>CLUSTER</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLUSTER [VERBOSE] <replaceable class="PARAMETER">table_name</replaceable> [ USING <replaceable class="PARAMETER">index_name</replaceable> ]
+CLUSTER [VERBOSE] <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">index_name</replaceable> ]
 CLUSTER [VERBOSE]
 </synopsis>
  </refsynopsisdiv>
@@ -57,7 +57,7 @@ CLUSTER [VERBOSE]
    <command>CLUSTER <replaceable class="parameter">table_name</replaceable></command>
    reclusters the table using the same index as before.  You can also
    use the <literal>CLUSTER</literal> or <literal>SET WITHOUT CLUSTER</literal>
-   forms of <xref linkend="SQL-ALTERTABLE"> to set the index to be used for
+   forms of <xref linkend="sql-altertable"/> to set the index to be used for
    future cluster operations, or to clear any previous setting.
   </para>
 
@@ -82,7 +82,7 @@ CLUSTER [VERBOSE]
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (possibly schema-qualified) of a table.
@@ -91,7 +91,7 @@ CLUSTER [VERBOSE]
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">index_name</replaceable></term>
+    <term><replaceable class="parameter">index_name</replaceable></term>
     <listitem>
      <para>
       The name of an index.
@@ -128,7 +128,7 @@ CLUSTER [VERBOSE]
    </para>
 
    <para>
-    <command>CLUSTER</> can re-sort the table using either an index scan
+    <command>CLUSTER</command> can re-sort the table using either an index scan
     on the specified index, or (if the index is a b-tree) a sequential
     scan followed by sorting.  It will attempt to choose the method that
     will be faster, based on planner cost parameters and available statistical
@@ -148,18 +148,18 @@ CLUSTER [VERBOSE]
     as double the table size, plus the index sizes.  This method is often
     faster than the index scan method, but if the disk space requirement is
     intolerable, you can disable this choice by temporarily setting <xref
-    linkend="guc-enable-sort"> to <literal>off</>.
+    linkend="guc-enable-sort"/> to <literal>off</literal>.
    </para>
 
    <para>
-    It is advisable to set <xref linkend="guc-maintenance-work-mem"> to
+    It is advisable to set <xref linkend="guc-maintenance-work-mem"/> to
     a reasonably large value (but not more than the amount of RAM you can
-    dedicate to the <command>CLUSTER</> operation) before clustering.
+    dedicate to the <command>CLUSTER</command> operation) before clustering.
    </para>
 
    <para>
     Because the planner records statistics about the ordering of
-    tables, it is advisable to run <xref linkend="sql-analyze">
+    tables, it is advisable to run <xref linkend="sql-analyze"/>
     on the newly clustered table.
     Otherwise, the planner might make poor choices of query plans.
    </para>
@@ -168,7 +168,7 @@ CLUSTER [VERBOSE]
     Because <command>CLUSTER</command> remembers which indexes are clustered,
     one can cluster the tables one wants clustered manually the first time,
     then set up a periodic maintenance script that executes
-    <command>CLUSTER</> without any parameters, so that the desired tables
+    <command>CLUSTER</command> without any parameters, so that the desired tables
     are periodically reclustered.
    </para>
 
@@ -210,9 +210,9 @@ CLUSTER;
   <para>
    The syntax
 <synopsis>
-CLUSTER <replaceable class="PARAMETER">index_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable>
+CLUSTER <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
 </synopsis>
-  is also supported for compatibility with pre-8.3 <productname>PostgreSQL</>
+  is also supported for compatibility with pre-8.3 <productname>PostgreSQL</productname>
   versions.
   </para>
  </refsect1>
@@ -221,7 +221,7 @@ CLUSTER <replaceable class="PARAMETER">index_name</replaceable> ON <replaceable 
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-clusterdb"></member>
+   <member><xref linkend="app-clusterdb"/></member>
   </simplelist>
  </refsect1>
 </refentry>

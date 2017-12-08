@@ -508,6 +508,14 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 
 			break;
 
+		case EXPR_KIND_CALL:
+			if (isAgg)
+				err = _("aggregate functions are not allowed in CALL arguments");
+			else
+				err = _("grouping operations are not allowed in CALL arguments");
+
+			break;
+
 			/*
 			 * There is intentionally no default: case here, so that the
 			 * compiler will warn if we add a new ParseExprKind without
@@ -882,6 +890,9 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 			break;
 		case EXPR_KIND_PARTITION_EXPRESSION:
 			err = _("window functions are not allowed in partition key expression");
+			break;
+		case EXPR_KIND_CALL:
+			err = _("window functions are not allowed in CALL arguments");
 			break;
 
 			/*

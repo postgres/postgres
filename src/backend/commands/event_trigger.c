@@ -106,8 +106,10 @@ static event_trigger_support_data event_trigger_support[] = {
 	{"OPERATOR CLASS", true},
 	{"OPERATOR FAMILY", true},
 	{"POLICY", true},
+	{"PROCEDURE", true},
 	{"PUBLICATION", true},
 	{"ROLE", false},
+	{"ROUTINE", true},
 	{"RULE", true},
 	{"SCHEMA", true},
 	{"SEQUENCE", true},
@@ -152,7 +154,7 @@ static event_trigger_command_tag_check_result check_table_rewrite_ddl_tag(
 							const char *tag);
 static void error_duplicate_filter_variable(const char *defname);
 static Datum filter_list_to_array(List *filterlist);
-static Oid insert_event_trigger_tuple(char *trigname, char *eventname,
+static Oid insert_event_trigger_tuple(const char *trigname, const char *eventname,
 						   Oid evtOwner, Oid funcoid, List *tags);
 static void validate_ddl_tags(const char *filtervar, List *taglist);
 static void validate_table_rewrite_tags(const char *filtervar, List *taglist);
@@ -372,7 +374,7 @@ error_duplicate_filter_variable(const char *defname)
  * Insert the new pg_event_trigger row and record dependencies.
  */
 static Oid
-insert_event_trigger_tuple(char *trigname, char *eventname, Oid evtOwner,
+insert_event_trigger_tuple(const char *trigname, const char *eventname, Oid evtOwner,
 						   Oid funcoid, List *taglist)
 {
 	Relation	tgrel;
@@ -1103,8 +1105,10 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_OPERATOR:
 		case OBJECT_OPFAMILY:
 		case OBJECT_POLICY:
+		case OBJECT_PROCEDURE:
 		case OBJECT_PUBLICATION:
 		case OBJECT_PUBLICATION_REL:
+		case OBJECT_ROUTINE:
 		case OBJECT_RULE:
 		case OBJECT_SCHEMA:
 		case OBJECT_SEQUENCE:
@@ -1215,6 +1219,8 @@ EventTriggerSupportsGrantObjectType(GrantObjectType objtype)
 		case ACL_OBJECT_LANGUAGE:
 		case ACL_OBJECT_LARGEOBJECT:
 		case ACL_OBJECT_NAMESPACE:
+		case ACL_OBJECT_PROCEDURE:
+		case ACL_OBJECT_ROUTINE:
 		case ACL_OBJECT_TYPE:
 			return true;
 
@@ -2243,6 +2249,10 @@ stringify_grantobjtype(GrantObjectType objtype)
 			return "LARGE OBJECT";
 		case ACL_OBJECT_NAMESPACE:
 			return "SCHEMA";
+		case ACL_OBJECT_PROCEDURE:
+			return "PROCEDURE";
+		case ACL_OBJECT_ROUTINE:
+			return "ROUTINE";
 		case ACL_OBJECT_TABLESPACE:
 			return "TABLESPACE";
 		case ACL_OBJECT_TYPE:
@@ -2285,6 +2295,10 @@ stringify_adefprivs_objtype(GrantObjectType objtype)
 			return "LARGE OBJECTS";
 		case ACL_OBJECT_NAMESPACE:
 			return "SCHEMAS";
+		case ACL_OBJECT_PROCEDURE:
+			return "PROCEDURES";
+		case ACL_OBJECT_ROUTINE:
+			return "ROUTINES";
 		case ACL_OBJECT_TABLESPACE:
 			return "TABLESPACES";
 		case ACL_OBJECT_TYPE:

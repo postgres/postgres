@@ -1421,7 +1421,7 @@ build_tuplestore_recursively(char *key_fld,
  * Check expected (query runtime) tupdesc suitable for Connectby
  */
 static void
-validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial)
+validateConnectbyTupleDesc(TupleDesc td, bool show_branch, bool show_serial)
 {
 	int			serial_column = 0;
 
@@ -1431,7 +1431,7 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 	/* are there the correct number of columns */
 	if (show_branch)
 	{
-		if (tupdesc->natts != (CONNECTBY_NCOLS + serial_column))
+		if (td->natts != (CONNECTBY_NCOLS + serial_column))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("invalid return type"),
@@ -1440,7 +1440,7 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 	}
 	else
 	{
-		if (tupdesc->natts != CONNECTBY_NCOLS_NOBRANCH + serial_column)
+		if (td->natts != CONNECTBY_NCOLS_NOBRANCH + serial_column)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("invalid return type"),
@@ -1449,14 +1449,14 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 	}
 
 	/* check that the types of the first two columns match */
-	if (tupdesc->attrs[0]->atttypid != tupdesc->attrs[1]->atttypid)
+	if (TupleDescAttr(td, 0)->atttypid != TupleDescAttr(td, 1)->atttypid)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
 				 errdetail("First two columns must be the same type.")));
 
 	/* check that the type of the third column is INT4 */
-	if (tupdesc->attrs[2]->atttypid != INT4OID)
+	if (TupleDescAttr(td, 2)->atttypid != INT4OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
@@ -1464,7 +1464,7 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 						   format_type_be(INT4OID))));
 
 	/* check that the type of the fourth column is TEXT if applicable */
-	if (show_branch && tupdesc->attrs[3]->atttypid != TEXTOID)
+	if (show_branch && TupleDescAttr(td, 3)->atttypid != TEXTOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid return type"),
@@ -1472,7 +1472,8 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 						   format_type_be(TEXTOID))));
 
 	/* check that the type of the fifth column is INT4 */
-	if (show_branch && show_serial && tupdesc->attrs[4]->atttypid != INT4OID)
+	if (show_branch && show_serial &&
+		TupleDescAttr(td, 4)->atttypid != INT4OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("query-specified return tuple not valid for Connectby: "
@@ -1480,7 +1481,8 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 						format_type_be(INT4OID))));
 
 	/* check that the type of the fifth column is INT4 */
-	if (!show_branch && show_serial && tupdesc->attrs[3]->atttypid != INT4OID)
+	if (!show_branch && show_serial &&
+		TupleDescAttr(td, 3)->atttypid != INT4OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("query-specified return tuple not valid for Connectby: "
@@ -1514,10 +1516,10 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	 * These columns must match the result type indicated by the calling
 	 * query.
 	 */
-	ret_atttypid = ret_tupdesc->attrs[0]->atttypid;
-	sql_atttypid = sql_tupdesc->attrs[0]->atttypid;
-	ret_atttypmod = ret_tupdesc->attrs[0]->atttypmod;
-	sql_atttypmod = sql_tupdesc->attrs[0]->atttypmod;
+	ret_atttypid = TupleDescAttr(ret_tupdesc, 0)->atttypid;
+	sql_atttypid = TupleDescAttr(sql_tupdesc, 0)->atttypid;
+	ret_atttypmod = TupleDescAttr(ret_tupdesc, 0)->atttypmod;
+	sql_atttypmod = TupleDescAttr(sql_tupdesc, 0)->atttypmod;
 	if (ret_atttypid != sql_atttypid ||
 		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 		ereport(ERROR,
@@ -1528,10 +1530,10 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 						   format_type_with_typemod(ret_atttypid, ret_atttypmod),
 						   format_type_with_typemod(sql_atttypid, sql_atttypmod))));
 
-	ret_atttypid = ret_tupdesc->attrs[1]->atttypid;
-	sql_atttypid = sql_tupdesc->attrs[1]->atttypid;
-	ret_atttypmod = ret_tupdesc->attrs[1]->atttypmod;
-	sql_atttypmod = sql_tupdesc->attrs[1]->atttypmod;
+	ret_atttypid = TupleDescAttr(ret_tupdesc, 1)->atttypid;
+	sql_atttypid = TupleDescAttr(sql_tupdesc, 1)->atttypid;
+	ret_atttypmod = TupleDescAttr(ret_tupdesc, 1)->atttypmod;
+	sql_atttypmod = TupleDescAttr(sql_tupdesc, 1)->atttypmod;
 	if (ret_atttypid != sql_atttypid ||
 		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 		ereport(ERROR,
@@ -1562,8 +1564,8 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 		return false;
 
 	/* check the rowid types match */
-	ret_atttypid = ret_tupdesc->attrs[0]->atttypid;
-	sql_atttypid = sql_tupdesc->attrs[0]->atttypid;
+	ret_atttypid = TupleDescAttr(ret_tupdesc, 0)->atttypid;
+	sql_atttypid = TupleDescAttr(sql_tupdesc, 0)->atttypid;
 	if (ret_atttypid != sql_atttypid)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1576,10 +1578,10 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	 * attribute [2] of the sql tuple should match attributes [1] to [natts]
 	 * of the return tuple
 	 */
-	sql_attr = sql_tupdesc->attrs[2];
+	sql_attr = TupleDescAttr(sql_tupdesc, 2);
 	for (i = 1; i < ret_tupdesc->natts; i++)
 	{
-		ret_attr = ret_tupdesc->attrs[i];
+		ret_attr = TupleDescAttr(ret_tupdesc, i);
 
 		if (ret_attr->atttypid != sql_attr->atttypid)
 			return false;

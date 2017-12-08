@@ -304,8 +304,9 @@ typedef enum pg_conn_host_type
  */
 typedef struct pg_conn_host
 {
-	char	   *host;			/* host name or address, or socket path */
 	pg_conn_host_type type;		/* type of host */
+	char	   *host;			/* host name or socket path */
+	char	   *hostaddr;		/* host address */
 	char	   *port;			/* port number for this host; if not NULL,
 								 * overrides the PGConn's pgport */
 	char	   *password;		/* password for this host, read from the
@@ -452,11 +453,13 @@ struct pg_conn
 	/* Assorted state for SASL, SSL, GSS, etc */
 	void	   *sasl_state;
 
+	/* SSL structures */
+	bool		ssl_in_use;
+
 #ifdef USE_SSL
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
 	bool		wait_ssl_try;	/* Delay SSL negotiation until after
 								 * attempting normal connection */
-	bool		ssl_in_use;
 #ifdef USE_OPENSSL
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
 	X509	   *peer;			/* X509 cert of server */
@@ -667,6 +670,7 @@ extern void pgtls_close(PGconn *conn);
 extern ssize_t pgtls_read(PGconn *conn, void *ptr, size_t len);
 extern bool pgtls_read_pending(PGconn *conn);
 extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);
+extern char *pgtls_get_finished(PGconn *conn, size_t *len);
 
 /*
  * this is so that we can check if a connection is non-blocking internally

@@ -1714,7 +1714,7 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 	/* Be sure to null out any dropped columns */
 	for (i = 0; i < newTupDesc->natts; i++)
 	{
-		if (newTupDesc->attrs[i]->attisdropped)
+		if (TupleDescAttr(newTupDesc, i)->attisdropped)
 			isnull[i] = true;
 	}
 

@@ -294,21 +294,13 @@ PortalCleanup(Portal portal)
 
 			/* We must make the portal's resource owner current */
 			saveResourceOwner = CurrentResourceOwner;
-			PG_TRY();
-			{
-				if (portal->resowner)
-					CurrentResourceOwner = portal->resowner;
-				ExecutorFinish(queryDesc);
-				ExecutorEnd(queryDesc);
-				FreeQueryDesc(queryDesc);
-			}
-			PG_CATCH();
-			{
-				/* Ensure CurrentResourceOwner is restored on error */
-				CurrentResourceOwner = saveResourceOwner;
-				PG_RE_THROW();
-			}
-			PG_END_TRY();
+			if (portal->resowner)
+				CurrentResourceOwner = portal->resowner;
+
+			ExecutorFinish(queryDesc);
+			ExecutorEnd(queryDesc);
+			FreeQueryDesc(queryDesc);
+
 			CurrentResourceOwner = saveResourceOwner;
 		}
 	}
@@ -397,7 +389,7 @@ PersistHoldablePortal(Portal portal)
 		/* Fetch the result set into the tuplestore */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L, false);
 
-		(*queryDesc->dest->rDestroy) (queryDesc->dest);
+		queryDesc->dest->rDestroy(queryDesc->dest);
 		queryDesc->dest = NULL;
 
 		/*

@@ -33,6 +33,19 @@
 
 
 /* ----------------------------------------------------------------
+ *		ExecBitmapAnd
+ *
+ *		stub for pro forma compliance
+ * ----------------------------------------------------------------
+ */
+static TupleTableSlot *
+ExecBitmapAnd(PlanState *pstate)
+{
+	elog(ERROR, "BitmapAnd node does not support ExecProcNode call convention");
+	return NULL;
+}
+
+/* ----------------------------------------------------------------
  *		ExecInitBitmapAnd
  *
  *		Begin all of the subscans of the BitmapAnd node.
@@ -63,6 +76,7 @@ ExecInitBitmapAnd(BitmapAnd *node, EState *estate, int eflags)
 	 */
 	bitmapandstate->ps.plan = (Plan *) node;
 	bitmapandstate->ps.state = estate;
+	bitmapandstate->ps.ExecProcNode = ExecBitmapAnd;
 	bitmapandstate->bitmapplans = bitmapplanstates;
 	bitmapandstate->nplans = nplans;
 

@@ -40,5 +40,5 @@ int main(void)
 	strcpy(msg, "disconnect");
 	exec sql disconnect current;
 
-	return (0);
+	return 0;
 }

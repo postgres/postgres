@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_tablespace.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETABLESPACE">
+<refentry id="sql-createtablespace">
  <indexterm zone="sql-createtablespace">
   <primary>CREATE TABLESPACE</primary>
  </indexterm>
@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
     [ OWNER { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER } ]
     LOCATION '<replaceable class="parameter">directory</replaceable>'
-    [ WITH ( <replaceable class="PARAMETER">tablespace_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
+    [ WITH ( <replaceable class="parameter">tablespace_option</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -45,16 +45,16 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
 
   <para>
    A user with appropriate privileges can pass
-   <replaceable class="parameter">tablespace_name</> to
-   <command>CREATE DATABASE</>, <command>CREATE TABLE</>,
-   <command>CREATE INDEX</> or <command>ADD CONSTRAINT</> to have the data
+   <replaceable class="parameter">tablespace_name</replaceable> to
+   <command>CREATE DATABASE</command>, <command>CREATE TABLE</command>,
+   <command>CREATE INDEX</command> or <command>ADD CONSTRAINT</command> to have the data
    files for these objects stored within the specified tablespace.
   </para>
 
   <warning>
    <para>
     A tablespace cannot be used independently of the cluster in which it
-    is defined;  see <xref linkend="manage-ag-tablespaces">.
+    is defined;  see <xref linkend="manage-ag-tablespaces"/>.
    </para>
   </warning>
 
@@ -93,7 +93,7 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
        <para>
         The directory that will be used for the tablespace. The directory
         should be empty and must be owned by the
-        <productname>PostgreSQL</> system user.  The directory must be
+        <productname>PostgreSQL</productname> system user.  The directory must be
         specified by an absolute path name.
        </para>
       </listitem>
@@ -104,14 +104,14 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
       <listitem>
        <para>
         A tablespace parameter to be set or reset.  Currently, the only
-        available parameters are <varname>seq_page_cost</>,
-        <varname>random_page_cost</> and <varname>effective_io_concurrency</>.
+        available parameters are <varname>seq_page_cost</varname>,
+        <varname>random_page_cost</varname> and <varname>effective_io_concurrency</varname>.
         Setting either value for a particular tablespace will override the
         planner's usual estimate of the cost of reading pages from tables in
         that tablespace, as established by the configuration parameters of the
-        same name (see <xref linkend="guc-seq-page-cost">,
-        <xref linkend="guc-random-page-cost">,
-        <xref linkend="guc-effective-io-concurrency">).  This may be useful if
+        same name (see <xref linkend="guc-seq-page-cost"/>,
+        <xref linkend="guc-random-page-cost"/>,
+        <xref linkend="guc-effective-io-concurrency"/>).  This may be useful if
         one tablespace is located on a disk which is faster or slower than the
         remainder of the I/O subsystem.
        </para>
@@ -128,7 +128,7 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
   </para>
 
    <para>
-    <command>CREATE TABLESPACE</> cannot be executed inside a transaction
+    <command>CREATE TABLESPACE</command> cannot be executed inside a transaction
     block.
    </para>
  </refsect1>
@@ -137,15 +137,15 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
   <title>Examples</title>
 
   <para>
-   Create a tablespace <literal>dbspace</> at <literal>/data/dbs</>:
+   Create a tablespace <literal>dbspace</literal> at <literal>/data/dbs</literal>:
 <programlisting>
 CREATE TABLESPACE dbspace LOCATION '/data/dbs';
 </programlisting>
   </para>
 
   <para>
-   Create a tablespace <literal>indexspace</> at <literal>/data/indexes</>
-   owned by user <literal>genevieve</>:
+   Create a tablespace <literal>indexspace</literal> at <literal>/data/indexes</literal>
+   owned by user <literal>genevieve</literal>:
 <programlisting>
 CREATE TABLESPACE indexspace OWNER genevieve LOCATION '/data/indexes';
 </programlisting></para>
@@ -155,7 +155,7 @@ CREATE TABLESPACE indexspace OWNER genevieve LOCATION '/data/indexes';
   <title>Compatibility</title>
 
   <para>
-   <command>CREATE TABLESPACE</command> is a <productname>PostgreSQL</>
+   <command>CREATE TABLESPACE</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>
@@ -164,11 +164,11 @@ CREATE TABLESPACE indexspace OWNER genevieve LOCATION '/data/indexes';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdatabase"></member>
-   <member><xref linkend="sql-createtable"></member>
-   <member><xref linkend="sql-createindex"></member>
-   <member><xref linkend="sql-droptablespace"></member>
-   <member><xref linkend="sql-altertablespace"></member>
+   <member><xref linkend="sql-createdatabase"/></member>
+   <member><xref linkend="sql-createtable"/></member>
+   <member><xref linkend="sql-createindex"/></member>
+   <member><xref linkend="sql-droptablespace"/></member>
+   <member><xref linkend="sql-altertablespace"/></member>
   </simplelist>
  </refsect1>
 

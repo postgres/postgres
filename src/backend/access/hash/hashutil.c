@@ -85,7 +85,7 @@ _hash_datum2hashkey(Relation rel, Datum key)
 	Oid			collation;
 
 	/* XXX assumes index has only one attribute */
-	procinfo = index_getprocinfo(rel, 1, HASHPROC);
+	procinfo = index_getprocinfo(rel, 1, HASHSTANDARD_PROC);
 	collation = rel->rd_indcollation[0];
 
 	return DatumGetUInt32(FunctionCall1Coll(procinfo, collation, key));
@@ -108,10 +108,10 @@ _hash_datum2hashkey_type(Relation rel, Datum key, Oid keytype)
 	hash_proc = get_opfamily_proc(rel->rd_opfamily[0],
 								  keytype,
 								  keytype,
-								  HASHPROC);
+								  HASHSTANDARD_PROC);
 	if (!RegProcedureIsValid(hash_proc))
 		elog(ERROR, "missing support function %d(%u,%u) for index \"%s\"",
-			 HASHPROC, keytype, keytype,
+			 HASHSTANDARD_PROC, keytype, keytype,
 			 RelationGetRelationName(rel));
 	collation = rel->rd_indcollation[0];
 
@@ -522,13 +522,31 @@ _hash_get_newbucket_from_oldbucket(Relation rel, Bucket old_bucket,
  * current page and killed tuples thereon (generally, this should only be
  * called if so->numKilled > 0).
  *
+ * The caller does not have a lock on the page and may or may not have the
+ * page pinned in a buffer.  Note that read-lock is sufficient for setting
+ * LP_DEAD status (which is only a hint).
+ *
+ * The caller must have pin on bucket buffer, but may or may not have pin
+ * on overflow buffer, as indicated by HashScanPosIsPinned(so->currPos).
+ *
  * We match items by heap TID before assuming they are the right ones to
  * delete.
+ *
+ * There are never any scans active in a bucket at the time VACUUM begins,
+ * because VACUUM takes a cleanup lock on the primary bucket page and scans
+ * hold a pin.  A scan can begin after VACUUM leaves the primary bucket page
+ * but before it finishes the entire bucket, but it can never pass VACUUM,
+ * because VACUUM always locks the next page before releasing the lock on
+ * the previous one.  Therefore, we don't have to worry about accidentally
+ * killing a TID that has been reused for an unrelated tuple.
  */
 void
 _hash_kill_items(IndexScanDesc scan)
 {
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	Relation	rel = scan->indexRelation;
+	BlockNumber blkno;
+	Buffer		buf;
 	Page		page;
 	HashPageOpaque opaque;
 	OffsetNumber offnum,
@@ -536,9 +554,11 @@ _hash_kill_items(IndexScanDesc scan)
 	int			numKilled = so->numKilled;
 	int			i;
 	bool		killedsomething = false;
+	bool		havePin = false;
 
 	Assert(so->numKilled > 0);
 	Assert(so->killedItems != NULL);
+	Assert(HashScanPosIsValid(so->currPos));
 
 	/*
 	 * Always reset the scan state, so we don't look for same items on other
@@ -546,20 +566,40 @@ _hash_kill_items(IndexScanDesc scan)
 	 */
 	so->numKilled = 0;
 
-	page = BufferGetPage(so->hashso_curbuf);
+	blkno = so->currPos.currPage;
+	if (HashScanPosIsPinned(so->currPos))
+	{
+		/*
+		 * We already have pin on this buffer, so, all we need to do is
+		 * acquire lock on it.
+		 */
+		havePin = true;
+		buf = so->currPos.buf;
+		LockBuffer(buf, BUFFER_LOCK_SHARE);
+	}
+	else
+		buf = _hash_getbuf(rel, blkno, HASH_READ, LH_OVERFLOW_PAGE);
+
+	page = BufferGetPage(buf);
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	for (i = 0; i < numKilled; i++)
 	{
-		offnum = so->killedItems[i].indexOffset;
+		int			itemIndex = so->killedItems[i];
+		HashScanPosItem *currItem = &so->currPos.items[itemIndex];
+
+		offnum = currItem->indexOffset;
+
+		Assert(itemIndex >= so->currPos.firstItem &&
+			   itemIndex <= so->currPos.lastItem);
 
 		while (offnum <= maxoff)
 		{
 			ItemId		iid = PageGetItemId(page, offnum);
 			IndexTuple	ituple = (IndexTuple) PageGetItem(page, iid);
 
-			if (ItemPointerEquals(&ituple->t_tid, &so->killedItems[i].heapTid))
+			if (ItemPointerEquals(&ituple->t_tid, &currItem->heapTid))
 			{
 				/* found the item */
 				ItemIdMarkDead(iid);
@@ -578,6 +618,12 @@ _hash_kill_items(IndexScanDesc scan)
 	if (killedsomething)
 	{
 		opaque->hasho_flag |= LH_PAGE_HAS_DEAD_TUPLES;
-		MarkBufferDirtyHint(so->hashso_curbuf, true);
+		MarkBufferDirtyHint(buf, true);
 	}
+
+	if (so->hashso_bucket_buf == so->currPos.buf ||
+		havePin)
+		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+	else
+		_hash_relbuf(rel, buf);
 }

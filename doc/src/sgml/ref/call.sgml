@@ -1,0 +1,97 @@
+<!--
+doc/src/sgml/ref/call.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-call">
+ <indexterm zone="sql-call">
+  <primary>CALL</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>CALL</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CALL</refname>
+  <refpurpose>invoke a procedure</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CALL <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> ] [ , ...] )
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CALL</command> executes a procedure.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the procedure.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  <varlistentry>
+    <term><replaceable class="parameter">argument</replaceable></term>
+    <listitem>
+     <para>
+      An argument for the procedure call.
+      See <xref linkend="sql-syntax-calling-funcs"/> for the full details on
+      function and procedure call syntax, including use of named parameters.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   The user must have <literal>EXECUTE</literal> privilege on the procedure in
+   order to be allowed to invoke it.
+  </para>
+
+  <para>
+   To call a function (not a procedure), use <command>SELECT</command> instead.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+<programlisting>
+CALL do_db_maintenance();
+</programlisting>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CALL</command> conforms to the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createprocedure"/></member>
+  </simplelist>
+ </refsect1>
+</refentry>

@@ -222,7 +222,7 @@ ApplySortComparator(Datum datum1, bool isNull1,
 	}
 	else
 	{
-		compare = (*ssup->comparator) (datum1, datum2, ssup);
+		compare = ssup->comparator(datum1, datum2, ssup);
 		if (ssup->ssup_reverse)
 			compare = -compare;
 	}
@@ -260,7 +260,7 @@ ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
 	}
 	else
 	{
-		compare = (*ssup->abbrev_full_comparator) (datum1, datum2, ssup);
+		compare = ssup->abbrev_full_comparator(datum1, datum2, ssup);
 		if (ssup->ssup_reverse)
 			compare = -compare;
 	}

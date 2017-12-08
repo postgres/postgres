@@ -37,7 +37,9 @@ our @EXPORT = qw(
   program_version_ok
   program_options_handling_ok
   command_like
+  command_like_safe
   command_fails_like
+  command_checks_all
 
   $windows_os
 );
@@ -300,6 +302,25 @@ sub command_like
 	like($stdout, $expected_stdout, "$test_name: matches");
 }
 
+sub command_like_safe
+{
+
+	# Doesn't rely on detecting end of file on the file descriptors,
+	# which can fail, causing the process to hang, notably on Msys
+	# when used with 'pg_ctl start'
+	my ($cmd, $expected_stdout, $test_name) = @_;
+	my ($stdout, $stderr);
+	my $stdoutfile = File::Temp->new();
+	my $stderrfile = File::Temp->new();
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $result = IPC::Run::run $cmd, '>', $stdoutfile, '2>', $stderrfile;
+	$stdout = slurp_file($stdoutfile);
+	$stderr = slurp_file($stderrfile);
+	ok($result, "$test_name: exit code 0");
+	is($stderr, '', "$test_name: no stderr");
+	like($stdout, $expected_stdout, "$test_name: matches");
+}
+
 sub command_fails_like
 {
 	my ($cmd, $expected_stderr, $test_name) = @_;
@@ -308,6 +329,45 @@ sub command_fails_like
 	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
 	ok(!$result, "$test_name: exit code not 0");
 	like($stderr, $expected_stderr, "$test_name: matches");
+}
+
+# Run a command and check its status and outputs.
+# The 5 arguments are:
+# - cmd: ref to list for command, options and arguments to run
+# - ret: expected exit status
+# - out: ref to list of re to be checked against stdout (all must match)
+# - err: ref to list of re to be checked against stderr (all must match)
+# - test_name: name of test
+sub command_checks_all
+{
+	my ($cmd, $expected_ret, $out, $err, $test_name) = @_;
+
+	# run command
+	my ($stdout, $stderr);
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	IPC::Run::run($cmd, '>', \$stdout, '2>', \$stderr);
+
+	# See http://perldoc.perl.org/perlvar.html#%24CHILD_ERROR
+	my $ret = $?;
+	die "command exited with signal " . ($ret & 127)
+	  if $ret & 127;
+	$ret = $ret >> 8;
+
+	# check status
+	ok($ret == $expected_ret,
+		"$test_name status (got $ret vs expected $expected_ret)");
+
+	# check stdout
+	for my $re (@$out)
+	{
+		like($stdout, $re, "$test_name stdout /$re/");
+	}
+
+	# check stderr
+	for my $re (@$err)
+	{
+		like($stderr, $re, "$test_name stderr /$re/");
+	}
 }
 
 1;

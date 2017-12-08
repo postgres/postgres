@@ -12,9 +12,17 @@
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
  *	  of the privileges represented by the individual items.  A zero-length
- *	  array represents "no privileges".  There are no assumptions about the
- *	  ordering of the items, but we do expect that there are no two entries
- *	  in the array with the same grantor and grantee.
+ *	  array represents "no privileges".
+ *
+ *	  The order of items in the array is important as client utilities (in
+ *	  particular, pg_dump, though possibly other clients) expect to be able
+ *	  to issue GRANTs in the ordering of the items in the array.  The reason
+ *	  this matters is that GRANTs WITH GRANT OPTION must be before any GRANTs
+ *	  which depend on it.  This happens naturally in the backend during
+ *	  operations as we update ACLs in-place, new items are appended, and
+ *	  existing entries are only removed if there's no dependency on them (no
+ *	  GRANT can been based on it, or, if there was, those GRANTs are also
+ *	  removed).
  *
  *	  For backward-compatibility purposes we have to allow null ACL entries
  *	  in system catalogs.  A null ACL will be treated as meaning "default

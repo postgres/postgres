@@ -58,6 +58,7 @@
 #include "catalog/namespace.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "port/atomics.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
@@ -89,6 +90,7 @@ static HeapScanDesc heap_beginscan_internal(Relation relation,
 						bool is_bitmapscan,
 						bool is_samplescan,
 						bool temp_snap);
+static void heap_parallelscan_startblock_init(HeapScanDesc scan);
 static BlockNumber heap_parallelscan_nextpage(HeapScanDesc scan);
 static HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
 					TransactionId xid, CommandId cid, int options);
@@ -510,6 +512,8 @@ heapgettup(HeapScanDesc scan,
 			}
 			if (scan->rs_parallel != NULL)
 			{
+				heap_parallelscan_startblock_init(scan);
+
 				page = heap_parallelscan_nextpage(scan);
 
 				/* Other processes might have already finished the scan. */
@@ -812,6 +816,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 			}
 			if (scan->rs_parallel != NULL)
 			{
+				heap_parallelscan_startblock_init(scan);
+
 				page = heap_parallelscan_nextpage(scan);
 
 				/* Other processes might have already finished the scan. */
@@ -1060,11 +1066,11 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			 (*(isnull) = false),
 			 HeapTupleNoNulls(tup) ?
 			 (
-			  (tupleDesc)->attrs[(attnum) - 1]->attcacheoff >= 0 ?
+			  TupleDescAttr((tupleDesc), (attnum) - 1)->attcacheoff >= 0 ?
 			  (
-			   fetchatt((tupleDesc)->attrs[(attnum) - 1],
+			   fetchatt(TupleDescAttr((tupleDesc), (attnum) - 1),
 						(char *) (tup)->t_data + (tup)->t_data->t_hoff +
-						(tupleDesc)->attrs[(attnum) - 1]->attcacheoff)
+						TupleDescAttr((tupleDesc), (attnum) - 1)->attcacheoff)
 			   )
 			  :
 			  nocachegetattr((tup), (attnum), (tupleDesc))
@@ -1373,7 +1379,7 @@ heap_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
  * heap_beginscan_strat offers an extended API that lets the caller control
  * whether a nondefault buffer access strategy can be used, and whether
  * syncscan can be chosen (possibly resulting in the scan not starting from
- * block zero).  Both of these default to TRUE with plain heap_beginscan.
+ * block zero).  Both of these default to true with plain heap_beginscan.
  *
  * heap_beginscan_bm is an alternative entry point for setting up a
  * HeapScanDesc for a bitmap heap scan.  Although that scan technology is
@@ -1525,25 +1531,6 @@ heap_rescan(HeapScanDesc scan,
 	 * reinitialize scan descriptor
 	 */
 	initscan(scan, key, true);
-
-	/*
-	 * reset parallel scan, if present
-	 */
-	if (scan->rs_parallel != NULL)
-	{
-		ParallelHeapScanDesc parallel_scan;
-
-		/*
-		 * Caller is responsible for making sure that all workers have
-		 * finished the scan before calling this, so it really shouldn't be
-		 * necessary to acquire the mutex at all.  We acquire it anyway, just
-		 * to be tidy.
-		 */
-		parallel_scan = scan->rs_parallel;
-		SpinLockAcquire(&parallel_scan->phs_mutex);
-		parallel_scan->phs_cblock = parallel_scan->phs_startblock;
-		SpinLockRelease(&parallel_scan->phs_mutex);
-	}
 }
 
 /* ----------------
@@ -1635,9 +1622,22 @@ heap_parallelscan_initialize(ParallelHeapScanDesc target, Relation relation,
 		!RelationUsesLocalBuffers(relation) &&
 		target->phs_nblocks > NBuffers / 4;
 	SpinLockInit(&target->phs_mutex);
-	target->phs_cblock = InvalidBlockNumber;
 	target->phs_startblock = InvalidBlockNumber;
+	pg_atomic_init_u64(&target->phs_nallocated, 0);
 	SerializeSnapshot(snapshot, target->phs_snapshot_data);
+}
+
+/* ----------------
+ *		heap_parallelscan_reinitialize - reset a parallel scan
+ *
+ *		Call this in the leader process.  Caller is responsible for
+ *		making sure that all workers have finished the scan beforehand.
+ * ----------------
+ */
+void
+heap_parallelscan_reinitialize(ParallelHeapScanDesc parallel_scan)
+{
+	pg_atomic_write_u64(&parallel_scan->phs_nallocated, 0);
 }
 
 /* ----------------
@@ -1660,20 +1660,17 @@ heap_beginscan_parallel(Relation relation, ParallelHeapScanDesc parallel_scan)
 }
 
 /* ----------------
- *		heap_parallelscan_nextpage - get the next page to scan
+ *		heap_parallelscan_startblock_init - find and set the scan's startblock
  *
- *		Get the next page to scan.  Even if there are no pages left to scan,
- *		another backend could have grabbed a page to scan and not yet finished
- *		looking at it, so it doesn't follow that the scan is done when the
- *		first backend gets an InvalidBlockNumber return.
+ *		Determine where the parallel seq scan should start.  This function may
+ *		be called many times, once by each parallel worker.  We must be careful
+ *		only to set the startblock once.
  * ----------------
  */
-static BlockNumber
-heap_parallelscan_nextpage(HeapScanDesc scan)
+static void
+heap_parallelscan_startblock_init(HeapScanDesc scan)
 {
-	BlockNumber page = InvalidBlockNumber;
 	BlockNumber sync_startpage = InvalidBlockNumber;
-	BlockNumber report_page = InvalidBlockNumber;
 	ParallelHeapScanDesc parallel_scan;
 
 	Assert(scan->rs_parallel);
@@ -1705,46 +1702,63 @@ retry:
 			sync_startpage = ss_get_location(scan->rs_rd, scan->rs_nblocks);
 			goto retry;
 		}
-		parallel_scan->phs_cblock = parallel_scan->phs_startblock;
 	}
+	SpinLockRelease(&parallel_scan->phs_mutex);
+}
+
+/* ----------------
+ *		heap_parallelscan_nextpage - get the next page to scan
+ *
+ *		Get the next page to scan.  Even if there are no pages left to scan,
+ *		another backend could have grabbed a page to scan and not yet finished
+ *		looking at it, so it doesn't follow that the scan is done when the
+ *		first backend gets an InvalidBlockNumber return.
+ * ----------------
+ */
+static BlockNumber
+heap_parallelscan_nextpage(HeapScanDesc scan)
+{
+	BlockNumber page;
+	ParallelHeapScanDesc parallel_scan;
+	uint64		nallocated;
+
+	Assert(scan->rs_parallel);
+	parallel_scan = scan->rs_parallel;
 
 	/*
-	 * The current block number is the next one that needs to be scanned,
-	 * unless it's InvalidBlockNumber already, in which case there are no more
-	 * blocks to scan.  After remembering the current value, we must advance
-	 * it so that the next call to this function returns the next block to be
-	 * scanned.
+	 * phs_nallocated tracks how many pages have been allocated to workers
+	 * already.  When phs_nallocated >= rs_nblocks, all blocks have been
+	 * allocated.
+	 *
+	 * Because we use an atomic fetch-and-add to fetch the current value, the
+	 * phs_nallocated counter will exceed rs_nblocks, because workers will
+	 * still increment the value, when they try to allocate the next block but
+	 * all blocks have been allocated already. The counter must be 64 bits
+	 * wide because of that, to avoid wrapping around when rs_nblocks is close
+	 * to 2^32.
+	 *
+	 * The actual page to return is calculated by adding the counter to the
+	 * starting block number, modulo nblocks.
 	 */
-	page = parallel_scan->phs_cblock;
-	if (page != InvalidBlockNumber)
-	{
-		parallel_scan->phs_cblock++;
-		if (parallel_scan->phs_cblock >= scan->rs_nblocks)
-			parallel_scan->phs_cblock = 0;
-		if (parallel_scan->phs_cblock == parallel_scan->phs_startblock)
-		{
-			parallel_scan->phs_cblock = InvalidBlockNumber;
-			report_page = parallel_scan->phs_startblock;
-		}
-	}
-
-	/* Release the lock. */
-	SpinLockRelease(&parallel_scan->phs_mutex);
+	nallocated = pg_atomic_fetch_add_u64(&parallel_scan->phs_nallocated, 1);
+	if (nallocated >= scan->rs_nblocks)
+		page = InvalidBlockNumber;	/* all blocks have been allocated */
+	else
+		page = (nallocated + parallel_scan->phs_startblock) % scan->rs_nblocks;
 
 	/*
 	 * Report scan location.  Normally, we report the current page number.
 	 * When we reach the end of the scan, though, we report the starting page,
 	 * not the ending page, just so the starting positions for later scans
 	 * doesn't slew backwards.  We only report the position at the end of the
-	 * scan once, though: subsequent callers will have report nothing, since
-	 * they will have page == InvalidBlockNumber.
+	 * scan once, though: subsequent callers will report nothing.
 	 */
 	if (scan->rs_syncscan)
 	{
-		if (report_page == InvalidBlockNumber)
-			report_page = page;
-		if (report_page != InvalidBlockNumber)
-			ss_report_location(scan->rs_rd, report_page);
+		if (page != InvalidBlockNumber)
+			ss_report_location(scan->rs_rd, page);
+		else if (nallocated == scan->rs_nblocks)
+			ss_report_location(scan->rs_rd, parallel_scan->phs_startblock);
 	}
 
 	return page;
@@ -1828,16 +1842,16 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
  * against the specified snapshot.
  *
  * If successful (tuple found and passes snapshot time qual), then *userbuf
- * is set to the buffer holding the tuple and TRUE is returned.  The caller
+ * is set to the buffer holding the tuple and true is returned.  The caller
  * must unpin the buffer when done with the tuple.
  *
  * If the tuple is not found (ie, item number references a deleted slot),
- * then tuple->t_data is set to NULL and FALSE is returned.
+ * then tuple->t_data is set to NULL and false is returned.
  *
- * If the tuple is found but fails the time qual check, then FALSE is returned
+ * If the tuple is found but fails the time qual check, then false is returned
  * but tuple->t_data is left pointing to the tuple.
  *
- * keep_buf determines what is done with the buffer in the FALSE-result cases.
+ * keep_buf determines what is done with the buffer in the false-result cases.
  * When the caller specifies keep_buf = true, we retain the pin on the buffer
  * and return it in *userbuf (so the caller must eventually unpin it); when
  * keep_buf = false, the pin is released and *userbuf is set to InvalidBuffer.
@@ -1979,15 +1993,15 @@ heap_fetch(Relation relation,
  * of a HOT chain), and buffer is the buffer holding this tuple.  We search
  * for the first chain member satisfying the given snapshot.  If one is
  * found, we update *tid to reference that tuple's offset number, and
- * return TRUE.  If no match, return FALSE without modifying *tid.
+ * return true.  If no match, return false without modifying *tid.
  *
  * heapTuple is a caller-supplied buffer.  When a match is found, we return
  * the tuple here, in addition to updating *tid.  If no match is found, the
  * contents of this buffer on return are undefined.
  *
  * If all_dead is not NULL, we check non-visible tuples to see if they are
- * globally dead; *all_dead is set TRUE if all members of the HOT chain
- * are vacuumable, FALSE if not.
+ * globally dead; *all_dead is set true if all members of the HOT chain
+ * are vacuumable, false if not.
  *
  * Unlike heap_fetch, the caller must already have pin and (at least) share
  * lock on the buffer; it is still pinned/locked at exit.  Also unlike
@@ -2104,6 +2118,9 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 * If we can't see it, maybe no one else can either.  At caller
 		 * request, check whether all chain members are dead to all
 		 * transactions.
+		 *
+		 * Note: if you change the criterion here for what is "dead", fix the
+		 * planner's get_actual_variable_range() function to match.
 		 */
 		if (all_dead && *all_dead &&
 			!HeapTupleIsSurelyDead(heapTuple, RecentGlobalXmin))
@@ -2581,15 +2598,17 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 					CommandId cid, int options)
 {
 	/*
-	 * For now, parallel operations are required to be strictly read-only.
-	 * Unlike heap_update() and heap_delete(), an insert should never create a
-	 * combo CID, so it might be possible to relax this restriction, but not
-	 * without more thought and testing.
+	 * Parallel operations are required to be strictly read-only in a parallel
+	 * worker.  Parallel inserts are not safe even in the leader in the
+	 * general case, because group locking means that heavyweight locks for
+	 * relation extension or GIN page locks will not conflict between members
+	 * of a lock group, but we don't prohibit that case here because there are
+	 * useful special cases that we can safely allow, such as CREATE TABLE AS.
 	 */
-	if (IsInParallelMode())
+	if (IsParallelWorker())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot insert tuples during a parallel operation")));
+				 errmsg("cannot insert tuples in a parallel worker")));
 
 	if (relation->rd_rel->relhasoids)
 	{
@@ -3983,7 +4002,7 @@ l2:
 
 		/*
 		 * To prevent concurrent sessions from updating the tuple, we have to
-		 * temporarily mark it locked, while we release the lock.
+		 * temporarily mark it locked, while we release the page-level lock.
 		 *
 		 * To satisfy the rule that any xid potentially appearing in a buffer
 		 * written out to disk, we unfortunately have to WAL log this
@@ -3995,8 +4014,9 @@ l2:
 
 		/*
 		 * Compute xmax / infomask appropriate for locking the tuple. This has
-		 * to be done separately from the lock, because the potentially
-		 * created multixact would otherwise be wrong.
+		 * to be done separately from the combo that's going to be used for
+		 * updating, because the potentially created multixact would otherwise
+		 * be wrong.
 		 */
 		compute_new_xmax_infomask(HeapTupleHeaderGetRawXmax(oldtup.t_data),
 								  oldtup.t_data->t_infomask,
@@ -4405,7 +4425,7 @@ heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 	else
 	{
 		Assert(attrnum <= tupdesc->natts);
-		att = tupdesc->attrs[attrnum - 1];
+		att = TupleDescAttr(tupdesc, attrnum - 1);
 		return datumIsEqual(value1, value2, att->attbyval, att->attlen);
 	}
 }
@@ -5524,8 +5544,10 @@ l5:
  * with the given xid, does the current transaction need to wait, fail, or can
  * it continue if it wanted to acquire a lock of the given mode?  "needwait"
  * is set to true if waiting is necessary; if it can continue, then
- * HeapTupleMayBeUpdated is returned.  In case of a conflict, a different
- * HeapTupleSatisfiesUpdate return code is returned.
+ * HeapTupleMayBeUpdated is returned.  If the lock is already held by the
+ * current transaction, return HeapTupleSelfUpdated.  In case of a conflict
+ * with another transaction, a different HeapTupleSatisfiesUpdate return code
+ * is returned.
  *
  * The held status is said to be hypothetical because it might correspond to a
  * lock held by a single Xid, i.e. not a real MultiXactId; we express it this
@@ -5548,8 +5570,9 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
 	if (TransactionIdIsCurrentTransactionId(xid))
 	{
 		/*
-		 * Updated by our own transaction? Just return failure.  This
-		 * shouldn't normally happen.
+		 * The tuple has already been locked by our own transaction.  This is
+		 * very rare but can happen if multiple transactions are trying to
+		 * lock an ancient version of the same tuple.
 		 */
 		return HeapTupleSelfUpdated;
 	}
@@ -5748,6 +5771,22 @@ l4:
 														members[i].xid,
 														mode, &needwait);
 
+					/*
+					 * If the tuple was already locked by ourselves in a
+					 * previous iteration of this (say heap_lock_tuple was
+					 * forced to restart the locking loop because of a change
+					 * in xmax), then we hold the lock already on this tuple
+					 * version and we don't need to do anything; and this is
+					 * not an error condition either.  We just need to skip
+					 * this tuple and continue locking the next version in the
+					 * update chain.
+					 */
+					if (result == HeapTupleSelfUpdated)
+					{
+						pfree(members);
+						goto next;
+					}
+
 					if (needwait)
 					{
 						LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -5808,6 +5847,19 @@ l4:
 
 				result = test_lockmode_for_conflict(status, rawxmax, mode,
 													&needwait);
+
+				/*
+				 * If the tuple was already locked by ourselves in a previous
+				 * iteration of this (say heap_lock_tuple was forced to
+				 * restart the locking loop because of a change in xmax), then
+				 * we hold the lock already on this tuple version and we don't
+				 * need to do anything; and this is not an error condition
+				 * either.  We just need to skip this tuple and continue
+				 * locking the next version in the update chain.
+				 */
+				if (result == HeapTupleSelfUpdated)
+					goto next;
+
 				if (needwait)
 				{
 					LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -5868,6 +5920,7 @@ l4:
 
 		END_CRIT_SECTION();
 
+next:
 		/* if we find the end of update chain, we're done. */
 		if (mytup.t_data->t_infomask & HEAP_XMAX_INVALID ||
 			ItemPointerEquals(&mytup.t_self, &mytup.t_data->t_ctid) ||
@@ -6541,7 +6594,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  * Check to see whether any of the XID fields of a tuple (xmin, xmax, xvac)
  * are older than the specified cutoff XID and cutoff MultiXactId.  If so,
  * setup enough state (in the *frz output argument) to later execute and
- * WAL-log what we would need to do, and return TRUE.  Return FALSE if nothing
+ * WAL-log what we would need to do, and return true.  Return false if nothing
  * is to be changed.  In addition, set *totally_frozen_p to true if the tuple
  * will be totally frozen after these operations are performed and false if
  * more freezing will eventually be required.
@@ -6627,7 +6680,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 			frz->t_infomask &= ~HEAP_XMAX_BITS;
 			frz->xmax = newxmax;
 			if (flags & FRM_MARK_COMMITTED)
-				frz->t_infomask &= HEAP_XMAX_COMMITTED;
+				frz->t_infomask |= HEAP_XMAX_COMMITTED;
 			changed = true;
 			totally_frozen = false;
 		}
@@ -7189,7 +7242,7 @@ heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple)
  * heap_tuple_needs_freeze
  *
  * Check to see whether any of the XID fields of a tuple (xmin, xmax, xvac)
- * are older than the specified cutoff XID or MultiXactId.  If so, return TRUE.
+ * are older than the specified cutoff XID or MultiXactId.  If so, return true.
  *
  * It doesn't matter whether the tuple is alive or dead, we are checking
  * to see if a tuple needs to be removed or frozen to avoid wraparound.
@@ -9115,7 +9168,7 @@ heap_mask(char *pagedata, BlockNumber blkno)
 	Page		page = (Page) pagedata;
 	OffsetNumber off;
 
-	mask_page_lsn(page);
+	mask_page_lsn_and_checksum(page);
 
 	mask_page_hint_bits(page);
 	mask_unused_space(page);

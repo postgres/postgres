@@ -275,7 +275,6 @@ do_compile(FunctionCallInfo fcinfo,
 	bool		isnull;
 	char	   *proc_source;
 	HeapTuple	typeTup;
-	Form_pg_type typeStruct;
 	PLpgSQL_variable *var;
 	PLpgSQL_rec *rec;
 	int			i;
@@ -433,9 +432,14 @@ do_compile(FunctionCallInfo fcinfo,
 							 errmsg("PL/pgSQL functions cannot accept type %s",
 									format_type_be(argtypeid))));
 
-				/* Build variable and add to datum list */
-				argvariable = plpgsql_build_variable(buf, 0,
-													 argdtype, false);
+				/*
+				 * Build variable and add to datum list.  If there's a name
+				 * for the argument, use that as refname, else use $n name.
+				 */
+				argvariable = plpgsql_build_variable((argnames &&
+													  argnames[i][0] != '\0') ?
+													 argnames[i] : buf,
+													 0, argdtype, false);
 
 				if (argvariable->dtype == PLPGSQL_DTYPE_VAR)
 				{
@@ -526,53 +530,58 @@ do_compile(FunctionCallInfo fcinfo,
 			/*
 			 * Lookup the function's return type
 			 */
-			typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettypeid));
-			if (!HeapTupleIsValid(typeTup))
-				elog(ERROR, "cache lookup failed for type %u", rettypeid);
-			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-
-			/* Disallow pseudotype result, except VOID or RECORD */
-			/* (note we already replaced polymorphic types) */
-			if (typeStruct->typtype == TYPTYPE_PSEUDO)
+			if (rettypeid)
 			{
-				if (rettypeid == VOIDOID ||
-					rettypeid == RECORDOID)
-					 /* okay */ ;
-				else if (rettypeid == TRIGGEROID || rettypeid == EVTTRIGGEROID)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("trigger functions can only be called as triggers")));
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("PL/pgSQL functions cannot return type %s",
-									format_type_be(rettypeid))));
-			}
+				Form_pg_type typeStruct;
 
-			if (typeStruct->typrelid != InvalidOid ||
-				rettypeid == RECORDOID)
-				function->fn_retistuple = true;
-			else
-			{
-				function->fn_retbyval = typeStruct->typbyval;
-				function->fn_rettyplen = typeStruct->typlen;
+				typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettypeid));
+				if (!HeapTupleIsValid(typeTup))
+					elog(ERROR, "cache lookup failed for type %u", rettypeid);
+				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
-				/*
-				 * install $0 reference, but only for polymorphic return
-				 * types, and not when the return is specified through an
-				 * output parameter.
-				 */
-				if (IsPolymorphicType(procStruct->prorettype) &&
-					num_out_args == 0)
+				/* Disallow pseudotype result, except VOID or RECORD */
+				/* (note we already replaced polymorphic types) */
+				if (typeStruct->typtype == TYPTYPE_PSEUDO)
 				{
-					(void) plpgsql_build_variable("$0", 0,
-												  build_datatype(typeTup,
-																 -1,
-																 function->fn_input_collation),
-												  true);
+					if (rettypeid == VOIDOID ||
+						rettypeid == RECORDOID)
+						 /* okay */ ;
+					else if (rettypeid == TRIGGEROID || rettypeid == EVTTRIGGEROID)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("trigger functions can only be called as triggers")));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("PL/pgSQL functions cannot return type %s",
+										format_type_be(rettypeid))));
 				}
+
+				if (typeStruct->typrelid != InvalidOid ||
+					rettypeid == RECORDOID)
+					function->fn_retistuple = true;
+				else
+				{
+					function->fn_retbyval = typeStruct->typbyval;
+					function->fn_rettyplen = typeStruct->typlen;
+
+					/*
+					 * install $0 reference, but only for polymorphic return
+					 * types, and not when the return is specified through an
+					 * output parameter.
+					 */
+					if (IsPolymorphicType(procStruct->prorettype) &&
+						num_out_args == 0)
+					{
+						(void) plpgsql_build_variable("$0", 0,
+													  build_datatype(typeTup,
+																	 -1,
+																	 function->fn_input_collation),
+													  true);
+					}
+				}
+				ReleaseSysCache(typeTup);
 			}
-			ReleaseSysCache(typeTup);
 			break;
 
 		case PLPGSQL_DML_TRIGGER:
@@ -864,7 +873,7 @@ plpgsql_compile_inline(char *proc_source)
 
 	/*
 	 * Remember if function is STABLE/IMMUTABLE.  XXX would it be better to
-	 * set this TRUE inside a read-only transaction?  Not clear.
+	 * set this true inside a read-only transaction?  Not clear.
 	 */
 	function->fn_readonly = false;
 
@@ -1345,8 +1354,8 @@ make_datum_param(PLpgSQL_expr *expr, int dno, int location)
  * yytxt is the original token text; we need this to check for quoting,
  * so that later checks for unreserved keywords work properly.
  *
- * If recognized as a variable, fill in *wdatum and return TRUE;
- * if not recognized, fill in *word and return FALSE.
+ * If recognized as a variable, fill in *wdatum and return true;
+ * if not recognized, fill in *word and return false.
  * (Note: those two pointers actually point to members of the same union,
  * but for notational reasons we pass them separately.)
  * ----------
@@ -2012,7 +2021,7 @@ build_row_from_class(Oid classOid)
 		/*
 		 * Get the attribute and check for dropped column
 		 */
-		attrStruct = row->rowtupdesc->attrs[i];
+		attrStruct = TupleDescAttr(row->rowtupdesc, i);
 
 		if (!attrStruct->attisdropped)
 		{

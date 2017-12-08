@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/drop_cast.sgml -->
 
-<refentry id="SQL-DROPCAST">
+<refentry id="sql-dropcast">
  <indexterm zone="sql-dropcast">
   <primary>DROP CAST</primary>
  </indexterm>
@@ -107,7 +107,7 @@ DROP CAST (text AS int);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createcast"></member>
+   <member><xref linkend="sql-createcast"/></member>
   </simplelist>
  </refsect1>
 

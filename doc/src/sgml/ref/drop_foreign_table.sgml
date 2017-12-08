@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/drop_foreign_table.sgml -->
 
-<refentry id="SQL-DROPFOREIGNTABLE">
+<refentry id="sql-dropforeigntable">
  <indexterm zone="sql-dropforeigntable">
   <primary>DROP FOREIGN TABLE</primary>
  </indexterm>
@@ -18,7 +18,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -46,7 +46,7 @@ DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceabl
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the foreign table to drop.
@@ -60,7 +60,7 @@ DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceabl
      <para>
       Automatically drop objects that depend on the foreign table (such as
       views), and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -95,7 +95,7 @@ DROP FOREIGN TABLE films, distributors;
   <para>
    This command conforms to the ISO/IEC 9075-9 (SQL/MED), except that the
    standard only allows one foreign table to be dropped per command, and apart
-   from the <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
+   from the <literal>IF EXISTS</literal> option, which is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>
@@ -104,8 +104,8 @@ DROP FOREIGN TABLE films, distributors;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterforeigntable"></member>
-   <member><xref linkend="sql-createforeigntable"></member>
+   <member><xref linkend="sql-alterforeigntable"/></member>
+   <member><xref linkend="sql-createforeigntable"/></member>
   </simplelist>
  </refsect1>
 

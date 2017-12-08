@@ -111,7 +111,7 @@ typedef struct Query
 
 	QuerySource querySource;	/* where did I come from? */
 
-	uint32		queryId;		/* query identifier (can be set by plugins) */
+	uint64		queryId;		/* query identifier (can be set by plugins) */
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
@@ -198,7 +198,7 @@ typedef struct Query
  * Similarly, if "typmods" is NIL then the actual typmod is expected to
  * be prespecified in typemod, otherwise typemod is unused.
  *
- * If pct_type is TRUE, then names is actually a field name and we look up
+ * If pct_type is true, then names is actually a field name and we look up
  * the type of that field.  Otherwise (the normal case), names is a type
  * name possibly qualified with schema and database name.
  */
@@ -777,12 +777,14 @@ typedef struct PartitionElem
 typedef struct PartitionSpec
 {
 	NodeTag		type;
-	char	   *strategy;		/* partitioning strategy ('list' or 'range') */
+	char	   *strategy;		/* partitioning strategy ('hash', 'list' or
+								 * 'range') */
 	List	   *partParams;		/* List of PartitionElems */
 	int			location;		/* token location, or -1 if unknown */
 } PartitionSpec;
 
 /* Internal codes for partitioning strategies */
+#define PARTITION_STRATEGY_HASH		'h'
 #define PARTITION_STRATEGY_LIST		'l'
 #define PARTITION_STRATEGY_RANGE	'r'
 
@@ -797,6 +799,11 @@ typedef struct PartitionBoundSpec
 	NodeTag		type;
 
 	char		strategy;		/* see PARTITION_STRATEGY codes above */
+	bool		is_default;		/* is it a default partition bound? */
+
+	/* Partitioning info for HASH strategy: */
+	int			modulus;
+	int			remainder;
 
 	/* Partitioning info for LIST strategy: */
 	List	   *listdatums;		/* List of Consts (or A_Consts in raw tree) */
@@ -809,16 +816,24 @@ typedef struct PartitionBoundSpec
 } PartitionBoundSpec;
 
 /*
- * PartitionRangeDatum - can be either a value or UNBOUNDED
+ * PartitionRangeDatum - one of the values in a range partition bound
  *
- * "value" is an A_Const in raw grammar output, a Const after analysis
+ * This can be MINVALUE, MAXVALUE or a specific bounded value.
  */
+typedef enum PartitionRangeDatumKind
+{
+	PARTITION_RANGE_DATUM_MINVALUE = -1,	/* less than any other value */
+	PARTITION_RANGE_DATUM_VALUE = 0,	/* a specific (bounded) value */
+	PARTITION_RANGE_DATUM_MAXVALUE = 1	/* greater than any other value */
+} PartitionRangeDatumKind;
+
 typedef struct PartitionRangeDatum
 {
 	NodeTag		type;
 
-	bool		infinite;		/* true if UNBOUNDED */
-	Node	   *value;			/* null if UNBOUNDED */
+	PartitionRangeDatumKind kind;
+	Node	   *value;			/* Const (or A_Const in raw tree), if kind is
+								 * PARTITION_RANGE_DATUM_VALUE, else NULL */
 
 	int			location;		/* token location, or -1 if unknown */
 } PartitionRangeDatum;
@@ -879,8 +894,8 @@ typedef struct PartitionCmd
  *	  them from the joinaliasvars list, because that would affect the attnums
  *	  of Vars referencing the rest of the list.)
  *
- *	  inh is TRUE for relation references that should be expanded to include
- *	  inheritance children, if the rel has any.  This *must* be FALSE for
+ *	  inh is true for relation references that should be expanded to include
+ *	  inheritance children, if the rel has any.  This *must* be false for
  *	  RTEs other than RTE_RELATION entries.
  *
  *	  inFromCl marks those range variables that are listed in the FROM clause.
@@ -1017,6 +1032,11 @@ typedef struct RangeTblEntry
 	 * from the catalogs if 'relid' was supplied, but we'd still need these
 	 * for TupleDesc-based ENRs, so we might as well always store the type
 	 * info here).
+	 *
+	 * For ENRs only, we have to consider the possibility of dropped columns.
+	 * A dropped column is included in these lists, but it will have zeroes in
+	 * all three lists (as well as an empty-string entry in eref).  Testing
+	 * for zero coltype is the standard way to detect a dropped column.
 	 */
 	List	   *coltypes;		/* OID list of column type OIDs */
 	List	   *coltypmods;		/* integer list of column typmods */
@@ -1133,7 +1153,7 @@ typedef struct WithCheckOption
  *		or InvalidOid if not available.
  * nulls_first means about what you'd expect.  If sortop is InvalidOid
  *		then nulls_first is meaningless and should be set to false.
- * hashable is TRUE if eqop is hashable (note this condition also depends
+ * hashable is true if eqop is hashable (note this condition also depends
  *		on the datatype of the input expression).
  *
  * In an ORDER BY item, all fields must be valid.  (The eqop isn't essential
@@ -1622,9 +1642,11 @@ typedef enum ObjectType
 	OBJECT_OPERATOR,
 	OBJECT_OPFAMILY,
 	OBJECT_POLICY,
+	OBJECT_PROCEDURE,
 	OBJECT_PUBLICATION,
 	OBJECT_PUBLICATION_REL,
 	OBJECT_ROLE,
+	OBJECT_ROUTINE,
 	OBJECT_RULE,
 	OBJECT_SCHEMA,
 	OBJECT_SEQUENCE,
@@ -1699,6 +1721,7 @@ typedef enum AlterTableType
 	AT_AddConstraint,			/* add constraint */
 	AT_AddConstraintRecurse,	/* internal to commands/tablecmds.c */
 	AT_ReAddConstraint,			/* internal to commands/tablecmds.c */
+	AT_ReAddDomainConstraint,	/* internal to commands/tablecmds.c */
 	AT_AlterConstraint,			/* alter constraint */
 	AT_ValidateConstraint,		/* validate constraint */
 	AT_ValidateConstraintRecurse,	/* internal to commands/tablecmds.c */
@@ -1764,6 +1787,8 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column, constraint, or trigger to act on,
 								 * or tablespace */
+	int16		num;			/* attribute number for columns referenced by
+								 * number */
 	RoleSpec   *newowner;
 	Node	   *def;			/* definition of new column, index,
 								 * constraint, or parent table */
@@ -1833,6 +1858,8 @@ typedef enum GrantObjectType
 	ACL_OBJECT_LANGUAGE,		/* procedural language */
 	ACL_OBJECT_LARGEOBJECT,		/* largeobject */
 	ACL_OBJECT_NAMESPACE,		/* namespace */
+	ACL_OBJECT_PROCEDURE,		/* procedure */
+	ACL_OBJECT_ROUTINE,			/* routine */
 	ACL_OBJECT_TABLESPACE,		/* tablespace */
 	ACL_OBJECT_TYPE				/* type */
 } GrantObjectType;
@@ -2663,7 +2690,7 @@ typedef struct FetchStmt
 	FetchDirection direction;	/* see above */
 	long		howMany;		/* number of rows, or position argument */
 	char	   *portalname;		/* name of portal (cursor) */
-	bool		ismove;			/* TRUE if MOVE */
+	bool		ismove;			/* true if MOVE */
 } FetchStmt;
 
 /* ----------------------
@@ -2726,6 +2753,7 @@ typedef struct CreateFunctionStmt
 	List	   *funcname;		/* qualified name of function to create */
 	List	   *parameters;		/* a list of FunctionParameter */
 	TypeName   *returnType;		/* the return type */
+	bool		is_procedure;
 	List	   *options;		/* a list of DefElem */
 	List	   *withClause;		/* a list of DefElem */
 } CreateFunctionStmt;
@@ -2752,6 +2780,7 @@ typedef struct FunctionParameter
 typedef struct AlterFunctionStmt
 {
 	NodeTag		type;
+	ObjectType	objtype;
 	ObjectWithArgs *func;		/* name and args of function */
 	List	   *actions;		/* list of DefElem */
 } AlterFunctionStmt;
@@ -2775,6 +2804,16 @@ typedef struct InlineCodeBlock
 	Oid			langOid;		/* OID of selected language */
 	bool		langIsTrusted;	/* trusted property of the language */
 } InlineCodeBlock;
+
+/* ----------------------
+ *		CALL statement
+ * ----------------------
+ */
+typedef struct CallStmt
+{
+	NodeTag		type;
+	FuncCall   *funccall;
+} CallStmt;
 
 /* ----------------------
  *		Alter Object Rename Statement
@@ -3082,12 +3121,26 @@ typedef enum VacuumOption
 	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7	/* don't skip any pages */
 } VacuumOption;
 
+/*
+ * Info about a single target table of VACUUM/ANALYZE.
+ *
+ * If the OID field is set, it always identifies the table to process.
+ * Then the relation field can be NULL; if it isn't, it's used only to report
+ * failure to open/lock the relation.
+ */
+typedef struct VacuumRelation
+{
+	NodeTag		type;
+	RangeVar   *relation;		/* table name to process, or NULL */
+	Oid			oid;			/* table's OID; InvalidOid if not looked up */
+	List	   *va_cols;		/* list of column names, or NIL for all */
+} VacuumRelation;
+
 typedef struct VacuumStmt
 {
 	NodeTag		type;
 	int			options;		/* OR of VacuumOption flags */
-	RangeVar   *relation;		/* single table to process, or NULL */
-	List	   *va_cols;		/* list of column names, or NIL for all */
+	List	   *rels;			/* list of VacuumRelation, or NIL for all */
 } VacuumStmt;
 
 /* ----------------------

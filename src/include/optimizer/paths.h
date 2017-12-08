@@ -58,6 +58,8 @@ extern int compute_parallel_worker(RelOptInfo *rel, double heap_pages,
 						double index_pages);
 extern void create_partial_bitmap_paths(PlannerInfo *root, RelOptInfo *rel,
 							Path *bitmapqual);
+extern void generate_partition_wise_join_paths(PlannerInfo *root,
+								   RelOptInfo *rel);
 
 #ifdef OPTIMIZER_DEBUG
 extern void debug_print_rel(PlannerInfo *root, RelOptInfo *rel);
@@ -111,6 +113,9 @@ extern bool have_join_order_restriction(PlannerInfo *root,
 							RelOptInfo *rel1, RelOptInfo *rel2);
 extern bool have_dangerous_phv(PlannerInfo *root,
 				   Relids outer_relids, Relids inner_params);
+extern void mark_dummy_rel(RelOptInfo *rel);
+extern bool have_partkey_equi_join(RelOptInfo *rel1, RelOptInfo *rel2,
+					   JoinType jointype, List *restrictlist);
 
 /*
  * equivclass.c
@@ -122,7 +127,8 @@ typedef bool (*ec_matches_callback_type) (PlannerInfo *root,
 										  EquivalenceMember *em,
 										  void *arg);
 
-extern bool process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
+extern bool process_equivalence(PlannerInfo *root,
+					RestrictInfo **p_restrictinfo,
 					bool below_outer_join);
 extern Expr *canonicalize_ec_expression(Expr *expr,
 						   Oid req_type, Oid req_collation);

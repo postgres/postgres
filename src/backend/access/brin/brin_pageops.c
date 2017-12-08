@@ -113,9 +113,15 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 
 	/*
 	 * Check that the old tuple wasn't updated concurrently: it might have
-	 * moved someplace else entirely ...
+	 * moved someplace else entirely, and for that matter the whole page
+	 * might've become a revmap page.  Note that in the first two cases
+	 * checked here, the "oldlp" we just calculated is garbage; but
+	 * PageGetItemId() is simple enough that it was safe to do that
+	 * calculation anyway.
 	 */
-	if (!ItemIdIsNormal(oldlp))
+	if (!BRIN_IS_REGULAR_PAGE(oldpage) ||
+		oldoff > PageGetMaxOffsetNumber(oldpage) ||
+		!ItemIdIsNormal(oldlp))
 	{
 		LockBuffer(oldbuf, BUFFER_LOCK_UNLOCK);
 
@@ -470,7 +476,7 @@ brin_page_init(Page page, uint16 type)
 }
 
 /*
- * Initialize a new BRIN index' metapage.
+ * Initialize a new BRIN index's metapage.
  */
 void
 brin_metapage_init(Page page, BlockNumber pagesPerRange, uint16 version)
@@ -491,6 +497,14 @@ brin_metapage_init(Page page, BlockNumber pagesPerRange, uint16 version)
 	 * revmap page to be created when the index is.
 	 */
 	metadata->lastRevmapPage = 0;
+
+	/*
+	 * Set pd_lower just past the end of the metadata.  This is essential,
+	 * because without doing so, metadata will be lost if xlog.c compresses
+	 * the page.
+	 */
+	((PageHeader) page)->pd_lower =
+		((char *) metadata + sizeof(BrinMetaPageData)) - (char *) page;
 }
 
 /*

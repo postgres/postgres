@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 72;
+use Test::More tests => 79;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -61,6 +61,11 @@ foreach my $filename (
 	close $file;
 }
 
+# Connect to a database to create global/pg_internal.init.  If this is removed
+# the test to ensure global/pg_internal.init is not copied will return a false
+# positive.
+$node->safe_psql('postgres', 'SELECT 1;');
+
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '-X', 'none' ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
@@ -84,7 +89,8 @@ foreach my $dirname (
 
 # These files should not be copied.
 foreach my $filename (
-	qw(postgresql.auto.conf.tmp postmaster.opts postmaster.pid tablespace_map current_logfiles.tmp)
+	qw(postgresql.auto.conf.tmp postmaster.opts postmaster.pid tablespace_map current_logfiles.tmp
+		global/pg_internal.init)
   )
 {
 	ok(!-f "$tempdir/backup/$filename", "$filename not copied");
@@ -256,14 +262,34 @@ $node->command_ok(
 	'pg_basebackup -X stream runs with --no-slot');
 
 $node->command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/fail", '-S', 'slot1' ],
-	'pg_basebackup with replication slot fails without -X stream');
-$node->command_fails(
 	[   'pg_basebackup',             '-D',
 		"$tempdir/backupxs_sl_fail", '-X',
 		'stream',                    '-S',
-		'slot1' ],
+		'slot0' ],
 	'pg_basebackup fails with nonexistent replication slot');
+
+$node->command_fails(
+	[   'pg_basebackup', '-D', "$tempdir/backupxs_slot", '-C' ],
+	'pg_basebackup -C fails without slot name');
+
+$node->command_fails(
+	[   'pg_basebackup', '-D', "$tempdir/backupxs_slot", '-C', '-S', 'slot0', '--no-slot' ],
+	'pg_basebackup fails with -C -S --no-slot');
+
+$node->command_ok(
+	[   'pg_basebackup', '-D', "$tempdir/backupxs_slot", '-C', '-S', 'slot0' ],
+	'pg_basebackup -C runs');
+
+is($node->safe_psql('postgres', q{SELECT slot_name FROM pg_replication_slots WHERE slot_name = 'slot0'}),
+   'slot0',
+   'replication slot was created');
+isnt($node->safe_psql('postgres', q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot0'}),
+   '',
+   'restart LSN of new slot is not null');
+
+$node->command_fails(
+	[   'pg_basebackup', '-D', "$tempdir/backupxs_slot1", '-C', '-S', 'slot0' ],
+	'pg_basebackup fails with -C -S and a previously existing slot');
 
 $node->safe_psql('postgres',
 	q{SELECT * FROM pg_create_physical_replication_slot('slot1')});
@@ -271,6 +297,9 @@ my $lsn = $node->safe_psql('postgres',
 	q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'}
 );
 is($lsn, '', 'restart LSN of new slot is null');
+$node->command_fails(
+	[ 'pg_basebackup', '-D', "$tempdir/fail", '-S', 'slot1', '-X', 'none' ],
+	'pg_basebackup with replication slot fails without WAL streaming');
 $node->command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backupxs_sl", '-X',
 		'stream',        '-S', 'slot1' ],

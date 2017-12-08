@@ -237,13 +237,14 @@ CreateSharedProcArray(void)
 		 */
 		procArray->numProcs = 0;
 		procArray->maxProcs = PROCARRAY_MAXPROCS;
-		procArray->replication_slot_xmin = InvalidTransactionId;
 		procArray->maxKnownAssignedXids = TOTAL_MAX_CACHED_SUBXIDS;
 		procArray->numKnownAssignedXids = 0;
 		procArray->tailKnownAssignedXids = 0;
 		procArray->headKnownAssignedXids = 0;
 		SpinLockInit(&procArray->known_assigned_xids_lck);
 		procArray->lastOverflowedXid = InvalidTransactionId;
+		procArray->replication_slot_xmin = InvalidTransactionId;
+		procArray->replication_slot_catalog_xmin = InvalidTransactionId;
 	}
 
 	allProcs = ProcGlobal->allProcs;
@@ -1408,8 +1409,8 @@ GetOldestXmin(Relation rel, int flags)
 		 * being careful not to generate a "permanent" XID.
 		 *
 		 * vacuum_defer_cleanup_age provides some additional "slop" for the
-		 * benefit of hot standby queries on slave servers.  This is quick and
-		 * dirty, and perhaps not all that useful unless the master has a
+		 * benefit of hot standby queries on standby servers.  This is quick
+		 * and dirty, and perhaps not all that useful unless the master has a
 		 * predictable transaction rate, but it offers some protection when
 		 * there's no walsender connection.  Note that we are assuming
 		 * vacuum_defer_cleanup_age isn't large enough to cause wraparound ---
@@ -1790,7 +1791,7 @@ GetSnapshotData(Snapshot snapshot)
  * check that the source transaction is still running, and we'd better do
  * that atomically with installing the new xmin.
  *
- * Returns TRUE if successful, FALSE if source xact is no longer running.
+ * Returns true if successful, false if source xact is no longer running.
  */
 bool
 ProcArrayInstallImportedXmin(TransactionId xmin,
@@ -1865,7 +1866,7 @@ ProcArrayInstallImportedXmin(TransactionId xmin,
  * PGPROC of the transaction from which we imported the snapshot, rather than
  * an XID.
  *
- * Returns TRUE if successful, FALSE if source xact is no longer running.
+ * Returns true if successful, false if source xact is no longer running.
  */
 bool
 ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
@@ -2096,20 +2097,21 @@ GetOldestActiveTransactionId(void)
 
 	Assert(!RecoveryInProgress());
 
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
-
 	/*
-	 * It's okay to read nextXid without acquiring XidGenLock because (1) we
-	 * assume TransactionIds can be read atomically and (2) we don't care if
-	 * we get a slightly stale value.  It can't be very stale anyway, because
-	 * the LWLockAcquire above will have done any necessary memory
-	 * interlocking.
+	 * Read nextXid, as the upper bound of what's still active.
+	 *
+	 * Reading a TransactionId is atomic, but we must grab the lock to make
+	 * sure that all XIDs < nextXid are already present in the proc array (or
+	 * have already completed), when we spin over it.
 	 */
+	LWLockAcquire(XidGenLock, LW_SHARED);
 	oldestRunningXid = ShmemVariableCache->nextXid;
+	LWLockRelease(XidGenLock);
 
 	/*
 	 * Spin over procArray collecting all xids and subxids.
 	 */
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
 		int			pgprocno = arrayP->pgprocnos[index];
@@ -2131,7 +2133,6 @@ GetOldestActiveTransactionId(void)
 		 * smaller than oldestRunningXid
 		 */
 	}
-
 	LWLockRelease(ProcArrayLock);
 
 	return oldestRunningXid;
@@ -2872,7 +2873,7 @@ CountUserBackends(Oid roleid)
  * The current backend is always ignored; it is caller's responsibility to
  * check whether the current backend uses the given DB, if it's important.
  *
- * Returns TRUE if there are (still) other backends in the DB, FALSE if not.
+ * Returns true if there are (still) other backends in the DB, false if not.
  * Also, *nbackends and *nprepared are set to the number of other backends
  * and prepared transactions in the DB, respectively.
  *

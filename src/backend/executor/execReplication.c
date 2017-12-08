@@ -81,9 +81,8 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 		operator = get_opfamily_member(opfamily, optype,
 									   optype,
 									   BTEqualStrategyNumber);
-
 		if (!OidIsValid(operator))
-			elog(ERROR, "could not find member %d(%u,%u) of opfamily %u",
+			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 				 BTEqualStrategyNumber, optype, optype, opfamily);
 
 		regop = get_opcode(operator);
@@ -248,7 +247,7 @@ tuple_equals_slot(TupleDesc desc, HeapTuple tup, TupleTableSlot *slot)
 		if (isnull[attrnum])
 			continue;
 
-		att = desc->attrs[attrnum];
+		att = TupleDescAttr(desc, attrnum);
 
 		typentry = lookup_type_cache(att->atttypid, TYPECACHE_EQ_OPR_FINFO);
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
@@ -449,7 +448,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 
 	CheckCmdReplicaIdentity(rel, CMD_UPDATE);
 
-	/* BEFORE ROW INSERT Triggers */
+	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
@@ -510,9 +509,9 @@ ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
 
 	CheckCmdReplicaIdentity(rel, CMD_DELETE);
 
-	/* BEFORE ROW INSERT Triggers */
+	/* BEFORE ROW DELETE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->trig_update_before_row)
+		resultRelInfo->ri_TrigDesc->trig_delete_before_row)
 	{
 		skip_tuple = !ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
 										   &searchslot->tts_tuple->t_self,
@@ -560,13 +559,13 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 	if (cmd == CMD_UPDATE && pubactions->pubupdate)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot update table \"%s\" because it does not have replica identity and publishes updates",
+				 errmsg("cannot update table \"%s\" because it does not have a replica identity and publishes updates",
 						RelationGetRelationName(rel)),
 				 errhint("To enable updating the table, set REPLICA IDENTITY using ALTER TABLE.")));
 	else if (cmd == CMD_DELETE && pubactions->pubdelete)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot delete from table \"%s\" because it does not have replica identity and publishes deletes",
+				 errmsg("cannot delete from table \"%s\" because it does not have a replica identity and publishes deletes",
 						RelationGetRelationName(rel)),
 				 errhint("To enable deleting from the table, set REPLICA IDENTITY using ALTER TABLE.")));
 }

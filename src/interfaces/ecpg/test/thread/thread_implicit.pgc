@@ -18,6 +18,7 @@ main(void)
 #include <pthread.h>
 #else
 #include <windows.h>
+#include <locale.h>
 #endif
 
 exec sql include ../regression;
@@ -60,7 +61,7 @@ int main()
   if( threads == NULL )
     {
       fprintf(stderr, "Cannot alloc memory\n");
-      return( 1 );
+      return 1;
     }
   for( n = 0; n < nthreads; n++ )
     {
@@ -92,16 +93,23 @@ int main()
   else
     printf("ERROR: Failure - expecting %d rows, got %d.\n", nthreads * iterations, l_rows);
 
-  return( 0 );
+  return 0;
 }
 
 void *test_thread(void *arg)
 {
   long threadnum = (long)arg;
+
   EXEC SQL BEGIN DECLARE SECTION;
   int  l_i;
   char l_connection[128];
   EXEC SQL END DECLARE SECTION;
+
+#ifdef WIN32
+#ifdef _MSC_VER                /* requires MSVC */
+	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+#endif
 
   /* build up connection name, and connect to database */
 #ifndef _MSC_VER
@@ -114,7 +122,7 @@ void *test_thread(void *arg)
   if( sqlca.sqlcode != 0 )
     {
       printf("%s: ERROR: cannot connect to database!\n", l_connection);
-      return( NULL );
+      return NULL;
     }
   EXEC SQL BEGIN;
 
@@ -129,6 +137,6 @@ void *test_thread(void *arg)
   /* all done */
   EXEC SQL COMMIT;
   EXEC SQL DISCONNECT :l_connection;
-  return( NULL );
+  return NULL;
 }
 #endif /* ENABLE_THREAD_SAFETY */

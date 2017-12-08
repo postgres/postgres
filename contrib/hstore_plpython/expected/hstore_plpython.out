@@ -68,12 +68,30 @@ AS $$
 val = [{'a': 1, 'b': 'boo', 'c': None}, {'d': 2}]
 return val
 $$;
- SELECT test2arr();
+SELECT test2arr();
                            test2arr                           
 --------------------------------------------------------------
  {"\"a\"=>\"1\", \"b\"=>\"boo\", \"c\"=>NULL","\"d\"=>\"2\""}
 (1 row)
 
+-- test python -> domain over hstore
+CREATE DOMAIN hstore_foo AS hstore CHECK(VALUE ? 'foo');
+CREATE FUNCTION test2dom(fn text) RETURNS hstore_foo
+LANGUAGE plpythonu
+TRANSFORM FOR TYPE hstore
+AS $$
+return {'a': 1, fn: 'boo', 'c': None}
+$$;
+SELECT test2dom('foo');
+             test2dom              
+-----------------------------------
+ "a"=>"1", "c"=>NULL, "foo"=>"boo"
+(1 row)
+
+SELECT test2dom('bar');  -- fail
+ERROR:  value for domain hstore_foo violates check constraint "hstore_foo_check"
+CONTEXT:  while creating return value
+PL/Python function "test2dom"
 -- test as part of prepare/execute
 CREATE FUNCTION test3() RETURNS void
 LANGUAGE plpythonu

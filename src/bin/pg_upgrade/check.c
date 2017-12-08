@@ -62,13 +62,15 @@ output_check_banner(bool live_check)
 {
 	if (user_opts.check && live_check)
 	{
-		pg_log(PG_REPORT, "Performing Consistency Checks on Old Live Server\n");
-		pg_log(PG_REPORT, "------------------------------------------------\n");
+		pg_log(PG_REPORT,
+			   "Performing Consistency Checks on Old Live Server\n"
+			   "------------------------------------------------\n");
 	}
 	else
 	{
-		pg_log(PG_REPORT, "Performing Consistency Checks\n");
-		pg_log(PG_REPORT, "-----------------------------\n");
+		pg_log(PG_REPORT,
+			   "Performing Consistency Checks\n"
+			   "-----------------------------\n");
 	}
 }
 
@@ -232,9 +234,9 @@ check_cluster_versions(void)
 {
 	prep_status("Checking cluster versions");
 
-	/* get old and new cluster versions */
-	old_cluster.major_version = get_major_server_version(&old_cluster);
-	new_cluster.major_version = get_major_server_version(&new_cluster);
+	/* cluster versions should already have been obtained */
+	Assert(old_cluster.major_version != 0);
+	Assert(new_cluster.major_version != 0);
 
 	/*
 	 * We allow upgrades from/to the same major version for alpha/beta
@@ -276,12 +278,6 @@ check_cluster_compatibility(bool live_check)
 	get_control_data(&old_cluster, live_check);
 	get_control_data(&new_cluster, false);
 	check_control_data(&old_cluster.controldata, &new_cluster.controldata);
-
-	/* Is it 9.0 but without tablespace directories? */
-	if (GET_MAJOR_VERSION(new_cluster.major_version) == 900 &&
-		new_cluster.controldata.cat_ver < TABLE_SPACE_SUBDIRS_CAT_VER)
-		pg_fatal("This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
-				 "because of backend API changes made during development.\n");
 
 	/* We read the real port number for PG >= 9.1 */
 	if (live_check && GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
@@ -770,8 +766,12 @@ check_for_prepared_transactions(ClusterInfo *cluster)
 							"FROM pg_catalog.pg_prepared_xacts");
 
 	if (PQntuples(res) != 0)
-		pg_fatal("The %s cluster contains prepared transactions\n",
-				 CLUSTER_NAME(cluster));
+	{
+		if (cluster == &old_cluster)
+			pg_fatal("The source cluster contains prepared transactions\n");
+		else
+			pg_fatal("The target cluster contains prepared transactions\n");
+	}
 
 	PQclear(res);
 
@@ -890,7 +890,7 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status("Checking for reg* system OID user data types");
+	prep_status("Checking for reg* data types in user tables");
 
 	snprintf(output_path, sizeof(output_path), "tables_using_reg.txt");
 
@@ -987,7 +987,7 @@ check_for_jsonb_9_4_usage(ClusterInfo *cluster)
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status("Checking for JSONB user data types");
+	prep_status("Checking for incompatible \"jsonb\" data type");
 
 	snprintf(output_path, sizeof(output_path), "tables_using_jsonb.txt");
 
@@ -1018,7 +1018,7 @@ check_for_jsonb_9_4_usage(ClusterInfo *cluster)
 								"		a.atttypid = 'pg_catalog.jsonb'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
-								"  		n.nspname !~ '^pg_temp_' AND "
+								"		n.nspname !~ '^pg_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 		ntups = PQntuples(res);
@@ -1053,8 +1053,8 @@ check_for_jsonb_9_4_usage(ClusterInfo *cluster)
 	if (found)
 	{
 		pg_log(PG_REPORT, "fatal\n");
-		pg_fatal("Your installation contains one of the JSONB data types in user tables.\n"
-				 "The internal format of JSONB changed during 9.4 beta so this cluster cannot currently\n"
+		pg_fatal("Your installation contains the \"jsonb\" data type in user tables.\n"
+				 "The internal format of \"jsonb\" changed during 9.4 beta so this cluster cannot currently\n"
 				 "be upgraded.  You can remove the problem tables and restart the upgrade.  A list\n"
 				 "of the problem columns is in the file:\n"
 				 "    %s\n\n", output_path);
@@ -1074,7 +1074,7 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 	PGresult   *res;
 	PGconn	   *conn = connectToServer(cluster, "template1");
 
-	prep_status("Checking for roles starting with 'pg_'");
+	prep_status("Checking for roles starting with \"pg_\"");
 
 	res = executeQueryOrDie(conn,
 							"SELECT * "
@@ -1082,8 +1082,12 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 							"WHERE rolname ~ '^pg_'");
 
 	if (PQntuples(res) != 0)
-		pg_fatal("The %s cluster contains roles starting with 'pg_'\n",
-				 CLUSTER_NAME(cluster));
+	{
+		if (cluster == &old_cluster)
+			pg_fatal("The source cluster contains roles starting with \"pg_\"\n");
+		else
+			pg_fatal("The target cluster contains roles starting with \"pg_\"\n");
+	}
 
 	PQclear(res);
 

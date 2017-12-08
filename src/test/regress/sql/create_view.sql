@@ -547,7 +547,40 @@ select 'foo'::text = any(array['abc','def','foo']::text[]) c1,
        'foo'::text = any((select array['abc','def','foo']::text[])::text[]) c2;
 select pg_get_viewdef('tt19v', true);
 
+-- check display of assorted RTE_FUNCTION expressions
+
+create view tt20v as
+select * from
+  coalesce(1,2) as c,
+  collation for ('x'::text) col,
+  current_date as d,
+  localtimestamp(3) as t,
+  cast(1+2 as int4) as i4,
+  cast(1+2 as int8) as i8;
+select pg_get_viewdef('tt20v', true);
+
+-- corner cases with empty join conditions
+
+create view tt21v as
+select * from tt5 natural inner join tt6;
+select pg_get_viewdef('tt21v', true);
+
+create view tt22v as
+select * from tt5 natural left join tt6;
+select pg_get_viewdef('tt22v', true);
+
+-- check handling of views with immediately-renamed columns
+
+create view tt23v (col_a, col_b) as
+select q1 as other_name1, q2 as other_name2 from int8_tbl
+union
+select 42, 43;
+
+select pg_get_viewdef('tt23v', true);
+select pg_get_ruledef(oid, true) from pg_rewrite
+  where ev_class = 'tt23v'::regclass and ev_type = '1';
+
 -- clean up all the random objects we made above
-set client_min_messages = warning;
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA temp_view_test CASCADE;
 DROP SCHEMA testviewschm2 CASCADE;

@@ -254,3 +254,11 @@ revoke select on ec0 from regress_user_ectest;
 revoke select on ec1 from regress_user_ectest;
 
 drop user regress_user_ectest;
+
+-- check that X=X is converted to X IS NOT NULL when appropriate
+explain (costs off)
+  select * from tenk1 where unique1 = unique1 and unique2 = unique2;
+
+-- this could be converted, but isn't at present
+explain (costs off)
+  select * from tenk1 where unique1 = unique1 or unique2 = unique2;

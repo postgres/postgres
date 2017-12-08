@@ -71,6 +71,8 @@ typedef int YYSTYPE;
 extern int	psql_yyget_column(yyscan_t yyscanner);
 extern void psql_yyset_column(int column_no, yyscan_t yyscanner);
 
+/* LCOV_EXCL_START */
+
 %}
 
 %option reentrant
@@ -745,9 +747,13 @@ other			.
 											 PQUOTE_SQL_IDENT);
 				}
 
+:\{\?{variable_char}+\}	{
+					psqlscan_test_variable(cur_state, yytext, yyleng);
+				}
+
 	/*
 	 * These rules just avoid the need for scanner backup if one of the
-	 * two rules above fails to match completely.
+	 * three rules above fails to match completely.
 	 */
 
 :'{variable_char}*	{
@@ -757,6 +763,17 @@ other			.
 				}
 
 :\"{variable_char}*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					ECHO;
+				}
+
+:\{\?{variable_char}*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					ECHO;
+				}
+:\{	{
 					/* Throw back everything but the colon */
 					yyless(1);
 					ECHO;
@@ -883,6 +900,8 @@ other			.
 				}
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 /*
  * Create a lexer working state struct.
@@ -1440,5 +1459,30 @@ psqlscan_escape_variable(PsqlScanState state, const char *txt, int len,
 	{
 		/* Emit original token as-is */
 		psqlscan_emit(state, txt, len);
+	}
+}
+
+void
+psqlscan_test_variable(PsqlScanState state, const char *txt, int len)
+{
+	char	*varname;
+	char	*value;
+
+	varname = psqlscan_extract_substring(state, txt + 3, len - 4);
+	if (state->callbacks->get_variable)
+		value = state->callbacks->get_variable(varname, PQUOTE_PLAIN,
+											   state->cb_passthrough);
+	else
+		value = NULL;
+	free(varname);
+
+	if (value != NULL)
+	{
+		psqlscan_emit(state, "TRUE", 4);
+		free(value);
+	}
+	else
+	{
+		psqlscan_emit(state, "FALSE", 5);
 	}
 }

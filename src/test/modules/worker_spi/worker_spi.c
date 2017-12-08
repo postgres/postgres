@@ -111,7 +111,7 @@ initialize_worker_spi(worktable *table)
 	StartTransactionCommand();
 	SPI_connect();
 	PushActiveSnapshot(GetTransactionSnapshot());
-	pgstat_report_activity(STATE_RUNNING, "initializing spi_worker schema");
+	pgstat_report_activity(STATE_RUNNING, "initializing worker_spi schema");
 
 	/* XXX could we use CREATE SCHEMA IF NOT EXISTS? */
 	initStringInfo(&buf);
@@ -359,7 +359,8 @@ _PG_init(void)
 	 */
 	for (i = 1; i <= worker_spi_total_workers; i++)
 	{
-		snprintf(worker.bgw_name, BGW_MAXLEN, "worker %d", i);
+		snprintf(worker.bgw_name, BGW_MAXLEN, "worker_spi worker %d", i);
+		snprintf(worker.bgw_type, BGW_MAXLEN, "worker_spi");
 		worker.bgw_main_arg = Int32GetDatum(i);
 
 		RegisterBackgroundWorker(&worker);
@@ -385,7 +386,8 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
 	sprintf(worker.bgw_library_name, "worker_spi");
 	sprintf(worker.bgw_function_name, "worker_spi_main");
-	snprintf(worker.bgw_name, BGW_MAXLEN, "worker %d", i);
+	snprintf(worker.bgw_name, BGW_MAXLEN, "worker_spi worker %d", i);
+	snprintf(worker.bgw_type, BGW_MAXLEN, "worker_spi");
 	worker.bgw_main_arg = Int32GetDatum(i);
 	/* set bgw_notify_pid so that we can use WaitForBackgroundWorkerStartup */
 	worker.bgw_notify_pid = MyProcPid;

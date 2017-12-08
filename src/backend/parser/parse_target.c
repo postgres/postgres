@@ -455,7 +455,7 @@ Expr *
 transformAssignedExpr(ParseState *pstate,
 					  Expr *expr,
 					  ParseExprKind exprKind,
-					  char *colname,
+					  const char *colname,
 					  int attrno,
 					  List *indirection,
 					  int location)
@@ -484,8 +484,8 @@ transformAssignedExpr(ParseState *pstate,
 						colname),
 				 parser_errposition(pstate, location)));
 	attrtype = attnumTypeId(rd, attrno);
-	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
-	attrcollation = rd->rd_att->attrs[attrno - 1]->attcollation;
+	attrtypmod = TupleDescAttr(rd->rd_att, attrno - 1)->atttypmod;
+	attrcollation = TupleDescAttr(rd->rd_att, attrno - 1)->attcollation;
 
 	/*
 	 * If the expression is a DEFAULT placeholder, insert the attribute's
@@ -725,6 +725,8 @@ transformAssignmentIndirection(ParseState *pstate,
 		else
 		{
 			FieldStore *fstore;
+			Oid			baseTypeId;
+			int32		baseTypeMod;
 			Oid			typrelid;
 			AttrNumber	attnum;
 			Oid			fieldTypeId;
@@ -752,7 +754,14 @@ transformAssignmentIndirection(ParseState *pstate,
 
 			/* No subscripts, so can process field selection here */
 
-			typrelid = typeidTypeRelid(targetTypeId);
+			/*
+			 * Look up the composite type, accounting for possibility that
+			 * what we are given is a domain over composite.
+			 */
+			baseTypeMod = targetTypMod;
+			baseTypeId = getBaseTypeAndTypmod(targetTypeId, &baseTypeMod);
+
+			typrelid = typeidTypeRelid(baseTypeId);
 			if (!typrelid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -796,7 +805,17 @@ transformAssignmentIndirection(ParseState *pstate,
 			fstore->arg = (Expr *) basenode;
 			fstore->newvals = list_make1(rhs);
 			fstore->fieldnums = list_make1_int(attnum);
-			fstore->resulttype = targetTypeId;
+			fstore->resulttype = baseTypeId;
+
+			/* If target is a domain, apply constraints */
+			if (baseTypeId != targetTypeId)
+				return coerce_to_domain((Node *) fstore,
+										baseTypeId, baseTypeMod,
+										targetTypeId,
+										COERCION_IMPLICIT,
+										COERCE_IMPLICIT_CAST,
+										location,
+										false);
 
 			return (Node *) fstore;
 		}
@@ -959,19 +978,21 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 		/*
 		 * Generate default column list for INSERT.
 		 */
-		Form_pg_attribute *attr = pstate->p_target_relation->rd_att->attrs;
 		int			numcol = pstate->p_target_relation->rd_rel->relnatts;
 		int			i;
 
 		for (i = 0; i < numcol; i++)
 		{
 			ResTarget  *col;
+			Form_pg_attribute attr;
 
-			if (attr[i]->attisdropped)
+			attr = TupleDescAttr(pstate->p_target_relation->rd_att, i);
+
+			if (attr->attisdropped)
 				continue;
 
 			col = makeNode(ResTarget);
-			col->name = pstrdup(NameStr(attr[i]->attname));
+			col->name = pstrdup(NameStr(attr->attname));
 			col->indirection = NIL;
 			col->val = NULL;
 			col->location = -1;
@@ -1106,7 +1127,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		{
 			Node	   *node;
 
-			node = (*pstate->p_pre_columnref_hook) (pstate, cref);
+			node = pstate->p_pre_columnref_hook(pstate, cref);
 			if (node != NULL)
 				return ExpandRowReference(pstate, node, make_target_entry);
 		}
@@ -1161,8 +1182,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		{
 			Node	   *node;
 
-			node = (*pstate->p_post_columnref_hook) (pstate, cref,
-													 (Node *) rte);
+			node = pstate->p_post_columnref_hook(pstate, cref,
+												 (Node *) rte);
 			if (node != NULL)
 			{
 				if (rte != NULL)
@@ -1385,29 +1406,25 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 	 * (This can be pretty inefficient if the expression involves nontrivial
 	 * computation :-(.)
 	 *
-	 * Verify it's a composite type, and get the tupdesc.  We use
-	 * get_expr_result_type() because that can handle references to functions
-	 * returning anonymous record types.  If that fails, use
-	 * lookup_rowtype_tupdesc(), which will almost certainly fail as well, but
-	 * it will give an appropriate error message.
+	 * Verify it's a composite type, and get the tupdesc.
+	 * get_expr_result_tupdesc() handles this conveniently.
 	 *
 	 * If it's a Var of type RECORD, we have to work even harder: we have to
-	 * find what the Var refers to, and pass that to get_expr_result_type.
+	 * find what the Var refers to, and pass that to get_expr_result_tupdesc.
 	 * That task is handled by expandRecordVariable().
 	 */
 	if (IsA(expr, Var) &&
 		((Var *) expr)->vartype == RECORDOID)
 		tupleDesc = expandRecordVariable(pstate, (Var *) expr, 0);
-	else if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-		tupleDesc = lookup_rowtype_tupdesc_copy(exprType(expr),
-												exprTypmod(expr));
+	else
+		tupleDesc = get_expr_result_tupdesc(expr, false);
 	Assert(tupleDesc);
 
 	/* Generate a list of references to the individual fields */
 	numAttrs = tupleDesc->natts;
 	for (i = 0; i < numAttrs; i++)
 	{
-		Form_pg_attribute att = tupleDesc->attrs[i];
+		Form_pg_attribute att = TupleDescAttr(tupleDesc, i);
 		FieldSelect *fselect;
 
 		if (att->attisdropped)
@@ -1509,8 +1526,8 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 		case RTE_NAMEDTUPLESTORE:
 
 			/*
-			 * This case should not occur: a column of a table or values list
-			 * shouldn't have type RECORD.  Fall through and fail (most
+			 * This case should not occur: a column of a table, values list,
+			 * or ENR shouldn't have type RECORD.  Fall through and fail (most
 			 * likely) at the bottom.
 			 */
 			break;
@@ -1608,15 +1625,9 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 
 	/*
 	 * We now have an expression we can't expand any more, so see if
-	 * get_expr_result_type() can do anything with it.  If not, pass to
-	 * lookup_rowtype_tupdesc() which will probably fail, but will give an
-	 * appropriate error message while failing.
+	 * get_expr_result_tupdesc() can do anything with it.
 	 */
-	if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-		tupleDesc = lookup_rowtype_tupdesc_copy(exprType(expr),
-												exprTypmod(expr));
-
-	return tupleDesc;
+	return get_expr_result_tupdesc(expr, false);
 }
 
 

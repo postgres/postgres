@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_function.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPFUNCTION">
+<refentry id="sql-dropfunction">
  <indexterm zone="sql-dropfunction">
   <primary>DROP FUNCTION</primary>
  </indexterm>
@@ -67,14 +67,14 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ 
 
     <listitem>
      <para>
-      The mode of an argument: <literal>IN</>, <literal>OUT</>,
-      <literal>INOUT</>, or <literal>VARIADIC</>.
-      If omitted, the default is <literal>IN</>.
+      The mode of an argument: <literal>IN</literal>, <literal>OUT</literal>,
+      <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
+      If omitted, the default is <literal>IN</literal>.
       Note that <command>DROP FUNCTION</command> does not actually pay
-      any attention to <literal>OUT</> arguments, since only the input
+      any attention to <literal>OUT</literal> arguments, since only the input
       arguments are needed to determine the function's identity.
-      So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
-      and <literal>VARIADIC</> arguments.
+      So it is sufficient to list the <literal>IN</literal>, <literal>INOUT</literal>,
+      and <literal>VARIADIC</literal> arguments.
      </para>
     </listitem>
    </varlistentry>
@@ -110,7 +110,7 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ 
       Automatically drop objects that depend on the function (such as
       operators or triggers),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -127,7 +127,7 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ 
   </variablelist>
  </refsect1>
 
- <refsect1 id="SQL-DROPFUNCTION-examples">
+ <refsect1 id="sql-dropfunction-examples">
   <title>Examples</title>
 
   <para>
@@ -159,7 +159,7 @@ DROP FUNCTION update_employee_salaries();
   </para>
  </refsect1>
 
- <refsect1 id="SQL-DROPFUNCTION-compatibility">
+ <refsect1 id="sql-dropfunction-compatibility">
   <title>Compatibility</title>
 
   <para>
@@ -183,8 +183,10 @@ DROP FUNCTION update_employee_salaries();
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction"></member>
-   <member><xref linkend="sql-alterfunction"></member>
+   <member><xref linkend="sql-createfunction"/></member>
+   <member><xref linkend="sql-alterfunction"/></member>
+   <member><xref linkend="sql-dropprocedure"/></member>
+   <member><xref linkend="sql-droproutine"/></member>
   </simplelist>
  </refsect1>
 

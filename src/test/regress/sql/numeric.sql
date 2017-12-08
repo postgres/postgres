@@ -655,6 +655,14 @@ INSERT INTO fract_only VALUES (8, '0.00017');
 SELECT * FROM fract_only;
 DROP TABLE fract_only;
 
+-- Check inf/nan conversion behavior
+SELECT 'NaN'::float8::numeric;
+SELECT 'Infinity'::float8::numeric;
+SELECT '-Infinity'::float8::numeric;
+SELECT 'NaN'::float4::numeric;
+SELECT 'Infinity'::float4::numeric;
+SELECT '-Infinity'::float4::numeric;
+
 -- Simple check that ceil(), floor(), and round() work correctly
 CREATE TABLE ceil_floor_round (a numeric);
 INSERT INTO ceil_floor_round VALUES ('-5.5');
@@ -778,8 +786,21 @@ SELECT '' AS to_char_24, to_char('100'::numeric, 'FM999.9');
 SELECT '' AS to_char_25, to_char('100'::numeric, 'FM999.');
 SELECT '' AS to_char_26, to_char('100'::numeric, 'FM999');
 
+-- Check parsing of literal text in a format string
+SELECT '' AS to_char_27, to_char('100'::numeric, 'foo999');
+SELECT '' AS to_char_28, to_char('100'::numeric, 'f\oo999');
+SELECT '' AS to_char_29, to_char('100'::numeric, 'f\\oo999');
+SELECT '' AS to_char_30, to_char('100'::numeric, 'f\"oo999');
+SELECT '' AS to_char_31, to_char('100'::numeric, 'f\\"oo999');
+SELECT '' AS to_char_32, to_char('100'::numeric, 'f"ool"999');
+SELECT '' AS to_char_33, to_char('100'::numeric, 'f"\ool"999');
+SELECT '' AS to_char_34, to_char('100'::numeric, 'f"\\ool"999');
+SELECT '' AS to_char_35, to_char('100'::numeric, 'f"ool\"999');
+SELECT '' AS to_char_36, to_char('100'::numeric, 'f"ool\\"999');
+
 -- TO_NUMBER()
 --
+SET lc_numeric = 'C';
 SELECT '' AS to_number_1,  to_number('-34,338,492', '99G999G999');
 SELECT '' AS to_number_2,  to_number('-34,338,492.654,878', '99G999G999D999G999');
 SELECT '' AS to_number_3,  to_number('<564646.654564>', '999999.999999PR');
@@ -793,6 +814,16 @@ SELECT '' AS to_number_10, to_number('0', '99.99');
 SELECT '' AS to_number_11, to_number('.-01', 'S99.99');
 SELECT '' AS to_number_12, to_number('.01-', '99.99S');
 SELECT '' AS to_number_13, to_number(' . 0 1-', ' 9 9 . 9 9 S');
+SELECT '' AS to_number_14, to_number('34,50','999,99');
+SELECT '' AS to_number_15, to_number('123,000','999G');
+SELECT '' AS to_number_16, to_number('123456','999G999');
+SELECT '' AS to_number_17, to_number('$1234.56','L9,999.99');
+SELECT '' AS to_number_18, to_number('$1234.56','L99,999.99');
+SELECT '' AS to_number_19, to_number('$1,234.56','L99,999.99');
+SELECT '' AS to_number_20, to_number('1234.56','L99,999.99');
+SELECT '' AS to_number_21, to_number('1,234.56','L99,999.99');
+SELECT '' AS to_number_22, to_number('42nd', '99th');
+RESET lc_numeric;
 
 --
 -- Input syntax

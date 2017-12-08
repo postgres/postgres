@@ -79,6 +79,7 @@ static Node *process_sublinks_mutator(Node *node,
 						 process_sublinks_context *context);
 static Bitmapset *finalize_plan(PlannerInfo *root,
 			  Plan *plan,
+			  int gather_param,
 			  Bitmapset *valid_params,
 			  Bitmapset *scan_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
@@ -130,7 +131,9 @@ assign_param_for_var(PlannerInfo *root, Var *var)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) var;
-	pitem->paramId = root->glob->nParamExec++;
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 var->vartype);
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
@@ -233,7 +236,9 @@ assign_param_for_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) phv;
-	pitem->paramId = root->glob->nParamExec++;
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 exprType((Node *) phv->phexpr));
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
@@ -322,7 +327,9 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) agg;
-	pitem->paramId = root->glob->nParamExec++;
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 agg->aggtype);
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
@@ -347,6 +354,7 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 	Param	   *retval;
 	PlannerParamItem *pitem;
 	Index		levelsup;
+	Oid			ptype;
 
 	Assert(grp->agglevelsup > 0 && grp->agglevelsup < root->query_level);
 
@@ -361,17 +369,20 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 	grp = copyObject(grp);
 	IncrementVarSublevelsUp((Node *) grp, -((int) grp->agglevelsup), 0);
 	Assert(grp->agglevelsup == 0);
+	ptype = exprType((Node *) grp);
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) grp;
-	pitem->paramId = root->glob->nParamExec++;
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 ptype);
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = pitem->paramId;
-	retval->paramtype = exprType((Node *) grp);
+	retval->paramtype = ptype;
 	retval->paramtypmod = -1;
 	retval->paramcollid = InvalidOid;
 	retval->location = grp->location;
@@ -384,7 +395,8 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
  *
  * This is used to create Params representing subplan outputs.
  * We don't need to build a PlannerParamItem for such a Param, but we do
- * need to record the PARAM_EXEC slot number as being allocated.
+ * need to make sure we record the type in paramExecTypes (otherwise,
+ * there won't be a slot allocated for it).
  */
 static Param *
 generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
@@ -394,7 +406,9 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = root->glob->nParamExec++;
+	retval->paramid = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 paramtype);
 	retval->paramtype = paramtype;
 	retval->paramtypmod = paramtypmod;
 	retval->paramcollid = paramcollation;
@@ -414,7 +428,11 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
 int
 SS_assign_special_param(PlannerInfo *root)
 {
-	return root->glob->nParamExec++;
+	int			paramId = list_length(root->glob->paramExecTypes);
+
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 InvalidOid);
+	return paramId;
 }
 
 /*
@@ -1562,7 +1580,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
  * won't occur, nor will other side-effects of volatile functions.  This seems
  * unlikely to bother anyone in practice.
  *
- * Returns TRUE if was able to discard the targetlist, else FALSE.
+ * Returns true if was able to discard the targetlist, else false.
  */
 static bool
 simplify_EXISTS_query(PlannerInfo *root, Query *query)
@@ -2097,7 +2115,7 @@ SS_identify_outer_params(PlannerInfo *root)
 	 * If no parameters have been assigned anywhere in the tree, we certainly
 	 * don't need to do anything here.
 	 */
-	if (root->glob->nParamExec == 0)
+	if (root->glob->paramExecTypes == NIL)
 		return;
 
 	/*
@@ -2217,11 +2235,14 @@ void
 SS_finalize_plan(PlannerInfo *root, Plan *plan)
 {
 	/* No setup needed, just recurse through plan tree. */
-	(void) finalize_plan(root, plan, root->outer_params, NULL);
+	(void) finalize_plan(root, plan, -1, root->outer_params, NULL);
 }
 
 /*
  * Recursive processing of all nodes in the plan tree
+ *
+ * gather_param is the rescan_param of an ancestral Gather/GatherMerge,
+ * or -1 if there is none.
  *
  * valid_params is the set of param IDs supplied by outer plan levels
  * that are valid to reference in this plan node or its children.
@@ -2249,7 +2270,9 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
  * can be handled more cleanly.
  */
 static Bitmapset *
-finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
+finalize_plan(PlannerInfo *root, Plan *plan,
+			  int gather_param,
+			  Bitmapset *valid_params,
 			  Bitmapset *scan_params)
 {
 	finalize_primnode_context context;
@@ -2301,6 +2324,18 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	/* Find params in targetlist and qual */
 	finalize_primnode((Node *) plan->targetlist, &context);
 	finalize_primnode((Node *) plan->qual, &context);
+
+	/*
+	 * If it's a parallel-aware scan node, mark it as dependent on the parent
+	 * Gather/GatherMerge's rescan Param.
+	 */
+	if (plan->parallel_aware)
+	{
+		if (gather_param < 0)
+			elog(ERROR, "parallel-aware plan node is not below a Gather");
+		context.paramids =
+			bms_add_member(context.paramids, gather_param);
+	}
 
 	/* Check additional node-type-specific fields */
 	switch (nodeTag(plan))
@@ -2512,6 +2547,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(lc),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2542,6 +2578,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2558,6 +2595,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2574,6 +2612,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2590,6 +2629,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2606,6 +2646,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2697,13 +2738,51 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 							  &context);
 			break;
 
+		case T_Gather:
+			/* child nodes are allowed to reference rescan_param, if any */
+			locally_added_param = ((Gather *) plan)->rescan_param;
+			if (locally_added_param >= 0)
+			{
+				valid_params = bms_add_member(bms_copy(valid_params),
+											  locally_added_param);
+
+				/*
+				 * We currently don't support nested Gathers.  The issue so
+				 * far as this function is concerned would be how to identify
+				 * which child nodes depend on which Gather.
+				 */
+				Assert(gather_param < 0);
+				/* Pass down rescan_param to child parallel-aware nodes */
+				gather_param = locally_added_param;
+			}
+			/* rescan_param does *not* get added to scan_params */
+			break;
+
+		case T_GatherMerge:
+			/* child nodes are allowed to reference rescan_param, if any */
+			locally_added_param = ((GatherMerge *) plan)->rescan_param;
+			if (locally_added_param >= 0)
+			{
+				valid_params = bms_add_member(bms_copy(valid_params),
+											  locally_added_param);
+
+				/*
+				 * We currently don't support nested Gathers.  The issue so
+				 * far as this function is concerned would be how to identify
+				 * which child nodes depend on which Gather.
+				 */
+				Assert(gather_param < 0);
+				/* Pass down rescan_param to child parallel-aware nodes */
+				gather_param = locally_added_param;
+			}
+			/* rescan_param does *not* get added to scan_params */
+			break;
+
 		case T_ProjectSet:
 		case T_Hash:
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
-		case T_Gather:
-		case T_GatherMerge:
 		case T_SetOp:
 		case T_Group:
 			/* no node-type-specific fields need fixing */
@@ -2717,6 +2796,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	/* Process left and right child plans, if any */
 	child_params = finalize_plan(root,
 								 plan->lefttree,
+								 gather_param,
 								 valid_params,
 								 scan_params);
 	context.paramids = bms_add_members(context.paramids, child_params);
@@ -2726,6 +2806,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 		/* right child can reference nestloop_params as well as valid_params */
 		child_params = finalize_plan(root,
 									 plan->righttree,
+									 gather_param,
 									 bms_union(nestloop_params, valid_params),
 									 scan_params);
 		/* ... and they don't count as parameters used at my level */
@@ -2737,6 +2818,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 		/* easy case */
 		child_params = finalize_plan(root,
 									 plan->righttree,
+									 gather_param,
 									 valid_params,
 									 scan_params);
 	}

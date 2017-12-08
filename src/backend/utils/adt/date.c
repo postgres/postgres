@@ -239,7 +239,7 @@ date_send(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
-	pq_sendint(&buf, date, sizeof(date));
+	pq_sendint32(&buf, date);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
@@ -1509,6 +1509,12 @@ time_hash(PG_FUNCTION_ARGS)
 }
 
 Datum
+time_hash_extended(PG_FUNCTION_ARGS)
+{
+	return hashint8extended(fcinfo);
+}
+
+Datum
 time_larger(PG_FUNCTION_ARGS)
 {
 	TimeADT		time1 = PG_GETARG_TIMEADT(0);
@@ -2043,7 +2049,7 @@ timetz_send(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 	pq_sendint64(&buf, time->time);
-	pq_sendint(&buf, time->zone, sizeof(time->zone));
+	pq_sendint32(&buf, time->zone);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
@@ -2211,6 +2217,22 @@ timetz_hash(PG_FUNCTION_ARGS)
 											   Int64GetDatumFast(key->time)));
 	thash ^= DatumGetUInt32(hash_uint32(key->zone));
 	PG_RETURN_UINT32(thash);
+}
+
+Datum
+timetz_hash_extended(PG_FUNCTION_ARGS)
+{
+	TimeTzADT  *key = PG_GETARG_TIMETZADT_P(0);
+	Datum		seed = PG_GETARG_DATUM(1);
+	uint64		thash;
+
+	/* Same approach as timetz_hash */
+	thash = DatumGetUInt64(DirectFunctionCall2(hashint8extended,
+											   Int64GetDatumFast(key->time),
+											   seed));
+	thash ^= DatumGetUInt64(hash_uint32_extended(key->zone,
+												 DatumGetInt64(seed)));
+	PG_RETURN_UINT64(thash);
 }
 
 Datum

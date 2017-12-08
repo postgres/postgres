@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/parallel.h"
+#include "access/session.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/namespace.h"
@@ -36,6 +37,7 @@
 #include "utils/memutils.h"
 #include "utils/resowner.h"
 #include "utils/snapmgr.h"
+#include "utils/typcache.h"
 
 
 /*
@@ -51,8 +53,9 @@
 #define PARALLEL_MAGIC						0x50477c7c
 
 /*
- * Magic numbers for parallel state sharing.  Higher-level code should use
- * smaller values, leaving these very large ones for use by this module.
+ * Magic numbers for per-context parallel state sharing.  Higher-level code
+ * should use smaller values, leaving these very large ones for use by this
+ * module.
  */
 #define PARALLEL_KEY_FIXED					UINT64CONST(0xFFFFFFFFFFFF0001)
 #define PARALLEL_KEY_ERROR_QUEUE			UINT64CONST(0xFFFFFFFFFFFF0002)
@@ -63,6 +66,7 @@
 #define PARALLEL_KEY_ACTIVE_SNAPSHOT		UINT64CONST(0xFFFFFFFFFFFF0007)
 #define PARALLEL_KEY_TRANSACTION_STATE		UINT64CONST(0xFFFFFFFFFFFF0008)
 #define PARALLEL_KEY_ENTRYPOINT				UINT64CONST(0xFFFFFFFFFFFF0009)
+#define PARALLEL_KEY_SESSION_DSM			UINT64CONST(0xFFFFFFFFFFFF000A)
 
 /* Fixed-size parallel state. */
 typedef struct FixedParallelState
@@ -71,9 +75,11 @@ typedef struct FixedParallelState
 	Oid			database_id;
 	Oid			authenticated_user_id;
 	Oid			current_user_id;
+	Oid			outer_user_id;
 	Oid			temp_namespace_id;
 	Oid			temp_toast_namespace_id;
 	int			sec_context;
+	bool		is_superuser;
 	PGPROC	   *parallel_master_pgproc;
 	pid_t		parallel_master_pid;
 	BackendId	parallel_master_backend_id;
@@ -197,6 +203,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	Size		segsize = 0;
 	int			i;
 	FixedParallelState *fps;
+	dsm_handle	session_dsm_handle = DSM_HANDLE_INVALID;
 	Snapshot	transaction_snapshot = GetTransactionSnapshot();
 	Snapshot	active_snapshot = GetActiveSnapshot();
 
@@ -213,6 +220,21 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	 */
 	if (pcxt->nworkers > 0)
 	{
+		/* Get (or create) the per-session DSM segment's handle. */
+		session_dsm_handle = GetSessionDsmHandle();
+
+		/*
+		 * If we weren't able to create a per-session DSM segment, then we can
+		 * continue but we can't safely launch any workers because their
+		 * record typmods would be incompatible so they couldn't exchange
+		 * tuples.
+		 */
+		if (session_dsm_handle == DSM_HANDLE_INVALID)
+			pcxt->nworkers = 0;
+	}
+
+	if (pcxt->nworkers > 0)
+	{
 		/* Estimate space for various kinds of state sharing. */
 		library_len = EstimateLibraryStateSpace();
 		shm_toc_estimate_chunk(&pcxt->estimator, library_len);
@@ -226,8 +248,9 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		shm_toc_estimate_chunk(&pcxt->estimator, asnaplen);
 		tstatelen = EstimateTransactionStateSpace();
 		shm_toc_estimate_chunk(&pcxt->estimator, tstatelen);
+		shm_toc_estimate_chunk(&pcxt->estimator, sizeof(dsm_handle));
 		/* If you add more chunks here, you probably need to add keys. */
-		shm_toc_estimate_keys(&pcxt->estimator, 6);
+		shm_toc_estimate_keys(&pcxt->estimator, 7);
 
 		/* Estimate space need for error queues. */
 		StaticAssertStmt(BUFFERALIGN(PARALLEL_ERROR_QUEUE_SIZE) ==
@@ -275,6 +298,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		shm_toc_allocate(pcxt->toc, sizeof(FixedParallelState));
 	fps->database_id = MyDatabaseId;
 	fps->authenticated_user_id = GetAuthenticatedUserId();
+	fps->outer_user_id = GetCurrentRoleId();
+	fps->is_superuser = session_auth_is_superuser;
 	GetUserIdAndSecContext(&fps->current_user_id, &fps->sec_context);
 	GetTempNamespaceState(&fps->temp_namespace_id,
 						  &fps->temp_toast_namespace_id);
@@ -295,6 +320,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		char	   *asnapspace;
 		char	   *tstatespace;
 		char	   *error_queue_space;
+		char	   *session_dsm_handle_space;
 		char	   *entrypointstate;
 		Size		lnamelen;
 
@@ -321,6 +347,13 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		asnapspace = shm_toc_allocate(pcxt->toc, asnaplen);
 		SerializeSnapshot(active_snapshot, asnapspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_ACTIVE_SNAPSHOT, asnapspace);
+
+		/* Provide the handle for per-session segment. */
+		session_dsm_handle_space = shm_toc_allocate(pcxt->toc,
+													sizeof(dsm_handle));
+		*(dsm_handle *) session_dsm_handle_space = session_dsm_handle;
+		shm_toc_insert(pcxt->toc, PARALLEL_KEY_SESSION_DSM,
+					   session_dsm_handle_space);
 
 		/* Serialize transaction state. */
 		tstatespace = shm_toc_allocate(pcxt->toc, tstatelen);
@@ -395,9 +428,10 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 	fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED, false);
 	fps->last_xlog_end = 0;
 
-	/* Recreate error queues. */
+	/* Recreate error queues (if they exist). */
 	error_queue_space =
-		shm_toc_lookup(pcxt->toc, PARALLEL_KEY_ERROR_QUEUE, false);
+		shm_toc_lookup(pcxt->toc, PARALLEL_KEY_ERROR_QUEUE, true);
+	Assert(pcxt->nworkers == 0 || error_queue_space != NULL);
 	for (i = 0; i < pcxt->nworkers; ++i)
 	{
 		char	   *start;
@@ -438,6 +472,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	memset(&worker, 0, sizeof(worker));
 	snprintf(worker.bgw_name, BGW_MAXLEN, "parallel worker for PID %d",
 			 MyProcPid);
+	snprintf(worker.bgw_type, BGW_MAXLEN, "parallel worker");
 	worker.bgw_flags =
 		BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION
 		| BGWORKER_CLASS_PARALLEL;
@@ -480,7 +515,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 			 */
 			any_registrations_failed = true;
 			pcxt->worker[i].bgwhandle = NULL;
-			pfree(pcxt->worker[i].error_mqh);
+			shm_mq_detach(pcxt->worker[i].error_mqh);
 			pcxt->worker[i].error_mqh = NULL;
 		}
 	}
@@ -612,7 +647,7 @@ DestroyParallelContext(ParallelContext *pcxt)
 			{
 				TerminateBackgroundWorker(pcxt->worker[i].bgwhandle);
 
-				pfree(pcxt->worker[i].error_mqh);
+				shm_mq_detach(pcxt->worker[i].error_mqh);
 				pcxt->worker[i].error_mqh = NULL;
 			}
 		}
@@ -861,7 +896,7 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 
 		case 'X':				/* Terminate, indicating clean exit */
 			{
-				pfree(pcxt->worker[i].error_mqh);
+				shm_mq_detach(pcxt->worker[i].error_mqh);
 				pcxt->worker[i].error_mqh = NULL;
 				break;
 			}
@@ -938,6 +973,7 @@ ParallelWorkerMain(Datum main_arg)
 	char	   *asnapspace;
 	char	   *tstatespace;
 	StringInfoData msgbuf;
+	char	   *session_dsm_handle_space;
 
 	/* Set flag to indicate that we're initializing a parallel worker. */
 	InitializingParallelWorker = true;
@@ -999,8 +1035,8 @@ ParallelWorkerMain(Datum main_arg)
 	 * in this case.
 	 */
 	pq_beginmessage(&msgbuf, 'K');
-	pq_sendint(&msgbuf, (int32) MyProcPid, sizeof(int32));
-	pq_sendint(&msgbuf, (int32) MyCancelKey, sizeof(int32));
+	pq_sendint32(&msgbuf, (int32) MyProcPid);
+	pq_sendint32(&msgbuf, (int32) MyCancelKey);
 	pq_endmessage(&msgbuf);
 
 	/*
@@ -1064,6 +1100,11 @@ ParallelWorkerMain(Datum main_arg)
 	combocidspace = shm_toc_lookup(toc, PARALLEL_KEY_COMBO_CID, false);
 	RestoreComboCIDState(combocidspace);
 
+	/* Attach to the per-session DSM segment and contained objects. */
+	session_dsm_handle_space =
+		shm_toc_lookup(toc, PARALLEL_KEY_SESSION_DSM, false);
+	AttachSession(*(dsm_handle *) session_dsm_handle_space);
+
 	/* Restore transaction snapshot. */
 	tsnapspace = shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_SNAPSHOT, false);
 	RestoreTransactionSnapshot(RestoreSnapshot(tsnapspace),
@@ -1078,6 +1119,13 @@ ParallelWorkerMain(Datum main_arg)
 	 * system caches.
 	 */
 	InvalidateSystemCaches();
+
+	/*
+	 * Restore current role id.  Skip verifying whether session user is
+	 * allowed to become this role and blindly restore the leader's state for
+	 * current role.
+	 */
+	SetCurrentRoleId(fps->outer_user_id, fps->is_superuser);
 
 	/* Restore user ID and security context. */
 	SetUserIdAndSecContext(fps->current_user_id, fps->sec_context);
@@ -1109,6 +1157,9 @@ ParallelWorkerMain(Datum main_arg)
 
 	/* Shut down the parallel-worker transaction. */
 	EndParallelWorkerTransaction();
+
+	/* Detach from the per-session DSM segment. */
+	DetachSession();
 
 	/* Report success. */
 	pq_putmessage('X', NULL, 0);

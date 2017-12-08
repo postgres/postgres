@@ -29,7 +29,7 @@
 #ifndef HAVE_DLOPEN
 
 void *
-pg_dlopen(char *filename)
+pg_dlopen(const char *filename)
 {
 #ifndef HAVE_DLD_H
 	elog(ERROR, "dynamic load not supported");
@@ -101,7 +101,7 @@ pg_dlopen(char *filename)
 }
 
 PGFunction
-pg_dlsym(void *handle, char *funcname)
+pg_dlsym(void *handle, const char *funcname)
 {
 #ifndef HAVE_DLD_H
 	return NULL;

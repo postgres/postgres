@@ -51,7 +51,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value of
-	 * this type by value or by reference.  typbyval had better be FALSE if
+	 * this type by value or by reference.  typbyval had better be false if
 	 * the length is not 1, 2, or 4 (or 8 on 8-byte-Datum machines).
 	 * Variable-length types are always passed by reference. Note that
 	 * typbyval can be false even if the length would allow pass-by-value;

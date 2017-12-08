@@ -3,7 +3,7 @@ doc/src/sgml/ref/prepare.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-PREPARE">
+<refentry id="sql-prepare">
  <indexterm zone="sql-prepare">
   <primary>PREPARE</primary>
  </indexterm>
@@ -26,7 +26,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class="PARAMETER">data_type</replaceable> [, ...] ) ] AS <replaceable class="PARAMETER">statement</replaceable>
+PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class="parameter">data_type</replaceable> [, ...] ) ] AS <replaceable class="parameter">statement</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -48,14 +48,14 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    Prepared statements can take parameters: values that are
    substituted into the statement when it is executed. When creating
    the prepared statement, refer to parameters by position, using
-   <literal>$1</>, <literal>$2</>, etc. A corresponding list of
+   <literal>$1</literal>, <literal>$2</literal>, etc. A corresponding list of
    parameter data types can optionally be specified. When a
    parameter's data type is not specified or is declared as
    <literal>unknown</literal>, the type is inferred from the context
    in which the parameter is used (if possible). When executing the
    statement, specify the actual values for these parameters in the
    <command>EXECUTE</command> statement.  Refer to <xref
-   linkend="sql-execute"> for more
+   linkend="sql-execute"/> for more
    information about that.
   </para>
 
@@ -66,7 +66,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    also means that a single  prepared statement cannot be used by
    multiple simultaneous database clients; however, each client can create
    their own prepared statement to use.  Prepared statements can be
-   manually cleaned up using the <xref linkend="sql-deallocate"> command.
+   manually cleaned up using the <xref linkend="sql-deallocate"/> command.
   </para>
 
   <para>
@@ -86,7 +86,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       An arbitrary name given to this particular prepared
@@ -98,7 +98,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">data_type</replaceable></term>
+    <term><replaceable class="parameter">data_type</replaceable></term>
     <listitem>
      <para>
       The data type of a parameter to the prepared statement.  If the
@@ -112,18 +112,18 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">statement</replaceable></term>
+    <term><replaceable class="parameter">statement</replaceable></term>
     <listitem>
      <para>
-      Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
-      <command>DELETE</>, or <command>VALUES</> statement.
+      Any <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
+      <command>DELETE</command>, or <command>VALUES</command> statement.
      </para>
     </listitem>
    </varlistentry>
   </variablelist>
  </refsect1>
 
- <refsect1 id="SQL-PREPARE-notes">
+ <refsect1 id="sql-prepare-notes">
   <title>Notes</title>
 
   <para>
@@ -154,10 +154,10 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
 
   <para>
    To examine the query plan <productname>PostgreSQL</productname> is using
-   for a prepared statement, use <xref linkend="sql-explain">, e.g.
-   <command>EXPLAIN EXECUTE</>.
+   for a prepared statement, use <xref linkend="sql-explain"/>, e.g.
+   <command>EXPLAIN EXECUTE</command>.
    If a generic plan is in use, it will contain parameter symbols
-   <literal>$<replaceable>n</></literal>, while a custom plan will have the
+   <literal>$<replaceable>n</replaceable></literal>, while a custom plan will have the
    supplied parameter values substituted into it.
    The row estimates in the generic plan reflect the selectivity
    computed for the parameters.
@@ -166,19 +166,19 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
   <para>
    For more information on query planning and the statistics collected
    by <productname>PostgreSQL</productname> for that purpose, see
-   the <xref linkend="sql-analyze">
+   the <xref linkend="sql-analyze"/>
    documentation.
   </para>
 
   <para>
    Although the main point of a prepared statement is to avoid repeated parse
-   analysis and planning of the statement, <productname>PostgreSQL</> will
+   analysis and planning of the statement, <productname>PostgreSQL</productname> will
    force re-analysis and re-planning of the statement before using it
    whenever database objects used in the statement have undergone
    definitional (DDL) changes since the previous use of the prepared
-   statement.  Also, if the value of <xref linkend="guc-search-path"> changes
+   statement.  Also, if the value of <xref linkend="guc-search-path"/> changes
    from one use to the next, the statement will be re-parsed using the new
-   <varname>search_path</>.  (This latter behavior is new as of
+   <varname>search_path</varname>.  (This latter behavior is new as of
    <productname>PostgreSQL</productname> 9.3.)  These rules make use of a
    prepared statement semantically almost equivalent to re-submitting the
    same query text over and over, but with a performance benefit if no object
@@ -186,7 +186,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    across uses.  An example of a case where the semantic equivalence is not
    perfect is that if the statement refers to a table by an unqualified name,
    and then a new table of the same name is created in a schema appearing
-   earlier in the <varname>search_path</>, no automatic re-parse will occur
+   earlier in the <varname>search_path</varname>, no automatic re-parse will occur
    since no object used in the statement changed.  However, if some other
    change forces a re-parse, the new table will be referenced in subsequent
    uses.
@@ -222,7 +222,7 @@ EXECUTE usrrptplan(1, current_date);
 </programlisting>
 
    Note that the data type of the second parameter is not specified,
-   so it is inferred from the context in which <literal>$2</> is used.
+   so it is inferred from the context in which <literal>$2</literal> is used.
   </para>
  </refsect1>
  <refsect1>
@@ -240,8 +240,8 @@ EXECUTE usrrptplan(1, current_date);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-deallocate"></member>
-   <member><xref linkend="sql-execute"></member>
+   <member><xref linkend="sql-deallocate"/></member>
+   <member><xref linkend="sql-execute"/></member>
   </simplelist>
  </refsect1>
 </refentry>

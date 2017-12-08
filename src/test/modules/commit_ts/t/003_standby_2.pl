@@ -33,7 +33,7 @@ my $master_lsn =
   $master->safe_psql('postgres', 'select pg_current_wal_lsn()');
 $standby->poll_query_until('postgres',
 	qq{SELECT '$master_lsn'::pg_lsn <= pg_last_wal_replay_lsn()})
-  or die "slave never caught up";
+  or die "standby never caught up";
 
 $standby->safe_psql('postgres', 'checkpoint');
 $standby->restart;
@@ -55,8 +55,6 @@ $master->append_conf('postgresql.conf', 'track_commit_timestamp = off');
 $master->restart;
 
 system_or_bail('pg_ctl', '-D', $standby->data_dir, 'promote');
-$standby->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "standby never exited recovery";
 
 $standby->safe_psql('postgres', "create table t11()");
 my $standby_ts = $standby->safe_psql('postgres',

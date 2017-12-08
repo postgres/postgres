@@ -168,7 +168,7 @@ ExecInitJunkFilterConversion(List *targetList,
 		t = list_head(targetList);
 		for (i = 0; i < cleanLength; i++)
 		{
-			if (cleanTupType->attrs[i]->attisdropped)
+			if (TupleDescAttr(cleanTupType, i)->attisdropped)
 				continue;		/* map entry is already zero */
 			for (;;)
 			{

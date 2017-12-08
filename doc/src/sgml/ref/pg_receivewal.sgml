@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_receivewal</command>
-   <arg rep="repeat"><replaceable>option</></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -36,22 +36,22 @@ PostgreSQL documentation
    log is streamed using the streaming replication protocol, and is written
    to a local directory of files. This directory can be used as the archive
    location for doing a restore using point-in-time recovery (see
-   <xref linkend="continuous-archiving">).
+   <xref linkend="continuous-archiving"/>).
   </para>
 
   <para>
    <application>pg_receivewal</application> streams the write-ahead
    log in real time as it's being generated on the server, and does not wait
-   for segments to complete like <xref linkend="guc-archive-command"> does.
+   for segments to complete like <xref linkend="guc-archive-command"/> does.
    For this reason, it is not necessary to set
-   <xref linkend="guc-archive-timeout"> when using
+   <xref linkend="guc-archive-timeout"/> when using
     <application>pg_receivewal</application>.
   </para>
 
   <para>
-   Unlike the WAL receiver of a PostgreSQL standby server, <application>pg_receivewal</>
+   Unlike the WAL receiver of a PostgreSQL standby server, <application>pg_receivewal</application>
    by default flushes WAL data only when a WAL file is closed.
-   The option <option>--synchronous</> must be specified to flush WAL data
+   The option <option>--synchronous</option> must be specified to flush WAL data
    in real time.
   </para>
 
@@ -60,9 +60,9 @@ PostgreSQL documentation
    <productname>PostgreSQL</productname> connection and uses the replication
    protocol. The connection must be made with a superuser or a user
    having <literal>REPLICATION</literal> permissions (see
-   <xref linkend="role-attributes">), and <filename>pg_hba.conf</filename>
+   <xref linkend="role-attributes"/>), and <filename>pg_hba.conf</filename>
    must permit the replication connection. The server must also be
-   configured with <xref linkend="guc-max-wal-senders"> set high enough to
+   configured with <xref linkend="guc-max-wal-senders"/> set high enough to
    leave at least one session available for the stream.
   </para>
 
@@ -72,6 +72,12 @@ PostgreSQL documentation
    retry the connection indefinitely, and reestablish streaming as soon
    as possible. To avoid this behavior, use the <literal>-n</literal>
    parameter.
+  </para>
+
+  <para>
+   In the absence of fatal errors, <application>pg_receivewal</application>
+   will run until terminated by the <systemitem>SIGINT</systemitem> signal
+   (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>).
   </para>
  </refsect1>
 
@@ -88,6 +94,22 @@ PostgreSQL documentation
        </para>
        <para>
         This parameter is required.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-E <replaceable>lsn</replaceable></option></term>
+      <term><option>--endpos=<replaceable>lsn</replaceable></option></term>
+      <listitem>
+       <para>
+        Automatically stop replication and exit with normal exit status 0 when
+        receiving reaches the specified LSN.
+       </para>
+
+       <para>
+        If there is a record with LSN exactly equal to <replaceable>lsn</replaceable>,
+        the record will be processed.
        </para>
       </listitem>
      </varlistentry>
@@ -114,6 +136,23 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-sync</option></term>
+      <listitem>
+       <para>
+        This option causes <command>pg_receivewal</command> to not force WAL
+        data to be flushed to disk.  This is faster, but means that a
+        subsequent operating system crash can leave the WAL segments corrupt.
+        Generally, this option is useful for testing but should not be used
+        when doing WAL archiving on a production deployment.
+       </para>
+
+       <para>
+        This option is incompatible with <literal>--synchronous</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
       <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
       <listitem>
@@ -133,8 +172,8 @@ PostgreSQL documentation
       <listitem>
         <para>
          Require <application>pg_receivewal</application> to use an existing
-         replication slot (see <xref linkend="streaming-replication-slots">).
-         When this option is used, <application>pg_receivewal</> will report
+         replication slot (see <xref linkend="streaming-replication-slots"/>).
+         When this option is used, <application>pg_receivewal</application> will report
          a flush position to the server, indicating when each segment has been
          synchronized to disk so that the server can remove that segment if it
          is not otherwise needed.
@@ -159,7 +198,7 @@ PostgreSQL documentation
        <para>
         Flush the WAL data to disk immediately after it has been received. Also
         send a status packet back to the server immediately after flushing,
-        regardless of <literal>--status-interval</>.
+        regardless of <literal>--status-interval</literal>.
        </para>
 
        <para>
@@ -205,10 +244,10 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies parameters used to connect to the server, as a connection
-        string. See <xref linkend="libpq-connstring"> for more information.
+        string. See <xref linkend="libpq-connstring"/> for more information.
        </para>
        <para>
-        The option is called <literal>--dbname</> for consistency with other
+        The option is called <literal>--dbname</literal> for consistency with other
         client applications, but because <application>pg_receivewal</application>
         doesn't connect to any particular database in the cluster, database
         name in the connection string will be ignored.
@@ -254,8 +293,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-w</></term>
-      <term><option>--no-password</></term>
+      <term><option>-w</option></term>
+      <term><option>--no-password</option></term>
       <listitem>
        <para>
         Never issue a password prompt.  If the server requires
@@ -283,7 +322,7 @@ PostgreSQL documentation
         for a password if the server demands password authentication.
         However, <application>pg_receivewal</application> will waste a
         connection attempt finding out that the server wants a password.
-        In some cases it is worth typing <option>-W</> to avoid the extra
+        In some cases it is worth typing <option>-W</option> to avoid the extra
         connection attempt.
        </para>
       </listitem>
@@ -323,8 +362,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-       <term><option>-V</></term>
-       <term><option>--version</></term>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
        <listitem>
        <para>
        Print the <application>pg_receivewal</application> version and exit.
@@ -333,8 +372,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-?</></term>
-       <term><option>--help</></term>
+       <term><option>-?</option></term>
+       <term><option>--help</option></term>
        <listitem>
        <para>
        Show help about <application>pg_receivewal</application> command line
@@ -349,12 +388,24 @@ PostgreSQL documentation
  </refsect1>
 
  <refsect1>
+  <title>Exit Status</title>
+
+  <para>
+   <application>pg_receivewal</application> will exit with status 0 when
+   terminated by the <systemitem>SIGINT</systemitem> signal.  (That is the
+   normal way to end it.  Hence it is not an error.)  For fatal errors or
+   other signals, the exit status will be nonzero.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
   <title>Environment</title>
 
   <para>
-   This utility, like most other <productname>PostgreSQL</> utilities,
-   uses the environment variables supported by <application>libpq</>
-   (see <xref linkend="libpq-envars">).
+   This utility, like most other <productname>PostgreSQL</productname> utilities,
+   uses the environment variables supported by <application>libpq</application>
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -364,11 +415,11 @@ PostgreSQL documentation
 
   <para>
    When using <application>pg_receivewal</application> instead of
-   <xref linkend="guc-archive-command"> as the main WAL backup method, it is
+   <xref linkend="guc-archive-command"/> as the main WAL backup method, it is
    strongly recommended to use replication slots.  Otherwise, the server is
    free to recycle or remove write-ahead log files before they are backed up,
    because it does not have any information, either
-   from <xref linkend="guc-archive-command"> or the replication slots, about
+   from <xref linkend="guc-archive-command"/> or the replication slots, about
    how far the WAL stream has been archived.  Note, however, that a
    replication slot will fill up the server's disk space if the receiver does
    not keep up with fetching the WAL data.
@@ -392,7 +443,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="APP-PGBASEBACKUP"></member>
+   <member><xref linkend="app-pgbasebackup"/></member>
   </simplelist>
  </refsect1>
 

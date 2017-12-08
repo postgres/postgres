@@ -62,17 +62,6 @@ struct RBTree
 
 static RBNode sentinel = {RBBLACK, RBNIL, RBNIL, NULL};
 
-/*
- * Values used in the RBTreeIterator.next_state field, with an
- * InvertedWalk iterator.
- */
-typedef enum InvertedWalkNextStep
-{
-	NextStepBegin,
-	NextStepUp,
-	NextStepLeft,
-	NextStepRight
-} InvertedWalkNextStep;
 
 /*
  * rb_create: create an empty RBTree
@@ -567,6 +556,7 @@ rb_delete_node(RBTree *rb, RBNode *z)
 	RBNode	   *x,
 			   *y;
 
+	/* This is just paranoia: we should only get called on a valid node */
 	if (!z || z == RBNIL)
 		return;
 
@@ -730,114 +720,6 @@ rb_right_left_iterator(RBTreeIterator *iter)
 	return iter->last_visited;
 }
 
-static RBNode *
-rb_direct_iterator(RBTreeIterator *iter)
-{
-	if (iter->last_visited == NULL)
-	{
-		iter->last_visited = iter->rb->root;
-		return iter->last_visited;
-	}
-
-	if (iter->last_visited->left != RBNIL)
-	{
-		iter->last_visited = iter->last_visited->left;
-		return iter->last_visited;
-	}
-
-	do
-	{
-		if (iter->last_visited->right != RBNIL)
-		{
-			iter->last_visited = iter->last_visited->right;
-			break;
-		}
-
-		/* go up and one step right */
-		for (;;)
-		{
-			RBNode	   *came_from = iter->last_visited;
-
-			iter->last_visited = iter->last_visited->parent;
-			if (iter->last_visited == NULL)
-			{
-				iter->is_over = true;
-				break;
-			}
-
-			if ((iter->last_visited->right != came_from) && (iter->last_visited->right != RBNIL))
-			{
-				iter->last_visited = iter->last_visited->right;
-				return iter->last_visited;
-			}
-		}
-	}
-	while (iter->last_visited != NULL);
-
-	return iter->last_visited;
-}
-
-static RBNode *
-rb_inverted_iterator(RBTreeIterator *iter)
-{
-	RBNode	   *came_from;
-	RBNode	   *current;
-
-	current = iter->last_visited;
-
-loop:
-	switch ((InvertedWalkNextStep) iter->next_step)
-	{
-			/* First call, begin from root */
-		case NextStepBegin:
-			current = iter->rb->root;
-			iter->next_step = NextStepLeft;
-			goto loop;
-
-		case NextStepLeft:
-			while (current->left != RBNIL)
-				current = current->left;
-
-			iter->next_step = NextStepRight;
-			goto loop;
-
-		case NextStepRight:
-			if (current->right != RBNIL)
-			{
-				current = current->right;
-				iter->next_step = NextStepLeft;
-				goto loop;
-			}
-			else				/* not moved - return current, then go up */
-				iter->next_step = NextStepUp;
-			break;
-
-		case NextStepUp:
-			came_from = current;
-			current = current->parent;
-			if (current == NULL)
-			{
-				iter->is_over = true;
-				break;			/* end of iteration */
-			}
-			else if (came_from == current->right)
-			{
-				/* return current, then continue to go up */
-				break;
-			}
-			else
-			{
-				/* otherwise we came from the left */
-				Assert(came_from == current->left);
-				iter->next_step = NextStepRight;
-				goto loop;
-			}
-	}
-
-	iter->last_visited = current;
-	return current;
-}
-
 /*
  * rb_begin_iterate: prepare to traverse the tree in any of several orders
  *
@@ -849,7 +731,7 @@ loop:
  * tree are allowed.
  *
  * The iterator state is stored in the 'iter' struct.  The caller should
- * treat it as opaque struct.
+ * treat it as an opaque struct.
  */
 void
 rb_begin_iterate(RBTree *rb, RBOrderControl ctrl, RBTreeIterator *iter)
@@ -866,13 +748,6 @@ rb_begin_iterate(RBTree *rb, RBOrderControl ctrl, RBTreeIterator *iter)
 			break;
 		case RightLeftWalk:		/* visit right, then self, then left */
 			iter->iterate = rb_right_left_iterator;
-			break;
-		case DirectWalk:		/* visit self, then left, then right */
-			iter->iterate = rb_direct_iterator;
-			break;
-		case InvertedWalk:		/* visit left, then right, then self */
-			iter->iterate = rb_inverted_iterator;
-			iter->next_step = NextStepBegin;
 			break;
 		default:
 			elog(ERROR, "unrecognized rbtree iteration order: %d", ctrl);

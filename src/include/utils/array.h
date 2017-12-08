@@ -64,6 +64,10 @@
 #include "fmgr.h"
 #include "utils/expandeddatum.h"
 
+/* avoid including execnodes.h here */
+struct ExprState;
+struct ExprContext;
+
 
 /*
  * Arrays are varlena objects, so must meet the varlena convention that
@@ -252,7 +256,7 @@ typedef struct ArrayIteratorData *ArrayIterator;
 #define PG_RETURN_EXPANDED_ARRAY(x)  PG_RETURN_DATUM(EOHPGetRWDatum(&(x)->hdr))
 
 /* fmgr macros for AnyArrayType (ie, get either varlena or expanded form) */
-#define PG_GETARG_ANY_ARRAY(n)	DatumGetAnyArray(PG_GETARG_DATUM(n))
+#define PG_GETARG_ANY_ARRAY_P(n)	DatumGetAnyArrayP(PG_GETARG_DATUM(n))
 
 /*
  * Access macros for varlena array header fields.
@@ -360,8 +364,9 @@ extern ArrayType *array_set(ArrayType *array, int nSubscripts, int *indx,
 		  Datum dataValue, bool isNull,
 		  int arraytyplen, int elmlen, bool elmbyval, char elmalign);
 
-extern Datum array_map(FunctionCallInfo fcinfo, Oid retType,
-		  ArrayMapState *amstate);
+extern Datum array_map(Datum arrayd,
+		  struct ExprState *exprstate, struct ExprContext *econtext,
+		  Oid retType, ArrayMapState *amstate);
 
 extern void array_bitmap_copy(bits8 *destbitmap, int destoffset,
 				  const bits8 *srcbitmap, int srcoffset,
@@ -440,7 +445,7 @@ extern Datum expand_array(Datum arraydatum, MemoryContext parentcontext,
 extern ExpandedArrayHeader *DatumGetExpandedArray(Datum d);
 extern ExpandedArrayHeader *DatumGetExpandedArrayX(Datum d,
 					   ArrayMetaState *metacache);
-extern AnyArrayType *DatumGetAnyArray(Datum d);
+extern AnyArrayType *DatumGetAnyArrayP(Datum d);
 extern void deconstruct_expanded_array(ExpandedArrayHeader *eah);
 
 #endif							/* ARRAY_H */

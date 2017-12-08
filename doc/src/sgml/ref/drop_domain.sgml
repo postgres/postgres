@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_domain.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPDOMAIN">
+<refentry id="sql-dropdomain">
  <indexterm zone="sql-dropdomain">
   <primary>DROP DOMAIN</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP DOMAIN [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP DOMAIN [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -49,7 +49,7 @@ DROP DOMAIN [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of an existing domain.
@@ -58,19 +58,19 @@ DROP DOMAIN [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CASCADE</></term>
+    <term><literal>CASCADE</literal></term>
     <listitem>
      <para>
       Automatically drop objects that depend on the domain (such as
       table columns),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>RESTRICT</></term>
+    <term><literal>RESTRICT</literal></term>
     <listitem>
      <para>
       Refuse to drop the domain if any objects depend on it.  This is
@@ -81,7 +81,7 @@ DROP DOMAIN [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
   </variablelist>
  </refsect1>
 
- <refsect1 id="SQL-DROPDOMAIN-examples">
+ <refsect1 id="sql-dropdomain-examples">
   <title>Examples</title>
 
   <para>
@@ -92,22 +92,22 @@ DROP DOMAIN box;
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="SQL-DROPDOMAIN-compatibility">
+ <refsect1 id="sql-dropdomain-compatibility">
   <title>Compatibility</title>
 
   <para>
    This command conforms to the SQL standard, except for the
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
+   <literal>IF EXISTS</literal> option, which is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>
 
- <refsect1 id="SQL-DROPDOMAIN-see-also">
+ <refsect1 id="sql-dropdomain-see-also">
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdomain"></member>
-   <member><xref linkend="sql-alterdomain"></member>
+   <member><xref linkend="sql-createdomain"/></member>
+   <member><xref linkend="sql-alterdomain"/></member>
   </simplelist>
  </refsect1>
 

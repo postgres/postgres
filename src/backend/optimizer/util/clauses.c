@@ -832,7 +832,7 @@ expression_returns_set_rows(Node *clause)
  * contain_subplans
  *	  Recursively search for subplan nodes within a clause.
  *
- * If we see a SubLink node, we will return TRUE.  This is only possible if
+ * If we see a SubLink node, we will return true.  This is only possible if
  * the expression tree hasn't yet been transformed by subselect.c.  We do not
  * know whether the node will produce a true subplan or just an initplan,
  * but we make the conservative assumption that it will be a subplan.
@@ -899,6 +899,12 @@ contain_mutable_functions_walker(Node *node, void *context)
 	if (IsA(node, SQLValueFunction))
 	{
 		/* all variants of SQLValueFunction are stable */
+		return true;
+	}
+
+	if (IsA(node, NextValueExpr))
+	{
+		/* NextValueExpr is volatile */
 		return true;
 	}
 
@@ -969,6 +975,12 @@ contain_volatile_functions_walker(Node *node, void *context)
 								context))
 		return true;
 
+	if (IsA(node, NextValueExpr))
+	{
+		/* NextValueExpr is volatile */
+		return true;
+	}
+
 	/*
 	 * See notes in contain_mutable_functions_walker about why we treat
 	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable, while
@@ -1019,6 +1031,8 @@ contain_volatile_functions_not_nextval_walker(Node *node, void *context)
 	 * See notes in contain_mutable_functions_walker about why we treat
 	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable, while
 	 * SQLValueFunction is stable.  Hence, none of them are of interest here.
+	 * Also, since we're intentionally ignoring nextval(), presumably we
+	 * should ignore NextValueExpr.
 	 */
 
 	/* Recurse to check arguments */
@@ -1073,6 +1087,8 @@ bool
 is_parallel_safe(PlannerInfo *root, Node *node)
 {
 	max_parallel_hazard_context context;
+	PlannerInfo *proot;
+	ListCell   *l;
 
 	/*
 	 * Even if the original querytree contained nothing unsafe, we need to
@@ -1081,12 +1097,31 @@ is_parallel_safe(PlannerInfo *root, Node *node)
 	 * in this expression.  But otherwise we don't need to look.
 	 */
 	if (root->glob->maxParallelHazard == PROPARALLEL_SAFE &&
-		root->glob->nParamExec == 0)
+		root->glob->paramExecTypes == NIL)
 		return true;
 	/* Else use max_parallel_hazard's search logic, but stop on RESTRICTED */
 	context.max_hazard = PROPARALLEL_SAFE;
 	context.max_interesting = PROPARALLEL_RESTRICTED;
 	context.safe_param_ids = NIL;
+
+	/*
+	 * The params that refer to the same or parent query level are considered
+	 * parallel-safe.  The idea is that we compute such params at Gather or
+	 * Gather Merge node and pass their value to workers.
+	 */
+	for (proot = root; proot != NULL; proot = proot->parent_root)
+	{
+		foreach(l, proot->init_plans)
+		{
+			SubPlan    *initsubplan = (SubPlan *) lfirst(l);
+			ListCell   *l2;
+
+			foreach(l2, initsubplan->setParam)
+				context.safe_param_ids = lcons_int(lfirst_int(l2),
+												   context.safe_param_ids);
+		}
+	}
+
 	return !max_parallel_hazard_walker(node, &context);
 }
 
@@ -1146,11 +1181,17 @@ max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
 	 * contain a parallel-unsafe function; but useful constraints probably
 	 * never would have such, and assuming they do would cripple use of
 	 * parallel query in the presence of domain types.)  SQLValueFunction
-	 * should be safe in all cases.
+	 * should be safe in all cases.  NextValueExpr is parallel-unsafe.
 	 */
 	if (IsA(node, CoerceToDomain))
 	{
 		if (max_parallel_hazard_test(PROPARALLEL_RESTRICTED, context))
+			return true;
+	}
+
+	if (IsA(node, NextValueExpr))
+	{
+		if (max_parallel_hazard_test(PROPARALLEL_UNSAFE, context))
 			return true;
 	}
 
@@ -1203,12 +1244,17 @@ max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
 
 	/*
 	 * We can't pass Params to workers at the moment either, so they are also
-	 * parallel-restricted, unless they are PARAM_EXEC Params listed in
-	 * safe_param_ids, meaning they could be generated within the worker.
+	 * parallel-restricted, unless they are PARAM_EXTERN Params or are
+	 * PARAM_EXEC Params listed in safe_param_ids, meaning they could be
+	 * either generated within the worker or can be computed in master and
+	 * then their value can be passed to the worker.
 	 */
 	else if (IsA(node, Param))
 	{
 		Param	   *param = (Param *) node;
+
+		if (param->paramkind == PARAM_EXTERN)
+			return false;
 
 		if (param->paramkind != PARAM_EXEC ||
 			!list_member_int(context->safe_param_ids, param->paramid))
@@ -1341,6 +1387,17 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	if (IsA(node, FieldStore))
 		return true;
+	if (IsA(node, ArrayCoerceExpr))
+	{
+		/*
+		 * ArrayCoerceExpr is strict at the array level, regardless of what
+		 * the per-element expression is; so we should ignore elemexpr and
+		 * recurse only into the arg.
+		 */
+		return expression_tree_walker((Node *) ((ArrayCoerceExpr *) node)->arg,
+									  contain_nonstrict_functions_walker,
+									  context);
+	}
 	if (IsA(node, CaseExpr))
 		return true;
 	if (IsA(node, ArrayExpr))
@@ -1360,14 +1417,11 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	if (IsA(node, BooleanTest))
 		return true;
 
-	/*
-	 * Check other function-containing nodes; but ArrayCoerceExpr is strict at
-	 * the array level, regardless of elemfunc.
-	 */
-	if (!IsA(node, ArrayCoerceExpr) &&
-		check_functions_in_node(node, contain_nonstrict_functions_checker,
+	/* Check other function-containing nodes */
+	if (check_functions_in_node(node, contain_nonstrict_functions_checker,
 								context))
 		return true;
+
 	return expression_tree_walker(node, contain_nonstrict_functions_walker,
 								  context);
 }
@@ -1495,6 +1549,7 @@ contain_leaked_vars_walker(Node *node, void *context)
 		case T_SQLValueFunction:
 		case T_NullTest:
 		case T_BooleanTest:
+		case T_NextValueExpr:
 		case T_List:
 
 			/*
@@ -1593,8 +1648,8 @@ contain_leaked_vars_walker(Node *node, void *context)
  * that either v1 or v2 can't be NULL, but it does prove that the t1 row
  * as a whole can't be all-NULL.
  *
- * top_level is TRUE while scanning top-level AND/OR structure; here, showing
- * the result is either FALSE or NULL is good enough.  top_level is FALSE when
+ * top_level is true while scanning top-level AND/OR structure; here, showing
+ * the result is either FALSE or NULL is good enough.  top_level is false when
  * we have descended below a NOT or a strict function: now we must be able to
  * prove that the subexpression goes to NULL.
  *
@@ -1736,7 +1791,7 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	}
 	else if (IsA(node, ArrayCoerceExpr))
 	{
-		/* ArrayCoerceExpr is strict at the array level */
+		/* ArrayCoerceExpr is strict at the array level; ignore elemexpr */
 		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
 
 		result = find_nonnullable_rels_walker((Node *) expr->arg, top_level);
@@ -1801,8 +1856,8 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
  * The result is a palloc'd List, but we have not copied the member Var nodes.
  * Also, we don't bother trying to eliminate duplicate entries.
  *
- * top_level is TRUE while scanning top-level AND/OR structure; here, showing
- * the result is either FALSE or NULL is good enough.  top_level is FALSE when
+ * top_level is true while scanning top-level AND/OR structure; here, showing
+ * the result is either FALSE or NULL is good enough.  top_level is false when
  * we have descended below a NOT or a strict function: now we must be able to
  * prove that the subexpression goes to NULL.
  *
@@ -1944,7 +1999,7 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 	}
 	else if (IsA(node, ArrayCoerceExpr))
 	{
-		/* ArrayCoerceExpr is strict at the array level */
+		/* ArrayCoerceExpr is strict at the array level; ignore elemexpr */
 		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
 
 		result = find_nonnullable_vars_walker((Node *) expr->arg, top_level);
@@ -2327,6 +2382,10 @@ CommuteRowCompareExpr(RowCompareExpr *clause)
  * is still what it was when the expression was parsed.  This is needed to
  * guard against improper simplification after ALTER COLUMN TYPE.  (XXX we
  * may well need to make similar checks elsewhere?)
+ *
+ * rowtypeid may come from a whole-row Var, and therefore it can be a domain
+ * over composite, but for this purpose we only care about checking the type
+ * of a contained field.
  */
 static bool
 rowtype_field_matches(Oid rowtypeid, int fieldnum,
@@ -2339,13 +2398,13 @@ rowtype_field_matches(Oid rowtypeid, int fieldnum,
 	/* No issue for RECORD, since there is no way to ALTER such a type */
 	if (rowtypeid == RECORDOID)
 		return true;
-	tupdesc = lookup_rowtype_tupdesc(rowtypeid, -1);
+	tupdesc = lookup_rowtype_tupdesc_domain(rowtypeid, -1, false);
 	if (fieldnum <= 0 || fieldnum > tupdesc->natts)
 	{
 		ReleaseTupleDesc(tupdesc);
 		return false;
 	}
-	attr = tupdesc->attrs[fieldnum - 1];
+	attr = TupleDescAttr(tupdesc, fieldnum - 1);
 	if (attr->attisdropped ||
 		attr->atttypid != expectedtype ||
 		attr->atttypmod != expectedtypmod ||
@@ -2984,32 +3043,38 @@ eval_const_expressions_mutator(Node *node,
 			{
 				ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
 				Expr	   *arg;
+				Expr	   *elemexpr;
 				ArrayCoerceExpr *newexpr;
 
 				/*
-				 * Reduce constants in the ArrayCoerceExpr's argument, then
-				 * build a new ArrayCoerceExpr.
+				 * Reduce constants in the ArrayCoerceExpr's argument and
+				 * per-element expressions, then build a new ArrayCoerceExpr.
 				 */
 				arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
 															  context);
+				elemexpr = (Expr *) eval_const_expressions_mutator((Node *) expr->elemexpr,
+																   context);
 
 				newexpr = makeNode(ArrayCoerceExpr);
 				newexpr->arg = arg;
-				newexpr->elemfuncid = expr->elemfuncid;
+				newexpr->elemexpr = elemexpr;
 				newexpr->resulttype = expr->resulttype;
 				newexpr->resulttypmod = expr->resulttypmod;
 				newexpr->resultcollid = expr->resultcollid;
-				newexpr->isExplicit = expr->isExplicit;
 				newexpr->coerceformat = expr->coerceformat;
 				newexpr->location = expr->location;
 
 				/*
-				 * If constant argument and it's a binary-coercible or
-				 * immutable conversion, we can simplify it to a constant.
+				 * If constant argument and per-element expression is
+				 * immutable, we can simplify the whole thing to a constant.
+				 * Exception: although contain_mutable_functions considers
+				 * CoerceToDomain immutable for historical reasons, let's not
+				 * do so here; this ensures coercion to an array-over-domain
+				 * does not apply the domain's constraints until runtime.
 				 */
 				if (arg && IsA(arg, Const) &&
-					(!OidIsValid(newexpr->elemfuncid) ||
-					 func_volatile(newexpr->elemfuncid) == PROVOLATILE_IMMUTABLE))
+					elemexpr && !IsA(elemexpr, CoerceToDomain) &&
+					!contain_mutable_functions((Node *) elemexpr))
 					return (Node *) evaluate_expr((Expr *) newexpr,
 												  newexpr->resulttype,
 												  newexpr->resulttypmod,
@@ -3577,8 +3642,8 @@ eval_const_expressions_mutator(Node *node,
  * input is TRUE and at least one is NULL.  We don't actually include the NULL
  * here, that's supposed to be done by the caller.
  *
- * The output arguments *haveNull and *forceTrue must be initialized FALSE
- * by the caller.  They will be set TRUE if a null constant or true constant,
+ * The output arguments *haveNull and *forceTrue must be initialized false
+ * by the caller.  They will be set true if a NULL constant or TRUE constant,
  * respectively, is detected anywhere in the argument list.
  */
 static List *
@@ -3689,8 +3754,8 @@ simplify_or_arguments(List *args,
  * no input is FALSE and at least one is NULL.  We don't actually include the
  * NULL here, that's supposed to be done by the caller.
  *
- * The output arguments *haveNull and *forceFalse must be initialized FALSE
- * by the caller.  They will be set TRUE if a null constant or false constant,
+ * The output arguments *haveNull and *forceFalse must be initialized false
+ * by the caller.  They will be set true if a null constant or false constant,
  * respectively, is detected anywhere in the argument list.
  */
 static List *
@@ -4336,6 +4401,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	if (funcform->prolang != SQLlanguageId ||
 		funcform->prosecdef ||
 		funcform->proretset ||
+		funcform->prorettype == InvalidOid ||
 		funcform->prorettype == RECORDOID ||
 		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig) ||
 		funcform->pronargs != list_length(args))
@@ -4424,6 +4490,11 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 
 	/*
 	 * The single command must be a simple "SELECT expression".
+	 *
+	 * Note: if you change the tests involved in this, see also plpgsql's
+	 * exec_simple_check_plan().  That generally needs to have the same idea
+	 * of what's a "simple expression", so that inlining a function that
+	 * previously wasn't inlined won't change plpgsql's conclusion.
 	 */
 	if (!IsA(querytree, Query) ||
 		querytree->commandType != CMD_SELECT ||
@@ -4965,7 +5036,9 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 *
 	 * If the function returns a composite type, don't inline unless the check
 	 * shows it's returning a whole tuple result; otherwise what it's
-	 * returning is a single composite column which is not what we need.
+	 * returning is a single composite column which is not what we need. (Like
+	 * check_sql_fn_retval, we deliberately exclude domains over composite
+	 * here.)
 	 */
 	if (!check_sql_fn_retval(func_oid, fexpr->funcresulttype,
 							 querytree_list,

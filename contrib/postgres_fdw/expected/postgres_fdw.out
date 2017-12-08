@@ -191,6 +191,44 @@ ALTER FOREIGN TABLE ft2 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
  public | ft_pg_type | loopback  | (schema_name 'pg_catalog', table_name 'pg_type') | 
 (6 rows)
 
+-- Test that alteration of server options causes reconnection
+-- Remote's errors might be non-English, so hide them to ensure stable results
+\set VERBOSITY terse
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work
+  c3   |              c4              
+-------+------------------------------
+ 00001 | Fri Jan 02 00:00:00 1970 PST
+(1 row)
+
+ALTER SERVER loopback OPTIONS (SET dbname 'no such database');
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should fail
+ERROR:  could not connect to server "loopback"
+DO $d$
+    BEGIN
+        EXECUTE $$ALTER SERVER loopback
+            OPTIONS (SET dbname '$$||current_database()||$$')$$;
+    END;
+$d$;
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work again
+  c3   |              c4              
+-------+------------------------------
+ 00001 | Fri Jan 02 00:00:00 1970 PST
+(1 row)
+
+-- Test that alteration of user mapping options causes reconnection
+ALTER USER MAPPING FOR CURRENT_USER SERVER loopback
+  OPTIONS (ADD user 'no such user');
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should fail
+ERROR:  could not connect to server "loopback"
+ALTER USER MAPPING FOR CURRENT_USER SERVER loopback
+  OPTIONS (DROP user);
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work again
+  c3   |              c4              
+-------+------------------------------
+ 00001 | Fri Jan 02 00:00:00 1970 PST
+(1 row)
+
+\set VERBOSITY default
 -- Now we should be able to run ANALYZE.
 -- To exercise multiple code paths, we use local stats on ft1
 -- and remote-estimate mode on ft2.
@@ -2277,7 +2315,7 @@ SELECT ft5, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2 FROM ft5 left join ft4 on ft5
 (4 rows)
 
 -- check join pushdown in situations where multiple userids are involved
-CREATE ROLE regress_view_owner;
+CREATE ROLE regress_view_owner SUPERUSER;
 CREATE USER MAPPING FOR regress_view_owner SERVER loopback;
 GRANT SELECT ON ft4 TO regress_view_owner;
 GRANT SELECT ON ft5 TO regress_view_owner;
@@ -3122,21 +3160,23 @@ drop operator public.<^(int, int);
 -- Input relation to aggregate push down hook is not safe to pushdown and thus
 -- the aggregate cannot be pushed down to foreign server.
 explain (verbose, costs off)
-select count(t1.c3) from ft1 t1, ft1 t2 where t1.c1 = postgres_fdw_abs(t1.c2);
-                                                QUERY PLAN                                                
-----------------------------------------------------------------------------------------------------------
+select count(t1.c3) from ft2 t1 left join ft2 t2 on (t1.c1 = random() * t2.c2);
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
  Aggregate
    Output: count(t1.c3)
-   ->  Nested Loop
+   ->  Nested Loop Left Join
          Output: t1.c3
-         ->  Foreign Scan on public.ft1 t2
-               Remote SQL: SELECT NULL FROM "S 1"."T 1"
+         Join Filter: ((t1.c1)::double precision = (random() * (t2.c2)::double precision))
+         ->  Foreign Scan on public.ft2 t1
+               Output: t1.c3, t1.c1
+               Remote SQL: SELECT "C 1", c3 FROM "S 1"."T 1"
          ->  Materialize
-               Output: t1.c3
-               ->  Foreign Scan on public.ft1 t1
-                     Output: t1.c3
-                     Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" = public.postgres_fdw_abs(c2)))
-(11 rows)
+               Output: t2.c2
+               ->  Foreign Scan on public.ft2 t2
+                     Output: t2.c2
+                     Remote SQL: SELECT c2 FROM "S 1"."T 1"
+(13 rows)
 
 -- Subquery in FROM clause having aggregate
 explain (verbose, costs off)
@@ -5856,6 +5896,66 @@ INSERT INTO ft1(c1, c2) VALUES(1111, 2);
 UPDATE ft1 SET c2 = c2 + 1 WHERE c1 = 1;
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c2negative;
 -- ===================================================================
+-- test WITH CHECK OPTION constraints
+-- ===================================================================
+CREATE TABLE base_tbl (a int, b int);
+CREATE FOREIGN TABLE foreign_tbl (a int, b int)
+  SERVER loopback OPTIONS(table_name 'base_tbl');
+CREATE VIEW rw_view AS SELECT * FROM foreign_tbl
+  WHERE a < b WITH CHECK OPTION;
+\d+ rw_view
+                           View "public.rw_view"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ a      | integer |           |          |         | plain   | 
+ b      | integer |           |          |         | plain   | 
+View definition:
+ SELECT foreign_tbl.a,
+    foreign_tbl.b
+   FROM foreign_tbl
+  WHERE foreign_tbl.a < foreign_tbl.b;
+Options: check_option=cascaded
+
+INSERT INTO rw_view VALUES (0, 10); -- ok
+INSERT INTO rw_view VALUES (10, 0); -- should fail
+ERROR:  new row violates check option for view "rw_view"
+DETAIL:  Failing row contains (10, 0).
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE rw_view SET b = 20 WHERE a = 0; -- not pushed down
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
+ Update on public.foreign_tbl
+   Remote SQL: UPDATE public.base_tbl SET b = $2 WHERE ctid = $1
+   ->  Foreign Scan on public.foreign_tbl
+         Output: foreign_tbl.a, 20, foreign_tbl.ctid
+         Remote SQL: SELECT a, ctid FROM public.base_tbl WHERE ((a < b)) AND ((a = 0)) FOR UPDATE
+(5 rows)
+
+UPDATE rw_view SET b = 20 WHERE a = 0; -- ok
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE rw_view SET b = -20 WHERE a = 0; -- not pushed down
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
+ Update on public.foreign_tbl
+   Remote SQL: UPDATE public.base_tbl SET b = $2 WHERE ctid = $1
+   ->  Foreign Scan on public.foreign_tbl
+         Output: foreign_tbl.a, '-20'::integer, foreign_tbl.ctid
+         Remote SQL: SELECT a, ctid FROM public.base_tbl WHERE ((a < b)) AND ((a = 0)) FOR UPDATE
+(5 rows)
+
+UPDATE rw_view SET b = -20 WHERE a = 0; -- should fail
+ERROR:  new row violates check option for view "rw_view"
+DETAIL:  Failing row contains (0, -20).
+SELECT * FROM foreign_tbl;
+ a | b  
+---+----
+ 0 | 20
+(1 row)
+
+DROP FOREIGN TABLE foreign_tbl CASCADE;
+NOTICE:  drop cascades to view rw_view
+DROP TABLE base_tbl;
+-- ===================================================================
 -- test serial columns (ie, sequence-based defaults)
 -- ===================================================================
 create table loc1 (f1 serial, f2 text);
@@ -6924,6 +7024,63 @@ update bar set f2 = f2 + 100 returning *;
   7 | 277
 (6 rows)
 
+-- Test that UPDATE/DELETE with inherited target works with row-level triggers
+CREATE TRIGGER trig_row_before
+BEFORE UPDATE OR DELETE ON bar2
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+CREATE TRIGGER trig_row_after
+AFTER UPDATE OR DELETE ON bar2
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+explain (verbose, costs off)
+update bar set f2 = f2 + 100;
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Update on public.bar
+   Update on public.bar
+   Foreign Update on public.bar2
+     Remote SQL: UPDATE public.loct2 SET f2 = $2 WHERE ctid = $1 RETURNING f1, f2, f3
+   ->  Seq Scan on public.bar
+         Output: bar.f1, (bar.f2 + 100), bar.ctid
+   ->  Foreign Scan on public.bar2
+         Output: bar2.f1, (bar2.f2 + 100), bar2.f3, bar2.ctid, bar2.*
+         Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR UPDATE
+(9 rows)
+
+update bar set f2 = f2 + 100;
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON bar2
+NOTICE:  OLD: (3,333,33),NEW: (3,433,33)
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON bar2
+NOTICE:  OLD: (4,344,44),NEW: (4,444,44)
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON bar2
+NOTICE:  OLD: (7,277,77),NEW: (7,377,77)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON bar2
+NOTICE:  OLD: (3,333,33),NEW: (3,433,33)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON bar2
+NOTICE:  OLD: (4,344,44),NEW: (4,444,44)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON bar2
+NOTICE:  OLD: (7,277,77),NEW: (7,377,77)
+explain (verbose, costs off)
+delete from bar where f2 < 400;
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Delete on public.bar
+   Delete on public.bar
+   Foreign Delete on public.bar2
+     Remote SQL: DELETE FROM public.loct2 WHERE ctid = $1 RETURNING f1, f2, f3
+   ->  Seq Scan on public.bar
+         Output: bar.ctid
+         Filter: (bar.f2 < 400)
+   ->  Foreign Scan on public.bar2
+         Output: bar2.ctid, bar2.*
+         Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 WHERE ((f2 < 400)) FOR UPDATE
+(10 rows)
+
+delete from bar where f2 < 400;
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW DELETE ON bar2
+NOTICE:  OLD: (7,377,77)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW DELETE ON bar2
+NOTICE:  OLD: (7,377,77)
+-- cleanup
 drop table foo cascade;
 NOTICE:  drop cascades to foreign table foo2
 drop table bar cascade;
@@ -7248,3 +7405,123 @@ AND ftoptions @> array['fetch_size=60000'];
 (1 row)
 
 ROLLBACK;
+-- ===================================================================
+-- test partition-wise-joins
+-- ===================================================================
+SET enable_partition_wise_join=on;
+CREATE TABLE fprt1 (a int, b int, c varchar) PARTITION BY RANGE(a);
+CREATE TABLE fprt1_p1 (LIKE fprt1);
+CREATE TABLE fprt1_p2 (LIKE fprt1);
+INSERT INTO fprt1_p1 SELECT i, i, to_char(i/50, 'FM0000') FROM generate_series(0, 249, 2) i;
+INSERT INTO fprt1_p2 SELECT i, i, to_char(i/50, 'FM0000') FROM generate_series(250, 499, 2) i;
+CREATE FOREIGN TABLE ftprt1_p1 PARTITION OF fprt1 FOR VALUES FROM (0) TO (250)
+	SERVER loopback OPTIONS (table_name 'fprt1_p1', use_remote_estimate 'true');
+CREATE FOREIGN TABLE ftprt1_p2 PARTITION OF fprt1 FOR VALUES FROM (250) TO (500)
+	SERVER loopback OPTIONS (TABLE_NAME 'fprt1_p2');
+ANALYZE fprt1;
+ANALYZE fprt1_p1;
+ANALYZE fprt1_p2;
+CREATE TABLE fprt2 (a int, b int, c varchar) PARTITION BY RANGE(b);
+CREATE TABLE fprt2_p1 (LIKE fprt2);
+CREATE TABLE fprt2_p2 (LIKE fprt2);
+INSERT INTO fprt2_p1 SELECT i, i, to_char(i/50, 'FM0000') FROM generate_series(0, 249, 3) i;
+INSERT INTO fprt2_p2 SELECT i, i, to_char(i/50, 'FM0000') FROM generate_series(250, 499, 3) i;
+CREATE FOREIGN TABLE ftprt2_p1 PARTITION OF fprt2 FOR VALUES FROM (0) TO (250)
+	SERVER loopback OPTIONS (table_name 'fprt2_p1', use_remote_estimate 'true');
+CREATE FOREIGN TABLE ftprt2_p2 PARTITION OF fprt2 FOR VALUES FROM (250) TO (500)
+	SERVER loopback OPTIONS (table_name 'fprt2_p2', use_remote_estimate 'true');
+ANALYZE fprt2;
+ANALYZE fprt2_p1;
+ANALYZE fprt2_p2;
+-- inner join three tables
+EXPLAIN (COSTS OFF)
+SELECT t1.a,t2.b,t3.c FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) INNER JOIN fprt1 t3 ON (t2.b = t3.a) WHERE t1.a % 25 =0 ORDER BY 1,2,3;
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: t1.a, t3.c
+   ->  Append
+         ->  Foreign Scan
+               Relations: ((public.ftprt1_p1 t1) INNER JOIN (public.ftprt2_p1 t2)) INNER JOIN (public.ftprt1_p1 t3)
+         ->  Foreign Scan
+               Relations: ((public.ftprt1_p2 t1) INNER JOIN (public.ftprt2_p2 t2)) INNER JOIN (public.ftprt1_p2 t3)
+(7 rows)
+
+SELECT t1.a,t2.b,t3.c FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) INNER JOIN fprt1 t3 ON (t2.b = t3.a) WHERE t1.a % 25 =0 ORDER BY 1,2,3;
+  a  |  b  |  c   
+-----+-----+------
+   0 |   0 | 0000
+ 150 | 150 | 0003
+ 250 | 250 | 0005
+ 400 | 400 | 0008
+(4 rows)
+
+-- left outer join + nullable clasue
+EXPLAIN (COSTS OFF)
+SELECT t1.a,t2.b,t2.c FROM fprt1 t1 LEFT JOIN (SELECT * FROM fprt2 WHERE a < 10) t2 ON (t1.a = t2.b and t1.b = t2.a) WHERE t1.a < 10 ORDER BY 1,2,3;
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
+ Sort
+   Sort Key: t1.a, ftprt2_p1.b, ftprt2_p1.c
+   ->  Append
+         ->  Foreign Scan
+               Relations: (public.ftprt1_p1 t1) LEFT JOIN (public.ftprt2_p1 fprt2)
+(5 rows)
+
+SELECT t1.a,t2.b,t2.c FROM fprt1 t1 LEFT JOIN (SELECT * FROM fprt2 WHERE a < 10) t2 ON (t1.a = t2.b and t1.b = t2.a) WHERE t1.a < 10 ORDER BY 1,2,3;
+ a | b |  c   
+---+---+------
+ 0 | 0 | 0000
+ 2 |   | 
+ 4 |   | 
+ 6 | 6 | 0000
+ 8 |   | 
+(5 rows)
+
+-- with whole-row reference
+EXPLAIN (COSTS OFF)
+SELECT t1,t2 FROM fprt1 t1 JOIN fprt2 t2 ON (t1.a = t2.b and t1.b = t2.a) WHERE t1.a % 25 =0 ORDER BY 1,2;
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Sort
+   Sort Key: ((t1.*)::fprt1), ((t2.*)::fprt2)
+   ->  Append
+         ->  Foreign Scan
+               Relations: (public.ftprt1_p1 t1) INNER JOIN (public.ftprt2_p1 t2)
+         ->  Foreign Scan
+               Relations: (public.ftprt1_p2 t1) INNER JOIN (public.ftprt2_p2 t2)
+(7 rows)
+
+SELECT t1,t2 FROM fprt1 t1 JOIN fprt2 t2 ON (t1.a = t2.b and t1.b = t2.a) WHERE t1.a % 25 =0 ORDER BY 1,2;
+       t1       |       t2       
+----------------+----------------
+ (0,0,0000)     | (0,0,0000)
+ (150,150,0003) | (150,150,0003)
+ (250,250,0005) | (250,250,0005)
+ (400,400,0008) | (400,400,0008)
+(4 rows)
+
+-- join with lateral reference
+EXPLAIN (COSTS OFF)
+SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t1.a = t2.b AND t1.b = t2.a) q WHERE t1.a%25 = 0 ORDER BY 1,2;
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Sort
+   Sort Key: t1.a, t1.b
+   ->  Append
+         ->  Foreign Scan
+               Relations: (public.ftprt1_p1 t1) INNER JOIN (public.ftprt2_p1 t2)
+         ->  Foreign Scan
+               Relations: (public.ftprt1_p2 t1) INNER JOIN (public.ftprt2_p2 t2)
+(7 rows)
+
+SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t1.a = t2.b AND t1.b = t2.a) q WHERE t1.a%25 = 0 ORDER BY 1,2;
+  a  |  b  
+-----+-----
+   0 |   0
+ 150 | 150
+ 250 | 250
+ 400 | 400
+(4 rows)
+
+RESET enable_partition_wise_join;

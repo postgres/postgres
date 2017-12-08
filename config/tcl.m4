@@ -4,7 +4,7 @@
 
 
 AC_DEFUN([PGAC_PATH_TCLSH],
-[AC_PATH_PROGS(TCLSH, [tclsh tcl tclsh8.6 tclsh86 tclsh8.5 tclsh85 tclsh8.4 tclsh84])
+[PGAC_PATH_PROGS(TCLSH, [tclsh tcl tclsh8.6 tclsh86 tclsh8.5 tclsh85 tclsh8.4 tclsh84])
 if test x"$TCLSH" = x""; then
   AC_MSG_ERROR([Tcl shell not found])
 fi

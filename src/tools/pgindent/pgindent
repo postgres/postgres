@@ -13,11 +13,12 @@ use Getopt::Long;
 
 # Update for pg_bsd_indent version
 my $INDENT_VERSION = "2.0";
+
 # Our standard indent settings
 my $indent_opts =
-  "-bad -bap -bbb -bc -bl -cli1 -cp33 -cdb -nce -d0 -di12 -nfc1 -i4 -l79 -lp -lpl -nip -npro -sac -tpg -ts4";
+"-bad -bap -bbb -bc -bl -cli1 -cp33 -cdb -nce -d0 -di12 -nfc1 -i4 -l79 -lp -lpl -nip -npro -sac -tpg -ts4";
 
-my $devnull        = File::Spec->devnull;
+my $devnull = File::Spec->devnull;
 
 my ($typedefs_file, $typedef_str, $code_base, $excludes, $indent, $build);
 
@@ -75,7 +76,7 @@ sub check_indent
 	if ($? == 0)
 	{
 		print STDERR
-		    "You appear to have GNU indent rather than BSD indent.\n";
+		  "You appear to have GNU indent rather than BSD indent.\n";
 		exit 1;
 	}
 }
@@ -254,8 +255,7 @@ sub run_indent
 	my $source        = shift;
 	my $error_message = shift;
 
-	my $cmd =
-	  "$indent $indent_opts -U" . $filtered_typedefs_fh->filename;
+	my $cmd = "$indent $indent_opts -U" . $filtered_typedefs_fh->filename;
 
 	my $tmp_fh = new File::Temp(TEMPLATE => "pgsrcXXXXX");
 	my $filename = $tmp_fh->filename;
@@ -394,6 +394,7 @@ push(@files, @ARGV);
 
 foreach my $source_filename (@files)
 {
+
 	# Automatically ignore .c and .h files that correspond to a .y or .l
 	# file.  indent tends to get badly confused by Bison/flex output,
 	# and there's no value in indenting derived files anyway.

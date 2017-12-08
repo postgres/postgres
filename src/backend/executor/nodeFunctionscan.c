@@ -262,9 +262,11 @@ FunctionRecheck(FunctionScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecFunctionScan(FunctionScanState *node)
+static TupleTableSlot *
+ExecFunctionScan(PlanState *pstate)
 {
+	FunctionScanState *node = castNode(FunctionScanState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) FunctionNext,
 					(ExecScanRecheckMtd) FunctionRecheck);
@@ -299,6 +301,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	scanstate = makeNode(FunctionScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecFunctionScan;
 	scanstate->eflags = eflags;
 
 	/*
@@ -380,7 +383,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 											&funcrettype,
 											&tupdesc);
 
-		if (functypclass == TYPEFUNC_COMPOSITE)
+		if (functypclass == TYPEFUNC_COMPOSITE ||
+			functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
 		{
 			/* Composite data type, e.g. a table's row type */
 			Assert(tupdesc);

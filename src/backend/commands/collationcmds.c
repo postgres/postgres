@@ -214,11 +214,15 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	if (!OidIsValid(newoid))
 		return InvalidObjectAddress;
 
-	ObjectAddressSet(address, CollationRelationId, newoid);
-
-	/* check that the locales can be loaded */
+	/*
+	 * Check that the locales can be loaded.  NB: pg_newlocale_from_collation
+	 * is only supposed to be called on non-C-equivalent locales.
+	 */
 	CommandCounterIncrement();
-	(void) pg_newlocale_from_collation(newoid);
+	if (!lc_collate_is_c(newoid) || !lc_ctype_is_c(newoid))
+		(void) pg_newlocale_from_collation(newoid);
+
+	ObjectAddressSet(address, CollationRelationId, newoid);
 
 	return address;
 }
@@ -357,6 +361,12 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 }
 
 
+/* will we use "locale -a" in pg_import_system_collations? */
+#if defined(HAVE_LOCALE_T) && !defined(WIN32)
+#define READ_LOCALE_A_OUTPUT
+#endif
+
+#if defined(READ_LOCALE_A_OUTPUT) || defined(USE_ICU)
 /*
  * Check a string to see if it is pure ASCII
  */
@@ -371,11 +381,7 @@ is_all_ascii(const char *str)
 	}
 	return true;
 }
-
-/* will we use "locale -a" in pg_import_system_collations? */
-#if defined(HAVE_LOCALE_T) && !defined(WIN32)
-#define READ_LOCALE_A_OUTPUT
-#endif
+#endif							/* READ_LOCALE_A_OUTPUT || USE_ICU */
 
 #ifdef READ_LOCALE_A_OUTPUT
 /*
@@ -661,7 +667,16 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 	}
 #endif							/* READ_LOCALE_A_OUTPUT */
 
-	/* Load collations known to ICU */
+	/*
+	 * Load collations known to ICU
+	 *
+	 * We use uloc_countAvailable()/uloc_getAvailable() rather than
+	 * ucol_countAvailable()/ucol_getAvailable().  The former returns a full
+	 * set of language+region combinations, whereas the latter only returns
+	 * language+region combinations of they are distinct from the language's
+	 * base collation.  So there might not be a de-DE or en-GB, which would be
+	 * confusing.
+	 */
 #ifdef USE_ICU
 	{
 		int			i;
@@ -670,21 +685,18 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		 * Start the loop at -1 to sneak in the root locale without too much
 		 * code duplication.
 		 */
-		for (i = -1; i < ucol_countAvailable(); i++)
+		for (i = -1; i < uloc_countAvailable(); i++)
 		{
 			const char *name;
 			char	   *langtag;
 			char	   *icucomment;
 			const char *collcollate;
-			UEnumeration *en;
-			UErrorCode	status;
-			const char *val;
 			Oid			collid;
 
 			if (i == -1)
 				name = "";		/* ICU root locale */
 			else
-				name = ucol_getAvailable(i);
+				name = uloc_getAvailable(i);
 
 			langtag = get_icu_language_tag(name);
 			collcollate = U_ICU_VERSION_MAJOR_NUM >= 54 ? langtag : name;
@@ -713,56 +725,6 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 					CreateComments(collid, CollationRelationId, 0,
 								   icucomment);
 			}
-
-			/*
-			 * Add keyword variants
-			 */
-			status = U_ZERO_ERROR;
-			en = ucol_getKeywordValuesForLocale("collation", name, TRUE, &status);
-			if (U_FAILURE(status))
-				ereport(ERROR,
-						(errmsg("could not get keyword values for locale \"%s\": %s",
-								name, u_errorName(status))));
-
-			status = U_ZERO_ERROR;
-			uenum_reset(en, &status);
-			while ((val = uenum_next(en, NULL, &status)))
-			{
-				char	   *localeid = psprintf("%s@collation=%s", name, val);
-
-				langtag = get_icu_language_tag(localeid);
-				collcollate = U_ICU_VERSION_MAJOR_NUM >= 54 ? langtag : localeid;
-
-				/*
-				 * Be paranoid about not allowing any non-ASCII strings into
-				 * pg_collation
-				 */
-				if (!is_all_ascii(langtag) || !is_all_ascii(collcollate))
-					continue;
-
-				collid = CollationCreate(psprintf("%s-x-icu", langtag),
-										 nspid, GetUserId(),
-										 COLLPROVIDER_ICU, -1,
-										 collcollate, collcollate,
-										 get_collation_actual_version(COLLPROVIDER_ICU, collcollate),
-										 true, true);
-				if (OidIsValid(collid))
-				{
-					ncreated++;
-
-					CommandCounterIncrement();
-
-					icucomment = get_icu_locale_comment(name);
-					if (icucomment)
-						CreateComments(collid, CollationRelationId, 0,
-									   icucomment);
-				}
-			}
-			if (U_FAILURE(status))
-				ereport(ERROR,
-						(errmsg("could not get keyword values for locale \"%s\": %s",
-								name, u_errorName(status))));
-			uenum_close(en);
 		}
 	}
 #endif							/* USE_ICU */

@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_extension.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPEXTENSION">
+<refentry id="sql-dropextension">
  <indexterm zone="sql-dropextension">
   <primary>DROP EXTENSION</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP EXTENSION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP EXTENSION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -54,7 +54,7 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of an installed extension.
@@ -68,7 +68,7 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [
      <para>
       Automatically drop objects that depend on the extension,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -79,7 +79,7 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [
      <para>
       Refuse to drop the extension if any objects depend on it (other than
       its own member objects and other extensions listed in the same
-      <command>DROP</> command).  This is the default.
+      <command>DROP</command> command).  This is the default.
      </para>
     </listitem>
    </varlistentry>
@@ -97,7 +97,7 @@ DROP EXTENSION hstore;
 </programlisting>
    This command will fail if any of <literal>hstore</literal>'s objects
    are in use in the database, for example if any tables have columns
-   of the <type>hstore</> type.  Add the <literal>CASCADE</> option to
+   of the <type>hstore</type> type.  Add the <literal>CASCADE</literal> option to
    forcibly remove those dependent objects as well.
   </para>
  </refsect1>
@@ -106,7 +106,7 @@ DROP EXTENSION hstore;
   <title>Compatibility</title>
 
   <para>
-   <command>DROP EXTENSION</command> is a <productname>PostgreSQL</>
+   <command>DROP EXTENSION</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>
@@ -115,8 +115,8 @@ DROP EXTENSION hstore;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createextension"></member>
-   <member><xref linkend="sql-alterextension"></member>
+   <member><xref linkend="sql-createextension"/></member>
+   <member><xref linkend="sql-alterextension"/></member>
   </simplelist>
  </refsect1>
 

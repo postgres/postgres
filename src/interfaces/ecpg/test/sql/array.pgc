@@ -107,5 +107,5 @@ EXEC SQL END DECLARE SECTION;
 
 	free(t);
 
-	return (0);
+	return 0;
 }

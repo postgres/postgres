@@ -474,9 +474,12 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		 cluster->controldata.ctrl_ver >= LARGE_OBJECT_SIZE_PG_CONTROL_VER) ||
 		!got_date_is_int || !got_data_checksum_version)
 	{
-		pg_log(PG_REPORT,
-			   "The %s cluster lacks some required control information:\n",
-			   CLUSTER_NAME(cluster));
+		if (cluster == &old_cluster)
+			pg_log(PG_REPORT,
+				   "The source cluster lacks some required control information:\n");
+		else
+			pg_log(PG_REPORT,
+				   "The target cluster lacks some required control information:\n");
 
 		if (!got_xid)
 			pg_log(PG_REPORT, "  checkpoint next XID\n");

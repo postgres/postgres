@@ -75,7 +75,7 @@ static const gbtree_vinfo tinfo =
 {
 	gbt_t_bytea,
 	0,
-	TRUE,
+	true,
 	gbt_byteagt,
 	gbt_byteage,
 	gbt_byteaeq,

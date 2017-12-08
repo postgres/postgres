@@ -232,9 +232,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 		/*
 		 * We loop through the lexemes in the tsvector and add them to our
-		 * tracking hashtable.  Note: the hashtable entries will point into
-		 * the (detoasted) tsvector value, therefore we cannot free that
-		 * storage until we're done.
+		 * tracking hashtable.
 		 */
 		lexemesptr = STRPTR(vector);
 		curentryptr = ARRPTR(vector);
@@ -242,7 +240,12 @@ compute_tsvector_stats(VacAttrStats *stats,
 		{
 			bool		found;
 
-			/* Construct a hash key */
+			/*
+			 * Construct a hash key.  The key points into the (detoasted)
+			 * tsvector value at this point, but if a new entry is created, we
+			 * make a copy of it.  This way we can free the tsvector value
+			 * once we've processed all its lexemes.
+			 */
 			hash_key.lexeme = lexemesptr + curentryptr->pos;
 			hash_key.length = curentryptr->len;
 
@@ -261,6 +264,9 @@ compute_tsvector_stats(VacAttrStats *stats,
 				/* Initialize new tracking list element */
 				item->frequency = 1;
 				item->delta = b_current - 1;
+
+				item->key.lexeme = palloc(hash_key.length);
+				memcpy(item->key.lexeme, hash_key.lexeme, hash_key.length);
 			}
 
 			/* lexeme_no is the number of elements processed (ie N) */
@@ -276,6 +282,10 @@ compute_tsvector_stats(VacAttrStats *stats,
 			/* Advance to the next WordEntry in the tsvector */
 			curentryptr++;
 		}
+
+		/* If the vector was toasted, free the detoasted copy. */
+		if (TSVectorGetDatum(vector) != value)
+			pfree(vector);
 	}
 
 	/* We can only compute real stats if we found some non-null values. */
@@ -447,9 +457,12 @@ prune_lexemes_hashtable(HTAB *lexemes_tab, int b_current)
 	{
 		if (item->frequency + item->delta <= b_current)
 		{
+			char	   *lexeme = item->key.lexeme;
+
 			if (hash_search(lexemes_tab, (const void *) &item->key,
 							HASH_REMOVE, NULL) == NULL)
 				elog(ERROR, "hash table corrupted");
+			pfree(lexeme);
 		}
 	}
 }

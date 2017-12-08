@@ -232,7 +232,7 @@ PTHREAD_LIBS		= @PTHREAD_LIBS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 
-override CPPFLAGS := $(CPPFLAGS) $(ICU_CFLAGS)
+override CPPFLAGS := $(ICU_CFLAGS) $(CPPFLAGS)
 
 ifdef PGXS
 override CPPFLAGS := -I$(includedir_server) -I$(includedir_internal) $(CPPFLAGS)
@@ -304,6 +304,7 @@ else
 endif
 perl_archlibexp		= @perl_archlibexp@
 perl_privlibexp		= @perl_privlibexp@
+perl_embed_ccflags	= @perl_embed_ccflags@
 perl_embed_ldflags	= @perl_embed_ldflags@
 
 # Miscellaneous
@@ -361,12 +362,14 @@ endef
 ifeq ($(enable_tap_tests),yes)
 
 define prove_installcheck
-rm -rf $(CURDIR)/tmp_check/log
+rm -rf '$(CURDIR)'/tmp_check
+$(MKDIR_P) '$(CURDIR)'/tmp_check
 cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
 endef
 
 define prove_check
-rm -rf $(CURDIR)/tmp_check/log
+rm -rf '$(CURDIR)'/tmp_check
+$(MKDIR_P) '$(CURDIR)'/tmp_check
 cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
 endef
 
@@ -403,8 +406,6 @@ STRIP_SHARED_LIB = @STRIP_SHARED_LIB@
 
 DBTOEPUB	= @DBTOEPUB@
 FOP				= @FOP@
-NSGMLS			= @NSGMLS@
-OSX				= @OSX@
 XMLLINT			= @XMLLINT@
 XSLTPROC		= @XSLTPROC@
 
@@ -866,30 +867,50 @@ endif # enable_nls
 #		gcov from foo.gcda (by "make coverage")
 #   foo.c.gcov.out  stdout captured when foo.c.gcov is created, mildly
 #		interesting
-#   lcov.info	lcov tracefile, built from gcda files in one directory,
+#   lcov_test.info
+#		lcov tracefile, built from gcda files in one directory,
 #		later collected by "make coverage-html"
+#   lcov_base.info
+#		tracefile for zero counters for every file, so that
+#		even files that are not touched by tests are counted
+#		for the overall coverage rate
 
 ifeq ($(enable_coverage), yes)
 
-# There is a strange interaction between lcov and existing .gcov
-# output files.  Hence the rm command and the ordering dependency.
+# make coverage -- text output
 
-gcda_files := $(wildcard *.gcda)
+local_gcda_files = $(wildcard *.gcda)
 
-lcov.info: $(gcda_files)
-	rm -f *.gcov
-	$(if $^,$(LCOV) -d . -c -o $@ $(LCOVFLAGS) --gcov-tool $(GCOV))
+coverage: $(local_gcda_files:.gcda=.c.gcov)
 
-%.c.gcov: %.gcda | lcov.info
+%.c.gcov: %.gcda
 	$(GCOV) -b -f -p -o . $(GCOVFLAGS) $*.c >$*.c.gcov.out
 
-coverage: $(gcda_files:.gcda=.c.gcov) lcov.info
+# make coverage-html -- HTML output via lcov
 
 .PHONY: coverage-html
-coverage-html: coverage
+coverage-html: coverage-html-stamp
+
+GENHTML_FLAGS = -q --legend
+GENHTML_TITLE = PostgreSQL $(VERSION)
+
+coverage-html-stamp: lcov_base.info lcov_test.info
 	rm -rf coverage
-	mkdir coverage
-	$(GENHTML) --show-details --legend --output-directory=coverage --title=PostgreSQL --num-spaces=4 --prefix=$(abs_top_srcdir) `find . -name lcov.info -print`
+	$(GENHTML) $(GENHTML_FLAGS) -o coverage --title='$(GENHTML_TITLE)' --num-spaces=4 $(if $(filter no,$(vpath_build)),--prefix='$(abs_top_srcdir)') $^
+	touch $@
+
+LCOV += --gcov-tool $(GCOV)
+LCOVFLAGS = -q --no-external
+
+all_gcno_files = $(shell find . -name '*.gcno' -print)
+
+lcov_base.info: $(all_gcno_files)
+	$(LCOV) $(LCOVFLAGS) -c -i -d . -d $(srcdir) -o $@
+
+all_gcda_files = $(shell find . -name '*.gcda' -print)
+
+lcov_test.info: $(all_gcda_files)
+	$(LCOV) $(LCOVFLAGS) -c -d . -d $(srcdir) -o $@
 
 
 # hook for clean-up
@@ -897,8 +918,8 @@ clean distclean maintainer-clean: clean-coverage
 
 .PHONY: clean-coverage
 clean-coverage:
-	rm -rf coverage
-	rm -f *.gcda *.gcno lcov.info *.gcov *.gcov.out
+	rm -rf coverage coverage-html-stamp
+	rm -f *.gcda *.gcno lcov*.info *.gcov .*.gcov *.gcov.out
 
 
 # User-callable target to reset counts between test runs

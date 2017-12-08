@@ -63,6 +63,7 @@ test: copyselect
 test: copydml
 test: create_misc
 test: create_operator
+test: create_procedure
 test: create_index
 test: create_view
 test: create_aggregate
@@ -79,6 +80,7 @@ test: updatable_views
 test: rolenames
 test: roleattributes
 test: create_am
+test: hash_func
 test: sanity_check
 test: errors
 test: select
@@ -115,12 +117,11 @@ test: matview
 test: lock
 test: replica_identity
 test: rowsecurity
-test: password
 test: object_address
 test: tablesample
 test: groupingsets
 test: drop_operator
-test: large_object
+test: password
 test: alter_generic
 test: alter_operator
 test: misc
@@ -135,6 +136,7 @@ test: stats_ext
 test: rules
 test: psql_crosstab
 test: select_parallel
+test: write_parallel
 test: publication
 test: subscription
 test: amutils
@@ -171,12 +173,16 @@ test: conversion
 test: truncate
 test: alter_table
 test: sequence
-test: identity
 test: polymorphism
 test: rowtypes
 test: returning
 test: largeobject
 test: with
 test: xml
+test: identity
+test: partition_join
+test: partition_prune
+test: reloptions
+test: hash_part
 test: event_trigger
 test: stats

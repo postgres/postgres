@@ -124,7 +124,7 @@ validOperatorName(const char *name)
  *		finds an operator given an exact specification (name, namespace,
  *		left and right type IDs).
  *
- *		*defined is set TRUE if defined (not a shell)
+ *		*defined is set true if defined (not a shell)
  */
 static Oid
 OperatorGet(const char *operatorName,
@@ -164,7 +164,7 @@ OperatorGet(const char *operatorName,
  *		looks up an operator given a possibly-qualified name and
  *		left and right type IDs.
  *
- *		*defined is set TRUE if defined (not a shell)
+ *		*defined is set true if defined (not a shell)
  */
 static Oid
 OperatorLookup(List *operatorName,

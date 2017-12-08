@@ -83,8 +83,6 @@ $node_standby->poll_query_until('postgres', $caughtup_query)
 
 # Promote the standby
 $node_standby->promote;
-$node_standby->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby";
 $node_standby->psql('postgres', 'checkpoint');
 
 # Restart to discard in-memory copy of FSM

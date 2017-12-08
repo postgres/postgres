@@ -23,36 +23,46 @@
 #include "executor/tqueue.h"
 #include "lib/binaryheap.h"
 #include "miscadmin.h"
+#include "optimizer/planmain.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-
-/*
- * Tuple array for each worker
- */
-typedef struct GMReaderTupleBuffer
-{
-	HeapTuple  *tuple;
-	int			readCounter;
-	int			nTuples;
-	bool		done;
-} GMReaderTupleBuffer;
 
 /*
  * When we read tuples from workers, it's a good idea to read several at once
  * for efficiency when possible: this minimizes context-switching overhead.
  * But reading too many at a time wastes memory without improving performance.
+ * We'll read up to MAX_TUPLE_STORE tuples (in addition to the first one).
  */
 #define MAX_TUPLE_STORE 10
 
+/*
+ * Pending-tuple array for each worker.  This holds additional tuples that
+ * we were able to fetch from the worker, but can't process yet.  In addition,
+ * this struct holds the "done" flag indicating the worker is known to have
+ * no more tuples.  (We do not use this struct for the leader; we don't keep
+ * any pending tuples for the leader, and the need_to_scan_locally flag serves
+ * as its "done" indicator.)
+ */
+typedef struct GMReaderTupleBuffer
+{
+	HeapTuple  *tuple;			/* array of length MAX_TUPLE_STORE */
+	int			nTuples;		/* number of tuples currently stored */
+	int			readCounter;	/* index of next tuple to extract */
+	bool		done;			/* true if reader is known exhausted */
+} GMReaderTupleBuffer;
+
+static TupleTableSlot *ExecGatherMerge(PlanState *pstate);
 static int32 heap_compare_slots(Datum a, Datum b, void *arg);
 static TupleTableSlot *gather_merge_getnext(GatherMergeState *gm_state);
 static HeapTuple gm_readnext_tuple(GatherMergeState *gm_state, int nreader,
 				  bool nowait, bool *done);
-static void gather_merge_init(GatherMergeState *gm_state);
 static void ExecShutdownGatherMergeWorkers(GatherMergeState *node);
+static void gather_merge_setup(GatherMergeState *gm_state);
+static void gather_merge_init(GatherMergeState *gm_state);
+static void gather_merge_clear_tuples(GatherMergeState *gm_state);
 static bool gather_merge_readnext(GatherMergeState *gm_state, int reader,
 					  bool nowait);
-static void form_tuple_array(GatherMergeState *gm_state, int reader);
+static void load_tuple_array(GatherMergeState *gm_state, int reader);
 
 /* ----------------------------------------------------------------
  *		ExecInitGather
@@ -75,6 +85,11 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	gm_state = makeNode(GatherMergeState);
 	gm_state->ps.plan = (Plan *) node;
 	gm_state->ps.state = estate;
+	gm_state->ps.ExecProcNode = ExecGatherMerge;
+
+	gm_state->initialized = false;
+	gm_state->gm_initialized = false;
+	gm_state->tuples_needed = -1;
 
 	/*
 	 * Miscellaneous initialization
@@ -84,10 +99,10 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &gm_state->ps);
 
 	/*
-	 * initialize child expressions
+	 * GatherMerge doesn't support checking a qual (it's always more efficient
+	 * to do it in the child node).
 	 */
-	gm_state->ps.qual =
-		ExecInitQual(node->plan.qual, &gm_state->ps);
+	Assert(!node->plan.qual);
 
 	/*
 	 * tuple table initialization
@@ -101,12 +116,19 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	outerPlanState(gm_state) = ExecInitNode(outerNode, estate, eflags);
 
 	/*
+	 * Store the tuple descriptor into gather merge state, so we can use it
+	 * while initializing the gather merge slots.
+	 */
+	if (!ExecContextForcesOids(outerPlanState(gm_state), &hasoid))
+		hasoid = false;
+	tupDesc = ExecTypeFromTL(outerNode->targetlist, hasoid);
+	gm_state->tupDesc = tupDesc;
+
+	/*
 	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&gm_state->ps);
-	ExecAssignProjectionInfo(&gm_state->ps, NULL);
-
-	gm_state->gm_initialized = false;
+	ExecConditionalAssignProjectionInfo(&gm_state->ps, tupDesc, OUTER_VAR);
 
 	/*
 	 * initialize sort-key information
@@ -138,14 +160,8 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 		}
 	}
 
-	/*
-	 * store the tuple descriptor into gather merge state, so we can use it
-	 * later while initializing the gather merge slots.
-	 */
-	if (!ExecContextForcesOids(&gm_state->ps, &hasoid))
-		hasoid = false;
-	tupDesc = ExecTypeFromTL(outerNode->targetlist, hasoid);
-	gm_state->tupDesc = tupDesc;
+	/* Now allocate the workspace for gather merge */
+	gather_merge_setup(gm_state);
 
 	return gm_state;
 }
@@ -157,12 +173,14 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
  *		the next qualifying tuple.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecGatherMerge(GatherMergeState *node)
+static TupleTableSlot *
+ExecGatherMerge(PlanState *pstate)
 {
+	GatherMergeState *node = castNode(GatherMergeState, pstate);
 	TupleTableSlot *slot;
 	ExprContext *econtext;
-	int			i;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * As with Gather, we don't launch workers until this node is actually
@@ -171,54 +189,56 @@ ExecGatherMerge(GatherMergeState *node)
 	if (!node->initialized)
 	{
 		EState	   *estate = node->ps.state;
-		GatherMerge *gm = (GatherMerge *) node->ps.plan;
+		GatherMerge *gm = castNode(GatherMerge, node->ps.plan);
 
 		/*
 		 * Sometimes we might have to run without parallelism; but if parallel
 		 * mode is active then we can try to fire up some workers.
 		 */
-		if (gm->num_workers > 0 && IsInParallelMode())
+		if (gm->num_workers > 0 && estate->es_use_parallel_mode)
 		{
 			ParallelContext *pcxt;
 
-			/* Initialize data structures for workers. */
+			/* Initialize, or re-initialize, shared state needed by workers. */
 			if (!node->pei)
 				node->pei = ExecInitParallelPlan(node->ps.lefttree,
 												 estate,
-												 gm->num_workers);
+												 gm->initParam,
+												 gm->num_workers,
+												 node->tuples_needed);
+			else
+				ExecParallelReinitialize(node->ps.lefttree,
+										 node->pei,
+										 gm->initParam);
 
 			/* Try to launch workers. */
 			pcxt = node->pei->pcxt;
 			LaunchParallelWorkers(pcxt);
+			/* We save # workers launched for the benefit of EXPLAIN */
 			node->nworkers_launched = pcxt->nworkers_launched;
 
 			/* Set up tuple queue readers to read the results. */
 			if (pcxt->nworkers_launched > 0)
 			{
-				node->nreaders = 0;
-				node->reader = palloc(pcxt->nworkers_launched *
-									  sizeof(TupleQueueReader *));
-
-				Assert(gm->numCols);
-
-				for (i = 0; i < pcxt->nworkers_launched; ++i)
-				{
-					shm_mq_set_handle(node->pei->tqueue[i],
-									  pcxt->worker[i].bgwhandle);
-					node->reader[node->nreaders++] =
-						CreateTupleQueueReader(node->pei->tqueue[i],
-											   node->tupDesc);
-				}
+				ExecParallelCreateReaders(node->pei);
+				/* Make a working array showing the active readers */
+				node->nreaders = pcxt->nworkers_launched;
+				node->reader = (TupleQueueReader **)
+					palloc(node->nreaders * sizeof(TupleQueueReader *));
+				memcpy(node->reader, node->pei->reader,
+					   node->nreaders * sizeof(TupleQueueReader *));
 			}
 			else
 			{
 				/* No workers?	Then never mind. */
-				ExecShutdownGatherMergeWorkers(node);
+				node->nreaders = 0;
+				node->reader = NULL;
 			}
 		}
 
-		/* always allow leader to participate */
-		node->need_to_scan_locally = true;
+		/* allow leader to participate if enabled or no choice */
+		if (parallel_leader_participation || node->nreaders == 0)
+			node->need_to_scan_locally = true;
 		node->initialized = true;
 	}
 
@@ -237,10 +257,12 @@ ExecGatherMerge(GatherMergeState *node)
 	if (TupIsNull(slot))
 		return NULL;
 
+	/* If no projection is required, we're done. */
+	if (node->ps.ps_ProjInfo == NULL)
+		return slot;
+
 	/*
-	 * form the result tuple using ExecProject(), and return it --- unless the
-	 * projection produces an empty set, in which case we must loop back
-	 * around for another tuple
+	 * Form the result tuple using ExecProject(), and return it.
 	 */
 	econtext->ecxt_outertuple = slot;
 	return ExecProject(node->ps.ps_ProjInfo);
@@ -265,8 +287,6 @@ ExecEndGatherMerge(GatherMergeState *node)
  *		ExecShutdownGatherMerge
  *
  *		Destroy the setup for parallel workers including parallel context.
- *		Collect all the stats after workers are stopped, else some work
- *		done by workers won't be accounted.
  * ----------------------------------------------------------------
  */
 void
@@ -285,157 +305,226 @@ ExecShutdownGatherMerge(GatherMergeState *node)
 /* ----------------------------------------------------------------
  *		ExecShutdownGatherMergeWorkers
  *
- *		Destroy the parallel workers.  Collect all the stats after
- *		workers are stopped, else some work done by workers won't be
- *		accounted.
+ *		Stop all the parallel workers.
  * ----------------------------------------------------------------
  */
 static void
 ExecShutdownGatherMergeWorkers(GatherMergeState *node)
 {
-	/* Shut down tuple queue readers before shutting down workers. */
-	if (node->reader != NULL)
-	{
-		int			i;
-
-		for (i = 0; i < node->nreaders; ++i)
-			if (node->reader[i])
-				DestroyTupleQueueReader(node->reader[i]);
-
-		pfree(node->reader);
-		node->reader = NULL;
-	}
-
-	/* Now shut down the workers. */
 	if (node->pei != NULL)
 		ExecParallelFinish(node->pei);
+
+	/* Flush local copy of reader array */
+	if (node->reader)
+		pfree(node->reader);
+	node->reader = NULL;
 }
 
 /* ----------------------------------------------------------------
  *		ExecReScanGatherMerge
  *
- *		Re-initialize the workers and rescans a relation via them.
+ *		Prepare to re-scan the result of a GatherMerge.
  * ----------------------------------------------------------------
  */
 void
 ExecReScanGatherMerge(GatherMergeState *node)
 {
-	/*
-	 * Re-initialize the parallel workers to perform rescan of relation. We
-	 * want to gracefully shutdown all the workers so that they should be able
-	 * to propagate any error or other information to master backend before
-	 * dying.  Parallel context will be reused for rescan.
-	 */
+	GatherMerge *gm = (GatherMerge *) node->ps.plan;
+	PlanState  *outerPlan = outerPlanState(node);
+
+	/* Make sure any existing workers are gracefully shut down */
 	ExecShutdownGatherMergeWorkers(node);
 
+	/* Free any unused tuples, so we don't leak memory across rescans */
+	gather_merge_clear_tuples(node);
+
+	/* Mark node so that shared state will be rebuilt at next call */
 	node->initialized = false;
+	node->gm_initialized = false;
 
-	if (node->pei)
-		ExecParallelReinitialize(node->pei);
+	/*
+	 * Set child node's chgParam to tell it that the next scan might deliver a
+	 * different set of rows within the leader process.  (The overall rowset
+	 * shouldn't change, but the leader process's subset might; hence nodes
+	 * between here and the parallel table scan node mustn't optimize on the
+	 * assumption of an unchanging rowset.)
+	 */
+	if (gm->rescan_param >= 0)
+		outerPlan->chgParam = bms_add_member(outerPlan->chgParam,
+											 gm->rescan_param);
 
-	ExecReScan(node->ps.lefttree);
+	/*
+	 * If chgParam of subnode is not null then plan will be re-scanned by
+	 * first ExecProcNode.  Note: because this does nothing if we have a
+	 * rescan_param, it's currently guaranteed that parallel-aware child nodes
+	 * will not see a ReScan call until after they get a ReInitializeDSM call.
+	 * That ordering might not be something to rely on, though.  A good rule
+	 * of thumb is that ReInitializeDSM should reset only shared state, ReScan
+	 * should reset only local state, and anything that depends on both of
+	 * those steps being finished must wait until the first ExecProcNode call.
+	 */
+	if (outerPlan->chgParam == NULL)
+		ExecReScan(outerPlan);
 }
 
 /*
- * Initialize the Gather merge tuple read.
+ * Set up the data structures that we'll need for Gather Merge.
  *
- * Pull at least a single tuple from each worker + leader and set up the heap.
+ * We allocate these once on the basis of gm->num_workers, which is an
+ * upper bound for the number of workers we'll actually have.  During
+ * a rescan, we reset the structures to empty.  This approach simplifies
+ * not leaking memory across rescans.
+ *
+ * In the gm_slots[] array, index 0 is for the leader, and indexes 1 to n
+ * are for workers.  The values placed into gm_heap correspond to indexes
+ * in gm_slots[].  The gm_tuple_buffers[] array, however, is indexed from
+ * 0 to n-1; it has no entry for the leader.
+ */
+static void
+gather_merge_setup(GatherMergeState *gm_state)
+{
+	GatherMerge *gm = castNode(GatherMerge, gm_state->ps.plan);
+	int			nreaders = gm->num_workers;
+	int			i;
+
+	/*
+	 * Allocate gm_slots for the number of workers + one more slot for leader.
+	 * Slot 0 is always for the leader.  Leader always calls ExecProcNode() to
+	 * read the tuple, and then stores it directly into its gm_slots entry.
+	 * For other slots, code below will call ExecInitExtraTupleSlot() to
+	 * create a slot for the worker's results.  Note that during any single
+	 * scan, we might have fewer than num_workers available workers, in which
+	 * case the extra array entries go unused.
+	 */
+	gm_state->gm_slots = (TupleTableSlot **)
+		palloc0((nreaders + 1) * sizeof(TupleTableSlot *));
+
+	/* Allocate the tuple slot and tuple array for each worker */
+	gm_state->gm_tuple_buffers = (GMReaderTupleBuffer *)
+		palloc0(nreaders * sizeof(GMReaderTupleBuffer));
+
+	for (i = 0; i < nreaders; i++)
+	{
+		/* Allocate the tuple array with length MAX_TUPLE_STORE */
+		gm_state->gm_tuple_buffers[i].tuple =
+			(HeapTuple *) palloc0(sizeof(HeapTuple) * MAX_TUPLE_STORE);
+
+		/* Initialize tuple slot for worker */
+		gm_state->gm_slots[i + 1] = ExecInitExtraTupleSlot(gm_state->ps.state);
+		ExecSetSlotDescriptor(gm_state->gm_slots[i + 1],
+							  gm_state->tupDesc);
+	}
+
+	/* Allocate the resources for the merge */
+	gm_state->gm_heap = binaryheap_allocate(nreaders + 1,
+											heap_compare_slots,
+											gm_state);
+}
+
+/*
+ * Initialize the Gather Merge.
+ *
+ * Reset data structures to ensure they're empty.  Then pull at least one
+ * tuple from leader + each worker (or set its "done" indicator), and set up
+ * the heap.
  */
 static void
 gather_merge_init(GatherMergeState *gm_state)
 {
 	int			nreaders = gm_state->nreaders;
-	bool		initialize = true;
+	bool		nowait = true;
 	int			i;
 
-	/*
-	 * Allocate gm_slots for the number of worker + one more slot for leader.
-	 * Last slot is always for leader. Leader always calls ExecProcNode() to
-	 * read the tuple which will return the TupleTableSlot. Later it will
-	 * directly get assigned to gm_slot. So just initialize leader gm_slot
-	 * with NULL. For other slots below code will call
-	 * ExecInitExtraTupleSlot() which will do the initialization of worker
-	 * slots.
-	 */
-	gm_state->gm_slots =
-		palloc((gm_state->nreaders + 1) * sizeof(TupleTableSlot *));
-	gm_state->gm_slots[gm_state->nreaders] = NULL;
+	/* Assert that gather_merge_setup made enough space */
+	Assert(nreaders <= castNode(GatherMerge, gm_state->ps.plan)->num_workers);
 
-	/* Initialize the tuple slot and tuple array for each worker */
-	gm_state->gm_tuple_buffers =
-		(GMReaderTupleBuffer *) palloc0(sizeof(GMReaderTupleBuffer) *
-										(gm_state->nreaders + 1));
-	for (i = 0; i < gm_state->nreaders; i++)
+	/* Reset leader's tuple slot to empty */
+	gm_state->gm_slots[0] = NULL;
+
+	/* Reset the tuple slot and tuple array for each worker */
+	for (i = 0; i < nreaders; i++)
 	{
-		/* Allocate the tuple array with MAX_TUPLE_STORE size */
-		gm_state->gm_tuple_buffers[i].tuple =
-			(HeapTuple *) palloc0(sizeof(HeapTuple) * MAX_TUPLE_STORE);
-
-		/* Initialize slot for worker */
-		gm_state->gm_slots[i] = ExecInitExtraTupleSlot(gm_state->ps.state);
-		ExecSetSlotDescriptor(gm_state->gm_slots[i],
-							  gm_state->tupDesc);
+		/* Reset tuple array to empty */
+		gm_state->gm_tuple_buffers[i].nTuples = 0;
+		gm_state->gm_tuple_buffers[i].readCounter = 0;
+		/* Reset done flag to not-done */
+		gm_state->gm_tuple_buffers[i].done = false;
+		/* Ensure output slot is empty */
+		ExecClearTuple(gm_state->gm_slots[i + 1]);
 	}
 
-	/* Allocate the resources for the merge */
-	gm_state->gm_heap = binaryheap_allocate(gm_state->nreaders + 1,
-											heap_compare_slots,
-											gm_state);
+	/* Reset binary heap to empty */
+	binaryheap_reset(gm_state->gm_heap);
 
 	/*
 	 * First, try to read a tuple from each worker (including leader) in
-	 * nowait mode, so that we initialize read from each worker as well as
-	 * leader. After this, if all active workers are unable to produce a
-	 * tuple, then re-read and this time use wait mode. For workers that were
-	 * able to produce a tuple in the earlier loop and are still active, just
-	 * try to fill the tuple array if more tuples are avaiable.
+	 * nowait mode.  After this, if not all workers were able to produce a
+	 * tuple (or a "done" indication), then re-read from remaining workers,
+	 * this time using wait mode.  Add all live readers (those producing at
+	 * least one tuple) to the heap.
 	 */
 reread:
-	for (i = 0; i < nreaders + 1; i++)
+	for (i = 0; i <= nreaders; i++)
 	{
-		if (!gm_state->gm_tuple_buffers[i].done &&
-			(TupIsNull(gm_state->gm_slots[i]) ||
-			 gm_state->gm_slots[i]->tts_isempty))
+		CHECK_FOR_INTERRUPTS();
+
+		/* skip this source if already known done */
+		if ((i == 0) ? gm_state->need_to_scan_locally :
+			!gm_state->gm_tuple_buffers[i - 1].done)
 		{
-			if (gather_merge_readnext(gm_state, i, initialize))
+			if (TupIsNull(gm_state->gm_slots[i]))
 			{
-				binaryheap_add_unordered(gm_state->gm_heap,
-										 Int32GetDatum(i));
+				/* Don't have a tuple yet, try to get one */
+				if (gather_merge_readnext(gm_state, i, nowait))
+					binaryheap_add_unordered(gm_state->gm_heap,
+											 Int32GetDatum(i));
+			}
+			else
+			{
+				/*
+				 * We already got at least one tuple from this worker, but
+				 * might as well see if it has any more ready by now.
+				 */
+				load_tuple_array(gm_state, i);
 			}
 		}
-		else
-			form_tuple_array(gm_state, i);
 	}
-	initialize = false;
 
-	for (i = 0; i < nreaders; i++)
-		if (!gm_state->gm_tuple_buffers[i].done &&
-			(TupIsNull(gm_state->gm_slots[i]) ||
-			 gm_state->gm_slots[i]->tts_isempty))
+	/* need not recheck leader, since nowait doesn't matter for it */
+	for (i = 1; i <= nreaders; i++)
+	{
+		if (!gm_state->gm_tuple_buffers[i - 1].done &&
+			TupIsNull(gm_state->gm_slots[i]))
+		{
+			nowait = false;
 			goto reread;
+		}
+	}
 
+	/* Now heapify the heap. */
 	binaryheap_build(gm_state->gm_heap);
+
 	gm_state->gm_initialized = true;
 }
 
 /*
- * Clear out the tuple table slots for each gather merge input.
+ * Clear out the tuple table slot, and any unused pending tuples,
+ * for each gather merge input.
  */
 static void
-gather_merge_clear_slots(GatherMergeState *gm_state)
+gather_merge_clear_tuples(GatherMergeState *gm_state)
 {
 	int			i;
 
 	for (i = 0; i < gm_state->nreaders; i++)
 	{
-		pfree(gm_state->gm_tuple_buffers[i].tuple);
-		gm_state->gm_slots[i] = ExecClearTuple(gm_state->gm_slots[i]);
-	}
+		GMReaderTupleBuffer *tuple_buffer = &gm_state->gm_tuple_buffers[i];
 
-	/* Free tuple array as we don't need it any more */
-	pfree(gm_state->gm_tuple_buffers);
-	/* Free the binaryheap, which was created for sort */
-	binaryheap_free(gm_state->gm_heap);
+		while (tuple_buffer->readCounter < tuple_buffer->nTuples)
+			heap_freetuple(tuple_buffer->tuple[tuple_buffer->readCounter++]);
+
+		ExecClearTuple(gm_state->gm_slots[i + 1]);
+	}
 }
 
 /*
@@ -469,13 +558,16 @@ gather_merge_getnext(GatherMergeState *gm_state)
 		if (gather_merge_readnext(gm_state, i, false))
 			binaryheap_replace_first(gm_state->gm_heap, Int32GetDatum(i));
 		else
+		{
+			/* reader exhausted, remove it from heap */
 			(void) binaryheap_remove_first(gm_state->gm_heap);
+		}
 	}
 
 	if (binaryheap_empty(gm_state->gm_heap))
 	{
 		/* All the queues are exhausted, and so is the heap */
-		gather_merge_clear_slots(gm_state);
+		gather_merge_clear_tuples(gm_state);
 		return NULL;
 	}
 	else
@@ -487,37 +579,37 @@ gather_merge_getnext(GatherMergeState *gm_state)
 }
 
 /*
- * Read the tuple for given reader in nowait mode, and form the tuple array.
+ * Read tuple(s) for given reader in nowait mode, and load into its tuple
+ * array, until we have MAX_TUPLE_STORE of them or would have to block.
  */
 static void
-form_tuple_array(GatherMergeState *gm_state, int reader)
+load_tuple_array(GatherMergeState *gm_state, int reader)
 {
-	GMReaderTupleBuffer *tuple_buffer = &gm_state->gm_tuple_buffers[reader];
+	GMReaderTupleBuffer *tuple_buffer;
 	int			i;
 
-	/* Last slot is for leader and we don't build tuple array for leader */
-	if (reader == gm_state->nreaders)
+	/* Don't do anything if this is the leader. */
+	if (reader == 0)
 		return;
 
-	/*
-	 * We here because we already read all the tuples from the tuple array, so
-	 * initialize the counter to zero.
-	 */
+	tuple_buffer = &gm_state->gm_tuple_buffers[reader - 1];
+
+	/* If there's nothing in the array, reset the counters to zero. */
 	if (tuple_buffer->nTuples == tuple_buffer->readCounter)
 		tuple_buffer->nTuples = tuple_buffer->readCounter = 0;
 
-	/* Tuple array is already full? */
-	if (tuple_buffer->nTuples == MAX_TUPLE_STORE)
-		return;
-
+	/* Try to fill additional slots in the array. */
 	for (i = tuple_buffer->nTuples; i < MAX_TUPLE_STORE; i++)
 	{
-		tuple_buffer->tuple[i] = heap_copytuple(gm_readnext_tuple(gm_state,
-																  reader,
-																  false,
-																  &tuple_buffer->done));
-		if (!HeapTupleIsValid(tuple_buffer->tuple[i]))
+		HeapTuple	tuple;
+
+		tuple = gm_readnext_tuple(gm_state,
+								  reader,
+								  true,
+								  &tuple_buffer->done);
+		if (!HeapTupleIsValid(tuple))
 			break;
+		tuple_buffer->tuple[i] = tuple;
 		tuple_buffer->nTuples++;
 	}
 }
@@ -525,19 +617,21 @@ form_tuple_array(GatherMergeState *gm_state, int reader)
 /*
  * Store the next tuple for a given reader into the appropriate slot.
  *
- * Returns false if the reader is exhausted, and true otherwise.
+ * Returns true if successful, false if not (either reader is exhausted,
+ * or we didn't want to wait for a tuple).  Sets done flag if reader
+ * is found to be exhausted.
  */
 static bool
 gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 {
 	GMReaderTupleBuffer *tuple_buffer;
-	HeapTuple	tup = NULL;
+	HeapTuple	tup;
 
 	/*
 	 * If we're being asked to generate a tuple from the leader, then we just
 	 * call ExecProcNode as normal to produce one.
 	 */
-	if (gm_state->nreaders == reader)
+	if (reader == 0)
 	{
 		if (gm_state->need_to_scan_locally)
 		{
@@ -548,47 +642,43 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 
 			if (!TupIsNull(outerTupleSlot))
 			{
-				gm_state->gm_slots[reader] = outerTupleSlot;
+				gm_state->gm_slots[0] = outerTupleSlot;
 				return true;
 			}
-			gm_state->gm_tuple_buffers[reader].done = true;
+			/* need_to_scan_locally serves as "done" flag for leader */
 			gm_state->need_to_scan_locally = false;
 		}
 		return false;
 	}
 
 	/* Otherwise, check the state of the relevant tuple buffer. */
-	tuple_buffer = &gm_state->gm_tuple_buffers[reader];
+	tuple_buffer = &gm_state->gm_tuple_buffers[reader - 1];
 
 	if (tuple_buffer->nTuples > tuple_buffer->readCounter)
 	{
 		/* Return any tuple previously read that is still buffered. */
-		tuple_buffer = &gm_state->gm_tuple_buffers[reader];
 		tup = tuple_buffer->tuple[tuple_buffer->readCounter++];
 	}
 	else if (tuple_buffer->done)
 	{
 		/* Reader is known to be exhausted. */
-		DestroyTupleQueueReader(gm_state->reader[reader]);
-		gm_state->reader[reader] = NULL;
 		return false;
 	}
 	else
 	{
 		/* Read and buffer next tuple. */
-		tup = heap_copytuple(gm_readnext_tuple(gm_state,
-											   reader,
-											   nowait,
-											   &tuple_buffer->done));
+		tup = gm_readnext_tuple(gm_state,
+								reader,
+								nowait,
+								&tuple_buffer->done);
+		if (!HeapTupleIsValid(tup))
+			return false;
 
 		/*
 		 * Attempt to read more tuples in nowait mode and store them in the
-		 * tuple array.
+		 * pending-tuple array for the reader.
 		 */
-		if (HeapTupleIsValid(tup))
-			form_tuple_array(gm_state, reader);
-		else
-			return false;
+		load_tuple_array(gm_state, reader);
 	}
 
 	Assert(HeapTupleIsValid(tup));
@@ -597,39 +687,28 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 	ExecStoreTuple(tup,			/* tuple to store */
 				   gm_state->gm_slots[reader],	/* slot in which to store the
 												 * tuple */
-				   InvalidBuffer,	/* buffer associated with this tuple */
-				   true);		/* pfree this pointer if not from heap */
+				   InvalidBuffer,	/* no buffer associated with tuple */
+				   true);		/* pfree tuple when done with it */
 
 	return true;
 }
 
 /*
- * Attempt to read a tuple from given reader.
+ * Attempt to read a tuple from given worker.
  */
 static HeapTuple
 gm_readnext_tuple(GatherMergeState *gm_state, int nreader, bool nowait,
 				  bool *done)
 {
 	TupleQueueReader *reader;
-	HeapTuple	tup = NULL;
-	MemoryContext oldContext;
-	MemoryContext tupleContext;
-
-	tupleContext = gm_state->ps.ps_ExprContext->ecxt_per_tuple_memory;
-
-	if (done != NULL)
-		*done = false;
+	HeapTuple	tup;
 
 	/* Check for async events, particularly messages from workers. */
 	CHECK_FOR_INTERRUPTS();
 
 	/* Attempt to read a tuple. */
-	reader = gm_state->reader[nreader];
-
-	/* Run TupleQueueReaders in per-tuple context */
-	oldContext = MemoryContextSwitchTo(tupleContext);
+	reader = gm_state->reader[nreader - 1];
 	tup = TupleQueueReaderNext(reader, nowait, done);
-	MemoryContextSwitchTo(oldContext);
 
 	return tup;
 }

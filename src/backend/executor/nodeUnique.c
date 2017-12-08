@@ -35,6 +35,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeUnique.h"
+#include "miscadmin.h"
 #include "utils/memutils.h"
 
 
@@ -42,13 +43,16 @@
  *		ExecUnique
  * ----------------------------------------------------------------
  */
-TupleTableSlot *				/* return: a tuple or NULL */
-ExecUnique(UniqueState *node)
+static TupleTableSlot *			/* return: a tuple or NULL */
+ExecUnique(PlanState *pstate)
 {
+	UniqueState *node = castNode(UniqueState, pstate);
 	Unique	   *plannode = (Unique *) node->ps.plan;
 	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
 	PlanState  *outerPlan;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get information from the node
@@ -122,6 +126,7 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 	uniquestate = makeNode(UniqueState);
 	uniquestate->ps.plan = (Plan *) node;
 	uniquestate->ps.state = estate;
+	uniquestate->ps.ExecProcNode = ExecUnique;
 
 	/*
 	 * Miscellaneous initialization

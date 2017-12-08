@@ -50,7 +50,7 @@ my %filename = (
 	'GBK'        => 'CP936.TXT');
 
 # make maps for all encodings if not specified
-my @charsets = (scalar(@ARGV) > 0) ? @ARGV : keys(%filename);
+my @charsets = (scalar(@ARGV) > 0) ? @ARGV : sort keys(%filename);
 
 foreach my $charset (@charsets)
 {

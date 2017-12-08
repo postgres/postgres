@@ -682,7 +682,7 @@ CREATE INDEX hash_name_index ON hash_name_heap USING hash (random name_ops);
 
 CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
 
-CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops);
+CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops) WITH (fillfactor=60);
 
 CREATE UNLOGGED TABLE unlogged_hash_table (id int4);
 CREATE INDEX unlogged_hash_index ON unlogged_hash_table USING hash (id int4_ops);
@@ -1083,6 +1083,5 @@ REINDEX SCHEMA schema_to_reindex;
 -- Clean up
 RESET ROLE;
 DROP ROLE regress_reindexuser;
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA schema_to_reindex CASCADE;
-RESET client_min_messages;

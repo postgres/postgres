@@ -64,7 +64,7 @@ static XLogRecPtr output_fsync_lsn = InvalidXLogRecPtr;
 
 static void usage(void);
 static void StreamLogicalLog(void);
-static void disconnect_and_exit(int code);
+static void disconnect_and_exit(int code) pg_attribute_noreturn();
 static bool flushAndSendFeedback(PGconn *conn, TimestampTz *now);
 static void prepareToTerminate(PGconn *conn, XLogRecPtr endpos,
 				   bool keepalive, XLogRecPtr lsn);
@@ -979,8 +979,8 @@ main(int argc, char **argv)
 					_("%s: creating replication slot \"%s\"\n"),
 					progname, replication_slot);
 
-		if (!CreateReplicationSlot(conn, replication_slot, plugin,
-								   false, slot_exists_ok))
+		if (!CreateReplicationSlot(conn, replication_slot, plugin, false,
+								   false, false, slot_exists_ok))
 			disconnect_and_exit(1);
 		startpos = InvalidXLogRecPtr;
 	}

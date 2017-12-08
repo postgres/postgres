@@ -374,5 +374,5 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 124 "outofscope.pgc"
 
 
-	return (0);
+	return 0;
 }

@@ -29,12 +29,17 @@ use File::Copy;
 =head2 copypath($from, $to, %params)
 
 Recursively copy all files and directories from $from to $to.
+Does not preserve file metadata (e.g., permissions).
 
 Only regular files and subdirectories are copied.  Trying to copy other types
 of directory entries raises an exception.
 
 Raises an exception if a file would be overwritten, the source directory can't
-be read, or any I/O operation fails. Always returns true.
+be read, or any I/O operation fails.  However, we silently ignore ENOENT on
+open, because when copying from a live database it's possible for a file/dir
+to be deleted after we see its directory entry but before we can open it.
+
+Always returns true.
 
 If the B<filterfn> parameter is given, it must be a subroutine reference.
 This subroutine will be called for each entry in the source directory with its
@@ -74,6 +79,9 @@ sub copypath
 		$filterfn = sub { return 1; };
 	}
 
+	# Complain if original path is bogus, because _copypath_recurse won't.
+	die "\"$base_src_dir\" does not exist" if !-e $base_src_dir;
+
 	# Start recursive copy from current directory
 	return _copypath_recurse($base_src_dir, $base_dest_dir, "", $filterfn);
 }
@@ -89,12 +97,8 @@ sub _copypath_recurse
 	return 1 unless &$filterfn($curr_path);
 
 	# Check for symlink -- needed only on source dir
-	die "Cannot operate on symlinks" if -l $srcpath;
-
-	# Can't handle symlinks or other weird things
-	die "Source path \"$srcpath\" is not a regular file or directory"
-	  unless -f $srcpath
-		  or -d $srcpath;
+	# (note: this will fall through quietly if file is already gone)
+	die "Cannot operate on symlink \"$srcpath\"" if -l $srcpath;
 
 	# Abort if destination path already exists.  Should we allow directories
 	# to exist already?
@@ -104,25 +108,47 @@ sub _copypath_recurse
 	# same name and we're done.
 	if (-f $srcpath)
 	{
-		copy($srcpath, $destpath)
+		my $fh;
+		unless (open($fh, '<', $srcpath))
+		{
+			return 1 if ($!{ENOENT});
+			die "open($srcpath) failed: $!";
+		}
+		copy($fh, $destpath)
 		  or die "copy $srcpath -> $destpath failed: $!";
+		close $fh;
 		return 1;
 	}
 
-	# Otherwise this is directory: create it on dest and recurse onto it.
-	mkdir($destpath) or die "mkdir($destpath) failed: $!";
-
-	opendir(my $directory, $srcpath) or die "could not opendir($srcpath): $!";
-	while (my $entry = readdir($directory))
+	# If it's a directory, create it on dest and recurse into it.
+	if (-d $srcpath)
 	{
-		next if ($entry eq '.' or $entry eq '..');
-		_copypath_recurse($base_src_dir, $base_dest_dir,
-			$curr_path eq '' ? $entry : "$curr_path/$entry", $filterfn)
-		  or die "copypath $srcpath/$entry -> $destpath/$entry failed";
-	}
-	closedir($directory);
+		my $directory;
+		unless (opendir($directory, $srcpath))
+		{
+			return 1 if ($!{ENOENT});
+			die "opendir($srcpath) failed: $!";
+		}
 
-	return 1;
+		mkdir($destpath) or die "mkdir($destpath) failed: $!";
+
+		while (my $entry = readdir($directory))
+		{
+			next if ($entry eq '.' or $entry eq '..');
+			_copypath_recurse($base_src_dir, $base_dest_dir,
+				$curr_path eq '' ? $entry : "$curr_path/$entry", $filterfn)
+			  or die "copypath $srcpath/$entry -> $destpath/$entry failed";
+		}
+
+		closedir($directory);
+		return 1;
+	}
+
+	# If it disappeared from sight, that's OK.
+	return 1 if !-e $srcpath;
+
+	# Else it's some weird file type; complain.
+	die "Source path \"$srcpath\" is not a regular file or directory";
 }
 
 1;

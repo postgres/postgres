@@ -95,6 +95,7 @@
 #include "access/nbtree.h"
 #include "executor/execdebug.h"
 #include "executor/nodeMergejoin.h"
+#include "miscadmin.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
@@ -509,7 +510,7 @@ MJFillInner(MergeJoinState *node)
 
 /*
  * Check that a qual condition is constant true or constant false.
- * If it is constant false (or null), set *is_const_false to TRUE.
+ * If it is constant false (or null), set *is_const_false to true.
  *
  * Constant true would normally be represented by a NIL list, but we allow an
  * actual bool Const as well.  We do expect that the planner will have thrown
@@ -595,9 +596,10 @@ ExecMergeTupleDump(MergeJoinState *mergestate)
  *		ExecMergeJoin
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecMergeJoin(MergeJoinState *node)
+static TupleTableSlot *
+ExecMergeJoin(PlanState *pstate)
 {
+	MergeJoinState *node = castNode(MergeJoinState, pstate);
 	ExprState  *joinqual;
 	ExprState  *otherqual;
 	bool		qualResult;
@@ -609,6 +611,8 @@ ExecMergeJoin(MergeJoinState *node)
 	ExprContext *econtext;
 	bool		doFillOuter;
 	bool		doFillInner;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get information from node
@@ -1445,6 +1449,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	mergestate = makeNode(MergeJoinState);
 	mergestate->js.ps.plan = (Plan *) node;
 	mergestate->js.ps.state = estate;
+	mergestate->js.ps.ExecProcNode = ExecMergeJoin;
 
 	/*
 	 * Miscellaneous initialization

@@ -1266,8 +1266,8 @@ find_install_path(List *evi_list, ExtensionVersionInfo *evi_target,
 static ObjectAddress
 CreateExtensionInternal(char *extensionName,
 						char *schemaName,
-						char *versionName,
-						char *oldVersionName,
+						const char *versionName,
+						const char *oldVersionName,
 						bool cascade,
 						List *parents,
 						bool is_create)

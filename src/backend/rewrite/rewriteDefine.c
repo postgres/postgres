@@ -56,7 +56,7 @@ static void setRuleCheckAsUser_Query(Query *qry, Oid userid);
  *	  relation "pg_rewrite"
  */
 static Oid
-InsertRule(char *rulname,
+InsertRule(const char *rulname,
 		   int evtype,
 		   Oid eventrel_oid,
 		   bool evinstead,
@@ -225,7 +225,7 @@ DefineRule(RuleStmt *stmt, const char *queryString)
  * action and qual have already been passed through parse analysis.
  */
 ObjectAddress
-DefineQueryRewrite(char *rulename,
+DefineQueryRewrite(const char *rulename,
 				   Oid event_relid,
 				   Node *event_qual,
 				   CmdType event_type,
@@ -425,13 +425,13 @@ DefineQueryRewrite(char *rulename,
 			if (event_relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("could not convert partitioned table \"%s\" to a view",
+						 errmsg("cannot convert partitioned table \"%s\" to a view",
 								RelationGetRelationName(event_relation))));
 
 			if (event_relation->rd_rel->relispartition)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("could not convert partition \"%s\" to a view",
+						 errmsg("cannot convert partition \"%s\" to a view",
 								RelationGetRelationName(event_relation))));
 
 			snapshot = RegisterSnapshot(GetLatestSnapshot());
@@ -531,7 +531,7 @@ DefineQueryRewrite(char *rulename,
 							replace);
 
 		/*
-		 * Set pg_class 'relhasrules' field TRUE for event relation.
+		 * Set pg_class 'relhasrules' field true for event relation.
 		 *
 		 * Important side effect: an SI notice is broadcast to force all
 		 * backends (including me!) to update relcache entries with the new
@@ -676,7 +676,7 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect,
 					 errmsg("SELECT rule's target list has too many entries") :
 					 errmsg("RETURNING list has too many entries")));
 
-		attr = resultDesc->attrs[i - 1];
+		attr = TupleDescAttr(resultDesc, i - 1);
 		attname = NameStr(attr->attname);
 
 		/*

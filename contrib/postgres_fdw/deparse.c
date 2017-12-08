@@ -973,7 +973,7 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 		/* Append HAVING clause */
 		if (remote_conds)
 		{
-			appendStringInfo(buf, " HAVING ");
+			appendStringInfoString(buf, " HAVING ");
 			appendConditions(remote_conds, &context);
 		}
 	}
@@ -1076,7 +1076,7 @@ deparseFromExpr(List *quals, deparse_expr_cxt *context)
 	/* Construct WHERE clause */
 	if (quals != NIL)
 	{
-		appendStringInfo(buf, " WHERE ");
+		appendStringInfoString(buf, " WHERE ");
 		appendConditions(quals, context);
 	}
 }
@@ -1115,7 +1115,7 @@ deparseTargetList(StringInfo buf,
 	first = true;
 	for (i = 1; i <= tupdesc->natts; i++)
 	{
-		Form_pg_attribute attr = tupdesc->attrs[i - 1];
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i - 1);
 
 		/* Ignore dropped attributes. */
 		if (attr->attisdropped)
@@ -1447,15 +1447,15 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 			context.root = root;
 			context.params_list = params_list;
 
-			appendStringInfo(buf, "(");
+			appendStringInfoChar(buf, '(');
 			appendConditions(fpinfo->joinclauses, &context);
-			appendStringInfo(buf, ")");
+			appendStringInfoChar(buf, ')');
 		}
 		else
 			appendStringInfoString(buf, "(TRUE)");
 
 		/* End the FROM clause entry. */
-		appendStringInfo(buf, ")");
+		appendStringInfoChar(buf, ')');
 	}
 	else
 	{
@@ -1702,7 +1702,7 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 
 	if (remote_conds)
 	{
-		appendStringInfo(buf, " WHERE ");
+		appendStringInfoString(buf, " WHERE ");
 		appendConditions(remote_conds, &context);
 	}
 
@@ -1762,7 +1762,7 @@ deparseDirectDeleteSql(StringInfo buf, PlannerInfo *root,
 
 	if (remote_conds)
 	{
-		appendStringInfo(buf, " WHERE ");
+		appendStringInfoString(buf, " WHERE ");
 		appendConditions(remote_conds, &context);
 	}
 
@@ -1851,7 +1851,7 @@ deparseAnalyzeSql(StringInfo buf, Relation rel, List **retrieved_attrs)
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		/* Ignore dropped columns. */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (TupleDescAttr(tupdesc, i)->attisdropped)
 			continue;
 
 		if (!first)
@@ -1859,7 +1859,7 @@ deparseAnalyzeSql(StringInfo buf, Relation rel, List **retrieved_attrs)
 		first = false;
 
 		/* Use attribute name or column_name option. */
-		colname = NameStr(tupdesc->attrs[i]->attname);
+		colname = NameStr(TupleDescAttr(tupdesc, i)->attname);
 		options = GetForeignColumnOptions(relid, i + 1);
 
 		foreach(lc, options)
@@ -1978,17 +1978,17 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, PlannerInfo *root,
 		{
 			appendStringInfoString(buf, "CASE WHEN (");
 			ADD_REL_QUALIFIER(buf, varno);
-			appendStringInfo(buf, "*)::text IS NOT NULL THEN ");
+			appendStringInfoString(buf, "*)::text IS NOT NULL THEN ");
 		}
 
 		appendStringInfoString(buf, "ROW(");
 		deparseTargetList(buf, root, varno, rel, false, attrs_used, qualify_col,
 						  &retrieved_attrs);
-		appendStringInfoString(buf, ")");
+		appendStringInfoChar(buf, ')');
 
 		/* Complete the CASE WHEN statement started above. */
 		if (qualify_col)
-			appendStringInfo(buf, " END");
+			appendStringInfoString(buf, " END");
 
 		heap_close(rel, NoLock);
 		bms_free(attrs_used);
@@ -2759,7 +2759,7 @@ deparseAggref(Aggref *node, deparse_expr_cxt *context)
 	appendStringInfoChar(buf, '(');
 
 	/* Add DISTINCT */
-	appendStringInfo(buf, "%s", (node->aggdistinct != NIL) ? "DISTINCT " : "");
+	appendStringInfoString(buf, (node->aggdistinct != NIL) ? "DISTINCT " : "");
 
 	if (AGGKIND_IS_ORDERED_SET(node->aggkind))
 	{
@@ -2944,7 +2944,7 @@ appendGroupByClause(List *tlist, deparse_expr_cxt *context)
 	if (!query->groupClause)
 		return;
 
-	appendStringInfo(buf, " GROUP BY ");
+	appendStringInfoString(buf, " GROUP BY ");
 
 	/*
 	 * Queries with grouping sets are not pushed down, so we don't expect
@@ -2981,7 +2981,7 @@ appendOrderByClause(List *pathkeys, deparse_expr_cxt *context)
 	/* Make sure any constants in the exprs are printed portably */
 	nestlevel = set_transmission_modes();
 
-	appendStringInfo(buf, " ORDER BY");
+	appendStringInfoString(buf, " ORDER BY");
 	foreach(lcell, pathkeys)
 	{
 		PathKey    *pathkey = lfirst(lcell);
@@ -3035,7 +3035,7 @@ appendFunctionName(Oid funcid, deparse_expr_cxt *context)
 
 	/* Always print the function name */
 	proname = NameStr(procform->proname);
-	appendStringInfo(buf, "%s", quote_identifier(proname));
+	appendStringInfoString(buf, quote_identifier(proname));
 
 	ReleaseSysCache(proctup);
 }
@@ -3070,9 +3070,9 @@ deparseSortGroupClause(Index ref, List *tlist, deparse_expr_cxt *context)
 	else
 	{
 		/* Always parenthesize the expression. */
-		appendStringInfoString(buf, "(");
+		appendStringInfoChar(buf, '(');
 		deparseExpr(expr, context);
-		appendStringInfoString(buf, ")");
+		appendStringInfoChar(buf, ')');
 	}
 
 	return (Node *) expr;

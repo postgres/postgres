@@ -12,6 +12,10 @@ SELECT table_name, column_name, column_default, is_nullable, is_identity, identi
 -- internal sequences should not be shown here
 SELECT sequence_name FROM information_schema.sequences WHERE sequence_name LIKE 'itest%';
 
+SELECT pg_get_serial_sequence('itest1', 'a');
+
+\d itest1_a_seq
+
 CREATE TABLE itest4 (a int, b text);
 ALTER TABLE itest4 ALTER COLUMN a ADD GENERATED ALWAYS AS IDENTITY;  -- error, requires NOT NULL
 ALTER TABLE itest4 ALTER COLUMN a SET NOT NULL;
@@ -72,6 +76,23 @@ SELECT * FROM itest1;
 UPDATE itest2 SET a = 101 WHERE a = 1;
 UPDATE itest2 SET a = DEFAULT WHERE a = 2;
 SELECT * FROM itest2;
+
+
+-- COPY tests
+
+CREATE TABLE itest9 (a int GENERATED ALWAYS AS IDENTITY, b text, c bigint);
+
+COPY itest9 FROM stdin;
+100	foo	200
+101	bar	201
+\.
+
+COPY itest9 (b, c) FROM stdin;
+foo2	202
+bar2	203
+\.
+
+SELECT * FROM itest9 ORDER BY c;
 
 
 -- DROP IDENTITY tests

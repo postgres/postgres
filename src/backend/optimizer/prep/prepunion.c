@@ -33,6 +33,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
+#include "catalog/partition.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -55,7 +56,8 @@
 typedef struct
 {
 	PlannerInfo *root;
-	AppendRelInfo *appinfo;
+	int			nappinfos;
+	AppendRelInfo **appinfos;
 } adjust_appendrel_attrs_context;
 
 static Path *recurse_set_operations(Node *setOp, PlannerInfo *root,
@@ -99,6 +101,17 @@ static List *generate_append_tlist(List *colTypes, List *colCollations,
 static List *generate_setop_grouplist(SetOperationStmt *op, List *targetlist);
 static void expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte,
 						 Index rti);
+static void expand_partitioned_rtentry(PlannerInfo *root,
+						   RangeTblEntry *parentrte,
+						   Index parentRTindex, Relation parentrel,
+						   PlanRowMark *top_parentrc, LOCKMODE lockmode,
+						   List **appinfos, List **partitioned_child_rels);
+static void expand_single_inheritance_child(PlannerInfo *root,
+								RangeTblEntry *parentrte,
+								Index parentRTindex, Relation parentrel,
+								PlanRowMark *top_parentrc, Relation childrel,
+								List **appinfos, RangeTblEntry **childrte_p,
+								Index *childRTindex_p);
 static void make_inh_translation_list(Relation oldrelation,
 						  Relation newrelation,
 						  Index newvarno,
@@ -107,7 +120,8 @@ static Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
 					List *translated_vars);
 static Node *adjust_appendrel_attrs_mutator(Node *node,
 							   adjust_appendrel_attrs_context *context);
-static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
+static Relids adjust_child_relids(Relids relids, int nappinfos,
+					AppendRelInfo **appinfos);
 static List *adjust_inherited_tlist(List *tlist,
 					   AppendRelInfo *context);
 
@@ -576,8 +590,8 @@ generate_union_path(SetOperationStmt *op, PlannerInfo *root,
 	/*
 	 * Append the child results together.
 	 */
-	path = (Path *) create_append_path(result_rel, pathlist, NULL, 0, NIL);
-
+	path = (Path *) create_append_path(result_rel, pathlist, NIL,
+									   NULL, 0, false, NIL, -1);
 	/* We have to manually jam the right tlist into the path; ick */
 	path->pathtarget = create_pathtarget(root, tlist);
 
@@ -688,7 +702,8 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 	/*
 	 * Append the child results together.
 	 */
-	path = (Path *) create_append_path(result_rel, pathlist, NULL, 0, NIL);
+	path = (Path *) create_append_path(result_rel, pathlist, NIL,
+									   NULL, 0, false, NIL, -1);
 
 	/* We have to manually jam the right tlist into the path; ick */
 	path->pathtarget = create_pathtarget(root, tlist);
@@ -963,6 +978,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 */
 	cost_agg(&hashed_p, root, AGG_HASHED, NULL,
 			 numGroupCols, dNumGroups,
+			 NIL,
 			 input_path->startup_cost, input_path->total_cost,
 			 input_path->rows);
 
@@ -977,6 +993,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 			  input_path->rows, input_path->pathtarget->width,
 			  0.0, work_mem, -1.0);
 	cost_group(&sorted_p, root, numGroupCols, dNumGroups,
+			   NIL,
 			   sorted_p.startup_cost, sorted_p.total_cost,
 			   input_path->rows);
 
@@ -1332,9 +1349,9 @@ expand_inherited_tables(PlannerInfo *root)
 	ListCell   *rl;
 
 	/*
-	 * expand_inherited_rtentry may add RTEs to parse->rtable; there is no
-	 * need to scan them since they can't have inh=true.  So just scan as far
-	 * as the original end of the rtable list.
+	 * expand_inherited_rtentry may add RTEs to parse->rtable. The function is
+	 * expected to recursively handle any RTEs that it creates with inh=true.
+	 * So just scan as far as the original end of the rtable list.
 	 */
 	nrtes = list_length(root->parse->rtable);
 	rl = list_head(root->parse->rtable);
@@ -1360,8 +1377,12 @@ expand_inherited_tables(PlannerInfo *root)
  * table, but with inh = false, to represent the parent table in its role
  * as a simple member of the inheritance set.
  *
- * A childless table is never considered to be an inheritance set; therefore
- * a parent RTE must always have at least two associated AppendRelInfos.
+ * A childless table is never considered to be an inheritance set. For
+ * regular inheritance, a parent RTE must always have at least two associated
+ * AppendRelInfos: one corresponding to the parent table as a simple member of
+ * inheritance set and one or more corresponding to the actual children.
+ * Since a partitioned table is not scanned, it might have only one associated
+ * AppendRelInfo.
  */
 static void
 expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
@@ -1372,11 +1393,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	Relation	oldrelation;
 	LOCKMODE	lockmode;
 	List	   *inhOIDs;
-	List	   *appinfos;
 	ListCell   *l;
-	bool		need_append;
-	PartitionedChildRelInfo *pcinfo;
-	List	   *partitioned_child_rels = NIL;
 
 	/* Does RT entry allow inheritance? */
 	if (!rte->inh)
@@ -1447,168 +1464,314 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	oldrelation = heap_open(parentOID, NoLock);
 
 	/* Scan the inheritance set and expand it */
-	appinfos = NIL;
-	need_append = false;
-	foreach(l, inhOIDs)
+	if (RelationGetPartitionDesc(oldrelation) != NULL)
 	{
-		Oid			childOID = lfirst_oid(l);
-		Relation	newrelation;
+		List	   *partitioned_child_rels = NIL;
+
+		Assert(rte->relkind == RELKIND_PARTITIONED_TABLE);
+
+		/*
+		 * If this table has partitions, recursively expand them in the order
+		 * in which they appear in the PartitionDesc.
+		 */
+		expand_partitioned_rtentry(root, rte, rti, oldrelation, oldrc,
+								   lockmode, &root->append_rel_list,
+								   &partitioned_child_rels);
+
+		/*
+		 * We keep a list of objects in root, each of which maps a root
+		 * partitioned parent RT index to the list of RT indexes of descendant
+		 * partitioned child tables.  When creating an Append or a ModifyTable
+		 * path for the parent, we copy the child RT index list verbatim to
+		 * the path so that it could be carried over to the executor so that
+		 * the latter could identify the partitioned child tables.
+		 */
+		if (rte->inh && partitioned_child_rels != NIL)
+		{
+			PartitionedChildRelInfo *pcinfo;
+
+			pcinfo = makeNode(PartitionedChildRelInfo);
+			pcinfo->parent_relid = rti;
+			pcinfo->child_rels = partitioned_child_rels;
+			root->pcinfo_list = lappend(root->pcinfo_list, pcinfo);
+		}
+	}
+	else
+	{
+		List	   *appinfos = NIL;
 		RangeTblEntry *childrte;
 		Index		childRTindex;
-		AppendRelInfo *appinfo;
-
-		/* Open rel if needed; we already have required locks */
-		if (childOID != parentOID)
-			newrelation = heap_open(childOID, NoLock);
-		else
-			newrelation = oldrelation;
 
 		/*
-		 * It is possible that the parent table has children that are temp
-		 * tables of other backends.  We cannot safely access such tables
-		 * (because of buffering issues), and the best thing to do seems to be
-		 * to silently ignore them.
+		 * This table has no partitions.  Expand any plain inheritance
+		 * children in the order the OIDs were returned by
+		 * find_all_inheritors.
 		 */
-		if (childOID != parentOID && RELATION_IS_OTHER_TEMP(newrelation))
+		foreach(l, inhOIDs)
 		{
-			heap_close(newrelation, lockmode);
-			continue;
-		}
+			Oid			childOID = lfirst_oid(l);
+			Relation	newrelation;
 
-		/*
-		 * Build an RTE for the child, and attach to query's rangetable list.
-		 * We copy most fields of the parent's RTE, but replace relation OID
-		 * and relkind, and set inh = false.  Also, set requiredPerms to zero
-		 * since all required permissions checks are done on the original RTE.
-		 * Likewise, set the child's securityQuals to empty, because we only
-		 * want to apply the parent's RLS conditions regardless of what RLS
-		 * properties individual children may have.  (This is an intentional
-		 * choice to make inherited RLS work like regular permissions checks.)
-		 * The parent securityQuals will be propagated to children along with
-		 * other base restriction clauses, so we don't need to do it here.
-		 */
-		childrte = copyObject(rte);
-		childrte->relid = childOID;
-		childrte->relkind = newrelation->rd_rel->relkind;
-		childrte->inh = false;
-		childrte->requiredPerms = 0;
-		childrte->securityQuals = NIL;
-		parse->rtable = lappend(parse->rtable, childrte);
-		childRTindex = list_length(parse->rtable);
-
-		/*
-		 * Build an AppendRelInfo for this parent and child, unless the child
-		 * is a partitioned table.
-		 */
-		if (childrte->relkind != RELKIND_PARTITIONED_TABLE)
-		{
-			need_append = true;
-			appinfo = makeNode(AppendRelInfo);
-			appinfo->parent_relid = rti;
-			appinfo->child_relid = childRTindex;
-			appinfo->parent_reltype = oldrelation->rd_rel->reltype;
-			appinfo->child_reltype = newrelation->rd_rel->reltype;
-			make_inh_translation_list(oldrelation, newrelation, childRTindex,
-									  &appinfo->translated_vars);
-			appinfo->parent_reloid = parentOID;
-			appinfos = lappend(appinfos, appinfo);
-
-			/*
-			 * Translate the column permissions bitmaps to the child's attnums
-			 * (we have to build the translated_vars list before we can do
-			 * this). But if this is the parent table, leave copyObject's
-			 * result alone.
-			 *
-			 * Note: we need to do this even though the executor won't run any
-			 * permissions checks on the child RTE.  The
-			 * insertedCols/updatedCols bitmaps may be examined for
-			 * trigger-firing purposes.
-			 */
+			/* Open rel if needed; we already have required locks */
 			if (childOID != parentOID)
-			{
-				childrte->selectedCols = translate_col_privs(rte->selectedCols,
-															 appinfo->translated_vars);
-				childrte->insertedCols = translate_col_privs(rte->insertedCols,
-															 appinfo->translated_vars);
-				childrte->updatedCols = translate_col_privs(rte->updatedCols,
-															appinfo->translated_vars);
-			}
-		}
-		else
-			partitioned_child_rels = lappend_int(partitioned_child_rels,
-												 childRTindex);
-
-		/*
-		 * Build a PlanRowMark if parent is marked FOR UPDATE/SHARE.
-		 */
-		if (oldrc)
-		{
-			PlanRowMark *newrc = makeNode(PlanRowMark);
-
-			newrc->rti = childRTindex;
-			newrc->prti = rti;
-			newrc->rowmarkId = oldrc->rowmarkId;
-			/* Reselect rowmark type, because relkind might not match parent */
-			newrc->markType = select_rowmark_type(childrte, oldrc->strength);
-			newrc->allMarkTypes = (1 << newrc->markType);
-			newrc->strength = oldrc->strength;
-			newrc->waitPolicy = oldrc->waitPolicy;
+				newrelation = heap_open(childOID, NoLock);
+			else
+				newrelation = oldrelation;
 
 			/*
-			 * We mark RowMarks for partitioned child tables as parent
-			 * RowMarks so that the executor ignores them (except their
-			 * existence means that the child tables be locked using
-			 * appropriate mode).
+			 * It is possible that the parent table has children that are temp
+			 * tables of other backends.  We cannot safely access such tables
+			 * (because of buffering issues), and the best thing to do seems
+			 * to be to silently ignore them.
 			 */
-			newrc->isParent = (childrte->relkind == RELKIND_PARTITIONED_TABLE);
+			if (childOID != parentOID && RELATION_IS_OTHER_TEMP(newrelation))
+			{
+				heap_close(newrelation, lockmode);
+				continue;
+			}
 
-			/* Include child's rowmark type in parent's allMarkTypes */
-			oldrc->allMarkTypes |= newrc->allMarkTypes;
+			expand_single_inheritance_child(root, rte, rti, oldrelation, oldrc,
+											newrelation,
+											&appinfos, &childrte,
+											&childRTindex);
 
-			root->rowMarks = lappend(root->rowMarks, newrc);
+			/* Close child relations, but keep locks */
+			if (childOID != parentOID)
+				heap_close(newrelation, NoLock);
 		}
 
-		/* Close child relations, but keep locks */
-		if (childOID != parentOID)
-			heap_close(newrelation, NoLock);
+		/*
+		 * If all the children were temp tables, pretend it's a
+		 * non-inheritance situation; we don't need Append node in that case.
+		 * The duplicate RTE we added for the parent table is harmless, so we
+		 * don't bother to get rid of it; ditto for the useless PlanRowMark
+		 * node.
+		 */
+		if (list_length(appinfos) < 2)
+			rte->inh = false;
+		else
+			root->append_rel_list = list_concat(root->append_rel_list,
+												appinfos);
+
 	}
 
 	heap_close(oldrelation, NoLock);
+}
+
+/*
+ * expand_partitioned_rtentry
+ *		Recursively expand an RTE for a partitioned table.
+ *
+ * Note that RelationGetPartitionDispatchInfo will expand partitions in the
+ * same order as this code.
+ */
+static void
+expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
+						   Index parentRTindex, Relation parentrel,
+						   PlanRowMark *top_parentrc, LOCKMODE lockmode,
+						   List **appinfos, List **partitioned_child_rels)
+{
+	int			i;
+	RangeTblEntry *childrte;
+	Index		childRTindex;
+	bool		has_child = false;
+	PartitionDesc partdesc = RelationGetPartitionDesc(parentrel);
+
+	check_stack_depth();
+
+	/* A partitioned table should always have a partition descriptor. */
+	Assert(partdesc);
+
+	Assert(parentrte->inh);
+
+	/* First expand the partitioned table itself. */
+	expand_single_inheritance_child(root, parentrte, parentRTindex, parentrel,
+									top_parentrc, parentrel,
+									appinfos, &childrte, &childRTindex);
 
 	/*
-	 * If all the children were temp tables or a partitioned parent did not
-	 * have any leaf partitions, pretend it's a non-inheritance situation; we
-	 * don't need Append node in that case.  The duplicate RTE we added for
-	 * the parent table is harmless, so we don't bother to get rid of it;
-	 * ditto for the useless PlanRowMark node.
+	 * The partitioned table does not have data for itself but still need to
+	 * be locked. Update given list of partitioned children with RTI of this
+	 * partitioned relation.
 	 */
-	if (!need_append)
+	*partitioned_child_rels = lappend_int(*partitioned_child_rels,
+										  childRTindex);
+
+	for (i = 0; i < partdesc->nparts; i++)
 	{
-		/* Clear flag before returning */
-		rte->inh = false;
-		return;
+		Oid			childOID = partdesc->oids[i];
+		Relation	childrel;
+
+		/* Open rel; we already have required locks */
+		childrel = heap_open(childOID, NoLock);
+
+		/* As in expand_inherited_rtentry, skip non-local temp tables */
+		if (RELATION_IS_OTHER_TEMP(childrel))
+		{
+			heap_close(childrel, lockmode);
+			continue;
+		}
+
+		/* We have a real partition. */
+		has_child = true;
+
+		expand_single_inheritance_child(root, parentrte, parentRTindex,
+										parentrel, top_parentrc, childrel,
+										appinfos, &childrte, &childRTindex);
+
+		/* If this child is itself partitioned, recurse */
+		if (childrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			expand_partitioned_rtentry(root, childrte, childRTindex,
+									   childrel, top_parentrc, lockmode,
+									   appinfos, partitioned_child_rels);
+
+		/* Close child relation, but keep locks */
+		heap_close(childrel, NoLock);
 	}
 
 	/*
-	 * We keep a list of objects in root, each of which maps a partitioned
-	 * parent RT index to the list of RT indexes of its partitioned child
-	 * tables.  When creating an Append or a ModifyTable path for the parent,
-	 * we copy the child RT index list verbatim to the path so that it could
-	 * be carried over to the executor so that the latter could identify the
-	 * partitioned child tables.
+	 * If the partitioned table has no partitions or all the partitions are
+	 * temporary tables from other backends, treat this as non-inheritance
+	 * case.
 	 */
-	if (partitioned_child_rels != NIL)
-	{
-		pcinfo = makeNode(PartitionedChildRelInfo);
+	if (!has_child)
+		parentrte->inh = false;
+}
 
-		Assert(rte->relkind == RELKIND_PARTITIONED_TABLE);
-		pcinfo->parent_relid = rti;
-		pcinfo->child_rels = partitioned_child_rels;
-		root->pcinfo_list = lappend(root->pcinfo_list, pcinfo);
+/*
+ * expand_single_inheritance_child
+ *		Expand a single inheritance child, if needed.
+ *
+ * If this is a temp table of another backend, we'll return without doing
+ * anything at all.  Otherwise, build a RangeTblEntry and an AppendRelInfo, if
+ * appropriate, plus maybe a PlanRowMark.
+ *
+ * We now expand the partition hierarchy level by level, creating a
+ * corresponding hierarchy of AppendRelInfos and RelOptInfos, where each
+ * partitioned descendant acts as a parent of its immediate partitions.
+ * (This is a difference from what older versions of PostgreSQL did and what
+ * is still done in the case of table inheritance for unpartitioned tables,
+ * where the hierarchy is flattened during RTE expansion.)
+ *
+ * PlanRowMarks still carry the top-parent's RTI, and the top-parent's
+ * allMarkTypes field still accumulates values from all descendents.
+ *
+ * "parentrte" and "parentRTindex" are immediate parent's RTE and
+ * RTI. "top_parentrc" is top parent's PlanRowMark.
+ *
+ * The child RangeTblEntry and its RTI are returned in "childrte_p" and
+ * "childRTindex_p" resp.
+ */
+static void
+expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
+								Index parentRTindex, Relation parentrel,
+								PlanRowMark *top_parentrc, Relation childrel,
+								List **appinfos, RangeTblEntry **childrte_p,
+								Index *childRTindex_p)
+{
+	Query	   *parse = root->parse;
+	Oid			parentOID = RelationGetRelid(parentrel);
+	Oid			childOID = RelationGetRelid(childrel);
+	RangeTblEntry *childrte;
+	Index		childRTindex;
+	AppendRelInfo *appinfo;
+
+	/*
+	 * Build an RTE for the child, and attach to query's rangetable list. We
+	 * copy most fields of the parent's RTE, but replace relation OID and
+	 * relkind, and set inh = false.  Also, set requiredPerms to zero since
+	 * all required permissions checks are done on the original RTE. Likewise,
+	 * set the child's securityQuals to empty, because we only want to apply
+	 * the parent's RLS conditions regardless of what RLS properties
+	 * individual children may have.  (This is an intentional choice to make
+	 * inherited RLS work like regular permissions checks.) The parent
+	 * securityQuals will be propagated to children along with other base
+	 * restriction clauses, so we don't need to do it here.
+	 */
+	childrte = copyObject(parentrte);
+	*childrte_p = childrte;
+	childrte->relid = childOID;
+	childrte->relkind = childrel->rd_rel->relkind;
+	/* A partitioned child will need to be expanded further. */
+	if (childOID != parentOID &&
+		childrte->relkind == RELKIND_PARTITIONED_TABLE)
+		childrte->inh = true;
+	else
+		childrte->inh = false;
+	childrte->requiredPerms = 0;
+	childrte->securityQuals = NIL;
+	parse->rtable = lappend(parse->rtable, childrte);
+	childRTindex = list_length(parse->rtable);
+	*childRTindex_p = childRTindex;
+
+	/*
+	 * We need an AppendRelInfo if paths will be built for the child RTE. If
+	 * childrte->inh is true, then we'll always need to generate append paths
+	 * for it.  If childrte->inh is false, we must scan it if it's not a
+	 * partitioned table; but if it is a partitioned table, then it never has
+	 * any data of its own and need not be scanned.
+	 */
+	if (childrte->relkind != RELKIND_PARTITIONED_TABLE || childrte->inh)
+	{
+		appinfo = makeNode(AppendRelInfo);
+		appinfo->parent_relid = parentRTindex;
+		appinfo->child_relid = childRTindex;
+		appinfo->parent_reltype = parentrel->rd_rel->reltype;
+		appinfo->child_reltype = childrel->rd_rel->reltype;
+		make_inh_translation_list(parentrel, childrel, childRTindex,
+								  &appinfo->translated_vars);
+		appinfo->parent_reloid = parentOID;
+		*appinfos = lappend(*appinfos, appinfo);
+
+		/*
+		 * Translate the column permissions bitmaps to the child's attnums (we
+		 * have to build the translated_vars list before we can do this). But
+		 * if this is the parent table, leave copyObject's result alone.
+		 *
+		 * Note: we need to do this even though the executor won't run any
+		 * permissions checks on the child RTE.  The insertedCols/updatedCols
+		 * bitmaps may be examined for trigger-firing purposes.
+		 */
+		if (childOID != parentOID)
+		{
+			childrte->selectedCols = translate_col_privs(parentrte->selectedCols,
+														 appinfo->translated_vars);
+			childrte->insertedCols = translate_col_privs(parentrte->insertedCols,
+														 appinfo->translated_vars);
+			childrte->updatedCols = translate_col_privs(parentrte->updatedCols,
+														appinfo->translated_vars);
+		}
 	}
 
-	/* Otherwise, OK to add to root->append_rel_list */
-	root->append_rel_list = list_concat(root->append_rel_list, appinfos);
+	/*
+	 * Build a PlanRowMark if parent is marked FOR UPDATE/SHARE.
+	 */
+	if (top_parentrc)
+	{
+		PlanRowMark *childrc = makeNode(PlanRowMark);
+
+		childrc->rti = childRTindex;
+		childrc->prti = top_parentrc->rti;
+		childrc->rowmarkId = top_parentrc->rowmarkId;
+		/* Reselect rowmark type, because relkind might not match parent */
+		childrc->markType = select_rowmark_type(childrte,
+												top_parentrc->strength);
+		childrc->allMarkTypes = (1 << childrc->markType);
+		childrc->strength = top_parentrc->strength;
+		childrc->waitPolicy = top_parentrc->waitPolicy;
+
+		/*
+		 * We mark RowMarks for partitioned child tables as parent RowMarks so
+		 * that the executor ignores them (except their existence means that
+		 * the child tables be locked using appropriate mode).
+		 */
+		childrc->isParent = (childrte->relkind == RELKIND_PARTITIONED_TABLE);
+
+		/* Include child's rowmark type in top parent's allMarkTypes */
+		top_parentrc->allMarkTypes |= childrc->allMarkTypes;
+
+		root->rowMarks = lappend(root->rowMarks, childrc);
+	}
 }
 
 /*
@@ -1639,7 +1802,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 		Oid			attcollation;
 		int			new_attno;
 
-		att = old_tupdesc->attrs[old_attno];
+		att = TupleDescAttr(old_tupdesc, old_attno);
 		if (att->attisdropped)
 		{
 			/* Just put NULL into this list entry */
@@ -1677,7 +1840,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 		 * notational device to include the assignment into the if-clause.
 		 */
 		if (old_attno < newnatts &&
-			(att = new_tupdesc->attrs[old_attno]) != NULL &&
+			(att = TupleDescAttr(new_tupdesc, old_attno)) != NULL &&
 			!att->attisdropped && att->attinhcount != 0 &&
 			strcmp(attname, NameStr(att->attname)) == 0)
 			new_attno = old_attno;
@@ -1685,7 +1848,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 		{
 			for (new_attno = 0; new_attno < newnatts; new_attno++)
 			{
-				att = new_tupdesc->attrs[new_attno];
+				att = TupleDescAttr(new_tupdesc, new_attno);
 				if (!att->attisdropped && att->attinhcount != 0 &&
 					strcmp(attname, NameStr(att->attname)) == 0)
 					break;
@@ -1768,10 +1931,10 @@ translate_col_privs(const Bitmapset *parent_privs,
 
 /*
  * adjust_appendrel_attrs
- *	  Copy the specified query or expression and translate Vars referring
- *	  to the parent rel of the specified AppendRelInfo to refer to the
- *	  child rel instead.  We also update rtindexes appearing outside Vars,
- *	  such as resultRelation and jointree relids.
+ *	  Copy the specified query or expression and translate Vars referring to a
+ *	  parent rel to refer to the corresponding child rel instead.  We also
+ *	  update rtindexes appearing outside Vars, such as resultRelation and
+ *	  jointree relids.
  *
  * Note: this is only applied after conversion of sublinks to subplans,
  * so we don't need to cope with recursion into sub-queries.
@@ -1780,13 +1943,18 @@ translate_col_privs(const Bitmapset *parent_privs,
  * maybe we should try to fold the two routines together.
  */
 Node *
-adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
+adjust_appendrel_attrs(PlannerInfo *root, Node *node, int nappinfos,
+					   AppendRelInfo **appinfos)
 {
 	Node	   *result;
 	adjust_appendrel_attrs_context context;
 
 	context.root = root;
-	context.appinfo = appinfo;
+	context.nappinfos = nappinfos;
+	context.appinfos = appinfos;
+
+	/* If there's nothing to adjust, don't call this function. */
+	Assert(nappinfos >= 1 && appinfos != NULL);
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree.
@@ -1794,20 +1962,28 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 	if (node && IsA(node, Query))
 	{
 		Query	   *newnode;
+		int			cnt;
 
 		newnode = query_tree_mutator((Query *) node,
 									 adjust_appendrel_attrs_mutator,
 									 (void *) &context,
 									 QTW_IGNORE_RC_SUBQUERIES);
-		if (newnode->resultRelation == appinfo->parent_relid)
+		for (cnt = 0; cnt < nappinfos; cnt++)
 		{
-			newnode->resultRelation = appinfo->child_relid;
-			/* Fix tlist resnos too, if it's inherited UPDATE */
-			if (newnode->commandType == CMD_UPDATE)
-				newnode->targetList =
-					adjust_inherited_tlist(newnode->targetList,
-										   appinfo);
+			AppendRelInfo *appinfo = appinfos[cnt];
+
+			if (newnode->resultRelation == appinfo->parent_relid)
+			{
+				newnode->resultRelation = appinfo->child_relid;
+				/* Fix tlist resnos too, if it's inherited UPDATE */
+				if (newnode->commandType == CMD_UPDATE)
+					newnode->targetList =
+						adjust_inherited_tlist(newnode->targetList,
+											   appinfo);
+				break;
+			}
 		}
+
 		result = (Node *) newnode;
 	}
 	else
@@ -1820,16 +1996,27 @@ static Node *
 adjust_appendrel_attrs_mutator(Node *node,
 							   adjust_appendrel_attrs_context *context)
 {
-	AppendRelInfo *appinfo = context->appinfo;
+	AppendRelInfo **appinfos = context->appinfos;
+	int			nappinfos = context->nappinfos;
+	int			cnt;
 
 	if (node == NULL)
 		return NULL;
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) copyObject(node);
+		AppendRelInfo *appinfo = NULL;
 
-		if (var->varlevelsup == 0 &&
-			var->varno == appinfo->parent_relid)
+		for (cnt = 0; cnt < nappinfos; cnt++)
+		{
+			if (var->varno == appinfos[cnt]->parent_relid)
+			{
+				appinfo = appinfos[cnt];
+				break;
+			}
+		}
+
+		if (var->varlevelsup == 0 && appinfo)
 		{
 			var->varno = appinfo->child_relid;
 			var->varnoold = appinfo->child_relid;
@@ -1909,29 +2096,54 @@ adjust_appendrel_attrs_mutator(Node *node,
 	{
 		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
 
-		if (cexpr->cvarno == appinfo->parent_relid)
-			cexpr->cvarno = appinfo->child_relid;
+		for (cnt = 0; cnt < nappinfos; cnt++)
+		{
+			AppendRelInfo *appinfo = appinfos[cnt];
+
+			if (cexpr->cvarno == appinfo->parent_relid)
+			{
+				cexpr->cvarno = appinfo->child_relid;
+				break;
+			}
+		}
 		return (Node *) cexpr;
 	}
 	if (IsA(node, RangeTblRef))
 	{
 		RangeTblRef *rtr = (RangeTblRef *) copyObject(node);
 
-		if (rtr->rtindex == appinfo->parent_relid)
-			rtr->rtindex = appinfo->child_relid;
+		for (cnt = 0; cnt < nappinfos; cnt++)
+		{
+			AppendRelInfo *appinfo = appinfos[cnt];
+
+			if (rtr->rtindex == appinfo->parent_relid)
+			{
+				rtr->rtindex = appinfo->child_relid;
+				break;
+			}
+		}
 		return (Node *) rtr;
 	}
 	if (IsA(node, JoinExpr))
 	{
 		/* Copy the JoinExpr node with correct mutation of subnodes */
 		JoinExpr   *j;
+		AppendRelInfo *appinfo;
 
 		j = (JoinExpr *) expression_tree_mutator(node,
 												 adjust_appendrel_attrs_mutator,
 												 (void *) context);
 		/* now fix JoinExpr's rtindex (probably never happens) */
-		if (j->rtindex == appinfo->parent_relid)
-			j->rtindex = appinfo->child_relid;
+		for (cnt = 0; cnt < nappinfos; cnt++)
+		{
+			appinfo = appinfos[cnt];
+
+			if (j->rtindex == appinfo->parent_relid)
+			{
+				j->rtindex = appinfo->child_relid;
+				break;
+			}
+		}
 		return (Node *) j;
 	}
 	if (IsA(node, PlaceHolderVar))
@@ -1944,9 +2156,8 @@ adjust_appendrel_attrs_mutator(Node *node,
 														 (void *) context);
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == 0)
-			phv->phrels = adjust_relid_set(phv->phrels,
-										   appinfo->parent_relid,
-										   appinfo->child_relid);
+			phv->phrels = adjust_child_relids(phv->phrels, context->nappinfos,
+											  context->appinfos);
 		return (Node *) phv;
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
@@ -1977,24 +2188,24 @@ adjust_appendrel_attrs_mutator(Node *node,
 			adjust_appendrel_attrs_mutator((Node *) oldinfo->orclause, context);
 
 		/* adjust relid sets too */
-		newinfo->clause_relids = adjust_relid_set(oldinfo->clause_relids,
-												  appinfo->parent_relid,
-												  appinfo->child_relid);
-		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
-													appinfo->parent_relid,
-													appinfo->child_relid);
-		newinfo->outer_relids = adjust_relid_set(oldinfo->outer_relids,
-												 appinfo->parent_relid,
-												 appinfo->child_relid);
-		newinfo->nullable_relids = adjust_relid_set(oldinfo->nullable_relids,
-													appinfo->parent_relid,
-													appinfo->child_relid);
-		newinfo->left_relids = adjust_relid_set(oldinfo->left_relids,
-												appinfo->parent_relid,
-												appinfo->child_relid);
-		newinfo->right_relids = adjust_relid_set(oldinfo->right_relids,
-												 appinfo->parent_relid,
-												 appinfo->child_relid);
+		newinfo->clause_relids = adjust_child_relids(oldinfo->clause_relids,
+													 context->nappinfos,
+													 context->appinfos);
+		newinfo->required_relids = adjust_child_relids(oldinfo->required_relids,
+													   context->nappinfos,
+													   context->appinfos);
+		newinfo->outer_relids = adjust_child_relids(oldinfo->outer_relids,
+													context->nappinfos,
+													context->appinfos);
+		newinfo->nullable_relids = adjust_child_relids(oldinfo->nullable_relids,
+													   context->nappinfos,
+													   context->appinfos);
+		newinfo->left_relids = adjust_child_relids(oldinfo->left_relids,
+												   context->nappinfos,
+												   context->appinfos);
+		newinfo->right_relids = adjust_child_relids(oldinfo->right_relids,
+													context->nappinfos,
+													context->appinfos);
 
 		/*
 		 * Reset cached derivative fields, since these might need to have
@@ -2010,6 +2221,8 @@ adjust_appendrel_attrs_mutator(Node *node,
 		newinfo->scansel_cache = NIL;
 		newinfo->left_bucketsize = -1;
 		newinfo->right_bucketsize = -1;
+		newinfo->left_mcvfreq = -1;
+		newinfo->right_mcvfreq = -1;
 
 		return (Node *) newinfo;
 	}
@@ -2026,20 +2239,90 @@ adjust_appendrel_attrs_mutator(Node *node,
 }
 
 /*
- * Substitute newrelid for oldrelid in a Relid set
+ * Substitute child relids for parent relids in a Relid set.  The array of
+ * appinfos specifies the substitutions to be performed.
  */
 static Relids
-adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
+adjust_child_relids(Relids relids, int nappinfos, AppendRelInfo **appinfos)
 {
-	if (bms_is_member(oldrelid, relids))
+	Bitmapset  *result = NULL;
+	int			cnt;
+
+	for (cnt = 0; cnt < nappinfos; cnt++)
 	{
-		/* Ensure we have a modifiable copy */
-		relids = bms_copy(relids);
-		/* Remove old, add new */
-		relids = bms_del_member(relids, oldrelid);
-		relids = bms_add_member(relids, newrelid);
+		AppendRelInfo *appinfo = appinfos[cnt];
+
+		/* Remove parent, add child */
+		if (bms_is_member(appinfo->parent_relid, relids))
+		{
+			/* Make a copy if we are changing the set. */
+			if (!result)
+				result = bms_copy(relids);
+
+			result = bms_del_member(result, appinfo->parent_relid);
+			result = bms_add_member(result, appinfo->child_relid);
+		}
 	}
+
+	/* If we made any changes, return the modified copy. */
+	if (result)
+		return result;
+
+	/* Otherwise, return the original set without modification. */
 	return relids;
+}
+
+/*
+ * Replace any relid present in top_parent_relids with its child in
+ * child_relids. Members of child_relids can be multiple levels below top
+ * parent in the partition hierarchy.
+ */
+Relids
+adjust_child_relids_multilevel(PlannerInfo *root, Relids relids,
+							   Relids child_relids, Relids top_parent_relids)
+{
+	AppendRelInfo **appinfos;
+	int			nappinfos;
+	Relids		parent_relids = NULL;
+	Relids		result;
+	Relids		tmp_result = NULL;
+	int			cnt;
+
+	/*
+	 * If the given relids set doesn't contain any of the top parent relids,
+	 * it will remain unchanged.
+	 */
+	if (!bms_overlap(relids, top_parent_relids))
+		return relids;
+
+	appinfos = find_appinfos_by_relids(root, child_relids, &nappinfos);
+
+	/* Construct relids set for the immediate parent of the given child. */
+	for (cnt = 0; cnt < nappinfos; cnt++)
+	{
+		AppendRelInfo *appinfo = appinfos[cnt];
+
+		parent_relids = bms_add_member(parent_relids, appinfo->parent_relid);
+	}
+
+	/* Recurse if immediate parent is not the top parent. */
+	if (!bms_equal(parent_relids, top_parent_relids))
+	{
+		tmp_result = adjust_child_relids_multilevel(root, relids,
+													parent_relids,
+													top_parent_relids);
+		relids = tmp_result;
+	}
+
+	result = adjust_child_relids(relids, nappinfos, appinfos);
+
+	/* Free memory consumed by any intermediate result. */
+	if (tmp_result)
+		bms_free(tmp_result);
+	bms_free(parent_relids);
+	pfree(appinfos);
+
+	return result;
 }
 
 /*
@@ -2143,21 +2426,119 @@ adjust_inherited_tlist(List *tlist, AppendRelInfo *context)
  * adjust_appendrel_attrs_multilevel
  *	  Apply Var translations from a toplevel appendrel parent down to a child.
  *
- * In some cases we need to translate expressions referencing a baserel
+ * In some cases we need to translate expressions referencing a parent relation
  * to reference an appendrel child that's multiple levels removed from it.
  */
 Node *
 adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
-								  RelOptInfo *child_rel)
+								  Relids child_relids,
+								  Relids top_parent_relids)
 {
-	AppendRelInfo *appinfo = find_childrel_appendrelinfo(root, child_rel);
-	RelOptInfo *parent_rel = find_base_rel(root, appinfo->parent_relid);
+	AppendRelInfo **appinfos;
+	Bitmapset  *parent_relids = NULL;
+	int			nappinfos;
+	int			cnt;
 
-	/* If parent is also a child, first recurse to apply its translations */
-	if (IS_OTHER_REL(parent_rel))
-		node = adjust_appendrel_attrs_multilevel(root, node, parent_rel);
-	else
-		Assert(parent_rel->reloptkind == RELOPT_BASEREL);
+	Assert(bms_num_members(child_relids) == bms_num_members(top_parent_relids));
+
+	appinfos = find_appinfos_by_relids(root, child_relids, &nappinfos);
+
+	/* Construct relids set for the immediate parent of given child. */
+	for (cnt = 0; cnt < nappinfos; cnt++)
+	{
+		AppendRelInfo *appinfo = appinfos[cnt];
+
+		parent_relids = bms_add_member(parent_relids, appinfo->parent_relid);
+	}
+
+	/* Recurse if immediate parent is not the top parent. */
+	if (!bms_equal(parent_relids, top_parent_relids))
+		node = adjust_appendrel_attrs_multilevel(root, node, parent_relids,
+												 top_parent_relids);
+
 	/* Now translate for this child */
-	return adjust_appendrel_attrs(root, node, appinfo);
+	node = adjust_appendrel_attrs(root, node, nappinfos, appinfos);
+
+	pfree(appinfos);
+
+	return node;
+}
+
+/*
+ * Construct the SpecialJoinInfo for a child-join by translating
+ * SpecialJoinInfo for the join between parents. left_relids and right_relids
+ * are the relids of left and right side of the join respectively.
+ */
+SpecialJoinInfo *
+build_child_join_sjinfo(PlannerInfo *root, SpecialJoinInfo *parent_sjinfo,
+						Relids left_relids, Relids right_relids)
+{
+	SpecialJoinInfo *sjinfo = makeNode(SpecialJoinInfo);
+	AppendRelInfo **left_appinfos;
+	int			left_nappinfos;
+	AppendRelInfo **right_appinfos;
+	int			right_nappinfos;
+
+	memcpy(sjinfo, parent_sjinfo, sizeof(SpecialJoinInfo));
+	left_appinfos = find_appinfos_by_relids(root, left_relids,
+											&left_nappinfos);
+	right_appinfos = find_appinfos_by_relids(root, right_relids,
+											 &right_nappinfos);
+
+	sjinfo->min_lefthand = adjust_child_relids(sjinfo->min_lefthand,
+											   left_nappinfos, left_appinfos);
+	sjinfo->min_righthand = adjust_child_relids(sjinfo->min_righthand,
+												right_nappinfos,
+												right_appinfos);
+	sjinfo->syn_lefthand = adjust_child_relids(sjinfo->syn_lefthand,
+											   left_nappinfos, left_appinfos);
+	sjinfo->syn_righthand = adjust_child_relids(sjinfo->syn_righthand,
+												right_nappinfos,
+												right_appinfos);
+	sjinfo->semi_rhs_exprs = (List *) adjust_appendrel_attrs(root,
+															 (Node *) sjinfo->semi_rhs_exprs,
+															 right_nappinfos,
+															 right_appinfos);
+
+	pfree(left_appinfos);
+	pfree(right_appinfos);
+
+	return sjinfo;
+}
+
+/*
+ * find_appinfos_by_relids
+ * 		Find AppendRelInfo structures for all relations specified by relids.
+ *
+ * The AppendRelInfos are returned in an array, which can be pfree'd by the
+ * caller. *nappinfos is set to the the number of entries in the array.
+ */
+AppendRelInfo **
+find_appinfos_by_relids(PlannerInfo *root, Relids relids, int *nappinfos)
+{
+	ListCell   *lc;
+	AppendRelInfo **appinfos;
+	int			cnt = 0;
+
+	*nappinfos = bms_num_members(relids);
+	appinfos = (AppendRelInfo **) palloc(sizeof(AppendRelInfo *) * *nappinfos);
+
+	foreach(lc, root->append_rel_list)
+	{
+		AppendRelInfo *appinfo = lfirst(lc);
+
+		if (bms_is_member(appinfo->child_relid, relids))
+		{
+			appinfos[cnt] = appinfo;
+			cnt++;
+
+			/* Stop when we have gathered all the AppendRelInfos. */
+			if (cnt == *nappinfos)
+				return appinfos;
+		}
+	}
+
+	/* Should have found the entries ... */
+	elog(ERROR, "did not find all requested child rels in append_rel_list");
+	return NULL;				/* not reached */
 }

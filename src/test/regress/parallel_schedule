@@ -53,14 +53,14 @@ test: copy copyselect copydml
 # ----------
 # More groups of parallel tests
 # ----------
-test: create_misc create_operator
+test: create_misc create_operator create_procedure
 # These depend on the above two
 test: create_index create_view
 
 # ----------
 # Another group of parallel tests
 # ----------
-test: create_aggregate create_function_3 create_cast constraints triggers inherit create_table_like typed_table vacuum drop_if_exists updatable_views rolenames roleattributes create_am
+test: create_aggregate create_function_3 create_cast constraints triggers inherit create_table_like typed_table vacuum drop_if_exists updatable_views rolenames roleattributes create_am hash_func
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
@@ -84,7 +84,7 @@ test: select_into select_distinct select_distinct_on select_implicit select_havi
 # ----------
 # Another group of parallel tests
 # ----------
-test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator large_object password
+test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator password
 
 # ----------
 # Another group of parallel tests
@@ -96,6 +96,7 @@ test: rules psql_crosstab amutils
 
 # run by itself so it can run parallel workers
 test: select_parallel
+test: write_parallel
 
 # no relation related tests can be put in this group
 test: publication subscription
@@ -104,6 +105,7 @@ test: publication subscription
 # Another group of parallel tests
 # ----------
 test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
+
 # ----------
 # Another group of parallel tests
 # NB: temp.sql does a reconnect which transiently uses 2 connections,
@@ -114,7 +116,7 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid c
 # ----------
 # Another group of parallel tests
 # ----------
-test: identity
+test: identity partition_join partition_prune reloptions hash_part
 
 # event triggers cannot run concurrently with any test that runs DDL
 test: event_trigger

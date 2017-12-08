@@ -139,7 +139,7 @@ CommentObject(CommentStmt *stmt)
  * existing comment for the specified key.
  */
 void
-CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
+CreateComments(Oid oid, Oid classoid, int32 subid, const char *comment)
 {
 	Relation	description;
 	ScanKeyData skey[3];
@@ -234,7 +234,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
  * existing comment for the specified key.
  */
 void
-CreateSharedComments(Oid oid, Oid classoid, char *comment)
+CreateSharedComments(Oid oid, Oid classoid, const char *comment)
 {
 	Relation	shdescription;
 	ScanKeyData skey[2];

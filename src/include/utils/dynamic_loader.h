@@ -17,8 +17,8 @@
 #include "fmgr.h"
 
 
-extern void *pg_dlopen(char *filename);
-extern PGFunction pg_dlsym(void *handle, char *funcname);
+extern void *pg_dlopen(const char *filename);
+extern PGFunction pg_dlsym(void *handle, const char *funcname);
 extern void pg_dlclose(void *handle);
 extern char *pg_dlerror(void);
 

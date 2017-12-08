@@ -3,7 +3,7 @@ doc/src/sgml/ref/move.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-MOVE">
+<refentry id="sql-move">
  <indexterm zone="sql-move">
   <primary>MOVE</primary>
  </indexterm>
@@ -27,23 +27,23 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <!-- Note the "direction" bit is also in ref/fetch.sgml -->
 <synopsis>
-MOVE [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <replaceable class="PARAMETER">cursor_name</replaceable>
+MOVE [ <replaceable class="parameter">direction</replaceable> [ FROM | IN ] ] <replaceable class="parameter">cursor_name</replaceable>
 
-<phrase>where <replaceable class="PARAMETER">direction</replaceable> can be empty or one of:</phrase>
+<phrase>where <replaceable class="parameter">direction</replaceable> can be empty or one of:</phrase>
 
     NEXT
     PRIOR
     FIRST
     LAST
-    ABSOLUTE <replaceable class="PARAMETER">count</replaceable>
-    RELATIVE <replaceable class="PARAMETER">count</replaceable>
-    <replaceable class="PARAMETER">count</replaceable>
+    ABSOLUTE <replaceable class="parameter">count</replaceable>
+    RELATIVE <replaceable class="parameter">count</replaceable>
+    <replaceable class="parameter">count</replaceable>
     ALL
     FORWARD
-    FORWARD <replaceable class="PARAMETER">count</replaceable>
+    FORWARD <replaceable class="parameter">count</replaceable>
     FORWARD ALL
     BACKWARD
-    BACKWARD <replaceable class="PARAMETER">count</replaceable>
+    BACKWARD <replaceable class="parameter">count</replaceable>
     BACKWARD ALL
 </synopsis>
  </refsynopsisdiv>
@@ -60,7 +60,7 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <r
   <para>
    The parameters for the <command>MOVE</command> command are identical to
    those of the <command>FETCH</command> command; refer to
-   <xref linkend="sql-fetch">
+   <xref linkend="sql-fetch"/>
    for details on syntax and usage.
   </para>
  </refsect1>
@@ -69,7 +69,7 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <r
   <title>Outputs</title>
 
   <para>
-   On successful completion, a <command>MOVE</> command returns a command
+   On successful completion, a <command>MOVE</command> command returns a command
    tag of the form
 <screen>
 MOVE <replaceable class="parameter">count</replaceable>
@@ -116,9 +116,9 @@ COMMIT WORK;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-close"></member>
-   <member><xref linkend="sql-declare"></member>
-   <member><xref linkend="sql-fetch"></member>
+   <member><xref linkend="sql-close"/></member>
+   <member><xref linkend="sql-declare"/></member>
+   <member><xref linkend="sql-fetch"/></member>
   </simplelist>
  </refsect1>
 </refentry>

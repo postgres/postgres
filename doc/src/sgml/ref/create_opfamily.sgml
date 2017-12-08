@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_opfamily.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEOPFAMILY">
+<refentry id="sql-createopfamily">
  <indexterm zone="sql-createopfamily">
   <primary>CREATE OPERATOR FAMILY</primary>
  </indexterm>
@@ -35,7 +35,7 @@ CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <
    compatible with these operator classes but not essential for the
    functioning of any individual index.  (Operators and functions that
    are essential to indexes should be grouped within the relevant operator
-   class, rather than being <quote>loose</> in the operator family.
+   class, rather than being <quote>loose</quote> in the operator family.
    Typically, single-data-type operators are bound to operator classes,
    while cross-data-type operators can be loose in an operator family
    containing operator classes for both data types.)
@@ -45,7 +45,7 @@ CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <
    The new operator family is initially empty.  It should be populated
    by issuing subsequent <command>CREATE OPERATOR CLASS</command> commands
    to add contained operator classes, and optionally
-   <command>ALTER OPERATOR FAMILY</command> commands to add <quote>loose</>
+   <command>ALTER OPERATOR FAMILY</command> commands to add <quote>loose</quote>
    operators and their corresponding support functions.
   </para>
 
@@ -64,7 +64,7 @@ CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <
   </para>
 
   <para>
-   Refer to <xref linkend="xindex"> for further information.
+   Refer to <xref linkend="xindex"/> for further information.
   </para>
  </refsect1>
 
@@ -108,11 +108,11 @@ CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteropfamily"></member>
-   <member><xref linkend="sql-dropopfamily"></member>
-   <member><xref linkend="sql-createopclass"></member>
-   <member><xref linkend="sql-alteropclass"></member>
-   <member><xref linkend="sql-dropopclass"></member>
+   <member><xref linkend="sql-alteropfamily"/></member>
+   <member><xref linkend="sql-dropopfamily"/></member>
+   <member><xref linkend="sql-createopclass"/></member>
+   <member><xref linkend="sql-alteropclass"/></member>
+   <member><xref linkend="sql-dropopclass"/></member>
   </simplelist>
  </refsect1>
 </refentry>

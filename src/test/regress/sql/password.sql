@@ -59,11 +59,18 @@ SELECT rolname, regexp_replace(rolpassword, '(SCRAM-SHA-256)\$(\d+):([a-zA-Z0-9+
     WHERE rolname LIKE 'regress_passwd%'
     ORDER BY rolname, rolpassword;
 
+-- An empty password is not allowed, in any form
+CREATE ROLE regress_passwd_empty PASSWORD '';
+ALTER ROLE regress_passwd_empty PASSWORD 'md585939a5ce845f1a1b620742e3c659e0a';
+ALTER ROLE regress_passwd_empty PASSWORD 'SCRAM-SHA-256$4096:hpFyHTUsSWcR7O9P$LgZFIt6Oqdo27ZFKbZ2nV+vtnYM995pDh9ca6WSi120=:qVV5NeluNfUPkwm7Vqat25RjSPLkGeoZBQs6wVv+um4=';
+SELECT rolpassword FROM pg_authid WHERE rolname='regress_passwd_empty';
+
 DROP ROLE regress_passwd1;
 DROP ROLE regress_passwd2;
 DROP ROLE regress_passwd3;
 DROP ROLE regress_passwd4;
 DROP ROLE regress_passwd5;
+DROP ROLE regress_passwd_empty;
 
 -- all entries should have been removed
 SELECT rolname, rolpassword

@@ -145,6 +145,10 @@ SELECT * from ts_debug('english', 'http://www.harewoodsolutions.co.uk/press.aspx
 SELECT * from ts_debug('english', 'http://aew.wer0c.ewr/id?ad=qwe&dw<span>');
 SELECT * from ts_debug('english', 'http://5aew.werc.ewr:8100/?');
 SELECT * from ts_debug('english', '5aew.werc.ewr:8100/?xx');
+SELECT token, alias,
+  dictionaries, dictionaries is null as dnull, array_dims(dictionaries) as ddims,
+  lexemes, lexemes is null as lnull, array_dims(lexemes) as ldims
+from ts_debug('english', 'a title');
 
 -- to_tsquery
 

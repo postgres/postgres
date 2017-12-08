@@ -162,8 +162,8 @@ pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys)
  * considered.  Otherwise child members are ignored.  (See the comments for
  * get_eclass_for_sort_expr.)
  *
- * create_it is TRUE if we should create any missing EquivalenceClass
- * needed to represent the sort key.  If it's FALSE, we return NULL if the
+ * create_it is true if we should create any missing EquivalenceClass
+ * needed to represent the sort key.  If it's false, we return NULL if the
  * sort key isn't already present in any EquivalenceClass.
  */
 static PathKey *
@@ -197,8 +197,8 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 									  opcintype,
 									  BTEqualStrategyNumber);
 	if (!OidIsValid(equality_op))	/* shouldn't happen */
-		elog(ERROR, "could not find equality operator for opfamily %u",
-			 opfamily);
+		elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
+			 BTEqualStrategyNumber, opcintype, opcintype, opfamily);
 	opfamilies = get_mergejoin_opfamilies(equality_op);
 	if (!opfamilies)			/* certainly should find some */
 		elog(ERROR, "could not find opfamilies for equality operator %u",
@@ -987,8 +987,8 @@ update_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
  *	  If successful, it returns a list of mergeclauses.
  *
  * 'pathkeys' is a pathkeys list showing the ordering of an input path.
- * 'outer_keys' is TRUE if these keys are for the outer input path,
- *			FALSE if for inner.
+ * 'outer_keys' is true if these keys are for the outer input path,
+ *			false if for inner.
  * 'restrictinfos' is a list of mergejoinable restriction clauses for the
  *			join relation being formed.
  *

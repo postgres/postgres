@@ -48,7 +48,7 @@ Each test script should begin with:
 then it will generally need to set up one or more nodes, run commands
 against them and evaluate the results. For example:
 
-    my $node = get_new_node('master');
+    my $node = PostgresNode->get_new_node('master');
     $node->init;
     $node->start;
 

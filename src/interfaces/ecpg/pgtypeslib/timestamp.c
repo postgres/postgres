@@ -192,7 +192,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **t
 /* EncodeSpecialTimestamp()
  *	* Convert reserved timestamp data type to string.
  *	 */
-static int
+static void
 EncodeSpecialTimestamp(timestamp dt, char *str)
 {
 	if (TIMESTAMP_IS_NOBEGIN(dt))
@@ -200,10 +200,8 @@ EncodeSpecialTimestamp(timestamp dt, char *str)
 	else if (TIMESTAMP_IS_NOEND(dt))
 		strcpy(str, LATE);
 	else
-		return FALSE;
-
-	return TRUE;
-}								/* EncodeSpecialTimestamp() */
+		abort();				/* shouldn't happen */
+}
 
 timestamp
 PGTYPEStimestamp_from_asc(char *str, char **endptr)
@@ -224,14 +222,14 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 	if (strlen(str) > MAXDATELEN)
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;
-		return (noresult);
+		return noresult;
 	}
 
 	if (ParseDateTime(str, lowstr, field, ftype, &nf, ptr) != 0 ||
 		DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, 0) != 0)
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;
-		return (noresult);
+		return noresult;
 	}
 
 	switch (dtype)
@@ -240,7 +238,7 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
 			{
 				errno = PGTYPES_TS_BAD_TIMESTAMP;
-				return (noresult);
+				return noresult;
 			}
 			break;
 
@@ -258,11 +256,11 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 
 		case DTK_INVALID:
 			errno = PGTYPES_TS_BAD_TIMESTAMP;
-			return (noresult);
+			return noresult;
 
 		default:
 			errno = PGTYPES_TS_BAD_TIMESTAMP;
-			return (noresult);
+			return noresult;
 	}
 
 	/* AdjustTimestampForTypmod(&result, typmod); */
@@ -815,7 +813,7 @@ PGTYPEStimestamp_sub(timestamp * ts1, timestamp * ts2, interval * iv)
 }
 
 int
-PGTYPEStimestamp_defmt_asc(char *str, const char *fmt, timestamp * d)
+PGTYPEStimestamp_defmt_asc(const char *str, const char *fmt, timestamp * d)
 {
 	int			year,
 				month,

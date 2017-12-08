@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_tablespace.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTABLESPACE">
+<refentry id="sql-droptablespace">
  <indexterm zone="sql-droptablespace">
   <primary>DROP TABLESPACE</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+DROP TABLESPACE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -38,8 +38,8 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    dropped. It is possible that objects in other databases might still reside
    in the tablespace even if no objects in the current database are using
    the tablespace.  Also, if the tablespace is listed in the <xref
-   linkend="guc-temp-tablespaces"> setting of any active session, the
-   <command>DROP</> might fail due to temporary files residing in the
+   linkend="guc-temp-tablespaces"/> setting of any active session, the
+   <command>DROP</command> might fail due to temporary files residing in the
    tablespace.
   </para>
  </refsect1>
@@ -60,7 +60,7 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of a tablespace.
@@ -74,7 +74,7 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
   <title>Notes</title>
 
    <para>
-    <command>DROP TABLESPACE</> cannot be executed inside a transaction block.
+    <command>DROP TABLESPACE</command> cannot be executed inside a transaction block.
    </para>
  </refsect1>
 
@@ -93,7 +93,7 @@ DROP TABLESPACE mystuff;
   <title>Compatibility</title>
 
   <para>
-   <command>DROP TABLESPACE</command> is a <productname>PostgreSQL</>
+   <command>DROP TABLESPACE</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>
@@ -102,8 +102,8 @@ DROP TABLESPACE mystuff;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtablespace"></member>
-   <member><xref linkend="sql-altertablespace"></member>
+   <member><xref linkend="sql-createtablespace"/></member>
+   <member><xref linkend="sql-altertablespace"/></member>
   </simplelist>
  </refsect1>
 

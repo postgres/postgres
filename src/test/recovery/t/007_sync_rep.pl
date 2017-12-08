@@ -23,7 +23,7 @@ sub test_sync_state
 		$self->reload;
 	}
 
-	ok( $self->poll_query_until('postgres', $check_sql, $expected), $msg);
+	ok($self->poll_query_until('postgres', $check_sql, $expected), $msg);
 }
 
 # Initialize master node

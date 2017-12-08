@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/create_collation.sgml -->
 
-<refentry id="SQL-CREATECOLLATION">
+<refentry id="sql-createcollation">
  <indexterm zone="sql-createcollation">
   <primary>CREATE COLLATION</primary>
  </indexterm>
@@ -93,10 +93,7 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
      <listitem>
       <para>
        Use the specified operating system locale for
-       the <symbol>LC_COLLATE</symbol> locale category.  The locale
-       must be applicable to the current database encoding.
-       (See <xref linkend="sql-createdatabase"> for the precise
-       rules.)
+       the <symbol>LC_COLLATE</symbol> locale category.
       </para>
      </listitem>
     </varlistentry>
@@ -107,10 +104,7 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
      <listitem>
       <para>
        Use the specified operating system locale for
-       the <symbol>LC_CTYPE</symbol> locale category.  The locale
-       must be applicable to the current database encoding.
-       (See <xref linkend="sql-createdatabase"> for the precise
-       rules.)
+       the <symbol>LC_CTYPE</symbol> locale category.
       </para>
      </listitem>
     </varlistentry>
@@ -122,7 +116,7 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
       <para>
        Specifies the provider to use for locale services associated with this
        collation.  Possible values
-       are: <literal>icu</literal>,<indexterm><primary>ICU</></>
+       are: <literal>icu</literal>,<indexterm><primary>ICU</primary></indexterm>
        <literal>libc</literal>.
        <literal>libc</literal> is the default.
        The available choices depend on the operating system and build options.
@@ -144,7 +138,7 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
       </para>
 
       <para>
-       See also <xref linkend="sql-altercollation"> for how to handle
+       See also <xref linkend="sql-altercollation"/> for how to handle
        collation version mismatches.
       </para>
      </listitem>
@@ -173,8 +167,13 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
   </para>
 
   <para>
-   See <xref linkend="collation"> for more information about collation
-   support in PostgreSQL.
+   See <xref linkend="collation-create"/> for more information on how to create collations.
+  </para>
+
+  <para>
+   When using the <literal>libc</literal> collation provider, the locale must
+   be applicable to the current database encoding.
+   See <xref linkend="sql-createdatabase"/> for the precise rules.
   </para>
  </refsect1>
 
@@ -186,7 +185,14 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
    <literal>fr_FR.utf8</literal>
    (assuming the current database encoding is <literal>UTF8</literal>):
 <programlisting>
-CREATE COLLATION french (LOCALE = 'fr_FR.utf8');
+CREATE COLLATION french (locale = 'fr_FR.utf8');
+</programlisting>
+  </para>
+
+  <para>
+   To create a collation using the ICU provider using German phone book sort order:
+<programlisting>
+CREATE COLLATION german_phonebook (provider = icu, locale = 'de-u-co-phonebk');
 </programlisting>
   </para>
 
@@ -217,8 +223,8 @@ CREATE COLLATION german FROM "de_DE";
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altercollation"></member>
-   <member><xref linkend="sql-dropcollation"></member>
+   <member><xref linkend="sql-altercollation"/></member>
+   <member><xref linkend="sql-dropcollation"/></member>
   </simplelist>
  </refsect1>
 

@@ -9,7 +9,7 @@
  </indexterm>
 
  <para>
-  The <application>spi</> module provides several workable examples
+  The <application>spi</application> module provides several workable examples
   of using SPI and triggers.  While these functions are of some value in
   their own right, they are even more useful as examples to modify for
   your own purposes.  The functions are general enough to be used
@@ -26,15 +26,15 @@
   <title>refint &mdash; Functions for Implementing Referential Integrity</title>
 
   <para>
-   <function>check_primary_key()</> and
-   <function>check_foreign_key()</> are used to check foreign key constraints.
+   <function>check_primary_key()</function> and
+   <function>check_foreign_key()</function> are used to check foreign key constraints.
    (This functionality is long since superseded by the built-in foreign
    key mechanism, of course, but the module is still useful as an example.)
   </para>
 
   <para>
-   <function>check_primary_key()</> checks the referencing table.
-   To use, create a <literal>BEFORE INSERT OR UPDATE</> trigger using this
+   <function>check_primary_key()</function> checks the referencing table.
+   To use, create a <literal>BEFORE INSERT OR UPDATE</literal> trigger using this
    function on a table referencing another table. Specify as the trigger
    arguments: the referencing table's column name(s) which form the foreign
    key, the referenced table name, and the column names in the referenced table
@@ -43,14 +43,14 @@
   </para>
 
   <para>
-   <function>check_foreign_key()</> checks the referenced table.
-   To use, create a <literal>BEFORE DELETE OR UPDATE</> trigger using this
+   <function>check_foreign_key()</function> checks the referenced table.
+   To use, create a <literal>BEFORE DELETE OR UPDATE</literal> trigger using this
    function on a table referenced by other table(s).  Specify as the trigger
    arguments: the number of referencing tables for which the function has to
    perform checking, the action if a referencing key is found
-   (<literal>cascade</> &mdash; to delete the referencing row,
-   <literal>restrict</> &mdash; to abort transaction if referencing keys
-   exist, <literal>setnull</> &mdash; to set referencing key fields to null),
+   (<literal>cascade</literal> &mdash; to delete the referencing row,
+   <literal>restrict</literal> &mdash; to abort transaction if referencing keys
+   exist, <literal>setnull</literal> &mdash; to set referencing key fields to null),
    the triggered table's column names which form the primary/unique key, then
    the referencing table name and column names (repeated for as many
    referencing tables as were specified by first argument).  Note that the
@@ -59,7 +59,7 @@
   </para>
 
   <para>
-   There are examples in <filename>refint.example</>.
+   There are examples in <filename>refint.example</filename>.
   </para>
  </sect2>
 
@@ -67,10 +67,10 @@
   <title>timetravel &mdash; Functions for Implementing Time Travel</title>
 
   <para>
-   Long ago, <productname>PostgreSQL</> had a built-in time travel feature
+   Long ago, <productname>PostgreSQL</productname> had a built-in time travel feature
    that kept the insert and delete times for each tuple.  This can be
    emulated using these functions.  To use these functions,
-   you must add to a table two columns of <type>abstime</> type to store
+   you must add to a table two columns of <type>abstime</type> type to store
    the date when a tuple was inserted (start_date) and changed/deleted
    (stop_date):
 
@@ -89,7 +89,7 @@ CREATE TABLE mytab (
 
   <para>
    When a new row is inserted, start_date should normally be set to
-   current time, and stop_date to <literal>infinity</>.  The trigger
+   current time, and stop_date to <literal>infinity</literal>.  The trigger
    will automatically substitute these values if the inserted data
    contains nulls in these columns.  Generally, inserting explicit
    non-null data in these columns should only be done when re-loading
@@ -97,7 +97,7 @@ CREATE TABLE mytab (
   </para>
 
   <para>
-   Tuples with stop_date equal to <literal>infinity</> are <quote>valid
+   Tuples with stop_date equal to <literal>infinity</literal> are <quote>valid
    now</quote>, and can be modified.  Tuples with a finite stop_date cannot
    be modified anymore &mdash; the trigger will prevent it.  (If you need
    to do that, you can turn off time travel as shown below.)
@@ -107,7 +107,7 @@ CREATE TABLE mytab (
    For a modifiable row, on update only the stop_date in the tuple being
    updated will be changed (to current time) and a new tuple with the modified
    data will be inserted.  Start_date in this new tuple will be set to current
-   time and stop_date to <literal>infinity</>.
+   time and stop_date to <literal>infinity</literal>.
   </para>
 
   <para>
@@ -117,29 +117,29 @@ CREATE TABLE mytab (
 
   <para>
    To query for tuples <quote>valid now</quote>, include
-   <literal>stop_date = 'infinity'</> in the query's WHERE condition.
+   <literal>stop_date = 'infinity'</literal> in the query's WHERE condition.
    (You might wish to incorporate that in a view.)  Similarly, you can
    query for tuples valid at any past time with suitable conditions on
    start_date and stop_date.
   </para>
 
   <para>
-   <function>timetravel()</> is the general trigger function that supports
-   this behavior.  Create a <literal>BEFORE INSERT OR UPDATE OR DELETE</>
+   <function>timetravel()</function> is the general trigger function that supports
+   this behavior.  Create a <literal>BEFORE INSERT OR UPDATE OR DELETE</literal>
    trigger using this function on each time-traveled table. Specify two
    trigger arguments: the actual
    names of the start_date and stop_date columns.
    Optionally, you can specify one to three more arguments, which must refer
-   to columns of type <type>text</>.  The trigger will store the name of
+   to columns of type <type>text</type>.  The trigger will store the name of
    the current user into the first of these columns during INSERT, the
    second column during UPDATE, and the third during DELETE.
   </para>
 
   <para>
-   <function>set_timetravel()</> allows you to turn time-travel on or off for
+   <function>set_timetravel()</function> allows you to turn time-travel on or off for
    a table.
-   <literal>set_timetravel('mytab', 1)</> will turn TT ON for table <literal>mytab</>.
-   <literal>set_timetravel('mytab', 0)</> will turn TT OFF for table <literal>mytab</>.
+   <literal>set_timetravel('mytab', 1)</literal> will turn TT ON for table <literal>mytab</literal>.
+   <literal>set_timetravel('mytab', 0)</literal> will turn TT OFF for table <literal>mytab</literal>.
    In both cases the old status is reported.  While TT is off, you can modify
    the start_date and stop_date columns freely.  Note that the on/off status
    is local to the current database session &mdash; fresh sessions will
@@ -147,12 +147,12 @@ CREATE TABLE mytab (
   </para>
 
   <para>
-   <function>get_timetravel()</> returns the TT state for a table without
+   <function>get_timetravel()</function> returns the TT state for a table without
    changing it.
   </para>
 
   <para>
-   There is an example in <filename>timetravel.example</>.
+   There is an example in <filename>timetravel.example</filename>.
   </para>
  </sect2>
 
@@ -160,17 +160,17 @@ CREATE TABLE mytab (
   <title>autoinc &mdash; Functions for Autoincrementing Fields</title>
 
   <para>
-   <function>autoinc()</> is a trigger that stores the next value of
+   <function>autoinc()</function> is a trigger that stores the next value of
    a sequence into an integer field.  This has some overlap with the
-   built-in <quote>serial column</> feature, but it is not the same:
-   <function>autoinc()</> will override attempts to substitute a
+   built-in <quote>serial column</quote> feature, but it is not the same:
+   <function>autoinc()</function> will override attempts to substitute a
    different field value during inserts, and optionally it can be
    used to increment the field during updates, too.
   </para>
 
   <para>
-   To use, create a <literal>BEFORE INSERT</> (or optionally <literal>BEFORE
-   INSERT OR UPDATE</>) trigger using this function.  Specify two
+   To use, create a <literal>BEFORE INSERT</literal> (or optionally <literal>BEFORE
+   INSERT OR UPDATE</literal>) trigger using this function.  Specify two
    trigger arguments: the name of the integer column to be modified,
    and the name of the sequence object that will supply values.
    (Actually, you can specify any number of pairs of such names, if
@@ -178,7 +178,7 @@ CREATE TABLE mytab (
   </para>
 
   <para>
-   There is an example in <filename>autoinc.example</>.
+   There is an example in <filename>autoinc.example</filename>.
   </para>
 
  </sect2>
@@ -187,19 +187,19 @@ CREATE TABLE mytab (
   <title>insert_username &mdash; Functions for Tracking Who Changed a Table</title>
 
   <para>
-   <function>insert_username()</> is a trigger that stores the current
+   <function>insert_username()</function> is a trigger that stores the current
    user's name into a text field.  This can be useful for tracking
    who last modified a particular row within a table.
   </para>
 
   <para>
-   To use, create a <literal>BEFORE INSERT</> and/or <literal>UPDATE</>
+   To use, create a <literal>BEFORE INSERT</literal> and/or <literal>UPDATE</literal>
    trigger using this function.  Specify a single trigger
    argument: the name of the text column to be modified.
   </para>
 
   <para>
-   There is an example in <filename>insert_username.example</>.
+   There is an example in <filename>insert_username.example</filename>.
   </para>
 
  </sect2>
@@ -208,21 +208,21 @@ CREATE TABLE mytab (
   <title>moddatetime &mdash; Functions for Tracking Last Modification Time</title>
 
   <para>
-   <function>moddatetime()</> is a trigger that stores the current
-   time into a <type>timestamp</> field.  This can be useful for tracking
+   <function>moddatetime()</function> is a trigger that stores the current
+   time into a <type>timestamp</type> field.  This can be useful for tracking
    the last modification time of a particular row within a table.
   </para>
 
   <para>
-   To use, create a <literal>BEFORE UPDATE</>
+   To use, create a <literal>BEFORE UPDATE</literal>
    trigger using this function.  Specify a single trigger
    argument: the name of the column to be modified.
-   The column must be of type <type>timestamp</> or <type>timestamp with
-   time zone</>.
+   The column must be of type <type>timestamp</type> or <type>timestamp with
+   time zone</type>.
   </para>
 
   <para>
-   There is an example in <filename>moddatetime.example</>.
+   There is an example in <filename>moddatetime.example</filename>.
   </para>
 
  </sect2>

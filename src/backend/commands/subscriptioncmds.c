@@ -244,7 +244,7 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 }
 
 /*
- * Auxiliary function to return a text array out of a list of String nodes.
+ * Auxiliary function to build a text array out of a list of String nodes.
  */
 static Datum
 publicationListToArray(List *publist)
@@ -264,7 +264,8 @@ publicationListToArray(List *publist)
 								   ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
-	datums = palloc(sizeof(text *) * list_length(publist));
+	datums = (Datum *) palloc(sizeof(Datum) * list_length(publist));
+
 	foreach(cell, publist)
 	{
 		char	   *name = strVal(lfirst(cell));
@@ -275,7 +276,7 @@ publicationListToArray(List *publist)
 		{
 			char	   *pname = strVal(lfirst(pcell));
 
-			if (name == pname)
+			if (pcell == cell)
 				break;
 
 			if (strcmp(name, pname) == 0)
@@ -292,6 +293,7 @@ publicationListToArray(List *publist)
 
 	arr = construct_array(datums, list_length(publist),
 						  TEXTOID, -1, false, 'i');
+
 	MemoryContextDelete(memcxt);
 
 	return PointerGetDatum(arr);
@@ -572,10 +574,9 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 			SetSubscriptionRelState(sub->oid, relid,
 									copy_data ? SUBREL_STATE_INIT : SUBREL_STATE_READY,
 									InvalidXLogRecPtr, false);
-			ereport(NOTICE,
-					(errmsg("added subscription for table %s.%s",
-							quote_identifier(rv->schemaname),
-							quote_identifier(rv->relname))));
+			ereport(DEBUG1,
+					(errmsg("table \"%s.%s\" added to subscription \"%s\"",
+							rv->schemaname, rv->relname, sub->name)));
 		}
 	}
 
@@ -593,17 +594,15 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 		if (!bsearch(&relid, pubrel_local_oids,
 					 list_length(pubrel_names), sizeof(Oid), oid_cmp))
 		{
-			char	   *namespace;
-
 			RemoveSubscriptionRel(sub->oid, relid);
 
-			logicalrep_worker_stop(sub->oid, relid);
+			logicalrep_worker_stop_at_commit(sub->oid, relid);
 
-			namespace = get_namespace_name(get_rel_namespace(relid));
-			ereport(NOTICE,
-					(errmsg("removed subscription for table %s.%s",
-							quote_identifier(namespace),
-							quote_identifier(get_rel_name(relid)))));
+			ereport(DEBUG1,
+					(errmsg("table \"%s.%s\" removed from subscription \"%s\"",
+							get_namespace_name(get_rel_namespace(relid)),
+							get_rel_name(relid),
+							sub->name)));
 		}
 	}
 }
@@ -819,6 +818,8 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	char	   *subname;
 	char	   *conninfo;
 	char	   *slotname;
+	List	   *subworkers;
+	ListCell   *lc;
 	char		originname[NAMEDATALEN];
 	char	   *err = NULL;
 	RepOriginId originid;
@@ -909,20 +910,44 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 
 	ReleaseSysCache(tup);
 
+	/*
+	 * Stop all the subscription workers immediately.
+	 *
+	 * This is necessary if we are dropping the replication slot, so that the
+	 * slot becomes accessible.
+	 *
+	 * It is also necessary if the subscription is disabled and was disabled
+	 * in the same transaction.  Then the workers haven't seen the disabling
+	 * yet and will still be running, leading to hangs later when we want to
+	 * drop the replication origin.  If the subscription was disabled before
+	 * this transaction, then there shouldn't be any workers left, so this
+	 * won't make a difference.
+	 *
+	 * New workers won't be started because we hold an exclusive lock on the
+	 * subscription till the end of the transaction.
+	 */
+	LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
+	subworkers = logicalrep_workers_find(subid, false);
+	LWLockRelease(LogicalRepWorkerLock);
+	foreach(lc, subworkers)
+	{
+		LogicalRepWorker *w = (LogicalRepWorker *) lfirst(lc);
+
+		logicalrep_worker_stop(w->subid, w->relid);
+	}
+	list_free(subworkers);
+
 	/* Clean up dependencies */
 	deleteSharedDependencyRecordsFor(SubscriptionRelationId, subid, 0);
 
 	/* Remove any associated relation synchronization states. */
 	RemoveSubscriptionRel(subid, InvalidOid);
 
-	/* Kill the apply worker so that the slot becomes accessible. */
-	logicalrep_worker_stop(subid, InvalidOid);
-
 	/* Remove the origin tracking if exists. */
 	snprintf(originname, sizeof(originname), "pg_%u", subid);
 	originid = replorigin_by_name(originname, true);
 	if (originid != InvalidRepOriginId)
-		replorigin_drop(originid);
+		replorigin_drop(originid, false);
 
 	/*
 	 * If there is no slot associated with the subscription, we can finish
@@ -941,7 +966,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	load_file("libpqwalreceiver", false);
 
 	initStringInfo(&cmd);
-	appendStringInfo(&cmd, "DROP_REPLICATION_SLOT %s", quote_identifier(slotname));
+	appendStringInfo(&cmd, "DROP_REPLICATION_SLOT %s WAIT", quote_identifier(slotname));
 
 	wrconn = walrcv_connect(conninfo, true, subname, &err);
 	if (wrconn == NULL)
@@ -1099,9 +1124,9 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 	Assert(list_length(publications) > 0);
 
 	initStringInfo(&cmd);
-	appendStringInfo(&cmd, "SELECT DISTINCT t.schemaname, t.tablename\n"
-					 "  FROM pg_catalog.pg_publication_tables t\n"
-					 " WHERE t.pubname IN (");
+	appendStringInfoString(&cmd, "SELECT DISTINCT t.schemaname, t.tablename\n"
+						   "  FROM pg_catalog.pg_publication_tables t\n"
+						   " WHERE t.pubname IN (");
 	first = true;
 	foreach(lc, publications)
 	{
@@ -1112,9 +1137,9 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 		else
 			appendStringInfoString(&cmd, ", ");
 
-		appendStringInfo(&cmd, "%s", quote_literal_cstr(pubname));
+		appendStringInfoString(&cmd, quote_literal_cstr(pubname));
 	}
-	appendStringInfoString(&cmd, ")");
+	appendStringInfoChar(&cmd, ')');
 
 	res = walrcv_exec(wrconn, cmd.data, 2, tableRow);
 	pfree(cmd.data);

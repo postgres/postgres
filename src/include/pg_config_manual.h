@@ -14,6 +14,12 @@
  */
 
 /*
+ * This is default value for wal_segment_size to be used at initdb when run
+ * without --walsegsize option. Must be a valid segment size.
+ */
+#define DEFAULT_XLOG_SEG_SIZE	(16*1024*1024)
+
+/*
  * Maximum length for identifiers (e.g. table names, column names,
  * function names).  Names actually are limited to one less byte than this,
  * because the length must include a trailing zero byte.
@@ -65,16 +71,6 @@
  * semaphores have to be used.
  */
 #define NUM_ATOMICS_SEMAPHORES		64
-
-/*
- * Define this if you want to allow the lo_import and lo_export SQL
- * functions to be executed by ordinary users.  By default these
- * functions are only available to the Postgres superuser.  CAUTION:
- * These functions are SECURITY HOLES since they can read and write
- * any file that the PostgreSQL server has permission to access.  If
- * you turn this on, don't say we didn't warn you.
- */
-/* #define ALLOW_DANGEROUS_LO_FUNCTIONS */
 
 /*
  * MAXPGPATH: standard size of a pathname buffer in PostgreSQL (hence,

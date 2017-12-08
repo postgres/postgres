@@ -1,0 +1,76 @@
+Parsed test spec with 2 sessions
+
+starting permutation: lock vac_specified drop_and_commit
+step lock: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step vac_specified: VACUUM part1, part2; <waiting ...>
+step drop_and_commit: 
+	DROP TABLE part2;
+	COMMIT;
+
+WARNING:  skipping vacuum of "part2" --- relation no longer exists
+step vac_specified: <... completed>
+
+starting permutation: lock vac_all_parts drop_and_commit
+step lock: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step vac_all_parts: VACUUM parted; <waiting ...>
+step drop_and_commit: 
+	DROP TABLE part2;
+	COMMIT;
+
+step vac_all_parts: <... completed>
+
+starting permutation: lock analyze_specified drop_and_commit
+step lock: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step analyze_specified: ANALYZE part1, part2; <waiting ...>
+step drop_and_commit: 
+	DROP TABLE part2;
+	COMMIT;
+
+WARNING:  skipping analyze of "part2" --- relation no longer exists
+step analyze_specified: <... completed>
+
+starting permutation: lock analyze_all_parts drop_and_commit
+step lock: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step analyze_all_parts: ANALYZE parted; <waiting ...>
+step drop_and_commit: 
+	DROP TABLE part2;
+	COMMIT;
+
+step analyze_all_parts: <... completed>
+
+starting permutation: lock vac_analyze_specified drop_and_commit
+step lock: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step vac_analyze_specified: VACUUM ANALYZE part1, part2; <waiting ...>
+step drop_and_commit: 
+	DROP TABLE part2;
+	COMMIT;
+
+WARNING:  skipping vacuum of "part2" --- relation no longer exists
+step vac_analyze_specified: <... completed>
+
+starting permutation: lock vac_analyze_all_parts drop_and_commit
+step lock: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step vac_analyze_all_parts: VACUUM ANALYZE parted; <waiting ...>
+step drop_and_commit: 
+	DROP TABLE part2;
+	COMMIT;
+
+step vac_analyze_all_parts: <... completed>

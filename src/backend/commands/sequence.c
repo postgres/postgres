@@ -458,7 +458,7 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	/* lock page's buffer and read tuple into new sequence structure */
 	(void) read_seq_tuple(seqrel, &buf, &datatuple);
 
-	/* copy the existing sequence data tuple, so it can be modified localy */
+	/* copy the existing sequence data tuple, so it can be modified locally */
 	newdatatuple = heap_copytuple(&datatuple);
 	newdataform = (Form_pg_sequence_data) GETSTRUCT(newdatatuple);
 
@@ -1055,18 +1055,10 @@ lock_and_open_sequence(SeqTable seq)
 		ResourceOwner currentOwner;
 
 		currentOwner = CurrentResourceOwner;
-		PG_TRY();
-		{
-			CurrentResourceOwner = TopTransactionResourceOwner;
-			LockRelationOid(seq->relid, RowExclusiveLock);
-		}
-		PG_CATCH();
-		{
-			/* Ensure CurrentResourceOwner is restored on error */
-			CurrentResourceOwner = currentOwner;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
+		CurrentResourceOwner = TopTransactionResourceOwner;
+
+		LockRelationOid(seq->relid, RowExclusiveLock);
+
 		CurrentResourceOwner = currentOwner;
 
 		/* Flag that we have a lock in the current xact */
@@ -1941,7 +1933,7 @@ ResetSequenceCaches(void)
 void
 seq_mask(char *page, BlockNumber blkno)
 {
-	mask_page_lsn(page);
+	mask_page_lsn_and_checksum(page);
 
 	mask_unused_space(page);
 }

@@ -416,7 +416,7 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 		BTPageOpaque opaque;
 
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-		if (opaque->btpo_flags & (BTP_DELETED | BTP_HALF_DEAD))
+		if (P_IGNORE(opaque))
 		{
 			/* recyclable page */
 			stat->free_space += BLCKSZ;

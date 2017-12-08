@@ -634,7 +634,7 @@ createTrgmNFAInternal(regex_t *regex, TrgmPackedGraph **graph,
  * Main entry point for evaluating a graph during index scanning.
  *
  * The check[] array is indexed by trigram number (in the array of simple
- * trigrams returned by createTrgmNFA), and holds TRUE for those trigrams
+ * trigrams returned by createTrgmNFA), and holds true for those trigrams
  * that are present in the index entry being checked.
  */
 bool
@@ -1451,7 +1451,7 @@ prefixContains(TrgmPrefix *prefix1, TrgmPrefix *prefix2)
  * Get vector of all color trigrams in graph and select which of them
  * to expand into simple trigrams.
  *
- * Returns TRUE if OK, FALSE if exhausted resource limits.
+ * Returns true if OK, false if exhausted resource limits.
  */
 static bool
 selectColorTrigrams(TrgmNFA *trgmNFA)

@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_publication.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPPUBLICATION">
+<refentry id="sql-droppublication">
  <indexterm zone="sql-droppublication">
   <primary>DROP PUBLICATION</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP PUBLICATION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP PUBLICATION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -89,7 +89,7 @@ DROP PUBLICATION mypublication;
   <title>Compatibility</title>
 
   <para>
-   <command>DROP PUBLICATION</command> is a <productname>PostgreSQL</>
+   <command>DROP PUBLICATION</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>
@@ -98,8 +98,8 @@ DROP PUBLICATION mypublication;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createpublication"></member>
-   <member><xref linkend="sql-alterpublication"></member>
+   <member><xref linkend="sql-createpublication"/></member>
+   <member><xref linkend="sql-alterpublication"/></member>
   </simplelist>
  </refsect1>
 </refentry>

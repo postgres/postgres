@@ -4,6 +4,8 @@
  * contrib/cube/cubescan.l
  */
 
+/* LCOV_EXCL_START */
+
 /* No reason to constrain amount of data slurped */
 #define YY_READ_BUF_SIZE 16777216
 
@@ -55,6 +57,8 @@ NaN          [nN][aA][nN]
 .            return yytext[0]; /* alert parser of the garbage */
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 /* result is not used, but Bison expects this signature */
 void

@@ -66,7 +66,7 @@ static int	numExtensions;
 static ExtensionMemberId *extmembers;
 static int	numextmembers;
 
-static void flagInhTables(TableInfo *tbinfo, int numTables,
+static void flagInhTables(Archive *fout, TableInfo *tbinfo, int numTables,
 			  InhInfo *inhinfo, int numInherits);
 static void flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables);
 static DumpableObject **buildIndexArray(void *objArray, int numObjs,
@@ -243,7 +243,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
 		write_msg(NULL, "finding inheritance relationships\n");
-	flagInhTables(tblinfo, numTables, inhinfo, numInherits);
+	flagInhTables(fout, tblinfo, numTables, inhinfo, numInherits);
 
 	if (g_verbose)
 		write_msg(NULL, "reading column info for interesting tables\n");
@@ -294,8 +294,8 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 }
 
 /* flagInhTables -
- *	 Fill in parent link fields of every target table, and mark
- *	 parents of target tables as interesting
+ *	 Fill in parent link fields of tables for which we need that information,
+ *	 and mark parents of target tables as interesting
  *
  * Note that only direct ancestors of targets are marked interesting.
  * This is sufficient; we don't much care whether they inherited their
@@ -304,34 +304,53 @@ getSchemaData(Archive *fout, int *numTablesPtr)
  * modifies tblinfo
  */
 static void
-flagInhTables(TableInfo *tblinfo, int numTables,
+flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			  InhInfo *inhinfo, int numInherits)
 {
+	DumpOptions *dopt = fout->dopt;
 	int			i,
 				j;
-	int			numParents;
-	TableInfo **parents;
 
 	for (i = 0; i < numTables; i++)
 	{
+		bool		find_parents = true;
+		bool		mark_parents = true;
+
 		/* Some kinds never have parents */
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE ||
 			tblinfo[i].relkind == RELKIND_VIEW ||
 			tblinfo[i].relkind == RELKIND_MATVIEW)
 			continue;
 
-		/* Don't bother computing anything for non-target tables, either */
+		/*
+		 * Normally, we don't bother computing anything for non-target tables,
+		 * but if load-via-partition-root is specified, we gather information
+		 * on every partition in the system so that getRootTableInfo can trace
+		 * from any given to leaf partition all the way up to the root.  (We
+		 * don't need to mark them as interesting for getTableAttrs, though.)
+		 */
 		if (!tblinfo[i].dobj.dump)
-			continue;
+		{
+			mark_parents = false;
 
-		/* Find all the immediate parent tables */
-		findParentsByOid(&tblinfo[i], inhinfo, numInherits);
+			if (!dopt->load_via_partition_root ||
+				!tblinfo[i].ispartition)
+				find_parents = false;
+		}
 
-		/* Mark the parents as interesting for getTableAttrs */
-		numParents = tblinfo[i].numParents;
-		parents = tblinfo[i].parents;
-		for (j = 0; j < numParents; j++)
-			parents[j]->interesting = true;
+		/* If needed, find all the immediate parent tables. */
+		if (find_parents)
+			findParentsByOid(&tblinfo[i], inhinfo, numInherits);
+
+		/* If needed, mark the parents as interesting for getTableAttrs. */
+		if (mark_parents)
+		{
+			int			numParents = tblinfo[i].numParents;
+			TableInfo **parents = tblinfo[i].parents;
+
+			for (j = 0; j < numParents; j++)
+				parents[j]->interesting = true;
+		}
 	}
 }
 

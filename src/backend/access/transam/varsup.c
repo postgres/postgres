@@ -67,7 +67,7 @@ GetNewTransactionId(bool isSubXact)
 		return BootstrapTransactionId;
 	}
 
-	/* safety check, we should never get this far in a HS slave */
+	/* safety check, we should never get this far in a HS standby */
 	if (RecoveryInProgress())
 		elog(ERROR, "cannot assign TransactionIds during recovery");
 
@@ -468,7 +468,7 @@ GetNewObjectId(void)
 {
 	Oid			result;
 
-	/* safety check, we should never get this far in a HS slave */
+	/* safety check, we should never get this far in a HS standby */
 	if (RecoveryInProgress())
 		elog(ERROR, "cannot assign OIDs during recovery");
 

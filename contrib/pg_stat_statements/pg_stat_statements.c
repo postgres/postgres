@@ -21,7 +21,7 @@
  * as the collations of Vars and, most notably, the values of constants.
  *
  * This jumble is acquired at the end of parse analysis of each query, and
- * a 32-bit hash of it is stored into the query's Query.queryId field.
+ * a 64-bit hash of it is stored into the query's Query.queryId field.
  * The server then copies this value around, making it available in plan
  * tree(s) generated from the query.  The executor can then use this value
  * to blame query costs on the proper queryId.
@@ -95,7 +95,7 @@ PG_MODULE_MAGIC;
 #define PGSS_TEXT_FILE	PG_STAT_TMP_DIR "/pgss_query_texts.stat"
 
 /* Magic number identifying the stats file format */
-static const uint32 PGSS_FILE_HEADER = 0x20140125;
+static const uint32 PGSS_FILE_HEADER = 0x20171004;
 
 /* PostgreSQL major version number, changes in which invalidate all entries */
 static const uint32 PGSS_PG_MAJOR_VERSION = PG_VERSION_NUM / 100;
@@ -125,12 +125,17 @@ typedef enum pgssVersion
 /*
  * Hashtable key that defines the identity of a hashtable entry.  We separate
  * queries by user and by database even if they are otherwise identical.
+ *
+ * Right now, this structure contains no padding.  If you add any, make sure
+ * to teach pgss_store() to zero the padding bytes.  Otherwise, things will
+ * break, because pgss_hash is created using HASH_BLOBS, and thus tag_hash
+ * is used to hash this.
  */
 typedef struct pgssHashKey
 {
 	Oid			userid;			/* user OID */
 	Oid			dbid;			/* database OID */
-	uint32		queryid;		/* query identifier */
+	uint64		queryid;		/* query identifier */
 } pgssHashKey;
 
 /*
@@ -301,10 +306,8 @@ static void pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 					ProcessUtilityContext context, ParamListInfo params,
 					QueryEnvironment *queryEnv,
 					DestReceiver *dest, char *completionTag);
-static uint32 pgss_hash_fn(const void *key, Size keysize);
-static int	pgss_match_fn(const void *key1, const void *key2, Size keysize);
-static uint32 pgss_hash_string(const char *str, int len);
-static void pgss_store(const char *query, uint32 queryId,
+static uint64 pgss_hash_string(const char *str, int len);
+static void pgss_store(const char *query, uint64 queryId,
 		   int query_location, int query_len,
 		   double total_time, uint64 rows,
 		   const BufferUsage *bufusage,
@@ -500,12 +503,10 @@ pgss_shmem_startup(void)
 	memset(&info, 0, sizeof(info));
 	info.keysize = sizeof(pgssHashKey);
 	info.entrysize = sizeof(pgssEntry);
-	info.hash = pgss_hash_fn;
-	info.match = pgss_match_fn;
 	pgss_hash = ShmemInitHash("pg_stat_statements hash",
 							  pgss_max, pgss_max,
 							  &info,
-							  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE);
+							  HASH_ELEM | HASH_BLOBS);
 
 	LWLockRelease(AddinShmemInitLock);
 
@@ -781,7 +782,7 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query)
 		prev_post_parse_analyze_hook(pstate, query);
 
 	/* Assert we didn't do this already */
-	Assert(query->queryId == 0);
+	Assert(query->queryId == UINT64CONST(0));
 
 	/* Safety check... */
 	if (!pgss || !pgss_hash)
@@ -797,7 +798,7 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query)
 	 */
 	if (query->utilityStmt)
 	{
-		query->queryId = 0;
+		query->queryId = UINT64CONST(0);
 		return;
 	}
 
@@ -812,14 +813,15 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query)
 
 	/* Compute query ID and mark the Query node with it */
 	JumbleQuery(&jstate, query);
-	query->queryId = hash_any(jstate.jumble, jstate.jumble_len);
+	query->queryId =
+		DatumGetUInt64(hash_any_extended(jstate.jumble, jstate.jumble_len, 0));
 
 	/*
 	 * If we are unlucky enough to get a hash of zero, use 1 instead, to
 	 * prevent confusion with the utility-statement case.
 	 */
-	if (query->queryId == 0)
-		query->queryId = 1;
+	if (query->queryId == UINT64CONST(0))
+		query->queryId = UINT64CONST(1);
 
 	/*
 	 * If we were able to identify any ignorable constants, we immediately
@@ -855,7 +857,7 @@ pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * counting of optimizable statements that are directly contained in
 	 * utility statements.
 	 */
-	if (pgss_enabled() && queryDesc->plannedstmt->queryId != 0)
+	if (pgss_enabled() && queryDesc->plannedstmt->queryId != UINT64CONST(0))
 	{
 		/*
 		 * Set up to track total elapsed time in ExecutorRun.  Make sure the
@@ -926,9 +928,9 @@ pgss_ExecutorFinish(QueryDesc *queryDesc)
 static void
 pgss_ExecutorEnd(QueryDesc *queryDesc)
 {
-	uint32		queryId = queryDesc->plannedstmt->queryId;
+	uint64		queryId = queryDesc->plannedstmt->queryId;
 
-	if (queryId != 0 && queryDesc->totaltime && pgss_enabled())
+	if (queryId != UINT64CONST(0) && queryDesc->totaltime && pgss_enabled())
 	{
 		/*
 		 * Make sure stats accumulation is done.  (Note: it's okay if several
@@ -1070,44 +1072,15 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 }
 
 /*
- * Calculate hash value for a key
- */
-static uint32
-pgss_hash_fn(const void *key, Size keysize)
-{
-	const pgssHashKey *k = (const pgssHashKey *) key;
-
-	return hash_uint32((uint32) k->userid) ^
-		hash_uint32((uint32) k->dbid) ^
-		hash_uint32((uint32) k->queryid);
-}
-
-/*
- * Compare two keys - zero means match
- */
-static int
-pgss_match_fn(const void *key1, const void *key2, Size keysize)
-{
-	const pgssHashKey *k1 = (const pgssHashKey *) key1;
-	const pgssHashKey *k2 = (const pgssHashKey *) key2;
-
-	if (k1->userid == k2->userid &&
-		k1->dbid == k2->dbid &&
-		k1->queryid == k2->queryid)
-		return 0;
-	else
-		return 1;
-}
-
-/*
  * Given an arbitrarily long query string, produce a hash for the purposes of
  * identifying the query, without normalizing constants.  Used when hashing
  * utility statements.
  */
-static uint32
+static uint64
 pgss_hash_string(const char *str, int len)
 {
-	return hash_any((const unsigned char *) str, len);
+	return DatumGetUInt64(hash_any_extended((const unsigned char *) str,
+											len, 0));
 }
 
 /*
@@ -1121,7 +1094,7 @@ pgss_hash_string(const char *str, int len)
  * query string.  total_time, rows, bufusage are ignored in this case.
  */
 static void
-pgss_store(const char *query, uint32 queryId,
+pgss_store(const char *query, uint64 queryId,
 		   int query_location, int query_len,
 		   double total_time, uint64 rows,
 		   const BufferUsage *bufusage,
@@ -1173,7 +1146,7 @@ pgss_store(const char *query, uint32 queryId,
 	/*
 	 * For utility statements, we just hash the query string to get an ID.
 	 */
-	if (queryId == 0)
+	if (queryId == UINT64CONST(0))
 		queryId = pgss_hash_string(query, query_len);
 
 	/* Set up key for hashtable search */
@@ -1869,8 +1842,7 @@ qtext_store(const char *query, int query_len,
 	*query_offset = off;
 
 	/* Now write the data into the successfully-reserved part of the file */
-	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDWR | O_CREAT | PG_BINARY,
-						   S_IRUSR | S_IWUSR);
+	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDWR | O_CREAT | PG_BINARY);
 	if (fd < 0)
 		goto error;
 
@@ -1934,7 +1906,7 @@ qtext_load_file(Size *buffer_size)
 	int			fd;
 	struct stat stat;
 
-	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDONLY | PG_BINARY, 0);
+	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		if (errno != ENOENT)
@@ -2325,8 +2297,10 @@ AppendJumble(pgssJumbleState *jstate, const unsigned char *item, Size size)
 
 		if (jumble_len >= JUMBLE_SIZE)
 		{
-			uint32		start_hash = hash_any(jumble, JUMBLE_SIZE);
+			uint64		start_hash;
 
+			start_hash = DatumGetUInt64(hash_any_extended(jumble,
+														  JUMBLE_SIZE, 0));
 			memcpy(jumble, &start_hash, sizeof(start_hash));
 			jumble_len = sizeof(start_hash);
 		}
@@ -2631,6 +2605,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 
 				APP_JUMB(acexpr->resulttype);
 				JumbleExpr(jstate, (Node *) acexpr->arg);
+				JumbleExpr(jstate, (Node *) acexpr->elemexpr);
 			}
 			break;
 		case T_ConvertRowtypeExpr:
@@ -2761,6 +2736,14 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				if (ce->cursor_name)
 					APP_JUMB_STRING(ce->cursor_name);
 				APP_JUMB(ce->cursor_param);
+			}
+			break;
+		case T_NextValueExpr:
+			{
+				NextValueExpr *nve = (NextValueExpr *) node;
+
+				APP_JUMB(nve->seqid);
+				APP_JUMB(nve->typeId);
 			}
 			break;
 		case T_InferenceElem:

@@ -22,6 +22,7 @@
  *
  *		ExecSeqScanEstimate		estimates DSM space needed for parallel scan
  *		ExecSeqScanInitializeDSM initialize DSM for parallel scan
+ *		ExecSeqScanReInitializeDSM reinitialize DSM for fresh parallel scan
  *		ExecSeqScanInitializeWorker attach to DSM info in parallel worker
  */
 #include "postgres.h"
@@ -121,10 +122,12 @@ SeqRecheck(SeqScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecSeqScan(SeqScanState *node)
+static TupleTableSlot *
+ExecSeqScan(PlanState *pstate)
 {
-	return ExecScan((ScanState *) node,
+	SeqScanState *node = castNode(SeqScanState, pstate);
+
+	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) SeqNext,
 					(ExecScanRecheckMtd) SeqRecheck);
 }
@@ -177,6 +180,7 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	scanstate = makeNode(SeqScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecSeqScan;
 
 	/*
 	 * Miscellaneous initialization
@@ -285,7 +289,8 @@ ExecReScanSeqScan(SeqScanState *node)
 /* ----------------------------------------------------------------
  *		ExecSeqScanEstimate
  *
- *		estimates the space required to serialize seqscan node.
+ *		Compute the amount of space we'll need in the parallel
+ *		query DSM, and inform pcxt->estimator about our needs.
  * ----------------------------------------------------------------
  */
 void
@@ -322,17 +327,33 @@ ExecSeqScanInitializeDSM(SeqScanState *node,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecSeqScanReInitializeDSM
+ *
+ *		Reset shared state before beginning a fresh scan.
+ * ----------------------------------------------------------------
+ */
+void
+ExecSeqScanReInitializeDSM(SeqScanState *node,
+						   ParallelContext *pcxt)
+{
+	HeapScanDesc scan = node->ss.ss_currentScanDesc;
+
+	heap_parallelscan_reinitialize(scan->rs_parallel);
+}
+
+/* ----------------------------------------------------------------
  *		ExecSeqScanInitializeWorker
  *
  *		Copy relevant information from TOC into planstate.
  * ----------------------------------------------------------------
  */
 void
-ExecSeqScanInitializeWorker(SeqScanState *node, shm_toc *toc)
+ExecSeqScanInitializeWorker(SeqScanState *node,
+							ParallelWorkerContext *pwcxt)
 {
 	ParallelHeapScanDesc pscan;
 
-	pscan = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id, false);
+	pscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
 	node->ss.ss_currentScanDesc =
 		heap_beginscan_parallel(node->ss.ss_currentRelation, pscan);
 }

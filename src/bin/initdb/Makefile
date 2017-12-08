@@ -19,7 +19,7 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(CPPFLAGS)
 
 # note: we need libpq only because fe_utils does
-LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
+override LDFLAGS := -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport) $(LDFLAGS)
 
 # use system timezone data?
 ifneq (,$(with_system_tzdata))

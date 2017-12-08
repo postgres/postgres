@@ -51,6 +51,13 @@ RESET ROLE;
 CREATE FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
 \dew+
 
+-- HANDLER related checks
+CREATE FUNCTION invalid_fdw_handler() RETURNS int LANGUAGE SQL AS 'SELECT 1;';
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER invalid_fdw_handler;  -- ERROR
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler HANDLER invalid_fdw_handler;  -- ERROR
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler;
+DROP FOREIGN DATA WRAPPER test_fdw;
+
 -- ALTER FOREIGN DATA WRAPPER
 ALTER FOREIGN DATA WRAPPER foo;                             -- ERROR
 ALTER FOREIGN DATA WRAPPER foo VALIDATOR bar;               -- ERROR
@@ -87,6 +94,12 @@ RESET ROLE;
 ALTER FOREIGN DATA WRAPPER foo RENAME TO foo1;
 \dew+
 ALTER FOREIGN DATA WRAPPER foo1 RENAME TO foo;
+
+-- HANDLER related checks
+ALTER FOREIGN DATA WRAPPER foo HANDLER invalid_fdw_handler;  -- ERROR
+ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler HANDLER anything;  -- ERROR
+ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler;
+DROP FUNCTION invalid_fdw_handler();
 
 -- DROP FOREIGN DATA WRAPPER
 DROP FOREIGN DATA WRAPPER nonexistent;                      -- ERROR
@@ -484,7 +497,10 @@ CREATE SERVER s10 FOREIGN DATA WRAPPER foo;                     -- ERROR
 ALTER SERVER s9 VERSION '1.1';
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER s9;
+-- We use terse mode to avoid ordering issues in cascade detail output.
+\set VERBOSITY terse
 DROP SERVER s9 CASCADE;
+\set VERBOSITY default
 RESET ROLE;
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_unprivileged_role;
@@ -498,17 +514,19 @@ DROP SERVER s9 CASCADE;                                         -- ERROR
 SET ROLE regress_test_role;
 CREATE SERVER s10 FOREIGN DATA WRAPPER foo;
 CREATE USER MAPPING FOR public SERVER s10 OPTIONS (user 'secret');
-GRANT USAGE ON FOREIGN SERVER s10 TO regress_unprivileged_role;
--- owner of server can see option fields
+CREATE USER MAPPING FOR regress_unprivileged_role SERVER s10 OPTIONS (user 'secret');
+-- owner of server can see some option fields
 \deu+
 RESET ROLE;
--- superuser can see option fields
+-- superuser can see all option fields
 \deu+
--- unprivileged user cannot see option fields
+-- unprivileged user cannot see any option field
 SET ROLE regress_unprivileged_role;
 \deu+
 RESET ROLE;
+\set VERBOSITY terse
 DROP SERVER s10 CASCADE;
+\set VERBOSITY default
 
 -- Triggers
 CREATE FUNCTION dummy_trigger() RETURNS TRIGGER AS $$
@@ -638,8 +656,10 @@ SELECT relname, conname, contype, conislocal, coninhcount, connoinherit
 -- child does not inherit NO INHERIT constraints
 \d+ pt1
 \d+ ft2
+\set VERBOSITY terse
 DROP FOREIGN TABLE ft2; -- ERROR
 DROP FOREIGN TABLE ft2 CASCADE;
+\set VERBOSITY default
 CREATE FOREIGN TABLE ft2 (
 	c1 integer NOT NULL,
 	c2 text,
@@ -784,12 +804,10 @@ DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
 DROP SERVER t1 CASCADE;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
--- This test causes some order dependent cascade detail output,
--- so switch to terse mode for it.
 \set VERBOSITY terse
 DROP FOREIGN DATA WRAPPER foo CASCADE;
-\set VERBOSITY default
 DROP SERVER s8 CASCADE;
+\set VERBOSITY default
 DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;
 DROP ROLE regress_unprivileged_role;                        -- ERROR

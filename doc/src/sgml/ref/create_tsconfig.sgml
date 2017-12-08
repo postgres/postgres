@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_tsconfig.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETSCONFIG">
+<refentry id="sql-createtsconfig">
  <indexterm zone="sql-createtsconfig">
   <primary>CREATE TEXT SEARCH CONFIGURATION</primary>
  </indexterm>
@@ -57,7 +57,7 @@ CREATE TEXT SEARCH CONFIGURATION <replaceable class="parameter">name</replaceabl
   </para>
 
   <para>
-   Refer to <xref linkend="textsearch"> for further information.
+   Refer to <xref linkend="textsearch"/> for further information.
   </para>
  </refsect1>
 
@@ -99,7 +99,7 @@ CREATE TEXT SEARCH CONFIGURATION <replaceable class="parameter">name</replaceabl
   <title>Notes</title>
 
   <para>
-   The <literal>PARSER</> and <literal>COPY</> options are mutually
+   The <literal>PARSER</literal> and <literal>COPY</literal> options are mutually
    exclusive, because when an existing configuration is copied, its
    parser selection is copied too.
   </para>
@@ -119,8 +119,8 @@ CREATE TEXT SEARCH CONFIGURATION <replaceable class="parameter">name</replaceabl
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsconfig"></member>
-   <member><xref linkend="sql-droptsconfig"></member>
+   <member><xref linkend="sql-altertsconfig"/></member>
+   <member><xref linkend="sql-droptsconfig"/></member>
   </simplelist>
  </refsect1>
 </refentry>

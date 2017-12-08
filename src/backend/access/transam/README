@@ -177,13 +177,13 @@ subtransaction level with the same name.  So it's a completely new
 subtransaction as far as the internals are concerned.
 
 Other subsystems are allowed to start "internal" subtransactions, which are
-handled by BeginInternalSubtransaction.  This is to allow implementing
+handled by BeginInternalSubTransaction.  This is to allow implementing
 exception handling, e.g. in PL/pgSQL.  ReleaseCurrentSubTransaction and
 RollbackAndReleaseCurrentSubTransaction allows the subsystem to close said
 subtransactions.  The main difference between this and the savepoint/release
 path is that we execute the complete state transition immediately in each
 subroutine, rather than deferring some work until CommitTransactionCommand.
-Another difference is that BeginInternalSubtransaction is allowed when no
+Another difference is that BeginInternalSubTransaction is allowed when no
 explicit transaction block has been established, while DefineSavepoint is not.
 
 

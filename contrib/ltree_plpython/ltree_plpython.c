@@ -40,12 +40,16 @@ PG_FUNCTION_INFO_V1(ltree_to_plpython);
 Datum
 ltree_to_plpython(PG_FUNCTION_ARGS)
 {
-	ltree	   *in = PG_GETARG_LTREE(0);
+	ltree	   *in = PG_GETARG_LTREE_P(0);
 	int			i;
 	PyObject   *list;
 	ltree_level *curlevel;
 
 	list = PyList_New(in->numlevel);
+	if (!list)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	curlevel = LTREE_FIRST(in);
 	for (i = 0; i < in->numlevel; i++)

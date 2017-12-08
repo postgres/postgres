@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_materialized_view.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEMATERIALIZEDVIEW">
+<refentry id="sql-creatematerializedview">
  <indexterm zone="sql-creatematerializedview">
   <primary>CREATE MATERIALIZED VIEW</primary>
  </indexterm>
@@ -23,8 +23,8 @@ PostgreSQL documentation
 <synopsis>
 CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
     [ (<replaceable>column_name</replaceable> [, ...] ) ]
-    [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
-    [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
+    [ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+    [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
     AS <replaceable>query</replaceable>
     [ WITH [ NO ] DATA ]
 </synopsis>
@@ -36,13 +36,13 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
   <para>
    <command>CREATE MATERIALIZED VIEW</command> defines a materialized view of
    a query.  The query is executed and used to populate the view at the time
-   the command is issued (unless <command>WITH NO DATA</> is used) and may be
+   the command is issued (unless <command>WITH NO DATA</command> is used) and may be
    refreshed later using <command>REFRESH MATERIALIZED VIEW</command>.
   </para>
 
   <para>
    <command>CREATE MATERIALIZED VIEW</command> is similar to
-   <command>CREATE TABLE AS</>, except that it also remembers the query used
+   <command>CREATE TABLE AS</command>, except that it also remembers the query used
    to initialize the view, so that it can be refreshed later upon demand.
    A materialized view has many of the same properties as a table, but there
    is no support for temporary materialized views or automatic generation of
@@ -55,7 +55,7 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><literal>IF NOT EXISTS</></term>
+    <term><literal>IF NOT EXISTS</literal></term>
     <listitem>
      <para>
       Do not throw an error if a materialized view with the same name already
@@ -87,27 +87,27 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] )</literal></term>
+    <term><literal>WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies optional storage parameters for the new
       materialized view; see <xref linkend="sql-createtable-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title"> for more
+      endterm="sql-createtable-storage-parameters-title"/> for more
       information.  All parameters supported for <literal>CREATE
       TABLE</literal> are also supported for <literal>CREATE MATERIALIZED
       VIEW</literal> with the exception of <literal>OIDS</literal>.
-      See <xref linkend="sql-createtable"> for more information.
+      See <xref linkend="sql-createtable"/> for more information.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable></literal></term>
+    <term><literal>TABLESPACE <replaceable class="parameter">tablespace_name</replaceable></literal></term>
     <listitem>
      <para>
-      The <replaceable class="PARAMETER">tablespace_name</replaceable> is the name
+      The <replaceable class="parameter">tablespace_name</replaceable> is the name
       of the tablespace in which the new materialized view is to be created.
-      If not specified, <xref linkend="guc-default-tablespace"> is consulted.
+      If not specified, <xref linkend="guc-default-tablespace"/> is consulted.
      </para>
     </listitem>
    </varlistentry>
@@ -116,8 +116,8 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
     <term><replaceable>query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select">, <link linkend="sql-table">TABLE</link>,
-      or <xref linkend="sql-values"> command.  This query will run within a
+      A <xref linkend="sql-select"/>, <link linkend="sql-table">TABLE</link>,
+      or <xref linkend="sql-values"/> command.  This query will run within a
       security-restricted operation; in particular, calls to functions that
       themselves create temporary tables will fail.
      </para>
@@ -125,13 +125,13 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH [ NO ] DATA</></term>
+    <term><literal>WITH [ NO ] DATA</literal></term>
     <listitem>
      <para>
       This clause specifies whether or not the materialized view should be
       populated at creation time.  If not, the materialized view will be
       flagged as unscannable and cannot be queried until <command>REFRESH
-      MATERIALIZED VIEW</> is used.
+      MATERIALIZED VIEW</command> is used.
      </para>
     </listitem>
    </varlistentry>
@@ -152,11 +152,11 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altermaterializedview"></member>
-   <member><xref linkend="sql-createtableas"></member>
-   <member><xref linkend="sql-createview"></member>
-   <member><xref linkend="sql-dropmaterializedview"></member>
-   <member><xref linkend="sql-refreshmaterializedview"></member>
+   <member><xref linkend="sql-altermaterializedview"/></member>
+   <member><xref linkend="sql-createtableas"/></member>
+   <member><xref linkend="sql-createview"/></member>
+   <member><xref linkend="sql-dropmaterializedview"/></member>
+   <member><xref linkend="sql-refreshmaterializedview"/></member>
   </simplelist>
  </refsect1>
 

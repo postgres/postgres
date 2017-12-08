@@ -13,13 +13,14 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
+override LDFLAGS := $(libpq_pgport) $(LDFLAGS)
 
 OBJS= findoidjoins.o
 
 all: findoidjoins
 
 findoidjoins: findoidjoins.o | submake-libpq submake-libpgport
-	$(CC) $(CFLAGS) findoidjoins.o $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) findoidjoins.o $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 clean distclean maintainer-clean:
 	rm -f findoidjoins$(X) $(OBJS)

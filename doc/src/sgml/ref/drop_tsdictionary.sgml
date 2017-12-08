@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_tsdictionary.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTSDICTIONARY">
+<refentry id="sql-droptsdictionary">
  <indexterm zone="sql-droptsdictionary">
   <primary>DROP TEXT SEARCH DICTIONARY</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -66,7 +66,7 @@ DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] <replaceable class="PARAMETER">name</r
      <para>
       Automatically drop objects that depend on the text search dictionary,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -94,7 +94,7 @@ DROP TEXT SEARCH DICTIONARY english;
 </programlisting>
 
    This command will not succeed if there are any existing text search
-   configurations that use the dictionary.  Add <literal>CASCADE</> to
+   configurations that use the dictionary.  Add <literal>CASCADE</literal> to
    drop such configurations along with the dictionary.
   </para>
  </refsect1>
@@ -112,8 +112,8 @@ DROP TEXT SEARCH DICTIONARY english;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsdictionary"></member>
-   <member><xref linkend="sql-createtsdictionary"></member>
+   <member><xref linkend="sql-altertsdictionary"/></member>
+   <member><xref linkend="sql-createtsdictionary"/></member>
   </simplelist>
  </refsect1>
 

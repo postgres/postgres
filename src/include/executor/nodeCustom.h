@@ -21,7 +21,6 @@
  */
 extern CustomScanState *ExecInitCustomScan(CustomScan *custom_scan,
 				   EState *estate, int eflags);
-extern TupleTableSlot *ExecCustomScan(CustomScanState *node);
 extern void ExecEndCustomScan(CustomScanState *node);
 
 extern void ExecReScanCustomScan(CustomScanState *node);
@@ -35,8 +34,10 @@ extern void ExecCustomScanEstimate(CustomScanState *node,
 					   ParallelContext *pcxt);
 extern void ExecCustomScanInitializeDSM(CustomScanState *node,
 							ParallelContext *pcxt);
+extern void ExecCustomScanReInitializeDSM(CustomScanState *node,
+							  ParallelContext *pcxt);
 extern void ExecCustomScanInitializeWorker(CustomScanState *node,
-							   shm_toc *toc);
+							   ParallelWorkerContext *pwcxt);
 extern void ExecShutdownCustomScan(CustomScanState *node);
 
 #endif							/* NODECUSTOM_H */

@@ -77,6 +77,10 @@ mlparted12|f
 mlparted2|f
 mlparted3|f
 mlparted4|f
+mlparted_def|f
+mlparted_def1|f
+mlparted_def2|f
+mlparted_defd|f
 money_data|f
 num_data|f
 num_exp_add|t

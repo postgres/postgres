@@ -48,7 +48,7 @@ print_lo_result(const char *fmt,...)
  * Prepare to do a large-object operation.  We *must* be inside a transaction
  * block for all these operations, so start one if needed.
  *
- * Returns TRUE if okay, FALSE if failed.  *own_transaction is set to indicate
+ * Returns true if okay, false if failed.  *own_transaction is set to indicate
  * if we started our own transaction or not.
  */
 static bool

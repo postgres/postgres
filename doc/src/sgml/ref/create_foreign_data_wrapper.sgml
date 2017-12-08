@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_foreign_data_wrapper.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEFOREIGNDATAWRAPPER">
+<refentry id="sql-createforeigndatawrapper">
  <indexterm zone="sql-createforeigndatawrapper">
   <primary>CREATE FOREIGN DATA WRAPPER</primary>
  </indexterm>
@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
     [ HANDLER <replaceable class="parameter">handler_function</replaceable> | NO HANDLER ]
     [ VALIDATOR <replaceable class="parameter">validator_function</replaceable> | NO VALIDATOR ]
-    [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+    [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -100,7 +100,7 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies options for the new foreign-data wrapper.
@@ -117,7 +117,7 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
   <para>
-   <productname>PostgreSQL</>'s foreign-data functionality is still under
+   <productname>PostgreSQL</productname>'s foreign-data functionality is still under
    active development.  Optimization of queries is primitive (and mostly left
    to the wrapper, too).  Thus, there is considerable room for future
    performance improvements.
@@ -128,22 +128,22 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Create a useless foreign-data wrapper <literal>dummy</>:
+   Create a useless foreign-data wrapper <literal>dummy</literal>:
 <programlisting>
 CREATE FOREIGN DATA WRAPPER dummy;
 </programlisting>
   </para>
 
   <para>
-   Create a foreign-data wrapper <literal>file</> with
-   handler function <literal>file_fdw_handler</>:
+   Create a foreign-data wrapper <literal>file</literal> with
+   handler function <literal>file_fdw_handler</literal>:
 <programlisting>
 CREATE FOREIGN DATA WRAPPER file HANDLER file_fdw_handler;
 </programlisting>
   </para>
 
   <para>
-   Create a foreign-data wrapper <literal>mywrapper</> with some
+   Create a foreign-data wrapper <literal>mywrapper</literal> with some
    options:
 <programlisting>
 CREATE FOREIGN DATA WRAPPER mywrapper
@@ -159,7 +159,7 @@ CREATE FOREIGN DATA WRAPPER mywrapper
    9075-9 (SQL/MED), with the exception that the <literal>HANDLER</literal>
    and <literal>VALIDATOR</literal> clauses are extensions and the standard
    clauses <literal>LIBRARY</literal> and <literal>LANGUAGE</literal>
-   are not implemented in <productname>PostgreSQL</>.
+   are not implemented in <productname>PostgreSQL</productname>.
   </para>
 
   <para>
@@ -172,11 +172,11 @@ CREATE FOREIGN DATA WRAPPER mywrapper
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterforeigndatawrapper"></member>
-   <member><xref linkend="sql-dropforeigndatawrapper"></member>
-   <member><xref linkend="sql-createserver"></member>
-   <member><xref linkend="sql-createusermapping"></member>
-   <member><xref linkend="sql-createforeigntable"></member>
+   <member><xref linkend="sql-alterforeigndatawrapper"/></member>
+   <member><xref linkend="sql-dropforeigndatawrapper"/></member>
+   <member><xref linkend="sql-createserver"/></member>
+   <member><xref linkend="sql-createusermapping"/></member>
+   <member><xref linkend="sql-createforeigntable"/></member>
   </simplelist>
  </refsect1>
 

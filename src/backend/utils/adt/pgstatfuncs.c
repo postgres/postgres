@@ -21,6 +21,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "postmaster/bgworker_internals.h"
 #include "postmaster/postmaster.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
@@ -664,6 +665,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
 		{
 			SockAddr	zero_clientaddr;
+			char	   *clipped_activity;
 
 			switch (beentry->st_state)
 			{
@@ -690,7 +692,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					break;
 			}
 
-			values[5] = CStringGetTextDatum(beentry->st_activity);
+			clipped_activity = pgstat_clip_activity(beentry->st_activity_raw);
+			values[5] = CStringGetTextDatum(clipped_activity);
+			pfree(clipped_activity);
 
 			proc = BackendPidGetProc(beentry->st_procpid);
 			if (proc != NULL)
@@ -820,8 +824,19 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				}
 			}
 			/* Add backend type */
-			values[17] =
-				CStringGetTextDatum(pgstat_get_backend_desc(beentry->st_backendType));
+			if (beentry->st_backendType == B_BG_WORKER)
+			{
+				const char *bgw_type;
+
+				bgw_type = GetBackgroundWorkerTypeByPid(beentry->st_procpid);
+				if (bgw_type)
+					values[17] = CStringGetTextDatum(bgw_type);
+				else
+					nulls[17] = true;
+			}
+			else
+				values[17] =
+					CStringGetTextDatum(pgstat_get_backend_desc(beentry->st_backendType));
 		}
 		else
 		{
@@ -906,17 +921,23 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 	int32		beid = PG_GETARG_INT32(0);
 	PgBackendStatus *beentry;
 	const char *activity;
+	char	   *clipped_activity;
+	text	   *ret;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		activity = "<backend information not available>";
 	else if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		activity = "<insufficient privilege>";
-	else if (*(beentry->st_activity) == '\0')
+	else if (*(beentry->st_activity_raw) == '\0')
 		activity = "<command string not enabled>";
 	else
-		activity = beentry->st_activity;
+		activity = beentry->st_activity_raw;
 
-	PG_RETURN_TEXT_P(cstring_to_text(activity));
+	clipped_activity = pgstat_clip_activity(activity);
+	ret = cstring_to_text(activity);
+	pfree(clipped_activity);
+
+	PG_RETURN_TEXT_P(ret);
 }
 
 Datum

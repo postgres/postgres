@@ -3,7 +3,7 @@ doc/src/sgml/ref/security_label.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-SECURITY-LABEL">
+<refentry id="sql-security-label">
  <indexterm zone="sql-security-label">
   <primary>SECURITY LABEL</primary>
  </indexterm>
@@ -21,28 +21,30 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
+SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
 {
-  TABLE <replaceable class="PARAMETER">object_name</replaceable> |
-  COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
-  AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
-  DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
-  DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
-  EVENT TRIGGER <replaceable class="PARAMETER">object_name</replaceable> |
-  FOREIGN TABLE <replaceable class="PARAMETER">object_name</replaceable>
-  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
-  LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
-  MATERIALIZED VIEW <replaceable class="PARAMETER">object_name</replaceable> |
-  [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
-  PUBLICATION <replaceable class="PARAMETER">object_name</replaceable> |
-  ROLE <replaceable class="PARAMETER">object_name</replaceable> |
-  SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
-  SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
-  SUBSCRIPTION <replaceable class="PARAMETER">object_name</replaceable> |
-  TABLESPACE <replaceable class="PARAMETER">object_name</replaceable> |
-  TYPE <replaceable class="PARAMETER">object_name</replaceable> |
-  VIEW <replaceable class="PARAMETER">object_name</replaceable>
-} IS '<replaceable class="PARAMETER">label</replaceable>'
+  TABLE <replaceable class="parameter">object_name</replaceable> |
+  COLUMN <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> |
+  AGGREGATE <replaceable class="parameter">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
+  DATABASE <replaceable class="parameter">object_name</replaceable> |
+  DOMAIN <replaceable class="parameter">object_name</replaceable> |
+  EVENT TRIGGER <replaceable class="parameter">object_name</replaceable> |
+  FOREIGN TABLE <replaceable class="parameter">object_name</replaceable>
+  FUNCTION <replaceable class="parameter">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  LARGE OBJECT <replaceable class="parameter">large_object_oid</replaceable> |
+  MATERIALIZED VIEW <replaceable class="parameter">object_name</replaceable> |
+  [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">object_name</replaceable> |
+  PROCEDURE <replaceable class="parameter">procedure_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  PUBLICATION <replaceable class="parameter">object_name</replaceable> |
+  ROLE <replaceable class="parameter">object_name</replaceable> |
+  ROUTINE <replaceable class="parameter">routine_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  SCHEMA <replaceable class="parameter">object_name</replaceable> |
+  SEQUENCE <replaceable class="parameter">object_name</replaceable> |
+  SUBSCRIPTION <replaceable class="parameter">object_name</replaceable> |
+  TABLESPACE <replaceable class="parameter">object_name</replaceable> |
+  TYPE <replaceable class="parameter">object_name</replaceable> |
+  VIEW <replaceable class="parameter">object_name</replaceable>
+} IS '<replaceable class="parameter">label</replaceable>'
 
 <phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
 
@@ -60,12 +62,12 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
    object.  An arbitrary number of security labels, one per label provider, can
    be associated with a given database object.  Label providers are loadable
    modules which register themselves by using the function
-   <function>register_label_provider</>.
+   <function>register_label_provider</function>.
   </para>
 
   <note>
     <para>
-      <function>register_label_provider</> is not an SQL function; it can
+      <function>register_label_provider</function> is not an SQL function; it can
       only be called from C code loaded into the backend.
     </para>
   </note>
@@ -74,11 +76,11 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
    The label provider determines whether a given label is valid and whether
    it is permissible to assign that label to a given object.  The meaning of a
    given label is likewise at the discretion of the label provider.
-   <productname>PostgreSQL</> places no restrictions on whether or how a
+   <productname>PostgreSQL</productname> places no restrictions on whether or how a
    label provider must interpret security labels; it merely provides a
    mechanism for storing them.  In practice, this facility is intended to allow
    integration with label-based mandatory access control (MAC) systems such as
-   <productname>SE-Linux</>.  Such systems make all access control decisions
+   <productname>SE-Linux</productname>.  Such systems make all access control decisions
    based on object labels, rather than traditional discretionary access control
    (DAC) concepts such as users and groups.
   </para>
@@ -93,10 +95,12 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
     <term><replaceable class="parameter">table_name.column_name</replaceable></term>
     <term><replaceable class="parameter">aggregate_name</replaceable></term>
     <term><replaceable class="parameter">function_name</replaceable></term>
+    <term><replaceable class="parameter">procedure_name</replaceable></term>
+    <term><replaceable class="parameter">routine_name</replaceable></term>
     <listitem>
      <para>
       The name of the object to be labeled.  Names of tables,
-      aggregates, domains, foreign tables, functions, sequences, types, and
+      aggregates, domains, foreign tables, functions, procedures, routines, sequences, types, and
       views can be schema-qualified.
      </para>
     </listitem>
@@ -119,15 +123,15 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
 
     <listitem>
      <para>
-      The mode of a function or aggregate
-      argument: <literal>IN</>, <literal>OUT</>,
-      <literal>INOUT</>, or <literal>VARIADIC</>.
-      If omitted, the default is <literal>IN</>.
+      The mode of a function, procedure, or aggregate
+      argument: <literal>IN</literal>, <literal>OUT</literal>,
+      <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
+      If omitted, the default is <literal>IN</literal>.
       Note that <command>SECURITY LABEL</command> does not actually
-      pay any attention to <literal>OUT</> arguments, since only the input
+      pay any attention to <literal>OUT</literal> arguments, since only the input
       arguments are needed to determine the function's identity.
-      So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
-      and <literal>VARIADIC</> arguments.
+      So it is sufficient to list the <literal>IN</literal>, <literal>INOUT</literal>,
+      and <literal>VARIADIC</literal> arguments.
      </para>
     </listitem>
    </varlistentry>
@@ -137,7 +141,7 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
 
     <listitem>
      <para>
-      The name of a function or aggregate argument.
+      The name of a function, procedure, or aggregate argument.
       Note that <command>SECURITY LABEL</command> does not actually
       pay any attention to argument names, since only the argument data
       types are needed to determine the function's identity.
@@ -150,7 +154,7 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
 
     <listitem>
      <para>
-      The data type of a function or aggregate argument.
+      The data type of a function, procedure, or aggregate argument.
      </para>
     </listitem>
    </varlistentry>
@@ -178,7 +182,7 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
     <term><replaceable class="parameter">label</replaceable></term>
     <listitem>
      <para>
-      The new security label, written as a string literal; or <literal>NULL</>
+      The new security label, written as a string literal; or <literal>NULL</literal>
       to drop the security label.
      </para>
     </listitem>
@@ -208,7 +212,7 @@ SECURITY LABEL FOR selinux ON TABLE mytable IS 'system_u:object_r:sepgsql_table_
  <refsect1>
   <title>See Also</title>
   <simplelist type="inline">
-   <member><xref linkend="sepgsql"></member>
+   <member><xref linkend="sepgsql"/></member>
    <member><filename>src/test/modules/dummy_seclabel</filename></member>
   </simplelist>
  </refsect1>

@@ -444,35 +444,35 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 
 	/* Send a RowDescription message */
 	pq_beginmessage(&buf, 'T');
-	pq_sendint(&buf, 2, 2);		/* 2 fields */
+	pq_sendint16(&buf, 2);		/* 2 fields */
 
 	/* first field */
 	pq_sendstring(&buf, "filename");	/* col name */
-	pq_sendint(&buf, 0, 4);		/* table oid */
-	pq_sendint(&buf, 0, 2);		/* attnum */
-	pq_sendint(&buf, TEXTOID, 4);	/* type oid */
-	pq_sendint(&buf, -1, 2);	/* typlen */
-	pq_sendint(&buf, 0, 4);		/* typmod */
-	pq_sendint(&buf, 0, 2);		/* format code */
+	pq_sendint32(&buf, 0);		/* table oid */
+	pq_sendint16(&buf, 0);		/* attnum */
+	pq_sendint32(&buf, TEXTOID);	/* type oid */
+	pq_sendint16(&buf, -1);		/* typlen */
+	pq_sendint32(&buf, 0);		/* typmod */
+	pq_sendint16(&buf, 0);		/* format code */
 
 	/* second field */
 	pq_sendstring(&buf, "content"); /* col name */
-	pq_sendint(&buf, 0, 4);		/* table oid */
-	pq_sendint(&buf, 0, 2);		/* attnum */
-	pq_sendint(&buf, BYTEAOID, 4);	/* type oid */
-	pq_sendint(&buf, -1, 2);	/* typlen */
-	pq_sendint(&buf, 0, 4);		/* typmod */
-	pq_sendint(&buf, 0, 2);		/* format code */
+	pq_sendint32(&buf, 0);		/* table oid */
+	pq_sendint16(&buf, 0);		/* attnum */
+	pq_sendint32(&buf, BYTEAOID);	/* type oid */
+	pq_sendint16(&buf, -1);		/* typlen */
+	pq_sendint32(&buf, 0);		/* typmod */
+	pq_sendint16(&buf, 0);		/* format code */
 	pq_endmessage(&buf);
 
 	/* Send a DataRow message */
 	pq_beginmessage(&buf, 'D');
-	pq_sendint(&buf, 2, 2);		/* # of columns */
+	pq_sendint16(&buf, 2);		/* # of columns */
 	len = strlen(histfname);
-	pq_sendint(&buf, len, 4);	/* col1 len */
+	pq_sendint32(&buf, len);	/* col1 len */
 	pq_sendbytes(&buf, histfname, len);
 
-	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0666);
+	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -489,7 +489,7 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 				(errcode_for_file_access(),
 				 errmsg("could not seek to beginning of file \"%s\": %m", path)));
 
-	pq_sendint(&buf, histfilelen, 4);	/* col2 len */
+	pq_sendint32(&buf, histfilelen);	/* col2 len */
 
 	bytesleft = histfilelen;
 	while (bytesleft > 0)
@@ -541,7 +541,7 @@ StartReplication(StartReplicationCmd *cmd)
 
 	if (cmd->slotname)
 	{
-		ReplicationSlotAcquire(cmd->slotname);
+		ReplicationSlotAcquire(cmd->slotname, true);
 		if (SlotIsLogical(MyReplicationSlot))
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -646,7 +646,7 @@ StartReplication(StartReplicationCmd *cmd)
 		/* Send a CopyBothResponse message, and start streaming */
 		pq_beginmessage(&buf, 'W');
 		pq_sendbyte(&buf, 0);
-		pq_sendint(&buf, 0, 2);
+		pq_sendint16(&buf, 0);
 		pq_endmessage(&buf);
 		pq_flush();
 
@@ -1028,7 +1028,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 static void
 DropReplicationSlot(DropReplicationSlotCmd *cmd)
 {
-	ReplicationSlotDrop(cmd->slotname);
+	ReplicationSlotDrop(cmd->slotname, !cmd->wait);
 	EndCommand("DROP_REPLICATION_SLOT", DestRemote);
 }
 
@@ -1046,7 +1046,7 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 
 	Assert(!MyReplicationSlot);
 
-	ReplicationSlotAcquire(cmd->slotname);
+	ReplicationSlotAcquire(cmd->slotname, true);
 
 	/*
 	 * Force a disconnect, so that the decoding code doesn't need to care
@@ -1065,7 +1065,7 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	/* Send a CopyBothResponse message, and start streaming */
 	pq_beginmessage(&buf, 'W');
 	pq_sendbyte(&buf, 0);
-	pq_sendint(&buf, 0, 2);
+	pq_sendint16(&buf, 0);
 	pq_endmessage(&buf);
 	pq_flush();
 
@@ -1545,7 +1545,7 @@ exec_replication_command(const char *cmd_string)
 		case T_SQLCmd:
 			if (MyDatabaseId == InvalidOid)
 				ereport(ERROR,
-						(errmsg("not connected to database")));
+						(errmsg("cannot execute SQL commands in WAL sender for physical replication")));
 
 			/* Tell the caller that this wasn't a WalSender command. */
 			return false;
@@ -2316,9 +2316,9 @@ retry:
 		int			segbytes;
 		int			readbytes;
 
-		startoff = recptr % XLogSegSize;
+		startoff = XLogSegmentOffset(recptr, wal_segment_size);
 
-		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo))
+		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo, wal_segment_size))
 		{
 			char		path[MAXPGPATH];
 
@@ -2326,7 +2326,7 @@ retry:
 			if (sendFile >= 0)
 				close(sendFile);
 
-			XLByteToSeg(recptr, sendSegNo);
+			XLByteToSeg(recptr, sendSegNo, wal_segment_size);
 
 			/*-------
 			 * When reading from a historic timeline, and there is a timeline
@@ -2359,14 +2359,14 @@ retry:
 			{
 				XLogSegNo	endSegNo;
 
-				XLByteToSeg(sendTimeLineValidUpto, endSegNo);
+				XLByteToSeg(sendTimeLineValidUpto, endSegNo, wal_segment_size);
 				if (sendSegNo == endSegNo)
 					curFileTimeLine = sendTimeLineNextTLI;
 			}
 
-			XLogFilePath(path, curFileTimeLine, sendSegNo);
+			XLogFilePath(path, curFileTimeLine, sendSegNo, wal_segment_size);
 
-			sendFile = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
+			sendFile = BasicOpenFile(path, O_RDONLY | PG_BINARY);
 			if (sendFile < 0)
 			{
 				/*
@@ -2401,8 +2401,8 @@ retry:
 		}
 
 		/* How many bytes are within this segment? */
-		if (nbytes > (XLogSegSize - startoff))
-			segbytes = XLogSegSize - startoff;
+		if (nbytes > (wal_segment_size - startoff))
+			segbytes = wal_segment_size - startoff;
 		else
 			segbytes = nbytes;
 
@@ -2433,7 +2433,7 @@ retry:
 	 * read() succeeds in that case, but the data we tried to read might
 	 * already have been overwritten with new WAL records.
 	 */
-	XLByteToSeg(startptr, segno);
+	XLByteToSeg(startptr, segno, wal_segment_size);
 	CheckXLogRemoved(segno, ThisTimeLineID);
 
 	/*
@@ -2572,7 +2572,7 @@ XLogSendPhysical(void)
 		 * fsync'd to disk.  We cannot go further than what's been written out
 		 * given the current implementation of XLogRead().  And in any case
 		 * it's unsafe to send WAL that is not securely down to disk on the
-		 * master: if the master subsequently crashes and restarts, slaves
+		 * master: if the master subsequently crashes and restarts, standbys
 		 * must not have applied any WAL that got lost on the master.
 		 */
 		SendRqstPtr = GetFlushRecPtr();

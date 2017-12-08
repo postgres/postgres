@@ -3,7 +3,7 @@ doc/src/sgml/ref/analyze.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ANALYZE">
+<refentry id="sql-analyze">
  <indexterm zone="sql-analyze">
   <primary>ANALYZE</primary>
  </indexterm>
@@ -21,7 +21,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ] ]
+ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replaceable> [, ...] ]
+
+<phrase>where <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
+
+    <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -31,16 +35,18 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
   <para>
    <command>ANALYZE</command> collects statistics about the contents
    of tables in the database, and stores the results in the <link
-   linkend="catalog-pg-statistic"><structname>pg_statistic</></>
+   linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
    system catalog.  Subsequently, the query planner uses these
    statistics to help determine the most efficient execution plans for
    queries.
   </para>
 
   <para>
-   With no parameter, <command>ANALYZE</command> examines every table in the
-   current database.  With a parameter, <command>ANALYZE</command> examines
-   only that table.  It is further possible to give a list of column names,
+   Without a <replaceable class="parameter">table_and_columns</replaceable>
+   list, <command>ANALYZE</command> processes every table and materialized view
+   in the current database that the current user has permission to analyze.
+   With a list, <command>ANALYZE</command> processes only those table(s).
+   It is further possible to give a list of column names for a table,
    in which case only the statistics for those columns are collected.
   </para>
  </refsect1>
@@ -59,7 +65,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (possibly schema-qualified) of a specific table to
@@ -73,7 +79,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column_name</replaceable></term>
+    <term><replaceable class="parameter">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a specific column to analyze. Defaults to all columns.
@@ -87,7 +93,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
   <title>Outputs</title>
 
    <para>
-    When <literal>VERBOSE</> is specified, <command>ANALYZE</> emits
+    When <literal>VERBOSE</literal> is specified, <command>ANALYZE</command> emits
     progress messages to indicate which table is currently being
     processed.  Various statistics about the tables are printed as well.
    </para>
@@ -98,14 +104,14 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
 
   <para>
    Foreign tables are analyzed only when explicitly selected.  Not all
-   foreign data wrappers support <command>ANALYZE</>.  If the table's
-   wrapper does not support <command>ANALYZE</>, the command prints a
+   foreign data wrappers support <command>ANALYZE</command>.  If the table's
+   wrapper does not support <command>ANALYZE</command>, the command prints a
    warning and does nothing.
   </para>
 
   <para>
    In the default <productname>PostgreSQL</productname> configuration,
-   the autovacuum daemon (see <xref linkend="autovacuum">)
+   the autovacuum daemon (see <xref linkend="autovacuum"/>)
    takes care of automatic analyzing of tables when they are first loaded
    with data, and as they change throughout regular operation.
    When autovacuum is disabled,
@@ -113,7 +119,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
    just after making major changes in the contents of a table.  Accurate
    statistics will help the planner to choose the most appropriate query
    plan, and thereby improve the speed of query processing.  A common
-   strategy for read-mostly databases is to run <xref linkend="sql-vacuum">
+   strategy for read-mostly databases is to run <xref linkend="sql-vacuum"/>
    and <command>ANALYZE</command> once a day during a low-usage time of day.
    (This will not be sufficient if there is heavy update activity.)
   </para>
@@ -133,7 +139,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
    in a unique-key column, there are no common values) or if the
    column data type does not support the appropriate operators.  There
    is more information about the statistics in <xref
-   linkend="maintenance">.
+   linkend="maintenance"/>.
   </para>
 
   <para>
@@ -144,7 +150,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
    will change slightly each time <command>ANALYZE</command> is run,
    even if the actual table contents did not change.  This might result
    in small changes in the planner's estimated costs shown by
-   <xref linkend="sql-explain">.
+   <xref linkend="sql-explain"/>.
    In rare situations, this non-determinism will cause the planner's
    choices of query plans to change after <command>ANALYZE</command> is run.
    To avoid this, raise the amount of statistics collected by
@@ -153,10 +159,10 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
 
   <para>
    The extent of analysis can be controlled by adjusting the
-   <xref linkend="guc-default-statistics-target"> configuration variable, or
+   <xref linkend="guc-default-statistics-target"/> configuration variable, or
    on a column-by-column basis by setting the per-column statistics
    target with <command>ALTER TABLE ... ALTER COLUMN ... SET
-   STATISTICS</command> (see <xref linkend="sql-altertable">).
+   STATISTICS</command> (see <xref linkend="sql-altertable"/>).
    The target value sets the
    maximum number of entries in the most-common-value list and the
    maximum number of bins in the histogram.  The default target value
@@ -166,8 +172,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
    <literal>pg_statistic</literal>.  In particular, setting the
    statistics target to zero disables collection of statistics for
    that column.  It might be useful to do that for columns that are
-   never used as part of the <literal>WHERE</>, <literal>GROUP BY</>,
-   or <literal>ORDER BY</> clauses of queries, since the planner will
+   never used as part of the <literal>WHERE</literal>, <literal>GROUP BY</literal>,
+   or <literal>ORDER BY</literal> clauses of queries, since the planner will
    have no use for statistics on such columns.
   </para>
 
@@ -185,8 +191,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
    with the largest possible statistics target.  If this inaccuracy leads to
    bad query plans, a more accurate value can be determined manually and then
    installed with
-   <command>ALTER TABLE ... ALTER COLUMN ... SET (n_distinct = ...)</>
-   (see <xref linkend="sql-altertable">).
+   <command>ALTER TABLE ... ALTER COLUMN ... SET (n_distinct = ...)</command>
+   (see <xref linkend="sql-altertable"/>).
   </para>
 
   <para>
@@ -204,7 +210,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
 
   <para>
     If any of the child tables are foreign tables whose foreign data wrappers
-    do not support <command>ANALYZE</>, those child tables are ignored while
+    do not support <command>ANALYZE</command>, those child tables are ignored while
     gathering inheritance statistics.
   </para>
 
@@ -227,10 +233,10 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-vacuum"></member>
-   <member><xref linkend="app-vacuumdb"></member>
-   <member><xref linkend="runtime-config-resource-vacuum-cost"></member>
-   <member><xref linkend="autovacuum"></member>
+   <member><xref linkend="sql-vacuum"/></member>
+   <member><xref linkend="app-vacuumdb"/></member>
+   <member><xref linkend="runtime-config-resource-vacuum-cost"/></member>
+   <member><xref linkend="autovacuum"/></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1589,6 +1589,28 @@ SELECT * FROM test_cube WHERE c && '(3000,1000),(0,0)' GROUP BY c ORDER BY c;
  (2424, 160),(2424, 81)
 (5 rows)
 
+-- Test index-only scans
+SET enable_bitmapscan = false;
+EXPLAIN (COSTS OFF)
+SELECT c FROM test_cube WHERE c <@ '(3000,1000),(0,0)' ORDER BY c;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Sort
+   Sort Key: c
+   ->  Index Only Scan using test_cube_ix on test_cube
+         Index Cond: (c <@ '(3000, 1000),(0, 0)'::cube)
+(4 rows)
+
+SELECT c FROM test_cube WHERE c <@ '(3000,1000),(0,0)' ORDER BY c;
+            c            
+-------------------------
+ (337, 455),(240, 359)
+ (759, 187),(662, 163)
+ (1444, 403),(1346, 344)
+ (2424, 160),(2424, 81)
+(4 rows)
+
+RESET enable_bitmapscan;
 -- kNN with index
 SELECT *, c <-> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <-> '(100, 100),(500, 500)'::cube LIMIT 5;
             c            |       dist       

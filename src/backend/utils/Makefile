@@ -25,7 +25,7 @@ fmgrprotos.h: fmgroids.h ;
 fmgroids.h: fmgrtab.c ;
 
 fmgrtab.c: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
-	$(PERL) -I $(catalogdir) $< $(top_srcdir)/src/include/catalog/pg_proc.h
+	$(PERL) -I $(catalogdir) $< -I $(top_srcdir)/src/include/ $(top_srcdir)/src/include/catalog/pg_proc.h
 
 errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
 	$(PERL) $(srcdir)/generate-errcodes.pl $< > $@

@@ -217,6 +217,9 @@ END;
 DELETE FROM hash_split_heap WHERE keycol = 1;
 INSERT INTO hash_split_heap SELECT a/2 FROM generate_series(1, 25000) a;
 VACUUM hash_split_heap;
+-- Rebuild the index using a different fillfactor
+ALTER INDEX hash_split_index SET (fillfactor = 10);
+REINDEX INDEX hash_split_index;
 -- Clean up.
 DROP TABLE hash_split_heap;
 -- Index on temp table.
@@ -229,3 +232,12 @@ CREATE TABLE hash_heap_float4 (x float4, y int);
 INSERT INTO hash_heap_float4 VALUES (1.1,1);
 CREATE INDEX hash_idx ON hash_heap_float4 USING hash (x);
 DROP TABLE hash_heap_float4 CASCADE;
+-- Test out-of-range fillfactor values
+CREATE INDEX hash_f8_index2 ON hash_f8_heap USING hash (random float8_ops)
+	WITH (fillfactor=9);
+ERROR:  value 9 out of bounds for option "fillfactor"
+DETAIL:  Valid values are between "10" and "100".
+CREATE INDEX hash_f8_index2 ON hash_f8_heap USING hash (random float8_ops)
+	WITH (fillfactor=101);
+ERROR:  value 101 out of bounds for option "fillfactor"
+DETAIL:  Valid values are between "10" and "100".

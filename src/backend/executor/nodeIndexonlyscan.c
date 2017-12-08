@@ -25,6 +25,7 @@
  *						parallel index-only scan
  *		ExecIndexOnlyScanInitializeDSM	initialize DSM for parallel
  *						index-only scan
+ *		ExecIndexOnlyScanReInitializeDSM	reinitialize DSM for fresh scan
  *		ExecIndexOnlyScanInitializeWorker attach to DSM info in parallel worker
  */
 #include "postgres.h"
@@ -34,6 +35,7 @@
 #include "executor/execdebug.h"
 #include "executor/nodeIndexonlyscan.h"
 #include "executor/nodeIndexscan.h"
+#include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "utils/memutils.h"
@@ -116,6 +118,8 @@ IndexOnlyNext(IndexOnlyScanState *node)
 	while ((tid = index_getnext_tid(scandesc, direction)) != NULL)
 	{
 		HeapTuple	tuple = NULL;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * We can skip the heap fetch if the TID references a heap page on
@@ -303,9 +307,11 @@ IndexOnlyRecheck(IndexOnlyScanState *node, TupleTableSlot *slot)
  *		ExecIndexOnlyScan(node)
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecIndexOnlyScan(IndexOnlyScanState *node)
+static TupleTableSlot *
+ExecIndexOnlyScan(PlanState *pstate)
 {
+	IndexOnlyScanState *node = castNode(IndexOnlyScanState, pstate);
+
 	/*
 	 * If we have runtime keys and they've not already been set up, do it now.
 	 */
@@ -331,16 +337,6 @@ ExecIndexOnlyScan(IndexOnlyScanState *node)
 void
 ExecReScanIndexOnlyScan(IndexOnlyScanState *node)
 {
-	bool		reset_parallel_scan = true;
-
-	/*
-	 * If we are here to just update the scan keys, then don't reset parallel
-	 * scan. For detailed reason behind this look in the comments for
-	 * ExecReScanIndexScan.
-	 */
-	if (node->ioss_NumRuntimeKeys != 0 && !node->ioss_RuntimeKeysReady)
-		reset_parallel_scan = false;
-
 	/*
 	 * If we are doing runtime key calculations (ie, any of the index key
 	 * values weren't simple Consts), compute the new key values.  But first,
@@ -361,15 +357,10 @@ ExecReScanIndexOnlyScan(IndexOnlyScanState *node)
 
 	/* reset index scan */
 	if (node->ioss_ScanDesc)
-	{
-
 		index_rescan(node->ioss_ScanDesc,
 					 node->ioss_ScanKeys, node->ioss_NumScanKeys,
 					 node->ioss_OrderByKeys, node->ioss_NumOrderByKeys);
 
-		if (reset_parallel_scan && node->ioss_ScanDesc->parallel_scan)
-			index_parallelrescan(node->ioss_ScanDesc);
-	}
 	ExecScanReScan(&node->ss);
 }
 
@@ -473,6 +464,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	indexstate = makeNode(IndexOnlyScanState);
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
+	indexstate->ss.ps.ExecProcNode = ExecIndexOnlyScan;
 	indexstate->ioss_HeapFetches = 0;
 
 	/*
@@ -612,7 +604,8 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 /* ----------------------------------------------------------------
  *		ExecIndexOnlyScanEstimate
  *
- *	estimates the space required to serialize index-only scan node.
+ *		Compute the amount of space we'll need in the parallel
+ *		query DSM, and inform pcxt->estimator about our needs.
  * ----------------------------------------------------------------
  */
 void
@@ -666,17 +659,31 @@ ExecIndexOnlyScanInitializeDSM(IndexOnlyScanState *node,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecIndexOnlyScanReInitializeDSM
+ *
+ *		Reset shared state before beginning a fresh scan.
+ * ----------------------------------------------------------------
+ */
+void
+ExecIndexOnlyScanReInitializeDSM(IndexOnlyScanState *node,
+								 ParallelContext *pcxt)
+{
+	index_parallelrescan(node->ioss_ScanDesc);
+}
+
+/* ----------------------------------------------------------------
  *		ExecIndexOnlyScanInitializeWorker
  *
  *		Copy relevant information from TOC into planstate.
  * ----------------------------------------------------------------
  */
 void
-ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node, shm_toc *toc)
+ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
+								  ParallelWorkerContext *pwcxt)
 {
 	ParallelIndexScanDesc piscan;
 
-	piscan = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id, false);
+	piscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
 	node->ioss_ScanDesc =
 		index_beginscan_parallel(node->ss.ss_currentRelation,
 								 node->ioss_RelationDesc,

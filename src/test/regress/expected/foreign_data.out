@@ -89,6 +89,14 @@ CREATE FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
  postgresql | regress_foreign_data_user | -       | postgresql_fdw_validator |                   |             | 
 (3 rows)
 
+-- HANDLER related checks
+CREATE FUNCTION invalid_fdw_handler() RETURNS int LANGUAGE SQL AS 'SELECT 1;';
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER invalid_fdw_handler;  -- ERROR
+ERROR:  function invalid_fdw_handler must return type fdw_handler
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler HANDLER invalid_fdw_handler;  -- ERROR
+ERROR:  conflicting or redundant options
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler;
+DROP FOREIGN DATA WRAPPER test_fdw;
 -- ALTER FOREIGN DATA WRAPPER
 ALTER FOREIGN DATA WRAPPER foo;                             -- ERROR
 ERROR:  syntax error at or near ";"
@@ -188,18 +196,26 @@ ALTER FOREIGN DATA WRAPPER foo RENAME TO foo1;
 (3 rows)
 
 ALTER FOREIGN DATA WRAPPER foo1 RENAME TO foo;
+-- HANDLER related checks
+ALTER FOREIGN DATA WRAPPER foo HANDLER invalid_fdw_handler;  -- ERROR
+ERROR:  function invalid_fdw_handler must return type fdw_handler
+ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler HANDLER anything;  -- ERROR
+ERROR:  conflicting or redundant options
+ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler;
+WARNING:  changing the foreign-data wrapper handler can change behavior of existing foreign tables
+DROP FUNCTION invalid_fdw_handler();
 -- DROP FOREIGN DATA WRAPPER
 DROP FOREIGN DATA WRAPPER nonexistent;                      -- ERROR
 ERROR:  foreign-data wrapper "nonexistent" does not exist
 DROP FOREIGN DATA WRAPPER IF EXISTS nonexistent;
 NOTICE:  foreign-data wrapper "nonexistent" does not exist, skipping
 \dew+
-                                                        List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW options          | Description 
-------------+---------------------------+---------+--------------------------+-------------------+------------------------------+-------------
- dummy      | regress_foreign_data_user | -       | -                        |                   |                              | useless
- foo        | regress_test_role_super   | -       | -                        |                   | (b '3', c '4', a '2', d '5') | 
- postgresql | regress_foreign_data_user | -       | postgresql_fdw_validator |                   |                              | 
+                                                             List of foreign-data wrappers
+    Name    |           Owner           |     Handler      |        Validator         | Access privileges |         FDW options          | Description 
+------------+---------------------------+------------------+--------------------------+-------------------+------------------------------+-------------
+ dummy      | regress_foreign_data_user | -                | -                        |                   |                              | useless
+ foo        | regress_test_role_super   | test_fdw_handler | -                        |                   | (b '3', c '4', a '2', d '5') | 
+ postgresql | regress_foreign_data_user | -                | postgresql_fdw_validator |                   |                              | 
 (3 rows)
 
 DROP ROLE regress_test_role_super;                          -- ERROR
@@ -1185,10 +1201,11 @@ ERROR:  permission denied for foreign-data wrapper foo
 ALTER SERVER s9 VERSION '1.1';
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER s9;
+-- We use terse mode to avoid ordering issues in cascade detail output.
+\set VERBOSITY terse
 DROP SERVER s9 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to user mapping for public on server s9
-drop cascades to user mapping for regress_unprivileged_role on server s9
+\set VERBOSITY default
 RESET ROLE;
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_unprivileged_role;
@@ -1204,13 +1221,14 @@ ERROR:  must be owner of foreign server s9
 SET ROLE regress_test_role;
 CREATE SERVER s10 FOREIGN DATA WRAPPER foo;
 CREATE USER MAPPING FOR public SERVER s10 OPTIONS (user 'secret');
-GRANT USAGE ON FOREIGN SERVER s10 TO regress_unprivileged_role;
--- owner of server can see option fields
+CREATE USER MAPPING FOR regress_unprivileged_role SERVER s10 OPTIONS (user 'secret');
+-- owner of server can see some option fields
 \deu+
                  List of user mappings
  Server |         User name         |    FDW options    
 --------+---------------------------+-------------------
  s10    | public                    | ("user" 'secret')
+ s10    | regress_unprivileged_role | 
  s4     | regress_foreign_data_user | 
  s5     | regress_test_role         | (modified '1')
  s6     | regress_test_role         | 
@@ -1218,15 +1236,16 @@ GRANT USAGE ON FOREIGN SERVER s10 TO regress_unprivileged_role;
  s8     | regress_foreign_data_user | 
  s9     | regress_unprivileged_role | 
  t1     | public                    | (modified '1')
-(8 rows)
+(9 rows)
 
 RESET ROLE;
--- superuser can see option fields
+-- superuser can see all option fields
 \deu+
                   List of user mappings
  Server |         User name         |     FDW options     
 --------+---------------------------+---------------------
  s10    | public                    | ("user" 'secret')
+ s10    | regress_unprivileged_role | ("user" 'secret')
  s4     | regress_foreign_data_user | 
  s5     | regress_test_role         | (modified '1')
  s6     | regress_test_role         | 
@@ -1234,15 +1253,16 @@ RESET ROLE;
  s8     | regress_foreign_data_user | (password 'public')
  s9     | regress_unprivileged_role | 
  t1     | public                    | (modified '1')
-(8 rows)
+(9 rows)
 
--- unprivileged user cannot see option fields
+-- unprivileged user cannot see any option field
 SET ROLE regress_unprivileged_role;
 \deu+
               List of user mappings
  Server |         User name         | FDW options 
 --------+---------------------------+-------------
  s10    | public                    | 
+ s10    | regress_unprivileged_role | 
  s4     | regress_foreign_data_user | 
  s5     | regress_test_role         | 
  s6     | regress_test_role         | 
@@ -1250,11 +1270,13 @@ SET ROLE regress_unprivileged_role;
  s8     | regress_foreign_data_user | 
  s9     | regress_unprivileged_role | 
  t1     | public                    | 
-(8 rows)
+(9 rows)
 
 RESET ROLE;
+\set VERBOSITY terse
 DROP SERVER s10 CASCADE;
-NOTICE:  drop cascades to user mapping for public on server s10
+NOTICE:  drop cascades to 2 other objects
+\set VERBOSITY default
 -- Triggers
 CREATE FUNCTION dummy_trigger() RETURNS TRIGGER AS $$
   BEGIN
@@ -1596,15 +1618,12 @@ Inherits: pt1
 Child tables: ct3,
               ft3
 
+\set VERBOSITY terse
 DROP FOREIGN TABLE ft2; -- ERROR
 ERROR:  cannot drop foreign table ft2 because other objects depend on it
-DETAIL:  table ct3 depends on foreign table ft2
-foreign table ft3 depends on foreign table ft2
-HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP FOREIGN TABLE ft2 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to table ct3
-drop cascades to foreign table ft3
+\set VERBOSITY default
 CREATE FOREIGN TABLE ft2 (
 	c1 integer NOT NULL,
 	c2 text,
@@ -1869,7 +1888,7 @@ FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
 ERROR:  table "pt2_1" contains column "c4" not found in parent "pt2"
-DETAIL:  New partition should contain only the columns present in parent.
+DETAIL:  The new partition may contain only the columns present in parent.
 DROP FOREIGN TABLE pt2_1;
 \d+ pt2
                                     Table "public.pt2"
@@ -1879,6 +1898,7 @@ DROP FOREIGN TABLE pt2_1;
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Partition key: LIST (c1)
+Number of partitions: 0
 
 CREATE FOREIGN TABLE pt2_1 (
 	c1 integer NOT NULL,
@@ -1963,6 +1983,7 @@ ALTER TABLE pt2 ALTER c2 SET NOT NULL;
  c2     | text    |           | not null |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Partition key: LIST (c1)
+Number of partitions: 0
 
 \d+ pt2_1
                                       Foreign table "public.pt2_1"
@@ -1992,6 +2013,7 @@ ALTER TABLE pt2 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
 Partition key: LIST (c1)
 Check constraints:
     "pt2chk1" CHECK (c1 > 0)
+Number of partitions: 0
 
 \d+ pt2_1
                                       Foreign table "public.pt2_1"
@@ -2026,16 +2048,12 @@ owner of user mapping for regress_test_role on server s6
 DROP SERVER t1 CASCADE;
 NOTICE:  drop cascades to user mapping for public on server t1
 DROP USER MAPPING FOR regress_test_role SERVER s6;
--- This test causes some order dependent cascade detail output,
--- so switch to terse mode for it.
 \set VERBOSITY terse
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 NOTICE:  drop cascades to 5 other objects
-\set VERBOSITY default
 DROP SERVER s8 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to user mapping for regress_foreign_data_user on server s8
-drop cascades to user mapping for public on server s8
+\set VERBOSITY default
 DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;
 DROP ROLE regress_unprivileged_role;                        -- ERROR

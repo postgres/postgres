@@ -224,9 +224,8 @@ static void exec_eval_cleanup(PLpgSQL_execstate *estate);
 
 static void exec_prepare_plan(PLpgSQL_execstate *estate,
 				  PLpgSQL_expr *expr, int cursorOptions);
-static bool exec_simple_check_node(Node *node);
 static void exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr);
-static void exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan);
+static void exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan);
 static void exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno);
 static bool contains_target_param(Node *node, int *target_dno);
 static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
@@ -273,8 +272,7 @@ static ParamListInfo setup_unshared_param_list(PLpgSQL_execstate *estate,
 						  PLpgSQL_expr *expr);
 static void plpgsql_param_fetch(ParamListInfo params, int paramid);
 static void exec_move_row(PLpgSQL_execstate *estate,
-			  PLpgSQL_rec *rec,
-			  PLpgSQL_row *row,
+			  PLpgSQL_variable *target,
 			  HeapTuple tup, TupleDesc tupdesc);
 static HeapTuple make_tuple_from_row(PLpgSQL_execstate *estate,
 					PLpgSQL_row *row,
@@ -282,8 +280,7 @@ static HeapTuple make_tuple_from_row(PLpgSQL_execstate *estate,
 static HeapTuple get_tuple_from_datum(Datum value);
 static TupleDesc get_tupdesc_from_datum(Datum value);
 static void exec_move_row_from_datum(PLpgSQL_execstate *estate,
-						 PLpgSQL_rec *rec,
-						 PLpgSQL_row *row,
+						 PLpgSQL_variable *target,
 						 Datum value);
 static char *convert_value_to_string(PLpgSQL_execstate *estate,
 						Datum value, Oid valtype);
@@ -426,13 +423,15 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 					if (!fcinfo->argnull[i])
 					{
 						/* Assign row value from composite datum */
-						exec_move_row_from_datum(&estate, NULL, row,
+						exec_move_row_from_datum(&estate,
+												 (PLpgSQL_variable *) row,
 												 fcinfo->arg[i]);
 					}
 					else
 					{
 						/* If arg is null, treat it as an empty row */
-						exec_move_row(&estate, NULL, row, NULL, NULL);
+						exec_move_row(&estate, (PLpgSQL_variable *) row,
+									  NULL, NULL);
 					}
 					/* clean up after exec_move_row() */
 					exec_eval_cleanup(&estate);
@@ -463,7 +462,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	estate.err_text = NULL;
 	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
 	rc = exec_stmt_block(&estate, func->action);
-	if (rc != PLPGSQL_RC_RETURN)
+	if (rc != PLPGSQL_RC_RETURN && func->fn_rettype)
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = NULL;
@@ -510,6 +509,12 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	}
 	else if (!estate.retisnull)
 	{
+		if (!func->fn_rettype)
+		{
+			ereport(ERROR,
+					(errmsg("cannot return a value from a procedure")));
+		}
+
 		if (estate.retistuple)
 		{
 			/*
@@ -2322,7 +2327,7 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 		set_args.sqlstmt = stmt->argquery;
 		set_args.into = true;
 		/* XXX historically this has not been STRICT */
-		set_args.row = (PLpgSQL_row *)
+		set_args.target = (PLpgSQL_variable *)
 			(estate->datums[curvar->cursor_explicit_argrow]);
 
 		if (exec_stmt_execsql(estate, &set_args) != PLPGSQL_RC_OK)
@@ -2842,6 +2847,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 					PLpgSQL_var *var = (PLpgSQL_var *) retvar;
 					Datum		retval = var->value;
 					bool		isNull = var->isnull;
+					Form_pg_attribute attr = TupleDescAttr(tupdesc, 0);
 
 					if (natts != 1)
 						ereport(ERROR,
@@ -2859,8 +2865,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 											 &isNull,
 											 var->datatype->typoid,
 											 var->datatype->atttypmod,
-											 tupdesc->attrs[0]->atttypid,
-											 tupdesc->attrs[0]->atttypmod);
+											 attr->atttypid,
+											 attr->atttypmod);
 
 					tuplestore_putvalues(estate->tuple_store, tupdesc,
 										 &retval, &isNull);
@@ -2969,6 +2975,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 		}
 		else
 		{
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, 0);
+
 			/* Simple scalar result */
 			if (natts != 1)
 				ereport(ERROR,
@@ -2981,8 +2989,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 									 &isNull,
 									 rettype,
 									 rettypmod,
-									 tupdesc->attrs[0]->atttypid,
-									 tupdesc->attrs[0]->atttypmod);
+									 attr->atttypid,
+									 attr->atttypmod);
 
 			tuplestore_putvalues(estate->tuple_store, tupdesc,
 								 &retval, &isNull);
@@ -3747,8 +3755,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	{
 		SPITupleTable *tuptab = SPI_tuptable;
 		uint64		n = SPI_processed;
-		PLpgSQL_rec *rec = NULL;
-		PLpgSQL_row *row = NULL;
+		PLpgSQL_variable *target;
 
 		/* If the statement did not return a tuple table, complain */
 		if (tuptab == NULL)
@@ -3756,13 +3763,8 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("INTO used with a command that cannot return data")));
 
-		/* Determine if we assign to a record or a row */
-		if (stmt->rec != NULL)
-			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->dno]);
-		else if (stmt->row != NULL)
-			row = (PLpgSQL_row *) (estate->datums[stmt->row->dno]);
-		else
-			elog(ERROR, "unsupported target");
+		/* Fetch target's datum entry */
+		target = (PLpgSQL_variable *) estate->datums[stmt->target->dno];
 
 		/*
 		 * If SELECT ... INTO specified STRICT, and the query didn't find
@@ -3786,7 +3788,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
 			}
 			/* set the target to NULL(s) */
-			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+			exec_move_row(estate, target, NULL, tuptab->tupdesc);
 		}
 		else
 		{
@@ -3805,7 +3807,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
 			}
 			/* Put the first result row into the target */
-			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
+			exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);
 		}
 
 		/* Clean up */
@@ -3938,8 +3940,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	{
 		SPITupleTable *tuptab = SPI_tuptable;
 		uint64		n = SPI_processed;
-		PLpgSQL_rec *rec = NULL;
-		PLpgSQL_row *row = NULL;
+		PLpgSQL_variable *target;
 
 		/* If the statement did not return a tuple table, complain */
 		if (tuptab == NULL)
@@ -3947,13 +3948,8 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("INTO used with a command that cannot return data")));
 
-		/* Determine if we assign to a record or a row */
-		if (stmt->rec != NULL)
-			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->dno]);
-		else if (stmt->row != NULL)
-			row = (PLpgSQL_row *) (estate->datums[stmt->row->dno]);
-		else
-			elog(ERROR, "unsupported target");
+		/* Fetch target's datum entry */
+		target = (PLpgSQL_variable *) estate->datums[stmt->target->dno];
 
 		/*
 		 * If SELECT ... INTO specified STRICT, and the query didn't find
@@ -3977,7 +3973,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
 			}
 			/* set the target to NULL(s) */
-			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+			exec_move_row(estate, target, NULL, tuptab->tupdesc);
 		}
 		else
 		{
@@ -3997,7 +3993,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 			}
 
 			/* Put the first result row into the target */
-			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
+			exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);
 		}
 		/* clean up after exec_move_row() */
 		exec_eval_cleanup(estate);
@@ -4155,7 +4151,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 			set_args.sqlstmt = stmt->argquery;
 			set_args.into = true;
 			/* XXX historically this has not been STRICT */
-			set_args.row = (PLpgSQL_row *)
+			set_args.target = (PLpgSQL_variable *)
 				(estate->datums[curvar->cursor_explicit_argrow]);
 
 			if (exec_stmt_execsql(estate, &set_args) != PLPGSQL_RC_OK)
@@ -4213,8 +4209,6 @@ static int
 exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 {
 	PLpgSQL_var *curvar;
-	PLpgSQL_rec *rec = NULL;
-	PLpgSQL_row *row = NULL;
 	long		how_many = stmt->how_many;
 	SPITupleTable *tuptab;
 	Portal		portal;
@@ -4261,16 +4255,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 
 	if (!stmt->is_move)
 	{
-		/* ----------
-		 * Determine if we fetch into a record or a row
-		 * ----------
-		 */
-		if (stmt->rec != NULL)
-			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->dno]);
-		else if (stmt->row != NULL)
-			row = (PLpgSQL_row *) (estate->datums[stmt->row->dno]);
-		else
-			elog(ERROR, "unsupported target");
+		PLpgSQL_variable *target;
 
 		/* ----------
 		 * Fetch 1 tuple from the cursor
@@ -4284,10 +4269,11 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 		 * Set the target appropriately.
 		 * ----------
 		 */
+		target = (PLpgSQL_variable *) estate->datums[stmt->target->dno];
 		if (n == 0)
-			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+			exec_move_row(estate, target, NULL, tuptab->tupdesc);
 		else
-			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
+			exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);
 
 		exec_eval_cleanup(estate);
 		SPI_freetuptable(tuptab);
@@ -4506,7 +4492,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				if (isNull)
 				{
 					/* If source is null, just assign nulls to the row */
-					exec_move_row(estate, NULL, row, NULL, NULL);
+					exec_move_row(estate, (PLpgSQL_variable *) row,
+								  NULL, NULL);
 				}
 				else
 				{
@@ -4515,7 +4502,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
 								 errmsg("cannot assign non-composite value to a row variable")));
-					exec_move_row_from_datum(estate, NULL, row, value);
+					exec_move_row_from_datum(estate, (PLpgSQL_variable *) row,
+											 value);
 				}
 				break;
 			}
@@ -4530,7 +4518,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				if (isNull)
 				{
 					/* If source is null, just assign nulls to the record */
-					exec_move_row(estate, rec, NULL, NULL, NULL);
+					exec_move_row(estate, (PLpgSQL_variable *) rec,
+								  NULL, NULL);
 				}
 				else
 				{
@@ -4539,7 +4528,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
 								 errmsg("cannot assign non-composite value to a record variable")));
-					exec_move_row_from_datum(estate, rec, NULL, value);
+					exec_move_row_from_datum(estate, (PLpgSQL_variable *) rec,
+											 value);
 				}
 				break;
 			}
@@ -4589,8 +4579,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * Now insert the new value, being careful to cast it to the
 				 * right type.
 				 */
-				atttype = rec->tupdesc->attrs[fno - 1]->atttypid;
-				atttypmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
+				atttype = TupleDescAttr(rec->tupdesc, fno - 1)->atttypid;
+				atttypmod = TupleDescAttr(rec->tupdesc, fno - 1)->atttypmod;
 				values[0] = exec_cast_value(estate,
 											value,
 											&isNull,
@@ -4914,7 +4904,11 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 									rec->refname, recfield->fieldname)));
 				*typeid = SPI_gettypeid(rec->tupdesc, fno);
 				if (fno > 0)
-					*typetypmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
+				{
+					Form_pg_attribute attr = TupleDescAttr(rec->tupdesc, fno - 1);
+
+					*typetypmod = attr->atttypmod;
+				}
 				else
 					*typetypmod = -1;
 				*value = SPI_getbinval(rec->tup, rec->tupdesc, fno, isnull);
@@ -5090,11 +5084,19 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 									rec->refname, recfield->fieldname)));
 				*typeid = SPI_gettypeid(rec->tupdesc, fno);
 				if (fno > 0)
-					*typmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
+				{
+					Form_pg_attribute attr = TupleDescAttr(rec->tupdesc, fno - 1);
+
+					*typmod = attr->atttypmod;
+				}
 				else
 					*typmod = -1;
 				if (fno > 0)
-					*collation = rec->tupdesc->attrs[fno - 1]->attcollation;
+				{
+					Form_pg_attribute attr = TupleDescAttr(rec->tupdesc, fno - 1);
+
+					*collation = attr->attcollation;
+				}
 				else			/* no system column types have collation */
 					*collation = InvalidOid;
 				break;
@@ -5173,6 +5175,7 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 {
 	Datum		result = 0;
 	int			rc;
+	Form_pg_attribute attr;
 
 	/*
 	 * If first time through, create a plan for this expression.
@@ -5212,8 +5215,9 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	/*
 	 * ... and get the column's datatype.
 	 */
-	*rettype = estate->eval_tuptable->tupdesc->attrs[0]->atttypid;
-	*rettypmod = estate->eval_tuptable->tupdesc->attrs[0]->atttypmod;
+	attr = TupleDescAttr(estate->eval_tuptable->tupdesc, 0);
+	*rettype = attr->atttypid;
+	*rettypmod = attr->atttypmod;
 
 	/*
 	 * If there are no rows selected, the result is a NULL of that type.
@@ -5319,22 +5323,14 @@ static int
 exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 			   Portal portal, bool prefetch_ok)
 {
-	PLpgSQL_rec *rec = NULL;
-	PLpgSQL_row *row = NULL;
+	PLpgSQL_variable *var;
 	SPITupleTable *tuptab;
 	bool		found = false;
 	int			rc = PLPGSQL_RC_OK;
 	uint64		n;
 
-	/*
-	 * Determine if we assign to a record or a row
-	 */
-	if (stmt->rec != NULL)
-		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->dno]);
-	else if (stmt->row != NULL)
-		row = (PLpgSQL_row *) (estate->datums[stmt->row->dno]);
-	else
-		elog(ERROR, "unsupported target");
+	/* Fetch loop variable's datum entry */
+	var = (PLpgSQL_variable *) estate->datums[stmt->var->dno];
 
 	/*
 	 * Make sure the portal doesn't get closed by the user statements we
@@ -5357,7 +5353,7 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	 */
 	if (n == 0)
 	{
-		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+		exec_move_row(estate, var, NULL, tuptab->tupdesc);
 		exec_eval_cleanup(estate);
 	}
 	else
@@ -5375,7 +5371,7 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 			/*
 			 * Assign the tuple to the target
 			 */
-			exec_move_row(estate, rec, row, tuptab->vals[i], tuptab->tupdesc);
+			exec_move_row(estate, var, tuptab->vals[i], tuptab->tupdesc);
 			exec_eval_cleanup(estate);
 
 			/*
@@ -5475,12 +5471,12 @@ loop_exit:
  *								a Datum by directly calling ExecEvalExpr().
  *
  * If successful, store results into *result, *isNull, *rettype, *rettypmod
- * and return TRUE.  If the expression cannot be handled by simple evaluation,
- * return FALSE.
+ * and return true.  If the expression cannot be handled by simple evaluation,
+ * return false.
  *
  * Because we only store one execution tree for a simple expression, we
  * can't handle recursion cases.  So, if we see the tree is already busy
- * with an evaluation in the current xact, we just return FALSE and let the
+ * with an evaluation in the current xact, we just return false and let the
  * caller run the expression the hard way.  (Other alternatives such as
  * creating a new tree for a recursive call either introduce memory leaks,
  * or add enough bookkeeping to be doubtful wins anyway.)  Another case that
@@ -5488,13 +5484,12 @@ loop_exit:
  * of the tree was aborted by an error: the tree may contain bogus state
  * so we dare not re-use it.
  *
- * It is possible though unlikely for a simple expression to become non-simple
- * (consider for example redefining a trivial view).  We must handle that for
- * correctness; fortunately it's normally inexpensive to call
- * SPI_plan_get_cached_plan for a simple expression.  We do not consider the
- * other direction (non-simple expression becoming simple) because we'll still
- * give correct results if that happens, and it's unlikely to be worth the
- * cycles to check.
+ * It is possible that we'd need to replan a simple expression; for example,
+ * someone might redefine a SQL function that had been inlined into the simple
+ * expression.  That cannot cause a simple expression to become non-simple (or
+ * vice versa), but we do have to handle replacing the expression tree.
+ * Fortunately it's normally inexpensive to call SPI_plan_get_cached_plan for
+ * a simple expression.
  *
  * Note: if pass-by-reference, the result is in the eval_mcontext.
  * It will be freed when exec_eval_cleanup is done.
@@ -5543,19 +5538,13 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 */
 	Assert(cplan != NULL);
 
+	/* If it got replanned, update our copy of the simple expression */
 	if (cplan->generation != expr->expr_simple_generation)
 	{
-		/* It got replanned ... is it still simple? */
-		exec_simple_recheck_plan(expr, cplan);
-		/* better recheck r/w safety, as well */
+		exec_save_simple_expr(expr, cplan);
+		/* better recheck r/w safety, as it could change due to inlining */
 		if (expr->rwparam >= 0)
 			exec_check_rw_parameter(expr, expr->rwparam);
-		if (expr->expr_simple_expr == NULL)
-		{
-			/* Oops, release refcount and fail */
-			ReleaseCachedPlan(cplan, true);
-			return false;
-		}
 	}
 
 	/*
@@ -5567,7 +5556,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	/*
 	 * Prepare the expression for execution, if it's not been done already in
 	 * the current transaction.  (This will be forced to happen if we called
-	 * exec_simple_recheck_plan above.)
+	 * exec_save_simple_expr above.)
 	 */
 	if (expr->expr_simple_lxid != curlxid)
 	{
@@ -5934,16 +5923,17 @@ plpgsql_param_fetch(ParamListInfo params, int paramid)
  */
 static void
 exec_move_row(PLpgSQL_execstate *estate,
-			  PLpgSQL_rec *rec,
-			  PLpgSQL_row *row,
+			  PLpgSQL_variable *target,
 			  HeapTuple tup, TupleDesc tupdesc)
 {
 	/*
 	 * Record is simple - just copy the tuple and its descriptor into the
 	 * record variable
 	 */
-	if (rec != NULL)
+	if (target->dtype == PLPGSQL_DTYPE_REC)
 	{
+		PLpgSQL_rec *rec = (PLpgSQL_rec *) target;
+
 		/*
 		 * Copy input first, just in case it is pointing at variable's value
 		 */
@@ -6012,8 +6002,9 @@ exec_move_row(PLpgSQL_execstate *estate,
 	 * If we have no tuple data at all, we'll assign NULL to all columns of
 	 * the row variable.
 	 */
-	if (row != NULL)
+	if (target->dtype == PLPGSQL_DTYPE_ROW)
 	{
+		PLpgSQL_row *row = (PLpgSQL_row *) target;
 		int			td_natts = tupdesc ? tupdesc->natts : 0;
 		int			t_natts;
 		int			fnum;
@@ -6038,7 +6029,8 @@ exec_move_row(PLpgSQL_execstate *estate,
 
 			var = (PLpgSQL_var *) (estate->datums[row->varnos[fnum]]);
 
-			while (anum < td_natts && tupdesc->attrs[anum]->attisdropped)
+			while (anum < td_natts &&
+				   TupleDescAttr(tupdesc, anum)->attisdropped)
 				anum++;			/* skip dropped column in tuple */
 
 			if (anum < td_natts)
@@ -6050,8 +6042,8 @@ exec_move_row(PLpgSQL_execstate *estate,
 					value = (Datum) 0;
 					isnull = true;
 				}
-				valtype = tupdesc->attrs[anum]->atttypid;
-				valtypmod = tupdesc->attrs[anum]->atttypmod;
+				valtype = TupleDescAttr(tupdesc, anum)->atttypid;
+				valtypmod = TupleDescAttr(tupdesc, anum)->atttypmod;
 				anum++;
 			}
 			else
@@ -6103,7 +6095,7 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 		Oid			fieldtypeid;
 		int32		fieldtypmod;
 
-		if (tupdesc->attrs[i]->attisdropped)
+		if (TupleDescAttr(tupdesc, i)->attisdropped)
 		{
 			nulls[i] = true;	/* leave the column as null */
 			continue;
@@ -6114,7 +6106,7 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 		exec_eval_datum(estate, estate->datums[row->varnos[i]],
 						&fieldtypeid, &fieldtypmod,
 						&dvalues[i], &nulls[i]);
-		if (fieldtypeid != tupdesc->attrs[i]->atttypid)
+		if (fieldtypeid != TupleDescAttr(tupdesc, i)->atttypid)
 			return NULL;
 		/* XXX should we insist on typmod match, too? */
 	}
@@ -6179,8 +6171,7 @@ get_tupdesc_from_datum(Datum value)
  */
 static void
 exec_move_row_from_datum(PLpgSQL_execstate *estate,
-						 PLpgSQL_rec *rec,
-						 PLpgSQL_row *row,
+						 PLpgSQL_variable *target,
 						 Datum value)
 {
 	HeapTupleHeader td = DatumGetHeapTupleHeader(value);
@@ -6201,7 +6192,7 @@ exec_move_row_from_datum(PLpgSQL_execstate *estate,
 	tmptup.t_data = td;
 
 	/* Do the move */
-	exec_move_row(estate, rec, row, &tmptup, tupdesc);
+	exec_move_row(estate, target, &tmptup, tupdesc);
 
 	/* Release tupdesc usage count */
 	ReleaseTupleDesc(tupdesc);
@@ -6299,7 +6290,7 @@ exec_cast_value(PLpgSQL_execstate *estate,
  * or NULL if the cast is a mere no-op relabeling.  If there's work to be
  * done, the cast_exprstate field contains an expression evaluation tree
  * based on a CaseTestExpr input, and the cast_in_use field should be set
- * TRUE while executing it.
+ * true while executing it.
  * ----------
  */
 static plpgsql_CastHashEntry *
@@ -6450,265 +6441,6 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 	return cast_entry;
 }
 
-/* ----------
- * exec_simple_check_node -		Recursively check if an expression
- *								is made only of simple things we can
- *								hand out directly to ExecEvalExpr()
- *								instead of calling SPI.
- * ----------
- */
-static bool
-exec_simple_check_node(Node *node)
-{
-	if (node == NULL)
-		return TRUE;
-
-	switch (nodeTag(node))
-	{
-		case T_Const:
-			return TRUE;
-
-		case T_Param:
-			return TRUE;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *expr = (ArrayRef *) node;
-
-				if (!exec_simple_check_node((Node *) expr->refupperindexpr))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->reflowerindexpr))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->refexpr))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->refassgnexpr))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_FuncExpr:
-			{
-				FuncExpr   *expr = (FuncExpr *) node;
-
-				if (expr->funcretset)
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_OpExpr:
-			{
-				OpExpr	   *expr = (OpExpr *) node;
-
-				if (expr->opretset)
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_DistinctExpr:
-			{
-				DistinctExpr *expr = (DistinctExpr *) node;
-
-				if (expr->opretset)
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_NullIfExpr:
-			{
-				NullIfExpr *expr = (NullIfExpr *) node;
-
-				if (expr->opretset)
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_ScalarArrayOpExpr:
-			{
-				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_BoolExpr:
-			{
-				BoolExpr   *expr = (BoolExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_FieldSelect:
-			return exec_simple_check_node((Node *) ((FieldSelect *) node)->arg);
-
-		case T_FieldStore:
-			{
-				FieldStore *expr = (FieldStore *) node;
-
-				if (!exec_simple_check_node((Node *) expr->arg))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->newvals))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_RelabelType:
-			return exec_simple_check_node((Node *) ((RelabelType *) node)->arg);
-
-		case T_CoerceViaIO:
-			return exec_simple_check_node((Node *) ((CoerceViaIO *) node)->arg);
-
-		case T_ArrayCoerceExpr:
-			return exec_simple_check_node((Node *) ((ArrayCoerceExpr *) node)->arg);
-
-		case T_ConvertRowtypeExpr:
-			return exec_simple_check_node((Node *) ((ConvertRowtypeExpr *) node)->arg);
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *expr = (CaseExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->arg))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->defresult))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *when = (CaseWhen *) node;
-
-				if (!exec_simple_check_node((Node *) when->expr))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) when->result))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_CaseTestExpr:
-			return TRUE;
-
-		case T_ArrayExpr:
-			{
-				ArrayExpr  *expr = (ArrayExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->elements))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_RowExpr:
-			{
-				RowExpr    *expr = (RowExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_RowCompareExpr:
-			{
-				RowCompareExpr *expr = (RowCompareExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->largs))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->rargs))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_CoalesceExpr:
-			{
-				CoalesceExpr *expr = (CoalesceExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_MinMaxExpr:
-			{
-				MinMaxExpr *expr = (MinMaxExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_SQLValueFunction:
-			return TRUE;
-
-		case T_XmlExpr:
-			{
-				XmlExpr    *expr = (XmlExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->named_args))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_NullTest:
-			return exec_simple_check_node((Node *) ((NullTest *) node)->arg);
-
-		case T_BooleanTest:
-			return exec_simple_check_node((Node *) ((BooleanTest *) node)->arg);
-
-		case T_CoerceToDomain:
-			return exec_simple_check_node((Node *) ((CoerceToDomain *) node)->arg);
-
-		case T_CoerceToDomainValue:
-			return TRUE;
-
-		case T_List:
-			{
-				List	   *expr = (List *) node;
-				ListCell   *l;
-
-				foreach(l, expr)
-				{
-					if (!exec_simple_check_node(lfirst(l)))
-						return FALSE;
-				}
-
-				return TRUE;
-			}
-
-		default:
-			return FALSE;
-	}
-}
-
 
 /* ----------
  * exec_simple_check_plan -		Check if a plan is simple enough to
@@ -6726,12 +6458,16 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	MemoryContext oldcontext;
 
 	/*
-	 * Initialize to "not simple", and remember the plan generation number we
-	 * last checked.  (If we don't get as far as obtaining a plan to check, we
-	 * just leave expr_simple_generation set to 0.)
+	 * Initialize to "not simple".
 	 */
 	expr->expr_simple_expr = NULL;
-	expr->expr_simple_generation = 0;
+
+	/*
+	 * Check the analyzed-and-rewritten form of the query to see if we will be
+	 * able to treat it as a simple expression.  Since this function is only
+	 * called immediately after creating the CachedPlanSource, we need not
+	 * worry about the query being stale.
+	 */
 
 	/*
 	 * We can only test queries that resulted in exactly one CachedPlanSource
@@ -6740,15 +6476,6 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	if (list_length(plansources) != 1)
 		return;
 	plansource = (CachedPlanSource *) linitial(plansources);
-
-	/*
-	 * Do some checking on the analyzed-and-rewritten form of the query. These
-	 * checks are basically redundant with the tests in
-	 * exec_simple_recheck_plan, but the point is to avoid building a plan if
-	 * possible.  Since this function is only called immediately after
-	 * creating the CachedPlanSource, we need not worry about the query being
-	 * stale.
-	 */
 
 	/*
 	 * 1. There must be one single querytree.
@@ -6768,16 +6495,20 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		return;
 
 	/*
-	 * 3. Can't have any subplans, aggregates, qual clauses either
+	 * 3. Can't have any subplans, aggregates, qual clauses either.  (These
+	 * tests should generally match what inline_function() checks before
+	 * inlining a SQL function; otherwise, inlining could change our
+	 * conclusion about whether an expression is simple, which we don't want.)
 	 */
 	if (query->hasAggs ||
 		query->hasWindowFuncs ||
 		query->hasTargetSRFs ||
 		query->hasSubLinks ||
-		query->hasForUpdate ||
 		query->cteList ||
+		query->jointree->fromlist ||
 		query->jointree->quals ||
 		query->groupClause ||
+		query->groupingSets ||
 		query->havingQual ||
 		query->windowClause ||
 		query->distinctClause ||
@@ -6794,7 +6525,7 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		return;
 
 	/*
-	 * OK, it seems worth constructing a plan for more careful checking.
+	 * OK, we can treat it as a simple plan.
 	 *
 	 * Get the generic plan for the query.  If replanning is needed, do that
 	 * work in the eval_mcontext.
@@ -6806,81 +6537,89 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	/* Can't fail, because we checked for a single CachedPlanSource above */
 	Assert(cplan != NULL);
 
-	/* Share the remaining work with recheck code path */
-	exec_simple_recheck_plan(expr, cplan);
+	/* Share the remaining work with replan code path */
+	exec_save_simple_expr(expr, cplan);
 
 	/* Release our plan refcount */
 	ReleaseCachedPlan(cplan, true);
 }
 
 /*
- * exec_simple_recheck_plan --- check for simple plan once we have CachedPlan
+ * exec_save_simple_expr --- extract simple expression from CachedPlan
  */
 static void
-exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
+exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 {
 	PlannedStmt *stmt;
 	Plan	   *plan;
-	TargetEntry *tle;
+	Expr	   *tle_expr;
 
 	/*
-	 * Initialize to "not simple", and remember the plan generation number we
-	 * last checked.
+	 * Given the checks that exec_simple_check_plan did, none of the Asserts
+	 * here should ever fail.
 	 */
-	expr->expr_simple_expr = NULL;
-	expr->expr_simple_generation = cplan->generation;
 
-	/*
-	 * 1. There must be one single plantree
-	 */
-	if (list_length(cplan->stmt_list) != 1)
-		return;
+	/* Extract the single PlannedStmt */
+	Assert(list_length(cplan->stmt_list) == 1);
 	stmt = linitial_node(PlannedStmt, cplan->stmt_list);
+	Assert(stmt->commandType == CMD_SELECT);
 
 	/*
-	 * 2. It must be a RESULT plan --> no scan's required
+	 * Ordinarily, the plan node should be a simple Result.  However, if
+	 * force_parallel_mode is on, the planner might've stuck a Gather node
+	 * atop that.  The simplest way to deal with this is to look through the
+	 * Gather node.  The Gather node's tlist would normally contain a Var
+	 * referencing the child node's output, but it could also be a Param, or
+	 * it could be a Const that setrefs.c copied as-is.
 	 */
-	if (stmt->commandType != CMD_SELECT)
-		return;
 	plan = stmt->planTree;
-	if (!IsA(plan, Result))
-		return;
+	for (;;)
+	{
+		/* Extract the single tlist expression */
+		Assert(list_length(plan->targetlist) == 1);
+		tle_expr = castNode(TargetEntry, linitial(plan->targetlist))->expr;
+
+		if (IsA(plan, Result))
+		{
+			Assert(plan->lefttree == NULL &&
+				   plan->righttree == NULL &&
+				   plan->initPlan == NULL &&
+				   plan->qual == NULL &&
+				   ((Result *) plan)->resconstantqual == NULL);
+			break;
+		}
+		else if (IsA(plan, Gather))
+		{
+			Assert(plan->lefttree != NULL &&
+				   plan->righttree == NULL &&
+				   plan->initPlan == NULL &&
+				   plan->qual == NULL);
+			/* If setrefs.c copied up a Const, no need to look further */
+			if (IsA(tle_expr, Const))
+				break;
+			/* Otherwise, it had better be a Param or an outer Var */
+			Assert(IsA(tle_expr, Param) ||(IsA(tle_expr, Var) &&
+										   ((Var *) tle_expr)->varno == OUTER_VAR));
+			/* Descend to the child node */
+			plan = plan->lefttree;
+		}
+		else
+			elog(ERROR, "unexpected plan node type: %d",
+				 (int) nodeTag(plan));
+	}
 
 	/*
-	 * 3. Can't have any subplan or qual clause, either
+	 * Save the simple expression, and initialize state to "not valid in
+	 * current transaction".
 	 */
-	if (plan->lefttree != NULL ||
-		plan->righttree != NULL ||
-		plan->initPlan != NULL ||
-		plan->qual != NULL ||
-		((Result *) plan)->resconstantqual != NULL)
-		return;
-
-	/*
-	 * 4. The plan must have a single attribute as result
-	 */
-	if (list_length(plan->targetlist) != 1)
-		return;
-
-	tle = (TargetEntry *) linitial(plan->targetlist);
-
-	/*
-	 * 5. Check that all the nodes in the expression are non-scary.
-	 */
-	if (!exec_simple_check_node((Node *) tle->expr))
-		return;
-
-	/*
-	 * Yes - this is a simple expression.  Mark it as such, and initialize
-	 * state to "not valid in current transaction".
-	 */
-	expr->expr_simple_expr = tle->expr;
+	expr->expr_simple_expr = tle_expr;
+	expr->expr_simple_generation = cplan->generation;
 	expr->expr_simple_state = NULL;
 	expr->expr_simple_in_use = false;
 	expr->expr_simple_lxid = InvalidLocalTransactionId;
 	/* Also stash away the expression result type */
-	expr->expr_simple_type = exprType((Node *) tle->expr);
-	expr->expr_simple_typmod = exprTypmod((Node *) tle->expr);
+	expr->expr_simple_type = exprType((Node *) tle_expr);
+	expr->expr_simple_typmod = exprTypmod((Node *) tle_expr);
 }
 
 /*

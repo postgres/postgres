@@ -27,9 +27,9 @@
  * offset is the current seek offset within the LO
  * flags contains some flag bits
  *
- * NOTE: in current usage, flag bit IFS_RDLOCK is *always* set, and we don't
- * bother to test for it.  Permission checks are made at first read or write
- * attempt, not during inv_open(), so we have other bits to remember that.
+ * NOTE: as of v11, permission checks are made when the large object is
+ * opened; therefore IFS_RDLOCK/IFS_WRLOCK indicate that read or write mode
+ * has been requested *and* the corresponding permission has been checked.
  *
  * NOTE: before 7.1, we also had to store references to the separate table
  * and index of a specific large object.  Now they all live in pg_largeobject
@@ -47,8 +47,6 @@ typedef struct LargeObjectDesc
 /* bits in flags: */
 #define IFS_RDLOCK		(1 << 0)	/* LO was opened for reading */
 #define IFS_WRLOCK		(1 << 1)	/* LO was opened for writing */
-#define IFS_RD_PERM_OK	(1 << 2)	/* read permission has been verified */
-#define IFS_WR_PERM_OK	(1 << 3)	/* write permission has been verified */
 
 } LargeObjectDesc;
 
@@ -77,6 +75,11 @@ typedef struct LargeObjectDesc
  */
 #define MAX_LARGE_OBJECT_SIZE	((int64) INT_MAX * LOBLKSIZE)
 
+
+/*
+ * GUC: backwards-compatibility flag to suppress LO permission checks
+ */
+extern bool lo_compat_privileges;
 
 /*
  * Function definitions...

@@ -42,6 +42,12 @@ extern void index_check_primary_key(Relation heapRel,
 						IndexInfo *indexInfo,
 						bool is_alter_table);
 
+#define	INDEX_CREATE_IS_PRIMARY				(1 << 0)
+#define	INDEX_CREATE_ADD_CONSTRAINT			(1 << 1)
+#define	INDEX_CREATE_SKIP_BUILD				(1 << 2)
+#define	INDEX_CREATE_CONCURRENT				(1 << 3)
+#define	INDEX_CREATE_IF_NOT_EXISTS			(1 << 4)
+
 extern Oid index_create(Relation heapRelation,
 			 const char *indexRelationName,
 			 Oid indexRelationId,
@@ -54,26 +60,23 @@ extern Oid index_create(Relation heapRelation,
 			 Oid *classObjectId,
 			 int16 *coloptions,
 			 Datum reloptions,
-			 bool isprimary,
-			 bool isconstraint,
-			 bool deferrable,
-			 bool initdeferred,
+			 bits16 flags,
+			 bits16 constr_flags,
 			 bool allow_system_table_mods,
-			 bool skip_build,
-			 bool concurrent,
-			 bool is_internal,
-			 bool if_not_exists);
+			 bool is_internal);
+
+#define	INDEX_CONSTR_CREATE_MARK_AS_PRIMARY	(1 << 0)
+#define	INDEX_CONSTR_CREATE_DEFERRABLE		(1 << 1)
+#define	INDEX_CONSTR_CREATE_INIT_DEFERRED	(1 << 2)
+#define	INDEX_CONSTR_CREATE_UPDATE_INDEX	(1 << 3)
+#define	INDEX_CONSTR_CREATE_REMOVE_OLD_DEPS	(1 << 4)
 
 extern ObjectAddress index_constraint_create(Relation heapRelation,
 						Oid indexRelationId,
 						IndexInfo *indexInfo,
 						const char *constraintName,
 						char constraintType,
-						bool deferrable,
-						bool initdeferred,
-						bool mark_as_primary,
-						bool update_pgindex,
-						bool remove_old_dependencies,
+						bits16 constr_flags,
 						bool allow_system_table_mods,
 						bool is_internal);
 

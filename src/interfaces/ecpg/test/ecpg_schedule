@@ -28,6 +28,7 @@ test: preproc/type
 test: preproc/variable
 test: preproc/outofscope
 test: preproc/whenever
+test: preproc/whenever_do_continue
 test: sql/array
 test: sql/binary
 test: sql/code100

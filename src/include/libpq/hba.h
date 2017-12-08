@@ -80,6 +80,7 @@ typedef struct HbaLine
 	char	   *ldapbinddn;
 	char	   *ldapbindpasswd;
 	char	   *ldapsearchattribute;
+	char	   *ldapsearchfilter;
 	char	   *ldapbasedn;
 	int			ldapscope;
 	char	   *ldapprefix;

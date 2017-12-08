@@ -1454,13 +1454,19 @@ action : CONTINUE_P
 			$<action>$.command = NULL;
 			$<action>$.str = mm_strdup("break");
 		}
-		| SQL_CALL name '(' c_args ')'
+		| DO CONTINUE_P
+		{
+			$<action>$.code = W_CONTINUE;
+			$<action>$.command = NULL;
+			$<action>$.str = mm_strdup("continue");
+		}
+		| CALL name '(' c_args ')'
 		{
 			$<action>$.code = W_DO;
 			$<action>$.command = cat_str(4, $2, mm_strdup("("), $4, mm_strdup(")"));
 			$<action>$.str = cat2_str(mm_strdup("call"), mm_strdup($<action>$.command));
 		}
-		| SQL_CALL name
+		| CALL name
 		{
 			$<action>$.code = W_DO;
 			$<action>$.command = cat2_str($2, mm_strdup("()"));
@@ -1476,7 +1482,6 @@ ECPGKeywords: ECPGKeywords_vanames	{ $$ = $1; }
 		;
 
 ECPGKeywords_vanames:  SQL_BREAK		{ $$ = mm_strdup("break"); }
-		| SQL_CALL						{ $$ = mm_strdup("call"); }
 		| SQL_CARDINALITY				{ $$ = mm_strdup("cardinality"); }
 		| SQL_COUNT						{ $$ = mm_strdup("count"); }
 		| SQL_DATETIME_INTERVAL_CODE	{ $$ = mm_strdup("datetime_interval_code"); }
@@ -1877,14 +1882,17 @@ Iresult:        Iconst				{ $$ = $1; }
                 ;
 
 execute_rest: /* EMPTY */	{ $$ = EMPTY; }
-	| ecpg_using ecpg_into  { $$ = EMPTY; }
+	| ecpg_using opt_ecpg_into  { $$ = EMPTY; }
 	| ecpg_into ecpg_using  { $$ = EMPTY; }
-	| ecpg_using			{ $$ = EMPTY; }
 	| ecpg_into				{ $$ = EMPTY; }
 	;
 
 ecpg_into: INTO into_list	{ $$ = EMPTY; }
 	| into_descriptor		{ $$ = $1; }
+	;
+
+opt_ecpg_into:	/* EMPTY */	{ $$ = EMPTY; }
+	| ecpg_into		{ $$ = $1; }
 	;
 
 ecpg_fetch_into: ecpg_into	{ $$ = $1; }

@@ -163,7 +163,7 @@ StartupDecodingContext(List *output_plugin_options,
 
 	ctx->slot = slot;
 
-	ctx->reader = XLogReaderAllocate(read_page, ctx);
+	ctx->reader = XLogReaderAllocate(wal_segment_size, read_page, ctx);
 	if (!ctx->reader)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -288,7 +288,7 @@ CreateInitDecodingContext(char *plugin,
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
-	xmin_horizon = GetOldestSafeDecodingTransactionId(need_full_snapshot);
+	xmin_horizon = GetOldestSafeDecodingTransactionId(!need_full_snapshot);
 
 	slot->effective_catalog_xmin = xmin_horizon;
 	slot->data.catalog_xmin = xmin_horizon;

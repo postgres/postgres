@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_aggregate.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPAGGREGATE">
+<refentry id="sql-dropaggregate">
  <indexterm zone="sql-dropaggregate">
   <primary>DROP AGGREGATE</primary>
  </indexterm>
@@ -70,8 +70,8 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggr
 
     <listitem>
      <para>
-      The mode of an argument: <literal>IN</> or <literal>VARIADIC</>.
-      If omitted, the default is <literal>IN</>.
+      The mode of an argument: <literal>IN</literal> or <literal>VARIADIC</literal>.
+      If omitted, the default is <literal>IN</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -94,10 +94,10 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggr
     <listitem>
      <para>
       An input data type on which the aggregate function operates.
-      To reference a zero-argument aggregate function, write <literal>*</>
+      To reference a zero-argument aggregate function, write <literal>*</literal>
       in place of the list of argument specifications.
       To reference an ordered-set aggregate function, write
-      <literal>ORDER BY</> between the direct and aggregated argument
+      <literal>ORDER BY</literal> between the direct and aggregated argument
       specifications.
      </para>
     </listitem>
@@ -110,7 +110,7 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggr
       Automatically drop objects that depend on the aggregate function
       (such as views using it),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -132,7 +132,7 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggr
 
    <para>
     Alternative syntaxes for referencing ordered-set aggregates
-    are described under <xref linkend="sql-alteraggregate">.
+    are described under <xref linkend="sql-alteraggregate"/>.
    </para>
  </refsect1>
 
@@ -148,7 +148,7 @@ DROP AGGREGATE myavg(integer);
   </para>
 
   <para>
-   To remove the hypothetical-set aggregate function <literal>myrank</>,
+   To remove the hypothetical-set aggregate function <literal>myrank</literal>,
    which takes an arbitrary list of ordering columns and a matching list
    of direct arguments:
 <programlisting>
@@ -176,8 +176,8 @@ DROP AGGREGATE myavg(integer), myavg(bigint);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteraggregate"></member>
-   <member><xref linkend="sql-createaggregate"></member>
+   <member><xref linkend="sql-alteraggregate"/></member>
+   <member><xref linkend="sql-createaggregate"/></member>
   </simplelist>
  </refsect1>
 

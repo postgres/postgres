@@ -17,7 +17,6 @@
 #include "nodes/execnodes.h"
 
 extern WindowAggState *ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags);
-extern TupleTableSlot *ExecWindowAgg(WindowAggState *node);
 extern void ExecEndWindowAgg(WindowAggState *node);
 extern void ExecReScanWindowAgg(WindowAggState *node);
 

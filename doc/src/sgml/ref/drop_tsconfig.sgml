@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_tsconfig.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTSCONFIG">
+<refentry id="sql-droptsconfig">
  <indexterm zone="sql-droptsconfig">
   <primary>DROP TEXT SEARCH CONFIGURATION</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -66,7 +66,7 @@ DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] <replaceable class="PARAMETER">name
      <para>
       Automatically drop objects that depend on the text search configuration,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -94,8 +94,8 @@ DROP TEXT SEARCH CONFIGURATION my_english;
 </programlisting>
 
    This command will not succeed if there are any existing indexes
-   that reference the configuration in <function>to_tsvector</> calls.
-   Add <literal>CASCADE</> to
+   that reference the configuration in <function>to_tsvector</function> calls.
+   Add <literal>CASCADE</literal> to
    drop such indexes along with the text search configuration.
   </para>
  </refsect1>
@@ -113,8 +113,8 @@ DROP TEXT SEARCH CONFIGURATION my_english;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsconfig"></member>
-   <member><xref linkend="sql-createtsconfig"></member>
+   <member><xref linkend="sql-altertsconfig"/></member>
+   <member><xref linkend="sql-createtsconfig"/></member>
   </simplelist>
  </refsect1>
 

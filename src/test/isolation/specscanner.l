@@ -17,6 +17,8 @@ static int litbufpos = 0;
 
 static void addlitchar(char c);
 
+/* LCOV_EXCL_START */
+
 %}
 
 %option 8bit
@@ -39,11 +41,11 @@ comment			("#"{non_newline}*)
 
 %%
 
-permutation		{ return(PERMUTATION); }
-session			{ return(SESSION); }
-setup			{ return(SETUP); }
-step			{ return(STEP); }
-teardown		{ return(TEARDOWN); }
+permutation		{ return PERMUTATION; }
+session			{ return SESSION; }
+setup			{ return SETUP; }
+step			{ return STEP; }
+teardown		{ return TEARDOWN; }
 
 [\n]			{ yyline++; }
 {comment}		{ /* ignore */ }
@@ -92,6 +94,8 @@ teardown		{ return(TEARDOWN); }
 					exit(1);
 				}
 %%
+
+/* LCOV_EXCL_STOP */
 
 static void
 addlitchar(char c)

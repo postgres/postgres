@@ -68,7 +68,7 @@
  * A TupleTableSlot can also be "empty", holding no valid data.  This is
  * the only valid state for a freshly-created slot that has not yet had a
  * tuple descriptor assigned to it.  In this state, tts_isempty must be
- * TRUE, tts_shouldFree FALSE, tts_tuple NULL, tts_buffer InvalidBuffer,
+ * true, tts_shouldFree false, tts_tuple NULL, tts_buffer InvalidBuffer,
  * and tts_nvalid zero.
  *
  * The tupleDescriptor is simply referenced, not copied, by the TupleTableSlot

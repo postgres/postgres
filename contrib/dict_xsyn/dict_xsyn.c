@@ -70,7 +70,7 @@ compare_syn(const void *a, const void *b)
 }
 
 static void
-read_dictionary(DictSyn *d, char *filename)
+read_dictionary(DictSyn *d, const char *filename)
 {
 	char	   *real_filename = get_tsearch_config_filename(filename, "rules");
 	tsearch_readline_state trst;

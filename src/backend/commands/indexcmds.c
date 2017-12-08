@@ -67,7 +67,7 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 				  List *attList,
 				  List *exclusionOpNames,
 				  Oid relId,
-				  char *accessMethodName, Oid accessMethodId,
+				  const char *accessMethodName, Oid accessMethodId,
 				  bool amcanorder,
 				  bool isconstraint);
 static char *ChooseIndexName(const char *tabname, Oid namespaceId,
@@ -115,7 +115,7 @@ static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
  */
 bool
 CheckIndexCompatible(Oid oldId,
-					 char *accessMethodName,
+					 const char *accessMethodName,
 					 List *attributeList,
 					 List *exclusionOpNames)
 {
@@ -242,7 +242,7 @@ CheckIndexCompatible(Oid oldId,
 	for (i = 0; i < old_natts; i++)
 	{
 		if (IsPolymorphicType(get_opclass_input_type(classObjectId[i])) &&
-			irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
+			TupleDescAttr(irel->rd_att, i)->atttypid != typeObjectId[i])
 		{
 			ret = false;
 			break;
@@ -270,7 +270,7 @@ CheckIndexCompatible(Oid oldId,
 
 				op_input_types(indexInfo->ii_ExclusionOps[i], &left, &right);
 				if ((IsPolymorphicType(left) || IsPolymorphicType(right)) &&
-					irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
+					TupleDescAttr(irel->rd_att, i)->atttypid != typeObjectId[i])
 				{
 					ret = false;
 					break;
@@ -333,6 +333,8 @@ DefineIndex(Oid relationId,
 	Datum		reloptions;
 	int16	   *coloptions;
 	IndexInfo  *indexInfo;
+	bits16		flags;
+	bits16		constr_flags;
 	int			numberOfAttributes;
 	TransactionId limitXmin;
 	VirtualTransactionId *old_snapshots;
@@ -375,25 +377,24 @@ DefineIndex(Oid relationId,
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
 
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_MATVIEW)
+	/* Ensure that it makes sense to index this kind of relation */
+	switch (rel->rd_rel->relkind)
 	{
-		if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-
-			/*
-			 * Custom error message for FOREIGN TABLE since the term is close
-			 * to a regular table and can confuse the user.
-			 */
+		case RELKIND_RELATION:
+		case RELKIND_MATVIEW:
+			/* OK */
+			break;
+		case RELKIND_FOREIGN_TABLE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot create index on foreign table \"%s\"",
 							RelationGetRelationName(rel))));
-		else if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		case RELKIND_PARTITIONED_TABLE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot create index on partitioned table \"%s\"",
 							RelationGetRelationName(rel))));
-		else
+		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("\"%s\" is not a table or materialized view",
@@ -662,20 +663,35 @@ DefineIndex(Oid relationId,
 	Assert(!OidIsValid(stmt->oldNode) || (skip_build && !stmt->concurrent));
 
 	/*
-	 * Make the catalog entries for the index, including constraints. Then, if
-	 * not skip_build || concurrent, actually build the index.
+	 * Make the catalog entries for the index, including constraints. This
+	 * step also actually builds the index, except if caller requested not to
+	 * or in concurrent mode, in which case it'll be done later.
 	 */
+	flags = constr_flags = 0;
+	if (stmt->isconstraint)
+		flags |= INDEX_CREATE_ADD_CONSTRAINT;
+	if (skip_build || stmt->concurrent)
+		flags |= INDEX_CREATE_SKIP_BUILD;
+	if (stmt->if_not_exists)
+		flags |= INDEX_CREATE_IF_NOT_EXISTS;
+	if (stmt->concurrent)
+		flags |= INDEX_CREATE_CONCURRENT;
+	if (stmt->primary)
+		flags |= INDEX_CREATE_IS_PRIMARY;
+
+	if (stmt->deferrable)
+		constr_flags |= INDEX_CONSTR_CREATE_DEFERRABLE;
+	if (stmt->initdeferred)
+		constr_flags |= INDEX_CONSTR_CREATE_INIT_DEFERRED;
+
 	indexRelationId =
 		index_create(rel, indexRelationName, indexRelationId, stmt->oldNode,
 					 indexInfo, indexColNames,
 					 accessMethodId, tablespaceId,
 					 collationObjectId, classObjectId,
-					 coloptions, reloptions, stmt->primary,
-					 stmt->isconstraint, stmt->deferrable, stmt->initdeferred,
-					 allowSystemTableMods,
-					 skip_build || stmt->concurrent,
-					 stmt->concurrent, !check_rights,
-					 stmt->if_not_exists);
+					 coloptions, reloptions,
+					 flags, constr_flags,
+					 allowSystemTableMods, !check_rights);
 
 	ObjectAddressSet(address, RelationRelationId, indexRelationId);
 
@@ -1012,7 +1028,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				  List *attList,	/* list of IndexElem's */
 				  List *exclusionOpNames,
 				  Oid relId,
-				  char *accessMethodName,
+				  const char *accessMethodName,
 				  Oid accessMethodId,
 				  bool amcanorder,
 				  bool isconstraint)
@@ -1278,7 +1294,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
  */
 Oid
 ResolveOpClass(List *opclass, Oid attrType,
-			   char *accessMethodName, Oid accessMethodId)
+			   const char *accessMethodName, Oid accessMethodId)
 {
 	char	   *schemaname;
 	char	   *opcname;

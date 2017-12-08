@@ -51,7 +51,7 @@ executeFileMap(void)
  * handy for text files.
  */
 char *
-fetchFile(char *filename, size_t *filesize)
+fetchFile(const char *filename, size_t *filesize)
 {
 	if (datadir_source)
 		return slurpFile(datadir_source, filename, filesize);

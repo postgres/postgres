@@ -33,7 +33,7 @@ struct ECPGtype
 };
 
 /* Everything is malloced. */
-void		ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member **);
+void		ECPGmake_struct_member(const char *, struct ECPGtype *, struct ECPGstruct_member **);
 struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, char *, int);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, char *);
 struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *, enum ECPGttype, char *, char *);

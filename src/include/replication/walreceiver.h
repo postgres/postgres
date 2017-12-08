@@ -117,14 +117,6 @@ typedef struct
 	/* set true once conninfo is ready to display (obfuscated pwds etc) */
 	bool		ready_to_display;
 
-	slock_t		mutex;			/* locks shared variables shown above */
-
-	/*
-	 * force walreceiver reply?  This doesn't need to be locked; memory
-	 * barriers for ordering are sufficient.
-	 */
-	bool		force_reply;
-
 	/*
 	 * Latch used by startup process to wake up walreceiver after telling it
 	 * where to start streaming (after setting receiveStart and
@@ -133,6 +125,15 @@ typedef struct
 	 * normally mapped to procLatch when walreceiver is running.
 	 */
 	Latch	   *latch;
+
+	slock_t		mutex;			/* locks shared variables shown above */
+
+	/*
+	 * force walreceiver reply?  This doesn't need to be locked; memory
+	 * barriers for ordering are sufficient.  But we do need atomic fetch and
+	 * store semantics, so use sig_atomic_t.
+	 */
+	sig_atomic_t force_reply;	/* used as a bool */
 } WalRcvData;
 
 extern WalRcvData *WalRcv;

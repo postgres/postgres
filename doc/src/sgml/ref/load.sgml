@@ -2,7 +2,7 @@
 doc/src/sgml/ref/load.sgml
 -->
 
-<refentry id="SQL-LOAD">
+<refentry id="sql-load">
  <indexterm zone="sql-load">
   <primary>LOAD</primary>
  </indexterm>
@@ -20,7 +20,7 @@ doc/src/sgml/ref/load.sgml
 
  <refsynopsisdiv>
 <synopsis>
-LOAD '<replaceable class="PARAMETER">filename</replaceable>'
+LOAD '<replaceable class="parameter">filename</replaceable>'
 </synopsis>
  </refsynopsisdiv>
 
@@ -28,34 +28,34 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
   <title>Description</title>
 
   <para>
-   This command loads a shared library file into the <productname>PostgreSQL</>
+   This command loads a shared library file into the <productname>PostgreSQL</productname>
    server's address space.  If the file has been loaded already,
    the command does nothing.  Shared library files that contain C functions
    are automatically loaded whenever one of their functions is called.
-   Therefore, an explicit <command>LOAD</> is usually only needed to
-   load a library that modifies the server's behavior through <quote>hooks</>
+   Therefore, an explicit <command>LOAD</command> is usually only needed to
+   load a library that modifies the server's behavior through <quote>hooks</quote>
    rather than providing a set of functions.
   </para>
 
   <para>
    The library file name is typically given as just a bare file name,
    which is sought in the server's library search path (set
-   by <xref linkend="guc-dynamic-library-path">).  Alternatively it can be
+   by <xref linkend="guc-dynamic-library-path"/>).  Alternatively it can be
    given as a full path name.  In either case the platform's standard shared
    library file name extension may be omitted.
-   See <xref linkend="xfunc-c-dynload"> for more information on this topic.
+   See <xref linkend="xfunc-c-dynload"/> for more information on this topic.
   </para>
 
   <indexterm>
-   <primary><filename>$libdir/plugins</></primary>
+   <primary><filename>$libdir/plugins</filename></primary>
   </indexterm>
 
   <para>
-   Non-superusers can only apply <command>LOAD</> to library files
-   located in <filename>$libdir/plugins/</> &mdash; the specified
-   <replaceable class="PARAMETER">filename</replaceable> must begin
+   Non-superusers can only apply <command>LOAD</command> to library files
+   located in <filename>$libdir/plugins/</filename> &mdash; the specified
+   <replaceable class="parameter">filename</replaceable> must begin
    with exactly that string.  (It is the database administrator's
-   responsibility to ensure that only <quote>safe</> libraries
+   responsibility to ensure that only <quote>safe</quote> libraries
    are installed there.)
   </para>
  </refsect1>
@@ -74,7 +74,7 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
   <title>See Also</title>
 
   <para>
-   <xref linkend="sql-createfunction">
+   <xref linkend="sql-createfunction"/>
   </para>
  </refsect1>
 </refentry>

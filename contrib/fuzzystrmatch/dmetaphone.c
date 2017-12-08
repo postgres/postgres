@@ -232,7 +232,7 @@ metastring;
  */
 
 static metastring *
-NewMetaString(char *init_str)
+NewMetaString(const char *init_str)
 {
 	metastring *s;
 	char		empty_string[] = "";
@@ -375,7 +375,7 @@ StringAt(metastring *s, int start, int length,...)
 
 
 static void
-MetaphAdd(metastring *s, char *new_str)
+MetaphAdd(metastring *s, const char *new_str)
 {
 	int			add_length;
 

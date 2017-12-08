@@ -12,7 +12,7 @@ pgtypes_alloc(long size)
 
 	if (!new)
 		errno = ENOMEM;
-	return (new);
+	return new;
 }
 
 char *
@@ -22,7 +22,7 @@ pgtypes_strdup(const char *str)
 
 	if (!new)
 		errno = ENOMEM;
-	return (new);
+	return new;
 }
 
 int

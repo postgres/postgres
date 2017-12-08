@@ -997,7 +997,8 @@ ExecTypeSetColNames(TupleDesc typeInfo, List *namesList)
 		/* Guard against too-long names list */
 		if (colno >= typeInfo->natts)
 			break;
-		attr = typeInfo->attrs[colno++];
+		attr = TupleDescAttr(typeInfo, colno);
+		colno++;
 
 		/* Ignore empty aliases (these must be for dropped columns) */
 		if (cname[0] == '\0')
@@ -1090,13 +1091,15 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 
 	for (i = 0; i < natts; i++)
 	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
 		/* Ignore dropped attributes */
-		if (!tupdesc->attrs[i]->attisdropped)
+		if (!att->attisdropped)
 		{
-			atttypeid = tupdesc->attrs[i]->atttypid;
+			atttypeid = att->atttypid;
 			getTypeInputInfo(atttypeid, &attinfuncid, &attioparams[i]);
 			fmgr_info(attinfuncid, &attinfuncinfo[i]);
-			atttypmods[i] = tupdesc->attrs[i]->atttypmod;
+			atttypmods[i] = att->atttypmod;
 		}
 	}
 	attinmeta->attinfuncs = attinfuncinfo;
@@ -1127,7 +1130,7 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	/* Call the "in" function for each non-dropped attribute */
 	for (i = 0; i < natts; i++)
 	{
-		if (!tupdesc->attrs[i]->attisdropped)
+		if (!TupleDescAttr(tupdesc, i)->attisdropped)
 		{
 			/* Non-dropped attributes */
 			dvalues[i] = InputFunctionCall(&attinmeta->attinfuncs[i],
@@ -1238,7 +1241,7 @@ begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
 	tstate->slot = MakeSingleTupleTableSlot(tupdesc);
 	tstate->dest = dest;
 
-	(*tstate->dest->rStartup) (tstate->dest, (int) CMD_SELECT, tupdesc);
+	tstate->dest->rStartup(tstate->dest, (int) CMD_SELECT, tupdesc);
 
 	return tstate;
 }
@@ -1263,7 +1266,7 @@ do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull)
 	ExecStoreVirtualTuple(slot);
 
 	/* send the tuple to the receiver */
-	(void) (*tstate->dest->receiveSlot) (slot, tstate->dest);
+	(void) tstate->dest->receiveSlot(slot, tstate->dest);
 
 	/* clean up */
 	ExecClearTuple(slot);
@@ -1307,7 +1310,7 @@ do_text_output_multiline(TupOutputState *tstate, const char *txt)
 void
 end_tup_output(TupOutputState *tstate)
 {
-	(*tstate->dest->rShutdown) (tstate->dest);
+	tstate->dest->rShutdown(tstate->dest);
 	/* note that destroying the dest is not ours to do */
 	ExecDropSingleTupleTableSlot(tstate->slot);
 	pfree(tstate);

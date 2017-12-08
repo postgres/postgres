@@ -830,5 +830,5 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 253 "cursor.pgc"
 
 
-	return (0);
+	return 0;
 }

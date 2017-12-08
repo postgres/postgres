@@ -10,7 +10,33 @@ extern PyObject *PLy_exc_error;
 extern PyObject *PLy_exc_fatal;
 extern PyObject *PLy_exc_spi_error;
 
-extern void PLy_elog(int elevel, const char *fmt,...) pg_attribute_printf(2, 3);
+/*
+ * PLy_elog()
+ *
+ * See comments at elog() about the compiler hinting.
+ */
+#ifdef HAVE__VA_ARGS
+#ifdef HAVE__BUILTIN_CONSTANT_P
+#define PLy_elog(elevel, ...) \
+	do { \
+		PLy_elog_impl(elevel, __VA_ARGS__); \
+		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
+			pg_unreachable(); \
+	} while(0)
+#else							/* !HAVE__BUILTIN_CONSTANT_P */
+#define PLy_elog(elevel, ...)  \
+	do { \
+		const int elevel_ = (elevel); \
+		PLy_elog_impl(elevel_, __VA_ARGS__); \
+		if (elevel_ >= ERROR) \
+			pg_unreachable(); \
+	} while(0)
+#endif							/* HAVE__BUILTIN_CONSTANT_P */
+#else							/* !HAVE__VA_ARGS */
+#define PLy_elog PLy_elog_impl
+#endif							/* HAVE__VA_ARGS */
+
+extern void PLy_elog_impl(int elevel, const char *fmt,...) pg_attribute_printf(2, 3);
 
 extern void PLy_exception_set(PyObject *exc, const char *fmt,...) pg_attribute_printf(2, 3);
 

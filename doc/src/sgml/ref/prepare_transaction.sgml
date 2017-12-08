@@ -3,7 +3,7 @@ doc/src/sgml/ref/prepare_transaction.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-PREPARE-TRANSACTION">
+<refentry id="sql-prepare-transaction">
  <indexterm zone="sql-prepare-transaction">
   <primary>PREPARE TRANSACTION</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
+PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -39,15 +39,15 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <para>
    Once prepared, a transaction can later be committed or rolled back
-   with <xref linkend="sql-commit-prepared">
-   or <xref linkend="sql-rollback-prepared">,
+   with <xref linkend="sql-commit-prepared"/>
+   or <xref linkend="sql-rollback-prepared"/>,
    respectively.  Those commands can be issued from any session, not
    only the one that executed the original transaction.
   </para>
 
   <para>
    From the point of view of the issuing session, <command>PREPARE
-   TRANSACTION</command> is not unlike a <command>ROLLBACK</> command:
+   TRANSACTION</command> is not unlike a <command>ROLLBACK</command> command:
    after executing it, there is no active current transaction, and the
    effects of the prepared transaction are no longer visible.  (The effects
    will become visible again if the transaction is committed.)
@@ -55,7 +55,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <para>
    If the <command>PREPARE TRANSACTION</command> command fails for any
-   reason, it becomes a <command>ROLLBACK</>: the current transaction
+   reason, it becomes a <command>ROLLBACK</command>: the current transaction
    is canceled.
   </para>
  </refsect1>
@@ -65,11 +65,11 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">transaction_id</replaceable></term>
+    <term><replaceable class="parameter">transaction_id</replaceable></term>
     <listitem>
      <para>
       An arbitrary identifier that later identifies this transaction for
-      <command>COMMIT PREPARED</> or <command>ROLLBACK PREPARED</>.
+      <command>COMMIT PREPARED</command> or <command>ROLLBACK PREPARED</command>.
       The identifier must be written as a string literal, and must be
       less than 200 bytes long.  It must not be the same as the identifier
       used for any currently prepared transaction.
@@ -83,36 +83,37 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
   <title>Notes</title>
 
   <para>
-   <command>PREPARE TRANSACTION</> is not intended for use in applications
+   <command>PREPARE TRANSACTION</command> is not intended for use in applications
    or interactive sessions. Its purpose is to allow an external
    transaction manager to perform atomic global transactions across multiple
    databases or other transactional resources. Unless you're writing a
    transaction manager, you probably shouldn't be using <command>PREPARE
-   TRANSACTION</>.
+   TRANSACTION</command>.
   </para>
 
   <para>
    This command must be used inside a transaction block. Use <xref
-   linkend="sql-begin"> to start one.
+   linkend="sql-begin"/> to start one.
   </para>
 
   <para>
-   It is not currently allowed to <command>PREPARE</> a transaction that
+   It is not currently allowed to <command>PREPARE</command> a transaction that
    has executed any operations involving temporary tables,
-   created any cursors <literal>WITH HOLD</>, or executed
-   <command>LISTEN</> or <command>UNLISTEN</>.
+   created any cursors <literal>WITH HOLD</literal>, or executed
+   <command>LISTEN</command>, <command>UNLISTEN</command>, or
+   <command>NOTIFY</command>.
    Those features are too tightly
    tied to the current session to be useful in a transaction to be prepared.
   </para>
 
   <para>
-   If the transaction modified any run-time parameters with <command>SET</>
-   (without the <literal>LOCAL</> option),
-   those effects persist after <command>PREPARE TRANSACTION</>, and will not
+   If the transaction modified any run-time parameters with <command>SET</command>
+   (without the <literal>LOCAL</literal> option),
+   those effects persist after <command>PREPARE TRANSACTION</command>, and will not
    be affected by any later <command>COMMIT PREPARED</command> or
    <command>ROLLBACK PREPARED</command>.  Thus, in this one respect
-   <command>PREPARE TRANSACTION</> acts more like <command>COMMIT</> than
-   <command>ROLLBACK</>.
+   <command>PREPARE TRANSACTION</command> acts more like <command>COMMIT</command> than
+   <command>ROLLBACK</command>.
   </para>
 
   <para>
@@ -124,10 +125,10 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
   <caution>
    <para>
     It is unwise to leave transactions in the prepared state for a long time.
-    This will interfere with the ability of <command>VACUUM</> to reclaim
+    This will interfere with the ability of <command>VACUUM</command> to reclaim
     storage, and in extreme cases could cause the database to shut down
     to prevent transaction ID wraparound (see <xref
-    linkend="vacuum-for-wraparound">).  Keep in mind also that the transaction
+    linkend="vacuum-for-wraparound"/>).  Keep in mind also that the transaction
     continues to hold whatever locks it held.  The intended usage of the
     feature is that a prepared transaction will normally be committed or
     rolled back as soon as an external transaction manager has verified that
@@ -138,7 +139,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
     If you have not set up an external transaction manager to track prepared
     transactions and ensure they get closed out promptly, it is best to keep
     the prepared-transaction feature disabled by setting
-    <xref linkend="guc-max-prepared-transactions"> to zero.  This will
+    <xref linkend="guc-max-prepared-transactions"/> to zero.  This will
     prevent accidental creation of prepared transactions that might then
     be forgotten and eventually cause problems.
    </para>
@@ -149,7 +150,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
   <title id="sql-prepare-transaction-examples-title">Examples</title>
   <para>
    Prepare the current transaction for two-phase commit, using
-   <literal>foobar</> as the transaction identifier:
+   <literal>foobar</literal> as the transaction identifier:
 
 <programlisting>
 PREPARE TRANSACTION 'foobar';
@@ -172,8 +173,8 @@ PREPARE TRANSACTION 'foobar';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-commit-prepared"></member>
-   <member><xref linkend="sql-rollback-prepared"></member>
+   <member><xref linkend="sql-commit-prepared"/></member>
+   <member><xref linkend="sql-rollback-prepared"/></member>
   </simplelist>
  </refsect1>
 

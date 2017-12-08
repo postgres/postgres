@@ -122,7 +122,7 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 	}
 
 	/* Provider gets control here, may throw ERROR to veto new label. */
-	(*provider->hook) (&address, stmt->label);
+	provider->hook(&address, stmt->label);
 
 	/* Apply new label. */
 	SetSecurityLabel(&address, provider->provider_name, stmt->label);

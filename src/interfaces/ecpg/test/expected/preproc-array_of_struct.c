@@ -284,5 +284,5 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 92 "array_of_struct.pgc"
 
 
-    return( 0 );
+    return 0;
 }

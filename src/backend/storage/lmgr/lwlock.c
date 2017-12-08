@@ -111,7 +111,7 @@ extern slock_t *ShmemLock;
  * This is indexed by tranche ID and stores the names of all tranches known
  * to the current backend.
  */
-static char **LWLockTrancheArray = NULL;
+static const char **LWLockTrancheArray = NULL;
 static int	LWLockTranchesAllocated = 0;
 
 #define T_NAME(lock) \
@@ -494,8 +494,8 @@ RegisterLWLockTranches(void)
 
 	if (LWLockTrancheArray == NULL)
 	{
-		LWLockTranchesAllocated = 64;
-		LWLockTrancheArray = (char **)
+		LWLockTranchesAllocated = 128;
+		LWLockTrancheArray = (const char **)
 			MemoryContextAllocZero(TopMemoryContext,
 								   LWLockTranchesAllocated * sizeof(char *));
 		Assert(LWLockTranchesAllocated >= LWTRANCHE_FIRST_USER_DEFINED);
@@ -510,7 +510,14 @@ RegisterLWLockTranches(void)
 						  "predicate_lock_manager");
 	LWLockRegisterTranche(LWTRANCHE_PARALLEL_QUERY_DSA,
 						  "parallel_query_dsa");
+	LWLockRegisterTranche(LWTRANCHE_SESSION_DSA,
+						  "session_dsa");
+	LWLockRegisterTranche(LWTRANCHE_SESSION_RECORD_TABLE,
+						  "session_record_table");
+	LWLockRegisterTranche(LWTRANCHE_SESSION_TYPMOD_TABLE,
+						  "session_typmod_table");
 	LWLockRegisterTranche(LWTRANCHE_TBM, "tbm");
+	LWLockRegisterTranche(LWTRANCHE_PARALLEL_APPEND, "parallel_append");
 
 	/* Register named tranches. */
 	for (i = 0; i < NamedLWLockTrancheRequests; i++)
@@ -589,7 +596,7 @@ LWLockNewTrancheId(void)
  * (TopMemoryContext, static variable, or similar).
  */
 void
-LWLockRegisterTranche(int tranche_id, char *tranche_name)
+LWLockRegisterTranche(int tranche_id, const char *tranche_name)
 {
 	Assert(LWLockTrancheArray != NULL);
 
@@ -601,7 +608,7 @@ LWLockRegisterTranche(int tranche_id, char *tranche_name)
 		while (i <= tranche_id)
 			i *= 2;
 
-		LWLockTrancheArray = (char **)
+		LWLockTrancheArray = (const char **)
 			repalloc(LWLockTrancheArray, i * sizeof(char *));
 		LWLockTranchesAllocated = i;
 		while (j < LWLockTranchesAllocated)
@@ -1275,7 +1282,7 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 /*
  * LWLockConditionalAcquire - acquire a lightweight lock in the specified mode
  *
- * If the lock is not available, return FALSE with no side-effects.
+ * If the lock is not available, return false with no side-effects.
  *
  * If successful, cancel/die interrupts are held off until lock release.
  */

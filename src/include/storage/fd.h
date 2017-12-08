@@ -22,7 +22,7 @@
  * Use them for all file activity...
  *
  *	File fd;
- *	fd = PathNameOpenFile("foo", O_RDONLY, 0600);
+ *	fd = PathNameOpenFile("foo", O_RDONLY);
  *
  *	AllocateFile();
  *	FreeFile();
@@ -46,13 +46,11 @@
  * FileSeek uses the standard UNIX lseek(2) flags.
  */
 
-typedef char *FileName;
-
 typedef int File;
 
 
 /* GUC parameter */
-extern int	max_files_per_process;
+extern PGDLLIMPORT int max_files_per_process;
 
 /*
  * This is private to fd.c, but exported for save/restore_backend_variables()
@@ -65,7 +63,8 @@ extern int	max_safe_fds;
  */
 
 /* Operations on virtual Files --- equivalent to Unix kernel file ops */
-extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
+extern File PathNameOpenFile(const char *fileName, int fileFlags);
+extern File PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 extern File OpenTemporaryFile(bool interXact);
 extern void FileClose(File file);
 extern int	FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info);
@@ -78,7 +77,15 @@ extern void FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_eve
 extern char *FilePathName(File file);
 extern int	FileGetRawDesc(File file);
 extern int	FileGetRawFlags(File file);
-extern int	FileGetRawMode(File file);
+extern mode_t FileGetRawMode(File file);
+
+/* Operations used for sharing named temporary files */
+extern File PathNameCreateTemporaryFile(const char *name, bool error_on_failure);
+extern File PathNameOpenTemporaryFile(const char *name);
+extern bool PathNameDeleteTemporaryFile(const char *name, bool error_on_failure);
+extern void PathNameCreateTemporaryDir(const char *base, const char *name);
+extern void PathNameDeleteTemporaryDir(const char *name);
+extern void TempTablespacePath(char *path, Oid tablespace);
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);
@@ -91,14 +98,18 @@ extern int	ClosePipeStream(FILE *file);
 /* Operations to allow use of the <dirent.h> library routines */
 extern DIR *AllocateDir(const char *dirname);
 extern struct dirent *ReadDir(DIR *dir, const char *dirname);
+extern struct dirent *ReadDirExtended(DIR *dir, const char *dirname,
+				int elevel);
 extern int	FreeDir(DIR *dir);
 
 /* Operations to allow use of a plain kernel FD, with automatic cleanup */
-extern int	OpenTransientFile(FileName fileName, int fileFlags, int fileMode);
+extern int	OpenTransientFile(const char *fileName, int fileFlags);
+extern int	OpenTransientFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 extern int	CloseTransientFile(int fd);
 
 /* If you've really really gotta have a plain kernel FD, use this */
-extern int	BasicOpenFile(FileName fileName, int fileFlags, int fileMode);
+extern int	BasicOpenFile(const char *fileName, int fileFlags);
+extern int	BasicOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 
 /* Miscellaneous support routines */
 extern void InitFileAccess(void);
@@ -106,6 +117,7 @@ extern void set_max_safe_fds(void);
 extern void closeAllVfds(void);
 extern void SetTempTablespaces(Oid *tableSpaces, int numSpaces);
 extern bool TempTablespacesAreSet(void);
+extern int	GetTempTablespaces(Oid *tableSpaces, int numSpaces);
 extern Oid	GetNextTempTableSpace(void);
 extern void AtEOXact_Files(void);
 extern void AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
@@ -123,7 +135,7 @@ extern int	durable_unlink(const char *fname, int loglevel);
 extern int	durable_link_or_rename(const char *oldfile, const char *newfile, int loglevel);
 extern void SyncDataDirectory(void);
 
-/* Filename components for OpenTemporaryFile */
+/* Filename components */
 #define PG_TEMP_FILES_DIR "pgsql_tmp"
 #define PG_TEMP_FILE_PREFIX "pgsql_tmp"
 

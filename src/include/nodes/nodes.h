@@ -183,6 +183,7 @@ typedef enum NodeTag
 	T_CoerceToDomainValue,
 	T_SetToDefault,
 	T_CurrentOfExpr,
+	T_NextValueExpr,
 	T_InferenceElem,
 	T_TargetEntry,
 	T_RangeTblRef,
@@ -190,7 +191,6 @@ typedef enum NodeTag
 	T_FromExpr,
 	T_OnConflictExpr,
 	T_IntoClause,
-	T_NextValueExpr,
 
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
@@ -274,6 +274,7 @@ typedef enum NodeTag
 	T_MemoryContext,
 	T_AllocSetContext,
 	T_SlabContext,
+	T_GenerationContext,
 
 	/*
 	 * TAGS FOR VALUE NODES (value.h)
@@ -413,6 +414,7 @@ typedef enum NodeTag
 	T_DropSubscriptionStmt,
 	T_CreateStatsStmt,
 	T_AlterCollationStmt,
+	T_CallStmt,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
@@ -468,6 +470,7 @@ typedef enum NodeTag
 	T_PartitionBoundSpec,
 	T_PartitionRangeDatum,
 	T_PartitionCmd,
+	T_VacuumRelation,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)

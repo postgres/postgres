@@ -63,7 +63,9 @@
 
 #include "parallel.h"
 #include "pg_backup_utils.h"
+
 #include "fe_utils/string_utils.h"
+#include "port/pg_bswap.h"
 
 /* Mnemonic macros for indexing the fd array returned by pipe(2) */
 #define PIPE_READ							0
@@ -1764,8 +1766,8 @@ pgpipe(int handles[2])
 
 	memset((void *) &serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(0);
-	serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	serv_addr.sin_port = pg_hton16(0);
+	serv_addr.sin_addr.s_addr = pg_hton32(INADDR_LOOPBACK);
 	if (bind(s, (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
 		write_msg(modulename, "pgpipe: could not bind: error code %d\n",

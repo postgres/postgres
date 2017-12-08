@@ -1354,6 +1354,18 @@ select *, row_to_json(upper(t)) as u from
 drop type two_ints cascade;
 NOTICE:  drop cascades to type two_ints_range
 --
+-- Check behavior when subtype lacks a hash function
+--
+create type cashrange as range (subtype = money);
+set enable_sort = off;  -- try to make it pick a hash setop implementation
+select '(2,5)'::cashrange except select '(5,6)'::cashrange;
+   cashrange   
+---------------
+ ($2.00,$5.00)
+(1 row)
+
+reset enable_sort;
+--
 -- OUT/INOUT/TABLE functions
 --
 create function outparam_succeed(i anyrange, out r anyrange, out t text)

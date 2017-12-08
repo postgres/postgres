@@ -377,6 +377,24 @@ with q as (select max(f1) from int4_tbl group by f1 order by f1)
   select q from q;
 
 --
+-- Test case for sublinks pulled up into joinaliasvars lists in an
+-- inherited update/delete query
+--
+
+begin;  --  this shouldn't delete anything, but be safe
+
+delete from road
+where exists (
+  select 1
+  from
+    int4_tbl cross join
+    ( select f1, array(select q1 from int8_tbl) as arr
+      from text_tbl ) ss
+  where road.name = ss.f1 );
+
+rollback;
+
+--
 -- Test case for sublinks pushed down into subselects via join alias expansion
 --
 
@@ -453,6 +471,16 @@ explain (verbose, costs off)
 --
 create temp table nocolumns();
 select exists(select * from nocolumns);
+
+--
+-- Check behavior with a SubPlan in VALUES (bug #14924)
+--
+select val.x
+  from generate_series(1,10) as s(i),
+  lateral (
+    values ((select s.i + 1)), (s.i + 101)
+  ) as val(x)
+where s.i < 10 and (select val.x) < 110;
 
 --
 -- Check sane behavior with nested IN SubLinks
@@ -540,3 +568,44 @@ select * from
   where tattle(x, u);
 
 drop function tattle(x int, y int);
+
+--
+-- Test that LIMIT can be pushed to SORT through a subquery that just projects
+-- columns.  We check for that having happened by looking to see if EXPLAIN
+-- ANALYZE shows that a top-N sort was used.  We must suppress or filter away
+-- all the non-invariant parts of the EXPLAIN ANALYZE output.
+--
+create table sq_limit (pk int primary key, c1 int, c2 int);
+insert into sq_limit values
+    (1, 1, 1),
+    (2, 2, 2),
+    (3, 3, 3),
+    (4, 4, 4),
+    (5, 1, 1),
+    (6, 2, 2),
+    (7, 3, 3),
+    (8, 4, 4);
+
+create function explain_sq_limit() returns setof text language plpgsql as
+$$
+declare ln text;
+begin
+    for ln in
+        explain (analyze, summary off, timing off, costs off)
+        select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3
+    loop
+        ln := regexp_replace(ln, 'Memory: \S*',  'Memory: xxx');
+        -- this case might occur if force_parallel_mode is on:
+        ln := regexp_replace(ln, 'Worker 0:  Sort Method',  'Sort Method');
+        return next ln;
+    end loop;
+end;
+$$;
+
+select * from explain_sq_limit();
+
+select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3;
+
+drop function explain_sq_limit();
+
+drop table sq_limit;

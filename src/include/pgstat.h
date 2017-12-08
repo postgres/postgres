@@ -759,15 +759,15 @@ typedef enum
 	WAIT_EVENT_BGWRITER_HIBERNATE,
 	WAIT_EVENT_BGWRITER_MAIN,
 	WAIT_EVENT_CHECKPOINTER_MAIN,
+	WAIT_EVENT_LOGICAL_LAUNCHER_MAIN,
+	WAIT_EVENT_LOGICAL_APPLY_MAIN,
 	WAIT_EVENT_PGSTAT_MAIN,
 	WAIT_EVENT_RECOVERY_WAL_ALL,
 	WAIT_EVENT_RECOVERY_WAL_STREAM,
 	WAIT_EVENT_SYSLOGGER_MAIN,
 	WAIT_EVENT_WAL_RECEIVER_MAIN,
 	WAIT_EVENT_WAL_SENDER_MAIN,
-	WAIT_EVENT_WAL_WRITER_MAIN,
-	WAIT_EVENT_LOGICAL_LAUNCHER_MAIN,
-	WAIT_EVENT_LOGICAL_APPLY_MAIN
+	WAIT_EVENT_WAL_WRITER_MAIN
 } WaitEventActivity;
 
 /* ----------
@@ -782,9 +782,10 @@ typedef enum
 {
 	WAIT_EVENT_CLIENT_READ = PG_WAIT_CLIENT,
 	WAIT_EVENT_CLIENT_WRITE,
+	WAIT_EVENT_LIBPQWALRECEIVER_CONNECT,
+	WAIT_EVENT_LIBPQWALRECEIVER_RECEIVE,
 	WAIT_EVENT_SSL_OPEN_SERVER,
 	WAIT_EVENT_WAL_RECEIVER_WAIT_START,
-	WAIT_EVENT_LIBPQWALRECEIVER,
 	WAIT_EVENT_WAL_SENDER_WAIT_WAL,
 	WAIT_EVENT_WAL_SENDER_WRITE_DATA
 } WaitEventClient;
@@ -802,6 +803,8 @@ typedef enum
 	WAIT_EVENT_BGWORKER_STARTUP,
 	WAIT_EVENT_BTREE_PAGE,
 	WAIT_EVENT_EXECUTE_GATHER,
+	WAIT_EVENT_LOGICAL_SYNC_DATA,
+	WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE,
 	WAIT_EVENT_MQ_INTERNAL,
 	WAIT_EVENT_MQ_PUT_MESSAGE,
 	WAIT_EVENT_MQ_RECEIVE,
@@ -809,10 +812,11 @@ typedef enum
 	WAIT_EVENT_PARALLEL_FINISH,
 	WAIT_EVENT_PARALLEL_BITMAP_SCAN,
 	WAIT_EVENT_PROCARRAY_GROUP_UPDATE,
+	WAIT_EVENT_CLOG_GROUP_UPDATE,
+	WAIT_EVENT_REPLICATION_ORIGIN_DROP,
+	WAIT_EVENT_REPLICATION_SLOT_DROP,
 	WAIT_EVENT_SAFE_SNAPSHOT,
-	WAIT_EVENT_SYNC_REP,
-	WAIT_EVENT_LOGICAL_SYNC_DATA,
-	WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE
+	WAIT_EVENT_SYNC_REP
 } WaitEventIPC;
 
 /* ----------
@@ -999,8 +1003,14 @@ typedef struct PgBackendStatus
 	/* application name; MUST be null-terminated */
 	char	   *st_appname;
 
-	/* current command string; MUST be null-terminated */
-	char	   *st_activity;
+	/*
+	 * Current command string; MUST be null-terminated. Note that this string
+	 * possibly is truncated in the middle of a multi-byte character. As
+	 * activity strings are stored more frequently than read, that allows to
+	 * move the cost of correct truncation to the display side. Use
+	 * pgstat_clip_activity() to truncate correctly.
+	 */
+	char	   *st_activity_raw;
 
 	/*
 	 * Command progress reporting.  Any command which wishes can advertise
@@ -1188,6 +1198,8 @@ extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
 
 extern void pgstat_initstats(Relation rel);
+
+extern char *pgstat_clip_activity(const char *raw_activity);
 
 /* ----------
  * pgstat_report_wait_start() -

@@ -9,13 +9,13 @@ sub run_test
 {
 	my $test_mode = shift;
 
-	RewindTest::setup_cluster();
+	RewindTest::setup_cluster($test_mode);
 	RewindTest::start_master();
 
 	# Create a database in master.
 	master_psql('CREATE DATABASE inmaster');
 
-	RewindTest::create_standby();
+	RewindTest::create_standby($test_mode);
 
 	# Create another database, the creation is replicated to the standby
 	master_psql('CREATE DATABASE beforepromotion');

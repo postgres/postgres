@@ -8,6 +8,8 @@ PGFILEDESC = "passwordcheck - strengthen user password checks"
 # PG_CPPFLAGS = -DUSE_CRACKLIB '-DCRACKLIB_DICTPATH="/usr/lib/cracklib_dict"'
 # SHLIB_LINK = -lcrack
 
+REGRESS = passwordcheck
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

@@ -46,6 +46,8 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
+#include "access/parallel.h"
+#include "access/session.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_constraint.h"
@@ -55,7 +57,9 @@
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "executor/executor.h"
+#include "lib/dshash.h"
 #include "optimizer/planner.h"
+#include "storage/lwlock.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
@@ -75,21 +79,24 @@ static HTAB *TypeCacheHash = NULL;
 static TypeCacheEntry *firstDomainTypeEntry = NULL;
 
 /* Private flag bits in the TypeCacheEntry.flags field */
-#define TCFLAGS_CHECKED_BTREE_OPCLASS		0x0001
-#define TCFLAGS_CHECKED_HASH_OPCLASS		0x0002
-#define TCFLAGS_CHECKED_EQ_OPR				0x0004
-#define TCFLAGS_CHECKED_LT_OPR				0x0008
-#define TCFLAGS_CHECKED_GT_OPR				0x0010
-#define TCFLAGS_CHECKED_CMP_PROC			0x0020
-#define TCFLAGS_CHECKED_HASH_PROC			0x0040
-#define TCFLAGS_CHECKED_ELEM_PROPERTIES		0x0080
-#define TCFLAGS_HAVE_ELEM_EQUALITY			0x0100
-#define TCFLAGS_HAVE_ELEM_COMPARE			0x0200
-#define TCFLAGS_HAVE_ELEM_HASHING			0x0400
-#define TCFLAGS_CHECKED_FIELD_PROPERTIES	0x0800
-#define TCFLAGS_HAVE_FIELD_EQUALITY			0x1000
-#define TCFLAGS_HAVE_FIELD_COMPARE			0x2000
-#define TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS	0x4000
+#define TCFLAGS_CHECKED_BTREE_OPCLASS		0x000001
+#define TCFLAGS_CHECKED_HASH_OPCLASS		0x000002
+#define TCFLAGS_CHECKED_EQ_OPR				0x000004
+#define TCFLAGS_CHECKED_LT_OPR				0x000008
+#define TCFLAGS_CHECKED_GT_OPR				0x000010
+#define TCFLAGS_CHECKED_CMP_PROC			0x000020
+#define TCFLAGS_CHECKED_HASH_PROC			0x000040
+#define TCFLAGS_CHECKED_HASH_EXTENDED_PROC	0x000080
+#define TCFLAGS_CHECKED_ELEM_PROPERTIES		0x000100
+#define TCFLAGS_HAVE_ELEM_EQUALITY			0x000200
+#define TCFLAGS_HAVE_ELEM_COMPARE			0x000400
+#define TCFLAGS_HAVE_ELEM_HASHING			0x000800
+#define TCFLAGS_HAVE_ELEM_EXTENDED_HASHING	0x001000
+#define TCFLAGS_CHECKED_FIELD_PROPERTIES	0x002000
+#define TCFLAGS_HAVE_FIELD_EQUALITY			0x004000
+#define TCFLAGS_HAVE_FIELD_COMPARE			0x008000
+#define TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS	0x010000
+#define TCFLAGS_DOMAIN_BASE_IS_COMPOSITE	0x020000
 
 /*
  * Data stored about a domain type's constraints.  Note that we do not create
@@ -133,20 +140,124 @@ typedef struct TypeCacheEnumData
  *
  * Stored record types are remembered in a linear array of TupleDescs,
  * which can be indexed quickly with the assigned typmod.  There is also
- * a hash table to speed searches for matching TupleDescs.  The hash key
- * uses just the first N columns' type OIDs, and so we may have multiple
- * entries with the same hash key.
+ * a hash table to speed searches for matching TupleDescs.
  */
-#define REC_HASH_KEYS	16		/* use this many columns in hash key */
 
 typedef struct RecordCacheEntry
 {
-	/* the hash lookup key MUST BE FIRST */
-	Oid			hashkey[REC_HASH_KEYS]; /* column type IDs, zero-filled */
-
-	/* list of TupleDescs for record types with this hashkey */
-	List	   *tupdescs;
+	TupleDesc	tupdesc;
 } RecordCacheEntry;
+
+/*
+ * To deal with non-anonymous record types that are exchanged by backends
+ * involved in a parallel query, we also need a shared verion of the above.
+ */
+struct SharedRecordTypmodRegistry
+{
+	/* A hash table for finding a matching TupleDesc. */
+	dshash_table_handle record_table_handle;
+	/* A hash table for finding a TupleDesc by typmod. */
+	dshash_table_handle typmod_table_handle;
+	/* A source of new record typmod numbers. */
+	pg_atomic_uint32 next_typmod;
+};
+
+/*
+ * When using shared tuple descriptors as hash table keys we need a way to be
+ * able to search for an equal shared TupleDesc using a backend-local
+ * TupleDesc.  So we use this type which can hold either, and hash and compare
+ * functions that know how to handle both.
+ */
+typedef struct SharedRecordTableKey
+{
+	union
+	{
+		TupleDesc	local_tupdesc;
+		dsa_pointer shared_tupdesc;
+	}			u;
+	bool		shared;
+} SharedRecordTableKey;
+
+/*
+ * The shared version of RecordCacheEntry.  This lets us look up a typmod
+ * using a TupleDesc which may be in local or shared memory.
+ */
+typedef struct SharedRecordTableEntry
+{
+	SharedRecordTableKey key;
+} SharedRecordTableEntry;
+
+/*
+ * An entry in SharedRecordTypmodRegistry's typmod table.  This lets us look
+ * up a TupleDesc in shared memory using a typmod.
+ */
+typedef struct SharedTypmodTableEntry
+{
+	uint32		typmod;
+	dsa_pointer shared_tupdesc;
+} SharedTypmodTableEntry;
+
+/*
+ * A comparator function for SharedTupleDescTableKey.
+ */
+static int
+shared_record_table_compare(const void *a, const void *b, size_t size,
+							void *arg)
+{
+	dsa_area   *area = (dsa_area *) arg;
+	SharedRecordTableKey *k1 = (SharedRecordTableKey *) a;
+	SharedRecordTableKey *k2 = (SharedRecordTableKey *) b;
+	TupleDesc	t1;
+	TupleDesc	t2;
+
+	if (k1->shared)
+		t1 = (TupleDesc) dsa_get_address(area, k1->u.shared_tupdesc);
+	else
+		t1 = k1->u.local_tupdesc;
+
+	if (k2->shared)
+		t2 = (TupleDesc) dsa_get_address(area, k2->u.shared_tupdesc);
+	else
+		t2 = k2->u.local_tupdesc;
+
+	return equalTupleDescs(t1, t2) ? 0 : 1;
+}
+
+/*
+ * A hash function for SharedRecordTableKey.
+ */
+static uint32
+shared_record_table_hash(const void *a, size_t size, void *arg)
+{
+	dsa_area   *area = (dsa_area *) arg;
+	SharedRecordTableKey *k = (SharedRecordTableKey *) a;
+	TupleDesc	t;
+
+	if (k->shared)
+		t = (TupleDesc) dsa_get_address(area, k->u.shared_tupdesc);
+	else
+		t = k->u.local_tupdesc;
+
+	return hashTupleDesc(t);
+}
+
+/* Parameters for SharedRecordTypmodRegistry's TupleDesc table. */
+static const dshash_parameters srtr_record_table_params = {
+	sizeof(SharedRecordTableKey),	/* unused */
+	sizeof(SharedRecordTableEntry),
+	shared_record_table_compare,
+	shared_record_table_hash,
+	LWTRANCHE_SESSION_RECORD_TABLE
+};
+
+/* Parameters for SharedRecordTypmodRegistry's typmod hash table. */
+static const dshash_parameters srtr_typmod_table_params = {
+	sizeof(uint32),
+	sizeof(SharedTypmodTableEntry),
+	dshash_memcmp,
+	dshash_memhash,
+	LWTRANCHE_SESSION_TYPMOD_TABLE
+};
 
 static HTAB *RecordCacheHash = NULL;
 
@@ -164,16 +275,25 @@ static List *prep_domain_constraints(List *constraints, MemoryContext execctx);
 static bool array_element_has_equality(TypeCacheEntry *typentry);
 static bool array_element_has_compare(TypeCacheEntry *typentry);
 static bool array_element_has_hashing(TypeCacheEntry *typentry);
+static bool array_element_has_extended_hashing(TypeCacheEntry *typentry);
 static void cache_array_element_properties(TypeCacheEntry *typentry);
 static bool record_fields_have_equality(TypeCacheEntry *typentry);
 static bool record_fields_have_compare(TypeCacheEntry *typentry);
 static void cache_record_field_properties(TypeCacheEntry *typentry);
+static bool range_element_has_hashing(TypeCacheEntry *typentry);
+static bool range_element_has_extended_hashing(TypeCacheEntry *typentry);
+static void cache_range_element_properties(TypeCacheEntry *typentry);
 static void TypeCacheRelCallback(Datum arg, Oid relid);
 static void TypeCacheOpcCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void TypeCacheConstrCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void load_enum_cache_data(TypeCacheEntry *tcache);
 static EnumItem *find_enumitem(TypeCacheEnumData *enumdata, Oid arg);
 static int	enum_oid_cmp(const void *left, const void *right);
+static void shared_record_typmod_registry_detach(dsm_segment *segment,
+									 Datum datum);
+static TupleDesc find_or_make_matching_shared_tupledesc(TupleDesc tupdesc);
+static dsa_pointer share_tupledesc(dsa_area *area, TupleDesc tupdesc,
+				uint32 typmod);
 
 
 /*
@@ -257,6 +377,7 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->typstorage = typtup->typstorage;
 		typentry->typtype = typtup->typtype;
 		typentry->typrelid = typtup->typrelid;
+		typentry->typelem = typtup->typelem;
 
 		/* If it's a domain, immediately thread it into the domain cache list */
 		if (typentry->typtype == TYPTYPE_DOMAIN)
@@ -314,6 +435,8 @@ lookup_type_cache(Oid type_id, int flags)
 		flags |= TYPECACHE_HASH_OPFAMILY;
 
 	if ((flags & (TYPECACHE_HASH_PROC | TYPECACHE_HASH_PROC_FINFO |
+				  TYPECACHE_HASH_EXTENDED_PROC |
+				  TYPECACHE_HASH_EXTENDED_PROC_FINFO |
 				  TYPECACHE_HASH_OPFAMILY)) &&
 		!(typentry->flags & TCFLAGS_CHECKED_HASH_OPCLASS))
 	{
@@ -335,7 +458,8 @@ lookup_type_cache(Oid type_id, int flags)
 		 * eq_opr; if we already found one from the btree opclass, that
 		 * decision is still good.
 		 */
-		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC);
+		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC |
+							 TCFLAGS_CHECKED_HASH_EXTENDED_PROC);
 		typentry->flags |= TCFLAGS_CHECKED_HASH_OPCLASS;
 	}
 
@@ -361,9 +485,11 @@ lookup_type_cache(Oid type_id, int flags)
 
 		/*
 		 * If the proposed equality operator is array_eq or record_eq, check
-		 * to see if the element type or column types support equality. If
+		 * to see if the element type or column types support equality.  If
 		 * not, array_eq or record_eq would fail at runtime, so we don't want
-		 * to report that the type has equality.
+		 * to report that the type has equality.  (We can omit similar
+		 * checking for ranges because ranges can't be created in the first
+		 * place unless their subtypes support equality.)
 		 */
 		if (eq_opr == ARRAY_EQ_OP &&
 			!array_element_has_equality(typentry))
@@ -379,11 +505,12 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->eq_opr = eq_opr;
 
 		/*
-		 * Reset info about hash function whenever we pick up new info about
-		 * equality operator.  This is so we can ensure that the hash function
-		 * matches the operator.
+		 * Reset info about hash functions whenever we pick up new info about
+		 * equality operator.  This is so we can ensure that the hash
+		 * functions match the operator.
 		 */
-		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC);
+		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC |
+							 TCFLAGS_CHECKED_HASH_EXTENDED_PROC);
 		typentry->flags |= TCFLAGS_CHECKED_EQ_OPR;
 	}
 	if ((flags & TYPECACHE_LT_OPR) &&
@@ -397,7 +524,10 @@ lookup_type_cache(Oid type_id, int flags)
 										 typentry->btree_opintype,
 										 BTLessStrategyNumber);
 
-		/* As above, make sure array_cmp or record_cmp will succeed */
+		/*
+		 * As above, make sure array_cmp or record_cmp will succeed; but again
+		 * we need no special check for ranges.
+		 */
 		if (lt_opr == ARRAY_LT_OP &&
 			!array_element_has_compare(typentry))
 			lt_opr = InvalidOid;
@@ -419,7 +549,10 @@ lookup_type_cache(Oid type_id, int flags)
 										 typentry->btree_opintype,
 										 BTGreaterStrategyNumber);
 
-		/* As above, make sure array_cmp or record_cmp will succeed */
+		/*
+		 * As above, make sure array_cmp or record_cmp will succeed; but again
+		 * we need no special check for ranges.
+		 */
 		if (gt_opr == ARRAY_GT_OP &&
 			!array_element_has_compare(typentry))
 			gt_opr = InvalidOid;
@@ -441,7 +574,10 @@ lookup_type_cache(Oid type_id, int flags)
 										 typentry->btree_opintype,
 										 BTORDER_PROC);
 
-		/* As above, make sure array_cmp or record_cmp will succeed */
+		/*
+		 * As above, make sure array_cmp or record_cmp will succeed; but again
+		 * we need no special check for ranges.
+		 */
 		if (cmp_proc == F_BTARRAYCMP &&
 			!array_element_has_compare(typentry))
 			cmp_proc = InvalidOid;
@@ -474,7 +610,7 @@ lookup_type_cache(Oid type_id, int flags)
 			hash_proc = get_opfamily_proc(typentry->hash_opf,
 										  typentry->hash_opintype,
 										  typentry->hash_opintype,
-										  HASHPROC);
+										  HASHSTANDARD_PROC);
 
 		/*
 		 * As above, make sure hash_array will succeed.  We don't currently
@@ -485,12 +621,63 @@ lookup_type_cache(Oid type_id, int flags)
 			!array_element_has_hashing(typentry))
 			hash_proc = InvalidOid;
 
+		/*
+		 * Likewise for hash_range.
+		 */
+		if (hash_proc == F_HASH_RANGE &&
+			!range_element_has_hashing(typentry))
+			hash_proc = InvalidOid;
+
 		/* Force update of hash_proc_finfo only if we're changing state */
 		if (typentry->hash_proc != hash_proc)
 			typentry->hash_proc_finfo.fn_oid = InvalidOid;
 
 		typentry->hash_proc = hash_proc;
 		typentry->flags |= TCFLAGS_CHECKED_HASH_PROC;
+	}
+	if ((flags & (TYPECACHE_HASH_EXTENDED_PROC |
+				  TYPECACHE_HASH_EXTENDED_PROC_FINFO)) &&
+		!(typentry->flags & TCFLAGS_CHECKED_HASH_EXTENDED_PROC))
+	{
+		Oid			hash_extended_proc = InvalidOid;
+
+		/*
+		 * We insist that the eq_opr, if one has been determined, match the
+		 * hash opclass; else report there is no hash function.
+		 */
+		if (typentry->hash_opf != InvalidOid &&
+			(!OidIsValid(typentry->eq_opr) ||
+			 typentry->eq_opr == get_opfamily_member(typentry->hash_opf,
+													 typentry->hash_opintype,
+													 typentry->hash_opintype,
+													 HTEqualStrategyNumber)))
+			hash_extended_proc = get_opfamily_proc(typentry->hash_opf,
+												   typentry->hash_opintype,
+												   typentry->hash_opintype,
+												   HASHEXTENDED_PROC);
+
+		/*
+		 * As above, make sure hash_array_extended will succeed.  We don't
+		 * currently support hashing for composite types, but when we do,
+		 * we'll need more logic here to check that case too.
+		 */
+		if (hash_extended_proc == F_HASH_ARRAY_EXTENDED &&
+			!array_element_has_extended_hashing(typentry))
+			hash_extended_proc = InvalidOid;
+
+		/*
+		 * Likewise for hash_range_extended.
+		 */
+		if (hash_extended_proc == F_HASH_RANGE_EXTENDED &&
+			!range_element_has_extended_hashing(typentry))
+			hash_extended_proc = InvalidOid;
+
+		/* Force update of proc finfo only if we're changing state */
+		if (typentry->hash_extended_proc != hash_extended_proc)
+			typentry->hash_extended_proc_finfo.fn_oid = InvalidOid;
+
+		typentry->hash_extended_proc = hash_extended_proc;
+		typentry->flags |= TCFLAGS_CHECKED_HASH_EXTENDED_PROC;
 	}
 
 	/*
@@ -530,6 +717,14 @@ lookup_type_cache(Oid type_id, int flags)
 		fmgr_info_cxt(typentry->hash_proc, &typentry->hash_proc_finfo,
 					  CacheMemoryContext);
 	}
+	if ((flags & TYPECACHE_HASH_EXTENDED_PROC_FINFO) &&
+		typentry->hash_extended_proc_finfo.fn_oid == InvalidOid &&
+		typentry->hash_extended_proc != InvalidOid)
+	{
+		fmgr_info_cxt(typentry->hash_extended_proc,
+					  &typentry->hash_extended_proc_finfo,
+					  CacheMemoryContext);
+	}
 
 	/*
 	 * If it's a composite type (row type), get tupdesc if requested
@@ -554,7 +749,15 @@ lookup_type_cache(Oid type_id, int flags)
 	/*
 	 * If requested, get information about a domain type
 	 */
-	if ((flags & TYPECACHE_DOMAIN_INFO) &&
+	if ((flags & TYPECACHE_DOMAIN_BASE_INFO) &&
+		typentry->domainBaseType == InvalidOid &&
+		typentry->typtype == TYPTYPE_DOMAIN)
+	{
+		typentry->domainBaseTypmod = -1;
+		typentry->domainBaseType =
+			getBaseTypeAndTypmod(type_id, &typentry->domainBaseTypmod);
+	}
+	if ((flags & TYPECACHE_DOMAIN_CONSTR_INFO) &&
 		(typentry->flags & TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS) == 0 &&
 		typentry->typtype == TYPTYPE_DOMAIN)
 	{
@@ -588,6 +791,12 @@ load_typcache_tupdesc(TypeCacheEntry *typentry)
 
 	Assert(typentry->tupDesc->tdrefcount > 0);
 	typentry->tupDesc->tdrefcount++;
+
+	/*
+	 * In future, we could take some pains to not increment the seqno if the
+	 * tupdesc didn't really change; but for now it's not worth it.
+	 */
+	typentry->tupDescSeqNo++;
 
 	relation_close(rel, AccessShareLock);
 }
@@ -973,7 +1182,7 @@ InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
 						MemoryContext refctx, bool need_exprstate)
 {
 	/* Look up the typcache entry --- we assume it survives indefinitely */
-	ref->tcache = lookup_type_cache(type_id, TYPECACHE_DOMAIN_INFO);
+	ref->tcache = lookup_type_cache(type_id, TYPECACHE_DOMAIN_CONSTR_INFO);
 	ref->need_exprstate = need_exprstate;
 	/* For safety, establish the callback before acquiring a refcount */
 	ref->refctx = refctx;
@@ -1064,7 +1273,7 @@ DomainHasConstraints(Oid type_id)
 	 * Note: a side effect is to cause the typcache's domain data to become
 	 * valid.  This is fine since we'll likely need it soon if there is any.
 	 */
-	typentry = lookup_type_cache(type_id, TYPECACHE_DOMAIN_INFO);
+	typentry = lookup_type_cache(type_id, TYPECACHE_DOMAIN_CONSTR_INFO);
 
 	return (typentry->domainData != NULL);
 }
@@ -1106,6 +1315,14 @@ array_element_has_hashing(TypeCacheEntry *typentry)
 	return (typentry->flags & TCFLAGS_HAVE_ELEM_HASHING) != 0;
 }
 
+static bool
+array_element_has_extended_hashing(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_ELEM_PROPERTIES))
+		cache_array_element_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_ELEM_EXTENDED_HASHING) != 0;
+}
+
 static void
 cache_array_element_properties(TypeCacheEntry *typentry)
 {
@@ -1118,16 +1335,23 @@ cache_array_element_properties(TypeCacheEntry *typentry)
 		elementry = lookup_type_cache(elem_type,
 									  TYPECACHE_EQ_OPR |
 									  TYPECACHE_CMP_PROC |
-									  TYPECACHE_HASH_PROC);
+									  TYPECACHE_HASH_PROC |
+									  TYPECACHE_HASH_EXTENDED_PROC);
 		if (OidIsValid(elementry->eq_opr))
 			typentry->flags |= TCFLAGS_HAVE_ELEM_EQUALITY;
 		if (OidIsValid(elementry->cmp_proc))
 			typentry->flags |= TCFLAGS_HAVE_ELEM_COMPARE;
 		if (OidIsValid(elementry->hash_proc))
 			typentry->flags |= TCFLAGS_HAVE_ELEM_HASHING;
+		if (OidIsValid(elementry->hash_extended_proc))
+			typentry->flags |= TCFLAGS_HAVE_ELEM_EXTENDED_HASHING;
 	}
 	typentry->flags |= TCFLAGS_CHECKED_ELEM_PROPERTIES;
 }
+
+/*
+ * Likewise, some helper functions for composite types.
+ */
 
 static bool
 record_fields_have_equality(TypeCacheEntry *typentry)
@@ -1176,11 +1400,12 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 		for (i = 0; i < tupdesc->natts; i++)
 		{
 			TypeCacheEntry *fieldentry;
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
-			if (tupdesc->attrs[i]->attisdropped)
+			if (attr->attisdropped)
 				continue;
 
-			fieldentry = lookup_type_cache(tupdesc->attrs[i]->atttypid,
+			fieldentry = lookup_type_cache(attr->atttypid,
 										   TYPECACHE_EQ_OPR |
 										   TYPECACHE_CMP_PROC);
 			if (!OidIsValid(fieldentry->eq_opr))
@@ -1196,9 +1421,107 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 
 		DecrTupleDescRefCount(tupdesc);
 	}
+	else if (typentry->typtype == TYPTYPE_DOMAIN)
+	{
+		/* If it's domain over composite, copy base type's properties */
+		TypeCacheEntry *baseentry;
+
+		/* load up basetype info if we didn't already */
+		if (typentry->domainBaseType == InvalidOid)
+		{
+			typentry->domainBaseTypmod = -1;
+			typentry->domainBaseType =
+				getBaseTypeAndTypmod(typentry->type_id,
+									 &typentry->domainBaseTypmod);
+		}
+		baseentry = lookup_type_cache(typentry->domainBaseType,
+									  TYPECACHE_EQ_OPR |
+									  TYPECACHE_CMP_PROC);
+		if (baseentry->typtype == TYPTYPE_COMPOSITE)
+		{
+			typentry->flags |= TCFLAGS_DOMAIN_BASE_IS_COMPOSITE;
+			typentry->flags |= baseentry->flags & (TCFLAGS_HAVE_FIELD_EQUALITY |
+												   TCFLAGS_HAVE_FIELD_COMPARE);
+		}
+	}
 	typentry->flags |= TCFLAGS_CHECKED_FIELD_PROPERTIES;
 }
 
+/*
+ * Likewise, some helper functions for range types.
+ *
+ * We can borrow the flag bits for array element properties to use for range
+ * element properties, since those flag bits otherwise have no use in a
+ * range type's typcache entry.
+ */
+
+static bool
+range_element_has_hashing(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_ELEM_PROPERTIES))
+		cache_range_element_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_ELEM_HASHING) != 0;
+}
+
+static bool
+range_element_has_extended_hashing(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_ELEM_PROPERTIES))
+		cache_range_element_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_ELEM_EXTENDED_HASHING) != 0;
+}
+
+static void
+cache_range_element_properties(TypeCacheEntry *typentry)
+{
+	/* load up subtype link if we didn't already */
+	if (typentry->rngelemtype == NULL &&
+		typentry->typtype == TYPTYPE_RANGE)
+		load_rangetype_info(typentry);
+
+	if (typentry->rngelemtype != NULL)
+	{
+		TypeCacheEntry *elementry;
+
+		/* might need to calculate subtype's hash function properties */
+		elementry = lookup_type_cache(typentry->rngelemtype->type_id,
+									  TYPECACHE_HASH_PROC |
+									  TYPECACHE_HASH_EXTENDED_PROC);
+		if (OidIsValid(elementry->hash_proc))
+			typentry->flags |= TCFLAGS_HAVE_ELEM_HASHING;
+		if (OidIsValid(elementry->hash_extended_proc))
+			typentry->flags |= TCFLAGS_HAVE_ELEM_EXTENDED_HASHING;
+	}
+	typentry->flags |= TCFLAGS_CHECKED_ELEM_PROPERTIES;
+}
+
+/*
+ * Make sure that RecordCacheArray is large enough to store 'typmod'.
+ */
+static void
+ensure_record_cache_typmod_slot_exists(int32 typmod)
+{
+	if (RecordCacheArray == NULL)
+	{
+		RecordCacheArray = (TupleDesc *)
+			MemoryContextAllocZero(CacheMemoryContext, 64 * sizeof(TupleDesc));
+		RecordCacheArrayLen = 64;
+	}
+
+	if (typmod >= RecordCacheArrayLen)
+	{
+		int32		newlen = RecordCacheArrayLen * 2;
+
+		while (typmod >= newlen)
+			newlen *= 2;
+
+		RecordCacheArray = (TupleDesc *) repalloc(RecordCacheArray,
+												  newlen * sizeof(TupleDesc));
+		memset(RecordCacheArray + RecordCacheArrayLen, 0,
+			   (newlen - RecordCacheArrayLen) * sizeof(TupleDesc));
+		RecordCacheArrayLen = newlen;
+	}
+}
 
 /*
  * lookup_rowtype_tupdesc_internal --- internal routine to lookup a rowtype
@@ -1229,15 +1552,53 @@ lookup_rowtype_tupdesc_internal(Oid type_id, int32 typmod, bool noError)
 		/*
 		 * It's a transient record type, so look in our record-type table.
 		 */
-		if (typmod < 0 || typmod >= NextRecordTypmod)
+		if (typmod >= 0)
 		{
-			if (!noError)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("record type has not been registered")));
-			return NULL;
+			/* It is already in our local cache? */
+			if (typmod < RecordCacheArrayLen &&
+				RecordCacheArray[typmod] != NULL)
+				return RecordCacheArray[typmod];
+
+			/* Are we attached to a shared record typmod registry? */
+			if (CurrentSession->shared_typmod_registry != NULL)
+			{
+				SharedTypmodTableEntry *entry;
+
+				/* Try to find it in the shared typmod index. */
+				entry = dshash_find(CurrentSession->shared_typmod_table,
+									&typmod, false);
+				if (entry != NULL)
+				{
+					TupleDesc	tupdesc;
+
+					tupdesc = (TupleDesc)
+						dsa_get_address(CurrentSession->area,
+										entry->shared_tupdesc);
+					Assert(typmod == tupdesc->tdtypmod);
+
+					/* We may need to extend the local RecordCacheArray. */
+					ensure_record_cache_typmod_slot_exists(typmod);
+
+					/*
+					 * Our local array can now point directly to the TupleDesc
+					 * in shared memory.
+					 */
+					RecordCacheArray[typmod] = tupdesc;
+					Assert(tupdesc->tdrefcount == -1);
+
+					dshash_release_lock(CurrentSession->shared_typmod_table,
+										entry);
+
+					return RecordCacheArray[typmod];
+				}
+			}
 		}
-		return RecordCacheArray[typmod];
+
+		if (!noError)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("record type has not been registered")));
+		return NULL;
 	}
 }
 
@@ -1259,7 +1620,7 @@ lookup_rowtype_tupdesc(Oid type_id, int32 typmod)
 	TupleDesc	tupDesc;
 
 	tupDesc = lookup_rowtype_tupdesc_internal(type_id, typmod, false);
-	IncrTupleDescRefCount(tupDesc);
+	PinTupleDesc(tupDesc);
 	return tupDesc;
 }
 
@@ -1277,7 +1638,7 @@ lookup_rowtype_tupdesc_noerror(Oid type_id, int32 typmod, bool noError)
 
 	tupDesc = lookup_rowtype_tupdesc_internal(type_id, typmod, noError);
 	if (tupDesc != NULL)
-		IncrTupleDescRefCount(tupDesc);
+		PinTupleDesc(tupDesc);
 	return tupDesc;
 }
 
@@ -1296,6 +1657,75 @@ lookup_rowtype_tupdesc_copy(Oid type_id, int32 typmod)
 	return CreateTupleDescCopyConstr(tmp);
 }
 
+/*
+ * lookup_rowtype_tupdesc_domain
+ *
+ * Same as lookup_rowtype_tupdesc_noerror(), except that the type can also be
+ * a domain over a named composite type; so this is effectively equivalent to
+ * lookup_rowtype_tupdesc_noerror(getBaseType(type_id), typmod, noError)
+ * except for being a tad faster.
+ *
+ * Note: the reason we don't fold the look-through-domain behavior into plain
+ * lookup_rowtype_tupdesc() is that we want callers to know they might be
+ * dealing with a domain.  Otherwise they might construct a tuple that should
+ * be of the domain type, but not apply domain constraints.
+ */
+TupleDesc
+lookup_rowtype_tupdesc_domain(Oid type_id, int32 typmod, bool noError)
+{
+	TupleDesc	tupDesc;
+
+	if (type_id != RECORDOID)
+	{
+		/*
+		 * Check for domain or named composite type.  We might as well load
+		 * whichever data is needed.
+		 */
+		TypeCacheEntry *typentry;
+
+		typentry = lookup_type_cache(type_id,
+									 TYPECACHE_TUPDESC |
+									 TYPECACHE_DOMAIN_BASE_INFO);
+		if (typentry->typtype == TYPTYPE_DOMAIN)
+			return lookup_rowtype_tupdesc_noerror(typentry->domainBaseType,
+												  typentry->domainBaseTypmod,
+												  noError);
+		if (typentry->tupDesc == NULL && !noError)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("type %s is not composite",
+							format_type_be(type_id))));
+		tupDesc = typentry->tupDesc;
+	}
+	else
+		tupDesc = lookup_rowtype_tupdesc_internal(type_id, typmod, noError);
+	if (tupDesc != NULL)
+		PinTupleDesc(tupDesc);
+	return tupDesc;
+}
+
+/*
+ * Hash function for the hash table of RecordCacheEntry.
+ */
+static uint32
+record_type_typmod_hash(const void *data, size_t size)
+{
+	RecordCacheEntry *entry = (RecordCacheEntry *) data;
+
+	return hashTupleDesc(entry->tupdesc);
+}
+
+/*
+ * Match function for the hash table of RecordCacheEntry.
+ */
+static int
+record_type_typmod_compare(const void *a, const void *b, size_t size)
+{
+	RecordCacheEntry *left = (RecordCacheEntry *) a;
+	RecordCacheEntry *right = (RecordCacheEntry *) b;
+
+	return equalTupleDescs(left->tupdesc, right->tupdesc) ? 0 : 1;
+}
 
 /*
  * assign_record_type_typmod
@@ -1309,11 +1739,7 @@ assign_record_type_typmod(TupleDesc tupDesc)
 {
 	RecordCacheEntry *recentry;
 	TupleDesc	entDesc;
-	Oid			hashkey[REC_HASH_KEYS];
 	bool		found;
-	int			i;
-	ListCell   *l;
-	int32		newtypmod;
 	MemoryContext oldcxt;
 
 	Assert(tupDesc->tdtypeid == RECORDOID);
@@ -1324,75 +1750,237 @@ assign_record_type_typmod(TupleDesc tupDesc)
 		HASHCTL		ctl;
 
 		MemSet(&ctl, 0, sizeof(ctl));
-		ctl.keysize = REC_HASH_KEYS * sizeof(Oid);
+		ctl.keysize = sizeof(TupleDesc);	/* just the pointer */
 		ctl.entrysize = sizeof(RecordCacheEntry);
+		ctl.hash = record_type_typmod_hash;
+		ctl.match = record_type_typmod_compare;
 		RecordCacheHash = hash_create("Record information cache", 64,
-									  &ctl, HASH_ELEM | HASH_BLOBS);
+									  &ctl,
+									  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE);
 
 		/* Also make sure CacheMemoryContext exists */
 		if (!CacheMemoryContext)
 			CreateCacheMemoryContext();
 	}
 
-	/* Find or create a hashtable entry for this hash class */
-	MemSet(hashkey, 0, sizeof(hashkey));
-	for (i = 0; i < tupDesc->natts; i++)
-	{
-		if (i >= REC_HASH_KEYS)
-			break;
-		hashkey[i] = tupDesc->attrs[i]->atttypid;
-	}
+	/* Find or create a hashtable entry for this tuple descriptor */
 	recentry = (RecordCacheEntry *) hash_search(RecordCacheHash,
-												(void *) hashkey,
+												(void *) &tupDesc,
 												HASH_ENTER, &found);
-	if (!found)
+	if (found && recentry->tupdesc != NULL)
 	{
-		/* New entry ... hash_search initialized only the hash key */
-		recentry->tupdescs = NIL;
-	}
-
-	/* Look for existing record cache entry */
-	foreach(l, recentry->tupdescs)
-	{
-		entDesc = (TupleDesc) lfirst(l);
-		if (equalTupleDescs(tupDesc, entDesc))
-		{
-			tupDesc->tdtypmod = entDesc->tdtypmod;
-			return;
-		}
+		tupDesc->tdtypmod = recentry->tupdesc->tdtypmod;
+		return;
 	}
 
 	/* Not present, so need to manufacture an entry */
+	recentry->tupdesc = NULL;
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
-	if (RecordCacheArray == NULL)
+	/* Look in the SharedRecordTypmodRegistry, if attached */
+	entDesc = find_or_make_matching_shared_tupledesc(tupDesc);
+	if (entDesc == NULL)
 	{
-		RecordCacheArray = (TupleDesc *) palloc(64 * sizeof(TupleDesc));
-		RecordCacheArrayLen = 64;
+		/* Reference-counted local cache only. */
+		entDesc = CreateTupleDescCopy(tupDesc);
+		entDesc->tdrefcount = 1;
+		entDesc->tdtypmod = NextRecordTypmod++;
 	}
-	else if (NextRecordTypmod >= RecordCacheArrayLen)
-	{
-		int32		newlen = RecordCacheArrayLen * 2;
+	ensure_record_cache_typmod_slot_exists(entDesc->tdtypmod);
+	RecordCacheArray[entDesc->tdtypmod] = entDesc;
+	recentry->tupdesc = entDesc;
 
-		RecordCacheArray = (TupleDesc *) repalloc(RecordCacheArray,
-												  newlen * sizeof(TupleDesc));
-		RecordCacheArrayLen = newlen;
-	}
-
-	/* if fail in subrs, no damage except possibly some wasted memory... */
-	entDesc = CreateTupleDescCopy(tupDesc);
-	recentry->tupdescs = lcons(entDesc, recentry->tupdescs);
-	/* mark it as a reference-counted tupdesc */
-	entDesc->tdrefcount = 1;
-	/* now it's safe to advance NextRecordTypmod */
-	newtypmod = NextRecordTypmod++;
-	entDesc->tdtypmod = newtypmod;
-	RecordCacheArray[newtypmod] = entDesc;
-
-	/* report to caller as well */
-	tupDesc->tdtypmod = newtypmod;
+	/* Update the caller's tuple descriptor. */
+	tupDesc->tdtypmod = entDesc->tdtypmod;
 
 	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ * Return the amout of shmem required to hold a SharedRecordTypmodRegistry.
+ * This exists only to avoid exposing private innards of
+ * SharedRecordTypmodRegistry in a header.
+ */
+size_t
+SharedRecordTypmodRegistryEstimate(void)
+{
+	return sizeof(SharedRecordTypmodRegistry);
+}
+
+/*
+ * Initialize 'registry' in a pre-existing shared memory region, which must be
+ * maximally aligned and have space for SharedRecordTypmodRegistryEstimate()
+ * bytes.
+ *
+ * 'area' will be used to allocate shared memory space as required for the
+ * typemod registration.  The current process, expected to be a leader process
+ * in a parallel query, will be attached automatically and its current record
+ * types will be loaded into *registry.  While attached, all calls to
+ * assign_record_type_typmod will use the shared registry.  Worker backends
+ * will need to attach explicitly.
+ *
+ * Note that this function takes 'area' and 'segment' as arguments rather than
+ * accessing them via CurrentSession, because they aren't installed there
+ * until after this function runs.
+ */
+void
+SharedRecordTypmodRegistryInit(SharedRecordTypmodRegistry *registry,
+							   dsm_segment *segment,
+							   dsa_area *area)
+{
+	MemoryContext old_context;
+	dshash_table *record_table;
+	dshash_table *typmod_table;
+	int32		typmod;
+
+	Assert(!IsParallelWorker());
+
+	/* We can't already be attached to a shared registry. */
+	Assert(CurrentSession->shared_typmod_registry == NULL);
+	Assert(CurrentSession->shared_record_table == NULL);
+	Assert(CurrentSession->shared_typmod_table == NULL);
+
+	old_context = MemoryContextSwitchTo(TopMemoryContext);
+
+	/* Create the hash table of tuple descriptors indexed by themselves. */
+	record_table = dshash_create(area, &srtr_record_table_params, area);
+
+	/* Create the hash table of tuple descriptors indexed by typmod. */
+	typmod_table = dshash_create(area, &srtr_typmod_table_params, NULL);
+
+	MemoryContextSwitchTo(old_context);
+
+	/* Initialize the SharedRecordTypmodRegistry. */
+	registry->record_table_handle = dshash_get_hash_table_handle(record_table);
+	registry->typmod_table_handle = dshash_get_hash_table_handle(typmod_table);
+	pg_atomic_init_u32(&registry->next_typmod, NextRecordTypmod);
+
+	/*
+	 * Copy all entries from this backend's private registry into the shared
+	 * registry.
+	 */
+	for (typmod = 0; typmod < NextRecordTypmod; ++typmod)
+	{
+		SharedTypmodTableEntry *typmod_table_entry;
+		SharedRecordTableEntry *record_table_entry;
+		SharedRecordTableKey record_table_key;
+		dsa_pointer shared_dp;
+		TupleDesc	tupdesc;
+		bool		found;
+
+		tupdesc = RecordCacheArray[typmod];
+		if (tupdesc == NULL)
+			continue;
+
+		/* Copy the TupleDesc into shared memory. */
+		shared_dp = share_tupledesc(area, tupdesc, typmod);
+
+		/* Insert into the typmod table. */
+		typmod_table_entry = dshash_find_or_insert(typmod_table,
+												   &tupdesc->tdtypmod,
+												   &found);
+		if (found)
+			elog(ERROR, "cannot create duplicate shared record typmod");
+		typmod_table_entry->typmod = tupdesc->tdtypmod;
+		typmod_table_entry->shared_tupdesc = shared_dp;
+		dshash_release_lock(typmod_table, typmod_table_entry);
+
+		/* Insert into the record table. */
+		record_table_key.shared = false;
+		record_table_key.u.local_tupdesc = tupdesc;
+		record_table_entry = dshash_find_or_insert(record_table,
+												   &record_table_key,
+												   &found);
+		if (!found)
+		{
+			record_table_entry->key.shared = true;
+			record_table_entry->key.u.shared_tupdesc = shared_dp;
+		}
+		dshash_release_lock(record_table, record_table_entry);
+	}
+
+	/*
+	 * Set up the global state that will tell assign_record_type_typmod and
+	 * lookup_rowtype_tupdesc_internal about the shared registry.
+	 */
+	CurrentSession->shared_record_table = record_table;
+	CurrentSession->shared_typmod_table = typmod_table;
+	CurrentSession->shared_typmod_registry = registry;
+
+	/*
+	 * We install a detach hook in the leader, but only to handle cleanup on
+	 * failure during GetSessionDsmHandle().  Once GetSessionDsmHandle() pins
+	 * the memory, the leader process will use a shared registry until it
+	 * exits.
+	 */
+	on_dsm_detach(segment, shared_record_typmod_registry_detach, (Datum) 0);
+}
+
+/*
+ * Attach to 'registry', which must have been initialized already by another
+ * backend.  Future calls to assign_record_type_typmod and
+ * lookup_rowtype_tupdesc_internal will use the shared registry until the
+ * current session is detached.
+ */
+void
+SharedRecordTypmodRegistryAttach(SharedRecordTypmodRegistry *registry)
+{
+	MemoryContext old_context;
+	dshash_table *record_table;
+	dshash_table *typmod_table;
+
+	Assert(IsParallelWorker());
+
+	/* We can't already be attached to a shared registry. */
+	Assert(CurrentSession != NULL);
+	Assert(CurrentSession->segment != NULL);
+	Assert(CurrentSession->area != NULL);
+	Assert(CurrentSession->shared_typmod_registry == NULL);
+	Assert(CurrentSession->shared_record_table == NULL);
+	Assert(CurrentSession->shared_typmod_table == NULL);
+
+	/*
+	 * We can't already have typmods in our local cache, because they'd clash
+	 * with those imported by SharedRecordTypmodRegistryInit.  This should be
+	 * a freshly started parallel worker.  If we ever support worker
+	 * recycling, a worker would need to zap its local cache in between
+	 * servicing different queries, in order to be able to call this and
+	 * synchronize typmods with a new leader; but that's problematic because
+	 * we can't be very sure that record-typmod-related state hasn't escaped
+	 * to anywhere else in the process.
+	 */
+	Assert(NextRecordTypmod == 0);
+
+	old_context = MemoryContextSwitchTo(TopMemoryContext);
+
+	/* Attach to the two hash tables. */
+	record_table = dshash_attach(CurrentSession->area,
+								 &srtr_record_table_params,
+								 registry->record_table_handle,
+								 CurrentSession->area);
+	typmod_table = dshash_attach(CurrentSession->area,
+								 &srtr_typmod_table_params,
+								 registry->typmod_table_handle,
+								 NULL);
+
+	MemoryContextSwitchTo(old_context);
+
+	/*
+	 * Set up detach hook to run at worker exit.  Currently this is the same
+	 * as the leader's detach hook, but in future they might need to be
+	 * different.
+	 */
+	on_dsm_detach(CurrentSession->segment,
+				  shared_record_typmod_registry_detach,
+				  PointerGetDatum(registry));
+
+	/*
+	 * Set up the session state that will tell assign_record_type_typmod and
+	 * lookup_rowtype_tupdesc_internal about the shared registry.
+	 */
+	CurrentSession->shared_typmod_registry = registry;
+	CurrentSession->shared_record_table = record_table;
+	CurrentSession->shared_typmod_table = typmod_table;
 }
 
 /*
@@ -1427,29 +2015,40 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 	hash_seq_init(&status, TypeCacheHash);
 	while ((typentry = (TypeCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
-		if (typentry->typtype != TYPTYPE_COMPOSITE)
-			continue;			/* skip non-composites */
+		if (typentry->typtype == TYPTYPE_COMPOSITE)
+		{
+			/* Skip if no match, unless we're zapping all composite types */
+			if (relid != typentry->typrelid && relid != InvalidOid)
+				continue;
 
-		/* Skip if no match, unless we're zapping all composite types */
-		if (relid != typentry->typrelid && relid != InvalidOid)
-			continue;
+			/* Delete tupdesc if we have it */
+			if (typentry->tupDesc != NULL)
+			{
+				/*
+				 * Release our refcount, and free the tupdesc if none remain.
+				 * (Can't use DecrTupleDescRefCount because this reference is
+				 * not logged in current resource owner.)
+				 */
+				Assert(typentry->tupDesc->tdrefcount > 0);
+				if (--typentry->tupDesc->tdrefcount == 0)
+					FreeTupleDesc(typentry->tupDesc);
+				typentry->tupDesc = NULL;
+			}
 
-		/* Delete tupdesc if we have it */
-		if (typentry->tupDesc != NULL)
+			/* Reset equality/comparison/hashing validity information */
+			typentry->flags = 0;
+		}
+		else if (typentry->typtype == TYPTYPE_DOMAIN)
 		{
 			/*
-			 * Release our refcount, and free the tupdesc if none remain.
-			 * (Can't use DecrTupleDescRefCount because this reference is not
-			 * logged in current resource owner.)
+			 * If it's domain over composite, reset flags.  (We don't bother
+			 * trying to determine whether the specific base type needs a
+			 * reset.)  Note that if we haven't determined whether the base
+			 * type is composite, we don't need to reset anything.
 			 */
-			Assert(typentry->tupDesc->tdrefcount > 0);
-			if (--typentry->tupDesc->tdrefcount == 0)
-				FreeTupleDesc(typentry->tupDesc);
-			typentry->tupDesc = NULL;
+			if (typentry->flags & TCFLAGS_DOMAIN_BASE_IS_COMPOSITE)
+				typentry->flags = 0;
 		}
-
-		/* Reset equality/comparison/hashing validity information */
-		typentry->flags = 0;
 	}
 }
 
@@ -1808,4 +2407,158 @@ enum_oid_cmp(const void *left, const void *right)
 		return 1;
 	else
 		return 0;
+}
+
+/*
+ * Copy 'tupdesc' into newly allocated shared memory in 'area', set its typmod
+ * to the given value and return a dsa_pointer.
+ */
+static dsa_pointer
+share_tupledesc(dsa_area *area, TupleDesc tupdesc, uint32 typmod)
+{
+	dsa_pointer shared_dp;
+	TupleDesc	shared;
+
+	shared_dp = dsa_allocate(area, TupleDescSize(tupdesc));
+	shared = (TupleDesc) dsa_get_address(area, shared_dp);
+	TupleDescCopy(shared, tupdesc);
+	shared->tdtypmod = typmod;
+
+	return shared_dp;
+}
+
+/*
+ * If we are attached to a SharedRecordTypmodRegistry, use it to find or
+ * create a shared TupleDesc that matches 'tupdesc'.  Otherwise return NULL.
+ * Tuple descriptors returned by this function are not reference counted, and
+ * will exist at least as long as the current backend remained attached to the
+ * current session.
+ */
+static TupleDesc
+find_or_make_matching_shared_tupledesc(TupleDesc tupdesc)
+{
+	TupleDesc	result;
+	SharedRecordTableKey key;
+	SharedRecordTableEntry *record_table_entry;
+	SharedTypmodTableEntry *typmod_table_entry;
+	dsa_pointer shared_dp;
+	bool		found;
+	uint32		typmod;
+
+	/* If not even attached, nothing to do. */
+	if (CurrentSession->shared_typmod_registry == NULL)
+		return NULL;
+
+	/* Try to find a matching tuple descriptor in the record table. */
+	key.shared = false;
+	key.u.local_tupdesc = tupdesc;
+	record_table_entry = (SharedRecordTableEntry *)
+		dshash_find(CurrentSession->shared_record_table, &key, false);
+	if (record_table_entry)
+	{
+		Assert(record_table_entry->key.shared);
+		dshash_release_lock(CurrentSession->shared_record_table,
+							record_table_entry);
+		result = (TupleDesc)
+			dsa_get_address(CurrentSession->area,
+							record_table_entry->key.u.shared_tupdesc);
+		Assert(result->tdrefcount == -1);
+
+		return result;
+	}
+
+	/* Allocate a new typmod number.  This will be wasted if we error out. */
+	typmod = (int)
+		pg_atomic_fetch_add_u32(&CurrentSession->shared_typmod_registry->next_typmod,
+								1);
+
+	/* Copy the TupleDesc into shared memory. */
+	shared_dp = share_tupledesc(CurrentSession->area, tupdesc, typmod);
+
+	/*
+	 * Create an entry in the typmod table so that others will understand this
+	 * typmod number.
+	 */
+	PG_TRY();
+	{
+		typmod_table_entry = (SharedTypmodTableEntry *)
+			dshash_find_or_insert(CurrentSession->shared_typmod_table,
+								  &typmod, &found);
+		if (found)
+			elog(ERROR, "cannot create duplicate shared record typmod");
+	}
+	PG_CATCH();
+	{
+		dsa_free(CurrentSession->area, shared_dp);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	typmod_table_entry->typmod = typmod;
+	typmod_table_entry->shared_tupdesc = shared_dp;
+	dshash_release_lock(CurrentSession->shared_typmod_table,
+						typmod_table_entry);
+
+	/*
+	 * Finally create an entry in the record table so others with matching
+	 * tuple descriptors can reuse the typmod.
+	 */
+	record_table_entry = (SharedRecordTableEntry *)
+		dshash_find_or_insert(CurrentSession->shared_record_table, &key,
+							  &found);
+	if (found)
+	{
+		/*
+		 * Someone concurrently inserted a matching tuple descriptor since the
+		 * first time we checked.  Use that one instead.
+		 */
+		dshash_release_lock(CurrentSession->shared_record_table,
+							record_table_entry);
+
+		/* Might as well free up the space used by the one we created. */
+		found = dshash_delete_key(CurrentSession->shared_typmod_table,
+								  &typmod);
+		Assert(found);
+		dsa_free(CurrentSession->area, shared_dp);
+
+		/* Return the one we found. */
+		Assert(record_table_entry->key.shared);
+		result = (TupleDesc)
+			dsa_get_address(CurrentSession->area,
+							record_table_entry->key.shared);
+		Assert(result->tdrefcount == -1);
+
+		return result;
+	}
+
+	/* Store it and return it. */
+	record_table_entry->key.shared = true;
+	record_table_entry->key.u.shared_tupdesc = shared_dp;
+	dshash_release_lock(CurrentSession->shared_record_table,
+						record_table_entry);
+	result = (TupleDesc)
+		dsa_get_address(CurrentSession->area, shared_dp);
+	Assert(result->tdrefcount == -1);
+
+	return result;
+}
+
+/*
+ * On-DSM-detach hook to forget about the current shared record typmod
+ * infrastructure.  This is currently used by both leader and workers.
+ */
+static void
+shared_record_typmod_registry_detach(dsm_segment *segment, Datum datum)
+{
+	/* Be cautious here: maybe we didn't finish initializing. */
+	if (CurrentSession->shared_record_table != NULL)
+	{
+		dshash_detach(CurrentSession->shared_record_table);
+		CurrentSession->shared_record_table = NULL;
+	}
+	if (CurrentSession->shared_typmod_table != NULL)
+	{
+		dshash_detach(CurrentSession->shared_typmod_table);
+		CurrentSession->shared_typmod_table = NULL;
+	}
+	CurrentSession->shared_typmod_registry = NULL;
 }

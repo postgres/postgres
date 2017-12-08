@@ -345,6 +345,96 @@ ERROR:  FOR NO KEY UPDATE is not allowed with UNION/INTERSECT/EXCEPT
         1 |        2 |        3
 (1 row)
 
+-- exercise both hashed and sorted implementations of INTERSECT/EXCEPT
+set enable_hashagg to on;
+explain (costs off)
+select count(*) from
+  ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Aggregate
+   ->  Subquery Scan on ss
+         ->  HashSetOp Intersect
+               ->  Append
+                     ->  Subquery Scan on "*SELECT* 2"
+                           ->  Seq Scan on tenk1
+                     ->  Subquery Scan on "*SELECT* 1"
+                           ->  Index Only Scan using tenk1_unique1 on tenk1 tenk1_1
+(8 rows)
+
+select count(*) from
+  ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
+ count 
+-------
+  5000
+(1 row)
+
+explain (costs off)
+select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ HashSetOp Except
+   ->  Append
+         ->  Subquery Scan on "*SELECT* 1"
+               ->  Index Only Scan using tenk1_unique1 on tenk1
+         ->  Subquery Scan on "*SELECT* 2"
+               ->  Index Only Scan using tenk1_unique2 on tenk1 tenk1_1
+                     Filter: (unique2 <> 10)
+(7 rows)
+
+select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+ unique1 
+---------
+      10
+(1 row)
+
+set enable_hashagg to off;
+explain (costs off)
+select count(*) from
+  ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Subquery Scan on ss
+         ->  SetOp Intersect
+               ->  Sort
+                     Sort Key: "*SELECT* 2".fivethous
+                     ->  Append
+                           ->  Subquery Scan on "*SELECT* 2"
+                                 ->  Seq Scan on tenk1
+                           ->  Subquery Scan on "*SELECT* 1"
+                                 ->  Index Only Scan using tenk1_unique1 on tenk1 tenk1_1
+(10 rows)
+
+select count(*) from
+  ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
+ count 
+-------
+  5000
+(1 row)
+
+explain (costs off)
+select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ SetOp Except
+   ->  Sort
+         Sort Key: "*SELECT* 1".unique1
+         ->  Append
+               ->  Subquery Scan on "*SELECT* 1"
+                     ->  Index Only Scan using tenk1_unique1 on tenk1
+               ->  Subquery Scan on "*SELECT* 2"
+                     ->  Index Only Scan using tenk1_unique2 on tenk1 tenk1_1
+                           Filter: (unique2 <> 10)
+(9 rows)
+
+select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+ unique1 
+---------
+      10
+(1 row)
+
+reset enable_hashagg;
 --
 -- Mixed types
 --

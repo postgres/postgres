@@ -7,7 +7,7 @@ use TestLib;
 use Test::More tests => 2;
 use PostgresNode;
 
-my $node = get_new_node();
+my $node = get_new_node('foxtrot');
 $node->init;
 $node->append_conf('postgresql.conf', 'track_commit_timestamp = on');
 $node->start;

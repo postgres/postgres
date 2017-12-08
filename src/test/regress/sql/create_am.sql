@@ -27,12 +27,10 @@ CREATE OPERATOR CLASS box_ops DEFAULT
 	OPERATOR 14	@,
 	FUNCTION 1	gist_box_consistent(internal, box, smallint, oid, internal),
 	FUNCTION 2	gist_box_union(internal, internal),
-	FUNCTION 3	gist_box_compress(internal),
-	FUNCTION 4	gist_box_decompress(internal),
+	-- don't need compress, decompress, or fetch functions
 	FUNCTION 5	gist_box_penalty(internal, internal, internal),
 	FUNCTION 6	gist_box_picksplit(internal, internal),
-	FUNCTION 7	gist_box_same(box, box, internal),
-	FUNCTION 9	gist_box_fetch(internal);
+	FUNCTION 7	gist_box_same(box, box, internal);
 
 -- Create gist2 index on fast_emp4000
 CREATE INDEX grect2ind2 ON fast_emp4000 USING gist2 (home_base);

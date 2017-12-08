@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_statistics.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPSTATISTICS">
+<refentry id="sql-dropstatistics">
  <indexterm zone="sql-dropstatistics">
   <primary>DROP STATISTICS</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP STATISTICS [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -51,7 +51,7 @@ DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the statistics object to drop.
@@ -88,8 +88,8 @@ DROP STATISTICS IF EXISTS
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterstatistics"></member>
-   <member><xref linkend="sql-createstatistics"></member>
+   <member><xref linkend="sql-alterstatistics"/></member>
+   <member><xref linkend="sql-createstatistics"/></member>
   </simplelist>
  </refsect1>
 

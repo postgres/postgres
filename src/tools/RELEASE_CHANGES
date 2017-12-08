@@ -68,12 +68,14 @@ For Major Releases
 Starting a New Development Cycle
 ================================
 
+* Typically, we do pgindent and perltidy runs just before branching
+
 * Create a branch in git for maintenance of the previous release
 	o on master branch, do:
 		git pull           # be sure you have the latest "master"
 		git push origin master:refs/heads/"new-branch-name"
 	  for example,
-		git push origin master:refs/heads/REL9_2_STABLE
+		git push origin master:refs/heads/REL_10_STABLE
 
 * Add new branch's name to list in src/tools/git_changelog
 

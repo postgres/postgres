@@ -32,6 +32,8 @@ CATALOG(pg_partitioned_table,3350) BKI_WITHOUT_OIDS
 	Oid			partrelid;		/* partitioned table oid */
 	char		partstrat;		/* partitioning strategy */
 	int16		partnatts;		/* number of partition key columns */
+	Oid			partdefid;		/* default partition oid; InvalidOid if there
+								 * isn't one */
 
 	/*
 	 * variable-length fields start here, but we allow direct access to
@@ -62,13 +64,14 @@ typedef FormData_pg_partitioned_table *Form_pg_partitioned_table;
  *		compiler constants for pg_partitioned_table
  * ----------------
  */
-#define Natts_pg_partitioned_table				7
+#define Natts_pg_partitioned_table				8
 #define Anum_pg_partitioned_table_partrelid		1
 #define Anum_pg_partitioned_table_partstrat		2
 #define Anum_pg_partitioned_table_partnatts		3
-#define Anum_pg_partitioned_table_partattrs		4
-#define Anum_pg_partitioned_table_partclass		5
-#define Anum_pg_partitioned_table_partcollation 6
-#define Anum_pg_partitioned_table_partexprs		7
+#define Anum_pg_partitioned_table_partdefid		4
+#define Anum_pg_partitioned_table_partattrs		5
+#define Anum_pg_partitioned_table_partclass		6
+#define Anum_pg_partitioned_table_partcollation 7
+#define Anum_pg_partitioned_table_partexprs		8
 
 #endif							/* PG_PARTITIONED_TABLE_H */

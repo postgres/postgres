@@ -44,12 +44,12 @@ PQregisterEventProc(PGconn *conn, PGEventProc proc,
 	PGEventRegister regevt;
 
 	if (!proc || !conn || !name || !*name)
-		return FALSE;			/* bad arguments */
+		return false;			/* bad arguments */
 
 	for (i = 0; i < conn->nEvents; i++)
 	{
 		if (conn->events[i].proc == proc)
-			return FALSE;		/* already registered */
+			return false;		/* already registered */
 	}
 
 	if (conn->nEvents >= conn->eventArraySize)
@@ -64,7 +64,7 @@ PQregisterEventProc(PGconn *conn, PGEventProc proc,
 			e = (PGEvent *) malloc(newSize * sizeof(PGEvent));
 
 		if (!e)
-			return FALSE;
+			return false;
 
 		conn->eventArraySize = newSize;
 		conn->events = e;
@@ -73,10 +73,10 @@ PQregisterEventProc(PGconn *conn, PGEventProc proc,
 	conn->events[conn->nEvents].proc = proc;
 	conn->events[conn->nEvents].name = strdup(name);
 	if (!conn->events[conn->nEvents].name)
-		return FALSE;
+		return false;
 	conn->events[conn->nEvents].passThrough = passThrough;
 	conn->events[conn->nEvents].data = NULL;
-	conn->events[conn->nEvents].resultInitialized = FALSE;
+	conn->events[conn->nEvents].resultInitialized = false;
 	conn->nEvents++;
 
 	regevt.conn = conn;
@@ -84,10 +84,10 @@ PQregisterEventProc(PGconn *conn, PGEventProc proc,
 	{
 		conn->nEvents--;
 		free(conn->events[conn->nEvents].name);
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 /*
@@ -100,18 +100,18 @@ PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data)
 	int			i;
 
 	if (!conn || !proc)
-		return FALSE;
+		return false;
 
 	for (i = 0; i < conn->nEvents; i++)
 	{
 		if (conn->events[i].proc == proc)
 		{
 			conn->events[i].data = data;
-			return TRUE;
+			return true;
 		}
 	}
 
-	return FALSE;
+	return false;
 }
 
 /*
@@ -144,18 +144,18 @@ PQresultSetInstanceData(PGresult *result, PGEventProc proc, void *data)
 	int			i;
 
 	if (!result || !proc)
-		return FALSE;
+		return false;
 
 	for (i = 0; i < result->nEvents; i++)
 	{
 		if (result->events[i].proc == proc)
 		{
 			result->events[i].data = data;
-			return TRUE;
+			return true;
 		}
 	}
 
-	return FALSE;
+	return false;
 }
 
 /*
@@ -187,7 +187,7 @@ PQfireResultCreateEvents(PGconn *conn, PGresult *res)
 	int			i;
 
 	if (!res)
-		return FALSE;
+		return false;
 
 	for (i = 0; i < res->nEvents; i++)
 	{
@@ -199,11 +199,11 @@ PQfireResultCreateEvents(PGconn *conn, PGresult *res)
 			evt.result = res;
 			if (!res->events[i].proc(PGEVT_RESULTCREATE, &evt,
 									 res->events[i].passThrough))
-				return FALSE;
+				return false;
 
-			res->events[i].resultInitialized = TRUE;
+			res->events[i].resultInitialized = true;
 		}
 	}
 
-	return TRUE;
+	return true;
 }

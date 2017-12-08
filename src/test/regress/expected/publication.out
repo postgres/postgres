@@ -76,10 +76,10 @@ Publications:
     "testpub_foralltables"
 
 \dRp+ testpub_foralltables
-     Publication testpub_foralltables
- All tables | Inserts | Updates | Deletes 
-------------+---------+---------+---------
- t          | t       | t       | f
+                  Publication testpub_foralltables
+          Owner           | All tables | Inserts | Updates | Deletes 
+--------------------------+------------+---------+---------+---------
+ regress_publication_user | t          | t       | t       | f
 (1 row)
 
 DROP TABLE testpub_tbl2;
@@ -89,19 +89,19 @@ CREATE TABLE testpub_tbl3a (b text) INHERITS (testpub_tbl3);
 CREATE PUBLICATION testpub3 FOR TABLE testpub_tbl3;
 CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl3;
 \dRp+ testpub3
-           Publication testpub3
- All tables | Inserts | Updates | Deletes 
-------------+---------+---------+---------
- f          | t       | t       | t
+                        Publication testpub3
+          Owner           | All tables | Inserts | Updates | Deletes 
+--------------------------+------------+---------+---------+---------
+ regress_publication_user | f          | t       | t       | t
 Tables:
     "public.testpub_tbl3"
     "public.testpub_tbl3a"
 
 \dRp+ testpub4
-           Publication testpub4
- All tables | Inserts | Updates | Deletes 
-------------+---------+---------+---------
- f          | t       | t       | t
+                        Publication testpub4
+          Owner           | All tables | Inserts | Updates | Deletes 
+--------------------------+------------+---------+---------+---------
+ regress_publication_user | f          | t       | t       | t
 Tables:
     "public.testpub_tbl3"
 
@@ -119,10 +119,10 @@ ERROR:  relation "testpub_tbl1" is already member of publication "testpub_fortbl
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1;
 ERROR:  publication "testpub_fortbl" already exists
 \dRp+ testpub_fortbl
-        Publication testpub_fortbl
- All tables | Inserts | Updates | Deletes 
-------------+---------+---------+---------
- f          | t       | t       | t
+                     Publication testpub_fortbl
+          Owner           | All tables | Inserts | Updates | Deletes 
+--------------------------+------------+---------+---------+---------
+ regress_publication_user | f          | t       | t       | t
 Tables:
     "pub_test.testpub_nopk"
     "public.testpub_tbl1"
@@ -165,10 +165,10 @@ Publications:
     "testpub_fortbl"
 
 \dRp+ testpub_default
-       Publication testpub_default
- All tables | Inserts | Updates | Deletes 
-------------+---------+---------+---------
- f          | t       | t       | t
+                     Publication testpub_default
+          Owner           | All tables | Inserts | Updates | Deletes 
+--------------------------+------------+---------+---------+---------
+ regress_publication_user | f          | t       | t       | t
 Tables:
     "pub_test.testpub_nopk"
     "public.testpub_tbl1"
@@ -210,10 +210,10 @@ DROP TABLE testpub_parted;
 DROP VIEW testpub_view;
 DROP TABLE testpub_tbl1;
 \dRp+ testpub_default
-       Publication testpub_default
- All tables | Inserts | Updates | Deletes 
-------------+---------+---------+---------
- f          | t       | t       | t
+                     Publication testpub_default
+          Owner           | All tables | Inserts | Updates | Deletes 
+--------------------------+------------+---------+---------+---------
+ regress_publication_user | f          | t       | t       | t
 (1 row)
 
 -- fail - must be owner of publication

@@ -257,7 +257,7 @@ ShmemAllocUnlocked(Size size)
 /*
  * ShmemAddrIsValid -- test if an address refers to shared memory
  *
- * Returns TRUE if the pointer points within the shared memory segment.
+ * Returns true if the pointer points within the shared memory segment.
  */
 bool
 ShmemAddrIsValid(const void *addr)
@@ -361,7 +361,7 @@ ShmemInitHash(const char *name,		/* table string name for shmem index */
  *		for it.  If it exists already, a pointer to the existing
  *		structure is returned.
  *
- *	Returns: pointer to the object.  *foundPtr is set TRUE if the object was
+ *	Returns: pointer to the object.  *foundPtr is set true if the object was
  *		already in the shmem index (hence, already initialized).
  *
  *	Note: before Postgres 9.0, this function returned NULL for some failure
@@ -388,7 +388,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			/* Must be initializing a (non-standalone) backend */
 			Assert(shmemseghdr->index != NULL);
 			structPtr = shmemseghdr->index;
-			*foundPtr = TRUE;
+			*foundPtr = true;
 		}
 		else
 		{
@@ -403,7 +403,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			Assert(shmemseghdr->index == NULL);
 			structPtr = ShmemAlloc(size);
 			shmemseghdr->index = structPtr;
-			*foundPtr = FALSE;
+			*foundPtr = false;
 		}
 		LWLockRelease(ShmemIndexLock);
 		return structPtr;

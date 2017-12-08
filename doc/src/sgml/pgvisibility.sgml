@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  The <filename>pg_visibility</> module provides a means for examining the
+  The <filename>pg_visibility</filename> module provides a means for examining the
   visibility map (VM) and page-level visibility information of a table.
   It also provides functions to check the integrity of a visibility map and to
   force it to be rebuilt.
@@ -28,13 +28,13 @@
   These two bits will normally agree, but the page's all-visible bit can
   sometimes be set while the visibility map bit is clear after a crash
   recovery.  The reported values can also disagree because of a change that
-  occurs after <literal>pg_visibility</> examines the visibility map and
+  occurs after <literal>pg_visibility</literal> examines the visibility map and
   before it examines the data page.  Any event that causes data corruption
   can also cause these bits to disagree.
  </para>
 
  <para>
-  Functions that display information about <literal>PD_ALL_VISIBLE</> bits
+  Functions that display information about <literal>PD_ALL_VISIBLE</literal> bits
   are much more costly than those that only consult the visibility map,
   because they must read the relation's data blocks rather than only the
   (much smaller) visibility map.  Functions that check the relation's
@@ -61,7 +61,7 @@
      <para>
       Returns the all-visible and all-frozen bits in the visibility map for
       the given block of the given relation, plus the
-      <literal>PD_ALL_VISIBLE</> bit of that block.
+      <literal>PD_ALL_VISIBLE</literal> bit of that block.
      </para>
     </listitem>
    </varlistentry>
@@ -82,7 +82,7 @@
     <listitem>
      <para>
       Returns the all-visible and all-frozen bits in the visibility map for
-      each block of the given relation, plus the <literal>PD_ALL_VISIBLE</>
+      each block of the given relation, plus the <literal>PD_ALL_VISIBLE</literal>
       bit of each block.
      </para>
     </listitem>
@@ -130,7 +130,7 @@
      <para>
       Truncates the visibility map for the given relation.  This function is
       useful if you believe that the visibility map for the relation is
-      corrupt and wish to force rebuilding it.  The first <command>VACUUM</>
+      corrupt and wish to force rebuilding it.  The first <command>VACUUM</command>
       executed on the given relation after this function is executed will scan
       every page in the relation and rebuild the visibility map.  (Until that
       is done, queries will treat the visibility map as containing all zeroes.)

@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_event_trigger.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPEVENTTRIGGER">
+<refentry id="sql-dropeventtrigger">
  <indexterm zone="sql-dropeventtrigger">
   <primary>DROP EVENT TRIGGER</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP EVENT TRIGGER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+DROP EVENT TRIGGER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -51,7 +51,7 @@ DROP EVENT TRIGGER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceabl
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of the event trigger to remove.
@@ -65,7 +65,7 @@ DROP EVENT TRIGGER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceabl
      <para>
       Automatically drop objects that depend on the trigger,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -107,8 +107,8 @@ DROP EVENT TRIGGER snitch;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createeventtrigger"></member>
-   <member><xref linkend="sql-altereventtrigger"></member>
+   <member><xref linkend="sql-createeventtrigger"/></member>
+   <member><xref linkend="sql-altereventtrigger"/></member>
   </simplelist>
  </refsect1>
 

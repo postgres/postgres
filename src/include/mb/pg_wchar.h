@@ -305,6 +305,17 @@ typedef enum pg_enc
 #define PG_VALID_FE_ENCODING(_enc)	PG_VALID_ENCODING(_enc)
 
 /*
+ * When converting strings between different encodings, we assume that space
+ * for converted result is 4-to-1 growth in the worst case. The rate for
+ * currently supported encoding pairs are within 3 (SJIS JIS X0201 half width
+ * kanna -> UTF8 is the worst case).  So "4" should be enough for the moment.
+ *
+ * Note that this is not the same as the maximum character width in any
+ * particular encoding.
+ */
+#define MAX_CONVERSION_GROWTH  4
+
+/*
  * Table for mapping an encoding number to official encoding name and
  * possibly other subsidiary data.  Be careful to check encoding number
  * before accessing a table entry!

@@ -125,7 +125,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			/* Is it empty page now? */
 			if (BloomPageGetMaxOffset(page) == 0)
 				BloomPageSetDeleted(page);
-			/* Adjust pg_lower */
+			/* Adjust pd_lower */
 			((PageHeader) page)->pd_lower = (Pointer) itupPtr - page;
 			/* Finish WAL-logging */
 			GenericXLogFinish(gxlogState);

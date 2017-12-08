@@ -19,6 +19,7 @@
 
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "access/xlog_internal.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
@@ -222,7 +223,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	/* If no -x argument, we are a CheckerProcess */
 	MyAuxProcType = CheckerProcess;
 
-	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:-:")) != -1)
+	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:X:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -256,6 +257,18 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				break;
 			case 'x':
 				MyAuxProcType = atoi(optarg);
+				break;
+			case 'X':
+				{
+					int			WalSegSz = strtoul(optarg, NULL, 0);
+
+					if (!IsValidWalSegSize(WalSegSz))
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("-X requires a power of 2 value between 1MB and 1GB")));
+					SetConfigOption("wal_segment_size", optarg, PGC_INTERNAL,
+									PGC_S_OVERRIDE);
+				}
 				break;
 			case 'c':
 			case '-':
@@ -308,19 +321,19 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		switch (MyAuxProcType)
 		{
 			case StartupProcess:
-				statmsg = "startup process";
+				statmsg = pgstat_get_backend_desc(B_STARTUP);
 				break;
 			case BgWriterProcess:
-				statmsg = "writer process";
+				statmsg = pgstat_get_backend_desc(B_BG_WRITER);
 				break;
 			case CheckpointerProcess:
-				statmsg = "checkpointer process";
+				statmsg = pgstat_get_backend_desc(B_CHECKPOINTER);
 				break;
 			case WalWriterProcess:
-				statmsg = "wal writer process";
+				statmsg = pgstat_get_backend_desc(B_WAL_WRITER);
 				break;
 			case WalReceiverProcess:
-				statmsg = "wal receiver process";
+				statmsg = pgstat_get_backend_desc(B_WAL_RECEIVER);
 				break;
 			default:
 				statmsg = "??? process";
@@ -609,7 +622,7 @@ boot_openrel(char *relname)
 		if (attrtypes[i] == NULL)
 			attrtypes[i] = AllocateAttribute();
 		memmove((char *) attrtypes[i],
-				(char *) boot_reldesc->rd_att->attrs[i],
+				(char *) TupleDescAttr(boot_reldesc->rd_att, i),
 				ATTRIBUTE_FIXED_PART_SIZE);
 
 		{
@@ -816,7 +829,7 @@ InsertOneValue(char *value, int i)
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
-	typoid = boot_reldesc->rd_att->attrs[i]->atttypid;
+	typoid = TupleDescAttr(boot_reldesc->rd_att, i)->atttypid;
 
 	boot_get_type_io_data(typoid,
 						  &typlen, &typbyval, &typalign,
@@ -843,10 +856,10 @@ InsertOneNull(int i)
 {
 	elog(DEBUG4, "inserting column %d NULL", i);
 	Assert(i >= 0 && i < MAXATTR);
-	if (boot_reldesc->rd_att->attrs[i]->attnotnull)
+	if (TupleDescAttr(boot_reldesc->rd_att, i)->attnotnull)
 		elog(ERROR,
 			 "NULL value specified for not-null column \"%s\" of relation \"%s\"",
-			 NameStr(boot_reldesc->rd_att->attrs[i]->attname),
+			 NameStr(TupleDescAttr(boot_reldesc->rd_att, i)->attname),
 			 RelationGetRelationName(boot_reldesc));
 	values[i] = PointerGetDatum(NULL);
 	Nulls[i] = true;

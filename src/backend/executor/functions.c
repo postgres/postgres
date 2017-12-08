@@ -390,6 +390,7 @@ sql_fn_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 								  list_make1(param),
 								  pstate->p_last_srf,
 								  NULL,
+								  false,
 								  cref->location);
 	}
 
@@ -658,7 +659,8 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	fcache->rettype = rettype;
 
 	/* Fetch the typlen and byval info for the result type */
-	get_typlenbyval(rettype, &fcache->typlen, &fcache->typbyval);
+	if (rettype)
+		get_typlenbyval(rettype, &fcache->typlen, &fcache->typbyval);
 
 	/* Remember whether we're returning setof something */
 	fcache->returnsSet = procedureStruct->proretset;
@@ -886,7 +888,7 @@ postquel_end(execution_state *es)
 		ExecutorEnd(es->qd);
 	}
 
-	(*es->qd->dest->rDestroy) (es->qd->dest);
+	es->qd->dest->rDestroy(es->qd->dest);
 
 	FreeQueryDesc(es->qd);
 	es->qd = NULL;
@@ -1321,8 +1323,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* Should only get here for VOID functions */
-			Assert(fcache->rettype == VOIDOID);
+			/* Should only get here for procedures and VOID functions */
+			Assert(fcache->rettype == InvalidOid || fcache->rettype == VOIDOID);
 			fcinfo->isnull = true;
 			result = (Datum) 0;
 		}
@@ -1546,7 +1548,10 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	if (modifyTargetList)
 		*modifyTargetList = false;	/* initialize for no change */
 	if (junkFilter)
-		*junkFilter = NULL;		/* initialize in case of VOID result */
+		*junkFilter = NULL;		/* initialize in case of procedure/VOID result */
+
+	if (!rettype)
+		return false;
 
 	/*
 	 * Find the last canSetTag query in the list.  This isn't necessarily the
@@ -1591,7 +1596,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	else
 	{
 		/* Empty function body, or last statement is a utility command */
-		if (rettype != VOIDOID)
+		if (rettype && rettype != VOIDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("return type mismatch in function declared to return %s",
@@ -1665,7 +1670,15 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	}
 	else if (fn_typtype == TYPTYPE_COMPOSITE || rettype == RECORDOID)
 	{
-		/* Returns a rowtype */
+		/*
+		 * Returns a rowtype.
+		 *
+		 * Note that we will not consider a domain over composite to be a
+		 * "rowtype" return type; it goes through the scalar case above.  This
+		 * is because SQL functions don't provide any implicit casting to the
+		 * result type, so there is no way to produce a domain-over-composite
+		 * result except by computing it as an explicit single-column result.
+		 */
 		TupleDesc	tupdesc;
 		int			tupnatts;	/* physical number of columns in tuple */
 		int			tuplogcols; /* # of nondeleted columns in tuple */
@@ -1711,7 +1724,10 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 			}
 		}
 
-		/* Is the rowtype fixed, or determined only at runtime? */
+		/*
+		 * Is the rowtype fixed, or determined only at runtime?  (Note we
+		 * cannot see TYPEFUNC_COMPOSITE_DOMAIN here.)
+		 */
 		if (get_func_result_type(func_id, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		{
 			/*
@@ -1759,7 +1775,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 							 errmsg("return type mismatch in function declared to return %s",
 									format_type_be(rettype)),
 							 errdetail("Final statement returns too many columns.")));
-				attr = tupdesc->attrs[colindex - 1];
+				attr = TupleDescAttr(tupdesc, colindex - 1);
 				if (attr->attisdropped && modifyTargetList)
 				{
 					Expr	   *null_expr;
@@ -1816,7 +1832,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		/* remaining columns in tupdesc had better all be dropped */
 		for (colindex++; colindex <= tupnatts; colindex++)
 		{
-			if (!tupdesc->attrs[colindex - 1]->attisdropped)
+			if (!TupleDescAttr(tupdesc, colindex - 1)->attisdropped)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("return type mismatch in function declared to return %s",

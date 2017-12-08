@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 
+#include "access/hash.h"
 #include "access/htup_details.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
@@ -717,12 +718,28 @@ hash_aclitem(PG_FUNCTION_ARGS)
 	PG_RETURN_UINT32((uint32) (a->ai_privs + a->ai_grantee + a->ai_grantor));
 }
 
+/*
+ * 64-bit hash function for aclitem.
+ *
+ * Similar to hash_aclitem, but accepts a seed and returns a uint64 value.
+ */
+Datum
+hash_aclitem_extended(PG_FUNCTION_ARGS)
+{
+	AclItem    *a = PG_GETARG_ACLITEM_P(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	uint32		sum = (uint32) (a->ai_privs + a->ai_grantee + a->ai_grantor);
+
+	return (seed == 0) ? UInt64GetDatum(sum) : hash_uint32_extended(sum, seed);
+}
 
 /*
  * acldefault()  --- create an ACL describing default access permissions
  *
  * Change this routine if you want to alter the default access policy for
- * newly-created objects (or any object with a NULL acl entry).
+ * newly-created objects (or any object with a NULL acl entry).  When
+ * you make a change here, don't forget to update the GRANT man page,
+ * which explains all the default permissions.
  *
  * Note that these are the hard-wired "defaults" that are used in the
  * absence of any pg_default_acl entry.
@@ -2225,8 +2242,11 @@ convert_sequence_priv_string(text *priv_type_text)
 {
 	static const priv_map sequence_priv_map[] = {
 		{"USAGE", ACL_USAGE},
+		{"USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE)},
 		{"SELECT", ACL_SELECT},
+		{"SELECT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_SELECT)},
 		{"UPDATE", ACL_UPDATE},
+		{"UPDATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_UPDATE)},
 		{NULL, 0}
 	};
 

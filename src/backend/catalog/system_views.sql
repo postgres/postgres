@@ -910,7 +910,9 @@ CREATE VIEW pg_user_mappings AS
         ELSE
             A.rolname
         END AS usename,
-        CASE WHEN (U.umuser <> 0 AND A.rolname = current_user)
+        CASE WHEN (U.umuser <> 0 AND A.rolname = current_user
+                     AND (pg_has_role(S.srvowner, 'USAGE')
+                          OR has_server_privilege(S.oid, 'USAGE')))
                     OR (U.umuser = 0 AND pg_has_role(S.srvowner, 'USAGE'))
                     OR (SELECT rolsuper FROM pg_authid WHERE rolname = current_user)
                     THEN U.umoptions
@@ -1113,12 +1115,14 @@ LANGUAGE INTERNAL
 STRICT IMMUTABLE PARALLEL SAFE
 AS 'jsonb_insert';
 
+--
 -- The default permissions for functions mean that anyone can execute them.
 -- A number of functions shouldn't be executable by just anyone, but rather
 -- than use explicit 'superuser()' checks in those functions, we use the GRANT
 -- system to REVOKE access to those functions at initdb time.  Administrators
 -- can later change who can access these functions, or leave them as only
 -- available to superuser / cluster owner, if they choose.
+--
 REVOKE EXECUTE ON FUNCTION pg_start_backup(text, boolean, boolean) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stop_backup() FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stop_backup(boolean, boolean) FROM public;
@@ -1136,8 +1140,16 @@ REVOKE EXECUTE ON FUNCTION pg_stat_reset_shared(text) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_table_counters(oid) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_function_counters(oid) FROM public;
 
+REVOKE EXECUTE ON FUNCTION lo_import(text) FROM public;
+REVOKE EXECUTE ON FUNCTION lo_import(text, oid) FROM public;
+REVOKE EXECUTE ON FUNCTION lo_export(oid, text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_ls_logdir() FROM public;
 REVOKE EXECUTE ON FUNCTION pg_ls_waldir() FROM public;
+
+--
+-- We also set up some things as accessible to standard roles.
+--
 GRANT EXECUTE ON FUNCTION pg_ls_logdir() TO pg_monitor;
 GRANT EXECUTE ON FUNCTION pg_ls_waldir() TO pg_monitor;
 

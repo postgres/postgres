@@ -39,12 +39,12 @@ extern char *makeObjectName(const char *name1, const char *name2,
 extern char *ChooseRelationName(const char *name1, const char *name2,
 				   const char *label, Oid namespaceid);
 extern bool CheckIndexCompatible(Oid oldId,
-					 char *accessMethodName,
+					 const char *accessMethodName,
 					 List *attributeList,
 					 List *exclusionOpNames);
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 extern Oid ResolveOpClass(List *opclass, Oid attrType,
-			   char *accessMethodName, Oid accessMethodId);
+			   const char *accessMethodName, Oid accessMethodId);
 
 /* commands/functioncmds.c */
 extern ObjectAddress CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt);
@@ -59,12 +59,13 @@ extern void DropTransformById(Oid transformOid);
 extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
 						   oidvector *proargtypes, Oid nspOid);
 extern void ExecuteDoStmt(DoStmt *stmt);
+extern void ExecuteCallStmt(ParseState *pstate, CallStmt *stmt);
 extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 extern Oid	get_transform_oid(Oid type_id, Oid lang_id, bool missing_ok);
 extern void interpret_function_parameter_list(ParseState *pstate,
 								  List *parameters,
 								  Oid languageOid,
-								  bool is_aggregate,
+								  ObjectType objtype,
 								  oidvector **parameterTypes,
 								  ArrayType **allParameterTypes,
 								  ArrayType **parameterModes,

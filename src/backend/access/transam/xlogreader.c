@@ -64,7 +64,8 @@ report_invalid_record(XLogReaderState *state, const char *fmt,...)
  * Returns NULL if the xlogreader couldn't be allocated.
  */
 XLogReaderState *
-XLogReaderAllocate(XLogPageReadCB pagereadfunc, void *private_data)
+XLogReaderAllocate(int wal_segment_size, XLogPageReadCB pagereadfunc,
+				   void *private_data)
 {
 	XLogReaderState *state;
 
@@ -91,6 +92,7 @@ XLogReaderAllocate(XLogPageReadCB pagereadfunc, void *private_data)
 		return NULL;
 	}
 
+	state->wal_segment_size = wal_segment_size;
 	state->read_page = pagereadfunc;
 	/* system_identifier initialized to zeroes above */
 	state->private_data = private_data;
@@ -466,8 +468,8 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 		(record->xl_info & ~XLR_INFO_MASK) == XLOG_SWITCH)
 	{
 		/* Pretend it extends to end of segment */
-		state->EndRecPtr += XLogSegSize - 1;
-		state->EndRecPtr -= state->EndRecPtr % XLogSegSize;
+		state->EndRecPtr += state->wal_segment_size - 1;
+		state->EndRecPtr -= XLogSegmentOffset(state->EndRecPtr, state->wal_segment_size);
 	}
 
 	if (DecodeXLogRecord(state, record, errormsg))
@@ -509,8 +511,8 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 
 	Assert((pageptr % XLOG_BLCKSZ) == 0);
 
-	XLByteToSeg(pageptr, targetSegNo);
-	targetPageOff = (pageptr % XLogSegSize);
+	XLByteToSeg(pageptr, targetSegNo, state->wal_segment_size);
+	targetPageOff = XLogSegmentOffset(pageptr, state->wal_segment_size);
 
 	/* check whether we have all the requested data already */
 	if (targetSegNo == state->readSegNo && targetPageOff == state->readOff &&
@@ -719,16 +721,16 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
 
 	Assert((recptr % XLOG_BLCKSZ) == 0);
 
-	XLByteToSeg(recptr, segno);
-	offset = recptr % XLogSegSize;
+	XLByteToSeg(recptr, segno, state->wal_segment_size);
+	offset = XLogSegmentOffset(recptr, state->wal_segment_size);
 
-	XLogSegNoOffsetToRecPtr(segno, offset, recaddr);
+	XLogSegNoOffsetToRecPtr(segno, offset, recaddr, state->wal_segment_size);
 
 	if (hdr->xlp_magic != XLOG_PAGE_MAGIC)
 	{
 		char		fname[MAXFNAMELEN];
 
-		XLogFileName(fname, state->readPageTLI, segno);
+		XLogFileName(fname, state->readPageTLI, segno, state->wal_segment_size);
 
 		report_invalid_record(state,
 							  "invalid magic number %04X in log segment %s, offset %u",
@@ -742,7 +744,7 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
 	{
 		char		fname[MAXFNAMELEN];
 
-		XLogFileName(fname, state->readPageTLI, segno);
+		XLogFileName(fname, state->readPageTLI, segno, state->wal_segment_size);
 
 		report_invalid_record(state,
 							  "invalid info bits %04X in log segment %s, offset %u",
@@ -775,10 +777,10 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
 								  fhdrident_str, sysident_str);
 			return false;
 		}
-		else if (longhdr->xlp_seg_size != XLogSegSize)
+		else if (longhdr->xlp_seg_size != state->wal_segment_size)
 		{
 			report_invalid_record(state,
-								  "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header");
+								  "WAL file is from different database system: incorrect segment size in page header");
 			return false;
 		}
 		else if (longhdr->xlp_xlog_blcksz != XLOG_BLCKSZ)
@@ -792,7 +794,7 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
 	{
 		char		fname[MAXFNAMELEN];
 
-		XLogFileName(fname, state->readPageTLI, segno);
+		XLogFileName(fname, state->readPageTLI, segno, state->wal_segment_size);
 
 		/* hmm, first page of file doesn't have a long header? */
 		report_invalid_record(state,
@@ -807,7 +809,7 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
 	{
 		char		fname[MAXFNAMELEN];
 
-		XLogFileName(fname, state->readPageTLI, segno);
+		XLogFileName(fname, state->readPageTLI, segno, state->wal_segment_size);
 
 		report_invalid_record(state,
 							  "unexpected pageaddr %X/%X in log segment %s, offset %u",
@@ -832,7 +834,7 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
 		{
 			char		fname[MAXFNAMELEN];
 
-			XLogFileName(fname, state->readPageTLI, segno);
+			XLogFileName(fname, state->readPageTLI, segno, state->wal_segment_size);
 
 			report_invalid_record(state,
 								  "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u",
@@ -1262,7 +1264,13 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 			{
 				if (blk->data)
 					pfree(blk->data);
-				blk->data_bufsz = blk->data_len;
+
+				/*
+				 * Force the initial request to be BLCKSZ so that we don't
+				 * waste time with lots of trips through this stanza as a
+				 * result of WAL compression.
+				 */
+				blk->data_bufsz = MAXALIGN(Max(blk->data_len, BLCKSZ));
 				blk->data = palloc(blk->data_bufsz);
 			}
 			memcpy(blk->data, ptr, blk->data_len);
@@ -1277,7 +1285,22 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 		{
 			if (state->main_data)
 				pfree(state->main_data);
-			state->main_data_bufsz = state->main_data_len;
+
+			/*
+			 * main_data_bufsz must be MAXALIGN'ed.  In many xlog record
+			 * types, we omit trailing struct padding on-disk to save a few
+			 * bytes; but compilers may generate accesses to the xlog struct
+			 * that assume that padding bytes are present.  If the palloc
+			 * request is not large enough to include such padding bytes then
+			 * we'll get valgrind complaints due to otherwise-harmless fetches
+			 * of the padding bytes.
+			 *
+			 * In addition, force the initial request to be reasonably large
+			 * so that we don't waste time with lots of trips through this
+			 * stanza.  BLCKSZ / 2 seems like a good compromise choice.
+			 */
+			state->main_data_bufsz = MAXALIGN(Max(state->main_data_len,
+												  BLCKSZ / 2));
 			state->main_data = palloc(state->main_data_bufsz);
 		}
 		memcpy(state->main_data, ptr, state->main_data_len);
@@ -1300,8 +1323,8 @@ err:
  * Returns information about the block that a block reference refers to.
  *
  * If the WAL record contains a block reference with the given ID, *rnode,
- * *forknum, and *blknum are filled in (if not NULL), and returns TRUE.
- * Otherwise returns FALSE.
+ * *forknum, and *blknum are filled in (if not NULL), and returns true.
+ * Otherwise returns false.
  */
 bool
 XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,

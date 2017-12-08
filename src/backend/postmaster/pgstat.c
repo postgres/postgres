@@ -2701,7 +2701,7 @@ CreateSharedBackendStatus(void)
 		buffer = BackendActivityBuffer;
 		for (i = 0; i < NumBackendStatSlots; i++)
 		{
-			BackendStatusArray[i].st_activity = buffer;
+			BackendStatusArray[i].st_activity_raw = buffer;
 			buffer += pgstat_track_activity_query_size;
 		}
 	}
@@ -2922,11 +2922,11 @@ pgstat_bestart(void)
 #endif
 	beentry->st_state = STATE_UNDEFINED;
 	beentry->st_appname[0] = '\0';
-	beentry->st_activity[0] = '\0';
+	beentry->st_activity_raw[0] = '\0';
 	/* Also make sure the last byte in each string area is always 0 */
 	beentry->st_clienthostname[NAMEDATALEN - 1] = '\0';
 	beentry->st_appname[NAMEDATALEN - 1] = '\0';
-	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
+	beentry->st_activity_raw[pgstat_track_activity_query_size - 1] = '\0';
 	beentry->st_progress_command = PROGRESS_COMMAND_INVALID;
 	beentry->st_progress_command_target = InvalidOid;
 
@@ -3017,7 +3017,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 			pgstat_increment_changecount_before(beentry);
 			beentry->st_state = STATE_DISABLED;
 			beentry->st_state_start_timestamp = 0;
-			beentry->st_activity[0] = '\0';
+			beentry->st_activity_raw[0] = '\0';
 			beentry->st_activity_start_timestamp = 0;
 			/* st_xact_start_timestamp and wait_event_info are also disabled */
 			beentry->st_xact_start_timestamp = 0;
@@ -3034,8 +3034,12 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	start_timestamp = GetCurrentStatementStartTimestamp();
 	if (cmd_str != NULL)
 	{
-		len = pg_mbcliplen(cmd_str, strlen(cmd_str),
-						   pgstat_track_activity_query_size - 1);
+		/*
+		 * Compute length of to-be-stored string unaware of multi-byte
+		 * characters. For speed reasons that'll get corrected on read, rather
+		 * than computed every write.
+		 */
+		len = Min(strlen(cmd_str), pgstat_track_activity_query_size - 1);
 	}
 	current_timestamp = GetCurrentTimestamp();
 
@@ -3049,8 +3053,8 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 
 	if (cmd_str != NULL)
 	{
-		memcpy((char *) beentry->st_activity, cmd_str, len);
-		beentry->st_activity[len] = '\0';
+		memcpy((char *) beentry->st_activity_raw, cmd_str, len);
+		beentry->st_activity_raw[len] = '\0';
 		beentry->st_activity_start_timestamp = start_timestamp;
 	}
 
@@ -3278,8 +3282,8 @@ pgstat_read_current_status(void)
 				 */
 				strcpy(localappname, (char *) beentry->st_appname);
 				localentry->backendStatus.st_appname = localappname;
-				strcpy(localactivity, (char *) beentry->st_activity);
-				localentry->backendStatus.st_activity = localactivity;
+				strcpy(localactivity, (char *) beentry->st_activity_raw);
+				localentry->backendStatus.st_activity_raw = localactivity;
 				localentry->backendStatus.st_ssl = beentry->st_ssl;
 #ifdef USE_SSL
 				if (beentry->st_ssl)
@@ -3481,6 +3485,12 @@ pgstat_get_wait_activity(WaitEventActivity w)
 		case WAIT_EVENT_CHECKPOINTER_MAIN:
 			event_name = "CheckpointerMain";
 			break;
+		case WAIT_EVENT_LOGICAL_LAUNCHER_MAIN:
+			event_name = "LogicalLauncherMain";
+			break;
+		case WAIT_EVENT_LOGICAL_APPLY_MAIN:
+			event_name = "LogicalApplyMain";
+			break;
 		case WAIT_EVENT_PGSTAT_MAIN:
 			event_name = "PgStatMain";
 			break;
@@ -3501,12 +3511,6 @@ pgstat_get_wait_activity(WaitEventActivity w)
 			break;
 		case WAIT_EVENT_WAL_WRITER_MAIN:
 			event_name = "WalWriterMain";
-			break;
-		case WAIT_EVENT_LOGICAL_LAUNCHER_MAIN:
-			event_name = "LogicalLauncherMain";
-			break;
-		case WAIT_EVENT_LOGICAL_APPLY_MAIN:
-			event_name = "LogicalApplyMain";
 			break;
 			/* no default case, so that compiler will warn */
 	}
@@ -3533,14 +3537,17 @@ pgstat_get_wait_client(WaitEventClient w)
 		case WAIT_EVENT_CLIENT_WRITE:
 			event_name = "ClientWrite";
 			break;
+		case WAIT_EVENT_LIBPQWALRECEIVER_CONNECT:
+			event_name = "LibPQWalReceiverConnect";
+			break;
+		case WAIT_EVENT_LIBPQWALRECEIVER_RECEIVE:
+			event_name = "LibPQWalReceiverReceive";
+			break;
 		case WAIT_EVENT_SSL_OPEN_SERVER:
 			event_name = "SSLOpenServer";
 			break;
 		case WAIT_EVENT_WAL_RECEIVER_WAIT_START:
 			event_name = "WalReceiverWaitStart";
-			break;
-		case WAIT_EVENT_LIBPQWALRECEIVER:
-			event_name = "LibPQWalReceiver";
 			break;
 		case WAIT_EVENT_WAL_SENDER_WAIT_WAL:
 			event_name = "WalSenderWaitForWAL";
@@ -3579,6 +3586,12 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_EXECUTE_GATHER:
 			event_name = "ExecuteGather";
 			break;
+		case WAIT_EVENT_LOGICAL_SYNC_DATA:
+			event_name = "LogicalSyncData";
+			break;
+		case WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE:
+			event_name = "LogicalSyncStateChange";
+			break;
 		case WAIT_EVENT_MQ_INTERNAL:
 			event_name = "MessageQueueInternal";
 			break;
@@ -3600,17 +3613,20 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_PROCARRAY_GROUP_UPDATE:
 			event_name = "ProcArrayGroupUpdate";
 			break;
+		case WAIT_EVENT_CLOG_GROUP_UPDATE:
+			event_name = "ClogGroupUpdate";
+			break;
+		case WAIT_EVENT_REPLICATION_ORIGIN_DROP:
+			event_name = "ReplicationOriginDrop";
+			break;
+		case WAIT_EVENT_REPLICATION_SLOT_DROP:
+			event_name = "ReplicationSlotDrop";
+			break;
 		case WAIT_EVENT_SAFE_SNAPSHOT:
 			event_name = "SafeSnapshot";
 			break;
 		case WAIT_EVENT_SYNC_REP:
 			event_name = "SyncRep";
-			break;
-		case WAIT_EVENT_LOGICAL_SYNC_DATA:
-			event_name = "LogicalSyncData";
-			break;
-		case WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE:
-			event_name = "LogicalSyncStateChange";
 			break;
 			/* no default case, so that compiler will warn */
 	}
@@ -3933,10 +3949,13 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
 			/* Now it is safe to use the non-volatile pointer */
 			if (checkUser && !superuser() && beentry->st_userid != GetUserId())
 				return "<insufficient privilege>";
-			else if (*(beentry->st_activity) == '\0')
+			else if (*(beentry->st_activity_raw) == '\0')
 				return "<command string not enabled>";
 			else
-				return beentry->st_activity;
+			{
+				/* this'll leak a bit of memory, but that seems acceptable */
+				return pgstat_clip_activity(beentry->st_activity_raw);
+			}
 		}
 
 		beentry++;
@@ -3982,7 +4001,7 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 		if (beentry->st_procpid == pid)
 		{
 			/* Read pointer just once, so it can't change after validation */
-			const char *activity = beentry->st_activity;
+			const char *activity = beentry->st_activity_raw;
 			const char *activity_last;
 
 			/*
@@ -4005,7 +4024,8 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 			/*
 			 * Copy only ASCII-safe characters so we don't run into encoding
 			 * problems when reporting the message; and be sure not to run off
-			 * the end of memory.
+			 * the end of memory.  As only ASCII characters are reported, it
+			 * doesn't seem necessary to perform multibyte aware clipping.
 			 */
 			ascii_safe_strlcpy(buffer, activity,
 							   Min(buflen, pgstat_track_activity_query_size));
@@ -4204,7 +4224,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	/*
 	 * Identify myself via ps
 	 */
-	init_ps_display("stats collector process", "", "", "");
+	init_ps_display("stats collector", "", "", "");
 
 	/*
 	 * Read in existing stats files or initialize the stats to zero.
@@ -5250,7 +5270,7 @@ done:
  * pgstat_read_db_statsfile_timestamp() -
  *
  *	Attempt to determine the timestamp of the last db statfile write.
- *	Returns TRUE if successful; the timestamp is stored in *ts.
+ *	Returns true if successful; the timestamp is stored in *ts.
  *
  *	This needs to be careful about handling databases for which no stats file
  *	exists, such as databases without a stat entry or those not yet written:
@@ -6257,4 +6277,48 @@ pgstat_db_requested(Oid databaseid)
 		return true;
 
 	return false;
+}
+
+/*
+ * Convert a potentially unsafely truncated activity string (see
+ * PgBackendStatus.st_activity_raw's documentation) into a correctly truncated
+ * one.
+ *
+ * The returned string is allocated in the caller's memory context and may be
+ * freed.
+ */
+char *
+pgstat_clip_activity(const char *raw_activity)
+{
+	char	   *activity;
+	int			rawlen;
+	int			cliplen;
+
+	/*
+	 * Some callers, like pgstat_get_backend_current_activity(), do not
+	 * guarantee that the buffer isn't concurrently modified. We try to take
+	 * care that the buffer is always terminated by a NUL byte regardless, but
+	 * let's still be paranoid about the string's length. In those cases the
+	 * underlying buffer is guaranteed to be pgstat_track_activity_query_size
+	 * large.
+	 */
+	activity = pnstrdup(raw_activity, pgstat_track_activity_query_size - 1);
+
+	/* now double-guaranteed to be NUL terminated */
+	rawlen = strlen(activity);
+
+	/*
+	 * All supported server-encodings make it possible to determine the length
+	 * of a multi-byte character from its first byte (this is not the case for
+	 * client encodings, see GB18030). As st_activity is always stored using
+	 * server encoding, this allows us to perform multi-byte aware truncation,
+	 * even if the string earlier was truncated in the middle of a multi-byte
+	 * character.
+	 */
+	cliplen = pg_mbcliplen(activity, rawlen,
+						   pgstat_track_activity_query_size - 1);
+
+	activity[cliplen] = '\0';
+
+	return activity;
 }

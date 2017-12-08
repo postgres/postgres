@@ -96,9 +96,11 @@ undefine([Ac_cachevar])dnl
 # PGAC_TYPE_128BIT_INT
 # ---------------------
 # Check if __int128 is a working 128 bit integer type, and if so
-# define PG_INT128_TYPE to that typename.  This currently only detects
-# a GCC/clang extension, but support for different environments may be
-# added in the future.
+# define PG_INT128_TYPE to that typename, and define ALIGNOF_PG_INT128_TYPE
+# as its alignment requirement.
+#
+# This currently only detects a GCC/clang extension, but support for other
+# environments may be added in the future.
 #
 # For the moment we only test for support for 128bit math; support for
 # 128bit literals and snprintf is not required.
@@ -128,6 +130,7 @@ return 1;
 [pgac_cv__128bit_int=no])])
 if test x"$pgac_cv__128bit_int" = xyes ; then
   AC_DEFINE(PG_INT128_TYPE, __int128, [Define to the name of a signed 128-bit integer type.])
+  AC_CHECK_ALIGNOF(PG_INT128_TYPE)
 fi])# PGAC_TYPE_128BIT_INT
 
 
@@ -222,6 +225,23 @@ if test x"$pgac_cv__types_compatible" = xyes ; then
 AC_DEFINE(HAVE__BUILTIN_TYPES_COMPATIBLE_P, 1,
           [Define to 1 if your compiler understands __builtin_types_compatible_p.])
 fi])# PGAC_C_TYPES_COMPATIBLE
+
+
+# PGAC_C_BUILTIN_BSWAP16
+# -------------------------
+# Check if the C compiler understands __builtin_bswap16(),
+# and define HAVE__BUILTIN_BSWAP16 if so.
+AC_DEFUN([PGAC_C_BUILTIN_BSWAP16],
+[AC_CACHE_CHECK(for __builtin_bswap16, pgac_cv__builtin_bswap16,
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[static unsigned long int x = __builtin_bswap16(0xaabb);]
+)],
+[pgac_cv__builtin_bswap16=yes],
+[pgac_cv__builtin_bswap16=no])])
+if test x"$pgac_cv__builtin_bswap16" = xyes ; then
+AC_DEFINE(HAVE__BUILTIN_BSWAP16, 1,
+          [Define to 1 if your compiler understands __builtin_bswap16.])
+fi])# PGAC_C_BUILTIN_BSWAP16
 
 
 

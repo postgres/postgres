@@ -107,8 +107,9 @@ _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 	pageop->btpo_flags = BTP_META;
 
 	/*
-	 * Set pd_lower just past the end of the metadata.  This is not essential
-	 * but it makes the page look compressible to xlog.c.
+	 * Set pd_lower just past the end of the metadata.  This is essential,
+	 * because without doing so, metadata will be lost if xlog.c compresses
+	 * the page.
 	 */
 	((PageHeader) metapg)->pd_lower =
 		((char *) md + sizeof(BTMetaPageData)) - (char *) metapg;
@@ -135,7 +136,7 @@ _bt_clear_incomplete_split(XLogReaderState *record, uint8 block_id)
 		Page		page = (Page) BufferGetPage(buf);
 		BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-		Assert((pageop->btpo_flags & BTP_INCOMPLETE_SPLIT) != 0);
+		Assert(P_INCOMPLETE_SPLIT(pageop));
 		pageop->btpo_flags &= ~BTP_INCOMPLETE_SPLIT;
 
 		PageSetLSN(page, lsn);
@@ -193,7 +194,7 @@ btree_xlog_insert(bool isleaf, bool ismeta, XLogReaderState *record)
 }
 
 static void
-btree_xlog_split(bool onleft, bool isroot, XLogReaderState *record)
+btree_xlog_split(bool onleft, XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_btree_split *xlrec = (xl_btree_split *) XLogRecGetData(record);
@@ -598,7 +599,7 @@ btree_xlog_delete_get_latestRemovedXid(XLogReaderState *record)
 			UnlockReleaseBuffer(ibuffer);
 			return InvalidTransactionId;
 		}
-		LockBuffer(hbuffer, BUFFER_LOCK_SHARE);
+		LockBuffer(hbuffer, BT_READ);
 		hpage = (Page) BufferGetPage(hbuffer);
 
 		/*
@@ -996,16 +997,10 @@ btree_redo(XLogReaderState *record)
 			btree_xlog_insert(false, true, record);
 			break;
 		case XLOG_BTREE_SPLIT_L:
-			btree_xlog_split(true, false, record);
+			btree_xlog_split(true, record);
 			break;
 		case XLOG_BTREE_SPLIT_R:
-			btree_xlog_split(false, false, record);
-			break;
-		case XLOG_BTREE_SPLIT_L_ROOT:
-			btree_xlog_split(true, true, record);
-			break;
-		case XLOG_BTREE_SPLIT_R_ROOT:
-			btree_xlog_split(false, true, record);
+			btree_xlog_split(false, record);
 			break;
 		case XLOG_BTREE_VACUUM:
 			btree_xlog_vacuum(record);
@@ -1040,7 +1035,7 @@ btree_mask(char *pagedata, BlockNumber blkno)
 	Page		page = (Page) pagedata;
 	BTPageOpaque maskopaq;
 
-	mask_page_lsn(page);
+	mask_page_lsn_and_checksum(page);
 
 	mask_page_hint_bits(page);
 	mask_unused_space(page);

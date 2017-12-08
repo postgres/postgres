@@ -344,6 +344,8 @@ BackgroundWorkerStateChange(void)
 		 */
 		ascii_safe_strlcpy(rw->rw_worker.bgw_name,
 						   slot->worker.bgw_name, BGW_MAXLEN);
+		ascii_safe_strlcpy(rw->rw_worker.bgw_type,
+						   slot->worker.bgw_type, BGW_MAXLEN);
 		ascii_safe_strlcpy(rw->rw_worker.bgw_library_name,
 						   slot->worker.bgw_library_name, BGW_MAXLEN);
 		ascii_safe_strlcpy(rw->rw_worker.bgw_function_name,
@@ -630,6 +632,12 @@ SanityCheckBackgroundWorker(BackgroundWorker *worker, int elevel)
 		return false;
 	}
 
+	/*
+	 * If bgw_type is not filled in, use bgw_name.
+	 */
+	if (strcmp(worker->bgw_type, "") == 0)
+		strcpy(worker->bgw_type, worker->bgw_name);
+
 	return true;
 }
 
@@ -671,7 +679,7 @@ bgworker_die(SIGNAL_ARGS)
 	ereport(FATAL,
 			(errcode(ERRCODE_ADMIN_SHUTDOWN),
 			 errmsg("terminating background worker \"%s\" due to administrator command",
-					MyBgworkerEntry->bgw_name)));
+					MyBgworkerEntry->bgw_type)));
 }
 
 /*
@@ -700,7 +708,6 @@ void
 StartBackgroundWorker(void)
 {
 	sigjmp_buf	local_sigjmp_buf;
-	char		buf[MAXPGPATH];
 	BackgroundWorker *worker = MyBgworkerEntry;
 	bgworker_main_type entrypt;
 
@@ -710,8 +717,7 @@ StartBackgroundWorker(void)
 	IsBackgroundWorker = true;
 
 	/* Identify myself via ps */
-	snprintf(buf, MAXPGPATH, "bgworker: %s", worker->bgw_name);
-	init_ps_display(buf, "", "", "");
+	init_ps_display(worker->bgw_name, "", "", "");
 
 	/*
 	 * If we're not supposed to have shared memory access, then detach from
@@ -1028,14 +1034,18 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
  * Get the PID of a dynamically-registered background worker.
  *
  * If the worker is determined to be running, the return value will be
- * BGWH_STARTED and *pidp will get the PID of the worker process.
- * Otherwise, the return value will be BGWH_NOT_YET_STARTED if the worker
- * hasn't been started yet, and BGWH_STOPPED if the worker was previously
- * running but is no longer.
+ * BGWH_STARTED and *pidp will get the PID of the worker process.  If the
+ * postmaster has not yet attempted to start the worker, the return value will
+ * be BGWH_NOT_YET_STARTED.  Otherwise, the return value is BGWH_STOPPED.
  *
- * In the latter case, the worker may be stopped temporarily (if it is
- * configured for automatic restart and exited non-zero) or gone for
- * good (if it exited with code 0 or if it is configured not to restart).
+ * BGWH_STOPPED can indicate either that the worker is temporarily stopped
+ * (because it is configured for automatic restart and exited non-zero),
+ * or that the worker is permanently stopped (because it exited with exit
+ * code 0, or was not configured for automatic restart), or even that the
+ * worker was unregistered without ever starting (either because startup
+ * failed and the worker is not configured for automatic restart, or because
+ * TerminateBackgroundWorker was used before the worker was successfully
+ * started).
  */
 BgwHandleStatus
 GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pid_t *pidp)
@@ -1060,8 +1070,11 @@ GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pid_t *pidp)
 	 * time, but we assume such changes are atomic.  So the value we read
 	 * won't be garbage, but it might be out of date by the time the caller
 	 * examines it (but that's unavoidable anyway).
+	 *
+	 * The in_use flag could be in the process of changing from true to false,
+	 * but if it is already false then it can't change further.
 	 */
-	if (handle->generation != slot->generation)
+	if (handle->generation != slot->generation || !slot->in_use)
 		pid = 0;
 	else
 		pid = slot->pid;
@@ -1232,4 +1245,41 @@ LookupBackgroundWorkerFunction(const char *libraryname, const char *funcname)
 	/* Otherwise load from external library. */
 	return (bgworker_main_type)
 		load_external_function(libraryname, funcname, true, NULL);
+}
+
+/*
+ * Given a PID, get the bgw_type of the background worker.  Returns NULL if
+ * not a valid background worker.
+ *
+ * The return value is in static memory belonging to this function, so it has
+ * to be used before calling this function again.  This is so that the caller
+ * doesn't have to worry about the background worker locking protocol.
+ */
+const char *
+GetBackgroundWorkerTypeByPid(pid_t pid)
+{
+	int			slotno;
+	bool		found = false;
+	static char result[BGW_MAXLEN];
+
+	LWLockAcquire(BackgroundWorkerLock, LW_SHARED);
+
+	for (slotno = 0; slotno < BackgroundWorkerData->total_slots; slotno++)
+	{
+		BackgroundWorkerSlot *slot = &BackgroundWorkerData->slot[slotno];
+
+		if (slot->pid > 0 && slot->pid == pid)
+		{
+			strcpy(result, slot->worker.bgw_type);
+			found = true;
+			break;
+		}
+	}
+
+	LWLockRelease(BackgroundWorkerLock);
+
+	if (!found)
+		return NULL;
+
+	return result;
 }

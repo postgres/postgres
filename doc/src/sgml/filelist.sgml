@@ -110,7 +110,6 @@
 <!ENTITY bloom           SYSTEM "bloom.sgml">
 <!ENTITY btree-gin       SYSTEM "btree-gin.sgml">
 <!ENTITY btree-gist      SYSTEM "btree-gist.sgml">
-<!ENTITY chkpass         SYSTEM "chkpass.sgml">
 <!ENTITY citext          SYSTEM "citext.sgml">
 <!ENTITY cube            SYSTEM "cube.sgml">
 <!ENTITY dblink          SYSTEM "dblink.sgml">
@@ -157,7 +156,6 @@
 <!ENTITY xml2            SYSTEM "xml2.sgml">
 
 <!-- appendixes -->
-<!ENTITY contacts   SYSTEM "contacts.sgml">
 <!ENTITY datetime   SYSTEM "datetime.sgml">
 <!ENTITY docguide   SYSTEM "docguide.sgml">
 <!ENTITY errcodes   SYSTEM "errcodes.sgml">
@@ -191,12 +189,3 @@
 
 <!-- back matter -->
 <!ENTITY biblio     SYSTEM "biblio.sgml">
-
-<!--
- Some parts of the documentation are also source for some plain-text
- files used during installation.  To selectively ignore or include
- some parts (e.g., external xref's) when generating these files we use
- these parameter entities.  See also standalone-install.sgml.
- -->
-<!ENTITY % standalone-ignore  "INCLUDE">
-<!ENTITY % standalone-include "IGNORE">

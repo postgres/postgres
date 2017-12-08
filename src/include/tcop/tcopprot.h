@@ -45,7 +45,7 @@ typedef enum
 	LOGSTMT_ALL					/* log all statements */
 } LogStmtLevel;
 
-extern int	log_statement;
+extern PGDLLIMPORT int log_statement;
 
 extern List *pg_parse_query(const char *query_string);
 extern List *pg_analyze_and_rewrite(RawStmt *parsetree,

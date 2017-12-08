@@ -110,5 +110,5 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 41 "twophase.pgc"
 
 
-	return (0);
+	return 0;
 }

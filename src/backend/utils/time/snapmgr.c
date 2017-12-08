@@ -625,7 +625,7 @@ SetTransactionSnapshot(Snapshot sourcesnap, VirtualTransactionId *sourcevxid,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not import the requested snapshot"),
-				 errdetail("The source process with pid %d is not running anymore.",
+				 errdetail("The source process with PID %d is not running anymore.",
 						   sourcepid)));
 
 	/*
@@ -1619,32 +1619,38 @@ DeleteAllExportedSnapshotFiles(void)
 	DIR		   *s_dir;
 	struct dirent *s_de;
 
-	if (!(s_dir = AllocateDir(SNAPSHOT_EXPORT_DIR)))
-	{
-		/*
-		 * We really should have that directory in a sane cluster setup. But
-		 * then again if we don't, it's not fatal enough to make it FATAL.
-		 * Since we're running in the postmaster, LOG is our best bet.
-		 */
-		elog(LOG, "could not open directory \"%s\": %m", SNAPSHOT_EXPORT_DIR);
-		return;
-	}
+	/*
+	 * Problems in reading the directory, or unlinking files, are reported at
+	 * LOG level.  Since we're running in the startup process, ERROR level
+	 * would prevent database start, and it's not important enough for that.
+	 */
+	s_dir = AllocateDir(SNAPSHOT_EXPORT_DIR);
 
-	while ((s_de = ReadDir(s_dir, SNAPSHOT_EXPORT_DIR)) != NULL)
+	while ((s_de = ReadDirExtended(s_dir, SNAPSHOT_EXPORT_DIR, LOG)) != NULL)
 	{
 		if (strcmp(s_de->d_name, ".") == 0 ||
 			strcmp(s_de->d_name, "..") == 0)
 			continue;
 
 		snprintf(buf, sizeof(buf), SNAPSHOT_EXPORT_DIR "/%s", s_de->d_name);
-		/* Again, unlink failure is not worthy of FATAL */
-		if (unlink(buf))
-			elog(LOG, "could not unlink file \"%s\": %m", buf);
+
+		if (unlink(buf) != 0)
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m", buf)));
 	}
 
 	FreeDir(s_dir);
 }
 
+/*
+ * ThereAreNoPriorRegisteredSnapshots
+ *		Is the registered snapshot count less than or equal to one?
+ *
+ * Don't use this to settle important decisions.  While zero registrations and
+ * no ActiveSnapshot would confirm a certain idleness, the system makes no
+ * guarantees about the significance of one registered snapshot.
+ */
 bool
 ThereAreNoPriorRegisteredSnapshots(void)
 {

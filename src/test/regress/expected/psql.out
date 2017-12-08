@@ -8,7 +8,7 @@
 invalid variable name: "invalid/name"
 -- fail: invalid value for special variable
 \set AUTOCOMMIT foo
-unrecognized value "foo" for "AUTOCOMMIT": boolean expected
+unrecognized value "foo" for "AUTOCOMMIT": Boolean expected
 \set FETCH_COUNT foo
 invalid value "foo" for "FETCH_COUNT": integer expected
 -- check handling of built-in boolean variable
@@ -51,6 +51,31 @@ four  | 4
      3 |    4
 (1 row)
 
+-- \gx should work in FETCH_COUNT mode too
+\set FETCH_COUNT 1
+SELECT 1 as one, 2 as two \g
+ one | two 
+-----+-----
+   1 |   2
+(1 row)
+
+\gx
+-[ RECORD 1 ]
+one | 1
+two | 2
+
+SELECT 3 as three, 4 as four \gx
+-[ RECORD 1 ]
+three | 3
+four  | 4
+
+\g
+ three | four 
+-------+------
+     3 |    4
+(1 row)
+
+\unset FETCH_COUNT
 -- \gset
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 \echo :pref01_test01 :pref01_test02 :pref01_test03
@@ -101,6 +126,91 @@ more than one row returned for \gset
 select 10 as test01, 20 as test02 from generate_series(1,0) \gset
 no rows returned for \gset
 \unset FETCH_COUNT
+-- \gdesc
+SELECT
+    NULL AS zero,
+    1 AS one,
+    2.0 AS two,
+    'three' AS three,
+    $1 AS four,
+    sin($2) as five,
+    'foo'::varchar(4) as six,
+    CURRENT_DATE AS now
+\gdesc
+ Column |         Type         
+--------+----------------------
+ zero   | text
+ one    | integer
+ two    | numeric
+ three  | text
+ four   | text
+ five   | double precision
+ six    | character varying(4)
+ now    | date
+(8 rows)
+
+-- should work with tuple-returning utilities, such as EXECUTE
+PREPARE test AS SELECT 1 AS first, 2 AS second;
+EXECUTE test \gdesc
+ Column |  Type   
+--------+---------
+ first  | integer
+ second | integer
+(2 rows)
+
+EXPLAIN EXECUTE test \gdesc
+   Column   | Type 
+------------+------
+ QUERY PLAN | text
+(1 row)
+
+-- should fail cleanly - syntax error
+SELECT 1 + \gdesc
+ERROR:  syntax error at end of input
+LINE 1: SELECT 1 + 
+                   ^
+-- check behavior with empty results
+SELECT \gdesc
+The command has no result, or the result has no columns.
+CREATE TABLE bububu(a int) \gdesc
+The command has no result, or the result has no columns.
+-- subject command should not have executed
+TABLE bububu;  -- fail
+ERROR:  relation "bububu" does not exist
+LINE 1: TABLE bububu;
+              ^
+-- query buffer should remain unchanged
+SELECT 1 AS x, 'Hello', 2 AS y, true AS "dirty\name"
+\gdesc
+   Column   |  Type   
+------------+---------
+ x          | integer
+ ?column?   | text
+ y          | integer
+ dirty\name | boolean
+(4 rows)
+
+\g
+ x | ?column? | y | dirty\name 
+---+----------+---+------------
+ 1 | Hello    | 2 | t
+(1 row)
+
+-- all on one line
+SELECT 3 AS x, 'Hello', 4 AS y, true AS "dirty\name" \gdesc \g
+   Column   |  Type   
+------------+---------
+ x          | integer
+ ?column?   | text
+ y          | integer
+ dirty\name | boolean
+(4 rows)
+
+ x | ?column? | y | dirty\name 
+---+----------+---+------------
+ 3 | Hello    | 4 | t
+(1 row)
+
 -- \gexec
 create temporary table gexec_test(a int, b text, c date, d float);
 select format('create index on gexec_test(%I)', attname)
@@ -2829,7 +2939,7 @@ second thing true
 \endif
 -- invalid boolean expressions are false
 \if invalid boolean expression
-unrecognized value "invalid boolean expression" for "\if expression": boolean expected
+unrecognized value "invalid boolean expression" for "\if expression": Boolean expected
 	\echo 'will not print #6-1'
 \else
 	\echo 'will print anyway #6-2'
@@ -2904,6 +3014,32 @@ bar 'bar' "bar"
 	\echo 'should print #8-1'
 should print #8-1
 \endif
+-- :{?...} defined variable test
+\set i 1
+\if :{?i}
+  \echo '#9-1 ok, variable i is defined'
+#9-1 ok, variable i is defined
+\else
+  \echo 'should not print #9-2'
+\endif
+\if :{?no_such_variable}
+  \echo 'should not print #10-1'
+\else
+  \echo '#10-2 ok, variable no_such_variable is not defined'
+#10-2 ok, variable no_such_variable is not defined
+\endif
+SELECT :{?i} AS i_is_defined;
+ i_is_defined 
+--------------
+ t
+(1 row)
+
+SELECT NOT :{?no_such_var} AS no_such_var_is_not_defined;
+ no_such_var_is_not_defined 
+----------------------------
+ t
+(1 row)
+
 -- SHOW_CONTEXT
 \set SHOW_CONTEXT never
 do $$
@@ -2964,3 +3100,146 @@ SELECT 3
 UNION SELECT 4 
 UNION SELECT 5
 ORDER BY 1;
+-- tests for special result variables
+-- working query, 2 rows selected
+SELECT 1 AS stuff UNION SELECT 2;
+ stuff 
+-------
+     1
+     2
+(2 rows)
+
+\echo 'error:' :ERROR
+error: false
+\echo 'error code:' :SQLSTATE
+error code: 00000
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 2
+-- syntax error
+SELECT 1 UNION;
+ERROR:  syntax error at or near ";"
+LINE 1: SELECT 1 UNION;
+                      ^
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 42601
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: syntax error at or near ";"
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 42601
+-- empty query
+;
+\echo 'error:' :ERROR
+error: false
+\echo 'error code:' :SQLSTATE
+error code: 00000
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+-- must have kept previous values
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: syntax error at or near ";"
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 42601
+-- other query error
+DROP TABLE this_table_does_not_exist;
+ERROR:  table "this_table_does_not_exist" does not exist
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 42P01
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: table "this_table_does_not_exist" does not exist
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 42P01
+-- working \gdesc
+SELECT 3 AS three, 4 AS four \gdesc
+ Column |  Type   
+--------+---------
+ three  | integer
+ four   | integer
+(2 rows)
+
+\echo 'error:' :ERROR
+error: false
+\echo 'error code:' :SQLSTATE
+error code: 00000
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 2
+-- \gdesc with an error
+SELECT 4 AS \gdesc
+ERROR:  syntax error at end of input
+LINE 1: SELECT 4 AS 
+                    ^
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 42601
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: syntax error at end of input
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 42601
+-- check row count for a cursor-fetched query
+\set FETCH_COUNT 10
+select unique2 from tenk1 order by unique2 limit 19;
+ unique2 
+---------
+       0
+       1
+       2
+       3
+       4
+       5
+       6
+       7
+       8
+       9
+      10
+      11
+      12
+      13
+      14
+      15
+      16
+      17
+      18
+(19 rows)
+
+\echo 'error:' :ERROR
+error: false
+\echo 'error code:' :SQLSTATE
+error code: 00000
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 19
+-- cursor-fetched query with an error after the first group
+select 1/(15-unique2) from tenk1 order by unique2 limit 19;
+ ?column? 
+----------
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+ERROR:  division by zero
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 22012
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: division by zero
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 22012
+\unset FETCH_COUNT

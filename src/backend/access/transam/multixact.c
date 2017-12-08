@@ -939,7 +939,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 
 	debug_elog3(DEBUG2, "GetNew: for %d xids", nmembers);
 
-	/* safety check, we should never get this far in a HS slave */
+	/* safety check, we should never get this far in a HS standby */
 	if (RecoveryInProgress())
 		elog(ERROR, "cannot assign MultiXactIds during recovery");
 
@@ -1892,7 +1892,7 @@ BootStrapMultiXact(void)
 
 /*
  * Initialize (or reinitialize) a page of MultiXactOffset to zeroes.
- * If writeXlog is TRUE, also emit an XLOG record saying we did this.
+ * If writeXlog is true, also emit an XLOG record saying we did this.
  *
  * The page is not actually written, just set up in shared memory.
  * The slot number of the new page is returned.

@@ -12,7 +12,11 @@ override CPPFLAGS += -DPLPERL_HAVE_UID_GID
 override CPPFLAGS += -Wno-comment
 endif
 
-override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
+# Note: we need to make sure that the CORE directory is included last,
+# probably because it sometimes contains some header files with names
+# that clash with some of ours, or with some that we include, notably on
+# Windows.
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) $(perl_embed_ccflags) -I$(perl_archlibexp)/CORE
 
 rpathdir = $(perl_archlibexp)/CORE
 
@@ -51,7 +55,7 @@ endif # win32
 SHLIB_LINK = $(perl_embed_ldflags)
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=plperl  --load-extension=plperlu
-REGRESS = plperl plperl_lc plperl_trigger plperl_shared plperl_elog plperl_util plperl_init plperlu plperl_array
+REGRESS = plperl plperl_lc plperl_trigger plperl_shared plperl_elog plperl_util plperl_init plperlu plperl_array plperl_call
 # if Perl can support two interpreters in one backend,
 # test plperl-and-plperlu cases
 ifneq ($(PERL),)
@@ -77,13 +81,14 @@ perlchunks.h: $(PERLCHUNKS)
 
 all: all-lib
 
-SPI.c: SPI.xs plperl_helpers.h
+%.c: %.xs
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
+# xsubpp -output option is required for coverage+vpath, but requires Perl 5.9.3
+ifeq ($(enable_coverage)$(vpath_build),yesyes)
+	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap -output $@ $<
+else
 	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
-
-Util.c: Util.xs plperl_helpers.h
-	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
-	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
+endif
 
 
 install: all install-lib install-data

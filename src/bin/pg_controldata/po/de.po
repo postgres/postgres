@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-03-10 20:16+0000\n"
-"PO-Revision-Date: 2017-03-10 15:42-0500\n"
+"POT-Creation-Date: 2017-08-04 21:46+0000\n"
+"PO-Revision-Date: 2017-08-04 18:16-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -449,7 +449,6 @@ msgid "Data page checksum version:           %u\n"
 msgstr "Datenseitenprüfsummenversion:                %u\n"
 
 #: pg_controldata.c:311
-#, fuzzy, c-format
-#| msgid "Prior checkpoint location:            %X/%X\n"
+#, c-format
 msgid "Mock authentication nonce:            %s\n"
-msgstr "Position des vorletzten Checkpoints:         %X/%X\n"
+msgstr "Mock-Authentifizierungs-Nonce:               %s\n"

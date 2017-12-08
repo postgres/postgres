@@ -317,7 +317,7 @@ pg_md5_binary(const void *buff, size_t len, void *outbuf)
  * Output format is "md5" followed by a 32-hex-digit MD5 checksum.
  * Hence, the output buffer "buf" must be at least 36 bytes long.
  *
- * Returns TRUE if okay, FALSE on error (out of memory).
+ * Returns true if okay, false on error (out of memory).
  */
 bool
 pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,

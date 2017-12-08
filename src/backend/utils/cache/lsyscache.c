@@ -186,7 +186,7 @@ get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
  *		determine its opfamily, its declared input datatype, and its
  *		strategy number (BTLessStrategyNumber or BTGreaterStrategyNumber).
  *
- * Returns TRUE if successful, FALSE if no matching pg_amop entry exists.
+ * Returns true if successful, false if no matching pg_amop entry exists.
  * (This indicates that the operator is not a valid ordering operator.)
  *
  * Note: the operator could be registered in multiple families, for example
@@ -254,8 +254,8 @@ get_ordering_op_properties(Oid opno,
  *		Get the OID of the datatype-specific btree equality operator
  *		associated with an ordering operator (a "<" or ">" operator).
  *
- * If "reverse" isn't NULL, also set *reverse to FALSE if the operator is "<",
- * TRUE if it's ">"
+ * If "reverse" isn't NULL, also set *reverse to false if the operator is "<",
+ * true if it's ">"
  *
  * Returns InvalidOid if no matching equality operator can be found.
  * (This indicates that the operator is not a valid ordering operator.)
@@ -490,8 +490,8 @@ get_compatible_hash_operators(Oid opno,
 
 /*
  * get_op_hash_functions
- *		Get the OID(s) of hash support function(s) compatible with the given
- *		operator, operating on its LHS and/or RHS datatype as required.
+ *		Get the OID(s) of the standard hash support function(s) compatible with
+ *		the given operator, operating on its LHS and/or RHS datatype as required.
  *
  * A function for the LHS type is sought and returned into *lhs_procno if
  * lhs_procno isn't NULL.  Similarly, a function for the RHS type is sought
@@ -542,7 +542,7 @@ get_op_hash_functions(Oid opno,
 				*lhs_procno = get_opfamily_proc(aform->amopfamily,
 												aform->amoplefttype,
 												aform->amoplefttype,
-												HASHPROC);
+												HASHSTANDARD_PROC);
 				if (!OidIsValid(*lhs_procno))
 					continue;
 				/* Matching LHS found, done if caller doesn't want RHS */
@@ -564,7 +564,7 @@ get_op_hash_functions(Oid opno,
 				*rhs_procno = get_opfamily_proc(aform->amopfamily,
 												aform->amoprighttype,
 												aform->amoprighttype,
-												HASHPROC);
+												HASHSTANDARD_PROC);
 				if (!OidIsValid(*rhs_procno))
 				{
 					/* Forget any LHS function from this opfamily */
@@ -682,7 +682,7 @@ get_op_btree_interpretation(Oid opno)
 
 /*
  * equality_ops_are_compatible
- *		Return TRUE if the two given equality operators have compatible
+ *		Return true if the two given equality operators have compatible
  *		semantics.
  *
  * This is trivially true if they are the same operator.  Otherwise,
@@ -1615,6 +1615,25 @@ func_parallel(Oid funcid)
 }
 
 /*
+ * get_func_isagg
+ *	   Given procedure id, return the function's proisagg field.
+ */
+bool
+get_func_isagg(Oid funcid)
+{
+	HeapTuple	tp;
+	bool		result;
+
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	result = ((Form_pg_proc) GETSTRUCT(tp))->proisagg;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
  * get_func_leakproof
  *	   Given procedure id, return the function's leakproof field.
  */
@@ -2398,12 +2417,26 @@ get_typtype(Oid typid)
  * type_is_rowtype
  *
  *		Convenience function to determine whether a type OID represents
- *		a "rowtype" type --- either RECORD or a named composite type.
+ *		a "rowtype" type --- either RECORD or a named composite type
+ *		(including a domain over a named composite type).
  */
 bool
 type_is_rowtype(Oid typid)
 {
-	return (typid == RECORDOID || get_typtype(typid) == TYPTYPE_COMPOSITE);
+	if (typid == RECORDOID)
+		return true;			/* easy case */
+	switch (get_typtype(typid))
+	{
+		case TYPTYPE_COMPOSITE:
+			return true;
+		case TYPTYPE_DOMAIN:
+			if (get_typtype(getBaseType(typid)) == TYPTYPE_COMPOSITE)
+				return true;
+			break;
+		default:
+			break;
+	}
+	return false;
 }
 
 /*
@@ -2854,7 +2887,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * get_attstatsslot
  *
  *		Extract the contents of a "slot" of a pg_statistic tuple.
- *		Returns TRUE if requested slot type was found, else FALSE.
+ *		Returns true if requested slot type was found, else false.
  *
  * Unlike other routines in this file, this takes a pointer to an
  * already-looked-up tuple in the pg_statistic cache.  We do this since
@@ -2870,7 +2903,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * reqop: STAOP value wanted, or InvalidOid if don't care.
  * flags: bitmask of ATTSTATSSLOT_VALUES and/or ATTSTATSSLOT_NUMBERS.
  *
- * If a matching slot is found, TRUE is returned, and *sslot is filled thus:
+ * If a matching slot is found, true is returned, and *sslot is filled thus:
  * staop: receives the actual STAOP value.
  * valuetype: receives actual datatype of the elements of stavalues.
  * values: receives pointer to an array of the slot's stavalues.
@@ -2882,7 +2915,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * wasn't specified.  Likewise, numbers/nnumbers are NULL/0 if
  * ATTSTATSSLOT_NUMBERS wasn't specified.
  *
- * If no matching slot is found, FALSE is returned, and *sslot is zeroed.
+ * If no matching slot is found, false is returned, and *sslot is zeroed.
  *
  * The data referred to by the fields of sslot is locally palloc'd and
  * is independent of the original pg_statistic tuple.  When the caller

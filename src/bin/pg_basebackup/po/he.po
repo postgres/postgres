@@ -1,0 +1,1405 @@
+# Hebrew message translation file for pg_basebackup
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Michael Goldberg <mic.goldbrg@gmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_basebackup (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2017-05-17 03:16+0000\n"
+"PO-Revision-Date: 2017-05-17 14:22+0300\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Last-Translator: Michael Goldberg <mic.goldbrg@gmail.com>, 2017.\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.0.2\n"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98
+#, c-format
+msgid "out of memory\n"
+msgstr "אין זיכרון פנוי\n"
+
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "לא ניתן לשכפל מצביע ריק (שגיאה פנימית)\n"
+
+#: ../../common/file_utils.c:82 ../../common/file_utils.c:186
+#: pg_receivewal.c:252 pg_recvlogical.c:353
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "תכנית %s: לא היה ניתן לקבל מידע (stat) על קובץ  \"%s\": %s\n"
+
+#: ../../common/file_utils.c:162 pg_receivewal.c:153
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לפתוח תיקייה \"%s\": %s\n"
+
+#: ../../common/file_utils.c:198 pg_receivewal.c:320
+#, c-format
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לקרוא מתיקייה \"%s\": %s\n"
+
+#: ../../common/file_utils.c:231 ../../common/file_utils.c:291
+#: ../../common/file_utils.c:367
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לפתוח קובץ \"%s\": %s\n"
+
+#: ../../common/file_utils.c:304 ../../common/file_utils.c:376 receivelog.c:802
+#: receivelog.c:1059
+#, c-format
+msgid "%s: could not fsync file \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן להעביר תוכן הקובץ (fsync) לדיסק \"%s\": %s\n"
+
+#: ../../common/file_utils.c:387
+#, c-format
+msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לשנות שם הקובץ \"%s\" \"%s\": %s\n"
+
+#: pg_basebackup.c:159
+#, c-format
+msgid "%s: removing data directory \"%s\"\n"
+msgstr "תכנית %s:  הסרת ספריית נתונים \"%s\"\n"
+
+#: pg_basebackup.c:162
+#, c-format
+msgid "%s: failed to remove data directory\n"
+msgstr "תכנית %s:  כשל בלהסיר את ספריית הנתונים\n"
+
+#: pg_basebackup.c:168
+#, c-format
+msgid "%s: removing contents of data directory \"%s\"\n"
+msgstr "תכנית %s:  הסרת התוכן של ספריית הנתונים \"%s\"\n"
+
+#: pg_basebackup.c:171
+#, c-format
+msgid "%s: failed to remove contents of data directory\n"
+msgstr "תכנית %s:  כשל בלהסיר את התוכן של ספריית הנתונים\n"
+
+#: pg_basebackup.c:177
+#, c-format
+msgid "%s: removing WAL directory \"%s\"\n"
+msgstr "תכנית %s:  הסרת ספריית WAL \"%s\"\n"
+
+#: pg_basebackup.c:180
+#, c-format
+msgid "%s: failed to remove WAL directory\n"
+msgstr "תכנית %s:  כשל בלהסיר מדריך את תיקיית WAL\n"
+
+#: pg_basebackup.c:186
+#, c-format
+msgid "%s: removing contents of WAL directory \"%s\"\n"
+msgstr "תכנית %s:  הסרת התוכן של תיקיית WAL \"%s\"\n"
+
+#: pg_basebackup.c:189
+#, c-format
+msgid "%s: failed to remove contents of WAL directory\n"
+msgstr "תכנית %s:  כשל בלהסיר את התוכן של הספרית WAL\n"
+
+#: pg_basebackup.c:197
+#, c-format
+msgid "%s: data directory \"%s\" not removed at user's request\n"
+msgstr "תכנית %s:  תיקיית הנתונים \"%s\" לא הוסרה לבקשת המשתמש\n"
+
+#: pg_basebackup.c:202
+#, c-format
+msgid "%s: WAL directory \"%s\" not removed at user's request\n"
+msgstr "תכנית %s:  תיקייה WAL \"%s\" לא הוסרה לבקשת המשתמש\n"
+
+#: pg_basebackup.c:208
+#, c-format
+msgid "%s: changes to tablespace directories will not be undone\n"
+msgstr "תכנית %s: שינויים ספריות מרחב טבלאות לא יבוטלו\n"
+
+#: pg_basebackup.c:250
+#, c-format
+msgid "%s: directory name too long\n"
+msgstr "תכנית %s: שם הספרייה יותר מדי ארוך\n"
+
+#: pg_basebackup.c:260
+#, c-format
+msgid "%s: multiple \"=\" signs in tablespace mapping\n"
+msgstr "תכנית %s: סימנים \"=\" מרובים במיפוי מרחב טבלאות\n"
+
+#: pg_basebackup.c:273
+#, c-format
+msgid "%s: invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"\n"
+msgstr "תכנית %s: תבנית המיפוי לא חוקי  \"%s\" של מרחב טבלאות, חייב להיות \"OLDDIR = NEWDIR\"\n"
+
+#: pg_basebackup.c:286
+#, c-format
+msgid "%s: old directory is not an absolute path in tablespace mapping: %s\n"
+msgstr "תכנית %s: ספרייה הישנה אינה נתיב מוחלט במיפוי מרחב טבלאות: %s\n"
+
+#: pg_basebackup.c:293
+#, c-format
+msgid "%s: new directory is not an absolute path in tablespace mapping: %s\n"
+msgstr "תכנית %s: הספריה החדשה אינה נתיב מוחלט במיפוי מרחב טלאות: %s\n"
+
+#: pg_basebackup.c:327
+#, c-format
+msgid ""
+"%s takes a base backup of a running PostgreSQL server.\n"
+"\n"
+msgstr ""
+"תכנית %s לוקח גיבוי בסיסי של שרת PostgreSQL פועל.\n"
+"\n"
+
+#: pg_basebackup.c:329 pg_receivewal.c:76 pg_recvlogical.c:77
+#, c-format
+msgid "Usage:\n"
+msgstr "שימוש:\n"
+
+#: pg_basebackup.c:330 pg_receivewal.c:77 pg_recvlogical.c:78
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [OPTION]...\n"
+
+#: pg_basebackup.c:331
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output:\n"
+msgstr ""
+"\n"
+"אפשרויות שליטה בפלט:\n"
+
+#: pg_basebackup.c:332
+#, c-format
+msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
+msgstr ""
+"  -D\n"
+"  --pgdata=DIRECTORY\n"
+"לקבל גיבוי בסיס לתוך הספריה\n"
+
+#: pg_basebackup.c:333
+#, c-format
+msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
+msgstr ""
+"  -F\n"
+"  --format=p|t\n"
+"תבנית פלט (רגיל (ברירת המחדל), tar)\n"
+
+#: pg_basebackup.c:334
+#, c-format
+msgid "  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
+msgstr ""
+"  -r\n"
+"  --max-rate=RATE\n"
+"קצב המירבי להעברת נתונים לספרייה\n"
+
+#: pg_basebackup.c:335
+#, c-format
+msgid "                         (in kB/s, or use suffix \"k\" or \"M\")\n"
+msgstr " (ב- kB/s, או תשתמש בסיומת \"k\" או \"M\")\n"
+
+#: pg_basebackup.c:336
+#, c-format
+msgid "  -R, --write-recovery-conf\n"
+msgstr ""
+"  -R\n"
+"  --write-recovery-conf\n"
+
+#: pg_basebackup.c:337
+#, c-format
+msgid "                         write recovery.conf for replication\n"
+msgstr " לכתוב recovery.conf עבור שכפול\n"
+
+#: pg_basebackup.c:338 pg_receivewal.c:84
+#, c-format
+msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
+msgstr ""
+"  -S\n"
+"  --slot=SLOTNAME\n"
+"חריץ שכפול לשימוש\n"
+
+#: pg_basebackup.c:339
+#, c-format
+msgid "      --no-slot          prevent creation of temporary replication slot\n"
+msgstr ""
+"  --no-slot\n"
+"למנוע יצירה של חריץ שכפול זמני\n"
+
+#: pg_basebackup.c:340
+#, c-format
+msgid "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+msgstr ""
+"  -T\n"
+"  --tablespace-mapping=OLDDIR=NEWDIR\n"
+
+#: pg_basebackup.c:341
+#, c-format
+msgid "                         relocate tablespace in OLDDIR to NEWDIR\n"
+msgstr " לעבור מרחב טבלאות מ OLDDIR ל NEWDIR\n"
+
+#: pg_basebackup.c:342
+#, c-format
+msgid "  -X, --wal-method=none|fetch|stream\n"
+msgstr ""
+"  -X\n"
+"  --wal-method=none|fetch|stream\n"
+
+#: pg_basebackup.c:343
+#, c-format
+msgid "                         include required WAL files with specified method\n"
+msgstr " כלול קבצי WAL הנדרשים עם שיטה שצוינה\n"
+
+#: pg_basebackup.c:344
+#, c-format
+msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
+msgstr ""
+" --waldir = WALDIR\n"
+"מיקום עבור ספריית WAL\n"
+
+#: pg_basebackup.c:345
+#, c-format
+msgid "  -z, --gzip             compress tar output\n"
+msgstr ""
+"  -z\n"
+"  --gzip\n"
+"לדחוס פלט tar \n"
+
+#: pg_basebackup.c:346
+#, c-format
+msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
+msgstr ""
+"  -Z\n"
+"  --compress=0-9\n"
+"לדחוס יומנים ברמת דחיסה שצוינה\n"
+
+#: pg_basebackup.c:347
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"אפשרויות כלליות:\n"
+
+#: pg_basebackup.c:348
+#, c-format
+msgid "  -c, --checkpoint=fast|spread\n"
+msgstr ""
+"  -c\n"
+"  --checkpoint=fast|spread\n"
+
+#: pg_basebackup.c:349
+#, c-format
+msgid "                         set fast or spread checkpointing\n"
+msgstr " הגדר ביצוע של נקודת הביקורת: מהר או לא\n"
+
+#: pg_basebackup.c:350
+#, c-format
+msgid "  -l, --label=LABEL      set backup label\n"
+msgstr ""
+"  -l\n"
+"  --label=LABEL\n"
+"להגדיר תווית גיבוי\n"
+
+#: pg_basebackup.c:351
+#, c-format
+msgid "  -n, --no-clean         do not clean up after errors\n"
+msgstr ""
+"  -n\n"
+" --no-clean\n"
+"לא לנקות לאחר שגיאות\n"
+
+#: pg_basebackup.c:352
+#, c-format
+msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
+msgstr ""
+"  -N\n"
+" --no-sync\n"
+"לא לחכות עד אשר השינויים ייכתבו בבטחה לדיסק\n"
+
+#: pg_basebackup.c:353
+#, c-format
+msgid "  -P, --progress         show progress information\n"
+msgstr ""
+"  -P\n"
+"  --progress\n"
+"הצג מידע אודות התקדמות\n"
+
+#: pg_basebackup.c:354 pg_receivewal.c:86 pg_recvlogical.c:98
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr ""
+"  -v\n"
+"  --verbose\n"
+"הצג הודעות פלט מילוליות\n"
+
+#: pg_basebackup.c:355 pg_receivewal.c:87 pg_recvlogical.c:99
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr ""
+"  -V\n"
+"  --version\n"
+"להציג מידע על הגירסה, ולאחר מכן לצאת\n"
+
+#: pg_basebackup.c:356 pg_receivewal.c:89 pg_recvlogical.c:100
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr ""
+"  -?\n"
+"  --help\n"
+"להציג עזרה זו, ולאחר מכן לצאת\n"
+
+#: pg_basebackup.c:357 pg_receivewal.c:90 pg_recvlogical.c:101
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"אפשרויות חיבור:\n"
+
+#: pg_basebackup.c:358 pg_receivewal.c:91
+#, c-format
+msgid "  -d, --dbname=CONNSTR   connection string\n"
+msgstr ""
+"  -d\n"
+"--dbname=CONNSTR\n"
+"מחרוזת חיבור\n"
+
+#: pg_basebackup.c:359 pg_receivewal.c:92 pg_recvlogical.c:103
+#, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr ""
+"  -h\n"
+"  --host=HOSTNAME\n"
+"שרת מארח של מסד הנתונים  או ספריית שקע\n"
+
+#: pg_basebackup.c:360 pg_receivewal.c:93 pg_recvlogical.c:104
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr ""
+"  -p\n"
+"  --port=PORT\n"
+"פורט שרת מסד נתונים\n"
+
+#: pg_basebackup.c:361
+#, c-format
+msgid "  -s, --status-interval=INTERVAL\n"
+msgstr ""
+"  -s\n"
+"  --status-interval=INTERVAL\n"
+
+#: pg_basebackup.c:362
+#, c-format
+msgid "                         time between status packets sent to server (in seconds)\n"
+msgstr " זמן בין מנות המצב הנשלחות לשרת (בשניות)\n"
+
+#: pg_basebackup.c:363 pg_receivewal.c:94 pg_recvlogical.c:105
+#, c-format
+msgid "  -U, --username=NAME    connect as specified database user\n"
+msgstr ""
+"  -U\n"
+"  --username=NAME\n"
+"להתחבר כמשתמש מסד הנתונים המצוין\n"
+
+#: pg_basebackup.c:364 pg_receivewal.c:95 pg_recvlogical.c:106
+#, c-format
+msgid "  -w, --no-password      never prompt for password\n"
+msgstr ""
+"  -w\n"
+"  --no-password\n"
+"לעולם לא לבקש סיסמה\n"
+
+#: pg_basebackup.c:365 pg_receivewal.c:96 pg_recvlogical.c:107
+#, c-format
+msgid "  -W, --password         force password prompt (should happen automatically)\n"
+msgstr ""
+"  -W\n"
+"  --password\n"
+"נדרשת בקשת סיסמה  (צריך לקרות באופן אוטומטי)\n"
+
+#: pg_basebackup.c:366 pg_receivewal.c:100 pg_recvlogical.c:108
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"לדווח על באגים ל <pgsql-bugs@postgresql.org>\n"
+
+#: pg_basebackup.c:409
+#, c-format
+msgid "%s: could not read from ready pipe: %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לקרוא מצינור מוכן: %s\n"
+
+#: pg_basebackup.c:417 pg_basebackup.c:552 pg_basebackup.c:2001
+#: streamutil.c:285
+#, c-format
+msgid "%s: could not parse write-ahead log location \"%s\"\n"
+msgstr "תכנית %s: לא היתה אפשרות לנתח את המיקום של WAL \"%s\"\n"
+
+#: pg_basebackup.c:515 pg_receivewal.c:428
+#, c-format
+msgid "%s: could not finish writing WAL files: %s\n"
+msgstr "תכנית %s: לא יכול לסיים את כתיבת קבצי WAL: %s\n"
+
+#: pg_basebackup.c:565
+#, c-format
+msgid "%s: could not create pipe for background process: %s\n"
+msgstr "תכנית %s:  לא יכול ליצור צינור עבור תהליך הרקע: %s\n"
+
+#: pg_basebackup.c:605 pg_basebackup.c:661 pg_basebackup.c:1419
+#, c-format
+msgid "%s: could not create directory \"%s\": %s\n"
+msgstr "תכנית %s:  לא היתה אפשרות ליצור תיקייה \"%s\": %s\n"
+
+#: pg_basebackup.c:624
+#, c-format
+msgid "%s: could not create background process: %s\n"
+msgstr "תכנית %s: לא היתה אפשרות ליצור תהליך רקע: %s\n"
+
+#: pg_basebackup.c:636
+#, c-format
+msgid "%s: could not create background thread: %s\n"
+msgstr "תכנית %s: לא היתה אפשרות ליצור הליך רקע משנה: %s\n"
+
+#: pg_basebackup.c:684
+#, c-format
+msgid "%s: directory \"%s\" exists but is not empty\n"
+msgstr "תכנית %s:  תיקייה \"%s\" קיימת, אך אינה ריקה\n"
+
+#: pg_basebackup.c:692
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "תכנית %s:  לא ניתן לגשת לתיקייה \"%s\": %s\n"
+
+#: pg_basebackup.c:754
+#, c-format
+msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
+msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
+msgstr[0] "סטטוס: %*s/%s kB (100%%), %d/%d מרחב טבלאות %*s"
+msgstr[1] "סטטוס: %*s/%s kB (100%%), %d/%d מרחבי טבלאות %*s"
+
+#: pg_basebackup.c:766
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
+msgstr[0] "סטטוס: %*s/%s kB (%d%%), %d/%d מרחב טבלאות (%s%-*.*s)"
+msgstr[1] "סטטוס: %*s/%s kB (%d%%), %d/%d מרחבי טבלאות (%s%-*.*s)"
+
+#: pg_basebackup.c:782
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "סטטוס: %*s/%s kB (%d%%), %d/%d מרחב טבלאות"
+msgstr[1] "סטטוס: %*s/%s kB (%d%%), %d/%d מרחבי טבלאות"
+
+#: pg_basebackup.c:804
+#, c-format
+msgid "%s: transfer rate \"%s\" is not a valid value\n"
+msgstr "תכנית %s: קצב העברה '%s' אינו ערך חוקי\n"
+
+#: pg_basebackup.c:811
+#, c-format
+msgid "%s: invalid transfer rate \"%s\": %s\n"
+msgstr "תכנית %s: קצב העברה לא חוקי \"%s\": %s\n"
+
+#: pg_basebackup.c:821
+#, c-format
+msgid "%s: transfer rate must be greater than zero\n"
+msgstr "תכנית %s: קצב ההעברה חייב להיות גדול מאפס\n"
+
+#: pg_basebackup.c:855
+#, c-format
+msgid "%s: invalid --max-rate unit: \"%s\"\n"
+msgstr "תכנית %s: יחידת --max-rate לא חוקית \"%s\"\n"
+
+#: pg_basebackup.c:864
+#, c-format
+msgid "%s: transfer rate \"%s\" exceeds integer range\n"
+msgstr "תכנית %s: קצב ההעברה \"%s\" חורג טווח מספר שלם\n"
+
+#: pg_basebackup.c:876
+#, c-format
+msgid "%s: transfer rate \"%s\" is out of range\n"
+msgstr "תכנית %s: קצב ההעברה \"%s\" נמצא מחוץ לטווח\n"
+
+#: pg_basebackup.c:900
+#, c-format
+msgid "%s: could not write to compressed file \"%s\": %s\n"
+msgstr "תכנית %s: לא מצליח לכתוב לקובץ דחוס \"%s\": %s\n"
+
+#: pg_basebackup.c:910 pg_basebackup.c:1513 pg_basebackup.c:1679
+#, c-format
+msgid "%s: could not write to file \"%s\": %s\n"
+msgstr "תכנית %s:  לא ניתן לכתוב לקובץ \"%s\": %s\n"
+
+#: pg_basebackup.c:965 pg_basebackup.c:986 pg_basebackup.c:1014
+#, c-format
+msgid "%s: could not set compression level %d: %s\n"
+msgstr "תכנתי %s: לא היתה אפשרות להגדיר את רמת הדחיסה % d: %s\n"
+
+#: pg_basebackup.c:1035
+#, c-format
+msgid "%s: could not create compressed file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות ליצור קובץ דחוס \"%s\": %s\n"
+
+#: pg_basebackup.c:1046 pg_basebackup.c:1473 pg_basebackup.c:1672
+#, c-format
+msgid "%s: could not create file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות ליצור קובץ \"%s\": %s\n"
+
+#: pg_basebackup.c:1058 pg_basebackup.c:1326
+#, c-format
+msgid "%s: could not get COPY data stream: %s"
+msgstr "תכנית %s: לא היתה אפשרות לקבל COPY מנתונים מועתקים: %s"
+
+#: pg_basebackup.c:1115
+#, c-format
+msgid "%s: could not close compressed file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לסגור קובץ דחוס \"%s\": %s\n"
+
+#: pg_basebackup.c:1128 pg_recvlogical.c:631 receivelog.c:221 receivelog.c:306
+#: receivelog.c:712
+#, c-format
+msgid "%s: could not close file \"%s\": %s\n"
+msgstr "תכנית %s: לא יכול לסגור הקובץ \"%s\": %s\n"
+
+#: pg_basebackup.c:1139 pg_basebackup.c:1355 pg_recvlogical.c:453
+#: receivelog.c:1007
+#, c-format
+msgid "%s: could not read COPY data: %s"
+msgstr "תכנית %s: לא היתה אפשרות לקרוא נתונים מ COPY: %s"
+
+#: pg_basebackup.c:1369
+#, c-format
+msgid "%s: invalid tar block header size: %d\n"
+msgstr "תכנית %s: גודל הכותרת של בלוק tar  לא חוקי: %d\n"
+
+#: pg_basebackup.c:1427
+#, c-format
+msgid "%s: could not set permissions on directory \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות להגדיר הרשאות בספריה \"%s\": %s\n"
+
+#: pg_basebackup.c:1451
+#, c-format
+msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות ליצור קישור סימבולי מ \"%s\" ל- \"%s\": %s\n"
+
+#: pg_basebackup.c:1460
+#, c-format
+msgid "%s: unrecognized link indicator \"%c\"\n"
+msgstr "תכנית %s: מחוון קישור לא מזוהה '%c'\n"
+
+#: pg_basebackup.c:1480
+#, c-format
+msgid "%s: could not set permissions on file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות להגדיר הרשאות הקובץ \"%s\": %s\n"
+
+#: pg_basebackup.c:1539
+#, c-format
+msgid "%s: COPY stream ended before last file was finished\n"
+msgstr "תכנית %s: הזרמת COPY הסתיימה לפני שקובץ האחרון הסתיים\n"
+
+#: pg_basebackup.c:1567 pg_basebackup.c:1587 pg_basebackup.c:1594
+#: pg_basebackup.c:1647
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "תכנית %s:  אין זיכרון פנוי\n"
+
+#: pg_basebackup.c:1720
+#, c-format
+msgid "%s: incompatible server version %s\n"
+msgstr "תכנית %s:  גירסת שרת לא תואמת %s\n"
+
+#: pg_basebackup.c:1735
+#, c-format
+msgid "HINT: use -X none or -X fetch to disable log streaming\n"
+msgstr "רמז: השתמש ב -X none או ב -X fetch להשבתת הזרמה  ליומן\n"
+
+#: pg_basebackup.c:1761
+#, c-format
+msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
+msgstr "תכנית %s: ייזום גיבוי בסיס, ממתין להשלמת צ'ק-פוינט\n"
+
+#: pg_basebackup.c:1779 pg_recvlogical.c:270 receivelog.c:490 receivelog.c:561
+#: receivelog.c:601 streamutil.c:255 streamutil.c:363 streamutil.c:409
+#, c-format
+msgid "%s: could not send replication command \"%s\": %s"
+msgstr "תכנית %s: לא היתה אפשרות לשלוח פקודת השכפול \"%s\": %s"
+
+#: pg_basebackup.c:1790
+#, c-format
+msgid "%s: could not initiate base backup: %s"
+msgstr "תכנית %s: לא יכול ליזום גיבוי בסיס: %s"
+
+#: pg_basebackup.c:1797
+#, c-format
+msgid "%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "תכנית %s: השרת החזיר תגובה לא צפויה לפקודה BASE_BACKUP; יש %d שורות ו- %d שדות, הצפי ל %d שורות ו %dשדות\n"
+
+#: pg_basebackup.c:1805
+#, c-format
+msgid "%s: checkpoint completed\n"
+msgstr "תכנית %s: מחסום הושלם\n"
+
+#: pg_basebackup.c:1820
+#, c-format
+msgid "%s: write-ahead log start point: %s on timeline %u\n"
+msgstr "תכנית %s: נקודת התחלה של WAL: %s בציר הזמן %u\n"
+
+#: pg_basebackup.c:1829
+#, c-format
+msgid "%s: could not get backup header: %s"
+msgstr "תכנית %s: לא היתה אפשרות לקבל כותרת גיבוי: %s"
+
+#: pg_basebackup.c:1835
+#, c-format
+msgid "%s: no data returned from server\n"
+msgstr "תכנית %s: אין נתונים שהוחזרו משרת\n"
+
+#: pg_basebackup.c:1867
+#, c-format
+msgid "%s: can only write single tablespace to stdout, database has %d\n"
+msgstr "תכנית %s: יכול לכתוב רק מחרב טבלאות יחיד ל stdout, למסד הנתונים יש %d\n"
+
+#: pg_basebackup.c:1879
+#, c-format
+msgid "%s: starting background WAL receiver\n"
+msgstr "תכנית %s: החל מקלט רקע של WAL\n"
+
+#: pg_basebackup.c:1910
+#, c-format
+msgid "%s: could not get write-ahead log end position from server: %s"
+msgstr "תכנית %s: לא היתה אפשרות לקבל מיקום סופי בWAL משרת: %s"
+
+#: pg_basebackup.c:1917
+#, c-format
+msgid "%s: no write-ahead log end position returned from server\n"
+msgstr "תכנית %s: מיקום סופי בWAK לא הוחזר מהשרת\n"
+
+#: pg_basebackup.c:1923
+#, c-format
+msgid "%s: write-ahead log end point: %s\n"
+msgstr "תכנית %s: נקודת סיום שך WAL: %s\n"
+
+#: pg_basebackup.c:1929
+#, c-format
+msgid "%s: final receive failed: %s"
+msgstr "תכנית %s: השליחה הסופית נכשלה: %s"
+
+#: pg_basebackup.c:1953
+#, c-format
+msgid "%s: waiting for background process to finish streaming ...\n"
+msgstr "תכנית %s: מחכה לתהליך רקע לסיים זרימה...\n"
+
+#: pg_basebackup.c:1959
+#, c-format
+msgid "%s: could not send command to background pipe: %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לשלוח פקודה לצינור רקע: %s\n"
+
+#: pg_basebackup.c:1968
+#, c-format
+msgid "%s: could not wait for child process: %s\n"
+msgstr "תכנתי %s: לא יכול היה לחכות לתהליך צאצא: %s\n"
+
+#: pg_basebackup.c:1974
+#, c-format
+msgid "%s: child %d died, expected %d\n"
+msgstr "תכנית %s: תהליך צאצא %d הופסק, צפוי %d\n"
+
+#: pg_basebackup.c:1980
+#, c-format
+msgid "%s: child process did not exit normally\n"
+msgstr "תכנתי %s: תהליך צאצא לא יצא כהלכה\n"
+
+#: pg_basebackup.c:1986
+#, c-format
+msgid "%s: child process exited with error %d\n"
+msgstr "תכנתי %s: תהליך צאצא עם שגיאה %d\n"
+
+#: pg_basebackup.c:2013
+#, c-format
+msgid "%s: could not wait for child thread: %s\n"
+msgstr "תכנתי %s: לא יכול היה לחכות תהליך צאצא משנה: %s\n"
+
+#: pg_basebackup.c:2020
+#, c-format
+msgid "%s: could not get child thread exit status: %s\n"
+msgstr "תכנית %s: לא יכול לקבל את מצב היציאה של תהליך צאצא המשנה: %s\n"
+
+#: pg_basebackup.c:2026
+#, c-format
+msgid "%s: child thread exited with error %u\n"
+msgstr "תכנית %s: תהליך צאצא משנהיצא עם שגיאה %u\n"
+
+#: pg_basebackup.c:2064
+#, c-format
+msgid "%s: base backup completed\n"
+msgstr "תכנתי %s: הגיבוי הבסיסי הושלם\n"
+
+#: pg_basebackup.c:2141
+#, c-format
+msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
+msgstr "תכנית %s: תבנית הפלט לא חוקית \"%s\", חייבת להיות \"plain\" או \"tar\"\n"
+
+#: pg_basebackup.c:2186
+#, c-format
+msgid "%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\" or \"none\"\n"
+msgstr "תכנית %s: אופציה wal-method לא חוקית \"%s\", חייב להיות \"fetch\", \"stream\" או \"none\"\n"
+
+#: pg_basebackup.c:2214 pg_receivewal.c:556
+#, c-format
+msgid "%s: invalid compression level \"%s\"\n"
+msgstr "תכנית %s: רמת הדחיסה לא חוקית \"%s\"\n"
+
+#: pg_basebackup.c:2226
+#, c-format
+msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "תכנית %s: ארגומנט המחסום לא חוקי \"%s\", חייב להיות \"fast\" או \"spread\"\n"
+
+#: pg_basebackup.c:2253 pg_receivewal.c:538 pg_recvlogical.c:825
+#, c-format
+msgid "%s: invalid status interval \"%s\"\n"
+msgstr "תכנית %s: מרווח מצב לא חוקי \"%s\"\n"
+
+#: pg_basebackup.c:2269 pg_basebackup.c:2283 pg_basebackup.c:2294
+#: pg_basebackup.c:2307 pg_basebackup.c:2317 pg_basebackup.c:2327
+#: pg_basebackup.c:2339 pg_basebackup.c:2353 pg_basebackup.c:2364
+#: pg_receivewal.c:579 pg_receivewal.c:593 pg_receivewal.c:601
+#: pg_receivewal.c:611 pg_receivewal.c:622 pg_recvlogical.c:852
+#: pg_recvlogical.c:866 pg_recvlogical.c:877 pg_recvlogical.c:885
+#: pg_recvlogical.c:893 pg_recvlogical.c:901 pg_recvlogical.c:909
+#: pg_recvlogical.c:917 pg_recvlogical.c:927
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "נסה '%s --help' לקבלת מידע נוסף.\n"
+
+#: pg_basebackup.c:2281 pg_receivewal.c:591 pg_recvlogical.c:864
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "תכנית %s:  יותר מדי ארגומנטים של שורת הפקודה (הראשון הוא \"%s\")\n"
+
+#: pg_basebackup.c:2293 pg_receivewal.c:621
+#, c-format
+msgid "%s: no target directory specified\n"
+msgstr "תכנית %s: לא צוינה ספריית היעד\n"
+
+#: pg_basebackup.c:2305
+#, c-format
+msgid "%s: only tar mode backups can be compressed\n"
+msgstr "תכנית %s: רק גיבויים במצב tar  ניתן לדחוס\n"
+
+#: pg_basebackup.c:2315
+#, c-format
+msgid "%s: cannot stream write-ahead logs in tar mode to stdout\n"
+msgstr "תכנית %s: לא ניתן להציגWAL במצב tar ב stdout\n"
+
+#: pg_basebackup.c:2325
+#, c-format
+msgid "%s: replication slots can only be used with WAL streaming\n"
+msgstr "תכנית %s: חריצי שכפול יכולים לשמש רק עם הזרמת WAL\n"
+
+#: pg_basebackup.c:2337
+#, c-format
+msgid "%s: --no-slot cannot be used with slot name\n"
+msgstr "תכנית %s: אין אפשרות להשתמש ב  --no-slot עם שם חריץ\n"
+
+#: pg_basebackup.c:2351
+#, c-format
+msgid "%s: WAL directory location can only be specified in plain mode\n"
+msgstr "תכנית %s: ניתן לציין מיקום ספריית WAL רק במצב רגיל\n"
+
+#: pg_basebackup.c:2362
+#, c-format
+msgid "%s: WAL directory location must be an absolute path\n"
+msgstr "תכנית %s: המיקום התיקייה עבור WAL חייב להיות נתיב מוחלט\n"
+
+#: pg_basebackup.c:2374 pg_receivewal.c:631
+#, c-format
+msgid "%s: this build does not support compression\n"
+msgstr "תכנית %s: הבילד הזה אינו תומך דחיסה\n"
+
+#: pg_basebackup.c:2414
+#, c-format
+msgid "%s: could not create symbolic link \"%s\": %s\n"
+msgstr "תכנית %s:  לא ניתן ליצור קישור סמלי \"%s\": %s\n"
+
+#: pg_basebackup.c:2419
+#, c-format
+msgid "%s: symlinks are not supported on this platform\n"
+msgstr "תכנית %s:  קישורים סימבוליים אינם נתמכים בפלטפורמה זו\n"
+
+#: pg_receivewal.c:74
+#, c-format
+msgid ""
+"%s receives PostgreSQL streaming write-ahead logs.\n"
+"\n"
+msgstr ""
+"תכנית %s מקבלת הזרמת WAL של PostgreSQL.\n"
+"\n"
+
+#: pg_receivewal.c:78 pg_recvlogical.c:83
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"אפשרויות:\n"
+
+#: pg_receivewal.c:79
+#, c-format
+msgid "  -D, --directory=DIR    receive write-ahead log files into this directory\n"
+msgstr ""
+"  -D\n"
+"  --directory=DIR\n"
+"לקבל קבצי WAL לספריה זו\n"
+
+#: pg_receivewal.c:80 pg_recvlogical.c:87
+#, c-format
+msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
+msgstr ""
+"  --if-not-exists\n"
+"לא לזרוק  שגיאה אם חריץ קיים כבר בעת יצירתו\n"
+
+#: pg_receivewal.c:81 pg_recvlogical.c:90
+#, c-format
+msgid "  -n, --no-loop          do not loop on connection lost\n"
+msgstr ""
+"  -n\n"
+"  --no-loop\n"
+"אל תיכנס ללולאה כאשר החיבור אבד\n"
+
+#: pg_receivewal.c:82 pg_recvlogical.c:95
+#, c-format
+msgid ""
+"  -s, --status-interval=SECS\n"
+"                         time between status packets sent to server (default: %d)\n"
+msgstr ""
+"  -s\n"
+"  --status-interval=SECS\n"
+"זמן בין מנות המצב הנשלחות לשרת (ברירת מחדל: %d)\n"
+
+#: pg_receivewal.c:85
+#, c-format
+msgid "      --synchronous      flush write-ahead log immediately after writing\n"
+msgstr ""
+"  --synchronous\n"
+"לסמוק WAL מיד לאחר הכתיבה\n"
+
+#: pg_receivewal.c:88
+#, c-format
+msgid "  -Z, --compress=0-9     compress logs with given compression level\n"
+msgstr ""
+"  -Z\n"
+"  --compress=0-9\n"
+"לדחוס יומנים ברמת דחיסה שצוינה\n"
+
+#: pg_receivewal.c:97
+#, c-format
+msgid ""
+"\n"
+"Optional actions:\n"
+msgstr ""
+"\n"
+"פעולות אופציונליים:\n"
+
+#: pg_receivewal.c:98 pg_recvlogical.c:80
+#, c-format
+msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
+msgstr ""
+"  --create-slot\n"
+"ליצור חריץ שכפול חדש (עבור השם של החריץ ראו  --slot)\n"
+
+#: pg_receivewal.c:99 pg_recvlogical.c:81
+#, c-format
+msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
+msgstr ""
+"  --drop-slot\n"
+"להוריד חריץ השכפול (עבור השם של החריץ ראו --slot)\n"
+
+#: pg_receivewal.c:111
+#, c-format
+msgid "%s: finished segment at %X/%X (timeline %u)\n"
+msgstr "תכנית %s: מסיים מקטע  %X/%X  (ציר זמן %u)\n"
+
+#: pg_receivewal.c:124
+#, c-format
+msgid "%s: switched to timeline %u at %X/%X\n"
+msgstr ""
+"תכנית %s: החלפת ציר הזמן %u ב %X/%X\n"
+"\n"
+
+#: pg_receivewal.c:133
+#, c-format
+msgid "%s: received interrupt signal, exiting\n"
+msgstr "תכנית %s: נתקבל  איתות הפסיקה, יוצא\n"
+
+#: pg_receivewal.c:171
+#, c-format
+msgid "%s: could not close directory \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לסגור תיקייה \"%s\": %s\n"
+
+#: pg_receivewal.c:260
+#, c-format
+msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
+msgstr "תכנית %s: לקטע הקובץ \"%s\" יש גודל שגוי %d, מדלג\n"
+
+#: pg_receivewal.c:277
+#, c-format
+msgid "%s: could not open compressed file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לפתוח קובץ דחוס \"%s\": %s\n"
+
+#: pg_receivewal.c:283
+#, c-format
+msgid "%s: could not seek compressed file \"%s\": %s\n"
+msgstr "תכנית %s: לא יכול לחפש אחר הקובץ הדחוס \"%s\": %s\n"
+
+#: pg_receivewal.c:289
+#, c-format
+msgid "%s: could not read compressed file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לקרוא קובץ דחוס \"%s\": %s\n"
+
+#: pg_receivewal.c:301
+#, c-format
+msgid "%s: compressed segment file \"%s\" has incorrect uncompressed size %d, skipping\n"
+msgstr "תכנית %s: לקובץ קטע דחוס \"%s\" יש גודל לא דחוס שגוי %d, מדלג\n"
+
+#: pg_receivewal.c:407
+#, c-format
+msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
+msgstr "תכנית %s: החל יומן בכתובת %X/%X (ציר זמן %u)\n"
+
+#: pg_receivewal.c:519 pg_recvlogical.c:762
+#, c-format
+msgid "%s: invalid port number \"%s\"\n"
+msgstr "תכנית %s: מספר הפורט לא חוקי \"%s\"\n"
+
+#: pg_receivewal.c:600
+#, c-format
+msgid "%s: cannot use --create-slot together with --drop-slot\n"
+msgstr "תכנית %s: לא יכול להשתמש ב --create-slot יחד עם  --drop-slot\n"
+
+#. translator: second %s is an option name
+#: pg_receivewal.c:609
+#, c-format
+msgid "%s: %s needs a slot to be specified using --slot\n"
+msgstr "תכנית %s: %s חריץ חייב להיות צוין עם  --slot\n"
+
+#: pg_receivewal.c:674
+#, c-format
+msgid "%s: replication connection using slot \"%s\" is unexpectedly database specific\n"
+msgstr "תכנית %s: חיבור שכפול באמצעות חריץ \"%s\" הוא בלתי צפוי של מסד נתונים ספציפי\n"
+
+#: pg_receivewal.c:686 pg_recvlogical.c:967
+#, c-format
+msgid "%s: dropping replication slot \"%s\"\n"
+msgstr "תכנית %s: נשירת חריץ שכפול \"%s\"\n"
+
+#: pg_receivewal.c:699 pg_recvlogical.c:979
+#, c-format
+msgid "%s: creating replication slot \"%s\"\n"
+msgstr "תכנית %s: יצירת חריץ שכפול \"%s\"\n"
+
+#: pg_receivewal.c:726 pg_recvlogical.c:1005
+#, c-format
+msgid "%s: disconnected\n"
+msgstr "תכנית %s: מנותק\n"
+
+#. translator: check source for value for %d
+#: pg_receivewal.c:733 pg_recvlogical.c:1012
+#, c-format
+msgid "%s: disconnected; waiting %d seconds to try again\n"
+msgstr "תכנית %s: מנותק; מחכה %d שניות כדי לנסות שוב\n"
+
+#: pg_recvlogical.c:75
+#, c-format
+msgid ""
+"%s controls PostgreSQL logical decoding streams.\n"
+"\n"
+msgstr ""
+"תכנית %s שולטת בזרמי פענוח לוגיים של PostgreSQL\n"
+"\n"
+
+#: pg_recvlogical.c:79
+#, c-format
+msgid ""
+"\n"
+"Action to be performed:\n"
+msgstr ""
+"\n"
+"פעולה שיש לבצע:\n"
+
+#: pg_recvlogical.c:82
+#, c-format
+msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
+msgstr ""
+"  --start\n"
+"להתחיל הזרמת בחריץ שכפול (עבור השם של החריץ ראו --slot)\n"
+
+#: pg_recvlogical.c:84
+#, c-format
+msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
+msgstr ""
+"  -f\n"
+"--file=FILE\n"
+"לקבל יומן לקובץ זה,ל - stdout\n"
+
+#: pg_recvlogical.c:85
+#, c-format
+msgid ""
+"  -F  --fsync-interval=SECS\n"
+"                         time between fsyncs to the output file (default: %d)\n"
+msgstr ""
+"  -F\n"
+"  --fsync-interval=SECS\n"
+"זמן בין fsyncs לקובץ הפלט (ברירת מחדל: %d)\n"
+
+#: pg_recvlogical.c:88
+#, c-format
+msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
+msgstr ""
+"  -I\n"
+"  --startpos=LSN\n"
+"היכן בחריץ הקיים צריכה להתחיל ההזרמה\n"
+
+#: pg_recvlogical.c:89
+#, c-format
+msgid "  -E, --endpos=LSN       exit after receiving the specified LSN\n"
+msgstr ""
+"  -E\n"
+" --endpos=LSN\n"
+"לצאת לאחר שקיבל את LSN שצוין\n"
+
+#: pg_recvlogical.c:91
+#, c-format
+msgid ""
+"  -o, --option=NAME[=VALUE]\n"
+"                         pass option NAME with optional value VALUE to the\n"
+"                         output plugin\n"
+msgstr ""
+"  -o\n"
+"  --option=NAME[=VALUE]\n"
+"להעביר אפשרות NAME עם ערך אופציונלי VALUE לתוסף פלט\n"
+
+#: pg_recvlogical.c:94
+#, c-format
+msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
+msgstr ""
+"   -P\n"
+"  --plugin=PLUGIN\n"
+"שימוש בתוסף הפלט PLUGIN (ברירת מחדל: %s)\n"
+
+#: pg_recvlogical.c:97
+#, c-format
+msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
+msgstr ""
+"  -S\n"
+"  --slot=SLOTNAME\n"
+"שם של חריץ שכפול לוגי\n"
+
+#: pg_recvlogical.c:102
+#, c-format
+msgid "  -d, --dbname=DBNAME    database to connect to\n"
+msgstr ""
+"  -d\n"
+"  --dbname = DBNAME\n"
+"מסד נתונים להתחבר אליו\n"
+
+#: pg_recvlogical.c:135
+#, c-format
+msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
+msgstr "תכנית %s: מאשר לכתוב עד % X/%X, סומק ל %X/%X (חריץ %s)\n"
+
+#: pg_recvlogical.c:160 receivelog.c:349
+#, c-format
+msgid "%s: could not send feedback packet: %s"
+msgstr "תכנית %s: לא היתה אפשרות לשלוח מנת המשוב: %s"
+
+#: pg_recvlogical.c:199
+#, c-format
+msgid "%s: could not fsync log file \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן להעביר תוכן הקובץ יומן (fsync) לדיסק \"%s\": %s\n"
+
+#: pg_recvlogical.c:238
+#, c-format
+msgid "%s: starting log streaming at %X/%X (slot %s)\n"
+msgstr "תכנית %s: החל הזרמת היומן בכתובת %X/%X (חריץ %s)\n"
+
+#: pg_recvlogical.c:280
+#, c-format
+msgid "%s: streaming initiated\n"
+msgstr "תכנית %s: זרימה יזומה\n"
+
+#: pg_recvlogical.c:346
+#, c-format
+msgid "%s: could not open log file \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לפתוח קובץ יומן הרישום \"%s\": %s\n"
+
+#: pg_recvlogical.c:376 receivelog.c:912
+#, c-format
+msgid "%s: invalid socket: %s"
+msgstr "תכנית %s: שקע לא חוקית: %s"
+
+#: pg_recvlogical.c:430 receivelog.c:941
+#, c-format
+msgid "%s: select() failed: %s\n"
+msgstr ""
+"תכנית %s: נכשל select(): %s\n"
+"\n"
+
+#: pg_recvlogical.c:439 receivelog.c:993
+#, c-format
+msgid "%s: could not receive data from WAL stream: %s"
+msgstr "תכנית %s: לא יכול לקבל נתונים מהזרם WAL: %s"
+
+#: pg_recvlogical.c:481 pg_recvlogical.c:533 receivelog.c:1038
+#: receivelog.c:1105
+#, c-format
+msgid "%s: streaming header too small: %d\n"
+msgstr "תכנית %s: כותרת הזרימה קטן מדי: %d\n"
+
+#: pg_recvlogical.c:517 receivelog.c:872
+#, c-format
+msgid "%s: unrecognized streaming header: \"%c\"\n"
+msgstr "תכנית %s: כותרת זרימה בלתי מוכרת: \"%c\"\n"
+
+#: pg_recvlogical.c:573 pg_recvlogical.c:587
+#, c-format
+msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
+msgstr "תכנית %s: לא מצליח לכתוב %u בתים לקובץ יומן \"%s\": %s\n"
+
+#: pg_recvlogical.c:617 receivelog.c:665 receivelog.c:703
+#, c-format
+msgid "%s: unexpected termination of replication stream: %s"
+msgstr "תכנית %s: סיום בלתי צפוי של זרם השכפול: %s"
+
+#: pg_recvlogical.c:741
+#, c-format
+msgid "%s: invalid fsync interval \"%s\"\n"
+msgstr "תכנית %s : מרווח fsync לא חוקי \"%s\"\n"
+
+#: pg_recvlogical.c:782
+#, c-format
+msgid "%s: could not parse start position \"%s\"\n"
+msgstr "תכנית %s: לא היתה אפשרות לנתח מיקום ההתחלה \"%s\"\n"
+
+#: pg_recvlogical.c:792
+#, c-format
+msgid "%s: could not parse end position \"%s\"\n"
+msgstr "תכנית %s: לא היתה אפשרות לנתח מיקום קצה \"%s\"\n"
+
+#: pg_recvlogical.c:876
+#, c-format
+msgid "%s: no slot specified\n"
+msgstr "תכנית %s:  לא צוין חריץ\n"
+
+#: pg_recvlogical.c:884
+#, c-format
+msgid "%s: no target file specified\n"
+msgstr "תכנית %s: לא צוין קובץ היעד\n"
+
+#: pg_recvlogical.c:892
+#, c-format
+msgid "%s: no database specified\n"
+msgstr "תכנית %s: לא צוין מסד נתונים\n"
+
+#: pg_recvlogical.c:900
+#, c-format
+msgid "%s: at least one action needs to be specified\n"
+msgstr "תכנית %s: חייבים לציין פעולה אחת לפחות\n"
+
+#: pg_recvlogical.c:908
+#, c-format
+msgid "%s: cannot use --create-slot or --start together with --drop-slot\n"
+msgstr "תכנית %s: לא יכול להשתמש ב --create-slot או --start יחד עם  --drop-slot\n"
+
+#: pg_recvlogical.c:916
+#, c-format
+msgid "%s: cannot use --create-slot or --drop-slot together with --startpos\n"
+msgstr ""
+"תכנית %s: לא יכול להשתמש ב --create-slot או ב --drop-slot יחד עם --startpos\n"
+"\n"
+
+#: pg_recvlogical.c:925
+#, c-format
+msgid "%s: --endpos may only be specified with --start\n"
+msgstr ""
+"תכנית %s: אפשר לציין --endpos רק עם --start\n"
+"\n"
+
+#: pg_recvlogical.c:957
+#, c-format
+msgid "%s: could not establish database-specific replication connection\n"
+msgstr "תכנית %s: לא היתה אפשרות ליצור חיבור שכפולים ספציפית למסד נתונים\n"
+
+#: receivelog.c:71
+#, c-format
+msgid "%s: could not create archive status file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות ליצור קובץ מצב הארכיון \"%s\": %s\n"
+
+#: receivelog.c:119
+#, c-format
+msgid "%s: could not get size of write-ahead log file \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לקבל את הגודל של קובץ WAL \"%s\": %s\n"
+
+#: receivelog.c:130
+#, c-format
+msgid "%s: could not open existing write-ahead log file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לפתוח קובץ יWAL קיים \"%s\": %s\n"
+
+#: receivelog.c:139
+#, c-format
+msgid "%s: could not sync existing write-ahead log file \"%s\": %s\n"
+msgstr "תכנית %s: לא יכול לסנכרן קובץ WAL קיים \"%s\": %s\n"
+
+#: receivelog.c:154
+#, c-format
+msgid "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr "תכנית %s: לקובץ WAL \"%s\" יש %d בתים, צריך להיות 0 או %d\n"
+
+#: receivelog.c:167
+#, c-format
+msgid "%s: could not open write-ahead log file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לפתוח קובץ יWAL \"%s\": %s\n"
+
+#: receivelog.c:194
+#, c-format
+msgid "%s: could not determine seek position in file \"%s\": %s\n"
+msgstr "תכנית %s: לא יכול לקבוע את המיקום החיפוש בקובץ '%s': %s\n"
+
+#: receivelog.c:209
+#, c-format
+msgid "%s: not renaming \"%s%s\", segment is not complete\n"
+msgstr "תכנית %s:  לא משנה שם \"%s%s\", קטע אינה שלמה\n"
+
+#: receivelog.c:278
+#, c-format
+msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
+msgstr "תכנית %s: שרת דיווח שם קובץ היסטוריה לא צפוי עבור ציר הזמן % u: %s\n"
+
+#: receivelog.c:286
+#, c-format
+msgid "%s: could not create timeline history file \"%s\": %s\n"
+msgstr "תכנית %s: לא יכול ליצור קובץ ההיסטוריה עבור ציר הזמן \"%s\": %s\n"
+
+#: receivelog.c:293
+#, c-format
+msgid "%s: could not write timeline history file \"%s\": %s\n"
+msgstr "תכנית %s: לא יכול לכתבו לקובץ ההיסטוריה עבור ציר הזמן \"%s\": %s\n"
+
+#: receivelog.c:383
+#, c-format
+msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
+msgstr "תכנית %s: גירסת שרת לא תואמת %s; הלקוח אינו תומך בהזרמה משרתים שגרסאות מתחת ל %s\n"
+
+#: receivelog.c:393
+#, c-format
+msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
+msgstr "תכנית %s: גירסת שרת לא תואמת %s; הלקוח אינו תומך בהזרמה משרתים שגרסאות מעל %s\n"
+
+#: receivelog.c:498 streamutil.c:264 streamutil.c:303
+#, c-format
+msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "תכנית %s: לא יוכל לזהות את המערכת: נתקבלו %d שורות ו- %d שדות, צפי ל %d שורות ו- %d או יותר שדות\n"
+
+#: receivelog.c:506
+#, c-format
+msgid "%s: system identifier does not match between base backup and streaming connection\n"
+msgstr "תכנית %s: המזהה של מערכת אינו תואם בין גיבוי בסיס וזרימת חיבור\n"
+
+#: receivelog.c:514
+#, c-format
+msgid "%s: starting timeline %u is not present in the server\n"
+msgstr "תכנית %s: ציר הזמן התחלתי %u אינו נמצא בשרת\n"
+
+#: receivelog.c:533
+#, c-format
+msgid "%s: could not create temporary replication slot \"%s\": %s"
+msgstr "תכנית %s: לא היתה אפשרות ליצור חריץ שכפול זמני \"%s\": %s"
+
+#: receivelog.c:574
+#, c-format
+msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "תכנית %s: תגובה לא צפויה לפקודה TIMELINE_HISTORY: יש לי %d שורות ו- %d שדות, צפוי ל %d שורות ו %d שדות\n"
+
+#: receivelog.c:646
+#, c-format
+msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
+msgstr "תכנתי %s: שרת דיווח ציר הזמן הבא לא צפוי %u, לאחר ציר הזמן %u\n"
+
+#: receivelog.c:653
+#, c-format
+msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
+msgstr "תכנית %s: שרת הפסיק הזרמת ציר הזמן %u ב- %X/%X, אך דיווח ציר הזמן הבא  %u שתתחיל ב %X/%X\n"
+
+#: receivelog.c:694
+#, c-format
+msgid "%s: replication stream was terminated before stop point\n"
+msgstr "תכנית %s: שכפול זרם הסתיים לפני נקודת עצירה\n"
+
+#: receivelog.c:743
+#, c-format
+msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "תכנית %s: תוצאה בלתי צפויה שנקבעה לאחר סיום ציר הזמן: יש %d שורות ו- %d שדות, צפוי %d שורות ו %d שדות\n"
+
+#: receivelog.c:753
+#, c-format
+msgid "%s: could not parse next timeline's starting point \"%s\"\n"
+msgstr "תכנית %s: לא היתה אפשרות לנתח נקודת ההתחלה של ציר הזמן הבא \"%s\"\n"
+
+#: receivelog.c:1124
+#, c-format
+msgid "%s: received write-ahead log record for offset %u with no file open\n"
+msgstr "תכנית %s: נתקבלה רשומת WAL עבור היסט %u עם אף קובץ פתוח\n"
+
+#: receivelog.c:1135
+#, c-format
+msgid "%s: got WAL data offset %08x, expected %08x\n"
+msgstr "תכנית %s: יש WAL נתוני היסט %08x, צפוי %08x\n"
+
+#: receivelog.c:1170
+#, c-format
+msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
+msgstr "תכנית %s: לא מצליח לכתוב %u בתים לקובץ WAL \"%s\": %s\n"
+
+#: receivelog.c:1195 receivelog.c:1236 receivelog.c:1267
+#, c-format
+msgid "%s: could not send copy-end packet: %s"
+msgstr "תכנית %s: לא היתה אפשרות לשלוח את מנת סיום ההעתקה: %s"
+
+#: streamutil.c:148
+msgid "Password: "
+msgstr "סיסמה: "
+
+#: streamutil.c:173
+#, c-format
+msgid "%s: could not connect to server\n"
+msgstr "תכנית %s: לא היתה אפשרות להתחבר לשרת\n"
+
+#: streamutil.c:191
+#, c-format
+msgid "%s: could not connect to server: %s"
+msgstr "תכנית %s: לא היתה אפשרות להתחבר לשרת: %s"
+
+#: streamutil.c:215
+#, c-format
+msgid "%s: could not determine server setting for integer_datetimes\n"
+msgstr "תכנית %s: לא היתה אפשרות לקבוע הגדרת השרת עבור integer_datetimes\n"
+
+#: streamutil.c:224
+#, c-format
+msgid "%s: integer_datetimes compile flag does not match server\n"
+msgstr "תכנית %s:  דגל הקומפילציה integer_datetimes אינו תואם שרת\n"
+
+#: streamutil.c:375
+#, c-format
+msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "תכנית %s: לא היתה אפשרות ליצור חריץ שכפול \"%s\": נתקבלו שורות %d ו- %d שדות, היו צפויים שורות %d ושדות %d\n"
+
+#: streamutil.c:420
+#, c-format
+msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "תכנית %s: לא היתה אפשרות להוריד חריץ שכפול \"%s\": נתקבלו שורות %d ו- %d שדות, היו צפויים שורות %d ושדות %d\n"

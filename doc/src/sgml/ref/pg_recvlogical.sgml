@@ -35,16 +35,16 @@ PostgreSQL documentation
 
   <para>
    It creates a replication-mode connection, so it is subject to the same
-   constraints as <xref linkend="app-pgreceivewal">, plus those for logical
-   replication (see <xref linkend="logicaldecoding">).
+   constraints as <xref linkend="app-pgreceivewal"/>, plus those for logical
+   replication (see <xref linkend="logicaldecoding"/>).
   </para>
 
   <para>
-   <command>pg_recvlogical</> has no equivalent to the logical decoding
+   <command>pg_recvlogical</command> has no equivalent to the logical decoding
    SQL interface's peek and get modes. It sends replay confirmations for
    data lazily as it receives it and on clean exit. To examine pending data on
     a slot without consuming it, use
-   <link linkend="functions-replication"><function>pg_logical_slot_peek_changes</></>.
+   <link linkend="functions-replication"><function>pg_logical_slot_peek_changes</function></link>.
   </para>
  </refsect1>
 
@@ -125,7 +125,7 @@ PostgreSQL documentation
        </para>
 
        <para>
-        If there's a record with LSN exactly equal to <replaceable>lsn</>,
+        If there's a record with LSN exactly equal to <replaceable>lsn</replaceable>,
         the record will be output.
        </para>
 
@@ -145,7 +145,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Write received and decoded transaction data into this
-        file. Use <literal>-</> for <systemitem>stdout</systemitem>.
+        file. Use <literal>-</literal> for <systemitem>stdout</systemitem>.
        </para>
       </listitem>
      </varlistentry>
@@ -182,8 +182,8 @@ PostgreSQL documentation
        <para>
         In <option>--start</option> mode, start replication from the given
         LSN.  For details on the effect of this, see the documentation
-        in <xref linkend="logicaldecoding">
-        and <xref linkend="protocol-replication">. Ignored in other modes.
+        in <xref linkend="logicaldecoding"/>
+        and <xref linkend="protocol-replication"/>. Ignored in other modes.
        </para>
       </listitem>
      </varlistentry>
@@ -226,7 +226,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         When creating a slot, use the specified logical decoding output
-        plugin. See <xref linkend="logicaldecoding">. This option has no
+        plugin. See <xref linkend="logicaldecoding"/>. This option has no
         effect if the slot already exists.
        </para>
       </listitem>
@@ -238,7 +238,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option has the same effect as the option of the same name
-        in <xref linkend="app-pgreceivewal">.  See the description there.
+        in <xref linkend="app-pgreceivewal"/>.  See the description there.
        </para>
       </listitem>
      </varlistentry>
@@ -257,8 +257,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-v</></term>
-       <term><option>--verbose</></term>
+       <term><option>-v</option></term>
+       <term><option>--verbose</option></term>
        <listitem>
        <para>
         Enables verbose mode.
@@ -279,7 +279,7 @@ PostgreSQL documentation
         <para>
          The database to connect to.  See the description of the actions for
          what this means in detail.  This can be a <application>libpq</application> connection string;
-         see <xref linkend="LIBPQ-CONNSTRING"> for more information.  Defaults
+         see <xref linkend="libpq-connstring"/> for more information.  Defaults
          to user name.
         </para>
        </listitem>
@@ -353,7 +353,7 @@ PostgreSQL documentation
          for a password if the server demands password authentication.
          However, <application>pg_recvlogical</application> will waste a
          connection attempt finding out that the server wants a password.
-         In some cases it is worth typing <option>-W</> to avoid the extra
+         In some cases it is worth typing <option>-W</option> to avoid the extra
          connection attempt.
         </para>
       </listitem>
@@ -366,8 +366,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-       <term><option>-V</></term>
-       <term><option>--version</></term>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
        <listitem>
        <para>
         Print the <application>pg_recvlogical</application> version and exit.
@@ -376,8 +376,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-?</></term>
-      <term><option>--help</></term>
+      <term><option>-?</option></term>
+      <term><option>--help</option></term>
        <listitem>
         <para>
          Show help about <application>pg_recvlogical</application> command line
@@ -393,9 +393,9 @@ PostgreSQL documentation
   <title>Environment</title>
 
   <para>
-   This utility, like most other <productname>PostgreSQL</> utilities,
-   uses the environment variables supported by <application>libpq</>
-   (see <xref linkend="libpq-envars">).
+   This utility, like most other <productname>PostgreSQL</productname> utilities,
+   uses the environment variables supported by <application>libpq</application>
+   (see <xref linkend="libpq-envars"/>).
   </para>
  </refsect1>
 
@@ -403,7 +403,7 @@ PostgreSQL documentation
   <title>Examples</title>
 
   <para>
-   See <xref linkend="logicaldecoding-example"> for an example.
+   See <xref linkend="logicaldecoding-example"/> for an example.
   </para>
  </refsect1>
 
@@ -411,7 +411,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-pgreceivewal"></member>
+   <member><xref linkend="app-pgreceivewal"/></member>
   </simplelist>
  </refsect1>
 </refentry>

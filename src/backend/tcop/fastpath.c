@@ -17,9 +17,6 @@
  */
 #include "postgres.h"
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/objectaccess.h"
@@ -28,6 +25,7 @@
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "port/pg_bswap.h"
 #include "tcop/fastpath.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -92,7 +90,7 @@ GetOldFunctionMessage(StringInfo buf)
 	if (pq_getbytes((char *) &ibuf, 4))
 		return EOF;
 	appendBinaryStringInfo(buf, (char *) &ibuf, 4);
-	nargs = ntohl(ibuf);
+	nargs = pg_ntoh32(ibuf);
 	/* For each argument ... */
 	while (nargs-- > 0)
 	{
@@ -102,7 +100,7 @@ GetOldFunctionMessage(StringInfo buf)
 		if (pq_getbytes((char *) &ibuf, 4))
 			return EOF;
 		appendBinaryStringInfo(buf, (char *) &ibuf, 4);
-		argsize = ntohl(ibuf);
+		argsize = pg_ntoh32(ibuf);
 		if (argsize < -1)
 		{
 			/* FATAL here since no hope of regaining message sync */
@@ -145,7 +143,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 	if (isnull)
 	{
 		if (newstyle)
-			pq_sendint(&buf, -1, 4);
+			pq_sendint32(&buf, -1);
 	}
 	else
 	{
@@ -171,7 +169,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 
 			getTypeBinaryOutputInfo(rettype, &typsend, &typisvarlena);
 			outputbytes = OidSendFunctionCall(typsend, retval);
-			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+			pq_sendint32(&buf, VARSIZE(outputbytes) - VARHDRSZ);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);
 			pfree(outputbytes);

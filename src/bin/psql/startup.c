@@ -160,7 +160,14 @@ main(int argc, char *argv[])
 
 	EstablishVariableSpace();
 
+	/* Create variables showing psql version number */
 	SetVariable(pset.vars, "VERSION", PG_VERSION_STR);
+	SetVariable(pset.vars, "VERSION_NAME", PG_VERSION);
+	SetVariable(pset.vars, "VERSION_NUM", CppAsString2(PG_VERSION_NUM));
+
+	/* Initialize variables for last error */
+	SetVariable(pset.vars, "LAST_ERROR_MESSAGE", "");
+	SetVariable(pset.vars, "LAST_ERROR_SQLSTATE", "00000");
 
 	/* Default values for variables (that don't match the result of \unset) */
 	SetVariableBool(pset.vars, "AUTOCOMMIT");

@@ -290,7 +290,7 @@ check_hard_link(void)
 
 	if (pg_link_file(existing_file, new_link_file) < 0)
 		pg_fatal("could not create hard link between old and new data directories: %s\n"
-				 "In link mode the old and new data directories must be on the same file system volume.\n",
+				 "In link mode the old and new data directories must be on the same file system.\n",
 				 strerror(errno));
 
 	unlink(new_link_file);

@@ -28,10 +28,17 @@
  */
 #define SCRAM_RAW_NONCE_LEN			18
 
-/* length of salt when generating new verifiers */
-#define SCRAM_DEFAULT_SALT_LEN		12
+/*
+ * Length of salt when generating new verifiers, in bytes.  (It will be stored
+ * and sent over the wire encoded in Base64.)  16 bytes is what the example in
+ * RFC 7677 uses.
+ */
+#define SCRAM_DEFAULT_SALT_LEN		16
 
-/* default number of iterations when generating verifier */
+/*
+ * Default number of iterations when generating verifier.  Should be at least
+ * 4096 per RFC 7677.
+ */
 #define SCRAM_DEFAULT_ITERATIONS	4096
 
 /*

@@ -35,15 +35,18 @@
  *
  * ----------------------------------------------------------------
  */
-TupleTableSlot *				/* result tuple from subplan */
-ExecMaterial(MaterialState *node)
+static TupleTableSlot *			/* result tuple from subplan */
+ExecMaterial(PlanState *pstate)
 {
+	MaterialState *node = castNode(MaterialState, pstate);
 	EState	   *estate;
 	ScanDirection dir;
 	bool		forward;
 	Tuplestorestate *tuplestorestate;
 	bool		eof_tuplestore;
 	TupleTableSlot *slot;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get state info from node
@@ -171,6 +174,7 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate = makeNode(MaterialState);
 	matstate->ss.ps.plan = (Plan *) node;
 	matstate->ss.ps.state = estate;
+	matstate->ss.ps.ExecProcNode = ExecMaterial;
 
 	/*
 	 * We must have a tuplestore buffering the subplan output to do backward

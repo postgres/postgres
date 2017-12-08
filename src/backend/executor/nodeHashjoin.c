@@ -58,9 +58,10 @@ static bool ExecHashJoinNewBatch(HashJoinState *hjstate);
  *			  the other one is "outer".
  * ----------------------------------------------------------------
  */
-TupleTableSlot *				/* return: a tuple or NULL */
-ExecHashJoin(HashJoinState *node)
+static TupleTableSlot *			/* return: a tuple or NULL */
+ExecHashJoin(PlanState *pstate)
 {
+	HashJoinState *node = castNode(HashJoinState, pstate);
 	PlanState  *outerNode;
 	HashState  *hashNode;
 	ExprState  *joinqual;
@@ -92,6 +93,14 @@ ExecHashJoin(HashJoinState *node)
 	 */
 	for (;;)
 	{
+		/*
+		 * It's possible to iterate this loop many times before returning a
+		 * tuple, in some pathological cases such as needing to move much of
+		 * the current batch to a later batch.  So let's check for interrupts
+		 * each time through.
+		 */
+		CHECK_FOR_INTERRUPTS();
+
 		switch (node->hj_JoinState)
 		{
 			case HJ_BUILD_HASHTABLE:
@@ -247,13 +256,6 @@ ExecHashJoin(HashJoinState *node)
 			case HJ_SCAN_BUCKET:
 
 				/*
-				 * We check for interrupts here because this corresponds to
-				 * where we'd fetch a row from a child plan node in other join
-				 * types.
-				 */
-				CHECK_FOR_INTERRUPTS();
-
-				/*
 				 * Scan the selected hash bucket for matches to current outer
 				 */
 				if (!ExecScanHashBucket(node, econtext))
@@ -398,6 +400,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	hjstate = makeNode(HashJoinState);
 	hjstate->js.ps.plan = (Plan *) node;
 	hjstate->js.ps.state = estate;
+	hjstate->js.ps.ExecProcNode = ExecHashJoin;
 
 	/*
 	 * Miscellaneous initialization

@@ -340,7 +340,8 @@ hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen)
 		{
 			*buflen += res->keylen + ((res->isnull) ? 0 : res->vallen);
 			res++;
-			memcpy(res, ptr, sizeof(Pairs));
+			if (res != ptr)
+				memcpy(res, ptr, sizeof(Pairs));
 		}
 
 		ptr++;
@@ -752,6 +753,8 @@ typedef struct RecordIOData
 {
 	Oid			record_type;
 	int32		record_typmod;
+	/* this field is used only if target type is domain over composite: */
+	void	   *domain_info;	/* opaque cache for domain checks */
 	int			ncolumns;
 	ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER];
 } RecordIOData;
@@ -780,9 +783,11 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
 
 		/*
-		 * have no tuple to look at, so the only source of type info is the
-		 * argtype. The lookup_rowtype_tupdesc call below will error out if we
-		 * don't have a known composite type oid here.
+		 * We have no tuple to look at, so the only source of type info is the
+		 * argtype --- which might be domain over composite, but we don't care
+		 * here, since we have no need to be concerned about domain
+		 * constraints.  The lookup_rowtype_tupdesc_domain call below will
+		 * error out if we don't have a known composite type oid here.
 		 */
 		tupType = argtype;
 		tupTypmod = -1;
@@ -793,12 +798,15 @@ hstore_from_record(PG_FUNCTION_ARGS)
 	{
 		rec = PG_GETARG_HEAPTUPLEHEADER(0);
 
-		/* Extract type info from the tuple itself */
+		/*
+		 * Extract type info from the tuple itself -- this will work even for
+		 * anonymous record types.
+		 */
 		tupType = HeapTupleHeaderGetTypeId(rec);
 		tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	}
 
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	tupdesc = lookup_rowtype_tupdesc_domain(tupType, tupTypmod, false);
 	ncolumns = tupdesc->natts;
 
 	/*
@@ -855,15 +863,16 @@ hstore_from_record(PG_FUNCTION_ARGS)
 	for (i = 0, j = 0; i < ncolumns; ++i)
 	{
 		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		Oid			column_type = att->atttypid;
 		char	   *value;
 
 		/* Ignore dropped columns in datatype */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
-		pairs[j].key = NameStr(tupdesc->attrs[i]->attname);
-		pairs[j].keylen = hstoreCheckKeyLen(strlen(NameStr(tupdesc->attrs[i]->attname)));
+		pairs[j].key = NameStr(att->attname);
+		pairs[j].keylen = hstoreCheckKeyLen(strlen(NameStr(att->attname)));
 
 		if (!nulls || nulls[i])
 		{
@@ -942,9 +951,9 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		rec = NULL;
 
 		/*
-		 * have no tuple to look at, so the only source of type info is the
-		 * argtype. The lookup_rowtype_tupdesc call below will error out if we
-		 * don't have a known composite type oid here.
+		 * We have no tuple to look at, so the only source of type info is the
+		 * argtype.  The lookup_rowtype_tupdesc_domain call below will error
+		 * out if we don't have a known composite type oid here.
 		 */
 		tupType = argtype;
 		tupTypmod = -1;
@@ -956,12 +965,15 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(1))
 			PG_RETURN_POINTER(rec);
 
-		/* Extract type info from the tuple itself */
+		/*
+		 * Extract type info from the tuple itself -- this will work even for
+		 * anonymous record types.
+		 */
 		tupType = HeapTupleHeaderGetTypeId(rec);
 		tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	}
 
-	hs = PG_GETARG_HS(1);
+	hs = PG_GETARG_HSTORE_P(1);
 	entries = ARRPTR(hs);
 	ptr = STRPTR(hs);
 
@@ -974,7 +986,11 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	if (HS_COUNT(hs) == 0 && rec)
 		PG_RETURN_POINTER(rec);
 
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	/*
+	 * Lookup the input record's tupdesc.  For the moment, we don't worry
+	 * about whether it is a domain over composite.
+	 */
+	tupdesc = lookup_rowtype_tupdesc_domain(tupType, tupTypmod, false);
 	ncolumns = tupdesc->natts;
 
 	if (rec)
@@ -1001,6 +1017,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
 		my_extra->record_type = InvalidOid;
 		my_extra->record_typmod = 0;
+		my_extra->domain_info = NULL;
 	}
 
 	if (my_extra->record_type != tupType ||
@@ -1034,21 +1051,22 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	for (i = 0; i < ncolumns; ++i)
 	{
 		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		Oid			column_type = att->atttypid;
 		char	   *value;
 		int			idx;
 		int			vallen;
 
 		/* Ignore dropped columns in datatype */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 		{
 			nulls[i] = true;
 			continue;
 		}
 
 		idx = hstoreFindKey(hs, 0,
-							NameStr(tupdesc->attrs[i]->attname),
-							strlen(NameStr(tupdesc->attrs[i]->attname)));
+							NameStr(att->attname),
+							strlen(NameStr(att->attname)));
 
 		/*
 		 * we can't just skip here if the key wasn't found since we might have
@@ -1082,7 +1100,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 			 */
 			values[i] = InputFunctionCall(&column_info->proc, NULL,
 										  column_info->typioparam,
-										  tupdesc->attrs[i]->atttypmod);
+										  att->atttypmod);
 			nulls[i] = true;
 		}
 		else
@@ -1094,12 +1112,23 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 
 			values[i] = InputFunctionCall(&column_info->proc, value,
 										  column_info->typioparam,
-										  tupdesc->attrs[i]->atttypmod);
+										  att->atttypmod);
 			nulls[i] = false;
 		}
 	}
 
 	rettuple = heap_form_tuple(tupdesc, values, nulls);
+
+	/*
+	 * If the target type is domain over composite, all we know at this point
+	 * is that we've made a valid value of the base composite type.  Must
+	 * check domain constraints before deciding we're done.
+	 */
+	if (argtype != tupdesc->tdtypeid)
+		domain_check(HeapTupleGetDatum(rettuple), false,
+					 argtype,
+					 &my_extra->domain_info,
+					 fcinfo->flinfo->fn_mcxt);
 
 	ReleaseTupleDesc(tupdesc);
 
@@ -1125,7 +1154,7 @@ PG_FUNCTION_INFO_V1(hstore_out);
 Datum
 hstore_out(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			buflen,
 				i;
 	int			count = HS_COUNT(in);
@@ -1196,7 +1225,7 @@ PG_FUNCTION_INFO_V1(hstore_send);
 Datum
 hstore_send(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
@@ -1205,23 +1234,23 @@ hstore_send(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 
-	pq_sendint(&buf, count, 4);
+	pq_sendint32(&buf, count);
 
 	for (i = 0; i < count; i++)
 	{
 		int32		keylen = HSTORE_KEYLEN(entries, i);
 
-		pq_sendint(&buf, keylen, 4);
+		pq_sendint32(&buf, keylen);
 		pq_sendtext(&buf, HSTORE_KEY(entries, base, i), keylen);
 		if (HSTORE_VALISNULL(entries, i))
 		{
-			pq_sendint(&buf, -1, 4);
+			pq_sendint32(&buf, -1);
 		}
 		else
 		{
 			int32		vallen = HSTORE_VALLEN(entries, i);
 
-			pq_sendint(&buf, vallen, 4);
+			pq_sendint32(&buf, vallen);
 			pq_sendtext(&buf, HSTORE_VAL(entries, base, i), vallen);
 		}
 	}
@@ -1242,7 +1271,7 @@ PG_FUNCTION_INFO_V1(hstore_to_json_loose);
 Datum
 hstore_to_json_loose(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
@@ -1297,7 +1326,7 @@ PG_FUNCTION_INFO_V1(hstore_to_json);
 Datum
 hstore_to_json(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
@@ -1342,7 +1371,7 @@ PG_FUNCTION_INFO_V1(hstore_to_jsonb);
 Datum
 hstore_to_jsonb(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
@@ -1385,7 +1414,7 @@ PG_FUNCTION_INFO_V1(hstore_to_jsonb_loose);
 Datum
 hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);

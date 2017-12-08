@@ -42,5 +42,5 @@ exec sql end declare section;
 	/* disconnect from "second" */
 	exec sql disconnect;
 
-	return (0);
+	return 0;
 }

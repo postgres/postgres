@@ -25,7 +25,7 @@
 
 extern ObjectAddress DefineRule(RuleStmt *stmt, const char *queryString);
 
-extern ObjectAddress DefineQueryRewrite(char *rulename,
+extern ObjectAddress DefineQueryRewrite(const char *rulename,
 				   Oid event_relid,
 				   Node *event_qual,
 				   CmdType event_type,

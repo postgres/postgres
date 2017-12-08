@@ -18,7 +18,6 @@
 #include "access/parallel.h"
 
 extern IndexOnlyScanState *ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags);
-extern TupleTableSlot *ExecIndexOnlyScan(IndexOnlyScanState *node);
 extern void ExecEndIndexOnlyScan(IndexOnlyScanState *node);
 extern void ExecIndexOnlyMarkPos(IndexOnlyScanState *node);
 extern void ExecIndexOnlyRestrPos(IndexOnlyScanState *node);
@@ -29,7 +28,9 @@ extern void ExecIndexOnlyScanEstimate(IndexOnlyScanState *node,
 						  ParallelContext *pcxt);
 extern void ExecIndexOnlyScanInitializeDSM(IndexOnlyScanState *node,
 							   ParallelContext *pcxt);
+extern void ExecIndexOnlyScanReInitializeDSM(IndexOnlyScanState *node,
+								 ParallelContext *pcxt);
 extern void ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
-								  shm_toc *toc);
+								  ParallelWorkerContext *pwcxt);
 
 #endif							/* NODEINDEXONLYSCAN_H */

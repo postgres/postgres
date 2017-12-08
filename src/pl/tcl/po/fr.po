@@ -1,93 +1,133 @@
 # translation of pltcl.po to fr_fr
 # french message translation file for pltcl
 #
-# Use these quotes: « %s »
+# Use these quotes: Â« %s Â»
 # Guillaume Lelarge <guillaume@lelarge.info>, 2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-02-21 16:07+0000\n"
-"PO-Revision-Date: 2016-02-21 17:18+0100\n"
+"POT-Creation-Date: 2017-07-06 14:37+0000\n"
+"PO-Revision-Date: 2017-07-06 18:12+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-15\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.6\n"
+"X-Generator: Poedit 1.8.12\n"
 
-#: pltcl.c:555
+#: pltcl.c:459
+msgid "PL/Tcl function to call once when pltcl is first used."
+msgstr ""
+"Fonction PL/Tcl Ã  appeler une fois quand pltcl est utilisÃ© pour la\n"
+"premiÃ¨re fois"
+
+#: pltcl.c:466
+msgid "PL/TclU function to call once when pltclu is first used."
+msgstr ""
+"Fonction PL/TclU Ã  appeler une fois quand pltcl est utilisÃ© pour la\n"
+"premiÃ¨re fois"
+
+#: pltcl.c:629
 #, c-format
-msgid "module \"unknown\" not found in pltcl_modules"
-msgstr "module « unkown » introuvable dans pltcl_modules"
+msgid "function \"%s\" is in the wrong language"
+msgstr "la fonction Â« %s Â» est dans le mauvais langage"
 
-#: pltcl.c:591
+#: pltcl.c:640
 #, c-format
-msgid "could not load module \"unknown\": %s"
-msgstr "n'a pas pu charger le module « unknown » : %s"
+msgid "function \"%s\" must not be SECURITY DEFINER"
+msgstr "la fonction Â« %s Â» doit Ãªtre dÃ©finie en SECURITY DEFINER"
 
-#: pltcl.c:1047
+#. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
+#: pltcl.c:674
+#, c-format
+msgid "processing %s parameter"
+msgstr "traitement du paramÃ¨tre %s"
+
+#: pltcl.c:830
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr ""
+"la fonction avec set-value a Ã©tÃ© appelÃ© dans un contexte qui n'accepte pas\n"
+"un ensemble"
+
+#: pltcl.c:994
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr ""
+"fonction renvoyant le type record appelÃ©e dans un contexte qui ne peut pas\n"
+"accepter le type record"
+
+#: pltcl.c:1263
 #, c-format
 msgid "could not split return value from trigger: %s"
-msgstr "n'a pas pu séparer la valeur de retour du trigger : %s"
+msgstr "n'a pas pu sÃ©parer la valeur de retour du trigger : %s"
 
-#: pltcl.c:1058
-#, c-format
-msgid "trigger's return list must have even number of elements"
-msgstr "la liste de retour du trigger doit avoir un nombre pair d'éléments"
-
-#: pltcl.c:1094
-#, c-format
-msgid "unrecognized attribute \"%s\""
-msgstr "attribut « %s » non reconnu"
-
-#: pltcl.c:1099
-#, c-format
-msgid "cannot set system attribute \"%s\""
-msgstr "ne peut pas initialiser l'attribut système « %s »"
-
-#: pltcl.c:1222 pltcl.c:1648
+#: pltcl.c:1343 pltcl.c:1771
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1223
+#: pltcl.c:1344
 #, c-format
 msgid ""
 "%s\n"
 "in PL/Tcl function \"%s\""
 msgstr ""
 "%s\n"
-"dans la fonction PL/Tcl « %s »"
+"dans la fonction PL/Tcl Â« %s Â»"
 
-#: pltcl.c:1331 pltcl.c:1338
-#, c-format
-msgid "out of memory"
-msgstr "mémoire épuisée"
-
-#: pltcl.c:1386
+#: pltcl.c:1509
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "les fonctions trigger peuvent seulement être appelées par des triggers"
+msgstr "les fonctions trigger peuvent seulement Ãªtre appelÃ©es par des triggers"
 
-#: pltcl.c:1395
+#: pltcl.c:1513
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer le type %s"
 
-#: pltcl.c:1407
-#, c-format
-msgid "PL/Tcl functions cannot return composite types"
-msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer des types composites"
-
-#: pltcl.c:1446
+#: pltcl.c:1549
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "les fonctions PL/Tcl ne peuvent pas accepter le type %s"
 
-#: pltcl.c:1564
+#: pltcl.c:1663
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
-msgstr "n'a pas pu créer la procédure interne « %s » : %s"
+msgstr "n'a pas pu crÃ©er la procÃ©dure interne Â« %s Â» : %s"
+
+#: pltcl.c:3100
+#, c-format
+msgid "column name/value list must have even number of elements"
+msgstr "la liste de nom de colonne/valeur doit avoir un nombre pair d'Ã©lÃ©ments"
+
+#: pltcl.c:3118
+#, c-format
+msgid "column name/value list contains nonexistent column name \"%s\""
+msgstr "la liste de nom de colonne/valeur contient des noms de colonne inexistantes (Â« %s Â»)"
+
+#: pltcl.c:3125
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "ne peut pas initialiser l'attribut systÃ¨me Â« %s Â»"
+
+#~ msgid "PL/Tcl functions cannot return composite types"
+#~ msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer des types composites"
+
+#~ msgid "out of memory"
+#~ msgstr "mÃ©moire Ã©puisÃ©e"
+
+#~ msgid "unrecognized attribute \"%s\""
+#~ msgstr "attribut Â« %s Â» non reconnu"
+
+#~ msgid "trigger's return list must have even number of elements"
+#~ msgstr "la liste de retour du trigger doit avoir un nombre pair d'Ã©lÃ©ments"
+
+#~ msgid "could not load module \"unknown\": %s"
+#~ msgstr "n'a pas pu charger le module Â« unknown Â» : %s"
+
+#~ msgid "module \"unknown\" not found in pltcl_modules"
+#~ msgstr "module Â« unkown Â» introuvable dans pltcl_modules"

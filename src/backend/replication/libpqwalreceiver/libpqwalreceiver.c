@@ -168,20 +168,25 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	status = PGRES_POLLING_WRITING;
 	do
 	{
-		/* Wait for socket ready and/or other events. */
 		int			io_flag;
 		int			rc;
 
-		io_flag = (status == PGRES_POLLING_READING
-				   ? WL_SOCKET_READABLE
-				   : WL_SOCKET_WRITEABLE);
+		if (status == PGRES_POLLING_READING)
+			io_flag = WL_SOCKET_READABLE;
+#ifdef WIN32
+		/* Windows needs a different test while waiting for connection-made */
+		else if (PQstatus(conn->streamConn) == CONNECTION_STARTED)
+			io_flag = WL_SOCKET_CONNECTED;
+#endif
+		else
+			io_flag = WL_SOCKET_WRITEABLE;
 
 		rc = WaitLatchOrSocket(MyLatch,
 							   WL_POSTMASTER_DEATH |
 							   WL_LATCH_SET | io_flag,
 							   PQsocket(conn->streamConn),
 							   0,
-							   WAIT_EVENT_LIBPQWALRECEIVER);
+							   WAIT_EVENT_LIBPQWALRECEIVER_CONNECT);
 
 		/* Emergency bailout? */
 		if (rc & WL_POSTMASTER_DEATH)
@@ -350,7 +355,7 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 						 options->slotname);
 
 	if (options->logical)
-		appendStringInfo(&cmd, " LOGICAL");
+		appendStringInfoString(&cmd, " LOGICAL");
 
 	appendStringInfo(&cmd, " %X/%X",
 					 (uint32) (options->startpoint >> 32),
@@ -582,7 +587,7 @@ libpqrcv_PQexec(PGconn *streamConn, const char *query)
 								   WL_LATCH_SET,
 								   PQsocket(streamConn),
 								   0,
-								   WAIT_EVENT_LIBPQWALRECEIVER);
+								   WAIT_EVENT_LIBPQWALRECEIVER_RECEIVE);
 
 			/* Emergency bailout? */
 			if (rc & WL_POSTMASTER_DEATH)
@@ -769,21 +774,21 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 	appendStringInfo(&cmd, "CREATE_REPLICATION_SLOT \"%s\"", slotname);
 
 	if (temporary)
-		appendStringInfo(&cmd, " TEMPORARY");
+		appendStringInfoString(&cmd, " TEMPORARY");
 
 	if (conn->logical)
 	{
-		appendStringInfo(&cmd, " LOGICAL pgoutput");
+		appendStringInfoString(&cmd, " LOGICAL pgoutput");
 		switch (snapshot_action)
 		{
 			case CRS_EXPORT_SNAPSHOT:
-				appendStringInfo(&cmd, " EXPORT_SNAPSHOT");
+				appendStringInfoString(&cmd, " EXPORT_SNAPSHOT");
 				break;
 			case CRS_NOEXPORT_SNAPSHOT:
-				appendStringInfo(&cmd, " NOEXPORT_SNAPSHOT");
+				appendStringInfoString(&cmd, " NOEXPORT_SNAPSHOT");
 				break;
 			case CRS_USE_SNAPSHOT:
-				appendStringInfo(&cmd, " USE_SNAPSHOT");
+				appendStringInfoString(&cmd, " USE_SNAPSHOT");
 				break;
 		}
 	}

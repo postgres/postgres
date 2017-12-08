@@ -43,7 +43,7 @@ extern bool InRecovery;
 /*
  * Like InRecovery, standbyState is only valid in the startup process.
  * In all other processes it will have the value STANDBY_DISABLED (so
- * InHotStandby will read as FALSE).
+ * InHotStandby will read as false).
  *
  * In DISABLED state, we're performing crash recovery or hot standby was
  * disabled in postgresql.conf.
@@ -94,6 +94,7 @@ extern PGDLLIMPORT XLogRecPtr XactLastCommitEnd;
 extern bool reachedConsistency;
 
 /* these variables are GUC parameters related to XLOG */
+extern int	wal_segment_size;
 extern int	min_wal_size_mb;
 extern int	max_wal_size_mb;
 extern int	wal_keep_segments;
@@ -261,6 +262,7 @@ extern XLogRecPtr GetFakeLSNForUnloggedRel(void);
 extern Size XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
 extern void BootStrapXLOG(void);
+extern void LocalProcessControlFile(bool reset);
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(int code, Datum arg);
 extern void InitXLOGAccess(void);
@@ -308,7 +310,7 @@ typedef enum SessionBackupState
 } SessionBackupState;
 
 extern XLogRecPtr do_pg_start_backup(const char *backupidstr, bool fast,
-				   TimeLineID *starttli_p, StringInfo labelfile, DIR *tblspcdir,
+				   TimeLineID *starttli_p, StringInfo labelfile,
 				   List **tablespaces, StringInfo tblspcmapfile, bool infotbssize,
 				   bool needtblspcmapfile);
 extern XLogRecPtr do_pg_stop_backup(char *labelfile, bool waitforarchive,

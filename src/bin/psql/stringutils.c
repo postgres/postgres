@@ -27,8 +27,8 @@
  * delim -		set of non-whitespace separator characters (or NULL)
  * quote -		set of characters that can quote a token (NULL if none)
  * escape -		character that can quote quotes (0 if none)
- * e_strings -	if TRUE, treat E'...' syntax as a valid token
- * del_quotes - if TRUE, strip quotes from the returned token, else return
+ * e_strings -	if true, treat E'...' syntax as a valid token
+ * del_quotes - if true, strip quotes from the returned token, else return
  *				it exactly as found in the string
  * encoding -	the active character-set encoding
  *
@@ -39,7 +39,7 @@
  * a single quote character in the data.  If escape isn't 0, then escape
  * followed by anything (except \0) is a data character too.
  *
- * The combination of e_strings and del_quotes both TRUE is not currently
+ * The combination of e_strings and del_quotes both true is not currently
  * handled.  This could be fixed but it's not needed anywhere at the moment.
  *
  * Note that the string s is _not_ overwritten in this implementation.

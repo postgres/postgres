@@ -671,11 +671,10 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 /* EncodeDateOnly()
  * Encode date as local time.
  */
-int
+void
 EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates)
 {
-	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
-		return -1;
+	Assert(tm->tm_mon >= 1 && tm->tm_mon <= MONTHS_PER_YEAR);
 
 	switch (style)
 	{
@@ -723,9 +722,7 @@ EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates)
 				sprintf(str + 5, "-%04d %s", -(tm->tm_year - 1), "BC");
 			break;
 	}
-
-	return TRUE;
-}								/* EncodeDateOnly() */
+}
 
 void
 TrimTrailingZeros(char *str)
@@ -758,7 +755,7 @@ TrimTrailingZeros(char *str)
  *	US - mm/dd/yyyy
  *	European - dd/mm/yyyy
  */
-int
+void
 EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates)
 {
 	int			day,
@@ -951,9 +948,7 @@ EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tz
 			}
 			break;
 	}
-
-	return TRUE;
-}								/* EncodeDateTime() */
+}
 
 int
 GetEpochTime(struct tm *tm)
@@ -1094,7 +1089,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				  int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits)
+				  int *tmask, struct tm *tm, fsec_t *fsec, bool *is2digits)
 {
 	char	   *cp;
 
@@ -1149,7 +1144,7 @@ DecodeNumberField(int len, char *str, int fmask,
 			tm->tm_mon = atoi(str + 2);
 			*(str + 2) = '\0';
 			tm->tm_year = atoi(str + 0);
-			*is2digits = TRUE;
+			*is2digits = true;
 
 			return DTK_DATE;
 		}
@@ -1161,7 +1156,7 @@ DecodeNumberField(int len, char *str, int fmask,
 			*(str + 2) = '\0';
 			tm->tm_mon = 1;
 			tm->tm_year = atoi(str + 0);
-			*is2digits = TRUE;
+			*is2digits = true;
 
 			return DTK_DATE;
 		}
@@ -1204,7 +1199,7 @@ DecodeNumberField(int len, char *str, int fmask,
  */
 static int
 DecodeNumber(int flen, char *str, int fmask,
-			 int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits, bool EuroDates)
+			 int *tmask, struct tm *tm, fsec_t *fsec, bool *is2digits, bool EuroDates)
 {
 	int			val;
 	char	   *cp;
@@ -1319,8 +1314,8 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm *tm, bool EuroDates)
 	int			nf = 0;
 	int			i,
 				len;
-	int			bc = FALSE;
-	int			is2digits = FALSE;
+	bool		bc = false;
+	bool		is2digits = false;
 	int			type,
 				val,
 				dmask = 0;
@@ -1797,9 +1792,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			i;
 	int			val;
 	int			mer = HR24;
-	int			haveTextMonth = FALSE;
-	int			is2digits = FALSE;
-	int			bc = FALSE;
+	bool		haveTextMonth = false;
+	bool		is2digits = false;
+	bool		bc = false;
 	int			t = 0;
 	int		   *tzp = &t;
 
@@ -2205,7 +2200,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							tm->tm_mday = tm->tm_mon;
 							tmask = DTK_M(DAY);
 						}
-						haveTextMonth = TRUE;
+						haveTextMonth = true;
 						tm->tm_mon = val;
 						break;
 

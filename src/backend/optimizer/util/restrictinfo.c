@@ -199,6 +199,8 @@ make_restrictinfo_internal(Expr *clause,
 
 	restrictinfo->left_bucketsize = -1;
 	restrictinfo->right_bucketsize = -1;
+	restrictinfo->left_mcvfreq = -1;
+	restrictinfo->right_mcvfreq = -1;
 
 	return restrictinfo;
 }

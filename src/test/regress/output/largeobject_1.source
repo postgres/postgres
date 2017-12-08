@@ -90,10 +90,8 @@ END;
 -- it's left behind to help test pg_dump.
 SELECT lo_from_bytea(0, lo_get(loid)) AS newloid FROM lotest_stash_values
 \gset
--- Ideally we'd put a comment on this object for pg_dump testing purposes.
--- But since pg_upgrade fails to preserve large object comments, doing so
--- would break pg_upgrade's regression test.
--- COMMENT ON LARGE OBJECT :newloid IS 'I Wandered Lonely as a Cloud';
+-- Add a comment to it, as well, for pg_dump/pg_upgrade testing.
+COMMENT ON LARGE OBJECT :newloid IS 'I Wandered Lonely as a Cloud';
 -- Read out a portion
 BEGIN;
 UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS integer));
@@ -469,5 +467,15 @@ SELECT lo_get(:newloid);
  \xdeadbeef
 (1 row)
 
+-- Create one more object that we leave behind for testing pg_dump/pg_upgrade;
+-- this one intentionally has an OID in the system range
+SELECT lo_create(3001);
+ lo_create 
+-----------
+      3001
+(1 row)
+
+COMMENT ON LARGE OBJECT 3001 IS 'testing comments';
+-- Clean up
 DROP TABLE lotest_stash_values;
 DROP ROLE regress_lo_user;

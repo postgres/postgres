@@ -6,7 +6,7 @@
  *
  * This should only be used if code is compiled with OpenSSL support.
  *
- * Portions Copyright (c) 2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/common/sha2_openssl.c

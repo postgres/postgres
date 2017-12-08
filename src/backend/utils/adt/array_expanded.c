@@ -394,11 +394,11 @@ DatumGetExpandedArrayX(Datum d, ArrayMetaState *metacache)
 }
 
 /*
- * DatumGetAnyArray: return either an expanded array or a detoasted varlena
+ * DatumGetAnyArrayP: return either an expanded array or a detoasted varlena
  * array.  The result must not be modified in-place.
  */
 AnyArrayType *
-DatumGetAnyArray(Datum d)
+DatumGetAnyArrayP(Datum d)
 {
 	ExpandedArrayHeader *eah;
 

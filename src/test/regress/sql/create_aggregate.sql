@@ -86,7 +86,8 @@ create aggregate my_percentile_disc(float8 ORDER BY anyelement) (
   stype = internal,
   sfunc = ordered_set_transition,
   finalfunc = percentile_disc_final,
-  finalfunc_extra = true
+  finalfunc_extra = true,
+  finalfunc_modify = read_write
 );
 
 create aggregate my_rank(VARIADIC "any" ORDER BY VARIADIC "any") (
@@ -161,11 +162,13 @@ CREATE AGGREGATE myavg (numeric)
 	finalfunc = numeric_avg,
 	serialfunc = numeric_avg_serialize,
 	deserialfunc = numeric_avg_deserialize,
-	combinefunc = numeric_avg_combine
+	combinefunc = numeric_avg_combine,
+	finalfunc_modify = sharable  -- just to test a non-default setting
 );
 
 -- Ensure all these functions made it into the catalog
-SELECT aggfnoid,aggtransfn,aggcombinefn,aggtranstype,aggserialfn,aggdeserialfn
+SELECT aggfnoid, aggtransfn, aggcombinefn, aggtranstype::regtype,
+       aggserialfn, aggdeserialfn, aggfinalmodify
 FROM pg_aggregate
 WHERE aggfnoid = 'myavg'::REGPROC;
 

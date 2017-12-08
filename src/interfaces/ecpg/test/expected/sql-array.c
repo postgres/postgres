@@ -351,5 +351,5 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	free(t);
 
-	return (0);
+	return 0;
 }

@@ -45,7 +45,7 @@ CATALOG(pg_statistic_ext,3381)
 	int2vector	stxkeys;		/* array of column keys */
 
 #ifdef CATALOG_VARLEN
-	char		stxkind[1] BKI_FORCE_NOT_NULL;	/* statistic types requested
+	char		stxkind[1] BKI_FORCE_NOT_NULL;	/* statistics kinds requested
 												 * to build */
 	pg_ndistinct stxndistinct;	/* ndistinct coefficients (serialized) */
 	pg_dependencies stxdependencies;	/* dependencies (serialized) */

@@ -382,6 +382,13 @@ SELECT * FROM test_cube WHERE c && '(3000,1000),(0,0)' ORDER BY c;
 -- Test sorting
 SELECT * FROM test_cube WHERE c && '(3000,1000),(0,0)' GROUP BY c ORDER BY c;
 
+-- Test index-only scans
+SET enable_bitmapscan = false;
+EXPLAIN (COSTS OFF)
+SELECT c FROM test_cube WHERE c <@ '(3000,1000),(0,0)' ORDER BY c;
+SELECT c FROM test_cube WHERE c <@ '(3000,1000),(0,0)' ORDER BY c;
+RESET enable_bitmapscan;
+
 -- kNN with index
 SELECT *, c <-> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <-> '(100, 100),(500, 500)'::cube LIMIT 5;
 SELECT *, c <=> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <=> '(100, 100),(500, 500)'::cube LIMIT 5;

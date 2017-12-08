@@ -216,7 +216,16 @@ CREATE TABLE test_seg (s seg);
 \copy test_seg from 'data/test_seg.data'
 
 CREATE INDEX test_seg_ix ON test_seg USING gist (s);
+
+EXPLAIN (COSTS OFF)
 SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
+SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
+
+SET enable_bitmapscan = false;
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
+SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
+RESET enable_bitmapscan;
 
 -- Test sorting
 SELECT * FROM test_seg WHERE s @> '11..11.3' GROUP BY s;

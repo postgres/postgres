@@ -19,12 +19,12 @@ include $(top_builddir)/src/Makefile.global
 PROGRAMS = createdb createuser dropdb dropuser clusterdb vacuumdb reindexdb pg_isready
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
-LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
+override LDFLAGS := -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport) $(LDFLAGS)
 
 all: $(PROGRAMS)
 
 %: %.o $(WIN32RES)
-	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 createdb: createdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 createuser: createuser.o common.o | submake-libpq submake-libpgport submake-libpgfeutils

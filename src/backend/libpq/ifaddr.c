@@ -27,10 +27,10 @@
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
-#include <arpa/inet.h>
 #include <sys/file.h>
 
 #include "libpq/ifaddr.h"
+#include "port/pg_bswap.h"
 
 static int range_sockaddr_AF_INET(const struct sockaddr_in *addr,
 					   const struct sockaddr_in *netaddr,
@@ -144,7 +144,7 @@ pg_sockaddr_cidr_mask(struct sockaddr_storage *mask, char *numbits, int family)
 						& 0xffffffffUL;
 				else
 					maskl = 0;
-				mask4.sin_addr.s_addr = htonl(maskl);
+				mask4.sin_addr.s_addr = pg_hton32(maskl);
 				memcpy(mask, &mask4, sizeof(mask4));
 				break;
 			}
@@ -568,7 +568,7 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 	/* addr 127.0.0.1/8 */
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = ntohl(0x7f000001);
+	addr.sin_addr.s_addr = pg_ntoh32(0x7f000001);
 	memset(&mask, 0, sizeof(mask));
 	pg_sockaddr_cidr_mask(&mask, "8", AF_INET);
 	run_ifaddr_callback(callback, cb_data,

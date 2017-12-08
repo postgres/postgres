@@ -25,8 +25,9 @@
 #define XLOG_BLCKSZ_K	(XLOG_BLCKSZ / 1024)
 
 #define LABEL_FORMAT		"        %-30s"
-#define NA_FORMAT			"%20s"
-#define OPS_FORMAT			"%13.3f ops/sec  %6.0f usecs/op"
+#define NA_FORMAT			"%21s\n"
+/* translator: maintain alignment with NA_FORMAT */
+#define OPS_FORMAT			gettext_noop("%13.3f ops/sec  %6.0f usecs/op\n")
 #define USECS_SEC			1000000
 
 /* These are macros to avoid timing the function call overhead. */
@@ -45,7 +46,7 @@ do { \
 	if (CreateThread(NULL, 0, process_alarm, NULL, 0, NULL) == \
 		INVALID_HANDLE_VALUE) \
 	{ \
-		fprintf(stderr, _("Cannot create thread for alarm\n")); \
+		fprintf(stderr, _("Could not create thread for alarm\n")); \
 		exit(1); \
 	} \
 	gettimeofday(&start_t, NULL); \
@@ -63,7 +64,7 @@ static const char *progname;
 
 static int	secs_per_test = 5;
 static int	needs_unlink = 0;
-static char full_buf[XLOG_SEG_SIZE],
+static char full_buf[DEFAULT_XLOG_SEG_SIZE],
 		   *buf,
 		   *filename = FSYNC_FILENAME;
 static struct timeval start_t,
@@ -191,7 +192,10 @@ handle_args(int argc, char *argv[])
 		exit(1);
 	}
 
-	printf(_("%d seconds per test\n"), secs_per_test);
+	printf(ngettext("%d second per test\n",
+					"%d seconds per test\n",
+					secs_per_test),
+		   secs_per_test);
 #if PG_O_DIRECT != 0
 	printf(_("O_DIRECT supported on this platform for open_datasync and open_sync.\n"));
 #else
@@ -205,7 +209,7 @@ prepare_buf(void)
 	int			ops;
 
 	/* write random data into buffer */
-	for (ops = 0; ops < XLOG_SEG_SIZE; ops++)
+	for (ops = 0; ops < DEFAULT_XLOG_SEG_SIZE; ops++)
 		full_buf[ops] = random();
 
 	buf = (char *) TYPEALIGN(XLOG_BLCKSZ, full_buf);
@@ -222,7 +226,8 @@ test_open(void)
 	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
 		die("could not open output file");
 	needs_unlink = 1;
-	if (write(tmpfile, full_buf, XLOG_SEG_SIZE) != XLOG_SEG_SIZE)
+	if (write(tmpfile, full_buf, DEFAULT_XLOG_SEG_SIZE) !=
+		DEFAULT_XLOG_SEG_SIZE)
 		die("write failed");
 
 	/* fsync now so that dirty buffers don't skew later tests */
@@ -255,7 +260,7 @@ test_sync(int writes_per_op)
 #ifdef OPEN_DATASYNC_FLAG
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC | PG_O_DIRECT, 0)) == -1)
 	{
-		printf(NA_FORMAT, _("n/a*\n"));
+		printf(NA_FORMAT, _("n/a*"));
 		fs_warning = true;
 	}
 	else
@@ -273,7 +278,7 @@ test_sync(int writes_per_op)
 		close(tmpfile);
 	}
 #else
-	printf(NA_FORMAT, _("n/a\n"));
+	printf(NA_FORMAT, _("n/a"));
 #endif
 
 /*
@@ -298,7 +303,7 @@ test_sync(int writes_per_op)
 	STOP_TIMER;
 	close(tmpfile);
 #else
-	printf(NA_FORMAT, _("n/a\n"));
+	printf(NA_FORMAT, _("n/a"));
 #endif
 
 /*
@@ -346,7 +351,7 @@ test_sync(int writes_per_op)
 	STOP_TIMER;
 	close(tmpfile);
 #else
-	printf(NA_FORMAT, _("n/a\n"));
+	printf(NA_FORMAT, _("n/a"));
 #endif
 
 /*
@@ -358,7 +363,7 @@ test_sync(int writes_per_op)
 #ifdef OPEN_SYNC_FLAG
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
 	{
-		printf(NA_FORMAT, _("n/a*\n"));
+		printf(NA_FORMAT, _("n/a*"));
 		fs_warning = true;
 	}
 	else
@@ -383,7 +388,7 @@ test_sync(int writes_per_op)
 		close(tmpfile);
 	}
 #else
-	printf(NA_FORMAT, _("n/a\n"));
+	printf(NA_FORMAT, _("n/a"));
 #endif
 
 	if (fs_warning)
@@ -424,7 +429,7 @@ test_open_sync(const char *msg, int writes_size)
 
 #ifdef OPEN_SYNC_FLAG
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
-		printf(NA_FORMAT, _("n/a*\n"));
+		printf(NA_FORMAT, _("n/a*"));
 	else
 	{
 		START_TIMER;
@@ -441,7 +446,7 @@ test_open_sync(const char *msg, int writes_size)
 		close(tmpfile);
 	}
 #else
-	printf(NA_FORMAT, _("n/a\n"));
+	printf(NA_FORMAT, _("n/a"));
 #endif
 }
 
@@ -577,7 +582,7 @@ print_elapse(struct timeval start_t, struct timeval stop_t, int ops)
 	double		per_second = ops / total_time;
 	double		avg_op_time_us = (total_time / ops) * USECS_SEC;
 
-	printf(OPS_FORMAT "\n", per_second, avg_op_time_us);
+	printf(_(OPS_FORMAT), per_second, avg_op_time_us);
 }
 
 #ifndef WIN32

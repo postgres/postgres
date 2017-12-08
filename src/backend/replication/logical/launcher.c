@@ -73,6 +73,14 @@ typedef struct LogicalRepCtxStruct
 
 LogicalRepCtxStruct *LogicalRepCtx;
 
+typedef struct LogicalRepWorkerId
+{
+	Oid			subid;
+	Oid			relid;
+} LogicalRepWorkerId;
+
+static List *on_commit_stop_workers = NIL;
+
 static void ApplyLauncherWakeup(void);
 static void logicalrep_launcher_onexit(int code, Datum arg);
 static void logicalrep_worker_onexit(int code, Datum arg);
@@ -160,14 +168,11 @@ get_subscription_list(void)
  */
 static void
 WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
+							   uint16 generation,
 							   BackgroundWorkerHandle *handle)
 {
 	BgwHandleStatus status;
 	int			rc;
-	uint16		generation;
-
-	/* Remember generation for future identification. */
-	generation = worker->generation;
 
 	for (;;)
 	{
@@ -250,7 +255,31 @@ logicalrep_worker_find(Oid subid, Oid relid, bool only_running)
 }
 
 /*
- * Start new apply background worker.
+ * Similar to logicalrep_worker_find(), but returns list of all workers for
+ * the subscription, instead just one.
+ */
+List *
+logicalrep_workers_find(Oid subid, bool only_running)
+{
+	int			i;
+	List	   *res = NIL;
+
+	Assert(LWLockHeldByMe(LogicalRepWorkerLock));
+
+	/* Search for attached worker for a given subscription id. */
+	for (i = 0; i < max_logical_replication_workers; i++)
+	{
+		LogicalRepWorker *w = &LogicalRepCtx->workers[i];
+
+		if (w->in_use && w->subid == subid && (!only_running || w->proc))
+			res = lappend(res, w);
+	}
+
+	return res;
+}
+
+/*
+ * Start new apply background worker, if possible.
  */
 void
 logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid,
@@ -258,6 +287,7 @@ logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid,
 {
 	BackgroundWorker bgw;
 	BackgroundWorkerHandle *bgw_handle;
+	uint16		generation;
 	int			i;
 	int			slot = 0;
 	LogicalRepWorker *worker = NULL;
@@ -374,6 +404,9 @@ retry:
 	worker->reply_lsn = InvalidXLogRecPtr;
 	TIMESTAMP_NOBEGIN(worker->reply_time);
 
+	/* Before releasing lock, remember generation for future identification. */
+	generation = worker->generation;
+
 	LWLockRelease(LogicalRepWorkerLock);
 
 	/* Register the new dynamic worker. */
@@ -389,6 +422,7 @@ retry:
 	else
 		snprintf(bgw.bgw_name, BGW_MAXLEN,
 				 "logical replication worker for subscription %u", subid);
+	snprintf(bgw.bgw_type, BGW_MAXLEN, "logical replication worker");
 
 	bgw.bgw_restart_time = BGW_NEVER_RESTART;
 	bgw.bgw_notify_pid = MyProcPid;
@@ -396,6 +430,12 @@ retry:
 
 	if (!RegisterDynamicBackgroundWorker(&bgw, &bgw_handle))
 	{
+		/* Failed to start worker, so clean up the worker slot. */
+		LWLockAcquire(LogicalRepWorkerLock, LW_EXCLUSIVE);
+		Assert(generation == worker->generation);
+		logicalrep_worker_cleanup(worker);
+		LWLockRelease(LogicalRepWorkerLock);
+
 		ereport(WARNING,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
 				 errmsg("out of background worker slots"),
@@ -404,7 +444,7 @@ retry:
 	}
 
 	/* Now wait until it attaches. */
-	WaitForReplicationWorkerAttach(worker, bgw_handle);
+	WaitForReplicationWorkerAttach(worker, generation, bgw_handle);
 }
 
 /*
@@ -511,6 +551,27 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 	}
 
 	LWLockRelease(LogicalRepWorkerLock);
+}
+
+/*
+ * Request worker for specified sub/rel to be stopped on commit.
+ */
+void
+logicalrep_worker_stop_at_commit(Oid subid, Oid relid)
+{
+	LogicalRepWorkerId *wid;
+	MemoryContext oldctx;
+
+	/* Make sure we store the info in context that survives until commit. */
+	oldctx = MemoryContextSwitchTo(TopTransactionContext);
+
+	wid = palloc(sizeof(LogicalRepWorkerId));
+	wid->subid = subid;
+	wid->relid = relid;
+
+	on_commit_stop_workers = lappend(on_commit_stop_workers, wid);
+
+	MemoryContextSwitchTo(oldctx);
 }
 
 /*
@@ -715,6 +776,8 @@ ApplyLauncherRegister(void)
 	snprintf(bgw.bgw_function_name, BGW_MAXLEN, "ApplyLauncherMain");
 	snprintf(bgw.bgw_name, BGW_MAXLEN,
 			 "logical replication launcher");
+	snprintf(bgw.bgw_type, BGW_MAXLEN,
+			 "logical replication launcher");
 	bgw.bgw_restart_time = 5;
 	bgw.bgw_notify_pid = 0;
 	bgw.bgw_main_arg = (Datum) 0;
@@ -754,14 +817,41 @@ ApplyLauncherShmemInit(void)
 }
 
 /*
+ * Check whether current transaction has manipulated logical replication
+ * workers.
+ */
+bool
+XactManipulatesLogicalReplicationWorkers(void)
+{
+	return (on_commit_stop_workers != NIL);
+}
+
+/*
  * Wakeup the launcher on commit if requested.
  */
 void
 AtEOXact_ApplyLauncher(bool isCommit)
 {
-	if (isCommit && on_commit_launcher_wakeup)
-		ApplyLauncherWakeup();
+	if (isCommit)
+	{
+		ListCell   *lc;
 
+		foreach(lc, on_commit_stop_workers)
+		{
+			LogicalRepWorkerId *wid = lfirst(lc);
+
+			logicalrep_worker_stop(wid->subid, wid->relid);
+		}
+
+		if (on_commit_launcher_wakeup)
+			ApplyLauncherWakeup();
+	}
+
+	/*
+	 * No need to pfree on_commit_stop_workers.  It was allocated in
+	 * transaction memory context, which is going to be cleaned soon.
+	 */
+	on_commit_stop_workers = NIL;
 	on_commit_launcher_wakeup = false;
 }
 
@@ -849,11 +939,14 @@ ApplyLauncherMain(Datum main_arg)
 				Subscription *sub = (Subscription *) lfirst(lc);
 				LogicalRepWorker *w;
 
+				if (!sub->enabled)
+					continue;
+
 				LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 				w = logicalrep_worker_find(sub->oid, InvalidOid, false);
 				LWLockRelease(LogicalRepWorkerLock);
 
-				if (sub->enabled && w == NULL)
+				if (w == NULL)
 				{
 					last_start_time = now;
 					wait_time = wal_retrieve_retry_interval;

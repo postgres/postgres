@@ -78,6 +78,11 @@ chomp($stdout_recv);
 is($stdout_recv, $expected,
 	'got same expected output from pg_recvlogical decoding session');
 
+$node_master->poll_query_until('postgres',
+"SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'test_slot' AND active_pid IS NULL)"
+)
+  or die "slot never became inactive";
+
 $stdout_recv = $node_master->pg_recvlogical_upto(
 	'postgres', 'test_slot', $endpos, 10,
 	'include-xids'     => '0',
@@ -111,8 +116,7 @@ SKIP:
 			'-S', 'otherdb_slot', '-f', '-', '--start' ]);
 	$node_master->poll_query_until('otherdb',
 "SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NOT NULL)"
-	)
-	  or die "slot never became active";
+	) or die "slot never became active";
 	is($node_master->psql('postgres', 'DROP DATABASE otherdb'),
 		3, 'dropping a DB with active logical slots fails');
 	$pg_recvlogical->kill_kill;
@@ -122,8 +126,7 @@ SKIP:
 
 $node_master->poll_query_until('otherdb',
 "SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NULL)"
-)
-  or die "slot never became inactive";
+) or die "slot never became inactive";
 
 is($node_master->psql('postgres', 'DROP DATABASE otherdb'),
 	0, 'dropping a DB with inactive logical slots succeeds');

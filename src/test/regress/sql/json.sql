@@ -388,6 +388,9 @@ CREATE DOMAIN js_int_not_null  AS int     NOT NULL;
 CREATE DOMAIN js_int_array_1d  AS int[]   CHECK(array_length(VALUE, 1) = 3);
 CREATE DOMAIN js_int_array_2d  AS int[][] CHECK(array_length(VALUE, 2) = 3);
 
+create type j_unordered_pair as (x int, y int);
+create domain j_ordered_pair as j_unordered_pair check((value).x <= (value).y);
+
 CREATE TYPE jsrec AS (
 	i	int,
 	ia	_int4,
@@ -516,6 +519,15 @@ SELECT rec FROM json_populate_record(
 	'{"rec": {"a": "abc", "c": "01.02.2003", "x": 43.2}}'
 ) q;
 
+-- anonymous record type
+SELECT json_populate_record(null::record, '{"x": 0, "y": 1}');
+SELECT json_populate_record(row(1,2), '{"f1": 0, "f2": 1}');
+
+-- composite domain
+SELECT json_populate_record(null::j_ordered_pair, '{"x": 0, "y": 1}');
+SELECT json_populate_record(row(1,2)::j_ordered_pair, '{"x": 0}');
+SELECT json_populate_record(row(1,2)::j_ordered_pair, '{"x": 1, "y": 0}');
+
 -- populate_recordset
 
 select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
@@ -531,6 +543,21 @@ select * from json_populate_recordset(null::jpop2, '[{"a":2,"c":3,"b":{"z":4},"d
 select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
+
+-- anonymous record type
+SELECT json_populate_recordset(null::record, '[{"x": 0, "y": 1}]');
+SELECT json_populate_recordset(row(1,2), '[{"f1": 0, "f2": 1}]');
+
+-- composite domain
+SELECT json_populate_recordset(null::j_ordered_pair, '[{"x": 0, "y": 1}]');
+SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 0}, {"y": 3}]');
+SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 1, "y": 0}]');
+
+-- negative cases where the wrong record type is supplied
+select * from json_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+select * from json_populate_recordset(row(0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+select * from json_populate_recordset(row(0::int,0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+select * from json_populate_recordset(row(1000000000::int,50::int),'[{"b":"2"},{"a":"3"}]') q (a text, b text);
 
 -- test type info caching in json_populate_record()
 CREATE TEMP TABLE jspoptest (js json);
@@ -550,6 +577,8 @@ DROP TYPE jsrec_i_not_null;
 DROP DOMAIN js_int_not_null;
 DROP DOMAIN js_int_array_1d;
 DROP DOMAIN js_int_array_2d;
+DROP DOMAIN j_ordered_pair;
+DROP TYPE j_unordered_pair;
 
 --json_typeof() function
 select value, json_typeof(value)
@@ -569,6 +598,14 @@ select value, json_typeof(value)
 -- json_build_array, json_build_object, json_object_agg
 
 SELECT json_build_array('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+SELECT json_build_array('a', NULL); -- ok
+SELECT json_build_array(VARIADIC NULL::text[]); -- ok
+SELECT json_build_array(VARIADIC '{}'::text[]); -- ok
+SELECT json_build_array(VARIADIC '{a,b,c}'::text[]); -- ok
+SELECT json_build_array(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+SELECT json_build_array(VARIADIC '{1,2,3,4}'::text[]); -- ok
+SELECT json_build_array(VARIADIC '{1,2,3,4}'::int[]); -- ok
+SELECT json_build_array(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
 
 SELECT json_build_object('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
 
@@ -576,6 +613,19 @@ SELECT json_build_object(
        'a', json_build_object('b',false,'c',99),
        'd', json_build_object('e',array[9,8,7]::int[],
            'f', (select row_to_json(r) from ( select relkind, oid::regclass as name from pg_class where relname = 'pg_class') r)));
+SELECT json_build_object('{a,b,c}'::text[]); -- error
+SELECT json_build_object('{a,b,c}'::text[], '{d,e,f}'::text[]); -- error, key cannot be array
+SELECT json_build_object('a', 'b', 'c'); -- error
+SELECT json_build_object(NULL, 'a'); -- error, key cannot be NULL
+SELECT json_build_object('a', NULL); -- ok
+SELECT json_build_object(VARIADIC NULL::text[]); -- ok
+SELECT json_build_object(VARIADIC '{}'::text[]); -- ok
+SELECT json_build_object(VARIADIC '{a,b,c}'::text[]); -- error
+SELECT json_build_object(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+SELECT json_build_object(VARIADIC ARRAY[NULL, 'a']::text[]); -- error, key cannot be NULL
+SELECT json_build_object(VARIADIC '{1,2,3,4}'::text[]); -- ok
+SELECT json_build_object(VARIADIC '{1,2,3,4}'::int[]); -- ok
+SELECT json_build_object(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
 
 -- empty objects/arrays
 SELECT json_build_array();

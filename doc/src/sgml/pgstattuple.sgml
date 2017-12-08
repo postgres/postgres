@@ -13,12 +13,14 @@
  </para>
 
  <para>
-  As these functions return detailed page-level information, only the superuser
-  has EXECUTE privileges on them upon installation.  After the functions have
-  been installed, users may issue <command>GRANT</command> commands to change
-  the privileges on the functions to allow non-superusers to execute them. Members
-  of the <literal>pg_stat_scan_tables</literal> role are granted access by default. See
-  the description of the <xref linkend="sql-grant"> command for specifics.
+  Because these functions return detailed page-level information, access is
+  restricted by default.  By default, only the
+  role <literal>pg_stat_scan_tables</literal> has <literal>EXECUTE</literal>
+  privilege.  Superusers of course bypass this restriction.  After the
+  extension has been installed, users may issue <command>GRANT</command>
+  commands to change the privileges on the functions to allow others to
+  execute them.  However, it might be preferable to add those users to
+  the <literal>pg_stat_scan_tables</literal> role instead.
  </para>
 
  <sect2>
@@ -30,13 +32,13 @@
      <indexterm>
       <primary>pgstattuple</primary>
      </indexterm>
-     <function>pgstattuple(regclass) returns record</>
+     <function>pgstattuple(regclass) returns record</function>
     </term>
 
     <listitem>
      <para>
       <function>pgstattuple</function> returns a relation's physical length,
-      percentage of <quote>dead</> tuples, and other info. This may help users
+      percentage of <quote>dead</quote> tuples, and other info. This may help users
       to determine whether vacuum is necessary or not.  The argument is the
       target relation's name (optionally schema-qualified) or OID.
       For example:
@@ -53,7 +55,7 @@ dead_tuple_percent | 0.69
 free_space         | 8932
 free_percent       | 1.95
 </programlisting>
-     The output columns are described in <xref linkend="pgstattuple-columns">.
+     The output columns are described in <xref linkend="pgstattuple-columns"/>.
     </para>
 
     <table id="pgstattuple-columns">
@@ -135,15 +137,15 @@ free_percent       | 1.95
     </para>
 
     <para>
-     <function>pgstattuple</function> judges a tuple is <quote>dead</> if
-     <function>HeapTupleSatisfiesDirty</> returns false.
+     <function>pgstattuple</function> judges a tuple is <quote>dead</quote> if
+     <function>HeapTupleSatisfiesDirty</function> returns false.
     </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term>
-     <function>pgstattuple(text) returns record</>
+     <function>pgstattuple(text) returns record</function>
     </term>
 
     <listitem>
@@ -161,7 +163,7 @@ free_percent       | 1.95
     <indexterm>
      <primary>pgstatindex</primary>
     </indexterm>
-     <function>pgstatindex(regclass) returns record</>
+     <function>pgstatindex(regclass) returns record</function>
     </term>
 
     <listitem>
@@ -225,7 +227,7 @@ leaf_fragmentation | 0
        <row>
         <entry><structfield>internal_pages</structfield></entry>
         <entry><type>bigint</type></entry>
-        <entry>Number of <quote>internal</> (upper-level) pages</entry>
+        <entry>Number of <quote>internal</quote> (upper-level) pages</entry>
        </row>
 
        <row>
@@ -264,14 +266,14 @@ leaf_fragmentation | 0
     </para>
 
     <para>
-     The reported <literal>index_size</> will normally correspond to one more
+     The reported <literal>index_size</literal> will normally correspond to one more
      page than is accounted for by <literal>internal_pages + leaf_pages +
      empty_pages + deleted_pages</literal>, because it also includes the
      index's metapage.
     </para>
 
     <para>
-     As with <function>pgstattuple</>, the results are accumulated
+     As with <function>pgstattuple</function>, the results are accumulated
      page-by-page, and should not be expected to represent an
      instantaneous snapshot of the whole index.
     </para>
@@ -280,7 +282,7 @@ leaf_fragmentation | 0
 
    <varlistentry>
     <term>
-     <function>pgstatindex(text) returns record</>
+     <function>pgstatindex(text) returns record</function>
     </term>
 
     <listitem>
@@ -298,7 +300,7 @@ leaf_fragmentation | 0
      <indexterm>
       <primary>pgstatginindex</primary>
      </indexterm>
-     <function>pgstatginindex(regclass) returns record</>
+     <function>pgstatginindex(regclass) returns record</function>
     </term>
 
     <listitem>
@@ -358,7 +360,7 @@ pending_tuples | 0
      <indexterm>
       <primary>pgstathashindex</primary>
      </indexterm>
-     <function>pgstathashindex(regclass) returns record</>
+     <function>pgstathashindex(regclass) returns record</function>
     </term>
 
     <listitem>
@@ -368,7 +370,7 @@ pending_tuples | 0
 <programlisting>
 test=&gt; select * from pgstathashindex('con_hash_index');
 -[ RECORD 1 ]--+-----------------
-version        | 2
+version        | 4
 bucket_pages   | 33081
 overflow_pages | 0
 bitmap_pages   | 1
@@ -453,7 +455,7 @@ free_percent   | 61.8005949100872
      <indexterm>
       <primary>pg_relpages</primary>
      </indexterm>
-     <function>pg_relpages(regclass) returns bigint</>
+     <function>pg_relpages(regclass) returns bigint</function>
     </term>
 
     <listitem>
@@ -466,7 +468,7 @@ free_percent   | 61.8005949100872
 
    <varlistentry>
     <term>
-     <function>pg_relpages(text) returns bigint</>
+     <function>pg_relpages(text) returns bigint</function>
     </term>
 
     <listitem>
@@ -484,7 +486,7 @@ free_percent   | 61.8005949100872
      <indexterm>
       <primary>pgstattuple_approx</primary>
      </indexterm>
-     <function>pgstattuple_approx(regclass) returns record</>
+     <function>pgstattuple_approx(regclass) returns record</function>
     </term>
 
     <listitem>
@@ -507,7 +509,7 @@ dead_tuple_percent   | 0
 approx_free_space    | 11996
 approx_free_percent  | 2.09
 </programlisting>
-      The output columns are described in <xref linkend="pgstatapprox-columns">.
+      The output columns are described in <xref linkend="pgstatapprox-columns"/>.
      </para>
 
      <para>

@@ -29,7 +29,7 @@ CHECKPOINT
    A checkpoint is a point in the write-ahead log sequence at which
    all data files have been updated to reflect the information in the
    log.  All data files will be flushed to disk.  Refer to
-   <xref linkend="wal-configuration"> for more details about what happens
+   <xref linkend="wal-configuration"/> for more details about what happens
    during a checkpoint.
   </para>
 
@@ -37,14 +37,14 @@ CHECKPOINT
    The <command>CHECKPOINT</command> command forces an immediate
    checkpoint when the command is issued, without waiting for a
    regular checkpoint scheduled by the system (controlled by the settings in
-   <xref linkend="runtime-config-wal-checkpoints">).
+   <xref linkend="runtime-config-wal-checkpoints"/>).
    <command>CHECKPOINT</command> is not intended for use during normal
    operation.
   </para>
 
   <para>
    If executed during recovery, the <command>CHECKPOINT</command> command
-   will force a restartpoint (see <xref linkend="wal-configuration">)
+   will force a restartpoint (see <xref linkend="wal-configuration"/>)
    rather than writing a new checkpoint.
   </para>
 

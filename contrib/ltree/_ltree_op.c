@@ -71,7 +71,7 @@ Datum
 _ltree_isparent(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
-	ltree	   *query = PG_GETARG_LTREE(1);
+	ltree	   *query = PG_GETARG_LTREE_P(1);
 	bool		res = array_iterator(la, ltree_isparent, (void *) query, NULL);
 
 	PG_FREE_IF_COPY(la, 0);
@@ -92,7 +92,7 @@ Datum
 _ltree_risparent(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
-	ltree	   *query = PG_GETARG_LTREE(1);
+	ltree	   *query = PG_GETARG_LTREE_P(1);
 	bool		res = array_iterator(la, ltree_risparent, (void *) query, NULL);
 
 	PG_FREE_IF_COPY(la, 0);
@@ -113,7 +113,7 @@ Datum
 _ltq_regex(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
-	lquery	   *query = PG_GETARG_LQUERY(1);
+	lquery	   *query = PG_GETARG_LQUERY_P(1);
 	bool		res = array_iterator(la, ltq_regex, (void *) query, NULL);
 
 	PG_FREE_IF_COPY(la, 0);
@@ -178,7 +178,7 @@ Datum
 _ltxtq_exec(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
-	ltxtquery  *query = PG_GETARG_LTXTQUERY(1);
+	ltxtquery  *query = PG_GETARG_LTXTQUERY_P(1);
 	bool		res = array_iterator(la, ltxtq_exec, (void *) query, NULL);
 
 	PG_FREE_IF_COPY(la, 0);
@@ -200,7 +200,7 @@ Datum
 _ltree_extract_isparent(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
-	ltree	   *query = PG_GETARG_LTREE(1);
+	ltree	   *query = PG_GETARG_LTREE_P(1);
 	ltree	   *found,
 			   *item;
 
@@ -223,7 +223,7 @@ Datum
 _ltree_extract_risparent(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
-	ltree	   *query = PG_GETARG_LTREE(1);
+	ltree	   *query = PG_GETARG_LTREE_P(1);
 	ltree	   *found,
 			   *item;
 
@@ -246,7 +246,7 @@ Datum
 _ltq_extract_regex(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
-	lquery	   *query = PG_GETARG_LQUERY(1);
+	lquery	   *query = PG_GETARG_LQUERY_P(1);
 	ltree	   *found,
 			   *item;
 
@@ -269,7 +269,7 @@ Datum
 _ltxtq_extract_exec(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
-	ltxtquery  *query = PG_GETARG_LTXTQUERY(1);
+	ltxtquery  *query = PG_GETARG_LTXTQUERY_P(1);
 	ltree	   *found,
 			   *item;
 

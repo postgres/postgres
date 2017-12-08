@@ -246,5 +246,5 @@ exec sql end declare section;
 	strcpy(msg, "disconnect");
 	exec sql disconnect;
 
-	return (0);
+	return 0;
 }

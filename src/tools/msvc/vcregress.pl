@@ -104,6 +104,7 @@ sub installcheck
 		"--dlpath=.",
 		"--bindir=../../../$Config/psql",
 		"--schedule=${schedule}_schedule",
+		"--max-concurrent-tests=20",
 		"--encoding=SQL_ASCII",
 		"--no-locale");
 	push(@args, $maxconn) if $maxconn;
@@ -122,6 +123,7 @@ sub check
 		"--dlpath=.",
 		"--bindir=",
 		"--schedule=${schedule}_schedule",
+		"--max-concurrent-tests=20",
 		"--encoding=SQL_ASCII",
 		"--no-locale",
 		"--temp-instance=./tmp_check");
@@ -183,7 +185,7 @@ sub tap_check
 	{
 		next unless $_[$arg] =~ /^PROVE_FLAGS=(.*)/;
 		@flags = split(/\s+/, $1);
-		splice(@_,$arg,1);
+		splice(@_, $arg, 1);
 		last;
 	}
 
@@ -227,11 +229,20 @@ sub bincheck
 sub taptest
 {
 	my $dir = shift;
+	my @args;
+
+	if ($dir =~ /^PROVE_FLAGS=/)
+	{
+		push(@args, $dir);
+		$dir = shift;
+	}
 
 	die "no tests found!" unless -d "$topdir/$dir/t";
 
+	push(@args, "$topdir/$dir");
+
 	InstallTemp();
-	my $status = tap_check("$topdir/$dir");
+	my $status = tap_check(@args);
 	exit $status if $status;
 }
 

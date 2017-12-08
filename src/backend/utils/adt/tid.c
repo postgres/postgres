@@ -149,10 +149,8 @@ tidsend(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
-	pq_sendint(&buf, ItemPointerGetBlockNumberNoCheck(itemPtr),
-			   sizeof(BlockNumber));
-	pq_sendint(&buf, ItemPointerGetOffsetNumberNoCheck(itemPtr),
-			   sizeof(OffsetNumber));
+	pq_sendint32(&buf, ItemPointerGetBlockNumberNoCheck(itemPtr));
+	pq_sendint16(&buf, ItemPointerGetOffsetNumberNoCheck(itemPtr));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
@@ -273,9 +271,11 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 
 	for (i = 0; i < natts; i++)
 	{
-		if (strcmp(NameStr(att->attrs[i]->attname), "ctid") == 0)
+		Form_pg_attribute attr = TupleDescAttr(att, i);
+
+		if (strcmp(NameStr(attr->attname), "ctid") == 0)
 		{
-			if (att->attrs[i]->atttypid != TIDOID)
+			if (attr->atttypid != TIDOID)
 				elog(ERROR, "ctid isn't of type TID");
 			tididx = i;
 			break;

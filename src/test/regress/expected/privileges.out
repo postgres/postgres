@@ -488,9 +488,21 @@ ERROR:  permission denied for relation atest5
 INSERT INTO atest5(three) VALUES (4) ON CONFLICT (two) DO UPDATE set three = 10; -- fails (due to INSERT)
 ERROR:  permission denied for relation atest5
 -- Check that the columns in the inference require select privileges
--- Error. No privs on four
-INSERT INTO atest5(three) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 10;
+INSERT INTO atest5(four) VALUES (4); -- fail
 ERROR:  permission denied for relation atest5
+SET SESSION AUTHORIZATION regress_user1;
+GRANT INSERT (four) ON atest5 TO regress_user4;
+SET SESSION AUTHORIZATION regress_user4;
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 3; -- fails (due to SELECT)
+ERROR:  permission denied for relation atest5
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT ON CONSTRAINT atest5_four_key DO UPDATE set three = 3; -- fails (due to SELECT)
+ERROR:  permission denied for relation atest5
+INSERT INTO atest5(four) VALUES (4); -- ok
+SET SESSION AUTHORIZATION regress_user1;
+GRANT SELECT (four) ON atest5 TO regress_user4;
+SET SESSION AUTHORIZATION regress_user4;
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 3; -- ok
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT ON CONSTRAINT atest5_four_key DO UPDATE set three = 3; -- ok
 SET SESSION AUTHORIZATION regress_user1;
 REVOKE ALL (one) ON atest5 FROM regress_user4;
 GRANT SELECT (one,two,blue) ON atest6 TO regress_user4;
@@ -639,13 +651,25 @@ GRANT USAGE ON LANGUAGE sql TO regress_user2; -- fail
 WARNING:  no privileges were granted for "sql"
 CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
 CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
-REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int) TO regress_user2;
+CREATE AGGREGATE testagg1(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testproc1(int) AS 'select $1;' LANGUAGE sql;
+REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) TO regress_user2;
+REVOKE ALL ON FUNCTION testproc1(int) FROM PUBLIC; -- fail, not a function
+ERROR:  testproc1(integer) is not a function
+REVOKE ALL ON PROCEDURE testproc1(int) FROM PUBLIC;
+GRANT EXECUTE ON PROCEDURE testproc1(int) TO regress_user2;
 GRANT USAGE ON FUNCTION testfunc1(int) TO regress_user3; -- semantic error
 ERROR:  invalid privilege type USAGE for function
+GRANT USAGE ON FUNCTION testagg1(int) TO regress_user3; -- semantic error
+ERROR:  invalid privilege type USAGE for function
+GRANT USAGE ON PROCEDURE testproc1(int) TO regress_user3; -- semantic error
+ERROR:  invalid privilege type USAGE for procedure
 GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regress_user4;
 GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regress_user4;
 ERROR:  function testfunc_nosuch(integer) does not exist
+GRANT ALL PRIVILEGES ON FUNCTION testagg1(int) TO regress_user4;
+GRANT ALL PRIVILEGES ON PROCEDURE testproc1(int) TO regress_user4;
 CREATE FUNCTION testfunc4(boolean) RETURNS text
   AS 'select col1 from atest2 where col2 = $1;'
   LANGUAGE sql SECURITY DEFINER;
@@ -659,9 +683,20 @@ SELECT testfunc1(5), testfunc2(5); -- ok
 
 CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
 ERROR:  permission denied for language sql
+SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+ testagg1 
+----------
+        6
+(1 row)
+
+CALL testproc1(6); -- ok
 SET SESSION AUTHORIZATION regress_user3;
 SELECT testfunc1(5); -- fail
 ERROR:  permission denied for function testfunc1
+SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- fail
+ERROR:  permission denied for function testagg1
+CALL testproc1(6); -- fail
+ERROR:  permission denied for function testproc1
 SELECT col1 FROM atest2 WHERE col2 = true; -- fail
 ERROR:  permission denied for relation atest2
 SELECT testfunc4(true); -- ok
@@ -677,8 +712,19 @@ SELECT testfunc1(5); -- ok
         10
 (1 row)
 
+SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+ testagg1 
+----------
+        6
+(1 row)
+
+CALL testproc1(6); -- ok
 DROP FUNCTION testfunc1(int); -- fail
 ERROR:  must be owner of function testfunc1
+DROP AGGREGATE testagg1(int); -- fail
+ERROR:  must be owner of function testagg1
+DROP PROCEDURE testproc1(int); -- fail
+ERROR:  must be owner of function testproc1
 \c -
 DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
@@ -1238,6 +1284,14 @@ SELECT lo_create(2002);
       2002
 (1 row)
 
+SELECT loread(lo_open(1001, x'20000'::int), 32);	-- allowed, for now
+ loread 
+--------
+ \x
+(1 row)
+
+SELECT lowrite(lo_open(1001, x'40000'::int), 'abcd');	-- fail, wrong mode
+ERROR:  large object descriptor 0 was not opened for writing
 SELECT loread(lo_open(1001, x'40000'::int), 32);
  loread 
 --------
@@ -1333,11 +1387,16 @@ SELECT lowrite(lo_open(1002, x'20000'::int), 'abcd');	-- to be denied
 ERROR:  permission denied for large object 1002
 SELECT lo_truncate(lo_open(1002, x'20000'::int), 10);	-- to be denied
 ERROR:  permission denied for large object 1002
+SELECT lo_put(1002, 1, 'abcd');				-- to be denied
+ERROR:  permission denied for large object 1002
 SELECT lo_unlink(1002);					-- to be denied
 ERROR:  must be owner of large object 1002
 SELECT lo_export(1001, '/dev/null');			-- to be denied
-ERROR:  must be superuser to use server-side lo_export()
-HINT:  Anyone can use the client-side lo_export() provided by libpq.
+ERROR:  permission denied for function lo_export
+SELECT lo_import('/dev/null');				-- to be denied
+ERROR:  permission denied for function lo_import
+SELECT lo_import('/dev/null', 2003);			-- to be denied
+ERROR:  permission denied for function lo_import
 \c -
 SET lo_compat_privileges = true;	-- compatibility mode
 SET SESSION AUTHORIZATION regress_user4;
@@ -1366,8 +1425,7 @@ SELECT lo_unlink(1002);
 (1 row)
 
 SELECT lo_export(1001, '/dev/null');			-- to be denied
-ERROR:  must be superuser to use server-side lo_export()
-HINT:  Anyone can use the client-side lo_export() provided by libpq.
+ERROR:  permission denied for function lo_export
 -- don't allow unpriv users to access pg_largeobject contents
 \c -
 SELECT * FROM pg_largeobject LIMIT 0;
@@ -1513,22 +1571,54 @@ SELECT has_schema_privilege('regress_user2', 'testns5', 'CREATE'); -- no
 
 SET ROLE regress_user1;
 CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
+CREATE AGGREGATE testns.agg1(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testns.bar() AS 'select 1' LANGUAGE sql;
 SELECT has_function_privilege('regress_user2', 'testns.foo()', 'EXECUTE'); -- no
  has_function_privilege 
 ------------------------
  f
 (1 row)
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT EXECUTE ON FUNCTIONS to public;
+SELECT has_function_privilege('regress_user2', 'testns.agg1(int)', 'EXECUTE'); -- no
+ has_function_privilege 
+------------------------
+ f
+(1 row)
+
+SELECT has_function_privilege('regress_user2', 'testns.bar()', 'EXECUTE'); -- no
+ has_function_privilege 
+------------------------
+ f
+(1 row)
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT EXECUTE ON ROUTINES to public;
 DROP FUNCTION testns.foo();
 CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
+DROP AGGREGATE testns.agg1(int);
+CREATE AGGREGATE testns.agg1(int) (sfunc = int4pl, stype = int4);
+DROP PROCEDURE testns.bar();
+CREATE PROCEDURE testns.bar() AS 'select 1' LANGUAGE sql;
 SELECT has_function_privilege('regress_user2', 'testns.foo()', 'EXECUTE'); -- yes
  has_function_privilege 
 ------------------------
  t
 (1 row)
 
+SELECT has_function_privilege('regress_user2', 'testns.agg1(int)', 'EXECUTE'); -- yes
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+SELECT has_function_privilege('regress_user2', 'testns.bar()', 'EXECUTE'); -- yes (counts as function here)
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
 DROP FUNCTION testns.foo();
+DROP AGGREGATE testns.agg1(int);
+DROP PROCEDURE testns.bar();
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_user1 REVOKE USAGE ON TYPES FROM public;
 CREATE DOMAIN testns.testdomain1 AS int;
 SELECT has_type_privilege('regress_user2', 'testns.testdomain1', 'USAGE'); -- no
@@ -1607,7 +1697,21 @@ SELECT has_table_privilege('regress_user1', 'testns.t2', 'SELECT'); -- false
 (1 row)
 
 CREATE FUNCTION testns.testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+CREATE AGGREGATE testns.testagg(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testns.testproc(int) AS 'select 3' LANGUAGE sql;
 SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true by default
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+SELECT has_function_privilege('regress_user1', 'testns.testagg(int)', 'EXECUTE'); -- true by default
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- true by default
  has_function_privilege 
 ------------------------
  t
@@ -1620,9 +1724,48 @@ SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'
  f
 (1 row)
 
-SET client_min_messages TO 'warning';
+SELECT has_function_privilege('regress_user1', 'testns.testagg(int)', 'EXECUTE'); -- false
+ has_function_privilege 
+------------------------
+ f
+(1 row)
+
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- still true, not a function
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+REVOKE ALL ON ALL PROCEDURES IN SCHEMA testns FROM PUBLIC;
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- now false
+ has_function_privilege 
+------------------------
+ f
+(1 row)
+
+GRANT ALL ON ALL ROUTINES IN SCHEMA testns TO PUBLIC;
+SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+SELECT has_function_privilege('regress_user1', 'testns.testagg(int)', 'EXECUTE'); -- true
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- true
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
-RESET client_min_messages;
+NOTICE:  drop cascades to 5 other objects
+\set VERBOSITY default
 -- Change owner of the schema & and rename of new schema owner
 \c -
 CREATE ROLE regress_schemauser1 superuser login;
@@ -1644,9 +1787,9 @@ SELECT nspname, rolname FROM pg_namespace, pg_roles WHERE pg_namespace.nspname =
 (1 row)
 
 set session role regress_schemauser_renamed;
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 -- clean up
 \c -
 DROP ROLE regress_schemauser1;
@@ -1704,8 +1847,10 @@ drop table dep_priv_test;
 -- clean up
 \c
 drop sequence x_seq;
+DROP AGGREGATE testagg1(int);
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);
+DROP PROCEDURE testproc1(int);
 DROP VIEW atestv0;
 DROP VIEW atestv1;
 DROP VIEW atestv2;

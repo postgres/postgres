@@ -174,7 +174,7 @@ CREATE OPERATOR < (
 CREATE OPERATOR <= (
    leftarg = complex, rightarg = complex, procedure = complex_abs_le,
    commutator = >= , negator = > ,
-   restrict = scalarltsel, join = scalarltjoinsel
+   restrict = scalarlesel, join = scalarlejoinsel
 );
 CREATE OPERATOR = (
    leftarg = complex, rightarg = complex, procedure = complex_abs_eq,
@@ -186,7 +186,7 @@ CREATE OPERATOR = (
 CREATE OPERATOR >= (
    leftarg = complex, rightarg = complex, procedure = complex_abs_ge,
    commutator = <= , negator = < ,
-   restrict = scalargtsel, join = scalargtjoinsel
+   restrict = scalargesel, join = scalargejoinsel
 );
 CREATE OPERATOR > (
    leftarg = complex, rightarg = complex, procedure = complex_abs_gt,

@@ -103,7 +103,7 @@ static void checkEnumOwner(HeapTuple tup);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 					Oid baseTypeOid,
 					int typMod, Constraint *constr,
-					char *domainName, ObjectAddress *constrAddr);
+					const char *domainName, ObjectAddress *constrAddr);
 static Node *replace_domain_constraint_value(ParseState *pstate,
 								ColumnRef *cref);
 
@@ -729,6 +729,7 @@ ObjectAddress
 DefineDomain(CreateDomainStmt *stmt)
 {
 	char	   *domainName;
+	char	   *domainArrayName;
 	Oid			domainNamespace;
 	AclResult	aclresult;
 	int16		internalLength;
@@ -757,6 +758,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	Oid			basetypeoid;
 	Oid			old_type_oid;
 	Oid			domaincoll;
+	Oid			domainArrayOid;
 	Form_pg_type baseType;
 	int32		basetypeMod;
 	Oid			baseColl;
@@ -796,13 +798,16 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypeoid = HeapTupleGetOid(typeTup);
 
 	/*
-	 * Base type must be a plain base type, another domain, an enum or a range
-	 * type. Domains over pseudotypes would create a security hole.  Domains
-	 * over composite types might be made to work in the future, but not
-	 * today.
+	 * Base type must be a plain base type, a composite type, another domain,
+	 * an enum or a range type.  Domains over pseudotypes would create a
+	 * security hole.  (It would be shorter to code this to just check for
+	 * pseudotypes; but it seems safer to call out the specific typtypes that
+	 * are supported, rather than assume that all future typtypes would be
+	 * automatically supported.)
 	 */
 	typtype = baseType->typtype;
 	if (typtype != TYPTYPE_BASE &&
+		typtype != TYPTYPE_COMPOSITE &&
 		typtype != TYPTYPE_DOMAIN &&
 		typtype != TYPTYPE_ENUM &&
 		typtype != TYPTYPE_RANGE)
@@ -1027,6 +1032,9 @@ DefineDomain(CreateDomainStmt *stmt)
 		}
 	}
 
+	/* Allocate OID for array type */
+	domainArrayOid = AssignTypeArrayOid();
+
 	/*
 	 * Have TypeCreate do all the real work.
 	 */
@@ -1051,7 +1059,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   analyzeProcedure,	/* analyze procedure */
 				   InvalidOid,	/* no array element type */
 				   false,		/* this isn't an array */
-				   InvalidOid,	/* no arrays for domains (yet) */
+				   domainArrayOid,	/* array type we are about to create */
 				   basetypeoid, /* base type ID */
 				   defaultValue,	/* default type value (text) */
 				   defaultValueBin, /* default type value (binary) */
@@ -1062,6 +1070,48 @@ DefineDomain(CreateDomainStmt *stmt)
 				   typNDims,	/* Array dimensions for base type */
 				   typNotNull,	/* Type NOT NULL */
 				   domaincoll); /* type's collation */
+
+	/*
+	 * Create the array type that goes with it.
+	 */
+	domainArrayName = makeArrayTypeName(domainName, domainNamespace);
+
+	/* alignment must be 'i' or 'd' for arrays */
+	alignment = (alignment == 'd') ? 'd' : 'i';
+
+	TypeCreate(domainArrayOid,	/* force assignment of this type OID */
+			   domainArrayName, /* type name */
+			   domainNamespace, /* namespace */
+			   InvalidOid,		/* relation oid (n/a here) */
+			   0,				/* relation kind (ditto) */
+			   GetUserId(),		/* owner's ID */
+			   -1,				/* internal size (always varlena) */
+			   TYPTYPE_BASE,	/* type-type (base type) */
+			   TYPCATEGORY_ARRAY,	/* type-category (array) */
+			   false,			/* array types are never preferred */
+			   delimiter,		/* array element delimiter */
+			   F_ARRAY_IN,		/* input procedure */
+			   F_ARRAY_OUT,		/* output procedure */
+			   F_ARRAY_RECV,	/* receive procedure */
+			   F_ARRAY_SEND,	/* send procedure */
+			   InvalidOid,		/* typmodin procedure - none */
+			   InvalidOid,		/* typmodout procedure - none */
+			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
+			   address.objectId,	/* element type ID */
+			   true,			/* yes this is an array type */
+			   InvalidOid,		/* no further array type */
+			   InvalidOid,		/* base type ID */
+			   NULL,			/* never a default type value */
+			   NULL,			/* binary default isn't sent either */
+			   false,			/* never passed by value */
+			   alignment,		/* see above */
+			   'x',				/* ARRAY is always toastable */
+			   -1,				/* typMod (Domains only) */
+			   0,				/* Array dimensions of typbasetype */
+			   false,			/* Type NOT NULL */
+			   domaincoll);		/* type's collation */
+
+	pfree(domainArrayName);
 
 	/*
 	 * Process constraints which refer to the domain ID returned by TypeCreate
@@ -1139,6 +1189,7 @@ DefineEnum(CreateEnumStmt *stmt)
 					 errmsg("type \"%s\" already exists", enumName)));
 	}
 
+	/* Allocate OID for array type */
 	enumArrayOid = AssignTypeArrayOid();
 
 	/* Create the pg_type entry */
@@ -1222,10 +1273,10 @@ DefineEnum(CreateEnumStmt *stmt)
 
 /*
  * AlterEnum
- *		Adds a new label to an existing enum.
+ *		ALTER TYPE on an enum.
  */
 ObjectAddress
-AlterEnum(AlterEnumStmt *stmt)
+AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 {
 	Oid			enum_type_oid;
 	TypeName   *typename;
@@ -1243,8 +1294,6 @@ AlterEnum(AlterEnumStmt *stmt)
 	/* Check it's an enum and check user has permission to ALTER the enum */
 	checkEnumOwner(tup);
 
-	ReleaseSysCache(tup);
-
 	if (stmt->oldVal)
 	{
 		/* Rename an existing label */
@@ -1253,6 +1302,27 @@ AlterEnum(AlterEnumStmt *stmt)
 	else
 	{
 		/* Add a new label */
+
+		/*
+		 * Ordinarily we disallow adding values within transaction blocks,
+		 * because we can't cope with enum OID values getting into indexes and
+		 * then having their defining pg_enum entries go away.  However, it's
+		 * okay if the enum type was created in the current transaction, since
+		 * then there can be no such indexes that wouldn't themselves go away
+		 * on rollback.  (We support this case because pg_dump
+		 * --binary-upgrade needs it.)  We test this by seeing if the pg_type
+		 * row has xmin == current XID and is not HEAP_UPDATED.  If it is
+		 * HEAP_UPDATED, we can't be sure whether the type was created or only
+		 * modified in this xact.  So we are disallowing some cases that could
+		 * theoretically be safe; but fortunately pg_dump only needs the
+		 * simplest case.
+		 */
+		if (HeapTupleHeaderGetXmin(tup->t_data) == GetCurrentTransactionId() &&
+			!(tup->t_data->t_infomask & HEAP_UPDATED))
+			 /* safe to do inside transaction block */ ;
+		else
+			PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
+
 		AddEnumLabel(enum_type_oid, stmt->newVal,
 					 stmt->newValNeighbor, stmt->newValIsAfter,
 					 stmt->skipIfNewValExists);
@@ -1261,6 +1331,8 @@ AlterEnum(AlterEnumStmt *stmt)
 	InvokeObjectPostAlterHook(TypeRelationId, enum_type_oid, 0);
 
 	ObjectAddressSet(address, TypeRelationId, enum_type_oid);
+
+	ReleaseSysCache(tup);
 
 	return address;
 }
@@ -2324,6 +2396,7 @@ AlterDomainNotNull(List *names, bool notNull)
 				for (i = 0; i < rtc->natts; i++)
 				{
 					int			attnum = rtc->atts[i];
+					Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
 
 					if (heap_attisnull(tuple, attnum))
 					{
@@ -2338,7 +2411,7 @@ AlterDomainNotNull(List *names, bool notNull)
 						ereport(ERROR,
 								(errcode(ERRCODE_NOT_NULL_VIOLATION),
 								 errmsg("column \"%s\" of table \"%s\" contains null values",
-										NameStr(tupdesc->attrs[attnum - 1]->attname),
+										NameStr(attr->attname),
 										RelationGetRelationName(testrel)),
 								 errtablecol(testrel, attnum)));
 					}
@@ -2576,7 +2649,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint,
  * Implements the ALTER DOMAIN .. VALIDATE CONSTRAINT statement.
  */
 ObjectAddress
-AlterDomainValidateConstraint(List *names, char *constrName)
+AlterDomainValidateConstraint(List *names, const char *constrName)
 {
 	TypeName   *typename;
 	Oid			domainoid;
@@ -2722,6 +2795,7 @@ validateDomainConstraint(Oid domainoid, char *ccbin)
 				Datum		d;
 				bool		isNull;
 				Datum		conResult;
+				Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
 
 				d = heap_getattr(tuple, attnum, tupdesc, &isNull);
 
@@ -2745,7 +2819,7 @@ validateDomainConstraint(Oid domainoid, char *ccbin)
 					ereport(ERROR,
 							(errcode(ERRCODE_CHECK_VIOLATION),
 							 errmsg("column \"%s\" of table \"%s\" contains values that violate the new constraint",
-									NameStr(tupdesc->attrs[attnum - 1]->attname),
+									NameStr(attr->attname),
 									RelationGetRelationName(testrel)),
 							 errtablecol(testrel, attnum)));
 				}
@@ -2787,10 +2861,9 @@ validateDomainConstraint(Oid domainoid, char *ccbin)
  * risk by using the weakest suitable lock (ShareLock for most callers).
  *
  * XXX the API for this is not sufficient to support checking domain values
- * that are inside composite types or arrays.  Currently we just error out
- * if a composite type containing the target domain is stored anywhere.
- * There are not currently arrays of domains; if there were, we could take
- * the same approach, but it'd be nicer to fix it properly.
+ * that are inside container types, such as composite types, arrays, or
+ * ranges.  Currently we just error out if a container type containing the
+ * target domain is stored anywhere.
  *
  * Generally used for retrieving a list of tests when adding
  * new constraints to a domain.
@@ -2799,12 +2872,16 @@ static List *
 get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 {
 	List	   *result = NIL;
+	char	   *domainTypeName = format_type_be(domainOid);
 	Relation	depRel;
 	ScanKeyData key[2];
 	SysScanDesc depScan;
 	HeapTuple	depTup;
 
 	Assert(lockmode != NoLock);
+
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
 
 	/*
 	 * We scan pg_depend to find those things that depend on the domain. (We
@@ -2832,20 +2909,32 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 		Form_pg_attribute pg_att;
 		int			ptr;
 
-		/* Check for directly dependent types --- must be domains */
+		/* Check for directly dependent types */
 		if (pg_depend->classid == TypeRelationId)
 		{
-			Assert(get_typtype(pg_depend->objid) == TYPTYPE_DOMAIN);
-
-			/*
-			 * Recursively add dependent columns to the output list.  This is
-			 * a bit inefficient since we may fail to combine RelToCheck
-			 * entries when attributes of the same rel have different derived
-			 * domain types, but it's probably not worth improving.
-			 */
-			result = list_concat(result,
-								 get_rels_with_domain(pg_depend->objid,
-													  lockmode));
+			if (get_typtype(pg_depend->objid) == TYPTYPE_DOMAIN)
+			{
+				/*
+				 * This is a sub-domain, so recursively add dependent columns
+				 * to the output list.  This is a bit inefficient since we may
+				 * fail to combine RelToCheck entries when attributes of the
+				 * same rel have different derived domain types, but it's
+				 * probably not worth improving.
+				 */
+				result = list_concat(result,
+									 get_rels_with_domain(pg_depend->objid,
+														  lockmode));
+			}
+			else
+			{
+				/*
+				 * Otherwise, it is some container type using the domain, so
+				 * fail if there are any columns of this type.
+				 */
+				find_composite_type_dependencies(pg_depend->objid,
+												 NULL,
+												 domainTypeName);
+			}
 			continue;
 		}
 
@@ -2882,7 +2971,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 			if (OidIsValid(rel->rd_rel->reltype))
 				find_composite_type_dependencies(rel->rd_rel->reltype,
 												 NULL,
-												 format_type_be(domainOid));
+												 domainTypeName);
 
 			/*
 			 * Otherwise, we can ignore relations except those with both
@@ -2915,7 +3004,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 		 */
 		if (pg_depend->objsubid > RelationGetNumberOfAttributes(rtc->rel))
 			continue;
-		pg_att = rtc->rel->rd_att->attrs[pg_depend->objsubid - 1];
+		pg_att = TupleDescAttr(rtc->rel->rd_att, pg_depend->objsubid - 1);
 		if (pg_att->attisdropped || pg_att->atttypid != domainOid)
 			continue;
 
@@ -2971,7 +3060,7 @@ checkDomainOwner(HeapTuple tup)
 static char *
 domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 					int typMod, Constraint *constr,
-					char *domainName, ObjectAddress *constrAddr)
+					const char *domainName, ObjectAddress *constrAddr)
 {
 	Node	   *expr;
 	char	   *ccsrc;
@@ -3310,9 +3399,9 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
  * AlterTypeOwner_oid - change type owner unconditionally
  *
  * This function recurses to handle a pg_class entry, if necessary.  It
- * invokes any necessary access object hooks.  If hasDependEntry is TRUE, this
+ * invokes any necessary access object hooks.  If hasDependEntry is true, this
  * function modifies the pg_shdepend entry appropriately (this should be
- * passed as FALSE only for table rowtypes and array types).
+ * passed as false only for table rowtypes and array types).
  *
  * This is used by ALTER TABLE/TYPE OWNER commands, as well as by REASSIGN
  * OWNED BY.  It assumes the caller has done all needed check.
@@ -3478,10 +3567,10 @@ AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved)
  * Caller must have already checked privileges.
  *
  * The function automatically recurses to process the type's array type,
- * if any.  isImplicitArray should be TRUE only when doing this internal
+ * if any.  isImplicitArray should be true only when doing this internal
  * recursion (outside callers must never try to move an array type directly).
  *
- * If errorOnTableType is TRUE, the function errors out if the type is
+ * If errorOnTableType is true, the function errors out if the type is
  * a table type.  ALTER TABLE has to be used to move a table to a new
  * namespace.
  *

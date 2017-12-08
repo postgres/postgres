@@ -38,10 +38,7 @@ extern Expr *canonicalize_qual(Expr *qual);
 /*
  * prototypes for preptlist.c
  */
-extern List *preprocess_targetlist(PlannerInfo *root, List *tlist);
-
-extern List *preprocess_onconflict_targetlist(List *tlist,
-								 int result_relation, List *range_table);
+extern List *preprocess_targetlist(PlannerInfo *root);
 
 extern PlanRowMark *get_plan_rowmark(List *rowmarks, Index rtindex);
 
@@ -53,9 +50,19 @@ extern RelOptInfo *plan_set_operations(PlannerInfo *root);
 extern void expand_inherited_tables(PlannerInfo *root);
 
 extern Node *adjust_appendrel_attrs(PlannerInfo *root, Node *node,
-					   AppendRelInfo *appinfo);
+					   int nappinfos, AppendRelInfo **appinfos);
 
 extern Node *adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
-								  RelOptInfo *child_rel);
+								  Relids child_relids,
+								  Relids top_parent_relids);
+
+extern AppendRelInfo **find_appinfos_by_relids(PlannerInfo *root,
+						Relids relids, int *nappinfos);
+
+extern SpecialJoinInfo *build_child_join_sjinfo(PlannerInfo *root,
+						SpecialJoinInfo *parent_sjinfo,
+						Relids left_relids, Relids right_relids);
+extern Relids adjust_child_relids_multilevel(PlannerInfo *root, Relids relids,
+							   Relids child_relids, Relids top_parent_relids);
 
 #endif							/* PREP_H */

@@ -1,0 +1,102 @@
+<!--
+doc/src/sgml/ref/alter_routine.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-alterroutine">
+ <indexterm zone="sql-alterroutine">
+  <primary>ALTER ROUTINE</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>ALTER ROUTINE</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER ROUTINE</refname>
+  <refpurpose>change the definition of a routine</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER ROUTINE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    <replaceable class="parameter">action</replaceable> [ ... ] [ RESTRICT ]
+ALTER ROUTINE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    RENAME TO <replaceable>new_name</replaceable>
+ALTER ROUTINE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER ROUTINE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    SET SCHEMA <replaceable>new_schema</replaceable>
+ALTER ROUTINE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
+    DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
+
+<phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
+
+    IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
+    [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+    PARALLEL { UNSAFE | RESTRICTED | SAFE }
+    COST <replaceable class="parameter">execution_cost</replaceable>
+    ROWS <replaceable class="parameter">result_rows</replaceable>
+    SET <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | DEFAULT }
+    SET <replaceable class="parameter">configuration_parameter</replaceable> FROM CURRENT
+    RESET <replaceable class="parameter">configuration_parameter</replaceable>
+    RESET ALL
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER ROUTINE</command> changes the definition of a routine, which
+   can be an aggregate function, a normal function, or a procedure.  See
+   under <xref linkend="sql-alteraggregate"/>, <xref linkend="sql-alterfunction"/>,
+   and <xref linkend="sql-alterprocedure"/> for the description of the
+   parameters, more examples, and further details.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To rename the routine <literal>foo</literal> for type
+   <type>integer</type> to <literal>foobar</literal>:
+<programlisting>
+ALTER ROUTINE foo(integer) RENAME TO foobar;
+</programlisting>
+   This command will work independent of whether <literal>foo</literal> is an
+   aggregate, function, or procedure.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   This statement is partially compatible with the <command>ALTER
+   ROUTINE</command> statement in the SQL standard.  See
+   under <xref linkend="sql-alterfunction"/>
+   and <xref linkend="sql-alterprocedure"/> for more details.  Allowing
+   routine names to refer to aggregate functions is
+   a <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alteraggregate"/></member>
+   <member><xref linkend="sql-alterfunction"/></member>
+   <member><xref linkend="sql-alterprocedure"/></member>
+   <member><xref linkend="sql-droproutine"/></member>
+  </simplelist>
+
+  <para>
+   Note that there is no <literal>CREATE ROUTINE</literal> command.
+  </para>
+ </refsect1>
+</refentry>

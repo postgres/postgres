@@ -9,7 +9,7 @@ PostgresNode - class representing PostgreSQL server instance
 
   use PostgresNode;
 
-  my $node = get_new_node('mynode');
+  my $node = PostgresNode->get_new_node('mynode');
 
   # Create a data directory with initdb
   $node->init();
@@ -86,6 +86,7 @@ use Config;
 use Cwd;
 use Exporter 'import';
 use File::Basename;
+use File::Path qw(rmtree);
 use File::Spec;
 use File::Temp ();
 use IPC::Run;
@@ -93,13 +94,14 @@ use RecursiveCopy;
 use Socket;
 use Test::More;
 use TestLib ();
+use Time::HiRes qw(usleep);
 use Scalar::Util qw(blessed);
 
 our @EXPORT = qw(
   get_new_node
 );
 
-our ($test_localhost, $test_pghost, $last_port_assigned, @all_nodes);
+our ($test_localhost, $test_pghost, $last_port_assigned, @all_nodes, $died);
 
 # Windows path to virtual file system root
 
@@ -148,11 +150,14 @@ sub new
 	my $self = {
 		_port    => $pgport,
 		_host    => $pghost,
-		_basedir => TestLib::tempdir("data_" . $name),
+		_basedir => "$TestLib::tmp_check/t_${testname}_${name}_data",
 		_name    => $name,
 		_logfile => "$TestLib::log_path/${testname}_${name}.log" };
 
 	bless $self, $class;
+	mkdir $self->{_basedir}
+	  or
+	  BAIL_OUT("could not create data directory \"$self->{_basedir}\": $!");
 	$self->dump_info;
 
 	return $self;
@@ -414,6 +419,7 @@ sub init
 	print $conf "restart_after_crash = off\n";
 	print $conf "log_line_prefix = '%m [%p] %q%a '\n";
 	print $conf "log_statement = all\n";
+	print $conf "log_replication_commands = on\n";
 	print $conf "wal_retrieve_retry_interval = '500ms'\n";
 	print $conf "port = $port\n";
 
@@ -429,7 +435,6 @@ sub init
 		}
 		print $conf "max_wal_senders = 5\n";
 		print $conf "max_replication_slots = 5\n";
-		print $conf "wal_keep_segments = 20\n";
 		print $conf "max_wal_size = 128MB\n";
 		print $conf "shared_buffers = 1MB\n";
 		print $conf "wal_log_hints = on\n";
@@ -854,20 +859,24 @@ sub _update_pid
 
 =pod
 
-=item get_new_node(node_name)
+=item PostgresNode->get_new_node(node_name)
 
-Build a new PostgresNode object, assigning a free port number. Standalone
-function that's automatically imported.
+Build a new object of class C<PostgresNode> (or of a subclass, if you have
+one), assigning a free port number.  Remembers the node, to prevent its port
+number from being reused for another node, and to ensure that it gets
+shut down when the test script exits.
 
-Remembers the node, to prevent its port number from being reused for another
-node, and to ensure that it gets shut down when the test script exits.
+You should generally use this instead of C<PostgresNode::new(...)>.
 
-You should generally use this instead of PostgresNode::new(...).
+For backwards compatibility, it is also exported as a standalone function,
+which can only create objects of class C<PostgresNode>.
 
 =cut
 
 sub get_new_node
 {
+	my $class = 'PostgresNode';
+	$class = shift if 1 < scalar @_;
 	my $name  = shift;
 	my $found = 0;
 	my $port  = $last_port_assigned;
@@ -912,7 +921,7 @@ sub get_new_node
 	print "# Found free port $port\n";
 
 	# Lock port number found by creating a new node
-	my $node = new PostgresNode($name, $test_pghost, $port);
+	my $node = $class->new($name, $test_pghost, $port);
 
 	# Add node to list of nodes
 	push(@all_nodes, $node);
@@ -923,9 +932,23 @@ sub get_new_node
 	return $node;
 }
 
+# Retain the errno on die() if set, else assume a generic errno of 1.
+# This will instruct the END handler on how to handle artifacts left
+# behind from tests.
+$SIG{__DIE__} = sub {
+	if ($!)
+	{
+		$died = $!;
+	}
+	else
+	{
+		$died = 1;
+	}
+};
+
 # Automatically shut down any still-running nodes when the test script exits.
 # Note that this just stops the postmasters (in the same order the nodes were
-# created in).  Temporary PGDATA directories are deleted, in an unspecified
+# created in).  Any temporary directories are deleted, in an unspecified
 # order, later when the File::Temp objects are destroyed.
 END
 {
@@ -936,6 +959,13 @@ END
 	foreach my $node (@all_nodes)
 	{
 		$node->teardown_node;
+
+		# skip clean if we are requested to retain the basedir
+		next if defined $ENV{'PG_TEST_NOCLEAN'};
+
+		# clean basedir on clean test invocation
+		$node->clean_node
+		  if TestLib::all_tests_passing() && !defined $died && !$exit_code;
 	}
 
 	$? = $exit_code;
@@ -954,6 +984,22 @@ sub teardown_node
 	my $self = shift;
 
 	$self->stop('immediate');
+
+}
+
+=pod
+
+=item $node->clean_node()
+
+Remove the base directory of the node if the node has been stopped.
+
+=cut
+
+sub clean_node
+{
+	my $self = shift;
+
+	rmtree $self->{_basedir} unless defined $self->{_pid};
 }
 
 =pod
@@ -1227,10 +1273,9 @@ sub poll_query_until
 {
 	my ($self, $dbname, $query, $expected) = @_;
 
-	$expected = 't' unless defined($expected);	# default value
+	$expected = 't' unless defined($expected);    # default value
 
-	my $cmd =
-		[ 'psql', '-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
+	my $cmd = [ 'psql', '-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
 	my ($stdout, $stderr);
 	my $max_attempts = 180 * 10;
 	my $attempts     = 0;
@@ -1248,7 +1293,7 @@ sub poll_query_until
 		}
 
 		# Wait 0.1 second before retrying.
-		select undef, undef, undef, 0.1;
+		usleep(100_000);
 
 		$attempts++;
 	}
@@ -1280,9 +1325,9 @@ sub command_ok
 
 =pod
 
-=item $node->command_fails(...) - TestLib::command_fails with our PGPORT
+=item $node->command_fails(...)
 
-See command_ok(...)
+TestLib::command_fails with our PGPORT. See command_ok(...)
 
 =cut
 
@@ -1310,6 +1355,23 @@ sub command_like
 	local $ENV{PGPORT} = $self->port;
 
 	TestLib::command_like(@_);
+}
+
+=pod
+
+=item $node->command_checks_all(...)
+
+TestLib::command_checks_all with our PGPORT. See command_ok(...)
+
+=cut
+
+sub command_checks_all
+{
+	my $self = shift;
+
+	local $ENV{PGPORT} = $self->port;
+
+	TestLib::command_checks_all(@_);
 }
 
 =pod

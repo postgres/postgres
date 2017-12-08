@@ -33,7 +33,7 @@ static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
  *	name: the object name, in the form to use in the commands (already quoted)
  *	subname: the sub-object name, if any (already quoted); NULL if none
  *	type: the object type (as seen in GRANT command: must be one of
- *		TABLE, SEQUENCE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, TABLESPACE,
+ *		TABLE, SEQUENCE, FUNCTION, PROCEDURE, LANGUAGE, SCHEMA, DATABASE, TABLESPACE,
  *		FOREIGN DATA WRAPPER, SERVER, or LARGE OBJECT)
  *	acls: the ACL string fetched from the database
  *	racls: the ACL string of any initial-but-now-revoked privileges
@@ -42,7 +42,7 @@ static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
  *	prefix: string to prefix to each generated command; typically empty
  *	remoteVersion: version of database
  *
- * Returns TRUE if okay, FALSE if could not parse the acl string.
+ * Returns true if okay, false if could not parse the acl string.
  * The resulting commands (if any) are appended to the contents of 'sql'.
  *
  * Note: when processing a default ACL, prefix is "ALTER DEFAULT PRIVILEGES "
@@ -359,7 +359,7 @@ buildACLCommands(const char *name, const char *subname,
  *	owner: username of privileges owner (will be passed through fmtId)
  *	remoteVersion: version of database
  *
- * Returns TRUE if okay, FALSE if could not parse the acl string.
+ * Returns true if okay, false if could not parse the acl string.
  * The resulting commands (if any) are appended to the contents of 'sql'.
  */
 bool
@@ -523,6 +523,9 @@ do { \
 	}
 	else if (strcmp(type, "FUNCTION") == 0 ||
 			 strcmp(type, "FUNCTIONS") == 0)
+		CONVERT_PRIV('X', "EXECUTE");
+	else if (strcmp(type, "PROCEDURE") == 0 ||
+			 strcmp(type, "PROCEDURES") == 0)
 		CONVERT_PRIV('X', "EXECUTE");
 	else if (strcmp(type, "LANGUAGE") == 0)
 		CONVERT_PRIV('U', "USAGE");
@@ -722,21 +725,36 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 	 * We always perform this delta on all ACLs and expect that by the time
 	 * these are run the initial privileges will be in place, even in a binary
 	 * upgrade situation (see below).
+	 *
+	 * Finally, the order in which privileges are in the ACL string (the order
+	 * they been GRANT'd in, which the backend maintains) must be preserved to
+	 * ensure that GRANTs WITH GRANT OPTION and subsequent GRANTs based on
+	 * those are dumped in the correct order.
 	 */
-	printfPQExpBuffer(acl_subquery, "(SELECT pg_catalog.array_agg(acl) FROM "
-					  "(SELECT pg_catalog.unnest(coalesce(%s,pg_catalog.acldefault(%s,%s))) AS acl "
-					  "EXCEPT "
-					  "SELECT pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(%s,%s)))) as foo)",
+	printfPQExpBuffer(acl_subquery,
+					  "(SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM "
+					  "(SELECT acl, row_n FROM "
+					  "pg_catalog.unnest(coalesce(%s,pg_catalog.acldefault(%s,%s))) "
+					  "WITH ORDINALITY AS perm(acl,row_n) "
+					  "WHERE NOT EXISTS ( "
+					  "SELECT 1 FROM "
+					  "pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(%s,%s))) "
+					  "AS init(init_acl) WHERE acl = init_acl)) as foo)",
 					  acl_column,
 					  obj_kind,
 					  acl_owner,
 					  obj_kind,
 					  acl_owner);
 
-	printfPQExpBuffer(racl_subquery, "(SELECT pg_catalog.array_agg(acl) FROM "
-					  "(SELECT pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(%s,%s))) AS acl "
-					  "EXCEPT "
-					  "SELECT pg_catalog.unnest(coalesce(%s,pg_catalog.acldefault(%s,%s)))) as foo)",
+	printfPQExpBuffer(racl_subquery,
+					  "(SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM "
+					  "(SELECT acl, row_n FROM "
+					  "pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(%s,%s))) "
+					  "WITH ORDINALITY AS initp(acl,row_n) "
+					  "WHERE NOT EXISTS ( "
+					  "SELECT 1 FROM "
+					  "pg_catalog.unnest(coalesce(%s,pg_catalog.acldefault(%s,%s))) "
+					  "AS permp(orig_acl) WHERE acl = orig_acl)) as foo)",
 					  obj_kind,
 					  acl_owner,
 					  acl_column,
@@ -761,19 +779,25 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 	{
 		printfPQExpBuffer(init_acl_subquery,
 						  "CASE WHEN privtype = 'e' THEN "
-						  "(SELECT pg_catalog.array_agg(acl) FROM "
-						  "(SELECT pg_catalog.unnest(pip.initprivs) AS acl "
-						  "EXCEPT "
-						  "SELECT pg_catalog.unnest(pg_catalog.acldefault(%s,%s))) as foo) END",
+						  "(SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM "
+						  "(SELECT acl, row_n FROM pg_catalog.unnest(pip.initprivs) "
+						  "WITH ORDINALITY AS initp(acl,row_n) "
+						  "WHERE NOT EXISTS ( "
+						  "SELECT 1 FROM "
+						  "pg_catalog.unnest(pg_catalog.acldefault(%s,%s)) "
+						  "AS privm(orig_acl) WHERE acl = orig_acl)) as foo) END",
 						  obj_kind,
 						  acl_owner);
 
 		printfPQExpBuffer(init_racl_subquery,
 						  "CASE WHEN privtype = 'e' THEN "
 						  "(SELECT pg_catalog.array_agg(acl) FROM "
-						  "(SELECT pg_catalog.unnest(pg_catalog.acldefault(%s,%s)) AS acl "
-						  "EXCEPT "
-						  "SELECT pg_catalog.unnest(pip.initprivs)) as foo) END",
+						  "(SELECT acl, row_n FROM "
+						  "pg_catalog.unnest(pg_catalog.acldefault(%s,%s)) "
+						  "WITH ORDINALITY AS privp(acl,row_n) "
+						  "WHERE NOT EXISTS ( "
+						  "SELECT 1 FROM pg_catalog.unnest(pip.initprivs) "
+						  "AS initp(init_acl) WHERE acl = init_acl)) as foo) END",
 						  obj_kind,
 						  acl_owner);
 	}

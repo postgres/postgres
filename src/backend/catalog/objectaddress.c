@@ -69,13 +69,13 @@
 #include "commands/trigger.h"
 #include "foreign/foreign.h"
 #include "funcapi.h"
-#include "libpq/be-fsstubs.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "rewrite/rewriteSupport.h"
+#include "storage/large_object.h"
 #include "storage/lmgr.h"
 #include "storage/sinval.h"
 #include "utils/builtins.h"
@@ -566,6 +566,9 @@ static const struct object_type_map
 	{
 		"function", OBJECT_FUNCTION
 	},
+	{
+		"procedure", OBJECT_PROCEDURE
+	},
 	/* OCLASS_TYPE */
 	{
 		"type", OBJECT_TYPE
@@ -884,13 +887,11 @@ get_object_address(ObjectType objtype, Node *object,
 				address = get_object_address_type(objtype, castNode(TypeName, object), missing_ok);
 				break;
 			case OBJECT_AGGREGATE:
-				address.classId = ProcedureRelationId;
-				address.objectId = LookupAggWithArgs(castNode(ObjectWithArgs, object), missing_ok);
-				address.objectSubId = 0;
-				break;
 			case OBJECT_FUNCTION:
+			case OBJECT_PROCEDURE:
+			case OBJECT_ROUTINE:
 				address.classId = ProcedureRelationId;
-				address.objectId = LookupFuncWithArgs(castNode(ObjectWithArgs, object), missing_ok);
+				address.objectId = LookupFuncWithArgs(objtype, castNode(ObjectWithArgs, object), missing_ok);
 				address.objectSubId = 0;
 				break;
 			case OBJECT_OPERATOR:
@@ -2025,6 +2026,8 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	 */
 	if (type == OBJECT_AGGREGATE ||
 		type == OBJECT_FUNCTION ||
+		type == OBJECT_PROCEDURE ||
+		type == OBJECT_ROUTINE ||
 		type == OBJECT_OPERATOR ||
 		type == OBJECT_CAST ||
 		type == OBJECT_AMOP ||
@@ -2168,6 +2171,8 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 			objnode = (Node *) list_make2(name, args);
 			break;
 		case OBJECT_FUNCTION:
+		case OBJECT_PROCEDURE:
+		case OBJECT_ROUTINE:
 		case OBJECT_AGGREGATE:
 		case OBJECT_OPERATOR:
 			{
@@ -2253,6 +2258,8 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 			break;
 		case OBJECT_AGGREGATE:
 		case OBJECT_FUNCTION:
+		case OBJECT_PROCEDURE:
+		case OBJECT_ROUTINE:
 			if (!pg_proc_ownercheck(address.objectId, roleid))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 							   NameListToString((castNode(ObjectWithArgs, object))->objname));
@@ -4026,6 +4033,8 @@ getProcedureTypeDescription(StringInfo buffer, Oid procid)
 
 	if (procForm->proisagg)
 		appendStringInfoString(buffer, "aggregate");
+	else if (procForm->prorettype == InvalidOid)
+		appendStringInfoString(buffer, "procedure");
 	else
 		appendStringInfoString(buffer, "function");
 
@@ -5051,7 +5060,7 @@ getRelationIdentity(StringInfo buffer, Oid relid, List **object)
 }
 
 /*
- * Auxiliary function to return a TEXT array out of a list of C-strings.
+ * Auxiliary function to build a TEXT array out of a list of C-strings.
  */
 ArrayType *
 strlist_to_textarray(List *list)
@@ -5063,12 +5072,14 @@ strlist_to_textarray(List *list)
 	MemoryContext memcxt;
 	MemoryContext oldcxt;
 
+	/* Work in a temp context; easier than individually pfree'ing the Datums */
 	memcxt = AllocSetContextCreate(CurrentMemoryContext,
 								   "strlist to array",
 								   ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
-	datums = palloc(sizeof(text *) * list_length(list));
+	datums = (Datum *) palloc(sizeof(Datum) * list_length(list));
+
 	foreach(cell, list)
 	{
 		char	   *name = lfirst(cell);
@@ -5080,6 +5091,7 @@ strlist_to_textarray(List *list)
 
 	arr = construct_array(datums, list_length(list),
 						  TEXTOID, -1, false, 'i');
+
 	MemoryContextDelete(memcxt);
 
 	return arr;

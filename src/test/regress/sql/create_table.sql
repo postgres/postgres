@@ -350,10 +350,10 @@ CREATE TABLE partitioned (
 ) PARTITION BY RANGE (const_func());
 DROP FUNCTION const_func();
 
--- only accept "list" and "range" as partitioning strategy
+-- only accept valid partitioning strategy
 CREATE TABLE partitioned (
-	a int
-) PARTITION BY HASH (a);
+    a int
+) PARTITION BY MAGIC (a);
 
 -- specified column must be present in the table
 CREATE TABLE partitioned (
@@ -421,7 +421,7 @@ CREATE TABLE fail () INHERITS (partitioned2);
 
 -- Partition key in describe output
 \d partitioned
-\d partitioned2
+\d+ partitioned2
 
 DROP TABLE partitioned, partitioned2;
 
@@ -446,6 +446,12 @@ CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES IN ('1'::int);
 CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES IN ();
 -- trying to specify range for list partitioned table
 CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES FROM (1) TO (2);
+-- trying to specify modulus and remainder for list partitioned table
+CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES WITH (MODULUS 10, REMAINDER 1);
+
+-- check default partition cannot be created more than once
+CREATE TABLE part_default PARTITION OF list_parted DEFAULT;
+CREATE TABLE fail_default_part PARTITION OF list_parted DEFAULT;
 
 -- specified literal can't be cast to the partition column data type
 CREATE TABLE bools (
@@ -477,18 +483,37 @@ CREATE TABLE range_parted (
 
 -- trying to specify list for range partitioned table
 CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES IN ('a');
+-- trying to specify modulus and remainder for range partitioned table
+CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES WITH (MODULUS 10, REMAINDER 1);
 -- each of start and end bounds must have same number of values as the
 -- length of the partition key
 CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM ('a', 1) TO ('z');
 CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM ('a') TO ('z', 1);
 
 -- cannot specify null values in range bounds
-CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM (null) TO (unbounded);
+CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM (null) TO (maxvalue);
 
--- cannot specify finite values after UNBOUNDED has been specified
-CREATE TABLE range_parted_multicol (a int, b int, c int) PARTITION BY RANGE (a, b, c);
-CREATE TABLE fail_part PARTITION OF range_parted_multicol FOR VALUES FROM (1, UNBOUNDED, 1) TO (UNBOUNDED, 1, 1);
-DROP TABLE range_parted_multicol;
+-- trying to specify modulus and remainder for range partitioned table
+CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES WITH (MODULUS 10, REMAINDER 1);
+
+-- check partition bound syntax for the hash partition
+CREATE TABLE hash_parted (
+	a int
+) PARTITION BY HASH (a);
+CREATE TABLE hpart_1 PARTITION OF hash_parted FOR VALUES WITH (MODULUS 10, REMAINDER 0);
+CREATE TABLE hpart_2 PARTITION OF hash_parted FOR VALUES WITH (MODULUS 50, REMAINDER 1);
+CREATE TABLE hpart_3 PARTITION OF hash_parted FOR VALUES WITH (MODULUS 200, REMAINDER 2);
+-- modulus 25 is factor of modulus of 50 but 10 is not factor of 25.
+CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES WITH (MODULUS 25, REMAINDER 3);
+-- previous modulus 50 is factor of 150 but this modulus is not factor of next modulus 200.
+CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES WITH (MODULUS 150, REMAINDER 3);
+-- trying to specify range for the hash partitioned table
+CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES FROM ('a', 1) TO ('z');
+-- trying to specify list value for the hash partitioned table
+CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES IN (1000);
+
+-- trying to create default partition for the hash partitioned table
+CREATE TABLE fail_default_part PARTITION OF hash_parted DEFAULT;
 
 -- check if compatible with the specified parent
 
@@ -497,6 +522,7 @@ CREATE TABLE unparted (
 	a int
 );
 CREATE TABLE fail_part PARTITION OF unparted FOR VALUES IN ('a');
+CREATE TABLE fail_part PARTITION OF unparted FOR VALUES WITH (MODULUS 2, REMAINDER 1);
 DROP TABLE unparted;
 
 -- cannot create a permanent rel as partition of a temp rel
@@ -529,9 +555,13 @@ CREATE TABLE list_parted2 (
 ) PARTITION BY LIST (a);
 CREATE TABLE part_null_z PARTITION OF list_parted2 FOR VALUES IN (null, 'z');
 CREATE TABLE part_ab PARTITION OF list_parted2 FOR VALUES IN ('a', 'b');
+CREATE TABLE list_parted2_def PARTITION OF list_parted2 DEFAULT;
 
 CREATE TABLE fail_part PARTITION OF list_parted2 FOR VALUES IN (null);
 CREATE TABLE fail_part PARTITION OF list_parted2 FOR VALUES IN ('b', 'c');
+-- check default partition overlap
+INSERT INTO list_parted2 VALUES('X');
+CREATE TABLE fail_part PARTITION OF list_parted2 FOR VALUES IN ('W', 'X', 'Y');
 
 CREATE TABLE range_parted2 (
 	a int
@@ -542,14 +572,25 @@ CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (1) TO (0);
 -- note that the range '[1, 1)' has no elements
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (1) TO (1);
 
-CREATE TABLE part0 PARTITION OF range_parted2 FOR VALUES FROM (unbounded) TO (1);
-CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (unbounded) TO (2);
+CREATE TABLE part0 PARTITION OF range_parted2 FOR VALUES FROM (minvalue) TO (1);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (minvalue) TO (2);
 CREATE TABLE part1 PARTITION OF range_parted2 FOR VALUES FROM (1) TO (10);
-CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (9) TO (unbounded);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (9) TO (maxvalue);
 CREATE TABLE part2 PARTITION OF range_parted2 FOR VALUES FROM (20) TO (30);
 CREATE TABLE part3 PARTITION OF range_parted2 FOR VALUES FROM (30) TO (40);
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (30);
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (50);
+
+-- Create a default partition for range partitioned table
+CREATE TABLE range2_default PARTITION OF range_parted2 DEFAULT;
+
+-- More than one default partition is not allowed, so this should give error
+CREATE TABLE fail_default_part PARTITION OF range_parted2 DEFAULT;
+
+-- Check if the range for default partitions overlap
+INSERT INTO range_parted2 VALUES (85);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (80) TO (90);
+CREATE TABLE part4 PARTITION OF range_parted2 FOR VALUES FROM (90) TO (100);
 
 -- now check for multi-column range partition key
 CREATE TABLE range_parted3 (
@@ -557,18 +598,34 @@ CREATE TABLE range_parted3 (
 	b int
 ) PARTITION BY RANGE (a, (b+1));
 
-CREATE TABLE part00 PARTITION OF range_parted3 FOR VALUES FROM (0, unbounded) TO (0, unbounded);
-CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (0, unbounded) TO (0, 1);
+CREATE TABLE part00 PARTITION OF range_parted3 FOR VALUES FROM (0, minvalue) TO (0, maxvalue);
+CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (0, minvalue) TO (0, 1);
 
-CREATE TABLE part10 PARTITION OF range_parted3 FOR VALUES FROM (1, unbounded) TO (1, 1);
+CREATE TABLE part10 PARTITION OF range_parted3 FOR VALUES FROM (1, minvalue) TO (1, 1);
 CREATE TABLE part11 PARTITION OF range_parted3 FOR VALUES FROM (1, 1) TO (1, 10);
-CREATE TABLE part12 PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, unbounded);
+CREATE TABLE part12 PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, maxvalue);
 CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, 20);
+CREATE TABLE range3_default PARTITION OF range_parted3 DEFAULT;
 
 -- cannot create a partition that says column b is allowed to range
 -- from -infinity to +infinity, while there exist partitions that have
 -- more specific ranges
-CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, unbounded) TO (1, unbounded);
+CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, minvalue) TO (1, maxvalue);
+
+-- check for partition bound overlap and other invalid specifications for the hash partition
+CREATE TABLE hash_parted2 (
+	a varchar
+) PARTITION BY HASH (a);
+CREATE TABLE h2part_1 PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 4, REMAINDER 2);
+CREATE TABLE h2part_2 PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 8, REMAINDER 0);
+CREATE TABLE h2part_3 PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 8, REMAINDER 4);
+CREATE TABLE h2part_4 PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 8, REMAINDER 5);
+-- overlap with part_4
+CREATE TABLE fail_part PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+-- modulus must be greater than zero
+CREATE TABLE fail_part PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 0, REMAINDER 1);
+-- remainder must be greater than or equal to zero and less than modulus
+CREATE TABLE fail_part PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 8, REMAINDER 8);
 
 -- check schema propagation from parent
 
@@ -623,22 +680,25 @@ CREATE TABLE part_c_1_10 PARTITION OF part_c FOR VALUES FROM (1) TO (10);
 -- output could vary depending on the order in which partition oids are
 -- returned.
 \d parted
+\d hash_parted
 
 -- check that we get the expected partition constraints
 CREATE TABLE range_parted4 (a int, b int, c int) PARTITION BY RANGE (abs(a), abs(b), c);
-CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (UNBOUNDED, UNBOUNDED, UNBOUNDED);
+CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (MAXVALUE, MAXVALUE, MAXVALUE);
 \d+ unbounded_range_part
 DROP TABLE unbounded_range_part;
-CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (1, UNBOUNDED, UNBOUNDED);
+CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (1, MAXVALUE, MAXVALUE);
 \d+ range_parted4_1
-CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, UNBOUNDED);
+CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, MAXVALUE);
 \d+ range_parted4_2
-CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, UNBOUNDED) TO (9, UNBOUNDED, UNBOUNDED);
+CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, MINVALUE) TO (9, MAXVALUE, MAXVALUE);
 \d+ range_parted4_3
 DROP TABLE range_parted4;
 
 -- cleanup
 DROP TABLE parted, list_parted, range_parted, list_parted2, range_parted2, range_parted3;
+DROP TABLE hash_parted;
+DROP TABLE hash_parted2;
 
 -- comments on partitioned tables columns
 CREATE TABLE parted_col_comment (a int, b text) PARTITION BY LIST (a);

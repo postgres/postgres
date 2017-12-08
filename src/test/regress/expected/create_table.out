@@ -340,11 +340,11 @@ CREATE TABLE partitioned (
 ) PARTITION BY RANGE (const_func());
 ERROR:  cannot use constant expression as partition key
 DROP FUNCTION const_func();
--- only accept "list" and "range" as partitioning strategy
+-- only accept valid partitioning strategy
 CREATE TABLE partitioned (
-	a int
-) PARTITION BY HASH (a);
-ERROR:  unrecognized partitioning strategy "hash"
+    a int
+) PARTITION BY MAGIC (a);
+ERROR:  unrecognized partitioning strategy "magic"
 -- specified column must be present in the table
 CREATE TABLE partitioned (
 	a int
@@ -428,13 +428,15 @@ ERROR:  cannot inherit from partitioned table "partitioned2"
  c      | text    |           |          | 
  d      | text    |           |          | 
 Partition key: RANGE (a oid_ops, plusone(b), c, d COLLATE "C")
+Number of partitions: 0
 
-\d partitioned2
-            Table "public.partitioned2"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
- a      | integer |           |          | 
-Partition key: LIST ((a + 1))
+\d+ partitioned2
+                               Table "public.partitioned2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+Partition key: LIST (((a + 1)))
+Number of partitions: 0
 
 DROP TABLE partitioned, partitioned2;
 --
@@ -467,6 +469,15 @@ CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES FROM (1) TO (2);
 ERROR:  invalid bound specification for a list partition
 LINE 1: ...BLE fail_part PARTITION OF list_parted FOR VALUES FROM (1) T...
                                                              ^
+-- trying to specify modulus and remainder for list partitioned table
+CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES WITH (MODULUS 10, REMAINDER 1);
+ERROR:  invalid bound specification for a list partition
+LINE 1: ...BLE fail_part PARTITION OF list_parted FOR VALUES WITH (MODU...
+                                                             ^
+-- check default partition cannot be created more than once
+CREATE TABLE part_default PARTITION OF list_parted DEFAULT;
+CREATE TABLE fail_default_part PARTITION OF list_parted DEFAULT;
+ERROR:  partition "fail_default_part" conflicts with existing default partition "part_default"
 -- specified literal can't be cast to the partition column data type
 CREATE TABLE bools (
 	a bool
@@ -505,6 +516,11 @@ CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES IN ('a');
 ERROR:  invalid bound specification for a range partition
 LINE 1: ...BLE fail_part PARTITION OF range_parted FOR VALUES IN ('a');
                                                               ^
+-- trying to specify modulus and remainder for range partitioned table
+CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES WITH (MODULUS 10, REMAINDER 1);
+ERROR:  invalid bound specification for a range partition
+LINE 1: ...LE fail_part PARTITION OF range_parted FOR VALUES WITH (MODU...
+                                                             ^
 -- each of start and end bounds must have same number of values as the
 -- length of the partition key
 CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM ('a', 1) TO ('z');
@@ -512,21 +528,47 @@ ERROR:  FROM must specify exactly one value per partitioning column
 CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM ('a') TO ('z', 1);
 ERROR:  TO must specify exactly one value per partitioning column
 -- cannot specify null values in range bounds
-CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM (null) TO (unbounded);
+CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM (null) TO (maxvalue);
 ERROR:  cannot specify NULL in range bound
--- cannot specify finite values after UNBOUNDED has been specified
-CREATE TABLE range_parted_multicol (a int, b int, c int) PARTITION BY RANGE (a, b, c);
-CREATE TABLE fail_part PARTITION OF range_parted_multicol FOR VALUES FROM (1, UNBOUNDED, 1) TO (UNBOUNDED, 1, 1);
-ERROR:  cannot specify finite value after UNBOUNDED
-LINE 1: ...ge_parted_multicol FOR VALUES FROM (1, UNBOUNDED, 1) TO (UNB...
+-- trying to specify modulus and remainder for range partitioned table
+CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES WITH (MODULUS 10, REMAINDER 1);
+ERROR:  invalid bound specification for a range partition
+LINE 1: ...LE fail_part PARTITION OF range_parted FOR VALUES WITH (MODU...
                                                              ^
-DROP TABLE range_parted_multicol;
+-- check partition bound syntax for the hash partition
+CREATE TABLE hash_parted (
+	a int
+) PARTITION BY HASH (a);
+CREATE TABLE hpart_1 PARTITION OF hash_parted FOR VALUES WITH (MODULUS 10, REMAINDER 0);
+CREATE TABLE hpart_2 PARTITION OF hash_parted FOR VALUES WITH (MODULUS 50, REMAINDER 1);
+CREATE TABLE hpart_3 PARTITION OF hash_parted FOR VALUES WITH (MODULUS 200, REMAINDER 2);
+-- modulus 25 is factor of modulus of 50 but 10 is not factor of 25.
+CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES WITH (MODULUS 25, REMAINDER 3);
+ERROR:  every hash partition modulus must be a factor of the next larger modulus
+-- previous modulus 50 is factor of 150 but this modulus is not factor of next modulus 200.
+CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES WITH (MODULUS 150, REMAINDER 3);
+ERROR:  every hash partition modulus must be a factor of the next larger modulus
+-- trying to specify range for the hash partitioned table
+CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES FROM ('a', 1) TO ('z');
+ERROR:  invalid bound specification for a hash partition
+LINE 1: ...BLE fail_part PARTITION OF hash_parted FOR VALUES FROM ('a',...
+                                                             ^
+-- trying to specify list value for the hash partitioned table
+CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES IN (1000);
+ERROR:  invalid bound specification for a hash partition
+LINE 1: ...BLE fail_part PARTITION OF hash_parted FOR VALUES IN (1000);
+                                                             ^
+-- trying to create default partition for the hash partitioned table
+CREATE TABLE fail_default_part PARTITION OF hash_parted DEFAULT;
+ERROR:  a hash-partitioned table may not have a default partition
 -- check if compatible with the specified parent
 -- cannot create as partition of a non-partitioned table
 CREATE TABLE unparted (
 	a int
 );
 CREATE TABLE fail_part PARTITION OF unparted FOR VALUES IN ('a');
+ERROR:  "unparted" is not partitioned
+CREATE TABLE fail_part PARTITION OF unparted FOR VALUES WITH (MODULUS 2, REMAINDER 1);
 ERROR:  "unparted" is not partitioned
 DROP TABLE unparted;
 -- cannot create a permanent rel as partition of a temp rel
@@ -565,49 +607,84 @@ CREATE TABLE list_parted2 (
 ) PARTITION BY LIST (a);
 CREATE TABLE part_null_z PARTITION OF list_parted2 FOR VALUES IN (null, 'z');
 CREATE TABLE part_ab PARTITION OF list_parted2 FOR VALUES IN ('a', 'b');
+CREATE TABLE list_parted2_def PARTITION OF list_parted2 DEFAULT;
 CREATE TABLE fail_part PARTITION OF list_parted2 FOR VALUES IN (null);
 ERROR:  partition "fail_part" would overlap partition "part_null_z"
 CREATE TABLE fail_part PARTITION OF list_parted2 FOR VALUES IN ('b', 'c');
 ERROR:  partition "fail_part" would overlap partition "part_ab"
+-- check default partition overlap
+INSERT INTO list_parted2 VALUES('X');
+CREATE TABLE fail_part PARTITION OF list_parted2 FOR VALUES IN ('W', 'X', 'Y');
+ERROR:  updated partition constraint for default partition "list_parted2_def" would be violated by some row
 CREATE TABLE range_parted2 (
 	a int
 ) PARTITION BY RANGE (a);
 -- trying to create range partition with empty range
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (1) TO (0);
-ERROR:  cannot create range partition with empty range
+ERROR:  empty range bound specified for partition "fail_part"
+DETAIL:  Specified lower bound (1) is greater than or equal to upper bound (0).
 -- note that the range '[1, 1)' has no elements
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (1) TO (1);
-ERROR:  cannot create range partition with empty range
-CREATE TABLE part0 PARTITION OF range_parted2 FOR VALUES FROM (unbounded) TO (1);
-CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (unbounded) TO (2);
+ERROR:  empty range bound specified for partition "fail_part"
+DETAIL:  Specified lower bound (1) is greater than or equal to upper bound (1).
+CREATE TABLE part0 PARTITION OF range_parted2 FOR VALUES FROM (minvalue) TO (1);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (minvalue) TO (2);
 ERROR:  partition "fail_part" would overlap partition "part0"
 CREATE TABLE part1 PARTITION OF range_parted2 FOR VALUES FROM (1) TO (10);
-CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (9) TO (unbounded);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (9) TO (maxvalue);
 ERROR:  partition "fail_part" would overlap partition "part1"
 CREATE TABLE part2 PARTITION OF range_parted2 FOR VALUES FROM (20) TO (30);
 CREATE TABLE part3 PARTITION OF range_parted2 FOR VALUES FROM (30) TO (40);
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (30);
 ERROR:  partition "fail_part" would overlap partition "part2"
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (50);
-ERROR:  partition "fail_part" would overlap partition "part3"
+ERROR:  partition "fail_part" would overlap partition "part2"
+-- Create a default partition for range partitioned table
+CREATE TABLE range2_default PARTITION OF range_parted2 DEFAULT;
+-- More than one default partition is not allowed, so this should give error
+CREATE TABLE fail_default_part PARTITION OF range_parted2 DEFAULT;
+ERROR:  partition "fail_default_part" conflicts with existing default partition "range2_default"
+-- Check if the range for default partitions overlap
+INSERT INTO range_parted2 VALUES (85);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (80) TO (90);
+ERROR:  updated partition constraint for default partition "range2_default" would be violated by some row
+CREATE TABLE part4 PARTITION OF range_parted2 FOR VALUES FROM (90) TO (100);
 -- now check for multi-column range partition key
 CREATE TABLE range_parted3 (
 	a int,
 	b int
 ) PARTITION BY RANGE (a, (b+1));
-CREATE TABLE part00 PARTITION OF range_parted3 FOR VALUES FROM (0, unbounded) TO (0, unbounded);
-CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (0, unbounded) TO (0, 1);
+CREATE TABLE part00 PARTITION OF range_parted3 FOR VALUES FROM (0, minvalue) TO (0, maxvalue);
+CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (0, minvalue) TO (0, 1);
 ERROR:  partition "fail_part" would overlap partition "part00"
-CREATE TABLE part10 PARTITION OF range_parted3 FOR VALUES FROM (1, unbounded) TO (1, 1);
+CREATE TABLE part10 PARTITION OF range_parted3 FOR VALUES FROM (1, minvalue) TO (1, 1);
 CREATE TABLE part11 PARTITION OF range_parted3 FOR VALUES FROM (1, 1) TO (1, 10);
-CREATE TABLE part12 PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, unbounded);
+CREATE TABLE part12 PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, maxvalue);
 CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, 20);
 ERROR:  partition "fail_part" would overlap partition "part12"
+CREATE TABLE range3_default PARTITION OF range_parted3 DEFAULT;
 -- cannot create a partition that says column b is allowed to range
 -- from -infinity to +infinity, while there exist partitions that have
 -- more specific ranges
-CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, unbounded) TO (1, unbounded);
+CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, minvalue) TO (1, maxvalue);
 ERROR:  partition "fail_part" would overlap partition "part10"
+-- check for partition bound overlap and other invalid specifications for the hash partition
+CREATE TABLE hash_parted2 (
+	a varchar
+) PARTITION BY HASH (a);
+CREATE TABLE h2part_1 PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 4, REMAINDER 2);
+CREATE TABLE h2part_2 PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 8, REMAINDER 0);
+CREATE TABLE h2part_3 PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 8, REMAINDER 4);
+CREATE TABLE h2part_4 PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 8, REMAINDER 5);
+-- overlap with part_4
+CREATE TABLE fail_part PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+ERROR:  partition "fail_part" would overlap partition "h2part_4"
+-- modulus must be greater than zero
+CREATE TABLE fail_part PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 0, REMAINDER 1);
+ERROR:  modulus for hash partition must be a positive integer
+-- remainder must be greater than or equal to zero and less than modulus
+CREATE TABLE fail_part PARTITION OF hash_parted2 FOR VALUES WITH (MODULUS 8, REMAINDER 8);
+ERROR:  remainder for hash partition must be less than modulus
 -- check schema propagation from parent
 CREATE TABLE parted (
 	a text,
@@ -706,9 +783,17 @@ Check constraints:
     "check_a" CHECK (length(a) > 0)
 Number of partitions: 3 (Use \d+ to list them.)
 
+\d hash_parted
+            Table "public.hash_parted"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Partition key: HASH (a)
+Number of partitions: 3 (Use \d+ to list them.)
+
 -- check that we get the expected partition constraints
 CREATE TABLE range_parted4 (a int, b int, c int) PARTITION BY RANGE (abs(a), abs(b), c);
-CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (UNBOUNDED, UNBOUNDED, UNBOUNDED);
+CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (MAXVALUE, MAXVALUE, MAXVALUE);
 \d+ unbounded_range_part
                            Table "public.unbounded_range_part"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -716,11 +801,11 @@ CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (UN
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
  c      | integer |           |          |         | plain   |              | 
-Partition of: range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (UNBOUNDED, UNBOUNDED, UNBOUNDED)
+Partition of: range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (MAXVALUE, MAXVALUE, MAXVALUE)
 Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL))
 
 DROP TABLE unbounded_range_part;
-CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (1, UNBOUNDED, UNBOUNDED);
+CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (1, MAXVALUE, MAXVALUE);
 \d+ range_parted4_1
                               Table "public.range_parted4_1"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -728,10 +813,10 @@ CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (UNBOUND
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
  c      | integer |           |          |         | plain   |              | 
-Partition of: range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (1, UNBOUNDED, UNBOUNDED)
+Partition of: range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (1, MAXVALUE, MAXVALUE)
 Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL) AND (abs(a) <= 1))
 
-CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, UNBOUNDED);
+CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, MAXVALUE);
 \d+ range_parted4_2
                               Table "public.range_parted4_2"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -739,10 +824,10 @@ CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
  c      | integer |           |          |         | plain   |              | 
-Partition of: range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, UNBOUNDED)
+Partition of: range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, MAXVALUE)
 Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL) AND ((abs(a) > 3) OR ((abs(a) = 3) AND (abs(b) > 4)) OR ((abs(a) = 3) AND (abs(b) = 4) AND (c >= 5))) AND ((abs(a) < 6) OR ((abs(a) = 6) AND (abs(b) <= 7))))
 
-CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, UNBOUNDED) TO (9, UNBOUNDED, UNBOUNDED);
+CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, MINVALUE) TO (9, MAXVALUE, MAXVALUE);
 \d+ range_parted4_3
                               Table "public.range_parted4_3"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -750,12 +835,14 @@ CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, U
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
  c      | integer |           |          |         | plain   |              | 
-Partition of: range_parted4 FOR VALUES FROM (6, 8, UNBOUNDED) TO (9, UNBOUNDED, UNBOUNDED)
+Partition of: range_parted4 FOR VALUES FROM (6, 8, MINVALUE) TO (9, MAXVALUE, MAXVALUE)
 Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL) AND ((abs(a) > 6) OR ((abs(a) = 6) AND (abs(b) >= 8))) AND (abs(a) <= 9))
 
 DROP TABLE range_parted4;
 -- cleanup
 DROP TABLE parted, list_parted, range_parted, list_parted2, range_parted2, range_parted3;
+DROP TABLE hash_parted;
+DROP TABLE hash_parted2;
 -- comments on partitioned tables columns
 CREATE TABLE parted_col_comment (a int, b text) PARTITION BY LIST (a);
 COMMENT ON TABLE parted_col_comment IS 'Am partitioned table';
@@ -773,5 +860,6 @@ SELECT obj_description('parted_col_comment'::regclass);
  a      | integer |           |          |         | plain    |              | Partition key
  b      | text    |           |          |         | extended |              | 
 Partition key: LIST (a)
+Number of partitions: 0
 
 DROP TABLE parted_col_comment;

@@ -383,7 +383,7 @@ Datum
 ts_headline_jsonb_byid_opt(PG_FUNCTION_ARGS)
 {
 	Oid			tsconfig = PG_GETARG_OID(0);
-	Jsonb	   *jb = PG_GETARG_JSONB(1);
+	Jsonb	   *jb = PG_GETARG_JSONB_P(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
 	Jsonb	   *out;
@@ -424,7 +424,7 @@ ts_headline_jsonb_byid_opt(PG_FUNCTION_ARGS)
 		pfree(prs.stopsel);
 	}
 
-	PG_RETURN_JSONB(out);
+	PG_RETURN_JSONB_P(out);
 }
 
 Datum

@@ -92,4 +92,4 @@ SELECT f1 + time with time zone '00:01' AS "Illegal" FROM TIMETZ_TBL;
 ERROR:  operator does not exist: time with time zone + time with time zone
 LINE 1: SELECT f1 + time with time zone '00:01' AS "Illegal" FROM TI...
                   ^
-HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.

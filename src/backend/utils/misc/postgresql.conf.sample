@@ -80,11 +80,12 @@
 #ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
 #ssl_prefer_server_ciphers = on
 #ssl_ecdh_curve = 'prime256v1'
+#ssl_dh_params_file = ''
 #ssl_cert_file = 'server.crt'
 #ssl_key_file = 'server.key'
 #ssl_ca_file = ''
 #ssl_crl_file = ''
-#password_encryption = md5		# md5, scram-sha-256, or plain
+#password_encryption = md5		# md5 or scram-sha-256
 #db_user_namespace = off
 #row_security = on
 
@@ -120,7 +121,6 @@
 # you actively intend to use prepared transactions.
 #work_mem = 4MB				# min 64kB
 #maintenance_work_mem = 64MB		# min 1MB
-#replacement_sort_tuples = 150000	# limits use of replacement selection sort
 #autovacuum_work_mem = -1		# min 1MB, or -1 to use maintenance_work_mem
 #max_stack_depth = 2MB			# min 100kB
 #dynamic_shared_memory_type = posix	# the default is the first option
@@ -130,17 +130,17 @@
 					#   windows
 					#   mmap
 					# use none to disable dynamic shared memory
+					# (change requires restart)
 
 # - Disk -
 
 #temp_file_limit = -1			# limits per-process temp file space
 					# in kB, or -1 for no limit
 
-# - Kernel Resource Usage -
+# - Kernel Resource -
 
 #max_files_per_process = 1000		# min 25
 					# (change requires restart)
-#shared_preload_libraries = ''		# (change requires restart)
 
 # - Cost-Based Vacuum Delay -
 
@@ -153,7 +153,7 @@
 # - Background Writer -
 
 #bgwriter_delay = 200ms			# 10-10000ms between rounds
-#bgwriter_lru_maxpages = 100		# 0-1000 max buffers written/round
+#bgwriter_lru_maxpages = 100		# max buffers written/round, 0 disables
 #bgwriter_lru_multiplier = 2.0		# 0-10.0 multiplier on buffers scanned/round
 #bgwriter_flush_after = 0		# measured in pages, 0 disables
 
@@ -162,6 +162,7 @@
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 #max_worker_processes = 8		# (change requires restart)
 #max_parallel_workers_per_gather = 2	# taken from max_parallel_workers
+#parallel_leader_participation = on
 #max_parallel_workers = 8		# maximum number of max_worker_processes that
 					# can be used in parallel queries
 #old_snapshot_threshold = -1		# 1min-60d; -1 disables; 0 is immediate
@@ -170,7 +171,7 @@
 
 
 #------------------------------------------------------------------------------
-# WRITE AHEAD LOG
+# WRITE-AHEAD LOG
 #------------------------------------------------------------------------------
 
 # - Settings -
@@ -226,13 +227,13 @@
 # REPLICATION
 #------------------------------------------------------------------------------
 
-# - Sending Server(s) -
+# - Sending Servers -
 
 # Set these on the master and on any standby that will send replication data.
 
 #max_wal_senders = 10		# max number of walsender processes
 				# (change requires restart)
-#wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
+#wal_keep_segments = 0		# in logfile segments; 0 disables
 #wal_sender_timeout = 60s	# in milliseconds; 0 disables
 
 #max_replication_slots = 10	# max number of replication slots
@@ -277,6 +278,7 @@
 # These settings are ignored on a publisher.
 
 #max_logical_replication_workers = 4	# taken from max_worker_processes
+					# (change requires restart)
 #max_sync_workers_per_subscription = 2	# taken from max_logical_replication_workers
 
 
@@ -294,9 +296,11 @@
 #enable_material = on
 #enable_mergejoin = on
 #enable_nestloop = on
+#enable_parallel_append = on
 #enable_seqscan = on
 #enable_sort = on
 #enable_tidscan = on
+#enable_partition_wise_join = off
 
 # - Planner Cost Constants -
 
@@ -333,7 +337,7 @@
 
 
 #------------------------------------------------------------------------------
-# ERROR REPORTING AND LOGGING
+# REPORTING AND LOGGING
 #------------------------------------------------------------------------------
 
 # - Where to Log -
@@ -377,6 +381,7 @@
 #syslog_split_messages = on
 
 # This is only relevant when logging to eventlog (win32):
+# (change requires restart)
 #event_source = 'PostgreSQL'
 
 # - When to Log -
@@ -467,8 +472,9 @@
 					# -1 disables, 0 logs all temp files
 #log_timezone = 'GMT'
 
-
-# - Process Title -
+#------------------------------------------------------------------------------
+# PROCESS TITLE
+#------------------------------------------------------------------------------
 
 #cluster_name = ''			# added to process titles if nonempty
 					# (change requires restart)
@@ -476,10 +482,10 @@
 
 
 #------------------------------------------------------------------------------
-# RUNTIME STATISTICS
+# STATISTICS
 #------------------------------------------------------------------------------
 
-# - Query/Index Statistics Collector -
+# - Query and Index Statistics Collector -
 
 #track_activities = on
 #track_counts = on
@@ -489,7 +495,7 @@
 #stats_temp_directory = 'pg_stat_tmp'
 
 
-# - Statistics Monitoring -
+# - Monitoring -
 
 #log_parser_stats = off
 #log_planner_stats = off
@@ -498,7 +504,7 @@
 
 
 #------------------------------------------------------------------------------
-# AUTOVACUUM PARAMETERS
+# AUTOVACUUM
 #------------------------------------------------------------------------------
 
 #autovacuum = on			# Enable autovacuum subprocess?  'on'
@@ -583,11 +589,15 @@
 # default configuration for text search
 #default_text_search_config = 'pg_catalog.simple'
 
+# - Shared Library Preloading -
+
+#shared_preload_libraries = ''	# (change requires restart)
+#local_preload_libraries = ''
+#session_preload_libraries = ''
+
 # - Other Defaults -
 
 #dynamic_library_path = '$libdir'
-#local_preload_libraries = ''
-#session_preload_libraries = ''
 
 
 #------------------------------------------------------------------------------
@@ -606,7 +616,7 @@
 
 
 #------------------------------------------------------------------------------
-# VERSION/PLATFORM COMPATIBILITY
+# VERSION AND PLATFORM COMPATIBILITY
 #------------------------------------------------------------------------------
 
 # - Previous PostgreSQL Versions -

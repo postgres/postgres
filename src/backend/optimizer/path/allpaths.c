@@ -24,6 +24,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "foreign/fdwapi.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #ifdef OPTIMIZER_DEBUG
@@ -100,7 +101,8 @@ static void generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 static Path *get_cheapest_parameterized_child_path(PlannerInfo *root,
 									  RelOptInfo *rel,
 									  Relids required_outer);
-static List *accumulate_append_subpath(List *subpaths, Path *path);
+static void accumulate_append_subpath(Path *path,
+						  List **subpaths, List **special_subpaths);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -352,8 +354,8 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 				else if (rte->relkind == RELKIND_PARTITIONED_TABLE)
 				{
 					/*
-					 * A partitioned table without leaf partitions is marked
-					 * as a dummy rel.
+					 * A partitioned table without any partitions is marked as
+					 * a dummy rel.
 					 */
 					set_dummy_rel_pathlist(rel);
 				}
@@ -867,6 +869,9 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	int			nattrs;
 	ListCell   *l;
 
+	/* Guard against stack overflow due to overly deep inheritance tree. */
+	check_stack_depth();
+
 	Assert(IS_SIMPLE_REL(rel));
 
 	/*
@@ -916,12 +921,91 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		childrel = find_base_rel(root, childRTindex);
 		Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
 
+		if (rel->part_scheme)
+		{
+			AttrNumber	attno;
+
+			/*
+			 * We need attr_needed data for building targetlist of a join
+			 * relation representing join between matching partitions for
+			 * partition-wise join. A given attribute of a child will be
+			 * needed in the same highest joinrel where the corresponding
+			 * attribute of parent is needed. Hence it suffices to use the
+			 * same Relids set for parent and child.
+			 */
+			for (attno = rel->min_attr; attno <= rel->max_attr; attno++)
+			{
+				int			index = attno - rel->min_attr;
+				Relids		attr_needed = rel->attr_needed[index];
+
+				/* System attributes do not need translation. */
+				if (attno <= 0)
+				{
+					Assert(rel->min_attr == childrel->min_attr);
+					childrel->attr_needed[index] = attr_needed;
+				}
+				else
+				{
+					Var		   *var = list_nth_node(Var,
+													appinfo->translated_vars,
+													attno - 1);
+					int			child_index;
+
+					/*
+					 * Ignore any column dropped from the parent.
+					 * Corresponding Var won't have any translation. It won't
+					 * have attr_needed information, since it can not be
+					 * referenced in the query.
+					 */
+					if (var == NULL)
+					{
+						Assert(attr_needed == NULL);
+						continue;
+					}
+
+					child_index = var->varattno - childrel->min_attr;
+					childrel->attr_needed[child_index] = attr_needed;
+				}
+			}
+		}
+
 		/*
-		 * We have to copy the parent's targetlist and quals to the child,
-		 * with appropriate substitution of variables.  However, only the
-		 * baserestrictinfo quals are needed before we can check for
-		 * constraint exclusion; so do that first and then check to see if we
-		 * can disregard this child.
+		 * Copy/Modify targetlist. Even if this child is deemed empty, we need
+		 * its targetlist in case it falls on nullable side in a child-join
+		 * because of partition-wise join.
+		 *
+		 * NB: the resulting childrel->reltarget->exprs may contain arbitrary
+		 * expressions, which otherwise would not occur in a rel's targetlist.
+		 * Code that might be looking at an appendrel child must cope with
+		 * such.  (Normally, a rel's targetlist would only include Vars and
+		 * PlaceHolderVars.)  XXX we do not bother to update the cost or width
+		 * fields of childrel->reltarget; not clear if that would be useful.
+		 */
+		childrel->reltarget->exprs = (List *)
+			adjust_appendrel_attrs(root,
+								   (Node *) rel->reltarget->exprs,
+								   1, &appinfo);
+
+		/*
+		 * We have to make child entries in the EquivalenceClass data
+		 * structures as well.  This is needed either if the parent
+		 * participates in some eclass joins (because we will want to consider
+		 * inner-indexscan joins on the individual children) or if the parent
+		 * has useful pathkeys (because we should try to build MergeAppend
+		 * paths that produce those sort orderings). Even if this child is
+		 * deemed dummy, it may fall on nullable side in a child-join, which
+		 * in turn may participate in a MergeAppend, where we will need the
+		 * EquivalenceClass data structures.
+		 */
+		if (rel->has_eclass_joins || has_useful_pathkeys(root, rel))
+			add_child_rel_equivalences(root, appinfo, rel, childrel);
+		childrel->has_eclass_joins = rel->has_eclass_joins;
+
+		/*
+		 * We have to copy the parent's quals to the child, with appropriate
+		 * substitution of variables.  However, only the baserestrictinfo
+		 * quals are needed before we can check for constraint exclusion; so
+		 * do that first and then check to see if we can disregard this child.
 		 *
 		 * The child rel's targetlist might contain non-Var expressions, which
 		 * means that substitution into the quals could produce opportunities
@@ -942,7 +1026,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			Assert(IsA(rinfo, RestrictInfo));
 			childqual = adjust_appendrel_attrs(root,
 											   (Node *) rinfo->clause,
-											   appinfo);
+											   1, &appinfo);
 			childqual = eval_const_expressions(root, childqual);
 			/* check for flat-out constant */
 			if (childqual && IsA(childqual, Const))
@@ -1048,44 +1132,11 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			continue;
 		}
 
-		/*
-		 * CE failed, so finish copying/modifying targetlist and join quals.
-		 *
-		 * NB: the resulting childrel->reltarget->exprs may contain arbitrary
-		 * expressions, which otherwise would not occur in a rel's targetlist.
-		 * Code that might be looking at an appendrel child must cope with
-		 * such.  (Normally, a rel's targetlist would only include Vars and
-		 * PlaceHolderVars.)  XXX we do not bother to update the cost or width
-		 * fields of childrel->reltarget; not clear if that would be useful.
-		 */
+		/* CE failed, so finish copying/modifying join quals. */
 		childrel->joininfo = (List *)
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->joininfo,
-								   appinfo);
-		childrel->reltarget->exprs = (List *)
-			adjust_appendrel_attrs(root,
-								   (Node *) rel->reltarget->exprs,
-								   appinfo);
-
-		/*
-		 * We have to make child entries in the EquivalenceClass data
-		 * structures as well.  This is needed either if the parent
-		 * participates in some eclass joins (because we will want to consider
-		 * inner-indexscan joins on the individual children) or if the parent
-		 * has useful pathkeys (because we should try to build MergeAppend
-		 * paths that produce those sort orderings).
-		 */
-		if (rel->has_eclass_joins || has_useful_pathkeys(root, rel))
-			add_child_rel_equivalences(root, appinfo, rel, childrel);
-		childrel->has_eclass_joins = rel->has_eclass_joins;
-
-		/*
-		 * Note: we could compute appropriate attr_needed data for the child's
-		 * variables, by transforming the parent's attr_needed through the
-		 * translated_vars mapping.  However, currently there's no need
-		 * because attr_needed is only examined for base relations not
-		 * otherrels.  So we just leave the child's attr_needed empty.
-		 */
+								   1, &appinfo);
 
 		/*
 		 * If parallelism is allowable for this query in general, see whether
@@ -1258,14 +1309,14 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		live_childrels = lappend(live_childrels, childrel);
 	}
 
-	/* Add paths to the "append" relation. */
+	/* Add paths to the append relation. */
 	add_paths_to_append_rel(root, rel, live_childrels);
 }
 
 
 /*
  * add_paths_to_append_rel
- *		Generate paths for given "append" relation given the set of non-dummy
+ *		Generate paths for the given append relation given the set of non-dummy
  *		child rels.
  *
  * The function collects all parameterizations and orderings supported by the
@@ -1281,19 +1332,56 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	List	   *subpaths = NIL;
 	bool		subpaths_valid = true;
 	List	   *partial_subpaths = NIL;
+	List	   *pa_partial_subpaths = NIL;
+	List	   *pa_nonpartial_subpaths = NIL;
 	bool		partial_subpaths_valid = true;
+	bool		pa_subpaths_valid = enable_parallel_append;
 	List	   *all_child_pathkeys = NIL;
 	List	   *all_child_outers = NIL;
 	ListCell   *l;
 	List	   *partitioned_rels = NIL;
 	RangeTblEntry *rte;
+	bool		build_partitioned_rels = false;
+	double		partial_rows = -1;
 
-	rte = planner_rt_fetch(rel->relid, root);
-	if (rte->relkind == RELKIND_PARTITIONED_TABLE)
+	if (IS_SIMPLE_REL(rel))
 	{
-		partitioned_rels = get_partitioned_child_rels(root, rel->relid);
-		/* The root partitioned table is included as a child rel */
-		Assert(list_length(partitioned_rels) >= 1);
+		/*
+		 * A root partition will already have a PartitionedChildRelInfo, and a
+		 * non-root partitioned table doesn't need one, because its Append
+		 * paths will get flattened into the parent anyway.  For a subquery
+		 * RTE, no PartitionedChildRelInfo exists; we collect all
+		 * partitioned_rels associated with any child.  (This assumes that we
+		 * don't need to look through multiple levels of subquery RTEs; if we
+		 * ever do, we could create a PartitionedChildRelInfo with the
+		 * accumulated list of partitioned_rels which would then be found when
+		 * populated our parent rel with paths.  For the present, that appears
+		 * to be unnecessary.)
+		 */
+		rte = planner_rt_fetch(rel->relid, root);
+		switch (rte->rtekind)
+		{
+			case RTE_RELATION:
+				if (rte->relkind == RELKIND_PARTITIONED_TABLE)
+					partitioned_rels =
+						get_partitioned_child_rels(root, rel->relid);
+				break;
+			case RTE_SUBQUERY:
+				build_partitioned_rels = true;
+				break;
+			default:
+				elog(ERROR, "unexpected rtekind: %d", (int) rte->rtekind);
+		}
+	}
+	else if (rel->reloptkind == RELOPT_JOINREL && rel->part_scheme)
+	{
+		/*
+		 * Associate PartitionedChildRelInfo of the root partitioned tables
+		 * being joined with the root partitioned join (indicated by
+		 * RELOPT_JOINREL).
+		 */
+		partitioned_rels = get_partitioned_child_rels_for_join(root,
+															   rel->relids);
 	}
 
 	/*
@@ -1305,6 +1393,20 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	{
 		RelOptInfo *childrel = lfirst(l);
 		ListCell   *lcp;
+		Path	   *cheapest_partial_path = NULL;
+
+		/*
+		 * If we need to build partitioned_rels, accumulate the partitioned
+		 * rels for this child.
+		 */
+		if (build_partitioned_rels)
+		{
+			List	   *cprels;
+
+			cprels = get_partitioned_child_rels(root, childrel->relid);
+			partitioned_rels = list_concat(partitioned_rels,
+										   list_copy(cprels));
+		}
 
 		/*
 		 * If child has an unparameterized cheapest-total path, add that to
@@ -1312,17 +1414,68 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		 * If not, there's no workable unparameterized path.
 		 */
 		if (childrel->cheapest_total_path->param_info == NULL)
-			subpaths = accumulate_append_subpath(subpaths,
-												 childrel->cheapest_total_path);
+			accumulate_append_subpath(childrel->cheapest_total_path,
+									  &subpaths, NULL);
 		else
 			subpaths_valid = false;
 
 		/* Same idea, but for a partial plan. */
 		if (childrel->partial_pathlist != NIL)
-			partial_subpaths = accumulate_append_subpath(partial_subpaths,
-														 linitial(childrel->partial_pathlist));
+		{
+			cheapest_partial_path = linitial(childrel->partial_pathlist);
+			accumulate_append_subpath(cheapest_partial_path,
+									  &partial_subpaths, NULL);
+		}
 		else
 			partial_subpaths_valid = false;
+
+		/*
+		 * Same idea, but for a parallel append mixing partial and non-partial
+		 * paths.
+		 */
+		if (pa_subpaths_valid)
+		{
+			Path	   *nppath = NULL;
+
+			nppath =
+				get_cheapest_parallel_safe_total_inner(childrel->pathlist);
+
+			if (cheapest_partial_path == NULL && nppath == NULL)
+			{
+				/* Neither a partial nor a parallel-safe path?  Forget it. */
+				pa_subpaths_valid = false;
+			}
+			else if (nppath == NULL ||
+					 (cheapest_partial_path != NULL &&
+					  cheapest_partial_path->total_cost < nppath->total_cost))
+			{
+				/* Partial path is cheaper or the only option. */
+				Assert(cheapest_partial_path != NULL);
+				accumulate_append_subpath(cheapest_partial_path,
+										  &pa_partial_subpaths,
+										  &pa_nonpartial_subpaths);
+
+			}
+			else
+			{
+				/*
+				 * Either we've got only a non-partial path, or we think that
+				 * a single backend can execute the best non-partial path
+				 * faster than all the parallel backends working together can
+				 * execute the best partial path.
+				 *
+				 * It might make sense to be more aggressive here.  Even if
+				 * the best non-partial path is more expensive than the best
+				 * partial path, it could still be better to choose the
+				 * non-partial path if there are several such paths that can
+				 * be given to different workers.  For now, we don't try to
+				 * figure that out.
+				 */
+				accumulate_append_subpath(nppath,
+										  &pa_nonpartial_subpaths,
+										  NULL);
+			}
+		}
 
 		/*
 		 * Collect lists of all the available path orderings and
@@ -1395,11 +1548,13 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	 * if we have zero or one live subpath due to constraint exclusion.)
 	 */
 	if (subpaths_valid)
-		add_path(rel, (Path *) create_append_path(rel, subpaths, NULL, 0,
-												  partitioned_rels));
+		add_path(rel, (Path *) create_append_path(rel, subpaths, NIL,
+												  NULL, 0, false,
+												  partitioned_rels, -1));
 
 	/*
-	 * Consider an append of partial unordered, unparameterized partial paths.
+	 * Consider an append of unordered, unparameterized partial paths.  Make
+	 * it parallel-aware if possible.
 	 */
 	if (partial_subpaths_valid)
 	{
@@ -1407,12 +1562,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		ListCell   *lc;
 		int			parallel_workers = 0;
 
-		/*
-		 * Decide on the number of workers to request for this append path.
-		 * For now, we just use the maximum value from among the members.  It
-		 * might be useful to use a higher number if the Append node were
-		 * smart enough to spread out the workers, but it currently isn't.
-		 */
+		/* Find the highest number of workers requested for any subpath. */
 		foreach(lc, partial_subpaths)
 		{
 			Path	   *path = lfirst(lc);
@@ -1421,9 +1571,78 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		}
 		Assert(parallel_workers > 0);
 
+		/*
+		 * If the use of parallel append is permitted, always request at least
+		 * log2(# of children) paths.  We assume it can be useful to have
+		 * extra workers in this case because they will be spread out across
+		 * the children.  The precise formula is just a guess, but we don't
+		 * want to end up with a radically different answer for a table with N
+		 * partitions vs. an unpartitioned table with the same data, so the
+		 * use of some kind of log-scaling here seems to make some sense.
+		 */
+		if (enable_parallel_append)
+		{
+			parallel_workers = Max(parallel_workers,
+								   fls(list_length(live_childrels)));
+			parallel_workers = Min(parallel_workers,
+								   max_parallel_workers_per_gather);
+		}
+		Assert(parallel_workers > 0);
+
 		/* Generate a partial append path. */
-		appendpath = create_append_path(rel, partial_subpaths, NULL,
-										parallel_workers, partitioned_rels);
+		appendpath = create_append_path(rel, NIL, partial_subpaths, NULL,
+										parallel_workers,
+										enable_parallel_append,
+										partitioned_rels, -1);
+
+		/*
+		 * Make sure any subsequent partial paths use the same row count
+		 * estimate.
+		 */
+		partial_rows = appendpath->path.rows;
+
+		/* Add the path. */
+		add_partial_path(rel, (Path *) appendpath);
+	}
+
+	/*
+	 * Consider a parallel-aware append using a mix of partial and non-partial
+	 * paths.  (This only makes sense if there's at least one child which has
+	 * a non-partial path that is substantially cheaper than any partial path;
+	 * otherwise, we should use the append path added in the previous step.)
+	 */
+	if (pa_subpaths_valid && pa_nonpartial_subpaths != NIL)
+	{
+		AppendPath *appendpath;
+		ListCell   *lc;
+		int			parallel_workers = 0;
+
+		/*
+		 * Find the highest number of workers requested for any partial
+		 * subpath.
+		 */
+		foreach(lc, pa_partial_subpaths)
+		{
+			Path	   *path = lfirst(lc);
+
+			parallel_workers = Max(parallel_workers, path->parallel_workers);
+		}
+
+		/*
+		 * Same formula here as above.  It's even more important in this
+		 * instance because the non-partial paths won't contribute anything to
+		 * the planned number of parallel workers.
+		 */
+		parallel_workers = Max(parallel_workers,
+							   fls(list_length(live_childrels)));
+		parallel_workers = Min(parallel_workers,
+							   max_parallel_workers_per_gather);
+		Assert(parallel_workers > 0);
+
+		appendpath = create_append_path(rel, pa_nonpartial_subpaths,
+										pa_partial_subpaths,
+										NULL, parallel_workers, true,
+										partitioned_rels, partial_rows);
 		add_partial_path(rel, (Path *) appendpath);
 	}
 
@@ -1471,13 +1690,14 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 				subpaths_valid = false;
 				break;
 			}
-			subpaths = accumulate_append_subpath(subpaths, subpath);
+			accumulate_append_subpath(subpath, &subpaths, NULL);
 		}
 
 		if (subpaths_valid)
 			add_path(rel, (Path *)
-					 create_append_path(rel, subpaths, required_outer, 0,
-										partitioned_rels));
+					 create_append_path(rel, subpaths, NIL,
+										required_outer, 0, false,
+										partitioned_rels, -1));
 	}
 }
 
@@ -1561,10 +1781,10 @@ generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 			if (cheapest_startup != cheapest_total)
 				startup_neq_total = true;
 
-			startup_subpaths =
-				accumulate_append_subpath(startup_subpaths, cheapest_startup);
-			total_subpaths =
-				accumulate_append_subpath(total_subpaths, cheapest_total);
+			accumulate_append_subpath(cheapest_startup,
+									  &startup_subpaths, NULL);
+			accumulate_append_subpath(cheapest_total,
+									  &total_subpaths, NULL);
 		}
 
 		/* ... and build the MergeAppend paths */
@@ -1660,7 +1880,7 @@ get_cheapest_parameterized_child_path(PlannerInfo *root, RelOptInfo *rel,
 
 /*
  * accumulate_append_subpath
- *		Add a subpath to the list being built for an Append or MergeAppend
+ *		Add a subpath to the list being built for an Append or MergeAppend.
  *
  * It's possible that the child is itself an Append or MergeAppend path, in
  * which case we can "cut out the middleman" and just add its child paths to
@@ -1671,26 +1891,53 @@ get_cheapest_parameterized_child_path(PlannerInfo *root, RelOptInfo *rel,
  * omitting a sort step, which seems fine: if the parent is to be an Append,
  * its result would be unsorted anyway, while if the parent is to be a
  * MergeAppend, there's no point in a separate sort on a child.
+ * its result would be unsorted anyway.
+ *
+ * Normally, either path is a partial path and subpaths is a list of partial
+ * paths, or else path is a non-partial plan and subpaths is a list of those.
+ * However, if path is a parallel-aware Append, then we add its partial path
+ * children to subpaths and the rest to special_subpaths.  If the latter is
+ * NULL, we don't flatten the path at all (unless it contains only partial
+ * paths).
  */
-static List *
-accumulate_append_subpath(List *subpaths, Path *path)
+static void
+accumulate_append_subpath(Path *path, List **subpaths, List **special_subpaths)
 {
 	if (IsA(path, AppendPath))
 	{
 		AppendPath *apath = (AppendPath *) path;
 
-		/* list_copy is important here to avoid sharing list substructure */
-		return list_concat(subpaths, list_copy(apath->subpaths));
+		if (!apath->path.parallel_aware || apath->first_partial_path == 0)
+		{
+			/* list_copy is important here to avoid sharing list substructure */
+			*subpaths = list_concat(*subpaths, list_copy(apath->subpaths));
+			return;
+		}
+		else if (special_subpaths != NULL)
+		{
+			List	   *new_special_subpaths;
+
+			/* Split Parallel Append into partial and non-partial subpaths */
+			*subpaths = list_concat(*subpaths,
+									list_copy_tail(apath->subpaths,
+												   apath->first_partial_path));
+			new_special_subpaths =
+				list_truncate(list_copy(apath->subpaths),
+							  apath->first_partial_path);
+			*special_subpaths = list_concat(*special_subpaths,
+											new_special_subpaths);
+		}
 	}
 	else if (IsA(path, MergeAppendPath))
 	{
 		MergeAppendPath *mpath = (MergeAppendPath *) path;
 
 		/* list_copy is important here to avoid sharing list substructure */
-		return list_concat(subpaths, list_copy(mpath->subpaths));
+		*subpaths = list_concat(*subpaths, list_copy(mpath->subpaths));
+		return;
 	}
-	else
-		return lappend(subpaths, path);
+
+	*subpaths = lappend(*subpaths, path);
 }
 
 /*
@@ -1713,7 +1960,8 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 	rel->pathlist = NIL;
 	rel->partial_pathlist = NIL;
 
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0, NIL));
+	add_path(rel, (Path *) create_append_path(rel, NIL, NIL, NULL,
+											  0, false, NIL, -1));
 
 	/*
 	 * We set the cheapest path immediately, to ensure that IS_DUMMY_REL()
@@ -1788,7 +2036,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * Zero out result area for subquery_is_pushdown_safe, so that it can set
 	 * flags as needed while recursing.  In particular, we need a workspace
 	 * for keeping track of unsafe-to-reference columns.  unsafeColumns[i]
-	 * will be set TRUE if we find that output column i of the subquery is
+	 * will be set true if we find that output column i of the subquery is
 	 * unsafe to use in a pushed-down qual.
 	 */
 	memset(&safetyInfo, 0, sizeof(safetyInfo));
@@ -2386,15 +2634,21 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 		join_search_one_level(root, lev);
 
 		/*
-		 * Run generate_gather_paths() for each just-processed joinrel.  We
-		 * could not do this earlier because both regular and partial paths
-		 * can get added to a particular joinrel at multiple times within
-		 * join_search_one_level.  After that, we're done creating paths for
-		 * the joinrel, so run set_cheapest().
+		 * Run generate_partition_wise_join_paths() and
+		 * generate_gather_paths() for each just-processed joinrel.  We could
+		 * not do this earlier because both regular and partial paths can get
+		 * added to a particular joinrel at multiple times within
+		 * join_search_one_level.
+		 *
+		 * After that, we're done creating paths for the joinrel, so run
+		 * set_cheapest().
 		 */
 		foreach(lc, root->join_rel_level[lev])
 		{
 			rel = (RelOptInfo *) lfirst(lc);
+
+			/* Create paths for partition-wise joins. */
+			generate_partition_wise_join_paths(root, rel);
 
 			/* Create GatherPaths for any useful partial paths for rel */
 			generate_gather_paths(root, rel);
@@ -2464,7 +2718,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  * In addition, we make several checks on the subquery's output columns to see
  * if it is safe to reference them in pushed-down quals.  If output column k
  * is found to be unsafe to reference, we set safetyInfo->unsafeColumns[k]
- * to TRUE, but we don't reject the subquery overall since column k might not
+ * to true, but we don't reject the subquery overall since column k might not
  * be referenced by some/all quals.  The unsafeColumns[] array will be
  * consulted later by qual_is_pushdown_safe().  It's better to do it this way
  * than to make the checks directly in qual_is_pushdown_safe(), because when
@@ -2586,7 +2840,7 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
  *
  * There are several cases in which it's unsafe to push down an upper-level
  * qual if it references a particular output column of a subquery.  We check
- * each output column of the subquery and set unsafeColumns[k] to TRUE if
+ * each output column of the subquery and set unsafeColumns[k] to true if
  * that column is unsafe for a pushed-down qual to reference.  The conditions
  * checked here are:
  *
@@ -2738,9 +2992,11 @@ targetIsInAllPartitionLists(TargetEntry *tle, Query *query)
  *
  * Conditions checked here:
  *
- * 1. The qual must not contain any subselects (mainly because I'm not sure
- * it will work correctly: sublinks will already have been transformed into
- * subplans in the qual, but not in the subquery).
+ * 1. The qual must not contain any SubPlans (mainly because I'm not sure
+ * it will work correctly: SubLinks will already have been transformed into
+ * SubPlans in the qual, but not in the subquery).  Note that SubLinks that
+ * transform to initplans are safe, and will be accepted here because what
+ * we'll see in the qual is just a Param referencing the initplan output.
  *
  * 2. If unsafeVolatile is set, the qual must not contain any volatile
  * functions.
@@ -3141,6 +3397,82 @@ compute_parallel_worker(RelOptInfo *rel, double heap_pages, double index_pages)
 	parallel_workers = Min(parallel_workers, max_parallel_workers_per_gather);
 
 	return parallel_workers;
+}
+
+/*
+ * generate_partition_wise_join_paths
+ * 		Create paths representing partition-wise join for given partitioned
+ * 		join relation.
+ *
+ * This must not be called until after we are done adding paths for all
+ * child-joins. Otherwise, add_path might delete a path to which some path
+ * generated here has a reference.
+ */
+void
+generate_partition_wise_join_paths(PlannerInfo *root, RelOptInfo *rel)
+{
+	List	   *live_children = NIL;
+	int			cnt_parts;
+	int			num_parts;
+	RelOptInfo **part_rels;
+
+	/* Handle only join relations here. */
+	if (!IS_JOIN_REL(rel))
+		return;
+
+	/*
+	 * If we've already proven this join is empty, we needn't consider any
+	 * more paths for it.
+	 */
+	if (IS_DUMMY_REL(rel))
+		return;
+
+	/*
+	 * We've nothing to do if the relation is not partitioned. An outer join
+	 * relation which had an empty inner relation in every pair will have the
+	 * rest of the partitioning properties set except the child-join
+	 * RelOptInfos. See try_partition_wise_join() for more details.
+	 */
+	if (rel->nparts <= 0 || rel->part_rels == NULL)
+		return;
+
+	/* Guard against stack overflow due to overly deep partition hierarchy. */
+	check_stack_depth();
+
+	num_parts = rel->nparts;
+	part_rels = rel->part_rels;
+
+	/* Collect non-dummy child-joins. */
+	for (cnt_parts = 0; cnt_parts < num_parts; cnt_parts++)
+	{
+		RelOptInfo *child_rel = part_rels[cnt_parts];
+
+		/* Add partition-wise join paths for partitioned child-joins. */
+		generate_partition_wise_join_paths(root, child_rel);
+
+		/* Dummy children will not be scanned, so ignore those. */
+		if (IS_DUMMY_REL(child_rel))
+			continue;
+
+		set_cheapest(child_rel);
+
+#ifdef OPTIMIZER_DEBUG
+		debug_print_rel(root, rel);
+#endif
+
+		live_children = lappend(live_children, child_rel);
+	}
+
+	/* If all child-joins are dummy, parent join is also dummy. */
+	if (!live_children)
+	{
+		mark_dummy_rel(rel);
+		return;
+	}
+
+	/* Build additional paths for this rel from child-join paths. */
+	add_paths_to_append_rel(root, rel, live_children);
+	list_free(live_children);
 }
 
 

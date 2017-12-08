@@ -1,0 +1,36 @@
+CREATE PROCEDURE test_proc1()
+LANGUAGE pltcl
+AS $$
+unset
+$$;
+
+CALL test_proc1();
+
+
+CREATE PROCEDURE test_proc2()
+LANGUAGE pltcl
+AS $$
+return 5
+$$;
+
+CALL test_proc2();
+
+
+CREATE TABLE test1 (a int);
+
+CREATE PROCEDURE test_proc3(x int)
+LANGUAGE pltcl
+AS $$
+spi_exec "INSERT INTO test1 VALUES ($1)"
+$$;
+
+CALL test_proc3(55);
+
+SELECT * FROM test1;
+
+
+DROP PROCEDURE test_proc1;
+DROP PROCEDURE test_proc2;
+DROP PROCEDURE test_proc3;
+
+DROP TABLE test1;

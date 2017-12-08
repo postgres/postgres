@@ -561,13 +561,13 @@ inet_gist_compress(PG_FUNCTION_ARGS)
 
 			gistentryinit(*retval, PointerGetDatum(r),
 						  entry->rel, entry->page,
-						  entry->offset, FALSE);
+						  entry->offset, false);
 		}
 		else
 		{
 			gistentryinit(*retval, (Datum) 0,
 						  entry->rel, entry->page,
-						  entry->offset, FALSE);
+						  entry->offset, false);
 		}
 	}
 	else
@@ -576,17 +576,9 @@ inet_gist_compress(PG_FUNCTION_ARGS)
 }
 
 /*
- * The GiST decompress function
- *
- * do not do anything --- we just use the stored GistInetKey as-is.
+ * We do not need a decompress function, because the other GiST inet
+ * support functions work with the GistInetKey representation.
  */
-Datum
-inet_gist_decompress(PG_FUNCTION_ARGS)
-{
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-
-	PG_RETURN_POINTER(entry);
-}
 
 /*
  * The GiST fetch function
@@ -610,7 +602,7 @@ inet_gist_fetch(PG_FUNCTION_ARGS)
 
 	retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, InetPGetDatum(dst), entry->rel, entry->page,
-				  entry->offset, FALSE);
+				  entry->offset, false);
 
 	PG_RETURN_POINTER(retval);
 }

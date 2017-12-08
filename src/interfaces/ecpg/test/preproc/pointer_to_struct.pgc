@@ -96,5 +96,5 @@ int main()
     EXEC SQL disconnect all;
 
 	/* All the memory will anyway be freed at the end */
-    return( 0 );
+    return 0;
 }

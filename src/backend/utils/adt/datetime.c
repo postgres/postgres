@@ -791,10 +791,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			val;
 	int			dterr;
 	int			mer = HR24;
-	bool		haveTextMonth = FALSE;
-	bool		isjulian = FALSE;
-	bool		is2digits = FALSE;
-	bool		bc = FALSE;
+	bool		haveTextMonth = false;
+	bool		isjulian = false;
+	bool		is2digits = false;
+	bool		bc = false;
 	pg_tz	   *namedTz = NULL;
 	pg_tz	   *abbrevTz = NULL;
 	pg_tz	   *valtz;
@@ -840,7 +840,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						return DTERR_FIELD_OVERFLOW;
 
 					j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-					isjulian = TRUE;
+					isjulian = true;
 
 					/* Get the time zone from the end of the string */
 					dterr = DecodeTimezone(cp, tzp);
@@ -1087,7 +1087,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								return DTERR_FIELD_OVERFLOW;
 							tmask = DTK_DATE_M;
 							j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-							isjulian = TRUE;
+							isjulian = true;
 
 							/* fractional Julian Day? */
 							if (*cp == '.')
@@ -1271,7 +1271,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							tm->tm_mday = tm->tm_mon;
 							tmask = DTK_M(DAY);
 						}
-						haveTextMonth = TRUE;
+						haveTextMonth = true;
 						tm->tm_mon = val;
 						break;
 
@@ -1751,9 +1751,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	int			i;
 	int			val;
 	int			dterr;
-	bool		isjulian = FALSE;
-	bool		is2digits = FALSE;
-	bool		bc = FALSE;
+	bool		isjulian = false;
+	bool		is2digits = false;
+	bool		bc = false;
 	int			mer = HR24;
 	pg_tz	   *namedTz = NULL;
 	pg_tz	   *abbrevTz = NULL;
@@ -1991,7 +1991,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 								return DTERR_FIELD_OVERFLOW;
 							tmask = DTK_DATE_M;
 							j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-							isjulian = TRUE;
+							isjulian = true;
 
 							if (*cp == '.')
 							{
@@ -2086,7 +2086,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					else
 					{
 						dterr = DecodeNumber(flen, field[i],
-											 FALSE,
+											 false,
 											 (fmask | DTK_DATE_M),
 											 &tmask, tm,
 											 fsec, &is2digits);
@@ -2362,7 +2362,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
  *	str: field to be parsed
  *	fmask: bitmask for field types already seen
  *	*tmask: receives bitmask for fields found here
- *	*is2digits: set to TRUE if we find 2-digit year
+ *	*is2digits: set to true if we find 2-digit year
  *	*tm: field values are stored into appropriate members of this struct
  */
 static int
@@ -2374,7 +2374,7 @@ DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
 	int			i,
 				len;
 	int			dterr;
-	bool		haveTextMonth = FALSE;
+	bool		haveTextMonth = false;
 	int			type,
 				val,
 				dmask = 0;
@@ -2424,7 +2424,7 @@ DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
 			{
 				case MONTH:
 					tm->tm_mon = val;
-					haveTextMonth = TRUE;
+					haveTextMonth = true;
 					break;
 
 				default:
@@ -2755,7 +2755,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 					*tmask = DTK_M(DAY);	/* YEAR is already set */
 					tm->tm_mday = tm->tm_year;
 					tm->tm_year = val;
-					*is2digits = FALSE;
+					*is2digits = false;
 				}
 				else
 				{
@@ -2859,7 +2859,7 @@ DecodeNumberField(int len, char *str, int fmask,
 			*(str + (len - 4)) = '\0';
 			tm->tm_year = atoi(str);
 			if ((len - 4) == 2)
-				*is2digits = TRUE;
+				*is2digits = true;
 
 			return DTK_DATE;
 		}
@@ -3095,7 +3095,7 @@ int
 DecodeInterval(char **field, int *ftype, int nf, int range,
 			   int *dtype, struct pg_tm *tm, fsec_t *fsec)
 {
-	bool		is_before = FALSE;
+	bool		is_before = false;
 	char	   *cp;
 	int			fmask = 0,
 				tmask,
@@ -3350,7 +3350,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 						break;
 
 					case AGO:
-						is_before = TRUE;
+						is_before = true;
 						type = val;
 						break;
 
@@ -4193,7 +4193,7 @@ AddPostgresIntPart(char *cp, int value, const char *units,
 	 * tad bizarre but it's how it worked before...
 	 */
 	*is_before = (value < 0);
-	*is_zero = FALSE;
+	*is_zero = false;
 	return cp + strlen(cp);
 }
 
@@ -4213,7 +4213,7 @@ AddVerboseIntPart(char *cp, int value, const char *units,
 	else if (*is_before)
 		value = -value;
 	sprintf(cp, " %d %s%s", value, units, (value == 1) ? "" : "s");
-	*is_zero = FALSE;
+	*is_zero = false;
 	return cp + strlen(cp);
 }
 
@@ -4247,8 +4247,8 @@ EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str)
 	int			hour = tm->tm_hour;
 	int			min = tm->tm_min;
 	int			sec = tm->tm_sec;
-	bool		is_before = FALSE;
-	bool		is_zero = TRUE;
+	bool		is_before = false;
+	bool		is_zero = true;
 
 	/*
 	 * The sign of year and month are guaranteed to match, since they are
@@ -4403,7 +4403,7 @@ EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str)
 				if (sec < 0 || (sec == 0 && fsec < 0))
 				{
 					if (is_zero)
-						is_before = TRUE;
+						is_before = true;
 					else if (!is_before)
 						*cp++ = '-';
 				}
@@ -4412,7 +4412,7 @@ EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str)
 				cp = AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, false);
 				sprintf(cp, " sec%s",
 						(abs(sec) != 1 || fsec != 0) ? "s" : "");
-				is_zero = FALSE;
+				is_zero = false;
 			}
 			/* identically zero? then put in a unitless zero... */
 			if (is_zero)

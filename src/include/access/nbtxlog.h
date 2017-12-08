@@ -28,8 +28,7 @@
 #define XLOG_BTREE_INSERT_META	0x20	/* same, plus update metapage */
 #define XLOG_BTREE_SPLIT_L		0x30	/* add index tuple with split */
 #define XLOG_BTREE_SPLIT_R		0x40	/* as above, new item on right */
-#define XLOG_BTREE_SPLIT_L_ROOT 0x50	/* add tuple with split of root */
-#define XLOG_BTREE_SPLIT_R_ROOT 0x60	/* as above, new item on right */
+/* 0x50 and 0x60 are unused */
 #define XLOG_BTREE_DELETE		0x70	/* delete leaf index tuples for a page */
 #define XLOG_BTREE_UNLINK_PAGE	0x80	/* delete a half-dead page */
 #define XLOG_BTREE_UNLINK_PAGE_META 0x90	/* same, and update metapage */

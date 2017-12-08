@@ -114,7 +114,7 @@ typedef struct PlannerGlobal
 
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 
-	int			nParamExec;		/* number of PARAM_EXEC Params used */
+	List	   *paramExecTypes; /* type OIDs for PARAM_EXEC Params */
 
 	Index		lastPHId;		/* highest PlaceHolderVar ID assigned */
 
@@ -266,6 +266,9 @@ typedef struct PlannerInfo
 	List	   *distinct_pathkeys;	/* distinctClause pathkeys, if any */
 	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
 
+	List	   *part_schemes;	/* Canonicalised partition schemes used in the
+								 * query. */
+
 	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
 
 	/* Use fetch_upper_rel() to get any particular upper rel */
@@ -326,6 +329,34 @@ typedef struct PlannerInfo
 	((root)->simple_rte_array ? (root)->simple_rte_array[rti] : \
 	 rt_fetch(rti, (root)->parse->rtable))
 
+/*
+ * If multiple relations are partitioned the same way, all such partitions
+ * will have a pointer to the same PartitionScheme.  A list of PartitionScheme
+ * objects is attached to the PlannerInfo.  By design, the partition scheme
+ * incorporates only the general properties of the partition method (LIST vs.
+ * RANGE, number of partitioning columns and the type information for each)
+ * and not the specific bounds.
+ *
+ * We store the opclass-declared input data types instead of the partition key
+ * datatypes since the former rather than the latter are used to compare
+ * partition bounds. Since partition key data types and the opclass declared
+ * input data types are expected to be binary compatible (per ResolveOpClass),
+ * both of those should have same byval and length properties.
+ */
+typedef struct PartitionSchemeData
+{
+	char		strategy;		/* partition strategy */
+	int16		partnatts;		/* number of partition attributes */
+	Oid		   *partopfamily;	/* OIDs of operator families */
+	Oid		   *partopcintype;	/* OIDs of opclass declared input data types */
+	Oid		   *parttypcoll;	/* OIDs of collations of partition keys. */
+
+	/* Cached information about partition key data types. */
+	int16	   *parttyplen;
+	bool	   *parttypbyval;
+}			PartitionSchemeData;
+
+typedef struct PartitionSchemeData *PartitionScheme;
 
 /*----------
  * RelOptInfo
@@ -359,6 +390,11 @@ typedef struct PlannerInfo
  * At one time we also made otherrels to represent join RTEs, for use in
  * handling join alias Vars.  Currently this is not needed because all join
  * alias Vars are expanded to non-aliased form during preprocess_expression.
+ *
+ * We also have relations representing joins between child relations of
+ * different partitioned tables. These relations are not added to
+ * join_rel_level lists as they are not joined directly by the dynamic
+ * programming algorithm.
  *
  * There is also a RelOptKind for "upper" relations, which are RelOptInfos
  * that describe post-scan/join processing steps, such as aggregation.
@@ -407,7 +443,7 @@ typedef struct PlannerInfo
  *
  *		relid - RTE index (this is redundant with the relids field, but
  *				is provided for convenience of access)
- *		rtekind - distinguishes plain relation, subquery, or function RTE
+ *		rtekind - copy of RTE's rtekind field
  *		min_attr, max_attr - range of valid AttrNumbers for rel
  *		attr_needed - array of bitmapsets indicating the highest joinrel
  *				in which each attribute is needed; if bit 0 is set then
@@ -456,7 +492,7 @@ typedef struct PlannerInfo
  *					other rels for which we have tried and failed to prove
  *					this one unique
  *
- * The presence of the remaining fields depends on the restrictions
+ * The presence of the following fields depends on the restrictions
  * and joins that the relation participates in:
  *
  *		baserestrictinfo - List of RestrictInfo nodes, containing info about
@@ -487,6 +523,25 @@ typedef struct PlannerInfo
  * We store baserestrictcost in the RelOptInfo (for base relations) because
  * we know we will need it at least once (to price the sequential scan)
  * and may need it multiple times to price index scans.
+ *
+ * If the relation is partitioned, these fields will be set:
+ *
+ * 		part_scheme - Partitioning scheme of the relation
+ * 		boundinfo - Partition bounds
+ * 		nparts - Number of partitions
+ * 		part_rels - RelOptInfos for each partition
+ * 		partexprs, nullable_partexprs - Partition key expressions
+ *
+ * Note: A base relation always has only one set of partition keys, but a join
+ * relation may have as many sets of partition keys as the number of relations
+ * being joined. partexprs and nullable_partexprs are arrays containing
+ * part_scheme->partnatts elements each. Each of these elements is a list of
+ * partition key expressions.  For a base relation each list in partexprs
+ * contains only one expression and nullable_partexprs is not populated. For a
+ * join relation, partexprs and nullable_partexprs contain partition key
+ * expressions from non-nullable and nullable relations resp. Lists at any
+ * given position in those arrays together contain as many elements as the
+ * number of joining relations.
  *----------
  */
 typedef enum RelOptKind
@@ -494,6 +549,7 @@ typedef enum RelOptKind
 	RELOPT_BASEREL,
 	RELOPT_JOINREL,
 	RELOPT_OTHER_MEMBER_REL,
+	RELOPT_OTHER_JOINREL,
 	RELOPT_UPPER_REL,
 	RELOPT_DEADREL
 } RelOptKind;
@@ -507,13 +563,17 @@ typedef enum RelOptKind
 	 (rel)->reloptkind == RELOPT_OTHER_MEMBER_REL)
 
 /* Is the given relation a join relation? */
-#define IS_JOIN_REL(rel) ((rel)->reloptkind == RELOPT_JOINREL)
+#define IS_JOIN_REL(rel)	\
+	((rel)->reloptkind == RELOPT_JOINREL || \
+	 (rel)->reloptkind == RELOPT_OTHER_JOINREL)
 
 /* Is the given relation an upper relation? */
 #define IS_UPPER_REL(rel) ((rel)->reloptkind == RELOPT_UPPER_REL)
 
 /* Is the given relation an "other" relation? */
-#define IS_OTHER_REL(rel) ((rel)->reloptkind == RELOPT_OTHER_MEMBER_REL)
+#define IS_OTHER_REL(rel) \
+	((rel)->reloptkind == RELOPT_OTHER_MEMBER_REL || \
+	 (rel)->reloptkind == RELOPT_OTHER_JOINREL)
 
 typedef struct RelOptInfo
 {
@@ -552,7 +612,7 @@ typedef struct RelOptInfo
 	/* information about a base rel (not set for join rels!) */
 	Index		relid;
 	Oid			reltablespace;	/* containing tablespace */
-	RTEKind		rtekind;		/* RELATION, SUBQUERY, or FUNCTION */
+	RTEKind		rtekind;		/* RELATION, SUBQUERY, FUNCTION, etc */
 	AttrNumber	min_attr;		/* smallest attrno of rel (often <0) */
 	AttrNumber	max_attr;		/* largest attrno of rel */
 	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
@@ -592,7 +652,35 @@ typedef struct RelOptInfo
 
 	/* used by "other" relations */
 	Relids		top_parent_relids;	/* Relids of topmost parents */
+
+	/* used for partitioned relations */
+	PartitionScheme part_scheme;	/* Partitioning scheme. */
+	int			nparts;			/* number of partitions */
+	struct PartitionBoundInfoData *boundinfo;	/* Partition bounds */
+	struct RelOptInfo **part_rels;	/* Array of RelOptInfos of partitions,
+									 * stored in the same order of bounds */
+	List	  **partexprs;		/* Non-nullable partition key expressions. */
+	List	  **nullable_partexprs; /* Nullable partition key expressions. */
 } RelOptInfo;
+
+/*
+ * Is given relation partitioned?
+ *
+ * A join between two partitioned relations with same partitioning scheme
+ * without any matching partitions will not have any partition in it but will
+ * have partition scheme set. So a relation is deemed to be partitioned if it
+ * has a partitioning scheme, bounds and positive number of partitions.
+ */
+#define IS_PARTITIONED_REL(rel) \
+	((rel)->part_scheme && (rel)->boundinfo && (rel)->nparts > 0)
+
+/*
+ * Convenience macro to make sure that a partitioned relation has all the
+ * required members set.
+ */
+#define REL_HAS_ALL_PART_PROPS(rel)	\
+	((rel)->part_scheme && (rel)->boundinfo && (rel)->nparts > 0 && \
+	 (rel)->part_rels && (rel)->partexprs && (rel)->nullable_partexprs)
 
 /*
  * IndexOptInfo
@@ -1167,6 +1255,9 @@ typedef struct CustomPath
  * AppendPath represents an Append plan, ie, successive execution of
  * several member plans.
  *
+ * For partial Append, 'subpaths' contains non-partial subpaths followed by
+ * partial subpaths.
+ *
  * Note: it is possible for "subpaths" to contain only one, or even no,
  * elements.  These cases are optimized during create_append_plan.
  * In particular, an AppendPath with no subpaths is a "dummy" path that
@@ -1178,6 +1269,9 @@ typedef struct AppendPath
 	/* RT indexes of non-leaf tables in a partition tree */
 	List	   *partitioned_rels;
 	List	   *subpaths;		/* list of component Paths */
+
+	/* Index of first partial path in subpaths */
+	int			first_partial_path;
 } AppendPath;
 
 #define IS_DUMMY_PATH(p) \
@@ -1268,9 +1362,9 @@ typedef struct GatherPath
 } GatherPath;
 
 /*
- * GatherMergePath runs several copies of a plan in parallel and
- * collects the results. For gather merge parallel leader always execute the
- * plan.
+ * GatherMergePath runs several copies of a plan in parallel and collects
+ * the results, preserving their common sort order.  For gather merge, the
+ * parallel leader always executes the plan too, so we don't need single_copy.
  */
 typedef struct GatherMergePath
 {
@@ -1335,14 +1429,14 @@ typedef JoinPath NestPath;
  * mergejoin.  If it is not NIL then it is a PathKeys list describing
  * the ordering that must be created by an explicit Sort node.
  *
- * skip_mark_restore is TRUE if the executor need not do mark/restore calls.
+ * skip_mark_restore is true if the executor need not do mark/restore calls.
  * Mark/restore overhead is usually required, but can be skipped if we know
  * that the executor need find only one match per outer tuple, and that the
  * mergeclauses are sufficient to identify a match.  In such cases the
  * executor can immediately advance the outer relation after processing a
  * match, and therefoere it need never back up the inner relation.
  *
- * materialize_inner is TRUE if a Material node should be placed atop the
+ * materialize_inner is true if a Material node should be placed atop the
  * inner input.  This may appear with or without an inner Sort step.
  */
 
@@ -1746,15 +1840,15 @@ typedef struct RestrictInfo
 
 	Expr	   *clause;			/* the represented clause of WHERE or JOIN */
 
-	bool		is_pushed_down; /* TRUE if clause was pushed down in level */
+	bool		is_pushed_down; /* true if clause was pushed down in level */
 
-	bool		outerjoin_delayed;	/* TRUE if delayed by lower outer join */
+	bool		outerjoin_delayed;	/* true if delayed by lower outer join */
 
 	bool		can_join;		/* see comment above */
 
 	bool		pseudoconstant; /* see comment above */
 
-	bool		leakproof;		/* TRUE if known to contain no leaked Vars */
+	bool		leakproof;		/* true if known to contain no leaked Vars */
 
 	Index		security_level; /* see comment above */
 
@@ -1807,6 +1901,8 @@ typedef struct RestrictInfo
 	/* cache space for hashclause processing; -1 if not yet set */
 	Selectivity left_bucketsize;	/* avg bucketsize of left side */
 	Selectivity right_bucketsize;	/* avg bucketsize of right side */
+	Selectivity left_mcvfreq;	/* left side's most common val's freq */
+	Selectivity right_mcvfreq;	/* right side's most common val's freq */
 } RestrictInfo;
 
 /*
@@ -1883,7 +1979,7 @@ typedef struct PlaceHolderVar
  * syntactically below this special join.  (These are needed to help compute
  * min_lefthand and min_righthand for higher joins.)
  *
- * delay_upper_joins is set TRUE if we detect a pushed-down clause that has
+ * delay_upper_joins is set true if we detect a pushed-down clause that has
  * to be evaluated after this join is formed (because it references the RHS).
  * Any outer joins that have such a clause and this join in their RHS cannot
  * commute with this join, because that would leave noplace to check the
@@ -1933,10 +2029,10 @@ typedef struct SpecialJoinInfo
  *
  * When we expand an inheritable table or a UNION-ALL subselect into an
  * "append relation" (essentially, a list of child RTEs), we build an
- * AppendRelInfo for each non-partitioned child RTE.  The list of
- * AppendRelInfos indicates which child RTEs must be included when expanding
- * the parent, and each node carries information needed to translate Vars
- * referencing the parent into Vars referencing that child.
+ * AppendRelInfo for each child RTE.  The list of AppendRelInfos indicates
+ * which child RTEs must be included when expanding the parent, and each node
+ * carries information needed to translate Vars referencing the parent into
+ * Vars referencing that child.
  *
  * These structs are kept in the PlannerInfo node's append_rel_list.
  * Note that we just throw all the structs into one list, and scan the
@@ -2129,8 +2225,8 @@ typedef struct MinMaxAggInfo
  * from subplans (values that are setParam items for those subplans).  These
  * IDs need not be tracked via PlannerParamItems, since we do not need any
  * duplicate-elimination nor later processing of the represented expressions.
- * Instead, we just record the assignment of the slot number by incrementing
- * root->glob->nParamExec.
+ * Instead, we just record the assignment of the slot number by appending to
+ * root->glob->paramExecTypes.
  */
 typedef struct PlannerParamItem
 {

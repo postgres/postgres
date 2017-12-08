@@ -3,7 +3,7 @@ doc/src/sgml/ref/refresh_materialized_view.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-REFRESHMATERIALIZEDVIEW">
+<refentry id="sql-refreshmaterializedview">
  <indexterm zone="sql-refreshmaterializedview">
   <primary>REFRESH MATERIALIZED VIEW</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="PARAMETER">name</replaceable>
+REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
     [ WITH [ NO ] DATA ]
 </synopsis>
  </refsynopsisdiv>
@@ -77,7 +77,7 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="PARAMETER">name</
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the materialized view to
@@ -93,10 +93,10 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="PARAMETER">name</
 
   <para>
    While the default index for future
-   <xref linkend="SQL-CLUSTER">
-   operations is retained, <command>REFRESH MATERIALIZED VIEW</> does not
+   <xref linkend="sql-cluster"/>
+   operations is retained, <command>REFRESH MATERIALIZED VIEW</command> does not
    order the generated rows based on this property. If you want the data
-   to be ordered upon generation, you must use an <literal>ORDER BY</>
+   to be ordered upon generation, you must use an <literal>ORDER BY</literal>
    clause in the backing query.
   </para>
  </refsect1>
@@ -135,9 +135,9 @@ REFRESH MATERIALIZED VIEW annual_statistics_basis WITH NO DATA;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-creatematerializedview"></member>
-   <member><xref linkend="sql-altermaterializedview"></member>
-   <member><xref linkend="sql-dropmaterializedview"></member>
+   <member><xref linkend="sql-creatematerializedview"/></member>
+   <member><xref linkend="sql-altermaterializedview"/></member>
+   <member><xref linkend="sql-dropmaterializedview"/></member>
   </simplelist>
  </refsect1>
 

@@ -16,5 +16,6 @@ clean distclean maintainer-clean:
 		$(MAKE) -C $$d clean || exit; \
 	done
 
+# These behave like installcheck targets.
 check-%: all
 	@$(MAKE) -C `echo $@ | sed 's/^check-//'` test

@@ -1250,6 +1250,49 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 }
 
 /*
+ * Hash a value to a 64-bit value, with a seed. Otherwise, similar to
+ * JsonbHashScalarValue.
+ */
+void
+JsonbHashScalarValueExtended(const JsonbValue *scalarVal, uint64 *hash,
+							 uint64 seed)
+{
+	uint64		tmp;
+
+	switch (scalarVal->type)
+	{
+		case jbvNull:
+			tmp = seed + 0x01;
+			break;
+		case jbvString:
+			tmp = DatumGetUInt64(hash_any_extended((const unsigned char *) scalarVal->val.string.val,
+												   scalarVal->val.string.len,
+												   seed));
+			break;
+		case jbvNumeric:
+			tmp = DatumGetUInt64(DirectFunctionCall2(hash_numeric_extended,
+													 NumericGetDatum(scalarVal->val.numeric),
+													 UInt64GetDatum(seed)));
+			break;
+		case jbvBool:
+			if (seed)
+				tmp = DatumGetUInt64(DirectFunctionCall2(hashcharextended,
+														 BoolGetDatum(scalarVal->val.boolean),
+														 UInt64GetDatum(seed)));
+			else
+				tmp = scalarVal->val.boolean ? 0x02 : 0x04;
+
+			break;
+		default:
+			elog(ERROR, "invalid jsonb scalar type");
+			break;
+	}
+
+	*hash = ROTATE_HIGH_AND_LOW_32BITS(*hash);
+	*hash ^= tmp;
+}
+
+/*
  * Are two scalar JsonbValues of the same type a and b equal?
  */
 static bool

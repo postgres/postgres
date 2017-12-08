@@ -428,7 +428,7 @@ GetFdwRoutineForRelation(Relation relation, bool makecopy)
 /*
  * IsImportableForeignTable - filter table names for IMPORT FOREIGN SCHEMA
  *
- * Returns TRUE if given table name should be imported according to the
+ * Returns true if given table name should be imported according to the
  * statement's import filter options.
  */
 bool

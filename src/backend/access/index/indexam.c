@@ -784,7 +784,7 @@ index_can_return(Relation indexRelation, int attno)
 {
 	RELATION_CHECKS;
 
-	/* amcanreturn is optional; assume FALSE if not provided by AM */
+	/* amcanreturn is optional; assume false if not provided by AM */
 	if (indexRelation->rd_amroutine->amcanreturn == NULL)
 		return false;
 

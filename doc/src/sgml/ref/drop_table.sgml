@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_table.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTABLE">
+<refentry id="sql-droptable">
  <indexterm zone="sql-droptable">
   <primary>DROP TABLE</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -32,16 +32,16 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
    <command>DROP TABLE</command> removes tables from the database.
    Only the table owner, the schema owner, and superuser can drop a
    table.  To empty a table of rows
-   without destroying the table, use <xref linkend="sql-delete">
-   or <xref linkend="sql-truncate">.
+   without destroying the table, use <xref linkend="sql-delete"/>
+   or <xref linkend="sql-truncate"/>.
   </para>
 
   <para>
    <command>DROP TABLE</command> always removes any indexes, rules,
    triggers, and constraints that exist for the target table.
    However, to drop a table that is referenced by a view or a foreign-key
-   constraint of another table, <literal>CASCADE</> must be
-   specified. (<literal>CASCADE</> will remove a dependent view entirely,
+   constraint of another table, <literal>CASCADE</literal> must be
+   specified. (<literal>CASCADE</literal> will remove a dependent view entirely,
    but in the foreign-key case it will only remove the foreign-key
    constraint, not the other table entirely.)
   </para>
@@ -62,7 +62,7 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to drop.
@@ -77,7 +77,7 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
       Automatically drop objects that depend on the table (such as
       views),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -112,7 +112,7 @@ DROP TABLE films, distributors;
   <para>
    This command conforms to the SQL standard, except that the standard only
    allows one table to be dropped per command, and apart from the
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
+   <literal>IF EXISTS</literal> option, which is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>
@@ -121,8 +121,8 @@ DROP TABLE films, distributors;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertable"></member>
-   <member><xref linkend="sql-createtable"></member>
+   <member><xref linkend="sql-altertable"/></member>
+   <member><xref linkend="sql-createtable"/></member>
   </simplelist>
  </refsect1>
 

@@ -45,7 +45,7 @@
  */
 void
 px(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
-   City *city_table)
+   City * city_table)
 {
 	int			num_positions;
 	int			i,

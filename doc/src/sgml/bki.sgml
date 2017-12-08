@@ -21,7 +21,7 @@
   input file used by <application>initdb</application> is created as
   part of building and installing <productname>PostgreSQL</productname>
   by a program named <filename>genbki.pl</filename>, which reads some
-  specially formatted C header files in the <filename>src/include/catalog/</>
+  specially formatted C header files in the <filename>src/include/catalog/</filename>
   directory of the source tree.  The created <acronym>BKI</acronym> file
   is called <filename>postgres.bki</filename> and is
   normally installed in the
@@ -67,13 +67,13 @@
   <variablelist>
    <varlistentry>
     <term>
-     <literal>create</>
+     <literal>create</literal>
      <replaceable class="parameter">tablename</replaceable>
      <replaceable class="parameter">tableoid</replaceable>
-     <optional><literal>bootstrap</></optional>
-     <optional><literal>shared_relation</></optional>
-     <optional><literal>without_oids</></optional>
-     <optional><literal>rowtype_oid</> <replaceable>oid</></optional>
+     <optional><literal>bootstrap</literal></optional>
+     <optional><literal>shared_relation</literal></optional>
+     <optional><literal>without_oids</literal></optional>
+     <optional><literal>rowtype_oid</literal> <replaceable>oid</replaceable></optional>
      (<replaceable class="parameter">name1</replaceable> =
      <replaceable class="parameter">type1</replaceable>
      <optional>FORCE NOT NULL | FORCE NULL </optional> <optional>,
@@ -93,7 +93,7 @@
 
      <para>
       The following column types are supported directly by
-      <filename>bootstrap.c</>: <type>bool</type>,
+      <filename>bootstrap.c</filename>: <type>bool</type>,
       <type>bytea</type>, <type>char</type> (1 byte),
       <type>name</type>, <type>int2</type>,
       <type>int4</type>, <type>regproc</type>, <type>regclass</type>,
@@ -104,31 +104,31 @@
       <type>_oid</type> (array), <type>_char</type> (array),
       <type>_aclitem</type> (array).  Although it is possible to create
       tables containing columns of other types, this cannot be done until
-      after <structname>pg_type</> has been created and filled with
+      after <structname>pg_type</structname> has been created and filled with
       appropriate entries.  (That effectively means that only these
       column types can be used in bootstrapped tables, but non-bootstrap
       catalogs can contain any built-in type.)
      </para>
 
      <para>
-      When <literal>bootstrap</> is specified,
+      When <literal>bootstrap</literal> is specified,
       the table will only be created on disk; nothing is entered into
       <structname>pg_class</structname>,
       <structname>pg_attribute</structname>, etc, for it.  Thus the
       table will not be accessible by ordinary SQL operations until
-      such entries are made the hard way (with <literal>insert</>
+      such entries are made the hard way (with <literal>insert</literal>
       commands).  This option is used for creating
       <structname>pg_class</structname> etc themselves.
      </para>
 
      <para>
-      The table is created as shared if <literal>shared_relation</> is
+      The table is created as shared if <literal>shared_relation</literal> is
       specified.
-      It will have OIDs unless <literal>without_oids</> is specified.
-      The table's row type OID (<structname>pg_type</> OID) can optionally
-      be specified via the <literal>rowtype_oid</> clause; if not specified,
-      an OID is automatically generated for it.  (The <literal>rowtype_oid</>
-      clause is useless if <literal>bootstrap</> is specified, but it can be
+      It will have OIDs unless <literal>without_oids</literal> is specified.
+      The table's row type OID (<structname>pg_type</structname> OID) can optionally
+      be specified via the <literal>rowtype_oid</literal> clause; if not specified,
+      an OID is automatically generated for it.  (The <literal>rowtype_oid</literal>
+      clause is useless if <literal>bootstrap</literal> is specified, but it can be
       provided anyway for documentation.)
      </para>
     </listitem>
@@ -136,7 +136,7 @@
 
    <varlistentry>
     <term>
-     <literal>open</> <replaceable class="parameter">tablename</replaceable>
+     <literal>open</literal> <replaceable class="parameter">tablename</replaceable>
     </term>
 
     <listitem>
@@ -150,7 +150,7 @@
 
    <varlistentry>
     <term>
-     <literal>close</> <optional><replaceable class="parameter">tablename</replaceable></optional>
+     <literal>close</literal> <optional><replaceable class="parameter">tablename</replaceable></optional>
     </term>
 
     <listitem>
@@ -163,7 +163,7 @@
 
    <varlistentry>
     <term>
-     <literal>insert</> <optional><literal>OID =</> <replaceable class="parameter">oid_value</replaceable></optional> <literal>(</> <replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ... <literal>)</>
+     <literal>insert</literal> <optional><literal>OID =</literal> <replaceable class="parameter">oid_value</replaceable></optional> <literal>(</literal> <replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ... <literal>)</literal>
     </term>
 
     <listitem>
@@ -188,14 +188,14 @@
 
    <varlistentry>
     <term>
-     <literal>declare</> <optional><literal>unique</></optional>
-     <literal>index</> <replaceable class="parameter">indexname</replaceable>
+     <literal>declare</literal> <optional><literal>unique</literal></optional>
+     <literal>index</literal> <replaceable class="parameter">indexname</replaceable>
      <replaceable class="parameter">indexoid</replaceable>
-     <literal>on</> <replaceable class="parameter">tablename</replaceable>
-     <literal>using</> <replaceable class="parameter">amname</replaceable>
-     <literal>(</> <replaceable class="parameter">opclass1</replaceable>
+     <literal>on</literal> <replaceable class="parameter">tablename</replaceable>
+     <literal>using</literal> <replaceable class="parameter">amname</replaceable>
+     <literal>(</literal> <replaceable class="parameter">opclass1</replaceable>
      <replaceable class="parameter">name1</replaceable>
-     <optional>, ...</optional> <literal>)</>
+     <optional>, ...</optional> <literal>)</literal>
     </term>
 
     <listitem>
@@ -220,10 +220,10 @@
 
    <varlistentry>
     <term>
-     <literal>declare toast</>
+     <literal>declare toast</literal>
      <replaceable class="parameter">toasttableoid</replaceable>
      <replaceable class="parameter">toastindexoid</replaceable>
-     <literal>on</> <replaceable class="parameter">tablename</replaceable>
+     <literal>on</literal> <replaceable class="parameter">tablename</replaceable>
     </term>
 
     <listitem>
@@ -234,14 +234,14 @@
       <replaceable class="parameter">toasttableoid</replaceable>
       and its index is assigned OID
       <replaceable class="parameter">toastindexoid</replaceable>.
-      As with <literal>declare index</>, filling of the index
+      As with <literal>declare index</literal>, filling of the index
       is postponed.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>build indices</></term>
+    <term><literal>build indices</literal></term>
 
     <listitem>
      <para>
@@ -257,17 +257,17 @@
   <title>Structure of the Bootstrap <acronym>BKI</acronym> File</title>
 
   <para>
-   The <literal>open</> command cannot be used until the tables it uses
+   The <literal>open</literal> command cannot be used until the tables it uses
    exist and have entries for the table that is to be opened.
-   (These minimum tables are <structname>pg_class</>,
-   <structname>pg_attribute</>, <structname>pg_proc</>, and
-   <structname>pg_type</>.)   To allow those tables themselves to be filled,
-   <literal>create</> with the <literal>bootstrap</> option implicitly opens
+   (These minimum tables are <structname>pg_class</structname>,
+   <structname>pg_attribute</structname>, <structname>pg_proc</structname>, and
+   <structname>pg_type</structname>.)   To allow those tables themselves to be filled,
+   <literal>create</literal> with the <literal>bootstrap</literal> option implicitly opens
    the created table for data insertion.
   </para>
 
   <para>
-   Also, the <literal>declare index</> and <literal>declare toast</>
+   Also, the <literal>declare index</literal> and <literal>declare toast</literal>
    commands cannot be used until the system catalogs they need have been
    created and filled in.
   </para>
@@ -278,17 +278,17 @@
    <orderedlist>
     <listitem>
      <para>
-      <literal>create bootstrap</> one of the critical tables
+      <literal>create bootstrap</literal> one of the critical tables
      </para>
     </listitem>
     <listitem>
      <para>
-      <literal>insert</> data describing at least the critical tables
+      <literal>insert</literal> data describing at least the critical tables
      </para>
     </listitem>
     <listitem>
      <para>
-      <literal>close</>
+      <literal>close</literal>
      </para>
     </listitem>
     <listitem>
@@ -298,22 +298,22 @@
     </listitem>
     <listitem>
      <para>
-      <literal>create</> (without <literal>bootstrap</>) a noncritical table
+      <literal>create</literal> (without <literal>bootstrap</literal>) a noncritical table
      </para>
     </listitem>
     <listitem>
      <para>
-      <literal>open</>
+      <literal>open</literal>
      </para>
     </listitem>
     <listitem>
      <para>
-      <literal>insert</> desired data
+      <literal>insert</literal> desired data
      </para>
     </listitem>
     <listitem>
      <para>
-      <literal>close</>
+      <literal>close</literal>
      </para>
     </listitem>
     <listitem>
@@ -328,7 +328,7 @@
     </listitem>
     <listitem>
      <para>
-      <literal>build indices</>
+      <literal>build indices</literal>
      </para>
     </listitem>
    </orderedlist>

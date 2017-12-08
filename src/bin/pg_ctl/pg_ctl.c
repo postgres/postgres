@@ -9,14 +9,6 @@
  *-------------------------------------------------------------------------
  */
 
-#ifdef WIN32
-/*
- * Need this to get defines for restricted tokens and jobs. And it
- * has to be set before any header from the Win32 API is loaded.
- */
-#define _WIN32_WINNT 0x0501
-#endif
-
 #include "postgres_fe.h"
 
 #include <fcntl.h>
@@ -840,7 +832,9 @@ do_start(void)
 				break;
 			case POSTMASTER_STILL_STARTING:
 				print_msg(_(" stopped waiting\n"));
-				print_msg(_("server is still starting up\n"));
+				write_stderr(_("%s: server did not start in time\n"),
+							 progname);
+				exit(1);
 				break;
 			case POSTMASTER_FAILED:
 				print_msg(_(" stopped waiting\n"));
@@ -963,7 +957,7 @@ do_restart(void)
 		write_stderr(_("%s: PID file \"%s\" does not exist\n"),
 					 progname, pid_file);
 		write_stderr(_("Is server running?\n"));
-		write_stderr(_("starting server anyway\n"));
+		write_stderr(_("trying to start server anyway\n"));
 		do_start();
 		return;
 	}
@@ -1166,7 +1160,9 @@ do_promote(void)
 		else
 		{
 			print_msg(_(" stopped waiting\n"));
-			print_msg(_("server is still promoting\n"));
+			write_stderr(_("%s: server did not promote in time\n"),
+						 progname);
+			exit(1);
 		}
 	}
 	else
@@ -1899,7 +1895,7 @@ do_help(void)
 	printf(_("  immediate   quit without complete shutdown; will lead to recovery on restart\n"));
 
 	printf(_("\nAllowed signal names for kill:\n"));
-	printf("  ABRT HUP INT QUIT TERM USR1 USR2\n");
+	printf("  ABRT HUP INT KILL QUIT TERM USR1 USR2\n");
 
 #ifdef WIN32
 	printf(_("\nOptions for register and unregister:\n"));
@@ -1957,11 +1953,8 @@ set_sig(char *signame)
 		sig = SIGQUIT;
 	else if (strcmp(signame, "ABRT") == 0)
 		sig = SIGABRT;
-#if 0
-	/* probably should NOT provide SIGKILL */
 	else if (strcmp(signame, "KILL") == 0)
 		sig = SIGKILL;
-#endif
 	else if (strcmp(signame, "TERM") == 0)
 		sig = SIGTERM;
 	else if (strcmp(signame, "USR1") == 0)

@@ -62,8 +62,8 @@ extern shm_mq_handle *shm_mq_attach(shm_mq *mq, dsm_segment *seg,
 /* Associate worker handle with shm_mq. */
 extern void shm_mq_set_handle(shm_mq_handle *, BackgroundWorkerHandle *);
 
-/* Break connection. */
-extern void shm_mq_detach(shm_mq *);
+/* Break connection, release handle resources. */
+extern void shm_mq_detach(shm_mq_handle *mqh);
 
 /* Get the shm_mq from handle. */
 extern shm_mq *shm_mq_get_queue(shm_mq_handle *mqh);

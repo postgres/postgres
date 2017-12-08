@@ -105,7 +105,7 @@ gbt_inet_compress(PG_FUNCTION_ARGS)
 		r->upper = r->lower;
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
-					  entry->offset, FALSE);
+					  entry->offset, false);
 	}
 	else
 		retval = entry;

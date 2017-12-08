@@ -3,7 +3,8 @@
 MODULES = isn
 
 EXTENSION = isn
-DATA = isn--1.1.sql isn--1.0--1.1.sql isn--unpackaged--1.0.sql
+DATA = isn--1.1.sql isn--1.1--1.2.sql \
+	isn--1.0--1.1.sql isn--unpackaged--1.0.sql
 PGFILEDESC = "isn - data types for international product numbering standards"
 
 REGRESS = isn

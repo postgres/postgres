@@ -18,14 +18,15 @@
 #include "access/parallel.h"
 
 extern BitmapHeapScanState *ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags);
-extern TupleTableSlot *ExecBitmapHeapScan(BitmapHeapScanState *node);
 extern void ExecEndBitmapHeapScan(BitmapHeapScanState *node);
 extern void ExecReScanBitmapHeapScan(BitmapHeapScanState *node);
 extern void ExecBitmapHeapEstimate(BitmapHeapScanState *node,
 					   ParallelContext *pcxt);
 extern void ExecBitmapHeapInitializeDSM(BitmapHeapScanState *node,
 							ParallelContext *pcxt);
+extern void ExecBitmapHeapReInitializeDSM(BitmapHeapScanState *node,
+							  ParallelContext *pcxt);
 extern void ExecBitmapHeapInitializeWorker(BitmapHeapScanState *node,
-							   shm_toc *toc);
+							   ParallelWorkerContext *pwcxt);
 
 #endif							/* NODEBITMAPHEAPSCAN_H */

@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_statistics.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERSTATISTICS">
+<refentry id="sql-alterstatistics">
  <indexterm zone="sql-alterstatistics">
   <primary>ALTER STATISTICS</primary>
  </indexterm>
@@ -23,7 +23,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER STATISTICS <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER STATISTICS <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
 </synopsis>
@@ -39,9 +39,9 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
   </para>
 
   <para>
-   You must own the statistics object to use <command>ALTER STATISTICS</>.
+   You must own the statistics object to use <command>ALTER STATISTICS</command>.
    To change a statistics object's schema, you must also
-   have <literal>CREATE</> privilege on the new schema.
+   have <literal>CREATE</literal> privilege on the new schema.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
    the statistics object's schema.  (These restrictions enforce that altering
@@ -67,7 +67,7 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+      <term><replaceable class="parameter">new_owner</replaceable></term>
       <listitem>
        <para>
         The user name of the new owner of the statistics object.
@@ -109,8 +109,8 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createstatistics"></member>
-   <member><xref linkend="sql-dropstatistics"></member>
+   <member><xref linkend="sql-createstatistics"/></member>
+   <member><xref linkend="sql-dropstatistics"/></member>
   </simplelist>
  </refsect1>
 

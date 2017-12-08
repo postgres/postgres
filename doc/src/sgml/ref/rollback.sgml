@@ -3,7 +3,7 @@ doc/src/sgml/ref/rollback.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ROLLBACK">
+<refentry id="sql-rollback">
  <indexterm zone="sql-rollback">
   <primary>ROLLBACK</primary>
  </indexterm>
@@ -54,12 +54,12 @@ ROLLBACK [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-COMMIT"> to
+   Use <xref linkend="sql-commit"/> to
    successfully terminate a transaction.
   </para>
 
   <para>
-   Issuing <command>ROLLBACK</> outside of a transaction
+   Issuing <command>ROLLBACK</command> outside of a transaction
    block emits a warning and otherwise has no effect.
   </para>
  </refsect1>
@@ -88,9 +88,9 @@ ROLLBACK;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-commit"></member>
-   <member><xref linkend="sql-rollback-to"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-commit"/></member>
+   <member><xref linkend="sql-rollback-to"/></member>
   </simplelist>
  </refsect1>
 </refentry>

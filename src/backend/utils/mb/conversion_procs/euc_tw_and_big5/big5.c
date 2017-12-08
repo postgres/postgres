@@ -361,14 +361,14 @@ CNStoBIG5(unsigned short cns, unsigned char lc)
 			for (i = 0; i < sizeof(b2c3) / (sizeof(unsigned short) * 2); i++)
 			{
 				if (b2c3[i][1] == cns)
-					return (b2c3[i][0]);
+					return b2c3[i][0];
 			}
 			break;
 		case LC_CNS11643_4:
 			for (i = 0; i < sizeof(b1c4) / (sizeof(unsigned short) * 2); i++)
 			{
 				if (b1c4[i][1] == cns)
-					return (b1c4[i][0]);
+					return b1c4[i][0];
 			}
 		default:
 			break;

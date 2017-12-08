@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_tsparser.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERTSPARSER">
+<refentry id="sql-altertsparser">
  <indexterm zone="sql-altertsparser">
   <primary>ALTER TEXT SEARCH PARSER</primary>
  </indexterm>
@@ -36,7 +36,7 @@ ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> SET SCHEMA <replaceable
   </para>
 
   <para>
-   You must be a superuser to use <command>ALTER TEXT SEARCH PARSER</>.
+   You must be a superuser to use <command>ALTER TEXT SEARCH PARSER</command>.
   </para>
  </refsect1>
 
@@ -86,8 +86,8 @@ ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> SET SCHEMA <replaceable
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtsparser"></member>
-   <member><xref linkend="sql-droptsparser"></member>
+   <member><xref linkend="sql-createtsparser"/></member>
+   <member><xref linkend="sql-droptsparser"/></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_server.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERSERVER">
+<refentry id="sql-alterserver">
  <indexterm zone="sql-alterserver">
   <primary>ALTER SERVER</primary>
  </indexterm>
@@ -22,9 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER SERVER <replaceable class="parameter">name</replaceable> [ VERSION '<replaceable class="parameter">new_version</replaceable>' ]
-    [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] ) ]
-ALTER SERVER <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER SERVER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+    [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ] ) ]
+ALTER SERVER <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER SERVER <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -42,7 +42,7 @@ ALTER SERVER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replac
    To alter the server you must be the owner of the server.
    Additionally to alter the owner, you must own the server and also
    be a direct or indirect member of the new owning role, and you must
-   have <literal>USAGE</> privilege on the server's foreign-data
+   have <literal>USAGE</literal> privilege on the server's foreign-data
    wrapper.  (Note that superusers satisfy all these criteria
    automatically.)
   </para>
@@ -71,12 +71,12 @@ ALTER SERVER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replac
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ] )</literal></term>
     <listitem>
      <para>
       Change options for the
-      server.  <literal>ADD</>, <literal>SET</>, and <literal>DROP</>
-      specify the action to be performed.  <literal>ADD</> is assumed
+      server.  <literal>ADD</literal>, <literal>SET</literal>, and <literal>DROP</literal>
+      specify the action to be performed.  <literal>ADD</literal> is assumed
       if no operation is explicitly specified.  Option names must be
       unique; names and values are also validated using the server's
       foreign-data wrapper library.
@@ -85,7 +85,7 @@ ALTER SERVER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replac
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
       The user name of the new owner of the foreign server.
@@ -108,15 +108,15 @@ ALTER SERVER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replac
   <title>Examples</title>
 
   <para>
-   Alter server <literal>foo</>, add connection options:
+   Alter server <literal>foo</literal>, add connection options:
 <programlisting>
 ALTER SERVER foo OPTIONS (host 'foo', dbname 'foodb');
 </programlisting>
   </para>
 
   <para>
-   Alter server <literal>foo</>, change version,
-   change <literal>host</> option:
+   Alter server <literal>foo</literal>, change version,
+   change <literal>host</literal> option:
 <programlisting>
 ALTER SERVER foo VERSION '8.4' OPTIONS (SET host 'baz');
 </programlisting></para>
@@ -136,8 +136,8 @@ ALTER SERVER foo VERSION '8.4' OPTIONS (SET host 'baz');
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createserver"></member>
-   <member><xref linkend="sql-dropserver"></member>
+   <member><xref linkend="sql-createserver"/></member>
+   <member><xref linkend="sql-dropserver"/></member>
   </simplelist>
  </refsect1>
 

@@ -41,7 +41,7 @@ ginTraverseLock(Buffer buffer, bool searchMode)
 	page = BufferGetPage(buffer);
 	if (GinPageIsLeaf(page))
 	{
-		if (searchMode == FALSE)
+		if (searchMode == false)
 		{
 			/* we should relock our page */
 			LockBuffer(buffer, GIN_UNLOCK);
@@ -107,7 +107,7 @@ ginFindLeafPage(GinBtree btree, bool searchMode, Snapshot snapshot)
 		 * ok, page is correctly locked, we should check to move right ..,
 		 * root never has a right link, so small optimization
 		 */
-		while (btree->fullScan == FALSE && stack->blkno != btree->rootBlkno &&
+		while (btree->fullScan == false && stack->blkno != btree->rootBlkno &&
 			   btree->isMoveRight(btree, page))
 		{
 			BlockNumber rightlink = GinPageGetOpaque(page)->rightlink;

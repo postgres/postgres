@@ -70,6 +70,7 @@ static MultiXactId set_mxid = 0;
 static MultiXactOffset set_mxoff = (MultiXactOffset) -1;
 static uint32 minXlogTli = 0;
 static XLogSegNo minXlogSegNo = 0;
+static int	WalSegSz;
 
 static void CheckDataVersion(void);
 static bool ReadControlFile(void);
@@ -94,6 +95,7 @@ main(int argc, char *argv[])
 	char	   *endptr;
 	char	   *endptr2;
 	char	   *DataDir = NULL;
+	char	   *log_fname = NULL;
 	int			fd;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_resetwal"));
@@ -265,7 +267,12 @@ main(int argc, char *argv[])
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
-				XLogFromFileName(optarg, &minXlogTli, &minXlogSegNo);
+
+				/*
+				 * XLogFromFileName requires wal segment size which is not yet
+				 * set. Hence wal details are set later on.
+				 */
+				log_fname = pg_strdup(optarg);
 				break;
 
 			default:
@@ -349,6 +356,9 @@ main(int argc, char *argv[])
 	 */
 	if (!ReadControlFile())
 		GuessControlValues();
+
+	if (log_fname != NULL)
+		XLogFromFileName(log_fname, &minXlogTli, &minXlogSegNo, WalSegSz);
 
 	/*
 	 * Also look at existing segment files to set up newXlogSegNo
@@ -552,9 +562,9 @@ ReadControlFile(void)
 	}
 
 	/* Use malloc to ensure we have a maxaligned buffer */
-	buffer = (char *) pg_malloc(PG_CONTROL_SIZE);
+	buffer = (char *) pg_malloc(PG_CONTROL_FILE_SIZE);
 
-	len = read(fd, buffer, PG_CONTROL_SIZE);
+	len = read(fd, buffer, PG_CONTROL_FILE_SIZE);
 	if (len < 0)
 	{
 		fprintf(stderr, _("%s: could not read file \"%s\": %s\n"),
@@ -573,18 +583,27 @@ ReadControlFile(void)
 					offsetof(ControlFileData, crc));
 		FIN_CRC32C(crc);
 
-		if (EQ_CRC32C(crc, ((ControlFileData *) buffer)->crc))
+		if (!EQ_CRC32C(crc, ((ControlFileData *) buffer)->crc))
 		{
-			/* Valid data... */
-			memcpy(&ControlFile, buffer, sizeof(ControlFile));
-			return true;
+			/* We will use the data but treat it as guessed. */
+			fprintf(stderr,
+					_("%s: pg_control exists but has invalid CRC; proceed with caution\n"),
+					progname);
+			guessed = true;
 		}
 
-		fprintf(stderr, _("%s: pg_control exists but has invalid CRC; proceed with caution\n"),
-				progname);
-		/* We will use the data anyway, but treat it as guessed. */
 		memcpy(&ControlFile, buffer, sizeof(ControlFile));
-		guessed = true;
+		WalSegSz = ControlFile.xlog_seg_size;
+
+		/* return false if WalSegSz is not valid */
+		if (!IsValidWalSegSize(WalSegSz))
+		{
+			fprintf(stderr,
+					_("%s: pg_control specifies invalid WAL segment size (%d bytes); proceed with caution \n"),
+					progname, WalSegSz);
+			guessed = true;
+		}
+
 		return true;
 	}
 
@@ -660,7 +679,7 @@ GuessControlValues(void)
 	ControlFile.blcksz = BLCKSZ;
 	ControlFile.relseg_size = RELSEG_SIZE;
 	ControlFile.xlog_blcksz = XLOG_BLCKSZ;
-	ControlFile.xlog_seg_size = XLOG_SEG_SIZE;
+	ControlFile.xlog_seg_size = DEFAULT_XLOG_SEG_SIZE;
 	ControlFile.nameDataLen = NAMEDATALEN;
 	ControlFile.indexMaxKeys = INDEX_MAX_KEYS;
 	ControlFile.toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
@@ -773,7 +792,8 @@ PrintNewControlValues(void)
 	/* This will be always printed in order to keep format same. */
 	printf(_("\n\nValues to be changed:\n\n"));
 
-	XLogFileName(fname, ControlFile.checkPointCopy.ThisTimeLineID, newXlogSegNo);
+	XLogFileName(fname, ControlFile.checkPointCopy.ThisTimeLineID,
+				 newXlogSegNo, WalSegSz);
 	printf(_("First log segment after reset:        %s\n"), fname);
 
 	if (set_mxid != 0)
@@ -834,20 +854,28 @@ static void
 RewriteControlFile(void)
 {
 	int			fd;
-	char		buffer[PG_CONTROL_SIZE];	/* need not be aligned */
+	char		buffer[PG_CONTROL_FILE_SIZE];	/* need not be aligned */
+
+	/*
+	 * For good luck, apply the same static assertions as in backend's
+	 * WriteControlFile().
+	 */
+	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_MAX_SAFE_SIZE,
+					 "pg_control is too large for atomic disk writes");
+	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_FILE_SIZE,
+					 "sizeof(ControlFileData) exceeds PG_CONTROL_FILE_SIZE");
 
 	/*
 	 * Adjust fields as needed to force an empty XLOG starting at
 	 * newXlogSegNo.
 	 */
 	XLogSegNoOffsetToRecPtr(newXlogSegNo, SizeOfXLogLongPHD,
-							ControlFile.checkPointCopy.redo);
+							ControlFile.checkPointCopy.redo, WalSegSz);
 	ControlFile.checkPointCopy.time = (pg_time_t) time(NULL);
 
 	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.time = (pg_time_t) time(NULL);
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
-	ControlFile.prevCheckPoint = 0;
 	ControlFile.minRecoveryPoint = 0;
 	ControlFile.minRecoveryPointTLI = 0;
 	ControlFile.backupStartPoint = 0;
@@ -868,7 +896,7 @@ RewriteControlFile(void)
 	ControlFile.max_locks_per_xact = 64;
 
 	/* Now we can force the recorded xlog seg size to the right thing. */
-	ControlFile.xlog_seg_size = XLogSegSize;
+	ControlFile.xlog_seg_size = WalSegSz;
 
 	/* Contents are protected with a CRC */
 	INIT_CRC32C(ControlFile.crc);
@@ -878,21 +906,13 @@ RewriteControlFile(void)
 	FIN_CRC32C(ControlFile.crc);
 
 	/*
-	 * We write out PG_CONTROL_SIZE bytes into pg_control, zero-padding the
-	 * excess over sizeof(ControlFileData).  This reduces the odds of
+	 * We write out PG_CONTROL_FILE_SIZE bytes into pg_control, zero-padding
+	 * the excess over sizeof(ControlFileData).  This reduces the odds of
 	 * premature-EOF errors when reading pg_control.  We'll still fail when we
 	 * check the contents of the file, but hopefully with a more specific
 	 * error than "couldn't read pg_control".
 	 */
-	if (sizeof(ControlFileData) > PG_CONTROL_SIZE)
-	{
-		fprintf(stderr,
-				_("%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"),
-				progname);
-		exit(1);
-	}
-
-	memset(buffer, 0, PG_CONTROL_SIZE);
+	memset(buffer, 0, PG_CONTROL_FILE_SIZE);
 	memcpy(buffer, &ControlFile, sizeof(ControlFileData));
 
 	unlink(XLOG_CONTROL_FILE);
@@ -908,7 +928,7 @@ RewriteControlFile(void)
 	}
 
 	errno = 0;
-	if (write(fd, buffer, PG_CONTROL_SIZE) != PG_CONTROL_SIZE)
+	if (write(fd, buffer, PG_CONTROL_FILE_SIZE) != PG_CONTROL_FILE_SIZE)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
@@ -1013,7 +1033,7 @@ FindEndOfXLOG(void)
 	 * are in virgin territory.
 	 */
 	xlogbytepos = newXlogSegNo * ControlFile.xlog_seg_size;
-	newXlogSegNo = (xlogbytepos + XLogSegSize - 1) / XLogSegSize;
+	newXlogSegNo = (xlogbytepos + WalSegSz - 1) / WalSegSz;
 	newXlogSegNo++;
 }
 
@@ -1150,7 +1170,7 @@ WriteEmptyXLOG(void)
 	page->xlp_pageaddr = ControlFile.checkPointCopy.redo - SizeOfXLogLongPHD;
 	longpage = (XLogLongPageHeader) page;
 	longpage->xlp_sysid = ControlFile.system_identifier;
-	longpage->xlp_seg_size = XLogSegSize;
+	longpage->xlp_seg_size = WalSegSz;
 	longpage->xlp_xlog_blcksz = XLOG_BLCKSZ;
 
 	/* Insert the initial checkpoint record */
@@ -1175,7 +1195,8 @@ WriteEmptyXLOG(void)
 	record->xl_crc = crc;
 
 	/* Write the first page */
-	XLogFilePath(path, ControlFile.checkPointCopy.ThisTimeLineID, newXlogSegNo);
+	XLogFilePath(path, ControlFile.checkPointCopy.ThisTimeLineID,
+				 newXlogSegNo, WalSegSz);
 
 	unlink(path);
 
@@ -1201,7 +1222,7 @@ WriteEmptyXLOG(void)
 
 	/* Fill the rest of the file with zeroes */
 	memset(buffer, 0, XLOG_BLCKSZ);
-	for (nbytes = XLOG_BLCKSZ; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
+	for (nbytes = XLOG_BLCKSZ; nbytes < WalSegSz; nbytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
 		if (write(fd, buffer, XLOG_BLCKSZ) != XLOG_BLCKSZ)

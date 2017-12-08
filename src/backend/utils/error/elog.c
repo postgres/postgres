@@ -226,7 +226,7 @@ err_gettext(const char *str)
  * the stack entry.  Finally, errfinish() will be called to actually process
  * the error report.
  *
- * Returns TRUE in normal case.  Returns FALSE to short-circuit the error
+ * Returns true in normal case.  Returns false to short-circuit the error
  * report (if it's a warning or lower and not to be reported anywhere).
  */
 bool
@@ -285,7 +285,7 @@ errstart(int elevel, const char *filename, int lineno,
 
 	/*
 	 * Now decide whether we need to process this report at all; if it's
-	 * warning or less and not enabled for logging, just return FALSE without
+	 * warning or less and not enabled for logging, just return false without
 	 * starting up any error logging machinery.
 	 */
 
@@ -435,7 +435,7 @@ errfinish(int dummy,...)
 	for (econtext = error_context_stack;
 		 econtext != NULL;
 		 econtext = econtext->previous)
-		(*econtext->callback) (econtext->arg);
+		econtext->callback(econtext->arg);
 
 	/*
 	 * If ERROR (not more nor less) we pass it off to the current handler.
@@ -1837,7 +1837,7 @@ GetErrorContextStack(void)
 	for (econtext = error_context_stack;
 		 econtext != NULL;
 		 econtext = econtext->previous)
-		(*econtext->callback) (econtext->arg);
+		econtext->callback(econtext->arg);
 
 	/*
 	 * Clean ourselves off the stack, any allocations done should have been
@@ -2117,10 +2117,15 @@ write_eventlog(int level, const char *line, int len)
 	 * try to convert the message to UTF16 and write it with ReportEventW().
 	 * Fall back on ReportEventA() if conversion failed.
 	 *
+	 * Since we palloc the structure required for conversion, also fall
+	 * through to writing unconverted if we have not yet set up
+	 * CurrentMemoryContext.
+	 *
 	 * Also verify that we are not on our way into error recursion trouble due
 	 * to error messages thrown deep inside pgwin32_message_to_UTF16().
 	 */
 	if (!in_error_recursion_trouble() &&
+		CurrentMemoryContext != NULL &&
 		GetMessageEncoding() != GetACPEncoding())
 	{
 		utf16 = pgwin32_message_to_UTF16(line, len, NULL);

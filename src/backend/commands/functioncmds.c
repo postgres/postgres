@@ -51,6 +51,8 @@
 #include "commands/alter.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
+#include "executor/execdesc.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
@@ -179,7 +181,7 @@ void
 interpret_function_parameter_list(ParseState *pstate,
 								  List *parameters,
 								  Oid languageOid,
-								  bool is_aggregate,
+								  ObjectType objtype,
 								  oidvector **parameterTypes,
 								  ArrayType **allParameterTypes,
 								  ArrayType **parameterModes,
@@ -233,7 +235,7 @@ interpret_function_parameter_list(ParseState *pstate,
 							 errmsg("SQL function cannot accept shell type %s",
 									TypeNameToString(t))));
 				/* We don't allow creating aggregates on shell types either */
-				else if (is_aggregate)
+				else if (objtype == OBJECT_AGGREGATE)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("aggregate cannot accept shell type %s",
@@ -262,14 +264,26 @@ interpret_function_parameter_list(ParseState *pstate,
 
 		if (t->setof)
 		{
-			if (is_aggregate)
+			if (objtype == OBJECT_AGGREGATE)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("aggregates cannot accept set arguments")));
+			else if (objtype == OBJECT_PROCEDURE)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("procedures cannot accept set arguments")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("functions cannot accept set arguments")));
+		}
+
+		if (objtype == OBJECT_PROCEDURE)
+		{
+			if (fp->mode == FUNC_PARAM_OUT || fp->mode == FUNC_PARAM_INOUT)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 (errmsg("procedures cannot have OUT parameters"))));
 		}
 
 		/* handle input parameters */
@@ -451,6 +465,7 @@ interpret_function_parameter_list(ParseState *pstate,
  */
 static bool
 compute_common_attribute(ParseState *pstate,
+						 bool is_procedure,
 						 DefElem *defel,
 						 DefElem **volatility_item,
 						 DefElem **strict_item,
@@ -463,6 +478,8 @@ compute_common_attribute(ParseState *pstate,
 {
 	if (strcmp(defel->defname, "volatility") == 0)
 	{
+		if (is_procedure)
+			goto procedure_error;
 		if (*volatility_item)
 			goto duplicate_error;
 
@@ -470,6 +487,8 @@ compute_common_attribute(ParseState *pstate,
 	}
 	else if (strcmp(defel->defname, "strict") == 0)
 	{
+		if (is_procedure)
+			goto procedure_error;
 		if (*strict_item)
 			goto duplicate_error;
 
@@ -484,6 +503,8 @@ compute_common_attribute(ParseState *pstate,
 	}
 	else if (strcmp(defel->defname, "leakproof") == 0)
 	{
+		if (is_procedure)
+			goto procedure_error;
 		if (*leakproof_item)
 			goto duplicate_error;
 
@@ -495,6 +516,8 @@ compute_common_attribute(ParseState *pstate,
 	}
 	else if (strcmp(defel->defname, "cost") == 0)
 	{
+		if (is_procedure)
+			goto procedure_error;
 		if (*cost_item)
 			goto duplicate_error;
 
@@ -502,6 +525,8 @@ compute_common_attribute(ParseState *pstate,
 	}
 	else if (strcmp(defel->defname, "rows") == 0)
 	{
+		if (is_procedure)
+			goto procedure_error;
 		if (*rows_item)
 			goto duplicate_error;
 
@@ -509,6 +534,8 @@ compute_common_attribute(ParseState *pstate,
 	}
 	else if (strcmp(defel->defname, "parallel") == 0)
 	{
+		if (is_procedure)
+			goto procedure_error;
 		if (*parallel_item)
 			goto duplicate_error;
 
@@ -526,6 +553,13 @@ duplicate_error:
 			 errmsg("conflicting or redundant options"),
 			 parser_errposition(pstate, defel->location)));
 	return false;				/* keep compiler quiet */
+
+procedure_error:
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+			 errmsg("invalid attribute in procedure definition"),
+			 parser_errposition(pstate, defel->location)));
+	return false;
 }
 
 static char
@@ -603,6 +637,7 @@ update_proconfig_value(ArrayType *a, List *set_items)
  */
 static void
 compute_attributes_sql_style(ParseState *pstate,
+							 bool is_procedure,
 							 List *options,
 							 List **as,
 							 char **language,
@@ -669,9 +704,15 @@ compute_attributes_sql_style(ParseState *pstate,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
+			if (is_procedure)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("invalid attribute in procedure definition"),
+						 parser_errposition(pstate, defel->location)));
 			windowfunc_item = defel;
 		}
 		else if (compute_common_attribute(pstate,
+										  is_procedure,
 										  defel,
 										  &volatility_item,
 										  &strict_item,
@@ -762,7 +803,7 @@ compute_attributes_sql_style(ParseState *pstate,
  *------------
  */
 static void
-compute_attributes_with_style(ParseState *pstate, List *parameters, bool *isStrict_p, char *volatility_p)
+compute_attributes_with_style(ParseState *pstate, bool is_procedure, List *parameters, bool *isStrict_p, char *volatility_p)
 {
 	ListCell   *pl;
 
@@ -771,10 +812,22 @@ compute_attributes_with_style(ParseState *pstate, List *parameters, bool *isStri
 		DefElem    *param = (DefElem *) lfirst(pl);
 
 		if (pg_strcasecmp(param->defname, "isstrict") == 0)
+		{
+			if (is_procedure)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("invalid attribute in procedure definition"),
+						 parser_errposition(pstate, param->location)));
 			*isStrict_p = defGetBoolean(param);
+		}
 		else if (pg_strcasecmp(param->defname, "iscachable") == 0)
 		{
 			/* obsolete spelling of isImmutable */
+			if (is_procedure)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("invalid attribute in procedure definition"),
+						 parser_errposition(pstate, param->location)));
 			if (defGetBoolean(param))
 				*volatility_p = PROVOLATILE_IMMUTABLE;
 		}
@@ -916,6 +969,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 
 	/* override attributes from explicit list */
 	compute_attributes_sql_style(pstate,
+								 stmt->is_procedure,
 								 stmt->options,
 								 &as_clause, &language, &transformDefElem,
 								 &isWindowFunc, &volatility,
@@ -990,7 +1044,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 	interpret_function_parameter_list(pstate,
 									  stmt->parameters,
 									  languageOid,
-									  false,	/* not an aggregate */
+									  stmt->is_procedure ? OBJECT_PROCEDURE : OBJECT_FUNCTION,
 									  &parameterTypes,
 									  &allParameterTypes,
 									  &parameterModes,
@@ -999,7 +1053,14 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 									  &variadicArgType,
 									  &requiredResultType);
 
-	if (stmt->returnType)
+	if (stmt->is_procedure)
+	{
+		Assert(!stmt->returnType);
+
+		prorettype = InvalidOid;
+		returnsSet = false;
+	}
+	else if (stmt->returnType)
 	{
 		/* explicit RETURNS clause */
 		compute_return_type(stmt->returnType, languageOid,
@@ -1045,7 +1106,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 		trftypes = NULL;
 	}
 
-	compute_attributes_with_style(pstate, stmt->withClause, &isStrict, &volatility);
+	compute_attributes_with_style(pstate, stmt->is_procedure, stmt->withClause, &isStrict, &volatility);
 
 	interpret_AS_clause(languageOid, language, funcname, as_clause,
 						&prosrc_str, &probin_str);
@@ -1168,6 +1229,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 	HeapTuple	tup;
 	Oid			funcOid;
 	Form_pg_proc procForm;
+	bool		is_procedure;
 	Relation	rel;
 	ListCell   *l;
 	DefElem    *volatility_item = NULL;
@@ -1182,7 +1244,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
-	funcOid = LookupFuncWithArgs(stmt->func, false);
+	funcOid = LookupFuncWithArgs(stmt->objtype, stmt->func, false);
 
 	tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(funcOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -1201,12 +1263,15 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 				 errmsg("\"%s\" is an aggregate function",
 						NameListToString(stmt->func->objname))));
 
+	is_procedure = (procForm->prorettype == InvalidOid);
+
 	/* Examine requested actions. */
 	foreach(l, stmt->actions)
 	{
 		DefElem    *defel = (DefElem *) lfirst(l);
 
 		if (compute_common_attribute(pstate,
+									 is_procedure,
 									 defel,
 									 &volatility_item,
 									 &strict_item,
@@ -1472,7 +1537,7 @@ CreateCast(CreateCastStmt *stmt)
 	{
 		Form_pg_proc procstruct;
 
-		funcid = LookupFuncWithArgs(stmt->func, false);
+		funcid = LookupFuncWithArgs(OBJECT_FUNCTION, stmt->func, false);
 
 		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 		if (!HeapTupleIsValid(tuple))
@@ -1853,7 +1918,7 @@ CreateTransform(CreateTransformStmt *stmt)
 	 */
 	if (stmt->fromsql)
 	{
-		fromsqlfuncid = LookupFuncWithArgs(stmt->fromsql, false);
+		fromsqlfuncid = LookupFuncWithArgs(OBJECT_FUNCTION, stmt->fromsql, false);
 
 		if (!pg_proc_ownercheck(fromsqlfuncid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->fromsql->objname));
@@ -1879,7 +1944,7 @@ CreateTransform(CreateTransformStmt *stmt)
 
 	if (stmt->tosql)
 	{
-		tosqlfuncid = LookupFuncWithArgs(stmt->tosql, false);
+		tosqlfuncid = LookupFuncWithArgs(OBJECT_FUNCTION, stmt->tosql, false);
 
 		if (!pg_proc_ownercheck(tosqlfuncid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC, NameListToString(stmt->tosql->objname));
@@ -2167,4 +2232,81 @@ ExecuteDoStmt(DoStmt *stmt)
 
 	/* execute the inline handler */
 	OidFunctionCall1(laninline, PointerGetDatum(codeblock));
+}
+
+/*
+ * Execute CALL statement
+ */
+void
+ExecuteCallStmt(ParseState *pstate, CallStmt *stmt)
+{
+	List	   *targs;
+	ListCell   *lc;
+	Node	   *node;
+	FuncExpr   *fexpr;
+	int			nargs;
+	int			i;
+	AclResult   aclresult;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+
+	targs = NIL;
+	foreach(lc, stmt->funccall->args)
+	{
+		targs = lappend(targs, transformExpr(pstate,
+											 (Node *) lfirst(lc),
+											 EXPR_KIND_CALL));
+	}
+
+	node = ParseFuncOrColumn(pstate,
+							 stmt->funccall->funcname,
+							 targs,
+							 pstate->p_last_srf,
+							 stmt->funccall,
+							 true,
+							 stmt->funccall->location);
+
+	fexpr = castNode(FuncExpr, node);
+
+	aclresult = pg_proc_aclcheck(fexpr->funcid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(fexpr->funcid));
+	InvokeFunctionExecuteHook(fexpr->funcid);
+
+	nargs = list_length(fexpr->args);
+
+	/* safety check; see ExecInitFunc() */
+	if (nargs > FUNC_MAX_ARGS)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg_plural("cannot pass more than %d argument to a procedure",
+							   "cannot pass more than %d arguments to a procedure",
+							   FUNC_MAX_ARGS,
+							   FUNC_MAX_ARGS)));
+
+	fmgr_info(fexpr->funcid, &flinfo);
+	InitFunctionCallInfoData(fcinfo, &flinfo, nargs, fexpr->inputcollid, NULL, NULL);
+
+	i = 0;
+	foreach (lc, fexpr->args)
+	{
+		EState	   *estate;
+		ExprState  *exprstate;
+		ExprContext *econtext;
+		Datum		val;
+		bool		isnull;
+
+		estate = CreateExecutorState();
+		exprstate = ExecPrepareExpr(lfirst(lc), estate);
+		econtext = CreateStandaloneExprContext();
+		val = ExecEvalExprSwitchContext(exprstate, econtext, &isnull);
+		FreeExecutorState(estate);
+
+		fcinfo.arg[i] = val;
+		fcinfo.argnull[i] = isnull;
+
+		i++;
+	}
+
+	FunctionCallInvoke(&fcinfo);
 }

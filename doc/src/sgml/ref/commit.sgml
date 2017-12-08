@@ -3,7 +3,7 @@ doc/src/sgml/ref/commit.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-COMMIT">
+<refentry id="sql-commit">
  <indexterm zone="sql-commit">
   <primary>COMMIT</primary>
  </indexterm>
@@ -55,12 +55,12 @@ COMMIT [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-ROLLBACK"> to
+   Use <xref linkend="sql-rollback"/> to
    abort a transaction.
   </para>
 
   <para>
-   Issuing <command>COMMIT</> when not inside a transaction does
+   Issuing <command>COMMIT</command> when not inside a transaction does
    no harm, but it will provoke a warning message.
   </para>
  </refsect1>
@@ -89,8 +89,8 @@ COMMIT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-rollback"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-rollback"/></member>
   </simplelist>
  </refsect1>
 </refentry>

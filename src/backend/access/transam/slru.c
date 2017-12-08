@@ -205,14 +205,15 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		shared->page_lru_count = (int *) (ptr + offset);
 		offset += MAXALIGN(nslots * sizeof(int));
 
+		/* Initialize LWLocks */
+		shared->buffer_locks = (LWLockPadded *) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(LWLockPadded));
+
 		if (nlsns > 0)
 		{
 			shared->group_lsn = (XLogRecPtr *) (ptr + offset);
 			offset += MAXALIGN(nslots * nlsns * sizeof(XLogRecPtr));
 		}
-
-		/* Initialize LWLocks */
-		shared->buffer_locks = (LWLockPadded *) ShmemAlloc(sizeof(LWLockPadded) * nslots);
 
 		Assert(strlen(name) + 1 < SLRU_MAX_NAME_LENGTH);
 		strlcpy(shared->lwlock_tranche_name, name, SLRU_MAX_NAME_LENGTH);
@@ -230,6 +231,9 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 			shared->page_lru_count[slotno] = 0;
 			ptr += BLCKSZ;
 		}
+
+		/* Should fit to estimated shmem size */
+		Assert(ptr - (char *) shared <= SimpleLruShmemSize(nslots, nlsns));
 	}
 	else
 		Assert(found);
@@ -595,7 +599,7 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
 
 	SlruFileName(ctl, path, segno);
 
-	fd = OpenTransientFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
 	if (fd < 0)
 	{
 		/* expected: file doesn't exist */
@@ -625,7 +629,7 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
  * Physical read of a (previously existing) page into a buffer slot
  *
  * On failure, we cannot just ereport(ERROR) since caller has put state in
- * shared memory that must be undone.  So, we return FALSE and save enough
+ * shared memory that must be undone.  So, we return false and save enough
  * info in static variables to let SlruReportIOError make the report.
  *
  * For now, assume it's not worth keeping a file pointer open across
@@ -650,7 +654,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	 * SlruPhysicalWritePage).  Hence, if we are InRecovery, allow the case
 	 * where the file doesn't exist, and return zeroes instead.
 	 */
-	fd = OpenTransientFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
 	if (fd < 0)
 	{
 		if (errno != ENOENT || !InRecovery)
@@ -701,7 +705,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
  * Physical write of a page from a buffer slot
  *
  * On failure, we cannot just ereport(ERROR) since caller has put state in
- * shared memory that must be undone.  So, we return FALSE and save enough
+ * shared memory that must be undone.  So, we return false and save enough
  * info in static variables to let SlruReportIOError make the report.
  *
  * For now, assume it's not worth keeping a file pointer open across
@@ -800,8 +804,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		 * don't use O_EXCL or O_TRUNC or anything like that.
 		 */
 		SlruFileName(ctl, path, segno);
-		fd = OpenTransientFile(path, O_RDWR | O_CREAT | PG_BINARY,
-							   S_IRUSR | S_IWUSR);
+		fd = OpenTransientFile(path, O_RDWR | O_CREAT | PG_BINARY);
 		if (fd < 0)
 		{
 			slru_errcause = SLRU_OPEN_FAILED;

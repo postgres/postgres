@@ -9,10 +9,10 @@
  </indexterm>
 
  <para>
-  <xref linkend="keywords-table"> lists all tokens that are key words
+  <xref linkend="keywords-table"/> lists all tokens that are key words
   in the SQL standard and in <productname>PostgreSQL</productname>
   &version;.  Background information can be found in <xref
-  linkend="sql-syntax-identifiers">.
+  linkend="sql-syntax-identifiers"/>.
   (For space reasons, only the latest two versions of the SQL standard, and
   SQL-92 for historical comparison, are included.  The differences between
   those and the other intermediate standard versions are small.)
@@ -45,7 +45,7 @@
  </para>
 
  <para>
-  In <xref linkend="keywords-table"> in the column for
+  In <xref linkend="keywords-table"/> in the column for
   <productname>PostgreSQL</productname> we classify as
   <quote>non-reserved</quote> those key words that are explicitly
   known to the parser but are allowed as column or table names.
@@ -69,7 +69,7 @@
 
  <para>
   It is important to understand before studying <xref
-  linkend="keywords-table"> that the fact that a key word is not
+  linkend="keywords-table"/> that the fact that a key word is not
   reserved in <productname>PostgreSQL</productname> does not mean that
   the feature related to the word is not implemented.  Conversely, the
   presence of a key word does not indicate the existence of a feature.

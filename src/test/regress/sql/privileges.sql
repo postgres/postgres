@@ -320,9 +320,24 @@ INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLU
 INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLUDED.three;
 INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set one = 8; -- fails (due to UPDATE)
 INSERT INTO atest5(three) VALUES (4) ON CONFLICT (two) DO UPDATE set three = 10; -- fails (due to INSERT)
+
 -- Check that the columns in the inference require select privileges
--- Error. No privs on four
-INSERT INTO atest5(three) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 10;
+INSERT INTO atest5(four) VALUES (4); -- fail
+
+SET SESSION AUTHORIZATION regress_user1;
+GRANT INSERT (four) ON atest5 TO regress_user4;
+SET SESSION AUTHORIZATION regress_user4;
+
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 3; -- fails (due to SELECT)
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT ON CONSTRAINT atest5_four_key DO UPDATE set three = 3; -- fails (due to SELECT)
+INSERT INTO atest5(four) VALUES (4); -- ok
+
+SET SESSION AUTHORIZATION regress_user1;
+GRANT SELECT (four) ON atest5 TO regress_user4;
+SET SESSION AUTHORIZATION regress_user4;
+
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 3; -- ok
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT ON CONSTRAINT atest5_four_key DO UPDATE set three = 3; -- ok
 
 SET SESSION AUTHORIZATION regress_user1;
 REVOKE ALL (one) ON atest5 FROM regress_user4;
@@ -427,12 +442,21 @@ SET SESSION AUTHORIZATION regress_user1;
 GRANT USAGE ON LANGUAGE sql TO regress_user2; -- fail
 CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
 CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+CREATE AGGREGATE testagg1(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testproc1(int) AS 'select $1;' LANGUAGE sql;
 
-REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int) TO regress_user2;
+REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) TO regress_user2;
+REVOKE ALL ON FUNCTION testproc1(int) FROM PUBLIC; -- fail, not a function
+REVOKE ALL ON PROCEDURE testproc1(int) FROM PUBLIC;
+GRANT EXECUTE ON PROCEDURE testproc1(int) TO regress_user2;
 GRANT USAGE ON FUNCTION testfunc1(int) TO regress_user3; -- semantic error
+GRANT USAGE ON FUNCTION testagg1(int) TO regress_user3; -- semantic error
+GRANT USAGE ON PROCEDURE testproc1(int) TO regress_user3; -- semantic error
 GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regress_user4;
 GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regress_user4;
+GRANT ALL PRIVILEGES ON FUNCTION testagg1(int) TO regress_user4;
+GRANT ALL PRIVILEGES ON PROCEDURE testproc1(int) TO regress_user4;
 
 CREATE FUNCTION testfunc4(boolean) RETURNS text
   AS 'select col1 from atest2 where col2 = $1;'
@@ -442,16 +466,24 @@ GRANT EXECUTE ON FUNCTION testfunc4(boolean) TO regress_user3;
 SET SESSION AUTHORIZATION regress_user2;
 SELECT testfunc1(5), testfunc2(5); -- ok
 CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
+SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+CALL testproc1(6); -- ok
 
 SET SESSION AUTHORIZATION regress_user3;
 SELECT testfunc1(5); -- fail
+SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- fail
+CALL testproc1(6); -- fail
 SELECT col1 FROM atest2 WHERE col2 = true; -- fail
 SELECT testfunc4(true); -- ok
 
 SET SESSION AUTHORIZATION regress_user4;
 SELECT testfunc1(5); -- ok
+SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+CALL testproc1(6); -- ok
 
 DROP FUNCTION testfunc1(int); -- fail
+DROP AGGREGATE testagg1(int); -- fail
+DROP PROCEDURE testproc1(int); -- fail
 
 \c -
 
@@ -779,6 +811,9 @@ SET SESSION AUTHORIZATION regress_user2;
 SELECT lo_create(2001);
 SELECT lo_create(2002);
 
+SELECT loread(lo_open(1001, x'20000'::int), 32);	-- allowed, for now
+SELECT lowrite(lo_open(1001, x'40000'::int), 'abcd');	-- fail, wrong mode
+
 SELECT loread(lo_open(1001, x'40000'::int), 32);
 SELECT loread(lo_open(1002, x'40000'::int), 32);	-- to be denied
 SELECT loread(lo_open(1003, x'40000'::int), 32);
@@ -818,8 +853,11 @@ SET SESSION AUTHORIZATION regress_user4;
 SELECT loread(lo_open(1002, x'40000'::int), 32);	-- to be denied
 SELECT lowrite(lo_open(1002, x'20000'::int), 'abcd');	-- to be denied
 SELECT lo_truncate(lo_open(1002, x'20000'::int), 10);	-- to be denied
+SELECT lo_put(1002, 1, 'abcd');				-- to be denied
 SELECT lo_unlink(1002);					-- to be denied
 SELECT lo_export(1001, '/dev/null');			-- to be denied
+SELECT lo_import('/dev/null');				-- to be denied
+SELECT lo_import('/dev/null', 2003);			-- to be denied
 
 \c -
 SET lo_compat_privileges = true;	-- compatibility mode
@@ -910,17 +948,29 @@ SELECT has_schema_privilege('regress_user2', 'testns5', 'CREATE'); -- no
 SET ROLE regress_user1;
 
 CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
+CREATE AGGREGATE testns.agg1(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testns.bar() AS 'select 1' LANGUAGE sql;
 
 SELECT has_function_privilege('regress_user2', 'testns.foo()', 'EXECUTE'); -- no
+SELECT has_function_privilege('regress_user2', 'testns.agg1(int)', 'EXECUTE'); -- no
+SELECT has_function_privilege('regress_user2', 'testns.bar()', 'EXECUTE'); -- no
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT EXECUTE ON FUNCTIONS to public;
+ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT EXECUTE ON ROUTINES to public;
 
 DROP FUNCTION testns.foo();
 CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
+DROP AGGREGATE testns.agg1(int);
+CREATE AGGREGATE testns.agg1(int) (sfunc = int4pl, stype = int4);
+DROP PROCEDURE testns.bar();
+CREATE PROCEDURE testns.bar() AS 'select 1' LANGUAGE sql;
 
 SELECT has_function_privilege('regress_user2', 'testns.foo()', 'EXECUTE'); -- yes
+SELECT has_function_privilege('regress_user2', 'testns.agg1(int)', 'EXECUTE'); -- yes
+SELECT has_function_privilege('regress_user2', 'testns.bar()', 'EXECUTE'); -- yes (counts as function here)
 
 DROP FUNCTION testns.foo();
+DROP AGGREGATE testns.agg1(int);
+DROP PROCEDURE testns.bar();
 
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_user1 REVOKE USAGE ON TYPES FROM public;
 
@@ -974,16 +1024,32 @@ SELECT has_table_privilege('regress_user1', 'testns.t1', 'SELECT'); -- false
 SELECT has_table_privilege('regress_user1', 'testns.t2', 'SELECT'); -- false
 
 CREATE FUNCTION testns.testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+CREATE AGGREGATE testns.testagg(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testns.testproc(int) AS 'select 3' LANGUAGE sql;
 
 SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true by default
+SELECT has_function_privilege('regress_user1', 'testns.testagg(int)', 'EXECUTE'); -- true by default
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- true by default
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA testns FROM PUBLIC;
 
 SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'); -- false
+SELECT has_function_privilege('regress_user1', 'testns.testagg(int)', 'EXECUTE'); -- false
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- still true, not a function
 
-SET client_min_messages TO 'warning';
+REVOKE ALL ON ALL PROCEDURES IN SCHEMA testns FROM PUBLIC;
+
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- now false
+
+GRANT ALL ON ALL ROUTINES IN SCHEMA testns TO PUBLIC;
+
+SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_user1', 'testns.testagg(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_user1', 'testns.testproc(int)', 'EXECUTE'); -- true
+
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 
 -- Change owner of the schema & and rename of new schema owner
@@ -1002,9 +1068,9 @@ ALTER ROLE regress_schemauser2 RENAME TO regress_schemauser_renamed;
 SELECT nspname, rolname FROM pg_namespace, pg_roles WHERE pg_namespace.nspname = 'testns' AND pg_namespace.nspowner = pg_roles.oid;
 
 set session role regress_schemauser_renamed;
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 -- clean up
 \c -
@@ -1043,8 +1109,10 @@ drop table dep_priv_test;
 
 drop sequence x_seq;
 
+DROP AGGREGATE testagg1(int);
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);
+DROP PROCEDURE testproc1(int);
 
 DROP VIEW atestv0;
 DROP VIEW atestv1;

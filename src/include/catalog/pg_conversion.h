@@ -32,7 +32,7 @@
  *	conforencoding		FOR encoding id
  *	contoencoding		TO encoding id
  *	conproc				OID of the conversion proc
- *	condefault			TRUE if this is a default conversion
+ *	condefault			true if this is a default conversion
  * ----------------------------------------------------------------
  */
 #define ConversionRelationId  2607

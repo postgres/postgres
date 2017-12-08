@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_database.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPDATABASE">
+<refentry id="sql-dropdatabase">
  <indexterm zone="sql-dropdatabase">
   <primary>DROP DATABASE</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -57,7 +57,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of the database to remove.
@@ -71,14 +71,14 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
   <title>Notes</title>
 
    <para>
-    <command>DROP DATABASE</> cannot be executed inside a transaction
+    <command>DROP DATABASE</command> cannot be executed inside a transaction
     block.
    </para>
 
   <para>
    This command cannot be executed while connected to the target
    database. Thus, it might be more convenient to use the program
-   <xref linkend="app-dropdb"> instead,
+   <xref linkend="app-dropdb"/> instead,
    which is a wrapper around this command.
   </para>
  </refsect1>
@@ -95,7 +95,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdatabase"></member>
+   <member><xref linkend="sql-createdatabase"/></member>
   </simplelist>
  </refsect1>
 </refentry>

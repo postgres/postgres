@@ -21,6 +21,7 @@
 #include "lib/pairingheap.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
+#include "storage/spin.h"
 #include "utils/hsearch.h"
 #include "utils/queryenvironment.h"
 #include "utils/reltrigger.h"
@@ -452,6 +453,9 @@ typedef struct EState
 	ResultRelInfo *es_root_result_relations;	/* array of ResultRelInfos */
 	int			es_num_root_result_relations;	/* length of the array */
 
+	/* Info about leaf partitions of partitioned table(s) for insert queries: */
+	List	   *es_leaf_result_relations;	/* List of ResultRelInfos */
+
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;	/* trigger-only ResultRelInfos */
 	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
@@ -503,6 +507,8 @@ typedef struct EState
 	HeapTuple  *es_epqTuple;	/* array of EPQ substitute tuples */
 	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */
 	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
+
+	bool		es_use_parallel_mode;	/* can we use parallel workers? */
 
 	/* The per-query shared memory area to use for parallel execution. */
 	struct dsa_area *es_query_dsa;
@@ -763,8 +769,8 @@ typedef struct SubPlanState
 	ProjectionInfo *projRight;	/* for projecting subselect output */
 	TupleHashTable hashtable;	/* hash table for no-nulls subselect rows */
 	TupleHashTable hashnulls;	/* hash table for rows with null(s) */
-	bool		havehashrows;	/* TRUE if hashtable is not empty */
-	bool		havenullrows;	/* TRUE if hashnulls is not empty */
+	bool		havehashrows;	/* true if hashtable is not empty */
+	bool		havenullrows;	/* true if hashnulls is not empty */
 	MemoryContext hashtablecxt; /* memory context containing hash tables */
 	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
 	ExprContext *innerecontext; /* econtext for computing inner tuples */
@@ -818,6 +824,18 @@ typedef struct DomainConstraintState
  * ----------------------------------------------------------------
  */
 
+struct PlanState;
+
+/* ----------------
+ *	 ExecProcNodeMtd
+ *
+ * This is the method called by ExecProcNode to return the next tuple
+ * from an executor node.  It returns NULL, or an empty TupleTableSlot,
+ * if no more tuples are available.
+ * ----------------
+ */
+typedef TupleTableSlot *(*ExecProcNodeMtd) (struct PlanState *pstate);
+
 /* ----------------
  *		PlanState node
  *
@@ -834,6 +852,10 @@ typedef struct PlanState
 	EState	   *state;			/* at execution time, states of individual
 								 * nodes point to one EState for the whole
 								 * top-level plan */
+
+	ExecProcNodeMtd ExecProcNode;	/* function to return next tuple */
+	ExecProcNodeMtd ExecProcNodeReal;	/* actual function, if above is a
+										 * wrapper */
 
 	Instrumentation *instrument;	/* Optional runtime stats for this node */
 	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
@@ -927,6 +949,7 @@ typedef struct ProjectSetState
 	ExprDoneCond *elemdone;		/* array of per-SRF is-done states */
 	int			nelems;			/* length of elemdone[] array */
 	bool		pending_srf_tuples; /* still evaluating srfs in tlist? */
+	MemoryContext argcontext;	/* context for SRF arguments */
 } ProjectSetState;
 
 /* ----------------
@@ -959,14 +982,16 @@ typedef struct ModifyTableState
 	int			mt_num_dispatch;	/* Number of entries in the above array */
 	int			mt_num_partitions;	/* Number of members in the following
 									 * arrays */
-	ResultRelInfo *mt_partitions;	/* Per partition result relation */
+	ResultRelInfo **mt_partitions;	/* Per partition result relation pointers */
 	TupleConversionMap **mt_partition_tupconv_maps;
 	/* Per partition tuple conversion map */
 	TupleTableSlot *mt_partition_tuple_slot;
 	struct TransitionCaptureState *mt_transition_capture;
-									/* controls transition table population */
+	/* controls transition table population for specified operation */
+	struct TransitionCaptureState *mt_oc_transition_capture;
+	/* controls transition table population for INSERT...ON CONFLICT UPDATE */
 	TupleConversionMap **mt_transition_tupconv_maps;
-									/* Per plan/partition tuple conversion */
+	/* Per plan/partition tuple conversion */
 } ModifyTableState;
 
 /* ----------------
@@ -976,13 +1001,22 @@ typedef struct ModifyTableState
  *		whichplan		which plan is being executed (0 .. n-1)
  * ----------------
  */
-typedef struct AppendState
+
+struct AppendState;
+typedef struct AppendState AppendState;
+struct ParallelAppendState;
+typedef struct ParallelAppendState ParallelAppendState;
+
+struct AppendState
 {
 	PlanState	ps;				/* its first field is NodeTag */
 	PlanState **appendplans;	/* array of PlanStates for my inputs */
 	int			as_nplans;
 	int			as_whichplan;
-} AppendState;
+	ParallelAppendState *as_pstate; /* parallel coordination info */
+	Size		pstate_len;		/* size of parallel coordination info */
+	bool		(*choose_next_subplan) (AppendState *);
+};
 
 /* ----------------
  *	 MergeAppendState information
@@ -1307,6 +1341,10 @@ typedef struct ParallelBitmapHeapState
  *		tbm				   bitmap obtained from child index scan(s)
  *		tbmiterator		   iterator for scanning current pages
  *		tbmres			   current-page data
+ *		can_skip_fetch	   can we potentially skip tuple fetches in this scan?
+ *		skip_fetch		   are we skipping tuple fetches on this page?
+ *		vmbuffer		   buffer for visibility-map lookups
+ *		pvmbuffer		   ditto, for prefetched pages
  *		exact_pages		   total number of exact pages retrieved
  *		lossy_pages		   total number of lossy pages retrieved
  *		prefetch_iterator  iterator for prefetching ahead of current page
@@ -1327,6 +1365,10 @@ typedef struct BitmapHeapScanState
 	TIDBitmap  *tbm;
 	TBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
+	bool		can_skip_fetch;
+	bool		skip_fetch;
+	Buffer		vmbuffer;
+	Buffer		pvmbuffer;
 	long		exact_pages;
 	long		lossy_pages;
 	TBMIterator *prefetch_iterator;
@@ -1712,6 +1754,16 @@ typedef struct MaterialState
 } MaterialState;
 
 /* ----------------
+ *	 Shared memory container for per-worker sort information
+ * ----------------
+ */
+typedef struct SharedSortInfo
+{
+	int			num_workers;
+	TuplesortInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
+} SharedSortInfo;
+
+/* ----------------
  *	 SortState information
  * ----------------
  */
@@ -1725,6 +1777,8 @@ typedef struct SortState
 	bool		bounded_Done;	/* value of bounded we did the sort with */
 	int64		bound_Done;		/* value of bound we did the sort with */
 	void	   *tuplesortstate; /* private state of tuplesort.c */
+	bool		am_worker;		/* are we a worker? */
+	SharedSortInfo *shared_info;	/* one entry per worker */
 } SortState;
 
 /* ---------------------
@@ -1774,7 +1828,8 @@ typedef struct AggState
 	ExprContext **aggcontexts;	/* econtexts for long-lived data (per GS) */
 	ExprContext *tmpcontext;	/* econtext for input expressions */
 	ExprContext *curaggcontext; /* currently active aggcontext */
-	AggStatePerTrans curpertrans;	/* currently active trans state */
+	AggStatePerAgg curperagg;	/* currently active aggregate, if any */
+	AggStatePerTrans curpertrans;	/* currently active trans state, if any */
 	bool		input_done;		/* indicates end of input */
 	bool		agg_done;		/* indicates completion of Agg scan */
 	int			projected_set;	/* The last projected grouping set */
@@ -1795,10 +1850,8 @@ typedef struct AggState
 	int			num_hashes;
 	AggStatePerHash perhash;
 	AggStatePerGroup *hash_pergroup;	/* array of per-group pointers */
-	/* support for evaluation of agg inputs */
-	TupleTableSlot *evalslot;	/* slot for agg inputs */
-	ProjectionInfo *evalproj;	/* projection machinery */
-	TupleDesc	evaldesc;		/* descriptor of input tuples */
+	/* support for evaluation of agg input expressions: */
+	ProjectionInfo *combinedproj;	/* projection machinery */
 } AggState;
 
 /* ----------------
@@ -1892,14 +1945,17 @@ typedef struct UniqueState
 typedef struct GatherState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	bool		initialized;
-	struct ParallelExecutorInfo *pei;
-	int			nreaders;
-	int			nextreader;
-	int			nworkers_launched;
-	struct TupleQueueReader **reader;
+	bool		initialized;	/* workers launched? */
+	bool		need_to_scan_locally;	/* need to read from local plan? */
+	int64		tuples_needed;	/* tuple bound, see ExecSetTupleBound */
+	/* these fields are set up once: */
 	TupleTableSlot *funnel_slot;
-	bool		need_to_scan_locally;
+	struct ParallelExecutorInfo *pei;
+	/* all remaining fields are reinitialized during a rescan: */
+	int			nworkers_launched;	/* original number of workers */
+	int			nreaders;		/* number of still-active workers */
+	int			nextreader;		/* next one to try to read from */
+	struct TupleQueueReader **reader;	/* array with nreaders active entries */
 } GatherState;
 
 /* ----------------
@@ -1910,25 +1966,52 @@ typedef struct GatherState
  *		merge the results into a single sorted stream.
  * ----------------
  */
-struct GMReaderTuple;
+struct GMReaderTupleBuffer;		/* private in nodeGatherMerge.c */
 
 typedef struct GatherMergeState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	bool		initialized;
+	bool		initialized;	/* workers launched? */
+	bool		gm_initialized; /* gather_merge_init() done? */
+	bool		need_to_scan_locally;	/* need to read from local plan? */
+	int64		tuples_needed;	/* tuple bound, see ExecSetTupleBound */
+	/* these fields are set up once: */
+	TupleDesc	tupDesc;		/* descriptor for subplan result tuples */
+	int			gm_nkeys;		/* number of sort columns */
+	SortSupport gm_sortkeys;	/* array of length gm_nkeys */
 	struct ParallelExecutorInfo *pei;
-	int			nreaders;
-	int			nworkers_launched;
-	struct TupleQueueReader **reader;
-	TupleDesc	tupDesc;
-	TupleTableSlot **gm_slots;
+	/* all remaining fields are reinitialized during a rescan */
+	/* (but the arrays are not reallocated, just cleared) */
+	int			nworkers_launched;	/* original number of workers */
+	int			nreaders;		/* number of active workers */
+	TupleTableSlot **gm_slots;	/* array with nreaders+1 entries */
+	struct TupleQueueReader **reader;	/* array with nreaders active entries */
+	struct GMReaderTupleBuffer *gm_tuple_buffers;	/* nreaders tuple buffers */
 	struct binaryheap *gm_heap; /* binary heap of slot indices */
-	bool		gm_initialized; /* gather merge initilized ? */
-	bool		need_to_scan_locally;
-	int			gm_nkeys;
-	SortSupport gm_sortkeys;	/* array of length ms_nkeys */
-	struct GMReaderTupleBuffer *gm_tuple_buffers;	/* tuple buffer per reader */
 } GatherMergeState;
+
+/* ----------------
+ *	 Values displayed by EXPLAIN ANALYZE
+ * ----------------
+ */
+typedef struct HashInstrumentation
+{
+	int			nbuckets;		/* number of buckets at end of execution */
+	int			nbuckets_original;	/* planned number of buckets */
+	int			nbatch;			/* number of batches at end of execution */
+	int			nbatch_original;	/* planned number of batches */
+	size_t		space_peak;		/* speak memory usage in bytes */
+} HashInstrumentation;
+
+/* ----------------
+ *	 Shared memory container for per-worker hash information
+ * ----------------
+ */
+typedef struct SharedHashInfo
+{
+	int			num_workers;
+	HashInstrumentation hinstrument[FLEXIBLE_ARRAY_MEMBER];
+} SharedHashInfo;
 
 /* ----------------
  *	 HashState information
@@ -1940,6 +2023,9 @@ typedef struct HashState
 	HashJoinTable hashtable;	/* hash table for the hashjoin */
 	List	   *hashkeys;		/* list of ExprState nodes */
 	/* hashkeys is same as parent's hj_InnerHashKeys */
+
+	SharedHashInfo *shared_info;	/* one entry per worker */
+	HashInstrumentation *hinstrument;	/* this worker's entry */
 } HashState;
 
 /* ----------------

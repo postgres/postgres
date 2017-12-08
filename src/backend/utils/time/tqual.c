@@ -45,6 +45,8 @@
  *		  like HeapTupleSatisfiesSelf(), but includes open transactions
  *	 HeapTupleSatisfiesVacuum()
  *		  visible to any running transaction, used by VACUUM
+ *	 HeapTupleSatisfiesNonVacuumable()
+ *		  Snapshot-style API for HeapTupleSatisfiesVacuum
  *	 HeapTupleSatisfiesToast()
  *		  visible unless part of interrupted vacuum, used for TOAST
  *	 HeapTupleSatisfiesAny()
@@ -79,8 +81,6 @@
 SnapshotData SnapshotSelfData = {HeapTupleSatisfiesSelf};
 SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
 
-/* local functions */
-static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
 
 /*
  * SetHintBits()
@@ -1392,6 +1392,26 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 	return HEAPTUPLE_DEAD;
 }
 
+
+/*
+ * HeapTupleSatisfiesNonVacuumable
+ *
+ *	True if tuple might be visible to some transaction; false if it's
+ *	surely dead to everyone, ie, vacuumable.
+ *
+ *	This is an interface to HeapTupleSatisfiesVacuum that meets the
+ *	SnapshotSatisfiesFunc API, so it can be used through a Snapshot.
+ *	snapshot->xmin must have been set up with the xmin horizon to use.
+ */
+bool
+HeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot,
+								Buffer buffer)
+{
+	return HeapTupleSatisfiesVacuum(htup, snapshot->xmin, buffer)
+		!= HEAPTUPLE_DEAD;
+}
+
+
 /*
  * HeapTupleIsSurelyDead
  *
@@ -1402,7 +1422,7 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
  *	should already be set.  We assume that if no hint bits are set, the xmin
  *	or xmax transaction is still running.  This is therefore faster than
  *	HeapTupleSatisfiesVacuum, because we don't consult PGXACT nor CLOG.
- *	It's okay to return FALSE when in doubt, but we must return TRUE only
+ *	It's okay to return false when in doubt, but we must return true only
  *	if the tuple is removable.
  */
 bool
@@ -1457,10 +1477,10 @@ HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin)
  * Note: GetSnapshotData never stores either top xid or subxids of our own
  * backend into a snapshot, so these xids will not be reported as "running"
  * by this function.  This is OK for current uses, because we always check
- * TransactionIdIsCurrentTransactionId first, except for known-committed
- * XIDs which could not be ours anyway.
+ * TransactionIdIsCurrentTransactionId first, except when it's known the
+ * XID could not be ours anyway.
  */
-static bool
+bool
 XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 {
 	uint32		i;

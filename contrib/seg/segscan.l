@@ -3,6 +3,8 @@
  * A scanner for EMP-style numeric ranges
  */
 
+/* LCOV_EXCL_START */
+
 /* No reason to constrain amount of data slurped */
 #define YY_READ_BUF_SIZE 16777216
 
@@ -50,6 +52,8 @@ float        ({integer}|{real})([eE]{integer})?
 .            return yytext[0]; /* alert parser of the garbage */
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 void
 yyerror(SEG *result, const char *message)

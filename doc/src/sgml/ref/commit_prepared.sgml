@@ -3,7 +3,7 @@ doc/src/sgml/ref/commit_prepared.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-COMMIT-PREPARED">
+<refentry id="sql-commit-prepared">
  <indexterm zone="sql-commit-prepared">
   <primary>COMMIT PREPARED</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-COMMIT PREPARED <replaceable class="PARAMETER">transaction_id</replaceable>
+COMMIT PREPARED <replaceable class="parameter">transaction_id</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -39,7 +39,7 @@ COMMIT PREPARED <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">transaction_id</replaceable></term>
+    <term><replaceable class="parameter">transaction_id</replaceable></term>
     <listitem>
      <para>
       The transaction identifier of the transaction that is to be
@@ -75,7 +75,7 @@ COMMIT PREPARED <replaceable class="PARAMETER">transaction_id</replaceable>
   <title id="sql-commit-prepared-examples-title">Examples</title>
   <para>
    Commit the transaction identified by the transaction
-   identifier <literal>foobar</>:
+   identifier <literal>foobar</literal>:
 
 <programlisting>
 COMMIT PREPARED 'foobar';
@@ -99,8 +99,8 @@ COMMIT PREPARED 'foobar';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-prepare-transaction"></member>
-   <member><xref linkend="sql-rollback-prepared"></member>
+   <member><xref linkend="sql-prepare-transaction"/></member>
+   <member><xref linkend="sql-rollback-prepared"/></member>
   </simplelist>
  </refsect1>
 

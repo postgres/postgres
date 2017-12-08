@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_event_trigger.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEEVENTTRIGGER">
+<refentry id="sql-createeventtrigger">
  <indexterm zone="sql-createeventtrigger">
   <primary>CREATE EVENT TRIGGER</primary>
  </indexterm>
@@ -21,10 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable>
-    ON <replaceable class="PARAMETER">event</replaceable>
-    [ WHEN <replaceable class="PARAMETER">filter_variable</replaceable> IN (filter_value [, ... ]) [ AND ... ] ]
-    EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable>()
+CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
+    ON <replaceable class="parameter">event</replaceable>
+    [ WHEN <replaceable class="parameter">filter_variable</replaceable> IN (filter_value [, ... ]) [ AND ... ] ]
+    EXECUTE PROCEDURE <replaceable class="parameter">function_name</replaceable>()
 </synopsis>
  </refsynopsisdiv>
 
@@ -33,10 +33,10 @@ CREATE EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    <command>CREATE EVENT TRIGGER</command> creates a new event trigger.
-   Whenever the designated event occurs and the <literal>WHEN</> condition
+   Whenever the designated event occurs and the <literal>WHEN</literal> condition
    associated with the trigger, if any, is satisfied, the trigger function
    will be executed.  For a general introduction to event triggers, see
-   <xref linkend="event-triggers">.  The user who creates an event trigger
+   <xref linkend="event-triggers"/>.  The user who creates an event trigger
    becomes its owner.
   </para>
  </refsect1>
@@ -60,7 +60,7 @@ CREATE EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       The name of the event that triggers a call to the given function.
-      See <xref linkend="event-trigger-definition"> for more information
+      See <xref linkend="event-trigger-definition"/> for more information
       on event names.
      </para>
     </listitem>
@@ -85,8 +85,8 @@ CREATE EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable>
      <para>
       A list of values for the
       associated <replaceable class="parameter">filter_variable</replaceable>
-      for which the trigger should fire.  For <literal>TAG</>, this means a
-      list of command tags (e.g. <literal>'DROP FUNCTION'</>).
+      for which the trigger should fire.  For <literal>TAG</literal>, this means a
+      list of command tags (e.g. <literal>'DROP FUNCTION'</literal>).
      </para>
     </listitem>
    </varlistentry>
@@ -113,7 +113,7 @@ CREATE EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    Event triggers are disabled in single-user mode (see <xref
-   linkend="app-postgres">).  If an erroneous event trigger disables the
+   linkend="app-postgres"/>).  If an erroneous event trigger disables the
    database so much that you can't even drop the trigger, restart in
    single-user mode and you'll be able to do that.
   </para>
@@ -154,9 +154,9 @@ CREATE EVENT TRIGGER abort_ddl ON ddl_command_start
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altereventtrigger"></member>
-   <member><xref linkend="sql-dropeventtrigger"></member>
-   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-altereventtrigger"/></member>
+   <member><xref linkend="sql-dropeventtrigger"/></member>
+   <member><xref linkend="sql-createfunction"/></member>
   </simplelist>
  </refsect1>
 </refentry>

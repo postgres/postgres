@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-03-13 22:07+0000\n"
-"PO-Revision-Date: 2017-03-13 23:08-0400\n"
+"POT-Creation-Date: 2017-08-04 15:37+0000\n"
+"PO-Revision-Date: 2017-08-04 13:01-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -19,49 +19,49 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: plpy_cursorobject.c:101
+#: plpy_cursorobject.c:100
 #, c-format
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor hat eine Anfrage oder einen Plan erwartet"
 
-#: plpy_cursorobject.c:177
+#: plpy_cursorobject.c:176
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor nimmt eine Sequenz als zweites Argument"
 
-#: plpy_cursorobject.c:193 plpy_spi.c:227
+#: plpy_cursorobject.c:192 plpy_spi.c:226
 #, c-format
 msgid "could not execute plan"
 msgstr "konnte Plan nicht ausführen"
 
-#: plpy_cursorobject.c:196 plpy_spi.c:230
+#: plpy_cursorobject.c:195 plpy_spi.c:229
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "Sequenz aus %d Argument erwartet, aber %d erhalten: %s"
 msgstr[1] "Sequenz aus %d Argumenten erwartet, aber %d erhalten: %s"
 
-#: plpy_cursorobject.c:351
+#: plpy_cursorobject.c:350
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "Iteration mit einem geschlossenen Cursor"
 
-#: plpy_cursorobject.c:359 plpy_cursorobject.c:424
+#: plpy_cursorobject.c:358 plpy_cursorobject.c:423
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "Iteration mit einem Cursor in einer abgebrochenen Transaktionen"
 
-#: plpy_cursorobject.c:416
+#: plpy_cursorobject.c:415
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "Lesen aus einem geschlossenen Cursor"
 
-#: plpy_cursorobject.c:464 plpy_spi.c:435
+#: plpy_cursorobject.c:463 plpy_spi.c:434
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr "Anfrageergebnis hat zu viele Zeilen, um in eine Python-Liste zu passen"
 
-#: plpy_cursorobject.c:505
+#: plpy_cursorobject.c:504
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "Schließen eines Cursors in einer abgebrochenen Subtransaktion"
@@ -101,82 +101,82 @@ msgstr "Fehler beim Auslesen des nächsten Elements vom Iterator"
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "PL/Python-Funktion mit Rückgabetyp »void« hat nicht None zurückgegeben"
 
-#: plpy_exec.c:374 plpy_exec.c:400
+#: plpy_exec.c:379 plpy_exec.c:405
 #, c-format
 msgid "unexpected return value from trigger procedure"
 msgstr "unerwarteter Rückgabewert von Triggerprozedur"
 
-#: plpy_exec.c:375
+#: plpy_exec.c:380
 #, c-format
 msgid "Expected None or a string."
 msgstr "Erwartete None oder eine Zeichenkette."
 
-#: plpy_exec.c:390
+#: plpy_exec.c:395
 #, c-format
 msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
 msgstr "PL/Python-Funktion gab in einem DELETE-Trigger \"MODIFY\" zurück -- ignoriert"
 
-#: plpy_exec.c:401
+#: plpy_exec.c:406
 #, c-format
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "Erwartete None, \"OK\", \"SKIP\" oder \"MODIFY\"."
 
-#: plpy_exec.c:482
+#: plpy_exec.c:487
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "PyList_SetItem() fehlgeschlagen, beim Einrichten der Argumente"
 
-#: plpy_exec.c:486
+#: plpy_exec.c:491
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "PyDict_SetItemString() fehlgeschlagen, beim Einrichten der Argumente"
 
-#: plpy_exec.c:498
+#: plpy_exec.c:503
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "Funktion, die einen Record zurückgibt, in einem Zusammenhang aufgerufen, der Typ record nicht verarbeiten kann"
 
-#: plpy_exec.c:714
+#: plpy_exec.c:719
 #, c-format
 msgid "while creating return value"
 msgstr "beim Erzeugen des Rückgabewerts"
 
-#: plpy_exec.c:738
+#: plpy_exec.c:743
 #, c-format
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "konnte neues Dictionary nicht erzeugen, beim Aufbauen der Triggerargumente"
 
-#: plpy_exec.c:926
+#: plpy_exec.c:931
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] wurde gelöscht, kann Zeile nicht ändern"
 
-#: plpy_exec.c:931
+#: plpy_exec.c:936
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] ist kein Dictionary"
 
-#: plpy_exec.c:958
+#: plpy_exec.c:963
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "Dictionary-Schlüssel auf Position %d in TD[\"new\"] ist keine Zeichenkette"
 
-#: plpy_exec.c:965
+#: plpy_exec.c:970
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "in TD[\"new\"] gefundener Schlüssel »%s« existiert nicht als Spalte in der den Trigger auslösenden Zeile"
 
-#: plpy_exec.c:970
+#: plpy_exec.c:975
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "Systemattribut »%s« kann nicht gesetzt werden"
 
-#: plpy_exec.c:1041
+#: plpy_exec.c:1046
 #, c-format
 msgid "while modifying trigger row"
 msgstr "beim Ändern der Triggerzeile"
 
-#: plpy_exec.c:1102
+#: plpy_exec.c:1107
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "Abbruch einer Subtransaktion, die nicht beendet wurde, wird erzwungen"
@@ -257,7 +257,7 @@ msgstr "konnte Fehlermeldung in plpy.elog nicht parsen"
 
 #: plpy_plpymodule.c:469
 #, c-format
-msgid "Argument 'message' given by name and position"
+msgid "argument 'message' given by name and position"
 msgstr "Argument »message« wurde durch Namen und Position angegeben"
 
 #: plpy_plpymodule.c:496
@@ -300,32 +300,32 @@ msgstr "konnte anonymen PL/Python-Codeblock nicht kompilieren"
 msgid "command did not produce a result set"
 msgstr "Befehl hat keine Ergebnismenge erzeugt"
 
-#: plpy_spi.c:60
+#: plpy_spi.c:59
 #, c-format
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "zweites Argument von plpy.prepare muss eine Sequenz sein"
 
-#: plpy_spi.c:116
+#: plpy_spi.c:115
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: Typname auf Position %d ist keine Zeichenkette"
 
-#: plpy_spi.c:192
+#: plpy_spi.c:191
 #, c-format
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute hat eine Anfrage oder einen Plan erwartet"
 
-#: plpy_spi.c:211
+#: plpy_spi.c:210
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute nimmt eine Sequenz als zweites Argument"
 
-#: plpy_spi.c:336
+#: plpy_spi.c:335
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "SPI_execute_plan fehlgeschlagen: %s"
 
-#: plpy_spi.c:378
+#: plpy_spi.c:377
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute fehlgeschlagen: %s"
@@ -370,85 +370,83 @@ msgstr "kein Attribut »Decimal« im Modul"
 msgid "conversion from numeric to Decimal failed"
 msgstr "Umwandlung von numeric in Decimal fehlgeschlagen"
 
-#: plpy_typeio.c:772
+#: plpy_typeio.c:773
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "konnte Bytes-Darstellung eines Python-Objektes nicht erzeugen"
 
-#: plpy_typeio.c:881
+#: plpy_typeio.c:882
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "konnte Zeichenkettendarstellung eines Python-Objektes nicht erzeugen"
 
-#: plpy_typeio.c:892
+#: plpy_typeio.c:893
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
 msgstr "konnte Python-Objekt nicht in cstring umwandeln: Python-Zeichenkettendarstellung enthält anscheinend Null-Bytes"
 
-#: plpy_typeio.c:949
+#: plpy_typeio.c:950
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "fehlerhafte Record-Konstante: »%s«"
 
-#: plpy_typeio.c:950
+#: plpy_typeio.c:951
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Linke Klammer fehlt."
 
-#: plpy_typeio.c:951 plpy_typeio.c:1389
+#: plpy_typeio.c:952 plpy_typeio.c:1390
 #, c-format
-msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g. \"[('foo')]\""
-msgstr ""
+msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
+msgstr "Um einen zusammengesetzten Typ in einem Array zurückzugeben, geben Sie den zusammengesetzten Typ als ein Python-Tupel zurück, z.B. »[('foo',)]«."
 
-#: plpy_typeio.c:1000
+#: plpy_typeio.c:1001
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "Anzahl der Arraydimensionen überschreitet erlaubtes Maximum (%d)"
 
-#: plpy_typeio.c:1004
-#, fuzzy, c-format
-#| msgid "cannot determine OID of function lo_truncate\n"
+#: plpy_typeio.c:1005
+#, c-format
 msgid "cannot determine sequence length for function return value"
-msgstr "kann OID der Funktion lo_truncate nicht ermitteln\n"
+msgstr "kann Sequenzlänge für Funktionsrückgabewert nicht ermitteln"
 
-#: plpy_typeio.c:1007 plpy_typeio.c:1011
-#, fuzzy, c-format
-#| msgid "array size exceeds the maximum allowed (%d)"
+#: plpy_typeio.c:1008 plpy_typeio.c:1012
+#, c-format
 msgid "array size exceeds the maximum allowed"
-msgstr "Arraygröße überschreitet erlaubtes Maximum (%d)"
+msgstr "Arraygröße überschreitet erlaubtes Maximum"
 
-#: plpy_typeio.c:1037
+#: plpy_typeio.c:1038
 #, c-format
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "Rückgabewert von Funktion mit Array-Rückgabetyp ist keine Python-Sequenz"
 
-#: plpy_typeio.c:1090
+#: plpy_typeio.c:1091
 #, fuzzy, c-format
 #| msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgid "multidimensional arrays must have array expressions with matching dimensions. PL/Python function return value has sequence length %d while expected %d"
 msgstr "mehrdimensionale Arrays müssen Arraysausdrücke mit gleicher Anzahl Dimensionen haben"
 
-#: plpy_typeio.c:1212
+#: plpy_typeio.c:1213
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "Schlüssel »%s« nicht in Mapping gefunden"
 
-#: plpy_typeio.c:1213
+#: plpy_typeio.c:1214
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Um einen NULL-Wert in einer Spalte zurückzugeben, muss der Wert None mit einem nach der Spalte benannten Schlüssel in das Mapping eingefügt werden."
 
-#: plpy_typeio.c:1264
+#: plpy_typeio.c:1265
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "Länge der zurückgegebenen Sequenz hat nicht mit der Anzahl der Spalten in der Zeile übereingestimmt"
 
-#: plpy_typeio.c:1387
+#: plpy_typeio.c:1388
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "Attribut »%s« existiert nicht in Python-Objekt"
 
-#: plpy_typeio.c:1390
+#: plpy_typeio.c:1391
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Um einen NULL-Wert in einer Spalte zurückzugeben, muss das zurückzugebende Objekt ein nach der Spalte benanntes Attribut mit dem Wert None haben."
@@ -462,6 +460,3 @@ msgstr "konnte Python-Unicode-Objekt nicht in Bytes umwandeln"
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "konnte kodierte Zeichenkette nicht in Bytes umwandeln"
-
-#~ msgid "could not create new Python list"
-#~ msgstr "konnte neue Python-Liste nicht erzeugen"

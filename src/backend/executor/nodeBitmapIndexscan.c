@@ -29,6 +29,19 @@
 
 
 /* ----------------------------------------------------------------
+ *		ExecBitmapIndexScan
+ *
+ *		stub for pro forma compliance
+ * ----------------------------------------------------------------
+ */
+static TupleTableSlot *
+ExecBitmapIndexScan(PlanState *pstate)
+{
+	elog(ERROR, "BitmapIndexScan node does not support ExecProcNode call convention");
+	return NULL;
+}
+
+/* ----------------------------------------------------------------
  *		MultiExecBitmapIndexScan(node)
  * ----------------------------------------------------------------
  */
@@ -208,6 +221,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	indexstate = makeNode(BitmapIndexScanState);
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
+	indexstate->ss.ps.ExecProcNode = ExecBitmapIndexScan;
 
 	/* normally we don't make the result bitmap till runtime */
 	indexstate->biss_result = NULL;

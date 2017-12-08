@@ -70,26 +70,21 @@ static Datum fmgr_security_definer(PG_FUNCTION_ARGS);
 static const FmgrBuiltin *
 fmgr_isbuiltin(Oid id)
 {
-	int			low = 0;
-	int			high = fmgr_nbuiltins - 1;
+	uint16		index;
+
+	/* fast lookup only possible if original oid still assigned */
+	if (id >= FirstBootstrapObjectId)
+		return NULL;
 
 	/*
-	 * Loop invariant: low is the first index that could contain target entry,
-	 * and high is the last index that could contain it.
+	 * Lookup function data. If there's a miss in that range it's likely a
+	 * nonexistant function, returning NULL here will trigger an ERROR later.
 	 */
-	while (low <= high)
-	{
-		int			i = (high + low) / 2;
-		const FmgrBuiltin *ptr = &fmgr_builtins[i];
+	index = fmgr_builtin_oid_index[id];
+	if (index == InvalidOidBuiltinMapping)
+		return NULL;
 
-		if (id == ptr->foid)
-			return ptr;
-		else if (id > ptr->foid)
-			low = i + 1;
-		else
-			high = i - 1;
-	}
-	return NULL;
+	return &fmgr_builtins[index];
 }
 
 /*
@@ -1941,8 +1936,6 @@ get_call_expr_argtype(Node *expr, int argnum)
 		args = ((DistinctExpr *) expr)->args;
 	else if (IsA(expr, ScalarArrayOpExpr))
 		args = ((ScalarArrayOpExpr *) expr)->args;
-	else if (IsA(expr, ArrayCoerceExpr))
-		args = list_make1(((ArrayCoerceExpr *) expr)->arg);
 	else if (IsA(expr, NullIfExpr))
 		args = ((NullIfExpr *) expr)->args;
 	else if (IsA(expr, WindowFunc))
@@ -1956,15 +1949,11 @@ get_call_expr_argtype(Node *expr, int argnum)
 	argtype = exprType((Node *) list_nth(args, argnum));
 
 	/*
-	 * special hack for ScalarArrayOpExpr and ArrayCoerceExpr: what the
-	 * underlying function will actually get passed is the element type of the
-	 * array.
+	 * special hack for ScalarArrayOpExpr: what the underlying function will
+	 * actually get passed is the element type of the array.
 	 */
 	if (IsA(expr, ScalarArrayOpExpr) &&
 		argnum == 1)
-		argtype = get_base_element_type(argtype);
-	else if (IsA(expr, ArrayCoerceExpr) &&
-			 argnum == 0)
 		argtype = get_base_element_type(argtype);
 
 	return argtype;
@@ -2012,8 +2001,6 @@ get_call_expr_arg_stable(Node *expr, int argnum)
 		args = ((DistinctExpr *) expr)->args;
 	else if (IsA(expr, ScalarArrayOpExpr))
 		args = ((ScalarArrayOpExpr *) expr)->args;
-	else if (IsA(expr, ArrayCoerceExpr))
-		args = list_make1(((ArrayCoerceExpr *) expr)->arg);
 	else if (IsA(expr, NullIfExpr))
 		args = ((NullIfExpr *) expr)->args;
 	else if (IsA(expr, WindowFunc))

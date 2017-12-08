@@ -18,7 +18,7 @@ our $config = {
 	icu       => undef,    # --with-icu=<path>
 	nls       => undef,    # --enable-nls=<path>
 	tap_tests => undef,    # --enable-tap-tests
-	tcl       => undef,    # --with-tls=<path>
+	tcl       => undef,    # --with-tcl=<path>
 	perl      => undef,    # --with-perl
 	python    => undef,    # --with-python=<path>
 	openssl   => undef,    # --with-openssl=<path>

@@ -177,7 +177,7 @@ extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void standard_ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
 extern bool ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation);
-extern void CheckValidResultRel(Relation resultRel, CmdType operation);
+extern void CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
@@ -188,6 +188,8 @@ extern void ExecCleanUpTriggerState(EState *estate);
 extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
+extern void ExecPartitionCheck(ResultRelInfo *resultRelInfo,
+				   TupleTableSlot *slot, EState *estate);
 extern void ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					 TupleTableSlot *slot, EState *estate);
 extern LockTupleMode ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo);
@@ -206,16 +208,6 @@ extern void EvalPlanQualSetPlan(EPQState *epqstate,
 extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
 					 HeapTuple tuple);
 extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);
-extern void ExecSetupPartitionTupleRouting(Relation rel,
-							   PartitionDispatch **pd,
-							   ResultRelInfo **partitions,
-							   TupleConversionMap ***tup_conv_maps,
-							   TupleTableSlot **partition_tuple_slot,
-							   int *num_parted, int *num_partitions);
-extern int ExecFindPartition(ResultRelInfo *resultRelInfo,
-				  PartitionDispatch *pd,
-				  TupleTableSlot *slot,
-				  EState *estate);
 
 #define EvalPlanQualSetSlot(epqstate, slot)  ((epqstate)->origslot = (slot))
 extern void EvalPlanQualFetchRowMarks(EPQState *epqstate);
@@ -224,13 +216,31 @@ extern void EvalPlanQualBegin(EPQState *epqstate, EState *parentestate);
 extern void EvalPlanQualEnd(EPQState *epqstate);
 
 /*
- * prototypes from functions in execProcnode.c
+ * functions in execProcnode.c
  */
 extern PlanState *ExecInitNode(Plan *node, EState *estate, int eflags);
-extern TupleTableSlot *ExecProcNode(PlanState *node);
 extern Node *MultiExecProcNode(PlanState *node);
 extern void ExecEndNode(PlanState *node);
 extern bool ExecShutdownNode(PlanState *node);
+extern void ExecSetTupleBound(int64 tuples_needed, PlanState *child_node);
+
+
+/* ----------------------------------------------------------------
+ *		ExecProcNode
+ *
+ *		Execute the given node to return a(nother) tuple.
+ * ----------------------------------------------------------------
+ */
+#ifndef FRONTEND
+static inline TupleTableSlot *
+ExecProcNode(PlanState *node)
+{
+	if (node->chgParam != NULL) /* something changed? */
+		ExecReScan(node);		/* let ReScan handle this */
+
+	return node->ExecProcNode(node);
+}
+#endif
 
 /*
  * prototypes from functions in execExpr.c
@@ -267,7 +277,7 @@ ExecEvalExpr(ExprState *state,
 			 ExprContext *econtext,
 			 bool *isNull)
 {
-	return (*state->evalfunc) (state, econtext, isNull);
+	return state->evalfunc(state, econtext, isNull);
 }
 #endif
 
@@ -286,7 +296,7 @@ ExecEvalExprSwitchContext(ExprState *state,
 	MemoryContext oldContext;
 
 	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
-	retDatum = (*state->evalfunc) (state, econtext, isNull);
+	retDatum = state->evalfunc(state, econtext, isNull);
 	MemoryContextSwitchTo(oldContext);
 	return retDatum;
 }
@@ -380,6 +390,7 @@ extern SetExprState *ExecInitFunctionResultSet(Expr *expr,
 						  ExprContext *econtext, PlanState *parent);
 extern Datum ExecMakeFunctionResultSet(SetExprState *fcache,
 						  ExprContext *econtext,
+						  MemoryContext argContext,
 						  bool *isNull,
 						  ExprDoneCond *isDone);
 
@@ -474,6 +485,8 @@ extern void ExecAssignResultTypeFromTL(PlanState *planstate);
 extern TupleDesc ExecGetResultType(PlanState *planstate);
 extern void ExecAssignProjectionInfo(PlanState *planstate,
 						 TupleDesc inputDesc);
+extern void ExecConditionalAssignProjectionInfo(PlanState *planstate,
+									TupleDesc inputDesc, Index varno);
 extern void ExecFreeExprContext(PlanState *planstate);
 extern void ExecAssignScanType(ScanState *scanstate, TupleDesc tupDesc);
 extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);

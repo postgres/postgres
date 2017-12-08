@@ -145,11 +145,11 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		ResourceOwnerRememberBuffer(CurrentResourceOwner,
 									BufferDescriptorGetBuffer(bufHdr));
 		if (buf_state & BM_VALID)
-			*foundPtr = TRUE;
+			*foundPtr = true;
 		else
 		{
 			/* Previous read attempt must have failed; try again */
-			*foundPtr = FALSE;
+			*foundPtr = false;
 		}
 		return bufHdr;
 	}
@@ -268,7 +268,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	buf_state += BUF_USAGECOUNT_ONE;
 	pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 
-	*foundPtr = FALSE;
+	*foundPtr = false;
 	return bufHdr;
 }
 

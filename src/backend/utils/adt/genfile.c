@@ -477,7 +477,7 @@ pg_ls_dir_1arg(PG_FUNCTION_ARGS)
 
 /* Generic function to return a directory listing of files */
 static Datum
-pg_ls_dir_files(FunctionCallInfo fcinfo, char *dir)
+pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir)
 {
 	FuncCallContext *funcctx;
 	struct dirent *de;
@@ -508,7 +508,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, char *dir)
 		if (!fctx->dirdesc)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read directory \"%s\": %m",
+					 errmsg("could not open directory \"%s\": %m",
 							fctx->location)));
 
 		funcctx->user_fctx = fctx;

@@ -67,6 +67,8 @@ static void evaluate_backtick(PsqlScanState state);
 extern int	slash_yyget_column(yyscan_t yyscanner);
 extern void slash_yyset_column(int column_no, yyscan_t yyscanner);
 
+/* LCOV_EXCL_START */
+
 %}
 
 /* Except for the prefix, these options should match psqlscan.l */
@@ -281,6 +283,10 @@ other			.
 					unquoted_option_chars = 0;
 				}
 
+:\{\?{variable_char}+\}	{
+					psqlscan_test_variable(cur_state, yytext, yyleng);
+				}
+
 :'{variable_char}*	{
 					/* Throw back everything but the colon */
 					yyless(1);
@@ -289,6 +295,20 @@ other			.
 				}
 
 :\"{variable_char}*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					unquoted_option_chars++;
+					ECHO;
+				}
+
+:\{\?{variable_char}*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					unquoted_option_chars++;
+					ECHO;
+				}
+
+:\{		{
 					/* Throw back everything but the colon */
 					yyless(1);
 					unquoted_option_chars++;
@@ -449,6 +469,8 @@ other			.
 				}
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 /*
  * Scan the command name of a psql backslash command.  This should be called

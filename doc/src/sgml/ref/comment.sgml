@@ -3,7 +3,7 @@ doc/src/sgml/ref/comment.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-COMMENT">
+<refentry id="sql-comment">
  <indexterm zone="sql-comment">
   <primary>COMMENT</primary>
  </indexterm>
@@ -23,48 +23,50 @@ PostgreSQL documentation
 <synopsis>
 COMMENT ON
 {
-  ACCESS METHOD <replaceable class="PARAMETER">object_name</replaceable> |
-  AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
+  ACCESS METHOD <replaceable class="parameter">object_name</replaceable> |
+  AGGREGATE <replaceable class="parameter">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
-  COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
-  COLUMN <replaceable class="PARAMETER">relation_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
-  CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
-  CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ON DOMAIN <replaceable class="PARAMETER">domain_name</replaceable> |
-  CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
-  DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
-  DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
-  EXTENSION <replaceable class="PARAMETER">object_name</replaceable> |
-  EVENT TRIGGER <replaceable class="PARAMETER">object_name</replaceable> |
-  FOREIGN DATA WRAPPER <replaceable class="PARAMETER">object_name</replaceable> |
-  FOREIGN TABLE <replaceable class="PARAMETER">object_name</replaceable> |
-  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
-  INDEX <replaceable class="PARAMETER">object_name</replaceable> |
-  LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
-  MATERIALIZED VIEW <replaceable class="PARAMETER">object_name</replaceable> |
-  OPERATOR <replaceable class="PARAMETER">operator_name</replaceable> (<replaceable class="PARAMETER">left_type</replaceable>, <replaceable class="PARAMETER">right_type</replaceable>) |
-  OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
-  OPERATOR FAMILY <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
-  POLICY <replaceable class="PARAMETER">policy_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
-  [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
-  PUBLICATION <replaceable class="PARAMETER">object_name</replaceable> |
-  ROLE <replaceable class="PARAMETER">object_name</replaceable> |
-  RULE <replaceable class="PARAMETER">rule_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
-  SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
-  SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
-  SERVER <replaceable class="PARAMETER">object_name</replaceable> |
-  STATISTICS <replaceable class="PARAMETER">object_name</replaceable> |
-  SUBSCRIPTION <replaceable class="PARAMETER">object_name</replaceable> |
-  TABLE <replaceable class="PARAMETER">object_name</replaceable> |
-  TABLESPACE <replaceable class="PARAMETER">object_name</replaceable> |
-  TEXT SEARCH CONFIGURATION <replaceable class="PARAMETER">object_name</replaceable> |
-  TEXT SEARCH DICTIONARY <replaceable class="PARAMETER">object_name</replaceable> |
-  TEXT SEARCH PARSER <replaceable class="PARAMETER">object_name</replaceable> |
-  TEXT SEARCH TEMPLATE <replaceable class="PARAMETER">object_name</replaceable> |
+  COLLATION <replaceable class="parameter">object_name</replaceable> |
+  COLUMN <replaceable class="parameter">relation_name</replaceable>.<replaceable class="parameter">column_name</replaceable> |
+  CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ON <replaceable class="parameter">table_name</replaceable> |
+  CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ON DOMAIN <replaceable class="parameter">domain_name</replaceable> |
+  CONVERSION <replaceable class="parameter">object_name</replaceable> |
+  DATABASE <replaceable class="parameter">object_name</replaceable> |
+  DOMAIN <replaceable class="parameter">object_name</replaceable> |
+  EXTENSION <replaceable class="parameter">object_name</replaceable> |
+  EVENT TRIGGER <replaceable class="parameter">object_name</replaceable> |
+  FOREIGN DATA WRAPPER <replaceable class="parameter">object_name</replaceable> |
+  FOREIGN TABLE <replaceable class="parameter">object_name</replaceable> |
+  FUNCTION <replaceable class="parameter">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  INDEX <replaceable class="parameter">object_name</replaceable> |
+  LARGE OBJECT <replaceable class="parameter">large_object_oid</replaceable> |
+  MATERIALIZED VIEW <replaceable class="parameter">object_name</replaceable> |
+  OPERATOR <replaceable class="parameter">operator_name</replaceable> (<replaceable class="parameter">left_type</replaceable>, <replaceable class="parameter">right_type</replaceable>) |
+  OPERATOR CLASS <replaceable class="parameter">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
+  OPERATOR FAMILY <replaceable class="parameter">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
+  POLICY <replaceable class="parameter">policy_name</replaceable> ON <replaceable class="parameter">table_name</replaceable> |
+  [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">object_name</replaceable> |
+  PROCEDURE <replaceable class="parameter">procedure_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  PUBLICATION <replaceable class="parameter">object_name</replaceable> |
+  ROLE <replaceable class="parameter">object_name</replaceable> |
+  ROUTINE <replaceable class="parameter">routine_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  RULE <replaceable class="parameter">rule_name</replaceable> ON <replaceable class="parameter">table_name</replaceable> |
+  SCHEMA <replaceable class="parameter">object_name</replaceable> |
+  SEQUENCE <replaceable class="parameter">object_name</replaceable> |
+  SERVER <replaceable class="parameter">object_name</replaceable> |
+  STATISTICS <replaceable class="parameter">object_name</replaceable> |
+  SUBSCRIPTION <replaceable class="parameter">object_name</replaceable> |
+  TABLE <replaceable class="parameter">object_name</replaceable> |
+  TABLESPACE <replaceable class="parameter">object_name</replaceable> |
+  TEXT SEARCH CONFIGURATION <replaceable class="parameter">object_name</replaceable> |
+  TEXT SEARCH DICTIONARY <replaceable class="parameter">object_name</replaceable> |
+  TEXT SEARCH PARSER <replaceable class="parameter">object_name</replaceable> |
+  TEXT SEARCH TEMPLATE <replaceable class="parameter">object_name</replaceable> |
   TRANSFORM FOR <replaceable>type_name</replaceable> LANGUAGE <replaceable>lang_name</replaceable> |
-  TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
-  TYPE <replaceable class="PARAMETER">object_name</replaceable> |
-  VIEW <replaceable class="PARAMETER">object_name</replaceable>
-} IS '<replaceable class="PARAMETER">text</replaceable>'
+  TRIGGER <replaceable class="parameter">trigger_name</replaceable> ON <replaceable class="parameter">table_name</replaceable> |
+  TYPE <replaceable class="parameter">object_name</replaceable> |
+  VIEW <replaceable class="parameter">object_name</replaceable>
+} IS '<replaceable class="parameter">text</replaceable>'
 
 <phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
 
@@ -83,16 +85,16 @@ COMMENT ON
 
   <para>
    Only one comment string is stored for each object, so to modify a comment,
-   issue a new <command>COMMENT</> command for the same object.  To remove a
+   issue a new <command>COMMENT</command> command for the same object.  To remove a
    comment, write <literal>NULL</literal> in place of the text string.
    Comments are automatically dropped when their object is dropped.
   </para>
 
   <para>
    For most kinds of object, only the object's owner can set the comment.
-   Roles don't have owners, so the rule for <literal>COMMENT ON ROLE</> is
+   Roles don't have owners, so the rule for <literal>COMMENT ON ROLE</literal> is
    that you must be superuser to comment on a superuser role, or have the
-   <literal>CREATEROLE</> privilege to comment on non-superuser roles.
+   <literal>CREATEROLE</literal> privilege to comment on non-superuser roles.
    Likewise, access methods don't have owners either; you must be superuser
    to comment on an access method.
    Of course, a superuser can comment on anything.
@@ -103,9 +105,9 @@ COMMENT ON
     <command>\d</command> family of commands.
     Other user interfaces to retrieve comments can be built atop
     the same built-in functions that <application>psql</application> uses, namely
-    <function>obj_description</>, <function>col_description</>,
-    and <function>shobj_description</>
-    (see <xref linkend="functions-info-comment-table">).
+    <function>obj_description</function>, <function>col_description</function>,
+    and <function>shobj_description</function>
+    (see <xref linkend="functions-info-comment-table"/>).
   </para>
  </refsect1>
 
@@ -121,13 +123,15 @@ COMMENT ON
     <term><replaceable class="parameter">function_name</replaceable></term>
     <term><replaceable class="parameter">operator_name</replaceable></term>
     <term><replaceable class="parameter">policy_name</replaceable></term>
+    <term><replaceable class="parameter">procedure_name</replaceable></term>
+    <term><replaceable class="parameter">routine_name</replaceable></term>
     <term><replaceable class="parameter">rule_name</replaceable></term>
     <term><replaceable class="parameter">trigger_name</replaceable></term>
     <listitem>
      <para>
       The name of the object to be commented.  Names of tables,
       aggregates, collations, conversions, domains, foreign tables, functions,
-      indexes, operators, operator classes, operator families, sequences,
+      indexes, operators, operator classes, operator families, procedures, routines, sequences,
       statistics, text search objects, types, and views can be
       schema-qualified. When commenting on a column,
       <replaceable class="parameter">relation_name</replaceable> must refer
@@ -170,15 +174,15 @@ COMMENT ON
     <term><replaceable class="parameter">argmode</replaceable></term>
     <listitem>
      <para>
-      The mode of a function or aggregate
-      argument: <literal>IN</>, <literal>OUT</>,
-      <literal>INOUT</>, or <literal>VARIADIC</>.
-      If omitted, the default is <literal>IN</>.
+      The mode of a function, procedure, or aggregate
+      argument: <literal>IN</literal>, <literal>OUT</literal>,
+      <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
+      If omitted, the default is <literal>IN</literal>.
       Note that <command>COMMENT</command> does not actually pay
-      any attention to <literal>OUT</> arguments, since only the input
+      any attention to <literal>OUT</literal> arguments, since only the input
       arguments are needed to determine the function's identity.
-      So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
-      and <literal>VARIADIC</> arguments.
+      So it is sufficient to list the <literal>IN</literal>, <literal>INOUT</literal>,
+      and <literal>VARIADIC</literal> arguments.
      </para>
     </listitem>
    </varlistentry>
@@ -187,7 +191,7 @@ COMMENT ON
     <term><replaceable class="parameter">argname</replaceable></term>
     <listitem>
      <para>
-      The name of a function or aggregate argument.
+      The name of a function, procedure, or aggregate argument.
       Note that <command>COMMENT</command> does not actually pay
       any attention to argument names, since only the argument data
       types are needed to determine the function's identity.
@@ -199,7 +203,7 @@ COMMENT ON
     <term><replaceable class="parameter">argtype</replaceable></term>
     <listitem>
      <para>
-      The data type of a function or aggregate argument.
+      The data type of a function, procedure, or aggregate argument.
      </para>
     </listitem>
    </varlistentry>
@@ -219,7 +223,7 @@ COMMENT ON
     <listitem>
      <para>
       The data type(s) of the operator's arguments (optionally
-      schema-qualified).  Write <literal>NONE</> for the missing argument
+      schema-qualified).  Write <literal>NONE</literal> for the missing argument
       of a prefix or postfix operator.
      </para>
     </listitem>
@@ -258,7 +262,7 @@ COMMENT ON
     <term><replaceable class="parameter">text</replaceable></term>
     <listitem>
      <para>
-      The new comment, written as a string literal; or <literal>NULL</>
+      The new comment, written as a string literal; or <literal>NULL</literal>
       to drop the comment.
      </para>
     </listitem>
@@ -325,6 +329,7 @@ COMMENT ON OPERATOR - (NONE, integer) IS 'Unary minus';
 COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for btrees';
 COMMENT ON OPERATOR FAMILY integer_ops USING btree IS 'all integer operators for btrees';
 COMMENT ON POLICY my_policy ON mytable IS 'Filter rows by users';
+COMMENT ON PROCEDURE my_proc (integer, integer) IS 'Runs a report';
 COMMENT ON ROLE my_role IS 'Administration group for finance tables';
 COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';

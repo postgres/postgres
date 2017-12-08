@@ -300,7 +300,7 @@ typedef struct GinScanKeyData
 
 	/*
 	 * Match status data.  curItem is the TID most recently tested (could be a
-	 * lossy-page pointer).  curItemMatches is TRUE if it passes the
+	 * lossy-page pointer).  curItemMatches is true if it passes the
 	 * consistentFn test; if so, recheckCurItem is the recheck flag.
 	 * isFinished means that all the input entry streams are finished, so this
 	 * key cannot succeed for any later TIDs.
@@ -439,7 +439,7 @@ extern void ginHeapTupleFastCollect(GinState *ginstate,
 						OffsetNumber attnum, Datum value, bool isNull,
 						ItemPointer ht_ctid);
 extern void ginInsertCleanup(GinState *ginstate, bool full_clean,
-				 bool fill_fsm, IndexBulkDeleteResult *stats);
+				 bool fill_fsm, bool forceCleanup, IndexBulkDeleteResult *stats);
 
 /* ginpostinglist.c */
 

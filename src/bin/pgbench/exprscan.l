@@ -43,6 +43,8 @@ static bool last_was_newline = false;
 extern int	expr_yyget_column(yyscan_t yyscanner);
 extern void expr_yyset_column(int column_no, yyscan_t yyscanner);
 
+/* LCOV_EXCL_START */
+
 %}
 
 /* Except for the prefix, these options should match psqlscan.l */
@@ -58,9 +60,9 @@ extern void expr_yyset_column(int column_no, yyscan_t yyscanner);
 %option prefix="expr_yy"
 
 /* Character classes */
-alpha			[a-zA-Z_]
+alpha			[a-zA-Z\200-\377_]
 digit			[0-9]
-alnum			[a-zA-Z0-9_]
+alnum			[A-Za-z\200-\377_0-9]
 /* {space} + {nonspace} + {newline} should cover all characters */
 space			[ \t\r\f\v]
 nonspace		[^ \t\r\f\v\n]
@@ -190,6 +192,8 @@ continuation	\\{newline}
 
 %%
 
+/* LCOV_EXCL_STOP */
+
 void
 expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)
 {
@@ -197,7 +201,6 @@ expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)
 	int			error_detection_offset = expr_scanner_offset(state) - 1;
 	YYSTYPE		lval;
 	char	   *full_line;
-	size_t		l;
 
 	/*
 	 * While parsing an expression, we may not have collected the whole line
@@ -210,13 +213,11 @@ expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)
 			 /* skip */ ;
 	}
 
+	/* Extract the line, trimming trailing newline if any */
 	full_line = expr_scanner_get_substring(state,
 										   expr_start_offset,
-										   expr_scanner_offset(state));
-	/* Trim trailing newline if any */
-	l = strlen(full_line);
-	while (l > 0 && full_line[l - 1] == '\n')
-		full_line[--l] = '\0';
+										   expr_scanner_offset(state),
+										   true);
 
 	syntax_error(expr_source, expr_lineno, full_line, expr_command,
 				 message, more, error_detection_offset - expr_start_offset);
@@ -341,19 +342,30 @@ expr_scanner_offset(PsqlScanState state)
 
 /*
  * Get a malloc'd copy of the lexer input string from start_offset
- * to just before end_offset.
+ * to just before end_offset.  If chomp is true, drop any trailing
+ * newline(s).
  */
 char *
 expr_scanner_get_substring(PsqlScanState state,
-						   int start_offset, int end_offset)
+						   int start_offset, int end_offset,
+						   bool chomp)
 {
 	char	   *result;
+	const char *scanptr = state->scanbuf + start_offset;
 	int			slen = end_offset - start_offset;
 
 	Assert(slen >= 0);
 	Assert(end_offset <= strlen(state->scanbuf));
+
+	if (chomp)
+	{
+		while (slen > 0 &&
+			   (scanptr[slen - 1] == '\n' || scanptr[slen - 1] == '\r'))
+			slen--;
+	}
+
 	result = (char *) pg_malloc(slen + 1);
-	memcpy(result, state->scanbuf + start_offset, slen);
+	memcpy(result, scanptr, slen);
 	result[slen] = '\0';
 
 	return result;

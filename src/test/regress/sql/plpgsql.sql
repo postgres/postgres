@@ -4678,14 +4678,14 @@ CREATE FUNCTION transition_table_level2_bad_usage_func()
   LANGUAGE plpgsql
 AS $$
   BEGIN
-    INSERT INTO d VALUES (1000000, 1000000, 'x');
+    INSERT INTO dx VALUES (1000000, 1000000, 'x');
     RETURN NULL;
   END;
 $$;
 
 CREATE TRIGGER transition_table_level2_bad_usage_trigger
   AFTER DELETE ON transition_table_level2
-  REFERENCING OLD TABLE AS d
+  REFERENCING OLD TABLE AS dx
   FOR EACH STATEMENT EXECUTE PROCEDURE
     transition_table_level2_bad_usage_func();
 
@@ -4811,3 +4811,61 @@ BEGIN
 END; $$ LANGUAGE plpgsql;
 
 SELECT * FROM list_partitioned_table() AS t;
+
+--
+-- Check argument name is used instead of $n in error message
+--
+CREATE FUNCTION fx(x WSlot) RETURNS void AS $$
+BEGIN
+  GET DIAGNOSTICS x = ROW_COUNT;
+  RETURN;
+END; $$ LANGUAGE plpgsql;
+
+
+--
+-- Procedures
+--
+
+CREATE PROCEDURE test_proc1()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    NULL;
+END;
+$$;
+
+CALL test_proc1();
+
+
+-- error: can't return non-NULL
+CREATE PROCEDURE test_proc2()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN 5;
+END;
+$$;
+
+CALL test_proc2();
+
+
+CREATE TABLE proc_test1 (a int);
+
+CREATE PROCEDURE test_proc3(x int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO proc_test1 VALUES (x);
+END;
+$$;
+
+CALL test_proc3(55);
+
+SELECT * FROM proc_test1;
+
+
+DROP PROCEDURE test_proc1;
+DROP PROCEDURE test_proc2;
+DROP PROCEDURE test_proc3;
+
+DROP TABLE proc_test1;

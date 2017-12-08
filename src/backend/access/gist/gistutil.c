@@ -179,7 +179,7 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len,
 						   evec->vector + evec->n,
 						   datum,
 						   NULL, NULL, (OffsetNumber) 0,
-						   FALSE, IsNull);
+						   false, IsNull);
 			evec->n++;
 		}
 
@@ -187,7 +187,7 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len,
 		if (evec->n == 0)
 		{
 			attr[i] = (Datum) 0;
-			isnull[i] = TRUE;
+			isnull[i] = true;
 		}
 		else
 		{
@@ -204,7 +204,7 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len,
 										PointerGetDatum(evec),
 										PointerGetDatum(&attrsize));
 
-			isnull[i] = FALSE;
+			isnull[i] = false;
 		}
 	}
 }
@@ -246,17 +246,17 @@ gistMakeUnionKey(GISTSTATE *giststate, int attno,
 
 	if (isnull1 && isnull2)
 	{
-		*dstisnull = TRUE;
+		*dstisnull = true;
 		*dst = (Datum) 0;
 	}
 	else
 	{
-		if (isnull1 == FALSE && isnull2 == FALSE)
+		if (isnull1 == false && isnull2 == false)
 		{
 			evec->vector[0] = *entry1;
 			evec->vector[1] = *entry2;
 		}
-		else if (isnull1 == FALSE)
+		else if (isnull1 == false)
 		{
 			evec->vector[0] = *entry1;
 			evec->vector[1] = *entry1;
@@ -267,7 +267,7 @@ gistMakeUnionKey(GISTSTATE *giststate, int attno,
 			evec->vector[1] = *entry2;
 		}
 
-		*dstisnull = FALSE;
+		*dstisnull = false;
 		*dst = FunctionCall2Coll(&giststate->unionFn[attno],
 								 giststate->supportCollation[attno],
 								 PointerGetDatum(evec),
@@ -303,7 +303,7 @@ gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
 		datum = index_getattr(tuple, i + 1, giststate->tupdesc, &isnull[i]);
 		gistdentryinit(giststate, i, &attdata[i],
 					   datum, r, p, o,
-					   FALSE, isnull[i]);
+					   false, isnull[i]);
 	}
 }
 
@@ -313,7 +313,7 @@ gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
 IndexTuple
 gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *giststate)
 {
-	bool		neednew = FALSE;
+	bool		neednew = false;
 	GISTENTRY	oldentries[INDEX_MAX_KEYS],
 				addentries[INDEX_MAX_KEYS];
 	bool		oldisnull[INDEX_MAX_KEYS],
@@ -451,7 +451,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 			/* Compute penalty for this column. */
 			datum = index_getattr(itup, j + 1, giststate->tupdesc, &IsNull);
 			gistdentryinit(giststate, j, &entry, datum, r, p, i,
-						   FALSE, IsNull);
+						   false, IsNull);
 			usize = gistpenalty(giststate, j, &entry, IsNull,
 								&identry[j], isnull[j]);
 			if (usize > 0)
@@ -550,6 +550,11 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 		GISTENTRY  *dep;
 
 		gistentryinit(*e, k, r, pg, o, l);
+
+		/* there may not be a decompress function in opclass */
+		if (!OidIsValid(giststate->decompressFn[nkey].fn_oid))
+			return;
+
 		dep = (GISTENTRY *)
 			DatumGetPointer(FunctionCall1Coll(&giststate->decompressFn[nkey],
 											  giststate->supportCollation[nkey],
@@ -585,10 +590,14 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 
 			gistentryinit(centry, attdata[i], r, NULL, (OffsetNumber) 0,
 						  isleaf);
-			cep = (GISTENTRY *)
-				DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[i],
-												  giststate->supportCollation[i],
-												  PointerGetDatum(&centry)));
+			/* there may not be a compress function in opclass */
+			if (OidIsValid(giststate->compressFn[i].fn_oid))
+				cep = (GISTENTRY *)
+					DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[i],
+													  giststate->supportCollation[i],
+													  PointerGetDatum(&centry)));
+			else
+				cep = &centry;
 			compatt[i] = cep->key;
 		}
 	}
@@ -648,6 +657,17 @@ gistFetchTuple(GISTSTATE *giststate, Relation r, IndexTuple tuple)
 			else
 				fetchatt[i] = (Datum) 0;
 		}
+		else if (giststate->compressFn[i].fn_oid == InvalidOid)
+		{
+			/*
+			 * If opclass does not provide compress method that could change
+			 * original value, att is necessarily stored in original form.
+			 */
+			if (!isnull[i])
+				fetchatt[i] = datum;
+			else
+				fetchatt[i] = (Datum) 0;
+		}
 		else
 		{
 			/*
@@ -671,8 +691,8 @@ gistpenalty(GISTSTATE *giststate, int attno,
 {
 	float		penalty = 0.0;
 
-	if (giststate->penaltyFn[attno].fn_strict == FALSE ||
-		(isNullOrig == FALSE && isNullAdd == FALSE))
+	if (giststate->penaltyFn[attno].fn_strict == false ||
+		(isNullOrig == false && isNullAdd == false))
 	{
 		FunctionCall3Coll(&giststate->penaltyFn[attno],
 						  giststate->supportCollation[attno],
@@ -934,6 +954,20 @@ gistproperty(Oid index_oid, int attno,
 								 ObjectIdGetDatum(opcintype),
 								 ObjectIdGetDatum(opcintype),
 								 Int16GetDatum(procno));
+
+	/*
+	 * Special case: even without a fetch function, AMPROP_RETURNABLE is true
+	 * if the opclass has no compress function.
+	 */
+	if (prop == AMPROP_RETURNABLE && !*res)
+	{
+		*res = !SearchSysCacheExists4(AMPROCNUM,
+									  ObjectIdGetDatum(opfamily),
+									  ObjectIdGetDatum(opcintype),
+									  ObjectIdGetDatum(opcintype),
+									  Int16GetDatum(GIST_COMPRESS_PROC));
+	}
+
 	return true;
 }
 

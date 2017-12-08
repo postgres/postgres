@@ -40,7 +40,7 @@ SHMQueueInit(SHM_QUEUE *queue)
 }
 
 /*
- * SHMQueueIsDetached -- TRUE if element is not currently
+ * SHMQueueIsDetached -- true if element is not currently
  *		in a queue.
  */
 bool
@@ -174,7 +174,7 @@ SHMQueuePrev(const SHM_QUEUE *queue, const SHM_QUEUE *curElem, Size linkOffset)
 }
 
 /*
- * SHMQueueEmpty -- TRUE if queue head is only element, FALSE otherwise
+ * SHMQueueEmpty -- true if queue head is only element, false otherwise
  */
 bool
 SHMQueueEmpty(const SHM_QUEUE *queue)
@@ -184,7 +184,7 @@ SHMQueueEmpty(const SHM_QUEUE *queue)
 	if (queue->prev == queue)
 	{
 		Assert(queue->next == queue);
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }

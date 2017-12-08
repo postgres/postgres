@@ -63,21 +63,16 @@ EOF
   </PropertyGroup>
 EOF
 
-	# We have to use this flag on 32 bit targets because the 32bit perls
-	# are built with it and sometimes crash if we don't.
-	my $use_32bit_time_t =
-	  $self->{platform} eq 'Win32' ? '_USE_32BIT_TIME_T;' : '';
-
 	$self->WriteItemDefinitionGroup(
 		$f, 'Debug',
-		{   defs    => "_DEBUG;DEBUG=1;$use_32bit_time_t",
+		{   defs    => "_DEBUG;DEBUG=1",
 			opt     => 'Disabled',
 			strpool => 'false',
 			runtime => 'MultiThreadedDebugDLL' });
 	$self->WriteItemDefinitionGroup(
 		$f,
 		'Release',
-		{   defs    => "$use_32bit_time_t",
+		{   defs    => "",
 			opt     => 'Full',
 			strpool => 'true',
 			runtime => 'MultiThreadedDLL' });
@@ -484,6 +479,29 @@ sub new
 	$self->{vcver}           = '14.00';
 	$self->{PlatformToolset} = 'v140';
 	$self->{ToolsVersion}    = '14.0';
+
+	return $self;
+}
+
+package VC2017Project;
+
+#
+# Package that encapsulates a Visual C++ 2017 project file
+#
+
+use strict;
+use warnings;
+use base qw(VC2012Project);
+
+sub new
+{
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
+
+	$self->{vcver}           = '15.00';
+	$self->{PlatformToolset} = 'v141';
+	$self->{ToolsVersion}    = '15.0';
 
 	return $self;
 }

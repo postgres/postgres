@@ -18,12 +18,11 @@ sub configure_and_reload
 		'postgresql.conf', qq(
 		$parameter
 	));
-	$node->psql('postgres', "SELECT pg_reload_conf()",
-				stdout => \$psql_out);
+	$node->psql('postgres', "SELECT pg_reload_conf()", stdout => \$psql_out);
 	is($psql_out, 't', "reload node $name with $parameter");
 }
 
-# Set up two nodes, which will alternately be master and replication slave.
+# Set up two nodes, which will alternately be master and replication standby.
 
 # Setup london node
 my $node_london = get_new_node("london");
@@ -44,11 +43,11 @@ $node_paris->start;
 
 # Switch to synchronous replication in both directions
 configure_and_reload($node_london, "synchronous_standby_names = 'paris'");
-configure_and_reload($node_paris, "synchronous_standby_names = 'london'");
+configure_and_reload($node_paris,  "synchronous_standby_names = 'london'");
 
-# Set up nonce names for current master and slave nodes
-note "Initially, london is master and paris is slave";
-my ($cur_master, $cur_slave) = ($node_london, $node_paris);
+# Set up nonce names for current master and standby nodes
+note "Initially, london is master and paris is standby";
+my ($cur_master, $cur_standby) = ($node_london, $node_paris);
 my $cur_master_name = $cur_master->name;
 
 # Create table we'll use in the test transactions
@@ -163,7 +162,7 @@ is($psql_rc, '0', "Cleanup of shared memory state for 2PC commit");
 $cur_master->psql('postgres', "COMMIT PREPARED 'xact_009_7'");
 
 ###############################################################################
-# Check that WAL replay will cleanup its shared memory state on running slave.
+# Check that WAL replay will cleanup its shared memory state on running standby.
 ###############################################################################
 
 $cur_master->psql(
@@ -174,7 +173,7 @@ $cur_master->psql(
 	INSERT INTO t_009_tbl VALUES (18, 'issued to ${cur_master_name}');
 	PREPARE TRANSACTION 'xact_009_8';
 	COMMIT PREPARED 'xact_009_8';");
-$cur_slave->psql(
+$cur_standby->psql(
 	'postgres',
 	"SELECT count(*) FROM pg_prepared_xacts",
 	stdout => \$psql_out);
@@ -182,7 +181,7 @@ is($psql_out, '0',
 	"Cleanup of shared memory state on running standby without checkpoint");
 
 ###############################################################################
-# Same as in previous case, but let's force checkpoint on slave between
+# Same as in previous case, but let's force checkpoint on standby between
 # prepare and commit to use on-disk twophase files.
 ###############################################################################
 
@@ -193,9 +192,9 @@ $cur_master->psql(
 	SAVEPOINT s1;
 	INSERT INTO t_009_tbl VALUES (20, 'issued to ${cur_master_name}');
 	PREPARE TRANSACTION 'xact_009_9';");
-$cur_slave->psql('postgres', "CHECKPOINT");
+$cur_standby->psql('postgres', "CHECKPOINT");
 $cur_master->psql('postgres', "COMMIT PREPARED 'xact_009_9'");
-$cur_slave->psql(
+$cur_standby->psql(
 	'postgres',
 	"SELECT count(*) FROM pg_prepared_xacts",
 	stdout => \$psql_out);
@@ -203,7 +202,7 @@ is($psql_out, '0',
 	"Cleanup of shared memory state on running standby after checkpoint");
 
 ###############################################################################
-# Check that prepared transactions can be committed on promoted slave.
+# Check that prepared transactions can be committed on promoted standby.
 ###############################################################################
 
 $cur_master->psql(
@@ -214,28 +213,26 @@ $cur_master->psql(
 	INSERT INTO t_009_tbl VALUES (22, 'issued to ${cur_master_name}');
 	PREPARE TRANSACTION 'xact_009_10';");
 $cur_master->teardown_node;
-$cur_slave->promote;
-$cur_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby " . $cur_slave->name;
+$cur_standby->promote;
 
 # change roles
-note "Now paris is master and london is slave";
-($cur_master, $cur_slave) = ($node_paris, $node_london);
+note "Now paris is master and london is standby";
+($cur_master, $cur_standby) = ($node_paris, $node_london);
 $cur_master_name = $cur_master->name;
 
 # because london is not running at this point, we can't use syncrep commit
 # on this command
 $psql_rc = $cur_master->psql('postgres',
 	"SET synchronous_commit = off; COMMIT PREPARED 'xact_009_10'");
-is($psql_rc, '0', "Restore of prepared transaction on promoted slave");
+is($psql_rc, '0', "Restore of prepared transaction on promoted standby");
 
-# restart old master as new slave
-$cur_slave->enable_streaming($cur_master);
-$cur_slave->append_conf(
+# restart old master as new standby
+$cur_standby->enable_streaming($cur_master);
+$cur_standby->append_conf(
 	'recovery.conf', qq(
 recovery_target_timeline='latest'
 ));
-$cur_slave->start;
+$cur_standby->start;
 
 ###############################################################################
 # Check that prepared transactions are replayed after soft restart of standby
@@ -252,14 +249,12 @@ $cur_master->psql(
 	INSERT INTO t_009_tbl VALUES (24, 'issued to ${cur_master_name}');
 	PREPARE TRANSACTION 'xact_009_11';");
 $cur_master->stop;
-$cur_slave->restart;
-$cur_slave->promote;
-$cur_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby " . $cur_slave->name;
+$cur_standby->restart;
+$cur_standby->promote;
 
 # change roles
-note "Now london is master and paris is slave";
-($cur_master, $cur_slave) = ($node_london, $node_paris);
+note "Now london is master and paris is standby";
+($cur_master, $cur_standby) = ($node_london, $node_paris);
 $cur_master_name = $cur_master->name;
 
 $cur_master->psql(
@@ -269,18 +264,18 @@ $cur_master->psql(
 is($psql_out, '1',
 	"Restore prepared transactions from files with master down");
 
-# restart old master as new slave
-$cur_slave->enable_streaming($cur_master);
-$cur_slave->append_conf(
+# restart old master as new standby
+$cur_standby->enable_streaming($cur_master);
+$cur_standby->append_conf(
 	'recovery.conf', qq(
 recovery_target_timeline='latest'
 ));
-$cur_slave->start;
+$cur_standby->start;
 
 $cur_master->psql('postgres', "COMMIT PREPARED 'xact_009_11'");
 
 ###############################################################################
-# Check that prepared transactions are correctly replayed after slave hard
+# Check that prepared transactions are correctly replayed after standby hard
 # restart while master is down.
 ###############################################################################
 
@@ -293,15 +288,13 @@ $cur_master->psql(
 	PREPARE TRANSACTION 'xact_009_12';
 	");
 $cur_master->stop;
-$cur_slave->teardown_node;
-$cur_slave->start;
-$cur_slave->promote;
-$cur_slave->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
-  or die "Timed out while waiting for promotion of standby " . $cur_slave->name;
+$cur_standby->teardown_node;
+$cur_standby->start;
+$cur_standby->promote;
 
 # change roles
-note "Now paris is master and london is slave";
-($cur_master, $cur_slave) = ($node_paris, $node_london);
+note "Now paris is master and london is standby";
+($cur_master, $cur_standby) = ($node_paris, $node_london);
 $cur_master_name = $cur_master->name;
 
 $cur_master->psql(
@@ -311,13 +304,13 @@ $cur_master->psql(
 is($psql_out, '1',
 	"Restore prepared transactions from records with master down");
 
-# restart old master as new slave
-$cur_slave->enable_streaming($cur_master);
-$cur_slave->append_conf(
+# restart old master as new standby
+$cur_standby->enable_streaming($cur_master);
+$cur_standby->append_conf(
 	'recovery.conf', qq(
 recovery_target_timeline='latest'
 ));
-$cur_slave->start;
+$cur_standby->start;
 
 $cur_master->psql('postgres', "COMMIT PREPARED 'xact_009_12'");
 
@@ -338,7 +331,15 @@ $cur_master->psql(
 	CHECKPOINT;
 	COMMIT PREPARED 'xact_009_13';");
 
-$cur_slave->psql(
+# Ensure that last transaction is replayed on standby.
+my $cur_master_lsn =
+	$cur_master->safe_psql('postgres', "SELECT pg_current_wal_lsn()");
+my $caughtup_query =
+	"SELECT '$cur_master_lsn'::pg_lsn <= pg_last_wal_replay_lsn()";
+$cur_standby->poll_query_until('postgres', $caughtup_query)
+  or die "Timed out while waiting for standby to catch up";
+
+$cur_standby->psql(
 	'postgres',
 	"SELECT count(*) FROM t_009_tbl2",
 	stdout => \$psql_out);
@@ -358,7 +359,7 @@ $cur_master->psql(
 	'postgres',
 	"SELECT * FROM t_009_tbl ORDER BY id",
 	stdout => \$psql_out);
-is($psql_out, qq{1|issued to london
+is( $psql_out, qq{1|issued to london
 2|issued to london
 5|issued to london
 6|issued to london
@@ -380,26 +381,27 @@ is($psql_out, qq{1|issued to london
 24|issued to paris
 25|issued to london
 26|issued to london},
-   "Check expected t_009_tbl data on master");
+	"Check expected t_009_tbl data on master");
 
 $cur_master->psql(
 	'postgres',
 	"SELECT * FROM t_009_tbl2",
 	stdout => \$psql_out);
-is($psql_out, qq{27|issued to paris},
-   "Check expected t_009_tbl2 data on master");
+is( $psql_out,
+	qq{27|issued to paris},
+	"Check expected t_009_tbl2 data on master");
 
-$cur_slave->psql(
+$cur_standby->psql(
 	'postgres',
 	"SELECT count(*) FROM pg_prepared_xacts",
 	stdout => \$psql_out);
-is($psql_out, '0', "No uncommitted prepared transactions on slave");
+is($psql_out, '0', "No uncommitted prepared transactions on standby");
 
-$cur_slave->psql(
+$cur_standby->psql(
 	'postgres',
 	"SELECT * FROM t_009_tbl ORDER BY id",
 	stdout => \$psql_out);
-is($psql_out, qq{1|issued to london
+is( $psql_out, qq{1|issued to london
 2|issued to london
 5|issued to london
 6|issued to london
@@ -421,11 +423,12 @@ is($psql_out, qq{1|issued to london
 24|issued to paris
 25|issued to london
 26|issued to london},
-   "Check expected t_009_tbl data on slave");
+	"Check expected t_009_tbl data on standby");
 
-$cur_slave->psql(
+$cur_standby->psql(
 	'postgres',
 	"SELECT * FROM t_009_tbl2",
 	stdout => \$psql_out);
-is($psql_out, qq{27|issued to paris},
-   "Check expected t_009_tbl2 data on slave");
+is( $psql_out,
+	qq{27|issued to paris},
+	"Check expected t_009_tbl2 data on standby");

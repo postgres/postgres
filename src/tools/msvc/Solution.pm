@@ -81,6 +81,7 @@ sub DeterminePlatform
 sub IsNewer
 {
 	my ($newfile, $oldfile) = @_;
+	-e $oldfile or warn "source file \"$oldfile\" does not exist";
 	if (   $oldfile ne 'src/tools/msvc/config.pl'
 		&& $oldfile ne 'src/tools/msvc/config_default.pl')
 	{
@@ -179,8 +180,6 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 		  1024, "\n";
 		print $o "#define XLOG_BLCKSZ ",
 		  1024 * $self->{options}->{wal_blocksize}, "\n";
-		print $o "#define XLOG_SEG_SIZE (", $self->{options}->{wal_segsize},
-		  " * 1024 * 1024)\n";
 
 		if ($self->{options}->{float4byval})
 		{
@@ -271,7 +270,7 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 		print "Generating fmgrtab.c, fmgroids.h, fmgrprotos.h...\n";
 		chdir('src/backend/utils');
 		system(
-"perl -I ../catalog Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
+"perl -I ../catalog Gen_fmgrtab.pl -I../../../src/include/ ../../../src/include/catalog/pg_proc.h");
 		chdir('../../..');
 	}
 	if (IsNewer(
@@ -327,7 +326,7 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 	if ($self->{options}->{python}
 		&& IsNewer(
 			'src/pl/plpython/spiexceptions.h',
-			'src/include/backend/errcodes.txt'))
+			'src/backend/utils/errcodes.txt'))
 	{
 		print "Generating spiexceptions.h...\n";
 		system(
@@ -392,7 +391,7 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 		while (<$i>)
 		{
 			s/(VERSION.*),0/$1,$d/;
-			print $o;
+			print $o $_;
 		}
 		close($i);
 		close($o);
@@ -425,7 +424,7 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 		  || confess "Could not open ecpg_config.h";
 		print $o <<EOF;
 #if (_MSC_VER > 1200)
-#define HAVE_LONG_LONG_INT_64
+#define HAVE_LONG_LONG_INT_64 1
 #define ENABLE_THREAD_SAFETY 1
 EOF
 		print $o "#endif\n";
@@ -846,6 +845,32 @@ sub new
 	$self->{vcver}                      = '14.00';
 	$self->{visualStudioName}           = 'Visual Studio 2015';
 	$self->{VisualStudioVersion}        = '14.0.24730.2';
+	$self->{MinimumVisualStudioVersion} = '10.0.40219.1';
+
+	return $self;
+}
+
+package VS2017Solution;
+
+#
+# Package that encapsulates a Visual Studio 2017 solution file
+#
+
+use Carp;
+use strict;
+use warnings;
+use base qw(Solution);
+
+sub new
+{
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
+
+	$self->{solutionFileVersion}        = '12.00';
+	$self->{vcver}                      = '15.00';
+	$self->{visualStudioName}           = 'Visual Studio 2017';
+	$self->{VisualStudioVersion}        = '15.0.26730.3';
 	$self->{MinimumVisualStudioVersion} = '10.0.40219.1';
 
 	return $self;

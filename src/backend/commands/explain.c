@@ -19,7 +19,7 @@
 #include "commands/createas.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
-#include "executor/hashjoin.h"
+#include "executor/nodeHash.h"
 #include "foreign/fdwapi.h"
 #include "nodes/extensible.h"
 #include "nodes/nodeFuncs.h"
@@ -107,6 +107,7 @@ static void show_tidbitmap_info(BitmapHeapScanState *planstate,
 static void show_instrumentation_count(const char *qlabel, int which,
 						   PlanState *planstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
+static void show_eval_params(Bitmapset *bms_params, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
 static void show_buffer_usage(ExplainState *es, const BufferUsage *usage);
 static void ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
@@ -124,10 +125,6 @@ static void ExplainCustomChildren(CustomScanState *css,
 					  List *ancestors, ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
-static void ExplainOpenGroup(const char *objtype, const char *labelname,
-				 bool labeled, ExplainState *es);
-static void ExplainCloseGroup(const char *objtype, const char *labelname,
-				  bool labeled, ExplainState *es);
 static void ExplainDummyGroup(const char *objtype, const char *labelname,
 				  ExplainState *es);
 static void ExplainXMLTag(const char *tagname, int flags, ExplainState *es);
@@ -400,8 +397,6 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		 * We have to rewrite the contained SELECT and then pass it back to
 		 * ExplainOneQuery.  It's probably not really necessary to copy the
 		 * contained parsetree another time, but let's be safe.
-		 *
-		 * Like ExecCreateTableAs, disallow parallelism in the plan.
 		 */
 		CreateTableAsStmt *ctas = (CreateTableAsStmt *) utilityStmt;
 		List	   *rewritten;
@@ -409,7 +404,7 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		rewritten = QueryRewrite(castNode(Query, copyObject(ctas->query)));
 		Assert(list_length(rewritten) == 1);
 		ExplainOneQuery(linitial_node(Query, rewritten),
-						0, ctas->into, es,
+						CURSOR_OPT_PARALLEL_OK, ctas->into, es,
 						queryString, params, queryEnv);
 	}
 	else if (IsA(utilityStmt, DeclareCursorStmt))
@@ -656,16 +651,29 @@ ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
 	ResultRelInfo *rInfo;
 	bool		show_relname;
 	int			numrels = queryDesc->estate->es_num_result_relations;
+	int			numrootrels = queryDesc->estate->es_num_root_result_relations;
+	List	   *leafrels = queryDesc->estate->es_leaf_result_relations;
 	List	   *targrels = queryDesc->estate->es_trig_target_relations;
 	int			nr;
 	ListCell   *l;
 
 	ExplainOpenGroup("Triggers", "Triggers", false, es);
 
-	show_relname = (numrels > 1 || targrels != NIL);
+	show_relname = (numrels > 1 || numrootrels > 0 ||
+					leafrels != NIL || targrels != NIL);
 	rInfo = queryDesc->estate->es_result_relations;
 	for (nr = 0; nr < numrels; rInfo++, nr++)
 		report_triggers(rInfo, show_relname, es);
+
+	rInfo = queryDesc->estate->es_root_result_relations;
+	for (nr = 0; nr < numrootrels; rInfo++, nr++)
+		report_triggers(rInfo, show_relname, es);
+
+	foreach(l, leafrels)
+	{
+		rInfo = (ResultRelInfo *) lfirst(l);
+		report_triggers(rInfo, show_relname, es);
+	}
 
 	foreach(l, targrels)
 	{
@@ -1434,6 +1442,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 											   planstate, es);
 				ExplainPropertyInteger("Workers Planned",
 									   gather->num_workers, es);
+
+				/* Show params evaluated at gather node */
+				if (gather->initParam)
+					show_eval_params(gather->initParam, es);
+
 				if (es->analyze)
 				{
 					int			nworkers;
@@ -1456,6 +1469,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 											   planstate, es);
 				ExplainPropertyInteger("Workers Planned",
 									   gm->num_workers, es);
+
+				/* Show params evaluated at gather-merge node */
+				if (gm->initParam)
+					show_eval_params(gm->initParam, es);
+
 				if (es->analyze)
 				{
 					int			nworkers;
@@ -2279,15 +2297,21 @@ show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 static void
 show_sort_info(SortState *sortstate, ExplainState *es)
 {
-	if (es->analyze && sortstate->sort_Done &&
-		sortstate->tuplesortstate != NULL)
+	if (!es->analyze)
+		return;
+
+	if (sortstate->sort_Done && sortstate->tuplesortstate != NULL)
 	{
 		Tuplesortstate *state = (Tuplesortstate *) sortstate->tuplesortstate;
+		TuplesortInstrumentation stats;
 		const char *sortMethod;
 		const char *spaceType;
 		long		spaceUsed;
 
-		tuplesort_get_stats(state, &sortMethod, &spaceType, &spaceUsed);
+		tuplesort_get_stats(state, &stats);
+		sortMethod = tuplesort_method_name(stats.sortMethod);
+		spaceType = tuplesort_space_type_name(stats.spaceType);
+		spaceUsed = stats.spaceUsed;
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
@@ -2302,6 +2326,51 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 			ExplainPropertyText("Sort Space Type", spaceType, es);
 		}
 	}
+
+	if (sortstate->shared_info != NULL)
+	{
+		int			n;
+		bool		opened_group = false;
+
+		for (n = 0; n < sortstate->shared_info->num_workers; n++)
+		{
+			TuplesortInstrumentation *sinstrument;
+			const char *sortMethod;
+			const char *spaceType;
+			long		spaceUsed;
+
+			sinstrument = &sortstate->shared_info->sinstrument[n];
+			if (sinstrument->sortMethod == SORT_TYPE_STILL_IN_PROGRESS)
+				continue;		/* ignore any unfilled slots */
+			sortMethod = tuplesort_method_name(sinstrument->sortMethod);
+			spaceType = tuplesort_space_type_name(sinstrument->spaceType);
+			spaceUsed = sinstrument->spaceUsed;
+
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+			{
+				appendStringInfoSpaces(es->str, es->indent * 2);
+				appendStringInfo(es->str,
+								 "Worker %d:  Sort Method: %s  %s: %ldkB\n",
+								 n, sortMethod, spaceType, spaceUsed);
+			}
+			else
+			{
+				if (!opened_group)
+				{
+					ExplainOpenGroup("Workers", "Workers", false, es);
+					opened_group = true;
+				}
+				ExplainOpenGroup("Worker", NULL, true, es);
+				ExplainPropertyInteger("Worker Number", n, es);
+				ExplainPropertyText("Sort Method", sortMethod, es);
+				ExplainPropertyLong("Sort Space Used", spaceUsed, es);
+				ExplainPropertyText("Sort Space Type", spaceType, es);
+				ExplainCloseGroup("Worker", NULL, true, es);
+			}
+		}
+		if (opened_group)
+			ExplainCloseGroup("Workers", "Workers", false, es);
+	}
 }
 
 /*
@@ -2310,34 +2379,62 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 static void
 show_hash_info(HashState *hashstate, ExplainState *es)
 {
-	HashJoinTable hashtable;
+	HashInstrumentation *hinstrument = NULL;
 
-	hashtable = hashstate->hashtable;
-
-	if (hashtable)
+	/*
+	 * In a parallel query, the leader process may or may not have run the
+	 * hash join, and even if it did it may not have built a hash table due to
+	 * timing (if it started late it might have seen no tuples in the outer
+	 * relation and skipped building the hash table).  Therefore we have to be
+	 * prepared to get instrumentation data from a worker if there is no hash
+	 * table.
+	 */
+	if (hashstate->hashtable)
 	{
-		long		spacePeakKb = (hashtable->spacePeak + 1023) / 1024;
+		hinstrument = (HashInstrumentation *)
+			palloc(sizeof(HashInstrumentation));
+		ExecHashGetInstrumentation(hinstrument, hashstate->hashtable);
+	}
+	else if (hashstate->shared_info)
+	{
+		SharedHashInfo *shared_info = hashstate->shared_info;
+		int		i;
+
+		/* Find the first worker that built a hash table. */
+		for (i = 0; i < shared_info->num_workers; ++i)
+		{
+			if (shared_info->hinstrument[i].nbatch > 0)
+			{
+				hinstrument = &shared_info->hinstrument[i];
+				break;
+			}
+		}
+	}
+
+	if (hinstrument)
+	{
+		long		spacePeakKb = (hinstrument->space_peak + 1023) / 1024;
 
 		if (es->format != EXPLAIN_FORMAT_TEXT)
 		{
-			ExplainPropertyLong("Hash Buckets", hashtable->nbuckets, es);
+			ExplainPropertyLong("Hash Buckets", hinstrument->nbuckets, es);
 			ExplainPropertyLong("Original Hash Buckets",
-								hashtable->nbuckets_original, es);
-			ExplainPropertyLong("Hash Batches", hashtable->nbatch, es);
+								hinstrument->nbuckets_original, es);
+			ExplainPropertyLong("Hash Batches", hinstrument->nbatch, es);
 			ExplainPropertyLong("Original Hash Batches",
-								hashtable->nbatch_original, es);
+								hinstrument->nbatch_original, es);
 			ExplainPropertyLong("Peak Memory Usage", spacePeakKb, es);
 		}
-		else if (hashtable->nbatch_original != hashtable->nbatch ||
-				 hashtable->nbuckets_original != hashtable->nbuckets)
+		else if (hinstrument->nbatch_original != hinstrument->nbatch ||
+				 hinstrument->nbuckets_original != hinstrument->nbuckets)
 		{
 			appendStringInfoSpaces(es->str, es->indent * 2);
 			appendStringInfo(es->str,
 							 "Buckets: %d (originally %d)  Batches: %d (originally %d)  Memory Usage: %ldkB\n",
-							 hashtable->nbuckets,
-							 hashtable->nbuckets_original,
-							 hashtable->nbatch,
-							 hashtable->nbatch_original,
+							 hinstrument->nbuckets,
+							 hinstrument->nbuckets_original,
+							 hinstrument->nbatch,
+							 hinstrument->nbatch_original,
 							 spacePeakKb);
 		}
 		else
@@ -2345,7 +2442,7 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 			appendStringInfoSpaces(es->str, es->indent * 2);
 			appendStringInfo(es->str,
 							 "Buckets: %d  Batches: %d  Memory Usage: %ldkB\n",
-							 hashtable->nbuckets, hashtable->nbatch,
+							 hinstrument->nbuckets, hinstrument->nbatch,
 							 spacePeakKb);
 		}
 	}
@@ -2427,6 +2524,29 @@ show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es)
 		if (fdwroutine->ExplainForeignScan != NULL)
 			fdwroutine->ExplainForeignScan(fsstate, es);
 	}
+}
+
+/*
+ * Show initplan params evaluated at Gather or Gather Merge node.
+ */
+static void
+show_eval_params(Bitmapset *bms_params, ExplainState *es)
+{
+	int			paramid = -1;
+	List	   *params = NIL;
+
+	Assert(bms_params);
+
+	while ((paramid = bms_next_member(bms_params, paramid)) >= 0)
+	{
+		char		param[32];
+
+		snprintf(param, sizeof(param), "$%d", paramid);
+		params = lappend(params, pstrdup(param));
+	}
+
+	if (params)
+		ExplainPropertyList("Params Evaluated", params, es);
 }
 
 /*
@@ -3213,7 +3333,7 @@ ExplainPropertyBool(const char *qlabel, bool value, ExplainState *es)
  * If labeled is true, the group members will be labeled properties,
  * while if it's false, they'll be unlabeled objects.
  */
-static void
+void
 ExplainOpenGroup(const char *objtype, const char *labelname,
 				 bool labeled, ExplainState *es)
 {
@@ -3276,7 +3396,7 @@ ExplainOpenGroup(const char *objtype, const char *labelname,
  * Close a group of related objects.
  * Parameters must match the corresponding ExplainOpenGroup call.
  */
-static void
+void
 ExplainCloseGroup(const char *objtype, const char *labelname,
 				  bool labeled, ExplainState *es)
 {

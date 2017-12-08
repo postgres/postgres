@@ -80,7 +80,7 @@ static gbtree_vinfo tinfo =
 {
 	gbt_t_text,
 	0,
-	FALSE,
+	false,
 	gbt_textgt,
 	gbt_textge,
 	gbt_texteq,
@@ -128,7 +128,7 @@ gbt_bpchar_compress(PG_FUNCTION_ARGS)
 
 		gistentryinit(trim, d,
 					  entry->rel, entry->page,
-					  entry->offset, TRUE);
+					  entry->offset, true);
 		retval = gbt_var_compress(&trim, &tinfo);
 	}
 	else
@@ -171,7 +171,7 @@ Datum
 gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	void	   *query = (void *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
+	void	   *query = (void *) DatumGetTextP(PG_GETARG_DATUM(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 
 	/* Oid		subtype = PG_GETARG_OID(3); */

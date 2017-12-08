@@ -517,11 +517,10 @@ SELECT * FROM rec1;    -- fail, mutual recursion via views
 -- Mutual recursion via .s.b views
 --
 SET SESSION AUTHORIZATION regress_rls_bob;
--- Suppress NOTICE messages when doing a cascaded drop.
-SET client_min_messages TO 'warning';
 
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP VIEW rec1v, rec2v CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
 CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
@@ -1026,11 +1025,10 @@ DROP TABLE test_qual_pushdown;
 -- Plancache invalidate on user change.
 --
 RESET SESSION AUTHORIZATION;
--- Suppress NOTICE messages when doing a cascaded drop.
-SET client_min_messages TO 'warning';
 
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP TABLE t1 CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 CREATE TABLE t1 (a integer);
 
@@ -1676,10 +1674,11 @@ DROP TABLE r1;
 --
 SET SESSION AUTHORIZATION regress_rls_alice;
 SET row_security = on;
-CREATE TABLE r1 (a int);
+CREATE TABLE r1 (a int PRIMARY KEY);
 
 CREATE POLICY p1 ON r1 FOR SELECT USING (a < 20);
 CREATE POLICY p2 ON r1 FOR UPDATE USING (a < 20) WITH CHECK (true);
+CREATE POLICY p3 ON r1 FOR INSERT WITH CHECK (true);
 INSERT INTO r1 VALUES (10);
 ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
@@ -1700,6 +1699,17 @@ ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
 
 -- Error
 UPDATE r1 SET a = 30 RETURNING *;
+
+-- UPDATE path of INSERT ... ON CONFLICT DO UPDATE should also error out
+INSERT INTO r1 VALUES (10)
+    ON CONFLICT (a) DO UPDATE SET a = 30 RETURNING *;
+
+-- Should still error out without RETURNING (use of arbiter always requires
+-- SELECT permissions)
+INSERT INTO r1 VALUES (10)
+    ON CONFLICT (a) DO UPDATE SET a = 30;
+INSERT INTO r1 VALUES (10)
+    ON CONFLICT ON CONSTRAINT r1_pkey DO UPDATE SET a = 30;
 
 DROP TABLE r1;
 
@@ -1762,11 +1772,9 @@ DROP USER regress_rls_dob_role2;
 --
 RESET SESSION AUTHORIZATION;
 
--- Suppress NOTICE messages when doing a cascaded drop.
-SET client_min_messages TO 'warning';
-
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA regress_rls_schema CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 DROP USER regress_rls_alice;
 DROP USER regress_rls_bob;

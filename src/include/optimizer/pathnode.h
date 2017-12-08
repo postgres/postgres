@@ -14,6 +14,7 @@
 #ifndef PATHNODE_H
 #define PATHNODE_H
 
+#include "nodes/bitmapset.h"
 #include "nodes/relation.h"
 
 
@@ -63,9 +64,11 @@ extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 					  List *bitmapquals);
 extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *tidquals, Relids required_outer);
-extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths,
-				   Relids required_outer, int parallel_workers,
-				   List *partitioned_rels);
+extern AppendPath *create_append_path(RelOptInfo *rel,
+				   List *subpaths, List *partial_subpaths,
+				   Relids required_outer,
+				   int parallel_workers, bool parallel_aware,
+				   List *partitioned_rels, double rows);
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 List *subpaths,
@@ -112,7 +115,10 @@ extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 						Path *fdw_outerpath,
 						List *fdw_private);
 
-extern Relids calc_nestloop_required_outer(Path *outer_path, Path *inner_path);
+extern Relids calc_nestloop_required_outer(Relids outerrelids,
+							 Relids outer_paramrels,
+							 Relids innerrelids,
+							 Relids inner_paramrels);
 extern Relids calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path);
 
 extern NestPath *create_nestloop_path(PlannerInfo *root,
@@ -248,6 +254,8 @@ extern LimitPath *create_limit_path(PlannerInfo *root, RelOptInfo *rel,
 extern Path *reparameterize_path(PlannerInfo *root, Path *path,
 					Relids required_outer,
 					double loop_count);
+extern Path *reparameterize_path_by_child(PlannerInfo *root, Path *path,
+							 RelOptInfo *child_rel);
 
 /*
  * prototypes for relnode.c
@@ -285,5 +293,11 @@ extern ParamPathInfo *get_joinrel_parampathinfo(PlannerInfo *root,
 						  List **restrict_clauses);
 extern ParamPathInfo *get_appendrel_parampathinfo(RelOptInfo *appendrel,
 							Relids required_outer);
+extern ParamPathInfo *find_param_path_info(RelOptInfo *rel,
+					 Relids required_outer);
+extern RelOptInfo *build_child_join_rel(PlannerInfo *root,
+					 RelOptInfo *outer_rel, RelOptInfo *inner_rel,
+					 RelOptInfo *parent_joinrel, List *restrictlist,
+					 SpecialJoinInfo *sjinfo, JoinType jointype);
 
 #endif							/* PATHNODE_H */

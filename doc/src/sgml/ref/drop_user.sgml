@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_user.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPUSER">
+<refentry id="sql-dropuser">
  <indexterm zone="sql-dropuser">
   <primary>DROP USER</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP USER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP USER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -30,7 +30,7 @@ DROP USER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
 
   <para>
    <command>DROP USER</command> is simply an alternate spelling of
-   <xref linkend="sql-droprole">.
+   <xref linkend="sql-droprole"/>.
   </para>
  </refsect1>
 
@@ -48,7 +48,7 @@ DROP USER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-droprole"></member>
+   <member><xref linkend="sql-droprole"/></member>
   </simplelist>
  </refsect1>
 

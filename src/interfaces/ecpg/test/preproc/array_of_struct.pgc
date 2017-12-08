@@ -91,5 +91,5 @@ int main()
 
     EXEC SQL disconnect all;
 
-    return( 0 );
+    return 0;
 }

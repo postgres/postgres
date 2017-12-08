@@ -70,7 +70,7 @@ check_password(const char *username,
 		if (plain_crypt_verify(username, shadow_pass, username, &logdetail) == STATUS_OK)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("password must not contain user name")));
+					 errmsg("password must not equal user name")));
 	}
 	else
 	{

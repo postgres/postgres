@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  <literal>bloom</> provides an index access method based on
+  <literal>bloom</literal> provides an index access method based on
   <ulink url="http://en.wikipedia.org/wiki/Bloom_filter">Bloom filters</ulink>.
  </para>
 
@@ -42,29 +42,29 @@
   <title>Parameters</title>
 
   <para>
-   A <literal>bloom</> index accepts the following parameters in its
-   <literal>WITH</> clause:
+   A <literal>bloom</literal> index accepts the following parameters in its
+   <literal>WITH</literal> clause:
   </para>
 
    <variablelist>
    <varlistentry>
-    <term><literal>length</></term>
+    <term><literal>length</literal></term>
     <listitem>
      <para>
       Length of each signature (index entry) in bits. The default
-      is <literal>80</> bits and maximum is <literal>4096</>.
+      is <literal>80</literal> bits and maximum is <literal>4096</literal>.
      </para>
     </listitem>
    </varlistentry>
    </variablelist>
    <variablelist>
    <varlistentry>
-    <term><literal>col1 &mdash; col32</></term>
+    <term><literal>col1 &mdash; col32</literal></term>
     <listitem>
      <para>
       Number of bits generated for each index column. Each parameter's name
       refers to the number of the index column that it controls.  The default
-      is <literal>2</> bits and maximum is <literal>4095</>.  Parameters for
+      is <literal>2</literal> bits and maximum is <literal>4095</literal>.  Parameters for
       index columns not actually used are ignored.
      </para>
     </listitem>
@@ -87,8 +87,8 @@ CREATE INDEX bloomidx ON tbloom USING bloom (i1,i2,i3)
   <para>
    The index is created with a signature length of 80 bits, with attributes
    i1 and i2 mapped to 2 bits, and attribute i3 mapped to 4 bits.  We could
-   have omitted the <literal>length</>, <literal>col1</>,
-   and <literal>col2</> specifications since those have the default values.
+   have omitted the <literal>length</literal>, <literal>col1</literal>,
+   and <literal>col2</literal> specifications since those have the default values.
   </para>
 
   <para>
@@ -175,7 +175,7 @@ CREATE INDEX
    Note the relatively large number of false positives: 2439 rows were
    selected to be visited in the heap, but none actually matched the
    query.  We could reduce that by specifying a larger signature length.
-   In this example, creating the index with <literal>length=200</>
+   In this example, creating the index with <literal>length=200</literal>
    reduced the number of false positives to 55; but it doubled the index size
    (to 306 MB) and ended up being slower for this query (125 ms overall).
   </para>
@@ -213,7 +213,7 @@ CREATE INDEX
   <para>
    An operator class for bloom indexes requires only a hash function for the
    indexed data type and an equality operator for searching. This example
-   shows the operator class definition for the <type>text</> data type:
+   shows the operator class definition for the <type>text</type> data type:
   </para>
 
 <programlisting>
@@ -230,7 +230,7 @@ DEFAULT FOR TYPE text USING bloom AS
    <itemizedlist>
     <listitem>
      <para>
-      Only operator classes for <type>int4</> and <type>text</> are
+      Only operator classes for <type>int4</type> and <type>text</type> are
       included with the module.
      </para>
     </listitem>

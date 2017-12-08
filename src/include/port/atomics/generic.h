@@ -45,7 +45,7 @@ typedef pg_atomic_uint32 pg_atomic_flag;
 static inline uint32
 pg_atomic_read_u32_impl(volatile pg_atomic_uint32 *ptr)
 {
-	return *(&ptr->value);
+	return ptr->value;
 }
 #endif
 
@@ -170,12 +170,9 @@ static inline uint32
 pg_atomic_exchange_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 xchg_)
 {
 	uint32 old;
-	while (true)
-	{
-		old = pg_atomic_read_u32_impl(ptr);
-		if (pg_atomic_compare_exchange_u32_impl(ptr, &old, xchg_))
-			break;
-	}
+	old = ptr->value;			/* ok if read is not atomic */
+	while (!pg_atomic_compare_exchange_u32_impl(ptr, &old, xchg_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -186,12 +183,9 @@ static inline uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
 	uint32 old;
-	while (true)
-	{
-		old = pg_atomic_read_u32_impl(ptr);
-		if (pg_atomic_compare_exchange_u32_impl(ptr, &old, old + add_))
-			break;
-	}
+	old = ptr->value;			/* ok if read is not atomic */
+	while (!pg_atomic_compare_exchange_u32_impl(ptr, &old, old + add_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -211,12 +205,9 @@ static inline uint32
 pg_atomic_fetch_and_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 and_)
 {
 	uint32 old;
-	while (true)
-	{
-		old = pg_atomic_read_u32_impl(ptr);
-		if (pg_atomic_compare_exchange_u32_impl(ptr, &old, old & and_))
-			break;
-	}
+	old = ptr->value;			/* ok if read is not atomic */
+	while (!pg_atomic_compare_exchange_u32_impl(ptr, &old, old & and_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -227,12 +218,9 @@ static inline uint32
 pg_atomic_fetch_or_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 or_)
 {
 	uint32 old;
-	while (true)
-	{
-		old = pg_atomic_read_u32_impl(ptr);
-		if (pg_atomic_compare_exchange_u32_impl(ptr, &old, old | or_))
-			break;
-	}
+	old = ptr->value;			/* ok if read is not atomic */
+	while (!pg_atomic_compare_exchange_u32_impl(ptr, &old, old | or_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -261,12 +249,9 @@ static inline uint64
 pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 xchg_)
 {
 	uint64 old;
-	while (true)
-	{
-		old = ptr->value;
-		if (pg_atomic_compare_exchange_u64_impl(ptr, &old, xchg_))
-			break;
-	}
+	old = ptr->value;			/* ok if read is not atomic */
+	while (!pg_atomic_compare_exchange_u64_impl(ptr, &old, xchg_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -314,12 +299,10 @@ static inline uint64
 pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
 {
 	/*
-	 * On this platform aligned 64bit reads are guaranteed to be atomic,
-	 * except if using the fallback implementation, where can't guarantee the
-	 * required alignment.
+	 * On this platform aligned 64-bit reads are guaranteed to be atomic.
 	 */
 	AssertPointerAlignment(ptr, 8);
-	return *(&ptr->value);
+	return ptr->value;
 }
 
 #else
@@ -330,10 +313,10 @@ pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
 	uint64 old = 0;
 
 	/*
-	 * 64 bit reads aren't safe on all platforms. In the generic
+	 * 64-bit reads aren't atomic on all platforms. In the generic
 	 * implementation implement them as a compare/exchange with 0. That'll
-	 * fail or succeed, but always return the old value. Possible might store
-	 * a 0, but only if the prev. value also was a 0 - i.e. harmless.
+	 * fail or succeed, but always return the old value. Possibly might store
+	 * a 0, but only if the previous value also was a 0 - i.e. harmless.
 	 */
 	pg_atomic_compare_exchange_u64_impl(ptr, &old, 0);
 
@@ -357,12 +340,9 @@ static inline uint64
 pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
 	uint64 old;
-	while (true)
-	{
-		old = pg_atomic_read_u64_impl(ptr);
-		if (pg_atomic_compare_exchange_u64_impl(ptr, &old, old + add_))
-			break;
-	}
+	old = ptr->value;			/* ok if read is not atomic */
+	while (!pg_atomic_compare_exchange_u64_impl(ptr, &old, old + add_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -382,12 +362,9 @@ static inline uint64
 pg_atomic_fetch_and_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 and_)
 {
 	uint64 old;
-	while (true)
-	{
-		old = pg_atomic_read_u64_impl(ptr);
-		if (pg_atomic_compare_exchange_u64_impl(ptr, &old, old & and_))
-			break;
-	}
+	old = ptr->value;			/* ok if read is not atomic */
+	while (!pg_atomic_compare_exchange_u64_impl(ptr, &old, old & and_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -398,12 +375,9 @@ static inline uint64
 pg_atomic_fetch_or_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 or_)
 {
 	uint64 old;
-	while (true)
-	{
-		old = pg_atomic_read_u64_impl(ptr);
-		if (pg_atomic_compare_exchange_u64_impl(ptr, &old, old | or_))
-			break;
-	}
+	old = ptr->value;			/* ok if read is not atomic */
+	while (!pg_atomic_compare_exchange_u64_impl(ptr, &old, old | or_))
+		/* skip */;
 	return old;
 }
 #endif

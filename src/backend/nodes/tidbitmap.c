@@ -45,6 +45,7 @@
 #include "nodes/tidbitmap.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
+#include "utils/hashutils.h"
 
 /*
  * The maximum number of tuples per page is not large (typically 256 with
@@ -237,30 +238,13 @@ static int	tbm_comparator(const void *left, const void *right);
 static int tbm_shared_comparator(const void *left, const void *right,
 					  void *arg);
 
-/*
- * Simple inline murmur hash implementation for the exact width required, for
- * performance.
- */
-static inline uint32
-hash_blockno(BlockNumber b)
-{
-	uint32		h = b;
-
-	h ^= h >> 16;
-	h *= 0x85ebca6b;
-	h ^= h >> 13;
-	h *= 0xc2b2ae35;
-	h ^= h >> 16;
-	return h;
-}
-
 /* define hashtable mapping block numbers to PagetableEntry's */
 #define SH_USE_NONDEFAULT_ALLOCATOR
 #define SH_PREFIX pagetable
 #define SH_ELEMENT_TYPE PagetableEntry
 #define SH_KEY_TYPE BlockNumber
 #define SH_KEY blockno
-#define SH_HASH_KEY(tb, key) hash_blockno(key)
+#define SH_HASH_KEY(tb, key) murmurhash32(key)
 #define SH_EQUAL(tb, a, b) a == b
 #define SH_SCOPE static inline
 #define SH_DEFINE
@@ -281,7 +265,6 @@ TIDBitmap *
 tbm_create(long maxbytes, dsa_area *dsa)
 {
 	TIDBitmap  *tbm;
-	long		nbuckets;
 
 	/* Create the TIDBitmap struct and zero all its fields */
 	tbm = makeNode(TIDBitmap);
@@ -289,17 +272,7 @@ tbm_create(long maxbytes, dsa_area *dsa)
 	tbm->mcxt = CurrentMemoryContext;
 	tbm->status = TBM_EMPTY;
 
-	/*
-	 * Estimate number of hashtable entries we can have within maxbytes. This
-	 * estimates the hash cost as sizeof(PagetableEntry), which is good enough
-	 * for our purpose.  Also count an extra Pointer per entry for the arrays
-	 * created during iteration readout.
-	 */
-	nbuckets = maxbytes /
-		(sizeof(PagetableEntry) + sizeof(Pointer) + sizeof(Pointer));
-	nbuckets = Min(nbuckets, INT_MAX - 1);	/* safety limit */
-	nbuckets = Max(nbuckets, 16);	/* sanity limit */
-	tbm->maxentries = (int) nbuckets;
+	tbm->maxentries = (int) tbm_calculate_entries(maxbytes);
 	tbm->lossify_start = 0;
 	tbm->dsa = dsa;
 	tbm->dsapagetable = InvalidDsaPointer;
@@ -609,7 +582,7 @@ tbm_intersect(TIDBitmap *a, const TIDBitmap *b)
 /*
  * Process one page of a during an intersection op
  *
- * Returns TRUE if apage is now empty and should be deleted from a
+ * Returns true if apage is now empty and should be deleted from a
  */
 static bool
 tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
@@ -1561,4 +1534,28 @@ pagetable_free(pagetable_hash *pagetable, void *pointer)
 		dsa_free(tbm->dsa, tbm->dsapagetableold);
 		tbm->dsapagetableold = InvalidDsaPointer;
 	}
+}
+
+/*
+ * tbm_calculate_entries
+ *
+ * Estimate number of hashtable entries we can have within maxbytes.
+ */
+long
+tbm_calculate_entries(double maxbytes)
+{
+	long		nbuckets;
+
+	/*
+	 * Estimate number of hashtable entries we can have within maxbytes. This
+	 * estimates the hash cost as sizeof(PagetableEntry), which is good enough
+	 * for our purpose.  Also count an extra Pointer per entry for the arrays
+	 * created during iteration readout.
+	 */
+	nbuckets = maxbytes /
+		(sizeof(PagetableEntry) + sizeof(Pointer) + sizeof(Pointer));
+	nbuckets = Min(nbuckets, INT_MAX - 1);	/* safety limit */
+	nbuckets = Max(nbuckets, 16);	/* sanity limit */
+
+	return nbuckets;
 }

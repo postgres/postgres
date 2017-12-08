@@ -627,7 +627,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
  * SICleanupQueue
  *		Remove messages that have been consumed by all active backends
  *
- * callerHasWriteLock is TRUE if caller is holding SInvalWriteLock.
+ * callerHasWriteLock is true if caller is holding SInvalWriteLock.
  * minFree is the minimum number of message slots to make free.
  *
  * Possible side effects of this routine include marking one or more

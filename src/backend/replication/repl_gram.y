@@ -72,6 +72,7 @@ static SQLCmd *make_sqlcmd(void);
 %token K_LABEL
 %token K_PROGRESS
 %token K_FAST
+%token K_WAIT
 %token K_NOWAIT
 %token K_MAX_RATE
 %token K_WAL
@@ -180,22 +181,22 @@ base_backup_opt:
 			| K_PROGRESS
 				{
 				  $$ = makeDefElem("progress",
-								   (Node *)makeInteger(TRUE), -1);
+								   (Node *)makeInteger(true), -1);
 				}
 			| K_FAST
 				{
 				  $$ = makeDefElem("fast",
-								   (Node *)makeInteger(TRUE), -1);
+								   (Node *)makeInteger(true), -1);
 				}
 			| K_WAL
 				{
 				  $$ = makeDefElem("wal",
-								   (Node *)makeInteger(TRUE), -1);
+								   (Node *)makeInteger(true), -1);
 				}
 			| K_NOWAIT
 				{
 				  $$ = makeDefElem("nowait",
-								   (Node *)makeInteger(TRUE), -1);
+								   (Node *)makeInteger(true), -1);
 				}
 			| K_MAX_RATE UCONST
 				{
@@ -205,7 +206,7 @@ base_backup_opt:
 			| K_TABLESPACE_MAP
 				{
 				  $$ = makeDefElem("tablespace_map",
-								   (Node *)makeInteger(TRUE), -1);
+								   (Node *)makeInteger(true), -1);
 				}
 			;
 
@@ -246,22 +247,22 @@ create_slot_opt:
 			K_EXPORT_SNAPSHOT
 				{
 				  $$ = makeDefElem("export_snapshot",
-								   (Node *)makeInteger(TRUE), -1);
+								   (Node *)makeInteger(true), -1);
 				}
 			| K_NOEXPORT_SNAPSHOT
 				{
 				  $$ = makeDefElem("export_snapshot",
-								   (Node *)makeInteger(FALSE), -1);
+								   (Node *)makeInteger(false), -1);
 				}
 			| K_USE_SNAPSHOT
 				{
 				  $$ = makeDefElem("use_snapshot",
-								   (Node *)makeInteger(TRUE), -1);
+								   (Node *)makeInteger(true), -1);
 				}
 			| K_RESERVE_WAL
 				{
 				  $$ = makeDefElem("reserve_wal",
-								   (Node *)makeInteger(TRUE), -1);
+								   (Node *)makeInteger(true), -1);
 				}
 			;
 
@@ -272,6 +273,15 @@ drop_replication_slot:
 					DropReplicationSlotCmd *cmd;
 					cmd = makeNode(DropReplicationSlotCmd);
 					cmd->slotname = $2;
+					cmd->wait = false;
+					$$ = (Node *) cmd;
+				}
+			| K_DROP_REPLICATION_SLOT IDENT K_WAIT
+				{
+					DropReplicationSlotCmd *cmd;
+					cmd = makeNode(DropReplicationSlotCmd);
+					cmd->slotname = $2;
+					cmd->wait = true;
 					$$ = (Node *) cmd;
 				}
 			;

@@ -321,7 +321,7 @@ SELECT date '1991-02-03' - time with time zone '04:05:06 UTC' AS "Subtract Time 
 ERROR:  operator does not exist: date - time with time zone
 LINE 1: SELECT date '1991-02-03' - time with time zone '04:05:06 UTC...
                                  ^
-HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 --
 -- timestamp, interval arithmetic
 --

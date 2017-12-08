@@ -210,7 +210,7 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	/* new_relfilenode will match old and new pg_class.oid */
 	map->new_relfilenode = new_rel->relfilenode;
 
-	/* used only for logging and error reporing, old/new are identical */
+	/* used only for logging and error reporting, old/new are identical */
 	map->nspname = old_rel->nspname;
 	map->relname = old_rel->relname;
 }
@@ -320,7 +320,11 @@ get_db_and_rel_infos(ClusterInfo *cluster)
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum]);
 
-	pg_log(PG_VERBOSE, "\n%s databases:\n", CLUSTER_NAME(cluster));
+	if (cluster == &old_cluster)
+		pg_log(PG_VERBOSE, "\nsource databases:\n");
+	else
+		pg_log(PG_VERBOSE, "\ntarget databases:\n");
+
 	if (log_opts.verbose)
 		print_db_infos(&cluster->dbarr);
 }

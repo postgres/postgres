@@ -40,5 +40,5 @@ main(void)
 #line 17 "test4.pgc"
 
 
-	return (0);
+	return 0;
 }

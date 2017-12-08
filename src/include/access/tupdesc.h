@@ -60,6 +60,12 @@ typedef struct tupleConstr
  * row type, or a value >= 0 to allow the rowtype to be looked up in the
  * typcache.c type cache.
  *
+ * Note that tdtypeid is never the OID of a domain over composite, even if
+ * we are dealing with values that are known (at some higher level) to be of
+ * a domain-over-composite type.  This is because tdtypeid/tdtypmod need to
+ * match up with the type labeling of composite Datums, and those are never
+ * explicitly marked as being of a domain type, either.
+ *
  * Tuple descriptors that live in caches (relcache or typcache, at present)
  * are reference-counted: they can be deleted when their reference count goes
  * to zero.  Tuple descriptors created by the executor need no reference
@@ -71,15 +77,17 @@ typedef struct tupleConstr
 typedef struct tupleDesc
 {
 	int			natts;			/* number of attributes in the tuple */
-	Form_pg_attribute *attrs;
-	/* attrs[N] is a pointer to the description of Attribute Number N+1 */
-	TupleConstr *constr;		/* constraints, or NULL if none */
 	Oid			tdtypeid;		/* composite type ID for tuple type */
 	int32		tdtypmod;		/* typmod for tuple type */
 	bool		tdhasoid;		/* tuple has oid attribute in its header */
 	int			tdrefcount;		/* reference count, or -1 if not counting */
+	TupleConstr *constr;		/* constraints, or NULL if none */
+	/* attrs[N] is the description of Attribute Number N+1 */
+	FormData_pg_attribute attrs[FLEXIBLE_ARRAY_MEMBER];
 }		   *TupleDesc;
 
+/* Accessor for the i'th attribute of tupdesc. */
+#define TupleDescAttr(tupdesc, i) (&(tupdesc)->attrs[(i)])
 
 extern TupleDesc CreateTemplateTupleDesc(int natts, bool hasoid);
 
@@ -89,6 +97,12 @@ extern TupleDesc CreateTupleDesc(int natts, bool hasoid,
 extern TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
 
 extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
+
+#define TupleDescSize(src) \
+	(offsetof(struct tupleDesc, attrs) + \
+	 (src)->natts * sizeof(FormData_pg_attribute))
+
+extern void TupleDescCopy(TupleDesc dst, TupleDesc src);
 
 extern void TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 				   TupleDesc src, AttrNumber srcAttno);
@@ -111,6 +125,8 @@ extern void DecrTupleDescRefCount(TupleDesc tupdesc);
 	} while (0)
 
 extern bool equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
+
+extern uint32 hashTupleDesc(TupleDesc tupdesc);
 
 extern void TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,

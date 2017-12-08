@@ -33,6 +33,7 @@
 #include "executor/executor.h"
 #include "executor/nodeSubplan.h"
 #include "nodes/makefuncs.h"
+#include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "utils/array.h"
 #include "utils/lsyscache.h"
@@ -64,6 +65,8 @@ ExecSubPlan(SubPlanState *node,
 			bool *isNull)
 {
 	SubPlan    *subplan = node->subplan;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/* Set non-null as default */
 	*isNull = false;
@@ -217,7 +220,7 @@ ExecScanSubPlan(SubPlanState *node,
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	Datum		result;
-	bool		found = false;	/* TRUE if got at least one subplan tuple */
+	bool		found = false;	/* true if got at least one subplan tuple */
 	ListCell   *pvar;
 	ListCell   *l;
 	ArrayBuildStateAny *astate = NULL;
@@ -357,7 +360,7 @@ ExecScanSubPlan(SubPlanState *node,
 
 			found = true;
 			/* stash away current value */
-			Assert(subplan->firstColType == tdesc->attrs[0]->atttypid);
+			Assert(subplan->firstColType == TupleDescAttr(tdesc, 0)->atttypid);
 			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResultAny(astate, dvalue, disnull,
 										 subplan->firstColType, oldcontext);
@@ -618,6 +621,8 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot,
 	InitTupleHashIterator(hashtable, &hashiter);
 	while ((entry = ScanTupleHashTable(hashtable, &hashiter)) != NULL)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		ExecStoreMinimalTuple(entry->firstTuple, hashtable->tableslot, false);
 		if (!execTuplesUnequal(slot, hashtable->tableslot,
 							   numCols, keyColIdx,
@@ -987,7 +992,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 			found = true;
 			/* stash away current value */
-			Assert(subplan->firstColType == tdesc->attrs[0]->atttypid);
+			Assert(subplan->firstColType == TupleDescAttr(tdesc, 0)->atttypid);
 			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResultAny(astate, dvalue, disnull,
 										 subplan->firstColType, oldcontext);

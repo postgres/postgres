@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_server.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPSERVER">
+<refentry id="sql-dropserver">
  <indexterm zone="sql-dropserver">
   <primary>DROP SERVER</primary>
  </indexterm>
@@ -65,7 +65,7 @@ DROP SERVER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, .
       Automatically drop objects that depend on the server (such as
       user mappings),
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -86,7 +86,7 @@ DROP SERVER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, .
   <title>Examples</title>
 
   <para>
-   Drop a server <literal>foo</> if it exists:
+   Drop a server <literal>foo</literal> if it exists:
 <programlisting>
 DROP SERVER IF EXISTS foo;
 </programlisting></para>
@@ -97,8 +97,8 @@ DROP SERVER IF EXISTS foo;
 
   <para>
    <command>DROP SERVER</command> conforms to ISO/IEC 9075-9
-   (SQL/MED).  The <literal>IF EXISTS</> clause is
-   a <productname>PostgreSQL</> extension.
+   (SQL/MED).  The <literal>IF EXISTS</literal> clause is
+   a <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 
@@ -106,8 +106,8 @@ DROP SERVER IF EXISTS foo;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createserver"></member>
-   <member><xref linkend="sql-alterserver"></member>
+   <member><xref linkend="sql-createserver"/></member>
+   <member><xref linkend="sql-alterserver"/></member>
   </simplelist>
  </refsect1>
 

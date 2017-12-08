@@ -77,9 +77,11 @@ WorkTableScanRecheck(WorkTableScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecWorkTableScan(WorkTableScanState *node)
+static TupleTableSlot *
+ExecWorkTableScan(PlanState *pstate)
 {
+	WorkTableScanState *node = castNode(WorkTableScanState, pstate);
+
 	/*
 	 * On the first call, find the ancestor RecursiveUnion's state via the
 	 * Param slot reserved for it.  (We can't do this during node init because
@@ -144,6 +146,7 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	scanstate = makeNode(WorkTableScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecWorkTableScan;
 	scanstate->rustate = NULL;	/* we'll set this later */
 
 	/*

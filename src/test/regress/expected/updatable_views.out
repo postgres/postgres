@@ -2368,8 +2368,8 @@ DETAIL:  Failing row contains (-1, invalid).
 DROP VIEW v1;
 DROP TABLE t1;
 -- check that an auto-updatable view on a partitioned table works correctly
-create table pt (a int, b int) partition by range (a, b);
-create table pt1 (b int not null, a int not null) partition by range (b);
+create table pt (a int, b int, v varchar) partition by range (a, b);
+create table pt1 (b int not null, v varchar, a int not null) partition by range (b);
 create table pt11 (like pt1);
 alter table pt11 drop a;
 alter table pt11 add a int;
@@ -2412,18 +2412,45 @@ select table_name, column_name, is_updatable
 ------------+-------------+--------------
  ptv        | a           | YES
  ptv        | b           | YES
-(2 rows)
+ ptv        | v           | YES
+(3 rows)
 
 insert into ptv values (1, 2);
 select tableoid::regclass, * from pt;
- tableoid | a | b 
-----------+---+---
- pt11     | 1 | 2
+ tableoid | a | b | v 
+----------+---+---+---
+ pt11     | 1 | 2 | 
 (1 row)
 
 create view ptv_wco as select * from pt where a = 0 with check option;
 insert into ptv_wco values (1, 2);
 ERROR:  new row violates check option for view "ptv_wco"
-DETAIL:  Failing row contains (2, 1).
+DETAIL:  Failing row contains (1, 2, null).
 drop view ptv, ptv_wco;
 drop table pt, pt1, pt11;
+-- check that wholerow vars appearing in WITH CHECK OPTION constraint expressions
+-- work fine with partitioned tables
+create table wcowrtest (a int) partition by list (a);
+create table wcowrtest1 partition of wcowrtest for values in (1);
+create view wcowrtest_v as select * from wcowrtest where wcowrtest = '(2)'::wcowrtest with check option;
+insert into wcowrtest_v values (1);
+ERROR:  new row violates check option for view "wcowrtest_v"
+DETAIL:  Failing row contains (1).
+alter table wcowrtest add b text;
+create table wcowrtest2 (b text, c int, a int);
+alter table wcowrtest2 drop c;
+alter table wcowrtest attach partition wcowrtest2 for values in (2);
+create table sometable (a int, b text);
+insert into sometable values (1, 'a'), (2, 'b');
+create view wcowrtest_v2 as
+    select *
+      from wcowrtest r
+      where r in (select s from sometable s where r.a = s.a)
+with check option;
+-- WITH CHECK qual will be processed with wcowrtest2's
+-- rowtype after tuple-routing
+insert into wcowrtest_v2 values (2, 'no such row in sometable');
+ERROR:  new row violates check option for view "wcowrtest_v2"
+DETAIL:  Failing row contains (2, no such row in sometable).
+drop view wcowrtest_v, wcowrtest_v2;
+drop table wcowrtest, sometable;

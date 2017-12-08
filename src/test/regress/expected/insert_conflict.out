@@ -786,3 +786,16 @@ select * from selfconflict;
 (3 rows)
 
 drop table selfconflict;
+-- check that the following works:
+-- insert into partitioned_table on conflict do nothing
+create table parted_conflict_test (a int, b char) partition by list (a);
+create table parted_conflict_test_1 partition of parted_conflict_test (b unique) for values in (1);
+insert into parted_conflict_test values (1, 'a') on conflict do nothing;
+insert into parted_conflict_test values (1, 'a') on conflict do nothing;
+-- however, on conflict do update is not supported yet
+insert into parted_conflict_test values (1) on conflict (b) do update set a = excluded.a;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- but it works OK if we target the partition directly
+insert into parted_conflict_test_1 values (1) on conflict (b) do
+update set a = excluded.a;
+drop table parted_conflict_test;

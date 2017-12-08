@@ -2870,7 +2870,9 @@ PageOutput(int lines, const printTableOpt *topt)
 			const char *pagerprog;
 			FILE	   *pagerpipe;
 
-			pagerprog = getenv("PAGER");
+			pagerprog = getenv("PSQL_PAGER");
+			if (!pagerprog)
+				pagerprog = getenv("PAGER");
 			if (!pagerprog)
 				pagerprog = DEFAULT_PAGER;
 			else

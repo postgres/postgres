@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_tsparser.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTSPARSER">
+<refentry id="sql-droptsparser">
  <indexterm zone="sql-droptsparser">
   <primary>DROP TEXT SEARCH PARSER</primary>
  </indexterm>
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TEXT SEARCH PARSER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+DROP TEXT SEARCH PARSER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -64,7 +64,7 @@ DROP TEXT SEARCH PARSER [ IF EXISTS ] <replaceable class="PARAMETER">name</repla
      <para>
       Automatically drop objects that depend on the text search parser,
       and in turn all objects that depend on those objects
-      (see <xref linkend="ddl-depend">).
+      (see <xref linkend="ddl-depend"/>).
      </para>
     </listitem>
    </varlistentry>
@@ -92,7 +92,7 @@ DROP TEXT SEARCH PARSER my_parser;
 </programlisting>
 
    This command will not succeed if there are any existing text search
-   configurations that use the parser.  Add <literal>CASCADE</> to
+   configurations that use the parser.  Add <literal>CASCADE</literal> to
    drop such configurations along with the parser.
   </para>
  </refsect1>
@@ -110,8 +110,8 @@ DROP TEXT SEARCH PARSER my_parser;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsparser"></member>
-   <member><xref linkend="sql-createtsparser"></member>
+   <member><xref linkend="sql-altertsparser"/></member>
+   <member><xref linkend="sql-createtsparser"/></member>
   </simplelist>
  </refsect1>
 

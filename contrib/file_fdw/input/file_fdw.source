@@ -162,6 +162,27 @@ SELECT tableoid::regclass, * FROM agg FOR UPDATE;
 ALTER FOREIGN TABLE agg_csv NO INHERIT agg;
 DROP TABLE agg;
 
+-- declarative partitioning tests
+SET ROLE regress_file_fdw_superuser;
+CREATE TABLE pt (a int, b text) partition by list (a);
+CREATE FOREIGN TABLE p1 partition of pt for values in (1) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/list1.csv', delimiter ',');
+CREATE TABLE p2 partition of pt for values in (2);
+SELECT tableoid::regclass, * FROM pt;
+SELECT tableoid::regclass, * FROM p1;
+SELECT tableoid::regclass, * FROM p2;
+COPY pt FROM '@abs_srcdir@/data/list2.bad' with (format 'csv', delimiter ','); -- ERROR
+COPY pt FROM '@abs_srcdir@/data/list2.csv' with (format 'csv', delimiter ',');
+SELECT tableoid::regclass, * FROM pt;
+SELECT tableoid::regclass, * FROM p1;
+SELECT tableoid::regclass, * FROM p2;
+INSERT INTO pt VALUES (1, 'xyzzy'); -- ERROR
+INSERT INTO pt VALUES (2, 'xyzzy');
+SELECT tableoid::regclass, * FROM pt;
+SELECT tableoid::regclass, * FROM p1;
+SELECT tableoid::regclass, * FROM p2;
+DROP TABLE pt;
+
 -- privilege tests
 SET ROLE regress_file_fdw_superuser;
 SELECT * FROM agg_text ORDER BY a;

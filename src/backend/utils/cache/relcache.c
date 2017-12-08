@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "access/hash.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/nbtree.h"
@@ -86,11 +87,6 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
-
-/*
- *		name of relcache init file(s), used to speed up backend startup
- */
-#define RELCACHE_INIT_FILENAME	"pg_internal.init"
 
 #define RELCACHE_INIT_FILEMAGIC		0x573266	/* version ID value */
 
@@ -232,7 +228,7 @@ do { \
 typedef struct opclasscacheent
 {
 	Oid			opclassoid;		/* lookup key: OID of opclass */
-	bool		valid;			/* set TRUE after successful fill-in */
+	bool		valid;			/* set true after successful fill-in */
 	StrategyNumber numSupport;	/* max # of support procs (from pg_am) */
 	Oid			opcfamily;		/* OID of opclass's family */
 	Oid			opcintype;		/* OID of opclass's declared input type */
@@ -546,7 +542,7 @@ RelationBuildTupleDesc(Relation relation)
 			elog(ERROR, "invalid attribute number %d for %s",
 				 attp->attnum, RelationGetRelationName(relation));
 
-		memcpy(relation->rd_att->attrs[attp->attnum - 1],
+		memcpy(TupleDescAttr(relation->rd_att, attp->attnum - 1),
 			   attp,
 			   ATTRIBUTE_FIXED_PART_SIZE);
 
@@ -590,7 +586,7 @@ RelationBuildTupleDesc(Relation relation)
 		int			i;
 
 		for (i = 0; i < relation->rd_rel->relnatts; i++)
-			Assert(relation->rd_att->attrs[i]->attcacheoff == -1);
+			Assert(TupleDescAttr(relation->rd_att, i)->attcacheoff == -1);
 	}
 #endif
 
@@ -600,7 +596,7 @@ RelationBuildTupleDesc(Relation relation)
 	 * for attnum=1 that used to exist in fastgetattr() and index_getattr().
 	 */
 	if (relation->rd_rel->relnatts > 0)
-		relation->rd_att->attrs[0]->attcacheoff = 0;
+		TupleDescAttr(relation->rd_att, 0)->attcacheoff = 0;
 
 	/*
 	 * Set up constraint/default info
@@ -838,6 +834,7 @@ RelationBuildPartitionKey(Relation relation)
 	Datum		datum;
 	MemoryContext partkeycxt,
 				oldcxt;
+	int16		procnum;
 
 	tuple = SearchSysCache1(PARTRELID,
 							ObjectIdGetDatum(RelationGetRelid(relation)));
@@ -917,6 +914,10 @@ RelationBuildPartitionKey(Relation relation)
 	key->parttypalign = (char *) palloc0(key->partnatts * sizeof(char));
 	key->parttypcoll = (Oid *) palloc0(key->partnatts * sizeof(Oid));
 
+	/* For the hash partitioning, an extended hash function will be used. */
+	procnum = (key->strategy == PARTITION_STRATEGY_HASH) ?
+		HASHEXTENDED_PROC : BTORDER_PROC;
+
 	/* Copy partattrs and fill other per-attribute info */
 	memcpy(key->partattrs, attrs, key->partnatts * sizeof(int16));
 	partexprs_item = list_head(key->partexprs);
@@ -937,14 +938,20 @@ RelationBuildPartitionKey(Relation relation)
 		key->partopfamily[i] = opclassform->opcfamily;
 		key->partopcintype[i] = opclassform->opcintype;
 
-		/*
-		 * A btree support function covers the cases of list and range methods
-		 * currently supported.
-		 */
+		/* Get a support function for the specified opfamily and datatypes */
 		funcid = get_opfamily_proc(opclassform->opcfamily,
 								   opclassform->opcintype,
 								   opclassform->opcintype,
-								   BTORDER_PROC);
+								   procnum);
+		if (!OidIsValid(funcid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("operator class \"%s\" of access method %s is missing support function %d for data type \"%s\"",
+							NameStr(opclassform->opcname),
+							(key->strategy == PARTITION_STRATEGY_HASH) ?
+							"hash" : "btree",
+							procnum,
+							format_type_be(opclassform->opcintype))));
 
 		fmgr_info(funcid, &key->partsupfunc[i]);
 
@@ -954,9 +961,11 @@ RelationBuildPartitionKey(Relation relation)
 		/* Collect type information */
 		if (attno != 0)
 		{
-			key->parttypid[i] = relation->rd_att->attrs[attno - 1]->atttypid;
-			key->parttypmod[i] = relation->rd_att->attrs[attno - 1]->atttypmod;
-			key->parttypcoll[i] = relation->rd_att->attrs[attno - 1]->attcollation;
+			Form_pg_attribute att = TupleDescAttr(relation->rd_att, attno - 1);
+
+			key->parttypid[i] = att->atttypid;
+			key->parttypmod[i] = att->atttypmod;
+			key->parttypcoll[i] = att->attcollation;
 		}
 		else
 		{
@@ -1204,7 +1213,9 @@ equalPartitionDescs(PartitionKey key, PartitionDesc partdesc1,
 			if (partdesc2->boundinfo == NULL)
 				return false;
 
-			if (!partition_bounds_equal(key, partdesc1->boundinfo,
+			if (!partition_bounds_equal(key->partnatts, key->parttyplen,
+										key->parttypbyval,
+										partdesc1->boundinfo,
 										partdesc2->boundinfo))
 				return false;
 		}
@@ -1971,16 +1982,16 @@ formrdesc(const char *relationName, Oid relationReltype,
 	has_not_null = false;
 	for (i = 0; i < natts; i++)
 	{
-		memcpy(relation->rd_att->attrs[i],
+		memcpy(TupleDescAttr(relation->rd_att, i),
 			   &attrs[i],
 			   ATTRIBUTE_FIXED_PART_SIZE);
 		has_not_null |= attrs[i].attnotnull;
 		/* make sure attcacheoff is valid */
-		relation->rd_att->attrs[i]->attcacheoff = -1;
+		TupleDescAttr(relation->rd_att, i)->attcacheoff = -1;
 	}
 
 	/* initialize first attribute's attcacheoff, cf RelationBuildTupleDesc */
-	relation->rd_att->attrs[0]->attcacheoff = 0;
+	TupleDescAttr(relation->rd_att, 0)->attcacheoff = 0;
 
 	/* mark not-null status */
 	if (has_not_null)
@@ -1994,7 +2005,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/*
 	 * initialize relation id from info in att array (my, this is ugly)
 	 */
-	RelationGetRelid(relation) = relation->rd_att->attrs[0]->attrelid;
+	RelationGetRelid(relation) = TupleDescAttr(relation->rd_att, 0)->attrelid;
 
 	/*
 	 * All relations made with formrdesc are mapped.  This is necessarily so
@@ -3268,9 +3279,12 @@ RelationBuildLocalRelation(const char *relname,
 	has_not_null = false;
 	for (i = 0; i < natts; i++)
 	{
-		rel->rd_att->attrs[i]->attidentity = tupDesc->attrs[i]->attidentity;
-		rel->rd_att->attrs[i]->attnotnull = tupDesc->attrs[i]->attnotnull;
-		has_not_null |= tupDesc->attrs[i]->attnotnull;
+		Form_pg_attribute satt = TupleDescAttr(tupDesc, i);
+		Form_pg_attribute datt = TupleDescAttr(rel->rd_att, i);
+
+		datt->attidentity = satt->attidentity;
+		datt->attnotnull = satt->attnotnull;
+		has_not_null |= satt->attnotnull;
 	}
 
 	if (has_not_null)
@@ -3340,7 +3354,7 @@ RelationBuildLocalRelation(const char *relname,
 	RelationGetRelid(rel) = relid;
 
 	for (i = 0; i < natts; i++)
-		rel->rd_att->attrs[i]->attrelid = relid;
+		TupleDescAttr(rel->rd_att, i)->attrelid = relid;
 
 	rel->rd_rel->reltablespace = reltablespace;
 
@@ -3965,13 +3979,13 @@ BuildHardcodedDescriptor(int natts, const FormData_pg_attribute *attrs,
 
 	for (i = 0; i < natts; i++)
 	{
-		memcpy(result->attrs[i], &attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
+		memcpy(TupleDescAttr(result, i), &attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 		/* make sure attcacheoff is valid */
-		result->attrs[i]->attcacheoff = -1;
+		TupleDescAttr(result, i)->attcacheoff = -1;
 	}
 
 	/* initialize first attribute's attcacheoff, cf RelationBuildTupleDesc */
-	result->attrs[0]->attcacheoff = 0;
+	TupleDescAttr(result, 0)->attcacheoff = 0;
 
 	/* Note: we don't bother to set up a TupleConstr entry */
 
@@ -4038,6 +4052,7 @@ AttrDefaultFetch(Relation relation)
 	while (HeapTupleIsValid(htup = systable_getnext(adscan)))
 	{
 		Form_pg_attrdef adform = (Form_pg_attrdef) GETSTRUCT(htup);
+		Form_pg_attribute attr = TupleDescAttr(relation->rd_att, adform->adnum - 1);
 
 		for (i = 0; i < ndef; i++)
 		{
@@ -4045,7 +4060,7 @@ AttrDefaultFetch(Relation relation)
 				continue;
 			if (attrdef[i].adbin != NULL)
 				elog(WARNING, "multiple attrdef records found for attr %s of rel %s",
-					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
+					 NameStr(attr->attname),
 					 RelationGetRelationName(relation));
 			else
 				found++;
@@ -4055,7 +4070,7 @@ AttrDefaultFetch(Relation relation)
 							  adrel->rd_att, &isnull);
 			if (isnull)
 				elog(WARNING, "null adbin for attr %s of rel %s",
-					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
+					 NameStr(attr->attname),
 					 RelationGetRelationName(relation));
 			else
 			{
@@ -5264,7 +5279,7 @@ errtablecol(Relation rel, int attnum)
 
 	/* Use reldesc if it's a user attribute, else consult the catalogs */
 	if (attnum > 0 && attnum <= reldesc->natts)
-		colname = NameStr(reldesc->attrs[attnum - 1]->attname);
+		colname = NameStr(TupleDescAttr(reldesc, attnum - 1)->attname);
 	else
 		colname = get_relid_attribute_name(RelationGetRelid(rel), attnum);
 
@@ -5351,9 +5366,9 @@ errtableconstraint(Relation rel, const char *conname)
  * load_relcache_init_file -- attempt to load cache from the shared
  * or local cache init file
  *
- * If successful, return TRUE and set criticalRelcachesBuilt or
+ * If successful, return true and set criticalRelcachesBuilt or
  * criticalSharedRelcachesBuilt to true.
- * If not successful, return FALSE.
+ * If not successful, return false.
  *
  * NOTE: we assume we are already switched into CacheMemoryContext.
  */
@@ -5454,14 +5469,16 @@ load_relcache_init_file(bool shared)
 		has_not_null = false;
 		for (i = 0; i < relform->relnatts; i++)
 		{
+			Form_pg_attribute attr = TupleDescAttr(rel->rd_att, i);
+
 			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 			if (len != ATTRIBUTE_FIXED_PART_SIZE)
 				goto read_failed;
-			if (fread(rel->rd_att->attrs[i], 1, len, fp) != len)
+			if (fread(attr, 1, len, fp) != len)
 				goto read_failed;
 
-			has_not_null |= rel->rd_att->attrs[i]->attnotnull;
+			has_not_null |= attr->attnotnull;
 		}
 
 		/* next read the access method specific field */
@@ -5842,7 +5859,8 @@ write_relcache_init_file(bool shared)
 		/* next, do all the attribute tuple form data entries */
 		for (i = 0; i < relform->relnatts; i++)
 		{
-			write_item(rel->rd_att->attrs[i], ATTRIBUTE_FIXED_PART_SIZE, fp);
+			write_item(TupleDescAttr(rel->rd_att, i),
+					   ATTRIBUTE_FIXED_PART_SIZE, fp);
 		}
 
 		/* next, do the access method specific field */
@@ -6101,14 +6119,8 @@ RelationCacheInitFileRemove(void)
 
 	/* Scan the tablespace link directory to find non-default tablespaces */
 	dir = AllocateDir(tblspcdir);
-	if (dir == NULL)
-	{
-		elog(LOG, "could not open tablespace link directory \"%s\": %m",
-			 tblspcdir);
-		return;
-	}
 
-	while ((de = ReadDir(dir, tblspcdir)) != NULL)
+	while ((de = ReadDirExtended(dir, tblspcdir, LOG)) != NULL)
 	{
 		if (strspn(de->d_name, "0123456789") == strlen(de->d_name))
 		{
@@ -6132,14 +6144,8 @@ RelationCacheInitFileRemoveInDir(const char *tblspcpath)
 
 	/* Scan the tablespace directory to find per-database directories */
 	dir = AllocateDir(tblspcpath);
-	if (dir == NULL)
-	{
-		elog(LOG, "could not open tablespace directory \"%s\": %m",
-			 tblspcpath);
-		return;
-	}
 
-	while ((de = ReadDir(dir, tblspcpath)) != NULL)
+	while ((de = ReadDirExtended(dir, tblspcpath, LOG)) != NULL)
 	{
 		if (strspn(de->d_name, "0123456789") == strlen(de->d_name))
 		{

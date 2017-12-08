@@ -138,7 +138,7 @@ typedef struct DictSnowball
 
 
 static void
-locate_stem_module(DictSnowball *d, char *lang)
+locate_stem_module(DictSnowball *d, const char *lang)
 {
 	const stemmer_module *m;
 

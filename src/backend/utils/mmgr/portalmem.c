@@ -415,12 +415,12 @@ MarkPortalDone(Portal portal)
 	 * well do that now, since the portal can't be executed any more.
 	 *
 	 * In some cases involving execution of a ROLLBACK command in an already
-	 * aborted transaction, this prevents an assertion failure caused by
-	 * reaching AtCleanup_Portals with the cleanup hook still unexecuted.
+	 * aborted transaction, this is necessary, or we'd reach AtCleanup_Portals
+	 * with the cleanup hook still unexecuted.
 	 */
 	if (PointerIsValid(portal->cleanup))
 	{
-		(*portal->cleanup) (portal);
+		portal->cleanup(portal);
 		portal->cleanup = NULL;
 	}
 }
@@ -443,12 +443,12 @@ MarkPortalFailed(Portal portal)
 	 * well do that now, since the portal can't be executed any more.
 	 *
 	 * In some cases involving cleanup of an already aborted transaction, this
-	 * prevents an assertion failure caused by reaching AtCleanup_Portals with
-	 * the cleanup hook still unexecuted.
+	 * is necessary, or we'd reach AtCleanup_Portals with the cleanup hook
+	 * still unexecuted.
 	 */
 	if (PointerIsValid(portal->cleanup))
 	{
-		(*portal->cleanup) (portal);
+		portal->cleanup(portal);
 		portal->cleanup = NULL;
 	}
 }
@@ -486,7 +486,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 	 */
 	if (PointerIsValid(portal->cleanup))
 	{
-		(*portal->cleanup) (portal);
+		portal->cleanup(portal);
 		portal->cleanup = NULL;
 	}
 
@@ -623,8 +623,8 @@ PortalHashTableDeleteAll(void)
  * simply removed.  Portals remaining from prior transactions should be
  * left untouched.
  *
- * Returns TRUE if any portals changed state (possibly causing user-defined
- * code to be run), FALSE if not.
+ * Returns true if any portals changed state (possibly causing user-defined
+ * code to be run), false if not.
  */
 bool
 PreCommit_Portals(bool isPrepare)
@@ -786,7 +786,7 @@ AtAbort_Portals(void)
 		 */
 		if (PointerIsValid(portal->cleanup))
 		{
-			(*portal->cleanup) (portal);
+			portal->cleanup(portal);
 			portal->cleanup = NULL;
 		}
 
@@ -842,8 +842,15 @@ AtCleanup_Portals(void)
 		if (portal->portalPinned)
 			portal->portalPinned = false;
 
-		/* We had better not be calling any user-defined code here */
-		Assert(portal->cleanup == NULL);
+		/*
+		 * We had better not call any user-defined code during cleanup, so if
+		 * the cleanup hook hasn't been run yet, too bad; we'll just skip it.
+		 */
+		if (PointerIsValid(portal->cleanup))
+		{
+			elog(WARNING, "skipping cleanup for portal \"%s\"", portal->name);
+			portal->cleanup = NULL;
+		}
 
 		/* Zap it. */
 		PortalDrop(portal, false);
@@ -973,7 +980,7 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 */
 		if (PointerIsValid(portal->cleanup))
 		{
-			(*portal->cleanup) (portal);
+			portal->cleanup(portal);
 			portal->cleanup = NULL;
 		}
 
@@ -1026,8 +1033,15 @@ AtSubCleanup_Portals(SubTransactionId mySubid)
 		if (portal->portalPinned)
 			portal->portalPinned = false;
 
-		/* We had better not be calling any user-defined code here */
-		Assert(portal->cleanup == NULL);
+		/*
+		 * We had better not call any user-defined code during cleanup, so if
+		 * the cleanup hook hasn't been run yet, too bad; we'll just skip it.
+		 */
+		if (PointerIsValid(portal->cleanup))
+		{
+			elog(WARNING, "skipping cleanup for portal \"%s\"", portal->name);
+			portal->cleanup = NULL;
+		}
 
 		/* Zap it. */
 		PortalDrop(portal, false);

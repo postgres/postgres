@@ -102,5 +102,5 @@ main(void)
 	 *     are used in other tests
 	 */
 
-	return (0);
+	return 0;
 }

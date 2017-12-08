@@ -125,5 +125,57 @@ update range_parted set b = b - 1 where b = 10;
 -- ok
 update range_parted set b = b + 1 where b = 10;
 
+-- Creating default partition for range
+create table part_def partition of range_parted default;
+\d+ part_def
+insert into range_parted values ('c', 9);
+-- ok
+update part_def set a = 'd' where a = 'c';
+-- fail
+update part_def set a = 'a' where a = 'd';
+
+create table list_parted (
+	a text,
+	b int
+) partition by list (a);
+create table list_part1  partition of list_parted for values in ('a', 'b');
+create table list_default partition of list_parted default;
+insert into list_part1 values ('a', 1);
+insert into list_default values ('d', 10);
+
+-- fail
+update list_default set a = 'a' where a = 'd';
+-- ok
+update list_default set a = 'x' where a = 'd';
+
+-- create custom operator class and hash function, for the same reason
+-- explained in alter_table.sql
+create or replace function dummy_hashint4(a int4, seed int8) returns int8 as
+$$ begin return (a + seed); end; $$ language 'plpgsql' immutable;
+create operator class custom_opclass for type int4 using hash as
+operator 1 = , function 2 dummy_hashint4(int4, int8);
+
+create table hash_parted (
+	a int,
+	b int
+) partition by hash (a custom_opclass, b custom_opclass);
+create table hpart1 partition of hash_parted for values with (modulus 2, remainder 1);
+create table hpart2 partition of hash_parted for values with (modulus 4, remainder 2);
+create table hpart3 partition of hash_parted for values with (modulus 8, remainder 0);
+create table hpart4 partition of hash_parted for values with (modulus 8, remainder 4);
+insert into hpart1 values (1, 1);
+insert into hpart2 values (2, 5);
+insert into hpart4 values (3, 4);
+
+-- fail
+update hpart1 set a = 3, b=4 where a = 1;
+update hash_parted set b = b - 1 where b = 1;
+-- ok
+update hash_parted set b = b + 8 where b = 1;
+
 -- cleanup
 drop table range_parted;
+drop table list_parted;
+drop table hash_parted;
+drop operator class custom_opclass using hash;
+drop function dummy_hashint4(a int4, seed int8);

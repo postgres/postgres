@@ -279,7 +279,8 @@ ALTER TABLE toasted_several ALTER COLUMN toasted_key SET STORAGE EXTERNAL;
 ALTER TABLE toasted_several ALTER COLUMN toasted_col1 SET STORAGE EXTERNAL;
 ALTER TABLE toasted_several ALTER COLUMN toasted_col2 SET STORAGE EXTERNAL;
 
-INSERT INTO toasted_several(toasted_key) VALUES(repeat('9876543210', 2000));
+INSERT INTO toasted_several(toasted_key) VALUES(repeat('9876543210', 10000));
+SELECT pg_column_size(toasted_key) > 2^16 FROM toasted_several;
 
 SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 

@@ -3,7 +3,7 @@ doc/src/sgml/ref/savepoint.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-SAVEPOINT">
+<refentry id="sql-savepoint">
  <indexterm zone="sql-savepoint">
   <primary>SAVEPOINT</primary>
  </indexterm>
@@ -64,8 +64,8 @@ SAVEPOINT <replaceable>savepoint_name</replaceable>
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-ROLLBACK-TO"> to
-   rollback to a savepoint.  Use <xref linkend="SQL-RELEASE-SAVEPOINT">
+   Use <xref linkend="sql-rollback-to"/> to
+   rollback to a savepoint.  Use <xref linkend="sql-release-savepoint"/>
    to destroy a savepoint, keeping
    the effects of commands executed after it was established.
   </para>
@@ -114,11 +114,11 @@ COMMIT;
   <para>
    SQL requires a savepoint to be destroyed automatically when another
    savepoint with the same name is established.  In
-   <productname>PostgreSQL</>, the old savepoint is kept, though only the more
+   <productname>PostgreSQL</productname>, the old savepoint is kept, though only the more
    recent one will be used when rolling back or releasing.  (Releasing the
-   newer savepoint with <command>RELEASE SAVEPOINT</> will cause the older one
-   to again become accessible to <command>ROLLBACK TO SAVEPOINT</> and
-   <command>RELEASE SAVEPOINT</>.) Otherwise, <command>SAVEPOINT</command> is
+   newer savepoint with <command>RELEASE SAVEPOINT</command> will cause the older one
+   to again become accessible to <command>ROLLBACK TO SAVEPOINT</command> and
+   <command>RELEASE SAVEPOINT</command>.) Otherwise, <command>SAVEPOINT</command> is
    fully SQL conforming.
   </para>
  </refsect1>
@@ -127,11 +127,11 @@ COMMIT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin"></member>
-   <member><xref linkend="sql-commit"></member>
-   <member><xref linkend="sql-release-savepoint"></member>
-   <member><xref linkend="sql-rollback"></member>
-   <member><xref linkend="sql-rollback-to"></member>
+   <member><xref linkend="sql-begin"/></member>
+   <member><xref linkend="sql-commit"/></member>
+   <member><xref linkend="sql-release-savepoint"/></member>
+   <member><xref linkend="sql-rollback"/></member>
+   <member><xref linkend="sql-rollback-to"/></member>
   </simplelist>
  </refsect1>
 </refentry>

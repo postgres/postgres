@@ -355,6 +355,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 									   params->log_min_duration))
 		{
 			StringInfoData buf;
+			char	   *msgfmt;
 
 			TimestampDifference(starttime, endtime, &secs, &usecs);
 
@@ -373,7 +374,11 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 			 * emitting individual parts of the message when not applicable.
 			 */
 			initStringInfo(&buf);
-			appendStringInfo(&buf, _("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"),
+			if (aggressive)
+				msgfmt = _("automatic aggressive vacuum of table \"%s.%s.%s\": index scans: %d\n");
+			else
+				msgfmt = _("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n");
+			appendStringInfo(&buf, msgfmt,
 							 get_database_name(MyDatabaseId),
 							 get_namespace_name(RelationGetNamespace(onerel)),
 							 RelationGetRelationName(onerel),
@@ -486,10 +491,16 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	pg_rusage_init(&ru0);
 
 	relname = RelationGetRelationName(onerel);
-	ereport(elevel,
-			(errmsg("vacuuming \"%s.%s\"",
-					get_namespace_name(RelationGetNamespace(onerel)),
-					relname)));
+	if (aggressive)
+		ereport(elevel,
+				(errmsg("aggressively vacuuming \"%s.%s\"",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						relname)));
+	else
+		ereport(elevel,
+				(errmsg("vacuuming \"%s.%s\"",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						relname)));
 
 	empty_pages = vacuumed_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;
@@ -529,11 +540,11 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	 * safely set for relfrozenxid or relminmxid.
 	 *
 	 * Before entering the main loop, establish the invariant that
-	 * next_unskippable_block is the next block number >= blkno that's not we
-	 * can't skip based on the visibility map, either all-visible for a
-	 * regular scan or all-frozen for an aggressive scan.  We set it to
-	 * nblocks if there's no such block.  We also set up the skipping_blocks
-	 * flag correctly at this stage.
+	 * next_unskippable_block is the next block number >= blkno that we can't
+	 * skip based on the visibility map, either all-visible for a regular scan
+	 * or all-frozen for an aggressive scan.  We set it to nblocks if there's
+	 * no such block.  We also set up the skipping_blocks flag correctly at
+	 * this stage.
 	 *
 	 * Note: The value returned by visibilitymap_get_status could be slightly
 	 * out-of-date, since we make this test before reading the corresponding
@@ -639,8 +650,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 
 			/*
 			 * We know we can't skip the current block.  But set up
-			 * skipping_all_visible_blocks to do the right thing at the
-			 * following blocks.
+			 * skipping_blocks to do the right thing at the following blocks.
 			 */
 			if (next_unskippable_block - blkno > SKIP_PAGES_THRESHOLD)
 				skipping_blocks = true;
@@ -1352,7 +1362,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 									"%u pages are entirely empty.\n",
 									empty_pages),
 					 empty_pages);
-	appendStringInfo(&buf, "%s.", pg_rusage_show(&ru0));
+	appendStringInfo(&buf, _("%s."), pg_rusage_show(&ru0));
 
 	ereport(elevel,
 			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u pages",

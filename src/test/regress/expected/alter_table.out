@@ -94,6 +94,30 @@ SELECT * FROM tmp;
          | 4 | name | text | 4.1 | 4.1 | 2 | ((4.1,4.1),(3.1,3.1)) | Mon May 01 00:30:30 1995 PDT | c | {"Mon May 01 00:30:30 1995 PDT","Mon Aug 24 14:43:07 1992 PDT","Wed Dec 31 16:00:00 1969 PST"} | 314159 | (1,1) | 512 | 1 2 3 4 5 6 7 8 | magnetic disk | (1.1,1.1) | [(4.1,4.1),(3.1,3.1)] | ((0,2),(4.1,4.1),(3.1,3.1)) | (4.1,4.1),(3.1,3.1) | ["Wed Dec 31 16:00:00 1969 PST" "infinity"] | Thu Jan 01 00:00:00 1970 | @ 1 hour 10 secs | {1,2,3,4} | {1,2,3,4} | {1,2,3,4}
 (1 row)
 
+CREATE INDEX tmp_idx ON tmp (a, (d + e), b);
+ALTER INDEX tmp_idx ALTER COLUMN 0 SET STATISTICS 1000;
+ERROR:  column number must be in range from 1 to 32767
+LINE 1: ALTER INDEX tmp_idx ALTER COLUMN 0 SET STATISTICS 1000;
+                                         ^
+ALTER INDEX tmp_idx ALTER COLUMN 1 SET STATISTICS 1000;
+ERROR:  cannot alter statistics on non-expression column "a" of index "tmp_idx"
+HINT:  Alter statistics on table column instead.
+ALTER INDEX tmp_idx ALTER COLUMN 2 SET STATISTICS 1000;
+\d+ tmp_idx
+                     Index "public.tmp_idx"
+ Column |       Type       | Definition | Storage | Stats target 
+--------+------------------+------------+---------+--------------
+ a      | integer          | a          | plain   | 
+ expr   | double precision | (d + e)    | plain   | 1000
+ b      | cstring          | b          | plain   | 
+btree, for table "public.tmp"
+
+ALTER INDEX tmp_idx ALTER COLUMN 3 SET STATISTICS 1000;
+ERROR:  cannot alter statistics on non-expression column "b" of index "tmp_idx"
+HINT:  Alter statistics on table column instead.
+ALTER INDEX tmp_idx ALTER COLUMN 4 SET STATISTICS 1000;
+ERROR:  column number 4 of relation "tmp_idx" does not exist
+ALTER INDEX tmp_idx ALTER COLUMN 2 SET STATISTICS -1;
 DROP TABLE tmp;
 --
 -- rename - check on both non-temp and temp tables
@@ -328,7 +352,7 @@ Number of child tables: 1 (Use \d+ to list them.)
       Table "public.constraint_rename_test2"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
- a      | integer |           |          | 
+ a      | integer |           | not null | 
  b      | integer |           |          | 
  c      | integer |           |          | 
  d      | integer |           |          | 
@@ -1895,7 +1919,7 @@ alter table anothertab alter column atcol1 drop default;
 alter table anothertab alter column atcol1 type boolean
         using case when atcol1 % 2 = 0 then true else false end; -- fails
 ERROR:  operator does not exist: boolean <= integer
-HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 alter table anothertab drop constraint anothertab_chk;
 alter table anothertab drop constraint anothertab_chk; -- fails
 ERROR:  constraint "anothertab_chk" of relation "anothertab" does not exist
@@ -2156,6 +2180,91 @@ Foreign-key constraints:
     "check_fk_presence_2_id_fkey" FOREIGN KEY (id) REFERENCES check_fk_presence_1(id)
 
 DROP TABLE check_fk_presence_1, check_fk_presence_2;
+-- check column addition within a view (bug #14876)
+create table at_base_table(id int, stuff text);
+insert into at_base_table values (23, 'skidoo');
+create view at_view_1 as select * from at_base_table bt;
+create view at_view_2 as select *, to_json(v1) as j from at_view_1 v1;
+\d+ at_view_1
+                          View "public.at_view_1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ id     | integer |           |          |         | plain    | 
+ stuff  | text    |           |          |         | extended | 
+View definition:
+ SELECT bt.id,
+    bt.stuff
+   FROM at_base_table bt;
+
+\d+ at_view_2
+                          View "public.at_view_2"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ id     | integer |           |          |         | plain    | 
+ stuff  | text    |           |          |         | extended | 
+ j      | json    |           |          |         | extended | 
+View definition:
+ SELECT v1.id,
+    v1.stuff,
+    to_json(v1.*) AS j
+   FROM at_view_1 v1;
+
+explain (verbose, costs off) select * from at_view_2;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Seq Scan on public.at_base_table bt
+   Output: bt.id, bt.stuff, to_json(ROW(bt.id, bt.stuff))
+(2 rows)
+
+select * from at_view_2;
+ id | stuff  |             j              
+----+--------+----------------------------
+ 23 | skidoo | {"id":23,"stuff":"skidoo"}
+(1 row)
+
+create or replace view at_view_1 as select *, 2+2 as more from at_base_table bt;
+\d+ at_view_1
+                          View "public.at_view_1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ id     | integer |           |          |         | plain    | 
+ stuff  | text    |           |          |         | extended | 
+ more   | integer |           |          |         | plain    | 
+View definition:
+ SELECT bt.id,
+    bt.stuff,
+    2 + 2 AS more
+   FROM at_base_table bt;
+
+\d+ at_view_2
+                          View "public.at_view_2"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ id     | integer |           |          |         | plain    | 
+ stuff  | text    |           |          |         | extended | 
+ j      | json    |           |          |         | extended | 
+View definition:
+ SELECT v1.id,
+    v1.stuff,
+    to_json(v1.*) AS j
+   FROM at_view_1 v1;
+
+explain (verbose, costs off) select * from at_view_2;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Seq Scan on public.at_base_table bt
+   Output: bt.id, bt.stuff, to_json(ROW(bt.id, bt.stuff, NULL))
+(2 rows)
+
+select * from at_view_2;
+ id | stuff  |                   j                    
+----+--------+----------------------------------------
+ 23 | skidoo | {"id":23,"stuff":"skidoo","more":null}
+(1 row)
+
+drop view at_view_2;
+drop view at_view_1;
+drop table at_base_table;
 --
 -- lock levels
 --
@@ -2682,6 +2791,23 @@ Typed table of type: test_type2
 Inherits: test_tbl2
 
 DROP TABLE test_tbl2_subclass;
+CREATE TYPE test_typex AS (a int, b text);
+CREATE TABLE test_tblx (x int, y test_typex check ((y).a > 0));
+ALTER TYPE test_typex DROP ATTRIBUTE a; -- fails
+ERROR:  cannot drop composite type test_typex column a because other objects depend on it
+DETAIL:  constraint test_tblx_y_check on table test_tblx depends on composite type test_typex column a
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER TYPE test_typex DROP ATTRIBUTE a CASCADE;
+NOTICE:  drop cascades to constraint test_tblx_y_check on table test_tblx
+\d test_tblx
+               Table "public.test_tblx"
+ Column |    Type    | Collation | Nullable | Default 
+--------+------------+-----------+----------+---------
+ x      | integer    |           |          | 
+ y      | test_typex |           |          | 
+
+DROP TABLE test_tblx;
+DROP TYPE test_typex;
 -- This test isn't that interesting on its own, but the purpose is to leave
 -- behind a table to test pg_upgrade with. The table has a composite type
 -- column in it, and the composite type has a dropped attribute.
@@ -3218,7 +3344,7 @@ DROP TABLE fail_part;
 CREATE TABLE fail_part (like list_parted, c int);
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 ERROR:  table "fail_part" contains column "c" not found in parent "list_parted"
-DETAIL:  New partition should contain only the columns present in parent.
+DETAIL:  The new partition may contain only the columns present in parent.
 DROP TABLE fail_part;
 -- check that the table being attached has every column of the parent
 CREATE TABLE fail_part (a int NOT NULL);
@@ -3273,6 +3399,15 @@ SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_1'::reg
 CREATE TABLE fail_part (LIKE part_1 INCLUDING CONSTRAINTS);
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 ERROR:  partition "fail_part" would overlap partition "part_1"
+DROP TABLE fail_part;
+-- check that an existing table can be attached as a default partition
+CREATE TABLE def_part (LIKE list_parted INCLUDING CONSTRAINTS);
+ALTER TABLE list_parted ATTACH PARTITION def_part DEFAULT;
+-- check attaching default partition fails if a default partition already
+-- exists
+CREATE TABLE fail_def_part (LIKE part_1 INCLUDING CONSTRAINTS);
+ALTER TABLE list_parted ATTACH PARTITION fail_def_part DEFAULT;
+ERROR:  partition "fail_def_part" conflicts with existing default partition "def_part"
 -- check validation when attaching list partitions
 CREATE TABLE list_parted2 (
 	a int,
@@ -3286,6 +3421,15 @@ ERROR:  partition constraint is violated by some row
 -- should be ok after deleting the bad row
 DELETE FROM part_2;
 ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
+-- check partition cannot be attached if default has some row for its values
+CREATE TABLE list_parted2_def PARTITION OF list_parted2 DEFAULT;
+INSERT INTO list_parted2_def VALUES (11, 'z');
+CREATE TABLE part_3 (LIKE list_parted2);
+ALTER TABLE list_parted2 ATTACH PARTITION part_3 FOR VALUES IN (11);
+ERROR:  updated partition constraint for default partition would be violated by some row
+-- should be ok after deleting the bad row
+DELETE FROM list_parted2_def WHERE a = 11;
+ALTER TABLE list_parted2 ATTACH PARTITION part_3 FOR VALUES IN (11);
 -- adding constraints that describe the desired partition constraint
 -- (or more restrictive) will help skip the validation scan
 CREATE TABLE part_3_4 (
@@ -3301,6 +3445,10 @@ ALTER TABLE list_parted2 DETACH PARTITION part_3_4;
 ALTER TABLE part_3_4 ALTER a SET NOT NULL;
 ALTER TABLE list_parted2 ATTACH PARTITION part_3_4 FOR VALUES IN (3, 4);
 INFO:  partition constraint for table "part_3_4" is implied by existing constraints
+-- check if default partition scan skipped
+ALTER TABLE list_parted2_def ADD CONSTRAINT check_a CHECK (a IN (5, 6));
+CREATE TABLE part_55_66 PARTITION OF list_parted2 FOR VALUES IN (55, 66);
+INFO:  updated partition constraint for default partition "list_parted2_def" is implied by existing constraints
 -- check validation when attaching range partitions
 CREATE TABLE range_parted (
 	a int,
@@ -3326,6 +3474,19 @@ CREATE TABLE part2 (
 );
 ALTER TABLE range_parted ATTACH PARTITION part2 FOR VALUES FROM (1, 10) TO (1, 20);
 INFO:  partition constraint for table "part2" is implied by existing constraints
+-- Create default partition
+CREATE TABLE partr_def1 PARTITION OF range_parted DEFAULT;
+-- Only one default partition is allowed, hence, following should give error
+CREATE TABLE partr_def2 (LIKE part1 INCLUDING CONSTRAINTS);
+ALTER TABLE range_parted ATTACH PARTITION partr_def2 DEFAULT;
+ERROR:  partition "partr_def2" conflicts with existing default partition "partr_def1"
+-- Overlapping partitions cannot be attached, hence, following should give error
+INSERT INTO partr_def1 VALUES (2, 10);
+CREATE TABLE part3 (LIKE range_parted);
+ALTER TABLE range_parted ATTACH partition part3 FOR VALUES FROM (2, 10) TO (2, 20);
+ERROR:  updated partition constraint for default partition would be violated by some row
+-- Attaching partitions should be successful when there are no overlapping rows
+ALTER TABLE range_parted ATTACH partition part3 FOR VALUES FROM (3, 10) TO (3, 20);
 -- check that leaf partitions are scanned when attaching a partitioned
 -- table
 CREATE TABLE part_5 (
@@ -3347,6 +3508,65 @@ ALTER TABLE part_5 DROP CONSTRAINT check_a;
 ALTER TABLE part_5 ADD CONSTRAINT check_a CHECK (a IN (5)), ALTER a SET NOT NULL;
 ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
 INFO:  partition constraint for table "part_5" is implied by existing constraints
+-- Check the case where attnos of the partitioning columns in the table being
+-- attached differs from the parent.  It should not affect the constraint-
+-- checking logic that allows to skip the scan.
+CREATE TABLE part_6 (
+	c int,
+	LIKE list_parted2,
+	CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 6)
+);
+ALTER TABLE part_6 DROP c;
+ALTER TABLE list_parted2 ATTACH PARTITION part_6 FOR VALUES IN (6);
+INFO:  partition constraint for table "part_6" is implied by existing constraints
+-- Similar to above, but the table being attached is a partitioned table
+-- whose partition has still different attnos for the root partitioning
+-- columns.
+CREATE TABLE part_7 (
+	LIKE list_parted2,
+	CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 7)
+) PARTITION BY LIST (b);
+CREATE TABLE part_7_a_null (
+	c int,
+	d int,
+	e int,
+	LIKE list_parted2,  -- 'a' will have attnum = 4
+	CONSTRAINT check_b CHECK (b IS NULL OR b = 'a'),
+	CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 7)
+);
+ALTER TABLE part_7_a_null DROP c, DROP d, DROP e;
+ALTER TABLE part_7 ATTACH PARTITION part_7_a_null FOR VALUES IN ('a', null);
+INFO:  partition constraint for table "part_7_a_null" is implied by existing constraints
+ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
+INFO:  partition constraint for table "part_7" is implied by existing constraints
+INFO:  updated partition constraint for default partition "list_parted2_def" is implied by existing constraints
+-- Same example, but check this time that the constraint correctly detects
+-- violating rows
+ALTER TABLE list_parted2 DETACH PARTITION part_7;
+ALTER TABLE part_7 DROP CONSTRAINT check_a; -- thusly, scan won't be skipped
+INSERT INTO part_7 (a, b) VALUES (8, null), (9, 'a');
+SELECT tableoid::regclass, a, b FROM part_7 order by a;
+   tableoid    | a | b 
+---------------+---+---
+ part_7_a_null | 8 | 
+ part_7_a_null | 9 | a
+(2 rows)
+
+ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
+INFO:  updated partition constraint for default partition "list_parted2_def" is implied by existing constraints
+ERROR:  partition constraint is violated by some row
+-- check that leaf partitions of default partition are scanned when
+-- attaching a partitioned table.
+ALTER TABLE part_5 DROP CONSTRAINT check_a;
+CREATE TABLE part5_def PARTITION OF part_5 DEFAULT PARTITION BY LIST(a);
+CREATE TABLE part5_def_p1 PARTITION OF part5_def FOR VALUES IN (5);
+INSERT INTO part5_def_p1 VALUES (5, 'y');
+CREATE TABLE part5_p1 (LIKE part_5);
+ALTER TABLE part_5 ATTACH PARTITION part5_p1 FOR VALUES IN ('y');
+ERROR:  updated partition constraint for default partition would be violated by some row
+-- should be ok after deleting the bad row
+DELETE FROM part5_def_p1 WHERE b = 'y';
+ALTER TABLE part_5 ATTACH PARTITION part5_p1 FOR VALUES IN ('y');
 -- check that the table being attached is not already a partition
 ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
 ERROR:  "part_2" is already a partition
@@ -3357,6 +3577,79 @@ DETAIL:  "part_5" is already a child of "list_parted2".
 ALTER TABLE list_parted2 ATTACH PARTITION list_parted2 FOR VALUES IN (0);
 ERROR:  circular inheritance not allowed
 DETAIL:  "list_parted2" is already a child of "list_parted2".
+-- If a partitioned table being created or an existing table being attached
+-- as a paritition does not have a constraint that would allow validation scan
+-- to be skipped, but an individual partition does, then the partition's
+-- validation scan is skipped.
+CREATE TABLE quuux (a int, b text) PARTITION BY LIST (a);
+CREATE TABLE quuux_default PARTITION OF quuux DEFAULT PARTITION BY LIST (b);
+CREATE TABLE quuux_default1 PARTITION OF quuux_default (
+	CONSTRAINT check_1 CHECK (a IS NOT NULL AND a = 1)
+) FOR VALUES IN ('b');
+CREATE TABLE quuux1 (a int, b text);
+ALTER TABLE quuux ATTACH PARTITION quuux1 FOR VALUES IN (1); -- validate!
+CREATE TABLE quuux2 (a int, b text);
+ALTER TABLE quuux ATTACH PARTITION quuux2 FOR VALUES IN (2); -- skip validation
+INFO:  updated partition constraint for default partition "quuux_default1" is implied by existing constraints
+DROP TABLE quuux1, quuux2;
+-- should validate for quuux1, but not for quuux2
+CREATE TABLE quuux1 PARTITION OF quuux FOR VALUES IN (1);
+CREATE TABLE quuux2 PARTITION OF quuux FOR VALUES IN (2);
+INFO:  updated partition constraint for default partition "quuux_default1" is implied by existing constraints
+DROP TABLE quuux;
+-- check validation when attaching hash partitions
+-- The default hash functions as they exist today aren't portable; they can
+-- return different results on different machines.  Depending upon how the
+-- values are hashed, the row may map to different partitions, which result in
+-- regression failure.  To avoid this, let's create a non-default hash function
+-- that just returns the input value unchanged.
+CREATE OR REPLACE FUNCTION dummy_hashint4(a int4, seed int8) RETURNS int8 AS
+$$ BEGIN RETURN (a + 1 + seed); END; $$ LANGUAGE 'plpgsql' IMMUTABLE;
+CREATE OPERATOR CLASS custom_opclass FOR TYPE int4 USING HASH AS
+OPERATOR 1 = , FUNCTION 2 dummy_hashint4(int4, int8);
+-- check that the new partition won't overlap with an existing partition
+CREATE TABLE hash_parted (
+	a int,
+	b int
+) PARTITION BY HASH (a custom_opclass);
+CREATE TABLE hpart_1 PARTITION OF hash_parted FOR VALUES WITH (MODULUS 4, REMAINDER 0);
+CREATE TABLE fail_part (LIKE hpart_1);
+ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 8, REMAINDER 4);
+ERROR:  partition "fail_part" would overlap partition "hpart_1"
+ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 8, REMAINDER 0);
+ERROR:  partition "fail_part" would overlap partition "hpart_1"
+DROP TABLE fail_part;
+-- check validation when attaching hash partitions
+-- check that violating rows are correctly reported
+CREATE TABLE hpart_2 (LIKE hash_parted);
+INSERT INTO hpart_2 VALUES (3, 0);
+ALTER TABLE hash_parted ATTACH PARTITION hpart_2 FOR VALUES WITH (MODULUS 4, REMAINDER 1);
+ERROR:  partition constraint is violated by some row
+-- should be ok after deleting the bad row
+DELETE FROM hpart_2;
+ALTER TABLE hash_parted ATTACH PARTITION hpart_2 FOR VALUES WITH (MODULUS 4, REMAINDER 1);
+-- check that leaf partitions are scanned when attaching a partitioned
+-- table
+CREATE TABLE hpart_5 (
+	LIKE hash_parted
+) PARTITION BY LIST (b);
+-- check that violating rows are correctly reported
+CREATE TABLE hpart_5_a PARTITION OF hpart_5 FOR VALUES IN ('1', '2', '3');
+INSERT INTO hpart_5_a (a, b) VALUES (7, 1);
+ALTER TABLE hash_parted ATTACH PARTITION hpart_5 FOR VALUES WITH (MODULUS 4, REMAINDER 2);
+ERROR:  partition constraint is violated by some row
+-- should be ok after deleting the bad row
+DELETE FROM hpart_5_a;
+ALTER TABLE hash_parted ATTACH PARTITION hpart_5 FOR VALUES WITH (MODULUS 4, REMAINDER 2);
+-- check that the table being attach is with valid modulus and remainder value
+CREATE TABLE fail_part(LIKE hash_parted);
+ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 0, REMAINDER 1);
+ERROR:  modulus for hash partition must be a positive integer
+ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 8, REMAINDER 8);
+ERROR:  remainder for hash partition must be less than modulus
+ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 3, REMAINDER 2);
+ERROR:  every hash partition modulus must be a factor of the next larger modulus
+DROP TABLE fail_part;
 --
 -- DETACH PARTITION
 --
@@ -3368,12 +3661,17 @@ DROP TABLE regular_table;
 -- check that the partition being detached exists at all
 ALTER TABLE list_parted2 DETACH PARTITION part_4;
 ERROR:  relation "part_4" does not exist
+ALTER TABLE hash_parted DETACH PARTITION hpart_4;
+ERROR:  relation "hpart_4" does not exist
 -- check that the partition being detached is actually a partition of the parent
 CREATE TABLE not_a_part (a int);
 ALTER TABLE list_parted2 DETACH PARTITION not_a_part;
 ERROR:  relation "not_a_part" is not a partition of relation "list_parted2"
 ALTER TABLE list_parted2 DETACH PARTITION part_1;
 ERROR:  relation "part_1" is not a partition of relation "list_parted2"
+ALTER TABLE hash_parted DETACH PARTITION not_a_part;
+ERROR:  relation "not_a_part" is not a partition of relation "hash_parted"
+DROP TABLE not_a_part;
 -- check that, after being detached, attinhcount/coninhcount is dropped to 0 and
 -- attislocal/conislocal is set to true
 ALTER TABLE list_parted2 DETACH PARTITION part_3_4;
@@ -3467,8 +3765,19 @@ ALTER TABLE list_parted2 DROP COLUMN b;
 ERROR:  cannot drop column named in partition key
 ALTER TABLE list_parted2 ALTER COLUMN b TYPE text;
 ERROR:  cannot alter type of column named in partition key
+-- dropping non-partition key columns should be allowed on the parent table.
+ALTER TABLE list_parted DROP COLUMN b;
+SELECT * FROM list_parted;
+ a 
+---
+(0 rows)
+
 -- cleanup
 DROP TABLE list_parted, list_parted2, range_parted;
+DROP TABLE fail_def_part;
+DROP TABLE hash_parted;
+DROP OPERATOR CLASS custom_opclass USING HASH;
+DROP FUNCTION dummy_hashint4(a int4, seed int8);
 -- more tests for certain multi-level partitioning scenarios
 create table p (a int, b int) partition by range (a, b);
 create table p1 (b int, a int not null) partition by range (b);
@@ -3506,3 +3815,10 @@ create table parted_validate_test_1 partition of parted_validate_test for values
 alter table parted_validate_test add constraint parted_validate_test_chka check (a > 0) not valid;
 alter table parted_validate_test validate constraint parted_validate_test_chka;
 drop table parted_validate_test;
+-- test alter column options
+CREATE TABLE tmp(i integer);
+INSERT INTO tmp VALUES (1);
+ALTER TABLE tmp ALTER COLUMN i SET (n_distinct = 1, n_distinct_inherited = 2);
+ALTER TABLE tmp ALTER COLUMN i RESET (n_distinct_inherited);
+ANALYZE tmp;
+DROP TABLE tmp;

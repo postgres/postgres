@@ -15,53 +15,15 @@
 #include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"       /* for byteain & byteaout */
-#include "mb/pg_wchar.h"       /* for GetDatabaseEncoding */
+
 /* Defined by Perl */
 #undef _
 
 /* perl stuff */
+#define PG_NEED_PERL_XSUB_H
 #include "plperl.h"
 #include "plperl_helpers.h"
 
-/*
- * Implementation of plperl's elog() function
- *
- * If the error level is less than ERROR, we'll just emit the message and
- * return.  When it is ERROR, elog() will longjmp, which we catch and
- * turn into a Perl croak().  Note we are assuming that elog() can't have
- * any internal failures that are so bad as to require a transaction abort.
- *
- * This is out-of-line to suppress "might be clobbered by longjmp" warnings.
- */
-static void
-do_util_elog(int level, SV *msg)
-{
-	MemoryContext oldcontext = CurrentMemoryContext;
-	char	   * volatile cmsg = NULL;
-
-	PG_TRY();
-	{
-		cmsg = sv2cstr(msg);
-		elog(level, "%s", cmsg);
-		pfree(cmsg);
-	}
-	PG_CATCH();
-	{
-		ErrorData  *edata;
-
-		/* Must reset elog.c's state */
-		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
-		FlushErrorState();
-
-		if (cmsg)
-			pfree(cmsg);
-
-		/* Punt the error to Perl */
-		croak_cstr(edata->message);
-	}
-	PG_END_TRY();
-}
 
 static text *
 sv2text(SV *sv)
@@ -105,7 +67,7 @@ util_elog(level, msg)
             level = ERROR;
         if (level < DEBUG5)
             level = DEBUG5;
-        do_util_elog(level, msg);
+        plperl_util_elog(level, msg);
 
 SV *
 util_quote_literal(sv)

@@ -170,9 +170,9 @@ typedef struct GlobalTransactionData
 
 	Oid			owner;			/* ID of user that executed the xact */
 	BackendId	locking_backend;	/* backend currently working on the xact */
-	bool		valid;			/* TRUE if PGPROC entry is in proc array */
-	bool		ondisk;			/* TRUE if prepare state file is on disk */
-	bool		inredo;			/* TRUE if entry was added via xlog_redo */
+	bool		valid;			/* true if PGPROC entry is in proc array */
+	bool		ondisk;			/* true if prepare state file is on disk */
+	bool		inredo;			/* true if entry was added via xlog_redo */
 	char		gid[GIDSIZE];	/* The GID assigned to the prepared xact */
 }			GlobalTransactionData;
 
@@ -1195,7 +1195,7 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 
 	TwoPhaseFilePath(path, xid);
 
-	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
+	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		if (give_warnings)
@@ -1299,7 +1299,8 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 	XLogReaderState *xlogreader;
 	char	   *errormsg;
 
-	xlogreader = XLogReaderAllocate(&read_local_xlog_page, NULL);
+	xlogreader = XLogReaderAllocate(wal_segment_size, &read_local_xlog_page,
+									NULL);
 	if (!xlogreader)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -1580,8 +1581,7 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	TwoPhaseFilePath(path, xid);
 
 	fd = OpenTransientFile(path,
-						   O_CREAT | O_TRUNC | O_WRONLY | PG_BINARY,
-						   S_IRUSR | S_IWUSR);
+						   O_CREAT | O_TRUNC | O_WRONLY | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -1735,8 +1735,8 @@ restoreTwoPhaseData(void)
 	DIR		   *cldir;
 	struct dirent *clde;
 
-	cldir = AllocateDir(TWOPHASE_DIR);
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
+	cldir = AllocateDir(TWOPHASE_DIR);
 	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
@@ -2031,14 +2031,14 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 		if (fromdisk)
 		{
 			ereport(WARNING,
-					(errmsg("removing stale two-phase state file for \"%u\"",
+					(errmsg("removing stale two-phase state file for transaction %u",
 							xid)));
 			RemoveTwoPhaseFile(xid, true);
 		}
 		else
 		{
 			ereport(WARNING,
-					(errmsg("removing stale two-phase state from shared memory for \"%u\"",
+					(errmsg("removing stale two-phase state from memory for transaction %u",
 							xid)));
 			PrepareRedoRemove(xid, true);
 		}
@@ -2051,14 +2051,14 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 		if (fromdisk)
 		{
 			ereport(WARNING,
-					(errmsg("removing future two-phase state file for \"%u\"",
+					(errmsg("removing future two-phase state file for transaction %u",
 							xid)));
 			RemoveTwoPhaseFile(xid, true);
 		}
 		else
 		{
 			ereport(WARNING,
-					(errmsg("removing future two-phase state from memory for \"%u\"",
+					(errmsg("removing future two-phase state from memory for transaction %u",
 							xid)));
 			PrepareRedoRemove(xid, true);
 		}
@@ -2072,7 +2072,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 		if (buf == NULL)
 		{
 			ereport(WARNING,
-					(errmsg("removing corrupt two-phase state file for \"%u\"",
+					(errmsg("removing corrupt two-phase state file for transaction %u",
 							xid)));
 			RemoveTwoPhaseFile(xid, true);
 			return NULL;
@@ -2091,14 +2091,14 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 		if (fromdisk)
 		{
 			ereport(WARNING,
-					(errmsg("removing corrupt two-phase state file for \"%u\"",
+					(errmsg("removing corrupt two-phase state file for transaction %u",
 							xid)));
 			RemoveTwoPhaseFile(xid, true);
 		}
 		else
 		{
 			ereport(WARNING,
-					(errmsg("removing corrupt two-phase state from memory for \"%u\"",
+					(errmsg("removing corrupt two-phase state from memory for transaction %u",
 							xid)));
 			PrepareRedoRemove(xid, true);
 		}

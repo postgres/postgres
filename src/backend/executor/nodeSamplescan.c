@@ -96,10 +96,12 @@ SampleRecheck(SampleScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecSampleScan(SampleScanState *node)
+static TupleTableSlot *
+ExecSampleScan(PlanState *pstate)
 {
-	return ExecScan((ScanState *) node,
+	SampleScanState *node = castNode(SampleScanState, pstate);
+
+	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) SampleNext,
 					(ExecScanRecheckMtd) SampleRecheck);
 }
@@ -153,6 +155,7 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	scanstate = makeNode(SampleScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecSampleScan;
 
 	/*
 	 * Miscellaneous initialization

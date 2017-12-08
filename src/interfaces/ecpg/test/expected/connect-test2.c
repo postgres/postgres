@@ -100,5 +100,5 @@ main(void)
 #line 43 "test2.pgc"
 
 
-	return (0);
+	return 0;
 }

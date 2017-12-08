@@ -38,6 +38,8 @@ static char *litbufdup(void);
 static void addlit(char *ytext, int yleng);
 static void addlitchar(unsigned char ychar);
 
+/* LCOV_EXCL_START */
+
 %}
 
 %option 8bit
@@ -103,6 +105,7 @@ TEMPORARY			{ return K_TEMPORARY; }
 EXPORT_SNAPSHOT		{ return K_EXPORT_SNAPSHOT; }
 NOEXPORT_SNAPSHOT	{ return K_NOEXPORT_SNAPSHOT; }
 USE_SNAPSHOT		{ return K_USE_SNAPSHOT; }
+WAIT				{ return K_WAIT; }
 
 ","				{ return ','; }
 ";"				{ return ';'; }
@@ -185,6 +188,7 @@ USE_SNAPSHOT		{ return K_USE_SNAPSHOT; }
 				}
 %%
 
+/* LCOV_EXCL_STOP */
 
 static void
 startlit(void)

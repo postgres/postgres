@@ -65,8 +65,9 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
 	metaopaque->btpo_flags = BTP_META;
 
 	/*
-	 * Set pd_lower just past the end of the metadata.  This is not essential
-	 * but it makes the page look compressible to xlog.c.
+	 * Set pd_lower just past the end of the metadata.  This is essential,
+	 * because without doing so, metadata will be lost if xlog.c compresses
+	 * the page.
 	 */
 	((PageHeader) page)->pd_lower =
 		((char *) metad + sizeof(BTMetaPageData)) - (char *) page;
@@ -162,7 +163,7 @@ _bt_getroot(Relation rel, int access)
 	metad = BTPageGetMeta(metapg);
 
 	/* sanity-check the metapage */
-	if (!(metaopaque->btpo_flags & BTP_META) ||
+	if (!P_ISMETA(metaopaque) ||
 		metad->btm_magic != BTREE_MAGIC)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -241,7 +242,7 @@ _bt_getroot(Relation rel, int access)
 
 			XLogBeginInsert();
 			XLogRegisterBuffer(0, rootbuf, REGBUF_WILL_INIT);
-			XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT);
+			XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 			md.root = rootblkno;
 			md.level = 0;
@@ -365,7 +366,7 @@ _bt_gettrueroot(Relation rel)
 	metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	metad = BTPageGetMeta(metapg);
 
-	if (!(metaopaque->btpo_flags & BTP_META) ||
+	if (!P_ISMETA(metaopaque) ||
 		metad->btm_magic != BTREE_MAGIC)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -452,7 +453,7 @@ _bt_getrootheight(Relation rel)
 		metad = BTPageGetMeta(metapg);
 
 		/* sanity-check the metapage */
-		if (!(metaopaque->btpo_flags & BTP_META) ||
+		if (!P_ISMETA(metaopaque) ||
 			metad->btm_magic != BTREE_MAGIC)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -1827,7 +1828,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 
 		if (BufferIsValid(metabuf))
 		{
-			XLogRegisterBuffer(4, metabuf, REGBUF_WILL_INIT);
+			XLogRegisterBuffer(4, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 			xlmeta.root = metad->btm_root;
 			xlmeta.level = metad->btm_level;

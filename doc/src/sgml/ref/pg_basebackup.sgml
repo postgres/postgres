@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_basebackup</command>
-   <arg rep="repeat"><replaceable>option</></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -34,9 +34,9 @@ PostgreSQL documentation
    <application>pg_basebackup</application> is used to take base backups of
    a running <productname>PostgreSQL</productname> database cluster. These
    are taken without affecting other clients to the database, and can be used
-   both for point-in-time recovery (see <xref linkend="continuous-archiving">)
+   both for point-in-time recovery (see <xref linkend="continuous-archiving"/>)
    and as the starting point for a log shipping or streaming replication standby
-   servers (see <xref linkend="warm-standby">).
+   servers (see <xref linkend="warm-standby"/>).
   </para>
 
   <para>
@@ -45,17 +45,17 @@ PostgreSQL documentation
    out of backup mode automatically. Backups are always taken of the entire
    database cluster; it is not possible to back up individual databases or
    database objects. For individual database backups, a tool such as
-   <xref linkend="APP-PGDUMP"> must be used.
+   <xref linkend="app-pgdump"/> must be used.
   </para>
 
   <para>
    The backup is made over a regular <productname>PostgreSQL</productname>
    connection, and uses the replication protocol. The connection must be made
    with a superuser or a user having <literal>REPLICATION</literal>
-   permissions (see <xref linkend="role-attributes">),
+   permissions (see <xref linkend="role-attributes"/>),
    and <filename>pg_hba.conf</filename> must explicitly permit the replication
    connection. The server must also be configured
-   with <xref linkend="guc-max-wal-senders"> set high enough to leave at least
+   with <xref linkend="guc-max-wal-senders"/> set high enough to leave at least
    one session available for the backup and one for WAL streaming (if used).
   </para>
 
@@ -69,9 +69,9 @@ PostgreSQL documentation
    <application>pg_basebackup</application> can make a base backup from
    not only the master but also the standby. To take a backup from the standby,
    set up the standby so that it can accept replication connections (that is, set
-   <varname>max_wal_senders</> and <xref linkend="guc-hot-standby">,
+   <varname>max_wal_senders</varname> and <xref linkend="guc-hot-standby"/>,
    and configure <link linkend="auth-pg-hba-conf">host-based authentication</link>).
-   You will also need to enable <xref linkend="guc-full-page-writes"> on the master.
+   You will also need to enable <xref linkend="guc-full-page-writes"/> on the master.
   </para>
 
   <para>
@@ -85,7 +85,7 @@ PostgreSQL documentation
     </listitem>
     <listitem>
      <para>
-      If you are using <literal>-X none</>, there is no guarantee that all
+      If you are using <literal>-X none</literal>, there is no guarantee that all
       WAL files required for the backup are archived at the end of backup.
      </para>
     </listitem>
@@ -97,9 +97,9 @@ PostgreSQL documentation
     <listitem>
      <para>
       All WAL records required for the backup must contain sufficient full-page writes,
-      which requires you to enable <varname>full_page_writes</> on the master and
-      not to use a tool like <application>pg_compresslog</> as
-      <varname>archive_command</> to remove full-page writes from WAL files.
+      which requires you to enable <varname>full_page_writes</varname> on the master and
+      not to use a tool like <application>pg_compresslog</application> as
+      <varname>archive_command</varname> to remove full-page writes from WAL files.
      </para>
     </listitem>
    </itemizedlist>
@@ -193,8 +193,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         The maximum transfer rate of data transferred from the server.  Values are
-        in kilobytes per second.  Use a suffix of <literal>M</> to indicate megabytes
-        per second.  A suffix of <literal>k</> is also accepted, and has no effect.
+        in kilobytes per second.  Use a suffix of <literal>M</literal> to indicate megabytes
+        per second.  A suffix of <literal>k</literal> is also accepted, and has no effect.
         Valid values are between 32 kilobytes per second and 1024 megabytes per second.
        </para>
        <para>
@@ -223,48 +223,6 @@ PostgreSQL documentation
         streaming replication will use the same settings later on.
        </para>
 
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-S <replaceable>slotname</replaceable></option></term>
-      <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
-      <listitem>
-       <para>
-        This option can only be used together with <literal>-X
-        stream</literal>.  It causes the WAL streaming to use the specified
-        replication slot.  If the base backup is intended to be used as a
-        streaming replication standby using replication slots, it should then
-        use the same replication slot name
-        in <filename>recovery.conf</filename>.  That way, it is ensured that
-        the server does not remove any necessary WAL data in the time between
-        the end of the base backup and the start of streaming replication.
-       </para>
-       <para>
-        If this option is not specified and the server supports temporary
-        replication slots (version 10 and later), then a temporary replication
-        slot is automatically used for WAL streaming.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--no-slot</option></term>
-      <listitem>
-       <para>
-        This option prevents the creation of a temporary replication slot
-        during the backup even if it's supported by the server.
-       </para>
-       <para>
-        Temporary replication slots are created by default if no slot name
-        is given with the option <option>-S</option> when using log streaming.
-       </para>
-       <para>
-        The main purpose of this option is to allow taking a base backup when
-        the server is out of free replication slots.  Using replication slots
-        is almost always preferred, because it prevents needed WAL from being
-        removed by the server during the backup.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -341,7 +299,7 @@ PostgreSQL documentation
            <para>
             The write-ahead log files are collected at the end of the backup.
             Therefore, it is necessary for the
-            <xref linkend="guc-wal-keep-segments"> parameter to be set high
+            <xref linkend="guc-wal-keep-segments"/> parameter to be set high
              enough that the log is not removed before the end of the backup.
              If the log has been rotated when it's time to transfer it, the
              backup will fail and be unusable.
@@ -362,7 +320,7 @@ PostgreSQL documentation
             open a second connection to the server and start streaming the
             write-ahead log in parallel while running the backup. Therefore,
             it will use up two connections configured by the
-            <xref linkend="guc-max-wal-senders"> parameter. As long as the
+            <xref linkend="guc-max-wal-senders"/> parameter. As long as the
              client can keep up with write-ahead log received, using this mode
              requires no extra write-ahead logs to be saved on the master.
            </para>
@@ -419,7 +377,19 @@ PostgreSQL documentation
       <term><option>--checkpoint=<replaceable class="parameter">fast|spread</replaceable></option></term>
       <listitem>
        <para>
-        Sets checkpoint mode to fast (immediate) or spread (default) (see <xref linkend="backup-lowlevel-base-backup">).
+        Sets checkpoint mode to fast (immediate) or spread (default) (see <xref linkend="backup-lowlevel-base-backup"/>).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-C</option></term>
+      <term><option>--create-slot</option></term>
+      <listitem>
+       <para>
+        This option causes the replication slot specified by the
+        option <literal>--slot</literal> to be created before starting the
+        backup.  In this case, an error is raised if the slot already exists.
        </para>
       </listitem>
      </varlistentry>
@@ -454,6 +424,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-N</option></term>
+      <term><option>--no-sync</option></term>
+      <listitem>
+       <para>
+        By default, <command>pg_basebackup</command> will wait for all files
+        to be written safely to disk.  This option causes
+        <command>pg_basebackup</command> to return without waiting, which is
+        faster, but means that a subsequent operating system crash can leave
+        the base backup corrupt.  Generally, this option is useful for testing
+        but should not be used when creating a production installation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-P</option></term>
       <term><option>--progress</option></term>
       <listitem>
@@ -476,16 +461,47 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-N</option></term>
-      <term><option>--no-sync</option></term>
+      <term><option>-S <replaceable>slotname</replaceable></option></term>
+      <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
       <listitem>
        <para>
-        By default, <command>pg_basebackup</command> will wait for all files
-        to be written safely to disk.  This option causes
-        <command>pg_basebackup</command> to return without waiting, which is
-        faster, but means that a subsequent operating system crash can leave
-        the base backup corrupt.  Generally, this option is useful for testing
-        but should not be used when creating a production installation.
+        This option can only be used together with <literal>-X
+        stream</literal>.  It causes the WAL streaming to use the specified
+        replication slot.  If the base backup is intended to be used as a
+        streaming replication standby using replication slots, it should then
+        use the same replication slot name
+        in <filename>recovery.conf</filename>.  That way, it is ensured that
+        the server does not remove any necessary WAL data in the time between
+        the end of the base backup and the start of streaming replication.
+       </para>
+       <para>
+        The specified replication slot has to exist unless the
+        option <option>-C</option> is also used.
+       </para>
+       <para>
+        If this option is not specified and the server supports temporary
+        replication slots (version 10 and later), then a temporary replication
+        slot is automatically used for WAL streaming.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-slot</option></term>
+      <listitem>
+       <para>
+        This option prevents the creation of a temporary replication slot
+        during the backup even if it's supported by the server.
+       </para>
+       <para>
+        Temporary replication slots are created by default if no slot name
+        is given with the option <option>-S</option> when using log streaming.
+       </para>
+       <para>
+        The main purpose of this option is to allow taking a base backup when
+        the server is out of free replication slots.  Using replication slots
+        is almost always preferred, because it prevents needed WAL from being
+        removed by the server during the backup.
        </para>
       </listitem>
      </varlistentry>
@@ -515,10 +531,10 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies parameters used to connect to the server, as a connection
-        string. See <xref linkend="libpq-connstring"> for more information.
+        string. See <xref linkend="libpq-connstring"/> for more information.
        </para>
        <para>
-        The option is called <literal>--dbname</> for consistency with other
+        The option is called <literal>--dbname</literal> for consistency with other
         client applications, but because <application>pg_basebackup</application>
         doesn't connect to any particular database in the cluster, database
         name in the connection string will be ignored.
@@ -578,8 +594,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-w</></term>
-      <term><option>--no-password</></term>
+      <term><option>-w</option></term>
+      <term><option>--no-password</option></term>
       <listitem>
        <para>
         Never issue a password prompt.  If the server requires
@@ -607,7 +623,7 @@ PostgreSQL documentation
         for a password if the server demands password authentication.
         However, <application>pg_basebackup</application> will waste a
         connection attempt finding out that the server wants a password.
-        In some cases it is worth typing <option>-W</> to avoid the extra
+        In some cases it is worth typing <option>-W</option> to avoid the extra
         connection attempt.
        </para>
       </listitem>
@@ -620,8 +636,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-       <term><option>-V</></term>
-       <term><option>--version</></term>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
        <listitem>
        <para>
        Print the <application>pg_basebackup</application> version and exit.
@@ -630,8 +646,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-?</></term>
-       <term><option>--help</></term>
+       <term><option>-?</option></term>
+       <term><option>--help</option></term>
        <listitem>
        <para>
        Show help about <application>pg_basebackup</application> command line
@@ -649,9 +665,9 @@ PostgreSQL documentation
   <title>Environment</title>
 
   <para>
-   This utility, like most other <productname>PostgreSQL</> utilities,
-   uses the environment variables supported by <application>libpq</>
-   (see <xref linkend="libpq-envars">).
+   This utility, like most other <productname>PostgreSQL</productname> utilities,
+   uses the environment variables supported by <application>libpq</application>
+   (see <xref linkend="libpq-envars"/>).
   </para>
 
  </refsect1>
@@ -675,7 +691,7 @@ PostgreSQL documentation
    symbolic links used for tablespaces are preserved.  Symbolic links pointing
    to certain directories known to PostgreSQL are copied as empty directories.
    Other symbolic links and special device files are skipped.
-   See <xref linkend="protocol-replication"> for the precise details.
+   See <xref linkend="protocol-replication"/> for the precise details.
   </para>
 
   <para>
@@ -693,8 +709,8 @@ PostgreSQL documentation
    tar file before starting the PostgreSQL server. If there are additional tablespaces, the
    tar files for them need to be unpacked in the correct locations. In this
    case the symbolic links for those tablespaces will be created by the server
-   according to the contents of the <filename>tablespace_map</> file that is
-   included in the <filename>base.tar</> file.
+   according to the contents of the <filename>tablespace_map</filename> file that is
+   included in the <filename>base.tar</filename> file.
   </para>
 
   <para>
@@ -752,7 +768,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="APP-PGDUMP"></member>
+   <member><xref linkend="app-pgdump"/></member>
   </simplelist>
  </refsect1>
 

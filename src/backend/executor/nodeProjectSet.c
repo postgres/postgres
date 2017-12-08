@@ -24,6 +24,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeProjectSet.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/memutils.h"
 
@@ -38,15 +39,25 @@ static TupleTableSlot *ExecProjectSRF(ProjectSetState *node, bool continuing);
  *		returning functions).
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecProjectSet(ProjectSetState *node)
+static TupleTableSlot *
+ExecProjectSet(PlanState *pstate)
 {
+	ProjectSetState *node = castNode(ProjectSetState, pstate);
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *resultSlot;
 	PlanState  *outerPlan;
 	ExprContext *econtext;
 
+	CHECK_FOR_INTERRUPTS();
+
 	econtext = node->ps.ps_ExprContext;
+
+	/*
+	 * Reset per-tuple context to free expression-evaluation storage allocated
+	 * for a potentially previously returned tuple. Note that the SRF argument
+	 * context has a different lifetime and is reset below.
+	 */
+	ResetExprContext(econtext);
 
 	/*
 	 * Check to see if we're still projecting out tuples from a previous scan
@@ -62,11 +73,13 @@ ExecProjectSet(ProjectSetState *node)
 	}
 
 	/*
-	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note this can't happen
-	 * until we're done projecting out tuples from a scan tuple.
+	 * Reset argument context to free any expression evaluation storage
+	 * allocated in the previous tuple cycle.  Note this can't happen until
+	 * we're done projecting out tuples from a scan tuple, as ValuePerCall
+	 * functions are allowed to reference the arguments for each returned
+	 * tuple.
 	 */
-	ResetExprContext(econtext);
+	MemoryContextReset(node->argcontext);
 
 	/*
 	 * Get another input tuple and project SRFs from it.
@@ -120,11 +133,15 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 {
 	TupleTableSlot *resultSlot = node->ps.ps_ResultTupleSlot;
 	ExprContext *econtext = node->ps.ps_ExprContext;
+	MemoryContext oldcontext;
 	bool		hassrf PG_USED_FOR_ASSERTS_ONLY;
 	bool		hasresult;
 	int			argno;
 
 	ExecClearTuple(resultSlot);
+
+	/* Call SRFs, as well as plain expressions, in per-tuple context */
+	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
 	 * Assume no further tuples are produced unless an ExprMultipleResult is
@@ -156,7 +173,8 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 			 * Evaluate SRF - possibly continuing previously started output.
 			 */
 			*result = ExecMakeFunctionResultSet((SetExprState *) elem,
-												econtext, isnull, isdone);
+												econtext, node->argcontext,
+												isnull, isdone);
 
 			if (*isdone != ExprEndResult)
 				hasresult = true;
@@ -171,6 +189,8 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 			*isdone = ExprSingleResult;
 		}
 	}
+
+	MemoryContextSwitchTo(oldcontext);
 
 	/* ProjectSet should not be used if there's no SRFs */
 	Assert(hassrf);
@@ -212,6 +232,7 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 	state = makeNode(ProjectSetState);
 	state->ps.plan = (Plan *) node;
 	state->ps.state = estate;
+	state->ps.ExecProcNode = ExecProjectSet;
 
 	state->pending_srf_tuples = false;
 
@@ -279,6 +300,18 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 
 		off++;
 	}
+
+
+	/*
+	 * Create a memory context that ExecMakeFunctionResult can use to evaluate
+	 * function arguments in.  We can't use the per-tuple context for this
+	 * because it gets reset too often; but we don't want to leak evaluation
+	 * results into the query-lifespan context either.  We use one context for
+	 * the arguments of all tSRFs, as they have roughly equivalent lifetimes.
+	 */
+	state->argcontext = AllocSetContextCreate(CurrentMemoryContext,
+											  "tSRF function arguments",
+											  ALLOCSET_DEFAULT_SIZES);
 
 	return state;
 }

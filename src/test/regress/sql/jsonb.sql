@@ -313,6 +313,14 @@ SELECT jsonb_typeof('"1.0"') AS string;
 -- jsonb_build_array, jsonb_build_object, jsonb_object_agg
 
 SELECT jsonb_build_array('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+SELECT jsonb_build_array('a', NULL); -- ok
+SELECT jsonb_build_array(VARIADIC NULL::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{}'::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{a,b,c}'::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{1,2,3,4}'::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{1,2,3,4}'::int[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
 
 SELECT jsonb_build_object('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
 
@@ -320,7 +328,19 @@ SELECT jsonb_build_object(
        'a', jsonb_build_object('b',false,'c',99),
        'd', jsonb_build_object('e',array[9,8,7]::int[],
            'f', (select row_to_json(r) from ( select relkind, oid::regclass as name from pg_class where relname = 'pg_class') r)));
-
+SELECT jsonb_build_object('{a,b,c}'::text[]); -- error
+SELECT jsonb_build_object('{a,b,c}'::text[], '{d,e,f}'::text[]); -- error, key cannot be array
+SELECT jsonb_build_object('a', 'b', 'c'); -- error
+SELECT jsonb_build_object(NULL, 'a'); -- error, key cannot be NULL
+SELECT jsonb_build_object('a', NULL); -- ok
+SELECT jsonb_build_object(VARIADIC NULL::text[]); -- ok
+SELECT jsonb_build_object(VARIADIC '{}'::text[]); -- ok
+SELECT jsonb_build_object(VARIADIC '{a,b,c}'::text[]); -- error
+SELECT jsonb_build_object(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+SELECT jsonb_build_object(VARIADIC ARRAY[NULL, 'a']::text[]); -- error, key cannot be NULL
+SELECT jsonb_build_object(VARIADIC '{1,2,3,4}'::text[]); -- ok
+SELECT jsonb_build_object(VARIADIC '{1,2,3,4}'::int[]); -- ok
+SELECT jsonb_build_object(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
 
 -- empty objects/arrays
 SELECT jsonb_build_array();
@@ -488,6 +508,9 @@ CREATE DOMAIN jsb_int_not_null  AS int     NOT NULL;
 CREATE DOMAIN jsb_int_array_1d  AS int[]   CHECK(array_length(VALUE, 1) = 3);
 CREATE DOMAIN jsb_int_array_2d  AS int[][] CHECK(array_length(VALUE, 2) = 3);
 
+create type jb_unordered_pair as (x int, y int);
+create domain jb_ordered_pair as jb_unordered_pair check((value).x <= (value).y);
+
 CREATE TYPE jsbrec AS (
 	i	int,
 	ia	_int4,
@@ -616,6 +639,15 @@ SELECT rec FROM jsonb_populate_record(
 	'{"rec": {"a": "abc", "c": "01.02.2003", "x": 43.2}}'
 ) q;
 
+-- anonymous record type
+SELECT jsonb_populate_record(null::record, '{"x": 0, "y": 1}');
+SELECT jsonb_populate_record(row(1,2), '{"f1": 0, "f2": 1}');
+
+-- composite domain
+SELECT jsonb_populate_record(null::jb_ordered_pair, '{"x": 0, "y": 1}');
+SELECT jsonb_populate_record(row(1,2)::jb_ordered_pair, '{"x": 0}');
+SELECT jsonb_populate_record(row(1,2)::jb_ordered_pair, '{"x": 1, "y": 0}');
+
 -- populate_recordset
 SELECT * FROM jsonb_populate_recordset(NULL::jbpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 SELECT * FROM jsonb_populate_recordset(row('def',99,NULL)::jbpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
@@ -627,6 +659,21 @@ SELECT * FROM jsonb_populate_recordset(row('def',99,NULL)::jbpop,'[{"c":[100,200
 SELECT * FROM jsonb_populate_recordset(NULL::jbpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 SELECT * FROM jsonb_populate_recordset(row('def',99,NULL)::jbpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 SELECT * FROM jsonb_populate_recordset(row('def',99,NULL)::jbpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
+
+-- anonymous record type
+SELECT jsonb_populate_recordset(null::record, '[{"x": 0, "y": 1}]');
+SELECT jsonb_populate_recordset(row(1,2), '[{"f1": 0, "f2": 1}]');
+
+-- composite domain
+SELECT jsonb_populate_recordset(null::jb_ordered_pair, '[{"x": 0, "y": 1}]');
+SELECT jsonb_populate_recordset(row(1,2)::jb_ordered_pair, '[{"x": 0}, {"y": 3}]');
+SELECT jsonb_populate_recordset(row(1,2)::jb_ordered_pair, '[{"x": 1, "y": 0}]');
+
+-- negative cases where the wrong record type is supplied
+select * from jsonb_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+select * from jsonb_populate_recordset(row(0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+select * from jsonb_populate_recordset(row(0::int,0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+select * from jsonb_populate_recordset(row(1000000000::int,50::int),'[{"b":"2"},{"a":"3"}]') q (a text, b text);
 
 -- jsonb_to_record and jsonb_to_recordset
 
@@ -673,6 +720,8 @@ DROP TYPE jsbrec_i_not_null;
 DROP DOMAIN jsb_int_not_null;
 DROP DOMAIN jsb_int_array_1d;
 DROP DOMAIN jsb_int_array_2d;
+DROP DOMAIN jb_ordered_pair;
+DROP TYPE jb_unordered_pair;
 
 -- indexing
 SELECT count(*) FROM testjsonb WHERE j @> '{"wait":null}';

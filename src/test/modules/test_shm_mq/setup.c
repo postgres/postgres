@@ -219,7 +219,7 @@ setup_background_workers(int nworkers, dsm_segment *seg)
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
 	sprintf(worker.bgw_library_name, "test_shm_mq");
 	sprintf(worker.bgw_function_name, "test_shm_mq_main");
-	snprintf(worker.bgw_name, BGW_MAXLEN, "test_shm_mq");
+	snprintf(worker.bgw_type, BGW_MAXLEN, "test_shm_mq");
 	worker.bgw_main_arg = UInt32GetDatum(dsm_segment_handle(seg));
 	/* set bgw_notify_pid, so we can detect if the worker stops */
 	worker.bgw_notify_pid = MyProcPid;
