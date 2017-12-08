@@ -112,6 +112,8 @@ typedef struct
 
 	const char *username;		/* username from startup packet */
 
+	char		cbind_flag;
+
 	int			iterations;
 	char	   *salt;			/* base64-encoded */
 	uint8		StoredKey[SCRAM_KEY_LEN];
@@ -774,6 +776,7 @@ read_client_first_message(scram_state *state, char *input)
 	 */
 
 	/* read gs2-cbind-flag */
+	state->cbind_flag = *input;
 	switch (*input)
 	{
 		case 'n':
@@ -1033,10 +1036,13 @@ read_client_final_message(scram_state *state, char *input)
 
 	/*
 	 * Read channel-binding.  We don't support channel binding, so it's
-	 * expected to always be "biws", which is "n,,", base64-encoded.
+	 * expected to always be "biws", which is "n,,", base64-encoded, or
+	 * "eSws", which is "y,,".  We also have to check whether the flag is
+	 * the same one that the client originally sent.
 	 */
 	channel_binding = read_attr_value(&p, 'c');
-	if (strcmp(channel_binding, "biws") != 0)
+	if (!(strcmp(channel_binding, "biws") == 0 && state->cbind_flag == 'n') &&
+		!(strcmp(channel_binding, "eSws") == 0 && state->cbind_flag == 'y'))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 (errmsg("unexpected SCRAM channel-binding attribute in client-final-message"))));
