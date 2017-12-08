@@ -545,7 +545,7 @@ do_compile(FunctionCallInfo fcinfo,
 				{
 					if (rettypeid == VOIDOID ||
 						rettypeid == RECORDOID)
-						/* okay */ ;
+						 /* okay */ ;
 					else if (rettypeid == TRIGGEROID || rettypeid == EVTTRIGGEROID)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

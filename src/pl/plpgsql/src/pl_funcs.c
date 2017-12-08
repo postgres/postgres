@@ -1062,7 +1062,7 @@ static void
 dump_fors(PLpgSQL_stmt_fors *stmt)
 {
 	dump_ind();
-	printf("FORS %s ", (stmt->rec != NULL) ? stmt->rec->refname : stmt->row->refname);
+	printf("FORS %s ", stmt->var->refname);
 	dump_expr(stmt->query);
 	printf("\n");
 
@@ -1076,7 +1076,7 @@ static void
 dump_forc(PLpgSQL_stmt_forc *stmt)
 {
 	dump_ind();
-	printf("FORC %s ", stmt->rec->refname);
+	printf("FORC %s ", stmt->var->refname);
 	printf("curvar=%d\n", stmt->curvar);
 
 	dump_indent += 2;
@@ -1174,15 +1174,11 @@ dump_fetch(PLpgSQL_stmt_fetch *stmt)
 		dump_cursor_direction(stmt);
 
 		dump_indent += 2;
-		if (stmt->rec != NULL)
+		if (stmt->target != NULL)
 		{
 			dump_ind();
-			printf("    target = %d %s\n", stmt->rec->dno, stmt->rec->refname);
-		}
-		if (stmt->row != NULL)
-		{
-			dump_ind();
-			printf("    target = %d %s\n", stmt->row->dno, stmt->row->refname);
+			printf("    target = %d %s\n",
+				   stmt->target->dno, stmt->target->refname);
 		}
 		dump_indent -= 2;
 	}
@@ -1420,19 +1416,12 @@ dump_execsql(PLpgSQL_stmt_execsql *stmt)
 	printf("\n");
 
 	dump_indent += 2;
-	if (stmt->rec != NULL)
+	if (stmt->target != NULL)
 	{
 		dump_ind();
 		printf("    INTO%s target = %d %s\n",
 			   stmt->strict ? " STRICT" : "",
-			   stmt->rec->dno, stmt->rec->refname);
-	}
-	if (stmt->row != NULL)
-	{
-		dump_ind();
-		printf("    INTO%s target = %d %s\n",
-			   stmt->strict ? " STRICT" : "",
-			   stmt->row->dno, stmt->row->refname);
+			   stmt->target->dno, stmt->target->refname);
 	}
 	dump_indent -= 2;
 }
@@ -1446,19 +1435,12 @@ dump_dynexecute(PLpgSQL_stmt_dynexecute *stmt)
 	printf("\n");
 
 	dump_indent += 2;
-	if (stmt->rec != NULL)
+	if (stmt->target != NULL)
 	{
 		dump_ind();
 		printf("    INTO%s target = %d %s\n",
 			   stmt->strict ? " STRICT" : "",
-			   stmt->rec->dno, stmt->rec->refname);
-	}
-	if (stmt->row != NULL)
-	{
-		dump_ind();
-		printf("    INTO%s target = %d %s\n",
-			   stmt->strict ? " STRICT" : "",
-			   stmt->row->dno, stmt->row->refname);
+			   stmt->target->dno, stmt->target->refname);
 	}
 	if (stmt->params != NIL)
 	{
@@ -1485,8 +1467,7 @@ static void
 dump_dynfors(PLpgSQL_stmt_dynfors *stmt)
 {
 	dump_ind();
-	printf("FORS %s EXECUTE ",
-		   (stmt->rec != NULL) ? stmt->rec->refname : stmt->row->refname);
+	printf("FORS %s EXECUTE ", stmt->var->refname);
 	dump_expr(stmt->query);
 	printf("\n");
 	if (stmt->params != NIL)

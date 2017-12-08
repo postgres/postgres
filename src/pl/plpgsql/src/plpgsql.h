@@ -549,8 +549,7 @@ typedef struct PLpgSQL_stmt_forq
 	PLpgSQL_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
-	PLpgSQL_rec *rec;
-	PLpgSQL_row *row;
+	PLpgSQL_variable *var;		/* Loop variable (record or row) */
 	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_forq;
 
@@ -562,8 +561,7 @@ typedef struct PLpgSQL_stmt_fors
 	PLpgSQL_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
-	PLpgSQL_rec *rec;
-	PLpgSQL_row *row;
+	PLpgSQL_variable *var;		/* Loop variable (record or row) */
 	List	   *body;			/* List of statements */
 	/* end of fields that must match PLpgSQL_stmt_forq */
 	PLpgSQL_expr *query;
@@ -577,8 +575,7 @@ typedef struct PLpgSQL_stmt_forc
 	PLpgSQL_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
-	PLpgSQL_rec *rec;
-	PLpgSQL_row *row;
+	PLpgSQL_variable *var;		/* Loop variable (record or row) */
 	List	   *body;			/* List of statements */
 	/* end of fields that must match PLpgSQL_stmt_forq */
 	int			curvar;
@@ -593,8 +590,7 @@ typedef struct PLpgSQL_stmt_dynfors
 	PLpgSQL_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
-	PLpgSQL_rec *rec;
-	PLpgSQL_row *row;
+	PLpgSQL_variable *var;		/* Loop variable (record or row) */
 	List	   *body;			/* List of statements */
 	/* end of fields that must match PLpgSQL_stmt_forq */
 	PLpgSQL_expr *query;
@@ -624,7 +620,6 @@ typedef struct PLpgSQL_stmt_open
 	int			lineno;
 	int			curvar;
 	int			cursor_options;
-	PLpgSQL_row *returntype;
 	PLpgSQL_expr *argquery;
 	PLpgSQL_expr *query;
 	PLpgSQL_expr *dynquery;
@@ -638,8 +633,7 @@ typedef struct PLpgSQL_stmt_fetch
 {
 	PLpgSQL_stmt_type cmd_type;
 	int			lineno;
-	PLpgSQL_rec *rec;			/* target, as record or row */
-	PLpgSQL_row *row;
+	PLpgSQL_variable *target;	/* target (record or row) */
 	int			curvar;			/* cursor variable to fetch from */
 	FetchDirection direction;	/* fetch direction */
 	long		how_many;		/* count, if constant (expr is NULL) */
@@ -750,8 +744,7 @@ typedef struct PLpgSQL_stmt_execsql
 								 * mod_stmt is set when we plan the query */
 	bool		into;			/* INTO supplied? */
 	bool		strict;			/* INTO STRICT flag */
-	PLpgSQL_rec *rec;			/* INTO target, if record */
-	PLpgSQL_row *row;			/* INTO target, if row */
+	PLpgSQL_variable *target;	/* INTO target (record or row) */
 } PLpgSQL_stmt_execsql;
 
 /*
@@ -764,8 +757,7 @@ typedef struct PLpgSQL_stmt_dynexecute
 	PLpgSQL_expr *query;		/* string expression */
 	bool		into;			/* INTO supplied? */
 	bool		strict;			/* INTO STRICT flag */
-	PLpgSQL_rec *rec;			/* INTO target, if record */
-	PLpgSQL_row *row;			/* INTO target, if row */
+	PLpgSQL_variable *target;	/* INTO target (record or row) */
 	List	   *params;			/* USING expressions */
 } PLpgSQL_stmt_dynexecute;
 

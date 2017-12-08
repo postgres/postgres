@@ -90,7 +90,7 @@ static  PLpgSQL_stmt	*make_case(int location, PLpgSQL_expr *t_expr,
 								   List *case_when_list, List *else_stmts);
 static	char			*NameOfDatum(PLwdatum *wdatum);
 static	void			 check_assignable(PLpgSQL_datum *datum, int location);
-static	void			 read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row,
+static	void			 read_into_target(PLpgSQL_variable **target,
 										  bool *strict);
 static	PLpgSQL_row		*read_into_scalar_list(char *initial_name,
 											   PLpgSQL_datum *initial_datum,
@@ -138,8 +138,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 			char *name;
 			int  lineno;
 			PLpgSQL_datum   *scalar;
-			PLpgSQL_rec		*rec;
-			PLpgSQL_row		*row;
+			PLpgSQL_datum   *row;
 		}						forvariable;
 		struct
 		{
@@ -1310,22 +1309,18 @@ for_control		: for_variable K_IN
 
 							new = palloc0(sizeof(PLpgSQL_stmt_dynfors));
 							new->cmd_type = PLPGSQL_STMT_DYNFORS;
-							if ($1.rec)
+							if ($1.row)
 							{
-								new->rec = $1.rec;
-								check_assignable((PLpgSQL_datum *) new->rec, @1);
-							}
-							else if ($1.row)
-							{
-								new->row = $1.row;
-								check_assignable((PLpgSQL_datum *) new->row, @1);
+								new->var = (PLpgSQL_variable *) $1.row;
+								check_assignable($1.row, @1);
 							}
 							else if ($1.scalar)
 							{
 								/* convert single scalar to list */
-								new->row = make_scalar_list1($1.name, $1.scalar,
-															 $1.lineno, @1);
-								/* no need for check_assignable */
+								new->var = (PLpgSQL_variable *)
+									make_scalar_list1($1.name, $1.scalar,
+													  $1.lineno, @1);
+								/* make_scalar_list1 did check_assignable */
 							}
 							else
 							{
@@ -1381,9 +1376,10 @@ for_control		: for_variable K_IN
 															 "LOOP");
 
 							/* create loop's private RECORD variable */
-							new->rec = plpgsql_build_record($1.name,
-															$1.lineno,
-															true);
+							new->var = (PLpgSQL_variable *)
+								plpgsql_build_record($1.name,
+													 $1.lineno,
+													 true);
 
 							$$ = (PLpgSQL_stmt *) new;
 						}
@@ -1504,22 +1500,18 @@ for_control		: for_variable K_IN
 
 								new = palloc0(sizeof(PLpgSQL_stmt_fors));
 								new->cmd_type = PLPGSQL_STMT_FORS;
-								if ($1.rec)
+								if ($1.row)
 								{
-									new->rec = $1.rec;
-									check_assignable((PLpgSQL_datum *) new->rec, @1);
-								}
-								else if ($1.row)
-								{
-									new->row = $1.row;
-									check_assignable((PLpgSQL_datum *) new->row, @1);
+									new->var = (PLpgSQL_variable *) $1.row;
+									check_assignable($1.row, @1);
 								}
 								else if ($1.scalar)
 								{
 									/* convert single scalar to list */
-									new->row = make_scalar_list1($1.name, $1.scalar,
-																 $1.lineno, @1);
-									/* no need for check_assignable */
+									new->var = (PLpgSQL_variable *)
+										make_scalar_list1($1.name, $1.scalar,
+														  $1.lineno, @1);
+									/* make_scalar_list1 did check_assignable */
 								}
 								else
 								{
@@ -1558,32 +1550,26 @@ for_variable	: T_DATUM
 					{
 						$$.name = NameOfDatum(&($1));
 						$$.lineno = plpgsql_location_to_lineno(@1);
-						if ($1.datum->dtype == PLPGSQL_DTYPE_ROW)
+						if ($1.datum->dtype == PLPGSQL_DTYPE_ROW ||
+							$1.datum->dtype == PLPGSQL_DTYPE_REC)
 						{
 							$$.scalar = NULL;
-							$$.rec = NULL;
-							$$.row = (PLpgSQL_row *) $1.datum;
-						}
-						else if ($1.datum->dtype == PLPGSQL_DTYPE_REC)
-						{
-							$$.scalar = NULL;
-							$$.rec = (PLpgSQL_rec *) $1.datum;
-							$$.row = NULL;
+							$$.row = $1.datum;
 						}
 						else
 						{
 							int			tok;
 
 							$$.scalar = $1.datum;
-							$$.rec = NULL;
 							$$.row = NULL;
 							/* check for comma-separated list */
 							tok = yylex();
 							plpgsql_push_back_token(tok);
 							if (tok == ',')
-								$$.row = read_into_scalar_list($$.name,
-															   $$.scalar,
-															   @1);
+								$$.row = (PLpgSQL_datum *)
+									read_into_scalar_list($$.name,
+														  $$.scalar,
+														  @1);
 						}
 					}
 				| T_WORD
@@ -1593,7 +1579,6 @@ for_variable	: T_DATUM
 						$$.name = $1.ident;
 						$$.lineno = plpgsql_location_to_lineno(@1);
 						$$.scalar = NULL;
-						$$.rec = NULL;
 						$$.row = NULL;
 						/* check for comma-separated list */
 						tok = yylex();
@@ -1620,15 +1605,10 @@ stmt_foreach_a	: opt_loop_label K_FOREACH for_variable foreach_slice K_IN K_ARRA
 						new->expr = $7;
 						new->body = $8.stmts;
 
-						if ($3.rec)
-						{
-							new->varno = $3.rec->dno;
-							check_assignable((PLpgSQL_datum *) $3.rec, @3);
-						}
-						else if ($3.row)
+						if ($3.row)
 						{
 							new->varno = $3.row->dno;
-							check_assignable((PLpgSQL_datum *) $3.row, @3);
+							check_assignable($3.row, @3);
 						}
 						else if ($3.scalar)
 						{
@@ -1981,8 +1961,7 @@ stmt_dynexecute : K_EXECUTE
 						new->query = expr;
 						new->into = false;
 						new->strict = false;
-						new->rec = NULL;
-						new->row = NULL;
+						new->target = NULL;
 						new->params = NIL;
 
 						/*
@@ -1999,7 +1978,7 @@ stmt_dynexecute : K_EXECUTE
 								if (new->into)			/* multiple INTO */
 									yyerror("syntax error");
 								new->into = true;
-								read_into_target(&new->rec, &new->row, &new->strict);
+								read_into_target(&new->target, &new->strict);
 								endtoken = yylex();
 							}
 							else if (endtoken == K_USING)
@@ -2107,11 +2086,10 @@ stmt_open		: K_OPEN cursor_variable
 stmt_fetch		: K_FETCH opt_fetch_direction cursor_variable K_INTO
 					{
 						PLpgSQL_stmt_fetch *fetch = $2;
-						PLpgSQL_rec	   *rec;
-						PLpgSQL_row	   *row;
+						PLpgSQL_variable *target;
 
 						/* We have already parsed everything through the INTO keyword */
-						read_into_target(&rec, &row, NULL);
+						read_into_target(&target, NULL);
 
 						if (yylex() != ';')
 							yyerror("syntax error");
@@ -2127,8 +2105,7 @@ stmt_fetch		: K_FETCH opt_fetch_direction cursor_variable K_INTO
 									 parser_errposition(@1)));
 
 						fetch->lineno = plpgsql_location_to_lineno(@1);
-						fetch->rec		= rec;
-						fetch->row		= row;
+						fetch->target	= target;
 						fetch->curvar	= $3->dno;
 						fetch->is_move	= false;
 
@@ -2842,8 +2819,7 @@ make_execsql_stmt(int firsttoken, int location)
 	IdentifierLookup	save_IdentifierLookup;
 	PLpgSQL_stmt_execsql *execsql;
 	PLpgSQL_expr		*expr;
-	PLpgSQL_row			*row = NULL;
-	PLpgSQL_rec			*rec = NULL;
+	PLpgSQL_variable	*target = NULL;
 	int					tok;
 	int					prev_tok;
 	bool				have_into = false;
@@ -2907,7 +2883,7 @@ make_execsql_stmt(int firsttoken, int location)
 			have_into = true;
 			into_start_loc = yylloc;
 			plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
-			read_into_target(&rec, &row, &have_strict);
+			read_into_target(&target, &have_strict);
 			plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_EXPR;
 		}
 	}
@@ -2949,8 +2925,7 @@ make_execsql_stmt(int firsttoken, int location)
 	execsql->sqlstmt = expr;
 	execsql->into	 = have_into;
 	execsql->strict	 = have_strict;
-	execsql->rec	 = rec;
-	execsql->row	 = row;
+	execsql->target	 = target;
 
 	return (PLpgSQL_stmt *) execsql;
 }
@@ -3341,13 +3316,12 @@ check_assignable(PLpgSQL_datum *datum, int location)
  * INTO keyword.
  */
 static void
-read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row, bool *strict)
+read_into_target(PLpgSQL_variable **target, bool *strict)
 {
 	int			tok;
 
 	/* Set default results */
-	*rec = NULL;
-	*row = NULL;
+	*target = NULL;
 	if (strict)
 		*strict = false;
 
@@ -3368,22 +3342,11 @@ read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row, bool *strict)
 	switch (tok)
 	{
 		case T_DATUM:
-			if (yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW)
+			if (yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
+				yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC)
 			{
 				check_assignable(yylval.wdatum.datum, yylloc);
-				*row = (PLpgSQL_row *) yylval.wdatum.datum;
-
-				if ((tok = yylex()) == ',')
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("record or row variable cannot be part of multiple-item INTO list"),
-							 parser_errposition(yylloc)));
-				plpgsql_push_back_token(tok);
-			}
-			else if (yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC)
-			{
-				check_assignable(yylval.wdatum.datum, yylloc);
-				*rec = (PLpgSQL_rec *) yylval.wdatum.datum;
+				*target = (PLpgSQL_variable *) yylval.wdatum.datum;
 
 				if ((tok = yylex()) == ',')
 					ereport(ERROR,
@@ -3394,8 +3357,9 @@ read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row, bool *strict)
 			}
 			else
 			{
-				*row = read_into_scalar_list(NameOfDatum(&(yylval.wdatum)),
-											 yylval.wdatum.datum, yylloc);
+				*target = (PLpgSQL_variable *)
+					read_into_scalar_list(NameOfDatum(&(yylval.wdatum)),
+										  yylval.wdatum.datum, yylloc);
 			}
 			break;
 
