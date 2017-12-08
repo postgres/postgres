@@ -7832,7 +7832,7 @@ CheckRecoveryConsistency(void)
 	/*
 	 * Have we passed our safe starting point? Note that minRecoveryPoint is
 	 * known to be incorrectly set if ControlFile->backupEndRequired, until
-	 * the XLOG_BACKUP_RECORD arrives to advise us of the correct
+	 * the XLOG_BACKUP_END arrives to advise us of the correct
 	 * minRecoveryPoint. All we know prior to that is that we're not
 	 * consistent yet.
 	 */
