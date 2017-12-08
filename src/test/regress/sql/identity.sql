@@ -211,3 +211,19 @@ SELECT * FROM itest8;
 RESET ROLE;
 DROP TABLE itest8;
 DROP USER regress_user1;
+
+
+-- typed tables (currently not supported)
+
+CREATE TYPE itest_type AS (f1 integer, f2 text, f3 bigint);
+CREATE TABLE itest12 OF itest_type (f1 WITH OPTIONS GENERATED ALWAYS AS IDENTITY); -- error
+DROP TYPE itest_type CASCADE;
+
+
+-- table partitions (currently not supported)
+
+CREATE TABLE itest_parent (f1 date NOT NULL, f2 text, f3 bigint) PARTITION BY RANGE (f1);
+CREATE TABLE itest_child PARTITION OF itest_parent (
+    f3 WITH OPTIONS GENERATED ALWAYS AS IDENTITY
+) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01'); -- error
+DROP TABLE itest_parent;
