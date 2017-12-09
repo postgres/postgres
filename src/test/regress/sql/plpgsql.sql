@@ -4014,6 +4014,27 @@ select scope_test();
 
 drop function scope_test();
 
+-- Check that variables are reinitialized on block re-entry.
+
+do $$
+begin
+  for i in 1..3 loop
+    declare
+      x int;
+      y int := i;
+      r record;
+    begin
+      if i = 1 then
+        x := 42;
+        r := row(i, i+1);
+      end if;
+      raise notice 'x = %', x;
+      raise notice 'y = %', y;
+      raise notice 'r = %', r;
+    end;
+  end loop;
+end$$;
+
 -- Check handling of conflicts between plpgsql vars and table columns.
 
 set plpgsql.variable_conflict = error;

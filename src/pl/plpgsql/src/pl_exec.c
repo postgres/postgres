@@ -1184,7 +1184,6 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 {
 	volatile int rc = -1;
 	int			i;
-	int			n;
 
 	/*
 	 * First initialize all variables declared in this block
@@ -1193,13 +1192,17 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 
 	for (i = 0; i < block->n_initvars; i++)
 	{
-		n = block->initvarnos[i];
+		int			n = block->initvarnos[i];
+		PLpgSQL_datum *datum = estate->datums[n];
 
-		switch (estate->datums[n]->dtype)
+		/*
+		 * The set of dtypes handled here must match plpgsql_add_initdatums().
+		 */
+		switch (datum->dtype)
 		{
 			case PLPGSQL_DTYPE_VAR:
 				{
-					PLpgSQL_var *var = (PLpgSQL_var *) (estate->datums[n]);
+					PLpgSQL_var *var = (PLpgSQL_var *) datum;
 
 					/*
 					 * Free any old value, in case re-entering block, and
@@ -1241,7 +1244,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 
 			case PLPGSQL_DTYPE_REC:
 				{
-					PLpgSQL_rec *rec = (PLpgSQL_rec *) (estate->datums[n]);
+					PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
 
 					if (rec->freetup)
 					{
@@ -1258,13 +1261,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				}
 				break;
 
-			case PLPGSQL_DTYPE_RECFIELD:
-			case PLPGSQL_DTYPE_ARRAYELEM:
-				break;
-
 			default:
-				elog(ERROR, "unrecognized dtype: %d",
-					 estate->datums[n]->dtype);
+				elog(ERROR, "unrecognized dtype: %d", datum->dtype);
 		}
 	}
 

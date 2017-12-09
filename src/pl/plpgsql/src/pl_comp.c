@@ -2384,14 +2384,14 @@ plpgsql_finish_datums(PLpgSQL_function *function)
 
 /* ----------
  * plpgsql_add_initdatums		Make an array of the datum numbers of
- *					all the simple VAR datums created since the last call
+ *					all the initializable datums created since the last call
  *					to this function.
  *
  * If varnos is NULL, we just forget any datum entries created since the
  * last call.
  *
- * This is used around a DECLARE section to create a list of the VARs
- * that have to be initialized at block entry.  Note that VARs can also
+ * This is used around a DECLARE section to create a list of the datums
+ * that have to be initialized at block entry.  Note that datums can also
  * be created elsewhere than DECLARE, eg by a FOR-loop, but it is then
  * the responsibility of special-purpose code to initialize them.
  * ----------
@@ -2402,11 +2402,16 @@ plpgsql_add_initdatums(int **varnos)
 	int			i;
 	int			n = 0;
 
+	/*
+	 * The set of dtypes recognized here must match what exec_stmt_block()
+	 * cares about (re)initializing at block entry.
+	 */
 	for (i = datums_last; i < plpgsql_nDatums; i++)
 	{
 		switch (plpgsql_Datums[i]->dtype)
 		{
 			case PLPGSQL_DTYPE_VAR:
+			case PLPGSQL_DTYPE_REC:
 				n++;
 				break;
 
@@ -2427,6 +2432,7 @@ plpgsql_add_initdatums(int **varnos)
 				switch (plpgsql_Datums[i]->dtype)
 				{
 					case PLPGSQL_DTYPE_VAR:
+					case PLPGSQL_DTYPE_REC:
 						(*varnos)[n++] = plpgsql_Datums[i]->dno;
 
 					default:

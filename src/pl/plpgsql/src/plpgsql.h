@@ -407,8 +407,8 @@ typedef struct PLpgSQL_stmt_block
 	int			lineno;
 	char	   *label;
 	List	   *body;			/* List of statements */
-	int			n_initvars;
-	int		   *initvarnos;
+	int			n_initvars;		/* Length of initvarnos[] */
+	int		   *initvarnos;		/* dnos of variables declared in this block */
 	PLpgSQL_exception_block *exceptions;
 } PLpgSQL_stmt_block;
 
