@@ -511,10 +511,10 @@ sub mkvcbuild
 
 		# Add defines from Perl's ccflags; see PGAC_CHECK_PERL_EMBED_CCFLAGS
 		my @perl_embed_ccflags;
-		foreach my $f (split(" ",$Config{ccflags}))
+		foreach my $f (split(" ", $Config{ccflags}))
 		{
-			if ($f =~ /^-D[^_]/ ||
-			    $f =~ /^-D_USE_32BIT_TIME_T/)
+			if (   $f =~ /^-D[^_]/
+				|| $f =~ /^-D_USE_32BIT_TIME_T/)
 			{
 				$f =~ s/\-D//;
 				push(@perl_embed_ccflags, $f);
@@ -616,7 +616,8 @@ sub mkvcbuild
 		}
 		else
 		{
-			die "could not identify perl library version";
+			die
+"could not identify perl library version matching pattern $perl_path\n";
 		}
 
 		# Add transform module dependent on plperl
