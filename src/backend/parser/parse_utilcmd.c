@@ -672,7 +672,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 					if (cxt->partbound)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("identify columns are not supported on partitions")));
+								 errmsg("identity columns are not supported on partitions")));
 
 					ctype = typenameType(cxt->pstate, column->typeName, NULL);
 					typeOid = HeapTupleGetOid(ctype);

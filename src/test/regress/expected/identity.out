@@ -356,5 +356,5 @@ CREATE TABLE itest_parent (f1 date NOT NULL, f2 text, f3 bigint) PARTITION BY RA
 CREATE TABLE itest_child PARTITION OF itest_parent (
     f3 WITH OPTIONS GENERATED ALWAYS AS IDENTITY
 ) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01'); -- error
-ERROR:  identify columns are not supported on partitions
+ERROR:  identity columns are not supported on partitions
 DROP TABLE itest_parent;
