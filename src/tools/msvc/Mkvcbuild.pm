@@ -28,6 +28,7 @@ my $libpgcommon;
 my $libpgfeutils;
 my $postgres;
 my $libpq;
+my @unlink_on_exit;
 
 # Set of variables for modules in contrib/ and src/test/modules/
 my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
@@ -517,34 +518,154 @@ sub mkvcbuild
 		my $plperl =
 		  $solution->AddProject('plperl', 'dll', 'PLs', 'src/pl/plperl');
 		$plperl->AddIncludeDir($solution->{options}->{perl} . '/lib/CORE');
+		$plperl->AddReference($postgres);
+
+		my $perl_path = $solution->{options}->{perl} . '\lib\CORE\*perl*';
+
+		# ActivePerl 5.16 provided perl516.lib; 5.18 provided libperl518.a
+		my @perl_libs =
+		  grep { /perl\d+\.lib$|libperl\d+\.a$/ } glob($perl_path);
+		if (@perl_libs == 1)
+		{
+			$plperl->AddLibrary($perl_libs[0]);
+		}
+		else
+		{
+			die
+"could not identify perl library version matching pattern $perl_path\n";
+		}
 
 		# Add defines from Perl's ccflags; see PGAC_CHECK_PERL_EMBED_CCFLAGS
 		my @perl_embed_ccflags;
 		foreach my $f (split(" ", $Config{ccflags}))
 		{
-			if (   $f =~ /^-D[^_]/
-				|| $f =~ /^-D_USE_32BIT_TIME_T/)
+			if ($f =~ /^-D[^_]/)
 			{
 				$f =~ s/\-D//;
 				push(@perl_embed_ccflags, $f);
 			}
 		}
 
-		# Perl versions before 5.13.4 don't provide -D_USE_32BIT_TIME_T
-		# regardless of how they were built.  On 32-bit Windows, assume
-		# such a version was built with a pre-MSVC-2005 compiler, and
-		# define the symbol anyway, so that we are compatible if we're
-		# being built with a later MSVC version.
-		push(@perl_embed_ccflags, '_USE_32BIT_TIME_T')
-		  if $solution->{platform} eq 'Win32'
-			  && $Config{PERL_REVISION} == 5
-			  && ($Config{PERL_VERSION} < 13
-				  || (   $Config{PERL_VERSION} == 13
-					  && $Config{PERL_SUBVERSION} < 4));
-
-		# Also, a hack to prevent duplicate definitions of uid_t/gid_t
+		# hack to prevent duplicate definitions of uid_t/gid_t
 		push(@perl_embed_ccflags, 'PLPERL_HAVE_UID_GID');
 
+		# Windows offers several 32-bit ABIs.  Perl is sensitive to
+		# sizeof(time_t), one of the ABI dimensions.  To get 32-bit time_t,
+		# use "cl -D_USE_32BIT_TIME_T" or plain "gcc".  For 64-bit time_t, use
+		# "gcc -D__MINGW_USE_VC2005_COMPAT" or plain "cl".  Before MSVC 2005,
+		# plain "cl" chose 32-bit time_t.  PostgreSQL doesn't support building
+		# with pre-MSVC-2005 compilers, but it does support linking to Perl
+		# built with such a compiler.  MSVC-built Perl 5.13.4 and later report
+		# -D_USE_32BIT_TIME_T in $Config{ccflags} if applicable, but
+		# MinGW-built Perl never reports -D_USE_32BIT_TIME_T despite typically
+		# needing it.  Ignore the $Config{ccflags} opinion about
+		# -D_USE_32BIT_TIME_T, and use a runtime test to deduce the ABI Perl
+		# expects.  Specifically, test use of PL_modglobal, which maps to a
+		# PerlInterpreter field whose position depends on sizeof(time_t).
+		if ($solution->{platform} eq 'Win32')
+		{
+			my $source_file = 'conftest.c';
+			my $obj         = 'conftest.obj';
+			my $exe         = 'conftest.exe';
+			my @conftest    = ($source_file, $obj, $exe);
+			push @unlink_on_exit, @conftest;
+			unlink $source_file;
+			open my $o, '>', $source_file
+			  || croak "Could not write to $source_file";
+			print $o '
+	/* compare to plperl.h */
+	#define __inline__ __inline
+	#define PERL_NO_GET_CONTEXT
+	#include <EXTERN.h>
+	#include <perl.h>
+
+	int
+	main(int argc, char **argv)
+	{
+		int			dummy_argc = 1;
+		char	   *dummy_argv[1] = {""};
+		char	   *dummy_env[1] = {NULL};
+		static PerlInterpreter *interp;
+
+		PERL_SYS_INIT3(&dummy_argc, (char ***) &dummy_argv,
+					   (char ***) &dummy_env);
+		interp = perl_alloc();
+		perl_construct(interp);
+		{
+			dTHX;
+			const char	key[] = "dummy";
+
+			PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+			hv_store(PL_modglobal, key, sizeof(key) - 1, newSViv(1), 0);
+			return hv_fetch(PL_modglobal, key, sizeof(key) - 1, 0) == NULL;
+		}
+	}
+';
+			close $o;
+
+			# Build $source_file with a given #define, and return a true value
+			# if a run of the resulting binary exits successfully.
+			my $try_define = sub {
+				my $define = shift;
+
+				unlink $obj, $exe;
+				my @cmd = (
+					'cl',
+					'-I' . $solution->{options}->{perl} . '/lib/CORE',
+					(map { "-D$_" } @perl_embed_ccflags, $define || ()),
+					$source_file,
+					'/link',
+					$perl_libs[0]);
+				my $compile_output = `@cmd 2>&1`;
+				-f $exe || die "Failed to build Perl test:\n$compile_output";
+
+				{
+
+					# Some builds exhibit runtime failure through Perl warning
+					# 'Can't spawn "conftest.exe"'; supress that.
+					no warnings;
+
+					# Disable error dialog boxes like we do in the postmaster.
+					# Here, we run code that triggers relevant errors.
+					use Win32API::File qw(SetErrorMode :SEM_);
+					my $oldmode = SetErrorMode(
+						SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+					system(".\\$exe");
+					SetErrorMode($oldmode);
+				}
+
+				return !($? >> 8);
+			};
+
+			my $define_32bit_time = '_USE_32BIT_TIME_T';
+			my $ok_now            = $try_define->(undef);
+			my $ok_32bit          = $try_define->($define_32bit_time);
+			unlink @conftest;
+			if (!$ok_now && !$ok_32bit)
+			{
+
+				# Unsupported configuration.  Since we used %Config from the
+				# Perl running the build scripts, this is expected if
+				# attempting to link with some other Perl.
+				die "Perl test fails with or without -D$define_32bit_time";
+			}
+			elsif ($ok_now && $ok_32bit)
+			{
+
+				# Resulting build may work, but it's especially important to
+				# verify with "vcregress plcheck".  A refined test may avoid
+				# this outcome.
+				warn "Perl test passes with or without -D$define_32bit_time";
+			}
+			elsif ($ok_32bit)
+			{
+				push(@perl_embed_ccflags, $define_32bit_time);
+			}    # else $ok_now, hence no flag required
+		}
+
+		print "CFLAGS recommended by Perl: $Config{ccflags}\n";
+		print "CFLAGS to compile embedded Perl: ",
+		  (join ' ', map { "-D$_" } @perl_embed_ccflags), "\n";
 		foreach my $f (@perl_embed_ccflags)
 		{
 			$plperl->AddDefine($f);
@@ -613,20 +734,6 @@ sub mkvcbuild
 				unlink('src/pl/plperl/plperl_opmask.h');    # if zero size
 				die 'Failed to create plperl_opmask.h' . "\n";
 			}
-		}
-		$plperl->AddReference($postgres);
-		my $perl_path = $solution->{options}->{perl} . '\lib\CORE\*perl*';
-		# ActivePerl 5.16 provided perl516.lib; 5.18 provided libperl518.a
-		my @perl_libs =
-		  grep { /perl\d+\.lib$|libperl\d+\.a$/ } glob($perl_path);
-		if (@perl_libs == 1)
-		{
-			$plperl->AddLibrary($perl_libs[0]);
-		}
-		else
-		{
-			die
-"could not identify perl library version matching pattern $perl_path\n";
 		}
 
 		# Add transform module dependent on plperl
@@ -954,6 +1061,11 @@ sub AdjustModule
 			$proj->AddFile($i);
 		}
 	}
+}
+
+END
+{
+	unlink @unlink_on_exit;
 }
 
 1;
