@@ -4016,6 +4016,7 @@ drop function scope_test();
 
 -- Check that variables are reinitialized on block re-entry.
 
+\set VERBOSITY terse   \\ -- needed for output stability
 do $$
 begin
   for i in 1..3 loop
@@ -4034,6 +4035,7 @@ begin
     end;
   end loop;
 end$$;
+\set VERBOSITY default
 
 -- Check handling of conflicts between plpgsql vars and table columns.
 
