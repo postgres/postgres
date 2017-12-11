@@ -72,6 +72,13 @@
  * of datum-tuples with 2 datums, modulus and remainder, corresponding to a
  * given partition.
  *
+ * The datums in datums array are arranged in increasing order as defined by
+ * functions qsort_partition_rbound_cmp(), qsort_partition_list_value_cmp() and
+ * qsort_partition_hbound_cmp() for range, list and hash partitioned tables
+ * respectively. For range and list partitions this simply means that the
+ * datums in the datums array are arranged in increasing order as defined by
+ * the partition key's operator classes and collations.
+ *
  * In the case of list partitioning, the indexes array stores one entry for
  * every datum, which is the index of the partition that accepts a given datum.
  * In case of range partitioning, it stores one entry per distinct range
