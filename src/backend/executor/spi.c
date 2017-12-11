@@ -2367,6 +2367,9 @@ _SPI_error_callback(void *arg)
 	const char *query = (const char *) arg;
 	int			syntaxerrposition;
 
+	if (query == NULL)			/* in case arg wasn't set yet */
+		return;
+
 	/*
 	 * If there is a syntax error position, convert to internal syntax error;
 	 * otherwise treat the query as an item of context stack
