@@ -288,7 +288,7 @@ RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 
 	Assert(equalTupleDescs(desc, outslot->tts_tupleDescriptor));
 
-	/* Start an index scan. */
+	/* Start a heap scan. */
 	InitDirtySnapshot(snap);
 	scan = heap_beginscan(rel, &snap, 0, NULL);
 
