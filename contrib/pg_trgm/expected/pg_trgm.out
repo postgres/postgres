@@ -7,6 +7,9 @@ WHERE opc.oid >= 16384 AND NOT amvalidate(opc.oid);
 --------+---------
 (0 rows)
 
+--backslash is used in tests below, installcheck will fail if
+--standard_conforming_string is off
+set standard_conforming_strings=on;
 select show_trgm('');
  show_trgm 
 -----------
