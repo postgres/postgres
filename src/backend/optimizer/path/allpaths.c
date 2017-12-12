@@ -3457,7 +3457,7 @@ generate_partition_wise_join_paths(PlannerInfo *root, RelOptInfo *rel)
 		set_cheapest(child_rel);
 
 #ifdef OPTIMIZER_DEBUG
-		debug_print_rel(root, rel);
+		debug_print_rel(root, child_rel);
 #endif
 
 		live_children = lappend(live_children, child_rel);
