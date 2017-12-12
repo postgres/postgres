@@ -3406,6 +3406,8 @@ plperl_spi_query(char *query)
 				 SPI_result_code_string(SPI_result));
 		cursor = cstr2sv(portal->name);
 
+		PinPortal(portal);
+
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
@@ -3469,6 +3471,7 @@ plperl_spi_fetchrow(char *cursor)
 			SPI_cursor_fetch(p, true, 1);
 			if (SPI_processed == 0)
 			{
+				UnpinPortal(p);
 				SPI_cursor_close(p);
 				row = &PL_sv_undef;
 			}
@@ -3520,7 +3523,10 @@ plperl_spi_cursor_close(char *cursor)
 	p = SPI_cursor_find(cursor);
 
 	if (p)
+	{
+		UnpinPortal(p);
 		SPI_cursor_close(p);
+	}
 }
 
 SV *
@@ -3883,6 +3889,8 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 				 SPI_result_code_string(SPI_result));
 
 		cursor = cstr2sv(portal->name);
+
+		PinPortal(portal);
 
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();

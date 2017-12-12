@@ -151,6 +151,8 @@ PLy_cursor_query(const char *query)
 
 		cursor->portalname = MemoryContextStrdup(cursor->mcxt, portal->name);
 
+		PinPortal(portal);
+
 		PLy_spi_subtransaction_commit(oldcontext, oldowner);
 	}
 	PG_CATCH();
@@ -266,6 +268,8 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 
 		cursor->portalname = MemoryContextStrdup(cursor->mcxt, portal->name);
 
+		PinPortal(portal);
+
 		PLy_spi_subtransaction_commit(oldcontext, oldowner);
 	}
 	PG_CATCH();
@@ -317,7 +321,10 @@ PLy_cursor_dealloc(PyObject *arg)
 		portal = GetPortalByName(cursor->portalname);
 
 		if (PortalIsValid(portal))
+		{
+			UnpinPortal(portal);
 			SPI_cursor_close(portal);
+		}
 		cursor->closed = true;
 	}
 	if (cursor->mcxt)
@@ -508,6 +515,7 @@ PLy_cursor_close(PyObject *self, PyObject *unused)
 			return NULL;
 		}
 
+		UnpinPortal(portal);
 		SPI_cursor_close(portal);
 		cursor->closed = true;
 	}
