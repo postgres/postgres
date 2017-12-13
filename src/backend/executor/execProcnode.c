@@ -370,12 +370,7 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			break;
 	}
 
-	/*
-	 * Add a wrapper around the ExecProcNode callback that checks stack depth
-	 * during the first execution.
-	 */
-	result->ExecProcNodeReal = result->ExecProcNode;
-	result->ExecProcNode = ExecProcNodeFirst;
+	ExecSetExecProcNode(result, result->ExecProcNode);
 
 	/*
 	 * Initialize any initPlans present in this node.  The planner put them in
@@ -398,6 +393,27 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		result->instrument = InstrAlloc(1, estate->es_instrument);
 
 	return result;
+}
+
+
+/*
+ * If a node wants to change its ExecProcNode function after ExecInitNode()
+ * has finished, it should do so with this function.  That way any wrapper
+ * functions can be reinstalled, without the node having to know how that
+ * works.
+ */
+void
+ExecSetExecProcNode(PlanState *node, ExecProcNodeMtd function)
+{
+	/*
+	 * Add a wrapper around the ExecProcNode callback that checks stack depth
+	 * during the first execution and maybe adds an instrumentation
+	 * wrapper. When the callback is changed after execution has already begun
+	 * that means we'll superflously execute ExecProcNodeFirst, but that seems
+	 * ok.
+	 */
+	node->ExecProcNodeReal = function;
+	node->ExecProcNode = ExecProcNodeFirst;
 }
 
 
