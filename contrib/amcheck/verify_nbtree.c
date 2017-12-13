@@ -295,9 +295,7 @@ bt_check_every_level(Relation rel, bool readonly)
 	/* Create context for page */
 	state->targetcontext = AllocSetContextCreate(CurrentMemoryContext,
 												 "amcheck context",
-												 ALLOCSET_DEFAULT_MINSIZE,
-												 ALLOCSET_DEFAULT_INITSIZE,
-												 ALLOCSET_DEFAULT_MAXSIZE);
+												 ALLOCSET_DEFAULT_SIZES);
 	state->checkstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	/* Get true root block from meta-page */

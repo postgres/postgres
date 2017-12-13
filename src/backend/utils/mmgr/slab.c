@@ -67,6 +67,7 @@ typedef struct SlabContext
 	Size		chunkSize;		/* chunk size */
 	Size		fullChunkSize;	/* chunk size including header and alignment */
 	Size		blockSize;		/* block size */
+	Size		headerSize;		/* allocated size of context header */
 	int			chunksPerBlock; /* number of chunks per block */
 	int			minFreeChunks;	/* min number of free chunks in any block */
 	int			nblocks;		/* number of blocks allocated */
@@ -126,7 +127,6 @@ typedef struct SlabChunk
 static void *SlabAlloc(MemoryContext context, Size size);
 static void SlabFree(MemoryContext context, void *pointer);
 static void *SlabRealloc(MemoryContext context, void *pointer, Size size);
-static void SlabInit(MemoryContext context);
 static void SlabReset(MemoryContext context);
 static void SlabDelete(MemoryContext context);
 static Size SlabGetChunkSpace(MemoryContext context, void *pointer);
@@ -140,11 +140,10 @@ static void SlabCheck(MemoryContext context);
 /*
  * This is the virtual function table for Slab contexts.
  */
-static MemoryContextMethods SlabMethods = {
+static const MemoryContextMethods SlabMethods = {
 	SlabAlloc,
 	SlabFree,
 	SlabRealloc,
-	SlabInit,
 	SlabReset,
 	SlabDelete,
 	SlabGetChunkSpace,
@@ -177,24 +176,30 @@ static MemoryContextMethods SlabMethods = {
  *		Create a new Slab context.
  *
  * parent: parent context, or NULL if top-level context
- * name: name of context (for debugging --- string will be copied)
+ * name: name of context (for debugging only, need not be unique)
+ * flags: bitmask of MEMCONTEXT_XXX option flags
  * blockSize: allocation block size
  * chunkSize: allocation chunk size
  *
+ * Notes: if flags & MEMCONTEXT_COPY_NAME, the name string will be copied into
+ * context-lifespan storage; otherwise, it had better be statically allocated.
  * The chunkSize may not exceed:
  *		MAXALIGN_DOWN(SIZE_MAX) - MAXALIGN(sizeof(SlabBlock)) - SLAB_CHUNKHDRSZ
- *
  */
 MemoryContext
 SlabContextCreate(MemoryContext parent,
 				  const char *name,
+				  int flags,
 				  Size blockSize,
 				  Size chunkSize)
 {
 	int			chunksPerBlock;
 	Size		fullChunkSize;
 	Size		freelistSize;
+	Size		nameOffset;
+	Size		headerSize;
 	SlabContext *slab;
+	int			i;
 
 	/* Assert we padded SlabChunk properly */
 	StaticAssertStmt(sizeof(SlabChunk) == MAXALIGN(sizeof(SlabChunk)),
@@ -211,7 +216,7 @@ SlabContextCreate(MemoryContext parent,
 	fullChunkSize = sizeof(SlabChunk) + MAXALIGN(chunkSize);
 
 	/* Make sure the block can store at least one chunk. */
-	if (blockSize - sizeof(SlabBlock) < fullChunkSize)
+	if (blockSize < fullChunkSize + sizeof(SlabBlock))
 		elog(ERROR, "block size %zu for slab is too small for %zu chunks",
 			 blockSize, chunkSize);
 
@@ -221,45 +226,58 @@ SlabContextCreate(MemoryContext parent,
 	/* The freelist starts with 0, ends with chunksPerBlock. */
 	freelistSize = sizeof(dlist_head) * (chunksPerBlock + 1);
 
-	/* if we can't fit at least one chunk into the block, we're hosed */
-	Assert(chunksPerBlock > 0);
+	/*
+	 * Allocate the context header.  Unlike aset.c, we never try to combine
+	 * this with the first regular block; not worth the extra complication.
+	 */
 
-	/* make sure the chunks actually fit on the block	*/
-	Assert((fullChunkSize * chunksPerBlock) + sizeof(SlabBlock) <= blockSize);
+	/* Size of the memory context header, including name storage if needed */
+	nameOffset = offsetof(SlabContext, freelist) + freelistSize;
+	if (flags & MEMCONTEXT_COPY_NAME)
+		headerSize = nameOffset + strlen(name) + 1;
+	else
+		headerSize = nameOffset;
 
-	/* Do the type-independent part of context creation */
-	slab = (SlabContext *)
-		MemoryContextCreate(T_SlabContext,
-							(offsetof(SlabContext, freelist) + freelistSize),
-							&SlabMethods,
-							parent,
-							name);
+	slab = (SlabContext *) malloc(headerSize);
+	if (slab == NULL)
+	{
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed while creating memory context \"%s\".",
+						   name)));
+	}
 
-	slab->blockSize = blockSize;
+	/*
+	 * Avoid writing code that can fail between here and MemoryContextCreate;
+	 * we'd leak the header if we ereport in this stretch.
+	 */
+
+	/* Fill in SlabContext-specific header fields */
 	slab->chunkSize = chunkSize;
 	slab->fullChunkSize = fullChunkSize;
+	slab->blockSize = blockSize;
+	slab->headerSize = headerSize;
 	slab->chunksPerBlock = chunksPerBlock;
-	slab->nblocks = 0;
 	slab->minFreeChunks = 0;
-
-	return (MemoryContext) slab;
-}
-
-/*
- * SlabInit
- *		Context-type-specific initialization routine.
- */
-static void
-SlabInit(MemoryContext context)
-{
-	int			i;
-	SlabContext *slab = castNode(SlabContext, context);
-
-	Assert(slab);
+	slab->nblocks = 0;
 
 	/* initialize the freelist slots */
 	for (i = 0; i < (slab->chunksPerBlock + 1); i++)
 		dlist_init(&slab->freelist[i]);
+
+	/* Finally, do the type-independent part of context creation */
+	MemoryContextCreate((MemoryContext) slab,
+						T_SlabContext,
+						headerSize,
+						nameOffset,
+						&SlabMethods,
+						parent,
+						name,
+						flags);
+
+	return (MemoryContext) slab;
 }
 
 /*
@@ -308,14 +326,15 @@ SlabReset(MemoryContext context)
 
 /*
  * SlabDelete
- *		Frees all memory which is allocated in the given slab, in preparation
- *		for deletion of the slab. We simply call SlabReset().
+ *		Free all memory which is allocated in the given context.
  */
 static void
 SlabDelete(MemoryContext context)
 {
-	/* just reset the context */
+	/* Reset to release all the SlabBlocks */
 	SlabReset(context);
+	/* And free the context header */
+	free(context);
 }
 
 /*
@@ -613,7 +632,7 @@ SlabIsEmpty(MemoryContext context)
 
 /*
  * SlabStats
- *		Compute stats about memory consumption of an Slab.
+ *		Compute stats about memory consumption of a Slab context.
  *
  * level: recursion level (0 at top level); used for print indentation.
  * print: true to print stats to stderr.
@@ -626,11 +645,12 @@ SlabStats(MemoryContext context, int level, bool print,
 	SlabContext *slab = castNode(SlabContext, context);
 	Size		nblocks = 0;
 	Size		freechunks = 0;
-	Size		totalspace = 0;
+	Size		totalspace;
 	Size		freespace = 0;
 	int			i;
 
-	Assert(slab);
+	/* Include context header in totalspace */
+	totalspace = slab->headerSize;
 
 	for (i = 0; i <= slab->chunksPerBlock; i++)
 	{
@@ -682,7 +702,7 @@ SlabCheck(MemoryContext context)
 {
 	int			i;
 	SlabContext *slab = castNode(SlabContext, context);
-	char	   *name = slab->header.name;
+	const char *name = slab->header.name;
 	char	   *freechunks;
 
 	Assert(slab);

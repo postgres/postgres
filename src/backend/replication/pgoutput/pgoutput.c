@@ -152,9 +152,7 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	/* Create our memory context for private allocations. */
 	data->context = AllocSetContextCreate(ctx->context,
 										  "logical replication output context",
-										  ALLOCSET_DEFAULT_MINSIZE,
-										  ALLOCSET_DEFAULT_INITSIZE,
-										  ALLOCSET_DEFAULT_MAXSIZE);
+										  ALLOCSET_DEFAULT_SIZES);
 
 	ctx->output_plugin_private = data;
 

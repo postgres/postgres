@@ -340,9 +340,11 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 			CurrentDynaHashCxt = info->hcxt;
 		else
 			CurrentDynaHashCxt = TopMemoryContext;
-		CurrentDynaHashCxt = AllocSetContextCreate(CurrentDynaHashCxt,
-												   tabname,
-												   ALLOCSET_DEFAULT_SIZES);
+		CurrentDynaHashCxt =
+			AllocSetContextCreateExtended(CurrentDynaHashCxt,
+										  tabname,
+										  MEMCONTEXT_COPY_NAME,
+										  ALLOCSET_DEFAULT_SIZES);
 	}
 
 	/* Initialize the hash header, plus a copy of the table name */

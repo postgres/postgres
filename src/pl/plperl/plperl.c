@@ -2777,9 +2777,10 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 		/************************************************************
 		 * Allocate a context that will hold all PG data for the procedure.
 		 ************************************************************/
-		proc_cxt = AllocSetContextCreate(TopMemoryContext,
-										 NameStr(procStruct->proname),
-										 ALLOCSET_SMALL_SIZES);
+		proc_cxt = AllocSetContextCreateExtended(TopMemoryContext,
+												 NameStr(procStruct->proname),
+												 MEMCONTEXT_COPY_NAME,
+												 ALLOCSET_SMALL_SIZES);
 
 		/************************************************************
 		 * Allocate and fill a new procedure description block.

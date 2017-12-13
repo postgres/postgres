@@ -259,9 +259,7 @@ publicationListToArray(List *publist)
 	/* Create memory context for temporary allocations. */
 	memcxt = AllocSetContextCreate(CurrentMemoryContext,
 								   "publicationListToArray to array",
-								   ALLOCSET_DEFAULT_MINSIZE,
-								   ALLOCSET_DEFAULT_INITSIZE,
-								   ALLOCSET_DEFAULT_MAXSIZE);
+								   ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
 	datums = (Datum *) palloc(sizeof(Datum) * list_length(publist));

@@ -93,6 +93,9 @@
  *
  * Blocks allocated to hold oversize chunks do not follow this rule, however;
  * they are just however big they need to be to hold that single chunk.
+ *
+ * Also, if a minContextSize is specified, the first block has that size,
+ * and then initBlockSize is used for the next one.
  *--------------------
  */
 
@@ -113,7 +116,7 @@ typedef void *AllocPointer;
  *
  * Note: header.isReset means there is nothing for AllocSetReset to do.
  * This is different from the aset being physically empty (empty blocks list)
- * because we may still have a keeper block.  It's also different from the set
+ * because we will still have a keeper block.  It's also different from the set
  * being logically empty, because we don't attempt to detect pfree'ing the
  * last active chunk.
  */
@@ -127,8 +130,11 @@ typedef struct AllocSetContext
 	Size		initBlockSize;	/* initial block size */
 	Size		maxBlockSize;	/* maximum block size */
 	Size		nextBlockSize;	/* next block size to allocate */
+	Size		headerSize;		/* allocated size of context header */
 	Size		allocChunkLimit;	/* effective chunk size limit */
-	AllocBlock	keeper;			/* if not NULL, keep this block over resets */
+	AllocBlock	keeper;			/* keep this block over resets */
+	/* freelist this context could be put in, or -1 if not a candidate: */
+	int			freeListIndex;	/* index in context_freelists[], or -1 */
 } AllocSetContext;
 
 typedef AllocSetContext *AllocSet;
@@ -216,12 +222,56 @@ typedef struct AllocChunkData
 					((AllocPointer)(((char *)(chk)) + ALLOC_CHUNKHDRSZ))
 
 /*
+ * Rather than repeatedly creating and deleting memory contexts, we keep some
+ * freed contexts in freelists so that we can hand them out again with little
+ * work.  Before putting a context in a freelist, we reset it so that it has
+ * only its initial malloc chunk and no others.  To be a candidate for a
+ * freelist, a context must have the same minContextSize/initBlockSize as
+ * other contexts in the list; but its maxBlockSize is irrelevant since that
+ * doesn't affect the size of the initial chunk.  Also, candidate contexts
+ * *must not* use MEMCONTEXT_COPY_NAME since that would make their header size
+ * variable.  (We currently insist that all flags be zero, since other flags
+ * would likely make the contexts less interchangeable, too.)
+ *
+ * We currently provide one freelist for ALLOCSET_DEFAULT_SIZES contexts
+ * and one for ALLOCSET_SMALL_SIZES contexts; the latter works for
+ * ALLOCSET_START_SMALL_SIZES too, since only the maxBlockSize differs.
+ *
+ * Ordinarily, we re-use freelist contexts in last-in-first-out order, in
+ * hopes of improving locality of reference.  But if there get to be too
+ * many contexts in the list, we'd prefer to drop the most-recently-created
+ * contexts in hopes of keeping the process memory map compact.
+ * We approximate that by simply deleting all existing entries when the list
+ * overflows, on the assumption that queries that allocate a lot of contexts
+ * will probably free them in more or less reverse order of allocation.
+ *
+ * Contexts in a freelist are chained via their nextchild pointers.
+ */
+#define MAX_FREE_CONTEXTS 100	/* arbitrary limit on freelist length */
+
+typedef struct AllocSetFreeList
+{
+	int			num_free;		/* current list length */
+	AllocSetContext *first_free;	/* list header */
+} AllocSetFreeList;
+
+/* context_freelists[0] is for default params, [1] for small params */
+static AllocSetFreeList context_freelists[2] =
+{
+	{
+		0, NULL
+	},
+	{
+		0, NULL
+	}
+};
+
+/*
  * These functions implement the MemoryContext API for AllocSet contexts.
  */
 static void *AllocSetAlloc(MemoryContext context, Size size);
 static void AllocSetFree(MemoryContext context, void *pointer);
 static void *AllocSetRealloc(MemoryContext context, void *pointer, Size size);
-static void AllocSetInit(MemoryContext context);
 static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
@@ -236,11 +286,10 @@ static void AllocSetCheck(MemoryContext context);
 /*
  * This is the virtual function table for AllocSet contexts.
  */
-static MemoryContextMethods AllocSetMethods = {
+static const MemoryContextMethods AllocSetMethods = {
 	AllocSetAlloc,
 	AllocSetFree,
 	AllocSetRealloc,
-	AllocSetInit,
 	AllocSetReset,
 	AllocSetDelete,
 	AllocSetGetChunkSpace,
@@ -325,27 +374,35 @@ AllocSetFreeIndex(Size size)
 
 
 /*
- * AllocSetContextCreate
+ * AllocSetContextCreateExtended
  *		Create a new AllocSet context.
  *
  * parent: parent context, or NULL if top-level context
  * name: name of context (for debugging only, need not be unique)
+ * flags: bitmask of MEMCONTEXT_XXX option flags
  * minContextSize: minimum context size
  * initBlockSize: initial allocation block size
  * maxBlockSize: maximum allocation block size
  *
- * Notes: the name string will be copied into context-lifespan storage.
+ * Notes: if flags & MEMCONTEXT_COPY_NAME, the name string will be copied into
+ * context-lifespan storage; otherwise, it had better be statically allocated.
  * Most callers should abstract the context size parameters using a macro
- * such as ALLOCSET_DEFAULT_SIZES.
+ * such as ALLOCSET_DEFAULT_SIZES.  (This is now *required* when going
+ * through the AllocSetContextCreate macro.)
  */
 MemoryContext
-AllocSetContextCreate(MemoryContext parent,
-					  const char *name,
-					  Size minContextSize,
-					  Size initBlockSize,
-					  Size maxBlockSize)
+AllocSetContextCreateExtended(MemoryContext parent,
+							  const char *name,
+							  int flags,
+							  Size minContextSize,
+							  Size initBlockSize,
+							  Size maxBlockSize)
 {
+	int			freeListIndex;
+	Size		headerSize;
+	Size		firstBlockSize;
 	AllocSet	set;
+	AllocBlock	block;
 
 	/* Assert we padded AllocChunkData properly */
 	StaticAssertStmt(ALLOC_CHUNKHDRSZ == MAXALIGN(ALLOC_CHUNKHDRSZ),
@@ -355,36 +412,125 @@ AllocSetContextCreate(MemoryContext parent,
 					 "padding calculation in AllocChunkData is wrong");
 
 	/*
-	 * First, validate allocation parameters.  (If we're going to throw an
-	 * error, we should do so before the context is created, not after.)  We
-	 * somewhat arbitrarily enforce a minimum 1K block size.
+	 * First, validate allocation parameters.  Once these were regular runtime
+	 * test and elog's, but in practice Asserts seem sufficient because nobody
+	 * varies their parameters at runtime.  We somewhat arbitrarily enforce a
+	 * minimum 1K block size.
 	 */
-	if (initBlockSize != MAXALIGN(initBlockSize) ||
-		initBlockSize < 1024)
-		elog(ERROR, "invalid initBlockSize for memory context: %zu",
-			 initBlockSize);
-	if (maxBlockSize != MAXALIGN(maxBlockSize) ||
-		maxBlockSize < initBlockSize ||
-		!AllocHugeSizeIsValid(maxBlockSize))	/* must be safe to double */
-		elog(ERROR, "invalid maxBlockSize for memory context: %zu",
-			 maxBlockSize);
-	if (minContextSize != 0 &&
-		(minContextSize != MAXALIGN(minContextSize) ||
-		 minContextSize <= ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ))
-		elog(ERROR, "invalid minContextSize for memory context: %zu",
-			 minContextSize);
+	Assert(initBlockSize == MAXALIGN(initBlockSize) &&
+		   initBlockSize >= 1024);
+	Assert(maxBlockSize == MAXALIGN(maxBlockSize) &&
+		   maxBlockSize >= initBlockSize &&
+		   AllocHugeSizeIsValid(maxBlockSize)); /* must be safe to double */
+	Assert(minContextSize == 0 ||
+		   (minContextSize == MAXALIGN(minContextSize) &&
+			minContextSize >= 1024 &&
+			minContextSize <= maxBlockSize));
 
-	/* Do the type-independent part of context creation */
-	set = (AllocSet) MemoryContextCreate(T_AllocSetContext,
-										 sizeof(AllocSetContext),
-										 &AllocSetMethods,
-										 parent,
-										 name);
+	/*
+	 * Check whether the parameters match either available freelist.  We do
+	 * not need to demand a match of maxBlockSize.
+	 */
+	if (flags == 0 &&
+		minContextSize == ALLOCSET_DEFAULT_MINSIZE &&
+		initBlockSize == ALLOCSET_DEFAULT_INITSIZE)
+		freeListIndex = 0;
+	else if (flags == 0 &&
+			 minContextSize == ALLOCSET_SMALL_MINSIZE &&
+			 initBlockSize == ALLOCSET_SMALL_INITSIZE)
+		freeListIndex = 1;
+	else
+		freeListIndex = -1;
 
-	/* Save allocation parameters */
+	/*
+	 * If a suitable freelist entry exists, just recycle that context.
+	 */
+	if (freeListIndex >= 0)
+	{
+		AllocSetFreeList *freelist = &context_freelists[freeListIndex];
+
+		if (freelist->first_free != NULL)
+		{
+			/* Remove entry from freelist */
+			set = freelist->first_free;
+			freelist->first_free = (AllocSet) set->header.nextchild;
+			freelist->num_free--;
+
+			/* Update its maxBlockSize; everything else should be OK */
+			set->maxBlockSize = maxBlockSize;
+
+			/* Reinitialize its header, installing correct name and parent */
+			MemoryContextCreate((MemoryContext) set,
+								T_AllocSetContext,
+								set->headerSize,
+								sizeof(AllocSetContext),
+								&AllocSetMethods,
+								parent,
+								name,
+								flags);
+
+			return (MemoryContext) set;
+		}
+	}
+
+	/* Size of the memory context header, including name storage if needed */
+	if (flags & MEMCONTEXT_COPY_NAME)
+		headerSize = MAXALIGN(sizeof(AllocSetContext) + strlen(name) + 1);
+	else
+		headerSize = MAXALIGN(sizeof(AllocSetContext));
+
+	/* Determine size of initial block */
+	firstBlockSize = headerSize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
+	if (minContextSize != 0)
+		firstBlockSize = Max(firstBlockSize, minContextSize);
+	else
+		firstBlockSize = Max(firstBlockSize, initBlockSize);
+
+	/*
+	 * Allocate the initial block.  Unlike other aset.c blocks, it starts with
+	 * the context header and its block header follows that.
+	 */
+	set = (AllocSet) malloc(firstBlockSize);
+	if (set == NULL)
+	{
+		if (TopMemoryContext)
+			MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed while creating memory context \"%s\".",
+						   name)));
+	}
+
+	/*
+	 * Avoid writing code that can fail between here and MemoryContextCreate;
+	 * we'd leak the header/initial block if we ereport in this stretch.
+	 */
+
+	/* Fill in the initial block's block header */
+	block = (AllocBlock) (((char *) set) + headerSize);
+	block->aset = set;
+	block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
+	block->endptr = ((char *) set) + firstBlockSize;
+	block->prev = NULL;
+	block->next = NULL;
+
+	/* Mark unallocated space NOACCESS; leave the block header alone. */
+	VALGRIND_MAKE_MEM_NOACCESS(block->freeptr, block->endptr - block->freeptr);
+
+	/* Remember block as part of block list */
+	set->blocks = block;
+	/* Mark block as not to be released at reset time */
+	set->keeper = block;
+
+	/* Finish filling in aset-specific parts of the context header */
+	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
+
 	set->initBlockSize = initBlockSize;
 	set->maxBlockSize = maxBlockSize;
 	set->nextBlockSize = initBlockSize;
+	set->headerSize = headerSize;
+	set->freeListIndex = freeListIndex;
 
 	/*
 	 * Compute the allocation chunk size limit for this context.  It can't be
@@ -410,62 +556,17 @@ AllocSetContextCreate(MemoryContext parent,
 		   (Size) ((maxBlockSize - ALLOC_BLOCKHDRSZ) / ALLOC_CHUNK_FRACTION))
 		set->allocChunkLimit >>= 1;
 
-	/*
-	 * Grab always-allocated space, if requested
-	 */
-	if (minContextSize > 0)
-	{
-		Size		blksize = minContextSize;
-		AllocBlock	block;
-
-		block = (AllocBlock) malloc(blksize);
-		if (block == NULL)
-		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed while creating memory context \"%s\".",
-							   name)));
-		}
-		block->aset = set;
-		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
-		block->endptr = ((char *) block) + blksize;
-		block->prev = NULL;
-		block->next = set->blocks;
-		if (block->next)
-			block->next->prev = block;
-		set->blocks = block;
-		/* Mark block as not to be released at reset time */
-		set->keeper = block;
-
-		/* Mark unallocated space NOACCESS; leave the block header alone. */
-		VALGRIND_MAKE_MEM_NOACCESS(block->freeptr,
-								   blksize - ALLOC_BLOCKHDRSZ);
-	}
+	/* Finally, do the type-independent part of context creation */
+	MemoryContextCreate((MemoryContext) set,
+						T_AllocSetContext,
+						headerSize,
+						sizeof(AllocSetContext),
+						&AllocSetMethods,
+						parent,
+						name,
+						flags);
 
 	return (MemoryContext) set;
-}
-
-/*
- * AllocSetInit
- *		Context-type-specific initialization routine.
- *
- * This is called by MemoryContextCreate() after setting up the
- * generic MemoryContext fields and before linking the new context
- * into the context tree.  We must do whatever is needed to make the
- * new context minimally valid for deletion.  We must *not* risk
- * failure --- thus, for example, allocating more memory is not cool.
- * (AllocSetContextCreate can allocate memory when it gets control
- * back, however.)
- */
-static void
-AllocSetInit(MemoryContext context)
-{
-	/*
-	 * Since MemoryContextCreate already zeroed the context node, we don't
-	 * have to do anything here: it's already OK.
-	 */
 }
 
 /*
@@ -475,9 +576,10 @@ AllocSetInit(MemoryContext context)
  * Actually, this routine has some discretion about what to do.
  * It should mark all allocated chunks freed, but it need not necessarily
  * give back all the resources the set owns.  Our actual implementation is
- * that we hang onto any "keeper" block specified for the set.  In this way,
- * we don't thrash malloc() when a context is repeatedly reset after small
- * allocations, which is typical behavior for per-tuple contexts.
+ * that we give back all but the "keeper" block (which we must keep, since
+ * it shares a malloc chunk with the context header).  In this way, we don't
+ * thrash malloc() when a context is repeatedly reset after small allocations,
+ * which is typical behavior for per-tuple contexts.
  */
 static void
 AllocSetReset(MemoryContext context)
@@ -497,7 +599,7 @@ AllocSetReset(MemoryContext context)
 
 	block = set->blocks;
 
-	/* New blocks list is either empty or just the keeper block */
+	/* New blocks list will be just the keeper block */
 	set->blocks = set->keeper;
 
 	while (block != NULL)
@@ -540,7 +642,6 @@ AllocSetReset(MemoryContext context)
  *		in preparation for deletion of the set.
  *
  * Unlike AllocSetReset, this *must* free all resources of the set.
- * But note we are not responsible for deleting the context node itself.
  */
 static void
 AllocSetDelete(MemoryContext context)
@@ -555,11 +656,49 @@ AllocSetDelete(MemoryContext context)
 	AllocSetCheck(context);
 #endif
 
-	/* Make it look empty, just in case... */
-	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
-	set->blocks = NULL;
-	set->keeper = NULL;
+	/*
+	 * If the context is a candidate for a freelist, put it into that freelist
+	 * instead of destroying it.
+	 */
+	if (set->freeListIndex >= 0)
+	{
+		AllocSetFreeList *freelist = &context_freelists[set->freeListIndex];
 
+		/*
+		 * Reset the context, if it needs it, so that we aren't hanging on to
+		 * more than the initial malloc chunk.
+		 */
+		if (!context->isReset)
+			MemoryContextResetOnly(context);
+
+		/*
+		 * If the freelist is full, just discard what's already in it.  See
+		 * comments with context_freelists[].
+		 */
+		if (freelist->num_free >= MAX_FREE_CONTEXTS)
+		{
+			while (freelist->first_free != NULL)
+			{
+				AllocSetContext *oldset = freelist->first_free;
+
+				freelist->first_free = (AllocSetContext *) oldset->header.nextchild;
+				freelist->num_free--;
+
+				/* All that remains is to free the header/initial block */
+				free(oldset);
+			}
+			Assert(freelist->num_free == 0);
+		}
+
+		/* Now add the just-deleted context to the freelist. */
+		set->header.nextchild = (MemoryContext) freelist->first_free;
+		freelist->first_free = set;
+		freelist->num_free++;
+
+		return;
+	}
+
+	/* Free all blocks, except the keeper which is part of context header */
 	while (block != NULL)
 	{
 		AllocBlock	next = block->next;
@@ -567,9 +706,15 @@ AllocSetDelete(MemoryContext context)
 #ifdef CLOBBER_FREED_MEMORY
 		wipe_mem(block, block->freeptr - ((char *) block));
 #endif
-		free(block);
+
+		if (block != set->keeper)
+			free(block);
+
 		block = next;
 	}
+
+	/* Finally, free the context header, including the keeper block */
+	free(set);
 }
 
 /*
@@ -806,18 +951,6 @@ AllocSetAlloc(MemoryContext context, Size size)
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
 		block->endptr = ((char *) block) + blksize;
-
-		/*
-		 * If this is the first block of the set, make it the "keeper" block.
-		 * Formerly, a keeper block could only be created during context
-		 * creation, but allowing it to happen here lets us have fast reset
-		 * cycling even for contexts created with minContextSize = 0; that way
-		 * we don't have to force space to be allocated in contexts that might
-		 * never need any space.  Don't mark an oversize block as a keeper,
-		 * however.
-		 */
-		if (set->keeper == NULL && blksize == set->initBlockSize)
-			set->keeper = block;
 
 		/* Mark unallocated space NOACCESS. */
 		VALGRIND_MAKE_MEM_NOACCESS(block->freeptr,
@@ -1205,10 +1338,13 @@ AllocSetStats(MemoryContext context, int level, bool print,
 	AllocSet	set = (AllocSet) context;
 	Size		nblocks = 0;
 	Size		freechunks = 0;
-	Size		totalspace = 0;
+	Size		totalspace;
 	Size		freespace = 0;
 	AllocBlock	block;
 	int			fidx;
+
+	/* Include context header in totalspace */
+	totalspace = set->headerSize;
 
 	for (block = set->blocks; block != NULL; block = block->next)
 	{
@@ -1264,7 +1400,7 @@ static void
 AllocSetCheck(MemoryContext context)
 {
 	AllocSet	set = (AllocSet) context;
-	char	   *name = set->header.name;
+	const char *name = set->header.name;
 	AllocBlock	prevblock;
 	AllocBlock	block;
 

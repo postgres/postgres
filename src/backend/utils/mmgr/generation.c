@@ -61,6 +61,7 @@ typedef struct GenerationContext
 
 	/* Generational context parameters */
 	Size		blockSize;		/* standard block size */
+	Size		headerSize;		/* allocated size of context header */
 
 	GenerationBlock *block;		/* current (most recently allocated) block */
 	dlist_head	blocks;			/* list of blocks */
@@ -149,7 +150,6 @@ struct GenerationChunk
 static void *GenerationAlloc(MemoryContext context, Size size);
 static void GenerationFree(MemoryContext context, void *pointer);
 static void *GenerationRealloc(MemoryContext context, void *pointer, Size size);
-static void GenerationInit(MemoryContext context);
 static void GenerationReset(MemoryContext context);
 static void GenerationDelete(MemoryContext context);
 static Size GenerationGetChunkSpace(MemoryContext context, void *pointer);
@@ -164,11 +164,10 @@ static void GenerationCheck(MemoryContext context);
 /*
  * This is the virtual function table for Generation contexts.
  */
-static MemoryContextMethods GenerationMethods = {
+static const MemoryContextMethods GenerationMethods = {
 	GenerationAlloc,
 	GenerationFree,
 	GenerationRealloc,
-	GenerationInit,
 	GenerationReset,
 	GenerationDelete,
 	GenerationGetChunkSpace,
@@ -208,8 +207,10 @@ static MemoryContextMethods GenerationMethods = {
 MemoryContext
 GenerationContextCreate(MemoryContext parent,
 						const char *name,
+						int flags,
 						Size blockSize)
 {
+	Size		headerSize;
 	GenerationContext *set;
 
 	/* Assert we padded GenerationChunk properly */
@@ -231,29 +232,51 @@ GenerationContextCreate(MemoryContext parent,
 		elog(ERROR, "invalid blockSize for memory context: %zu",
 			 blockSize);
 
-	/* Do the type-independent part of context creation */
-	set = (GenerationContext *) MemoryContextCreate(T_GenerationContext,
-													sizeof(GenerationContext),
-													&GenerationMethods,
-													parent,
-													name);
+	/*
+	 * Allocate the context header.  Unlike aset.c, we never try to combine
+	 * this with the first regular block, since that would prevent us from
+	 * freeing the first generation of allocations.
+	 */
 
+	/* Size of the memory context header, including name storage if needed */
+	if (flags & MEMCONTEXT_COPY_NAME)
+		headerSize = MAXALIGN(sizeof(GenerationContext) + strlen(name) + 1);
+	else
+		headerSize = MAXALIGN(sizeof(GenerationContext));
+
+	set = (GenerationContext *) malloc(headerSize);
+	if (set == NULL)
+	{
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed while creating memory context \"%s\".",
+						   name)));
+	}
+
+	/*
+	 * Avoid writing code that can fail between here and MemoryContextCreate;
+	 * we'd leak the header if we ereport in this stretch.
+	 */
+
+	/* Fill in GenerationContext-specific header fields */
 	set->blockSize = blockSize;
-
-	return (MemoryContext) set;
-}
-
-/*
- * GenerationInit
- *		Context-type-specific initialization routine.
- */
-static void
-GenerationInit(MemoryContext context)
-{
-	GenerationContext *set = (GenerationContext *) context;
-
+	set->headerSize = headerSize;
 	set->block = NULL;
 	dlist_init(&set->blocks);
+
+	/* Finally, do the type-independent part of context creation */
+	MemoryContextCreate((MemoryContext) set,
+						T_GenerationContext,
+						headerSize,
+						sizeof(GenerationContext),
+						&GenerationMethods,
+						parent,
+						name,
+						flags);
+
+	return (MemoryContext) set;
 }
 
 /*
@@ -296,16 +319,15 @@ GenerationReset(MemoryContext context)
 
 /*
  * GenerationDelete
- *		Frees all memory which is allocated in the given set, in preparation
- *		for deletion of the set. We simply call GenerationReset() which does
- *		all the dirty work.
+ *		Free all memory which is allocated in the given context.
  */
 static void
 GenerationDelete(MemoryContext context)
 {
-	/* just reset to release all the GenerationBlocks */
+	/* Reset to release all the GenerationBlocks */
 	GenerationReset(context);
-	/* we are not responsible for deleting the context node itself */
+	/* And free the context header */
+	free(context);
 }
 
 /*
@@ -659,7 +681,7 @@ GenerationIsEmpty(MemoryContext context)
 
 /*
  * GenerationStats
- *		Compute stats about memory consumption of an Generation.
+ *		Compute stats about memory consumption of a Generation context.
  *
  * level: recursion level (0 at top level); used for print indentation.
  * print: true to print stats to stderr.
@@ -676,9 +698,12 @@ GenerationStats(MemoryContext context, int level, bool print,
 	Size		nblocks = 0;
 	Size		nchunks = 0;
 	Size		nfreechunks = 0;
-	Size		totalspace = 0;
+	Size		totalspace;
 	Size		freespace = 0;
 	dlist_iter	iter;
+
+	/* Include context header in totalspace */
+	totalspace = set->headerSize;
 
 	dlist_foreach(iter, &set->blocks)
 	{
@@ -727,7 +752,7 @@ static void
 GenerationCheck(MemoryContext context)
 {
 	GenerationContext *gen = (GenerationContext *) context;
-	char	   *name = context->name;
+	const char *name = context->name;
 	dlist_iter	iter;
 
 	/* walk all blocks in this context */

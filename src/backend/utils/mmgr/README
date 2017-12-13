@@ -177,8 +177,7 @@ every other context is a direct or indirect child of this one.  Allocating
 here is essentially the same as "malloc", because this context will never
 be reset or deleted.  This is for stuff that should live forever, or for
 stuff that the controlling module will take care of deleting at the
-appropriate time.  An example is fd.c's tables of open files, as well as
-the context management nodes for memory contexts themselves.  Avoid
+appropriate time.  An example is fd.c's tables of open files.  Avoid
 allocating stuff here unless really necessary, and especially avoid
 running with CurrentMemoryContext pointing here.
 
@@ -420,11 +419,10 @@ a maximum block size.  Selecting smaller values can prevent wastage of
 space in contexts that aren't expected to hold very much (an example
 is the relcache's per-relation contexts).
 
-Also, it is possible to specify a minimum context size.  If this
-value is greater than zero then a block of that size will be grabbed
-immediately upon context creation, and cleared but not released during
-context resets.  This feature is needed for ErrorContext (see above),
-but will most likely not be used for other contexts.
+Also, it is possible to specify a minimum context size, in case for some
+reason that should be different from the initial size for additional
+blocks.  An aset.c context will always contain at least one block,
+of size minContextSize if that is specified, otherwise initBlockSize.
 
 We expect that per-tuple contexts will be reset frequently and typically
 will not allocate very much space per tuple cycle.  To make this usage

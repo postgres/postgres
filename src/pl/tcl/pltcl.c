@@ -146,7 +146,7 @@ typedef struct pltcl_proc_desc
 	Oid			result_typid;	/* OID of fn's result type */
 	FmgrInfo	result_in_func; /* input function for fn's result type */
 	Oid			result_typioparam;	/* param to pass to same */
-	bool		fn_is_procedure;/* true if this is a procedure */
+	bool		fn_is_procedure;	/* true if this is a procedure */
 	bool		fn_retisset;	/* true if function returns a set */
 	bool		fn_retistuple;	/* true if function returns composite */
 	bool		fn_retisdomain; /* true if function returns domain */
@@ -1471,9 +1471,10 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		 * Allocate a context that will hold all PG data for the procedure.
 		 * We use the internal proc name as the context name.
 		 ************************************************************/
-		proc_cxt = AllocSetContextCreate(TopMemoryContext,
-										 internal_proname,
-										 ALLOCSET_SMALL_SIZES);
+		proc_cxt = AllocSetContextCreateExtended(TopMemoryContext,
+												 internal_proname,
+												 MEMCONTEXT_COPY_NAME,
+												 ALLOCSET_SMALL_SIZES);
 
 		/************************************************************
 		 * Allocate and fill a new procedure description block.

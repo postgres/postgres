@@ -166,9 +166,10 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	}
 
 	/* Create long-lived context that all procedure info will live in */
-	cxt = AllocSetContextCreate(TopMemoryContext,
-								procName,
-								ALLOCSET_DEFAULT_SIZES);
+	cxt = AllocSetContextCreateExtended(TopMemoryContext,
+										procName,
+										MEMCONTEXT_COPY_NAME,
+										ALLOCSET_DEFAULT_SIZES);
 
 	oldcxt = MemoryContextSwitchTo(cxt);
 

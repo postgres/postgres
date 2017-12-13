@@ -925,9 +925,7 @@ ApplyLauncherMain(Datum main_arg)
 			/* Use temporary context for the database list and worker info. */
 			subctx = AllocSetContextCreate(TopMemoryContext,
 										   "Logical Replication Launcher sublist",
-										   ALLOCSET_DEFAULT_MINSIZE,
-										   ALLOCSET_DEFAULT_INITSIZE,
-										   ALLOCSET_DEFAULT_MAXSIZE);
+										   ALLOCSET_DEFAULT_SIZES);
 			oldctx = MemoryContextSwitchTo(subctx);
 
 			/* search for subscriptions to start or stop. */

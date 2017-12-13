@@ -520,9 +520,10 @@ RelationBuildPartitionDesc(Relation rel)
 	}
 
 	/* Now build the actual relcache partition descriptor */
-	rel->rd_pdcxt = AllocSetContextCreate(CacheMemoryContext,
-										  RelationGetRelationName(rel),
-										  ALLOCSET_DEFAULT_SIZES);
+	rel->rd_pdcxt = AllocSetContextCreateExtended(CacheMemoryContext,
+												  RelationGetRelationName(rel),
+												  MEMCONTEXT_COPY_NAME,
+												  ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(rel->rd_pdcxt);
 
 	result = (PartitionDescData *) palloc0(sizeof(PartitionDescData));

@@ -91,9 +91,7 @@ MemoryContextInit(void)
 	AssertState(TopMemoryContext == NULL);
 
 	/*
-	 * First, initialize TopMemoryContext, which will hold the MemoryContext
-	 * nodes for all other contexts.  (There is special-case code in
-	 * MemoryContextCreate() to handle this call.)
+	 * First, initialize TopMemoryContext, which is the parent of all others.
 	 */
 	TopMemoryContext = AllocSetContextCreate((MemoryContext) NULL,
 											 "TopMemoryContext",
@@ -118,11 +116,12 @@ MemoryContextInit(void)
 	 * This should be the last step in this function, as elog.c assumes memory
 	 * management works once ErrorContext is non-null.
 	 */
-	ErrorContext = AllocSetContextCreate(TopMemoryContext,
-										 "ErrorContext",
-										 8 * 1024,
-										 8 * 1024,
-										 8 * 1024);
+	ErrorContext = AllocSetContextCreateExtended(TopMemoryContext,
+												 "ErrorContext",
+												 0,
+												 8 * 1024,
+												 8 * 1024,
+												 8 * 1024);
 	MemoryContextAllowInCriticalSection(ErrorContext, true);
 }
 
@@ -191,10 +190,9 @@ MemoryContextResetChildren(MemoryContext context)
  *		Delete a context and its descendants, and release all space
  *		allocated therein.
  *
- * The type-specific delete routine removes all subsidiary storage
- * for the context, but we have to delete the context node itself,
- * as well as recurse to get the children.  We must also delink the
- * node from its parent, if it has one.
+ * The type-specific delete routine removes all storage for the context,
+ * but we have to recurse to handle the children.
+ * We must also delink the context from its parent, if it has one.
  */
 void
 MemoryContextDelete(MemoryContext context)
@@ -205,7 +203,9 @@ MemoryContextDelete(MemoryContext context)
 	/* And not CurrentMemoryContext, either */
 	Assert(context != CurrentMemoryContext);
 
-	MemoryContextDeleteChildren(context);
+	/* save a function call in common case where there are no children */
+	if (context->firstchild != NULL)
+		MemoryContextDeleteChildren(context);
 
 	/*
 	 * It's not entirely clear whether 'tis better to do this before or after
@@ -223,8 +223,8 @@ MemoryContextDelete(MemoryContext context)
 	MemoryContextSetParent(context, NULL);
 
 	context->methods->delete_context(context);
+
 	VALGRIND_DESTROY_MEMPOOL(context);
-	pfree(context);
 }
 
 /*
@@ -587,100 +587,85 @@ MemoryContextContains(MemoryContext context, void *pointer)
 	return ptr_context == context;
 }
 
-/*--------------------
+/*
  * MemoryContextCreate
  *		Context-type-independent part of context creation.
  *
  * This is only intended to be called by context-type-specific
  * context creation routines, not by the unwashed masses.
  *
- * The context creation procedure is a little bit tricky because
- * we want to be sure that we don't leave the context tree invalid
- * in case of failure (such as insufficient memory to allocate the
- * context node itself).  The procedure goes like this:
- *	1.  Context-type-specific routine first calls MemoryContextCreate(),
- *		passing the appropriate tag/size/methods values (the methods
- *		pointer will ordinarily point to statically allocated data).
- *		The parent and name parameters usually come from the caller.
- *	2.  MemoryContextCreate() attempts to allocate the context node,
- *		plus space for the name.  If this fails we can ereport() with no
- *		damage done.
- *	3.  We fill in all of the type-independent MemoryContext fields.
- *	4.  We call the type-specific init routine (using the methods pointer).
- *		The init routine is required to make the node minimally valid
- *		with zero chance of failure --- it can't allocate more memory,
- *		for example.
- *	5.  Now we have a minimally valid node that can behave correctly
- *		when told to reset or delete itself.  We link the node to its
- *		parent (if any), making the node part of the context tree.
- *	6.  We return to the context-type-specific routine, which finishes
+ * The memory context creation procedure goes like this:
+ *	1.  Context-type-specific routine makes some initial space allocation,
+ *		including enough space for the context header.  If it fails,
+ *		it can ereport() with no damage done.
+ *	2.	Context-type-specific routine sets up all type-specific fields of
+ *		the header (those beyond MemoryContextData proper), as well as any
+ *		other management fields it needs to have a fully valid context.
+ *		Usually, failure in this step is impossible, but if it's possible
+ *		the initial space allocation should be freed before ereport'ing.
+ *	3.	Context-type-specific routine calls MemoryContextCreate() to fill in
+ *		the generic header fields and link the context into the context tree.
+ *	4.  We return to the context-type-specific routine, which finishes
  *		up type-specific initialization.  This routine can now do things
  *		that might fail (like allocate more memory), so long as it's
  *		sure the node is left in a state that delete will handle.
  *
- * This protocol doesn't prevent us from leaking memory if step 6 fails
- * during creation of a top-level context, since there's no parent link
- * in that case.  However, if you run out of memory while you're building
- * a top-level context, you might as well go home anyway...
+ * node: the as-yet-uninitialized common part of the context header node.
+ * tag: NodeTag code identifying the memory context type.
+ * size: total size of context header including context-type-specific fields,
+ *		as well as space for the context name if MEMCONTEXT_COPY_NAME is set.
+ * nameoffset: where within the "size" space to insert the context name.
+ * methods: context-type-specific methods (usually statically allocated).
+ * parent: parent context, or NULL if this will be a top-level context.
+ * name: name of context (for debugging only, need not be unique).
+ * flags: bitmask of MEMCONTEXT_XXX option flags.
  *
- * Normally, the context node and the name are allocated from
- * TopMemoryContext (NOT from the parent context, since the node must
- * survive resets of its parent context!).  However, this routine is itself
- * used to create TopMemoryContext!  If we see that TopMemoryContext is NULL,
- * we assume we are creating TopMemoryContext and use malloc() to allocate
- * the node.
- *
- * Note that the name field of a MemoryContext does not point to
- * separately-allocated storage, so it should not be freed at context
- * deletion.
- *--------------------
+ * Context routines generally assume that MemoryContextCreate can't fail,
+ * so this can contain Assert but not elog/ereport.
  */
-MemoryContext
-MemoryContextCreate(NodeTag tag, Size size,
-					MemoryContextMethods *methods,
+void
+MemoryContextCreate(MemoryContext node,
+					NodeTag tag, Size size, Size nameoffset,
+					const MemoryContextMethods *methods,
 					MemoryContext parent,
-					const char *name)
+					const char *name,
+					int flags)
 {
-	MemoryContext node;
-	Size		needed = size + strlen(name) + 1;
-
-	/* creating new memory contexts is not allowed in a critical section */
+	/* Creating new memory contexts is not allowed in a critical section */
 	Assert(CritSectionCount == 0);
 
-	/* Get space for node and name */
-	if (TopMemoryContext != NULL)
+	/* Check size is sane */
+	Assert(nameoffset >= sizeof(MemoryContextData));
+	Assert((flags & MEMCONTEXT_COPY_NAME) ?
+		   size >= nameoffset + strlen(name) + 1 :
+		   size >= nameoffset);
+
+	/* Initialize all standard fields of memory context header */
+	node->type = tag;
+	node->isReset = true;
+	node->methods = methods;
+	node->parent = parent;
+	node->firstchild = NULL;
+	node->prevchild = NULL;
+	node->reset_cbs = NULL;
+
+	if (flags & MEMCONTEXT_COPY_NAME)
 	{
-		/* Normal case: allocate the node in TopMemoryContext */
-		node = (MemoryContext) MemoryContextAlloc(TopMemoryContext,
-												  needed);
+		/* Insert context name into space reserved for it */
+		char	   *namecopy = ((char *) node) + nameoffset;
+
+		node->name = namecopy;
+		strcpy(namecopy, name);
 	}
 	else
 	{
-		/* Special case for startup: use good ol' malloc */
-		node = (MemoryContext) malloc(needed);
-		Assert(node != NULL);
+		/* Assume the passed-in name is statically allocated */
+		node->name = name;
 	}
 
-	/* Initialize the node as best we can */
-	MemSet(node, 0, size);
-	node->type = tag;
-	node->methods = methods;
-	node->parent = NULL;		/* for the moment */
-	node->firstchild = NULL;
-	node->prevchild = NULL;
-	node->nextchild = NULL;
-	node->isReset = true;
-	node->name = ((char *) node) + size;
-	strcpy(node->name, name);
-
-	/* Type-specific routine finishes any other essential initialization */
-	node->methods->init(node);
-
-	/* OK to link node to parent (if any) */
-	/* Could use MemoryContextSetParent here, but doesn't seem worthwhile */
+	/* OK to link node into context tree */
 	if (parent)
 	{
-		node->parent = parent;
 		node->nextchild = parent->firstchild;
 		if (parent->firstchild != NULL)
 			parent->firstchild->prevchild = node;
@@ -688,11 +673,13 @@ MemoryContextCreate(NodeTag tag, Size size,
 		/* inherit allowInCritSection flag from parent */
 		node->allowInCritSection = parent->allowInCritSection;
 	}
+	else
+	{
+		node->nextchild = NULL;
+		node->allowInCritSection = false;
+	}
 
 	VALGRIND_CREATE_MEMPOOL(node, 0, false);
-
-	/* Return to type-specific creation routine to finish up */
-	return node;
 }
 
 /*
