@@ -336,6 +336,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		Form_pg_aggregate classForm;
 		int			catDirectArgs;
 
+		if (proc_call)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("%s is not a procedure",
+							func_signature_string(funcname, nargs,
+												  argnames,
+												  actual_arg_types)),
+					 parser_errposition(pstate, location)));
+
 		tup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(funcid));
 		if (!HeapTupleIsValid(tup)) /* should not happen */
 			elog(ERROR, "cache lookup failed for aggregate %u", funcid);

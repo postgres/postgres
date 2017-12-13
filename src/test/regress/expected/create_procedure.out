@@ -41,6 +41,15 @@ SELECT 5;
 $$;
 CALL ptest2();
 -- various error cases
+CALL version();  -- error: not a procedure
+ERROR:  version() is not a procedure
+LINE 1: CALL version();
+             ^
+HINT:  To call a function, use SELECT.
+CALL sum(1);  -- error: not a procedure
+ERROR:  sum(integer) is not a procedure
+LINE 1: CALL sum(1);
+             ^
 CREATE PROCEDURE ptestx() LANGUAGE SQL WINDOW AS $$ INSERT INTO cp_test VALUES (1, 'a') $$;
 ERROR:  invalid attribute in procedure definition
 LINE 1: CREATE PROCEDURE ptestx() LANGUAGE SQL WINDOW AS $$ INSERT I...
