@@ -179,14 +179,7 @@ insert into bmscantest select r, 'fooooooooooooooooooooooooooooooooooooooooooooo
 create index i_bmtest ON bmscantest(a);
 select count(*) from bmscantest where a>1;
 
--- test accumulation of stats for parallel node
 reset enable_seqscan;
-alter table tenk2 set (parallel_workers = 0);
-explain (analyze, timing off, summary off, costs off)
-	select count(*) from tenk1, tenk2 where tenk1.hundred > 1
-        and tenk2.thousand=0;
-alter table tenk2 reset (parallel_workers);
-
 reset enable_indexscan;
 reset enable_hashjoin;
 reset enable_mergejoin;
