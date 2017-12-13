@@ -14472,6 +14472,8 @@ esac
 
 fi
 
+# has to be down here, rather than with the other builtins, because
+# the test uses PG_INT64_TYPE.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __builtin_mul_overflow" >&5
 $as_echo_n "checking for __builtin_mul_overflow... " >&6; }
 if ${pgac_cv__builtin_op_overflow+:} false; then :
@@ -14490,12 +14492,13 @@ __builtin_mul_overflow((PG_INT64_TYPE) 1, (PG_INT64_TYPE) 2, &result);
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
+if ac_fn_c_try_link "$LINENO"; then :
   pgac_cv__builtin_op_overflow=yes
 else
   pgac_cv__builtin_op_overflow=no
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv__builtin_op_overflow" >&5
 $as_echo "$pgac_cv__builtin_op_overflow" >&6; }
