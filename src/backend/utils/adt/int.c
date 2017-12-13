@@ -794,7 +794,7 @@ int2div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		if (unlikely(arg1 == INT16_MIN))
+		if (unlikely(arg1 == PG_INT16_MIN))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("smallint out of range")));
@@ -1018,7 +1018,7 @@ int4abs(PG_FUNCTION_ARGS)
 	int32		arg1 = PG_GETARG_INT32(0);
 	int32		result;
 
-	if (unlikely(arg1 == INT32_MIN))
+	if (unlikely(arg1 == PG_INT32_MIN))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
@@ -1032,7 +1032,7 @@ int2abs(PG_FUNCTION_ARGS)
 	int16		arg1 = PG_GETARG_INT16(0);
 	int16		result;
 
-	if (unlikely(arg1 == INT16_MIN))
+	if (unlikely(arg1 == PG_INT16_MIN))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));

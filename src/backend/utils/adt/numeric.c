@@ -6226,7 +6226,7 @@ numericvar_to_int64(const NumericVar *var, int64 *result)
 
 	if (!neg)
 	{
-		if (unlikely(val == INT64_MIN))
+		if (unlikely(val == PG_INT64_MIN))
 			return false;
 		val = -val;
 	}

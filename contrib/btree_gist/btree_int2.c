@@ -100,7 +100,7 @@ int2_dist(PG_FUNCTION_ARGS)
 	int16		ra;
 
 	if (pg_sub_s16_overflow(a, b, &r) ||
-		r == INT16_MIN)
+		r == PG_INT16_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));

@@ -103,7 +103,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 
 	if (!neg)
 	{
-		if (unlikely(tmp == INT64_MIN))
+		if (unlikely(tmp == PG_INT64_MIN))
 			goto out_of_range;
 		tmp = -tmp;
 	}
@@ -564,7 +564,7 @@ int8div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		if (unlikely(arg1 == INT64_MIN))
+		if (unlikely(arg1 == PG_INT64_MIN))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));
@@ -588,7 +588,7 @@ int8abs(PG_FUNCTION_ARGS)
 	int64		arg1 = PG_GETARG_INT64(0);
 	int64		result;
 
-	if (unlikely(arg1 == INT64_MIN))
+	if (unlikely(arg1 == PG_INT64_MIN))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
@@ -822,7 +822,7 @@ int84div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		if (unlikely(arg1 == INT64_MIN))
+		if (unlikely(arg1 == PG_INT64_MIN))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));
@@ -964,7 +964,7 @@ int82div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		if (unlikely(arg1 == INT64_MIN))
+		if (unlikely(arg1 == PG_INT64_MIN))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));

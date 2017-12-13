@@ -101,7 +101,7 @@ int8_dist(PG_FUNCTION_ARGS)
 	int64		ra;
 
 	if (pg_sub_s64_overflow(a, b, &r) ||
-		r == INT64_MIN)
+		r == PG_INT64_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));

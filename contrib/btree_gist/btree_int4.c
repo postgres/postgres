@@ -101,7 +101,7 @@ int4_dist(PG_FUNCTION_ARGS)
 	int32		ra;
 
 	if (pg_sub_s32_overflow(a, b, &r) ||
-		r == INT32_MIN)
+		r == PG_INT32_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
