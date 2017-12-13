@@ -2459,11 +2459,6 @@ mergeruns(Tuplesortstate *state)
 	 * Use all the remaining memory we have available for read buffers among
 	 * the input tapes.
 	 *
-	 * We do this only after checking for the case that we produced only one
-	 * initial run, because there is no need to use a large read buffer when
-	 * we're reading from a single tape.  With one tape, the I/O pattern will
-	 * be the same regardless of the buffer size.
-	 *
 	 * We don't try to "rebalance" the memory among tapes, when we start a new
 	 * merge phase, even if some tapes are inactive in the new phase.  That
 	 * would be hard, because logtape.c doesn't know where one run ends and
