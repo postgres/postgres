@@ -146,6 +146,16 @@
 #define pg_attribute_noreturn()
 #endif
 
+/* GCC, Sunpro and XLC support always_inline via __attribute__ */
+#if defined(__GNUC__)
+#define pg_attribute_always_inline __attribute__((always_inline))
+/* msvc via a special keyword */
+#elif defined(_MSC_VER)
+#define pg_attribute_always_inline __forceinline
+#else
+#define pg_attribute_always_inline
+#endif
+
 /*
  * Forcing a function not to be inlined can be useful if it's the slow path of
  * a performance-critical function, or should be visible in profiles to allow
