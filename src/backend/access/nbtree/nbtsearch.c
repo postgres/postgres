@@ -1486,6 +1486,11 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 				if (_bt_readpage(scan, dir, P_FIRSTDATAKEY(opaque)))
 					break;
 			}
+			else if (scan->parallel_scan != NULL)
+			{
+				/* allow next page be processed by parallel worker */
+				_bt_parallel_release(scan, opaque->btpo_next);
+			}
 
 			/* nope, keep going */
 			if (scan->parallel_scan != NULL)
@@ -1580,6 +1585,11 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 				/* note that this will clear moreLeft if we can stop */
 				if (_bt_readpage(scan, dir, PageGetMaxOffsetNumber(page)))
 					break;
+			}
+			else if (scan->parallel_scan != NULL)
+			{
+				/* allow next page be processed by parallel worker */
+				_bt_parallel_release(scan, BufferGetBlockNumber(so->currPos.buf));
 			}
 
 			/*
