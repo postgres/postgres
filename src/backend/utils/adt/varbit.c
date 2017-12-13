@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "common/int.h"
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/array.h"
@@ -1166,8 +1167,7 @@ bit_overlay(VarBit *t1, VarBit *t2, int sp, int sl)
 		ereport(ERROR,
 				(errcode(ERRCODE_SUBSTRING_ERROR),
 				 errmsg("negative substring length not allowed")));
-	sp_pl_sl = sp + sl;
-	if (sp_pl_sl <= sl)
+	if (pg_add_s32_overflow(sp, sl, &sp_pl_sl))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));

@@ -28,6 +28,7 @@
 
 #include "access/hash.h"
 #include "catalog/pg_type.h"
+#include "common/int.h"
 #include "funcapi.h"
 #include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
@@ -6169,8 +6170,7 @@ numericvar_to_int64(const NumericVar *var, int64 *result)
 	int			ndigits;
 	int			weight;
 	int			i;
-	int64		val,
-				oldval;
+	int64		val;
 	bool		neg;
 	NumericVar	rounded;
 
@@ -6196,27 +6196,25 @@ numericvar_to_int64(const NumericVar *var, int64 *result)
 	weight = rounded.weight;
 	Assert(weight >= 0 && ndigits <= weight + 1);
 
-	/* Construct the result */
+	/*
+	 * Construct the result. To avoid issues with converting a value
+	 * corresponding to INT64_MIN (which can't be represented as a positive 64
+	 * bit two's complement integer), accumulate value as a negative number.
+	 */
 	digits = rounded.digits;
 	neg = (rounded.sign == NUMERIC_NEG);
-	val = digits[0];
+	val = -digits[0];
 	for (i = 1; i <= weight; i++)
 	{
-		oldval = val;
-		val *= NBASE;
-		if (i < ndigits)
-			val += digits[i];
-
-		/*
-		 * The overflow check is a bit tricky because we want to accept
-		 * INT64_MIN, which will overflow the positive accumulator.  We can
-		 * detect this case easily though because INT64_MIN is the only
-		 * nonzero value for which -val == val (on a two's complement machine,
-		 * anyway).
-		 */
-		if ((val / NBASE) != oldval)	/* possible overflow? */
+		if (unlikely(pg_mul_s64_overflow(val, NBASE, &val)))
 		{
-			if (!neg || (-val) != val || val == 0 || oldval < 0)
+			free_var(&rounded);
+			return false;
+		}
+
+		if (i < ndigits)
+		{
+			if (unlikely(pg_sub_s64_overflow(val, digits[i], &val)))
 			{
 				free_var(&rounded);
 				return false;
@@ -6226,7 +6224,14 @@ numericvar_to_int64(const NumericVar *var, int64 *result)
 
 	free_var(&rounded);
 
-	*result = neg ? -val : val;
+	if (!neg)
+	{
+		if (unlikely(val == INT64_MIN))
+			return false;
+		val = -val;
+	}
+	*result = val;
+
 	return true;
 }
 

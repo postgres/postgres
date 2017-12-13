@@ -5,6 +5,7 @@
 
 #include "btree_gist.h"
 #include "btree_utils_num.h"
+#include "common/int.h"
 #include "utils/cash.h"
 
 typedef struct
@@ -99,14 +100,13 @@ cash_dist(PG_FUNCTION_ARGS)
 	Cash		r;
 	Cash		ra;
 
-	r = a - b;
-	ra = Abs(r);
-
-	/* Overflow check. */
-	if (ra < 0 || (!SAMESIGN(a, b) && !SAMESIGN(r, a)))
+	if (pg_sub_s64_overflow(a, b, &r) ||
+		r == INT64_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("money out of range")));
+
+	ra = Abs(r);
 
 	PG_RETURN_CASH(ra);
 }

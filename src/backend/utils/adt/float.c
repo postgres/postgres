@@ -20,6 +20,7 @@
 #include <limits.h>
 
 #include "catalog/pg_type.h"
+#include "common/int.h"
 #include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -3548,9 +3549,7 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 			result = 0;
 		else if (operand >= bound2)
 		{
-			result = count + 1;
-			/* check for overflow */
-			if (result < count)
+			if (pg_add_s32_overflow(count, 1, &result))
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("integer out of range")));
@@ -3564,9 +3563,7 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 			result = 0;
 		else if (operand <= bound2)
 		{
-			result = count + 1;
-			/* check for overflow */
-			if (result < count)
+			if (pg_add_s32_overflow(count, 1, &result))
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("integer out of range")));

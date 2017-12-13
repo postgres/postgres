@@ -5,6 +5,7 @@
 
 #include "btree_gist.h"
 #include "btree_utils_num.h"
+#include "common/int.h"
 
 typedef struct int32key
 {
@@ -99,14 +100,13 @@ int4_dist(PG_FUNCTION_ARGS)
 	int32		r;
 	int32		ra;
 
-	r = a - b;
-	ra = Abs(r);
-
-	/* Overflow check. */
-	if (ra < 0 || (!SAMESIGN(a, b) && !SAMESIGN(r, a)))
+	if (pg_sub_s32_overflow(a, b, &r) ||
+		r == INT32_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
+
+	ra = Abs(r);
 
 	PG_RETURN_INT32(ra);
 }

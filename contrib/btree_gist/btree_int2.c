@@ -5,6 +5,7 @@
 
 #include "btree_gist.h"
 #include "btree_utils_num.h"
+#include "common/int.h"
 
 typedef struct int16key
 {
@@ -98,14 +99,13 @@ int2_dist(PG_FUNCTION_ARGS)
 	int16		r;
 	int16		ra;
 
-	r = a - b;
-	ra = Abs(r);
-
-	/* Overflow check. */
-	if (ra < 0 || (!SAMESIGN(a, b) && !SAMESIGN(r, a)))
+	if (pg_sub_s16_overflow(a, b, &r) ||
+		r == INT16_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
+
+	ra = Abs(r);
 
 	PG_RETURN_INT16(ra);
 }

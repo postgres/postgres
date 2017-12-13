@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "common/int.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
 #include "mb/pg_wchar.h"
@@ -1045,19 +1046,12 @@ repeat(PG_FUNCTION_ARGS)
 		count = 0;
 
 	slen = VARSIZE_ANY_EXHDR(string);
-	tlen = VARHDRSZ + (count * slen);
 
-	/* Check for integer overflow */
-	if (slen != 0 && count != 0)
-	{
-		int			check = count * slen;
-		int			check2 = check + VARHDRSZ;
-
-		if ((check / slen) != count || check2 <= check)
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("requested length too large")));
-	}
+	if (unlikely(pg_mul_s32_overflow(count, slen, &tlen)) ||
+		unlikely(pg_add_s32_overflow(tlen, VARHDRSZ, &tlen)))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("requested length too large")));
 
 	result = (text *) palloc(tlen);
 

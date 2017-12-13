@@ -89,8 +89,6 @@ typedef struct
 
 #define GET_FLOAT_DISTANCE(t, arg1, arg2)	Abs( ((float8) *((const t *) (arg1))) - ((float8) *((const t *) (arg2))) )
 
-#define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
-
 /*
  * check to see if a float4/8 val has underflowed or overflowed
  * borrowed from src/backend/utils/adt/float.c
