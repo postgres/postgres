@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#include <float.h> /* for _isnan */
 #include <limits.h>
 #include <math.h>
 
