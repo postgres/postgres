@@ -41,7 +41,7 @@ pg_add_s16_overflow(int16 a, int16 b, int16 *result)
 }
 
 /*
- * If a - b overflows, return true, otherwise store the result of a + b into
+ * If a - b overflows, return true, otherwise store the result of a - b into
  * *result. The content of *result is implementation defined in case of
  * overflow.
  */
@@ -61,7 +61,7 @@ pg_sub_s16_overflow(int16 a, int16 b, int16 *result)
 }
 
 /*
- * If a * b overflows, return true, otherwise store the result of a + b into
+ * If a * b overflows, return true, otherwise store the result of a * b into
  * *result. The content of *result is implementation defined in case of
  * overflow.
  */
@@ -101,7 +101,7 @@ pg_add_s32_overflow(int32 a, int32 b, int32 *result)
 }
 
 /*
- * If a - b overflows, return true, otherwise store the result of a + b into
+ * If a - b overflows, return true, otherwise store the result of a - b into
  * *result. The content of *result is implementation defined in case of
  * overflow.
  */
@@ -121,7 +121,7 @@ pg_sub_s32_overflow(int32 a, int32 b, int32 *result)
 }
 
 /*
- * If a * b overflows, return true, otherwise store the result of a + b into
+ * If a * b overflows, return true, otherwise store the result of a * b into
  * *result. The content of *result is implementation defined in case of
  * overflow.
  */
@@ -167,7 +167,7 @@ pg_add_s64_overflow(int64 a, int64 b, int64 *result)
 }
 
 /*
- * If a - b overflows, return true, otherwise store the result of a + b into
+ * If a - b overflows, return true, otherwise store the result of a - b into
  * *result. The content of *result is implementation defined in case of
  * overflow.
  */
@@ -193,7 +193,7 @@ pg_sub_s64_overflow(int64 a, int64 b, int64 *result)
 }
 
 /*
- * If a * b overflows, return true, otherwise store the result of a + b into
+ * If a * b overflows, return true, otherwise store the result of a * b into
  * *result. The content of *result is implementation defined in case of
  * overflow.
  */
