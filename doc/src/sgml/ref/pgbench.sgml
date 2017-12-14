@@ -1093,6 +1093,14 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <entry>an integer between <literal>1</literal> and <literal>10</literal></entry>
       </row>
       <row>
+       <entry><literal><function>random_zipfian(<replaceable>lb</replaceable>, <replaceable>ub</replaceable>, <replaceable>parameter</replaceable>)</function></literal></entry>
+       <entry>integer</entry>
+       <entry>Zipfian-distributed random integer in <literal>[lb, ub]</literal>,
+              see below</entry>
+       <entry><literal>random_zipfian(1, 10, 1.5)</literal></entry>
+       <entry>an integer between <literal>1</literal> and <literal>10</literal></entry>
+      </row>
+      <row>
        <entry><literal><function>sqrt(<replaceable>x</replaceable>)</function></literal></entry>
        <entry>double</entry>
        <entry>square root</entry>
@@ -1171,6 +1179,27 @@ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
       the middle half (<literal>2.0 / 4.0</literal>) of the interval (second and third
       quartiles). The minimum <replaceable>parameter</replaceable> is 2.0 for performance
       of the Box-Muller transform.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>random_zipfian</literal> generates an approximated bounded zipfian
+      distribution. For <replaceable>parameter</replaceable> in (0, 1), an
+      approximated algorithm is taken from
+      "Quickly Generating Billion-Record Synthetic Databases",
+      Jim Gray et al, SIGMOD 1994. For <replaceable>parameter</replaceable>
+      in (1, 1000), a rejection method is used, based on
+      "Non-Uniform Random Variate Generation", Luc Devroye, p. 550-551,
+      Springer 1986. The distribution is not defined when the parameter's
+      value is 1.0. The drawing performance is poor for parameter values
+      close and above 1.0 and on a small range.
+     </para>
+     <para>
+      <replaceable>parameter</replaceable>
+      defines how skewed the distribution is. The larger the <replaceable>parameter</replaceable>, the more
+      frequently values to the beginning of the interval are drawn.
+      The closer to 0 <replaceable>parameter</replaceable> is,
+      the flatter (more uniform) the access distribution.
      </para>
     </listitem>
    </itemizedlist>
