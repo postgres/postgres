@@ -11901,7 +11901,10 @@ if ${pgac_cv__builtin_constant_p+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-static int x; static int y[__builtin_constant_p(x) ? x : 1];
+static int x;
+  static int y[__builtin_constant_p(x) ? x : 1];
+  static int z[__builtin_constant_p("string literal") ? 1 : x];
+
 
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :

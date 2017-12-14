@@ -285,10 +285,15 @@ fi])# PGAC_C_BUILTIN_BSWAP64
 # -------------------------
 # Check if the C compiler understands __builtin_constant_p(),
 # and define HAVE__BUILTIN_CONSTANT_P if so.
+# We need __builtin_constant_p("string literal") to be true, but some older
+# compilers don't think that, so test for that case explicitly.
 AC_DEFUN([PGAC_C_BUILTIN_CONSTANT_P],
 [AC_CACHE_CHECK(for __builtin_constant_p, pgac_cv__builtin_constant_p,
 [AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[[static int x; static int y[__builtin_constant_p(x) ? x : 1];]]
+[[static int x;
+  static int y[__builtin_constant_p(x) ? x : 1];
+  static int z[__builtin_constant_p("string literal") ? 1 : x];
+]]
 )],
 [pgac_cv__builtin_constant_p=yes],
 [pgac_cv__builtin_constant_p=no])])
