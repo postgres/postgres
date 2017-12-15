@@ -19,7 +19,7 @@
 /* struct definition is private to rewriteheap.c */
 typedef struct RewriteStateData *RewriteState;
 
-extern RewriteState begin_heap_rewrite(Relation NewHeap,
+extern RewriteState begin_heap_rewrite(Relation OldHeap, Relation NewHeap,
 				   TransactionId OldestXmin, TransactionId FreezeXid,
 				   MultiXactId MultiXactCutoff, bool use_wal);
 extern void end_heap_rewrite(RewriteState state);

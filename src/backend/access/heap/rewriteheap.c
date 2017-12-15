@@ -120,6 +120,7 @@
  */
 typedef struct RewriteStateData
 {
+	Relation	rs_old_rel;		/* source heap */
 	Relation	rs_new_rel;		/* destination heap */
 	Page		rs_buffer;		/* page currently being built */
 	BlockNumber rs_blockno;		/* block where page will go */
@@ -187,7 +188,7 @@ static void raw_heap_insert(RewriteState state, HeapTuple tup);
  * to be used in subsequent calls to the other functions.
  */
 RewriteState
-begin_heap_rewrite(Relation new_heap, TransactionId oldest_xmin,
+begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xmin,
 				   TransactionId freeze_xid, MultiXactId cutoff_multi,
 				   bool use_wal)
 {
@@ -210,6 +211,7 @@ begin_heap_rewrite(Relation new_heap, TransactionId oldest_xmin,
 	/* Create and fill in the state struct */
 	state = palloc0(sizeof(RewriteStateData));
 
+	state->rs_old_rel = old_heap;
 	state->rs_new_rel = new_heap;
 	state->rs_buffer = (Page) palloc(BLCKSZ);
 	/* new_heap needn't be empty, just locked */
