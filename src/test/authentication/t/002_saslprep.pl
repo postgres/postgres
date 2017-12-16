@@ -41,8 +41,7 @@ sub test_login
 	$status_string = 'success' if ($expected_res eq 0);
 
 	$ENV{"PGPASSWORD"} = $password;
-	my $res =
-	  $node->psql('postgres', 'SELECT 1', extra_params => [ '-U', $role ]);
+	my $res = $node->psql('postgres', undef, extra_params => [ '-U', $role ]);
 	is($res, $expected_res,
 		"authentication $status_string for role $role with password $password"
 	);

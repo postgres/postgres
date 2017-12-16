@@ -74,6 +74,10 @@ BEGIN
 INIT
 {
 
+	# Return EPIPE instead of killing the process with SIGPIPE.  An affected
+	# test may still fail, but it's more likely to report useful facts.
+	$SIG{PIPE} = 'IGNORE';
+
 	# Determine output directories, and create them.  The base path is the
 	# TESTDIR environment variable, which is normally set by the invoking
 	# Makefile.
