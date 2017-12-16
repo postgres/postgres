@@ -277,7 +277,7 @@ PortalCleanup(Portal portal)
 	 * since other mechanisms will take care of releasing executor resources,
 	 * and we can't be sure that ExecutorEnd itself wouldn't fail.
 	 */
-	queryDesc = PortalGetQueryDesc(portal);
+	queryDesc = portal->queryDesc;
 	if (queryDesc)
 	{
 		/*
@@ -317,7 +317,7 @@ PortalCleanup(Portal portal)
 void
 PersistHoldablePortal(Portal portal)
 {
-	QueryDesc  *queryDesc = PortalGetQueryDesc(portal);
+	QueryDesc  *queryDesc = portal->queryDesc;
 	Portal		saveActivePortal;
 	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;

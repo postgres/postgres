@@ -198,11 +198,6 @@ typedef struct PortalData
  */
 #define PortalIsValid(p) PointerIsValid(p)
 
-/*
- * Access macros for Portal ... use these in preference to field access.
- */
-#define PortalGetQueryDesc(portal)	((portal)->queryDesc)
-
 
 /* Prototypes for functions in utils/mmgr/portalmem.c */
 extern void EnablePortalManager(void);
