@@ -466,9 +466,9 @@ PortalStart(Portal portal, ParamListInfo params,
 		ActivePortal = portal;
 		if (portal->resowner)
 			CurrentResourceOwner = portal->resowner;
-		PortalContext = PortalGetHeapMemory(portal);
+		PortalContext = portal->portalContext;
 
-		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+		oldContext = MemoryContextSwitchTo(PortalContext);
 
 		/* Must remember portal param list, if any */
 		portal->portalParams = params;
@@ -634,7 +634,7 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
 		return;
 	natts = portal->tupDesc->natts;
 	portal->formats = (int16 *)
-		MemoryContextAlloc(PortalGetHeapMemory(portal),
+		MemoryContextAlloc(portal->portalContext,
 						   natts * sizeof(int16));
 	if (nFormats > 1)
 	{
@@ -748,7 +748,7 @@ PortalRun(Portal portal, long count, bool isTopLevel, bool run_once,
 		ActivePortal = portal;
 		if (portal->resowner)
 			CurrentResourceOwner = portal->resowner;
-		PortalContext = PortalGetHeapMemory(portal);
+		PortalContext = portal->portalContext;
 
 		MemoryContextSwitchTo(PortalContext);
 
@@ -1184,7 +1184,7 @@ PortalRunUtility(Portal portal, PlannedStmt *pstmt,
 				   completionTag);
 
 	/* Some utility statements may change context on us */
-	MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+	MemoryContextSwitchTo(portal->portalContext);
 
 	/*
 	 * Some utility commands may pop the ActiveSnapshot stack from under us,
@@ -1343,9 +1343,9 @@ PortalRunMulti(Portal portal,
 		/*
 		 * Clear subsidiary contexts to recover temporary memory.
 		 */
-		Assert(PortalGetHeapMemory(portal) == CurrentMemoryContext);
+		Assert(portal->portalContext == CurrentMemoryContext);
 
-		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
+		MemoryContextDeleteChildren(portal->portalContext);
 	}
 
 	/* Pop the snapshot if we pushed one. */
@@ -1424,7 +1424,7 @@ PortalRunFetch(Portal portal,
 		ActivePortal = portal;
 		if (portal->resowner)
 			CurrentResourceOwner = portal->resowner;
-		PortalContext = PortalGetHeapMemory(portal);
+		PortalContext = portal->portalContext;
 
 		oldContext = MemoryContextSwitchTo(PortalContext);
 

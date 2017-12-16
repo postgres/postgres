@@ -96,7 +96,7 @@ PerformCursorOpen(DeclareCursorStmt *cstmt, ParamListInfo params,
 	 */
 	portal = CreatePortal(cstmt->portalname, false, false);
 
-	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+	oldContext = MemoryContextSwitchTo(portal->portalContext);
 
 	plan = copyObject(plan);
 
@@ -363,7 +363,7 @@ PersistHoldablePortal(Portal portal)
 		ActivePortal = portal;
 		if (portal->resowner)
 			CurrentResourceOwner = portal->resowner;
-		PortalContext = PortalGetHeapMemory(portal);
+		PortalContext = portal->portalContext;
 
 		MemoryContextSwitchTo(PortalContext);
 
@@ -450,10 +450,10 @@ PersistHoldablePortal(Portal portal)
 	PopActiveSnapshot();
 
 	/*
-	 * We can now release any subsidiary memory of the portal's heap context;
+	 * We can now release any subsidiary memory of the portal's context;
 	 * we'll never use it again.  The executor already dropped its context,
-	 * but this will clean up anything that glommed onto the portal's heap via
+	 * but this will clean up anything that glommed onto the portal's context via
 	 * PortalContext.
 	 */
-	MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
+	MemoryContextDeleteChildren(portal->portalContext);
 }

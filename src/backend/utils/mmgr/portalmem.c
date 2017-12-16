@@ -87,7 +87,7 @@ do { \
 		elog(WARNING, "trying to delete portal name that does not exist"); \
 } while(0)
 
-static MemoryContext PortalMemory = NULL;
+static MemoryContext TopPortalContext = NULL;
 
 
 /* ----------------------------------------------------------------
@@ -104,10 +104,10 @@ EnablePortalManager(void)
 {
 	HASHCTL		ctl;
 
-	Assert(PortalMemory == NULL);
+	Assert(TopPortalContext == NULL);
 
-	PortalMemory = AllocSetContextCreate(TopMemoryContext,
-										 "PortalMemory",
+	TopPortalContext = AllocSetContextCreate(TopMemoryContext,
+										 "TopPortalContext",
 										 ALLOCSET_DEFAULT_SIZES);
 
 	ctl.keysize = MAX_PORTALNAME_LEN;
@@ -193,12 +193,12 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	}
 
 	/* make new portal structure */
-	portal = (Portal) MemoryContextAllocZero(PortalMemory, sizeof *portal);
+	portal = (Portal) MemoryContextAllocZero(TopPortalContext, sizeof *portal);
 
-	/* initialize portal heap context; typically it won't store much */
-	portal->heap = AllocSetContextCreate(PortalMemory,
-										 "PortalHeapMemory",
-										 ALLOCSET_SMALL_SIZES);
+	/* initialize portal context; typically it won't store much */
+	portal->portalContext = AllocSetContextCreate(TopPortalContext,
+												  "PortalContext",
+												  ALLOCSET_SMALL_SIZES);
 
 	/* create a resource owner for the portal */
 	portal->resowner = ResourceOwnerCreate(CurTransactionResourceOwner,
@@ -263,7 +263,7 @@ CreateNewPortal(void)
  *
  * If cplan is NULL, then it is the caller's responsibility to ensure that
  * the passed plan trees have adequate lifetime.  Typically this is done by
- * copying them into the portal's heap context.
+ * copying them into the portal's context.
  *
  * The caller is also responsible for ensuring that the passed prepStmtName
  * (if not NULL) and sourceText have adequate lifetime.
@@ -331,10 +331,10 @@ PortalCreateHoldStore(Portal portal)
 
 	/*
 	 * Create the memory context that is used for storage of the tuple set.
-	 * Note this is NOT a child of the portal's heap memory.
+	 * Note this is NOT a child of the portal's portalContext.
 	 */
 	portal->holdContext =
-		AllocSetContextCreate(PortalMemory,
+		AllocSetContextCreate(TopPortalContext,
 							  "PortalHoldContext",
 							  ALLOCSET_DEFAULT_SIZES);
 
@@ -576,9 +576,9 @@ PortalDrop(Portal portal, bool isTopCommit)
 		MemoryContextDelete(portal->holdContext);
 
 	/* release subsidiary storage */
-	MemoryContextDelete(PortalGetHeapMemory(portal));
+	MemoryContextDelete(portal->portalContext);
 
-	/* release portal struct (it's in PortalMemory) */
+	/* release portal struct (it's in TopPortalContext) */
 	pfree(portal);
 }
 
@@ -806,7 +806,7 @@ AtAbort_Portals(void)
 		 * The cleanup hook was the last thing that might have needed data
 		 * there.
 		 */
-		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
+		MemoryContextDeleteChildren(portal->portalContext);
 	}
 }
 
@@ -1000,7 +1000,7 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 * The cleanup hook was the last thing that might have needed data
 		 * there.
 		 */
-		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
+		MemoryContextDeleteChildren(portal->portalContext);
 	}
 }
 

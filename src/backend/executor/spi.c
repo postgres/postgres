@@ -1183,7 +1183,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	}
 
 	/* Copy the plan's query string into the portal */
-	query_string = MemoryContextStrdup(PortalGetHeapMemory(portal),
+	query_string = MemoryContextStrdup(portal->portalContext,
 									   plansource->query_string);
 
 	/*
@@ -1213,7 +1213,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 		 * will result in leaking our refcount on the plan, but it doesn't
 		 * matter because the plan is unsaved and hence transient anyway.
 		 */
-		oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+		oldcontext = MemoryContextSwitchTo(portal->portalContext);
 		stmt_list = copyObject(stmt_list);
 		MemoryContextSwitchTo(oldcontext);
 		ReleaseCachedPlan(cplan, false);
@@ -1311,7 +1311,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	 */
 	if (paramLI)
 	{
-		oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+		oldcontext = MemoryContextSwitchTo(portal->portalContext);
 		paramLI = copyParamList(paramLI);
 		MemoryContextSwitchTo(oldcontext);
 	}

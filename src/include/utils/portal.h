@@ -116,7 +116,7 @@ typedef struct PortalData
 	/* Bookkeeping data */
 	const char *name;			/* portal's name */
 	const char *prepStmtName;	/* source prepared statement (NULL if none) */
-	MemoryContext heap;			/* subsidiary memory for portal */
+	MemoryContext portalContext;/* subsidiary memory for portal */
 	ResourceOwner resowner;		/* resources owned by portal */
 	void		(*cleanup) (Portal portal); /* cleanup hook */
 
@@ -202,7 +202,6 @@ typedef struct PortalData
  * Access macros for Portal ... use these in preference to field access.
  */
 #define PortalGetQueryDesc(portal)	((portal)->queryDesc)
-#define PortalGetHeapMemory(portal) ((portal)->heap)
 
 
 /* Prototypes for functions in utils/mmgr/portalmem.c */

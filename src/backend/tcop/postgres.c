@@ -1608,7 +1608,7 @@ exec_bind_message(StringInfo input_message)
 	 * don't want a failure to occur between GetCachedPlan and
 	 * PortalDefineQuery; that would result in leaking our plancache refcount.
 	 */
-	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+	oldContext = MemoryContextSwitchTo(portal->portalContext);
 
 	/* Copy the plan's query string into the portal */
 	query_string = pstrdup(psrc->query_string);

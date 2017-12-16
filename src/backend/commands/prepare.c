@@ -239,7 +239,7 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	portal->visible = false;
 
 	/* Copy the plan's saved query string into the portal's memory */
-	query_string = MemoryContextStrdup(PortalGetHeapMemory(portal),
+	query_string = MemoryContextStrdup(portal->portalContext,
 									   entry->plansource->query_string);
 
 	/* Replan if needed, and increment plan refcount for portal */
