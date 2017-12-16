@@ -14488,8 +14488,10 @@ else
 int
 main ()
 {
+PG_INT64_TYPE a = 1;
+PG_INT64_TYPE b = 1;
 PG_INT64_TYPE result;
-__builtin_mul_overflow((PG_INT64_TYPE) 1, (PG_INT64_TYPE) 2, &result);
+__builtin_mul_overflow(*(volatile PG_INT64_TYPE *) a, *(volatile PG_INT64_TYPE *) b, &result);
 
   ;
   return 0;

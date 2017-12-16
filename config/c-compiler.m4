@@ -310,13 +310,17 @@ fi])# PGAC_C_BUILTIN_CONSTANT_P
 # and define HAVE__BUILTIN_OP_OVERFLOW if so.
 #
 # Check for the most complicated case, 64 bit multiplication, as a
-# proxy for all of the operations. Have to link to be sure to
-# recognize a missing __builtin_mul_overflow.
+# proxy for all of the operations. Use volatile variables to avoid the
+# compiler computing result at compile time, even though the runtime
+# might not supply operation. Have to link to be sure to recognize a
+# missing __builtin_mul_overflow.
 AC_DEFUN([PGAC_C_BUILTIN_OP_OVERFLOW],
 [AC_CACHE_CHECK(for __builtin_mul_overflow, pgac_cv__builtin_op_overflow,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([],
-[PG_INT64_TYPE result;
-__builtin_mul_overflow((PG_INT64_TYPE) 1, (PG_INT64_TYPE) 2, &result);]
+[PG_INT64_TYPE a = 1;
+PG_INT64_TYPE b = 1;
+PG_INT64_TYPE result;
+__builtin_mul_overflow(*(volatile PG_INT64_TYPE *) a, *(volatile PG_INT64_TYPE *) b, &result);]
 )],
 [pgac_cv__builtin_op_overflow=yes],
 [pgac_cv__builtin_op_overflow=no])])
