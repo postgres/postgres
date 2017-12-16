@@ -24,6 +24,8 @@ OBJS = pl_gram.o pl_handler.o pl_comp.o pl_exec.o \
 
 DATA = plpgsql.control plpgsql--1.0.sql plpgsql--unpackaged--1.0.sql
 
+REGRESS_OPTS = --dbname=$(PL_TESTDB)
+
 REGRESS = plpgsql_call
 
 all: all-lib
@@ -85,6 +87,7 @@ distprep: pl_gram.h pl_gram.c plerrcodes.h
 # so they are not cleaned here.
 clean distclean: clean-lib
 	rm -f $(OBJS)
+	rm -rf $(pg_regress_clean_files)
 
-maintainer-clean: clean
+maintainer-clean: distclean
 	rm -f pl_gram.c pl_gram.h plerrcodes.h
