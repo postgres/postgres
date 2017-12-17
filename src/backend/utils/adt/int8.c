@@ -81,9 +81,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 
 	/* require at least one digit */
 	if (unlikely(!isdigit((unsigned char) *ptr)))
-	{
 		goto invalid_syntax;
-	}
 
 	/* process digits */
 	while (*ptr && isdigit((unsigned char) *ptr))
@@ -108,26 +106,25 @@ scanint8(const char *str, bool errorOK, int64 *result)
 			goto out_of_range;
 		tmp = -tmp;
 	}
-	*result = tmp;
 
+	*result = tmp;
 	return true;
 
 out_of_range:
-	if (errorOK)
-		return false;
-	else
+	if (!errorOK)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("value \"%s\" is out of range for type %s",
 						str, "bigint")));
+	return false;
+
 invalid_syntax:
-	if (errorOK)
-		return false;
-	else
+	if (!errorOK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for integer: \"%s\"",
 						str)));
+	return false;
 }
 
 /* int8in()
