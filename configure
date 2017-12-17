@@ -14485,14 +14485,15 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-int
-main ()
-{
 PG_INT64_TYPE a = 1;
 PG_INT64_TYPE b = 1;
 PG_INT64_TYPE result;
-__builtin_mul_overflow(*(volatile PG_INT64_TYPE *) a, *(volatile PG_INT64_TYPE *) b, &result);
+int oflo;
 
+int
+main ()
+{
+oflo = __builtin_mul_overflow(a, b, &result);
   ;
   return 0;
 }
