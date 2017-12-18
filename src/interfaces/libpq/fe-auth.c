@@ -39,8 +39,8 @@
 #endif
 
 #include "common/md5.h"
+#include "common/scram-common.h"
 #include "libpq-fe.h"
-#include "libpq/scram.h"
 #include "fe-auth.h"
 
 

@@ -17,7 +17,6 @@
 #include "common/base64.h"
 #include "common/saslprep.h"
 #include "common/scram-common.h"
-#include "libpq/scram.h"
 #include "fe-auth.h"
 
 /* These are needed for getpid(), in the fallback implementation */

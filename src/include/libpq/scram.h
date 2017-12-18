@@ -13,13 +13,6 @@
 #ifndef PG_SCRAM_H
 #define PG_SCRAM_H
 
-/* Name of SCRAM mechanisms per IANA */
-#define SCRAM_SHA256_NAME "SCRAM-SHA-256"
-#define SCRAM_SHA256_PLUS_NAME "SCRAM-SHA-256-PLUS" /* with channel binding */
-
-/* Channel binding types */
-#define SCRAM_CHANNEL_BINDING_TLS_UNIQUE	"tls-unique"
-
 /* Status codes for message exchange */
 #define SASL_EXCHANGE_CONTINUE		0
 #define SASL_EXCHANGE_SUCCESS		1
