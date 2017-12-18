@@ -388,7 +388,7 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
     as a result of caching that's expected to occur during the repeated
     index scans on <literal>t2</literal>.)  The
     costs of the loop node are then set on the basis of the cost of the outer
-    scan, plus one repetition of the inner scan for each outer row (10 * 7.87,
+    scan, plus one repetition of the inner scan for each outer row (10 * 7.91,
     here), plus a little CPU time for join processing.
    </para>
 
