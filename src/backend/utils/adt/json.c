@@ -1940,7 +1940,7 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 				  state->val_output_func, false);
 
 	/*
-	 * The transition type for array_agg() is declared to be "internal", which
+	 * The transition type for json_agg() is declared to be "internal", which
 	 * is a pass-by-value type the same size as a pointer.  So we can safely
 	 * pass the JsonAggState pointer through nodeAgg.c's machinations.
 	 */
