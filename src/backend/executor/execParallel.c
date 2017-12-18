@@ -544,12 +544,6 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	}
 
 	/*
-	 * Make the area available to executor nodes running in the leader.  See
-	 * also ParallelQueryMain which makes it available to workers.
-	 */
-	estate->es_query_dsa = pei->area;
-
-	/*
 	 * Give parallel-aware nodes a chance to initialize their shared data.
 	 * This also initializes the elements of instrumentation->ps_instrument,
 	 * if it exists.
@@ -557,7 +551,11 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	d.pcxt = pcxt;
 	d.instrumentation = instrumentation;
 	d.nnodes = 0;
+
+	/* Install our DSA area while initializing the plan. */
+	estate->es_query_dsa = pei->area;
 	ExecParallelInitializeDSM(planstate, &d);
+	estate->es_query_dsa = NULL;
 
 	/*
 	 * Make sure that the world hasn't shifted under our feet.  This could
@@ -609,6 +607,8 @@ void
 ExecParallelReinitialize(PlanState *planstate,
 						 ParallelExecutorInfo *pei)
 {
+	EState	   *estate = planstate->state;
+
 	/* Old workers must already be shut down */
 	Assert(pei->finished);
 
@@ -618,7 +618,9 @@ ExecParallelReinitialize(PlanState *planstate,
 	pei->finished = false;
 
 	/* Traverse plan tree and let each child node reset associated state. */
+	estate->es_query_dsa = pei->area;
 	ExecParallelReInitializeDSM(planstate, pei->pcxt);
+	estate->es_query_dsa = NULL;
 }
 
 /*
