@@ -2038,6 +2038,8 @@ SharedRecordTableEntry
 SharedRecordTableKey
 SharedRecordTypmodRegistry
 SharedSortInfo
+SharedTuplestore
+SharedTuplestoreAccessor
 SharedTypmodTableEntry
 ShellTypeInfo
 ShippableCacheEntry
