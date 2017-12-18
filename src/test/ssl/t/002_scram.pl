@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 1;
+use Test::More tests => 4;
 use ServerSetup;
 use File::Copy;
 
@@ -34,5 +34,17 @@ $ENV{PGPASSWORD} = "pass";
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslmode=require hostaddr=$SERVERHOSTADDR";
 
+# Default settings
 test_connect_ok($common_connstr, '',
 				"SCRAM authentication with default channel binding");
+
+# Channel binding settings
+test_connect_ok($common_connstr,
+	"scram_channel_binding=tls-unique",
+	"SCRAM authentication with tls-unique as channel binding");
+test_connect_ok($common_connstr,
+	"scram_channel_binding=''",
+	"SCRAM authentication without channel binding");
+test_connect_fails($common_connstr,
+	"scram_channel_binding=not-exists",
+	"SCRAM authentication with invalid channel binding");

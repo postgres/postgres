@@ -528,11 +528,13 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 
 		/*
 		 * Select the mechanism to use.  Pick SCRAM-SHA-256-PLUS over anything
-		 * else.  Pick SCRAM-SHA-256 if nothing else has already been picked.
-		 * If we add more mechanisms, a more refined priority mechanism might
-		 * become necessary.
+		 * else if a channel binding type is set.  Pick SCRAM-SHA-256 if
+		 * nothing else has already been picked.  If we add more mechanisms, a
+		 * more refined priority mechanism might become necessary.
 		 */
 		if (conn->ssl_in_use &&
+			conn->scram_channel_binding &&
+			strlen(conn->scram_channel_binding) > 0 &&
 			strcmp(mechanism_buf.data, SCRAM_SHA256_PLUS_NAME) == 0)
 			selected_mechanism = SCRAM_SHA256_PLUS_NAME;
 		else if (strcmp(mechanism_buf.data, SCRAM_SHA256_NAME) == 0 &&
@@ -591,6 +593,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 										password,
 										conn->ssl_in_use,
 										selected_mechanism,
+										conn->scram_channel_binding,
 										tls_finished,
 										tls_finished_len);
 	if (!conn->sasl_state)

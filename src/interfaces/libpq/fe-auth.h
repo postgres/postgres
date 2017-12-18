@@ -27,6 +27,7 @@ extern void *pg_fe_scram_init(const char *username,
 				 const char *password,
 				 bool ssl_in_use,
 				 const char *sasl_mechanism,
+				 const char *channel_binding_type,
 				 char *tls_finished_message,
 				 size_t tls_finished_len);
 extern void pg_fe_scram_free(void *opaq);

@@ -93,6 +93,7 @@ pg_fe_scram_init(const char *username,
 				 const char *password,
 				 bool ssl_in_use,
 				 const char *sasl_mechanism,
+				 const char *channel_binding_type,
 				 char *tls_finished_message,
 				 size_t tls_finished_len)
 {
@@ -112,16 +113,13 @@ pg_fe_scram_init(const char *username,
 	state->tls_finished_message = tls_finished_message;
 	state->tls_finished_len = tls_finished_len;
 	state->sasl_mechanism = strdup(sasl_mechanism);
+	state->channel_binding_type = channel_binding_type;
+
 	if (!state->sasl_mechanism)
 	{
 		free(state);
 		return NULL;
 	}
-
-	/*
-	 * Store channel binding type.  Only one type is currently supported.
-	 */
-	state->channel_binding_type = SCRAM_CHANNEL_BINDING_TLS_UNIQUE;
 
 	/* Normalize the password with SASLprep, if possible */
 	rc = pg_saslprep(password, &prep_password);
@@ -375,6 +373,15 @@ build_client_first_message(fe_scram_state *state, PQExpBuffer errormessage)
 		Assert(state->ssl_in_use);
 		appendPQExpBuffer(&buf, "p=%s", state->channel_binding_type);
 	}
+	else if (state->channel_binding_type == NULL ||
+			 strlen(state->channel_binding_type) == 0)
+	{
+		/*
+		 * Client has chosen to not show to server that it supports channel
+		 * binding.
+		 */
+		appendPQExpBuffer(&buf, "n");
+	}
 	else if (state->ssl_in_use)
 	{
 		/*
@@ -493,6 +500,9 @@ build_client_final_message(fe_scram_state *state, PQExpBuffer errormessage)
 
 		free(cbind_input);
 	}
+	else if (state->channel_binding_type == NULL ||
+			 strlen(state->channel_binding_type) == 0)
+		appendPQExpBuffer(&buf, "c=biws");	/* base64 of "n,," */
 	else if (state->ssl_in_use)
 		appendPQExpBuffer(&buf, "c=eSws");	/* base64 of "y,," */
 	else

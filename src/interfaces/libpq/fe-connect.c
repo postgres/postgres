@@ -71,6 +71,7 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #endif
 
 #include "common/ip.h"
+#include "common/scram-common.h"
 #include "mb/pg_wchar.h"
 #include "port/pg_bswap.h"
 
@@ -122,6 +123,7 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #define DefaultOption	""
 #define DefaultAuthtype		  ""
 #define DefaultTargetSessionAttrs	"any"
+#define DefaultSCRAMChannelBinding	SCRAM_CHANNEL_BINDING_TLS_UNIQUE
 #ifdef USE_SSL
 #define DefaultSSLMode "prefer"
 #else
@@ -261,6 +263,11 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"keepalives_count", NULL, NULL, NULL,
 		"TCP-Keepalives-Count", "", 10, /* strlen(INT32_MAX) == 10 */
 	offsetof(struct pg_conn, keepalives_count)},
+
+	{"scram_channel_binding", NULL, DefaultSCRAMChannelBinding, NULL,
+		"SCRAM-Channel-Binding", "D",
+		21,	/* sizeof("tls-server-end-point") == 21 */
+	offsetof(struct pg_conn, scram_channel_binding)},
 
 	/*
 	 * ssl options are allowed even without client SSL support because the
@@ -3469,6 +3476,8 @@ freePGconn(PGconn *conn)
 		free(conn->keepalives_interval);
 	if (conn->keepalives_count)
 		free(conn->keepalives_count);
+	if (conn->scram_channel_binding)
+		free(conn->scram_channel_binding);
 	if (conn->sslmode)
 		free(conn->sslmode);
 	if (conn->sslcert)
