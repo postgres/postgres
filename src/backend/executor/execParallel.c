@@ -330,7 +330,7 @@ EstimateParamExecSpace(EState *estate, Bitmapset *params)
  * parameter array) and then the datum as serialized by datumSerialize().
  */
 static dsa_pointer
-SerializeParamExecParams(EState *estate, Bitmapset *params)
+SerializeParamExecParams(EState *estate, Bitmapset *params, dsa_area *area)
 {
 	Size		size;
 	int			nparams;
@@ -341,8 +341,8 @@ SerializeParamExecParams(EState *estate, Bitmapset *params)
 
 	/* Allocate enough space for the current parameter values. */
 	size = EstimateParamExecSpace(estate, params);
-	handle = dsa_allocate(estate->es_query_dsa, size);
-	start_address = dsa_get_address(estate->es_query_dsa, handle);
+	handle = dsa_allocate(area, size);
+	start_address = dsa_get_address(area, handle);
 
 	/* First write the number of parameters as a 4-byte integer. */
 	nparams = bms_num_members(params);
@@ -737,12 +737,6 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 										pcxt->seg);
 
 		/*
-		 * Make the area available to executor nodes running in the leader.
-		 * See also ParallelQueryMain which makes it available to workers.
-		 */
-		estate->es_query_dsa = pei->area;
-
-		/*
 		 * Serialize parameters, if any, using DSA storage.  We don't dare use
 		 * the main parallel query DSM for this because we might relaunch
 		 * workers after the values have changed (and thus the amount of
@@ -750,7 +744,8 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 		 */
 		if (!bms_is_empty(sendParams))
 		{
-			pei->param_exec = SerializeParamExecParams(estate, sendParams);
+			pei->param_exec = SerializeParamExecParams(estate, sendParams,
+													   pei->area);
 			fpes->param_exec = pei->param_exec;
 		}
 	}
@@ -763,7 +758,11 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 	d.pcxt = pcxt;
 	d.instrumentation = instrumentation;
 	d.nnodes = 0;
+
+	/* Install our DSA area while initializing the plan. */
+	estate->es_query_dsa = pei->area;
 	ExecParallelInitializeDSM(planstate, &d);
+	estate->es_query_dsa = NULL;
 
 	/*
 	 * Make sure that the world hasn't shifted under our feet.  This could
@@ -832,19 +831,22 @@ ExecParallelReinitialize(PlanState *planstate,
 	/* Free any serialized parameters from the last round. */
 	if (DsaPointerIsValid(fpes->param_exec))
 	{
-		dsa_free(estate->es_query_dsa, fpes->param_exec);
+		dsa_free(pei->area, fpes->param_exec);
 		fpes->param_exec = InvalidDsaPointer;
 	}
 
 	/* Serialize current parameter values if required. */
 	if (!bms_is_empty(sendParams))
 	{
-		pei->param_exec = SerializeParamExecParams(estate, sendParams);
+		pei->param_exec = SerializeParamExecParams(estate, sendParams,
+												   pei->area);
 		fpes->param_exec = pei->param_exec;
 	}
 
 	/* Traverse plan tree and let each child node reset associated state. */
+	estate->es_query_dsa = pei->area;
 	ExecParallelReInitializeDSM(planstate, pei->pcxt);
+	estate->es_query_dsa = NULL;
 }
 
 /*
