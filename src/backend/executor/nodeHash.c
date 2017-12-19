@@ -1670,19 +1670,6 @@ ExecHashInitializeDSM(HashState *node, ParallelContext *pcxt)
 }
 
 /*
- * Reset shared state before beginning a fresh scan.
- */
-void
-ExecHashReInitializeDSM(HashState *node, ParallelContext *pcxt)
-{
-	if (node->shared_info != NULL)
-	{
-		memset(node->shared_info->hinstrument, 0,
-			   node->shared_info->num_workers * sizeof(HashInstrumentation));
-	}
-}
-
-/*
  * Locate the DSM space for hash table instrumentation data that we'll write
  * to at shutdown time.
  */

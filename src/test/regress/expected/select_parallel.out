@@ -465,14 +465,71 @@ select count(*) from bmscantest where a>1;
  99999
 (1 row)
 
+-- test accumulation of stats for parallel nodes
 reset enable_seqscan;
+alter table tenk2 set (parallel_workers = 0);
+explain (analyze, timing off, summary off, costs off)
+   select count(*) from tenk1, tenk2 where tenk1.hundred > 1
+        and tenk2.thousand=0;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Aggregate (actual rows=1 loops=1)
+   ->  Nested Loop (actual rows=98000 loops=1)
+         ->  Seq Scan on tenk2 (actual rows=10 loops=1)
+               Filter: (thousand = 0)
+               Rows Removed by Filter: 9990
+         ->  Gather (actual rows=9800 loops=10)
+               Workers Planned: 4
+               Workers Launched: 4
+               ->  Parallel Seq Scan on tenk1 (actual rows=1960 loops=50)
+                     Filter: (hundred > 1)
+                     Rows Removed by Filter: 40
+(11 rows)
+
+alter table tenk2 reset (parallel_workers);
+reset work_mem;
+create function explain_parallel_sort_stats() returns setof text
+language plpgsql as
+$$
+declare ln text;
+begin
+    for ln in
+        explain (analyze, timing off, summary off, costs off)
+          select * from
+          (select ten from tenk1 where ten < 100 order by ten) ss
+          right join (values (1),(2),(3)) v(x) on true
+    loop
+        ln := regexp_replace(ln, 'Memory: \S*',  'Memory: xxx');
+        return next ln;
+    end loop;
+end;
+$$;
+select * from explain_parallel_sort_stats();
+                       explain_parallel_sort_stats                        
+--------------------------------------------------------------------------
+ Nested Loop Left Join (actual rows=30000 loops=1)
+   ->  Values Scan on "*VALUES*" (actual rows=3 loops=1)
+   ->  Gather Merge (actual rows=10000 loops=3)
+         Workers Planned: 4
+         Workers Launched: 4
+         ->  Sort (actual rows=2000 loops=15)
+               Sort Key: tenk1.ten
+               Sort Method: quicksort  Memory: xxx
+               Worker 0:  Sort Method: quicksort  Memory: xxx
+               Worker 1:  Sort Method: quicksort  Memory: xxx
+               Worker 2:  Sort Method: quicksort  Memory: xxx
+               Worker 3:  Sort Method: quicksort  Memory: xxx
+               ->  Parallel Seq Scan on tenk1 (actual rows=2000 loops=15)
+                     Filter: (ten < 100)
+(14 rows)
+
 reset enable_indexscan;
 reset enable_hashjoin;
 reset enable_mergejoin;
 reset enable_material;
 reset effective_io_concurrency;
-reset work_mem;
 drop table bmscantest;
+drop function explain_parallel_sort_stats();
 -- test parallel merge join path.
 set enable_hashjoin to off;
 set enable_nestloop to off;
