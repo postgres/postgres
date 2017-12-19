@@ -123,6 +123,50 @@ select avg(aa::int8) from a_star;
  13.6538461538461538
 (1 row)
 
+-- test accumulation of stats for parallel nodes
+set enable_indexscan to off;
+set enable_bitmapscan to off;
+set enable_material to off;
+alter table tenk2 set (parallel_workers = 0);
+create function explain_parallel_stats() returns setof text
+language plpgsql as
+$$
+declare ln text;
+begin
+    for ln in
+        explain (analyze, timing off, costs off)
+          select count(*) from tenk1, tenk2 where
+            tenk1.hundred > 1 and tenk2.thousand=0
+    loop
+        ln := regexp_replace(ln, 'Planning time: \S*',  'Planning time: xxx');
+        ln := regexp_replace(ln, 'Execution time: \S*', 'Execution time: xxx');
+        return next ln;
+    end loop;
+end;
+$$;
+select * from explain_parallel_stats();
+                          explain_parallel_stats                          
+--------------------------------------------------------------------------
+ Aggregate (actual rows=1 loops=1)
+   ->  Nested Loop (actual rows=98000 loops=1)
+         ->  Seq Scan on tenk2 (actual rows=10 loops=1)
+               Filter: (thousand = 0)
+               Rows Removed by Filter: 9990
+         ->  Gather (actual rows=9800 loops=10)
+               Workers Planned: 4
+               Workers Launched: 4
+               ->  Parallel Seq Scan on tenk1 (actual rows=1960 loops=50)
+                     Filter: (hundred > 1)
+                     Rows Removed by Filter: 40
+ Planning time: xxx ms
+ Execution time: xxx ms
+(13 rows)
+
+reset enable_indexscan;
+reset enable_bitmapscan;
+reset enable_material;
+alter table tenk2 reset (parallel_workers);
+drop function explain_parallel_stats();
 -- test the sanity of parallel query after the active role is dropped.
 set force_parallel_mode=1;
 drop role if exists regress_parallel_worker;

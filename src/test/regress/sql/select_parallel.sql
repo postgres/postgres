@@ -45,6 +45,34 @@ select avg(aa::int8) from a_star;
 
 select avg(aa::int8) from a_star;
 
+-- test accumulation of stats for parallel nodes
+set enable_indexscan to off;
+set enable_bitmapscan to off;
+set enable_material to off;
+alter table tenk2 set (parallel_workers = 0);
+create function explain_parallel_stats() returns setof text
+language plpgsql as
+$$
+declare ln text;
+begin
+    for ln in
+        explain (analyze, timing off, costs off)
+          select count(*) from tenk1, tenk2 where
+            tenk1.hundred > 1 and tenk2.thousand=0
+    loop
+        ln := regexp_replace(ln, 'Planning time: \S*',  'Planning time: xxx');
+        ln := regexp_replace(ln, 'Execution time: \S*', 'Execution time: xxx');
+        return next ln;
+    end loop;
+end;
+$$;
+select * from explain_parallel_stats();
+reset enable_indexscan;
+reset enable_bitmapscan;
+reset enable_material;
+alter table tenk2 reset (parallel_workers);
+drop function explain_parallel_stats();
+
 -- test the sanity of parallel query after the active role is dropped.
 set force_parallel_mode=1;
 drop role if exists regress_parallel_worker;
