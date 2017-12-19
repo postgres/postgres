@@ -2170,6 +2170,66 @@ $$
 $$);
 rollback to settings;
 
+-- Exercise rescans.  We'll turn off parallel_leader_participation so
+-- that we can check that instrumentation comes back correctly.
+
+create table foo as select generate_series(1, 3) as id, 'xxxxx'::text as t;
+alter table foo set (parallel_workers = 0);
+create table bar as select generate_series(1, 5000) as id, 'xxxxx'::text as t;
+alter table bar set (parallel_workers = 2);
+
+-- multi-batch with rescan, parallel-oblivious
+savepoint settings;
+set parallel_leader_participation = off;
+set min_parallel_table_scan_size = 0;
+set parallel_setup_cost = 0;
+set parallel_tuple_cost = 0;
+set max_parallel_workers_per_gather = 2;
+set enable_material = off;
+set enable_mergejoin = off;
+set work_mem = '64kB';
+explain (costs off)
+  select count(*) from foo
+    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+select count(*) from foo
+  left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+  on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+select final > 1 as multibatch
+  from hash_join_batches(
+$$
+  select count(*) from foo
+    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+$$);
+rollback to settings;
+
+-- single-batch with rescan, parallel-oblivious
+savepoint settings;
+set parallel_leader_participation = off;
+set min_parallel_table_scan_size = 0;
+set parallel_setup_cost = 0;
+set parallel_tuple_cost = 0;
+set max_parallel_workers_per_gather = 2;
+set enable_material = off;
+set enable_mergejoin = off;
+set work_mem = '4MB';
+explain (costs off)
+  select count(*) from foo
+    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+select count(*) from foo
+  left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+  on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+select final > 1 as multibatch
+  from hash_join_batches(
+$$
+  select count(*) from foo
+    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+$$);
+rollback to settings;
+
 -- A full outer join where every record is matched.
 
 -- non-parallel
