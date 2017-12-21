@@ -262,7 +262,6 @@ static Relation AllocateRelationDesc(Form_pg_class relp);
 static void RelationParseRelOptions(Relation relation, HeapTuple tuple);
 static void RelationBuildTupleDesc(Relation relation);
 static void RelationBuildPartitionKey(Relation relation);
-static PartitionKey copy_partition_key(PartitionKey fromkey);
 static Relation RelationBuildDesc(Oid targetRelId, bool insertIt);
 static void RelationInitPhysicalAddr(Relation relation);
 static void load_critical_index(Oid indexoid, Oid heapoid);
@@ -847,6 +846,12 @@ RelationBuildPartitionKey(Relation relation)
 	if (!HeapTupleIsValid(tuple))
 		return;
 
+	partkeycxt = AllocSetContextCreateExtended(CurTransactionContext,
+											   RelationGetRelationName(relation),
+											   MEMCONTEXT_COPY_NAME,
+											   ALLOCSET_SMALL_SIZES);
+	oldcxt = MemoryContextSwitchTo(partkeycxt);
+
 	key = (PartitionKey) palloc0(sizeof(PartitionKeyData));
 
 	/* Fixed-length attributes */
@@ -984,69 +989,11 @@ RelationBuildPartitionKey(Relation relation)
 
 	ReleaseSysCache(tuple);
 
-	/* Success --- now copy to the cache memory */
-	partkeycxt = AllocSetContextCreateExtended(CacheMemoryContext,
-											   RelationGetRelationName(relation),
-											   MEMCONTEXT_COPY_NAME,
-											   ALLOCSET_SMALL_SIZES);
+	/* Success --- make the relcache point to the newly constructed key */
+	MemoryContextSetParent(partkeycxt, CacheMemoryContext);
 	relation->rd_partkeycxt = partkeycxt;
-	oldcxt = MemoryContextSwitchTo(relation->rd_partkeycxt);
-	relation->rd_partkey = copy_partition_key(key);
+	relation->rd_partkey = key;
 	MemoryContextSwitchTo(oldcxt);
-}
-
-/*
- * copy_partition_key
- *
- * The copy is allocated in the current memory context.
- */
-static PartitionKey
-copy_partition_key(PartitionKey fromkey)
-{
-	PartitionKey newkey;
-	int			n;
-
-	newkey = (PartitionKey) palloc(sizeof(PartitionKeyData));
-
-	newkey->strategy = fromkey->strategy;
-	newkey->partnatts = n = fromkey->partnatts;
-
-	newkey->partattrs = (AttrNumber *) palloc(n * sizeof(AttrNumber));
-	memcpy(newkey->partattrs, fromkey->partattrs, n * sizeof(AttrNumber));
-
-	newkey->partexprs = copyObject(fromkey->partexprs);
-
-	newkey->partopfamily = (Oid *) palloc(n * sizeof(Oid));
-	memcpy(newkey->partopfamily, fromkey->partopfamily, n * sizeof(Oid));
-
-	newkey->partopcintype = (Oid *) palloc(n * sizeof(Oid));
-	memcpy(newkey->partopcintype, fromkey->partopcintype, n * sizeof(Oid));
-
-	newkey->partsupfunc = (FmgrInfo *) palloc(n * sizeof(FmgrInfo));
-	memcpy(newkey->partsupfunc, fromkey->partsupfunc, n * sizeof(FmgrInfo));
-
-	newkey->partcollation = (Oid *) palloc(n * sizeof(Oid));
-	memcpy(newkey->partcollation, fromkey->partcollation, n * sizeof(Oid));
-
-	newkey->parttypid = (Oid *) palloc(n * sizeof(Oid));
-	memcpy(newkey->parttypid, fromkey->parttypid, n * sizeof(Oid));
-
-	newkey->parttypmod = (int32 *) palloc(n * sizeof(int32));
-	memcpy(newkey->parttypmod, fromkey->parttypmod, n * sizeof(int32));
-
-	newkey->parttyplen = (int16 *) palloc(n * sizeof(int16));
-	memcpy(newkey->parttyplen, fromkey->parttyplen, n * sizeof(int16));
-
-	newkey->parttypbyval = (bool *) palloc(n * sizeof(bool));
-	memcpy(newkey->parttypbyval, fromkey->parttypbyval, n * sizeof(bool));
-
-	newkey->parttypalign = (char *) palloc(n * sizeof(bool));
-	memcpy(newkey->parttypalign, fromkey->parttypalign, n * sizeof(char));
-
-	newkey->parttypcoll = (Oid *) palloc(n * sizeof(Oid));
-	memcpy(newkey->parttypcoll, fromkey->parttypcoll, n * sizeof(Oid));
-
-	return newkey;
 }
 
 /*
