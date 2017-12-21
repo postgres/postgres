@@ -82,11 +82,12 @@ select name, setting from pg_settings where name like 'enable%';
  enable_mergejoin           | on
  enable_nestloop            | on
  enable_parallel_append     | on
+ enable_parallel_hash       | on
  enable_partition_wise_join | off
  enable_seqscan             | on
  enable_sort                | on
  enable_tidscan             | on
-(14 rows)
+(15 rows)
 
 -- Test that the pg_timezone_names and pg_timezone_abbrevs views are
 -- more-or-less working.  We can't test their contents in any great detail

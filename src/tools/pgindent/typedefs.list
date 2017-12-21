@@ -1542,6 +1542,10 @@ ParallelBitmapHeapState
 ParallelCompletionPtr
 ParallelContext
 ParallelExecutorInfo
+ParallelHashGrowth
+ParallelHashJoinBatch
+ParallelHashJoinBatchAccessor
+ParallelHashJoinState
 ParallelHeapScanDesc
 ParallelIndexScanDesc
 ParallelSlot

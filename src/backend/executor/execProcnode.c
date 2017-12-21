@@ -770,6 +770,9 @@ ExecShutdownNode(PlanState *node)
 		case T_HashState:
 			ExecShutdownHash((HashState *) node);
 			break;
+		case T_HashJoinState:
+			ExecShutdownHashJoin((HashJoinState *) node);
+			break;
 		default:
 			break;
 	}

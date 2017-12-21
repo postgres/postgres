@@ -301,6 +301,7 @@
 #enable_sort = on
 #enable_tidscan = on
 #enable_partition_wise_join = off
+#enable_parallel_hash = on
 
 # - Planner Cost Constants -
 

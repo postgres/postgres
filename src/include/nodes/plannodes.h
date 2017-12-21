@@ -880,6 +880,7 @@ typedef struct Hash
 	AttrNumber	skewColumn;		/* outer join key's column #, or zero */
 	bool		skewInherit;	/* is outer join rel an inheritance tree? */
 	/* all other info is in the parent HashJoin node */
+	double		rows_total;		/* estimate total rows if parallel_aware */
 } Hash;
 
 /* ----------------

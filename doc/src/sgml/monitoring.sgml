@@ -1263,7 +1263,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in an extension.</entry>
         </row>
         <row>
-         <entry morerows="17"><literal>IPC</literal></entry>
+         <entry morerows="32"><literal>IPC</literal></entry>
          <entry><literal>BgWorkerShutdown</literal></entry>
          <entry>Waiting for background worker to shut down.</entry>
         </row>
@@ -1278,6 +1278,66 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>ExecuteGather</literal></entry>
          <entry>Waiting for activity from child process when executing <literal>Gather</literal> node.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/Batch/Allocating</literal></entry>
+          <entry>Waiting for an elected Parallel Hash participant to allocate a hash table.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/Batch/Electing</literal></entry>
+          <entry>Electing a Parallel Hash participant to allocate a hash table.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/Batch/Loading</literal></entry>
+          <entry>Waiting for other Parallel Hash participants to finish loading a hash table.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/Build/Allocating</literal></entry>
+          <entry>Waiting for an elected Parallel Hash participant to allocate the initial hash table.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/Build/Electing</literal></entry>
+          <entry>Electing a Parallel Hash participant to allocate the initial hash table.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/Build/HashingInner</literal></entry>
+          <entry>Waiting for other Parallel Hash participants to finish hashing the inner relation.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/Build/HashingOuter</literal></entry>
+          <entry>Waiting for other Parallel Hash participants to finish partitioning the outer relation.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/GrowBatches/Allocating</literal></entry>
+          <entry>Waiting for an elected Parallel Hash participant to allocate more batches.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/GrowBatches/Deciding</literal></entry>
+          <entry>Electing a Parallel Hash participant to decide on future batch growth.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/GrowBatches/Electing</literal></entry>
+          <entry>Electing a Parallel Hash participant to allocate more batches.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/GrowBatches/Finishing</literal></entry>
+          <entry>Waiting for an elected Parallel Hash participant to decide on future batch growth.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/GrowBatches/Repartitioning</literal></entry>
+          <entry>Waiting for other Parallel Hash participants to finishing repartitioning.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/GrowBuckets/Allocating</literal></entry>
+          <entry>Waiting for an elected Parallel Hash participant to finish allocating more buckets.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/GrowBuckets/Electing</literal></entry>
+          <entry>Electing a Parallel Hash participant to allocate more buckets.</entry>
+        </row>
+        <row>
+          <entry><literal>Hash/GrowBuckets/Reinserting</literal></entry>
+          <entry>Waiting for other Parallel Hash participants to finish inserting tuples into new buckets.</entry>
         </row>
         <row>
          <entry><literal>LogicalSyncData</literal></entry>

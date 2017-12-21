@@ -2028,6 +2028,10 @@ update pg_class
   set reltuples = 2, relpages = pg_relation_size('extremely_skewed') / 8192
   where relname = 'extremely_skewed';
 
+-- Make a relation with a couple of enormous tuples.
+create table wide as select generate_series(1, 2) as id, rpad('', 320000, 'x') as t;
+alter table wide set (parallel_workers = 2);
+
 -- The "optimal" case: the hash table fits in memory; we plan for 1
 -- batch, we stick to that number, and peak memory usage stays within
 -- our work_mem budget
@@ -2050,6 +2054,22 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '4MB';
+set local enable_parallel_hash = off;
+explain (costs off)
+  select count(*) from simple r join simple s using (id);
+select count(*) from simple r join simple s using (id);
+select original > 1 as initially_multibatch, final > original as increased_batches
+  from hash_join_batches(
+$$
+  select count(*) from simple r join simple s using (id);
+$$);
+rollback to settings;
+
+-- parallel with parallel-aware hash join
+savepoint settings;
+set local max_parallel_workers_per_gather = 2;
+set local work_mem = '4MB';
+set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
 select count(*) from simple r join simple s using (id);
@@ -2082,6 +2102,22 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
+set local enable_parallel_hash = off;
+explain (costs off)
+  select count(*) from simple r join simple s using (id);
+select count(*) from simple r join simple s using (id);
+select original > 1 as initially_multibatch, final > original as increased_batches
+  from hash_join_batches(
+$$
+  select count(*) from simple r join simple s using (id);
+$$);
+rollback to settings;
+
+-- parallel with parallel-aware hash join
+savepoint settings;
+set local max_parallel_workers_per_gather = 2;
+set local work_mem = '128kB';
+set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join simple s using (id);
 select count(*) from simple r join simple s using (id);
@@ -2115,6 +2151,22 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
+set local enable_parallel_hash = off;
+explain (costs off)
+  select count(*) from simple r join bigger_than_it_looks s using (id);
+select count(*) from simple r join bigger_than_it_looks s using (id);
+select original > 1 as initially_multibatch, final > original as increased_batches
+  from hash_join_batches(
+$$
+  select count(*) from simple r join bigger_than_it_looks s using (id);
+$$);
+rollback to settings;
+
+-- parallel with parallel-aware hash join
+savepoint settings;
+set local max_parallel_workers_per_gather = 1;
+set local work_mem = '192kB';
+set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join bigger_than_it_looks s using (id);
 select count(*) from simple r join bigger_than_it_looks s using (id);
@@ -2148,6 +2200,21 @@ rollback to settings;
 savepoint settings;
 set local max_parallel_workers_per_gather = 2;
 set local work_mem = '128kB';
+set local enable_parallel_hash = off;
+explain (costs off)
+  select count(*) from simple r join extremely_skewed s using (id);
+select count(*) from simple r join extremely_skewed s using (id);
+select * from hash_join_batches(
+$$
+  select count(*) from simple r join extremely_skewed s using (id);
+$$);
+rollback to settings;
+
+-- parallel with parallel-aware hash join
+savepoint settings;
+set local max_parallel_workers_per_gather = 1;
+set local work_mem = '128kB';
+set local enable_parallel_hash = on;
 explain (costs off)
   select count(*) from simple r join extremely_skewed s using (id);
 select count(*) from simple r join extremely_skewed s using (id);
@@ -2175,11 +2242,12 @@ rollback to settings;
 
 create table foo as select generate_series(1, 3) as id, 'xxxxx'::text as t;
 alter table foo set (parallel_workers = 0);
-create table bar as select generate_series(1, 5000) as id, 'xxxxx'::text as t;
+create table bar as select generate_series(1, 10000) as id, 'xxxxx'::text as t;
 alter table bar set (parallel_workers = 2);
 
 -- multi-batch with rescan, parallel-oblivious
 savepoint settings;
+set enable_parallel_hash = off;
 set parallel_leader_participation = off;
 set min_parallel_table_scan_size = 0;
 set parallel_setup_cost = 0;
@@ -2206,6 +2274,61 @@ rollback to settings;
 
 -- single-batch with rescan, parallel-oblivious
 savepoint settings;
+set enable_parallel_hash = off;
+set parallel_leader_participation = off;
+set min_parallel_table_scan_size = 0;
+set parallel_setup_cost = 0;
+set parallel_tuple_cost = 0;
+set max_parallel_workers_per_gather = 2;
+set enable_material = off;
+set enable_mergejoin = off;
+set work_mem = '4MB';
+explain (costs off)
+  select count(*) from foo
+    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+select count(*) from foo
+  left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+  on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+select final > 1 as multibatch
+  from hash_join_batches(
+$$
+  select count(*) from foo
+    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+$$);
+rollback to settings;
+
+-- multi-batch with rescan, parallel-aware
+savepoint settings;
+set enable_parallel_hash = on;
+set parallel_leader_participation = off;
+set min_parallel_table_scan_size = 0;
+set parallel_setup_cost = 0;
+set parallel_tuple_cost = 0;
+set max_parallel_workers_per_gather = 2;
+set enable_material = off;
+set enable_mergejoin = off;
+set work_mem = '64kB';
+explain (costs off)
+  select count(*) from foo
+    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+select count(*) from foo
+  left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+  on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+select final > 1 as multibatch
+  from hash_join_batches(
+$$
+  select count(*) from foo
+    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
+    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+$$);
+rollback to settings;
+
+-- single-batch with rescan, parallel-aware
+savepoint settings;
+set enable_parallel_hash = on;
 set parallel_leader_participation = off;
 set min_parallel_table_scan_size = 0;
 set parallel_setup_cost = 0;
@@ -2264,6 +2387,29 @@ set local max_parallel_workers_per_gather = 2;
 explain (costs off)
      select  count(*) from simple r full outer join simple s on (r.id = 0 - s.id);
 select  count(*) from simple r full outer join simple s on (r.id = 0 - s.id);
+rollback to settings;
+
+-- exercise special code paths for huge tuples (note use of non-strict
+-- expression and left join required to get the detoasted tuple into
+-- the hash table)
+
+-- parallel with parallel-aware hash join (hits ExecParallelHashLoadTuple and
+-- sts_puttuple oversized tuple cases because it's multi-batch)
+savepoint settings;
+set max_parallel_workers_per_gather = 2;
+set enable_parallel_hash = on;
+set work_mem = '128kB';
+explain (costs off)
+  select length(max(s.t))
+  from wide left join (select id, coalesce(t, '') || '' as t from wide) s using (id);
+select length(max(s.t))
+from wide left join (select id, coalesce(t, '') || '' as t from wide) s using (id);
+select final > 1 as multibatch
+  from hash_join_batches(
+$$
+  select length(max(s.t))
+  from wide left join (select id, coalesce(t, '') || '' as t from wide) s using (id);
+$$);
 rollback to settings;
 
 rollback;

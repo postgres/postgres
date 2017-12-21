@@ -929,7 +929,15 @@ static struct config_bool ConfigureNamesBool[] =
 		true,
 		NULL, NULL, NULL
 	},
-
+	{
+		{"enable_parallel_hash", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables the planner's user of parallel hash plans."),
+			NULL
+		},
+		&enable_parallel_hash,
+		true,
+		NULL, NULL, NULL
+	},
 	{
 		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("Enables genetic query optimization."),

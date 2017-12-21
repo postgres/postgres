@@ -4192,6 +4192,17 @@ create_hashjoin_plan(PlannerInfo *root,
 	copy_plan_costsize(&hash_plan->plan, inner_plan);
 	hash_plan->plan.startup_cost = hash_plan->plan.total_cost;
 
+	/*
+	 * If parallel-aware, the executor will also need an estimate of the total
+	 * number of rows expected from all participants so that it can size the
+	 * shared hash table.
+	 */
+	if (best_path->jpath.path.parallel_aware)
+	{
+		hash_plan->plan.parallel_aware = true;
+		hash_plan->rows_total = best_path->inner_rows_total;
+	}
+
 	join_plan = make_hashjoin(tlist,
 							  joinclauses,
 							  otherclauses,

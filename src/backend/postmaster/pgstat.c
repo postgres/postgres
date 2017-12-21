@@ -3586,6 +3586,51 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_EXECUTE_GATHER:
 			event_name = "ExecuteGather";
 			break;
+		case WAIT_EVENT_HASH_BATCH_ALLOCATING:
+			event_name = "Hash/Batch/Allocating";
+			break;
+		case WAIT_EVENT_HASH_BATCH_ELECTING:
+			event_name = "Hash/Batch/Electing";
+			break;
+		case WAIT_EVENT_HASH_BATCH_LOADING:
+			event_name = "Hash/Batch/Loading";
+			break;
+		case WAIT_EVENT_HASH_BUILD_ALLOCATING:
+			event_name = "Hash/Build/Allocating";
+			break;
+		case WAIT_EVENT_HASH_BUILD_ELECTING:
+			event_name = "Hash/Build/Electing";
+			break;
+		case WAIT_EVENT_HASH_BUILD_HASHING_INNER:
+			event_name = "Hash/Build/HashingInner";
+			break;
+		case WAIT_EVENT_HASH_BUILD_HASHING_OUTER:
+			event_name = "Hash/Build/HashingOuter";
+			break;
+		case WAIT_EVENT_HASH_GROW_BATCHES_ALLOCATING:
+			event_name = "Hash/GrowBatches/Allocating";
+			break;
+		case WAIT_EVENT_HASH_GROW_BATCHES_DECIDING:
+			event_name = "Hash/GrowBatches/Deciding";
+			break;
+		case WAIT_EVENT_HASH_GROW_BATCHES_ELECTING:
+			event_name = "Hash/GrowBatches/Electing";
+			break;
+		case WAIT_EVENT_HASH_GROW_BATCHES_FINISHING:
+			event_name = "Hash/GrowBatches/Finishing";
+			break;
+		case WAIT_EVENT_HASH_GROW_BATCHES_REPARTITIONING:
+			event_name = "Hash/GrowBatches/Repartitioning";
+			break;
+		case WAIT_EVENT_HASH_GROW_BUCKETS_ALLOCATING:
+			event_name = "Hash/GrowBuckets/Allocating";
+			break;
+		case WAIT_EVENT_HASH_GROW_BUCKETS_ELECTING:
+			event_name = "Hash/GrowBuckets/Electing";
+			break;
+		case WAIT_EVENT_HASH_GROW_BUCKETS_REINSERTING:
+			event_name = "Hash/GrowBuckets/Reinserting";
+			break;
 		case WAIT_EVENT_LOGICAL_SYNC_DATA:
 			event_name = "LogicalSyncData";
 			break;

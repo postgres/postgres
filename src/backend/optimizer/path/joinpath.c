@@ -747,7 +747,7 @@ try_hashjoin_path(PlannerInfo *root,
 	 * never have any output pathkeys, per comments in create_hashjoin_path.
 	 */
 	initial_cost_hashjoin(root, &workspace, jointype, hashclauses,
-						  outer_path, inner_path, extra);
+						  outer_path, inner_path, extra, false);
 
 	if (add_path_precheck(joinrel,
 						  workspace.startup_cost, workspace.total_cost,
@@ -761,6 +761,7 @@ try_hashjoin_path(PlannerInfo *root,
 									  extra,
 									  outer_path,
 									  inner_path,
+									  false,	/* parallel_hash */
 									  extra->restrictlist,
 									  required_outer,
 									  hashclauses));
@@ -776,6 +777,10 @@ try_hashjoin_path(PlannerInfo *root,
  * try_partial_hashjoin_path
  *	  Consider a partial hashjoin join path; if it appears useful, push it into
  *	  the joinrel's partial_pathlist via add_partial_path().
+ *	  The outer side is partial.  If parallel_hash is true, then the inner path
+ *	  must be partial and will be run in parallel to create one or more shared
+ *	  hash tables; otherwise the inner path must be complete and a copy of it
+ *	  is run in every process to create separate identical private hash tables.
  */
 static void
 try_partial_hashjoin_path(PlannerInfo *root,
@@ -784,7 +789,8 @@ try_partial_hashjoin_path(PlannerInfo *root,
 						  Path *inner_path,
 						  List *hashclauses,
 						  JoinType jointype,
-						  JoinPathExtraData *extra)
+						  JoinPathExtraData *extra,
+						  bool parallel_hash)
 {
 	JoinCostWorkspace workspace;
 
@@ -808,7 +814,7 @@ try_partial_hashjoin_path(PlannerInfo *root,
 	 * cost.  Bail out right away if it looks terrible.
 	 */
 	initial_cost_hashjoin(root, &workspace, jointype, hashclauses,
-						  outer_path, inner_path, extra);
+						  outer_path, inner_path, extra, true);
 	if (!add_partial_path_precheck(joinrel, workspace.total_cost, NIL))
 		return;
 
@@ -821,6 +827,7 @@ try_partial_hashjoin_path(PlannerInfo *root,
 										  extra,
 										  outer_path,
 										  inner_path,
+										  parallel_hash,
 										  extra->restrictlist,
 										  NULL,
 										  hashclauses));
@@ -1839,6 +1846,10 @@ hash_inner_and_outer(PlannerInfo *root,
 		 * able to properly guarantee uniqueness.  Similarly, we can't handle
 		 * JOIN_FULL and JOIN_RIGHT, because they can produce false null
 		 * extended rows.  Also, the resulting path must not be parameterized.
+		 * We would be able to support JOIN_FULL and JOIN_RIGHT for Parallel
+		 * Hash, since in that case we're back to a single hash table with a
+		 * single set of match bits for each batch, but that will require
+		 * figuring out a deadlock-free way to wait for the probe to finish.
 		 */
 		if (joinrel->consider_parallel &&
 			save_jointype != JOIN_UNIQUE_OUTER &&
@@ -1848,10 +1859,26 @@ hash_inner_and_outer(PlannerInfo *root,
 			bms_is_empty(joinrel->lateral_relids))
 		{
 			Path	   *cheapest_partial_outer;
+			Path	   *cheapest_partial_inner = NULL;
 			Path	   *cheapest_safe_inner = NULL;
 
 			cheapest_partial_outer =
 				(Path *) linitial(outerrel->partial_pathlist);
+
+			/*
+			 * Can we use a partial inner plan too, so that we can build a
+			 * shared hash table in parallel?
+			 */
+			if (innerrel->partial_pathlist != NIL && enable_parallel_hash)
+			{
+				cheapest_partial_inner =
+					(Path *) linitial(innerrel->partial_pathlist);
+				try_partial_hashjoin_path(root, joinrel,
+										  cheapest_partial_outer,
+										  cheapest_partial_inner,
+										  hashclauses, jointype, extra,
+										  true /* parallel_hash */ );
+			}
 
 			/*
 			 * Normally, given that the joinrel is parallel-safe, the cheapest
@@ -1870,7 +1897,8 @@ hash_inner_and_outer(PlannerInfo *root,
 				try_partial_hashjoin_path(root, joinrel,
 										  cheapest_partial_outer,
 										  cheapest_safe_inner,
-										  hashclauses, jointype, extra);
+										  hashclauses, jointype, extra,
+										  false /* parallel_hash */ );
 		}
 	}
 }

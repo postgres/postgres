@@ -3647,6 +3647,21 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-enable-parallel-hash" xreflabel="enable_parallel_hash">
+      <term><varname>enable_parallel_hash</varname> (<type>boolean</type>)
+       <indexterm>
+        <primary><varname>enable_parallel_hash</varname> configuration parameter</primary>
+       </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of hash-join plan
+        types with parallel hash. Has no effect if hash-join plans are not
+        also enabled. The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-partition-wise-join" xreflabel="enable_partition_wise_join">
       <term><varname>enable_partition_wise_join</varname> (<type>boolean</type>)
       <indexterm>

@@ -153,6 +153,7 @@ extern HashPath *create_hashjoin_path(PlannerInfo *root,
 					 JoinPathExtraData *extra,
 					 Path *outer_path,
 					 Path *inner_path,
+					 bool parallel_hash,
 					 List *restrict_clauses,
 					 Relids required_outer,
 					 List *hashclauses);

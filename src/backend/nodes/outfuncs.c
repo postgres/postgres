@@ -927,6 +927,7 @@ _outHash(StringInfo str, const Hash *node)
 	WRITE_OID_FIELD(skewTable);
 	WRITE_INT_FIELD(skewColumn);
 	WRITE_BOOL_FIELD(skewInherit);
+	WRITE_FLOAT_FIELD(rows_total, "%.0f");
 }
 
 static void

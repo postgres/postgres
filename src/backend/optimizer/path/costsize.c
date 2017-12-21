@@ -129,6 +129,7 @@ bool		enable_hashjoin = true;
 bool		enable_gathermerge = true;
 bool		enable_partition_wise_join = false;
 bool		enable_parallel_append = true;
+bool		enable_parallel_hash = true;
 
 typedef struct
 {
@@ -3130,16 +3131,19 @@ initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 					  JoinType jointype,
 					  List *hashclauses,
 					  Path *outer_path, Path *inner_path,
-					  JoinPathExtraData *extra)
+					  JoinPathExtraData *extra,
+					  bool parallel_hash)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	double		outer_path_rows = outer_path->rows;
 	double		inner_path_rows = inner_path->rows;
+	double		inner_path_rows_total = inner_path_rows;
 	int			num_hashclauses = list_length(hashclauses);
 	int			numbuckets;
 	int			numbatches;
 	int			num_skew_mcvs;
+	size_t		space_allowed;	/* unused */
 
 	/* cost of source data */
 	startup_cost += outer_path->startup_cost;
@@ -3161,6 +3165,15 @@ initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 	run_cost += cpu_operator_cost * num_hashclauses * outer_path_rows;
 
 	/*
+	 * If this is a parallel hash build, then the value we have for
+	 * inner_rows_total currently refers only to the rows returned by each
+	 * participant.  For shared hash table size estimation, we need the total
+	 * number, so we need to undo the division.
+	 */
+	if (parallel_hash)
+		inner_path_rows_total *= get_parallel_divisor(inner_path);
+
+	/*
 	 * Get hash table size that executor would use for inner relation.
 	 *
 	 * XXX for the moment, always assume that skew optimization will be
@@ -3170,9 +3183,12 @@ initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 	 * XXX at some point it might be interesting to try to account for skew
 	 * optimization in the cost estimate, but for now, we don't.
 	 */
-	ExecChooseHashTableSize(inner_path_rows,
+	ExecChooseHashTableSize(inner_path_rows_total,
 							inner_path->pathtarget->width,
 							true,	/* useskew */
+							parallel_hash,	/* try_combined_work_mem */
+							outer_path->parallel_workers,
+							&space_allowed,
 							&numbuckets,
 							&numbatches,
 							&num_skew_mcvs);
@@ -3204,6 +3220,7 @@ initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 	workspace->run_cost = run_cost;
 	workspace->numbuckets = numbuckets;
 	workspace->numbatches = numbatches;
+	workspace->inner_rows_total = inner_path_rows_total;
 }
 
 /*
@@ -3226,6 +3243,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	Path	   *inner_path = path->jpath.innerjoinpath;
 	double		outer_path_rows = outer_path->rows;
 	double		inner_path_rows = inner_path->rows;
+	double		inner_path_rows_total = workspace->inner_rows_total;
 	List	   *hashclauses = path->path_hashclauses;
 	Cost		startup_cost = workspace->startup_cost;
 	Cost		run_cost = workspace->run_cost;
@@ -3265,6 +3283,9 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 
 	/* mark the path with estimated # of batches */
 	path->num_batches = numbatches;
+
+	/* store the total number of tuples (sum of partial row estimates) */
+	path->inner_rows_total = inner_path_rows_total;
 
 	/* and compute the number of "virtual" buckets in the whole join */
 	virtualbuckets = (double) numbuckets * (double) numbatches;
