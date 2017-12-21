@@ -161,12 +161,10 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 #define Anum_pg_statistic_stavalues5	26
 
 /*
- * Currently, five statistical slot "kinds" are defined by core PostgreSQL,
- * as documented below.  Additional "kinds" will probably appear in
- * future to help cope with non-scalar datatypes.  Also, custom data types
- * can define their own "kind" codes by mutual agreement between a custom
- * typanalyze routine and the selectivity estimation functions of the type's
- * operators.
+ * Several statistical slot "kinds" are defined by core PostgreSQL, as
+ * documented below.  Also, custom data types can define their own "kind"
+ * codes by mutual agreement between a custom typanalyze routine and the
+ * selectivity estimation functions of the type's operators.
  *
  * Code reading the pg_statistic relation should not assume that a particular
  * data "kind" will appear in any particular slot.  Instead, search the

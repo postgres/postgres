@@ -2,7 +2,8 @@
 #-------------------------------------------------------------------------
 #
 # Gen_fmgrtab.pl
-#    Perl script that generates fmgroids.h and fmgrtab.c from pg_proc.h
+#    Perl script that generates fmgroids.h, fmgrprotos.h, and fmgrtab.c
+#    from pg_proc.h
 #
 # Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
@@ -56,6 +57,8 @@ die "No include path; you must specify -I at least once.\n" if !@include_path;
 
 my $FirstBootstrapObjectId =
 	Catalog::FindDefinedSymbol('access/transam.h', \@include_path, 'FirstBootstrapObjectId');
+my $INTERNALlanguageId =
+	Catalog::FindDefinedSymbol('catalog/pg_language.h', \@include_path, 'INTERNALlanguageId');
 
 # Read all the data from the include/catalog files.
 my $catalogs = Catalog::Catalogs($infile);
@@ -77,8 +80,7 @@ foreach my $row (@$data)
 	@bki_values{@attnames} = Catalog::SplitDataLine($row->{bki_values});
 
 	# Select out just the rows for internal-language procedures.
-	# Note assumption here that INTERNALlanguageId is 12.
-	next if $bki_values{prolang} ne '12';
+	next if $bki_values{prolang} ne $INTERNALlanguageId;
 
 	push @fmgr,
 	  { oid    => $row->{oid},
@@ -281,7 +283,8 @@ sub usage
 	die <<EOM;
 Usage: perl -I [directory of Catalog.pm] Gen_fmgrtab.pl [path to pg_proc.h]
 
-Gen_fmgrtab.pl generates fmgroids.h and fmgrtab.c from pg_proc.h
+Gen_fmgrtab.pl generates fmgroids.h, fmgrprotos.h, and fmgrtab.c from
+pg_proc.h
 
 Report bugs to <pgsql-bugs\@postgresql.org>.
 EOM

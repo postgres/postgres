@@ -20,7 +20,7 @@ use strict;
 use warnings;
 
 my @input_files;
-our @include_path;
+my @include_path;
 my $output_path = '';
 my $major_version;
 
@@ -105,7 +105,7 @@ print $bki "# PostgreSQL $major_version\n";
 my %schemapg_entries;
 my @tables_needing_macros;
 my %regprocoids;
-our @types;
+my @types;
 
 # produce output, one catalog at a time
 foreach my $catname (@{ $catalogs->{names} })
@@ -124,7 +124,8 @@ foreach my $catname (@{ $catalogs->{names} })
 	my $first = 1;
 
 	print $bki " (\n";
-	foreach my $column (@{ $catalog->{columns} })
+	my $schema = $catalog->{columns};
+	foreach my $column (@$schema)
 	{
 		my $attname = $column->{name};
 		my $atttype = $column->{type};
@@ -150,8 +151,9 @@ foreach my $catname (@{ $catalogs->{names} })
 	}
 	print $bki "\n )\n";
 
-   # open it, unless bootstrap case (create bootstrap does this automatically)
-	if ($catalog->{bootstrap} eq '')
+	# Open it, unless bootstrap case (create bootstrap does this
+	# automatically)
+	if (!$catalog->{bootstrap})
 	{
 		print $bki "open $catname\n";
 	}
@@ -169,21 +171,23 @@ foreach my $catname (@{ $catalogs->{names} })
 			  Catalog::SplitDataLine($row->{bki_values});
 
 			# Perform required substitutions on fields
-			foreach my $att (keys %bki_values)
+			foreach my $column (@$schema)
 			{
+				my $attname = $column->{name};
+				my $atttype = $column->{type};
 
 				# Substitute constant values we acquired above.
 				# (It's intentional that this can apply to parts of a field).
-				$bki_values{$att} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
-				$bki_values{$att} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
+				$bki_values{$attname} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
+				$bki_values{$attname} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
 
 				# Replace regproc columns' values with OIDs.
 				# If we don't have a unique value to substitute,
 				# just do nothing (regprocin will complain).
-				if ($bki_attr{$att}->{type} eq 'regproc')
+				if ($atttype eq 'regproc')
 				{
-					my $procoid = $regprocoids{ $bki_values{$att} };
-					$bki_values{$att} = $procoid
+					my $procoid = $regprocoids{ $bki_values{$attname} };
+					$bki_values{$attname} = $procoid
 					  if defined($procoid) && $procoid ne 'MULTIPLE';
 				}
 			}
@@ -215,16 +219,17 @@ foreach my $catname (@{ $catalogs->{names} })
 			printf $bki "insert %s( %s )\n", $oid,
 			  join(' ', @bki_values{@attnames});
 
-		   # Write comments to postgres.description and postgres.shdescription
+			# Write comments to postgres.description and
+			# postgres.shdescription
 			if (defined $row->{descr})
 			{
-				printf $descr "%s\t%s\t0\t%s\n", $row->{oid}, $catname,
-				  $row->{descr};
+				printf $descr "%s\t%s\t0\t%s\n",
+				  $row->{oid}, $catname, $row->{descr};
 			}
 			if (defined $row->{shdescr})
 			{
-				printf $shdescr "%s\t%s\t%s\n", $row->{oid}, $catname,
-				  $row->{shdescr};
+				printf $shdescr "%s\t%s\t%s\n",
+				  $row->{oid}, $catname, $row->{shdescr};
 			}
 		}
 	}
@@ -240,11 +245,10 @@ foreach my $catname (@{ $catalogs->{names} })
 
 			# Currently, all bootstrapped relations also need schemapg.h
 			# entries, so skip if the relation isn't to be in schemapg.h.
-			next if $table->{schema_macro} ne 'True';
+			next if !$table->{schema_macro};
 
 			$schemapg_entries{$table_name} = [];
 			push @tables_needing_macros, $table_name;
-			my $is_bootstrap = $table->{bootstrap};
 
 			# Generate entries for user attributes.
 			my $attnum       = 0;
@@ -259,7 +263,7 @@ foreach my $catname (@{ $catalogs->{names} })
 				$priornotnull &= ($row->{attnotnull} eq 't');
 
 				# If it's bootstrapped, put an entry in postgres.bki.
-				if ($is_bootstrap eq ' bootstrap')
+				if ($table->{bootstrap})
 				{
 					bki_insert($row, @attnames);
 				}
@@ -268,15 +272,14 @@ foreach my $catname (@{ $catalogs->{names} })
 				$row =
 				  emit_schemapg_row($row,
 					grep { $bki_attr{$_}{type} eq 'bool' } @attnames);
-				push @{ $schemapg_entries{$table_name} }, '{ '
-				  . join(
-					', ',             grep { defined $_ }
-					  map $row->{$_}, @attnames) . ' }';
+				push @{ $schemapg_entries{$table_name} },
+				  sprintf "{ %s }",
+				    join(', ', grep { defined $_ } @{$row}{@attnames});
 			}
 
 			# Generate entries for system attributes.
 			# We only need postgres.bki entries, not schemapg.h entries.
-			if ($is_bootstrap eq ' bootstrap')
+			if ($table->{bootstrap})
 			{
 				$attnum = 0;
 				my @SYS_ATTRS = (
@@ -294,9 +297,9 @@ foreach my $catname (@{ $catalogs->{names} })
 					$row->{attnum}        = $attnum;
 					$row->{attstattarget} = '0';
 
-					# some catalogs don't have oids
+					# Omit the oid column if the catalog doesn't have them
 					next
-					  if $table->{without_oids} eq ' without_oids'
+					  if $table->{without_oids}
 						  && $row->{attname} eq 'oid';
 
 					bki_insert($row, @attnames);

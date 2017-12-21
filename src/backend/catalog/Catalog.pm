@@ -16,11 +16,6 @@ package Catalog;
 use strict;
 use warnings;
 
-require Exporter;
-our @ISA       = qw(Exporter);
-our @EXPORT    = ();
-our @EXPORT_OK = qw(Catalogs SplitDataLine RenameTempFile FindDefinedSymbol);
-
 # Call this function with an array of names of header files to parse.
 # Returns a nested data structure describing the data in the headers.
 sub Catalogs
@@ -36,7 +31,8 @@ sub Catalogs
 		'int64'         => 'int8',
 		'Oid'           => 'oid',
 		'NameData'      => 'name',
-		'TransactionId' => 'xid');
+		'TransactionId' => 'xid',
+		'XLogRecPtr'    => 'pg_lsn');
 
 	foreach my $input_file (@_)
 	{
@@ -162,7 +158,7 @@ sub Catalogs
 				  /BKI_WITHOUT_OIDS/ ? ' without_oids' : '';
 				$catalog{rowtype_oid} =
 				  /BKI_ROWTYPE_OID\((\d+)\)/ ? " rowtype_oid $1" : '';
-				$catalog{schema_macro} = /BKI_SCHEMA_MACRO/ ? 'True' : '';
+				$catalog{schema_macro} = /BKI_SCHEMA_MACRO/ ? 1 : 0;
 				$declaring_attributes = 1;
 			}
 			elsif ($declaring_attributes)
@@ -175,7 +171,7 @@ sub Catalogs
 				}
 				else
 				{
-					my %row;
+					my %column;
 					my ($atttype, $attname, $attopt) = split /\s+/, $_;
 					die "parse error ($input_file)" unless $attname;
 					if (exists $RENAME_ATTTYPE{$atttype})
@@ -188,18 +184,18 @@ sub Catalogs
 						$atttype .= '[]';            # variable-length only
 					}
 
-					$row{'type'} = $atttype;
-					$row{'name'} = $attname;
+					$column{type} = $atttype;
+					$column{name} = $attname;
 
 					if (defined $attopt)
 					{
 						if ($attopt eq 'BKI_FORCE_NULL')
 						{
-							$row{'forcenull'} = 1;
+							$column{forcenull} = 1;
 						}
 						elsif ($attopt eq 'BKI_FORCE_NOT_NULL')
 						{
-							$row{'forcenotnull'} = 1;
+							$column{forcenotnull} = 1;
 						}
 						else
 						{
@@ -207,7 +203,7 @@ sub Catalogs
 "unknown column option $attopt on column $attname";
 						}
 					}
-					push @{ $catalog{columns} }, \%row;
+					push @{ $catalog{columns} }, \%column;
 				}
 			}
 		}

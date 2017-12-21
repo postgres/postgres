@@ -1,3 +1,13 @@
+/* -------------------------------------------------------------------------
+ *
+ * pg_sequence.h
+ *	  definition of the system "sequence" relation (pg_sequence)
+ *
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * -------------------------------------------------------------------------
+ */
 #ifndef PG_SEQUENCE_H
 #define PG_SEQUENCE_H
 
