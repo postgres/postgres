@@ -16,16 +16,23 @@
 
 /* Forward declarations, to avoid including other headers */
 struct Bitmapset;
+struct ExprState;
+struct Param;
 struct ParseState;
 
 
-/* ----------------
+/*
  *	  ParamListInfo
  *
- *	  ParamListInfo arrays are used to pass parameters into the executor
- *	  for parameterized plans.  Each entry in the array defines the value
- *	  to be substituted for a PARAM_EXTERN parameter.  The "paramid"
- *	  of a PARAM_EXTERN Param can range from 1 to numParams.
+ *	  ParamListInfo structures are used to pass parameters into the executor
+ *	  for parameterized plans.  We support two basic approaches to supplying
+ *	  parameter values, the "static" way and the "dynamic" way.
+ *
+ *	  In the static approach, per-parameter data is stored in an array of
+ *	  ParamExternData structs appended to the ParamListInfo struct.
+ *	  Each entry in the array defines the value to be substituted for a
+ *	  PARAM_EXTERN parameter.  The "paramid" of a PARAM_EXTERN Param
+ *	  can range from 1 to numParams.
  *
  *	  Although parameter numbers are normally consecutive, we allow
  *	  ptype == InvalidOid to signal an unused array entry.
@@ -35,18 +42,47 @@ struct ParseState;
  *	  as a constant (i.e., generate a plan that works only for this value
  *	  of the parameter).
  *
- *	  There are two hook functions that can be associated with a ParamListInfo
- *	  array to support dynamic parameter handling.  First, if paramFetch
- *	  isn't null and the executor requires a value for an invalid parameter
- *	  (one with ptype == InvalidOid), the paramFetch hook is called to give
- *	  it a chance to fill in the parameter value.  Second, a parserSetup
- *	  hook can be supplied to re-instantiate the original parsing hooks if
- *	  a query needs to be re-parsed/planned (as a substitute for supposing
- *	  that the current ptype values represent a fixed set of parameter types).
-
+ *	  In the dynamic approach, all access to parameter values is done through
+ *	  hook functions found in the ParamListInfo struct.  In this case,
+ *	  the ParamExternData array is typically unused and not allocated;
+ *	  but the legal range of paramid is still 1 to numParams.
+ *
  *	  Although the data structure is really an array, not a list, we keep
  *	  the old typedef name to avoid unnecessary code changes.
- * ----------------
+ *
+ *	  There are 3 hook functions that can be associated with a ParamListInfo
+ *	  structure:
+ *
+ *	  If paramFetch isn't null, it is called to fetch the ParamExternData
+ *	  for a particular param ID, rather than accessing the relevant element
+ *	  of the ParamExternData array.  This supports the case where the array
+ *	  isn't there at all, as well as cases where the data in the array
+ *	  might be obsolete or lazily evaluated.  paramFetch must return the
+ *	  address of a ParamExternData struct describing the specified param ID;
+ *	  the convention above about ptype == InvalidOid signaling an invalid
+ *	  param ID still applies.  The returned struct can either be placed in
+ *	  the "workspace" supplied by the caller, or it can be in storage
+ *	  controlled by the paramFetch hook if that's more convenient.
+ *	  (In either case, the struct is not expected to be long-lived.)
+ *	  If "speculative" is true, the paramFetch hook should not risk errors
+ *	  in trying to fetch the parameter value, and should report an invalid
+ *	  parameter instead.
+ *
+ *	  If paramCompile isn't null, then it controls what execExpr.c compiles
+ *	  for PARAM_EXTERN Param nodes --- typically, this hook would emit a
+ *	  EEOP_PARAM_CALLBACK step.  This allows unnecessary work to be
+ *	  optimized away in compiled expressions.
+ *
+ *	  If parserSetup isn't null, then it is called to re-instantiate the
+ *	  original parsing hooks when a query needs to be re-parsed/planned.
+ *	  This is especially useful if the types of parameters might change
+ *	  from time to time, since it can replace the need to supply a fixed
+ *	  list of parameter types to the parser.
+ *
+ *	  Notice that the paramFetch and paramCompile hooks are actually passed
+ *	  the ParamListInfo struct's address; they can therefore access all
+ *	  three of the "arg" fields, and the distinction between paramFetchArg
+ *	  and paramCompileArg is rather arbitrary.
  */
 
 #define PARAM_FLAG_CONST	0x0001	/* parameter is constant */
@@ -61,7 +97,13 @@ typedef struct ParamExternData
 
 typedef struct ParamListInfoData *ParamListInfo;
 
-typedef void (*ParamFetchHook) (ParamListInfo params, int paramid);
+typedef ParamExternData *(*ParamFetchHook) (ParamListInfo params,
+											int paramid, bool speculative,
+											ParamExternData *workspace);
+
+typedef void (*ParamCompileHook) (ParamListInfo params, struct Param *param,
+								  struct ExprState *state,
+								  Datum *resv, bool *resnull);
 
 typedef void (*ParserSetupHook) (struct ParseState *pstate, void *arg);
 
@@ -69,10 +111,16 @@ typedef struct ParamListInfoData
 {
 	ParamFetchHook paramFetch;	/* parameter fetch hook */
 	void	   *paramFetchArg;
+	ParamCompileHook paramCompile;	/* parameter compile hook */
+	void	   *paramCompileArg;
 	ParserSetupHook parserSetup;	/* parser setup hook */
 	void	   *parserSetupArg;
-	int			numParams;		/* number of ParamExternDatas following */
-	struct Bitmapset *paramMask;	/* if non-NULL, can ignore omitted params */
+	int			numParams;		/* nominal/maximum # of Params represented */
+
+	/*
+	 * params[] may be of length zero if paramFetch is supplied; otherwise it
+	 * must be of length numParams.
+	 */
 	ParamExternData params[FLEXIBLE_ARRAY_MEMBER];
 }			ParamListInfoData;
 

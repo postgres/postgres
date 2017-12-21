@@ -33,6 +33,13 @@
 #include "storage/condition_variable.h"
 
 
+struct PlanState;				/* forward references in this file */
+struct ParallelHashJoinState;
+struct ExprState;
+struct ExprContext;
+struct ExprEvalStep;			/* avoid including execExpr.h everywhere */
+
+
 /* ----------------
  *		ExprState node
  *
@@ -40,12 +47,6 @@
  * It contains instructions (in ->steps) to evaluate the expression.
  * ----------------
  */
-struct ExprState;				/* forward references in this file */
-struct ExprContext;
-struct ExprEvalStep;			/* avoid including execExpr.h everywhere */
-
-struct ParallelHashJoinState;
-
 typedef Datum (*ExprStateEvalFunc) (struct ExprState *expression,
 									struct ExprContext *econtext,
 									bool *isNull);
@@ -87,11 +88,15 @@ typedef struct ExprState
 	Expr	   *expr;
 
 	/*
-	 * XXX: following only needed during "compilation", could be thrown away.
+	 * XXX: following fields only needed during "compilation" (ExecInitExpr);
+	 * could be thrown away afterwards.
 	 */
 
 	int			steps_len;		/* number of steps currently */
 	int			steps_alloc;	/* allocated length of steps array */
+
+	struct PlanState *parent;	/* parent PlanState node, if any */
+	ParamListInfo ext_params;	/* for compiling PARAM_EXTERN nodes */
 
 	Datum	   *innermost_caseval;
 	bool	   *innermost_casenull;
@@ -826,8 +831,6 @@ typedef struct DomainConstraintState
  * that describes the plan.
  * ----------------------------------------------------------------
  */
-
-struct PlanState;
 
 /* ----------------
  *	 ExecProcNodeMtd

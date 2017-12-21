@@ -857,7 +857,6 @@ typedef struct PLpgSQL_function
 	/* the datums representing the function's local variables */
 	int			ndatums;
 	PLpgSQL_datum **datums;
-	Bitmapset  *resettable_datums;	/* dnos of non-simple vars */
 
 	/* function body parsetree */
 	PLpgSQL_stmt_block *action;
@@ -899,9 +898,13 @@ typedef struct PLpgSQL_execstate
 	int			ndatums;
 	PLpgSQL_datum **datums;
 
-	/* we pass datums[i] to the executor, when needed, in paramLI->params[i] */
+	/*
+	 * paramLI is what we use to pass local variable values to the executor.
+	 * It does not have a ParamExternData array; we just dynamically
+	 * instantiate parameter data as needed.  By convention, PARAM_EXTERN
+	 * Params have paramid equal to the dno of the referenced local variable.
+	 */
 	ParamListInfo paramLI;
-	bool		params_dirty;	/* T if any resettable datum has been passed */
 
 	/* EState to use for "simple" expression evaluation */
 	EState	   *simple_eval_estate;

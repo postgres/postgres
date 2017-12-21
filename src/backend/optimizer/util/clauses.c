@@ -2513,14 +2513,27 @@ eval_const_expressions_mutator(Node *node,
 		case T_Param:
 			{
 				Param	   *param = (Param *) node;
+				ParamListInfo paramLI = context->boundParams;
 
 				/* Look to see if we've been given a value for this Param */
 				if (param->paramkind == PARAM_EXTERN &&
-					context->boundParams != NULL &&
+					paramLI != NULL &&
 					param->paramid > 0 &&
-					param->paramid <= context->boundParams->numParams)
+					param->paramid <= paramLI->numParams)
 				{
-					ParamExternData *prm = &context->boundParams->params[param->paramid - 1];
+					ParamExternData *prm;
+					ParamExternData prmdata;
+
+					/*
+					 * Give hook a chance in case parameter is dynamic.  Tell
+					 * it that this fetch is speculative, so it should avoid
+					 * erroring out if parameter is unavailable.
+					 */
+					if (paramLI->paramFetch != NULL)
+						prm = paramLI->paramFetch(paramLI, param->paramid,
+												  true, &prmdata);
+					else
+						prm = &paramLI->params[param->paramid - 1];
 
 					if (OidIsValid(prm->ptype))
 					{

@@ -914,10 +914,11 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 			/* we have static list of params, so no hooks needed */
 			paramLI->paramFetch = NULL;
 			paramLI->paramFetchArg = NULL;
+			paramLI->paramCompile = NULL;
+			paramLI->paramCompileArg = NULL;
 			paramLI->parserSetup = NULL;
 			paramLI->parserSetupArg = NULL;
 			paramLI->numParams = nargs;
-			paramLI->paramMask = NULL;
 			fcache->paramLI = paramLI;
 		}
 		else

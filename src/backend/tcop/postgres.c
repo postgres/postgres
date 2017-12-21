@@ -1646,10 +1646,11 @@ exec_bind_message(StringInfo input_message)
 		/* we have static list of params, so no hooks needed */
 		params->paramFetch = NULL;
 		params->paramFetchArg = NULL;
+		params->paramCompile = NULL;
+		params->paramCompileArg = NULL;
 		params->parserSetup = NULL;
 		params->parserSetupArg = NULL;
 		params->numParams = numParams;
-		params->paramMask = NULL;
 
 		for (paramno = 0; paramno < numParams; paramno++)
 		{
@@ -2210,6 +2211,9 @@ errdetail_params(ParamListInfo params)
 		StringInfoData param_str;
 		MemoryContext oldcontext;
 		int			paramno;
+
+		/* This code doesn't support dynamic param lists */
+		Assert(params->paramFetch == NULL);
 
 		/* Make sure any trash is generated in MessageContext */
 		oldcontext = MemoryContextSwitchTo(MessageContext);

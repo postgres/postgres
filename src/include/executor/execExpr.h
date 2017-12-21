@@ -16,7 +16,8 @@
 
 #include "nodes/execnodes.h"
 
-/* forward reference to avoid circularity */
+/* forward references to avoid circularity */
+struct ExprEvalStep;
 struct ArrayRefState;
 
 /* Bits in ExprState->flags (see also execnodes.h for public flag bits): */
@@ -24,6 +25,11 @@ struct ArrayRefState;
 #define EEO_FLAG_INTERPRETER_INITIALIZED	(1 << 1)
 /* jump-threading is in use */
 #define EEO_FLAG_DIRECT_THREADED			(1 << 2)
+
+/* Typical API for out-of-line evaluation subroutines */
+typedef void (*ExecEvalSubroutine) (ExprState *state,
+									struct ExprEvalStep *op,
+									ExprContext *econtext);
 
 /*
  * Discriminator for ExprEvalSteps.
@@ -131,6 +137,7 @@ typedef enum ExprEvalOp
 	/* evaluate PARAM_EXEC/EXTERN parameters */
 	EEOP_PARAM_EXEC,
 	EEOP_PARAM_EXTERN,
+	EEOP_PARAM_CALLBACK,
 
 	/* return CaseTestExpr value */
 	EEOP_CASE_TESTVAL,
@@ -330,6 +337,15 @@ typedef struct ExprEvalStep
 			int			paramid;	/* numeric ID for parameter */
 			Oid			paramtype;	/* OID of parameter's datatype */
 		}			param;
+
+		/* for EEOP_PARAM_CALLBACK */
+		struct
+		{
+			ExecEvalSubroutine paramfunc;	/* add-on evaluation subroutine */
+			void	   *paramarg;	/* private data for same */
+			int			paramid;	/* numeric ID for parameter */
+			Oid			paramtype;	/* OID of parameter's datatype */
+		}			cparam;
 
 		/* for EEOP_CASE_TESTVAL/DOMAIN_TESTVAL */
 		struct
@@ -598,8 +614,11 @@ typedef struct ArrayRefState
 } ArrayRefState;
 
 
-extern void ExecReadyInterpretedExpr(ExprState *state);
+/* functions in execExpr.c */
+extern void ExprEvalPushStep(ExprState *es, const ExprEvalStep *s);
 
+/* functions in execExprInterp.c */
+extern void ExecReadyInterpretedExpr(ExprState *state);
 extern ExprEvalOp ExecEvalStepOp(ExprState *state, ExprEvalStep *op);
 
 /*

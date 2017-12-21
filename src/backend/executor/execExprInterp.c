@@ -335,6 +335,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_BOOLTEST_IS_NOT_FALSE,
 		&&CASE_EEOP_PARAM_EXEC,
 		&&CASE_EEOP_PARAM_EXTERN,
+		&&CASE_EEOP_PARAM_CALLBACK,
 		&&CASE_EEOP_CASE_TESTVAL,
 		&&CASE_EEOP_MAKE_READONLY,
 		&&CASE_EEOP_IOCOERCE,
@@ -1044,6 +1045,13 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			/* out of line implementation: too large */
 			ExecEvalParamExtern(state, op, econtext);
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_PARAM_CALLBACK)
+		{
+			/* allow an extension module to supply a PARAM_EXTERN value */
+			op->d.cparam.paramfunc(state, op, econtext);
 			EEO_NEXT();
 		}
 
@@ -1967,11 +1975,14 @@ ExecEvalParamExtern(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	if (likely(paramInfo &&
 			   paramId > 0 && paramId <= paramInfo->numParams))
 	{
-		ParamExternData *prm = &paramInfo->params[paramId - 1];
+		ParamExternData *prm;
+		ParamExternData prmdata;
 
 		/* give hook a chance in case parameter is dynamic */
-		if (!OidIsValid(prm->ptype) && paramInfo->paramFetch != NULL)
-			paramInfo->paramFetch(paramInfo, paramId);
+		if (paramInfo->paramFetch != NULL)
+			prm = paramInfo->paramFetch(paramInfo, paramId, false, &prmdata);
+		else
+			prm = &paramInfo->params[paramId - 1];
 
 		if (likely(OidIsValid(prm->ptype)))
 		{

@@ -55,22 +55,21 @@ typedef struct LastAttnumInfo
 } LastAttnumInfo;
 
 static void ExecReadyExpr(ExprState *state);
-static void ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
+static void ExecInitExprRec(Expr *node, ExprState *state,
 				Datum *resv, bool *resnull);
-static void ExprEvalPushStep(ExprState *es, const ExprEvalStep *s);
 static void ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args,
-			 Oid funcid, Oid inputcollid, PlanState *parent,
+			 Oid funcid, Oid inputcollid,
 			 ExprState *state);
 static void ExecInitExprSlots(ExprState *state, Node *node);
 static bool get_last_attnums_walker(Node *node, LastAttnumInfo *info);
 static void ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable,
-					PlanState *parent);
+					ExprState *state);
 static void ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
-				 PlanState *parent, ExprState *state,
+				 ExprState *state,
 				 Datum *resv, bool *resnull);
 static bool isAssignmentIndirectionExpr(Expr *expr);
 static void ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
-					   PlanState *parent, ExprState *state,
+					   ExprState *state,
 					   Datum *resv, bool *resnull);
 
 
@@ -122,12 +121,51 @@ ExecInitExpr(Expr *node, PlanState *parent)
 	/* Initialize ExprState with empty step list */
 	state = makeNode(ExprState);
 	state->expr = node;
+	state->parent = parent;
+	state->ext_params = NULL;
 
 	/* Insert EEOP_*_FETCHSOME steps as needed */
 	ExecInitExprSlots(state, (Node *) node);
 
 	/* Compile the expression proper */
-	ExecInitExprRec(node, parent, state, &state->resvalue, &state->resnull);
+	ExecInitExprRec(node, state, &state->resvalue, &state->resnull);
+
+	/* Finally, append a DONE step */
+	scratch.opcode = EEOP_DONE;
+	ExprEvalPushStep(state, &scratch);
+
+	ExecReadyExpr(state);
+
+	return state;
+}
+
+/*
+ * ExecInitExprWithParams: prepare a standalone expression tree for execution
+ *
+ * This is the same as ExecInitExpr, except that there is no parent PlanState,
+ * and instead we may have a ParamListInfo describing PARAM_EXTERN Params.
+ */
+ExprState *
+ExecInitExprWithParams(Expr *node, ParamListInfo ext_params)
+{
+	ExprState  *state;
+	ExprEvalStep scratch;
+
+	/* Special case: NULL expression produces a NULL ExprState pointer */
+	if (node == NULL)
+		return NULL;
+
+	/* Initialize ExprState with empty step list */
+	state = makeNode(ExprState);
+	state->expr = node;
+	state->parent = NULL;
+	state->ext_params = ext_params;
+
+	/* Insert EEOP_*_FETCHSOME steps as needed */
+	ExecInitExprSlots(state, (Node *) node);
+
+	/* Compile the expression proper */
+	ExecInitExprRec(node, state, &state->resvalue, &state->resnull);
 
 	/* Finally, append a DONE step */
 	scratch.opcode = EEOP_DONE;
@@ -172,6 +210,9 @@ ExecInitQual(List *qual, PlanState *parent)
 
 	state = makeNode(ExprState);
 	state->expr = (Expr *) qual;
+	state->parent = parent;
+	state->ext_params = NULL;
+
 	/* mark expression as to be used with ExecQual() */
 	state->flags = EEO_FLAG_IS_QUAL;
 
@@ -198,7 +239,7 @@ ExecInitQual(List *qual, PlanState *parent)
 		Expr	   *node = (Expr *) lfirst(lc);
 
 		/* first evaluate expression */
-		ExecInitExprRec(node, parent, state, &state->resvalue, &state->resnull);
+		ExecInitExprRec(node, state, &state->resvalue, &state->resnull);
 
 		/* then emit EEOP_QUAL to detect if it's false (or null) */
 		scratch.d.qualexpr.jumpdone = -1;
@@ -314,6 +355,9 @@ ExecBuildProjectionInfo(List *targetList,
 	projInfo->pi_state.tag.type = T_ExprState;
 	state = &projInfo->pi_state;
 	state->expr = (Expr *) targetList;
+	state->parent = parent;
+	state->ext_params = NULL;
+
 	state->resultslot = slot;
 
 	/* Insert EEOP_*_FETCHSOME steps as needed */
@@ -398,7 +442,7 @@ ExecBuildProjectionInfo(List *targetList,
 			 * matter) can change between executions.  We instead evaluate
 			 * into the ExprState's resvalue/resnull and then move.
 			 */
-			ExecInitExprRec(tle->expr, parent, state,
+			ExecInitExprRec(tle->expr, state,
 							&state->resvalue, &state->resnull);
 
 			/*
@@ -581,12 +625,11 @@ ExecReadyExpr(ExprState *state)
  * possibly recursing into sub-expressions of node.
  *
  * node - expression to evaluate
- * parent - parent executor node (or NULL if a standalone expression)
  * state - ExprState to whose ->steps to append the necessary operations
  * resv / resnull - where to store the result of the node into
  */
 static void
-ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
+ExecInitExprRec(Expr *node, ExprState *state,
 				Datum *resv, bool *resnull)
 {
 	ExprEvalStep scratch;
@@ -609,7 +652,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				if (variable->varattno == InvalidAttrNumber)
 				{
 					/* whole-row Var */
-					ExecInitWholeRowVar(&scratch, variable, parent);
+					ExecInitWholeRowVar(&scratch, variable, state);
 				}
 				else if (variable->varattno <= 0)
 				{
@@ -674,6 +717,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 		case T_Param:
 			{
 				Param	   *param = (Param *) node;
+				ParamListInfo params;
 
 				switch (param->paramkind)
 				{
@@ -681,19 +725,41 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 						scratch.opcode = EEOP_PARAM_EXEC;
 						scratch.d.param.paramid = param->paramid;
 						scratch.d.param.paramtype = param->paramtype;
+						ExprEvalPushStep(state, &scratch);
 						break;
 					case PARAM_EXTERN:
-						scratch.opcode = EEOP_PARAM_EXTERN;
-						scratch.d.param.paramid = param->paramid;
-						scratch.d.param.paramtype = param->paramtype;
+
+						/*
+						 * If we have a relevant ParamCompileHook, use it;
+						 * otherwise compile a standard EEOP_PARAM_EXTERN
+						 * step.  ext_params, if supplied, takes precedence
+						 * over info from the parent node's EState (if any).
+						 */
+						if (state->ext_params)
+							params = state->ext_params;
+						else if (state->parent &&
+								 state->parent->state)
+							params = state->parent->state->es_param_list_info;
+						else
+							params = NULL;
+						if (params && params->paramCompile)
+						{
+							params->paramCompile(params, param, state,
+												 resv, resnull);
+						}
+						else
+						{
+							scratch.opcode = EEOP_PARAM_EXTERN;
+							scratch.d.param.paramid = param->paramid;
+							scratch.d.param.paramtype = param->paramtype;
+							ExprEvalPushStep(state, &scratch);
+						}
 						break;
 					default:
 						elog(ERROR, "unrecognized paramkind: %d",
 							 (int) param->paramkind);
 						break;
 				}
-
-				ExprEvalPushStep(state, &scratch);
 				break;
 			}
 
@@ -706,9 +772,9 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				scratch.d.aggref.astate = astate;
 				astate->aggref = aggref;
 
-				if (parent && IsA(parent, AggState))
+				if (state->parent && IsA(state->parent, AggState))
 				{
-					AggState   *aggstate = (AggState *) parent;
+					AggState   *aggstate = (AggState *) state->parent;
 
 					aggstate->aggs = lcons(astate, aggstate->aggs);
 					aggstate->numaggs++;
@@ -728,14 +794,14 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				GroupingFunc *grp_node = (GroupingFunc *) node;
 				Agg		   *agg;
 
-				if (!parent || !IsA(parent, AggState) ||
-					!IsA(parent->plan, Agg))
+				if (!state->parent || !IsA(state->parent, AggState) ||
+					!IsA(state->parent->plan, Agg))
 					elog(ERROR, "GroupingFunc found in non-Agg plan node");
 
 				scratch.opcode = EEOP_GROUPING_FUNC;
-				scratch.d.grouping_func.parent = (AggState *) parent;
+				scratch.d.grouping_func.parent = (AggState *) state->parent;
 
-				agg = (Agg *) (parent->plan);
+				agg = (Agg *) (state->parent->plan);
 
 				if (agg->groupingSets)
 					scratch.d.grouping_func.clauses = grp_node->cols;
@@ -753,9 +819,9 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 
 				wfstate->wfunc = wfunc;
 
-				if (parent && IsA(parent, WindowAggState))
+				if (state->parent && IsA(state->parent, WindowAggState))
 				{
-					WindowAggState *winstate = (WindowAggState *) parent;
+					WindowAggState *winstate = (WindowAggState *) state->parent;
 					int			nfuncs;
 
 					winstate->funcs = lcons(wfstate, winstate->funcs);
@@ -764,9 +830,10 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 						winstate->numaggs++;
 
 					/* for now initialize agg using old style expressions */
-					wfstate->args = ExecInitExprList(wfunc->args, parent);
+					wfstate->args = ExecInitExprList(wfunc->args,
+													 state->parent);
 					wfstate->aggfilter = ExecInitExpr(wfunc->aggfilter,
-													  parent);
+													  state->parent);
 
 					/*
 					 * Complain if the windowfunc's arguments contain any
@@ -795,7 +862,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 			{
 				ArrayRef   *aref = (ArrayRef *) node;
 
-				ExecInitArrayRef(&scratch, aref, parent, state, resv, resnull);
+				ExecInitArrayRef(&scratch, aref, state, resv, resnull);
 				break;
 			}
 
@@ -805,7 +872,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 
 				ExecInitFunc(&scratch, node,
 							 func->args, func->funcid, func->inputcollid,
-							 parent, state);
+							 state);
 				ExprEvalPushStep(state, &scratch);
 				break;
 			}
@@ -816,7 +883,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 
 				ExecInitFunc(&scratch, node,
 							 op->args, op->opfuncid, op->inputcollid,
-							 parent, state);
+							 state);
 				ExprEvalPushStep(state, &scratch);
 				break;
 			}
@@ -827,7 +894,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 
 				ExecInitFunc(&scratch, node,
 							 op->args, op->opfuncid, op->inputcollid,
-							 parent, state);
+							 state);
 
 				/*
 				 * Change opcode of call instruction to EEOP_DISTINCT.
@@ -849,7 +916,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 
 				ExecInitFunc(&scratch, node,
 							 op->args, op->opfuncid, op->inputcollid,
-							 parent, state);
+							 state);
 
 				/*
 				 * Change opcode of call instruction to EEOP_NULLIF.
@@ -896,7 +963,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 										 opexpr->inputcollid, NULL, NULL);
 
 				/* Evaluate scalar directly into left function argument */
-				ExecInitExprRec(scalararg, parent, state,
+				ExecInitExprRec(scalararg, state,
 								&fcinfo->arg[0], &fcinfo->argnull[0]);
 
 				/*
@@ -905,7 +972,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				 * be overwritten by EEOP_SCALARARRAYOP, and will not be
 				 * passed to any other expression.
 				 */
-				ExecInitExprRec(arrayarg, parent, state, resv, resnull);
+				ExecInitExprRec(arrayarg, state, resv, resnull);
 
 				/* And perform the operation */
 				scratch.opcode = EEOP_SCALARARRAYOP;
@@ -949,7 +1016,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					Expr	   *arg = (Expr *) lfirst(lc);
 
 					/* Evaluate argument into our output variable */
-					ExecInitExprRec(arg, parent, state, resv, resnull);
+					ExecInitExprRec(arg, state, resv, resnull);
 
 					/* Perform the appropriate step type */
 					switch (boolexpr->boolop)
@@ -1009,13 +1076,14 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				SubPlan    *subplan = (SubPlan *) node;
 				SubPlanState *sstate;
 
-				if (!parent)
+				if (!state->parent)
 					elog(ERROR, "SubPlan found with no parent plan");
 
-				sstate = ExecInitSubPlan(subplan, parent);
+				sstate = ExecInitSubPlan(subplan, state->parent);
 
-				/* add SubPlanState nodes to parent->subPlan */
-				parent->subPlan = lappend(parent->subPlan, sstate);
+				/* add SubPlanState nodes to state->parent->subPlan */
+				state->parent->subPlan = lappend(state->parent->subPlan,
+												 sstate);
 
 				scratch.opcode = EEOP_SUBPLAN;
 				scratch.d.subplan.sstate = sstate;
@@ -1029,10 +1097,10 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				AlternativeSubPlan *asplan = (AlternativeSubPlan *) node;
 				AlternativeSubPlanState *asstate;
 
-				if (!parent)
+				if (!state->parent)
 					elog(ERROR, "AlternativeSubPlan found with no parent plan");
 
-				asstate = ExecInitAlternativeSubPlan(asplan, parent);
+				asstate = ExecInitAlternativeSubPlan(asplan, state->parent);
 
 				scratch.opcode = EEOP_ALTERNATIVE_SUBPLAN;
 				scratch.d.alternative_subplan.asstate = asstate;
@@ -1046,7 +1114,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				FieldSelect *fselect = (FieldSelect *) node;
 
 				/* evaluate row/record argument into result area */
-				ExecInitExprRec(fselect->arg, parent, state, resv, resnull);
+				ExecInitExprRec(fselect->arg, state, resv, resnull);
 
 				/* and extract field */
 				scratch.opcode = EEOP_FIELDSELECT;
@@ -1083,7 +1151,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				*descp = NULL;
 
 				/* emit code to evaluate the composite input value */
-				ExecInitExprRec(fstore->arg, parent, state, resv, resnull);
+				ExecInitExprRec(fstore->arg, state, resv, resnull);
 
 				/* next, deform the input tuple into our workspace */
 				scratch.opcode = EEOP_FIELDSTORE_DEFORM;
@@ -1134,7 +1202,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					state->innermost_caseval = &values[fieldnum - 1];
 					state->innermost_casenull = &nulls[fieldnum - 1];
 
-					ExecInitExprRec(e, parent, state,
+					ExecInitExprRec(e, state,
 									&values[fieldnum - 1],
 									&nulls[fieldnum - 1]);
 
@@ -1158,7 +1226,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				/* relabel doesn't need to do anything at runtime */
 				RelabelType *relabel = (RelabelType *) node;
 
-				ExecInitExprRec(relabel->arg, parent, state, resv, resnull);
+				ExecInitExprRec(relabel->arg, state, resv, resnull);
 				break;
 			}
 
@@ -1171,7 +1239,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				FunctionCallInfo fcinfo_in;
 
 				/* evaluate argument into step's result area */
-				ExecInitExprRec(iocoerce->arg, parent, state, resv, resnull);
+				ExecInitExprRec(iocoerce->arg, state, resv, resnull);
 
 				/*
 				 * Prepare both output and input function calls, to be
@@ -1228,7 +1296,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				ExprState  *elemstate;
 
 				/* evaluate argument into step's result area */
-				ExecInitExprRec(acoerce->arg, parent, state, resv, resnull);
+				ExecInitExprRec(acoerce->arg, state, resv, resnull);
 
 				resultelemtype = get_element_type(acoerce->resulttype);
 				if (!OidIsValid(resultelemtype))
@@ -1244,10 +1312,13 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				 */
 				elemstate = makeNode(ExprState);
 				elemstate->expr = acoerce->elemexpr;
+				elemstate->parent = state->parent;
+				elemstate->ext_params = state->ext_params;
+
 				elemstate->innermost_caseval = (Datum *) palloc(sizeof(Datum));
 				elemstate->innermost_casenull = (bool *) palloc(sizeof(bool));
 
-				ExecInitExprRec(acoerce->elemexpr, parent, elemstate,
+				ExecInitExprRec(acoerce->elemexpr, elemstate,
 								&elemstate->resvalue, &elemstate->resnull);
 
 				if (elemstate->steps_len == 1 &&
@@ -1290,7 +1361,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				ConvertRowtypeExpr *convert = (ConvertRowtypeExpr *) node;
 
 				/* evaluate argument into step's result area */
-				ExecInitExprRec(convert->arg, parent, state, resv, resnull);
+				ExecInitExprRec(convert->arg, state, resv, resnull);
 
 				/* and push conversion step */
 				scratch.opcode = EEOP_CONVERT_ROWTYPE;
@@ -1324,7 +1395,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					caseval = palloc(sizeof(Datum));
 					casenull = palloc(sizeof(bool));
 
-					ExecInitExprRec(caseExpr->arg, parent, state,
+					ExecInitExprRec(caseExpr->arg, state,
 									caseval, casenull);
 
 					/*
@@ -1375,7 +1446,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					state->innermost_casenull = casenull;
 
 					/* evaluate condition into CASE's result variables */
-					ExecInitExprRec(when->expr, parent, state, resv, resnull);
+					ExecInitExprRec(when->expr, state, resv, resnull);
 
 					state->innermost_caseval = save_innermost_caseval;
 					state->innermost_casenull = save_innermost_casenull;
@@ -1390,7 +1461,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					 * If WHEN result is true, evaluate THEN result, storing
 					 * it into the CASE's result variables.
 					 */
-					ExecInitExprRec(when->result, parent, state, resv, resnull);
+					ExecInitExprRec(when->result, state, resv, resnull);
 
 					/* Emit JUMP step to jump to end of CASE's code */
 					scratch.opcode = EEOP_JUMP;
@@ -1415,7 +1486,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				Assert(caseExpr->defresult);
 
 				/* evaluate ELSE expr into CASE's result variables */
-				ExecInitExprRec(caseExpr->defresult, parent, state,
+				ExecInitExprRec(caseExpr->defresult, state,
 								resv, resnull);
 
 				/* adjust jump targets */
@@ -1484,7 +1555,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				{
 					Expr	   *e = (Expr *) lfirst(lc);
 
-					ExecInitExprRec(e, parent, state,
+					ExecInitExprRec(e, state,
 									&scratch.d.arrayexpr.elemvalues[elemoff],
 									&scratch.d.arrayexpr.elemnulls[elemoff]);
 					elemoff++;
@@ -1578,7 +1649,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					}
 
 					/* Evaluate column expr into appropriate workspace slot */
-					ExecInitExprRec(e, parent, state,
+					ExecInitExprRec(e, state,
 									&scratch.d.row.elemvalues[i],
 									&scratch.d.row.elemnulls[i]);
 					i++;
@@ -1667,9 +1738,9 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					 */
 
 					/* evaluate left and right args directly into fcinfo */
-					ExecInitExprRec(left_expr, parent, state,
+					ExecInitExprRec(left_expr, state,
 									&fcinfo->arg[0], &fcinfo->argnull[0]);
-					ExecInitExprRec(right_expr, parent, state,
+					ExecInitExprRec(right_expr, state,
 									&fcinfo->arg[1], &fcinfo->argnull[1]);
 
 					scratch.opcode = EEOP_ROWCOMPARE_STEP;
@@ -1738,7 +1809,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					Expr	   *e = (Expr *) lfirst(lc);
 
 					/* evaluate argument, directly into result datum */
-					ExecInitExprRec(e, parent, state, resv, resnull);
+					ExecInitExprRec(e, state, resv, resnull);
 
 					/* if it's not null, skip to end of COALESCE expr */
 					scratch.opcode = EEOP_JUMP_IF_NOT_NULL;
@@ -1820,7 +1891,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				{
 					Expr	   *e = (Expr *) lfirst(lc);
 
-					ExecInitExprRec(e, parent, state,
+					ExecInitExprRec(e, state,
 									&scratch.d.minmax.values[off],
 									&scratch.d.minmax.nulls[off]);
 					off++;
@@ -1886,7 +1957,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				{
 					Expr	   *e = (Expr *) lfirst(arg);
 
-					ExecInitExprRec(e, parent, state,
+					ExecInitExprRec(e, state,
 									&scratch.d.xmlexpr.named_argvalue[off],
 									&scratch.d.xmlexpr.named_argnull[off]);
 					off++;
@@ -1897,7 +1968,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				{
 					Expr	   *e = (Expr *) lfirst(arg);
 
-					ExecInitExprRec(e, parent, state,
+					ExecInitExprRec(e, state,
 									&scratch.d.xmlexpr.argvalue[off],
 									&scratch.d.xmlexpr.argnull[off]);
 					off++;
@@ -1935,7 +2006,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				scratch.d.nulltest_row.argdesc = NULL;
 
 				/* first evaluate argument into result variable */
-				ExecInitExprRec(ntest->arg, parent, state,
+				ExecInitExprRec(ntest->arg, state,
 								resv, resnull);
 
 				/* then push the test of that argument */
@@ -1953,7 +2024,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				 * and will get overwritten by the below EEOP_BOOLTEST_IS_*
 				 * step.
 				 */
-				ExecInitExprRec(btest->arg, parent, state, resv, resnull);
+				ExecInitExprRec(btest->arg, state, resv, resnull);
 
 				switch (btest->booltesttype)
 				{
@@ -1990,7 +2061,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 			{
 				CoerceToDomain *ctest = (CoerceToDomain *) node;
 
-				ExecInitCoerceToDomain(&scratch, ctest, parent, state,
+				ExecInitCoerceToDomain(&scratch, ctest, state,
 									   resv, resnull);
 				break;
 			}
@@ -2046,7 +2117,7 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
  * Note that this potentially re-allocates es->steps, therefore no pointer
  * into that array may be used while the expression is still being built.
  */
-static void
+void
 ExprEvalPushStep(ExprState *es, const ExprEvalStep *s)
 {
 	if (es->steps_alloc == 0)
@@ -2074,7 +2145,7 @@ ExprEvalPushStep(ExprState *es, const ExprEvalStep *s)
  */
 static void
 ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
-			 Oid inputcollid, PlanState *parent, ExprState *state)
+			 Oid inputcollid, ExprState *state)
 {
 	int			nargs = list_length(args);
 	AclResult	aclresult;
@@ -2126,8 +2197,9 @@ ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that cannot accept a set"),
-				 parent ? executor_errposition(parent->state,
-											   exprLocation((Node *) node)) : 0));
+				 state->parent ?
+				 executor_errposition(state->parent->state,
+									  exprLocation((Node *) node)) : 0));
 
 	/* Build code to evaluate arguments directly into the fcinfo struct */
 	argno = 0;
@@ -2148,7 +2220,7 @@ ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
 		}
 		else
 		{
-			ExecInitExprRec(arg, parent, state,
+			ExecInitExprRec(arg, state,
 							&fcinfo->arg[argno], &fcinfo->argnull[argno]);
 		}
 		argno++;
@@ -2260,8 +2332,10 @@ get_last_attnums_walker(Node *node, LastAttnumInfo *info)
  * The caller still has to push the step.
  */
 static void
-ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable, PlanState *parent)
+ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable, ExprState *state)
 {
+	PlanState  *parent = state->parent;
+
 	/* fill in all but the target */
 	scratch->opcode = EEOP_WHOLEROW;
 	scratch->d.wholerow.var = variable;
@@ -2331,7 +2405,7 @@ ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable, PlanState *parent)
  * Prepare evaluation of an ArrayRef expression.
  */
 static void
-ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref, PlanState *parent,
+ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
 				 ExprState *state, Datum *resv, bool *resnull)
 {
 	bool		isAssignment = (aref->refassgnexpr != NULL);
@@ -2355,7 +2429,7 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref, PlanState *parent,
 	 * be overwritten by the final EEOP_ARRAYREF_FETCH/ASSIGN step, which is
 	 * pushed last.
 	 */
-	ExecInitExprRec(aref->refexpr, parent, state, resv, resnull);
+	ExecInitExprRec(aref->refexpr, state, resv, resnull);
 
 	/*
 	 * If refexpr yields NULL, and it's a fetch, then result is NULL.  We can
@@ -2401,7 +2475,7 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref, PlanState *parent,
 		arefstate->upperprovided[i] = true;
 
 		/* Each subscript is evaluated into subscriptvalue/subscriptnull */
-		ExecInitExprRec(e, parent, state,
+		ExecInitExprRec(e, state,
 						&arefstate->subscriptvalue, &arefstate->subscriptnull);
 
 		/* ... and then ARRAYREF_SUBSCRIPT saves it into step's workspace */
@@ -2434,7 +2508,7 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref, PlanState *parent,
 		arefstate->lowerprovided[i] = true;
 
 		/* Each subscript is evaluated into subscriptvalue/subscriptnull */
-		ExecInitExprRec(e, parent, state,
+		ExecInitExprRec(e, state,
 						&arefstate->subscriptvalue, &arefstate->subscriptnull);
 
 		/* ... and then ARRAYREF_SUBSCRIPT saves it into step's workspace */
@@ -2488,7 +2562,7 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref, PlanState *parent,
 		state->innermost_casenull = &arefstate->prevnull;
 
 		/* evaluate replacement value into replacevalue/replacenull */
-		ExecInitExprRec(aref->refassgnexpr, parent, state,
+		ExecInitExprRec(aref->refassgnexpr, state,
 						&arefstate->replacevalue, &arefstate->replacenull);
 
 		state->innermost_caseval = save_innermost_caseval;
@@ -2566,8 +2640,7 @@ isAssignmentIndirectionExpr(Expr *expr)
  */
 static void
 ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
-					   PlanState *parent, ExprState *state,
-					   Datum *resv, bool *resnull)
+					   ExprState *state, Datum *resv, bool *resnull)
 {
 	ExprEvalStep scratch2;
 	DomainConstraintRef *constraint_ref;
@@ -2587,7 +2660,7 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 	 * if there's constraint failures there'll be errors, otherwise it's what
 	 * needs to be returned.
 	 */
-	ExecInitExprRec(ctest->arg, parent, state, resv, resnull);
+	ExecInitExprRec(ctest->arg, state, resv, resnull);
 
 	/*
 	 * Note: if the argument is of varlena type, it could be a R/W expanded
@@ -2684,7 +2757,7 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 				state->innermost_domainnull = domainnull;
 
 				/* evaluate check expression value */
-				ExecInitExprRec(con->check_expr, parent, state,
+				ExecInitExprRec(con->check_expr, state,
 								scratch->d.domaincheck.checkvalue,
 								scratch->d.domaincheck.checknull);
 

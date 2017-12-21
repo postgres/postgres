@@ -2259,10 +2259,11 @@ _SPI_convert_params(int nargs, Oid *argtypes,
 		/* we have static list of params, so no hooks needed */
 		paramLI->paramFetch = NULL;
 		paramLI->paramFetchArg = NULL;
+		paramLI->paramCompile = NULL;
+		paramLI->paramCompileArg = NULL;
 		paramLI->parserSetup = NULL;
 		paramLI->parserSetupArg = NULL;
 		paramLI->numParams = nargs;
-		paramLI->paramMask = NULL;
 
 		for (i = 0; i < nargs; i++)
 		{

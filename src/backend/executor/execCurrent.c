@@ -216,11 +216,14 @@ fetch_cursor_param_value(ExprContext *econtext, int paramId)
 	if (paramInfo &&
 		paramId > 0 && paramId <= paramInfo->numParams)
 	{
-		ParamExternData *prm = &paramInfo->params[paramId - 1];
+		ParamExternData *prm;
+		ParamExternData prmdata;
 
 		/* give hook a chance in case parameter is dynamic */
-		if (!OidIsValid(prm->ptype) && paramInfo->paramFetch != NULL)
-			paramInfo->paramFetch(paramInfo, paramId);
+		if (paramInfo->paramFetch != NULL)
+			prm = paramInfo->paramFetch(paramInfo, paramId, false, &prmdata);
+		else
+			prm = &paramInfo->params[paramId - 1];
 
 		if (OidIsValid(prm->ptype) && !prm->isnull)
 		{

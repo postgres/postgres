@@ -2350,35 +2350,17 @@ plpgsql_adddatum(PLpgSQL_datum *new)
 
 /* ----------
  * plpgsql_finish_datums	Copy completed datum info into function struct.
- *
- * This is also responsible for building resettable_datums, a bitmapset
- * of the dnos of all ROW, REC, and RECFIELD datums in the function.
  * ----------
  */
 static void
 plpgsql_finish_datums(PLpgSQL_function *function)
 {
-	Bitmapset  *resettable_datums = NULL;
 	int			i;
 
 	function->ndatums = plpgsql_nDatums;
 	function->datums = palloc(sizeof(PLpgSQL_datum *) * plpgsql_nDatums);
 	for (i = 0; i < plpgsql_nDatums; i++)
-	{
 		function->datums[i] = plpgsql_Datums[i];
-		switch (function->datums[i]->dtype)
-		{
-			case PLPGSQL_DTYPE_ROW:
-			case PLPGSQL_DTYPE_REC:
-			case PLPGSQL_DTYPE_RECFIELD:
-				resettable_datums = bms_add_member(resettable_datums, i);
-				break;
-
-			default:
-				break;
-		}
-	}
-	function->resettable_datums = resettable_datums;
 }
 
 
