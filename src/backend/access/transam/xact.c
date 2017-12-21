@@ -4596,6 +4596,9 @@ AbortSubTransaction(void)
 	/* Reset WAL record construction state */
 	XLogResetInsertion();
 
+	/* Cancel condition variable sleep */
+	ConditionVariableCancelSleep();
+
 	/*
 	 * Also clean up any open wait for lock, since the lock manager will choke
 	 * if we try to wait for another lock before doing this.
