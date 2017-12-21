@@ -12,7 +12,7 @@ use convutils;
 
 # first generate UTF-8 --> SHIFT_JIS_2004 table
 
-my $this_script = $0;
+my $this_script = 'src/backend/utils/mb/Unicode/UCS_to_SHIFT_JIS_2004.pl';
 
 my $in_file = "sjis-0213-2004-std.txt";
 

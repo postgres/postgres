@@ -18,7 +18,7 @@
 use strict;
 use convutils;
 
-my $this_script = $0;
+my $this_script = 'src/backend/utils/mb/Unicode/UCS_to_most.pl';
 
 my %filename = (
 	'WIN866'     => 'CP866.TXT',

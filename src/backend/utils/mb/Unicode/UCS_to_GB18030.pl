@@ -16,7 +16,7 @@
 use strict;
 use convutils;
 
-my $this_script = $0;
+my $this_script = 'src/backend/utils/mb/Unicode/UCS_to_GB18030.pl';
 
 # Read the input
 
