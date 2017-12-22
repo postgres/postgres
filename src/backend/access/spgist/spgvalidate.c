@@ -22,6 +22,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/regproc.h"
 #include "utils/syscache.h"
 
@@ -52,6 +53,10 @@ spgvalidate(Oid opclassoid)
 	OpFamilyOpFuncGroup *opclassgroup;
 	int			i;
 	ListCell   *lc;
+	spgConfigIn	configIn;
+	spgConfigOut configOut;
+	Oid			configOutLefttype = InvalidOid;
+	Oid			configOutRighttype = InvalidOid;
 
 	/* Fetch opclass information */
 	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
@@ -74,6 +79,7 @@ spgvalidate(Oid opclassoid)
 	/* Fetch all operators and support functions of the opfamily */
 	oprlist = SearchSysCacheList1(AMOPSTRATEGY, ObjectIdGetDatum(opfamilyoid));
 	proclist = SearchSysCacheList1(AMPROCNUM, ObjectIdGetDatum(opfamilyoid));
+	grouplist = identify_opfamily_groups(oprlist, proclist);
 
 	/* Check individual support functions */
 	for (i = 0; i < proclist->n_members; i++)
@@ -100,6 +106,40 @@ spgvalidate(Oid opclassoid)
 		switch (procform->amprocnum)
 		{
 			case SPGIST_CONFIG_PROC:
+				ok = check_amproc_signature(procform->amproc, VOIDOID, true,
+											2, 2, INTERNALOID, INTERNALOID);
+				configIn.attType = procform->amproclefttype;
+				memset(&configOut, 0, sizeof(configOut));
+
+				OidFunctionCall2(procform->amproc,
+								 PointerGetDatum(&configIn),
+								 PointerGetDatum(&configOut));
+
+				configOutLefttype = procform->amproclefttype;
+				configOutRighttype = procform->amprocrighttype;
+
+				/*
+				 * When leaf and attribute types are the same, compress function
+				 * is not required and we set corresponding bit in functionset
+				 * for later group consistency check.
+				 */
+				if (!OidIsValid(configOut.leafType) ||
+					configOut.leafType == configIn.attType)
+				{
+					foreach(lc, grouplist)
+					{
+						OpFamilyOpFuncGroup *group = lfirst(lc);
+
+						if (group->lefttype == procform->amproclefttype &&
+							group->righttype == procform->amprocrighttype)
+						{
+							group->functionset |=
+								((uint64) 1) << SPGIST_COMPRESS_PROC;
+							break;
+						}
+					}
+				}
+				break;
 			case SPGIST_CHOOSE_PROC:
 			case SPGIST_PICKSPLIT_PROC:
 			case SPGIST_INNER_CONSISTENT_PROC:
@@ -109,6 +149,15 @@ spgvalidate(Oid opclassoid)
 			case SPGIST_LEAF_CONSISTENT_PROC:
 				ok = check_amproc_signature(procform->amproc, BOOLOID, true,
 											2, 2, INTERNALOID, INTERNALOID);
+				break;
+			case SPGIST_COMPRESS_PROC:
+				if (configOutLefttype != procform->amproclefttype ||
+					configOutRighttype != procform->amprocrighttype)
+					ok = false;
+				else
+					ok = check_amproc_signature(procform->amproc,
+												configOut.leafType, true,
+												1, 1, procform->amproclefttype);
 				break;
 			default:
 				ereport(INFO,
@@ -178,7 +227,6 @@ spgvalidate(Oid opclassoid)
 	}
 
 	/* Now check for inconsistent groups of operators/functions */
-	grouplist = identify_opfamily_groups(oprlist, proclist);
 	opclassgroup = NULL;
 	foreach(lc, grouplist)
 	{

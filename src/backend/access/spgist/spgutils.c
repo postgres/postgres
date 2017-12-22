@@ -125,6 +125,22 @@ spgGetCache(Relation index)
 
 		/* Get the information we need about each relevant datatype */
 		fillTypeDesc(&cache->attType, atttype);
+
+		if (OidIsValid(cache->config.leafType) &&
+			cache->config.leafType != atttype)
+		{
+			if (!OidIsValid(index_getprocid(index, 1, SPGIST_COMPRESS_PROC)))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("compress method must not defined when leaf type is different from input type")));
+
+			fillTypeDesc(&cache->attLeafType, cache->config.leafType);
+		}
+		else
+		{
+			cache->attLeafType = cache->attType;
+		}
+
 		fillTypeDesc(&cache->attPrefixType, cache->config.prefixType);
 		fillTypeDesc(&cache->attLabelType, cache->config.labelType);
 
@@ -164,6 +180,7 @@ initSpGistState(SpGistState *state, Relation index)
 
 	state->config = cache->config;
 	state->attType = cache->attType;
+	state->attLeafType = cache->attLeafType;
 	state->attPrefixType = cache->attPrefixType;
 	state->attLabelType = cache->attLabelType;
 
@@ -618,7 +635,7 @@ spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
 	/* compute space needed (note result is already maxaligned) */
 	size = SGLTHDRSZ;
 	if (!isnull)
-		size += SpGistGetTypeSize(&state->attType, datum);
+		size += SpGistGetTypeSize(&state->attLeafType, datum);
 
 	/*
 	 * Ensure that we can replace the tuple with a dead tuple later.  This
@@ -634,7 +651,7 @@ spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
 	tup->nextOffset = InvalidOffsetNumber;
 	tup->heapPtr = *heapPtr;
 	if (!isnull)
-		memcpyDatum(SGLTDATAPTR(tup), &state->attType, datum);
+		memcpyDatum(SGLTDATAPTR(tup), &state->attLeafType, datum);
 
 	return tup;
 }

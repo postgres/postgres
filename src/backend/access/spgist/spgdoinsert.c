@@ -1906,14 +1906,37 @@ spgdoinsert(Relation index, SpGistState *state,
 		procinfo = index_getprocinfo(index, 1, SPGIST_CHOOSE_PROC);
 
 	/*
-	 * Since we don't use index_form_tuple in this AM, we have to make sure
+	 * Prepare the leaf datum to insert.
+	 *
+	 * If an optional "compress" method is provided, then call it to form
+	 * the leaf datum from the input datum.  Otherwise store the input datum as
+	 * is.  Since we don't use index_form_tuple in this AM, we have to make sure
 	 * value to be inserted is not toasted; FormIndexDatum doesn't guarantee
-	 * that.
+	 * that.  But we assume the "compress" method to return an untoasted value.
 	 */
-	if (!isnull && state->attType.attlen == -1)
-		datum = PointerGetDatum(PG_DETOAST_DATUM(datum));
+	if (!isnull)
+	{
+		if (OidIsValid(index_getprocid(index, 1, SPGIST_COMPRESS_PROC)))
+		{
+			FmgrInfo   *compressProcinfo = NULL;
 
-	leafDatum = datum;
+			compressProcinfo = index_getprocinfo(index, 1, SPGIST_COMPRESS_PROC);
+			leafDatum = FunctionCall1Coll(compressProcinfo,
+										  index->rd_indcollation[0],
+										  datum);
+		}
+		else
+		{
+			Assert(state->attLeafType.type == state->attType.type);
+
+			if (state->attType.attlen == -1)
+				leafDatum = PointerGetDatum(PG_DETOAST_DATUM(datum));
+			else
+				leafDatum = datum;
+		}
+	}
+	else
+		leafDatum = (Datum) 0;
 
 	/*
 	 * Compute space needed for a leaf tuple containing the given datum.
@@ -1923,7 +1946,7 @@ spgdoinsert(Relation index, SpGistState *state,
 	 */
 	if (!isnull)
 		leafSize = SGLTHDRSZ + sizeof(ItemIdData) +
-			SpGistGetTypeSize(&state->attType, leafDatum);
+			SpGistGetTypeSize(&state->attLeafType, leafDatum);
 	else
 		leafSize = SGDTSIZE + sizeof(ItemIdData);
 
@@ -2138,7 +2161,7 @@ spgdoinsert(Relation index, SpGistState *state,
 					{
 						leafDatum = out.result.matchNode.restDatum;
 						leafSize = SGLTHDRSZ + sizeof(ItemIdData) +
-							SpGistGetTypeSize(&state->attType, leafDatum);
+							SpGistGetTypeSize(&state->attLeafType, leafDatum);
 					}
 
 					/*
