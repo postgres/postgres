@@ -592,12 +592,13 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	/* Identify the grouping semantics */
 	groupList = generate_setop_grouplist(op, tlist);
 
-	/* punt if nothing to group on (can this happen?) */
+	/* punt if nothing to group on (not worth fixing in back branches) */
 	if (groupList == NIL)
-	{
-		*sortClauses = NIL;
-		return plan;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 /* translator: %s is UNION, INTERSECT, or EXCEPT */
+				 errmsg("%s over no columns is not supported",
+						(op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT")));
 
 	/*
 	 * Estimate number of distinct groups that we'll need hashtable entries
@@ -736,12 +737,12 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 	/* Identify the grouping semantics */
 	groupList = generate_setop_grouplist(op, plan->targetlist);
 
-	/* punt if nothing to group on (can this happen?) */
+	/* punt if nothing to group on (not worth fixing in back branches) */
 	if (groupList == NIL)
-	{
-		*sortClauses = NIL;
-		return plan;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 /* translator: %s is UNION, INTERSECT, or EXCEPT */
+				 errmsg("%s over no columns is not supported", "UNION")));
 
 	/*
 	 * XXX for the moment, take the number of distinct groups as equal to the
