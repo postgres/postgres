@@ -553,6 +553,121 @@ SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1)))
 (5 rows)
 
 --
+-- Check behavior with empty select list (allowed since 9.4)
+--
+select union select;
+--
+(1 row)
+
+select intersect select;
+--
+(1 row)
+
+select except select;
+--
+(0 rows)
+
+-- check hashed implementation
+set enable_hashagg = true;
+set enable_sort = false;
+explain (costs off)
+select from generate_series(1,5) union select from generate_series(1,3);
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ HashAggregate
+   ->  Append
+         ->  Function Scan on generate_series
+         ->  Function Scan on generate_series generate_series_1
+(4 rows)
+
+explain (costs off)
+select from generate_series(1,5) intersect select from generate_series(1,3);
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ HashSetOp Intersect
+   ->  Append
+         ->  Subquery Scan on "*SELECT* 1"
+               ->  Function Scan on generate_series
+         ->  Subquery Scan on "*SELECT* 2"
+               ->  Function Scan on generate_series generate_series_1
+(6 rows)
+
+select from generate_series(1,5) union select from generate_series(1,3);
+--
+(1 row)
+
+select from generate_series(1,5) union all select from generate_series(1,3);
+--
+(8 rows)
+
+select from generate_series(1,5) intersect select from generate_series(1,3);
+--
+(1 row)
+
+select from generate_series(1,5) intersect all select from generate_series(1,3);
+--
+(3 rows)
+
+select from generate_series(1,5) except select from generate_series(1,3);
+--
+(0 rows)
+
+select from generate_series(1,5) except all select from generate_series(1,3);
+--
+(2 rows)
+
+-- check sorted implementation
+set enable_hashagg = false;
+set enable_sort = true;
+explain (costs off)
+select from generate_series(1,5) union select from generate_series(1,3);
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Unique
+   ->  Append
+         ->  Function Scan on generate_series
+         ->  Function Scan on generate_series generate_series_1
+(4 rows)
+
+explain (costs off)
+select from generate_series(1,5) intersect select from generate_series(1,3);
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ SetOp Intersect
+   ->  Append
+         ->  Subquery Scan on "*SELECT* 1"
+               ->  Function Scan on generate_series
+         ->  Subquery Scan on "*SELECT* 2"
+               ->  Function Scan on generate_series generate_series_1
+(6 rows)
+
+select from generate_series(1,5) union select from generate_series(1,3);
+--
+(1 row)
+
+select from generate_series(1,5) union all select from generate_series(1,3);
+--
+(8 rows)
+
+select from generate_series(1,5) intersect select from generate_series(1,3);
+--
+(1 row)
+
+select from generate_series(1,5) intersect all select from generate_series(1,3);
+--
+(3 rows)
+
+select from generate_series(1,5) except select from generate_series(1,3);
+--
+(0 rows)
+
+select from generate_series(1,5) except all select from generate_series(1,3);
+--
+(2 rows)
+
+reset enable_hashagg;
+reset enable_sort;
+--
 -- Check handling of a case with unknown constants.  We don't guarantee
 -- an undecorated constant will work in all cases, but historically this
 -- usage has worked, so test we don't break it.

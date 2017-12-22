@@ -711,10 +711,6 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 	/* Identify the grouping semantics */
 	groupList = generate_setop_grouplist(op, tlist);
 
-	/* punt if nothing to group on (can this happen?) */
-	if (groupList == NIL)
-		return path;
-
 	/*
 	 * Estimate number of distinct groups that we'll need hashtable entries
 	 * for; this is the size of the left-hand input for EXCEPT, or the smaller
@@ -741,7 +737,7 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 								   dNumGroups, dNumOutputRows,
 								   (op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT");
 
-	if (!use_hash)
+	if (groupList && !use_hash)
 		path = (Path *) create_sort_path(root,
 										 result_rel,
 										 path,
@@ -864,10 +860,6 @@ make_union_unique(SetOperationStmt *op, Path *path, List *tlist,
 	/* Identify the grouping semantics */
 	groupList = generate_setop_grouplist(op, tlist);
 
-	/* punt if nothing to group on (can this happen?) */
-	if (groupList == NIL)
-		return path;
-
 	/*
 	 * XXX for the moment, take the number of distinct groups as equal to the
 	 * total input size, ie, the worst case.  This is too conservative, but we
@@ -898,13 +890,15 @@ make_union_unique(SetOperationStmt *op, Path *path, List *tlist,
 	else
 	{
 		/* Sort and Unique */
-		path = (Path *) create_sort_path(root,
-										 result_rel,
-										 path,
-										 make_pathkeys_for_sortclauses(root,
-																	   groupList,
-																	   tlist),
-										 -1.0);
+		if (groupList)
+			path = (Path *)
+				create_sort_path(root,
+								 result_rel,
+								 path,
+								 make_pathkeys_for_sortclauses(root,
+															   groupList,
+															   tlist),
+								 -1.0);
 		/* We have to manually jam the right tlist into the path; ick */
 		path->pathtarget = create_pathtarget(root, tlist);
 		path = (Path *) create_upper_unique_path(root,

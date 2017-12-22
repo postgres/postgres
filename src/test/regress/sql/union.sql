@@ -191,6 +191,49 @@ SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1)))
 (((((select * from int8_tbl)))));
 
 --
+-- Check behavior with empty select list (allowed since 9.4)
+--
+
+select union select;
+select intersect select;
+select except select;
+
+-- check hashed implementation
+set enable_hashagg = true;
+set enable_sort = false;
+
+explain (costs off)
+select from generate_series(1,5) union select from generate_series(1,3);
+explain (costs off)
+select from generate_series(1,5) intersect select from generate_series(1,3);
+
+select from generate_series(1,5) union select from generate_series(1,3);
+select from generate_series(1,5) union all select from generate_series(1,3);
+select from generate_series(1,5) intersect select from generate_series(1,3);
+select from generate_series(1,5) intersect all select from generate_series(1,3);
+select from generate_series(1,5) except select from generate_series(1,3);
+select from generate_series(1,5) except all select from generate_series(1,3);
+
+-- check sorted implementation
+set enable_hashagg = false;
+set enable_sort = true;
+
+explain (costs off)
+select from generate_series(1,5) union select from generate_series(1,3);
+explain (costs off)
+select from generate_series(1,5) intersect select from generate_series(1,3);
+
+select from generate_series(1,5) union select from generate_series(1,3);
+select from generate_series(1,5) union all select from generate_series(1,3);
+select from generate_series(1,5) intersect select from generate_series(1,3);
+select from generate_series(1,5) intersect all select from generate_series(1,3);
+select from generate_series(1,5) except select from generate_series(1,3);
+select from generate_series(1,5) except all select from generate_series(1,3);
+
+reset enable_hashagg;
+reset enable_sort;
+
+--
 -- Check handling of a case with unknown constants.  We don't guarantee
 -- an undecorated constant will work in all cases, but historically this
 -- usage has worked, so test we don't break it.
