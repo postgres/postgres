@@ -1275,7 +1275,7 @@ ExecParallelHashRepartitionFirst(HashJoinTable hashtable)
 	dsa_pointer chunk_shared;
 	HashMemoryChunk chunk;
 
-	Assert(hashtable->nbatch = hashtable->parallel_state->nbatch);
+	Assert(hashtable->nbatch == hashtable->parallel_state->nbatch);
 
 	while ((chunk = ExecParallelHashPopChunkQueue(hashtable, &chunk_shared)))
 	{
