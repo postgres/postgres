@@ -116,3 +116,96 @@ SELECT	'(0,0)'::point <-> '((0,0),(1,2),(2,1))'::polygon as on_corner,
 	'(2,2)'::point <-> '((0,0),(1,4),(3,1))'::polygon as inside,
 	'(3,3)'::point <-> '((0,2),(2,0),(2,2))'::polygon as near_corner,
 	'(4,4)'::point <-> '((0,0),(0,3),(4,0))'::polygon as near_segment;
+
+--
+-- Test the SP-GiST index
+--
+
+CREATE TABLE quad_poly_tbl (id int, p polygon);
+
+INSERT INTO quad_poly_tbl
+	SELECT (x - 1) * 100 + y, polygon(circle(point(x * 10, y * 10), 1 + (x + y) % 10))
+	FROM generate_series(1, 100) x,
+		 generate_series(1, 100) y;
+
+INSERT INTO quad_poly_tbl
+	SELECT i, polygon '((200, 300),(210, 310),(230, 290))'
+	FROM generate_series(10001, 11000) AS i;
+
+INSERT INTO quad_poly_tbl
+	VALUES
+		(11001, NULL),
+		(11002, NULL),
+		(11003, NULL);
+
+CREATE INDEX quad_poly_tbl_idx ON quad_poly_tbl USING spgist(p);
+
+-- get reference results for ORDER BY distance from seq scan
+SET enable_seqscan = ON;
+SET enable_indexscan = OFF;
+SET enable_bitmapscan = OFF;
+
+CREATE TABLE quad_poly_tbl_ord_seq1 AS
+SELECT rank() OVER (ORDER BY p <-> point '123,456') n, p <-> point '123,456' dist, id
+FROM quad_poly_tbl;
+
+CREATE TABLE quad_poly_tbl_ord_seq2 AS
+SELECT rank() OVER (ORDER BY p <-> point '123,456') n, p <-> point '123,456' dist, id
+FROM quad_poly_tbl WHERE p <@ polygon '((300,300),(400,600),(600,500),(700,200))';
+
+-- check results results from index scan
+SET enable_seqscan = OFF;
+SET enable_indexscan = OFF;
+SET enable_bitmapscan = ON;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p << polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p << polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p &< polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p &< polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p && polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p && polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p &> polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p &> polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p >> polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p >> polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p <<| polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p <<| polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p &<| polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p &<| polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p |&> polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p |&> polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p |>> polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p |>> polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p <@ polygon '((300,300),(400,600),(600,500),(700,200))';
+SELECT count(*) FROM quad_poly_tbl WHERE p <@ polygon '((300,300),(400,600),(600,500),(700,200))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p @> polygon '((340,550),(343,552),(341,553))';
+SELECT count(*) FROM quad_poly_tbl WHERE p @> polygon '((340,550),(343,552),(341,553))';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_poly_tbl WHERE p ~= polygon '((200, 300),(210, 310),(230, 290))';
+SELECT count(*) FROM quad_poly_tbl WHERE p ~= polygon '((200, 300),(210, 310),(230, 290))';
+
+RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;

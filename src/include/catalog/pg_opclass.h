@@ -205,6 +205,7 @@ DATA(insert (	4000	box_ops				PGNSP PGUID 5000  603  t 0 ));
 DATA(insert (	4000	quad_point_ops		PGNSP PGUID 4015  600 t 0 ));
 DATA(insert (	4000	kd_point_ops		PGNSP PGUID 4016  600 f 0 ));
 DATA(insert (	4000	text_ops			PGNSP PGUID 4017  25 t 0 ));
+DATA(insert (	4000	poly_ops			PGNSP PGUID 5008  604 t 603 ));
 DATA(insert (	403		jsonb_ops			PGNSP PGUID 4033  3802 t 0 ));
 DATA(insert (	405		jsonb_ops			PGNSP PGUID 4034  3802 t 0 ));
 DATA(insert (	2742	jsonb_ops			PGNSP PGUID 4036  3802 t 25 ));

@@ -131,6 +131,42 @@
       </entry>
      </row>
      <row>
+      <entry><literal>poly_ops</literal></entry>
+      <entry><type>polygon</type></entry>
+      <entry>
+       <literal>&lt;&lt;</literal>
+       <literal>&amp;&lt;</literal>
+       <literal>&amp;&amp;</literal>
+       <literal>&amp;&gt;</literal>
+       <literal>&gt;&gt;</literal>
+       <literal>~=</literal>
+       <literal>@&gt;</literal>
+       <literal>&lt;@</literal>
+       <literal>&amp;&lt;|</literal>
+       <literal>&lt;&lt;|</literal>
+       <literal>|&gt;&gt;</literal>
+       <literal>|&amp;&gt;</literal>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>poly_ops</literal></entry>
+      <entry><type>polygon</type></entry>
+      <entry>
+       <literal>&lt;&lt;</literal>
+       <literal>&amp;&lt;</literal>
+       <literal>&amp;&amp;</literal>
+       <literal>&amp;&gt;</literal>
+       <literal>&gt;&gt;</literal>
+       <literal>~=</literal>
+       <literal>@&gt;</literal>
+       <literal>&lt;@</literal>
+       <literal>&amp;&lt;|</literal>
+       <literal>&lt;&lt;|</literal>
+       <literal>|&gt;&gt;</literal>
+       <literal>|&amp;&gt;</literal>
+      </entry>
+     </row>
+     <row>
       <entry><literal>text_ops</literal></entry>
       <entry><type>text</type></entry>
       <entry>

@@ -5335,6 +5335,11 @@ DESCR("SP-GiST support for quad tree over box");
 DATA(insert OID = 5016 (  spg_box_quad_leaf_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "2281 2281" _null_ _null_ _null_ _null_  _null_ spg_box_quad_leaf_consistent _null_ _null_ _null_ ));
 DESCR("SP-GiST support for quad tree over box");
 
+DATA(insert OID = 5010 (  spg_bbox_quad_config PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  _null_ spg_bbox_quad_config _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over 2-D types represented by their bounding boxes");
+DATA(insert OID = 5011 (  spg_poly_quad_compress PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 603 "604" _null_ _null_ _null_ _null_  _null_ spg_poly_quad_compress _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over polygons");
+
 /* replication slots */
 DATA(insert OID = 3779 (  pg_create_physical_replication_slot PGNSP PGUID 12 1 0 0 0 f f f f t f v u 3 0 2249 "19 16 16" "{19,16,16,19,3220}" "{i,i,i,o,o}" "{slot_name,immediately_reserve,temporary,slot_name,lsn}" _null_ _null_ pg_create_physical_replication_slot _null_ _null_ _null_ ));
 DESCR("create a physical replication slot");
