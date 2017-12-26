@@ -13,6 +13,7 @@
 #ifndef SHAREDTUPLESTORE_H
 #define SHAREDTUPLESTORE_H
 
+#include "access/htup.h"
 #include "storage/fd.h"
 #include "storage/sharedfileset.h"
 
