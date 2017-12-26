@@ -529,19 +529,10 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 
 	/*
 	 * If the extractValueFn didn't create a nullFlags array, create one,
-	 * assuming that everything's non-null.  Otherwise, run through the array
-	 * and make sure each value is exactly 0 or 1; this ensures binary
-	 * compatibility with the GinNullCategory representation.
+	 * assuming that everything's non-null.
 	 */
 	if (nullFlags == NULL)
 		nullFlags = (bool *) palloc0(*nentries * sizeof(bool));
-	else
-	{
-		for (i = 0; i < *nentries; i++)
-			nullFlags[i] = (nullFlags[i] ? true : false);
-	}
-	/* now we can use the nullFlags as category codes */
-	*categories = (GinNullCategory *) nullFlags;
 
 	/*
 	 * If there's more than one key, sort and unique-ify.
@@ -599,6 +590,13 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 
 		pfree(keydata);
 	}
+
+	/*
+	 * Create GinNullCategory representation from nullFlags.
+	 */
+	*categories = (GinNullCategory *) palloc0(*nentries * sizeof(GinNullCategory));
+	for (i = 0; i < *nentries; i++)
+		(*categories)[i] = (nullFlags[i] ? GIN_CAT_NULL_KEY : GIN_CAT_NORM_KEY);
 
 	return entries;
 }
