@@ -807,17 +807,16 @@ RelationBuildRuleLock(Relation relation)
  * RelationBuildPartitionKey
  *		Build and attach to relcache partition key data of relation
  *
- * Partitioning key data is stored in CacheMemoryContext to ensure it survives
- * as long as the relcache.  To avoid leaking memory in that context in case
- * of an error partway through this function, we build the structure in the
- * working context (which must be short-lived) and copy the completed
- * structure into the cache memory.
- *
- * Also, since the structure being created here is sufficiently complex, we
- * make a private child context of CacheMemoryContext for each relation that
- * has associated partition key information.  That means no complicated logic
- * to free individual elements whenever the relcache entry is flushed - just
- * delete the context.
+ * Partitioning key data is a complex structure; to avoid complicated logic to
+ * free individual elements whenever the relcache entry is flushed, we give it
+ * its own memory context, child of CacheMemoryContext, which can easily be
+ * deleted on its own.  To avoid leaking memory in that context in case of an
+ * error partway through this function, the context is initially created as a
+ * child of CurTransactionContext and only re-parented to CacheMemoryContext
+ * at the end, when no further errors are possible.  Also, we don't make this
+ * context the current context except in very brief code sections, out of fear
+ * that some of our callees allocate memory on their own which would be leaked
+ * permanently.
  */
 static void
 RelationBuildPartitionKey(Relation relation)
@@ -850,9 +849,9 @@ RelationBuildPartitionKey(Relation relation)
 											   RelationGetRelationName(relation),
 											   MEMCONTEXT_COPY_NAME,
 											   ALLOCSET_SMALL_SIZES);
-	oldcxt = MemoryContextSwitchTo(partkeycxt);
 
-	key = (PartitionKey) palloc0(sizeof(PartitionKeyData));
+	key = (PartitionKey) MemoryContextAllocZero(partkeycxt,
+												sizeof(PartitionKeyData));
 
 	/* Fixed-length attributes */
 	form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
@@ -894,17 +893,20 @@ RelationBuildPartitionKey(Relation relation)
 		/*
 		 * Run the expressions through const-simplification since the planner
 		 * will be comparing them to similarly-processed qual clause operands,
-		 * and may fail to detect valid matches without this step.  We don't
-		 * need to bother with canonicalize_qual() though, because partition
-		 * expressions are not full-fledged qualification clauses.
+		 * and may fail to detect valid matches without this step; fix
+		 * opfuncids while at it.  We don't need to bother with
+		 * canonicalize_qual() though, because partition expressions are not
+		 * full-fledged qualification clauses.
 		 */
-		expr = eval_const_expressions(NULL, (Node *) expr);
+		expr = eval_const_expressions(NULL, expr);
+		fix_opfuncids(expr);
 
-		/* May as well fix opfuncids too */
-		fix_opfuncids((Node *) expr);
-		key->partexprs = (List *) expr;
+		oldcxt = MemoryContextSwitchTo(partkeycxt);
+		key->partexprs = (List *) copyObject(expr);
+		MemoryContextSwitchTo(oldcxt);
 	}
 
+	oldcxt = MemoryContextSwitchTo(partkeycxt);
 	key->partattrs = (AttrNumber *) palloc0(key->partnatts * sizeof(AttrNumber));
 	key->partopfamily = (Oid *) palloc0(key->partnatts * sizeof(Oid));
 	key->partopcintype = (Oid *) palloc0(key->partnatts * sizeof(Oid));
@@ -919,8 +921,9 @@ RelationBuildPartitionKey(Relation relation)
 	key->parttypbyval = (bool *) palloc0(key->partnatts * sizeof(bool));
 	key->parttypalign = (char *) palloc0(key->partnatts * sizeof(char));
 	key->parttypcoll = (Oid *) palloc0(key->partnatts * sizeof(Oid));
+	MemoryContextSwitchTo(oldcxt);
 
-	/* For the hash partitioning, an extended hash function will be used. */
+	/* determine support function number to search for */
 	procnum = (key->strategy == PARTITION_STRATEGY_HASH) ?
 		HASHEXTENDED_PROC : BTORDER_PROC;
 
@@ -952,7 +955,7 @@ RelationBuildPartitionKey(Relation relation)
 		if (!OidIsValid(funcid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("operator class \"%s\" of access method %s is missing support function %d for data type \"%s\"",
+					 errmsg("operator class \"%s\" of access method %s is missing support function %d for type %s",
 							NameStr(opclassform->opcname),
 							(key->strategy == PARTITION_STRATEGY_HASH) ?
 							"hash" : "btree",
@@ -989,11 +992,13 @@ RelationBuildPartitionKey(Relation relation)
 
 	ReleaseSysCache(tuple);
 
-	/* Success --- make the relcache point to the newly constructed key */
+	/*
+	 * Success --- reparent our context and make the relcache point to the
+	 * newly constructed key
+	 */
 	MemoryContextSetParent(partkeycxt, CacheMemoryContext);
 	relation->rd_partkeycxt = partkeycxt;
 	relation->rd_partkey = key;
-	MemoryContextSwitchTo(oldcxt);
 }
 
 /*

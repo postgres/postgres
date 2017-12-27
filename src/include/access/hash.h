@@ -338,7 +338,7 @@ typedef HashMetaPageData *HashMetaPage;
 
 /*
  * When a new operator class is declared, we require that the user supply
- * us with an amproc procudure for hashing a key of the new type, returning
+ * us with an amproc procedure for hashing a key of the new type, returning
  * a 32-bit hash value.  We call this the "standard" hash procedure.  We
  * also allow an optional "extended" hash procedure which accepts a salt and
  * returns a 64-bit hash value.  This is highly recommended but, for reasons
