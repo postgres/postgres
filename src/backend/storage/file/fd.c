@@ -1451,7 +1451,7 @@ PathNameCreateTemporaryDir(const char *basedir, const char *directory)
 							basedir)));
 
 		/* Try again. */
-		if (mkdir(directory, S_IRWXU) < 0)
+		if (mkdir(directory, S_IRWXU) < 0 && errno != EEXIST)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("cannot create temporary subdirectory \"%s\": %m",
