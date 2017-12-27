@@ -5115,7 +5115,7 @@ conversion_error_callback(void *arg)
 
 		/*
 		 * Target list can have Vars and expressions.  For Vars, we can get
-		 * it's relation, however for expressions we can't.  Thus for
+		 * its relation, however for expressions we can't.  Thus for
 		 * expressions, just show generic context message.
 		 */
 		if (IsA(tle->expr, Var))
