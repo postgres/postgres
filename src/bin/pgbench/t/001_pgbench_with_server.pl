@@ -232,7 +232,17 @@ pgbench(
 		qr{command=19.: double 19\b},
 		qr{command=20.: double 20\b},
 		qr{command=21.: int 9223372036854775807\b},
-		qr{command=23.: int [1-9]\b}, ],
+		qr{command=23.: int [1-9]\b},
+		qr{command=24.: double -27\b},
+		qr{command=25.: double 1024\b},
+		qr{command=26.: double 1\b},
+		qr{command=27.: double 1\b},
+		qr{command=28.: double -0.125\b},
+		qr{command=29.: double -0.125\b},
+		qr{command=30.: double -0.00032\b},
+		qr{command=31.: double 8.50705917302346e\+37\b},
+		qr{command=32.: double 1e\+30\b},
+	],
 	'pgbench expressions',
 	{   '001_pgbench_expressions' => q{-- integer functions
 \set i1 debug(random(1, 100))
@@ -264,6 +274,16 @@ pgbench(
 \set i1 0
 -- yet another integer function
 \set id debug(random_zipfian(1, 9, 1.3))
+--- pow and power
+\set poweri debug(pow(-3,3))
+\set powerd debug(pow(2.0,10))
+\set poweriz debug(pow(0,0))
+\set powerdz debug(pow(0.0,0.0))
+\set powernegi debug(pow(-2,-3))
+\set powernegd debug(pow(-2.0,-3.0))
+\set powernegd2 debug(power(-5.0,-5.0))
+\set powerov debug(pow(9223372036854775807, 2))
+\set powerov2 debug(pow(10,30))
 } });
 
 # backslash commands

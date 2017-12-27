@@ -1070,6 +1070,13 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <entry><literal>3.14159265358979323846</literal></entry>
       </row>
       <row>
+       <entry><literal><function>pow(<replaceable>x</replaceable>, <replaceable>y</replaceable>)</function>, <function>power(<replaceable>x</replaceable>, <replaceable>y</replaceable>)</function></literal></entry>
+       <entry>double</entry>
+       <entry>exponentiation</entry>
+       <entry><literal>pow(2.0, 10)</literal>, <literal>power(2.0, 10)</literal></entry>
+       <entry><literal>1024.0</literal></entry>
+      </row>
+      <row>
        <entry><literal><function>random(<replaceable>lb</replaceable>, <replaceable>ub</replaceable>)</function></literal></entry>
        <entry>integer</entry>
        <entry>uniformly-distributed random integer in <literal>[lb, ub]</literal></entry>

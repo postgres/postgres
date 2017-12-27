@@ -1850,6 +1850,24 @@ evalFunc(TState *thread, CState *st,
 				return true;
 			}
 
+		case PGBENCH_POW:
+			{
+				PgBenchValue *lval = &vargs[0];
+				PgBenchValue *rval = &vargs[1];
+				double		ld,
+							rd;
+
+				Assert(nargs == 2);
+
+				if (!coerceToDouble(lval, &ld) ||
+					!coerceToDouble(rval, &rd))
+					return false;
+
+				setDoubleValue(retval, pow(ld, rd));
+
+				return true;
+			}
+
 		default:
 			/* cannot get here */
 			Assert(0);

@@ -194,6 +194,12 @@ static const struct
 	{
 		"random_zipfian", 3, PGBENCH_RANDOM_ZIPFIAN
 	},
+	{
+		"pow", 2, PGBENCH_POW
+	},
+	{
+		"power", 2, PGBENCH_POW
+	},
 	/* keep as last array element */
 	{
 		NULL, 0, 0
