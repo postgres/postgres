@@ -288,8 +288,6 @@ MultiExecParallelHash(HashState *node)
 					ExecParallelHashTableInsert(hashtable, slot, hashvalue);
 				hashtable->partialTuples++;
 			}
-			BarrierDetach(&pstate->grow_buckets_barrier);
-			BarrierDetach(&pstate->grow_batches_barrier);
 
 			/*
 			 * Make sure that any tuples we wrote to disk are visible to
@@ -303,6 +301,9 @@ MultiExecParallelHash(HashState *node)
 			 * to control the empty table optimization.
 			 */
 			ExecParallelHashMergeCounters(hashtable);
+
+			BarrierDetach(&pstate->grow_buckets_barrier);
+			BarrierDetach(&pstate->grow_batches_barrier);
 
 			/*
 			 * Wait for everyone to finish building and flushing files and
