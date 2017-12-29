@@ -51,12 +51,8 @@ typedef enum ExprEvalOp
 	EEOP_SCAN_FETCHSOME,
 
 	/* compute non-system Var value */
-	/* "FIRST" variants are used only the first time through */
-	EEOP_INNER_VAR_FIRST,
 	EEOP_INNER_VAR,
-	EEOP_OUTER_VAR_FIRST,
 	EEOP_OUTER_VAR,
-	EEOP_SCAN_VAR_FIRST,
 	EEOP_SCAN_VAR,
 
 	/* compute system Var value */
@@ -67,8 +63,11 @@ typedef enum ExprEvalOp
 	/* compute wholerow Var */
 	EEOP_WHOLEROW,
 
-	/* compute non-system Var value, assign it into ExprState's resultslot */
-	/* (these are not used if _FIRST checks would be needed) */
+	/*
+	 * Compute non-system Var value, assign it into ExprState's
+	 * resultslot. These are not used if a CheckVarSlotCompatibility() check
+	 * would be needed.
+	 */
 	EEOP_ASSIGN_INNER_VAR,
 	EEOP_ASSIGN_OUTER_VAR,
 	EEOP_ASSIGN_SCAN_VAR,
@@ -620,6 +619,9 @@ extern void ExprEvalPushStep(ExprState *es, const ExprEvalStep *s);
 /* functions in execExprInterp.c */
 extern void ExecReadyInterpretedExpr(ExprState *state);
 extern ExprEvalOp ExecEvalStepOp(ExprState *state, ExprEvalStep *op);
+
+extern Datum ExecInterpExprStillValid(ExprState *state, ExprContext *econtext, bool *isNull);
+extern void CheckExprStillValid(ExprState *state, ExprContext *econtext);
 
 /*
  * Non fast-path execution functions. These are externs instead of statics in

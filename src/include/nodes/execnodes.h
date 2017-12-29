@@ -87,6 +87,9 @@ typedef struct ExprState
 	/* original expression tree, for debugging only */
 	Expr	   *expr;
 
+	/* private state for an evalfunc */
+	void	   *evalfunc_private;
+
 	/*
 	 * XXX: following fields only needed during "compilation" (ExecInitExpr);
 	 * could be thrown away afterwards.
