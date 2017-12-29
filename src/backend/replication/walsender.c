@@ -1504,6 +1504,9 @@ exec_replication_command(const char *cmd_string)
 	initStringInfo(&reply_message);
 	initStringInfo(&tmpbuf);
 
+	/* Report to pgstat that this process is running */
+	pgstat_report_activity(STATE_RUNNING, NULL);
+
 	switch (cmd_node->type)
 	{
 		case T_IdentifySystemCmd:
@@ -1555,6 +1558,9 @@ exec_replication_command(const char *cmd_string)
 				ereport(ERROR,
 						(errmsg("cannot execute SQL commands in WAL sender for physical replication")));
 
+			/* Report to pgstat that this process is now idle */
+			pgstat_report_activity(STATE_IDLE, NULL);
+
 			/* Tell the caller that this wasn't a WalSender command. */
 			return false;
 
@@ -1569,6 +1575,9 @@ exec_replication_command(const char *cmd_string)
 
 	/* Send CommandComplete message */
 	EndCommand("SELECT", DestRemote);
+
+	/* Report to pgstat that this process is now idle */
+	pgstat_report_activity(STATE_IDLE, NULL);
 
 	return true;
 }
@@ -2088,9 +2097,6 @@ WalSndLoop(WalSndSendDataCallback send_data)
 	 */
 	last_reply_timestamp = GetCurrentTimestamp();
 	waiting_for_ping_response = false;
-
-	/* Report to pgstat that this process is running */
-	pgstat_report_activity(STATE_RUNNING, NULL);
 
 	/*
 	 * Loop until we reach the end of this timeline or the client requests to
