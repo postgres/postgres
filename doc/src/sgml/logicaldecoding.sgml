@@ -248,16 +248,18 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
      may consume changes from a slot at any given time.
     </para>
 
-    <note>
+    <caution>
      <para>
       Replication slots persist across crashes and know nothing about the state
       of their consumer(s). They will prevent removal of required resources
       even when there is no connection using them. This consumes storage
       because neither required WAL nor required rows from the system catalogs
       can be removed by <command>VACUUM</command> as long as they are required by a replication
-      slot.  So if a slot is no longer required it should be dropped.
+      slot.  In extreme cases this could cause the database to shut down to prevent
+      transaction ID wraparound (see <xref linkend="vacuum-for-wraparound"/>).
+      So if a slot is no longer required it should be dropped.
      </para>
-    </note>
+    </caution>
    </sect2>
 
    <sect2>
