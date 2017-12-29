@@ -1828,7 +1828,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	int			nplans = list_length(node->plans);
 	ResultRelInfo *saved_resultRelInfo;
 	ResultRelInfo *resultRelInfo;
-	TupleDesc	tupDesc;
 	Plan	   *subplan;
 	ListCell   *l;
 	int			i;
@@ -2068,12 +2067,11 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * Initialize result tuple slot and assign its rowtype using the first
 		 * RETURNING list.  We assume the rest will look the same.
 		 */
-		tupDesc = ExecTypeFromTL((List *) linitial(node->returningLists),
-								 false);
+		mtstate->ps.plan->targetlist = (List *) linitial(node->returningLists);
 
 		/* Set up a slot for the output of the RETURNING projection(s) */
 		ExecInitResultTupleSlot(estate, &mtstate->ps);
-		ExecAssignResultType(&mtstate->ps, tupDesc);
+		ExecAssignResultTypeFromTL(&mtstate->ps);
 		slot = mtstate->ps.ps_ResultTupleSlot;
 
 		/* Need an econtext too */
@@ -2126,9 +2124,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * We still must construct a dummy result tuple type, because InitPlan
 		 * expects one (maybe should change that?).
 		 */
-		tupDesc = ExecTypeFromTL(NIL, false);
+		mtstate->ps.plan->targetlist = NIL;
 		ExecInitResultTupleSlot(estate, &mtstate->ps);
-		ExecAssignResultType(&mtstate->ps, tupDesc);
+		ExecAssignResultTypeFromTL(&mtstate->ps);
 
 		mtstate->ps.ps_ExprContext = NULL;
 	}
