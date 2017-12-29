@@ -240,8 +240,8 @@ pgbench(
 		qr{command=28.: double -0.125\b},
 		qr{command=29.: double -0.125\b},
 		qr{command=30.: double -0.00032\b},
-		qr{command=31.: double 8.50705917302346e\+37\b},
-		qr{command=32.: double 1e\+30\b},
+		qr{command=31.: double 8.50705917302346e\+0?37\b},
+		qr{command=32.: double 1e\+0?30\b},
 	],
 	'pgbench expressions',
 	{   '001_pgbench_expressions' => q{-- integer functions
