@@ -1037,7 +1037,7 @@ flushAndSendFeedback(PGconn *conn, TimestampTz *now)
 }
 
 /*
- * Try to inform the server about of upcoming demise, but don't wait around or
+ * Try to inform the server about our upcoming demise, but don't wait around or
  * retry on failure.
  */
 static void
