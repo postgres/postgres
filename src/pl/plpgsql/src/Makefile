@@ -26,7 +26,7 @@ DATA = plpgsql.control plpgsql--1.0.sql plpgsql--unpackaged--1.0.sql
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB)
 
-REGRESS = plpgsql_call
+REGRESS = plpgsql_call plpgsql_control
 
 all: all-lib
 
