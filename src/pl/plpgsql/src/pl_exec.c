@@ -155,6 +155,80 @@ typedef struct					/* cast_hash table entry */
 static MemoryContext shared_cast_context = NULL;
 static HTAB *shared_cast_hash = NULL;
 
+/*
+ * LOOP_RC_PROCESSING encapsulates common logic for looping statements to
+ * handle return/exit/continue result codes from the loop body statement(s).
+ * It's meant to be used like this:
+ *
+ *		int rc = PLPGSQL_RC_OK;
+ *		for (...)
+ *		{
+ *			...
+ *			rc = exec_stmts(estate, stmt->body);
+ *			LOOP_RC_PROCESSING(stmt->label, break);
+ *			...
+ *		}
+ *		return rc;
+ *
+ * If execution of the loop should terminate, LOOP_RC_PROCESSING will execute
+ * "exit_action" (typically a "break" or "goto"), after updating "rc" to the
+ * value the current statement should return.  If execution should continue,
+ * LOOP_RC_PROCESSING will do nothing except reset "rc" to PLPGSQL_RC_OK.
+ *
+ * estate and rc are implicit arguments to the macro.
+ * estate->exitlabel is examined and possibly updated.
+ */
+#define LOOP_RC_PROCESSING(looplabel, exit_action) \
+	if (rc == PLPGSQL_RC_RETURN) \
+	{ \
+		/* RETURN, so propagate RC_RETURN out */ \
+		exit_action; \
+	} \
+	else if (rc == PLPGSQL_RC_EXIT) \
+	{ \
+		if (estate->exitlabel == NULL) \
+		{ \
+			/* unlabelled EXIT terminates this loop */ \
+			rc = PLPGSQL_RC_OK; \
+			exit_action; \
+		} \
+		else if ((looplabel) != NULL && \
+				 strcmp(looplabel, estate->exitlabel) == 0) \
+		{ \
+			/* labelled EXIT matching this loop, so terminate loop */ \
+			estate->exitlabel = NULL; \
+			rc = PLPGSQL_RC_OK; \
+			exit_action; \
+		} \
+		else \
+		{ \
+			/* non-matching labelled EXIT, propagate RC_EXIT out */ \
+			exit_action; \
+		} \
+	} \
+	else if (rc == PLPGSQL_RC_CONTINUE) \
+	{ \
+		if (estate->exitlabel == NULL) \
+		{ \
+			/* unlabelled CONTINUE matches this loop, so continue in loop */ \
+			rc = PLPGSQL_RC_OK; \
+		} \
+		else if ((looplabel) != NULL && \
+				 strcmp(looplabel, estate->exitlabel) == 0) \
+		{ \
+			/* labelled CONTINUE matching this loop, so continue in loop */ \
+			estate->exitlabel = NULL; \
+			rc = PLPGSQL_RC_OK; \
+		} \
+		else \
+		{ \
+			/* non-matching labelled CONTINUE, propagate RC_CONTINUE out */ \
+			exit_action; \
+		} \
+	} \
+	else \
+		Assert(rc == PLPGSQL_RC_OK)
+
 /************************************************************
  * Local function forward declarations
  ************************************************************/
@@ -1476,7 +1550,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 	estate->err_text = NULL;
 
 	/*
-	 * Handle the return code.
+	 * Handle the return code.  This is intentionally different from
+	 * LOOP_RC_PROCESSING(): CONTINUE never matches a block, and EXIT matches
+	 * a block only if there is a label match.
 	 */
 	switch (rc)
 	{
@@ -1486,11 +1562,6 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			return rc;
 
 		case PLPGSQL_RC_EXIT:
-
-			/*
-			 * This is intentionally different from the handling of RC_EXIT
-			 * for loops: to match a block, we require a match by label.
-			 */
 			if (estate->exitlabel == NULL)
 				return PLPGSQL_RC_EXIT;
 			if (block->label == NULL)
@@ -1948,45 +2019,16 @@ exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
 static int
 exec_stmt_loop(PLpgSQL_execstate *estate, PLpgSQL_stmt_loop *stmt)
 {
+	int			rc = PLPGSQL_RC_OK;
+
 	for (;;)
 	{
-		int			rc = exec_stmts(estate, stmt->body);
+		rc = exec_stmts(estate, stmt->body);
 
-		switch (rc)
-		{
-			case PLPGSQL_RC_OK:
-				break;
-
-			case PLPGSQL_RC_EXIT:
-				if (estate->exitlabel == NULL)
-					return PLPGSQL_RC_OK;
-				if (stmt->label == NULL)
-					return PLPGSQL_RC_EXIT;
-				if (strcmp(stmt->label, estate->exitlabel) != 0)
-					return PLPGSQL_RC_EXIT;
-				estate->exitlabel = NULL;
-				return PLPGSQL_RC_OK;
-
-			case PLPGSQL_RC_CONTINUE:
-				if (estate->exitlabel == NULL)
-					/* anonymous continue, so re-run the loop */
-					break;
-				else if (stmt->label != NULL &&
-						 strcmp(stmt->label, estate->exitlabel) == 0)
-					/* label matches named continue, so re-run loop */
-					estate->exitlabel = NULL;
-				else
-					/* label doesn't match named continue, so propagate upward */
-					return PLPGSQL_RC_CONTINUE;
-				break;
-
-			case PLPGSQL_RC_RETURN:
-				return rc;
-
-			default:
-				elog(ERROR, "unrecognized rc: %d", rc);
-		}
+		LOOP_RC_PROCESSING(stmt->label, break);
 	}
+
+	return rc;
 }
 
 
@@ -1999,9 +2041,10 @@ exec_stmt_loop(PLpgSQL_execstate *estate, PLpgSQL_stmt_loop *stmt)
 static int
 exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 {
+	int			rc = PLPGSQL_RC_OK;
+
 	for (;;)
 	{
-		int			rc;
 		bool		value;
 		bool		isnull;
 
@@ -2013,43 +2056,10 @@ exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 
 		rc = exec_stmts(estate, stmt->body);
 
-		switch (rc)
-		{
-			case PLPGSQL_RC_OK:
-				break;
-
-			case PLPGSQL_RC_EXIT:
-				if (estate->exitlabel == NULL)
-					return PLPGSQL_RC_OK;
-				if (stmt->label == NULL)
-					return PLPGSQL_RC_EXIT;
-				if (strcmp(stmt->label, estate->exitlabel) != 0)
-					return PLPGSQL_RC_EXIT;
-				estate->exitlabel = NULL;
-				return PLPGSQL_RC_OK;
-
-			case PLPGSQL_RC_CONTINUE:
-				if (estate->exitlabel == NULL)
-					/* anonymous continue, so re-run loop */
-					break;
-				else if (stmt->label != NULL &&
-						 strcmp(stmt->label, estate->exitlabel) == 0)
-					/* label matches named continue, so re-run loop */
-					estate->exitlabel = NULL;
-				else
-					/* label doesn't match named continue, propagate upward */
-					return PLPGSQL_RC_CONTINUE;
-				break;
-
-			case PLPGSQL_RC_RETURN:
-				return rc;
-
-			default:
-				elog(ERROR, "unrecognized rc: %d", rc);
-		}
+		LOOP_RC_PROCESSING(stmt->label, break);
 	}
 
-	return PLPGSQL_RC_OK;
+	return rc;
 }
 
 
@@ -2163,50 +2173,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		 */
 		rc = exec_stmts(estate, stmt->body);
 
-		if (rc == PLPGSQL_RC_RETURN)
-			break;				/* break out of the loop */
-		else if (rc == PLPGSQL_RC_EXIT)
-		{
-			if (estate->exitlabel == NULL)
-				/* unlabelled exit, finish the current loop */
-				rc = PLPGSQL_RC_OK;
-			else if (stmt->label != NULL &&
-					 strcmp(stmt->label, estate->exitlabel) == 0)
-			{
-				/* labelled exit, matches the current stmt's label */
-				estate->exitlabel = NULL;
-				rc = PLPGSQL_RC_OK;
-			}
-
-			/*
-			 * otherwise, this is a labelled exit that does not match the
-			 * current statement's label, if any: return RC_EXIT so that the
-			 * EXIT continues to propagate up the stack.
-			 */
-			break;
-		}
-		else if (rc == PLPGSQL_RC_CONTINUE)
-		{
-			if (estate->exitlabel == NULL)
-				/* unlabelled continue, so re-run the current loop */
-				rc = PLPGSQL_RC_OK;
-			else if (stmt->label != NULL &&
-					 strcmp(stmt->label, estate->exitlabel) == 0)
-			{
-				/* label matches named continue, so re-run loop */
-				estate->exitlabel = NULL;
-				rc = PLPGSQL_RC_OK;
-			}
-			else
-			{
-				/*
-				 * otherwise, this is a named continue that does not match the
-				 * current statement's label, if any: return RC_CONTINUE so
-				 * that the CONTINUE will propagate up the stack.
-				 */
-				break;
-			}
-		}
+		LOOP_RC_PROCESSING(stmt->label, break);
 
 		/*
 		 * Increase/decrease loop value, unless it would overflow, in which
@@ -2536,51 +2503,7 @@ exec_stmt_foreach_a(PLpgSQL_execstate *estate, PLpgSQL_stmt_foreach_a *stmt)
 		 */
 		rc = exec_stmts(estate, stmt->body);
 
-		/* Handle the return code */
-		if (rc == PLPGSQL_RC_RETURN)
-			break;				/* break out of the loop */
-		else if (rc == PLPGSQL_RC_EXIT)
-		{
-			if (estate->exitlabel == NULL)
-				/* unlabelled exit, finish the current loop */
-				rc = PLPGSQL_RC_OK;
-			else if (stmt->label != NULL &&
-					 strcmp(stmt->label, estate->exitlabel) == 0)
-			{
-				/* labelled exit, matches the current stmt's label */
-				estate->exitlabel = NULL;
-				rc = PLPGSQL_RC_OK;
-			}
-
-			/*
-			 * otherwise, this is a labelled exit that does not match the
-			 * current statement's label, if any: return RC_EXIT so that the
-			 * EXIT continues to propagate up the stack.
-			 */
-			break;
-		}
-		else if (rc == PLPGSQL_RC_CONTINUE)
-		{
-			if (estate->exitlabel == NULL)
-				/* unlabelled continue, so re-run the current loop */
-				rc = PLPGSQL_RC_OK;
-			else if (stmt->label != NULL &&
-					 strcmp(stmt->label, estate->exitlabel) == 0)
-			{
-				/* label matches named continue, so re-run loop */
-				estate->exitlabel = NULL;
-				rc = PLPGSQL_RC_OK;
-			}
-			else
-			{
-				/*
-				 * otherwise, this is a named continue that does not match the
-				 * current statement's label, if any: return RC_CONTINUE so
-				 * that the CONTINUE will propagate up the stack.
-				 */
-				break;
-			}
-		}
+		LOOP_RC_PROCESSING(stmt->label, break);
 
 		MemoryContextSwitchTo(stmt_mcontext);
 	}
@@ -5381,60 +5304,7 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 			 */
 			rc = exec_stmts(estate, stmt->body);
 
-			if (rc != PLPGSQL_RC_OK)
-			{
-				if (rc == PLPGSQL_RC_EXIT)
-				{
-					if (estate->exitlabel == NULL)
-					{
-						/* unlabelled exit, so exit the current loop */
-						rc = PLPGSQL_RC_OK;
-					}
-					else if (stmt->label != NULL &&
-							 strcmp(stmt->label, estate->exitlabel) == 0)
-					{
-						/* label matches this loop, so exit loop */
-						estate->exitlabel = NULL;
-						rc = PLPGSQL_RC_OK;
-					}
-
-					/*
-					 * otherwise, we processed a labelled exit that does not
-					 * match the current statement's label, if any; return
-					 * RC_EXIT so that the EXIT continues to recurse upward.
-					 */
-				}
-				else if (rc == PLPGSQL_RC_CONTINUE)
-				{
-					if (estate->exitlabel == NULL)
-					{
-						/* unlabelled continue, so re-run the current loop */
-						rc = PLPGSQL_RC_OK;
-						continue;
-					}
-					else if (stmt->label != NULL &&
-							 strcmp(stmt->label, estate->exitlabel) == 0)
-					{
-						/* label matches this loop, so re-run loop */
-						estate->exitlabel = NULL;
-						rc = PLPGSQL_RC_OK;
-						continue;
-					}
-
-					/*
-					 * otherwise, we process a labelled continue that does not
-					 * match the current statement's label, if any; return
-					 * RC_CONTINUE so that the CONTINUE will propagate up the
-					 * stack.
-					 */
-				}
-
-				/*
-				 * We're aborting the loop.  Need a goto to get out of two
-				 * levels of loop...
-				 */
-				goto loop_exit;
-			}
+			LOOP_RC_PROCESSING(stmt->label, goto loop_exit);
 		}
 
 		SPI_freetuptable(tuptab);
