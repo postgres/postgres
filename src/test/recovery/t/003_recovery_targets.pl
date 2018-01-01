@@ -5,8 +5,9 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 9;
 
-# Create and test a standby from given backup, with a certain
-# recovery target.
+# Create and test a standby from given backup, with a certain recovery target.
+# Choose $until_lsn later than the transaction commit that causes the row
+# count to reach $num_rows, yet not later than the recovery target.
 sub test_recovery_standby
 {
 	my $test_name       = shift;
@@ -70,9 +71,9 @@ my ($lsn2, $recovery_txid) = split /\|/, $ret;
 # More data, with recovery target timestamp
 $node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(2001,3000))");
-$ret =
-  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn(), now();");
-my ($lsn3, $recovery_time) = split /\|/, $ret;
+my $lsn3 =
+  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
+my $recovery_time = $node_master->safe_psql('postgres', "SELECT now()");
 
 # Even more data, this time with a recovery target name
 $node_master->safe_psql('postgres',
@@ -86,10 +87,8 @@ $node_master->safe_psql('postgres',
 # And now for a recovery target LSN
 $node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(4001,5000))");
-my $recovery_lsn =
+my $lsn5 = my $recovery_lsn =
   $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn()");
-my $lsn5 =
-  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 
 $node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(5001,6000))");
