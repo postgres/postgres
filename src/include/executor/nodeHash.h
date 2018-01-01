@@ -33,7 +33,6 @@ extern void ExecHashTableDetach(HashJoinTable hashtable);
 extern void ExecHashTableDetachBatch(HashJoinTable hashtable);
 extern void ExecParallelHashTableSetCurrentBatch(HashJoinTable hashtable,
 									 int batchno);
-void		ExecParallelHashUpdateSpacePeak(HashJoinTable hashtable, int batchno);
 
 extern void ExecHashTableInsert(HashJoinTable hashtable,
 					TupleTableSlot *slot,

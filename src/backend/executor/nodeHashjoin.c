@@ -1186,12 +1186,6 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 					 * remain).
 					 */
 					BarrierDetach(batch_barrier);
-
-					/*
-					 * We didn't work on this batch, but we need to observe
-					 * its size for EXPLAIN.
-					 */
-					ExecParallelHashUpdateSpacePeak(hashtable, batchno);
 					hashtable->batches[batchno].done = true;
 					hashtable->curbatch = -1;
 					break;

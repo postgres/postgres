@@ -3090,7 +3090,16 @@ ExecHashTableDetachBatch(HashJoinTable hashtable)
 				batch->buckets = InvalidDsaPointer;
 			}
 		}
-		ExecParallelHashUpdateSpacePeak(hashtable, curbatch);
+
+		/*
+		 * Track the largest batch we've been attached to.  Though each
+		 * backend might see a different subset of batches, explain.c will
+		 * scan the results from all backends to find the largest value.
+		 */
+		hashtable->spacePeak =
+			Max(hashtable->spacePeak,
+				batch->size + sizeof(dsa_pointer_atomic) * hashtable->nbuckets);
+
 		/* Remember that we are not attached to a batch. */
 		hashtable->curbatch = -1;
 	}
@@ -3294,20 +3303,4 @@ ExecParallelHashTuplePrealloc(HashJoinTable hashtable, int batchno, size_t size)
 	LWLockRelease(&pstate->lock);
 
 	return true;
-}
-
-/*
- * Update this backend's copy of hashtable->spacePeak to account for a given
- * batch.  This is called at the end of hashing for batch 0, and then for each
- * batch when it is done or discovered to be already done.  The result is used
- * for EXPLAIN output.
- */
-void
-ExecParallelHashUpdateSpacePeak(HashJoinTable hashtable, int batchno)
-{
-	size_t		size;
-
-	size = hashtable->batches[batchno].shared->size;
-	size += sizeof(dsa_pointer_atomic) * hashtable->nbuckets;
-	hashtable->spacePeak = Max(hashtable->spacePeak, size);
 }
