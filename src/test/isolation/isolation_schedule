@@ -37,5 +37,6 @@ test: nowait-3
 test: nowait-4
 test: nowait-5
 test: drop-index-concurrently-1
+test: multiple-cic
 test: alter-table-1
 test: timeouts
