@@ -55,6 +55,7 @@ test: skip-locked-2
 test: skip-locked-3
 test: skip-locked-4
 test: drop-index-concurrently-1
+test: multiple-cic
 test: alter-table-1
 test: alter-table-2
 test: alter-table-3
