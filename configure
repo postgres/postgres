@@ -10424,6 +10424,17 @@ fi
     else
       LDAP_LIBS_FE="-lldap $EXTRA_LDAP_LIBS"
     fi
+    for ac_func in ldap_initialize
+do :
+  ac_fn_c_check_func "$LINENO" "ldap_initialize" "ac_cv_func_ldap_initialize"
+if test "x$ac_cv_func_ldap_initialize" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LDAP_INITIALIZE 1
+_ACEOF
+
+fi
+done
+
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ldap_bind in -lwldap32" >&5
 $as_echo_n "checking for ldap_bind in -lwldap32... " >&6; }

@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use TestLib;
 use PostgresNode;
-use Test::More tests => 15;
+use Test::More tests => 19;
 
 my ($slapd, $ldap_bin_dir, $ldap_schema_dir);
 
@@ -33,13 +33,16 @@ elsif ($^O eq 'freebsd')
 $ENV{PATH} = "$ldap_bin_dir:$ENV{PATH}" if $ldap_bin_dir;
 
 my $ldap_datadir = "${TestLib::tmp_check}/openldap-data";
+my $slapd_certs = "${TestLib::tmp_check}/slapd-certs";
 my $slapd_conf = "${TestLib::tmp_check}/slapd.conf";
 my $slapd_pidfile = "${TestLib::tmp_check}/slapd.pid";
 my $slapd_logfile = "${TestLib::tmp_check}/slapd.log";
 my $ldap_conf = "${TestLib::tmp_check}/ldap.conf";
 my $ldap_server = 'localhost';
 my $ldap_port = int(rand() * 16384) + 49152;
+my $ldaps_port = $ldap_port + 1;
 my $ldap_url = "ldap://$ldap_server:$ldap_port";
+my $ldaps_url = "ldaps://$ldap_server:$ldaps_port";
 my $ldap_basedn = 'dc=example,dc=net';
 my $ldap_rootdn = 'cn=Manager,dc=example,dc=net';
 my $ldap_rootpw = 'secret';
@@ -63,13 +66,27 @@ access to *
 database ldif
 directory $ldap_datadir
 
+TLSCACertificateFile $slapd_certs/ca.crt
+TLSCertificateFile $slapd_certs/server.crt
+TLSCertificateKeyFile $slapd_certs/server.key
+
 suffix "dc=example,dc=net"
 rootdn "$ldap_rootdn"
 rootpw $ldap_rootpw});
 
-mkdir $ldap_datadir or die;
+# don't bother to check the server's cert (though perhaps we should)
+append_to_file($ldap_conf,
+qq{TLS_REQCERT never
+});
 
-system_or_bail $slapd, '-f', $slapd_conf, '-h', $ldap_url;
+mkdir $ldap_datadir or die;
+mkdir $slapd_certs or die;
+
+system_or_bail "openssl", "req", "-new", "-nodes", "-keyout", "$slapd_certs/ca.key", "-x509", "-out", "$slapd_certs/ca.crt", "-subj", "/cn=CA";
+system_or_bail "openssl", "req", "-new", "-nodes", "-keyout", "$slapd_certs/server.key", "-out", "$slapd_certs/server.csr", "-subj", "/cn=server";
+system_or_bail "openssl", "x509", "-req", "-in", "$slapd_certs/server.csr", "-CA", "$slapd_certs/ca.crt", "-CAkey", "$slapd_certs/ca.key", "-CAcreateserial", "-out", "$slapd_certs/server.crt";
+
+system_or_bail $slapd, '-f', $slapd_conf, '-h', "$ldap_url $ldaps_url";
 
 END
 {
@@ -81,6 +98,7 @@ chmod 0600, $ldap_pwfile or die;
 
 $ENV{'LDAPURI'} = $ldap_url;
 $ENV{'LDAPBINDDN'} = $ldap_rootdn;
+$ENV{'LDAPCONF'} = $ldap_conf;
 
 note "loading LDAP data";
 
@@ -178,9 +196,44 @@ test_access($node, 'test1', 0, 'combined LDAP URL and search filter');
 
 note "diagnostic message";
 
+# note bad ldapprefix with a question mark that triggers a diagnostic message
 unlink($node->data_dir . '/pg_hba.conf');
-$node->append_conf('pg_hba.conf', qq{local all all ldap ldapserver=$ldap_server ldapport=$ldap_port ldapprefix="uid=" ldapsuffix=",dc=example,dc=net" ldaptls=1});
+$node->append_conf('pg_hba.conf', qq{local all all ldap ldapserver=$ldap_server ldapport=$ldap_port ldapprefix="?uid=" ldapsuffix=""});
 $node->reload;
 
 $ENV{"PGPASSWORD"} = 'secret1';
-test_access($node, 'test1', 2, 'any attempt fails due to unsupported TLS');
+test_access($node, 'test1', 2, 'any attempt fails due to bad search pattern');
+
+note "TLS";
+
+# request StartTLS with ldaptls=1
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf', qq{local all all ldap ldapserver=$ldap_server ldapport=$ldap_port ldapbasedn="$ldap_basedn" ldapsearchfilter="(uid=\$username)" ldaptls=1});
+$node->reload;
+
+$ENV{"PGPASSWORD"} = 'secret1';
+test_access($node, 'test1', 0, 'StartTLS');
+
+# request LDAPS with ldapscheme=ldaps
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf', qq{local all all ldap ldapserver=$ldap_server ldapscheme=ldaps ldapport=$ldaps_port ldapbasedn="$ldap_basedn" ldapsearchfilter="(uid=\$username)"});
+$node->reload;
+
+$ENV{"PGPASSWORD"} = 'secret1';
+test_access($node, 'test1', 0, 'LDAPS');
+
+# request LDAPS with ldapurl=ldaps://...
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf', qq{local all all ldap ldapurl="$ldaps_url/$ldap_basedn??sub?(uid=\$username)"});
+$node->reload;
+
+$ENV{"PGPASSWORD"} = 'secret1';
+test_access($node, 'test1', 0, 'LDAPS with URL');
+
+# bad combination of LDAPS and StartTLS
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf', qq{local all all ldap ldapurl="$ldaps_url/$ldap_basedn??sub?(uid=\$username)" ldaptls=1});
+$node->reload;
+
+$ENV{"PGPASSWORD"} = 'secret1';
+test_access($node, 'test1', 2, 'bad combination of LDAPS and StartTLS');

@@ -2355,22 +2355,61 @@ static int	errdetail_for_ldap(LDAP *ldap);
 static int
 InitializeLDAPConnection(Port *port, LDAP **ldap)
 {
+	const char *scheme;
 	int			ldapversion = LDAP_VERSION3;
 	int			r;
 
-	*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
+	scheme = port->hba->ldapscheme;
+	if (scheme == NULL)
+		scheme = "ldap";
+#ifdef WIN32
+	*ldap = ldap_sslinit(port->hba->ldapserver,
+						 port->hba->ldapport,
+						 strcmp(scheme, "ldaps") == 0);
 	if (!*ldap)
 	{
-#ifndef WIN32
-		ereport(LOG,
-				(errmsg("could not initialize LDAP: %m")));
-#else
 		ereport(LOG,
 				(errmsg("could not initialize LDAP: error code %d",
 						(int) LdapGetLastError())));
-#endif
+
 		return STATUS_ERROR;
 	}
+#else
+#ifdef HAVE_LDAP_INITIALIZE
+	{
+		char	   *uri;
+
+		uri = psprintf("%s://%s:%d", scheme, port->hba->ldapserver,
+					   port->hba->ldapport);
+		r = ldap_initialize(ldap, uri);
+		pfree(uri);
+		if (r != LDAP_SUCCESS)
+		{
+			ereport(LOG,
+					(errmsg("could not initialize LDAP: %s",
+							ldap_err2string(r))));
+
+			return STATUS_ERROR;
+		}
+	}
+#else
+	if (strcmp(scheme, "ldaps") == 0)
+	{
+		ereport(LOG,
+				(errmsg("ldaps not supported with this LDAP library")));
+
+		return STATUS_ERROR;
+	}
+	*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
+	if (!*ldap)
+	{
+		ereport(LOG,
+				(errmsg("could not initialize LDAP: %m")));
+
+		return STATUS_ERROR;
+	}
+#endif
+#endif
 
 	if ((r = ldap_set_option(*ldap, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS)
 	{
@@ -2493,7 +2532,13 @@ CheckLDAPAuth(Port *port)
 	}
 
 	if (port->hba->ldapport == 0)
-		port->hba->ldapport = LDAP_PORT;
+	{
+		if (port->hba->ldapscheme != NULL &&
+			strcmp(port->hba->ldapscheme, "ldaps") == 0)
+			port->hba->ldapport = LDAPS_PORT;
+		else
+			port->hba->ldapport = LDAP_PORT;
+	}
 
 	sendAuthRequest(port, AUTH_REQ_PASSWORD, NULL, 0);
 

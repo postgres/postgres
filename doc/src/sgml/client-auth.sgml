@@ -1503,18 +1503,39 @@ omicron         bryanh                  guest1
       </listitem>
      </varlistentry>
      <varlistentry>
+      <term><literal>ldapscheme</literal></term>
+      <listitem>
+       <para>
+        Set to <literal>ldaps</literal> to use LDAPS.  This is a non-standard
+        way of using LDAP over SSL, supported by some LDAP server
+        implementations.  See also the <literal>ldaptls</literal> option for
+        an alternative.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
       <term><literal>ldaptls</literal></term>
       <listitem>
        <para>
-        Set to 1 to make the connection between PostgreSQL and the
-        LDAP server use TLS encryption. Note that this only encrypts
-        the traffic to the LDAP server &mdash; the connection to the client
-        will still be unencrypted unless SSL is used.
+        Set to 1 to make the connection between PostgreSQL and the LDAP server
+        use TLS encryption.  This uses the <literal>StartTLS</literal>
+        operation per RFC 4513.  See also the <literal>ldapscheme</literal>
+        option for an alternative.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
+   </para>
 
+   <para>
+    Note that using <literal>ldapscheme</literal> or
+    <literal>ldaptls</literal> only encrypts the traffic between the
+    PostgreSQL server and the LDAP server.  The connection between the
+    PostgreSQL server and the PostgreSQL client will still be unencrypted
+    unless SSL is used there as well.
+   </para>
+
+   <para>
     The following options are used in simple bind mode only:
     <variablelist>
      <varlistentry>
@@ -1536,7 +1557,9 @@ omicron         bryanh                  guest1
       </listitem>
      </varlistentry>
     </variablelist>
+   </para>
 
+   <para>
     The following options are used in search+bind mode only:
     <variablelist>
      <varlistentry>
@@ -1594,7 +1617,7 @@ omicron         bryanh                  guest1
          An RFC 4516 LDAP URL.  This is an alternative way to write some of the
          other LDAP options in a more compact and standard form.  The format is
 <synopsis>
-ldap://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>][?[<replaceable>filter</replaceable>]]]]
+ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>][?[<replaceable>filter</replaceable>]]]]
 </synopsis>
          <replaceable>scope</replaceable> must be one
          of <literal>base</literal>, <literal>one</literal>, <literal>sub</literal>,
@@ -1608,16 +1631,19 @@ ldap://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replac
         </para>
 
         <para>
-         For non-anonymous binds, <literal>ldapbinddn</literal>
-         and <literal>ldapbindpasswd</literal> must be specified as separate
-         options.
+         The URL scheme <literal>ldaps</literal> chooses the LDAPS method for
+         making LDAP connections over SSL, equivalent to using
+         <literal>ldapscheme=ldaps</literal>.  To use encrypted LDAP
+         connections using the <literal>StartTLS</literal> operation, use the
+         normal URL scheme <literal>ldap</literal> and specify the
+         <literal>ldaptls</literal> option in addition to
+         <literal>ldapurl</literal>.
         </para>
 
         <para>
-         To use encrypted LDAP connections, the <literal>ldaptls</literal>
-         option has to be used in addition to <literal>ldapurl</literal>.
-         The <literal>ldaps</literal> URL scheme (direct SSL connection) is not
-         supported.
+         For non-anonymous binds, <literal>ldapbinddn</literal>
+         and <literal>ldapbindpasswd</literal> must be specified as separate
+         options.
         </para>
 
         <para>

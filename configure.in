@@ -1106,6 +1106,7 @@ if test "$with_ldap" = yes ; then
     else
       LDAP_LIBS_FE="-lldap $EXTRA_LDAP_LIBS"
     fi
+    AC_CHECK_FUNCS([ldap_initialize])
   else
     AC_CHECK_LIB(wldap32, ldap_bind, [], [AC_MSG_ERROR([library 'wldap32' is required for LDAP])])
     LDAP_LIBS_FE="-lwldap32"
