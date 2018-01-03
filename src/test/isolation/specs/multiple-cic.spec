@@ -26,19 +26,15 @@ session "s1"
 step "s1i"	{
 		CREATE INDEX CONCURRENTLY mcic_one_pkey ON mcic_one (id)
 		WHERE lck_shr(281457);
-}
-step "s1u"  { SELECT unlck(); }
+	}
+teardown	{ SELECT unlck(); }
 
 
 session "s2"
 step "s2l"  { SELECT pg_advisory_lock(281457); }
 step "s2i"	{
 		CREATE INDEX CONCURRENTLY mcic_two_pkey ON mcic_two (id)
-		WHERE unlck() AND lck_shr(572814);
+		WHERE unlck();
 	}
 
-session "s3"
-setup		{ SELECT pg_advisory_lock(572814); }
-step "s3u"	{ SELECT unlck(); }
-
-permutation "s2l" "s1i" "s2i" "s3u"
+permutation "s2l" "s1i" "s2i"
