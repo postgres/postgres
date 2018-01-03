@@ -2740,7 +2740,7 @@ ExecParallelHashTupleAlloc(HashJoinTable hashtable, size_t size,
 	 */
 	chunk = hashtable->current_chunk;
 	if (chunk != NULL &&
-		size < HASH_CHUNK_THRESHOLD &&
+		size <= HASH_CHUNK_THRESHOLD &&
 		chunk->maxlen - chunk->used >= size)
 	{
 
@@ -3260,6 +3260,7 @@ ExecParallelHashTuplePrealloc(HashJoinTable hashtable, int batchno, size_t size)
 
 	Assert(batchno > 0);
 	Assert(batchno < hashtable->nbatch);
+	Assert(size == MAXALIGN(size));
 
 	LWLockAcquire(&pstate->lock, LW_EXCLUSIVE);
 
@@ -3280,7 +3281,8 @@ ExecParallelHashTuplePrealloc(HashJoinTable hashtable, int batchno, size_t size)
 
 	if (pstate->growth != PHJ_GROWTH_DISABLED &&
 		batch->at_least_one_chunk &&
-		(batch->shared->estimated_size + size > pstate->space_allowed))
+		(batch->shared->estimated_size + want + HASH_CHUNK_HEADER_SIZE
+		 > pstate->space_allowed))
 	{
 		/*
 		 * We have determined that this batch would exceed the space budget if
