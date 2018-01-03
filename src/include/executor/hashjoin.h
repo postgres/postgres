@@ -117,7 +117,7 @@ typedef struct HashSkewBucket
 typedef struct HashMemoryChunkData
 {
 	int			ntuples;		/* number of tuples stored in this chunk */
-	size_t		maxlen;			/* size of the buffer holding the tuples */
+	size_t		maxlen;			/* size of the chunk's tuple buffer */
 	size_t		used;			/* number of buffer bytes already used */
 
 	/* pointer to the next chunk (linked list) */
@@ -127,13 +127,19 @@ typedef struct HashMemoryChunkData
 		dsa_pointer shared;
 	}			next;
 
-	char		data[FLEXIBLE_ARRAY_MEMBER];	/* buffer allocated at the end */
+	/*
+	 * The chunk's tuple buffer starts after the HashMemoryChunkData struct,
+	 * at offset HASH_CHUNK_HEADER_SIZE (which must be maxaligned).  Note that
+	 * that offset is not included in "maxlen" or "used".
+	 */
 }			HashMemoryChunkData;
 
 typedef struct HashMemoryChunkData *HashMemoryChunk;
 
 #define HASH_CHUNK_SIZE			(32 * 1024L)
-#define HASH_CHUNK_HEADER_SIZE (offsetof(HashMemoryChunkData, data))
+#define HASH_CHUNK_HEADER_SIZE	MAXALIGN(sizeof(HashMemoryChunkData))
+#define HASH_CHUNK_DATA(hc)		(((char *) (hc)) + HASH_CHUNK_HEADER_SIZE)
+/* tuples exceeding HASH_CHUNK_THRESHOLD bytes are put in their own chunk */
 #define HASH_CHUNK_THRESHOLD	(HASH_CHUNK_SIZE / 4)
 
 /*
