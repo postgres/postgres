@@ -5,7 +5,7 @@
 # Input: UnicodeData.txt and CompositionExclusions.txt
 # Output: unicode_norm_table.h
 #
-# Copyright (c) 2000-2017, PostgreSQL Global Development Group
+# Copyright (c) 2000-2018, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -74,7 +74,7 @@ print $OUTPUT <<HEADER;
  * unicode_norm_table.h
  *	  Composition table used for Unicode normalization
  *
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/unicode_norm_table.h

@@ -3,7 +3,7 @@
  * windowfuncs.c
  *	  Standard window functions defined in SQL spec.
  *
- * Portions Copyright (c) 2000-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2000-2018, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

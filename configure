@@ -11,7 +11,7 @@
 # This configure script is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
 #
-# Copyright (c) 1996-2017, PostgreSQL Global Development Group
+# Copyright (c) 1996-2018, PostgreSQL Global Development Group
 ## -------------------- ##
 ## M4sh Initialization. ##
 ## -------------------- ##
@@ -1635,7 +1635,7 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This configure script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it.
 
-Copyright (c) 1996-2017, PostgreSQL Global Development Group
+Copyright (c) 1996-2018, PostgreSQL Global Development Group
 _ACEOF
   exit
 fi

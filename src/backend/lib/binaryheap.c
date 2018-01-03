@@ -3,7 +3,7 @@
  * binaryheap.c
  *	  A simple binary heap implementation
  *
- * Portions Copyright (c) 2012-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/lib/binaryheap.c

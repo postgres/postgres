@@ -2,7 +2,7 @@
  * brinfuncs.c
  *		Functions to investigate BRIN indexes
  *
- * Copyright (c) 2014-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		contrib/pageinspect/brinfuncs.c

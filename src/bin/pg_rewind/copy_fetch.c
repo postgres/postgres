@@ -3,7 +3,7 @@
  * copy_fetch.c
  *	  Functions for using a data directory as the source.
  *
- * Portions Copyright (c) 2013-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2018, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

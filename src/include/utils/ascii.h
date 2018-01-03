@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------
  * ascii.h
  *
- *	 Portions Copyright (c) 1999-2017, PostgreSQL Global Development Group
+ *	 Portions Copyright (c) 1999-2018, PostgreSQL Global Development Group
  *
  * src/include/utils/ascii.h
  *

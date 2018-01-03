@@ -1,7 +1,7 @@
 /*
  * bipartite_match.h
  *
- * Copyright (c) 2015-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2018, PostgreSQL Global Development Group
  *
  * src/include/lib/bipartite_match.h
  */

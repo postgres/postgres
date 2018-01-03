@@ -3,7 +3,7 @@
  * pg_publication_rel.h
  *	  definition of the publication to relation map (pg_publication_rel)
   *
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_publication_rel.h

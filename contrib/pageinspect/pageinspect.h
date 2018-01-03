@@ -3,7 +3,7 @@
  * pageinspect.h
  *	  Common functions for pageinspect.
  *
- * Copyright (c) 2017, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/pageinspect/pageinspect.h

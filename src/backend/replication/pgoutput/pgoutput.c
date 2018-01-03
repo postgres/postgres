@@ -3,7 +3,7 @@
  * pgoutput.c
  *		Logical Replication output plugin
  *
- * Copyright (c) 2012-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/backend/replication/pgoutput/pgoutput.c

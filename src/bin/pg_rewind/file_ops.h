@@ -3,7 +3,7 @@
  * file_ops.h
  *	  Helper functions for operating on files
  *
- * Copyright (c) 2013-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2018, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

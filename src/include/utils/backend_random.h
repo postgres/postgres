@@ -3,7 +3,7 @@
  * backend_random.h
  *		Declarations for backend random number generation
  *
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  *
  *	  src/include/utils/backend_random.h
  *

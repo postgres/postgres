@@ -3,7 +3,7 @@
  *	  Encoding and decoding routines for base64 without whitespace
  *	  support.
  *
- * Portions Copyright (c) 2001-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2001-2018, PostgreSQL Global Development Group
  *
  * src/include/common/base64.h
  */

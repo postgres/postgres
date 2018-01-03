@@ -12,7 +12,7 @@
  * can be cancelled prior to the fulfillment of the condition) and do not
  * use pointers internally (so that they are safe to use within DSMs).
  *
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/condition_variable.h

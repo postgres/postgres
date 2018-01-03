@@ -3,7 +3,7 @@
  * dict_xsyn.c
  *	  Extended synonym dictionary
  *
- * Copyright (c) 2007-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/dict_xsyn/dict_xsyn.c

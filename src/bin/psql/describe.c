@@ -6,7 +6,7 @@
  * with servers of versions 7.4 and up.  It's okay to omit irrelevant
  * information for an old server, but not to fail outright.
  *
- * Copyright (c) 2000-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2018, PostgreSQL Global Development Group
  *
  * src/bin/psql/describe.c
  */

@@ -2,7 +2,7 @@
  * norm_test.c
  *		Program to test Unicode normalization functions.
  *
- * Portions Copyright (c) 2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/unicode_norm.c

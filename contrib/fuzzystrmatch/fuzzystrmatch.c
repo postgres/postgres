@@ -6,7 +6,7 @@
  * Joe Conway <mail@joeconway.com>
  *
  * contrib/fuzzystrmatch/fuzzystrmatch.c
- * Copyright (c) 2001-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2018, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
  * metaphone()

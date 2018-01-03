@@ -3,7 +3,7 @@
  * atomics.c
  *	   Non-Inline parts of the atomics implementation
  *
- * Portions Copyright (c) 2013-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2018, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

@@ -4,7 +4,7 @@
  *	  putenv() and unsetenv() for win32, which update both process environment
  *	  and caches in (potentially multiple) C run-time library (CRT) versions.
  *
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

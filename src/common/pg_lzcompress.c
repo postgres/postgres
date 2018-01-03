@@ -166,7 +166,7 @@
  *
  *			Jan Wieck
  *
- * Copyright (c) 1999-2017, PostgreSQL Global Development Group
+ * Copyright (c) 1999-2018, PostgreSQL Global Development Group
  *
  * src/common/pg_lzcompress.c
  * ----------

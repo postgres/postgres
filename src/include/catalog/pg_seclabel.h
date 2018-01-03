@@ -3,7 +3,7 @@
  * pg_seclabel.h
  *	  definition of the system "security label" relation (pg_seclabel)
  *
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * -------------------------------------------------------------------------

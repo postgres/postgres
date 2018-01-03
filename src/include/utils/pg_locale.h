@@ -4,7 +4,7 @@
  *
  * src/include/utils/pg_locale.h
  *
- * Copyright (c) 2002-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2018, PostgreSQL Global Development Group
  *
  *-----------------------------------------------------------------------
  */

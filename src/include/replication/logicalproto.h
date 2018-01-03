@@ -3,7 +3,7 @@
  * logicalproto.h
  *		logical replication protocol
  *
- * Copyright (c) 2015-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/include/replication/logicalproto.h

@@ -2,7 +2,7 @@
  *
  * pg_transform.h
  *
- * Copyright (c) 2012-2017, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2018, PostgreSQL Global Development Group
  *
  * src/include/catalog/pg_transform.h
  *
