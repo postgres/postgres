@@ -52,6 +52,14 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	/*
 	 * Allocate enough memory for the tuple descriptor, including the
 	 * attribute rows.
+	 *
+	 * Note: the attribute array stride is sizeof(FormData_pg_attribute),
+	 * since we declare the array elements as FormData_pg_attribute for
+	 * notational convenience.  However, we only guarantee that the first
+	 * ATTRIBUTE_FIXED_PART_SIZE bytes of each entry are valid; most code that
+	 * copies tupdesc entries around copies just that much.  In principle that
+	 * could be less due to trailing padding, although with the current
+	 * definition of pg_attribute there probably isn't any padding.
 	 */
 	desc = (TupleDesc) palloc(offsetof(struct tupleDesc, attrs) +
 							  natts * sizeof(FormData_pg_attribute));
@@ -106,16 +114,25 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 
 	desc = CreateTemplateTupleDesc(tupdesc->natts, tupdesc->tdhasoid);
 
+	/* Flat-copy the attribute array */
+	memcpy(TupleDescAttr(desc, 0),
+		   TupleDescAttr(tupdesc, 0),
+		   desc->natts * sizeof(FormData_pg_attribute));
+
+	/*
+	 * Since we're not copying constraints and defaults, clear fields
+	 * associated with them.
+	 */
 	for (i = 0; i < desc->natts; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
-		memcpy(att, &tupdesc->attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 		att->attnotnull = false;
 		att->atthasdef = false;
 		att->attidentity = '\0';
 	}
 
+	/* We can copy the tuple type identification, too */
 	desc->tdtypeid = tupdesc->tdtypeid;
 	desc->tdtypmod = tupdesc->tdtypmod;
 
@@ -136,13 +153,12 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 	desc = CreateTemplateTupleDesc(tupdesc->natts, tupdesc->tdhasoid);
 
-	for (i = 0; i < desc->natts; i++)
-	{
-		memcpy(TupleDescAttr(desc, i),
-			   TupleDescAttr(tupdesc, i),
-			   ATTRIBUTE_FIXED_PART_SIZE);
-	}
+	/* Flat-copy the attribute array */
+	memcpy(TupleDescAttr(desc, 0),
+		   TupleDescAttr(tupdesc, 0),
+		   desc->natts * sizeof(FormData_pg_attribute));
 
+	/* Copy the TupleConstr data structure, if any */
 	if (constr)
 	{
 		TupleConstr *cpy = (TupleConstr *) palloc0(sizeof(TupleConstr));
@@ -178,6 +194,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 		desc->constr = cpy;
 	}
 
+	/* We can copy the tuple type identification, too */
 	desc->tdtypeid = tupdesc->tdtypeid;
 	desc->tdtypmod = tupdesc->tdtypmod;
 
@@ -195,8 +212,29 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 void
 TupleDescCopy(TupleDesc dst, TupleDesc src)
 {
+	int			i;
+
+	/* Flat-copy the header and attribute array */
 	memcpy(dst, src, TupleDescSize(src));
+
+	/*
+	 * Since we're not copying constraints and defaults, clear fields
+	 * associated with them.
+	 */
+	for (i = 0; i < dst->natts; i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(dst, i);
+
+		att->attnotnull = false;
+		att->atthasdef = false;
+		att->attidentity = '\0';
+	}
 	dst->constr = NULL;
+
+	/*
+	 * Also, assume the destination is not to be ref-counted.  (Copying the
+	 * source's refcount would be wrong in any case.)
+	 */
 	dst->tdrefcount = -1;
 }
 
