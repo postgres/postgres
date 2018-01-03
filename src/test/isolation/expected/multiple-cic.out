@@ -1,6 +1,9 @@
-Parsed test spec with 2 sessions
+Parsed test spec with 3 sessions
 
-starting permutation: s2l s1i s2i
+starting permutation: s2l s1i s2i s3u
+pg_advisory_lock
+
+               
 step s2l: SELECT pg_advisory_lock(281457);
 pg_advisory_lock
 
@@ -11,9 +14,11 @@ step s1i:
  <waiting ...>
 step s2i: 
 		CREATE INDEX CONCURRENTLY mcic_two_pkey ON mcic_two (id)
-		WHERE unlck();
+		WHERE unlck() AND lck_shr(572814);
+ <waiting ...>
+step s3u: SELECT unlck();
+unlck          
 
+t              
 step s1i: <... completed>
-s1             
-
-               
+step s2i: <... completed>
