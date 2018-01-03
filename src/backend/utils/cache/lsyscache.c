@@ -958,7 +958,7 @@ get_atttypetypmodcoll(Oid relid, AttrNumber attnum,
  * get_collation_name
  *		Returns the name of a given pg_collation entry.
  *
- * Returns a palloc'd copy of the string, or NULL if no such constraint.
+ * Returns a palloc'd copy of the string, or NULL if no such collation.
  *
  * NOTE: since collation name is not unique, be wary of code that uses this
  * for anything except preparing error messages.
