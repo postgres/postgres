@@ -537,10 +537,12 @@ sub AddProject
 		}
 		else
 		{
+			# We don't expect the config-specific library to be here,
+			# so don't ask for it in last parameter
 			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\ssleay32.lib', 1);
+				$self->{options}->{openssl} . '\lib\ssleay32.lib', 0);
 			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\libeay32.lib', 1);
+				$self->{options}->{openssl} . '\lib\libeay32.lib', 0);
 		}
 	}
 	if ($self->{options}->{nls})
