@@ -557,6 +557,7 @@ XactLockTableWait(TransactionId xid, Relation rel, ItemPointer ctid,
 	LOCKTAG		tag;
 	XactLockTableWaitInfo info;
 	ErrorContextCallback callback;
+	bool		first = true;
 
 	/*
 	 * If an operation is specified, set up our verbose error context
@@ -590,7 +591,26 @@ XactLockTableWait(TransactionId xid, Relation rel, ItemPointer ctid,
 
 		if (!TransactionIdIsInProgress(xid))
 			break;
-		xid = SubTransGetParent(xid);
+
+		/*
+		 * If the Xid belonged to a subtransaction, then the lock would have
+		 * gone away as soon as it was finished; for correct tuple visibility,
+		 * the right action is to wait on its parent transaction to go away.
+		 * But instead of going levels up one by one, we can just wait for the
+		 * topmost transaction to finish with the same end result, which also
+		 * incurs less locktable traffic.
+		 *
+		 * Some uses of this function don't involve tuple visibility -- such
+		 * as when building snapshots for logical decoding.  It is possible to
+		 * see a transaction in ProcArray before it registers itself in the
+		 * locktable.  The topmost transaction in that case is the same xid,
+		 * so we try again after a short sleep.  (Don't sleep the first time
+		 * through, to avoid slowing down the normal case.)
+		 */
+		if (!first)
+			pg_usleep(1000L);
+		first = false;
+		xid = SubTransGetTopmostTransaction(xid);
 	}
 
 	if (oper != XLTW_None)
@@ -607,6 +627,7 @@ bool
 ConditionalXactLockTableWait(TransactionId xid)
 {
 	LOCKTAG		tag;
+	bool		first = true;
 
 	for (;;)
 	{
@@ -622,7 +643,12 @@ ConditionalXactLockTableWait(TransactionId xid)
 
 		if (!TransactionIdIsInProgress(xid))
 			break;
-		xid = SubTransGetParent(xid);
+
+		/* See XactLockTableWait about this case */
+		if (!first)
+			pg_usleep(1000L);
+		first = false;
+		xid = SubTransGetTopmostTransaction(xid);
 	}
 
 	return true;
