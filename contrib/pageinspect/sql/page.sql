@@ -41,3 +41,11 @@ select get_raw_page('test_partitioned', 0); -- error about partitioned table
 create table test_part1 partition of test_partitioned for values from ( 1 ) to (100);
 select get_raw_page('test_part1', 0); -- get farther and error about empty table
 drop table test_partitioned;
+
+-- check null bitmap alignment for table whose number of attributes is multiple of 8
+create table test8 (f1 int, f2 int, f3 int, f4 int, f5 int, f6 int, f7 int, f8 int);
+insert into test8(f1, f8) values (x'f1'::int, 0);
+select t_bits, t_data from heap_page_items(get_raw_page('test8', 0));
+select tuple_data_split('test8'::regclass, t_data, t_infomask, t_infomask2, t_bits)
+    from heap_page_items(get_raw_page('test8', 0));
+drop table test8;
