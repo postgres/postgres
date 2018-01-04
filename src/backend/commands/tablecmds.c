@@ -468,7 +468,6 @@ static void RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid,
 								Oid oldRelOid, void *arg);
 static void RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid,
 								 Oid oldrelid, void *arg);
-static bool is_partition_attr(Relation rel, AttrNumber attnum, bool *used_in_expr);
 static PartitionSpec *transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy);
 static void ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 					  List **partexprs, Oid *partopclass, Oid *partcollation, char strategy);
@@ -6492,68 +6491,6 @@ ATPrepDropColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 }
 
 /*
- * Checks if attnum is a partition attribute for rel
- *
- * Sets *used_in_expr if attnum is found to be referenced in some partition
- * key expression.  It's possible for a column to be both used directly and
- * as part of an expression; if that happens, *used_in_expr may end up as
- * either true or false.  That's OK for current uses of this function, because
- * *used_in_expr is only used to tailor the error message text.
- */
-static bool
-is_partition_attr(Relation rel, AttrNumber attnum, bool *used_in_expr)
-{
-	PartitionKey key;
-	int			partnatts;
-	List	   *partexprs;
-	ListCell   *partexprs_item;
-	int			i;
-
-	if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-		return false;
-
-	key = RelationGetPartitionKey(rel);
-	partnatts = get_partition_natts(key);
-	partexprs = get_partition_exprs(key);
-
-	partexprs_item = list_head(partexprs);
-	for (i = 0; i < partnatts; i++)
-	{
-		AttrNumber	partattno = get_partition_col_attnum(key, i);
-
-		if (partattno != 0)
-		{
-			if (attnum == partattno)
-			{
-				if (used_in_expr)
-					*used_in_expr = false;
-				return true;
-			}
-		}
-		else
-		{
-			/* Arbitrary expression */
-			Node	   *expr = (Node *) lfirst(partexprs_item);
-			Bitmapset  *expr_attrs = NULL;
-
-			/* Find all attributes referenced */
-			pull_varattnos(expr, 1, &expr_attrs);
-			partexprs_item = lnext(partexprs_item);
-
-			if (bms_is_member(attnum - FirstLowInvalidHeapAttributeNumber,
-							  expr_attrs))
-			{
-				if (used_in_expr)
-					*used_in_expr = true;
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-/*
  * Return value is the address of the dropped column.
  */
 static ObjectAddress
@@ -6613,7 +6550,9 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 						colName)));
 
 	/* Don't drop columns used in the partition key */
-	if (is_partition_attr(rel, attnum, &is_expr))
+	if (has_partition_attrs(rel,
+							bms_make_singleton(attnum - FirstLowInvalidHeapAttributeNumber),
+							&is_expr))
 	{
 		if (!is_expr)
 			ereport(ERROR,
@@ -8837,7 +8776,9 @@ ATPrepAlterColumnType(List **wqueue,
 						colName)));
 
 	/* Don't alter columns used in the partition key */
-	if (is_partition_attr(rel, attnum, &is_expr))
+	if (has_partition_attrs(rel,
+							bms_make_singleton(attnum - FirstLowInvalidHeapAttributeNumber),
+							&is_expr))
 	{
 		if (!is_expr)
 			ereport(ERROR,

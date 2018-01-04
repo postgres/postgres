@@ -1446,10 +1446,13 @@ get_qual_from_partbound(Relation rel, Relation parent,
 
 /*
  * map_partition_varattnos - maps varattno of any Vars in expr from the
- * parent attno to partition attno.
+ * attno's of 'from_rel' to the attno's of 'to_rel' partition, each of which
+ * may be either a leaf partition or a partitioned table, but both of which
+ * must be from the same partitioning hierarchy.
  *
- * We must allow for cases where physical attnos of a partition can be
- * different from the parent's.
+ * Even though all of the same column names must be present in all relations
+ * in the hierarchy, and they must also have the same types, the attnos may
+ * be different.
  *
  * If found_whole_row is not NULL, *found_whole_row returns whether a
  * whole-row variable was found in the input expression.
@@ -1459,8 +1462,8 @@ get_qual_from_partbound(Relation rel, Relation parent,
  * are working on Lists, so it's less messy to do the casts internally.
  */
 List *
-map_partition_varattnos(List *expr, int target_varno,
-						Relation partrel, Relation parent,
+map_partition_varattnos(List *expr, int fromrel_varno,
+						Relation to_rel, Relation from_rel,
 						bool *found_whole_row)
 {
 	bool		my_found_whole_row = false;
@@ -1469,14 +1472,14 @@ map_partition_varattnos(List *expr, int target_varno,
 	{
 		AttrNumber *part_attnos;
 
-		part_attnos = convert_tuples_by_name_map(RelationGetDescr(partrel),
-												 RelationGetDescr(parent),
+		part_attnos = convert_tuples_by_name_map(RelationGetDescr(to_rel),
+												 RelationGetDescr(from_rel),
 												 gettext_noop("could not convert row type"));
 		expr = (List *) map_variable_attnos((Node *) expr,
-											target_varno, 0,
+											fromrel_varno, 0,
 											part_attnos,
-											RelationGetDescr(parent)->natts,
-											RelationGetForm(partrel)->reltype,
+											RelationGetDescr(from_rel)->natts,
+											RelationGetForm(to_rel)->reltype,
 											&my_found_whole_row);
 	}
 
@@ -2596,6 +2599,70 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 		part_index = partdesc->boundinfo->default_index;
 
 	return part_index;
+}
+
+/*
+ * Checks if any of the 'attnums' is a partition key attribute for rel
+ *
+ * Sets *used_in_expr if any of the 'attnums' is found to be referenced in some
+ * partition key expression.  It's possible for a column to be both used
+ * directly and as part of an expression; if that happens, *used_in_expr may
+ * end up as either true or false.  That's OK for current uses of this
+ * function, because *used_in_expr is only used to tailor the error message
+ * text.
+ */
+bool
+has_partition_attrs(Relation rel, Bitmapset *attnums,
+					bool *used_in_expr)
+{
+	PartitionKey key;
+	int			partnatts;
+	List	   *partexprs;
+	ListCell   *partexprs_item;
+	int			i;
+
+	if (attnums == NULL || rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+		return false;
+
+	key = RelationGetPartitionKey(rel);
+	partnatts = get_partition_natts(key);
+	partexprs = get_partition_exprs(key);
+
+	partexprs_item = list_head(partexprs);
+	for (i = 0; i < partnatts; i++)
+	{
+		AttrNumber	partattno = get_partition_col_attnum(key, i);
+
+		if (partattno != 0)
+		{
+			if (bms_is_member(partattno - FirstLowInvalidHeapAttributeNumber,
+							  attnums))
+			{
+				if (used_in_expr)
+					*used_in_expr = false;
+				return true;
+			}
+		}
+		else
+		{
+			/* Arbitrary expression */
+			Node	   *expr = (Node *) lfirst(partexprs_item);
+			Bitmapset  *expr_attrs = NULL;
+
+			/* Find all attributes referenced */
+			pull_varattnos(expr, 1, &expr_attrs);
+			partexprs_item = lnext(partexprs_item);
+
+			if (bms_overlap(attnums, expr_attrs))
+			{
+				if (used_in_expr)
+					*used_in_expr = true;
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 /*
