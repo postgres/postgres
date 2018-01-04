@@ -44,7 +44,7 @@ drop table test_partitioned;
 
 -- check null bitmap alignment for table whose number of attributes is multiple of 8
 create table test8 (f1 int, f2 int, f3 int, f4 int, f5 int, f6 int, f7 int, f8 int);
-insert into test8(f1, f8) values (x'f1'::int, 0);
+insert into test8(f1, f8) values (x'7f00007f'::int, 0);
 select t_bits, t_data from heap_page_items(get_raw_page('test8', 0));
 select tuple_data_split('test8'::regclass, t_data, t_infomask, t_infomask2, t_bits)
     from heap_page_items(get_raw_page('test8', 0));
