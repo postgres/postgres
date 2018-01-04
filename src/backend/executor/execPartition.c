@@ -38,58 +38,40 @@ static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
 									 int maxfieldlen);
 
 /*
- * ExecSetupPartitionTupleRouting - set up information needed during
- * tuple routing for partitioned tables
- *
- * Output arguments:
- * 'pd' receives an array of PartitionDispatch objects with one entry for
- *		every partitioned table in the partition tree
- * 'partitions' receives an array of ResultRelInfo* objects with one entry for
- *		every leaf partition in the partition tree
- * 'tup_conv_maps' receives an array of TupleConversionMap objects with one
- *		entry for every leaf partition (required to convert input tuple based
- *		on the root table's rowtype to a leaf partition's rowtype after tuple
- *		routing is done)
- * 'partition_tuple_slot' receives a standalone TupleTableSlot to be used
- *		to manipulate any given leaf partition's rowtype after that partition
- *		is chosen by tuple-routing.
- * 'num_parted' receives the number of partitioned tables in the partition
- *		tree (= the number of entries in the 'pd' output array)
- * 'num_partitions' receives the number of leaf partitions in the partition
- *		tree (= the number of entries in the 'partitions' and 'tup_conv_maps'
- *		output arrays
+ * ExecSetupPartitionTupleRouting - sets up information needed during
+ * tuple routing for partitioned tables, encapsulates it in
+ * PartitionTupleRouting, and returns it.
  *
  * Note that all the relations in the partition tree are locked using the
  * RowExclusiveLock mode upon return from this function.
  */
-void
+PartitionTupleRouting *
 ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
-							   Relation rel,
-							   Index resultRTindex,
-							   EState *estate,
-							   PartitionDispatch **pd,
-							   ResultRelInfo ***partitions,
-							   TupleConversionMap ***tup_conv_maps,
-							   TupleTableSlot **partition_tuple_slot,
-							   int *num_parted, int *num_partitions)
+							   Relation rel, Index resultRTindex,
+							   EState *estate)
 {
 	TupleDesc	tupDesc = RelationGetDescr(rel);
 	List	   *leaf_parts;
 	ListCell   *cell;
 	int			i;
 	ResultRelInfo *leaf_part_rri;
+	PartitionTupleRouting *proute;
 
 	/*
 	 * Get the information about the partition tree after locking all the
 	 * partitions.
 	 */
 	(void) find_all_inheritors(RelationGetRelid(rel), RowExclusiveLock, NULL);
-	*pd = RelationGetPartitionDispatchInfo(rel, num_parted, &leaf_parts);
-	*num_partitions = list_length(leaf_parts);
-	*partitions = (ResultRelInfo **) palloc(*num_partitions *
-											sizeof(ResultRelInfo *));
-	*tup_conv_maps = (TupleConversionMap **) palloc0(*num_partitions *
-													 sizeof(TupleConversionMap *));
+	proute = (PartitionTupleRouting *) palloc0(sizeof(PartitionTupleRouting));
+	proute->partition_dispatch_info =
+		RelationGetPartitionDispatchInfo(rel, &proute->num_dispatch,
+										 &leaf_parts);
+	proute->num_partitions = list_length(leaf_parts);
+	proute->partitions = (ResultRelInfo **) palloc(proute->num_partitions *
+												   sizeof(ResultRelInfo *));
+	proute->partition_tupconv_maps =
+		(TupleConversionMap **) palloc0(proute->num_partitions *
+										sizeof(TupleConversionMap *));
 
 	/*
 	 * Initialize an empty slot that will be used to manipulate tuples of any
@@ -97,9 +79,9 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 	 * (such as ModifyTableState) and released when the node finishes
 	 * processing.
 	 */
-	*partition_tuple_slot = MakeTupleTableSlot();
+	proute->partition_tuple_slot = MakeTupleTableSlot();
 
-	leaf_part_rri = (ResultRelInfo *) palloc0(*num_partitions *
+	leaf_part_rri = (ResultRelInfo *) palloc0(proute->num_partitions *
 											  sizeof(ResultRelInfo));
 	i = 0;
 	foreach(cell, leaf_parts)
@@ -109,8 +91,8 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 
 		/*
 		 * We locked all the partitions above including the leaf partitions.
-		 * Note that each of the relations in *partitions are eventually
-		 * closed by the caller.
+		 * Note that each of the relations in proute->partitions are
+		 * eventually closed by the caller.
 		 */
 		partrel = heap_open(lfirst_oid(cell), NoLock);
 		part_tupdesc = RelationGetDescr(partrel);
@@ -119,8 +101,9 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 		 * Save a tuple conversion map to convert a tuple routed to this
 		 * partition from the parent's type to the partition's.
 		 */
-		(*tup_conv_maps)[i] = convert_tuples_by_name(tupDesc, part_tupdesc,
-													 gettext_noop("could not convert row type"));
+		proute->partition_tupconv_maps[i] =
+			convert_tuples_by_name(tupDesc, part_tupdesc,
+								   gettext_noop("could not convert row type"));
 
 		InitResultRelInfo(leaf_part_rri,
 						  partrel,
@@ -149,9 +132,11 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 		estate->es_leaf_result_relations =
 			lappend(estate->es_leaf_result_relations, leaf_part_rri);
 
-		(*partitions)[i] = leaf_part_rri++;
+		proute->partitions[i] = leaf_part_rri++;
 		i++;
 	}
+
+	return proute;
 }
 
 /*
@@ -270,6 +255,45 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 
 	ecxt->ecxt_scantuple = ecxt_scantuple_old;
 	return result;
+}
+
+/*
+ * ExecCleanupTupleRouting -- Clean up objects allocated for partition tuple
+ * routing.
+ *
+ * Close all the partitioned tables, leaf partitions, and their indices.
+ */
+void
+ExecCleanupTupleRouting(PartitionTupleRouting * proute)
+{
+	int			i;
+
+	/*
+	 * Remember, proute->partition_dispatch_info[0] corresponds to the root
+	 * partitioned table, which we must not try to close, because it is the
+	 * main target table of the query that will be closed by callers such as
+	 * ExecEndPlan() or DoCopy(). Also, tupslot is NULL for the root
+	 * partitioned table.
+	 */
+	for (i = 1; i < proute->num_dispatch; i++)
+	{
+		PartitionDispatch pd = proute->partition_dispatch_info[i];
+
+		heap_close(pd->reldesc, NoLock);
+		ExecDropSingleTupleTableSlot(pd->tupslot);
+	}
+
+	for (i = 0; i < proute->num_partitions; i++)
+	{
+		ResultRelInfo *resultRelInfo = proute->partitions[i];
+
+		ExecCloseIndices(resultRelInfo);
+		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+	}
+
+	/* Release the standalone partition tuple descriptor, if any */
+	if (proute->partition_tuple_slot)
+		ExecDropSingleTupleTableSlot(proute->partition_tuple_slot);
 }
 
 /*

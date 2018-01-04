@@ -985,15 +985,8 @@ typedef struct ModifyTableState
 	TupleTableSlot *mt_existing;	/* slot to store existing target tuple in */
 	List	   *mt_excludedtlist;	/* the excluded pseudo relation's tlist  */
 	TupleTableSlot *mt_conflproj;	/* CONFLICT ... SET ... projection target */
-	struct PartitionDispatchData **mt_partition_dispatch_info;
+	struct PartitionTupleRouting *mt_partition_tuple_routing;
 	/* Tuple-routing support info */
-	int			mt_num_dispatch;	/* Number of entries in the above array */
-	int			mt_num_partitions;	/* Number of members in the following
-									 * arrays */
-	ResultRelInfo **mt_partitions;	/* Per partition result relation pointers */
-	TupleConversionMap **mt_partition_tupconv_maps;
-	/* Per partition tuple conversion map */
-	TupleTableSlot *mt_partition_tuple_slot;
 	struct TransitionCaptureState *mt_transition_capture;
 	/* controls transition table population for specified operation */
 	struct TransitionCaptureState *mt_oc_transition_capture;
