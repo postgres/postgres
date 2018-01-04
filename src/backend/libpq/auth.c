@@ -2363,9 +2363,10 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	if (scheme == NULL)
 		scheme = "ldap";
 #ifdef WIN32
-	*ldap = ldap_sslinit(port->hba->ldapserver,
-						 port->hba->ldapport,
-						 strcmp(scheme, "ldaps") == 0);
+	if (strcmp(scheme, "ldaps") == 0)
+		*ldap = ldap_sslinit(port->hba->ldapserver, port->hba->ldapport, 1);
+	else
+		*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
 	if (!*ldap)
 	{
 		ereport(LOG,
@@ -2487,6 +2488,11 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 /* Not all LDAP implementations define this. */
 #ifndef LDAP_NO_ATTRS
 #define LDAP_NO_ATTRS "1.1"
+#endif
+
+/* Not all LDAP implementations define this. */
+#ifndef LDAPS_PORT
+#define LDAPS_PORT 636
 #endif
 
 /*
