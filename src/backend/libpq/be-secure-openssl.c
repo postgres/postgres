@@ -57,6 +57,7 @@
 #ifndef OPENSSL_NO_ECDH
 #include <openssl/ec.h>
 #endif
+#include <openssl/x509.h>
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"

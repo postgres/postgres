@@ -58,6 +58,7 @@
 #ifdef USE_SSL_ENGINE
 #include <openssl/engine.h>
 #endif
+#include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 static bool verify_peer_name_matches_certificate(PGconn *);
