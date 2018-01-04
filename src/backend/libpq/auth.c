@@ -873,8 +873,6 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	int			inputlen;
 	int			result;
 	bool		initial;
-	char	   *tls_finished = NULL;
-	size_t		tls_finished_len = 0;
 
 	/*
 	 * SASL auth is not supported for protocol versions before 3, because it
@@ -915,17 +913,6 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	sendAuthRequest(port, AUTH_REQ_SASL, sasl_mechs, p - sasl_mechs + 1);
 	pfree(sasl_mechs);
 
-#ifdef USE_SSL
-
-	/*
-	 * Get data for channel binding.
-	 */
-	if (port->ssl_in_use)
-	{
-		tls_finished = be_tls_get_peer_finished(port, &tls_finished_len);
-	}
-#endif
-
 	/*
 	 * Initialize the status tracker for message exchanges.
 	 *
@@ -937,11 +924,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	 * This is because we don't want to reveal to an attacker what usernames
 	 * are valid, nor which users have a valid password.
 	 */
-	scram_opaq = pg_be_scram_init(port->user_name,
-								  shadow_pass,
-								  port->ssl_in_use,
-								  tls_finished,
-								  tls_finished_len);
+	scram_opaq = pg_be_scram_init(port, shadow_pass);
 
 	/*
 	 * Loop through SASL message exchange.  This exchange can consist of

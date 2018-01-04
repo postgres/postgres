@@ -23,17 +23,13 @@ extern int	pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn);
 extern char *pg_fe_getauthname(PQExpBuffer errorMessage);
 
 /* Prototypes for functions in fe-auth-scram.c */
-extern void *pg_fe_scram_init(const char *username,
+extern void *pg_fe_scram_init(PGconn *conn,
 				 const char *password,
-				 bool ssl_in_use,
-				 const char *sasl_mechanism,
-				 const char *channel_binding_type,
-				 char *tls_finished_message,
-				 size_t tls_finished_len);
+				 const char *sasl_mechanism);
 extern void pg_fe_scram_free(void *opaq);
 extern void pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 					 char **output, int *outputlen,
-					 bool *done, bool *success, PQExpBuffer errorMessage);
+					 bool *done, bool *success);
 extern char *pg_fe_scram_build_verifier(const char *password);
 
 #endif							/* FE_AUTH_H */

@@ -110,10 +110,8 @@ typedef struct
 
 	const char *username;		/* username from startup packet */
 
+	Port	   *port;
 	char		cbind_flag;
-	bool		ssl_in_use;
-	const char *tls_finished_message;
-	size_t		tls_finished_len;
 	char	   *channel_binding_type;
 
 	int			iterations;
@@ -172,21 +170,15 @@ static char *scram_mock_salt(const char *username);
  * it will fail, as if an incorrect password was given.
  */
 void *
-pg_be_scram_init(const char *username,
-				 const char *shadow_pass,
-				 bool ssl_in_use,
-				 const char *tls_finished_message,
-				 size_t tls_finished_len)
+pg_be_scram_init(Port *port,
+				 const char *shadow_pass)
 {
 	scram_state *state;
 	bool		got_verifier;
 
 	state = (scram_state *) palloc0(sizeof(scram_state));
+	state->port = port;
 	state->state = SCRAM_AUTH_INIT;
-	state->username = username;
-	state->ssl_in_use = ssl_in_use;
-	state->tls_finished_message = tls_finished_message;
-	state->tls_finished_len = tls_finished_len;
 	state->channel_binding_type = NULL;
 
 	/*
@@ -209,7 +201,7 @@ pg_be_scram_init(const char *username,
 				 */
 				ereport(LOG,
 						(errmsg("invalid SCRAM verifier for user \"%s\"",
-								username)));
+								state->port->user_name)));
 				got_verifier = false;
 			}
 		}
@@ -220,7 +212,7 @@ pg_be_scram_init(const char *username,
 			 * authentication with an MD5 hash.)
 			 */
 			state->logdetail = psprintf(_("User \"%s\" does not have a valid SCRAM verifier."),
-										state->username);
+										state->port->user_name);
 			got_verifier = false;
 		}
 	}
@@ -242,8 +234,8 @@ pg_be_scram_init(const char *username,
 	 */
 	if (!got_verifier)
 	{
-		mock_scram_verifier(username, &state->iterations, &state->salt,
-							state->StoredKey, state->ServerKey);
+		mock_scram_verifier(state->port->user_name, &state->iterations,
+							&state->salt, state->StoredKey, state->ServerKey);
 		state->doomed = true;
 	}
 
@@ -815,7 +807,7 @@ read_client_first_message(scram_state *state, char *input)
 			 * it supports channel binding, which in this implementation is
 			 * the case if a connection is using SSL.
 			 */
-			if (state->ssl_in_use)
+			if (state->port->ssl_in_use)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						 errmsg("SCRAM channel binding negotiation error"),
@@ -839,7 +831,7 @@ read_client_first_message(scram_state *state, char *input)
 			{
 				char	   *channel_binding_type;
 
-				if (!state->ssl_in_use)
+				if (!state->port->ssl_in_use)
 				{
 					/*
 					 * Without SSL, we don't support channel binding.
@@ -1120,8 +1112,9 @@ read_client_final_message(scram_state *state, char *input)
 		 */
 		if (strcmp(state->channel_binding_type, SCRAM_CHANNEL_BINDING_TLS_UNIQUE) == 0)
 		{
-			cbind_data = state->tls_finished_message;
-			cbind_data_len = state->tls_finished_len;
+#ifdef USE_SSL
+			cbind_data = be_tls_get_peer_finished(state->port, &cbind_data_len);
+#endif
 		}
 		else
 		{
