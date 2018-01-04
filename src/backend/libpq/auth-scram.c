@@ -849,13 +849,14 @@ read_client_first_message(scram_state *state, char *input)
 				}
 
 				/*
-				 * Read value provided by client; only tls-unique is supported
-				 * for now.  (It is not safe to print the name of an
-				 * unsupported binding type in the error message.  Pranksters
-				 * could print arbitrary strings into the log that way.)
+				 * Read value provided by client.  (It is not safe to print
+				 * the name of an unsupported binding type in the error
+				 * message.  Pranksters could print arbitrary strings into the
+				 * log that way.)
 				 */
 				channel_binding_type = read_attr_value(&input, 'p');
-				if (strcmp(channel_binding_type, SCRAM_CHANNEL_BINDING_TLS_UNIQUE) != 0)
+				if (strcmp(channel_binding_type, SCRAM_CHANNEL_BINDING_TLS_UNIQUE) != 0 &&
+					strcmp(channel_binding_type, SCRAM_CHANNEL_BINDING_TLS_END_POINT) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
 							 (errmsg("unsupported SCRAM channel-binding type"))));
@@ -1114,6 +1115,15 @@ read_client_final_message(scram_state *state, char *input)
 		{
 #ifdef USE_SSL
 			cbind_data = be_tls_get_peer_finished(state->port, &cbind_data_len);
+#endif
+		}
+		else if (strcmp(state->channel_binding_type,
+						SCRAM_CHANNEL_BINDING_TLS_END_POINT) == 0)
+		{
+			/* Fetch hash data of server's SSL certificate */
+#ifdef USE_SSL
+			cbind_data = be_tls_get_certificate_hash(state->port,
+													 &cbind_data_len);
 #endif
 		}
 		else

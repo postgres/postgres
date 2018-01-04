@@ -1240,6 +1240,67 @@ be_tls_get_peer_finished(Port *port, size_t *len)
 }
 
 /*
+ * Get the server certificate hash for SCRAM channel binding type
+ * tls-server-end-point.
+ *
+ * The result is a palloc'd hash of the server certificate with its
+ * size, and NULL if there is no certificate available.
+ */
+char *
+be_tls_get_certificate_hash(Port *port, size_t *len)
+{
+	X509	   *server_cert;
+	char	   *cert_hash;
+	const EVP_MD *algo_type = NULL;
+	unsigned char hash[EVP_MAX_MD_SIZE];	/* size for SHA-512 */
+	unsigned int hash_size;
+	int			algo_nid;
+
+	*len = 0;
+	server_cert = SSL_get_certificate(port->ssl);
+	if (server_cert == NULL)
+		return NULL;
+
+	/*
+	 * Get the signature algorithm of the certificate to determine the
+	 * hash algorithm to use for the result.
+	 */
+	if (!OBJ_find_sigid_algs(X509_get_signature_nid(server_cert),
+							 &algo_nid, NULL))
+		elog(ERROR, "could not determine server certificate signature algorithm");
+
+	/*
+	 * The TLS server's certificate bytes need to be hashed with SHA-256 if
+	 * its signature algorithm is MD5 or SHA-1 as per RFC 5929
+	 * (https://tools.ietf.org/html/rfc5929#section-4.1).  If something else
+	 * is used, the same hash as the signature algorithm is used.
+	 */
+	switch (algo_nid)
+	{
+		case NID_md5:
+		case NID_sha1:
+			algo_type = EVP_sha256();
+			break;
+		default:
+			algo_type = EVP_get_digestbynid(algo_nid);
+			if (algo_type == NULL)
+				elog(ERROR, "could not find digest for NID %s",
+					 OBJ_nid2sn(algo_nid));
+			break;
+	}
+
+	/* generate and save the certificate hash */
+	if (!X509_digest(server_cert, algo_type, hash, &hash_size))
+		elog(ERROR, "could not generate server certificate hash");
+
+	cert_hash = palloc(hash_size);
+	memcpy(cert_hash, hash, hash_size);
+	*len = hash_size;
+
+	return cert_hash;
+}
+
+/*
  * Convert an X509 subject name to a cstring.
  *
  */

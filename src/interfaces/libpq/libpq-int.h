@@ -672,6 +672,7 @@ extern ssize_t pgtls_read(PGconn *conn, void *ptr, size_t len);
 extern bool pgtls_read_pending(PGconn *conn);
 extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);
 extern char *pgtls_get_finished(PGconn *conn, size_t *len);
+extern char *pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len);
 
 /*
  * this is so that we can check if a connection is non-blocking internally

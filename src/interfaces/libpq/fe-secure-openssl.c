@@ -419,6 +419,86 @@ pgtls_get_finished(PGconn *conn, size_t *len)
 	return result;
 }
 
+/*
+ * Get the hash of the server certificate, for SCRAM channel binding type
+ * tls-server-end-point.
+ *
+ * NULL is sent back to the caller in the event of an error, with an
+ * error message for the caller to consume.
+ */
+char *
+pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
+{
+	X509	   *peer_cert;
+	const EVP_MD *algo_type;
+	unsigned char hash[EVP_MAX_MD_SIZE];	/* size for SHA-512 */
+	unsigned int hash_size;
+	int			algo_nid;
+	char	   *cert_hash;
+
+	*len = 0;
+
+	if (!conn->peer)
+		return NULL;
+
+	peer_cert = conn->peer;
+
+	/*
+	 * Get the signature algorithm of the certificate to determine the hash
+	 * algorithm to use for the result.
+	 */
+	if (!OBJ_find_sigid_algs(X509_get_signature_nid(peer_cert),
+							 &algo_nid, NULL))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("could not determine server certificate signature algorithm\n"));
+		return NULL;
+	}
+
+	/*
+	 * The TLS server's certificate bytes need to be hashed with SHA-256 if
+	 * its signature algorithm is MD5 or SHA-1 as per RFC 5929
+	 * (https://tools.ietf.org/html/rfc5929#section-4.1).  If something else
+	 * is used, the same hash as the signature algorithm is used.
+	 */
+	switch (algo_nid)
+	{
+		case NID_md5:
+		case NID_sha1:
+			algo_type = EVP_sha256();
+			break;
+		default:
+			algo_type = EVP_get_digestbynid(algo_nid);
+			if (algo_type == NULL)
+			{
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not find digest for NID %s\n"),
+								  OBJ_nid2sn(algo_nid));
+				return NULL;
+			}
+			break;
+	}
+
+	if (!X509_digest(peer_cert, algo_type, hash, &hash_size))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("could not generate peer certificate hash\n"));
+		return NULL;
+	}
+
+	/* save result */
+	cert_hash = malloc(hash_size);
+	if (cert_hash == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("out of memory\n"));
+		return NULL;
+	}
+	memcpy(cert_hash, hash, hash_size);
+	*len = hash_size;
+
+	return cert_hash;
+}
 
 /* ------------------------------------------------------------ */
 /*						OpenSSL specific code					*/

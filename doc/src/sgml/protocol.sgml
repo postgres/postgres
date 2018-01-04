@@ -1575,9 +1575,13 @@ the password is in.
 
   <para>
 <firstterm>Channel binding</firstterm> is supported in PostgreSQL builds with
-SSL support. The SASL mechanism name for SCRAM with channel binding
-is <literal>SCRAM-SHA-256-PLUS</literal>.  The only channel binding type
-supported at the moment is <literal>tls-unique</literal>, defined in RFC 5929.
+SSL support. The SASL mechanism name for SCRAM with channel binding is
+<literal>SCRAM-SHA-256-PLUS</literal>.  Two channel binding types are
+supported: <literal>tls-unique</literal> and
+<literal>tls-server-end-point</literal>, both defined in RFC 5929.  Clients
+should use <literal>tls-unique</literal> if they can support it.
+<literal>tls-server-end-point</literal> is intended for third-party clients
+that cannot support <literal>tls-unique</literal> for some reason.
   </para>
 
 <procedure>
@@ -1597,9 +1601,10 @@ supported at the moment is <literal>tls-unique</literal>, defined in RFC 5929.
   indicates the chosen mechanism, <literal>SCRAM-SHA-256</literal> or
   <literal>SCRAM-SHA-256-PLUS</literal>. (A client is free to choose either
   mechanism, but for better security it should choose the channel-binding
-  variant if it can support it.) In the Initial Client response field,
-  the message contains the SCRAM
-  <structname>client-first-message</structname>.
+  variant if it can support it.) In the Initial Client response field, the
+  message contains the SCRAM <structname>client-first-message</structname>.
+  The <structname>client-first-message</structname> also contains the channel
+  binding type chosen by the client.
 </para>
 </step>
 <step id="scram-server-first">
