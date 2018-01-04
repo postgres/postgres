@@ -447,7 +447,7 @@ pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 	 * Get the signature algorithm of the certificate to determine the hash
 	 * algorithm to use for the result.
 	 */
-	if (!OBJ_find_sigid_algs(X509_get_signature_nid(peer_cert),
+	if (!OBJ_find_sigid_algs(OBJ_obj2nid(peer_cert->sig_alg->algorithm),
 							 &algo_nid, NULL))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
