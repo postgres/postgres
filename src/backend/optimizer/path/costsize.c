@@ -1883,17 +1883,25 @@ cost_append(AppendPath *apath)
 											   subpath->startup_cost);
 
 			/*
-			 * Apply parallel divisor to non-partial subpaths.  Also add the
-			 * cost of partial paths to the total cost, but ignore non-partial
-			 * paths for now.
+			 * Apply parallel divisor to subpaths.  Scale the number of rows
+			 * for each partial subpath based on the ratio of the parallel
+			 * divisor originally used for the subpath to the one we adopted.
+			 * Also add the cost of partial paths to the total cost, but
+			 * ignore non-partial paths for now.
 			 */
 			if (i < apath->first_partial_path)
 				apath->path.rows += subpath->rows / parallel_divisor;
 			else
 			{
-				apath->path.rows += subpath->rows;
+				double		subpath_parallel_divisor;
+
+				subpath_parallel_divisor = get_parallel_divisor(subpath);
+				apath->path.rows += subpath->rows * (subpath_parallel_divisor /
+													 parallel_divisor);
 				apath->path.total_cost += subpath->total_cost;
 			}
+
+			apath->path.rows = clamp_row_est(apath->path.rows);
 
 			i++;
 		}
