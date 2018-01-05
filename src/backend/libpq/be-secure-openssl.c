@@ -57,7 +57,6 @@
 #ifndef OPENSSL_NO_ECDH
 #include <openssl/ec.h>
 #endif
-#include <openssl/x509.h>
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -1250,6 +1249,7 @@ be_tls_get_peer_finished(Port *port, size_t *len)
 char *
 be_tls_get_certificate_hash(Port *port, size_t *len)
 {
+#ifdef HAVE_X509_GET_SIGNATURE_NID
 	X509	   *server_cert;
 	char	   *cert_hash;
 	const EVP_MD *algo_type = NULL;
@@ -1266,7 +1266,7 @@ be_tls_get_certificate_hash(Port *port, size_t *len)
 	 * Get the signature algorithm of the certificate to determine the
 	 * hash algorithm to use for the result.
 	 */
-	if (!OBJ_find_sigid_algs(OBJ_obj2nid(server_cert->sig_alg->algorithm),
+	if (!OBJ_find_sigid_algs(X509_get_signature_nid(server_cert),
 							 &algo_nid, NULL))
 		elog(ERROR, "could not determine server certificate signature algorithm");
 
@@ -1299,6 +1299,12 @@ be_tls_get_certificate_hash(Port *port, size_t *len)
 	*len = hash_size;
 
 	return cert_hash;
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_PROTOCOL_VIOLATION),
+			 errmsg("channel binding type \"tls-server-end-point\" is not supported by this build")));
+	return NULL;
+#endif
 }
 
 /*

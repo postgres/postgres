@@ -58,7 +58,6 @@
 #ifdef USE_SSL_ENGINE
 #include <openssl/engine.h>
 #endif
-#include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 static bool verify_peer_name_matches_certificate(PGconn *);
@@ -430,6 +429,7 @@ pgtls_get_finished(PGconn *conn, size_t *len)
 char *
 pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 {
+#ifdef HAVE_X509_GET_SIGNATURE_NID
 	X509	   *peer_cert;
 	const EVP_MD *algo_type;
 	unsigned char hash[EVP_MAX_MD_SIZE];	/* size for SHA-512 */
@@ -448,7 +448,7 @@ pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 	 * Get the signature algorithm of the certificate to determine the hash
 	 * algorithm to use for the result.
 	 */
-	if (!OBJ_find_sigid_algs(OBJ_obj2nid(peer_cert->sig_alg->algorithm),
+	if (!OBJ_find_sigid_algs(X509_get_signature_nid(peer_cert),
 							 &algo_nid, NULL))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -499,6 +499,11 @@ pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 	*len = hash_size;
 
 	return cert_hash;
+#else
+	printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("channel binding type \"tls-server-end-point\" is not supported by this build\n"));
+	return NULL;
+#endif
 }
 
 /* ------------------------------------------------------------ */

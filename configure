@@ -10125,12 +10125,13 @@ else
 fi
 
   fi
-  for ac_func in SSL_get_current_compression
+  for ac_func in SSL_get_current_compression X509_get_signature_nid
 do :
-  ac_fn_c_check_func "$LINENO" "SSL_get_current_compression" "ac_cv_func_SSL_get_current_compression"
-if test "x$ac_cv_func_SSL_get_current_compression" = xyes; then :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_SSL_GET_CURRENT_COMPRESSION 1
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
