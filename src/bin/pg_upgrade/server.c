@@ -310,12 +310,8 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	 * running.
 	 */
 	if (!pg_ctl_return)
-	{
-		if (cluster == &old_cluster)
-			pg_fatal("pg_ctl failed to start the source server, or connection failed\n");
-		else
-			pg_fatal("pg_ctl failed to start the target server, or connection failed\n");
-	}
+		pg_fatal("pg_ctl failed to start the %s server, or connection failed\n",
+			cluster == &old_cluster ? "source" : "target");
 
 	return true;
 }
