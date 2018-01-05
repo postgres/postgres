@@ -167,8 +167,9 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 	 * First check the root table's partition constraint, if any.  No point in
 	 * routing the tuple if it doesn't belong in the root table itself.
 	 */
-	if (resultRelInfo->ri_PartitionCheck)
-		ExecPartitionCheck(resultRelInfo, slot, estate);
+	if (resultRelInfo->ri_PartitionCheck &&
+		!ExecPartitionCheck(resultRelInfo, slot, estate))
+		ExecPartitionCheckEmitError(resultRelInfo, slot, estate);
 
 	/* start with the root partitioned table */
 	parent = pd[0];

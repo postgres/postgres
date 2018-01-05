@@ -487,7 +487,7 @@ ExecInsert(ModifyTableState *mtstate,
 
 		/* Check the constraints of the tuple */
 		if (resultRelationDesc->rd_att->constr || check_partition_constr)
-			ExecConstraints(resultRelInfo, slot, estate);
+			ExecConstraints(resultRelInfo, slot, estate, true);
 
 		if (onconflict != ONCONFLICT_NONE && resultRelInfo->ri_NumIndices > 0)
 		{
@@ -1049,7 +1049,7 @@ lreplace:;
 		 * tuple-routing is performed here, hence the slot remains unchanged.
 		 */
 		if (resultRelationDesc->rd_att->constr || resultRelInfo->ri_PartitionCheck)
-			ExecConstraints(resultRelInfo, slot, estate);
+			ExecConstraints(resultRelInfo, slot, estate, true);
 
 		/*
 		 * replace the heap tuple

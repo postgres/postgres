@@ -2731,7 +2731,7 @@ CopyFrom(CopyState cstate)
 
 				/* Check the constraints of the tuple */
 				if (cstate->rel->rd_att->constr || check_partition_constr)
-					ExecConstraints(resultRelInfo, slot, estate);
+					ExecConstraints(resultRelInfo, slot, estate, true);
 
 				if (useHeapMultiInsert)
 				{
