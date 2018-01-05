@@ -168,6 +168,8 @@ typedef struct ReorderBufferTXN
 	 * * plain abort record
 	 * * prepared transaction abort
 	 * * error during decoding
+	 * * for a crashed transaction, the LSN of the last change, regardless of
+	 *   what it was.
 	 * ----
 	 */
 	XLogRecPtr	final_lsn;
