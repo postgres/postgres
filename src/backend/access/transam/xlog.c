@@ -10535,6 +10535,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 						 backup_started_in_recovery ? "standby" : "master");
 		appendStringInfo(labelfile, "START TIME: %s\n", strfbuf);
 		appendStringInfo(labelfile, "LABEL: %s\n", backupidstr);
+		appendStringInfo(labelfile, "START TIMELINE: %u\n", starttli);
 
 		/*
 		 * Okay, write the file, or return its contents to caller.
@@ -11015,9 +11016,13 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 				(uint32) (startpoint >> 32), (uint32) startpoint, startxlogfilename);
 		fprintf(fp, "STOP WAL LOCATION: %X/%X (file %s)\n",
 				(uint32) (stoppoint >> 32), (uint32) stoppoint, stopxlogfilename);
-		/* transfer remaining lines from label to history file */
+		/*
+		 * Transfer remaining lines including label and start timeline to
+		 * history file.
+		 */
 		fprintf(fp, "%s", remaining);
 		fprintf(fp, "STOP TIME: %s\n", strfbuf);
+		fprintf(fp, "STOP TIMELINE: %u\n", stoptli);
 		if (fflush(fp) || ferror(fp) || FreeFile(fp))
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -11228,11 +11233,13 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 				  bool *backupFromStandby)
 {
 	char		startxlogfilename[MAXFNAMELEN];
-	TimeLineID	tli;
+	TimeLineID	tli_from_walseg, tli_from_file;
 	FILE	   *lfp;
 	char		ch;
 	char		backuptype[20];
 	char		backupfrom[20];
+	char		backuplabel[MAXPGPATH];
+	char		backuptime[128];
 	uint32		hi,
 				lo;
 
@@ -11259,7 +11266,7 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 	 * format).
 	 */
 	if (fscanf(lfp, "START WAL LOCATION: %X/%X (file %08X%16s)%c",
-			   &hi, &lo, &tli, startxlogfilename, &ch) != 5 || ch != '\n')
+			   &hi, &lo, &tli_from_walseg, startxlogfilename, &ch) != 5 || ch != '\n')
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
@@ -11286,6 +11293,43 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 	{
 		if (strcmp(backupfrom, "standby") == 0)
 			*backupFromStandby = true;
+	}
+
+	/*
+	 * Parse START TIME and LABEL. Those are not mandatory fields for
+	 * recovery but checking for their presence is useful for debugging
+	 * and the next sanity checks. Cope also with the fact that the
+	 * result buffers have a pre-allocated size, hence if the backup_label
+	 * file has been generated with strings longer than the maximum assumed
+	 * here an incorrect parsing happens. That's fine as only minor
+	 * consistency checks are done afterwards.
+	 */
+	if (fscanf(lfp, "START TIME: %127[^\n]\n", backuptime) == 1)
+		ereport(DEBUG1,
+				(errmsg("backup time %s in file \"%s\"",
+						backuptime, BACKUP_LABEL_FILE)));
+
+	if (fscanf(lfp, "LABEL: %1023[^\n]\n", backuplabel) == 1)
+		ereport(DEBUG1,
+				(errmsg("backup label %s in file \"%s\"",
+						backuplabel, BACKUP_LABEL_FILE)));
+
+	/*
+	 * START TIMELINE is new as of 11. Its parsing is not mandatory, still
+	 * use it as a sanity check if present.
+	 */
+	if (fscanf(lfp, "START TIMELINE: %u\n", &tli_from_file) == 1)
+	{
+		if (tli_from_walseg != tli_from_file)
+			ereport(FATAL,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE),
+					 errdetail("Timeline ID parsed is %u, but expected %u",
+							   tli_from_file, tli_from_walseg)));
+
+		ereport(DEBUG1,
+				(errmsg("backup timeline %u in file \"%s\"",
+						tli_from_file, BACKUP_LABEL_FILE)));
 	}
 
 	if (ferror(lfp) || FreeFile(lfp))
