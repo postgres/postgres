@@ -186,11 +186,14 @@ ConditionVariableCancelSleep(void)
 }
 
 /*
- * Wake up one sleeping process, assuming there is at least one.
+ * Wake up the oldest process sleeping on the CV, if there is any.
  *
- * The return value indicates whether or not we woke somebody up.
+ * Note: it's difficult to tell whether this has any real effect: we know
+ * whether we took an entry off the list, but the entry might only be a
+ * sentinel.  Hence, think twice before proposing that this should return
+ * a flag telling whether it woke somebody.
  */
-bool
+void
 ConditionVariableSignal(ConditionVariable *cv)
 {
 	PGPROC	   *proc = NULL;
@@ -203,24 +206,19 @@ ConditionVariableSignal(ConditionVariable *cv)
 
 	/* If we found someone sleeping, set their latch to wake them up. */
 	if (proc != NULL)
-	{
 		SetLatch(&proc->procLatch);
-		return true;
-	}
-
-	/* No sleeping processes. */
-	return false;
 }
 
 /*
- * Wake up all sleeping processes.
+ * Wake up all processes sleeping on the given CV.
  *
- * The return value indicates the number of processes we woke.
+ * This guarantees to wake all processes that were sleeping on the CV
+ * at time of call, but processes that add themselves to the list mid-call
+ * will typically not get awakened.
  */
-int
+void
 ConditionVariableBroadcast(ConditionVariable *cv)
 {
-	int			nwoken = 0;
 	int			pgprocno = MyProc->pgprocno;
 	PGPROC	   *proc = NULL;
 	bool		have_sentinel = false;
@@ -270,10 +268,7 @@ ConditionVariableBroadcast(ConditionVariable *cv)
 
 	/* Awaken first waiter, if there was one. */
 	if (proc != NULL)
-	{
 		SetLatch(&proc->procLatch);
-		++nwoken;
-	}
 
 	while (have_sentinel)
 	{
@@ -297,11 +292,6 @@ ConditionVariableBroadcast(ConditionVariable *cv)
 		SpinLockRelease(&cv->mutex);
 
 		if (proc != NULL && proc != MyProc)
-		{
 			SetLatch(&proc->procLatch);
-			++nwoken;
-		}
 	}
-
-	return nwoken;
 }
