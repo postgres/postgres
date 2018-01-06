@@ -55,6 +55,21 @@ ConditionVariablePrepareToSleep(ConditionVariable *cv)
 	int			pgprocno = MyProc->pgprocno;
 
 	/*
+	 * If first time through in this process, create a WaitEventSet, which
+	 * we'll reuse for all condition variable sleeps.
+	 */
+	if (cv_wait_event_set == NULL)
+	{
+		WaitEventSet *new_event_set;
+
+		new_event_set = CreateWaitEventSet(TopMemoryContext, 1);
+		AddWaitEventToSet(new_event_set, WL_LATCH_SET, PGINVALID_SOCKET,
+						  MyLatch, NULL);
+		/* Don't set cv_wait_event_set until we have a correct WES. */
+		cv_wait_event_set = new_event_set;
+	}
+
+	/*
 	 * It's not legal to prepare a sleep until the previous sleep has been
 	 * completed or canceled.
 	 */
@@ -62,14 +77,6 @@ ConditionVariablePrepareToSleep(ConditionVariable *cv)
 
 	/* Record the condition variable on which we will sleep. */
 	cv_sleep_target = cv;
-
-	/* Create a reusable WaitEventSet. */
-	if (cv_wait_event_set == NULL)
-	{
-		cv_wait_event_set = CreateWaitEventSet(TopMemoryContext, 1);
-		AddWaitEventToSet(cv_wait_event_set, WL_LATCH_SET, PGINVALID_SOCKET,
-						  MyLatch, NULL);
-	}
 
 	/*
 	 * Reset my latch before adding myself to the queue and before entering
