@@ -16,7 +16,12 @@
 #define PROCLIST_TYPES_H
 
 /*
- * A node in a list of processes.
+ * A node in a doubly-linked list of processes.  The link fields contain
+ * the 0-based PGPROC indexes of the next and previous process, or
+ * INVALID_PGPROCNO in the next-link of the last node and the prev-link
+ * of the first node.  A node that is currently not in any list
+ * should have next == prev == 0; this is not a possible state for a node
+ * that is in a list, because we disallow circularity.
  */
 typedef struct proclist_node
 {
@@ -25,7 +30,8 @@ typedef struct proclist_node
 } proclist_node;
 
 /*
- * Head of a doubly-linked list of PGPROCs, identified by pgprocno.
+ * Header of a doubly-linked list of PGPROCs, identified by pgprocno.
+ * An empty list is represented by head == tail == INVALID_PGPROCNO.
  */
 typedef struct proclist_head
 {
@@ -42,4 +48,4 @@ typedef struct proclist_mutable_iter
 	int			next;			/* pgprocno of the next PGPROC */
 } proclist_mutable_iter;
 
-#endif
+#endif							/* PROCLIST_TYPES_H */

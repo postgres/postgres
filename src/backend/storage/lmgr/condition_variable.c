@@ -86,8 +86,7 @@ ConditionVariablePrepareToSleep(ConditionVariable *cv)
 
 	/* Add myself to the wait queue. */
 	SpinLockAcquire(&cv->mutex);
-	if (!proclist_contains(&cv->wakeup, pgprocno, cvWaitLink))
-		proclist_push_tail(&cv->wakeup, pgprocno, cvWaitLink);
+	proclist_push_tail(&cv->wakeup, pgprocno, cvWaitLink);
 	SpinLockRelease(&cv->mutex);
 }
 

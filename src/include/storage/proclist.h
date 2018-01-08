@@ -42,7 +42,7 @@ proclist_is_empty(proclist_head *list)
 
 /*
  * Get a pointer to a proclist_node inside a given PGPROC, given a procno and
- * an offset.
+ * the proclist_node field's offset within struct PGPROC.
  */
 static inline proclist_node *
 proclist_node_get(int procno, size_t node_offset)
@@ -53,12 +53,14 @@ proclist_node_get(int procno, size_t node_offset)
 }
 
 /*
- * Insert a node at the beginning of a list.
+ * Insert a process at the beginning of a list.
  */
 static inline void
 proclist_push_head_offset(proclist_head *list, int procno, size_t node_offset)
 {
 	proclist_node *node = proclist_node_get(procno, node_offset);
+
+	Assert(node->next == 0 && node->prev == 0);
 
 	if (list->head == INVALID_PGPROCNO)
 	{
@@ -79,12 +81,14 @@ proclist_push_head_offset(proclist_head *list, int procno, size_t node_offset)
 }
 
 /*
- * Insert a node at the end of a list.
+ * Insert a process at the end of a list.
  */
 static inline void
 proclist_push_tail_offset(proclist_head *list, int procno, size_t node_offset)
 {
 	proclist_node *node = proclist_node_get(procno, node_offset);
+
+	Assert(node->next == 0 && node->prev == 0);
 
 	if (list->tail == INVALID_PGPROCNO)
 	{
@@ -105,30 +109,38 @@ proclist_push_tail_offset(proclist_head *list, int procno, size_t node_offset)
 }
 
 /*
- * Delete a node.  The node must be in the list.
+ * Delete a process from a list --- it must be in the list!
  */
 static inline void
 proclist_delete_offset(proclist_head *list, int procno, size_t node_offset)
 {
 	proclist_node *node = proclist_node_get(procno, node_offset);
 
+	Assert(node->next != 0 || node->prev != 0);
+
 	if (node->prev == INVALID_PGPROCNO)
+	{
+		Assert(list->head == procno);
 		list->head = node->next;
+	}
 	else
 		proclist_node_get(node->prev, node_offset)->next = node->next;
 
 	if (node->next == INVALID_PGPROCNO)
+	{
+		Assert(list->tail == procno);
 		list->tail = node->prev;
+	}
 	else
 		proclist_node_get(node->next, node_offset)->prev = node->prev;
 
-	node->next = node->prev = INVALID_PGPROCNO;
+	node->next = node->prev = 0;
 }
 
 /*
- * Check if a node is currently in a list.  It must be known that the node is
- * not in any _other_ proclist that uses the same proclist_node, so that the
- * only possibilities are that it is in this list or none.
+ * Check if a process is currently in a list.  It must be known that the
+ * process is not in any _other_ proclist that uses the same proclist_node,
+ * so that the only possibilities are that it is in this list or none.
  */
 static inline bool
 proclist_contains_offset(proclist_head *list, int procno,
@@ -136,27 +148,26 @@ proclist_contains_offset(proclist_head *list, int procno,
 {
 	proclist_node *node = proclist_node_get(procno, node_offset);
 
-	/*
-	 * If this is not a member of a proclist, then the next and prev pointers
-	 * should be 0. Circular lists are not allowed so this condition is not
-	 * confusable with a real pgprocno 0.
-	 */
+	/* If it's not in any list, it's definitely not in this one. */
 	if (node->prev == 0 && node->next == 0)
 		return false;
 
-	/* If there is a previous node, then this node must be in the list. */
-	if (node->prev != INVALID_PGPROCNO)
-		return true;
-
 	/*
-	 * There is no previous node, so the only way this node can be in the list
-	 * is if it's the head node.
+	 * It must, in fact, be in this list.  Ideally, in assert-enabled builds,
+	 * we'd verify that.  But since this function is typically used while
+	 * holding a spinlock, crawling the whole list is unacceptable.  However,
+	 * we can verify matters in O(1) time when the node is a list head or
+	 * tail, and that seems worth doing, since in practice that should often
+	 * be enough to catch mistakes.
 	 */
-	return list->head == procno;
+	Assert(node->prev != INVALID_PGPROCNO || list->head == procno);
+	Assert(node->next != INVALID_PGPROCNO || list->tail == procno);
+
+	return true;
 }
 
 /*
- * Remove and return the first node from a list (there must be one).
+ * Remove and return the first process from a list (there must be one).
  */
 static inline PGPROC *
 proclist_pop_head_node_offset(proclist_head *list, size_t node_offset)
@@ -205,4 +216,4 @@ proclist_pop_head_node_offset(proclist_head *list, size_t node_offset)
 			 proclist_node_get((iter).cur,									\
 							   offsetof(PGPROC, link_member))->next)
 
-#endif
+#endif							/* PROCLIST_H */
