@@ -27,30 +27,33 @@
 
 typedef struct
 {
-	slock_t		mutex;
-	proclist_head wakeup;
+	slock_t		mutex;			/* spinlock protecting the wakeup list */
+	proclist_head wakeup;		/* list of wake-able processes */
 } ConditionVariable;
 
 /* Initialize a condition variable. */
-extern void ConditionVariableInit(ConditionVariable *);
+extern void ConditionVariableInit(ConditionVariable *cv);
 
 /*
  * To sleep on a condition variable, a process should use a loop which first
  * checks the condition, exiting the loop if it is met, and then calls
  * ConditionVariableSleep.  Spurious wakeups are possible, but should be
- * infrequent.  After exiting the loop, ConditionVariableCancelSleep should
+ * infrequent.  After exiting the loop, ConditionVariableCancelSleep must
  * be called to ensure that the process is no longer in the wait list for
- * the condition variable.
+ * the condition variable.  Only one condition variable can be used at a
+ * time, ie, ConditionVariableCancelSleep must be called before any attempt
+ * is made to sleep on a different condition variable.
  */
-extern void ConditionVariableSleep(ConditionVariable *, uint32 wait_event_info);
+extern void ConditionVariableSleep(ConditionVariable *cv, uint32 wait_event_info);
 extern void ConditionVariableCancelSleep(void);
 
 /*
- * The use of this function is optional and not necessary for correctness;
- * for efficiency, it should be called prior entering the loop described above
- * if it is thought that the condition is unlikely to hold immediately.
+ * Optionally, ConditionVariablePrepareToSleep can be called before entering
+ * the test-and-sleep loop described above.  Doing so is more efficient if
+ * at least one sleep is needed, whereas not doing so is more efficient when
+ * no sleep is needed because the test condition is true the first time.
  */
-extern void ConditionVariablePrepareToSleep(ConditionVariable *);
+extern void ConditionVariablePrepareToSleep(ConditionVariable *cv);
 
 /* Wake up a single waiter (via signal) or all waiters (via broadcast). */
 extern void ConditionVariableSignal(ConditionVariable *cv);
