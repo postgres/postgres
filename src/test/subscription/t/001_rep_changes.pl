@@ -60,11 +60,7 @@ $node_subscriber->safe_psql('postgres',
 "CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub, tap_pub_ins_only"
 );
 
-# Wait for subscriber to finish initialization
-my $caughtup_query =
-"SELECT pg_current_wal_lsn() <= replay_lsn FROM pg_stat_replication WHERE application_name = '$appname';";
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # Also wait for initial table sync to finish
 my $synced_query =
@@ -93,8 +89,7 @@ $node_publisher->safe_psql('postgres', "UPDATE tab_rep SET a = -a");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_mixed VALUES (2, 'bar')");
 
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_ins");
@@ -132,9 +127,7 @@ $node_publisher->safe_psql('postgres', "UPDATE tab_full SET a = a * a");
 $node_publisher->safe_psql('postgres',
 	"UPDATE tab_full2 SET x = 'bb' WHERE x = 'b'");
 
-# Wait for subscription to catch up
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_full");
@@ -176,8 +169,7 @@ $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_ins SELECT generate_series(1001,1100)");
 $node_publisher->safe_psql('postgres', "DELETE FROM tab_rep");
 
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_ins");
@@ -200,8 +192,7 @@ $node_subscriber->safe_psql('postgres',
 );
 $node_publisher->safe_psql('postgres', "INSERT INTO tab_full VALUES(0)");
 
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # note that data are different on provider and subscriber
 $result = $node_subscriber->safe_psql('postgres',

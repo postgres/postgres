@@ -5,15 +5,6 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 2;
 
-sub wait_for_caught_up
-{
-	my ($node, $appname) = @_;
-
-	$node->poll_query_until('postgres',
-"SELECT pg_current_wal_lsn() <= replay_lsn FROM pg_stat_replication WHERE application_name = '$appname';"
-	) or die "Timed out while waiting for subscriber to catch up";
-}
-
 my $node_publisher = get_new_node('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->start;
@@ -35,7 +26,7 @@ $node_subscriber->safe_psql('postgres',
 "CREATE SUBSCRIPTION mysub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION mypub;"
 );
 
-wait_for_caught_up($node_publisher, $appname);
+$node_publisher->wait_for_catchup($appname);
 
 # Wait for initial sync to finish as well
 my $synced_query =
@@ -45,7 +36,7 @@ $node_subscriber->poll_query_until('postgres', $synced_query)
 
 $node_publisher->safe_psql('postgres', q{INSERT INTO test1 (a, b) VALUES (1, 'one'), (2, 'two');});
 
-wait_for_caught_up($node_publisher, $appname);
+$node_publisher->wait_for_catchup($appname);
 
 is($node_subscriber->safe_psql('postgres', q{SELECT a, b FROM test1}),
    qq(1|one
@@ -57,11 +48,11 @@ my $ddl2 = "ALTER TABLE test1 ADD c int NOT NULL DEFAULT 0;";
 $node_subscriber->safe_psql('postgres', $ddl2);
 $node_publisher->safe_psql('postgres', $ddl2);
 
-wait_for_caught_up($node_publisher, $appname);
+$node_publisher->wait_for_catchup($appname);
 
 $node_publisher->safe_psql('postgres', q{INSERT INTO test1 (a, b, c) VALUES (3, 'three', 33);});
 
-wait_for_caught_up($node_publisher, $appname);
+$node_publisher->wait_for_catchup($appname);
 
 is($node_subscriber->safe_psql('postgres', q{SELECT a, b, c FROM test1}),
    qq(1|one|0

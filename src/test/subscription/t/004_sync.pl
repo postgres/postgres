@@ -37,11 +37,7 @@ $node_subscriber->safe_psql('postgres',
 "CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub"
 );
 
-# Wait for subscriber to finish initialization
-my $caughtup_query =
-"SELECT pg_current_wal_lsn() <= replay_lsn FROM pg_stat_replication WHERE application_name = '$appname';";
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # Also wait for initial table sync to finish
 my $synced_query =
@@ -124,9 +120,7 @@ $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_rep_next (a int)");
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_rep_next (a) AS SELECT generate_series(1,10)");
 
-# Wait for subscription to catch up
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*) FROM tab_rep_next");
@@ -149,9 +143,7 @@ is($result, qq(10),
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_rep_next SELECT generate_series(1,10)");
 
-# Wait for subscription to catch up
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*) FROM tab_rep_next");

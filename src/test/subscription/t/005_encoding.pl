@@ -5,15 +5,6 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 1;
 
-sub wait_for_caught_up
-{
-	my ($node, $appname) = @_;
-
-	$node->poll_query_until('postgres',
-"SELECT pg_current_wal_lsn() <= replay_lsn FROM pg_stat_replication WHERE application_name = '$appname';"
-	) or die "Timed out while waiting for subscriber to catch up";
-}
-
 my $node_publisher = get_new_node('publisher');
 $node_publisher->init(
 	allows_streaming => 'logical',
@@ -39,7 +30,7 @@ $node_subscriber->safe_psql('postgres',
 "CREATE SUBSCRIPTION mysub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION mypub;"
 );
 
-wait_for_caught_up($node_publisher, $appname);
+$node_publisher->wait_for_catchup($appname);
 
 # Wait for initial sync to finish as well
 my $synced_query =
@@ -50,7 +41,7 @@ $node_subscriber->poll_query_until('postgres', $synced_query)
 $node_publisher->safe_psql('postgres',
 	q{INSERT INTO test1 VALUES (1, E'Mot\xc3\xb6rhead')}); # hand-rolled UTF-8
 
-wait_for_caught_up($node_publisher, $appname);
+$node_publisher->wait_for_catchup($appname);
 
 is( $node_subscriber->safe_psql(
 		'postgres', q{SELECT a FROM test1 WHERE b = E'Mot\xf6rhead'}

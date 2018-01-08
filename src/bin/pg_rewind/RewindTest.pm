@@ -163,10 +163,7 @@ sub promote_standby
 	# up standby
 
 	# Wait for the standby to receive and write all WAL.
-	my $wal_received_query =
-"SELECT pg_current_wal_lsn() = write_lsn FROM pg_stat_replication WHERE application_name = 'rewind_standby';";
-	$node_master->poll_query_until('postgres', $wal_received_query)
-	  or die "Timed out while waiting for standby to receive and write WAL";
+	$node_master->wait_for_catchup('rewind_standby', 'write');
 
 	# Now promote standby and insert some new data on master, this will put
 	# the master out-of-sync with the standby.

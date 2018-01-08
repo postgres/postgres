@@ -106,11 +106,7 @@ $node_subscriber->safe_psql('postgres',
 "CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (slot_name = tap_sub_slot)"
 );
 
-# Wait for subscriber to finish initialization
-my $caughtup_query =
-"SELECT pg_current_wal_lsn() <= replay_lsn FROM pg_stat_replication WHERE application_name = '$appname';";
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # Wait for initial sync to finish as well
 my $synced_query =
@@ -246,8 +242,7 @@ $node_publisher->safe_psql(
 		(4, '"yellow horse"=>"moaned"');
 ));
 
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # Check the data on subscriber
 my $result = $node_subscriber->safe_psql(
@@ -368,8 +363,7 @@ $node_publisher->safe_psql(
 	UPDATE tst_hstore SET b = '"also"=>"updated"' WHERE a = 3;
 ));
 
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # Check the data on subscriber
 $result = $node_subscriber->safe_psql(
@@ -489,8 +483,7 @@ $node_publisher->safe_psql(
 	DELETE FROM tst_hstore WHERE a = 1;
 ));
 
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # Check the data on subscriber
 $result = $node_subscriber->safe_psql(

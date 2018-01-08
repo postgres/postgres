@@ -5,15 +5,6 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 3;
 
-sub wait_for_caught_up
-{
-	my ($node, $appname) = @_;
-
-	$node->poll_query_until('postgres',
-"SELECT pg_current_wal_lsn() <= replay_lsn FROM pg_stat_replication WHERE application_name = '$appname';"
-	) or die "Timed out while waiting for subscriber to catch up";
-}
-
 # Create publisher node
 my $node_publisher = get_new_node('publisher');
 $node_publisher->init(allows_streaming => 'logical');
@@ -42,7 +33,7 @@ $node_subscriber->safe_psql('postgres',
 "CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub"
 );
 
-wait_for_caught_up($node_publisher, $appname);
+$node_publisher->wait_for_catchup($appname);
 
 # Also wait for initial table sync to finish
 my $synced_query =
@@ -58,7 +49,7 @@ is($result, qq(2|2|2), 'check initial data was copied to subscriber');
 # subscriber didn't change
 $node_publisher->safe_psql('postgres', "UPDATE test_tab SET b = md5(b)");
 
-wait_for_caught_up($node_publisher, $appname);
+$node_publisher->wait_for_catchup($appname);
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d = 999) FROM test_tab");
@@ -70,7 +61,7 @@ is($result, qq(2|2|2), 'check extra columns contain local defaults');
 $node_subscriber->safe_psql('postgres', "UPDATE test_tab SET c = 'epoch'::timestamptz + 987654321 * interval '1s'");
 $node_publisher->safe_psql('postgres', "UPDATE test_tab SET b = md5(a::text)");
 
-wait_for_caught_up($node_publisher, $appname);
+$node_publisher->wait_for_catchup($appname);
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), count(extract(epoch from c) = 987654321), count(d = 999) FROM test_tab");

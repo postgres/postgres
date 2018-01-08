@@ -1465,7 +1465,8 @@ sub lsn
 
 =item $node->wait_for_catchup(standby_name, mode, target_lsn)
 
-Wait for the node with application_name standby_name (usually from node->name)
+Wait for the node with application_name standby_name (usually from node->name,
+also works for logical subscriptions)
 until its replication location in pg_stat_replication equals or passes the
 upstream's WAL insert point at the time this function is called. By default
 the replay_lsn is waited for, but 'mode' may be specified to wait for any of
@@ -1477,6 +1478,7 @@ poll_query_until timeout.
 Requires that the 'postgres' db exists and is accessible.
 
 target_lsn may be any arbitrary lsn, but is typically $master_node->lsn('insert').
+If omitted, pg_current_wal_lsn() is used.
 
 This is not a test. It die()s on failure.
 
@@ -1497,7 +1499,15 @@ sub wait_for_catchup
 	{
 		$standby_name = $standby_name->name;
 	}
-	die 'target_lsn must be specified' unless defined($target_lsn);
+	my $lsn_expr;
+	if (defined($target_lsn))
+	{
+		$lsn_expr = "'$target_lsn'";
+	}
+	else
+	{
+		$lsn_expr = 'pg_current_wal_lsn()'
+	}
 	print "Waiting for replication conn "
 	  . $standby_name . "'s "
 	  . $mode
@@ -1505,10 +1515,9 @@ sub wait_for_catchup
 	  . $target_lsn . " on "
 	  . $self->name . "\n";
 	my $query =
-qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
+qq[SELECT $lsn_expr <= ${mode}_lsn FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
 	$self->poll_query_until('postgres', $query)
-	  or die "timed out waiting for catchup, current location is "
-	  . ($self->safe_psql('postgres', $query) || '(unknown)');
+	  or die "timed out waiting for catchup";
 	print "done\n";
 }
 
@@ -1550,8 +1559,7 @@ sub wait_for_slot_catchup
 	my $query =
 qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name';];
 	$self->poll_query_until('postgres', $query)
-	  or die "timed out waiting for catchup, current location is "
-	  . ($self->safe_psql('postgres', $query) || '(unknown)');
+	  or die "timed out waiting for catchup";
 	print "done\n";
 }
 

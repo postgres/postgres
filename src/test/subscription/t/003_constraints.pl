@@ -39,19 +39,14 @@ $node_subscriber->safe_psql('postgres',
 "CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (copy_data = false)"
 );
 
-# Wait for subscriber to finish initialization
-my $caughtup_query =
-"SELECT pg_current_wal_lsn() <= replay_lsn FROM pg_stat_replication WHERE application_name = '$appname';";
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_fk (bid) VALUES (1);");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_fk_ref (id, bid) VALUES (1, 1);");
 
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # Check data on subscriber
 my $result = $node_subscriber->safe_psql('postgres',
@@ -69,8 +64,7 @@ $node_publisher->safe_psql('postgres', "DROP TABLE tab_fk CASCADE;");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_fk_ref (id, bid) VALUES (2, 2);");
 
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # FK is not enforced on subscriber
 $result = $node_subscriber->safe_psql('postgres',
@@ -104,8 +98,7 @@ ALTER TABLE tab_fk_ref ENABLE REPLICA TRIGGER filter_basic_dml_trg;
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_fk_ref (id, bid) VALUES (10, 10);");
 
-$node_publisher->poll_query_until('postgres', $caughtup_query)
-  or die "Timed out while waiting for subscriber to catch up";
+$node_publisher->wait_for_catchup($appname);
 
 # The row should be skipped on subscriber
 $result = $node_subscriber->safe_psql('postgres',
