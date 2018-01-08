@@ -321,7 +321,8 @@ static int	FreeDesc(AllocateDesc *desc);
 
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
-static void RemovePgTempFilesInDir(const char *tmpdirname, bool unlink_all);
+static void RemovePgTempFilesInDir(const char *tmpdirname, bool missing_ok,
+					   bool unlink_all);
 static void RemovePgTempRelationFiles(const char *tsdirname);
 static void RemovePgTempRelationFilesInDbspace(const char *dbspacedirname);
 static bool looks_like_temp_rel_name(const char *name);
@@ -3010,7 +3011,7 @@ RemovePgTempFiles(void)
 	 * First process temp files in pg_default ($PGDATA/base)
 	 */
 	snprintf(temp_path, sizeof(temp_path), "base/%s", PG_TEMP_FILES_DIR);
-	RemovePgTempFilesInDir(temp_path, false);
+	RemovePgTempFilesInDir(temp_path, true, false);
 	RemovePgTempRelationFiles("base");
 
 	/*
@@ -3026,7 +3027,7 @@ RemovePgTempFiles(void)
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s/%s",
 				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
-		RemovePgTempFilesInDir(temp_path, false);
+		RemovePgTempFilesInDir(temp_path, true, false);
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",
 				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
@@ -3040,25 +3041,36 @@ RemovePgTempFiles(void)
 	 * DataDir as well.
 	 */
 #ifdef EXEC_BACKEND
-	RemovePgTempFilesInDir(PG_TEMP_FILES_DIR, false);
+	RemovePgTempFilesInDir(PG_TEMP_FILES_DIR, true, false);
 #endif
 }
 
 /*
- * Process one pgsql_tmp directory for RemovePgTempFiles.  At the top level in
- * each tablespace, this should be called with unlink_all = false, so that
+ * Process one pgsql_tmp directory for RemovePgTempFiles.
+ *
+ * If missing_ok is true, it's all right for the named directory to not exist.
+ * Any other problem results in a LOG message.  (missing_ok should be true at
+ * the top level, since pgsql_tmp directories are not created until needed.)
+ *
+ * At the top level, this should be called with unlink_all = false, so that
  * only files matching the temporary name prefix will be unlinked.  When
  * recursing it will be called with unlink_all = true to unlink everything
  * under a top-level temporary directory.
+ *
+ * (These two flags could be replaced by one, but it seems clearer to keep
+ * them separate.)
  */
 static void
-RemovePgTempFilesInDir(const char *tmpdirname, bool unlink_all)
+RemovePgTempFilesInDir(const char *tmpdirname, bool missing_ok, bool unlink_all)
 {
 	DIR		   *temp_dir;
 	struct dirent *temp_de;
 	char		rm_path[MAXPGPATH * 2];
 
 	temp_dir = AllocateDir(tmpdirname);
+
+	if (temp_dir == NULL && errno == ENOENT && missing_ok)
+		return;
 
 	while ((temp_de = ReadDirExtended(temp_dir, tmpdirname, LOG)) != NULL)
 	{
@@ -3087,7 +3099,7 @@ RemovePgTempFilesInDir(const char *tmpdirname, bool unlink_all)
 			if (S_ISDIR(statbuf.st_mode))
 			{
 				/* recursively remove contents, then directory itself */
-				RemovePgTempFilesInDir(rm_path, true);
+				RemovePgTempFilesInDir(rm_path, false, true);
 
 				if (rmdir(rm_path) < 0)
 					ereport(LOG,
