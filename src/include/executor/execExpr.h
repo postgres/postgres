@@ -14,6 +14,7 @@
 #ifndef EXEC_EXPR_H
 #define EXEC_EXPR_H
 
+#include "executor/nodeAgg.h"
 #include "nodes/execnodes.h"
 
 /* forward references to avoid circularity */
@@ -64,9 +65,9 @@ typedef enum ExprEvalOp
 	EEOP_WHOLEROW,
 
 	/*
-	 * Compute non-system Var value, assign it into ExprState's
-	 * resultslot. These are not used if a CheckVarSlotCompatibility() check
-	 * would be needed.
+	 * Compute non-system Var value, assign it into ExprState's resultslot.
+	 * These are not used if a CheckVarSlotCompatibility() check would be
+	 * needed.
 	 */
 	EEOP_ASSIGN_INNER_VAR,
 	EEOP_ASSIGN_OUTER_VAR,
@@ -217,6 +218,17 @@ typedef enum ExprEvalOp
 	EEOP_WINDOW_FUNC,
 	EEOP_SUBPLAN,
 	EEOP_ALTERNATIVE_SUBPLAN,
+
+	/* aggregation related nodes */
+	EEOP_AGG_STRICT_DESERIALIZE,
+	EEOP_AGG_DESERIALIZE,
+	EEOP_AGG_STRICT_INPUT_CHECK,
+	EEOP_AGG_INIT_TRANS,
+	EEOP_AGG_STRICT_TRANS_CHECK,
+	EEOP_AGG_PLAIN_TRANS_BYVAL,
+	EEOP_AGG_PLAIN_TRANS,
+	EEOP_AGG_ORDERED_TRANS_DATUM,
+	EEOP_AGG_ORDERED_TRANS_TUPLE,
 
 	/* non-existent operation, used e.g. to check array lengths */
 	EEOP_LAST
@@ -573,6 +585,55 @@ typedef struct ExprEvalStep
 			/* out-of-line state, created by nodeSubplan.c */
 			AlternativeSubPlanState *asstate;
 		}			alternative_subplan;
+
+		/* for EEOP_AGG_*DESERIALIZE */
+		struct
+		{
+			AggState   *aggstate;
+			FunctionCallInfo fcinfo_data;
+			int			jumpnull;
+		}			agg_deserialize;
+
+		/* for EEOP_AGG_STRICT_INPUT_CHECK */
+		struct
+		{
+			bool	   *nulls;
+			int			nargs;
+			int			jumpnull;
+		}			agg_strict_input_check;
+
+		/* for EEOP_AGG_INIT_TRANS */
+		struct
+		{
+			AggState   *aggstate;
+			AggStatePerTrans pertrans;
+			ExprContext *aggcontext;
+			int			setno;
+			int			transno;
+			int			setoff;
+			int			jumpnull;
+		}			agg_init_trans;
+
+		/* for EEOP_AGG_STRICT_TRANS_CHECK */
+		struct
+		{
+			AggState   *aggstate;
+			int			setno;
+			int			transno;
+			int			setoff;
+			int			jumpnull;
+		}			agg_strict_trans_check;
+
+		/* for EEOP_AGG_{PLAIN,ORDERED}_TRANS* */
+		struct
+		{
+			AggState   *aggstate;
+			AggStatePerTrans pertrans;
+			ExprContext *aggcontext;
+			int			setno;
+			int			transno;
+			int			setoff;
+		}			agg_trans;
 	}			d;
 } ExprEvalStep;
 
@@ -668,5 +729,14 @@ extern void ExecEvalAlternativeSubPlan(ExprState *state, ExprEvalStep *op,
 						   ExprContext *econtext);
 extern void ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op,
 					ExprContext *econtext);
+
+extern void ExecAggInitGroup(AggState *aggstate, AggStatePerTrans pertrans, AggStatePerGroup pergroup);
+extern Datum ExecAggTransReparent(AggState *aggstate, AggStatePerTrans pertrans,
+					 Datum newValue, bool newValueIsNull,
+					 Datum oldValue, bool oldValueIsNull);
+extern void ExecEvalAggOrderedTransDatum(ExprState *state, ExprEvalStep *op,
+							 ExprContext *econtext);
+extern void ExecEvalAggOrderedTransTuple(ExprState *state, ExprEvalStep *op,
+							 ExprContext *econtext);
 
 #endif							/* EXEC_EXPR_H */

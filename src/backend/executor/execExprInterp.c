@@ -62,12 +62,14 @@
 #include "executor/execExpr.h"
 #include "executor/nodeSubplan.h"
 #include "funcapi.h"
+#include "utils/memutils.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
 #include "pgstat.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
@@ -99,11 +101,12 @@
 typedef struct ExprEvalOpLookup
 {
 	const void *opcode;
-	ExprEvalOp op;
+	ExprEvalOp	op;
 } ExprEvalOpLookup;
 
 /* to make dispatch_table accessible outside ExecInterpExpr() */
 static const void **dispatch_table = NULL;
+
 /* jump target -> opcode lookup table */
 static ExprEvalOpLookup reverse_dispatch_table[EEOP_LAST];
 
@@ -379,6 +382,15 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_WINDOW_FUNC,
 		&&CASE_EEOP_SUBPLAN,
 		&&CASE_EEOP_ALTERNATIVE_SUBPLAN,
+		&&CASE_EEOP_AGG_STRICT_DESERIALIZE,
+		&&CASE_EEOP_AGG_DESERIALIZE,
+		&&CASE_EEOP_AGG_STRICT_INPUT_CHECK,
+		&&CASE_EEOP_AGG_INIT_TRANS,
+		&&CASE_EEOP_AGG_STRICT_TRANS_CHECK,
+		&&CASE_EEOP_AGG_PLAIN_TRANS_BYVAL,
+		&&CASE_EEOP_AGG_PLAIN_TRANS,
+		&&CASE_EEOP_AGG_ORDERED_TRANS_DATUM,
+		&&CASE_EEOP_AGG_ORDERED_TRANS_TUPLE,
 		&&CASE_EEOP_LAST
 	};
 
@@ -1514,6 +1526,235 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			EEO_NEXT();
 		}
 
+		/* evaluate a strict aggregate deserialization function */
+		EEO_CASE(EEOP_AGG_STRICT_DESERIALIZE)
+		{
+			bool	   *argnull = op->d.agg_deserialize.fcinfo_data->argnull;
+
+			/* Don't call a strict deserialization function with NULL input */
+			if (argnull[0])
+				EEO_JUMP(op->d.agg_deserialize.jumpnull);
+
+			/* fallthrough */
+		}
+
+		/* evaluate aggregate deserialization function (non-strict portion) */
+		EEO_CASE(EEOP_AGG_DESERIALIZE)
+		{
+			FunctionCallInfo fcinfo = op->d.agg_deserialize.fcinfo_data;
+			AggState   *aggstate = op->d.agg_deserialize.aggstate;
+			MemoryContext oldContext;
+
+			/*
+			 * We run the deserialization functions in per-input-tuple memory
+			 * context.
+			 */
+			oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
+			fcinfo->isnull = false;
+			*op->resvalue = FunctionCallInvoke(fcinfo);
+			*op->resnull = fcinfo->isnull;
+			MemoryContextSwitchTo(oldContext);
+
+			EEO_NEXT();
+		}
+
+		/*
+		 * Check that a strict aggregate transition / combination function's
+		 * input is not NULL.
+		 */
+		EEO_CASE(EEOP_AGG_STRICT_INPUT_CHECK)
+		{
+			int			argno;
+			bool	   *nulls = op->d.agg_strict_input_check.nulls;
+			int			nargs = op->d.agg_strict_input_check.nargs;
+
+			for (argno = 0; argno < nargs; argno++)
+			{
+				if (nulls[argno])
+					EEO_JUMP(op->d.agg_strict_input_check.jumpnull);
+			}
+			EEO_NEXT();
+		}
+
+		/*
+		 * Initialize an aggregate's first value if necessary.
+		 */
+		EEO_CASE(EEOP_AGG_INIT_TRANS)
+		{
+			AggState   *aggstate;
+			AggStatePerGroup pergroup;
+
+			aggstate = op->d.agg_init_trans.aggstate;
+			pergroup = &aggstate->all_pergroups
+				[op->d.agg_init_trans.setoff]
+				[op->d.agg_init_trans.transno];
+
+			/* If transValue has not yet been initialized, do so now. */
+			if (pergroup->noTransValue)
+			{
+				AggStatePerTrans pertrans = op->d.agg_init_trans.pertrans;
+
+				aggstate->curaggcontext = op->d.agg_init_trans.aggcontext;
+				aggstate->current_set = op->d.agg_init_trans.setno;
+
+				ExecAggInitGroup(aggstate, pertrans, pergroup);
+
+				/* copied trans value from input, done this round */
+				EEO_JUMP(op->d.agg_init_trans.jumpnull);
+			}
+
+			EEO_NEXT();
+		}
+
+		/* check that a strict aggregate's input isn't NULL */
+		EEO_CASE(EEOP_AGG_STRICT_TRANS_CHECK)
+		{
+			AggState   *aggstate;
+			AggStatePerGroup pergroup;
+
+			aggstate = op->d.agg_strict_trans_check.aggstate;
+			pergroup = &aggstate->all_pergroups
+				[op->d.agg_strict_trans_check.setoff]
+				[op->d.agg_strict_trans_check.transno];
+
+			if (unlikely(pergroup->transValueIsNull))
+				EEO_JUMP(op->d.agg_strict_trans_check.jumpnull);
+
+			EEO_NEXT();
+		}
+
+		/*
+		 * Evaluate aggregate transition / combine function that has a
+		 * by-value transition type. That's a seperate case from the
+		 * by-reference implementation because it's a bit simpler.
+		 */
+		EEO_CASE(EEOP_AGG_PLAIN_TRANS_BYVAL)
+		{
+			AggState   *aggstate;
+			AggStatePerTrans pertrans;
+			AggStatePerGroup pergroup;
+			FunctionCallInfo fcinfo;
+			MemoryContext oldContext;
+			Datum		newVal;
+
+			aggstate = op->d.agg_trans.aggstate;
+			pertrans = op->d.agg_trans.pertrans;
+
+			pergroup = &aggstate->all_pergroups
+				[op->d.agg_trans.setoff]
+				[op->d.agg_trans.transno];
+
+			Assert(pertrans->transtypeByVal);
+
+			fcinfo = &pertrans->transfn_fcinfo;
+
+			/* cf. select_current_set() */
+			aggstate->curaggcontext = op->d.agg_trans.aggcontext;
+			aggstate->current_set = op->d.agg_trans.setno;
+
+			/* set up aggstate->curpertrans for AggGetAggref() */
+			aggstate->curpertrans = pertrans;
+
+			/* invoke transition function in per-tuple context */
+			oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
+
+			fcinfo->arg[0] = pergroup->transValue;
+			fcinfo->argnull[0] = pergroup->transValueIsNull;
+			fcinfo->isnull = false; /* just in case transfn doesn't set it */
+
+			newVal = FunctionCallInvoke(fcinfo);
+
+			pergroup->transValue = newVal;
+			pergroup->transValueIsNull = fcinfo->isnull;
+
+			MemoryContextSwitchTo(oldContext);
+
+			EEO_NEXT();
+		}
+
+		/*
+		 * Evaluate aggregate transition / combine function that has a
+		 * by-reference transition type.
+		 *
+		 * Could optimize a bit further by splitting off by-reference
+		 * fixed-length types, but currently that doesn't seem worth it.
+		 */
+		EEO_CASE(EEOP_AGG_PLAIN_TRANS)
+		{
+			AggState   *aggstate;
+			AggStatePerTrans pertrans;
+			AggStatePerGroup pergroup;
+			FunctionCallInfo fcinfo;
+			MemoryContext oldContext;
+			Datum		newVal;
+
+			aggstate = op->d.agg_trans.aggstate;
+			pertrans = op->d.agg_trans.pertrans;
+
+			pergroup = &aggstate->all_pergroups
+				[op->d.agg_trans.setoff]
+				[op->d.agg_trans.transno];
+
+			Assert(!pertrans->transtypeByVal);
+
+			fcinfo = &pertrans->transfn_fcinfo;
+
+			/* cf. select_current_set() */
+			aggstate->curaggcontext = op->d.agg_trans.aggcontext;
+			aggstate->current_set = op->d.agg_trans.setno;
+
+			/* set up aggstate->curpertrans for AggGetAggref() */
+			aggstate->curpertrans = pertrans;
+
+			/* invoke transition function in per-tuple context */
+			oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
+
+			fcinfo->arg[0] = pergroup->transValue;
+			fcinfo->argnull[0] = pergroup->transValueIsNull;
+			fcinfo->isnull = false; /* just in case transfn doesn't set it */
+
+			newVal = FunctionCallInvoke(fcinfo);
+
+			/*
+			 * For pass-by-ref datatype, must copy the new value into
+			 * aggcontext and free the prior transValue.  But if transfn
+			 * returned a pointer to its first input, we don't need to do
+			 * anything.  Also, if transfn returned a pointer to a R/W
+			 * expanded object that is already a child of the aggcontext,
+			 * assume we can adopt that value without copying it.
+			 */
+			if (DatumGetPointer(newVal) != DatumGetPointer(pergroup->transValue))
+				newVal = ExecAggTransReparent(aggstate, pertrans,
+											  newVal, fcinfo->isnull,
+											  pergroup->transValue,
+											  pergroup->transValueIsNull);
+
+			pergroup->transValue = newVal;
+			pergroup->transValueIsNull = fcinfo->isnull;
+
+			MemoryContextSwitchTo(oldContext);
+
+			EEO_NEXT();
+		}
+
+		/* process single-column ordered aggregate datum */
+		EEO_CASE(EEOP_AGG_ORDERED_TRANS_DATUM)
+		{
+			/* too complex for an inline implementation */
+			ExecEvalAggOrderedTransDatum(state, op, econtext);
+
+			EEO_NEXT();
+		}
+
+		/* process multi-column ordered aggregate tuple */
+		EEO_CASE(EEOP_AGG_ORDERED_TRANS_TUPLE)
+		{
+			/* too complex for an inline implementation */
+			ExecEvalAggOrderedTransTuple(state, op, econtext);
+
+			EEO_NEXT();
+		}
+
 		EEO_CASE(EEOP_LAST)
 		{
 			/* unreachable */
@@ -1536,8 +1777,8 @@ Datum
 ExecInterpExprStillValid(ExprState *state, ExprContext *econtext, bool *isNull)
 {
 	/*
-	 * First time through, check whether attribute matches Var.  Might
-	 * not be ok anymore, due to schema changes.
+	 * First time through, check whether attribute matches Var.  Might not be
+	 * ok anymore, due to schema changes.
 	 */
 	CheckExprStillValid(state, econtext);
 
@@ -1555,7 +1796,7 @@ ExecInterpExprStillValid(ExprState *state, ExprContext *econtext, bool *isNull)
 void
 CheckExprStillValid(ExprState *state, ExprContext *econtext)
 {
-	int i = 0;
+	int			i = 0;
 	TupleTableSlot *innerslot;
 	TupleTableSlot *outerslot;
 	TupleTableSlot *scanslot;
@@ -1564,9 +1805,9 @@ CheckExprStillValid(ExprState *state, ExprContext *econtext)
 	outerslot = econtext->ecxt_outertuple;
 	scanslot = econtext->ecxt_scantuple;
 
-	for (i = 0; i < state->steps_len;i++)
+	for (i = 0; i < state->steps_len; i++)
 	{
-		ExprEvalStep   *op = &state->steps[i];
+		ExprEvalStep *op = &state->steps[i];
 
 		switch (ExecEvalStepOp(state, op))
 		{
@@ -1859,7 +2100,7 @@ ExecJustApplyFuncToCase(ExprState *state, ExprContext *econtext, bool *isnull)
  * ExecEvalStepOp() in the threaded dispatch case.
  */
 static int
-dispatch_compare_ptr(const void* a, const void *b)
+dispatch_compare_ptr(const void *a, const void *b)
 {
 	const ExprEvalOpLookup *la = (const ExprEvalOpLookup *) a;
 	const ExprEvalOpLookup *lb = (const ExprEvalOpLookup *) b;
@@ -1896,7 +2137,7 @@ ExecInitInterpreter(void)
 
 		/* make it bsearch()able */
 		qsort(reverse_dispatch_table,
-			  EEOP_LAST /* nmembers */,
+			  EEOP_LAST /* nmembers */ ,
 			  sizeof(ExprEvalOpLookup),
 			  dispatch_compare_ptr);
 	}
@@ -1918,13 +2159,13 @@ ExecEvalStepOp(ExprState *state, ExprEvalStep *op)
 		ExprEvalOpLookup key;
 		ExprEvalOpLookup *res;
 
-		key.opcode =  (void *) op->opcode;
+		key.opcode = (void *) op->opcode;
 		res = bsearch(&key,
 					  reverse_dispatch_table,
-					  EEOP_LAST /* nmembers */,
+					  EEOP_LAST /* nmembers */ ,
 					  sizeof(ExprEvalOpLookup),
 					  dispatch_compare_ptr);
-		Assert(res); /* unknown ops shouldn't get looked up */
+		Assert(res);			/* unknown ops shouldn't get looked up */
 		return res->op;
 	}
 #endif
@@ -3690,4 +3931,97 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 
 	*op->resvalue = PointerGetDatum(dtuple);
 	*op->resnull = false;
+}
+
+/*
+ * Transition value has not been initialized. This is the first non-NULL input
+ * value for a group. We use it as the initial value for transValue.
+ */
+void
+ExecAggInitGroup(AggState *aggstate, AggStatePerTrans pertrans, AggStatePerGroup pergroup)
+{
+	FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
+	MemoryContext oldContext;
+
+	/*
+	 * We must copy the datum into aggcontext if it is pass-by-ref. We do not
+	 * need to pfree the old transValue, since it's NULL.  (We already checked
+	 * that the agg's input type is binary-compatible with its transtype, so
+	 * straight copy here is OK.)
+	 */
+	oldContext = MemoryContextSwitchTo(
+									   aggstate->curaggcontext->ecxt_per_tuple_memory);
+	pergroup->transValue = datumCopy(fcinfo->arg[1],
+									 pertrans->transtypeByVal,
+									 pertrans->transtypeLen);
+	pergroup->transValueIsNull = false;
+	pergroup->noTransValue = false;
+	MemoryContextSwitchTo(oldContext);
+}
+
+/*
+ * Ensure that the current transition value is a child of the aggcontext,
+ * rather than the per-tuple context.
+ *
+ * NB: This can change the current memory context.
+ */
+Datum
+ExecAggTransReparent(AggState *aggstate, AggStatePerTrans pertrans,
+					 Datum newValue, bool newValueIsNull,
+					 Datum oldValue, bool oldValueIsNull)
+{
+	if (!newValueIsNull)
+	{
+		MemoryContextSwitchTo(aggstate->curaggcontext->ecxt_per_tuple_memory);
+		if (DatumIsReadWriteExpandedObject(newValue,
+										   false,
+										   pertrans->transtypeLen) &&
+			MemoryContextGetParent(DatumGetEOHP(newValue)->eoh_context) == CurrentMemoryContext)
+			 /* do nothing */ ;
+		else
+			newValue = datumCopy(newValue,
+								 pertrans->transtypeByVal,
+								 pertrans->transtypeLen);
+	}
+	if (!oldValueIsNull)
+	{
+		if (DatumIsReadWriteExpandedObject(oldValue,
+										   false,
+										   pertrans->transtypeLen))
+			DeleteExpandedObject(oldValue);
+		else
+			pfree(DatumGetPointer(oldValue));
+	}
+
+	return newValue;
+}
+
+/*
+ * Invoke ordered transition function, with a datum argument.
+ */
+void
+ExecEvalAggOrderedTransDatum(ExprState *state, ExprEvalStep *op,
+							 ExprContext *econtext)
+{
+	AggStatePerTrans pertrans = op->d.agg_trans.pertrans;
+	int			setno = op->d.agg_trans.setno;
+
+	tuplesort_putdatum(pertrans->sortstates[setno],
+					   *op->resvalue, *op->resnull);
+}
+
+/*
+ * Invoke ordered transition function, with a tuple argument.
+ */
+void
+ExecEvalAggOrderedTransTuple(ExprState *state, ExprEvalStep *op,
+							 ExprContext *econtext)
+{
+	AggStatePerTrans pertrans = op->d.agg_trans.pertrans;
+	int			setno = op->d.agg_trans.setno;
+
+	ExecClearTuple(pertrans->sortslot);
+	pertrans->sortslot->tts_nvalid = pertrans->numInputs;
+	ExecStoreVirtualTuple(pertrans->sortslot);
+	tuplesort_puttupleslot(pertrans->sortstates[setno], pertrans->sortslot);
 }

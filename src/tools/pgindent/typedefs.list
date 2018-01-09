@@ -604,6 +604,7 @@ ExprContextCallbackFunction
 ExprContext_CB
 ExprDoneCond
 ExprEvalOp
+ExprEvalOpLookup
 ExprEvalStep
 ExprState
 ExprStateEvalFunc

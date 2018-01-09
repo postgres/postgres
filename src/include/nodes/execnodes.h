@@ -1850,10 +1850,13 @@ typedef struct AggState
 	/* these fields are used in AGG_HASHED and AGG_MIXED modes: */
 	bool		table_filled;	/* hash table filled yet? */
 	int			num_hashes;
-	AggStatePerHash perhash;
+	AggStatePerHash perhash;	/* array of per-hashtable data */
 	AggStatePerGroup *hash_pergroup;	/* grouping set indexed array of
 										 * per-group pointers */
+
 	/* support for evaluation of agg input expressions: */
+	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
+										 * ->hash_pergroup */
 	ProjectionInfo *combinedproj;	/* projection machinery */
 } AggState;
 

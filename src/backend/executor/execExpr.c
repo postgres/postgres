@@ -43,6 +43,7 @@
 #include "optimizer/planner.h"
 #include "pgstat.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
@@ -61,6 +62,7 @@ static void ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args,
 			 Oid funcid, Oid inputcollid,
 			 ExprState *state);
 static void ExecInitExprSlots(ExprState *state, Node *node);
+static void ExecPushExprSlots(ExprState *state, LastAttnumInfo *info);
 static bool get_last_attnums_walker(Node *node, LastAttnumInfo *info);
 static void ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable,
 					ExprState *state);
@@ -71,6 +73,10 @@ static bool isAssignmentIndirectionExpr(Expr *expr);
 static void ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 					   ExprState *state,
 					   Datum *resv, bool *resnull);
+static void ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
+					  ExprEvalStep *scratch,
+					  FunctionCallInfo fcinfo, AggStatePerTrans pertrans,
+					  int transno, int setno, int setoff, bool ishash);
 
 
 /*
@@ -2250,30 +2256,42 @@ static void
 ExecInitExprSlots(ExprState *state, Node *node)
 {
 	LastAttnumInfo info = {0, 0, 0};
-	ExprEvalStep scratch;
 
 	/*
 	 * Figure out which attributes we're going to need.
 	 */
 	get_last_attnums_walker(node, &info);
 
+	ExecPushExprSlots(state, &info);
+}
+
+/*
+ * Add steps deforming the ExprState's inner/out/scan slots as much as
+ * indicated by info. This is useful when building an ExprState covering more
+ * than one expression.
+ */
+static void
+ExecPushExprSlots(ExprState *state, LastAttnumInfo *info)
+{
+	ExprEvalStep scratch;
+
 	/* Emit steps as needed */
-	if (info.last_inner > 0)
+	if (info->last_inner > 0)
 	{
 		scratch.opcode = EEOP_INNER_FETCHSOME;
-		scratch.d.fetch.last_var = info.last_inner;
+		scratch.d.fetch.last_var = info->last_inner;
 		ExprEvalPushStep(state, &scratch);
 	}
-	if (info.last_outer > 0)
+	if (info->last_outer > 0)
 	{
 		scratch.opcode = EEOP_OUTER_FETCHSOME;
-		scratch.d.fetch.last_var = info.last_outer;
+		scratch.d.fetch.last_var = info->last_outer;
 		ExprEvalPushStep(state, &scratch);
 	}
-	if (info.last_scan > 0)
+	if (info->last_scan > 0)
 	{
 		scratch.opcode = EEOP_SCAN_FETCHSOME;
-		scratch.d.fetch.last_var = info.last_scan;
+		scratch.d.fetch.last_var = info->last_scan;
 		ExprEvalPushStep(state, &scratch);
 	}
 }
@@ -2773,5 +2791,402 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 					 (int) con->constrainttype);
 				break;
 		}
+	}
+}
+
+/*
+ * Build transition/combine function invocations for all aggregate transition
+ * / combination function invocations in a grouping sets phase. This has to
+ * invoke all sort based transitions in a phase (if doSort is true), all hash
+ * based transitions (if doHash is true), or both (both true).
+ *
+ * The resulting expression will, for each set of transition values, first
+ * check for filters, evaluate aggregate input, check that that input is not
+ * NULL for a strict transition function, and then finally invoke the
+ * transition for each of the concurrently computed grouping sets.
+ */
+ExprState *
+ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
+				  bool doSort, bool doHash)
+{
+	ExprState  *state = makeNode(ExprState);
+	PlanState  *parent = &aggstate->ss.ps;
+	ExprEvalStep scratch;
+	int			transno = 0;
+	int			setoff = 0;
+	bool		isCombine = DO_AGGSPLIT_COMBINE(aggstate->aggsplit);
+	LastAttnumInfo deform = {0, 0, 0};
+
+	state->expr = (Expr *) aggstate;
+	state->parent = parent;
+
+	scratch.resvalue = &state->resvalue;
+	scratch.resnull = &state->resnull;
+
+	/*
+	 * First figure out which slots, and how many columns from each, we're
+	 * going to need.
+	 */
+	for (transno = 0; transno < aggstate->numtrans; transno++)
+	{
+		AggStatePerTrans pertrans = &aggstate->pertrans[transno];
+
+		get_last_attnums_walker((Node *) pertrans->aggref->aggdirectargs,
+								&deform);
+		get_last_attnums_walker((Node *) pertrans->aggref->args,
+								&deform);
+		get_last_attnums_walker((Node *) pertrans->aggref->aggorder,
+								&deform);
+		get_last_attnums_walker((Node *) pertrans->aggref->aggdistinct,
+								&deform);
+		get_last_attnums_walker((Node *) pertrans->aggref->aggfilter,
+								&deform);
+	}
+	ExecPushExprSlots(state, &deform);
+
+	/*
+	 * Emit instructions for each transition value / grouping set combination.
+	 */
+	for (transno = 0; transno < aggstate->numtrans; transno++)
+	{
+		AggStatePerTrans pertrans = &aggstate->pertrans[transno];
+		int			numInputs = pertrans->numInputs;
+		int			argno;
+		int			setno;
+		FunctionCallInfo trans_fcinfo = &pertrans->transfn_fcinfo;
+		ListCell   *arg;
+		ListCell   *bail;
+		List	   *adjust_bailout = NIL;
+		bool	   *strictnulls = NULL;
+
+		/*
+		 * If filter present, emit. Do so before evaluating the input, to
+		 * avoid potentially unneeded computations, or even worse, unintended
+		 * side-effects.  When combining, all the necessary filtering has
+		 * already been done.
+		 */
+		if (pertrans->aggref->aggfilter && !isCombine)
+		{
+			/* evaluate filter expression */
+			ExecInitExprRec(pertrans->aggref->aggfilter, state,
+							&state->resvalue, &state->resnull);
+			/* and jump out if false */
+			scratch.opcode = EEOP_JUMP_IF_NOT_TRUE;
+			scratch.d.jump.jumpdone = -1;	/* adjust later */
+			ExprEvalPushStep(state, &scratch);
+			adjust_bailout = lappend_int(adjust_bailout,
+										 state->steps_len - 1);
+		}
+
+		/*
+		 * Evaluate arguments to aggregate/combine function.
+		 */
+		argno = 0;
+		if (isCombine)
+		{
+			/*
+			 * Combining two aggregate transition values. Instead of directly
+			 * coming from a tuple the input is a, potentially deserialized,
+			 * transition value.
+			 */
+			TargetEntry *source_tle;
+
+			Assert(pertrans->numSortCols == 0);
+			Assert(list_length(pertrans->aggref->args) == 1);
+
+			strictnulls = trans_fcinfo->argnull + 1;
+			source_tle = (TargetEntry *) linitial(pertrans->aggref->args);
+
+			/*
+			 * deserialfn_oid will be set if we must deserialize the input
+			 * state before calling the combine function.
+			 */
+			if (!OidIsValid(pertrans->deserialfn_oid))
+			{
+				/*
+				 * Start from 1, since the 0th arg will be the transition
+				 * value
+				 */
+				ExecInitExprRec(source_tle->expr, state,
+								&trans_fcinfo->arg[argno + 1],
+								&trans_fcinfo->argnull[argno + 1]);
+			}
+			else
+			{
+				FunctionCallInfo ds_fcinfo = &pertrans->deserialfn_fcinfo;
+
+				/* evaluate argument */
+				ExecInitExprRec(source_tle->expr, state,
+								&ds_fcinfo->arg[0],
+								&ds_fcinfo->argnull[0]);
+
+				/* Dummy second argument for type-safety reasons */
+				ds_fcinfo->arg[1] = PointerGetDatum(NULL);
+				ds_fcinfo->argnull[1] = false;
+
+				/*
+				 * Don't call a strict deserialization function with NULL
+				 * input
+				 */
+				if (pertrans->deserialfn.fn_strict)
+					scratch.opcode = EEOP_AGG_STRICT_DESERIALIZE;
+				else
+					scratch.opcode = EEOP_AGG_DESERIALIZE;
+
+				scratch.d.agg_deserialize.aggstate = aggstate;
+				scratch.d.agg_deserialize.fcinfo_data = ds_fcinfo;
+				scratch.d.agg_deserialize.jumpnull = -1;	/* adjust later */
+				scratch.resvalue = &trans_fcinfo->arg[argno + 1];
+				scratch.resnull = &trans_fcinfo->argnull[argno + 1];
+
+				ExprEvalPushStep(state, &scratch);
+				adjust_bailout = lappend_int(adjust_bailout,
+											 state->steps_len - 1);
+
+				/* restore normal settings of scratch fields */
+				scratch.resvalue = &state->resvalue;
+				scratch.resnull = &state->resnull;
+			}
+			argno++;
+		}
+		else if (pertrans->numSortCols == 0)
+		{
+			/*
+			 * Normal transition function without ORDER BY / DISTINCT.
+			 */
+			strictnulls = trans_fcinfo->argnull + 1;
+
+			foreach(arg, pertrans->aggref->args)
+			{
+				TargetEntry *source_tle = (TargetEntry *) lfirst(arg);
+
+				/*
+				 * Start from 1, since the 0th arg will be the transition
+				 * value
+				 */
+				ExecInitExprRec(source_tle->expr, state,
+								&trans_fcinfo->arg[argno + 1],
+								&trans_fcinfo->argnull[argno + 1]);
+				argno++;
+			}
+		}
+		else if (pertrans->numInputs == 1)
+		{
+			/*
+			 * DISTINCT and/or ORDER BY case, with a single column sorted on.
+			 */
+			TargetEntry *source_tle =
+			(TargetEntry *) linitial(pertrans->aggref->args);
+
+			Assert(list_length(pertrans->aggref->args) == 1);
+
+			ExecInitExprRec(source_tle->expr, state,
+							&state->resvalue,
+							&state->resnull);
+			strictnulls = &state->resnull;
+			argno++;
+		}
+		else
+		{
+			/*
+			 * DISTINCT and/or ORDER BY case, with multiple columns sorted on.
+			 */
+			Datum	   *values = pertrans->sortslot->tts_values;
+			bool	   *nulls = pertrans->sortslot->tts_isnull;
+
+			strictnulls = nulls;
+
+			foreach(arg, pertrans->aggref->args)
+			{
+				TargetEntry *source_tle = (TargetEntry *) lfirst(arg);
+
+				ExecInitExprRec(source_tle->expr, state,
+								&values[argno], &nulls[argno]);
+				argno++;
+			}
+		}
+		Assert(numInputs == argno);
+
+		/*
+		 * For a strict transfn, nothing happens when there's a NULL input; we
+		 * just keep the prior transValue. This is true for both plain and
+		 * sorted/distinct aggregates.
+		 */
+		if (trans_fcinfo->flinfo->fn_strict && numInputs > 0)
+		{
+			scratch.opcode = EEOP_AGG_STRICT_INPUT_CHECK;
+			scratch.d.agg_strict_input_check.nulls = strictnulls;
+			scratch.d.agg_strict_input_check.jumpnull = -1; /* adjust later */
+			scratch.d.agg_strict_input_check.nargs = numInputs;
+			ExprEvalPushStep(state, &scratch);
+			adjust_bailout = lappend_int(adjust_bailout,
+										 state->steps_len - 1);
+		}
+
+		/*
+		 * Call transition function (once for each concurrently evaluated
+		 * grouping set). Do so for both sort and hash based computations, as
+		 * applicable.
+		 */
+		setoff = 0;
+		if (doSort)
+		{
+			int			processGroupingSets = Max(phase->numsets, 1);
+
+			for (setno = 0; setno < processGroupingSets; setno++)
+			{
+				ExecBuildAggTransCall(state, aggstate, &scratch, trans_fcinfo,
+									  pertrans, transno, setno, setoff, false);
+				setoff++;
+			}
+		}
+
+		if (doHash)
+		{
+			int			numHashes = aggstate->num_hashes;
+
+			/* in MIXED mode, there'll be preceding transition values */
+			if (aggstate->aggstrategy != AGG_HASHED)
+				setoff = aggstate->maxsets;
+			else
+				setoff = 0;
+
+			for (setno = 0; setno < numHashes; setno++)
+			{
+				ExecBuildAggTransCall(state, aggstate, &scratch, trans_fcinfo,
+									  pertrans, transno, setno, setoff, true);
+				setoff++;
+			}
+		}
+
+		/* adjust early bail out jump target(s) */
+		foreach(bail, adjust_bailout)
+		{
+			ExprEvalStep *as = &state->steps[lfirst_int(bail)];
+
+			if (as->opcode == EEOP_JUMP_IF_NOT_TRUE)
+			{
+				Assert(as->d.jump.jumpdone == -1);
+				as->d.jump.jumpdone = state->steps_len;
+			}
+			else if (as->opcode == EEOP_AGG_STRICT_INPUT_CHECK)
+			{
+				Assert(as->d.agg_strict_input_check.jumpnull == -1);
+				as->d.agg_strict_input_check.jumpnull = state->steps_len;
+			}
+			else if (as->opcode == EEOP_AGG_STRICT_DESERIALIZE)
+			{
+				Assert(as->d.agg_deserialize.jumpnull == -1);
+				as->d.agg_deserialize.jumpnull = state->steps_len;
+			}
+		}
+	}
+
+	scratch.resvalue = NULL;
+	scratch.resnull = NULL;
+	scratch.opcode = EEOP_DONE;
+	ExprEvalPushStep(state, &scratch);
+
+	ExecReadyExpr(state);
+
+	return state;
+}
+
+/*
+ * Build transition/combine function invocation for a single transition
+ * value. This is separated from ExecBuildAggTrans() because there are
+ * multiple callsites (hash and sort in some grouping set cases).
+ */
+static void
+ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
+					  ExprEvalStep *scratch,
+					  FunctionCallInfo fcinfo, AggStatePerTrans pertrans,
+					  int transno, int setno, int setoff, bool ishash)
+{
+	int			adjust_init_jumpnull = -1;
+	int			adjust_strict_jumpnull = -1;
+	ExprContext *aggcontext;
+
+	if (ishash)
+		aggcontext = aggstate->hashcontext;
+	else
+		aggcontext = aggstate->aggcontexts[setno];
+
+	/*
+	 * If the initial value for the transition state doesn't exist in the
+	 * pg_aggregate table then we will let the first non-NULL value returned
+	 * from the outer procNode become the initial value. (This is useful for
+	 * aggregates like max() and min().) The noTransValue flag signals that we
+	 * still need to do this.
+	 */
+	if (pertrans->numSortCols == 0 &&
+		fcinfo->flinfo->fn_strict &&
+		pertrans->initValueIsNull)
+	{
+		scratch->opcode = EEOP_AGG_INIT_TRANS;
+		scratch->d.agg_init_trans.aggstate = aggstate;
+		scratch->d.agg_init_trans.pertrans = pertrans;
+		scratch->d.agg_init_trans.setno = setno;
+		scratch->d.agg_init_trans.setoff = setoff;
+		scratch->d.agg_init_trans.transno = transno;
+		scratch->d.agg_init_trans.aggcontext = aggcontext;
+		scratch->d.agg_init_trans.jumpnull = -1;	/* adjust later */
+		ExprEvalPushStep(state, scratch);
+
+		/* see comment about jumping out below */
+		adjust_init_jumpnull = state->steps_len - 1;
+	}
+
+	if (pertrans->numSortCols == 0 &&
+		fcinfo->flinfo->fn_strict)
+	{
+		scratch->opcode = EEOP_AGG_STRICT_TRANS_CHECK;
+		scratch->d.agg_strict_trans_check.aggstate = aggstate;
+		scratch->d.agg_strict_trans_check.setno = setno;
+		scratch->d.agg_strict_trans_check.setoff = setoff;
+		scratch->d.agg_strict_trans_check.transno = transno;
+		scratch->d.agg_strict_trans_check.jumpnull = -1;	/* adjust later */
+		ExprEvalPushStep(state, scratch);
+
+		/*
+		 * Note, we don't push into adjust_bailout here - those jump to the
+		 * end of all transition value computations. Here a single transition
+		 * value is NULL, so just skip processing the individual value.
+		 */
+		adjust_strict_jumpnull = state->steps_len - 1;
+	}
+
+	/* invoke appropriate transition implementation */
+	if (pertrans->numSortCols == 0 && pertrans->transtypeByVal)
+		scratch->opcode = EEOP_AGG_PLAIN_TRANS_BYVAL;
+	else if (pertrans->numSortCols == 0)
+		scratch->opcode = EEOP_AGG_PLAIN_TRANS;
+	else if (pertrans->numInputs == 1)
+		scratch->opcode = EEOP_AGG_ORDERED_TRANS_DATUM;
+	else
+		scratch->opcode = EEOP_AGG_ORDERED_TRANS_TUPLE;
+
+	scratch->d.agg_trans.aggstate = aggstate;
+	scratch->d.agg_trans.pertrans = pertrans;
+	scratch->d.agg_trans.setno = setno;
+	scratch->d.agg_trans.setoff = setoff;
+	scratch->d.agg_trans.transno = transno;
+	scratch->d.agg_trans.aggcontext = aggcontext;
+	ExprEvalPushStep(state, scratch);
+
+	/* adjust jumps so they jump till after transition invocation */
+	if (adjust_init_jumpnull != -1)
+	{
+		ExprEvalStep *as = &state->steps[adjust_init_jumpnull];
+
+		Assert(as->d.agg_init_trans.jumpnull == -1);
+		as->d.agg_init_trans.jumpnull = state->steps_len;
+	}
+	if (adjust_strict_jumpnull != -1)
+	{
+		ExprEvalStep *as = &state->steps[adjust_strict_jumpnull];
+
+		Assert(as->d.agg_strict_trans_check.jumpnull == -1);
+		as->d.agg_strict_trans_check.jumpnull = state->steps_len;
 	}
 }
