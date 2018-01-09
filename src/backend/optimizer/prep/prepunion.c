@@ -1634,11 +1634,8 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 
 /*
  * expand_single_inheritance_child
- *		Expand a single inheritance child, if needed.
- *
- * If this is a temp table of another backend, we'll return without doing
- * anything at all.  Otherwise, build a RangeTblEntry and an AppendRelInfo, if
- * appropriate, plus maybe a PlanRowMark.
+ *		Build a RangeTblEntry and an AppendRelInfo, if appropriate, plus
+ *		maybe a PlanRowMark.
  *
  * We now expand the partition hierarchy level by level, creating a
  * corresponding hierarchy of AppendRelInfos and RelOptInfos, where each
