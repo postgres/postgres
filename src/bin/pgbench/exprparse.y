@@ -19,13 +19,17 @@
 PgBenchExpr *expr_parse_result;
 
 static PgBenchExprList *make_elist(PgBenchExpr *exp, PgBenchExprList *list);
+static PgBenchExpr *make_null_constant(void);
+static PgBenchExpr *make_boolean_constant(bool bval);
 static PgBenchExpr *make_integer_constant(int64 ival);
 static PgBenchExpr *make_double_constant(double dval);
 static PgBenchExpr *make_variable(char *varname);
 static PgBenchExpr *make_op(yyscan_t yyscanner, const char *operator,
 		PgBenchExpr *lexpr, PgBenchExpr *rexpr);
+static PgBenchExpr *make_uop(yyscan_t yyscanner, const char *operator, PgBenchExpr *expr);
 static int	find_func(yyscan_t yyscanner, const char *fname);
 static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args);
+static PgBenchExpr *make_case(yyscan_t yyscanner, PgBenchExprList *when_then_list, PgBenchExpr *else_part);
 
 %}
 
@@ -40,52 +44,125 @@ static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *
 {
 	int64		ival;
 	double		dval;
+	bool		bval;
 	char	   *str;
 	PgBenchExpr *expr;
 	PgBenchExprList *elist;
 }
 
-%type <elist> elist
-%type <expr> expr
+%type <elist> elist when_then_list
+%type <expr> expr case_control
 %type <ival> INTEGER_CONST function
 %type <dval> DOUBLE_CONST
+%type <bval> BOOLEAN_CONST
 %type <str> VARIABLE FUNCTION
 
-%token INTEGER_CONST DOUBLE_CONST VARIABLE FUNCTION
+%token NULL_CONST INTEGER_CONST DOUBLE_CONST BOOLEAN_CONST VARIABLE FUNCTION
+%token AND_OP OR_OP NOT_OP NE_OP LE_OP GE_OP LS_OP RS_OP IS_OP
+%token CASE_KW WHEN_KW THEN_KW ELSE_KW END_KW
 
-/* Precedence: lowest to highest */
+/* Precedence: lowest to highest, taken from postgres SQL parser */
+%left	OR_OP
+%left	AND_OP
+%right  NOT_OP
+%nonassoc IS_OP ISNULL_OP NOTNULL_OP
+%nonassoc '<' '>' '=' LE_OP GE_OP NE_OP
+%left   '|' '#' '&' LS_OP RS_OP '~'
 %left	'+' '-'
 %left	'*' '/' '%'
-%right	UMINUS
+%right	UNARY
 
 %%
 
 result: expr				{ expr_parse_result = $1; }
 
-elist:                  	{ $$ = NULL; }
-	| expr 					{ $$ = make_elist($1, NULL); }
+elist:						{ $$ = NULL; }
+	| expr					{ $$ = make_elist($1, NULL); }
 	| elist ',' expr		{ $$ = make_elist($3, $1); }
 	;
 
 expr: '(' expr ')'			{ $$ = $2; }
-	| '+' expr %prec UMINUS	{ $$ = $2; }
-	| '-' expr %prec UMINUS	{ $$ = make_op(yyscanner, "-",
+	| '+' expr %prec UNARY	{ $$ = $2; }
+	/* unary minus "-x" implemented as "0 - x" */
+	| '-' expr %prec UNARY	{ $$ = make_op(yyscanner, "-",
 										   make_integer_constant(0), $2); }
+	/* binary ones complement "~x" implemented as 0xffff... xor x" */
+	| '~' expr				{ $$ = make_op(yyscanner, "#",
+										   make_integer_constant(~INT64CONST(0)), $2); }
+	| NOT_OP expr			{ $$ = make_uop(yyscanner, "!not", $2); }
 	| expr '+' expr			{ $$ = make_op(yyscanner, "+", $1, $3); }
 	| expr '-' expr			{ $$ = make_op(yyscanner, "-", $1, $3); }
 	| expr '*' expr			{ $$ = make_op(yyscanner, "*", $1, $3); }
 	| expr '/' expr			{ $$ = make_op(yyscanner, "/", $1, $3); }
-	| expr '%' expr			{ $$ = make_op(yyscanner, "%", $1, $3); }
+	| expr '%' expr			{ $$ = make_op(yyscanner, "mod", $1, $3); }
+	| expr '<' expr			{ $$ = make_op(yyscanner, "<", $1, $3); }
+	| expr LE_OP expr		{ $$ = make_op(yyscanner, "<=", $1, $3); }
+	| expr '>' expr			{ $$ = make_op(yyscanner, "<", $3, $1); }
+	| expr GE_OP expr		{ $$ = make_op(yyscanner, "<=", $3, $1); }
+	| expr '=' expr			{ $$ = make_op(yyscanner, "=", $1, $3); }
+	| expr NE_OP expr		{ $$ = make_op(yyscanner, "<>", $1, $3); }
+	| expr '&' expr			{ $$ = make_op(yyscanner, "&", $1, $3); }
+	| expr '|' expr			{ $$ = make_op(yyscanner, "|", $1, $3); }
+	| expr '#' expr			{ $$ = make_op(yyscanner, "#", $1, $3); }
+	| expr LS_OP expr		{ $$ = make_op(yyscanner, "<<", $1, $3); }
+	| expr RS_OP expr		{ $$ = make_op(yyscanner, ">>", $1, $3); }
+	| expr AND_OP expr		{ $$ = make_op(yyscanner, "!and", $1, $3); }
+	| expr OR_OP expr		{ $$ = make_op(yyscanner, "!or", $1, $3); }
+	/* IS variants */
+	| expr ISNULL_OP		{ $$ = make_op(yyscanner, "!is", $1, make_null_constant()); }
+	| expr NOTNULL_OP		{
+								$$ = make_uop(yyscanner, "!not",
+											  make_op(yyscanner, "!is", $1, make_null_constant()));
+							}
+	| expr IS_OP NULL_CONST	{ $$ = make_op(yyscanner, "!is", $1, make_null_constant()); }
+	| expr IS_OP NOT_OP NULL_CONST
+							{
+								$$ = make_uop(yyscanner, "!not",
+											  make_op(yyscanner, "!is", $1, make_null_constant()));
+							}
+	| expr IS_OP BOOLEAN_CONST
+							{
+								$$ = make_op(yyscanner, "!is", $1, make_boolean_constant($3));
+							}
+	| expr IS_OP NOT_OP BOOLEAN_CONST
+							{
+								$$ = make_uop(yyscanner, "!not",
+											  make_op(yyscanner, "!is", $1, make_boolean_constant($4)));
+							}
+	/* constants */
+	| NULL_CONST			{ $$ = make_null_constant(); }
+	| BOOLEAN_CONST			{ $$ = make_boolean_constant($1); }
 	| INTEGER_CONST			{ $$ = make_integer_constant($1); }
 	| DOUBLE_CONST			{ $$ = make_double_constant($1); }
-	| VARIABLE 				{ $$ = make_variable($1); }
+	/* misc */
+	| VARIABLE				{ $$ = make_variable($1); }
 	| function '(' elist ')' { $$ = make_func(yyscanner, $1, $3); }
+	| case_control			{ $$ = $1; }
 	;
+
+when_then_list:
+	  when_then_list WHEN_KW expr THEN_KW expr { $$ = make_elist($5, make_elist($3, $1)); }
+	| WHEN_KW expr THEN_KW expr { $$ = make_elist($4, make_elist($2, NULL)); }
+
+case_control:
+	  CASE_KW when_then_list END_KW { $$ = make_case(yyscanner, $2, make_null_constant()); }
+	| CASE_KW when_then_list ELSE_KW expr END_KW { $$ = make_case(yyscanner, $2, $4); }
 
 function: FUNCTION			{ $$ = find_func(yyscanner, $1); pg_free($1); }
 	;
 
 %%
+
+static PgBenchExpr *
+make_null_constant(void)
+{
+	PgBenchExpr *expr = pg_malloc(sizeof(PgBenchExpr));
+
+	expr->etype = ENODE_CONSTANT;
+	expr->u.constant.type = PGBT_NULL;
+	expr->u.constant.u.ival = 0;
+	return expr;
+}
 
 static PgBenchExpr *
 make_integer_constant(int64 ival)
@@ -110,6 +187,17 @@ make_double_constant(double dval)
 }
 
 static PgBenchExpr *
+make_boolean_constant(bool bval)
+{
+	PgBenchExpr *expr = pg_malloc(sizeof(PgBenchExpr));
+
+	expr->etype = ENODE_CONSTANT;
+	expr->u.constant.type = PGBT_BOOLEAN;
+	expr->u.constant.u.bval = bval;
+	return expr;
+}
+
+static PgBenchExpr *
 make_variable(char *varname)
 {
 	PgBenchExpr *expr = pg_malloc(sizeof(PgBenchExpr));
@@ -119,6 +207,7 @@ make_variable(char *varname)
 	return expr;
 }
 
+/* binary operators */
 static PgBenchExpr *
 make_op(yyscan_t yyscanner, const char *operator,
 		PgBenchExpr *lexpr, PgBenchExpr *rexpr)
@@ -127,11 +216,19 @@ make_op(yyscan_t yyscanner, const char *operator,
 					 make_elist(rexpr, make_elist(lexpr, NULL)));
 }
 
+/* unary operator */
+static PgBenchExpr *
+make_uop(yyscan_t yyscanner, const char *operator, PgBenchExpr *expr)
+{
+	return make_func(yyscanner, find_func(yyscanner, operator), make_elist(expr, NULL));
+}
+
 /*
  * List of available functions:
- * - fname: function name
+ * - fname: function name, "!..." for special internal functions
  * - nargs: number of arguments
  *			-1 is a special value for least & greatest meaning #args >= 1
+ *			-2 is for the "CASE WHEN ..." function, which has #args >= 3 and odd
  * - tag: function identifier from PgBenchFunction enum
  */
 static const struct
@@ -155,7 +252,7 @@ static const struct
 		"/", 2, PGBENCH_DIV
 	},
 	{
-		"%", 2, PGBENCH_MOD
+		"mod", 2, PGBENCH_MOD
 	},
 	/* actual functions */
 	{
@@ -175,6 +272,12 @@ static const struct
 	},
 	{
 		"sqrt", 1, PGBENCH_SQRT
+	},
+	{
+		"ln", 1, PGBENCH_LN
+	},
+	{
+		"exp", 1, PGBENCH_EXP
 	},
 	{
 		"int", 1, PGBENCH_INT
@@ -199,6 +302,52 @@ static const struct
 	},
 	{
 		"power", 2, PGBENCH_POW
+	},
+	/* logical operators */
+	{
+		"!and", 2, PGBENCH_AND
+	},
+	{
+		"!or", 2, PGBENCH_OR
+	},
+	{
+		"!not", 1, PGBENCH_NOT
+	},
+	/* bitwise integer operators */
+	{
+		"&", 2, PGBENCH_BITAND
+	},
+	{
+		"|", 2, PGBENCH_BITOR
+	},
+	{
+		"#", 2, PGBENCH_BITXOR
+	},
+	{
+		"<<", 2, PGBENCH_LSHIFT
+	},
+	{
+		">>", 2, PGBENCH_RSHIFT
+	},
+	/* comparison operators */
+	{
+		"=", 2, PGBENCH_EQ
+	},
+	{
+		"<>", 2, PGBENCH_NE
+	},
+	{
+		"<=", 2, PGBENCH_LE
+	},
+	{
+		"<", 2, PGBENCH_LT
+	},
+	{
+		"!is", 2, PGBENCH_IS
+	},
+	/* "case when ... then ... else ... end" construction */
+	{
+		"!case_end", -2, PGBENCH_CASE
 	},
 	/* keep as last array element */
 	{
@@ -288,6 +437,16 @@ make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args)
 		elist_length(args) == 0)
 		expr_yyerror_more(yyscanner, "at least one argument expected",
 						  PGBENCH_FUNCTIONS[fnumber].fname);
+	/* special case: case (when ... then ...)+ (else ...)? end */
+	if (PGBENCH_FUNCTIONS[fnumber].nargs == -2)
+	{
+		int len = elist_length(args);
+
+		/* 'else' branch is always present, but could be a NULL-constant */
+		if (len < 3 || len % 2 != 1)
+			expr_yyerror_more(yyscanner, "odd and >= 3 number of arguments expected",
+							  "case control structure");
+	}
 
 	expr->etype = ENODE_FUNCTION;
 	expr->u.function.function = PGBENCH_FUNCTIONS[fnumber].tag;
@@ -298,6 +457,14 @@ make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args)
 		pg_free(args);
 
 	return expr;
+}
+
+static PgBenchExpr *
+make_case(yyscan_t yyscanner, PgBenchExprList *when_then_list, PgBenchExpr *else_part)
+{
+	return make_func(yyscanner,
+					 find_func(yyscanner, "!case_end"),
+					 make_elist(else_part, when_then_list));
 }
 
 /*

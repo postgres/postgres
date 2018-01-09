@@ -211,10 +211,13 @@ COMMIT;
 
 # test expressions
 pgbench(
-	'-t 1 -Dfoo=-10.1 -Dbla=false -Di=+3 -Dminint=-9223372036854775808',
+	'-t 1 -Dfoo=-10.1 -Dbla=false -Di=+3 -Dminint=-9223372036854775808 -Dn=null -Dt=t -Df=of -Dd=1.0',
 	0,
 	[ qr{type: .*/001_pgbench_expressions}, qr{processed: 1/1} ],
-	[   qr{command=4.: int 4\b},
+	[   qr{command=1.: int 1\d\b},
+	    qr{command=2.: int 1\d\d\b},
+	    qr{command=3.: int 1\d\d\d\b},
+	    qr{command=4.: int 4\b},
 		qr{command=5.: int 5\b},
 		qr{command=6.: int 6\b},
 		qr{command=7.: int 7\b},
@@ -223,51 +226,61 @@ pgbench(
 		qr{command=10.: int 10\b},
 		qr{command=11.: int 11\b},
 		qr{command=12.: int 12\b},
-		qr{command=13.: double 13\b},
-		qr{command=14.: double 14\b},
 		qr{command=15.: double 15\b},
 		qr{command=16.: double 16\b},
 		qr{command=17.: double 17\b},
-		qr{command=18.: double 18\b},
-		qr{command=19.: double 19\b},
-		qr{command=20.: double 20\b},
-		qr{command=21.: int 9223372036854775807\b},
-		qr{command=23.: int [1-9]\b},
-		qr{command=24.: double -27\b},
-		qr{command=25.: double 1024\b},
-		qr{command=26.: double 1\b},
-		qr{command=27.: double 1\b},
-		qr{command=28.: double -0.125\b},
-		qr{command=29.: double -0.125\b},
-		qr{command=30.: double -0.00032\b},
-		qr{command=31.: double 8.50705917302346e\+0?37\b},
-		qr{command=32.: double 1e\+0?30\b},
+		qr{command=18.: int 9223372036854775807\b},
+		qr{command=20.: int [1-9]\b},
+		qr{command=21.: double -27\b},
+		qr{command=22.: double 1024\b},
+		qr{command=23.: double 1\b},
+		qr{command=24.: double 1\b},
+		qr{command=25.: double -0.125\b},
+		qr{command=26.: double -0.125\b},
+		qr{command=27.: double -0.00032\b},
+		qr{command=28.: double 8.50705917302346e\+0?37\b},
+		qr{command=29.: double 1e\+30\b},
+		qr{command=30.: boolean false\b},
+		qr{command=31.: boolean true\b},
+		qr{command=32.: int 32\b},
+		qr{command=33.: int 33\b},
+		qr{command=34.: double 34\b},
+		qr{command=35.: int 35\b},
+		qr{command=36.: int 36\b},
+		qr{command=37.: double 37\b},
+		qr{command=38.: int 38\b},
+		qr{command=39.: int 39\b},
+		qr{command=40.: boolean true\b},
+		qr{command=41.: null\b},
+		qr{command=42.: null\b},
+		qr{command=43.: boolean true\b},
+		qr{command=44.: boolean true\b},
+		qr{command=45.: boolean true\b},
+		qr{command=46.: int 46\b},
+		qr{command=47.: boolean true\b},
+		qr{command=48.: boolean true\b},
 	],
 	'pgbench expressions',
 	{   '001_pgbench_expressions' => q{-- integer functions
-\set i1 debug(random(1, 100))
-\set i2 debug(random_exponential(1, 100, 10.0))
-\set i3 debug(random_gaussian(1, 100, 10.0))
+\set i1 debug(random(10, 19))
+\set i2 debug(random_exponential(100, 199, 10.0))
+\set i3 debug(random_gaussian(1000, 1999, 10.0))
 \set i4 debug(abs(-4))
 \set i5 debug(greatest(5, 4, 3, 2))
 \set i6 debug(11 + least(-5, -4, -3, -2))
 \set i7 debug(int(7.3))
--- integer operators
-\set i8 debug(17 / 5 + 5)
-\set i9 debug(- (3 * 4 - 3) / -1 + 3 % -1)
+-- integer arithmetic and bit-wise operators
+\set i8 debug(17 / (4|1) + ( 4 + (7 >> 2)))
+\set i9 debug(- (3 * 4 - (-(~ 1) + -(~ 0))) / -1 + 3 % -1)
 \set ia debug(10 + (0 + 0 * 0 - 0 / 1))
 \set ib debug(:ia + :scale)
-\set ic debug(64 % 13)
--- double functions
-\set d1 debug(sqrt(3.0) * abs(-0.8E1))
-\set d2 debug(double(1 + 1) * 7)
+\set ic debug(64 % (((2 + 1 * 2 + (1 # 2) | 4 * (2 & 11)) - (1 << 2)) + 2))
+-- double functions and operators
+\set d1 debug(sqrt(+1.5 * 2.0) * abs(-0.8E1))
+\set d2 debug(double(1 + 1) * (-75.0 / :foo))
 \set pi debug(pi() * 4.9)
-\set d4 debug(greatest(4, 2, -1.17) * 4.0)
+\set d4 debug(greatest(4, 2, -1.17) * 4.0 * Ln(Exp(1.0)))
 \set d5 debug(least(-5.18, .0E0, 1.0/0) * -3.3)
--- double operators
-\set d6 debug((0.5 * 12.1 - 0.05) * (31.0 / 10))
-\set d7 debug(11.1 + 7.9)
-\set d8 debug(:foo * -2)
 -- forced overflow
 \set maxint debug(:minint - 1)
 -- reset a variable
@@ -284,7 +297,54 @@ pgbench(
 \set powernegd2 debug(power(-5.0,-5.0))
 \set powerov debug(pow(9223372036854775807, 2))
 \set powerov2 debug(pow(10,30))
+-- comparisons and logical operations
+\set c0 debug(1.0 = 0.0 and 1.0 != 0.0)
+\set c1 debug(0 = 1 Or 1.0 = 1)
+\set c4 debug(case when 0 < 1 then 32 else 0 end)
+\set c5 debug(case when true then 33 else 0 end)
+\set c6 debug(case when false THEN -1 when 1 = 1 then 13 + 19 + 2.0 end )
+\set c7 debug(case when (1 > 0) and (1 >= 0) and (0 < 1) and (0 <= 1) and (0 != 1) and (0 = 0) and (0 <> 1) then 35 else 0 end)
+\set c8 debug(CASE \
+                WHEN (1.0 > 0.0) AND (1.0 >= 0.0) AND (0.0 < 1.0) AND (0.0 <= 1.0) AND \
+                     (0.0 != 1.0) AND (0.0 = 0.0) AND (0.0 <> 1.0) AND (0.0 = 0.0) \
+                  THEN 36 \
+                  ELSE 0 \
+              END)
+\set c9 debug(CASE WHEN NOT FALSE THEN 3 * 12.3333334 END)
+\set ca debug(case when false then 0 when 1-1 <> 0 then 1 else 38 end)
+\set cb debug(10 + mod(13 * 7 + 12, 13) - mod(-19 * 11 - 17, 19))
+\set cc debug(NOT (0 > 1) AND (1 <= 1) AND NOT (0 >= 1) AND (0 < 1) AND \
+    NOT (false and true) AND (false OR TRUE) AND (NOT :f) AND (NOT FALSE) AND \
+    NOT (NOT TRUE))
+-- NULL value and associated operators
+\set n0 debug(NULL + NULL * exp(NULL))
+\set n1 debug(:n0)
+\set n2 debug(NOT (:n0 IS NOT NULL OR :d1 IS NULL))
+\set n3 debug(:n0 IS NULL AND :d1 IS NOT NULL AND :d1 NOTNULL)
+\set n4 debug(:n0 ISNULL AND NOT :n0 IS TRUE AND :n0 IS NOT FALSE)
+\set n5 debug(CASE WHEN :n IS NULL THEN 46 ELSE NULL END)
+-- use a variables of all types
+\set n6 debug(:n IS NULL AND NOT :f AND :t)
+-- conditional truth
+\set cs debug(CASE WHEN 1 THEN TRUE END AND CASE WHEN 1.0 THEN TRUE END AND CASE WHEN :n THEN NULL ELSE TRUE END)
+-- lazy evaluation
+\set zy 0
+\set yz debug(case when :zy = 0 then -1 else (1 / :zy) end)
+\set yz debug(case when :zy = 0 or (1 / :zy) < 0 then -1 else (1 / :zy) end)
+\set yz debug(case when :zy > 0 and (1 / :zy) < 0 then (1 / :zy) else 1 end)
+-- substitute variables of all possible types
+\set v0 NULL
+\set v1 TRUE
+\set v2 5432
+\set v3 -54.21E-2
+SELECT :v0, :v1, :v2, :v3;
 } });
+
+=head
+
+} });
+
+=cut
 
 # backslash commands
 pgbench(
@@ -404,8 +464,42 @@ SELECT LEAST(:i, :i, :i, :i, :i, :i, :i, :i, :i, :i, :i);
 		q{\set i random_zipfian(0, 10, 1000000)} ],
 	[   'set non numeric value',                     0,
 		[qr{malformed variable "foo" value: "bla"}], q{\set i :foo + 1} ],
-	[ 'set no expression',    1, [qr{syntax error}],      q{\set i} ],
-	[ 'set missing argument', 1, [qr{missing argument}i], q{\set} ],
+	[ 'set no expression',
+		1,
+		[qr{syntax error}],
+		q{\set i} ],
+	[ 'set missing argument',
+		1,
+		[qr{missing argument}i],
+		q{\set} ],
+	[ 'set not a bool',
+		0,
+		[ qr{cannot coerce double to boolean} ],
+		q{\set b NOT 0.0} ],
+	[ 'set not an int',
+		0,
+		[ qr{cannot coerce boolean to int} ],
+		q{\set i TRUE + 2} ],
+	[ 'set not an double',
+		0,
+		[ qr{cannot coerce boolean to double} ],
+		q{\set d ln(TRUE)} ],
+	[ 'set case error',
+		1,
+		[ qr{syntax error in command "set"} ],
+		q{\set i CASE TRUE THEN 1 ELSE 0 END} ],
+	[ 'set random error',
+		0,
+		[ qr{cannot coerce boolean to int} ],
+		q{\set b random(FALSE, TRUE)} ],
+	[ 'set number of args mismatch',
+		1,
+		[ qr{unexpected number of arguments} ],
+		q{\set d ln(1.0, 2.0))} ],
+	[ 'set at least one arg',
+		1,
+		[ qr{at least one argument expected} ],
+		q{\set i greatest())} ],
 
 	# SETSHELL
 	[   'setshell not an int',                0,
@@ -427,7 +521,10 @@ SELECT LEAST(:i, :i, :i, :i, :i, :i, :i, :i, :i, :i, :i);
 	# MISC
 	[   'misc invalid backslash command',         1,
 		[qr{invalid command .* "nosuchcommand"}], q{\nosuchcommand} ],
-	[ 'misc empty script', 1, [qr{empty command list for script}], q{} ],);
+	[ 'misc empty script', 1, [qr{empty command list for script}], q{} ],
+	[ 'bad boolean', 0, [qr{malformed variable.*trueXXX}], q{\set b :badtrue or true} ],
+    );
+
 
 for my $e (@errors)
 {
@@ -435,7 +532,7 @@ for my $e (@errors)
 	my $n = '001_pgbench_error_' . $name;
 	$n =~ s/ /_/g;
 	pgbench(
-		'-n -t 1 -Dfoo=bla -M prepared',
+		'-n -t 1 -Dfoo=bla -Dnull=null -Dtrue=true -Done=1 -Dzero=0.0 -Dbadtrue=trueXXX -M prepared',
 		$status,
 		[ $status ? qr{^$} : qr{processed: 0/1} ],
 		$re,

@@ -904,14 +904,32 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      <para>
       Sets variable <replaceable>varname</replaceable> to a value calculated
       from <replaceable>expression</replaceable>.
-      The expression may contain integer constants such as <literal>5432</literal>,
+      The expression may contain the <literal>NULL</literal> constant,
+      boolean constants <literal>TRUE</literal> and <literal>FALSE</literal>,
+      integer constants such as <literal>5432</literal>,
       double constants such as <literal>3.14159</literal>,
       references to variables <literal>:</literal><replaceable>variablename</replaceable>,
-      unary operators (<literal>+</literal>, <literal>-</literal>) and binary operators
-      (<literal>+</literal>, <literal>-</literal>, <literal>*</literal>, <literal>/</literal>,
-      <literal>%</literal>) with their usual precedence and associativity,
-      <link linkend="pgbench-builtin-functions">function calls</link>, and
-      parentheses.
+      <link linkend="pgbench-builtin-operators">operators</link>
+      with their usual SQL precedence and associativity,
+      <link linkend="pgbench-builtin-functions">function calls</link>,
+      SQL <link linkend="functions-case"><token>CASE</token> generic conditional
+      expressions</link> and parentheses.
+     </para>
+
+     <para>
+      Functions and most operators return <literal>NULL</literal> on
+      <literal>NULL</literal> input.
+     </para>
+
+     <para>
+      For conditional purposes, non zero numerical values are
+      <literal>TRUE</literal>, zero numerical values and <literal>NULL</literal>
+      are <literal>FALSE</literal>.
+     </para>
+
+     <para>
+      When no final <token>ELSE</token> clause is provided to a
+      <token>CASE</token>, the default value is <literal>NULL</literal>.
      </para>
 
      <para>
@@ -920,6 +938,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
 \set ntellers 10 * :scale
 \set aid (1021 * random(1, 100000 * :scale)) % \
            (100000 * :scale) + 1
+\set divx CASE WHEN :x &lt;&gt; 0 THEN :y/:x ELSE NULL END
 </programlisting></para>
     </listitem>
    </varlistentry>
@@ -996,6 +1015,177 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
   </variablelist>
  </refsect2>
 
+ <refsect2 id="pgbench-builtin-operators">
+  <title>Built-In Operators</title>
+
+  <para>
+   The arithmetic, bitwise, comparison and logical operators listed in
+   <xref linkend="pgbench-operators"/> are built into <application>pgbench</application>
+   and may be used in expressions appearing in
+   <link linkend="pgbench-metacommand-set"><literal>\set</literal></link>.
+  </para>
+
+  <table id="pgbench-operators">
+   <title>pgbench Operators by increasing precedence</title>
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Operator</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>OR</literal></entry>
+      <entry>logical or</entry>
+      <entry><literal>5 or 0</literal></entry>
+      <entry><literal>TRUE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>AND</literal></entry>
+      <entry>logical and</entry>
+      <entry><literal>3 and 0</literal></entry>
+      <entry><literal>FALSE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>NOT</literal></entry>
+      <entry>logical not</entry>
+      <entry><literal>not false</literal></entry>
+      <entry><literal>TRUE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>IS [NOT] (NULL|TRUE|FALSE)</literal></entry>
+      <entry>value tests</entry>
+      <entry><literal>1 is null</literal></entry>
+      <entry><literal>FALSE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>ISNULL|NOTNULL</literal></entry>
+      <entry>null tests</entry>
+      <entry><literal>1 notnull</literal></entry>
+      <entry><literal>TRUE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>=</literal></entry>
+      <entry>is equal</entry>
+      <entry><literal>5 = 4</literal></entry>
+      <entry><literal>FALSE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>&lt;&gt;</literal></entry>
+      <entry>is not equal</entry>
+      <entry><literal>5 &lt;&gt; 4</literal></entry>
+      <entry><literal>TRUE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>!=</literal></entry>
+      <entry>is not equal</entry>
+      <entry><literal>5 != 5</literal></entry>
+      <entry><literal>FALSE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>&lt;</literal></entry>
+      <entry>lower than</entry>
+      <entry><literal>5 &lt; 4</literal></entry>
+      <entry><literal>FALSE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>&lt;=</literal></entry>
+      <entry>lower or equal</entry>
+      <entry><literal>5 &lt;= 4</literal></entry>
+      <entry><literal>FALSE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>&gt;</literal></entry>
+      <entry>greater than</entry>
+      <entry><literal>5 &gt; 4</literal></entry>
+      <entry><literal>TRUE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>&gt;=</literal></entry>
+      <entry>greater or equal</entry>
+      <entry><literal>5 &gt;= 4</literal></entry>
+      <entry><literal>TRUE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>|</literal></entry>
+      <entry>integer bitwise OR</entry>
+      <entry><literal>1 | 2</literal></entry>
+      <entry><literal>3</literal></entry>
+     </row>
+     <row>
+      <entry><literal>#</literal></entry>
+      <entry>integer bitwise XOR</entry>
+      <entry><literal>1 # 3</literal></entry>
+      <entry><literal>2</literal></entry>
+     </row>
+     <row>
+      <entry><literal>&amp;</literal></entry>
+      <entry>integer bitwise AND</entry>
+      <entry><literal>1 &amp; 3</literal></entry>
+      <entry><literal>1</literal></entry>
+     </row>
+     <row>
+      <entry><literal>~</literal></entry>
+      <entry>integer bitwise NOT</entry>
+      <entry><literal>~ 1</literal></entry>
+      <entry><literal>-2</literal></entry>
+     </row>
+     <row>
+      <entry><literal>&lt;&lt;</literal></entry>
+      <entry>integer bitwise shift left</entry>
+      <entry><literal>1 &lt;&lt; 2</literal></entry>
+      <entry><literal>4</literal></entry>
+     </row>
+     <row>
+      <entry><literal>&gt;&gt;</literal></entry>
+      <entry>integer bitwise shift right</entry>
+      <entry><literal>8 &gt;&gt; 2</literal></entry>
+      <entry><literal>2</literal></entry>
+     </row>
+     <row>
+      <entry><literal>+</literal></entry>
+      <entry>addition</entry>
+      <entry><literal>5 + 4</literal></entry>
+      <entry><literal>9</literal></entry>
+     </row>
+     <row>
+      <entry><literal>-</literal></entry>
+      <entry>substraction</entry>
+      <entry><literal>3 - 2.0</literal></entry>
+      <entry><literal>1.0</literal></entry>
+     </row>
+     <row>
+      <entry><literal>*</literal></entry>
+      <entry>multiplication</entry>
+      <entry><literal>5 * 4</literal></entry>
+      <entry><literal>20</literal></entry>
+     </row>
+     <row>
+      <entry><literal>/</literal></entry>
+      <entry>division (integer truncates the results)</entry>
+      <entry><literal>5 / 3</literal></entry>
+      <entry><literal>1</literal></entry>
+     </row>
+     <row>
+      <entry><literal>%</literal></entry>
+      <entry>modulo</entry>
+      <entry><literal>3 % 2</literal></entry>
+      <entry><literal>1</literal></entry>
+     </row>
+     <row>
+      <entry><literal>-</literal></entry>
+      <entry>opposite</entry>
+      <entry><literal>- 2.0</literal></entry>
+      <entry><literal>-2.0</literal></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </refsect2>
+
  <refsect2 id="pgbench-builtin-functions">
   <title>Built-In Functions</title>
 
@@ -1042,6 +1232,13 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <entry><literal>5432.0</literal></entry>
       </row>
       <row>
+       <entry><literal><function>exp(<replaceable>x</replaceable>)</function></literal></entry>
+       <entry>double</entry>
+       <entry>exponential</entry>
+       <entry><literal>exp(1.0)</literal></entry>
+       <entry><literal>2.718281828459045</literal></entry>
+      </row>
+      <row>
        <entry><literal><function>greatest(<replaceable>a</replaceable> [, <replaceable>...</replaceable> ] )</function></literal></entry>
        <entry>double if any <replaceable>a</replaceable> is double, else integer</entry>
        <entry>largest value among arguments</entry>
@@ -1061,6 +1258,20 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <entry>smallest value among arguments</entry>
        <entry><literal>least(5, 4, 3, 2.1)</literal></entry>
        <entry><literal>2.1</literal></entry>
+      </row>
+      <row>
+       <entry><literal><function>ln(<replaceable>x</replaceable>)</function></literal></entry>
+       <entry>double</entry>
+       <entry>natural logarithm</entry>
+       <entry><literal>ln(2.718281828459045)</literal></entry>
+       <entry><literal>1.0</literal></entry>
+      </row>
+      <row>
+       <entry><literal><function>mod(<replaceable>i</replaceable>, <replaceable>bj</replaceable>)</function></literal></entry>
+       <entry>integer</entry>
+       <entry>modulo</entry>
+       <entry><literal>mod(54, 32)</literal></entry>
+       <entry><literal>22</literal></entry>
       </row>
       <row>
        <entry><literal><function>pi()</function></literal></entry>
