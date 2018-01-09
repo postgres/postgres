@@ -26,6 +26,7 @@ our @EXPORT = qw(
   slurp_dir
   slurp_file
   append_to_file
+  check_pg_config
   system_or_bail
   system_log
   run_log
@@ -219,6 +220,24 @@ sub append_to_file
 	  or die "could not write \"$filename\": $!";
 	print $fh $str;
 	close $fh;
+}
+
+# Check presence of a given regexp within pg_config.h for the installation
+# where tests are running, returning a match status result depending on
+# that.
+sub check_pg_config
+{
+	my ($regexp) = @_;
+	my ($stdout, $stderr);
+	my $result = IPC::Run::run [ 'pg_config', '--includedir' ], '>',
+	  \$stdout, '2>', \$stderr
+	  or die "could not execute pg_config";
+	chomp($stdout);
+
+	open my $pg_config_h, '<', "$stdout/pg_config.h" or die "$!";
+	my $match = (grep {/^$regexp/} <$pg_config_h>);
+	close $pg_config_h;
+	return $match;
 }
 
 #
