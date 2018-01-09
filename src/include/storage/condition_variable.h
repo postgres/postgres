@@ -40,9 +40,7 @@ extern void ConditionVariableInit(ConditionVariable *cv);
  * ConditionVariableSleep.  Spurious wakeups are possible, but should be
  * infrequent.  After exiting the loop, ConditionVariableCancelSleep must
  * be called to ensure that the process is no longer in the wait list for
- * the condition variable.  Only one condition variable can be used at a
- * time, ie, ConditionVariableCancelSleep must be called before any attempt
- * is made to sleep on a different condition variable.
+ * the condition variable.
  */
 extern void ConditionVariableSleep(ConditionVariable *cv, uint32 wait_event_info);
 extern void ConditionVariableCancelSleep(void);

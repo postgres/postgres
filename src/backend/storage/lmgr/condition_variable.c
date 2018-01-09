@@ -55,10 +55,6 @@ ConditionVariableInit(ConditionVariable *cv)
  * condition between calling ConditionVariablePrepareToSleep and calling
  * ConditionVariableSleep.  If that is inconvenient, omit calling
  * ConditionVariablePrepareToSleep.
- *
- * Only one condition variable can be used at a time, ie,
- * ConditionVariableCancelSleep must be called before any attempt is made
- * to sleep on a different condition variable.
  */
 void
 ConditionVariablePrepareToSleep(ConditionVariable *cv)
@@ -81,10 +77,15 @@ ConditionVariablePrepareToSleep(ConditionVariable *cv)
 	}
 
 	/*
-	 * It's not legal to prepare a sleep until the previous sleep has been
-	 * completed or canceled.
+	 * If some other sleep is already prepared, cancel it; this is necessary
+	 * because we have just one static variable tracking the prepared sleep,
+	 * and also only one cvWaitLink in our PGPROC.  It's okay to do this
+	 * because whenever control does return to the other test-and-sleep loop,
+	 * its ConditionVariableSleep call will just re-establish that sleep as
+	 * the prepared one.
 	 */
-	Assert(cv_sleep_target == NULL);
+	if (cv_sleep_target != NULL)
+		ConditionVariableCancelSleep();
 
 	/* Record the condition variable on which we will sleep. */
 	cv_sleep_target = cv;
@@ -133,15 +134,15 @@ ConditionVariableSleep(ConditionVariable *cv, uint32 wait_event_info)
 	 * is recommended because it avoids manipulations of the wait list, or not
 	 * met initially, in which case preparing first is better because it
 	 * avoids one extra test of the exit condition.
+	 *
+	 * If we are currently prepared to sleep on some other CV, we just cancel
+	 * that and prepare this one; see ConditionVariablePrepareToSleep.
 	 */
-	if (cv_sleep_target == NULL)
+	if (cv_sleep_target != cv)
 	{
 		ConditionVariablePrepareToSleep(cv);
 		return;
 	}
-
-	/* Any earlier condition variable sleep must have been canceled. */
-	Assert(cv_sleep_target == cv);
 
 	do
 	{
@@ -265,7 +266,8 @@ ConditionVariableBroadcast(ConditionVariable *cv)
 	 * prepared CV sleep.  The next call to ConditionVariableSleep will take
 	 * care of re-establishing the lost state.
 	 */
-	ConditionVariableCancelSleep();
+	if (cv_sleep_target != NULL)
+		ConditionVariableCancelSleep();
 
 	/*
 	 * Inspect the state of the queue.  If it's empty, we have nothing to do.
