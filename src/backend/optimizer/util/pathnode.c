@@ -1274,38 +1274,44 @@ create_append_path(RelOptInfo *rel,
 
 /*
  * append_total_cost_compare
- *	  list_qsort comparator for sorting append child paths by total_cost
+ *	  qsort comparator for sorting append child paths by total_cost descending
+ *
+ * For equal total costs, we fall back to comparing startup costs; if those
+ * are equal too, break ties using bms_compare on the paths' relids.
+ * (This is to avoid getting unpredictable results from qsort.)
  */
 static int
 append_total_cost_compare(const void *a, const void *b)
 {
 	Path	   *path1 = (Path *) lfirst(*(ListCell **) a);
 	Path	   *path2 = (Path *) lfirst(*(ListCell **) b);
+	int			cmp;
 
-	if (path1->total_cost > path2->total_cost)
-		return -1;
-	if (path1->total_cost < path2->total_cost)
-		return 1;
-
-	return 0;
+	cmp = compare_path_costs(path1, path2, TOTAL_COST);
+	if (cmp != 0)
+		return -cmp;
+	return bms_compare(path1->parent->relids, path2->parent->relids);
 }
 
 /*
  * append_startup_cost_compare
- *	  list_qsort comparator for sorting append child paths by startup_cost
+ *	  qsort comparator for sorting append child paths by startup_cost descending
+ *
+ * For equal startup costs, we fall back to comparing total costs; if those
+ * are equal too, break ties using bms_compare on the paths' relids.
+ * (This is to avoid getting unpredictable results from qsort.)
  */
 static int
 append_startup_cost_compare(const void *a, const void *b)
 {
 	Path	   *path1 = (Path *) lfirst(*(ListCell **) a);
 	Path	   *path2 = (Path *) lfirst(*(ListCell **) b);
+	int			cmp;
 
-	if (path1->startup_cost > path2->startup_cost)
-		return -1;
-	if (path1->startup_cost < path2->startup_cost)
-		return 1;
-
-	return 0;
+	cmp = compare_path_costs(path1, path2, STARTUP_COST);
+	if (cmp != 0)
+		return -cmp;
+	return bms_compare(path1->parent->relids, path2->parent->relids);
 }
 
 /*

@@ -21,12 +21,12 @@ explain (costs off)
          Workers Planned: 3
          ->  Partial Aggregate
                ->  Parallel Append
-                     ->  Parallel Seq Scan on a_star
+                     ->  Parallel Seq Scan on d_star
+                     ->  Parallel Seq Scan on f_star
+                     ->  Parallel Seq Scan on e_star
                      ->  Parallel Seq Scan on b_star
                      ->  Parallel Seq Scan on c_star
-                     ->  Parallel Seq Scan on d_star
-                     ->  Parallel Seq Scan on e_star
-                     ->  Parallel Seq Scan on f_star
+                     ->  Parallel Seq Scan on a_star
 (11 rows)
 
 select round(avg(aa)), sum(aa) from a_star a1;
@@ -49,10 +49,10 @@ explain (costs off)
                ->  Parallel Append
                      ->  Seq Scan on d_star
                      ->  Seq Scan on c_star
-                     ->  Parallel Seq Scan on a_star
-                     ->  Parallel Seq Scan on b_star
-                     ->  Parallel Seq Scan on e_star
                      ->  Parallel Seq Scan on f_star
+                     ->  Parallel Seq Scan on e_star
+                     ->  Parallel Seq Scan on b_star
+                     ->  Parallel Seq Scan on a_star
 (11 rows)
 
 select round(avg(aa)), sum(aa) from a_star a2;

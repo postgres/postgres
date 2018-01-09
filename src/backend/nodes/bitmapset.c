@@ -173,6 +173,50 @@ bms_equal(const Bitmapset *a, const Bitmapset *b)
 }
 
 /*
+ * bms_compare - qsort-style comparator for bitmapsets
+ *
+ * This guarantees to report values as equal iff bms_equal would say they are
+ * equal.  Otherwise, the highest-numbered bit that is set in one value but
+ * not the other determines the result.  (This rule means that, for example,
+ * {6} is greater than {5}, which seems plausible.)
+ */
+int
+bms_compare(const Bitmapset *a, const Bitmapset *b)
+{
+	int			shortlen;
+	int			i;
+
+	/* Handle cases where either input is NULL */
+	if (a == NULL)
+		return bms_is_empty(b) ? 0 : -1;
+	else if (b == NULL)
+		return bms_is_empty(a) ? 0 : +1;
+	/* Handle cases where one input is longer than the other */
+	shortlen = Min(a->nwords, b->nwords);
+	for (i = shortlen; i < a->nwords; i++)
+	{
+		if (a->words[i] != 0)
+			return +1;
+	}
+	for (i = shortlen; i < b->nwords; i++)
+	{
+		if (b->words[i] != 0)
+			return -1;
+	}
+	/* Process words in common */
+	i = shortlen;
+	while (--i >= 0)
+	{
+		bitmapword	aw = a->words[i];
+		bitmapword	bw = b->words[i];
+
+		if (aw != bw)
+			return (aw > bw) ? +1 : -1;
+	}
+	return 0;
+}
+
+/*
  * bms_make_singleton - build a bitmapset containing a single member
  */
 Bitmapset *
@@ -838,7 +882,7 @@ bms_add_range(Bitmapset *a, int lower, int upper)
 	if (lwordnum == uwordnum)
 	{
 		a->words[lwordnum] |= ~(bitmapword) (((bitmapword) 1 << lbitnum) - 1)
-							  & (~(bitmapword) 0) >> ushiftbits;
+			& (~(bitmapword) 0) >> ushiftbits;
 	}
 	else
 	{
