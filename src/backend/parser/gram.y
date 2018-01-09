@@ -437,7 +437,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <boolean> opt_instead
 %type <boolean> opt_unique opt_concurrently opt_verbose opt_full
-%type <boolean> opt_freeze opt_default opt_recheck
+%type <boolean> opt_freeze opt_analyze opt_default opt_recheck
 %type <defelt>	opt_binary opt_oids copy_delimiter
 
 %type <boolean> copy_from opt_program
@@ -10462,7 +10462,7 @@ cluster_index_specification:
  *
  *****************************************************************************/
 
-VacuumStmt: VACUUM opt_full opt_freeze opt_verbose opt_vacuum_relation_list
+VacuumStmt: VACUUM opt_full opt_freeze opt_verbose opt_analyze opt_vacuum_relation_list
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->options = VACOPT_VACUUM;
@@ -10472,19 +10472,9 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose opt_vacuum_relation_list
 						n->options |= VACOPT_FREEZE;
 					if ($4)
 						n->options |= VACOPT_VERBOSE;
-					n->rels = $5;
-					$$ = (Node *)n;
-				}
-			| VACUUM opt_full opt_freeze opt_verbose AnalyzeStmt
-				{
-					VacuumStmt *n = (VacuumStmt *) $5;
-					n->options |= VACOPT_VACUUM;
-					if ($2)
-						n->options |= VACOPT_FULL;
-					if ($3)
-						n->options |= VACOPT_FREEZE;
-					if ($4)
-						n->options |= VACOPT_VERBOSE;
+					if ($5)
+						n->options |= VACOPT_ANALYZE;
+					n->rels = $6;
 					$$ = (Node *)n;
 				}
 			| VACUUM '(' vacuum_option_list ')' opt_vacuum_relation_list
@@ -10532,6 +10522,11 @@ AnalyzeStmt: analyze_keyword opt_verbose opt_vacuum_relation_list
 analyze_keyword:
 			ANALYZE									{}
 			| ANALYSE /* British */					{}
+		;
+
+opt_analyze:
+			analyze_keyword							{ $$ = true; }
+			| /*EMPTY*/								{ $$ = false; }
 		;
 
 opt_verbose:
