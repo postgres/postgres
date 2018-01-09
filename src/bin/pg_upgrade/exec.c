@@ -71,16 +71,14 @@ get_bin_version(ClusterInfo *cluster)
  * and attempts to execute that command.  If the command executes
  * successfully, exec_prog() returns true.
  *
- * If the command fails, an error message is saved to the specified log_file.
- * If throw_error is true, this raises a PG_FATAL error and pg_upgrade
- * terminates; otherwise it is just reported as PG_REPORT and exec_prog()
- * returns false.
+ * If the command fails, an error message is optionally written to the specified
+ * log_file, and the program optionally exits.
  *
  * The code requires it be called first from the primary thread on Windows.
  */
 bool
 exec_prog(const char *log_file, const char *opt_log_file,
-		  bool throw_error, const char *fmt,...)
+		  bool report_error, bool exit_on_error, const char *fmt,...)
 {
 	int			result = 0;
 	int			written;
@@ -173,7 +171,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 #endif
 		result = system(cmd);
 
-	if (result != 0)
+	if (result != 0 && report_error)
 	{
 		/* we might be in on a progress status line, so go to the next line */
 		report_status(PG_REPORT, "\n*failure*");
@@ -181,12 +179,12 @@ exec_prog(const char *log_file, const char *opt_log_file,
 
 		pg_log(PG_VERBOSE, "There were problems executing \"%s\"\n", cmd);
 		if (opt_log_file)
-			pg_log(throw_error ? PG_FATAL : PG_REPORT,
+			pg_log(exit_on_error ? PG_FATAL : PG_REPORT,
 				   "Consult the last few lines of \"%s\" or \"%s\" for\n"
 				   "the probable cause of the failure.\n",
 				   log_file, opt_log_file);
 		else
-			pg_log(throw_error ? PG_FATAL : PG_REPORT,
+			pg_log(exit_on_error ? PG_FATAL : PG_REPORT,
 				   "Consult the last few lines of \"%s\" for\n"
 				   "the probable cause of the failure.\n",
 				   log_file);

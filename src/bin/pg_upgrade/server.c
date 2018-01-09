@@ -191,7 +191,7 @@ stop_postmaster_atexit(void)
 
 
 bool
-start_postmaster(ClusterInfo *cluster, bool throw_error)
+start_postmaster(ClusterInfo *cluster, bool report_and_exit_on_error)
 {
 	char		cmd[MAXPGPATH * 4 + 1000];
 	PGconn	   *conn;
@@ -257,11 +257,11 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 							  (strcmp(SERVER_LOG_FILE,
 									  SERVER_START_LOG_FILE) != 0) ?
 							  SERVER_LOG_FILE : NULL,
-							  false,
+							  report_and_exit_on_error, false,
 							  "%s", cmd);
 
 	/* Did it fail and we are just testing if the server could be started? */
-	if (!pg_ctl_return && !throw_error)
+	if (!pg_ctl_return && !report_and_exit_on_error)
 		return false;
 
 	/*
@@ -305,9 +305,9 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	PQfinish(conn);
 
 	/*
-	 * If pg_ctl failed, and the connection didn't fail, and throw_error is
-	 * enabled, fail now.  This could happen if the server was already
-	 * running.
+	 * If pg_ctl failed, and the connection didn't fail, and
+	 * report_and_exit_on_error is enabled, fail now.  This
+	 * could happen if the server was already running.
 	 */
 	if (!pg_ctl_return)
 	{
@@ -322,7 +322,7 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 
 
 void
-stop_postmaster(bool fast)
+stop_postmaster(bool in_atexit)
 {
 	ClusterInfo *cluster;
 
@@ -333,11 +333,11 @@ stop_postmaster(bool fast)
 	else
 		return;					/* no cluster running */
 
-	exec_prog(SERVER_STOP_LOG_FILE, NULL, !fast,
+	exec_prog(SERVER_STOP_LOG_FILE, NULL, !in_atexit, !in_atexit,
 			  "\"%s/pg_ctl\" -w -D \"%s\" -o \"%s\" %s stop",
 			  cluster->bindir, cluster->pgconfig,
 			  cluster->pgopts ? cluster->pgopts : "",
-			  fast ? "-m fast" : "-m smart");
+			  in_atexit ? "-m fast" : "-m smart");
 
 	os_info.running_cluster = NULL;
 }

@@ -78,8 +78,8 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 	va_end(args);
 
 	if (user_opts.jobs <= 1)
-		/* throw_error must be true to allow jobs */
-		exec_prog(log_file, opt_log_file, true, "%s", cmd);
+		/* exit_on_error must be true to allow jobs */
+		exec_prog(log_file, opt_log_file, true, true, "%s", cmd);
 	else
 	{
 		/* parallel */
@@ -122,7 +122,7 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 		child = fork();
 		if (child == 0)
 			/* use _exit to skip atexit() functions */
-			_exit(!exec_prog(log_file, opt_log_file, true, "%s", cmd));
+			_exit(!exec_prog(log_file, opt_log_file, true, true, "%s", cmd));
 		else if (child < 0)
 			/* fork failed */
 			pg_fatal("could not create worker process: %s\n", strerror(errno));
@@ -160,7 +160,7 @@ win32_exec_prog(exec_thread_arg *args)
 {
 	int			ret;
 
-	ret = !exec_prog(args->log_file, args->opt_log_file, true, "%s", args->cmd);
+	ret = !exec_prog(args->log_file, args->opt_log_file, true, true, "%s", args->cmd);
 
 	/* terminates thread */
 	return ret;
@@ -187,7 +187,6 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 #endif
 
 	if (user_opts.jobs <= 1)
-		/* throw_error must be true to allow jobs */
 		transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata, new_pgdata, NULL);
 	else
 	{
