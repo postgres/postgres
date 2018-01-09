@@ -43,9 +43,6 @@
 
 /*
  * defines for dynamic linking on Win32 platform
- *	http://support.microsoft.com/kb/132044
- *	http://msdn.microsoft.com/en-us/library/8fskxacy(v=vs.80).aspx
- *	http://msdn.microsoft.com/en-us/library/a90k134d(v=vs.80).aspx
  */
 
 #ifdef BUILDING_DLL
