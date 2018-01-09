@@ -1772,7 +1772,7 @@ _bt_killitems(IndexScanDesc scan)
 			return;
 
 		page = BufferGetPage(buf);
-		if (PageGetLSN(page) == so->currPos.lsn)
+		if (BufferGetLSNAtomic(buf) == so->currPos.lsn)
 			so->currPos.buf = buf;
 		else
 		{
