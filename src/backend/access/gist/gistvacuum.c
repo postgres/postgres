@@ -249,7 +249,7 @@ gistbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 
 				ptr = (GistBDItem *) palloc(sizeof(GistBDItem));
 				ptr->blkno = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
-				ptr->parentlsn = PageGetLSN(page);
+				ptr->parentlsn = BufferGetLSNAtomic(buffer);
 				ptr->next = stack->next;
 				stack->next = ptr;
 

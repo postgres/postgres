@@ -1224,7 +1224,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 	 * safe to apply LP_DEAD hints to the page later.  This allows us to drop
 	 * the pin for MVCC scans, which allows vacuum to avoid blocking.
 	 */
-	so->currPos.lsn = PageGetLSN(page);
+	so->currPos.lsn = BufferGetLSNAtomic(so->currPos.buf);
 
 	/*
 	 * we must save the page's right-link while scanning it; this tells us
