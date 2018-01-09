@@ -566,7 +566,8 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 		}
 
 		stack->page = (Page) BufferGetPage(stack->buffer);
-		stack->lsn = PageGetLSN(stack->page);
+		stack->lsn = xlocked ?
+			PageGetLSN(stack->page) : BufferGetLSNAtomic(stack->buffer);
 		Assert(!RelationNeedsWAL(state.r) || !XLogRecPtrIsInvalid(stack->lsn));
 
 		/*
@@ -816,7 +817,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 			break;
 		}
 
-		top->lsn = PageGetLSN(page);
+		top->lsn = BufferGetLSNAtomic(buffer);
 
 		/*
 		 * If F_FOLLOW_RIGHT is set, the page to the right doesn't have a
