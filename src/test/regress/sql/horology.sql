@@ -446,6 +446,12 @@ SELECT to_timestamp('  20050302', 'YYYYMMDD');
 SELECT to_timestamp('2011-12-18 11:38 AM', 'YYYY-MM-DD HH12:MI PM');
 SELECT to_timestamp('2011-12-18 11:38 PM', 'YYYY-MM-DD HH12:MI PM');
 
+SELECT to_timestamp('2011-12-18 11:38 +05',    'YYYY-MM-DD HH12:MI TZH');
+SELECT to_timestamp('2011-12-18 11:38 -05',    'YYYY-MM-DD HH12:MI TZH');
+SELECT to_timestamp('2011-12-18 11:38 +05:20', 'YYYY-MM-DD HH12:MI TZH:TZM');
+SELECT to_timestamp('2011-12-18 11:38 -05:20', 'YYYY-MM-DD HH12:MI TZH:TZM');
+SELECT to_timestamp('2011-12-18 11:38 20',     'YYYY-MM-DD HH12:MI TZM');
+
 --
 -- Check handling of multiple spaces in format and/or input
 --

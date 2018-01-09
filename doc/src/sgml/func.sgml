@@ -6074,6 +6074,14 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
          (only supported in <function>to_char</function>)</entry>
        </row>
        <row>
+       <entry><literal>TZH</literal></entry>
+        <entry>time-zone hours</entry>
+       </row>
+       <row>
+       <entry><literal>TZM</literal></entry>
+        <entry>time-zone minutes</entry>
+       </row>
+       <row>
         <entry><literal>OF</literal></entry>
         <entry>time-zone offset from UTC
          (only supported in <function>to_char</function>)</entry>

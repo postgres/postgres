@@ -248,21 +248,25 @@ SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
 SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
    FROM TIMESTAMPTZ_TBL;
 
--- Check OF with various zone offsets, particularly fractional hours
+-- Check OF, TZH, TZM with various zone offsets, particularly fractional hours
 SET timezone = '00:00';
-SELECT to_char(now(), 'OF');
+SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
 SET timezone = '+02:00';
-SELECT to_char(now(), 'OF');
+SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
 SET timezone = '-13:00';
-SELECT to_char(now(), 'OF');
+SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
 SET timezone = '-00:30';
-SELECT to_char(now(), 'OF');
+SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
 SET timezone = '00:30';
-SELECT to_char(now(), 'OF');
+SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
 SET timezone = '-04:30';
-SELECT to_char(now(), 'OF');
+SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
 SET timezone = '04:30';
-SELECT to_char(now(), 'OF');
+SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
+SET timezone = '-04:15';
+SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
+SET timezone = '04:15';
+SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
 RESET timezone;
 
 CREATE TABLE TIMESTAMPTZ_TST (a int , b timestamptz);

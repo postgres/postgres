@@ -2930,6 +2930,36 @@ SELECT to_timestamp('2011-12-18 11:38 PM', 'YYYY-MM-DD HH12:MI PM');
  Sun Dec 18 23:38:00 2011 PST
 (1 row)
 
+SELECT to_timestamp('2011-12-18 11:38 +05',    'YYYY-MM-DD HH12:MI TZH');
+         to_timestamp         
+------------------------------
+ Sat Dec 17 22:38:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 -05',    'YYYY-MM-DD HH12:MI TZH');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 08:38:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 +05:20', 'YYYY-MM-DD HH12:MI TZH:TZM');
+         to_timestamp         
+------------------------------
+ Sat Dec 17 22:18:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 -05:20', 'YYYY-MM-DD HH12:MI TZH:TZM');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 08:58:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 20',     'YYYY-MM-DD HH12:MI TZM');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 03:18:00 2011 PST
+(1 row)
+
 --
 -- Check handling of multiple spaces in format and/or input
 --
