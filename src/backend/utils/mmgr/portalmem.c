@@ -464,11 +464,17 @@ PortalDrop(Portal portal, bool isTopCommit)
 
 	/*
 	 * Don't allow dropping a pinned portal, it's still needed by whoever
-	 * pinned it. Not sure if the PORTAL_ACTIVE case can validly happen or
-	 * not...
+	 * pinned it.
 	 */
-	if (portal->portalPinned ||
-		portal->status == PORTAL_ACTIVE)
+	if (portal->portalPinned)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_STATE),
+				 errmsg("cannot drop pinned portal \"%s\"", portal->name)));
+
+	/*
+	 * Not sure if the PORTAL_ACTIVE case can validly happen or not...
+	 */
+	if (portal->status == PORTAL_ACTIVE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("cannot drop active portal \"%s\"", portal->name)));
