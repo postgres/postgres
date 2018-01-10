@@ -5634,27 +5634,29 @@ $$ LANGUAGE plpgsql STRICT IMMUTABLE;
     <primary><function>instr</> function</primary>
    </indexterm>
 
-<programlisting>
+<programlisting><![CDATA[
 --
 -- instr functions that mimic Oracle's counterpart
--- Syntax: instr(string1, string2, [n], [m]) where [] denotes optional parameters.
+-- Syntax: instr(string1, string2 [, n [, m]])
+-- where [] denotes optional parameters.
 --
--- Searches string1 beginning at the nth character for the mth occurrence
--- of string2.  If n is negative, search backwards.  If m is not passed,
--- assume 1 (search starts at first character).
+-- Search string1, beginning at the nth character, for the mth occurrence
+-- of string2.  If n is negative, search backwards, starting at the abs(n)'th
+-- character from the end of string1.
+-- If n is not passed, assume 1 (search starts at first character).
+-- If m is not passed, assume 1 (find first occurrence).
+-- Returns starting index of string2 in string1, or 0 if string2 is not found.
 --
 
 CREATE FUNCTION instr(varchar, varchar) RETURNS integer AS $$
-DECLARE
-    pos integer;
 BEGIN
-    pos:= instr($1, $2, 1);
-    RETURN pos;
+    RETURN instr($1, $2, 1);
 END;
 $$ LANGUAGE plpgsql STRICT IMMUTABLE;
 
 
-CREATE FUNCTION instr(string varchar, string_to_search varchar, beg_index integer)
+CREATE FUNCTION instr(string varchar, string_to_search_for varchar,
+                      beg_index integer)
 RETURNS integer AS $$
 DECLARE
     pos integer NOT NULL DEFAULT 0;
@@ -5663,25 +5665,23 @@ DECLARE
     length integer;
     ss_length integer;
 BEGIN
-    IF beg_index &gt; 0 THEN
+    IF beg_index > 0 THEN
         temp_str := substring(string FROM beg_index);
-        pos := position(string_to_search IN temp_str);
+        pos := position(string_to_search_for IN temp_str);
 
         IF pos = 0 THEN
             RETURN 0;
         ELSE
             RETURN pos + beg_index - 1;
         END IF;
-    ELSIF beg_index &lt; 0 THEN
-        ss_length := char_length(string_to_search);
+    ELSIF beg_index < 0 THEN
+        ss_length := char_length(string_to_search_for);
         length := char_length(string);
-        beg := length + beg_index - ss_length + 2;
+        beg := length + 1 + beg_index;
 
-        WHILE beg &gt; 0 LOOP
+        WHILE beg > 0 LOOP
             temp_str := substring(string FROM beg FOR ss_length);
-            pos := position(string_to_search IN temp_str);
-
-            IF pos &gt; 0 THEN
+            IF string_to_search_for = temp_str THEN
                 RETURN beg;
             END IF;
 
@@ -5696,7 +5696,7 @@ END;
 $$ LANGUAGE plpgsql STRICT IMMUTABLE;
 
 
-CREATE FUNCTION instr(string varchar, string_to_search varchar,
+CREATE FUNCTION instr(string varchar, string_to_search_for varchar,
                       beg_index integer, occur_index integer)
 RETURNS integer AS $$
 DECLARE
@@ -5708,39 +5708,32 @@ DECLARE
     length integer;
     ss_length integer;
 BEGIN
-    IF beg_index &gt; 0 THEN
-        beg := beg_index;
-        temp_str := substring(string FROM beg_index);
+    IF occur_index <= 0 THEN
+        RAISE 'argument ''%'' is out of range', occur_index
+          USING ERRCODE = '22003';
+    END IF;
 
+    IF beg_index > 0 THEN
+        beg := beg_index - 1;
         FOR i IN 1..occur_index LOOP
-            pos := position(string_to_search IN temp_str);
-
-            IF i = 1 THEN
-                beg := beg + pos - 1;
-            ELSE
-                beg := beg + pos;
-            END IF;
-
             temp_str := substring(string FROM beg + 1);
+            pos := position(string_to_search_for IN temp_str);
+            IF pos = 0 THEN
+                RETURN 0;
+            END IF;
+            beg := beg + pos;
         END LOOP;
 
-        IF pos = 0 THEN
-            RETURN 0;
-        ELSE
-            RETURN beg;
-        END IF;
-    ELSIF beg_index &lt; 0 THEN
-        ss_length := char_length(string_to_search);
+        RETURN beg;
+    ELSIF beg_index < 0 THEN
+        ss_length := char_length(string_to_search_for);
         length := char_length(string);
-        beg := length + beg_index - ss_length + 2;
+        beg := length + 1 + beg_index;
 
-        WHILE beg &gt; 0 LOOP
+        WHILE beg > 0 LOOP
             temp_str := substring(string FROM beg FOR ss_length);
-            pos := position(string_to_search IN temp_str);
-
-            IF pos &gt; 0 THEN
+            IF string_to_search_for = temp_str THEN
                 occur_number := occur_number + 1;
-
                 IF occur_number = occur_index THEN
                     RETURN beg;
                 END IF;
@@ -5755,6 +5748,7 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql STRICT IMMUTABLE;
+]]>
 </programlisting>
   </sect2>
 
