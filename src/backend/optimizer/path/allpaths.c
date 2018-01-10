@@ -1926,6 +1926,7 @@ accumulate_append_subpath(Path *path, List **subpaths, List **special_subpaths)
 							  apath->first_partial_path);
 			*special_subpaths = list_concat(*special_subpaths,
 											new_special_subpaths);
+			return;
 		}
 	}
 	else if (IsA(path, MergeAppendPath))
