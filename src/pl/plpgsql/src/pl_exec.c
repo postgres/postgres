@@ -5258,6 +5258,12 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	var = (PLpgSQL_variable *) estate->datums[stmt->var->dno];
 
 	/*
+	 * Make sure the portal doesn't get closed by the user statements we
+	 * execute.
+	 */
+	PinPortal(portal);
+
+	/*
 	 * Fetch the initial tuple(s).  If prefetching is allowed then we grab a
 	 * few more rows to avoid multiple trips through executor startup
 	 * overhead.
@@ -5317,6 +5323,8 @@ loop_exit:
 	 * Release last group of tuples (if any)
 	 */
 	SPI_freetuptable(tuptab);
+
+	UnpinPortal(portal);
 
 	/*
 	 * Set the FOUND variable to indicate the result of executing the loop

@@ -1175,12 +1175,6 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	{
 		/* Use a random nonconflicting name */
 		portal = CreateNewPortal();
-
-		/*
-		 * Make sure the portal doesn't get closed by the user statements we
-		 * execute.
-		 */
-		PinPortal(portal);
 	}
 	else
 	{
@@ -1418,9 +1412,6 @@ SPI_cursor_close(Portal portal)
 {
 	if (!PortalIsValid(portal))
 		elog(ERROR, "invalid portal in SPI cursor operation");
-
-	if (portal->portalPinned)
-		UnpinPortal(portal);
 
 	PortalDrop(portal, false);
 }
