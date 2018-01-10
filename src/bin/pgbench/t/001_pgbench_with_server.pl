@@ -239,7 +239,7 @@ pgbench(
 		qr{command=26.: double -0.125\b},
 		qr{command=27.: double -0.00032\b},
 		qr{command=28.: double 8.50705917302346e\+0?37\b},
-		qr{command=29.: double 1e\+30\b},
+		qr{command=29.: double 1e\+0?30\b},
 		qr{command=30.: boolean false\b},
 		qr{command=31.: boolean true\b},
 		qr{command=32.: int 32\b},
