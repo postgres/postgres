@@ -370,6 +370,16 @@
    </varlistentry>
 
    <varlistentry>
+    <term><acronym>JSON</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://json.org">JavaScript Object Notation</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>LDAP</acronym></term>
     <listitem>
      <para>
