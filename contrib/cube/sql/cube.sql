@@ -389,20 +389,29 @@ SELECT c FROM test_cube WHERE c <@ '(3000,1000),(0,0)' ORDER BY c;
 SELECT c FROM test_cube WHERE c <@ '(3000,1000),(0,0)' ORDER BY c;
 RESET enable_bitmapscan;
 
--- kNN with index
+-- Test kNN
+INSERT INTO test_cube VALUES ('(1,1)'), ('(100000)'), ('(0, 100000)'); -- Some corner cases
+SET enable_seqscan = false;
+
+-- Test different metrics
 SELECT *, c <-> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <-> '(100, 100),(500, 500)'::cube LIMIT 5;
 SELECT *, c <=> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <=> '(100, 100),(500, 500)'::cube LIMIT 5;
 SELECT *, c <#> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <#> '(100, 100),(500, 500)'::cube LIMIT 5;
 
--- kNN-based sorting
-SELECT * FROM test_cube ORDER BY c~>1 LIMIT 15; -- ascending by 1st coordinate of lower left corner
-SELECT * FROM test_cube ORDER BY c~>4 LIMIT 15; -- ascending by 2nd coordinate or upper right corner
-SELECT * FROM test_cube ORDER BY c~>1 DESC LIMIT 15; -- descending by 1st coordinate of lower left corner
-SELECT * FROM test_cube ORDER BY c~>4 DESC LIMIT 15; -- descending by 2nd coordinate or upper right corner
+-- Test sorting by coordinates
+SELECT c~>1, c FROM test_cube ORDER BY c~>1 LIMIT 15; -- ascending by left bound
+SELECT c~>2, c FROM test_cube ORDER BY c~>2 LIMIT 15; -- ascending by right bound
+SELECT c~>3, c FROM test_cube ORDER BY c~>3 LIMIT 15; -- ascending by lower bound
+SELECT c~>4, c FROM test_cube ORDER BY c~>4 LIMIT 15; -- ascending by upper bound
 
--- same thing for index with points
-CREATE TABLE test_point(c cube);
-INSERT INTO test_point(SELECT cube(array[c->1,c->2,c->3,c->4]) FROM test_cube);
-CREATE INDEX ON test_point USING gist(c);
-SELECT * FROM test_point ORDER BY c~>1, c~>2 LIMIT 15; -- ascending by 1st then by 2nd coordinate
-SELECT * FROM test_point ORDER BY c~>4 DESC LIMIT 15; -- descending by 1st coordinate
+-- Same queries with sequential scan (should give the same results as above)
+RESET enable_seqscan;
+SET enable_indexscan = OFF;
+SELECT *, c <-> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <-> '(100, 100),(500, 500)'::cube LIMIT 5;
+SELECT *, c <=> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <=> '(100, 100),(500, 500)'::cube LIMIT 5;
+SELECT *, c <#> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <#> '(100, 100),(500, 500)'::cube LIMIT 5;
+SELECT c~>1, c FROM test_cube ORDER BY c~>1 LIMIT 15; -- ascending by left bound
+SELECT c~>2, c FROM test_cube ORDER BY c~>2 LIMIT 15; -- ascending by right bound
+SELECT c~>3, c FROM test_cube ORDER BY c~>3 LIMIT 15; -- ascending by lower bound
+SELECT c~>4, c FROM test_cube ORDER BY c~>4 LIMIT 15; -- ascending by upper bound
+RESET enable_indexscan;
