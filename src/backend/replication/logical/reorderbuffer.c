@@ -15,7 +15,7 @@
  *	  they are written to the WAL and is responsible to reassemble them into
  *	  toplevel transaction sized pieces. When a transaction is completely
  *	  reassembled - signalled by reading the transaction commit record - it
- *	  will then call the output plugin (c.f. ReorderBufferCommit()) with the
+ *	  will then call the output plugin (cf. ReorderBufferCommit()) with the
  *	  individual changes. The output plugins rely on snapshots built by
  *	  snapbuild.c which hands them to us.
  *
@@ -1752,7 +1752,7 @@ ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
 /*
  * Execute invalidations happening outside the context of a decoded
  * transaction. That currently happens either for xid-less commits
- * (c.f. RecordTransactionCommit()) or for invalidations in uninteresting
+ * (cf. RecordTransactionCommit()) or for invalidations in uninteresting
  * transactions (via ReorderBufferForget()).
  */
 void

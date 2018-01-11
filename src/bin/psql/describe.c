@@ -1722,7 +1722,7 @@ describeOneTableDetails(const char *schemaname,
 
 		/*
 		 * In 9.0+, we have column comments for: relations, views, composite
-		 * types, and foreign tables (c.f. CommentObject() in comment.c).
+		 * types, and foreign tables (cf. CommentObject() in comment.c).
 		 */
 		if (tableinfo.relkind == RELKIND_RELATION ||
 			tableinfo.relkind == RELKIND_VIEW ||

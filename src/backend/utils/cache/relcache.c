@@ -2511,7 +2511,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 			/*
 			 * This shouldn't happen as dropping a relation is intended to be
-			 * impossible if still referenced (c.f. CheckTableNotInUse()). But
+			 * impossible if still referenced (cf. CheckTableNotInUse()). But
 			 * if we get here anyway, we can't just delete the relcache entry,
 			 * as it possibly could get accessed later (as e.g. the error
 			 * might get trapped and handled via a subtransaction rollback).

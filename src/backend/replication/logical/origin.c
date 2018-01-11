@@ -60,7 +60,7 @@
  *	 all our platforms, but it also simplifies memory ordering concerns
  *	 between the remote and local lsn. We use a lwlock instead of a spinlock
  *	 so it's less harmful to hold the lock over a WAL write
- *	 (c.f. AdvanceReplicationProgress).
+ *	 (cf. AdvanceReplicationProgress).
  *
  * ---------------------------------------------------------------------------
  */

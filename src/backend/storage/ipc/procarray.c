@@ -820,7 +820,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 	/*
 	 * latestObservedXid is at least set to the point where SUBTRANS was
-	 * started up to (c.f. ProcArrayInitRecovery()) or to the biggest xid
+	 * started up to (cf. ProcArrayInitRecovery()) or to the biggest xid
 	 * RecordKnownAssignedTransactionIds() was called for.  Initialize
 	 * subtrans from thereon, up to nextXid - 1.
 	 *

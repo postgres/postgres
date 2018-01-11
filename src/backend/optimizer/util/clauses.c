@@ -1611,7 +1611,7 @@ contain_leaked_vars_walker(Node *node, void *context)
 			 * WHERE CURRENT OF doesn't contain leaky function calls.
 			 * Moreover, it is essential that this is considered non-leaky,
 			 * since the planner must always generate a TID scan when CURRENT
-			 * OF is present -- c.f. cost_tidscan.
+			 * OF is present -- cf. cost_tidscan.
 			 */
 			return false;
 
