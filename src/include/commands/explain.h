@@ -53,7 +53,8 @@ typedef void (*ExplainOneQuery_hook_type) (Query *query,
 										   IntoClause *into,
 										   ExplainState *es,
 										   const char *queryString,
-										   ParamListInfo params);
+										   ParamListInfo params,
+										   QueryEnvironment *queryEnv);
 extern PGDLLIMPORT ExplainOneQuery_hook_type ExplainOneQuery_hook;
 
 /* Hook for plugins to get control in explain_get_index_name() */

@@ -351,7 +351,7 @@ ExplainOneQuery(Query *query, int cursorOptions,
 	/* if an advisor plugin is present, let it manage things */
 	if (ExplainOneQuery_hook)
 		(*ExplainOneQuery_hook) (query, cursorOptions, into, es,
-								 queryString, params);
+								 queryString, params, queryEnv);
 	else
 	{
 		PlannedStmt *plan;
