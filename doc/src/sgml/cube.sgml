@@ -186,10 +186,11 @@
       <entry><literal>a ~&gt; n</></entry>
       <entry><type>float8</></entry>
       <entry>
-        Get <replaceable>n</>-th coordinate in <quote>normalized</> cube
-        representation, in which the coordinates have been rearranged into
-        the form <quote>lower left &mdash; upper right</>; that is, the
-        smaller endpoint along each dimension appears first.
+        Get <replaceable>n</>-th coordinate of cube in following way:
+        n = 2 * k - 1 means lower bound of <replaceable>k</>-th
+        dimension, n = 2 * k means upper bound of
+        <replaceable>k</>-th dimension.  This operator is designed
+        for KNN-GiST support.
       </entry>
      </row>
 
