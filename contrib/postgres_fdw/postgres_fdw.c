@@ -353,8 +353,8 @@ static void postgresGetForeignUpperPaths(PlannerInfo *root,
  * Helper functions
  */
 static void estimate_path_cost_size(PlannerInfo *root,
-						RelOptInfo *baserel,
-						List *join_conds,
+						RelOptInfo *foreignrel,
+						List *param_join_conds,
 						List *pathkeys,
 						double *p_rows, int *p_width,
 						Cost *p_startup_cost, Cost *p_total_cost);
