@@ -105,7 +105,7 @@ print $bki "# PostgreSQL $major_version\n";
 my %schemapg_entries;
 my @tables_needing_macros;
 my %regprocoids;
-my @types;
+my %types;
 
 # produce output, one catalog at a time
 foreach my $catname (@{ $catalogs->{names} })
@@ -119,7 +119,6 @@ foreach my $catname (@{ $catalogs->{names} })
 	  . $catalog->{without_oids}
 	  . $catalog->{rowtype_oid} . "\n";
 
-	my %bki_attr;
 	my @attnames;
 	my $first = 1;
 
@@ -129,7 +128,6 @@ foreach my $catname (@{ $catalogs->{names} })
 	{
 		my $attname = $column->{name};
 		my $atttype = $column->{type};
-		$bki_attr{$attname} = $column;
 		push @attnames, $attname;
 
 		if (!$first)
@@ -211,7 +209,7 @@ foreach my $catname (@{ $catalogs->{names} })
 			{
 				my %type = %bki_values;
 				$type{oid} = $row->{oid};
-				push @types, \%type;
+				$types{ $type{typname} } = \%type;
 			}
 
 			# Write to postgres.bki
@@ -253,28 +251,24 @@ foreach my $catname (@{ $catalogs->{names} })
 			# Generate entries for user attributes.
 			my $attnum       = 0;
 			my $priornotnull = 1;
-			my @user_attrs   = @{ $table->{columns} };
-			foreach my $attr (@user_attrs)
+			foreach my $attr (@{ $table->{columns} })
 			{
 				$attnum++;
-				my $row = emit_pgattr_row($table_name, $attr, $priornotnull);
-				$row->{attnum}        = $attnum;
-				$row->{attstattarget} = '-1';
-				$priornotnull &= ($row->{attnotnull} eq 't');
+				my %row;
+				$row{attnum}   = $attnum;
+				$row{attrelid} = $table->{relation_oid};
+
+				morph_row_for_pgattr(\%row, $schema, $attr, $priornotnull);
+				$priornotnull &= ($row{attnotnull} eq 't');
 
 				# If it's bootstrapped, put an entry in postgres.bki.
-				if ($table->{bootstrap})
-				{
-					bki_insert($row, @attnames);
-				}
+				print_bki_insert(\%row, @attnames) if $table->{bootstrap};
 
 				# Store schemapg entries for later.
-				$row =
-				  emit_schemapg_row($row,
-					grep { $bki_attr{$_}{type} eq 'bool' } @attnames);
+				morph_row_for_schemapg(\%row, $schema);
 				push @{ $schemapg_entries{$table_name} },
 				  sprintf "{ %s }",
-				    join(', ', grep { defined $_ } @{$row}{@attnames});
+				    join(', ', grep { defined $_ } @row{@attnames});
 			}
 
 			# Generate entries for system attributes.
@@ -293,16 +287,18 @@ foreach my $catname (@{ $catalogs->{names} })
 				foreach my $attr (@SYS_ATTRS)
 				{
 					$attnum--;
-					my $row = emit_pgattr_row($table_name, $attr, 1);
-					$row->{attnum}        = $attnum;
-					$row->{attstattarget} = '0';
+					my %row;
+					$row{attnum}        = $attnum;
+					$row{attrelid}      = $table->{relation_oid};
+					$row{attstattarget} = '0';
 
 					# Omit the oid column if the catalog doesn't have them
 					next
 					  if $table->{without_oids}
-						  && $row->{attname} eq 'oid';
+						  && $attr->{name} eq 'oid';
 
-					bki_insert($row, @attnames);
+					morph_row_for_pgattr(\%row, $schema, $attr, 1);
+					print_bki_insert(\%row, @attnames);
 				}
 			}
 		}
@@ -379,130 +375,122 @@ exit 0;
 #################### Subroutines ########################
 
 
-# Given a system catalog name and a reference to a key-value pair corresponding
-# to the name and type of a column, generate a reference to a hash that
-# represents a pg_attribute entry.  We must also be told whether preceding
-# columns were all not-null.
-sub emit_pgattr_row
+# Given $pgattr_schema (the pg_attribute schema for a catalog sufficient for
+# AddDefaultValues), $attr (the description of a catalog row), and
+# $priornotnull (whether all prior attributes in this catalog are not null),
+# modify the $row hashref for print_bki_insert.  This includes setting data
+# from the corresponding pg_type element and filling in any default values.
+# Any value not handled here must be supplied by caller.
+sub morph_row_for_pgattr
 {
-	my ($table_name, $attr, $priornotnull) = @_;
+	my ($row, $pgattr_schema, $attr, $priornotnull) = @_;
 	my $attname = $attr->{name};
 	my $atttype = $attr->{type};
-	my %row;
 
-	$row{attrelid} = $catalogs->{$table_name}->{relation_oid};
-	$row{attname}  = $attname;
+	$row->{attname} = $attname;
 
-	# Adjust type name for arrays: foo[] becomes _foo
-	# so we can look it up in pg_type
-	if ($atttype =~ /(.+)\[\]$/)
-	{
-		$atttype = '_' . $1;
-	}
+	# Adjust type name for arrays: foo[] becomes _foo, so we can look it up in
+	# pg_type
+	$atttype = '_' . $1 if $atttype =~ /(.+)\[\]$/;
 
 	# Copy the type data from pg_type, and add some type-dependent items
-	foreach my $type (@types)
+	my $type = $types{$atttype};
+
+	$row->{atttypid}   = $type->{oid};
+	$row->{attlen}     = $type->{typlen};
+	$row->{attbyval}   = $type->{typbyval};
+	$row->{attstorage} = $type->{typstorage};
+	$row->{attalign}   = $type->{typalign};
+
+	# set attndims if it's an array type
+	$row->{attndims} = $type->{typcategory} eq 'A' ? '1' : '0';
+	$row->{attcollation} = $type->{typcollation};
+
+	if (defined $attr->{forcenotnull})
 	{
-		if (defined $type->{typname} && $type->{typname} eq $atttype)
-		{
-			$row{atttypid}   = $type->{oid};
-			$row{attlen}     = $type->{typlen};
-			$row{attbyval}   = $type->{typbyval};
-			$row{attstorage} = $type->{typstorage};
-			$row{attalign}   = $type->{typalign};
+		$row->{attnotnull} = 't';
+	}
+	elsif (defined $attr->{forcenull})
+	{
+		$row->{attnotnull} = 'f';
+	}
+	elsif ($priornotnull)
+	{
 
-			# set attndims if it's an array type
-			$row{attndims} = $type->{typcategory} eq 'A' ? '1' : '0';
-			$row{attcollation} = $type->{typcollation};
-
-			if (defined $attr->{forcenotnull})
-			{
-				$row{attnotnull} = 't';
-			}
-			elsif (defined $attr->{forcenull})
-			{
-				$row{attnotnull} = 'f';
-			}
-			elsif ($priornotnull)
-			{
-
-				# attnotnull will automatically be set if the type is
-				# fixed-width and prior columns are all NOT NULL ---
-				# compare DefineAttr in bootstrap.c. oidvector and
-				# int2vector are also treated as not-nullable.
-				$row{attnotnull} =
-				    $type->{typname} eq 'oidvector'   ? 't'
-				  : $type->{typname} eq 'int2vector'  ? 't'
-				  : $type->{typlen}  eq 'NAMEDATALEN' ? 't'
-				  : $type->{typlen} > 0 ? 't'
-				  :                       'f';
-			}
-			else
-			{
-				$row{attnotnull} = 'f';
-			}
-			last;
-		}
+		# attnotnull will automatically be set if the type is
+		# fixed-width and prior columns are all NOT NULL ---
+		# compare DefineAttr in bootstrap.c. oidvector and
+		# int2vector are also treated as not-nullable.
+		$row->{attnotnull} =
+		$type->{typname} eq 'oidvector'   ? 't'
+		: $type->{typname} eq 'int2vector'  ? 't'
+		: $type->{typlen}  eq 'NAMEDATALEN' ? 't'
+		: $type->{typlen} > 0 ? 't'
+		:                       'f';
+	}
+	else
+	{
+		$row->{attnotnull} = 'f';
 	}
 
-	# Add in default values for pg_attribute
-	my %PGATTR_DEFAULTS = (
-		attcacheoff   => '-1',
-		atttypmod     => '-1',
-		atthasdef     => 'f',
-		attidentity   => '',
-		attisdropped  => 'f',
-		attislocal    => 't',
-		attinhcount   => '0',
-		attacl        => '_null_',
-		attoptions    => '_null_',
-		attfdwoptions => '_null_');
-	return { %PGATTR_DEFAULTS, %row };
+	my $error = Catalog::AddDefaultValues($row, $pgattr_schema);
+	if ($error)
+	{
+		die "Failed to form full tuple for pg_attribute: ", $error;
+	}
 }
 
 # Write a pg_attribute entry to postgres.bki
-sub bki_insert
+sub print_bki_insert
 {
 	my $row        = shift;
 	my @attnames   = @_;
 	my $oid        = $row->{oid} ? "OID = $row->{oid} " : '';
-	my $bki_values = join ' ', map { $_ eq '' ? '""' : $_ } map $row->{$_},
-	  @attnames;
+	my $bki_values = join ' ', @{$row}{@attnames};
 	printf $bki "insert %s( %s )\n", $oid, $bki_values;
 }
 
+# Given a row reference, modify it so that it becomes a valid entry for
+# a catalog schema declaration in schemapg.h.
+#
 # The field values of a Schema_pg_xxx declaration are similar, but not
 # quite identical, to the corresponding values in postgres.bki.
-sub emit_schemapg_row
+sub morph_row_for_schemapg
 {
-	my $row        = shift;
-	my @bool_attrs = @_;
+	my $row           = shift;
+	my $pgattr_schema = shift;
 
-	# Replace empty string by zero char constant
-	$row->{attidentity} ||= '\0';
-
-	# Supply appropriate quoting for these fields.
-	$row->{attname}     = q|{"| . $row->{attname} . q|"}|;
-	$row->{attstorage}  = q|'| . $row->{attstorage} . q|'|;
-	$row->{attalign}    = q|'| . $row->{attalign} . q|'|;
-	$row->{attidentity} = q|'| . $row->{attidentity} . q|'|;
-
-	# We don't emit initializers for the variable length fields at all.
-	# Only the fixed-size portions of the descriptors are ever used.
-	delete $row->{attacl};
-	delete $row->{attoptions};
-	delete $row->{attfdwoptions};
-
-	# Expand booleans from 'f'/'t' to 'false'/'true'.
-	# Some values might be other macros (eg FLOAT4PASSBYVAL), don't change.
-	foreach my $attr (@bool_attrs)
+	foreach my $column (@$pgattr_schema)
 	{
-		$row->{$attr} =
-		    $row->{$attr} eq 't' ? 'true'
-		  : $row->{$attr} eq 'f' ? 'false'
-		  :                        $row->{$attr};
+		my $attname = $column->{name};
+		my $atttype = $column->{type};
+
+		# Some data types have special formatting rules.
+		if ($atttype eq 'name')
+		{
+			# add {" ... "} quoting
+			$row->{$attname} = sprintf(qq'{"%s"}', $row->{$attname});
+		}
+		elsif ($atttype eq 'char')
+		{
+			# Replace empty string by zero char constant; add single quotes
+			$row->{$attname} = '\0' if $row->{$attname} eq q|""|;
+			$row->{$attname} = sprintf("'%s'", $row->{$attname});
+		}
+
+		# Expand booleans from 'f'/'t' to 'false'/'true'.
+		# Some values might be other macros (eg FLOAT4PASSBYVAL),
+		# don't change.
+		elsif ($atttype eq 'bool')
+		{
+			$row->{$attname} = 'true' if $row->{$attname} eq 't';
+			$row->{$attname} = 'false' if $row->{$attname} eq 'f';
+		}
+
+		# We don't emit initializers for the variable length fields at all.
+		# Only the fixed-size portions of the descriptors are ever used.
+		delete $row->{$attname} if $column->{is_varlen};
 	}
-	return $row;
 }
 
 sub usage

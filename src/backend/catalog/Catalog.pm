@@ -37,6 +37,8 @@ sub Catalogs
 	foreach my $input_file (@_)
 	{
 		my %catalog;
+		my $is_varlen     = 0;
+
 		$catalog{columns} = [];
 		$catalog{data}    = [];
 
@@ -164,7 +166,11 @@ sub Catalogs
 			elsif ($declaring_attributes)
 			{
 				next if (/^{|^$/);
-				next if (/^#/);
+				if (/^#/)
+				{
+					$is_varlen = 1 if /^#ifdef\s+CATALOG_VARLEN/;
+					next;
+				}
 				if (/^}/)
 				{
 					undef $declaring_attributes;
@@ -172,8 +178,12 @@ sub Catalogs
 				else
 				{
 					my %column;
-					my ($atttype, $attname, $attopt) = split /\s+/, $_;
-					die "parse error ($input_file)" unless $attname;
+					my @attopts = split /\s+/, $_;
+					my $atttype = shift @attopts;
+					my $attname = shift @attopts;
+					die "parse error ($input_file)"
+					  unless ($attname and $atttype);
+
 					if (exists $RENAME_ATTTYPE{$atttype})
 					{
 						$atttype = $RENAME_ATTTYPE{$atttype};
@@ -181,13 +191,14 @@ sub Catalogs
 					if ($attname =~ /(.*)\[.*\]/)    # array attribute
 					{
 						$attname = $1;
-						$atttype .= '[]';            # variable-length only
+						$atttype .= '[]';
 					}
 
 					$column{type} = $atttype;
 					$column{name} = $attname;
+					$column{is_varlen} = 1 if $is_varlen;
 
-					if (defined $attopt)
+					foreach my $attopt (@attopts)
 					{
 						if ($attopt eq 'BKI_FORCE_NULL')
 						{
@@ -197,10 +208,19 @@ sub Catalogs
 						{
 							$column{forcenotnull} = 1;
 						}
+						elsif ($attopt =~ /BKI_DEFAULT\((\S+)\)/)
+						{
+							$column{default} = $1;
+						}
 						else
 						{
 							die
 "unknown column option $attopt on column $attname";
+						}
+
+						if ($column{forcenull} and $column{forcenotnull})
+						{
+							die "$attname is forced both null and not null";
 						}
 					}
 					push @{ $catalog{columns} }, \%column;
@@ -233,6 +253,46 @@ sub SplitDataLine
 	my @result = $bki_values =~ /"[^"]*"|\S+/g;
 
 	return @result;
+}
+
+# Fill in default values of a record using the given schema. It's the
+# caller's responsibility to specify other values beforehand.
+sub AddDefaultValues
+{
+	my ($row, $schema) = @_;
+	my @missing_fields;
+	my $msg;
+
+	foreach my $column (@$schema)
+	{
+		my $attname = $column->{name};
+		my $atttype = $column->{type};
+
+		if (defined $row->{$attname})
+		{
+			;
+		}
+		elsif (defined $column->{default})
+		{
+			$row->{$attname} = $column->{default};
+		}
+		else
+		{
+			# Failed to find a value.
+			push @missing_fields, $attname;
+		}
+	}
+
+	if (@missing_fields)
+	{
+		$msg = "Missing values for: " . join(', ', @missing_fields);
+		$msg .= "\nShowing other values for context:\n";
+		while (my($key, $value) = each %$row)
+		{
+			$msg .= "$key => $value, ";
+		}
+	}
+	return $msg;
 }
 
 # Rename temporary files to final names.

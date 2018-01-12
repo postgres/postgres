@@ -31,6 +31,9 @@
 #define BKI_FORCE_NULL
 #define BKI_FORCE_NOT_NULL
 
+/* Specifies a default value for a catalog field */
+#define BKI_DEFAULT(value)
+
 /*
  * This is never defined; it's here only for documentation.
  *
