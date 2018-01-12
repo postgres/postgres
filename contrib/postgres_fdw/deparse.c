@@ -178,7 +178,7 @@ static void appendGroupByClause(List *tlist, deparse_expr_cxt *context);
 static void appendAggOrderBy(List *orderList, List *targetList,
 				 deparse_expr_cxt *context);
 static void appendFunctionName(Oid funcid, deparse_expr_cxt *context);
-static Node *deparseSortGroupClause(Index ref, List *tlist,
+static Node *deparseSortGroupClause(Index ref, List *tlist, bool force_colno,
 					   deparse_expr_cxt *context);
 
 /*
@@ -2853,7 +2853,7 @@ appendAggOrderBy(List *orderList, List *targetList, deparse_expr_cxt *context)
 		first = false;
 
 		sortexpr = deparseSortGroupClause(srt->tleSortGroupRef, targetList,
-										  context);
+										  false, context);
 		sortcoltype = exprType(sortexpr);
 		/* See whether operator is default < or > for datatype */
 		typentry = lookup_type_cache(sortcoltype,
@@ -2960,7 +2960,7 @@ appendGroupByClause(List *tlist, deparse_expr_cxt *context)
 			appendStringInfoString(buf, ", ");
 		first = false;
 
-		deparseSortGroupClause(grp->tleSortGroupRef, tlist, context);
+		deparseSortGroupClause(grp->tleSortGroupRef, tlist, true, context);
 	}
 }
 
@@ -3047,7 +3047,8 @@ appendFunctionName(Oid funcid, deparse_expr_cxt *context)
  * need not find it again.
  */
 static Node *
-deparseSortGroupClause(Index ref, List *tlist, deparse_expr_cxt *context)
+deparseSortGroupClause(Index ref, List *tlist, bool force_colno,
+					   deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
 	TargetEntry *tle;
@@ -3056,7 +3057,13 @@ deparseSortGroupClause(Index ref, List *tlist, deparse_expr_cxt *context)
 	tle = get_sortgroupref_tle(ref, tlist);
 	expr = tle->expr;
 
-	if (expr && IsA(expr, Const))
+	if (force_colno)
+	{
+		/* Use column-number form when requested by caller. */
+		Assert(!tle->resjunk);
+		appendStringInfo(buf, "%d", tle->resno);
+	}
+	else if (expr && IsA(expr, Const))
 	{
 		/*
 		 * Force a typecast here so that we don't emit something like "GROUP
