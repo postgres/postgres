@@ -389,6 +389,51 @@ select g as alias1, g as alias2
       3 |       
 (6 rows)
 
+-- check that pulled-up subquery outputs still go to null when appropriate
+select four, x
+  from (select four, ten, 'foo'::text as x from tenk1) as t
+  group by grouping sets (four, x)
+  having x = 'foo';
+ four |  x  
+------+-----
+      | foo
+(1 row)
+
+select four, x || 'x'
+  from (select four, ten, 'foo'::text as x from tenk1) as t
+  group by grouping sets (four, x)
+  order by four;
+ four | ?column? 
+------+----------
+    0 | 
+    1 | 
+    2 | 
+    3 | 
+      | foox
+(5 rows)
+
+select (x+y)*1, sum(z)
+ from (select 1 as x, 2 as y, 3 as z) s
+ group by grouping sets (x+y, x);
+ ?column? | sum 
+----------+-----
+        3 |   3
+          |   3
+(2 rows)
+
+select x, not x as not_x, q2 from
+  (select *, q1 = 1 as x from int8_tbl i1) as t
+  group by grouping sets(x, q2)
+  order by x, q2;
+ x | not_x |        q2         
+---+-------+-------------------
+ f | t     |                  
+   |       | -4567890123456789
+   |       |               123
+   |       |               456
+   |       |  4567890123456789
+(5 rows)
+
 -- simple rescan tests
 select a, b, sum(v.x)
   from (values (1),(2)) v(x), gstest_data(v.x)
