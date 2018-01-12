@@ -32,4 +32,5 @@ test: propagate-lock-delete
 test: tuplelock-conflict
 test: freeze-the-dead
 test: drop-index-concurrently-1
+test: alter-table-4
 test: timeouts
