@@ -1003,11 +1003,8 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 
 	/*
 	 * The subquery's targetlist items are now in the appropriate form to
-	 * insert into the top query, but if we are under an outer join then
-	 * non-nullable items and lateral references may have to be turned into
-	 * PlaceHolderVars.  If we are dealing with an appendrel member then
-	 * anything that's not a simple Var has to be turned into a
-	 * PlaceHolderVar.  Set up required context data for pullup_replace_vars.
+	 * insert into the top query, except that we may need to wrap them in
+	 * PlaceHolderVars.  Set up required context data for pullup_replace_vars.
 	 */
 	rvcontext.root = root;
 	rvcontext.targetlist = subquery->targetList;
@@ -1019,12 +1016,47 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 		rvcontext.relids = NULL;
 	rvcontext.outer_hasSubLinks = &parse->hasSubLinks;
 	rvcontext.varno = varno;
-	rvcontext.need_phvs = (lowest_nulling_outer_join != NULL ||
-						   containing_appendrel != NULL);
-	rvcontext.wrap_non_vars = (containing_appendrel != NULL);
+	/* these flags will be set below, if needed */
+	rvcontext.need_phvs = false;
+	rvcontext.wrap_non_vars = false;
 	/* initialize cache array with indexes 0 .. length(tlist) */
 	rvcontext.rv_cache = palloc0((list_length(subquery->targetList) + 1) *
 								 sizeof(Node *));
+
+	/*
+	 * If we are under an outer join then non-nullable items and lateral
+	 * references may have to be turned into PlaceHolderVars.
+	 */
+	if (lowest_nulling_outer_join != NULL)
+		rvcontext.need_phvs = true;
+
+	/*
+	 * If we are dealing with an appendrel member then anything that's not a
+	 * simple Var has to be turned into a PlaceHolderVar.  We force this to
+	 * ensure that what we pull up doesn't get merged into a surrounding
+	 * expression during later processing and then fail to match the
+	 * expression actually available from the appendrel.
+	 */
+	if (containing_appendrel != NULL)
+	{
+		rvcontext.need_phvs = true;
+		rvcontext.wrap_non_vars = true;
+	}
+
+	/*
+	 * If the parent query uses grouping sets, we need a PlaceHolderVar for
+	 * anything that's not a simple Var.  Again, this ensures that expressions
+	 * retain their separate identity so that they will match grouping set
+	 * columns when appropriate.  (It'd be sufficient to wrap values used in
+	 * grouping set columns, and do so only in non-aggregated portions of the
+	 * tlist and havingQual, but that would require a lot of infrastructure
+	 * that pullup_replace_vars hasn't currently got.)
+	 */
+	if (parse->groupingSets)
+	{
+		rvcontext.need_phvs = true;
+		rvcontext.wrap_non_vars = true;
+	}
 
 	/*
 	 * Replace all of the top query's references to the subquery's outputs
