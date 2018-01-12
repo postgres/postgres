@@ -198,12 +198,12 @@ main(int argc, char *const argv[])
 				system_includes = true;
 				break;
 			case 'C':
-				if (strncmp(optarg, "INFORMIX", strlen("INFORMIX")) == 0)
+				if (pg_strcasecmp(optarg, "INFORMIX") == 0 || pg_strcasecmp(optarg, "INFORMIX_SE") == 0)
 				{
 					char		pkginclude_path[MAXPGPATH];
 					char		informix_path[MAXPGPATH];
 
-					compat = (strcmp(optarg, "INFORMIX") == 0) ? ECPG_COMPAT_INFORMIX : ECPG_COMPAT_INFORMIX_SE;
+					compat = (pg_strcasecmp(optarg, "INFORMIX") == 0) ? ECPG_COMPAT_INFORMIX : ECPG_COMPAT_INFORMIX_SE;
 					get_pkginclude_path(my_exec_path, pkginclude_path);
 					snprintf(informix_path, MAXPGPATH, "%s/informix/esql", pkginclude_path);
 					add_include_path(informix_path);
