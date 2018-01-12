@@ -3614,8 +3614,9 @@ SELECT plainto_tsquery('supernovae stars');
    allows the implementation of very fast searches with online update.
    Partitioning can be done at the database level using table inheritance,
    or by distributing documents over
-   servers and collecting search results using the <xref linkend="dblink"/>
-   module. The latter is possible because ranking functions use
+   servers and collecting external search results, e.g. via <link
+   linkend="ddl-foreign-data">Foreign Data</link> access.
+   The latter is possible because ranking functions use
    only local information.
   </para>
 
