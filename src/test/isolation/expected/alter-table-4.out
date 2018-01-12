@@ -1,0 +1,57 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1b s1delc1 s2sel s1c s2sel
+step s1b: BEGIN;
+step s1delc1: ALTER TABLE c1 NO INHERIT p;
+step s2sel: SELECT SUM(a) FROM p; <waiting ...>
+step s1c: COMMIT;
+step s2sel: <... completed>
+sum            
+
+11             
+step s2sel: SELECT SUM(a) FROM p;
+sum            
+
+1              
+
+starting permutation: s1b s1delc1 s1addc2 s2sel s1c s2sel
+step s1b: BEGIN;
+step s1delc1: ALTER TABLE c1 NO INHERIT p;
+step s1addc2: ALTER TABLE c2 INHERIT p;
+step s2sel: SELECT SUM(a) FROM p; <waiting ...>
+step s1c: COMMIT;
+step s2sel: <... completed>
+sum            
+
+11             
+step s2sel: SELECT SUM(a) FROM p;
+sum            
+
+101            
+
+starting permutation: s1b s1dropc1 s2sel s1c s2sel
+step s1b: BEGIN;
+step s1dropc1: DROP TABLE c1;
+step s2sel: SELECT SUM(a) FROM p; <waiting ...>
+step s1c: COMMIT;
+step s2sel: <... completed>
+sum            
+
+1              
+step s2sel: SELECT SUM(a) FROM p;
+sum            
+
+1              
+
+starting permutation: s1b s1delc1 s1modc1a s2sel s1c s2sel
+step s1b: BEGIN;
+step s1delc1: ALTER TABLE c1 NO INHERIT p;
+step s1modc1a: ALTER TABLE c1 ALTER COLUMN a TYPE float;
+step s2sel: SELECT SUM(a) FROM p; <waiting ...>
+step s1c: COMMIT;
+step s2sel: <... completed>
+error in steps s1c s2sel: ERROR:  attribute "a" of relation "c1" does not match parent's type
+step s2sel: SELECT SUM(a) FROM p;
+sum            
+
+1              
