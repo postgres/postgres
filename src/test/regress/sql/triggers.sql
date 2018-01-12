@@ -1409,7 +1409,7 @@ $$;
 --
 -- Verify behavior of statement triggers on partition hierarchy with
 -- transition tables.  Tuples should appear to each trigger in the
--- format of the the relation the trigger is attached to.
+-- format of the relation the trigger is attached to.
 --
 
 -- set up a partition hierarchy with some different TupleDescriptors
