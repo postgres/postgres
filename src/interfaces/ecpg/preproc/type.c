@@ -609,7 +609,17 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsize
 						prefix, ind_prefix, arrsize, type->struct_sizeof,
 						(ind_p != NULL) ? ind_type->struct_sizeof : NULL);
 		if (ind_p != NULL && ind_p != &struct_no_indicator)
+		{
 			ind_p = ind_p->next;
+			if (ind_p == NULL && p->next != NULL) {
+				mmerror(PARSE_ERROR, ET_WARNING, "indicator struct \"%s\" has too few members", ind_name);
+				ind_p = &struct_no_indicator;
+			}
+		}
+	}
+
+	if (ind_type != NULL && ind_p != NULL && ind_p != &struct_no_indicator) {
+		mmerror(PARSE_ERROR, ET_WARNING, "indicator struct \"%s\" has too many members", ind_name);
 	}
 
 	free(pbuf);
