@@ -559,6 +559,13 @@ EXPLAIN (VERBOSE, COSTS OFF)
 SELECT ft5, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2 FROM ft5 left join ft4 on ft5.c1 = ft4.c1 WHERE ft4.c1 BETWEEN 10 and 30 ORDER BY ft5.c1, ft4.c1;
 SELECT ft5, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2 FROM ft5 left join ft4 on ft5.c1 = ft4.c1 WHERE ft4.c1 BETWEEN 10 and 30 ORDER BY ft5.c1, ft4.c1;
 
+-- multi-way join involving multiple merge joins
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM ft1, ft2, ft4, ft5 WHERE ft1.c1 = ft2.c1 AND ft1.c1 = ft4.c1
+    AND ft1.c1 = ft5.c1 FOR UPDATE;
+SELECT * FROM ft1, ft2, ft4, ft5 WHERE ft1.c1 = ft2.c1 AND ft1.c1 = ft4.c1
+    AND ft1.c1 = ft5.c1 FOR UPDATE;
+
 -- check join pushdown in situations where multiple userids are involved
 CREATE ROLE regress_view_owner SUPERUSER;
 CREATE USER MAPPING FOR regress_view_owner SERVER loopback;
