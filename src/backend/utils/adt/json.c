@@ -1504,62 +1504,25 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			break;
 		case JSONTYPE_DATE:
 			{
-				DateADT		date;
-				struct pg_tm tm;
 				char		buf[MAXDATELEN + 1];
 
-				date = DatumGetDateADT(val);
-				/* Same as date_out(), but forcing DateStyle */
-				if (DATE_NOT_FINITE(date))
-					EncodeSpecialDate(date, buf);
-				else
-				{
-					j2date(date + POSTGRES_EPOCH_JDATE,
-						   &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
-					EncodeDateOnly(&tm, USE_XSD_DATES, buf);
-				}
+				JsonEncodeDateTime(buf, val, DATEOID);
 				appendStringInfo(result, "\"%s\"", buf);
 			}
 			break;
 		case JSONTYPE_TIMESTAMP:
 			{
-				Timestamp	timestamp;
-				struct pg_tm tm;
-				fsec_t		fsec;
 				char		buf[MAXDATELEN + 1];
 
-				timestamp = DatumGetTimestamp(val);
-				/* Same as timestamp_out(), but forcing DateStyle */
-				if (TIMESTAMP_NOT_FINITE(timestamp))
-					EncodeSpecialTimestamp(timestamp, buf);
-				else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
-					EncodeDateTime(&tm, fsec, false, 0, NULL, USE_XSD_DATES, buf);
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range")));
+				JsonEncodeDateTime(buf, val, TIMESTAMPOID);
 				appendStringInfo(result, "\"%s\"", buf);
 			}
 			break;
 		case JSONTYPE_TIMESTAMPTZ:
 			{
-				TimestampTz timestamp;
-				struct pg_tm tm;
-				int			tz;
-				fsec_t		fsec;
-				const char *tzn = NULL;
 				char		buf[MAXDATELEN + 1];
 
-				timestamp = DatumGetTimestampTz(val);
-				/* Same as timestamptz_out(), but forcing DateStyle */
-				if (TIMESTAMP_NOT_FINITE(timestamp))
-					EncodeSpecialTimestamp(timestamp, buf);
-				else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
-					EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range")));
+				JsonEncodeDateTime(buf, val, TIMESTAMPTZOID);
 				appendStringInfo(result, "\"%s\"", buf);
 			}
 			break;
@@ -1583,6 +1546,107 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			pfree(outputstr);
 			break;
 	}
+}
+
+/*
+ * Encode 'value' of datetime type 'typid' into JSON string in ISO format using
+ * optionally preallocated buffer 'buf'.
+ */
+char *
+JsonEncodeDateTime(char *buf, Datum value, Oid typid)
+{
+	if (!buf)
+		buf = palloc(MAXDATELEN + 1);
+
+	switch (typid)
+	{
+		case DATEOID:
+			{
+				DateADT		date;
+				struct pg_tm tm;
+
+				date = DatumGetDateADT(value);
+
+				/* Same as date_out(), but forcing DateStyle */
+				if (DATE_NOT_FINITE(date))
+					EncodeSpecialDate(date, buf);
+				else
+				{
+					j2date(date + POSTGRES_EPOCH_JDATE,
+						   &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
+					EncodeDateOnly(&tm, USE_XSD_DATES, buf);
+				}
+			}
+			break;
+		case TIMEOID:
+			{
+				TimeADT		time = DatumGetTimeADT(value);
+				struct pg_tm tt,
+						   *tm = &tt;
+				fsec_t		fsec;
+
+				/* Same as time_out(), but forcing DateStyle */
+				time2tm(time, tm, &fsec);
+				EncodeTimeOnly(tm, fsec, false, 0, USE_XSD_DATES, buf);
+			}
+			break;
+		case TIMETZOID:
+			{
+				TimeTzADT  *time = DatumGetTimeTzADTP(value);
+				struct pg_tm tt,
+						   *tm = &tt;
+				fsec_t		fsec;
+				int			tz;
+
+				/* Same as timetz_out(), but forcing DateStyle */
+				timetz2tm(time, tm, &fsec, &tz);
+				EncodeTimeOnly(tm, fsec, true, tz, USE_XSD_DATES, buf);
+			}
+			break;
+		case TIMESTAMPOID:
+			{
+				Timestamp	timestamp;
+				struct pg_tm tm;
+				fsec_t		fsec;
+
+				timestamp = DatumGetTimestamp(value);
+				/* Same as timestamp_out(), but forcing DateStyle */
+				if (TIMESTAMP_NOT_FINITE(timestamp))
+					EncodeSpecialTimestamp(timestamp, buf);
+				else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
+					EncodeDateTime(&tm, fsec, false, 0, NULL, USE_XSD_DATES, buf);
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+			}
+			break;
+		case TIMESTAMPTZOID:
+			{
+				TimestampTz timestamp;
+				struct pg_tm tm;
+				int			tz;
+				fsec_t		fsec;
+				const char *tzn = NULL;
+
+				timestamp = DatumGetTimestampTz(value);
+				/* Same as timestamptz_out(), but forcing DateStyle */
+				if (TIMESTAMP_NOT_FINITE(timestamp))
+					EncodeSpecialTimestamp(timestamp, buf);
+				else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
+					EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+			}
+			break;
+		default:
+			elog(ERROR, "unknown jsonb value datetime type oid %d", typid);
+			return NULL;
+	}
+
+	return buf;
 }
 
 /*

@@ -17,7 +17,7 @@
 #include <math.h>
 
 #include "fmgr.h"
-
+#include "datatype/timestamp.h"
 
 typedef int32 DateADT;
 
@@ -73,5 +73,7 @@ extern void EncodeSpecialDate(DateADT dt, char *str);
 extern DateADT GetSQLCurrentDate(void);
 extern TimeTzADT *GetSQLCurrentTime(int32 typmod);
 extern TimeADT GetSQLLocalTime(int32 typmod);
+extern int	time2tm(TimeADT time, struct pg_tm *tm, fsec_t *fsec);
+extern int	timetz2tm(TimeTzADT *time, struct pg_tm *tm, fsec_t *fsec, int *tzp);
 
 #endif							/* DATE_H */

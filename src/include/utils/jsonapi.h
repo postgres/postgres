@@ -147,4 +147,6 @@ extern Jsonb *transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
 extern text *transform_json_string_values(text *json, void *action_state,
 							 JsonTransformStringValuesAction transform_action);
 
+extern char *JsonEncodeDateTime(char *buf, Datum value, Oid typid);
+
 #endif							/* JSONAPI_H */

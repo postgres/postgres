@@ -786,71 +786,19 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				}
 				break;
 			case JSONBTYPE_DATE:
-				{
-					DateADT		date;
-					struct pg_tm tm;
-					char		buf[MAXDATELEN + 1];
-
-					date = DatumGetDateADT(val);
-					/* Same as date_out(), but forcing DateStyle */
-					if (DATE_NOT_FINITE(date))
-						EncodeSpecialDate(date, buf);
-					else
-					{
-						j2date(date + POSTGRES_EPOCH_JDATE,
-							   &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
-						EncodeDateOnly(&tm, USE_XSD_DATES, buf);
-					}
-					jb.type = jbvString;
-					jb.val.string.len = strlen(buf);
-					jb.val.string.val = pstrdup(buf);
-				}
+				jb.type = jbvString;
+				jb.val.string.val = JsonEncodeDateTime(NULL, val, DATEOID);
+				jb.val.string.len = strlen(jb.val.string.val);
 				break;
 			case JSONBTYPE_TIMESTAMP:
-				{
-					Timestamp	timestamp;
-					struct pg_tm tm;
-					fsec_t		fsec;
-					char		buf[MAXDATELEN + 1];
-
-					timestamp = DatumGetTimestamp(val);
-					/* Same as timestamp_out(), but forcing DateStyle */
-					if (TIMESTAMP_NOT_FINITE(timestamp))
-						EncodeSpecialTimestamp(timestamp, buf);
-					else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
-						EncodeDateTime(&tm, fsec, false, 0, NULL, USE_XSD_DATES, buf);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("timestamp out of range")));
-					jb.type = jbvString;
-					jb.val.string.len = strlen(buf);
-					jb.val.string.val = pstrdup(buf);
-				}
+				jb.type = jbvString;
+				jb.val.string.val = JsonEncodeDateTime(NULL, val, TIMESTAMPOID);
+				jb.val.string.len = strlen(jb.val.string.val);
 				break;
 			case JSONBTYPE_TIMESTAMPTZ:
-				{
-					TimestampTz timestamp;
-					struct pg_tm tm;
-					int			tz;
-					fsec_t		fsec;
-					const char *tzn = NULL;
-					char		buf[MAXDATELEN + 1];
-
-					timestamp = DatumGetTimestampTz(val);
-					/* Same as timestamptz_out(), but forcing DateStyle */
-					if (TIMESTAMP_NOT_FINITE(timestamp))
-						EncodeSpecialTimestamp(timestamp, buf);
-					else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
-						EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("timestamp out of range")));
-					jb.type = jbvString;
-					jb.val.string.len = strlen(buf);
-					jb.val.string.val = pstrdup(buf);
-				}
+				jb.type = jbvString;
+				jb.val.string.val = JsonEncodeDateTime(NULL, val, TIMESTAMPTZOID);
+				jb.val.string.len = strlen(jb.val.string.val);
 				break;
 			case JSONBTYPE_JSONCAST:
 			case JSONBTYPE_JSON:
