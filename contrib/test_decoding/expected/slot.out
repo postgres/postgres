@@ -92,6 +92,36 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot2', NULL, NULL, 'in
  COMMIT
 (3 rows)
 
+INSERT INTO replication_example(somedata, text) VALUES (1, 4);
+INSERT INTO replication_example(somedata, text) VALUES (1, 5);
+SELECT pg_current_wal_lsn() AS wal_lsn \gset
+INSERT INTO replication_example(somedata, text) VALUES (1, 6);
+SELECT end_lsn FROM pg_replication_slot_advance('regression_slot1', :'wal_lsn') \gset
+SELECT slot_name FROM pg_replication_slot_advance('regression_slot2', pg_current_wal_lsn());
+    slot_name     
+------------------
+ regression_slot2
+(1 row)
+
+SELECT :'wal_lsn' = :'end_lsn';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT data FROM pg_logical_slot_get_changes('regression_slot1', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+                                                  data                                                   
+---------------------------------------------------------------------------------------------------------
+ BEGIN
+ table public.replication_example: INSERT: id[integer]:6 somedata[integer]:1 text[character varying]:'6'
+ COMMIT
+(3 rows)
+
+SELECT data FROM pg_logical_slot_get_changes('regression_slot2', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+ data 
+------
+(0 rows)
+
 DROP TABLE replication_example;
 -- error
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot1', 'test_decoding', true);

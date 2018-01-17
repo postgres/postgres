@@ -19156,6 +19156,25 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       </row>
 
       <row>
+       <entry>
+        <indexterm>
+         <primary>pg_replication_slot_advance</primary>
+        </indexterm>
+        <literal><function>pg_replication_slot_advance(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>)</function></literal>
+       </entry>
+       <entry>
+        (<parameter>slot_name</parameter> <type>name</type>, <parameter>end_lsn</parameter> <type>pg_lsn</type>)
+        <type>bool</type>
+       </entry>
+       <entry>
+        Advances the current confirmed position of a replication slot named
+        <parameter>slot_name</parameter>. The slot will not be moved backwards,
+        and it will not be moved beyond the current insert location.  Returns
+        name of the slot and real position to which it was advanced to.
+       </entry>
+      </row>
+
+      <row>
        <entry id="pg-replication-origin-create">
         <indexterm>
          <primary>pg_replication_origin_create</primary>

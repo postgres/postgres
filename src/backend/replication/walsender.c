@@ -1075,6 +1075,7 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	 * to be shipped from that position.
 	 */
 	logical_decoding_ctx = CreateDecodingContext(cmd->startpoint, cmd->options,
+												 false,
 												 logical_read_xlog_page,
 												 WalSndPrepareWrite,
 												 WalSndWriteData,
