@@ -16,15 +16,13 @@
 
 #include "miscadmin.h"
 #include "catalog/partition.h"
-#include "nodes/relation.h"
 #include "optimizer/clauses.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/prep.h"
-#include "optimizer/cost.h"
-#include "utils/memutils.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 
 
 static void make_rels_by_clause_joins(PlannerInfo *root,

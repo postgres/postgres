@@ -17,8 +17,9 @@
 #include <math.h>
 
 #include "miscadmin.h"
-#include "nodes/nodeFuncs.h"
+#include "foreign/fdwapi.h"
 #include "nodes/extensible.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -29,7 +30,6 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
-#include "foreign/fdwapi.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/selfuncs.h"
