@@ -108,29 +108,61 @@ AC_DEFUN([PGAC_TYPE_128BIT_INT],
 [AC_CACHE_CHECK([for __int128], [pgac_cv__128bit_int],
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([
 /*
+ * We don't actually run this test, just link it to verify that any support
+ * functions needed for __int128 are present.
+ *
  * These are globals to discourage the compiler from folding all the
  * arithmetic tests down to compile-time constants.  We do not have
- * convenient support for 64bit literals at this point...
+ * convenient support for 128bit literals at this point...
  */
 __int128 a = 48828125;
-__int128 b = 97656255;
+__int128 b = 97656250;
 ],[
 __int128 c,d;
 a = (a << 12) + 1; /* 200000000001 */
 b = (b << 12) + 5; /* 400000000005 */
-/* use the most relevant arithmetic ops */
+/* try the most relevant arithmetic ops */
 c = a * b;
 d = (c + b) / b;
-/* return different values, to prevent optimizations */
+/* must use the results, else compiler may optimize arithmetic away */
 if (d != a+1)
-  return 0;
-return 1;
+  return 1;
 ])],
 [pgac_cv__128bit_int=yes],
 [pgac_cv__128bit_int=no])])
 if test x"$pgac_cv__128bit_int" = xyes ; then
-  AC_DEFINE(PG_INT128_TYPE, __int128, [Define to the name of a signed 128-bit integer type.])
-  AC_CHECK_ALIGNOF(PG_INT128_TYPE)
+  # Use of non-default alignment with __int128 tickles bugs in some compilers.
+  # If not cross-compiling, we can test for bugs and disable use of __int128
+  # with buggy compilers.  If cross-compiling, hope for the best.
+  # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83925
+  AC_CACHE_CHECK([for __int128 alignment bug], [pgac_cv__128bit_int_bug],
+  [AC_RUN_IFELSE([AC_LANG_PROGRAM([
+/* This must match the corresponding code in c.h: */
+#if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
+#define pg_attribute_aligned(a) __attribute__((aligned(a)))
+#endif
+typedef __int128 int128a
+#if defined(pg_attribute_aligned)
+pg_attribute_aligned(8)
+#endif
+;
+int128a holder;
+void pass_by_val(void *buffer, int128a par) { holder = par; }
+],[
+long int i64 = 97656225L << 12;
+int128a q;
+pass_by_val(main, (int128a) i64);
+q = (int128a) i64;
+if (q != holder)
+  return 1;
+])],
+  [pgac_cv__128bit_int_bug=ok],
+  [pgac_cv__128bit_int_bug=broken],
+  [pgac_cv__128bit_int_bug="assuming ok"])])
+  if test x"$pgac_cv__128bit_int_bug" != xbroken ; then
+    AC_DEFINE(PG_INT128_TYPE, __int128, [Define to the name of a signed 128-bit integer type.])
+    AC_CHECK_ALIGNOF(PG_INT128_TYPE)
+  fi
 fi])# PGAC_TYPE_128BIT_INT
 
 
