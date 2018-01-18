@@ -1177,3 +1177,29 @@ CREATE RULE parted_table_insert AS ON INSERT to parted_table
     DO INSTEAD INSERT INTO parted_table_1 VALUES (NEW.*);
 ALTER RULE parted_table_insert ON parted_table RENAME TO parted_table_insert_redirect;
 DROP TABLE parted_table;
+
+--
+-- Test enabling/disabling
+--
+CREATE TABLE ruletest1 (a int);
+CREATE TABLE ruletest2 (b int);
+
+CREATE RULE rule1 AS ON INSERT TO ruletest1
+    DO INSTEAD INSERT INTO ruletest2 VALUES (NEW.*);
+
+INSERT INTO ruletest1 VALUES (1);
+ALTER TABLE ruletest1 DISABLE RULE rule1;
+INSERT INTO ruletest1 VALUES (2);
+ALTER TABLE ruletest1 ENABLE RULE rule1;
+SET session_replication_role = replica;
+INSERT INTO ruletest1 VALUES (3);
+ALTER TABLE ruletest1 ENABLE REPLICA RULE rule1;
+INSERT INTO ruletest1 VALUES (4);
+RESET session_replication_role;
+INSERT INTO ruletest1 VALUES (5);
+
+SELECT * FROM ruletest1;
+SELECT * FROM ruletest2;
+
+DROP TABLE ruletest1;
+DROP TABLE ruletest2;

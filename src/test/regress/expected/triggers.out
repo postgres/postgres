@@ -569,6 +569,12 @@ insert into trigtest default values;
 alter table trigtest enable trigger trigtest_a_stmt_tg;
 insert into trigtest default values;
 NOTICE:  trigtest INSERT AFTER STATEMENT
+set session_replication_role = replica;
+insert into trigtest default values;  -- does not trigger
+alter table trigtest enable always trigger trigtest_a_stmt_tg;
+insert into trigtest default values;  -- now it does
+NOTICE:  trigtest INSERT AFTER STATEMENT
+reset session_replication_role;
 insert into trigtest2 values(1);
 insert into trigtest2 values(2);
 delete from trigtest where i=2;
@@ -595,7 +601,9 @@ select *  from trigtest;
  3
  4
  5
-(3 rows)
+ 6
+ 7
+(5 rows)
 
 drop table trigtest2;
 drop table trigtest;

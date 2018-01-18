@@ -401,6 +401,11 @@ alter table trigtest disable trigger user;
 insert into trigtest default values;
 alter table trigtest enable trigger trigtest_a_stmt_tg;
 insert into trigtest default values;
+set session_replication_role = replica;
+insert into trigtest default values;  -- does not trigger
+alter table trigtest enable always trigger trigtest_a_stmt_tg;
+insert into trigtest default values;  -- now it does
+reset session_replication_role;
 insert into trigtest2 values(1);
 insert into trigtest2 values(2);
 delete from trigtest where i=2;

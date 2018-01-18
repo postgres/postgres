@@ -89,15 +89,26 @@ create event trigger regress_event_trigger_noperms on ddl_command_start
    execute procedure test_event_trigger();
 reset role;
 
--- all OK
-alter event trigger regress_event_trigger enable replica;
-alter event trigger regress_event_trigger enable always;
-alter event trigger regress_event_trigger enable;
+-- test enabling and disabling
 alter event trigger regress_event_trigger disable;
-
--- regress_event_trigger2 and regress_event_trigger_end should fire, but not
--- regress_event_trigger
+-- fires _trigger2 and _trigger_end should fire, but not _trigger
 create table event_trigger_fire1 (a int);
+alter event trigger regress_event_trigger enable;
+set session_replication_role = replica;
+-- fires nothing
+create table event_trigger_fire2 (a int);
+alter event trigger regress_event_trigger enable replica;
+-- fires only _trigger
+create table event_trigger_fire3 (a int);
+alter event trigger regress_event_trigger enable always;
+-- fires only _trigger
+create table event_trigger_fire4 (a int);
+reset session_replication_role;
+-- fires all three
+create table event_trigger_fire5 (a int);
+-- clean up
+alter event trigger regress_event_trigger disable;
+drop table event_trigger_fire2, event_trigger_fire3, event_trigger_fire4, event_trigger_fire5;
 
 -- regress_event_trigger_end should fire on these commands
 grant all on table event_trigger_fire1 to public;
