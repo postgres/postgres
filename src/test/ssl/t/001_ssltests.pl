@@ -46,20 +46,20 @@ note "running client tests";
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
 
-# The server should not accept non-SSL connections
+# The server should not accept non-SSL connections.
 note "test that the server doesn't accept non-SSL connections";
 test_connect_fails($common_connstr, "sslmode=disable");
 
 # Try without a root cert. In sslmode=require, this should work. In verify-ca
-# or verify-full mode it should fail
+# or verify-full mode it should fail.
 note "connect without server root cert";
 test_connect_ok($common_connstr, "sslrootcert=invalid sslmode=require");
 test_connect_fails($common_connstr, "sslrootcert=invalid sslmode=verify-ca");
 test_connect_fails($common_connstr, "sslrootcert=invalid sslmode=verify-full");
 
-# Try with wrong root cert, should fail. (we're using the client CA as the
-# root, but the server's key is signed by the server CA)
-note "connect without wrong server root cert";
+# Try with wrong root cert, should fail. (We're using the client CA as the
+# root, but the server's key is signed by the server CA.)
+note "connect with wrong server root cert";
 test_connect_fails($common_connstr,
 	"sslrootcert=ssl/client_ca.crt sslmode=require");
 test_connect_fails($common_connstr,
