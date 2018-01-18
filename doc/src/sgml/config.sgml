@@ -6506,8 +6506,30 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         superuser privilege and results in discarding any previously cached
         query plans.  Possible values are <literal>origin</literal> (the default),
         <literal>replica</literal> and <literal>local</literal>.
-        See <xref linkend="sql-altertable"/> for
-        more information.
+       </para>
+
+       <para>
+        The intended use of this setting is that logical replication systems
+        set it to <literal>replica</literal> when they are applying replicated
+        changes.  The effect of that will be that triggers and rules (that
+        have not been altered from their default configuration) will not fire
+        on the replica.  See the <xref linkend="sql-altertable"/> clauses
+        <literal>ENABLE TRIGGER</literal> and <literal>ENABLE RULE</literal>
+        for more information.
+       </para>
+
+       <para>
+        PostgreSQL treats the settings <literal>origin</literal> and
+        <literal>local</literal> the same internally.  Third-party replication
+        systems may use these two values for their internal purposes, for
+        example using <literal>local</literal> to designate a session whose
+        changes should not be replicated.
+       </para>
+
+       <para>
+        Since foreign keys are implemented as triggers, setting this parameter
+        to <literal>replica</literal> also disables all foreign key checks,
+        which can leave data in an inconsistent state if improperly used.
        </para>
       </listitem>
      </varlistentry>
