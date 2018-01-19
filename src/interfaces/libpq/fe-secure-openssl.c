@@ -98,10 +98,6 @@ static long win32_ssl_create_mutex = 0;
 /*			 Procedures common to all secure sessions			*/
 /* ------------------------------------------------------------ */
 
-/*
- *	Exported function to allow application to tell us it's already
- *	initialized OpenSSL and/or libcrypto.
- */
 void
 pgtls_init_library(bool do_ssl, int do_crypto)
 {
@@ -119,9 +115,6 @@ pgtls_init_library(bool do_ssl, int do_crypto)
 	pq_init_crypto_lib = do_crypto;
 }
 
-/*
- *	Begin or continue negotiating a secure session.
- */
 PostgresPollingStatusType
 pgtls_open_client(PGconn *conn)
 {
@@ -144,22 +137,6 @@ pgtls_open_client(PGconn *conn)
 	return open_client_SSL(conn);
 }
 
-/*
- *	Is there unread data waiting in the SSL read buffer?
- */
-bool
-pgtls_read_pending(PGconn *conn)
-{
-	return SSL_pending(conn->ssl);
-}
-
-/*
- *	Read data from a secure connection.
- *
- * On failure, this function is responsible for putting a suitable message
- * into conn->errorMessage.  The caller must still inspect errno, but only
- * to determine whether to continue/retry after error.
- */
 ssize_t
 pgtls_read(PGconn *conn, void *ptr, size_t len)
 {
@@ -284,13 +261,12 @@ rloop:
 	return n;
 }
 
-/*
- *	Write data to a secure connection.
- *
- * On failure, this function is responsible for putting a suitable message
- * into conn->errorMessage.  The caller must still inspect errno, but only
- * to determine whether to continue/retry after error.
- */
+bool
+pgtls_read_pending(PGconn *conn)
+{
+	return SSL_pending(conn->ssl);
+}
+
 ssize_t
 pgtls_write(PGconn *conn, const void *ptr, size_t len)
 {
@@ -393,12 +369,6 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 	return n;
 }
 
-/*
- *	Get the TLS finish message sent during last handshake
- *
- * This information is useful for callers doing channel binding during
- * authentication.
- */
 char *
 pgtls_get_finished(PGconn *conn, size_t *len)
 {
@@ -419,13 +389,6 @@ pgtls_get_finished(PGconn *conn, size_t *len)
 	return result;
 }
 
-/*
- * Get the hash of the server certificate, for SCRAM channel binding type
- * tls-server-end-point.
- *
- * NULL is sent back to the caller in the event of an error, with an
- * error message for the caller to consume.
- */
 char *
 pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 {
@@ -854,11 +817,6 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
  * If the caller has told us (through PQinitOpenSSL) that he's taking care
  * of libcrypto, we expect that callbacks are already set, and won't try to
  * override it.
- *
- * The conn parameter is only used to be able to pass back an error
- * message - no connection-local setup is made here.
- *
- * Returns 0 if OK, -1 on failure (with a message in conn->errorMessage).
  */
 int
 pgtls_init(PGconn *conn)
@@ -1493,9 +1451,6 @@ open_client_SSL(PGconn *conn)
 	return PGRES_POLLING_OK;
 }
 
-/*
- *	Close SSL connection.
- */
 void
 pgtls_close(PGconn *conn)
 {

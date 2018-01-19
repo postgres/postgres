@@ -216,19 +216,65 @@ CD1mpF1Bn5x8vYlLIhkmuquiXsNV6TILOwIBAg==\n\
  * These functions are implemented by the glue code specific to each
  * SSL implementation (e.g. be-secure-openssl.c)
  */
+
+/*
+ * Initialize global SSL context.
+ *
+ * If isServerStart is true, report any errors as FATAL (so we don't return).
+ * Otherwise, log errors at LOG level and return -1 to indicate trouble,
+ * preserving the old SSL state if any.  Returns 0 if OK.
+ */
 extern int	be_tls_init(bool isServerStart);
+
+/*
+ * Destroy global SSL context, if any.
+ */
 extern void be_tls_destroy(void);
+
+/*
+ * Attempt to negotiate SSL connection.
+ */
 extern int	be_tls_open_server(Port *port);
+
+/*
+ * Close SSL connection.
+ */
 extern void be_tls_close(Port *port);
+
+/*
+ * Read data from a secure connection.
+ */
 extern ssize_t be_tls_read(Port *port, void *ptr, size_t len, int *waitfor);
+
+/*
+ * Write data to a secure connection.
+ */
 extern ssize_t be_tls_write(Port *port, void *ptr, size_t len, int *waitfor);
 
+/*
+ * Return information about the SSL connection.
+ */
 extern int	be_tls_get_cipher_bits(Port *port);
 extern bool be_tls_get_compression(Port *port);
 extern void be_tls_get_version(Port *port, char *ptr, size_t len);
 extern void be_tls_get_cipher(Port *port, char *ptr, size_t len);
 extern void be_tls_get_peerdn_name(Port *port, char *ptr, size_t len);
+
+/*
+ * Get the expected TLS Finished message information from the client, useful
+ * for authorization when doing channel binding.
+ *
+ * Result is a palloc'd copy of the TLS Finished message with its size.
+ */
 extern char *be_tls_get_peer_finished(Port *port, size_t *len);
+
+/*
+ * Get the server certificate hash for SCRAM channel binding type
+ * tls-server-end-point.
+ *
+ * The result is a palloc'd hash of the server certificate with its
+ * size, and NULL if there is no certificate available.
+ */
 extern char *be_tls_get_certificate_hash(Port *port, size_t *len);
 #endif
 

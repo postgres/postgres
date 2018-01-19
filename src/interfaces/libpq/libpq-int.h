@@ -661,18 +661,78 @@ extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
 				 bool got_epipe);
 #endif
 
+/* === SSL === */
+
 /*
- * The SSL implementation provides these functions (fe-secure-openssl.c)
+ * The SSL implementation provides these functions.
+ */
+
+/*
+ *	Implementation of PQinitSSL().
  */
 extern void pgtls_init_library(bool do_ssl, int do_crypto);
+
+/*
+ * Initialize SSL library.
+ *
+ * The conn parameter is only used to be able to pass back an error
+ * message - no connection-local setup is made here.
+ *
+ * Returns 0 if OK, -1 on failure (with a message in conn->errorMessage).
+ */
 extern int	pgtls_init(PGconn *conn);
+
+/*
+ *	Begin or continue negotiating a secure session.
+ */
 extern PostgresPollingStatusType pgtls_open_client(PGconn *conn);
+
+/*
+ *	Close SSL connection.
+ */
 extern void pgtls_close(PGconn *conn);
+
+/*
+ *	Read data from a secure connection.
+ *
+ * On failure, this function is responsible for putting a suitable message
+ * into conn->errorMessage.  The caller must still inspect errno, but only
+ * to determine whether to continue/retry after error.
+ */
 extern ssize_t pgtls_read(PGconn *conn, void *ptr, size_t len);
+
+/*
+ *	Is there unread data waiting in the SSL read buffer?
+ */
 extern bool pgtls_read_pending(PGconn *conn);
+
+/*
+ *	Write data to a secure connection.
+ *
+ * On failure, this function is responsible for putting a suitable message
+ * into conn->errorMessage.  The caller must still inspect errno, but only
+ * to determine whether to continue/retry after error.
+ */
 extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);
+
+/*
+ * Get the TLS finish message sent during last handshake.
+ *
+ * This information is useful for callers doing channel binding during
+ * authentication.
+ */
 extern char *pgtls_get_finished(PGconn *conn, size_t *len);
+
+/*
+ * Get the hash of the server certificate, for SCRAM channel binding type
+ * tls-server-end-point.
+ *
+ * NULL is sent back to the caller in the event of an error, with an
+ * error message for the caller to consume.
+ */
 extern char *pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len);
+
+/* === miscellaneous macros === */
 
 /*
  * this is so that we can check if a connection is non-blocking internally
