@@ -5203,6 +5203,101 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			section_pre_data         => 1,
 			test_schema_plus_blobs   => 1, }, },
 
+	'CREATE INDEX ON ONLY measurement' => {
+		all_runs     => 1,
+		catch_all    => 'CREATE ... commands',
+		create_order => 92,
+		create_sql   => 'CREATE INDEX ON dump_test.measurement (city_id, logdate);',
+		regexp => qr/^
+		\QCREATE INDEX measurement_city_id_logdate_idx ON ONLY measurement USING\E
+		/xm,
+		like => {
+			binary_upgrade           => 1,
+			clean                    => 1,
+			clean_if_exists          => 1,
+			createdb                 => 1,
+			defaults                 => 1,
+			exclude_test_table       => 1,
+			exclude_test_table_data  => 1,
+			no_blobs                 => 1,
+			no_privs                 => 1,
+			no_owner                 => 1,
+			only_dump_test_schema    => 1,
+			pg_dumpall_dbprivs       => 1,
+			schema_only              => 1,
+			section_post_data        => 1,
+			test_schema_plus_blobs   => 1,
+			with_oids                => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			role                     => 1,
+			section_pre_data         => 1, }, },
+
+	'CREATE INDEX ... ON measurement_y2006_m2' => {
+		all_runs     => 1,
+		catch_all    => 'CREATE ... commands',
+		regexp       => qr/^
+		\QCREATE INDEX measurement_y2006m2_city_id_logdate_idx ON measurement_y2006m2 \E
+		/xm,
+		like => {
+			binary_upgrade           => 1,
+			clean                    => 1,
+			clean_if_exists          => 1,
+			createdb                 => 1,
+			defaults                 => 1,
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+			exclude_test_table_data  => 1,
+			no_blobs                 => 1,
+			no_privs                 => 1,
+			no_owner                 => 1,
+			pg_dumpall_dbprivs       => 1,
+			role                     => 1,
+			schema_only              => 1,
+			section_post_data        => 1,
+			with_oids                => 1, },
+		unlike => {
+			only_dump_test_schema    => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			section_pre_data         => 1,
+			test_schema_plus_blobs   => 1, }, },
+
+	'ALTER INDEX ... ATTACH PARTITION' => {
+		all_runs     => 1,
+		catch_all    => 'CREATE ... commands',
+		regexp       => qr/^
+		\QALTER INDEX dump_test.measurement_city_id_logdate_idx ATTACH PARTITION dump_test_second_schema.measurement_y2006m2_city_id_logdate_idx\E
+		/xm,
+		like => {
+			binary_upgrade           => 1,
+			clean                    => 1,
+			clean_if_exists          => 1,
+			createdb                 => 1,
+			defaults                 => 1,
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+			exclude_test_table_data  => 1,
+			no_blobs                 => 1,
+			no_privs                 => 1,
+			no_owner                 => 1,
+			pg_dumpall_dbprivs       => 1,
+			role                     => 1,
+			schema_only              => 1,
+			section_post_data        => 1,
+			with_oids                => 1, },
+		unlike => {
+			only_dump_test_schema    => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			section_pre_data         => 1,
+			test_schema_plus_blobs   => 1, }, },
+
 	'CREATE VIEW test_view' => {
 		all_runs     => 1,
 		catch_all    => 'CREATE ... commands',

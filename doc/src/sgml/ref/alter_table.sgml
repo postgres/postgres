@@ -805,7 +805,10 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       as a partition of the target table. The table can be attached
       as a partition for specific values using <literal>FOR VALUES
       </literal> or as a default partition by using <literal>DEFAULT
-      </literal>.
+      </literal>.  For each index in the target table, a corresponding
+      one will be created in the attached table; or, if an equivalent
+      index already exists, will be attached to the target table's index,
+      as if <command>ALTER INDEX ATTACH PARTITION</command> had been executed.
      </para>
 
      <para>
@@ -866,7 +869,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       This form detaches specified partition of the target table.  The detached
       partition continues to exist as a standalone table, but no longer has any
-      ties to the table from which it was detached.
+      ties to the table from which it was detached.  Any indexes that were
+      attached to the target table's indexes are detached.
      </para>
     </listitem>
    </varlistentry>

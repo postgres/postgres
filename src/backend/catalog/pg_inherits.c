@@ -405,3 +405,83 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 
 	return result;
 }
+
+/*
+ * Create a single pg_inherits row with the given data
+ */
+void
+StoreSingleInheritance(Oid relationId, Oid parentOid, int32 seqNumber)
+{
+	Datum		values[Natts_pg_inherits];
+	bool		nulls[Natts_pg_inherits];
+	HeapTuple	tuple;
+	Relation	inhRelation;
+
+	inhRelation = heap_open(InheritsRelationId, RowExclusiveLock);
+
+	/*
+	 * Make the pg_inherits entry
+	 */
+	values[Anum_pg_inherits_inhrelid - 1] = ObjectIdGetDatum(relationId);
+	values[Anum_pg_inherits_inhparent - 1] = ObjectIdGetDatum(parentOid);
+	values[Anum_pg_inherits_inhseqno - 1] = Int32GetDatum(seqNumber);
+
+	memset(nulls, 0, sizeof(nulls));
+
+	tuple = heap_form_tuple(RelationGetDescr(inhRelation), values, nulls);
+
+	CatalogTupleInsert(inhRelation, tuple);
+
+	heap_freetuple(tuple);
+
+	heap_close(inhRelation, RowExclusiveLock);
+}
+
+/*
+ * DeleteInheritsTuple
+ *
+ * Delete pg_inherits tuples with the given inhrelid.  inhparent may be given
+ * as InvalidOid, in which case all tuples matching inhrelid are deleted;
+ * otherwise only delete tuples with the specified inhparent.
+ *
+ * Returns whether at least one row was deleted.
+ */
+bool
+DeleteInheritsTuple(Oid inhrelid, Oid inhparent)
+{
+	bool	found = false;
+	Relation	catalogRelation;
+	ScanKeyData key;
+	SysScanDesc scan;
+	HeapTuple	inheritsTuple;
+
+	/*
+	 * Find pg_inherits entries by inhrelid.
+	 */
+	catalogRelation = heap_open(InheritsRelationId, RowExclusiveLock);
+	ScanKeyInit(&key,
+				Anum_pg_inherits_inhrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(inhrelid));
+	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId,
+							  true, NULL, 1, &key);
+
+	while (HeapTupleIsValid(inheritsTuple = systable_getnext(scan)))
+	{
+		Oid			parent;
+
+		/* Compare inhparent if it was given, and do the actual deletion. */
+		parent = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhparent;
+		if (!OidIsValid(inhparent) || parent == inhparent)
+		{
+			CatalogTupleDelete(catalogRelation, &inheritsTuple->t_self);
+			found = true;
+		}
+	}
+
+	/* Done */
+	systable_endscan(scan);
+	heap_close(catalogRelation, RowExclusiveLock);
+
+	return found;
+}

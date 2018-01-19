@@ -656,14 +656,19 @@ get_constraint_index(Oid constraintId)
 
 		/*
 		 * We assume any internal dependency of an index on the constraint
-		 * must be what we are looking for.  (The relkind test is just
-		 * paranoia; there shouldn't be any such dependencies otherwise.)
+		 * must be what we are looking for.
 		 */
 		if (deprec->classid == RelationRelationId &&
 			deprec->objsubid == 0 &&
-			deprec->deptype == DEPENDENCY_INTERNAL &&
-			get_rel_relkind(deprec->objid) == RELKIND_INDEX)
+			deprec->deptype == DEPENDENCY_INTERNAL)
 		{
+			char		relkind = get_rel_relkind(deprec->objid);
+
+			/* This is pure paranoia; there shouldn't be any such */
+			if (relkind != RELKIND_INDEX &&
+				relkind != RELKIND_PARTITIONED_INDEX)
+				break;
+
 			indexId = deprec->objid;
 			break;
 		}

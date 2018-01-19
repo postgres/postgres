@@ -35,6 +35,10 @@ static const char *modulename = gettext_noop("sorter");
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
  * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
  * must sort between them.
+ *
+ * Note: sortDataAndIndexObjectsBySize wants to have all DO_TABLE_DATA and
+ * DO_INDEX objects in contiguous chunks, so do not reuse the values for those
+ * for other object types.
  */
 static const int dbObjectTypePriority[] =
 {
@@ -53,11 +57,12 @@ static const int dbObjectTypePriority[] =
 	18,							/* DO_TABLE */
 	20,							/* DO_ATTRDEF */
 	28,							/* DO_INDEX */
-	29,							/* DO_STATSEXT */
-	30,							/* DO_RULE */
-	31,							/* DO_TRIGGER */
+	29,							/* DO_INDEX_ATTACH */
+	30,							/* DO_STATSEXT */
+	31,							/* DO_RULE */
+	32,							/* DO_TRIGGER */
 	27,							/* DO_CONSTRAINT */
-	32,							/* DO_FK_CONSTRAINT */
+	33,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	10,							/* DO_CAST */
 	23,							/* DO_TABLE_DATA */
@@ -69,18 +74,18 @@ static const int dbObjectTypePriority[] =
 	15,							/* DO_TSCONFIG */
 	16,							/* DO_FDW */
 	17,							/* DO_FOREIGN_SERVER */
-	32,							/* DO_DEFAULT_ACL */
+	33,							/* DO_DEFAULT_ACL */
 	3,							/* DO_TRANSFORM */
 	21,							/* DO_BLOB */
 	25,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
 	26,							/* DO_POST_DATA_BOUNDARY */
-	33,							/* DO_EVENT_TRIGGER */
-	38,							/* DO_REFRESH_MATVIEW */
-	34,							/* DO_POLICY */
-	35,							/* DO_PUBLICATION */
-	36,							/* DO_PUBLICATION_REL */
-	37							/* DO_SUBSCRIPTION */
+	34,							/* DO_EVENT_TRIGGER */
+	39,							/* DO_REFRESH_MATVIEW */
+	35,							/* DO_POLICY */
+	36,							/* DO_PUBLICATION */
+	37,							/* DO_PUBLICATION_REL */
+	38							/* DO_SUBSCRIPTION */
 };
 
 static DumpId preDataBoundId;
@@ -937,6 +942,13 @@ repairDomainConstraintMultiLoop(DumpableObject *domainobj,
 	addObjectDependency(constraintobj, postDataBoundId);
 }
 
+static void
+repairIndexLoop(DumpableObject *partedindex,
+				DumpableObject *partindex)
+{
+	removeObjectDependency(partedindex, partindex->dumpId);
+}
+
 /*
  * Fix a dependency loop, or die trying ...
  *
@@ -1097,6 +1109,23 @@ repairDependencyLoop(DumpableObject **loop,
 	{
 		repairTableAttrDefLoop(loop[1], loop[0]);
 		return;
+	}
+
+	/* index on partitioned table and corresponding index on partition */
+	if (nLoop == 2 &&
+		loop[0]->objType == DO_INDEX &&
+		loop[1]->objType == DO_INDEX)
+	{
+		if (((IndxInfo *) loop[0])->parentidx == loop[1]->catId.oid)
+		{
+			repairIndexLoop(loop[0], loop[1]);
+			return;
+		}
+		else if (((IndxInfo *) loop[1])->parentidx == loop[0]->catId.oid)
+		{
+			repairIndexLoop(loop[1], loop[0]);
+			return;
+		}
 	}
 
 	/* Indirect loop involving table and attribute default */
@@ -1291,6 +1320,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 			snprintf(buf, bufsize,
 					 "INDEX %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_INDEX_ATTACH:
+			snprintf(buf, bufsize,
+					 "INDEX ATTACH %s  (ID %d)",
+					 obj->name, obj->dumpId);
 			return;
 		case DO_STATSEXT:
 			snprintf(buf, bufsize,

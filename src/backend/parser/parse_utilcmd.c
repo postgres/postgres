@@ -118,9 +118,6 @@ static void transformTableLikeClause(CreateStmtContext *cxt,
 						 TableLikeClause *table_like_clause);
 static void transformOfType(CreateStmtContext *cxt,
 				TypeName *ofTypename);
-static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
-						Relation source_idx,
-						const AttrNumber *attmap, int attmap_length);
 static List *get_collation(Oid collation, Oid actual_datatype);
 static List *get_opclass(Oid opclass, Oid actual_datatype);
 static void transformIndexConstraints(CreateStmtContext *cxt);
@@ -1185,7 +1182,8 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			parent_index = index_open(parent_index_oid, AccessShareLock);
 
 			/* Build CREATE INDEX statement to recreate the parent_index */
-			index_stmt = generateClonedIndexStmt(cxt, parent_index,
+			index_stmt = generateClonedIndexStmt(cxt->relation, InvalidOid,
+												 parent_index,
 												 attmap, tupleDesc->natts);
 
 			/* Copy comment on index, if requested */
@@ -1263,10 +1261,12 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 
 /*
  * Generate an IndexStmt node using information from an already existing index
- * "source_idx".  Attribute numbers should be adjusted according to attmap.
+ * "source_idx", for the rel identified either by heapRel or heapRelid.
+ *
+ * Attribute numbers should be adjusted according to attmap.
  */
-static IndexStmt *
-generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
+IndexStmt *
+generateClonedIndexStmt(RangeVar *heapRel, Oid heapRelid, Relation source_idx,
 						const AttrNumber *attmap, int attmap_length)
 {
 	Oid			source_relid = RelationGetRelid(source_idx);
@@ -1286,6 +1286,9 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	Oid			keycoltype;
 	Datum		datum;
 	bool		isnull;
+
+	Assert((heapRel == NULL && OidIsValid(heapRelid)) ||
+		   (heapRel != NULL && !OidIsValid(heapRelid)));
 
 	/*
 	 * Fetch pg_class tuple of source index.  We can't use the copy in the
@@ -1322,7 +1325,8 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 
 	/* Begin building the IndexStmt */
 	index = makeNode(IndexStmt);
-	index->relation = cxt->relation;
+	index->relation = heapRel;
+	index->relationId = heapRelid;
 	index->accessMethod = pstrdup(NameStr(amrec->amname));
 	if (OidIsValid(idxrelrec->reltablespace))
 		index->tableSpace = get_tablespace_name(idxrelrec->reltablespace);
@@ -3289,18 +3293,39 @@ transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd)
 {
 	Relation	parentRel = cxt->rel;
 
-	/* the table must be partitioned */
-	if (parentRel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("\"%s\" is not partitioned",
-						RelationGetRelationName(parentRel))));
-
-	/* transform the partition bound, if any */
-	Assert(RelationGetPartitionKey(parentRel) != NULL);
-	if (cmd->bound != NULL)
-		cxt->partbound = transformPartitionBound(cxt->pstate, parentRel,
-												 cmd->bound);
+	switch (parentRel->rd_rel->relkind)
+	{
+		case RELKIND_PARTITIONED_TABLE:
+			/* transform the partition bound, if any */
+			Assert(RelationGetPartitionKey(parentRel) != NULL);
+			if (cmd->bound != NULL)
+				cxt->partbound = transformPartitionBound(cxt->pstate, parentRel,
+														 cmd->bound);
+			break;
+		case RELKIND_PARTITIONED_INDEX:
+			/* nothing to check */
+			Assert(cmd->bound == NULL);
+			break;
+		case RELKIND_RELATION:
+			/* the table must be partitioned */
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("table \"%s\" is not partitioned",
+							RelationGetRelationName(parentRel))));
+			break;
+		case RELKIND_INDEX:
+			/* the index must be partitioned */
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("index \"%s\" is not partitioned",
+							RelationGetRelationName(parentRel))));
+			break;
+		default:
+			/* parser shouldn't let this case through */
+			elog(ERROR, "\"%s\" is not a partitioned table or index",
+				 RelationGetRelationName(parentRel));
+			break;
+	}
 }
 
 /*

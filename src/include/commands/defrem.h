@@ -25,12 +25,13 @@ extern void RemoveObjects(DropStmt *stmt);
 extern ObjectAddress DefineIndex(Oid relationId,
 			IndexStmt *stmt,
 			Oid indexRelationId,
+			Oid parentIndexId,
 			bool is_alter_table,
 			bool check_rights,
 			bool check_not_in_use,
 			bool skip_build,
 			bool quiet);
-extern Oid	ReindexIndex(RangeVar *indexRelation, int options);
+extern void ReindexIndex(RangeVar *indexRelation, int options);
 extern Oid	ReindexTable(RangeVar *relation, int options);
 extern void ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 					  int options);

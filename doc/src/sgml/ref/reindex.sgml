@@ -231,6 +231,11 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
    reindex anything.
   </para>
 
+  <para>
+   Reindexing partitioned tables or partitioned indexes is not supported.
+   Each individual partition can be reindexed separately instead.
+  </para>
+
  </refsect1>
 
  <refsect1>

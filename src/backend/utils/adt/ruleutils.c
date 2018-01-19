@@ -317,7 +317,7 @@ static void decompile_column_index_array(Datum column_index_array, Oid relId,
 static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
 static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   const Oid *excludeOps,
-					   bool attrsOnly, bool showTblSpc,
+					   bool attrsOnly, bool showTblSpc, bool inherits,
 					   int prettyFlags, bool missing_ok);
 static char *pg_get_statisticsobj_worker(Oid statextid, bool missing_ok);
 static char *pg_get_partkeydef_worker(Oid relid, int prettyFlags,
@@ -1086,7 +1086,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 
 	prettyFlags = PRETTYFLAG_INDENT;
 
-	res = pg_get_indexdef_worker(indexrelid, 0, NULL, false, false,
+	res = pg_get_indexdef_worker(indexrelid, 0, NULL, false, false, false,
 								 prettyFlags, true);
 
 	if (res == NULL)
@@ -1107,7 +1107,7 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
 
 	res = pg_get_indexdef_worker(indexrelid, colno, NULL, colno != 0, false,
-								 prettyFlags, true);
+								 false, prettyFlags, true);
 
 	if (res == NULL)
 		PG_RETURN_NULL();
@@ -1123,7 +1123,7 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 char *
 pg_get_indexdef_string(Oid indexrelid)
 {
-	return pg_get_indexdef_worker(indexrelid, 0, NULL, false, true, 0, false);
+	return pg_get_indexdef_worker(indexrelid, 0, NULL, false, true, true, 0, false);
 }
 
 /* Internal version that just reports the column definitions */
@@ -1133,7 +1133,7 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 	int			prettyFlags;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
-	return pg_get_indexdef_worker(indexrelid, 0, NULL, true, false,
+	return pg_get_indexdef_worker(indexrelid, 0, NULL, true, false, false,
 								  prettyFlags, false);
 }
 
@@ -1146,7 +1146,7 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 static char *
 pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   const Oid *excludeOps,
-					   bool attrsOnly, bool showTblSpc,
+					   bool attrsOnly, bool showTblSpc, bool inherits,
 					   int prettyFlags, bool missing_ok)
 {
 	/* might want a separate isConstraint parameter later */
@@ -1259,9 +1259,11 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	if (!attrsOnly)
 	{
 		if (!isConstraint)
-			appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
+			appendStringInfo(&buf, "CREATE %sINDEX %s ON %s%s USING %s (",
 							 idxrec->indisunique ? "UNIQUE " : "",
 							 quote_identifier(NameStr(idxrelrec->relname)),
+							 idxrelrec->relkind == RELKIND_PARTITIONED_INDEX
+							 && !inherits ? "ONLY " : "",
 							 generate_relation_name(indrelid, NIL),
 							 quote_identifier(NameStr(amrec->amname)));
 		else					/* currently, must be EXCLUDE constraint */
@@ -2146,6 +2148,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 									   pg_get_indexdef_worker(indexOid,
 															  0,
 															  operators,
+															  false,
 															  false,
 															  false,
 															  prettyFlags,

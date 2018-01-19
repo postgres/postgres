@@ -2996,6 +2996,29 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
     </varlistentry>
 
     <varlistentry>
+     <term><symbol>DEPENDENCY_INTERNAL_AUTO</symbol> (<literal>I</literal>)</term>
+     <listitem>
+      <para>
+       The dependent object was created as part of creation of the
+       referenced object, and is really just a part of its internal
+       implementation.  A <command>DROP</command> of the dependent object
+       will be disallowed outright (we'll tell the user to issue a
+       <command>DROP</command> against the referenced object, instead).
+       While a regular internal dependency will prevent
+       the dependent object from being dropped while any such dependencies
+       remain, <literal>DEPENDENCY_INTERNAL_AUTO</literal> will allow such
+       a drop as long as the object can be found by following any of such
+       dependencies.
+       Example: an index on a partition is made internal-auto-dependent on
+       both the partition itself as well as on the index on the parent
+       partitioned table; so the partition index is dropped together with
+       either the partition it indexes, or with the parent index it is
+       attached to.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><symbol>DEPENDENCY_EXTENSION</symbol> (<literal>e</literal>)</term>
      <listitem>
       <para>

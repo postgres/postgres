@@ -1217,7 +1217,8 @@ get_relation_by_qualified_name(ObjectType objtype, List *object,
 	switch (objtype)
 	{
 		case OBJECT_INDEX:
-			if (relation->rd_rel->relkind != RELKIND_INDEX)
+			if (relation->rd_rel->relkind != RELKIND_INDEX &&
+				relation->rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is not an index",
@@ -3483,6 +3484,7 @@ getRelationDescription(StringInfo buffer, Oid relid)
 							 relname);
 			break;
 		case RELKIND_INDEX:
+		case RELKIND_PARTITIONED_INDEX:
 			appendStringInfo(buffer, _("index %s"),
 							 relname);
 			break;
@@ -3957,6 +3959,7 @@ getRelationTypeDescription(StringInfo buffer, Oid relid, int32 objectSubId)
 			appendStringInfoString(buffer, "table");
 			break;
 		case RELKIND_INDEX:
+		case RELKIND_PARTITIONED_INDEX:
 			appendStringInfoString(buffer, "index");
 			break;
 		case RELKIND_SEQUENCE:

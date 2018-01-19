@@ -412,7 +412,8 @@ static const SchemaQuery Query_for_list_of_indexes = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN (" CppAsString2(RELKIND_INDEX) ")",
+	"c.relkind IN (" CppAsString2(RELKIND_INDEX) ", "
+	CppAsString2(RELKIND_PARTITIONED_INDEX) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -590,6 +591,23 @@ static const SchemaQuery Query_for_list_of_tmf = {
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
 	CppAsString2(RELKIND_MATVIEW) ", "
 	CppAsString2(RELKIND_FOREIGN_TABLE) ")",
+	/* viscondition */
+	"pg_catalog.pg_table_is_visible(c.oid)",
+	/* namespace */
+	"c.relnamespace",
+	/* result */
+	"pg_catalog.quote_ident(c.relname)",
+	/* qualresult */
+	NULL
+};
+
+static const SchemaQuery Query_for_list_of_tpm = {
+	/* catname */
+	"pg_catalog.pg_class c",
+	/* selcondition */
+	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+	CppAsString2(RELKIND_PARTITIONED_TABLE) ", "
+	CppAsString2(RELKIND_MATVIEW) ")",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -1676,7 +1694,12 @@ psql_completion(const char *text, int start, int end)
 								   "UNION SELECT 'ALL IN TABLESPACE'");
 	/* ALTER INDEX <name> */
 	else if (Matches3("ALTER", "INDEX", MatchAny))
-		COMPLETE_WITH_LIST5("ALTER COLUMN", "OWNER TO", "RENAME TO", "SET", "RESET");
+		COMPLETE_WITH_LIST6("ALTER COLUMN", "OWNER TO", "RENAME TO", "SET",
+							"RESET", "ATTACH PARTITION");
+	else if (Matches4("ALTER", "INDEX", MatchAny, "ATTACH"))
+		COMPLETE_WITH_CONST("PARTITION");
+	else if (Matches5("ALTER", "INDEX", MatchAny, "ATTACH", "PARTITION"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
 	/* ALTER INDEX <name> ALTER COLUMN <colnum> */
 	else if (Matches6("ALTER", "INDEX", MatchAny, "ALTER", "COLUMN", MatchAny))
 		COMPLETE_WITH_CONST("SET STATISTICS");
@@ -2338,10 +2361,13 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes,
 								   " UNION SELECT 'ON'"
 								   " UNION SELECT 'CONCURRENTLY'");
-	/* Complete ... INDEX|CONCURRENTLY [<name>] ON with a list of tables  */
+	/*
+	 * Complete ... INDEX|CONCURRENTLY [<name>] ON with a list of relations
+	 * that can indexes can be created on
+	 */
 	else if (TailMatches3("INDEX|CONCURRENTLY", MatchAny, "ON") ||
 			 TailMatches2("INDEX|CONCURRENTLY", "ON"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tpm, NULL);
 
 	/*
 	 * Complete CREATE|UNIQUE INDEX CONCURRENTLY with "ON" and existing

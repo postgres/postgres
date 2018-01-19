@@ -430,18 +430,26 @@ static void
 RelationParseRelOptions(Relation relation, HeapTuple tuple)
 {
 	bytea	   *options;
+	amoptions_function amoptsfn;
 
 	relation->rd_options = NULL;
 
-	/* Fall out if relkind should not have options */
+	/*
+	 * Look up any AM-specific parse function; fall out if relkind should not
+	 * have options.
+	 */
 	switch (relation->rd_rel->relkind)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
-		case RELKIND_INDEX:
 		case RELKIND_VIEW:
 		case RELKIND_MATVIEW:
 		case RELKIND_PARTITIONED_TABLE:
+			amoptsfn = NULL;
+			break;
+		case RELKIND_INDEX:
+		case RELKIND_PARTITIONED_INDEX:
+			amoptsfn = relation->rd_amroutine->amoptions;
 			break;
 		default:
 			return;
@@ -452,10 +460,7 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	 * we might not have any other for pg_class yet (consider executing this
 	 * code for pg_class itself)
 	 */
-	options = extractRelOptions(tuple,
-								GetPgClassDescriptor(),
-								relation->rd_rel->relkind == RELKIND_INDEX ?
-								relation->rd_amroutine->amoptions : NULL);
+	options = extractRelOptions(tuple, GetPgClassDescriptor(), amoptsfn);
 
 	/*
 	 * Copy parsed data into CacheMemoryContext.  To guard against the
@@ -2053,7 +2058,8 @@ RelationIdGetRelation(Oid relationId)
 			 * and we don't want to use the full-blown procedure because it's
 			 * a headache for indexes that reload itself depends on.
 			 */
-			if (rd->rd_rel->relkind == RELKIND_INDEX)
+			if (rd->rd_rel->relkind == RELKIND_INDEX ||
+				rd->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
 				RelationReloadIndexInfo(rd);
 			else
 				RelationClearRelation(rd, true);
@@ -2167,7 +2173,8 @@ RelationReloadIndexInfo(Relation relation)
 	Form_pg_class relp;
 
 	/* Should be called only for invalidated indexes */
-	Assert(relation->rd_rel->relkind == RELKIND_INDEX &&
+	Assert((relation->rd_rel->relkind == RELKIND_INDEX ||
+			relation->rd_rel->relkind == RELKIND_PARTITIONED_INDEX) &&
 		   !relation->rd_isvalid);
 
 	/* Ensure it's closed at smgr level */
@@ -2387,7 +2394,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 	{
 		RelationInitPhysicalAddr(relation);
 
-		if (relation->rd_rel->relkind == RELKIND_INDEX)
+		if (relation->rd_rel->relkind == RELKIND_INDEX ||
+			relation->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
 		{
 			relation->rd_isvalid = false;	/* needs to be revalidated */
 			if (relation->rd_refcnt > 1 && IsTransactionState())
@@ -2403,7 +2411,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * re-read the pg_class row to handle possible physical relocation of the
 	 * index, and we check for pg_index updates too.
 	 */
-	if (relation->rd_rel->relkind == RELKIND_INDEX &&
+	if ((relation->rd_rel->relkind == RELKIND_INDEX ||
+		 relation->rd_rel->relkind == RELKIND_PARTITIONED_INDEX) &&
 		relation->rd_refcnt > 0 &&
 		relation->rd_indexcxt != NULL)
 	{
@@ -5461,7 +5470,10 @@ load_relcache_init_file(bool shared)
 			rel->rd_att->constr = constr;
 		}
 
-		/* If it's an index, there's more to do */
+		/*
+		 * If it's an index, there's more to do.  Note we explicitly ignore
+		 * partitioned indexes here.
+		 */
 		if (rel->rd_rel->relkind == RELKIND_INDEX)
 		{
 			MemoryContext indexcxt;
@@ -5825,7 +5837,10 @@ write_relcache_init_file(bool shared)
 				   (rel->rd_options ? VARSIZE(rel->rd_options) : 0),
 				   fp);
 
-		/* If it's an index, there's more to do */
+		/*
+		 * If it's an index, there's more to do. Note we explicitly ignore
+		 * partitioned indexes here.
+		 */
 		if (rel->rd_rel->relkind == RELKIND_INDEX)
 		{
 			/* write the pg_index tuple */

@@ -1965,6 +1965,67 @@ create table tab1 (a int, b text);
 create table tab2 (x int, y tab1);
 alter table tab1 alter column b type varchar; -- fails
 ERROR:  cannot alter table "tab1" because column "tab2.y" uses its row type
+-- Alter column type that's part of a partitioned index
+create table at_partitioned (a int, b text) partition by range (a);
+create table at_part_1 partition of at_partitioned for values from (0) to (1000);
+insert into at_partitioned values (512, '0.123');
+create table at_part_2 (b text, a int);
+insert into at_part_2 values ('1.234', 1024);
+create index on at_partitioned (b);
+create index on at_partitioned (a);
+\d at_part_1
+             Table "public.at_part_1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | text    |           |          | 
+Partition of: at_partitioned FOR VALUES FROM (0) TO (1000)
+Indexes:
+    "at_part_1_a_idx" btree (a)
+    "at_part_1_b_idx" btree (b)
+
+\d at_part_2
+             Table "public.at_part_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ b      | text    |           |          | 
+ a      | integer |           |          | 
+
+alter table at_partitioned attach partition at_part_2 for values from (1000) to (2000);
+\d at_part_2
+             Table "public.at_part_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ b      | text    |           |          | 
+ a      | integer |           |          | 
+Partition of: at_partitioned FOR VALUES FROM (1000) TO (2000)
+Indexes:
+    "at_part_2_a_idx" btree (a)
+    "at_part_2_b_idx" btree (b)
+
+alter table at_partitioned alter column b type numeric using b::numeric;
+\d at_part_1
+             Table "public.at_part_1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | numeric |           |          | 
+Partition of: at_partitioned FOR VALUES FROM (0) TO (1000)
+Indexes:
+    "at_part_1_a_idx" btree (a)
+    "at_part_1_b_idx" btree (b)
+
+\d at_part_2
+             Table "public.at_part_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ b      | numeric |           |          | 
+ a      | integer |           |          | 
+Partition of: at_partitioned FOR VALUES FROM (1000) TO (2000)
+Indexes:
+    "at_part_2_a_idx" btree (a)
+    "at_part_2_b_idx" btree (b)
+
 -- disallow recursive containment of row types
 create temp table recur1 (f1 int);
 alter table recur1 add column f2 recur1; -- fails
@@ -3276,7 +3337,7 @@ CREATE TABLE unparted (
 );
 CREATE TABLE fail_part (like unparted);
 ALTER TABLE unparted ATTACH PARTITION fail_part FOR VALUES IN ('a');
-ERROR:  "unparted" is not partitioned
+ERROR:  table "unparted" is not partitioned
 DROP TABLE unparted, fail_part;
 -- check that partition bound is compatible
 CREATE TABLE list_parted (
@@ -3656,7 +3717,7 @@ DROP TABLE fail_part;
 -- check that the table is partitioned at all
 CREATE TABLE regular_table (a int);
 ALTER TABLE regular_table DETACH PARTITION any_name;
-ERROR:  "regular_table" is not partitioned
+ERROR:  table "regular_table" is not partitioned
 DROP TABLE regular_table;
 -- check that the partition being detached exists at all
 ALTER TABLE list_parted2 DETACH PARTITION part_4;

@@ -184,5 +184,6 @@ test: partition_join
 test: partition_prune
 test: reloptions
 test: hash_part
+test: indexing
 test: event_trigger
 test: stats
