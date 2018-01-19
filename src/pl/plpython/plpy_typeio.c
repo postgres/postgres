@@ -618,11 +618,7 @@ PLyInt_FromInt32(PLyDatumToOb *arg, Datum d)
 static PyObject *
 PLyLong_FromInt64(PLyDatumToOb *arg, Datum d)
 {
-	/* on 32 bit platforms "long" may be too small */
-	if (sizeof(int64) > sizeof(long))
-		return PyLong_FromLongLong(DatumGetInt64(d));
-	else
-		return PyLong_FromLong(DatumGetInt64(d));
+	return PyLong_FromLongLong(DatumGetInt64(d));
 }
 
 static PyObject *
