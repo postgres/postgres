@@ -1547,14 +1547,6 @@ SSLerrfree(char *buf)
 /*					SSL information functions					*/
 /* ------------------------------------------------------------ */
 
-int
-PQsslInUse(PGconn *conn)
-{
-	if (!conn)
-		return 0;
-	return conn->ssl_in_use;
-}
-
 /*
  *	Return pointer to OpenSSL object.
  */

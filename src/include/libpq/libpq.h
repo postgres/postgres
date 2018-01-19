@@ -90,6 +90,7 @@ extern ssize_t secure_read(Port *port, void *ptr, size_t len);
 extern ssize_t secure_write(Port *port, void *ptr, size_t len);
 extern ssize_t secure_raw_read(Port *port, void *ptr, size_t len);
 extern ssize_t secure_raw_write(Port *port, const void *ptr, size_t len);
+extern bool check_ssl_key_file_permissions(const char *ssl_key_file, bool isServerStart);
 
 extern bool ssl_loaded_verify_locations;
 

@@ -129,6 +129,14 @@ struct sigpipe_info
 /* ------------------------------------------------------------ */
 
 
+int
+PQsslInUse(PGconn *conn)
+{
+	if (!conn)
+		return 0;
+	return conn->ssl_in_use;
+}
+
 /*
  *	Exported function to allow application to tell us it's already
  *	initialized OpenSSL.
@@ -383,12 +391,6 @@ retry_masked:
 
 /* Dummy versions of SSL info functions, when built without SSL support */
 #ifndef USE_SSL
-
-int
-PQsslInUse(PGconn *conn)
-{
-	return 0;
-}
 
 void *
 PQgetssl(PGconn *conn)
