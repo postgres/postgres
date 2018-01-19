@@ -73,26 +73,6 @@
 #bonjour_name = ''			# defaults to the computer name
 					# (change requires restart)
 
-# - Security and Authentication -
-
-#authentication_timeout = 1min		# 1s-600s
-#ssl = off
-#ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
-#ssl_prefer_server_ciphers = on
-#ssl_ecdh_curve = 'prime256v1'
-#ssl_dh_params_file = ''
-#ssl_cert_file = 'server.crt'
-#ssl_key_file = 'server.key'
-#ssl_ca_file = ''
-#ssl_crl_file = ''
-#password_encryption = md5		# md5 or scram-sha-256
-#db_user_namespace = off
-#row_security = on
-
-# GSSAPI using Kerberos
-#krb_server_keyfile = ''
-#krb_caseins_users = off
-
 # - TCP Keepalives -
 # see "man 7 tcp" for details
 
@@ -102,6 +82,28 @@
 					# 0 selects the system default
 #tcp_keepalives_count = 0		# TCP_KEEPCNT;
 					# 0 selects the system default
+
+# - Authentication -
+
+#authentication_timeout = 1min		# 1s-600s
+#password_encryption = md5		# md5 or scram-sha-256
+#db_user_namespace = off
+
+# GSSAPI using Kerberos
+#krb_server_keyfile = ''
+#krb_caseins_users = off
+
+# - SSL -
+
+#ssl = off
+#ssl_ca_file = ''
+#ssl_cert_file = 'server.crt'
+#ssl_crl_file = ''
+#ssl_key_file = 'server.key'
+#ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
+#ssl_prefer_server_ciphers = on
+#ssl_ecdh_curve = 'prime256v1'
+#ssl_dh_params_file = ''
 
 
 #------------------------------------------------------------------------------
@@ -543,6 +545,7 @@
 # - Statement Behavior -
 
 #search_path = '"$user", public'	# schema names
+#row_security = on
 #default_tablespace = ''		# a tablespace name, '' uses the default
 #temp_tablespaces = ''			# a list of tablespace names, '' uses
 					# only default tablespace

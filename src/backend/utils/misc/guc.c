@@ -573,8 +573,10 @@ const char *const config_group_names[] =
 	gettext_noop("Connections and Authentication"),
 	/* CONN_AUTH_SETTINGS */
 	gettext_noop("Connections and Authentication / Connection Settings"),
-	/* CONN_AUTH_SECURITY */
-	gettext_noop("Connections and Authentication / Security and Authentication"),
+	/* CONN_AUTH_AUTH */
+	gettext_noop("Connections and Authentication / Authentication"),
+	/* CONN_AUTH_SSL */
+	gettext_noop("Connections and Authentication / SSL"),
 	/* RESOURCES */
 	gettext_noop("Resource Usage"),
 	/* RESOURCES_MEM */
@@ -978,7 +980,7 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"ssl", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"ssl", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Enables SSL connections."),
 			NULL
 		},
@@ -987,7 +989,7 @@ static struct config_bool ConfigureNamesBool[] =
 		check_ssl, NULL, NULL
 	},
 	{
-		{"ssl_prefer_server_ciphers", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"ssl_prefer_server_ciphers", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Give priority to server ciphersuite order."),
 			NULL
 		},
@@ -1378,7 +1380,7 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"db_user_namespace", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"db_user_namespace", PGC_SIGHUP, CONN_AUTH_AUTH,
 			gettext_noop("Enables per-database user names."),
 			NULL
 		},
@@ -1425,7 +1427,7 @@ static struct config_bool ConfigureNamesBool[] =
 		check_transaction_deferrable, NULL, NULL
 	},
 	{
-		{"row_security", PGC_USERSET, CONN_AUTH_SECURITY,
+		{"row_security", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Enable row security."),
 			gettext_noop("When enabled, row security will be applied to all users.")
 		},
@@ -1548,7 +1550,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"krb_caseins_users", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"krb_caseins_users", PGC_SIGHUP, CONN_AUTH_AUTH,
 			gettext_noop("Sets whether Kerberos and GSSAPI user names should be treated as case-insensitive."),
 			NULL
 		},
@@ -2247,7 +2249,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"authentication_timeout", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"authentication_timeout", PGC_SIGHUP, CONN_AUTH_AUTH,
 			gettext_noop("Sets the maximum allowed time to complete client authentication."),
 			NULL,
 			GUC_UNIT_S
@@ -2797,7 +2799,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
+		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SSL,
 			gettext_noop("SSL renegotiation is no longer supported; this can only be 0."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE,
@@ -3170,7 +3172,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"krb_server_keyfile", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"krb_server_keyfile", PGC_SIGHUP, CONN_AUTH_AUTH,
 			gettext_noop("Sets the location of the Kerberos server key file."),
 			NULL,
 			GUC_SUPERUSER_ONLY
@@ -3530,7 +3532,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_cert_file", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"ssl_cert_file", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Location of the SSL server certificate file."),
 			NULL
 		},
@@ -3540,7 +3542,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_key_file", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"ssl_key_file", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Location of the SSL server private key file."),
 			NULL
 		},
@@ -3550,7 +3552,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_ca_file", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"ssl_ca_file", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Location of the SSL certificate authority file."),
 			NULL
 		},
@@ -3560,7 +3562,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_crl_file", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"ssl_crl_file", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Location of the SSL certificate revocation list file."),
 			NULL
 		},
@@ -3602,7 +3604,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_ciphers", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"ssl_ciphers", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Sets the list of allowed SSL ciphers."),
 			NULL,
 			GUC_SUPERUSER_ONLY
@@ -3617,7 +3619,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_ecdh_curve", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"ssl_ecdh_curve", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Sets the curve to use for ECDH."),
 			NULL,
 			GUC_SUPERUSER_ONLY
@@ -3632,7 +3634,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_dh_params_file", PGC_SIGHUP, CONN_AUTH_SECURITY,
+		{"ssl_dh_params_file", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Location of the SSL DH parameters file."),
 			NULL,
 			GUC_SUPERUSER_ONLY
@@ -3932,7 +3934,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"password_encryption", PGC_USERSET, CONN_AUTH_SECURITY,
+		{"password_encryption", PGC_USERSET, CONN_AUTH_AUTH,
 			gettext_noop("Encrypt passwords."),
 			gettext_noop("When a password is specified in CREATE USER or "
 						 "ALTER USER without writing either ENCRYPTED or UNENCRYPTED, "

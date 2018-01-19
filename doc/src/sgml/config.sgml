@@ -924,8 +924,9 @@ include_dir 'conf.d'
 
      </variablelist>
      </sect2>
-     <sect2 id="runtime-config-connection-security">
-     <title>Security and Authentication</title>
+
+     <sect2 id="runtime-config-connection-authentication">
+     <title>Authentication</title>
 
      <variablelist>
      <varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">
@@ -950,6 +951,123 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-password-encryption" xreflabel="password_encryption">
+      <term><varname>password_encryption</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>password_encryption</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        When a password is specified in <xref linkend="sql-createrole"/> or
+        <xref linkend="sql-alterrole"/>, this parameter determines the algorithm
+        to use to encrypt the password. The default value is <literal>md5</literal>,
+        which stores the password as an MD5 hash (<literal>on</literal> is also
+        accepted, as alias for <literal>md5</literal>). Setting this parameter to
+        <literal>scram-sha-256</literal> will encrypt the password with SCRAM-SHA-256.
+       </para>
+       <para>
+        Note that older clients might lack support for the SCRAM authentication
+        mechanism, and hence not work with passwords encrypted with
+        SCRAM-SHA-256.  See <xref linkend="auth-password"/> for more details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
+      <term><varname>krb_server_keyfile</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>krb_server_keyfile</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the location of the Kerberos server key file. See
+        <xref linkend="gssapi-auth"/>
+        for details. This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-krb-caseins-users" xreflabel="krb_caseins_users">
+      <term><varname>krb_caseins_users</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>krb_caseins_users</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets whether GSSAPI user names should be treated
+        case-insensitively.
+        The default is <literal>off</literal> (case sensitive). This parameter can only be
+        set in the <filename>postgresql.conf</filename> file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-db-user-namespace" xreflabel="db_user_namespace">
+      <term><varname>db_user_namespace</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>db_user_namespace</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter enables per-database user names.  It is off by default.
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
+       </para>
+
+       <para>
+        If this is on, you should create users as <replaceable>username@dbname</replaceable>.
+        When <replaceable>username</replaceable> is passed by a connecting client,
+        <literal>@</literal> and the database name are appended to the user
+        name and that database-specific user name is looked up by the
+        server. Note that when you create users with names containing
+        <literal>@</literal> within the SQL environment, you will need to
+        quote the user name.
+       </para>
+
+       <para>
+        With this parameter enabled, you can still create ordinary global
+        users.  Simply append <literal>@</literal> when specifying the user
+        name in the client, e.g. <literal>joe@</literal>.  The <literal>@</literal>
+        will be stripped off before the user name is looked up by the
+        server.
+       </para>
+
+       <para>
+        <varname>db_user_namespace</varname> causes the client's and
+        server's user name representation to differ.
+        Authentication checks are always done with the server's user name
+        so authentication methods must be configured for the
+        server's user name, not the client's.  Because
+        <literal>md5</literal> uses the user name as salt on both the
+        client and server, <literal>md5</literal> cannot be used with
+        <varname>db_user_namespace</varname>.
+       </para>
+
+       <note>
+        <para>
+         This feature is intended as a temporary measure until a
+         complete solution is found.  At that time, this option will
+         be removed.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+     </variablelist>
+     </sect2>
+
+     <sect2 id="runtime-config-connection-ssl">
+     <title>SSL</title>
+
+     <para>
+      See <xref linkend="ssl-tcp"/> for more information about setting up SSL.
+     </para>
+
+     <variablelist>
      <varlistentry id="guc-ssl" xreflabel="ssl">
       <term><varname>ssl</varname> (<type>boolean</type>)
       <indexterm>
@@ -958,8 +1076,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Enables <acronym>SSL</acronym> connections. Please read
-        <xref linkend="ssl-tcp"/> before using this.
+        Enables <acronym>SSL</acronym> connections.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
         The default is <literal>off</literal>.
@@ -1172,29 +1289,6 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-password-encryption" xreflabel="password_encryption">
-      <term><varname>password_encryption</varname> (<type>enum</type>)
-      <indexterm>
-       <primary><varname>password_encryption</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        When a password is specified in <xref linkend="sql-createrole"/> or
-        <xref linkend="sql-alterrole"/>, this parameter determines the algorithm
-        to use to encrypt the password. The default value is <literal>md5</literal>,
-        which stores the password as an MD5 hash (<literal>on</literal> is also
-        accepted, as alias for <literal>md5</literal>). Setting this parameter to
-        <literal>scram-sha-256</literal> will encrypt the password with SCRAM-SHA-256.
-       </para>
-       <para>
-        Note that older clients might lack support for the SCRAM authentication
-        mechanism, and hence not work with passwords encrypted with
-        SCRAM-SHA-256.  See <xref linkend="auth-password"/> for more details.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-ssl-dh-params-file" xreflabel="ssl_dh_params_file">
       <term><varname>ssl_dh_params_file</varname> (<type>string</type>)
       <indexterm>
@@ -1218,91 +1312,6 @@ include_dir 'conf.d'
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
-      <term><varname>krb_server_keyfile</varname> (<type>string</type>)
-      <indexterm>
-       <primary><varname>krb_server_keyfile</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Sets the location of the Kerberos server key file. See
-        <xref linkend="gssapi-auth"/>
-        for details. This parameter can only be set in the
-        <filename>postgresql.conf</filename> file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-krb-caseins-users" xreflabel="krb_caseins_users">
-      <term><varname>krb_caseins_users</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>krb_caseins_users</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Sets whether GSSAPI user names should be treated
-        case-insensitively.
-        The default is <literal>off</literal> (case sensitive). This parameter can only be
-        set in the <filename>postgresql.conf</filename> file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-db-user-namespace" xreflabel="db_user_namespace">
-      <term><varname>db_user_namespace</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>db_user_namespace</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        This parameter enables per-database user names.  It is off by default.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
-       </para>
-
-       <para>
-        If this is on, you should create users as <replaceable>username@dbname</replaceable>.
-        When <replaceable>username</replaceable> is passed by a connecting client,
-        <literal>@</literal> and the database name are appended to the user
-        name and that database-specific user name is looked up by the
-        server. Note that when you create users with names containing
-        <literal>@</literal> within the SQL environment, you will need to
-        quote the user name.
-       </para>
-
-       <para>
-        With this parameter enabled, you can still create ordinary global
-        users.  Simply append <literal>@</literal> when specifying the user
-        name in the client, e.g. <literal>joe@</literal>.  The <literal>@</literal>
-        will be stripped off before the user name is looked up by the
-        server.
-       </para>
-
-       <para>
-        <varname>db_user_namespace</varname> causes the client's and
-        server's user name representation to differ.
-        Authentication checks are always done with the server's user name
-        so authentication methods must be configured for the
-        server's user name, not the client's.  Because
-        <literal>md5</literal> uses the user name as salt on both the
-        client and server, <literal>md5</literal> cannot be used with
-        <varname>db_user_namespace</varname>.
-       </para>
-
-       <note>
-        <para>
-         This feature is intended as a temporary measure until a
-         complete solution is found.  At that time, this option will
-         be removed.
-        </para>
-       </note>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
     </sect2>
    </sect1>
