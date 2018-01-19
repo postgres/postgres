@@ -18,3 +18,7 @@ Running the tests
 =================
 
     make check
+
+or
+
+    make installcheck

@@ -13,4 +13,8 @@ Running the tests
 
     make check
 
+or
+
+    make installcheck
+
 NOTE: This requires the --enable-tap-tests argument to configure.

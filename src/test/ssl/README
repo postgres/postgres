@@ -12,10 +12,15 @@ Running the tests
 
     make check
 
-NOTE: This creates a temporary installation, and sets it up to listen for TCP
-connections on localhost. Any user on the same host is allowed to log in to
-the test installation while the tests are running. Do not run this suite
-on a multi-user system where you don't trust all local users!
+or
+
+    make installcheck
+
+NOTE: This creates a temporary installation (in the case of "check"),
+and sets it up to listen for TCP connections on localhost. Any user on
+the same host is allowed to log in to the test installation while the
+tests are running. Do not run this suite on a multi-user system where
+you don't trust all local users!
 
 Certificates
 ============

@@ -10,8 +10,12 @@ Running the tests
 
     make check
 
-NOTE: This creates a temporary installation, and some tests may
-create one or multiple nodes, be they master or standby(s) for the
-purpose of the tests.
+or
+
+    make installcheck
+
+NOTE: This creates a temporary installation (in the case of "check"),
+and some tests may create one or multiple nodes, be they master or
+standby(s) for the purpose of the tests.
 
 NOTE: This requires the --enable-tap-tests argument to configure.
