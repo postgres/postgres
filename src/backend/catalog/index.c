@@ -1795,8 +1795,10 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 		if (maplen < info2->ii_KeyAttrNumbers[i])
 			elog(ERROR, "incorrect attribute map");
 
-		if (attmap[info2->ii_KeyAttrNumbers[i] - 1] !=
-			info1->ii_KeyAttrNumbers[i])
+		/* ignore expressions at this stage */
+		if ((info1->ii_KeyAttrNumbers[i] != InvalidAttrNumber) &&
+			(attmap[info2->ii_KeyAttrNumbers[i] - 1] !=
+			info1->ii_KeyAttrNumbers[i]))
 			return false;
 
 		if (collations1[i] != collations2[i])
