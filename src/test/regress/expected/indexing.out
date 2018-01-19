@@ -224,26 +224,26 @@ Partition of: idxpart2 FOR VALUES FROM (100) TO (200)
 select indexrelid::regclass, indrelid::regclass, inhparent::regclass
   from pg_index idx left join pg_inherits inh on (idx.indexrelid = inh.inhrelid)
 where indexrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
    indexrelid    | indrelid  |   inhparent   
 -----------------+-----------+---------------
- idxpart_a_idx   | idxpart   | 
  idxpart1_a_idx  | idxpart1  | idxpart_a_idx
- idxpart2_a_idx  | idxpart2  | idxpart_a_idx
  idxpart22_a_idx | idxpart22 | 
+ idxpart2_a_idx  | idxpart2  | idxpart_a_idx
+ idxpart_a_idx   | idxpart   | 
 (4 rows)
 
 alter index idxpart2_a_idx attach partition idxpart22_a_idx;
 select indexrelid::regclass, indrelid::regclass, inhparent::regclass
   from pg_index idx left join pg_inherits inh on (idx.indexrelid = inh.inhrelid)
 where indexrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
    indexrelid    | indrelid  |   inhparent    
 -----------------+-----------+----------------
- idxpart_a_idx   | idxpart   | 
  idxpart1_a_idx  | idxpart1  | idxpart_a_idx
- idxpart2_a_idx  | idxpart2  | idxpart_a_idx
  idxpart22_a_idx | idxpart22 | idxpart2_a_idx
+ idxpart2_a_idx  | idxpart2  | idxpart_a_idx
+ idxpart_a_idx   | idxpart   | 
 (4 rows)
 
 -- attaching idxpart22 is not enough to set idxpart22_a_idx valid ...
@@ -600,15 +600,15 @@ alter table idxpart attach partition idxpart2 for values from (10) to (20);
 select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid
   where indrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
      relname      |                       pg_get_indexdef                        
 ------------------+--------------------------------------------------------------
- idxparti         | CREATE INDEX idxparti ON ONLY idxpart USING btree (a)
- idxparti2        | CREATE INDEX idxparti2 ON ONLY idxpart USING btree (c, b)
  idxpart1_a_idx   | CREATE INDEX idxpart1_a_idx ON idxpart1 USING btree (a)
  idxpart1_c_b_idx | CREATE INDEX idxpart1_c_b_idx ON idxpart1 USING btree (c, b)
  idxpart2_a_idx   | CREATE INDEX idxpart2_a_idx ON idxpart2 USING btree (a)
  idxpart2_c_b_idx | CREATE INDEX idxpart2_c_b_idx ON idxpart2 USING btree (c, b)
+ idxparti         | CREATE INDEX idxparti ON ONLY idxpart USING btree (a)
+ idxparti2        | CREATE INDEX idxparti2 ON ONLY idxpart USING btree (c, b)
 (6 rows)
 
 drop table idxpart;
@@ -626,12 +626,12 @@ alter table idxpart attach partition idxpart1 for values from (1) to (2);
 select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid
   where indrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
      relname      |                          pg_get_indexdef                          
 ------------------+-------------------------------------------------------------------
- idxpart_abs_idx  | CREATE INDEX idxpart_abs_idx ON ONLY idxpart USING btree (abs(b))
  idxpart1_abs_idx | CREATE INDEX idxpart1_abs_idx ON idxpart1 USING btree (abs(b))
  idxpart2_abs_idx | CREATE INDEX idxpart2_abs_idx ON idxpart2 USING btree (abs(b))
+ idxpart_abs_idx  | CREATE INDEX idxpart_abs_idx ON ONLY idxpart USING btree (abs(b))
 (3 rows)
 
 drop table idxpart;
@@ -649,12 +649,12 @@ create index on idxpart (a) where b > 1000;
 select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid
   where indrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
     relname     |                               pg_get_indexdef                               
 ----------------+-----------------------------------------------------------------------------
- idxpart_a_idx  | CREATE INDEX idxpart_a_idx ON ONLY idxpart USING btree (a) WHERE (b > 1000)
  idxpart1_a_idx | CREATE INDEX idxpart1_a_idx ON idxpart1 USING btree (a) WHERE (b > 1000)
  idxpart2_a_idx | CREATE INDEX idxpart2_a_idx ON idxpart2 USING btree (a) WHERE (b > 1000)
+ idxpart_a_idx  | CREATE INDEX idxpart_a_idx ON ONLY idxpart USING btree (a) WHERE (b > 1000)
 (3 rows)
 
 drop table idxpart;

@@ -116,12 +116,12 @@ create index on idxpart (a);
 select indexrelid::regclass, indrelid::regclass, inhparent::regclass
   from pg_index idx left join pg_inherits inh on (idx.indexrelid = inh.inhrelid)
 where indexrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
 alter index idxpart2_a_idx attach partition idxpart22_a_idx;
 select indexrelid::regclass, indrelid::regclass, inhparent::regclass
   from pg_index idx left join pg_inherits inh on (idx.indexrelid = inh.inhrelid)
 where indexrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
 -- attaching idxpart22 is not enough to set idxpart22_a_idx valid ...
 alter index idxpart2_a_idx attach partition idxpart22_a_idx;
 \d idxpart2
@@ -306,7 +306,7 @@ alter table idxpart attach partition idxpart2 for values from (10) to (20);
 select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid
   where indrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
 drop table idxpart;
 
 -- Verify that columns are mapped correctly in expression indexes
@@ -323,7 +323,7 @@ alter table idxpart attach partition idxpart1 for values from (1) to (2);
 select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid
   where indrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
 drop table idxpart;
 
 -- Verify that columns are mapped correctly for WHERE in a partial index
@@ -340,7 +340,7 @@ create index on idxpart (a) where b > 1000;
 select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid
   where indrelid::regclass::text like 'idxpart%'
-  order by indrelid::regclass::text collate "C";
+  order by indexrelid::regclass::text collate "C";
 drop table idxpart;
 
 -- Column number mapping: dropped columns in the partition
