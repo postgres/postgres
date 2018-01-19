@@ -31,7 +31,7 @@
  *	  The downside to EDH is that it makes it impossible to
  *	  use ssldump(1) if there's a problem establishing an SSL
  *	  session.  In this case you'll need to temporarily disable
- *	  EDH by commenting out the callback.
+ *	  EDH (see initialize_dh()).
  *
  *-------------------------------------------------------------------------
  */
