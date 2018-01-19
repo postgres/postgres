@@ -303,7 +303,7 @@ static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel
 static void StoreCatalogInheritance(Oid relationId, List *supers,
 						bool child_is_partition);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-						 int16 seqNumber, Relation inhRelation,
+						 int32 seqNumber, Relation inhRelation,
 						 bool child_is_partition);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
@@ -2352,7 +2352,7 @@ StoreCatalogInheritance(Oid relationId, List *supers,
 						bool child_is_partition)
 {
 	Relation	relation;
-	int16		seqNumber;
+	int32		seqNumber;
 	ListCell   *entry;
 
 	/*
@@ -2393,7 +2393,7 @@ StoreCatalogInheritance(Oid relationId, List *supers,
  */
 static void
 StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-						 int16 seqNumber, Relation inhRelation,
+						 int32 seqNumber, Relation inhRelation,
 						 bool child_is_partition)
 {
 	TupleDesc	desc = RelationGetDescr(inhRelation);
@@ -2408,7 +2408,7 @@ StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 	 */
 	values[Anum_pg_inherits_inhrelid - 1] = ObjectIdGetDatum(relationId);
 	values[Anum_pg_inherits_inhparent - 1] = ObjectIdGetDatum(parentOid);
-	values[Anum_pg_inherits_inhseqno - 1] = Int16GetDatum(seqNumber);
+	values[Anum_pg_inherits_inhseqno - 1] = Int32GetDatum(seqNumber);
 
 	memset(nulls, 0, sizeof(nulls));
 
