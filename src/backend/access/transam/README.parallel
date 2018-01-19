@@ -122,6 +122,9 @@ worker.  This includes:
     values are restored, this incidentally sets SessionUserId and OuterUserId
     to the correct values.  This final step restores CurrentUserId.
 
+  - State related to pending REINDEX operations, which prevents access to
+    an index that is currently being rebuilt.
+
 To prevent undetected or unprincipled deadlocks when running in parallel mode,
 this could should eventually handle heavyweight locks in some way.  This is
 not implemented yet.

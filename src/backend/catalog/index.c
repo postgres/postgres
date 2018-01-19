@@ -86,6 +86,18 @@ typedef struct
 				tups_inserted;
 } v_i_state;
 
+/*
+ * Pointer-free representation of variables used when reindexing system
+ * catalogs; we use this to propagate those values to parallel workers.
+ */
+typedef struct
+{
+	Oid			currentlyReindexedHeap;
+	Oid			currentlyReindexedIndex;
+	int			numPendingReindexedIndexes;
+	Oid			pendingReindexedIndexes[FLEXIBLE_ARRAY_MEMBER];
+} SerializedReindexState;
+
 /* non-export function prototypes */
 static bool relationHasPrimaryKey(Relation rel);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
@@ -3653,7 +3665,8 @@ reindex_relation(Oid relid, int flags, int options)
  * When we are busy reindexing a system index, this code provides support
  * for preventing catalog lookups from using that index.  We also make use
  * of this to catch attempted uses of user indexes during reindexing of
- * those indexes.
+ * those indexes.  This information is propagated to parallel workers;
+ * attempting to change it during a parallel operation is not permitted.
  * ----------------------------------------------------------------
  */
 
@@ -3719,6 +3732,8 @@ SetReindexProcessing(Oid heapOid, Oid indexOid)
 static void
 ResetReindexProcessing(void)
 {
+	if (IsInParallelMode())
+		elog(ERROR, "cannot modify reindex state during a parallel operation");
 	currentlyReindexedHeap = InvalidOid;
 	currentlyReindexedIndex = InvalidOid;
 }
@@ -3736,6 +3751,8 @@ SetReindexPending(List *indexes)
 	/* Reindexing is not re-entrant. */
 	if (pendingReindexedIndexes)
 		elog(ERROR, "cannot reindex while reindexing");
+	if (IsInParallelMode())
+		elog(ERROR, "cannot modify reindex state during a parallel operation");
 	pendingReindexedIndexes = list_copy(indexes);
 }
 
@@ -3746,6 +3763,8 @@ SetReindexPending(List *indexes)
 static void
 RemoveReindexPending(Oid indexOid)
 {
+	if (IsInParallelMode())
+		elog(ERROR, "cannot modify reindex state during a parallel operation");
 	pendingReindexedIndexes = list_delete_oid(pendingReindexedIndexes,
 											  indexOid);
 }
@@ -3757,5 +3776,59 @@ RemoveReindexPending(Oid indexOid)
 static void
 ResetReindexPending(void)
 {
+	if (IsInParallelMode())
+		elog(ERROR, "cannot modify reindex state during a parallel operation");
 	pendingReindexedIndexes = NIL;
+}
+
+/*
+ * EstimateReindexStateSpace
+ *		Estimate space needed to pass reindex state to parallel workers.
+ */
+extern Size
+EstimateReindexStateSpace(void)
+{
+	return offsetof(SerializedReindexState, pendingReindexedIndexes)
+		+ mul_size(sizeof(Oid), list_length(pendingReindexedIndexes));
+}
+
+/*
+ * SerializeReindexState
+ *		Serialize reindex state for parallel workers.
+ */
+extern void
+SerializeReindexState(Size maxsize, char *start_address)
+{
+	SerializedReindexState *sistate = (SerializedReindexState *) start_address;
+	int			c = 0;
+	ListCell   *lc;
+
+	sistate->currentlyReindexedHeap = currentlyReindexedHeap;
+	sistate->currentlyReindexedIndex = currentlyReindexedIndex;
+	sistate->numPendingReindexedIndexes = list_length(pendingReindexedIndexes);
+	foreach(lc, pendingReindexedIndexes)
+		sistate->pendingReindexedIndexes[c++] = lfirst_oid(lc);
+}
+
+/*
+ * RestoreReindexState
+ *		Restore reindex state in a parallel worker.
+ */
+extern void
+RestoreReindexState(void *reindexstate)
+{
+	SerializedReindexState *sistate = (SerializedReindexState *) reindexstate;
+	int			c = 0;
+	MemoryContext	oldcontext;
+
+	currentlyReindexedHeap = sistate->currentlyReindexedHeap;
+	currentlyReindexedIndex = sistate->currentlyReindexedIndex;
+
+	Assert(pendingReindexedIndexes == NIL);
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	for (c = 0; c < sistate->numPendingReindexedIndexes; ++c)
+		pendingReindexedIndexes =
+			lappend_oid(pendingReindexedIndexes,
+						sistate->pendingReindexedIndexes[c]);
+	MemoryContextSwitchTo(oldcontext);
 }

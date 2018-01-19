@@ -134,4 +134,8 @@ extern bool ReindexIsProcessingHeap(Oid heapOid);
 extern bool ReindexIsProcessingIndex(Oid indexOid);
 extern Oid	IndexGetRelation(Oid indexId, bool missing_ok);
 
+extern Size EstimateReindexStateSpace(void);
+extern void SerializeReindexState(Size maxsize, char *start_address);
+extern void RestoreReindexState(void *reindexstate);
+
 #endif							/* INDEX_H */
