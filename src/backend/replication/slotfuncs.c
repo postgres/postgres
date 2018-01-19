@@ -462,7 +462,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 
 	/*
 	 * We can't move slot past what's been flushed/replayed so clamp the
-	 * target possition accordingly.
+	 * target position accordingly.
 	 */
 	if (!RecoveryInProgress())
 		moveto = Min(moveto, GetFlushRecPtr());
