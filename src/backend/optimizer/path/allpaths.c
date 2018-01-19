@@ -1364,7 +1364,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 			case RTE_RELATION:
 				if (rte->relkind == RELKIND_PARTITIONED_TABLE)
 					partitioned_rels =
-						get_partitioned_child_rels(root, rel->relid);
+						get_partitioned_child_rels(root, rel->relid, NULL);
 				break;
 			case RTE_SUBQUERY:
 				build_partitioned_rels = true;
@@ -1403,7 +1403,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		{
 			List	   *cprels;
 
-			cprels = get_partitioned_child_rels(root, childrel->relid);
+			cprels = get_partitioned_child_rels(root, childrel->relid, NULL);
 			partitioned_rels = list_concat(partitioned_rels,
 										   list_copy(cprels));
 		}

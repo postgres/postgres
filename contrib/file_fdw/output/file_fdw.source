@@ -344,6 +344,8 @@ SELECT tableoid::regclass, * FROM p2;
 INSERT INTO pt VALUES (1, 'xyzzy'); -- ERROR
 ERROR:  cannot route inserted tuples to a foreign table
 INSERT INTO pt VALUES (2, 'xyzzy');
+UPDATE pt set a = 1 where a = 2; -- ERROR
+ERROR:  cannot route inserted tuples to a foreign table
 SELECT tableoid::regclass, * FROM pt;
  tableoid | a |   b   
 ----------+---+-------

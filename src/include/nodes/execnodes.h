@@ -992,8 +992,8 @@ typedef struct ModifyTableState
 	/* controls transition table population for specified operation */
 	struct TransitionCaptureState *mt_oc_transition_capture;
 	/* controls transition table population for INSERT...ON CONFLICT UPDATE */
-	TupleConversionMap **mt_transition_tupconv_maps;
-	/* Per plan/partition tuple conversion */
+	TupleConversionMap **mt_per_subplan_tupconv_maps;
+	/* Per plan map for tuple conversion from child to root */
 } ModifyTableState;
 
 /* ----------------

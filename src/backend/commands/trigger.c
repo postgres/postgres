@@ -2854,8 +2854,13 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	{
 		HeapTuple	trigtuple;
 
-		Assert(HeapTupleIsValid(fdw_trigtuple) ^ ItemPointerIsValid(tupleid));
-		if (fdw_trigtuple == NULL)
+		/*
+		 * Note: if the UPDATE is converted into a DELETE+INSERT as part of
+		 * update-partition-key operation, then this function is also called
+		 * separately for DELETE and INSERT to capture transition table rows.
+		 * In such case, either old tuple or new tuple can be NULL.
+		 */
+		if (fdw_trigtuple == NULL && ItemPointerIsValid(tupleid))
 			trigtuple = GetTupleForTrigger(estate,
 										   NULL,
 										   relinfo,
@@ -5414,7 +5419,12 @@ AfterTriggerPendingOnRel(Oid relid)
  *	triggers actually need to be queued.  It is also called after each row,
  *	even if there are no triggers for that event, if there are any AFTER
  *	STATEMENT triggers for the statement which use transition tables, so that
- *	the transition tuplestores can be built.
+ *	the transition tuplestores can be built.  Furthermore, if the transition
+ *	capture is happening for UPDATEd rows being moved to another partition due
+ *	to the partition-key being changed, then this function is called once when
+ *	the row is deleted (to capture OLD row), and once when the row is inserted
+ *	into another partition (to capture NEW row).  This is done separately because
+ *	DELETE and INSERT happen on different tables.
  *
  *	Transition tuplestores are built now, rather than when events are pulled
  *	off of the queue because AFTER ROW triggers are allowed to select from the
@@ -5463,12 +5473,25 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		bool		update_new_table = transition_capture->tcs_update_new_table;
 		bool		insert_new_table = transition_capture->tcs_insert_new_table;;
 
-		if ((event == TRIGGER_EVENT_DELETE && delete_old_table) ||
-			(event == TRIGGER_EVENT_UPDATE && update_old_table))
+		/*
+		 * For INSERT events newtup should be non-NULL, for DELETE events
+		 * oldtup should be non-NULL, whereas for UPDATE events normally both
+		 * oldtup and newtup are non-NULL.  But for UPDATE events fired for
+		 * capturing transition tuples during UPDATE partition-key row
+		 * movement, oldtup is NULL when the event is for a row being inserted,
+		 * whereas newtup is NULL when the event is for a row being deleted.
+		 */
+		Assert(!(event == TRIGGER_EVENT_DELETE && delete_old_table &&
+				 oldtup == NULL));
+		Assert(!(event == TRIGGER_EVENT_INSERT && insert_new_table &&
+				 newtup == NULL));
+
+		if (oldtup != NULL &&
+			((event == TRIGGER_EVENT_DELETE && delete_old_table) ||
+			 (event == TRIGGER_EVENT_UPDATE && update_old_table)))
 		{
 			Tuplestorestate *old_tuplestore;
 
-			Assert(oldtup != NULL);
 			old_tuplestore = transition_capture->tcs_private->old_tuplestore;
 
 			if (map != NULL)
@@ -5481,12 +5504,12 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 			else
 				tuplestore_puttuple(old_tuplestore, oldtup);
 		}
-		if ((event == TRIGGER_EVENT_INSERT && insert_new_table) ||
-			(event == TRIGGER_EVENT_UPDATE && update_new_table))
+		if (newtup != NULL &&
+			((event == TRIGGER_EVENT_INSERT && insert_new_table) ||
+			(event == TRIGGER_EVENT_UPDATE && update_new_table)))
 		{
 			Tuplestorestate *new_tuplestore;
 
-			Assert(newtup != NULL);
 			new_tuplestore = transition_capture->tcs_private->new_tuplestore;
 
 			if (original_insert_tuple != NULL)
@@ -5502,11 +5525,18 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 				tuplestore_puttuple(new_tuplestore, newtup);
 		}
 
-		/* If transition tables are the only reason we're here, return. */
+		/*
+		 * If transition tables are the only reason we're here, return. As
+		 * mentioned above, we can also be here during update tuple routing in
+		 * presence of transition tables, in which case this function is called
+		 * separately for oldtup and newtup, so we expect exactly one of them
+		 * to be NULL.
+		 */
 		if (trigdesc == NULL ||
 			(event == TRIGGER_EVENT_DELETE && !trigdesc->trig_delete_after_row) ||
 			(event == TRIGGER_EVENT_INSERT && !trigdesc->trig_insert_after_row) ||
-			(event == TRIGGER_EVENT_UPDATE && !trigdesc->trig_update_after_row))
+			(event == TRIGGER_EVENT_UPDATE && !trigdesc->trig_update_after_row) ||
+			(event == TRIGGER_EVENT_UPDATE && ((oldtup == NULL) ^ (newtup == NULL))))
 			return;
 	}
 

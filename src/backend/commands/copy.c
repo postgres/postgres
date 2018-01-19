@@ -170,7 +170,6 @@ typedef struct CopyStateData
 	PartitionTupleRouting *partition_tuple_routing;
 
 	TransitionCaptureState *transition_capture;
-	TupleConversionMap **transition_tupconv_maps;
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -2481,19 +2480,7 @@ CopyFrom(CopyState cstate)
 		 * tuple).
 		 */
 		if (cstate->transition_capture != NULL)
-		{
-			int			i;
-
-			cstate->transition_tupconv_maps = (TupleConversionMap **)
-				palloc0(sizeof(TupleConversionMap *) * proute->num_partitions);
-			for (i = 0; i < proute->num_partitions; ++i)
-			{
-				cstate->transition_tupconv_maps[i] =
-					convert_tuples_by_name(RelationGetDescr(proute->partitions[i]->ri_RelationDesc),
-										   RelationGetDescr(cstate->rel),
-										   gettext_noop("could not convert row type"));
-			}
-		}
+			ExecSetupChildParentMapForLeaf(proute);
 	}
 
 	/*
@@ -2587,7 +2574,6 @@ CopyFrom(CopyState cstate)
 		if (cstate->partition_tuple_routing)
 		{
 			int			leaf_part_index;
-			TupleConversionMap *map;
 			PartitionTupleRouting *proute = cstate->partition_tuple_routing;
 
 			/*
@@ -2651,7 +2637,8 @@ CopyFrom(CopyState cstate)
 					 */
 					cstate->transition_capture->tcs_original_insert_tuple = NULL;
 					cstate->transition_capture->tcs_map =
-						cstate->transition_tupconv_maps[leaf_part_index];
+						TupConvMapForLeaf(proute, saved_resultRelInfo,
+										  leaf_part_index);
 				}
 				else
 				{
@@ -2668,23 +2655,10 @@ CopyFrom(CopyState cstate)
 			 * We might need to convert from the parent rowtype to the
 			 * partition rowtype.
 			 */
-			map = proute->partition_tupconv_maps[leaf_part_index];
-			if (map)
-			{
-				Relation	partrel = resultRelInfo->ri_RelationDesc;
-
-				tuple = do_convert_tuple(tuple, map);
-
-				/*
-				 * We must use the partition's tuple descriptor from this
-				 * point on.  Use a dedicated slot from this point on until
-				 * we're finished dealing with the partition.
-				 */
-				slot = proute->partition_tuple_slot;
-				Assert(slot != NULL);
-				ExecSetSlotDescriptor(slot, RelationGetDescr(partrel));
-				ExecStoreTuple(tuple, slot, InvalidBuffer, true);
-			}
+			tuple = ConvertPartitionTupleSlot(proute->parent_child_tupconv_maps[leaf_part_index],
+											  tuple,
+											  proute->partition_tuple_slot,
+											  &slot);
 
 			tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
 		}

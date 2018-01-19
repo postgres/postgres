@@ -154,6 +154,29 @@
    </para>
 
    <para>
+    If an <command>UPDATE</command> on a partitioned table causes a row to move
+    to another partition, it will be performed as a <command>DELETE</command>
+    from the original partition followed by an <command>INSERT</command> into
+    the new partition. In this case, all row-level <literal>BEFORE</literal>
+    <command>UPDATE</command> triggers and all row-level
+    <literal>BEFORE</literal> <command>DELETE</command> triggers are fired on
+    the original partition. Then all row-level <literal>BEFORE</literal>
+    <command>INSERT</command> triggers are fired on the destination partition.
+    The possibility of surprising outcomes should be considered when all these
+    triggers affect the row being moved. As far as <literal>AFTER ROW</literal>
+    triggers are concerned, <literal>AFTER</literal> <command>DELETE</command>
+    and <literal>AFTER</literal> <command>INSERT</command> triggers are
+    applied; but <literal>AFTER</literal> <command>UPDATE</command> triggers
+    are not applied because the <command>UPDATE</command> has been converted to
+    a <command>DELETE</command> and an <command>INSERT</command>. As far as
+    statement-level triggers are concerned, none of the
+    <command>DELETE</command> or <command>INSERT</command> triggers are fired,
+    even if row movement occurs; only the <command>UPDATE</command> triggers
+    defined on the target table used in the <command>UPDATE</command> statement
+    will be fired.
+   </para>
+
+   <para>
     Trigger functions invoked by per-statement triggers should always
     return <symbol>NULL</symbol>. Trigger functions invoked by per-row
     triggers can return a table row (a value of

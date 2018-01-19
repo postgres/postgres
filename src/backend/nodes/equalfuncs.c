@@ -908,6 +908,7 @@ _equalPartitionedChildRelInfo(const PartitionedChildRelInfo *a, const Partitione
 {
 	COMPARE_SCALAR_FIELD(parent_relid);
 	COMPARE_NODE_FIELD(child_rels);
+	COMPARE_SCALAR_FIELD(part_cols_updated);
 
 	return true;
 }

@@ -282,10 +282,15 @@ UPDATE <replaceable class="parameter">count</replaceable>
 
   <para>
    In the case of a partitioned table, updating a row might cause it to no
-   longer satisfy the partition constraint.  Since there is no provision to
-   move the row to the partition appropriate to the new value of its
-   partitioning key, an error will occur in this case.  This can also happen
-   when updating a partition directly.
+   longer satisfy the partition constraint of the containing partition. In that
+   case, if there is some other partition in the partition tree for which this
+   row satisfies its partition constraint, then the row is moved to that
+   partition. If there is no such partition, an error will occur.  Behind the
+   scenes, the row movement is actually a <command>DELETE</command> and
+   <command>INSERT</command> operation. However, there is a possibility that a
+   concurrent <command>UPDATE</command> or <command>DELETE</command> on the
+   same row may miss this row. For details see the section
+   <xref linkend="ddl-partitioning-declarative-limitations"/>.
   </para>
  </refsect1>
 

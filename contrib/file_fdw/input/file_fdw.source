@@ -178,6 +178,7 @@ SELECT tableoid::regclass, * FROM p1;
 SELECT tableoid::regclass, * FROM p2;
 INSERT INTO pt VALUES (1, 'xyzzy'); -- ERROR
 INSERT INTO pt VALUES (2, 'xyzzy');
+UPDATE pt set a = 1 where a = 2; -- ERROR
 SELECT tableoid::regclass, * FROM pt;
 SELECT tableoid::regclass, * FROM p1;
 SELECT tableoid::regclass, * FROM p2;
