@@ -11,28 +11,6 @@
  * IDENTIFICATION
  *	  src/backend/libpq/be-secure-openssl.c
  *
- *	  Since the server static private key ($DataDir/server.key)
- *	  will normally be stored unencrypted so that the database
- *	  backend can restart automatically, it is important that
- *	  we select an algorithm that continues to provide confidentiality
- *	  even if the attacker has the server's private key.  Ephemeral
- *	  DH (EDH) keys provide this and more (Perfect Forward Secrecy
- *	  aka PFS).
- *
- *	  N.B., the static private key should still be protected to
- *	  the largest extent possible, to minimize the risk of
- *	  impersonations.
- *
- *	  Another benefit of EDH is that it allows the backend and
- *	  clients to use DSA keys.  DSA keys can only provide digital
- *	  signatures, not encryption, and are often acceptable in
- *	  jurisdictions where RSA keys are unacceptable.
- *
- *	  The downside to EDH is that it makes it impossible to
- *	  use ssldump(1) if there's a problem establishing an SSL
- *	  session.  In this case you'll need to temporarily disable
- *	  EDH (see initialize_dh()).
- *
  *-------------------------------------------------------------------------
  */
 
@@ -86,40 +64,6 @@ static char *X509_NAME_to_cstring(X509_NAME *name);
 static SSL_CTX *SSL_context = NULL;
 static bool SSL_initialized = false;
 static bool ssl_passwd_cb_called = false;
-
-/* ------------------------------------------------------------ */
-/*						 Hardcoded values						*/
-/* ------------------------------------------------------------ */
-
-/*
- *	Hardcoded DH parameters, used in ephemeral DH keying.
- *	As discussed above, EDH protects the confidentiality of
- *	sessions even if the static private key is compromised,
- *	so we are *highly* motivated to ensure that we can use
- *	EDH even if the DBA has not provided custom DH parameters.
- *
- *	We could refuse SSL connections unless a good DH parameter
- *	file exists, but some clients may quietly renegotiate an
- *	unsecured connection without fully informing the user.
- *	Very uncool. Alternatively, the system could refuse to start
- *	if a DH parameters is not specified, but this would tend to
- *	piss off DBAs.
- *
- *	If you want to create your own hardcoded DH parameters
- *	for fun and profit, review "Assigned Number for SKIP
- *	Protocols" (http://www.skip-vpn.org/spec/numbers.html)
- *	for suggestions.
- */
-
-static const char file_dh2048[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MIIBCAKCAQEA9kJXtwh/CBdyorrWqULzBej5UxE5T7bxbrlLOCDaAadWoxTpj0BV\n\
-89AHxstDqZSt90xkhkn4DIO9ZekX1KHTUPj1WV/cdlJPPT2N286Z4VeSWc39uK50\n\
-T8X8dryDxUcwYc58yWb/Ffm7/ZFexwGq01uejaClcjrUGvC/RgBYK+X0iP1YTknb\n\
-zSC0neSRBzZrM2w4DUUdD3yIsxx8Wy2O9vPJI8BD8KVbGI2Ou1WMuF040zT9fBdX\n\
-Q6MdGGzeMyEstSr/POGxKUAYEY18hKcKctaGxAMZyAcpesqVDNmWn6vQClCbAkbT\n\
-CD1mpF1Bn5x8vYlLIhkmuquiXsNV6TILOwIBAg==\n\
------END DH PARAMETERS-----\n";
 
 
 /* ------------------------------------------------------------ */
@@ -1080,7 +1024,7 @@ initialize_dh(SSL_CTX *context, bool isServerStart)
 	if (ssl_dh_params_file[0])
 		dh = load_dh_file(ssl_dh_params_file, isServerStart);
 	if (!dh)
-		dh = load_dh_buffer(file_dh2048, sizeof file_dh2048);
+		dh = load_dh_buffer(FILE_DH2048, sizeof(FILE_DH2048));
 	if (!dh)
 	{
 		ereport(isServerStart ? FATAL : LOG,

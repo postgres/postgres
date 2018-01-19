@@ -194,6 +194,25 @@ typedef struct Port
 
 #ifdef USE_SSL
 /*
+ *	Hardcoded DH parameters, used in ephemeral DH keying.  (See also
+ *	README.SSL for more details on EDH.)
+ *
+ *	If you want to create your own hardcoded DH parameters
+ *	for fun and profit, review "Assigned Number for SKIP
+ *	Protocols" (http://www.skip-vpn.org/spec/numbers.html)
+ *	for suggestions.
+ */
+#define FILE_DH2048 \
+"-----BEGIN DH PARAMETERS-----\n\
+MIIBCAKCAQEA9kJXtwh/CBdyorrWqULzBej5UxE5T7bxbrlLOCDaAadWoxTpj0BV\n\
+89AHxstDqZSt90xkhkn4DIO9ZekX1KHTUPj1WV/cdlJPPT2N286Z4VeSWc39uK50\n\
+T8X8dryDxUcwYc58yWb/Ffm7/ZFexwGq01uejaClcjrUGvC/RgBYK+X0iP1YTknb\n\
+zSC0neSRBzZrM2w4DUUdD3yIsxx8Wy2O9vPJI8BD8KVbGI2Ou1WMuF040zT9fBdX\n\
+Q6MdGGzeMyEstSr/POGxKUAYEY18hKcKctaGxAMZyAcpesqVDNmWn6vQClCbAkbT\n\
+CD1mpF1Bn5x8vYlLIhkmuquiXsNV6TILOwIBAg==\n\
+-----END DH PARAMETERS-----\n"
+
+/*
  * These functions are implemented by the glue code specific to each
  * SSL implementation (e.g. be-secure-openssl.c)
  */
