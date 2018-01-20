@@ -371,9 +371,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 	if (status > 0 && tuptable == NULL)
 	{
 		Py_DECREF(result->nrows);
-		result->nrows = (rows > (uint64) LONG_MAX) ?
-			PyFloat_FromDouble((double) rows) :
-			PyInt_FromLong((long) rows);
+		result->nrows = PyLong_FromUnsignedLongLong(rows);
 	}
 	else if (status > 0 && tuptable != NULL)
 	{
@@ -381,9 +379,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 		MemoryContext cxt;
 
 		Py_DECREF(result->nrows);
-		result->nrows = (rows > (uint64) LONG_MAX) ?
-			PyFloat_FromDouble((double) rows) :
-			PyInt_FromLong((long) rows);
+		result->nrows = PyLong_FromUnsignedLongLong(rows);
 
 		cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"PL/Python temp context",

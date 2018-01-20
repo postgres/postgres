@@ -444,9 +444,7 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 		ret->status = PyInt_FromLong(SPI_OK_FETCH);
 
 		Py_DECREF(ret->nrows);
-		ret->nrows = (SPI_processed > (uint64) LONG_MAX) ?
-			PyFloat_FromDouble((double) SPI_processed) :
-			PyInt_FromLong((long) SPI_processed);
+		ret->nrows = PyLong_FromUnsignedLongLong(SPI_processed);
 
 		if (SPI_processed != 0)
 		{
