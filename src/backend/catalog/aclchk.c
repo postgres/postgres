@@ -3359,7 +3359,7 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 			break;
 		case ACLCHECK_NO_PRIV:
 			{
-				const char *msg;
+				const char *msg = "???";
 
 				switch (objtype)
 				{
@@ -3481,7 +3481,6 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 					case OBJECT_TSTEMPLATE:
 					case OBJECT_USER_MAPPING:
 						elog(ERROR, "unsupported object type %d", objtype);
-						msg = "???";
 				}
 
 				ereport(ERROR,
@@ -3491,7 +3490,7 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 			}
 		case ACLCHECK_NOT_OWNER:
 			{
-				const char *msg;
+				const char *msg = "???";
 
 				switch (objtype)
 				{
@@ -3616,7 +3615,6 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 					case OBJECT_TSTEMPLATE:
 					case OBJECT_USER_MAPPING:
 						elog(ERROR, "unsupported object type %d", objtype);
-						msg = "???";
 				}
 
 				ereport(ERROR,
