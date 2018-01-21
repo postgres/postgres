@@ -1010,8 +1010,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        </para>
 
        <para>
-        A comma-separated list of <literal>hostaddrs</> is also accepted, in
-        which case each host in the list is tried in order. See
+        A comma-separated list of <literal>hostaddr</literal> values is also
+        accepted, in which case each host in the list is tried in order. See
         <xref linkend="libpq-multiple-hosts"> for details.
        </para>
        <para>
