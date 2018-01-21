@@ -7548,17 +7548,37 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    the server certificate. This means that it is possible to spoof the server
    identity (for example by modifying a DNS record or by taking over the server
    IP address) without the client knowing. In order to prevent spoofing,
-   <acronym>SSL</> certificate verification must be used.
+   the client must be able to verify the server's identity via a chain of
+   trust.  A chain of trust is established by placing a root (self-signed)
+   certificate authority (<acronym>CA</>) certificate on one
+   computer and a leaf certificate <emphasis>signed</> by the
+   root certificate on another computer.  It is also possible to use an
+   <quote>intermediate</> certificate which is signed by the root
+   certificate and signs leaf certificates.
   </para>
 
   <para>
+   To allow the client to verify the identity of the server, place a root
+   certificate on the client and a leaf certificate signed by the root
+   certificate on the server.  To allow the server to verify the identity
+   of the client, place a root certificate on the server and a leaf and
+   optional intermediate certificates signed by the root certificate on
+   the client.  Intermediate certificates (usually stored with the leaf
+   certificate) can also be used to link the leaf certificate to the
+   root certificate.
+  </para>
+
+  <para>
+   Once a chain of trust has been established, there are two ways for
+   the client to validate the leaf certificate sent by the server.
    If the parameter <literal>sslmode</> is set to <literal>verify-ca</>,
    libpq will verify that the server is trustworthy by checking the
-   certificate chain up to a trusted certificate authority
-   (<acronym>CA</>). If <literal>sslmode</> is set to <literal>verify-full</>,
-   libpq will <emphasis>also</> verify that the server host name matches its
-   certificate. The SSL connection will fail if the server certificate cannot
-   be verified. <literal>verify-full</> is recommended in most
+   certificate chain up to the root certificate stored on the client.
+   If <literal>sslmode</> is set to <literal>verify-full</>,
+   libpq will <emphasis>also</> verify that the server host
+   name matches the name stored in the server certificate. The
+   SSL connection will fail if the server certificate cannot be
+   verified. <literal>verify-full</> is recommended in most
    security-sensitive environments.
   </para>
 
@@ -7575,13 +7595,13 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   </para>
 
   <para>
-   To allow server certificate verification, the certificate(s) of one or more
-   trusted <acronym>CA</>s must be
-   placed in the file <filename>~/.postgresql/root.crt</> in the user's home
-   directory. If intermediate <acronym>CA</>s appear in
-   <filename>root.crt</filename>, the file must also contain certificate
-   chains to their root <acronym>CA</>s. (On Microsoft Windows the file is named
-   <filename>%APPDATA%\postgresql\root.crt</filename>.)
+   To allow server certificate verification, one or more root certificates
+   must be placed in the file <filename>~/.postgresql/root.crt</>
+   in the user's home directory.  (On Microsoft Windows the file is named
+   <filename>%APPDATA%\postgresql\root.crt</>.)  Intermediate
+   certificates should also be added to the file if they are needed to link
+   the certificate chain sent by the server to the root certificates
+   stored on the client.
   </para>
 
   <para>
@@ -7615,11 +7635,12 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   <title>Client Certificates</title>
 
   <para>
-   If the server requests a trusted client certificate,
-   <application>libpq</application> will send the certificate stored in
+   If the server attempts to verify the identity of the
+   client by requesting the client's leaf certificate,
+   <application>libpq</> will send the certificates stored in
    file <filename>~/.postgresql/postgresql.crt</> in the user's home
-   directory.  The certificate must be signed by one of the certificate
-   authorities (<acronym>CA</acronym>) trusted by the server.  A matching
+   directory.  The certificates must chain to the root certificate trusted
+   by the server.  A matching
    private key file <filename>~/.postgresql/postgresql.key</> must also
    be present. The private
    key file must not allow any access to world or group; achieve this by the
@@ -7634,23 +7655,17 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   </para>
 
   <para>
-   In some cases, the client certificate might be signed by an
-   <quote>intermediate</> certificate authority, rather than one that is
-   directly trusted by the server.  To use such a certificate, append the
-   certificate of the signing authority to the <filename>postgresql.crt</>
-   file, then its parent authority's certificate, and so on up to a certificate
-   authority, <quote>root</> or <quote>intermediate</>, that is trusted by
-   the server, i.e. signed by a certificate in the server's
-   <filename>root.crt</filename> file.
+   The first certificate in <filename>postgresql.crt</> must be the
+   client's certificate because it must match the client's private key.
+   <quote>Intermediate</> certificates can be optionally appended
+   to the file &mdash; doing so avoids requiring storage of intermediate
+   certificates on the server's <filename>root.crt</filename> file.
   </para>
 
   <para>
-   Note that the client's <filename>~/.postgresql/root.crt</> lists the top-level CAs
-   that are considered trusted for signing server certificates.  In principle it need
-   not list the CA that signed the client's certificate, though in most cases
-   that CA would also be trusted for server certificates.
+   For instructions on creating certificates, see <xref
+   linkend="ssl-certificate-creation">.
   </para>
-
  </sect2>
 
  <sect2 id="libpq-ssl-protection">
