@@ -1369,14 +1369,26 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        At present, this feature is supported only on Linux. The setting is
-        ignored on other systems when set to <literal>try</literal>.
+        At present, this feature is supported only on Linux and Windows. The
+        setting is ignored on other systems when set to <literal>try</literal>.
        </para>
 
        <para>
         The use of huge pages results in smaller page tables and less CPU time
-        spent on memory management, increasing performance. For more details,
-        see <xref linkend="linux-huge-pages"/>.
+        spent on memory management, increasing performance. For more details about
+        using huge pages on Linux, see <xref linkend="linux-huge-pages"/>.
+       </para>
+
+       <para>
+        Huge pages are known as large pages on Windows.  To use them, you need to
+        assign the user right Lock Pages in Memory to the Windows user account
+        that runs <productname>PostgreSQL</productname>.
+        You can use Windows Group Policy tool (gpedit.msc) to assign the user right
+        Lock Pages in Memory.
+        To start the database server on the command prompt as a standalone process,
+        not as a Windows service, the command prompt must be run as an administrator
+        User Access Control (UAC) must be disabled. When the UAC is enabled, the normal
+        command prompt revokes the user right Lock Pages in Memory when started.
        </para>
 
        <para>

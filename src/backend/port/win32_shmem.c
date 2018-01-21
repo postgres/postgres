@@ -21,6 +21,7 @@ HANDLE		UsedShmemSegID = INVALID_HANDLE_VALUE;
 void	   *UsedShmemSegAddr = NULL;
 static Size UsedShmemSegSize = 0;
 
+static bool EnableLockPagesPrivilege(int elevel);
 static void pgwin32_SharedMemoryDelete(int status, Datum shmId);
 
 /*
@@ -103,6 +104,66 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 	return true;
 }
 
+/*
+ * EnableLockPagesPrivilege
+ *
+ * Try to acquire SeLockMemoryPrivilege so we can use large pages.
+ */
+static bool
+EnableLockPagesPrivilege(int elevel)
+{
+	HANDLE hToken;
+	TOKEN_PRIVILEGES tp;
+	LUID luid;
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+	{
+		ereport(elevel,
+				(errmsg("could not enable Lock Pages in Memory user right: error code %lu", GetLastError()),
+				 errdetail("Failed system call was %s.", "OpenProcessToken")));
+		return FALSE;
+	}
+
+	if (!LookupPrivilegeValue(NULL, SE_LOCK_MEMORY_NAME, &luid))
+	{
+		ereport(elevel,
+				(errmsg("could not enable Lock Pages in Memory user right: error code %lu", GetLastError()),
+				 errdetail("Failed system call was %s.", "LookupPrivilegeValue")));
+		CloseHandle(hToken);
+		return FALSE;
+	}
+	tp.PrivilegeCount = 1;
+	tp.Privileges[0].Luid = luid;
+	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+	if (!AdjustTokenPrivileges(hToken, FALSE, &tp, 0, NULL, NULL))
+	{
+		ereport(elevel,
+				(errmsg("could not enable Lock Pages in Memory user right: error code %lu", GetLastError()),
+				 errdetail("Failed system call was %s.", "AdjustTokenPrivileges")));
+		CloseHandle(hToken);
+		return FALSE;
+	}
+
+	if (GetLastError() != ERROR_SUCCESS)
+	{
+		if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
+			ereport(elevel,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("could not enable Lock Pages in Memory user right"),
+					 errhint("Assign Lock Pages in Memory user right to the Windows user account which runs PostgreSQL.")));
+		else
+			ereport(elevel,
+					(errmsg("could not enable Lock Pages in Memory user right: error code %lu", GetLastError()),
+					 errdetail("Failed system call was %s.", "AdjustTokenPrivileges")));
+		CloseHandle(hToken);
+		return FALSE;
+	}
+
+	CloseHandle(hToken);
+
+	return TRUE;
+}
 
 /*
  * PGSharedMemoryCreate
@@ -127,11 +188,9 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	int			i;
 	DWORD		size_high;
 	DWORD		size_low;
-
-	if (huge_pages == HUGE_PAGES_ON)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("huge pages not supported on this platform")));
+	SIZE_T		largePageSize = 0;
+	Size		orig_size = size;
+	DWORD		flProtect = PAGE_READWRITE;
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
@@ -140,6 +199,35 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 
 	UsedShmemSegAddr = NULL;
 
+	if (huge_pages == HUGE_PAGES_ON || huge_pages == HUGE_PAGES_TRY)
+	{
+		/* Does the processor support large pages? */
+		largePageSize = GetLargePageMinimum();
+		if (largePageSize == 0)
+		{
+			ereport(huge_pages == HUGE_PAGES_ON ? FATAL : DEBUG1,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("the processor does not support large pages")));
+			ereport(DEBUG1,
+					(errmsg("disabling huge pages")));
+		}
+		else if (!EnableLockPagesPrivilege(huge_pages == HUGE_PAGES_ON ? FATAL : DEBUG1))
+		{
+			ereport(DEBUG1,
+					(errmsg("disabling huge pages")));
+		}
+		else
+		{
+			/* Huge pages available and privilege enabled, so turn on */
+			flProtect = PAGE_READWRITE | SEC_COMMIT | SEC_LARGE_PAGES;
+
+			/* Round size up as appropriate. */
+			if (size % largePageSize != 0)
+				size += largePageSize - (size % largePageSize);
+		}
+	}
+
+retry:
 #ifdef _WIN64
 	size_high = size >> 32;
 #else
@@ -163,16 +251,35 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 
 		hmap = CreateFileMapping(INVALID_HANDLE_VALUE,	/* Use the pagefile */
 								 NULL,	/* Default security attrs */
-								 PAGE_READWRITE,	/* Memory is Read/Write */
+								 flProtect,
 								 size_high, /* Size Upper 32 Bits	*/
 								 size_low,	/* Size Lower 32 bits */
 								 szShareMem);
 
 		if (!hmap)
-			ereport(FATAL,
-					(errmsg("could not create shared memory segment: error code %lu", GetLastError()),
-					 errdetail("Failed system call was CreateFileMapping(size=%zu, name=%s).",
-							   size, szShareMem)));
+		{
+			if (GetLastError() == ERROR_NO_SYSTEM_RESOURCES &&
+				huge_pages == HUGE_PAGES_TRY &&
+				(flProtect & SEC_LARGE_PAGES) != 0)
+			{
+				elog(DEBUG1, "CreateFileMapping(%zu) with SEC_LARGE_PAGES failed, "
+					 "huge pages disabled",
+					 size);
+
+				/*
+				 * Use the original size, not the rounded-up value, when falling back
+				 * to non-huge pages.
+				 */
+				size = orig_size;
+				flProtect = PAGE_READWRITE;
+				goto retry;
+			}
+			else
+				ereport(FATAL,
+						(errmsg("could not create shared memory segment: error code %lu", GetLastError()),
+						 errdetail("Failed system call was CreateFileMapping(size=%zu, name=%s).",
+								   size, szShareMem)));
+		}
 
 		/*
 		 * If the segment already existed, CreateFileMapping() will return a
