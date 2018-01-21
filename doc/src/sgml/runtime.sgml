@@ -2247,40 +2247,46 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </para>
 
   <para>
-   In some cases, the server certificate might be signed by an
-   <quote>intermediate</quote> certificate authority, rather than one that is
-   directly trusted by clients.  To use such a certificate, append the
-   certificate of the signing authority to the <filename>server.crt</filename> file,
-   then its parent authority's certificate, and so on up to a certificate
-   authority, <quote>root</quote> or <quote>intermediate</quote>, that is trusted by
-   clients, i.e. signed by a certificate in the clients'
-   <filename>root.crt</filename> files.
+   The first certificate in <filename>server.crt</filename> must be the
+   server's certificate because it must match the server's private key.
+   The certificates of <quote>intermediate</quote> certificate authorities
+   can also be appended to the file.  Doing this avoids the necessity of
+   storing intermediate certificates on clients, assuming the root and
+   intermediate certificates were created with <literal>v3_ca</literal>
+   extensions.  This allows easier expiration of intermediate certificates.
+  </para>
+
+  <para>
+   It is not necessary to add the root certificate to
+   <filename>server.crt</filename>.  Instead, clients must have the root
+   certificate of the server's certificate chain.
   </para>
 
   <sect2 id="ssl-client-certificates">
    <title>Using Client Certificates</title>
 
   <para>
-   To require the client to supply a trusted certificate, place
-   certificates of the certificate authorities (<acronym>CA</acronym>s)
-   you trust in a file named <filename>root.crt</filename> in the data
+   To require the client to supply a trusted certificate,
+   place certificates of the root certificate authorities
+   (<acronym>CA</acronym>s) you trust in a file in the data
    directory, set the parameter <xref linkend="guc-ssl-ca-file"/> in
-   <filename>postgresql.conf</filename> to <literal>root.crt</literal>,
-   and add the authentication option <literal>clientcert=1</literal> to the
-   appropriate <literal>hostssl</literal> line(s) in <filename>pg_hba.conf</filename>.
-   A certificate will then be requested from the client during
-   SSL connection startup.  (See <xref linkend="libpq-ssl"/> for a
-   description of how to set up certificates on the client.)  The server will
+   <filename>postgresql.conf</filename> to the new file name, and add the
+   authentication option <literal>clientcert=1</literal> to the appropriate
+   <literal>hostssl</literal> line(s) in <filename>pg_hba.conf</filename>.
+   A certificate will then be requested from the client during SSL
+   connection startup.  (See <xref linkend="libpq-ssl"/> for a description
+   of how to set up certificates on the client.)  The server will
    verify that the client's certificate is signed by one of the trusted
    certificate authorities.
   </para>
 
   <para>
-   If intermediate <acronym>CA</acronym>s appear in
-   <filename>root.crt</filename>, the file must also contain certificate
-   chains to their root <acronym>CA</acronym>s.  Certificate Revocation List
-   (CRL) entries
-   are also checked if the parameter <xref linkend="guc-ssl-crl-file"/> is set.
+   Intermediate certificates that chain up to existing root certificates
+   can also appear in the <xref linkend="guc-ssl-ca-file"/> file if
+   you wish to avoid storing them on clients (assuming the root and
+   intermediate certificates were created with <literal>v3_ca</literal>
+   extensions).  Certificate Revocation List (CRL) entries are also
+   checked if the parameter <xref linkend="guc-ssl-crl-file"/> is set.
    <!-- If this URL changes replace it with a URL to www.archive.org. -->
    (See <ulink
    url="http://h71000.www7.hp.com/doc/83final/ba554_90007/ch04s02.html"></ulink>
@@ -2294,14 +2300,6 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    not specified or is set to 0, the server will still verify any presented
    client certificates against its CA file, if one is configured &mdash; but
    it will not insist that a client certificate be presented.
-  </para>
-
-  <para>
-   Note that the server's <filename>root.crt</filename> lists the top-level
-   CAs that are considered trusted for signing client certificates.
-   In principle it need
-   not list the CA that signed the server's certificate, though in most cases
-   that CA would also be trusted for client certificates.
   </para>
 
   <para>
@@ -2385,15 +2383,16 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </sect2>
 
   <sect2 id="ssl-certificate-creation">
-   <title>Creating a Self-signed Certificate</title>
+   <title>Creating Certificates</title>
 
    <para>
-     To create a quick self-signed certificate for the server, valid for 365
+     To create a simple self-signed certificate for the server, valid for 365
      days, use the following <productname>OpenSSL</productname> command,
-     replacing <replaceable>yourdomain.com</replaceable> with the server's host name:
+     replacing <replaceable>dbhost.yourdomain.com</replaceable> with the
+     server's host name:
 <programlisting>
 openssl req -new -x509 -days 365 -nodes -text -out server.crt \
-  -keyout server.key -subj "/CN=<replaceable>yourdomain.com</replaceable>"
+  -keyout server.key -subj "/CN=<replaceable>dbhost.yourdomain.com</replaceable>"
 </programlisting>
     Then do:
 <programlisting>
@@ -2406,14 +2405,86 @@ chmod og-rwx server.key
    </para>
 
    <para>
-    A self-signed certificate can be used for testing, but a certificate
-    signed by a certificate authority (<acronym>CA</acronym>) (either one of the
-    global <acronym>CAs</acronym> or a local one) should be used in production
-    so that clients can verify the server's identity. If all the clients
-    are local to the organization, using a local <acronym>CA</acronym> is
-    recommended.
+    While a self-signed certificate can be used for testing, a certificate
+    signed by a certificate authority (<acronym>CA</acronym>) (usually an
+    enterprise-wide root <acronym>CA</acronym>) should be used in production.
    </para>
 
+   <para>
+    To create a server certificate whose identity can be validated
+    by clients, first create a certificate signing request
+    (<acronym>CSR</acronym>) and a public/private key file:
+<programlisting>
+openssl req -new -nodes -text -out root.csr \
+  -keyout root.key -subj "/CN=<replaceable>root.yourdomain.com</replaceable>"
+chmod og-rwx root.key
+</programlisting>
+    Then, sign the request with the key to create a root certificate
+    authority (using the default <productname>OpenSSL</productname>
+    configuration file location on <productname>Linux</productname>):
+<programlisting>
+openssl x509 -req -in root.csr -text -days 3650 \
+  -extfile /etc/ssl/openssl.cnf -extensions v3_ca \
+  -signkey root.key -out root.crt
+</programlisting>
+    Finally, create a server certificate signed by the new root certificate
+    authority:
+<programlisting>
+openssl req -new -nodes -text -out server.csr \
+  -keyout server.key -subj "/CN=<replaceable>dbhost.yourdomain.com</replaceable>"
+chmod og-rwx server.key
+
+openssl x509 -req -in server.csr -text -days 365 \
+  -CA root.crt -CAkey root.key -CAcreateserial \
+  -out server.crt
+</programlisting>
+    <filename>server.crt</filename> and <filename>server.key</filename>
+    should be stored on the server, and <filename>root.crt</filename> should
+    be stored on the client so the client can verify that the server's leaf
+    certificate was signed by its trusted root certificate. 
+    <filename>root.key</filename> should be stored offline for use in
+    creating future certificates.
+   </para>
+
+   <para>
+    It is also possible to create a chain of trust that includes
+    intermediate certificates:
+<programlisting>
+# root
+openssl req -new -nodes -text -out root.csr \
+  -keyout root.key -subj "/CN=<replaceable>root.yourdomain.com</replaceable>"
+chmod og-rwx root.key
+openssl x509 -req -in root.csr -text -days 3650 \
+  -extfile /etc/ssl/openssl.cnf -extensions v3_ca \
+  -signkey root.key -out root.crt
+
+# intermediate
+openssl req -new -nodes -text -out intermediate.csr \
+  -keyout intermediate.key -subj "/CN=<replaceable>intermediate.yourdomain.com</replaceable>"
+chmod og-rwx intermediate.key
+openssl x509 -req -in intermediate.csr -text -days 1825 \
+  -extfile /etc/ssl/openssl.cnf -extensions v3_ca \
+  -CA root.crt -CAkey root.key -CAcreateserial \
+  -out intermediate.crt
+
+# leaf
+openssl req -new -nodes -text -out server.csr \
+  -keyout server.key -subj "/CN=<replaceable>dbhost.yourdomain.com</replaceable>"
+chmod og-rwx server.key
+openssl x509 -req -in server.csr -text -days 365 \
+  -CA intermediate.crt -CAkey intermediate.key -CAcreateserial \
+  -out server.crt
+</programlisting>
+    <filename>server.crt</filename> and
+    <filename>intermediate.crt</filename> should be concatenated
+    into a certificate file bundle and stored on the server.
+    <filename>server.key</filename> should also be stored on the server.
+    <filename>root.crt</filename> should be stored on the client so
+    the client can verify that the server's leaf certificate was signed
+    by a chain of certificates linked to its trusted root certificate.
+    <filename>root.key</filename> and <filename>intermediate.key</filename>
+    should be stored offline for use in creating future certificates.
+   </para>
   </sect2>
 
  </sect1>
