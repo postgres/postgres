@@ -1002,6 +1002,47 @@ $$ LANGUAGE pltcl;
     </para>
    </sect1>
 
+   <sect1 id="pltcl-transactions">
+    <title>Transaction Management</title>
+
+    <para>
+     In a procedure called from the top level or an anonymous code block
+     (<command>DO</command> command) called from the top level it is possible
+     to control transactions.  To commit the current transaction, call the
+     <literal>commit</literal> command.  To roll back the current transaction,
+     call the <literal>rollback</literal> command.  (Note that it is not
+     possible to run the SQL commands <command>COMMIT</command> or
+     <command>ROLLBACK</command> via <function>spi_exec</function> or similar.
+     It has to be done using these functions.)  After a transaction is ended,
+     a new transaction is automatically started, so there is no separate
+     command for that.
+    </para>
+
+    <para>
+     Here is an example:
+<programlisting>
+CREATE PROCEDURE transaction_test1()
+LANGUAGE pltcl
+AS $$
+for {set i 0} {$i &lt; 10} {incr i} {
+    spi_exec "INSERT INTO test1 (a) VALUES ($i)"
+    if {$i % 2 == 0} {
+        commit
+    } else {
+        rollback
+    }
+}
+$$;
+
+CALL transaction_test1();
+</programlisting>
+    </para>
+
+    <para>
+     Transactions cannot be ended when an explicit subtransaction is active.
+    </para>
+   </sect1>
+
    <sect1 id="pltcl-config">
     <title>PL/Tcl Configuration</title>
 

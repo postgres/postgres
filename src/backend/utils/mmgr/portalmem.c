@@ -742,11 +742,8 @@ PreCommit_Portals(bool isPrepare)
 /*
  * Abort processing for portals.
  *
- * At this point we reset "active" status and run the cleanup hook if
- * present, but we can't release the portal's memory until the cleanup call.
- *
- * The reason we need to reset active is so that we can replace the unnamed
- * portal, else we'll fail to execute ROLLBACK when it arrives.
+ * At this point we run the cleanup hook if present, but we can't release the
+ * portal's memory until the cleanup call.
  */
 void
 AtAbort_Portals(void)
@@ -759,17 +756,6 @@ AtAbort_Portals(void)
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
 		Portal		portal = hentry->portal;
-
-		/*
-		 * See similar code in AtSubAbort_Portals().  This would fire if code
-		 * orchestrating multiple top-level transactions within a portal, such
-		 * as VACUUM, caught errors and continued under the same portal with a
-		 * fresh transaction.  No part of core PostgreSQL functions that way.
-		 * XXX Such code would wish the portal to remain ACTIVE, as in
-		 * PreCommit_Portals().
-		 */
-		if (portal->status == PORTAL_ACTIVE)
-			MarkPortalFailed(portal);
 
 		/*
 		 * Do nothing else to cursors held over from a previous transaction.
@@ -810,9 +796,10 @@ AtAbort_Portals(void)
 		 * Although we can't delete the portal data structure proper, we can
 		 * release any memory in subsidiary contexts, such as executor state.
 		 * The cleanup hook was the last thing that might have needed data
-		 * there.
+		 * there.  But leave active portals alone.
 		 */
-		MemoryContextDeleteChildren(portal->portalContext);
+		if (portal->status != PORTAL_ACTIVE)
+			MemoryContextDeleteChildren(portal->portalContext);
 	}
 }
 
@@ -831,6 +818,13 @@ AtCleanup_Portals(void)
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
 		Portal		portal = hentry->portal;
+
+		/*
+		 * Do not touch active portals --- this can only happen in the case of
+		 * a multi-transaction command.
+		 */
+		if (portal->status == PORTAL_ACTIVE)
+			continue;
 
 		/* Do nothing to cursors held over from a previous transaction */
 		if (portal->createSubid == InvalidSubTransactionId)
@@ -1160,4 +1154,23 @@ ThereAreNoReadyPortals(void)
 	}
 
 	return true;
+}
+
+bool
+ThereArePinnedPortals(void)
+{
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+
+	hash_seq_init(&status, PortalHashTable);
+
+	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Portal		portal = hentry->portal;
+
+		if (portal->portalPinned)
+			return true;
+	}
+
+	return false;
 }

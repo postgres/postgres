@@ -70,6 +70,13 @@ CALL <replaceable class="parameter">name</replaceable> ( [ <replaceable class="p
   <para>
    To call a function (not a procedure), use <command>SELECT</command> instead.
   </para>
+
+  <para>
+   If <command>CALL</command> is executed in a transaction block, then the
+   called procedure cannot execute transaction control statements.
+   Transaction control statements are only allowed if <command>CALL</command>
+   is executed in its own transaction.
+  </para>
  </refsect1>
 
  <refsect1>

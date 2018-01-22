@@ -290,6 +290,10 @@ static int exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 					 PLpgSQL_stmt_dynexecute *stmt);
 static int exec_stmt_dynfors(PLpgSQL_execstate *estate,
 				  PLpgSQL_stmt_dynfors *stmt);
+static int exec_stmt_commit(PLpgSQL_execstate *estate,
+				PLpgSQL_stmt_commit *stmt);
+static int exec_stmt_rollback(PLpgSQL_execstate *estate,
+				PLpgSQL_stmt_rollback *stmt);
 
 static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
 					 PLpgSQL_function *func,
@@ -1729,6 +1733,14 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 
 		case PLPGSQL_STMT_CLOSE:
 			rc = exec_stmt_close(estate, (PLpgSQL_stmt_close *) stmt);
+			break;
+
+		case PLPGSQL_STMT_COMMIT:
+			rc = exec_stmt_commit(estate, (PLpgSQL_stmt_commit *) stmt);
+			break;
+
+		case PLPGSQL_STMT_ROLLBACK:
+			rc = exec_stmt_rollback(estate, (PLpgSQL_stmt_rollback *) stmt);
 			break;
 
 		default:
@@ -4264,6 +4276,57 @@ exec_stmt_close(PLpgSQL_execstate *estate, PLpgSQL_stmt_close *stmt)
 	return PLPGSQL_RC_OK;
 }
 
+/*
+ * exec_stmt_commit
+ *
+ * Commit the transaction.
+ */
+static int
+exec_stmt_commit(PLpgSQL_execstate *estate, PLpgSQL_stmt_commit *stmt)
+{
+	/*
+	 * XXX This could be implemented by converting the pinned portals to
+	 * holdable ones and organizing the cleanup separately.
+	 */
+	if (ThereArePinnedPortals())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("committing inside a cursor loop is not supported")));
+
+	SPI_commit();
+	SPI_start_transaction();
+
+	estate->simple_eval_estate = NULL;
+	plpgsql_create_econtext(estate);
+
+	return PLPGSQL_RC_OK;
+}
+
+/*
+ * exec_stmt_rollback
+ *
+ * Abort the transaction.
+ */
+static int
+exec_stmt_rollback(PLpgSQL_execstate *estate, PLpgSQL_stmt_rollback *stmt)
+{
+	/*
+	 * Unlike the COMMIT case above, this might not make sense at all,
+	 * especially if the query driving the cursor loop has side effects.
+	 */
+	if (ThereArePinnedPortals())
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
+				 errmsg("cannot abort transaction inside a cursor loop")));
+
+	SPI_rollback();
+	SPI_start_transaction();
+
+	estate->simple_eval_estate = NULL;
+	plpgsql_create_econtext(estate);
+
+	return PLPGSQL_RC_OK;
+}
 
 /* ----------
  * exec_assign_expr			Put an expression's result into a variable.
@@ -6767,8 +6830,7 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 	 */
 	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_PREPARE)
 	{
-		/* Shouldn't be any econtext stack entries left at commit */
-		Assert(simple_econtext_stack == NULL);
+		simple_econtext_stack = NULL;
 
 		if (shared_simple_eval_estate)
 			FreeExecutorState(shared_simple_eval_estate);

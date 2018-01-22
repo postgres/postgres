@@ -198,6 +198,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %type <stmt>	stmt_return stmt_raise stmt_assert stmt_execsql
 %type <stmt>	stmt_dynexecute stmt_for stmt_perform stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_move stmt_close stmt_null
+%type <stmt>	stmt_commit stmt_rollback
 %type <stmt>	stmt_case stmt_foreach_a
 
 %type <list>	proc_exceptions
@@ -260,6 +261,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %token <keyword>	K_COLLATE
 %token <keyword>	K_COLUMN
 %token <keyword>	K_COLUMN_NAME
+%token <keyword>	K_COMMIT
 %token <keyword>	K_CONSTANT
 %token <keyword>	K_CONSTRAINT
 %token <keyword>	K_CONSTRAINT_NAME
@@ -325,6 +327,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %token <keyword>	K_RETURN
 %token <keyword>	K_RETURNED_SQLSTATE
 %token <keyword>	K_REVERSE
+%token <keyword>	K_ROLLBACK
 %token <keyword>	K_ROW_COUNT
 %token <keyword>	K_ROWTYPE
 %token <keyword>	K_SCHEMA
@@ -896,6 +899,10 @@ proc_stmt		: pl_block ';'
 				| stmt_close
 						{ $$ = $1; }
 				| stmt_null
+						{ $$ = $1; }
+				| stmt_commit
+						{ $$ = $1; }
+				| stmt_rollback
 						{ $$ = $1; }
 				;
 
@@ -2151,6 +2158,31 @@ stmt_null		: K_NULL ';'
 					}
 				;
 
+stmt_commit		: K_COMMIT ';'
+					{
+						PLpgSQL_stmt_commit *new;
+
+						new = palloc(sizeof(PLpgSQL_stmt_commit));
+						new->cmd_type = PLPGSQL_STMT_COMMIT;
+						new->lineno = plpgsql_location_to_lineno(@1);
+
+						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+stmt_rollback	: K_ROLLBACK ';'
+					{
+						PLpgSQL_stmt_rollback *new;
+
+						new = palloc(sizeof(PLpgSQL_stmt_rollback));
+						new->cmd_type = PLPGSQL_STMT_ROLLBACK;
+						new->lineno = plpgsql_location_to_lineno(@1);
+
+						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+
 cursor_variable	: T_DATUM
 					{
 						/*
@@ -2387,6 +2419,7 @@ unreserved_keyword	:
 				| K_COLLATE
 				| K_COLUMN
 				| K_COLUMN_NAME
+				| K_COMMIT
 				| K_CONSTANT
 				| K_CONSTRAINT
 				| K_CONSTRAINT_NAME
@@ -2438,6 +2471,7 @@ unreserved_keyword	:
 				| K_RETURN
 				| K_RETURNED_SQLSTATE
 				| K_REVERSE
+				| K_ROLLBACK
 				| K_ROW_COUNT
 				| K_ROWTYPE
 				| K_SCHEMA

@@ -3449,6 +3449,48 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
 
   </sect1>
 
+  <sect1 id="plpgsql-transactions">
+   <title>Transaction Management</title>
+
+   <para>
+    In procedures invoked by the <command>CALL</command> command from the top
+    level as well as in anonymous code blocks (<command>DO</command> command)
+    called from the top level, it is possible to end transactions using the
+    commands <command>COMMIT</command> and <command>ROLLBACK</command>.  A new
+    transaction is started automatically after a transaction is ended using
+    these commands, so there is no separate <command>START
+    TRANSACTION</command> command.  (Note that <command>BEGIN</command> and
+    <command>END</command> have different meanings in PL/pgSQL.)
+   </para>
+
+   <para>
+    Here is a simple example:
+<programlisting>
+CREATE PROCEDURE transaction_test1()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    FOR i IN 0..9 LOOP
+        INSERT INTO test1 (a) VALUES (i);
+        IF i % 2 = 0 THEN
+            COMMIT;
+        ELSE
+            ROLLBACK;
+        END IF;
+    END LOOP;
+END
+$$;
+
+CALL transaction_test1();
+</programlisting>
+   </para>
+
+   <para>
+    A transaction cannot be ended inside a loop over a query result, nor
+    inside a block with exception handlers.
+   </para>
+  </sect1>
+
   <sect1 id="plpgsql-errors-and-messages">
    <title>Errors and Messages</title>
 
@@ -5432,14 +5474,13 @@ SELECT * FROM cs_parse_url('http://foobar.com/query.cgi?baz');
 <programlisting>
 CREATE OR REPLACE PROCEDURE cs_create_job(v_job_id IN INTEGER) IS
     a_running_job_count INTEGER;
-    PRAGMA AUTONOMOUS_TRANSACTION; -- <co id="co.plpgsql-porting-pragma"/>
 BEGIN
-    LOCK TABLE cs_jobs IN EXCLUSIVE MODE; -- <co id="co.plpgsql-porting-locktable"/>
+    LOCK TABLE cs_jobs IN EXCLUSIVE MODE;
 
     SELECT count(*) INTO a_running_job_count FROM cs_jobs WHERE end_stamp IS NULL;
 
     IF a_running_job_count &gt; 0 THEN
-        COMMIT; -- free lock <co id="co.plpgsql-porting-commit"/>
+        COMMIT; -- free lock
         raise_application_error(-20000,
                  'Unable to create a new job: a job is currently running.');
     END IF;
@@ -5460,44 +5501,10 @@ show errors
    </para>
 
    <para>
-    Procedures like this can easily be converted into <productname>PostgreSQL</productname>
-    functions returning <type>void</type>. This procedure in
-    particular is interesting because it can teach us some things:
-
-    <calloutlist>
-     <callout arearefs="co.plpgsql-porting-pragma">
-      <para>
-       There is no <literal>PRAGMA</literal> statement in <productname>PostgreSQL</productname>.
-      </para>
-     </callout>
-
-     <callout arearefs="co.plpgsql-porting-locktable">
-      <para>
-       If you do a <command>LOCK TABLE</command> in <application>PL/pgSQL</application>,
-       the lock will not be released until the calling transaction is
-       finished.
-      </para>
-     </callout>
-
-     <callout arearefs="co.plpgsql-porting-commit">
-      <para>
-       You cannot issue <command>COMMIT</command> in a
-       <application>PL/pgSQL</application> function.  The function is
-       running within some outer transaction and so <command>COMMIT</command>
-       would imply terminating the function's execution.  However, in
-       this particular case it is not necessary anyway, because the lock
-       obtained by the <command>LOCK TABLE</command> will be released when
-       we raise an error.
-      </para>
-     </callout>
-    </calloutlist>
-   </para>
-
-   <para>
     This is how we could port this procedure to <application>PL/pgSQL</application>:
 
 <programlisting>
-CREATE OR REPLACE FUNCTION cs_create_job(v_job_id integer) RETURNS void AS $$
+CREATE OR REPLACE PROCEDURE cs_create_job(v_job_id integer) AS $$
 DECLARE
     a_running_job_count integer;
 BEGIN
@@ -5506,6 +5513,7 @@ BEGIN
     SELECT count(*) INTO a_running_job_count FROM cs_jobs WHERE end_stamp IS NULL;
 
     IF a_running_job_count &gt; 0 THEN
+        COMMIT; -- free lock
         RAISE EXCEPTION 'Unable to create a new job: a job is currently running'; -- <co id="co.plpgsql-porting-raise"/>
     END IF;
 
@@ -5518,6 +5526,7 @@ BEGIN
         WHEN unique_violation THEN -- <co id="co.plpgsql-porting-exception"/>
             -- don't worry if it already exists
     END;
+    COMMIT;
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
@@ -5541,12 +5550,6 @@ $$ LANGUAGE plpgsql;
       </para>
      </callout>
     </calloutlist>
-
-    The main functional difference between this procedure and the
-    Oracle equivalent is that the exclusive lock on the <literal>cs_jobs</literal>
-    table will be held until the calling transaction completes.  Also, if
-    the caller later aborts (for example due to an error), the effects of
-    this procedure will be rolled back.
    </para>
    </example>
   </sect2>

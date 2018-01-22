@@ -661,6 +661,60 @@ SELECT release_hosts_query();
     </para>
     </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term>
+      <literal><function>spi_commit()</function></literal>
+      <indexterm>
+       <primary>spi_commit</primary>
+       <secondary>in PL/Perl</secondary>
+     </indexterm>
+     </term>
+     <term>
+      <literal><function>spi_rollback()</function></literal>
+      <indexterm>
+       <primary>spi_rollback</primary>
+       <secondary>in PL/Perl</secondary>
+      </indexterm>
+     </term>
+     <listitem>
+      <para>
+       Commit or roll back the current transaction.  This can only be called
+       in a procedure or anonymous code block (<command>DO</command> command)
+       called from the top level.  (Note that it is not possible to run the
+       SQL commands <command>COMMIT</command> or <command>ROLLBACK</command>
+       via <function>spi_exec_query</function> or similar.  It has to be done
+       using these functions.)  After a transaction is ended, a new
+       transaction is automatically started, so there is no separate function
+       for that.
+      </para>
+
+      <para>
+       Here is an example:
+<programlisting>
+CREATE PROCEDURE transaction_test1()
+LANGUAGE plperl
+AS $$
+foreach my $i (0..9) {
+    spi_exec_query("INSERT INTO test1 (a) VALUES ($i)");
+    if ($i % 2 == 0) {
+        spi_commit();
+    } else {
+        spi_rollback();
+    }
+}
+$$;
+
+CALL transaction_test1();
+</programlisting>
+      </para>
+
+      <para>
+       Transactions cannot be ended when a cursor created by
+       <function>spi_query</function> is open.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
  </sect2>
 

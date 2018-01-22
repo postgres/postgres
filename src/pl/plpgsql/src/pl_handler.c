@@ -219,15 +219,20 @@ PG_FUNCTION_INFO_V1(plpgsql_call_handler);
 Datum
 plpgsql_call_handler(PG_FUNCTION_ARGS)
 {
+	bool		nonatomic;
 	PLpgSQL_function *func;
 	PLpgSQL_execstate *save_cur_estate;
 	Datum		retval;
 	int			rc;
 
+	nonatomic = fcinfo->context &&
+		IsA(fcinfo->context, CallContext) &&
+		!castNode(CallContext, fcinfo->context)->atomic;
+
 	/*
 	 * Connect to SPI manager
 	 */
-	if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+	if ((rc = SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0)) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
 	/* Find or compile the function */
@@ -301,7 +306,7 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	/*
 	 * Connect to SPI manager
 	 */
-	if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+	if ((rc = SPI_connect_ext(codeblock->atomic ? 0 : SPI_OPT_NONATOMIC)) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
 	/* Compile the anonymous code block */

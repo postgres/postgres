@@ -229,6 +229,13 @@ CREATE [ OR REPLACE ] PROCEDURE
       </para>
 
       <para>
+       If a <literal>SET</literal> clause is attached to a procedure, then
+       that procedure cannot execute transaction control statements (for
+       example, <command>COMMIT</command> and <command>ROLLBACK</command>,
+       depending on the language).
+      </para>
+
+      <para>
        See <xref linkend="sql-set"/> and
        <xref linkend="runtime-config"/>
        for more information about allowed parameter names and values.

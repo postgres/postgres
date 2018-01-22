@@ -6,8 +6,10 @@
 
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+#include "utils/snapmgr.h"
 
 #include "plpython.h"
 
@@ -15,6 +17,7 @@
 
 #include "plpy_cursorobject.h"
 #include "plpy_elog.h"
+#include "plpy_main.h"
 #include "plpy_planobject.h"
 #include "plpy_resultobject.h"
 #include "plpy_spi.h"
@@ -41,6 +44,8 @@ static PyObject *PLy_fatal(PyObject *self, PyObject *args, PyObject *kw);
 static PyObject *PLy_quote_literal(PyObject *self, PyObject *args);
 static PyObject *PLy_quote_nullable(PyObject *self, PyObject *args);
 static PyObject *PLy_quote_ident(PyObject *self, PyObject *args);
+static PyObject *PLy_commit(PyObject *self, PyObject *args);
+static PyObject *PLy_rollback(PyObject *self, PyObject *args);
 
 
 /* A list of all known exceptions, generated from backend/utils/errcodes.txt */
@@ -94,6 +99,12 @@ static PyMethodDef PLy_methods[] = {
 	 * create a cursor
 	 */
 	{"cursor", PLy_cursor, METH_VARARGS, NULL},
+
+	/*
+	 * transaction control
+	 */
+	{"commit", PLy_commit, METH_NOARGS, NULL},
+	{"rollback", PLy_rollback, METH_NOARGS, NULL},
 
 	{NULL, NULL, 0, NULL}
 };
@@ -575,5 +586,43 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	/*
 	 * return a legal object so the interpreter will continue on its merry way
 	 */
+	Py_RETURN_NONE;
+}
+
+static PyObject *
+PLy_commit(PyObject *self, PyObject *args)
+{
+	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
+
+	if (ThereArePinnedPortals())
+	   ereport(ERROR,
+			   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("cannot commit transaction while a cursor is open")));
+
+	SPI_commit();
+	SPI_start_transaction();
+
+	/* was cleared at transaction end, reset pointer */
+	exec_ctx->scratch_ctx = NULL;
+
+	Py_RETURN_NONE;
+}
+
+static PyObject *
+PLy_rollback(PyObject *self, PyObject *args)
+{
+	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
+
+	if (ThereArePinnedPortals())
+	   ereport(ERROR,
+			   (errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
+				errmsg("cannot abort transaction while a cursor is open")));
+
+	SPI_rollback();
+	SPI_start_transaction();
+
+	/* was cleared at transaction end, reset pointer */
+	exec_ctx->scratch_ctx = NULL;
+
 	Py_RETURN_NONE;
 }

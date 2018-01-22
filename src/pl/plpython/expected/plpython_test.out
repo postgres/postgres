@@ -48,6 +48,7 @@ select module_contents();
  Error
  Fatal
  SPIError
+ commit
  cursor
  debug
  error
@@ -60,10 +61,11 @@ select module_contents();
  quote_ident
  quote_literal
  quote_nullable
+ rollback
  spiexceptions
  subtransaction
  warning
-(18 rows)
+(20 rows)
 
 CREATE FUNCTION elog_test_basic() RETURNS void
 AS $$

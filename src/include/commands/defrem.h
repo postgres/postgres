@@ -59,8 +59,8 @@ extern ObjectAddress CreateTransform(CreateTransformStmt *stmt);
 extern void DropTransformById(Oid transformOid);
 extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
 						   oidvector *proargtypes, Oid nspOid);
-extern void ExecuteDoStmt(DoStmt *stmt);
-extern void ExecuteCallStmt(ParseState *pstate, CallStmt *stmt);
+extern void ExecuteDoStmt(DoStmt *stmt, bool atomic);
+extern void ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic);
 extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 extern Oid	get_transform_oid(Oid type_id, Oid lang_id, bool missing_ok);
 extern void interpret_function_parameter_list(ParseState *pstate,

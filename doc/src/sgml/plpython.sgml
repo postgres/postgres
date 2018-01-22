@@ -1370,6 +1370,47 @@ $$ LANGUAGE plpythonu;
   </sect2>
  </sect1>
 
+ <sect1 id="plpython-transactions">
+  <title>Transaction Management</title>
+
+  <para>
+   In a procedure called from the top level or an anonymous code block
+   (<command>DO</command> command) called from the top level it is possible to
+   control transactions.  To commit the current transaction, call
+   <literal>plpy.commit()</literal>.  To roll back the current transaction,
+   call <literal>plpy.rollback()</literal>.  (Note that it is not possible to
+   run the SQL commands <command>COMMIT</command> or
+   <command>ROLLBACK</command> via <function>plpy.execute</function> or
+   similar.  It has to be done using these functions.)  After a transaction is
+   ended, a new transaction is automatically started, so there is no separate
+   function for that.
+  </para>
+
+  <para>
+   Here is an example:
+<programlisting>
+CREATE PROCEDURE transaction_test1()
+LANGUAGE plpythonu
+AS $$
+for i in range(0, 10):
+    plpy.execute("INSERT INTO test1 (a) VALUES (%d)" % i)
+    if i % 2 == 0:
+        plpy.commit()
+    else:
+        plpy.rollback()
+$$;
+
+CALL transaction_test1();
+</programlisting>
+  </para>
+
+  <para>
+   Transactions cannot be ended when a cursor created by
+   <literal>plpy.cursor</literal> is open or when an explicit subtransaction
+   is active.
+  </para>
+ </sect1>
+
  <sect1 id="plpython-util">
   <title>Utility Functions</title>
   <para>

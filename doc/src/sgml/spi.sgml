@@ -64,6 +64,7 @@
 
  <refentry id="spi-spi-connect">
   <indexterm><primary>SPI_connect</primary></indexterm>
+  <indexterm><primary>SPI_connect_ext</primary></indexterm>
 
   <refmeta>
    <refentrytitle>SPI_connect</refentrytitle>
@@ -72,12 +73,17 @@
 
   <refnamediv>
    <refname>SPI_connect</refname>
+   <refname>SPI_connect_ext</refname>
    <refpurpose>connect a procedure to the SPI manager</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
 <synopsis>
 int SPI_connect(void)
+</synopsis>
+
+ <synopsis>
+int SPI_connect_ext(int <parameter>options</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -89,6 +95,31 @@ int SPI_connect(void)
    procedure invocation to the SPI manager.  You must call this
    function if you want to execute commands through SPI.  Some utility
    SPI functions can be called from unconnected procedures.
+  </para>
+
+  <para>
+   <function>SPI_connect_ext</function> does the same but has an argument that
+   allows passing option flags.  Currently, the following option values are
+   available:
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SPI_OPT_NONATOMIC</symbol></term>
+     <listitem>
+      <para>
+       Sets the SPI connection to be <firstterm>nonatomic</firstterm>, which
+       means that transaction control calls <function>SPI_commit</function>,
+       <function>SPI_rollback</function>, and
+       <function>SPI_start_transaction</function> are allowed.  Otherwise,
+       calling these functions will result in an immediate error.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   <literal>SPI_connect()</literal> is equivalent to
+   <literal>SPI_connect_ext(0)</literal>.
   </para>
  </refsect1>
 
@@ -4319,6 +4350,152 @@ int SPI_freeplan(SPIPlanPtr <parameter>plan</parameter>)
    0 on success;
    <symbol>SPI_ERROR_ARGUMENT</symbol> if <parameter>plan</parameter>
    is <symbol>NULL</symbol> or invalid
+  </para>
+ </refsect1>
+</refentry>
+
+ </sect1>
+
+ <sect1 id="spi-transaction">
+  <title>Transaction Management</title>
+
+  <para>
+   It is not possible to run transaction control commands such
+   as <command>COMMIT</command> and <command>ROLLBACK</command> through SPI
+   functions such as <function>SPI_execute</function>.  There are, however,
+   separate interface functions that allow transaction control through SPI.
+  </para>
+
+  <para>
+   It is not generally safe and sensible to start and end transactions in
+   arbitrary user-defined SQL-callable functions without taking into account
+   the context in which they are called.  For example, a transaction boundary
+   in the middle of a function that is part of a complex SQL expression that
+   is part of some SQL command will probably result in obscure internal errors
+   or crashes.  The interface functions presented here are primarily intended
+   to be used by procedural language implementations to support transaction
+   management in procedures that are invoked by the <command>CALL</command>
+   command, taking the context of the <command>CALL</command> invocation into
+   account.  SPI procedures implemented in C can implement the same logic, but
+   the details of that are beyond the scope of this documentation.
+  </para>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-commit">
+ <indexterm><primary>SPI_commit</primary></indexterm>
+
+ <refmeta>
+  <refentrytitle>SPI_commit</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_commit</refname>
+  <refpurpose>commit the current transaction</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+void SPI_commit(void)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_commit</function> commits the current transaction.  It is
+   approximately equivalent to running the SQL
+   command <command>COMMIT</command>.  After a transaction is committed, a new
+   transaction has to be started
+   using <function>SPI_start_transaction</function> before further database
+   actions can be executed.
+  </para>
+
+  <para>
+   This function can only be executed if the SPI connection has been set as
+   nonatomic in the call to <function>SPI_connect_ext</function>.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-rollback">
+ <indexterm><primary>SPI_rollback</primary></indexterm>
+
+ <refmeta>
+  <refentrytitle>SPI_rollback</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_rollback</refname>
+  <refpurpose>abort the current transaction</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+void SPI_rollback(void)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_rollback</function> rolls back the current transaction.  It
+   is approximately equivalent to running the SQL
+   command <command>ROLLBACK</command>.  After a transaction is rolled back, a
+   new transaction has to be started
+   using <function>SPI_start_transaction</function> before further database
+   actions can be executed.
+  </para>
+
+  <para>
+   This function can only be executed if the SPI connection has been set as
+   nonatomic in the call to <function>SPI_connect_ext</function>.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-start-transaction">
+ <indexterm><primary>SPI_start_transaction</primary></indexterm>
+
+ <refmeta>
+  <refentrytitle>SPI_start_transaction</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_start_transaction</refname>
+  <refpurpose>start a new transaction</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+void SPI_start_transaction(void)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_start_transaction</function> starts a new transaction.  It
+   can only be called after <function>SPI_commit</function>
+   or <function>SPI_rollback</function>, as there is no transaction active at
+   that point.  Normally, when an SPI procedure is called, there is already a
+   transaction active, so attempting to start another one before closing out
+   the current one will result in an error.
+  </para>
+
+  <para>
+   This function can only be executed if the SPI connection has been set as
+   nonatomic in the call to <function>SPI_connect_ext</function>.
   </para>
  </refsect1>
 </refentry>

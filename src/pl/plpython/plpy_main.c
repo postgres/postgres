@@ -60,7 +60,7 @@ static void plpython_error_callback(void *arg);
 static void plpython_inline_error_callback(void *arg);
 static void PLy_init_interp(void);
 
-static PLyExecutionContext *PLy_push_execution_context(void);
+static PLyExecutionContext *PLy_push_execution_context(bool atomic_context);
 static void PLy_pop_execution_context(void);
 
 /* static state for Python library conflict detection */
@@ -219,14 +219,19 @@ plpython2_validator(PG_FUNCTION_ARGS)
 Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
 {
+	bool		nonatomic;
 	Datum		retval;
 	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
 
 	PLy_initialize();
 
+	nonatomic = fcinfo->context &&
+		IsA(fcinfo->context, CallContext) &&
+		!castNode(CallContext, fcinfo->context)->atomic;
+
 	/* Note: SPI_finish() happens in plpy_exec.c, which is dubious design */
-	if (SPI_connect() != SPI_OK_CONNECT)
+	if (SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
 	/*
@@ -235,7 +240,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	 * here and the PG_TRY.  (plpython_error_callback expects the stack entry
 	 * to be there, so we have to make the context first.)
 	 */
-	exec_ctx = PLy_push_execution_context();
+	exec_ctx = PLy_push_execution_context(!nonatomic);
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -303,7 +308,7 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	PLy_initialize();
 
 	/* Note: SPI_finish() happens in plpy_exec.c, which is dubious design */
-	if (SPI_connect() != SPI_OK_CONNECT)
+	if (SPI_connect_ext(codeblock->atomic ? 0 : SPI_OPT_NONATOMIC) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
 	MemSet(&fake_fcinfo, 0, sizeof(fake_fcinfo));
@@ -332,7 +337,7 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	 * need the stack entry, but for consistency with plpython_call_handler we
 	 * do it in this order.)
 	 */
-	exec_ctx = PLy_push_execution_context();
+	exec_ctx = PLy_push_execution_context(codeblock->atomic);
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -430,12 +435,14 @@ PLy_get_scratch_context(PLyExecutionContext *context)
 }
 
 static PLyExecutionContext *
-PLy_push_execution_context(void)
+PLy_push_execution_context(bool atomic_context)
 {
 	PLyExecutionContext *context;
 
+	/* Pick a memory context similar to what SPI uses. */
 	context = (PLyExecutionContext *)
-		MemoryContextAlloc(TopTransactionContext, sizeof(PLyExecutionContext));
+		MemoryContextAlloc(atomic_context ? TopTransactionContext : PortalContext,
+						   sizeof(PLyExecutionContext));
 	context->curr_proc = NULL;
 	context->scratch_ctx = NULL;
 	context->next = PLy_execution_contexts;

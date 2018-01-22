@@ -83,6 +83,12 @@ static bool _SPI_checktuples(void);
 int
 SPI_connect(void)
 {
+	return SPI_connect_ext(0);
+}
+
+int
+SPI_connect_ext(int options)
+{
 	int			newdepth;
 
 	/* Enlarge stack if necessary */
@@ -92,7 +98,7 @@ SPI_connect(void)
 			elog(ERROR, "SPI stack corrupted");
 		newdepth = 16;
 		_SPI_stack = (_SPI_connection *)
-			MemoryContextAlloc(TopTransactionContext,
+			MemoryContextAlloc(TopMemoryContext,
 							   newdepth * sizeof(_SPI_connection));
 		_SPI_stack_depth = newdepth;
 	}
@@ -124,19 +130,25 @@ SPI_connect(void)
 	_SPI_current->execCxt = NULL;
 	_SPI_current->connectSubid = GetCurrentSubTransactionId();
 	_SPI_current->queryEnv = NULL;
+	_SPI_current->atomic = (options & SPI_OPT_NONATOMIC ? false : true);
+	_SPI_current->internal_xact = false;
 
 	/*
 	 * Create memory contexts for this procedure
 	 *
-	 * XXX it would be better to use PortalContext as the parent context, but
-	 * we may not be inside a portal (consider deferred-trigger execution).
-	 * Perhaps CurTransactionContext would do?	For now it doesn't matter
-	 * because we clean up explicitly in AtEOSubXact_SPI().
+	 * In atomic contexts (the normal case), we use TopTransactionContext,
+	 * otherwise PortalContext, so that it lives across transaction
+	 * boundaries.
+	 *
+	 * XXX It could be better to use PortalContext as the parent context in
+	 * all cases, but we may not be inside a portal (consider deferred-trigger
+	 * execution).  Perhaps CurTransactionContext could be an option?  For now
+	 * it doesn't matter because we clean up explicitly in AtEOSubXact_SPI().
 	 */
-	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
+	_SPI_current->procCxt = AllocSetContextCreate(_SPI_current->atomic ? TopTransactionContext : PortalContext,
 												  "SPI Proc",
 												  ALLOCSET_DEFAULT_SIZES);
-	_SPI_current->execCxt = AllocSetContextCreate(TopTransactionContext,
+	_SPI_current->execCxt = AllocSetContextCreate(_SPI_current->atomic ? TopTransactionContext : _SPI_current->procCxt,
 												  "SPI Exec",
 												  ALLOCSET_DEFAULT_SIZES);
 	/* ... and switch to procedure's context */
@@ -181,12 +193,85 @@ SPI_finish(void)
 	return SPI_OK_FINISH;
 }
 
+void
+SPI_start_transaction(void)
+{
+	MemoryContext oldcontext = CurrentMemoryContext;
+
+	StartTransactionCommand();
+	MemoryContextSwitchTo(oldcontext);
+}
+
+void
+SPI_commit(void)
+{
+	MemoryContext oldcontext = CurrentMemoryContext;
+
+	if (_SPI_current->atomic)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
+				 errmsg("invalid transaction termination")));
+
+	/*
+	 * This restriction is required by PLs implemented on top of SPI.  They
+	 * use subtransactions to establish exception blocks that are supposed to
+	 * be rolled back together if there is an error.  Terminating the
+	 * top-level transaction in such a block violates that idea.  A future PL
+	 * implementation might have different ideas about this, in which case
+	 * this restriction would have to be refined or the check possibly be
+	 * moved out of SPI into the PLs.
+	 */
+	if (IsSubTransaction())
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
+				 errmsg("cannot commit while a subtransaction is active")));
+
+	_SPI_current->internal_xact = true;
+
+	if (ActiveSnapshotSet())
+		PopActiveSnapshot();
+	CommitTransactionCommand();
+	MemoryContextSwitchTo(oldcontext);
+
+	_SPI_current->internal_xact = false;
+}
+
+void
+SPI_rollback(void)
+{
+	MemoryContext oldcontext = CurrentMemoryContext;
+
+	if (_SPI_current->atomic)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
+				 errmsg("invalid transaction termination")));
+
+	/* see under SPI_commit() */
+	if (IsSubTransaction())
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
+				 errmsg("cannot roll back while a subtransaction is active")));
+
+	_SPI_current->internal_xact = true;
+
+	AbortCurrentTransaction();
+	MemoryContextSwitchTo(oldcontext);
+
+	_SPI_current->internal_xact = false;
+}
+
 /*
  * Clean up SPI state at transaction commit or abort.
  */
 void
 AtEOXact_SPI(bool isCommit)
 {
+	/*
+	 * Do nothing if the transaction end was initiated by SPI.
+	 */
+	if (_SPI_current && _SPI_current->internal_xact)
+		return;
+
 	/*
 	 * Note that memory contexts belonging to SPI stack entries will be freed
 	 * automatically, so we can ignore them here.  We just need to restore our
@@ -223,6 +308,9 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 
 		if (connection->connectSubid != mySubid)
 			break;				/* couldn't be any underneath it either */
+
+		if (connection->internal_xact)
+			break;
 
 		found = true;
 

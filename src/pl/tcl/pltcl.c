@@ -312,6 +312,10 @@ static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[]);
 static int pltcl_subtransaction(ClientData cdata, Tcl_Interp *interp,
 					 int objc, Tcl_Obj *const objv[]);
+static int pltcl_commit(ClientData cdata, Tcl_Interp *interp,
+					 int objc, Tcl_Obj *const objv[]);
+static int pltcl_rollback(ClientData cdata, Tcl_Interp *interp,
+					 int objc, Tcl_Obj *const objv[]);
 
 static void pltcl_subtrans_begin(MemoryContext oldcontext,
 					 ResourceOwner oldowner);
@@ -524,6 +528,10 @@ pltcl_init_interp(pltcl_interp_desc *interp_desc, Oid prolang, bool pltrusted)
 						 pltcl_SPI_lastoid, NULL, NULL);
 	Tcl_CreateObjCommand(interp, "subtransaction",
 						 pltcl_subtransaction, NULL, NULL);
+	Tcl_CreateObjCommand(interp, "commit",
+						 pltcl_commit, NULL, NULL);
+	Tcl_CreateObjCommand(interp, "rollback",
+						 pltcl_rollback, NULL, NULL);
 
 	/************************************************************
 	 * Call the appropriate start_proc, if there is one.
@@ -797,6 +805,7 @@ static Datum
 pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 				   bool pltrusted)
 {
+	bool		nonatomic;
 	pltcl_proc_desc *prodesc;
 	Tcl_Interp *volatile interp;
 	Tcl_Obj    *tcl_cmd;
@@ -804,8 +813,12 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 	int			tcl_rc;
 	Datum		retval;
 
+	nonatomic = fcinfo->context &&
+		IsA(fcinfo->context, CallContext) &&
+		!castNode(CallContext, fcinfo->context)->atomic;
+
 	/* Connect to SPI manager */
-	if (SPI_connect() != SPI_OK_CONNECT)
+	if (SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0) != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
 
 	/* Find or compile the function */
@@ -2933,6 +2946,86 @@ pltcl_subtransaction(ClientData cdata, Tcl_Interp *interp,
 	CurrentResourceOwner = oldowner;
 
 	return retcode;
+}
+
+
+/**********************************************************************
+ * pltcl_commit()
+ *
+ * Commit the transaction and start a new one.
+ **********************************************************************/
+static int
+pltcl_commit(ClientData cdata, Tcl_Interp *interp,
+			 int objc, Tcl_Obj *const objv[])
+{
+	MemoryContext oldcontext = CurrentMemoryContext;
+
+	PG_TRY();
+	{
+		SPI_commit();
+		SPI_start_transaction();
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
+
+		/* Save error info */
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		/* Pass the error data to Tcl */
+		pltcl_construct_errorCode(interp, edata);
+		UTF_BEGIN;
+		Tcl_SetObjResult(interp, Tcl_NewStringObj(UTF_E2U(edata->message), -1));
+		UTF_END;
+		FreeErrorData(edata);
+
+		return TCL_ERROR;
+	}
+	PG_END_TRY();
+
+	return TCL_OK;
+}
+
+
+/**********************************************************************
+ * pltcl_rollback()
+ *
+ * Abort the transaction and start a new one.
+ **********************************************************************/
+static int
+pltcl_rollback(ClientData cdata, Tcl_Interp *interp,
+			   int objc, Tcl_Obj *const objv[])
+{
+	MemoryContext oldcontext = CurrentMemoryContext;
+
+	PG_TRY();
+	{
+		SPI_rollback();
+		SPI_start_transaction();
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
+
+		/* Save error info */
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		/* Pass the error data to Tcl */
+		pltcl_construct_errorCode(interp, edata);
+		UTF_BEGIN;
+		Tcl_SetObjResult(interp, Tcl_NewStringObj(UTF_E2U(edata->message), -1));
+		UTF_END;
+		FreeErrorData(edata);
+
+		return TCL_ERROR;
+	}
+	PG_END_TRY();
+
+	return TCL_OK;
 }
 
 

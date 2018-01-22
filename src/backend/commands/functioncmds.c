@@ -65,6 +65,7 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -2136,9 +2137,11 @@ IsThereFunctionInNamespace(const char *proname, int pronargs,
 /*
  * ExecuteDoStmt
  *		Execute inline procedural-language code
+ *
+ * See at ExecuteCallStmt() about the atomic argument.
  */
 void
-ExecuteDoStmt(DoStmt *stmt)
+ExecuteDoStmt(DoStmt *stmt, bool atomic)
 {
 	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
 	ListCell   *arg;
@@ -2200,6 +2203,7 @@ ExecuteDoStmt(DoStmt *stmt)
 	codeblock->langOid = HeapTupleGetOid(languageTuple);
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 	codeblock->langIsTrusted = languageStruct->lanpltrusted;
+	codeblock->atomic = atomic;
 
 	if (languageStruct->lanpltrusted)
 	{
@@ -2236,9 +2240,28 @@ ExecuteDoStmt(DoStmt *stmt)
 
 /*
  * Execute CALL statement
+ *
+ * Inside a top-level CALL statement, transaction-terminating commands such as
+ * COMMIT or a PL-specific equivalent are allowed.  The terminology in the SQL
+ * standard is that CALL establishes a non-atomic execution context.  Most
+ * other commands establish an atomic execution context, in which transaction
+ * control actions are not allowed.  If there are nested executions of CALL,
+ * we want to track the execution context recursively, so that the nested
+ * CALLs can also do transaction control.  Note, however, that for example in
+ * CALL -> SELECT -> CALL, the second call cannot do transaction control,
+ * because the SELECT in between establishes an atomic execution context.
+ *
+ * So when ExecuteCallStmt() is called from the top level, we pass in atomic =
+ * false (recall that that means transactions = yes).  We then create a
+ * CallContext node with content atomic = false, which is passed in the
+ * fcinfo->context field to the procedure invocation.  The language
+ * implementation should then take appropriate measures to allow or prevent
+ * transaction commands based on that information, e.g., call
+ * SPI_connect_ext(SPI_OPT_NONATOMIC).  The language should also pass on the
+ * atomic flag to any nested invocations to CALL.
  */
 void
-ExecuteCallStmt(ParseState *pstate, CallStmt *stmt)
+ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 {
 	List	   *targs;
 	ListCell   *lc;
@@ -2249,6 +2272,8 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt)
 	AclResult   aclresult;
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;
+	CallContext *callcontext;
+	HeapTuple	tp;
 
 	targs = NIL;
 	foreach(lc, stmt->funccall->args)
@@ -2284,8 +2309,24 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt)
 							   FUNC_MAX_ARGS,
 							   FUNC_MAX_ARGS)));
 
+	callcontext = makeNode(CallContext);
+	callcontext->atomic = atomic;
+
+	/*
+	 * If proconfig is set we can't allow transaction commands because of the
+	 * way the GUC stacking works: The transaction boundary would have to pop
+	 * the proconfig setting off the stack.  That restriction could be lifted
+	 * by redesigning the GUC nesting mechanism a bit.
+	 */
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(fexpr->funcid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for function %u", fexpr->funcid);
+	if (!heap_attisnull(tp, Anum_pg_proc_proconfig))
+		callcontext->atomic = true;
+	ReleaseSysCache(tp);
+
 	fmgr_info(fexpr->funcid, &flinfo);
-	InitFunctionCallInfoData(fcinfo, &flinfo, nargs, fexpr->inputcollid, NULL, NULL);
+	InitFunctionCallInfoData(fcinfo, &flinfo, nargs, fexpr->inputcollid, (Node *) callcontext, NULL);
 
 	i = 0;
 	foreach (lc, fexpr->args)

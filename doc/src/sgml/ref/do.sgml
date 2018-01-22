@@ -91,6 +91,13 @@ DO [ LANGUAGE <replaceable class="parameter">lang_name</replaceable> ] <replacea
    This is the same privilege requirement as for creating a function
    in the language.
   </para>
+
+  <para>
+   If <command>DO</command> is executed in a transaction block, then the
+   procedure code cannot execute transaction control statements.  Transaction
+   control statements are only allowed if <command>DO</command> is executed in
+   its own transaction.
+  </para>
  </refsect1>
 
  <refsect1 id="sql-do-examples">

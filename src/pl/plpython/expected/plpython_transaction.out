@@ -1,0 +1,135 @@
+CREATE TABLE test1 (a int, b text);
+CREATE PROCEDURE transaction_test1()
+LANGUAGE plpythonu
+AS $$
+for i in range(0, 10):
+    plpy.execute("INSERT INTO test1 (a) VALUES (%d)" % i)
+    if i % 2 == 0:
+        plpy.commit()
+    else:
+        plpy.rollback()
+$$;
+CALL transaction_test1();
+SELECT * FROM test1;
+ a | b 
+---+---
+ 0 | 
+ 2 | 
+ 4 | 
+ 6 | 
+ 8 | 
+(5 rows)
+
+TRUNCATE test1;
+DO
+LANGUAGE plpythonu
+$$
+for i in range(0, 10):
+    plpy.execute("INSERT INTO test1 (a) VALUES (%d)" % i)
+    if i % 2 == 0:
+        plpy.commit()
+    else:
+        plpy.rollback()
+$$;
+SELECT * FROM test1;
+ a | b 
+---+---
+ 0 | 
+ 2 | 
+ 4 | 
+ 6 | 
+ 8 | 
+(5 rows)
+
+TRUNCATE test1;
+-- not allowed in a function
+CREATE FUNCTION transaction_test2() RETURNS int
+LANGUAGE plpythonu
+AS $$
+for i in range(0, 10):
+    plpy.execute("INSERT INTO test1 (a) VALUES (%d)" % i)
+    if i % 2 == 0:
+        plpy.commit()
+    else:
+        plpy.rollback()
+return 1
+$$;
+SELECT transaction_test2();
+ERROR:  invalid transaction termination
+CONTEXT:  PL/Python function "transaction_test2"
+SELECT * FROM test1;
+ a | b 
+---+---
+(0 rows)
+
+-- also not allowed if procedure is called from a function
+CREATE FUNCTION transaction_test3() RETURNS int
+LANGUAGE plpythonu
+AS $$
+plpy.execute("CALL transaction_test1()")
+return 1
+$$;
+SELECT transaction_test3();
+ERROR:  spiexceptions.InvalidTransactionTermination: invalid transaction termination
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "transaction_test3", line 2, in <module>
+    plpy.execute("CALL transaction_test1()")
+PL/Python function "transaction_test3"
+SELECT * FROM test1;
+ a | b 
+---+---
+(0 rows)
+
+-- DO block inside function
+CREATE FUNCTION transaction_test4() RETURNS int
+LANGUAGE plpythonu
+AS $$
+plpy.execute("DO LANGUAGE plpythonu $x$ plpy.commit() $x$")
+return 1
+$$;
+SELECT transaction_test4();
+ERROR:  spiexceptions.InvalidTransactionTermination: invalid transaction termination
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "transaction_test4", line 2, in <module>
+    plpy.execute("DO LANGUAGE plpythonu $x$ plpy.commit() $x$")
+PL/Python function "transaction_test4"
+-- commit inside subtransaction (prohibited)
+DO LANGUAGE plpythonu $$
+with plpy.subtransaction():
+    plpy.commit()
+$$;
+WARNING:  forcibly aborting a subtransaction that has not been exited
+ERROR:  cannot commit while a subtransaction is active
+CONTEXT:  PL/Python anonymous code block
+-- commit inside cursor loop
+CREATE TABLE test2 (x int);
+INSERT INTO test2 VALUES (0), (1), (2), (3), (4);
+TRUNCATE test1;
+DO LANGUAGE plpythonu $$
+for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
+    plpy.execute("INSERT INTO test1 (a) VALUES (%s)" % row['x'])
+    plpy.commit()
+$$;
+ERROR:  cannot commit transaction while a cursor is open
+CONTEXT:  PL/Python anonymous code block
+SELECT * FROM test1;
+ a | b 
+---+---
+(0 rows)
+
+-- rollback inside cursor loop
+TRUNCATE test1;
+DO LANGUAGE plpythonu $$
+for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
+    plpy.execute("INSERT INTO test1 (a) VALUES (%s)" % row['x'])
+    plpy.rollback()
+$$;
+ERROR:  cannot abort transaction while a cursor is open
+CONTEXT:  PL/Python anonymous code block
+SELECT * FROM test1;
+ a | b 
+---+---
+(0 rows)
+
+DROP TABLE test1;
+DROP TABLE test2;

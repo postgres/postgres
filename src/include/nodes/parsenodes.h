@@ -2789,6 +2789,7 @@ typedef struct InlineCodeBlock
 	char	   *source_text;	/* source text of anonymous code block */
 	Oid			langOid;		/* OID of selected language */
 	bool		langIsTrusted;	/* trusted property of the language */
+	bool		atomic;			/* atomic execution context */
 } InlineCodeBlock;
 
 /* ----------------------
@@ -2800,6 +2801,12 @@ typedef struct CallStmt
 	NodeTag		type;
 	FuncCall   *funccall;
 } CallStmt;
+
+typedef struct CallContext
+{
+	NodeTag		type;
+	bool		atomic;
+} CallContext;
 
 /* ----------------------
  *		Alter Object Rename Statement
