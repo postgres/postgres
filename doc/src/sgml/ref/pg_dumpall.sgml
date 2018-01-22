@@ -36,13 +36,10 @@ PostgreSQL documentation
    of a cluster into one script file.  The script file contains
    <acronym>SQL</acronym> commands that can be used as input to <xref
    linkend="app-psql"/> to restore the databases.  It does this by
-   calling <xref linkend="app-pgdump"/> for each database in a cluster.
+   calling <xref linkend="app-pgdump"/> for each database in the cluster.
    <application>pg_dumpall</application> also dumps global objects
-   that are common to all databases.
+   that are common to all databases, that is, database roles and tablespaces.
    (<application>pg_dump</application> does not save these objects.)
-   This currently includes information about database users and
-   groups, tablespaces, and properties such as access permissions
-   that apply to databases as a whole.
   </para>
 
   <para>
@@ -50,7 +47,7 @@ PostgreSQL documentation
    databases you will most likely have to connect as a database
    superuser in order to produce a complete dump.  Also you will need
    superuser privileges to execute the saved script in order to be
-   allowed to add users and groups, and to create databases.
+   allowed to add roles and create databases.
   </para>
 
   <para>
@@ -308,7 +305,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Use conditional commands (i.e. add an <literal>IF EXISTS</literal>
-        clause) to clean databases and other objects.  This option is not valid
+        clause) to drop databases and other objects.  This option is not valid
         unless <option>--clean</option> is also specified.
        </para>
       </listitem>
@@ -500,10 +497,11 @@ PostgreSQL documentation
        <para>
         The option is called <literal>--dbname</literal> for consistency with other
         client applications, but because <application>pg_dumpall</application>
-        needs to connect to many databases, database name in the connection
-        string will be ignored. Use <literal>-l</literal> option to specify
-        the name of the database used to dump global objects and to discover
-        what other databases should be dumped.
+        needs to connect to many databases, the database name in the
+        connection string will be ignored.  Use the <literal>-l</literal>
+        option to specify the name of the database used for the initial
+        connection, which will dump global objects and discover what other
+        databases should be dumped.
        </para>
       </listitem>
      </varlistentry>
@@ -658,10 +656,33 @@ PostgreSQL documentation
   </para>
 
   <para>
+   The <option>--clean</option> option can be useful even when your
+   intention is to restore the dump script into a fresh cluster.  Use of
+   <option>--clean</option> authorizes the script to drop and re-create the
+   built-in <literal>postgres</literal> and <literal>template1</literal>
+   databases, ensuring that those databases will retain the same properties
+   (for instance, locale and encoding) that they had in the source cluster.
+   Without the option, those databases will retain their existing
+   database-level properties, as well as any pre-existing contents.
+  </para>
+
+  <para>
    Once restored, it is wise to run <command>ANALYZE</command> on each
    database so the optimizer has useful statistics. You
    can also run <command>vacuumdb -a -z</command> to analyze all
    databases.
+  </para>
+
+  <para>
+   The dump script should not be expected to run completely without errors.
+   In particular, because the script will issue <command>CREATE ROLE</command>
+   for every role existing in the source cluster, it is certain to get a
+   <quote>role already exists</quote> error for the bootstrap superuser,
+   unless the destination cluster was initialized with a different bootstrap
+   superuser name.  This error is harmless and should be ignored.  Use of
+   the <option>--clean</option> option is likely to produce additional
+   harmless error messages about non-existent objects, although you can
+   minimize those by adding <option>--if-exists</option>.
   </para>
 
   <para>
@@ -688,10 +709,13 @@ PostgreSQL documentation
 <screen>
 <prompt>$</prompt> <userinput>psql -f db.out postgres</userinput>
 </screen>
-   (It is not important to which database you connect here since the
+   It is not important to which database you connect here since the
    script file created by <application>pg_dumpall</application> will
    contain the appropriate commands to create and connect to the saved
-   databases.)
+   databases.  An exception is that if you specified <option>--clean</option>,
+   you must connect to the <literal>postgres</literal> database initially;
+   the script will attempt to drop other databases immediately, and that
+   will fail for the database you are connected to.
   </para>
  </refsect1>
 

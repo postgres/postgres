@@ -807,3 +807,54 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 		printfPQExpBuffer(init_racl_subquery, "NULL");
 	}
 }
+
+/*
+ * Helper function for dumping "ALTER DATABASE/ROLE SET ..." commands.
+ *
+ * Parse the contents of configitem (a "name=value" string), wrap it in
+ * a complete ALTER command, and append it to buf.
+ *
+ * type is DATABASE or ROLE, and name is the name of the database or role.
+ * If we need an "IN" clause, type2 and name2 similarly define what to put
+ * there; otherwise they should be NULL.
+ * conn is used only to determine string-literal quoting conventions.
+ */
+void
+makeAlterConfigCommand(PGconn *conn, const char *configitem,
+					   const char *type, const char *name,
+					   const char *type2, const char *name2,
+					   PQExpBuffer buf)
+{
+	char	   *mine;
+	char	   *pos;
+
+	/* Parse the configitem.  If we can't find an "=", silently do nothing. */
+	mine = pg_strdup(configitem);
+	pos = strchr(mine, '=');
+	if (pos == NULL)
+	{
+		pg_free(mine);
+		return;
+	}
+	*pos++ = '\0';
+
+	/* Build the command, with suitable quoting for everything. */
+	appendPQExpBuffer(buf, "ALTER %s %s ", type, fmtId(name));
+	if (type2 != NULL && name2 != NULL)
+		appendPQExpBuffer(buf, "IN %s %s ", type2, fmtId(name2));
+	appendPQExpBuffer(buf, "SET %s TO ", fmtId(mine));
+
+	/*
+	 * Some GUC variable names are 'LIST' type and hence must not be quoted.
+	 * XXX this list is incomplete ...
+	 */
+	if (pg_strcasecmp(mine, "DateStyle") == 0
+		|| pg_strcasecmp(mine, "search_path") == 0)
+		appendPQExpBufferStr(buf, pos);
+	else
+		appendStringLiteralConn(buf, pos, conn);
+
+	appendPQExpBufferStr(buf, ";\n");
+
+	pg_free(mine);
+}

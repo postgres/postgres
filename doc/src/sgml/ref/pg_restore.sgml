@@ -127,6 +127,17 @@
        </para>
 
        <para>
+        With <option>--create</option>, <application>pg_restore</application>
+        also restores the database's comment if any, and any configuration
+        variable settings that are specific to this database, that is,
+        any <command>ALTER DATABASE ... SET ...</command>
+        and <command>ALTER ROLE ... IN DATABASE ... SET ...</command>
+        commands that mention this database.
+        Access privileges for the database itself are also restored,
+        unless <option>--no-acl</option> is specified.
+       </para>
+
+       <para>
         When this option is used, the database named with <option>-d</option>
         is used only to issue the initial <command>DROP DATABASE</command> and
         <command>CREATE DATABASE</command> commands.  All data is restored into the

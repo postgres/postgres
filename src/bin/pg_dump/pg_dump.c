@@ -252,6 +252,8 @@ static void dumpPublication(Archive *fout, PublicationInfo *pubinfo);
 static void dumpPublicationTable(Archive *fout, PublicationRelInfo *pubrinfo);
 static void dumpSubscription(Archive *fout, SubscriptionInfo *subinfo);
 static void dumpDatabase(Archive *AH);
+static void dumpDatabaseConfig(Archive *AH, PQExpBuffer outbuf,
+				   const char *dbname, Oid dboid);
 static void dumpEncoding(Archive *AH);
 static void dumpStdStrings(Archive *AH);
 static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
@@ -838,7 +840,7 @@ main(int argc, char **argv)
 	dumpEncoding(fout);
 	dumpStdStrings(fout);
 
-	/* The database item is always next, unless we don't want it at all */
+	/* The database items are always next, unless we don't want them at all */
 	if (dopt.include_everything && !dopt.dataOnly)
 		dumpDatabase(fout);
 
@@ -2540,6 +2542,10 @@ dumpDatabase(Archive *fout)
 				i_ctype,
 				i_frozenxid,
 				i_minmxid,
+				i_datacl,
+				i_rdatacl,
+				i_datistemplate,
+				i_datconnlimit,
 				i_tablespace;
 	CatalogId	dbCatId;
 	DumpId		dbDumpId;
@@ -2548,11 +2554,17 @@ dumpDatabase(Archive *fout)
 			   *encoding,
 			   *collate,
 			   *ctype,
+			   *datacl,
+			   *rdatacl,
+			   *datistemplate,
+			   *datconnlimit,
 			   *tablespace;
 	uint32		frozenxid,
 				minmxid;
+	char	   *qdatname;
 
 	datname = PQdb(conn);
+	qdatname = pg_strdup(fmtId(datname));
 
 	if (g_verbose)
 		write_msg(NULL, "saving database definition\n");
@@ -2560,13 +2572,37 @@ dumpDatabase(Archive *fout)
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
 
-	/* Get the database owner and parameters from pg_database */
-	if (fout->remoteVersion >= 90300)
+	/* Fetch the database-level properties for this database */
+	if (fout->remoteVersion >= 90600)
 	{
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
 						  "datcollate, datctype, datfrozenxid, datminmxid, "
+						  "(SELECT array_agg(acl ORDER BY acl::text COLLATE \"C\") FROM ( "
+						  "  SELECT unnest(coalesce(datacl,acldefault('d',datdba))) AS acl "
+						  "  EXCEPT SELECT unnest(acldefault('d',datdba))) as datacls)"
+						  " AS datacl, "
+						  "(SELECT array_agg(acl ORDER BY acl::text COLLATE \"C\") FROM ( "
+						  "  SELECT unnest(acldefault('d',datdba)) AS acl "
+						  "  EXCEPT SELECT unnest(coalesce(datacl,acldefault('d',datdba)))) as rdatacls)"
+						  " AS rdatacl, "
+						  "datistemplate, datconnlimit, "
+						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
+						  "shobj_description(oid, 'pg_database') AS description "
+
+						  "FROM pg_database "
+						  "WHERE datname = ",
+						  username_subquery);
+		appendStringLiteralAH(dbQry, datname, fout);
+	}
+	else if (fout->remoteVersion >= 90300)
+	{
+		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
+						  "(%s datdba) AS dba, "
+						  "pg_encoding_to_char(encoding) AS encoding, "
+						  "datcollate, datctype, datfrozenxid, datminmxid, "
+						  "datacl, '' as rdatacl, datistemplate, datconnlimit, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 						  "shobj_description(oid, 'pg_database') AS description "
 
@@ -2581,6 +2617,7 @@ dumpDatabase(Archive *fout)
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
 						  "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
+						  "datacl, '' as rdatacl, datistemplate, datconnlimit, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 						  "shobj_description(oid, 'pg_database') AS description "
 
@@ -2595,6 +2632,7 @@ dumpDatabase(Archive *fout)
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
 						  "NULL AS datcollate, NULL AS datctype, datfrozenxid, 0 AS datminmxid, "
+						  "datacl, '' as rdatacl, datistemplate, datconnlimit, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 						  "shobj_description(oid, 'pg_database') AS description "
 
@@ -2609,6 +2647,8 @@ dumpDatabase(Archive *fout)
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
 						  "NULL AS datcollate, NULL AS datctype, datfrozenxid, 0 AS datminmxid, "
+						  "datacl, '' as rdatacl, datistemplate, "
+						  "-1 as datconnlimit, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace "
 						  "FROM pg_database "
 						  "WHERE datname = ",
@@ -2626,6 +2666,10 @@ dumpDatabase(Archive *fout)
 	i_ctype = PQfnumber(res, "datctype");
 	i_frozenxid = PQfnumber(res, "datfrozenxid");
 	i_minmxid = PQfnumber(res, "datminmxid");
+	i_datacl = PQfnumber(res, "datacl");
+	i_rdatacl = PQfnumber(res, "rdatacl");
+	i_datistemplate = PQfnumber(res, "datistemplate");
+	i_datconnlimit = PQfnumber(res, "datconnlimit");
 	i_tablespace = PQfnumber(res, "tablespace");
 
 	dbCatId.tableoid = atooid(PQgetvalue(res, 0, i_tableoid));
@@ -2636,10 +2680,20 @@ dumpDatabase(Archive *fout)
 	ctype = PQgetvalue(res, 0, i_ctype);
 	frozenxid = atooid(PQgetvalue(res, 0, i_frozenxid));
 	minmxid = atooid(PQgetvalue(res, 0, i_minmxid));
+	datacl = PQgetvalue(res, 0, i_datacl);
+	rdatacl = PQgetvalue(res, 0, i_rdatacl);
+	datistemplate = PQgetvalue(res, 0, i_datistemplate);
+	datconnlimit = PQgetvalue(res, 0, i_datconnlimit);
 	tablespace = PQgetvalue(res, 0, i_tablespace);
 
+	/*
+	 * Prepare the CREATE DATABASE command.  We must specify encoding, locale,
+	 * and tablespace since those can't be altered later.  Other DB properties
+	 * are left to the DATABASE PROPERTIES entry, so that they can be applied
+	 * after reconnecting to the target DB.
+	 */
 	appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
-					  fmtId(datname));
+					  qdatname);
 	if (strlen(encoding) > 0)
 	{
 		appendPQExpBufferStr(creaQry, " ENCODING = ");
@@ -2655,26 +2709,23 @@ dumpDatabase(Archive *fout)
 		appendPQExpBufferStr(creaQry, " LC_CTYPE = ");
 		appendStringLiteralAH(creaQry, ctype, fout);
 	}
+
+	/*
+	 * Note: looking at dopt->outputNoTablespaces here is completely the wrong
+	 * thing; the decision whether to specify a tablespace should be left till
+	 * pg_restore, so that pg_restore --no-tablespaces applies.  Ideally we'd
+	 * label the DATABASE entry with the tablespace and let the normal
+	 * tablespace selection logic work ... but CREATE DATABASE doesn't pay
+	 * attention to default_tablespace, so that won't work.
+	 */
 	if (strlen(tablespace) > 0 && strcmp(tablespace, "pg_default") != 0 &&
 		!dopt->outputNoTablespaces)
 		appendPQExpBuffer(creaQry, " TABLESPACE = %s",
 						  fmtId(tablespace));
 	appendPQExpBufferStr(creaQry, ";\n");
 
-	if (dopt->binary_upgrade)
-	{
-		appendPQExpBufferStr(creaQry, "\n-- For binary upgrade, set datfrozenxid and datminmxid.\n");
-		appendPQExpBuffer(creaQry, "UPDATE pg_catalog.pg_database\n"
-						  "SET datfrozenxid = '%u', datminmxid = '%u'\n"
-						  "WHERE datname = ",
-						  frozenxid, minmxid);
-		appendStringLiteralAH(creaQry, datname, fout);
-		appendPQExpBufferStr(creaQry, ";\n");
-
-	}
-
 	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
-					  fmtId(datname));
+					  qdatname);
 
 	dbDumpId = createDumpId();
 
@@ -2697,7 +2748,7 @@ dumpDatabase(Archive *fout)
 				 NULL);			/* Dumper Arg */
 
 	/* Compute correct tag for comments etc */
-	appendPQExpBuffer(labelq, "DATABASE %s", fmtId(datname));
+	appendPQExpBuffer(labelq, "DATABASE %s", qdatname);
 
 	/* Dump DB comment if any */
 	if (fout->remoteVersion >= 80200)
@@ -2717,7 +2768,7 @@ dumpDatabase(Archive *fout)
 			 * Generates warning when loaded into a differently-named
 			 * database.
 			 */
-			appendPQExpBuffer(dbQry, "COMMENT ON DATABASE %s IS ", fmtId(datname));
+			appendPQExpBuffer(dbQry, "COMMENT ON DATABASE %s IS ", qdatname);
 			appendStringLiteralAH(dbQry, comment, fout);
 			appendPQExpBufferStr(dbQry, ";\n");
 
@@ -2759,6 +2810,73 @@ dumpDatabase(Archive *fout)
 	}
 
 	/*
+	 * Dump ACL if any.  Note that we do not support initial privileges
+	 * (pg_init_privs) on databases.
+	 */
+	dumpACL(fout, dbCatId, dbDumpId, "DATABASE",
+			qdatname, NULL, labelq->data, NULL,
+			dba, datacl, rdatacl, "", "");
+
+	/*
+	 * Now construct a DATABASE PROPERTIES archive entry to restore any
+	 * non-default database-level properties.  We want to do this after
+	 * reconnecting so that these properties won't apply during the restore
+	 * session.  In this way, restoring works even if there is, say, an ALTER
+	 * DATABASE SET that turns on default_transaction_read_only.
+	 */
+	resetPQExpBuffer(creaQry);
+	resetPQExpBuffer(delQry);
+
+	if (strlen(datconnlimit) > 0 && strcmp(datconnlimit, "-1") != 0)
+		appendPQExpBuffer(creaQry, "ALTER DATABASE %s CONNECTION LIMIT = %s;\n",
+						  qdatname, datconnlimit);
+
+	if (strcmp(datistemplate, "t") == 0)
+	{
+		appendPQExpBuffer(creaQry, "ALTER DATABASE %s IS_TEMPLATE = true;\n",
+						  qdatname);
+
+		/*
+		 * The backend won't accept DROP DATABASE on a template database.  We
+		 * can deal with that by removing the template marking before the DROP
+		 * gets issued.  We'd prefer to use ALTER DATABASE IF EXISTS here, but
+		 * since no such command is currently supported, fake it with a direct
+		 * UPDATE on pg_database.
+		 */
+		appendPQExpBufferStr(delQry, "UPDATE pg_catalog.pg_database "
+							 "SET datistemplate = false WHERE datname = ");
+		appendStringLiteralAH(delQry, datname, fout);
+		appendPQExpBufferStr(delQry, ";\n");
+	}
+
+	/* Add database-specific SET options */
+	dumpDatabaseConfig(fout, creaQry, datname, dbCatId.oid);
+
+	/*
+	 * We stick this binary-upgrade query into the DATABASE PROPERTIES archive
+	 * entry, too.  It can't go into the DATABASE entry because that would
+	 * result in an implicit transaction block around the CREATE DATABASE.
+	 */
+	if (dopt->binary_upgrade)
+	{
+		appendPQExpBufferStr(creaQry, "\n-- For binary upgrade, set datfrozenxid and datminmxid.\n");
+		appendPQExpBuffer(creaQry, "UPDATE pg_catalog.pg_database\n"
+						  "SET datfrozenxid = '%u', datminmxid = '%u'\n"
+						  "WHERE datname = ",
+						  frozenxid, minmxid);
+		appendStringLiteralAH(creaQry, datname, fout);
+		appendPQExpBufferStr(creaQry, ";\n");
+	}
+
+	if (creaQry->len > 0)
+		ArchiveEntry(fout, nilCatalogId, createDumpId(),
+					 datname, NULL, NULL, dba,
+					 false, "DATABASE PROPERTIES", SECTION_PRE_DATA,
+					 creaQry->data, delQry->data, NULL,
+					 &(dbDumpId), 1,
+					 NULL, NULL);
+
+	/*
 	 * pg_largeobject and pg_largeobject_metadata come from the old system
 	 * intact, so set their relfrozenxids and relminmxids.
 	 */
@@ -2793,8 +2911,8 @@ dumpDatabase(Archive *fout)
 		appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
 						  "SET relfrozenxid = '%u', relminmxid = '%u'\n"
 						  "WHERE oid = %u;\n",
-						  atoi(PQgetvalue(lo_res, 0, i_relfrozenxid)),
-						  atoi(PQgetvalue(lo_res, 0, i_relminmxid)),
+						  atooid(PQgetvalue(lo_res, 0, i_relfrozenxid)),
+						  atooid(PQgetvalue(lo_res, 0, i_relminmxid)),
 						  LargeObjectRelationId);
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
 					 "pg_largeobject", NULL, NULL, "",
@@ -2833,8 +2951,8 @@ dumpDatabase(Archive *fout)
 			appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
 							  "SET relfrozenxid = '%u', relminmxid = '%u'\n"
 							  "WHERE oid = %u;\n",
-							  atoi(PQgetvalue(lo_res, 0, i_relfrozenxid)),
-							  atoi(PQgetvalue(lo_res, 0, i_relminmxid)),
+							  atooid(PQgetvalue(lo_res, 0, i_relfrozenxid)),
+							  atooid(PQgetvalue(lo_res, 0, i_relminmxid)),
 							  LargeObjectMetadataRelationId);
 			ArchiveEntry(fout, nilCatalogId, createDumpId(),
 						 "pg_largeobject_metadata", NULL, NULL, "",
@@ -2852,10 +2970,83 @@ dumpDatabase(Archive *fout)
 
 	PQclear(res);
 
+	free(qdatname);
 	destroyPQExpBuffer(dbQry);
 	destroyPQExpBuffer(delQry);
 	destroyPQExpBuffer(creaQry);
 	destroyPQExpBuffer(labelq);
+}
+
+/*
+ * Collect any database-specific or role-and-database-specific SET options
+ * for this database, and append them to outbuf.
+ */
+static void
+dumpDatabaseConfig(Archive *AH, PQExpBuffer outbuf,
+				   const char *dbname, Oid dboid)
+{
+	PGconn	   *conn = GetConnection(AH);
+	PQExpBuffer buf = createPQExpBuffer();
+	PGresult   *res;
+	int			count = 1;
+
+	/*
+	 * First collect database-specific options.  Pre-8.4 server versions lack
+	 * unnest(), so we do this the hard way by querying once per subscript.
+	 */
+	for (;;)
+	{
+		if (AH->remoteVersion >= 90000)
+			printfPQExpBuffer(buf, "SELECT setconfig[%d] FROM pg_db_role_setting "
+							  "WHERE setrole = 0 AND setdatabase = '%u'::oid",
+							  count, dboid);
+		else
+			printfPQExpBuffer(buf, "SELECT datconfig[%d] FROM pg_database WHERE oid = '%u'::oid", count, dboid);
+
+		res = ExecuteSqlQuery(AH, buf->data, PGRES_TUPLES_OK);
+
+		if (PQntuples(res) == 1 &&
+			!PQgetisnull(res, 0, 0))
+		{
+			makeAlterConfigCommand(conn, PQgetvalue(res, 0, 0),
+								   "DATABASE", dbname, NULL, NULL,
+								   outbuf);
+			PQclear(res);
+			count++;
+		}
+		else
+		{
+			PQclear(res);
+			break;
+		}
+	}
+
+	/* Now look for role-and-database-specific options */
+	if (AH->remoteVersion >= 90000)
+	{
+		/* Here we can assume we have unnest() */
+		printfPQExpBuffer(buf, "SELECT rolname, unnest(setconfig) "
+						  "FROM pg_db_role_setting s, pg_roles r "
+						  "WHERE setrole = r.oid AND setdatabase = '%u'::oid",
+						  dboid);
+
+		res = ExecuteSqlQuery(AH, buf->data, PGRES_TUPLES_OK);
+
+		if (PQntuples(res) > 0)
+		{
+			int			i;
+
+			for (i = 0; i < PQntuples(res); i++)
+				makeAlterConfigCommand(conn, PQgetvalue(res, i, 1),
+									   "ROLE", PQgetvalue(res, i, 0),
+									   "DATABASE", dbname,
+									   outbuf);
+		}
+
+		PQclear(res);
+	}
+
+	destroyPQExpBuffer(buf);
 }
 
 /*

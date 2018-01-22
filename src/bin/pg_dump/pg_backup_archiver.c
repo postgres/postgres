@@ -489,16 +489,19 @@ RestoreArchive(Archive *AHX)
 			 * whole.  Issuing drops against anything else would be wrong,
 			 * because at this point we're connected to the wrong database.
 			 * Conversely, if we're not in createDB mode, we'd better not
-			 * issue a DROP against the database at all.
+			 * issue a DROP against the database at all.  (The DATABASE
+			 * PROPERTIES entry, if any, works like the DATABASE entry.)
 			 */
 			if (ropt->createDB)
 			{
-				if (strcmp(te->desc, "DATABASE") != 0)
+				if (strcmp(te->desc, "DATABASE") != 0 &&
+					strcmp(te->desc, "DATABASE PROPERTIES") != 0)
 					continue;
 			}
 			else
 			{
-				if (strcmp(te->desc, "DATABASE") == 0)
+				if (strcmp(te->desc, "DATABASE") == 0 ||
+					strcmp(te->desc, "DATABASE PROPERTIES") == 0)
 					continue;
 			}
 
@@ -558,6 +561,8 @@ RestoreArchive(Archive *AHX)
 							 * we simply emit the original command for DEFAULT
 							 * objects (modulo the adjustment made above).
 							 *
+							 * Likewise, don't mess with DATABASE PROPERTIES.
+							 *
 							 * If we used CREATE OR REPLACE VIEW as a means of
 							 * quasi-dropping an ON SELECT rule, that should
 							 * be emitted unchanged as well.
@@ -570,6 +575,7 @@ RestoreArchive(Archive *AHX)
 							 * search for hardcoded "DROP CONSTRAINT" instead.
 							 */
 							if (strcmp(te->desc, "DEFAULT") == 0 ||
+								strcmp(te->desc, "DATABASE PROPERTIES") == 0 ||
 								strncmp(dropStmt, "CREATE OR REPLACE VIEW", 22) == 0)
 								appendPQExpBufferStr(ftStmt, dropStmt);
 							else
@@ -750,11 +756,19 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 	reqs = te->reqs;
 
 	/*
-	 * Ignore DATABASE entry unless we should create it.  We must check this
-	 * here, not in _tocEntryRequired, because the createDB option should not
-	 * affect emitting a DATABASE entry to an archive file.
+	 * Ignore DATABASE and related entries unless createDB is specified.  We
+	 * must check this here, not in _tocEntryRequired, because !createDB
+	 * should not prevent emitting these entries to an archive file.
 	 */
-	if (!ropt->createDB && strcmp(te->desc, "DATABASE") == 0)
+	if (!ropt->createDB &&
+		(strcmp(te->desc, "DATABASE") == 0 ||
+		 strcmp(te->desc, "DATABASE PROPERTIES") == 0 ||
+		 (strcmp(te->desc, "ACL") == 0 &&
+		  strncmp(te->tag, "DATABASE ", 9) == 0) ||
+		 (strcmp(te->desc, "COMMENT") == 0 &&
+		  strncmp(te->tag, "DATABASE ", 9) == 0) ||
+		 (strcmp(te->desc, "SECURITY LABEL") == 0 &&
+		  strncmp(te->tag, "DATABASE ", 9) == 0)))
 		reqs = 0;
 
 	/* Dump any relevant dump warnings to stderr */
@@ -2917,8 +2931,8 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 		 * Special Case: If 'SEQUENCE SET' or anything to do with BLOBs, then
 		 * it is considered a data entry.  We don't need to check for the
 		 * BLOBS entry or old-style BLOB COMMENTS, because they will have
-		 * hadDumper = true ... but we do need to check new-style BLOB
-		 * comments.
+		 * hadDumper = true ... but we do need to check new-style BLOB ACLs,
+		 * comments, etc.
 		 */
 		if (strcmp(te->desc, "SEQUENCE SET") == 0 ||
 			strcmp(te->desc, "BLOB") == 0 ||
@@ -3598,6 +3612,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 		else if (strcmp(te->desc, "CAST") == 0 ||
 				 strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
 				 strcmp(te->desc, "CONSTRAINT") == 0 ||
+				 strcmp(te->desc, "DATABASE PROPERTIES") == 0 ||
 				 strcmp(te->desc, "DEFAULT") == 0 ||
 				 strcmp(te->desc, "FK CONSTRAINT") == 0 ||
 				 strcmp(te->desc, "INDEX") == 0 ||

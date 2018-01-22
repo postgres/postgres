@@ -46,7 +46,7 @@
 #endif
 
 static void prepare_new_cluster(void);
-static void prepare_new_databases(void);
+static void prepare_new_globals(void);
 static void create_new_objects(void);
 static void copy_xact_xlog_xid(void);
 static void set_frozenxids(bool minmxid_only);
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 	/* -- NEW -- */
 	start_postmaster(&new_cluster, true);
 
-	prepare_new_databases();
+	prepare_new_globals();
 
 	create_new_objects();
 
@@ -271,7 +271,7 @@ prepare_new_cluster(void)
 
 
 static void
-prepare_new_databases(void)
+prepare_new_globals(void)
 {
 	/*
 	 * We set autovacuum_freeze_max_age to its maximum value so autovacuum
@@ -283,20 +283,11 @@ prepare_new_databases(void)
 
 	prep_status("Restoring global objects in the new cluster");
 
-	/*
-	 * We have to create the databases first so we can install support
-	 * functions in all the other databases.  Ideally we could create the
-	 * support functions in template1 but pg_dumpall creates database using
-	 * the template0 template.
-	 */
 	exec_prog(UTILITY_LOG_FILE, NULL, true, true,
 			  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
 			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
 			  GLOBALS_DUMP_FILE);
 	check_ok();
-
-	/* we load this to get a current list of databases */
-	get_db_and_rel_infos(&new_cluster);
 }
 
 
@@ -312,33 +303,40 @@ create_new_objects(void)
 		char		sql_file_name[MAXPGPATH],
 					log_file_name[MAXPGPATH];
 		DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
-		PQExpBufferData connstr,
-					escaped_connstr;
-
-		initPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
-		appendConnStrVal(&connstr, old_db->db_name);
-		initPQExpBuffer(&escaped_connstr);
-		appendShellString(&escaped_connstr, connstr.data);
-		termPQExpBuffer(&connstr);
+		const char *create_opts;
+		const char *starting_db;
 
 		pg_log(PG_STATUS, "%s", old_db->db_name);
 		snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
 		snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
 
 		/*
-		 * pg_dump only produces its output at the end, so there is little
-		 * parallelism if using the pipe.
+		 * template1 and postgres databases will already exist in the target
+		 * installation, so tell pg_restore to drop and recreate them;
+		 * otherwise we would fail to propagate their database-level
+		 * properties.
 		 */
+		if (strcmp(old_db->db_name, "template1") == 0 ||
+			strcmp(old_db->db_name, "postgres") == 0)
+			create_opts = "--clean --create";
+		else
+			create_opts = "--create";
+
+		/* When processing template1, we can't connect there to start with */
+		if (strcmp(old_db->db_name, "template1") == 0)
+			starting_db = "postgres";
+		else
+			starting_db = "template1";
+
 		parallel_exec_prog(log_file_name,
 						   NULL,
-						   "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname %s \"%s\"",
+						   "\"%s/pg_restore\" %s %s --exit-on-error --verbose "
+						   "--dbname %s \"%s\"",
 						   new_cluster.bindir,
 						   cluster_conn_opts(&new_cluster),
-						   escaped_connstr.data,
+						   create_opts,
+						   starting_db,
 						   sql_file_name);
-
-		termPQExpBuffer(&escaped_connstr);
 	}
 
 	/* reap all children */
@@ -355,7 +353,7 @@ create_new_objects(void)
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 903)
 		set_frozenxids(true);
 
-	/* regenerate now that we have objects in the databases */
+	/* update new_cluster info now that we have objects in the databases */
 	get_db_and_rel_infos(&new_cluster);
 }
 

@@ -46,9 +46,10 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>pg_dump</application> only dumps a single database.  To backup
-   global objects that are common to all databases in a cluster, such as roles
-   and tablespaces, use <xref linkend="app-pg-dumpall"/>.
+   <application>pg_dump</application> only dumps a single database.
+   To back up an entire cluster, or to back up global objects that are
+   common to all databases in a cluster (such as roles and tablespaces),
+   use <xref linkend="app-pg-dumpall"/>.
   </para>
 
   <para>
@@ -142,7 +143,8 @@ PostgreSQL documentation
         switch is therefore only useful to add large objects to dumps
         where a specific schema or table has been requested.  Note that
         blobs are considered data and therefore will be included when
-        --data-only is used, but not when --schema-only is.
+        <option>--data-only</option> is used, but not
+        when <option>--schema-only</option> is.
        </para>
       </listitem>
      </varlistentry>
@@ -194,6 +196,17 @@ PostgreSQL documentation
         destination installation you connect to before running the script.)
         If <option>--clean</option> is also specified, the script drops and
         recreates the target database before reconnecting to it.
+       </para>
+
+       <para>
+        With <option>--create</option>, the output also includes the
+        database's comment if any, and any configuration variable settings
+        that are specific to this database, that is,
+        any <command>ALTER DATABASE ... SET ...</command>
+        and <command>ALTER ROLE ... IN DATABASE ... SET ...</command>
+        commands that mention this database.
+        Access privileges for the database itself are also dumped,
+        unless <option>--no-acl</option> is specified.
        </para>
 
        <para>
@@ -1231,10 +1244,6 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    <command>ANALYZE</command> after restoring from a dump file
    to ensure optimal performance; see <xref linkend="vacuum-for-statistics"/>
    and <xref linkend="autovacuum"/> for more information.
-   The dump file also does not
-   contain any <command>ALTER DATABASE ... SET</command> commands;
-   these settings are dumped by <xref linkend="app-pg-dumpall"/>,
-   along with database users and other installation-wide settings.
   </para>
 
   <para>
@@ -1322,6 +1331,15 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
 <screen>
 <prompt>$</prompt> <userinput>pg_restore -d newdb db.dump</userinput>
+</screen>
+  </para>
+
+  <para>
+   To reload an archive file into the same database it was dumped from,
+   discarding the current contents of that database:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_restore -d postgres --clean --create db.dump</userinput>
 </screen>
   </para>
 
