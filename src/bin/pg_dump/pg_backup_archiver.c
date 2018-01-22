@@ -2841,8 +2841,14 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 		 * other information should be generated in binary-upgrade mode (not
 		 * the actual data).
 		 */
-		if (!(ropt->binary_upgrade && strcmp(te->desc,"BLOB") == 0) &&
-		!(ropt->binary_upgrade && strncmp(te->tag,"LARGE OBJECT ", 13) == 0))
+		if (!(ropt->binary_upgrade &&
+			  (strcmp(te->desc, "BLOB") == 0 ||
+			   (strcmp(te->desc, "ACL") == 0 &&
+				strncmp(te->tag, "LARGE OBJECT ", 13) == 0) ||
+			   (strcmp(te->desc, "COMMENT") == 0 &&
+				strncmp(te->tag, "LARGE OBJECT ", 13) == 0) ||
+			   (strcmp(te->desc, "SECURITY LABEL") == 0 &&
+				strncmp(te->tag, "LARGE OBJECT ", 13) == 0))))
 			res = res & REQ_SCHEMA;
 	}
 
