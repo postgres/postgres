@@ -1386,7 +1386,7 @@ include_dir 'conf.d'
         You can use Windows Group Policy tool (gpedit.msc) to assign the user right
         Lock Pages in Memory.
         To start the database server on the command prompt as a standalone process,
-        not as a Windows service, the command prompt must be run as an administrator
+        not as a Windows service, the command prompt must be run as an administrator or
         User Access Control (UAC) must be disabled. When the UAC is enabled, the normal
         command prompt revokes the user right Lock Pages in Memory when started.
        </para>
