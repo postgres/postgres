@@ -79,8 +79,9 @@ SELECT transaction_test4();
 
 -- commit inside subtransaction (prohibited)
 DO LANGUAGE plpythonu $$
-with plpy.subtransaction():
-    plpy.commit()
+s = plpy.subtransaction()
+s.enter()
+plpy.commit()
 $$;
 
 

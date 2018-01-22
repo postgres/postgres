@@ -95,8 +95,9 @@ CONTEXT:  Traceback (most recent call last):
 PL/Python function "transaction_test4"
 -- commit inside subtransaction (prohibited)
 DO LANGUAGE plpythonu $$
-with plpy.subtransaction():
-    plpy.commit()
+s = plpy.subtransaction()
+s.enter()
+plpy.commit()
 $$;
 WARNING:  forcibly aborting a subtransaction that has not been exited
 ERROR:  cannot commit while a subtransaction is active
