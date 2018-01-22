@@ -2258,6 +2258,7 @@ dumpDatabase(Archive *fout)
 	PQExpBuffer dbQry = createPQExpBuffer();
 	PQExpBuffer delQry = createPQExpBuffer();
 	PQExpBuffer creaQry = createPQExpBuffer();
+	PQExpBuffer labelq = createPQExpBuffer();
 	PGconn	   *conn = GetConnection(fout);
 	PGresult   *res;
 	int			i_tableoid,
@@ -2541,16 +2542,20 @@ dumpDatabase(Archive *fout)
 		destroyPQExpBuffer(loOutQry);
 	}
 
+	/* Compute correct tag for comments etc */
+	appendPQExpBuffer(labelq, "DATABASE %s", fmtId(datname));
+
 	/* Dump DB comment if any */
 	if (fout->remoteVersion >= 80200)
 	{
 		/*
-		 * 8.2 keeps comments on shared objects in a shared table, so we
-		 * cannot use the dumpComment used for other database objects.
+		 * 8.2 and up keep comments on shared objects in a shared table, so we
+		 * cannot use the dumpComment() code used for other database objects.
+		 * Be careful that the ArchiveEntry parameters match that function.
 		 */
 		char	   *comment = PQgetvalue(res, 0, PQfnumber(res, "description"));
 
-		if (comment && strlen(comment))
+		if (comment && *comment)
 		{
 			resetPQExpBuffer(dbQry);
 
@@ -2562,17 +2567,17 @@ dumpDatabase(Archive *fout)
 			appendStringLiteralAH(dbQry, comment, fout);
 			appendPQExpBuffer(dbQry, ";\n");
 
-			ArchiveEntry(fout, dbCatId, createDumpId(), datname, NULL, NULL,
-						 dba, false, "COMMENT", SECTION_NONE,
+			ArchiveEntry(fout, nilCatalogId, createDumpId(),
+						 labelq->data, NULL, NULL, dba,
+						 false, "COMMENT", SECTION_NONE,
 						 dbQry->data, "", NULL,
-						 &dbDumpId, 1, NULL, NULL);
+						 &(dbDumpId), 1,
+						 NULL, NULL);
 		}
 	}
 	else
 	{
-		resetPQExpBuffer(dbQry);
-		appendPQExpBuffer(dbQry, "DATABASE %s", fmtId(datname));
-		dumpComment(fout, dbQry->data, NULL, "",
+		dumpComment(fout, labelq->data, NULL, dba,
 					dbCatId, 0, dbDumpId);
 	}
 
@@ -2588,11 +2593,13 @@ dumpDatabase(Archive *fout)
 		shres = ExecuteSqlQuery(fout, seclabelQry->data, PGRES_TUPLES_OK);
 		resetPQExpBuffer(seclabelQry);
 		emitShSecLabels(conn, shres, seclabelQry, "DATABASE", datname);
-		if (strlen(seclabelQry->data))
-			ArchiveEntry(fout, dbCatId, createDumpId(), datname, NULL, NULL,
-						 dba, false, "SECURITY LABEL", SECTION_NONE,
+		if (seclabelQry->len > 0)
+			ArchiveEntry(fout, nilCatalogId, createDumpId(),
+						 labelq->data, NULL, NULL, dba,
+						 false, "SECURITY LABEL", SECTION_NONE,
 						 seclabelQry->data, "", NULL,
-						 &dbDumpId, 1, NULL, NULL);
+						 &(dbDumpId), 1,
+						 NULL, NULL);
 		destroyPQExpBuffer(seclabelQry);
 		PQclear(shres);
 	}
@@ -2602,6 +2609,7 @@ dumpDatabase(Archive *fout)
 	destroyPQExpBuffer(dbQry);
 	destroyPQExpBuffer(delQry);
 	destroyPQExpBuffer(creaQry);
+	destroyPQExpBuffer(labelq);
 }
 
 
@@ -8012,7 +8020,7 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 				 nspinfo->dobj.catId, 0, nspinfo->dobj.dumpId);
 
 	dumpACL(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId, "SCHEMA",
-			qnspname, NULL, nspinfo->dobj.name, NULL,
+			qnspname, NULL, labelq->data, NULL,
 			nspinfo->rolname, nspinfo->nspacl);
 
 	free(qnspname);
@@ -8293,7 +8301,7 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
-			qtypname, NULL, tyinfo->dobj.name,
+			qtypname, NULL, labelq->data,
 			tyinfo->dobj.namespace->dobj.name,
 			tyinfo->rolname, tyinfo->typacl);
 
@@ -8426,7 +8434,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
-			qtypname, NULL, tyinfo->dobj.name,
+			qtypname, NULL, labelq->data,
 			tyinfo->dobj.namespace->dobj.name,
 			tyinfo->rolname, tyinfo->typacl);
 
@@ -8495,7 +8503,7 @@ dumpUndefinedType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
-			qtypname, NULL, tyinfo->dobj.name,
+			qtypname, NULL, labelq->data,
 			tyinfo->dobj.namespace->dobj.name,
 			tyinfo->rolname, tyinfo->typacl);
 
@@ -8883,7 +8891,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
-			qtypname, NULL, tyinfo->dobj.name,
+			qtypname, NULL, labelq->data,
 			tyinfo->dobj.namespace->dobj.name,
 			tyinfo->rolname, tyinfo->typacl);
 
@@ -9046,7 +9054,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
-			qtypname, NULL, tyinfo->dobj.name,
+			qtypname, NULL, labelq->data,
 			tyinfo->dobj.namespace->dobj.name,
 			tyinfo->rolname, tyinfo->typacl);
 
@@ -9256,7 +9264,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
-			qtypname, NULL, tyinfo->dobj.name,
+			qtypname, NULL, labelq->data,
 			tyinfo->dobj.namespace->dobj.name,
 			tyinfo->rolname, tyinfo->typacl);
 
@@ -9569,7 +9577,7 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 
 	if (plang->lanpltrusted)
 		dumpACL(fout, plang->dobj.catId, plang->dobj.dumpId, "LANGUAGE",
-				qlanname, NULL, plang->dobj.name,
+				qlanname, NULL, labelq->data,
 				lanschema,
 				plang->lanowner, plang->lanacl);
 
@@ -10155,7 +10163,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 				 finfo->dobj.catId, 0, finfo->dobj.dumpId);
 
 	dumpACL(fout, finfo->dobj.catId, finfo->dobj.dumpId, "FUNCTION",
-			funcsig, NULL, funcsig_tag,
+			funcsig, NULL, labelq->data,
 			finfo->dobj.namespace->dobj.name,
 			finfo->rolname, finfo->proacl);
 
@@ -11731,14 +11739,12 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	 * syntax for zero-argument aggregates.
 	 */
 	free(aggsig);
-	free(aggsig_tag);
 
 	aggsig = format_function_signature(fout, &agginfo->aggfn, true);
-	aggsig_tag = format_function_signature(fout, &agginfo->aggfn, false);
 
 	dumpACL(fout, agginfo->aggfn.dobj.catId, agginfo->aggfn.dobj.dumpId,
 			"FUNCTION",
-			aggsig, NULL, aggsig_tag,
+			aggsig, NULL, labelq->data,
 			agginfo->aggfn.dobj.namespace->dobj.name,
 			agginfo->aggfn.rolname, agginfo->aggfn.proacl);
 
@@ -12165,7 +12171,7 @@ dumpForeignDataWrapper(Archive *fout, FdwInfo *fdwinfo)
 	/* Handle the ACL */
 	dumpACL(fout, fdwinfo->dobj.catId, fdwinfo->dobj.dumpId,
 			"FOREIGN DATA WRAPPER",
-			qfdwname, NULL, fdwinfo->dobj.name,
+			qfdwname, NULL, labelq->data,
 			NULL, fdwinfo->rolname,
 			fdwinfo->fdwacl);
 
@@ -12257,7 +12263,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	/* Handle the ACL */
 	dumpACL(fout, srvinfo->dobj.catId, srvinfo->dobj.dumpId,
 			"FOREIGN SERVER",
-			qsrvname, NULL, srvinfo->dobj.name,
+			qsrvname, NULL, labelq->data,
 			NULL, srvinfo->rolname,
 			srvinfo->srvacl);
 
@@ -12455,7 +12461,8 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
  *		FOREIGN DATA WRAPPER, SERVER, or LARGE OBJECT.
  * 'name' is the formatted name of the object.  Must be quoted etc. already.
  * 'subname' is the formatted name of the sub-object, if any.  Must be quoted.
- * 'tag' is the tag for the archive entry (typ. unquoted name of object).
+ * 'tag' is the tag for the archive entry (should be the same tag as would be
+ *		used for comments etc; for example "TABLE foo").
  * 'nspname' is the namespace the object is in (NULL if none).
  * 'owner' is the owner, NULL if there is no owner (for languages).
  * 'acls' is the string read out of the fooacl system catalog field;
@@ -12531,7 +12538,7 @@ dumpSecLabel(Archive *fout, const char *target,
 	if (no_security_labels)
 		return;
 
-	/* Comments are schema not data ... except blob comments are data */
+	/* Security labels are schema not data ... except blob labels are data */
 	if (strncmp(target, "LARGE OBJECT ", 13) != 0)
 	{
 		if (dataOnly)
@@ -12809,6 +12816,8 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 	if (tbinfo->dobj.dump && !dataOnly)
 	{
 		char	   *namecopy;
+		const char *objtype;
+		char	   *acltag;
 
 		if (tbinfo->relkind == RELKIND_SEQUENCE)
 			dumpSequence(fout, tbinfo);
@@ -12817,12 +12826,14 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 
 		/* Handle the ACL here */
 		namecopy = pg_strdup(fmtId(tbinfo->dobj.name));
+		objtype = (tbinfo->relkind == RELKIND_SEQUENCE) ? "SEQUENCE" : "TABLE";
+		acltag = pg_malloc(strlen(objtype) + strlen(namecopy) + 2);
+		sprintf(acltag, "%s %s", objtype, namecopy);
 		dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
-				(tbinfo->relkind == RELKIND_SEQUENCE) ? "SEQUENCE" :
-				"TABLE",
-				namecopy, NULL, tbinfo->dobj.name,
+				objtype, namecopy, NULL, acltag,
 				tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
 				tbinfo->relacl);
+		free(acltag);
 
 		/*
 		 * Handle column ACLs, if any.  Note: we pull these with a separate
@@ -12847,11 +12858,10 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 				char	   *attname = PQgetvalue(res, i, 0);
 				char	   *attacl = PQgetvalue(res, i, 1);
 				char	   *attnamecopy;
-				char	   *acltag;
 
 				attnamecopy = pg_strdup(fmtId(attname));
-				acltag = pg_malloc(strlen(tbinfo->dobj.name) + strlen(attname) + 2);
-				sprintf(acltag, "%s.%s", tbinfo->dobj.name, attname);
+				acltag = pg_malloc(strlen(namecopy) + strlen(attnamecopy) + 9);
+				sprintf(acltag, "COLUMN %s.%s", namecopy, attnamecopy);
 				/* Column's GRANT type is always TABLE */
 				dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId, "TABLE",
 						namecopy, attnamecopy, acltag,
