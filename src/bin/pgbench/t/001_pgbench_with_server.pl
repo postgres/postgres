@@ -340,12 +340,6 @@ pgbench(
 SELECT :v0, :v1, :v2, :v3;
 } });
 
-=head
-
-} });
-
-=cut
-
 # backslash commands
 pgbench(
 	'-t 1', 0,
