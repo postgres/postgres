@@ -3540,6 +3540,40 @@ reparameterize_path(PlannerInfo *root, Path *path,
 														 spath->path.pathkeys,
 														 required_outer);
 			}
+		case T_Append:
+			{
+				AppendPath *apath = (AppendPath *) path;
+				List	   *childpaths = NIL;
+				List	   *partialpaths = NIL;
+				int			i;
+				ListCell   *lc;
+
+				/* Reparameterize the children */
+				i = 0;
+				foreach(lc, apath->subpaths)
+				{
+					Path	   *spath = (Path *) lfirst(lc);
+
+					spath = reparameterize_path(root, spath,
+												required_outer,
+												loop_count);
+					if (spath == NULL)
+						return NULL;
+					/* We have to re-split the regular and partial paths */
+					if (i < apath->first_partial_path)
+						childpaths = lappend(childpaths, spath);
+					else
+						partialpaths = lappend(partialpaths, spath);
+					i++;
+				}
+				return (Path *)
+					create_append_path(rel, childpaths, partialpaths,
+									   required_outer,
+									   apath->path.parallel_workers,
+									   apath->path.parallel_aware,
+									   apath->partitioned_rels,
+									   -1);
+			}
 		default:
 			break;
 	}
