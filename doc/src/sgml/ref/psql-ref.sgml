@@ -281,7 +281,9 @@ EOF
       <listitem>
       <para>
       List all available databases, then exit. Other non-connection
-      options are ignored. This is similar to the meta-command
+      options are ignored. If an explicit database name is not
+      found the <literal>postgres</literal> database, not the user's,
+      will be targeted for connection. This is similar to the meta-command
       <command>\list</command>.
       </para>
       </listitem>
