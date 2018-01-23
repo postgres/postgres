@@ -448,7 +448,7 @@ extern void InitArchiveFmt_Tar(ArchiveHandle *AH);
 
 extern bool isValidTarHeader(char *header);
 
-extern int	ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *newUser);
+extern void ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *newUser);
 extern void DropBlobIfExists(ArchiveHandle *AH, Oid oid);
 
 void		ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);

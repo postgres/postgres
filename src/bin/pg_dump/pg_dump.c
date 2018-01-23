@@ -2819,10 +2819,11 @@ dumpDatabase(Archive *fout)
 
 	/*
 	 * Now construct a DATABASE PROPERTIES archive entry to restore any
-	 * non-default database-level properties.  We want to do this after
-	 * reconnecting so that these properties won't apply during the restore
-	 * session.  In this way, restoring works even if there is, say, an ALTER
-	 * DATABASE SET that turns on default_transaction_read_only.
+	 * non-default database-level properties.  (The reason this must be
+	 * separate is that we cannot put any additional commands into the TOC
+	 * entry that has CREATE DATABASE.  pg_restore would execute such a group
+	 * in an implicit transaction block, and the backend won't allow CREATE
+	 * DATABASE in that context.)
 	 */
 	resetPQExpBuffer(creaQry);
 	resetPQExpBuffer(delQry);
@@ -2854,8 +2855,7 @@ dumpDatabase(Archive *fout)
 
 	/*
 	 * We stick this binary-upgrade query into the DATABASE PROPERTIES archive
-	 * entry, too.  It can't go into the DATABASE entry because that would
-	 * result in an implicit transaction block around the CREATE DATABASE.
+	 * entry, too, for lack of a better place.
 	 */
 	if (dopt->binary_upgrade)
 	{
