@@ -27,6 +27,9 @@ select '(Joe,"Blow,Jr")'::fullname;
 select '(Joe,)'::fullname;	-- ok, null 2nd column
 select '(Joe)'::fullname;	-- bad
 select '(Joe,,)'::fullname;	-- bad
+select '[]'::fullname;          -- bad
+select ' (Joe,Blow)  '::fullname;  -- ok, extra whitespace
+select '(Joe,Blow) /'::fullname;  -- bad
 
 create temp table quadtable(f1 int, q quad);
 
@@ -159,6 +162,105 @@ create temp table cc (f1 cantcompare);
 insert into cc values('("(1,2)",3)');
 insert into cc values('("(4,5)",6)');
 select * from cc order by f1; -- fail, but should complain about cantcompare
+
+--
+-- Tests for record_{eq,cmp}
+--
+
+create type testtype1 as (a int, b int);
+
+-- all true
+select row(1, 2)::testtype1 < row(1, 3)::testtype1;
+select row(1, 2)::testtype1 <= row(1, 3)::testtype1;
+select row(1, 2)::testtype1 = row(1, 2)::testtype1;
+select row(1, 2)::testtype1 <> row(1, 3)::testtype1;
+select row(1, 3)::testtype1 >= row(1, 2)::testtype1;
+select row(1, 3)::testtype1 > row(1, 2)::testtype1;
+
+-- all false
+select row(1, -2)::testtype1 < row(1, -3)::testtype1;
+select row(1, -2)::testtype1 <= row(1, -3)::testtype1;
+select row(1, -2)::testtype1 = row(1, -3)::testtype1;
+select row(1, -2)::testtype1 <> row(1, -2)::testtype1;
+select row(1, -3)::testtype1 >= row(1, -2)::testtype1;
+select row(1, -3)::testtype1 > row(1, -2)::testtype1;
+
+-- true, but see *< below
+select row(1, -2)::testtype1 < row(1, 3)::testtype1;
+
+-- mismatches
+create type testtype3 as (a int, b text);
+select row(1, 2)::testtype1 < row(1, 'abc')::testtype3;
+select row(1, 2)::testtype1 <> row(1, 'abc')::testtype3;
+create type testtype5 as (a int);
+select row(1, 2)::testtype1 < row(1)::testtype5;
+select row(1, 2)::testtype1 <> row(1)::testtype5;
+
+-- non-comparable types
+create type testtype6 as (a int, b point);
+select row(1, '(1,2)')::testtype6 < row(1, '(1,3)')::testtype6;
+select row(1, '(1,2)')::testtype6 <> row(1, '(1,3)')::testtype6;
+
+drop type testtype1, testtype3, testtype5, testtype6;
+
+--
+-- Tests for record_image_{eq,cmp}
+--
+
+create type testtype1 as (a int, b int);
+
+-- all true
+select row(1, 2)::testtype1 *< row(1, 3)::testtype1;
+select row(1, 2)::testtype1 *<= row(1, 3)::testtype1;
+select row(1, 2)::testtype1 *= row(1, 2)::testtype1;
+select row(1, 2)::testtype1 *<> row(1, 3)::testtype1;
+select row(1, 3)::testtype1 *>= row(1, 2)::testtype1;
+select row(1, 3)::testtype1 *> row(1, 2)::testtype1;
+
+-- all false
+select row(1, -2)::testtype1 *< row(1, -3)::testtype1;
+select row(1, -2)::testtype1 *<= row(1, -3)::testtype1;
+select row(1, -2)::testtype1 *= row(1, -3)::testtype1;
+select row(1, -2)::testtype1 *<> row(1, -2)::testtype1;
+select row(1, -3)::testtype1 *>= row(1, -2)::testtype1;
+select row(1, -3)::testtype1 *> row(1, -2)::testtype1;
+
+-- This returns the "wrong" order because record_image_cmp works on
+-- unsigned datums without knowing about the actual data type.
+select row(1, -2)::testtype1 *< row(1, 3)::testtype1;
+
+-- other types
+create type testtype2 as (a smallint, b bool);  -- byval different sizes
+select row(1, true)::testtype2 *< row(2, true)::testtype2;
+select row(-2, true)::testtype2 *< row(-1, true)::testtype2;
+select row(0, false)::testtype2 *< row(0, true)::testtype2;
+select row(0, false)::testtype2 *<> row(0, true)::testtype2;
+
+create type testtype3 as (a int, b text);  -- variable length
+select row(1, 'abc')::testtype3 *< row(1, 'abd')::testtype3;
+select row(1, 'abc')::testtype3 *< row(1, 'abcd')::testtype3;
+select row(1, 'abc')::testtype3 *> row(1, 'abd')::testtype3;
+select row(1, 'abc')::testtype3 *<> row(1, 'abd')::testtype3;
+
+create type testtype4 as (a int, b point);  -- by ref, fixed length
+select row(1, '(1,2)')::testtype4 *< row(1, '(1,3)')::testtype4;
+select row(1, '(1,2)')::testtype4 *<> row(1, '(1,3)')::testtype4;
+
+-- mismatches
+select row(1, 2)::testtype1 *< row(1, 'abc')::testtype3;
+select row(1, 2)::testtype1 *<> row(1, 'abc')::testtype3;
+create type testtype5 as (a int);
+select row(1, 2)::testtype1 *< row(1)::testtype5;
+select row(1, 2)::testtype1 *<> row(1)::testtype5;
+
+-- non-comparable types
+create type testtype6 as (a int, b point);
+select row(1, '(1,2)')::testtype6 *< row(1, '(1,3)')::testtype6;
+select row(1, '(1,2)')::testtype6 *>= row(1, '(1,3)')::testtype6;
+select row(1, '(1,2)')::testtype6 *<> row(1, '(1,3)')::testtype6;
+
+drop type testtype1, testtype2, testtype3, testtype4, testtype5, testtype6;
+
 
 --
 -- Test case derived from bug #5716: check multiple uses of a rowtype result
