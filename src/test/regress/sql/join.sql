@@ -1668,6 +1668,16 @@ select * from
     select * from (select 3 as z offset 0) z where z.z = x.x
   ) zz on zz.z = y.y;
 
+-- check handling of nested appendrels inside LATERAL
+select * from
+  ((select 2 as v) union all (select 3 as v)) as q1
+  cross join lateral
+  ((select * from
+      ((select 4 as v) union all (select 5 as v)) as q3)
+   union all
+   (select q1.v)
+  ) as q2;
+
 -- check we don't try to do a unique-ified semijoin with LATERAL
 explain (verbose, costs off)
 select * from
