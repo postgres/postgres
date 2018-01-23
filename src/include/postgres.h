@@ -24,7 +24,7 @@
  *	  section	description
  *	  -------	------------------------------------------------
  *		1)		variable-length datatypes (TOAST support)
- *		2)		datum type + support macros
+ *		2)		Datum type + support macros
  *		3)		exception handling backend support
  *
  *	 NOTES
@@ -349,60 +349,38 @@ typedef struct
 
 
 /* ----------------------------------------------------------------
- *				Section 2:	datum type + support macros
+ *				Section 2:	Datum type + support macros
  * ----------------------------------------------------------------
  */
 
 /*
- * Port Notes:
- *	Postgres makes the following assumptions about datatype sizes:
+ * A Datum contains either a value of a pass-by-value type or a pointer to a
+ * value of a pass-by-reference type.  Therefore, we require:
  *
- *	sizeof(Datum) == sizeof(void *) == 4 or 8
- *	sizeof(char) == 1
- *	sizeof(short) == 2
+ * sizeof(Datum) == sizeof(void *) == 4 or 8
  *
- * When a type narrower than Datum is stored in a Datum, we place it in the
- * low-order bits and are careful that the DatumGetXXX macro for it discards
- * the unused high-order bits (as opposed to, say, assuming they are zero).
- * This is needed to support old-style user-defined functions, since depending
- * on architecture and compiler, the return value of a function returning char
- * or short may contain garbage when called as if it returned Datum.
+ * The macros below and the analogous macros for other types should be used to
+ * convert between a Datum and the appropriate C type.
  */
 
 typedef uintptr_t Datum;
 
 #define SIZEOF_DATUM SIZEOF_VOID_P
 
-typedef Datum *DatumPtr;
-
-#define GET_1_BYTE(datum)	(((Datum) (datum)) & 0x000000ff)
-#define GET_2_BYTES(datum)	(((Datum) (datum)) & 0x0000ffff)
-#define GET_4_BYTES(datum)	(((Datum) (datum)) & 0xffffffff)
-#if SIZEOF_DATUM == 8
-#define GET_8_BYTES(datum)	((Datum) (datum))
-#endif
-#define SET_1_BYTE(value)	(((Datum) (value)) & 0x000000ff)
-#define SET_2_BYTES(value)	(((Datum) (value)) & 0x0000ffff)
-#define SET_4_BYTES(value)	(((Datum) (value)) & 0xffffffff)
-#if SIZEOF_DATUM == 8
-#define SET_8_BYTES(value)	((Datum) (value))
-#endif
-
 /*
  * DatumGetBool
  *		Returns boolean value of a datum.
  *
- * Note: any nonzero value will be considered TRUE, but we ignore bits to
- * the left of the width of bool, per comment above.
+ * Note: any nonzero value will be considered true.
  */
 
-#define DatumGetBool(X) ((bool) (GET_1_BYTE(X) != 0))
+#define DatumGetBool(X) ((bool) ((X) != 0))
 
 /*
  * BoolGetDatum
  *		Returns datum representation for a boolean.
  *
- * Note: any nonzero value will be considered TRUE.
+ * Note: any nonzero value will be considered true.
  */
 
 #define BoolGetDatum(X) ((Datum) ((X) ? 1 : 0))
@@ -412,140 +390,140 @@ typedef Datum *DatumPtr;
  *		Returns character value of a datum.
  */
 
-#define DatumGetChar(X) ((char) GET_1_BYTE(X))
+#define DatumGetChar(X) ((char) (X))
 
 /*
  * CharGetDatum
  *		Returns datum representation for a character.
  */
 
-#define CharGetDatum(X) ((Datum) SET_1_BYTE(X))
+#define CharGetDatum(X) ((Datum) (X))
 
 /*
  * Int8GetDatum
  *		Returns datum representation for an 8-bit integer.
  */
 
-#define Int8GetDatum(X) ((Datum) SET_1_BYTE(X))
+#define Int8GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetUInt8
  *		Returns 8-bit unsigned integer value of a datum.
  */
 
-#define DatumGetUInt8(X) ((uint8) GET_1_BYTE(X))
+#define DatumGetUInt8(X) ((uint8) (X))
 
 /*
  * UInt8GetDatum
  *		Returns datum representation for an 8-bit unsigned integer.
  */
 
-#define UInt8GetDatum(X) ((Datum) SET_1_BYTE(X))
+#define UInt8GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetInt16
  *		Returns 16-bit integer value of a datum.
  */
 
-#define DatumGetInt16(X) ((int16) GET_2_BYTES(X))
+#define DatumGetInt16(X) ((int16) (X))
 
 /*
  * Int16GetDatum
  *		Returns datum representation for a 16-bit integer.
  */
 
-#define Int16GetDatum(X) ((Datum) SET_2_BYTES(X))
+#define Int16GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetUInt16
  *		Returns 16-bit unsigned integer value of a datum.
  */
 
-#define DatumGetUInt16(X) ((uint16) GET_2_BYTES(X))
+#define DatumGetUInt16(X) ((uint16) (X))
 
 /*
  * UInt16GetDatum
  *		Returns datum representation for a 16-bit unsigned integer.
  */
 
-#define UInt16GetDatum(X) ((Datum) SET_2_BYTES(X))
+#define UInt16GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetInt32
  *		Returns 32-bit integer value of a datum.
  */
 
-#define DatumGetInt32(X) ((int32) GET_4_BYTES(X))
+#define DatumGetInt32(X) ((int32) (X))
 
 /*
  * Int32GetDatum
  *		Returns datum representation for a 32-bit integer.
  */
 
-#define Int32GetDatum(X) ((Datum) SET_4_BYTES(X))
+#define Int32GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetUInt32
  *		Returns 32-bit unsigned integer value of a datum.
  */
 
-#define DatumGetUInt32(X) ((uint32) GET_4_BYTES(X))
+#define DatumGetUInt32(X) ((uint32) (X))
 
 /*
  * UInt32GetDatum
  *		Returns datum representation for a 32-bit unsigned integer.
  */
 
-#define UInt32GetDatum(X) ((Datum) SET_4_BYTES(X))
+#define UInt32GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetObjectId
  *		Returns object identifier value of a datum.
  */
 
-#define DatumGetObjectId(X) ((Oid) GET_4_BYTES(X))
+#define DatumGetObjectId(X) ((Oid) (X))
 
 /*
  * ObjectIdGetDatum
  *		Returns datum representation for an object identifier.
  */
 
-#define ObjectIdGetDatum(X) ((Datum) SET_4_BYTES(X))
+#define ObjectIdGetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetTransactionId
  *		Returns transaction identifier value of a datum.
  */
 
-#define DatumGetTransactionId(X) ((TransactionId) GET_4_BYTES(X))
+#define DatumGetTransactionId(X) ((TransactionId) (X))
 
 /*
  * TransactionIdGetDatum
  *		Returns datum representation for a transaction identifier.
  */
 
-#define TransactionIdGetDatum(X) ((Datum) SET_4_BYTES((X)))
+#define TransactionIdGetDatum(X) ((Datum) (X))
 
 /*
  * MultiXactIdGetDatum
  *		Returns datum representation for a multixact identifier.
  */
 
-#define MultiXactIdGetDatum(X) ((Datum) SET_4_BYTES((X)))
+#define MultiXactIdGetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetCommandId
  *		Returns command identifier value of a datum.
  */
 
-#define DatumGetCommandId(X) ((CommandId) GET_4_BYTES(X))
+#define DatumGetCommandId(X) ((CommandId) (X))
 
 /*
  * CommandIdGetDatum
  *		Returns datum representation for a command identifier.
  */
 
-#define CommandIdGetDatum(X) ((Datum) SET_4_BYTES(X))
+#define CommandIdGetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetPointer
@@ -608,7 +586,7 @@ typedef Datum *DatumPtr;
  */
 
 #ifdef USE_FLOAT8_BYVAL
-#define DatumGetInt64(X) ((int64) GET_8_BYTES(X))
+#define DatumGetInt64(X) ((int64) (X))
 #else
 #define DatumGetInt64(X) (* ((int64 *) DatumGetPointer(X)))
 #endif
@@ -622,7 +600,7 @@ typedef Datum *DatumPtr;
  */
 
 #ifdef USE_FLOAT8_BYVAL
-#define Int64GetDatum(X) ((Datum) SET_8_BYTES(X))
+#define Int64GetDatum(X) ((Datum) (X))
 #else
 extern Datum Int64GetDatum(int64 X);
 #endif
@@ -635,7 +613,7 @@ extern Datum Int64GetDatum(int64 X);
  */
 
 #ifdef USE_FLOAT8_BYVAL
-#define DatumGetUInt64(X) ((uint64) GET_8_BYTES(X))
+#define DatumGetUInt64(X) ((uint64) (X))
 #else
 #define DatumGetUInt64(X) (* ((uint64 *) DatumGetPointer(X)))
 #endif
@@ -649,7 +627,7 @@ extern Datum Int64GetDatum(int64 X);
  */
 
 #ifdef USE_FLOAT8_BYVAL
-#define UInt64GetDatum(X) ((Datum) SET_8_BYTES(X))
+#define UInt64GetDatum(X) ((Datum) (X))
 #else
 #define UInt64GetDatum(X) Int64GetDatum((int64) (X))
 #endif
