@@ -405,10 +405,12 @@ PostgreSQL documentation
        </para>
 
        <para>
-        When waiting for startup, <command>pg_ctl</command> repeatedly
-        attempts to connect to the server.
-        When waiting for shutdown, <command>pg_ctl</command> waits for
-        the server to remove its <acronym>PID</acronym> file.
+        When waiting, <command>pg_ctl</command> repeatedly checks the
+        server's <acronym>PID</acronym> file, sleeping for a short amount
+        of time between checks.  Startup is considered complete when
+        the <acronym>PID</acronym> file indicates that the server is ready to
+        accept connections.  Shutdown is considered complete when the server
+        removes the <acronym>PID</acronym> file.
         <command>pg_ctl</command> returns an exit code based on the
         success of the startup or shutdown.
        </para>
