@@ -490,47 +490,55 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
   <title>Building the Documentation</title>
 
   <para>
-   Building the PostgreSQL documentation in HTML format requires several tools
-   and files. Create a root directory for all these files, and store them
-   in the subdirectories in the list below.
-   <variablelist>
-    <varlistentry>
-     <term>OpenJade 1.3.1-2</term>
-     <listitem><para>
-      Download from
-      <ulink url="http://sourceforge.net/projects/openjade/files/openjade/1.3.1/openjade-1_3_1-2-bin.zip/download"></ulink>
-      and uncompress in the subdirectory <filename>openjade-1.3.1</filename>.
-     </para></listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>DocBook DTD 4.2</term>
-     <listitem><para>
-      Download from
-      <ulink url="http://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip"></ulink>
-      and uncompress in the subdirectory <filename>docbook</filename>.
-     </para></listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>ISO character entities</term>
-     <listitem><para>
-      Download from
-      <ulink url="http://www.oasis-open.org/cover/ISOEnts.zip"></ulink> and
-      uncompress in the subdirectory <filename>docbook</filename>.
-     </para></listitem>
-    </varlistentry>
-   </variablelist>
-   Edit the <filename>buildenv.pl</filename> file, and add a variable for the
-   location of the root directory, for example:
-<programlisting>
-$ENV{DOCROOT}='c:\docbook';
-</programlisting>
-   To build the documentation, run the command
-   <filename>builddoc.bat</filename>. Note that this will actually run the
-   build twice, in order to generate the indexes. The generated HTML files
-   will be in <filename>doc\src\sgml</filename>.
+   Building the PostgreSQL documentation on Windows is not supported at the moment.
+   But it is possible to use 
+   <productname>Windows Linux Subsystem</productname> for that purpose.
+    For information about <productname>WSL</productname> installation see
+    <ulink url="https://docs.microsoft.com/en-us/windows/wsl/about"></ulink>. 
   </para>
+   <para>
+     At first create directory to put PostgreSQL sources onto Windows files ystem -
+     for example <filename>C:\postgres</filename>.
+   </para>
+   <para>
+     Then run <productname>WSL</productname> and navigate to that directory 
+     in Linux file system.
+     <screen>
+       <userinput>bash</userinput>
+       <userinput>cd /mnt/c/postgres/</userinput>
+     </screen>     
+   </para>
+   <para>
+     Clone repository and set <parameter>core.autocrlf</parameter> to <parameter>false</parameter>
+     (to avoid scripts corruption by Windows-style newline encodings).
+     <screen>
+       <userinput>git clone git://git.postgresql.org/git/postgresql.git</userinput>
+       <userinput>cd postgresql</userinput>
+       <userinput>git config core.autocrlf false</userinput>
+     </screen>
+   </para>
+   <para>
+     Install toolset for bulding docs into WSL. For more details see <xref linkend="docguide-toolsets"/>
+     <screen>
+       <userinput>sudo apt-get install docbook docbook-xml docbook-xsl fop libxml2-utils opensp xsltproc</userinput>
+     </screen>
+   </para>
+   <para>
+     Run the <filename>configure</filename> script inside <productname>WSL</productname> console.
+     For more information about the building in Linux enviroment, see <xref linkend="installation"/>.
+     <screen>
+       <userinput>./configure</userinput>
+     </screen>
+   </para>
+   <para>
+     Edit docs sources in <filename>C:\postgres\postgresql\doc\src\sgml</filename> using Windows. 
+     Make sure your editors uses Unix-style newline endings.
+     Build documentation inside <productname>WSL</productname>. See <xref linkend="docguide-build"/>
+     <screen>
+       <userinput>cd /mnt/c/postgres/postgresql/doc/src</userinput>
+       <userinput>make</userinput>
+     </screen>
+   </para>
  </sect2>
 
  </sect1>

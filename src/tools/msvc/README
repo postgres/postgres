@@ -47,7 +47,6 @@ arguments.
 
 - User tools -
 build.pl               tool to build the binaries
-builddoc.pl            tool to build the docs
 clean.bat              batch file for cleaning up generated files
 install.pl             tool to install the generated files
 mkvcbuild.pl           tool to generate the Visual Studio build files
