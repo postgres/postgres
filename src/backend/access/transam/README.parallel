@@ -125,9 +125,9 @@ worker.  This includes:
   - State related to pending REINDEX operations, which prevents access to
     an index that is currently being rebuilt.
 
-To prevent undetected or unprincipled deadlocks when running in parallel mode,
-this could should eventually handle heavyweight locks in some way.  This is
-not implemented yet.
+To prevent unprincipled deadlocks when running in parallel mode, this code
+also arranges for the leader and all workers to participate in group
+locking.  See src/backend/storage/lmgr/README for more details.
 
 Transaction Integration
 =======================
