@@ -7587,11 +7587,10 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    To allow the client to verify the identity of the server, place a root
    certificate on the client and a leaf certificate signed by the root
    certificate on the server.  To allow the server to verify the identity
-   of the client, place a root certificate on the server and a leaf and
-   optional intermediate certificates signed by the root certificate on
-   the client.  Intermediate certificates (usually stored with the leaf
-   certificate) can also be used to link the leaf certificate to the
-   root certificate.
+   of the client, place a root certificate on the server and a leaf
+   certificate signed by the root certificate on the client.  One or more
+   intermediate certificates (usually stored with the leaf certificate)
+   can also be used to link the leaf certificate to the root certificate.
   </para>
 
   <para>
