@@ -43,6 +43,7 @@ typedef struct ParallelContext
 	void	   *private_memory;
 	shm_toc    *toc;
 	ParallelWorkerInfo *worker;
+	bool	   *any_message_received;
 } ParallelContext;
 
 extern volatile bool ParallelMessagePending;
