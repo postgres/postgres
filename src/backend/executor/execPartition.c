@@ -87,6 +87,7 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 		num_update_rri = list_length(node->plans);
 		proute->subplan_partition_offsets =
 			palloc(num_update_rri * sizeof(int));
+		proute->num_subplan_partition_offsets = num_update_rri;
 
 		/*
 		 * We need an additional tuple slot for storing transient tuples that
@@ -481,6 +482,7 @@ ExecCleanupTupleRouting(PartitionTupleRouting *proute)
 		 * result rels are present in the UPDATE subplans.
 		 */
 		if (proute->subplan_partition_offsets &&
+			subplan_index < proute->num_subplan_partition_offsets &&
 			proute->subplan_partition_offsets[subplan_index] == i)
 		{
 			subplan_index++;

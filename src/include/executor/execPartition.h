@@ -80,6 +80,7 @@ typedef struct PartitionDispatchData *PartitionDispatch;
  * subplan_partition_offsets	Integer array ordered by UPDATE subplans. Each
  *								element of this array has the index into the
  *								corresponding partition in partitions array.
+ * num_subplan_partition_offsets  Length of 'subplan_partition_offsets' array
  * partition_tuple_slot			TupleTableSlot to be used to manipulate any
  *								given leaf partition's rowtype after that
  *								partition is chosen for insertion by
@@ -96,6 +97,7 @@ typedef struct PartitionTupleRouting
 	TupleConversionMap **child_parent_tupconv_maps;
 	bool	   *child_parent_map_not_required;
 	int		   *subplan_partition_offsets;
+	int			num_subplan_partition_offsets;
 	TupleTableSlot *partition_tuple_slot;
 	TupleTableSlot *root_tuple_slot;
 } PartitionTupleRouting;

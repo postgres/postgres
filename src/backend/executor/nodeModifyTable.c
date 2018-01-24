@@ -1812,7 +1812,8 @@ tupconv_map_for_subplan(ModifyTableState *mtstate, int whichplan)
 		 * If subplan-indexed array is NULL, things should have been arranged
 		 * to convert the subplan index to partition index.
 		 */
-		Assert(proute && proute->subplan_partition_offsets != NULL);
+		Assert(proute && proute->subplan_partition_offsets != NULL &&
+			   whichplan < proute->num_subplan_partition_offsets);
 
 		leaf_index = proute->subplan_partition_offsets[whichplan];
 
