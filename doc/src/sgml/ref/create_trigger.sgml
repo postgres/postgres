@@ -500,17 +500,17 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </para>
 
   <para>
-    Modifying a partitioned table or a table with inheritance children fires
-    statement-level triggers directly attached to that table, but not
-    statement-level triggers for its partitions or child tables.  In contrast,
-    row-level triggers are fired for all affected partitions or child tables.
-    If a statement-level trigger has been defined with transition relations
-    named by a <literal>REFERENCING</literal> clause, then before and after
-    images of rows are visible from all affected partitions or child tables.
-    In the case of inheritance children, the row images include only columns
-    that are present in the table that the trigger is attached to.  Currently,
-    row-level triggers with transition relations cannot be defined on
-    partitions or inheritance child tables.
+   Modifying a partitioned table or a table with inheritance children fires
+   statement-level triggers directly attached to that table, but not
+   statement-level triggers for its partitions or child tables.  In contrast,
+   row-level triggers are fired for all affected partitions or child tables.
+   If a statement-level trigger has been defined with transition relations
+   named by a <literal>REFERENCING</literal> clause, then before and after
+   images of rows are visible from all affected partitions or child tables.
+   In the case of inheritance children, the row images include only columns
+   that are present in the table that the trigger is attached to.  Currently,
+   row-level triggers with transition relations cannot be defined on
+   partitions or inheritance child tables.
   </para>
 
   <para>
