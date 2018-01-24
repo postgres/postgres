@@ -116,16 +116,23 @@ typedef struct TupleTableSlot
 	bool		tts_isempty;	/* true = slot is empty */
 	bool		tts_shouldFree; /* should pfree tts_tuple? */
 	bool		tts_shouldFreeMin;	/* should pfree tts_mintuple? */
+#define FIELDNO_TUPLETABLESLOT_SLOW 4
 	bool		tts_slow;		/* saved state for slot_deform_tuple */
+#define FIELDNO_TUPLETABLESLOT_TUPLE 5
 	HeapTuple	tts_tuple;		/* physical tuple, or NULL if virtual */
+#define FIELDNO_TUPLETABLESLOT_TUPLEDESCRIPTOR 6
 	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
 	MemoryContext tts_mcxt;		/* slot itself is in this context */
 	Buffer		tts_buffer;		/* tuple's buffer, or InvalidBuffer */
+#define FIELDNO_TUPLETABLESLOT_NVALID 9
 	int			tts_nvalid;		/* # of valid values in tts_values */
+#define FIELDNO_TUPLETABLESLOT_VALUES 10
 	Datum	   *tts_values;		/* current per-attribute values */
+#define FIELDNO_TUPLETABLESLOT_ISNULL 11
 	bool	   *tts_isnull;		/* current per-attribute isnull flags */
 	MinimalTuple tts_mintuple;	/* minimal tuple, or NULL if none */
 	HeapTupleData tts_minhdr;	/* workspace for minimal-tuple-only case */
+#define FIELDNO_TUPLETABLESLOT_OFF 14
 	uint32		tts_off;		/* saved state for slot_deform_tuple */
 	bool		tts_fixedTupleDescriptor; /* descriptor can't be changed */
 } TupleTableSlot;

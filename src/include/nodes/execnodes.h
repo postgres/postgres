@@ -64,12 +64,15 @@ typedef struct ExprState
 	 * Storage for result value of a scalar expression, or for individual
 	 * column results within expressions built by ExecBuildProjectionInfo().
 	 */
+#define FIELDNO_EXPRSTATE_RESNULL 2
 	bool		resnull;
+#define FIELDNO_EXPRSTATE_RESVALUE 3
 	Datum		resvalue;
 
 	/*
 	 * If projecting a tuple result, this slot holds the result; else NULL.
 	 */
+#define FIELDNO_EXPRSTATE_RESULTSLOT 4
 	TupleTableSlot *resultslot;
 
 	/*
@@ -208,8 +211,11 @@ typedef struct ExprContext
 	NodeTag		type;
 
 	/* Tuples that Var nodes in expression may refer to */
+#define FIELDNO_EXPRCONTEXT_SCANTUPLE 1
 	TupleTableSlot *ecxt_scantuple;
+#define FIELDNO_EXPRCONTEXT_INNERTUPLE 2
 	TupleTableSlot *ecxt_innertuple;
+#define FIELDNO_EXPRCONTEXT_OUTERTUPLE 3
 	TupleTableSlot *ecxt_outertuple;
 
 	/* Memory contexts for expression evaluation --- see notes above */
@@ -224,15 +230,21 @@ typedef struct ExprContext
 	 * Values to substitute for Aggref nodes in the expressions of an Agg
 	 * node, or for WindowFunc nodes within a WindowAgg node.
 	 */
+#define FIELDNO_EXPRCONTEXT_AGGVALUES 8
 	Datum	   *ecxt_aggvalues; /* precomputed values for aggs/windowfuncs */
+#define FIELDNO_EXPRCONTEXT_AGGNULLS 9
 	bool	   *ecxt_aggnulls;	/* null flags for aggs/windowfuncs */
 
 	/* Value to substitute for CaseTestExpr nodes in expression */
+#define FIELDNO_EXPRCONTEXT_CASEDATUM 10
 	Datum		caseValue_datum;
+#define FIELDNO_EXPRCONTEXT_CASENULL 11
 	bool		caseValue_isNull;
 
 	/* Value to substitute for CoerceToDomainValue nodes in expression */
+#define FIELDNO_EXPRCONTEXT_DOMAINDATUM 12
 	Datum		domainValue_datum;
+#define FIELDNO_EXPRCONTEXT_DOMAINNULL 13
 	bool		domainValue_isNull;
 
 	/* Link to containing EState (NULL if a standalone ExprContext) */
@@ -1847,12 +1859,15 @@ typedef struct AggState
 	ExprContext *hashcontext;	/* econtexts for long-lived data (hashtable) */
 	ExprContext **aggcontexts;	/* econtexts for long-lived data (per GS) */
 	ExprContext *tmpcontext;	/* econtext for input expressions */
+#define FIELDNO_AGGSTATE_CURAGGCONTEXT 14
 	ExprContext *curaggcontext; /* currently active aggcontext */
 	AggStatePerAgg curperagg;	/* currently active aggregate, if any */
+#define FIELDNO_AGGSTATE_CURPERTRANS 16
 	AggStatePerTrans curpertrans;	/* currently active trans state, if any */
 	bool		input_done;		/* indicates end of input */
 	bool		agg_done;		/* indicates completion of Agg scan */
 	int			projected_set;	/* The last projected grouping set */
+#define FIELDNO_AGGSTATE_CURRENT_SET 20
 	int			current_set;	/* The current grouping set being evaluated */
 	Bitmapset  *grouped_cols;	/* grouped cols in current projection */
 	List	   *all_grouped_cols;	/* list of all grouped cols in DESC order */
@@ -1874,6 +1889,7 @@ typedef struct AggState
 										 * per-group pointers */
 
 	/* support for evaluation of agg input expressions: */
+#define FIELDNO_AGGSTATE_ALL_PERGROUPS 34
 	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
 										 * ->hash_pergroup */
 	ProjectionInfo *combinedproj;	/* projection machinery */

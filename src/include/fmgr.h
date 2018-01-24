@@ -80,9 +80,12 @@ typedef struct FunctionCallInfoData
 	fmNodePtr	context;		/* pass info about context of call */
 	fmNodePtr	resultinfo;		/* pass or return extra info about result */
 	Oid			fncollation;	/* collation for function to use */
+#define FIELDNO_FUNCTIONCALLINFODATA_ISNULL 4
 	bool		isnull;			/* function must set true if result is NULL */
 	short		nargs;			/* # arguments actually passed */
+#define FIELDNO_FUNCTIONCALLINFODATA_ARG 6
 	Datum		arg[FUNC_MAX_ARGS]; /* Arguments passed to function */
+#define FIELDNO_FUNCTIONCALLINFODATA_ARGNULL 7
 	bool		argnull[FUNC_MAX_ARGS]; /* T if arg[i] is actually NULL */
 } FunctionCallInfoData;
 
