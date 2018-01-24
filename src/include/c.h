@@ -146,14 +146,21 @@
 #define pg_attribute_noreturn()
 #endif
 
-/* GCC, Sunpro and XLC support always_inline via __attribute__ */
-#if defined(__GNUC__)
-#define pg_attribute_always_inline __attribute__((always_inline))
-/* msvc via a special keyword */
+/*
+ * Use "pg_attribute_always_inline" in place of "inline" for functions that
+ * we wish to force inlining of, even when the compiler's heuristics would
+ * choose not to.  But, if possible, don't force inlining in unoptimized
+ * debug builds.
+ */
+#if (defined(__GNUC__) && __GNUC__ > 3 && defined(__OPTIMIZE__)) || defined(__SUNPRO_C) || defined(__IBMC__)
+/* GCC > 3, Sunpro and XLC support always_inline via __attribute__ */
+#define pg_attribute_always_inline __attribute__((always_inline)) inline
 #elif defined(_MSC_VER)
+/* MSVC has a special keyword for this */
 #define pg_attribute_always_inline __forceinline
 #else
-#define pg_attribute_always_inline
+/* Otherwise, the best we can do is to say "inline" */
+#define pg_attribute_always_inline inline
 #endif
 
 /*
