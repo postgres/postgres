@@ -74,6 +74,7 @@ typedef struct _restoreOptions
 	int			dump_inserts;
 	int			column_inserts;
 	int			if_exists;
+	int			no_comments;	/* Skip comments */
 	int			no_publications;	/* Skip publication entries */
 	int			no_security_labels; /* Skip security label entries */
 	int			no_subscriptions;	/* Skip subscription entries */
@@ -146,6 +147,7 @@ typedef struct _dumpOptions
 	int			dump_inserts;
 	int			column_inserts;
 	int			if_exists;
+	int			no_comments;
 	int			no_security_labels;
 	int			no_publications;
 	int			no_subscriptions;

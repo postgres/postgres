@@ -359,6 +359,7 @@ main(int argc, char **argv)
 		{"snapshot", required_argument, NULL, 6},
 		{"strict-names", no_argument, &strict_names, 1},
 		{"use-set-session-authorization", no_argument, &dopt.use_setsessauth, 1},
+		{"no-comments", no_argument, &dopt.no_comments, 1},
 		{"no-publications", no_argument, &dopt.no_publications, 1},
 		{"no-security-labels", no_argument, &dopt.no_security_labels, 1},
 		{"no-synchronized-snapshots", no_argument, &dopt.no_synchronized_snapshots, 1},
@@ -877,6 +878,7 @@ main(int argc, char **argv)
 	ropt->use_setsessauth = dopt.use_setsessauth;
 	ropt->disable_dollar_quoting = dopt.disable_dollar_quoting;
 	ropt->dump_inserts = dopt.dump_inserts;
+	ropt->no_comments = dopt.no_comments;
 	ropt->no_publications = dopt.no_publications;
 	ropt->no_security_labels = dopt.no_security_labels;
 	ropt->no_subscriptions = dopt.no_subscriptions;
@@ -967,6 +969,7 @@ help(const char *progname)
 	printf(_("  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
+	printf(_("  --no-comments                do not dump comments\n"));
 	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
@@ -2780,7 +2783,7 @@ dumpDatabase(Archive *fout)
 		 */
 		char	   *comment = PQgetvalue(res, 0, PQfnumber(res, "description"));
 
-		if (comment && *comment)
+		if (comment && *comment && !dopt->no_comments)
 		{
 			resetPQExpBuffer(dbQry);
 
@@ -2806,7 +2809,7 @@ dumpDatabase(Archive *fout)
 					dbCatId, 0, dbDumpId);
 	}
 
-	/* Dump shared security label. */
+	/* Dump DB security label, if enabled */
 	if (!dopt->no_security_labels && fout->remoteVersion >= 90200)
 	{
 		PGresult   *shres;
@@ -9416,6 +9419,10 @@ dumpComment(Archive *fout, const char *target,
 	CommentItem *comments;
 	int			ncomments;
 
+	/* do nothing, if --no-comments is supplied */
+	if (dopt->no_comments)
+		return;
+
 	/* Comments are schema not data ... except blob comments are data */
 	if (strncmp(target, "LARGE OBJECT ", 13) != 0)
 	{
@@ -9482,6 +9489,10 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 	int			ncomments;
 	PQExpBuffer query;
 	PQExpBuffer target;
+
+	/* do nothing, if --no-comments is supplied */
+	if (dopt->no_comments)
+		return;
 
 	/* Comments are SCHEMA not data */
 	if (dopt->dataOnly)
@@ -11151,6 +11162,10 @@ dumpCompositeTypeColComments(Archive *fout, TypeInfo *tyinfo)
 	int			ntups;
 	int			i_attname;
 	int			i_attnum;
+
+	/* do nothing, if --no-comments is supplied */
+	if (fout->dopt->no_comments)
+		return;
 
 	query = createPQExpBuffer();
 
