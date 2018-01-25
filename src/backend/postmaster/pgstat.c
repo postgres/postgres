@@ -2909,8 +2909,8 @@ pgstat_bestart(void)
 		beentry->st_ssl = true;
 		beentry->st_sslstatus->ssl_bits = be_tls_get_cipher_bits(MyProcPort);
 		beentry->st_sslstatus->ssl_compression = be_tls_get_compression(MyProcPort);
-		be_tls_get_version(MyProcPort, beentry->st_sslstatus->ssl_version, NAMEDATALEN);
-		be_tls_get_cipher(MyProcPort, beentry->st_sslstatus->ssl_cipher, NAMEDATALEN);
+		strlcpy(beentry->st_sslstatus->ssl_version, be_tls_get_version(MyProcPort), NAMEDATALEN);
+		strlcpy(beentry->st_sslstatus->ssl_cipher, be_tls_get_cipher(MyProcPort), NAMEDATALEN);
 		be_tls_get_peerdn_name(MyProcPort, beentry->st_sslstatus->ssl_clientdn, NAMEDATALEN);
 	}
 	else

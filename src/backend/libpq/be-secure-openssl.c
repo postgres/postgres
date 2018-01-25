@@ -1047,22 +1047,22 @@ be_tls_get_compression(Port *port)
 		return false;
 }
 
-void
-be_tls_get_version(Port *port, char *ptr, size_t len)
+const char *
+be_tls_get_version(Port *port)
 {
 	if (port->ssl)
-		strlcpy(ptr, SSL_get_version(port->ssl), len);
+		return SSL_get_version(port->ssl);
 	else
-		ptr[0] = '\0';
+		return NULL;
 }
 
-void
-be_tls_get_cipher(Port *port, char *ptr, size_t len)
+const char *
+be_tls_get_cipher(Port *port)
 {
 	if (port->ssl)
-		strlcpy(ptr, SSL_get_cipher(port->ssl), len);
+		return SSL_get_cipher(port->ssl);
 	else
-		ptr[0] = '\0';
+		return NULL;
 }
 
 void
