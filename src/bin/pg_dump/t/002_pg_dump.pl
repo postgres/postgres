@@ -1548,30 +1548,31 @@ qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|PUBLICATION|SUBSCRIPTION)(.*) OWNER TO .
 		all_runs  => 1,
 		catch_all => 'COMMENT commands',
 		regexp    => qr/^COMMENT ON EXTENSION plpgsql IS .*;/m,
-		like      => {
+		# this shouldn't ever get emitted anymore
+		like      => {},
+		unlike => {
+			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
+			column_inserts           => 1,
 			createdb                 => 1,
+			data_only                => 1,
 			defaults                 => 1,
 			exclude_dump_test_schema => 1,
 			exclude_test_table       => 1,
 			exclude_test_table_data  => 1,
 			no_blobs                 => 1,
-			no_privs                 => 1,
 			no_owner                 => 1,
+			no_privs                 => 1,
+			only_dump_test_schema    => 1,
+			only_dump_test_table     => 1,
 			pg_dumpall_dbprivs       => 1,
+			role                     => 1,
 			schema_only              => 1,
+			section_post_data        => 1,
 			section_pre_data         => 1,
-			with_oids                => 1, },
-		unlike => {
-			binary_upgrade         => 1,
-			column_inserts         => 1,
-			data_only              => 1,
-			only_dump_test_schema  => 1,
-			only_dump_test_table   => 1,
-			role                   => 1,
-			section_post_data      => 1,
-			test_schema_plus_blobs => 1, }, },
+			test_schema_plus_blobs   => 1,
+			with_oids                => 1, }, },
 
 	'COMMENT ON TABLE dump_test.test_table' => {
 		all_runs     => 1,
@@ -2751,33 +2752,34 @@ qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog
 		regexp   => qr/^
 			\QCREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;\E
 			/xm,
-		like => {
+		# this shouldn't ever get emitted anymore
+		like => {},
+		unlike => {
+			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
+			column_inserts           => 1,
 			createdb                 => 1,
+			data_only                => 1,
 			defaults                 => 1,
 			exclude_dump_test_schema => 1,
 			exclude_test_table       => 1,
 			exclude_test_table_data  => 1,
 			no_blobs                 => 1,
-			no_privs                 => 1,
 			no_owner                 => 1,
-			pg_dumpall_dbprivs       => 1,
-			schema_only              => 1,
-			section_pre_data         => 1,
-			with_oids                => 1, },
-		unlike => {
-			binary_upgrade           => 1,
-			column_inserts           => 1,
-			data_only                => 1,
+			no_privs                 => 1,
 			only_dump_test_schema    => 1,
 			only_dump_test_table     => 1,
+			pg_dumpall_dbprivs       => 1,
 			pg_dumpall_globals       => 1,
 			pg_dumpall_globals_clean => 1,
 			role                     => 1,
+			schema_only              => 1,
 			section_data             => 1,
 			section_post_data        => 1,
-			test_schema_plus_blobs   => 1, }, },
+			section_pre_data         => 1,
+			test_schema_plus_blobs   => 1,
+			with_oids                => 1, }, },
 
 	'CREATE AGGREGATE dump_test.newavg' => {
 		all_runs     => 1,
@@ -4565,11 +4567,12 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		all_runs  => 1,
 		catch_all => 'CREATE ... commands',
 		regexp    => qr/^CREATE SCHEMA public;/m,
-		like      => {
-			clean           => 1,
-			clean_if_exists => 1, },
+		# this shouldn't ever get emitted anymore
+		like      => {},
 		unlike => {
 			binary_upgrade           => 1,
+			clean                    => 1,
+			clean_if_exists          => 1,
 			createdb                 => 1,
 			defaults                 => 1,
 			exclude_test_table       => 1,
@@ -5395,8 +5398,10 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		all_runs  => 1,
 		catch_all => 'DROP ... commands',
 		regexp    => qr/^DROP SCHEMA public;/m,
-		like      => { clean => 1 },
+		# this shouldn't ever get emitted anymore
+		like      => {},
 		unlike    => {
+			clean                    => 1,
 			clean_if_exists          => 1,
 			pg_dumpall_globals_clean => 1, }, },
 
@@ -5404,17 +5409,21 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		all_runs  => 1,
 		catch_all => 'DROP ... commands',
 		regexp    => qr/^DROP SCHEMA IF EXISTS public;/m,
-		like      => { clean_if_exists => 1 },
+		# this shouldn't ever get emitted anymore
+		like      => {},
 		unlike    => {
 			clean                    => 1,
+			clean_if_exists          => 1,
 			pg_dumpall_globals_clean => 1, }, },
 
 	'DROP EXTENSION plpgsql' => {
 		all_runs  => 1,
 		catch_all => 'DROP ... commands',
 		regexp    => qr/^DROP EXTENSION plpgsql;/m,
-		like      => { clean => 1, },
+		# this shouldn't ever get emitted anymore
+		like      => {},
 		unlike    => {
+			clean => 1,
 			clean_if_exists          => 1,
 			pg_dumpall_globals_clean => 1, }, },
 
@@ -5494,9 +5503,11 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		all_runs  => 1,
 		catch_all => 'DROP ... commands',
 		regexp    => qr/^DROP EXTENSION IF EXISTS plpgsql;/m,
-		like      => { clean_if_exists => 1, },
+		# this shouldn't ever get emitted anymore
+		like      => {},
 		unlike    => {
 			clean                    => 1,
+			clean_if_exists          => 1,
 			pg_dumpall_globals_clean => 1, }, },
 
 	'DROP FUNCTION IF EXISTS dump_test.pltestlang_call_handler()' => {
@@ -6264,11 +6275,12 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 			\Q--\E\n\n
 			\QGRANT USAGE ON SCHEMA public TO PUBLIC;\E
 			/xm,
-		like => {
-			clean           => 1,
-			clean_if_exists => 1, },
+		# this shouldn't ever get emitted anymore
+		like => {},
 		unlike => {
 			binary_upgrade           => 1,
+			clean                    => 1,
+			clean_if_exists          => 1,
 			createdb                 => 1,
 			defaults                 => 1,
 			exclude_dump_test_schema => 1,
@@ -6537,6 +6549,8 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 			/xm,
 		like => {
 			binary_upgrade           => 1,
+			clean                    => 1,
+			clean_if_exists          => 1,
 			createdb                 => 1,
 			defaults                 => 1,
 			exclude_dump_test_schema => 1,
@@ -6549,8 +6563,6 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 			section_pre_data         => 1,
 			with_oids                => 1, },
 		unlike => {
-			clean                    => 1,
-			clean_if_exists          => 1,
 			only_dump_test_schema    => 1,
 			only_dump_test_table     => 1,
 			pg_dumpall_globals_clean => 1,
@@ -6576,18 +6588,18 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 			exclude_test_table_data  => 1,
 			no_blobs                 => 1,
 			no_owner                 => 1,
-			pg_dumpall_dbprivs       => 1,
-			schema_only              => 1,
-			section_pre_data         => 1,
-			with_oids                => 1, },
-		unlike => {
 			only_dump_test_schema    => 1,
 			only_dump_test_table     => 1,
-			pg_dumpall_globals_clean => 1,
+			pg_dumpall_dbprivs       => 1,
 			role                     => 1,
+			schema_only              => 1,
+			section_pre_data         => 1,
+			test_schema_plus_blobs   => 1,
+			with_oids                => 1, },
+		unlike => {
+			pg_dumpall_globals_clean => 1,
 			section_data             => 1,
-			section_post_data        => 1,
-			test_schema_plus_blobs   => 1, }, },
+			section_post_data        => 1, }, },
 
 	'REVOKE commands' => {    # catch-all for REVOKE commands
 		all_runs => 0,               # catch-all
