@@ -1711,7 +1711,7 @@ ExecSetupTransitionCaptureState(ModifyTableState *mtstate, EState *estate)
  * 1. For update-tuple-routing.
  * 2. For capturing tuples in transition tables.
  */
-void
+static void
 ExecSetupChildParentMapForSubplan(ModifyTableState *mtstate)
 {
 	ResultRelInfo *targetRelInfo = getTargetResultRelInfo(mtstate);

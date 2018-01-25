@@ -16431,7 +16431,7 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
  * dumpIndexAttach
  *	  write out to fout a partitioned-index attachment clause
  */
-void
+static void
 dumpIndexAttach(Archive *fout, IndexAttachInfo *attachinfo)
 {
 	if (fout->dopt->dataOnly)
