@@ -31,6 +31,17 @@ ERROR:  cannot create unique index on partitioned table "idxpart"
 create index concurrently on idxpart (a);
 ERROR:  cannot create index on partitioned table "idxpart" concurrently
 drop table idxpart;
+-- Verify bugfix with query on indexed partitioned table with no partitions
+-- https://postgr.es/m/20180124162006.pmapfiznhgngwtjf@alvherre.pgsql
+CREATE TABLE idxpart (col1 INT) PARTITION BY RANGE (col1);
+CREATE INDEX ON idxpart (col1);
+CREATE TABLE idxpart_two (col2 INT);
+SELECT col2 FROM idxpart_two fk LEFT OUTER JOIN idxpart pk ON (col1 = col2);
+ col2 
+------
+(0 rows)
+
+DROP table idxpart, idxpart_two;
 -- If a table without index is attached as partition to a table with
 -- an index, the index is automatically created
 create table idxpart (a int, b int, c text) partition by range (a);

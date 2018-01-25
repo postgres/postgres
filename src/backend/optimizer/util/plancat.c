@@ -208,6 +208,16 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			}
 
 			/*
+			 * Ignore partitioned indexes, since they are not usable for
+			 * queries.
+			 */
+			if (indexRelation->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
+			{
+				index_close(indexRelation, NoLock);
+				continue;
+			}
+
+			/*
 			 * If the index is valid, but cannot yet be used, ignore it; but
 			 * mark the plan we are generating as transient. See
 			 * src/backend/access/heap/README.HOT for discussion.

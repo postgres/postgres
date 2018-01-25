@@ -128,6 +128,14 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot cluster temporary tables of other sessions")));
 
+		/*
+		 * Reject clustering a partitioned table.
+		 */
+		if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot cluster a partitioned table")));
+
 		if (stmt->indexname == NULL)
 		{
 			ListCell   *index;
@@ -481,6 +489,12 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 	Form_pg_index indexForm;
 	Relation	pg_index;
 	ListCell   *index;
+
+	/* Disallow applying to a partitioned table */
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot mark index clustered in partitioned table")));
 
 	/*
 	 * If the index is already marked clustered, no need to do anything.

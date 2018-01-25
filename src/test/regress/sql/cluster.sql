@@ -196,6 +196,13 @@ drop table clstr_temp;
 
 RESET SESSION AUTHORIZATION;
 
+-- Check that partitioned tables cannot be clustered
+CREATE TABLE clstrpart (a int) PARTITION BY RANGE (a);
+CREATE INDEX clstrpart_idx ON clstrpart (a);
+ALTER TABLE clstrpart CLUSTER ON clstrpart_idx;
+CLUSTER clstrpart USING clstrpart_idx;
+DROP TABLE clstrpart;
+
 -- Test CLUSTER with external tuplesorting
 
 create table clstr_4 as select * from tenk1;
