@@ -446,6 +446,11 @@
          flag of <application>pg_dump</application>.  There is not currently
          any provision for wild-card matching in <application>pg_restore</application>,
          nor can you include a schema name within its <option>-t</option>.
+         And, while <application>pg_dump</application>'s <option>-t</option>
+         flag will also dump subsidiary objects (such as indexes) of the
+         selected table(s),
+         <application>pg_restore</application>'s <option>-t</option>
+         flag does not include such subsidiary objects.
         </para>
        </note>
 
@@ -564,7 +569,7 @@
       <listitem>
        <para>
         Use conditional commands (i.e. add an <literal>IF EXISTS</literal>
-        clause) when cleaning database objects.  This option is not valid
+        clause) to drop database objects.  This option is not valid
         unless <option>--clean</option> is also specified.
        </para>
       </listitem>
