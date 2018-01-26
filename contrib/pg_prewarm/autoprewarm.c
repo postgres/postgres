@@ -368,7 +368,7 @@ apw_load_buffers(void)
 			if (current_db != blkinfo[i].database)
 			{
 				/*
-				 * Combine BlockRecordInfos for global objects withs those of
+				 * Combine BlockRecordInfos for global objects with those of
 				 * the database.
 				 */
 				if (current_db != InvalidOid)
