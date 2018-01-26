@@ -1271,6 +1271,7 @@ ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type
      </listitem>
     </itemizedlist>
 
+    These option names are recognized case-insensitively.
     Any unspecified options receive these defaults:
 
 <programlisting>

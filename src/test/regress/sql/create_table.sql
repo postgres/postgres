@@ -253,6 +253,10 @@ CREATE TABLE IF NOT EXISTS test_tsvector(
 	t text
 );
 
+-- invalid: non-lowercase quoted reloptions identifiers
+CREATE TABLE tas_case WITH ("Fillfactor" = 10) AS SELECT 1 a;
+CREATE TABLE tas_case (a text) WITH ("Oids" = true);
+
 CREATE UNLOGGED TABLE unlogged1 (a int primary key);			-- OK
 CREATE TEMPORARY TABLE unlogged2 (a int primary key);			-- OK
 SELECT relname, relkind, relpersistence FROM pg_class WHERE relname ~ '^unlogged\d' ORDER BY relname;

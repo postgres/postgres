@@ -633,6 +633,11 @@ DROP COLLATION mycoll2;  -- fail
 ERROR:  cannot drop collation mycoll2 because other objects depend on it
 DETAIL:  table collate_test23 column f1 depends on collation mycoll2
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+-- invalid: non-lowercase quoted identifiers
+CREATE COLLATION case_coll ("Lc_Collate" = "POSIX", "Lc_Ctype" = "POSIX");
+ERROR:  collation attribute "Lc_Collate" not recognized
+LINE 1: CREATE COLLATION case_coll ("Lc_Collate" = "POSIX", "Lc_Ctyp...
+                                    ^
 -- 9.1 bug with useless COLLATE in an expression subject to length coercion
 CREATE TEMP TABLE vctable (f1 varchar(25));
 INSERT INTO vctable VALUES ('foo' COLLATE "C");

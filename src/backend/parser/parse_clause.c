@@ -262,7 +262,7 @@ interpretOidsOption(List *defList, bool allowOids)
 		DefElem    *def = (DefElem *) lfirst(cell);
 
 		if (def->defnamespace == NULL &&
-			pg_strcasecmp(def->defname, "oids") == 0)
+			strcmp(def->defname, "oids") == 0)
 		{
 			if (!allowOids)
 				ereport(ERROR,

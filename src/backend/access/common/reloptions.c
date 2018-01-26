@@ -796,12 +796,12 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 				}
 				else if (def->defnamespace == NULL)
 					continue;
-				else if (pg_strcasecmp(def->defnamespace, namspace) != 0)
+				else if (strcmp(def->defnamespace, namspace) != 0)
 					continue;
 
 				kw_len = strlen(def->defname);
 				if (text_len > kw_len && text_str[kw_len] == '=' &&
-					pg_strncasecmp(text_str, def->defname, kw_len) == 0)
+					strncmp(text_str, def->defname, kw_len) == 0)
 					break;
 			}
 			if (!cell)
@@ -849,8 +849,7 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 				{
 					for (i = 0; validnsps[i]; i++)
 					{
-						if (pg_strcasecmp(def->defnamespace,
-										  validnsps[i]) == 0)
+						if (strcmp(def->defnamespace, validnsps[i]) == 0)
 						{
 							valid = true;
 							break;
@@ -865,7 +864,7 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 									def->defnamespace)));
 			}
 
-			if (ignoreOids && pg_strcasecmp(def->defname, "oids") == 0)
+			if (ignoreOids && strcmp(def->defname, "oids") == 0)
 				continue;
 
 			/* ignore if not in the same namespace */
@@ -876,7 +875,7 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 			}
 			else if (def->defnamespace == NULL)
 				continue;
-			else if (pg_strcasecmp(def->defnamespace, namspace) != 0)
+			else if (strcmp(def->defnamespace, namspace) != 0)
 				continue;
 
 			/*
@@ -1082,8 +1081,7 @@ parseRelOptions(Datum options, bool validate, relopt_kind kind,
 				int			kw_len = reloptions[j].gen->namelen;
 
 				if (text_len > kw_len && text_str[kw_len] == '=' &&
-					pg_strncasecmp(text_str, reloptions[j].gen->name,
-								   kw_len) == 0)
+					strncmp(text_str, reloptions[j].gen->name, kw_len) == 0)
 				{
 					parse_one_reloption(&reloptions[j], text_str, text_len,
 										validate);
@@ -1262,7 +1260,7 @@ fillRelOptions(void *rdopts, Size basesize,
 
 		for (j = 0; j < numelems; j++)
 		{
-			if (pg_strcasecmp(options[i].gen->name, elems[j].optname) == 0)
+			if (strcmp(options[i].gen->name, elems[j].optname) == 0)
 			{
 				relopt_string *optstring;
 				char	   *itempos = ((char *) rdopts) + elems[j].offset;
@@ -1556,9 +1554,9 @@ AlterTableGetRelOptionsLockLevel(List *defList)
 
 		for (i = 0; relOpts[i]; i++)
 		{
-			if (pg_strncasecmp(relOpts[i]->name,
-							   def->defname,
-							   relOpts[i]->namelen + 1) == 0)
+			if (strncmp(relOpts[i]->name,
+						def->defname,
+						relOpts[i]->namelen + 1) == 0)
 			{
 				if (lockmode < relOpts[i]->lockmode)
 					lockmode = relOpts[i]->lockmode;

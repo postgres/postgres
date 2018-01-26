@@ -543,6 +543,9 @@ ALTER TEXT SEARCH TEMPLATE alt_ts_temp2 SET SCHEMA alt_nsp2;    -- OK
 CREATE TEXT SEARCH TEMPLATE alt_ts_temp2 (lexize=dsimple_lexize);
 ALTER TEXT SEARCH TEMPLATE alt_ts_temp2 SET SCHEMA alt_nsp2;    -- failed (name conflict)
 
+-- invalid: non-lowercase quoted identifiers
+CREATE TEXT SEARCH TEMPLATE tstemp_case ("Init" = init_function);
+
 SELECT nspname, tmplname
   FROM pg_ts_template t, pg_namespace n
   WHERE t.tmplnamespace = n.oid AND nspname like 'alt_nsp%'
@@ -564,6 +567,9 @@ ALTER TEXT SEARCH PARSER alt_ts_prs2 SET SCHEMA alt_nsp2;   -- OK
 CREATE TEXT SEARCH PARSER alt_ts_prs2
     (start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end, lextypes = prsd_lextype);
 ALTER TEXT SEARCH PARSER alt_ts_prs2 SET SCHEMA alt_nsp2;   -- failed (name conflict)
+
+-- invalid: non-lowercase quoted identifiers
+CREATE TEXT SEARCH PARSER tspars_case ("Start" = start_function);
 
 SELECT nspname, prsname
   FROM pg_ts_parser t, pg_namespace n

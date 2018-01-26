@@ -84,6 +84,16 @@ INSERT INTO default_test DEFAULT VALUES;
 
 SELECT * FROM default_test;
 
+-- invalid: non-lowercase quoted identifiers
+CREATE TYPE case_int42 (
+	"Internallength" = 4,
+	"Input" = int42_in,
+	"Output" = int42_out,
+	"Alignment" = int4,
+	"Default" = 42,
+	"Passedbyvalue"
+);
+
 -- Test stand-alone composite type
 
 CREATE TYPE default_test_row AS (f1 text_w_default, f2 int42);

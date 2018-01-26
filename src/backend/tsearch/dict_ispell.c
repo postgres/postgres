@@ -44,7 +44,7 @@ dispell_init(PG_FUNCTION_ARGS)
 	{
 		DefElem    *defel = (DefElem *) lfirst(l);
 
-		if (pg_strcasecmp(defel->defname, "DictFile") == 0)
+		if (strcmp(defel->defname, "dictfile") == 0)
 		{
 			if (dictloaded)
 				ereport(ERROR,
@@ -55,7 +55,7 @@ dispell_init(PG_FUNCTION_ARGS)
 														   "dict"));
 			dictloaded = true;
 		}
-		else if (pg_strcasecmp(defel->defname, "AffFile") == 0)
+		else if (strcmp(defel->defname, "afffile") == 0)
 		{
 			if (affloaded)
 				ereport(ERROR,
@@ -66,7 +66,7 @@ dispell_init(PG_FUNCTION_ARGS)
 														"affix"));
 			affloaded = true;
 		}
-		else if (pg_strcasecmp(defel->defname, "StopWords") == 0)
+		else if (strcmp(defel->defname, "stopwords") == 0)
 		{
 			if (stoploaded)
 				ereport(ERROR,

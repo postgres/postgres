@@ -209,27 +209,27 @@ DefineTSParser(List *names, List *parameters)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
-		if (pg_strcasecmp(defel->defname, "start") == 0)
+		if (strcmp(defel->defname, "start") == 0)
 		{
 			values[Anum_pg_ts_parser_prsstart - 1] =
 				get_ts_parser_func(defel, Anum_pg_ts_parser_prsstart);
 		}
-		else if (pg_strcasecmp(defel->defname, "gettoken") == 0)
+		else if (strcmp(defel->defname, "gettoken") == 0)
 		{
 			values[Anum_pg_ts_parser_prstoken - 1] =
 				get_ts_parser_func(defel, Anum_pg_ts_parser_prstoken);
 		}
-		else if (pg_strcasecmp(defel->defname, "end") == 0)
+		else if (strcmp(defel->defname, "end") == 0)
 		{
 			values[Anum_pg_ts_parser_prsend - 1] =
 				get_ts_parser_func(defel, Anum_pg_ts_parser_prsend);
 		}
-		else if (pg_strcasecmp(defel->defname, "headline") == 0)
+		else if (strcmp(defel->defname, "headline") == 0)
 		{
 			values[Anum_pg_ts_parser_prsheadline - 1] =
 				get_ts_parser_func(defel, Anum_pg_ts_parser_prsheadline);
 		}
-		else if (pg_strcasecmp(defel->defname, "lextypes") == 0)
+		else if (strcmp(defel->defname, "lextypes") == 0)
 		{
 			values[Anum_pg_ts_parser_prslextype - 1] =
 				get_ts_parser_func(defel, Anum_pg_ts_parser_prslextype);
@@ -438,7 +438,7 @@ DefineTSDictionary(List *names, List *parameters)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
-		if (pg_strcasecmp(defel->defname, "template") == 0)
+		if (strcmp(defel->defname, "template") == 0)
 		{
 			templId = get_ts_template_oid(defGetQualifiedName(defel), false);
 		}
@@ -580,7 +580,7 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 			DefElem    *oldel = (DefElem *) lfirst(cell);
 
 			next = lnext(cell);
-			if (pg_strcasecmp(oldel->defname, defel->defname) == 0)
+			if (strcmp(oldel->defname, defel->defname) == 0)
 				dictoptions = list_delete_cell(dictoptions, cell, prev);
 			else
 				prev = cell;
@@ -765,13 +765,13 @@ DefineTSTemplate(List *names, List *parameters)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
-		if (pg_strcasecmp(defel->defname, "init") == 0)
+		if (strcmp(defel->defname, "init") == 0)
 		{
 			values[Anum_pg_ts_template_tmplinit - 1] =
 				get_ts_template_func(defel, Anum_pg_ts_template_tmplinit);
 			nulls[Anum_pg_ts_template_tmplinit - 1] = false;
 		}
-		else if (pg_strcasecmp(defel->defname, "lexize") == 0)
+		else if (strcmp(defel->defname, "lexize") == 0)
 		{
 			values[Anum_pg_ts_template_tmpllexize - 1] =
 				get_ts_template_func(defel, Anum_pg_ts_template_tmpllexize);
@@ -990,9 +990,9 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
-		if (pg_strcasecmp(defel->defname, "parser") == 0)
+		if (strcmp(defel->defname, "parser") == 0)
 			prsOid = get_ts_parser_oid(defGetQualifiedName(defel), false);
-		else if (pg_strcasecmp(defel->defname, "copy") == 0)
+		else if (strcmp(defel->defname, "copy") == 0)
 			sourceOid = get_ts_config_oid(defGetQualifiedName(defel), false);
 		else
 			ereport(ERROR,
@@ -1251,7 +1251,6 @@ getTokenTypes(Oid prsId, List *tokennames)
 		j = 0;
 		while (list && list[j].lexid)
 		{
-			/* XXX should we use pg_strcasecmp here? */
 			if (strcmp(strVal(val), list[j].alias) == 0)
 			{
 				res[i] = list[j].lexid;

@@ -861,12 +861,13 @@ BEGIN
     RETURN NULL;
 END$$;
 
-CREATE AGGREGATE balk(
-    BASETYPE = int4,
+CREATE AGGREGATE balk(int4)
+(
     SFUNC = balkifnull(int8, int4),
     STYPE = int8,
-    "PARALLEL" = SAFE,
-    INITCOND = '0');
+    PARALLEL = SAFE,
+    INITCOND = '0'
+);
 
 SELECT balk(hundred) FROM tenk1;
 
@@ -888,12 +889,12 @@ BEGIN
     RETURN NULL;
 END$$;
 
-CREATE AGGREGATE balk(
-    BASETYPE = int4,
+CREATE AGGREGATE balk(int4)
+(
     SFUNC = int4_sum(int8, int4),
     STYPE = int8,
     COMBINEFUNC = balkifnull(int8, int8),
-    "PARALLEL" = SAFE,
+    PARALLEL = SAFE,
     INITCOND = '0'
 );
 

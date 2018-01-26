@@ -245,42 +245,42 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		DefElem    *defel = (DefElem *) lfirst(pl);
 		DefElem   **defelp;
 
-		if (pg_strcasecmp(defel->defname, "like") == 0)
+		if (strcmp(defel->defname, "like") == 0)
 			defelp = &likeTypeEl;
-		else if (pg_strcasecmp(defel->defname, "internallength") == 0)
+		else if (strcmp(defel->defname, "internallength") == 0)
 			defelp = &internalLengthEl;
-		else if (pg_strcasecmp(defel->defname, "input") == 0)
+		else if (strcmp(defel->defname, "input") == 0)
 			defelp = &inputNameEl;
-		else if (pg_strcasecmp(defel->defname, "output") == 0)
+		else if (strcmp(defel->defname, "output") == 0)
 			defelp = &outputNameEl;
-		else if (pg_strcasecmp(defel->defname, "receive") == 0)
+		else if (strcmp(defel->defname, "receive") == 0)
 			defelp = &receiveNameEl;
-		else if (pg_strcasecmp(defel->defname, "send") == 0)
+		else if (strcmp(defel->defname, "send") == 0)
 			defelp = &sendNameEl;
-		else if (pg_strcasecmp(defel->defname, "typmod_in") == 0)
+		else if (strcmp(defel->defname, "typmod_in") == 0)
 			defelp = &typmodinNameEl;
-		else if (pg_strcasecmp(defel->defname, "typmod_out") == 0)
+		else if (strcmp(defel->defname, "typmod_out") == 0)
 			defelp = &typmodoutNameEl;
-		else if (pg_strcasecmp(defel->defname, "analyze") == 0 ||
-				 pg_strcasecmp(defel->defname, "analyse") == 0)
+		else if (strcmp(defel->defname, "analyze") == 0 ||
+				 strcmp(defel->defname, "analyse") == 0)
 			defelp = &analyzeNameEl;
-		else if (pg_strcasecmp(defel->defname, "category") == 0)
+		else if (strcmp(defel->defname, "category") == 0)
 			defelp = &categoryEl;
-		else if (pg_strcasecmp(defel->defname, "preferred") == 0)
+		else if (strcmp(defel->defname, "preferred") == 0)
 			defelp = &preferredEl;
-		else if (pg_strcasecmp(defel->defname, "delimiter") == 0)
+		else if (strcmp(defel->defname, "delimiter") == 0)
 			defelp = &delimiterEl;
-		else if (pg_strcasecmp(defel->defname, "element") == 0)
+		else if (strcmp(defel->defname, "element") == 0)
 			defelp = &elemTypeEl;
-		else if (pg_strcasecmp(defel->defname, "default") == 0)
+		else if (strcmp(defel->defname, "default") == 0)
 			defelp = &defaultValueEl;
-		else if (pg_strcasecmp(defel->defname, "passedbyvalue") == 0)
+		else if (strcmp(defel->defname, "passedbyvalue") == 0)
 			defelp = &byValueEl;
-		else if (pg_strcasecmp(defel->defname, "alignment") == 0)
+		else if (strcmp(defel->defname, "alignment") == 0)
 			defelp = &alignmentEl;
-		else if (pg_strcasecmp(defel->defname, "storage") == 0)
+		else if (strcmp(defel->defname, "storage") == 0)
 			defelp = &storageEl;
-		else if (pg_strcasecmp(defel->defname, "collatable") == 0)
+		else if (strcmp(defel->defname, "collatable") == 0)
 			defelp = &collatableEl;
 		else
 		{
@@ -1439,7 +1439,7 @@ DefineRange(CreateRangeStmt *stmt)
 	{
 		DefElem    *defel = (DefElem *) lfirst(lc);
 
-		if (pg_strcasecmp(defel->defname, "subtype") == 0)
+		if (strcmp(defel->defname, "subtype") == 0)
 		{
 			if (OidIsValid(rangeSubtype))
 				ereport(ERROR,
@@ -1448,7 +1448,7 @@ DefineRange(CreateRangeStmt *stmt)
 			/* we can look up the subtype name immediately */
 			rangeSubtype = typenameTypeId(NULL, defGetTypeName(defel));
 		}
-		else if (pg_strcasecmp(defel->defname, "subtype_opclass") == 0)
+		else if (strcmp(defel->defname, "subtype_opclass") == 0)
 		{
 			if (rangeSubOpclassName != NIL)
 				ereport(ERROR,
@@ -1456,7 +1456,7 @@ DefineRange(CreateRangeStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			rangeSubOpclassName = defGetQualifiedName(defel);
 		}
-		else if (pg_strcasecmp(defel->defname, "collation") == 0)
+		else if (strcmp(defel->defname, "collation") == 0)
 		{
 			if (rangeCollationName != NIL)
 				ereport(ERROR,
@@ -1464,7 +1464,7 @@ DefineRange(CreateRangeStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			rangeCollationName = defGetQualifiedName(defel);
 		}
-		else if (pg_strcasecmp(defel->defname, "canonical") == 0)
+		else if (strcmp(defel->defname, "canonical") == 0)
 		{
 			if (rangeCanonicalName != NIL)
 				ereport(ERROR,
@@ -1472,7 +1472,7 @@ DefineRange(CreateRangeStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			rangeCanonicalName = defGetQualifiedName(defel);
 		}
-		else if (pg_strcasecmp(defel->defname, "subtype_diff") == 0)
+		else if (strcmp(defel->defname, "subtype_diff") == 0)
 		{
 			if (rangeSubtypeDiffName != NIL)
 				ereport(ERROR,

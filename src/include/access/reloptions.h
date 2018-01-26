@@ -166,7 +166,7 @@ typedef struct
  *	code block.
  */
 #define HAVE_RELOPTION(optname, option) \
-	(pg_strncasecmp(option.gen->name, optname, option.gen->namelen + 1) == 0)
+	(strncmp(option.gen->name, optname, option.gen->namelen + 1) == 0)
 
 #define HANDLE_INT_RELOPTION(optname, var, option, wasset)		\
 	do {														\

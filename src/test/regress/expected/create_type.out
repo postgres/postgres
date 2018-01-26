@@ -83,6 +83,34 @@ SELECT * FROM default_test;
  zippo | 42
 (1 row)
 
+-- invalid: non-lowercase quoted identifiers
+CREATE TYPE case_int42 (
+	"Internallength" = 4,
+	"Input" = int42_in,
+	"Output" = int42_out,
+	"Alignment" = int4,
+	"Default" = 42,
+	"Passedbyvalue"
+);
+WARNING:  type attribute "Internallength" not recognized
+LINE 2:  "Internallength" = 4,
+         ^
+WARNING:  type attribute "Input" not recognized
+LINE 3:  "Input" = int42_in,
+         ^
+WARNING:  type attribute "Output" not recognized
+LINE 4:  "Output" = int42_out,
+         ^
+WARNING:  type attribute "Alignment" not recognized
+LINE 5:  "Alignment" = int4,
+         ^
+WARNING:  type attribute "Default" not recognized
+LINE 6:  "Default" = 42,
+         ^
+WARNING:  type attribute "Passedbyvalue" not recognized
+LINE 7:  "Passedbyvalue"
+         ^
+ERROR:  type input function must be specified
 -- Test stand-alone composite type
 CREATE TYPE default_test_row AS (f1 text_w_default, f2 int42);
 CREATE FUNCTION get_default_test() RETURNS SETOF default_test_row AS '

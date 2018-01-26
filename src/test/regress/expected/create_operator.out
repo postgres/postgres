@@ -172,3 +172,26 @@ CREATE OPERATOR #*# (
 );
 ERROR:  permission denied for type type_op6
 ROLLBACK;
+-- invalid: non-lowercase quoted identifiers
+CREATE OPERATOR ===
+(
+	"Leftarg" = box,
+	"Rightarg" = box,
+	"Procedure" = area_equal_procedure,
+	"Commutator" = ===,
+	"Negator" = !==,
+	"Restrict" = area_restriction_procedure,
+	"Join" = area_join_procedure,
+	"Hashes",
+	"Merges"
+);
+WARNING:  operator attribute "Leftarg" not recognized
+WARNING:  operator attribute "Rightarg" not recognized
+WARNING:  operator attribute "Procedure" not recognized
+WARNING:  operator attribute "Commutator" not recognized
+WARNING:  operator attribute "Negator" not recognized
+WARNING:  operator attribute "Restrict" not recognized
+WARNING:  operator attribute "Join" not recognized
+WARNING:  operator attribute "Hashes" not recognized
+WARNING:  operator attribute "Merges" not recognized
+ERROR:  operator procedure must be specified

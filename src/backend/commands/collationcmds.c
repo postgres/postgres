@@ -82,17 +82,17 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 		DefElem    *defel = lfirst_node(DefElem, pl);
 		DefElem   **defelp;
 
-		if (pg_strcasecmp(defel->defname, "from") == 0)
+		if (strcmp(defel->defname, "from") == 0)
 			defelp = &fromEl;
-		else if (pg_strcasecmp(defel->defname, "locale") == 0)
+		else if (strcmp(defel->defname, "locale") == 0)
 			defelp = &localeEl;
-		else if (pg_strcasecmp(defel->defname, "lc_collate") == 0)
+		else if (strcmp(defel->defname, "lc_collate") == 0)
 			defelp = &lccollateEl;
-		else if (pg_strcasecmp(defel->defname, "lc_ctype") == 0)
+		else if (strcmp(defel->defname, "lc_ctype") == 0)
 			defelp = &lcctypeEl;
-		else if (pg_strcasecmp(defel->defname, "provider") == 0)
+		else if (strcmp(defel->defname, "provider") == 0)
 			defelp = &providerEl;
-		else if (pg_strcasecmp(defel->defname, "version") == 0)
+		else if (strcmp(defel->defname, "version") == 0)
 			defelp = &versionEl;
 		else
 		{

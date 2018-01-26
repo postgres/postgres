@@ -157,23 +157,23 @@ dxsyn_init(PG_FUNCTION_ARGS)
 	{
 		DefElem    *defel = (DefElem *) lfirst(l);
 
-		if (pg_strcasecmp(defel->defname, "MATCHORIG") == 0)
+		if (strcmp(defel->defname, "matchorig") == 0)
 		{
 			d->matchorig = defGetBoolean(defel);
 		}
-		else if (pg_strcasecmp(defel->defname, "KEEPORIG") == 0)
+		else if (strcmp(defel->defname, "keeporig") == 0)
 		{
 			d->keeporig = defGetBoolean(defel);
 		}
-		else if (pg_strcasecmp(defel->defname, "MATCHSYNONYMS") == 0)
+		else if (strcmp(defel->defname, "matchsynonyms") == 0)
 		{
 			d->matchsynonyms = defGetBoolean(defel);
 		}
-		else if (pg_strcasecmp(defel->defname, "KEEPSYNONYMS") == 0)
+		else if (strcmp(defel->defname, "keepsynonyms") == 0)
 		{
 			d->keepsynonyms = defGetBoolean(defel);
 		}
-		else if (pg_strcasecmp(defel->defname, "RULES") == 0)
+		else if (strcmp(defel->defname, "rules") == 0)
 		{
 			/* we can't read the rules before parsing all options! */
 			filename = defGetString(defel);

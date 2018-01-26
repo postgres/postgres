@@ -195,3 +195,33 @@ CREATE AGGREGATE wrongreturntype (float8)
     minvfunc = float8mi_int
 );
 ERROR:  return type of inverse transition function float8mi_int is not double precision
+-- invalid: non-lowercase quoted identifiers
+CREATE AGGREGATE case_agg ( -- old syntax
+	"Sfunc1" = int4pl,
+	"Basetype" = int4,
+	"Stype1" = int4,
+	"Initcond1" = '0',
+	"Parallel" = safe
+);
+WARNING:  aggregate attribute "Sfunc1" not recognized
+WARNING:  aggregate attribute "Basetype" not recognized
+WARNING:  aggregate attribute "Stype1" not recognized
+WARNING:  aggregate attribute "Initcond1" not recognized
+WARNING:  aggregate attribute "Parallel" not recognized
+ERROR:  aggregate stype must be specified
+CREATE AGGREGATE case_agg(float8)
+(
+	"Stype" = internal,
+	"Sfunc" = ordered_set_transition,
+	"Finalfunc" = percentile_disc_final,
+	"Finalfunc_extra" = true,
+	"Finalfunc_modify" = read_write,
+	"Parallel" = safe
+);
+WARNING:  aggregate attribute "Stype" not recognized
+WARNING:  aggregate attribute "Sfunc" not recognized
+WARNING:  aggregate attribute "Finalfunc" not recognized
+WARNING:  aggregate attribute "Finalfunc_extra" not recognized
+WARNING:  aggregate attribute "Finalfunc_modify" not recognized
+WARNING:  aggregate attribute "Parallel" not recognized
+ERROR:  aggregate stype must be specified

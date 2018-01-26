@@ -239,6 +239,8 @@ DROP COLLATION mycoll1;
 CREATE TABLE collate_test23 (f1 text collate mycoll2);
 DROP COLLATION mycoll2;  -- fail
 
+-- invalid: non-lowercase quoted identifiers
+CREATE COLLATION case_coll ("Lc_Collate" = "POSIX", "Lc_Ctype" = "POSIX");
 
 -- 9.1 bug with useless COLLATE in an expression subject to length coercion
 

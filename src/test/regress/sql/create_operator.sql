@@ -179,3 +179,17 @@ CREATE OPERATOR #*# (
    procedure = fn_op6
 );
 ROLLBACK;
+
+-- invalid: non-lowercase quoted identifiers
+CREATE OPERATOR ===
+(
+	"Leftarg" = box,
+	"Rightarg" = box,
+	"Procedure" = area_equal_procedure,
+	"Commutator" = ===,
+	"Negator" = !==,
+	"Restrict" = area_restriction_procedure,
+	"Join" = area_join_procedure,
+	"Hashes",
+	"Merges"
+);

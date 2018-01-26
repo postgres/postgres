@@ -108,9 +108,9 @@ dsynonym_init(PG_FUNCTION_ARGS)
 	{
 		DefElem    *defel = (DefElem *) lfirst(l);
 
-		if (pg_strcasecmp("Synonyms", defel->defname) == 0)
+		if (strcmp(defel->defname, "synonyms") == 0)
 			filename = defGetString(defel);
-		else if (pg_strcasecmp("CaseSensitive", defel->defname) == 0)
+		else if (strcmp(defel->defname, "casesensitive") == 0)
 			case_sensitive = defGetBoolean(defel);
 		else
 			ereport(ERROR,

@@ -81,6 +81,9 @@ ALTER OPERATOR === (boolean, boolean) SET (JOIN = non_existent_func);
 ALTER OPERATOR === (boolean, boolean) SET (COMMUTATOR = !==);
 ALTER OPERATOR === (boolean, boolean) SET (NEGATOR = !==);
 
+-- invalid: non-lowercase quoted identifiers
+ALTER OPERATOR & (bit, bit) SET ("Restrict" = _int_contsel, "Join" = _int_contjoinsel);
+
 --
 -- Test permission check. Must be owner to ALTER OPERATOR.
 --

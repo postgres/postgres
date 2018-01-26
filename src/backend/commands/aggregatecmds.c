@@ -127,37 +127,37 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 		 * sfunc1, stype1, and initcond1 are accepted as obsolete spellings
 		 * for sfunc, stype, initcond.
 		 */
-		if (pg_strcasecmp(defel->defname, "sfunc") == 0)
+		if (strcmp(defel->defname, "sfunc") == 0)
 			transfuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "sfunc1") == 0)
+		else if (strcmp(defel->defname, "sfunc1") == 0)
 			transfuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "finalfunc") == 0)
+		else if (strcmp(defel->defname, "finalfunc") == 0)
 			finalfuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "combinefunc") == 0)
+		else if (strcmp(defel->defname, "combinefunc") == 0)
 			combinefuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "serialfunc") == 0)
+		else if (strcmp(defel->defname, "serialfunc") == 0)
 			serialfuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "deserialfunc") == 0)
+		else if (strcmp(defel->defname, "deserialfunc") == 0)
 			deserialfuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "msfunc") == 0)
+		else if (strcmp(defel->defname, "msfunc") == 0)
 			mtransfuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "minvfunc") == 0)
+		else if (strcmp(defel->defname, "minvfunc") == 0)
 			minvtransfuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "mfinalfunc") == 0)
+		else if (strcmp(defel->defname, "mfinalfunc") == 0)
 			mfinalfuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "finalfunc_extra") == 0)
+		else if (strcmp(defel->defname, "finalfunc_extra") == 0)
 			finalfuncExtraArgs = defGetBoolean(defel);
-		else if (pg_strcasecmp(defel->defname, "mfinalfunc_extra") == 0)
+		else if (strcmp(defel->defname, "mfinalfunc_extra") == 0)
 			mfinalfuncExtraArgs = defGetBoolean(defel);
-		else if (pg_strcasecmp(defel->defname, "finalfunc_modify") == 0)
+		else if (strcmp(defel->defname, "finalfunc_modify") == 0)
 			finalfuncModify = extractModify(defel);
-		else if (pg_strcasecmp(defel->defname, "mfinalfunc_modify") == 0)
+		else if (strcmp(defel->defname, "mfinalfunc_modify") == 0)
 			mfinalfuncModify = extractModify(defel);
-		else if (pg_strcasecmp(defel->defname, "sortop") == 0)
+		else if (strcmp(defel->defname, "sortop") == 0)
 			sortoperatorName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "basetype") == 0)
+		else if (strcmp(defel->defname, "basetype") == 0)
 			baseType = defGetTypeName(defel);
-		else if (pg_strcasecmp(defel->defname, "hypothetical") == 0)
+		else if (strcmp(defel->defname, "hypothetical") == 0)
 		{
 			if (defGetBoolean(defel))
 			{
@@ -168,23 +168,23 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 				aggKind = AGGKIND_HYPOTHETICAL;
 			}
 		}
-		else if (pg_strcasecmp(defel->defname, "stype") == 0)
+		else if (strcmp(defel->defname, "stype") == 0)
 			transType = defGetTypeName(defel);
-		else if (pg_strcasecmp(defel->defname, "stype1") == 0)
+		else if (strcmp(defel->defname, "stype1") == 0)
 			transType = defGetTypeName(defel);
-		else if (pg_strcasecmp(defel->defname, "sspace") == 0)
+		else if (strcmp(defel->defname, "sspace") == 0)
 			transSpace = defGetInt32(defel);
-		else if (pg_strcasecmp(defel->defname, "mstype") == 0)
+		else if (strcmp(defel->defname, "mstype") == 0)
 			mtransType = defGetTypeName(defel);
-		else if (pg_strcasecmp(defel->defname, "msspace") == 0)
+		else if (strcmp(defel->defname, "msspace") == 0)
 			mtransSpace = defGetInt32(defel);
-		else if (pg_strcasecmp(defel->defname, "initcond") == 0)
+		else if (strcmp(defel->defname, "initcond") == 0)
 			initval = defGetString(defel);
-		else if (pg_strcasecmp(defel->defname, "initcond1") == 0)
+		else if (strcmp(defel->defname, "initcond1") == 0)
 			initval = defGetString(defel);
-		else if (pg_strcasecmp(defel->defname, "minitcond") == 0)
+		else if (strcmp(defel->defname, "minitcond") == 0)
 			minitval = defGetString(defel);
-		else if (pg_strcasecmp(defel->defname, "parallel") == 0)
+		else if (strcmp(defel->defname, "parallel") == 0)
 			parallel = defGetString(defel);
 		else
 			ereport(WARNING,
@@ -420,11 +420,11 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 
 	if (parallel)
 	{
-		if (pg_strcasecmp(parallel, "safe") == 0)
+		if (strcmp(parallel, "safe") == 0)
 			proparallel = PROPARALLEL_SAFE;
-		else if (pg_strcasecmp(parallel, "restricted") == 0)
+		else if (strcmp(parallel, "restricted") == 0)
 			proparallel = PROPARALLEL_RESTRICTED;
-		else if (pg_strcasecmp(parallel, "unsafe") == 0)
+		else if (strcmp(parallel, "unsafe") == 0)
 			proparallel = PROPARALLEL_UNSAFE;
 		else
 			ereport(ERROR,

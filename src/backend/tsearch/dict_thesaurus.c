@@ -616,7 +616,7 @@ thesaurus_init(PG_FUNCTION_ARGS)
 	{
 		DefElem    *defel = (DefElem *) lfirst(l);
 
-		if (pg_strcasecmp("DictFile", defel->defname) == 0)
+		if (strcmp(defel->defname, "dictfile") == 0)
 		{
 			if (fileloaded)
 				ereport(ERROR,
@@ -625,7 +625,7 @@ thesaurus_init(PG_FUNCTION_ARGS)
 			thesaurusRead(defGetString(defel), d);
 			fileloaded = true;
 		}
-		else if (pg_strcasecmp("Dictionary", defel->defname) == 0)
+		else if (strcmp(defel->defname, "dictionary") == 0)
 		{
 			if (subdictname)
 				ereport(ERROR,

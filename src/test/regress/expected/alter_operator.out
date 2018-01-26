@@ -121,6 +121,9 @@ ALTER OPERATOR === (boolean, boolean) SET (COMMUTATOR = !==);
 ERROR:  operator attribute "commutator" cannot be changed
 ALTER OPERATOR === (boolean, boolean) SET (NEGATOR = !==);
 ERROR:  operator attribute "negator" cannot be changed
+-- invalid: non-lowercase quoted identifiers
+ALTER OPERATOR & (bit, bit) SET ("Restrict" = _int_contsel, "Join" = _int_contjoinsel);
+ERROR:  operator attribute "Restrict" not recognized
 --
 -- Test permission check. Must be owner to ALTER OPERATOR.
 --

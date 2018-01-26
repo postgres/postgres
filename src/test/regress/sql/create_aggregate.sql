@@ -211,3 +211,23 @@ CREATE AGGREGATE wrongreturntype (float8)
     msfunc = float8pl,
     minvfunc = float8mi_int
 );
+
+-- invalid: non-lowercase quoted identifiers
+
+CREATE AGGREGATE case_agg ( -- old syntax
+	"Sfunc1" = int4pl,
+	"Basetype" = int4,
+	"Stype1" = int4,
+	"Initcond1" = '0',
+	"Parallel" = safe
+);
+
+CREATE AGGREGATE case_agg(float8)
+(
+	"Stype" = internal,
+	"Sfunc" = ordered_set_transition,
+	"Finalfunc" = percentile_disc_final,
+	"Finalfunc_extra" = true,
+	"Finalfunc_modify" = read_write,
+	"Parallel" = safe
+);
