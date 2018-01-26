@@ -637,21 +637,21 @@ update_proconfig_value(ArrayType *a, List *set_items)
  * attributes.
  */
 static void
-compute_attributes_sql_style(ParseState *pstate,
-							 bool is_procedure,
-							 List *options,
-							 List **as,
-							 char **language,
-							 Node **transform,
-							 bool *windowfunc_p,
-							 char *volatility_p,
-							 bool *strict_p,
-							 bool *security_definer,
-							 bool *leakproof_p,
-							 ArrayType **proconfig,
-							 float4 *procost,
-							 float4 *prorows,
-							 char *parallel_p)
+compute_function_attributes(ParseState *pstate,
+							bool is_procedure,
+							List *options,
+							List **as,
+							char **language,
+							Node **transform,
+							bool *windowfunc_p,
+							char *volatility_p,
+							bool *strict_p,
+							bool *security_definer,
+							bool *leakproof_p,
+							ArrayType **proconfig,
+							float4 *procost,
+							float4 *prorows,
+							char *parallel_p)
 {
 	ListCell   *option;
 	DefElem    *as_item = NULL;
@@ -789,59 +789,6 @@ compute_attributes_sql_style(ParseState *pstate,
 }
 
 
-/*-------------
- *	 Interpret the parameters *parameters and return their contents via
- *	 *isStrict_p and *volatility_p.
- *
- *	These parameters supply optional information about a function.
- *	All have defaults if not specified. Parameters:
- *
- *	 * isStrict means the function should not be called when any NULL
- *	   inputs are present; instead a NULL result value should be assumed.
- *
- *	 * volatility tells the optimizer whether the function's result can
- *	   be assumed to be repeatable over multiple evaluations.
- *------------
- */
-static void
-compute_attributes_with_style(ParseState *pstate, bool is_procedure, List *parameters, bool *isStrict_p, char *volatility_p)
-{
-	ListCell   *pl;
-
-	foreach(pl, parameters)
-	{
-		DefElem    *param = (DefElem *) lfirst(pl);
-
-		if (pg_strcasecmp(param->defname, "isstrict") == 0)
-		{
-			if (is_procedure)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("invalid attribute in procedure definition"),
-						 parser_errposition(pstate, param->location)));
-			*isStrict_p = defGetBoolean(param);
-		}
-		else if (pg_strcasecmp(param->defname, "iscachable") == 0)
-		{
-			/* obsolete spelling of isImmutable */
-			if (is_procedure)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("invalid attribute in procedure definition"),
-						 parser_errposition(pstate, param->location)));
-			if (defGetBoolean(param))
-				*volatility_p = PROVOLATILE_IMMUTABLE;
-		}
-		else
-			ereport(WARNING,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized function attribute \"%s\" ignored",
-							param->defname),
-					 parser_errposition(pstate, param->location)));
-	}
-}
-
-
 /*
  * For a dynamically linked C language object, the form of the clause is
  *
@@ -909,7 +856,7 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 
 /*
  * CreateFunction
- *	 Execute a CREATE FUNCTION utility statement.
+ *	 Execute a CREATE FUNCTION (or CREATE PROCEDURE) utility statement.
  */
 ObjectAddress
 CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
@@ -957,7 +904,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(namespaceId));
 
-	/* default attributes */
+	/* Set default attributes */
 	isWindowFunc = false;
 	isStrict = false;
 	security = false;
@@ -968,14 +915,14 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 	prorows = -1;				/* indicates not set */
 	parallel = PROPARALLEL_UNSAFE;
 
-	/* override attributes from explicit list */
-	compute_attributes_sql_style(pstate,
-								 stmt->is_procedure,
-								 stmt->options,
-								 &as_clause, &language, &transformDefElem,
-								 &isWindowFunc, &volatility,
-								 &isStrict, &security, &isLeakProof,
-								 &proconfig, &procost, &prorows, &parallel);
+	/* Extract non-default attributes from stmt->options list */
+	compute_function_attributes(pstate,
+								stmt->is_procedure,
+								stmt->options,
+								&as_clause, &language, &transformDefElem,
+								&isWindowFunc, &volatility,
+								&isStrict, &security, &isLeakProof,
+								&proconfig, &procost, &prorows, &parallel);
 
 	/* Look up the language and validate permissions */
 	languageTuple = SearchSysCache1(LANGNAME, PointerGetDatum(language));
@@ -1106,8 +1053,6 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 		/* store SQL NULL instead of empty array */
 		trftypes = NULL;
 	}
-
-	compute_attributes_with_style(pstate, stmt->is_procedure, stmt->withClause, &isStrict, &volatility);
 
 	interpret_AS_clause(languageOid, language, funcname, as_clause,
 						&prosrc_str, &probin_str);
@@ -2269,7 +2214,7 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 	FuncExpr   *fexpr;
 	int			nargs;
 	int			i;
-	AclResult   aclresult;
+	AclResult	aclresult;
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;
 	CallContext *callcontext;
@@ -2329,7 +2274,7 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 	InitFunctionCallInfoData(fcinfo, &flinfo, nargs, fexpr->inputcollid, (Node *) callcontext, NULL);
 
 	i = 0;
-	foreach (lc, fexpr->args)
+	foreach(lc, fexpr->args)
 	{
 		EState	   *estate;
 		ExprState  *exprstate;

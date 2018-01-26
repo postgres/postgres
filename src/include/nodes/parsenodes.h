@@ -2735,13 +2735,12 @@ typedef struct CreateStatsStmt
 typedef struct CreateFunctionStmt
 {
 	NodeTag		type;
+	bool		is_procedure;	/* it's really CREATE PROCEDURE */
 	bool		replace;		/* T => replace if already exists */
 	List	   *funcname;		/* qualified name of function to create */
 	List	   *parameters;		/* a list of FunctionParameter */
 	TypeName   *returnType;		/* the return type */
-	bool		is_procedure;
 	List	   *options;		/* a list of DefElem */
-	List	   *withClause;		/* a list of DefElem */
 } CreateFunctionStmt;
 
 typedef enum FunctionParameterMode

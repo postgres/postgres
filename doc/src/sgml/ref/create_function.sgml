@@ -37,7 +37,6 @@ CREATE [ OR REPLACE ] FUNCTION
     | AS '<replaceable class="parameter">definition</replaceable>'
     | AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
   } ...
-    [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -559,41 +558,6 @@ CREATE [ OR REPLACE ] FUNCTION
 
      </listitem>
     </varlistentry>
-
-    <varlistentry>
-     <term><replaceable class="parameter">attribute</replaceable></term>
-
-     <listitem>
-      <para>
-       The historical way to specify optional pieces of information
-       about the function.  The following attributes can appear here:
-
-      <variablelist>
-       <varlistentry>
-        <term><literal>isStrict</literal></term>
-        <listitem>
-         <para>
-          Equivalent to <literal>STRICT</literal> or <literal>RETURNS NULL ON NULL INPUT</literal>.
-         </para>
-        </listitem>
-       </varlistentry>
-
-       <varlistentry>
-        <term><literal>isCachable</literal></term>
-        <listitem>
-         <para><literal>isCachable</literal> is an obsolete equivalent of
-          <literal>IMMUTABLE</literal>; it's still accepted for
-          backwards-compatibility reasons.
-         </para>
-        </listitem>
-       </varlistentry>
-
-      </variablelist>
-
-      Attribute names are not case-sensitive.
-     </para>
-    </listitem>
-   </varlistentry>
 
    </variablelist>
 
