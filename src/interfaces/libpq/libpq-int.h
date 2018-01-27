@@ -732,6 +732,19 @@ extern char *pgtls_get_finished(PGconn *conn, size_t *len);
  */
 extern char *pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len);
 
+/*
+ * Verify that the server certificate matches the host name we connected to.
+ *
+ * The certificate's Common Name and Subject Alternative Names are considered.
+ *
+ * Returns 1 if the name matches, and 0 if it does not. On error, returns
+ * -1, and sets the libpq error message.
+ *
+ */
+extern int pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
+														   int *names_examined,
+														   char **first_name);
+
 /* === miscellaneous macros === */
 
 /*

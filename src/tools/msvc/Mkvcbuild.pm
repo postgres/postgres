@@ -242,6 +242,7 @@ sub mkvcbuild
    # building with OpenSSL.
 	if (!$solution->{options}->{openssl})
 	{
+		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-common.c');
 		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-openssl.c');
 		$libpq->RemoveFile('src/common/sha2_openssl.c');
 	}

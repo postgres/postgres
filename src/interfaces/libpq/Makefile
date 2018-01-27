@@ -52,7 +52,7 @@ OBJS += encnames.o wchar.o
 OBJS += base64.o ip.o md5.o scram-common.o saslprep.o unicode_norm.o
 
 ifeq ($(with_openssl),yes)
-OBJS += fe-secure-openssl.o sha2_openssl.o
+OBJS += fe-secure-openssl.o fe-secure-common.o sha2_openssl.o
 else
 OBJS += sha2.o
 endif

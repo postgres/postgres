@@ -28,6 +28,7 @@
 
 #include "libpq-fe.h"
 #include "fe-auth.h"
+#include "fe-secure-common.h"
 #include "libpq-int.h"
 
 #ifdef WIN32
@@ -60,9 +61,8 @@
 #endif
 #include <openssl/x509v3.h>
 
-static bool verify_peer_name_matches_certificate(PGconn *);
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
-static int verify_peer_name_matches_certificate_name(PGconn *conn,
+static int openssl_verify_peer_name_matches_certificate_name(PGconn *conn,
 										  ASN1_STRING *name,
 										  char **store_name);
 static void destroy_ssl_system(void);
@@ -492,76 +492,16 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 
 
 /*
- * Check if a wildcard certificate matches the server hostname.
- *
- * The rule for this is:
- *	1. We only match the '*' character as wildcard
- *	2. We match only wildcards at the start of the string
- *	3. The '*' character does *not* match '.', meaning that we match only
- *	   a single pathname component.
- *	4. We don't support more than one '*' in a single pattern.
- *
- * This is roughly in line with RFC2818, but contrary to what most browsers
- * appear to be implementing (point 3 being the difference)
- *
- * Matching is always case-insensitive, since DNS is case insensitive.
+ * OpenSSL-specific wrapper around
+ * pq_verify_peer_name_matches_certificate_name(), converting the ASN1_STRING
+ * into a plain C string.
  */
 static int
-wildcard_certificate_match(const char *pattern, const char *string)
-{
-	int			lenpat = strlen(pattern);
-	int			lenstr = strlen(string);
-
-	/* If we don't start with a wildcard, it's not a match (rule 1 & 2) */
-	if (lenpat < 3 ||
-		pattern[0] != '*' ||
-		pattern[1] != '.')
-		return 0;
-
-	if (lenpat > lenstr)
-		/* If pattern is longer than the string, we can never match */
-		return 0;
-
-	if (pg_strcasecmp(pattern + 1, string + lenstr - lenpat + 1) != 0)
-
-		/*
-		 * If string does not end in pattern (minus the wildcard), we don't
-		 * match
-		 */
-		return 0;
-
-	if (strchr(string, '.') < string + lenstr - lenpat)
-
-		/*
-		 * If there is a dot left of where the pattern started to match, we
-		 * don't match (rule 3)
-		 */
-		return 0;
-
-	/* String ended with pattern, and didn't have a dot before, so we match */
-	return 1;
-}
-
-/*
- * Check if a name from a server's certificate matches the peer's hostname.
- *
- * Returns 1 if the name matches, and 0 if it does not. On error, returns
- * -1, and sets the libpq error message.
- *
- * The name extracted from the certificate is returned in *store_name. The
- * caller is responsible for freeing it.
- */
-static int
-verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
-										  char **store_name)
+openssl_verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
+												  char **store_name)
 {
 	int			len;
-	char	   *name;
 	const unsigned char *namedata;
-	int			result;
-	char	   *host = PQhost(conn);
-
-	*store_name = NULL;
 
 	/* Should not happen... */
 	if (name_entry == NULL)
@@ -573,9 +513,6 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 
 	/*
 	 * GEN_DNS can be only IA5String, equivalent to US ASCII.
-	 *
-	 * There is no guarantee the string returned from the certificate is
-	 * NULL-terminated, so make a copy that is.
 	 */
 #ifdef HAVE_ASN1_STRING_GET0_DATA
 	namedata = ASN1_STRING_get0_data(name_entry);
@@ -583,45 +520,9 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 	namedata = ASN1_STRING_data(name_entry);
 #endif
 	len = ASN1_STRING_length(name_entry);
-	name = malloc(len + 1);
-	if (name == NULL)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
-		return -1;
-	}
-	memcpy(name, namedata, len);
-	name[len] = '\0';
 
-	/*
-	 * Reject embedded NULLs in certificate common or alternative name to
-	 * prevent attacks like CVE-2009-4034.
-	 */
-	if (len != strlen(name))
-	{
-		free(name);
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("SSL certificate's name contains embedded null\n"));
-		return -1;
-	}
-
-	if (pg_strcasecmp(name, host) == 0)
-	{
-		/* Exact name match */
-		result = 1;
-	}
-	else if (wildcard_certificate_match(name, host))
-	{
-		/* Matched wildcard name */
-		result = 1;
-	}
-	else
-	{
-		result = 0;
-	}
-
-	*store_name = name;
-	return result;
+	/* OK to cast from unsigned to plain char, since it's all ASCII. */
+	return pq_verify_peer_name_matches_certificate_name(conn, (const char *) namedata, len, store_name);
 }
 
 /*
@@ -629,33 +530,14 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
  *
  * The certificate's Common Name and Subject Alternative Names are considered.
  */
-static bool
-verify_peer_name_matches_certificate(PGconn *conn)
+int
+pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
+												int *names_examined,
+												char **first_name)
 {
-	int			names_examined = 0;
-	bool		found_match = false;
-	bool		got_error = false;
-	char	   *first_name = NULL;
-
 	STACK_OF(GENERAL_NAME) *peer_san;
 	int			i;
-	int			rc;
-	char	   *host = PQhost(conn);
-
-	/*
-	 * If told not to verify the peer name, don't do it. Return true
-	 * indicating that the verification was successful.
-	 */
-	if (strcmp(conn->sslmode, "verify-full") != 0)
-		return true;
-
-	/* Check that we have a hostname to compare with. */
-	if (!(host && host[0] != '\0'))
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("host name must be specified for a verified SSL connection\n"));
-		return false;
-	}
+	int			rc = 0;
 
 	/*
 	 * First, get the Subject Alternative Names (SANs) from the certificate,
@@ -676,24 +558,20 @@ verify_peer_name_matches_certificate(PGconn *conn)
 			{
 				char	   *alt_name;
 
-				names_examined++;
-				rc = verify_peer_name_matches_certificate_name(conn,
+				(*names_examined)++;
+				rc = openssl_verify_peer_name_matches_certificate_name(conn,
 															   name->d.dNSName,
 															   &alt_name);
-				if (rc == -1)
-					got_error = true;
-				if (rc == 1)
-					found_match = true;
 
 				if (alt_name)
 				{
-					if (!first_name)
-						first_name = alt_name;
+					if (!*first_name)
+						*first_name = alt_name;
 					else
 						free(alt_name);
 				}
 			}
-			if (found_match || got_error)
+			if (rc != 0)
 				break;
 		}
 		sk_GENERAL_NAME_free(peer_san);
@@ -706,7 +584,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	 * (Per RFC 2818 and RFC 6125, if the subjectAltName extension of type
 	 * dNSName is present, the CN must be ignored.)
 	 */
-	if (names_examined == 0)
+	if (*names_examined == 0)
 	{
 		X509_NAME  *subject_name;
 
@@ -719,55 +597,17 @@ verify_peer_name_matches_certificate(PGconn *conn)
 												  NID_commonName, -1);
 			if (cn_index >= 0)
 			{
-				names_examined++;
-				rc = verify_peer_name_matches_certificate_name(
+				(*names_examined)++;
+				rc = openssl_verify_peer_name_matches_certificate_name(
 															   conn,
 															   X509_NAME_ENTRY_get_data(
 																						X509_NAME_get_entry(subject_name, cn_index)),
-															   &first_name);
-
-				if (rc == -1)
-					got_error = true;
-				else if (rc == 1)
-					found_match = true;
+															   first_name);
 			}
 		}
 	}
 
-	if (!found_match && !got_error)
-	{
-		/*
-		 * No match. Include the name from the server certificate in the error
-		 * message, to aid debugging broken configurations. If there are
-		 * multiple names, only print the first one to avoid an overly long
-		 * error message.
-		 */
-		if (names_examined > 1)
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_ngettext("server certificate for \"%s\" (and %d other name) does not match host name \"%s\"\n",
-											 "server certificate for \"%s\" (and %d other names) does not match host name \"%s\"\n",
-											 names_examined - 1),
-							  first_name, names_examined - 1, host);
-		}
-		else if (names_examined == 1)
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("server certificate for \"%s\" does not match host name \"%s\"\n"),
-							  first_name, host);
-		}
-		else
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not get server's host name from server certificate\n"));
-		}
-	}
-
-	/* clean up */
-	if (first_name)
-		free(first_name);
-
-	return found_match && !got_error;
+	return rc;
 }
 
 #if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
@@ -1441,7 +1281,7 @@ open_client_SSL(PGconn *conn)
 		return PGRES_POLLING_FAILED;
 	}
 
-	if (!verify_peer_name_matches_certificate(conn))
+	if (!pq_verify_peer_name_matches_certificate(conn))
 	{
 		pgtls_close(conn);
 		return PGRES_POLLING_FAILED;
