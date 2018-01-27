@@ -1,3 +1,4 @@
+# version 2018c
 # This zic input file is in the public domain.
 R A 1916 o - Jun 14 23s 1 S
 R A 1916 1919 - O Sun>=1 23s 0 -
@@ -50,7 +51,6 @@ Li Africa/Abidjan Africa/Freetown
 Li Africa/Abidjan Africa/Lome
 Li Africa/Abidjan Africa/Nouakchott
 Li Africa/Abidjan Africa/Ouagadougou
-Li Africa/Abidjan Africa/Sao_Tome
 Li Africa/Abidjan Atlantic/St_Helena
 R B 1940 o - Jul 15 0 1 S
 R B 1940 o - O 1 0 0 -
@@ -237,6 +237,10 @@ Li Africa/Lagos Africa/Niamey
 Li Africa/Lagos Africa/Porto-Novo
 Z Indian/Reunion 3:41:52 - LMT 1911 Jun
 4 - +04
+Z Africa/Sao_Tome 0:26:56 - LMT 1884
+-0:36:45 - LMT 1912
+0 - GMT 2018 Ja 1 1
+1 - WAT
 Z Indian/Mahe 3:41:48 - LMT 1906 Jun
 4 - +04
 R H 1942 1943 - S Sun>=15 2 1 -
@@ -656,10 +660,10 @@ R Z 2013 ma - O lastSun 2 0 S
 Z Asia/Jerusalem 2:20:54 - LMT 1880
 2:20:40 - JMT 1918
 2 Z I%sT
-R a 1948 o - May Sun>=1 2 1 D
-R a 1948 1951 - S Sat>=8 2 0 S
-R a 1949 o - Ap Sun>=1 2 1 D
-R a 1950 1951 - May Sun>=1 2 1 D
+R a 1948 o - May Sat>=1 24 1 D
+R a 1948 1951 - S Sun>=9 0 0 S
+R a 1949 o - Ap Sat>=1 24 1 D
+R a 1950 1951 - May Sat>=1 24 1 D
 Z Asia/Tokyo 9:18:59 - LMT 1887 D 31 15u
 9 a J%sT
 R b 1973 o - Jun 6 0 1 S
@@ -3606,7 +3610,7 @@ Z America/Argentina/Ushuaia -4:33:12 - LMT 1894 O 31
 Li America/Curacao America/Aruba
 Z America/La_Paz -4:32:36 - LMT 1890
 -4:32:36 - CMT 1931 O 15
--4:32:36 1 BOST 1932 Mar 21
+-4:32:36 1 BST 1932 Mar 21
 -4 - -04
 R As 1931 o - O 3 11 1 S
 R As 1932 1933 - Ap 1 0 0 -
@@ -3658,12 +3662,13 @@ R As 2005 o - O 16 0 1 S
 R As 2006 o - N 5 0 1 S
 R As 2007 o - F 25 0 0 -
 R As 2007 o - O Sun>=8 0 1 S
-R As 2008 ma - O Sun>=15 0 1 S
+R As 2008 2017 - O Sun>=15 0 1 S
 R As 2008 2011 - F Sun>=15 0 0 -
 R As 2012 o - F Sun>=22 0 0 -
 R As 2013 2014 - F Sun>=15 0 0 -
 R As 2015 o - F Sun>=22 0 0 -
 R As 2016 2022 - F Sun>=15 0 0 -
+R As 2018 ma - N Sun>=1 0 1 S
 R As 2023 o - F Sun>=22 0 0 -
 R As 2024 2025 - F Sun>=15 0 0 -
 R As 2026 o - F Sun>=22 0 0 -
@@ -4024,6 +4029,7 @@ Z Etc/GMT+9 -9 - -09
 Z Etc/GMT+10 -10 - -10
 Z Etc/GMT+11 -11 - -11
 Z Etc/GMT+12 -12 - -12
+Z Factory 0 - -00
 Li Africa/Nairobi Africa/Asmera
 Li Africa/Abidjan Africa/Timbuktu
 Li America/Argentina/Catamarca America/Argentina/ComodRivadavia
@@ -4142,5 +4148,3 @@ Li Etc/UTC UTC
 Li Etc/UTC Universal
 Li Europe/Moscow W-SU
 Li Etc/UTC Zulu
-Li America/Los_Angeles US/Pacific-New
-Z Factory 0 - -00
