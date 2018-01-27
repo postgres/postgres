@@ -1502,6 +1502,10 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	 *
 	 * Currently, only Material wants the extra MARKs, and it will be helpful
 	 * only if eflags doesn't specify REWIND.
+	 *
+	 * Note that for IndexScan and IndexOnlyScan, it is *necessary* that we
+	 * not set mj_ExtraMarks; otherwise we might attempt to set a mark before
+	 * the first inner tuple, which they do not support.
 	 */
 	if (IsA(innerPlan(node), Material) &&
 		(eflags & EXEC_FLAG_REWIND) == 0 &&

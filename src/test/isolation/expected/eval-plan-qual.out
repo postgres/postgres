@@ -184,3 +184,36 @@ step readwcte: <... completed>
 id             value          
 
 1              tableAValue2   
+
+starting permutation: wrjt selectjoinforupdate c2 c1
+step wrjt: UPDATE jointest SET data = 42 WHERE id = 7;
+step selectjoinforupdate: 
+	set enable_nestloop to 0;
+	set enable_hashjoin to 0;
+	set enable_seqscan to 0;
+	explain (costs off)
+	select * from jointest a join jointest b on a.id=b.id for update;
+	select * from jointest a join jointest b on a.id=b.id for update;
+ <waiting ...>
+step c2: COMMIT;
+step selectjoinforupdate: <... completed>
+QUERY PLAN     
+
+LockRows       
+  ->  Merge Join
+        Merge Cond: (a.id = b.id)
+        ->  Index Scan using jointest_id_idx on jointest a
+        ->  Index Scan using jointest_id_idx on jointest b
+id             data           id             data           
+
+1              0              1              0              
+2              0              2              0              
+3              0              3              0              
+4              0              4              0              
+5              0              5              0              
+6              0              6              0              
+7              42             7              42             
+8              0              8              0              
+9              0              9              0              
+10             0              10             0              
+step c1: COMMIT;

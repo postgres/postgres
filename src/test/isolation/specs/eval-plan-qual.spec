@@ -21,13 +21,16 @@ setup
  CREATE TABLE table_b (id integer, value text);
  INSERT INTO table_a VALUES (1, 'tableAValue');
  INSERT INTO table_b VALUES (1, 'tableBValue');
+
+ CREATE TABLE jointest AS SELECT generate_series(1,10) AS id, 0 AS data;
+ CREATE INDEX ON jointest(id);
 }
 
 teardown
 {
  DROP TABLE accounts;
  DROP TABLE p CASCADE;
- DROP TABLE table_a, table_b;
+ DROP TABLE table_a, table_b, jointest;
 }
 
 session "s1"
@@ -78,6 +81,17 @@ step "updateforss"	{
 	UPDATE table_b SET value = 'newTableBValue' WHERE id = 1;
 }
 
+# these tests exercise mark/restore during EPQ recheck, cf bug #15032
+
+step "selectjoinforupdate"	{
+	set enable_nestloop to 0;
+	set enable_hashjoin to 0;
+	set enable_seqscan to 0;
+	explain (costs off)
+	select * from jointest a join jointest b on a.id=b.id for update;
+	select * from jointest a join jointest b on a.id=b.id for update;
+}
+
 
 session "s2"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
@@ -104,6 +118,7 @@ step "readforss"	{
 	WHERE ta.id = 1 FOR UPDATE OF ta;
 }
 step "wrtwcte"	{ UPDATE table_a SET value = 'tableAValue2' WHERE id = 1; }
+step "wrjt"	{ UPDATE jointest SET data = 42 WHERE id = 7; }
 step "c2"	{ COMMIT; }
 
 session "s3"
@@ -135,3 +150,4 @@ permutation "wx2" "partiallock" "c2" "c1" "read"
 permutation "wx2" "lockwithvalues" "c2" "c1" "read"
 permutation "updateforss" "readforss" "c1" "c2"
 permutation "wrtwcte" "readwcte" "c1" "c2"
+permutation "wrjt" "selectjoinforupdate" "c2" "c1"
