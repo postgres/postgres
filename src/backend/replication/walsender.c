@@ -56,6 +56,7 @@
 #include "access/xlog_internal.h"
 #include "access/xlogutils.h"
 
+#include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
@@ -3242,11 +3243,12 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		memset(nulls, 0, sizeof(nulls));
 		values[0] = Int32GetDatum(pid);
 
-		if (!superuser())
+		if (!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
 		{
 			/*
-			 * Only superusers can see details. Other users only get the pid
-			 * value to know it's a walsender, but no details.
+			 * Only superusers and members of pg_read_all_stats can see details.
+			 * Other users only get the pid value to know it's a walsender,
+			 * but no details.
 			 */
 			MemSet(&nulls[1], true, PG_STAT_GET_WAL_SENDERS_COLS - 1);
 		}
