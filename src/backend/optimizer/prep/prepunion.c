@@ -252,6 +252,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 					   List **pTargetList,
 					   double *pNumGroups)
 {
+	/* Guard against stack overflow due to overly complex setop nests */
+	check_stack_depth();
+
 	if (IsA(setOp, RangeTblRef))
 	{
 		RangeTblRef *rtr = (RangeTblRef *) setOp;

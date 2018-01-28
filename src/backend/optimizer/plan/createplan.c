@@ -355,6 +355,9 @@ create_plan_recurse(PlannerInfo *root, Path *best_path, int flags)
 {
 	Plan	   *plan;
 
+	/* Guard against stack overflow due to overly complex plans */
+	check_stack_depth();
+
 	switch (best_path->pathtype)
 	{
 		case T_SeqScan:
