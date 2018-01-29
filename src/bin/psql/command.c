@@ -2829,7 +2829,7 @@ prompt_for_password(const char *username)
 {
 	char		buf[100];
 
-	if (username == NULL)
+	if (username == NULL || username[0] == '\0')
 		simple_prompt("Password: ", buf, sizeof(buf), false);
 	else
 	{
@@ -2960,7 +2960,14 @@ do_connect(enum trivalue reuse_previous_specification,
 	 */
 	if (pset.getPassword == TRI_YES)
 	{
-		password = prompt_for_password(user);
+		/*
+		 * If a connstring or URI is provided, we can't be sure we know which
+		 * username will be used, since we haven't parsed that argument yet.
+		 * Don't risk issuing a misleading prompt.  As in startup.c, it does
+		 * not seem worth working harder, since this getPassword option is
+		 * normally only used in noninteractive cases.
+		 */
+		password = prompt_for_password(has_connection_string ? NULL : user);
 	}
 	else if (o_conn && keep_password)
 	{
@@ -3026,8 +3033,12 @@ do_connect(enum trivalue reuse_previous_specification,
 		 */
 		if (!password && PQconnectionNeedsPassword(n_conn) && pset.getPassword != TRI_NO)
 		{
+			/*
+			 * Prompt for password using the username we actually connected
+			 * with --- it might've come out of "dbname" rather than "user".
+			 */
+			password = prompt_for_password(PQuser(n_conn));
 			PQfinish(n_conn);
-			password = prompt_for_password(user);
 			continue;
 		}
 
