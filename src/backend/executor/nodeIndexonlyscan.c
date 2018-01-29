@@ -214,8 +214,7 @@ IndexOnlyNext(IndexOnlyScanState *node)
 		if (scandesc->xs_recheck)
 		{
 			econtext->ecxt_scantuple = slot;
-			ResetExprContext(econtext);
-			if (!ExecQual(node->indexqual, econtext))
+			if (!ExecQualAndReset(node->indexqual, econtext))
 			{
 				/* Fails recheck, so drop it and loop back for another */
 				InstrCountFiltered2(node, 1);

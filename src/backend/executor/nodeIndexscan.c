@@ -152,8 +152,7 @@ IndexNext(IndexScanState *node)
 		if (scandesc->xs_recheck)
 		{
 			econtext->ecxt_scantuple = slot;
-			ResetExprContext(econtext);
-			if (!ExecQual(node->indexqualorig, econtext))
+			if (!ExecQualAndReset(node->indexqualorig, econtext))
 			{
 				/* Fails recheck, so drop it and loop back for another */
 				InstrCountFiltered2(node, 1);
@@ -300,8 +299,7 @@ next_indextuple:
 		if (scandesc->xs_recheck)
 		{
 			econtext->ecxt_scantuple = slot;
-			ResetExprContext(econtext);
-			if (!ExecQual(node->indexqualorig, econtext))
+			if (!ExecQualAndReset(node->indexqualorig, econtext))
 			{
 				/* Fails recheck, so drop it and loop back for another */
 				InstrCountFiltered2(node, 1);
@@ -420,10 +418,7 @@ IndexRecheck(IndexScanState *node, TupleTableSlot *slot)
 
 	/* Does the tuple meet the indexqual condition? */
 	econtext->ecxt_scantuple = slot;
-
-	ResetExprContext(econtext);
-
-	return ExecQual(node->indexqualorig, econtext);
+	return ExecQualAndReset(node->indexqualorig, econtext);
 }
 
 

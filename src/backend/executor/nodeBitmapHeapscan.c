@@ -352,9 +352,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			if (tbmres->recheck)
 			{
 				econtext->ecxt_scantuple = slot;
-				ResetExprContext(econtext);
-
-				if (!ExecQual(node->bitmapqualorig, econtext))
+				if (!ExecQualAndReset(node->bitmapqualorig, econtext))
 				{
 					/* Fails recheck, so drop it and loop back for another */
 					InstrCountFiltered2(node, 1);
@@ -717,10 +715,7 @@ BitmapHeapRecheck(BitmapHeapScanState *node, TupleTableSlot *slot)
 
 	/* Does the tuple meet the original qual conditions? */
 	econtext->ecxt_scantuple = slot;
-
-	ResetExprContext(econtext);
-
-	return ExecQual(node->bitmapqualorig, econtext);
+	return ExecQualAndReset(node->bitmapqualorig, econtext);
 }
 
 /* ----------------------------------------------------------------

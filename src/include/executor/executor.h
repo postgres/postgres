@@ -17,6 +17,7 @@
 #include "catalog/partition.h"
 #include "executor/execdesc.h"
 #include "nodes/parsenodes.h"
+#include "utils/memutils.h"
 
 
 /*
@@ -378,6 +379,22 @@ ExecQual(ExprState *state, ExprContext *econtext)
 	Assert(!isnull);
 
 	return DatumGetBool(ret);
+}
+#endif
+
+/*
+ * ExecQualAndReset() - evaluate qual with ExecQual() and reset expression
+ * context.
+ */
+#ifndef FRONTEND
+static inline bool
+ExecQualAndReset(ExprState *state, ExprContext *econtext)
+{
+	bool		ret = ExecQual(state, econtext);
+
+	/* inline ResetExprContext, to avoid ordering issue in this file */
+	MemoryContextReset(econtext->ecxt_per_tuple_memory);
+	return ret;
 }
 #endif
 

@@ -1942,10 +1942,7 @@ ExecScanHashBucket(HashJoinState *hjstate,
 											 false);	/* do not pfree */
 			econtext->ecxt_innertuple = inntuple;
 
-			/* reset temp memory each time to avoid leaks from qual expr */
-			ResetExprContext(econtext);
-
-			if (ExecQual(hjclauses, econtext))
+			if (ExecQualAndReset(hjclauses, econtext))
 			{
 				hjstate->hj_CurTuple = hashTuple;
 				return true;
@@ -2002,10 +1999,7 @@ ExecParallelScanHashBucket(HashJoinState *hjstate,
 											 false);	/* do not pfree */
 			econtext->ecxt_innertuple = inntuple;
 
-			/* reset temp memory each time to avoid leaks from qual expr */
-			ResetExprContext(econtext);
-
-			if (ExecQual(hjclauses, econtext))
+			if (ExecQualAndReset(hjclauses, econtext))
 			{
 				hjstate->hj_CurTuple = hashTuple;
 				return true;
