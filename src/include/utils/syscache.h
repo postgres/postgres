@@ -157,7 +157,7 @@ extern uint32 GetSysCacheHashValue(int cacheId,
 /* list-search interface.  Users of this must import catcache.h too */
 struct catclist;
 extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
-				   Datum key1, Datum key2, Datum key3, Datum key4);
+				   Datum key1, Datum key2, Datum key3);
 
 extern void SysCacheInvalidate(int cacheId, uint32 hashValue);
 
@@ -207,13 +207,11 @@ extern bool RelationSupportsSysCache(Oid relid);
 	GetSysCacheHashValue(cacheId, key1, key2, key3, key4)
 
 #define SearchSysCacheList1(cacheId, key1) \
-	SearchSysCacheList(cacheId, 1, key1, 0, 0, 0)
+	SearchSysCacheList(cacheId, 1, key1, 0, 0)
 #define SearchSysCacheList2(cacheId, key1, key2) \
-	SearchSysCacheList(cacheId, 2, key1, key2, 0, 0)
+	SearchSysCacheList(cacheId, 2, key1, key2, 0)
 #define SearchSysCacheList3(cacheId, key1, key2, key3) \
-	SearchSysCacheList(cacheId, 3, key1, key2, key3, 0)
-#define SearchSysCacheList4(cacheId, key1, key2, key3, key4) \
-	SearchSysCacheList(cacheId, 4, key1, key2, key3, key4)
+	SearchSysCacheList(cacheId, 3, key1, key2, key3)
 
 #define ReleaseSysCacheList(x)	ReleaseCatCacheList(x)
 

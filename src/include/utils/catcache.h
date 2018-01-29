@@ -214,7 +214,7 @@ extern uint32 GetCatCacheHashValue(CatCache *cache,
 
 extern CatCList *SearchCatCacheList(CatCache *cache, int nkeys,
 				   Datum v1, Datum v2,
-				   Datum v3, Datum v4);
+				   Datum v3);
 extern void ReleaseCatCacheList(CatCList *list);
 
 extern void ResetCatalogCaches(void);
