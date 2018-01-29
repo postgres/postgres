@@ -248,8 +248,9 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\H                     toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
 	fprintf(output, _("  \\pset NAME [VALUE]     set table output option\n"
-					  "                         (NAME := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
-					  "                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"));
+					  "                         (NAME := {border|columns|expanded|fieldsep|fieldsep_zero|\n"
+					  "                         footer|format|linestyle|null|numericlocale|pager|\n"
+					  "                         recordsep|recordsep_zero|tableattr|title|tuples_only})\n"));
 	fprintf(output, _("  \\t [on|off]            show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"));
