@@ -174,6 +174,10 @@ SH_SCOPE void SH_STAT(SH_TYPE * tb);
 #ifndef SH_GROW_MAX_MOVE
 #define SH_GROW_MAX_MOVE 150
 #endif
+#ifndef SH_GROW_MIN_FILLFACTOR
+/* but do not grow due to SH_GROW_MAX_* if below */
+#define SH_GROW_MIN_FILLFACTOR 0.1
+#endif
 
 #ifdef SH_STORE_HASH
 #define SH_COMPARE_KEYS(tb, ahash, akey, b) (ahash == SH_GET_HASH(tb, b) && SH_EQUAL(tb, b->SH_KEY, akey))
@@ -574,9 +578,12 @@ restart:
 				 * hashtables, grow the hashtable if collisions would require
 				 * us to move a lot of entries.  The most likely cause of such
 				 * imbalance is filling a (currently) small table, from a
-				 * currently big one, in hash-table order.
+				 * currently big one, in hash-table order.  Don't grow if the
+				 * hashtable would be too empty, to prevent quick space
+				 * explosion for some weird edge cases.
 				 */
-				if (++emptydist > SH_GROW_MAX_MOVE)
+				if (unlikely(++emptydist > SH_GROW_MAX_MOVE) &&
+					((double) tb->members / tb->size) >= SH_GROW_MIN_FILLFACTOR)
 				{
 					tb->grow_threshold = 0;
 					goto restart;
@@ -621,9 +628,12 @@ restart:
 		 * To avoid negative consequences from overly imbalanced hashtables,
 		 * grow the hashtable if collisions lead to large runs. The most
 		 * likely cause of such imbalance is filling a (currently) small
-		 * table, from a currently big one, in hash-table order.
+		 * table, from a currently big one, in hash-table order.  Don't grow
+		 * if the hashtable would be too empty, to prevent quick space
+		 * explosion for some weird edge cases.
 		 */
-		if (insertdist > SH_GROW_MAX_DIB)
+		if (unlikely(insertdist > SH_GROW_MAX_DIB) &&
+			((double) tb->members / tb->size) >= SH_GROW_MIN_FILLFACTOR)
 		{
 			tb->grow_threshold = 0;
 			goto restart;
@@ -923,6 +933,7 @@ SH_STAT(SH_TYPE * tb)
 #undef SH_MAX_FILLFACTOR
 #undef SH_GROW_MAX_DIB
 #undef SH_GROW_MAX_MOVE
+#undef SH_GROW_MIN_FILLFACTOR
 #undef SH_MAX_SIZE
 
 /* types */
