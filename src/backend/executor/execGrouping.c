@@ -23,6 +23,7 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
+#include "utils/hashutils.h"
 #include "utils/memutils.h"
 
 static uint32 TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple);
@@ -326,7 +327,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	 * underestimated.
 	 */
 	if (use_variable_hash_iv)
-		hashtable->hash_iv = hash_uint32(ParallelWorkerNumber);
+		hashtable->hash_iv = murmurhash32(ParallelWorkerNumber);
 	else
 		hashtable->hash_iv = 0;
 
@@ -510,7 +511,13 @@ TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple)
 		}
 	}
 
-	return hashkey;
+	/*
+	 * The way hashes are combined above, among each other and with the IV,
+	 * doesn't lead to good bit perturbation. As the IV's goal is to lead to
+	 * achieve that, perform a round of hashing of the combined hash -
+	 * resulting in near perfect perturbation.
+	 */
+	return murmurhash32(hashkey);
 }
 
 /*
