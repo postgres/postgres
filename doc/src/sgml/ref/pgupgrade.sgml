@@ -682,7 +682,7 @@ psql --username=postgres --file=script.sql postgres
 
   <para>
    <application>pg_upgrade</application> does not support upgrading of databases
-   containing these <type>reg*</type> OID-referencing system data types:
+   containing table columns using these <type>reg*</type> OID-referencing system data types:
    <type>regproc</type>, <type>regprocedure</type>, <type>regoper</type>,
    <type>regoperator</type>, <type>regconfig</type>, and
    <type>regdictionary</type>.  (<type>regtype</type> can be upgraded.)
