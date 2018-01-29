@@ -1183,29 +1183,33 @@ explain (costs off)
 -- simple rescan tests
 select a, b, sum(v.x)
   from (values (1),(2)) v(x), gstest_data(v.x)
- group by grouping sets (a,b);
+ group by grouping sets (a,b)
+ order by 1, 2, 3;
  a | b | sum 
 ---+---+-----
- 2 |   |   6
  1 |   |   3
+ 2 |   |   6
+   | 1 |   3
    | 2 |   3
    | 3 |   3
-   | 1 |   3
 (5 rows)
 
 explain (costs off)
   select a, b, sum(v.x)
     from (values (1),(2)) v(x), gstest_data(v.x)
-   group by grouping sets (a,b);
-                QUERY PLAN                
-------------------------------------------
- HashAggregate
-   Hash Key: gstest_data.a
-   Hash Key: gstest_data.b
-   ->  Nested Loop
-         ->  Values Scan on "*VALUES*"
-         ->  Function Scan on gstest_data
-(6 rows)
+   group by grouping sets (a,b)
+   order by 3, 1, 2;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Sort Key: (sum("*VALUES*".column1)), gstest_data.a, gstest_data.b
+   ->  HashAggregate
+         Hash Key: gstest_data.a
+         Hash Key: gstest_data.b
+         ->  Nested Loop
+               ->  Values Scan on "*VALUES*"
+               ->  Function Scan on gstest_data
+(8 rows)
 
 select *
   from (values (1),(2)) v(x),
