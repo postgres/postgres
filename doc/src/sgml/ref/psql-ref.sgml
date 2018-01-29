@@ -2599,8 +2599,9 @@ lo_import 152801
         <tip>
         <para>
         There are various shortcut commands for <command>\pset</command>. See
-        <command>\a</command>, <command>\C</command>, <command>\H</command>,
-        <command>\t</command>, <command>\T</command>, and <command>\x</command>.
+        <command>\a</command>, <command>\C</command>, <command>\f</command>,
+        <command>\H</command>, <command>\t</command>, <command>\T</command>,
+        and <command>\x</command>.
         </para>
         </tip>
 
