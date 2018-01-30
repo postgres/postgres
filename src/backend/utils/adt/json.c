@@ -84,8 +84,8 @@ static void parse_object_field(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_object(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_array_element(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_array(JsonLexContext *lex, JsonSemAction *sem);
-static void report_parse_error(JsonParseContext ctx, JsonLexContext *lex);
-static void report_invalid_token(JsonLexContext *lex);
+static void report_parse_error(JsonParseContext ctx, JsonLexContext *lex) pg_attribute_noreturn();
+static void report_invalid_token(JsonLexContext *lex) pg_attribute_noreturn();
 static int	report_json_context(JsonLexContext *lex);
 static char *extract_mb_char(char *s);
 static void composite_to_json(Datum composite, StringInfo result,
