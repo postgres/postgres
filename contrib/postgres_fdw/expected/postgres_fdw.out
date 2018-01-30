@@ -2330,38 +2330,43 @@ SELECT ft5, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2 FROM ft5 left join ft4 on ft5
 (4 rows)
 
 -- multi-way join involving multiple merge joins
+-- (this case used to have EPQ-related planning problems)
+SET enable_nestloop TO false;
+SET enable_hashjoin TO false;
 EXPLAIN (VERBOSE, COSTS OFF)
-SELECT * FROM ft1, ft2, ft4, ft5 WHERE ft1.c1 = ft2.c1 AND ft1.c1 = ft4.c1
-    AND ft1.c1 = ft5.c1 FOR UPDATE;
-                                                                                                                                                                                                                                                                                                                                                                                                         QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                         
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SELECT * FROM ft1, ft2, ft4, ft5 WHERE ft1.c1 = ft2.c1 AND ft1.c2 = ft4.c1
+    AND ft1.c2 = ft5.c1 AND ft1.c1 < 100 AND ft2.c1 < 100 FOR UPDATE;
+                                                                                                                                                                                                                                                                                                                                                                                                                             QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  LockRows
    Output: ft1.c1, ft1.c2, ft1.c3, ft1.c4, ft1.c5, ft1.c6, ft1.c7, ft1.c8, ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft4.c1, ft4.c2, ft4.c3, ft5.c1, ft5.c2, ft5.c3, ft1.*, ft2.*, ft4.*, ft5.*
    ->  Foreign Scan
          Output: ft1.c1, ft1.c2, ft1.c3, ft1.c4, ft1.c5, ft1.c6, ft1.c7, ft1.c8, ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft4.c1, ft4.c2, ft4.c3, ft5.c1, ft5.c2, ft5.c3, ft1.*, ft2.*, ft4.*, ft5.*
          Relations: (((public.ft1) INNER JOIN (public.ft2)) INNER JOIN (public.ft4)) INNER JOIN (public.ft5)
-         Remote SQL: SELECT r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8, CASE WHEN (r1.*)::text IS NOT NULL THEN ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8) END, r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8, CASE WHEN (r2.*)::text IS NOT NULL THEN ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) END, r3.c1, r3.c2, r3.c3, CASE WHEN (r3.*)::text IS NOT NULL THEN ROW(r3.c1, r3.c2, r3.c3) END, r4.c1, r4.c2, r4.c3, CASE WHEN (r4.*)::text IS NOT NULL THEN ROW(r4.c1, r4.c2, r4.c3) END FROM ((("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1")))) INNER JOIN "S 1"."T 3" r3 ON (((r1."C 1" = r3.c1)))) INNER JOIN "S 1"."T 4" r4 ON (((r1."C 1" = r4.c1)))) FOR UPDATE OF r1 FOR UPDATE OF r2 FOR UPDATE OF r3 FOR UPDATE OF r4
+         Remote SQL: SELECT r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8, CASE WHEN (r1.*)::text IS NOT NULL THEN ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8) END, r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8, CASE WHEN (r2.*)::text IS NOT NULL THEN ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) END, r3.c1, r3.c2, r3.c3, CASE WHEN (r3.*)::text IS NOT NULL THEN ROW(r3.c1, r3.c2, r3.c3) END, r4.c1, r4.c2, r4.c3, CASE WHEN (r4.*)::text IS NOT NULL THEN ROW(r4.c1, r4.c2, r4.c3) END FROM ((("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1")) AND ((r2."C 1" < 100)) AND ((r1."C 1" < 100)))) INNER JOIN "S 1"."T 3" r3 ON (((r1.c2 = r3.c1)))) INNER JOIN "S 1"."T 4" r4 ON (((r1.c2 = r4.c1)))) FOR UPDATE OF r1 FOR UPDATE OF r2 FOR UPDATE OF r3 FOR UPDATE OF r4
          ->  Merge Join
                Output: ft1.c1, ft1.c2, ft1.c3, ft1.c4, ft1.c5, ft1.c6, ft1.c7, ft1.c8, ft1.*, ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft2.*, ft4.c1, ft4.c2, ft4.c3, ft4.*, ft5.c1, ft5.c2, ft5.c3, ft5.*
-               Merge Cond: (ft1.c1 = ft5.c1)
+               Merge Cond: (ft1.c2 = ft5.c1)
                ->  Merge Join
                      Output: ft1.c1, ft1.c2, ft1.c3, ft1.c4, ft1.c5, ft1.c6, ft1.c7, ft1.c8, ft1.*, ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft2.*, ft4.c1, ft4.c2, ft4.c3, ft4.*
-                     Merge Cond: (ft1.c1 = ft4.c1)
-                     ->  Merge Join
+                     Merge Cond: (ft1.c2 = ft4.c1)
+                     ->  Sort
                            Output: ft1.c1, ft1.c2, ft1.c3, ft1.c4, ft1.c5, ft1.c6, ft1.c7, ft1.c8, ft1.*, ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft2.*
-                           Merge Cond: (ft1.c1 = ft2.c1)
-                           ->  Sort
-                                 Output: ft1.c1, ft1.c2, ft1.c3, ft1.c4, ft1.c5, ft1.c6, ft1.c7, ft1.c8, ft1.*
-                                 Sort Key: ft1.c1
-                                 ->  Foreign Scan on public.ft1
+                           Sort Key: ft1.c2
+                           ->  Merge Join
+                                 Output: ft1.c1, ft1.c2, ft1.c3, ft1.c4, ft1.c5, ft1.c6, ft1.c7, ft1.c8, ft1.*, ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft2.*
+                                 Merge Cond: (ft1.c1 = ft2.c1)
+                                 ->  Sort
                                        Output: ft1.c1, ft1.c2, ft1.c3, ft1.c4, ft1.c5, ft1.c6, ft1.c7, ft1.c8, ft1.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR UPDATE
-                           ->  Sort
-                                 Output: ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft2.*
-                                 Sort Key: ft2.c1
-                                 ->  Foreign Scan on public.ft2
+                                       Sort Key: ft1.c1
+                                       ->  Foreign Scan on public.ft1
+                                             Output: ft1.c1, ft1.c2, ft1.c3, ft1.c4, ft1.c5, ft1.c6, ft1.c7, ft1.c8, ft1.*
+                                             Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" < 100)) FOR UPDATE
+                                 ->  Materialize
                                        Output: ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft2.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR UPDATE
+                                       ->  Foreign Scan on public.ft2
+                                             Output: ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft2.*
+                                             Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" < 100)) ORDER BY "C 1" ASC NULLS LAST FOR UPDATE
                      ->  Sort
                            Output: ft4.c1, ft4.c2, ft4.c3, ft4.*
                            Sort Key: ft4.c1
@@ -2374,30 +2379,26 @@ SELECT * FROM ft1, ft2, ft4, ft5 WHERE ft1.c1 = ft2.c1 AND ft1.c1 = ft4.c1
                      ->  Foreign Scan on public.ft5
                            Output: ft5.c1, ft5.c2, ft5.c3, ft5.*
                            Remote SQL: SELECT c1, c2, c3 FROM "S 1"."T 4" FOR UPDATE
-(39 rows)
+(41 rows)
 
-SELECT * FROM ft1, ft2, ft4, ft5 WHERE ft1.c1 = ft2.c1 AND ft1.c1 = ft4.c1
-    AND ft1.c1 = ft5.c1 FOR UPDATE;
+SELECT * FROM ft1, ft2, ft4, ft5 WHERE ft1.c1 = ft2.c1 AND ft1.c2 = ft4.c1
+    AND ft1.c2 = ft5.c1 AND ft1.c1 < 100 AND ft2.c1 < 100 FOR UPDATE;
  c1 | c2 |  c3   |              c4              |            c5            | c6 |     c7     | c8  | c1 | c2 |  c3   |              c4              |            c5            | c6 |     c7     | c8  | c1 | c2 |   c3   | c1 | c2 |   c3   
 ----+----+-------+------------------------------+--------------------------+----+------------+-----+----+----+-------+------------------------------+--------------------------+----+------------+-----+----+----+--------+----+----+--------
   6 |  6 | 00006 | Wed Jan 07 00:00:00 1970 PST | Wed Jan 07 00:00:00 1970 | 6  | 6          | foo |  6 |  6 | 00006 | Wed Jan 07 00:00:00 1970 PST | Wed Jan 07 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
- 12 |  2 | 00012 | Tue Jan 13 00:00:00 1970 PST | Tue Jan 13 00:00:00 1970 | 2  | 2          | foo | 12 |  2 | 00012 | Tue Jan 13 00:00:00 1970 PST | Tue Jan 13 00:00:00 1970 | 2  | 2          | foo | 12 | 13 | AAA012 | 12 | 13 | AAA012
- 18 |  8 | 00018 | Mon Jan 19 00:00:00 1970 PST | Mon Jan 19 00:00:00 1970 | 8  | 8          | foo | 18 |  8 | 00018 | Mon Jan 19 00:00:00 1970 PST | Mon Jan 19 00:00:00 1970 | 8  | 8          | foo | 18 | 19 | AAA018 | 18 | 19 | 
- 24 |  4 | 00024 | Sun Jan 25 00:00:00 1970 PST | Sun Jan 25 00:00:00 1970 | 4  | 4          | foo | 24 |  4 | 00024 | Sun Jan 25 00:00:00 1970 PST | Sun Jan 25 00:00:00 1970 | 4  | 4          | foo | 24 | 25 | AAA024 | 24 | 25 | AAA024
- 30 |  0 | 00030 | Sat Jan 31 00:00:00 1970 PST | Sat Jan 31 00:00:00 1970 | 0  | 0          | foo | 30 |  0 | 00030 | Sat Jan 31 00:00:00 1970 PST | Sat Jan 31 00:00:00 1970 | 0  | 0          | foo | 30 | 31 | AAA030 | 30 | 31 | AAA030
- 36 |  6 | 00036 | Fri Feb 06 00:00:00 1970 PST | Fri Feb 06 00:00:00 1970 | 6  | 6          | foo | 36 |  6 | 00036 | Fri Feb 06 00:00:00 1970 PST | Fri Feb 06 00:00:00 1970 | 6  | 6          | foo | 36 | 37 | AAA036 | 36 | 37 | 
- 42 |  2 | 00042 | Thu Feb 12 00:00:00 1970 PST | Thu Feb 12 00:00:00 1970 | 2  | 2          | foo | 42 |  2 | 00042 | Thu Feb 12 00:00:00 1970 PST | Thu Feb 12 00:00:00 1970 | 2  | 2          | foo | 42 | 43 | AAA042 | 42 | 43 | AAA042
- 48 |  8 | 00048 | Wed Feb 18 00:00:00 1970 PST | Wed Feb 18 00:00:00 1970 | 8  | 8          | foo | 48 |  8 | 00048 | Wed Feb 18 00:00:00 1970 PST | Wed Feb 18 00:00:00 1970 | 8  | 8          | foo | 48 | 49 | AAA048 | 48 | 49 | AAA048
- 54 |  4 | 00054 | Tue Feb 24 00:00:00 1970 PST | Tue Feb 24 00:00:00 1970 | 4  | 4          | foo | 54 |  4 | 00054 | Tue Feb 24 00:00:00 1970 PST | Tue Feb 24 00:00:00 1970 | 4  | 4          | foo | 54 | 55 | AAA054 | 54 | 55 | 
- 60 |  0 | 00060 | Mon Mar 02 00:00:00 1970 PST | Mon Mar 02 00:00:00 1970 | 0  | 0          | foo | 60 |  0 | 00060 | Mon Mar 02 00:00:00 1970 PST | Mon Mar 02 00:00:00 1970 | 0  | 0          | foo | 60 | 61 | AAA060 | 60 | 61 | AAA060
- 66 |  6 | 00066 | Sun Mar 08 00:00:00 1970 PST | Sun Mar 08 00:00:00 1970 | 6  | 6          | foo | 66 |  6 | 00066 | Sun Mar 08 00:00:00 1970 PST | Sun Mar 08 00:00:00 1970 | 6  | 6          | foo | 66 | 67 | AAA066 | 66 | 67 | AAA066
- 72 |  2 | 00072 | Sat Mar 14 00:00:00 1970 PST | Sat Mar 14 00:00:00 1970 | 2  | 2          | foo | 72 |  2 | 00072 | Sat Mar 14 00:00:00 1970 PST | Sat Mar 14 00:00:00 1970 | 2  | 2          | foo | 72 | 73 | AAA072 | 72 | 73 | 
- 78 |  8 | 00078 | Fri Mar 20 00:00:00 1970 PST | Fri Mar 20 00:00:00 1970 | 8  | 8          | foo | 78 |  8 | 00078 | Fri Mar 20 00:00:00 1970 PST | Fri Mar 20 00:00:00 1970 | 8  | 8          | foo | 78 | 79 | AAA078 | 78 | 79 | AAA078
- 84 |  4 | 00084 | Thu Mar 26 00:00:00 1970 PST | Thu Mar 26 00:00:00 1970 | 4  | 4          | foo | 84 |  4 | 00084 | Thu Mar 26 00:00:00 1970 PST | Thu Mar 26 00:00:00 1970 | 4  | 4          | foo | 84 | 85 | AAA084 | 84 | 85 | AAA084
- 90 |  0 | 00090 | Wed Apr 01 00:00:00 1970 PST | Wed Apr 01 00:00:00 1970 | 0  | 0          | foo | 90 |  0 | 00090 | Wed Apr 01 00:00:00 1970 PST | Wed Apr 01 00:00:00 1970 | 0  | 0          | foo | 90 | 91 | AAA090 | 90 | 91 | 
- 96 |  6 | 00096 | Tue Apr 07 00:00:00 1970 PST | Tue Apr 07 00:00:00 1970 | 6  | 6          | foo | 96 |  6 | 00096 | Tue Apr 07 00:00:00 1970 PST | Tue Apr 07 00:00:00 1970 | 6  | 6          | foo | 96 | 97 | AAA096 | 96 | 97 | AAA096
-(16 rows)
+ 16 |  6 | 00016 | Sat Jan 17 00:00:00 1970 PST | Sat Jan 17 00:00:00 1970 | 6  | 6          | foo | 16 |  6 | 00016 | Sat Jan 17 00:00:00 1970 PST | Sat Jan 17 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
+ 26 |  6 | 00026 | Tue Jan 27 00:00:00 1970 PST | Tue Jan 27 00:00:00 1970 | 6  | 6          | foo | 26 |  6 | 00026 | Tue Jan 27 00:00:00 1970 PST | Tue Jan 27 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
+ 36 |  6 | 00036 | Fri Feb 06 00:00:00 1970 PST | Fri Feb 06 00:00:00 1970 | 6  | 6          | foo | 36 |  6 | 00036 | Fri Feb 06 00:00:00 1970 PST | Fri Feb 06 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
+ 46 |  6 | 00046 | Mon Feb 16 00:00:00 1970 PST | Mon Feb 16 00:00:00 1970 | 6  | 6          | foo | 46 |  6 | 00046 | Mon Feb 16 00:00:00 1970 PST | Mon Feb 16 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
+ 56 |  6 | 00056 | Thu Feb 26 00:00:00 1970 PST | Thu Feb 26 00:00:00 1970 | 6  | 6          | foo | 56 |  6 | 00056 | Thu Feb 26 00:00:00 1970 PST | Thu Feb 26 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
+ 66 |  6 | 00066 | Sun Mar 08 00:00:00 1970 PST | Sun Mar 08 00:00:00 1970 | 6  | 6          | foo | 66 |  6 | 00066 | Sun Mar 08 00:00:00 1970 PST | Sun Mar 08 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
+ 76 |  6 | 00076 | Wed Mar 18 00:00:00 1970 PST | Wed Mar 18 00:00:00 1970 | 6  | 6          | foo | 76 |  6 | 00076 | Wed Mar 18 00:00:00 1970 PST | Wed Mar 18 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
+ 86 |  6 | 00086 | Sat Mar 28 00:00:00 1970 PST | Sat Mar 28 00:00:00 1970 | 6  | 6          | foo | 86 |  6 | 00086 | Sat Mar 28 00:00:00 1970 PST | Sat Mar 28 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
+ 96 |  6 | 00096 | Tue Apr 07 00:00:00 1970 PST | Tue Apr 07 00:00:00 1970 | 6  | 6          | foo | 96 |  6 | 00096 | Tue Apr 07 00:00:00 1970 PST | Tue Apr 07 00:00:00 1970 | 6  | 6          | foo |  6 |  7 | AAA006 |  6 |  7 | AAA006
+(10 rows)
 
+RESET enable_nestloop;
+RESET enable_hashjoin;
 -- check join pushdown in situations where multiple userids are involved
 CREATE ROLE regress_view_owner SUPERUSER;
 CREATE USER MAPPING FOR regress_view_owner SERVER loopback;
