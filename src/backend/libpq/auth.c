@@ -883,8 +883,8 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	 * SCRAM-SHA-256 at the moment).  The extra "\0" is for an empty string to
 	 * terminate the list.
 	 */
-	sendAuthRequest(port, AUTH_REQ_SASL, SCRAM_SHA256_NAME "\0",
-					strlen(SCRAM_SHA256_NAME) + 2);
+	sendAuthRequest(port, AUTH_REQ_SASL, SCRAM_SHA_256_NAME "\0",
+					strlen(SCRAM_SHA_256_NAME) + 2);
 
 	/*
 	 * Initialize the status tracker for message exchanges.
@@ -950,7 +950,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 			 * is an error.
 			 */
 			selected_mech = pq_getmsgrawstring(&buf);
-			if (strcmp(selected_mech, SCRAM_SHA256_NAME) != 0)
+			if (strcmp(selected_mech, SCRAM_SHA_256_NAME) != 0)
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),

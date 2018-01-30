@@ -14,7 +14,7 @@
 #define PG_SCRAM_H
 
 /* Name of SCRAM-SHA-256 per IANA */
-#define SCRAM_SHA256_NAME "SCRAM-SHA-256"
+#define SCRAM_SHA_256_NAME "SCRAM-SHA-256"
 
 /* Status codes for message exchange */
 #define SASL_EXCHANGE_CONTINUE		0

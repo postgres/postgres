@@ -532,7 +532,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		/*
 		 * Do we support this mechanism?
 		 */
-		if (strcmp(mechanism_buf.data, SCRAM_SHA256_NAME) == 0)
+		if (strcmp(mechanism_buf.data, SCRAM_SHA_256_NAME) == 0)
 		{
 			char	   *password;
 
@@ -550,7 +550,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 			conn->sasl_state = pg_fe_scram_init(conn->pguser, password);
 			if (!conn->sasl_state)
 				goto oom_error;
-			selected_mechanism = SCRAM_SHA256_NAME;
+			selected_mechanism = SCRAM_SHA_256_NAME;
 		}
 	}
 

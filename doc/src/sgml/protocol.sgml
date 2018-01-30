@@ -1420,7 +1420,7 @@ On error, the server can abort the authentication at any stage, and send an
 ErrorMessage.
 </para>
 
- <sect2 id="sasl-scram-sha256">
+ <sect2 id="sasl-scram-sha-256">
   <title>SCRAM-SHA-256 authentication</title>
 
   <para>
