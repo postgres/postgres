@@ -489,7 +489,6 @@ check_foreign_key(PG_FUNCTION_ARGS)
 								 " %s = %s%s%s %s ",
 								 args2[k], (is_char_type > 0) ? "'" : "",
 								 nv, (is_char_type > 0) ? "'" : "", (k < nkeys) ? ", " : "");
-						is_char_type = 0;
 					}
 					strcat(sql, " where ");
 
