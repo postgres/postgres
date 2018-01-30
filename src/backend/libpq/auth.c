@@ -894,18 +894,18 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	 * channel-binding variants go first, if they are supported.  Channel
 	 * binding is only supported in SSL builds.
 	 */
-	sasl_mechs = palloc(strlen(SCRAM_SHA256_PLUS_NAME) +
-						strlen(SCRAM_SHA256_NAME) + 3);
+	sasl_mechs = palloc(strlen(SCRAM_SHA_256_PLUS_NAME) +
+						strlen(SCRAM_SHA_256_NAME) + 3);
 	p = sasl_mechs;
 
 	if (port->ssl_in_use)
 	{
-		strcpy(p, SCRAM_SHA256_PLUS_NAME);
-		p += strlen(SCRAM_SHA256_PLUS_NAME) + 1;
+		strcpy(p, SCRAM_SHA_256_PLUS_NAME);
+		p += strlen(SCRAM_SHA_256_PLUS_NAME) + 1;
 	}
 
-	strcpy(p, SCRAM_SHA256_NAME);
-	p += strlen(SCRAM_SHA256_NAME) + 1;
+	strcpy(p, SCRAM_SHA_256_NAME);
+	p += strlen(SCRAM_SHA_256_NAME) + 1;
 
 	/* Put another '\0' to mark that list is finished. */
 	p[0] = '\0';
@@ -973,8 +973,8 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 			const char *selected_mech;
 
 			selected_mech = pq_getmsgrawstring(&buf);
-			if (strcmp(selected_mech, SCRAM_SHA256_NAME) != 0 &&
-				strcmp(selected_mech, SCRAM_SHA256_PLUS_NAME) != 0)
+			if (strcmp(selected_mech, SCRAM_SHA_256_NAME) != 0 &&
+				strcmp(selected_mech, SCRAM_SHA_256_PLUS_NAME) != 0)
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),

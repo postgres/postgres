@@ -533,11 +533,11 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		if (conn->ssl_in_use &&
 			conn->scram_channel_binding &&
 			strlen(conn->scram_channel_binding) > 0 &&
-			strcmp(mechanism_buf.data, SCRAM_SHA256_PLUS_NAME) == 0)
-			selected_mechanism = SCRAM_SHA256_PLUS_NAME;
-		else if (strcmp(mechanism_buf.data, SCRAM_SHA256_NAME) == 0 &&
+			strcmp(mechanism_buf.data, SCRAM_SHA_256_PLUS_NAME) == 0)
+			selected_mechanism = SCRAM_SHA_256_PLUS_NAME;
+		else if (strcmp(mechanism_buf.data, SCRAM_SHA_256_NAME) == 0 &&
 				 !selected_mechanism)
-			selected_mechanism = SCRAM_SHA256_NAME;
+			selected_mechanism = SCRAM_SHA_256_NAME;
 	}
 
 	if (!selected_mechanism)

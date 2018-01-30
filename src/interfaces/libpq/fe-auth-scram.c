@@ -349,7 +349,7 @@ build_client_first_message(fe_scram_state *state)
 	/*
 	 * First build the gs2-header with channel binding information.
 	 */
-	if (strcmp(state->sasl_mechanism, SCRAM_SHA256_PLUS_NAME) == 0)
+	if (strcmp(state->sasl_mechanism, SCRAM_SHA_256_PLUS_NAME) == 0)
 	{
 		Assert(conn->ssl_in_use);
 		appendPQExpBuffer(&buf, "p=%s", conn->scram_channel_binding);
@@ -430,7 +430,7 @@ build_client_final_message(fe_scram_state *state)
 	 * build_client_first_message(), because the server will check that it's
 	 * the same flag both times.
 	 */
-	if (strcmp(state->sasl_mechanism, SCRAM_SHA256_PLUS_NAME) == 0)
+	if (strcmp(state->sasl_mechanism, SCRAM_SHA_256_PLUS_NAME) == 0)
 	{
 		char	   *cbind_data = NULL;
 		size_t		cbind_data_len = 0;
