@@ -767,6 +767,8 @@ apw_init_shmem(void)
 	}
 	LWLockRelease(AddinShmemInitLock);
 
+	LWLockRegisterTranche(apw_state->lock.tranche, "autoprewarm");
+
 	return found;
 }
 
