@@ -503,7 +503,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    Modifying a partitioned table or a table with inheritance children fires
    statement-level triggers attached to the explicitly named table, but not
    statement-level triggers for its partitions or child tables.  In contrast,
-   row-level triggers are fired on the rows in effected partitions or
+   row-level triggers are fired on the rows in affected partitions or
    child tables, even if they are not explicitly named in the query.
    If a statement-level trigger has been defined with transition relations
    named by a <literal>REFERENCING</literal> clause, then before and after
