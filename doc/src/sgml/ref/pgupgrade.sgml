@@ -38,9 +38,9 @@
   <application>pg_upgrade</application> (formerly called <application>pg_migrator</application>) allows data
   stored in <productname>PostgreSQL</productname> data files to be upgraded to a later <productname>PostgreSQL</productname>
   major version without the data dump/reload typically required for
-  major version upgrades, e.g. from 9.6.3 to the current major release
-  of <productname>PostgreSQL</productname>.  It is not required for minor version upgrades, e.g. from
-  9.6.2 to 9.6.3.
+  major version upgrades, e.g. from 9.5.8 to 9.6.4 or from 10.7 to 11.2.
+  It is not required for minor version upgrades, e.g. from 9.6.2 to 9.6.3
+  or from 10.1 to 10.2.
  </para>
 
  <para>
