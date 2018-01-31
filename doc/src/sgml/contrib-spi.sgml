@@ -10,7 +10,9 @@
 
  <para>
   The <application>spi</> module provides several workable examples
-  of using SPI and triggers.  While these functions are of some value in
+  of using the <link linkend="spi">Server Programming Interface</link>
+  (<acronym>SPI</acronym>) and triggers.  While these functions are of
+  some value in
   their own right, they are even more useful as examples to modify for
   your own purposes.  The functions are general enough to be used
   with any table, but you have to specify table and field names (as described
