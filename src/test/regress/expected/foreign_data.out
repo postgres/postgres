@@ -1863,7 +1863,7 @@ Partitions: pt2_1 FOR VALUES IN (1)
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Partition of: pt2 FOR VALUES IN (1)
-Partition constraint: ((c1 IS NOT NULL) AND (c1 = ANY (ARRAY[1])))
+Partition constraint: ((c1 IS NOT NULL) AND (c1 = 1))
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
@@ -1935,7 +1935,7 @@ Partitions: pt2_1 FOR VALUES IN (1)
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Partition of: pt2 FOR VALUES IN (1)
-Partition constraint: ((c1 IS NOT NULL) AND (c1 = ANY (ARRAY[1])))
+Partition constraint: ((c1 IS NOT NULL) AND (c1 = 1))
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
@@ -1963,7 +1963,7 @@ Partitions: pt2_1 FOR VALUES IN (1)
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           | not null |         |             | plain    |              | 
 Partition of: pt2 FOR VALUES IN (1)
-Partition constraint: ((c1 IS NOT NULL) AND (c1 = ANY (ARRAY[1])))
+Partition constraint: ((c1 IS NOT NULL) AND (c1 = 1))
 Check constraints:
     "p21chk" CHECK (c2 <> ''::text)
 Server: s0

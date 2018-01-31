@@ -1625,18 +1625,60 @@ make_partition_op_expr(PartitionKey key, int keynum,
 	{
 		case PARTITION_STRATEGY_LIST:
 			{
-				ScalarArrayOpExpr *saopexpr;
+				List	   *elems = (List *) arg2;
+				int			nelems = list_length(elems);
 
-				/* Build leftop = ANY (rightop) */
-				saopexpr = makeNode(ScalarArrayOpExpr);
-				saopexpr->opno = operoid;
-				saopexpr->opfuncid = get_opcode(operoid);
-				saopexpr->useOr = true;
-				saopexpr->inputcollid = key->partcollation[keynum];
-				saopexpr->args = list_make2(arg1, arg2);
-				saopexpr->location = -1;
+				Assert(nelems >= 1);
+				Assert(keynum == 0);
 
-				result = (Expr *) saopexpr;
+				if (nelems > 1 &&
+					!type_is_array(key->parttypid[keynum]))
+				{
+					ArrayExpr  *arrexpr;
+					ScalarArrayOpExpr *saopexpr;
+
+					/* Construct an ArrayExpr for the right-hand inputs */
+					arrexpr = makeNode(ArrayExpr);
+					arrexpr->array_typeid =
+									get_array_type(key->parttypid[keynum]);
+					arrexpr->array_collid = key->parttypcoll[keynum];
+					arrexpr->element_typeid = key->parttypid[keynum];
+					arrexpr->elements = elems;
+					arrexpr->multidims = false;
+					arrexpr->location = -1;
+
+					/* Build leftop = ANY (rightop) */
+					saopexpr = makeNode(ScalarArrayOpExpr);
+					saopexpr->opno = operoid;
+					saopexpr->opfuncid = get_opcode(operoid);
+					saopexpr->useOr = true;
+					saopexpr->inputcollid = key->partcollation[keynum];
+					saopexpr->args = list_make2(arg1, arrexpr);
+					saopexpr->location = -1;
+
+					result = (Expr *) saopexpr;
+				}
+				else
+				{
+					List	   *elemops = NIL;
+					ListCell   *lc;
+
+					foreach (lc, elems)
+					{
+						Expr   *elem = lfirst(lc),
+							   *elemop;
+
+						elemop = make_opclause(operoid,
+											   BOOLOID,
+											   false,
+											   arg1, elem,
+											   InvalidOid,
+											   key->partcollation[keynum]);
+						elemops = lappend(elemops, elemop);
+					}
+
+					result = nelems > 1 ? makeBoolExpr(OR_EXPR, elemops, -1) : linitial(elemops);
+				}
 				break;
 			}
 
@@ -1758,11 +1800,10 @@ get_qual_for_list(Relation parent, PartitionBoundSpec *spec)
 	PartitionKey key = RelationGetPartitionKey(parent);
 	List	   *result;
 	Expr	   *keyCol;
-	ArrayExpr  *arr;
 	Expr	   *opexpr;
 	NullTest   *nulltest;
 	ListCell   *cell;
-	List	   *arrelems = NIL;
+	List	   *elems = NIL;
 	bool		list_has_null = false;
 
 	/*
@@ -1828,7 +1869,7 @@ get_qual_for_list(Relation parent, PartitionBoundSpec *spec)
 							false,	/* isnull */
 							key->parttypbyval[0]);
 
-			arrelems = lappend(arrelems, val);
+			elems = lappend(elems, val);
 		}
 	}
 	else
@@ -1843,30 +1884,25 @@ get_qual_for_list(Relation parent, PartitionBoundSpec *spec)
 			if (val->constisnull)
 				list_has_null = true;
 			else
-				arrelems = lappend(arrelems, copyObject(val));
+				elems = lappend(elems, copyObject(val));
 		}
 	}
 
-	if (arrelems)
+	if (elems)
 	{
-		/* Construct an ArrayExpr for the non-null partition values */
-		arr = makeNode(ArrayExpr);
-		arr->array_typeid = !type_is_array(key->parttypid[0])
-			? get_array_type(key->parttypid[0])
-			: key->parttypid[0];
-		arr->array_collid = key->parttypcoll[0];
-		arr->element_typeid = key->parttypid[0];
-		arr->elements = arrelems;
-		arr->multidims = false;
-		arr->location = -1;
-
-		/* Generate the main expression, i.e., keyCol = ANY (arr) */
+		/*
+		 * Generate the operator expression from the non-null partition
+		 * values.
+		 */
 		opexpr = make_partition_op_expr(key, 0, BTEqualStrategyNumber,
-										keyCol, (Expr *) arr);
+										keyCol, (Expr *) elems);
 	}
 	else
 	{
-		/* If there are no partition values, we don't need an = ANY expr */
+		/*
+		 * If there are no partition values, we don't need an operator
+		 * expression.
+		 */
 		opexpr = NULL;
 	}
 

@@ -1014,23 +1014,19 @@ explain (costs off) select * from boolpart where a = false;
  Append
    ->  Seq Scan on boolpart_f
          Filter: (NOT a)
-   ->  Seq Scan on boolpart_t
-         Filter: (NOT a)
    ->  Seq Scan on boolpart_default
          Filter: (NOT a)
-(7 rows)
+(5 rows)
 
 explain (costs off) select * from boolpart where not a = false;
              QUERY PLAN             
 ------------------------------------
  Append
-   ->  Seq Scan on boolpart_f
-         Filter: a
    ->  Seq Scan on boolpart_t
          Filter: a
    ->  Seq Scan on boolpart_default
          Filter: a
-(7 rows)
+(5 rows)
 
 explain (costs off) select * from boolpart where a is true or a is not true;
                     QUERY PLAN                    
