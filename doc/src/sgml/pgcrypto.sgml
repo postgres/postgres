@@ -1062,7 +1062,7 @@ decrypt_iv(data bytea, key bytea, iv bytea, type text) returns bytea
 
   <itemizedlist>
    <listitem><para><literal>bf</literal> &mdash; Blowfish</para></listitem>
-   <listitem><para><literal>aes</literal> &mdash; AES (Rijndael-128)</para></listitem>
+   <listitem><para><literal>aes</literal> &mdash; AES (Rijndael-128, -192 or -256)</para></listitem>
   </itemizedlist>
    and <replaceable>mode</> is one of:
   <itemizedlist>
