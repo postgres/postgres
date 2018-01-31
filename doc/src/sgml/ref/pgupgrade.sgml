@@ -494,10 +494,10 @@ pg_upgrade.exe
        server:
 
 <programlisting>
-rsync --archive --delete --hard-links --size-only --no-inc-recursive old_pgdata new_pgdata remote_dir
+rsync --archive --delete --hard-links --size-only --no-inc-recursive old_cluster new_cluster remote_dir
 </programlisting>
 
-       where <option>old_pgdata</option> and <option>new_pgdata</option> are relative
+       where <option>old_cluster</option> and <option>new_cluster</option> are relative
        to the current directory on the primary, and <option>remote_dir</option>
        is <emphasis>above</emphasis> the old and new cluster directories
        on the standby.  The directory structure under the specified
@@ -506,8 +506,8 @@ rsync --archive --delete --hard-links --size-only --no-inc-recursive old_pgdata 
        remote directory, e.g.
 
 <programlisting>
-rsync --archive --delete --hard-links --size-only --no-inc-recursive /opt/PostgreSQL/9.5/data \
-      /opt/PostgreSQL/9.6/data standby.example.com:/opt/PostgreSQL
+rsync --archive --delete --hard-links --size-only --no-inc-recursive /opt/PostgreSQL/9.5 \
+      /opt/PostgreSQL/9.6 standby.example.com:/opt/PostgreSQL
 </programlisting>
 
        You can verify what the command will do using
