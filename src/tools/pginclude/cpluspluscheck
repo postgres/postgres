@@ -15,6 +15,8 @@ trap 'rm -rf $tmp' 0 1 2 3 15
 # rusagestub.h is also platform-specific, and will be included by
 # utils/pg_rusage.h if necessary.
 # access/rmgrlist.h is not meant to be included standalone.
+# common/int128.h uses static assertions, which are not supported
+# under C++.
 # regex/regerrs.h is not meant to be included standalone.
 # parser/gram.h will be included by parser/gramparse.h.
 # parser/kwlist.h is not meant to be included standalone.
@@ -26,6 +28,7 @@ for f in `find src/include src/interfaces/libpq/libpq-fe.h src/interfaces/libpq/
     grep -v -e ^src/include/port/ \
 	-e ^src/include/rusagestub.h -e ^src/include/regex/regerrs.h \
 	-e ^src/include/access/rmgrlist.h \
+	-e ^src/include/common/int128.h \
 	-e ^src/include/parser/gram.h -e ^src/include/parser/kwlist.h \
 	-e ^src/include/pg_trace.h -e ^src/include/utils/probes.h`
 do
