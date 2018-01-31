@@ -42,8 +42,7 @@
   have documented error-return conventions.  Those conventions only apply
   for errors detected within the SPI functions themselves, however.)
   It is possible to recover control after an error by establishing your own
-  subtransaction surrounding SPI calls that might fail.  This is not currently
-  documented because the mechanisms required are still in flux.
+  subtransaction surrounding SPI calls that might fail.
  </para>
 
  <para>
