@@ -664,8 +664,8 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 
 					if (cxt->ofType)
 						ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("identity colums are not supported on typed tables")));
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("identity columns are not supported on typed tables")));
 					if (cxt->partbound)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
