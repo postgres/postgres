@@ -655,7 +655,7 @@ CREATE TABLE part_c_1_10 PARTITION OF part_c FOR VALUES FROM (1) TO (10);
  a      | text    |           |          |         | extended |              | 
  b      | integer |           | not null | 1       | plain    |              | 
 Partition of: parted FOR VALUES IN ('b')
-Partition constraint: ((a IS NOT NULL) AND (a = ANY (ARRAY['b'::text])))
+Partition constraint: ((a IS NOT NULL) AND (a = 'b'::text))
 Check constraints:
     "check_a" CHECK (length(a) > 0)
     "part_b_b_check" CHECK (b >= 0)
@@ -668,7 +668,7 @@ Check constraints:
  a      | text    |           |          |         | extended |              | 
  b      | integer |           | not null | 0       | plain    |              | 
 Partition of: parted FOR VALUES IN ('c')
-Partition constraint: ((a IS NOT NULL) AND (a = ANY (ARRAY['c'::text])))
+Partition constraint: ((a IS NOT NULL) AND (a = 'c'::text))
 Partition key: RANGE (b)
 Check constraints:
     "check_a" CHECK (length(a) > 0)
@@ -682,7 +682,7 @@ Partitions: part_c_1_10 FOR VALUES FROM (1) TO (10)
  a      | text    |           |          |         | extended |              | 
  b      | integer |           | not null | 0       | plain    |              | 
 Partition of: part_c FOR VALUES FROM (1) TO (10)
-Partition constraint: ((a IS NOT NULL) AND (a = ANY (ARRAY['c'::text])) AND (b IS NOT NULL) AND (b >= 1) AND (b < 10))
+Partition constraint: ((a IS NOT NULL) AND (a = 'c'::text) AND (b IS NOT NULL) AND (b >= 1) AND (b < 10))
 Check constraints:
     "check_a" CHECK (length(a) > 0)
 
@@ -770,3 +770,15 @@ SELECT obj_description('parted_col_comment'::regclass);
 Partition key: LIST (a)
 
 DROP TABLE parted_col_comment;
+-- list partitioning on array type column
+CREATE TABLE arrlp (a int[]) PARTITION BY LIST (a);
+CREATE TABLE arrlp12 PARTITION OF arrlp FOR VALUES IN ('{1}', '{2}');
+\d+ arrlp12
+                                   Table "public.arrlp12"
+ Column |   Type    | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+-----------+-----------+----------+---------+----------+--------------+-------------
+ a      | integer[] |           |          |         | extended |              | 
+Partition of: arrlp FOR VALUES IN ('{1}', '{2}')
+Partition constraint: ((a IS NOT NULL) AND (((a)::anyarray OPERATOR(pg_catalog.=) '{1}'::integer[]) OR ((a)::anyarray OPERATOR(pg_catalog.=) '{2}'::integer[])))
+
+DROP TABLE arrlp;
