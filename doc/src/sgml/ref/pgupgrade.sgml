@@ -24,9 +24,9 @@
    <arg choice="plain"><option>-B</option></arg>
    <arg choice="plain"><replaceable>newbindir</replaceable></arg>
    <arg choice="plain"><option>-d</option></arg>
-   <arg choice="plain"><replaceable>olddatadir</replaceable></arg>
+   <arg choice="plain"><replaceable>oldconfigdir</replaceable></arg>
    <arg choice="plain"><option>-D</option></arg>
-   <arg choice="plain"><replaceable>newdatadir</replaceable></arg>
+   <arg choice="plain"><replaceable>newconfigdir</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -99,16 +99,16 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-d</option> <replaceable>datadir</replaceable></term>
-      <term><option>--old-datadir=</option><replaceable>datadir</replaceable></term>
-      <listitem><para>the old cluster data directory; environment
+      <term><option>-d</option> <replaceable>configdir</replaceable></term>
+      <term><option>--old-datadir=</option><replaceable>configdir</replaceable></term>
+      <listitem><para>the old database cluster configuration directory; environment
       variable <envar>PGDATAOLD</envar></para></listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-D</option> <replaceable>datadir</replaceable></term>
-      <term><option>--new-datadir=</option><replaceable>datadir</replaceable></term>
-      <listitem><para>the new cluster data directory; environment
+      <term><option>-D</option> <replaceable>configdir</replaceable></term>
+      <term><option>--new-datadir=</option><replaceable>configdir</replaceable></term>
+      <listitem><para>the new database cluster configuration directory; environment
       variable <envar>PGDATANEW</envar></para></listitem>
      </varlistentry>
 
@@ -476,7 +476,7 @@ pg_upgrade.exe
       <title>Save configuration files</title>
 
       <para>
-       Save any configuration files from the old standbys' data
+       Save any configuration files from the old standbys' configuration
        directories you need to keep, e.g.  <filename>postgresql.conf</filename>,
        <literal>recovery.conf</literal>, because these will be overwritten or
        removed in the next step.
