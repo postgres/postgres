@@ -341,8 +341,9 @@ found:
 			metap->hashm_mapp[metap->hashm_nmaps] = BufferGetBlockNumber(newmapbuf);
 			metap->hashm_nmaps++;
 			metap->hashm_spares[splitnum]++;
-			MarkBufferDirty(metabuf);
 		}
+
+		MarkBufferDirty(metabuf);
 
 		/*
 		 * for new overflow page, we don't need to explicitly set the bit in
