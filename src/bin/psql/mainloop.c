@@ -216,21 +216,108 @@ MainLoop(FILE *source)
 			continue;
 		}
 
-		/* A request for help? Be friendly and give them some guidance */
-		if (pset.cur_cmd_interactive && query_buf->len == 0 &&
-			pg_strncasecmp(line, "help", 4) == 0 &&
-			(line[4] == '\0' || line[4] == ';' || isspace((unsigned char) line[4])))
+		/* Recognize "help", "quit", "exit" only in interactive mode */
+		if (pset.cur_cmd_interactive)
 		{
-			free(line);
-			puts(_("You are using psql, the command-line interface to PostgreSQL."));
-			printf(_("Type:  \\copyright for distribution terms\n"
-					 "       \\h for help with SQL commands\n"
-					 "       \\? for help with psql commands\n"
-					 "       \\g or terminate with semicolon to execute query\n"
-					 "       \\q to quit\n"));
+			char	   *first_word = line;
+			char	   *rest_of_line = NULL;
+			bool		found_help = false;
+			bool		found_exit_or_quit = false;
 
-			fflush(stdout);
-			continue;
+			/* Search for the words we recognize;  must be first word */
+			if (pg_strncasecmp(first_word, "help", 4) == 0)
+			{
+				rest_of_line = first_word + 4;
+				found_help = true;
+			}
+			else if (pg_strncasecmp(first_word, "exit", 4) == 0 ||
+					 pg_strncasecmp(first_word, "quit", 4) == 0)
+			{
+				rest_of_line = first_word + 4;
+				found_exit_or_quit = true;
+			}
+
+			/*
+			 * If we found a command word, check whether the rest of the line
+			 * contains only whitespace plus maybe one semicolon.  If not,
+			 * ignore the command word after all.
+			 */
+			if (rest_of_line != NULL)
+			{
+				/*
+				 * Ignore unless rest of line is whitespace, plus maybe one
+				 * semicolon
+				 */
+				while (isspace((unsigned char) *rest_of_line))
+					++rest_of_line;
+				if (*rest_of_line == ';')
+					++rest_of_line;
+				while (isspace((unsigned char) *rest_of_line))
+					++rest_of_line;
+				if (*rest_of_line != '\0')
+				{
+					found_help = false;
+					found_exit_or_quit = false;
+				}
+			}
+
+			/*
+			 * "help" is only a command when the query buffer is empty, but we
+			 * emit a one-line message even when it isn't to help confused
+			 * users.  The text is still added to the query buffer in that
+			 * case.
+			 */
+			if (found_help)
+			{
+				if (query_buf->len != 0)
+#ifndef WIN32
+					puts(_("Use \\? for help or press control-C to clear the input buffer."));
+#else
+					puts(_("Use \\? for help."));
+#endif
+				else
+				{
+					puts(_("You are using psql, the command-line interface to PostgreSQL."));
+					printf(_("Type:  \\copyright for distribution terms\n"
+							 "       \\h for help with SQL commands\n"
+							 "       \\? for help with psql commands\n"
+							 "       \\g or terminate with semicolon to execute query\n"
+							 "       \\q to quit\n"));
+					free(line);
+					fflush(stdout);
+					continue;
+				}
+			}
+			/*
+			 * "quit" and "exit" are only commands when the query buffer is
+			 * empty, but we emit a one-line message even when it isn't to
+			 * help confused users.  The text is still added to the query
+			 * buffer in that case.
+			 */
+			if (found_exit_or_quit)
+			{
+				if (query_buf->len != 0)
+				{
+					if (prompt_status == PROMPT_READY ||
+						prompt_status == PROMPT_CONTINUE ||
+						prompt_status == PROMPT_PAREN)
+						puts(_("Use \\q to quit."));
+					else
+#ifndef WIN32
+						puts(_("Use control-D to quit."));
+#else
+						puts(_("Use control-C to quit."));
+#endif
+				}
+				else
+				{
+					/* exit app */
+					free(line);
+					fflush(stdout);
+					successResult = EXIT_SUCCESS;
+					break;
+				}
+			}
 		}
 
 		/* echo back if flag is set, unless interactive */
