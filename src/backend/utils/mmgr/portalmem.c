@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "commands/portalcmds.h"
 #include "miscadmin.h"
+#include "storage/ipc.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
@@ -756,6 +757,13 @@ AtAbort_Portals(void)
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
 		Portal		portal = hentry->portal;
+
+		/*
+		 * When elog(FATAL) is progress, we need to set the active portal to
+		 * failed, so that PortalCleanup() doesn't run the executor shutdown.
+		 */
+		if (portal->status == PORTAL_ACTIVE && shmem_exit_inprogress)
+			MarkPortalFailed(portal);
 
 		/*
 		 * Do nothing else to cursors held over from a previous transaction.

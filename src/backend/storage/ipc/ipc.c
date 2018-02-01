@@ -40,6 +40,11 @@
 bool		proc_exit_inprogress = false;
 
 /*
+ * Set when shmem_exit() is in progress.
+ */
+bool		shmem_exit_inprogress = false;
+
+/*
  * This flag tracks whether we've called atexit() in the current process
  * (or in the parent postmaster).
  */
@@ -214,6 +219,8 @@ proc_exit_prepare(int code)
 void
 shmem_exit(int code)
 {
+	shmem_exit_inprogress = true;
+
 	/*
 	 * Call before_shmem_exit callbacks.
 	 *
