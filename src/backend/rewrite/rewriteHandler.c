@@ -844,17 +844,7 @@ rewriteTargetListIU(List *targetList,
 		{
 			Node	   *new_expr;
 
-			if (att_tup->attidentity)
-			{
-				NextValueExpr *nve = makeNode(NextValueExpr);
-
-				nve->seqid = getOwnedSequence(RelationGetRelid(target_relation), attrno);
-				nve->typeId = att_tup->atttypid;
-
-				new_expr = (Node *) nve;
-			}
-			else
-				new_expr = build_column_default(target_relation, attrno);
+			new_expr = build_column_default(target_relation, attrno);
 
 			/*
 			 * If there is no default (ie, default is effectively NULL), we
@@ -1122,6 +1112,16 @@ build_column_default(Relation rel, int attrno)
 	int32		atttypmod = att_tup->atttypmod;
 	Node	   *expr = NULL;
 	Oid			exprtype;
+
+	if (att_tup->attidentity)
+	{
+		NextValueExpr *nve = makeNode(NextValueExpr);
+
+		nve->seqid = getOwnedSequence(RelationGetRelid(rel), attrno);
+		nve->typeId = att_tup->atttypid;
+
+		return (Node *) nve;
+	}
 
 	/*
 	 * Scan to see if relation has a default for this column.
