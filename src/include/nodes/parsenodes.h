@@ -647,6 +647,8 @@ typedef struct ColumnDef
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	Node	   *cooked_default; /* default value (transformed expr tree) */
 	char		identity;		/* attidentity setting */
+	RangeVar   *identitySequence; /* to store identity sequence name for ALTER
+								   * TABLE ... ADD COLUMN */
 	CollateClause *collClause;	/* untransformed COLLATE spec, if any */
 	Oid			collOid;		/* collation OID (InvalidOid if not set) */
 	List	   *constraints;	/* other constraints on column */

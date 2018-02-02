@@ -2801,6 +2801,7 @@ _outColumnDef(StringInfo str, const ColumnDef *node)
 	WRITE_NODE_FIELD(raw_default);
 	WRITE_NODE_FIELD(cooked_default);
 	WRITE_CHAR_FIELD(identity);
+	WRITE_NODE_FIELD(identitySequence);
 	WRITE_NODE_FIELD(collClause);
 	WRITE_OID_FIELD(collOid);
 	WRITE_NODE_FIELD(constraints);

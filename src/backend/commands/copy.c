@@ -25,7 +25,6 @@
 #include "access/sysattr.h"
 #include "access/xact.h"
 #include "access/xlog.h"
-#include "catalog/dependency.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
 #include "commands/defrem.h"
@@ -3064,19 +3063,8 @@ BeginCopyFrom(ParseState *pstate,
 		{
 			/* attribute is NOT to be copied from input */
 			/* use default value if one exists */
-			Expr	   *defexpr;
-
-			if (attr[attnum - 1]->attidentity)
-			{
-				NextValueExpr *nve = makeNode(NextValueExpr);
-
-				nve->seqid = getOwnedSequence(RelationGetRelid(cstate->rel),
-											  attnum);
-				nve->typeId = attr[attnum - 1]->atttypid;
-				defexpr = (Expr *) nve;
-			}
-			else
-				defexpr = (Expr *) build_column_default(cstate->rel, attnum);
+			Expr	   *defexpr = (Expr *) build_column_default(cstate->rel,
+																attnum);
 
 			if (defexpr != NULL)
 			{

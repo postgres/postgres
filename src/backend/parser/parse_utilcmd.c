@@ -476,6 +476,14 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	cxt->blist = lappend(cxt->blist, seqstmt);
 
 	/*
+	 * Store the identity sequence name that we decided on.  ALTER TABLE
+	 * ... ADD COLUMN ... IDENTITY needs this so that it can fill the new
+	 * column with values from the sequence, while the association of the
+	 * sequence with the table is not set until after the ALTER TABLE.
+	 */
+	column->identitySequence = seqstmt->sequence;
+
+	/*
 	 * Build an ALTER SEQUENCE ... OWNED BY command to mark the sequence as
 	 * owned by this column, and add it to the list of things to be done after
 	 * this CREATE/ALTER TABLE.

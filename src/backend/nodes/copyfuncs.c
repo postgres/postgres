@@ -2812,6 +2812,7 @@ _copyColumnDef(const ColumnDef *from)
 	COPY_NODE_FIELD(raw_default);
 	COPY_NODE_FIELD(cooked_default);
 	COPY_SCALAR_FIELD(identity);
+	COPY_NODE_FIELD(identitySequence);
 	COPY_NODE_FIELD(collClause);
 	COPY_SCALAR_FIELD(collOid);
 	COPY_NODE_FIELD(constraints);
