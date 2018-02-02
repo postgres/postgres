@@ -2582,9 +2582,13 @@ ExecHashInitializeWorker(HashState *node, ParallelWorkerContext *pwcxt)
 {
 	SharedHashInfo *shared_info;
 
+	/* might not be there ... */
 	shared_info = (SharedHashInfo *)
 		shm_toc_lookup(pwcxt->toc, node->ps.plan->plan_node_id, true);
-	node->hinstrument = &shared_info->hinstrument[ParallelWorkerNumber];
+	if (shared_info)
+		node->hinstrument = &shared_info->hinstrument[ParallelWorkerNumber];
+	else
+		node->hinstrument = NULL;
 }
 
 /*
