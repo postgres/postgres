@@ -592,7 +592,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 	pstmt_data = ExecSerializePlan(planstate->plan, estate);
 
 	/* Create a parallel context. */
-	pcxt = CreateParallelContext("postgres", "ParallelQueryMain", nworkers);
+	pcxt = CreateParallelContext("postgres", "ParallelQueryMain", nworkers, false);
 	pei->pcxt = pcxt;
 
 	/*

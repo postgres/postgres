@@ -55,7 +55,7 @@ extern RelOptInfo *standard_join_search(PlannerInfo *root, int levels_needed,
 
 extern void generate_gather_paths(PlannerInfo *root, RelOptInfo *rel);
 extern int compute_parallel_worker(RelOptInfo *rel, double heap_pages,
-						double index_pages);
+						double index_pages, int max_workers);
 extern void create_partial_bitmap_paths(PlannerInfo *root, RelOptInfo *rel,
 							Path *bitmapqual);
 extern void generate_partition_wise_join_paths(PlannerInfo *root,

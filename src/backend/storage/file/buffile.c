@@ -271,7 +271,7 @@ BufFileCreateShared(SharedFileSet *fileset, const char *name)
  * Open a file that was previously created in another backend (or this one)
  * with BufFileCreateShared in the same SharedFileSet using the same name.
  * The backend that created the file must have called BufFileClose() or
- * BufFileExport() to make sure that it is ready to be opened by other
+ * BufFileExportShared() to make sure that it is ready to be opened by other
  * backends and render it read-only.
  */
 BufFile *
@@ -800,3 +800,62 @@ BufFileTellBlock(BufFile *file)
 }
 
 #endif
+
+/*
+ * Return the current file size.  Counts any holes left behind by
+ * BufFileViewAppend as part of the size.
+ */
+off_t
+BufFileSize(BufFile *file)
+{
+	return ((file->numFiles - 1) * (off_t) MAX_PHYSICAL_FILESIZE) +
+		FileGetSize(file->files[file->numFiles - 1]);
+}
+
+/*
+ * Append the contents of source file (managed within shared fileset) to
+ * end of target file (managed within same shared fileset).
+ *
+ * Note that operation subsumes ownership of underlying resources from
+ * "source".  Caller should never call BufFileClose against source having
+ * called here first.  Resource owners for source and target must match,
+ * too.
+ *
+ * This operation works by manipulating lists of segment files, so the
+ * file content is always appended at a MAX_PHYSICAL_FILESIZE-aligned
+ * boundary, typically creating empty holes before the boundary.  These
+ * areas do not contain any interesting data, and cannot be read from by
+ * caller.
+ *
+ * Returns the block number within target where the contents of source
+ * begins.  Caller should apply this as an offset when working off block
+ * positions that are in terms of the original BufFile space.
+ */
+long
+BufFileAppend(BufFile *target, BufFile *source)
+{
+	long		startBlock = target->numFiles * BUFFILE_SEG_SIZE;
+	int			newNumFiles = target->numFiles + source->numFiles;
+	int			i;
+
+	Assert(target->fileset != NULL);
+	Assert(source->readOnly);
+	Assert(!source->dirty);
+	Assert(source->fileset != NULL);
+
+	if (target->resowner != source->resowner)
+		elog(ERROR, "could not append BufFile with non-matching resource owner");
+
+	target->files = (File *)
+		repalloc(target->files, sizeof(File) * newNumFiles);
+	target->offsets = (off_t *)
+		repalloc(target->offsets, sizeof(off_t) * newNumFiles);
+	for (i = target->numFiles; i < newNumFiles; i++)
+	{
+		target->files[i] = source->files[i - target->numFiles];
+		target->offsets[i] = 0L;
+	}
+	target->numFiles = newNumFiles;
+
+	return startBlock;
+}

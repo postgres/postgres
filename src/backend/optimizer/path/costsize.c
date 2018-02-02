@@ -682,7 +682,9 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count,
 		 * order.
 		 */
 		path->path.parallel_workers = compute_parallel_worker(baserel,
-															  rand_heap_pages, index_pages);
+															  rand_heap_pages,
+															  index_pages,
+															  max_parallel_workers_per_gather);
 
 		/*
 		 * Fall out if workers can't be assigned for parallel scan, because in

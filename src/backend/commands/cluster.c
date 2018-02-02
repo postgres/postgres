@@ -909,7 +909,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	/* Set up sorting if wanted */
 	if (use_sort)
 		tuplesort = tuplesort_begin_cluster(oldTupDesc, OldIndex,
-											maintenance_work_mem, false);
+											maintenance_work_mem,
+											NULL, false);
 	else
 		tuplesort = NULL;
 

@@ -159,7 +159,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	/* do the heap scan */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   hashbuildCallback, (void *) &buildstate);
+								   hashbuildCallback, (void *) &buildstate, NULL);
 
 	if (buildstate.spool)
 	{

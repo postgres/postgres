@@ -203,7 +203,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * Do the heap scan.
 	 */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   gistBuildCallback, (void *) &buildstate);
+								   gistBuildCallback, (void *) &buildstate, NULL);
 
 	/*
 	 * If buffering was used, flush out all the tuples that are still in the

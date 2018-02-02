@@ -52,7 +52,7 @@ provider postgresql {
 	probe query__done(const char *);
 	probe statement__status(const char *);
 
-	probe sort__start(int, bool, int, int, bool);
+	probe sort__start(int, bool, int, int, bool, int);
 	probe sort__done(bool, long);
 
 	probe buffer__read__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool);

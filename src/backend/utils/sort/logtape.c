@@ -64,6 +64,14 @@
  * care that all calls for a single LogicalTapeSet are made in the same
  * palloc context.
  *
+ * To support parallel sort operations involving coordinated callers to
+ * tuplesort.c routines across multiple workers, it is necessary to
+ * concatenate each worker BufFile/tapeset into one single logical tapeset
+ * managed by the leader.  Workers should have produced one final
+ * materialized tape (their entire output) when this happens in leader.
+ * There will always be the same number of runs as input tapes, and the same
+ * number of input tapes as participants (worker Tuplesortstates).
+ *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -76,6 +84,7 @@
 #include "postgres.h"
 
 #include "storage/buffile.h"
+#include "utils/builtins.h"
 #include "utils/logtape.h"
 #include "utils/memutils.h"
 
@@ -129,16 +138,21 @@ typedef struct LogicalTape
 	 * a frozen tape.  (When reading from an unfrozen tape, we use a larger
 	 * read buffer that holds multiple blocks, so the "current" block is
 	 * ambiguous.)
+	 *
+	 * When concatenation of worker tape BufFiles is performed, an offset to
+	 * the first block in the unified BufFile space is applied during reads.
 	 */
 	long		firstBlockNumber;
 	long		curBlockNumber;
 	long		nextBlockNumber;
+	long		offsetBlockNumber;
 
 	/*
 	 * Buffer for current data block(s).
 	 */
 	char	   *buffer;			/* physical buffer (separately palloc'd) */
 	int			buffer_size;	/* allocated size of the buffer */
+	int			max_size;		/* highest useful, safe buffer_size */
 	int			pos;			/* next read/write position in buffer */
 	int			nbytes;			/* total # of valid bytes in buffer */
 } LogicalTape;
@@ -159,10 +173,13 @@ struct LogicalTapeSet
 	 * by ltsGetFreeBlock(), and it is always greater than or equal to
 	 * nBlocksWritten.  Blocks between nBlocksAllocated and nBlocksWritten are
 	 * blocks that have been allocated for a tape, but have not been written
-	 * to the underlying file yet.
+	 * to the underlying file yet.  nHoleBlocks tracks the total number of
+	 * blocks that are in unused holes between worker spaces following BufFile
+	 * concatenation.
 	 */
 	long		nBlocksAllocated;	/* # of blocks allocated */
 	long		nBlocksWritten; /* # of blocks used in underlying file */
+	long		nHoleBlocks;	/* # of "hole" blocks left */
 
 	/*
 	 * We store the numbers of recycled-and-available blocks in freeBlocks[].
@@ -192,6 +209,8 @@ static void ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer);
 static void ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer);
 static long ltsGetFreeBlock(LogicalTapeSet *lts);
 static void ltsReleaseBlock(LogicalTapeSet *lts, long blocknum);
+static void ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
+					 SharedFileSet *fileset);
 
 
 /*
@@ -213,6 +232,11 @@ ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 	 * previous tape isn't flushed to disk until the end of the sort, so you
 	 * get one-block hole, where the last block of the previous tape will
 	 * later go.
+	 *
+	 * Note that BufFile concatenation can leave "holes" in BufFile between
+	 * worker-owned block ranges.  These are tracked for reporting purposes
+	 * only.  We never read from nor write to these hole blocks, and so they
+	 * are not considered here.
 	 */
 	while (blocknum > lts->nBlocksWritten)
 	{
@@ -267,15 +291,18 @@ ltsReadFillBuffer(LogicalTapeSet *lts, LogicalTape *lt)
 	do
 	{
 		char	   *thisbuf = lt->buffer + lt->nbytes;
+		long		datablocknum = lt->nextBlockNumber;
 
 		/* Fetch next block number */
-		if (lt->nextBlockNumber == -1L)
+		if (datablocknum == -1L)
 			break;				/* EOF */
+		/* Apply worker offset, needed for leader tapesets */
+		datablocknum += lt->offsetBlockNumber;
 
 		/* Read the block */
-		ltsReadBlock(lts, lt->nextBlockNumber, (void *) thisbuf);
+		ltsReadBlock(lts, datablocknum, (void *) thisbuf);
 		if (!lt->frozen)
-			ltsReleaseBlock(lts, lt->nextBlockNumber);
+			ltsReleaseBlock(lts, datablocknum);
 		lt->curBlockNumber = lt->nextBlockNumber;
 
 		lt->nbytes += TapeBlockGetNBytes(thisbuf);
@@ -371,12 +398,115 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 }
 
 /*
+ * Claim ownership of a set of logical tapes from existing shared BufFiles.
+ *
+ * Caller should be leader process.  Though tapes are marked as frozen in
+ * workers, they are not frozen when opened within leader, since unfrozen tapes
+ * use a larger read buffer. (Frozen tapes have smaller read buffer, optimized
+ * for random access.)
+ */
+static void
+ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
+					 SharedFileSet *fileset)
+{
+	LogicalTape *lt = NULL;
+	long		tapeblocks;
+	long		nphysicalblocks = 0L;
+	int			i;
+
+	/* Should have at least one worker tape, plus leader's tape */
+	Assert(lts->nTapes >= 2);
+
+	/*
+	 * Build concatenated view of all BufFiles, remembering the block number
+	 * where each source file begins.  No changes are needed for leader/last
+	 * tape.
+	 */
+	for (i = 0; i < lts->nTapes - 1; i++)
+	{
+		char		filename[MAXPGPATH];
+		BufFile    *file;
+
+		lt = &lts->tapes[i];
+
+		pg_itoa(i, filename);
+		file = BufFileOpenShared(fileset, filename);
+
+		/*
+		 * Stash first BufFile, and concatenate subsequent BufFiles to that.
+		 * Store block offset into each tape as we go.
+		 */
+		lt->firstBlockNumber = shared[i].firstblocknumber;
+		if (i == 0)
+		{
+			lts->pfile = file;
+			lt->offsetBlockNumber = 0L;
+		}
+		else
+		{
+			lt->offsetBlockNumber = BufFileAppend(lts->pfile, file);
+		}
+		/* Don't allocate more for read buffer than could possibly help */
+		lt->max_size = Min(MaxAllocSize, shared[i].buffilesize);
+		tapeblocks = shared[i].buffilesize / BLCKSZ;
+		nphysicalblocks += tapeblocks;
+	}
+
+	/*
+	 * Set # of allocated blocks, as well as # blocks written.  Use extent of
+	 * new BufFile space (from 0 to end of last worker's tape space) for this.
+	 * Allocated/written blocks should include space used by holes left
+	 * between concatenated BufFiles.
+	 */
+	lts->nBlocksAllocated = lt->offsetBlockNumber + tapeblocks;
+	lts->nBlocksWritten = lts->nBlocksAllocated;
+
+	/*
+	 * Compute number of hole blocks so that we can later work backwards, and
+	 * instrument number of physical blocks.  We don't simply use physical
+	 * blocks directly for instrumentation because this would break if we ever
+	 * subsequently wrote to worker tape.
+	 *
+	 * Working backwards like this keeps our options open.  If shared BufFiles
+	 * ever support being written to post-export, logtape.c can automatically
+	 * take advantage of that.  We'd then support writing to the leader tape
+	 * while recycling space from worker tapes, because the leader tape has a
+	 * zero offset (write routines won't need to have extra logic to apply an
+	 * offset).
+	 *
+	 * The only thing that currently prevents writing to the leader tape from
+	 * working is the fact that BufFiles opened using BufFileOpenShared() are
+	 * read-only by definition, but that could be changed if it seemed
+	 * worthwhile.  For now, writing to the leader tape will raise a "Bad file
+	 * descriptor" error, so tuplesort must avoid writing to the leader tape
+	 * altogether.
+	 */
+	lts->nHoleBlocks = lts->nBlocksAllocated - nphysicalblocks;
+}
+
+/*
  * Create a set of logical tapes in a temporary underlying file.
  *
- * Each tape is initialized in write state.
+ * Each tape is initialized in write state.  Serial callers pass ntapes,
+ * NULL argument for shared, and -1 for worker.  Parallel worker callers
+ * pass ntapes, a shared file handle, NULL shared argument,  and their own
+ * worker number.  Leader callers, which claim shared worker tapes here,
+ * must supply non-sentinel values for all arguments except worker number,
+ * which should be -1.
+ *
+ * Leader caller is passing back an array of metadata each worker captured
+ * when LogicalTapeFreeze() was called for their final result tapes.  Passed
+ * tapes array is actually sized ntapes - 1, because it includes only
+ * worker tapes, whereas leader requires its own leader tape.  Note that we
+ * rely on the assumption that reclaimed worker tapes will only be read
+ * from once by leader, and never written to again (tapes are initialized
+ * for writing, but that's only to be consistent).  Leader may not write to
+ * its own tape purely due to a restriction in the shared buffile
+ * infrastructure that may be lifted in the future.
  */
 LogicalTapeSet *
-LogicalTapeSetCreate(int ntapes)
+LogicalTapeSetCreate(int ntapes, TapeShare *shared, SharedFileSet *fileset,
+					 int worker)
 {
 	LogicalTapeSet *lts;
 	LogicalTape *lt;
@@ -388,9 +518,9 @@ LogicalTapeSetCreate(int ntapes)
 	Assert(ntapes > 0);
 	lts = (LogicalTapeSet *) palloc(offsetof(LogicalTapeSet, tapes) +
 									ntapes * sizeof(LogicalTape));
-	lts->pfile = BufFileCreateTemp(false);
 	lts->nBlocksAllocated = 0L;
 	lts->nBlocksWritten = 0L;
+	lts->nHoleBlocks = 0L;
 	lts->forgetFreeSpace = false;
 	lts->blocksSorted = true;	/* a zero-length array is sorted ... */
 	lts->freeBlocksLen = 32;	/* reasonable initial guess */
@@ -412,11 +542,36 @@ LogicalTapeSetCreate(int ntapes)
 		lt->dirty = false;
 		lt->firstBlockNumber = -1L;
 		lt->curBlockNumber = -1L;
+		lt->nextBlockNumber = -1L;
+		lt->offsetBlockNumber = 0L;
 		lt->buffer = NULL;
 		lt->buffer_size = 0;
+		/* palloc() larger than MaxAllocSize would fail */
+		lt->max_size = MaxAllocSize;
 		lt->pos = 0;
 		lt->nbytes = 0;
 	}
+
+	/*
+	 * Create temp BufFile storage as required.
+	 *
+	 * Leader concatenates worker tapes, which requires special adjustment to
+	 * final tapeset data.  Things are simpler for the worker case and the
+	 * serial case, though.  They are generally very similar -- workers use a
+	 * shared fileset, whereas serial sorts use a conventional serial BufFile.
+	 */
+	if (shared)
+		ltsConcatWorkerTapes(lts, shared, fileset);
+	else if (fileset)
+	{
+		char		filename[MAXPGPATH];
+
+		pg_itoa(worker, filename);
+		lts->pfile = BufFileCreateShared(fileset, filename);
+	}
+	else
+		lts->pfile = BufFileCreateTemp(false);
+
 	return lts;
 }
 
@@ -470,6 +625,7 @@ LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = &lts->tapes[tapenum];
 	Assert(lt->writing);
+	Assert(lt->offsetBlockNumber == 0L);
 
 	/* Allocate data buffer and first block on first write */
 	if (lt->buffer == NULL)
@@ -566,12 +722,9 @@ LogicalTapeRewindForRead(LogicalTapeSet *lts, int tapenum, size_t buffer_size)
 		if (buffer_size < BLCKSZ)
 			buffer_size = BLCKSZ;
 
-		/*
-		 * palloc() larger than MaxAllocSize would fail (a multi-gigabyte
-		 * buffer is unlikely to be helpful, anyway)
-		 */
-		if (buffer_size > MaxAllocSize)
-			buffer_size = MaxAllocSize;
+		/* palloc() larger than max_size is unlikely to be helpful */
+		if (buffer_size > lt->max_size)
+			buffer_size = lt->max_size;
 
 		/* round down to BLCKSZ boundary */
 		buffer_size -= buffer_size % BLCKSZ;
@@ -698,15 +851,22 @@ LogicalTapeRead(LogicalTapeSet *lts, int tapenum,
  * tape is rewound (after rewind is too late!).  It performs a rewind
  * and switch to read mode "for free".  An immediately following rewind-
  * for-read call is OK but not necessary.
+ *
+ * share output argument is set with details of storage used for tape after
+ * freezing, which may be passed to LogicalTapeSetCreate within leader
+ * process later.  This metadata is only of interest to worker callers
+ * freezing their final output for leader (single materialized tape).
+ * Serial sorts should set share to NULL.
  */
 void
-LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum)
+LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum, TapeShare *share)
 {
 	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = &lts->tapes[tapenum];
 	Assert(lt->writing);
+	Assert(lt->offsetBlockNumber == 0L);
 
 	/*
 	 * Completion of a write phase.  Flush last partial data block, and rewind
@@ -749,6 +909,14 @@ LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum)
 	else
 		lt->nextBlockNumber = TapeBlockGetTrailer(lt->buffer)->next;
 	lt->nbytes = TapeBlockGetNBytes(lt->buffer);
+
+	/* Handle extra steps when caller is to share its tapeset */
+	if (share)
+	{
+		BufFileExportShared(lts->pfile);
+		share->firstblocknumber = lt->firstBlockNumber;
+		share->buffilesize = BufFileSize(lts->pfile);
+	}
 }
 
 /*
@@ -874,6 +1042,7 @@ LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = &lts->tapes[tapenum];
+	Assert(lt->offsetBlockNumber == 0L);
 
 	/* With a larger buffer, 'pos' wouldn't be the same as offset within page */
 	Assert(lt->buffer_size == BLCKSZ);
@@ -888,5 +1057,5 @@ LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 long
 LogicalTapeSetBlocks(LogicalTapeSet *lts)
 {
-	return lts->nBlocksAllocated;
+	return lts->nBlocksAllocated - lts->nHoleBlocks;
 }

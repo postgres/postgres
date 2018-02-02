@@ -2022,7 +2022,8 @@ include_dir 'conf.d'
 
         <para>
          When changing this value, consider also adjusting
-         <xref linkend="guc-max-parallel-workers"/> and
+         <xref linkend="guc-max-parallel-workers"/>,
+         <xref linkend="guc-max-parallel-workers-maintenance"/>, and
          <xref linkend="guc-max-parallel-workers-per-gather"/>.
         </para>
        </listitem>
@@ -2070,6 +2071,44 @@ include_dir 'conf.d'
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-max-parallel-workers-maintenance" xreflabel="max_parallel_maintenance_workers">
+       <term><varname>max_parallel_maintenance_workers</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>max_parallel_maintenance_workers</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Sets the maximum number of parallel workers that can be
+         started by a single utility command.  Currently, the only
+         parallel utility command that supports the use of parallel
+         workers is <command>CREATE INDEX</command>, and only when
+         building a B-tree index.  Parallel workers are taken from the
+         pool of processes established by <xref
+         linkend="guc-max-worker-processes"/>, limited by <xref
+         linkend="guc-max-parallel-workers"/>.  Note that the requested
+         number of workers may not actually be available at runtime.
+         If this occurs, the utility operation will run with fewer
+         workers than expected.  The default value is 2.  Setting this
+         value to 0 disables the use of parallel workers by utility
+         commands.
+        </para>
+
+        <para>
+         Note that parallel utility commands should not consume
+         substantially more memory than equivalent non-parallel
+         operations.  This strategy differs from that of parallel
+         query, where resource limits generally apply per worker
+         process.  Parallel utility commands treat the resource limit
+         <varname>maintenance_work_mem</varname> as a limit to be applied to
+         the entire utility command, regardless of the number of
+         parallel worker processes.  However, parallel utility
+         commands may still consume substantially more CPU resources
+         and I/O bandwidth.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="guc-max-parallel-workers" xreflabel="max_parallel_workers">
        <term><varname>max_parallel_workers</varname> (<type>integer</type>)
        <indexterm>
@@ -2079,8 +2118,9 @@ include_dir 'conf.d'
        <listitem>
         <para>
          Sets the maximum number of workers that the system can support for
-         parallel queries.  The default value is 8.  When increasing or
+         parallel operations.  The default value is 8.  When increasing or
          decreasing this value, consider also adjusting
+         <xref linkend="guc-max-parallel-workers-maintenance"/> and
          <xref linkend="guc-max-parallel-workers-per-gather"/>.
          Also, note that a setting for this value which is higher than
          <xref linkend="guc-max-worker-processes"/> will have no effect,

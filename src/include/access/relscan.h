@@ -39,6 +39,7 @@ typedef struct ParallelHeapScanDescData
 	BlockNumber phs_startblock; /* starting block number */
 	pg_atomic_uint64 phs_nallocated;	/* number of blocks allocated to
 										 * workers so far. */
+	bool		phs_snapshot_any;	/* SnapshotAny, not phs_snapshot_data? */
 	char		phs_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
 }			ParallelHeapScanDescData;
 

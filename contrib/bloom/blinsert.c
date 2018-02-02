@@ -135,7 +135,8 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	/* Do the heap scan */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   bloomBuildCallback, (void *) &buildstate);
+								   bloomBuildCallback, (void *) &buildstate,
+								   NULL);
 
 	/*
 	 * There are could be some items in cached page.  Flush this page if

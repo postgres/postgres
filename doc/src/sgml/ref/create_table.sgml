@@ -1228,8 +1228,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       This sets the number of workers that should be used to assist a parallel
       scan of this table.  If not set, the system will determine a value based
       on the relation size.  The actual number of workers chosen by the planner
-      may be less, for example due to
-      the setting of <xref linkend="guc-max-worker-processes"/>.
+      or by utility statements that use parallel scans may be less, for example
+      due to the setting of <xref linkend="guc-max-worker-processes"/>.
      </para>
     </listitem>
    </varlistentry>

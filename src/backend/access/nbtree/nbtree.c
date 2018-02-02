@@ -21,35 +21,18 @@
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "access/xlog.h"
-#include "catalog/index.h"
 #include "commands/vacuum.h"
+#include "nodes/execnodes.h"
 #include "pgstat.h"
 #include "storage/condition_variable.h"
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
-#include "tcop/tcopprot.h"		/* pgrminclude ignore */
 #include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
 #include "utils/memutils.h"
 
-
-/* Working state for btbuild and its callback */
-typedef struct
-{
-	bool		isUnique;
-	bool		haveDead;
-	Relation	heapRel;
-	BTSpool    *spool;
-
-	/*
-	 * spool2 is needed only when the index is a unique index. Dead tuples are
-	 * put into spool2 instead of spool in order to avoid uniqueness check.
-	 */
-	BTSpool    *spool2;
-	double		indtuples;
-} BTBuildState;
 
 /* Working state needed by btvacuumpage */
 typedef struct
@@ -104,12 +87,6 @@ typedef struct BTParallelScanDescData
 typedef struct BTParallelScanDescData *BTParallelScanDesc;
 
 
-static void btbuildCallback(Relation index,
-				HeapTuple htup,
-				Datum *values,
-				bool *isnull,
-				bool tupleIsAlive,
-				void *state);
 static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			 IndexBulkDeleteCallback callback, void *callback_state,
 			 BTCycleId cycleid);
@@ -164,115 +141,6 @@ bthandler(PG_FUNCTION_ARGS)
 	amroutine->amparallelrescan = btparallelrescan;
 
 	PG_RETURN_POINTER(amroutine);
-}
-
-/*
- *	btbuild() -- build a new btree index.
- */
-IndexBuildResult *
-btbuild(Relation heap, Relation index, IndexInfo *indexInfo)
-{
-	IndexBuildResult *result;
-	double		reltuples;
-	BTBuildState buildstate;
-
-	buildstate.isUnique = indexInfo->ii_Unique;
-	buildstate.haveDead = false;
-	buildstate.heapRel = heap;
-	buildstate.spool = NULL;
-	buildstate.spool2 = NULL;
-	buildstate.indtuples = 0;
-
-#ifdef BTREE_BUILD_STATS
-	if (log_btree_build_stats)
-		ResetUsage();
-#endif							/* BTREE_BUILD_STATS */
-
-	/*
-	 * We expect to be called exactly once for any index relation. If that's
-	 * not the case, big trouble's what we have.
-	 */
-	if (RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "index \"%s\" already contains data",
-			 RelationGetRelationName(index));
-
-	buildstate.spool = _bt_spoolinit(heap, index, indexInfo->ii_Unique, false);
-
-	/*
-	 * If building a unique index, put dead tuples in a second spool to keep
-	 * them out of the uniqueness check.
-	 */
-	if (indexInfo->ii_Unique)
-		buildstate.spool2 = _bt_spoolinit(heap, index, false, true);
-
-	/* do the heap scan */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   btbuildCallback, (void *) &buildstate);
-
-	/* okay, all heap tuples are indexed */
-	if (buildstate.spool2 && !buildstate.haveDead)
-	{
-		/* spool2 turns out to be unnecessary */
-		_bt_spooldestroy(buildstate.spool2);
-		buildstate.spool2 = NULL;
-	}
-
-	/*
-	 * Finish the build by (1) completing the sort of the spool file, (2)
-	 * inserting the sorted tuples into btree pages and (3) building the upper
-	 * levels.
-	 */
-	_bt_leafbuild(buildstate.spool, buildstate.spool2);
-	_bt_spooldestroy(buildstate.spool);
-	if (buildstate.spool2)
-		_bt_spooldestroy(buildstate.spool2);
-
-#ifdef BTREE_BUILD_STATS
-	if (log_btree_build_stats)
-	{
-		ShowUsage("BTREE BUILD STATS");
-		ResetUsage();
-	}
-#endif							/* BTREE_BUILD_STATS */
-
-	/*
-	 * Return statistics
-	 */
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
-
-	result->heap_tuples = reltuples;
-	result->index_tuples = buildstate.indtuples;
-
-	return result;
-}
-
-/*
- * Per-tuple callback from IndexBuildHeapScan
- */
-static void
-btbuildCallback(Relation index,
-				HeapTuple htup,
-				Datum *values,
-				bool *isnull,
-				bool tupleIsAlive,
-				void *state)
-{
-	BTBuildState *buildstate = (BTBuildState *) state;
-
-	/*
-	 * insert the index tuple into the appropriate spool file for subsequent
-	 * processing
-	 */
-	if (tupleIsAlive || buildstate->spool2 == NULL)
-		_bt_spool(buildstate->spool, &htup->t_self, values, isnull);
-	else
-	{
-		/* dead tuples are put into spool2 */
-		buildstate->haveDead = true;
-		_bt_spool(buildstate->spool2, &htup->t_self, values, isnull);
-	}
-
-	buildstate->indtuples += 1;
 }
 
 /*

@@ -5794,6 +5794,142 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 }
 
 /*
+ * plan_create_index_workers
+ *		Use the planner to decide how many parallel worker processes
+ *		CREATE INDEX should request for use
+ *
+ * tableOid is the table on which the index is to be built.  indexOid is the
+ * OID of an index to be created or reindexed (which must be a btree index).
+ *
+ * Return value is the number of parallel worker processes to request.  It
+ * may be unsafe to proceed if this is 0.  Note that this does not include the
+ * leader participating as a worker (value is always a number of parallel
+ * worker processes).
+ *
+ * Note: caller had better already hold some type of lock on the table and
+ * index.
+ */
+int
+plan_create_index_workers(Oid tableOid, Oid indexOid)
+{
+	PlannerInfo *root;
+	Query	   *query;
+	PlannerGlobal *glob;
+	RangeTblEntry *rte;
+	Relation	heap;
+	Relation	index;
+	RelOptInfo *rel;
+	int			parallel_workers;
+	BlockNumber heap_blocks;
+	double		reltuples;
+	double		allvisfrac;
+
+	/* Return immediately when parallelism disabled */
+	if (max_parallel_maintenance_workers == 0)
+		return 0;
+
+	/* Set up largely-dummy planner state */
+	query = makeNode(Query);
+	query->commandType = CMD_SELECT;
+
+	glob = makeNode(PlannerGlobal);
+
+	root = makeNode(PlannerInfo);
+	root->parse = query;
+	root->glob = glob;
+	root->query_level = 1;
+	root->planner_cxt = CurrentMemoryContext;
+	root->wt_param_id = -1;
+
+	/*
+	 * Build a minimal RTE.
+	 *
+	 * Set the target's table to be an inheritance parent.  This is a kludge
+	 * that prevents problems within get_relation_info(), which does not
+	 * expect that any IndexOptInfo is currently undergoing REINDEX.
+	 */
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
+	rte->relid = tableOid;
+	rte->relkind = RELKIND_RELATION;	/* Don't be too picky. */
+	rte->lateral = false;
+	rte->inh = true;
+	rte->inFromCl = true;
+	query->rtable = list_make1(rte);
+
+	/* Set up RTE/RelOptInfo arrays */
+	setup_simple_rel_arrays(root);
+
+	/* Build RelOptInfo */
+	rel = build_simple_rel(root, 1, NULL);
+
+	heap = heap_open(tableOid, NoLock);
+	index = index_open(indexOid, NoLock);
+
+	/*
+	 * Determine if it's safe to proceed.
+	 *
+	 * Currently, parallel workers can't access the leader's temporary tables.
+	 * Furthermore, any index predicate or index expressions must be parallel
+	 * safe.
+	 */
+	if (heap->rd_rel->relpersistence == RELPERSISTENCE_TEMP ||
+		!is_parallel_safe(root, (Node *) RelationGetIndexExpressions(index)) ||
+		!is_parallel_safe(root, (Node *) RelationGetIndexPredicate(index)))
+	{
+		parallel_workers = 0;
+		goto done;
+	}
+
+	/*
+	 * If parallel_workers storage parameter is set for the table, accept that
+	 * as the number of parallel worker processes to launch (though still cap
+	 * at max_parallel_maintenance_workers).  Note that we deliberately do not
+	 * consider any other factor when parallel_workers is set. (e.g., memory
+	 * use by workers.)
+	 */
+	if (rel->rel_parallel_workers != -1)
+	{
+		parallel_workers = Min(rel->rel_parallel_workers,
+							   max_parallel_maintenance_workers);
+		goto done;
+	}
+
+	/*
+	 * Estimate heap relation size ourselves, since rel->pages cannot be
+	 * trusted (heap RTE was marked as inheritance parent)
+	 */
+	estimate_rel_size(heap, NULL, &heap_blocks, &reltuples, &allvisfrac);
+
+	/*
+	 * Determine number of workers to scan the heap relation using generic
+	 * model
+	 */
+	parallel_workers = compute_parallel_worker(rel, heap_blocks, -1,
+											   max_parallel_maintenance_workers);
+
+	/*
+	 * Cap workers based on available maintenance_work_mem as needed.
+	 *
+	 * Note that each tuplesort participant receives an even share of the
+	 * total maintenance_work_mem budget.  Aim to leave participants
+	 * (including the leader as a participant) with no less than 32MB of
+	 * memory.  This leaves cases where maintenance_work_mem is set to 64MB
+	 * immediately past the threshold of being capable of launching a single
+	 * parallel worker to sort.
+	 */
+	while (parallel_workers > 0 &&
+		   maintenance_work_mem / (parallel_workers + 1) < 32768L)
+		parallel_workers--;
+
+done:
+	index_close(index, NoLock);
+	heap_close(heap, NoLock);
+
+	return parallel_workers;
+}
+
+/*
  * get_partitioned_child_rels
  *		Returns a list of the RT indexes of the partitioned child relations
  *		with rti as the root parent RT index. Also sets

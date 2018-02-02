@@ -720,7 +720,8 @@ create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	int			parallel_workers;
 
-	parallel_workers = compute_parallel_worker(rel, rel->pages, -1);
+	parallel_workers = compute_parallel_worker(rel, rel->pages, -1,
+											   max_parallel_workers_per_gather);
 
 	/* If any limit was set to zero, the user doesn't want a parallel scan. */
 	if (parallel_workers <= 0)
@@ -3299,7 +3300,8 @@ create_partial_bitmap_paths(PlannerInfo *root, RelOptInfo *rel,
 	pages_fetched = compute_bitmap_pages(root, rel, bitmapqual, 1.0,
 										 NULL, NULL);
 
-	parallel_workers = compute_parallel_worker(rel, pages_fetched, -1);
+	parallel_workers = compute_parallel_worker(rel, pages_fetched, -1,
+											   max_parallel_workers_per_gather);
 
 	if (parallel_workers <= 0)
 		return;
@@ -3319,9 +3321,13 @@ create_partial_bitmap_paths(PlannerInfo *root, RelOptInfo *rel,
  *
  * "index_pages" is the number of pages from the index that we expect to scan, or
  * -1 if we don't expect to scan any.
+ *
+ * "max_workers" is caller's limit on the number of workers.  This typically
+ * comes from a GUC.
  */
 int
-compute_parallel_worker(RelOptInfo *rel, double heap_pages, double index_pages)
+compute_parallel_worker(RelOptInfo *rel, double heap_pages, double index_pages,
+						int max_workers)
 {
 	int			parallel_workers = 0;
 
@@ -3392,10 +3398,8 @@ compute_parallel_worker(RelOptInfo *rel, double heap_pages, double index_pages)
 		}
 	}
 
-	/*
-	 * In no case use more than max_parallel_workers_per_gather workers.
-	 */
-	parallel_workers = Min(parallel_workers, max_parallel_workers_per_gather);
+	/* In no case use more than caller supplied maximum number of workers */
+	parallel_workers = Min(parallel_workers, max_workers);
 
 	return parallel_workers;
 }

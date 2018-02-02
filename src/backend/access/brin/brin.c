@@ -706,7 +706,7 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * heap blocks in physical order.
 	 */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo, false,
-								   brinbuildCallback, (void *) state);
+								   brinbuildCallback, (void *) state, NULL);
 
 	/* process the final batch */
 	form_and_insert_tuple(state);
@@ -1205,7 +1205,7 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	state->bs_currRangeStart = heapBlk;
 	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false, true,
 							heapBlk, scanNumBlks,
-							brinbuildCallback, (void *) state);
+							brinbuildCallback, (void *) state, NULL);
 
 	/*
 	 * Now we update the values obtained by the scan with the placeholder

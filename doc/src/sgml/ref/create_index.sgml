@@ -600,6 +600,64 @@ Indexes:
   </para>
 
   <para>
+   <productname>PostgreSQL</productname> can build indexes while
+   leveraging multiple CPUs in order to process the table rows faster.
+   This feature is known as <firstterm>parallel index
+   build</firstterm>.  For index methods that support building indexes
+   in parallel (currently, only B-tree),
+   <varname>maintenance_work_mem</varname> specifies the maximum
+   amount of memory that can be used by each index build operation as
+   a whole, regardless of how many worker processes were started.
+   Generally, a cost model automatically determines how many worker
+   processes should be requested, if any.
+  </para>
+
+  <para>
+   Parallel index builds may benefit from increasing
+   <varname>maintenance_work_mem</varname> where an equivalent serial
+   index build will see little or no benefit.  Note that
+   <varname>maintenance_work_mem</varname> may influence the number of
+   worker processes requested, since parallel workers must have at
+   least a <literal>32MB</literal> share of the total
+   <varname>maintenance_work_mem</varname> budget.  There must also be
+   a remaining <literal>32MB</literal> share for the leader process.
+   Increasing <xref linkend="guc-max-parallel-workers-maintenance"/>
+   may allow more workers to be used, which will reduce the time
+   needed for index creation, so long as the index build is not
+   already I/O bound.  Of course, there should also be sufficient
+   CPU capacity that would otherwise lie idle.
+  </para>
+
+  <para>
+   Setting a value for <literal>parallel_workers</literal> via <xref
+   linkend="sql-altertable"/> directly controls how many parallel
+   worker processes will be requested by a <command>CREATE
+   INDEX</command> against the table.  This bypasses the cost model
+   completely, and prevents <varname>maintenance_work_mem</varname>
+   from affecting how many parallel workers are requested.  Setting
+   <literal>parallel_workers</literal> to 0 via <command>ALTER
+   TABLE</command> will disable parallel index builds on the table in
+   all cases.
+  </para>
+
+  <tip>
+   <para>
+    You might want to reset <literal>parallel_workers</literal> after
+    setting it as part of tuning an index build.  This avoids
+    inadvertent changes to query plans, since
+    <literal>parallel_workers</literal> affects
+    <emphasis>all</emphasis> parallel table scans.
+   </para>
+  </tip>
+
+  <para>
+   While <command>CREATE INDEX</command> with the
+   <literal>CONCURRENTLY</literal> option supports parallel builds
+   without special restrictions, only the first table scan is actually
+   performed in parallel.
+  </para>
+
+  <para>
    Use <xref linkend="sql-dropindex"/>
    to remove an index.
   </para>

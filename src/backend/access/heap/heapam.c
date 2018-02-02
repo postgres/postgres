@@ -1627,7 +1627,16 @@ heap_parallelscan_initialize(ParallelHeapScanDesc target, Relation relation,
 	SpinLockInit(&target->phs_mutex);
 	target->phs_startblock = InvalidBlockNumber;
 	pg_atomic_init_u64(&target->phs_nallocated, 0);
-	SerializeSnapshot(snapshot, target->phs_snapshot_data);
+	if (IsMVCCSnapshot(snapshot))
+	{
+		SerializeSnapshot(snapshot, target->phs_snapshot_data);
+		target->phs_snapshot_any = false;
+	}
+	else
+	{
+		Assert(snapshot == SnapshotAny);
+		target->phs_snapshot_any = true;
+	}
 }
 
 /* ----------------
@@ -1655,11 +1664,22 @@ heap_beginscan_parallel(Relation relation, ParallelHeapScanDesc parallel_scan)
 	Snapshot	snapshot;
 
 	Assert(RelationGetRelid(relation) == parallel_scan->phs_relid);
-	snapshot = RestoreSnapshot(parallel_scan->phs_snapshot_data);
-	RegisterSnapshot(snapshot);
+
+	if (!parallel_scan->phs_snapshot_any)
+	{
+		/* Snapshot was serialized -- restore it */
+		snapshot = RestoreSnapshot(parallel_scan->phs_snapshot_data);
+		RegisterSnapshot(snapshot);
+	}
+	else
+	{
+		/* SnapshotAny passed by caller (not serialized) */
+		snapshot = SnapshotAny;
+	}
 
 	return heap_beginscan_internal(relation, snapshot, 0, NULL, parallel_scan,
-								   true, true, true, false, false, true);
+								   true, true, true, false, false,
+								   !parallel_scan->phs_snapshot_any);
 }
 
 /* ----------------

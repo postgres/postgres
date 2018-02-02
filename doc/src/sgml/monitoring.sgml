@@ -1263,7 +1263,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in an extension.</entry>
         </row>
         <row>
-         <entry morerows="32"><literal>IPC</literal></entry>
+         <entry morerows="33"><literal>IPC</literal></entry>
          <entry><literal>BgWorkerShutdown</literal></entry>
          <entry>Waiting for background worker to shut down.</entry>
         </row>
@@ -1370,6 +1370,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>ParallelBitmapScan</literal></entry>
          <entry>Waiting for parallel bitmap scan to become initialized.</entry>
+        </row>
+        <row>
+         <entry><literal>ParallelCreateIndexScan</literal></entry>
+         <entry>Waiting for parallel <command>CREATE INDEX</command> workers to finish heap scan.</entry>
         </row>
         <row>
          <entry><literal>ProcArrayGroupUpdate</literal></entry>
@@ -3900,13 +3904,15 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     </row>
     <row>
      <entry><literal>sort-start</literal></entry>
-     <entry><literal>(int, bool, int, int, bool)</literal></entry>
+     <entry><literal>(int, bool, int, int, bool, int)</literal></entry>
      <entry>Probe that fires when a sort operation is started.
       arg0 indicates heap, index or datum sort.
       arg1 is true for unique-value enforcement.
       arg2 is the number of key columns.
       arg3 is the number of kilobytes of work memory allowed.
-      arg4 is true if random access to the sort result is required.</entry>
+      arg4 is true if random access to the sort result is required.
+      arg5 indicates serial when <literal>0</literal>, parallel worker when
+      <literal>1</literal>, or parallel leader when <literal>2</literal>.</entry>
     </row>
     <row>
      <entry><literal>sort-done</literal></entry>

@@ -56,6 +56,7 @@ extern Expr *expression_planner(Expr *expr);
 extern Expr *preprocess_phv_expression(PlannerInfo *root, Expr *expr);
 
 extern bool plan_cluster_use_sort(Oid tableOid, Oid indexOid);
+extern int	plan_create_index_workers(Oid tableOid, Oid indexOid);
 
 extern List *get_partitioned_child_rels(PlannerInfo *root, Index rti,
 						   bool *part_cols_updated);

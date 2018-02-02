@@ -2735,6 +2735,16 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"max_parallel_maintenance_workers", PGC_USERSET, RESOURCES_ASYNCHRONOUS,
+			gettext_noop("Sets the maximum number of parallel processes per maintenance operation."),
+			NULL
+		},
+		&max_parallel_maintenance_workers,
+		2, 0, 1024,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"max_parallel_workers_per_gather", PGC_USERSET, RESOURCES_ASYNCHRONOUS,
 			gettext_noop("Sets the maximum number of parallel processes per executor node."),
 			NULL

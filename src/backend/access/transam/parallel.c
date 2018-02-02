@@ -14,6 +14,7 @@
 
 #include "postgres.h"
 
+#include "access/nbtree.h"
 #include "access/parallel.h"
 #include "access/session.h"
 #include "access/xact.h"
@@ -129,6 +130,9 @@ static const struct
 {
 	{
 		"ParallelQueryMain", ParallelQueryMain
+	},
+	{
+		"_bt_parallel_build_main", _bt_parallel_build_main
 	}
 };
 
@@ -146,7 +150,7 @@ static void ParallelWorkerShutdown(int code, Datum arg);
  */
 ParallelContext *
 CreateParallelContext(const char *library_name, const char *function_name,
-					  int nworkers)
+					  int nworkers, bool serializable_okay)
 {
 	MemoryContext oldcontext;
 	ParallelContext *pcxt;
@@ -167,9 +171,11 @@ CreateParallelContext(const char *library_name, const char *function_name,
 	/*
 	 * If we are running under serializable isolation, we can't use parallel
 	 * workers, at least not until somebody enhances that mechanism to be
-	 * parallel-aware.
+	 * parallel-aware.  Utility statement callers may ask us to ignore this
+	 * restriction because they're always able to safely ignore the fact that
+	 * SIREAD locks do not work with parallelism.
 	 */
-	if (IsolationIsSerializable())
+	if (IsolationIsSerializable() && !serializable_okay)
 		nworkers = 0;
 
 	/* We might be running in a short-lived memory context. */
