@@ -312,7 +312,14 @@ gather_readnext(GatherState *gatherstate)
 		/* Check for async events, particularly messages from workers. */
 		CHECK_FOR_INTERRUPTS();
 
-		/* Attempt to read a tuple, but don't block if none is available. */
+		/*
+		 * Attempt to read a tuple, but don't block if none is available.
+		 *
+		 * Note that TupleQueueReaderNext will just return NULL for a worker
+		 * which fails to initialize.  We'll treat that worker as having
+		 * produced no tuples; WaitForParallelWorkersToFinish will error out
+		 * when we get there.
+		 */
 		Assert(gatherstate->nextreader < gatherstate->nreaders);
 		reader = gatherstate->reader[gatherstate->nextreader];
 		tup = TupleQueueReaderNext(reader, true, &readerdone);

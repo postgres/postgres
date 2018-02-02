@@ -710,7 +710,14 @@ gm_readnext_tuple(GatherMergeState *gm_state, int nreader, bool nowait,
 	/* Check for async events, particularly messages from workers. */
 	CHECK_FOR_INTERRUPTS();
 
-	/* Attempt to read a tuple. */
+	/*
+	 * Attempt to read a tuple.
+	 *
+	 * Note that TupleQueueReaderNext will just return NULL for a worker which
+	 * fails to initialize.  We'll treat that worker as having produced no
+	 * tuples; WaitForParallelWorkersToFinish will error out when we get
+	 * there.
+	 */
 	reader = gm_state->reader[nreader - 1];
 	tup = TupleQueueReaderNext(reader, nowait, done);
 
