@@ -170,14 +170,21 @@ static int32 partition_rbound_cmp(PartitionKey key,
 					 bool lower1, PartitionRangeBound *b2);
 static int32 partition_rbound_datum_cmp(PartitionKey key,
 						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
-						   Datum *tuple_datums);
+						   Datum *tuple_datums, int n_tuple_datums);
 
-static int32 partition_bound_cmp(PartitionKey key,
-					PartitionBoundInfo boundinfo,
-					int offset, void *probe, bool probe_is_bound);
-static int partition_bound_bsearch(PartitionKey key,
+static int partition_list_bsearch(PartitionKey key,
+					   PartitionBoundInfo boundinfo,
+					   Datum value, bool *is_equal);
+static int partition_range_bsearch(PartitionKey key,
 						PartitionBoundInfo boundinfo,
-						void *probe, bool probe_is_bound, bool *is_equal);
+						PartitionRangeBound *probe, bool *is_equal);
+static int partition_range_datum_bsearch(PartitionKey key,
+							  PartitionBoundInfo boundinfo,
+							  int nvalues, Datum *values, bool *is_equal);
+static int partition_hash_bsearch(PartitionKey key,
+					   PartitionBoundInfo boundinfo,
+					   int modulus, int remainder);
+
 static int	get_partition_bound_num_indexes(PartitionBoundInfo b);
 static int	get_greatest_modulus(PartitionBoundInfo b);
 static uint64 compute_hash_value(PartitionKey key, Datum *values, bool *isnull);
@@ -981,8 +988,7 @@ check_new_partition_bound(char *relname, Relation parent,
 					int			greatest_modulus;
 					int			remainder;
 					int			offset;
-					bool		equal,
-								valid_modulus = true;
+					bool		valid_modulus = true;
 					int			prev_modulus,	/* Previous largest modulus */
 								next_modulus;	/* Next largest modulus */
 
@@ -995,12 +1001,13 @@ check_new_partition_bound(char *relname, Relation parent,
 					 * modulus 10 and a partition with modulus 15, because 10
 					 * is not a factor of 15.
 					 *
-					 * Get greatest bound in array boundinfo->datums which is
-					 * less than or equal to spec->modulus and
-					 * spec->remainder.
+					 * Get the greatest (modulus, remainder) pair contained in
+					 * boundinfo->datums that is less than or equal to the
+					 * (spec->modulus, spec->remainder) pair.
 					 */
-					offset = partition_bound_bsearch(key, boundinfo, spec,
-													 true, &equal);
+					offset = partition_hash_bsearch(key, boundinfo,
+													spec->modulus,
+													spec->remainder);
 					if (offset < 0)
 					{
 						next_modulus = DatumGetInt32(datums[0][0]);
@@ -1074,9 +1081,9 @@ check_new_partition_bound(char *relname, Relation parent,
 							int			offset;
 							bool		equal;
 
-							offset = partition_bound_bsearch(key, boundinfo,
-															 &val->constvalue,
-															 true, &equal);
+							offset = partition_list_bsearch(key, boundinfo,
+															val->constvalue,
+															&equal);
 							if (offset >= 0 && equal)
 							{
 								overlap = true;
@@ -1148,8 +1155,8 @@ check_new_partition_bound(char *relname, Relation parent,
 					 * since the index array is initialised with an extra -1
 					 * at the end.
 					 */
-					offset = partition_bound_bsearch(key, boundinfo, lower,
-													 true, &equal);
+					offset = partition_range_bsearch(key, boundinfo, lower,
+													 &equal);
 
 					if (boundinfo->indexes[offset + 1] < 0)
 					{
@@ -1162,10 +1169,16 @@ check_new_partition_bound(char *relname, Relation parent,
 						if (offset + 1 < boundinfo->ndatums)
 						{
 							int32		cmpval;
+							Datum 	   *datums;
+							PartitionRangeDatumKind *kind;
+							bool		is_lower;
 
-							cmpval = partition_bound_cmp(key, boundinfo,
-														 offset + 1, upper,
-														 true);
+							datums = boundinfo->datums[offset + 1];
+							kind = boundinfo->kind[offset + 1];
+							is_lower = (boundinfo->indexes[offset + 1] == -1);
+
+							cmpval = partition_rbound_cmp(key, datums, kind,
+														  is_lower, upper);
 							if (cmpval < 0)
 							{
 								/*
@@ -2574,11 +2587,9 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 			{
 				bool		equal = false;
 
-				bound_offset = partition_bound_bsearch(key,
-													   partdesc->boundinfo,
-													   values,
-													   false,
-													   &equal);
+				bound_offset = partition_list_bsearch(key,
+													  partdesc->boundinfo,
+													  values[0], &equal);
 				if (bound_offset >= 0 && equal)
 					part_index = partdesc->boundinfo->indexes[bound_offset];
 			}
@@ -2605,12 +2616,11 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 
 				if (!range_partkey_has_null)
 				{
-					bound_offset = partition_bound_bsearch(key,
-														   partdesc->boundinfo,
-														   values,
-														   false,
-														   &equal);
-
+					bound_offset = partition_range_datum_bsearch(key,
+														partdesc->boundinfo,
+														key->partnatts,
+														values,
+														&equal);
 					/*
 					 * The bound at bound_offset is less than or equal to the
 					 * tuple value, so the bound at offset+1 is the upper
@@ -2881,12 +2891,12 @@ partition_rbound_cmp(PartitionKey key,
 static int32
 partition_rbound_datum_cmp(PartitionKey key,
 						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
-						   Datum *tuple_datums)
+						   Datum *tuple_datums, int n_tuple_datums)
 {
 	int			i;
 	int32		cmpval = -1;
 
-	for (i = 0; i < key->partnatts; i++)
+	for (i = 0; i < n_tuple_datums; i++)
 	{
 		if (rb_kind[i] == PARTITION_RANGE_DATUM_MINVALUE)
 			return -1;
@@ -2905,84 +2915,17 @@ partition_rbound_datum_cmp(PartitionKey key,
 }
 
 /*
- * partition_bound_cmp
+ * partition_list_bsearch
+ *		Returns the index of the greatest bound datum that is less than equal
+ * 		to the given value or -1 if all of the bound datums are greater
  *
- * Return whether the bound at offset in boundinfo is <, =, or > the argument
- * specified in *probe.
- */
-static int32
-partition_bound_cmp(PartitionKey key, PartitionBoundInfo boundinfo,
-					int offset, void *probe, bool probe_is_bound)
-{
-	Datum	   *bound_datums = boundinfo->datums[offset];
-	int32		cmpval = -1;
-
-	switch (key->strategy)
-	{
-		case PARTITION_STRATEGY_HASH:
-			{
-				PartitionBoundSpec *spec = (PartitionBoundSpec *) probe;
-
-				cmpval = partition_hbound_cmp(DatumGetInt32(bound_datums[0]),
-											  DatumGetInt32(bound_datums[1]),
-											  spec->modulus, spec->remainder);
-				break;
-			}
-		case PARTITION_STRATEGY_LIST:
-			cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[0],
-													 key->partcollation[0],
-													 bound_datums[0],
-													 *(Datum *) probe));
-			break;
-
-		case PARTITION_STRATEGY_RANGE:
-			{
-				PartitionRangeDatumKind *kind = boundinfo->kind[offset];
-
-				if (probe_is_bound)
-				{
-					/*
-					 * We need to pass whether the existing bound is a lower
-					 * bound, so that two equal-valued lower and upper bounds
-					 * are not regarded equal.
-					 */
-					bool		lower = boundinfo->indexes[offset] < 0;
-
-					cmpval = partition_rbound_cmp(key,
-												  bound_datums, kind, lower,
-												  (PartitionRangeBound *) probe);
-				}
-				else
-					cmpval = partition_rbound_datum_cmp(key,
-														bound_datums, kind,
-														(Datum *) probe);
-				break;
-			}
-
-		default:
-			elog(ERROR, "unexpected partition strategy: %d",
-				 (int) key->strategy);
-	}
-
-	return cmpval;
-}
-
-/*
- * Binary search on a collection of partition bounds. Returns greatest
- * bound in array boundinfo->datums which is less than or equal to *probe.
- * If all bounds in the array are greater than *probe, -1 is returned.
- *
- * *probe could either be a partition bound or a Datum array representing
- * the partition key of a tuple being routed; probe_is_bound tells which.
- * We pass that down to the comparison function so that it can interpret the
- * contents of *probe accordingly.
- *
- * *is_equal is set to whether the bound at the returned index is equal with
- * *probe.
+ * *is_equal is set to true if the bound datum at the returned index is equal
+ * to the input value.
  */
 static int
-partition_bound_bsearch(PartitionKey key, PartitionBoundInfo boundinfo,
-						void *probe, bool probe_is_bound, bool *is_equal)
+partition_list_bsearch(PartitionKey key,
+					   PartitionBoundInfo boundinfo,
+					   Datum value, bool *is_equal)
 {
 	int			lo,
 				hi,
@@ -2995,14 +2938,146 @@ partition_bound_bsearch(PartitionKey key, PartitionBoundInfo boundinfo,
 		int32		cmpval;
 
 		mid = (lo + hi + 1) / 2;
-		cmpval = partition_bound_cmp(key, boundinfo, mid, probe,
-									 probe_is_bound);
+		cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[0],
+												 key->partcollation[0],
+												 boundinfo->datums[mid][0],
+												 value));
+		if (cmpval <= 0)
+		{
+			lo = mid;
+			*is_equal = (cmpval == 0);
+			if (*is_equal)
+				break;
+		}
+		else
+			hi = mid - 1;
+	}
+
+	return lo;
+}
+
+/*
+ * partition_range_bsearch
+ *		Returns the index of the greatest range bound that is less than or
+ *		equal to the given range bound or -1 if all of the range bounds are
+ *		greater
+ *
+ * *is_equal is set to true if the range bound at the returned index is equal
+ * to the input range bound
+ */
+static int
+partition_range_bsearch(PartitionKey key,
+						PartitionBoundInfo boundinfo,
+						PartitionRangeBound *probe, bool *is_equal)
+{
+	int			lo,
+				hi,
+				mid;
+
+	lo = -1;
+	hi = boundinfo->ndatums - 1;
+	while (lo < hi)
+	{
+		int32		cmpval;
+
+		mid = (lo + hi + 1) / 2;
+		cmpval = partition_rbound_cmp(key,
+									  boundinfo->datums[mid],
+									  boundinfo->kind[mid],
+									  (boundinfo->indexes[mid] == -1),
+									  probe);
 		if (cmpval <= 0)
 		{
 			lo = mid;
 			*is_equal = (cmpval == 0);
 
 			if (*is_equal)
+				break;
+		}
+		else
+			hi = mid - 1;
+	}
+
+	return lo;
+}
+
+/*
+ * partition_range_bsearch
+ *		Returns the index of the greatest range bound that is less than or
+ *		equal to the given tuple or -1 if all of the range bounds are greater
+ *
+ * *is_equal is set to true if the range bound at the returned index is equal
+ * to the input tuple.
+ */
+static int
+partition_range_datum_bsearch(PartitionKey key,
+							  PartitionBoundInfo boundinfo,
+							  int nvalues, Datum *values, bool *is_equal)
+{
+	int			lo,
+				hi,
+				mid;
+
+	lo = -1;
+	hi = boundinfo->ndatums - 1;
+	while (lo < hi)
+	{
+		int32		cmpval;
+
+		mid = (lo + hi + 1) / 2;
+		cmpval = partition_rbound_datum_cmp(key,
+											boundinfo->datums[mid],
+											boundinfo->kind[mid],
+											values,
+											nvalues);
+		if (cmpval <= 0)
+		{
+			lo = mid;
+			*is_equal = (cmpval == 0);
+
+			if (*is_equal)
+				break;
+		}
+		else
+			hi = mid - 1;
+	}
+
+	return lo;
+}
+
+/*
+ * partition_hash_bsearch
+ *		Returns the index of the greatest (modulus, remainder) pair that is
+ *		less than or equal to the given (modulus, remainder) pair or -1 if
+ *		all of them are greater
+ */
+static int
+partition_hash_bsearch(PartitionKey key,
+					   PartitionBoundInfo boundinfo,
+					   int modulus, int remainder)
+{
+	int			lo,
+				hi,
+				mid;
+
+	lo = -1;
+	hi = boundinfo->ndatums - 1;
+	while (lo < hi)
+	{
+		int32		cmpval,
+					bound_modulus,
+					bound_remainder;
+
+		mid = (lo + hi + 1) / 2;
+		bound_modulus = DatumGetInt32(boundinfo->datums[mid][0]);
+		bound_remainder = DatumGetInt32(boundinfo->datums[mid][1]);
+		cmpval = partition_hbound_cmp(bound_modulus, bound_remainder,
+									  modulus, remainder);
+		if (cmpval <= 0)
+		{
+			lo = mid;
+
+			if (cmpval == 0)
 				break;
 		}
 		else
