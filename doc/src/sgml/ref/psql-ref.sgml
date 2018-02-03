@@ -281,10 +281,16 @@ EOF
       <listitem>
       <para>
       List all available databases, then exit. Other non-connection
-      options are ignored. If an explicit database name is not
-      found the <literal>postgres</literal> database, not the user's,
-      will be targeted for connection. This is similar to the meta-command
+      options are ignored. This is similar to the meta-command
       <command>\list</command>.
+      </para>
+
+      <para>
+      When this option is used, <application>psql</application> will connect
+      to the database <literal>postgres</literal>, unless a different database
+      is named on the command line (option <option>-d</option> or non-option
+      argument, possibly via a service entry, but not via an environment
+      variable).
       </para>
       </listitem>
     </varlistentry>
