@@ -89,7 +89,7 @@ Branch: REL9_6_STABLE [19648ce55] 2017-11-16 15:26:49 -0500
      <para>
       This is necessary to ensure that dead index entries get removed.
       The old code got it backwards, allowing vacuum to skip the cleanup if
-      some other process were running it concurrently, thus risking
+      some other process were running cleanup concurrently, thus risking
       invalid entries being left behind in the index.
      </para>
     </listitem>
@@ -186,7 +186,7 @@ Branch: REL_10_STABLE [bdbf29aae] 2017-12-27 18:26:58 +0300
      </para>
 
      <para>
-      This prevents poor behavior when rebuilding any hash indexes on the
+      This prevents poor behavior when rebuilding hash indexes on the
       table, since those use the <structname>pg_class</structname>
       statistics to govern the initial hash size.
      </para>
@@ -361,7 +361,7 @@ Branch: REL9_4_STABLE [f68c49f86] 2018-01-05 12:17:10 -0300
      <para>
       Logical decoding may spill WAL records to disk for transactions
       generating many WAL records.  Normally these files are cleaned up
-      after the commit or abort record arrives for the transaction; but if
+      after the transaction's commit or abort record arrives; but if
       no such record is ever seen, the removal code misbehaved.
      </para>
     </listitem>
@@ -413,8 +413,8 @@ Branch: master [d02974e32] 2017-12-29 16:28:32 +0100
 Branch: REL_10_STABLE [b38c3d58e] 2017-12-29 16:22:43 +0100
 -->
      <para>
-      Show walsenders that are sending base backups as active
-      in <structname>pg_stat_activity</structname> (Magnus Hagander)
+      Show walsenders that are sending base backups as active in
+      the <structname>pg_stat_activity</structname> view (Magnus Hagander)
      </para>
     </listitem>
 
@@ -448,11 +448,8 @@ Branch: REL9_3_STABLE [69e5b1e9c] 2017-11-26 09:50:53 -0800
 -->
      <para>
       Fix <function>has_sequence_privilege()</function> to
-      support <literal>WITH GRANT OPTION</literal> tests (Joe Conway)
-     </para>
-
-     <para>
-      This case was already handled by other privilege-testing functions.
+      support <literal>WITH GRANT OPTION</literal> tests,
+      as other privilege-testing functions do (Joe Conway)
      </para>
     </listitem>
 
@@ -544,9 +541,9 @@ Branch: REL_10_STABLE [1c77e9908] 2018-01-05 19:21:30 -0500
 
      <para>
       Given repeatedly-unlucky timing, a process attempting to awaken all
-      waiters for a condition variable could loop indefinitely.  This
-      affects only parallel index scans and some operations on replication
-      slots.
+      waiters for a condition variable could loop indefinitely.  Due to the
+      limited usage of condition variables in v10, this affects only
+      parallel index scans and some operations on replication slots.
      </para>
     </listitem>
 
@@ -641,8 +638,8 @@ Branch: master [445dbd82a] 2017-11-28 12:15:38 -0500
 Branch: REL_10_STABLE [dba6e75c1] 2017-11-28 12:19:19 -0500
 -->
      <para>
-      Avoid unnecessary failure when no error queues are created during
-      parallel query startup (Robert Haas)
+      Avoid unnecessary failure when no parallel workers can be obtained
+      during parallel query startup (Robert Haas)
      </para>
     </listitem>
 
@@ -795,7 +792,8 @@ Branch: REL9_3_STABLE [45bfef7fb] 2018-01-10 17:13:29 -0500
      </para>
 
      <para>
-      These functions are stated to be Oracle(TM)-compatible, but
+      These functions are stated to
+      be <trademark class="registered">Oracle</trademark> compatible, but
       they weren't exactly.  In particular, there was a discrepancy in the
       interpretation of a negative third parameter: Oracle thinks that a
       negative value indicates the last place where the target substring can
@@ -823,7 +821,7 @@ Branch: REL9_3_STABLE [ef115621c] 2018-01-22 12:06:19 -0500
 -->
      <para>
       Fix <application>pg_dump</application> to make ACL (permissions),
-      security label, and comment entries reliably identifiable in archive
+      comment, and security label entries reliably identifiable in archive
       output formats (Tom Lane)
      </para>
 
@@ -832,7 +830,7 @@ Branch: REL9_3_STABLE [ef115621c] 2018-01-22 12:06:19 -0500
       just the name of the associated object.  Make it start with the object
       type instead, bringing ACLs into line with the convention already used
       for comment and security label archive entries.  Also, fix the
-      security label and comment entries for the whole database, if present,
+      comment and security label entries for the whole database, if present,
       to make their tags start with <literal>DATABASE</literal> so that they
       also follow this convention.  This prevents false matches in code that
       tries to identify large-object-related entries by seeing if the tag
@@ -858,7 +856,7 @@ Branch: REL9_5_STABLE [ea4cbf8f1] 2018-01-03 12:39:59 -0800
      <para>
       Rename <application>pg_rewind</application>'s
       <function>copy_file_range</function> function to avoid conflict
-      with new Linux system call (Andres Freund)
+      with new Linux system call of that name (Andres Freund)
      </para>
 
      <para>
@@ -1005,7 +1003,8 @@ Branch: REL9_3_STABLE [77b76fea9] 2017-11-17 12:47:44 -0500
       infrastructure that's been deprecated for over a decade, and which no
       longer works at all in macOS releases of the last couple of years.
       Add a new subdirectory <filename>contrib/start-scripts/macos</filename>
-      containing scripts that use the newer launchd infrastructure.
+      containing scripts that use the newer <application>launchd</application>
+      infrastructure.
      </para>
     </listitem>
 
@@ -1105,7 +1104,7 @@ Branch: REL9_4_STABLE [19cf9e96a] 2017-11-12 13:03:29 -0800
 Branch: REL9_3_STABLE [30e99efe8] 2017-11-12 13:05:55 -0800
 -->
      <para>
-      On Windows, avoid encoding-version-related crashes when emitting
+      On Windows, avoid encoding-conversion-related crashes when emitting
       messages very early in postmaster startup (Takayuki Tsunakawa)
      </para>
     </listitem>
