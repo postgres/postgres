@@ -365,7 +365,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
    </para>
    <sect2 id="logicaldecoding-output-init">
     <title>Initialization Function</title>
-    <indexterm zone="logicaldecoding">
+    <indexterm zone="logicaldecoding-output-init">
      <primary>_PG_output_plugin_init</primary>
     </indexterm>
     <para>
