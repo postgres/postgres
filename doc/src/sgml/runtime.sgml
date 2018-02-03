@@ -2024,16 +2024,18 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   <variablelist>
 
   <varlistentry>
-   <term>Password Storage Encryption</term>
+   <term>Password Encryption</term>
    <listitem>
 
     <para>
-     By default, database user passwords are stored as MD5 hashes, so
-     the administrator cannot determine the actual password assigned
-     to the user. If MD5 encryption is used for client authentication,
-     the unencrypted password is never even temporarily present on the
-     server because the client MD5-encrypts it before being sent
-     across the network.
+     Database user passwords are stored as hashes (determined by the setting
+     <xref linkend="guc-password-encryption">), so the administrator cannot
+     determine the actual password assigned to the user. If SCRAM or MD5
+     encryption is used for client authentication, the unencrypted password is
+     never even temporarily present on the server because the client encrypts
+     it before being sent across the network. SCRAM is preferred, because it
+     is an Internet standard and is more secure than the PostgreSQL-specific
+     MD5 authentication protocol.
     </para>
    </listitem>
   </varlistentry>
@@ -2085,24 +2087,6 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
      the disk.
     </para>
    </listitem>
-  </varlistentry>
-
-  <varlistentry>
-   <term>Encrypting Passwords Across A Network</term>
-
-   <listitem>
-     <para>
-      The <literal>MD5</> authentication method double-encrypts the
-      password on the client before sending it to the server. It first
-      MD5-encrypts it based on the user name, and then encrypts it
-      based on a random salt sent by the server when the database
-      connection was made. It is this double-encrypted value that is
-      sent over the network to the server. Double-encryption not only
-      prevents the password from being discovered, it also prevents
-      another connection from using the same encrypted password to
-      connect to the database server at a later time.
-     </para>
-    </listitem>
   </varlistentry>
 
   <varlistentry>
