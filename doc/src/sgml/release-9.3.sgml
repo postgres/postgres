@@ -1,6 +1,306 @@
 <!-- doc/src/sgml/release-9.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-3-21">
+  <title>Release 9.3.21</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2018-02-08</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 9.3.20.
+   For information about new features in the 9.3 major release, see
+   <xref linkend="release-9-3"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.3.21</title>
+
+   <para>
+    A dump/restore is not required for those running 9.3.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.3.18,
+    see <xref linkend="release-9-3-18"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix vacuuming of tuples that were updated while key-share locked
+      (Andres Freund, &Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      In some cases <command>VACUUM</command> would fail to remove such
+      tuples even though they are now dead, leading to assorted data
+      corruption scenarios.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix inadequate buffer locking in some LSN fetches (Jacob Champion,
+      Asim Praveen, Ashwin Agrawal)
+     </para>
+
+     <para>
+      These errors could result in misbehavior under concurrent load.
+      The potential consequences have not been characterized fully.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unnecessary failure in a query on an inheritance tree that
+      occurs concurrently with some child table being removed from the tree
+      by <command>ALTER TABLE NO INHERIT</command> (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair failure with correlated sub-<literal>SELECT</literal>
+      inside <literal>VALUES</literal> inside a <literal>LATERAL</literal>
+      subquery (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>could not devise a query plan for the given query</quote>
+      planner failure for some cases involving nested <literal>UNION
+      ALL</literal> inside a lateral subquery (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>has_sequence_privilege()</function> to
+      support <literal>WITH GRANT OPTION</literal> tests,
+      as other privilege-testing functions do (Joe Conway)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In databases using UTF8 encoding, ignore any XML declaration that
+      asserts a different encoding (Pavel Stehule, Noah Misch)
+     </para>
+
+     <para>
+      We always store XML strings in the database encoding, so allowing
+      libxml to act on a declaration of another encoding gave wrong results.
+      In encodings other than UTF8, we don't promise to support non-ASCII
+      XML data anyway, so retain the previous behavior for bug compatibility.
+      This change affects only <function>xpath()</function> and related
+      functions; other XML code paths already acted this way.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Provide for forward compatibility with future minor protocol versions
+      (Robert Haas, Badrul Chowdhury)
+     </para>
+
+     <para>
+      Up to now, <productname>PostgreSQL</productname> servers simply
+      rejected requests to use protocol versions newer than 3.0, so that
+      there was no functional difference between the major and minor parts
+      of the protocol version number.  Allow clients to request versions 3.x
+      without failing, sending back a message showing that the server only
+      understands 3.0.  This makes no difference at the moment, but
+      back-patching this change should allow speedier introduction of future
+      minor protocol upgrades.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent stack-overflow crashes when planning extremely deeply
+      nested set operations
+      (<literal>UNION</literal>/<literal>INTERSECT</literal>/<literal>EXCEPT</literal>)
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix null-pointer crashes for some types of LDAP URLs appearing
+      in <filename>pg_hba.conf</filename> (Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix sample <function>INSTR()</function> functions in the PL/pgSQL
+      documentation (Yugo Nagata, Tom Lane)
+     </para>
+
+     <para>
+      These functions are stated to
+      be <trademark class="registered">Oracle</trademark> compatible, but
+      they weren't exactly.  In particular, there was a discrepancy in the
+      interpretation of a negative third parameter: Oracle thinks that a
+      negative value indicates the last place where the target substring can
+      begin, whereas our functions took it as the last place where the
+      target can end.  Also, Oracle throws an error for a zero or negative
+      fourth parameter, whereas our functions returned zero.
+     </para>
+
+     <para>
+      The sample code has been adjusted to match Oracle's behavior more
+      precisely.  Users who have copied this code into their applications
+      may wish to update their copies.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</application> to make ACL (permissions),
+      comment, and security label entries reliably identifiable in archive
+      output formats (Tom Lane)
+     </para>
+
+     <para>
+      The <quote>tag</quote> portion of an ACL archive entry was usually
+      just the name of the associated object.  Make it start with the object
+      type instead, bringing ACLs into line with the convention already used
+      for comment and security label archive entries.  Also, fix the
+      comment and security label entries for the whole database, if present,
+      to make their tags start with <literal>DATABASE</literal> so that they
+      also follow this convention.  This prevents false matches in code that
+      tries to identify large-object-related entries by seeing if the tag
+      starts with <literal>LARGE OBJECT</literal>.  That could have resulted
+      in misclassifying entries as data rather than schema, with undesirable
+      results in a schema-only or data-only dump.
+     </para>
+
+     <para>
+      Note that this change has user-visible results in the output
+      of <command>pg_restore --list</command>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>ecpg</application>, detect indicator arrays that do
+      not have the correct length and report an error (David Rader)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid triggering a libc assertion
+      in <filename>contrib/hstore</filename>, due to use
+      of <function>memcpy()</function> with equal source and destination
+      pointers (Tomas Vondra)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Provide modern examples of how to auto-start Postgres on macOS
+      (Tom Lane)
+     </para>
+
+     <para>
+      The scripts in <filename>contrib/start-scripts/osx</filename> use
+      infrastructure that's been deprecated for over a decade, and which no
+      longer works at all in macOS releases of the last couple of years.
+      Add a new subdirectory <filename>contrib/start-scripts/macos</filename>
+      containing scripts that use the newer <application>launchd</application>
+      infrastructure.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect selection of configuration-specific libraries for
+      OpenSSL on Windows (Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support linking to MinGW-built versions of libperl (Noah Misch)
+     </para>
+
+     <para>
+      This allows building PL/Perl with some common Perl distributions for
+      Windows.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix MSVC build to test whether 32-bit libperl
+      needs <literal>-D_USE_32BIT_TIME_T</literal> (Noah Misch)
+     </para>
+
+     <para>
+      Available Perl distributions are inconsistent about what they expect,
+      and lack any reliable means of reporting it, so resort to a build-time
+      test on what the library being used actually does.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      On Windows, install the crash dump handler earlier in postmaster
+      startup (Takayuki Tsunakawa)
+     </para>
+
+     <para>
+      This may allow collection of a core dump for some early-startup
+      failures that did not produce a dump before.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      On Windows, avoid encoding-conversion-related crashes when emitting
+      messages very early in postmaster startup (Takayuki Tsunakawa)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use our existing Motorola 68K spinlock code on OpenBSD as
+      well as NetBSD (David Carlier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add support for spinlocks on Motorola 88K (David Carlier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2018c for DST law changes in Brazil, Sao Tome and Principe,
+      plus historical corrections for Bolivia, Japan, and South Sudan.
+      The <literal>US/Pacific-New</literal> zone has been removed (it was
+      only an alias for <literal>America/Los_Angeles</literal> anyway).
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-3-20">
   <title>Release 9.3.20</title>
 
