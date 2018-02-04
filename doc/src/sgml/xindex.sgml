@@ -458,8 +458,9 @@
       <row>
        <entry>
          Compute the 64-bit hash value for a key given a 64-bit salt; if
-         the salt is 0, the low 32 bits will match the value that would
-         have been computed by function 1
+         the salt is 0, the low 32 bits of the result must match the value
+         that would have been computed by function 1
+         (optional)
        </entry>
        <entry>2</entry>
       </row>
@@ -1140,15 +1141,10 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
   </para>
 
   <para>
-   Comparison of arrays of user-defined types also relies on the semantics
-   defined by the default B-tree operator class.
-  </para>
-
-  <para>
    If there is no default B-tree operator class for a data type, the system
    will look for a default hash operator class.  But since that kind of
-   operator class only provides equality, in practice it is only enough
-   to support array equality.
+   operator class only provides equality, it is only able to support grouping
+   not sorting.
   </para>
 
   <para>
@@ -1168,7 +1164,25 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
    </note>
 
   <para>
-   Another important point is that an operator that
+   Sorting by a non-default B-tree operator class is possible by specifying
+   the class's less-than operator in a <literal>USING</literal> option,
+   for example
+<programlisting>
+SELECT * FROM mytable ORDER BY somecol USING ~&lt;~;
+</programlisting>
+   Alternatively, specifying the class's greater-than operator
+   in <literal>USING</literal> selects a descending-order sort.
+  </para>
+
+  <para>
+   Comparison of arrays of a user-defined type also relies on the semantics
+   defined by the type's default B-tree operator class.  If there is no
+   default B-tree operator class, but there is a default hash operator class,
+   then array equality is supported, but not ordering comparisons.
+  </para>
+
+  <para>
+   Another important point is that an equality operator that
    appears in a hash operator family is a candidate for hash joins,
    hash aggregation, and related optimizations.  The hash operator family
    is essential here since it identifies the hash function(s) to use.
