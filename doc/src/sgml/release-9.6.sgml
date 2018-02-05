@@ -41,6 +41,28 @@
 
     <listitem>
      <para>
+      Ensure that all temporary files made
+      by <application>pg_upgrade</application> are non-world-readable
+      (Tom Lane, Noah Misch)
+     </para>
+
+     <para>
+      <application>pg_upgrade</application> normally restricts its
+      temporary files to be readable and writable only by the calling user.
+      But the temporary file containing <literal>pg_dumpall -g</literal>
+      output would be group- or world-readable, or even writable, if the
+      user's <literal>umask</literal> setting allows.  In typical usage on
+      multi-user machines, the <literal>umask</literal> and/or the working
+      directory's permissions would be tight enough to prevent problems;
+      but there may be people using <application>pg_upgrade</application>
+      in scenarios where this oversight would permit disclosure of database
+      passwords to unfriendly eyes.
+      (CVE-2018-1053)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix vacuuming of tuples that were updated while key-share locked
       (Andres Freund, &Aacute;lvaro Herrera)
      </para>

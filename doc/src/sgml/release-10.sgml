@@ -41,6 +41,55 @@
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3492a0af0] 2018-02-05 10:37:30 -0500
+Branch: REL_10_STABLE [fe921a360] 2018-02-05 10:37:30 -0500
+-->
+     <para>
+      Fix processing of partition keys containing multiple expressions
+      (&Aacute;lvaro Herrera, David Rowley)
+     </para>
+
+     <para>
+      This error led to crashes or, with carefully crafted input, disclosure
+      of arbitrary backend memory.
+      (CVE-2018-1052)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a926eb84e] 2018-02-05 10:58:27 -0500
+Branch: REL_10_STABLE [6ba52aeb2] 2018-02-05 10:58:27 -0500
+Branch: REL9_6_STABLE [1341e017d] 2018-02-05 10:58:27 -0500
+Branch: REL9_5_STABLE [17aa02368] 2018-02-05 10:58:27 -0500
+Branch: REL9_4_STABLE [c3456208d] 2018-02-05 10:58:27 -0500
+Branch: REL9_3_STABLE [9c59e48a2] 2018-02-05 10:58:27 -0500
+-->
+     <para>
+      Ensure that all temporary files made
+      by <application>pg_upgrade</application> are non-world-readable
+      (Tom Lane, Noah Misch)
+     </para>
+
+     <para>
+      <application>pg_upgrade</application> normally restricts its
+      temporary files to be readable and writable only by the calling user.
+      But the temporary file containing <literal>pg_dumpall -g</literal>
+      output would be group- or world-readable, or even writable, if the
+      user's <literal>umask</literal> setting allows.  In typical usage on
+      multi-user machines, the <literal>umask</literal> and/or the working
+      directory's permissions would be tight enough to prevent problems;
+      but there may be people using <application>pg_upgrade</application>
+      in scenarios where this oversight would permit disclosure of database
+      passwords to unfriendly eyes.
+      (CVE-2018-1053)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Andres Freund <andres@anarazel.de>
 Branch: master [9c2f0a6c3] 2017-12-14 18:20:47 -0800
 Branch: REL_10_STABLE [1224383e8] 2017-12-14 18:20:48 -0800
