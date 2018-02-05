@@ -45,9 +45,38 @@ typedef struct LLVMJitHandle
 
 /* types & functions commonly needed for JITing */
 LLVMTypeRef TypeSizeT;
+LLVMTypeRef TypePGFunction;
+LLVMTypeRef StructHeapTupleFieldsField3;
+LLVMTypeRef StructHeapTupleFields;
+LLVMTypeRef StructHeapTupleHeaderData;
+LLVMTypeRef StructHeapTupleDataChoice;
+LLVMTypeRef StructHeapTupleData;
+LLVMTypeRef StructMinimalTupleData;
+LLVMTypeRef StructItemPointerData;
+LLVMTypeRef StructBlockId;
+LLVMTypeRef StructFormPgAttribute;
+LLVMTypeRef StructTupleConstr;
+LLVMTypeRef StructtupleDesc;
+LLVMTypeRef StructTupleTableSlot;
+LLVMTypeRef StructMemoryContextData;
+LLVMTypeRef StructPGFinfoRecord;
+LLVMTypeRef StructFmgrInfo;
+LLVMTypeRef StructFunctionCallInfoData;
+LLVMTypeRef StructExprContext;
+LLVMTypeRef StructExprEvalStep;
+LLVMTypeRef StructExprState;
+LLVMTypeRef StructAggState;
+LLVMTypeRef StructAggStatePerGroupData;
+LLVMTypeRef StructAggStatePerTransData;
 
 LLVMValueRef AttributeTemplate;
 LLVMValueRef FuncStrlen;
+LLVMValueRef FuncSlotGetsomeattrs;
+LLVMValueRef FuncHeapGetsysattr;
+LLVMValueRef FuncMakeExpandedObjectReadOnlyInternal;
+LLVMValueRef FuncExecEvalArrayRefSubscript;
+LLVMValueRef FuncExecAggTransReparent;
+LLVMValueRef FuncExecAggInitGroup;
 
 
 static bool llvm_session_initialized = false;
@@ -647,9 +676,27 @@ llvm_create_types(void)
 	llvm_layout = pstrdup(LLVMGetDataLayoutStr(mod));
 
 	TypeSizeT = load_type(mod, "TypeSizeT");
+	TypePGFunction = load_type(mod, "TypePGFunction");
+	StructExprContext = load_type(mod, "StructExprContext");
+	StructExprEvalStep = load_type(mod, "StructExprEvalStep");
+	StructExprState = load_type(mod, "StructExprState");
+	StructFunctionCallInfoData = load_type(mod, "StructFunctionCallInfoData");
+	StructMemoryContextData = load_type(mod, "StructMemoryContextData");
+	StructTupleTableSlot = load_type(mod, "StructTupleTableSlot");
+	StructHeapTupleData = load_type(mod, "StructHeapTupleData");
+	StructtupleDesc = load_type(mod, "StructtupleDesc");
+	StructAggState = load_type(mod, "StructAggState");
+	StructAggStatePerGroupData = load_type(mod, "StructAggStatePerGroupData");
+	StructAggStatePerTransData = load_type(mod, "StructAggStatePerTransData");
 
 	AttributeTemplate = LLVMGetNamedFunction(mod, "AttributeTemplate");
 	FuncStrlen = LLVMGetNamedFunction(mod, "strlen");
+	FuncSlotGetsomeattrs = LLVMGetNamedFunction(mod, "slot_getsomeattrs");
+	FuncHeapGetsysattr = LLVMGetNamedFunction(mod, "heap_getsysattr");
+	FuncMakeExpandedObjectReadOnlyInternal = LLVMGetNamedFunction(mod, "MakeExpandedObjectReadOnlyInternal");
+	FuncExecEvalArrayRefSubscript = LLVMGetNamedFunction(mod, "ExecEvalArrayRefSubscript");
+	FuncExecAggTransReparent = LLVMGetNamedFunction(mod, "ExecAggTransReparent");
+	FuncExecAggInitGroup = LLVMGetNamedFunction(mod, "ExecAggInitGroup");
 
 	/*
 	 * Leave the module alive, otherwise references to function would be

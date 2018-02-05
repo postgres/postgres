@@ -56,9 +56,27 @@ typedef struct LLVMJitContext
 
 /* type and struct definitions */
 extern LLVMTypeRef TypeSizeT;
+extern LLVMTypeRef TypePGFunction;
+extern LLVMTypeRef StructtupleDesc;
+extern LLVMTypeRef StructHeapTupleData;
+extern LLVMTypeRef StructTupleTableSlot;
+extern LLVMTypeRef StructMemoryContextData;
+extern LLVMTypeRef StructFunctionCallInfoData;
+extern LLVMTypeRef StructExprContext;
+extern LLVMTypeRef StructExprEvalStep;
+extern LLVMTypeRef StructExprState;
+extern LLVMTypeRef StructAggState;
+extern LLVMTypeRef StructAggStatePerTransData;
+extern LLVMTypeRef StructAggStatePerGroupData;
 
 extern LLVMValueRef AttributeTemplate;
 extern LLVMValueRef FuncStrlen;
+extern LLVMValueRef FuncSlotGetsomeattrs;
+extern LLVMValueRef FuncHeapGetsysattr;
+extern LLVMValueRef FuncMakeExpandedObjectReadOnlyInternal;
+extern LLVMValueRef FuncExecEvalArrayRefSubscript;
+extern LLVMValueRef FuncExecAggTransReparent;
+extern LLVMValueRef FuncExecAggInitGroup;
 
 
 extern void llvm_enter_fatal_on_oom(void);

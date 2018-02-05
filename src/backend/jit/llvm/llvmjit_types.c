@@ -26,7 +26,19 @@
 
 #include "postgres.h"
 
+#include "access/htup.h"
+#include "access/htup_details.h"
+#include "access/tupdesc.h"
+#include "catalog/pg_attribute.h"
+#include "executor/execExpr.h"
+#include "executor/nodeAgg.h"
+#include "executor/tuptable.h"
 #include "fmgr.h"
+#include "nodes/execnodes.h"
+#include "nodes/memnodes.h"
+#include "utils/expandeddatum.h"
+#include "utils/palloc.h"
+
 
 /*
  * List of types needed for JITing. These have to be non-static, otherwise
@@ -34,6 +46,19 @@
  * anything, that's harmless.
  */
 size_t		TypeSizeT;
+PGFunction	TypePGFunction;
+
+AggState	StructAggState;
+AggStatePerGroupData StructAggStatePerGroupData;
+AggStatePerTransData StructAggStatePerTransData;
+ExprContext StructExprContext;
+ExprEvalStep StructExprEvalStep;
+ExprState	StructExprState;
+FunctionCallInfoData StructFunctionCallInfoData;
+HeapTupleData StructHeapTupleData;
+MemoryContextData StructMemoryContextData;
+TupleTableSlot StructTupleTableSlot;
+struct tupleDesc StructtupleDesc;
 
 
 /*
@@ -56,5 +81,11 @@ AttributeTemplate(PG_FUNCTION_ARGS)
  */
 void	   *referenced_functions[] =
 {
-	strlen
+	strlen,
+	slot_getsomeattrs,
+	heap_getsysattr,
+	MakeExpandedObjectReadOnlyInternal,
+	ExecEvalArrayRefSubscript,
+	ExecAggTransReparent,
+	ExecAggInitGroup
 };
