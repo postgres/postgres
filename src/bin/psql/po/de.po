@@ -1,5 +1,5 @@
 # German message translation file for psql
-# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2016.
+# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2018.
 #
 # Use these quotes: »%s«
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-07 16:41+0000\n"
-"PO-Revision-Date: 2016-10-24 09:21-0400\n"
+"POT-Creation-Date: 2018-02-04 21:15+0000\n"
+"PO-Revision-Date: 2018-02-05 08:27-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -229,8 +229,8 @@ msgstr "Zeitmessung ist aus."
 
 #: command.c:1411 command.c:1431 command.c:2110 command.c:2117 command.c:2126
 #: command.c:2136 command.c:2145 command.c:2159 command.c:2176 command.c:2235
-#: common.c:75 copy.c:335 copy.c:389 copy.c:404 psqlscan.l:1677 psqlscan.l:1688
-#: psqlscan.l:1698
+#: common.c:75 copy.c:335 copy.c:389 copy.c:404 psqlscan.l:1678 psqlscan.l:1689
+#: psqlscan.l:1699
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -256,7 +256,7 @@ msgstr "Alle Verbindungsparameter müssen angegeben werden, weil keine Datenbank
 
 #: command.c:1749 command.c:2946 common.c:121 common.c:418 common.c:483
 #: common.c:914 common.c:942 common.c:1039 copy.c:487 copy.c:694
-#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1949
+#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1950
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -2266,34 +2266,36 @@ msgstr "  \\H                     HTML-Ausgabemodus umschalten (gegenwärtig %s)
 #, c-format
 msgid ""
 "  \\pset NAME [VALUE]     set table output option\n"
-"                         (NAME := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
-"                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"
+"                         (NAME := {border|columns|expanded|fieldsep|fieldsep_zero|\n"
+"                         footer|format|linestyle|null|numericlocale|pager|\n"
+"                         recordsep|recordsep_zero|tableattr|title|tuples_only})\n"
 msgstr ""
 "  \\pset NAME [WERT]      Tabellenausgabeoption setzen\n"
-"                         (NAME := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
-"                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"
+"                         (NAME := {border|columns|expanded|fieldsep|fieldsep_zero|\n"
+"                         footer|format|linestyle|null|numericlocale|pager|\n"
+"                         recordsep|recordsep_zero|tableattr|title|tuples_only})\n"
 
-#: help.c:253
+#: help.c:254
 #, c-format
 msgid "  \\t [on|off]            show only rows (currently %s)\n"
 msgstr "  \\t [on|off]            nur Datenzeilen zeigen (gegenwärtig %s)\n"
 
-#: help.c:255
+#: help.c:256
 #, c-format
 msgid "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
 msgstr "  \\T [TEXT]              HTML <table>-Tag-Attribute setzen oder löschen\n"
 
-#: help.c:256
+#: help.c:257
 #, c-format
 msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
 msgstr "  \\x [on|off|auto]       erweiterte Ausgabe umschalten (gegenwärtig %s)\n"
 
-#: help.c:260
+#: help.c:261
 #, c-format
 msgid "Connection\n"
 msgstr "Verbindung\n"
 
-#: help.c:262
+#: help.c:263
 #, c-format
 msgid ""
 "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
@@ -2302,7 +2304,7 @@ msgstr ""
 "  \\c[onnect] {[DBNAME|- BENUTZER|- HOST|- PORT|-] | conninfo}\n"
 "                         mit neuer Datenbank verbinden (aktuell »%s«)\n"
 
-#: help.c:266
+#: help.c:267
 #, c-format
 msgid ""
 "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
@@ -2311,74 +2313,74 @@ msgstr ""
 "  \\c[onnect] {[DBNAME|- BENUTZER|- HOST|- PORT|-] | conninfo}\n"
 "                         mit neuer Datenbank verbinden (aktuell keine Verbindung)\n"
 
-#: help.c:268
+#: help.c:269
 #, c-format
 msgid "  \\encoding [ENCODING]   show or set client encoding\n"
 msgstr "  \\encoding [KODIERUNG]  Client-Kodierung zeigen oder setzen\n"
 
-#: help.c:269
+#: help.c:270
 #, c-format
 msgid "  \\password [USERNAME]   securely change the password for a user\n"
 msgstr ""
 "  \\password [BENUTZERNAME]\n"
 "                         sicheres Ändern eines Benutzerpasswortes\n"
 
-#: help.c:270
+#: help.c:271
 #, c-format
 msgid "  \\conninfo              display information about current connection\n"
 msgstr "  \\conninfo              Informationen über aktuelle Verbindung anzeigen\n"
 
-#: help.c:273
+#: help.c:274
 #, c-format
 msgid "Operating System\n"
 msgstr "Betriebssystem\n"
 
-#: help.c:274
+#: help.c:275
 #, c-format
 msgid "  \\cd [DIR]              change the current working directory\n"
 msgstr "  \\cd [VERZ]             Arbeitsverzeichnis wechseln\n"
 
-#: help.c:275
+#: help.c:276
 #, c-format
 msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
 msgstr "  \\setenv NAME [WERT]    Umgebungsvariable setzen oder löschen\n"
 
-#: help.c:276
+#: help.c:277
 #, c-format
 msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
 msgstr "  \\timing [on|off]       Zeitmessung umschalten (gegenwärtig %s)\n"
 
-#: help.c:278
+#: help.c:279
 #, c-format
 msgid "  \\! [COMMAND]           execute command in shell or start interactive shell\n"
 msgstr "  \\! [BEFEHL]            Befehl in Shell ausführen oder interaktive Shell starten\n"
 
-#: help.c:281
+#: help.c:282
 #, c-format
 msgid "Variables\n"
 msgstr "Variablen\n"
 
-#: help.c:282
+#: help.c:283
 #, c-format
 msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
 msgstr "  \\prompt [TEXT] NAME    interne Variable vom Benutzer abfragen\n"
 
-#: help.c:283
+#: help.c:284
 #, c-format
 msgid "  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"
 msgstr "  \\set [NAME [WERT]]     interne Variable setzen, oder alle anzeigen\n"
 
-#: help.c:284
+#: help.c:285
 #, c-format
 msgid "  \\unset NAME            unset (delete) internal variable\n"
 msgstr "  \\unset NAME            interne Variable löschen\n"
 
-#: help.c:287
+#: help.c:288
 #, c-format
 msgid "Large Objects\n"
 msgstr "Large Objects\n"
 
-#: help.c:288
+#: help.c:289
 #, c-format
 msgid ""
 "  \\lo_export LOBOID FILE\n"
@@ -2391,11 +2393,11 @@ msgstr ""
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID      Large-Object-Operationen\n"
 
-#: help.c:335
+#: help.c:336
 msgid "Available help:\n"
 msgstr "Verfügbare Hilfe:\n"
 
-#: help.c:419
+#: help.c:420
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -2410,7 +2412,7 @@ msgstr ""
 "%s\n"
 "\n"
 
-#: help.c:435
+#: help.c:436
 #, c-format
 msgid ""
 "No help available for \"%s\".\n"
@@ -2518,17 +2520,17 @@ msgstr "ungültiges Ausgabeformat (interner Fehler): %d"
 msgid "skipping recursive expansion of variable \"%s\"\n"
 msgstr "rekursive Auswertung der Variable »%s« wird ausgelassen\n"
 
-#: psqlscan.l:1604
+#: psqlscan.l:1605
 #, c-format
 msgid "unterminated quoted string\n"
 msgstr "Zeichenkette in Anführungszeichen nicht abgeschlossen\n"
 
-#: psqlscan.l:1704
+#: psqlscan.l:1705
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: Speicher aufgebraucht\n"
 
-#: psqlscan.l:1933
+#: psqlscan.l:1934
 #, c-format
 msgid "can't escape without active connection\n"
 msgstr "Escape kann nicht ohne aktive Verbindung ausgeführt werden\n"
