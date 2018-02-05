@@ -1,9 +1,7 @@
 # Russian message translation file for pg_test_timing
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander LAW <exclusion@gmail.com>, 2017.
 # Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"

@@ -7,13 +7,12 @@
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
 # Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-08-17 23:15+0000\n"
-"PO-Revision-Date: 2017-05-27 18:38+0300\n"
+"PO-Revision-Date: 2017-10-12 10:13+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -349,7 +348,7 @@ msgstr "выбирается значение shared_buffers... "
 #: initdb.c:996
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
-msgstr "выбор реализации динамической разделяемой памяти ... "
+msgstr "выбор реализации динамической разделяемой памяти... "
 
 #: initdb.c:1014
 msgid "creating configuration files ... "
@@ -363,7 +362,7 @@ msgstr "%s: не удалось поменять права для \"%s\": %s\n"
 #: initdb.c:1293
 #, c-format
 msgid "running bootstrap script ... "
-msgstr "выполняется подготовительный скрипт ... "
+msgstr "выполняется подготовительный скрипт... "
 
 #: initdb.c:1309
 #, c-format
@@ -925,7 +924,7 @@ msgstr "создание подкаталогов... "
 
 #: initdb.c:2910
 msgid "performing post-bootstrap initialization ... "
-msgstr "выполняется заключительная инициализация ... "
+msgstr "выполняется заключительная инициализация... "
 
 #: initdb.c:3067
 #, c-format

@@ -1,14 +1,13 @@
 # Russian message translation file for ecpg
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
-#
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018.
 msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 23:08+0000\n"
-"PO-Revision-Date: 2017-03-27 16:26+0300\n"
+"POT-Creation-Date: 2018-01-31 07:53+0300\n"
+"PO-Revision-Date: 2018-01-31 08:18+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -321,14 +320,14 @@ msgstr ""
 "внутренняя ошибка: недостижимое состояние; пожалуйста, сообщите в <pgsql-"
 "bugs@postgresql.org>"
 
-#: pgc.l:1375
+#: pgc.l:1376
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr ""
 "Ошибка: путь включаемых файлов \"%s/%s\" в строке %d слишком длинный, "
 "пропускается\n"
 
-#: pgc.l:1398
+#: pgc.l:1399
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "не удалось открыть включаемый файл \"%s\" (строка %d)"
@@ -557,7 +556,7 @@ msgstr "%s (примерное положение: \"%s\")"
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: type.c:212 type.c:664
+#: type.c:212 type.c:674
 #, c-format
 msgid "unrecognized variable type code %d"
 msgstr "нераспознанный код типа переменной %d"
@@ -603,7 +602,17 @@ msgstr "индикатор структуры должен быть структ
 msgid "indicator for simple data type has to be simple"
 msgstr "индикатор простого типа должен быть простым"
 
-#: type.c:723
+#: type.c:615
+#, c-format
+msgid "indicator struct \"%s\" has too few members"
+msgstr "в структуре индикаторе \"%s\" слишком мало членов"
+
+#: type.c:622
+#, c-format
+msgid "indicator struct \"%s\" has too many members"
+msgstr "в структуре индикаторе \"%s\" слишком много членов"
+
+#: type.c:733
 #, c-format
 msgid "unrecognized descriptor item code %d"
 msgstr "нераспознанный код элемента дескриптора %d"

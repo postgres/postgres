@@ -1,15 +1,13 @@
 # Russian message translation file for pg_upgrade
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander LAW <exclusion@gmail.com>, 2017.
 # Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-27 06:15+0000\n"
-"PO-Revision-Date: 2017-09-21 13:01+0300\n"
+"POT-Creation-Date: 2018-01-31 07:53+0300\n"
+"PO-Revision-Date: 2017-12-09 07:44+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -692,27 +690,27 @@ msgstr "Формирование выгрузки схем базы данных
 msgid "could not get pg_ctl version data using %s: %s\n"
 msgstr "не удалось получить данные версии pg_ctl, выполнив %s: %s\n"
 
-#: exec.c:54
+#: exec.c:50
 #, c-format
 msgid "could not get pg_ctl version output from %s\n"
 msgstr "не удалось получить версию pg_ctl из результата %s\n"
 
-#: exec.c:101 exec.c:105
+#: exec.c:104 exec.c:108
 #, c-format
 msgid "command too long\n"
 msgstr "команда слишком длинная\n"
 
-#: exec.c:107 util.c:38 util.c:226
+#: exec.c:110 util.c:38 util.c:226
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: exec.c:146 exec.c:201 option.c:101 option.c:217
+#: exec.c:148 exec.c:202 option.c:101 option.c:217
 #, c-format
 msgid "could not write to log file \"%s\"\n"
-msgstr "не удалось записать в файл протокола \"%s\n"
+msgstr "не удалось записать в файл протокола \"%s\"\n"
 
-#: exec.c:175
+#: exec.c:177
 #, c-format
 msgid ""
 "\n"
@@ -721,12 +719,12 @@ msgstr ""
 "\n"
 "*ошибка*"
 
-#: exec.c:178
+#: exec.c:180
 #, c-format
 msgid "There were problems executing \"%s\"\n"
 msgstr "При выполнении \"%s\" возникли проблемы\n"
 
-#: exec.c:181
+#: exec.c:183
 #, c-format
 msgid ""
 "Consult the last few lines of \"%s\" or \"%s\" for\n"
@@ -735,7 +733,7 @@ msgstr ""
 "Чтобы понять причину ошибки, просмотрите последние несколько строк\n"
 "файла \"%s\" или \"%s\".\n"
 
-#: exec.c:186
+#: exec.c:188
 #, c-format
 msgid ""
 "Consult the last few lines of \"%s\" for\n"
@@ -744,38 +742,38 @@ msgstr ""
 "Чтобы понять причину ошибки, просмотрите последние несколько строк\n"
 "файла \"%s\".\n"
 
-#: exec.c:227
+#: exec.c:228
 #, c-format
 msgid "could not open file \"%s\" for reading: %s\n"
 msgstr "не удалось открыть файл \"%s\" для чтения: %s\n"
 
-#: exec.c:254
+#: exec.c:255
 #, c-format
 msgid "You must have read and write access in the current directory.\n"
 msgstr "У вас должны быть права на чтение и запись в текущем каталоге.\n"
 
-#: exec.c:307 exec.c:370 exec.c:426
+#: exec.c:308 exec.c:370 exec.c:425
 #, c-format
 msgid "check for \"%s\" failed: %s\n"
 msgstr "проверка существования \"%s\" не пройдена: %s\n"
 
-#: exec.c:310 exec.c:373
+#: exec.c:311 exec.c:373
 #, c-format
 msgid "\"%s\" is not a directory\n"
 msgstr "\"%s\" не является каталогом\n"
 
-#: exec.c:429
+#: exec.c:428
 #, c-format
 msgid "check for \"%s\" failed: not a regular file\n"
 msgstr "проверка файла \"%s\" не пройдена: это не обычный файл\n"
 
-#: exec.c:441
+#: exec.c:440
 #, c-format
 msgid "check for \"%s\" failed: cannot read file (permission denied)\n"
 msgstr ""
 "проверка файла \"%s\" не пройдена: не удаётся прочитать файл (нет доступа)\n"
 
-#: exec.c:449
+#: exec.c:448
 #, c-format
 msgid "check for \"%s\" failed: cannot execute (permission denied)\n"
 msgstr ""
@@ -1348,17 +1346,17 @@ msgstr "не удалось прочитать строку %d из файла \
 msgid "user-supplied old port number %hu corrected to %hu\n"
 msgstr "заданный пользователем старый номер порта %hu изменён на %hu\n"
 
-#: parallel.c:128 parallel.c:242
+#: parallel.c:128 parallel.c:241
 #, c-format
 msgid "could not create worker process: %s\n"
 msgstr "не удалось создать рабочий процесс: %s\n"
 
-#: parallel.c:147 parallel.c:263
+#: parallel.c:147 parallel.c:262
 #, c-format
 msgid "could not create worker thread: %s\n"
 msgstr "не удалось создать рабочий поток: %s\n"
 
-#: parallel.c:311 parallel.c:326
+#: parallel.c:310 parallel.c:325
 #, c-format
 msgid "child worker exited abnormally: %s\n"
 msgstr "дочерний процесс завершился аварийно: %s\n"
@@ -1555,12 +1553,12 @@ msgstr ""
 msgid "could not open version file: %s\n"
 msgstr "не удалось открыть файл с версией: %s\n"
 
-#: server.c:170
+#: server.c:169
 #, c-format
 msgid "could not parse PG_VERSION file from %s\n"
 msgstr "не удалось разобрать файл PG_VERSION из %s\n"
 
-#: server.c:284
+#: server.c:292
 #, c-format
 msgid ""
 "\n"
@@ -1569,7 +1567,7 @@ msgstr ""
 "\n"
 "не удалось подключиться к базе: %s"
 
-#: server.c:289
+#: server.c:297
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1579,7 +1577,7 @@ msgstr ""
 "командой:\n"
 "%s\n"
 
-#: server.c:293
+#: server.c:301
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1589,26 +1587,26 @@ msgstr ""
 "командой:\n"
 "%s\n"
 
-#: server.c:307
+#: server.c:315
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed\n"
 msgstr ""
 "программа pg_ctl не смогла запустить исходный сервер, либо к нему не удалось "
 "подключиться\n"
 
-#: server.c:309
+#: server.c:317
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed\n"
 msgstr ""
 "программа pg_ctl не смогла запустить целевой сервер, либо к нему не удалось "
 "подключиться\n"
 
-#: server.c:354
+#: server.c:362
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: server.c:367
+#: server.c:375
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s\n"
 msgstr "в переменной окружения для libpq %s задано не локальное значение: %s\n"

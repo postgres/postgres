@@ -5,13 +5,13 @@
 # Oleg Bartunov <oleg@sai.msu.su>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
 # Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-10-02 21:44+0000\n"
-"PO-Revision-Date: 2017-10-03 11:21+0300\n"
+"POT-Creation-Date: 2017-10-09 14:14+0300\n"
+"PO-Revision-Date: 2017-11-21 15:42+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -355,8 +354,8 @@ msgstr "Секундомер выключен."
 #: command.c:2549 command.c:2577 command.c:3537 command.c:3540 command.c:3543
 #: command.c:3549 command.c:3551 command.c:3559 command.c:3569 command.c:3578
 #: command.c:3592 command.c:3609 command.c:3667 common.c:69 copy.c:332
-#: copy.c:392 copy.c:405 psqlscanslash.l:760 psqlscanslash.l:771
-#: psqlscanslash.l:781
+#: copy.c:392 copy.c:405 psqlscanslash.l:761 psqlscanslash.l:772
+#: psqlscanslash.l:782
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -3010,7 +3009,7 @@ msgid ""
 "                         unicode_column_linestyle|"
 "unicode_header_linestyle})\n"
 msgstr ""
-"  \\pset [ИМЯ [ЗНАЧЕНИЕ]]   установить параметр вывода таблицы, где\n"
+"  \\pset [ИМЯ [ЗНАЧЕНИЕ]] установить параметр вывода таблицы, где\n"
 "                         (ИМЯ := {border|columns|expanded|fieldsep|"
 "fieldsep_zero|\n"
 "                         footer|format|linestyle|null|numericlocale|pager|\n"
@@ -3802,12 +3801,12 @@ msgstr ""
 msgid "reached EOF without finding closing \\endif(s)\n"
 msgstr "в закончившемся потоке команд не хватает \\endif\n"
 
-#: psqlscanslash.l:614
+#: psqlscanslash.l:615
 #, c-format
 msgid "unterminated quoted string\n"
 msgstr "незавершённая строка в кавычках\n"
 
-#: psqlscanslash.l:787
+#: psqlscanslash.l:788
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: нехватка памяти\n"

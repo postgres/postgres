@@ -1,20 +1,17 @@
 #
-# Translation of ecpg to Italian
-# PostgreSQL Project
+# ecpg.po
+#   Italian message translation file for ecpg
 #
-# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
-# http://www.itpug.org/ - info@itpug.org
+# For development and bug report please use:
+# https://github.com/dvarrazzo/postgresql-it
 #
-# Traduttori:
-#  * Daniele Varrazzo <daniele.varrazzo@gmail.com>
-#  * Maurizio Totti <maurizio.totti@gmail.com>
+# Copyright (C) 2012-2017 PostgreSQL Global Development Group
+# Copyright (C) 2010, Associazione Culturale ITPUG
 #
-# Revisori:
-#  * Emanuele Zamprogno <ez@medicinaopen.info>
+# Daniele Varrazzo <daniele.varrazzo@gmail.com>, 2012-2017.
+# Maurizio Totti <maurizio.totti@gmail.com>, 2010.
 #
-#
-# Copyright (c) 2010, Associazione Culturale ITPUG
-# Distributed under the same license of the PostgreSQL project
+# This file is distributed under the same license as the PostgreSQL package.
 #
 msgid ""
 msgstr ""
@@ -23,7 +20,7 @@ msgstr ""
 "POT-Creation-Date: 2017-04-22 22:38+0000\n"
 "PO-Revision-Date: 2017-04-23 04:44+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
-"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-08 23:08+0000\n"
-"PO-Revision-Date: 2017-09-10 15:42+0200\n"
+"POT-Creation-Date: 2018-01-15 21:08+0000\n"
+"PO-Revision-Date: 2018-01-15 22:28+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -57,7 +57,9 @@ msgstr "deskriptor-post \"%s\" kan inte sättas"
 msgid ""
 "%s is the PostgreSQL embedded SQL preprocessor for C programs.\n"
 "\n"
-msgstr "%s är PostgreSQLs inbäddade SQL-preprocessor för C-program.\n\n"
+msgstr ""
+"%s är PostgreSQLs inbäddade SQL-preprocessor för C-program.\n"
+"\n"
 
 #: ecpg.c:37
 #, c-format
@@ -312,12 +314,12 @@ msgstr "syntaxfel i EXEC SQL INCLUDE-kommando"
 msgid "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"
 msgstr "internt fel: state som ej skall kunna nås; vänligen rapportera detta till <pgsql-bugs@postgresql.org>"
 
-#: pgc.l:1375
+#: pgc.l:1376
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr "Fel: include-sökväg \"%s/%s\" är för lång på rad %d, hoppar över\n"
 
-#: pgc.l:1398
+#: pgc.l:1399
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "kunde inte öppna inkludefil \"%s\" på rad %d"
@@ -539,7 +541,7 @@ msgstr "%s vid eller nära \"%s\""
 msgid "out of memory"
 msgstr "slut på minne"
 
-#: type.c:212 type.c:664
+#: type.c:212 type.c:674
 #, c-format
 msgid "unrecognized variable type code %d"
 msgstr "okänd variabeltypkod %d"
@@ -584,7 +586,17 @@ msgstr "indikator för en struktur måste vara en struktur"
 msgid "indicator for simple data type has to be simple"
 msgstr "indikator för enkla datatyper måste vara enkel"
 
-#: type.c:723
+#: type.c:615
+#, c-format
+msgid "indicator struct \"%s\" has too few members"
+msgstr "indikatorstruktur \"%s\" har för få medlemmar"
+
+#: type.c:622
+#, c-format
+msgid "indicator struct \"%s\" has too many members"
+msgstr "indikatorstruktur \"%s\" har för många medlemmar"
+
+#: type.c:733
 #, c-format
 msgid "unrecognized descriptor item code %d"
 msgstr "okänd deskriptor-post-kod %d"

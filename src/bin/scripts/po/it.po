@@ -1,28 +1,20 @@
 #
-# Translation of pgscripts to Italian
-# PostgreSQL Project
+# pgscripts.po
+#   Italian message translation file for pgscripts
 #
-# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
-# http://www.itpug.org/ - info@itpug.org
+# For development and bug report please use:
+# https://github.com/dvarrazzo/postgresql-it
 #
-# Traduttori:
-#  * Emanuele Zamprogno <ez@medicinaopen.info>
-#  * Daniele Varrazzo <daniele.varrazzo@gmail.com>
+# Copyright (C) 2012-2017 PostgreSQL Global Development Group
+# Copyright (C) 2010, Associazione Culturale ITPUG
 #
-# Revisori:
-#  * Diego Cinelli <diego.cinelli@gmail.com>
+# Daniele Varrazzo <daniele.varrazzo@gmail.com>, 2012-2017.
+# Emanuele Zamprogno <ez@medicinaopen.info>, 2009.
+# Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
+# Fabrizio Mazzoni <veramente@libero.it>, 2003.
 #
-# Traduttori precedenti:
-#  * Primo traduttore: Fabrizio Mazzoni <veramente@libero.it>, 2003.
-#  * Secondo traduttore: Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
+# This file is distributed under the same license as the PostgreSQL package.
 #
-# Copyright (c) 2010, Associazione Culturale ITPUG
-# Distributed under the same license of the PostgreSQL project
-#
-# Italian message translation file for pgscripts
-# Primo traduttore: Fabrizio Mazzoni <veramente@libero.it>, 2003.
-# Secondo traduttore: Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
-# Attuale traduttore: Emanuele Zamprogno <ez@medicinaopen.info>, 2009.
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 10\n"
@@ -30,7 +22,7 @@ msgstr ""
 "POT-Creation-Date: 2017-05-22 07:46+0000\n"
 "PO-Revision-Date: 2017-05-29 17:28+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
-"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -93,8 +85,9 @@ msgstr "formato di output non valido (errore interno): %d"
 
 #: clusterdb.c:111 clusterdb.c:130 createdb.c:119 createdb.c:138
 #: createuser.c:166 createuser.c:181 dropdb.c:94 dropdb.c:103 dropdb.c:111
-#: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93 pg_isready.c:107
-#: reindexdb.c:131 reindexdb.c:150 vacuumdb.c:213 vacuumdb.c:232
+#: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93
+#: pg_isready.c:107 reindexdb.c:131 reindexdb.c:150 vacuumdb.c:213
+#: vacuumdb.c:232
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Prova \"%s --help\" per maggiori informazioni.\n"
@@ -170,7 +163,8 @@ msgstr "  -a, --all                 raggruppa tutti i database\n"
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=NOMEDB       database da raggruppare\n"
 
-#: clusterdb.c:275 createuser.c:349 dropdb.c:158 dropuser.c:164 reindexdb.c:406
+#: clusterdb.c:275 createuser.c:349 dropdb.c:158 dropuser.c:164
+#: reindexdb.c:406
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                mostra i comandi inviati al server\n"
@@ -190,12 +184,14 @@ msgstr "  -t, --table=TABELLA       raggruppa solo le tabelle specificate\n"
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             mostra un output completo\n"
 
-#: clusterdb.c:279 createuser.c:361 dropdb.c:160 dropuser.c:167 reindexdb.c:413
+#: clusterdb.c:279 createuser.c:361 dropdb.c:160 dropuser.c:167
+#: reindexdb.c:413
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             mostra informazioni sulla versione ed esci\n"
 
-#: clusterdb.c:280 createuser.c:366 dropdb.c:162 dropuser.c:169 reindexdb.c:414
+#: clusterdb.c:280 createuser.c:366 dropdb.c:162 dropuser.c:169
+#: reindexdb.c:414
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                mostra questo aiuto ed esci\n"
@@ -210,14 +206,14 @@ msgstr ""
 "\n"
 "Opzioni di connessione:\n"
 
-#: clusterdb.c:282 createuser.c:368 dropdb.c:164 dropuser.c:171 reindexdb.c:416
-#: vacuumdb.c:971
+#: clusterdb.c:282 createuser.c:368 dropdb.c:164 dropuser.c:171
+#: reindexdb.c:416 vacuumdb.c:971
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME       host del server database o directory socket\n"
 
-#: clusterdb.c:283 createuser.c:369 dropdb.c:165 dropuser.c:172 reindexdb.c:417
-#: vacuumdb.c:972
+#: clusterdb.c:283 createuser.c:369 dropdb.c:165 dropuser.c:172
+#: reindexdb.c:417 vacuumdb.c:972
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORTA          porta del server database\n"
@@ -227,14 +223,14 @@ msgstr "  -p, --port=PORTA          porta del server database\n"
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=UTENTE     nome utente da utilizzare per la connessione\n"
 
-#: clusterdb.c:285 createuser.c:371 dropdb.c:167 dropuser.c:174 reindexdb.c:419
-#: vacuumdb.c:974
+#: clusterdb.c:285 createuser.c:371 dropdb.c:167 dropuser.c:174
+#: reindexdb.c:419 vacuumdb.c:974
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         non richiedere mai una password\n"
 
-#: clusterdb.c:286 createuser.c:372 dropdb.c:168 dropuser.c:175 reindexdb.c:420
-#: vacuumdb.c:975
+#: clusterdb.c:286 createuser.c:372 dropdb.c:168 dropuser.c:175
+#: reindexdb.c:420 vacuumdb.c:975
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            forza la richiesta di una password\n"

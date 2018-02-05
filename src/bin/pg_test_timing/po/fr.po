@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-16 19:44+0000\n"
-"PO-Revision-Date: 2017-07-29 21:37+0200\n"
+"POT-Creation-Date: 2017-11-06 09:45+0000\n"
+"PO-Revision-Date: 2017-11-11 14:21+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
-"X-Generator: Poedit 2.0.2\n"
+"X-Generator: Poedit 2.0.3\n"
 
 #: pg_test_timing.c:55
 #, c-format
@@ -67,7 +67,7 @@ msgstr "< us"
 #: pg_test_timing.c:176
 #, no-c-format
 msgid "% of total"
-msgstr ""
+msgstr "% du total"
 
 #: pg_test_timing.c:177
 msgid "count"
