@@ -466,7 +466,7 @@ msgstr "%s : n'a pas pu démarrer le service « %s » : code d'erreur %lu\n"
 #: pg_ctl.c:1919
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s : ATTENTION : ne peut pas crér les jetons restreints sur cette plateforme\n"
+msgstr "%s : ATTENTION : ne peut pas créer les jetons restreints sur cette plateforme\n"
 
 #: pg_ctl.c:1934
 #, c-format

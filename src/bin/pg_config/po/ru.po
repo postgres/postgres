@@ -5,8 +5,7 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009, 2012.
 # Andrey Sudnik <sudnikand@gmail.com>, 2010.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016.
-#
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL current)\n"

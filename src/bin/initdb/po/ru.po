@@ -7,13 +7,12 @@
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
 # Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-02-09 21:21+0000\n"
-"PO-Revision-Date: 2017-03-28 20:31+0300\n"
+"PO-Revision-Date: 2017-10-12 10:13+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -344,7 +343,7 @@ msgstr "выбирается значение shared_buffers... "
 #: initdb.c:1175
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
-msgstr "выбор реализации динамической разделяемой памяти ... "
+msgstr "выбор реализации динамической разделяемой памяти... "
 
 #: initdb.c:1193
 msgid "creating configuration files ... "

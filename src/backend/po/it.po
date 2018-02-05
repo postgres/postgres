@@ -1,25 +1,26 @@
 #
-# Translation of postgres to Italian
-# PostgreSQL Project
+# postgres.po
+#   Italian message translation file for postgres
 #
-# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
-# http://www.itpug.org/ - info@itpug.org
+# For development and bug report please use:
+# https://github.com/dvarrazzo/postgresql-it
 #
-# Traduttori:
-#  * Daniele Varrazzo <daniele.varrazzo@gmail.com>
-#  * Vincenzo Romano <vincenzo.romano@itpug.org>
+# Copyright (C) 2012-2017 PostgreSQL Global Development Group
+# Copyright (C) 2010, Associazione Culturale ITPUG
 #
-# Copyright (c) 2010, Associazione Culturale ITPUG
-# Distributed under the same license of the PostgreSQL project
+# Daniele Varrazzo <daniele.varrazzo@gmail.com>, 2012-2017.
+# Vincenzo Romano <vincenzo.romano@itpug.org>
+#
+# This file is distributed under the same license as the PostgreSQL package.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL) 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-10-23 22:24+0000\n"
-"PO-Revision-Date: 2017-10-24 08:30+0100\n"
+"POT-Creation-Date: 2017-11-07 19:25+0000\n"
+"PO-Revision-Date: 2017-11-07 22:06+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
-"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -300,8 +301,8 @@ msgstr "\"%s\" non è un indice BRIN"
 msgid "could not open parent table of index %s"
 msgstr "apertura della tabella dell'indice %s non riuscita"
 
-#: access/brin/brin_pageops.c:76 access/brin/brin_pageops.c:360
-#: access/brin/brin_pageops.c:824 access/gin/ginentrypage.c:109
+#: access/brin/brin_pageops.c:76 access/brin/brin_pageops.c:366
+#: access/brin/brin_pageops.c:830 access/gin/ginentrypage.c:109
 #: access/gist/gist.c:1289 access/nbtree/nbtinsert.c:575
 #: access/nbtree/nbtsort.c:488 access/spgist/spgdoinsert.c:1907
 #, c-format
@@ -529,33 +530,33 @@ msgstr "\"%s\" è un indice"
 msgid "\"%s\" is a composite type"
 msgstr "\"%s\" è un tipo composito"
 
-#: access/heap/heapam.c:2387
+#: access/heap/heapam.c:2344
 #, c-format
 msgid "cannot insert tuples during a parallel operation"
 msgstr "non è possibile inserire tuple durante un'operazione parallela"
 
-#: access/heap/heapam.c:2837
+#: access/heap/heapam.c:2794
 #, c-format
 msgid "cannot delete tuples during a parallel operation"
 msgstr "non è possibile eliminare tuple durante un'operazione parallela"
 
-#: access/heap/heapam.c:2883
+#: access/heap/heapam.c:2840
 #, c-format
 msgid "attempted to delete invisible tuple"
 msgstr "tentativo di eliminare tuple invisibili"
 
-#: access/heap/heapam.c:3309 access/heap/heapam.c:5982
+#: access/heap/heapam.c:3266 access/heap/heapam.c:5940
 #, c-format
 msgid "cannot update tuples during a parallel operation"
 msgstr "non è possibile aggiornare tuple durante un'operazione parallela"
 
-#: access/heap/heapam.c:3431
+#: access/heap/heapam.c:3388
 #, c-format
 msgid "attempted to update invisible tuple"
 msgstr "tentativo di aggiornare tuple invisibili"
 
-#: access/heap/heapam.c:4747 access/heap/heapam.c:4785
-#: access/heap/heapam.c:5008 executor/execMain.c:2278
+#: access/heap/heapam.c:4704 access/heap/heapam.c:4742
+#: access/heap/heapam.c:4965 executor/execMain.c:2279
 #, c-format
 msgid "could not obtain lock on row in relation \"%s\""
 msgstr "lock di riga nella relazione \"%s\" fallito"
@@ -2210,7 +2211,7 @@ msgstr "i tablespace non sono supportati su questa piattaforma"
 
 #: access/transam/xlog.c:10143 access/transam/xlog.c:10179
 #: access/transam/xlog.c:10380 access/transam/xlogarchive.c:106
-#: access/transam/xlogarchive.c:265 commands/copy.c:1787 commands/copy.c:2813
+#: access/transam/xlogarchive.c:265 commands/copy.c:1787 commands/copy.c:2825
 #: commands/extension.c:3029 commands/tablespace.c:782
 #: commands/tablespace.c:873 replication/basebackup.c:406
 #: replication/basebackup.c:474 replication/logical/snapbuild.c:1479
@@ -2763,13 +2764,13 @@ msgid "default privileges cannot be set for columns"
 msgstr "i privilegi predefiniti non possono essere impostati sulle colonne"
 
 #: catalog/aclchk.c:1483 catalog/objectaddress.c:1338 commands/analyze.c:382
-#: commands/copy.c:4432 commands/sequence.c:1491 commands/tablecmds.c:5181
+#: commands/copy.c:4444 commands/sequence.c:1491 commands/tablecmds.c:5181
 #: commands/tablecmds.c:5287 commands/tablecmds.c:5347
 #: commands/tablecmds.c:5460 commands/tablecmds.c:5517
 #: commands/tablecmds.c:5611 commands/tablecmds.c:5707
 #: commands/tablecmds.c:7899 commands/tablecmds.c:8161
 #: commands/tablecmds.c:8581 commands/trigger.c:643 parser/analyze.c:2157
-#: parser/parse_relation.c:2628 parser/parse_relation.c:2690
+#: parser/parse_relation.c:2639 parser/parse_relation.c:2701
 #: parser/parse_target.c:951 parser/parse_type.c:127 utils/adt/acl.c:2841
 #: utils/adt/ruleutils.c:1862
 #, c-format
@@ -3302,7 +3303,7 @@ msgstr "valore OID heap pg_class non impostato in modalità di aggiornamento bin
 msgid "check constraint \"%s\" already exists"
 msgstr "il vincolo di controllo \"%s\" esiste già"
 
-#: catalog/heap.c:2459 catalog/pg_constraint.c:652 commands/tablecmds.c:6052
+#: catalog/heap.c:2459 catalog/pg_constraint.c:653 commands/tablecmds.c:6052
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "il vincolo \"%s\" per la relazione \"%s\" esiste già"
@@ -4122,27 +4123,27 @@ msgstr "l'ordinamento \"%s\" per la codifica \"%s\" esiste già"
 msgid "collation \"%s\" already exists"
 msgstr "l'ordinamento \"%s\" esiste già"
 
-#: catalog/pg_constraint.c:661
+#: catalog/pg_constraint.c:662
 #, c-format
 msgid "constraint \"%s\" for domain %s already exists"
 msgstr "il vincolo \"%s\" per il dominio %s esiste già"
 
-#: catalog/pg_constraint.c:794
+#: catalog/pg_constraint.c:795 catalog/pg_constraint.c:871
 #, c-format
 msgid "table \"%s\" has multiple constraints named \"%s\""
 msgstr "la tabella \"%s\" ha più di un vincolo di nome \"%s\""
 
-#: catalog/pg_constraint.c:806
+#: catalog/pg_constraint.c:807 catalog/pg_constraint.c:905
 #, c-format
 msgid "constraint \"%s\" for table \"%s\" does not exist"
 msgstr "il vincolo \"%s\" per la tabella \"%s\" non esiste"
 
-#: catalog/pg_constraint.c:852
+#: catalog/pg_constraint.c:951
 #, c-format
 msgid "domain \"%s\" has multiple constraints named \"%s\""
 msgstr "il dominio \"%s\" ha più di un vincolo di nome \"%s\""
 
-#: catalog/pg_constraint.c:864
+#: catalog/pg_constraint.c:963
 #, c-format
 msgid "constraint \"%s\" for domain \"%s\" does not exist"
 msgstr "il vincolo \"%s\" per la il dominio \"%s\" non esiste"
@@ -5115,7 +5116,7 @@ msgstr "non è possibile copiare dalla sequenza \"%s\""
 msgid "cannot copy from non-table relation \"%s\""
 msgstr "non è possibile copiare dalla relazione \"%s\" perché non è una tabella"
 
-#: commands/copy.c:1749 commands/copy.c:2796
+#: commands/copy.c:1749 commands/copy.c:2808
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "esecuzione del comando \"%s\" fallita: %m"
@@ -5130,7 +5131,7 @@ msgstr "i percorsi relativi non sono consentiti per il COPY verso un file"
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "apertura del file \"%s\" in scrittura fallita: %m"
 
-#: commands/copy.c:1793 commands/copy.c:2819
+#: commands/copy.c:1793 commands/copy.c:2831
 #, c-format
 msgid "\"%s\" is a directory"
 msgstr "\"%s\" è una directory"
@@ -5185,159 +5186,159 @@ msgstr "non è possibile copiare verso sequenza \"%s\""
 msgid "cannot copy to non-table relation \"%s\""
 msgstr "non è possibile copiare verso la relazione \"%s\" perché non è una tabella"
 
-#: commands/copy.c:2330
+#: commands/copy.c:2342
 #, c-format
 msgid "cannot perform FREEZE because of prior transaction activity"
 msgstr "non è possibile eseguire FREEZE a causa di precedente attività della transazione"
 
-#: commands/copy.c:2336
+#: commands/copy.c:2348
 #, c-format
 msgid "cannot perform FREEZE because the table was not created or truncated in the current subtransaction"
 msgstr "non è possibile eseguire FREEZE perché la tabella non è stata creata o troncata nella sottotransazione corrente"
 
-#: commands/copy.c:2807 commands/extension.c:3040 utils/adt/genfile.c:134
+#: commands/copy.c:2819 commands/extension.c:3040 utils/adt/genfile.c:134
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "apertura del file \"%s\" in lettura fallita: %m"
 
-#: commands/copy.c:2839
+#: commands/copy.c:2851
 #, c-format
 msgid "COPY file signature not recognized"
 msgstr "formato del file COPY non riconosciuto"
 
-#: commands/copy.c:2844
+#: commands/copy.c:2856
 #, c-format
 msgid "invalid COPY file header (missing flags)"
 msgstr "intestazione del file COPY non valida (flag mancanti)"
 
-#: commands/copy.c:2850
+#: commands/copy.c:2862
 #, c-format
 msgid "unrecognized critical flags in COPY file header"
 msgstr "alcune flag critici non sono stati riconosciuti nell'intestazione del file COPY"
 
-#: commands/copy.c:2856
+#: commands/copy.c:2868
 #, c-format
 msgid "invalid COPY file header (missing length)"
 msgstr "intestazione del file COPY non valida (manca la lunghezza)"
 
-#: commands/copy.c:2863
+#: commands/copy.c:2875
 #, c-format
 msgid "invalid COPY file header (wrong length)"
 msgstr "intestazione del file COPY non valida (lunghezza errata)"
 
-#: commands/copy.c:2996 commands/copy.c:3703 commands/copy.c:3933
+#: commands/copy.c:3008 commands/copy.c:3715 commands/copy.c:3945
 #, c-format
 msgid "extra data after last expected column"
 msgstr "ci sono dati in eccesso dopo l'ultima colonna attesa"
 
-#: commands/copy.c:3006
+#: commands/copy.c:3018
 #, c-format
 msgid "missing data for OID column"
 msgstr "dati per la colonna OID mancanti"
 
-#: commands/copy.c:3012
+#: commands/copy.c:3024
 #, c-format
 msgid "null OID in COPY data"
 msgstr "OID nullo nei dati da COPY"
 
-#: commands/copy.c:3022 commands/copy.c:3145
+#: commands/copy.c:3034 commands/copy.c:3157
 #, c-format
 msgid "invalid OID in COPY data"
 msgstr "OID non valido nei dati da COPY"
 
-#: commands/copy.c:3037
+#: commands/copy.c:3049
 #, c-format
 msgid "missing data for column \"%s\""
 msgstr "dati mancanti per la colonna \"%s\""
 
-#: commands/copy.c:3120
+#: commands/copy.c:3132
 #, c-format
 msgid "received copy data after EOF marker"
 msgstr "dati da copiare ricevuti dopo il segnalatore di fine file"
 
-#: commands/copy.c:3127
+#: commands/copy.c:3139
 #, c-format
 msgid "row field count is %d, expected %d"
 msgstr "il numero di campi è %d, ne erano attesi %d"
 
-#: commands/copy.c:3467 commands/copy.c:3484
+#: commands/copy.c:3479 commands/copy.c:3496
 #, c-format
 msgid "literal carriage return found in data"
 msgstr "\"ritorno carrello\" trovato nei dati"
 
-#: commands/copy.c:3468 commands/copy.c:3485
+#: commands/copy.c:3480 commands/copy.c:3497
 #, c-format
 msgid "unquoted carriage return found in data"
 msgstr "\"ritorno carrello\" non quotato trovato nei dati"
 
-#: commands/copy.c:3470 commands/copy.c:3487
+#: commands/copy.c:3482 commands/copy.c:3499
 #, c-format
 msgid "Use \"\\r\" to represent carriage return."
 msgstr "Usa \"\\r\" per rappresentare i caratteri \"ritorno carrello\"."
 
-#: commands/copy.c:3471 commands/copy.c:3488
+#: commands/copy.c:3483 commands/copy.c:3500
 #, c-format
 msgid "Use quoted CSV field to represent carriage return."
 msgstr "Usa un campo CSV quotato per rappresentare i caratteri \"ritorno carrello\"."
 
-#: commands/copy.c:3500
+#: commands/copy.c:3512
 #, c-format
 msgid "literal newline found in data"
 msgstr "\"nuova riga\" letterale trovato nei dati"
 
-#: commands/copy.c:3501
+#: commands/copy.c:3513
 #, c-format
 msgid "unquoted newline found in data"
 msgstr "\"nuova riga\" non quotato trovato nei dati"
 
-#: commands/copy.c:3503
+#: commands/copy.c:3515
 #, c-format
 msgid "Use \"\\n\" to represent newline."
 msgstr "Usa \"\\n\" per rappresentare i caratteri \"nuova riga\"."
 
-#: commands/copy.c:3504
+#: commands/copy.c:3516
 #, c-format
 msgid "Use quoted CSV field to represent newline."
 msgstr "Usa un campo CSV quotato per rappresentare i caratteri \"nuova riga\"."
 
-#: commands/copy.c:3550 commands/copy.c:3586
+#: commands/copy.c:3562 commands/copy.c:3598
 #, c-format
 msgid "end-of-copy marker does not match previous newline style"
 msgstr "il marcatore di fine copia non combacia con il precedente stile \"nuova riga\""
 
-#: commands/copy.c:3559 commands/copy.c:3575
+#: commands/copy.c:3571 commands/copy.c:3587
 #, c-format
 msgid "end-of-copy marker corrupt"
 msgstr "il marcatore di fine copia è corrotto"
 
-#: commands/copy.c:4017
+#: commands/copy.c:4029
 #, c-format
 msgid "unterminated CSV quoted field"
 msgstr "campo CSV tra virgolette non terminato"
 
-#: commands/copy.c:4094 commands/copy.c:4113
+#: commands/copy.c:4106 commands/copy.c:4125
 #, c-format
 msgid "unexpected EOF in COPY data"
 msgstr "fine file inattesa dei dati da COPY"
 
-#: commands/copy.c:4103
+#: commands/copy.c:4115
 #, c-format
 msgid "invalid field size"
 msgstr "dimensione del campo non valida"
 
-#: commands/copy.c:4126
+#: commands/copy.c:4138
 #, c-format
 msgid "incorrect binary data format"
 msgstr "formato di dati binari non corretto"
 
-#: commands/copy.c:4437 commands/indexcmds.c:1009 commands/tablecmds.c:1460
-#: commands/tablecmds.c:2283 parser/parse_relation.c:3177
-#: parser/parse_relation.c:3197 utils/adt/tsvector_op.c:1418
+#: commands/copy.c:4449 commands/indexcmds.c:1009 commands/tablecmds.c:1460
+#: commands/tablecmds.c:2283 parser/parse_relation.c:3188
+#: parser/parse_relation.c:3208 utils/adt/tsvector_op.c:1418
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "la colonna \"%s\" non esiste"
 
-#: commands/copy.c:4444 commands/tablecmds.c:1486 commands/trigger.c:652
+#: commands/copy.c:4456 commands/tablecmds.c:1486 commands/trigger.c:652
 #: parser/parse_target.c:967 parser/parse_target.c:978
 #, c-format
 msgid "column \"%s\" specified more than once"
@@ -8358,7 +8359,7 @@ msgstr "la tupla da aggiornare era stata già modificata da un'operazione fatta 
 msgid "Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows."
 msgstr "Considera l'utilizzo di un trigger AFTER invece di un trigger BEFORE per propagare i cambiamenti ad altre righe."
 
-#: commands/trigger.c:2742 executor/execMain.c:2343
+#: commands/trigger.c:2742 executor/execMain.c:2344
 #: executor/nodeLockRows.c:216 executor/nodeModifyTable.c:196
 #: executor/nodeModifyTable.c:676 executor/nodeModifyTable.c:970
 #: executor/nodeModifyTable.c:1137
@@ -9429,7 +9430,7 @@ msgstr "non è possibile bloccare righe vista \"%s\""
 msgid "cannot lock rows in materialized view \"%s\""
 msgstr "non è possibile bloccare righe nella vista materializzata \"%s\""
 
-#: executor/execMain.c:1190 executor/execMain.c:2576
+#: executor/execMain.c:1190 executor/execMain.c:2578
 #: executor/nodeLockRows.c:132
 #, c-format
 msgid "cannot lock rows in foreign table \"%s\""
@@ -12125,12 +12126,12 @@ msgstr "ON CONFLICT non è supportato sulle tabelle del catalogo di sistema"
 msgid "ON CONFLICT is not supported on table \"%s\" used as a catalog table"
 msgstr "ON CONFLICT non è supportato sulla tabella \"%s\" usata da una tabella di catalogo"
 
-#: parser/parse_clause.c:3010
+#: parser/parse_clause.c:3027
 #, c-format
 msgid "operator %s is not a valid ordering operator"
 msgstr "l'operatore %s non è un operatore di ordinamento valido"
 
-#: parser/parse_clause.c:3012
+#: parser/parse_clause.c:3029
 #, c-format
 msgid "Ordering operators must be \"<\" or \">\" members of btree operator families."
 msgstr "Gli operatori di ordinamento devono essere i membri \"<\" oppure \">\" di una famiglia di operatori btree."
@@ -12361,8 +12362,8 @@ msgstr "FOR UPDATE/SHARE non è implementato in una query ricorsiva"
 msgid "recursive reference to query \"%s\" must not appear more than once"
 msgstr "il riferimento ricorsivo alla query \"%s\" non può apparire più di una volta"
 
-#: parser/parse_expr.c:387 parser/parse_relation.c:3176
-#: parser/parse_relation.c:3196
+#: parser/parse_expr.c:387 parser/parse_relation.c:3187
+#: parser/parse_relation.c:3207
 #, c-format
 msgid "column %s.%s does not exist"
 msgstr "la colonna %s.%s non esiste"
@@ -12786,12 +12787,12 @@ msgstr "il riferimento alla tabella %u è ambiguo"
 msgid "table name \"%s\" specified more than once"
 msgstr "la tabella di nome \"%s\" è stata specificata più di una volta"
 
-#: parser/parse_relation.c:425 parser/parse_relation.c:3116
+#: parser/parse_relation.c:425 parser/parse_relation.c:3127
 #, c-format
 msgid "invalid reference to FROM-clause entry for table \"%s\""
 msgstr "riferimento non valido all'elemento della clausola FROM per la tabella \"%s\""
 
-#: parser/parse_relation.c:428 parser/parse_relation.c:3121
+#: parser/parse_relation.c:428 parser/parse_relation.c:3132
 #, c-format
 msgid "There is an entry for table \"%s\", but it cannot be referenced from this part of the query."
 msgstr "C'è un elemento per la tabella \"%s\", ma non può essere referenziato da questa parte della query."
@@ -12852,32 +12853,32 @@ msgstr "i join possono avere al più %d colonne"
 msgid "WITH query \"%s\" does not have a RETURNING clause"
 msgstr "la query WITH \"%s\" non ha una clausola RETURNING"
 
-#: parser/parse_relation.c:2738 parser/parse_relation.c:2900
+#: parser/parse_relation.c:2749 parser/parse_relation.c:2911
 #, c-format
 msgid "column %d of relation \"%s\" does not exist"
 msgstr "la colonna %d della relazione \"%s\" non esiste"
 
-#: parser/parse_relation.c:3119
+#: parser/parse_relation.c:3130
 #, c-format
 msgid "Perhaps you meant to reference the table alias \"%s\"."
 msgstr "Forse intendevi utilizzare l'alias \"%s\" della tabella."
 
-#: parser/parse_relation.c:3127
+#: parser/parse_relation.c:3138
 #, c-format
 msgid "missing FROM-clause entry for table \"%s\""
 msgstr "elemento FROM per la tabella \"%s\" mancante"
 
-#: parser/parse_relation.c:3179
+#: parser/parse_relation.c:3190
 #, c-format
 msgid "Perhaps you meant to reference the column \"%s.%s\"."
 msgstr "Forse intendevi referenziare la colonna \"%s.%s\"."
 
-#: parser/parse_relation.c:3181
+#: parser/parse_relation.c:3192
 #, c-format
 msgid "There is a column named \"%s\" in table \"%s\", but it cannot be referenced from this part of the query."
 msgstr "Esiste una colonna di nome \"%s\" nella tabella \"%s\", ma non può essere referenziata da questa parte della query."
 
-#: parser/parse_relation.c:3198
+#: parser/parse_relation.c:3209
 #, c-format
 msgid "Perhaps you meant to reference the column \"%s.%s\" or the column \"%s.%s\"."
 msgstr "Forse intendevi referenziare la colonna \"%s.%s\" o la colonna \"%s.%s\"."
@@ -14548,8 +14549,8 @@ msgstr "l'array deve essere monodimensionale"
 msgid "array must not contain nulls"
 msgstr "l'array non deve contenere NULL"
 
-#: replication/logical/logicalfuncs.c:370 utils/adt/json.c:2277
-#: utils/adt/jsonb.c:1356
+#: replication/logical/logicalfuncs.c:370 utils/adt/json.c:2241
+#: utils/adt/jsonb.c:1313
 #, c-format
 msgid "array must have even number of elements"
 msgstr "l'array deve avere un numero pari di elementi"
@@ -16696,9 +16697,9 @@ msgid "array size exceeds the maximum allowed (%d)"
 msgstr "la dimensione dell'array supera il massimo consentito (%d)"
 
 #: utils/adt/array_userfuncs.c:79 utils/adt/array_userfuncs.c:541
-#: utils/adt/array_userfuncs.c:621 utils/adt/json.c:1759 utils/adt/json.c:1854
-#: utils/adt/json.c:1892 utils/adt/jsonb.c:1126 utils/adt/jsonb.c:1155
-#: utils/adt/jsonb.c:1591 utils/adt/jsonb.c:1755 utils/adt/jsonb.c:1765
+#: utils/adt/array_userfuncs.c:621 utils/adt/json.c:1760 utils/adt/json.c:1855
+#: utils/adt/json.c:1893 utils/adt/jsonb.c:1127 utils/adt/jsonb.c:1156
+#: utils/adt/jsonb.c:1548 utils/adt/jsonb.c:1712 utils/adt/jsonb.c:1722
 #, c-format
 msgid "could not determine input data type"
 msgstr "non è stato possibile determinare il tipo di dato di input"
@@ -16891,9 +16892,9 @@ msgstr "le sezioni di array a lunghezza fissa non sono implementate"
 #: utils/adt/arrayfuncs.c:2297 utils/adt/arrayfuncs.c:2533
 #: utils/adt/arrayfuncs.c:2830 utils/adt/arrayfuncs.c:5718
 #: utils/adt/arrayfuncs.c:5744 utils/adt/arrayfuncs.c:5755
-#: utils/adt/json.c:2290 utils/adt/json.c:2365 utils/adt/jsonb.c:1369
-#: utils/adt/jsonb.c:1455 utils/adt/jsonfuncs.c:3528
-#: utils/adt/jsonfuncs.c:3573
+#: utils/adt/json.c:2254 utils/adt/json.c:2329 utils/adt/jsonb.c:1326
+#: utils/adt/jsonb.c:1412 utils/adt/jsonfuncs.c:3542
+#: utils/adt/jsonfuncs.c:3587
 #, c-format
 msgid "wrong number of array subscripts"
 msgstr "il numero di indici di array è errato"
@@ -17092,8 +17093,8 @@ msgstr "data fuori dall'intervallo consentito per timestamp"
 #: utils/adt/date.c:970 utils/adt/date.c:1016 utils/adt/date.c:1616
 #: utils/adt/date.c:1652 utils/adt/date.c:2524 utils/adt/datetime.c:1690
 #: utils/adt/formatting.c:3397 utils/adt/formatting.c:3429
-#: utils/adt/formatting.c:3497 utils/adt/json.c:1534 utils/adt/json.c:1556
-#: utils/adt/jsonb.c:823 utils/adt/jsonb.c:847 utils/adt/nabstime.c:455
+#: utils/adt/formatting.c:3497 utils/adt/json.c:1535 utils/adt/json.c:1557
+#: utils/adt/jsonb.c:824 utils/adt/jsonb.c:848 utils/adt/nabstime.c:455
 #: utils/adt/nabstime.c:498 utils/adt/nabstime.c:528 utils/adt/nabstime.c:571
 #: utils/adt/timestamp.c:225 utils/adt/timestamp.c:268
 #: utils/adt/timestamp.c:717 utils/adt/timestamp.c:746
@@ -17791,187 +17792,185 @@ msgstr "bigint fuori dall'intervallo consentito"
 msgid "OID out of range"
 msgstr "OID fuori dall'intervallo consentito"
 
-#: utils/adt/json.c:785 utils/adt/json.c:825 utils/adt/json.c:840
-#: utils/adt/json.c:851 utils/adt/json.c:861 utils/adt/json.c:912
-#: utils/adt/json.c:943 utils/adt/json.c:961 utils/adt/json.c:973
-#: utils/adt/json.c:985 utils/adt/json.c:1130 utils/adt/json.c:1144
-#: utils/adt/json.c:1155 utils/adt/json.c:1163 utils/adt/json.c:1171
-#: utils/adt/json.c:1179 utils/adt/json.c:1187 utils/adt/json.c:1195
-#: utils/adt/json.c:1203 utils/adt/json.c:1211 utils/adt/json.c:1241
+#: utils/adt/json.c:786 utils/adt/json.c:826 utils/adt/json.c:841
+#: utils/adt/json.c:852 utils/adt/json.c:862 utils/adt/json.c:913
+#: utils/adt/json.c:944 utils/adt/json.c:962 utils/adt/json.c:974
+#: utils/adt/json.c:986 utils/adt/json.c:1131 utils/adt/json.c:1145
+#: utils/adt/json.c:1156 utils/adt/json.c:1164 utils/adt/json.c:1172
+#: utils/adt/json.c:1180 utils/adt/json.c:1188 utils/adt/json.c:1196
+#: utils/adt/json.c:1204 utils/adt/json.c:1212 utils/adt/json.c:1242
 #, c-format
 msgid "invalid input syntax for type json"
 msgstr "sintassi di input per il tipo json non valida"
 
-#: utils/adt/json.c:786
+#: utils/adt/json.c:787
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Il carattere con valore 0x%02x deve essere sottoposto ad escape."
 
-#: utils/adt/json.c:826
+#: utils/adt/json.c:827
 #, c-format
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "\"\\u\" deve essere seguito da quattro cifre esadecimali."
 
-#: utils/adt/json.c:841
+#: utils/adt/json.c:842
 #, c-format
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "un carattere surrogato alto Unicode non può seguire un altro surrogato alto"
 
-#: utils/adt/json.c:852 utils/adt/json.c:862 utils/adt/json.c:913
-#: utils/adt/json.c:974 utils/adt/json.c:986
+#: utils/adt/json.c:853 utils/adt/json.c:863 utils/adt/json.c:914
+#: utils/adt/json.c:975 utils/adt/json.c:987
 #, c-format
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "un carattere surrogato basso Unicode deve seguire un surrogato alto"
 
-#: utils/adt/json.c:877 utils/adt/json.c:900
+#: utils/adt/json.c:878 utils/adt/json.c:901
 #, c-format
 msgid "unsupported Unicode escape sequence"
 msgstr "sequenza di escape Unicode non supportata"
 
-#: utils/adt/json.c:878
+#: utils/adt/json.c:879
 #, c-format
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 non può essere convertito in testo."
 
-#: utils/adt/json.c:901
+#: utils/adt/json.c:902
 #, c-format
 msgid "Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8."
 msgstr "i codici escape Unicode non possono essere usati per caratteri con codice superiore ad 007F quando l'encoding del server non è UTF8"
 
-#: utils/adt/json.c:944 utils/adt/json.c:962
+#: utils/adt/json.c:945 utils/adt/json.c:963
 #, c-format
 msgid "Escape sequence \"\\%s\" is invalid."
 msgstr "La sequenza di escape \"\\%s\" non è valida."
 
-#: utils/adt/json.c:1131
+#: utils/adt/json.c:1132
 #, c-format
 msgid "The input string ended unexpectedly."
 msgstr "La stringa di input è terminata inaspettatamente."
 
-#: utils/adt/json.c:1145
+#: utils/adt/json.c:1146
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
 msgstr "Era prevista la fine dell'input, trovato \"%s\" invece."
 
-#: utils/adt/json.c:1156
+#: utils/adt/json.c:1157
 #, c-format
 msgid "Expected JSON value, but found \"%s\"."
 msgstr "Era previsto un valore JSON, trovato \"%s\" invece."
 
-#: utils/adt/json.c:1164 utils/adt/json.c:1212
+#: utils/adt/json.c:1165 utils/adt/json.c:1213
 #, c-format
 msgid "Expected string, but found \"%s\"."
 msgstr "Era prevista una stringa, trovato \"%s\" invece."
 
-#: utils/adt/json.c:1172
+#: utils/adt/json.c:1173
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
 msgstr "Era previsto un elemento di array oppure \"]\", trovato \"%s\" invece."
 
-#: utils/adt/json.c:1180
+#: utils/adt/json.c:1181
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
 msgstr "Era previsto \",\" oppure \"]\", trovato \"%s\" invece."
 
-#: utils/adt/json.c:1188
+#: utils/adt/json.c:1189
 #, c-format
 msgid "Expected string or \"}\", but found \"%s\"."
 msgstr "Era prevista una stringa oppure \"}\", trovato \"%s\" invece."
 
-#: utils/adt/json.c:1196
+#: utils/adt/json.c:1197
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
 msgstr "Era previsto \":\", trovato \"%s\" invece."
 
-#: utils/adt/json.c:1204
+#: utils/adt/json.c:1205
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
 msgstr "Era previsto \",\" oppure \"}\", trovato \"%s\" invece."
 
-#: utils/adt/json.c:1242
+#: utils/adt/json.c:1243
 #, c-format
 msgid "Token \"%s\" is invalid."
 msgstr "Il token \"%s\" non è valido."
 
-#: utils/adt/json.c:1314
+#: utils/adt/json.c:1315
 #, c-format
 msgid "JSON data, line %d: %s%s%s"
 msgstr "dati JSON, riga %d: %s%s%s"
 
-#: utils/adt/json.c:1469 utils/adt/jsonb.c:724
+#: utils/adt/json.c:1470 utils/adt/jsonb.c:725
 #, c-format
 msgid "key value must be scalar, not array, composite, or json"
 msgstr "la chiave deve essere uno scalare, non array, composito né json"
 
-#: utils/adt/json.c:2006 utils/adt/json.c:2016 utils/adt/json.c:2142
-#: utils/adt/json.c:2163 utils/adt/json.c:2222 utils/adt/jsonb.c:1214
-#: utils/adt/jsonb.c:1237 utils/adt/jsonb.c:1297
+#: utils/adt/json.c:2007 utils/adt/json.c:2017 utils/fmgr/funcapi.c:1502
 #, c-format
 msgid "could not determine data type for argument %d"
 msgstr "impossibile determinare il tipo di dato per l'argomento %d"
 
-#: utils/adt/json.c:2040 utils/adt/jsonb.c:1781
+#: utils/adt/json.c:2041 utils/adt/jsonb.c:1738
 #, c-format
 msgid "field name must not be null"
 msgstr "il nome del campo non può essere nullo"
 
-#: utils/adt/json.c:2117
+#: utils/adt/json.c:2125 utils/adt/jsonb.c:1190
 #, c-format
 msgid "argument list must have even number of elements"
 msgstr "la lista di argomenti deve avere un numero pari di elementi"
 
-#: utils/adt/json.c:2118
+#: utils/adt/json.c:2126
 #, c-format
 msgid "The arguments of json_build_object() must consist of alternating keys and values."
 msgstr "Gli argomenti di json_build_object() devono consistere in una serie alternata di chiavi e valori."
 
-#: utils/adt/json.c:2148
+#: utils/adt/json.c:2141
 #, c-format
 msgid "argument %d cannot be null"
 msgstr "l'argomento %d non può essere nullo"
 
-#: utils/adt/json.c:2149
+#: utils/adt/json.c:2142
 #, c-format
 msgid "Object keys should be text."
 msgstr "Le chiavi degli oggetti devono essere testo."
 
-#: utils/adt/json.c:2284 utils/adt/jsonb.c:1363
+#: utils/adt/json.c:2248 utils/adt/jsonb.c:1320
 #, c-format
 msgid "array must have two columns"
 msgstr "l'array deve avere due colonne"
 
-#: utils/adt/json.c:2308 utils/adt/json.c:2392 utils/adt/jsonb.c:1387
-#: utils/adt/jsonb.c:1482
+#: utils/adt/json.c:2272 utils/adt/json.c:2356 utils/adt/jsonb.c:1344
+#: utils/adt/jsonb.c:1439
 #, c-format
 msgid "null value not allowed for object key"
 msgstr "valori null non ammessi per le chiavi di oggetti"
 
-#: utils/adt/json.c:2381 utils/adt/jsonb.c:1471
+#: utils/adt/json.c:2345 utils/adt/jsonb.c:1428
 #, c-format
 msgid "mismatched array dimensions"
 msgstr "le dimensioni degli array non combaciano"
 
-#: utils/adt/jsonb.c:257
+#: utils/adt/jsonb.c:258
 #, c-format
 msgid "string too long to represent as jsonb string"
 msgstr "la stringa è troppo lunga per essere rappresentata come stringa jsonb"
 
-#: utils/adt/jsonb.c:258
+#: utils/adt/jsonb.c:259
 #, c-format
 msgid "Due to an implementation restriction, jsonb strings cannot exceed %d bytes."
 msgstr "A causa di una restrizione nell'implementazione le stringhe jsonb non possono superare i %d byte."
 
-#: utils/adt/jsonb.c:1182
+#: utils/adt/jsonb.c:1191
 #, c-format
-msgid "invalid number of arguments: object must be matched key value pairs"
-msgstr "numero di argomenti non valido: gli oggetti devono essere coppie chiave-valore appaiate"
+msgid "The arguments of jsonb_build_object() must consist of alternating keys and values."
+msgstr "Gli argomenti di jsonb_build_object() devono consistere in una serie alternata di chiavi e valori."
 
-#: utils/adt/jsonb.c:1195
+#: utils/adt/jsonb.c:1203
 #, c-format
 msgid "argument %d: key must not be null"
 msgstr "argomento %d: la chiave non può essere null"
 
-#: utils/adt/jsonb.c:1834
+#: utils/adt/jsonb.c:1791
 #, c-format
 msgid "object keys must be strings"
 msgstr "le chiavi dell'oggetto devono essere stringhe"
@@ -17999,7 +17998,7 @@ msgstr "la dimensione totale degli elementi dell'oggetto jsonb supera il massimo
 
 #: utils/adt/jsonfuncs.c:296 utils/adt/jsonfuncs.c:461
 #: utils/adt/jsonfuncs.c:2056 utils/adt/jsonfuncs.c:2497
-#: utils/adt/jsonfuncs.c:3003
+#: utils/adt/jsonfuncs.c:3017
 #, c-format
 msgid "cannot call %s on a scalar"
 msgstr "non è possibile eseguire %s su uno scalare"
@@ -18026,7 +18025,7 @@ msgid "cannot call %s on a non-object"
 msgstr "non è possibile eseguire %s su un argomento che non è un oggetto"
 
 #: utils/adt/jsonfuncs.c:1482 utils/adt/jsonfuncs.c:2169
-#: utils/adt/jsonfuncs.c:2706
+#: utils/adt/jsonfuncs.c:2714
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "funzione che restituisce record eseguita in un contesto che non può accettare il tipo record"
@@ -18051,7 +18050,7 @@ msgstr "non è possibile estrarre elementi da uno scalare"
 msgid "cannot extract elements from an object"
 msgstr "non è possibile estrarre elementi da un oggetto"
 
-#: utils/adt/jsonfuncs.c:2043 utils/adt/jsonfuncs.c:2802
+#: utils/adt/jsonfuncs.c:2043 utils/adt/jsonfuncs.c:2816
 #, c-format
 msgid "cannot call %s on a non-array"
 msgstr "non è possibile eseguire %s su un argomento che non è un array"
@@ -18066,47 +18065,47 @@ msgstr "il primo elemento di %s deve essere di tipo riga"
 msgid "Try calling the function in the FROM clause using a column definition list."
 msgstr "Prova ad eseguire la funzione nella clausola FROM usando una lista di definizioni di colonne."
 
-#: utils/adt/jsonfuncs.c:2818 utils/adt/jsonfuncs.c:2985
+#: utils/adt/jsonfuncs.c:2832 utils/adt/jsonfuncs.c:2999
 #, c-format
 msgid "argument of %s must be an array of objects"
 msgstr "l'argomento di %s deve essere un array di oggetti"
 
-#: utils/adt/jsonfuncs.c:2842
+#: utils/adt/jsonfuncs.c:2856
 #, c-format
 msgid "cannot call %s on an object"
 msgstr "non è possibile eseguire %s su un oggetto"
 
-#: utils/adt/jsonfuncs.c:3409 utils/adt/jsonfuncs.c:3462
+#: utils/adt/jsonfuncs.c:3423 utils/adt/jsonfuncs.c:3476
 #, c-format
 msgid "cannot delete from scalar"
 msgstr "non è possibile eliminare da uno scalare"
 
-#: utils/adt/jsonfuncs.c:3467
+#: utils/adt/jsonfuncs.c:3481
 #, c-format
 msgid "cannot delete from object using integer index"
 msgstr "non è possibile eliminare da un oggetto usando numeri interi come indici"
 
-#: utils/adt/jsonfuncs.c:3533
+#: utils/adt/jsonfuncs.c:3547
 #, c-format
 msgid "cannot set path in scalar"
 msgstr "non è possibile impostare un percorso in uno scalare"
 
-#: utils/adt/jsonfuncs.c:3578
+#: utils/adt/jsonfuncs.c:3592
 #, c-format
 msgid "cannot delete path in scalar"
 msgstr "non è possibile eliminare un percorso in uno scalare"
 
-#: utils/adt/jsonfuncs.c:3703
+#: utils/adt/jsonfuncs.c:3717
 #, c-format
 msgid "invalid concatenation of jsonb objects"
 msgstr "concatenazione invalida di oggetti jsonb"
 
-#: utils/adt/jsonfuncs.c:3732
+#: utils/adt/jsonfuncs.c:3746
 #, c-format
 msgid "path element at position %d is null"
 msgstr "l'elemento di percorso in posizione %d è nullo"
 
-#: utils/adt/jsonfuncs.c:3888
+#: utils/adt/jsonfuncs.c:3902
 #, c-format
 msgid "path element at position %d is not an integer: \"%s\""
 msgstr "l'elemento di percorso in posizione %d non è un intero: \"%s\""

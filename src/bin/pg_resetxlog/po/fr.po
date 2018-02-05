@@ -22,7 +22,7 @@ msgstr ""
 #: ../../common/restricted_token.c:68
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s : ATTENTION : ne peut pas crér les jetons restreints sur cette plateforme\n"
+msgstr "%s : ATTENTION : ne peut pas créer les jetons restreints sur cette plateforme\n"
 
 #: ../../common/restricted_token.c:77
 #, c-format
