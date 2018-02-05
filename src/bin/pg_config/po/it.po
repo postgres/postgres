@@ -1,28 +1,26 @@
 #
-# Translation of pg_config to Italian
-# PostgreSQL Project
+# pg_config.po
+#   Italian message translation file for pg_config
 #
-# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
-# http://www.itpug.org/ - info@itpug.org
+# For development and bug report please use:
+# https://github.com/dvarrazzo/postgresql-it
 #
-# Traduttori:
-#  * Daniele Varrazzo <daniele.varrazzo@gmail.com>
-#  * Cosimo D'Arcangelo <cosimo.darcangelo@itpug.org>
+# Copyright (C) 2012-2017 PostgreSQL Global Development Group
+# Copyright (C) 2010, Associazione Culturale ITPUG
 #
-# Revisori:
-#  * Emanuele Zamprogno <emanuele.zamprogno@itpug.org>
+# Daniele Varrazzo <daniele.varrazzo@gmail.com>, 2012-2017
+# Cosimo D'Arcangelo <cosimo.darcangelo@itpug.org> 2010
 #
-# Copyright (c) 2010, Associazione Culturale ITPUG
-# Distributed under the same license of the PostgreSQL project
+# This file is distributed under the same license as the PostgreSQL package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config (PostgreSQL) 9.3\n"
+"Project-Id-Version: pg_config (PostgreSQL) 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-03-15 22:16+0000\n"
+"POT-Creation-Date: 2014-07-30 04:12+0000\n"
 "PO-Revision-Date: 2012-11-02 13:39+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
-"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -31,37 +29,37 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "identificazione della directory corrente fallita: %s"
 
-#: ../../port/exec.c:146
+#: ../../common/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binario non valido \"%s\""
 
-#: ../../port/exec.c:195
+#: ../../common/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "lettura del binario \"%s\" fallita"
 
-#: ../../port/exec.c:202
+#: ../../common/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "programma \"%s\" da eseguire non trovato"
 
-#: ../../port/exec.c:257 ../../port/exec.c:293
+#: ../../common/exec.c:257 ../../common/exec.c:293
 #, c-format
 msgid "could not change directory to \"%s\": %s"
 msgstr "spostamento nella directory \"%s\" fallito: %s"
 
-#: ../../port/exec.c:272
+#: ../../common/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "lettura del link simbolico \"%s\" fallita"
 
-#: ../../port/exec.c:523
+#: ../../common/exec.c:523
 #, c-format
 msgid "pclose failed: %s"
 msgstr "pclose fallita: %s"

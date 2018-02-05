@@ -4,14 +4,14 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2005.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017, 2018.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 18:06+0000\n"
-"PO-Revision-Date: 2017-05-27 13:06+0300\n"
+"POT-Creation-Date: 2018-01-31 07:58+0300\n"
+"PO-Revision-Date: 2018-01-31 08:21+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -260,7 +260,7 @@ msgstr "Секундомер выключен."
 #: command.c:1449 command.c:1469 command.c:2139 command.c:2142 command.c:2145
 #: command.c:2151 command.c:2153 command.c:2161 command.c:2171 command.c:2180
 #: command.c:2194 command.c:2211 command.c:2270 common.c:75 copy.c:333
-#: copy.c:393 copy.c:408 psqlscan.l:1677 psqlscan.l:1688 psqlscan.l:1698
+#: copy.c:393 copy.c:408 psqlscan.l:1678 psqlscan.l:1689 psqlscan.l:1699
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -290,7 +290,7 @@ msgstr ""
 
 #: command.c:1785 command.c:3136 common.c:121 common.c:418 common.c:483
 #: common.c:934 common.c:962 common.c:1059 copy.c:492 copy.c:705
-#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1949
+#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1950
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -2459,23 +2459,25 @@ msgstr ""
 #, c-format
 msgid ""
 "  \\pset [NAME [VALUE]]   set table output option\n"
-"                         (NAME := {format|border|expanded|fieldsep|"
-"fieldsep_zero|footer|null|\n"
-"                         numericlocale|recordsep|recordsep_zero|tuples_only|"
-"title|tableattr|pager})\n"
+"                         (NAME := {border|columns|expanded|fieldsep|"
+"fieldsep_zero|\n"
+"                         footer|format|linestyle|null|numericlocale|pager|\n"
+"                         recordsep|recordsep_zero|tableattr|title|"
+"tuples_only})\n"
 msgstr ""
 "  \\pset [ИМЯ [ЗНАЧЕНИЕ]] установить параметр вывода таблицы, где\n"
-"                         ИМЯ := {format|border|expanded|fieldsep|"
-"fieldsep_zero|footer|null|\n"
-"                         numericlocale|recordsep|recordsep_zero|tuples_only|"
-"title|tableattr|pager})\n"
+"                         ИМЯ := {border|columns|expanded|fieldsep|"
+"fieldsep_zero|\n"
+"                         footer|format|linestyle|null|numericlocale|pager|\n"
+"                         recordsep|recordsep_zero|tableattr|title|"
+"tuples_only}\n"
 
-#: help.c:238
+#: help.c:239
 #, c-format
 msgid "  \\t [on|off]            show only rows (currently %s)\n"
 msgstr "  \\t [on|off]            режим вывода только строк (сейчас: %s)\n"
 
-#: help.c:240
+#: help.c:241
 #, c-format
 msgid ""
 "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
@@ -2483,19 +2485,19 @@ msgstr ""
 "  \\T [СТРОКА]            задать атрибуты для <table> или убрать, если не "
 "заданы\n"
 
-#: help.c:241
+#: help.c:242
 #, c-format
 msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
 msgstr ""
 "  \\x [on|off|auto]       переключить режим расширенного вывода (сейчас: "
 "%s)\n"
 
-#: help.c:245
+#: help.c:246
 #, c-format
 msgid "Connection\n"
 msgstr "Соединение\n"
 
-#: help.c:247
+#: help.c:248
 #, c-format
 msgid ""
 "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
@@ -2505,7 +2507,7 @@ msgstr ""
 "                         подключиться к другой базе данных\n"
 "                         (текущая: \"%s\")\n"
 
-#: help.c:251
+#: help.c:252
 #, c-format
 msgid ""
 "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
@@ -2515,44 +2517,44 @@ msgstr ""
 "                         подключиться к другой базе данных\n"
 "                         (сейчас подключения нет)\n"
 
-#: help.c:253
+#: help.c:254
 #, c-format
 msgid "  \\encoding [ENCODING]   show or set client encoding\n"
 msgstr "  \\encoding [КОДИРОВКА]  показать/установить клиентскую кодировку\n"
 
-#: help.c:254
+#: help.c:255
 #, c-format
 msgid "  \\password [USERNAME]   securely change the password for a user\n"
 msgstr "  \\password [ИМЯ]        безопасно сменить пароль пользователя\n"
 
-#: help.c:255
+#: help.c:256
 #, c-format
 msgid ""
 "  \\conninfo              display information about current connection\n"
 msgstr "  \\conninfo              информация о текущем соединении\n"
 
-#: help.c:258
+#: help.c:259
 #, c-format
 msgid "Operating System\n"
 msgstr "Операционная система\n"
 
-#: help.c:259
+#: help.c:260
 #, c-format
 msgid "  \\cd [DIR]              change the current working directory\n"
 msgstr "  \\cd [ПУТЬ]             сменить текущий каталог\n"
 
-#: help.c:260
+#: help.c:261
 #, c-format
 msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
 msgstr ""
 "  \\setenv ИМЯ [ЗНАЧЕНИЕ] установить или сбросить переменную окружения\n"
 
-#: help.c:261
+#: help.c:262
 #, c-format
 msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
 msgstr "  \\timing [on|off]       включить/выключить секундомер (сейчас: %s)\n"
 
-#: help.c:263
+#: help.c:264
 #, c-format
 msgid ""
 "  \\! [COMMAND]           execute command in shell or start interactive "
@@ -2561,19 +2563,19 @@ msgstr ""
 "  \\! [КОМАНДА]           выполнить команду в командной оболочке\n"
 "                         или запустить интерактивную оболочку\n"
 
-#: help.c:266
+#: help.c:267
 #, c-format
 msgid "Variables\n"
 msgstr "Переменные\n"
 
-#: help.c:267
+#: help.c:268
 #, c-format
 msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
 msgstr ""
 "  \\prompt [ТЕКСТ] ИМЯ    предложить пользователю задать внутреннюю "
 "переменную\n"
 
-#: help.c:268
+#: help.c:269
 #, c-format
 msgid ""
 "  \\set [NAME [VALUE]]    set internal variable, or list all if no "
@@ -2582,17 +2584,17 @@ msgstr ""
 "  \\set [ИМЯ [ЗНАЧЕНИЕ]]  установить внутреннюю переменную или вывести все,\n"
 "                         если имя не задано\n"
 
-#: help.c:269
+#: help.c:270
 #, c-format
 msgid "  \\unset NAME            unset (delete) internal variable\n"
 msgstr "  \\unset ИМЯ             сбросить (удалить) внутреннюю переменную\n"
 
-#: help.c:272
+#: help.c:273
 #, c-format
 msgid "Large Objects\n"
 msgstr "Большие объекты\n"
 
-#: help.c:273
+#: help.c:274
 #, c-format
 msgid ""
 "  \\lo_export LOBOID FILE\n"
@@ -2605,11 +2607,11 @@ msgstr ""
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID      операции с большими объектами\n"
 
-#: help.c:320
+#: help.c:321
 msgid "Available help:\n"
 msgstr "Имеющаяся справка:\n"
 
-#: help.c:404
+#: help.c:405
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -2624,7 +2626,7 @@ msgstr ""
 "%s\n"
 "\n"
 
-#: help.c:420
+#: help.c:421
 #, c-format
 msgid ""
 "No help available for \"%s\".\n"
@@ -2736,17 +2738,17 @@ msgstr "неверный формат вывода (внутренняя оши�
 msgid "skipping recursive expansion of variable \"%s\"\n"
 msgstr "рекурсивное расширение переменной \"%s\" пропускается\n"
 
-#: psqlscan.l:1604
+#: psqlscan.l:1605
 #, c-format
 msgid "unterminated quoted string\n"
 msgstr "незавершённая строка в кавычках\n"
 
-#: psqlscan.l:1704
+#: psqlscan.l:1705
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: нехватка памяти\n"
 
-#: psqlscan.l:1933
+#: psqlscan.l:1934
 #, c-format
 msgid "can't escape without active connection\n"
 msgstr "экранирование строк не работает без подключения к БД\n"

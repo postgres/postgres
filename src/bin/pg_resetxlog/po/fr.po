@@ -483,7 +483,7 @@ msgstr "%s : n'a pas pu écrire le fichier « %s » : %s\n"
 #: pg_resetxlog.c:1192
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s : ATTENTION : ne peut pas crér les jetons restreints sur cette plateforme\n"
+msgstr "%s : ATTENTION : ne peut pas créer les jetons restreints sur cette plateforme\n"
 
 #: pg_resetxlog.c:1201
 #, c-format
