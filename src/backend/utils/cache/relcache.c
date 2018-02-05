@@ -983,9 +983,14 @@ RelationBuildPartitionKey(Relation relation)
 		}
 		else
 		{
+			if (partexprs_item == NULL)
+				elog(ERROR, "wrong number of partition key expressions");
+
 			key->parttypid[i] = exprType(lfirst(partexprs_item));
 			key->parttypmod[i] = exprTypmod(lfirst(partexprs_item));
 			key->parttypcoll[i] = exprCollation(lfirst(partexprs_item));
+
+			partexprs_item = lnext(partexprs_item);
 		}
 		get_typlenbyvalalign(key->parttypid[i],
 							 &key->parttyplen[i],
