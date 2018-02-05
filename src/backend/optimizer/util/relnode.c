@@ -1662,11 +1662,14 @@ build_joinrel_partition_info(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 	 */
 	joinrel->part_scheme = part_scheme;
 	joinrel->boundinfo = outer_rel->boundinfo;
-	joinrel->nparts = outer_rel->nparts;
 	partnatts = joinrel->part_scheme->partnatts;
 	joinrel->partexprs = (List **) palloc0(sizeof(List *) * partnatts);
 	joinrel->nullable_partexprs =
 		(List **) palloc0(sizeof(List *) * partnatts);
+	joinrel->nparts = outer_rel->nparts;
+	joinrel->part_rels =
+		(RelOptInfo **) palloc0(sizeof(RelOptInfo *) * joinrel->nparts);
+
 
 	/*
 	 * Construct partition keys for the join.

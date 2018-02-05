@@ -1319,17 +1319,6 @@ try_partition_wise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		return;
 
 	/*
-	 * set_rel_pathlist() may not create paths in children of an empty
-	 * partitioned table and so we can not add paths to child-joins. So, deem
-	 * such a join as unpartitioned. When a partitioned relation is deemed
-	 * empty because all its children are empty, dummy path will be set in
-	 * each of the children.  In such a case we could still consider the join
-	 * as partitioned, but it might not help much.
-	 */
-	if (IS_DUMMY_REL(rel1) || IS_DUMMY_REL(rel2))
-		return;
-
-	/*
 	 * Since this join relation is partitioned, all the base relations
 	 * participating in this join must be partitioned and so are all the
 	 * intermediate join relations.
@@ -1359,11 +1348,6 @@ try_partition_wise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 								  joinrel->boundinfo, rel2->boundinfo));
 
 	nparts = joinrel->nparts;
-
-	/* Allocate space to hold child-joins RelOptInfos, if not already done. */
-	if (!joinrel->part_rels)
-		joinrel->part_rels =
-			(RelOptInfo **) palloc0(sizeof(RelOptInfo *) * nparts);
 
 	/*
 	 * Create child-join relations for this partitioned join, if those don't

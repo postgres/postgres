@@ -666,13 +666,17 @@ typedef struct RelOptInfo
 /*
  * Is given relation partitioned?
  *
- * A join between two partitioned relations with same partitioning scheme
- * without any matching partitions will not have any partition in it but will
- * have partition scheme set. So a relation is deemed to be partitioned if it
- * has a partitioning scheme, bounds and positive number of partitions.
+ * It's not enough to test whether rel->part_scheme is set, because it might
+ * be that the basic partitioning properties of the input relations matched
+ * but the partition bounds did not.
+ *
+ * We treat dummy relations as unpartitioned.  We could alternatively
+ * treat them as partitioned, but it's not clear whether that's a useful thing
+ * to do.
  */
 #define IS_PARTITIONED_REL(rel) \
-	((rel)->part_scheme && (rel)->boundinfo && (rel)->nparts > 0)
+	((rel)->part_scheme && (rel)->boundinfo && (rel)->nparts > 0 && \
+	 (rel)->part_rels && !(IS_DUMMY_REL(rel)))
 
 /*
  * Convenience macro to make sure that a partitioned relation has all the

@@ -3425,20 +3425,8 @@ generate_partition_wise_join_paths(PlannerInfo *root, RelOptInfo *rel)
 	if (!IS_JOIN_REL(rel))
 		return;
 
-	/*
-	 * If we've already proven this join is empty, we needn't consider any
-	 * more paths for it.
-	 */
-	if (IS_DUMMY_REL(rel))
-		return;
-
-	/*
-	 * We've nothing to do if the relation is not partitioned. An outer join
-	 * relation which had an empty inner relation in every pair will have the
-	 * rest of the partitioning properties set except the child-join
-	 * RelOptInfos. See try_partition_wise_join() for more details.
-	 */
-	if (rel->nparts <= 0 || rel->part_rels == NULL)
+	/* We've nothing to do if the relation is not partitioned. */
+	if (!IS_PARTITIONED_REL(rel))
 		return;
 
 	/* Guard against stack overflow due to overly deep partition hierarchy. */
@@ -3451,6 +3439,8 @@ generate_partition_wise_join_paths(PlannerInfo *root, RelOptInfo *rel)
 	for (cnt_parts = 0; cnt_parts < num_parts; cnt_parts++)
 	{
 		RelOptInfo *child_rel = part_rels[cnt_parts];
+
+		Assert(child_rel != NULL);
 
 		/* Add partition-wise join paths for partitioned child-joins. */
 		generate_partition_wise_join_paths(root, child_rel);
