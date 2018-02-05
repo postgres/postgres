@@ -77,6 +77,10 @@ main(int argc, char **argv)
 	bool		live_check = false;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_upgrade"));
+
+	/* Ensure that all files created by pg_upgrade are non-world-readable */
+	umask(S_IRWXG | S_IRWXO);
+
 	parseCommandLine(argc, argv);
 
 	get_restricted_token(os_info.progname);

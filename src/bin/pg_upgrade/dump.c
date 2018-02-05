@@ -18,7 +18,6 @@ void
 generate_old_dump(void)
 {
 	int			dbnum;
-	mode_t		old_umask;
 
 	prep_status("Creating dump of global objects");
 
@@ -32,13 +31,6 @@ generate_old_dump(void)
 	check_ok();
 
 	prep_status("Creating dump of database schemas\n");
-
-	/*
-	 * Set umask for this function, all functions it calls, and all
-	 * subprocesses/threads it creates.  We can't use fopen_priv() as Windows
-	 * uses threads and umask is process-global.
-	 */
-	old_umask = umask(S_IRWXG | S_IRWXO);
 
 	/* create per-db dump files */
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
@@ -73,8 +65,6 @@ generate_old_dump(void)
 	/* reap all children */
 	while (reap_child(true) == true)
 		;
-
-	umask(old_umask);
 
 	end_progress_output();
 	check_ok();
