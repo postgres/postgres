@@ -374,7 +374,9 @@ void linkFile(const char *src, const char *dst,
 void rewriteVisibilityMap(const char *fromfile, const char *tofile,
 					 const char *schemaName, const char *relName);
 void		check_hard_link(void);
-FILE	   *fopen_priv(const char *path, const char *mode);
+
+/* fopen_priv() is no longer different from fopen() */
+#define fopen_priv(path, mode)	fopen(path, mode)
 
 /* function.c */
 
