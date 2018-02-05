@@ -5,13 +5,12 @@
 # Oleg Bartunov <oleg@sai.msu.su>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
 # Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 17:52+0000\n"
-"PO-Revision-Date: 2017-05-27 15:09+0300\n"
+"POT-Creation-Date: 2018-01-31 07:55+0300\n"
+"PO-Revision-Date: 2017-11-21 15:42+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -327,8 +326,8 @@ msgstr "Секундомер выключен."
 #: command.c:1613 command.c:1633 command.c:2311 command.c:2314 command.c:2317
 #: command.c:2323 command.c:2325 command.c:2333 command.c:2343 command.c:2352
 #: command.c:2366 command.c:2383 command.c:2441 common.c:68 copy.c:332
-#: copy.c:392 copy.c:405 psqlscanslash.l:711 psqlscanslash.l:722
-#: psqlscanslash.l:732
+#: copy.c:392 copy.c:405 psqlscanslash.l:712 psqlscanslash.l:723
+#: psqlscanslash.l:733
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -1990,7 +1989,7 @@ msgstr ""
 "psql - это интерактивный терминал PostgreSQL.\n"
 "\n"
 
-#: help.c:75 help.c:333 help.c:367 help.c:394
+#: help.c:75 help.c:335 help.c:369 help.c:396
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
@@ -2782,27 +2781,31 @@ msgstr ""
 #, c-format
 msgid ""
 "  \\pset [NAME [VALUE]]   set table output option\n"
-"                         (NAME := {format|border|expanded|fieldsep|"
-"fieldsep_zero|footer|null|\n"
-"                         numericlocale|recordsep|recordsep_zero|tuples_only|"
-"title|tableattr|pager|\n"
-"                         unicode_border_linestyle|unicode_column_linestyle|"
+"                         (NAME := {border|columns|expanded|fieldsep|"
+"fieldsep_zero|\n"
+"                         footer|format|linestyle|null|numericlocale|pager|\n"
+"                         pager_min_lines|recordsep|recordsep_zero|tableattr|"
+"title|\n"
+"                         tuples_only|unicode_border_linestyle|\n"
+"                         unicode_column_linestyle|"
 "unicode_header_linestyle})\n"
 msgstr ""
 "  \\pset [ИМЯ [ЗНАЧЕНИЕ]] установить параметр вывода таблицы, где\n"
-"                         ИМЯ := {format|border|expanded|fieldsep|"
-"fieldsep_zero|footer|null|\n"
-"                         numericlocale|recordsep|recordsep_zero|tuples_only|"
-"title|tableattr|pager|\n"
-"                         unicode_border_linestyle|unicode_column_linestyle|"
+"                         (ИМЯ := {border|columns|expanded|fieldsep|"
+"fieldsep_zero|\n"
+"                         footer|format|linestyle|null|numericlocale|pager|\n"
+"                         pager_min_lines|recordsep|recordsep_zero|tableattr|"
+"title|\n"
+"                         tuples_only|unicode_border_linestyle|\n"
+"                         unicode_column_linestyle|"
 "unicode_header_linestyle})\n"
 
-#: help.c:268
+#: help.c:270
 #, c-format
 msgid "  \\t [on|off]            show only rows (currently %s)\n"
 msgstr "  \\t [on|off]            режим вывода только строк (сейчас: %s)\n"
 
-#: help.c:270
+#: help.c:272
 #, c-format
 msgid ""
 "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
@@ -2810,19 +2813,19 @@ msgstr ""
 "  \\T [СТРОКА]            задать атрибуты для <table> или убрать, если не "
 "заданы\n"
 
-#: help.c:271
+#: help.c:273
 #, c-format
 msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
 msgstr ""
 "  \\x [on|off|auto]       переключить режим расширенного вывода (сейчас: "
 "%s)\n"
 
-#: help.c:275
+#: help.c:277
 #, c-format
 msgid "Connection\n"
 msgstr "Соединение\n"
 
-#: help.c:277
+#: help.c:279
 #, c-format
 msgid ""
 "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
@@ -2832,7 +2835,7 @@ msgstr ""
 "                         подключиться к другой базе данных\n"
 "                         (текущая: \"%s\")\n"
 
-#: help.c:281
+#: help.c:283
 #, c-format
 msgid ""
 "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
@@ -2842,44 +2845,44 @@ msgstr ""
 "                         подключиться к другой базе данных\n"
 "                         (сейчас подключения нет)\n"
 
-#: help.c:283
+#: help.c:285
 #, c-format
 msgid "  \\encoding [ENCODING]   show or set client encoding\n"
 msgstr "  \\encoding [КОДИРОВКА]  показать/установить клиентскую кодировку\n"
 
-#: help.c:284
+#: help.c:286
 #, c-format
 msgid "  \\password [USERNAME]   securely change the password for a user\n"
 msgstr "  \\password [ИМЯ]        безопасно сменить пароль пользователя\n"
 
-#: help.c:285
+#: help.c:287
 #, c-format
 msgid ""
 "  \\conninfo              display information about current connection\n"
 msgstr "  \\conninfo              информация о текущем соединении\n"
 
-#: help.c:288
+#: help.c:290
 #, c-format
 msgid "Operating System\n"
 msgstr "Операционная система\n"
 
-#: help.c:289
+#: help.c:291
 #, c-format
 msgid "  \\cd [DIR]              change the current working directory\n"
 msgstr "  \\cd [ПУТЬ]             сменить текущий каталог\n"
 
-#: help.c:290
+#: help.c:292
 #, c-format
 msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
 msgstr ""
 "  \\setenv ИМЯ [ЗНАЧЕНИЕ] установить или сбросить переменную окружения\n"
 
-#: help.c:291
+#: help.c:293
 #, c-format
 msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
 msgstr "  \\timing [on|off]       включить/выключить секундомер (сейчас: %s)\n"
 
-#: help.c:293
+#: help.c:295
 #, c-format
 msgid ""
 "  \\! [COMMAND]           execute command in shell or start interactive "
@@ -2888,19 +2891,19 @@ msgstr ""
 "  \\! [КОМАНДА]           выполнить команду в командной оболочке\n"
 "                         или запустить интерактивную оболочку\n"
 
-#: help.c:296
+#: help.c:298
 #, c-format
 msgid "Variables\n"
 msgstr "Переменные\n"
 
-#: help.c:297
+#: help.c:299
 #, c-format
 msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
 msgstr ""
 "  \\prompt [ТЕКСТ] ИМЯ    предложить пользователю задать внутреннюю "
 "переменную\n"
 
-#: help.c:298
+#: help.c:300
 #, c-format
 msgid ""
 "  \\set [NAME [VALUE]]    set internal variable, or list all if no "
@@ -2909,17 +2912,17 @@ msgstr ""
 "  \\set [ИМЯ [ЗНАЧЕНИЕ]]  установить внутреннюю переменную или вывести все,\n"
 "                         если имя не задано\n"
 
-#: help.c:299
+#: help.c:301
 #, c-format
 msgid "  \\unset NAME            unset (delete) internal variable\n"
 msgstr "  \\unset ИМЯ             сбросить (удалить) внутреннюю переменную\n"
 
-#: help.c:302
+#: help.c:304
 #, c-format
 msgid "Large Objects\n"
 msgstr "Большие объекты\n"
 
-#: help.c:303
+#: help.c:305
 #, c-format
 msgid ""
 "  \\lo_export LOBOID FILE\n"
@@ -2932,7 +2935,7 @@ msgstr ""
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID      операции с большими объектами\n"
 
-#: help.c:330
+#: help.c:332
 #, c-format
 msgid ""
 "List of specially treated variables\n"
@@ -2941,12 +2944,12 @@ msgstr ""
 "Список специальных переменных\n"
 "\n"
 
-#: help.c:332
+#: help.c:334
 #, c-format
 msgid "psql variables:\n"
 msgstr "Переменные psql:\n"
 
-#: help.c:334
+#: help.c:336
 #, c-format
 msgid ""
 "  psql --set=NAME=VALUE\n"
@@ -2957,7 +2960,7 @@ msgstr ""
 "  или \\set ИМЯ ЗНАЧЕНИЕ в приглашении psql\n"
 "\n"
 
-#: help.c:336
+#: help.c:338
 #, c-format
 msgid ""
 "  AUTOCOMMIT         if set, successful SQL commands are automatically "
@@ -2966,7 +2969,7 @@ msgstr ""
 "  AUTOCOMMIT         если установлен, успешные SQL-команды фиксируются "
 "автоматически\n"
 
-#: help.c:337
+#: help.c:339
 #, c-format
 msgid ""
 "  COMP_KEYWORD_CASE  determines the case used to complete SQL key words\n"
@@ -2978,12 +2981,12 @@ msgstr ""
 "                      preserve-lower (сохранять нижний),\n"
 "                      preserve-upper (сохранять верхний)]\n"
 
-#: help.c:339
+#: help.c:341
 #, c-format
 msgid "  DBNAME             the currently connected database name\n"
 msgstr "  DBNAME             имя текущей подключённой базы данных\n"
 
-#: help.c:340
+#: help.c:342
 #, c-format
 msgid ""
 "  ECHO               controls what input is written to standard output\n"
@@ -2993,7 +2996,7 @@ msgstr ""
 "                     [all (всё), errors (ошибки), none (ничего),\n"
 "                      queries (запросы)]\n"
 
-#: help.c:342
+#: help.c:344
 #, c-format
 msgid ""
 "  ECHO_HIDDEN        if set, display internal queries executed by backslash "
@@ -3005,12 +3008,12 @@ msgstr ""
 "                     если установлено значение \"noexec\", они выводятся, но "
 "не выполняются\n"
 
-#: help.c:344
+#: help.c:346
 #, c-format
 msgid "  ENCODING           current client character set encoding\n"
 msgstr "  ENCODING           текущая кодировка клиентского набора символов\n"
 
-#: help.c:345
+#: help.c:347
 #, c-format
 msgid ""
 "  FETCH_COUNT        the number of result rows to fetch and display at a "
@@ -3021,7 +3024,7 @@ msgstr ""
 "за раз\n"
 "                     (по умолчанию: 0=без ограничений)\n"
 
-#: help.c:347
+#: help.c:349
 #, c-format
 msgid ""
 "  HISTCONTROL        controls command history [ignorespace, ignoredups, "
@@ -3032,26 +3035,26 @@ msgstr ""
 "                     ignoredups (игнорировать дубли), ignoreboth (и то, и "
 "другое)]\n"
 
-#: help.c:348
+#: help.c:350
 #, c-format
 msgid "  HISTFILE           file name used to store the command history\n"
 msgstr ""
 "  HISTFILE           имя файла, в котором будет сохраняться история команд\n"
 
-#: help.c:349
+#: help.c:351
 #, c-format
 msgid ""
 "  HISTSIZE           the number of commands to store in the command history\n"
 msgstr ""
 "  HISTSIZE           число команд, которые будут сохраняться в истории\n"
 
-#: help.c:350
+#: help.c:352
 #, c-format
 msgid "  HOST               the currently connected database server host\n"
 msgstr ""
 "  HOST               сервер баз данных, к которому установлено подключение\n"
 
-#: help.c:351
+#: help.c:353
 #, c-format
 msgid ""
 "  IGNOREEOF          if unset, sending an EOF to interactive session "
@@ -3060,12 +3063,12 @@ msgstr ""
 "  IGNOREEOF          если не установлено, отправка EOF в интерактивном "
 "сеансе завершает приложение\n"
 
-#: help.c:352
+#: help.c:354
 #, c-format
 msgid "  LASTOID            value of the last affected OID\n"
 msgstr "  LASTOID            значение последнего задействованного OID\n"
 
-#: help.c:353
+#: help.c:355
 #, c-format
 msgid ""
 "  ON_ERROR_ROLLBACK  if set, an error doesn't stop a transaction (uses "
@@ -3074,23 +3077,23 @@ msgstr ""
 "  ON_ERROR_ROLLBACK  если установлено, транзакция не прекращается при ошибке "
 "(используются неявные точки сохранения)\n"
 
-#: help.c:354
+#: help.c:356
 #, c-format
 msgid "  ON_ERROR_STOP      stop batch execution after error\n"
 msgstr ""
 "  ON_ERROR_STOP      останавливать выполнение пакета команд после ошибки\n"
 
-#: help.c:355
+#: help.c:357
 #, c-format
 msgid "  PORT               server port of the current connection\n"
 msgstr "  PORT               порт сервера для текущего соединения\n"
 
-#: help.c:356
+#: help.c:358
 #, c-format
 msgid "  PROMPT1            specifies the standard psql prompt\n"
 msgstr "  PROMPT1            устанавливает стандартное приглашение psql\n"
 
-#: help.c:357
+#: help.c:359
 #, c-format
 msgid ""
 "  PROMPT2            specifies the prompt used when a statement continues "
@@ -3099,7 +3102,7 @@ msgstr ""
 "  PROMPT2            устанавливает приглашение, которое выводится при "
 "переносе оператора на новую строку\n"
 
-#: help.c:358
+#: help.c:360
 #, c-format
 msgid ""
 "  PROMPT3            specifies the prompt used during COPY ... FROM STDIN\n"
@@ -3107,13 +3110,13 @@ msgstr ""
 "  PROMPT3            устанавливает приглашения для выполнения COPY ... FROM "
 "STDIN\n"
 
-#: help.c:359
+#: help.c:361
 #, c-format
 msgid "  QUIET              run quietly (same as -q option)\n"
 msgstr ""
 "  QUIET              выводить минимум сообщений (как и с параметром -q)\n"
 
-#: help.c:360
+#: help.c:362
 #, c-format
 msgid ""
 "  SHOW_CONTEXT       controls display of message context fields [never, "
@@ -3122,7 +3125,7 @@ msgstr ""
 "  SHOW_CONTEXT       управляет отображением полей контекста сообщений "
 "[never, errors, always]\n"
 
-#: help.c:361
+#: help.c:363
 #, c-format
 msgid ""
 "  SINGLELINE         end of line terminates SQL command mode (same as -S "
@@ -3131,17 +3134,17 @@ msgstr ""
 "  SINGLELINE         конец строки завершает режим ввода SQL-команды (как и с "
 "параметром -S)\n"
 
-#: help.c:362
+#: help.c:364
 #, c-format
 msgid "  SINGLESTEP         single-step mode (same as -s option)\n"
 msgstr "  SINGLESTEP         пошаговый режим (как и с параметром -s)\n"
 
-#: help.c:363
+#: help.c:365
 #, c-format
 msgid "  USER               the currently connected database user\n"
 msgstr "  USER               текущий пользователь, подключённый к БД\n"
 
-#: help.c:364
+#: help.c:366
 #, c-format
 msgid ""
 "  VERBOSITY          controls verbosity of error reports [default, verbose, "
@@ -3150,7 +3153,7 @@ msgstr ""
 "  VERBOSITY          управляет детализацией отчётов об ошибке [default (по "
 "умолчанию), verbose (подробно), terse (кратко)]\n"
 
-#: help.c:366
+#: help.c:368
 #, c-format
 msgid ""
 "\n"
@@ -3159,7 +3162,7 @@ msgstr ""
 "\n"
 "Параметры отображения:\n"
 
-#: help.c:368
+#: help.c:370
 #, c-format
 msgid ""
 "  psql --pset=NAME[=VALUE]\n"
@@ -3170,24 +3173,24 @@ msgstr ""
 "  или \\pset ИМЯ [ЗНАЧЕНИЕ] в приглашении psql\n"
 "\n"
 
-#: help.c:370
+#: help.c:372
 #, c-format
 msgid "  border             border style (number)\n"
 msgstr "  border             стиль границы (число)\n"
 
-#: help.c:371
+#: help.c:373
 #, c-format
 msgid "  columns            target width for the wrapped format\n"
 msgstr "  columns            целевая ширина для формата с переносом\n"
 
-#: help.c:372
+#: help.c:374
 #, c-format
 msgid "  expanded (or x)    expanded output [on, off, auto]\n"
 msgstr ""
 "  expanded (или x)    расширенный вывод [on (вкл.), off (выкл.), auto "
 "(авто)]\n"
 
-#: help.c:373
+#: help.c:375
 #, c-format
 msgid ""
 "  fieldsep           field separator for unaligned output (default \"%s\")\n"
@@ -3195,7 +3198,7 @@ msgstr ""
 "  fieldsep           разделитель полей для неформатированного вывода (по "
 "умолчанию \"%s\")\n"
 
-#: help.c:374
+#: help.c:376
 #, c-format
 msgid ""
 "  fieldsep_zero      set field separator for unaligned output to zero byte\n"
@@ -3203,7 +3206,7 @@ msgstr ""
 "  fieldsep_zero      устанавливает ноль разделителем полей при "
 "неформатированном выводе\n"
 
-#: help.c:375
+#: help.c:377
 #, c-format
 msgid ""
 "  footer             enable or disable display of the table footer [on, "
@@ -3212,7 +3215,7 @@ msgstr ""
 "  footer             включает или выключает вывод подписей таблицы [on "
 "(вкл.), off (выкл.)]\n"
 
-#: help.c:376
+#: help.c:378
 #, c-format
 msgid ""
 "  format             set output format [unaligned, aligned, wrapped, html, "
@@ -3222,7 +3225,7 @@ msgstr ""
 "(неформатированный), aligned (выровненный), wrapped (с переносом), html, "
 "asciidoc, ...]\n"
 
-#: help.c:377
+#: help.c:379
 #, c-format
 msgid ""
 "  linestyle          set the border line drawing style [ascii, old-ascii, "
@@ -3231,14 +3234,14 @@ msgstr ""
 "  linestyle          задаёт стиль рисования линий границы [ascii, old-ascii, "
 "unicode]\n"
 
-#: help.c:378
+#: help.c:380
 #, c-format
 msgid ""
 "  null               set the string to be printed in place of a null value\n"
 msgstr ""
 "  null               устанавливает строку, выводимую вместо значения NULL\n"
 
-#: help.c:379
+#: help.c:381
 #, c-format
 msgid ""
 "  numericlocale      enable or disable display of a locale-specific "
@@ -3249,7 +3252,7 @@ msgstr ""
 "разделителя\n"
 "                     группы цифр [on (вкл.), off (выкл.)]\n"
 
-#: help.c:381
+#: help.c:383
 #, c-format
 msgid ""
 "  pager              control when an external pager is used [yes, no, "
@@ -3258,14 +3261,14 @@ msgstr ""
 "  pager              определяет, используется ли внешний "
 "постраничник                      [yes (да), no (нет), always (всегда)]\n"
 
-#: help.c:382
+#: help.c:384
 #, c-format
 msgid "  recordsep          record (line) separator for unaligned output\n"
 msgstr ""
 "  recordsep          разделитель записей (строк) при неформатированном "
 "выводе\n"
 
-#: help.c:383
+#: help.c:385
 #, c-format
 msgid ""
 "  recordsep_zero     set record separator for unaligned output to zero byte\n"
@@ -3273,7 +3276,7 @@ msgstr ""
 "  recordsep_zero     устанавливает ноль разделителем записей при "
 "неформатированном выводе\n"
 
-#: help.c:384
+#: help.c:386
 #, c-format
 msgid ""
 "  tableattr (or T)   specify attributes for table tag in html format or "
@@ -3286,7 +3289,7 @@ msgstr ""
 "                     ширины столбцов для выровненных влево данных, в формате "
 "latex-longtable\n"
 
-#: help.c:386
+#: help.c:388
 #, c-format
 msgid ""
 "  title              set the table title for any subsequently printed "
@@ -3295,14 +3298,14 @@ msgstr ""
 "  title              задаёт заголовок таблицы для последовательно печатаемых "
 "таблиц\n"
 
-#: help.c:387
+#: help.c:389
 #, c-format
 msgid "  tuples_only        if set, only actual table data is shown\n"
 msgstr ""
 "  tuples_only        если установлено, выводятся только непосредственно "
 "табличные данные\n"
 
-#: help.c:388
+#: help.c:390
 #, c-format
 msgid ""
 "  unicode_border_linestyle\n"
@@ -3316,7 +3319,7 @@ msgstr ""
 "                     задаёт стиль рисуемых линий Unicode [single "
 "(одинарные), double (двойные)]\n"
 
-#: help.c:393
+#: help.c:395
 #, c-format
 msgid ""
 "\n"
@@ -3325,7 +3328,7 @@ msgstr ""
 "\n"
 "Переменные окружения:\n"
 
-#: help.c:397
+#: help.c:399
 #, c-format
 msgid ""
 "  NAME=VALUE [NAME=VALUE] psql ...\n"
@@ -3336,7 +3339,7 @@ msgstr ""
 "  или \\setenv ИМЯ [ЗНАЧЕНИЕ] в приглашении psql\n"
 "\n"
 
-#: help.c:399
+#: help.c:401
 #, c-format
 msgid ""
 "  set NAME=VALUE\n"
@@ -3349,54 +3352,54 @@ msgstr ""
 "  или \\setenv ИМЯ ЗНАЧЕНИЕ в приглашении psql\n"
 "\n"
 
-#: help.c:402
+#: help.c:404
 #, c-format
 msgid "  COLUMNS            number of columns for wrapped format\n"
 msgstr "  COLUMNS            число столбцов для форматирования с переносом\n"
 
-#: help.c:403
+#: help.c:405
 #, c-format
 msgid "  PAGER              name of external pager program\n"
 msgstr "  PAGER              имя программы внешнего постраничника\n"
 
-#: help.c:404
+#: help.c:406
 #, c-format
 msgid ""
 "  PGAPPNAME          same as the application_name connection parameter\n"
 msgstr "  PGAPPNAME          синоним параметра подключения application_name\n"
 
-#: help.c:405
+#: help.c:407
 #, c-format
 msgid "  PGDATABASE         same as the dbname connection parameter\n"
 msgstr "  PGDATABASE         синоним параметра подключения dbname\n"
 
-#: help.c:406
+#: help.c:408
 #, c-format
 msgid "  PGHOST             same as the host connection parameter\n"
 msgstr "  PGHOST             синоним параметра подключения host\n"
 
-#: help.c:407
+#: help.c:409
 #, c-format
 msgid "  PGPORT             same as the port connection parameter\n"
 msgstr "  PGPORT             синоним параметра подключения port\n"
 
-#: help.c:408
+#: help.c:410
 #, c-format
 msgid "  PGUSER             same as the user connection parameter\n"
 msgstr "  PGUSER             синоним параметра подключения user\n"
 
-#: help.c:409
+#: help.c:411
 #, c-format
 msgid "  PGPASSWORD         connection password (not recommended)\n"
 msgstr ""
 "  PGPASSWORD         пароль для подключения (использовать не рекомендуется)\n"
 
-#: help.c:410
+#: help.c:412
 #, c-format
 msgid "  PGPASSFILE         password file name\n"
 msgstr "  PGPASSFILE         имя файла с паролем\n"
 
-#: help.c:411
+#: help.c:413
 #, c-format
 msgid ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
@@ -3405,7 +3408,7 @@ msgstr ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
 "                     редактор, вызываемый командами \\e, \\ef и \\ev\n"
 
-#: help.c:413
+#: help.c:415
 #, c-format
 msgid ""
 "  PSQL_EDITOR_LINENUMBER_ARG\n"
@@ -3415,35 +3418,35 @@ msgstr ""
 "                     определяет способ передачи номера строки при вызове "
 "редактора\n"
 
-#: help.c:415
+#: help.c:417
 #, c-format
 msgid ""
 "  PSQL_HISTORY       alternative location for the command history file\n"
 msgstr ""
 "  PSQL_HISTORY       альтернативное размещение файла с историей команд\n"
 
-#: help.c:416
+#: help.c:418
 #, c-format
 msgid "  PSQLRC             alternative location for the user's .psqlrc file\n"
 msgstr ""
 "  PSQLRC             альтернативное размещения пользовательского файла ."
 "psqlrc\n"
 
-#: help.c:417
+#: help.c:419
 #, c-format
 msgid "  SHELL              shell used by the \\! command\n"
 msgstr "  SHELL              оболочка, вызываемая командой \\!\n"
 
-#: help.c:418
+#: help.c:420
 #, c-format
 msgid "  TMPDIR             directory for temporary files\n"
 msgstr "  TMPDIR             каталог для временных файлов\n"
 
-#: help.c:461
+#: help.c:463
 msgid "Available help:\n"
 msgstr "Имеющаяся справка:\n"
 
-#: help.c:545
+#: help.c:547
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -3458,7 +3461,7 @@ msgstr ""
 "%s\n"
 "\n"
 
-#: help.c:561
+#: help.c:563
 #, c-format
 msgid ""
 "No help available for \"%s\".\n"
@@ -3539,12 +3542,12 @@ msgstr ""
 "       \\g или ; в конце строки - выполнение запроса\n"
 "       \\q - выход\n"
 
-#: psqlscanslash.l:584
+#: psqlscanslash.l:585
 #, c-format
 msgid "unterminated quoted string\n"
 msgstr "незавершённая строка в кавычках\n"
 
-#: psqlscanslash.l:738
+#: psqlscanslash.l:739
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: нехватка памяти\n"
