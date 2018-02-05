@@ -414,8 +414,9 @@ DETAIL:  table partitioned depends on function plusone(integer)
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 -- partitioned table cannot participate in regular inheritance
 CREATE TABLE partitioned2 (
-	a int
-) PARTITION BY LIST ((a+1));
+	a int,
+	b text
+) PARTITION BY RANGE ((a+1), substr(b, 1, 5));
 CREATE TABLE fail () INHERITS (partitioned2);
 ERROR:  cannot inherit from partitioned table "partitioned2"
 -- Partition key in describe output
@@ -429,12 +430,26 @@ ERROR:  cannot inherit from partitioned table "partitioned2"
  d      | text    |           |          | 
 Partition key: RANGE (a oid_ops, plusone(b), c, d COLLATE "C")
 
-\d partitioned2
-            Table "public.partitioned2"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
- a      | integer |           |          | 
-Partition key: LIST (((a + 1)))
+\d+ partitioned2
+                                Table "public.partitioned2"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ a      | integer |           |          |         | plain    |              | 
+ b      | text    |           |          |         | extended |              | 
+Partition key: RANGE (((a + 1)), substr(b, 1, 5))
+
+INSERT INTO partitioned2 VALUES (1, 'hello');
+ERROR:  no partition of relation "partitioned2" found for row
+DETAIL:  Partition key of the failing row contains ((a + 1), substr(b, 1, 5)) = (2, hello).
+CREATE TABLE part2_1 PARTITION OF partitioned2 FOR VALUES FROM (-1, 'aaaaa') TO (100, 'ccccc');
+\d+ part2_1
+                                  Table "public.part2_1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ a      | integer |           |          |         | plain    |              | 
+ b      | text    |           |          |         | extended |              | 
+Partition of: partitioned2 FOR VALUES FROM ('-1', 'aaaaa') TO (100, 'ccccc')
+Partition constraint: (((a + 1) IS NOT NULL) AND (substr(b, 1, 5) IS NOT NULL) AND (((a + 1) > '-1'::integer) OR (((a + 1) = '-1'::integer) AND (substr(b, 1, 5) >= 'aaaaa'::text))) AND (((a + 1) < 100) OR (((a + 1) = 100) AND (substr(b, 1, 5) < 'ccccc'::text))))
 
 DROP TABLE partitioned, partitioned2;
 --
