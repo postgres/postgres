@@ -252,6 +252,7 @@
   &geqo;
   &indexam;
   &generic-wal;
+  &btree;
   &gist;
   &spgist;
   &gin;

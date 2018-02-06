@@ -35,7 +35,7 @@
    <productname>PostgreSQL</productname>, but all index methods are
    described in <classname>pg_am</classname>.  It is possible to add a
    new index access method by writing the necessary code and
-   then creating a row in <classname>pg_am</classname> &mdash; but that is
+   then creating an entry in <classname>pg_am</classname> &mdash; but that is
    beyond the scope of this chapter (see <xref linkend="indexam"/>).
   </para>
 
@@ -404,6 +404,8 @@
    B-trees require a single support function, and allow a second one to be
    supplied at the operator class author's option, as shown in <xref
    linkend="xindex-btree-support-table"/>.
+   The requirements for these support functions are explained further in
+   <xref linkend="btree-support-funcs"/>.
   </para>
 
    <table tocentry="1" id="xindex-btree-support-table">
@@ -426,8 +428,8 @@
       </row>
       <row>
        <entry>
-        Return the addresses of C-callable sort support function(s),
-        as documented in <filename>utils/sortsupport.h</filename> (optional)
+        Return the addresses of C-callable sort support function(s)
+        (optional)
        </entry>
        <entry>2</entry>
       </row>
@@ -1056,11 +1058,8 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
 
   <para>
    In a B-tree operator family, all the operators in the family must sort
-   compatibly, meaning that the transitive laws hold across all the data types
-   supported by the family: <quote>if A = B and B = C, then A = C</quote>,
-   and <quote>if A &lt; B and B &lt; C, then A &lt; C</quote>.  Moreover, implicit
-   or binary coercion casts between types represented in the operator family
-   must not change the associated sort ordering.  For each
+   compatibly, as is specified in detail in <xref linkend="btree-behavior"/>.
+   For each
    operator in the family there must be a support function having the same
    two input data types as the operator.  It is recommended that a family be
    complete, i.e., for each combination of data types, all operators are
