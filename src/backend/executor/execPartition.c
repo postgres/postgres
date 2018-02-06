@@ -360,7 +360,7 @@ ExecSetupChildParentMapForLeaf(PartitionTupleRouting *proute)
 	Assert(proute != NULL);
 
 	/*
-	 * These array elements gets filled up with maps on an on-demand basis.
+	 * These array elements get filled up with maps on an on-demand basis.
 	 * Initially just set all of them to NULL.
 	 */
 	proute->child_parent_tupconv_maps =
