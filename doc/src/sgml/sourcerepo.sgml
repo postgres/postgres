@@ -41,7 +41,7 @@
    <step>
     <para>
      You will need an installed version of <productname>Git</productname>, which you can
-     get from <ulink url="http://git-scm.com"></ulink>. Many systems already
+     get from <ulink url="https://git-scm.com"></ulink>. Many systems already
      have a recent version of <application>Git</application> installed by default, or
      available in their package distribution system.
     </para>
@@ -52,7 +52,7 @@
      To begin using the Git repository, make a clone of the official mirror:
 
 <programlisting>
-git clone git://git.postgresql.org/git/postgresql.git
+git clone https://git.postgresql.org/git/postgresql.git
 </programlisting>
 
      This will copy the full repository to your local machine, so it may take
@@ -62,16 +62,13 @@ git clone git://git.postgresql.org/git/postgresql.git
     </para>
 
     <para>
-     The Git mirror can also be reached via the HTTP protocol, if for example
-     a firewall is blocking access to the Git protocol. Just change the URL
-     prefix to <literal>https</literal>, as in:
+     The Git mirror can also be reached via the Git protocol. Just change the URL
+     prefix to <literal>git</literal>, as in:
 
 <programlisting>
-git clone https://git.postgresql.org/git/postgresql.git
+git clone git://git.postgresql.org/git/postgresql.git
 </programlisting>
 
-     The HTTP protocol is less efficient than the Git protocol, so it will be
-     slower to use.
     </para>
    </step>
 
@@ -90,7 +87,7 @@ git fetch
   <para>
    <productname>Git</productname> can do a lot more things than just fetch the source. For
    more information, consult the <productname>Git</productname> man pages, or see the
-   website at <ulink url="http://git-scm.com"></ulink>.
+   website at <ulink url="https://git-scm.com"></ulink>.
   </para>
  </sect1>
 
