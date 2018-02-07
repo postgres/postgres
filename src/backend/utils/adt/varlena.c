@@ -22,7 +22,6 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/int.h"
-#include "common/md5.h"
 #include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -4562,53 +4561,6 @@ to_hex64(PG_FUNCTION_ARGS)
 	} while (ptr > buf && value);
 
 	PG_RETURN_TEXT_P(cstring_to_text(ptr));
-}
-
-/*
- * Create an md5 hash of a text string and return it as hex
- *
- * md5 produces a 16 byte (128 bit) hash; double it for hex
- */
-#define MD5_HASH_LEN  32
-
-Datum
-md5_text(PG_FUNCTION_ARGS)
-{
-	text	   *in_text = PG_GETARG_TEXT_PP(0);
-	size_t		len;
-	char		hexsum[MD5_HASH_LEN + 1];
-
-	/* Calculate the length of the buffer using varlena metadata */
-	len = VARSIZE_ANY_EXHDR(in_text);
-
-	/* get the hash result */
-	if (pg_md5_hash(VARDATA_ANY(in_text), len, hexsum) == false)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-
-	/* convert to text and return it */
-	PG_RETURN_TEXT_P(cstring_to_text(hexsum));
-}
-
-/*
- * Create an md5 hash of a bytea field and return it as a hex string:
- * 16-byte md5 digest is represented in 32 hex characters.
- */
-Datum
-md5_bytea(PG_FUNCTION_ARGS)
-{
-	bytea	   *in = PG_GETARG_BYTEA_PP(0);
-	size_t		len;
-	char		hexsum[MD5_HASH_LEN + 1];
-
-	len = VARSIZE_ANY_EXHDR(in);
-	if (pg_md5_hash(VARDATA_ANY(in), len, hexsum) == false)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-
-	PG_RETURN_TEXT_P(cstring_to_text(hexsum));
 }
 
 /*

@@ -1440,6 +1440,58 @@ select md5('12345678901234567890123456789012345678901234567890123456789012345678
 (1 row)
 
 --
+-- SHA-2
+--
+SET bytea_output TO hex;
+SELECT sha224('');
+                           sha224                           
+------------------------------------------------------------
+ \xd14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f
+(1 row)
+
+SELECT sha224('The quick brown fox jumps over the lazy dog.');
+                           sha224                           
+------------------------------------------------------------
+ \x619cba8e8e05826e9b8c519c0a5c68f4fb653e8a3d8aa04bb2c8cd4c
+(1 row)
+
+SELECT sha256('');
+                               sha256                               
+--------------------------------------------------------------------
+ \xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+(1 row)
+
+SELECT sha256('The quick brown fox jumps over the lazy dog.');
+                               sha256                               
+--------------------------------------------------------------------
+ \xef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c
+(1 row)
+
+SELECT sha384('');
+                                               sha384                                               
+----------------------------------------------------------------------------------------------------
+ \x38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b
+(1 row)
+
+SELECT sha384('The quick brown fox jumps over the lazy dog.');
+                                               sha384                                               
+----------------------------------------------------------------------------------------------------
+ \xed892481d8272ca6df370bf706e4d7bc1b5739fa2177aae6c50e946678718fc67a7af2819a021c2fc34e91bdb63409d7
+(1 row)
+
+SELECT sha512('');
+                                                               sha512                                                               
+------------------------------------------------------------------------------------------------------------------------------------
+ \xcf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e
+(1 row)
+
+SELECT sha512('The quick brown fox jumps over the lazy dog.');
+                                                               sha512                                                               
+------------------------------------------------------------------------------------------------------------------------------------
+ \x91ea1245f20d46ae9a037a989f54f1f790f0a47607eeb8a14d12890cea77a1bbc6c7ed9cf205e67b7f2b8fd4c7dfd3a7a8617e45f3c463d481c7e586c39ac1ed
+(1 row)
+
+--
 -- test behavior of escape_string_warning and standard_conforming_strings options
 --
 set escape_string_warning = off;
@@ -1525,6 +1577,7 @@ select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, '
 --
 -- Additional string functions
 --
+SET bytea_output TO escape;
 SELECT initcap('hi THOMAS');
   initcap  
 -----------

@@ -3640,7 +3640,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        returning the result in hexadecimal
       </entry>
       <entry><literal>md5(E'Th\\000omas'::bytea)</literal></entry>
-      <entry><literal>8ab2d3c9689aaf18 b4958c334c82d8b1</literal></entry>
+      <entry><literal>8ab2d3c9689aaf18&#x200B;b4958c334c82d8b1</literal></entry>
      </row>
 
       <row>
@@ -3674,6 +3674,66 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        <entry><literal>set_byte(E'Th\\000omas'::bytea, 4, 64)</literal></entry>
        <entry><literal>Th\000o@as</literal></entry>
       </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>sha224</primary>
+        </indexterm>
+        <literal><function>sha224(<type>bytea</type>)</function></literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        SHA-224 hash
+       </entry>
+       <entry><literal>sha224('abc')</literal></entry>
+       <entry><literal>\x23097d223405d8228642a477bda2&#x200B;55b32aadbce4bda0b3f7e36c9da7</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>sha256</primary>
+        </indexterm>
+        <literal><function>sha256(<type>bytea</type>)</function></literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        SHA-256 hash
+       </entry>
+       <entry><literal>sha256('abc')</literal></entry>
+       <entry><literal>\xba7816bf8f01cfea414140de5dae2223&#x200B;b00361a396177a9cb410ff61f20015ad</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>sha384</primary>
+        </indexterm>
+        <literal><function>sha384(<type>bytea</type>)</function></literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        SHA-384 hash
+       </entry>
+       <entry><literal>sha384('abc')</literal></entry>
+       <entry><literal>\xcb00753f45a35e8bb5a03d699ac65007&#x200B;272c32ab0eded1631a8b605a43ff5bed&#x200B;8086072ba1e7cc2358baeca134c825a7</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>sha512</primary>
+        </indexterm>
+        <literal><function>sha512(<type>bytea</type>)</function></literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        SHA-512 hash
+       </entry>
+       <entry><literal>sha512('abc')</literal></entry>
+       <entry><literal>\xddaf35a193617abacc417349ae204131&#x200B;12e6fa4e89a97ea20a9eeee64b55d39a&#x200B;2192992a274fc1a836ba3c23a3feebbd&#x200B;454d4423643ce80e2a9ac94fa54ca49f</literal></entry>
+      </row>
     </tbody>
    </tgroup>
   </table>
@@ -3684,6 +3744,15 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
    <function>get_bit</function> and <function>set_bit</function> number bits from the
    right within each byte; for example bit 0 is the least significant bit of
    the first byte, and bit 15 is the most significant bit of the second byte.
+  </para>
+
+  <para>
+   Note that for historic reasons, the function <function>md5</function>
+   returns a hex-encoded value of type <type>text</type> whereas the SHA-2
+   functions return type <type>bytea</type>.  Use the functions
+   <function>encode</function> and <function>decode</function> to convert
+   between the two, for example <literal>encode(sha256('abc'),
+   'hex')</literal> to get a hex-encoded text representation.
   </para>
 
   <para>

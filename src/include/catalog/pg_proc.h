@@ -3917,10 +3917,18 @@ DATA(insert OID = 3314 (  system			PGNSP PGUID 12 1 0 0 0 f f f f t f v s 1 0 33
 DESCR("SYSTEM tablesample method handler");
 
 /* cryptographic */
-DATA(insert OID =  2311 (  md5	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 25 "25" _null_ _null_ _null_ _null_ _null_ md5_text _null_ _null_ _null_ ));
+DATA(insert OID =  2311 (  md5	   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 1 0 25 "25" _null_ _null_ _null_ _null_ _null_ md5_text _null_ _null_ _null_ ));
 DESCR("MD5 hash");
-DATA(insert OID =  2321 (  md5	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 25 "17" _null_ _null_ _null_ _null_ _null_ md5_bytea _null_ _null_ _null_ ));
+DATA(insert OID =  2321 (  md5	   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 1 0 25 "17" _null_ _null_ _null_ _null_ _null_ md5_bytea _null_ _null_ _null_ ));
 DESCR("MD5 hash");
+DATA(insert OID =  3419 (  sha224  PGNSP PGUID 12 1 0 0 0 f f f t t f i s 1 0 17 "17" _null_ _null_ _null_ _null_ _null_ sha224_bytea _null_ _null_ _null_ ));
+DESCR("SHA-224 hash");
+DATA(insert OID =  3420 (  sha256  PGNSP PGUID 12 1 0 0 0 f f f t t f i s 1 0 17 "17" _null_ _null_ _null_ _null_ _null_ sha256_bytea _null_ _null_ _null_ ));
+DESCR("SHA-256 hash");
+DATA(insert OID =  3421 (  sha384  PGNSP PGUID 12 1 0 0 0 f f f t t f i s 1 0 17 "17" _null_ _null_ _null_ _null_ _null_ sha384_bytea _null_ _null_ _null_ ));
+DESCR("SHA-384 hash");
+DATA(insert OID =  3422 (  sha512  PGNSP PGUID 12 1 0 0 0 f f f t t f i s 1 0 17 "17" _null_ _null_ _null_ _null_ _null_ sha512_bytea _null_ _null_ _null_ ));
+DESCR("SHA-512 hash");
 
 /* crosstype operations for date vs. timestamp and timestamptz */
 DATA(insert OID = 2338 (  date_lt_timestamp		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "1082 1114" _null_ _null_ _null_ _null_ _null_ date_lt_timestamp _null_ _null_ _null_ ));

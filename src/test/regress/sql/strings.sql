@@ -507,6 +507,23 @@ select md5('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'::byt
 select md5('12345678901234567890123456789012345678901234567890123456789012345678901234567890'::bytea) = '57edf4a22be3c955ac49da2e2107b67a' AS "TRUE";
 
 --
+-- SHA-2
+--
+SET bytea_output TO hex;
+
+SELECT sha224('');
+SELECT sha224('The quick brown fox jumps over the lazy dog.');
+
+SELECT sha256('');
+SELECT sha256('The quick brown fox jumps over the lazy dog.');
+
+SELECT sha384('');
+SELECT sha384('The quick brown fox jumps over the lazy dog.');
+
+SELECT sha512('');
+SELECT sha512('The quick brown fox jumps over the lazy dog.');
+
+--
 -- test behavior of escape_string_warning and standard_conforming_strings options
 --
 set escape_string_warning = off;
@@ -540,6 +557,7 @@ select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, '
 --
 -- Additional string functions
 --
+SET bytea_output TO escape;
 
 SELECT initcap('hi THOMAS');
 
