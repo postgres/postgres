@@ -370,7 +370,7 @@ $ sudo semodule -r sepgsql-regtest
    <para>
    For example, consider:
 <synopsis>
-UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
+UPDATE t1 SET x = 2, y = func1(y) WHERE z = 100;
 </synopsis>
 
     Here, <literal>db_column:update</literal> will be checked for

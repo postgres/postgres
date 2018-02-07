@@ -80,11 +80,11 @@ CREATE TABLE users (
     pass TEXT   NOT NULL
 );
 
-INSERT INTO users VALUES ( 'larry',  md5(random()::text) );
-INSERT INTO users VALUES ( 'Tom',    md5(random()::text) );
-INSERT INTO users VALUES ( 'Damian', md5(random()::text) );
-INSERT INTO users VALUES ( 'NEAL',   md5(random()::text) );
-INSERT INTO users VALUES ( 'Bj&oslash;rn',  md5(random()::text) );
+INSERT INTO users VALUES ( 'larry',  sha256(random()::text::bytea) );
+INSERT INTO users VALUES ( 'Tom',    sha256(random()::text::bytea) );
+INSERT INTO users VALUES ( 'Damian', sha256(random()::text::bytea) );
+INSERT INTO users VALUES ( 'NEAL',   sha256(random()::text::bytea) );
+INSERT INTO users VALUES ( 'Bj&oslash;rn',  sha256(random()::text::bytea) );
 
 SELECT * FROM users WHERE nick = 'Larry';
 </programlisting>
