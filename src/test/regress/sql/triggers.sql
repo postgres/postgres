@@ -95,7 +95,9 @@ update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 10 and pkey2 = '1';
 SELECT trigger_name, event_manipulation, event_object_schema, event_object_table,
        action_order, action_condition, action_orientation, action_timing,
        action_reference_old_table, action_reference_new_table
-  FROM information_schema.triggers ORDER BY 1, 2;
+  FROM information_schema.triggers
+  WHERE event_object_table in ('pkeys', 'fkeys', 'fkeys2')
+  ORDER BY trigger_name COLLATE "C", 2;
 
 DROP TABLE pkeys;
 DROP TABLE fkeys;
@@ -287,7 +289,9 @@ FOR EACH STATEMENT WHEN (true) EXECUTE PROCEDURE trigger_func('delete_when');
 SELECT trigger_name, event_manipulation, event_object_schema, event_object_table,
        action_order, action_condition, action_orientation, action_timing,
        action_reference_old_table, action_reference_new_table
-  FROM information_schema.triggers ORDER BY 1, 2;
+  FROM information_schema.triggers
+  WHERE event_object_table IN ('main_table')
+  ORDER BY trigger_name COLLATE "C", 2;
 INSERT INTO main_table (a) VALUES (123), (456);
 COPY main_table FROM stdin;
 123	999
@@ -1484,7 +1488,9 @@ create trigger child3_delete_trig
 SELECT trigger_name, event_manipulation, event_object_schema, event_object_table,
        action_order, action_condition, action_orientation, action_timing,
        action_reference_old_table, action_reference_new_table
-  FROM information_schema.triggers ORDER BY 1, 2;
+  FROM information_schema.triggers
+  WHERE event_object_table IN ('parent', 'child1', 'child2', 'child3')
+  ORDER BY trigger_name COLLATE "C", 2;
 
 -- insert directly into children sees respective child-format tuples
 insert into child1 values ('AAA', 42);
