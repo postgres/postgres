@@ -6563,10 +6563,7 @@ StartupXLOG(void)
 				StandbyMode = true;
 		}
 
-		/*
-		 * Get the last valid checkpoint record.  If the latest one according
-		 * to pg_control is broken, try the next-to-last one.
-		 */
+		/* Get the last valid checkpoint record. */
 		checkPointLoc = ControlFile->checkPoint;
 		RedoStartLSN = ControlFile->checkPointCopy.redo;
 		record = ReadCheckpointRecord(xlogreader, checkPointLoc, 1, true);
