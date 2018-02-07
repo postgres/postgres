@@ -177,6 +177,7 @@ Section: Class 22 - Data Exception
 22P06    E    ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER                    nonstandard_use_of_escape_character
 22010    E    ERRCODE_INVALID_INDICATOR_PARAMETER_VALUE                      invalid_indicator_parameter_value
 22023    E    ERRCODE_INVALID_PARAMETER_VALUE                                invalid_parameter_value
+22013    E    ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE                       invalid_preceding_following_size
 2201B    E    ERRCODE_INVALID_REGULAR_EXPRESSION                             invalid_regular_expression
 2201W    E    ERRCODE_INVALID_ROW_COUNT_IN_LIMIT_CLAUSE                      invalid_row_count_in_limit_clause
 2201X    E    ERRCODE_INVALID_ROW_COUNT_IN_RESULT_OFFSET_CLAUSE              invalid_row_count_in_result_offset_clause

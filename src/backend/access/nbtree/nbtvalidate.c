@@ -51,6 +51,7 @@ btvalidate(Oid opclassoid)
 	List	   *grouplist;
 	OpFamilyOpFuncGroup *opclassgroup;
 	List	   *familytypes;
+	int			usefulgroups;
 	int			i;
 	ListCell   *lc;
 
@@ -94,6 +95,14 @@ btvalidate(Oid opclassoid)
 			case BTSORTSUPPORT_PROC:
 				ok = check_amproc_signature(procform->amproc, VOIDOID, true,
 											1, 1, INTERNALOID);
+				break;
+			case BTINRANGE_PROC:
+				ok = check_amproc_signature(procform->amproc, BOOLOID, true,
+											5, 5,
+											procform->amproclefttype,
+											procform->amproclefttype,
+											procform->amprocrighttype,
+											BOOLOID, BOOLOID);
 				break;
 			default:
 				ereport(INFO,
@@ -165,11 +174,27 @@ btvalidate(Oid opclassoid)
 
 	/* Now check for inconsistent groups of operators/functions */
 	grouplist = identify_opfamily_groups(oprlist, proclist);
+	usefulgroups = 0;
 	opclassgroup = NULL;
 	familytypes = NIL;
 	foreach(lc, grouplist)
 	{
 		OpFamilyOpFuncGroup *thisgroup = (OpFamilyOpFuncGroup *) lfirst(lc);
+
+		/*
+		 * It is possible for an in_range support function to have a RHS type
+		 * that is otherwise irrelevant to the opfamily --- for instance, SQL
+		 * requires the datetime_ops opclass to have range support with an
+		 * interval offset.  So, if this group appears to contain only an
+		 * in_range function, ignore it: it doesn't represent a pair of
+		 * supported types.
+		 */
+		if (thisgroup->operatorset == 0 &&
+			thisgroup->functionset == (1 << BTINRANGE_PROC))
+			continue;
+
+		/* Else count it as a relevant group */
+		usefulgroups++;
 
 		/* Remember the group exactly matching the test opclass */
 		if (thisgroup->lefttype == opcintype &&
@@ -186,8 +211,8 @@ btvalidate(Oid opclassoid)
 
 		/*
 		 * Complain if there seems to be an incomplete set of either operators
-		 * or support functions for this datatype pair.  The only thing that
-		 * is considered optional is the sortsupport function.
+		 * or support functions for this datatype pair.  The only things
+		 * considered optional are the sortsupport and in_range functions.
 		 */
 		if (thisgroup->operatorset !=
 			((1 << BTLessStrategyNumber) |
@@ -234,8 +259,7 @@ btvalidate(Oid opclassoid)
 	 * additional qual clauses from equivalence classes, so it seems
 	 * reasonable to insist that all built-in btree opfamilies be complete.
 	 */
-	if (list_length(grouplist) !=
-		list_length(familytypes) * list_length(familytypes))
+	if (usefulgroups != (list_length(familytypes) * list_length(familytypes)))
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),

@@ -585,6 +585,158 @@ int42ge(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
+
+/*----------------------------------------------------------
+ *	in_range functions for int4 and int2,
+ *	including cross-data-type comparisons.
+ *
+ *	Note: we provide separate intN_int8 functions for performance
+ *	reasons.  This forces also providing intN_int2, else cases with a
+ *	smallint offset value would fail to resolve which function to use.
+ *	But that's an unlikely situation, so don't duplicate code for it.
+ *---------------------------------------------------------*/
+
+Datum
+in_range_int4_int4(PG_FUNCTION_ARGS)
+{
+	int32		val = PG_GETARG_INT32(0);
+	int32		base = PG_GETARG_INT32(1);
+	int32		offset = PG_GETARG_INT32(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	int32		sum;
+
+	if (offset < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	if (sub)
+		offset = -offset;		/* cannot overflow */
+
+	if (unlikely(pg_add_s32_overflow(base, offset, &sum)))
+	{
+		/*
+		 * If sub is false, the true sum is surely more than val, so correct
+		 * answer is the same as "less".  If sub is true, the true sum is
+		 * surely less than val, so the answer is "!less".
+		 */
+		PG_RETURN_BOOL(sub ? !less : less);
+	}
+
+	if (less)
+		PG_RETURN_BOOL(val <= sum);
+	else
+		PG_RETURN_BOOL(val >= sum);
+}
+
+Datum
+in_range_int4_int2(PG_FUNCTION_ARGS)
+{
+	/* Doesn't seem worth duplicating code for, so just invoke int4_int4 */
+	return DirectFunctionCall5(in_range_int4_int4,
+							   PG_GETARG_DATUM(0),
+							   PG_GETARG_DATUM(1),
+							   Int32GetDatum((int32) PG_GETARG_INT16(2)),
+							   PG_GETARG_DATUM(3),
+							   PG_GETARG_DATUM(4));
+}
+
+Datum
+in_range_int4_int8(PG_FUNCTION_ARGS)
+{
+	/* We must do all the math in int64 */
+	int64		val = (int64) PG_GETARG_INT32(0);
+	int64		base = (int64) PG_GETARG_INT32(1);
+	int64		offset = PG_GETARG_INT64(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	int64		sum;
+
+	if (offset < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	if (sub)
+		offset = -offset;		/* cannot overflow */
+
+	if (unlikely(pg_add_s64_overflow(base, offset, &sum)))
+	{
+		/*
+		 * If sub is false, the true sum is surely more than val, so correct
+		 * answer is the same as "less".  If sub is true, the true sum is
+		 * surely less than val, so the answer is "!less".
+		 */
+		PG_RETURN_BOOL(sub ? !less : less);
+	}
+
+	if (less)
+		PG_RETURN_BOOL(val <= sum);
+	else
+		PG_RETURN_BOOL(val >= sum);
+}
+
+Datum
+in_range_int2_int4(PG_FUNCTION_ARGS)
+{
+	/* We must do all the math in int32 */
+	int32		val = (int32) PG_GETARG_INT16(0);
+	int32		base = (int32) PG_GETARG_INT16(1);
+	int32		offset = PG_GETARG_INT32(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	int32		sum;
+
+	if (offset < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	if (sub)
+		offset = -offset;		/* cannot overflow */
+
+	if (unlikely(pg_add_s32_overflow(base, offset, &sum)))
+	{
+		/*
+		 * If sub is false, the true sum is surely more than val, so correct
+		 * answer is the same as "less".  If sub is true, the true sum is
+		 * surely less than val, so the answer is "!less".
+		 */
+		PG_RETURN_BOOL(sub ? !less : less);
+	}
+
+	if (less)
+		PG_RETURN_BOOL(val <= sum);
+	else
+		PG_RETURN_BOOL(val >= sum);
+}
+
+Datum
+in_range_int2_int2(PG_FUNCTION_ARGS)
+{
+	/* Doesn't seem worth duplicating code for, so just invoke int2_int4 */
+	return DirectFunctionCall5(in_range_int2_int4,
+							   PG_GETARG_DATUM(0),
+							   PG_GETARG_DATUM(1),
+							   Int32GetDatum((int32) PG_GETARG_INT16(2)),
+							   PG_GETARG_DATUM(3),
+							   PG_GETARG_DATUM(4));
+}
+
+Datum
+in_range_int2_int8(PG_FUNCTION_ARGS)
+{
+	/* Doesn't seem worth duplicating code for, so just invoke int4_int8 */
+	return DirectFunctionCall5(in_range_int4_int8,
+							   Int32GetDatum((int32) PG_GETARG_INT16(0)),
+							   Int32GetDatum((int32) PG_GETARG_INT16(1)),
+							   PG_GETARG_DATUM(2),
+							   PG_GETARG_DATUM(3),
+							   PG_GETARG_DATUM(4));
+}
+
+
 /*
  *		int[24]pl		- returns arg1 + arg2
  *		int[24]mi		- returns arg1 - arg2

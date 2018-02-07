@@ -570,6 +570,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	window_clause window_definition_list opt_partition_clause
 %type <windef>	window_definition over_clause window_specification
 				opt_frame_clause frame_extent frame_bound
+%type <ival>	opt_window_exclusion_clause
 %type <str>		opt_existing_window_name
 %type <boolean> opt_if_not_exists
 %type <ival>	generated_when override_kind
@@ -632,7 +633,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	FALSE_P FAMILY FETCH FILTER FIRST_P FLOAT_P FOLLOWING FOR
 	FORCE FOREIGN FORWARD FREEZE FROM FULL FUNCTION FUNCTIONS
 
-	GENERATED GLOBAL GRANT GRANTED GREATEST GROUP_P GROUPING
+	GENERATED GLOBAL GRANT GRANTED GREATEST GROUP_P GROUPING GROUPS
 
 	HANDLER HAVING HEADER_P HOLD HOUR_P
 
@@ -656,7 +657,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	NULLS_P NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OPTIONS OR
-	ORDER ORDINALITY OUT_P OUTER_P OVER OVERLAPS OVERLAY OVERRIDING OWNED OWNER
+	ORDER ORDINALITY OTHERS OUT_P OUTER_P
+	OVER OVERLAPS OVERLAY OVERRIDING OWNED OWNER
 
 	PARALLEL PARSER PARTIAL PARTITION PASSING PASSWORD PLACING PLANS POLICY
 	POSITION PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
@@ -676,7 +678,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	SUBSCRIPTION SUBSTRING SYMMETRIC SYSID SYSTEM_P
 
 	TABLE TABLES TABLESAMPLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN
-	TIME TIMESTAMP TO TRAILING TRANSACTION TRANSFORM TREAT TRIGGER TRIM TRUE_P
+	TIES TIME TIMESTAMP TO TRAILING TRANSACTION TRANSFORM
+	TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P TYPES_P
 
 	UNBOUNDED UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNLOGGED
@@ -724,9 +727,10 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
  * between POSTFIXOP and Op.  We can safely assign the same priority to
  * various unreserved keywords as needed to resolve ambiguities (this can't
  * have any bad effects since obviously the keywords will still behave the
- * same as if they weren't keywords).  We need to do this for PARTITION,
- * RANGE, ROWS to support opt_existing_window_name; and for RANGE, ROWS
- * so that they can follow a_expr without creating postfix-operator problems;
+ * same as if they weren't keywords).  We need to do this:
+ * for PARTITION, RANGE, ROWS, GROUPS to support opt_existing_window_name;
+ * for RANGE, ROWS, GROUPS so that they can follow a_expr without creating
+ * postfix-operator problems;
  * for GENERATED so that it can follow b_expr;
  * and for NULL so that it can follow b_expr in ColQualList without creating
  * postfix-operator problems.
@@ -746,7 +750,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
  * blame any funny behavior of UNBOUNDED on the SQL standard, though.
  */
 %nonassoc	UNBOUNDED		/* ideally should have same precedence as IDENT */
-%nonassoc	IDENT GENERATED NULL_P PARTITION RANGE ROWS PRECEDING FOLLOWING CUBE ROLLUP
+%nonassoc	IDENT GENERATED NULL_P PARTITION RANGE ROWS GROUPS PRECEDING FOLLOWING CUBE ROLLUP
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %left		'+' '-'
 %left		'*' '/' '%'
@@ -14003,7 +14007,7 @@ window_specification: '(' opt_existing_window_name opt_partition_clause
 		;
 
 /*
- * If we see PARTITION, RANGE, or ROWS as the first token after the '('
+ * If we see PARTITION, RANGE, ROWS or GROUPS as the first token after the '('
  * of a window_specification, we want the assumption to be that there is
  * no existing_window_name; but those keywords are unreserved and so could
  * be ColIds.  We fix this by making them have the same precedence as IDENT
@@ -14023,33 +14027,27 @@ opt_partition_clause: PARTITION BY expr_list		{ $$ = $3; }
 /*
  * For frame clauses, we return a WindowDef, but only some fields are used:
  * frameOptions, startOffset, and endOffset.
- *
- * This is only a subset of the full SQL:2008 frame_clause grammar.
- * We don't support <window frame exclusion> yet.
  */
 opt_frame_clause:
-			RANGE frame_extent
+			RANGE frame_extent opt_window_exclusion_clause
 				{
 					WindowDef *n = $2;
 					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_RANGE;
-					if (n->frameOptions & (FRAMEOPTION_START_VALUE_PRECEDING |
-										   FRAMEOPTION_END_VALUE_PRECEDING))
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("RANGE PRECEDING is only supported with UNBOUNDED"),
-								 parser_errposition(@1)));
-					if (n->frameOptions & (FRAMEOPTION_START_VALUE_FOLLOWING |
-										   FRAMEOPTION_END_VALUE_FOLLOWING))
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("RANGE FOLLOWING is only supported with UNBOUNDED"),
-								 parser_errposition(@1)));
+					n->frameOptions |= $3;
 					$$ = n;
 				}
-			| ROWS frame_extent
+			| ROWS frame_extent opt_window_exclusion_clause
 				{
 					WindowDef *n = $2;
 					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_ROWS;
+					n->frameOptions |= $3;
+					$$ = n;
+				}
+			| GROUPS frame_extent opt_window_exclusion_clause
+				{
+					WindowDef *n = $2;
+					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_GROUPS;
+					n->frameOptions |= $3;
 					$$ = n;
 				}
 			| /*EMPTY*/
@@ -14071,7 +14069,7 @@ frame_extent: frame_bound
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
 								 parser_errposition(@1)));
-					if (n->frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING)
+					if (n->frameOptions & FRAMEOPTION_START_OFFSET_FOLLOWING)
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame starting from following row cannot end with current row"),
@@ -14100,13 +14098,13 @@ frame_extent: frame_bound
 								 errmsg("frame end cannot be UNBOUNDED PRECEDING"),
 								 parser_errposition(@4)));
 					if ((frameOptions & FRAMEOPTION_START_CURRENT_ROW) &&
-						(frameOptions & FRAMEOPTION_END_VALUE_PRECEDING))
+						(frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING))
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame starting from current row cannot have preceding rows"),
 								 parser_errposition(@4)));
-					if ((frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING) &&
-						(frameOptions & (FRAMEOPTION_END_VALUE_PRECEDING |
+					if ((frameOptions & FRAMEOPTION_START_OFFSET_FOLLOWING) &&
+						(frameOptions & (FRAMEOPTION_END_OFFSET_PRECEDING |
 										 FRAMEOPTION_END_CURRENT_ROW)))
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
@@ -14151,7 +14149,7 @@ frame_bound:
 			| a_expr PRECEDING
 				{
 					WindowDef *n = makeNode(WindowDef);
-					n->frameOptions = FRAMEOPTION_START_VALUE_PRECEDING;
+					n->frameOptions = FRAMEOPTION_START_OFFSET_PRECEDING;
 					n->startOffset = $1;
 					n->endOffset = NULL;
 					$$ = n;
@@ -14159,11 +14157,19 @@ frame_bound:
 			| a_expr FOLLOWING
 				{
 					WindowDef *n = makeNode(WindowDef);
-					n->frameOptions = FRAMEOPTION_START_VALUE_FOLLOWING;
+					n->frameOptions = FRAMEOPTION_START_OFFSET_FOLLOWING;
 					n->startOffset = $1;
 					n->endOffset = NULL;
 					$$ = n;
 				}
+		;
+
+opt_window_exclusion_clause:
+			EXCLUDE CURRENT_P ROW	{ $$ = FRAMEOPTION_EXCLUDE_CURRENT_ROW; }
+			| EXCLUDE GROUP_P		{ $$ = FRAMEOPTION_EXCLUDE_GROUP; }
+			| EXCLUDE TIES			{ $$ = FRAMEOPTION_EXCLUDE_TIES; }
+			| EXCLUDE NO OTHERS		{ $$ = 0; }
+			| /*EMPTY*/				{ $$ = 0; }
 		;
 
 
@@ -15027,6 +15033,7 @@ unreserved_keyword:
 			| GENERATED
 			| GLOBAL
 			| GRANTED
+			| GROUPS
 			| HANDLER
 			| HEADER_P
 			| HOLD
@@ -15092,6 +15099,7 @@ unreserved_keyword:
 			| OPTION
 			| OPTIONS
 			| ORDINALITY
+			| OTHERS
 			| OVER
 			| OVERRIDING
 			| OWNED
@@ -15182,6 +15190,7 @@ unreserved_keyword:
 			| TEMPLATE
 			| TEMPORARY
 			| TEXT_P
+			| TIES
 			| TRANSACTION
 			| TRANSFORM
 			| TRIGGER

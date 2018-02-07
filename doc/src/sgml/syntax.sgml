@@ -1802,20 +1802,27 @@ FROM generate_series(1,10) AS s(i);
 [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
 [ <replaceable class="parameter">frame_clause</replaceable> ]
 </synopsis>
-    and the optional <replaceable class="parameter">frame_clause</replaceable>
+    The optional <replaceable class="parameter">frame_clause</replaceable>
     can be one of
 <synopsis>
-{ RANGE | ROWS } <replaceable>frame_start</replaceable>
-{ RANGE | ROWS } BETWEEN <replaceable>frame_start</replaceable> AND <replaceable>frame_end</replaceable>
+{ RANGE | ROWS | GROUPS } <replaceable>frame_start</replaceable> [ <replaceable>frame_exclusion</replaceable> ]
+{ RANGE | ROWS | GROUPS } BETWEEN <replaceable>frame_start</replaceable> AND <replaceable>frame_end</replaceable> [ <replaceable>frame_exclusion</replaceable> ]
 </synopsis>
-    where <replaceable>frame_start</replaceable> and <replaceable>frame_end</replaceable> can be
-    one of
+    where <replaceable>frame_start</replaceable>
+    and <replaceable>frame_end</replaceable> can be one of
 <synopsis>
 UNBOUNDED PRECEDING
-<replaceable>value</replaceable> PRECEDING
+<replaceable>offset</replaceable> PRECEDING
 CURRENT ROW
-<replaceable>value</replaceable> FOLLOWING
+<replaceable>offset</replaceable> FOLLOWING
 UNBOUNDED FOLLOWING
+</synopsis>
+    and <replaceable>frame_exclusion</replaceable> can be one of
+<synopsis>
+EXCLUDE CURRENT ROW
+EXCLUDE GROUP
+EXCLUDE TIES
+EXCLUDE NO OTHERS
 </synopsis>
    </para>
 
@@ -1856,11 +1863,14 @@ UNBOUNDED FOLLOWING
     The <replaceable class="parameter">frame_clause</replaceable> specifies
     the set of rows constituting the <firstterm>window frame</firstterm>, which is a
     subset of the current partition, for those window functions that act on
-    the frame instead of the whole partition.  The frame can be specified in
-    either <literal>RANGE</literal> or <literal>ROWS</literal> mode; in either case, it
-    runs from the <replaceable>frame_start</replaceable> to the
-    <replaceable>frame_end</replaceable>.  If <replaceable>frame_end</replaceable> is omitted,
-    it defaults to <literal>CURRENT ROW</literal>.
+    the frame instead of the whole partition.  The set of rows in the frame
+    can vary depending on which row is the current row.  The frame can be
+    specified in <literal>RANGE</literal>, <literal>ROWS</literal>
+    or <literal>GROUPS</literal> mode; in each case, it runs from
+    the <replaceable>frame_start</replaceable> to
+    the <replaceable>frame_end</replaceable>.
+    If <replaceable>frame_end</replaceable> is omitted, the end defaults
+    to <literal>CURRENT ROW</literal>.
    </para>
 
    <para>
@@ -1871,24 +1881,91 @@ UNBOUNDED FOLLOWING
    </para>
 
    <para>
-    In <literal>RANGE</literal> mode, a <replaceable>frame_start</replaceable> of
-    <literal>CURRENT ROW</literal> means the frame starts with the current row's
-    first <firstterm>peer</firstterm> row (a row that <literal>ORDER BY</literal> considers
-    equivalent to the current row), while a <replaceable>frame_end</replaceable> of
-    <literal>CURRENT ROW</literal> means the frame ends with the last equivalent
-    <literal>ORDER BY</literal> peer.  In <literal>ROWS</literal> mode, <literal>CURRENT ROW</literal> simply means
-    the current row.
+    In <literal>RANGE</literal> or <literal>GROUPS</literal> mode,
+    a <replaceable>frame_start</replaceable> of
+    <literal>CURRENT ROW</literal> means the frame starts with the current
+    row's first <firstterm>peer</firstterm> row (a row that the
+    window's <literal>ORDER BY</literal> clause sorts as equivalent to the
+    current row), while a <replaceable>frame_end</replaceable> of
+    <literal>CURRENT ROW</literal> means the frame ends with the current
+    row's last peer row.
+    In <literal>ROWS</literal> mode, <literal>CURRENT ROW</literal> simply
+    means the current row.
    </para>
 
    <para>
-    The <replaceable>value</replaceable> <literal>PRECEDING</literal> and
-    <replaceable>value</replaceable> <literal>FOLLOWING</literal> cases are currently only
-    allowed in <literal>ROWS</literal> mode.  They indicate that the frame starts
-    or ends the specified number of rows before or after the current row.
-    <replaceable>value</replaceable> must be an integer expression not
+    In the <replaceable>offset</replaceable> <literal>PRECEDING</literal>
+    and <replaceable>offset</replaceable> <literal>FOLLOWING</literal> frame
+    options, the <replaceable>offset</replaceable> must be an expression not
     containing any variables, aggregate functions, or window functions.
-    The value must not be null or negative; but it can be zero, which
-    just selects the current row.
+    The meaning of the <replaceable>offset</replaceable> depends on the
+    frame mode:
+    <itemizedlist>
+     <listitem>
+      <para>
+       In <literal>ROWS</literal> mode,
+       the <replaceable>offset</replaceable> must yield a non-null,
+       non-negative integer, and the option means that the frame starts or
+       ends the specified number of rows before or after the current row.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       In <literal>GROUPS</literal> mode,
+       the <replaceable>offset</replaceable> again must yield a non-null,
+       non-negative integer, and the option means that the frame starts or
+       ends the specified number of <firstterm>peer groups</firstterm>
+       before or after the current row's peer group, where a peer group is a
+       set of rows that are equivalent in the <literal>ORDER BY</literal>
+       ordering.  (If there is no <literal>ORDER BY</literal>, the whole
+       partition is one peer group.)
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       In <literal>RANGE</literal> mode, these options require that
+       the <literal>ORDER BY</literal> clause specify exactly one column.
+       The <replaceable>offset</replaceable> specifies the maximum
+       difference between the value of that column in the current row and
+       its value in preceding or following rows of the frame.  The data type
+       of the <replaceable>offset</replaceable> expression varies depending
+       on the data type of the ordering column.  For numeric ordering
+       columns it is typically of the same type as the ordering column,
+       but for datetime ordering columns it is an <type>interval</type>.
+       For example, if the ordering column is of type <type>date</type>
+       or <type>timestamp</type>, one could write <literal>RANGE BETWEEN
+       '1 day' PRECEDING AND '10 days' FOLLOWING</literal>.
+       The <replaceable>offset</replaceable> is still required to be
+       non-null and non-negative, though the meaning
+       of <quote>non-negative</quote> depends on its data type.
+      </para>
+     </listitem>
+    </itemizedlist>
+    In any case, the distance to the end of the frame is limited by the
+    distance to the end of the partition, so that for rows near the partition
+    ends the frame might contain fewer rows than elsewhere.
+   </para>
+
+   <para>
+    Notice that in both <literal>ROWS</literal> and <literal>GROUPS</literal>
+    mode, <literal>0 PRECEDING</literal> and <literal>0 FOLLOWING</literal>
+    are equivalent to <literal>CURRENT ROW</literal>.  This normally holds
+    in <literal>RANGE</literal> mode as well, for an appropriate
+    data-type-specific meaning of <quote>zero</quote>.
+   </para>
+
+   <para>
+    The <replaceable>frame_exclusion</replaceable> option allows rows around
+    the current row to be excluded from the frame, even if they would be
+    included according to the frame start and frame end options.
+    <literal>EXCLUDE CURRENT ROW</literal> excludes the current row from the
+    frame.
+    <literal>EXCLUDE GROUP</literal> excludes the current row and its
+    ordering peers from the frame.
+    <literal>EXCLUDE TIES</literal> excludes any peers of the current
+    row from the frame, but not the current row itself.
+    <literal>EXCLUDE NO OTHERS</literal> simply specifies explicitly the
+    default behavior of not excluding the current row or its peers.
    </para>
 
    <para>
@@ -1896,9 +1973,9 @@ UNBOUNDED FOLLOWING
     which is the same as <literal>RANGE BETWEEN UNBOUNDED PRECEDING AND
     CURRENT ROW</literal>.  With <literal>ORDER BY</literal>, this sets the frame to be
     all rows from the partition start up through the current row's last
-    <literal>ORDER BY</literal> peer.  Without <literal>ORDER BY</literal>, all rows of the partition are
-    included in the window frame, since all rows become peers of the current
-    row.
+    <literal>ORDER BY</literal> peer.  Without <literal>ORDER BY</literal>,
+    this means all rows of the partition are included in the window frame,
+    since all rows become peers of the current row.
    </para>
 
    <para>
@@ -1906,9 +1983,14 @@ UNBOUNDED FOLLOWING
     <replaceable>frame_start</replaceable> cannot be <literal>UNBOUNDED FOLLOWING</literal>,
     <replaceable>frame_end</replaceable> cannot be <literal>UNBOUNDED PRECEDING</literal>,
     and the <replaceable>frame_end</replaceable> choice cannot appear earlier in the
-    above list than the <replaceable>frame_start</replaceable> choice &mdash; for example
-    <literal>RANGE BETWEEN CURRENT ROW AND <replaceable>value</replaceable>
+    above list of <replaceable>frame_start</replaceable>
+    and <replaceable>frame_end</replaceable> options than
+    the <replaceable>frame_start</replaceable> choice does &mdash; for example
+    <literal>RANGE BETWEEN CURRENT ROW AND <replaceable>offset</replaceable>
     PRECEDING</literal> is not allowed.
+    But, for example, <literal>ROWS BETWEEN 7 PRECEDING AND 8
+    PRECEDING</literal> is allowed, even though it would never select any
+    rows.
    </para>
 
    <para>

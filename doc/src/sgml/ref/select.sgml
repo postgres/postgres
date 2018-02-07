@@ -859,19 +859,28 @@ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceabl
     The <replaceable class="parameter">frame_clause</replaceable> can be one of
 
 <synopsis>
-{ RANGE | ROWS } <replaceable>frame_start</replaceable>
-{ RANGE | ROWS } BETWEEN <replaceable>frame_start</replaceable> AND <replaceable>frame_end</replaceable>
+{ RANGE | ROWS | GROUPS } <replaceable>frame_start</replaceable> [ <replaceable>frame_exclusion</replaceable> ]
+{ RANGE | ROWS | GROUPS } BETWEEN <replaceable>frame_start</replaceable> AND <replaceable>frame_end</replaceable> [ <replaceable>frame_exclusion</replaceable> ]
 </synopsis>
 
-    where <replaceable>frame_start</replaceable> and <replaceable>frame_end</replaceable> can be
-    one of
+    where <replaceable>frame_start</replaceable>
+    and <replaceable>frame_end</replaceable> can be one of
 
 <synopsis>
 UNBOUNDED PRECEDING
-<replaceable>value</replaceable> PRECEDING
+<replaceable>offset</replaceable> PRECEDING
 CURRENT ROW
-<replaceable>value</replaceable> FOLLOWING
+<replaceable>offset</replaceable> FOLLOWING
 UNBOUNDED FOLLOWING
+</synopsis>
+
+    and <replaceable>frame_exclusion</replaceable> can be one of
+
+<synopsis>
+EXCLUDE CURRENT ROW
+EXCLUDE GROUP
+EXCLUDE TIES
+EXCLUDE NO OTHERS
 </synopsis>
 
     If <replaceable>frame_end</replaceable> is omitted it defaults to <literal>CURRENT
@@ -879,8 +888,10 @@ UNBOUNDED FOLLOWING
     <replaceable>frame_start</replaceable> cannot be <literal>UNBOUNDED FOLLOWING</literal>,
     <replaceable>frame_end</replaceable> cannot be <literal>UNBOUNDED PRECEDING</literal>,
     and the <replaceable>frame_end</replaceable> choice cannot appear earlier in the
-    above list than the <replaceable>frame_start</replaceable> choice &mdash; for example
-    <literal>RANGE BETWEEN CURRENT ROW AND <replaceable>value</replaceable>
+    above list of <replaceable>frame_start</replaceable>
+    and <replaceable>frame_end</replaceable> options than
+    the <replaceable>frame_start</replaceable> choice does &mdash; for example
+    <literal>RANGE BETWEEN CURRENT ROW AND <replaceable>offset</replaceable>
     PRECEDING</literal> is not allowed.
    </para>
 
@@ -888,33 +899,72 @@ UNBOUNDED FOLLOWING
     The default framing option is <literal>RANGE UNBOUNDED PRECEDING</literal>,
     which is the same as <literal>RANGE BETWEEN UNBOUNDED PRECEDING AND
     CURRENT ROW</literal>; it sets the frame to be all rows from the partition start
-    up through the current row's last peer (a row that <literal>ORDER
-    BY</literal> considers equivalent to the current row, or all rows if there
-    is no <literal>ORDER BY</literal>).
+    up through the current row's last <firstterm>peer</firstterm> (a row
+    that the window's <literal>ORDER BY</literal> clause considers
+    equivalent to the current row), or all rows if there
+    is no <literal>ORDER BY</literal>.
     In general, <literal>UNBOUNDED PRECEDING</literal> means that the frame
     starts with the first row of the partition, and similarly
     <literal>UNBOUNDED FOLLOWING</literal> means that the frame ends with the last
-    row of the partition (regardless of <literal>RANGE</literal> or <literal>ROWS</literal>
-    mode).  In <literal>ROWS</literal> mode, <literal>CURRENT ROW</literal>
-    means that the frame starts or ends with the current row; but in
-    <literal>RANGE</literal> mode it means that the frame starts or ends with
-    the current row's first or last peer in the <literal>ORDER BY</literal> ordering.
-    The <replaceable>value</replaceable> <literal>PRECEDING</literal> and
-    <replaceable>value</replaceable> <literal>FOLLOWING</literal> cases are currently only
-    allowed in <literal>ROWS</literal> mode.  They indicate that the frame starts
-    or ends with the row that many rows before or after the current row.
-    <replaceable>value</replaceable> must be an integer expression not
-    containing any variables, aggregate functions, or window functions.
-    The value must not be null or negative; but it can be zero, which
-    selects the current row itself.
+    row of the partition, regardless
+    of <literal>RANGE</literal>, <literal>ROWS</literal>
+    or <literal>GROUPS</literal> mode.
+    In <literal>ROWS</literal> mode, <literal>CURRENT ROW</literal> means
+    that the frame starts or ends with the current row; but
+    in <literal>RANGE</literal> or <literal>GROUPS</literal> mode it means
+    that the frame starts or ends with the current row's first or last peer
+    in the <literal>ORDER BY</literal> ordering.
+    The <replaceable>offset</replaceable> <literal>PRECEDING</literal> and
+    <replaceable>offset</replaceable> <literal>FOLLOWING</literal> options
+    vary in meaning depending on the frame mode.
+    In <literal>ROWS</literal> mode, the <replaceable>offset</replaceable>
+    is an integer indicating that the frame starts or ends that many rows
+    before or after the current row.
+    In <literal>GROUPS</literal> mode, the <replaceable>offset</replaceable>
+    is an integer indicating that the frame starts or ends that many peer
+    groups before or after the current row's peer group, where
+    a <firstterm>peer group</firstterm> is a group of rows that are
+    equivalent according to <literal>ORDER BY</literal>.
+    In <literal>RANGE</literal> mode, use of
+    an <replaceable>offset</replaceable> option requires that there be
+    exactly one <literal>ORDER BY</literal> column in the window definition.
+    Then the frame contains those rows whose ordering column value is no
+    more than <replaceable>offset</replaceable> less than
+    (for <literal>PRECEDING</literal>) or more than
+    (for <literal>FOLLOWING</literal>) the current row's ordering column
+    value.  In these cases the data type of
+    the <replaceable>offset</replaceable> expression depends on the data
+    type of the ordering column.  For numeric ordering columns it is
+    typically of the same type as the ordering column, but for datetime
+    ordering columns it is an <type>interval</type>.
+    In all these cases, the value of the <replaceable>offset</replaceable>
+    must be non-null and non-negative.  Also, while
+    the <replaceable>offset</replaceable> does not have to be a simple
+    constant, it cannot contain variables, aggregate functions, or window
+    functions.
    </para>
 
    <para>
-    Beware that the <literal>ROWS</literal> options can produce unpredictable
+    The <replaceable>frame_exclusion</replaceable> option allows rows around
+    the current row to be excluded from the frame, even if they would be
+    included according to the frame start and frame end options.
+    <literal>EXCLUDE CURRENT ROW</literal> excludes the current row from the
+    frame.
+    <literal>EXCLUDE GROUP</literal> excludes the current row and its
+    ordering peers from the frame.
+    <literal>EXCLUDE TIES</literal> excludes any peers of the current
+    row from the frame, but not the current row itself.
+    <literal>EXCLUDE NO OTHERS</literal> simply specifies explicitly the
+    default behavior of not excluding the current row or its peers.
+   </para>
+
+   <para>
+    Beware that the <literal>ROWS</literal> mode can produce unpredictable
     results if the <literal>ORDER BY</literal> ordering does not order the rows
-    uniquely.  The <literal>RANGE</literal> options are designed to ensure that
-    rows that are peers in the <literal>ORDER BY</literal> ordering are treated
-    alike; all peer rows will be in the same frame.
+    uniquely.  The <literal>RANGE</literal> and <literal>GROUPS</literal>
+    modes are designed to ensure that rows that are peers in
+    the <literal>ORDER BY</literal> ordering are treated alike: all rows of
+    a given peer group will be in the frame or excluded from it.
    </para>
 
    <para>
@@ -1978,17 +2028,6 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     a table's primary key is included in the <literal>GROUP BY</literal> list.
     The SQL standard specifies additional conditions that should be
     recognized.
-   </para>
-  </refsect2>
-
-  <refsect2>
-   <title><literal>WINDOW</literal> Clause Restrictions</title>
-
-   <para>
-    The SQL standard provides additional options for the window
-    <replaceable class="parameter">frame_clause</replaceable>.
-    <productname>PostgreSQL</productname> currently supports only the
-    options listed above.
    </para>
   </refsect2>
 

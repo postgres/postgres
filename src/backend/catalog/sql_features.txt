@@ -498,7 +498,7 @@ T616	Null treatment option for LEAD and LAG functions			NO
 T617	FIRST_VALUE and LAST_VALUE function			YES	
 T618	NTH_VALUE function			NO	function exists, but some options missing
 T619	Nested window functions			NO	
-T620	WINDOW clause: GROUPS option			NO	
+T620	WINDOW clause: GROUPS option			YES	
 T621	Enhanced numeric functions			YES	
 T631	IN predicate with one list element			YES	
 T641	Multiple column assignment			NO	only some syntax variants supported

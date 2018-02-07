@@ -369,6 +369,11 @@ _readWindowClause(void)
 	READ_INT_FIELD(frameOptions);
 	READ_NODE_FIELD(startOffset);
 	READ_NODE_FIELD(endOffset);
+	READ_OID_FIELD(startInRangeFunc);
+	READ_OID_FIELD(endInRangeFunc);
+	READ_OID_FIELD(inRangeColl);
+	READ_BOOL_FIELD(inRangeAsc);
+	READ_BOOL_FIELD(inRangeNullsFirst);
 	READ_UINT_FIELD(winref);
 	READ_BOOL_FIELD(copiedOrder);
 
@@ -2139,6 +2144,11 @@ _readWindowAgg(void)
 	READ_INT_FIELD(frameOptions);
 	READ_NODE_FIELD(startOffset);
 	READ_NODE_FIELD(endOffset);
+	READ_OID_FIELD(startInRangeFunc);
+	READ_OID_FIELD(endInRangeFunc);
+	READ_OID_FIELD(inRangeColl);
+	READ_BOOL_FIELD(inRangeAsc);
+	READ_BOOL_FIELD(inRangeNullsFirst);
 
 	READ_DONE();
 }

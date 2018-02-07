@@ -1011,6 +1011,34 @@ timestamptz_cmp_date(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(timestamptz_cmp_internal(dt1, dt2));
 }
 
+/*
+ * in_range support function for date.
+ *
+ * We implement this by promoting the dates to timestamp (without time zone)
+ * and then using the timestamp-and-interval in_range function.
+ */
+Datum
+in_range_date_interval(PG_FUNCTION_ARGS)
+{
+	DateADT		val = PG_GETARG_DATEADT(0);
+	DateADT		base = PG_GETARG_DATEADT(1);
+	Interval   *offset = PG_GETARG_INTERVAL_P(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	Timestamp	valStamp;
+	Timestamp	baseStamp;
+
+	valStamp = date2timestamp(val);
+	baseStamp = date2timestamp(base);
+
+	return DirectFunctionCall5(in_range_timestamp_interval,
+							   TimestampGetDatum(valStamp),
+							   TimestampGetDatum(baseStamp),
+							   IntervalPGetDatum(offset),
+							   BoolGetDatum(sub),
+							   BoolGetDatum(less));
+}
+
 
 /* Add an interval to a date, giving a new date.
  * Must handle both positive and negative intervals.
@@ -1842,6 +1870,45 @@ time_mi_interval(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMEADT(result);
 }
 
+/*
+ * in_range support function for time.
+ */
+Datum
+in_range_time_interval(PG_FUNCTION_ARGS)
+{
+	TimeADT		val = PG_GETARG_TIMEADT(0);
+	TimeADT		base = PG_GETARG_TIMEADT(1);
+	Interval   *offset = PG_GETARG_INTERVAL_P(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	TimeADT		sum;
+
+	/*
+	 * Like time_pl_interval/time_mi_interval, we disregard the month and day
+	 * fields of the offset.  So our test for negative should too.
+	 */
+	if (offset->time < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	/*
+	 * We can't use time_pl_interval/time_mi_interval here, because their
+	 * wraparound behavior would give wrong (or at least undesirable) answers.
+	 * Fortunately the equivalent non-wrapping behavior is trivial, especially
+	 * since we don't worry about integer overflow.
+	 */
+	if (sub)
+		sum = base - offset->time;
+	else
+		sum = base + offset->time;
+
+	if (less)
+		PG_RETURN_BOOL(val <= sum);
+	else
+		PG_RETURN_BOOL(val >= sum);
+}
+
 
 /* time_part()
  * Extract specified field from time type.
@@ -2303,6 +2370,46 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 	result->zone = time->zone;
 
 	PG_RETURN_TIMETZADT_P(result);
+}
+
+/*
+ * in_range support function for timetz.
+ */
+Datum
+in_range_timetz_interval(PG_FUNCTION_ARGS)
+{
+	TimeTzADT  *val = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *base = PG_GETARG_TIMETZADT_P(1);
+	Interval   *offset = PG_GETARG_INTERVAL_P(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	TimeTzADT	sum;
+
+	/*
+	 * Like timetz_pl_interval/timetz_mi_interval, we disregard the month and
+	 * day fields of the offset.  So our test for negative should too.
+	 */
+	if (offset->time < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	/*
+	 * We can't use timetz_pl_interval/timetz_mi_interval here, because their
+	 * wraparound behavior would give wrong (or at least undesirable) answers.
+	 * Fortunately the equivalent non-wrapping behavior is trivial, especially
+	 * since we don't worry about integer overflow.
+	 */
+	if (sub)
+		sum.time = base->time - offset->time;
+	else
+		sum.time = base->time + offset->time;
+	sum.zone = base->zone;
+
+	if (less)
+		PG_RETURN_BOOL(timetz_cmp_internal(val, &sum) <= 0);
+	else
+		PG_RETURN_BOOL(timetz_cmp_internal(val, &sum) >= 0);
 }
 
 /* overlaps_timetz() --- implements the SQL OVERLAPS operator.

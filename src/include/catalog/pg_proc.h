@@ -647,6 +647,20 @@ DATA(insert OID = 381 (  bttintervalcmp    PGNSP PGUID 12 1 0 0 0 f f f f t f i 
 DESCR("less-equal-greater");
 DATA(insert OID = 382 (  btarraycmp		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 23 "2277 2277" _null_ _null_ _null_ _null_ _null_ btarraycmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 4126 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "20 20 20 16 16" _null_ _null_ _null_ _null_ _null_ in_range_int8_int8 _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4127 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "23 23 20 16 16" _null_ _null_ _null_ _null_ _null_ in_range_int4_int8 _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4128 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "23 23 23 16 16" _null_ _null_ _null_ _null_ _null_ in_range_int4_int4 _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4129 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "23 23 21 16 16" _null_ _null_ _null_ _null_ _null_ in_range_int4_int2 _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4130 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "21 21 20 16 16" _null_ _null_ _null_ _null_ _null_ in_range_int2_int8 _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4131 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "21 21 23 16 16" _null_ _null_ _null_ _null_ _null_ in_range_int2_int4 _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4132 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "21 21 21 16 16" _null_ _null_ _null_ _null_ _null_ in_range_int2_int2 _null_ _null_ _null_ ));
+DESCR("window RANGE support");
 
 DATA(insert OID = 361 (  lseg_distance	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 701 "601 601" _null_ _null_ _null_ _null_ _null_	lseg_distance _null_ _null_ _null_ ));
 DATA(insert OID = 362 (  lseg_interpt	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 600 "601 601" _null_ _null_ _null_ _null_ _null_	lseg_interpt _null_ _null_ _null_ ));
@@ -1216,6 +1230,8 @@ DATA(insert OID = 1092 (  date_cmp		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 
 DESCR("less-equal-greater");
 DATA(insert OID = 3136 (  date_sortsupport PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2278 "2281" _null_ _null_ _null_ _null_ _null_ date_sortsupport _null_ _null_ _null_ ));
 DESCR("sort support");
+DATA(insert OID = 4133 (  in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "1082 1082 1186 16 16" _null_ _null_ _null_ _null_ _null_ in_range_date_interval _null_ _null_ _null_ ));
+DESCR("window RANGE support");
 
 /* OIDS 1100 - 1199 */
 
@@ -3141,6 +3157,18 @@ DATA(insert OID = 2045 (  timestamp_cmp		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 
 DESCR("less-equal-greater");
 DATA(insert OID = 3137 (  timestamp_sortsupport PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2278 "2281" _null_ _null_ _null_ _null_ _null_ timestamp_sortsupport _null_ _null_ _null_ ));
 DESCR("sort support");
+
+DATA(insert OID = 4134 (  in_range			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "1114 1114 1186 16 16" _null_ _null_ _null_ _null_ _null_ in_range_timestamp_interval _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4135 (  in_range			PGNSP PGUID 12 1 0 0 0 f f f f t f s s 5 0 16 "1184 1184 1186 16 16" _null_ _null_ _null_ _null_ _null_ in_range_timestamptz_interval _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4136 (  in_range			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "1186 1186 1186 16 16" _null_ _null_ _null_ _null_ _null_ in_range_interval_interval _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4137 (  in_range			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "1083 1083 1186 16 16" _null_ _null_ _null_ _null_ _null_ in_range_time_interval _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4138 (  in_range			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "1266 1266 1186 16 16" _null_ _null_ _null_ _null_ _null_ in_range_timetz_interval _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+
 DATA(insert OID = 2046 (  time				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 1083 "1266" _null_ _null_ _null_ _null_ _null_ timetz_time _null_ _null_ _null_ ));
 DESCR("convert time with time zone to time");
 DATA(insert OID = 2047 (  timetz			PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 1266 "1083" _null_ _null_ _null_ _null_ _null_ time_timetz _null_ _null_ _null_ ));

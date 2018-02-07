@@ -420,6 +420,13 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 				err = _("grouping operations are not allowed in window ROWS");
 
 			break;
+		case EXPR_KIND_WINDOW_FRAME_GROUPS:
+			if (isAgg)
+				err = _("aggregate functions are not allowed in window GROUPS");
+			else
+				err = _("grouping operations are not allowed in window GROUPS");
+
+			break;
 		case EXPR_KIND_SELECT_TARGET:
 			/* okay */
 			break;
@@ -835,6 +842,7 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 		case EXPR_KIND_WINDOW_ORDER:
 		case EXPR_KIND_WINDOW_FRAME_RANGE:
 		case EXPR_KIND_WINDOW_FRAME_ROWS:
+		case EXPR_KIND_WINDOW_FRAME_GROUPS:
 			err = _("window functions are not allowed in window definitions");
 			break;
 		case EXPR_KIND_SELECT_TARGET:

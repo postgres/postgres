@@ -3258,6 +3258,110 @@ interval_div(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
+
+/*
+ * in_range support functions for timestamps and intervals.
+ *
+ * Per SQL spec, we support these with interval as the offset type.
+ * The spec's restriction that the offset not be negative is a bit hard to
+ * decipher for intervals, but we choose to interpret it the same as our
+ * interval comparison operators would.
+ */
+
+Datum
+in_range_timestamptz_interval(PG_FUNCTION_ARGS)
+{
+	TimestampTz val = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz base = PG_GETARG_TIMESTAMPTZ(1);
+	Interval   *offset = PG_GETARG_INTERVAL_P(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	TimestampTz sum;
+
+	if (int128_compare(interval_cmp_value(offset), int64_to_int128(0)) < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	/* We don't currently bother to avoid overflow hazards here */
+	if (sub)
+		sum = DatumGetTimestampTz(DirectFunctionCall2(timestamptz_mi_interval,
+													  TimestampTzGetDatum(base),
+													  IntervalPGetDatum(offset)));
+	else
+		sum = DatumGetTimestampTz(DirectFunctionCall2(timestamptz_pl_interval,
+													  TimestampTzGetDatum(base),
+													  IntervalPGetDatum(offset)));
+
+	if (less)
+		PG_RETURN_BOOL(val <= sum);
+	else
+		PG_RETURN_BOOL(val >= sum);
+}
+
+Datum
+in_range_timestamp_interval(PG_FUNCTION_ARGS)
+{
+	Timestamp	val = PG_GETARG_TIMESTAMP(0);
+	Timestamp	base = PG_GETARG_TIMESTAMP(1);
+	Interval   *offset = PG_GETARG_INTERVAL_P(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	Timestamp	sum;
+
+	if (int128_compare(interval_cmp_value(offset), int64_to_int128(0)) < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	/* We don't currently bother to avoid overflow hazards here */
+	if (sub)
+		sum = DatumGetTimestamp(DirectFunctionCall2(timestamp_mi_interval,
+													TimestampGetDatum(base),
+													IntervalPGetDatum(offset)));
+	else
+		sum = DatumGetTimestamp(DirectFunctionCall2(timestamp_pl_interval,
+													TimestampGetDatum(base),
+													IntervalPGetDatum(offset)));
+
+	if (less)
+		PG_RETURN_BOOL(val <= sum);
+	else
+		PG_RETURN_BOOL(val >= sum);
+}
+
+Datum
+in_range_interval_interval(PG_FUNCTION_ARGS)
+{
+	Interval   *val = PG_GETARG_INTERVAL_P(0);
+	Interval   *base = PG_GETARG_INTERVAL_P(1);
+	Interval   *offset = PG_GETARG_INTERVAL_P(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	Interval   *sum;
+
+	if (int128_compare(interval_cmp_value(offset), int64_to_int128(0)) < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	/* We don't currently bother to avoid overflow hazards here */
+	if (sub)
+		sum = DatumGetIntervalP(DirectFunctionCall2(interval_mi,
+													IntervalPGetDatum(base),
+													IntervalPGetDatum(offset)));
+	else
+		sum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
+													IntervalPGetDatum(base),
+													IntervalPGetDatum(offset)));
+
+	if (less)
+		PG_RETURN_BOOL(interval_cmp_internal(val, sum) <= 0);
+	else
+		PG_RETURN_BOOL(interval_cmp_internal(val, sum) >= 0);
+}
+
+
 /*
  * interval_accum, interval_accum_inv, and interval_avg implement the
  * AVG(interval) aggregate.

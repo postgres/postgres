@@ -5877,6 +5877,8 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 			appendStringInfoString(buf, "RANGE ");
 		else if (wc->frameOptions & FRAMEOPTION_ROWS)
 			appendStringInfoString(buf, "ROWS ");
+		else if (wc->frameOptions & FRAMEOPTION_GROUPS)
+			appendStringInfoString(buf, "GROUPS ");
 		else
 			Assert(false);
 		if (wc->frameOptions & FRAMEOPTION_BETWEEN)
@@ -5885,12 +5887,12 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 			appendStringInfoString(buf, "UNBOUNDED PRECEDING ");
 		else if (wc->frameOptions & FRAMEOPTION_START_CURRENT_ROW)
 			appendStringInfoString(buf, "CURRENT ROW ");
-		else if (wc->frameOptions & FRAMEOPTION_START_VALUE)
+		else if (wc->frameOptions & FRAMEOPTION_START_OFFSET)
 		{
 			get_rule_expr(wc->startOffset, context, false);
-			if (wc->frameOptions & FRAMEOPTION_START_VALUE_PRECEDING)
+			if (wc->frameOptions & FRAMEOPTION_START_OFFSET_PRECEDING)
 				appendStringInfoString(buf, " PRECEDING ");
-			else if (wc->frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING)
+			else if (wc->frameOptions & FRAMEOPTION_START_OFFSET_FOLLOWING)
 				appendStringInfoString(buf, " FOLLOWING ");
 			else
 				Assert(false);
@@ -5904,12 +5906,12 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 				appendStringInfoString(buf, "UNBOUNDED FOLLOWING ");
 			else if (wc->frameOptions & FRAMEOPTION_END_CURRENT_ROW)
 				appendStringInfoString(buf, "CURRENT ROW ");
-			else if (wc->frameOptions & FRAMEOPTION_END_VALUE)
+			else if (wc->frameOptions & FRAMEOPTION_END_OFFSET)
 			{
 				get_rule_expr(wc->endOffset, context, false);
-				if (wc->frameOptions & FRAMEOPTION_END_VALUE_PRECEDING)
+				if (wc->frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING)
 					appendStringInfoString(buf, " PRECEDING ");
-				else if (wc->frameOptions & FRAMEOPTION_END_VALUE_FOLLOWING)
+				else if (wc->frameOptions & FRAMEOPTION_END_OFFSET_FOLLOWING)
 					appendStringInfoString(buf, " FOLLOWING ");
 				else
 					Assert(false);
@@ -5917,6 +5919,12 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 			else
 				Assert(false);
 		}
+		if (wc->frameOptions & FRAMEOPTION_EXCLUDE_CURRENT_ROW)
+			appendStringInfoString(buf, "EXCLUDE CURRENT ROW ");
+		else if (wc->frameOptions & FRAMEOPTION_EXCLUDE_GROUP)
+			appendStringInfoString(buf, "EXCLUDE GROUP ");
+		else if (wc->frameOptions & FRAMEOPTION_EXCLUDE_TIES)
+			appendStringInfoString(buf, "EXCLUDE TIES ");
 		/* we will now have a trailing space; remove it */
 		buf->len--;
 	}

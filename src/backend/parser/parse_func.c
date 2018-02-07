@@ -2227,6 +2227,7 @@ check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 			break;
 		case EXPR_KIND_WINDOW_FRAME_RANGE:
 		case EXPR_KIND_WINDOW_FRAME_ROWS:
+		case EXPR_KIND_WINDOW_FRAME_GROUPS:
 			err = _("set-returning functions are not allowed in window definitions");
 			break;
 		case EXPR_KIND_SELECT_TARGET:

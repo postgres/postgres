@@ -1805,6 +1805,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_WINDOW_ORDER:
 		case EXPR_KIND_WINDOW_FRAME_RANGE:
 		case EXPR_KIND_WINDOW_FRAME_ROWS:
+		case EXPR_KIND_WINDOW_FRAME_GROUPS:
 		case EXPR_KIND_SELECT_TARGET:
 		case EXPR_KIND_INSERT_TARGET:
 		case EXPR_KIND_UPDATE_SOURCE:
@@ -3428,6 +3429,8 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "window RANGE";
 		case EXPR_KIND_WINDOW_FRAME_ROWS:
 			return "window ROWS";
+		case EXPR_KIND_WINDOW_FRAME_GROUPS:
+			return "window GROUPS";
 		case EXPR_KIND_SELECT_TARGET:
 			return "SELECT";
 		case EXPR_KIND_INSERT_TARGET:

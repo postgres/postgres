@@ -261,6 +261,8 @@ static WindowAgg *make_windowagg(List *tlist, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
 			   int frameOptions, Node *startOffset, Node *endOffset,
+			   Oid startInRangeFunc, Oid endInRangeFunc,
+			   Oid inRangeColl, bool inRangeAsc, bool inRangeNullsFirst,
 			   Plan *lefttree);
 static Group *make_group(List *tlist, List *qual, int numGroupCols,
 		   AttrNumber *grpColIdx, Oid *grpOperators,
@@ -2123,6 +2125,11 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 						  wc->frameOptions,
 						  wc->startOffset,
 						  wc->endOffset,
+						  wc->startInRangeFunc,
+						  wc->endInRangeFunc,
+						  wc->inRangeColl,
+						  wc->inRangeAsc,
+						  wc->inRangeNullsFirst,
 						  subplan);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
@@ -6080,6 +6087,8 @@ make_windowagg(List *tlist, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
 			   int frameOptions, Node *startOffset, Node *endOffset,
+			   Oid startInRangeFunc, Oid endInRangeFunc,
+			   Oid inRangeColl, bool inRangeAsc, bool inRangeNullsFirst,
 			   Plan *lefttree)
 {
 	WindowAgg  *node = makeNode(WindowAgg);
@@ -6095,6 +6104,11 @@ make_windowagg(List *tlist, Index winref,
 	node->frameOptions = frameOptions;
 	node->startOffset = startOffset;
 	node->endOffset = endOffset;
+	node->startInRangeFunc = startInRangeFunc;
+	node->endInRangeFunc = endInRangeFunc;
+	node->inRangeColl = inRangeColl;
+	node->inRangeAsc = inRangeAsc;
+	node->inRangeNullsFirst = inRangeNullsFirst;
 
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;

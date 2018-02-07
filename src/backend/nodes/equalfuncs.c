@@ -2735,6 +2735,11 @@ _equalWindowClause(const WindowClause *a, const WindowClause *b)
 	COMPARE_SCALAR_FIELD(frameOptions);
 	COMPARE_NODE_FIELD(startOffset);
 	COMPARE_NODE_FIELD(endOffset);
+	COMPARE_SCALAR_FIELD(startInRangeFunc);
+	COMPARE_SCALAR_FIELD(endInRangeFunc);
+	COMPARE_SCALAR_FIELD(inRangeColl);
+	COMPARE_SCALAR_FIELD(inRangeAsc);
+	COMPARE_SCALAR_FIELD(inRangeNullsFirst);
 	COMPARE_SCALAR_FIELD(winref);
 	COMPARE_SCALAR_FIELD(copiedOrder);
 

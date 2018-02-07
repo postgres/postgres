@@ -14,7 +14,7 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <float.h> /* for _isnan */
+#include <float.h>				/* for _isnan */
 #include <limits.h>
 #include <math.h>
 
@@ -467,6 +467,46 @@ int28ge(PG_FUNCTION_ARGS)
 	int64		val2 = PG_GETARG_INT64(1);
 
 	PG_RETURN_BOOL(val1 >= val2);
+}
+
+/*
+ * in_range support function for int8.
+ *
+ * Note: we needn't supply int8_int4 or int8_int2 variants, as implicit
+ * coercion of the offset value takes care of those scenarios just as well.
+ */
+Datum
+in_range_int8_int8(PG_FUNCTION_ARGS)
+{
+	int64		val = PG_GETARG_INT64(0);
+	int64		base = PG_GETARG_INT64(1);
+	int64		offset = PG_GETARG_INT64(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	int64		sum;
+
+	if (offset < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	if (sub)
+		offset = -offset;		/* cannot overflow */
+
+	if (unlikely(pg_add_s64_overflow(base, offset, &sum)))
+	{
+		/*
+		 * If sub is false, the true sum is surely more than val, so correct
+		 * answer is the same as "less".  If sub is true, the true sum is
+		 * surely less than val, so the answer is "!less".
+		 */
+		PG_RETURN_BOOL(sub ? !less : less);
+	}
+
+	if (less)
+		PG_RETURN_BOOL(val <= sum);
+	else
+		PG_RETURN_BOOL(val >= sum);
 }
 
 

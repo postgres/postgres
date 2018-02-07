@@ -14729,8 +14729,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    partition through the last peer of the current row.  This is
    likely to give unhelpful results for <function>last_value</function> and
    sometimes also <function>nth_value</function>.  You can redefine the frame by
-   adding a suitable frame specification (<literal>RANGE</literal> or
-   <literal>ROWS</literal>) to the <literal>OVER</literal> clause.
+   adding a suitable frame specification (<literal>RANGE</literal>,
+   <literal>ROWS</literal> or <literal>GROUPS</literal>) to
+   the <literal>OVER</literal> clause.
    See <xref linkend="syntax-window-functions"/> for more information
    about frame specifications.
   </para>

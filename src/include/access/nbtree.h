@@ -225,11 +225,17 @@ typedef struct BTMetaPageData
  *	To facilitate accelerated sorting, an operator class may choose to
  *	offer a second procedure (BTSORTSUPPORT_PROC).  For full details, see
  *	src/include/utils/sortsupport.h.
+ *
+ *	To support window frames defined by "RANGE offset PRECEDING/FOLLOWING",
+ *	an operator class may choose to offer a third amproc procedure
+ *	(BTINRANGE_PROC), independently of whether it offers sortsupport.
+ *	For full details, see doc/src/sgml/btree.sgml.
  */
 
 #define BTORDER_PROC		1
 #define BTSORTSUPPORT_PROC	2
-#define BTNProcs			2
+#define BTINRANGE_PROC		3
+#define BTNProcs			3
 
 /*
  *	We need to be able to tell the difference between read and write

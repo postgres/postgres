@@ -207,7 +207,7 @@
 
  <para>
   As shown in <xref linkend="xindex-btree-support-table"/>, btree defines
-  one required and one optional support function.
+  one required and two optional support functions.
  </para>
 
  <para>
@@ -250,6 +250,185 @@
   in a more efficient way than naively calling the comparison support
   function.  The APIs involved in this are defined in
   <filename>src/include/utils/sortsupport.h</filename>.
+ </para>
+
+ <indexterm>
+  <primary>in_range support functions</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>support functions</primary>
+  <secondary>in_range</secondary>
+ </indexterm>
+
+ <para>
+  Optionally, a btree operator family may
+  provide <firstterm>in_range</firstterm> support function(s), registered
+  under support function number 3.  These are not used during btree index
+  operations; rather, they extend the semantics of the operator family so
+  that it can support window clauses containing
+  the <literal>RANGE</literal> <replaceable>offset</replaceable>
+  <literal>PRECEDING</literal>
+  and <literal>RANGE</literal> <replaceable>offset</replaceable>
+  <literal>FOLLOWING</literal> frame bound types (see
+  <xref linkend="syntax-window-functions"/>).  Fundamentally, the extra
+  information provided is how to add or subtract
+  an <replaceable>offset</replaceable> value in a way that is compatible
+  with the family's data ordering.
+ </para>
+
+ <para>
+  An <function>in_range</function> function must have the signature
+<synopsis>
+in_range(<replaceable>val</replaceable> type1, <replaceable>base</replaceable> type1, <replaceable>offset</replaceable> type2, <replaceable>sub</replaceable> bool, <replaceable>less</replaceable> bool)
+returns bool
+</synopsis>
+  <replaceable>val</replaceable> and <replaceable>base</replaceable> must be
+  of the same type, which is one of the types supported by the operator
+  family (i.e., a type for which it provides an ordering).
+  However, <replaceable>offset</replaceable> could be of a different type,
+  which might be one otherwise unsupported by the family.  An example is
+  that the built-in <literal>time_ops</literal> family provides
+  an <function>in_range</function> function that
+  has <replaceable>offset</replaceable> of type <type>interval</type>.
+  A family can provide <function>in_range</function> functions for any of
+  its supported types and one or more <replaceable>offset</replaceable>
+  types.  Each <function>in_range</function> function should be entered
+  in <structname>pg_amproc</structname>
+  with <structfield>amproclefttype</structfield> equal to <type>type1</type>
+  and <structfield>amprocrighttype</structfield> equal to <type>type2</type>.
+ </para>
+
+ <para>
+  The essential semantics of an <function>in_range</function> function
+  depend on the two boolean flag parameters.  It should add or
+  subtract <replaceable>base</replaceable>
+  and <replaceable>offset</replaceable>, then
+  compare <replaceable>val</replaceable> to the result, as follows:
+  <itemizedlist>
+   <listitem>
+    <para>
+     if <literal>!</literal><replaceable>sub</replaceable> and
+     <literal>!</literal><replaceable>less</replaceable>,
+     return <replaceable>val</replaceable> <literal>&gt;=</literal>
+     (<replaceable>base</replaceable> <literal>+</literal>
+     <replaceable>offset</replaceable>)
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     if <literal>!</literal><replaceable>sub</replaceable>
+     and <replaceable>less</replaceable>,
+     return <replaceable>val</replaceable> <literal>&lt;=</literal>
+     (<replaceable>base</replaceable> <literal>+</literal>
+     <replaceable>offset</replaceable>)
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     if <replaceable>sub</replaceable>
+     and <literal>!</literal><replaceable>less</replaceable>,
+     return <replaceable>val</replaceable> <literal>&gt;=</literal>
+     (<replaceable>base</replaceable> <literal>-</literal>
+     <replaceable>offset</replaceable>)
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     if <replaceable>sub</replaceable> and <replaceable>less</replaceable>,
+     return <replaceable>val</replaceable> <literal>&lt;=</literal>
+     (<replaceable>base</replaceable> <literal>-</literal>
+     <replaceable>offset</replaceable>)
+    </para>
+   </listitem>
+  </itemizedlist>
+  Before doing so, the function should check the sign
+  of <replaceable>offset</replaceable>: if it is less than zero, raise
+  error <literal>ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE</literal> (22013)
+  with error text like <quote>invalid preceding or following size in window
+  function</quote>.  (This is required by the SQL standard, although
+  nonstandard operator families might perhaps choose to ignore this
+  restriction, since there seems to be little semantic necessity for it.)
+  This requirement is delegated to the <function>in_range</function>
+  function so that the core code needn't understand what <quote>less than
+  zero</quote> means for a particular data type.
+ </para>
+
+ <para>
+  An additional expectation is that <function>in_range</function> functions
+  should, if practical, avoid throwing an error
+  if <replaceable>base</replaceable> <literal>+</literal>
+  <replaceable>offset</replaceable>
+  or <replaceable>base</replaceable> <literal>-</literal>
+  <replaceable>offset</replaceable> would overflow.
+  The correct comparison result can be determined even if that value would
+  be out of the data type's range.  Note that if the data type includes
+  concepts such as <quote>infinity</quote> or <quote>NaN</quote>, extra care
+  may be needed to ensure that <function>in_range</function>'s results agree
+  with the normal sort order of the operator family.
+ </para>
+
+ <para>
+  The results of the <function>in_range</function> function must be
+  consistent with the sort ordering imposed by the operator family.
+  To be precise, given any fixed values of <replaceable>offset</replaceable>
+  and <replaceable>sub</replaceable>, then:
+  <itemizedlist>
+   <listitem>
+    <para>
+     If <function>in_range</function> with <replaceable>less</replaceable> =
+     true is true for some <replaceable>val1</replaceable>
+     and <replaceable>base</replaceable>, it must be true for
+     every <replaceable>val2</replaceable> <literal>&lt;=</literal>
+     <replaceable>val1</replaceable> with the
+     same <replaceable>base</replaceable>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     If <function>in_range</function> with <replaceable>less</replaceable> =
+     true is false for some <replaceable>val1</replaceable>
+     and <replaceable>base</replaceable>, it must be false for
+     every <replaceable>val2</replaceable> <literal>&gt;=</literal>
+     <replaceable>val1</replaceable> with the
+     same <replaceable>base</replaceable>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     If <function>in_range</function> with <replaceable>less</replaceable> =
+     true is true for some <replaceable>val</replaceable>
+     and <replaceable>base1</replaceable>, it must be true for
+     every <replaceable>base2</replaceable> <literal>&gt;=</literal>
+     <replaceable>base1</replaceable> with the
+     same <replaceable>val</replaceable>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     If <function>in_range</function> with <replaceable>less</replaceable> =
+     true is false for some <replaceable>val</replaceable>
+     and <replaceable>base1</replaceable>, it must be false for
+     every <replaceable>base2</replaceable> <literal>&lt;=</literal>
+     <replaceable>base1</replaceable> with the
+     same <replaceable>val</replaceable>.
+    </para>
+   </listitem>
+  </itemizedlist>
+  Analogous statements with inverted conditions hold
+  when <replaceable>less</replaceable> = false.
+ </para>
+
+ <para>
+  If the type being ordered (<type>type1</type>) is collatable,
+  the appropriate collation OID will be passed to
+  the <function>in_range</function> function, using the standard
+  PG_GET_COLLATION() mechanism.
+ </para>
+
+ <para>
+  <function>in_range</function> functions need not handle NULL inputs, and
+  typically will be marked strict.
  </para>
 
 </sect1>

@@ -1128,10 +1128,11 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 
 	/*
-	 * btree comparison procs must be 2-arg procs returning int4, while btree
-	 * sortsupport procs must take internal and return void.  hash support
-	 * proc 1 must be a 1-arg proc returning int4, while proc 2 must be a
-	 * 2-arg proc returning int8.  Otherwise we don't know.
+	 * btree comparison procs must be 2-arg procs returning int4.  btree
+	 * sortsupport procs must take internal and return void.  btree in_range
+	 * procs must be 5-arg procs returning bool.  hash support proc 1 must be
+	 * a 1-arg proc returning int4, while proc 2 must be a 2-arg proc
+	 * returning int8.  Otherwise we don't know.
 	 */
 	if (amoid == BTREE_AM_OID)
 	{
@@ -1170,6 +1171,26 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 			/*
 			 * Can't infer lefttype/righttype from proc, so use default rule
 			 */
+		}
+		else if (member->number == BTINRANGE_PROC)
+		{
+			if (procform->pronargs != 5)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree in_range procedures must have five arguments")));
+			if (procform->prorettype != BOOLOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree in_range procedures must return boolean")));
+
+			/*
+			 * If lefttype/righttype isn't specified, use the proc's input
+			 * types (we look at the test-value and offset arguments)
+			 */
+			if (!OidIsValid(member->lefttype))
+				member->lefttype = procform->proargtypes.values[0];
+			if (!OidIsValid(member->righttype))
+				member->righttype = procform->proargtypes.values[2];
 		}
 	}
 	else if (amoid == HASH_AM_OID)

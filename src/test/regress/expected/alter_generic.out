@@ -354,9 +354,9 @@ ERROR:  invalid operator number 0, must be between 1 and 5
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 1 < ; -- operator without argument types
 ERROR:  operator argument types must be specified in ALTER OPERATOR FAMILY
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 0 btint42cmp(int4, int2); -- function number should be between 1 and 5
-ERROR:  invalid procedure number 0, must be between 1 and 2
+ERROR:  invalid procedure number 0, must be between 1 and 3
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 6 btint42cmp(int4, int2); -- function number should be between 1 and 5
-ERROR:  invalid procedure number 6, must be between 1 and 2
+ERROR:  invalid procedure number 6, must be between 1 and 3
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD STORAGE invalid_storage; -- Ensure STORAGE is not a part of ALTER OPERATOR FAMILY
 ERROR:  STORAGE cannot be specified in ALTER OPERATOR FAMILY
 DROP OPERATOR FAMILY alt_opf4 USING btree;
