@@ -5317,6 +5317,13 @@ ORDER BY c.ordinal_position;
       <entry><type>yes_or_no</type></entry>
       <entry><literal>YES</literal> if the constraint is deferrable and initially deferred, <literal>NO</literal> if not</entry>
      </row>
+     <row>
+      <entry><literal>enforced</literal></entry>
+      <entry><type>yes_or_no</type></entry>
+      <entry>Applies to a feature not available in
+      <productname>PostgreSQL</productname> (currently always
+      <literal>YES</literal>)</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -5761,7 +5768,14 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>action_order</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry>
+       Firing order among triggers on the same table having the same
+       <literal>event_manipulation</literal>,
+       <literal>action_timing</literal>, and
+       <literal>action_orientation</literal>.  In
+       <productname>PostgreSQL</productname>, triggers are fired in name
+       order, so this column reflects that.
+      </entry>
      </row>
 
      <row>
@@ -5806,13 +5820,13 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>action_reference_old_table</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
+      <entry>Name of the <quote>old</quote> transition table, or null if none</entry>
      </row>
 
      <row>
       <entry><literal>action_reference_new_table</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
+      <entry>Name of the <quote>new</quote> transition table, or null if none</entry>
      </row>
 
      <row>

@@ -96,6 +96,24 @@ CONTEXT:  SQL statement "delete from fkeys2 where fkey21 = $1 and fkey22 = $2 "
 update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 10 and pkey2 = '1';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
+SELECT trigger_name, event_manipulation, event_object_schema, event_object_table,
+       action_order, action_condition, action_orientation, action_timing,
+       action_reference_old_table, action_reference_new_table
+  FROM information_schema.triggers ORDER BY 1, 2;
+        trigger_name        | event_manipulation | event_object_schema | event_object_table | action_order | action_condition | action_orientation | action_timing | action_reference_old_table | action_reference_new_table 
+----------------------------+--------------------+---------------------+--------------------+--------------+------------------+--------------------+---------------+----------------------------+----------------------------
+ check_fkeys2_fkey_restrict | DELETE             | public              | fkeys2             |            1 |                  | ROW                | BEFORE        |                            | 
+ check_fkeys2_fkey_restrict | UPDATE             | public              | fkeys2             |            1 |                  | ROW                | BEFORE        |                            | 
+ check_fkeys2_pkey_exist    | INSERT             | public              | fkeys2             |            1 |                  | ROW                | BEFORE        |                            | 
+ check_fkeys2_pkey_exist    | UPDATE             | public              | fkeys2             |            2 |                  | ROW                | BEFORE        |                            | 
+ check_fkeys_pkey2_exist    | INSERT             | public              | fkeys              |            1 |                  | ROW                | BEFORE        |                            | 
+ check_fkeys_pkey2_exist    | UPDATE             | public              | fkeys              |            1 |                  | ROW                | BEFORE        |                            | 
+ check_fkeys_pkey_exist     | INSERT             | public              | fkeys              |            2 |                  | ROW                | BEFORE        |                            | 
+ check_fkeys_pkey_exist     | UPDATE             | public              | fkeys              |            2 |                  | ROW                | BEFORE        |                            | 
+ check_pkeys_fkey_cascade   | DELETE             | public              | pkeys              |            1 |                  | ROW                | BEFORE        |                            | 
+ check_pkeys_fkey_cascade   | UPDATE             | public              | pkeys              |            1 |                  | ROW                | BEFORE        |                            | 
+(10 rows)
+
 DROP TABLE pkeys;
 DROP TABLE fkeys;
 DROP TABLE fkeys2;
@@ -347,6 +365,24 @@ CREATE TRIGGER insert_when BEFORE INSERT ON main_table
 FOR EACH STATEMENT WHEN (true) EXECUTE PROCEDURE trigger_func('insert_when');
 CREATE TRIGGER delete_when AFTER DELETE ON main_table
 FOR EACH STATEMENT WHEN (true) EXECUTE PROCEDURE trigger_func('delete_when');
+SELECT trigger_name, event_manipulation, event_object_schema, event_object_table,
+       action_order, action_condition, action_orientation, action_timing,
+       action_reference_old_table, action_reference_new_table
+  FROM information_schema.triggers ORDER BY 1, 2;
+     trigger_name     | event_manipulation | event_object_schema | event_object_table | action_order |        action_condition        | action_orientation | action_timing | action_reference_old_table | action_reference_new_table 
+----------------------+--------------------+---------------------+--------------------+--------------+--------------------------------+--------------------+---------------+----------------------------+----------------------------
+ after_ins_stmt_trig  | INSERT             | public              | main_table         |            1 |                                | STATEMENT          | AFTER         |                            | 
+ after_upd_row_trig   | UPDATE             | public              | main_table         |            1 |                                | ROW                | AFTER         |                            | 
+ after_upd_stmt_trig  | UPDATE             | public              | main_table         |            1 |                                | STATEMENT          | AFTER         |                            | 
+ before_ins_stmt_trig | INSERT             | public              | main_table         |            1 |                                | STATEMENT          | BEFORE        |                            | 
+ delete_a             | DELETE             | public              | main_table         |            1 | (old.a = 123)                  | ROW                | AFTER         |                            | 
+ delete_when          | DELETE             | public              | main_table         |            1 | true                           | STATEMENT          | AFTER         |                            | 
+ insert_a             | INSERT             | public              | main_table         |            1 | (new.a = 123)                  | ROW                | AFTER         |                            | 
+ insert_when          | INSERT             | public              | main_table         |            2 | true                           | STATEMENT          | BEFORE        |                            | 
+ modified_a           | UPDATE             | public              | main_table         |            1 | (old.a <> new.a)               | ROW                | BEFORE        |                            | 
+ modified_any         | UPDATE             | public              | main_table         |            2 | (old.* IS DISTINCT FROM new.*) | ROW                | BEFORE        |                            | 
+(10 rows)
+
 INSERT INTO main_table (a) VALUES (123), (456);
 NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
 NOTICE:  trigger_func(insert_when) called: action = INSERT, when = BEFORE, level = STATEMENT
@@ -1991,6 +2027,33 @@ create trigger child3_update_trig
 create trigger child3_delete_trig
   after delete on child3 referencing old table as old_table
   for each statement execute procedure dump_delete();
+SELECT trigger_name, event_manipulation, event_object_schema, event_object_table,
+       action_order, action_condition, action_orientation, action_timing,
+       action_reference_old_table, action_reference_new_table
+  FROM information_schema.triggers ORDER BY 1, 2;
+      trigger_name      | event_manipulation | event_object_schema | event_object_table | action_order | action_condition | action_orientation | action_timing | action_reference_old_table | action_reference_new_table 
+------------------------+--------------------+---------------------+--------------------+--------------+------------------+--------------------+---------------+----------------------------+----------------------------
+ after_ins_stmt_trig    | INSERT             | public              | main_table         |            1 |                  | STATEMENT          | AFTER         |                            | 
+ after_upd_a_b_row_trig | UPDATE             | public              | main_table         |            1 |                  | ROW                | AFTER         |                            | 
+ after_upd_b_row_trig   | UPDATE             | public              | main_table         |            2 |                  | ROW                | AFTER         |                            | 
+ after_upd_b_stmt_trig  | UPDATE             | public              | main_table         |            1 |                  | STATEMENT          | AFTER         |                            | 
+ after_upd_stmt_trig    | UPDATE             | public              | main_table         |            2 |                  | STATEMENT          | AFTER         |                            | 
+ before_ins_stmt_trig   | INSERT             | public              | main_table         |            1 |                  | STATEMENT          | BEFORE        |                            | 
+ before_upd_a_stmt_trig | UPDATE             | public              | main_table         |            1 |                  | STATEMENT          | BEFORE        |                            | 
+ child1_delete_trig     | DELETE             | public              | child1             |            1 |                  | STATEMENT          | AFTER         | old_table                  | 
+ child1_insert_trig     | INSERT             | public              | child1             |            1 |                  | STATEMENT          | AFTER         |                            | new_table
+ child1_update_trig     | UPDATE             | public              | child1             |            1 |                  | STATEMENT          | AFTER         | old_table                  | new_table
+ child2_delete_trig     | DELETE             | public              | child2             |            1 |                  | STATEMENT          | AFTER         | old_table                  | 
+ child2_insert_trig     | INSERT             | public              | child2             |            1 |                  | STATEMENT          | AFTER         |                            | new_table
+ child2_update_trig     | UPDATE             | public              | child2             |            1 |                  | STATEMENT          | AFTER         | old_table                  | new_table
+ child3_delete_trig     | DELETE             | public              | child3             |            1 |                  | STATEMENT          | AFTER         | old_table                  | 
+ child3_insert_trig     | INSERT             | public              | child3             |            1 |                  | STATEMENT          | AFTER         |                            | new_table
+ child3_update_trig     | UPDATE             | public              | child3             |            1 |                  | STATEMENT          | AFTER         | old_table                  | new_table
+ parent_delete_trig     | DELETE             | public              | parent             |            1 |                  | STATEMENT          | AFTER         | old_table                  | 
+ parent_insert_trig     | INSERT             | public              | parent             |            1 |                  | STATEMENT          | AFTER         |                            | new_table
+ parent_update_trig     | UPDATE             | public              | parent             |            1 |                  | STATEMENT          | AFTER         | old_table                  | new_table
+(19 rows)
+
 -- insert directly into children sees respective child-format tuples
 insert into child1 values ('AAA', 42);
 NOTICE:  trigger = child1_insert_trig, new table = (AAA,42)
