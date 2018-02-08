@@ -1109,16 +1109,16 @@ EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c3 = 'foo'
   FROM ft4 INNER JOIN ft5 ON (ft4.c1 = ft5.c1)
   WHERE ft2.c1 > 1200 AND ft2.c2 = ft4.c1
-  RETURNING ft2.ctid, ft2, ft2.*, ft4.ctid, ft4, ft4.*;                             -- can be pushed down
+  RETURNING ft2, ft2.*, ft4, ft4.*;       -- can be pushed down
 UPDATE ft2 SET c3 = 'foo'
   FROM ft4 INNER JOIN ft5 ON (ft4.c1 = ft5.c1)
   WHERE ft2.c1 > 1200 AND ft2.c2 = ft4.c1
-  RETURNING ft2.ctid, ft2, ft2.*, ft4.ctid, ft4, ft4.*;
+  RETURNING ft2, ft2.*, ft4, ft4.*;
 EXPLAIN (verbose, costs off)
 DELETE FROM ft2
   USING ft4 LEFT JOIN ft5 ON (ft4.c1 = ft5.c1)
   WHERE ft2.c1 > 1200 AND ft2.c1 % 10 = 0 AND ft2.c2 = ft4.c1
-  RETURNING 100;                                                                    -- can be pushed down
+  RETURNING 100;                          -- can be pushed down
 DELETE FROM ft2
   USING ft4 LEFT JOIN ft5 ON (ft4.c1 = ft5.c1)
   WHERE ft2.c1 > 1200 AND ft2.c1 % 10 = 0 AND ft2.c2 = ft4.c1
@@ -1146,11 +1146,11 @@ EXPLAIN (verbose, costs off)
 DELETE FROM ft2
   USING ft4 INNER JOIN ft5 ON (ft4.c1 === ft5.c1)
   WHERE ft2.c1 > 2000 AND ft2.c2 = ft4.c1
-  RETURNING ft2.ctid, ft2.c1, ft2.c2, ft2.c3;                                       -- can't be pushed down
+  RETURNING ft2.c1, ft2.c2, ft2.c3;       -- can't be pushed down
 DELETE FROM ft2
   USING ft4 INNER JOIN ft5 ON (ft4.c1 === ft5.c1)
   WHERE ft2.c1 > 2000 AND ft2.c2 = ft4.c1
-  RETURNING ft2.ctid, ft2.c1, ft2.c2, ft2.c3;
+  RETURNING ft2.c1, ft2.c2, ft2.c3;
 DELETE FROM ft2 WHERE ft2.c1 > 2000;
 ALTER SERVER loopback OPTIONS (ADD extensions 'postgres_fdw');
 
