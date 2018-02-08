@@ -473,6 +473,9 @@ choose_next_subplan_for_worker(AppendState *node)
 		return false;
 	}
 
+	/* Save the plan from which we are starting the search. */
+	node->as_whichplan = pstate->pa_next_plan;
+
 	/* Loop until we find a subplan to execute. */
 	while (pstate->pa_finished[pstate->pa_next_plan])
 	{
@@ -481,14 +484,17 @@ choose_next_subplan_for_worker(AppendState *node)
 			/* Advance to next plan. */
 			pstate->pa_next_plan++;
 		}
-		else if (append->first_partial_plan < node->as_nplans)
+		else if (node->as_whichplan > append->first_partial_plan)
 		{
 			/* Loop back to first partial plan. */
 			pstate->pa_next_plan = append->first_partial_plan;
 		}
 		else
 		{
-			/* At last plan, no partial plans, arrange to bail out. */
+			/*
+			 * At last plan, and either there are no partial plans or we've
+			 * tried them all.  Arrange to bail out.
+			 */
 			pstate->pa_next_plan = node->as_whichplan;
 		}
 
