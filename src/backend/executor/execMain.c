@@ -1413,8 +1413,11 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 		rInfo++;
 		nr--;
 	}
-	/* Third, search through the leaf result relations, if any */
-	foreach(l, estate->es_leaf_result_relations)
+	/*
+	 * Third, search through the result relations that were created during
+	 * tuple routing, if any.
+	 */
+	foreach(l, estate->es_tuple_routing_result_relations)
 	{
 		rInfo = (ResultRelInfo *) lfirst(l);
 		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)

@@ -178,6 +178,15 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 							  resultRTindex,
 							  rel,
 							  estate->es_instrument);
+
+			/*
+			 * Since we've just initialized this ResultRelInfo, it's not in
+			 * any list attached to the estate as yet.  Add it, so that it can
+			 * be found later.
+			 */
+			estate->es_tuple_routing_result_relations =
+						lappend(estate->es_tuple_routing_result_relations,
+								leaf_part_rri);
 		}
 
 		part_tupdesc = RelationGetDescr(partrel);
@@ -209,9 +218,6 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 			ExecOpenIndices(leaf_part_rri,
 							mtstate != NULL &&
 							mtstate->mt_onconflict != ONCONFLICT_NONE);
-
-		estate->es_leaf_result_relations =
-			lappend(estate->es_leaf_result_relations, leaf_part_rri);
 
 		proute->partitions[i] = leaf_part_rri;
 		i++;
