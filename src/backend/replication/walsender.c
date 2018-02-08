@@ -1243,7 +1243,7 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 }
 
 /*
- * LogicalDecodingContext 'progress_update' callback.
+ * LogicalDecodingContext 'update_progress' callback.
  *
  * Write the current position to the log tracker (see XLogSendPhysical).
  */
