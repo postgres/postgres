@@ -263,7 +263,7 @@ extern char *HbaFileName;
 extern char *IdentFileName;
 extern char *external_pid_file;
 
-extern char *application_name;
+extern PGDLLIMPORT char *application_name;
 
 extern int	tcp_keepalives_idle;
 extern int	tcp_keepalives_interval;
