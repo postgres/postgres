@@ -3912,6 +3912,7 @@ PostgresMain(int argc, char *argv[],
 		 */
 		disable_all_timeouts(false);
 		QueryCancelPending = false; /* second to avoid race condition */
+		stmt_timeout_active = false;
 
 		/* Not reading from the client anymore. */
 		DoingCommandRead = false;
