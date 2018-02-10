@@ -2225,7 +2225,7 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 	{
 		targs = lappend(targs, transformExpr(pstate,
 											 (Node *) lfirst(lc),
-											 EXPR_KIND_CALL));
+											 EXPR_KIND_CALL_ARGUMENT));
 	}
 
 	node = ParseFuncOrColumn(pstate,

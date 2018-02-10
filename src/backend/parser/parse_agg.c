@@ -509,13 +509,13 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 			break;
 		case EXPR_KIND_PARTITION_EXPRESSION:
 			if (isAgg)
-				err = _("aggregate functions are not allowed in partition key expression");
+				err = _("aggregate functions are not allowed in partition key expressions");
 			else
-				err = _("grouping operations are not allowed in partition key expression");
+				err = _("grouping operations are not allowed in partition key expressions");
 
 			break;
 
-		case EXPR_KIND_CALL:
+		case EXPR_KIND_CALL_ARGUMENT:
 			if (isAgg)
 				err = _("aggregate functions are not allowed in CALL arguments");
 			else
@@ -897,9 +897,9 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 			err = _("window functions are not allowed in trigger WHEN conditions");
 			break;
 		case EXPR_KIND_PARTITION_EXPRESSION:
-			err = _("window functions are not allowed in partition key expression");
+			err = _("window functions are not allowed in partition key expressions");
 			break;
-		case EXPR_KIND_CALL:
+		case EXPR_KIND_CALL_ARGUMENT:
 			err = _("window functions are not allowed in CALL arguments");
 			break;
 

@@ -325,12 +325,12 @@ DROP FUNCTION retset(int);
 CREATE TABLE partitioned (
 	a int
 ) PARTITION BY RANGE ((avg(a)));
-ERROR:  aggregate functions are not allowed in partition key expression
+ERROR:  aggregate functions are not allowed in partition key expressions
 CREATE TABLE partitioned (
 	a int,
 	b int
 ) PARTITION BY RANGE ((avg(a) OVER (PARTITION BY b)));
-ERROR:  window functions are not allowed in partition key expression
+ERROR:  window functions are not allowed in partition key expressions
 CREATE TABLE partitioned (
 	a int
 ) PARTITION BY LIST ((a LIKE (SELECT 1)));

@@ -69,7 +69,7 @@ typedef enum ParseExprKind
 	EXPR_KIND_TRIGGER_WHEN,		/* WHEN condition in CREATE TRIGGER */
 	EXPR_KIND_POLICY,			/* USING or WITH CHECK expr in policy */
 	EXPR_KIND_PARTITION_EXPRESSION, /* PARTITION BY expression */
-	EXPR_KIND_CALL				/* CALL argument */
+	EXPR_KIND_CALL_ARGUMENT		/* procedure argument in CALL */
 } ParseExprKind;
 
 
