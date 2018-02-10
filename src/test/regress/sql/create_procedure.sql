@@ -13,10 +13,12 @@ $$;
 
 SELECT ptest1('x');  -- error
 CALL ptest1('a');  -- ok
+CALL ptest1('xy' || 'zzy');  -- ok, constant-folded arg
+CALL ptest1(substring(random()::text, 1, 1));  -- ok, volatile arg
 
 \df ptest1
 
-SELECT * FROM cp_test ORDER BY a;
+SELECT * FROM cp_test ORDER BY b COLLATE "C";
 
 
 CREATE PROCEDURE ptest2()

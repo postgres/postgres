@@ -2204,6 +2204,12 @@ ExecuteDoStmt(DoStmt *stmt, bool atomic)
  * transaction commands based on that information, e.g., call
  * SPI_connect_ext(SPI_OPT_NONATOMIC).  The language should also pass on the
  * atomic flag to any nested invocations to CALL.
+ *
+ * The expression data structures and execution context that we create
+ * within this function are children of the portalContext of the Portal
+ * that the CALL utility statement runs in.  Therefore, any pass-by-ref
+ * values that we're passing to the procedure will survive transaction
+ * commits that might occur inside the procedure.
  */
 void
 ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
@@ -2218,8 +2224,11 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;
 	CallContext *callcontext;
+	EState	   *estate;
+	ExprContext *econtext;
 	HeapTuple	tp;
 
+	/* We need to do parse analysis on the procedure call and its arguments */
 	targs = NIL;
 	foreach(lc, stmt->funccall->args)
 	{
@@ -2241,7 +2250,6 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 	aclresult = pg_proc_aclcheck(fexpr->funcid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_PROCEDURE, get_func_name(fexpr->funcid));
-	InvokeFunctionExecuteHook(fexpr->funcid);
 
 	nargs = list_length(fexpr->args);
 
@@ -2254,6 +2262,7 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 							   FUNC_MAX_ARGS,
 							   FUNC_MAX_ARGS)));
 
+	/* Prep the context object we'll pass to the procedure */
 	callcontext = makeNode(CallContext);
 	callcontext->atomic = atomic;
 
@@ -2270,23 +2279,28 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 		callcontext->atomic = true;
 	ReleaseSysCache(tp);
 
+	/* Initialize function call structure */
+	InvokeFunctionExecuteHook(fexpr->funcid);
 	fmgr_info(fexpr->funcid, &flinfo);
 	InitFunctionCallInfoData(fcinfo, &flinfo, nargs, fexpr->inputcollid, (Node *) callcontext, NULL);
+
+	/*
+	 * Evaluate procedure arguments inside a suitable execution context.  Note
+	 * we can't free this context till the procedure returns.
+	 */
+	estate = CreateExecutorState();
+	econtext = CreateExprContext(estate);
 
 	i = 0;
 	foreach(lc, fexpr->args)
 	{
-		EState	   *estate;
 		ExprState  *exprstate;
-		ExprContext *econtext;
 		Datum		val;
 		bool		isnull;
 
-		estate = CreateExecutorState();
 		exprstate = ExecPrepareExpr(lfirst(lc), estate);
-		econtext = CreateStandaloneExprContext();
+
 		val = ExecEvalExprSwitchContext(exprstate, econtext, &isnull);
-		FreeExecutorState(estate);
 
 		fcinfo.arg[i] = val;
 		fcinfo.argnull[i] = isnull;
@@ -2295,4 +2309,6 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 	}
 
 	FunctionCallInvoke(&fcinfo);
+
+	FreeExecutorState(estate);
 }
