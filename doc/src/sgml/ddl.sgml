@@ -3145,18 +3145,15 @@ CREATE TABLE measurement_y2006m02 PARTITION OF measurement
      <listitem>
       <para>
        Create an index on the key column(s), as well as any other indexes you
-       might want for every partition.  (The key index is not strictly
+       might want, on the partitioned table. (The key index is not strictly
        necessary, but in most scenarios it is helpful.  If you intend the key
        values to be unique then you should always create a unique or
-       primary-key constraint for each partition.)
+       primary-key constraint for each partition.)  This automatically creates
+       one index on each partition, and any partitions you create or attach
+       later will also contain the index.
 
 <programlisting>
-CREATE INDEX ON measurement_y2006m02 (logdate);
-CREATE INDEX ON measurement_y2006m03 (logdate);
-...
-CREATE INDEX ON measurement_y2007m11 (logdate);
-CREATE INDEX ON measurement_y2007m12 (logdate);
-CREATE INDEX ON measurement_y2008m01 (logdate);
+CREATE INDEX ON measurement (logdate);
 </programlisting>
       </para>
      </listitem>
@@ -3273,12 +3270,9 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
     <itemizedlist>
      <listitem>
       <para>
-       There is no facility available to create the matching indexes on all
-       partitions automatically.  Indexes must be added to each partition with
-       separate commands.  This also means that there is no way to create a
-       primary key, unique constraint, or exclusion constraint spanning all
-       partitions; it is only possible to constrain each leaf partition
-       individually.
+       There is no way to create a primary key, unique constraint, or
+       exclusion constraint spanning all partitions; it is only possible
+       to constrain each leaf partition individually.
       </para>
      </listitem>
 
