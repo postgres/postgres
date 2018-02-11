@@ -380,8 +380,7 @@ typedef struct _indexAttachInfo
 typedef struct _statsExtInfo
 {
 	DumpableObject dobj;
-	TableInfo  *statsexttable;	/* link to table the stats ext is for */
-	char	   *statsextdef;
+	char	   *rolname;		/* name of owner, or empty string */
 } StatsExtInfo;
 
 typedef struct _ruleInfo
@@ -694,7 +693,7 @@ extern TableInfo *getTables(Archive *fout, int *numTables);
 extern void getOwnedSeqs(Archive *fout, TableInfo tblinfo[], int numTables);
 extern InhInfo *getInherits(Archive *fout, int *numInherits);
 extern void getIndexes(Archive *fout, TableInfo tblinfo[], int numTables);
-extern void getExtendedStatistics(Archive *fout, TableInfo tblinfo[], int numTables);
+extern void getExtendedStatistics(Archive *fout);
 extern void getConstraints(Archive *fout, TableInfo tblinfo[], int numTables);
 extern RuleInfo *getRules(Archive *fout, int *numRules);
 extern void getTriggers(Archive *fout, TableInfo tblinfo[], int numTables);

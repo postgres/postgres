@@ -3441,6 +3441,7 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 		strcmp(type, "FOREIGN TABLE") == 0 ||
 		strcmp(type, "TEXT SEARCH DICTIONARY") == 0 ||
 		strcmp(type, "TEXT SEARCH CONFIGURATION") == 0 ||
+		strcmp(type, "STATISTICS") == 0 ||
 	/* non-schema-specified objects */
 		strcmp(type, "DATABASE") == 0 ||
 		strcmp(type, "PROCEDURAL LANGUAGE") == 0 ||
@@ -3636,6 +3637,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 			strcmp(te->desc, "TEXT SEARCH CONFIGURATION") == 0 ||
 			strcmp(te->desc, "FOREIGN DATA WRAPPER") == 0 ||
 			strcmp(te->desc, "SERVER") == 0 ||
+			strcmp(te->desc, "STATISTICS") == 0 ||
 			strcmp(te->desc, "PUBLICATION") == 0 ||
 			strcmp(te->desc, "SUBSCRIPTION") == 0)
 		{
@@ -3658,8 +3660,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 				 strcmp(te->desc, "TRIGGER") == 0 ||
 				 strcmp(te->desc, "ROW SECURITY") == 0 ||
 				 strcmp(te->desc, "POLICY") == 0 ||
-				 strcmp(te->desc, "USER MAPPING") == 0 ||
-				 strcmp(te->desc, "STATISTICS") == 0)
+				 strcmp(te->desc, "USER MAPPING") == 0)
 		{
 			/* these object types don't have separate owners */
 		}

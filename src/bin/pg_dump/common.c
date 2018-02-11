@@ -266,7 +266,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading extended statistics\n");
-	getExtendedStatistics(fout, tblinfo, numTables);
+	getExtendedStatistics(fout);
 
 	if (g_verbose)
 		write_msg(NULL, "reading constraints\n");
