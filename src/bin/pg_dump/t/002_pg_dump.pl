@@ -1420,7 +1420,7 @@ my %tests = (
 	'ALTER ... OWNER commands (except post-data objects)' => {
 		all_runs => 0,    # catch-all
 		regexp =>
-qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|PUBLICATION|SUBSCRIPTION)(.*) OWNER TO .*;/m,
+qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|STATISTICS|PUBLICATION|SUBSCRIPTION)(.*) OWNER TO .*;/m,
 		like   => {},     # use more-specific options above
 		unlike => {
 			column_inserts           => 1,
