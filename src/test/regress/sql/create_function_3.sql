@@ -134,6 +134,14 @@ SELECT proname, proisstrict FROM pg_proc
                      'functest_F_4'::regproc) ORDER BY proname;
 
 
+-- pg_get_functiondef tests
+
+SELECT pg_get_functiondef('functest_A_1'::regproc);
+SELECT pg_get_functiondef('functest_B_3'::regproc);
+SELECT pg_get_functiondef('functest_C_3'::regproc);
+SELECT pg_get_functiondef('functest_F_2'::regproc);
+
+
 -- information_schema tests
 
 CREATE FUNCTION functest_IS_1(a int, b int default 1, c text default 'foo')

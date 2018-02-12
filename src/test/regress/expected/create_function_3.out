@@ -189,6 +189,50 @@ SELECT proname, proisstrict FROM pg_proc
  functest_f_4 | t
 (4 rows)
 
+-- pg_get_functiondef tests
+SELECT pg_get_functiondef('functest_A_1'::regproc);
+                         pg_get_functiondef                         
+--------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_a_1(text, date)+
+  RETURNS boolean                                                  +
+  LANGUAGE sql                                                     +
+ AS $function$SELECT $1 = 'abcd' AND $2 > '2001-01-01'$function$   +
+ 
+(1 row)
+
+SELECT pg_get_functiondef('functest_B_3'::regproc);
+                       pg_get_functiondef                        
+-----------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_b_3(integer)+
+  RETURNS boolean                                               +
+  LANGUAGE sql                                                  +
+  STABLE                                                        +
+ AS $function$SELECT $1 = 0$function$                           +
+ 
+(1 row)
+
+SELECT pg_get_functiondef('functest_C_3'::regproc);
+                       pg_get_functiondef                        
+-----------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_c_3(integer)+
+  RETURNS boolean                                               +
+  LANGUAGE sql                                                  +
+  SECURITY DEFINER                                              +
+ AS $function$SELECT $1 < 0$function$                           +
+ 
+(1 row)
+
+SELECT pg_get_functiondef('functest_F_2'::regproc);
+                       pg_get_functiondef                        
+-----------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_f_2(integer)+
+  RETURNS boolean                                               +
+  LANGUAGE sql                                                  +
+  STRICT                                                        +
+ AS $function$SELECT $1 = 50$function$                          +
+ 
+(1 row)
+
 -- information_schema tests
 CREATE FUNCTION functest_IS_1(a int, b int default 1, c text default 'foo')
     RETURNS int
