@@ -69,124 +69,124 @@ SELECT proname, provolatile FROM pg_proc
 --
 -- SECURITY DEFINER | INVOKER
 --
-CREATE FUNCTION functext_C_1(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_C_1(int) RETURNS bool LANGUAGE 'sql'
        AS 'SELECT $1 > 0';
-CREATE FUNCTION functext_C_2(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_C_2(int) RETURNS bool LANGUAGE 'sql'
        SECURITY DEFINER AS 'SELECT $1 = 0';
-CREATE FUNCTION functext_C_3(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_C_3(int) RETURNS bool LANGUAGE 'sql'
        SECURITY INVOKER AS 'SELECT $1 < 0';
 SELECT proname, prosecdef FROM pg_proc
-       WHERE oid in ('functext_C_1'::regproc,
-                     'functext_C_2'::regproc,
-                     'functext_C_3'::regproc) ORDER BY proname;
+       WHERE oid in ('functest_C_1'::regproc,
+                     'functest_C_2'::regproc,
+                     'functest_C_3'::regproc) ORDER BY proname;
    proname    | prosecdef 
 --------------+-----------
- functext_c_1 | f
- functext_c_2 | t
- functext_c_3 | f
+ functest_c_1 | f
+ functest_c_2 | t
+ functest_c_3 | f
 (3 rows)
 
-ALTER FUNCTION functext_C_1(int) IMMUTABLE;	-- unrelated change, no effect
-ALTER FUNCTION functext_C_2(int) SECURITY INVOKER;
-ALTER FUNCTION functext_C_3(int) SECURITY DEFINER;
+ALTER FUNCTION functest_C_1(int) IMMUTABLE;	-- unrelated change, no effect
+ALTER FUNCTION functest_C_2(int) SECURITY INVOKER;
+ALTER FUNCTION functest_C_3(int) SECURITY DEFINER;
 SELECT proname, prosecdef FROM pg_proc
-       WHERE oid in ('functext_C_1'::regproc,
-                     'functext_C_2'::regproc,
-                     'functext_C_3'::regproc) ORDER BY proname;
+       WHERE oid in ('functest_C_1'::regproc,
+                     'functest_C_2'::regproc,
+                     'functest_C_3'::regproc) ORDER BY proname;
    proname    | prosecdef 
 --------------+-----------
- functext_c_1 | f
- functext_c_2 | f
- functext_c_3 | t
+ functest_c_1 | f
+ functest_c_2 | f
+ functest_c_3 | t
 (3 rows)
 
 --
 -- LEAKPROOF
 --
-CREATE FUNCTION functext_E_1(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_E_1(int) RETURNS bool LANGUAGE 'sql'
        AS 'SELECT $1 > 100';
-CREATE FUNCTION functext_E_2(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_E_2(int) RETURNS bool LANGUAGE 'sql'
        LEAKPROOF AS 'SELECT $1 > 100';
 SELECT proname, proleakproof FROM pg_proc
-       WHERE oid in ('functext_E_1'::regproc,
-                     'functext_E_2'::regproc) ORDER BY proname;
+       WHERE oid in ('functest_E_1'::regproc,
+                     'functest_E_2'::regproc) ORDER BY proname;
    proname    | proleakproof 
 --------------+--------------
- functext_e_1 | f
- functext_e_2 | t
+ functest_e_1 | f
+ functest_e_2 | t
 (2 rows)
 
-ALTER FUNCTION functext_E_1(int) LEAKPROOF;
-ALTER FUNCTION functext_E_2(int) STABLE;	-- unrelated change, no effect
+ALTER FUNCTION functest_E_1(int) LEAKPROOF;
+ALTER FUNCTION functest_E_2(int) STABLE;	-- unrelated change, no effect
 SELECT proname, proleakproof FROM pg_proc
-       WHERE oid in ('functext_E_1'::regproc,
-                     'functext_E_2'::regproc) ORDER BY proname;
+       WHERE oid in ('functest_E_1'::regproc,
+                     'functest_E_2'::regproc) ORDER BY proname;
    proname    | proleakproof 
 --------------+--------------
- functext_e_1 | t
- functext_e_2 | t
+ functest_e_1 | t
+ functest_e_2 | t
 (2 rows)
 
-ALTER FUNCTION functext_E_2(int) NOT LEAKPROOF;	-- remove leakproog attribute
+ALTER FUNCTION functest_E_2(int) NOT LEAKPROOF;	-- remove leakproog attribute
 SELECT proname, proleakproof FROM pg_proc
-       WHERE oid in ('functext_E_1'::regproc,
-                     'functext_E_2'::regproc) ORDER BY proname;
+       WHERE oid in ('functest_E_1'::regproc,
+                     'functest_E_2'::regproc) ORDER BY proname;
    proname    | proleakproof 
 --------------+--------------
- functext_e_1 | t
- functext_e_2 | f
+ functest_e_1 | t
+ functest_e_2 | f
 (2 rows)
 
 -- it takes superuser privilege to turn on leakproof, but not for turn off
-ALTER FUNCTION functext_E_1(int) OWNER TO regress_unpriv_user;
-ALTER FUNCTION functext_E_2(int) OWNER TO regress_unpriv_user;
+ALTER FUNCTION functest_E_1(int) OWNER TO regress_unpriv_user;
+ALTER FUNCTION functest_E_2(int) OWNER TO regress_unpriv_user;
 SET SESSION AUTHORIZATION regress_unpriv_user;
 SET search_path TO temp_func_test, public;
-ALTER FUNCTION functext_E_1(int) NOT LEAKPROOF;
-ALTER FUNCTION functext_E_2(int) LEAKPROOF;
+ALTER FUNCTION functest_E_1(int) NOT LEAKPROOF;
+ALTER FUNCTION functest_E_2(int) LEAKPROOF;
 ERROR:  only superuser can define a leakproof function
-CREATE FUNCTION functext_E_3(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_E_3(int) RETURNS bool LANGUAGE 'sql'
        LEAKPROOF AS 'SELECT $1 < 200';	-- failed
 ERROR:  only superuser can define a leakproof function
 RESET SESSION AUTHORIZATION;
 --
 -- CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
 --
-CREATE FUNCTION functext_F_1(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_F_1(int) RETURNS bool LANGUAGE 'sql'
        AS 'SELECT $1 > 50';
-CREATE FUNCTION functext_F_2(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_F_2(int) RETURNS bool LANGUAGE 'sql'
        CALLED ON NULL INPUT AS 'SELECT $1 = 50';
-CREATE FUNCTION functext_F_3(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_F_3(int) RETURNS bool LANGUAGE 'sql'
        RETURNS NULL ON NULL INPUT AS 'SELECT $1 < 50';
-CREATE FUNCTION functext_F_4(int) RETURNS bool LANGUAGE 'sql'
+CREATE FUNCTION functest_F_4(int) RETURNS bool LANGUAGE 'sql'
        STRICT AS 'SELECT $1 = 50';
 SELECT proname, proisstrict FROM pg_proc
-       WHERE oid in ('functext_F_1'::regproc,
-                     'functext_F_2'::regproc,
-                     'functext_F_3'::regproc,
-                     'functext_F_4'::regproc) ORDER BY proname;
+       WHERE oid in ('functest_F_1'::regproc,
+                     'functest_F_2'::regproc,
+                     'functest_F_3'::regproc,
+                     'functest_F_4'::regproc) ORDER BY proname;
    proname    | proisstrict 
 --------------+-------------
- functext_f_1 | f
- functext_f_2 | f
- functext_f_3 | t
- functext_f_4 | t
+ functest_f_1 | f
+ functest_f_2 | f
+ functest_f_3 | t
+ functest_f_4 | t
 (4 rows)
 
-ALTER FUNCTION functext_F_1(int) IMMUTABLE;	-- unrelated change, no effect
-ALTER FUNCTION functext_F_2(int) STRICT;
-ALTER FUNCTION functext_F_3(int) CALLED ON NULL INPUT;
+ALTER FUNCTION functest_F_1(int) IMMUTABLE;	-- unrelated change, no effect
+ALTER FUNCTION functest_F_2(int) STRICT;
+ALTER FUNCTION functest_F_3(int) CALLED ON NULL INPUT;
 SELECT proname, proisstrict FROM pg_proc
-       WHERE oid in ('functext_F_1'::regproc,
-                     'functext_F_2'::regproc,
-                     'functext_F_3'::regproc,
-                     'functext_F_4'::regproc) ORDER BY proname;
+       WHERE oid in ('functest_F_1'::regproc,
+                     'functest_F_2'::regproc,
+                     'functest_F_3'::regproc,
+                     'functest_F_4'::regproc) ORDER BY proname;
    proname    | proisstrict 
 --------------+-------------
- functext_f_1 | f
- functext_f_2 | t
- functext_f_3 | f
- functext_f_4 | t
+ functest_f_1 | f
+ functest_f_2 | t
+ functest_f_3 | f
+ functest_f_4 | t
 (4 rows)
 
 -- information_schema tests
@@ -236,15 +236,15 @@ drop cascades to function functest_a_3()
 drop cascades to function functest_b_2(integer)
 drop cascades to function functest_b_3(integer)
 drop cascades to function functest_b_4(integer)
-drop cascades to function functext_c_1(integer)
-drop cascades to function functext_c_2(integer)
-drop cascades to function functext_c_3(integer)
-drop cascades to function functext_e_1(integer)
-drop cascades to function functext_e_2(integer)
-drop cascades to function functext_f_1(integer)
-drop cascades to function functext_f_2(integer)
-drop cascades to function functext_f_3(integer)
-drop cascades to function functext_f_4(integer)
+drop cascades to function functest_c_1(integer)
+drop cascades to function functest_c_2(integer)
+drop cascades to function functest_c_3(integer)
+drop cascades to function functest_e_1(integer)
+drop cascades to function functest_e_2(integer)
+drop cascades to function functest_f_1(integer)
+drop cascades to function functest_f_2(integer)
+drop cascades to function functest_f_3(integer)
+drop cascades to function functest_f_4(integer)
 drop cascades to function functest_b_2(bigint)
 DROP USER regress_unpriv_user;
 RESET search_path;
