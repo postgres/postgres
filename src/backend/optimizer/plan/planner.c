@@ -5825,7 +5825,8 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 	double		allvisfrac;
 
 	/* Return immediately when parallelism disabled */
-	if (max_parallel_maintenance_workers == 0)
+	if (dynamic_shared_memory_type == DSM_IMPL_NONE ||
+		max_parallel_maintenance_workers == 0)
 		return 0;
 
 	/* Set up largely-dummy planner state */
