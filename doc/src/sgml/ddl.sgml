@@ -3078,7 +3078,7 @@ CREATE TABLE measurement (
        parent.  Note that specifying bounds such that the new partition's
        values will overlap with those in one or more existing partitions will
        cause an error.  Inserting data into the parent table that does not map
-       to one of the existing partitions will cause an error; appropriate
+       to one of the existing partitions will cause an error; an appropriate
        partition must be added manually.
       </para>
 
