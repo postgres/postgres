@@ -118,10 +118,7 @@ fixup_inherited_columns(Oid parentId, Oid childId, Bitmapset *columns)
 			continue;
 		}
 
-		attname = get_attname(parentId, attno);
-		if (!attname)
-			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-				 attno, parentId);
+		attname = get_attname(parentId, attno, false);
 		attno = get_attnum(childId, attname);
 		if (attno == InvalidAttrNumber)
 			elog(ERROR, "cache lookup failed for attribute %s of relation %u",

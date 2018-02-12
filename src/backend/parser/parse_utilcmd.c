@@ -1470,7 +1470,7 @@ generateClonedIndexStmt(RangeVar *heapRel, Oid heapRelid, Relation source_idx,
 			/* Simple index column */
 			char	   *attname;
 
-			attname = get_relid_attribute_name(indrelid, attnum);
+			attname = get_attname(indrelid, attnum, false);
 			keycoltype = get_atttype(indrelid, attnum);
 
 			iparam->name = attname;
@@ -3406,8 +3406,8 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 
 		/* Get the only column's name in case we need to output an error */
 		if (key->partattrs[0] != 0)
-			colname = get_relid_attribute_name(RelationGetRelid(parent),
-											   key->partattrs[0]);
+			colname = get_attname(RelationGetRelid(parent),
+								  key->partattrs[0], false);
 		else
 			colname = deparse_expression((Node *) linitial(partexprs),
 										 deparse_context_for(RelationGetRelationName(parent),
@@ -3491,8 +3491,8 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 
 			/* Get the column's name in case we need to output an error */
 			if (key->partattrs[i] != 0)
-				colname = get_relid_attribute_name(RelationGetRelid(parent),
-												   key->partattrs[i]);
+				colname = get_attname(RelationGetRelid(parent),
+									  key->partattrs[i], false);
 			else
 			{
 				colname = deparse_expression((Node *) list_nth(partexprs, j),

@@ -2405,7 +2405,8 @@ AddRelationNewConstraints(Relation rel,
 
 			if (list_length(vars) == 1)
 				colname = get_attname(RelationGetRelid(rel),
-									  ((Var *) linitial(vars))->varattno);
+									  ((Var *) linitial(vars))->varattno,
+									  true);
 			else
 				colname = NULL;
 

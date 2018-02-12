@@ -5250,7 +5250,7 @@ errtablecol(Relation rel, int attnum)
 	if (attnum > 0 && attnum <= reldesc->natts)
 		colname = NameStr(TupleDescAttr(reldesc, attnum - 1)->attname);
 	else
-		colname = get_relid_attribute_name(RelationGetRelid(rel), attnum);
+		colname = get_attname(RelationGetRelid(rel), attnum, false);
 
 	return errtablecolname(rel, colname);
 }

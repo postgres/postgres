@@ -2687,7 +2687,7 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	 * built (which can easily happen for rules).
 	 */
 	if (rte->rtekind == RTE_RELATION)
-		return get_relid_attribute_name(rte->relid, attnum);
+		return get_attname(rte->relid, attnum, false);
 
 	/*
 	 * Otherwise use the column name from eref.  There should always be one.

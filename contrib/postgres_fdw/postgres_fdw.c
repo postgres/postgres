@@ -5545,7 +5545,7 @@ conversion_error_callback(void *arg)
 			if (var->varattno == 0)
 				is_wholerow = true;
 			else
-				attname = get_relid_attribute_name(rte->relid, var->varattno);
+				attname = get_attname(rte->relid, var->varattno, false);
 
 			relname = get_rel_name(rte->relid);
 		}
