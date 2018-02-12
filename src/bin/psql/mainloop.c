@@ -223,6 +223,7 @@ MainLoop(FILE *source)
 			char	   *rest_of_line = NULL;
 			bool		found_help = false;
 			bool		found_exit_or_quit = false;
+			bool		found_q = false;
 
 			/* Search for the words we recognize;  must be first word */
 			if (pg_strncasecmp(first_word, "help", 4) == 0)
@@ -237,10 +238,18 @@ MainLoop(FILE *source)
 				found_exit_or_quit = true;
 			}
 
+			else if (strncmp(first_word, "\\q", 2) == 0)
+			{
+				rest_of_line = first_word + 2;
+				found_q = true;
+			}
+
 			/*
 			 * If we found a command word, check whether the rest of the line
 			 * contains only whitespace plus maybe one semicolon.  If not,
-			 * ignore the command word after all.
+			 * ignore the command word after all.  These commands are only
+			 * for compatibility with other SQL clients and are not
+			 * documented.
 			 */
 			if (rest_of_line != NULL)
 			{
@@ -288,6 +297,7 @@ MainLoop(FILE *source)
 					continue;
 				}
 			}
+
 			/*
 			 * "quit" and "exit" are only commands when the query buffer is
 			 * empty, but we emit a one-line message even when it isn't to
@@ -318,6 +328,21 @@ MainLoop(FILE *source)
 					break;
 				}
 			}
+
+			/*
+			 * If they typed "\q" in a place where "\q" is not active,
+			 * supply a hint.  The text is still added to the query
+			 * buffer.
+			 */
+			if (found_q && query_buf->len != 0 &&
+				prompt_status != PROMPT_READY &&
+				prompt_status != PROMPT_CONTINUE &&
+				prompt_status != PROMPT_PAREN)
+#ifndef WIN32
+					puts(_("Use control-D to quit."));
+#else
+					puts(_("Use control-C to quit."));
+#endif
 		}
 
 		/* echo back if flag is set, unless interactive */
