@@ -80,7 +80,7 @@ with plpy.subtransaction():
     except plpy.SPIError, e:
         if not swallow:
             raise
-        plpy.notice("Swallowed %r" % e)
+        plpy.notice("Swallowed %s(%r)" % (e.__class__.__name__, e.args[0]))
 return "ok"
 $$ LANGUAGE plpythonu;
 
