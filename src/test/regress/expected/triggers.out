@@ -1865,7 +1865,7 @@ create table parted2_stmt_trig1 partition of parted2_stmt_trig for values in (1)
 create table parted2_stmt_trig2 partition of parted2_stmt_trig for values in (2);
 create or replace function trigger_notice() returns trigger as $$
   begin
-    raise notice 'trigger on % % % for %', TG_TABLE_NAME, TG_WHEN, TG_OP, TG_LEVEL;
+    raise notice 'trigger % on % % % for %', TG_NAME, TG_TABLE_NAME, TG_WHEN, TG_OP, TG_LEVEL;
     if TG_LEVEL = 'ROW' then
        return NEW;
     end if;
@@ -1910,12 +1910,12 @@ create trigger trig_del_after after delete on parted2_stmt_trig
 with ins (a) as (
   insert into parted2_stmt_trig values (1), (2) returning a
 ) insert into parted_stmt_trig select a from ins returning tableoid::regclass, a;
-NOTICE:  trigger on parted_stmt_trig BEFORE INSERT for STATEMENT
-NOTICE:  trigger on parted2_stmt_trig BEFORE INSERT for STATEMENT
-NOTICE:  trigger on parted_stmt_trig1 BEFORE INSERT for ROW
-NOTICE:  trigger on parted_stmt_trig1 AFTER INSERT for ROW
-NOTICE:  trigger on parted2_stmt_trig AFTER INSERT for STATEMENT
-NOTICE:  trigger on parted_stmt_trig AFTER INSERT for STATEMENT
+NOTICE:  trigger trig_ins_before on parted_stmt_trig BEFORE INSERT for STATEMENT
+NOTICE:  trigger trig_ins_before on parted2_stmt_trig BEFORE INSERT for STATEMENT
+NOTICE:  trigger trig_ins_before on parted_stmt_trig1 BEFORE INSERT for ROW
+NOTICE:  trigger trig_ins_after on parted_stmt_trig1 AFTER INSERT for ROW
+NOTICE:  trigger trig_ins_after on parted2_stmt_trig AFTER INSERT for STATEMENT
+NOTICE:  trigger trig_ins_after on parted_stmt_trig AFTER INSERT for STATEMENT
      tableoid      | a 
 -------------------+---
  parted_stmt_trig1 | 1
@@ -1925,25 +1925,25 @@ NOTICE:  trigger on parted_stmt_trig AFTER INSERT for STATEMENT
 with upd as (
   update parted2_stmt_trig set a = a
 ) update parted_stmt_trig  set a = a;
-NOTICE:  trigger on parted_stmt_trig BEFORE UPDATE for STATEMENT
-NOTICE:  trigger on parted_stmt_trig1 BEFORE UPDATE for ROW
-NOTICE:  trigger on parted2_stmt_trig BEFORE UPDATE for STATEMENT
-NOTICE:  trigger on parted_stmt_trig1 AFTER UPDATE for ROW
-NOTICE:  trigger on parted_stmt_trig AFTER UPDATE for STATEMENT
-NOTICE:  trigger on parted2_stmt_trig AFTER UPDATE for STATEMENT
+NOTICE:  trigger trig_upd_before on parted_stmt_trig BEFORE UPDATE for STATEMENT
+NOTICE:  trigger trig_upd_before on parted_stmt_trig1 BEFORE UPDATE for ROW
+NOTICE:  trigger trig_upd_before on parted2_stmt_trig BEFORE UPDATE for STATEMENT
+NOTICE:  trigger trig_upd_after on parted_stmt_trig1 AFTER UPDATE for ROW
+NOTICE:  trigger trig_upd_after on parted_stmt_trig AFTER UPDATE for STATEMENT
+NOTICE:  trigger trig_upd_after on parted2_stmt_trig AFTER UPDATE for STATEMENT
 delete from parted_stmt_trig;
-NOTICE:  trigger on parted_stmt_trig BEFORE DELETE for STATEMENT
-NOTICE:  trigger on parted_stmt_trig AFTER DELETE for STATEMENT
+NOTICE:  trigger trig_del_before on parted_stmt_trig BEFORE DELETE for STATEMENT
+NOTICE:  trigger trig_del_after on parted_stmt_trig AFTER DELETE for STATEMENT
 -- insert via copy on the parent
 copy parted_stmt_trig(a) from stdin;
-NOTICE:  trigger on parted_stmt_trig BEFORE INSERT for STATEMENT
-NOTICE:  trigger on parted_stmt_trig1 BEFORE INSERT for ROW
-NOTICE:  trigger on parted_stmt_trig1 AFTER INSERT for ROW
-NOTICE:  trigger on parted_stmt_trig AFTER INSERT for STATEMENT
+NOTICE:  trigger trig_ins_before on parted_stmt_trig BEFORE INSERT for STATEMENT
+NOTICE:  trigger trig_ins_before on parted_stmt_trig1 BEFORE INSERT for ROW
+NOTICE:  trigger trig_ins_after on parted_stmt_trig1 AFTER INSERT for ROW
+NOTICE:  trigger trig_ins_after on parted_stmt_trig AFTER INSERT for STATEMENT
 -- insert via copy on the first partition
 copy parted_stmt_trig1(a) from stdin;
-NOTICE:  trigger on parted_stmt_trig1 BEFORE INSERT for ROW
-NOTICE:  trigger on parted_stmt_trig1 AFTER INSERT for ROW
+NOTICE:  trigger trig_ins_before on parted_stmt_trig1 BEFORE INSERT for ROW
+NOTICE:  trigger trig_ins_after on parted_stmt_trig1 AFTER INSERT for ROW
 drop table parted_stmt_trig, parted2_stmt_trig;
 --
 -- Test the interaction between transition tables and both kinds of
