@@ -1618,15 +1618,16 @@ plpgsql_dumptree(PLpgSQL_function *func)
 					printf("ROW %-16s fields", row->refname);
 					for (i = 0; i < row->nfields; i++)
 					{
-						if (row->fieldnames[i])
-							printf(" %s=var %d", row->fieldnames[i],
-								   row->varnos[i]);
+						printf(" %s=var %d", row->fieldnames[i],
+							   row->varnos[i]);
 					}
 					printf("\n");
 				}
 				break;
 			case PLPGSQL_DTYPE_REC:
-				printf("REC %s\n", ((PLpgSQL_rec *) d)->refname);
+				printf("REC %-16s typoid %u\n",
+					   ((PLpgSQL_rec *) d)->refname,
+					   ((PLpgSQL_rec *) d)->rectypeid);
 				break;
 			case PLPGSQL_DTYPE_RECFIELD:
 				printf("RECFIELD %-16s of REC %d\n",

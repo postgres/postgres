@@ -42,7 +42,7 @@ typedef struct PLyTupleToOb
 	TupleDesc	recdesc;
 	/* If we're dealing with a named composite type, these fields are set: */
 	TypeCacheEntry *typentry;	/* typcache entry for type */
-	int64		tupdescseq;		/* last tupdesc seqno seen in typcache */
+	uint64		tupdescid;		/* last tupdesc identifier seen in typcache */
 	/* These fields are NULL/0 if not yet set: */
 	PLyDatumToOb *atts;			/* array of per-column conversion info */
 	int			natts;			/* length of array */
@@ -107,7 +107,7 @@ typedef struct PLyObToTuple
 	TupleDesc	recdesc;
 	/* If we're dealing with a named composite type, these fields are set: */
 	TypeCacheEntry *typentry;	/* typcache entry for type */
-	int64		tupdescseq;		/* last tupdesc seqno seen in typcache */
+	uint64		tupdescid;		/* last tupdesc identifier seen in typcache */
 	/* These fields are NULL/0 if not yet set: */
 	PLyObToDatum *atts;			/* array of per-column conversion info */
 	int			natts;			/* length of array */

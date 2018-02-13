@@ -123,7 +123,9 @@
      and they can return a result of any of these types.  They can also
      accept or return any composite type (row type) specified by name.
      It is also possible to declare a <application>PL/pgSQL</application>
-     function as returning <type>record</type>, which means that the result
+     function as accepting <type>record</type>, which means that any
+     composite type will do as input, or
+     as returning <type>record</type>, which means that the result
      is a row type whose columns are determined by specification in the
      calling query, as discussed in <xref linkend="queries-tablefunctions"/>.
     </para>
@@ -669,14 +671,6 @@ user_id users.user_id%TYPE;
     composite types (complete table rows). In that case, the
     corresponding identifier <literal>$<replaceable>n</replaceable></literal> will be a row variable, and fields can
     be selected from it, for example <literal>$1.user_id</literal>.
-   </para>
-
-   <para>
-    Only the user-defined columns of a table row are accessible in a
-    row-type variable, not the OID or other system columns (because the
-    row could be from a view).  The fields of the row type inherit the
-    table's field size or precision for data types such as
-    <type>char(<replaceable>n</replaceable>)</type>.
    </para>
 
    <para>

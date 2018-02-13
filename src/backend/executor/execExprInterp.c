@@ -70,6 +70,7 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datum.h"
+#include "utils/expandedrecord.h"
 #include "utils/lsyscache.h"
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
@@ -2820,57 +2821,105 @@ ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	if (*op->resnull)
 		return;
 
-	/* Get the composite datum and extract its type fields */
 	tupDatum = *op->resvalue;
-	tuple = DatumGetHeapTupleHeader(tupDatum);
 
-	tupType = HeapTupleHeaderGetTypeId(tuple);
-	tupTypmod = HeapTupleHeaderGetTypMod(tuple);
-
-	/* Lookup tupdesc if first time through or if type changes */
-	tupDesc = get_cached_rowtype(tupType, tupTypmod,
-								 &op->d.fieldselect.argdesc,
-								 econtext);
-
-	/*
-	 * Find field's attr record.  Note we don't support system columns here: a
-	 * datum tuple doesn't have valid values for most of the interesting
-	 * system columns anyway.
-	 */
-	if (fieldnum <= 0)			/* should never happen */
-		elog(ERROR, "unsupported reference to system column %d in FieldSelect",
-			 fieldnum);
-	if (fieldnum > tupDesc->natts)	/* should never happen */
-		elog(ERROR, "attribute number %d exceeds number of columns %d",
-			 fieldnum, tupDesc->natts);
-	attr = TupleDescAttr(tupDesc, fieldnum - 1);
-
-	/* Check for dropped column, and force a NULL result if so */
-	if (attr->attisdropped)
+	/* We can special-case expanded records for speed */
+	if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(tupDatum)))
 	{
-		*op->resnull = true;
-		return;
+		ExpandedRecordHeader *erh = (ExpandedRecordHeader *) DatumGetEOHP(tupDatum);
+
+		Assert(erh->er_magic == ER_MAGIC);
+
+		/* Extract record's TupleDesc */
+		tupDesc = expanded_record_get_tupdesc(erh);
+
+		/*
+		 * Find field's attr record.  Note we don't support system columns
+		 * here: a datum tuple doesn't have valid values for most of the
+		 * interesting system columns anyway.
+		 */
+		if (fieldnum <= 0)		/* should never happen */
+			elog(ERROR, "unsupported reference to system column %d in FieldSelect",
+				 fieldnum);
+		if (fieldnum > tupDesc->natts)	/* should never happen */
+			elog(ERROR, "attribute number %d exceeds number of columns %d",
+				 fieldnum, tupDesc->natts);
+		attr = TupleDescAttr(tupDesc, fieldnum - 1);
+
+		/* Check for dropped column, and force a NULL result if so */
+		if (attr->attisdropped)
+		{
+			*op->resnull = true;
+			return;
+		}
+
+		/* Check for type mismatch --- possible after ALTER COLUMN TYPE? */
+		/* As in CheckVarSlotCompatibility, we should but can't check typmod */
+		if (op->d.fieldselect.resulttype != attr->atttypid)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("attribute %d has wrong type", fieldnum),
+					 errdetail("Table has type %s, but query expects %s.",
+							   format_type_be(attr->atttypid),
+							   format_type_be(op->d.fieldselect.resulttype))));
+
+		/* extract the field */
+		*op->resvalue = expanded_record_get_field(erh, fieldnum,
+												  op->resnull);
 	}
+	else
+	{
+		/* Get the composite datum and extract its type fields */
+		tuple = DatumGetHeapTupleHeader(tupDatum);
 
-	/* Check for type mismatch --- possible after ALTER COLUMN TYPE? */
-	/* As in CheckVarSlotCompatibility, we should but can't check typmod */
-	if (op->d.fieldselect.resulttype != attr->atttypid)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("attribute %d has wrong type", fieldnum),
-				 errdetail("Table has type %s, but query expects %s.",
-						   format_type_be(attr->atttypid),
-						   format_type_be(op->d.fieldselect.resulttype))));
+		tupType = HeapTupleHeaderGetTypeId(tuple);
+		tupTypmod = HeapTupleHeaderGetTypMod(tuple);
 
-	/* heap_getattr needs a HeapTuple not a bare HeapTupleHeader */
-	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
-	tmptup.t_data = tuple;
+		/* Lookup tupdesc if first time through or if type changes */
+		tupDesc = get_cached_rowtype(tupType, tupTypmod,
+									 &op->d.fieldselect.argdesc,
+									 econtext);
 
-	/* extract the field */
-	*op->resvalue = heap_getattr(&tmptup,
-								 fieldnum,
-								 tupDesc,
-								 op->resnull);
+		/*
+		 * Find field's attr record.  Note we don't support system columns
+		 * here: a datum tuple doesn't have valid values for most of the
+		 * interesting system columns anyway.
+		 */
+		if (fieldnum <= 0)		/* should never happen */
+			elog(ERROR, "unsupported reference to system column %d in FieldSelect",
+				 fieldnum);
+		if (fieldnum > tupDesc->natts)	/* should never happen */
+			elog(ERROR, "attribute number %d exceeds number of columns %d",
+				 fieldnum, tupDesc->natts);
+		attr = TupleDescAttr(tupDesc, fieldnum - 1);
+
+		/* Check for dropped column, and force a NULL result if so */
+		if (attr->attisdropped)
+		{
+			*op->resnull = true;
+			return;
+		}
+
+		/* Check for type mismatch --- possible after ALTER COLUMN TYPE? */
+		/* As in CheckVarSlotCompatibility, we should but can't check typmod */
+		if (op->d.fieldselect.resulttype != attr->atttypid)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("attribute %d has wrong type", fieldnum),
+					 errdetail("Table has type %s, but query expects %s.",
+							   format_type_be(attr->atttypid),
+							   format_type_be(op->d.fieldselect.resulttype))));
+
+		/* heap_getattr needs a HeapTuple not a bare HeapTupleHeader */
+		tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
+		tmptup.t_data = tuple;
+
+		/* extract the field */
+		*op->resvalue = heap_getattr(&tmptup,
+									 fieldnum,
+									 tupDesc,
+									 op->resnull);
+	}
 }
 
 /*

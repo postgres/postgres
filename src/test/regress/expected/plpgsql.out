@@ -4595,23 +4595,32 @@ begin
       x int;
       y int := i;
       r record;
+      c int8_tbl;
     begin
       if i = 1 then
         x := 42;
         r := row(i, i+1);
+        c := row(i, i+1);
       end if;
       raise notice 'x = %', x;
       raise notice 'y = %', y;
       raise notice 'r = %', r;
+      raise notice 'c = %', c;
     end;
   end loop;
 end$$;
 NOTICE:  x = 42
 NOTICE:  y = 1
 NOTICE:  r = (1,2)
+NOTICE:  c = (1,2)
 NOTICE:  x = <NULL>
 NOTICE:  y = 2
-ERROR:  record "r" is not assigned yet
+NOTICE:  r = <NULL>
+NOTICE:  c = <NULL>
+NOTICE:  x = <NULL>
+NOTICE:  y = 3
+NOTICE:  r = <NULL>
+NOTICE:  c = <NULL>
 \set VERBOSITY default
 -- Check handling of conflicts between plpgsql vars and table columns.
 set plpgsql.variable_conflict = error;

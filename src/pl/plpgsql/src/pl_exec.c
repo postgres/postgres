@@ -232,6 +232,8 @@ static HTAB *shared_cast_hash = NULL;
 /************************************************************
  * Local function forward declarations
  ************************************************************/
+static void coerce_function_result_tuple(PLpgSQL_execstate *estate,
+							 TupleDesc tupdesc);
 static void plpgsql_exec_error_callback(void *arg);
 static PLpgSQL_datum *copy_plpgsql_datum(PLpgSQL_datum *datum);
 static MemoryContext get_stmt_mcontext(PLpgSQL_execstate *estate);
@@ -291,9 +293,9 @@ static int exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 static int exec_stmt_dynfors(PLpgSQL_execstate *estate,
 				  PLpgSQL_stmt_dynfors *stmt);
 static int exec_stmt_commit(PLpgSQL_execstate *estate,
-				PLpgSQL_stmt_commit *stmt);
+				 PLpgSQL_stmt_commit *stmt);
 static int exec_stmt_rollback(PLpgSQL_execstate *estate,
-				PLpgSQL_stmt_rollback *stmt);
+				   PLpgSQL_stmt_rollback *stmt);
 
 static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
 					 PLpgSQL_function *func,
@@ -349,7 +351,7 @@ static ParamListInfo setup_param_list(PLpgSQL_execstate *estate,
 				 PLpgSQL_expr *expr);
 static ParamExternData *plpgsql_param_fetch(ParamListInfo params,
 					int paramid, bool speculative,
-					ParamExternData *prm);
+					ParamExternData *workspace);
 static void plpgsql_param_compile(ParamListInfo params, Param *param,
 					  ExprState *state,
 					  Datum *resv, bool *resnull);
@@ -357,19 +359,35 @@ static void plpgsql_param_eval_var(ExprState *state, ExprEvalStep *op,
 					   ExprContext *econtext);
 static void plpgsql_param_eval_var_ro(ExprState *state, ExprEvalStep *op,
 						  ExprContext *econtext);
-static void plpgsql_param_eval_non_var(ExprState *state, ExprEvalStep *op,
+static void plpgsql_param_eval_recfield(ExprState *state, ExprEvalStep *op,
+							ExprContext *econtext);
+static void plpgsql_param_eval_generic(ExprState *state, ExprEvalStep *op,
 						   ExprContext *econtext);
+static void plpgsql_param_eval_generic_ro(ExprState *state, ExprEvalStep *op,
+							  ExprContext *econtext);
 static void exec_move_row(PLpgSQL_execstate *estate,
 			  PLpgSQL_variable *target,
 			  HeapTuple tup, TupleDesc tupdesc);
+static ExpandedRecordHeader *make_expanded_record_for_rec(PLpgSQL_execstate *estate,
+							 PLpgSQL_rec *rec,
+							 TupleDesc srctupdesc,
+							 ExpandedRecordHeader *srcerh);
+static void exec_move_row_from_fields(PLpgSQL_execstate *estate,
+						  PLpgSQL_variable *target,
+						  ExpandedRecordHeader *newerh,
+						  Datum *values, bool *nulls,
+						  TupleDesc tupdesc);
+static bool compatible_tupdescs(TupleDesc src_tupdesc, TupleDesc dst_tupdesc);
 static HeapTuple make_tuple_from_row(PLpgSQL_execstate *estate,
 					PLpgSQL_row *row,
 					TupleDesc tupdesc);
-static HeapTuple get_tuple_from_datum(Datum value);
-static TupleDesc get_tupdesc_from_datum(Datum value);
+static TupleDesc deconstruct_composite_datum(Datum value,
+							HeapTupleData *tmptup);
 static void exec_move_row_from_datum(PLpgSQL_execstate *estate,
 						 PLpgSQL_variable *target,
 						 Datum value);
+static void instantiate_empty_record_variable(PLpgSQL_execstate *estate,
+								  PLpgSQL_rec *rec);
 static char *convert_value_to_string(PLpgSQL_execstate *estate,
 						Datum value, Oid valtype);
 static Datum exec_cast_value(PLpgSQL_execstate *estate,
@@ -387,6 +405,8 @@ static void assign_simple_var(PLpgSQL_execstate *estate, PLpgSQL_var *var,
 				  Datum newvalue, bool isnull, bool freeable);
 static void assign_text_var(PLpgSQL_execstate *estate, PLpgSQL_var *var,
 				const char *str);
+static void assign_record_var(PLpgSQL_execstate *estate, PLpgSQL_rec *rec,
+				  ExpandedRecordHeader *erh);
 static PreparedParamsData *exec_eval_using_params(PLpgSQL_execstate *estate,
 					   List *params);
 static Portal exec_dynquery_with_params(PLpgSQL_execstate *estate,
@@ -482,7 +502,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 							/* take ownership of R/W object */
 							assign_simple_var(&estate, var,
 											  TransferExpandedObject(var->value,
-																	 CurrentMemoryContext),
+																	 estate.datum_context),
 											  false,
 											  true);
 						}
@@ -495,7 +515,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 							/* flat array, so force to expanded form */
 							assign_simple_var(&estate, var,
 											  expand_array(var->value,
-														   CurrentMemoryContext,
+														   estate.datum_context,
 														   NULL),
 											  false,
 											  true);
@@ -504,21 +524,21 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 				}
 				break;
 
-			case PLPGSQL_DTYPE_ROW:
+			case PLPGSQL_DTYPE_REC:
 				{
-					PLpgSQL_row *row = (PLpgSQL_row *) estate.datums[n];
+					PLpgSQL_rec *rec = (PLpgSQL_rec *) estate.datums[n];
 
 					if (!fcinfo->argnull[i])
 					{
 						/* Assign row value from composite datum */
 						exec_move_row_from_datum(&estate,
-												 (PLpgSQL_variable *) row,
+												 (PLpgSQL_variable *) rec,
 												 fcinfo->arg[i]);
 					}
 					else
 					{
 						/* If arg is null, treat it as an empty row */
-						exec_move_row(&estate, (PLpgSQL_variable *) row,
+						exec_move_row(&estate, (PLpgSQL_variable *) rec,
 									  NULL, NULL);
 					}
 					/* clean up after exec_move_row() */
@@ -582,15 +602,12 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 		/* If we produced any tuples, send back the result */
 		if (estate.tuple_store)
 		{
-			rsi->setResult = estate.tuple_store;
-			if (estate.rettupdesc)
-			{
-				MemoryContext oldcxt;
+			MemoryContext oldcxt;
 
-				oldcxt = MemoryContextSwitchTo(estate.tuple_store_cxt);
-				rsi->setDesc = CreateTupleDescCopy(estate.rettupdesc);
-				MemoryContextSwitchTo(oldcxt);
-			}
+			rsi->setResult = estate.tuple_store;
+			oldcxt = MemoryContextSwitchTo(estate.tuple_store_cxt);
+			rsi->setDesc = CreateTupleDescCopy(estate.tuple_store_desc);
+			MemoryContextSwitchTo(oldcxt);
 		}
 		estate.retval = (Datum) 0;
 		fcinfo->isnull = true;
@@ -598,62 +615,80 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	else if (!estate.retisnull)
 	{
 		if (!func->fn_rettype)
-		{
 			ereport(ERROR,
 					(errmsg("cannot return a value from a procedure")));
-		}
 
+		/*
+		 * Cast result value to function's declared result type, and copy it
+		 * out to the upper executor memory context.  We must treat tuple
+		 * results specially in order to deal with cases like rowtypes
+		 * involving dropped columns.
+		 */
 		if (estate.retistuple)
 		{
-			/*
-			 * We have to check that the returned tuple actually matches the
-			 * expected result type.  XXX would be better to cache the tupdesc
-			 * instead of repeating get_call_result_type()
-			 */
-			HeapTuple	rettup = (HeapTuple) DatumGetPointer(estate.retval);
-			TupleDesc	tupdesc;
-			TupleConversionMap *tupmap;
-
-			switch (get_call_result_type(fcinfo, NULL, &tupdesc))
+			/* Don't need coercion if rowtype is known to match */
+			if (func->fn_rettype == estate.rettype &&
+				func->fn_rettype != RECORDOID)
 			{
-				case TYPEFUNC_COMPOSITE:
-					/* got the expected result rowtype, now check it */
-					tupmap = convert_tuples_by_position(estate.rettupdesc,
-														tupdesc,
-														gettext_noop("returned record type does not match expected record type"));
-					/* it might need conversion */
-					if (tupmap)
-						rettup = do_convert_tuple(rettup, tupmap);
-					/* no need to free map, we're about to return anyway */
-					break;
-				case TYPEFUNC_RECORD:
-
-					/*
-					 * Failed to determine actual type of RECORD.  We could
-					 * raise an error here, but what this means in practice is
-					 * that the caller is expecting any old generic rowtype,
-					 * so we don't really need to be restrictive. Pass back
-					 * the generated result type, instead.
-					 */
-					tupdesc = estate.rettupdesc;
-					if (tupdesc == NULL)	/* shouldn't happen */
-						elog(ERROR, "return type must be a row type");
-					break;
-				default:
-					/* shouldn't get here if retistuple is true ... */
-					elog(ERROR, "return type must be a row type");
-					break;
+				/*
+				 * Copy the tuple result into upper executor memory context.
+				 * However, if we have a R/W expanded datum, we can just
+				 * transfer its ownership out to the upper context.
+				 */
+				estate.retval = SPI_datumTransfer(estate.retval,
+												  false,
+												  -1);
 			}
+			else
+			{
+				/*
+				 * Need to look up the expected result type.  XXX would be
+				 * better to cache the tupdesc instead of repeating
+				 * get_call_result_type(), but the only easy place to save it
+				 * is in the PLpgSQL_function struct, and that's too
+				 * long-lived: composite types could change during the
+				 * existence of a PLpgSQL_function.
+				 */
+				Oid			resultTypeId;
+				TupleDesc	tupdesc;
 
-			/*
-			 * Copy tuple to upper executor memory, as a tuple Datum. Make
-			 * sure it is labeled with the caller-supplied tuple type.
-			 */
-			estate.retval = PointerGetDatum(SPI_returntuple(rettup, tupdesc));
+				switch (get_call_result_type(fcinfo, &resultTypeId, &tupdesc))
+				{
+					case TYPEFUNC_COMPOSITE:
+						/* got the expected result rowtype, now coerce it */
+						coerce_function_result_tuple(&estate, tupdesc);
+						break;
+					case TYPEFUNC_COMPOSITE_DOMAIN:
+						/* got the expected result rowtype, now coerce it */
+						coerce_function_result_tuple(&estate, tupdesc);
+						/* and check domain constraints */
+						/* XXX allowing caching here would be good, too */
+						domain_check(estate.retval, false, resultTypeId,
+									 NULL, NULL);
+						break;
+					case TYPEFUNC_RECORD:
+
+						/*
+						 * Failed to determine actual type of RECORD.  We
+						 * could raise an error here, but what this means in
+						 * practice is that the caller is expecting any old
+						 * generic rowtype, so we don't really need to be
+						 * restrictive.  Pass back the generated result as-is.
+						 */
+						estate.retval = SPI_datumTransfer(estate.retval,
+														  false,
+														  -1);
+						break;
+					default:
+						/* shouldn't get here if retistuple is true ... */
+						elog(ERROR, "return type must be a row type");
+						break;
+				}
+			}
 		}
 		else
 		{
-			/* Cast value to proper type */
+			/* Scalar case: use exec_cast_value */
 			estate.retval = exec_cast_value(&estate,
 											estate.retval,
 											&fcinfo->isnull,
@@ -699,6 +734,94 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	return estate.retval;
 }
 
+/*
+ * Helper for plpgsql_exec_function: coerce composite result to the specified
+ * tuple descriptor, and copy it out to upper executor memory.  This is split
+ * out mostly for cosmetic reasons --- the logic would be very deeply nested
+ * otherwise.
+ *
+ * estate->retval is updated in-place.
+ */
+static void
+coerce_function_result_tuple(PLpgSQL_execstate *estate, TupleDesc tupdesc)
+{
+	HeapTuple	rettup;
+	TupleDesc	retdesc;
+	TupleConversionMap *tupmap;
+
+	/* We assume exec_stmt_return verified that result is composite */
+	Assert(type_is_rowtype(estate->rettype));
+
+	/* We can special-case expanded records for speed */
+	if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(estate->retval)))
+	{
+		ExpandedRecordHeader *erh = (ExpandedRecordHeader *) DatumGetEOHP(estate->retval);
+
+		Assert(erh->er_magic == ER_MAGIC);
+
+		/* Extract record's TupleDesc */
+		retdesc = expanded_record_get_tupdesc(erh);
+
+		/* check rowtype compatibility */
+		tupmap = convert_tuples_by_position(retdesc,
+											tupdesc,
+											gettext_noop("returned record type does not match expected record type"));
+
+		/* it might need conversion */
+		if (tupmap)
+		{
+			rettup = expanded_record_get_tuple(erh);
+			Assert(rettup);
+			rettup = do_convert_tuple(rettup, tupmap);
+
+			/*
+			 * Copy tuple to upper executor memory, as a tuple Datum.  Make
+			 * sure it is labeled with the caller-supplied tuple type.
+			 */
+			estate->retval = PointerGetDatum(SPI_returntuple(rettup, tupdesc));
+			/* no need to free map, we're about to return anyway */
+		}
+		else
+		{
+			/*
+			 * We need only copy result into upper executor memory context.
+			 * However, if we have a R/W expanded datum, we can just transfer
+			 * its ownership out to the upper executor context.
+			 */
+			estate->retval = SPI_datumTransfer(estate->retval,
+											   false,
+											   -1);
+		}
+	}
+	else
+	{
+		/* Convert composite datum to a HeapTuple and TupleDesc */
+		HeapTupleData tmptup;
+
+		retdesc = deconstruct_composite_datum(estate->retval, &tmptup);
+		rettup = &tmptup;
+
+		/* check rowtype compatibility */
+		tupmap = convert_tuples_by_position(retdesc,
+											tupdesc,
+											gettext_noop("returned record type does not match expected record type"));
+
+		/* it might need conversion */
+		if (tupmap)
+			rettup = do_convert_tuple(rettup, tupmap);
+
+		/*
+		 * Copy tuple to upper executor memory, as a tuple Datum.  Make sure
+		 * it is labeled with the caller-supplied tuple type.
+		 */
+		estate->retval = PointerGetDatum(SPI_returntuple(rettup, tupdesc));
+
+		/* no need to free map, we're about to return anyway */
+
+		ReleaseTupleDesc(retdesc);
+	}
+}
+
 
 /* ----------
  * plpgsql_exec_trigger		Called by the call handler for
@@ -713,6 +836,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	ErrorContextCallback plerrcontext;
 	int			i;
 	int			rc;
+	TupleDesc	tupdesc;
 	PLpgSQL_var *var;
 	PLpgSQL_rec *rec_new,
 			   *rec_old;
@@ -747,37 +871,34 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 * might have a test like "if (TG_OP = 'INSERT' and NEW.foo = 'xyz')",
 	 * which should parse regardless of the current trigger type.
 	 */
+	tupdesc = RelationGetDescr(trigdata->tg_relation);
+
 	rec_new = (PLpgSQL_rec *) (estate.datums[func->new_varno]);
-	rec_new->freetup = false;
-	rec_new->tupdesc = trigdata->tg_relation->rd_att;
-	rec_new->freetupdesc = false;
 	rec_old = (PLpgSQL_rec *) (estate.datums[func->old_varno]);
-	rec_old->freetup = false;
-	rec_old->tupdesc = trigdata->tg_relation->rd_att;
-	rec_old->freetupdesc = false;
+
+	rec_new->erh = make_expanded_record_from_tupdesc(tupdesc,
+													 estate.datum_context);
+	rec_old->erh = make_expanded_record_from_exprecord(rec_new->erh,
+													   estate.datum_context);
 
 	if (!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
 	{
 		/*
 		 * Per-statement triggers don't use OLD/NEW variables
 		 */
-		rec_new->tup = NULL;
-		rec_old->tup = NULL;
 	}
 	else if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 	{
-		rec_new->tup = trigdata->tg_trigtuple;
-		rec_old->tup = NULL;
+		expanded_record_set_tuple(rec_new->erh, trigdata->tg_trigtuple, false);
 	}
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
-		rec_new->tup = trigdata->tg_newtuple;
-		rec_old->tup = trigdata->tg_trigtuple;
+		expanded_record_set_tuple(rec_new->erh, trigdata->tg_newtuple, false);
+		expanded_record_set_tuple(rec_old->erh, trigdata->tg_trigtuple, false);
 	}
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 	{
-		rec_new->tup = NULL;
-		rec_old->tup = trigdata->tg_trigtuple;
+		expanded_record_set_tuple(rec_old->erh, trigdata->tg_trigtuple, false);
 	}
 	else
 		elog(ERROR, "unrecognized trigger action: not INSERT, DELETE, or UPDATE");
@@ -936,20 +1057,68 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		rettup = NULL;
 	else
 	{
+		TupleDesc	retdesc;
 		TupleConversionMap *tupmap;
 
-		rettup = (HeapTuple) DatumGetPointer(estate.retval);
-		/* check rowtype compatibility */
-		tupmap = convert_tuples_by_position(estate.rettupdesc,
-											trigdata->tg_relation->rd_att,
-											gettext_noop("returned row structure does not match the structure of the triggering table"));
-		/* it might need conversion */
-		if (tupmap)
-			rettup = do_convert_tuple(rettup, tupmap);
-		/* no need to free map, we're about to return anyway */
+		/* We assume exec_stmt_return verified that result is composite */
+		Assert(type_is_rowtype(estate.rettype));
 
-		/* Copy tuple to upper executor memory */
-		rettup = SPI_copytuple(rettup);
+		/* We can special-case expanded records for speed */
+		if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(estate.retval)))
+		{
+			ExpandedRecordHeader *erh = (ExpandedRecordHeader *) DatumGetEOHP(estate.retval);
+
+			Assert(erh->er_magic == ER_MAGIC);
+
+			/* Extract HeapTuple and TupleDesc */
+			rettup = expanded_record_get_tuple(erh);
+			Assert(rettup);
+			retdesc = expanded_record_get_tupdesc(erh);
+
+			if (retdesc != RelationGetDescr(trigdata->tg_relation))
+			{
+				/* check rowtype compatibility */
+				tupmap = convert_tuples_by_position(retdesc,
+													RelationGetDescr(trigdata->tg_relation),
+													gettext_noop("returned row structure does not match the structure of the triggering table"));
+				/* it might need conversion */
+				if (tupmap)
+					rettup = do_convert_tuple(rettup, tupmap);
+				/* no need to free map, we're about to return anyway */
+			}
+
+			/*
+			 * Copy tuple to upper executor memory.  But if user just did
+			 * "return new" or "return old" without changing anything, there's
+			 * no need to copy; we can return the original tuple (which will
+			 * save a few cycles in trigger.c as well as here).
+			 */
+			if (rettup != trigdata->tg_newtuple &&
+				rettup != trigdata->tg_trigtuple)
+				rettup = SPI_copytuple(rettup);
+		}
+		else
+		{
+			/* Convert composite datum to a HeapTuple and TupleDesc */
+			HeapTupleData tmptup;
+
+			retdesc = deconstruct_composite_datum(estate.retval, &tmptup);
+			rettup = &tmptup;
+
+			/* check rowtype compatibility */
+			tupmap = convert_tuples_by_position(retdesc,
+												RelationGetDescr(trigdata->tg_relation),
+												gettext_noop("returned row structure does not match the structure of the triggering table"));
+			/* it might need conversion */
+			if (tupmap)
+				rettup = do_convert_tuple(rettup, tupmap);
+
+			ReleaseTupleDesc(retdesc);
+			/* no need to free map, we're about to return anyway */
+
+			/* Copy tuple to upper executor memory */
+			rettup = SPI_copytuple(rettup);
+		}
 	}
 
 	/*
@@ -1146,11 +1315,8 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 				PLpgSQL_rec *new = palloc(sizeof(PLpgSQL_rec));
 
 				memcpy(new, datum, sizeof(PLpgSQL_rec));
-				/* should be preset to null/non-freeable */
-				Assert(new->tup == NULL);
-				Assert(new->tupdesc == NULL);
-				Assert(!new->freetup);
-				Assert(!new->freetupdesc);
+				/* should be preset to empty */
+				Assert(new->erh == NULL);
 
 				result = (PLpgSQL_datum *) new;
 			}
@@ -1162,8 +1328,8 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 
 			/*
 			 * These datum records are read-only at runtime, so no need to
-			 * copy them (well, ARRAYELEM contains some cached type data, but
-			 * we'd just as soon centralize the caching anyway)
+			 * copy them (well, RECFIELD and ARRAYELEM contain cached data,
+			 * but we'd just as soon centralize the caching anyway)
 			 */
 			result = datum;
 			break;
@@ -1334,18 +1500,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				{
 					PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
 
-					if (rec->freetup)
-					{
-						heap_freetuple(rec->tup);
-						rec->freetup = false;
-					}
-					if (rec->freetupdesc)
-					{
-						FreeTupleDesc(rec->tupdesc);
-						rec->freetupdesc = false;
-					}
-					rec->tup = NULL;
-					rec->tupdesc = NULL;
+					if (rec->erh)
+						DeleteExpandedObject(ExpandedRecordGetDatum(rec->erh));
+					rec->erh = NULL;
 				}
 				break;
 
@@ -1401,16 +1558,12 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 
 			/*
 			 * If the block ended with RETURN, we may need to copy the return
-			 * value out of the subtransaction eval_context.  This is
-			 * currently only needed for scalar result types --- rowtype
-			 * values will always exist in the function's main memory context,
-			 * cf. exec_stmt_return().  We can avoid a physical copy if the
-			 * value happens to be a R/W expanded object.
+			 * value out of the subtransaction eval_context.  We can avoid a
+			 * physical copy if the value happens to be a R/W expanded object.
 			 */
 			if (rc == PLPGSQL_RC_RETURN &&
 				!estate->retisset &&
-				!estate->retisnull &&
-				estate->rettupdesc == NULL)
+				!estate->retisnull)
 			{
 				int16		resTypLen;
 				bool		resTypByVal;
@@ -2574,12 +2727,8 @@ exec_stmt_exit(PLpgSQL_execstate *estate, PLpgSQL_stmt_exit *stmt)
  * exec_stmt_return			Evaluate an expression and start
  *					returning from the function.
  *
- * Note: in the retistuple code paths, the returned tuple is always in the
- * function's main context, whereas for non-tuple data types the result may
- * be in the eval_mcontext.  The former case is not a memory leak since we're
- * about to exit the function anyway.  (If you want to change it, note that
- * exec_stmt_block() knows about this behavior.)  The latter case means that
- * we must not do exec_eval_cleanup while unwinding the control stack.
+ * Note: The result may be in the eval_mcontext.  Therefore, we must not
+ * do exec_eval_cleanup while unwinding the control stack.
  * ----------
  */
 static int
@@ -2593,9 +2742,8 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 	if (estate->retisset)
 		return PLPGSQL_RC_RETURN;
 
-	/* initialize for null result (possibly a tuple) */
+	/* initialize for null result */
 	estate->retval = (Datum) 0;
-	estate->rettupdesc = NULL;
 	estate->retisnull = true;
 	estate->rettype = InvalidOid;
 
@@ -2626,10 +2774,12 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 					estate->rettype = var->datatype->typoid;
 
 					/*
-					 * Cope with retistuple case.  A PLpgSQL_var could not be
-					 * of composite type, so we needn't make any effort to
-					 * convert.  However, for consistency with the expression
-					 * code path, don't throw error if the result is NULL.
+					 * A PLpgSQL_var could not be of composite type, so
+					 * conversion must fail if retistuple.  We throw a custom
+					 * error mainly for consistency with historical behavior.
+					 * For the same reason, we don't throw error if the result
+					 * is NULL.  (Note that plpgsql_exec_trigger assumes that
+					 * any non-null result has been verified to be composite.)
 					 */
 					if (estate->retistuple && !estate->retisnull)
 						ereport(ERROR,
@@ -2641,23 +2791,13 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 			case PLPGSQL_DTYPE_REC:
 				{
 					PLpgSQL_rec *rec = (PLpgSQL_rec *) retvar;
-					int32		rettypmod;
 
-					if (HeapTupleIsValid(rec->tup))
+					/* If record is empty, we return NULL not a row of nulls */
+					if (rec->erh && !ExpandedRecordIsEmpty(rec->erh))
 					{
-						if (estate->retistuple)
-						{
-							estate->retval = PointerGetDatum(rec->tup);
-							estate->rettupdesc = rec->tupdesc;
-							estate->retisnull = false;
-						}
-						else
-							exec_eval_datum(estate,
-											retvar,
-											&estate->rettype,
-											&rettypmod,
-											&estate->retval,
-											&estate->retisnull);
+						estate->retval = ExpandedRecordGetDatum(rec->erh);
+						estate->retisnull = false;
+						estate->rettype = rec->rectypeid;
 					}
 				}
 				break;
@@ -2667,26 +2807,13 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 					PLpgSQL_row *row = (PLpgSQL_row *) retvar;
 					int32		rettypmod;
 
-					if (estate->retistuple)
-					{
-						HeapTuple	tup;
-
-						if (!row->rowtupdesc)	/* should not happen */
-							elog(ERROR, "row variable has no tupdesc");
-						tup = make_tuple_from_row(estate, row, row->rowtupdesc);
-						if (tup == NULL)	/* should not happen */
-							elog(ERROR, "row not compatible with its own tupdesc");
-						estate->retval = PointerGetDatum(tup);
-						estate->rettupdesc = row->rowtupdesc;
-						estate->retisnull = false;
-					}
-					else
-						exec_eval_datum(estate,
-										retvar,
-										&estate->rettype,
-										&rettypmod,
-										&estate->retval,
-										&estate->retisnull);
+					/* We get here if there are multiple OUT parameters */
+					exec_eval_datum(estate,
+									(PLpgSQL_datum *) row,
+									&estate->rettype,
+									&rettypmod,
+									&estate->retval,
+									&estate->retisnull);
 				}
 				break;
 
@@ -2706,23 +2833,15 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 										&(estate->rettype),
 										&rettypmod);
 
-		if (estate->retistuple && !estate->retisnull)
-		{
-			/* Convert composite datum to a HeapTuple and TupleDesc */
-			HeapTuple	tuple;
-			TupleDesc	tupdesc;
-
-			/* Source must be of RECORD or composite type */
-			if (!type_is_rowtype(estate->rettype))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("cannot return non-composite value from function returning composite type")));
-			tuple = get_tuple_from_datum(estate->retval);
-			tupdesc = get_tupdesc_from_datum(estate->retval);
-			estate->retval = PointerGetDatum(tuple);
-			estate->rettupdesc = CreateTupleDescCopy(tupdesc);
-			ReleaseTupleDesc(tupdesc);
-		}
+		/*
+		 * As in the DTYPE_VAR case above, throw a custom error if a non-null,
+		 * non-composite value is returned in a function returning tuple.
+		 */
+		if (estate->retistuple && !estate->retisnull &&
+			!type_is_rowtype(estate->rettype))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("cannot return non-composite value from function returning composite type")));
 
 		return PLPGSQL_RC_RETURN;
 	}
@@ -2765,8 +2884,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 	if (estate->tuple_store == NULL)
 		exec_init_tuple_store(estate);
 
-	/* rettupdesc will be filled by exec_init_tuple_store */
-	tupdesc = estate->rettupdesc;
+	/* tuple_store_desc will be filled by exec_init_tuple_store */
+	tupdesc = estate->tuple_store_desc;
 	natts = tupdesc->natts;
 
 	/*
@@ -2819,22 +2938,22 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 			case PLPGSQL_DTYPE_REC:
 				{
 					PLpgSQL_rec *rec = (PLpgSQL_rec *) retvar;
+					TupleDesc	rec_tupdesc;
 					TupleConversionMap *tupmap;
 
-					if (!HeapTupleIsValid(rec->tup))
-						ereport(ERROR,
-								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-								 errmsg("record \"%s\" is not assigned yet",
-										rec->refname),
-								 errdetail("The tuple structure of a not-yet-assigned"
-										   " record is indeterminate.")));
+					/* If rec is null, try to convert it to a row of nulls */
+					if (rec->erh == NULL)
+						instantiate_empty_record_variable(estate, rec);
+					if (ExpandedRecordIsEmpty(rec->erh))
+						deconstruct_expanded_record(rec->erh);
 
 					/* Use eval_mcontext for tuple conversion work */
 					oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-					tupmap = convert_tuples_by_position(rec->tupdesc,
+					rec_tupdesc = expanded_record_get_tupdesc(rec->erh);
+					tupmap = convert_tuples_by_position(rec_tupdesc,
 														tupdesc,
 														gettext_noop("wrong record type supplied in RETURN NEXT"));
-					tuple = rec->tup;
+					tuple = expanded_record_get_tuple(rec->erh);
 					if (tupmap)
 						tuple = do_convert_tuple(tuple, tupmap);
 					tuplestore_puttuple(estate->tuple_store, tuple);
@@ -2846,10 +2965,12 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 				{
 					PLpgSQL_row *row = (PLpgSQL_row *) retvar;
 
+					/* We get here if there are multiple OUT parameters */
+
 					/* Use eval_mcontext for tuple conversion work */
 					oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 					tuple = make_tuple_from_row(estate, row, tupdesc);
-					if (tuple == NULL)
+					if (tuple == NULL)	/* should not happen */
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
 								 errmsg("wrong record type supplied in RETURN NEXT")));
@@ -2881,6 +3002,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 			/* Expression should be of RECORD or composite type */
 			if (!isNull)
 			{
+				HeapTupleData tmptup;
 				TupleDesc	retvaldesc;
 				TupleConversionMap *tupmap;
 
@@ -2891,8 +3013,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 
 				/* Use eval_mcontext for tuple conversion work */
 				oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-				tuple = get_tuple_from_datum(retval);
-				retvaldesc = get_tupdesc_from_datum(retval);
+				retvaldesc = deconstruct_composite_datum(retval, &tmptup);
+				tuple = &tmptup;
 				tupmap = convert_tuples_by_position(retvaldesc, tupdesc,
 													gettext_noop("returned record type does not match expected record type"));
 				if (tupmap)
@@ -2992,7 +3114,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 
 	tupmap = convert_tuples_by_position(portal->tupDesc,
-										estate->rettupdesc,
+										estate->tuple_store_desc,
 										gettext_noop("structure of query does not match function result type"));
 
 	while (true)
@@ -3069,7 +3191,7 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 	CurrentResourceOwner = oldowner;
 	MemoryContextSwitchTo(oldcxt);
 
-	estate->rettupdesc = rsi->expectedDesc;
+	estate->tuple_store_desc = rsi->expectedDesc;
 }
 
 #define SET_RAISE_OPTION_TEXT(opt, name) \
@@ -3363,11 +3485,11 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 
 	estate->readonly_func = func->fn_readonly;
 
-	estate->rettupdesc = NULL;
 	estate->exitlabel = NULL;
 	estate->cur_error = NULL;
 
 	estate->tuple_store = NULL;
+	estate->tuple_store_desc = NULL;
 	if (rsi)
 	{
 		estate->tuple_store_cxt = rsi->econtext->ecxt_per_query_memory;
@@ -3384,6 +3506,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->ndatums = func->ndatums;
 	estate->datums = palloc(sizeof(PLpgSQL_datum *) * estate->ndatums);
 	/* caller is expected to fill the datums array */
+	estate->datum_context = CurrentMemoryContext;
 
 	/* initialize our ParamListInfo with appropriate hook functions */
 	estate->paramLI = (ParamListInfo)
@@ -4449,7 +4572,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					{
 						/* array and not already R/W, so apply expand_array */
 						newvalue = expand_array(newvalue,
-												CurrentMemoryContext,
+												estate->datum_context,
 												NULL);
 					}
 					else
@@ -4534,64 +4657,58 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 */
 				PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) target;
 				PLpgSQL_rec *rec;
-				int			fno;
-				HeapTuple	newtup;
-				int			colnums[1];
-				Datum		values[1];
-				bool		nulls[1];
-				Oid			atttype;
-				int32		atttypmod;
+				ExpandedRecordHeader *erh;
 
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
+				erh = rec->erh;
 
 				/*
-				 * Check that there is already a tuple in the record. We need
-				 * that because records don't have any predefined field
-				 * structure.
+				 * If record variable is NULL, instantiate it if it has a
+				 * named composite type, else complain.  (This won't change
+				 * the logical state of the record, but if we successfully
+				 * assign below, the unassigned fields will all become NULLs.)
 				 */
-				if (!HeapTupleIsValid(rec->tup))
+				if (erh == NULL)
+				{
+					instantiate_empty_record_variable(estate, rec);
+					erh = rec->erh;
+				}
+
+				/*
+				 * Look up the field's properties if we have not already, or
+				 * if the tuple descriptor ID changed since last time.
+				 */
+				if (unlikely(recfield->rectupledescid != erh->er_tupdesc_id))
+				{
+					if (!expanded_record_lookup_field(erh,
+													  recfield->fieldname,
+													  &recfield->finfo))
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("record \"%s\" has no field \"%s\"",
+										rec->refname, recfield->fieldname)));
+					recfield->rectupledescid = erh->er_tupdesc_id;
+				}
+
+				/* We don't support assignments to system columns. */
+				if (recfield->finfo.fnumber <= 0)
 					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("record \"%s\" is not assigned yet",
-									rec->refname),
-							 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot assign to system column \"%s\"",
+									recfield->fieldname)));
 
-				/*
-				 * Get the number of the record field to change.  Disallow
-				 * system columns because the code below won't cope.
-				 */
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno <= 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("record \"%s\" has no field \"%s\"",
-									rec->refname, recfield->fieldname)));
-				colnums[0] = fno;
+				/* Cast the new value to the right type, if needed. */
+				value = exec_cast_value(estate,
+										value,
+										&isNull,
+										valtype,
+										valtypmod,
+										recfield->finfo.ftypeid,
+										recfield->finfo.ftypmod);
 
-				/*
-				 * Now insert the new value, being careful to cast it to the
-				 * right type.
-				 */
-				atttype = TupleDescAttr(rec->tupdesc, fno - 1)->atttypid;
-				atttypmod = TupleDescAttr(rec->tupdesc, fno - 1)->atttypmod;
-				values[0] = exec_cast_value(estate,
-											value,
-											&isNull,
-											valtype,
-											valtypmod,
-											atttype,
-											atttypmod);
-				nulls[0] = isNull;
-
-				newtup = heap_modify_tuple_by_cols(rec->tup, rec->tupdesc,
-												   1, colnums, values, nulls);
-
-				if (rec->freetup)
-					heap_freetuple(rec->tup);
-
-				rec->tup = newtup;
-				rec->freetup = true;
-
+				/* And assign it. */
+				expanded_record_set_field(erh, recfield->finfo.fnumber,
+										  value, isNull);
 				break;
 			}
 
@@ -4837,6 +4954,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				PLpgSQL_row *row = (PLpgSQL_row *) datum;
 				HeapTuple	tup;
 
+				/* We get here if there are multiple OUT parameters */
 				if (!row->rowtupdesc)	/* should not happen */
 					elog(ERROR, "row variable has no tupdesc");
 				/* Make sure we have a valid type/typmod setting */
@@ -4857,22 +4975,41 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 			{
 				PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
 
-				if (!HeapTupleIsValid(rec->tup))
-					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("record \"%s\" is not assigned yet",
-									rec->refname),
-							 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-				Assert(rec->tupdesc != NULL);
-				/* Make sure we have a valid type/typmod setting */
-				BlessTupleDesc(rec->tupdesc);
-
-				oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-				*typeid = rec->tupdesc->tdtypeid;
-				*typetypmod = rec->tupdesc->tdtypmod;
-				*value = heap_copy_tuple_as_datum(rec->tup, rec->tupdesc);
-				*isnull = false;
-				MemoryContextSwitchTo(oldcontext);
+				if (rec->erh == NULL)
+				{
+					/* Treat uninstantiated record as a simple NULL */
+					*value = (Datum) 0;
+					*isnull = true;
+					/* Report variable's declared type */
+					*typeid = rec->rectypeid;
+					*typetypmod = -1;
+				}
+				else
+				{
+					if (ExpandedRecordIsEmpty(rec->erh))
+					{
+						/* Empty record is also a NULL */
+						*value = (Datum) 0;
+						*isnull = true;
+					}
+					else
+					{
+						*value = ExpandedRecordGetDatum(rec->erh);
+						*isnull = false;
+					}
+					if (rec->rectypeid != RECORDOID)
+					{
+						/* Report variable's declared type, if not RECORD */
+						*typeid = rec->rectypeid;
+						*typetypmod = -1;
+					}
+					else
+					{
+						/* Report record's actual type if declared RECORD */
+						*typeid = rec->erh->er_typeid;
+						*typetypmod = rec->erh->er_typmod;
+					}
+				}
 				break;
 			}
 
@@ -4880,31 +5017,46 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 			{
 				PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) datum;
 				PLpgSQL_rec *rec;
-				int			fno;
+				ExpandedRecordHeader *erh;
 
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
-				if (!HeapTupleIsValid(rec->tup))
-					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("record \"%s\" is not assigned yet",
-									rec->refname),
-							 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("record \"%s\" has no field \"%s\"",
-									rec->refname, recfield->fieldname)));
-				*typeid = SPI_gettypeid(rec->tupdesc, fno);
-				if (fno > 0)
-				{
-					Form_pg_attribute attr = TupleDescAttr(rec->tupdesc, fno - 1);
+				erh = rec->erh;
 
-					*typetypmod = attr->atttypmod;
+				/*
+				 * If record variable is NULL, instantiate it if it has a
+				 * named composite type, else complain.  (This won't change
+				 * the logical state of the record: it's still NULL.)
+				 */
+				if (erh == NULL)
+				{
+					instantiate_empty_record_variable(estate, rec);
+					erh = rec->erh;
 				}
-				else
-					*typetypmod = -1;
-				*value = SPI_getbinval(rec->tup, rec->tupdesc, fno, isnull);
+
+				/*
+				 * Look up the field's properties if we have not already, or
+				 * if the tuple descriptor ID changed since last time.
+				 */
+				if (unlikely(recfield->rectupledescid != erh->er_tupdesc_id))
+				{
+					if (!expanded_record_lookup_field(erh,
+													  recfield->fieldname,
+													  &recfield->finfo))
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("record \"%s\" has no field \"%s\"",
+										rec->refname, recfield->fieldname)));
+					recfield->rectupledescid = erh->er_tupdesc_id;
+				}
+
+				/* Report type data. */
+				*typeid = recfield->finfo.ftypeid;
+				*typetypmod = recfield->finfo.ftypmod;
+
+				/* And fetch the field value. */
+				*value = expanded_record_get_field(erh,
+												   recfield->finfo.fnumber,
+												   isnull);
 				break;
 			}
 
@@ -4916,10 +5068,8 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 /*
  * plpgsql_exec_get_datum_type				Get datatype of a PLpgSQL_datum
  *
- * This is the same logic as in exec_eval_datum, except that it can handle
- * some cases where exec_eval_datum has to fail; specifically, we may have
- * a tupdesc but no row value for a record variable.  (This currently can
- * happen only for a trigger's NEW/OLD records.)
+ * This is the same logic as in exec_eval_datum, but we skip acquiring
+ * the actual value of the variable.  Also, needn't support DTYPE_ROW.
  */
 Oid
 plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
@@ -4937,31 +5087,20 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
 				break;
 			}
 
-		case PLPGSQL_DTYPE_ROW:
-			{
-				PLpgSQL_row *row = (PLpgSQL_row *) datum;
-
-				if (!row->rowtupdesc)	/* should not happen */
-					elog(ERROR, "row variable has no tupdesc");
-				/* Make sure we have a valid type/typmod setting */
-				BlessTupleDesc(row->rowtupdesc);
-				typeid = row->rowtupdesc->tdtypeid;
-				break;
-			}
-
 		case PLPGSQL_DTYPE_REC:
 			{
 				PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
 
-				if (rec->tupdesc == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("record \"%s\" is not assigned yet",
-									rec->refname),
-							 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-				/* Make sure we have a valid type/typmod setting */
-				BlessTupleDesc(rec->tupdesc);
-				typeid = rec->tupdesc->tdtypeid;
+				if (rec->erh == NULL || rec->rectypeid != RECORDOID)
+				{
+					/* Report variable's declared type */
+					typeid = rec->rectypeid;
+				}
+				else
+				{
+					/* Report record's actual type if declared RECORD */
+					typeid = rec->erh->er_typeid;
+				}
 				break;
 			}
 
@@ -4969,22 +5108,34 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
 			{
 				PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) datum;
 				PLpgSQL_rec *rec;
-				int			fno;
 
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
-				if (rec->tupdesc == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("record \"%s\" is not assigned yet",
-									rec->refname),
-							 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("record \"%s\" has no field \"%s\"",
-									rec->refname, recfield->fieldname)));
-				typeid = SPI_gettypeid(rec->tupdesc, fno);
+
+				/*
+				 * If record variable is NULL, instantiate it if it has a
+				 * named composite type, else complain.  (This won't change
+				 * the logical state of the record: it's still NULL.)
+				 */
+				if (rec->erh == NULL)
+					instantiate_empty_record_variable(estate, rec);
+
+				/*
+				 * Look up the field's properties if we have not already, or
+				 * if the tuple descriptor ID changed since last time.
+				 */
+				if (unlikely(recfield->rectupledescid != rec->erh->er_tupdesc_id))
+				{
+					if (!expanded_record_lookup_field(rec->erh,
+													  recfield->fieldname,
+													  &recfield->finfo))
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("record \"%s\" has no field \"%s\"",
+										rec->refname, recfield->fieldname)));
+					recfield->rectupledescid = rec->erh->er_tupdesc_id;
+				}
+
+				typeid = recfield->finfo.ftypeid;
 				break;
 			}
 
@@ -5001,7 +5152,8 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
  * plpgsql_exec_get_datum_type_info			Get datatype etc of a PLpgSQL_datum
  *
  * An extended version of plpgsql_exec_get_datum_type, which also retrieves the
- * typmod and collation of the datum.
+ * typmod and collation of the datum.  Note however that we don't report the
+ * possibly-mutable typmod of RECORD values, but say -1 always.
  */
 void
 plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
@@ -5020,37 +5172,23 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 				break;
 			}
 
-		case PLPGSQL_DTYPE_ROW:
-			{
-				PLpgSQL_row *row = (PLpgSQL_row *) datum;
-
-				if (!row->rowtupdesc)	/* should not happen */
-					elog(ERROR, "row variable has no tupdesc");
-				/* Make sure we have a valid type/typmod setting */
-				BlessTupleDesc(row->rowtupdesc);
-				*typeid = row->rowtupdesc->tdtypeid;
-				/* do NOT return the mutable typmod of a RECORD variable */
-				*typmod = -1;
-				/* composite types are never collatable */
-				*collation = InvalidOid;
-				break;
-			}
-
 		case PLPGSQL_DTYPE_REC:
 			{
 				PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
 
-				if (rec->tupdesc == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("record \"%s\" is not assigned yet",
-									rec->refname),
-							 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-				/* Make sure we have a valid type/typmod setting */
-				BlessTupleDesc(rec->tupdesc);
-				*typeid = rec->tupdesc->tdtypeid;
-				/* do NOT return the mutable typmod of a RECORD variable */
-				*typmod = -1;
+				if (rec->erh == NULL || rec->rectypeid != RECORDOID)
+				{
+					/* Report variable's declared type */
+					*typeid = rec->rectypeid;
+					*typmod = -1;
+				}
+				else
+				{
+					/* Report record's actual type if declared RECORD */
+					*typeid = rec->erh->er_typeid;
+					/* do NOT return the mutable typmod of a RECORD variable */
+					*typmod = -1;
+				}
 				/* composite types are never collatable */
 				*collation = InvalidOid;
 				break;
@@ -5060,38 +5198,36 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 			{
 				PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) datum;
 				PLpgSQL_rec *rec;
-				int			fno;
 
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
-				if (rec->tupdesc == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("record \"%s\" is not assigned yet",
-									rec->refname),
-							 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("record \"%s\" has no field \"%s\"",
-									rec->refname, recfield->fieldname)));
-				*typeid = SPI_gettypeid(rec->tupdesc, fno);
-				if (fno > 0)
-				{
-					Form_pg_attribute attr = TupleDescAttr(rec->tupdesc, fno - 1);
 
-					*typmod = attr->atttypmod;
-				}
-				else
-					*typmod = -1;
-				if (fno > 0)
-				{
-					Form_pg_attribute attr = TupleDescAttr(rec->tupdesc, fno - 1);
+				/*
+				 * If record variable is NULL, instantiate it if it has a
+				 * named composite type, else complain.  (This won't change
+				 * the logical state of the record: it's still NULL.)
+				 */
+				if (rec->erh == NULL)
+					instantiate_empty_record_variable(estate, rec);
 
-					*collation = attr->attcollation;
+				/*
+				 * Look up the field's properties if we have not already, or
+				 * if the tuple descriptor ID changed since last time.
+				 */
+				if (unlikely(recfield->rectupledescid != rec->erh->er_tupdesc_id))
+				{
+					if (!expanded_record_lookup_field(rec->erh,
+													  recfield->fieldname,
+													  &recfield->finfo))
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("record \"%s\" has no field \"%s\"",
+										rec->refname, recfield->fieldname)));
+					recfield->rectupledescid = rec->erh->er_tupdesc_id;
 				}
-				else			/* no system column types have collation */
-					*collation = InvalidOid;
+
+				*typeid = recfield->finfo.ftypeid;
+				*typmod = recfield->finfo.ftypmod;
+				*collation = recfield->finfo.fcollation;
 				break;
 			}
 
@@ -5315,6 +5451,8 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	SPITupleTable *tuptab;
 	bool		found = false;
 	int			rc = PLPGSQL_RC_OK;
+	uint64		previous_id = INVALID_TUPLEDESC_IDENTIFIER;
+	bool		tupdescs_match = true;
 	uint64		n;
 
 	/* Fetch loop variable's datum entry */
@@ -5357,9 +5495,56 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 		for (i = 0; i < n; i++)
 		{
 			/*
-			 * Assign the tuple to the target
+			 * Assign the tuple to the target.  Here, because we know that all
+			 * loop iterations should be assigning the same tupdesc, we can
+			 * optimize away repeated creations of expanded records with
+			 * identical tupdescs.  Testing for changes of er_tupdesc_id is
+			 * reliable even if the loop body contains assignments that
+			 * replace the target's value entirely, because it's assigned from
+			 * a process-global counter.  The case where the tupdescs don't
+			 * match could possibly be handled more efficiently than this
+			 * coding does, but it's not clear extra effort is worthwhile.
 			 */
-			exec_move_row(estate, var, tuptab->vals[i], tuptab->tupdesc);
+			if (var->dtype == PLPGSQL_DTYPE_REC)
+			{
+				PLpgSQL_rec *rec = (PLpgSQL_rec *) var;
+
+				if (rec->erh &&
+					rec->erh->er_tupdesc_id == previous_id &&
+					tupdescs_match)
+				{
+					/* Only need to assign a new tuple value */
+					expanded_record_set_tuple(rec->erh, tuptab->vals[i], true);
+				}
+				else
+				{
+					/*
+					 * First time through, or var's tupdesc changed in loop,
+					 * or we have to do it the hard way because type coercion
+					 * is needed.
+					 */
+					exec_move_row(estate, var,
+								  tuptab->vals[i], tuptab->tupdesc);
+
+					/*
+					 * Check to see if physical assignment is OK next time.
+					 * Once the tupdesc comparison has failed once, we don't
+					 * bother rechecking in subsequent loop iterations.
+					 */
+					if (tupdescs_match)
+					{
+						tupdescs_match =
+							(rec->rectypeid == RECORDOID ||
+							 rec->rectypeid == tuptab->tupdesc->tdtypeid ||
+							 compatible_tupdescs(tuptab->tupdesc,
+												 expanded_record_get_tupdesc(rec->erh)));
+					}
+					previous_id = rec->erh->er_tupdesc_id;
+				}
+			}
+			else
+				exec_move_row(estate, var, tuptab->vals[i], tuptab->tupdesc);
+
 			exec_eval_cleanup(estate);
 
 			/*
@@ -5684,27 +5869,33 @@ plpgsql_param_fetch(ParamListInfo params,
 				break;
 
 			case PLPGSQL_DTYPE_REC:
-				{
-					PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
-
-					if (!HeapTupleIsValid(rec->tup))
-						ok = false;
-					break;
-				}
+				/* always safe (might return NULL, that's fine) */
+				break;
 
 			case PLPGSQL_DTYPE_RECFIELD:
 				{
 					PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) datum;
 					PLpgSQL_rec *rec;
-					int			fno;
 
 					rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
-					if (!HeapTupleIsValid(rec->tup))
+
+					/*
+					 * If record variable is NULL, don't risk anything.
+					 */
+					if (rec->erh == NULL)
 						ok = false;
-					else
+
+					/*
+					 * Look up the field's properties if we have not already,
+					 * or if the tuple descriptor ID changed since last time.
+					 */
+					else if (unlikely(recfield->rectupledescid != rec->erh->er_tupdesc_id))
 					{
-						fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-						if (fno == SPI_ERROR_NOATTRIBUTE)
+						if (expanded_record_lookup_field(rec->erh,
+														 recfield->fieldname,
+														 &recfield->finfo))
+							recfield->rectupledescid = rec->erh->er_tupdesc_id;
+						else
 							ok = false;
 					}
 					break;
@@ -5737,10 +5928,17 @@ plpgsql_param_fetch(ParamListInfo params,
 	 * If it's a read/write expanded datum, convert reference to read-only,
 	 * unless it's safe to pass as read-write.
 	 */
-	if (datum->dtype == PLPGSQL_DTYPE_VAR && dno != expr->rwparam)
-		prm->value = MakeExpandedObjectReadOnly(prm->value,
-												prm->isnull,
-												((PLpgSQL_var *) datum)->datatype->typlen);
+	if (dno != expr->rwparam)
+	{
+		if (datum->dtype == PLPGSQL_DTYPE_VAR)
+			prm->value = MakeExpandedObjectReadOnly(prm->value,
+													prm->isnull,
+													((PLpgSQL_var *) datum)->datatype->typlen);
+		else if (datum->dtype == PLPGSQL_DTYPE_REC)
+			prm->value = MakeExpandedObjectReadOnly(prm->value,
+													prm->isnull,
+													-1);
+	}
 
 	return prm;
 }
@@ -5774,7 +5972,13 @@ plpgsql_param_compile(ParamListInfo params, Param *param,
 	scratch.resvalue = resv;
 	scratch.resnull = resnull;
 
-	/* Select appropriate eval function */
+	/*
+	 * Select appropriate eval function.  It seems worth special-casing
+	 * DTYPE_VAR and DTYPE_RECFIELD for performance.  Also, we can determine
+	 * in advance whether MakeExpandedObjectReadOnly() will be required.
+	 * Currently, only VAR and REC datums could contain read/write expanded
+	 * objects.
+	 */
 	if (datum->dtype == PLPGSQL_DTYPE_VAR)
 	{
 		if (dno != expr->rwparam &&
@@ -5783,8 +5987,13 @@ plpgsql_param_compile(ParamListInfo params, Param *param,
 		else
 			scratch.d.cparam.paramfunc = plpgsql_param_eval_var;
 	}
+	else if (datum->dtype == PLPGSQL_DTYPE_RECFIELD)
+		scratch.d.cparam.paramfunc = plpgsql_param_eval_recfield;
+	else if (datum->dtype == PLPGSQL_DTYPE_REC &&
+			 dno != expr->rwparam)
+		scratch.d.cparam.paramfunc = plpgsql_param_eval_generic_ro;
 	else
-		scratch.d.cparam.paramfunc = plpgsql_param_eval_non_var;
+		scratch.d.cparam.paramfunc = plpgsql_param_eval_generic;
 
 	/*
 	 * Note: it's tempting to use paramarg to store the estate pointer and
@@ -5868,12 +6077,85 @@ plpgsql_param_eval_var_ro(ExprState *state, ExprEvalStep *op,
 }
 
 /*
- * plpgsql_param_eval_non_var		evaluation of EEOP_PARAM_CALLBACK step
+ * plpgsql_param_eval_recfield		evaluation of EEOP_PARAM_CALLBACK step
  *
- * This handles all variable types except DTYPE_VAR.
+ * This is specialized to the case of DTYPE_RECFIELD variables, for which
+ * we never need to invoke MakeExpandedObjectReadOnly.
  */
 static void
-plpgsql_param_eval_non_var(ExprState *state, ExprEvalStep *op,
+plpgsql_param_eval_recfield(ExprState *state, ExprEvalStep *op,
+							ExprContext *econtext)
+{
+	ParamListInfo params;
+	PLpgSQL_execstate *estate;
+	int			dno = op->d.cparam.paramid - 1;
+	PLpgSQL_recfield *recfield;
+	PLpgSQL_rec *rec;
+	ExpandedRecordHeader *erh;
+
+	/* fetch back the hook data */
+	params = econtext->ecxt_param_list_info;
+	estate = (PLpgSQL_execstate *) params->paramFetchArg;
+	Assert(dno >= 0 && dno < estate->ndatums);
+
+	/* now we can access the target datum */
+	recfield = (PLpgSQL_recfield *) estate->datums[dno];
+	Assert(recfield->dtype == PLPGSQL_DTYPE_RECFIELD);
+
+	/* inline the relevant part of exec_eval_datum */
+	rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
+	erh = rec->erh;
+
+	/*
+	 * If record variable is NULL, instantiate it if it has a named composite
+	 * type, else complain.  (This won't change the logical state of the
+	 * record: it's still NULL.)
+	 */
+	if (erh == NULL)
+	{
+		instantiate_empty_record_variable(estate, rec);
+		erh = rec->erh;
+	}
+
+	/*
+	 * Look up the field's properties if we have not already, or if the tuple
+	 * descriptor ID changed since last time.
+	 */
+	if (unlikely(recfield->rectupledescid != erh->er_tupdesc_id))
+	{
+		if (!expanded_record_lookup_field(erh,
+										  recfield->fieldname,
+										  &recfield->finfo))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("record \"%s\" has no field \"%s\"",
+							rec->refname, recfield->fieldname)));
+		recfield->rectupledescid = erh->er_tupdesc_id;
+	}
+
+	/* OK to fetch the field value. */
+	*op->resvalue = expanded_record_get_field(erh,
+											  recfield->finfo.fnumber,
+											  op->resnull);
+
+	/* safety check -- needed for, eg, record fields */
+	if (unlikely(recfield->finfo.ftypeid != op->d.cparam.paramtype))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("type of parameter %d (%s) does not match that when preparing the plan (%s)",
+						op->d.cparam.paramid,
+						format_type_be(recfield->finfo.ftypeid),
+						format_type_be(op->d.cparam.paramtype))));
+}
+
+/*
+ * plpgsql_param_eval_generic		evaluation of EEOP_PARAM_CALLBACK step
+ *
+ * This handles all variable types, but assumes we do not need to invoke
+ * MakeExpandedObjectReadOnly.
+ */
+static void
+plpgsql_param_eval_generic(ExprState *state, ExprEvalStep *op,
 						   ExprContext *econtext)
 {
 	ParamListInfo params;
@@ -5890,8 +6172,48 @@ plpgsql_param_eval_non_var(ExprState *state, ExprEvalStep *op,
 
 	/* now we can access the target datum */
 	datum = estate->datums[dno];
-	Assert(datum->dtype != PLPGSQL_DTYPE_VAR);
 
+	/* fetch datum's value */
+	exec_eval_datum(estate, datum,
+					&datumtype, &datumtypmod,
+					op->resvalue, op->resnull);
+
+	/* safety check -- needed for, eg, record fields */
+	if (unlikely(datumtype != op->d.cparam.paramtype))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("type of parameter %d (%s) does not match that when preparing the plan (%s)",
+						op->d.cparam.paramid,
+						format_type_be(datumtype),
+						format_type_be(op->d.cparam.paramtype))));
+}
+
+/*
+ * plpgsql_param_eval_generic_ro	evaluation of EEOP_PARAM_CALLBACK step
+ *
+ * This handles all variable types, but assumes we need to invoke
+ * MakeExpandedObjectReadOnly (hence, variable must be of a varlena type).
+ */
+static void
+plpgsql_param_eval_generic_ro(ExprState *state, ExprEvalStep *op,
+							  ExprContext *econtext)
+{
+	ParamListInfo params;
+	PLpgSQL_execstate *estate;
+	int			dno = op->d.cparam.paramid - 1;
+	PLpgSQL_datum *datum;
+	Oid			datumtype;
+	int32		datumtypmod;
+
+	/* fetch back the hook data */
+	params = econtext->ecxt_param_list_info;
+	estate = (PLpgSQL_execstate *) params->paramFetchArg;
+	Assert(dno >= 0 && dno < estate->ndatums);
+
+	/* now we can access the target datum */
+	datum = estate->datums[dno];
+
+	/* fetch datum's value */
 	exec_eval_datum(estate, datum,
 					&datumtype, &datumtypmod,
 					op->resvalue, op->resnull);
@@ -5905,113 +6227,343 @@ plpgsql_param_eval_non_var(ExprState *state, ExprEvalStep *op,
 						format_type_be(datumtype),
 						format_type_be(op->d.cparam.paramtype))));
 
-	/*
-	 * Currently, if the dtype isn't VAR, the value couldn't be a read/write
-	 * expanded datum.
-	 */
+	/* force the value to read-only */
+	*op->resvalue = MakeExpandedObjectReadOnly(*op->resvalue,
+											   *op->resnull,
+											   -1);
 }
 
 
-/* ----------
+/*
  * exec_move_row			Move one tuple's values into a record or row
  *
- * Since this uses exec_assign_value, caller should eventually call
+ * tup and tupdesc may both be NULL if we're just assigning an indeterminate
+ * composite NULL to the target.  Alternatively, can have tup be NULL and
+ * tupdesc not NULL, in which case we assign a row of NULLs to the target.
+ *
+ * Since this uses the mcontext for workspace, caller should eventually call
  * exec_eval_cleanup to prevent long-term memory leaks.
- * ----------
  */
 static void
 exec_move_row(PLpgSQL_execstate *estate,
 			  PLpgSQL_variable *target,
 			  HeapTuple tup, TupleDesc tupdesc)
 {
+	ExpandedRecordHeader *newerh = NULL;
+
 	/*
-	 * Record is simple - just copy the tuple and its descriptor into the
-	 * record variable
+	 * If target is RECORD, we may be able to avoid field-by-field processing.
 	 */
 	if (target->dtype == PLPGSQL_DTYPE_REC)
 	{
 		PLpgSQL_rec *rec = (PLpgSQL_rec *) target;
 
 		/*
-		 * Copy input first, just in case it is pointing at variable's value
+		 * If we have no source tupdesc, just set the record variable to NULL.
+		 * (If we have a source tupdesc but not a tuple, we'll set the
+		 * variable to a row of nulls, instead.  This is odd perhaps, but
+		 * backwards compatible.)
 		 */
-		if (HeapTupleIsValid(tup))
-			tup = heap_copytuple(tup);
-		else if (tupdesc)
+		if (tupdesc == NULL)
 		{
-			/* If we have a tupdesc but no data, form an all-nulls tuple */
-			bool	   *nulls;
-
-			nulls = (bool *)
-				eval_mcontext_alloc(estate, tupdesc->natts * sizeof(bool));
-			memset(nulls, true, tupdesc->natts * sizeof(bool));
-
-			tup = heap_form_tuple(tupdesc, NULL, nulls);
+			if (rec->erh)
+				DeleteExpandedObject(ExpandedRecordGetDatum(rec->erh));
+			rec->erh = NULL;
+			return;
 		}
 
-		if (tupdesc)
-			tupdesc = CreateTupleDescCopy(tupdesc);
+		/*
+		 * Build a new expanded record with appropriate tupdesc.
+		 */
+		newerh = make_expanded_record_for_rec(estate, rec, tupdesc, NULL);
 
-		/* Free the old value ... */
-		if (rec->freetup)
+		/*
+		 * If the rowtypes match, or if we have no tuple anyway, we can
+		 * complete the assignment without field-by-field processing.
+		 *
+		 * The tests here are ordered more or less in order of cheapness.  We
+		 * can easily detect it will work if the target is declared RECORD or
+		 * has the same typeid as the source.  But when assigning from a query
+		 * result, it's common to have a source tupdesc that's labeled RECORD
+		 * but is actually physically compatible with a named-composite-type
+		 * target, so it's worth spending extra cycles to check for that.
+		 */
+		if (rec->rectypeid == RECORDOID ||
+			rec->rectypeid == tupdesc->tdtypeid ||
+			!HeapTupleIsValid(tup) ||
+			compatible_tupdescs(tupdesc, expanded_record_get_tupdesc(newerh)))
 		{
-			heap_freetuple(rec->tup);
-			rec->freetup = false;
-		}
-		if (rec->freetupdesc)
-		{
-			FreeTupleDesc(rec->tupdesc);
-			rec->freetupdesc = false;
-		}
+			if (!HeapTupleIsValid(tup))
+			{
+				/* No data, so force the record into all-nulls state */
+				deconstruct_expanded_record(newerh);
+			}
+			else
+			{
+				/* No coercion is needed, so just assign the row value */
+				expanded_record_set_tuple(newerh, tup, true);
+			}
 
-		/* ... and install the new */
-		if (HeapTupleIsValid(tup))
+			/* Complete the assignment */
+			assign_record_var(estate, rec, newerh);
+
+			return;
+		}
+	}
+
+	/*
+	 * Otherwise, deconstruct the tuple and do field-by-field assignment,
+	 * using exec_move_row_from_fields.
+	 */
+	if (tupdesc && HeapTupleIsValid(tup))
+	{
+		int			td_natts = tupdesc->natts;
+		Datum	   *values;
+		bool	   *nulls;
+		Datum		values_local[64];
+		bool		nulls_local[64];
+
+		/*
+		 * Need workspace arrays.  If td_natts is small enough, use local
+		 * arrays to save doing a palloc.  Even if it's not small, we can
+		 * allocate both the Datum and isnull arrays in one palloc chunk.
+		 */
+		if (td_natts <= lengthof(values_local))
 		{
-			rec->tup = tup;
-			rec->freetup = true;
+			values = values_local;
+			nulls = nulls_local;
 		}
 		else
-			rec->tup = NULL;
-
-		if (tupdesc)
 		{
-			rec->tupdesc = tupdesc;
-			rec->freetupdesc = true;
+			char	   *chunk;
+
+			chunk = eval_mcontext_alloc(estate,
+										td_natts * (sizeof(Datum) + sizeof(bool)));
+			values = (Datum *) chunk;
+			nulls = (bool *) (chunk + td_natts * sizeof(Datum));
 		}
+
+		heap_deform_tuple(tup, tupdesc, values, nulls);
+
+		exec_move_row_from_fields(estate, target, newerh,
+								  values, nulls, tupdesc);
+	}
+	else
+	{
+		/*
+		 * Assign all-nulls.
+		 */
+		exec_move_row_from_fields(estate, target, newerh,
+								  NULL, NULL, NULL);
+	}
+}
+
+/*
+ * Build an expanded record object suitable for assignment to "rec".
+ *
+ * Caller must supply either a source tuple descriptor or a source expanded
+ * record (not both).  If the record variable has declared type RECORD,
+ * it'll adopt the source's rowtype.  Even if it doesn't, we may be able to
+ * piggyback on a source expanded record to save a typcache lookup.
+ *
+ * Caller must fill the object with data, then do assign_record_var().
+ *
+ * The new record is initially put into the mcontext, so it will be cleaned up
+ * if we fail before reaching assign_record_var().
+ */
+static ExpandedRecordHeader *
+make_expanded_record_for_rec(PLpgSQL_execstate *estate,
+							 PLpgSQL_rec *rec,
+							 TupleDesc srctupdesc,
+							 ExpandedRecordHeader *srcerh)
+{
+	ExpandedRecordHeader *newerh;
+	MemoryContext mcontext = get_eval_mcontext(estate);
+
+	if (rec->rectypeid != RECORDOID)
+	{
+		/*
+		 * New record must be of desired type, but maybe srcerh has already
+		 * done all the same lookups.
+		 */
+		if (srcerh && rec->rectypeid == srcerh->er_decltypeid)
+			newerh = make_expanded_record_from_exprecord(srcerh,
+														 mcontext);
 		else
-			rec->tupdesc = NULL;
+			newerh = make_expanded_record_from_typeid(rec->rectypeid, -1,
+													  mcontext);
+	}
+	else
+	{
+		/*
+		 * We'll adopt the input tupdesc.  We can still use
+		 * make_expanded_record_from_exprecord, if srcerh isn't a composite
+		 * domain.  (If it is, we effectively adopt its base type.)
+		 */
+		if (srcerh && !ExpandedRecordIsDomain(srcerh))
+			newerh = make_expanded_record_from_exprecord(srcerh,
+														 mcontext);
+		else
+		{
+			if (!srctupdesc)
+				srctupdesc = expanded_record_get_tupdesc(srcerh);
+			newerh = make_expanded_record_from_tupdesc(srctupdesc,
+													   mcontext);
+		}
+	}
+
+	return newerh;
+}
+
+/*
+ * exec_move_row_from_fields	Move arrays of field values into a record or row
+ *
+ * When assigning to a record, the caller must have already created a suitable
+ * new expanded record object, newerh.  Pass NULL when assigning to a row.
+ *
+ * tupdesc describes the input row, which might have different column
+ * types and/or different dropped-column positions than the target.
+ * values/nulls/tupdesc can all be NULL if we just want to assign nulls to
+ * all fields of the record or row.
+ *
+ * Since this uses the mcontext for workspace, caller should eventually call
+ * exec_eval_cleanup to prevent long-term memory leaks.
+ */
+static void
+exec_move_row_from_fields(PLpgSQL_execstate *estate,
+						  PLpgSQL_variable *target,
+						  ExpandedRecordHeader *newerh,
+						  Datum *values, bool *nulls,
+						  TupleDesc tupdesc)
+{
+	int			td_natts = tupdesc ? tupdesc->natts : 0;
+	int			fnum;
+	int			anum;
+
+	/* Handle RECORD-target case */
+	if (target->dtype == PLPGSQL_DTYPE_REC)
+	{
+		PLpgSQL_rec *rec = (PLpgSQL_rec *) target;
+		TupleDesc	var_tupdesc;
+		Datum		newvalues_local[64];
+		bool		newnulls_local[64];
+
+		Assert(newerh != NULL); /* caller must have built new object */
+
+		var_tupdesc = expanded_record_get_tupdesc(newerh);
+
+		/*
+		 * Coerce field values if needed.  This might involve dealing with
+		 * different sets of dropped columns and/or coercing individual column
+		 * types.  That's sort of a pain, but historically plpgsql has allowed
+		 * it, so we preserve the behavior.  However, it's worth a quick check
+		 * to see if the tupdescs are identical.  (Since expandedrecord.c
+		 * prefers to use refcounted tupdescs from the typcache, expanded
+		 * records with the same rowtype will have pointer-equal tupdescs.)
+		 */
+		if (var_tupdesc != tupdesc)
+		{
+			int			vtd_natts = var_tupdesc->natts;
+			Datum	   *newvalues;
+			bool	   *newnulls;
+
+			/*
+			 * Need workspace arrays.  If vtd_natts is small enough, use local
+			 * arrays to save doing a palloc.  Even if it's not small, we can
+			 * allocate both the Datum and isnull arrays in one palloc chunk.
+			 */
+			if (vtd_natts <= lengthof(newvalues_local))
+			{
+				newvalues = newvalues_local;
+				newnulls = newnulls_local;
+			}
+			else
+			{
+				char	   *chunk;
+
+				chunk = eval_mcontext_alloc(estate,
+											vtd_natts * (sizeof(Datum) + sizeof(bool)));
+				newvalues = (Datum *) chunk;
+				newnulls = (bool *) (chunk + vtd_natts * sizeof(Datum));
+			}
+
+			/* Walk over destination columns */
+			anum = 0;
+			for (fnum = 0; fnum < vtd_natts; fnum++)
+			{
+				Form_pg_attribute attr = TupleDescAttr(var_tupdesc, fnum);
+				Datum		value;
+				bool		isnull;
+				Oid			valtype;
+				int32		valtypmod;
+
+				if (attr->attisdropped)
+				{
+					/* expanded_record_set_fields should ignore this column */
+					continue;	/* skip dropped column in record */
+				}
+
+				while (anum < td_natts &&
+					   TupleDescAttr(tupdesc, anum)->attisdropped)
+					anum++;		/* skip dropped column in tuple */
+
+				if (anum < td_natts)
+				{
+					value = values[anum];
+					isnull = nulls[anum];
+					valtype = TupleDescAttr(tupdesc, anum)->atttypid;
+					valtypmod = TupleDescAttr(tupdesc, anum)->atttypmod;
+					anum++;
+				}
+				else
+				{
+					value = (Datum) 0;
+					isnull = true;
+					valtype = UNKNOWNOID;
+					valtypmod = -1;
+				}
+
+				/* Cast the new value to the right type, if needed. */
+				newvalues[fnum] = exec_cast_value(estate,
+												  value,
+												  &isnull,
+												  valtype,
+												  valtypmod,
+												  attr->atttypid,
+												  attr->atttypmod);
+				newnulls[fnum] = isnull;
+			}
+
+			values = newvalues;
+			nulls = newnulls;
+		}
+
+		/* Insert the coerced field values into the new expanded record */
+		expanded_record_set_fields(newerh, values, nulls);
+
+		/* Complete the assignment */
+		assign_record_var(estate, rec, newerh);
 
 		return;
 	}
 
+	/* newerh should not have been passed in non-RECORD cases */
+	Assert(newerh == NULL);
+
 	/*
-	 * Row is a bit more complicated in that we assign the individual
-	 * attributes of the tuple to the variables the row points to.
+	 * For a row, we assign the individual field values to the variables the
+	 * row points to.
 	 *
-	 * NOTE: this code used to demand row->nfields ==
-	 * HeapTupleHeaderGetNatts(tup->t_data), but that's wrong.  The tuple
-	 * might have more fields than we expected if it's from an
-	 * inheritance-child table of the current table, or it might have fewer if
-	 * the table has had columns added by ALTER TABLE. Ignore extra columns
-	 * and assume NULL for missing columns, the same as heap_getattr would do.
-	 * We also have to skip over dropped columns in either the source or
-	 * destination.
+	 * NOTE: both this code and the record code above silently ignore extra
+	 * columns in the source and assume NULL for missing columns.  This is
+	 * pretty dubious but it's the historical behavior.
 	 *
-	 * If we have no tuple data at all, we'll assign NULL to all columns of
+	 * If we have no input data at all, we'll assign NULL to all columns of
 	 * the row variable.
 	 */
 	if (target->dtype == PLPGSQL_DTYPE_ROW)
 	{
 		PLpgSQL_row *row = (PLpgSQL_row *) target;
-		int			td_natts = tupdesc ? tupdesc->natts : 0;
-		int			t_natts;
-		int			fnum;
-		int			anum;
-
-		if (HeapTupleIsValid(tup))
-			t_natts = HeapTupleHeaderGetNatts(tup->t_data);
-		else
-			t_natts = 0;
 
 		anum = 0;
 		for (fnum = 0; fnum < row->nfields; fnum++)
@@ -6022,9 +6574,6 @@ exec_move_row(PLpgSQL_execstate *estate,
 			Oid			valtype;
 			int32		valtypmod;
 
-			if (row->varnos[fnum] < 0)
-				continue;		/* skip dropped column in row struct */
-
 			var = (PLpgSQL_var *) (estate->datums[row->varnos[fnum]]);
 
 			while (anum < td_natts &&
@@ -6033,13 +6582,8 @@ exec_move_row(PLpgSQL_execstate *estate,
 
 			if (anum < td_natts)
 			{
-				if (anum < t_natts)
-					value = SPI_getbinval(tup, tupdesc, anum + 1, &isnull);
-				else
-				{
-					value = (Datum) 0;
-					isnull = true;
-				}
+				value = values[anum];
+				isnull = nulls[anum];
 				valtype = TupleDescAttr(tupdesc, anum)->atttypid;
 				valtypmod = TupleDescAttr(tupdesc, anum)->atttypmod;
 				anum++;
@@ -6060,6 +6604,47 @@ exec_move_row(PLpgSQL_execstate *estate,
 	}
 
 	elog(ERROR, "unsupported target");
+}
+
+/*
+ * compatible_tupdescs: detect whether two tupdescs are physically compatible
+ *
+ * TRUE indicates that a tuple satisfying src_tupdesc can be used directly as
+ * a value for a composite variable using dst_tupdesc.
+ */
+static bool
+compatible_tupdescs(TupleDesc src_tupdesc, TupleDesc dst_tupdesc)
+{
+	int			i;
+
+	/* Possibly we could allow src_tupdesc to have extra columns? */
+	if (dst_tupdesc->natts != src_tupdesc->natts)
+		return false;
+
+	for (i = 0; i < dst_tupdesc->natts; i++)
+	{
+		Form_pg_attribute dattr = TupleDescAttr(dst_tupdesc, i);
+		Form_pg_attribute sattr = TupleDescAttr(src_tupdesc, i);
+
+		if (dattr->attisdropped != sattr->attisdropped)
+			return false;
+		if (!dattr->attisdropped)
+		{
+			/* Normal columns must match by type and typmod */
+			if (dattr->atttypid != sattr->atttypid ||
+				(dattr->atttypmod >= 0 &&
+				 dattr->atttypmod != sattr->atttypmod))
+				return false;
+		}
+		else
+		{
+			/* Dropped columns are OK as long as length/alignment match */
+			if (dattr->attlen != sattr->attlen ||
+				dattr->attalign != sattr->attalign)
+				return false;
+		}
+	}
+	return true;
 }
 
 /* ----------
@@ -6098,8 +6683,6 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 			nulls[i] = true;	/* leave the column as null */
 			continue;
 		}
-		if (row->varnos[i] < 0) /* should not happen */
-			elog(ERROR, "dropped rowtype entry for non-dropped column");
 
 		exec_eval_datum(estate, estate->datums[row->varnos[i]],
 						&fieldtypeid, &fieldtypmod,
@@ -6114,45 +6697,35 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 	return tuple;
 }
 
-/* ----------
- * get_tuple_from_datum		extract a tuple from a composite Datum
+/*
+ * deconstruct_composite_datum		extract tuple+tupdesc from composite Datum
  *
- * Returns a HeapTuple, freshly palloc'd in caller's context.
+ * The caller must supply a HeapTupleData variable, in which we set up a
+ * tuple header pointing to the composite datum's body.  To make the tuple
+ * value outlive that variable, caller would need to apply heap_copytuple...
+ * but current callers only need a short-lived tuple value anyway.
  *
- * Note: it's caller's responsibility to be sure value is of composite type.
- * ----------
- */
-static HeapTuple
-get_tuple_from_datum(Datum value)
-{
-	HeapTupleHeader td = DatumGetHeapTupleHeader(value);
-	HeapTupleData tmptup;
-
-	/* Build a temporary HeapTuple control structure */
-	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-	ItemPointerSetInvalid(&(tmptup.t_self));
-	tmptup.t_tableOid = InvalidOid;
-	tmptup.t_data = td;
-
-	/* Build a copy and return it */
-	return heap_copytuple(&tmptup);
-}
-
-/* ----------
- * get_tupdesc_from_datum	get a tuple descriptor for a composite Datum
- *
- * Returns a pointer to the TupleDesc of the tuple's rowtype.
+ * Returns a pointer to the TupleDesc of the datum's rowtype.
  * Caller is responsible for calling ReleaseTupleDesc when done with it.
  *
  * Note: it's caller's responsibility to be sure value is of composite type.
- * ----------
+ * Also, best to call this in a short-lived context, as it might leak memory.
  */
 static TupleDesc
-get_tupdesc_from_datum(Datum value)
+deconstruct_composite_datum(Datum value, HeapTupleData *tmptup)
 {
-	HeapTupleHeader td = DatumGetHeapTupleHeader(value);
+	HeapTupleHeader td;
 	Oid			tupType;
 	int32		tupTypmod;
+
+	/* Get tuple body (note this could involve detoasting) */
+	td = DatumGetHeapTupleHeader(value);
+
+	/* Build a temporary HeapTuple control structure */
+	tmptup->t_len = HeapTupleHeaderGetDatumLength(td);
+	ItemPointerSetInvalid(&(tmptup->t_self));
+	tmptup->t_tableOid = InvalidOid;
+	tmptup->t_data = td;
 
 	/* Extract rowtype info and find a tupdesc */
 	tupType = HeapTupleHeaderGetTypeId(td);
@@ -6160,40 +6733,254 @@ get_tupdesc_from_datum(Datum value)
 	return lookup_rowtype_tupdesc(tupType, tupTypmod);
 }
 
-/* ----------
+/*
  * exec_move_row_from_datum		Move a composite Datum into a record or row
  *
- * This is equivalent to get_tuple_from_datum() followed by exec_move_row(),
- * but we avoid constructing an intermediate physical copy of the tuple.
- * ----------
+ * This is equivalent to deconstruct_composite_datum() followed by
+ * exec_move_row(), but we can optimize things if the Datum is an
+ * expanded-record reference.
+ *
+ * Note: it's caller's responsibility to be sure value is of composite type.
  */
 static void
 exec_move_row_from_datum(PLpgSQL_execstate *estate,
 						 PLpgSQL_variable *target,
 						 Datum value)
 {
-	HeapTupleHeader td = DatumGetHeapTupleHeader(value);
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
-	HeapTupleData tmptup;
+	/* Check to see if source is an expanded record */
+	if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(value)))
+	{
+		ExpandedRecordHeader *erh = (ExpandedRecordHeader *) DatumGetEOHP(value);
+		ExpandedRecordHeader *newerh = NULL;
 
-	/* Extract rowtype info and find a tupdesc */
-	tupType = HeapTupleHeaderGetTypeId(td);
-	tupTypmod = HeapTupleHeaderGetTypMod(td);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+		Assert(erh->er_magic == ER_MAGIC);
 
-	/* Build a temporary HeapTuple control structure */
-	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-	ItemPointerSetInvalid(&(tmptup.t_self));
-	tmptup.t_tableOid = InvalidOid;
-	tmptup.t_data = td;
+		/* These cases apply if the target is record not row... */
+		if (target->dtype == PLPGSQL_DTYPE_REC)
+		{
+			PLpgSQL_rec *rec = (PLpgSQL_rec *) target;
 
-	/* Do the move */
-	exec_move_row(estate, target, &tmptup, tupdesc);
+			/*
+			 * If it's the same record already stored in the variable, do
+			 * nothing.  This would happen only in silly cases like "r := r",
+			 * but we need some check to avoid possibly freeing the variable's
+			 * live value below.  Note that this applies even if what we have
+			 * is a R/O pointer.
+			 */
+			if (erh == rec->erh)
+				return;
 
-	/* Release tupdesc usage count */
-	ReleaseTupleDesc(tupdesc);
+			/*
+			 * If we have a R/W pointer, we're allowed to just commandeer
+			 * ownership of the expanded record.  If it's of the right type to
+			 * put into the record variable, do that.  (Note we don't accept
+			 * an expanded record of a composite-domain type as a RECORD
+			 * value.  We'll treat it as the base composite type instead;
+			 * compare logic in make_expanded_record_for_rec.)
+			 */
+			if (VARATT_IS_EXTERNAL_EXPANDED_RW(DatumGetPointer(value)) &&
+				(rec->rectypeid == erh->er_decltypeid ||
+				 (rec->rectypeid == RECORDOID &&
+				  !ExpandedRecordIsDomain(erh))))
+			{
+				assign_record_var(estate, rec, erh);
+				return;
+			}
+
+			/*
+			 * If we already have an expanded record object in the target
+			 * variable, and the source record contains a valid tuple
+			 * representation with the right rowtype, then we can skip making
+			 * a new expanded record and just assign the tuple with
+			 * expanded_record_set_tuple.  (We can't do the equivalent if we
+			 * have to do field-by-field assignment, since that wouldn't be
+			 * atomic if there's an error.)  We consider that there's a
+			 * rowtype match only if it's the same named composite type or
+			 * same registered rowtype; checking for matches of anonymous
+			 * rowtypes would be more expensive than this is worth.
+			 */
+			if (rec->erh &&
+				(erh->flags & ER_FLAG_FVALUE_VALID) &&
+				erh->er_typeid == rec->erh->er_typeid &&
+				(erh->er_typeid != RECORDOID ||
+				 (erh->er_typmod == rec->erh->er_typmod &&
+				  erh->er_typmod >= 0)))
+			{
+				expanded_record_set_tuple(rec->erh, erh->fvalue, true);
+				return;
+			}
+
+			/*
+			 * Otherwise we're gonna need a new expanded record object.  Make
+			 * it here in hopes of piggybacking on the source object's
+			 * previous typcache lookup.
+			 */
+			newerh = make_expanded_record_for_rec(estate, rec, NULL, erh);
+
+			/*
+			 * If the expanded record contains a valid tuple representation,
+			 * and we don't need rowtype conversion, then just copying the
+			 * tuple is probably faster than field-by-field processing.  (This
+			 * isn't duplicative of the previous check, since here we will
+			 * catch the case where the record variable was previously empty.)
+			 */
+			if ((erh->flags & ER_FLAG_FVALUE_VALID) &&
+				(rec->rectypeid == RECORDOID ||
+				 rec->rectypeid == erh->er_typeid))
+			{
+				expanded_record_set_tuple(newerh, erh->fvalue, true);
+				assign_record_var(estate, rec, newerh);
+				return;
+			}
+
+			/*
+			 * Need to special-case empty source record, else code below would
+			 * leak newerh.
+			 */
+			if (ExpandedRecordIsEmpty(erh))
+			{
+				/* Set newerh to a row of NULLs */
+				deconstruct_expanded_record(newerh);
+				assign_record_var(estate, rec, newerh);
+				return;
+			}
+		}						/* end of record-target-only cases */
+
+		/*
+		 * If the source expanded record is empty, we should treat that like a
+		 * NULL tuple value.  (We're unlikely to see such a case, but we must
+		 * check this; deconstruct_expanded_record would cause a change of
+		 * logical state, which is not OK.)
+		 */
+		if (ExpandedRecordIsEmpty(erh))
+		{
+			exec_move_row(estate, target, NULL,
+						  expanded_record_get_tupdesc(erh));
+			return;
+		}
+
+		/*
+		 * Otherwise, ensure that the source record is deconstructed, and
+		 * assign from its field values.
+		 */
+		deconstruct_expanded_record(erh);
+		exec_move_row_from_fields(estate, target, newerh,
+								  erh->dvalues, erh->dnulls,
+								  expanded_record_get_tupdesc(erh));
+	}
+	else
+	{
+		/*
+		 * Nope, we've got a plain composite Datum.  Deconstruct it; but we
+		 * don't use deconstruct_composite_datum(), because we may be able to
+		 * skip calling lookup_rowtype_tupdesc().
+		 */
+		HeapTupleHeader td;
+		HeapTupleData tmptup;
+		Oid			tupType;
+		int32		tupTypmod;
+		TupleDesc	tupdesc;
+		MemoryContext oldcontext;
+
+		/* Ensure that any detoasted data winds up in the eval_mcontext */
+		oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
+		/* Get tuple body (note this could involve detoasting) */
+		td = DatumGetHeapTupleHeader(value);
+		MemoryContextSwitchTo(oldcontext);
+
+		/* Build a temporary HeapTuple control structure */
+		tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+		ItemPointerSetInvalid(&(tmptup.t_self));
+		tmptup.t_tableOid = InvalidOid;
+		tmptup.t_data = td;
+
+		/* Extract rowtype info */
+		tupType = HeapTupleHeaderGetTypeId(td);
+		tupTypmod = HeapTupleHeaderGetTypMod(td);
+
+		/* Now, if the target is record not row, maybe we can optimize ... */
+		if (target->dtype == PLPGSQL_DTYPE_REC)
+		{
+			PLpgSQL_rec *rec = (PLpgSQL_rec *) target;
+
+			/*
+			 * If we already have an expanded record object in the target
+			 * variable, and the source datum has a matching rowtype, then we
+			 * can skip making a new expanded record and just assign the tuple
+			 * with expanded_record_set_tuple.  We consider that there's a
+			 * rowtype match only if it's the same named composite type or
+			 * same registered rowtype.  (Checking to reject an anonymous
+			 * rowtype here should be redundant, but let's be safe.)
+			 */
+			if (rec->erh &&
+				tupType == rec->erh->er_typeid &&
+				(tupType != RECORDOID ||
+				 (tupTypmod == rec->erh->er_typmod &&
+				  tupTypmod >= 0)))
+			{
+				expanded_record_set_tuple(rec->erh, &tmptup, true);
+				return;
+			}
+
+			/*
+			 * If the source datum has a rowtype compatible with the target
+			 * variable, just build a new expanded record and assign the tuple
+			 * into it.  Using make_expanded_record_from_typeid() here saves
+			 * one typcache lookup compared to the code below.
+			 */
+			if (rec->rectypeid == RECORDOID || rec->rectypeid == tupType)
+			{
+				ExpandedRecordHeader *newerh;
+				MemoryContext mcontext = get_eval_mcontext(estate);
+
+				newerh = make_expanded_record_from_typeid(tupType, tupTypmod,
+														  mcontext);
+				expanded_record_set_tuple(newerh, &tmptup, true);
+				assign_record_var(estate, rec, newerh);
+				return;
+			}
+
+			/*
+			 * Otherwise, we're going to need conversion, so fall through to
+			 * do it the hard way.
+			 */
+		}
+
+		/*
+		 * ROW target, or unoptimizable RECORD target, so we have to expend a
+		 * lookup to obtain the source datum's tupdesc.
+		 */
+		tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
+		/* Do the move */
+		exec_move_row(estate, target, &tmptup, tupdesc);
+
+		/* Release tupdesc usage count */
+		ReleaseTupleDesc(tupdesc);
+	}
+}
+
+/*
+ * If we have not created an expanded record to hold the record variable's
+ * value, do so.  The expanded record will be "empty", so this does not
+ * change the logical state of the record variable: it's still NULL.
+ * However, now we'll have a tupdesc with which we can e.g. look up fields.
+ */
+static void
+instantiate_empty_record_variable(PLpgSQL_execstate *estate, PLpgSQL_rec *rec)
+{
+	Assert(rec->erh == NULL);	/* else caller error */
+
+	/* If declared type is RECORD, we can't instantiate */
+	if (rec->rectypeid == RECORDOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("record \"%s\" is not assigned yet", rec->refname),
+				 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+
+	/* OK, do it */
+	rec->erh = make_expanded_record_from_typeid(rec->rectypeid, -1,
+												estate->datum_context);
 }
 
 /* ----------
@@ -6904,6 +7691,26 @@ static void
 assign_text_var(PLpgSQL_execstate *estate, PLpgSQL_var *var, const char *str)
 {
 	assign_simple_var(estate, var, CStringGetTextDatum(str), false, true);
+}
+
+/*
+ * assign_record_var --- assign a new value to any REC datum.
+ */
+static void
+assign_record_var(PLpgSQL_execstate *estate, PLpgSQL_rec *rec,
+				  ExpandedRecordHeader *erh)
+{
+	Assert(rec->dtype == PLPGSQL_DTYPE_REC);
+
+	/* Transfer new record object into datum_context */
+	TransferExpandedRecord(erh, estate->datum_context);
+
+	/* Free the old value ... */
+	if (rec->erh)
+		DeleteExpandedObject(ExpandedRecordGetDatum(rec->erh));
+
+	/* ... and install the new */
+	rec->erh = erh;
 }
 
 /*

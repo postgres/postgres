@@ -259,11 +259,21 @@ static const dshash_parameters srtr_typmod_table_params = {
 	LWTRANCHE_SESSION_TYPMOD_TABLE
 };
 
+/* hashtable for recognizing registered record types */
 static HTAB *RecordCacheHash = NULL;
 
+/* arrays of info about registered record types, indexed by assigned typmod */
 static TupleDesc *RecordCacheArray = NULL;
-static int32 RecordCacheArrayLen = 0;	/* allocated length of array */
+static uint64 *RecordIdentifierArray = NULL;
+static int32 RecordCacheArrayLen = 0;	/* allocated length of above arrays */
 static int32 NextRecordTypmod = 0;	/* number of entries used */
+
+/*
+ * Process-wide counter for generating unique tupledesc identifiers.
+ * Zero and one (INVALID_TUPLEDESC_IDENTIFIER) aren't allowed to be chosen
+ * as identifiers, so we start the counter at INVALID_TUPLEDESC_IDENTIFIER.
+ */
+static uint64 tupledesc_id_counter = INVALID_TUPLEDESC_IDENTIFIER;
 
 static void load_typcache_tupdesc(TypeCacheEntry *typentry);
 static void load_rangetype_info(TypeCacheEntry *typentry);
@@ -793,10 +803,10 @@ load_typcache_tupdesc(TypeCacheEntry *typentry)
 	typentry->tupDesc->tdrefcount++;
 
 	/*
-	 * In future, we could take some pains to not increment the seqno if the
-	 * tupdesc didn't really change; but for now it's not worth it.
+	 * In future, we could take some pains to not change tupDesc_identifier if
+	 * the tupdesc didn't really change; but for now it's not worth it.
 	 */
-	typentry->tupDescSeqNo++;
+	typentry->tupDesc_identifier = ++tupledesc_id_counter;
 
 	relation_close(rel, AccessShareLock);
 }
@@ -1496,7 +1506,8 @@ cache_range_element_properties(TypeCacheEntry *typentry)
 }
 
 /*
- * Make sure that RecordCacheArray is large enough to store 'typmod'.
+ * Make sure that RecordCacheArray and RecordIdentifierArray are large enough
+ * to store 'typmod'.
  */
 static void
 ensure_record_cache_typmod_slot_exists(int32 typmod)
@@ -1505,6 +1516,8 @@ ensure_record_cache_typmod_slot_exists(int32 typmod)
 	{
 		RecordCacheArray = (TupleDesc *)
 			MemoryContextAllocZero(CacheMemoryContext, 64 * sizeof(TupleDesc));
+		RecordIdentifierArray = (uint64 *)
+			MemoryContextAllocZero(CacheMemoryContext, 64 * sizeof(uint64));
 		RecordCacheArrayLen = 64;
 	}
 
@@ -1519,6 +1532,10 @@ ensure_record_cache_typmod_slot_exists(int32 typmod)
 												  newlen * sizeof(TupleDesc));
 		memset(RecordCacheArray + RecordCacheArrayLen, 0,
 			   (newlen - RecordCacheArrayLen) * sizeof(TupleDesc));
+		RecordIdentifierArray = (uint64 *) repalloc(RecordIdentifierArray,
+													newlen * sizeof(uint64));
+		memset(RecordIdentifierArray + RecordCacheArrayLen, 0,
+			   (newlen - RecordCacheArrayLen) * sizeof(uint64));
 		RecordCacheArrayLen = newlen;
 	}
 }
@@ -1581,10 +1598,16 @@ lookup_rowtype_tupdesc_internal(Oid type_id, int32 typmod, bool noError)
 
 					/*
 					 * Our local array can now point directly to the TupleDesc
-					 * in shared memory.
+					 * in shared memory, which is non-reference-counted.
 					 */
 					RecordCacheArray[typmod] = tupdesc;
 					Assert(tupdesc->tdrefcount == -1);
+
+					/*
+					 * We don't share tupdesc identifiers across processes, so
+					 * assign one locally.
+					 */
+					RecordIdentifierArray[typmod] = ++tupledesc_id_counter;
 
 					dshash_release_lock(CurrentSession->shared_typmod_table,
 										entry);
@@ -1790,10 +1813,59 @@ assign_record_type_typmod(TupleDesc tupDesc)
 	RecordCacheArray[entDesc->tdtypmod] = entDesc;
 	recentry->tupdesc = entDesc;
 
+	/* Assign a unique tupdesc identifier, too. */
+	RecordIdentifierArray[entDesc->tdtypmod] = ++tupledesc_id_counter;
+
 	/* Update the caller's tuple descriptor. */
 	tupDesc->tdtypmod = entDesc->tdtypmod;
 
 	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ * assign_record_type_identifier
+ *
+ * Get an identifier, which will be unique over the lifespan of this backend
+ * process, for the current tuple descriptor of the specified composite type.
+ * For named composite types, the value is guaranteed to change if the type's
+ * definition does.  For registered RECORD types, the value will not change
+ * once assigned, since the registered type won't either.  If an anonymous
+ * RECORD type is specified, we return a new identifier on each call.
+ */
+uint64
+assign_record_type_identifier(Oid type_id, int32 typmod)
+{
+	if (type_id != RECORDOID)
+	{
+		/*
+		 * It's a named composite type, so use the regular typcache.
+		 */
+		TypeCacheEntry *typentry;
+
+		typentry = lookup_type_cache(type_id, TYPECACHE_TUPDESC);
+		if (typentry->tupDesc == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("type %s is not composite",
+							format_type_be(type_id))));
+		Assert(typentry->tupDesc_identifier != 0);
+		return typentry->tupDesc_identifier;
+	}
+	else
+	{
+		/*
+		 * It's a transient record type, so look in our record-type table.
+		 */
+		if (typmod >= 0 && typmod < RecordCacheArrayLen &&
+			RecordCacheArray[typmod] != NULL)
+		{
+			Assert(RecordIdentifierArray[typmod] != 0);
+			return RecordIdentifierArray[typmod];
+		}
+
+		/* For anonymous or unrecognized record type, generate a new ID */
+		return ++tupledesc_id_counter;
+	}
 }
 
 /*

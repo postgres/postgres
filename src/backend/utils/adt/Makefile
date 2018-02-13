@@ -12,7 +12,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS = acl.o amutils.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	array_typanalyze.o array_userfuncs.o arrayutils.o ascii.o \
 	bool.o cash.o char.o date.o datetime.o datum.o dbsize.o domains.o \
-	encode.o enum.o expandeddatum.o \
+	encode.o enum.o expandeddatum.o expandedrecord.o \
 	float.o format_type.o formatting.o genfile.o \
 	geo_ops.o geo_selfuncs.o geo_spgist.o inet_cidr_ntop.o inet_net_pton.o \
 	int.o int8.o json.o jsonb.o jsonb_gin.o jsonb_op.o jsonb_util.o \

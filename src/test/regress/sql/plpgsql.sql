@@ -3745,14 +3745,17 @@ begin
       x int;
       y int := i;
       r record;
+      c int8_tbl;
     begin
       if i = 1 then
         x := 42;
         r := row(i, i+1);
+        c := row(i, i+1);
       end if;
       raise notice 'x = %', x;
       raise notice 'y = %', y;
       raise notice 'r = %', r;
+      raise notice 'c = %', c;
     end;
   end loop;
 end$$;

@@ -384,7 +384,7 @@ PLy_output_setup_func(PLyObToDatum *arg, MemoryContext arg_mcxt,
 		/* We'll set up the per-field data later */
 		arg->u.tuple.recdesc = NULL;
 		arg->u.tuple.typentry = typentry;
-		arg->u.tuple.tupdescseq = typentry ? typentry->tupDescSeqNo - 1 : 0;
+		arg->u.tuple.tupdescid = INVALID_TUPLEDESC_IDENTIFIER;
 		arg->u.tuple.atts = NULL;
 		arg->u.tuple.natts = 0;
 		/* Mark this invalid till needed, too */
@@ -499,7 +499,7 @@ PLy_input_setup_func(PLyDatumToOb *arg, MemoryContext arg_mcxt,
 		/* We'll set up the per-field data later */
 		arg->u.tuple.recdesc = NULL;
 		arg->u.tuple.typentry = typentry;
-		arg->u.tuple.tupdescseq = typentry ? typentry->tupDescSeqNo - 1 : 0;
+		arg->u.tuple.tupdescid = INVALID_TUPLEDESC_IDENTIFIER;
 		arg->u.tuple.atts = NULL;
 		arg->u.tuple.natts = 0;
 	}
@@ -969,11 +969,11 @@ PLyObject_ToComposite(PLyObToDatum *arg, PyObject *plrv,
 		/* We should have the descriptor of the type's typcache entry */
 		Assert(desc == arg->u.tuple.typentry->tupDesc);
 		/* Detect change of descriptor, update cache if needed */
-		if (arg->u.tuple.tupdescseq != arg->u.tuple.typentry->tupDescSeqNo)
+		if (arg->u.tuple.tupdescid != arg->u.tuple.typentry->tupDesc_identifier)
 		{
 			PLy_output_setup_tuple(arg, desc,
 								   PLy_current_execution_context()->curr_proc);
-			arg->u.tuple.tupdescseq = arg->u.tuple.typentry->tupDescSeqNo;
+			arg->u.tuple.tupdescid = arg->u.tuple.typentry->tupDesc_identifier;
 		}
 	}
 	else

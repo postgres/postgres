@@ -20,6 +20,8 @@
 #include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#include "utils/expandedrecord.h"
+
 
 /**********************************************************************
  * Definitions
@@ -37,10 +39,9 @@
  */
 typedef enum PLpgSQL_nsitem_type
 {
-	PLPGSQL_NSTYPE_LABEL,
-	PLPGSQL_NSTYPE_VAR,
-	PLPGSQL_NSTYPE_ROW,
-	PLPGSQL_NSTYPE_REC
+	PLPGSQL_NSTYPE_LABEL,		/* block label */
+	PLPGSQL_NSTYPE_VAR,			/* scalar variable */
+	PLPGSQL_NSTYPE_REC			/* composite variable */
 } PLpgSQL_nsitem_type;
 
 /*
@@ -72,9 +73,8 @@ typedef enum PLpgSQL_datum_type
 typedef enum PLpgSQL_type_type
 {
 	PLPGSQL_TTYPE_SCALAR,		/* scalar types and domains */
-	PLPGSQL_TTYPE_ROW,			/* composite types */
-	PLPGSQL_TTYPE_REC,			/* RECORD pseudotype */
-	PLPGSQL_TTYPE_PSEUDO		/* other pseudotypes */
+	PLPGSQL_TTYPE_REC,			/* composite types, including RECORD */
+	PLPGSQL_TTYPE_PSEUDO		/* pseudotypes */
 } PLpgSQL_type_type;
 
 /*
@@ -183,7 +183,6 @@ typedef struct PLpgSQL_type
 	int16		typlen;			/* stuff copied from its pg_type entry */
 	bool		typbyval;
 	char		typtype;
-	Oid			typrelid;
 	Oid			collation;		/* from pg_type, but can be overridden */
 	bool		typisarray;		/* is "true" array, or domain over one */
 	int32		atttypmod;		/* typmod (taken from someplace else) */
@@ -274,7 +273,12 @@ typedef struct PLpgSQL_var
 } PLpgSQL_var;
 
 /*
- * Row variable
+ * Row variable - this represents one or more variables that are listed in an
+ * INTO clause, FOR-loop targetlist, cursor argument list, etc.  We also use
+ * a row to represent a function's OUT parameters when there's more than one.
+ *
+ * Note that there's no way to name the row as such from PL/pgSQL code,
+ * so many functions don't need to support these.
  */
 typedef struct PLpgSQL_row
 {
@@ -283,21 +287,20 @@ typedef struct PLpgSQL_row
 	char	   *refname;
 	int			lineno;
 
-	/* Note: TupleDesc is only set up for named rowtypes, else it is NULL. */
+	/*
+	 * rowtupdesc is only set up if we might need to convert the row into a
+	 * composite datum, which currently only happens for OUT parameters.
+	 * Otherwise it is NULL.
+	 */
 	TupleDesc	rowtupdesc;
 
-	/*
-	 * Note: if the underlying rowtype contains a dropped column, the
-	 * corresponding fieldnames[] entry will be NULL, and there is no
-	 * corresponding var (varnos[] will be -1).
-	 */
 	int			nfields;
 	char	  **fieldnames;
 	int		   *varnos;
 } PLpgSQL_row;
 
 /*
- * Record variable (non-fixed structure)
+ * Record variable (any composite type, including RECORD)
  */
 typedef struct PLpgSQL_rec
 {
@@ -305,11 +308,11 @@ typedef struct PLpgSQL_rec
 	int			dno;
 	char	   *refname;
 	int			lineno;
-
-	HeapTuple	tup;
-	TupleDesc	tupdesc;
-	bool		freetup;
-	bool		freetupdesc;
+	Oid			rectypeid;		/* declared type of variable */
+	/* RECFIELDs for this record are chained together for easy access */
+	int			firstfield;		/* dno of first RECFIELD, or -1 if none */
+	/* We always store record variables as "expanded" records */
+	ExpandedRecordHeader *erh;
 } PLpgSQL_rec;
 
 /*
@@ -319,8 +322,12 @@ typedef struct PLpgSQL_recfield
 {
 	PLpgSQL_datum_type dtype;
 	int			dno;
-	char	   *fieldname;
+	char	   *fieldname;		/* name of field */
 	int			recparentno;	/* dno of parent record */
+	int			nextfield;		/* dno of next child, or -1 if none */
+	uint64		rectupledescid; /* record's tupledesc ID as of last lookup */
+	ExpandedRecordFieldInfo finfo;	/* field's attnum and type info */
+	/* if rectupledescid == INVALID_TUPLEDESC_IDENTIFIER, finfo isn't valid */
 } PLpgSQL_recfield;
 
 /*
@@ -903,12 +910,12 @@ typedef struct PLpgSQL_execstate
 
 	bool		readonly_func;
 
-	TupleDesc	rettupdesc;
 	char	   *exitlabel;		/* the "target" label of the current EXIT or
 								 * CONTINUE stmt, if any */
 	ErrorData  *cur_error;		/* current exception handler's error */
 
 	Tuplestorestate *tuple_store;	/* SRFs accumulate results here */
+	TupleDesc	tuple_store_desc;	/* descriptor for tuples in tuple_store */
 	MemoryContext tuple_store_cxt;
 	ResourceOwner tuple_store_owner;
 	ReturnSetInfo *rsi;
@@ -917,6 +924,8 @@ typedef struct PLpgSQL_execstate
 	int			found_varno;
 	int			ndatums;
 	PLpgSQL_datum **datums;
+	/* context containing variable values (same as func's SPI_proc context) */
+	MemoryContext datum_context;
 
 	/*
 	 * paramLI is what we use to pass local variable values to the executor.
@@ -1088,7 +1097,9 @@ extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   PLpgSQL_type *dtype,
 					   bool add2namespace);
 extern PLpgSQL_rec *plpgsql_build_record(const char *refname, int lineno,
-					 bool add2namespace);
+					 Oid rectypeid, bool add2namespace);
+extern PLpgSQL_recfield *plpgsql_build_recfield(PLpgSQL_rec *rec,
+					   const char *fldname);
 extern int plpgsql_recognize_err_condition(const char *condname,
 								bool allow_sqlstate);
 extern PLpgSQL_condition *plpgsql_parse_err_condition(char *condname);

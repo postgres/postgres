@@ -512,7 +512,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull
 							else
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("row or record variable cannot be CONSTANT"),
+										 errmsg("record variable cannot be CONSTANT"),
 										 parser_errposition(@2)));
 						}
 						if ($5)
@@ -522,7 +522,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull
 							else
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("row or record variable cannot be NOT NULL"),
+										 errmsg("record variable cannot be NOT NULL"),
 										 parser_errposition(@4)));
 
 						}
@@ -533,7 +533,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull
 							else
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("default value for row or record variable is not supported"),
+										 errmsg("default value for record variable is not supported"),
 										 parser_errposition(@5)));
 						}
 					}
@@ -1333,7 +1333,7 @@ for_control		: for_variable K_IN
 							{
 								ereport(ERROR,
 										(errcode(ERRCODE_DATATYPE_MISMATCH),
-										 errmsg("loop variable of loop over rows must be a record or row variable or list of scalar variables"),
+										 errmsg("loop variable of loop over rows must be a record variable or list of scalar variables"),
 										 parser_errposition(@1)));
 							}
 							new->query = expr;
@@ -1386,6 +1386,7 @@ for_control		: for_variable K_IN
 							new->var = (PLpgSQL_variable *)
 								plpgsql_build_record($1.name,
 													 $1.lineno,
+													 RECORDOID,
 													 true);
 
 							$$ = (PLpgSQL_stmt *) new;
@@ -1524,7 +1525,7 @@ for_control		: for_variable K_IN
 								{
 									ereport(ERROR,
 											(errcode(ERRCODE_SYNTAX_ERROR),
-											 errmsg("loop variable of loop over rows must be a record or row variable or list of scalar variables"),
+											 errmsg("loop variable of loop over rows must be a record variable or list of scalar variables"),
 											 parser_errposition(@1)));
 								}
 
@@ -3328,7 +3329,7 @@ check_assignable(PLpgSQL_datum *datum, int location)
 						 parser_errposition(location)));
 			break;
 		case PLPGSQL_DTYPE_ROW:
-			/* always assignable? */
+			/* always assignable?  Shouldn't we check member vars? */
 			break;
 		case PLPGSQL_DTYPE_REC:
 			/* always assignable?  What about NEW/OLD? */
@@ -3385,7 +3386,7 @@ read_into_target(PLpgSQL_variable **target, bool *strict)
 				if ((tok = yylex()) == ',')
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("record or row variable cannot be part of multiple-item INTO list"),
+							 errmsg("record variable cannot be part of multiple-item INTO list"),
 							 parser_errposition(yylloc)));
 				plpgsql_push_back_token(tok);
 			}

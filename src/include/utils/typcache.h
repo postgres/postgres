@@ -76,11 +76,14 @@ typedef struct TypeCacheEntry
 	/*
 	 * Tuple descriptor if it's a composite type (row type).  NULL if not
 	 * composite or information hasn't yet been requested.  (NOTE: this is a
-	 * reference-counted tupledesc.)  To simplify caching dependent info,
-	 * tupDescSeqNo is incremented each time tupDesc is rebuilt in a session.
+	 * reference-counted tupledesc.)
+	 *
+	 * To simplify caching dependent info, tupDesc_identifier is an identifier
+	 * for this tupledesc that is unique for the life of the process, and
+	 * changes anytime the tupledesc does.  Zero if not yet determined.
 	 */
 	TupleDesc	tupDesc;
-	int64		tupDescSeqNo;
+	uint64		tupDesc_identifier;
 
 	/*
 	 * Fields computed when TYPECACHE_RANGE_INFO is requested.  Zeroes if not
@@ -138,6 +141,9 @@ typedef struct TypeCacheEntry
 #define TYPECACHE_HASH_EXTENDED_PROC		0x4000
 #define TYPECACHE_HASH_EXTENDED_PROC_FINFO	0x8000
 
+/* This value will not equal any valid tupledesc identifier, nor 0 */
+#define INVALID_TUPLEDESC_IDENTIFIER ((uint64) 1)
+
 /*
  * Callers wishing to maintain a long-lived reference to a domain's constraint
  * set must store it in one of these.  Use InitDomainConstraintRef() and
@@ -178,6 +184,8 @@ extern TupleDesc lookup_rowtype_tupdesc_domain(Oid type_id, int32 typmod,
 							  bool noError);
 
 extern void assign_record_type_typmod(TupleDesc tupDesc);
+
+extern uint64 assign_record_type_identifier(Oid type_id, int32 typmod);
 
 extern int	compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2);
 

@@ -443,14 +443,15 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	}
 
 	/* Disallow pseudotypes in arguments (either IN or OUT) */
-	/* except for polymorphic */
+	/* except for RECORD and polymorphic */
 	numargs = get_func_arg_info(tuple,
 								&argtypes, &argnames, &argmodes);
 	for (i = 0; i < numargs; i++)
 	{
 		if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO)
 		{
-			if (!IsPolymorphicType(argtypes[i]))
+			if (argtypes[i] != RECORDOID &&
+				!IsPolymorphicType(argtypes[i]))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("PL/pgSQL functions cannot accept type %s",
