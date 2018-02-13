@@ -17,6 +17,7 @@ CALL ptest1('xy' || 'zzy');  -- ok, constant-folded arg
 CALL ptest1(substring(random()::text, 1, 1));  -- ok, volatile arg
 
 \df ptest1
+SELECT pg_get_functiondef('ptest1'::regproc);
 
 SELECT * FROM cp_test ORDER BY b COLLATE "C";
 

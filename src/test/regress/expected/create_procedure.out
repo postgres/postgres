@@ -30,6 +30,17 @@ CALL ptest1(substring(random()::text, 1, 1));  -- ok, volatile arg
  public | ptest1 |                  | x text              | proc
 (1 row)
 
+SELECT pg_get_functiondef('ptest1'::regproc);
+                pg_get_functiondef                 
+---------------------------------------------------
+ CREATE OR REPLACE PROCEDURE public.ptest1(x text)+
+  LANGUAGE sql                                    +
+ AS $procedure$                                   +
+ INSERT INTO cp_test VALUES (1, x);               +
+ $procedure$                                      +
+ 
+(1 row)
+
 SELECT * FROM cp_test ORDER BY b COLLATE "C";
  a |   b   
 ---+-------

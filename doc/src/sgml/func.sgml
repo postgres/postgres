@@ -17008,22 +17008,22 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_get_functiondef(<parameter>func_oid</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get definition of a function</entry>
+       <entry>get definition of a function or procedure</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_function_arguments(<parameter>func_oid</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get argument list of function's definition (with default values)</entry>
+       <entry>get argument list of function's or procedure's definition (with default values)</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_function_identity_arguments(<parameter>func_oid</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get argument list to identify a function (without default values)</entry>
+       <entry>get argument list to identify a function or procedure (without default values)</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_function_result(<parameter>func_oid</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get <literal>RETURNS</literal> clause for function</entry>
+       <entry>get <literal>RETURNS</literal> clause for function (returns null for a procedure)</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_indexdef(<parameter>index_oid</parameter>)</function></literal></entry>

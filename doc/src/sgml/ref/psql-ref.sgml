@@ -1815,8 +1815,9 @@ Tue Oct 26 21:40:57 CEST 1999
 
         <listitem>
         <para>
-         This command fetches and edits the definition of the named function,
-         in the form of a <command>CREATE OR REPLACE FUNCTION</command> command.
+         This command fetches and edits the definition of the named function or procedure,
+         in the form of a <command>CREATE OR REPLACE FUNCTION</command> or
+         <command>CREATE OR REPLACE PROCEDURE</command> command.
          Editing is done in the same way as for <literal>\edit</literal>.
          After the editor exits, the updated command waits in the query buffer;
          type semicolon or <literal>\g</literal> to send it, or <literal>\r</literal>
@@ -2970,8 +2971,9 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
 
         <listitem>
         <para>
-         This command fetches and shows the definition of the named function,
-         in the form of a <command>CREATE OR REPLACE FUNCTION</command> command.
+         This command fetches and shows the definition of the named function or procedure,
+         in the form of a <command>CREATE OR REPLACE FUNCTION</command> or
+         <command>CREATE OR REPLACE PROCEDURE</command> command.
          The definition is printed to the current query output channel,
          as set by <command>\o</command>.
         </para>
