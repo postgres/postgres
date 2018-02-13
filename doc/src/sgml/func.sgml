@@ -16820,6 +16820,8 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
     Each function performs the visibility check for one type of database
     object.  Note that <function>pg_table_is_visible</function> can also be used
     with views, materialized views, indexes, sequences and foreign tables;
+    <function>pg_function_is_visible</function> can also be used with
+    procedures and aggregates;
     <function>pg_type_is_visible</function> can also be used with domains.
     For functions and operators, an object in
     the search path is visible if there is no object of the same name
