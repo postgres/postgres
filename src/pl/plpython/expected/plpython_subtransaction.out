@@ -134,7 +134,7 @@ with plpy.subtransaction():
     except plpy.SPIError, e:
         if not swallow:
             raise
-        plpy.notice("Swallowed %r" % e)
+        plpy.notice("Swallowed %s(%r)" % (e.__class__.__name__, e.args[0]))
 return "ok"
 $$ LANGUAGE plpythonu;
 SELECT subtransaction_nested_test();
@@ -153,7 +153,7 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_nested_test('t');
-NOTICE:  Swallowed SyntaxError('syntax error at or near "error"',)
+NOTICE:  Swallowed SyntaxError('syntax error at or near "error"')
  subtransaction_nested_test 
 ----------------------------
  ok
@@ -178,7 +178,7 @@ with plpy.subtransaction():
 return "ok"
 $$ LANGUAGE plpythonu;
 SELECT subtransaction_deeply_nested_test();
-NOTICE:  Swallowed SyntaxError('syntax error at or near "error"',)
+NOTICE:  Swallowed SyntaxError('syntax error at or near "error"')
  subtransaction_deeply_nested_test 
 -----------------------------------
  ok
