@@ -341,7 +341,7 @@ replorigin_drop(RepOriginId roident, bool nowait)
 
 	/*
 	 * To interlock against concurrent drops, we hold ExclusiveLock on
-	 * pg_replication_origin throughout this funcion.
+	 * pg_replication_origin throughout this function.
 	 */
 	rel = heap_open(ReplicationOriginRelationId, ExclusiveLock);
 
