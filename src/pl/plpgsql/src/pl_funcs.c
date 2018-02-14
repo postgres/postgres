@@ -729,6 +729,7 @@ plpgsql_free_function_memory(PLpgSQL_function *func)
 		switch (d->dtype)
 		{
 			case PLPGSQL_DTYPE_VAR:
+			case PLPGSQL_DTYPE_PROMISE:
 				{
 					PLpgSQL_var *var = (PLpgSQL_var *) d;
 
@@ -1582,6 +1583,7 @@ plpgsql_dumptree(PLpgSQL_function *func)
 		switch (d->dtype)
 		{
 			case PLPGSQL_DTYPE_VAR:
+			case PLPGSQL_DTYPE_PROMISE:
 				{
 					PLpgSQL_var *var = (PLpgSQL_var *) d;
 
@@ -1608,6 +1610,9 @@ plpgsql_dumptree(PLpgSQL_function *func)
 						dump_expr(var->cursor_explicit_expr);
 						printf("\n");
 					}
+					if (var->promise != PLPGSQL_PROMISE_NONE)
+						printf("                                  PROMISE %d\n",
+							   (int) var->promise);
 				}
 				break;
 			case PLPGSQL_DTYPE_ROW:

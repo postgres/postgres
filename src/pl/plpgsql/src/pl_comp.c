@@ -607,7 +607,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																InvalidOid),
 										 true);
-			function->tg_name_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_NAME;
 
 			/* Add the variable tg_when */
 			var = plpgsql_build_variable("tg_when", 0,
@@ -615,7 +617,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																function->fn_input_collation),
 										 true);
-			function->tg_when_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_WHEN;
 
 			/* Add the variable tg_level */
 			var = plpgsql_build_variable("tg_level", 0,
@@ -623,7 +627,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																function->fn_input_collation),
 										 true);
-			function->tg_level_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_LEVEL;
 
 			/* Add the variable tg_op */
 			var = plpgsql_build_variable("tg_op", 0,
@@ -631,7 +637,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																function->fn_input_collation),
 										 true);
-			function->tg_op_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_OP;
 
 			/* Add the variable tg_relid */
 			var = plpgsql_build_variable("tg_relid", 0,
@@ -639,7 +647,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																InvalidOid),
 										 true);
-			function->tg_relid_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_RELID;
 
 			/* Add the variable tg_relname */
 			var = plpgsql_build_variable("tg_relname", 0,
@@ -647,7 +657,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																InvalidOid),
 										 true);
-			function->tg_relname_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_TABLE_NAME;
 
 			/* tg_table_name is now preferred to tg_relname */
 			var = plpgsql_build_variable("tg_table_name", 0,
@@ -655,7 +667,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																InvalidOid),
 										 true);
-			function->tg_table_name_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_TABLE_NAME;
 
 			/* add the variable tg_table_schema */
 			var = plpgsql_build_variable("tg_table_schema", 0,
@@ -663,7 +677,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																InvalidOid),
 										 true);
-			function->tg_table_schema_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_TABLE_SCHEMA;
 
 			/* Add the variable tg_nargs */
 			var = plpgsql_build_variable("tg_nargs", 0,
@@ -671,7 +687,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																InvalidOid),
 										 true);
-			function->tg_nargs_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_NARGS;
 
 			/* Add the variable tg_argv */
 			var = plpgsql_build_variable("tg_argv", 0,
@@ -679,7 +697,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																function->fn_input_collation),
 										 true);
-			function->tg_argv_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_ARGV;
 
 			break;
 
@@ -701,7 +721,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																function->fn_input_collation),
 										 true);
-			function->tg_event_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_EVENT;
 
 			/* Add the variable tg_tag */
 			var = plpgsql_build_variable("tg_tag", 0,
@@ -709,7 +731,9 @@ do_compile(FunctionCallInfo fcinfo,
 																-1,
 																function->fn_input_collation),
 										 true);
-			function->tg_tag_varno = var->dno;
+			Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+			var->dtype = PLPGSQL_DTYPE_PROMISE;
+			((PLpgSQL_var *) var)->promise = PLPGSQL_PROMISE_TG_TAG;
 
 			break;
 
@@ -1878,6 +1902,7 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 		switch (var->dtype)
 		{
 			case PLPGSQL_DTYPE_VAR:
+			case PLPGSQL_DTYPE_PROMISE:
 				typoid = ((PLpgSQL_var *) var)->datatype->typoid;
 				typmod = ((PLpgSQL_var *) var)->datatype->atttypmod;
 				typcoll = ((PLpgSQL_var *) var)->datatype->collation;
@@ -2196,6 +2221,7 @@ plpgsql_finish_datums(PLpgSQL_function *function)
 		switch (function->datums[i]->dtype)
 		{
 			case PLPGSQL_DTYPE_VAR:
+			case PLPGSQL_DTYPE_PROMISE:
 				copiable_size += MAXALIGN(sizeof(PLpgSQL_var));
 				break;
 			case PLPGSQL_DTYPE_REC:

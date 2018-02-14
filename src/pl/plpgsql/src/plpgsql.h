@@ -63,8 +63,28 @@ typedef enum PLpgSQL_datum_type
 	PLPGSQL_DTYPE_ROW,
 	PLPGSQL_DTYPE_REC,
 	PLPGSQL_DTYPE_RECFIELD,
-	PLPGSQL_DTYPE_ARRAYELEM
+	PLPGSQL_DTYPE_ARRAYELEM,
+	PLPGSQL_DTYPE_PROMISE
 } PLpgSQL_datum_type;
+
+/*
+ * DTYPE_PROMISE datums have these possible ways of computing the promise
+ */
+typedef enum PLpgSQL_promise_type
+{
+	PLPGSQL_PROMISE_NONE = 0,	/* not a promise, or promise satisfied */
+	PLPGSQL_PROMISE_TG_NAME,
+	PLPGSQL_PROMISE_TG_WHEN,
+	PLPGSQL_PROMISE_TG_LEVEL,
+	PLPGSQL_PROMISE_TG_OP,
+	PLPGSQL_PROMISE_TG_RELID,
+	PLPGSQL_PROMISE_TG_TABLE_NAME,
+	PLPGSQL_PROMISE_TG_TABLE_SCHEMA,
+	PLPGSQL_PROMISE_TG_NARGS,
+	PLPGSQL_PROMISE_TG_ARGV,
+	PLPGSQL_PROMISE_TG_EVENT,
+	PLPGSQL_PROMISE_TG_TAG
+} PLpgSQL_promise_type;
 
 /*
  * Variants distinguished in PLpgSQL_type structs
@@ -248,6 +268,14 @@ typedef struct PLpgSQL_variable
 
 /*
  * Scalar variable
+ *
+ * DTYPE_VAR and DTYPE_PROMISE datums both use this struct type.
+ * A PROMISE datum works exactly like a VAR datum for most purposes,
+ * but if it is read without having previously been assigned to, then
+ * a special "promised" value is computed and assigned to the datum
+ * before the read is performed.  This technique avoids the overhead of
+ * computing the variable's value in cases where we expect that many
+ * functions will never read it.
  */
 typedef struct PLpgSQL_var
 {
@@ -271,9 +299,18 @@ typedef struct PLpgSQL_var
 	int			cursor_explicit_argrow;
 	int			cursor_options;
 
+	/* Fields below here can change at runtime */
+
 	Datum		value;
 	bool		isnull;
 	bool		freeval;
+
+	/*
+	 * The promise field records which "promised" value to assign if the
+	 * promise must be honored.  If it's a normal variable, or the promise has
+	 * been fulfilled, this is PLPGSQL_PROMISE_NONE.
+	 */
+	PLpgSQL_promise_type promise;
 } PLpgSQL_var;
 
 /*
@@ -869,20 +906,6 @@ typedef struct PLpgSQL_function
 	int			found_varno;
 	int			new_varno;
 	int			old_varno;
-	int			tg_name_varno;
-	int			tg_when_varno;
-	int			tg_level_varno;
-	int			tg_op_varno;
-	int			tg_relid_varno;
-	int			tg_relname_varno;
-	int			tg_table_name_varno;
-	int			tg_table_schema_varno;
-	int			tg_nargs_varno;
-	int			tg_argv_varno;
-
-	/* for event triggers */
-	int			tg_event_varno;
-	int			tg_tag_varno;
 
 	PLpgSQL_resolve_option resolve_option;
 
@@ -911,6 +934,9 @@ typedef struct PLpgSQL_function
 typedef struct PLpgSQL_execstate
 {
 	PLpgSQL_function *func;		/* function being executed */
+
+	TriggerData *trigdata;		/* if regular trigger, data about firing */
+	EventTriggerData *evtrigdata;	/* if event trigger, data about firing */
 
 	Datum		retval;
 	bool		retisnull;

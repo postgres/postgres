@@ -3170,6 +3170,7 @@ make_return_stmt(int location)
 
 		if (tok == T_DATUM && plpgsql_peek() == ';' &&
 			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_VAR ||
+			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_PROMISE ||
 			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
 			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
 		{
@@ -3231,6 +3232,7 @@ make_return_next_stmt(int location)
 
 		if (tok == T_DATUM && plpgsql_peek() == ';' &&
 			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_VAR ||
+			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_PROMISE ||
 			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
 			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
 		{
@@ -3318,6 +3320,7 @@ check_assignable(PLpgSQL_datum *datum, int location)
 	switch (datum->dtype)
 	{
 		case PLPGSQL_DTYPE_VAR:
+		case PLPGSQL_DTYPE_PROMISE:
 			if (((PLpgSQL_var *) datum)->isconst)
 				ereport(ERROR,
 						(errcode(ERRCODE_ERROR_IN_ASSIGNMENT),
