@@ -411,7 +411,7 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 					 SharedFileSet *fileset)
 {
 	LogicalTape *lt = NULL;
-	long		tapeblocks;
+	long		tapeblocks = 0L;
 	long		nphysicalblocks = 0L;
 	int			i;
 

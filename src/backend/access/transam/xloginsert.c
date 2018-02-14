@@ -584,7 +584,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		if (include_image)
 		{
 			Page		page = regbuf->page;
-			uint16		compressed_len;
+			uint16		compressed_len = 0;
 
 			/*
 			 * The page needs to be backed up, so calculate its hole length

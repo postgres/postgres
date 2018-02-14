@@ -1495,6 +1495,7 @@ coerceToBool(PgBenchValue *pval, bool *bval)
 	else /* NULL, INT or DOUBLE */
 	{
 		fprintf(stderr, "cannot coerce %s to boolean\n", valueTypeName(pval));
+		*bval = false;			/* suppress uninitialized-variable warnings */
 		return false;
 	}
 }
@@ -1725,9 +1726,9 @@ evalLazyFunc(TState *thread, CState *st,
  * which do not require lazy evaluation.
  */
 static bool
-evalStandardFunc(
-	TState *thread, CState *st,
-	PgBenchFunction func, PgBenchExprLink *args, PgBenchValue *retval)
+evalStandardFunc(TState *thread, CState *st,
+				 PgBenchFunction func, PgBenchExprLink *args,
+				 PgBenchValue *retval)
 {
 	/* evaluate all function arguments */
 	int				nargs = 0;
