@@ -328,3 +328,19 @@ EXCEPTION WHEN SQLSTATE 'SILLY' THEN
 	-- NOOP
 END
 $$ LANGUAGE plpgsql;
+
+/* test the context stack trace for nested execution levels
+ */
+CREATE FUNCTION notice_innerfunc() RETURNS int AS $$
+plpy.execute("DO LANGUAGE plpythonu $x$ plpy.notice('inside DO') $x$")
+return 1
+$$ LANGUAGE plpythonu;
+
+CREATE FUNCTION notice_outerfunc() RETURNS int AS $$
+plpy.execute("SELECT notice_innerfunc()")
+return 1
+$$ LANGUAGE plpythonu;
+
+\set SHOW_CONTEXT always
+
+SELECT notice_outerfunc();

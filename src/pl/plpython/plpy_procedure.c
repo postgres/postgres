@@ -47,9 +47,7 @@ init_procedure_caches(void)
 }
 
 /*
- * Get the name of the last procedure called by the backend (the
- * innermost, if a plpython procedure call calls the backend and the
- * backend calls another plpython procedure).
+ * PLy_procedure_name: get the name of the specified procedure.
  *
  * NB: this returns the SQL name, not the internal Python procedure name
  */
