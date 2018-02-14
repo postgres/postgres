@@ -182,7 +182,7 @@ SELECT subtransaction_deeply_nested_test();
 NOTICE:  Swallowed SyntaxError('syntax error at or near "error"',)
 CONTEXT:  PL/Python function "subtransaction_nested_test"
 SQL statement "SELECT subtransaction_nested_test('t')"
-PL/Python function "subtransaction_nested_test"
+PL/Python function "subtransaction_deeply_nested_test"
  subtransaction_deeply_nested_test 
 -----------------------------------
  ok
