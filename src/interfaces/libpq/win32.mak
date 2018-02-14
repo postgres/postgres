@@ -244,7 +244,7 @@ LINK32_OBJS= \
 # Inclusion of manifest
 !IF "$(_NMAKE_VER)" != "6.00.8168.0" && "$(_NMAKE_VER)" != "7.00.9466"
 !IF "$(_NMAKE_VER)" != "6.00.9782.0" && "$(_NMAKE_VER)" != "7.10.3077"
-        mt -manifest $(OUTDIR)\$(OUTFILENAME).dll.manifest -outputresource:$(OUTDIR)\$(OUTFILENAME).dll;2
+        if exist $(OUTDIR)\$(OUTFILENAME).dll.manifest ( mt -manifest $(OUTDIR)\$(OUTFILENAME).dll.manifest -outputresource:$(OUTDIR)\$(OUTFILENAME).dll;2 )
 !ENDIF
 !ENDIF
 
