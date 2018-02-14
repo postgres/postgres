@@ -264,6 +264,9 @@ typedef struct PLpgSQL_variable
 	int			dno;
 	char	   *refname;
 	int			lineno;
+	bool		isconst;
+	bool		notnull;
+	PLpgSQL_expr *default_val;
 } PLpgSQL_variable;
 
 /*
@@ -283,12 +286,12 @@ typedef struct PLpgSQL_var
 	int			dno;
 	char	   *refname;
 	int			lineno;
-	/* end of PLpgSQL_variable fields */
-
 	bool		isconst;
 	bool		notnull;
-	PLpgSQL_type *datatype;
 	PLpgSQL_expr *default_val;
+	/* end of PLpgSQL_variable fields */
+
+	PLpgSQL_type *datatype;
 
 	/*
 	 * Variables declared as CURSOR FOR <query> are mostly like ordinary
@@ -320,6 +323,11 @@ typedef struct PLpgSQL_var
  *
  * Note that there's no way to name the row as such from PL/pgSQL code,
  * so many functions don't need to support these.
+ *
+ * refname, isconst, notnull, and default_val are unsupported (and hence
+ * always zero/null) for a row.  The member variables of a row should have
+ * been checked to be writable at compile time, so isconst is correctly set
+ * to false.  notnull and default_val aren't applicable.
  */
 typedef struct PLpgSQL_row
 {
@@ -327,6 +335,9 @@ typedef struct PLpgSQL_row
 	int			dno;
 	char	   *refname;
 	int			lineno;
+	bool		isconst;
+	bool		notnull;
+	PLpgSQL_expr *default_val;
 	/* end of PLpgSQL_variable fields */
 
 	/*
@@ -350,11 +361,18 @@ typedef struct PLpgSQL_rec
 	int			dno;
 	char	   *refname;
 	int			lineno;
+	bool		isconst;
+	bool		notnull;
+	PLpgSQL_expr *default_val;
 	/* end of PLpgSQL_variable fields */
 
+	PLpgSQL_type *datatype;		/* can be NULL, if rectypeid is RECORDOID */
 	Oid			rectypeid;		/* declared type of variable */
 	/* RECFIELDs for this record are chained together for easy access */
 	int			firstfield;		/* dno of first RECFIELD, or -1 if none */
+
+	/* Fields below here can change at runtime */
+
 	/* We always store record variables as "expanded" records */
 	ExpandedRecordHeader *erh;
 } PLpgSQL_rec;
@@ -1141,7 +1159,8 @@ extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   PLpgSQL_type *dtype,
 					   bool add2namespace);
 extern PLpgSQL_rec *plpgsql_build_record(const char *refname, int lineno,
-					 Oid rectypeid, bool add2namespace);
+					 PLpgSQL_type *dtype, Oid rectypeid,
+					 bool add2namespace);
 extern PLpgSQL_recfield *plpgsql_build_recfield(PLpgSQL_rec *rec,
 					   const char *fldname);
 extern int plpgsql_recognize_err_condition(const char *condname,

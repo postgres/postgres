@@ -539,7 +539,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 					}
 					else
 					{
-						/* If arg is null, treat it as an empty row */
+						/* If arg is null, set variable to null */
 						exec_move_row(&estate, (PLpgSQL_variable *) rec,
 									  NULL, NULL);
 					}
@@ -1539,11 +1539,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					{
 						/*
 						 * If needed, give the datatype a chance to reject
-						 * NULLs, by assigning a NULL to the variable. We
+						 * NULLs, by assigning a NULL to the variable.  We
 						 * claim the value is of type UNKNOWN, not the var's
-						 * datatype, else coercion will be skipped. (Do this
-						 * before the notnull check to be consistent with
-						 * exec_assign_value.)
+						 * datatype, else coercion will be skipped.
 						 */
 						if (var->datatype->typtype == TYPTYPE_DOMAIN)
 							exec_assign_value(estate,
@@ -1553,11 +1551,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 											  UNKNOWNOID,
 											  -1);
 
-						if (var->notnull)
-							ereport(ERROR,
-									(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-									 errmsg("variable \"%s\" declared NOT NULL cannot default to NULL",
-											var->refname)));
+						/* parser should have rejected NOT NULL */
+						Assert(!var->notnull);
 					}
 					else
 					{
@@ -1571,9 +1566,28 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				{
 					PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
 
-					if (rec->erh)
-						DeleteExpandedObject(ExpandedRecordGetDatum(rec->erh));
-					rec->erh = NULL;
+					/*
+					 * Deletion of any existing object will be handled during
+					 * the assignments below, and in some cases it's more
+					 * efficient for us not to get rid of it beforehand.
+					 */
+					if (rec->default_val == NULL)
+					{
+						/*
+						 * If needed, give the datatype a chance to reject
+						 * NULLs, by assigning a NULL to the variable.
+						 */
+						exec_move_row(estate, (PLpgSQL_variable *) rec,
+									  NULL, NULL);
+
+						/* parser should have rejected NOT NULL */
+						Assert(!rec->notnull);
+					}
+					else
+					{
+						exec_assign_expr(estate, (PLpgSQL_datum *) rec,
+										 rec->default_val);
+					}
 				}
 				break;
 
@@ -4725,7 +4739,13 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				if (isNull)
 				{
-					/* If source is null, just assign nulls to the record */
+					if (rec->notnull)
+						ereport(ERROR,
+								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+								 errmsg("null value cannot be assigned to variable \"%s\" declared NOT NULL",
+										rec->refname)));
+
+					/* Set variable to a simple NULL */
 					exec_move_row(estate, (PLpgSQL_variable *) rec,
 								  NULL, NULL);
 				}
@@ -6375,9 +6395,27 @@ exec_move_row(PLpgSQL_execstate *estate,
 		 */
 		if (tupdesc == NULL)
 		{
-			if (rec->erh)
-				DeleteExpandedObject(ExpandedRecordGetDatum(rec->erh));
-			rec->erh = NULL;
+			if (rec->datatype &&
+				rec->datatype->typtype == TYPTYPE_DOMAIN)
+			{
+				/*
+				 * If it's a composite domain, NULL might not be a legal
+				 * value, so we instead need to make an empty expanded record
+				 * and ensure that domain type checking gets done.  If there
+				 * is already an expanded record, piggyback on its lookups.
+				 */
+				newerh = make_expanded_record_for_rec(estate, rec,
+													  NULL, rec->erh);
+				expanded_record_set_tuple(newerh, NULL, false);
+				assign_record_var(estate, rec, newerh);
+			}
+			else
+			{
+				/* Just clear it to NULL */
+				if (rec->erh)
+					DeleteExpandedObject(ExpandedRecordGetDatum(rec->erh));
+				rec->erh = NULL;
+			}
 			return;
 		}
 

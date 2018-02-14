@@ -26,7 +26,8 @@ DATA = plpgsql.control plpgsql--1.0.sql plpgsql--unpackaged--1.0.sql
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB)
 
-REGRESS = plpgsql_call plpgsql_control plpgsql_record plpgsql_transaction
+REGRESS = plpgsql_call plpgsql_control plpgsql_record \
+	plpgsql_transaction plpgsql_varprops
 
 all: all-lib
 

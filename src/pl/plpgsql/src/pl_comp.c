@@ -594,11 +594,11 @@ do_compile(FunctionCallInfo fcinfo,
 						 errhint("The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead.")));
 
 			/* Add the record for referencing NEW ROW */
-			rec = plpgsql_build_record("new", 0, RECORDOID, true);
+			rec = plpgsql_build_record("new", 0, NULL, RECORDOID, true);
 			function->new_varno = rec->dno;
 
 			/* Add the record for referencing OLD ROW */
-			rec = plpgsql_build_record("old", 0, RECORDOID, true);
+			rec = plpgsql_build_record("old", 0, NULL, RECORDOID, true);
 			function->old_varno = rec->dno;
 
 			/* Add the variable tg_name */
@@ -1811,7 +1811,7 @@ plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
 				var->refname = pstrdup(refname);
 				var->lineno = lineno;
 				var->datatype = dtype;
-				/* other fields might be filled by caller */
+				/* other fields are left as 0, might be changed by caller */
 
 				/* preset to NULL */
 				var->value = 0;
@@ -1831,7 +1831,8 @@ plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
 				/* Composite type -- build a record variable */
 				PLpgSQL_rec *rec;
 
-				rec = plpgsql_build_record(refname, lineno, dtype->typoid,
+				rec = plpgsql_build_record(refname, lineno,
+										   dtype, dtype->typoid,
 										   add2namespace);
 				result = (PLpgSQL_variable *) rec;
 				break;
@@ -1856,7 +1857,8 @@ plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
  * Build empty named record variable, and optionally add it to namespace
  */
 PLpgSQL_rec *
-plpgsql_build_record(const char *refname, int lineno, Oid rectypeid,
+plpgsql_build_record(const char *refname, int lineno,
+					 PLpgSQL_type *dtype, Oid rectypeid,
 					 bool add2namespace)
 {
 	PLpgSQL_rec *rec;
@@ -1865,6 +1867,8 @@ plpgsql_build_record(const char *refname, int lineno, Oid rectypeid,
 	rec->dtype = PLPGSQL_DTYPE_REC;
 	rec->refname = pstrdup(refname);
 	rec->lineno = lineno;
+	/* other fields are left as 0, might be changed by caller */
+	rec->datatype = dtype;
 	rec->rectypeid = rectypeid;
 	rec->firstfield = -1;
 	rec->erh = NULL;
@@ -1898,6 +1902,9 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 		Oid			typoid;
 		int32		typmod;
 		Oid			typcoll;
+
+		/* Member vars of a row should never be const */
+		Assert(!var->isconst);
 
 		switch (var->dtype)
 		{

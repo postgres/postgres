@@ -1,0 +1,300 @@
+--
+-- Tests for PL/pgSQL variable properties: CONSTANT, NOT NULL, initializers
+--
+create type var_record as (f1 int4, f2 int4);
+create domain int_nn as int not null;
+create domain var_record_nn as var_record not null;
+create domain var_record_colnn as var_record check((value).f2 is not null);
+-- CONSTANT
+do $$
+declare x constant int := 42;
+begin
+  raise notice 'x = %', x;
+end$$;
+NOTICE:  x = 42
+do $$
+declare x constant int;
+begin
+  x := 42;  -- fail
+end$$;
+ERROR:  variable "x" is declared CONSTANT
+LINE 4:   x := 42;  -- fail
+          ^
+do $$
+declare x constant int; y int;
+begin
+  for x, y in select 1, 2 loop  -- fail
+  end loop;
+end$$;
+ERROR:  variable "x" is declared CONSTANT
+LINE 4:   for x, y in select 1, 2 loop  -- fail
+              ^
+do $$
+declare x constant int[];
+begin
+  x[1] := 42;  -- fail
+end$$;
+ERROR:  variable "x" is declared CONSTANT
+LINE 4:   x[1] := 42;  -- fail
+          ^
+do $$
+declare x constant int[]; y int;
+begin
+  for x[1], y in select 1, 2 loop  -- fail (currently, unsupported syntax)
+  end loop;
+end$$;
+ERROR:  syntax error at or near "["
+LINE 4:   for x[1], y in select 1, 2 loop  -- fail (currently, unsup...
+               ^
+do $$
+declare x constant var_record;
+begin
+  x.f1 := 42;  -- fail
+end$$;
+ERROR:  variable "x" is declared CONSTANT
+LINE 4:   x.f1 := 42;  -- fail
+          ^
+do $$
+declare x constant var_record; y int;
+begin
+  for x.f1, y in select 1, 2 loop  -- fail
+  end loop;
+end$$;
+ERROR:  variable "x" is declared CONSTANT
+LINE 4:   for x.f1, y in select 1, 2 loop  -- fail
+              ^
+-- initializer expressions
+do $$
+declare x int := sin(0);
+begin
+  raise notice 'x = %', x;
+end$$;
+NOTICE:  x = 0
+do $$
+declare x int := 1/0;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  division by zero
+CONTEXT:  SQL statement "SELECT 1/0"
+PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x bigint[] := array[1,3,5];
+begin
+  raise notice 'x = %', x;
+end$$;
+NOTICE:  x = {1,3,5}
+do $$
+declare x record := row(1,2,3);
+begin
+  raise notice 'x = %', x;
+end$$;
+NOTICE:  x = (1,2,3)
+do $$
+declare x var_record := row(1,2);
+begin
+  raise notice 'x = %', x;
+end$$;
+NOTICE:  x = (1,2)
+-- NOT NULL
+do $$
+declare x int not null;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  variable "x" must have a default value, since it's declared NOT NULL
+LINE 2: declare x int not null;  -- fail
+                      ^
+do $$
+declare x int not null := 42;
+begin
+  raise notice 'x = %', x;
+  x := null;  -- fail
+end$$;
+NOTICE:  x = 42
+ERROR:  null value cannot be assigned to variable "x" declared NOT NULL
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at assignment
+do $$
+declare x int not null := null;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  null value cannot be assigned to variable "x" declared NOT NULL
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x record not null;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  variable "x" must have a default value, since it's declared NOT NULL
+LINE 2: declare x record not null;  -- fail
+                         ^
+do $$
+declare x record not null := row(42);
+begin
+  raise notice 'x = %', x;
+  x := row(null);  -- ok
+  raise notice 'x = %', x;
+  x := null;  -- fail
+end$$;
+NOTICE:  x = (42)
+NOTICE:  x = ()
+ERROR:  null value cannot be assigned to variable "x" declared NOT NULL
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at assignment
+do $$
+declare x record not null := null;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  null value cannot be assigned to variable "x" declared NOT NULL
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x var_record not null;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  variable "x" must have a default value, since it's declared NOT NULL
+LINE 2: declare x var_record not null;  -- fail
+                             ^
+do $$
+declare x var_record not null := row(41,42);
+begin
+  raise notice 'x = %', x;
+  x := row(null,null);  -- ok
+  raise notice 'x = %', x;
+  x := null;  -- fail
+end$$;
+NOTICE:  x = (41,42)
+NOTICE:  x = (,)
+ERROR:  null value cannot be assigned to variable "x" declared NOT NULL
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at assignment
+do $$
+declare x var_record not null := null;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  null value cannot be assigned to variable "x" declared NOT NULL
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+-- Check that variables are reinitialized on block re-entry.
+\set VERBOSITY terse   \\ -- needed for output stability
+do $$
+begin
+  for i in 1..3 loop
+    declare
+      x int;
+      y int := i;
+      r record;
+      c var_record;
+    begin
+      if i = 1 then
+        x := 42;
+        r := row(i, i+1);
+        c := row(i, i+1);
+      end if;
+      raise notice 'x = %', x;
+      raise notice 'y = %', y;
+      raise notice 'r = %', r;
+      raise notice 'c = %', c;
+    end;
+  end loop;
+end$$;
+NOTICE:  x = 42
+NOTICE:  y = 1
+NOTICE:  r = (1,2)
+NOTICE:  c = (1,2)
+NOTICE:  x = <NULL>
+NOTICE:  y = 2
+NOTICE:  r = <NULL>
+NOTICE:  c = <NULL>
+NOTICE:  x = <NULL>
+NOTICE:  y = 3
+NOTICE:  r = <NULL>
+NOTICE:  c = <NULL>
+\set VERBOSITY default
+-- Check enforcement of domain constraints during initialization
+do $$
+declare x int_nn;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  domain int_nn does not allow null values
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x int_nn := null;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  domain int_nn does not allow null values
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x int_nn := 42;
+begin
+  raise notice 'x = %', x;
+  x := null;  -- fail
+end$$;
+NOTICE:  x = 42
+ERROR:  domain int_nn does not allow null values
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at assignment
+do $$
+declare x var_record_nn;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  domain var_record_nn does not allow null values
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x var_record_nn := null;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  domain var_record_nn does not allow null values
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x var_record_nn := row(1,2);
+begin
+  raise notice 'x = %', x;
+  x := row(null,null);  -- ok
+  x := null;  -- fail
+end$$;
+NOTICE:  x = (1,2)
+ERROR:  domain var_record_nn does not allow null values
+CONTEXT:  PL/pgSQL function inline_code_block line 6 at assignment
+do $$
+declare x var_record_colnn;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  value for domain var_record_colnn violates check constraint "var_record_colnn_check"
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x var_record_colnn := null;  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  value for domain var_record_colnn violates check constraint "var_record_colnn_check"
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x var_record_colnn := row(1,null);  -- fail
+begin
+  raise notice 'x = %', x;
+end$$;
+ERROR:  value for domain var_record_colnn violates check constraint "var_record_colnn_check"
+CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+do $$
+declare x var_record_colnn := row(1,2);
+begin
+  raise notice 'x = %', x;
+  x := null;  -- fail
+end$$;
+NOTICE:  x = (1,2)
+ERROR:  value for domain var_record_colnn violates check constraint "var_record_colnn_check"
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at assignment
+do $$
+declare x var_record_colnn := row(1,2);
+begin
+  raise notice 'x = %', x;
+  x := row(null,null);  -- fail
+end$$;
+NOTICE:  x = (1,2)
+ERROR:  value for domain var_record_colnn violates check constraint "var_record_colnn_check"
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at assignment
