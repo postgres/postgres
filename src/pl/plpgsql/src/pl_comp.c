@@ -2183,12 +2183,29 @@ plpgsql_adddatum(PLpgSQL_datum *new)
 static void
 plpgsql_finish_datums(PLpgSQL_function *function)
 {
+	Size		copiable_size = 0;
 	int			i;
 
 	function->ndatums = plpgsql_nDatums;
 	function->datums = palloc(sizeof(PLpgSQL_datum *) * plpgsql_nDatums);
 	for (i = 0; i < plpgsql_nDatums; i++)
+	{
 		function->datums[i] = plpgsql_Datums[i];
+
+		/* This must agree with copy_plpgsql_datums on what is copiable */
+		switch (function->datums[i]->dtype)
+		{
+			case PLPGSQL_DTYPE_VAR:
+				copiable_size += MAXALIGN(sizeof(PLpgSQL_var));
+				break;
+			case PLPGSQL_DTYPE_REC:
+				copiable_size += MAXALIGN(sizeof(PLpgSQL_rec));
+				break;
+			default:
+				break;
+		}
+	}
+	function->copiable_size = copiable_size;
 }
 
 

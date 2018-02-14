@@ -235,7 +235,8 @@ static HTAB *shared_cast_hash = NULL;
 static void coerce_function_result_tuple(PLpgSQL_execstate *estate,
 							 TupleDesc tupdesc);
 static void plpgsql_exec_error_callback(void *arg);
-static PLpgSQL_datum *copy_plpgsql_datum(PLpgSQL_datum *datum);
+static void copy_plpgsql_datums(PLpgSQL_execstate *estate,
+					PLpgSQL_function *func);
 static MemoryContext get_stmt_mcontext(PLpgSQL_execstate *estate);
 static void push_stmt_mcontext(PLpgSQL_execstate *estate);
 static void pop_stmt_mcontext(PLpgSQL_execstate *estate);
@@ -458,8 +459,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	 * Make local execution copies of all the datums
 	 */
 	estate.err_text = gettext_noop("during initialization of execution state");
-	for (i = 0; i < estate.ndatums; i++)
-		estate.datums[i] = copy_plpgsql_datum(func->datums[i]);
+	copy_plpgsql_datums(&estate, func);
 
 	/*
 	 * Store the actual call argument values into the appropriate variables
@@ -859,8 +859,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 * Make local execution copies of all the datums
 	 */
 	estate.err_text = gettext_noop("during initialization of execution state");
-	for (i = 0; i < estate.ndatums; i++)
-		estate.datums[i] = copy_plpgsql_datum(func->datums[i]);
+	copy_plpgsql_datums(&estate, func);
 
 	/*
 	 * Put the OLD and NEW tuples into record variables
@@ -1153,7 +1152,6 @@ plpgsql_exec_event_trigger(PLpgSQL_function *func, EventTriggerData *trigdata)
 {
 	PLpgSQL_execstate estate;
 	ErrorContextCallback plerrcontext;
-	int			i;
 	int			rc;
 	PLpgSQL_var *var;
 
@@ -1174,8 +1172,7 @@ plpgsql_exec_event_trigger(PLpgSQL_function *func, EventTriggerData *trigdata)
 	 * Make local execution copies of all the datums
 	 */
 	estate.err_text = gettext_noop("during initialization of execution state");
-	for (i = 0; i < estate.ndatums; i++)
-		estate.datums[i] = copy_plpgsql_datum(func->datums[i]);
+	copy_plpgsql_datums(&estate, func);
 
 	/*
 	 * Assign the special tg_ variables
@@ -1290,57 +1287,73 @@ plpgsql_exec_error_callback(void *arg)
  * Support function for initializing local execution variables
  * ----------
  */
-static PLpgSQL_datum *
-copy_plpgsql_datum(PLpgSQL_datum *datum)
+static void
+copy_plpgsql_datums(PLpgSQL_execstate *estate,
+					PLpgSQL_function *func)
 {
-	PLpgSQL_datum *result;
+	int			ndatums = estate->ndatums;
+	PLpgSQL_datum **indatums;
+	PLpgSQL_datum **outdatums;
+	char	   *workspace;
+	char	   *ws_next;
+	int			i;
 
-	switch (datum->dtype)
+	/* Allocate local datum-pointer array */
+	estate->datums = (PLpgSQL_datum **)
+		palloc(sizeof(PLpgSQL_datum *) * ndatums);
+
+	/*
+	 * To reduce palloc overhead, we make a single palloc request for all the
+	 * space needed for locally-instantiated datums.
+	 */
+	workspace = palloc(func->copiable_size);
+	ws_next = workspace;
+
+	/* Fill datum-pointer array, copying datums into workspace as needed */
+	indatums = func->datums;
+	outdatums = estate->datums;
+	for (i = 0; i < ndatums; i++)
 	{
-		case PLPGSQL_DTYPE_VAR:
-			{
-				PLpgSQL_var *new = palloc(sizeof(PLpgSQL_var));
+		PLpgSQL_datum *indatum = indatums[i];
+		PLpgSQL_datum *outdatum;
 
-				memcpy(new, datum, sizeof(PLpgSQL_var));
-				/* should be preset to null/non-freeable */
-				Assert(new->isnull);
-				Assert(!new->freeval);
+		/* This must agree with plpgsql_finish_datums on what is copiable */
+		switch (indatum->dtype)
+		{
+			case PLPGSQL_DTYPE_VAR:
+				outdatum = (PLpgSQL_datum *) ws_next;
+				memcpy(outdatum, indatum, sizeof(PLpgSQL_var));
+				ws_next += MAXALIGN(sizeof(PLpgSQL_var));
+				break;
 
-				result = (PLpgSQL_datum *) new;
-			}
-			break;
+			case PLPGSQL_DTYPE_REC:
+				outdatum = (PLpgSQL_datum *) ws_next;
+				memcpy(outdatum, indatum, sizeof(PLpgSQL_rec));
+				ws_next += MAXALIGN(sizeof(PLpgSQL_rec));
+				break;
 
-		case PLPGSQL_DTYPE_REC:
-			{
-				PLpgSQL_rec *new = palloc(sizeof(PLpgSQL_rec));
+			case PLPGSQL_DTYPE_ROW:
+			case PLPGSQL_DTYPE_RECFIELD:
+			case PLPGSQL_DTYPE_ARRAYELEM:
 
-				memcpy(new, datum, sizeof(PLpgSQL_rec));
-				/* should be preset to empty */
-				Assert(new->erh == NULL);
+				/*
+				 * These datum records are read-only at runtime, so no need to
+				 * copy them (well, RECFIELD and ARRAYELEM contain cached
+				 * data, but we'd just as soon centralize the caching anyway).
+				 */
+				outdatum = indatum;
+				break;
 
-				result = (PLpgSQL_datum *) new;
-			}
-			break;
+			default:
+				elog(ERROR, "unrecognized dtype: %d", indatum->dtype);
+				outdatum = NULL;	/* keep compiler quiet */
+				break;
+		}
 
-		case PLPGSQL_DTYPE_ROW:
-		case PLPGSQL_DTYPE_RECFIELD:
-		case PLPGSQL_DTYPE_ARRAYELEM:
-
-			/*
-			 * These datum records are read-only at runtime, so no need to
-			 * copy them (well, RECFIELD and ARRAYELEM contain cached data,
-			 * but we'd just as soon centralize the caching anyway)
-			 */
-			result = datum;
-			break;
-
-		default:
-			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
-			result = NULL;		/* keep compiler quiet */
-			break;
+		outdatums[i] = outdatum;
 	}
 
-	return result;
+	Assert(ws_next == workspace + func->copiable_size);
 }
 
 /*
@@ -3504,8 +3517,8 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 
 	estate->found_varno = func->found_varno;
 	estate->ndatums = func->ndatums;
-	estate->datums = palloc(sizeof(PLpgSQL_datum *) * estate->ndatums);
-	/* caller is expected to fill the datums array */
+	estate->datums = NULL;
+	/* the datums array will be filled by copy_plpgsql_datums() */
 	estate->datum_context = CurrentMemoryContext;
 
 	/* initialize our ParamListInfo with appropriate hook functions */

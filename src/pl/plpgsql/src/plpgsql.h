@@ -63,8 +63,7 @@ typedef enum PLpgSQL_datum_type
 	PLPGSQL_DTYPE_ROW,
 	PLPGSQL_DTYPE_REC,
 	PLPGSQL_DTYPE_RECFIELD,
-	PLPGSQL_DTYPE_ARRAYELEM,
-	PLPGSQL_DTYPE_EXPR
+	PLPGSQL_DTYPE_ARRAYELEM
 } PLpgSQL_datum_type;
 
 /*
@@ -189,38 +188,10 @@ typedef struct PLpgSQL_type
 } PLpgSQL_type;
 
 /*
- * Generic datum array item
- *
- * PLpgSQL_datum is the common supertype for PLpgSQL_expr, PLpgSQL_var,
- * PLpgSQL_row, PLpgSQL_rec, PLpgSQL_recfield, and PLpgSQL_arrayelem
- */
-typedef struct PLpgSQL_datum
-{
-	PLpgSQL_datum_type dtype;
-	int			dno;
-} PLpgSQL_datum;
-
-/*
- * Scalar or composite variable
- *
- * The variants PLpgSQL_var, PLpgSQL_row, and PLpgSQL_rec share these
- * fields
- */
-typedef struct PLpgSQL_variable
-{
-	PLpgSQL_datum_type dtype;
-	int			dno;
-	char	   *refname;
-	int			lineno;
-} PLpgSQL_variable;
-
-/*
  * SQL Query to plan and execute
  */
 typedef struct PLpgSQL_expr
 {
-	PLpgSQL_datum_type dtype;
-	int			dno;
 	char	   *query;
 	SPIPlanPtr	plan;
 	Bitmapset  *paramnos;		/* all dnos referenced by this query */
@@ -250,6 +221,32 @@ typedef struct PLpgSQL_expr
 } PLpgSQL_expr;
 
 /*
+ * Generic datum array item
+ *
+ * PLpgSQL_datum is the common supertype for PLpgSQL_var, PLpgSQL_row,
+ * PLpgSQL_rec, PLpgSQL_recfield, and PLpgSQL_arrayelem.
+ */
+typedef struct PLpgSQL_datum
+{
+	PLpgSQL_datum_type dtype;
+	int			dno;
+} PLpgSQL_datum;
+
+/*
+ * Scalar or composite variable
+ *
+ * The variants PLpgSQL_var, PLpgSQL_row, and PLpgSQL_rec share these
+ * fields.
+ */
+typedef struct PLpgSQL_variable
+{
+	PLpgSQL_datum_type dtype;
+	int			dno;
+	char	   *refname;
+	int			lineno;
+} PLpgSQL_variable;
+
+/*
  * Scalar variable
  */
 typedef struct PLpgSQL_var
@@ -258,11 +255,18 @@ typedef struct PLpgSQL_var
 	int			dno;
 	char	   *refname;
 	int			lineno;
+	/* end of PLpgSQL_variable fields */
 
+	bool		isconst;
+	bool		notnull;
 	PLpgSQL_type *datatype;
-	int			isconst;
-	int			notnull;
 	PLpgSQL_expr *default_val;
+
+	/*
+	 * Variables declared as CURSOR FOR <query> are mostly like ordinary
+	 * scalar variables of type refcursor, but they have these additional
+	 * properties:
+	 */
 	PLpgSQL_expr *cursor_explicit_expr;
 	int			cursor_explicit_argrow;
 	int			cursor_options;
@@ -286,6 +290,7 @@ typedef struct PLpgSQL_row
 	int			dno;
 	char	   *refname;
 	int			lineno;
+	/* end of PLpgSQL_variable fields */
 
 	/*
 	 * rowtupdesc is only set up if we might need to convert the row into a
@@ -308,6 +313,8 @@ typedef struct PLpgSQL_rec
 	int			dno;
 	char	   *refname;
 	int			lineno;
+	/* end of PLpgSQL_variable fields */
+
 	Oid			rectypeid;		/* declared type of variable */
 	/* RECFIELDs for this record are chained together for easy access */
 	int			firstfield;		/* dno of first RECFIELD, or -1 if none */
@@ -322,6 +329,8 @@ typedef struct PLpgSQL_recfield
 {
 	PLpgSQL_datum_type dtype;
 	int			dno;
+	/* end of PLpgSQL_datum fields */
+
 	char	   *fieldname;		/* name of field */
 	int			recparentno;	/* dno of parent record */
 	int			nextfield;		/* dno of next child, or -1 if none */
@@ -337,6 +346,8 @@ typedef struct PLpgSQL_arrayelem
 {
 	PLpgSQL_datum_type dtype;
 	int			dno;
+	/* end of PLpgSQL_datum fields */
+
 	PLpgSQL_expr *subscript;
 	int			arrayparentno;	/* dno of parent array variable */
 
@@ -884,6 +895,7 @@ typedef struct PLpgSQL_function
 	/* the datums representing the function's local variables */
 	int			ndatums;
 	PLpgSQL_datum **datums;
+	Size		copiable_size;	/* space for locally instantiated datums */
 
 	/* function body parsetree */
 	PLpgSQL_stmt_block *action;
@@ -920,8 +932,14 @@ typedef struct PLpgSQL_execstate
 	ResourceOwner tuple_store_owner;
 	ReturnSetInfo *rsi;
 
-	/* the datums representing the function's local variables */
 	int			found_varno;
+
+	/*
+	 * The datums representing the function's local variables.  Some of these
+	 * are local storage in this execstate, but some just point to the shared
+	 * copy belonging to the PLpgSQL_function, depending on whether or not we
+	 * need any per-execution state for the datum's dtype.
+	 */
 	int			ndatums;
 	PLpgSQL_datum **datums;
 	/* context containing variable values (same as func's SPI_proc context) */
