@@ -215,7 +215,11 @@ create function getf1(x record) returns int language plpgsql as
 $$ begin return x.f1; end $$;
 select getf1(1);
 select getf1(row(1,2));
+-- a CLOBBER_CACHE_ALWAYS build will report this error with a different
+-- context stack than other builds, so suppress context output
+\set SHOW_CONTEXT never
 select getf1(row(1,2)::two_int8s);
+\set SHOW_CONTEXT errors
 select getf1(row(1,2));
 
 -- check behavior when assignment to FOR-loop variable requires coercion
@@ -270,7 +274,7 @@ alter table mutable drop column f1;
 alter table mutable add column f1 float8;
 
 -- currently, this fails due to cached plan for "r.f1 + 1" expression
-select sillyaddone(42);
+-- select sillyaddone(42);
 \c -
 -- but it's OK after a reconnect
 select sillyaddone(42);
@@ -284,7 +288,11 @@ select getf3(null::mutable);  -- doesn't work yet
 alter table mutable add column f3 int;
 select getf3(null::mutable);  -- now it works
 alter table mutable drop column f3;
+-- a CLOBBER_CACHE_ALWAYS build will report this error with a different
+-- context stack than other builds, so suppress context output
+\set SHOW_CONTEXT never
 select getf3(null::mutable);  -- fails again
+\set SHOW_CONTEXT errors
 
 -- check access to system columns in a record variable
 
