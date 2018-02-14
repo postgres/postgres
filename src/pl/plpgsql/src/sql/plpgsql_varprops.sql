@@ -151,7 +151,6 @@ end$$;
 
 -- Check that variables are reinitialized on block re-entry.
 
-\set VERBOSITY terse   \\ -- needed for output stability
 do $$
 begin
   for i in 1..3 loop
@@ -173,7 +172,6 @@ begin
     end;
   end loop;
 end$$;
-\set VERBOSITY default
 
 -- Check enforcement of domain constraints during initialization
 
