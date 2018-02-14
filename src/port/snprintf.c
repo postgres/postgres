@@ -745,6 +745,8 @@ nextch2:
 					strvalue = argvalues[fmtpos].cptr;
 				else
 					strvalue = va_arg(args, char *);
+				/* Whine if someone tries to print a NULL string */
+				Assert(strvalue != NULL);
 				fmtstr(strvalue, leftjust, fieldwidth, precision, pointflag,
 					   target);
 				break;
