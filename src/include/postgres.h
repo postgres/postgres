@@ -25,7 +25,6 @@
  *	  -------	------------------------------------------------
  *		1)		variable-length datatypes (TOAST support)
  *		2)		Datum type + support macros
- *		3)		exception handling backend support
  *
  *	 NOTES
  *
@@ -765,20 +764,5 @@ extern Datum Float8GetDatum(float8 X);
 #else
 #define Float4GetDatumFast(X) PointerGetDatum(&(X))
 #endif
-
-
-/* ----------------------------------------------------------------
- *				Section 3:	exception handling backend support
- * ----------------------------------------------------------------
- */
-
-/*
- * Backend only infrastructure for the assertion-related macros in c.h.
- *
- * ExceptionalCondition must be present even when assertions are not enabled.
- */
-extern void ExceptionalCondition(const char *conditionName,
-					 const char *errorType,
-					 const char *fileName, int lineNumber) pg_attribute_noreturn();
 
 #endif							/* POSTGRES_H */
