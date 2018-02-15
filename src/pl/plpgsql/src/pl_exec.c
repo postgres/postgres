@@ -712,6 +712,22 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 												  func->fn_rettyplen);
 		}
 	}
+	else
+	{
+		/*
+		 * We're returning a NULL, which normally requires no conversion work
+		 * regardless of datatypes.  But, if we are casting it to a domain
+		 * return type, we'd better check that the domain's constraints pass.
+		 */
+		if (func->fn_retisdomain)
+			estate.retval = exec_cast_value(&estate,
+											estate.retval,
+											&fcinfo->isnull,
+											estate.rettype,
+											-1,
+											func->fn_rettype,
+											-1);
+	}
 
 	estate.err_text = gettext_noop("during function exit");
 

@@ -557,6 +557,7 @@ do_compile(FunctionCallInfo fcinfo,
 				}
 
 				function->fn_retistuple = type_is_rowtype(rettypeid);
+				function->fn_retisdomain = (typeStruct->typtype == TYPTYPE_DOMAIN);
 				function->fn_retbyval = typeStruct->typbyval;
 				function->fn_rettyplen = typeStruct->typlen;
 
@@ -584,6 +585,7 @@ do_compile(FunctionCallInfo fcinfo,
 			function->fn_rettype = InvalidOid;
 			function->fn_retbyval = false;
 			function->fn_retistuple = true;
+			function->fn_retisdomain = false;
 			function->fn_retset = false;
 
 			/* shouldn't be any declared arguments */
@@ -707,6 +709,7 @@ do_compile(FunctionCallInfo fcinfo,
 			function->fn_rettype = VOIDOID;
 			function->fn_retbyval = false;
 			function->fn_retistuple = true;
+			function->fn_retisdomain = false;
 			function->fn_retset = false;
 
 			/* shouldn't be any declared arguments */
@@ -886,6 +889,7 @@ plpgsql_compile_inline(char *proc_source)
 	function->fn_rettype = VOIDOID;
 	function->fn_retset = false;
 	function->fn_retistuple = false;
+	function->fn_retisdomain = false;
 	/* a bit of hardwired knowledge about type VOID here */
 	function->fn_retbyval = true;
 	function->fn_rettyplen = sizeof(int32);

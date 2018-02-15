@@ -915,6 +915,7 @@ typedef struct PLpgSQL_function
 	int			fn_rettyplen;
 	bool		fn_retbyval;
 	bool		fn_retistuple;
+	bool		fn_retisdomain;
 	bool		fn_retset;
 	bool		fn_readonly;
 
