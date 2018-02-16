@@ -1,9 +1,9 @@
 --
 -- PARTITION_JOIN
--- Test partition-wise join between partitioned tables
+-- Test partitionwise join between partitioned tables
 --
--- Enable partition-wise join, which by default is disabled.
-SET enable_partition_wise_join to true;
+-- Enable partitionwise join, which by default is disabled.
+SET enable_partitionwise_join to true;
 --
 -- partitioned by a single column
 --
@@ -1578,7 +1578,7 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1_l WHERE prt1_l.b = 0) t1 
      |      | 525 | 0001
 (16 rows)
 
--- lateral partition-wise join
+-- lateral partitionwise join
 EXPLAIN (COSTS OFF)
 SELECT * FROM prt1_l t1 LEFT JOIN LATERAL
 			  (SELECT t2.a AS t2a, t2.c AS t2c, t2.b AS t2b, t3.b AS t3b, least(t1.a,t2.a,t3.b) FROM prt1_l t2 JOIN prt2_l t3 ON (t2.a = t3.b AND t2.c = t3.c)) ss
@@ -1695,7 +1695,7 @@ CREATE TABLE prt4_n_p2 PARTITION OF prt4_n FOR VALUES FROM (300) TO (500);
 CREATE TABLE prt4_n_p3 PARTITION OF prt4_n FOR VALUES FROM (500) TO (600);
 INSERT INTO prt4_n SELECT i, i, to_char(i, 'FM0000') FROM generate_series(0, 599, 2) i;
 ANALYZE prt4_n;
--- partition-wise join can not be applied if the partition ranges differ
+-- partitionwise join can not be applied if the partition ranges differ
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt4_n t2 WHERE t1.a = t2.a;
                   QUERY PLAN                  
@@ -1742,7 +1742,7 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt4_n t2, prt2 t3 WHERE t1.a = t2.a
                            ->  Seq Scan on prt2_p3 t3_2
 (23 rows)
 
--- partition-wise join can not be applied if there are no equi-join conditions
+-- partitionwise join can not be applied if there are no equi-join conditions
 -- between partition keys
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1 LEFT JOIN prt2 t2 ON (t1.a < t2.b);
@@ -1763,7 +1763,7 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1 LEFT JOIN prt2 t2 ON (t1.a < t2.b);
 (12 rows)
 
 -- equi-join with join condition on partial keys does not qualify for
--- partition-wise join
+-- partitionwise join
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_m t1, prt2_m t2 WHERE t1.a = (t2.b + t2.a)/2;
                   QUERY PLAN                  
@@ -1782,7 +1782,7 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_m t1, prt2_m t2 WHERE t1.a = (t2.b + t2.
 (11 rows)
 
 -- equi-join between out-of-order partition key columns does not qualify for
--- partition-wise join
+-- partitionwise join
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_m t1 LEFT JOIN prt2_m t2 ON t1.a = t2.b;
                   QUERY PLAN                  
@@ -1800,7 +1800,7 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_m t1 LEFT JOIN prt2_m t2 ON t1.a = t2.b;
                ->  Seq Scan on prt2_m_p3 t2_2
 (11 rows)
 
--- equi-join between non-key columns does not qualify for partition-wise join
+-- equi-join between non-key columns does not qualify for partitionwise join
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_m t1 LEFT JOIN prt2_m t2 ON t1.c = t2.c;
                   QUERY PLAN                  
@@ -1818,7 +1818,7 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_m t1 LEFT JOIN prt2_m t2 ON t1.c = t2.c;
                ->  Seq Scan on prt2_m_p3 t2_2
 (11 rows)
 
--- partition-wise join can not be applied between tables with different
+-- partitionwise join can not be applied between tables with different
 -- partition lists
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_n t1 LEFT JOIN prt2_n t2 ON (t1.c = t2.c);
@@ -1857,7 +1857,7 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_n t1 JOIN prt2_n t2 ON (t1.c = t2.c) JOI
                            ->  Seq Scan on prt1_n_p2 t1_1
 (16 rows)
 
--- partition-wise join can not be applied for a join between list and range
+-- partitionwise join can not be applied for a join between list and range
 -- partitioned table
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_n t1 FULL JOIN prt1 t2 ON (t1.c = t2.c);

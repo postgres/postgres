@@ -929,7 +929,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			/*
 			 * We need attr_needed data for building targetlist of a join
 			 * relation representing join between matching partitions for
-			 * partition-wise join. A given attribute of a child will be
+			 * partitionwise join. A given attribute of a child will be
 			 * needed in the same highest joinrel where the corresponding
 			 * attribute of parent is needed. Hence it suffices to use the
 			 * same Relids set for parent and child.
@@ -973,7 +973,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * Copy/Modify targetlist. Even if this child is deemed empty, we need
 		 * its targetlist in case it falls on nullable side in a child-join
-		 * because of partition-wise join.
+		 * because of partitionwise join.
 		 *
 		 * NB: the resulting childrel->reltarget->exprs may contain arbitrary
 		 * expressions, which otherwise would not occur in a rel's targetlist.
@@ -2636,7 +2636,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 		join_search_one_level(root, lev);
 
 		/*
-		 * Run generate_partition_wise_join_paths() and
+		 * Run generate_partitionwise_join_paths() and
 		 * generate_gather_paths() for each just-processed joinrel.  We could
 		 * not do this earlier because both regular and partial paths can get
 		 * added to a particular joinrel at multiple times within
@@ -2649,8 +2649,8 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 		{
 			rel = (RelOptInfo *) lfirst(lc);
 
-			/* Create paths for partition-wise joins. */
-			generate_partition_wise_join_paths(root, rel);
+			/* Create paths for partitionwise joins. */
+			generate_partitionwise_join_paths(root, rel);
 
 			/* Create GatherPaths for any useful partial paths for rel */
 			generate_gather_paths(root, rel);
@@ -3405,8 +3405,8 @@ compute_parallel_worker(RelOptInfo *rel, double heap_pages, double index_pages,
 }
 
 /*
- * generate_partition_wise_join_paths
- * 		Create paths representing partition-wise join for given partitioned
+ * generate_partitionwise_join_paths
+ * 		Create paths representing partitionwise join for given partitioned
  * 		join relation.
  *
  * This must not be called until after we are done adding paths for all
@@ -3414,7 +3414,7 @@ compute_parallel_worker(RelOptInfo *rel, double heap_pages, double index_pages,
  * generated here has a reference.
  */
 void
-generate_partition_wise_join_paths(PlannerInfo *root, RelOptInfo *rel)
+generate_partitionwise_join_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *live_children = NIL;
 	int			cnt_parts;
@@ -3442,8 +3442,8 @@ generate_partition_wise_join_paths(PlannerInfo *root, RelOptInfo *rel)
 
 		Assert(child_rel != NULL);
 
-		/* Add partition-wise join paths for partitioned child-joins. */
-		generate_partition_wise_join_paths(root, child_rel);
+		/* Add partitionwise join paths for partitioned child-joins. */
+		generate_partitionwise_join_paths(root, child_rel);
 
 		/* Dummy children will not be scanned, so ignore those. */
 		if (IS_DUMMY_REL(child_rel))

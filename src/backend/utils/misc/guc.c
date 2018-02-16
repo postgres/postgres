@@ -914,11 +914,11 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"enable_partition_wise_join", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Enables partition-wise join."),
+		{"enable_partitionwise_join", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables partitionwise join."),
 			NULL
 		},
-		&enable_partition_wise_join,
+		&enable_partitionwise_join,
 		false,
 		NULL, NULL, NULL
 	},

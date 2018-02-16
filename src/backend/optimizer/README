@@ -1076,8 +1076,8 @@ plan as possible.  Expanding the range of cases in which more work can be
 pushed below the Gather (and costing them accurately) is likely to keep us
 busy for a long time to come.
 
-Partition-wise joins
---------------------
+Partitionwise joins
+-------------------
 A join between two similarly partitioned tables can be broken down into joins
 between their matching partitions if there exists an equi-join condition
 between the partition keys of the joining tables. The equi-join between
@@ -1089,7 +1089,7 @@ partitioned in the same way as the joining relations, thus allowing an N-way
 join between similarly partitioned tables having equi-join condition between
 their partition keys to be broken down into N-way joins between their matching
 partitions. This technique of breaking down a join between partitioned tables
-into joins between their partitions is called partition-wise join. We will use
+into joins between their partitions is called partitionwise join. We will use
 term "partitioned relation" for either a partitioned table or a join between
 compatibly partitioned tables.
 

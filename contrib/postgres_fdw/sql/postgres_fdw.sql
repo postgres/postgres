@@ -1863,9 +1863,9 @@ AND ftoptions @> array['fetch_size=60000'];
 ROLLBACK;
 
 -- ===================================================================
--- test partition-wise-joins
+-- test partitionwise joins
 -- ===================================================================
-SET enable_partition_wise_join=on;
+SET enable_partitionwise_join=on;
 
 CREATE TABLE fprt1 (a int, b int, c varchar) PARTITION BY RANGE(a);
 CREATE TABLE fprt1_p1 (LIKE fprt1);
@@ -1913,4 +1913,4 @@ EXPLAIN (COSTS OFF)
 SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t1.a = t2.b AND t1.b = t2.a) q WHERE t1.a%25 = 0 ORDER BY 1,2;
 SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t1.a = t2.b AND t1.b = t2.a) q WHERE t1.a%25 = 0 ORDER BY 1,2;
 
-RESET enable_partition_wise_join;
+RESET enable_partitionwise_join;

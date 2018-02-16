@@ -3736,20 +3736,20 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-enable-partition-wise-join" xreflabel="enable_partition_wise_join">
-      <term><varname>enable_partition_wise_join</varname> (<type>boolean</type>)
+     <varlistentry id="guc-enable-partitionwise-join" xreflabel="enable_partitionwise_join">
+      <term><varname>enable_partitionwise_join</varname> (<type>boolean</type>)
       <indexterm>
-       <primary><varname>enable_partition_wise_join</varname> configuration parameter</primary>
+       <primary><varname>enable_partitionwise_join</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        Enables or disables the query planner's use of partition-wise join,
+        Enables or disables the query planner's use of partitionwise join,
         which allows a join between partitioned tables to be performed by
-        joining the matching partitions.  Partition-wise join currently applies
+        joining the matching partitions.  Partitionwise join currently applies
         only when the join conditions include all the partition keys, which
         must be of the same data type and have exactly matching sets of child
-        partitions.  Because partition-wise join planning can use significantly
+        partitions.  Because partitionwise join planning can use significantly
         more CPU time and memory during planning, the default is
         <literal>off</literal>.
        </para>
