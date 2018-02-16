@@ -4821,7 +4821,7 @@ check_wal_buffers(int *newval, void **extra, GucSource source)
  * This is to be called during startup, including a crash recovery cycle,
  * unless in bootstrap mode, where no control file yet exists.  As there's no
  * usable shared memory yet (its sizing can depend on the contents of the
- * control file!), first store the contents in local memory. XLOGShemInit()
+ * control file!), first store the contents in local memory. XLOGShmemInit()
  * will then copy it to shared memory later.
  *
  * reset just controls whether previous contents are to be expected (in the
