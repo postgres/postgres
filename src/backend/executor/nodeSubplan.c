@@ -149,7 +149,7 @@ ExecHashSubPlan(SubPlanState *node,
 		if (node->havehashrows &&
 			FindTupleHashEntry(node->hashtable,
 							   slot,
-							   node->cur_eq_funcs,
+							   node->cur_eq_comp,
 							   node->lhs_hash_funcs) != NULL)
 		{
 			ExecClearTuple(slot);
@@ -494,9 +494,11 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	if (nbuckets < 1)
 		nbuckets = 1;
 
-	node->hashtable = BuildTupleHashTable(ncols,
+	node->hashtable = BuildTupleHashTable(node->parent,
+										  node->descRight,
+										  ncols,
 										  node->keyColIdx,
-										  node->tab_eq_funcs,
+										  node->tab_eq_funcoids,
 										  node->tab_hash_funcs,
 										  nbuckets,
 										  0,
@@ -514,9 +516,11 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 			if (nbuckets < 1)
 				nbuckets = 1;
 		}
-		node->hashnulls = BuildTupleHashTable(ncols,
+		node->hashnulls = BuildTupleHashTable(node->parent,
+											  node->descRight,
+											  ncols,
 											  node->keyColIdx,
-											  node->tab_eq_funcs,
+											  node->tab_eq_funcoids,
 											  node->tab_hash_funcs,
 											  nbuckets,
 											  0,
@@ -596,6 +600,77 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	ExecClearTuple(node->projRight->pi_state.resultslot);
 
 	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * execTuplesUnequal
+ *		Return true if two tuples are definitely unequal in the indicated
+ *		fields.
+ *
+ * Nulls are neither equal nor unequal to anything else.  A true result
+ * is obtained only if there are non-null fields that compare not-equal.
+ *
+ * slot1, slot2: the tuples to compare (must have same columns!)
+ * numCols: the number of attributes to be examined
+ * matchColIdx: array of attribute column numbers
+ * eqFunctions: array of fmgr lookup info for the equality functions to use
+ * evalContext: short-term memory context for executing the functions
+ */
+static bool
+execTuplesUnequal(TupleTableSlot *slot1,
+				  TupleTableSlot *slot2,
+				  int numCols,
+				  AttrNumber *matchColIdx,
+				  FmgrInfo *eqfunctions,
+				  MemoryContext evalContext)
+{
+	MemoryContext oldContext;
+	bool		result;
+	int			i;
+
+	/* Reset and switch into the temp context. */
+	MemoryContextReset(evalContext);
+	oldContext = MemoryContextSwitchTo(evalContext);
+
+	/*
+	 * We cannot report a match without checking all the fields, but we can
+	 * report a non-match as soon as we find unequal fields.  So, start
+	 * comparing at the last field (least significant sort key). That's the
+	 * most likely to be different if we are dealing with sorted input.
+	 */
+	result = false;
+
+	for (i = numCols; --i >= 0;)
+	{
+		AttrNumber	att = matchColIdx[i];
+		Datum		attr1,
+					attr2;
+		bool		isNull1,
+					isNull2;
+
+		attr1 = slot_getattr(slot1, att, &isNull1);
+
+		if (isNull1)
+			continue;			/* can't prove anything here */
+
+		attr2 = slot_getattr(slot2, att, &isNull2);
+
+		if (isNull2)
+			continue;			/* can't prove anything here */
+
+		/* Apply the type-specific equality function */
+
+		if (!DatumGetBool(FunctionCall2(&eqfunctions[i],
+										attr1, attr2)))
+		{
+			result = true;		/* they are unequal */
+			break;
+		}
+	}
+
+	MemoryContextSwitchTo(oldContext);
+
+	return result;
 }
 
 /*
@@ -719,6 +794,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 	sstate->hashtempcxt = NULL;
 	sstate->innerecontext = NULL;
 	sstate->keyColIdx = NULL;
+	sstate->tab_eq_funcoids = NULL;
 	sstate->tab_hash_funcs = NULL;
 	sstate->tab_eq_funcs = NULL;
 	sstate->lhs_hash_funcs = NULL;
@@ -757,7 +833,8 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 	{
 		int			ncols,
 					i;
-		TupleDesc	tupDesc;
+		TupleDesc	tupDescLeft;
+		TupleDesc	tupDescRight;
 		TupleTableSlot *slot;
 		List	   *oplist,
 				   *lefttlist,
@@ -815,6 +892,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 		Assert(list_length(oplist) == ncols);
 
 		lefttlist = righttlist = NIL;
+		sstate->tab_eq_funcoids = (Oid *) palloc(ncols * sizeof(Oid));
 		sstate->tab_hash_funcs = (FmgrInfo *) palloc(ncols * sizeof(FmgrInfo));
 		sstate->tab_eq_funcs = (FmgrInfo *) palloc(ncols * sizeof(FmgrInfo));
 		sstate->lhs_hash_funcs = (FmgrInfo *) palloc(ncols * sizeof(FmgrInfo));
@@ -848,6 +926,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 			righttlist = lappend(righttlist, tle);
 
 			/* Lookup the equality function (potentially cross-type) */
+			sstate->tab_eq_funcoids[i - 1] = opexpr->opfuncid;
 			fmgr_info(opexpr->opfuncid, &sstate->cur_eq_funcs[i - 1]);
 			fmgr_info_set_expr((Node *) opexpr, &sstate->cur_eq_funcs[i - 1]);
 
@@ -877,23 +956,34 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 		 * (hack alert!).  The righthand expressions will be evaluated in our
 		 * own innerecontext.
 		 */
-		tupDesc = ExecTypeFromTL(lefttlist, false);
+		tupDescLeft = ExecTypeFromTL(lefttlist, false);
 		slot = ExecInitExtraTupleSlot(estate);
-		ExecSetSlotDescriptor(slot, tupDesc);
+		ExecSetSlotDescriptor(slot, tupDescLeft);
 		sstate->projLeft = ExecBuildProjectionInfo(lefttlist,
 												   NULL,
 												   slot,
 												   parent,
 												   NULL);
 
-		tupDesc = ExecTypeFromTL(righttlist, false);
+		sstate->descRight = tupDescRight = ExecTypeFromTL(righttlist, false);
 		slot = ExecInitExtraTupleSlot(estate);
-		ExecSetSlotDescriptor(slot, tupDesc);
+		ExecSetSlotDescriptor(slot, tupDescRight);
 		sstate->projRight = ExecBuildProjectionInfo(righttlist,
 													sstate->innerecontext,
 													slot,
 													sstate->planstate,
 													NULL);
+
+		/*
+		 * Create comparator for lookups of rows in the table (potentially
+		 *  across-type comparison).
+		 */
+		sstate->cur_eq_comp = ExecBuildGroupingEqual(tupDescLeft, tupDescRight,
+													 ncols,
+													 sstate->keyColIdx,
+													 sstate->tab_eq_funcoids,
+													 parent);
+
 	}
 
 	return sstate;

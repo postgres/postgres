@@ -3193,3 +3193,146 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 		as->d.agg_strict_trans_check.jumpnull = state->steps_len;
 	}
 }
+
+/*
+ * Build equality expression that can be evaluated using ExecQual(), returning
+ * true if the expression context's inner/outer tuple are NOT DISTINCT. I.e
+ * two nulls match, a null and a not-null don't match.
+ *
+ * desc: tuple descriptor of the to-be-compared tuples
+ * numCols: the number of attributes to be examined
+ * keyColIdx: array of attribute column numbers
+ * eqFunctions: array of function oids of the equality functions to use
+ * parent: parent executor node
+ */
+ExprState *
+ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
+					   int numCols,
+					   AttrNumber *keyColIdx,
+					   Oid *eqfunctions,
+					   PlanState *parent)
+{
+	ExprState  *state = makeNode(ExprState);
+	ExprEvalStep scratch = {0};
+	int			natt;
+	int			maxatt = -1;
+	List	   *adjust_jumps = NIL;
+	ListCell   *lc;
+
+	/*
+	 * When no columns are actually compared, the result's always true. See
+	 * special case in ExecQual().
+	 */
+	if (numCols == 0)
+		return NULL;
+
+	state->expr = NULL;
+	state->flags = EEO_FLAG_IS_QUAL;
+	state->parent = parent;
+
+	scratch.resvalue = &state->resvalue;
+	scratch.resnull = &state->resnull;
+
+	/* compute max needed attribute */
+	for (natt = 0; natt < numCols; natt++)
+	{
+		int			attno = keyColIdx[natt];
+
+		if (attno > maxatt)
+			maxatt = attno;
+	}
+	Assert(maxatt >= 0);
+
+	/* push deform steps */
+	scratch.opcode = EEOP_INNER_FETCHSOME;
+	scratch.d.fetch.last_var = maxatt;
+	ExprEvalPushStep(state, &scratch);
+
+	scratch.opcode = EEOP_OUTER_FETCHSOME;
+	scratch.d.fetch.last_var = maxatt;
+	ExprEvalPushStep(state, &scratch);
+
+	/*
+	 * Start comparing at the last field (least significant sort key). That's
+	 * the most likely to be different if we are dealing with sorted input.
+	 */
+	for (natt = numCols; --natt >= 0;)
+	{
+		int			attno = keyColIdx[natt];
+		Form_pg_attribute latt = TupleDescAttr(ldesc, attno - 1);
+		Form_pg_attribute ratt = TupleDescAttr(rdesc, attno - 1);
+		Oid			foid = eqfunctions[natt];
+		FmgrInfo   *finfo;
+		FunctionCallInfo fcinfo;
+		AclResult	aclresult;
+
+		/* Check permission to call function */
+		aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
+
+		InvokeFunctionExecuteHook(foid);
+
+		/* Set up the primary fmgr lookup information */
+		finfo = palloc0(sizeof(FmgrInfo));
+		fcinfo = palloc0(sizeof(FunctionCallInfoData));
+		fmgr_info(foid, finfo);
+		fmgr_info_set_expr(NULL, finfo);
+		InitFunctionCallInfoData(*fcinfo, finfo, 2,
+								 InvalidOid, NULL, NULL);
+
+		/* left arg */
+		scratch.opcode = EEOP_INNER_VAR;
+		scratch.d.var.attnum = attno - 1;
+		scratch.d.var.vartype = latt->atttypid;
+		scratch.resvalue = &fcinfo->arg[0];
+		scratch.resnull = &fcinfo->argnull[0];
+		ExprEvalPushStep(state, &scratch);
+
+		/* right arg */
+		scratch.opcode = EEOP_OUTER_VAR;
+		scratch.d.var.attnum = attno - 1;
+		scratch.d.var.vartype = ratt->atttypid;
+		scratch.resvalue = &fcinfo->arg[1];
+		scratch.resnull = &fcinfo->argnull[1];
+		ExprEvalPushStep(state, &scratch);
+
+		/* evaluate distinctness */
+		scratch.opcode = EEOP_NOT_DISTINCT;
+		scratch.d.func.finfo = finfo;
+		scratch.d.func.fcinfo_data = fcinfo;
+		scratch.d.func.fn_addr = finfo->fn_addr;
+		scratch.d.func.nargs = 2;
+		scratch.resvalue = &state->resvalue;
+		scratch.resnull = &state->resnull;
+		ExprEvalPushStep(state, &scratch);
+
+		/* then emit EEOP_QUAL to detect if result is false (or null) */
+		scratch.opcode = EEOP_QUAL;
+		scratch.d.qualexpr.jumpdone = -1;
+		scratch.resvalue = &state->resvalue;
+		scratch.resnull = &state->resnull;
+		ExprEvalPushStep(state, &scratch);
+		adjust_jumps = lappend_int(adjust_jumps,
+								   state->steps_len - 1);
+	}
+
+	/* adjust jump targets */
+	foreach(lc, adjust_jumps)
+	{
+		ExprEvalStep *as = &state->steps[lfirst_int(lc)];
+
+		Assert(as->opcode == EEOP_QUAL);
+		Assert(as->d.qualexpr.jumpdone == -1);
+		as->d.qualexpr.jumpdone = state->steps_len;
+	}
+
+	scratch.resvalue = NULL;
+	scratch.resnull = NULL;
+	scratch.opcode = EEOP_DONE;
+	ExprEvalPushStep(state, &scratch);
+
+	ExecReadyExpr(state);
+
+	return state;
+}
