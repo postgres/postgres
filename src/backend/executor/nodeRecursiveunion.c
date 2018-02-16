@@ -32,11 +32,14 @@ static void
 build_hash_table(RecursiveUnionState *rustate)
 {
 	RecursiveUnion *node = (RecursiveUnion *) rustate->ps.plan;
+	TupleDesc	desc = ExecGetResultType(outerPlanState(rustate));
 
 	Assert(node->numCols > 0);
 	Assert(node->numGroups > 0);
 
-	rustate->hashtable = BuildTupleHashTable(node->numCols,
+	rustate->hashtable = BuildTupleHashTable(&rustate->ps,
+											 desc,
+											 node->numCols,
 											 node->dupColIdx,
 											 rustate->eqfunctions,
 											 rustate->hashfunctions,

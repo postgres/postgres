@@ -47,7 +47,7 @@ static TupleTableSlot *			/* return: a tuple or NULL */
 ExecUnique(PlanState *pstate)
 {
 	UniqueState *node = castNode(UniqueState, pstate);
-	Unique	   *plannode = (Unique *) node->ps.plan;
+	ExprContext *econtext = node->ps.ps_ExprContext;
 	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
 	PlanState  *outerPlan;
@@ -89,10 +89,9 @@ ExecUnique(PlanState *pstate)
 		 * If so then we loop back and fetch another new tuple from the
 		 * subplan.
 		 */
-		if (!execTuplesMatch(slot, resultTupleSlot,
-							 plannode->numCols, plannode->uniqColIdx,
-							 node->eqfunctions,
-							 node->tempContext))
+		econtext->ecxt_innertuple = slot;
+		econtext->ecxt_outertuple = resultTupleSlot;
+		if (!ExecQualAndReset(node->eqfunction, econtext))
 			break;
 	}
 
@@ -129,16 +128,9 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 	uniquestate->ps.ExecProcNode = ExecUnique;
 
 	/*
-	 * Miscellaneous initialization
-	 *
-	 * Unique nodes have no ExprContext initialization because they never call
-	 * ExecQual or ExecProject.  But they do need a per-tuple memory context
-	 * anyway for calling execTuplesMatch.
+	 * create expression context
 	 */
-	uniquestate->tempContext =
-		AllocSetContextCreate(CurrentMemoryContext,
-							  "Unique",
-							  ALLOCSET_DEFAULT_SIZES);
+	ExecAssignExprContext(estate, &uniquestate->ps);
 
 	/*
 	 * Tuple table initialization
@@ -160,9 +152,12 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 	/*
 	 * Precompute fmgr lookup data for inner loop
 	 */
-	uniquestate->eqfunctions =
-		execTuplesMatchPrepare(node->numCols,
-							   node->uniqOperators);
+	uniquestate->eqfunction =
+		execTuplesMatchPrepare(ExecGetResultType(outerPlanState(uniquestate)),
+							   node->numCols,
+							   node->uniqColIdx,
+							   node->uniqOperators,
+							   &uniquestate->ps);
 
 	return uniquestate;
 }
@@ -180,7 +175,7 @@ ExecEndUnique(UniqueState *node)
 	/* clean up tuple table */
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
-	MemoryContextDelete(node->tempContext);
+	ExecFreeExprContext(&node->ps);
 
 	ExecEndNode(outerPlanState(node));
 }

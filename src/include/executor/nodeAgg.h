@@ -102,11 +102,12 @@ typedef struct AggStatePerTransData
 	bool	   *sortNullsFirst;
 
 	/*
-	 * fmgr lookup data for input columns' equality operators --- only
-	 * set/used when aggregate has DISTINCT flag.  Note that these are in
-	 * order of sort column index, not parameter index.
+	 * Comparators for input columns --- only set/used when aggregate has
+	 * DISTINCT flag. equalfnOne version is used for single-column
+	 * commparisons, equalfnMulti for the case of multiple columns.
 	 */
-	FmgrInfo   *equalfns;		/* array of length numDistinctCols */
+	FmgrInfo	equalfnOne;
+	ExprState  *equalfnMulti;
 
 	/*
 	 * initial value from pg_aggregate entry
@@ -270,7 +271,8 @@ typedef struct AggStatePerPhaseData
 	int			numsets;		/* number of grouping sets (or 0) */
 	int		   *gset_lengths;	/* lengths of grouping sets */
 	Bitmapset **grouped_cols;	/* column groupings for rollup */
-	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
+	ExprState **eqfunctions;	/* expression returning equality, indexed by
+								 * nr of cols to compare */
 	Agg		   *aggnode;		/* Agg node for phase data */
 	Sort	   *sortnode;		/* Sort node for input ordering for phase */
 

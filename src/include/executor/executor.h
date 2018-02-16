@@ -113,25 +113,18 @@ extern bool execCurrentOf(CurrentOfExpr *cexpr,
 /*
  * prototypes from functions in execGrouping.c
  */
-extern bool execTuplesMatch(TupleTableSlot *slot1,
-				TupleTableSlot *slot2,
-				int numCols,
-				AttrNumber *matchColIdx,
-				FmgrInfo *eqfunctions,
-				MemoryContext evalContext);
-extern bool execTuplesUnequal(TupleTableSlot *slot1,
-				  TupleTableSlot *slot2,
-				  int numCols,
-				  AttrNumber *matchColIdx,
-				  FmgrInfo *eqfunctions,
-				  MemoryContext evalContext);
-extern FmgrInfo *execTuplesMatchPrepare(int numCols,
-					   Oid *eqOperators);
+extern ExprState *execTuplesMatchPrepare(TupleDesc desc,
+					   int numCols,
+					   AttrNumber *keyColIdx,
+					   Oid *eqOperators,
+					   PlanState *parent);
 extern void execTuplesHashPrepare(int numCols,
 					  Oid *eqOperators,
 					  FmgrInfo **eqFunctions,
 					  FmgrInfo **hashFunctions);
-extern TupleHashTable BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
+extern TupleHashTable BuildTupleHashTable(PlanState *parent,
+					TupleDesc inputDesc,
+					int numCols, AttrNumber *keyColIdx,
 					FmgrInfo *eqfunctions,
 					FmgrInfo *hashfunctions,
 					long nbuckets, Size additionalsize,
@@ -257,6 +250,11 @@ extern ExprState *ExecInitCheck(List *qual, PlanState *parent);
 extern List *ExecInitExprList(List *nodes, PlanState *parent);
 extern ExprState *ExecBuildAggTrans(AggState *aggstate, struct AggStatePerPhaseData *phase,
 				  bool doSort, bool doHash);
+extern ExprState *ExecBuildGroupingEqual(TupleDesc desc,
+					   int numCols,
+					   AttrNumber *keyColIdx,
+					   Oid *eqfunctions,
+					   PlanState *parent);
 extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 						ExprContext *econtext,
 						TupleTableSlot *slot,

@@ -27,6 +27,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/timestamp.h"
 #include "utils/tuplesort.h"
 
@@ -54,6 +55,8 @@ typedef struct OSAPerQueryState
 	Aggref	   *aggref;
 	/* Memory context containing this struct and other per-query data: */
 	MemoryContext qcontext;
+	/* Context for expression evaluation */
+	ExprContext *econtext;
 	/* Do we expect multiple final-function calls within one group? */
 	bool		rescan_needed;
 
@@ -71,7 +74,7 @@ typedef struct OSAPerQueryState
 	Oid		   *sortCollations;
 	bool	   *sortNullsFirsts;
 	/* Equality operator call info, created only if needed: */
-	FmgrInfo   *equalfns;
+	ExprState  *compareTuple;
 
 	/* These fields are used only when accumulating datums: */
 
@@ -1287,6 +1290,8 @@ hypothetical_cume_dist_final(PG_FUNCTION_ARGS)
 Datum
 hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 {
+	ExprContext *econtext;
+	ExprState  *compareTuple;
 	int			nargs = PG_NARGS() - 1;
 	int64		rank = 1;
 	int64		duplicate_count = 0;
@@ -1294,12 +1299,9 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	int			numDistinctCols;
 	Datum		abbrevVal = (Datum) 0;
 	Datum		abbrevOld = (Datum) 0;
-	AttrNumber *sortColIdx;
-	FmgrInfo   *equalfns;
 	TupleTableSlot *slot;
 	TupleTableSlot *extraslot;
 	TupleTableSlot *slot2;
-	MemoryContext tmpcontext;
 	int			i;
 
 	Assert(AggCheckCallContext(fcinfo, NULL) == AGG_CONTEXT_AGGREGATE);
@@ -1309,6 +1311,9 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(rank);
 
 	osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+	econtext = osastate->qstate->econtext;
+	if (!econtext)
+		osastate->qstate->econtext = econtext = CreateStandaloneExprContext();
 
 	/* Adjust nargs to be the number of direct (or aggregated) args */
 	if (nargs % 2 != 0)
@@ -1323,26 +1328,22 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	 */
 	numDistinctCols = osastate->qstate->numSortCols - 1;
 
-	/* Look up the equality function(s), if we didn't already */
-	equalfns = osastate->qstate->equalfns;
-	if (equalfns == NULL)
+	/* Build tuple comparator, if we didn't already */
+	compareTuple = osastate->qstate->compareTuple;
+	if (compareTuple == NULL)
 	{
-		MemoryContext qcontext = osastate->qstate->qcontext;
+		AttrNumber *sortColIdx = osastate->qstate->sortColIdx;
+		MemoryContext oldContext;
 
-		equalfns = (FmgrInfo *)
-			MemoryContextAlloc(qcontext, numDistinctCols * sizeof(FmgrInfo));
-		for (i = 0; i < numDistinctCols; i++)
-		{
-			fmgr_info_cxt(get_opcode(osastate->qstate->eqOperators[i]),
-						  &equalfns[i],
-						  qcontext);
-		}
-		osastate->qstate->equalfns = equalfns;
+		oldContext = MemoryContextSwitchTo(osastate->qstate->qcontext);
+		compareTuple = execTuplesMatchPrepare(osastate->qstate->tupdesc,
+											  numDistinctCols,
+											  sortColIdx,
+											  osastate->qstate->eqOperators,
+											  NULL);
+		MemoryContextSwitchTo(oldContext);
+		osastate->qstate->compareTuple = compareTuple;
 	}
-	sortColIdx = osastate->qstate->sortColIdx;
-
-	/* Get short-term context we can use for execTuplesMatch */
-	tmpcontext = AggGetTempMemoryContext(fcinfo);
 
 	/* because we need a hypothetical row, we can't share transition state */
 	Assert(!osastate->sort_done);
@@ -1385,19 +1386,18 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 			break;
 
 		/* count non-distinct tuples */
+		econtext->ecxt_outertuple = slot;
+		econtext->ecxt_innertuple = slot2;
+
 		if (!TupIsNull(slot2) &&
 			abbrevVal == abbrevOld &&
-			execTuplesMatch(slot, slot2,
-							numDistinctCols,
-							sortColIdx,
-							equalfns,
-							tmpcontext))
+			ExecQualAndReset(compareTuple, econtext))
 			duplicate_count++;
 
 		tmpslot = slot2;
 		slot2 = slot;
 		slot = tmpslot;
-		/* avoid execTuplesMatch() calls by reusing abbreviated keys */
+		/* avoid ExecQual() calls by reusing abbreviated keys */
 		abbrevOld = abbrevVal;
 
 		rank++;

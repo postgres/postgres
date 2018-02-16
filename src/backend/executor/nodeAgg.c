@@ -755,7 +755,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 			((oldIsNull && *isNull) ||
 			 (!oldIsNull && !*isNull &&
 			  oldAbbrevVal == newAbbrevVal &&
-			  DatumGetBool(FunctionCall2(&pertrans->equalfns[0],
+			  DatumGetBool(FunctionCall2(&pertrans->equalfnOne,
 										 oldVal, *newVal)))))
 		{
 			/* equal to prior, so forget this one */
@@ -802,7 +802,7 @@ process_ordered_aggregate_multi(AggState *aggstate,
 								AggStatePerTrans pertrans,
 								AggStatePerGroup pergroupstate)
 {
-	MemoryContext workcontext = aggstate->tmpcontext->ecxt_per_tuple_memory;
+	ExprContext *tmpcontext = aggstate->tmpcontext;
 	FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
 	TupleTableSlot *slot1 = pertrans->sortslot;
 	TupleTableSlot *slot2 = pertrans->uniqslot;
@@ -811,6 +811,7 @@ process_ordered_aggregate_multi(AggState *aggstate,
 	Datum		newAbbrevVal = (Datum) 0;
 	Datum		oldAbbrevVal = (Datum) 0;
 	bool		haveOldValue = false;
+	TupleTableSlot *save = aggstate->tmpcontext->ecxt_outertuple;
 	int			i;
 
 	tuplesort_performsort(pertrans->sortstates[aggstate->current_set]);
@@ -824,22 +825,20 @@ process_ordered_aggregate_multi(AggState *aggstate,
 	{
 		CHECK_FOR_INTERRUPTS();
 
-		/*
-		 * Extract the first numTransInputs columns as datums to pass to the
-		 * transfn.  (This will help execTuplesMatch too, so we do it
-		 * immediately.)
-		 */
-		slot_getsomeattrs(slot1, numTransInputs);
+		tmpcontext->ecxt_outertuple = slot1;
+		tmpcontext->ecxt_innertuple = slot2;
 
 		if (numDistinctCols == 0 ||
 			!haveOldValue ||
 			newAbbrevVal != oldAbbrevVal ||
-			!execTuplesMatch(slot1, slot2,
-							 numDistinctCols,
-							 pertrans->sortColIdx,
-							 pertrans->equalfns,
-							 workcontext))
+			!ExecQual(pertrans->equalfnMulti, tmpcontext))
 		{
+			/*
+			 * Extract the first numTransInputs columns as datums to pass to
+			 * the transfn.
+			 */
+			slot_getsomeattrs(slot1, numTransInputs);
+
 			/* Load values into fcinfo */
 			/* Start from 1, since the 0th arg will be the transition value */
 			for (i = 0; i < numTransInputs; i++)
@@ -857,15 +856,14 @@ process_ordered_aggregate_multi(AggState *aggstate,
 
 				slot2 = slot1;
 				slot1 = tmpslot;
-				/* avoid execTuplesMatch() calls by reusing abbreviated keys */
+				/* avoid ExecQual() calls by reusing abbreviated keys */
 				oldAbbrevVal = newAbbrevVal;
 				haveOldValue = true;
 			}
 		}
 
-		/* Reset context each time, unless execTuplesMatch did it for us */
-		if (numDistinctCols == 0)
-			MemoryContextReset(workcontext);
+		/* Reset context each time */
+		ResetExprContext(tmpcontext);
 
 		ExecClearTuple(slot1);
 	}
@@ -875,6 +873,9 @@ process_ordered_aggregate_multi(AggState *aggstate,
 
 	tuplesort_end(pertrans->sortstates[aggstate->current_set]);
 	pertrans->sortstates[aggstate->current_set] = NULL;
+
+	/* restore previous slot, potentially in use for grouping sets */
+	tmpcontext->ecxt_outertuple = save;
 }
 
 /*
@@ -1276,7 +1277,9 @@ build_hash_table(AggState *aggstate)
 
 		Assert(perhash->aggnode->numGroups > 0);
 
-		perhash->hashtable = BuildTupleHashTable(perhash->numCols,
+		perhash->hashtable = BuildTupleHashTable(&aggstate->ss.ps,
+												 perhash->hashslot->tts_tupleDescriptor,
+												 perhash->numCols,
 												 perhash->hashGrpColIdxHash,
 												 perhash->eqfunctions,
 												 perhash->hashfunctions,
@@ -1314,6 +1317,7 @@ find_hash_columns(AggState *aggstate)
 	Bitmapset  *base_colnos;
 	List	   *outerTlist = outerPlanState(aggstate)->plan->targetlist;
 	int			numHashes = aggstate->num_hashes;
+	EState	   *estate = aggstate->ss.ps.state;
 	int			j;
 
 	/* Find Vars that will be needed in tlist and qual */
@@ -1393,6 +1397,12 @@ find_hash_columns(AggState *aggstate)
 		}
 
 		hashDesc = ExecTypeFromTL(hashTlist, false);
+
+		execTuplesHashPrepare(perhash->numCols,
+							  perhash->aggnode->grpOperators,
+							  &perhash->eqfunctions,
+							  &perhash->hashfunctions);
+		perhash->hashslot = ExecAllocTableSlot(&estate->es_tupleTable);
 		ExecSetSlotDescriptor(perhash->hashslot, hashDesc);
 
 		list_free(hashTlist);
@@ -1694,17 +1704,14 @@ agg_retrieve_direct(AggState *aggstate)
 		 *		of the next grouping set
 		 *----------
 		 */
+		tmpcontext->ecxt_innertuple = econtext->ecxt_outertuple;
 		if (aggstate->input_done ||
 			(node->aggstrategy != AGG_PLAIN &&
 			 aggstate->projected_set != -1 &&
 			 aggstate->projected_set < (numGroupingSets - 1) &&
 			 nextSetSize > 0 &&
-			 !execTuplesMatch(econtext->ecxt_outertuple,
-							  tmpcontext->ecxt_outertuple,
-							  nextSetSize,
-							  node->grpColIdx,
-							  aggstate->phase->eqfunctions,
-							  tmpcontext->ecxt_per_tuple_memory)))
+			 !ExecQualAndReset(aggstate->phase->eqfunctions[nextSetSize - 1],
+							   tmpcontext)))
 		{
 			aggstate->projected_set += 1;
 
@@ -1847,12 +1854,9 @@ agg_retrieve_direct(AggState *aggstate)
 					 */
 					if (node->aggstrategy != AGG_PLAIN)
 					{
-						if (!execTuplesMatch(firstSlot,
-											 outerslot,
-											 node->numCols,
-											 node->grpColIdx,
-											 aggstate->phase->eqfunctions,
-											 tmpcontext->ecxt_per_tuple_memory))
+						tmpcontext->ecxt_innertuple = firstSlot;
+						if (!ExecQual(aggstate->phase->eqfunctions[node->numCols - 1],
+									  tmpcontext))
 						{
 							aggstate->grp_firstTuple = ExecCopySlotTuple(outerslot);
 							break;
@@ -2078,6 +2082,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	AggStatePerGroup *pergroups;
 	Plan	   *outerPlan;
 	ExprContext *econtext;
+	TupleDesc	scanDesc;
 	int			numaggs,
 				transno,
 				aggno;
@@ -2233,9 +2238,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 * initialize source tuple type.
 	 */
 	ExecAssignScanTypeFromOuterPlan(&aggstate->ss);
+	scanDesc = aggstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
 	if (node->chain)
-		ExecSetSlotDescriptor(aggstate->sort_slot,
-							  aggstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
+		ExecSetSlotDescriptor(aggstate->sort_slot, scanDesc);
 
 	/*
 	 * Initialize result tuple type and projection info.
@@ -2355,11 +2360,43 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			 */
 			if (aggnode->aggstrategy == AGG_SORTED)
 			{
+				int			i = 0;
+
 				Assert(aggnode->numCols > 0);
 
+				/*
+				 * Build a separate function for each subset of columns that
+				 * need to be compared.
+				 */
 				phasedata->eqfunctions =
-					execTuplesMatchPrepare(aggnode->numCols,
-										   aggnode->grpOperators);
+					(ExprState **) palloc0(aggnode->numCols * sizeof(ExprState *));
+
+				/* for each grouping set */
+				for (i = 0; i < phasedata->numsets; i++)
+				{
+					int		length = phasedata->gset_lengths[i];
+
+					if (phasedata->eqfunctions[length - 1] != NULL)
+						continue;
+
+					phasedata->eqfunctions[length - 1] =
+						execTuplesMatchPrepare(scanDesc,
+											   length,
+											   aggnode->grpColIdx,
+											   aggnode->grpOperators,
+											   (PlanState *) aggstate);
+				}
+
+				/* and for all grouped columns, unless already computed */
+				if (phasedata->eqfunctions[aggnode->numCols - 1] == NULL)
+				{
+					phasedata->eqfunctions[aggnode->numCols - 1] =
+						execTuplesMatchPrepare(scanDesc,
+											   aggnode->numCols,
+											   aggnode->grpColIdx,
+											   aggnode->grpOperators,
+											   (PlanState *) aggstate);
+				}
 			}
 
 			phasedata->aggnode = aggnode;
@@ -2412,16 +2449,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 */
 	if (use_hashing)
 	{
-		for (i = 0; i < numHashes; ++i)
-		{
-			aggstate->perhash[i].hashslot = ExecInitExtraTupleSlot(estate);
-
-			execTuplesHashPrepare(aggstate->perhash[i].numCols,
-								  aggstate->perhash[i].aggnode->grpOperators,
-								  &aggstate->perhash[i].eqfunctions,
-								  &aggstate->perhash[i].hashfunctions);
-		}
-
 		/* this is an array of pointers, not structures */
 		aggstate->hash_pergroup = pergroups;
 
@@ -3101,24 +3128,28 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 
 	if (aggref->aggdistinct)
 	{
-		Assert(numArguments > 0);
+		Oid		   *ops;
 
-		/*
-		 * We need the equal function for each DISTINCT comparison we will
-		 * make.
-		 */
-		pertrans->equalfns =
-			(FmgrInfo *) palloc(numDistinctCols * sizeof(FmgrInfo));
+		Assert(numArguments > 0);
+		Assert(list_length(aggref->aggdistinct) == numDistinctCols);
+
+		ops = palloc(numDistinctCols * sizeof(Oid));
 
 		i = 0;
 		foreach(lc, aggref->aggdistinct)
-		{
-			SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc);
+			ops[i++] = ((SortGroupClause *) lfirst(lc))->eqop;
 
-			fmgr_info(get_opcode(sortcl->eqop), &pertrans->equalfns[i]);
-			i++;
-		}
-		Assert(i == numDistinctCols);
+		/* lookup / build the necessary comparators */
+		if (numDistinctCols == 1)
+			fmgr_info(get_opcode(ops[0]), &pertrans->equalfnOne);
+		else
+			pertrans->equalfnMulti =
+				execTuplesMatchPrepare(pertrans->sortdesc,
+									   numDistinctCols,
+									   pertrans->sortColIdx,
+									   ops,
+									   &aggstate->ss.ps);
+		pfree(ops);
 	}
 
 	pertrans->sortstates = (Tuplesortstate **)

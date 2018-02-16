@@ -120,18 +120,22 @@ static void
 build_hash_table(SetOpState *setopstate)
 {
 	SetOp	   *node = (SetOp *) setopstate->ps.plan;
+	ExprContext *econtext = setopstate->ps.ps_ExprContext;
+	TupleDesc	desc = ExecGetResultType(outerPlanState(setopstate));
 
 	Assert(node->strategy == SETOP_HASHED);
 	Assert(node->numGroups > 0);
 
-	setopstate->hashtable = BuildTupleHashTable(node->numCols,
+	setopstate->hashtable = BuildTupleHashTable(&setopstate->ps,
+												desc,
+												node->numCols,
 												node->dupColIdx,
 												setopstate->eqfunctions,
 												setopstate->hashfunctions,
 												node->numGroups,
 												0,
 												setopstate->tableContext,
-												setopstate->tempContext,
+												econtext->ecxt_per_tuple_memory,
 												false);
 }
 
@@ -220,11 +224,11 @@ ExecSetOp(PlanState *pstate)
 static TupleTableSlot *
 setop_retrieve_direct(SetOpState *setopstate)
 {
-	SetOp	   *node = (SetOp *) setopstate->ps.plan;
 	PlanState  *outerPlan;
 	SetOpStatePerGroup pergroup;
 	TupleTableSlot *outerslot;
 	TupleTableSlot *resultTupleSlot;
+	ExprContext *econtext = setopstate->ps.ps_ExprContext;
 
 	/*
 	 * get state info from node
@@ -292,11 +296,10 @@ setop_retrieve_direct(SetOpState *setopstate)
 			/*
 			 * Check whether we've crossed a group boundary.
 			 */
-			if (!execTuplesMatch(resultTupleSlot,
-								 outerslot,
-								 node->numCols, node->dupColIdx,
-								 setopstate->eqfunctions,
-								 setopstate->tempContext))
+			econtext->ecxt_outertuple = resultTupleSlot;
+			econtext->ecxt_innertuple = outerslot;
+
+			if (!ExecQualAndReset(setopstate->eqfunction, econtext))
 			{
 				/*
 				 * Save the first input tuple of the next group.
@@ -338,6 +341,7 @@ setop_fill_hash_table(SetOpState *setopstate)
 	PlanState  *outerPlan;
 	int			firstFlag;
 	bool		in_first_rel PG_USED_FOR_ASSERTS_ONLY;
+	ExprContext *econtext = setopstate->ps.ps_ExprContext;
 
 	/*
 	 * get state info from node
@@ -404,8 +408,8 @@ setop_fill_hash_table(SetOpState *setopstate)
 				advance_counts((SetOpStatePerGroup) entry->additional, flag);
 		}
 
-		/* Must reset temp context after each hashtable lookup */
-		MemoryContextReset(setopstate->tempContext);
+		/* Must reset expression context after each hashtable lookup */
+		ResetExprContext(econtext);
 	}
 
 	setopstate->table_filled = true;
@@ -476,6 +480,7 @@ SetOpState *
 ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 {
 	SetOpState *setopstate;
+	TupleDesc	outerDesc;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -498,16 +503,9 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	setopstate->tableContext = NULL;
 
 	/*
-	 * Miscellaneous initialization
-	 *
-	 * SetOp nodes have no ExprContext initialization because they never call
-	 * ExecQual or ExecProject.  But they do need a per-tuple memory context
-	 * anyway for calling execTuplesMatch.
+	 * create expression context
 	 */
-	setopstate->tempContext =
-		AllocSetContextCreate(CurrentMemoryContext,
-							  "SetOp",
-							  ALLOCSET_DEFAULT_SIZES);
+	ExecAssignExprContext(estate, &setopstate->ps);
 
 	/*
 	 * If hashing, we also need a longer-lived context to store the hash
@@ -534,6 +532,7 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	if (node->strategy == SETOP_HASHED)
 		eflags &= ~EXEC_FLAG_REWIND;
 	outerPlanState(setopstate) = ExecInitNode(outerPlan(node), estate, eflags);
+	outerDesc = ExecGetResultType(outerPlanState(setopstate));
 
 	/*
 	 * setop nodes do no projections, so initialize projection info for this
@@ -553,9 +552,12 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 							  &setopstate->eqfunctions,
 							  &setopstate->hashfunctions);
 	else
-		setopstate->eqfunctions =
-			execTuplesMatchPrepare(node->numCols,
-								   node->dupOperators);
+		setopstate->eqfunction =
+			execTuplesMatchPrepare(outerDesc,
+								   node->numCols,
+								   node->dupColIdx,
+								   node->dupOperators,
+								   &setopstate->ps);
 
 	if (node->strategy == SETOP_HASHED)
 	{
@@ -585,9 +587,9 @@ ExecEndSetOp(SetOpState *node)
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
 	/* free subsidiary stuff including hashtable */
-	MemoryContextDelete(node->tempContext);
 	if (node->tableContext)
 		MemoryContextDelete(node->tableContext);
+	ExecFreeExprContext(&node->ps);
 
 	ExecEndNode(outerPlanState(node));
 }

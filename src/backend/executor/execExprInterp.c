@@ -355,6 +355,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_MAKE_READONLY,
 		&&CASE_EEOP_IOCOERCE,
 		&&CASE_EEOP_DISTINCT,
+		&&CASE_EEOP_NOT_DISTINCT,
 		&&CASE_EEOP_NULLIF,
 		&&CASE_EEOP_SQLVALUEFUNCTION,
 		&&CASE_EEOP_CURRENTOFEXPR,
@@ -1192,6 +1193,34 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				eqresult = op->d.func.fn_addr(fcinfo);
 				/* Must invert result of "="; safe to do even if null */
 				*op->resvalue = BoolGetDatum(!DatumGetBool(eqresult));
+				*op->resnull = fcinfo->isnull;
+			}
+
+			EEO_NEXT();
+		}
+
+		/* see EEOP_DISTINCT for comments, this is just inverted */
+		EEO_CASE(EEOP_NOT_DISTINCT)
+		{
+			FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
+
+			if (fcinfo->argnull[0] && fcinfo->argnull[1])
+			{
+				*op->resvalue = BoolGetDatum(true);
+				*op->resnull = false;
+			}
+			else if (fcinfo->argnull[0] || fcinfo->argnull[1])
+			{
+				*op->resvalue = BoolGetDatum(false);
+				*op->resnull = false;
+			}
+			else
+			{
+				Datum		eqresult;
+
+				fcinfo->isnull = false;
+				eqresult = op->d.func.fn_addr(fcinfo);
+				*op->resvalue = eqresult;
 				*op->resnull = fcinfo->isnull;
 			}
 
