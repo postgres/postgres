@@ -8,7 +8,6 @@
 
 #include "mb/pg_wchar.h"
 #include "utils/memutils.h"
-#include "utils/palloc.h"
 
 #include "plpython.h"
 

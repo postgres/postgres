@@ -34,7 +34,6 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "utils/builtins.h"
-#include "utils/elog.h"
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
 #include "utils/timestamp.h"

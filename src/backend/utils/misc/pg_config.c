@@ -19,7 +19,6 @@
 #include "catalog/pg_type.h"
 #include "common/config_info.h"
 #include "utils/builtins.h"
-#include "utils/elog.h"
 #include "port.h"
 
 Datum

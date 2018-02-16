@@ -32,7 +32,6 @@
 #include "nodes/bitmapset.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-#include "utils/palloc.h"
 
 /*
  * DiscreteKnapsack

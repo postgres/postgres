@@ -8,7 +8,6 @@
 #ifndef KNAPSACK_H
 #define KNAPSACK_H
 
-#include "postgres.h"
 #include "nodes/bitmapset.h"
 
 extern Bitmapset *DiscreteKnapsack(int max_weight, int num_items,
