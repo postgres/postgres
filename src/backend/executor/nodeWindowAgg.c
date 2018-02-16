@@ -1272,13 +1272,12 @@ spool_tuples(WindowAggState *winstate, int64 pos)
 
 		if (node->partNumCols > 0)
 		{
-			ExprContext *econtext = winstate->tmpcontext;
-
-			econtext->ecxt_innertuple = winstate->first_part_slot;
-			econtext->ecxt_outertuple = outerslot;
-
 			/* Check if this tuple still belongs to the current partition */
-			if (!ExecQualAndReset(winstate->partEqfunction, econtext))
+			if (!execTuplesMatch(winstate->first_part_slot,
+								 outerslot,
+								 node->partNumCols, node->partColIdx,
+								 winstate->partEqfunctions,
+								 winstate->tmpcontext->ecxt_per_tuple_memory))
 			{
 				/*
 				 * end of partition; copy the tuple for the next cycle.
@@ -2246,7 +2245,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 				wfuncno,
 				numaggs,
 				aggno;
-	TupleDesc	scanDesc;
 	ListCell   *l;
 
 	/* check for unsupported flags */
@@ -2329,7 +2327,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 * store in the tuplestore and use in all our working slots).
 	 */
 	ExecAssignScanTypeFromOuterPlan(&winstate->ss);
-	scanDesc = winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
 
 	ExecSetSlotDescriptor(winstate->first_part_slot,
 						  winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
@@ -2354,20 +2351,11 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 
 	/* Set up data for comparing tuples */
 	if (node->partNumCols > 0)
-		winstate->partEqfunction =
-			execTuplesMatchPrepare(scanDesc,
-								   node->partNumCols,
-								   node->partColIdx,
-								   node->partOperators,
-								   &winstate->ss.ps);
-
+		winstate->partEqfunctions = execTuplesMatchPrepare(node->partNumCols,
+														   node->partOperators);
 	if (node->ordNumCols > 0)
-		winstate->ordEqfunction =
-			execTuplesMatchPrepare(scanDesc,
-								   node->ordNumCols,
-								   node->ordColIdx,
-								   node->ordOperators,
-								   &winstate->ss.ps);
+		winstate->ordEqfunctions = execTuplesMatchPrepare(node->ordNumCols,
+														  node->ordOperators);
 
 	/*
 	 * WindowAgg nodes use aggvalues and aggnulls as well as Agg nodes.
@@ -2891,15 +2879,15 @@ are_peers(WindowAggState *winstate, TupleTableSlot *slot1,
 		  TupleTableSlot *slot2)
 {
 	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
-	ExprContext *econtext = winstate->tmpcontext;
 
 	/* If no ORDER BY, all rows are peers with each other */
 	if (node->ordNumCols == 0)
 		return true;
 
-	econtext->ecxt_outertuple = slot1;
-	econtext->ecxt_innertuple = slot2;
-	return ExecQualAndReset(winstate->ordEqfunction, econtext);
+	return execTuplesMatch(slot1, slot2,
+						   node->ordNumCols, node->ordColIdx,
+						   winstate->ordEqfunctions,
+						   winstate->tmpcontext->ecxt_per_tuple_memory);
 }
 
 /*

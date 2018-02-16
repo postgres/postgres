@@ -148,7 +148,6 @@ typedef enum ExprEvalOp
 	/* evaluate assorted special-purpose expression types */
 	EEOP_IOCOERCE,
 	EEOP_DISTINCT,
-	EEOP_NOT_DISTINCT,
 	EEOP_NULLIF,
 	EEOP_SQLVALUEFUNCTION,
 	EEOP_CURRENTOFEXPR,

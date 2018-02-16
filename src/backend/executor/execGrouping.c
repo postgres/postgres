@@ -52,33 +52,172 @@ static int	TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tup
  *****************************************************************************/
 
 /*
- * execTuplesMatchPrepare
- *		Build expression that can be evaluated using ExecQual(), returning
- *		whether an ExprContext's inner/outer tuples are NOT DISTINCT
+ * execTuplesMatch
+ *		Return true if two tuples match in all the indicated fields.
+ *
+ * This actually implements SQL's notion of "not distinct".  Two nulls
+ * match, a null and a not-null don't match.
+ *
+ * slot1, slot2: the tuples to compare (must have same columns!)
+ * numCols: the number of attributes to be examined
+ * matchColIdx: array of attribute column numbers
+ * eqFunctions: array of fmgr lookup info for the equality functions to use
+ * evalContext: short-term memory context for executing the functions
+ *
+ * NB: evalContext is reset each time!
  */
-ExprState *
-execTuplesMatchPrepare(TupleDesc desc,
-					   int numCols,
-					   AttrNumber *keyColIdx,
-					   Oid *eqOperators,
-					   PlanState *parent)
+bool
+execTuplesMatch(TupleTableSlot *slot1,
+				TupleTableSlot *slot2,
+				int numCols,
+				AttrNumber *matchColIdx,
+				FmgrInfo *eqfunctions,
+				MemoryContext evalContext)
 {
-	Oid		   *eqFunctions = (Oid *) palloc(numCols * sizeof(Oid));
+	MemoryContext oldContext;
+	bool		result;
 	int			i;
-	ExprState  *expr;
 
-	if (numCols == 0)
-		return NULL;
+	/* Reset and switch into the temp context. */
+	MemoryContextReset(evalContext);
+	oldContext = MemoryContextSwitchTo(evalContext);
 
-	/* lookup equality functions */
+	/*
+	 * We cannot report a match without checking all the fields, but we can
+	 * report a non-match as soon as we find unequal fields.  So, start
+	 * comparing at the last field (least significant sort key). That's the
+	 * most likely to be different if we are dealing with sorted input.
+	 */
+	result = true;
+
+	for (i = numCols; --i >= 0;)
+	{
+		AttrNumber	att = matchColIdx[i];
+		Datum		attr1,
+					attr2;
+		bool		isNull1,
+					isNull2;
+
+		attr1 = slot_getattr(slot1, att, &isNull1);
+
+		attr2 = slot_getattr(slot2, att, &isNull2);
+
+		if (isNull1 != isNull2)
+		{
+			result = false;		/* one null and one not; they aren't equal */
+			break;
+		}
+
+		if (isNull1)
+			continue;			/* both are null, treat as equal */
+
+		/* Apply the type-specific equality function */
+
+		if (!DatumGetBool(FunctionCall2(&eqfunctions[i],
+										attr1, attr2)))
+		{
+			result = false;		/* they aren't equal */
+			break;
+		}
+	}
+
+	MemoryContextSwitchTo(oldContext);
+
+	return result;
+}
+
+/*
+ * execTuplesUnequal
+ *		Return true if two tuples are definitely unequal in the indicated
+ *		fields.
+ *
+ * Nulls are neither equal nor unequal to anything else.  A true result
+ * is obtained only if there are non-null fields that compare not-equal.
+ *
+ * Parameters are identical to execTuplesMatch.
+ */
+bool
+execTuplesUnequal(TupleTableSlot *slot1,
+				  TupleTableSlot *slot2,
+				  int numCols,
+				  AttrNumber *matchColIdx,
+				  FmgrInfo *eqfunctions,
+				  MemoryContext evalContext)
+{
+	MemoryContext oldContext;
+	bool		result;
+	int			i;
+
+	/* Reset and switch into the temp context. */
+	MemoryContextReset(evalContext);
+	oldContext = MemoryContextSwitchTo(evalContext);
+
+	/*
+	 * We cannot report a match without checking all the fields, but we can
+	 * report a non-match as soon as we find unequal fields.  So, start
+	 * comparing at the last field (least significant sort key). That's the
+	 * most likely to be different if we are dealing with sorted input.
+	 */
+	result = false;
+
+	for (i = numCols; --i >= 0;)
+	{
+		AttrNumber	att = matchColIdx[i];
+		Datum		attr1,
+					attr2;
+		bool		isNull1,
+					isNull2;
+
+		attr1 = slot_getattr(slot1, att, &isNull1);
+
+		if (isNull1)
+			continue;			/* can't prove anything here */
+
+		attr2 = slot_getattr(slot2, att, &isNull2);
+
+		if (isNull2)
+			continue;			/* can't prove anything here */
+
+		/* Apply the type-specific equality function */
+
+		if (!DatumGetBool(FunctionCall2(&eqfunctions[i],
+										attr1, attr2)))
+		{
+			result = true;		/* they are unequal */
+			break;
+		}
+	}
+
+	MemoryContextSwitchTo(oldContext);
+
+	return result;
+}
+
+
+/*
+ * execTuplesMatchPrepare
+ *		Look up the equality functions needed for execTuplesMatch or
+ *		execTuplesUnequal, given an array of equality operator OIDs.
+ *
+ * The result is a palloc'd array.
+ */
+FmgrInfo *
+execTuplesMatchPrepare(int numCols,
+					   Oid *eqOperators)
+{
+	FmgrInfo   *eqFunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
+	int			i;
+
 	for (i = 0; i < numCols; i++)
-		eqFunctions[i] = get_opcode(eqOperators[i]);
+	{
+		Oid			eq_opr = eqOperators[i];
+		Oid			eq_function;
 
-	/* build actual expression */
-	expr = ExecBuildGroupingEqual(desc, numCols, keyColIdx, eqFunctions,
-								  parent);
+		eq_function = get_opcode(eq_opr);
+		fmgr_info(eq_function, &eqFunctions[i]);
+	}
 
-	return expr;
+	return eqFunctions;
 }
 
 /*
@@ -149,9 +288,7 @@ execTuplesHashPrepare(int numCols,
  * storage that will live as long as the hashtable does.
  */
 TupleHashTable
-BuildTupleHashTable(PlanState *parent,
-					TupleDesc inputDesc,
-					int numCols, AttrNumber *keyColIdx,
+BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 					FmgrInfo *eqfunctions,
 					FmgrInfo *hashfunctions,
 					long nbuckets, Size additionalsize,
@@ -160,9 +297,6 @@ BuildTupleHashTable(PlanState *parent,
 {
 	TupleHashTable hashtable;
 	Size		entrysize = sizeof(TupleHashEntryData) + additionalsize;
-	MemoryContext oldcontext;
-	Oid		   *eqoids = (Oid *) palloc(numCols * sizeof(Oid));
-	int			i;
 
 	Assert(nbuckets > 0);
 
@@ -199,26 +333,6 @@ BuildTupleHashTable(PlanState *parent,
 
 	hashtable->hashtab = tuplehash_create(tablecxt, nbuckets, hashtable);
 
-	oldcontext = MemoryContextSwitchTo(hashtable->tablecxt);
-
-	/*
-	 * We copy the input tuple descriptor just for safety --- we assume all
-	 * input tuples will have equivalent descriptors.
-	 */
-	hashtable->tableslot = MakeSingleTupleTableSlot(CreateTupleDescCopy(inputDesc));
-
-	/* build comparator for all columns */
-	for (i = 0; i < numCols; i++)
-		eqoids[i] = eqfunctions[i].fn_oid;
-	hashtable->eq_func = ExecBuildGroupingEqual(inputDesc,
-												numCols,
-												keyColIdx, eqoids,
-												parent);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	hashtable->exprcontext = CreateExprContext(parent->state);
-
 	return hashtable;
 }
 
@@ -242,6 +356,22 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 	MemoryContext oldContext;
 	bool		found;
 	MinimalTuple key;
+
+	/* If first time through, clone the input slot to make table slot */
+	if (hashtable->tableslot == NULL)
+	{
+		TupleDesc	tupdesc;
+
+		oldContext = MemoryContextSwitchTo(hashtable->tablecxt);
+
+		/*
+		 * We copy the input tuple descriptor just for safety --- we assume
+		 * all input tuples will have equivalent descriptors.
+		 */
+		tupdesc = CreateTupleDescCopy(slot->tts_tupleDescriptor);
+		hashtable->tableslot = MakeSingleTupleTableSlot(tupdesc);
+		MemoryContextSwitchTo(oldContext);
+	}
 
 	/* Need to run the hash functions in short-lived context */
 	oldContext = MemoryContextSwitchTo(hashtable->tempcxt);
@@ -394,6 +524,9 @@ TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple)
  * See whether two tuples (presumably of the same hash value) match
  *
  * As above, the passed pointers are pointers to TupleHashEntryData.
+ *
+ * Also, the caller must select an appropriate memory context for running
+ * the compare functions.  (dynahash.c doesn't change CurrentMemoryContext.)
  */
 static int
 TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const MinimalTuple tuple2)
@@ -401,7 +534,6 @@ TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const 
 	TupleTableSlot *slot1;
 	TupleTableSlot *slot2;
 	TupleHashTable hashtable = (TupleHashTable) tb->private_data;
-	ExprContext *econtext = hashtable->exprcontext;
 
 	/*
 	 * We assume that simplehash.h will only ever call us with the first
@@ -416,7 +548,13 @@ TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const 
 	slot2 = hashtable->inputslot;
 
 	/* For crosstype comparisons, the inputslot must be first */
-	econtext->ecxt_innertuple = slot1;
-	econtext->ecxt_outertuple = slot2;
-	return !ExecQualAndReset(hashtable->eq_func, econtext);
+	if (execTuplesMatch(slot2,
+						slot1,
+						hashtable->numCols,
+						hashtable->keyColIdx,
+						hashtable->cur_eq_funcs,
+						hashtable->tempcxt))
+		return 0;
+	else
+		return 1;
 }

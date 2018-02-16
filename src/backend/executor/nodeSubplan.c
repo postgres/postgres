@@ -494,9 +494,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	if (nbuckets < 1)
 		nbuckets = 1;
 
-	node->hashtable = BuildTupleHashTable(node->parent,
-										  node->descRight,
-										  ncols,
+	node->hashtable = BuildTupleHashTable(ncols,
 										  node->keyColIdx,
 										  node->tab_eq_funcs,
 										  node->tab_hash_funcs,
@@ -516,9 +514,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 			if (nbuckets < 1)
 				nbuckets = 1;
 		}
-		node->hashnulls = BuildTupleHashTable(node->parent,
-											  node->descRight,
-											  ncols,
+		node->hashnulls = BuildTupleHashTable(ncols,
 											  node->keyColIdx,
 											  node->tab_eq_funcs,
 											  node->tab_hash_funcs,
@@ -600,78 +596,6 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	ExecClearTuple(node->projRight->pi_state.resultslot);
 
 	MemoryContextSwitchTo(oldcontext);
-}
-
-
-/*
- * execTuplesUnequal
- *		Return true if two tuples are definitely unequal in the indicated
- *		fields.
- *
- * Nulls are neither equal nor unequal to anything else.  A true result
- * is obtained only if there are non-null fields that compare not-equal.
- *
- * slot1, slot2: the tuples to compare (must have same columns!)
- * numCols: the number of attributes to be examined
- * matchColIdx: array of attribute column numbers
- * eqFunctions: array of fmgr lookup info for the equality functions to use
- * evalContext: short-term memory context for executing the functions
- */
-static bool
-execTuplesUnequal(TupleTableSlot *slot1,
-				  TupleTableSlot *slot2,
-				  int numCols,
-				  AttrNumber *matchColIdx,
-				  FmgrInfo *eqfunctions,
-				  MemoryContext evalContext)
-{
-	MemoryContext oldContext;
-	bool		result;
-	int			i;
-
-	/* Reset and switch into the temp context. */
-	MemoryContextReset(evalContext);
-	oldContext = MemoryContextSwitchTo(evalContext);
-
-	/*
-	 * We cannot report a match without checking all the fields, but we can
-	 * report a non-match as soon as we find unequal fields.  So, start
-	 * comparing at the last field (least significant sort key). That's the
-	 * most likely to be different if we are dealing with sorted input.
-	 */
-	result = false;
-
-	for (i = numCols; --i >= 0;)
-	{
-		AttrNumber	att = matchColIdx[i];
-		Datum		attr1,
-					attr2;
-		bool		isNull1,
-					isNull2;
-
-		attr1 = slot_getattr(slot1, att, &isNull1);
-
-		if (isNull1)
-			continue;			/* can't prove anything here */
-
-		attr2 = slot_getattr(slot2, att, &isNull2);
-
-		if (isNull2)
-			continue;			/* can't prove anything here */
-
-		/* Apply the type-specific equality function */
-
-		if (!DatumGetBool(FunctionCall2(&eqfunctions[i],
-										attr1, attr2)))
-		{
-			result = true;		/* they are unequal */
-			break;
-		}
-	}
-
-	MemoryContextSwitchTo(oldContext);
-
-	return result;
 }
 
 /*
@@ -963,7 +887,6 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 												   NULL);
 
 		tupDesc = ExecTypeFromTL(righttlist, false);
-		sstate->descRight = tupDesc;
 		slot = ExecInitExtraTupleSlot(estate);
 		ExecSetSlotDescriptor(slot, tupDesc);
 		sstate->projRight = ExecBuildProjectionInfo(righttlist,

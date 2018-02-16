@@ -25,7 +25,6 @@
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"
 #include "miscadmin.h"
-#include "utils/memutils.h"
 
 
 /*
@@ -38,6 +37,8 @@ ExecGroup(PlanState *pstate)
 {
 	GroupState *node = castNode(GroupState, pstate);
 	ExprContext *econtext;
+	int			numCols;
+	AttrNumber *grpColIdx;
 	TupleTableSlot *firsttupleslot;
 	TupleTableSlot *outerslot;
 
@@ -49,6 +50,8 @@ ExecGroup(PlanState *pstate)
 	if (node->grp_done)
 		return NULL;
 	econtext = node->ss.ps.ps_ExprContext;
+	numCols = ((Group *) node->ss.ps.plan)->numCols;
+	grpColIdx = ((Group *) node->ss.ps.plan)->grpColIdx;
 
 	/*
 	 * The ScanTupleSlot holds the (copied) first tuple of each group.
@@ -56,7 +59,7 @@ ExecGroup(PlanState *pstate)
 	firsttupleslot = node->ss.ss_ScanTupleSlot;
 
 	/*
-	 * We need not call ResetExprContext here because ExecQualAndReset() will
+	 * We need not call ResetExprContext here because execTuplesMatch will
 	 * reset the per-tuple memory context once per input tuple.
 	 */
 
@@ -121,9 +124,10 @@ ExecGroup(PlanState *pstate)
 			 * Compare with first tuple and see if this tuple is of the same
 			 * group.  If so, ignore it and keep scanning.
 			 */
-			econtext->ecxt_innertuple = firsttupleslot;
-			econtext->ecxt_outertuple = outerslot;
-			if (!ExecQualAndReset(node->eqfunction, econtext))
+			if (!execTuplesMatch(firsttupleslot, outerslot,
+								 numCols, grpColIdx,
+								 node->eqfunctions,
+								 econtext->ecxt_per_tuple_memory))
 				break;
 		}
 
@@ -162,7 +166,6 @@ GroupState *
 ExecInitGroup(Group *node, EState *estate, int eflags)
 {
 	GroupState *grpstate;
-	AttrNumber *grpColIdx = grpColIdx = node->grpColIdx;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -212,12 +215,9 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	/*
 	 * Precompute fmgr lookup data for inner loop
 	 */
-	grpstate->eqfunction =
-		execTuplesMatchPrepare(ExecGetResultType(outerPlanState(grpstate)),
-							   node->numCols,
-							   grpColIdx,
-							   node->grpOperators,
-							   &grpstate->ss.ps);
+	grpstate->eqfunctions =
+		execTuplesMatchPrepare(node->numCols,
+							   node->grpOperators);
 
 	return grpstate;
 }

@@ -635,8 +635,6 @@ typedef struct TupleHashTableData
 	FmgrInfo   *in_hash_funcs;	/* hash functions for input datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for input vs. table */
 	uint32		hash_iv;		/* hash-function IV */
-	ExprState  *eq_func;		/* tuple equality comparator */
-	ExprContext *exprcontext;	/* expression context */
 }			TupleHashTableData;
 
 typedef tuplehash_iterator TupleHashIterator;
@@ -783,7 +781,6 @@ typedef struct SubPlanState
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 	Datum		curArray;		/* most recent array from ARRAY() subplan */
 	/* these are used when hashing the subselect's output: */
-	TupleDesc	descRight;		/* subselect desc after projection */
 	ProjectionInfo *projLeft;	/* for projecting lefthand exprs */
 	ProjectionInfo *projRight;	/* for projecting subselect output */
 	TupleHashTable hashtable;	/* hash table for no-nulls subselect rows */
@@ -1798,7 +1795,7 @@ typedef struct SortState
 typedef struct GroupState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	ExprState  *eqfunction;		/* equality function */
+	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
 	bool		grp_done;		/* indicates completion of Group scan */
 } GroupState;
 
@@ -1888,8 +1885,8 @@ typedef struct WindowAggState
 
 	WindowStatePerFunc perfunc; /* per-window-function information */
 	WindowStatePerAgg peragg;	/* per-plain-aggregate information */
-	ExprState  *partEqfunction;	/* equality funcs for partition columns */
-	ExprState  *ordEqfunction; /* equality funcs for ordering columns */
+	FmgrInfo   *partEqfunctions;	/* equality funcs for partition columns */
+	FmgrInfo   *ordEqfunctions; /* equality funcs for ordering columns */
 	Tuplestorestate *buffer;	/* stores rows of current partition */
 	int			current_ptr;	/* read pointer # for current row */
 	int			framehead_ptr;	/* read pointer # for frame head, if used */
@@ -1967,7 +1964,8 @@ typedef struct WindowAggState
 typedef struct UniqueState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	ExprState   *eqfunction;		/* tuple equality qual */
+	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
+	MemoryContext tempContext;	/* short-term context for comparisons */
 } UniqueState;
 
 /* ----------------
@@ -2081,11 +2079,11 @@ typedef struct SetOpStatePerGroupData *SetOpStatePerGroup;
 typedef struct SetOpState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	ExprState  *eqfunction;		/* equality comparator */
 	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	bool		setop_done;		/* indicates completion of output scan */
 	long		numOutput;		/* number of dups left to output */
+	MemoryContext tempContext;	/* short-term context for comparisons */
 	/* these fields are used in SETOP_SORTED mode: */
 	SetOpStatePerGroup pergroup;	/* per-group working state */
 	HeapTuple	grp_firstTuple; /* copy of first tuple of current group */
