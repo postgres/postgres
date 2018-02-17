@@ -112,10 +112,17 @@ extern void clean_ipv6_addr(int addr_family, char *addr);
 extern Datum numeric_float8_no_overflow(PG_FUNCTION_ARGS);
 
 /* format_type.c */
+
+/* Control flags for format_type_extended */
+#define FORMAT_TYPE_TYPEMOD_GIVEN	0x01	/* typemod defined by caller */
+#define FORMAT_TYPE_ALLOW_INVALID	0x02	/* allow invalid types */
+#define FORMAT_TYPE_FORCE_QUALIFY	0x04	/* force qualification of type */
+extern char *format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
+
 extern char *format_type_be(Oid type_oid);
 extern char *format_type_be_qualified(Oid type_oid);
 extern char *format_type_with_typemod(Oid type_oid, int32 typemod);
-extern char *format_type_with_typemod_qualified(Oid type_oid, int32 typemod);
+
 extern int32 type_maximum_size(Oid type_oid, int32 typemod);
 
 /* quote.c */

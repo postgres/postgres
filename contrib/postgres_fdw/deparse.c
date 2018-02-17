@@ -854,10 +854,12 @@ foreign_expr_walker(Node *node,
 static char *
 deparse_type_name(Oid type_oid, int32 typemod)
 {
-	if (is_builtin(type_oid))
-		return format_type_with_typemod(type_oid, typemod);
-	else
-		return format_type_with_typemod_qualified(type_oid, typemod);
+	uint8 flags = FORMAT_TYPE_TYPEMOD_GIVEN;
+
+	if (!is_builtin(type_oid))
+		flags |= FORMAT_TYPE_FORCE_QUALIFY;
+
+	return format_type_extended(type_oid, typemod, flags);
 }
 
 /*

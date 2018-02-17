@@ -28,9 +28,6 @@
 
 #define MAX_INT32_LEN 11
 
-static char *format_type_internal(Oid type_oid, int32 typemod,
-					 bool typemod_given, bool allow_invalid,
-					 bool force_qualify);
 static char *printTypmod(const char *typname, int32 typmod, Oid typmodout);
 
 
@@ -72,81 +69,52 @@ format_type(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	type_oid = PG_GETARG_OID(0);
+	typemod = PG_ARGISNULL(1) ? -1 : PG_GETARG_INT32(1);
 
-	if (PG_ARGISNULL(1))
-		result = format_type_internal(type_oid, -1, false, true, false);
-	else
-	{
-		typemod = PG_GETARG_INT32(1);
-		result = format_type_internal(type_oid, typemod, true, true, false);
-	}
+	result = format_type_extended(type_oid, typemod,
+								  FORMAT_TYPE_TYPEMOD_GIVEN |
+								  FORMAT_TYPE_ALLOW_INVALID);
 
 	PG_RETURN_TEXT_P(cstring_to_text(result));
 }
 
 /*
- * This version is for use within the backend in error messages, etc.
- * One difference is that it will fail for an invalid type.
+ * format_type_extended
+ *		Generate a possibly-qualified type name.
  *
- * The result is always a palloc'd string.
+ * The default is to only qualify if the type is not in the search path, to
+ * ignore the given typmod, and to raise an error if a non-existent type_oid is
+ * given.
+ *
+ * The following bits in 'flags' modify the behavior:
+ * - FORMAT_TYPE_TYPEMOD_GIVEN
+ *			consider the given typmod in the output (may be -1 to request
+ *			the default behavior)
+ *
+ * - FORMAT_TYPE_ALLOW_INVALID
+ *			if the type OID is invalid or unknown, return ??? or such instead
+ *			of failing
+ *
+ * - FORMAT_TYPE_FORCE_QUALIFY
+ *			always schema-qualify type names, regardless of search_path
  */
 char *
-format_type_be(Oid type_oid)
+format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 {
-	return format_type_internal(type_oid, -1, false, false, false);
-}
-
-/*
- * This version returns a name that is always qualified (unless it's one
- * of the SQL-keyword type names, such as TIMESTAMP WITH TIME ZONE).
- */
-char *
-format_type_be_qualified(Oid type_oid)
-{
-	return format_type_internal(type_oid, -1, false, false, true);
-}
-
-/*
- * This version allows a nondefault typemod to be specified.
- */
-char *
-format_type_with_typemod(Oid type_oid, int32 typemod)
-{
-	return format_type_internal(type_oid, typemod, true, false, false);
-}
-
-/*
- * This version allows a nondefault typemod to be specified, and forces
- * qualification of normal type names.
- */
-char *
-format_type_with_typemod_qualified(Oid type_oid, int32 typemod)
-{
-	return format_type_internal(type_oid, typemod, true, false, true);
-}
-
-/*
- * Common workhorse.
- */
-static char *
-format_type_internal(Oid type_oid, int32 typemod,
-					 bool typemod_given, bool allow_invalid,
-					 bool force_qualify)
-{
-	bool		with_typemod = typemod_given && (typemod >= 0);
 	HeapTuple	tuple;
 	Form_pg_type typeform;
 	Oid			array_base_type;
 	bool		is_array;
 	char	   *buf;
+	bool		with_typemod;
 
-	if (type_oid == InvalidOid && allow_invalid)
+	if (type_oid == InvalidOid && (flags & FORMAT_TYPE_ALLOW_INVALID) != 0)
 		return pstrdup("-");
 
 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
 	if (!HeapTupleIsValid(tuple))
 	{
-		if (allow_invalid)
+		if ((flags & FORMAT_TYPE_ALLOW_INVALID) != 0)
 			return pstrdup("???");
 		else
 			elog(ERROR, "cache lookup failed for type %u", type_oid);
@@ -162,15 +130,14 @@ format_type_internal(Oid type_oid, int32 typemod,
 	 */
 	array_base_type = typeform->typelem;
 
-	if (array_base_type != InvalidOid &&
-		typeform->typstorage != 'p')
+	if (array_base_type != InvalidOid && typeform->typstorage != 'p')
 	{
 		/* Switch our attention to the array element type */
 		ReleaseSysCache(tuple);
 		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(array_base_type));
 		if (!HeapTupleIsValid(tuple))
 		{
-			if (allow_invalid)
+			if ((flags & FORMAT_TYPE_ALLOW_INVALID) != 0)
 				return pstrdup("???[]");
 			else
 				elog(ERROR, "cache lookup failed for type %u", type_oid);
@@ -181,6 +148,8 @@ format_type_internal(Oid type_oid, int32 typemod,
 	}
 	else
 		is_array = false;
+
+	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
 
 	/*
 	 * See if we want to special-case the output for certain built-in types.
@@ -200,7 +169,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 		case BITOID:
 			if (with_typemod)
 				buf = printTypmod("bit", typemod, typeform->typmodout);
-			else if (typemod_given)
+			else if ((flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0)
 			{
 				/*
 				 * bit with typmod -1 is not the same as BIT, which means
@@ -219,7 +188,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 		case BPCHAROID:
 			if (with_typemod)
 				buf = printTypmod("character", typemod, typeform->typmodout);
-			else if (typemod_given)
+			else if ((flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0)
 			{
 				/*
 				 * bpchar with typmod -1 is not the same as CHARACTER, which
@@ -313,13 +282,14 @@ format_type_internal(Oid type_oid, int32 typemod,
 		/*
 		 * Default handling: report the name as it appears in the catalog.
 		 * Here, we must qualify the name if it is not visible in the search
-		 * path, and we must double-quote it if it's not a standard identifier
-		 * or if it matches any keyword.
+		 * path or if caller requests it; and we must double-quote it if it's
+		 * not a standard identifier or if it matches any keyword.
 		 */
 		char	   *nspname;
 		char	   *typname;
 
-		if (!force_qualify && TypeIsVisible(type_oid))
+		if ((flags & FORMAT_TYPE_FORCE_QUALIFY) == 0 &&
+			TypeIsVisible(type_oid))
 			nspname = NULL;
 		else
 			nspname = get_namespace_name_or_temp(typeform->typnamespace);
@@ -340,6 +310,36 @@ format_type_internal(Oid type_oid, int32 typemod,
 	return buf;
 }
 
+/*
+ * This version is for use within the backend in error messages, etc.
+ * One difference is that it will fail for an invalid type.
+ *
+ * The result is always a palloc'd string.
+ */
+char *
+format_type_be(Oid type_oid)
+{
+	return format_type_extended(type_oid, -1, 0);
+}
+
+/*
+ * This version returns a name that is always qualified (unless it's one
+ * of the SQL-keyword type names, such as TIMESTAMP WITH TIME ZONE).
+ */
+char *
+format_type_be_qualified(Oid type_oid)
+{
+	return format_type_extended(type_oid, -1, FORMAT_TYPE_FORCE_QUALIFY);
+}
+
+/*
+ * This version allows a nondefault typemod to be specified.
+ */
+char *
+format_type_with_typemod(Oid type_oid, int32 typemod)
+{
+	return format_type_extended(type_oid, typemod, FORMAT_TYPE_TYPEMOD_GIVEN);
+}
 
 /*
  * Add typmod decoration to the basic type name
@@ -437,8 +437,8 @@ oidvectortypes(PG_FUNCTION_ARGS)
 
 	for (num = 0; num < numargs; num++)
 	{
-		char	   *typename = format_type_internal(oidArray->values[num], -1,
-													false, true, false);
+		char	   *typename = format_type_extended(oidArray->values[num], -1,
+													FORMAT_TYPE_ALLOW_INVALID);
 		size_t		slen = strlen(typename);
 
 		if (left < (slen + 2))
