@@ -5144,29 +5144,29 @@ BlockStateAsString(TBlockState blockState)
 		case TBLOCK_ABORT:
 			return "ABORT";
 		case TBLOCK_ABORT_END:
-			return "ABORT END";
+			return "ABORT_END";
 		case TBLOCK_ABORT_PENDING:
-			return "ABORT PEND";
+			return "ABORT_PENDING";
 		case TBLOCK_PREPARE:
 			return "PREPARE";
 		case TBLOCK_SUBBEGIN:
-			return "SUB BEGIN";
+			return "SUBBEGIN";
 		case TBLOCK_SUBINPROGRESS:
-			return "SUB INPROGRS";
+			return "SUBINPROGRESS";
 		case TBLOCK_SUBRELEASE:
-			return "SUB RELEASE";
+			return "SUBRELEASE";
 		case TBLOCK_SUBCOMMIT:
-			return "SUB COMMIT";
+			return "SUBCOMMIT";
 		case TBLOCK_SUBABORT:
-			return "SUB ABORT";
+			return "SUBABORT";
 		case TBLOCK_SUBABORT_END:
-			return "SUB ABORT END";
+			return "SUBABORT_END";
 		case TBLOCK_SUBABORT_PENDING:
-			return "SUB ABRT PEND";
+			return "SUBABORT_PENDING";
 		case TBLOCK_SUBRESTART:
-			return "SUB RESTART";
+			return "SUBRESTART";
 		case TBLOCK_SUBABORT_RESTART:
-			return "SUB AB RESTRT";
+			return "SUBABORT_RESTART";
 	}
 	return "UNRECOGNIZED";
 }
@@ -5185,7 +5185,7 @@ TransStateAsString(TransState state)
 		case TRANS_START:
 			return "START";
 		case TRANS_INPROGRESS:
-			return "INPROGR";
+			return "INPROGRESS";
 		case TRANS_COMMIT:
 			return "COMMIT";
 		case TRANS_ABORT:
