@@ -469,34 +469,18 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						break;
 
 					case TRANS_STMT_SAVEPOINT:
-						{
-							ListCell   *cell;
-							char	   *name = NULL;
-
-							RequireTransactionBlock(isTopLevel, "SAVEPOINT");
-
-							foreach(cell, stmt->options)
-							{
-								DefElem    *elem = lfirst(cell);
-
-								if (strcmp(elem->defname, "savepoint_name") == 0)
-									name = strVal(elem->arg);
-							}
-
-							Assert(PointerIsValid(name));
-
-							DefineSavepoint(name);
-						}
+						RequireTransactionBlock(isTopLevel, "SAVEPOINT");
+						DefineSavepoint(stmt->savepoint_name);
 						break;
 
 					case TRANS_STMT_RELEASE:
 						RequireTransactionBlock(isTopLevel, "RELEASE SAVEPOINT");
-						ReleaseSavepoint(stmt->options);
+						ReleaseSavepoint(stmt->savepoint_name);
 						break;
 
 					case TRANS_STMT_ROLLBACK_TO:
 						RequireTransactionBlock(isTopLevel, "ROLLBACK TO SAVEPOINT");
-						RollbackToSavepoint(stmt->options);
+						RollbackToSavepoint(stmt->savepoint_name);
 
 						/*
 						 * CommitTransactionCommand is in charge of

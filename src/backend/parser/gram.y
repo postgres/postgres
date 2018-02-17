@@ -9876,40 +9876,35 @@ TransactionStmt:
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_SAVEPOINT;
-					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($2), @1));
+					n->savepoint_name = $2;
 					$$ = (Node *)n;
 				}
 			| RELEASE SAVEPOINT ColId
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_RELEASE;
-					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($3), @1));
+					n->savepoint_name = $3;
 					$$ = (Node *)n;
 				}
 			| RELEASE ColId
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_RELEASE;
-					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($2), @1));
+					n->savepoint_name = $2;
 					$$ = (Node *)n;
 				}
 			| ROLLBACK opt_transaction TO SAVEPOINT ColId
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_TO;
-					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($5), @1));
+					n->savepoint_name = $5;
 					$$ = (Node *)n;
 				}
 			| ROLLBACK opt_transaction TO ColId
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_TO;
-					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($4), @1));
+					n->savepoint_name = $4;
 					$$ = (Node *)n;
 				}
 			| PREPARE TRANSACTION Sconst

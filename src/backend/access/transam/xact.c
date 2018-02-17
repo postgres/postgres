@@ -3908,13 +3908,11 @@ DefineSavepoint(const char *name)
  * As above, we don't actually do anything here except change blockState.
  */
 void
-ReleaseSavepoint(List *options)
+ReleaseSavepoint(const char *name)
 {
 	TransactionState s = CurrentTransactionState;
 	TransactionState target,
 				xact;
-	ListCell   *cell;
-	char	   *name = NULL;
 
 	/*
 	 * Workers synchronize transaction state at the beginning of each parallel
@@ -3978,16 +3976,6 @@ ReleaseSavepoint(List *options)
 			break;
 	}
 
-	foreach(cell, options)
-	{
-		DefElem    *elem = lfirst(cell);
-
-		if (strcmp(elem->defname, "savepoint_name") == 0)
-			name = strVal(elem->arg);
-	}
-
-	Assert(PointerIsValid(name));
-
 	for (target = s; PointerIsValid(target); target = target->parent)
 	{
 		if (PointerIsValid(target->name) && strcmp(target->name, name) == 0)
@@ -4029,13 +4017,11 @@ ReleaseSavepoint(List *options)
  * As above, we don't actually do anything here except change blockState.
  */
 void
-RollbackToSavepoint(List *options)
+RollbackToSavepoint(const char *name)
 {
 	TransactionState s = CurrentTransactionState;
 	TransactionState target,
 				xact;
-	ListCell   *cell;
-	char	   *name = NULL;
 
 	/*
 	 * Workers synchronize transaction state at the beginning of each parallel
@@ -4098,16 +4084,6 @@ RollbackToSavepoint(List *options)
 				 BlockStateAsString(s->blockState));
 			break;
 	}
-
-	foreach(cell, options)
-	{
-		DefElem    *elem = lfirst(cell);
-
-		if (strcmp(elem->defname, "savepoint_name") == 0)
-			name = strVal(elem->arg);
-	}
-
-	Assert(PointerIsValid(name));
 
 	for (target = s; PointerIsValid(target); target = target->parent)
 	{

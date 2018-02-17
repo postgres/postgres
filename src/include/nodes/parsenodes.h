@@ -2966,7 +2966,8 @@ typedef struct TransactionStmt
 {
 	NodeTag		type;
 	TransactionStmtKind kind;	/* see above */
-	List	   *options;		/* for BEGIN/START and savepoint commands */
+	List	   *options;		/* for BEGIN/START commands */
+	char	   *savepoint_name;	/* for savepoint commands */
 	char	   *gid;			/* for two-phase-commit related commands */
 } TransactionStmt;
 
