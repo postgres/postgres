@@ -596,6 +596,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	List	   *lclauses;
 	List	   *rclauses;
 	List	   *hoperators;
+	TupleDesc	outerDesc, innerDesc;
 	ListCell   *l;
 
 	/* check for unsupported flags */
@@ -614,6 +615,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 * managed to launch a parallel query.
 	 */
 	hjstate->js.ps.ExecProcNode = ExecHashJoin;
+	hjstate->js.jointype = node->join.jointype;
 
 	/*
 	 * Miscellaneous initialization
@@ -621,17 +623,6 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &hjstate->js.ps);
-
-	/*
-	 * initialize child expressions
-	 */
-	hjstate->js.ps.qual =
-		ExecInitQual(node->join.plan.qual, (PlanState *) hjstate);
-	hjstate->js.jointype = node->join.jointype;
-	hjstate->js.joinqual =
-		ExecInitQual(node->join.joinqual, (PlanState *) hjstate);
-	hjstate->hashclauses =
-		ExecInitQual(node->hashclauses, (PlanState *) hjstate);
 
 	/*
 	 * initialize child nodes
@@ -644,13 +635,20 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	hashNode = (Hash *) innerPlan(node);
 
 	outerPlanState(hjstate) = ExecInitNode(outerNode, estate, eflags);
+	outerDesc = ExecGetResultType(outerPlanState(hjstate));
 	innerPlanState(hjstate) = ExecInitNode((Plan *) hashNode, estate, eflags);
+	innerDesc = ExecGetResultType(innerPlanState(hjstate));
+
+	/*
+	 * Initialize result slot, type and projection.
+	 */
+	ExecInitResultTupleSlotTL(estate, &hjstate->js.ps);
+	ExecAssignProjectionInfo(&hjstate->js.ps, NULL);
 
 	/*
 	 * tuple table initialization
 	 */
-	ExecInitResultTupleSlot(estate, &hjstate->js.ps);
-	hjstate->hj_OuterTupleSlot = ExecInitExtraTupleSlot(estate);
+	hjstate->hj_OuterTupleSlot = ExecInitExtraTupleSlot(estate, outerDesc);
 
 	/*
 	 * detect whether we need only consider the first matching inner tuple
@@ -667,21 +665,17 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 		case JOIN_LEFT:
 		case JOIN_ANTI:
 			hjstate->hj_NullInnerTupleSlot =
-				ExecInitNullTupleSlot(estate,
-									  ExecGetResultType(innerPlanState(hjstate)));
+				ExecInitNullTupleSlot(estate, innerDesc);
 			break;
 		case JOIN_RIGHT:
 			hjstate->hj_NullOuterTupleSlot =
-				ExecInitNullTupleSlot(estate,
-									  ExecGetResultType(outerPlanState(hjstate)));
+				ExecInitNullTupleSlot(estate, outerDesc);
 			break;
 		case JOIN_FULL:
 			hjstate->hj_NullOuterTupleSlot =
-				ExecInitNullTupleSlot(estate,
-									  ExecGetResultType(outerPlanState(hjstate)));
+				ExecInitNullTupleSlot(estate, outerDesc);
 			hjstate->hj_NullInnerTupleSlot =
-				ExecInitNullTupleSlot(estate,
-									  ExecGetResultType(innerPlanState(hjstate)));
+				ExecInitNullTupleSlot(estate, innerDesc);
 			break;
 		default:
 			elog(ERROR, "unrecognized join type: %d",
@@ -703,13 +697,14 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	}
 
 	/*
-	 * initialize tuple type and projection info
+	 * initialize child expressions
 	 */
-	ExecAssignResultTypeFromTL(&hjstate->js.ps);
-	ExecAssignProjectionInfo(&hjstate->js.ps, NULL);
-
-	ExecSetSlotDescriptor(hjstate->hj_OuterTupleSlot,
-						  ExecGetResultType(outerPlanState(hjstate)));
+	hjstate->js.ps.qual =
+		ExecInitQual(node->join.plan.qual, (PlanState *) hjstate);
+	hjstate->js.joinqual =
+		ExecInitQual(node->join.joinqual, (PlanState *) hjstate);
+	hjstate->hashclauses =
+		ExecInitQual(node->hashclauses, (PlanState *) hjstate);
 
 	/*
 	 * initialize hash-specific info

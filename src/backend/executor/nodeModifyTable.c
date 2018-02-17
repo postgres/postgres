@@ -2367,8 +2367,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->ps.plan->targetlist = (List *) linitial(node->returningLists);
 
 		/* Set up a slot for the output of the RETURNING projection(s) */
-		ExecInitResultTupleSlot(estate, &mtstate->ps);
-		ExecAssignResultTypeFromTL(&mtstate->ps);
+		ExecInitResultTupleSlotTL(estate, &mtstate->ps);
 		slot = mtstate->ps.ps_ResultTupleSlot;
 
 		/* Need an econtext too */
@@ -2435,8 +2434,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * expects one (maybe should change that?).
 		 */
 		mtstate->ps.plan->targetlist = NIL;
-		ExecInitResultTupleSlot(estate, &mtstate->ps);
-		ExecAssignResultTypeFromTL(&mtstate->ps);
+		ExecInitResultTupleSlotTL(estate, &mtstate->ps);
 
 		mtstate->ps.ps_ExprContext = NULL;
 	}
@@ -2449,6 +2447,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	if (node->onConflictAction == ONCONFLICT_UPDATE)
 	{
 		ExprContext *econtext;
+		TupleDesc	relationDesc;
 		TupleDesc	tupDesc;
 
 		/* insert may only have one plan, inheritance is not expanded */
@@ -2459,26 +2458,26 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			ExecAssignExprContext(estate, &mtstate->ps);
 
 		econtext = mtstate->ps.ps_ExprContext;
+		relationDesc = resultRelInfo->ri_RelationDesc->rd_att;
 
 		/* initialize slot for the existing tuple */
-		mtstate->mt_existing = ExecInitExtraTupleSlot(mtstate->ps.state);
-		ExecSetSlotDescriptor(mtstate->mt_existing,
-							  resultRelInfo->ri_RelationDesc->rd_att);
+		mtstate->mt_existing =
+			ExecInitExtraTupleSlot(mtstate->ps.state, relationDesc);
 
 		/* carried forward solely for the benefit of explain */
 		mtstate->mt_excludedtlist = node->exclRelTlist;
 
 		/* create target slot for UPDATE SET projection */
 		tupDesc = ExecTypeFromTL((List *) node->onConflictSet,
-								 resultRelInfo->ri_RelationDesc->rd_rel->relhasoids);
-		mtstate->mt_conflproj = ExecInitExtraTupleSlot(mtstate->ps.state);
-		ExecSetSlotDescriptor(mtstate->mt_conflproj, tupDesc);
+								 relationDesc->tdhasoid);
+		mtstate->mt_conflproj =
+			ExecInitExtraTupleSlot(mtstate->ps.state, tupDesc);
 
 		/* build UPDATE SET projection state */
 		resultRelInfo->ri_onConflictSetProj =
 			ExecBuildProjectionInfo(node->onConflictSet, econtext,
 									mtstate->mt_conflproj, &mtstate->ps,
-									resultRelInfo->ri_RelationDesc->rd_att);
+									relationDesc);
 
 		/* build DO UPDATE WHERE clause expression */
 		if (node->onConflictWhere)
@@ -2583,7 +2582,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 				j = ExecInitJunkFilter(subplan->targetlist,
 									   resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
-									   ExecInitExtraTupleSlot(estate));
+									   ExecInitExtraTupleSlot(estate, NULL));
 
 				if (operation == CMD_UPDATE || operation == CMD_DELETE)
 				{
@@ -2633,7 +2632,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * we keep it in the estate.
 	 */
 	if (estate->es_trig_tuple_slot == NULL)
-		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
+		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate, NULL);
 
 	/*
 	 * Lastly, if this is not the primary (canSetTag) ModifyTable node, add it

@@ -244,14 +244,6 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &state->ps);
 
 	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &state->ps);
-
-	/* We don't support any qual on ProjectSet nodes */
-	Assert(node->plan.qual == NIL);
-
-	/*
 	 * initialize child nodes
 	 */
 	outerPlanState(state) = ExecInitNode(outerPlan(node), estate, eflags);
@@ -262,9 +254,9 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 	Assert(innerPlan(node) == NULL);
 
 	/*
-	 * initialize tuple type and projection info
+	 * tuple table and result type initialization
 	 */
-	ExecAssignResultTypeFromTL(&state->ps);
+	ExecInitResultTupleSlotTL(estate, &state->ps);
 
 	/* Create workspace for per-tlist-entry expr state & SRF-is-done state */
 	state->nelems = list_length(node->plan.targetlist);
@@ -301,6 +293,8 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 		off++;
 	}
 
+	/* We don't support any qual on ProjectSet nodes */
+	Assert(node->plan.qual == NIL);
 
 	/*
 	 * Create a memory context that ExecMakeFunctionResult can use to evaluate

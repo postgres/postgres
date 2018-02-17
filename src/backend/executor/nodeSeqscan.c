@@ -32,7 +32,6 @@
 #include "executor/nodeSeqscan.h"
 #include "utils/rel.h"
 
-static void InitScanRelation(SeqScanState *node, EState *estate, int eflags);
 static TupleTableSlot *SeqNext(SeqScanState *node);
 
 /* ----------------------------------------------------------------
@@ -132,31 +131,6 @@ ExecSeqScan(PlanState *pstate)
 					(ExecScanRecheckMtd) SeqRecheck);
 }
 
-/* ----------------------------------------------------------------
- *		InitScanRelation
- *
- *		Set up to access the scan relation.
- * ----------------------------------------------------------------
- */
-static void
-InitScanRelation(SeqScanState *node, EState *estate, int eflags)
-{
-	Relation	currentRelation;
-
-	/*
-	 * get the relation object id from the relid'th entry in the range table,
-	 * open that relation and acquire appropriate lock on it.
-	 */
-	currentRelation = ExecOpenScanRelation(estate,
-										   ((SeqScan *) node->ss.ps.plan)->scanrelid,
-										   eflags);
-
-	node->ss.ss_currentRelation = currentRelation;
-
-	/* and report the scan tuple slot's rowtype */
-	ExecAssignScanType(&node->ss, RelationGetDescr(currentRelation));
-}
-
 
 /* ----------------------------------------------------------------
  *		ExecInitSeqScan
@@ -190,27 +164,31 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
 	/*
+	 * Initialize scan relation.
+	 *
+	 * Get the relation object id from the relid'th entry in the range table,
+	 * open that relation and acquire appropriate lock on it.
+	 */
+	scanstate->ss.ss_currentRelation =
+		ExecOpenScanRelation(estate,
+							 node->scanrelid,
+							 eflags);
+
+	/* and create slot with the appropriate rowtype */
+	ExecInitScanTupleSlot(estate, &scanstate->ss,
+						  RelationGetDescr(scanstate->ss.ss_currentRelation));
+
+	/*
+	 * Initialize result slot, type and projection.
+	 */
+	ExecInitResultTupleSlotTL(estate, &scanstate->ss.ps);
+	ExecAssignScanProjectionInfo(&scanstate->ss);
+
+	/*
 	 * initialize child expressions
 	 */
 	scanstate->ss.ps.qual =
 		ExecInitQual(node->plan.qual, (PlanState *) scanstate);
-
-	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &scanstate->ss);
-
-	/*
-	 * initialize scan relation
-	 */
-	InitScanRelation(scanstate, estate, eflags);
-
-	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
-	ExecAssignScanProjectionInfo(&scanstate->ss);
 
 	return scanstate;
 }

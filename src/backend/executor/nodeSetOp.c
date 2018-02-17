@@ -519,11 +519,6 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 								  ALLOCSET_DEFAULT_SIZES);
 
 	/*
-	 * Tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &setopstate->ps);
-
-	/*
 	 * initialize child nodes
 	 *
 	 * If we are hashing then the child plan does not need to handle REWIND
@@ -535,10 +530,10 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	outerDesc = ExecGetResultType(outerPlanState(setopstate));
 
 	/*
-	 * setop nodes do no projections, so initialize projection info for this
-	 * node appropriately
+	 * Initialize result slot and type. Setop nodes do no projections, so
+	 * initialize projection info for this node appropriately.
 	 */
-	ExecAssignResultTypeFromTL(&setopstate->ps);
+	ExecInitResultTupleSlotTL(estate, &setopstate->ps);
 	setopstate->ps.ps_ProjInfo = NULL;
 
 	/*

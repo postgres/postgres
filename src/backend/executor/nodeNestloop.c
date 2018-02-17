@@ -286,15 +286,6 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &nlstate->js.ps);
 
 	/*
-	 * initialize child expressions
-	 */
-	nlstate->js.ps.qual =
-		ExecInitQual(node->join.plan.qual, (PlanState *) nlstate);
-	nlstate->js.jointype = node->join.jointype;
-	nlstate->js.joinqual =
-		ExecInitQual(node->join.joinqual, (PlanState *) nlstate);
-
-	/*
 	 * initialize child nodes
 	 *
 	 * If we have no parameters to pass into the inner rel from the outer,
@@ -311,9 +302,19 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate, eflags);
 
 	/*
-	 * tuple table initialization
+	 * Initialize result slot, type and projection.
 	 */
-	ExecInitResultTupleSlot(estate, &nlstate->js.ps);
+	ExecInitResultTupleSlotTL(estate, &nlstate->js.ps);
+	ExecAssignProjectionInfo(&nlstate->js.ps, NULL);
+
+	/*
+	 * initialize child expressions
+	 */
+	nlstate->js.ps.qual =
+		ExecInitQual(node->join.plan.qual, (PlanState *) nlstate);
+	nlstate->js.jointype = node->join.jointype;
+	nlstate->js.joinqual =
+		ExecInitQual(node->join.joinqual, (PlanState *) nlstate);
 
 	/*
 	 * detect whether we need only consider the first matching inner tuple
@@ -337,12 +338,6 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 			elog(ERROR, "unrecognized join type: %d",
 				 (int) node->join.jointype);
 	}
-
-	/*
-	 * initialize tuple type and projection info
-	 */
-	ExecAssignResultTypeFromTL(&nlstate->js.ps);
-	ExecAssignProjectionInfo(&nlstate->js.ps, NULL);
 
 	/*
 	 * finally, wipe the current outer tuple clean.

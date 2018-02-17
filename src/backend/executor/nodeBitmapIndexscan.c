@@ -227,6 +227,15 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	indexstate->biss_result = NULL;
 
 	/*
+	 * We do not open or lock the base relation here.  We assume that an
+	 * ancestor BitmapHeapScan node is holding AccessShareLock (or better) on
+	 * the heap relation throughout the execution of the plan tree.
+	 */
+
+	indexstate->ss.ss_currentRelation = NULL;
+	indexstate->ss.ss_currentScanDesc = NULL;
+
+	/*
 	 * Miscellaneous initialization
 	 *
 	 * We do not need a standard exprcontext for this node, though we may
@@ -241,15 +250,6 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 * Note: we don't initialize all of the indexqual expression, only the
 	 * sub-parts corresponding to runtime keys (see below).
 	 */
-
-	/*
-	 * We do not open or lock the base relation here.  We assume that an
-	 * ancestor BitmapHeapScan node is holding AccessShareLock (or better) on
-	 * the heap relation throughout the execution of the plan tree.
-	 */
-
-	indexstate->ss.ss_currentRelation = NULL;
-	indexstate->ss.ss_currentScanDesc = NULL;
 
 	/*
 	 * If we are just doing EXPLAIN (ie, aren't going to run the plan), stop

@@ -54,14 +54,6 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	/* create expression context for node */
 	ExecAssignExprContext(estate, &css->ss.ps);
 
-	/* initialize child expressions */
-	css->ss.ps.qual =
-		ExecInitQual(cscan->scan.plan.qual, (PlanState *) css);
-
-	/* tuple table initialization */
-	ExecInitScanTupleSlot(estate, &css->ss);
-	ExecInitResultTupleSlot(estate, &css->ss.ps);
-
 	/*
 	 * open the base relation, if any, and acquire an appropriate lock on it
 	 */
@@ -81,22 +73,26 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 		TupleDesc	scan_tupdesc;
 
 		scan_tupdesc = ExecTypeFromTL(cscan->custom_scan_tlist, false);
-		ExecAssignScanType(&css->ss, scan_tupdesc);
+		ExecInitScanTupleSlot(estate, &css->ss, scan_tupdesc);
 		/* Node's targetlist will contain Vars with varno = INDEX_VAR */
 		tlistvarno = INDEX_VAR;
 	}
 	else
 	{
-		ExecAssignScanType(&css->ss, RelationGetDescr(scan_rel));
+		ExecInitScanTupleSlot(estate, &css->ss, RelationGetDescr(scan_rel));
 		/* Node's targetlist will contain Vars with varno = scanrelid */
 		tlistvarno = scanrelid;
 	}
 
 	/*
-	 * Initialize result tuple type and projection info.
+	 * Initialize result slot, type and projection.
 	 */
-	ExecAssignResultTypeFromTL(&css->ss.ps);
+	ExecInitResultTupleSlotTL(estate, &css->ss.ps);
 	ExecAssignScanProjectionInfoWithVarno(&css->ss, tlistvarno);
+
+	/* initialize child expressions */
+	css->ss.ps.qual =
+		ExecInitQual(cscan->scan.plan.qual, (PlanState *) css);
 
 	/*
 	 * The callback of custom-scan provider applies the final initialization

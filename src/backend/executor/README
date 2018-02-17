@@ -243,6 +243,8 @@ This is a sketch of control flow for full query processing:
 		switch to per-query context to run ExecInitNode
 		AfterTriggerBeginQuery
 		ExecInitNode --- recursively scans plan tree
+			ExecInitNode
+				recurse into subsidiary nodes
 			CreateExprContext
 				creates per-tuple context
 			ExecInitExpr

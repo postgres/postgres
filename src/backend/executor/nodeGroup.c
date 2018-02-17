@@ -182,32 +182,26 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &grpstate->ss.ps);
 
 	/*
-	 * tuple table initialization
+	 * initialize child nodes
 	 */
-	ExecInitScanTupleSlot(estate, &grpstate->ss);
-	ExecInitResultTupleSlot(estate, &grpstate->ss.ps);
+	outerPlanState(grpstate) = ExecInitNode(outerPlan(node), estate, eflags);
+
+	/*
+	 * Initialize scan slot and type.
+	 */
+	ExecCreateScanSlotFromOuterPlan(estate, &grpstate->ss);
+
+	/*
+	 * Initialize result slot, type and projection.
+	 */
+	ExecInitResultTupleSlotTL(estate, &grpstate->ss.ps);
+	ExecAssignProjectionInfo(&grpstate->ss.ps, NULL);
 
 	/*
 	 * initialize child expressions
 	 */
 	grpstate->ss.ps.qual =
 		ExecInitQual(node->plan.qual, (PlanState *) grpstate);
-
-	/*
-	 * initialize child nodes
-	 */
-	outerPlanState(grpstate) = ExecInitNode(outerPlan(node), estate, eflags);
-
-	/*
-	 * initialize tuple type.
-	 */
-	ExecAssignScanTypeFromOuterPlan(&grpstate->ss);
-
-	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&grpstate->ss.ps);
-	ExecAssignProjectionInfo(&grpstate->ss.ps, NULL);
 
 	/*
 	 * Precompute fmgr lookup data for inner loop

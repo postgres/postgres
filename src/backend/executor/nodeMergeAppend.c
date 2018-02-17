@@ -109,7 +109,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	 * MergeAppend nodes do have Result slots, which hold pointers to tuples,
 	 * so we have to initialize them.
 	 */
-	ExecInitResultTupleSlot(estate, &mergestate->ps);
+	ExecInitResultTupleSlotTL(estate, &mergestate->ps);
 
 	/*
 	 * call ExecInitNode on each of the plans to be executed and save the
@@ -124,10 +124,6 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		i++;
 	}
 
-	/*
-	 * initialize output tuple type
-	 */
-	ExecAssignResultTypeFromTL(&mergestate->ps);
 	mergestate->ps.ps_ProjInfo = NULL;
 
 	/*

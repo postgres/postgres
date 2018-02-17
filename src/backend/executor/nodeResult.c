@@ -205,19 +205,6 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &resstate->ps);
 
 	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &resstate->ps);
-
-	/*
-	 * initialize child expressions
-	 */
-	resstate->ps.qual =
-		ExecInitQual(node->plan.qual, (PlanState *) resstate);
-	resstate->resconstantqual =
-		ExecInitQual((List *) node->resconstantqual, (PlanState *) resstate);
-
-	/*
 	 * initialize child nodes
 	 */
 	outerPlanState(resstate) = ExecInitNode(outerPlan(node), estate, eflags);
@@ -228,10 +215,18 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	Assert(innerPlan(node) == NULL);
 
 	/*
-	 * initialize tuple type and projection info
+	 * Initialize result slot, type and projection.
 	 */
-	ExecAssignResultTypeFromTL(&resstate->ps);
+	ExecInitResultTupleSlotTL(estate, &resstate->ps);
 	ExecAssignProjectionInfo(&resstate->ps, NULL);
+
+	/*
+	 * initialize child expressions
+	 */
+	resstate->ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) resstate);
+	resstate->resconstantqual =
+		ExecInitQual((List *) node->resconstantqual, (PlanState *) resstate);
 
 	return resstate;
 }

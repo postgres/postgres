@@ -133,20 +133,15 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &uniquestate->ps);
 
 	/*
-	 * Tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &uniquestate->ps);
-
-	/*
 	 * then initialize outer plan
 	 */
 	outerPlanState(uniquestate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
-	 * unique nodes do no projections, so initialize projection info for this
-	 * node appropriately
+	 * Initialize result slot and type. Unique nodes do no projections, so
+	 * initialize projection info for this node appropriately.
 	 */
-	ExecAssignResultTypeFromTL(&uniquestate->ps);
+	ExecInitResultTupleSlotTL(estate, &uniquestate->ps);
 	uniquestate->ps.ps_ProjInfo = NULL;
 
 	/*

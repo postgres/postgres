@@ -354,6 +354,12 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &limitstate->ps);
 
 	/*
+	 * initialize outer plan
+	 */
+	outerPlan = outerPlan(node);
+	outerPlanState(limitstate) = ExecInitNode(outerPlan, estate, eflags);
+
+	/*
 	 * initialize child expressions
 	 */
 	limitstate->limitOffset = ExecInitExpr((Expr *) node->limitOffset,
@@ -362,21 +368,15 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 										  (PlanState *) limitstate);
 
 	/*
-	 * Tuple table initialization (XXX not actually used...)
+	 * Initialize result slot and type. (XXX not actually used, but upper
+	 * nodes access it to get this node's result tupledesc...)
 	 */
-	ExecInitResultTupleSlot(estate, &limitstate->ps);
-
-	/*
-	 * then initialize outer plan
-	 */
-	outerPlan = outerPlan(node);
-	outerPlanState(limitstate) = ExecInitNode(outerPlan, estate, eflags);
+	ExecInitResultTupleSlotTL(estate, &limitstate->ps);
 
 	/*
 	 * limit nodes do no projections, so initialize projection info for this
 	 * node appropriately
 	 */
-	ExecAssignResultTypeFromTL(&limitstate->ps);
 	limitstate->ps.ps_ProjInfo = NULL;
 
 	return limitstate;

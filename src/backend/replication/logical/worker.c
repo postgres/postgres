@@ -208,7 +208,7 @@ create_estate_for_relation(LogicalRepRelMapEntry *rel)
 
 	/* Triggers might need a slot */
 	if (resultRelInfo->ri_TrigDesc)
-		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
+		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate, NULL);
 
 	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
@@ -585,8 +585,8 @@ apply_handle_insert(StringInfo s)
 
 	/* Initialize the executor state. */
 	estate = create_estate_for_relation(rel);
-	remoteslot = ExecInitExtraTupleSlot(estate);
-	ExecSetSlotDescriptor(remoteslot, RelationGetDescr(rel->localrel));
+	remoteslot = ExecInitExtraTupleSlot(estate,
+										RelationGetDescr(rel->localrel));
 
 	/* Process and store remote tuple in the slot */
 	oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
@@ -689,10 +689,10 @@ apply_handle_update(StringInfo s)
 
 	/* Initialize the executor state. */
 	estate = create_estate_for_relation(rel);
-	remoteslot = ExecInitExtraTupleSlot(estate);
-	ExecSetSlotDescriptor(remoteslot, RelationGetDescr(rel->localrel));
-	localslot = ExecInitExtraTupleSlot(estate);
-	ExecSetSlotDescriptor(localslot, RelationGetDescr(rel->localrel));
+	remoteslot = ExecInitExtraTupleSlot(estate,
+										RelationGetDescr(rel->localrel));
+	localslot = ExecInitExtraTupleSlot(estate,
+									   RelationGetDescr(rel->localrel));
 	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1);
 
 	PushActiveSnapshot(GetTransactionSnapshot());
@@ -807,10 +807,10 @@ apply_handle_delete(StringInfo s)
 
 	/* Initialize the executor state. */
 	estate = create_estate_for_relation(rel);
-	remoteslot = ExecInitExtraTupleSlot(estate);
-	ExecSetSlotDescriptor(remoteslot, RelationGetDescr(rel->localrel));
-	localslot = ExecInitExtraTupleSlot(estate);
-	ExecSetSlotDescriptor(localslot, RelationGetDescr(rel->localrel));
+	remoteslot = ExecInitExtraTupleSlot(estate,
+										RelationGetDescr(rel->localrel));
+	localslot = ExecInitExtraTupleSlot(estate,
+									   RelationGetDescr(rel->localrel));
 	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1);
 
 	PushActiveSnapshot(GetTransactionSnapshot());

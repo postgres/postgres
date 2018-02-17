@@ -156,20 +156,6 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
 	/*
-	 * initialize child expressions
-	 */
-	scanstate->ss.ps.qual =
-		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
-	scanstate->fdw_recheck_quals =
-		ExecInitQual(node->fdw_recheck_quals, (PlanState *) scanstate);
-
-	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &scanstate->ss);
-
-	/*
 	 * open the base relation, if any, and acquire an appropriate lock on it;
 	 * also acquire function pointers from the FDW's handler
 	 */
@@ -194,22 +180,30 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 		TupleDesc	scan_tupdesc;
 
 		scan_tupdesc = ExecTypeFromTL(node->fdw_scan_tlist, false);
-		ExecAssignScanType(&scanstate->ss, scan_tupdesc);
+		ExecInitScanTupleSlot(estate, &scanstate->ss, scan_tupdesc);
 		/* Node's targetlist will contain Vars with varno = INDEX_VAR */
 		tlistvarno = INDEX_VAR;
 	}
 	else
 	{
-		ExecAssignScanType(&scanstate->ss, RelationGetDescr(currentRelation));
+		ExecInitScanTupleSlot(estate, &scanstate->ss, RelationGetDescr(currentRelation));
 		/* Node's targetlist will contain Vars with varno = scanrelid */
 		tlistvarno = scanrelid;
 	}
 
 	/*
-	 * Initialize result tuple type and projection info.
+	 * Initialize result slot, type and projection.
 	 */
-	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
+	ExecInitResultTupleSlotTL(estate, &scanstate->ss.ps);
 	ExecAssignScanProjectionInfoWithVarno(&scanstate->ss, tlistvarno);
+
+	/*
+	 * initialize child expressions
+	 */
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
+	scanstate->fdw_recheck_quals =
+		ExecInitQual(node->fdw_recheck_quals, (PlanState *) scanstate);
 
 	/*
 	 * Initialize FDW-related state.

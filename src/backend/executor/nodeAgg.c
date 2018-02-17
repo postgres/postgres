@@ -1402,8 +1402,8 @@ find_hash_columns(AggState *aggstate)
 							  perhash->aggnode->grpOperators,
 							  &perhash->eqfuncoids,
 							  &perhash->hashfunctions);
-		perhash->hashslot = ExecAllocTableSlot(&estate->es_tupleTable);
-		ExecSetSlotDescriptor(perhash->hashslot, hashDesc);
+		perhash->hashslot =
+			ExecAllocTableSlot(&estate->es_tupleTable, hashDesc);
 
 		list_free(hashTlist);
 		bms_free(colnos);
@@ -2199,13 +2199,29 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &aggstate->ss.ps);
 
 	/*
-	 * tuple table initialization.
+	 * Initialize child nodes.
 	 *
-	 * For hashtables, we create some additional slots below.
+	 * If we are doing a hashed aggregation then the child plan does not need
+	 * to handle REWIND efficiently; see ExecReScanAgg.
 	 */
-	ExecInitScanTupleSlot(estate, &aggstate->ss);
-	ExecInitResultTupleSlot(estate, &aggstate->ss.ps);
-	aggstate->sort_slot = ExecInitExtraTupleSlot(estate);
+	if (node->aggstrategy == AGG_HASHED)
+		eflags &= ~EXEC_FLAG_REWIND;
+	outerPlan = outerPlan(node);
+	outerPlanState(aggstate) = ExecInitNode(outerPlan, estate, eflags);
+
+	/*
+	 * initialize source tuple type.
+	 */
+	ExecCreateScanSlotFromOuterPlan(estate, &aggstate->ss);
+	scanDesc = aggstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+	if (node->chain)
+		aggstate->sort_slot = ExecInitExtraTupleSlot(estate, scanDesc);
+
+	/*
+	 * Initialize result type, slot and projection.
+	 */
+	ExecInitResultTupleSlotTL(estate, &aggstate->ss.ps);
+	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
 
 	/*
 	 * initialize child expressions
@@ -2222,31 +2238,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 */
 	aggstate->ss.ps.qual =
 		ExecInitQual(node->plan.qual, (PlanState *) aggstate);
-
-	/*
-	 * Initialize child nodes.
-	 *
-	 * If we are doing a hashed aggregation then the child plan does not need
-	 * to handle REWIND efficiently; see ExecReScanAgg.
-	 */
-	if (node->aggstrategy == AGG_HASHED)
-		eflags &= ~EXEC_FLAG_REWIND;
-	outerPlan = outerPlan(node);
-	outerPlanState(aggstate) = ExecInitNode(outerPlan, estate, eflags);
-
-	/*
-	 * initialize source tuple type.
-	 */
-	ExecAssignScanTypeFromOuterPlan(&aggstate->ss);
-	scanDesc = aggstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
-	if (node->chain)
-		ExecSetSlotDescriptor(aggstate->sort_slot, scanDesc);
-
-	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&aggstate->ss.ps);
-	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
 
 	/*
 	 * We should now have found all Aggrefs in the targetlist and quals.
@@ -3071,8 +3062,8 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	if (numSortCols > 0 || aggref->aggfilter)
 	{
 		pertrans->sortdesc = ExecTypeFromTL(aggref->args, false);
-		pertrans->sortslot = ExecInitExtraTupleSlot(estate);
-		ExecSetSlotDescriptor(pertrans->sortslot, pertrans->sortdesc);
+		pertrans->sortslot =
+			ExecInitExtraTupleSlot(estate, pertrans->sortdesc);
 	}
 
 	if (numSortCols > 0)
@@ -3093,9 +3084,8 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		else if (numDistinctCols > 0)
 		{
 			/* we will need an extra slot to store prior values */
-			pertrans->uniqslot = ExecInitExtraTupleSlot(estate);
-			ExecSetSlotDescriptor(pertrans->uniqslot,
-								  pertrans->sortdesc);
+			pertrans->uniqslot =
+				ExecInitExtraTupleSlot(estate, pertrans->sortdesc);
 		}
 
 		/* Extract the sort information for use later */

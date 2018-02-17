@@ -127,6 +127,7 @@ typedef struct TupleTableSlot
 	MinimalTuple tts_mintuple;	/* minimal tuple, or NULL if none */
 	HeapTupleData tts_minhdr;	/* workspace for minimal-tuple-only case */
 	long		tts_off;		/* saved state for slot_deform_tuple */
+	bool		tts_fixedTupleDescriptor; /* descriptor can't be changed */
 } TupleTableSlot;
 
 #define TTS_HAS_PHYSICAL_TUPLE(slot)  \
@@ -139,8 +140,8 @@ typedef struct TupleTableSlot
 	((slot) == NULL || (slot)->tts_isempty)
 
 /* in executor/execTuples.c */
-extern TupleTableSlot *MakeTupleTableSlot(void);
-extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable);
+extern TupleTableSlot *MakeTupleTableSlot(TupleDesc desc);
+extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable, TupleDesc desc);
 extern void ExecResetTupleTable(List *tupleTable, bool shouldFree);
 extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc);
 extern void ExecDropSingleTupleTableSlot(TupleTableSlot *slot);

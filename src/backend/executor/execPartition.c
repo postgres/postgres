@@ -93,7 +93,7 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 		 * We need an additional tuple slot for storing transient tuples that
 		 * are converted to the root table descriptor.
 		 */
-		proute->root_tuple_slot = MakeTupleTableSlot();
+		proute->root_tuple_slot = MakeTupleTableSlot(NULL);
 	}
 	else
 	{
@@ -112,7 +112,7 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 	 * (such as ModifyTableState) and released when the node finishes
 	 * processing.
 	 */
-	proute->partition_tuple_slot = MakeTupleTableSlot();
+	proute->partition_tuple_slot = MakeTupleTableSlot(NULL);
 
 	i = 0;
 	foreach(cell, leaf_parts)

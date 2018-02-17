@@ -2288,30 +2288,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 							  ALLOCSET_DEFAULT_SIZES);
 
 	/*
-	 * tuple table initialization
-	 */
-	ExecInitScanTupleSlot(estate, &winstate->ss);
-	ExecInitResultTupleSlot(estate, &winstate->ss.ps);
-	winstate->first_part_slot = ExecInitExtraTupleSlot(estate);
-	winstate->agg_row_slot = ExecInitExtraTupleSlot(estate);
-	winstate->temp_slot_1 = ExecInitExtraTupleSlot(estate);
-	winstate->temp_slot_2 = ExecInitExtraTupleSlot(estate);
-
-	/*
-	 * create frame head and tail slots only if needed (must match logic in
-	 * update_frameheadpos and update_frametailpos)
-	 */
-	winstate->framehead_slot = winstate->frametail_slot = NULL;
-
-	if (frameOptions & (FRAMEOPTION_RANGE | FRAMEOPTION_GROUPS))
-	{
-		if (!(frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING))
-			winstate->framehead_slot = ExecInitExtraTupleSlot(estate);
-		if (!(frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING))
-			winstate->frametail_slot = ExecInitExtraTupleSlot(estate);
-	}
-
-	/*
 	 * WindowAgg nodes never have quals, since they can only occur at the
 	 * logical top level of a query (ie, after any WHERE or HAVING filters)
 	 */
@@ -2328,28 +2304,35 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 * initialize source tuple type (which is also the tuple type that we'll
 	 * store in the tuplestore and use in all our working slots).
 	 */
-	ExecAssignScanTypeFromOuterPlan(&winstate->ss);
+	ExecCreateScanSlotFromOuterPlan(estate, &winstate->ss);
 	scanDesc = winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
 
-	ExecSetSlotDescriptor(winstate->first_part_slot,
-						  winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
-	ExecSetSlotDescriptor(winstate->agg_row_slot,
-						  winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
-	ExecSetSlotDescriptor(winstate->temp_slot_1,
-						  winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
-	ExecSetSlotDescriptor(winstate->temp_slot_2,
-						  winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
-	if (winstate->framehead_slot)
-		ExecSetSlotDescriptor(winstate->framehead_slot,
-							  winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
-	if (winstate->frametail_slot)
-		ExecSetSlotDescriptor(winstate->frametail_slot,
-							  winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
+	/*
+	 * tuple table initialization
+	 */
+	winstate->first_part_slot = ExecInitExtraTupleSlot(estate, scanDesc);
+	winstate->agg_row_slot = ExecInitExtraTupleSlot(estate, scanDesc);
+	winstate->temp_slot_1 = ExecInitExtraTupleSlot(estate, scanDesc);
+	winstate->temp_slot_2 = ExecInitExtraTupleSlot(estate, scanDesc);
 
 	/*
-	 * Initialize result tuple type and projection info.
+	 * create frame head and tail slots only if needed (must match logic in
+	 * update_frameheadpos and update_frametailpos)
 	 */
-	ExecAssignResultTypeFromTL(&winstate->ss.ps);
+	winstate->framehead_slot = winstate->frametail_slot = NULL;
+
+	if (frameOptions & (FRAMEOPTION_RANGE | FRAMEOPTION_GROUPS))
+	{
+		if (!(frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING))
+			winstate->framehead_slot = ExecInitExtraTupleSlot(estate, scanDesc);
+		if (!(frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING))
+			winstate->frametail_slot = ExecInitExtraTupleSlot(estate, scanDesc);
+	}
+
+	/*
+	 * Initialize result slot, type and projection.
+	 */
+	ExecInitResultTupleSlotTL(estate, &winstate->ss.ps);
 	ExecAssignProjectionInfo(&winstate->ss.ps, NULL);
 
 	/* Set up data for comparing tuples */

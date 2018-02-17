@@ -229,7 +229,7 @@ ExecScan(ScanState *node,
  * the scan node, because the planner will preferentially generate a matching
  * tlist.
  *
- * ExecAssignScanType must have been called already.
+ * The scan slot's descriptor must have been set already.
  */
 void
 ExecAssignScanProjectionInfo(ScanState *node)

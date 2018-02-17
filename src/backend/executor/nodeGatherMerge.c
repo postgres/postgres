@@ -73,7 +73,6 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 {
 	GatherMergeState *gm_state;
 	Plan	   *outerNode;
-	bool		hasoid;
 	TupleDesc	tupDesc;
 
 	/* Gather merge node doesn't have innerPlan node. */
@@ -105,11 +104,6 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	Assert(!node->plan.qual);
 
 	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &gm_state->ps);
-
-	/*
 	 * now initialize outer plan
 	 */
 	outerNode = outerPlan(node);
@@ -119,15 +113,13 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	 * Store the tuple descriptor into gather merge state, so we can use it
 	 * while initializing the gather merge slots.
 	 */
-	if (!ExecContextForcesOids(outerPlanState(gm_state), &hasoid))
-		hasoid = false;
-	tupDesc = ExecTypeFromTL(outerNode->targetlist, hasoid);
+	tupDesc = ExecGetResultType(outerPlanState(gm_state));
 	gm_state->tupDesc = tupDesc;
 
 	/*
-	 * Initialize result tuple type and projection info.
+	 * Initialize result slot, type and projection.
 	 */
-	ExecAssignResultTypeFromTL(&gm_state->ps);
+	ExecInitResultTupleSlotTL(estate, &gm_state->ps);
 	ExecConditionalAssignProjectionInfo(&gm_state->ps, tupDesc, OUTER_VAR);
 
 	/*
@@ -410,9 +402,8 @@ gather_merge_setup(GatherMergeState *gm_state)
 			(HeapTuple *) palloc0(sizeof(HeapTuple) * MAX_TUPLE_STORE);
 
 		/* Initialize tuple slot for worker */
-		gm_state->gm_slots[i + 1] = ExecInitExtraTupleSlot(gm_state->ps.state);
-		ExecSetSlotDescriptor(gm_state->gm_slots[i + 1],
-							  gm_state->tupDesc);
+		gm_state->gm_slots[i + 1] =
+			ExecInitExtraTupleSlot(gm_state->ps.state, gm_state->tupDesc);
 	}
 
 	/* Allocate the resources for the merge */

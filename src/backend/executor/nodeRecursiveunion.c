@@ -229,14 +229,13 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	 * RecursiveUnion nodes still have Result slots, which hold pointers to
 	 * tuples, so we have to initialize them.
 	 */
-	ExecInitResultTupleSlot(estate, &rustate->ps);
+	ExecInitResultTupleSlotTL(estate, &rustate->ps);
 
 	/*
-	 * Initialize result tuple type and projection info.  (Note: we have to
-	 * set up the result type before initializing child nodes, because
-	 * nodeWorktablescan.c expects it to be valid.)
+	 * Initialize result tuple type.  (Note: we have to set up the result type
+	 * before initializing child nodes, because nodeWorktablescan.c expects it
+	 * to be valid.)
 	 */
-	ExecAssignResultTypeFromTL(&rustate->ps);
 	rustate->ps.ps_ProjInfo = NULL;
 
 	/*
