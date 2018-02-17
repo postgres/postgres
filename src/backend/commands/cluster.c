@@ -202,7 +202,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		 * We cannot run this form of CLUSTER inside a user transaction block;
 		 * we'd be holding locks way too long.
 		 */
-		PreventTransactionChain(isTopLevel, "CLUSTER");
+		PreventInTransactionBlock(isTopLevel, "CLUSTER");
 
 		/*
 		 * Create special memory context for cross-transaction storage.

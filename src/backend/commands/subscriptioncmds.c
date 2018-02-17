@@ -339,7 +339,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	 * replication slot.
 	 */
 	if (create_slot)
-		PreventTransactionChain(isTopLevel, "CREATE SUBSCRIPTION ... WITH (create_slot = true)");
+		PreventInTransactionBlock(isTopLevel, "CREATE SUBSCRIPTION ... WITH (create_slot = true)");
 
 	if (!superuser())
 		ereport(ERROR,
@@ -897,7 +897,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 * don't have the proper facilities for that.
 	 */
 	if (slotname)
-		PreventTransactionChain(isTopLevel, "DROP SUBSCRIPTION");
+		PreventInTransactionBlock(isTopLevel, "DROP SUBSCRIPTION");
 
 
 	ObjectAddressSet(myself, SubscriptionRelationId, subid);

@@ -1476,7 +1476,7 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 							dtablespace->defname),
 					 parser_errposition(pstate, dtablespace->location)));
 		/* this case isn't allowed within a transaction block */
-		PreventTransactionChain(isTopLevel, "ALTER DATABASE SET TABLESPACE");
+		PreventInTransactionBlock(isTopLevel, "ALTER DATABASE SET TABLESPACE");
 		movedb(stmt->dbname, defGetString(dtablespace));
 		return InvalidOid;
 	}

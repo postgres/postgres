@@ -186,11 +186,11 @@ vacuum(int options, List *relations, VacuumParams *params,
 	 */
 	if (options & VACOPT_VACUUM)
 	{
-		PreventTransactionChain(isTopLevel, stmttype);
+		PreventInTransactionBlock(isTopLevel, stmttype);
 		in_outer_xact = false;
 	}
 	else
-		in_outer_xact = IsInTransactionChain(isTopLevel);
+		in_outer_xact = IsInTransactionBlock(isTopLevel);
 
 	/*
 	 * Due to static variables vac_context, anl_context and vac_strategy,

@@ -1321,7 +1321,7 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 			!(tup->t_data->t_infomask & HEAP_UPDATED))
 			 /* safe to do inside transaction block */ ;
 		else
-			PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
+			PreventInTransactionBlock(isTopLevel, "ALTER TYPE ... ADD");
 
 		AddEnumLabel(enum_type_oid, stmt->newVal,
 					 stmt->newValNeighbor, stmt->newValIsAfter,

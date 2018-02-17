@@ -453,13 +453,13 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						break;
 
 					case TRANS_STMT_COMMIT_PREPARED:
-						PreventTransactionChain(isTopLevel, "COMMIT PREPARED");
+						PreventInTransactionBlock(isTopLevel, "COMMIT PREPARED");
 						PreventCommandDuringRecovery("COMMIT PREPARED");
 						FinishPreparedTransaction(stmt->gid, true);
 						break;
 
 					case TRANS_STMT_ROLLBACK_PREPARED:
-						PreventTransactionChain(isTopLevel, "ROLLBACK PREPARED");
+						PreventInTransactionBlock(isTopLevel, "ROLLBACK PREPARED");
 						PreventCommandDuringRecovery("ROLLBACK PREPARED");
 						FinishPreparedTransaction(stmt->gid, false);
 						break;
@@ -473,7 +473,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 							ListCell   *cell;
 							char	   *name = NULL;
 
-							RequireTransactionChain(isTopLevel, "SAVEPOINT");
+							RequireTransactionBlock(isTopLevel, "SAVEPOINT");
 
 							foreach(cell, stmt->options)
 							{
@@ -490,12 +490,12 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						break;
 
 					case TRANS_STMT_RELEASE:
-						RequireTransactionChain(isTopLevel, "RELEASE SAVEPOINT");
+						RequireTransactionBlock(isTopLevel, "RELEASE SAVEPOINT");
 						ReleaseSavepoint(stmt->options);
 						break;
 
 					case TRANS_STMT_ROLLBACK_TO:
-						RequireTransactionChain(isTopLevel, "ROLLBACK TO SAVEPOINT");
+						RequireTransactionBlock(isTopLevel, "ROLLBACK TO SAVEPOINT");
 						RollbackToSavepoint(stmt->options);
 
 						/*
@@ -536,13 +536,13 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreateTableSpaceStmt:
 			/* no event triggers for global objects */
-			PreventTransactionChain(isTopLevel, "CREATE TABLESPACE");
+			PreventInTransactionBlock(isTopLevel, "CREATE TABLESPACE");
 			CreateTableSpace((CreateTableSpaceStmt *) parsetree);
 			break;
 
 		case T_DropTableSpaceStmt:
 			/* no event triggers for global objects */
-			PreventTransactionChain(isTopLevel, "DROP TABLESPACE");
+			PreventInTransactionBlock(isTopLevel, "DROP TABLESPACE");
 			DropTableSpace((DropTableSpaceStmt *) parsetree);
 			break;
 
@@ -592,7 +592,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreatedbStmt:
 			/* no event triggers for global objects */
-			PreventTransactionChain(isTopLevel, "CREATE DATABASE");
+			PreventInTransactionBlock(isTopLevel, "CREATE DATABASE");
 			createdb(pstate, (CreatedbStmt *) parsetree);
 			break;
 
@@ -611,7 +611,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 				DropdbStmt *stmt = (DropdbStmt *) parsetree;
 
 				/* no event triggers for global objects */
-				PreventTransactionChain(isTopLevel, "DROP DATABASE");
+				PreventInTransactionBlock(isTopLevel, "DROP DATABASE");
 				dropdb(stmt->dbname, stmt->missing_ok);
 			}
 			break;
@@ -690,7 +690,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			break;
 
 		case T_AlterSystemStmt:
-			PreventTransactionChain(isTopLevel, "ALTER SYSTEM");
+			PreventInTransactionBlock(isTopLevel, "ALTER SYSTEM");
 			AlterSystemSetConfigFile((AlterSystemStmt *) parsetree);
 			break;
 
@@ -756,13 +756,13 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			 * Since the lock would just get dropped immediately, LOCK TABLE
 			 * outside a transaction block is presumed to be user error.
 			 */
-			RequireTransactionChain(isTopLevel, "LOCK TABLE");
+			RequireTransactionBlock(isTopLevel, "LOCK TABLE");
 			/* forbidden in parallel mode due to CommandIsReadOnly */
 			LockTableCommand((LockStmt *) parsetree);
 			break;
 
 		case T_ConstraintsSetStmt:
-			WarnNoTransactionChain(isTopLevel, "SET CONSTRAINTS");
+			WarnNoTransactionBlock(isTopLevel, "SET CONSTRAINTS");
 			AfterTriggerSetState((ConstraintsSetStmt *) parsetree);
 			break;
 
@@ -808,7 +808,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						 * start-transaction-command calls would not have the
 						 * intended effect!
 						 */
-						PreventTransactionChain(isTopLevel,
+						PreventInTransactionBlock(isTopLevel,
 												(stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
 												(stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
 												"REINDEX DATABASE");
@@ -1307,7 +1307,7 @@ ProcessUtilitySlow(ParseState *pstate,
 					List	   *inheritors = NIL;
 
 					if (stmt->concurrent)
-						PreventTransactionChain(isTopLevel,
+						PreventInTransactionBlock(isTopLevel,
 												"CREATE INDEX CONCURRENTLY");
 
 					/*
@@ -1715,7 +1715,7 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 	{
 		case OBJECT_INDEX:
 			if (stmt->concurrent)
-				PreventTransactionChain(isTopLevel,
+				PreventInTransactionBlock(isTopLevel,
 										"DROP INDEX CONCURRENTLY");
 			/* fall through */
 

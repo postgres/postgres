@@ -63,7 +63,7 @@ PerformCursorOpen(DeclareCursorStmt *cstmt, ParamListInfo params,
 	 * user-visible effect).
 	 */
 	if (!(cstmt->options & CURSOR_OPT_HOLD))
-		RequireTransactionChain(isTopLevel, "DECLARE CURSOR");
+		RequireTransactionBlock(isTopLevel, "DECLARE CURSOR");
 
 	/*
 	 * Parse analysis was done already, but we still have to run the rule

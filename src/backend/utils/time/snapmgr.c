@@ -1171,7 +1171,7 @@ ExportSnapshot(Snapshot snapshot)
 	char		pathtmp[MAXPGPATH];
 
 	/*
-	 * It's tempting to call RequireTransactionChain here, since it's not very
+	 * It's tempting to call RequireTransactionBlock here, since it's not very
 	 * useful to export a snapshot that will disappear immediately afterwards.
 	 * However, we haven't got enough information to do that, since we don't
 	 * know if we're at top level or not.  For example, we could be inside a

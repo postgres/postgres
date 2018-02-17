@@ -7348,7 +7348,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 		case VAR_SET_VALUE:
 		case VAR_SET_CURRENT:
 			if (stmt->is_local)
-				WarnNoTransactionChain(isTopLevel, "SET LOCAL");
+				WarnNoTransactionBlock(isTopLevel, "SET LOCAL");
 			(void) set_config_option(stmt->name,
 									 ExtractSetVariableArgs(stmt),
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
@@ -7368,7 +7368,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 			{
 				ListCell   *head;
 
-				WarnNoTransactionChain(isTopLevel, "SET TRANSACTION");
+				WarnNoTransactionBlock(isTopLevel, "SET TRANSACTION");
 
 				foreach(head, stmt->args)
 				{
@@ -7419,7 +7419,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("SET LOCAL TRANSACTION SNAPSHOT is not implemented")));
 
-				WarnNoTransactionChain(isTopLevel, "SET TRANSACTION");
+				WarnNoTransactionBlock(isTopLevel, "SET TRANSACTION");
 				Assert(nodeTag(&con->val) == T_String);
 				ImportSnapshot(strVal(&con->val));
 			}
@@ -7429,11 +7429,11 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 			break;
 		case VAR_SET_DEFAULT:
 			if (stmt->is_local)
-				WarnNoTransactionChain(isTopLevel, "SET LOCAL");
+				WarnNoTransactionBlock(isTopLevel, "SET LOCAL");
 			/* fall through */
 		case VAR_RESET:
 			if (strcmp(stmt->name, "transaction_isolation") == 0)
-				WarnNoTransactionChain(isTopLevel, "RESET TRANSACTION");
+				WarnNoTransactionBlock(isTopLevel, "RESET TRANSACTION");
 
 			(void) set_config_option(stmt->name,
 									 NULL,

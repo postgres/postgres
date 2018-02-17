@@ -1516,7 +1516,7 @@ exec_replication_command(const char *cmd_string)
 			break;
 
 		case T_BaseBackupCmd:
-			PreventTransactionChain(true, "BASE_BACKUP");
+			PreventInTransactionBlock(true, "BASE_BACKUP");
 			SendBaseBackup((BaseBackupCmd *) cmd_node);
 			break;
 
@@ -1532,7 +1532,7 @@ exec_replication_command(const char *cmd_string)
 			{
 				StartReplicationCmd *cmd = (StartReplicationCmd *) cmd_node;
 
-				PreventTransactionChain(true, "START_REPLICATION");
+				PreventInTransactionBlock(true, "START_REPLICATION");
 
 				if (cmd->kind == REPLICATION_KIND_PHYSICAL)
 					StartReplication(cmd);
@@ -1542,7 +1542,7 @@ exec_replication_command(const char *cmd_string)
 			}
 
 		case T_TimeLineHistoryCmd:
-			PreventTransactionChain(true, "TIMELINE_HISTORY");
+			PreventInTransactionBlock(true, "TIMELINE_HISTORY");
 			SendTimeLineHistory((TimeLineHistoryCmd *) cmd_node);
 			break;
 

@@ -310,7 +310,7 @@ static void CallSubXactCallbacks(SubXactEvent event,
 					 SubTransactionId mySubid,
 					 SubTransactionId parentSubid);
 static void CleanupTransaction(void);
-static void CheckTransactionChain(bool isTopLevel, bool throwError,
+static void CheckTransactionBlock(bool isTopLevel, bool throwError,
 					  const char *stmtType);
 static void CommitTransaction(void);
 static TransactionId RecordTransactionAbort(bool isSubXact);
@@ -3134,7 +3134,7 @@ AbortCurrentTransaction(void)
 }
 
 /*
- *	PreventTransactionChain
+ *	PreventInTransactionBlock
  *
  *	This routine is to be called by statements that must not run inside
  *	a transaction block, typically because they have non-rollback-able
@@ -3151,7 +3151,7 @@ AbortCurrentTransaction(void)
  *	stmtType: statement type name, for error messages.
  */
 void
-PreventTransactionChain(bool isTopLevel, const char *stmtType)
+PreventInTransactionBlock(bool isTopLevel, const char *stmtType)
 {
 	/*
 	 * xact block already started?
@@ -3190,8 +3190,8 @@ PreventTransactionChain(bool isTopLevel, const char *stmtType)
 }
 
 /*
- *	WarnNoTranactionChain
- *	RequireTransactionChain
+ *	WarnNoTranactionBlock
+ *	RequireTransactionBlock
  *
  *	These two functions allow for warnings or errors if a command is executed
  *	outside of a transaction block.  This is useful for commands that have no
@@ -3204,29 +3204,29 @@ PreventTransactionChain(bool isTopLevel, const char *stmtType)
  *	If we appear to be running inside a user-defined function, we do not
  *	issue anything, since the function could issue more commands that make
  *	use of the current statement's results.  Likewise subtransactions.
- *	Thus these are inverses for PreventTransactionChain.
+ *	Thus these are inverses for PreventInTransactionBlock.
  *
  *	isTopLevel: passed down from ProcessUtility to determine whether we are
  *	inside a function.
  *	stmtType: statement type name, for warning or error messages.
  */
 void
-WarnNoTransactionChain(bool isTopLevel, const char *stmtType)
+WarnNoTransactionBlock(bool isTopLevel, const char *stmtType)
 {
-	CheckTransactionChain(isTopLevel, false, stmtType);
+	CheckTransactionBlock(isTopLevel, false, stmtType);
 }
 
 void
-RequireTransactionChain(bool isTopLevel, const char *stmtType)
+RequireTransactionBlock(bool isTopLevel, const char *stmtType)
 {
-	CheckTransactionChain(isTopLevel, true, stmtType);
+	CheckTransactionBlock(isTopLevel, true, stmtType);
 }
 
 /*
  * This is the implementation of the above two.
  */
 static void
-CheckTransactionChain(bool isTopLevel, bool throwError, const char *stmtType)
+CheckTransactionBlock(bool isTopLevel, bool throwError, const char *stmtType)
 {
 	/*
 	 * xact block already started?
@@ -3255,7 +3255,7 @@ CheckTransactionChain(bool isTopLevel, bool throwError, const char *stmtType)
 }
 
 /*
- *	IsInTransactionChain
+ *	IsInTransactionBlock
  *
  *	This routine is for statements that need to behave differently inside
  *	a transaction block than when running as single commands.  ANALYZE is
@@ -3265,10 +3265,10 @@ CheckTransactionChain(bool isTopLevel, bool throwError, const char *stmtType)
  *	inside a function.
  */
 bool
-IsInTransactionChain(bool isTopLevel)
+IsInTransactionBlock(bool isTopLevel)
 {
 	/*
-	 * Return true on same conditions that would make PreventTransactionChain
+	 * Return true on same conditions that would make PreventInTransactionBlock
 	 * error out
 	 */
 	if (IsTransactionBlock())
