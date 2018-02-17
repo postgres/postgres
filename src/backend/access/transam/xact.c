@@ -3190,12 +3190,25 @@ PreventTransactionChain(bool isTopLevel, const char *stmtType)
 }
 
 /*
- *	These two functions allow for warnings or errors if a command is
- *	executed outside of a transaction block.
+ *	WarnNoTranactionChain
+ *	RequireTransactionChain
  *
- *	While top-level transaction control commands (BEGIN/COMMIT/ABORT) and
- *	SET that have no effect issue warnings, all other no-effect commands
- *	generate errors.
+ *	These two functions allow for warnings or errors if a command is executed
+ *	outside of a transaction block.  This is useful for commands that have no
+ *	effects that persist past transaction end (and so calling them outside a
+ *	transaction block is presumably an error).  DECLARE CURSOR is an example.
+ *	While top-level transaction control commands (BEGIN/COMMIT/ABORT) and SET
+ *	that have no effect issue warnings, all other no-effect commands generate
+ *	errors.
+ *
+ *	If we appear to be running inside a user-defined function, we do not
+ *	issue anything, since the function could issue more commands that make
+ *	use of the current statement's results.  Likewise subtransactions.
+ *	Thus these are inverses for PreventTransactionChain.
+ *
+ *	isTopLevel: passed down from ProcessUtility to determine whether we are
+ *	inside a function.
+ *	stmtType: statement type name, for warning or error messages.
  */
 void
 WarnNoTransactionChain(bool isTopLevel, const char *stmtType)
@@ -3210,21 +3223,7 @@ RequireTransactionChain(bool isTopLevel, const char *stmtType)
 }
 
 /*
- *	RequireTransactionChain
- *
- *	This routine is to be called by statements that must run inside
- *	a transaction block, because they have no effects that persist past
- *	transaction end (and so calling them outside a transaction block
- *	is presumably an error).  DECLARE CURSOR is an example.
- *
- *	If we appear to be running inside a user-defined function, we do not
- *	issue anything, since the function could issue more commands that make
- *	use of the current statement's results.  Likewise subtransactions.
- *	Thus this is an inverse for PreventTransactionChain.
- *
- *	isTopLevel: passed down from ProcessUtility to determine whether we are
- *	inside a function.
- *	stmtType: statement type name, for warning or error messages.
+ * This is the implementation of the above two.
  */
 static void
 CheckTransactionChain(bool isTopLevel, bool throwError, const char *stmtType)
