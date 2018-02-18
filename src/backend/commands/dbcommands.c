@@ -857,8 +857,8 @@ dropdb(const char *dbname, bool missing_ok)
 				(errcode(ERRCODE_OBJECT_IN_USE),
 				 errmsg("database \"%s\" is used by an active logical replication slot",
 						dbname),
-				 errdetail_plural("There is %d active slot",
-								  "There are %d active slots",
+				 errdetail_plural("There is %d active slot.",
+								  "There are %d active slots.",
 								  nslots_active, nslots_active)));
 	}
 
