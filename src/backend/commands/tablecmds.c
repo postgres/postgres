@@ -5879,9 +5879,6 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 
 /*
  * ALTER TABLE ALTER COLUMN SET NOT NULL
- *
- * Return the address of the modified column.  If the column was already NOT
- * NULL, InvalidObjectAddress is returned.
  */
 
 static void
@@ -5904,6 +5901,10 @@ ATPrepSetNotNull(Relation rel, bool recurse, bool recursing)
 	}
 }
 
+/*
+ * Return the address of the modified column.  If the column was already NOT
+ * NULL, InvalidObjectAddress is returned.
+ */
 static ObjectAddress
 ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 				 const char *colName, LOCKMODE lockmode)
