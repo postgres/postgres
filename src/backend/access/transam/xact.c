@@ -3934,7 +3934,7 @@ ReleaseSavepoint(const char *name)
 		case TBLOCK_INPROGRESS:
 			ereport(ERROR,
 					(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
-					 errmsg("no such savepoint")));
+					 errmsg("savepoint \"%s\" does not exist", name)));
 			break;
 
 		case TBLOCK_IMPLICIT_INPROGRESS:
@@ -3985,13 +3985,13 @@ ReleaseSavepoint(const char *name)
 	if (!PointerIsValid(target))
 		ereport(ERROR,
 				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
-				 errmsg("no such savepoint")));
+				 errmsg("savepoint \"%s\" does not exist", name)));
 
 	/* disallow crossing savepoint level boundaries */
 	if (target->savepointLevel != s->savepointLevel)
 		ereport(ERROR,
 				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
-				 errmsg("no such savepoint")));
+				 errmsg("savepoint \"%s\" does not exist within current savepoint level", name)));
 
 	/*
 	 * Mark "commit pending" all subtransactions up to the target
@@ -4045,7 +4045,7 @@ RollbackToSavepoint(const char *name)
 		case TBLOCK_ABORT:
 			ereport(ERROR,
 					(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
-					 errmsg("no such savepoint")));
+					 errmsg("savepoint \"%s\" does not exist", name)));
 			break;
 
 		case TBLOCK_IMPLICIT_INPROGRESS:
@@ -4094,13 +4094,13 @@ RollbackToSavepoint(const char *name)
 	if (!PointerIsValid(target))
 		ereport(ERROR,
 				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
-				 errmsg("no such savepoint")));
+				 errmsg("savepoint \"%s\" does not exist", name)));
 
 	/* disallow crossing savepoint level boundaries */
 	if (target->savepointLevel != s->savepointLevel)
 		ereport(ERROR,
 				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
-				 errmsg("no such savepoint")));
+				 errmsg("savepoint \"%s\" does not exist within current savepoint level", name)));
 
 	/*
 	 * Mark "abort pending" all subtransactions up to the target

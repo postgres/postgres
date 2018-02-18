@@ -749,5 +749,5 @@ begin;
 select 1/0;
 ERROR:  division by zero
 rollback to X;
-ERROR:  no such savepoint
+ERROR:  savepoint "x" does not exist
 -- DO NOT ADD ANYTHING HERE.
