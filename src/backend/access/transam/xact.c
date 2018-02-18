@@ -219,7 +219,7 @@ static TransactionStateData TopTransactionStateData = {
 	false,						/* entry-time xact r/o state */
 	false,						/* startedInRecovery */
 	false,						/* didLogXid */
-	0,							/* parallelMode */
+	0,							/* parallelModeLevel */
 	NULL						/* link to parent state block */
 };
 
