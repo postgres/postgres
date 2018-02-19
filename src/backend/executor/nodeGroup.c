@@ -162,7 +162,6 @@ GroupState *
 ExecInitGroup(Group *node, EState *estate, int eflags)
 {
 	GroupState *grpstate;
-	AttrNumber *grpColIdx = grpColIdx = node->grpColIdx;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -209,7 +208,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	grpstate->eqfunction =
 		execTuplesMatchPrepare(ExecGetResultType(outerPlanState(grpstate)),
 							   node->numCols,
-							   grpColIdx,
+							   node->grpColIdx,
 							   node->grpOperators,
 							   &grpstate->ss.ps);
 
