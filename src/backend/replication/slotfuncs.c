@@ -480,8 +480,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot move slot to %X/%X, minimum is %X/%X",
 						(uint32) (moveto >> 32), (uint32) moveto,
-						(uint32) (MyReplicationSlot->data.confirmed_flush >> 32),
-						(uint32) (MyReplicationSlot->data.confirmed_flush))));
+						(uint32) (startlsn >> 32), (uint32) startlsn)));
 	}
 
 	if (OidIsValid(MyReplicationSlot->data.database))
