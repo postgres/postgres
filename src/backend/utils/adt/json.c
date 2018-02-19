@@ -1843,7 +1843,7 @@ add_json(Datum val, bool is_null, StringInfo result,
 /*
  * SQL function array_to_json(row)
  */
-extern Datum
+Datum
 array_to_json(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
@@ -1859,7 +1859,7 @@ array_to_json(PG_FUNCTION_ARGS)
 /*
  * SQL function array_to_json(row, prettybool)
  */
-extern Datum
+Datum
 array_to_json_pretty(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
@@ -1876,7 +1876,7 @@ array_to_json_pretty(PG_FUNCTION_ARGS)
 /*
  * SQL function row_to_json(row)
  */
-extern Datum
+Datum
 row_to_json(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
@@ -1892,7 +1892,7 @@ row_to_json(PG_FUNCTION_ARGS)
 /*
  * SQL function row_to_json(row, prettybool)
  */
-extern Datum
+Datum
 row_to_json_pretty(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);

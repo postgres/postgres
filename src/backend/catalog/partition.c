@@ -856,7 +856,7 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
  * Return a copy of given PartitionBoundInfo structure. The data types of bounds
  * are described by given partition key specification.
  */
-extern PartitionBoundInfo
+PartitionBoundInfo
 partition_bounds_copy(PartitionBoundInfo src,
 					  PartitionKey key)
 {

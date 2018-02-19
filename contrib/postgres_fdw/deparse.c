@@ -927,7 +927,7 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
  *
  * List of columns selected is returned in retrieved_attrs.
  */
-extern void
+void
 deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 						List *tlist, List *remote_conds, List *pathkeys,
 						bool is_subquery, List **retrieved_attrs,
@@ -1313,7 +1313,7 @@ appendConditions(List *exprs, deparse_expr_cxt *context)
 }
 
 /* Output join name for given join type */
-extern const char *
+const char *
 get_jointype_name(JoinType jointype)
 {
 	switch (jointype)

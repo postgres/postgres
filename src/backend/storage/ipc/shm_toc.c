@@ -60,7 +60,7 @@ shm_toc_create(uint64 magic, void *address, Size nbytes)
  * Attach to an existing table of contents.  If the magic number found at
  * the target address doesn't match our expectations, return NULL.
  */
-extern shm_toc *
+shm_toc *
 shm_toc_attach(uint64 magic, void *address)
 {
 	shm_toc    *toc = (shm_toc *) address;
@@ -84,7 +84,7 @@ shm_toc_attach(uint64 magic, void *address)
  * We allocate backwards from the end of the segment, so that the TOC entries
  * can grow forward from the start of the segment.
  */
-extern void *
+void *
 shm_toc_allocate(shm_toc *toc, Size nbytes)
 {
 	volatile shm_toc *vtoc = toc;
@@ -127,7 +127,7 @@ shm_toc_allocate(shm_toc *toc, Size nbytes)
 /*
  * Return the number of bytes that can still be allocated.
  */
-extern Size
+Size
 shm_toc_freespace(shm_toc *toc)
 {
 	volatile shm_toc *vtoc = toc;

@@ -4023,7 +4023,7 @@ ResetReindexPending(void)
  * EstimateReindexStateSpace
  *		Estimate space needed to pass reindex state to parallel workers.
  */
-extern Size
+Size
 EstimateReindexStateSpace(void)
 {
 	return offsetof(SerializedReindexState, pendingReindexedIndexes)
@@ -4034,7 +4034,7 @@ EstimateReindexStateSpace(void)
  * SerializeReindexState
  *		Serialize reindex state for parallel workers.
  */
-extern void
+void
 SerializeReindexState(Size maxsize, char *start_address)
 {
 	SerializedReindexState *sistate = (SerializedReindexState *) start_address;
@@ -4052,7 +4052,7 @@ SerializeReindexState(Size maxsize, char *start_address)
  * RestoreReindexState
  *		Restore reindex state in a parallel worker.
  */
-extern void
+void
 RestoreReindexState(void *reindexstate)
 {
 	SerializedReindexState *sistate = (SerializedReindexState *) reindexstate;

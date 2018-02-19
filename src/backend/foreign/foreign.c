@@ -712,7 +712,7 @@ get_foreign_server_oid(const char *servername, bool missing_ok)
  * path list in RelOptInfo is anyway sorted by total cost we are likely to
  * choose the most efficient path, which is all for the best.
  */
-extern Path *
+Path *
 GetExistingLocalJoinPath(RelOptInfo *joinrel)
 {
 	ListCell   *lc;

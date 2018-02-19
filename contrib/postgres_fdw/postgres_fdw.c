@@ -5567,7 +5567,7 @@ conversion_error_callback(void *arg)
  * Find an equivalence class member expression, all of whose Vars, come from
  * the indicated relation.
  */
-extern Expr *
+Expr *
 find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
 {
 	ListCell   *lc_em;
