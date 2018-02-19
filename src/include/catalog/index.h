@@ -54,6 +54,7 @@ extern Oid index_create(Relation heapRelation,
 			 const char *indexRelationName,
 			 Oid indexRelationId,
 			 Oid parentIndexRelid,
+			 Oid parentConstraintId,
 			 Oid relFileNode,
 			 IndexInfo *indexInfo,
 			 List *indexColNames,
@@ -66,7 +67,8 @@ extern Oid index_create(Relation heapRelation,
 			 bits16 flags,
 			 bits16 constr_flags,
 			 bool allow_system_table_mods,
-			 bool is_internal);
+			 bool is_internal,
+			 Oid *constraintId);
 
 #define	INDEX_CONSTR_CREATE_MARK_AS_PRIMARY	(1 << 0)
 #define	INDEX_CONSTR_CREATE_DEFERRABLE		(1 << 1)
@@ -76,6 +78,7 @@ extern Oid index_create(Relation heapRelation,
 
 extern ObjectAddress index_constraint_create(Relation heapRelation,
 						Oid indexRelationId,
+						Oid parentConstraintId,
 						IndexInfo *indexInfo,
 						const char *constraintName,
 						char constraintType,

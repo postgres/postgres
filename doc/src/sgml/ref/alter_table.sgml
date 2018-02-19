@@ -412,6 +412,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       disappear too.
      </para>
 
+     <para>
+      Additional restrictions apply when unique or primary key constraints
+      are added to partitioned tables; see <xref linkend="sql-createtable" />.
+     </para>
+
      <note>
       <para>
        Adding a constraint using an existing index can be helpful in
@@ -834,9 +839,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       This form attaches an existing table (which might itself be partitioned)
       as a partition of the target table. The table can be attached
-      as a partition for specific values using <literal>FOR VALUES
-      </literal> or as a default partition by using <literal>DEFAULT
-      </literal>.  For each index in the target table, a corresponding
+      as a partition for specific values using <literal>FOR VALUES</literal>
+      or as a default partition by using <literal>DEFAULT</literal>.
+      For each index in the target table, a corresponding
       one will be created in the attached table; or, if an equivalent
       index already exists, will be attached to the target table's index,
       as if <command>ALTER INDEX ATTACH PARTITION</command> had been executed.
@@ -851,8 +856,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       as the target table and no more; moreover, the column types must also
       match.  Also, it must have all the <literal>NOT NULL</literal> and
       <literal>CHECK</literal> constraints of the target table.  Currently
-      <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and
       <literal>FOREIGN KEY</literal> constraints are not considered.
+      <literal>UNIQUE</literal> and <literal>PRIMARY KEY</literal> constraints
+      from the parent table will be created in the partition, if they don't
+      already exist.
       If any of the <literal>CHECK</literal> constraints of the table being
       attached is marked <literal>NO INHERIT</literal>, the command will fail;
       such a constraint must be recreated without the <literal>NO INHERIT</literal>

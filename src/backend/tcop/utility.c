@@ -1353,6 +1353,7 @@ ProcessUtilitySlow(ParseState *pstate,
 									stmt,
 									InvalidOid, /* no predefined OID */
 									InvalidOid, /* no parent index */
+									InvalidOid, /* no parent constraint */
 									false,	/* is_alter_table */
 									true,	/* check_rights */
 									true,	/* check_not_in_use */

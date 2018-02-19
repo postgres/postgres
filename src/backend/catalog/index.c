@@ -691,6 +691,8 @@ UpdateIndexRelation(Oid indexoid,
  *		nonzero to specify a preselected OID.
  * parentIndexRelid: if creating an index partition, the OID of the
  *		parent index; otherwise InvalidOid.
+ * parentConstraintId: if creating a constraint on a partition, the OID
+ *		of the constraint in the parent; otherwise InvalidOid.
  * relFileNode: normally, pass InvalidOid to get new storage.  May be
  *		nonzero to attach an existing valid build.
  * indexInfo: same info executor uses to insert into the index
@@ -722,6 +724,7 @@ UpdateIndexRelation(Oid indexoid,
  *		(only if INDEX_CREATE_ADD_CONSTRAINT is set)
  * allow_system_table_mods: allow table to be a system catalog
  * is_internal: if true, post creation hook for new index
+ * constraintId: if not NULL, receives OID of created constraint
  *
  * Returns the OID of the created index.
  */
@@ -730,6 +733,7 @@ index_create(Relation heapRelation,
 			 const char *indexRelationName,
 			 Oid indexRelationId,
 			 Oid parentIndexRelid,
+			 Oid parentConstraintId,
 			 Oid relFileNode,
 			 IndexInfo *indexInfo,
 			 List *indexColNames,
@@ -742,7 +746,8 @@ index_create(Relation heapRelation,
 			 bits16 flags,
 			 bits16 constr_flags,
 			 bool allow_system_table_mods,
-			 bool is_internal)
+			 bool is_internal,
+			 Oid *constraintId)
 {
 	Oid			heapRelationId = RelationGetRelid(heapRelation);
 	Relation	pg_class;
@@ -989,6 +994,7 @@ index_create(Relation heapRelation,
 		if ((flags & INDEX_CREATE_ADD_CONSTRAINT) != 0)
 		{
 			char		constraintType;
+			ObjectAddress localaddr;
 
 			if (isprimary)
 				constraintType = CONSTRAINT_PRIMARY;
@@ -1002,14 +1008,17 @@ index_create(Relation heapRelation,
 				constraintType = 0; /* keep compiler quiet */
 			}
 
-			index_constraint_create(heapRelation,
+			localaddr = index_constraint_create(heapRelation,
 									indexRelationId,
+									parentConstraintId,
 									indexInfo,
 									indexRelationName,
 									constraintType,
 									constr_flags,
 									allow_system_table_mods,
 									is_internal);
+			if (constraintId)
+				*constraintId = localaddr.objectId;
 		}
 		else
 		{
@@ -1181,6 +1190,8 @@ index_create(Relation heapRelation,
  *
  * heapRelation: table owning the index (must be suitably locked by caller)
  * indexRelationId: OID of the index
+ * parentConstraintId: if constraint is on a partition, the OID of the
+ *		constraint in the parent.
  * indexInfo: same info executor uses to insert into the index
  * constraintName: what it say (generally, should match name of index)
  * constraintType: one of CONSTRAINT_PRIMARY, CONSTRAINT_UNIQUE, or
@@ -1198,6 +1209,7 @@ index_create(Relation heapRelation,
 ObjectAddress
 index_constraint_create(Relation heapRelation,
 						Oid indexRelationId,
+						Oid parentConstraintId,
 						IndexInfo *indexInfo,
 						const char *constraintName,
 						char constraintType,
@@ -1212,6 +1224,9 @@ index_constraint_create(Relation heapRelation,
 	bool		deferrable;
 	bool		initdeferred;
 	bool		mark_as_primary;
+	bool		islocal;
+	bool		noinherit;
+	int			inhcount;
 
 	deferrable = (constr_flags & INDEX_CONSTR_CREATE_DEFERRABLE) != 0;
 	initdeferred = (constr_flags & INDEX_CONSTR_CREATE_INIT_DEFERRED) != 0;
@@ -1246,6 +1261,19 @@ index_constraint_create(Relation heapRelation,
 		deleteDependencyRecordsForClass(RelationRelationId, indexRelationId,
 										RelationRelationId, DEPENDENCY_AUTO);
 
+	if (OidIsValid(parentConstraintId))
+	{
+		islocal = false;
+		inhcount = 1;
+		noinherit = false;
+	}
+	else
+	{
+		islocal = true;
+		inhcount = 0;
+		noinherit = true;
+	}
+
 	/*
 	 * Construct a pg_constraint entry.
 	 */
@@ -1273,9 +1301,9 @@ index_constraint_create(Relation heapRelation,
 								   NULL,	/* no check constraint */
 								   NULL,
 								   NULL,
-								   true,	/* islocal */
-								   0,	/* inhcount */
-								   true,	/* noinherit */
+								   islocal,
+								   inhcount,
+								   noinherit,
 								   is_internal);
 
 	/*
@@ -1293,6 +1321,18 @@ index_constraint_create(Relation heapRelation,
 	referenced.objectSubId = 0;
 
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+
+	/*
+	 * Also, if this is a constraint on a partition, mark it as depending
+	 * on the constraint in the parent.
+	 */
+	if (OidIsValid(parentConstraintId))
+	{
+		ObjectAddress	parentConstr;
+
+		ObjectAddressSet(parentConstr, ConstraintRelationId, parentConstraintId);
+		recordDependencyOn(&referenced, &parentConstr, DEPENDENCY_INTERNAL_AUTO);
+	}
 
 	/*
 	 * If the constraint is deferrable, create the deferred uniqueness

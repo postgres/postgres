@@ -108,6 +108,11 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
         insert or update data which would result in duplicate entries
         will generate an error.
        </para>
+
+       <para>
+        Additional restrictions apply when unique indexes are applied to
+        partitioned tables; see <xref linkend="sql-createtable" />.
+       </para>
       </listitem>
      </varlistentry>
 

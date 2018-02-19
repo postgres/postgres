@@ -748,6 +748,43 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 }
 
 /*
+ * ConstraintSetParentConstraint
+ *		Set a partition's constraint as child of its parent table's
+ *
+ * This updates the constraint's pg_constraint row to show it as inherited, and
+ * add a dependency to the parent so that it cannot be removed on its own.
+ */
+void
+ConstraintSetParentConstraint(Oid childConstrId, Oid parentConstrId)
+{
+	Relation		constrRel;
+	Form_pg_constraint constrForm;
+	HeapTuple		tuple,
+					newtup;
+	ObjectAddress	depender;
+	ObjectAddress	referenced;
+
+	constrRel = heap_open(ConstraintRelationId, RowExclusiveLock);
+	tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(childConstrId));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for constraint %u", childConstrId);
+	newtup = heap_copytuple(tuple);
+	constrForm = (Form_pg_constraint) GETSTRUCT(newtup);
+	constrForm->conislocal = false;
+	constrForm->coninhcount++;
+	CatalogTupleUpdate(constrRel, &tuple->t_self, newtup);
+	ReleaseSysCache(tuple);
+
+	ObjectAddressSet(referenced, ConstraintRelationId, parentConstrId);
+	ObjectAddressSet(depender, ConstraintRelationId, childConstrId);
+
+	recordDependencyOn(&depender, &referenced, DEPENDENCY_INTERNAL_AUTO);
+
+	heap_close(constrRel, RowExclusiveLock);
+}
+
+
+/*
  * get_relation_constraint_oid
  *		Find a constraint on the specified relation with the specified name.
  *		Returns constraint's OID.
@@ -901,6 +938,45 @@ get_relation_constraint_attnos(Oid relid, const char *conname,
 	heap_close(pg_constraint, AccessShareLock);
 
 	return conattnos;
+}
+
+/*
+ * Return the OID of the constraint associated with the given index in the
+ * given relation; or InvalidOid if no such index is catalogued.
+ */
+Oid
+get_relation_idx_constraint_oid(Oid relationId, Oid indexId)
+{
+	Relation	pg_constraint;
+	SysScanDesc	scan;
+	ScanKeyData	key;
+	HeapTuple	tuple;
+	Oid			constraintId = InvalidOid;
+
+	pg_constraint = heap_open(ConstraintRelationId, AccessShareLock);
+
+	ScanKeyInit(&key,
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber,
+				F_OIDEQ,
+				ObjectIdGetDatum(relationId));
+	scan = systable_beginscan(pg_constraint, ConstraintRelidIndexId,
+							  true, NULL, 1, &key);
+	while ((tuple = systable_getnext(scan)) != NULL)
+	{
+		Form_pg_constraint	constrForm;
+
+		constrForm = (Form_pg_constraint) GETSTRUCT(tuple);
+		if (constrForm->conindid == indexId)
+		{
+			constraintId = HeapTupleGetOid(tuple);
+			break;
+		}
+	}
+	systable_endscan(scan);
+
+	heap_close(pg_constraint, AccessShareLock);
+	return constraintId;
 }
 
 /*

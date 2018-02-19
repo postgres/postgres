@@ -794,7 +794,7 @@ insert into parted_conflict_test values (1, 'a') on conflict do nothing;
 insert into parted_conflict_test values (1, 'a') on conflict do nothing;
 -- however, on conflict do update is not supported yet
 insert into parted_conflict_test values (1) on conflict (b) do update set a = excluded.a;
-ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+ERROR:  ON CONFLICT DO UPDATE cannot be applied to partitioned table "parted_conflict_test"
 -- but it works OK if we target the partition directly
 insert into parted_conflict_test_1 values (1) on conflict (b) do
 update set a = excluded.a;

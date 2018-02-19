@@ -330,13 +330,13 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	coloptions[1] = 0;
 
 	index_create(toast_rel, toast_idxname, toastIndexOid, InvalidOid,
-				 InvalidOid,
+				 InvalidOid, InvalidOid,
 				 indexInfo,
 				 list_make2("chunk_id", "chunk_seq"),
 				 BTREE_AM_OID,
 				 rel->rd_rel->reltablespace,
 				 collationObjectId, classObjectId, coloptions, (Datum) 0,
-				 INDEX_CREATE_IS_PRIMARY, 0, true, true);
+				 INDEX_CREATE_IS_PRIMARY, 0, true, true, NULL);
 
 	heap_close(toast_rel, NoLock);
 

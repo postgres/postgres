@@ -3146,9 +3146,8 @@ CREATE TABLE measurement_y2006m02 PARTITION OF measurement
       <para>
        Create an index on the key column(s), as well as any other indexes you
        might want, on the partitioned table. (The key index is not strictly
-       necessary, but in most scenarios it is helpful.  If you intend the key
-       values to be unique then you should always create a unique or
-       primary-key constraint for each partition.)  This automatically creates
+       necessary, but in most scenarios it is helpful.)
+       This automatically creates
        one index on each partition, and any partitions you create or attach
        later will also contain the index.
 
@@ -3270,7 +3269,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
     <itemizedlist>
      <listitem>
       <para>
-       There is no way to create a primary key, unique constraint, or
+       There is no way to create a
        exclusion constraint spanning all partitions; it is only possible
        to constrain each leaf partition individually.
       </para>
@@ -3278,7 +3277,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
 
      <listitem>
       <para>
-       Since primary keys are not supported on partitioned tables, foreign
+       While primary keys are supported on partitioned tables, foreign
        keys referencing partitioned tables are not supported, nor are foreign
        key references from a partitioned table to some other table.
       </para>

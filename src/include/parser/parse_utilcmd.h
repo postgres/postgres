@@ -29,6 +29,7 @@ extern PartitionBoundSpec *transformPartitionBound(ParseState *pstate, Relation 
 						PartitionBoundSpec *spec);
 extern IndexStmt *generateClonedIndexStmt(RangeVar *heapRel, Oid heapOid,
 						Relation source_idx,
-						const AttrNumber *attmap, int attmap_length);
+						const AttrNumber *attmap, int attmap_length,
+						Oid *constraintOid);
 
 #endif							/* PARSE_UTILCMD_H */

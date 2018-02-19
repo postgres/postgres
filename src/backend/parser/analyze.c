@@ -1017,6 +1017,13 @@ transformOnConflictClause(ParseState *pstate,
 		TargetEntry *te;
 		int			attno;
 
+		if (targetrel->rd_partdesc)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("%s cannot be applied to partitioned table \"%s\"",
+							"ON CONFLICT DO UPDATE",
+							RelationGetRelationName(targetrel))));
+
 		/*
 		 * All INSERT expressions have been parsed, get ready for potentially
 		 * existing SET statements that need to be processed like an UPDATE.

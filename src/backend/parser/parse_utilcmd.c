@@ -712,12 +712,6 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 							 errmsg("primary key constraints are not supported on foreign tables"),
 							 parser_errposition(cxt->pstate,
 												constraint->location)));
-				if (cxt->ispartitioned)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("primary key constraints are not supported on partitioned tables"),
-							 parser_errposition(cxt->pstate,
-												constraint->location)));
 				/* FALL THRU */
 
 			case CONSTR_UNIQUE:
@@ -725,12 +719,6 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("unique constraints are not supported on foreign tables"),
-							 parser_errposition(cxt->pstate,
-												constraint->location)));
-				if (cxt->ispartitioned)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("unique constraints are not supported on partitioned tables"),
 							 parser_errposition(cxt->pstate,
 												constraint->location)));
 				if (constraint->keys == NIL)
@@ -829,12 +817,6 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 						 errmsg("primary key constraints are not supported on foreign tables"),
 						 parser_errposition(cxt->pstate,
 											constraint->location)));
-			if (cxt->ispartitioned)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("primary key constraints are not supported on partitioned tables"),
-						 parser_errposition(cxt->pstate,
-											constraint->location)));
 			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 			break;
 
@@ -843,12 +825,6 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("unique constraints are not supported on foreign tables"),
-						 parser_errposition(cxt->pstate,
-											constraint->location)));
-			if (cxt->ispartitioned)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("unique constraints are not supported on partitioned tables"),
 						 parser_errposition(cxt->pstate,
 											constraint->location)));
 			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
@@ -1192,7 +1168,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			/* Build CREATE INDEX statement to recreate the parent_index */
 			index_stmt = generateClonedIndexStmt(cxt->relation, InvalidOid,
 												 parent_index,
-												 attmap, tupleDesc->natts);
+												 attmap, tupleDesc->natts, NULL);
 
 			/* Copy comment on index, if requested */
 			if (table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS)
@@ -1275,7 +1251,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
  */
 IndexStmt *
 generateClonedIndexStmt(RangeVar *heapRel, Oid heapRelid, Relation source_idx,
-						const AttrNumber *attmap, int attmap_length)
+						const AttrNumber *attmap, int attmap_length, Oid *constraintOid)
 {
 	Oid			source_relid = RelationGetRelid(source_idx);
 	HeapTuple	ht_idxrel;
@@ -1372,6 +1348,9 @@ generateClonedIndexStmt(RangeVar *heapRel, Oid heapRelid, Relation source_idx,
 		{
 			HeapTuple	ht_constr;
 			Form_pg_constraint conrec;
+
+			if (constraintOid)
+				*constraintOid = constraintId;
 
 			ht_constr = SearchSysCache1(CONSTROID,
 										ObjectIdGetDatum(constraintId));

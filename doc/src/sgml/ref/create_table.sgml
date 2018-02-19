@@ -546,8 +546,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      Partitioned tables do not support <literal>UNIQUE</literal>,
-      <literal>PRIMARY KEY</literal>, <literal>EXCLUDE</literal>, or
+      Partitioned tables do not support <literal>EXCLUDE</literal> or
       <literal>FOREIGN KEY</literal> constraints; however, you can define
       these constraints on individual partitions.
      </para>
@@ -786,6 +785,14 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       primary key constraint defined for the table.  (Otherwise it
       would just be the same constraint listed twice.)
      </para>
+
+     <para>
+      When used on partitioned tables, unique constraints must include all the
+      columns of the partition key.
+      If any partitions are in turn partitioned, all columns of each partition
+      key are considered at each level below the <literal>UNIQUE</literal>
+      constraint.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -814,6 +821,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       about the design of the schema, since a primary key implies that other
       tables can rely on this set of columns as a unique identifier for rows.
      </para>
+
+     <para>
+      <literal>PRIMARY KEY</literal> constraints share the restrictions that
+      <literal>UNIQUE</literal> constraints have when placed on partitioned
+      tables.
+     </para>
+
     </listitem>
    </varlistentry>
 

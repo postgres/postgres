@@ -5242,6 +5242,40 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			role                     => 1,
 			section_pre_data         => 1, }, },
 
+	'ALTER TABLE measurement PRIMARY KEY' => {
+		all_runs     => 1,
+		catch_all    => 'CREATE ... commands',
+		create_order => 93,
+		create_sql   => 'ALTER TABLE dump_test.measurement ADD PRIMARY KEY (city_id, logdate);',
+		regexp => qr/^
+			\QALTER TABLE ONLY measurement\E \n^\s+
+			\QADD CONSTRAINT measurement_pkey PRIMARY KEY (city_id, logdate);\E
+		/xm,
+		like => {
+			binary_upgrade           => 1,
+			clean                    => 1,
+			clean_if_exists          => 1,
+			createdb                 => 1,
+			defaults                 => 1,
+			exclude_test_table       => 1,
+			exclude_test_table_data  => 1,
+			no_blobs                 => 1,
+			no_privs                 => 1,
+			no_owner                 => 1,
+			only_dump_test_schema    => 1,
+			pg_dumpall_dbprivs       => 1,
+			schema_only              => 1,
+			section_post_data        => 1,
+			test_schema_plus_blobs   => 1,
+			with_oids                => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			role                     => 1,
+			section_pre_data         => 1, }, },
+
 	'CREATE INDEX ... ON measurement_y2006_m2' => {
 		all_runs     => 1,
 		catch_all    => 'CREATE ... commands',
@@ -5278,6 +5312,37 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		catch_all    => 'CREATE ... commands',
 		regexp       => qr/^
 		\QALTER INDEX dump_test.measurement_city_id_logdate_idx ATTACH PARTITION dump_test_second_schema.measurement_y2006m2_city_id_logdate_idx\E
+		/xm,
+		like => {
+			binary_upgrade           => 1,
+			clean                    => 1,
+			clean_if_exists          => 1,
+			createdb                 => 1,
+			defaults                 => 1,
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+			exclude_test_table_data  => 1,
+			no_blobs                 => 1,
+			no_privs                 => 1,
+			no_owner                 => 1,
+			pg_dumpall_dbprivs       => 1,
+			role                     => 1,
+			schema_only              => 1,
+			section_post_data        => 1,
+			with_oids                => 1, },
+		unlike => {
+			only_dump_test_schema    => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			section_pre_data         => 1,
+			test_schema_plus_blobs   => 1, }, },
+
+	'ALTER INDEX ... ATTACH PARTITION (primary key)' => {
+		all_runs     => 1,
+		catch_all    => 'CREATE ... commands',
+		regexp       => qr/^
+		\QALTER INDEX dump_test.measurement_pkey ATTACH PARTITION dump_test_second_schema.measurement_y2006m2_pkey\E
 		/xm,
 		like => {
 			binary_upgrade           => 1,

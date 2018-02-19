@@ -834,6 +834,12 @@ DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
 
 DROP TABLE cwi_test;
 
+-- ADD CONSTRAINT USING INDEX is forbidden on partitioned tables
+CREATE TABLE cwi_test(a int) PARTITION BY hash (a);
+create unique index on cwi_test (a);
+alter table cwi_test add primary key using index cwi_test_a_idx ;
+DROP TABLE cwi_test;
+
 --
 -- Check handling of indexes on system columns
 --

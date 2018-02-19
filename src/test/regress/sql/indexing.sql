@@ -15,7 +15,6 @@ drop table idxpart;
 -- Some unsupported features
 create table idxpart (a int, b int, c text) partition by range (a);
 create table idxpart1 partition of idxpart for values from (0) to (10);
-create unique index on idxpart (a);
 create index concurrently on idxpart (a);
 drop table idxpart;
 
@@ -383,6 +382,175 @@ select attrelid::regclass, attname, attnum from pg_attribute
   order by attrelid::regclass, attnum;
 drop table idxpart;
 
+--
+-- Constraint-related indexes
+--
+
+-- Verify that it works to add primary key / unique to partitioned tables
+create table idxpart (a int primary key, b int) partition by range (a);
+\d idxpart
+drop table idxpart;
+
+-- but not if you fail to use the full partition key
+create table idxpart (a int unique, b int) partition by range (a, b);
+create table idxpart (a int, b int unique) partition by range (a, b);
+create table idxpart (a int primary key, b int) partition by range (b, a);
+create table idxpart (a int, b int primary key) partition by range (b, a);
+
+-- OK if you use them in some other order
+create table idxpart (a int, b int, c text, primary key  (a, b, c)) partition by range (b, c, a);
+drop table idxpart;
+
+-- not other types of index-based constraints
+create table idxpart (a int, exclude (a with = )) partition by range (a);
+
+-- no expressions in partition key for PK/UNIQUE
+create table idxpart (a int primary key, b int) partition by range ((b + a));
+create table idxpart (a int unique, b int) partition by range ((b + a));
+
+-- use ALTER TABLE to add a primary key
+create table idxpart (a int, b int, c text) partition by range (a, b);
+alter table idxpart add primary key (a);	-- not an incomplete one though
+alter table idxpart add primary key (a, b);	-- this works
+\d idxpart
+create table idxpart1 partition of idxpart for values from (0, 0) to (1000, 1000);
+\d idxpart1
+drop table idxpart;
+
+-- use ALTER TABLE to add a unique constraint
+create table idxpart (a int, b int) partition by range (a, b);
+alter table idxpart add unique (a);			-- not an incomplete one though
+alter table idxpart add unique (b, a);		-- this works
+\d idxpart
+drop table idxpart;
+
+-- Exclusion constraints cannot be added
+create table idxpart (a int, b int) partition by range (a);
+alter table idxpart add exclude (a with =);
+drop table idxpart;
+
+-- When (sub)partitions are created, they also contain the constraint
+create table idxpart (a int, b int, primary key (a, b)) partition by range (a, b);
+create table idxpart1 partition of idxpart for values from (1, 1) to (10, 10);
+create table idxpart2 partition of idxpart for values from (10, 10) to (20, 20)
+  partition by range (b);
+create table idxpart21 partition of idxpart2 for values from (10) to (15);
+create table idxpart22 partition of idxpart2 for values from (15) to (20);
+create table idxpart3 (b int not null, a int not null);
+alter table idxpart attach partition idxpart3 for values from (20, 20) to (30, 30);
+select conname, contype, conrelid::regclass, conindid::regclass, conkey
+  from pg_constraint where conrelid::regclass::text like 'idxpart%'
+  order by conname;
+drop table idxpart;
+
+-- Verify that multi-layer partitioning honors the requirement that all
+-- columns in the partition key must appear in primary key
+create table idxpart (a int, b int, primary key (a)) partition by range (a);
+create table idxpart2 partition of idxpart
+for values from (0) to (1000) partition by range (b); -- fail
+drop table idxpart;
+
+-- Multi-layer partitioning works correctly in this case:
+create table idxpart (a int, b int, primary key (a, b)) partition by range (a);
+create table idxpart2 partition of idxpart for values from (0) to (1000) partition by range (b);
+create table idxpart21 partition of idxpart2 for values from (0) to (1000);
+select conname, contype, conrelid::regclass, conindid::regclass, conkey
+  from pg_constraint where conrelid::regclass::text like 'idxpart%'
+  order by conname;
+drop table idxpart;
+
+-- If a partitioned table has a unique/PK constraint, then it's not possible
+-- to drop the corresponding constraint in the children; nor it's possible
+-- to drop the indexes individually.  Dropping the constraint in the parent
+-- gets rid of the lot.
+create table idxpart (i int) partition by hash (i);
+create table idxpart0 partition of idxpart (i) for values with (modulus 2, remainder 0);
+create table idxpart1 partition of idxpart (i) for values with (modulus 2, remainder 1);
+alter table idxpart0 add primary key(i);
+alter table idxpart add primary key(i);
+select indrelid::regclass, indexrelid::regclass, inhparent::regclass, indisvalid,
+  conname, conislocal, coninhcount, connoinherit, convalidated
+  from pg_index idx left join pg_inherits inh on (idx.indexrelid = inh.inhrelid)
+  left join pg_constraint con on (idx.indexrelid = con.conindid)
+  where indrelid::regclass::text like 'idxpart%'
+  order by indexrelid::regclass::text collate "C";
+drop index idxpart0_pkey;								-- fail
+drop index idxpart1_pkey;								-- fail
+alter table idxpart0 drop constraint idxpart0_pkey;		-- fail
+alter table idxpart1 drop constraint idxpart1_pkey;		-- fail
+alter table idxpart drop constraint idxpart_pkey;		-- ok
+select indrelid::regclass, indexrelid::regclass, inhparent::regclass, indisvalid,
+  conname, conislocal, coninhcount, connoinherit, convalidated
+  from pg_index idx left join pg_inherits inh on (idx.indexrelid = inh.inhrelid)
+  left join pg_constraint con on (idx.indexrelid = con.conindid)
+  where indrelid::regclass::text like 'idxpart%'
+  order by indexrelid::regclass::text collate "C";
+drop table idxpart;
+
+-- If a partitioned table has a constraint whose index is not valid,
+-- attaching a missing partition makes it valid.
+create table idxpart (a int) partition by range (a);
+create table idxpart0 (like idxpart);
+alter table idxpart0 add primary key (a);
+alter table idxpart attach partition idxpart0 for values from (0) to (1000);
+alter table only idxpart add primary key (a);
+select indrelid::regclass, indexrelid::regclass, inhparent::regclass, indisvalid,
+  conname, conislocal, coninhcount, connoinherit, convalidated
+  from pg_index idx left join pg_inherits inh on (idx.indexrelid = inh.inhrelid)
+  left join pg_constraint con on (idx.indexrelid = con.conindid)
+  where indrelid::regclass::text like 'idxpart%'
+  order by indexrelid::regclass::text collate "C";
+alter index idxpart_pkey attach partition idxpart0_pkey;
+select indrelid::regclass, indexrelid::regclass, inhparent::regclass, indisvalid,
+  conname, conislocal, coninhcount, connoinherit, convalidated
+  from pg_index idx left join pg_inherits inh on (idx.indexrelid = inh.inhrelid)
+  left join pg_constraint con on (idx.indexrelid = con.conindid)
+  where indrelid::regclass::text like 'idxpart%'
+  order by indexrelid::regclass::text collate "C";
+drop table idxpart;
+
+-- if a partition has a unique index without a constraint, does not attach
+-- automatically; creates a new index instead.
+create table idxpart (a int, b int) partition by range (a);
+create table idxpart1 (a int not null, b int);
+create unique index on idxpart1 (a);
+alter table idxpart add primary key (a);
+alter table idxpart attach partition idxpart1 for values from (1) to (1000);
+select indrelid::regclass, indexrelid::regclass, inhparent::regclass, indisvalid,
+  conname, conislocal, coninhcount, connoinherit, convalidated
+  from pg_index idx left join pg_inherits inh on (idx.indexrelid = inh.inhrelid)
+  left join pg_constraint con on (idx.indexrelid = con.conindid)
+  where indrelid::regclass::text like 'idxpart%'
+  order by indexrelid::regclass::text collate "C";
+drop table idxpart;
+
+-- Can't attach an index without a corresponding constraint
+create table idxpart (a int, b int) partition by range (a);
+create table idxpart1 (a int not null, b int);
+create unique index on idxpart1 (a);
+alter table idxpart attach partition idxpart1 for values from (1) to (1000);
+alter table only idxpart add primary key (a);
+alter index idxpart_pkey attach partition idxpart1_a_idx;	-- fail
+drop table idxpart;
+
+-- Test that unique constraints are working
+create table idxpart (a int, b text, primary key (a, b)) partition by range (a);
+create table idxpart1 partition of idxpart for values from (0) to (100000);
+create table idxpart2 (c int, like idxpart);
+insert into idxpart2 (c, a, b) values (42, 572814, 'inserted first');
+alter table idxpart2 drop column c;
+create unique index on idxpart (a);
+alter table idxpart attach partition idxpart2 for values from (100000) to (1000000);
+insert into idxpart values (0, 'zero'), (42, 'life'), (2^16, 'sixteen');
+insert into idxpart select 2^g, format('two to power of %s', g) from generate_series(15, 17) g;
+insert into idxpart values (16, 'sixteen');
+insert into idxpart (b, a) values ('one', 142857), ('two', 285714);
+insert into idxpart select a * 2, b || b from idxpart where a between 2^16 and 2^19;
+insert into idxpart values (572814, 'five');
+insert into idxpart values (857142, 'six');
+select tableoid::regclass, * from idxpart order by a;
+drop table idxpart;
+
 -- intentionally leave some objects around
 create table idxpart (a int) partition by range (a);
 create table idxpart1 partition of idxpart for values from (0) to (100);
@@ -394,3 +562,5 @@ create index on idxpart22 (a);
 create index on only idxpart2 (a);
 alter index idxpart2_a_idx attach partition idxpart22_a_idx;
 create index on idxpart (a);
+create table idxpart_another (a int, b int, primary key (a, b)) partition by range (a);
+create table idxpart_another_1 partition of idxpart_another for values from (0) to (100);

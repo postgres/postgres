@@ -2559,6 +2559,12 @@ DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
 ERROR:  cannot drop index cwi_replaced_pkey because constraint cwi_replaced_pkey on table cwi_test requires it
 HINT:  You can drop constraint cwi_replaced_pkey on table cwi_test instead.
 DROP TABLE cwi_test;
+-- ADD CONSTRAINT USING INDEX is forbidden on partitioned tables
+CREATE TABLE cwi_test(a int) PARTITION BY hash (a);
+create unique index on cwi_test (a);
+alter table cwi_test add primary key using index cwi_test_a_idx ;
+ERROR:  ALTER TABLE / ADD CONSTRAINT USING INDEX is not supported on partitioned tables
+DROP TABLE cwi_test;
 --
 -- Check handling of indexes on system columns
 --

@@ -298,10 +298,6 @@ CREATE TABLE partitioned (
 ) PARTITION BY LIST (a1, a2);	-- fail
 
 -- unsupported constraint type for partitioned tables
-CREATE TABLE partitioned (
-	a int PRIMARY KEY
-) PARTITION BY RANGE (a);
-
 CREATE TABLE pkrel (
 	a int PRIMARY KEY
 );
@@ -309,10 +305,6 @@ CREATE TABLE partitioned (
 	a int REFERENCES pkrel(a)
 ) PARTITION BY RANGE (a);
 DROP TABLE pkrel;
-
-CREATE TABLE partitioned (
-	a int UNIQUE
-) PARTITION BY RANGE (a);
 
 CREATE TABLE partitioned (
 	a int,

@@ -25,6 +25,7 @@
 #include "catalog/indexing.h"
 #include "catalog/partition.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_constraint_fn.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_opclass.h"
@@ -301,6 +302,8 @@ CheckIndexCompatible(Oid oldId,
  *		nonzero to specify a preselected OID for the index.
  * 'parentIndexId': the OID of the parent index; InvalidOid if not the child
  *		of a partitioned index.
+ * 'parentConstraintId': the OID of the parent constraint; InvalidOid if not
+ *		the child of a constraint (only used when recursing)
  * 'is_alter_table': this is due to an ALTER rather than a CREATE operation.
  * 'check_rights': check for CREATE rights in namespace and tablespace.  (This
  *		should be true except when ALTER is deleting/recreating an index.)
@@ -317,6 +320,7 @@ DefineIndex(Oid relationId,
 			IndexStmt *stmt,
 			Oid indexRelationId,
 			Oid parentIndexId,
+			Oid	parentConstraintId,
 			bool is_alter_table,
 			bool check_rights,
 			bool check_not_in_use,
@@ -331,6 +335,7 @@ DefineIndex(Oid relationId,
 	Oid			accessMethodId;
 	Oid			namespaceId;
 	Oid			tablespaceId;
+	Oid			createdConstraintId = InvalidOid;
 	List	   *indexColNames;
 	Relation	rel;
 	Relation	indexRelation;
@@ -432,20 +437,11 @@ DefineIndex(Oid relationId,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot create index on partitioned table \"%s\" concurrently",
 							RelationGetRelationName(rel))));
-		if (stmt->unique)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot create unique index on partitioned table \"%s\"",
-							RelationGetRelationName(rel))));
 		if (stmt->excludeOpNames)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot create exclusion constraints on partitioned table \"%s\"",
 							RelationGetRelationName(rel))));
-		if (stmt->primary || stmt->isconstraint)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot create constraints on partitioned tables")));
 	}
 
 	/*
@@ -644,6 +640,84 @@ DefineIndex(Oid relationId,
 		index_check_primary_key(rel, indexInfo, is_alter_table);
 
 	/*
+	 * If this table is partitioned and we're creating a unique index or a
+	 * primary key, make sure that the indexed columns are part of the
+	 * partition key.  Otherwise it would be possible to violate uniqueness by
+	 * putting values that ought to be unique in different partitions.
+	 *
+	 * We could lift this limitation if we had global indexes, but those have
+	 * their own problems, so this is a useful feature combination.
+	 */
+	if (partitioned && (stmt->unique || stmt->primary))
+	{
+		PartitionKey key = rel->rd_partkey;
+		int			i;
+
+		/*
+		 * A partitioned table can have unique indexes, as long as all the
+		 * columns in the partition key appear in the unique key.  A
+		 * partition-local index can enforce global uniqueness iff the PK
+		 * value completely determines the partition that a row is in.
+		 *
+		 * Thus, verify that all the columns in the partition key appear
+		 * in the unique key definition.
+		 */
+		for (i = 0; i < key->partnatts; i++)
+		{
+			bool	found = false;
+			int		j;
+			const char *constraint_type;
+
+			if (stmt->primary)
+				constraint_type = "PRIMARY KEY";
+			else if (stmt->unique)
+				constraint_type = "UNIQUE";
+			else if (stmt->excludeOpNames != NIL)
+				constraint_type = "EXCLUDE";
+			else
+			{
+				elog(ERROR, "unknown constraint type");
+				constraint_type = NULL; /* keep compiler quiet */
+			}
+
+			/*
+			 * It may be possible to support UNIQUE constraints when partition
+			 * keys are expressions, but is it worth it?  Give up for now.
+			 */
+			if (key->partattrs[i] == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unsupported %s constraint with partition key definition",
+								constraint_type),
+						 errdetail("%s constraints cannot be used when partition keys include expressions.",
+								constraint_type)));
+
+			for (j = 0; j < indexInfo->ii_NumIndexAttrs; j++)
+			{
+				if (key->partattrs[i] == indexInfo->ii_KeyAttrNumbers[j])
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				Form_pg_attribute att;
+
+				att = TupleDescAttr(RelationGetDescr(rel), key->partattrs[i] - 1);
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("insufficient columns in %s constraint definition",
+								constraint_type),
+						 errdetail("%s constraint on table \"%s\" lacks column \"%s\" which is part of the partition key.",
+								   constraint_type, RelationGetRelationName(rel),
+								   NameStr(att->attname))));
+			}
+		}
+	}
+
+
+	/*
 	 * We disallow indexes on system columns other than OID.  They would not
 	 * necessarily get updated correctly, and they don't seem useful anyway.
 	 */
@@ -740,12 +814,14 @@ DefineIndex(Oid relationId,
 
 	indexRelationId =
 		index_create(rel, indexRelationName, indexRelationId, parentIndexId,
+					 parentConstraintId,
 					 stmt->oldNode, indexInfo, indexColNames,
 					 accessMethodId, tablespaceId,
 					 collationObjectId, classObjectId,
 					 coloptions, reloptions,
 					 flags, constr_flags,
-					 allowSystemTableMods, !check_rights);
+					 allowSystemTableMods, !check_rights,
+					 &createdConstraintId);
 
 	ObjectAddressSet(address, RelationRelationId, indexRelationId);
 
@@ -832,16 +908,40 @@ DefineIndex(Oid relationId,
 										 opfamOids,
 										 attmap, maplen))
 					{
+						Oid		cldConstrOid = InvalidOid;
+
 						/*
-						 * Found a match.  Attach index to parent and we're
-						 * done, but keep lock till commit.
+						 * Found a match.
+						 *
+						 * If this index is being created in the parent
+						 * because of a constraint, then the child needs to
+						 * have a constraint also, so look for one.  If there
+						 * is no such constraint, this index is no good, so
+						 * keep looking.
 						 */
+						if (createdConstraintId != InvalidOid)
+						{
+							cldConstrOid =
+								get_relation_idx_constraint_oid(childRelid,
+																cldidxid);
+							if (cldConstrOid == InvalidOid)
+							{
+								index_close(cldidx, lockmode);
+								continue;
+							}
+						}
+
+						/* Attach index to parent and we're done. */
 						IndexSetParentIndex(cldidx, indexRelationId);
+						if (createdConstraintId != InvalidOid)
+							ConstraintSetParentConstraint(cldConstrOid,
+														  createdConstraintId);
 
 						if (!IndexIsValid(cldidx->rd_index))
 							invalidate_parent = true;
 
 						found = true;
+						/* keep lock till commit */
 						index_close(cldidx, NoLock);
 						break;
 					}
@@ -872,6 +972,7 @@ DefineIndex(Oid relationId,
 					DefineIndex(childRelid, childStmt,
 								InvalidOid,			/* no predefined OID */
 								indexRelationId,	/* this is our child */
+								createdConstraintId,
 								false, check_rights, check_not_in_use,
 								false, quiet);
 				}

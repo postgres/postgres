@@ -281,12 +281,6 @@ CREATE TABLE partitioned (
 ) PARTITION BY LIST (a1, a2);	-- fail
 ERROR:  cannot use "list" partition strategy with more than one column
 -- unsupported constraint type for partitioned tables
-CREATE TABLE partitioned (
-	a int PRIMARY KEY
-) PARTITION BY RANGE (a);
-ERROR:  primary key constraints are not supported on partitioned tables
-LINE 2:  a int PRIMARY KEY
-               ^
 CREATE TABLE pkrel (
 	a int PRIMARY KEY
 );
@@ -297,12 +291,6 @@ ERROR:  foreign key constraints are not supported on partitioned tables
 LINE 2:  a int REFERENCES pkrel(a)
                ^
 DROP TABLE pkrel;
-CREATE TABLE partitioned (
-	a int UNIQUE
-) PARTITION BY RANGE (a);
-ERROR:  unique constraints are not supported on partitioned tables
-LINE 2:  a int UNIQUE
-               ^
 CREATE TABLE partitioned (
 	a int,
 	EXCLUDE USING gist (a WITH &&)
