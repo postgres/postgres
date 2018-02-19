@@ -217,3 +217,18 @@ id             data           id             data
 9              0              9              0              
 10             0              10             0              
 step c1: COMMIT;
+
+starting permutation: wrtwcte multireadwcte c1 c2
+step wrtwcte: UPDATE table_a SET value = 'tableAValue2' WHERE id = 1;
+step multireadwcte: 
+	WITH updated AS (
+	  UPDATE table_a SET value = 'tableAValue3' WHERE id = 1 RETURNING id
+	)
+	SELECT (SELECT id FROM updated) AS subid, * FROM updated;
+ <waiting ...>
+step c1: COMMIT;
+step c2: COMMIT;
+step multireadwcte: <... completed>
+subid          id             
+
+1              1              
