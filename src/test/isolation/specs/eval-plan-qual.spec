@@ -124,6 +124,14 @@ step "readwcte"	{
 	SELECT * FROM cte2;
 }
 
+# this test exercises a different CTE misbehavior, cf bug #14870
+step "multireadwcte"	{
+	WITH updated AS (
+	  UPDATE table_a SET value = 'tableAValue3' WHERE id = 1 RETURNING id
+	)
+	SELECT (SELECT id FROM updated) AS subid, * FROM updated;
+}
+
 teardown	{ COMMIT; }
 
 permutation "wx1" "wx2" "c1" "c2" "read"
@@ -135,3 +143,4 @@ permutation "wx2" "partiallock" "c2" "c1" "read"
 permutation "wx2" "lockwithvalues" "c2" "c1" "read"
 permutation "updateforss" "readforss" "c1" "c2"
 permutation "wrtwcte" "readwcte" "c1" "c2"
+permutation "wrtwcte" "multireadwcte" "c1" "c2"
