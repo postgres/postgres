@@ -94,6 +94,14 @@ step "readwcte"	{
 	SELECT * FROM cte2;
 }
 
+# this test exercises a different CTE misbehavior, cf bug #14870
+step "multireadwcte"	{
+	WITH updated AS (
+	  UPDATE table_a SET value = 'tableAValue3' WHERE id = 1 RETURNING id
+	)
+	SELECT (SELECT id FROM updated) AS subid, * FROM updated;
+}
+
 teardown	{ COMMIT; }
 
 permutation "wx1" "wx2" "c1" "c2" "read"
@@ -102,3 +110,4 @@ permutation "upsert1" "upsert2" "c1" "c2" "read"
 permutation "readp1" "writep1" "readp2" "c1" "c2"
 permutation "writep2" "returningp1" "c1" "c2"
 permutation "wrtwcte" "readwcte" "c1" "c2"
+permutation "wrtwcte" "multireadwcte" "c1" "c2"
