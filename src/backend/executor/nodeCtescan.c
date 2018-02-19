@@ -108,6 +108,13 @@ CteScanNext(CteScanState *node)
 		}
 
 		/*
+		 * There are corner cases where the subplan could change which
+		 * tuplestore read pointer is active, so be sure to reselect ours
+		 * before storing the tuple we got.
+		 */
+		tuplestore_select_read_pointer(tuplestorestate, node->readptr);
+
+		/*
 		 * Append a copy of the returned tuple to tuplestore.  NOTE: because
 		 * our read pointer is certainly in EOF state, its read position will
 		 * move forward over the added tuple.  This is what we want.  Also,
@@ -178,6 +185,12 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	 * we might be asked to rescan the CTE even though upper levels didn't
 	 * tell us to be prepared to do it efficiently.  Annoying, since this
 	 * prevents truncation of the tuplestore.  XXX FIXME
+	 *
+	 * Note: if we are in an EPQ recheck plan tree, it's likely that no access
+	 * to the tuplestore is needed at all, making this even more annoying.
+	 * It's not worth improving that as long as all the read pointers would
+	 * have REWIND anyway, but if we ever improve this logic then that aspect
+	 * should be considered too.
 	 */
 	eflags |= EXEC_FLAG_REWIND;
 
