@@ -791,7 +791,7 @@ extern void ExceptionalCondition(const char *conditionName,
 #define StaticAssertStmt(condition, errmessage) \
 	static_assert(condition, errmessage)
 #define StaticAssertExpr(condition, errmessage) \
-	StaticAssertStmt(condition, errmessage)
+	({ static_assert(condition, errmessage); })
 #else
 #define StaticAssertStmt(condition, errmessage) \
 	do { struct static_assert_struct { int static_assert_failure : (condition) ? 1 : -1; }; } while(0)
