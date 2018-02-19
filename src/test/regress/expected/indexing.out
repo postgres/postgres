@@ -918,7 +918,7 @@ select indrelid::regclass, indexrelid::regclass, inhparent::regclass, indisvalid
  indrelid |  indexrelid   |  inhparent   | indisvalid |    conname    | conislocal | coninhcount | connoinherit | convalidated 
 ----------+---------------+--------------+------------+---------------+------------+-------------+--------------+--------------
  idxpart0 | idxpart0_pkey | idxpart_pkey | t          | idxpart0_pkey | f          |           1 | t            | t
- idxpart1 | idxpart1_pkey | idxpart_pkey | t          | idxpart1_pkey | f          |           1 | t            | t
+ idxpart1 | idxpart1_pkey | idxpart_pkey | t          | idxpart1_pkey | f          |           1 | f            | t
  idxpart  | idxpart_pkey  |              | t          | idxpart_pkey  | t          |           0 | t            | t
 (3 rows)
 
@@ -993,7 +993,7 @@ select indrelid::regclass, indexrelid::regclass, inhparent::regclass, indisvalid
  indrelid |   indexrelid   |  inhparent   | indisvalid |    conname    | conislocal | coninhcount | connoinherit | convalidated 
 ----------+----------------+--------------+------------+---------------+------------+-------------+--------------+--------------
  idxpart1 | idxpart1_a_idx |              | t          |               |            |             |              | 
- idxpart1 | idxpart1_pkey  | idxpart_pkey | t          | idxpart1_pkey | f          |           1 | t            | t
+ idxpart1 | idxpart1_pkey  | idxpart_pkey | t          | idxpart1_pkey | f          |           1 | f            | t
  idxpart  | idxpart_pkey   |              | t          | idxpart_pkey  | t          |           0 | t            | t
 (3 rows)
 
