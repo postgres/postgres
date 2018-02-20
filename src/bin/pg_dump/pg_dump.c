@@ -16843,6 +16843,10 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 			   *seqtype;
 	bool		cycled;
 	bool		is_ascending;
+	int64		default_minv,
+				default_maxv;
+	char		bufm[32],
+				bufx[32];
 	PQExpBuffer query = createPQExpBuffer();
 	PQExpBuffer delqry = createPQExpBuffer();
 	PQExpBuffer labelq = createPQExpBuffer();
@@ -16912,40 +16916,41 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	cache = PQgetvalue(res, 0, 5);
 	cycled = (strcmp(PQgetvalue(res, 0, 6), "t") == 0);
 
-	is_ascending = incby[0] != '-';
-
-	if (is_ascending && atoi(minv) == 1)
-		minv = NULL;
-	if (!is_ascending && atoi(maxv) == -1)
-		maxv = NULL;
-
+	/* Calculate default limits for a sequence of this type */
+	is_ascending = (incby[0] != '-');
 	if (strcmp(seqtype, "smallint") == 0)
 	{
-		if (!is_ascending && atoi(minv) == PG_INT16_MIN)
-			minv = NULL;
-		if (is_ascending && atoi(maxv) == PG_INT16_MAX)
-			maxv = NULL;
+		default_minv = is_ascending ? 1 : PG_INT16_MIN;
+		default_maxv = is_ascending ? PG_INT16_MAX : -1;
 	}
 	else if (strcmp(seqtype, "integer") == 0)
 	{
-		if (!is_ascending && atoi(minv) == PG_INT32_MIN)
-			minv = NULL;
-		if (is_ascending && atoi(maxv) == PG_INT32_MAX)
-			maxv = NULL;
+		default_minv = is_ascending ? 1 : PG_INT32_MIN;
+		default_maxv = is_ascending ? PG_INT32_MAX : -1;
 	}
 	else if (strcmp(seqtype, "bigint") == 0)
 	{
-		char		bufm[100],
-					bufx[100];
-
-		snprintf(bufm, sizeof(bufm), INT64_FORMAT, PG_INT64_MIN);
-		snprintf(bufx, sizeof(bufx), INT64_FORMAT, PG_INT64_MAX);
-
-		if (!is_ascending && strcmp(minv, bufm) == 0)
-			minv = NULL;
-		if (is_ascending && strcmp(maxv, bufx) == 0)
-			maxv = NULL;
+		default_minv = is_ascending ? 1 : PG_INT64_MIN;
+		default_maxv = is_ascending ? PG_INT64_MAX : -1;
 	}
+	else
+	{
+		exit_horribly(NULL, "unrecognized sequence type: %s\n", seqtype);
+		default_minv = default_maxv = 0;	/* keep compiler quiet */
+	}
+
+	/*
+	 * 64-bit strtol() isn't very portable, so convert the limits to strings
+	 * and compare that way.
+	 */
+	snprintf(bufm, sizeof(bufm), INT64_FORMAT, default_minv);
+	snprintf(bufx, sizeof(bufx), INT64_FORMAT, default_maxv);
+
+	/* Don't print minv/maxv if they match the respective default limit */
+	if (strcmp(minv, bufm) == 0)
+		minv = NULL;
+	if (strcmp(maxv, bufx) == 0)
+		maxv = NULL;
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
