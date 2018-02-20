@@ -2958,7 +2958,7 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
  *
  * Install limits to future computations of the xmin horizon to prevent vacuum
  * and HOT pruning from removing affected rows still needed by clients with
- * replicaton slots.
+ * replication slots.
  */
 void
 ProcArraySetReplicationSlotXmin(TransactionId xmin, TransactionId catalog_xmin,
