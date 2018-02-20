@@ -1369,7 +1369,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot truncate only a partitioned table"),
-					 errhint("Do not specify the ONLY keyword, or use truncate only on the partitions directly.")));
+					 errhint("Do not specify the ONLY keyword, or use TRUNCATE ONLY on the partitions directly.")));
 	}
 
 	/*

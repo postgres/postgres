@@ -455,12 +455,12 @@ CREATE TABLE truncparted (a int, b char) PARTITION BY LIST (a);
 -- error, can't truncate a partitioned table
 TRUNCATE ONLY truncparted;
 ERROR:  cannot truncate only a partitioned table
-HINT:  Do not specify the ONLY keyword, or use truncate only on the partitions directly.
+HINT:  Do not specify the ONLY keyword, or use TRUNCATE ONLY on the partitions directly.
 CREATE TABLE truncparted1 PARTITION OF truncparted FOR VALUES IN (1);
 INSERT INTO truncparted VALUES (1, 'a');
 -- error, must truncate partitions
 TRUNCATE ONLY truncparted;
 ERROR:  cannot truncate only a partitioned table
-HINT:  Do not specify the ONLY keyword, or use truncate only on the partitions directly.
+HINT:  Do not specify the ONLY keyword, or use TRUNCATE ONLY on the partitions directly.
 TRUNCATE truncparted;
 DROP TABLE truncparted;
