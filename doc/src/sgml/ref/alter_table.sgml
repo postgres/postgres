@@ -370,6 +370,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       the table, until it is validated by using the <literal>VALIDATE
       CONSTRAINT</literal> option.
      </para>
+
+     <para>
+      Additional restrictions apply when unique or primary key constraints
+      are added to partitioned tables; see <xref linkend="sql-createtable" />.
+     </para>
+
     </listitem>
    </varlistentry>
 
@@ -413,8 +419,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      Additional restrictions apply when unique or primary key constraints
-      are added to partitioned tables; see <xref linkend="sql-createtable" />.
+      This form is not currently supported on partitioned tables.
      </para>
 
      <note>
