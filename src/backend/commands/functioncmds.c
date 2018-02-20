@@ -2212,11 +2212,9 @@ ExecuteDoStmt(DoStmt *stmt, bool atomic)
  * commits that might occur inside the procedure.
  */
 void
-ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
+ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic)
 {
-	List	   *targs;
 	ListCell   *lc;
-	Node	   *node;
 	FuncExpr   *fexpr;
 	int			nargs;
 	int			i;
@@ -2228,24 +2226,8 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 	ExprContext *econtext;
 	HeapTuple	tp;
 
-	/* We need to do parse analysis on the procedure call and its arguments */
-	targs = NIL;
-	foreach(lc, stmt->funccall->args)
-	{
-		targs = lappend(targs, transformExpr(pstate,
-											 (Node *) lfirst(lc),
-											 EXPR_KIND_CALL_ARGUMENT));
-	}
-
-	node = ParseFuncOrColumn(pstate,
-							 stmt->funccall->funcname,
-							 targs,
-							 pstate->p_last_srf,
-							 stmt->funccall,
-							 true,
-							 stmt->funccall->location);
-
-	fexpr = castNode(FuncExpr, node);
+	fexpr = stmt->funcexpr;
+	Assert(fexpr);
 
 	aclresult = pg_proc_aclcheck(fexpr->funcid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
@@ -2289,6 +2271,7 @@ ExecuteCallStmt(ParseState *pstate, CallStmt *stmt, bool atomic)
 	 * we can't free this context till the procedure returns.
 	 */
 	estate = CreateExecutorState();
+	estate->es_param_list_info = params;
 	econtext = CreateExprContext(estate);
 
 	i = 0;

@@ -1206,6 +1206,7 @@ static bool
 _equalCallStmt(const CallStmt *a, const CallStmt *b)
 {
 	COMPARE_NODE_FIELD(funccall);
+	COMPARE_NODE_FIELD(funcexpr);
 
 	return true;
 }

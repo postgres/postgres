@@ -660,7 +660,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			break;
 
 		case T_CallStmt:
-			ExecuteCallStmt(pstate, castNode(CallStmt, parsetree),
+			ExecuteCallStmt(castNode(CallStmt, parsetree), params,
 							(context != PROCESS_UTILITY_TOPLEVEL || IsTransactionBlock()));
 			break;
 

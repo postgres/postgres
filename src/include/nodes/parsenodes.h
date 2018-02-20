@@ -2814,7 +2814,8 @@ typedef struct InlineCodeBlock
 typedef struct CallStmt
 {
 	NodeTag		type;
-	FuncCall   *funccall;
+	FuncCall   *funccall;		/* from the parser */
+	FuncExpr   *funcexpr;		/* transformed */
 } CallStmt;
 
 typedef struct CallContext

@@ -31,6 +31,21 @@ $$;
 CALL ptest2();
 
 
+-- nested CALL
+TRUNCATE cp_test;
+
+CREATE PROCEDURE ptest3(y text)
+LANGUAGE SQL
+AS $$
+CALL ptest1(y);
+CALL ptest1($1);
+$$;
+
+CALL ptest3('b');
+
+SELECT * FROM cp_test;
+
+
 -- various error cases
 
 CALL version();  -- error: not a procedure

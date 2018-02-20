@@ -3231,6 +3231,7 @@ _copyCallStmt(const CallStmt *from)
 	CallStmt   *newnode = makeNode(CallStmt);
 
 	COPY_NODE_FIELD(funccall);
+	COPY_NODE_FIELD(funcexpr);
 
 	return newnode;
 }
