@@ -942,7 +942,7 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 	int			natts;			/* number of atts to extract */
 	int			attnum;
 	char	   *tp;				/* ptr to tuple data */
-	long		off;			/* offset in tuple data */
+	uint32		off;			/* offset in tuple data */
 	bits8	   *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
 	bool		slow = false;	/* can we use/set attcacheoff? */
 
@@ -1043,7 +1043,7 @@ slot_deform_tuple(TupleTableSlot *slot, int natts)
 	bool		hasnulls = HeapTupleHasNulls(tuple);
 	int			attnum;
 	char	   *tp;				/* ptr to tuple data */
-	long		off;			/* offset in tuple data */
+	uint32		off;			/* offset in tuple data */
 	bits8	   *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
 	bool		slow;			/* can we use/set attcacheoff? */
 

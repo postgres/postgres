@@ -126,7 +126,7 @@ typedef struct TupleTableSlot
 	bool	   *tts_isnull;		/* current per-attribute isnull flags */
 	MinimalTuple tts_mintuple;	/* minimal tuple, or NULL if none */
 	HeapTupleData tts_minhdr;	/* workspace for minimal-tuple-only case */
-	long		tts_off;		/* saved state for slot_deform_tuple */
+	uint32		tts_off;		/* saved state for slot_deform_tuple */
 	bool		tts_fixedTupleDescriptor; /* descriptor can't be changed */
 } TupleTableSlot;
 
