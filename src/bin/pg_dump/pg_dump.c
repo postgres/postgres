@@ -6548,7 +6548,8 @@ getTables(Archive *fout, int *numTables)
 		 * alterations to parent tables.
 		 *
 		 * NOTE: it'd be kinda nice to lock other relations too, not only
-		 * plain tables, but the backend doesn't presently allow that.
+		 * plain or partitioned tables, but the backend doesn't presently
+		 * allow that.
 		 *
 		 * We only need to lock the table for certain components; see
 		 * pg_dump.h
@@ -15898,6 +15899,14 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 * column order.  That also means we have to take care about setting
 		 * attislocal correctly, plus fix up any inherited CHECK constraints.
 		 * Analogously, we set up typed tables using ALTER TABLE / OF here.
+		 *
+		 * We process foreign and partitioned tables here, even though they
+		 * lack heap storage, because they can participate in inheritance
+		 * relationships and we want this stuff to be consistent across the
+		 * inheritance tree.  We can exclude indexes, toast tables, sequences
+		 * and matviews, even though they have storage, because we don't
+		 * support altering or dropping columns in them, nor can they be part
+		 * of inheritance trees.
 		 */
 		if (dopt->binary_upgrade &&
 			(tbinfo->relkind == RELKIND_RELATION ||
@@ -16009,7 +16018,19 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  fmtId(tbinfo->dobj.name),
 								  tbinfo->reloftype);
 			}
+		}
 
+		/*
+		 * In binary_upgrade mode, arrange to restore the old relfrozenxid and
+		 * relminmxid of all vacuumable relations.  (While vacuum.c processes
+		 * TOAST tables semi-independently, here we see them only as children
+		 * of other relations; so this "if" lacks RELKIND_TOASTVALUE, and the
+		 * child toast table is handled below.)
+		 */
+		if (dopt->binary_upgrade &&
+			(tbinfo->relkind == RELKIND_RELATION ||
+			 tbinfo->relkind == RELKIND_MATVIEW))
+		{
 			appendPQExpBufferStr(q, "\n-- For binary upgrade, set heap's relfrozenxid and relminmxid\n");
 			appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
 							  "SET relfrozenxid = '%u', relminmxid = '%u'\n"
@@ -16020,7 +16041,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 			if (tbinfo->toast_oid)
 			{
-				/* We preserve the toast oids, so we can use it during restore */
+				/*
+				 * The toast table will have the same OID at restore, so we
+				 * can safely target it by OID.
+				 */
 				appendPQExpBufferStr(q, "\n-- For binary upgrade, set toast's relfrozenxid and relminmxid\n");
 				appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
 								  "SET relfrozenxid = '%u', relminmxid = '%u'\n"
@@ -16034,7 +16058,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 * In binary_upgrade mode, restore matviews' populated status by
 		 * poking pg_class directly.  This is pretty ugly, but we can't use
 		 * REFRESH MATERIALIZED VIEW since it's possible that some underlying
-		 * matview is not populated even though this matview is.
+		 * matview is not populated even though this matview is; in any case,
+		 * we want to transfer the matview's heap storage, not run REFRESH.
 		 */
 		if (dopt->binary_upgrade && tbinfo->relkind == RELKIND_MATVIEW &&
 			tbinfo->relispopulated)
