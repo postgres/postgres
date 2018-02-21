@@ -143,6 +143,7 @@ LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column x"
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1 column y"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4eq(integer,integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.row_number()"
  row_number | x  |                y                 
 ------------+----+----------------------------------
@@ -172,6 +173,7 @@ LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1p_tens column p"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4eq(integer,integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.row_number()"
  row_number | o  |                p                 
 ------------+----+----------------------------------
@@ -194,6 +196,7 @@ LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1p_ones column o"
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1p_ones column p"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4eq(integer,integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.row_number()"
  row_number | o |                p                 
 ------------+---+----------------------------------
@@ -205,6 +208,7 @@ LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1p_tens column o"
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1p_tens column p"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.textlike(pg_catalog.text,pg_catalog.text)"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4eq(integer,integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.row_number()"
  row_number | o  |                p                 
 ------------+----+----------------------------------
