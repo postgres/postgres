@@ -2469,7 +2469,7 @@ CopyFrom(CopyState cstate)
 		PartitionTupleRouting *proute;
 
 		proute = cstate->partition_tuple_routing =
-			ExecSetupPartitionTupleRouting(NULL, cstate->rel, 1, estate);
+			ExecSetupPartitionTupleRouting(NULL, cstate->rel);
 
 		/*
 		 * If we are capturing transition tuples, they may need to be
@@ -2606,6 +2606,14 @@ CopyFrom(CopyState cstate)
 			 */
 			saved_resultRelInfo = resultRelInfo;
 			resultRelInfo = proute->partitions[leaf_part_index];
+			if (resultRelInfo == NULL)
+			{
+				resultRelInfo = ExecInitPartitionInfo(NULL,
+													  saved_resultRelInfo,
+													  proute, estate,
+													  leaf_part_index);
+				Assert(resultRelInfo != NULL);
+			}
 
 			/* We do not yet have a way to insert into a foreign partition */
 			if (resultRelInfo->ri_FdwRoutine)

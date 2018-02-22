@@ -58,6 +58,7 @@ typedef struct PartitionDispatchData *PartitionDispatch;
  *								partition tree.
  * num_dispatch					number of partitioned tables in the partition
  *								tree (= length of partition_dispatch_info[])
+ * partition_oids				Array of leaf partitions OIDs
  * partitions					Array of ResultRelInfo* objects with one entry
  *								for every leaf partition in the partition tree.
  * num_partitions				Number of leaf partitions in the partition tree
@@ -91,6 +92,7 @@ typedef struct PartitionTupleRouting
 {
 	PartitionDispatch *partition_dispatch_info;
 	int			num_dispatch;
+	Oid		   *partition_oids;
 	ResultRelInfo **partitions;
 	int			num_partitions;
 	TupleConversionMap **parent_child_tupconv_maps;
@@ -103,12 +105,15 @@ typedef struct PartitionTupleRouting
 } PartitionTupleRouting;
 
 extern PartitionTupleRouting *ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
-							   Relation rel, Index resultRTindex,
-							   EState *estate);
+							   Relation rel);
 extern int ExecFindPartition(ResultRelInfo *resultRelInfo,
 				  PartitionDispatch *pd,
 				  TupleTableSlot *slot,
 				  EState *estate);
+extern ResultRelInfo *ExecInitPartitionInfo(ModifyTableState *mtstate,
+					ResultRelInfo *resultRelInfo,
+					PartitionTupleRouting *proute,
+					EState *estate, int partidx);
 extern void ExecSetupChildParentMapForLeaf(PartitionTupleRouting *proute);
 extern TupleConversionMap *TupConvMapForLeaf(PartitionTupleRouting *proute,
 				  ResultRelInfo *rootRelInfo, int leaf_index);
