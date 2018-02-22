@@ -4565,7 +4565,11 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	foreach(lc, root->placeholder_list)
 	{
 		PlaceHolderInfo *phinfo = lfirst(lc);
-		Relids		relids = joinrel->relids;
+		Relids		relids;
+
+		/* PlaceHolderInfo refers to parent relids, not child relids. */
+		relids = IS_OTHER_REL(joinrel) ?
+			joinrel->top_parent_relids : joinrel->relids;
 
 		if (bms_is_subset(phinfo->ph_eval_at, relids) &&
 			bms_nonempty_difference(relids, phinfo->ph_eval_at))
