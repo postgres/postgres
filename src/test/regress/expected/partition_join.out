@@ -1285,13 +1285,13 @@ CREATE TABLE pht1_e (a int, b int, c text) PARTITION BY HASH(ltrim(c, 'A'));
 CREATE TABLE pht1_e_p1 PARTITION OF pht1_e FOR VALUES WITH (MODULUS 3, REMAINDER 0);
 CREATE TABLE pht1_e_p2 PARTITION OF pht1_e FOR VALUES WITH (MODULUS 3, REMAINDER 1);
 CREATE TABLE pht1_e_p3 PARTITION OF pht1_e FOR VALUES WITH (MODULUS 3, REMAINDER 2);
-INSERT INTO pht1_e SELECT i, i, 'A' || to_char(i/50, 'FM0000') FROM generate_series(0, 599, 2) i;
+INSERT INTO pht1_e SELECT i, i, 'A' || to_char(i/50, 'FM0000') FROM generate_series(0, 299, 2) i;
 ANALYZE pht1_e;
 -- test partition matching with N-way join
 EXPLAIN (COSTS OFF)
 SELECT avg(t1.a), avg(t2.b), avg(t3.a + t3.b), t1.c, t2.c, t3.c FROM pht1 t1, pht2 t2, pht1_e t3 WHERE t1.b = t2.b AND t1.c = t2.c AND ltrim(t3.c, 'A') = t1.c GROUP BY t1.c, t2.c, t3.c ORDER BY t1.c, t2.c, t3.c;
-                                         QUERY PLAN                                         
---------------------------------------------------------------------------------------------
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
  GroupAggregate
    Group Key: t1.c, t2.c, t3.c
    ->  Sort
@@ -1308,41 +1308,35 @@ SELECT avg(t1.a), avg(t2.b), avg(t3.a + t3.b), t1.c, t2.c, t3.c FROM pht1 t1, ph
                            ->  Hash
                                  ->  Seq Scan on pht1_e_p1 t3
                      ->  Hash Join
-                           Hash Cond: (ltrim(t3_1.c, 'A'::text) = t1_1.c)
-                           ->  Seq Scan on pht1_e_p2 t3_1
+                           Hash Cond: (t1_1.c = ltrim(t3_1.c, 'A'::text))
+                           ->  Hash Join
+                                 Hash Cond: ((t1_1.b = t2_1.b) AND (t1_1.c = t2_1.c))
+                                 ->  Seq Scan on pht1_p2 t1_1
+                                 ->  Hash
+                                       ->  Seq Scan on pht2_p2 t2_1
                            ->  Hash
-                                 ->  Hash Join
-                                       Hash Cond: ((t1_1.b = t2_1.b) AND (t1_1.c = t2_1.c))
-                                       ->  Seq Scan on pht1_p2 t1_1
-                                       ->  Hash
-                                             ->  Seq Scan on pht2_p2 t2_1
+                                 ->  Seq Scan on pht1_e_p2 t3_1
                      ->  Hash Join
-                           Hash Cond: (ltrim(t3_2.c, 'A'::text) = t1_2.c)
-                           ->  Seq Scan on pht1_e_p3 t3_2
+                           Hash Cond: (t1_2.c = ltrim(t3_2.c, 'A'::text))
+                           ->  Hash Join
+                                 Hash Cond: ((t1_2.b = t2_2.b) AND (t1_2.c = t2_2.c))
+                                 ->  Seq Scan on pht1_p3 t1_2
+                                 ->  Hash
+                                       ->  Seq Scan on pht2_p3 t2_2
                            ->  Hash
-                                 ->  Hash Join
-                                       Hash Cond: ((t1_2.b = t2_2.b) AND (t1_2.c = t2_2.c))
-                                       ->  Seq Scan on pht1_p3 t1_2
-                                       ->  Hash
-                                             ->  Seq Scan on pht2_p3 t2_2
+                                 ->  Seq Scan on pht1_e_p3 t3_2
 (33 rows)
 
 SELECT avg(t1.a), avg(t2.b), avg(t3.a + t3.b), t1.c, t2.c, t3.c FROM pht1 t1, pht2 t2, pht1_e t3 WHERE t1.b = t2.b AND t1.c = t2.c AND ltrim(t3.c, 'A') = t1.c GROUP BY t1.c, t2.c, t3.c ORDER BY t1.c, t2.c, t3.c;
-         avg          |         avg          |          avg          |  c   |  c   |   c   
-----------------------+----------------------+-----------------------+------+------+-------
-  24.0000000000000000 |  24.0000000000000000 |   48.0000000000000000 | 0000 | 0000 | A0000
-  75.0000000000000000 |  75.0000000000000000 |  148.0000000000000000 | 0001 | 0001 | A0001
- 123.0000000000000000 | 123.0000000000000000 |  248.0000000000000000 | 0002 | 0002 | A0002
- 174.0000000000000000 | 174.0000000000000000 |  348.0000000000000000 | 0003 | 0003 | A0003
- 225.0000000000000000 | 225.0000000000000000 |  448.0000000000000000 | 0004 | 0004 | A0004
- 273.0000000000000000 | 273.0000000000000000 |  548.0000000000000000 | 0005 | 0005 | A0005
- 324.0000000000000000 | 324.0000000000000000 |  648.0000000000000000 | 0006 | 0006 | A0006
- 375.0000000000000000 | 375.0000000000000000 |  748.0000000000000000 | 0007 | 0007 | A0007
- 423.0000000000000000 | 423.0000000000000000 |  848.0000000000000000 | 0008 | 0008 | A0008
- 474.0000000000000000 | 474.0000000000000000 |  948.0000000000000000 | 0009 | 0009 | A0009
- 525.0000000000000000 | 525.0000000000000000 | 1048.0000000000000000 | 0010 | 0010 | A0010
- 573.0000000000000000 | 573.0000000000000000 | 1148.0000000000000000 | 0011 | 0011 | A0011
-(12 rows)
+         avg          |         avg          |         avg          |  c   |  c   |   c   
+----------------------+----------------------+----------------------+------+------+-------
+  24.0000000000000000 |  24.0000000000000000 |  48.0000000000000000 | 0000 | 0000 | A0000
+  75.0000000000000000 |  75.0000000000000000 | 148.0000000000000000 | 0001 | 0001 | A0001
+ 123.0000000000000000 | 123.0000000000000000 | 248.0000000000000000 | 0002 | 0002 | A0002
+ 174.0000000000000000 | 174.0000000000000000 | 348.0000000000000000 | 0003 | 0003 | A0003
+ 225.0000000000000000 | 225.0000000000000000 | 448.0000000000000000 | 0004 | 0004 | A0004
+ 273.0000000000000000 | 273.0000000000000000 | 548.0000000000000000 | 0005 | 0005 | A0005
+(6 rows)
 
 --
 -- multiple levels of partitioning
