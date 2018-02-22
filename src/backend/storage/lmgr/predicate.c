@@ -493,8 +493,8 @@ PredicateLockingNeededForRelation(Relation relation)
  * as RO-safe since the last call, we release all predicate locks and reset
  * MySerializableXact. That makes subsequent calls to return quickly.
  *
- * This is marked as 'inline' to make to eliminate the function call overhead
- * in the common case that serialization is not needed.
+ * This is marked as 'inline' to eliminate the function call overhead in the
+ * common case that serialization is not needed.
  */
 static inline bool
 SerializationNeededForRead(Relation relation, Snapshot snapshot)
