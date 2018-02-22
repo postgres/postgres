@@ -584,7 +584,7 @@ sub check_pgbench_logs
 {
 	my ($prefix, $nb, $min, $max, $re) = @_;
 
-	my @logs = <$prefix.*>;
+	my @logs = glob "$prefix.*";
 	ok(@logs == $nb, "number of log files");
 	ok(grep(/^$prefix\.\d+(\.\d+)?$/, @logs) == $nb, "file name format");
 
@@ -592,14 +592,14 @@ sub check_pgbench_logs
 	for my $log (sort @logs)
 	{
 		eval {
-			open LOG, $log or die "$@";
-			my @contents = <LOG>;
+			open my $fh, '<', $log or die "$@";
+			my @contents = <$fh>;
 			my $clen     = @contents;
 			ok( $min <= $clen && $clen <= $max,
 				"transaction count for $log ($clen)");
 			ok( grep($re, @contents) == $clen,
 				"transaction format for $prefix");
-			close LOG or die "$@";
+			close $fh or die "$@";
 		};
 	}
 	ok(unlink(@logs), "remove log files");
