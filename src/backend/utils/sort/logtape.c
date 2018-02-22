@@ -739,6 +739,18 @@ LogicalTapeRewindForRead(LogicalTapeSet *lts, int tapenum, size_t buffer_size)
 		 */
 		if (lt->dirty)
 		{
+			/*
+			 * As long as we've filled the buffer at least once, its contents
+			 * are entirely defined from valgrind's point of view, even though
+			 * contents beyond the current end point may be stale.  But it's
+			 * possible - at least in the case of a parallel sort - to sort
+			 * such small amount of data that we do not fill the buffer even
+			 * once.  Tell valgrind that its contents are defined, so it
+			 * doesn't bleat.
+			 */
+			VALGRIND_MAKE_MEM_DEFINED(lt->buffer + lt->nbytes,
+									  lt->buffer_size - lt->nbytes);
+
 			TapeBlockSetNBytes(lt->buffer, lt->nbytes);
 			ltsWriteBlock(lts, lt->curBlockNumber, (void *) lt->buffer);
 		}
