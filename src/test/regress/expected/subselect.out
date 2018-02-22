@@ -235,7 +235,7 @@ SELECT *, pg_typeof(f1) FROM
 explain verbose select '42' union all select '43';
                    QUERY PLAN                    
 -------------------------------------------------
- Append  (cost=0.00..0.04 rows=2 width=32)
+ Append  (cost=0.00..0.05 rows=2 width=32)
    ->  Result  (cost=0.00..0.01 rows=1 width=32)
          Output: '42'::text
    ->  Result  (cost=0.00..0.01 rows=1 width=32)
@@ -245,7 +245,7 @@ explain verbose select '42' union all select '43';
 explain verbose select '42' union all select 43;
                    QUERY PLAN                   
 ------------------------------------------------
- Append  (cost=0.00..0.04 rows=2 width=4)
+ Append  (cost=0.00..0.05 rows=2 width=4)
    ->  Result  (cost=0.00..0.01 rows=1 width=4)
          Output: 42
    ->  Result  (cost=0.00..0.01 rows=1 width=4)
