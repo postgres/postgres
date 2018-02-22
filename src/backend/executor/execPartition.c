@@ -140,10 +140,10 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
 				partrel = leaf_part_rri->ri_RelationDesc;
 
 				/*
-				 * This is required in order to we convert the partition's
-				 * tuple to be compatible with the root partitioned table's
-				 * tuple descriptor.  When generating the per-subplan result
-				 * rels, this was not set.
+				 * This is required in order to convert the partition's tuple
+				 * to be compatible with the root partitioned table's tuple
+				 * descriptor.  When generating the per-subplan result rels,
+				 * this was not set.
 				 */
 				leaf_part_rri->ri_PartitionRoot = rel;
 
