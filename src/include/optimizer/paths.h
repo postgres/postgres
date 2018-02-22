@@ -20,9 +20,9 @@
 /*
  * allpaths.c
  */
-extern bool enable_geqo;
-extern int	geqo_threshold;
-extern int	min_parallel_relation_size;
+extern PGDLLIMPORT bool enable_geqo;
+extern PGDLLIMPORT int	geqo_threshold;
+extern PGDLLIMPORT int	min_parallel_relation_size;
 
 /* Hook for plugins to get control in set_rel_pathlist() */
 typedef void (*set_rel_pathlist_hook_type) (PlannerInfo *root,
