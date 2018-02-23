@@ -165,10 +165,12 @@ static PartitionRangeBound *make_one_range_bound(PartitionKey key, int index,
 					 List *datums, bool lower);
 static int32 partition_hbound_cmp(int modulus1, int remainder1, int modulus2,
 					 int remainder2);
-static int32 partition_rbound_cmp(PartitionKey key,
-					 Datum *datums1, PartitionRangeDatumKind *kind1,
-					 bool lower1, PartitionRangeBound *b2);
-static int32 partition_rbound_datum_cmp(PartitionKey key,
+static int32 partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
+					 Oid *partcollation, Datum *datums1,
+					 PartitionRangeDatumKind *kind1, bool lower1,
+					 PartitionRangeBound *b2);
+static int32 partition_rbound_datum_cmp(FmgrInfo *partsupfunc,
+						   Oid *partcollation,
 						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
 						   Datum *tuple_datums, int n_tuple_datums);
 
@@ -1113,8 +1115,9 @@ check_new_partition_bound(char *relname, Relation parent,
 				 * First check if the resulting range would be empty with
 				 * specified lower and upper bounds
 				 */
-				if (partition_rbound_cmp(key, lower->datums, lower->kind, true,
-										 upper) >= 0)
+				if (partition_rbound_cmp(key->partnatts, key->partsupfunc,
+										 key->partcollation, lower->datums,
+										 lower->kind, true, upper) >= 0)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1174,7 +1177,10 @@ check_new_partition_bound(char *relname, Relation parent,
 							kind = boundinfo->kind[offset + 1];
 							is_lower = (boundinfo->indexes[offset + 1] == -1);
 
-							cmpval = partition_rbound_cmp(key, datums, kind,
+							cmpval = partition_rbound_cmp(key->partnatts,
+														  key->partsupfunc,
+														  key->partcollation,
+														  datums, kind,
 														  is_lower, upper);
 							if (cmpval < 0)
 							{
@@ -2614,10 +2620,11 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 				if (!range_partkey_has_null)
 				{
 					bound_offset = partition_range_datum_bsearch(key,
-														partdesc->boundinfo,
-														key->partnatts,
-														values,
-														&equal);
+																 partdesc->boundinfo,
+																 key->partnatts,
+																 values,
+																 &equal);
+
 					/*
 					 * The bound at bound_offset is less than or equal to the
 					 * tuple value, so the bound at offset+1 is the upper
@@ -2811,7 +2818,9 @@ qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
 	PartitionRangeBound *b2 = (*(PartitionRangeBound *const *) b);
 	PartitionKey key = (PartitionKey) arg;
 
-	return partition_rbound_cmp(key, b1->datums, b1->kind, b1->lower, b2);
+	return partition_rbound_cmp(key->partnatts, key->partsupfunc,
+								key->partcollation, b1->datums, b1->kind,
+								b1->lower, b2);
 }
 
 /*
@@ -2819,6 +2828,10 @@ qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
  *
  * Return for two range bounds whether the 1st one (specified in datums1,
  * kind1, and lower1) is <, =, or > the bound specified in *b2.
+ *
+ * partnatts, partsupfunc and partcollation give the number of attributes in the
+ * bounds to be compared, comparison function to be used and the collations of
+ * attributes, respectively.
  *
  * Note that if the values of the two range bounds compare equal, then we take
  * into account whether they are upper or lower bounds, and an upper bound is
@@ -2828,7 +2841,7 @@ qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
  * two contiguous partitions.
  */
 static int32
-partition_rbound_cmp(PartitionKey key,
+partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc, Oid *partcollation,
 					 Datum *datums1, PartitionRangeDatumKind *kind1,
 					 bool lower1, PartitionRangeBound *b2)
 {
@@ -2838,7 +2851,7 @@ partition_rbound_cmp(PartitionKey key,
 	PartitionRangeDatumKind *kind2 = b2->kind;
 	bool		lower2 = b2->lower;
 
-	for (i = 0; i < key->partnatts; i++)
+	for (i = 0; i < partnatts; i++)
 	{
 		/*
 		 * First, handle cases where the column is unbounded, which should not
@@ -2859,8 +2872,8 @@ partition_rbound_cmp(PartitionKey key,
 			 */
 			break;
 
-		cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[i],
-												 key->partcollation[i],
+		cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
+												 partcollation[i],
 												 datums1[i],
 												 datums2[i]));
 		if (cmpval != 0)
@@ -2884,9 +2897,14 @@ partition_rbound_cmp(PartitionKey key,
  *
  * Return whether range bound (specified in rb_datums, rb_kind, and rb_lower)
  * is <, =, or > partition key of tuple (tuple_datums)
+ *
+ * n_tuple_datums, partsupfunc and partcollation give number of attributes in
+ * the bounds to be compared, comparison function to be used and the collations
+ * of attributes resp.
+ *
  */
 static int32
-partition_rbound_datum_cmp(PartitionKey key,
+partition_rbound_datum_cmp(FmgrInfo *partsupfunc, Oid *partcollation,
 						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
 						   Datum *tuple_datums, int n_tuple_datums)
 {
@@ -2900,8 +2918,8 @@ partition_rbound_datum_cmp(PartitionKey key,
 		else if (rb_kind[i] == PARTITION_RANGE_DATUM_MAXVALUE)
 			return 1;
 
-		cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[i],
-												 key->partcollation[i],
+		cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
+												 partcollation[i],
 												 rb_datums[i],
 												 tuple_datums[i]));
 		if (cmpval != 0)
@@ -2978,7 +2996,8 @@ partition_range_bsearch(PartitionKey key,
 		int32		cmpval;
 
 		mid = (lo + hi + 1) / 2;
-		cmpval = partition_rbound_cmp(key,
+		cmpval = partition_rbound_cmp(key->partnatts, key->partsupfunc,
+									  key->partcollation,
 									  boundinfo->datums[mid],
 									  boundinfo->kind[mid],
 									  (boundinfo->indexes[mid] == -1),
@@ -3022,7 +3041,8 @@ partition_range_datum_bsearch(PartitionKey key,
 		int32		cmpval;
 
 		mid = (lo + hi + 1) / 2;
-		cmpval = partition_rbound_datum_cmp(key,
+		cmpval = partition_rbound_datum_cmp(key->partsupfunc,
+											key->partcollation,
 											boundinfo->datums[mid],
 											boundinfo->kind[mid],
 											values,
