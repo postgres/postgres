@@ -417,6 +417,37 @@ select a.f1, b.f1, t.thousand, t.tenthous from
   (select sum(f1) as f1 from int4_tbl i4b) b
 where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
 
+--
+-- check a case where we formerly got confused by conflicting sort orders
+-- in redundant merge join path keys
+--
+explain (costs off)
+select * from
+  j1_tbl full join
+  (select * from j2_tbl order by j2_tbl.i desc, j2_tbl.k asc) j2_tbl
+  on j1_tbl.i = j2_tbl.i and j1_tbl.i = j2_tbl.k;
+
+select * from
+  j1_tbl full join
+  (select * from j2_tbl order by j2_tbl.i desc, j2_tbl.k asc) j2_tbl
+  on j1_tbl.i = j2_tbl.i and j1_tbl.i = j2_tbl.k;
+
+--
+-- a different check for handling of redundant sort keys in merge joins
+--
+explain (costs off)
+select count(*) from
+  (select * from tenk1 x order by x.thousand, x.twothousand, x.fivethous) x
+  left join
+  (select * from tenk1 y order by y.unique2) y
+  on x.thousand = y.unique2 and x.twothousand = y.hundred and x.fivethous = y.unique2;
+
+select count(*) from
+  (select * from tenk1 x order by x.thousand, x.twothousand, x.fivethous) x
+  left join
+  (select * from tenk1 y order by y.unique2) y
+  on x.thousand = y.unique2 and x.twothousand = y.hundred and x.fivethous = y.unique2;
+
 
 --
 -- Clean up

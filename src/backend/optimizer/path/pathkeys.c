@@ -981,16 +981,14 @@ update_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
 }
 
 /*
- * find_mergeclauses_for_pathkeys
- *	  This routine attempts to find a set of mergeclauses that can be
- *	  used with a specified ordering for one of the input relations.
+ * find_mergeclauses_for_outer_pathkeys
+ *	  This routine attempts to find a list of mergeclauses that can be
+ *	  used with a specified ordering for the join's outer relation.
  *	  If successful, it returns a list of mergeclauses.
  *
- * 'pathkeys' is a pathkeys list showing the ordering of an input path.
- * 'outer_keys' is true if these keys are for the outer input path,
- *			false if for inner.
+ * 'pathkeys' is a pathkeys list showing the ordering of an outer-rel path.
  * 'restrictinfos' is a list of mergejoinable restriction clauses for the
- *			join relation being formed.
+ *			join relation being formed, in no particular order.
  *
  * The restrictinfos must be marked (via outer_is_left) to show which side
  * of each clause is associated with the current outer path.  (See
@@ -998,12 +996,12 @@ update_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
  *
  * The result is NIL if no merge can be done, else a maximal list of
  * usable mergeclauses (represented as a list of their restrictinfo nodes).
+ * The list is ordered to match the pathkeys, as required for execution.
  */
 List *
-find_mergeclauses_for_pathkeys(PlannerInfo *root,
-							   List *pathkeys,
-							   bool outer_keys,
-							   List *restrictinfos)
+find_mergeclauses_for_outer_pathkeys(PlannerInfo *root,
+									 List *pathkeys,
+									 List *restrictinfos)
 {
 	List	   *mergeclauses = NIL;
 	ListCell   *i;
@@ -1044,19 +1042,20 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 		 *
 		 * It's possible that multiple matching clauses might have different
 		 * ECs on the other side, in which case the order we put them into our
-		 * result makes a difference in the pathkeys required for the other
-		 * input path.  However this routine hasn't got any info about which
+		 * result makes a difference in the pathkeys required for the inner
+		 * input rel.  However this routine hasn't got any info about which
 		 * order would be best, so we don't worry about that.
 		 *
 		 * It's also possible that the selected mergejoin clauses produce
-		 * a noncanonical ordering of pathkeys for the other side, ie, we
+		 * a noncanonical ordering of pathkeys for the inner side, ie, we
 		 * might select clauses that reference b.v1, b.v2, b.v1 in that
 		 * order.  This is not harmful in itself, though it suggests that
-		 * the clauses are partially redundant.  Since it happens only with
-		 * redundant query conditions, we don't bother to eliminate it.
-		 * make_inner_pathkeys_for_merge() has to delete duplicates when
-		 * it constructs the canonical pathkeys list, and we also have to
-		 * deal with the case in create_mergejoin_plan().
+		 * the clauses are partially redundant.  Since the alternative is
+		 * to omit mergejoin clauses and thereby possibly fail to generate a
+		 * plan altogether, we live with it.  make_inner_pathkeys_for_merge()
+		 * has to delete duplicates when it constructs the inner pathkeys
+		 * list, and we also have to deal with such cases specially in
+		 * create_mergejoin_plan().
 		 *----------
 		 */
 		foreach(j, restrictinfos)
@@ -1064,12 +1063,8 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(j);
 			EquivalenceClass *clause_ec;
 
-			if (outer_keys)
-				clause_ec = rinfo->outer_is_left ?
-					rinfo->left_ec : rinfo->right_ec;
-			else
-				clause_ec = rinfo->outer_is_left ?
-					rinfo->right_ec : rinfo->left_ec;
+			clause_ec = rinfo->outer_is_left ?
+				rinfo->left_ec : rinfo->right_ec;
 			if (clause_ec == pathkey_ec)
 				matched_restrictinfos = lappend(matched_restrictinfos, rinfo);
 		}
@@ -1273,8 +1268,8 @@ select_outer_pathkeys_for_merge(PlannerInfo *root,
  *	  must be applied to an inner path to make it usable with the
  *	  given mergeclauses.
  *
- * 'mergeclauses' is a list of RestrictInfos for mergejoin clauses
- *			that will be used in a merge join.
+ * 'mergeclauses' is a list of RestrictInfos for the mergejoin clauses
+ *			that will be used in a merge join, in order.
  * 'outer_pathkeys' are the already-known canonical pathkeys for the outer
  *			side of the join.
  *
@@ -1351,8 +1346,13 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
 											 opathkey->pk_nulls_first);
 
 		/*
-		 * Don't generate redundant pathkeys (can happen if multiple
-		 * mergeclauses refer to same EC).
+		 * Don't generate redundant pathkeys (which can happen if multiple
+		 * mergeclauses refer to the same EC).  Because we do this, the output
+		 * pathkey list isn't necessarily ordered like the mergeclauses, which
+		 * complicates life for create_mergejoin_plan().  But if we didn't,
+		 * we'd have a noncanonical sort key list, which would be bad; for one
+		 * reason, it certainly wouldn't match any available sort order for
+		 * the input relation.
 		 */
 		if (!pathkey_is_redundant(pathkey, pathkeys))
 			pathkeys = lappend(pathkeys, pathkey);
@@ -1360,6 +1360,98 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
 
 	return pathkeys;
 }
+
+/*
+ * trim_mergeclauses_for_inner_pathkeys
+ *	  This routine trims a list of mergeclauses to include just those that
+ *	  work with a specified ordering for the join's inner relation.
+ *
+ * 'mergeclauses' is a list of RestrictInfos for mergejoin clauses for the
+ *			join relation being formed, in an order known to work for the
+ *			currently-considered sort ordering of the join's outer rel.
+ * 'pathkeys' is a pathkeys list showing the ordering of an inner-rel path;
+ *			it should be equal to, or a truncation of, the result of
+ *			make_inner_pathkeys_for_merge for these mergeclauses.
+ *
+ * What we return will be a prefix of the given mergeclauses list.
+ *
+ * We need this logic because make_inner_pathkeys_for_merge's result isn't
+ * necessarily in the same order as the mergeclauses.  That means that if we
+ * consider an inner-rel pathkey list that is a truncation of that result,
+ * we might need to drop mergeclauses even though they match a surviving inner
+ * pathkey.  This happens when they are to the right of a mergeclause that
+ * matches a removed inner pathkey.
+ *
+ * The mergeclauses must be marked (via outer_is_left) to show which side
+ * of each clause is associated with the current outer path.  (See
+ * select_mergejoin_clauses())
+ */
+List *
+trim_mergeclauses_for_inner_pathkeys(PlannerInfo *root,
+									 List *mergeclauses,
+									 List *pathkeys)
+{
+	List	   *new_mergeclauses = NIL;
+	PathKey    *pathkey;
+	EquivalenceClass *pathkey_ec;
+	bool		matched_pathkey;
+	ListCell   *lip;
+	ListCell   *i;
+
+	/* No pathkeys => no mergeclauses (though we don't expect this case) */
+	if (pathkeys == NIL)
+		return NIL;
+	/* Initialize to consider first pathkey */
+	lip = list_head(pathkeys);
+	pathkey = (PathKey *) lfirst(lip);
+	pathkey_ec = pathkey->pk_eclass;
+	lip = lnext(lip);
+	matched_pathkey = false;
+
+	/* Scan mergeclauses to see how many we can use */
+	foreach(i, mergeclauses)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
+		EquivalenceClass *clause_ec;
+
+		/* Assume we needn't do update_mergeclause_eclasses again here */
+
+		/* Check clause's inner-rel EC against current pathkey */
+		clause_ec = rinfo->outer_is_left ?
+			rinfo->right_ec : rinfo->left_ec;
+
+		/* If we don't have a match, attempt to advance to next pathkey */
+		if (clause_ec != pathkey_ec)
+		{
+			/* If we had no clauses matching this inner pathkey, must stop */
+			if (!matched_pathkey)
+				break;
+
+			/* Advance to next inner pathkey, if any */
+			if (lip == NULL)
+				break;
+			pathkey = (PathKey *) lfirst(lip);
+			pathkey_ec = pathkey->pk_eclass;
+			lip = lnext(lip);
+			matched_pathkey = false;
+		}
+
+		/* If mergeclause matches current inner pathkey, we can use it */
+		if (clause_ec == pathkey_ec)
+		{
+			new_mergeclauses = lappend(new_mergeclauses, rinfo);
+			matched_pathkey = true;
+		}
+		else
+		{
+			/* Else, no hope of adding any more mergeclauses */
+			break;
+		}
+	}
+
+	return new_mergeclauses;
+}
+
 
 /****************************************************************************
  *		PATHKEY USEFULNESS CHECKS
