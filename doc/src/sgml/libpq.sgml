@@ -7779,13 +7779,16 @@ testlibpq.o(.text+0xa4): undefined reference to `PQerrorMessage'
 <programlisting>
 <![CDATA[
 /*
+ * src/test/examples/testlibpq.c
+ *
+ *
  * testlibpq.c
  *
  *      Test the C version of libpq, the PostgreSQL frontend library.
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 
 static void
 exit_nicely(PGconn *conn)
@@ -7906,6 +7909,9 @@ main(int argc, char **argv)
 <programlisting>
 <![CDATA[
 /*
+ * src/test/examples/testlibpq2.c
+ *
+ *
  * testlibpq2.c
  *      Test of the asynchronous notification interface
  *
@@ -7933,7 +7939,12 @@ main(int argc, char **argv)
 #include <string.h>
 #include <errno.h>
 #include <sys/time.h>
-#include <libpq-fe.h>
+#include <sys/types.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+
+#include "libpq-fe.h"
 
 static void
 exit_nicely(PGconn *conn)
@@ -8044,6 +8055,9 @@ main(int argc, char **argv)
 <programlisting>
 <![CDATA[
 /*
+ * src/test/examples/testlibpq3.c
+ *
+ *
  * testlibpq3.c
  *      Test out-of-line parameters and binary I/O.
  *
