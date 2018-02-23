@@ -629,10 +629,10 @@ sort_inner_and_outer(PlannerInfo *root,
 			outerkeys = all_pathkeys;	/* no work at first one... */
 
 		/* Sort the mergeclauses into the corresponding ordering */
-		cur_mergeclauses = find_mergeclauses_for_pathkeys(root,
-														  outerkeys,
-														  true,
-														  mergeclause_list);
+		cur_mergeclauses =
+			find_mergeclauses_for_outer_pathkeys(root,
+												 outerkeys,
+												 mergeclause_list);
 
 		/* Should have used them all... */
 		Assert(list_length(cur_mergeclauses) == list_length(mergeclause_list));
@@ -898,10 +898,10 @@ match_unsorted_outer(PlannerInfo *root,
 			continue;
 
 		/* Look for useful mergeclauses (if any) */
-		mergeclauses = find_mergeclauses_for_pathkeys(root,
-													  outerpath->pathkeys,
-													  true,
-													  mergeclause_list);
+		mergeclauses =
+			find_mergeclauses_for_outer_pathkeys(root,
+												 outerpath->pathkeys,
+												 mergeclause_list);
 
 		/*
 		 * Done with this outer path if no chance for a mergejoin.
@@ -1023,10 +1023,9 @@ match_unsorted_outer(PlannerInfo *root,
 				if (sortkeycnt < num_sortkeys)
 				{
 					newclauses =
-						find_mergeclauses_for_pathkeys(root,
-													   trialsortkeys,
-													   false,
-													   mergeclauses);
+						trim_mergeclauses_for_inner_pathkeys(root,
+															 mergeclauses,
+															 trialsortkeys);
 					Assert(newclauses != NIL);
 				}
 				else
@@ -1067,10 +1066,9 @@ match_unsorted_outer(PlannerInfo *root,
 						if (sortkeycnt < num_sortkeys)
 						{
 							newclauses =
-								find_mergeclauses_for_pathkeys(root,
-															   trialsortkeys,
-															   false,
-															   mergeclauses);
+								trim_mergeclauses_for_inner_pathkeys(root,
+																mergeclauses,
+															  trialsortkeys);
 							Assert(newclauses != NIL);
 						}
 						else
