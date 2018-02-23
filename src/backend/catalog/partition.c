@@ -174,22 +174,24 @@ static int32 partition_rbound_datum_cmp(FmgrInfo *partsupfunc,
 						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
 						   Datum *tuple_datums, int n_tuple_datums);
 
-static int partition_list_bsearch(PartitionKey key,
+static int partition_list_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
 					   PartitionBoundInfo boundinfo,
 					   Datum value, bool *is_equal);
-static int partition_range_bsearch(PartitionKey key,
+static int partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
+						Oid *partcollation,
 						PartitionBoundInfo boundinfo,
 						PartitionRangeBound *probe, bool *is_equal);
-static int partition_range_datum_bsearch(PartitionKey key,
+static int partition_range_datum_bsearch(FmgrInfo *partsupfunc,
+							  Oid *partcollation,
 							  PartitionBoundInfo boundinfo,
 							  int nvalues, Datum *values, bool *is_equal);
-static int partition_hash_bsearch(PartitionKey key,
-					   PartitionBoundInfo boundinfo,
+static int partition_hash_bsearch(PartitionBoundInfo boundinfo,
 					   int modulus, int remainder);
 
 static int	get_partition_bound_num_indexes(PartitionBoundInfo b);
 static int	get_greatest_modulus(PartitionBoundInfo b);
-static uint64 compute_hash_value(PartitionKey key, Datum *values, bool *isnull);
+static uint64 compute_hash_value(int partnatts, FmgrInfo *partsupfunc,
+								 Datum *values, bool *isnull);
 
 /*
  * RelationBuildPartitionDesc
@@ -1004,7 +1006,7 @@ check_new_partition_bound(char *relname, Relation parent,
 					 * boundinfo->datums that is less than or equal to the
 					 * (spec->modulus, spec->remainder) pair.
 					 */
-					offset = partition_hash_bsearch(key, boundinfo,
+					offset = partition_hash_bsearch(boundinfo,
 													spec->modulus,
 													spec->remainder);
 					if (offset < 0)
@@ -1080,7 +1082,9 @@ check_new_partition_bound(char *relname, Relation parent,
 							int			offset;
 							bool		equal;
 
-							offset = partition_list_bsearch(key, boundinfo,
+							offset = partition_list_bsearch(key->partsupfunc,
+														key->partcollation,
+															boundinfo,
 															val->constvalue,
 															&equal);
 							if (offset >= 0 && equal)
@@ -1155,7 +1159,10 @@ check_new_partition_bound(char *relname, Relation parent,
 					 * since the index array is initialised with an extra -1
 					 * at the end.
 					 */
-					offset = partition_range_bsearch(key, boundinfo, lower,
+					offset = partition_range_bsearch(key->partnatts,
+													 key->partsupfunc,
+													 key->partcollation,
+													 boundinfo, lower,
 													 &equal);
 
 					if (boundinfo->indexes[offset + 1] < 0)
@@ -2574,7 +2581,9 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 			{
 				PartitionBoundInfo boundinfo = partdesc->boundinfo;
 				int			greatest_modulus = get_greatest_modulus(boundinfo);
-				uint64		rowHash = compute_hash_value(key, values, isnull);
+				uint64		rowHash = compute_hash_value(key->partnatts,
+														 key->partsupfunc,
+														 values, isnull);
 
 				part_index = boundinfo->indexes[rowHash % greatest_modulus];
 			}
@@ -2590,7 +2599,8 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 			{
 				bool		equal = false;
 
-				bound_offset = partition_list_bsearch(key,
+				bound_offset = partition_list_bsearch(key->partsupfunc,
+													  key->partcollation,
 													  partdesc->boundinfo,
 													  values[0], &equal);
 				if (bound_offset >= 0 && equal)
@@ -2619,7 +2629,8 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 
 				if (!range_partkey_has_null)
 				{
-					bound_offset = partition_range_datum_bsearch(key,
+					bound_offset = partition_range_datum_bsearch(key->partsupfunc,
+																 key->partcollation,
 																 partdesc->boundinfo,
 																 key->partnatts,
 																 values,
@@ -2938,7 +2949,7 @@ partition_rbound_datum_cmp(FmgrInfo *partsupfunc, Oid *partcollation,
  * to the input value.
  */
 static int
-partition_list_bsearch(PartitionKey key,
+partition_list_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
 					   PartitionBoundInfo boundinfo,
 					   Datum value, bool *is_equal)
 {
@@ -2953,8 +2964,8 @@ partition_list_bsearch(PartitionKey key,
 		int32		cmpval;
 
 		mid = (lo + hi + 1) / 2;
-		cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[0],
-												 key->partcollation[0],
+		cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[0],
+												 partcollation[0],
 												 boundinfo->datums[mid][0],
 												 value));
 		if (cmpval <= 0)
@@ -2981,7 +2992,8 @@ partition_list_bsearch(PartitionKey key,
  * to the input range bound
  */
 static int
-partition_range_bsearch(PartitionKey key,
+partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
+						Oid *partcollation,
 						PartitionBoundInfo boundinfo,
 						PartitionRangeBound *probe, bool *is_equal)
 {
@@ -2996,8 +3008,7 @@ partition_range_bsearch(PartitionKey key,
 		int32		cmpval;
 
 		mid = (lo + hi + 1) / 2;
-		cmpval = partition_rbound_cmp(key->partnatts, key->partsupfunc,
-									  key->partcollation,
+		cmpval = partition_rbound_cmp(partnatts, partsupfunc, partcollation,
 									  boundinfo->datums[mid],
 									  boundinfo->kind[mid],
 									  (boundinfo->indexes[mid] == -1),
@@ -3026,7 +3037,7 @@ partition_range_bsearch(PartitionKey key,
  * to the input tuple.
  */
 static int
-partition_range_datum_bsearch(PartitionKey key,
+partition_range_datum_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
 							  PartitionBoundInfo boundinfo,
 							  int nvalues, Datum *values, bool *is_equal)
 {
@@ -3041,8 +3052,8 @@ partition_range_datum_bsearch(PartitionKey key,
 		int32		cmpval;
 
 		mid = (lo + hi + 1) / 2;
-		cmpval = partition_rbound_datum_cmp(key->partsupfunc,
-											key->partcollation,
+		cmpval = partition_rbound_datum_cmp(partsupfunc,
+											partcollation,
 											boundinfo->datums[mid],
 											boundinfo->kind[mid],
 											values,
@@ -3069,8 +3080,7 @@ partition_range_datum_bsearch(PartitionKey key,
  *		all of them are greater
  */
 static int
-partition_hash_bsearch(PartitionKey key,
-					   PartitionBoundInfo boundinfo,
+partition_hash_bsearch(PartitionBoundInfo boundinfo,
 					   int modulus, int remainder)
 {
 	int			lo,
@@ -3268,27 +3278,27 @@ get_greatest_modulus(PartitionBoundInfo bound)
  * Compute the hash value for given not null partition key values.
  */
 static uint64
-compute_hash_value(PartitionKey key, Datum *values, bool *isnull)
+compute_hash_value(int partnatts, FmgrInfo *partsupfunc,
+				   Datum *values, bool *isnull)
 {
 	int			i;
-	int			nkeys = key->partnatts;
 	uint64		rowHash = 0;
 	Datum		seed = UInt64GetDatum(HASH_PARTITION_SEED);
 
-	for (i = 0; i < nkeys; i++)
+	for (i = 0; i < partnatts; i++)
 	{
 		if (!isnull[i])
 		{
 			Datum		hash;
 
-			Assert(OidIsValid(key->partsupfunc[i].fn_oid));
+			Assert(OidIsValid(partsupfunc[i].fn_oid));
 
 			/*
 			 * Compute hash for each datum value by calling respective
 			 * datatype-specific hash functions of each partition key
 			 * attribute.
 			 */
-			hash = FunctionCall2(&key->partsupfunc[i], values[i], seed);
+			hash = FunctionCall2(&partsupfunc[i], values[i], seed);
 
 			/* Form a single 64-bit hash value */
 			rowHash = hash_combine64(rowHash, DatumGetUInt64(hash));
