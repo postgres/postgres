@@ -78,7 +78,7 @@ _PG_init(void)
 							"Zero prints all plans. -1 turns this feature off.",
 							&auto_explain_log_min_duration,
 							-1,
-							-1, INT_MAX / 1000,
+							-1, INT_MAX,
 							PGC_SUSET,
 							GUC_UNIT_MS,
 							NULL,
