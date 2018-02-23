@@ -1559,6 +1559,7 @@ update_frameheadpos(WindowAggState *winstate)
 			 * reach end of partition, we will leave frameheadpos = end+1 and
 			 * framehead_slot empty.
 			 */
+			int			sortCol = node->ordColIdx[0];
 			bool		sub,
 						less;
 
@@ -1593,9 +1594,9 @@ update_frameheadpos(WindowAggState *winstate)
 				bool		headisnull,
 							currisnull;
 
-				headval = slot_getattr(winstate->framehead_slot, 1,
+				headval = slot_getattr(winstate->framehead_slot, sortCol,
 									   &headisnull);
-				currval = slot_getattr(winstate->ss.ss_ScanTupleSlot, 1,
+				currval = slot_getattr(winstate->ss.ss_ScanTupleSlot, sortCol,
 									   &currisnull);
 				if (headisnull || currisnull)
 				{
@@ -1809,6 +1810,7 @@ update_frametailpos(WindowAggState *winstate)
 			 * necessary.  Note that if we reach end of partition, we will
 			 * leave frametailpos = end+1 and frametail_slot empty.
 			 */
+			int			sortCol = node->ordColIdx[0];
 			bool		sub,
 						less;
 
@@ -1843,9 +1845,9 @@ update_frametailpos(WindowAggState *winstate)
 				bool		tailisnull,
 							currisnull;
 
-				tailval = slot_getattr(winstate->frametail_slot, 1,
+				tailval = slot_getattr(winstate->frametail_slot, sortCol,
 									   &tailisnull);
-				currval = slot_getattr(winstate->ss.ss_ScanTupleSlot, 1,
+				currval = slot_getattr(winstate->ss.ss_ScanTupleSlot, sortCol,
 									   &currisnull);
 				if (tailisnull || currisnull)
 				{
