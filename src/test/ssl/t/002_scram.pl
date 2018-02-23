@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 5;
+use Test::More tests => 6;
 use ServerSetup;
 use File::Copy;
 
@@ -59,8 +59,10 @@ else
 {
 	test_connect_fails($common_connstr,
 					"scram_channel_binding=tls-server-end-point",
+					qr/unsupported SCRAM channel-binding type/,
 					"SCRAM authentication with tls-server-end-point as channel binding");
 }
 test_connect_fails($common_connstr,
 	"scram_channel_binding=not-exists",
+	qr/unsupported SCRAM channel-binding type/,
 	"SCRAM authentication with invalid channel binding");

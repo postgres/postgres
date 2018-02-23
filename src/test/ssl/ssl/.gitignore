@@ -1,3 +1,3 @@
 /*.old
 /new_certs_dir/
-/client_tmp.key
+/client*_tmp.key
