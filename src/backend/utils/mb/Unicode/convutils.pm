@@ -7,6 +7,7 @@ package convutils;
 
 use strict;
 
+use Carp;
 use Exporter 'import';
 
 our @EXPORT =
@@ -698,7 +699,7 @@ sub make_charmap
 {
 	my ($out, $charset, $direction, $verbose) = @_;
 
-	die "unacceptable direction : $direction"
+	croak "unacceptable direction : $direction"
 	  if ($direction != TO_UNICODE && $direction != FROM_UNICODE);
 
 	# In verbose mode, print a large comment with the source and comment of
@@ -759,7 +760,7 @@ sub make_charmap_combined
 {
 	my ($charset, $direction) = @_;
 
-	die "unacceptable direction : $direction"
+	croak "unacceptable direction : $direction"
 	  if ($direction != TO_UNICODE && $direction != FROM_UNICODE);
 
 	my @combined;

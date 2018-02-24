@@ -82,6 +82,7 @@ package PostgresNode;
 use strict;
 use warnings;
 
+use Carp;
 use Config;
 use Cwd;
 use Exporter 'import';
@@ -359,7 +360,7 @@ sub set_replication_conf
 	my $pgdata = $self->data_dir;
 
 	$self->host eq $test_pghost
-	  or die "set_replication_conf only works with the default host";
+	  or croak "set_replication_conf only works with the default host";
 
 	open my $hba, '>>', "$pgdata/pg_hba.conf";
 	print $hba "\n# Allow replication (set up by PostgresNode.pm)\n";
@@ -624,7 +625,7 @@ sub init_from_backup
 
 	print
 "# Initializing node \"$node_name\" from backup \"$backup_name\" of node \"$root_name\"\n";
-	die "Backup \"$backup_name\" does not exist at $backup_path"
+	croak "Backup \"$backup_name\" does not exist at $backup_path"
 	  unless -d $backup_path;
 
 	mkdir $self->backup_dir;
@@ -1445,7 +1446,7 @@ sub lsn
 		'replay'  => 'pg_last_wal_replay_lsn()');
 
 	$mode = '<undef>' if !defined($mode);
-	die "unknown mode for 'lsn': '$mode', valid modes are "
+	croak "unknown mode for 'lsn': '$mode', valid modes are "
 	  . join(', ', keys %modes)
 	  if !defined($modes{$mode});
 
@@ -1490,7 +1491,7 @@ sub wait_for_catchup
 	$mode = defined($mode) ? $mode : 'replay';
 	my %valid_modes =
 	  ('sent' => 1, 'write' => 1, 'flush' => 1, 'replay' => 1);
-	die "unknown mode $mode for 'wait_for_catchup', valid modes are "
+	croak "unknown mode $mode for 'wait_for_catchup', valid modes are "
 	  . join(', ', keys(%valid_modes))
 	  unless exists($valid_modes{$mode});
 
@@ -1517,7 +1518,7 @@ sub wait_for_catchup
 	my $query =
 qq[SELECT $lsn_expr <= ${mode}_lsn FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
 	$self->poll_query_until('postgres', $query)
-	  or die "timed out waiting for catchup";
+	  or croak "timed out waiting for catchup";
 	print "done\n";
 }
 
@@ -1547,9 +1548,9 @@ sub wait_for_slot_catchup
 	$mode = defined($mode) ? $mode : 'restart';
 	if (!($mode eq 'restart' || $mode eq 'confirmed_flush'))
 	{
-		die "valid modes are restart, confirmed_flush";
+		croak "valid modes are restart, confirmed_flush";
 	}
-	die 'target lsn must be specified' unless defined($target_lsn);
+	croak 'target lsn must be specified' unless defined($target_lsn);
 	print "Waiting for replication slot "
 	  . $slot_name . "'s "
 	  . $mode
@@ -1559,7 +1560,7 @@ sub wait_for_slot_catchup
 	my $query =
 qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name';];
 	$self->poll_query_until('postgres', $query)
-	  or die "timed out waiting for catchup";
+	  or croak "timed out waiting for catchup";
 	print "done\n";
 }
 
@@ -1588,7 +1589,7 @@ null columns.
 sub query_hash
 {
 	my ($self, $dbname, $query, @columns) = @_;
-	die 'calls in array context for multi-row results not supported yet'
+	croak 'calls in array context for multi-row results not supported yet'
 	  if (wantarray);
 
 	# Replace __COLUMNS__ if found
@@ -1663,8 +1664,8 @@ sub pg_recvlogical_upto
 
 	my $timeout_exception = 'pg_recvlogical timed out';
 
-	die 'slot name must be specified' unless defined($slot_name);
-	die 'endpos must be specified'    unless defined($endpos);
+	croak 'slot name must be specified' unless defined($slot_name);
+	croak 'endpos must be specified'    unless defined($endpos);
 
 	my @cmd = (
 		'pg_recvlogical', '-S', $slot_name, '--dbname',
@@ -1674,7 +1675,7 @@ sub pg_recvlogical_upto
 
 	while (my ($k, $v) = each %plugin_options)
 	{
-		die "= is not permitted to appear in replication option name"
+		croak "= is not permitted to appear in replication option name"
 		  if ($k =~ qr/=/);
 		push @cmd, "-o", "$k=$v";
 	}

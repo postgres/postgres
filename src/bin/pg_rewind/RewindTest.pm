@@ -35,6 +35,7 @@ package RewindTest;
 use strict;
 use warnings;
 
+use Carp;
 use Config;
 use Exporter 'import';
 use File::Copy;
@@ -228,7 +229,7 @@ sub run_pg_rewind
 	{
 
 		# Cannot come here normally
-		die("Incorrect test mode specified");
+		croak("Incorrect test mode specified");
 	}
 
 	# Now move back postgresql.conf with old settings

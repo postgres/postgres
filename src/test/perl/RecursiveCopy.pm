@@ -19,6 +19,7 @@ package RecursiveCopy;
 use strict;
 use warnings;
 
+use Carp;
 use File::Basename;
 use File::Copy;
 
@@ -68,7 +69,7 @@ sub copypath
 
 	if (defined $params{filterfn})
 	{
-		die "if specified, filterfn must be a subroutine reference"
+		croak "if specified, filterfn must be a subroutine reference"
 		  unless defined(ref $params{filterfn})
 			  and (ref $params{filterfn} eq 'CODE');
 
@@ -80,7 +81,7 @@ sub copypath
 	}
 
 	# Complain if original path is bogus, because _copypath_recurse won't.
-	die "\"$base_src_dir\" does not exist" if !-e $base_src_dir;
+	croak "\"$base_src_dir\" does not exist" if !-e $base_src_dir;
 
 	# Start recursive copy from current directory
 	return _copypath_recurse($base_src_dir, $base_dest_dir, "", $filterfn);
@@ -98,11 +99,11 @@ sub _copypath_recurse
 
 	# Check for symlink -- needed only on source dir
 	# (note: this will fall through quietly if file is already gone)
-	die "Cannot operate on symlink \"$srcpath\"" if -l $srcpath;
+	croak "Cannot operate on symlink \"$srcpath\"" if -l $srcpath;
 
 	# Abort if destination path already exists.  Should we allow directories
 	# to exist already?
-	die "Destination path \"$destpath\" already exists" if -e $destpath;
+	croak "Destination path \"$destpath\" already exists" if -e $destpath;
 
 	# If this source path is a file, simply copy it to destination with the
 	# same name and we're done.
@@ -148,7 +149,7 @@ sub _copypath_recurse
 	return 1 if !-e $srcpath;
 
 	# Else it's some weird file type; complain.
-	die "Source path \"$srcpath\" is not a regular file or directory";
+	croak "Source path \"$srcpath\" is not a regular file or directory";
 }
 
 1;
