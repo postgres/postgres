@@ -1259,9 +1259,12 @@ Datum
 in_range_float4_float8(PG_FUNCTION_ARGS)
 {
 	/* Doesn't seem worth duplicating code for, so just invoke float8_float8 */
+	float8		val = (float8) PG_GETARG_FLOAT4(0);
+	float8		base = (float8) PG_GETARG_FLOAT4(1);
+
 	return DirectFunctionCall5(in_range_float8_float8,
-							   Float8GetDatumFast((float8) PG_GETARG_FLOAT4(0)),
-							   Float8GetDatumFast((float8) PG_GETARG_FLOAT4(1)),
+							   Float8GetDatumFast(val),
+							   Float8GetDatumFast(base),
 							   PG_GETARG_DATUM(2),
 							   PG_GETARG_DATUM(3),
 							   PG_GETARG_DATUM(4));
