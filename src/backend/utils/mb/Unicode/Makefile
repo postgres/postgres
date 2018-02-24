@@ -73,40 +73,40 @@ GENERICTEXTS = $(ISO8859TEXTS) $(WINTEXTS) \
 all: $(MAPS)
 
 $(GENERICMAPS): UCS_to_most.pl $(GENERICTEXTS)
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 johab_to_utf8.map utf8_to_johab.map: UCS_to_JOHAB.pl JOHAB.TXT
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 uhc_to_utf8.map utf8_to_uhc.map: UCS_to_UHC.pl windows-949-2000.xml
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 euc_jp_to_utf8.map utf8_to_euc_jp.map: UCS_to_EUC_JP.pl CP932.TXT JIS0212.TXT
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 euc_cn_to_utf8.map utf8_to_euc_cn.map: UCS_to_EUC_CN.pl gb-18030-2000.xml
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 euc_kr_to_utf8.map utf8_to_euc_kr.map: UCS_to_EUC_KR.pl KSX1001.TXT
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 euc_tw_to_utf8.map utf8_to_euc_tw.map: UCS_to_EUC_TW.pl CNS11643.TXT
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 sjis_to_utf8.map utf8_to_sjis.map: UCS_to_SJIS.pl CP932.TXT
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 gb18030_to_utf8.map utf8_to_gb18030.map: UCS_to_GB18030.pl gb-18030-2000.xml
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 big5_to_utf8.map utf8_to_big5.map: UCS_to_BIG5.pl BIG5.TXT CP950.TXT
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 euc_jis_2004_to_utf8.map utf8_to_euc_jis_2004.map: UCS_to_EUC_JIS_2004.pl euc-jis-2004-std.txt
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 shift_jis_2004_to_utf8.map utf8_to_shift_jis_2004.map: UCS_to_SHIFT_JIS_2004.pl sjis-0213-2004-std.txt
-	$(PERL) $<
+	$(PERL) -I $(srcdir) $<
 
 distclean: clean
 	rm -f $(TEXTS)
