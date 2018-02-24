@@ -93,6 +93,7 @@ extern List *GetPublicationRelations(Oid pubid);
 extern List *GetAllTablesPublications(void);
 extern List *GetAllTablesPublicationRelations(void);
 
+extern bool is_publishable_relation(Relation rel);
 extern ObjectAddress publication_add_relation(Oid pubid, Relation targetrel,
 						 bool if_not_exists);
 

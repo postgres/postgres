@@ -105,6 +105,15 @@ is_publishable_class(Oid relid, Form_pg_class reltuple)
 		relid >= FirstNormalObjectId;
 }
 
+/*
+ * Another variant of this, taking a Relation.
+ */
+bool
+is_publishable_relation(Relation rel)
+{
+	return is_publishable_class(RelationGetRelid(rel), rel->rd_rel);
+}
+
 
 /*
  * SQL-callable variant of the above

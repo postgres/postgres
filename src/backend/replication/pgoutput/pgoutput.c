@@ -262,6 +262,9 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	MemoryContext old;
 	RelationSyncEntry *relentry;
 
+	if (!is_publishable_relation(relation))
+		return;
+
 	relentry = get_rel_sync_entry(data, RelationGetRelid(relation));
 
 	/* First check the table filter */
