@@ -489,6 +489,78 @@ from generate_series(9223372036854775804, 9223372036854775806) x;
 select x, last_value(x) over (order by x desc range between current row and 5 following)
 from generate_series(-9223372036854775806, -9223372036854775804) x;
 
+-- Test in_range for other numeric datatypes
+
+create temp table numerics(
+    id int,
+    f_float4 float4,
+    f_float8 float8,
+    f_numeric numeric
+);
+
+insert into numerics values
+(0, '-infinity', '-infinity', '-1000'),  -- numeric type lacks infinities
+(1, -3, -3, -3),
+(2, -1, -1, -1),
+(3, 0, 0, 0),
+(4, 1.1, 1.1, 1.1),
+(5, 1.12, 1.12, 1.12),
+(6, 2, 2, 2),
+(7, 100, 100, 100),
+(8, 'infinity', 'infinity', '1000'),
+(9, 'NaN', 'NaN', 'NaN');
+
+select id, f_float4, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float4 range between
+             1 preceding and 1 following);
+select id, f_float4, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float4 range between
+             1 preceding and 1.1::float4 following);
+select id, f_float4, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float4 range between
+             'inf' preceding and 'inf' following);
+select id, f_float4, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float4 range between
+             1.1 preceding and 'NaN' following);  -- error, NaN disallowed
+
+select id, f_float8, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float8 range between
+             1 preceding and 1 following);
+select id, f_float8, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float8 range between
+             1 preceding and 1.1::float8 following);
+select id, f_float8, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float8 range between
+             'inf' preceding and 'inf' following);
+select id, f_float8, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float8 range between
+             1.1 preceding and 'NaN' following);  -- error, NaN disallowed
+
+select id, f_numeric, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_numeric range between
+             1 preceding and 1 following);
+select id, f_numeric, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_numeric range between
+             1 preceding and 1.1::numeric following);
+select id, f_numeric, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_numeric range between
+             1 preceding and 1.1::float8 following);  -- currently unsupported
+select id, f_numeric, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_numeric range between
+             1.1 preceding and 'NaN' following);  -- error, NaN disallowed
+
 -- Test in_range for other datetime datatypes
 
 create temp table datetimes(

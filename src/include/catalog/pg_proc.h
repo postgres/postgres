@@ -661,6 +661,12 @@ DATA(insert OID = 4131 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0
 DESCR("window RANGE support");
 DATA(insert OID = 4132 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "21 21 21 16 16" _null_ _null_ _null_ _null_ _null_ in_range_int2_int2 _null_ _null_ _null_ ));
 DESCR("window RANGE support");
+DATA(insert OID = 4139 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "701 701 701 16 16" _null_ _null_ _null_ _null_ _null_ in_range_float8_float8 _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4140 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "700 700 701 16 16" _null_ _null_ _null_ _null_ _null_ in_range_float4_float8 _null_ _null_ _null_ ));
+DESCR("window RANGE support");
+DATA(insert OID = 4141 ( in_range		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "1700 1700 1700 16 16" _null_ _null_ _null_ _null_ _null_ in_range_numeric_numeric _null_ _null_ _null_ ));
+DESCR("window RANGE support");
 
 DATA(insert OID = 361 (  lseg_distance	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 701 "601 601" _null_ _null_ _null_ _null_ _null_	lseg_distance _null_ _null_ _null_ ));
 DATA(insert OID = 362 (  lseg_interpt	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 600 "601 601" _null_ _null_ _null_ _null_ _null_	lseg_interpt _null_ _null_ _null_ ));
