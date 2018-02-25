@@ -1,6 +1,118 @@
 <!-- doc/src/sgml/release-9.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-5-12">
+  <title>Release 9.5.12</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2018-03-01</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 9.5.11.
+   For information about new features in the 9.5 major release, see
+   <xref linkend="release-9-5"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.5.12</title>
+
+   <para>
+    A dump/restore is not required for those running 9.5.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.5.10,
+    see <xref linkend="release-9-5-10"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix misbehavior of concurrent-update rechecks with CTE references
+      appearing in subplans (Tom Lane)
+     </para>
+
+     <para>
+      If a CTE (<literal>WITH</literal> clause reference) is used in an
+      InitPlan or SubPlan, and the query requires a recheck due to trying
+      to update or lock a concurrently-updated row, incorrect results could
+      be obtained.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner failures with overlapping mergejoin clauses in an outer
+      join (Tom Lane)
+     </para>
+
+     <para>
+      These mistakes led to <quote>left and right pathkeys do not match in
+      mergejoin</quote> or <quote>outer pathkeys do not match
+      mergeclauses</quote> planner errors in corner cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Repair <application>pg_upgrade</application>'s failure to
+      preserve <structfield>relfrozenxid</structfield> for materialized
+      views (Tom Lane, Andres Freund)
+     </para>
+
+     <para>
+      This oversight could lead to data corruption in materialized views
+      after an upgrade, manifesting as <quote>could not access status of
+      transaction</quote> or <quote>found xmin from before
+      relfrozenxid</quote> errors.  The problem would be more likely to
+      occur in seldom-refreshed materialized views, or ones that were
+      maintained only with <command>REFRESH MATERIALIZED VIEW
+      CONCURRENTLY</command>.
+     </para>
+
+     <para>
+      If such corruption is observed, it can be repaired by refreshing the
+      materialized view (without <literal>CONCURRENTLY</literal>).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect reporting of PL/Python function names in
+      error <literal>CONTEXT</literal> stacks (Tom Lane)
+     </para>
+
+     <para>
+      An error occurring within a nested PL/Python function call (that is,
+      one reached via a SPI query from another PL/Python function) would
+      result in a stack trace showing the inner function's name twice,
+      rather than the expected results.  Also, an error in a nested
+      PL/Python <literal>DO</literal> block could result in a null pointer
+      dereference crash on some platforms.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <filename>contrib/auto_explain</filename>'s
+      <varname>log_min_duration</varname> setting to range up
+      to <literal>INT_MAX</literal>, or about 24 days instead of 35 minutes
+      (Tom Lane)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-5-11">
   <title>Release 9.5.11</title>
 

@@ -35,6 +35,27 @@
 
     <listitem>
 <!--
+Author: Peter Eisentraut <peter_e@gmx.net>
+Branch: master [bc1adc651] 2018-02-23 22:13:21 -0500
+Branch: REL_10_STABLE [b9bf23abb] 2018-02-23 22:09:26 -0500
+-->
+     <para>
+      Prevent logical replication from trying to ship changes for
+      unpublishable relations (Peter Eisentraut)
+     </para>
+
+     <para>
+      A publication marked <literal>FOR ALL TABLES</literal> would
+      incorrectly ship changes in materialized views
+      and <structname>information_schema</structname> tables, which are
+      supposed to be omitted from the change stream.
+     </para>
+     <para>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [159efe4af] 2018-02-19 16:00:31 -0500
 Branch: REL_10_STABLE [517e0fe86] 2018-02-19 16:00:18 -0500
