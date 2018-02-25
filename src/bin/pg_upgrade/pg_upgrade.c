@@ -302,13 +302,21 @@ create_new_objects(void)
 
 	prep_status("Restoring database schemas in the new cluster\n");
 
+	/*
+	 * We cannot process the template1 database concurrently with others,
+	 * because when it's transiently dropped, connection attempts would fail.
+	 * So handle it in a separate non-parallelized pass.
+	 */
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
 		char		sql_file_name[MAXPGPATH],
 					log_file_name[MAXPGPATH];
 		DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
 		const char *create_opts;
-		const char *starting_db;
+
+		/* Process only template1 in this pass */
+		if (strcmp(old_db->db_name, "template1") != 0)
+			continue;
 
 		pg_log(PG_STATUS, "%s", old_db->db_name);
 		snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
@@ -320,26 +328,55 @@ create_new_objects(void)
 		 * otherwise we would fail to propagate their database-level
 		 * properties.
 		 */
-		if (strcmp(old_db->db_name, "template1") == 0 ||
-			strcmp(old_db->db_name, "postgres") == 0)
+		create_opts = "--clean --create";
+
+		exec_prog(log_file_name,
+				  NULL,
+				  true,
+				  true,
+				  "\"%s/pg_restore\" %s %s --exit-on-error --verbose "
+				  "--dbname postgres \"%s\"",
+				  new_cluster.bindir,
+				  cluster_conn_opts(&new_cluster),
+				  create_opts,
+				  sql_file_name);
+
+		break;					/* done once we've processed template1 */
+	}
+
+	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
+	{
+		char		sql_file_name[MAXPGPATH],
+					log_file_name[MAXPGPATH];
+		DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
+		const char *create_opts;
+
+		/* Skip template1 in this pass */
+		if (strcmp(old_db->db_name, "template1") == 0)
+			continue;
+
+		pg_log(PG_STATUS, "%s", old_db->db_name);
+		snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+		snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
+
+		/*
+		 * template1 and postgres databases will already exist in the target
+		 * installation, so tell pg_restore to drop and recreate them;
+		 * otherwise we would fail to propagate their database-level
+		 * properties.
+		 */
+		if (strcmp(old_db->db_name, "postgres") == 0)
 			create_opts = "--clean --create";
 		else
 			create_opts = "--create";
 
-		/* When processing template1, we can't connect there to start with */
-		if (strcmp(old_db->db_name, "template1") == 0)
-			starting_db = "postgres";
-		else
-			starting_db = "template1";
-
 		parallel_exec_prog(log_file_name,
 						   NULL,
 						   "\"%s/pg_restore\" %s %s --exit-on-error --verbose "
-						   "--dbname %s \"%s\"",
+						   "--dbname template1 \"%s\"",
 						   new_cluster.bindir,
 						   cluster_conn_opts(&new_cluster),
 						   create_opts,
-						   starting_db,
 						   sql_file_name);
 	}
 
