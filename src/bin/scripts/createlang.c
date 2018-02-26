@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 		static const bool translate_columns[] = {false, true};
 
 		conn = connectDatabase(dbname, host, port, username, prompt_password,
-							   progname, false, false);
+							   progname, echo, false, false);
 
 		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", "
 				"(CASE WHEN lanpltrusted THEN '%s' ELSE '%s' END) as \"%s\" "
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 			*p += ('a' - 'A');
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false, false);
+						   progname, echo, false, false);
 
 	/*
 	 * Make sure the language isn't already installed

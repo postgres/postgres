@@ -7,6 +7,7 @@
  */
 #include "postgres_fe.h"
 
+#include "fe_utils/connect.h"
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 
@@ -43,6 +44,14 @@ main(int argc, char **argv)
 		fprintf(stderr, "connection error:  %s\n", PQerrorMessage(conn));
 		exit(EXIT_FAILURE);
 	}
+
+	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
+	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		fprintf(stderr, "sql error:  %s\n", PQerrorMessage(conn));
+		exit(EXIT_FAILURE);
+	}
+	PQclear(res);
 
 	/* Get a list of relations that have OIDs */
 
