@@ -283,7 +283,6 @@ static bool nonemptyReloptions(const char *reloptions);
 static void fmtReloptionsArray(Archive *fout, PQExpBuffer buffer,
 				   const char *reloptions, const char *prefix);
 static char *get_synchronized_snapshot(Archive *fout);
-static PGresult *ExecuteSqlQueryForSingleRow(Archive *fout, char *query);
 static void setupDumpWorker(Archive *AHX, RestoreOptions *ropt);
 
 
@@ -15294,27 +15293,4 @@ fmtReloptionsArray(Archive *fout, PQExpBuffer buffer, const char *reloptions,
 
 	if (options)
 		free(options);
-}
-
-/*
- * Execute an SQL query and verify that we got exactly one row back.
- */
-static PGresult *
-ExecuteSqlQueryForSingleRow(Archive *fout, char *query)
-{
-	PGresult   *res;
-	int			ntups;
-
-	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-		exit_horribly(NULL,
-					  ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-							   ntups),
-					  ntups, query);
-
-	return res;
 }

@@ -407,6 +407,29 @@ ExecuteSqlQuery(Archive *AHX, const char *query, ExecStatusType status)
 }
 
 /*
+ * Execute an SQL query and verify that we got exactly one row back.
+ */
+PGresult *
+ExecuteSqlQueryForSingleRow(Archive *fout, char *query)
+{
+	PGresult   *res;
+	int			ntups;
+
+	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
+
+	/* Expecting a single result only */
+	ntups = PQntuples(res);
+	if (ntups != 1)
+		exit_horribly(NULL,
+					  ngettext("query returned %d row instead of one: %s\n",
+							   "query returned %d rows instead of one: %s\n",
+							   ntups),
+					  ntups, query);
+
+	return res;
+}
+
+/*
  * Convenience function to send a query.
  * Monitors result to detect COPY statements
  */
