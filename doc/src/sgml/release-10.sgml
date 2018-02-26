@@ -23,7 +23,23 @@
    </para>
 
    <para>
-    However, if you are upgrading from a version earlier than 10.2,
+    However, if you run an installation in which not all users are mutually
+    trusting, or if you maintain an application or extension that is
+    intended for use in arbitrary situations, it is strongly recommended
+    that you read the documentation changes described in the first changelog
+    entry below, and take suitable steps to ensure that your installation or
+    code is secure.
+   </para>
+
+   <para>
+    Also, the changes described in the second changelog entry below may
+    cause functions used in index expressions or materialized views to fail
+    during auto-analyze, or when reloading from a dump.  After upgrading,
+    monitor the server logs for such problems, and fix affected functions.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 10.2,
     see <xref linkend="release-10-2"/>.
    </para>
   </sect2>
@@ -32,6 +48,92 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [5770172cb] 2018-02-26 07:39:44 -0800
+Branch: REL_10_STABLE [ee0d1966e] 2018-02-26 07:39:47 -0800
+Branch: REL9_6_STABLE [70396dbe3] 2018-02-26 07:39:48 -0800
+Branch: REL9_5_STABLE [1f47ea7b8] 2018-02-26 07:39:48 -0800
+Branch: REL9_4_STABLE [f28955e38] 2018-02-26 07:39:48 -0800
+Branch: REL9_3_STABLE [41ee473a4] 2018-02-26 07:39:48 -0800
+-->
+     <para>
+      Document how to configure installations and applications to guard
+      against search-path-dependent trojan-horse attacks from other users
+      (Noah Misch)
+     </para>
+
+     <para>
+      Using a <varname>search_path</varname> setting that includes any
+      schemas writable by a hostile user enables that user to capture
+      control of queries and then run arbitrary SQL code with the
+      permissions of the attacked user.  While it is possible to write
+      queries that are proof against such hijacking, it is notationally
+      tedious, and it's very easy to overlook holes.  Therefore, we now
+      recommend configurations in which no untrusted schemas appear in
+      one's search path.  Relevant documentation appears in
+      <xref linkend="ddl-schemas-patterns"/> (for database administrators and users),
+      <xref linkend="libpq-connect"/> (for application authors),
+      <xref linkend="extend-extensions-style"/>  (for extension authors), and
+      <xref linkend="sql-createfunction"/> (for authors
+      of <literal>SECURITY DEFINER</literal> functions).
+      (CVE-2018-1058)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [582edc369] 2018-02-26 07:39:44 -0800
+Branch: REL_10_STABLE [10d598354] 2018-02-26 07:39:47 -0800
+Branch: REL9_6_STABLE [e170b8c8c] 2018-02-26 07:39:48 -0800
+Branch: REL9_5_STABLE [91f3ffc52] 2018-02-26 07:39:48 -0800
+Branch: REL9_4_STABLE [928bca1a3] 2018-02-26 07:39:48 -0800
+Branch: REL9_3_STABLE [3db38b0ce] 2018-02-26 07:39:48 -0800
+Author: Noah Misch <noah@leadboat.com>
+Branch: REL9_4_STABLE [461c32b55] 2018-02-26 07:39:48 -0800
+Branch: REL9_3_STABLE [de8ffd666] 2018-02-26 07:39:48 -0800
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3d2aed664] 2018-02-26 10:18:21 -0500
+Branch: REL_10_STABLE [b8a2908f0] 2018-02-26 10:18:22 -0500
+Branch: REL9_6_STABLE [815172ba8] 2018-02-26 10:18:22 -0500
+Branch: REL9_5_STABLE [a8fc37a63] 2018-02-26 10:18:22 -0500
+Branch: REL9_4_STABLE [9f6e5296a] 2018-02-26 10:18:22 -0500
+Branch: REL9_3_STABLE [fe8b95b7e] 2018-02-26 10:18:22 -0500
+-->
+     <para>
+      Avoid use of insecure <varname>search_path</varname> settings
+      in <application>pg_dump</application> and other client programs
+      (Noah Misch, Tom Lane)
+     </para>
+
+     <para>
+      <application>pg_dump</application>,
+      <application>pg_upgrade</application>,
+      <application>vacuumdb</application> and
+      other <productname>PostgreSQL</productname>-provided applications were
+      themselves vulnerable to the type of hijacking described in the previous
+      changelog entry; since these applications are commonly run by
+      superusers, they present particularly attractive targets.  To make them
+      secure whether or not the installation as a whole has been secured,
+      modify them to include only the <structname>pg_catalog</structname>
+      schema in their <varname>search_path</varname> settings.
+      Autovacuum worker processes now do the same, as well.
+     </para>
+
+     <para>
+      In cases where user-provided functions are indirectly executed by
+      these programs &mdash; for example, user-provided functions in index
+      expressions &mdash; the tighter <varname>search_path</varname> may
+      result in errors, which will need to be corrected by adjusting those
+      user-provided functions to not assume anything about what search path
+      they are invoked under.  That has always been good practice, but now
+      it will be necessary for correct behavior.
+      (CVE-2018-1058)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
@@ -49,8 +151,6 @@ Branch: REL_10_STABLE [b9bf23abb] 2018-02-23 22:09:26 -0500
       incorrectly ship changes in materialized views
       and <structname>information_schema</structname> tables, which are
       supposed to be omitted from the change stream.
-     </para>
-     <para>
      </para>
     </listitem>
 
