@@ -87,7 +87,7 @@ extern void appendShellString(PQExpBuffer buf, const char *str);
 extern void appendConnStrVal(PQExpBuffer buf, const char *str);
 extern void appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname);
 extern bool parsePGArray(const char *atext, char ***itemarray, int *nitems);
-extern bool buildACLCommands(const char *name, const char *subname,
+extern bool buildACLCommands(const char *name, const char *subname, const char *nspname,
 				 const char *type, const char *acls, const char *owner,
 				 const char *prefix, int remoteVersion,
 				 PQExpBuffer sql);
@@ -101,9 +101,9 @@ extern bool processSQLNamePattern(PGconn *conn, PQExpBuffer buf,
 					  const char *schemavar, const char *namevar,
 					  const char *altnamevar, const char *visibilityrule);
 extern void buildShSecLabelQuery(PGconn *conn, const char *catalog_name,
-					 uint32 objectId, PQExpBuffer sql);
+					 Oid objectId, PQExpBuffer sql);
 extern void emitShSecLabels(PGconn *conn, PGresult *res,
-				PQExpBuffer buffer, const char *target, const char *objname);
+				PQExpBuffer buffer, const char *objtype, const char *objname);
 extern void set_dump_section(const char *arg, int *dumpSections);
 
 extern void simple_string_list_append(SimpleStringList *list, const char *val);
