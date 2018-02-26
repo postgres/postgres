@@ -83,7 +83,7 @@ dblink_connect(text connname, text connstr) returns text
      <listitem>
       <para><application>libpq</application>-style connection info string, for example
        <literal>hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres
-       password=mypasswd</literal>.
+       password=mypasswd options=-csearch_path=</literal>.
        For details see <xref linkend="libpq-connstring"/>.
        Alternatively, the name of a foreign server.
       </para>
@@ -105,6 +105,17 @@ dblink_connect(text connname, text connstr) returns text
    <title>Notes</title>
 
    <para>
+    If untrusted users have access to a database that has not adopted a
+    <link linkend="ddl-schemas-patterns">secure schema usage pattern</link>,
+    begin each session by removing publicly-writable schemas from
+    <varname>search_path</varname>.  One could, for example,
+    add <literal>options=-csearch_path=</literal> to
+    <parameter>connstr</parameter>.  This consideration is not specific
+    to <filename>dblink</filename>; it applies to every interface for
+    executing arbitrary SQL commands.
+   </para>
+
+   <para>
     Only superusers may use <function>dblink_connect</function> to create
     non-password-authenticated connections.  If non-superusers need this
     capability, use <function>dblink_connect_u</function> instead.
@@ -121,13 +132,13 @@ dblink_connect(text connname, text connstr) returns text
    <title>Examples</title>
 
 <screen>
-SELECT dblink_connect('dbname=postgres');
+SELECT dblink_connect('dbname=postgres options=-csearch_path=');
  dblink_connect
 ----------------
  OK
 (1 row)
 
-SELECT dblink_connect('myconn', 'dbname=postgres');
+SELECT dblink_connect('myconn', 'dbname=postgres options=-csearch_path=');
  dblink_connect
 ----------------
  OK
@@ -416,7 +427,8 @@ dblink(text sql [, bool fail_on_error]) returns setof record
 
 <programlisting>
 SELECT *
-    FROM dblink('dbname=mydb', 'select proname, prosrc from pg_proc')
+    FROM dblink('dbname=mydb options=-csearch_path=',
+                'select proname, prosrc from pg_proc')
       AS t1(proname name, prosrc text)
     WHERE proname LIKE 'bytea%';
 </programlisting>
@@ -450,7 +462,8 @@ SELECT *
 <programlisting>
 CREATE VIEW myremote_pg_proc AS
   SELECT *
-    FROM dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
+    FROM dblink('dbname=postgres options=-csearch_path=',
+                'select proname, prosrc from pg_proc')
     AS t1(proname name, prosrc text);
 
 SELECT * FROM myremote_pg_proc WHERE proname LIKE 'bytea%';
@@ -461,7 +474,8 @@ SELECT * FROM myremote_pg_proc WHERE proname LIKE 'bytea%';
    <title>Examples</title>
 
 <screen>
-SELECT * FROM dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
+SELECT * FROM dblink('dbname=postgres options=-csearch_path=',
+                     'select proname, prosrc from pg_proc')
   AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
   proname   |   prosrc
 ------------+------------
@@ -479,7 +493,7 @@ SELECT * FROM dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
  byteaout   | byteaout
 (12 rows)
 
-SELECT dblink_connect('dbname=postgres');
+SELECT dblink_connect('dbname=postgres options=-csearch_path=');
  dblink_connect
 ----------------
  OK
@@ -503,7 +517,7 @@ SELECT * FROM dblink('select proname, prosrc from pg_proc')
  byteaout   | byteaout
 (12 rows)
 
-SELECT dblink_connect('myconn', 'dbname=regression');
+SELECT dblink_connect('myconn', 'dbname=regression options=-csearch_path=');
  dblink_connect
 ----------------
  OK
@@ -778,7 +792,7 @@ dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) ret
    <title>Examples</title>
 
 <screen>
-SELECT dblink_connect('dbname=postgres');
+SELECT dblink_connect('dbname=postgres options=-csearch_path=');
  dblink_connect
 ----------------
  OK
@@ -899,7 +913,7 @@ dblink_fetch(text connname, text cursorname, int howmany [, bool fail_on_error])
    <title>Examples</title>
 
 <screen>
-SELECT dblink_connect('dbname=postgres');
+SELECT dblink_connect('dbname=postgres options=-csearch_path=');
  dblink_connect
 ----------------
  OK
@@ -1036,7 +1050,7 @@ dblink_close(text connname, text cursorname [, bool fail_on_error]) returns text
    <title>Examples</title>
 
 <screen>
-SELECT dblink_connect('dbname=postgres');
+SELECT dblink_connect('dbname=postgres options=-csearch_path=');
  dblink_connect
 ----------------
  OK

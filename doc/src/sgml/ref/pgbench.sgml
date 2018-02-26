@@ -1688,5 +1688,16 @@ statement latencies in milliseconds:
    database server.
   </para>
  </refsect2>
+ <refsect2>
+  <title>Security</title>
+
+  <para>
+    If untrusted users have access to a database that has not adopted a
+    <link linkend="ddl-schemas-patterns">secure schema usage pattern</link>,
+    do not run <application>pgbench</application> in that
+    database.  <application>pgbench</application> uses unqualified names and
+    does not manipulate the search path.
+  </para>
+ </refsect2>
  </refsect1>
 </refentry>

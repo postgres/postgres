@@ -430,6 +430,32 @@
     dropping the whole extension.
    </para>
 
+   <sect2 id="extend-extensions-style">
+    <title>Defining Extension Objects</title>
+
+    <!-- XXX It's not enough to use qualified names, because one might write a
+         qualified name to an object that itself uses unqualified names.  Many
+         information_schema functions have that defect, for example.  However,
+         that's a defect in the referenced object, and relatively few queries
+         will be affected.  Also, we direct applications to secure search_path
+         when connecting to an untrusted database; if applications do that,
+         they are immune to known attacks even if some extension refers to a
+         defective object.  Therefore, guide extension authors as though core
+         PostgreSQL contained no such defect. -->
+    <para>
+     Widely-distributed extensions should assume little about the database
+     they occupy.  In particular, unless you issued <literal>SET search_path =
+     pg_temp</literal>, assume each unqualified name could resolve to an
+     object that a malicious user has defined.  Beware of constructs that
+     depend on <varname>search_path</varname> implicitly: <token>IN</token>
+     and <literal>CASE <replaceable>expression</replaceable> WHEN</literal>
+     always select an operator using the search path.  In their place, use
+     <literal>OPERATOR(<replaceable>schema</replaceable>.=) ANY</literal>
+     and <literal>CASE WHEN <replaceable>expression</replaceable></literal>.
+    </para>
+
+   </sect2>
+
    <sect2>
     <title>Extension Files</title>
 
@@ -984,24 +1010,24 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</replaceabl
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pair" to load this file. \quit
 
-CREATE TYPE pair AS ( k text, v text );
+CREATE TYPE pair AS ( k pg_catalog.text, v pg_catalog.text );
 
-CREATE OR REPLACE FUNCTION pair(anyelement, text)
-RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::pair';
+CREATE OR REPLACE FUNCTION pair(pg_catalog.text, pg_catalog.text)
+RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::@extschema@.pair;';
 
-CREATE OR REPLACE FUNCTION pair(text, anyelement)
-RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::pair';
+CREATE OPERATOR ~> (LEFTARG = pg_catalog.text,
+                    RIGHTARG = pg_catalog.text, PROCEDURE = pair);
 
-CREATE OR REPLACE FUNCTION pair(anyelement, anyelement)
-RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::pair';
+-- "SET search_path" is easy to get right, but qualified names perform better.
+CREATE OR REPLACE FUNCTION lower(pair)
+RETURNS pair LANGUAGE SQL
+AS 'SELECT ROW(lower($1.k), lower($1.v))::@extschema@.pair;'
+SET search_path = pg_temp;
 
-CREATE OR REPLACE FUNCTION pair(text, text)
-RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::pair;';
-
-CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = anyelement, PROCEDURE = pair);
-CREATE OPERATOR ~> (LEFTARG = anyelement, RIGHTARG = text, PROCEDURE = pair);
-CREATE OPERATOR ~> (LEFTARG = anyelement, RIGHTARG = anyelement, PROCEDURE = pair);
-CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = text, PROCEDURE = pair);
+CREATE OR REPLACE FUNCTION pair_concat(pair, pair)
+RETURNS pair LANGUAGE SQL
+AS 'SELECT ROW($1.k OPERATOR(pg_catalog.||) $2.k,
+               $1.v OPERATOR(pg_catalog.||) $2.v)::@extschema@.pair;';
 ]]>
 </programlisting>
     </para>
@@ -1013,7 +1039,7 @@ CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = text, PROCEDURE = pair);
 # pair extension
 comment = 'A key/value pair data type'
 default_version = '1.0'
-relocatable = true
+relocatable = false
 </programlisting>
     </para>
 

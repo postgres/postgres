@@ -67,6 +67,22 @@
 
    <warning>
     <para>
+     If untrusted users have access to a database that has not adopted a
+     <link linkend="ddl-schemas-patterns">secure schema usage pattern</link>,
+     begin each session by removing publicly-writable schemas from
+     <varname>search_path</varname>.  One can set parameter key
+     word <literal>options</literal> to
+     value <literal>-csearch_path=</literal>.  Alternately, one can
+     issue <literal>PQexec(<replaceable>conn</replaceable>, "SELECT
+     pg_catalog.set_config('search_path', '', false)")</literal> after
+     connecting.  This consideration is not specific
+     to <application>libpq</application>; it applies to every interface for
+     executing arbitrary SQL commands.
+    </para>
+   </warning>
+
+   <warning>
+    <para>
      On Unix, forking a process with open libpq connections can lead to
      unpredictable results because the parent and child processes share
      the same sockets and operating system resources.  For this reason,
@@ -6878,7 +6894,8 @@ main(void)
 {
     mydata *data;
     PGresult *res;
-    PGconn *conn = PQconnectdb("dbname = postgres");
+    PGconn *conn =
+        PQconnectdb("dbname=postgres options=-csearch_path=");
 
     if (PQstatus(conn) != CONNECTION_OK)
     {
@@ -8305,6 +8322,22 @@ main(int argc, char **argv)
         exit_nicely(conn);
     }
 
+    /* Set always-secure search path, so malicous users can't take control. */
+    res = PQexec(conn,
+                 "SELECT pg_catalog.set_config('search_path', '', false)");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    /*
+     * Should PQclear PGresult whenever it is no longer needed to avoid memory
+     * leaks
+     */
+    PQclear(res);
+
     /*
      * Our test case here involves using a cursor, for which we must be inside
      * a transaction block.  We could do the whole thing with a single
@@ -8320,11 +8353,6 @@ main(int argc, char **argv)
         PQclear(res);
         exit_nicely(conn);
     }
-
-    /*
-     * Should PQclear PGresult whenever it is no longer needed to avoid memory
-     * leaks
-     */
     PQclear(res);
 
     /*
@@ -8400,16 +8428,16 @@ main(int argc, char **argv)
  * populate a database with the following commands
  * (provided in src/test/examples/testlibpq2.sql):
  *
+ *   CREATE SCHEMA TESTLIBPQ2;
+ *   SET search_path = TESTLIBPQ2;
  *   CREATE TABLE TBL1 (i int4);
- *
  *   CREATE TABLE TBL2 (i int4);
- *
  *   CREATE RULE r1 AS ON INSERT TO TBL1 DO
  *     (INSERT INTO TBL2 VALUES (new.i); NOTIFY TBL2);
  *
- * and do this four times:
+ * Start this program, then from psql do this four times:
  *
- *   INSERT INTO TBL1 VALUES (10);
+ *   INSERT INTO TESTLIBPQ2.TBL1 VALUES (10);
  */
 
 #ifdef WIN32
@@ -8464,6 +8492,22 @@ main(int argc, char **argv)
         exit_nicely(conn);
     }
 
+    /* Set always-secure search path, so malicous users can't take control. */
+    res = PQexec(conn,
+                 "SELECT pg_catalog.set_config('search_path', '', false)");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    /*
+     * Should PQclear PGresult whenever it is no longer needed to avoid memory
+     * leaks
+     */
+    PQclear(res);
+
     /*
      * Issue LISTEN command to enable notifications from the rule's NOTIFY.
      */
@@ -8474,11 +8518,6 @@ main(int argc, char **argv)
         PQclear(res);
         exit_nicely(conn);
     }
-
-    /*
-     * should PQclear PGresult whenever it is no longer needed to avoid memory
-     * leaks
-     */
     PQclear(res);
 
     /* Quit after four notifies are received. */
@@ -8545,8 +8584,9 @@ main(int argc, char **argv)
  * Before running this, populate a database with the following commands
  * (provided in src/test/examples/testlibpq3.sql):
  *
+ * CREATE SCHEMA testlibpq3;
+ * SET search_path = testlibpq3;
  * CREATE TABLE test1 (i int4, t text, b bytea);
- *
  * INSERT INTO test1 values (1, 'joe''s place', '\\000\\001\\002\\003\\004');
  * INSERT INTO test1 values (2, 'ho there', '\\004\\003\\002\\001\\000');
  *
@@ -8677,6 +8717,16 @@ main(int argc, char **argv)
                 PQerrorMessage(conn));
         exit_nicely(conn);
     }
+
+    /* Set always-secure search path, so malicous users can't take control. */
+    res = PQexec(conn, "SET search_path = testlibpq3");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn);
+    }
+    PQclear(res);
 
     /*
      * The point of this program is to illustrate use of PQexecParams() with

@@ -187,6 +187,18 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
   </para>
 
   <para>
+   If untrusted users have access to a database that has not adopted a
+   <link linkend="ddl-schemas-patterns">secure schema usage pattern</link>,
+   begin each session by removing publicly-writable schemas
+   from <varname>search_path</varname>.  For example,
+   add <literal>options=-csearch_path=</literal>
+   to <literal><replaceable>options</replaceable></literal>, or
+   issue <literal>EXEC SQL SELECT pg_catalog.set_config('search_path', '',
+   false);</literal> after connecting.  This consideration is not specific to
+   ECPG; it applies to every interface for executing arbitrary SQL commands.
+  </para>
+
+  <para>
    Here are some examples of <command>CONNECT</command> statements:
 <programlisting>
 EXEC SQL CONNECT TO mydb@sql.mydomain.com;
@@ -266,8 +278,11 @@ int
 main()
 {
     EXEC SQL CONNECT TO testdb1 AS con1 USER testuser;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
     EXEC SQL CONNECT TO testdb2 AS con2 USER testuser;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
     EXEC SQL CONNECT TO testdb3 AS con3 USER testuser;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 
     /* This query would be executed in the last opened database "testdb3". */
     EXEC SQL SELECT current_database() INTO :dbname;
@@ -1093,6 +1108,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 EXEC SQL END DECLARE SECTION;
 
     EXEC SQL CONNECT TO testdb;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 
     in = PGTYPESinterval_new();
     EXEC SQL SELECT '1 min'::interval INTO :in;
@@ -1147,6 +1163,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 EXEC SQL END DECLARE SECTION;
 
     EXEC SQL CONNECT TO testdb;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 
     num = PGTYPESnumeric_new();
     dec = PGTYPESdecimal_new();
@@ -1221,6 +1238,7 @@ EXEC SQL END DECLARE SECTION;
     memset(dbid, 0, sizeof(int) * 8);
 
     EXEC SQL CONNECT TO testdb;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 
     /* Retrieve multiple rows into arrays at once. */
     EXEC SQL SELECT oid,datname INTO :dbid, :dbname FROM pg_database;
@@ -1887,6 +1905,7 @@ char *stmt = "SELECT u.usename as dbaname, d.datname "
 EXEC SQL END DECLARE SECTION;
 
 EXEC SQL CONNECT TO testdb AS con1 USER testuser;
+EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 
 EXEC SQL PREPARE stmt1 FROM :stmt;
 
@@ -4317,6 +4336,7 @@ main(void)
     EXEC SQL END DECLARE SECTION;
 
     EXEC SQL CONNECT TO testdb AS con1 USER testuser;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 
     EXEC SQL PREPARE stmt1 FROM :query;
     EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
@@ -4478,6 +4498,7 @@ main(void)
     EXEC SQL END DECLARE SECTION;
 
     EXEC SQL CONNECT TO uptimedb AS con1 USER uptime;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 
     EXEC SQL PREPARE stmt1 FROM :query;
     EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
@@ -5909,6 +5930,7 @@ main(void)
     memset(buf, 1, buflen);
 
     EXEC SQL CONNECT TO testdb AS con1;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 
     conn = ECPGget_PGconn("con1");
     printf("conn = %p\n", conn);
@@ -6038,6 +6060,7 @@ class TestCpp
 TestCpp::TestCpp()
 {
     EXEC SQL CONNECT TO testdb1;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 }
 
 void Test::test()
@@ -6117,6 +6140,7 @@ void
 db_connect()
 {
     EXEC SQL CONNECT TO testdb1;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 }
 
 void
@@ -6510,12 +6534,14 @@ EXEC SQL END DECLARE SECTION;
     ECPGdebug(1, stderr);
 
     EXEC SQL CONNECT TO :dbname USER :user;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
     EXEC SQL SELECT version() INTO :ver;
     EXEC SQL DISCONNECT;
 
     printf("version: %s\n", ver);
 
     EXEC SQL CONNECT TO :connection USER :user;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
     EXEC SQL SELECT version() INTO :ver;
     EXEC SQL DISCONNECT;
 
@@ -7116,6 +7142,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 EXEC SQL END DECLARE SECTION;
 
     EXEC SQL CONNECT TO testdb AS con1 USER testuser;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
     EXEC SQL ALLOCATE DESCRIPTOR d;
 
     /* Declare, open a cursor, and assign a descriptor to the cursor  */
@@ -7673,6 +7700,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 EXEC SQL END DECLARE SECTION;
 
     EXEC SQL CONNECT TO testdb AS con1;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
 
     EXEC SQL SELECT current_database(), 256 INTO :t:t_ind LIMIT 1;
 
@@ -7829,6 +7857,7 @@ int
 main(void)
 {
     EXEC SQL CONNECT TO testdb AS con1;
+    EXEC SQL SELECT pg_catalog.set_config('search_path', '', false); EXEC SQL COMMIT;
     EXEC SQL ALLOCATE DESCRIPTOR d;
     EXEC SQL DECLARE cur CURSOR FOR SELECT current_database(), 'hoge', 256;
     EXEC SQL OPEN cur;

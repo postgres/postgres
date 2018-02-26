@@ -2172,6 +2172,20 @@ CREATE TABLE public.products ( ... );
     in other schemas in the database.
    </para>
 
+  <para>
+    The ability to create like-named objects in different schemas complicates
+    writing a query that references precisely the same objects every time.  It
+    also opens up the potential for users to change the behavior of other
+    users' queries, maliciously or accidentally.  Due to the prevalence of
+    unqualified names in queries and their use
+    in <productname>PostgreSQL</productname> internals, adding a schema
+    to <varname>search_path</varname> effectively trusts all users having
+    <literal>CREATE</literal> privilege on that schema.  When you run an
+    ordinary query, a malicious user able to create objects in a schema of
+    your search path can take control and execute arbitrary SQL functions as
+    though you executed them.
+   </para>
+
    <indexterm>
     <primary>schema</primary>
     <secondary>current</secondary>
@@ -2288,8 +2302,9 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     the schema
     <literal>public</literal>.  This allows all users that are able to
     connect to a given database to create objects in its
-    <literal>public</literal> schema.  If you do
-    not want to allow that, you can revoke that privilege:
+    <literal>public</literal> schema.
+    Some <link linkend="ddl-schemas-patterns">usage patterns</link> call for
+    revoking that privilege:
 <programlisting>
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 </programlisting>
@@ -2339,49 +2354,74 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
    <title>Usage Patterns</title>
 
    <para>
-    Schemas can be used to organize your data in many ways.  There are
-    a few usage patterns that are recommended and are easily supported by
-    the default configuration:
+    Schemas can be used to organize your data in many ways.  There are a few
+    usage patterns easily supported by the default configuration, only one of
+    which suffices when database users mistrust other database users:
     <itemizedlist>
      <listitem>
+      <!-- "DROP SCHEMA public" is inferior to this REVOKE, because pg_dump
+           doesn't preserve that DROP. -->
       <para>
-       If you do not create any schemas then all users access the
-       public schema implicitly.  This simulates the situation where
-       schemas are not available at all.  This setup is mainly
-       recommended when there is only a single user or a few cooperating
-       users in a database.  This setup also allows smooth transition
-       from the non-schema-aware world.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       You can create a schema for each user with the same name as
-       that user.  Recall that the default search path starts with
-       <literal>$user</literal>, which resolves to the user name.
-       Therefore, if each user has a separate schema, they access their
+       Constrain ordinary users to user-private schemas.  To implement this,
+       issue <literal>REVOKE CREATE ON SCHEMA public FROM PUBLIC</literal>,
+       and create a schema for each user with the same name as that user.  If
+       affected users had logged in before this, consider auditing the public
+       schema for objects named like objects in
+       schema <literal>pg_catalog</literal>.  Recall that the default search
+       path starts with <literal>$user</literal>, which resolves to the user
+       name.  Therefore, if each user has a separate schema, they access their
        own schemas by default.
       </para>
+     </listitem>
 
+     <listitem>
       <para>
-       If you use this setup then you might also want to revoke access
-       to the public schema (or drop it altogether), so users are
-       truly constrained to their own schemas.
+       Remove the public schema from each user's default search path
+       using <literal>ALTER ROLE <replaceable>user</replaceable> SET
+       search_path = "$user"</literal>.  Everyone retains the ability to
+       create objects in the public schema, but only qualified names will
+       choose those objects.  A user holding the <literal>CREATEROLE</literal>
+       privilege can undo this setting and issue arbitrary queries under the
+       identity of users relying on the setting.  If you
+       grant <literal>CREATEROLE</literal> to users not warranting this
+       almost-superuser ability, use the first pattern instead.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       To install shared applications (tables to be used by everyone,
-       additional functions provided by third parties, etc.), put them
-       into separate schemas.  Remember to grant appropriate
-       privileges to allow the other users to access them.  Users can
-       then refer to these additional objects by qualifying the names
-       with a schema name, or they can put the additional schemas into
-       their search path, as they choose.
+       Remove the public schema from <varname>search_path</varname> in
+       <link linkend="config-setting-configuration-file"><filename>postgresql.conf</filename></link>.
+       The ensuing user experience matches the previous pattern.  In addition
+       to that pattern's implications for <literal>CREATEROLE</literal>, this
+       trusts database owners the same way.  If you assign
+       the <literal>CREATEROLE</literal>
+       privilege, <literal>CREATEDB</literal> privilege or individual database
+       ownership to users not warranting almost-superuser access, use the
+       first pattern instead.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Keep the default.  All users access the public schema implicitly.  This
+       simulates the situation where schemas are not available at all, giving
+       a smooth transition from the non-schema-aware world.  However, any user
+       can issue arbitrary queries under the identity of any user not electing
+       to protect itself individually.  This pattern is acceptable only when
+       the database has a single user or a few mutually-trusting users.
       </para>
      </listitem>
     </itemizedlist>
+   </para>
+
+   <para>
+    For any pattern, to install shared applications (tables to be used by
+    everyone, additional functions provided by third parties, etc.), put them
+    into separate schemas.  Remember to grant appropriate privileges to allow
+    the other users to access them.  Users can then refer to these additional
+    objects by qualifying the names with a schema name, or they can put the
+    additional schemas into their search path, as they choose.
    </para>
   </sect2>
 
@@ -2405,7 +2445,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
    <para>
     Also, there is no concept of a <literal>public</literal> schema in the
     SQL standard.  For maximum conformance to the standard, you should
-    not use (perhaps even remove) the <literal>public</literal> schema.
+    not use the <literal>public</literal> schema.
    </para>
 
    <para>
