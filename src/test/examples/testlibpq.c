@@ -48,6 +48,22 @@ main(int argc, char **argv)
 		exit_nicely(conn);
 	}
 
+	/* Set always-secure search path, so malicous users can't take control. */
+	res = PQexec(conn,
+				 "SELECT pg_catalog.set_config('search_path', '', false)");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
+		PQclear(res);
+		exit_nicely(conn);
+	}
+
+	/*
+	 * Should PQclear PGresult whenever it is no longer needed to avoid memory
+	 * leaks
+	 */
+	PQclear(res);
+
 	/*
 	 * Our test case here involves using a cursor, for which we must be inside
 	 * a transaction block.  We could do the whole thing with a single
@@ -63,11 +79,6 @@ main(int argc, char **argv)
 		PQclear(res);
 		exit_nicely(conn);
 	}
-
-	/*
-	 * Should PQclear PGresult whenever it is no longer needed to avoid memory
-	 * leaks
-	 */
 	PQclear(res);
 
 	/*
