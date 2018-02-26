@@ -15,6 +15,7 @@ extern int	ExecuteSqlCommandBuf(ArchiveHandle *AH, const char *buf, size_t bufLe
 extern void ExecuteSqlStatement(Archive *AHX, const char *query);
 extern PGresult *ExecuteSqlQuery(Archive *AHX, const char *query,
 				ExecStatusType status);
+extern PGresult *ExecuteSqlQueryForSingleRow(Archive *fout, char *query);
 
 extern void EndDBCopyMode(ArchiveHandle *AH, struct _tocEntry * te);
 
