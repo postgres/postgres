@@ -13,16 +13,16 @@
  * populate a database with the following commands
  * (provided in src/test/examples/testlibpq2.sql):
  *
+ *	 CREATE SCHEMA TESTLIBPQ2;
+ *	 SET search_path = TESTLIBPQ2;
  *	 CREATE TABLE TBL1 (i int4);
- *
  *	 CREATE TABLE TBL2 (i int4);
- *
  *	 CREATE RULE r1 AS ON INSERT TO TBL1 DO
  *	   (INSERT INTO TBL2 VALUES (new.i); NOTIFY TBL2);
  *
- * and do this four times:
+ * Start this program, then from psql do this four times:
  *
- *	 INSERT INTO TBL1 VALUES (10);
+ *	 INSERT INTO TESTLIBPQ2.TBL1 VALUES (10);
  */
 
 #ifdef WIN32
@@ -77,6 +77,22 @@ main(int argc, char **argv)
 		exit_nicely(conn);
 	}
 
+	/* Set always-secure search path, so malicous users can't take control. */
+	res = PQexec(conn,
+				 "SELECT pg_catalog.set_config('search_path', '', false)");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
+		PQclear(res);
+		exit_nicely(conn);
+	}
+
+	/*
+	 * Should PQclear PGresult whenever it is no longer needed to avoid memory
+	 * leaks
+	 */
+	PQclear(res);
+
 	/*
 	 * Issue LISTEN command to enable notifications from the rule's NOTIFY.
 	 */
@@ -87,11 +103,6 @@ main(int argc, char **argv)
 		PQclear(res);
 		exit_nicely(conn);
 	}
-
-	/*
-	 * should PQclear PGresult whenever it is no longer needed to avoid memory
-	 * leaks
-	 */
 	PQclear(res);
 
 	/* Quit after four notifies are received. */
