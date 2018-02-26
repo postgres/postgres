@@ -26,6 +26,7 @@
 
 #include "dumputils.h"
 #include "pg_backup.h"
+#include "fe_utils/connect.h"
 
 /* version string we expect back from pg_dump */
 #define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
@@ -1983,12 +1984,8 @@ connectDatabase(const char *dbname, const char *connection_string,
 		exit_nicely(1);
 	}
 
-	/*
-	 * On 7.3 and later, make sure we are not fooled by non-system schemas in
-	 * the search path.
-	 */
 	if (server_version >= 70300)
-		executeCommand(conn, "SET search_path = pg_catalog");
+		PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL));
 
 	return conn;
 }

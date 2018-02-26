@@ -21,11 +21,11 @@ psql 'postgres',
   'CREATE TABLE test1 (a int); CREATE INDEX test1x ON test1 (a);';
 issues_sql_like(
 	[ 'reindexdb', '-t', 'test1', 'postgres' ],
-	qr/statement: REINDEX TABLE test1;/,
+	qr/statement: REINDEX TABLE public\.test1;/,
 	'reindex specific table');
 issues_sql_like(
 	[ 'reindexdb', '-i', 'test1x', 'postgres' ],
-	qr/statement: REINDEX INDEX test1x;/,
+	qr/statement: REINDEX INDEX public\.test1x;/,
 	'reindex specific index');
 issues_sql_like(
 	[ 'reindexdb', '-S', 'pg_catalog', 'postgres' ],
@@ -37,5 +37,5 @@ issues_sql_like(
 	'reindex system tables');
 issues_sql_like(
 	[ 'reindexdb', '-v', '-t', 'test1', 'postgres' ],
-	qr/statement: REINDEX \(VERBOSE\) TABLE test1;/,
+	qr/statement: REINDEX \(VERBOSE\) TABLE public\.test1;/,
 	'reindex with verbose output');
