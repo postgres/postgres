@@ -268,7 +268,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, bool force)
 				generate_partitionwise_join_paths(root, joinrel);
 
 				/* Create GatherPaths for any useful partial paths for rel */
-				generate_gather_paths(root, joinrel);
+				generate_gather_paths(root, joinrel, false);
 
 				/* Find and save the cheapest paths for this joinrel */
 				set_cheapest(joinrel);

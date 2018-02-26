@@ -488,7 +488,7 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * we'll consider gathering partial paths for the parent appendrel.)
 	 */
 	if (rel->reloptkind == RELOPT_BASEREL)
-		generate_gather_paths(root, rel);
+		generate_gather_paths(root, rel, false);
 
 	/*
 	 * Allow a plugin to editorialize on the set of Paths for this base
@@ -2444,17 +2444,30 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  * This must not be called until after we're done creating all partial paths
  * for the specified relation.  (Otherwise, add_partial_path might delete a
  * path that some GatherPath or GatherMergePath has a reference to.)
+ *
+ * If we're generating paths for a scan or join relation, override_rows will
+ * be false, and we'll just use the relation's size estimate.  When we're
+ * being called for a partially-grouped path, though, we need to override
+ * the rowcount estimate.  (It's not clear that the particular value we're
+ * using here is actually best, but the underlying rel has no estimate so
+ * we must do something.)
  */
 void
-generate_gather_paths(PlannerInfo *root, RelOptInfo *rel)
+generate_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_rows)
 {
 	Path	   *cheapest_partial_path;
 	Path	   *simple_gather_path;
 	ListCell   *lc;
+	double		rows;
+	double	   *rowsp = NULL;
 
 	/* If there are no partial paths, there's nothing to do here. */
 	if (rel->partial_pathlist == NIL)
 		return;
+
+	/* Should we override the rel's rowcount estimate? */
+	if (override_rows)
+		rowsp = &rows;
 
 	/*
 	 * The output of Gather is always unsorted, so there's only one partial
@@ -2462,9 +2475,11 @@ generate_gather_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * of partial_pathlist because of the way add_partial_path works.
 	 */
 	cheapest_partial_path = linitial(rel->partial_pathlist);
+	rows =
+		cheapest_partial_path->rows * cheapest_partial_path->parallel_workers;
 	simple_gather_path = (Path *)
 		create_gather_path(root, rel, cheapest_partial_path, rel->reltarget,
-						   NULL, NULL);
+						   NULL, rowsp);
 	add_path(rel, simple_gather_path);
 
 	/*
@@ -2479,8 +2494,9 @@ generate_gather_paths(PlannerInfo *root, RelOptInfo *rel)
 		if (subpath->pathkeys == NIL)
 			continue;
 
+		rows = subpath->rows * subpath->parallel_workers;
 		path = create_gather_merge_path(root, rel, subpath, rel->reltarget,
-										subpath->pathkeys, NULL, NULL);
+										subpath->pathkeys, NULL, rowsp);
 		add_path(rel, &path->path);
 	}
 }
@@ -2653,7 +2669,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 			generate_partitionwise_join_paths(root, rel);
 
 			/* Create GatherPaths for any useful partial paths for rel */
-			generate_gather_paths(root, rel);
+			generate_gather_paths(root, rel, false);
 
 			/* Find and save the cheapest paths for this rel */
 			set_cheapest(rel);
