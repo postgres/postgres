@@ -497,9 +497,9 @@ msgstr "запрос \"%s\" не вернул данные"
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
-msgstr[0] "запрос \"%s\" вернул %d строку"
-msgstr[1] "запрос \"%s\" вернул %d строки"
-msgstr[2] "запрос \"%s\" вернул %d строк"
+msgstr[0] "запрос \"%s\" вернул %d колонку"
+msgstr[1] "запрос \"%s\" вернул %d колонки"
+msgstr[2] "запрос \"%s\" вернул %d колонок"
 
 #: pl_exec.c:4834
 #, c-format
