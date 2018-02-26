@@ -245,18 +245,19 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	PGconn	   *conn;
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false);
+						   progname, echo, false);
 
 	initPQExpBuffer(&sql);
 
-	appendPQExpBufferStr(&sql, "REINDEX");
-	if (strcmp(type, "TABLE") == 0)
-		appendPQExpBuffer(&sql, " TABLE %s", name);
-	else if (strcmp(type, "INDEX") == 0)
-		appendPQExpBuffer(&sql, " INDEX %s", name);
+	appendPQExpBufferStr(&sql, "REINDEX ");
+	appendPQExpBufferStr(&sql, type);
+	appendPQExpBufferChar(&sql, ' ');
+	if (strcmp(type, "TABLE") == 0 ||
+		strcmp(type, "INDEX") == 0)
+		appendQualifiedRelation(&sql, name, conn, progname, echo);
 	else if (strcmp(type, "DATABASE") == 0)
-		appendPQExpBuffer(&sql, " DATABASE %s", fmtId(PQdb(conn)));
-	appendPQExpBufferStr(&sql, ";");
+		appendPQExpBufferStr(&sql, fmtId(PQdb(conn)));
+	appendPQExpBufferChar(&sql, ';');
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
@@ -289,7 +290,7 @@ reindex_all_databases(const char *maintenance_db,
 	int			i;
 
 	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
-									  prompt_password, progname);
+									  prompt_password, progname, echo);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
@@ -326,7 +327,7 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 	PQExpBufferData sql;
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false);
+						   progname, echo, false);
 
 	initPQExpBuffer(&sql);
 

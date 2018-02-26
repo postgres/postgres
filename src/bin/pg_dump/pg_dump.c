@@ -61,6 +61,7 @@
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
 #include "dumputils.h"
+#include "fe_utils/connect.h"
 #include "parallel.h"
 
 
@@ -979,6 +980,9 @@ setup_connection(Archive *AH, const char *dumpencoding, char *use_role)
 	PGconn	   *conn = GetConnection(AH);
 	const char *std_strings;
 
+	if (AH->remoteVersion >= 70300)
+		PQclear(ExecuteSqlQueryForSingleRow(AH, ALWAYS_SECURE_SEARCH_PATH_SQL));
+
 	/*
 	 * Set the client encoding if requested.
 	 */
@@ -1245,13 +1249,20 @@ expand_table_name_patterns(Archive *fout,
 
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
+		/*
+		 * Query must remain ABSOLUTELY devoid of unqualified names.  This
+		 * would be unnecessary given a pg_table_is_visible() variant taking a
+		 * search_path argument.
+		 */
 		if (cell != patterns->head)
 			appendPQExpBufferStr(query, "UNION ALL\n");
 		appendPQExpBuffer(query,
 						  "SELECT c.oid"
 						  "\nFROM pg_catalog.pg_class c"
-		"\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace"
-					 "\nWHERE c.relkind in ('%c', '%c', '%c', '%c', '%c')\n",
+						  "\n     LEFT JOIN pg_catalog.pg_namespace n"
+						  "\n     ON n.oid OPERATOR(pg_catalog.=) c.relnamespace"
+						  "\nWHERE c.relkind OPERATOR(pg_catalog.=) ANY"
+						  "\n    (array['%c', '%c', '%c', '%c', '%c'])\n",
 						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW,
 						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE);
 		processSQLNamePattern(GetConnection(fout), query, cell->val, true,
@@ -1259,7 +1270,9 @@ expand_table_name_patterns(Archive *fout,
 							  "pg_catalog.pg_table_is_visible(c.oid)");
 	}
 
+	ExecuteSqlStatement(fout, "RESET search_path");
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+	PQclear(ExecuteSqlQueryForSingleRow(fout, ALWAYS_SECURE_SEARCH_PATH_SQL));
 
 	for (i = 0; i < PQntuples(res); i++)
 	{

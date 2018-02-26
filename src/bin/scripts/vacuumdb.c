@@ -266,7 +266,7 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 	initPQExpBuffer(&sql);
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false);
+						   progname, echo, false);
 
 	if (analyze_only)
 	{
@@ -319,7 +319,10 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 		}
 	}
 	if (table)
-		appendPQExpBuffer(&sql, " %s", table);
+	{
+		appendPQExpBufferChar(&sql, ' ');
+		appendQualifiedRelation(&sql, table, conn, progname, echo);
+	}
 	appendPQExpBufferStr(&sql, ";");
 
 	if (analyze_in_stages)
@@ -386,7 +389,7 @@ vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_onl
 	int			stage;
 
 	conn = connectMaintenanceDatabase(maintenance_db, host, port,
-									  username, prompt_password, progname);
+									  username, prompt_password, progname, echo);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
