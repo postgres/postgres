@@ -61,7 +61,9 @@ static void vacuum_all_databases(vacuumingOptions *vacopts,
 					 const char *progname, bool echo, bool quiet);
 
 static void prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
-					   vacuumingOptions *vacopts, const char *table);
+					   vacuumingOptions *vacopts, const char *table,
+					   bool table_pre_qualified,
+					   const char *progname, bool echo);
 
 static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 				   const char *table, const char *progname, bool async);
@@ -361,7 +363,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		   (stage >= 0 && stage < ANALYZE_NUM_STAGES));
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false, true);
+						   progname, echo, false, true);
 
 	if (!quiet)
 	{
@@ -437,7 +439,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		for (i = 1; i < concurrentCons; i++)
 		{
 			conn = connectDatabase(dbname, host, port, username, prompt_password,
-								   progname, false, true);
+								   progname, echo, false, true);
 			init_slot(slots + i, conn, progname);
 		}
 	}
@@ -463,7 +465,8 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		ParallelSlot *free_slot;
 		const char *tabname = cell ? cell->val : NULL;
 
-		prepare_vacuum_command(&sql, conn, vacopts, tabname);
+		prepare_vacuum_command(&sql, conn, vacopts, tabname,
+							   tables == &dbtables, progname, echo);
 
 		if (CancelRequested)
 		{
@@ -554,8 +557,8 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 	int			stage;
 	int			i;
 
-	conn = connectMaintenanceDatabase(maintenance_db, host, port,
-									  username, prompt_password, progname);
+	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
+									  prompt_password, progname, echo);
 	result = executeQuery(conn,
 						  "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
 						  progname, echo);
@@ -618,8 +621,10 @@ vacuum_all_databases(vacuumingOptions *vacopts,
  * quoted.  The command is semicolon-terminated.
  */
 static void
-prepare_vacuum_command(PQExpBuffer sql, PGconn *conn, vacuumingOptions *vacopts,
-					   const char *table)
+prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
+					   vacuumingOptions *vacopts, const char *table,
+					   bool table_pre_qualified,
+					   const char *progname, bool echo)
 {
 	resetPQExpBuffer(sql);
 
@@ -675,7 +680,13 @@ prepare_vacuum_command(PQExpBuffer sql, PGconn *conn, vacuumingOptions *vacopts,
 	}
 
 	if (table)
-		appendPQExpBuffer(sql, " %s", table);
+	{
+		appendPQExpBufferChar(sql, ' ');
+		if (table_pre_qualified)
+			appendPQExpBufferStr(sql, table);
+		else
+			appendQualifiedRelation(sql, table, conn, progname, echo);
+	}
 	appendPQExpBufferChar(sql, ';');
 }
 

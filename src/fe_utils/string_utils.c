@@ -956,8 +956,9 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	}
 
 	/*
-	 * Now decide what we need to emit.  Note there will be a leading "^(" in
-	 * the patterns in any case.
+	 * Now decide what we need to emit.  We may run under a hostile
+	 * search_path, so qualify EVERY name.  Note there will be a leading "^("
+	 * in the patterns in any case.
 	 */
 	if (namebuf.len > 2)
 	{
@@ -970,15 +971,18 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 			WHEREAND();
 			if (altnamevar)
 			{
-				appendPQExpBuffer(buf, "(%s ~ ", namevar);
+				appendPQExpBuffer(buf,
+								  "(%s OPERATOR(pg_catalog.~) ", namevar);
 				appendStringLiteralConn(buf, namebuf.data, conn);
-				appendPQExpBuffer(buf, "\n        OR %s ~ ", altnamevar);
+				appendPQExpBuffer(buf,
+								  "\n        OR %s OPERATOR(pg_catalog.~) ",
+								  altnamevar);
 				appendStringLiteralConn(buf, namebuf.data, conn);
 				appendPQExpBufferStr(buf, ")\n");
 			}
 			else
 			{
-				appendPQExpBuffer(buf, "%s ~ ", namevar);
+				appendPQExpBuffer(buf, "%s OPERATOR(pg_catalog.~) ", namevar);
 				appendStringLiteralConn(buf, namebuf.data, conn);
 				appendPQExpBufferChar(buf, '\n');
 			}
@@ -994,7 +998,7 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 		if (strcmp(schemabuf.data, "^(.*)$") != 0 && schemavar)
 		{
 			WHEREAND();
-			appendPQExpBuffer(buf, "%s ~ ", schemavar);
+			appendPQExpBuffer(buf, "%s OPERATOR(pg_catalog.~) ", schemavar);
 			appendStringLiteralConn(buf, schemabuf.data, conn);
 			appendPQExpBufferChar(buf, '\n');
 		}
