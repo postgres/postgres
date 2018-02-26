@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-02-01 23:08+0000\n"
-"PO-Revision-Date: 2016-11-24 11:24+0300\n"
+"PO-Revision-Date: 2017-10-11 10:10+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -486,9 +486,9 @@ msgstr "запрос \"%s\" не вернул данные"
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
-msgstr[0] "запрос \"%s\" вернул %d строку"
-msgstr[1] "запрос \"%s\" вернул %d строки"
-msgstr[2] "запрос \"%s\" вернул %d строк"
+msgstr[0] "запрос \"%s\" вернул %d столбец"
+msgstr[1] "запрос \"%s\" вернул %d столбца"
+msgstr[2] "запрос \"%s\" вернул %d столбцов"
 
 #: pl_exec.c:5062
 #, c-format
