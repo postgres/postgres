@@ -431,9 +431,9 @@ SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'
 (1 row)
 
 SELECT pg_get_triggerdef(oid, false) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
-                                                              pg_get_triggerdef                                                               
-----------------------------------------------------------------------------------------------------------------------------------------------
- CREATE TRIGGER modified_a BEFORE UPDATE OF a ON main_table FOR EACH ROW WHEN ((old.a <> new.a)) EXECUTE PROCEDURE trigger_func('modified_a')
+                                                                  pg_get_triggerdef                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE TRIGGER modified_a BEFORE UPDATE OF a ON public.main_table FOR EACH ROW WHEN ((old.a <> new.a)) EXECUTE PROCEDURE trigger_func('modified_a')
 (1 row)
 
 SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_any';
@@ -461,9 +461,9 @@ FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('before_upd_a_stmt');
 CREATE TRIGGER after_upd_b_stmt_trig AFTER UPDATE OF b ON main_table
 FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('after_upd_b_stmt');
 SELECT pg_get_triggerdef(oid) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'after_upd_a_b_row_trig';
-                                                             pg_get_triggerdef                                                             
--------------------------------------------------------------------------------------------------------------------------------------------
- CREATE TRIGGER after_upd_a_b_row_trig AFTER UPDATE OF a, b ON main_table FOR EACH ROW EXECUTE PROCEDURE trigger_func('after_upd_a_b_row')
+                                                                pg_get_triggerdef                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE TRIGGER after_upd_a_b_row_trig AFTER UPDATE OF a, b ON public.main_table FOR EACH ROW EXECUTE PROCEDURE trigger_func('after_upd_a_b_row')
 (1 row)
 
 UPDATE main_table SET a = 50;

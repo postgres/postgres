@@ -92,10 +92,12 @@ typedef z_stream *z_streamp;
 													 * indicator */
 #define K_VERS_1_12 MAKE_ARCHIVE_VERSION(1, 12, 0)	/* add separate BLOB
 													 * entries */
+#define K_VERS_1_13 MAKE_ARCHIVE_VERSION(1, 13, 0)	/* change search_path
+													 * behavior */
 
 /* Current archive version number (the format we can output) */
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 12
+#define K_VERS_MINOR 13
 #define K_VERS_REV 0
 #define K_VERS_SELF MAKE_ARCHIVE_VERSION(K_VERS_MAJOR, K_VERS_MINOR, K_VERS_REV);
 

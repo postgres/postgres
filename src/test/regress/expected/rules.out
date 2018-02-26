@@ -2342,103 +2342,103 @@ toyemp| SELECT emp.name,
 SELECT tablename, rulename, definition FROM pg_rules
 	ORDER BY tablename, rulename;
 pg_settings|pg_settings_n|CREATE RULE pg_settings_n AS
-    ON UPDATE TO pg_settings DO INSTEAD NOTHING;
+    ON UPDATE TO pg_catalog.pg_settings DO INSTEAD NOTHING;
 pg_settings|pg_settings_u|CREATE RULE pg_settings_u AS
-    ON UPDATE TO pg_settings
+    ON UPDATE TO pg_catalog.pg_settings
    WHERE (new.name = old.name) DO  SELECT set_config(old.name, new.setting, false) AS set_config;
 rtest_emp|rtest_emp_del|CREATE RULE rtest_emp_del AS
-    ON DELETE TO rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
+    ON DELETE TO public.rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
   VALUES (old.ename, CURRENT_USER, 'fired'::bpchar, '$0.00'::money, old.salary);
 rtest_emp|rtest_emp_ins|CREATE RULE rtest_emp_ins AS
-    ON INSERT TO rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
+    ON INSERT TO public.rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
   VALUES (new.ename, CURRENT_USER, 'hired'::bpchar, new.salary, '$0.00'::money);
 rtest_emp|rtest_emp_upd|CREATE RULE rtest_emp_upd AS
-    ON UPDATE TO rtest_emp
+    ON UPDATE TO public.rtest_emp
    WHERE (new.salary <> old.salary) DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
   VALUES (new.ename, CURRENT_USER, 'honored'::bpchar, new.salary, old.salary);
 rtest_nothn1|rtest_nothn_r1|CREATE RULE rtest_nothn_r1 AS
-    ON INSERT TO rtest_nothn1
+    ON INSERT TO public.rtest_nothn1
    WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD NOTHING;
 rtest_nothn1|rtest_nothn_r2|CREATE RULE rtest_nothn_r2 AS
-    ON INSERT TO rtest_nothn1
+    ON INSERT TO public.rtest_nothn1
    WHERE ((new.a >= 30) AND (new.a < 40)) DO INSTEAD NOTHING;
 rtest_nothn2|rtest_nothn_r3|CREATE RULE rtest_nothn_r3 AS
-    ON INSERT TO rtest_nothn2
+    ON INSERT TO public.rtest_nothn2
    WHERE (new.a >= 100) DO INSTEAD  INSERT INTO rtest_nothn3 (a, b)
   VALUES (new.a, new.b);
 rtest_nothn2|rtest_nothn_r4|CREATE RULE rtest_nothn_r4 AS
-    ON INSERT TO rtest_nothn2 DO INSTEAD NOTHING;
+    ON INSERT TO public.rtest_nothn2 DO INSTEAD NOTHING;
 rtest_order1|rtest_order_r1|CREATE RULE rtest_order_r1 AS
-    ON INSERT TO rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
+    ON INSERT TO public.rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
   VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 1 - this should run 1st'::text);
 rtest_order1|rtest_order_r2|CREATE RULE rtest_order_r2 AS
-    ON INSERT TO rtest_order1 DO  INSERT INTO rtest_order2 (a, b, c)
+    ON INSERT TO public.rtest_order1 DO  INSERT INTO rtest_order2 (a, b, c)
   VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 2 - this should run 2nd'::text);
 rtest_order1|rtest_order_r3|CREATE RULE rtest_order_r3 AS
-    ON INSERT TO rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
+    ON INSERT TO public.rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
   VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 3 - this should run 3rd'::text);
 rtest_order1|rtest_order_r4|CREATE RULE rtest_order_r4 AS
-    ON INSERT TO rtest_order1
+    ON INSERT TO public.rtest_order1
    WHERE (new.a < 100) DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
   VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 4 - this should run 4th'::text);
 rtest_person|rtest_pers_del|CREATE RULE rtest_pers_del AS
-    ON DELETE TO rtest_person DO  DELETE FROM rtest_admin
+    ON DELETE TO public.rtest_person DO  DELETE FROM rtest_admin
   WHERE (rtest_admin.pname = old.pname);
 rtest_person|rtest_pers_upd|CREATE RULE rtest_pers_upd AS
-    ON UPDATE TO rtest_person DO  UPDATE rtest_admin SET pname = new.pname
+    ON UPDATE TO public.rtest_person DO  UPDATE rtest_admin SET pname = new.pname
   WHERE (rtest_admin.pname = old.pname);
 rtest_system|rtest_sys_del|CREATE RULE rtest_sys_del AS
-    ON DELETE TO rtest_system DO ( DELETE FROM rtest_interface
+    ON DELETE TO public.rtest_system DO ( DELETE FROM rtest_interface
   WHERE (rtest_interface.sysname = old.sysname);
  DELETE FROM rtest_admin
   WHERE (rtest_admin.sysname = old.sysname);
 );
 rtest_system|rtest_sys_upd|CREATE RULE rtest_sys_upd AS
-    ON UPDATE TO rtest_system DO ( UPDATE rtest_interface SET sysname = new.sysname
+    ON UPDATE TO public.rtest_system DO ( UPDATE rtest_interface SET sysname = new.sysname
   WHERE (rtest_interface.sysname = old.sysname);
  UPDATE rtest_admin SET sysname = new.sysname
   WHERE (rtest_admin.sysname = old.sysname);
 );
 rtest_t4|rtest_t4_ins1|CREATE RULE rtest_t4_ins1 AS
-    ON INSERT TO rtest_t4
+    ON INSERT TO public.rtest_t4
    WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD  INSERT INTO rtest_t5 (a, b)
   VALUES (new.a, new.b);
 rtest_t4|rtest_t4_ins2|CREATE RULE rtest_t4_ins2 AS
-    ON INSERT TO rtest_t4
+    ON INSERT TO public.rtest_t4
    WHERE ((new.a >= 20) AND (new.a < 30)) DO  INSERT INTO rtest_t6 (a, b)
   VALUES (new.a, new.b);
 rtest_t5|rtest_t5_ins|CREATE RULE rtest_t5_ins AS
-    ON INSERT TO rtest_t5
+    ON INSERT TO public.rtest_t5
    WHERE (new.a > 15) DO  INSERT INTO rtest_t7 (a, b)
   VALUES (new.a, new.b);
 rtest_t6|rtest_t6_ins|CREATE RULE rtest_t6_ins AS
-    ON INSERT TO rtest_t6
+    ON INSERT TO public.rtest_t6
    WHERE (new.a > 25) DO INSTEAD  INSERT INTO rtest_t8 (a, b)
   VALUES (new.a, new.b);
 rtest_v1|rtest_v1_del|CREATE RULE rtest_v1_del AS
-    ON DELETE TO rtest_v1 DO INSTEAD  DELETE FROM rtest_t1
+    ON DELETE TO public.rtest_v1 DO INSTEAD  DELETE FROM rtest_t1
   WHERE (rtest_t1.a = old.a);
 rtest_v1|rtest_v1_ins|CREATE RULE rtest_v1_ins AS
-    ON INSERT TO rtest_v1 DO INSTEAD  INSERT INTO rtest_t1 (a, b)
+    ON INSERT TO public.rtest_v1 DO INSTEAD  INSERT INTO rtest_t1 (a, b)
   VALUES (new.a, new.b);
 rtest_v1|rtest_v1_upd|CREATE RULE rtest_v1_upd AS
-    ON UPDATE TO rtest_v1 DO INSTEAD  UPDATE rtest_t1 SET a = new.a, b = new.b
+    ON UPDATE TO public.rtest_v1 DO INSTEAD  UPDATE rtest_t1 SET a = new.a, b = new.b
   WHERE (rtest_t1.a = old.a);
 shoelace|shoelace_del|CREATE RULE shoelace_del AS
-    ON DELETE TO shoelace DO INSTEAD  DELETE FROM shoelace_data
+    ON DELETE TO public.shoelace DO INSTEAD  DELETE FROM shoelace_data
   WHERE (shoelace_data.sl_name = old.sl_name);
 shoelace|shoelace_ins|CREATE RULE shoelace_ins AS
-    ON INSERT TO shoelace DO INSTEAD  INSERT INTO shoelace_data (sl_name, sl_avail, sl_color, sl_len, sl_unit)
+    ON INSERT TO public.shoelace DO INSTEAD  INSERT INTO shoelace_data (sl_name, sl_avail, sl_color, sl_len, sl_unit)
   VALUES (new.sl_name, new.sl_avail, new.sl_color, new.sl_len, new.sl_unit);
 shoelace|shoelace_upd|CREATE RULE shoelace_upd AS
-    ON UPDATE TO shoelace DO INSTEAD  UPDATE shoelace_data SET sl_name = new.sl_name, sl_avail = new.sl_avail, sl_color = new.sl_color, sl_len = new.sl_len, sl_unit = new.sl_unit
+    ON UPDATE TO public.shoelace DO INSTEAD  UPDATE shoelace_data SET sl_name = new.sl_name, sl_avail = new.sl_avail, sl_color = new.sl_color, sl_len = new.sl_len, sl_unit = new.sl_unit
   WHERE (shoelace_data.sl_name = old.sl_name);
 shoelace_data|log_shoelace|CREATE RULE log_shoelace AS
-    ON UPDATE TO shoelace_data
+    ON UPDATE TO public.shoelace_data
    WHERE (new.sl_avail <> old.sl_avail) DO  INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when)
   VALUES (new.sl_name, new.sl_avail, 'Al Bundy'::name, 'Thu Jan 01 00:00:00 1970'::timestamp without time zone);
 shoelace_ok|shoelace_ok_ins|CREATE RULE shoelace_ok_ins AS
-    ON INSERT TO shoelace_ok DO INSTEAD  UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant)
+    ON INSERT TO public.shoelace_ok DO INSTEAD  UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant)
   WHERE (shoelace.sl_name = new.ok_name);
 -- restore normal output mode
 \a\t
@@ -2961,7 +2961,7 @@ SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
                                          definition                                          
 ---------------------------------------------------------------------------------------------
  CREATE RULE hat_nosert AS                                                                  +
-     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)               +
+     ON INSERT TO public.hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)        +
    VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name COLLATE "C" bpchar_pattern_ops)+
    WHERE (hat_color = 'green'::bpchar) DO NOTHING                                           +
    RETURNING hat_data.hat_name,                                                             +
@@ -2986,7 +2986,7 @@ SELECT tablename, rulename, definition FROM pg_rules
  tablename |  rulename  |                                         definition                                          
 -----------+------------+---------------------------------------------------------------------------------------------
  hats      | hat_nosert | CREATE RULE hat_nosert AS                                                                  +
-           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)               +
+           |            |     ON INSERT TO public.hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)        +
            |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name COLLATE "C" bpchar_pattern_ops)+
            |            |   WHERE (hat_color = 'green'::bpchar) DO NOTHING                                           +
            |            |   RETURNING hat_data.hat_name,                                                             +
@@ -3004,12 +3004,12 @@ CREATE RULE hat_nosert_all AS ON INSERT TO hats
         DO NOTHING
         RETURNING *;
 SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
-                                  definition                                  
-------------------------------------------------------------------------------
- CREATE RULE hat_nosert_all AS                                               +
-     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)+
-   VALUES (new.hat_name, new.hat_color) ON CONFLICT DO NOTHING               +
-   RETURNING hat_data.hat_name,                                              +
+                                     definition                                      
+-------------------------------------------------------------------------------------
+ CREATE RULE hat_nosert_all AS                                                      +
+     ON INSERT TO public.hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)+
+   VALUES (new.hat_name, new.hat_color) ON CONFLICT DO NOTHING                      +
+   RETURNING hat_data.hat_name,                                                     +
      hat_data.hat_color;
 (1 row)
 
@@ -3036,7 +3036,7 @@ SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
                                                                definition                                                                
 -----------------------------------------------------------------------------------------------------------------------------------------
  CREATE RULE hat_upsert AS                                                                                                              +
-     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                           +
+     ON INSERT TO public.hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                    +
    VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name) DO UPDATE SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color+
    WHERE ((excluded.hat_color <> 'forbidden'::bpchar) AND (hat_data.* <> excluded.*))                                                   +
    RETURNING hat_data.hat_name,                                                                                                         +
@@ -3084,7 +3084,7 @@ SELECT tablename, rulename, definition FROM pg_rules
  tablename |  rulename  |                                                               definition                                                                
 -----------+------------+-----------------------------------------------------------------------------------------------------------------------------------------
  hats      | hat_upsert | CREATE RULE hat_upsert AS                                                                                                              +
-           |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                           +
+           |            |     ON INSERT TO public.hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)                                                    +
            |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name) DO UPDATE SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color+
            |            |   WHERE ((excluded.hat_color <> 'forbidden'::bpchar) AND (hat_data.* <> excluded.*))                                                   +
            |            |   RETURNING hat_data.hat_name,                                                                                                         +

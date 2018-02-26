@@ -487,11 +487,11 @@ select relname as child, inhparent::regclass as parent, pg_get_indexdef as child
   from pg_class join pg_inherits on inhrelid = oid,
   lateral pg_get_indexdef(pg_class.oid)
   where relkind in ('i', 'I') and relname like 'idxpart%' order by relname;
-       child       |      parent      |                              childdef                              
--------------------+------------------+--------------------------------------------------------------------
- idxpart1_expr_idx | idxpart_expr_idx | CREATE INDEX idxpart1_expr_idx ON idxpart1 USING btree (((a + b)))
- idxpart2_expr_idx | idxpart_expr_idx | CREATE INDEX idxpart2_expr_idx ON idxpart2 USING btree (((a + b)))
- idxpart3_expr_idx | idxpart_expr_idx | CREATE INDEX idxpart3_expr_idx ON idxpart3 USING btree (((a + b)))
+       child       |      parent      |                                 childdef                                  
+-------------------+------------------+---------------------------------------------------------------------------
+ idxpart1_expr_idx | idxpart_expr_idx | CREATE INDEX idxpart1_expr_idx ON public.idxpart1 USING btree (((a + b)))
+ idxpart2_expr_idx | idxpart_expr_idx | CREATE INDEX idxpart2_expr_idx ON public.idxpart2 USING btree (((a + b)))
+ idxpart3_expr_idx | idxpart_expr_idx | CREATE INDEX idxpart3_expr_idx ON public.idxpart3 USING btree (((a + b)))
 (3 rows)
 
 drop table idxpart;
@@ -511,15 +511,15 @@ select relname as child, inhparent::regclass as parent, pg_get_indexdef as child
   from pg_class left join pg_inherits on inhrelid = oid,
   lateral pg_get_indexdef(pg_class.oid)
   where relkind in ('i', 'I') and relname like 'idxpart%' order by relname;
-      child      |    parent     |                                childdef                                 
------------------+---------------+-------------------------------------------------------------------------
- idxpart1_a_idx  | idxpart_a_idx | CREATE INDEX idxpart1_a_idx ON idxpart1 USING btree (a COLLATE "C")
- idxpart2_a_idx  |               | CREATE INDEX idxpart2_a_idx ON idxpart2 USING btree (a COLLATE "POSIX")
- idxpart2_a_idx1 |               | CREATE INDEX idxpart2_a_idx1 ON idxpart2 USING btree (a)
- idxpart2_a_idx2 | idxpart_a_idx | CREATE INDEX idxpart2_a_idx2 ON idxpart2 USING btree (a COLLATE "C")
- idxpart3_a_idx  | idxpart_a_idx | CREATE INDEX idxpart3_a_idx ON idxpart3 USING btree (a COLLATE "C")
- idxpart4_a_idx  | idxpart_a_idx | CREATE INDEX idxpart4_a_idx ON idxpart4 USING btree (a COLLATE "C")
- idxpart_a_idx   |               | CREATE INDEX idxpart_a_idx ON ONLY idxpart USING btree (a COLLATE "C")
+      child      |    parent     |                                    childdef                                    
+-----------------+---------------+--------------------------------------------------------------------------------
+ idxpart1_a_idx  | idxpart_a_idx | CREATE INDEX idxpart1_a_idx ON public.idxpart1 USING btree (a COLLATE "C")
+ idxpart2_a_idx  |               | CREATE INDEX idxpart2_a_idx ON public.idxpart2 USING btree (a COLLATE "POSIX")
+ idxpart2_a_idx1 |               | CREATE INDEX idxpart2_a_idx1 ON public.idxpart2 USING btree (a)
+ idxpart2_a_idx2 | idxpart_a_idx | CREATE INDEX idxpart2_a_idx2 ON public.idxpart2 USING btree (a COLLATE "C")
+ idxpart3_a_idx  | idxpart_a_idx | CREATE INDEX idxpart3_a_idx ON public.idxpart3 USING btree (a COLLATE "C")
+ idxpart4_a_idx  | idxpart_a_idx | CREATE INDEX idxpart4_a_idx ON public.idxpart4 USING btree (a COLLATE "C")
+ idxpart_a_idx   |               | CREATE INDEX idxpart_a_idx ON ONLY public.idxpart USING btree (a COLLATE "C")
 (7 rows)
 
 drop table idxpart;
@@ -538,14 +538,14 @@ select relname as child, inhparent::regclass as parent, pg_get_indexdef as child
   from pg_class left join pg_inherits on inhrelid = oid,
   lateral pg_get_indexdef(pg_class.oid)
   where relkind in ('i', 'I') and relname like 'idxpart%' order by relname;
-      child      |    parent     |                                  childdef                                   
------------------+---------------+-----------------------------------------------------------------------------
- idxpart1_a_idx  | idxpart_a_idx | CREATE INDEX idxpart1_a_idx ON idxpart1 USING btree (a text_pattern_ops)
- idxpart2_a_idx  |               | CREATE INDEX idxpart2_a_idx ON idxpart2 USING btree (a)
- idxpart2_a_idx1 | idxpart_a_idx | CREATE INDEX idxpart2_a_idx1 ON idxpart2 USING btree (a text_pattern_ops)
- idxpart3_a_idx  | idxpart_a_idx | CREATE INDEX idxpart3_a_idx ON idxpart3 USING btree (a text_pattern_ops)
- idxpart4_a_idx  | idxpart_a_idx | CREATE INDEX idxpart4_a_idx ON idxpart4 USING btree (a text_pattern_ops)
- idxpart_a_idx   |               | CREATE INDEX idxpart_a_idx ON ONLY idxpart USING btree (a text_pattern_ops)
+      child      |    parent     |                                      childdef                                      
+-----------------+---------------+------------------------------------------------------------------------------------
+ idxpart1_a_idx  | idxpart_a_idx | CREATE INDEX idxpart1_a_idx ON public.idxpart1 USING btree (a text_pattern_ops)
+ idxpart2_a_idx  |               | CREATE INDEX idxpart2_a_idx ON public.idxpart2 USING btree (a)
+ idxpart2_a_idx1 | idxpart_a_idx | CREATE INDEX idxpart2_a_idx1 ON public.idxpart2 USING btree (a text_pattern_ops)
+ idxpart3_a_idx  | idxpart_a_idx | CREATE INDEX idxpart3_a_idx ON public.idxpart3 USING btree (a text_pattern_ops)
+ idxpart4_a_idx  | idxpart_a_idx | CREATE INDEX idxpart4_a_idx ON public.idxpart4 USING btree (a text_pattern_ops)
+ idxpart_a_idx   |               | CREATE INDEX idxpart_a_idx ON ONLY public.idxpart USING btree (a text_pattern_ops)
 (6 rows)
 
 drop index idxpart_a_idx;
@@ -584,15 +584,15 @@ select relname as child, inhparent::regclass as parent, pg_get_indexdef as child
   from pg_class left join pg_inherits on inhrelid = oid,
   lateral pg_get_indexdef(pg_class.oid)
   where relkind in ('i', 'I') and relname like 'idxpart%' order by relname;
-      child      |    parent     |                                     childdef                                     
------------------+---------------+----------------------------------------------------------------------------------
- idxpart1_1_idx  | idxpart_1_idx | CREATE INDEX idxpart1_1_idx ON idxpart1 USING btree (b, a)
- idxpart1_1b_idx |               | CREATE INDEX idxpart1_1b_idx ON idxpart1 USING btree (b)
- idxpart1_2_idx  | idxpart_2_idx | CREATE INDEX idxpart1_2_idx ON idxpart1 USING btree (((b + a))) WHERE (a > 1)
- idxpart1_2b_idx |               | CREATE INDEX idxpart1_2b_idx ON idxpart1 USING btree (((a + b))) WHERE (a > 1)
- idxpart1_2c_idx |               | CREATE INDEX idxpart1_2c_idx ON idxpart1 USING btree (((b + a))) WHERE (b > 1)
- idxpart_1_idx   |               | CREATE INDEX idxpart_1_idx ON ONLY idxpart USING btree (b, a)
- idxpart_2_idx   |               | CREATE INDEX idxpart_2_idx ON ONLY idxpart USING btree (((b + a))) WHERE (a > 1)
+      child      |    parent     |                                        childdef                                         
+-----------------+---------------+-----------------------------------------------------------------------------------------
+ idxpart1_1_idx  | idxpart_1_idx | CREATE INDEX idxpart1_1_idx ON public.idxpart1 USING btree (b, a)
+ idxpart1_1b_idx |               | CREATE INDEX idxpart1_1b_idx ON public.idxpart1 USING btree (b)
+ idxpart1_2_idx  | idxpart_2_idx | CREATE INDEX idxpart1_2_idx ON public.idxpart1 USING btree (((b + a))) WHERE (a > 1)
+ idxpart1_2b_idx |               | CREATE INDEX idxpart1_2b_idx ON public.idxpart1 USING btree (((a + b))) WHERE (a > 1)
+ idxpart1_2c_idx |               | CREATE INDEX idxpart1_2c_idx ON public.idxpart1 USING btree (((b + a))) WHERE (b > 1)
+ idxpart_1_idx   |               | CREATE INDEX idxpart_1_idx ON ONLY public.idxpart USING btree (b, a)
+ idxpart_2_idx   |               | CREATE INDEX idxpart_2_idx ON ONLY public.idxpart USING btree (((b + a))) WHERE (a > 1)
 (7 rows)
 
 drop table idxpart;
@@ -610,14 +610,14 @@ select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid
   where indrelid::regclass::text like 'idxpart%'
   order by indexrelid::regclass::text collate "C";
-     relname      |                       pg_get_indexdef                        
-------------------+--------------------------------------------------------------
- idxpart1_a_idx   | CREATE INDEX idxpart1_a_idx ON idxpart1 USING btree (a)
- idxpart1_c_b_idx | CREATE INDEX idxpart1_c_b_idx ON idxpart1 USING btree (c, b)
- idxpart2_a_idx   | CREATE INDEX idxpart2_a_idx ON idxpart2 USING btree (a)
- idxpart2_c_b_idx | CREATE INDEX idxpart2_c_b_idx ON idxpart2 USING btree (c, b)
- idxparti         | CREATE INDEX idxparti ON ONLY idxpart USING btree (a)
- idxparti2        | CREATE INDEX idxparti2 ON ONLY idxpart USING btree (c, b)
+     relname      |                           pg_get_indexdef                           
+------------------+---------------------------------------------------------------------
+ idxpart1_a_idx   | CREATE INDEX idxpart1_a_idx ON public.idxpart1 USING btree (a)
+ idxpart1_c_b_idx | CREATE INDEX idxpart1_c_b_idx ON public.idxpart1 USING btree (c, b)
+ idxpart2_a_idx   | CREATE INDEX idxpart2_a_idx ON public.idxpart2 USING btree (a)
+ idxpart2_c_b_idx | CREATE INDEX idxpart2_c_b_idx ON public.idxpart2 USING btree (c, b)
+ idxparti         | CREATE INDEX idxparti ON ONLY public.idxpart USING btree (a)
+ idxparti2        | CREATE INDEX idxparti2 ON ONLY public.idxpart USING btree (c, b)
 (6 rows)
 
 drop table idxpart;
@@ -636,11 +636,11 @@ select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid
   where indrelid::regclass::text like 'idxpart%'
   order by indexrelid::regclass::text collate "C";
-     relname      |                          pg_get_indexdef                          
-------------------+-------------------------------------------------------------------
- idxpart1_abs_idx | CREATE INDEX idxpart1_abs_idx ON idxpart1 USING btree (abs(b))
- idxpart2_abs_idx | CREATE INDEX idxpart2_abs_idx ON idxpart2 USING btree (abs(b))
- idxpart_abs_idx  | CREATE INDEX idxpart_abs_idx ON ONLY idxpart USING btree (abs(b))
+     relname      |                             pg_get_indexdef                              
+------------------+--------------------------------------------------------------------------
+ idxpart1_abs_idx | CREATE INDEX idxpart1_abs_idx ON public.idxpart1 USING btree (abs(b))
+ idxpart2_abs_idx | CREATE INDEX idxpart2_abs_idx ON public.idxpart2 USING btree (abs(b))
+ idxpart_abs_idx  | CREATE INDEX idxpart_abs_idx ON ONLY public.idxpart USING btree (abs(b))
 (3 rows)
 
 drop table idxpart;
@@ -659,11 +659,11 @@ select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid
   where indrelid::regclass::text like 'idxpart%'
   order by indexrelid::regclass::text collate "C";
-    relname     |                               pg_get_indexdef                               
-----------------+-----------------------------------------------------------------------------
- idxpart1_a_idx | CREATE INDEX idxpart1_a_idx ON idxpart1 USING btree (a) WHERE (b > 1000)
- idxpart2_a_idx | CREATE INDEX idxpart2_a_idx ON idxpart2 USING btree (a) WHERE (b > 1000)
- idxpart_a_idx  | CREATE INDEX idxpart_a_idx ON ONLY idxpart USING btree (a) WHERE (b > 1000)
+    relname     |                                  pg_get_indexdef                                   
+----------------+------------------------------------------------------------------------------------
+ idxpart1_a_idx | CREATE INDEX idxpart1_a_idx ON public.idxpart1 USING btree (a) WHERE (b > 1000)
+ idxpart2_a_idx | CREATE INDEX idxpart2_a_idx ON public.idxpart2 USING btree (a) WHERE (b > 1000)
+ idxpart_a_idx  | CREATE INDEX idxpart_a_idx ON ONLY public.idxpart USING btree (a) WHERE (b > 1000)
 (3 rows)
 
 drop table idxpart;
