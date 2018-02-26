@@ -256,6 +256,17 @@ main(int argc, char **argv)
 		exit_nicely(conn);
 	}
 
+	/* Set always-secure search path, so malicous users can't take control. */
+	res = PQexec(conn,
+				 "SELECT pg_catalog.set_config('search_path', '', false)");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
+		PQclear(res);
+		exit_nicely(conn);
+	}
+	PQclear(res);
+
 	res = PQexec(conn, "begin");
 	PQclear(res);
 	printf("importing file \"%s\" ...\n", in_filename);
