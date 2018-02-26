@@ -24,6 +24,7 @@
 #include "access/xlog_internal.h"
 #include "common/fe_memutils.h"
 #include "datatype/timestamp.h"
+#include "fe_utils/connect.h"
 #include "port/pg_bswap.h"
 #include "pqexpbuffer.h"
 
@@ -207,6 +208,23 @@ GetConnection(void)
 	free(keywords);
 	if (conn_opts)
 		PQconninfoFree(conn_opts);
+
+	/* Set always-secure search path, so malicious users can't get control. */
+	if (dbname != NULL)
+	{
+		PGresult   *res;
+
+		res = PQexec(tmpconn, ALWAYS_SECURE_SEARCH_PATH_SQL);
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			fprintf(stderr, _("%s: could not clear search_path: %s\n"),
+					progname, PQerrorMessage(tmpconn));
+			PQclear(res);
+			PQfinish(tmpconn);
+			exit(1);
+		}
+		PQclear(res);
+	}
 
 	/*
 	 * Ensure we have the same value of integer_datetimes (now always "on") as

@@ -24,6 +24,7 @@
 #include "libpq-fe.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
+#include "fe_utils/connect.h"
 #include "port/pg_bswap.h"
 
 static PGconn *conn = NULL;
@@ -53,6 +54,12 @@ libpqConnect(const char *connstr)
 				 PQerrorMessage(conn));
 
 	pg_log(PG_PROGRESS, "connected to server\n");
+
+	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("could not clear search_path: %s",
+				 PQresultErrorMessage(res));
+	PQclear(res);
 
 	/*
 	 * Check that the server is not in hot standby mode. There is no

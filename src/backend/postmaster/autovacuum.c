@@ -575,6 +575,12 @@ AutoVacLauncherMain(int argc, char *argv[])
 	PG_SETMASK(&UnBlockSig);
 
 	/*
+	 * Set always-secure search path.  Launcher doesn't connect to a database,
+	 * so this has no effect.
+	 */
+	SetConfigOption("search_path", "", PGC_SUSET, PGC_S_OVERRIDE);
+
+	/*
 	 * Force zero_damaged_pages OFF in the autovac process, even if it is set
 	 * in postgresql.conf.  We don't really want such a dangerous option being
 	 * applied non-interactively.
@@ -1583,6 +1589,14 @@ AutoVacWorkerMain(int argc, char *argv[])
 	PG_exception_stack = &local_sigjmp_buf;
 
 	PG_SETMASK(&UnBlockSig);
+
+	/*
+	 * Set always-secure search path, so malicious users can't redirect user
+	 * code (e.g. pg_index.indexprs).  (That code runs in a
+	 * SECURITY_RESTRICTED_OPERATION sandbox, so malicious users could not
+	 * take control of the entire autovacuum worker in any case.)
+	 */
+	SetConfigOption("search_path", "", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
 	 * Force zero_damaged_pages OFF in the autovac process, even if it is set

@@ -23,6 +23,7 @@
 #include "dumputils.h"
 #include "pg_backup.h"
 #include "common/file_utils.h"
+#include "fe_utils/connect.h"
 #include "fe_utils/string_utils.h"
 
 /* version string we expect back from pg_dump */
@@ -1717,10 +1718,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 		exit_nicely(1);
 	}
 
-	/*
-	 * Make sure we are not fooled by non-system schemas in the search path.
-	 */
-	executeCommand(conn, "SET search_path = pg_catalog");
+	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL));
 
 	return conn;
 }

@@ -129,7 +129,8 @@ main(int argc, char *argv[])
 		maintenance_db = "template1";
 
 	conn = connectMaintenanceDatabase(maintenance_db,
-									  host, port, username, prompt_password, progname);
+									  host, port, username, prompt_password,
+									  progname, echo);
 
 	if (echo)
 		printf("%s\n", sql.data);

@@ -18,6 +18,8 @@
 #include <unistd.h>
 
 #include "common.h"
+#include "fe_utils/connect.h"
+#include "fe_utils/string_utils.h"
 
 
 static PGcancel *volatile cancelConn = NULL;
@@ -63,9 +65,10 @@ handle_help_version_opts(int argc, char *argv[],
  * as before, else we might create password exposure hazards.)
  */
 PGconn *
-connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-				const char *pguser, enum trivalue prompt_password,
-				const char *progname, bool fail_ok, bool allow_password_reuse)
+connectDatabase(const char *dbname, const char *pghost,
+				const char *pgport, const char *pguser,
+				enum trivalue prompt_password, const char *progname,
+				bool echo, bool fail_ok, bool allow_password_reuse)
 {
 	PGconn	   *conn;
 	bool		new_pass;
@@ -142,6 +145,10 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		exit(1);
 	}
 
+	if (PQserverVersion(conn) >= 70300)
+		PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL,
+							 progname, echo));
+
 	return conn;
 }
 
@@ -149,24 +156,24 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
  * Try to connect to the appropriate maintenance database.
  */
 PGconn *
-connectMaintenanceDatabase(const char *maintenance_db, const char *pghost,
-						   const char *pgport, const char *pguser,
-						   enum trivalue prompt_password,
-						   const char *progname)
+connectMaintenanceDatabase(const char *maintenance_db,
+						   const char *pghost, const char *pgport,
+						   const char *pguser, enum trivalue prompt_password,
+						   const char *progname, bool echo)
 {
 	PGconn	   *conn;
 
 	/* If a maintenance database name was specified, just connect to it. */
 	if (maintenance_db)
 		return connectDatabase(maintenance_db, pghost, pgport, pguser,
-							   prompt_password, progname, false, false);
+							   prompt_password, progname, echo, false, false);
 
 	/* Otherwise, try postgres first and then template1. */
 	conn = connectDatabase("postgres", pghost, pgport, pguser, prompt_password,
-						   progname, true, false);
+						   progname, echo, true, false);
 	if (!conn)
 		conn = connectDatabase("template1", pghost, pgport, pguser,
-							   prompt_password, progname, false, false);
+							   prompt_password, progname, echo, false, false);
 
 	return conn;
 }
@@ -251,6 +258,116 @@ executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
 
 	return r;
 }
+
+
+/*
+ * Split TABLE[(COLUMNS)] into TABLE and [(COLUMNS)] portions.  When you
+ * finish using them, pg_free(*table).  *columns is a pointer into "spec",
+ * possibly to its NUL terminator.
+ */
+static void
+split_table_columns_spec(const char *spec, int encoding,
+						 char **table, const char **columns)
+{
+	bool		inquotes = false;
+	const char *cp = spec;
+
+	/*
+	 * Find the first '(' not identifier-quoted.  Based on
+	 * dequote_downcase_identifier().
+	 */
+	while (*cp && (*cp != '(' || inquotes))
+	{
+		if (*cp == '"')
+		{
+			if (inquotes && cp[1] == '"')
+				cp++;			/* pair does not affect quoting */
+			else
+				inquotes = !inquotes;
+			cp++;
+		}
+		else
+			cp += PQmblen(cp, encoding);
+	}
+	*table = pg_strdup(spec);
+	(*table)[cp - spec] = '\0'; /* no strndup */
+	*columns = cp;
+}
+
+/*
+ * Break apart TABLE[(COLUMNS)] of "spec".  With the reset_val of search_path
+ * in effect, have regclassin() interpret the TABLE portion.  Append to "buf"
+ * the qualified name of TABLE, followed by any (COLUMNS).  Exit on failure.
+ * We use this to interpret --table=foo under the search path psql would get,
+ * in advance of "ANALYZE public.foo" under the always-secure search path.
+ */
+void
+appendQualifiedRelation(PQExpBuffer buf, const char *spec,
+						PGconn *conn, const char *progname, bool echo)
+{
+	char	   *table;
+	const char *columns;
+	PQExpBufferData sql;
+	PGresult   *res;
+	int			ntups;
+
+	/* Before 7.3, the concept of qualifying a name did not exist. */
+	if (PQserverVersion(conn) < 70300)
+	{
+		appendPQExpBufferStr(&sql, spec);
+		return;
+	}
+
+	split_table_columns_spec(spec, PQclientEncoding(conn), &table, &columns);
+
+	/*
+	 * Query must remain ABSOLUTELY devoid of unqualified names.  This would
+	 * be unnecessary given a regclassin() variant taking a search_path
+	 * argument.
+	 */
+	initPQExpBuffer(&sql);
+	appendPQExpBufferStr(&sql,
+						 "SELECT c.relname, ns.nspname\n"
+						 " FROM pg_catalog.pg_class c,"
+						 " pg_catalog.pg_namespace ns\n"
+						 " WHERE c.relnamespace OPERATOR(pg_catalog.=) ns.oid\n"
+						 "  AND c.oid OPERATOR(pg_catalog.=) ");
+	appendStringLiteralConn(&sql, table, conn);
+	appendPQExpBufferStr(&sql, "::pg_catalog.regclass;");
+
+	executeCommand(conn, "RESET search_path", progname, echo);
+
+	/*
+	 * One row is a typical result, as is a nonexistent relation ERROR.
+	 * regclassin() unconditionally accepts all-digits input as an OID; if no
+	 * relation has that OID; this query returns no rows.  Catalog corruption
+	 * might elicit other row counts.
+	 */
+	res = executeQuery(conn, sql.data, progname, echo);
+	ntups = PQntuples(res);
+	if (ntups != 1)
+	{
+		fprintf(stderr,
+				ngettext("%s: query returned %d row instead of one: %s\n",
+						 "%s: query returned %d rows instead of one: %s\n",
+						 ntups),
+				progname, ntups, sql.data);
+		PQfinish(conn);
+		exit(1);
+	}
+	appendPQExpBufferStr(buf,
+						 fmtQualifiedId(PQserverVersion(conn),
+										PQgetvalue(res, 0, 1),
+										PQgetvalue(res, 0, 0)));
+	appendPQExpBufferStr(buf, columns);
+	PQclear(res);
+	termPQExpBuffer(&sql);
+	pg_free(table);
+
+	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL,
+						 progname, echo));
+}
+
 
 /*
  * Check yes/no answer in a localized way.  1=yes, 0=no, -1=neither.

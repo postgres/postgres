@@ -23,6 +23,7 @@
 
 #include "catalog/pg_class.h"
 
+#include "fe_utils/connect.h"
 #include "libpq-fe.h"
 #include "pg_getopt.h"
 
@@ -140,11 +141,8 @@ vacuumlo(const char *database, const struct _param *param)
 			fprintf(stdout, "Test run: no large objects will be removed!\n");
 	}
 
-	/*
-	 * Don't get fooled by any non-system catalogs
-	 */
-	res = PQexec(conn, "SET search_path = pg_catalog");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, "Failed to set search_path:\n");
 		fprintf(stderr, "%s", PQerrorMessage(conn));
