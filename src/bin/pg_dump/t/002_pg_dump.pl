@@ -460,7 +460,7 @@ my %tests = (
 	'ALTER COLLATION test0 OWNER TO' => {
 		all_runs  => 1,
 		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
-		regexp    => qr/^ALTER COLLATION test0 OWNER TO .*;/m,
+		regexp    => qr/^ALTER COLLATION public.test0 OWNER TO .*;/m,
 		collation => 1,
 		like      => {
 			binary_upgrade           => 1,
@@ -604,7 +604,7 @@ my %tests = (
 						 FUNCTION 1 (int4, int4) btint4cmp(int4,int4),
 						 FUNCTION 2 (int4, int4) btint4sortsupport(internal);',
 		regexp => qr/^
-			\QALTER OPERATOR FAMILY op_family USING btree ADD\E\n\s+
+			\QALTER OPERATOR FAMILY dump_test.op_family USING btree ADD\E\n\s+
 			\QOPERATOR 1 <(bigint,integer) ,\E\n\s+
 			\QOPERATOR 2 <=(bigint,integer) ,\E\n\s+
 			\QOPERATOR 3 =(bigint,integer) ,\E\n\s+
@@ -809,7 +809,7 @@ my %tests = (
 	'ALTER SEQUENCE test_table_col1_seq' => {
 		all_runs => 1,
 		regexp   => qr/^
-			\QALTER SEQUENCE test_table_col1_seq OWNED BY test_table.col1;\E
+			\QALTER SEQUENCE dump_test.test_table_col1_seq OWNED BY dump_test.test_table.col1;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -842,7 +842,7 @@ my %tests = (
 	'ALTER SEQUENCE test_third_table_col1_seq' => {
 		all_runs => 1,
 		regexp   => qr/^
-			\QALTER SEQUENCE test_third_table_col1_seq OWNED BY test_third_table.col1;\E
+			\QALTER SEQUENCE dump_test_second_schema.test_third_table_col1_seq OWNED BY dump_test_second_schema.test_third_table.col1;\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -876,7 +876,7 @@ my %tests = (
 		all_runs  => 1,
 		catch_all => 'ALTER TABLE ... commands',
 		regexp    => qr/^
-			\QALTER TABLE ONLY test_table\E \n^\s+
+			\QALTER TABLE ONLY dump_test.test_table\E \n^\s+
 			\QADD CONSTRAINT test_table_pkey PRIMARY KEY (col1);\E
 			/xm,
 		like => {
@@ -911,7 +911,7 @@ my %tests = (
 		create_sql =>
 'ALTER TABLE dump_test.test_table ALTER COLUMN col1 SET STATISTICS 90;',
 		regexp => qr/^
-			\QALTER TABLE ONLY test_table ALTER COLUMN col1 SET STATISTICS 90;\E\n
+			\QALTER TABLE ONLY dump_test.test_table ALTER COLUMN col1 SET STATISTICS 90;\E\n
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -945,7 +945,7 @@ my %tests = (
 		create_sql =>
 'ALTER TABLE dump_test.test_table ALTER COLUMN col2 SET STORAGE EXTERNAL;',
 		regexp => qr/^
-			\QALTER TABLE ONLY test_table ALTER COLUMN col2 SET STORAGE EXTERNAL;\E\n
+			\QALTER TABLE ONLY dump_test.test_table ALTER COLUMN col2 SET STORAGE EXTERNAL;\E\n
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -979,7 +979,7 @@ my %tests = (
 		create_sql =>
 'ALTER TABLE dump_test.test_table ALTER COLUMN col3 SET STORAGE MAIN;',
 		regexp => qr/^
-			\QALTER TABLE ONLY test_table ALTER COLUMN col3 SET STORAGE MAIN;\E\n
+			\QALTER TABLE ONLY dump_test.test_table ALTER COLUMN col3 SET STORAGE MAIN;\E\n
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -1013,7 +1013,7 @@ my %tests = (
 		create_sql =>
 'ALTER TABLE dump_test.test_table ALTER COLUMN col4 SET (n_distinct = 10);',
 		regexp => qr/^
-			\QALTER TABLE ONLY test_table ALTER COLUMN col4 SET (n_distinct=10);\E\n
+			\QALTER TABLE ONLY dump_test.test_table ALTER COLUMN col4 SET (n_distinct=10);\E\n
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -1044,7 +1044,7 @@ my %tests = (
 	  => {
 		all_runs => 1,
 		regexp   => qr/^
-			\QALTER TABLE ONLY dump_test.measurement ATTACH PARTITION measurement_y2006m2 \E
+			\QALTER TABLE ONLY dump_test.measurement ATTACH PARTITION dump_test_second_schema.measurement_y2006m2 \E
 			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
 			/xm,
 		like   => { binary_upgrade => 1, },
@@ -1081,7 +1081,7 @@ my %tests = (
 		create_sql =>
 		  'ALTER TABLE dump_test.test_table CLUSTER ON test_table_pkey',
 		regexp => qr/^
-			\QALTER TABLE test_table CLUSTER ON test_table_pkey;\E\n
+			\QALTER TABLE dump_test.test_table CLUSTER ON test_table_pkey;\E\n
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -1112,10 +1112,10 @@ my %tests = (
 		all_runs => 1,
 		regexp   => qr/^
 			\QSET SESSION AUTHORIZATION 'test_superuser';\E\n\n
-			\QALTER TABLE test_table DISABLE TRIGGER ALL;\E\n\n
-			\QCOPY test_table (col1, col2, col3, col4) FROM stdin;\E
+			\QALTER TABLE dump_test.test_table DISABLE TRIGGER ALL;\E\n\n
+			\QCOPY dump_test.test_table (col1, col2, col3, col4) FROM stdin;\E
 			\n(?:\d\t\\N\t\\N\t\\N\n){9}\\\.\n\n\n
-			\QALTER TABLE test_table ENABLE TRIGGER ALL;\E/xm,
+			\QALTER TABLE dump_test.test_table ENABLE TRIGGER ALL;\E/xm,
 		like   => { data_only => 1, },
 		unlike => {
 			binary_upgrade           => 1,
@@ -1147,7 +1147,7 @@ my %tests = (
 		all_runs  => 1,
 		catch_all => 'ALTER TABLE ... commands',
 		regexp    => qr/^
-			\QALTER FOREIGN TABLE foreign_table ALTER COLUMN c1 OPTIONS (\E\n
+			\QALTER FOREIGN TABLE dump_test.foreign_table ALTER COLUMN c1 OPTIONS (\E\n
 			\s+\Qcolumn_name 'col1'\E\n
 			\Q);\E\n
 			/xm,
@@ -1178,7 +1178,7 @@ my %tests = (
 	'ALTER TABLE test_table OWNER TO' => {
 		all_runs  => 1,
 		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
-		regexp    => qr/^ALTER TABLE test_table OWNER TO .*;/m,
+		regexp    => qr/^ALTER TABLE dump_test.test_table OWNER TO .*;/m,
 		like      => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1207,7 +1207,7 @@ my %tests = (
 		create_order => 23,
 		create_sql   => 'ALTER TABLE dump_test.test_table
 					   ENABLE ROW LEVEL SECURITY;',
-		regexp => qr/^ALTER TABLE test_table ENABLE ROW LEVEL SECURITY;/m,
+		regexp => qr/^ALTER TABLE dump_test.test_table ENABLE ROW LEVEL SECURITY;/m,
 		like   => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1235,7 +1235,7 @@ my %tests = (
 	'ALTER TABLE test_second_table OWNER TO' => {
 		all_runs  => 1,
 		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
-		regexp    => qr/^ALTER TABLE test_second_table OWNER TO .*;/m,
+		regexp    => qr/^ALTER TABLE dump_test.test_second_table OWNER TO .*;/m,
 		like      => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1261,7 +1261,7 @@ my %tests = (
 	'ALTER TABLE test_third_table OWNER TO' => {
 		all_runs  => 1,
 		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
-		regexp    => qr/^ALTER TABLE test_third_table OWNER TO .*;/m,
+		regexp    => qr/^ALTER TABLE dump_test_second_schema.test_third_table OWNER TO .*;/m,
 		like      => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -1287,7 +1287,7 @@ my %tests = (
 	'ALTER TABLE measurement OWNER TO' => {
 		all_runs  => 1,
 		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
-		regexp    => qr/^ALTER TABLE measurement OWNER TO .*;/m,
+		regexp    => qr/^ALTER TABLE dump_test.measurement OWNER TO .*;/m,
 		like      => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1313,7 +1313,7 @@ my %tests = (
 	'ALTER TABLE measurement_y2006m2 OWNER TO' => {
 		all_runs  => 1,
 		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
-		regexp    => qr/^ALTER TABLE measurement_y2006m2 OWNER TO .*;/m,
+		regexp    => qr/^ALTER TABLE dump_test_second_schema.measurement_y2006m2 OWNER TO .*;/m,
 		like      => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -1339,7 +1339,7 @@ my %tests = (
 	'ALTER FOREIGN TABLE foreign_table OWNER TO' => {
 		all_runs  => 1,
 		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
-		regexp    => qr/^ALTER FOREIGN TABLE foreign_table OWNER TO .*;/m,
+		regexp    => qr/^ALTER FOREIGN TABLE dump_test.foreign_table OWNER TO .*;/m,
 		like      => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1366,7 +1366,7 @@ my %tests = (
 		all_runs  => 1,
 		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
 		regexp =>
-		  qr/^ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 OWNER TO .*;/m,
+		  qr/^ALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 OWNER TO .*;/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1393,7 +1393,7 @@ my %tests = (
 		all_runs  => 1,
 		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
 		regexp =>
-		  qr/^ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 OWNER TO .*;/m,
+		  qr/^ALTER TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 OWNER TO .*;/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1576,7 +1576,7 @@ qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|STATISTICS|PUBLICATION|SUBSCRIPTION)(.*)
 		create_order => 36,
 		create_sql   => 'COMMENT ON TABLE dump_test.test_table
 					   IS \'comment on table\';',
-		regexp => qr/^COMMENT ON TABLE test_table IS 'comment on table';/m,
+		regexp => qr/^COMMENT ON TABLE dump_test.test_table IS 'comment on table';/m,
 		like   => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1609,7 +1609,7 @@ qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|STATISTICS|PUBLICATION|SUBSCRIPTION)(.*)
 		create_sql   => 'COMMENT ON COLUMN dump_test.test_table.col1
 					   IS \'comment on column\';',
 		regexp => qr/^
-			\QCOMMENT ON COLUMN test_table.col1 IS 'comment on column';\E
+			\QCOMMENT ON COLUMN dump_test.test_table.col1 IS 'comment on column';\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -1643,7 +1643,7 @@ qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|STATISTICS|PUBLICATION|SUBSCRIPTION)(.*)
 		create_sql   => 'COMMENT ON COLUMN dump_test.composite.f1
 					   IS \'comment on column of type\';',
 		regexp => qr/^
-			\QCOMMENT ON COLUMN composite.f1 IS 'comment on column of type';\E
+			\QCOMMENT ON COLUMN dump_test.composite.f1 IS 'comment on column of type';\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -1677,7 +1677,7 @@ qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|STATISTICS|PUBLICATION|SUBSCRIPTION)(.*)
 		create_sql   => 'COMMENT ON COLUMN dump_test.test_second_table.col1
 					   IS \'comment on column col1\';',
 		regexp => qr/^
-			\QCOMMENT ON COLUMN test_second_table.col1 IS 'comment on column col1';\E
+			\QCOMMENT ON COLUMN dump_test.test_second_table.col1 IS 'comment on column col1';\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -1711,7 +1711,7 @@ qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|STATISTICS|PUBLICATION|SUBSCRIPTION)(.*)
 		create_sql   => 'COMMENT ON COLUMN dump_test.test_second_table.col2
 					   IS \'comment on column col2\';',
 		regexp => qr/^
-			\QCOMMENT ON COLUMN test_second_table.col2 IS 'comment on column col2';\E
+			\QCOMMENT ON COLUMN dump_test.test_second_table.col2 IS 'comment on column col2';\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -1745,7 +1745,7 @@ qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|STATISTICS|PUBLICATION|SUBSCRIPTION)(.*)
 		create_sql   => 'COMMENT ON CONVERSION dump_test.test_conversion
 					   IS \'comment on test conversion\';',
 		regexp =>
-qr/^COMMENT ON CONVERSION test_conversion IS 'comment on test conversion';/m,
+qr/^COMMENT ON CONVERSION dump_test.test_conversion IS 'comment on test conversion';/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1778,7 +1778,7 @@ qr/^COMMENT ON CONVERSION test_conversion IS 'comment on test conversion';/m,
 		create_sql   => 'COMMENT ON COLLATION test0
 					   IS \'comment on test0 collation\';',
 		regexp =>
-		  qr/^COMMENT ON COLLATION test0 IS 'comment on test0 collation';/m,
+		  qr/^COMMENT ON COLLATION public.test0 IS 'comment on test0 collation';/m,
 		collation => 1,
 		like      => {
 			binary_upgrade           => 1,
@@ -1924,7 +1924,7 @@ qr/^COMMENT ON CONVERSION test_conversion IS 'comment on test conversion';/m,
 		  'COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1
 					   IS \'comment on text search configuration\';',
 		regexp =>
-qr/^COMMENT ON TEXT SEARCH CONFIGURATION alt_ts_conf1 IS 'comment on text search configuration';/m,
+qr/^COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 IS 'comment on text search configuration';/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1958,7 +1958,7 @@ qr/^COMMENT ON TEXT SEARCH CONFIGURATION alt_ts_conf1 IS 'comment on text search
 		  'COMMENT ON TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1
 					   IS \'comment on text search dictionary\';',
 		regexp =>
-qr/^COMMENT ON TEXT SEARCH DICTIONARY alt_ts_dict1 IS 'comment on text search dictionary';/m,
+qr/^COMMENT ON TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 IS 'comment on text search dictionary';/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -1991,7 +1991,7 @@ qr/^COMMENT ON TEXT SEARCH DICTIONARY alt_ts_dict1 IS 'comment on text search di
 		create_sql   => 'COMMENT ON TEXT SEARCH PARSER dump_test.alt_ts_prs1
 					   IS \'comment on text search parser\';',
 		regexp =>
-qr/^COMMENT ON TEXT SEARCH PARSER alt_ts_prs1 IS 'comment on text search parser';/m,
+qr/^COMMENT ON TEXT SEARCH PARSER dump_test.alt_ts_prs1 IS 'comment on text search parser';/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -2024,7 +2024,7 @@ qr/^COMMENT ON TEXT SEARCH PARSER alt_ts_prs1 IS 'comment on text search parser'
 		create_sql => 'COMMENT ON TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1
 					   IS \'comment on text search template\';',
 		regexp =>
-qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search template';/m,
+qr/^COMMENT ON TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 IS 'comment on text search template';/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -2056,7 +2056,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		create_order => 68,
 		create_sql   => 'COMMENT ON TYPE dump_test.planets
 					   IS \'comment on enum type\';',
-		regexp => qr/^COMMENT ON TYPE planets IS 'comment on enum type';/m,
+		regexp => qr/^COMMENT ON TYPE dump_test.planets IS 'comment on enum type';/m,
 		like   => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -2088,7 +2088,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		create_order => 69,
 		create_sql   => 'COMMENT ON TYPE dump_test.textrange
 					   IS \'comment on range type\';',
-		regexp => qr/^COMMENT ON TYPE textrange IS 'comment on range type';/m,
+		regexp => qr/^COMMENT ON TYPE dump_test.textrange IS 'comment on range type';/m,
 		like   => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -2120,7 +2120,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		create_order => 70,
 		create_sql   => 'COMMENT ON TYPE dump_test.int42
 					   IS \'comment on regular type\';',
-		regexp => qr/^COMMENT ON TYPE int42 IS 'comment on regular type';/m,
+		regexp => qr/^COMMENT ON TYPE dump_test.int42 IS 'comment on regular type';/m,
 		like   => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -2153,7 +2153,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		create_sql   => 'COMMENT ON TYPE dump_test.undefined
 					   IS \'comment on undefined type\';',
 		regexp =>
-		  qr/^COMMENT ON TYPE undefined IS 'comment on undefined type';/m,
+		  qr/^COMMENT ON TYPE dump_test.undefined IS 'comment on undefined type';/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -2196,7 +2196,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		create_sql   => 'INSERT INTO dump_test.test_table (col1) '
 		  . 'SELECT generate_series FROM generate_series(1,9);',
 		regexp => qr/^
-			\QCOPY test_table (col1, col2, col3, col4) FROM stdin;\E
+			\QCOPY dump_test.test_table (col1, col2, col3, col4) FROM stdin;\E
 			\n(?:\d\t\\N\t\\N\t\\N\n){9}\\\.\n
 			/xm,
 		like => {
@@ -2227,7 +2227,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		create_sql => 'INSERT INTO dump_test.fk_reference_test_table (col1) '
 		  . 'SELECT generate_series FROM generate_series(1,5);',
 		regexp => qr/^
-			\QCOPY fk_reference_test_table (col1) FROM stdin;\E
+			\QCOPY dump_test.fk_reference_test_table (col1) FROM stdin;\E
 			\n(?:\d\n){5}\\\.\n
 			/xm,
 		like => {
@@ -2258,9 +2258,9 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		all_runs  => 0,                     # really only for data-only
 		catch_all => 'COPY ... commands',
 		regexp    => qr/^
-			\QCOPY test_table (col1, col2, col3, col4) FROM stdin;\E
+			\QCOPY dump_test.test_table (col1, col2, col3, col4) FROM stdin;\E
 			\n(?:\d\t\\N\t\\N\t\\N\n){9}\\\.\n.*
-			\QCOPY fk_reference_test_table (col1) FROM stdin;\E
+			\QCOPY dump_test.fk_reference_test_table (col1) FROM stdin;\E
 			\n(?:\d\n){5}\\\.\n
 			/xms,
 		like   => { data_only => 1, },
@@ -2274,7 +2274,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		  . 'SELECT generate_series, generate_series::text '
 		  . 'FROM generate_series(1,9);',
 		regexp => qr/^
-			\QCOPY test_second_table (col1, col2) FROM stdin;\E
+			\QCOPY dump_test.test_second_table (col1, col2) FROM stdin;\E
 			\n(?:\d\t\d\n){9}\\\.\n
 			/xm,
 		like => {
@@ -2306,7 +2306,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		  'INSERT INTO dump_test_second_schema.test_third_table (col1) '
 		  . 'SELECT generate_series FROM generate_series(1,9);',
 		regexp => qr/^
-			\QCOPY test_third_table (col1) FROM stdin;\E
+			\QCOPY dump_test_second_schema.test_third_table (col1) FROM stdin;\E
 			\n(?:\d\n){9}\\\.\n
 			/xm,
 		like => {
@@ -2334,7 +2334,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		all_runs  => 1,
 		catch_all => 'COPY ... commands',
 		regexp    => qr/^
-			\QCOPY test_third_table (col1) WITH OIDS FROM stdin;\E
+			\QCOPY dump_test_second_schema.test_third_table (col1) WITH OIDS FROM stdin;\E
 			\n(?:\d+\t\d\n){9}\\\.\n
 			/xm,
 		like   => { with_oids => 1, },
@@ -2364,7 +2364,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		create_sql =>
 		  'INSERT INTO dump_test.test_fourth_table DEFAULT VALUES;',
 		regexp => qr/^
-			\QCOPY test_fourth_table  FROM stdin;\E
+			\QCOPY dump_test.test_fourth_table  FROM stdin;\E
 			\n\n\\\.\n
 			/xm,
 		like => {
@@ -2395,7 +2395,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		create_sql =>
 'INSERT INTO dump_test.test_fifth_table VALUES (NULL, true, false, \'11001\'::bit(5), \'NaN\');',
 		regexp => qr/^
-			\QCOPY test_fifth_table (col1, col2, col3, col4, col5) FROM stdin;\E
+			\QCOPY dump_test.test_fifth_table (col1, col2, col3, col4, col5) FROM stdin;\E
 			\n\\N\tt\tf\t11001\tNaN\n\\\.\n
 			/xm,
 		like => {
@@ -2426,7 +2426,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		create_sql =>
 'INSERT INTO dump_test.test_table_identity (col2) VALUES (\'test\');',
 		regexp => qr/^
-			\QCOPY test_table_identity (col1, col2) FROM stdin;\E
+			\QCOPY dump_test.test_table_identity (col1, col2) FROM stdin;\E
 			\n1\ttest\n\\\.\n
 			/xm,
 		like => {
@@ -2467,7 +2467,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		all_runs  => 1,
 		catch_all => 'INSERT INTO ...',
 		regexp    => qr/^
-			(?:INSERT\ INTO\ test_table\ \(col1,\ col2,\ col3,\ col4\)\ VALUES\ \(\d,\ NULL,\ NULL,\ NULL\);\n){9}
+			(?:INSERT\ INTO\ dump_test.test_table\ \(col1,\ col2,\ col3,\ col4\)\ VALUES\ \(\d,\ NULL,\ NULL,\ NULL\);\n){9}
 			/xm,
 		like   => { column_inserts => 1, },
 		unlike => {}, },
@@ -2476,7 +2476,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		all_runs  => 1,
 		catch_all => 'INSERT INTO ...',
 		regexp    => qr/^
-			(?:INSERT\ INTO\ test_second_table\ \(col1,\ col2\)
+			(?:INSERT\ INTO\ dump_test.test_second_table\ \(col1,\ col2\)
 			   \ VALUES\ \(\d,\ '\d'\);\n){9}/xm,
 		like   => { column_inserts => 1, },
 		unlike => {}, },
@@ -2485,7 +2485,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		all_runs  => 1,
 		catch_all => 'INSERT INTO ...',
 		regexp    => qr/^
-			(?:INSERT\ INTO\ test_third_table\ \(col1\)
+			(?:INSERT\ INTO\ dump_test_second_schema.test_third_table\ \(col1\)
 			   \ VALUES\ \(\d\);\n){9}/xm,
 		like   => { column_inserts => 1, },
 		unlike => {}, },
@@ -2493,7 +2493,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 	'INSERT INTO test_fourth_table' => {
 		all_runs  => 1,
 		catch_all => 'INSERT INTO ...',
-		regexp    => qr/^\QINSERT INTO test_fourth_table DEFAULT VALUES;\E/m,
+		regexp    => qr/^\QINSERT INTO dump_test.test_fourth_table DEFAULT VALUES;\E/m,
 		like      => { column_inserts => 1, },
 		unlike    => {}, },
 
@@ -2501,7 +2501,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE alt_ts_temp1 IS 'comment on text search temp
 		all_runs  => 1,
 		catch_all => 'INSERT INTO ...',
 		regexp =>
-qr/^\QINSERT INTO test_fifth_table (col1, col2, col3, col4, col5) VALUES (NULL, true, false, B'11001', 'NaN');\E/m,
+qr/^\QINSERT INTO dump_test.test_fifth_table (col1, col2, col3, col4, col5) VALUES (NULL, true, false, B'11001', 'NaN');\E/m,
 		like   => { column_inserts => 1, },
 		unlike => {}, },
 
@@ -2509,7 +2509,7 @@ qr/^\QINSERT INTO test_fifth_table (col1, col2, col3, col4, col5) VALUES (NULL, 
 		all_runs  => 1,
 		catch_all => 'INSERT INTO ...',
 		regexp =>
-qr/^\QINSERT INTO test_table_identity (col1, col2) OVERRIDING SYSTEM VALUE VALUES (1, 'test');\E/m,
+qr/^\QINSERT INTO dump_test.test_table_identity (col1, col2) OVERRIDING SYSTEM VALUE VALUES (1, 'test');\E/m,
 		like   => { column_inserts => 1, },
 		unlike => {}, },
 
@@ -2617,7 +2617,7 @@ qr/^\QINSERT INTO test_table_identity (col1, col2) OVERRIDING SYSTEM VALUE VALUE
 		create_order => 76,
 		create_sql   => 'CREATE COLLATION test0 FROM "C";',
 		regexp       => qr/^
-		  \QCREATE COLLATION test0 (provider = libc, locale = 'C');\E/xm,
+		  \QCREATE COLLATION public.test0 (provider = libc, locale = 'C');\E/xm,
 		collation => 1,
 		like      => {
 			binary_upgrade           => 1,
@@ -2787,7 +2787,7 @@ qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog
 						  initcond1 = \'{0,0}\'
 					   );',
 		regexp => qr/^
-			\QCREATE AGGREGATE newavg(integer) (\E
+			\QCREATE AGGREGATE dump_test.newavg(integer) (\E
 			\n\s+\QSFUNC = int4_avg_accum,\E
 			\n\s+\QSTYPE = bigint[],\E
 			\n\s+\QINITCOND = '{0,0}',\E
@@ -2827,7 +2827,7 @@ qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog
 		create_sql =>
 'CREATE DEFAULT CONVERSION dump_test.test_conversion FOR \'LATIN1\' TO \'UTF8\' FROM iso8859_1_to_utf8;',
 		regexp =>
-qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;\E/xm,
+qr/^\QCREATE DEFAULT CONVERSION dump_test.test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;\E/xm,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -2865,7 +2865,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 					   CHECK(VALUE ~ \'^\d{5}$\' OR
 							 VALUE ~ \'^\d{5}-\d{4}$\');',
 		regexp => qr/^
-			\QCREATE DOMAIN us_postal_code AS text COLLATE pg_catalog."C" DEFAULT '10014'::text\E\n\s+
+			\QCREATE DOMAIN dump_test.us_postal_code AS text COLLATE pg_catalog."C" DEFAULT '10014'::text\E\n\s+
 			\QCONSTRAINT us_postal_code_check CHECK \E
 			\Q(((VALUE ~ '^\d{5}\E
 			\$\Q'::text) OR (VALUE ~ '^\d{5}-\d{4}\E\$
@@ -2906,7 +2906,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 					   RETURNS LANGUAGE_HANDLER AS \'$libdir/plpgsql\',
 					   \'plpgsql_call_handler\' LANGUAGE C;',
 		regexp => qr/^
-			\QCREATE FUNCTION pltestlang_call_handler() \E
+			\QCREATE FUNCTION dump_test.pltestlang_call_handler() \E
 			\QRETURNS language_handler\E
 			\n\s+\QLANGUAGE c\E
 			\n\s+AS\ \'\$
@@ -2947,7 +2947,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 					   RETURNS trigger LANGUAGE plpgsql
 					   AS $$ BEGIN RETURN NULL; END;$$;',
 		regexp => qr/^
-			\QCREATE FUNCTION trigger_func() RETURNS trigger\E
+			\QCREATE FUNCTION dump_test.trigger_func() RETURNS trigger\E
 			\n\s+\QLANGUAGE plpgsql\E
 			\n\s+AS\ \$\$
 			\Q BEGIN RETURN NULL; END;\E
@@ -2987,7 +2987,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 					   RETURNS event_trigger LANGUAGE plpgsql
 					   AS $$ BEGIN RETURN; END;$$;',
 		regexp => qr/^
-			\QCREATE FUNCTION event_trigger_func() RETURNS event_trigger\E
+			\QCREATE FUNCTION dump_test.event_trigger_func() RETURNS event_trigger\E
 			\n\s+\QLANGUAGE plpgsql\E
 			\n\s+AS\ \$\$
 			\Q BEGIN RETURN; END;\E
@@ -3026,7 +3026,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 		create_sql =>
 		  'CREATE OPERATOR FAMILY dump_test.op_family USING btree;',
 		regexp => qr/^
-			\QCREATE OPERATOR FAMILY op_family USING btree;\E
+			\QCREATE OPERATOR FAMILY dump_test.op_family USING btree;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -3070,8 +3070,8 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 						 FUNCTION 1 btint8cmp(bigint,bigint),
 						 FUNCTION 2 btint8sortsupport(internal);',
 		regexp => qr/^
-			\QCREATE OPERATOR CLASS op_class\E\n\s+
-			\QFOR TYPE bigint USING btree FAMILY op_family AS\E\n\s+
+			\QCREATE OPERATOR CLASS dump_test.op_class\E\n\s+
+			\QFOR TYPE bigint USING btree FAMILY dump_test.op_family AS\E\n\s+
 			\QOPERATOR 1 <(bigint,bigint) ,\E\n\s+
 			\QOPERATOR 2 <=(bigint,bigint) ,\E\n\s+
 			\QOPERATOR 3 =(bigint,bigint) ,\E\n\s+
@@ -3155,9 +3155,9 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 					   FOR EACH ROW WHEN (NEW.col1 > 10)
 					   EXECUTE PROCEDURE dump_test.trigger_func();',
 		regexp => qr/^
-			\QCREATE TRIGGER test_trigger BEFORE INSERT ON test_table \E
+			\QCREATE TRIGGER test_trigger BEFORE INSERT ON dump_test.test_table \E
 			\QFOR EACH ROW WHEN ((new.col1 > 10)) \E
-			\QEXECUTE PROCEDURE trigger_func();\E
+			\QEXECUTE PROCEDURE dump_test.trigger_func();\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -3193,7 +3193,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 		create_sql   => 'CREATE TYPE dump_test.planets
 					   AS ENUM ( \'venus\', \'earth\', \'mars\' );',
 		regexp => qr/^
-			\QCREATE TYPE planets AS ENUM (\E
+			\QCREATE TYPE dump_test.planets AS ENUM (\E
 			\n\s+'venus',
 			\n\s+'earth',
 			\n\s+'mars'
@@ -3229,7 +3229,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 	'CREATE TYPE dump_test.planets AS ENUM pg_upgrade' => {
 		all_runs => 1,
 		regexp   => qr/^
-			\QCREATE TYPE planets AS ENUM (\E
+			\QCREATE TYPE dump_test.planets AS ENUM (\E
 			\n\);.*^
 			\QALTER TYPE dump_test.planets ADD VALUE 'venus';\E
 			\n.*^
@@ -3271,7 +3271,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 		create_sql   => 'CREATE TYPE dump_test.textrange
 					   AS RANGE (subtype=text, collation="C");',
 		regexp => qr/^
-			\QCREATE TYPE textrange AS RANGE (\E
+			\QCREATE TYPE dump_test.textrange AS RANGE (\E
 			\n\s+\Qsubtype = text,\E
 			\n\s+\Qcollation = pg_catalog."C"\E
 			\n\);/xm,
@@ -3307,7 +3307,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 		all_runs     => 1,
 		create_order => 39,
 		create_sql   => 'CREATE TYPE dump_test.int42;',
-		regexp       => qr/^CREATE TYPE int42;/m,
+		regexp       => qr/^CREATE TYPE dump_test.int42;/m,
 		like         => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -3342,7 +3342,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 		create_sql =>
 'CREATE TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 (copy=english);',
 		regexp => qr/^
-			\QCREATE TEXT SEARCH CONFIGURATION alt_ts_conf1 (\E\n
+			\QCREATE TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 (\E\n
 			\s+\QPARSER = pg_catalog."default" );\E/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -3375,61 +3375,61 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 	'ALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 ...' => {
 		all_runs => 1,
 		regexp   => qr/^
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR asciiword WITH english_stem;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR word WITH english_stem;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR numword WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR email WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR url WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR host WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR sfloat WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR version WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR hword_numpart WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR hword_part WITH english_stem;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR hword_asciipart WITH english_stem;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR numhword WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR asciihword WITH english_stem;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR hword WITH english_stem;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR url_path WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR file WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR "float" WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR "int" WITH simple;\E\n
 			\n
-			\QALTER TEXT SEARCH CONFIGURATION alt_ts_conf1\E\n
+			\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1\E\n
 			\s+\QADD MAPPING FOR uint WITH simple;\E\n
 			\n
 			/xm,
@@ -3467,7 +3467,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 		create_sql =>
 'CREATE TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 (lexize=dsimple_lexize);',
 		regexp => qr/^
-			\QCREATE TEXT SEARCH TEMPLATE alt_ts_temp1 (\E\n
+			\QCREATE TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 (\E\n
 			\s+\QLEXIZE = dsimple_lexize );\E/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -3503,7 +3503,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 		create_sql   => 'CREATE TEXT SEARCH PARSER dump_test.alt_ts_prs1
 		(start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end, lextypes = prsd_lextype);',
 		regexp => qr/^
-			\QCREATE TEXT SEARCH PARSER alt_ts_prs1 (\E\n
+			\QCREATE TEXT SEARCH PARSER dump_test.alt_ts_prs1 (\E\n
 			\s+\QSTART = prsd_start,\E\n
 			\s+\QGETTOKEN = prsd_nexttoken,\E\n
 			\s+\QEND = prsd_end,\E\n
@@ -3543,7 +3543,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 		create_sql =>
 'CREATE TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 (template=simple);',
 		regexp => qr/^
-			\QCREATE TEXT SEARCH DICTIONARY alt_ts_dict1 (\E\n
+			\QCREATE TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 (\E\n
 			\s+\QTEMPLATE = pg_catalog.simple );\E\n
 			/xm,
 		like => {
@@ -3581,7 +3581,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 					   RETURNS dump_test.int42 AS \'int4in\'
 					   LANGUAGE internal STRICT IMMUTABLE;',
 		regexp => qr/^
-			\QCREATE FUNCTION int42_in(cstring) RETURNS int42\E
+			\QCREATE FUNCTION dump_test.int42_in(cstring) RETURNS dump_test.int42\E
 			\n\s+\QLANGUAGE internal IMMUTABLE STRICT\E
 			\n\s+AS\ \$\$int4in\$\$;
 			/xm,
@@ -3620,7 +3620,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 					   RETURNS cstring AS \'int4out\'
 					   LANGUAGE internal STRICT IMMUTABLE;',
 		regexp => qr/^
-			\QCREATE FUNCTION int42_out(int42) RETURNS cstring\E
+			\QCREATE FUNCTION dump_test.int42_out(dump_test.int42) RETURNS cstring\E
 			\n\s+\QLANGUAGE internal IMMUTABLE STRICT\E
 			\n\s+AS\ \$\$int4out\$\$;
 			/xm,
@@ -3663,10 +3663,10 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 						   default = 42,
 						   passedbyvalue);',
 		regexp => qr/^
-			\QCREATE TYPE int42 (\E
+			\QCREATE TYPE dump_test.int42 (\E
 			\n\s+\QINTERNALLENGTH = 4,\E
-			\n\s+\QINPUT = int42_in,\E
-			\n\s+\QOUTPUT = int42_out,\E
+			\n\s+\QINPUT = dump_test.int42_in,\E
+			\n\s+\QOUTPUT = dump_test.int42_out,\E
 			\n\s+\QDEFAULT = '42',\E
 			\n\s+\QALIGNMENT = int4,\E
 			\n\s+\QSTORAGE = plain,\E
@@ -3708,9 +3708,9 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 						   f2 dump_test.int42
 					   );',
 		regexp => qr/^
-			\QCREATE TYPE composite AS (\E
+			\QCREATE TYPE dump_test.composite AS (\E
 			\n\s+\Qf1 integer,\E
-			\n\s+\Qf2 int42\E
+			\n\s+\Qf2 dump_test.int42\E
 			\n\);
 			/xm,
 		like => {
@@ -3745,7 +3745,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 		all_runs     => 1,
 		create_order => 39,
 		create_sql   => 'CREATE TYPE dump_test.undefined;',
-		regexp       => qr/^CREATE TYPE undefined;/m,
+		regexp       => qr/^CREATE TYPE dump_test.undefined;/m,
 		like         => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -3847,7 +3847,7 @@ qr/^\QCREATE DEFAULT CONVERSION test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8
 'CREATE FOREIGN TABLE dump_test.foreign_table (c1 int options (column_name \'col1\'))
 						SERVER s1 OPTIONS (schema_name \'x1\');',
 		regexp => qr/
-			\QCREATE FOREIGN TABLE foreign_table (\E\n
+			\QCREATE FOREIGN TABLE dump_test.foreign_table (\E\n
 			\s+\Qc1 integer\E\n
 			\Q)\E\n
 			\QSERVER s1\E\n
@@ -3961,7 +3961,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 					   HANDLER dump_test.pltestlang_call_handler;',
 		regexp => qr/^
 			\QCREATE PROCEDURAL LANGUAGE pltestlang \E
-			\QHANDLER pltestlang_call_handler;\E
+			\QHANDLER dump_test.pltestlang_call_handler;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -3995,9 +3995,9 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'CREATE MATERIALIZED VIEW dump_test.matview (col1) AS
 					   SELECT col1 FROM dump_test.test_table;',
 		regexp => qr/^
-			\QCREATE MATERIALIZED VIEW matview AS\E
+			\QCREATE MATERIALIZED VIEW dump_test.matview AS\E
 			\n\s+\QSELECT test_table.col1\E
-			\n\s+\QFROM test_table\E
+			\n\s+\QFROM dump_test.test_table\E
 			\n\s+\QWITH NO DATA;\E
 			/xm,
 		like => {
@@ -4033,9 +4033,9 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 						   dump_test.matview_second (col1) AS
 						   SELECT * FROM dump_test.matview;',
 		regexp => qr/^
-			\QCREATE MATERIALIZED VIEW matview_second AS\E
+			\QCREATE MATERIALIZED VIEW dump_test.matview_second AS\E
 			\n\s+\QSELECT matview.col1\E
-			\n\s+\QFROM matview\E
+			\n\s+\QFROM dump_test.matview\E
 			\n\s+\QWITH NO DATA;\E
 			/xm,
 		like => {
@@ -4071,9 +4071,9 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 						   dump_test.matview_third (col1) AS
 						   SELECT * FROM dump_test.matview_second WITH NO DATA;',
 		regexp => qr/^
-			\QCREATE MATERIALIZED VIEW matview_third AS\E
+			\QCREATE MATERIALIZED VIEW dump_test.matview_third AS\E
 			\n\s+\QSELECT matview_second.col1\E
-			\n\s+\QFROM matview_second\E
+			\n\s+\QFROM dump_test.matview_second\E
 			\n\s+\QWITH NO DATA;\E
 			/xm,
 		like => {
@@ -4109,9 +4109,9 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 						   dump_test.matview_fourth (col1) AS
 						   SELECT * FROM dump_test.matview_third WITH NO DATA;',
 		regexp => qr/^
-			\QCREATE MATERIALIZED VIEW matview_fourth AS\E
+			\QCREATE MATERIALIZED VIEW dump_test.matview_fourth AS\E
 			\n\s+\QSELECT matview_third.col1\E
-			\n\s+\QFROM matview_third\E
+			\n\s+\QFROM dump_test.matview_third\E
 			\n\s+\QWITH NO DATA;\E
 			/xm,
 		like => {
@@ -4147,7 +4147,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 						   USING (true)
 						   WITH CHECK (true);',
 		regexp => qr/^
-			\QCREATE POLICY p1 ON test_table \E
+			\QCREATE POLICY p1 ON dump_test.test_table \E
 			\QUSING (true) WITH CHECK (true);\E
 			/xm,
 		like => {
@@ -4182,7 +4182,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'CREATE POLICY p2 ON dump_test.test_table
 						   FOR SELECT TO regress_dump_test_role USING (true);',
 		regexp => qr/^
-			\QCREATE POLICY p2 ON test_table FOR SELECT TO regress_dump_test_role \E
+			\QCREATE POLICY p2 ON dump_test.test_table FOR SELECT TO regress_dump_test_role \E
 			\QUSING (true);\E
 			/xm,
 		like => {
@@ -4217,7 +4217,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'CREATE POLICY p3 ON dump_test.test_table
 						   FOR INSERT TO regress_dump_test_role WITH CHECK (true);',
 		regexp => qr/^
-			\QCREATE POLICY p3 ON test_table FOR INSERT \E
+			\QCREATE POLICY p3 ON dump_test.test_table FOR INSERT \E
 			\QTO regress_dump_test_role WITH CHECK (true);\E
 			/xm,
 		like => {
@@ -4252,7 +4252,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'CREATE POLICY p4 ON dump_test.test_table FOR UPDATE
 						   TO regress_dump_test_role USING (true) WITH CHECK (true);',
 		regexp => qr/^
-			\QCREATE POLICY p4 ON test_table FOR UPDATE TO regress_dump_test_role \E
+			\QCREATE POLICY p4 ON dump_test.test_table FOR UPDATE TO regress_dump_test_role \E
 			\QUSING (true) WITH CHECK (true);\E
 			/xm,
 		like => {
@@ -4287,7 +4287,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'CREATE POLICY p5 ON dump_test.test_table
 						   FOR DELETE TO regress_dump_test_role USING (true);',
 		regexp => qr/^
-			\QCREATE POLICY p5 ON test_table FOR DELETE \E
+			\QCREATE POLICY p5 ON dump_test.test_table FOR DELETE \E
 			\QTO regress_dump_test_role USING (true);\E
 			/xm,
 		like => {
@@ -4322,7 +4322,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql => 'CREATE POLICY p6 ON dump_test.test_table AS RESTRICTIVE
 						   USING (false);',
 		regexp => qr/^
-			\QCREATE POLICY p6 ON test_table AS RESTRICTIVE \E
+			\QCREATE POLICY p6 ON dump_test.test_table AS RESTRICTIVE \E
 			\QUSING (false);\E
 			/xm,
 		like => {
@@ -4460,7 +4460,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql =>
 		  'ALTER PUBLICATION pub1 ADD TABLE dump_test.test_table;',
 		regexp => qr/^
-			\QALTER PUBLICATION pub1 ADD TABLE ONLY test_table;\E
+			\QALTER PUBLICATION pub1 ADD TABLE ONLY dump_test.test_table;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -4494,7 +4494,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql =>
 		  'ALTER PUBLICATION pub1 ADD TABLE dump_test.test_second_table;',
 		regexp => qr/^
-			\QALTER PUBLICATION pub1 ADD TABLE ONLY test_second_table;\E
+			\QALTER PUBLICATION pub1 ADD TABLE ONLY dump_test.test_second_table;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -4621,7 +4621,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 						   CHECK (col1 <= 1000)
 					   ) WITH (autovacuum_enabled = false, fillfactor=80);',
 		regexp => qr/^
-			\QCREATE TABLE test_table (\E\n
+			\QCREATE TABLE dump_test.test_table (\E\n
 			\s+\Qcol1 integer NOT NULL,\E\n
 			\s+\Qcol2 text,\E\n
 			\s+\Qcol3 text,\E\n
@@ -4662,7 +4662,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 						   col1 int primary key references dump_test.test_table
 					   );',
 		regexp => qr/^
-			\QCREATE TABLE fk_reference_test_table (\E
+			\QCREATE TABLE dump_test.fk_reference_test_table (\E
 			\n\s+\Qcol1 integer NOT NULL\E
 			\n\);
 			/xm,
@@ -4700,7 +4700,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 						   col2 text
 					   );',
 		regexp => qr/^
-			\QCREATE TABLE test_second_table (\E
+			\QCREATE TABLE dump_test.test_second_table (\E
 			\n\s+\Qcol1 integer,\E
 			\n\s+\Qcol2 text\E
 			\n\);
@@ -4744,7 +4744,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			(\Q-- TOC entry \E[0-9]+\ \(class\ 1259\ OID\ [0-9]+\)\n)?
 			\Q-- Name: test_third_table;\E.*\n
 			\Q--\E\n\n
-			\QCREATE UNLOGGED TABLE test_third_table (\E
+			\QCREATE UNLOGGED TABLE dump_test_second_schema.test_third_table (\E
 			\n\s+\Qcol1 integer NOT NULL\E
 			\n\);\n
 			/xm,
@@ -4786,7 +4786,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		regexp => qr/^
 			\Q-- Name: measurement;\E.*\n
 			\Q--\E\n\n
-			\QCREATE TABLE measurement (\E\n
+			\QCREATE TABLE dump_test.measurement (\E\n
 			\s+\Qcity_id integer NOT NULL,\E\n
 			\s+\Qlogdate date NOT NULL,\E\n
 			\s+\Qpeaktemp integer,\E\n
@@ -4830,7 +4830,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		regexp => qr/^
 			\Q-- Name: measurement_y2006m2;\E.*\n
 			\Q--\E\n\n
-			\QCREATE TABLE measurement_y2006m2 PARTITION OF dump_test.measurement\E\n
+			\QCREATE TABLE dump_test_second_schema.measurement_y2006m2 PARTITION OF dump_test.measurement\E\n
 			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
 			/xm,
 		like => {
@@ -4865,7 +4865,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'CREATE TABLE dump_test.test_fourth_table (
 					   );',
 		regexp => qr/^
-			\QCREATE TABLE test_fourth_table (\E
+			\QCREATE TABLE dump_test.test_fourth_table (\E
 			\n\);
 			/xm,
 		like => {
@@ -4905,7 +4905,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 							col5 float8
 					   );',
 		regexp => qr/^
-			\QCREATE TABLE test_fifth_table (\E
+			\QCREATE TABLE dump_test.test_fifth_table (\E
 			\n\s+\Qcol1 integer,\E
 			\n\s+\Qcol2 boolean,\E
 			\n\s+\Qcol3 boolean,\E
@@ -4947,13 +4947,13 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 						   col2 text
 					   );',
 		regexp => qr/^
-			\QCREATE TABLE test_table_identity (\E\n
+			\QCREATE TABLE dump_test.test_table_identity (\E\n
 			\s+\Qcol1 integer NOT NULL,\E\n
 			\s+\Qcol2 text\E\n
 			\);
 			.*
-			\QALTER TABLE test_table_identity ALTER COLUMN col1 ADD GENERATED ALWAYS AS IDENTITY (\E\n
-			\s+\QSEQUENCE NAME test_table_identity_col1_seq\E\n
+			\QALTER TABLE dump_test.test_table_identity ALTER COLUMN col1 ADD GENERATED ALWAYS AS IDENTITY (\E\n
+			\s+\QSEQUENCE NAME dump_test.test_table_identity_col1_seq\E\n
 			\s+\QSTART WITH 1\E\n
 			\s+\QINCREMENT BY 1\E\n
 			\s+\QNO MINVALUE\E\n
@@ -4993,7 +4993,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'CREATE STATISTICS dump_test.test_ext_stats_no_options
 							ON col1, col2 FROM dump_test.test_fifth_table',
 		regexp => qr/^
-			\QCREATE STATISTICS dump_test.test_ext_stats_no_options ON col1, col2 FROM test_fifth_table;\E
+			\QCREATE STATISTICS dump_test.test_ext_stats_no_options ON col1, col2 FROM dump_test.test_fifth_table;\E
 		    /xms,
 		like => {
 			binary_upgrade          => 1,
@@ -5027,7 +5027,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'CREATE STATISTICS dump_test.test_ext_stats_opts
 							(ndistinct) ON col1, col2 FROM dump_test.test_fifth_table',
 		regexp => qr/^
-			\QCREATE STATISTICS dump_test.test_ext_stats_opts (ndistinct) ON col1, col2 FROM test_fifth_table;\E
+			\QCREATE STATISTICS dump_test.test_ext_stats_opts (ndistinct) ON col1, col2 FROM dump_test.test_fifth_table;\E
 		    /xms,
 		like => {
 			binary_upgrade          => 1,
@@ -5058,7 +5058,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		all_runs  => 1,
 		catch_all => 'CREATE ... commands',
 		regexp    => qr/^
-			\QCREATE SEQUENCE test_table_col1_seq\E
+			\QCREATE SEQUENCE dump_test.test_table_col1_seq\E
 			\n\s+\QAS integer\E
 			\n\s+\QSTART WITH 1\E
 			\n\s+\QINCREMENT BY 1\E
@@ -5095,7 +5095,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		all_runs  => 1,
 		catch_all => 'CREATE ... commands',
 		regexp    => qr/^
-			\QCREATE SEQUENCE test_third_table_col1_seq\E
+			\QCREATE SEQUENCE dump_test_second_schema.test_third_table_col1_seq\E
 			\n\s+\QAS integer\E
 			\n\s+\QSTART WITH 1\E
 			\n\s+\QINCREMENT BY 1\E
@@ -5136,7 +5136,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 					   ON dump_test_second_schema.test_third_table (col1);',
 		regexp => qr/^
 			\QCREATE UNIQUE INDEX test_third_table_idx \E
-			\QON test_third_table USING btree (col1);\E
+			\QON dump_test_second_schema.test_third_table USING btree (col1);\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -5171,9 +5171,9 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		                   WITH (check_option = \'local\', security_barrier = true) AS
 		                   SELECT col1 FROM dump_test.test_table;',
 		regexp => qr/^
-			\QCREATE VIEW test_view WITH (security_barrier='true') AS\E
+			\QCREATE VIEW dump_test.test_view WITH (security_barrier='true') AS\E
 			\n\s+\QSELECT test_table.col1\E
-			\n\s+\QFROM test_table\E
+			\n\s+\QFROM dump_test.test_table\E
 			\n\s+\QWITH LOCAL CHECK OPTION;\E/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -5207,7 +5207,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql =>
 		  'ALTER VIEW dump_test.test_view ALTER COLUMN col1 SET DEFAULT 1;',
 		regexp => qr/^
-			\QALTER TABLE ONLY test_view ALTER COLUMN col1 SET DEFAULT 1;\E/xm,
+			\QALTER TABLE ONLY dump_test.test_view ALTER COLUMN col1 SET DEFAULT 1;\E/xm,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -5585,7 +5585,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql =>
 'GRANT USAGE ON DOMAIN dump_test.us_postal_code TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT ALL ON TYPE us_postal_code TO regress_dump_test_role;\E
+			\QGRANT ALL ON TYPE dump_test.us_postal_code TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -5622,7 +5622,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql =>
 		  'GRANT USAGE ON TYPE dump_test.int42 TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT ALL ON TYPE int42 TO regress_dump_test_role;\E
+			\QGRANT ALL ON TYPE dump_test.int42 TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -5659,7 +5659,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql =>
 		  'GRANT USAGE ON TYPE dump_test.planets TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT ALL ON TYPE planets TO regress_dump_test_role;\E
+			\QGRANT ALL ON TYPE dump_test.planets TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -5696,7 +5696,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql =>
 'GRANT USAGE ON TYPE dump_test.textrange TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT ALL ON TYPE textrange TO regress_dump_test_role;\E
+			\QGRANT ALL ON TYPE dump_test.textrange TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -5765,7 +5765,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'GRANT SELECT ON TABLE dump_test.test_table
 						   TO regress_dump_test_role;',
 		regexp =>
-		  qr/^GRANT SELECT ON TABLE test_table TO regress_dump_test_role;/m,
+		  qr/^GRANT SELECT ON TABLE dump_test.test_table TO regress_dump_test_role;/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -5798,7 +5798,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 						   TABLE dump_test_second_schema.test_third_table
 						   TO regress_dump_test_role;',
 		regexp =>
-qr/^GRANT SELECT ON TABLE test_third_table TO regress_dump_test_role;/m,
+qr/^GRANT SELECT ON TABLE dump_test_second_schema.test_third_table TO regress_dump_test_role;/m,
 		like => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -5831,7 +5831,7 @@ qr/^GRANT SELECT ON TABLE test_third_table TO regress_dump_test_role;/m,
 						   dump_test_second_schema.test_third_table_col1_seq
 						   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT ALL ON SEQUENCE test_third_table_col1_seq TO regress_dump_test_role;\E
+			\QGRANT ALL ON SEQUENCE dump_test_second_schema.test_third_table_col1_seq TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -5865,7 +5865,7 @@ qr/^GRANT SELECT ON TABLE test_third_table TO regress_dump_test_role;/m,
 						   TABLE dump_test.measurement
 						   TO regress_dump_test_role;',
 		regexp =>
-		  qr/^GRANT SELECT ON TABLE measurement TO regress_dump_test_role;/m,
+		  qr/^GRANT SELECT ON TABLE dump_test.measurement TO regress_dump_test_role;/m,
 		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -5898,7 +5898,7 @@ qr/^GRANT SELECT ON TABLE test_third_table TO regress_dump_test_role;/m,
 						   TABLE dump_test_second_schema.measurement_y2006m2
 						   TO regress_dump_test_role;',
 		regexp =>
-qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
+qr/^GRANT SELECT ON TABLE dump_test_second_schema.measurement_y2006m2 TO regress_dump_test_role;/m,
 		like => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -5969,7 +5969,7 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 		  'GRANT INSERT (col1) ON TABLE dump_test.test_second_table
 						   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT INSERT(col1) ON TABLE test_second_table TO regress_dump_test_role;\E
+			\QGRANT INSERT(col1) ON TABLE dump_test.test_second_table TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -6002,7 +6002,7 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 		create_sql   => 'GRANT EXECUTE ON FUNCTION pg_sleep(float8)
 						   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT ALL ON FUNCTION pg_sleep(double precision) TO regress_dump_test_role;\E
+			\QGRANT ALL ON FUNCTION pg_catalog.pg_sleep(double precision) TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -6066,37 +6066,37 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 						   proacl
 						) ON TABLE pg_proc TO public;',
 		regexp => qr/
-		\QGRANT SELECT(tableoid) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(oid) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proname) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(pronamespace) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proowner) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(prolang) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(procost) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(prorows) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(provariadic) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(protransform) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proisagg) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proiswindow) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(prosecdef) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proleakproof) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proisstrict) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proretset) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(provolatile) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proparallel) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(pronargs) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(pronargdefaults) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(prorettype) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proargtypes) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proallargtypes) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proargmodes) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proargnames) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proargdefaults) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(protrftypes) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(prosrc) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(probin) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proconfig) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proacl) ON TABLE pg_proc TO PUBLIC;\E/xms,
+		\QGRANT SELECT(tableoid) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(oid) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proname) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(pronamespace) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proowner) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(prolang) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(procost) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(prorows) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(provariadic) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(protransform) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proisagg) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proiswindow) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(prosecdef) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proleakproof) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proisstrict) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proretset) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(provolatile) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proparallel) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(pronargs) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(pronargdefaults) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(prorettype) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proargtypes) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proallargtypes) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proargmodes) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proargnames) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proargdefaults) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(protrftypes) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(prosrc) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(probin) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proconfig) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(proacl) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E/xms,
 		like => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -6161,7 +6161,7 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 
 	'REFRESH MATERIALIZED VIEW matview' => {
 		all_runs => 1,
-		regexp   => qr/^REFRESH MATERIALIZED VIEW matview;/m,
+		regexp   => qr/^REFRESH MATERIALIZED VIEW dump_test.matview;/m,
 		like     => {
 			clean                   => 1,
 			clean_if_exists         => 1,
@@ -6193,9 +6193,9 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 	'REFRESH MATERIALIZED VIEW matview_second' => {
 		all_runs => 1,
 		regexp   => qr/^
-			\QREFRESH MATERIALIZED VIEW matview;\E
+			\QREFRESH MATERIALIZED VIEW dump_test.matview;\E
 			\n.*
-			\QREFRESH MATERIALIZED VIEW matview_second;\E
+			\QREFRESH MATERIALIZED VIEW dump_test.matview_second;\E
 			/xms,
 		like => {
 			clean                   => 1,
@@ -6228,7 +6228,7 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 	'REFRESH MATERIALIZED VIEW matview_third' => {
 		all_runs => 1,
 		regexp   => qr/^
-			\QREFRESH MATERIALIZED VIEW matview_third;\E
+			\QREFRESH MATERIALIZED VIEW dump_test.matview_third;\E
 			/xms,
 		like   => {},
 		unlike => {
@@ -6261,7 +6261,7 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 	'REFRESH MATERIALIZED VIEW matview_fourth' => {
 		all_runs => 1,
 		regexp   => qr/^
-			\QREFRESH MATERIALIZED VIEW matview_fourth;\E
+			\QREFRESH MATERIALIZED VIEW dump_test.matview_fourth;\E
 			/xms,
 		like   => {},
 		unlike => {
@@ -6332,7 +6332,7 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 		create_sql   => 'REVOKE EXECUTE ON FUNCTION pg_sleep(float8)
 						   FROM public;',
 		regexp => qr/^
-			\QREVOKE ALL ON FUNCTION pg_sleep(double precision) FROM PUBLIC;\E
+			\QREVOKE ALL ON FUNCTION pg_catalog.pg_sleep(double precision) FROM PUBLIC;\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -6363,7 +6363,7 @@ qr/^GRANT SELECT ON TABLE measurement_y2006m2 TO regress_dump_test_role;/m,
 		catch_all    => 'REVOKE commands',
 		create_order => 45,
 		create_sql   => 'REVOKE SELECT ON TABLE pg_proc FROM public;',
-		regexp       => qr/^REVOKE SELECT ON TABLE pg_proc FROM PUBLIC;/m,
+		regexp       => qr/^REVOKE SELECT ON TABLE pg_catalog.pg_proc FROM PUBLIC;/m,
 		like         => {
 			binary_upgrade           => 1,
 			clean                    => 1,

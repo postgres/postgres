@@ -977,12 +977,12 @@ ERROR:  collations are not supported by type integer
 LINE 1: ...ATE INDEX collate_test1_idx6 ON collate_test1 ((a COLLATE "C...
                                                              ^
 SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%' ORDER BY 1;
-      relname       |                                           pg_get_indexdef                                           
---------------------+-----------------------------------------------------------------------------------------------------
- collate_test1_idx1 | CREATE INDEX collate_test1_idx1 ON collate_test1 USING btree (b)
- collate_test1_idx2 | CREATE INDEX collate_test1_idx2 ON collate_test1 USING btree (b COLLATE "C")
- collate_test1_idx3 | CREATE INDEX collate_test1_idx3 ON collate_test1 USING btree (b COLLATE "C")
- collate_test1_idx4 | CREATE INDEX collate_test1_idx4 ON collate_test1 USING btree (((b || 'foo'::text)) COLLATE "POSIX")
+      relname       |                                                  pg_get_indexdef                                                  
+--------------------+-------------------------------------------------------------------------------------------------------------------
+ collate_test1_idx1 | CREATE INDEX collate_test1_idx1 ON collate_tests.collate_test1 USING btree (b)
+ collate_test1_idx2 | CREATE INDEX collate_test1_idx2 ON collate_tests.collate_test1 USING btree (b COLLATE "C")
+ collate_test1_idx3 | CREATE INDEX collate_test1_idx3 ON collate_tests.collate_test1 USING btree (b COLLATE "C")
+ collate_test1_idx4 | CREATE INDEX collate_test1_idx4 ON collate_tests.collate_test1 USING btree (((b || 'foo'::text)) COLLATE "POSIX")
 (4 rows)
 
 -- schema manipulation commands

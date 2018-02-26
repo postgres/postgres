@@ -194,7 +194,7 @@ my %tests = (
 		create_sql =>
 'ALTER EXTENSION test_pg_dump ADD TABLE regress_pg_dump_table_added;',
 		regexp => qr/^
-			\QCREATE TABLE regress_pg_dump_table_added (\E
+			\QCREATE TABLE public.regress_pg_dump_table_added (\E
 			\n\s+\Qcol1 integer NOT NULL,\E
 			\n\s+\Qcol2 integer\E
 			\n\);\n/xm,
@@ -250,7 +250,7 @@ my %tests = (
 
 	'CREATE SEQUENCE regress_pg_dump_table_col1_seq' => {
 		regexp => qr/^
-                    \QCREATE SEQUENCE regress_pg_dump_table_col1_seq\E
+                    \QCREATE SEQUENCE public.regress_pg_dump_table_col1_seq\E
                     \n\s+\QAS integer\E
                     \n\s+\QSTART WITH 1\E
                     \n\s+\QINCREMENT BY 1\E
@@ -276,7 +276,7 @@ my %tests = (
 		create_sql =>
 'CREATE TABLE regress_pg_dump_table_added (col1 int not null, col2 int);',
 		regexp => qr/^
-			\QCREATE TABLE regress_pg_dump_table_added (\E
+			\QCREATE TABLE public.regress_pg_dump_table_added (\E
 			\n\s+\Qcol1 integer NOT NULL,\E
 			\n\s+\Qcol2 integer\E
 			\n\);\n/xm,
@@ -295,7 +295,7 @@ my %tests = (
 
 	'CREATE SEQUENCE regress_pg_dump_seq' => {
 		regexp => qr/^
-                    \QCREATE SEQUENCE regress_pg_dump_seq\E
+                    \QCREATE SEQUENCE public.regress_pg_dump_seq\E
                     \n\s+\QSTART WITH 1\E
                     \n\s+\QINCREMENT BY 1\E
                     \n\s+\QNO MINVALUE\E
@@ -319,7 +319,7 @@ my %tests = (
 		create_order => 6,
 		create_sql   => qq{SELECT nextval('regress_seq_dumpable');},
 		regexp       => qr/^
-			\QSELECT pg_catalog.setval('regress_seq_dumpable', 1, true);\E
+			\QSELECT pg_catalog.setval('public.regress_seq_dumpable', 1, true);\E
 			\n/xm,
 		like => {
 			clean           => 1,
@@ -337,7 +337,7 @@ my %tests = (
 
 	'CREATE TABLE regress_pg_dump_table' => {
 		regexp => qr/^
-			\QCREATE TABLE regress_pg_dump_table (\E
+			\QCREATE TABLE public.regress_pg_dump_table (\E
 			\n\s+\Qcol1 integer NOT NULL,\E
 			\n\s+\Qcol2 integer\E
 			\n\);\n/xm,
@@ -395,7 +395,7 @@ my %tests = (
 		create_sql =>
 'GRANT SELECT ON regress_pg_dump_table_added TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT SELECT ON TABLE regress_pg_dump_table_added TO regress_dump_test_role;\E
+			\QGRANT SELECT ON TABLE public.regress_pg_dump_table_added TO regress_dump_test_role;\E
 			\n/xm,
 		like   => { binary_upgrade => 1, },
 		unlike => {
@@ -415,7 +415,7 @@ my %tests = (
 		create_sql =>
 'REVOKE SELECT ON regress_pg_dump_table_added FROM regress_dump_test_role;',
 		regexp => qr/^
-			\QREVOKE SELECT ON TABLE regress_pg_dump_table_added FROM regress_dump_test_role;\E
+			\QREVOKE SELECT ON TABLE public.regress_pg_dump_table_added FROM regress_dump_test_role;\E
 			\n/xm,
 		like => {
 			binary_upgrade   => 1,
@@ -434,7 +434,7 @@ my %tests = (
 	'GRANT SELECT ON TABLE regress_pg_dump_table' => {
 		regexp => qr/^
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
-			\QGRANT SELECT ON TABLE regress_pg_dump_table TO regress_dump_test_role;\E\n
+			\QGRANT SELECT ON TABLE public.regress_pg_dump_table TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
 		like   => { binary_upgrade => 1, },
@@ -453,7 +453,7 @@ my %tests = (
 	'GRANT SELECT(col1) ON regress_pg_dump_table' => {
 		regexp => qr/^
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
-			\QGRANT SELECT(col1) ON TABLE regress_pg_dump_table TO PUBLIC;\E\n
+			\QGRANT SELECT(col1) ON TABLE public.regress_pg_dump_table TO PUBLIC;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
 		like   => { binary_upgrade => 1, },
@@ -474,7 +474,7 @@ my %tests = (
 		create_sql   => 'GRANT SELECT(col2) ON regress_pg_dump_table
 						   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT SELECT(col2) ON TABLE regress_pg_dump_table TO regress_dump_test_role;\E
+			\QGRANT SELECT(col2) ON TABLE public.regress_pg_dump_table TO regress_dump_test_role;\E
 			\n/xm,
 		like => {
 			binary_upgrade   => 1,
@@ -496,7 +496,7 @@ my %tests = (
 		create_sql => 'GRANT USAGE ON SEQUENCE regress_pg_dump_table_col1_seq
 		                   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT USAGE ON SEQUENCE regress_pg_dump_table_col1_seq TO regress_dump_test_role;\E
+			\QGRANT USAGE ON SEQUENCE public.regress_pg_dump_table_col1_seq TO regress_dump_test_role;\E
 			\n/xm,
 		like => {
 			binary_upgrade   => 1,
@@ -514,7 +514,7 @@ my %tests = (
 
 	'GRANT USAGE ON regress_pg_dump_seq TO regress_dump_test_role' => {
 		regexp => qr/^
-			\QGRANT USAGE ON SEQUENCE regress_pg_dump_seq TO regress_dump_test_role;\E
+			\QGRANT USAGE ON SEQUENCE public.regress_pg_dump_seq TO regress_dump_test_role;\E
 			\n/xm,
 		like   => { binary_upgrade => 1, },
 		unlike => {
@@ -534,7 +534,7 @@ my %tests = (
 		create_sql   => 'REVOKE SELECT(col1) ON regress_pg_dump_table
 						   FROM PUBLIC;',
 		regexp => qr/^
-			\QREVOKE SELECT(col1) ON TABLE regress_pg_dump_table FROM PUBLIC;\E
+			\QREVOKE SELECT(col1) ON TABLE public.regress_pg_dump_table FROM PUBLIC;\E
 			\n/xm,
 		like => {
 			binary_upgrade   => 1,
@@ -553,7 +553,7 @@ my %tests = (
  # Objects included in extension part of a schema created by this extension */
 	'CREATE TABLE regress_pg_dump_schema.test_table' => {
 		regexp => qr/^
-			\QCREATE TABLE test_table (\E
+			\QCREATE TABLE regress_pg_dump_schema.test_table (\E
 			\n\s+\Qcol1 integer,\E
 			\n\s+\Qcol2 integer\E
 			\n\);\n/xm,
@@ -573,7 +573,7 @@ my %tests = (
 	'GRANT SELECT ON regress_pg_dump_schema.test_table' => {
 		regexp => qr/^
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
-			\QGRANT SELECT ON TABLE test_table TO regress_dump_test_role;\E\n
+			\QGRANT SELECT ON TABLE regress_pg_dump_schema.test_table TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
 		like   => { binary_upgrade => 1, },
@@ -591,7 +591,7 @@ my %tests = (
 
 	'CREATE SEQUENCE regress_pg_dump_schema.test_seq' => {
 		regexp => qr/^
-                    \QCREATE SEQUENCE test_seq\E
+                    \QCREATE SEQUENCE regress_pg_dump_schema.test_seq\E
                     \n\s+\QSTART WITH 1\E
                     \n\s+\QINCREMENT BY 1\E
                     \n\s+\QNO MINVALUE\E
@@ -614,7 +614,7 @@ my %tests = (
 	'GRANT USAGE ON regress_pg_dump_schema.test_seq' => {
 		regexp => qr/^
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
-			\QGRANT USAGE ON SEQUENCE test_seq TO regress_dump_test_role;\E\n
+			\QGRANT USAGE ON SEQUENCE regress_pg_dump_schema.test_seq TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
 		like   => { binary_upgrade => 1, },
@@ -632,7 +632,7 @@ my %tests = (
 
 	'CREATE TYPE regress_pg_dump_schema.test_type' => {
 		regexp => qr/^
-                    \QCREATE TYPE test_type AS (\E
+                    \QCREATE TYPE regress_pg_dump_schema.test_type AS (\E
                     \n\s+\Qcol1 integer\E
                     \n\);\n/xm,
 		like   => { binary_upgrade => 1, },
@@ -651,7 +651,7 @@ my %tests = (
 	'GRANT USAGE ON regress_pg_dump_schema.test_type' => {
 		regexp => qr/^
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
-			\QGRANT ALL ON TYPE test_type TO regress_dump_test_role;\E\n
+			\QGRANT ALL ON TYPE regress_pg_dump_schema.test_type TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
 		like   => { binary_upgrade => 1, },
@@ -669,7 +669,7 @@ my %tests = (
 
 	'CREATE FUNCTION regress_pg_dump_schema.test_func' => {
 		regexp => qr/^
-            \QCREATE FUNCTION test_func() RETURNS integer\E
+            \QCREATE FUNCTION regress_pg_dump_schema.test_func() RETURNS integer\E
             \n\s+\QLANGUAGE sql\E
             \n/xm,
 		like   => { binary_upgrade => 1, },
@@ -688,7 +688,7 @@ my %tests = (
 	'GRANT ALL ON regress_pg_dump_schema.test_func' => {
 		regexp => qr/^
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
-			\QGRANT ALL ON FUNCTION test_func() TO regress_dump_test_role;\E\n
+			\QGRANT ALL ON FUNCTION regress_pg_dump_schema.test_func() TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
 		like   => { binary_upgrade => 1, },
@@ -706,7 +706,7 @@ my %tests = (
 
 	'CREATE AGGREGATE regress_pg_dump_schema.test_agg' => {
 		regexp => qr/^
-            \QCREATE AGGREGATE test_agg(smallint) (\E
+            \QCREATE AGGREGATE regress_pg_dump_schema.test_agg(smallint) (\E
             \n\s+\QSFUNC = int2_sum,\E
             \n\s+\QSTYPE = bigint\E
             \n\);\n/xm,
@@ -726,7 +726,7 @@ my %tests = (
 	'GRANT ALL ON regress_pg_dump_schema.test_agg' => {
 		regexp => qr/^
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
-			\QGRANT ALL ON FUNCTION test_agg(smallint) TO regress_dump_test_role;\E\n
+			\QGRANT ALL ON FUNCTION regress_pg_dump_schema.test_agg(smallint) TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
 		like   => { binary_upgrade => 1, },
@@ -748,7 +748,7 @@ my %tests = (
 		create_sql   => 'CREATE TABLE regress_pg_dump_schema.external_tab
 						   (col1 int);',
 		regexp => qr/^
-			\QCREATE TABLE external_tab (\E
+			\QCREATE TABLE regress_pg_dump_schema.external_tab (\E
 			\n\s+\Qcol1 integer\E
 			\n\);\n/xm,
 		like => {
