@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-01-31 07:53+0300\n"
-"PO-Revision-Date: 2018-01-31 08:51+0300\n"
+"POT-Creation-Date: 2018-02-05 16:42+0300\n"
+"PO-Revision-Date: 2018-02-06 17:01+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -28,7 +28,7 @@ msgstr ""
 msgid "not recorded"
 msgstr "не записано"
 
-#: ../common/controldata_utils.c:57 commands/copy.c:3157
+#: ../common/controldata_utils.c:57 commands/copy.c:3145
 #: commands/extension.c:3330 utils/adt/genfile.c:135
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
@@ -843,8 +843,8 @@ msgid "\"%s\" is an index"
 msgstr "\"%s\" - это индекс"
 
 #: access/heap/heapam.c:1298 access/heap/heapam.c:1326
-#: access/heap/heapam.c:1358 catalog/aclchk.c:1779 commands/tablecmds.c:9898
-#: commands/tablecmds.c:13128
+#: access/heap/heapam.c:1358 catalog/aclchk.c:1779 commands/tablecmds.c:9912
+#: commands/tablecmds.c:13142
 #, c-format
 msgid "\"%s\" is a composite type"
 msgstr "\"%s\" - это составной тип"
@@ -983,7 +983,7 @@ msgstr "для метода доступа индекса \"%s\" не задан
 
 #: access/index/indexam.c:160 catalog/objectaddress.c:1222
 #: commands/indexcmds.c:1822 commands/tablecmds.c:247
-#: commands/tablecmds.c:13119
+#: commands/tablecmds.c:13133
 #, c-format
 msgid "\"%s\" is not an index"
 msgstr "\"%s\" - это не индекс"
@@ -1021,7 +1021,7 @@ msgstr ""
 "полнотекстовую индексацию."
 
 #: access/nbtree/nbtpage.c:169 access/nbtree/nbtpage.c:372
-#: access/nbtree/nbtpage.c:459 parser/parse_utilcmd.c:1913
+#: access/nbtree/nbtpage.c:459 parser/parse_utilcmd.c:1921
 #, c-format
 msgid "index \"%s\" is not a btree"
 msgstr "индекс \"%s\" не является b-деревом"
@@ -1295,36 +1295,36 @@ msgstr ""
 msgid "invalid MultiXactId: %u"
 msgstr "неверный MultiXactId: %u"
 
-#: access/transam/parallel.c:601
+#: access/transam/parallel.c:604
 #, c-format
 msgid "parallel worker failed to initialize"
 msgstr "не удалось инициализировать параллельный исполнитель"
 
-#: access/transam/parallel.c:602
+#: access/transam/parallel.c:605
 #, c-format
 msgid "More details may be available in the server log."
 msgstr "Дополнительная информация может быть в журнале сервера."
 
-#: access/transam/parallel.c:663
+#: access/transam/parallel.c:666
 #, c-format
 msgid "postmaster exited during a parallel transaction"
 msgstr "postmaster завершился в процессе параллельной транзакции"
 
-#: access/transam/parallel.c:850
+#: access/transam/parallel.c:853
 #, c-format
 msgid "lost connection to parallel worker"
 msgstr "потеряно подключение к параллельному исполнителю"
 
-#: access/transam/parallel.c:912 access/transam/parallel.c:914
+#: access/transam/parallel.c:915 access/transam/parallel.c:917
 msgid "parallel worker"
 msgstr "параллельный исполнитель"
 
-#: access/transam/parallel.c:1057
+#: access/transam/parallel.c:1060
 #, c-format
 msgid "could not map dynamic shared memory segment"
 msgstr "не удалось отобразить динамический сегмент разделяемой памяти"
 
-#: access/transam/parallel.c:1062
+#: access/transam/parallel.c:1065
 #, c-format
 msgid "invalid magic number in dynamic shared memory segment"
 msgstr "неверное магическое число в динамическом сегменте разделяемой памяти"
@@ -1419,7 +1419,7 @@ msgstr ""
 
 #: access/transam/timeline.c:418 access/transam/timeline.c:498
 #: access/transam/xlog.c:3256 access/transam/xlog.c:3423
-#: access/transam/xlogfuncs.c:693 commands/copy.c:1724
+#: access/transam/xlogfuncs.c:693 commands/copy.c:1723
 #: storage/file/copydir.c:228
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -2157,7 +2157,7 @@ msgstr "параметр \"%s\" требует временное значени
 
 #: access/transam/xlog.c:5391 catalog/dependency.c:961 catalog/dependency.c:962
 #: catalog/dependency.c:968 catalog/dependency.c:969 catalog/dependency.c:980
-#: catalog/dependency.c:981 commands/tablecmds.c:946 commands/tablecmds.c:10358
+#: catalog/dependency.c:981 commands/tablecmds.c:946 commands/tablecmds.c:10372
 #: commands/user.c:1064 commands/view.c:505 libpq/auth.c:328
 #: replication/syncrep.c:1160 storage/lmgr/deadlock.c:1139
 #: storage/lmgr/proc.c:1313 utils/adt/acl.c:5253 utils/misc/guc.c:5772
@@ -2846,7 +2846,7 @@ msgstr "табличные пространства не поддерживаю�
 
 #: access/transam/xlog.c:10536 access/transam/xlog.c:10574
 #: access/transam/xlog.c:10790 access/transam/xlogarchive.c:105
-#: access/transam/xlogarchive.c:264 commands/copy.c:1854 commands/copy.c:3167
+#: access/transam/xlogarchive.c:264 commands/copy.c:1853 commands/copy.c:3155
 #: commands/extension.c:3319 commands/tablespace.c:780
 #: commands/tablespace.c:871 replication/basebackup.c:481
 #: replication/basebackup.c:549 replication/logical/snapbuild.c:1518
@@ -3481,11 +3481,11 @@ msgid "large object %u does not exist"
 msgstr "большой объект %u не существует"
 
 #: catalog/aclchk.c:885 catalog/aclchk.c:894 commands/collationcmds.c:114
-#: commands/copy.c:1043 commands/copy.c:1063 commands/copy.c:1072
-#: commands/copy.c:1081 commands/copy.c:1090 commands/copy.c:1099
-#: commands/copy.c:1108 commands/copy.c:1117 commands/copy.c:1126
-#: commands/copy.c:1144 commands/copy.c:1160 commands/copy.c:1180
-#: commands/copy.c:1197 commands/dbcommands.c:155 commands/dbcommands.c:164
+#: commands/copy.c:1042 commands/copy.c:1062 commands/copy.c:1071
+#: commands/copy.c:1080 commands/copy.c:1089 commands/copy.c:1098
+#: commands/copy.c:1107 commands/copy.c:1116 commands/copy.c:1125
+#: commands/copy.c:1143 commands/copy.c:1159 commands/copy.c:1179
+#: commands/copy.c:1196 commands/dbcommands.c:155 commands/dbcommands.c:164
 #: commands/dbcommands.c:173 commands/dbcommands.c:182
 #: commands/dbcommands.c:191 commands/dbcommands.c:200
 #: commands/dbcommands.c:209 commands/dbcommands.c:218
@@ -3505,7 +3505,7 @@ msgstr "большой объект %u не существует"
 #: commands/subscriptioncmds.c:110 commands/subscriptioncmds.c:120
 #: commands/subscriptioncmds.c:130 commands/subscriptioncmds.c:140
 #: commands/subscriptioncmds.c:154 commands/subscriptioncmds.c:165
-#: commands/subscriptioncmds.c:179 commands/tablecmds.c:5973
+#: commands/subscriptioncmds.c:179 commands/tablecmds.c:5987
 #: commands/typecmds.c:298 commands/typecmds.c:1396 commands/typecmds.c:1405
 #: commands/typecmds.c:1413 commands/typecmds.c:1421 commands/typecmds.c:1429
 #: commands/user.c:134 commands/user.c:148 commands/user.c:157
@@ -3534,13 +3534,13 @@ msgid "cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS"
 msgstr "предложение IN SCHEMA нельзя использовать в GRANT/REVOKE ON SCHEMAS"
 
 #: catalog/aclchk.c:1521 catalog/objectaddress.c:1389 commands/analyze.c:399
-#: commands/copy.c:4786 commands/sequence.c:1700 commands/tablecmds.c:5621
-#: commands/tablecmds.c:5768 commands/tablecmds.c:5825
-#: commands/tablecmds.c:5898 commands/tablecmds.c:5992
-#: commands/tablecmds.c:6051 commands/tablecmds.c:6176
-#: commands/tablecmds.c:6230 commands/tablecmds.c:6322
-#: commands/tablecmds.c:6478 commands/tablecmds.c:8707
-#: commands/tablecmds.c:8983 commands/tablecmds.c:9418 commands/trigger.c:817
+#: commands/copy.c:4774 commands/sequence.c:1700 commands/tablecmds.c:5635
+#: commands/tablecmds.c:5782 commands/tablecmds.c:5839
+#: commands/tablecmds.c:5912 commands/tablecmds.c:6006
+#: commands/tablecmds.c:6065 commands/tablecmds.c:6190
+#: commands/tablecmds.c:6244 commands/tablecmds.c:6336
+#: commands/tablecmds.c:6492 commands/tablecmds.c:8721
+#: commands/tablecmds.c:8997 commands/tablecmds.c:9432 commands/trigger.c:817
 #: parser/analyze.c:2310 parser/parse_relation.c:2733
 #: parser/parse_relation.c:2795 parser/parse_target.c:1002
 #: parser/parse_type.c:127 utils/adt/acl.c:2828 utils/adt/ruleutils.c:2356
@@ -3549,7 +3549,7 @@ msgid "column \"%s\" of relation \"%s\" does not exist"
 msgstr "столбец \"%s\" в таблице \"%s\" не существует"
 
 #: catalog/aclchk.c:1787 catalog/objectaddress.c:1229 commands/sequence.c:1138
-#: commands/tablecmds.c:229 commands/tablecmds.c:13093 utils/adt/acl.c:2061
+#: commands/tablecmds.c:229 commands/tablecmds.c:13107 utils/adt/acl.c:2061
 #: utils/adt/acl.c:2091 utils/adt/acl.c:2123 utils/adt/acl.c:2155
 #: utils/adt/acl.c:2183 utils/adt/acl.c:2213
 #, c-format
@@ -4059,7 +4059,7 @@ msgstr "Изменение системного каталога в текуще
 msgid "tables can have at most %d columns"
 msgstr "максимальное число столбцов в таблице: %d"
 
-#: catalog/heap.c:438 commands/tablecmds.c:5484
+#: catalog/heap.c:438 commands/tablecmds.c:5498
 #, c-format
 msgid "column name \"%s\" conflicts with a system column name"
 msgstr "имя столбца \"%s\" конфликтует с системным столбцом"
@@ -4087,7 +4087,7 @@ msgstr ""
 "сортировки"
 
 #: catalog/heap.c:581 commands/createas.c:204 commands/createas.c:501
-#: commands/indexcmds.c:1152 commands/tablecmds.c:13389 commands/view.c:103
+#: commands/indexcmds.c:1152 commands/tablecmds.c:13403 commands/view.c:103
 #: regex/regc_pg_locale.c:263 utils/adt/formatting.c:1546
 #: utils/adt/formatting.c:1670 utils/adt/formatting.c:1795 utils/adt/like.c:184
 #: utils/adt/selfuncs.c:5590 utils/adt/varlena.c:1417 utils/adt/varlena.c:1854
@@ -4132,7 +4132,7 @@ msgstr ""
 msgid "check constraint \"%s\" already exists"
 msgstr "ограничение-проверка \"%s\" уже существует"
 
-#: catalog/heap.c:2506 catalog/pg_constraint.c:649 commands/tablecmds.c:6838
+#: catalog/heap.c:2506 catalog/pg_constraint.c:649 commands/tablecmds.c:6852
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "ограничение \"%s\" для отношения \"%s\" уже существует"
@@ -4215,7 +4215,7 @@ msgid "Truncate table \"%s\" at the same time, or use TRUNCATE ... CASCADE."
 msgstr ""
 "Опустошите таблицу \"%s\" параллельно или используйте TRUNCATE ... CASCADE."
 
-#: catalog/index.c:213 parser/parse_utilcmd.c:1684 parser/parse_utilcmd.c:1770
+#: catalog/index.c:213 parser/parse_utilcmd.c:1692 parser/parse_utilcmd.c:1778
 #, c-format
 msgid "multiple primary keys for table \"%s\" are not allowed"
 msgstr "таблица \"%s\" не может иметь несколько первичных ключей"
@@ -4421,25 +4421,25 @@ msgstr "Ошибка синтаксиса в списке."
 #: commands/lockcmds.c:93 commands/policy.c:94 commands/policy.c:391
 #: commands/policy.c:481 commands/tablecmds.c:223 commands/tablecmds.c:265
 #: commands/tablecmds.c:1507 commands/tablecmds.c:4722
-#: commands/tablecmds.c:8823
+#: commands/tablecmds.c:8837
 #, c-format
 msgid "\"%s\" is not a table"
 msgstr "\"%s\" - это не таблица"
 
 #: catalog/objectaddress.c:1244 commands/tablecmds.c:235
-#: commands/tablecmds.c:4752 commands/tablecmds.c:13098 commands/view.c:141
+#: commands/tablecmds.c:4752 commands/tablecmds.c:13112 commands/view.c:141
 #, c-format
 msgid "\"%s\" is not a view"
 msgstr "\"%s\" - это не представление"
 
 #: catalog/objectaddress.c:1251 commands/matview.c:174 commands/tablecmds.c:241
-#: commands/tablecmds.c:13103
+#: commands/tablecmds.c:13117
 #, c-format
 msgid "\"%s\" is not a materialized view"
 msgstr "\"%s\" - это не материализованное представление"
 
 #: catalog/objectaddress.c:1258 commands/tablecmds.c:259
-#: commands/tablecmds.c:4755 commands/tablecmds.c:13108
+#: commands/tablecmds.c:4755 commands/tablecmds.c:13122
 #, c-format
 msgid "\"%s\" is not a foreign table"
 msgstr "\"%s\" - это не сторонняя таблица"
@@ -4875,7 +4875,7 @@ msgid "partition \"%s\" would overlap partition \"%s\""
 msgstr "секция \"%s\" пересекается с секцией \"%s\""
 
 #: catalog/partition.c:927 catalog/partition.c:1110 commands/analyze.c:1462
-#: commands/copy.c:2511 commands/tablecmds.c:8885
+#: commands/copy.c:2510 commands/tablecmds.c:8899
 #: executor/execExprInterp.c:2853 executor/execMain.c:1907
 #: executor/execMain.c:1985 executor/execMain.c:2033 executor/execMain.c:2143
 #: executor/execMain.c:3322 executor/nodeModifyTable.c:1533
@@ -5502,7 +5502,7 @@ msgid "could not form array type name for type \"%s\""
 msgstr "не удалось сформировать имя типа массива для типа \"%s\""
 
 #: catalog/toasting.c:105 commands/indexcmds.c:399 commands/tablecmds.c:4734
-#: commands/tablecmds.c:12986
+#: commands/tablecmds.c:13000
 #, c-format
 msgid "\"%s\" is not a table or materialized view"
 msgstr "\"%s\" - это не таблица и не материализованное представление"
@@ -5857,7 +5857,7 @@ msgstr "кластеризовать временные таблицы друг�
 msgid "there is no previously clustered index for table \"%s\""
 msgstr "таблица \"%s\" ранее не кластеризовалась по какому-либо индексу"
 
-#: commands/cluster.c:173 commands/tablecmds.c:10198 commands/tablecmds.c:12079
+#: commands/cluster.c:173 commands/tablecmds.c:10212 commands/tablecmds.c:12093
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "индекс \"%s\" для таблицы \"%s\" не существует"
@@ -5872,7 +5872,7 @@ msgstr "кластеризовать разделяемый каталог не�
 msgid "cannot vacuum temporary tables of other sessions"
 msgstr "очищать временные таблицы других сеансов нельзя"
 
-#: commands/cluster.c:431 commands/tablecmds.c:12089
+#: commands/cluster.c:431 commands/tablecmds.c:12103
 #, c-format
 msgid "\"%s\" is not an index for table \"%s\""
 msgstr "\"%s\" не является индексом таблицы \"%s\""
@@ -5985,7 +5985,7 @@ msgid "must be superuser to import system collations"
 msgstr ""
 "импортировать системные правила сортировки может только суперпользователь"
 
-#: commands/collationcmds.c:535 commands/copy.c:1808 commands/copy.c:3142
+#: commands/collationcmds.c:535 commands/copy.c:1807 commands/copy.c:3130
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "не удалось выполнить команду \"%s\": %m"
@@ -6004,7 +6004,7 @@ msgstr "пригодные системные локали не найдены"
 msgid "database \"%s\" does not exist"
 msgstr "база данных \"%s\" не существует"
 
-#: commands/comment.c:101 commands/seclabel.c:117 parser/parse_utilcmd.c:944
+#: commands/comment.c:101 commands/seclabel.c:117 parser/parse_utilcmd.c:952
 #, c-format
 msgid ""
 "\"%s\" is not a table, view, materialized view, composite type, or foreign "
@@ -6043,54 +6043,54 @@ msgstr "целевая кодировка \"%s\" не существует"
 msgid "encoding conversion function %s must return type %s"
 msgstr "функция преобразования кодировки %s должна возвращать тип %s"
 
-#: commands/copy.c:374 commands/copy.c:408
+#: commands/copy.c:373 commands/copy.c:407
 #, c-format
 msgid "COPY BINARY is not supported to stdout or from stdin"
 msgstr "COPY BINARY не поддерживает стандартный вывод (stdout) и ввод (stdin)"
 
-#: commands/copy.c:508
+#: commands/copy.c:507
 #, c-format
 msgid "could not write to COPY program: %m"
 msgstr "не удалось записать в канал программы COPY: %m"
 
-#: commands/copy.c:513
+#: commands/copy.c:512
 #, c-format
 msgid "could not write to COPY file: %m"
 msgstr "не удалось записать в файл COPY: %m"
 
-#: commands/copy.c:526
+#: commands/copy.c:525
 #, c-format
 msgid "connection lost during COPY to stdout"
 msgstr "в процессе вывода данных COPY в stdout потеряно соединение"
 
-#: commands/copy.c:570
+#: commands/copy.c:569
 #, c-format
 msgid "could not read from COPY file: %m"
 msgstr "не удалось прочитать файл COPY: %m"
 
-#: commands/copy.c:586 commands/copy.c:607 commands/copy.c:611
+#: commands/copy.c:585 commands/copy.c:606 commands/copy.c:610
 #: tcop/postgres.c:335 tcop/postgres.c:371 tcop/postgres.c:398
 #, c-format
 msgid "unexpected EOF on client connection with an open transaction"
 msgstr "неожиданный обрыв соединения с клиентом при открытой транзакции"
 
-#: commands/copy.c:624
+#: commands/copy.c:623
 #, c-format
 msgid "COPY from stdin failed: %s"
 msgstr "ошибка при вводе данных COPY из stdin: %s"
 
-#: commands/copy.c:640
+#: commands/copy.c:639
 #, c-format
 msgid "unexpected message type 0x%02X during COPY from stdin"
 msgstr "неожиданный тип сообщения 0x%02X при вводе данных COPY из stdin"
 
-#: commands/copy.c:801
+#: commands/copy.c:800
 #, c-format
 msgid "must be superuser to COPY to or from an external program"
 msgstr ""
 "для использования COPY с внешними программами нужно быть суперпользователем"
 
-#: commands/copy.c:802 commands/copy.c:808
+#: commands/copy.c:801 commands/copy.c:807
 #, c-format
 msgid ""
 "Anyone can COPY to stdout or from stdin. psql's \\copy command also works "
@@ -6099,263 +6099,263 @@ msgstr ""
 "Не имея административных прав, можно использовать COPY с stdout и stdin (а "
 "также команду psql \\copy)."
 
-#: commands/copy.c:807
+#: commands/copy.c:806
 #, c-format
 msgid "must be superuser to COPY to or from a file"
 msgstr "для использования COPY с файлами нужно быть суперпользователем"
 
-#: commands/copy.c:869
+#: commands/copy.c:868
 #, c-format
 msgid "COPY FROM not supported with row-level security"
 msgstr "COPY FROM не поддерживается с защитой на уровне строк."
 
-#: commands/copy.c:870
+#: commands/copy.c:869
 #, c-format
 msgid "Use INSERT statements instead."
 msgstr "Используйте операторы INSERT."
 
-#: commands/copy.c:1055
+#: commands/copy.c:1054
 #, c-format
 msgid "COPY format \"%s\" not recognized"
 msgstr "формат \"%s\" для COPY не распознан"
 
-#: commands/copy.c:1135 commands/copy.c:1151 commands/copy.c:1166
-#: commands/copy.c:1188
+#: commands/copy.c:1134 commands/copy.c:1150 commands/copy.c:1165
+#: commands/copy.c:1187
 #, c-format
 msgid "argument to option \"%s\" must be a list of column names"
 msgstr "аргументом параметра \"%s\" должен быть список имён столбцов"
 
-#: commands/copy.c:1203
+#: commands/copy.c:1202
 #, c-format
 msgid "argument to option \"%s\" must be a valid encoding name"
 msgstr "аргументом параметра \"%s\" должно быть название допустимой кодировки"
 
-#: commands/copy.c:1210 commands/dbcommands.c:242 commands/dbcommands.c:1461
+#: commands/copy.c:1209 commands/dbcommands.c:242 commands/dbcommands.c:1461
 #, c-format
 msgid "option \"%s\" not recognized"
 msgstr "параметр \"%s\" не распознан"
 
-#: commands/copy.c:1222
+#: commands/copy.c:1221
 #, c-format
 msgid "cannot specify DELIMITER in BINARY mode"
 msgstr "в режиме BINARY нельзя указывать DELIMITER"
 
-#: commands/copy.c:1227
+#: commands/copy.c:1226
 #, c-format
 msgid "cannot specify NULL in BINARY mode"
 msgstr "в режиме BINARY нельзя указывать NULL"
 
-#: commands/copy.c:1249
+#: commands/copy.c:1248
 #, c-format
 msgid "COPY delimiter must be a single one-byte character"
 msgstr "разделитель для COPY должен быть однобайтным символом"
 
-#: commands/copy.c:1256
+#: commands/copy.c:1255
 #, c-format
 msgid "COPY delimiter cannot be newline or carriage return"
 msgstr ""
 "разделителем для COPY не может быть символ новой строки или возврата каретки"
 
-#: commands/copy.c:1262
+#: commands/copy.c:1261
 #, c-format
 msgid "COPY null representation cannot use newline or carriage return"
 msgstr ""
 "представление NULL для COPY не может включать символ новой строки или "
 "возврата каретки"
 
-#: commands/copy.c:1279
+#: commands/copy.c:1278
 #, c-format
 msgid "COPY delimiter cannot be \"%s\""
 msgstr "\"%s\" не может быть разделителем для COPY"
 
-#: commands/copy.c:1285
+#: commands/copy.c:1284
 #, c-format
 msgid "COPY HEADER available only in CSV mode"
 msgstr "COPY HEADER можно использовать только в режиме CSV"
 
-#: commands/copy.c:1291
+#: commands/copy.c:1290
 #, c-format
 msgid "COPY quote available only in CSV mode"
 msgstr "определить кавычки для COPY можно только в режиме CSV"
 
-#: commands/copy.c:1296
+#: commands/copy.c:1295
 #, c-format
 msgid "COPY quote must be a single one-byte character"
 msgstr "символ кавычек для COPY должен быть однобайтным"
 
-#: commands/copy.c:1301
+#: commands/copy.c:1300
 #, c-format
 msgid "COPY delimiter and quote must be different"
 msgstr "символ кавычек для COPY должен отличаться от разделителя"
 
-#: commands/copy.c:1307
+#: commands/copy.c:1306
 #, c-format
 msgid "COPY escape available only in CSV mode"
 msgstr "определить спецсимвол для COPY можно только в режиме CSV"
 
-#: commands/copy.c:1312
+#: commands/copy.c:1311
 #, c-format
 msgid "COPY escape must be a single one-byte character"
 msgstr "спецсимвол для COPY должен быть однобайтным"
 
-#: commands/copy.c:1318
+#: commands/copy.c:1317
 #, c-format
 msgid "COPY force quote available only in CSV mode"
 msgstr "параметр force quote для COPY можно использовать только в режиме CSV"
 
-#: commands/copy.c:1322
+#: commands/copy.c:1321
 #, c-format
 msgid "COPY force quote only available using COPY TO"
 msgstr "параметр force quote для COPY можно использовать только с COPY TO"
 
-#: commands/copy.c:1328
+#: commands/copy.c:1327
 #, c-format
 msgid "COPY force not null available only in CSV mode"
 msgstr ""
 "параметр force not null для COPY можно использовать только в режиме CSV"
 
-#: commands/copy.c:1332
+#: commands/copy.c:1331
 #, c-format
 msgid "COPY force not null only available using COPY FROM"
 msgstr "параметр force not null для COPY можно использовать только с COPY FROM"
 
-#: commands/copy.c:1338
+#: commands/copy.c:1337
 #, c-format
 msgid "COPY force null available only in CSV mode"
 msgstr "параметр force null для COPY можно использовать только в режиме CSV"
 
-#: commands/copy.c:1343
+#: commands/copy.c:1342
 #, c-format
 msgid "COPY force null only available using COPY FROM"
 msgstr "параметр force null для COPY можно использовать только с COPY FROM"
 
-#: commands/copy.c:1349
+#: commands/copy.c:1348
 #, c-format
 msgid "COPY delimiter must not appear in the NULL specification"
 msgstr "разделитель для COPY не должен присутствовать в представлении NULL"
 
-#: commands/copy.c:1356
+#: commands/copy.c:1355
 #, c-format
 msgid "CSV quote character must not appear in the NULL specification"
 msgstr "символ кавычек в CSV не должен присутствовать в представлении NULL"
 
-#: commands/copy.c:1417
+#: commands/copy.c:1416
 #, c-format
 msgid "table \"%s\" does not have OIDs"
 msgstr "таблица \"%s\" не содержит OID"
 
-#: commands/copy.c:1434
+#: commands/copy.c:1433
 #, c-format
 msgid "COPY (query) WITH OIDS is not supported"
 msgstr "COPY (запрос) WITH OIDS не поддерживается"
 
-#: commands/copy.c:1455
+#: commands/copy.c:1454
 #, c-format
 msgid "DO INSTEAD NOTHING rules are not supported for COPY"
 msgstr "правила DO INSTEAD NOTHING не поддерживаются с COPY"
 
-#: commands/copy.c:1469
+#: commands/copy.c:1468
 #, c-format
 msgid "conditional DO INSTEAD rules are not supported for COPY"
 msgstr "условные правила DO INSTEAD не поддерживаются с COPY"
 
-#: commands/copy.c:1473
+#: commands/copy.c:1472
 #, c-format
 msgid "DO ALSO rules are not supported for the COPY"
 msgstr "правила DO ALSO не поддерживаются с COPY"
 
-#: commands/copy.c:1478
+#: commands/copy.c:1477
 #, c-format
 msgid "multi-statement DO INSTEAD rules are not supported for COPY"
 msgstr "составные правила DO INSTEAD не поддерживаются с COPY"
 
-#: commands/copy.c:1488
+#: commands/copy.c:1487
 #, c-format
 msgid "COPY (SELECT INTO) is not supported"
 msgstr "COPY (SELECT INTO) не поддерживается"
 
-#: commands/copy.c:1505
+#: commands/copy.c:1504
 #, c-format
 msgid "COPY query must have a RETURNING clause"
 msgstr "в запросе COPY должно быть предложение RETURNING"
 
-#: commands/copy.c:1533
+#: commands/copy.c:1532
 #, c-format
 msgid "relation referenced by COPY statement has changed"
 msgstr "отношение, задействованное в операторе COPY, изменилось"
 
-#: commands/copy.c:1591
+#: commands/copy.c:1590
 #, c-format
 msgid "FORCE_QUOTE column \"%s\" not referenced by COPY"
 msgstr "столбец FORCE_QUOTE \"%s\" не фигурирует в COPY"
 
-#: commands/copy.c:1613
+#: commands/copy.c:1612
 #, c-format
 msgid "FORCE_NOT_NULL column \"%s\" not referenced by COPY"
 msgstr "столбец FORCE_NOT_NULL \"%s\" не фигурирует в COPY"
 
-#: commands/copy.c:1635
+#: commands/copy.c:1634
 #, c-format
 msgid "FORCE_NULL column \"%s\" not referenced by COPY"
 msgstr "столбец FORCE_NULL \"%s\" не фигурирует в COPY"
 
-#: commands/copy.c:1700
+#: commands/copy.c:1699
 #, c-format
 msgid "could not close pipe to external command: %m"
 msgstr "не удалось закрыть канал сообщений с внешней командой: %m"
 
-#: commands/copy.c:1704
+#: commands/copy.c:1703
 #, c-format
 msgid "program \"%s\" failed"
 msgstr "сбой программы \"%s\""
 
-#: commands/copy.c:1754
+#: commands/copy.c:1753
 #, c-format
 msgid "cannot copy from view \"%s\""
 msgstr "копировать из представления \"%s\" нельзя"
 
-#: commands/copy.c:1756 commands/copy.c:1762 commands/copy.c:1768
-#: commands/copy.c:1779
+#: commands/copy.c:1755 commands/copy.c:1761 commands/copy.c:1767
+#: commands/copy.c:1778
 #, c-format
 msgid "Try the COPY (SELECT ...) TO variant."
 msgstr "Попробуйте вариацию COPY (SELECT ...) TO."
 
-#: commands/copy.c:1760
+#: commands/copy.c:1759
 #, c-format
 msgid "cannot copy from materialized view \"%s\""
 msgstr "копировать из материализованного представления \"%s\" нельзя"
 
-#: commands/copy.c:1766
+#: commands/copy.c:1765
 #, c-format
 msgid "cannot copy from foreign table \"%s\""
 msgstr "копировать из сторонней таблицы \"%s\" нельзя"
 
-#: commands/copy.c:1772
+#: commands/copy.c:1771
 #, c-format
 msgid "cannot copy from sequence \"%s\""
 msgstr "копировать из последовательности \"%s\" нельзя"
 
-#: commands/copy.c:1777
+#: commands/copy.c:1776
 #, c-format
 msgid "cannot copy from partitioned table \"%s\""
 msgstr "копировать из секционированной таблицы \"%s\" нельзя"
 
-#: commands/copy.c:1783
+#: commands/copy.c:1782
 #, c-format
 msgid "cannot copy from non-table relation \"%s\""
 msgstr "копировать из отношения \"%s\", не являющегося таблицей, нельзя"
 
-#: commands/copy.c:1823
+#: commands/copy.c:1822
 #, c-format
 msgid "relative path not allowed for COPY to file"
 msgstr "при выполнении COPY в файл нельзя указывать относительный путь"
 
-#: commands/copy.c:1844
+#: commands/copy.c:1843
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "не удалось открыть файл \"%s\" для записи: %m"
 
-#: commands/copy.c:1847
+#: commands/copy.c:1846
 #, c-format
 msgid ""
 "COPY TO instructs the PostgreSQL server process to write a file. You may "
@@ -6365,74 +6365,74 @@ msgstr ""
 "Возможно, на самом деле вам нужно клиентское средство, например, \\copy в "
 "psql."
 
-#: commands/copy.c:1860 commands/copy.c:3173
+#: commands/copy.c:1859 commands/copy.c:3161
 #, c-format
 msgid "\"%s\" is a directory"
 msgstr "\"%s\" - это каталог"
 
-#: commands/copy.c:2183
+#: commands/copy.c:2182
 #, c-format
 msgid "COPY %s, line %d, column %s"
 msgstr "COPY %s, строка %d, столбец %s"
 
-#: commands/copy.c:2187 commands/copy.c:2234
+#: commands/copy.c:2186 commands/copy.c:2233
 #, c-format
 msgid "COPY %s, line %d"
 msgstr "COPY %s, строка %d"
 
-#: commands/copy.c:2198
+#: commands/copy.c:2197
 #, c-format
 msgid "COPY %s, line %d, column %s: \"%s\""
 msgstr "COPY %s, строка %d, столбец %s: \"%s\""
 
-#: commands/copy.c:2206
+#: commands/copy.c:2205
 #, c-format
 msgid "COPY %s, line %d, column %s: null input"
 msgstr "COPY %s, строка %d, столбец %s: значение NULL"
 
-#: commands/copy.c:2228
+#: commands/copy.c:2227
 #, c-format
 msgid "COPY %s, line %d: \"%s\""
 msgstr "COPY %s, строка %d: \"%s\""
 
-#: commands/copy.c:2322
+#: commands/copy.c:2321
 #, c-format
 msgid "cannot copy to view \"%s\""
 msgstr "копировать в представление \"%s\" нельзя"
 
-#: commands/copy.c:2324
+#: commands/copy.c:2323
 #, c-format
 msgid "To enable copying to a view, provide an INSTEAD OF INSERT trigger."
 msgstr ""
 "Чтобы представление допускало копирование данных в него, установите триггер "
 "INSTEAD OF INSERT."
 
-#: commands/copy.c:2328
+#: commands/copy.c:2327
 #, c-format
 msgid "cannot copy to materialized view \"%s\""
 msgstr "копировать в материализованное представление \"%s\" нельзя"
 
-#: commands/copy.c:2333
+#: commands/copy.c:2332
 #, c-format
 msgid "cannot copy to foreign table \"%s\""
 msgstr "копировать в стороннюю таблицу \"%s\" нельзя"
 
-#: commands/copy.c:2338
+#: commands/copy.c:2337
 #, c-format
 msgid "cannot copy to sequence \"%s\""
 msgstr "копировать в последовательность \"%s\" нельзя"
 
-#: commands/copy.c:2343
+#: commands/copy.c:2342
 #, c-format
 msgid "cannot copy to non-table relation \"%s\""
 msgstr "копировать в отношение \"%s\", не являющееся таблицей, нельзя"
 
-#: commands/copy.c:2418
+#: commands/copy.c:2417
 #, c-format
 msgid "cannot perform FREEZE because of prior transaction activity"
 msgstr "выполнить FREEZE нельзя из-за предыдущей активности в транзакции"
 
-#: commands/copy.c:2424
+#: commands/copy.c:2423
 #, c-format
 msgid ""
 "cannot perform FREEZE because the table was not created or truncated in the "
@@ -6441,12 +6441,12 @@ msgstr ""
 "выполнить FREEZE нельзя, так как таблица не была создана или усечена в "
 "текущей подтранзакции"
 
-#: commands/copy.c:2646 executor/nodeModifyTable.c:311
+#: commands/copy.c:2645 executor/nodeModifyTable.c:311
 #, c-format
 msgid "cannot route inserted tuples to a foreign table"
 msgstr "направить вставляемые кортежи в стороннюю таблицу нельзя"
 
-#: commands/copy.c:3160
+#: commands/copy.c:3148
 #, c-format
 msgid ""
 "COPY FROM instructs the PostgreSQL server process to read a file. You may "
@@ -6456,137 +6456,137 @@ msgstr ""
 "файла. Возможно, на самом деле вам нужно клиентское средство, например, "
 "\\copy в psql."
 
-#: commands/copy.c:3193
+#: commands/copy.c:3181
 #, c-format
 msgid "COPY file signature not recognized"
 msgstr "подпись COPY-файла не распознана"
 
-#: commands/copy.c:3198
+#: commands/copy.c:3186
 #, c-format
 msgid "invalid COPY file header (missing flags)"
 msgstr "неверный заголовок файла COPY (отсутствуют флаги)"
 
-#: commands/copy.c:3204
+#: commands/copy.c:3192
 #, c-format
 msgid "unrecognized critical flags in COPY file header"
 msgstr "не распознаны важные флаги в заголовке файла COPY"
 
-#: commands/copy.c:3210
+#: commands/copy.c:3198
 #, c-format
 msgid "invalid COPY file header (missing length)"
 msgstr "неверный заголовок файла COPY (отсутствует длина)"
 
-#: commands/copy.c:3217
+#: commands/copy.c:3205
 #, c-format
 msgid "invalid COPY file header (wrong length)"
 msgstr "неверный заголовок файла COPY (неправильная длина)"
 
-#: commands/copy.c:3350 commands/copy.c:4057 commands/copy.c:4287
+#: commands/copy.c:3338 commands/copy.c:4045 commands/copy.c:4275
 #, c-format
 msgid "extra data after last expected column"
 msgstr "лишние данные после содержимого последнего столбца"
 
-#: commands/copy.c:3360
+#: commands/copy.c:3348
 #, c-format
 msgid "missing data for OID column"
 msgstr "нет данных для столбца OID"
 
-#: commands/copy.c:3366
+#: commands/copy.c:3354
 #, c-format
 msgid "null OID in COPY data"
 msgstr "неверное значение OID (NULL) в данных COPY"
 
-#: commands/copy.c:3376 commands/copy.c:3499
+#: commands/copy.c:3364 commands/copy.c:3487
 #, c-format
 msgid "invalid OID in COPY data"
 msgstr "неверный OID в данных COPY"
 
-#: commands/copy.c:3391
+#: commands/copy.c:3379
 #, c-format
 msgid "missing data for column \"%s\""
 msgstr "нет данных для столбца \"%s\""
 
-#: commands/copy.c:3474
+#: commands/copy.c:3462
 #, c-format
 msgid "received copy data after EOF marker"
 msgstr "после маркера конца файла продолжаются данные COPY"
 
-#: commands/copy.c:3481
+#: commands/copy.c:3469
 #, c-format
 msgid "row field count is %d, expected %d"
 msgstr "количество полей в строке: %d, ожидалось: %d"
 
-#: commands/copy.c:3821 commands/copy.c:3838
+#: commands/copy.c:3809 commands/copy.c:3826
 #, c-format
 msgid "literal carriage return found in data"
 msgstr "в данных обнаружен явный возврат каретки"
 
-#: commands/copy.c:3822 commands/copy.c:3839
+#: commands/copy.c:3810 commands/copy.c:3827
 #, c-format
 msgid "unquoted carriage return found in data"
 msgstr "в данных обнаружен возврат каретки не в кавычках"
 
-#: commands/copy.c:3824 commands/copy.c:3841
+#: commands/copy.c:3812 commands/copy.c:3829
 #, c-format
 msgid "Use \"\\r\" to represent carriage return."
 msgstr "Представьте возврат каретки как \"\\r\"."
 
-#: commands/copy.c:3825 commands/copy.c:3842
+#: commands/copy.c:3813 commands/copy.c:3830
 #, c-format
 msgid "Use quoted CSV field to represent carriage return."
 msgstr "Заключите возврат каретки в кавычки CSV."
 
-#: commands/copy.c:3854
+#: commands/copy.c:3842
 #, c-format
 msgid "literal newline found in data"
 msgstr "в данных обнаружен явный символ новой строки"
 
-#: commands/copy.c:3855
+#: commands/copy.c:3843
 #, c-format
 msgid "unquoted newline found in data"
 msgstr "в данных обнаружен явный символ новой строки не в кавычках"
 
-#: commands/copy.c:3857
+#: commands/copy.c:3845
 #, c-format
 msgid "Use \"\\n\" to represent newline."
 msgstr "Представьте символ новой строки как \"\\n\"."
 
-#: commands/copy.c:3858
+#: commands/copy.c:3846
 #, c-format
 msgid "Use quoted CSV field to represent newline."
 msgstr "Заключите символ новой строки в кавычки CSV."
 
-#: commands/copy.c:3904 commands/copy.c:3940
+#: commands/copy.c:3892 commands/copy.c:3928
 #, c-format
 msgid "end-of-copy marker does not match previous newline style"
 msgstr "маркер \"конец копии\" не соответствует предыдущему стилю новой строки"
 
-#: commands/copy.c:3913 commands/copy.c:3929
+#: commands/copy.c:3901 commands/copy.c:3917
 #, c-format
 msgid "end-of-copy marker corrupt"
 msgstr "маркер \"конец копии\" испорчен"
 
-#: commands/copy.c:4371
+#: commands/copy.c:4359
 #, c-format
 msgid "unterminated CSV quoted field"
 msgstr "незавершённое поле в кавычках CSV"
 
-#: commands/copy.c:4448 commands/copy.c:4467
+#: commands/copy.c:4436 commands/copy.c:4455
 #, c-format
 msgid "unexpected EOF in COPY data"
 msgstr "неожиданный конец данных COPY"
 
-#: commands/copy.c:4457
+#: commands/copy.c:4445
 #, c-format
 msgid "invalid field size"
 msgstr "неверный размер поля"
 
-#: commands/copy.c:4480
+#: commands/copy.c:4468
 #, c-format
 msgid "incorrect binary data format"
 msgstr "неверный двоичный формат данных"
 
-#: commands/copy.c:4791 commands/indexcmds.c:1073 commands/statscmds.c:183
+#: commands/copy.c:4779 commands/indexcmds.c:1073 commands/statscmds.c:183
 #: commands/tablecmds.c:1685 commands/tablecmds.c:2187
 #: commands/tablecmds.c:2613 parser/parse_relation.c:3287
 #: parser/parse_relation.c:3307 utils/adt/tsvector_op.c:2561
@@ -6594,7 +6594,7 @@ msgstr "неверный двоичный формат данных"
 msgid "column \"%s\" does not exist"
 msgstr "столбец \"%s\" не существует"
 
-#: commands/copy.c:4798 commands/tablecmds.c:1711 commands/tablecmds.c:2213
+#: commands/copy.c:4786 commands/tablecmds.c:1711 commands/tablecmds.c:2213
 #: commands/trigger.c:826 parser/parse_target.c:1018 parser/parse_target.c:1029
 #, c-format
 msgid "column \"%s\" specified more than once"
@@ -6935,7 +6935,7 @@ msgstr "Используйте DROP AGGREGATE для удаления агрег
 
 #: commands/dropcmds.c:157 commands/sequence.c:442 commands/tablecmds.c:2697
 #: commands/tablecmds.c:2848 commands/tablecmds.c:2891
-#: commands/tablecmds.c:12462 tcop/utility.c:1168
+#: commands/tablecmds.c:12476 tcop/utility.c:1168
 #, c-format
 msgid "relation \"%s\" does not exist, skipping"
 msgstr "отношение \"%s\" не существует, пропускается"
@@ -7906,7 +7906,7 @@ msgstr "создать индекс в секционированной табл
 msgid "cannot create indexes on temporary tables of other sessions"
 msgstr "создавать индексы во временных таблицах других сеансов нельзя"
 
-#: commands/indexcmds.c:474 commands/tablecmds.c:593 commands/tablecmds.c:10506
+#: commands/indexcmds.c:474 commands/tablecmds.c:593 commands/tablecmds.c:10520
 #, c-format
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr ""
@@ -7947,7 +7947,7 @@ msgstr "%s %s создаст неявный индекс \"%s\" для табл�
 msgid "functions in index predicate must be marked IMMUTABLE"
 msgstr "функции в предикате индекса должны быть помечены как IMMUTABLE"
 
-#: commands/indexcmds.c:1068 parser/parse_utilcmd.c:2089
+#: commands/indexcmds.c:1068 parser/parse_utilcmd.c:2097
 #, c-format
 msgid "column \"%s\" named in key does not exist"
 msgstr "указанный в ключе столбец \"%s\" не существует"
@@ -7962,8 +7962,8 @@ msgstr "функции в индексном выражении должны б�
 msgid "could not determine which collation to use for index expression"
 msgstr "не удалось определить правило сортировки для индексного выражения"
 
-#: commands/indexcmds.c:1159 commands/tablecmds.c:13396 commands/typecmds.c:831
-#: parser/parse_expr.c:2763 parser/parse_type.c:549 parser/parse_utilcmd.c:3126
+#: commands/indexcmds.c:1159 commands/tablecmds.c:13410 commands/typecmds.c:831
+#: parser/parse_expr.c:2763 parser/parse_type.c:549 parser/parse_utilcmd.c:3134
 #: utils/adt/misc.c:661
 #, c-format
 msgid "collations are not supported by type %s"
@@ -8310,8 +8310,8 @@ msgstr "атрибут оператора \"%s\" нельзя изменить"
 #: commands/policy.c:87 commands/policy.c:397 commands/policy.c:487
 #: commands/tablecmds.c:1150 commands/tablecmds.c:1520
 #: commands/tablecmds.c:2507 commands/tablecmds.c:4704
-#: commands/tablecmds.c:7054 commands/tablecmds.c:13019
-#: commands/tablecmds.c:13054 commands/trigger.c:259 commands/trigger.c:1320
+#: commands/tablecmds.c:7068 commands/tablecmds.c:13033
+#: commands/tablecmds.c:13068 commands/trigger.c:259 commands/trigger.c:1320
 #: commands/trigger.c:1429 rewrite/rewriteDefine.c:272
 #: rewrite/rewriteDefine.c:925
 #, c-format
@@ -8661,8 +8661,8 @@ msgstr ""
 msgid "cannot change ownership of identity sequence"
 msgstr "сменить владельца последовательности идентификации нельзя"
 
-#: commands/sequence.c:1716 commands/tablecmds.c:9888
-#: commands/tablecmds.c:12482
+#: commands/sequence.c:1716 commands/tablecmds.c:9902
+#: commands/tablecmds.c:12496
 #, c-format
 msgid "Sequence \"%s\" is linked to table \"%s\"."
 msgstr "Последовательность \"%s\" связана с таблицей \"%s\"."
@@ -8957,7 +8957,7 @@ msgstr ""
 "Выполните DROP MATERIALIZED VIEW для удаления материализованного "
 "представления."
 
-#: commands/tablecmds.c:245 parser/parse_utilcmd.c:1841
+#: commands/tablecmds.c:245 parser/parse_utilcmd.c:1849
 #, c-format
 msgid "index \"%s\" does not exist"
 msgstr "индекс \"%s\" не существует"
@@ -8980,8 +8980,8 @@ msgstr "\"%s\" - это не тип"
 msgid "Use DROP TYPE to remove a type."
 msgstr "Выполните DROP TYPE для удаления типа."
 
-#: commands/tablecmds.c:257 commands/tablecmds.c:9404
-#: commands/tablecmds.c:12262
+#: commands/tablecmds.c:257 commands/tablecmds.c:9418
+#: commands/tablecmds.c:12276
 #, c-format
 msgid "foreign table \"%s\" does not exist"
 msgstr "сторонняя таблица \"%s\" не существует"
@@ -9012,7 +9012,7 @@ msgstr ""
 msgid "cannot create table with OIDs as partition of table without OIDs"
 msgstr "создать таблицу с OID в виде секции таблицы без OID нельзя"
 
-#: commands/tablecmds.c:783 parser/parse_utilcmd.c:3293
+#: commands/tablecmds.c:783 parser/parse_utilcmd.c:3301
 #, c-format
 msgid "\"%s\" is not partitioned"
 msgstr "отношение \"%s\" не секционировано"
@@ -9056,7 +9056,7 @@ msgstr "опустошение распространяется на табли�
 msgid "cannot truncate temporary tables of other sessions"
 msgstr "временные таблицы других сеансов нельзя опустошить"
 
-#: commands/tablecmds.c:1761 commands/tablecmds.c:10989
+#: commands/tablecmds.c:1761 commands/tablecmds.c:11003
 #, c-format
 msgid "cannot inherit from partitioned table \"%s\""
 msgstr "наследование от секционированной таблицы \"%s\" не допускается"
@@ -9066,23 +9066,23 @@ msgstr "наследование от секционированной табл�
 msgid "cannot inherit from partition \"%s\""
 msgstr "наследование от секции \"%s\" не допускается"
 
-#: commands/tablecmds.c:1774 parser/parse_utilcmd.c:2052
+#: commands/tablecmds.c:1774 parser/parse_utilcmd.c:2060
 #, c-format
 msgid "inherited relation \"%s\" is not a table or foreign table"
 msgstr ""
 "наследуемое отношение \"%s\" не является таблицей или сторонней таблицей"
 
-#: commands/tablecmds.c:1782 commands/tablecmds.c:10968
+#: commands/tablecmds.c:1782 commands/tablecmds.c:10982
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
 msgstr "временное отношение \"%s\" не может наследоваться"
 
-#: commands/tablecmds.c:1792 commands/tablecmds.c:10976
+#: commands/tablecmds.c:1792 commands/tablecmds.c:10990
 #, c-format
 msgid "cannot inherit from temporary relation of another session"
 msgstr "наследование от временного отношения другого сеанса невозможно"
 
-#: commands/tablecmds.c:1809 commands/tablecmds.c:11100
+#: commands/tablecmds.c:1809 commands/tablecmds.c:11114
 #, c-format
 msgid "relation \"%s\" would be inherited from more than once"
 msgstr "отношение \"%s\" наследуется неоднократно"
@@ -9122,14 +9122,14 @@ msgstr "\"%s\" и \"%s\""
 msgid "inherited column \"%s\" has a storage parameter conflict"
 msgstr "конфликт параметров хранения в наследованном столбце \"%s\""
 
-#: commands/tablecmds.c:2002 commands/tablecmds.c:8894
-#: parser/parse_utilcmd.c:1135 parser/parse_utilcmd.c:1486
-#: parser/parse_utilcmd.c:1562
+#: commands/tablecmds.c:2002 commands/tablecmds.c:8908
+#: parser/parse_utilcmd.c:1143 parser/parse_utilcmd.c:1494
+#: parser/parse_utilcmd.c:1570
 #, c-format
 msgid "cannot convert whole-row table reference"
 msgstr "преобразовать ссылку на тип всей строки таблицы нельзя"
 
-#: commands/tablecmds.c:2003 parser/parse_utilcmd.c:1136
+#: commands/tablecmds.c:2003 parser/parse_utilcmd.c:1144
 #, c-format
 msgid "Constraint \"%s\" contains a whole-row reference to table \"%s\"."
 msgstr "Ограничение \"%s\" ссылается на тип всей строки в таблице \"%s\"."
@@ -9274,7 +9274,7 @@ msgstr "проверка таблицы \"%s\""
 msgid "column \"%s\" contains null values"
 msgstr "столбец \"%s\" содержит значения NULL"
 
-#: commands/tablecmds.c:4571 commands/tablecmds.c:8163
+#: commands/tablecmds.c:4571 commands/tablecmds.c:8177
 #, c-format
 msgid "check constraint \"%s\" is violated by some row"
 msgstr "ограничение-проверку \"%s\" нарушает некоторая строка"
@@ -9324,7 +9324,7 @@ msgstr "\"%s\" - это не таблица и не сторонняя табл�
 msgid "\"%s\" is not a table, composite type, or foreign table"
 msgstr "\"%s\" - это не таблица, составной тип или сторонняя таблица"
 
-#: commands/tablecmds.c:4749 commands/tablecmds.c:6125
+#: commands/tablecmds.c:4749 commands/tablecmds.c:6139
 #, c-format
 msgid "\"%s\" is not a table, materialized view, index, or foreign table"
 msgstr ""
@@ -9383,12 +9383,12 @@ msgstr "добавить столбец в типизированную табл
 msgid "cannot add column to a partition"
 msgstr "добавить столбец в секцию нельзя"
 
-#: commands/tablecmds.c:5154 commands/tablecmds.c:11226
+#: commands/tablecmds.c:5154 commands/tablecmds.c:11240
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
 msgstr "дочерняя таблица \"%s\" имеет другой тип для столбца \"%s\""
 
-#: commands/tablecmds.c:5160 commands/tablecmds.c:11233
+#: commands/tablecmds.c:5160 commands/tablecmds.c:11247
 #, c-format
 msgid "child table \"%s\" has different collation for column \"%s\""
 msgstr ""
@@ -9410,22 +9410,22 @@ msgid "cannot recursively add identity column to table that has child tables"
 msgstr ""
 "добавить столбец идентификации в таблицу, у которой есть дочерние, нельзя"
 
-#: commands/tablecmds.c:5417
+#: commands/tablecmds.c:5431
 #, c-format
 msgid "column must be added to child tables too"
 msgstr "столбец также должен быть добавлен к дочерним таблицам"
 
-#: commands/tablecmds.c:5492
+#: commands/tablecmds.c:5506
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists, skipping"
 msgstr "столбец \"%s\" отношения \"%s\" уже существует, пропускается"
 
-#: commands/tablecmds.c:5499
+#: commands/tablecmds.c:5513
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists"
 msgstr "столбец \"%s\" отношения \"%s\" уже существует"
 
-#: commands/tablecmds.c:5597 commands/tablecmds.c:8576
+#: commands/tablecmds.c:5611 commands/tablecmds.c:8590
 #, c-format
 msgid ""
 "cannot remove constraint from only the partitioned table when partitions "
@@ -9434,38 +9434,38 @@ msgstr ""
 "удалить ограничение только из секционированной таблицы, когда существуют "
 "секции, нельзя"
 
-#: commands/tablecmds.c:5598 commands/tablecmds.c:5745
-#: commands/tablecmds.c:6542 commands/tablecmds.c:8577
+#: commands/tablecmds.c:5612 commands/tablecmds.c:5759
+#: commands/tablecmds.c:6556 commands/tablecmds.c:8591
 #, c-format
 msgid "Do not specify the ONLY keyword."
 msgstr "Не указывайте ключевое слово ONLY."
 
-#: commands/tablecmds.c:5630 commands/tablecmds.c:5777
-#: commands/tablecmds.c:5832 commands/tablecmds.c:5907
-#: commands/tablecmds.c:6001 commands/tablecmds.c:6060
-#: commands/tablecmds.c:6184 commands/tablecmds.c:6238
-#: commands/tablecmds.c:6330 commands/tablecmds.c:8716
-#: commands/tablecmds.c:9427
+#: commands/tablecmds.c:5644 commands/tablecmds.c:5791
+#: commands/tablecmds.c:5846 commands/tablecmds.c:5921
+#: commands/tablecmds.c:6015 commands/tablecmds.c:6074
+#: commands/tablecmds.c:6198 commands/tablecmds.c:6252
+#: commands/tablecmds.c:6344 commands/tablecmds.c:8730
+#: commands/tablecmds.c:9441
 #, c-format
 msgid "cannot alter system column \"%s\""
 msgstr "системный столбец \"%s\" нельзя изменить"
 
-#: commands/tablecmds.c:5636 commands/tablecmds.c:5838
+#: commands/tablecmds.c:5650 commands/tablecmds.c:5852
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is an identity column"
 msgstr "столбец \"%s\" отношения \"%s\" является столбцом идентификации"
 
-#: commands/tablecmds.c:5672
+#: commands/tablecmds.c:5686
 #, c-format
 msgid "column \"%s\" is in a primary key"
 msgstr "столбец \"%s\" входит в первичный ключ"
 
-#: commands/tablecmds.c:5694
+#: commands/tablecmds.c:5708
 #, c-format
 msgid "column \"%s\" is marked NOT NULL in parent table"
 msgstr "столбец \"%s\" в родительской таблице помечен как NOT NULL"
 
-#: commands/tablecmds.c:5744
+#: commands/tablecmds.c:5758
 #, c-format
 msgid ""
 "cannot add constraint to only the partitioned table when partitions exist"
@@ -9473,12 +9473,12 @@ msgstr ""
 "добавить ограничение только в секционированную таблицу, когда существуют "
 "секции, нельзя"
 
-#: commands/tablecmds.c:5840
+#: commands/tablecmds.c:5854
 #, c-format
 msgid "Use ALTER TABLE ... ALTER COLUMN ... DROP IDENTITY instead."
 msgstr "Вместо этого выполните ALTER TABLE ... ALTER COLUMN ... DROP IDENTITY."
 
-#: commands/tablecmds.c:5918
+#: commands/tablecmds.c:5932
 #, c-format
 msgid ""
 "column \"%s\" of relation \"%s\" must be declared NOT NULL before identity "
@@ -9487,79 +9487,79 @@ msgstr ""
 "столбец \"%s\" отношения \"%s\" должен быть объявлен как NOT NULL, чтобы его "
 "можно было сделать столбцом идентификации"
 
-#: commands/tablecmds.c:5924
+#: commands/tablecmds.c:5938
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is already an identity column"
 msgstr "столбец \"%s\" отношения \"%s\" уже является столбцом идентификации"
 
-#: commands/tablecmds.c:5930
+#: commands/tablecmds.c:5944
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already has a default value"
 msgstr "столбец \"%s\" отношения \"%s\" уже имеет значение по умолчанию"
 
-#: commands/tablecmds.c:6007 commands/tablecmds.c:6068
+#: commands/tablecmds.c:6021 commands/tablecmds.c:6082
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is not an identity column"
 msgstr "столбец \"%s\" отношения \"%s\" не является столбцом идентификации"
 
-#: commands/tablecmds.c:6073
+#: commands/tablecmds.c:6087
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is not an identity column, skipping"
 msgstr ""
 "столбец \"%s\" отношения \"%s\" не является столбцом идентификации, "
 "пропускается"
 
-#: commands/tablecmds.c:6157
+#: commands/tablecmds.c:6171
 #, c-format
 msgid "statistics target %d is too low"
 msgstr "целевое ограничение статистики слишком мало (%d)"
 
-#: commands/tablecmds.c:6165
+#: commands/tablecmds.c:6179
 #, c-format
 msgid "lowering statistics target to %d"
 msgstr "целевое ограничение статистики снижается до %d"
 
-#: commands/tablecmds.c:6310
+#: commands/tablecmds.c:6324
 #, c-format
 msgid "invalid storage type \"%s\""
 msgstr "неверный тип хранилища \"%s\""
 
-#: commands/tablecmds.c:6342
+#: commands/tablecmds.c:6356
 #, c-format
 msgid "column data type %s can only have storage PLAIN"
 msgstr "тип данных столбца %s совместим только с хранилищем PLAIN"
 
-#: commands/tablecmds.c:6377
+#: commands/tablecmds.c:6391
 #, c-format
 msgid "cannot drop column from typed table"
 msgstr "нельзя удалить столбец в типизированной таблице"
 
-#: commands/tablecmds.c:6484
+#: commands/tablecmds.c:6498
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist, skipping"
 msgstr "столбец \"%s\" в таблице\"%s\" не существует, пропускается"
 
-#: commands/tablecmds.c:6497
+#: commands/tablecmds.c:6511
 #, c-format
 msgid "cannot drop system column \"%s\""
 msgstr "нельзя удалить системный столбец \"%s\""
 
-#: commands/tablecmds.c:6504
+#: commands/tablecmds.c:6518
 #, c-format
 msgid "cannot drop inherited column \"%s\""
 msgstr "нельзя удалить наследованный столбец \"%s\""
 
-#: commands/tablecmds.c:6513
+#: commands/tablecmds.c:6527
 #, c-format
 msgid "cannot drop column named in partition key"
 msgstr "нельзя удалить столбец, входящий в ключ разбиения"
 
-#: commands/tablecmds.c:6517
+#: commands/tablecmds.c:6531
 #, c-format
 msgid "cannot drop column referenced in partition key expression"
 msgstr "нельзя удалить столбец, задействованный в выражении ключа разбиения"
 
-#: commands/tablecmds.c:6541
+#: commands/tablecmds.c:6555
 #, c-format
 msgid ""
 "cannot drop column from only the partitioned table when partitions exist"
@@ -9567,36 +9567,36 @@ msgstr ""
 "удалить столбец только из секционированной таблицы, когда существуют секции, "
 "нельзя"
 
-#: commands/tablecmds.c:6759
+#: commands/tablecmds.c:6773
 #, c-format
 msgid ""
 "ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index \"%s\" to \"%s\""
 msgstr ""
 "ALTER TABLE / ADD CONSTRAINT USING INDEX переименует индекс \"%s\" в \"%s\""
 
-#: commands/tablecmds.c:6971
+#: commands/tablecmds.c:6985
 #, c-format
 msgid "constraint must be added to child tables too"
 msgstr "ограничение также должно быть добавлено к дочерним таблицам"
 
-#: commands/tablecmds.c:7042
+#: commands/tablecmds.c:7056
 #, c-format
 msgid "cannot reference partitioned table \"%s\""
 msgstr "ссылаться на секционированную таблицу \"%s\" нельзя"
 
-#: commands/tablecmds.c:7048
+#: commands/tablecmds.c:7062
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
 msgstr "указанный объект \"%s\" не является таблицей"
 
-#: commands/tablecmds.c:7071
+#: commands/tablecmds.c:7085
 #, c-format
 msgid "constraints on permanent tables may reference only permanent tables"
 msgstr ""
 "ограничения в постоянных таблицах могут ссылаться только на постоянные "
 "таблицы"
 
-#: commands/tablecmds.c:7078
+#: commands/tablecmds.c:7092
 #, c-format
 msgid ""
 "constraints on unlogged tables may reference only permanent or unlogged "
@@ -9605,13 +9605,13 @@ msgstr ""
 "ограничения в нежурналируемых таблицах могут ссылаться только на постоянные "
 "или нежурналируемые таблицы"
 
-#: commands/tablecmds.c:7084
+#: commands/tablecmds.c:7098
 #, c-format
 msgid "constraints on temporary tables may reference only temporary tables"
 msgstr ""
 "ограничения во временных таблицах могут ссылаться только на временные таблицы"
 
-#: commands/tablecmds.c:7088
+#: commands/tablecmds.c:7102
 #, c-format
 msgid ""
 "constraints on temporary tables must involve temporary tables of this session"
@@ -9619,33 +9619,33 @@ msgstr ""
 "ограничения во временных таблицах должны ссылаться только на временные "
 "таблицы текущего сеанса"
 
-#: commands/tablecmds.c:7148
+#: commands/tablecmds.c:7162
 #, c-format
 msgid "number of referencing and referenced columns for foreign key disagree"
 msgstr "число столбцов в источнике и назначении внешнего ключа не совпадает"
 
-#: commands/tablecmds.c:7255
+#: commands/tablecmds.c:7269
 #, c-format
 msgid "foreign key constraint \"%s\" cannot be implemented"
 msgstr "ограничение внешнего ключа \"%s\" нельзя реализовать"
 
-#: commands/tablecmds.c:7258
+#: commands/tablecmds.c:7272
 #, c-format
 msgid "Key columns \"%s\" and \"%s\" are of incompatible types: %s and %s."
 msgstr "Столбцы ключа \"%s\" и \"%s\" имеют несовместимые типы: %s и %s."
 
-#: commands/tablecmds.c:7463 commands/tablecmds.c:7629
-#: commands/tablecmds.c:8544 commands/tablecmds.c:8612
+#: commands/tablecmds.c:7477 commands/tablecmds.c:7643
+#: commands/tablecmds.c:8558 commands/tablecmds.c:8626
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" does not exist"
 msgstr "ограничение \"%s\" в таблице \"%s\" не существует"
 
-#: commands/tablecmds.c:7469
+#: commands/tablecmds.c:7483
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" is not a foreign key constraint"
 msgstr "ограничение \"%s\" в таблице \"%s\" не является внешним ключом"
 
-#: commands/tablecmds.c:7636
+#: commands/tablecmds.c:7650
 #, c-format
 msgid ""
 "constraint \"%s\" of relation \"%s\" is not a foreign key or check constraint"
@@ -9653,46 +9653,46 @@ msgstr ""
 "ограничение \"%s\" в таблице \"%s\" не является внешним ключом или "
 "ограничением-проверкой"
 
-#: commands/tablecmds.c:7706
+#: commands/tablecmds.c:7720
 #, c-format
 msgid "constraint must be validated on child tables too"
 msgstr "ограничение также должно соблюдаться в дочерних таблицах"
 
-#: commands/tablecmds.c:7774
+#: commands/tablecmds.c:7788
 #, c-format
 msgid "column \"%s\" referenced in foreign key constraint does not exist"
 msgstr "столбец \"%s\", указанный в ограничении внешнего ключа, не существует"
 
-#: commands/tablecmds.c:7779
+#: commands/tablecmds.c:7793
 #, c-format
 msgid "cannot have more than %d keys in a foreign key"
 msgstr "во внешнем ключе не может быть больше %d столбцов"
 
-#: commands/tablecmds.c:7844
+#: commands/tablecmds.c:7858
 #, c-format
 msgid "cannot use a deferrable primary key for referenced table \"%s\""
 msgstr ""
 "использовать откладываемый первичный ключ в целевой внешней таблице \"%s\" "
 "нельзя"
 
-#: commands/tablecmds.c:7861
+#: commands/tablecmds.c:7875
 #, c-format
 msgid "there is no primary key for referenced table \"%s\""
 msgstr "в целевой внешней таблице \"%s\" нет первичного ключа"
 
-#: commands/tablecmds.c:7926
+#: commands/tablecmds.c:7940
 #, c-format
 msgid "foreign key referenced-columns list must not contain duplicates"
 msgstr "в списке столбцов внешнего ключа не должно быть повторений"
 
-#: commands/tablecmds.c:8020
+#: commands/tablecmds.c:8034
 #, c-format
 msgid "cannot use a deferrable unique constraint for referenced table \"%s\""
 msgstr ""
 "использовать откладываемое ограничение уникальности в целевой внешней "
 "таблице \"%s\" нельзя"
 
-#: commands/tablecmds.c:8025
+#: commands/tablecmds.c:8039
 #, c-format
 msgid ""
 "there is no unique constraint matching given keys for referenced table \"%s\""
@@ -9700,43 +9700,43 @@ msgstr ""
 "в целевой внешней таблице \"%s\" нет ограничения уникальности, "
 "соответствующего данным ключам"
 
-#: commands/tablecmds.c:8196
+#: commands/tablecmds.c:8210
 #, c-format
 msgid "validating foreign key constraint \"%s\""
 msgstr "проверка ограничения внешнего ключа \"%s\""
 
-#: commands/tablecmds.c:8498
+#: commands/tablecmds.c:8512
 #, c-format
 msgid "cannot drop inherited constraint \"%s\" of relation \"%s\""
 msgstr "удалить наследованное ограничение \"%s\" таблицы \"%s\" нельзя"
 
-#: commands/tablecmds.c:8550
+#: commands/tablecmds.c:8564
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" does not exist, skipping"
 msgstr "ограничение \"%s\" в таблице \"%s\" не существует, пропускается"
 
-#: commands/tablecmds.c:8700
+#: commands/tablecmds.c:8714
 #, c-format
 msgid "cannot alter column type of typed table"
 msgstr "изменить тип столбца в типизированной таблице нельзя"
 
-#: commands/tablecmds.c:8723
+#: commands/tablecmds.c:8737
 #, c-format
 msgid "cannot alter inherited column \"%s\""
 msgstr "изменить наследованный столбец \"%s\" нельзя"
 
-#: commands/tablecmds.c:8732
+#: commands/tablecmds.c:8746
 #, c-format
 msgid "cannot alter type of column named in partition key"
 msgstr "нельзя изменить тип столбца, составляющего ключ разбиения"
 
-#: commands/tablecmds.c:8736
+#: commands/tablecmds.c:8750
 #, c-format
 msgid "cannot alter type of column referenced in partition key expression"
 msgstr ""
 "нельзя изменить тип столбца, задействованного в выражении ключа разбиения"
 
-#: commands/tablecmds.c:8786
+#: commands/tablecmds.c:8800
 #, c-format
 msgid ""
 "result of USING clause for column \"%s\" cannot be cast automatically to "
@@ -9744,199 +9744,199 @@ msgid ""
 msgstr ""
 "результат USING для столбца \"%s\" нельзя автоматически привести к типу %s"
 
-#: commands/tablecmds.c:8789
+#: commands/tablecmds.c:8803
 #, c-format
 msgid "You might need to add an explicit cast."
 msgstr "Возможно, необходимо добавить явное приведение."
 
-#: commands/tablecmds.c:8793
+#: commands/tablecmds.c:8807
 #, c-format
 msgid "column \"%s\" cannot be cast automatically to type %s"
 msgstr "столбец \"%s\" нельзя автоматически привести к типу %s"
 
 # skip-rule: double-colons
 #. translator: USING is SQL, don't translate it
-#: commands/tablecmds.c:8796
+#: commands/tablecmds.c:8810
 #, c-format
 msgid "You might need to specify \"USING %s::%s\"."
 msgstr "Возможно, необходимо указать \"USING %s::%s\"."
 
-#: commands/tablecmds.c:8895
+#: commands/tablecmds.c:8909
 #, c-format
 msgid "USING expression contains a whole-row table reference."
 msgstr "Выражение USING ссылается на тип всей строки таблицы."
 
-#: commands/tablecmds.c:8906
+#: commands/tablecmds.c:8920
 #, c-format
 msgid "type of inherited column \"%s\" must be changed in child tables too"
 msgstr ""
 "тип наследованного столбца \"%s\" должен быть изменён и в дочерних таблицах"
 
-#: commands/tablecmds.c:8993
+#: commands/tablecmds.c:9007
 #, c-format
 msgid "cannot alter type of column \"%s\" twice"
 msgstr "нельзя изменить тип столбца \"%s\" дважды"
 
-#: commands/tablecmds.c:9029
+#: commands/tablecmds.c:9043
 #, c-format
 msgid "default for column \"%s\" cannot be cast automatically to type %s"
 msgstr ""
 "значение по умолчанию для столбца \"%s\" нельзя автоматически привести к "
 "типу %s"
 
-#: commands/tablecmds.c:9155
+#: commands/tablecmds.c:9169
 #, c-format
 msgid "cannot alter type of a column used by a view or rule"
 msgstr ""
 "изменить тип столбца, задействованного в представлении или правиле, нельзя"
 
-#: commands/tablecmds.c:9156 commands/tablecmds.c:9175
-#: commands/tablecmds.c:9193
+#: commands/tablecmds.c:9170 commands/tablecmds.c:9189
+#: commands/tablecmds.c:9207
 #, c-format
 msgid "%s depends on column \"%s\""
 msgstr "%s зависит от столбца \"%s\""
 
-#: commands/tablecmds.c:9174
+#: commands/tablecmds.c:9188
 #, c-format
 msgid "cannot alter type of a column used in a trigger definition"
 msgstr "изменить тип столбца, задействованного в определении триггера, нельзя"
 
-#: commands/tablecmds.c:9192
+#: commands/tablecmds.c:9206
 #, c-format
 msgid "cannot alter type of a column used in a policy definition"
 msgstr "изменить тип столбца, задействованного в определении политики, нельзя"
 
-#: commands/tablecmds.c:9867
+#: commands/tablecmds.c:9881
 #, c-format
 msgid "cannot change owner of index \"%s\""
 msgstr "сменить владельца индекса \"%s\" нельзя"
 
-#: commands/tablecmds.c:9869
+#: commands/tablecmds.c:9883
 #, c-format
 msgid "Change the ownership of the index's table, instead."
 msgstr "Однако возможно сменить владельца таблицы, содержащей этот индекс."
 
-#: commands/tablecmds.c:9886
+#: commands/tablecmds.c:9900
 #, c-format
 msgid "cannot change owner of sequence \"%s\""
 msgstr "сменить владельца последовательности \"%s\" нельзя"
 
-#: commands/tablecmds.c:9900 commands/tablecmds.c:13129
+#: commands/tablecmds.c:9914 commands/tablecmds.c:13143
 #, c-format
 msgid "Use ALTER TYPE instead."
 msgstr "Используйте ALTER TYPE."
 
-#: commands/tablecmds.c:9909
+#: commands/tablecmds.c:9923
 #, c-format
 msgid "\"%s\" is not a table, view, sequence, or foreign table"
 msgstr ""
 "\"%s\" - это не таблица, TOAST-таблица, индекс, представление или "
 "последовательность"
 
-#: commands/tablecmds.c:10250
+#: commands/tablecmds.c:10264
 #, c-format
 msgid "cannot have multiple SET TABLESPACE subcommands"
 msgstr "в одной инструкции не может быть несколько подкоманд SET TABLESPACE"
 
-#: commands/tablecmds.c:10324
+#: commands/tablecmds.c:10338
 #, c-format
 msgid "\"%s\" is not a table, view, materialized view, index, or TOAST table"
 msgstr ""
 "\"%s\" - это не таблица, представление, материализованное представление, "
 "индекс или TOAST-таблица"
 
-#: commands/tablecmds.c:10357 commands/view.c:504
+#: commands/tablecmds.c:10371 commands/view.c:504
 #, c-format
 msgid "WITH CHECK OPTION is supported only on automatically updatable views"
 msgstr ""
 "WITH CHECK OPTION поддерживается только с автообновляемыми представлениями"
 
-#: commands/tablecmds.c:10499
+#: commands/tablecmds.c:10513
 #, c-format
 msgid "cannot move system relation \"%s\""
 msgstr "переместить системную таблицу \"%s\" нельзя"
 
-#: commands/tablecmds.c:10515
+#: commands/tablecmds.c:10529
 #, c-format
 msgid "cannot move temporary tables of other sessions"
 msgstr "перемещать временные таблицы других сеансов нельзя"
 
-#: commands/tablecmds.c:10651
+#: commands/tablecmds.c:10665
 #, c-format
 msgid "only tables, indexes, and materialized views exist in tablespaces"
 msgstr ""
 "в табличных пространствах есть только таблицы, индексы и материализованные "
 "представления"
 
-#: commands/tablecmds.c:10663
+#: commands/tablecmds.c:10677
 #, c-format
 msgid "cannot move relations in to or out of pg_global tablespace"
 msgstr "перемещать объекты в/из табличного пространства pg_global нельзя"
 
-#: commands/tablecmds.c:10755
+#: commands/tablecmds.c:10769
 #, c-format
 msgid "aborting because lock on relation \"%s.%s\" is not available"
 msgstr ""
 "обработка прерывается из-за невозможности заблокировать отношение \"%s.%s\""
 
-#: commands/tablecmds.c:10771
+#: commands/tablecmds.c:10785
 #, c-format
 msgid "no matching relations in tablespace \"%s\" found"
 msgstr "в табличном пространстве \"%s\" не найдены подходящие отношения"
 
-#: commands/tablecmds.c:10845 storage/buffer/bufmgr.c:915
+#: commands/tablecmds.c:10859 storage/buffer/bufmgr.c:915
 #, c-format
 msgid "invalid page in block %u of relation %s"
 msgstr "неверная страница в блоке %u отношения %s"
 
-#: commands/tablecmds.c:10927
+#: commands/tablecmds.c:10941
 #, c-format
 msgid "cannot change inheritance of typed table"
 msgstr "изменить наследование типизированной таблицы нельзя"
 
-#: commands/tablecmds.c:10932 commands/tablecmds.c:11474
+#: commands/tablecmds.c:10946 commands/tablecmds.c:11488
 #, c-format
 msgid "cannot change inheritance of a partition"
 msgstr "изменить наследование секции нельзя"
 
-#: commands/tablecmds.c:10937
+#: commands/tablecmds.c:10951
 #, c-format
 msgid "cannot change inheritance of partitioned table"
 msgstr "изменить наследование секционированной таблицы нельзя"
 
-#: commands/tablecmds.c:10983
+#: commands/tablecmds.c:10997
 #, c-format
 msgid "cannot inherit to temporary relation of another session"
 msgstr "наследование для временного отношения другого сеанса невозможно"
 
-#: commands/tablecmds.c:10996
+#: commands/tablecmds.c:11010
 #, c-format
 msgid "cannot inherit from a partition"
 msgstr "наследование от секции невозможно"
 
-#: commands/tablecmds.c:11018 commands/tablecmds.c:13523
+#: commands/tablecmds.c:11032 commands/tablecmds.c:13537
 #, c-format
 msgid "circular inheritance not allowed"
 msgstr "циклическое наследование недопустимо"
 
-#: commands/tablecmds.c:11019 commands/tablecmds.c:13524
+#: commands/tablecmds.c:11033 commands/tablecmds.c:13538
 #, c-format
 msgid "\"%s\" is already a child of \"%s\"."
 msgstr "\"%s\" уже является потомком \"%s\"."
 
-#: commands/tablecmds.c:11027
+#: commands/tablecmds.c:11041
 #, c-format
 msgid "table \"%s\" without OIDs cannot inherit from table \"%s\" with OIDs"
 msgstr "таблица \"%s\" без OID не может наследоваться от таблицы \"%s\" с OID"
 
-#: commands/tablecmds.c:11040
+#: commands/tablecmds.c:11054
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming an inheritance child"
 msgstr ""
 "триггер \"%s\" не позволяет таблице \"%s\" стать потомком в иерархии "
 "наследования"
 
-#: commands/tablecmds.c:11042
+#: commands/tablecmds.c:11056
 #, c-format
 msgid ""
 "ROW triggers with transition tables are not supported in inheritance "
@@ -9945,24 +9945,24 @@ msgstr ""
 "триггеры ROW с переходными таблицами не поддерживаются в иерархиях "
 "наследования"
 
-#: commands/tablecmds.c:11244
+#: commands/tablecmds.c:11258
 #, c-format
 msgid "column \"%s\" in child table must be marked NOT NULL"
 msgstr "столбец \"%s\" в дочерней таблице должен быть помечен как NOT NULL"
 
-#: commands/tablecmds.c:11271 commands/tablecmds.c:11310
+#: commands/tablecmds.c:11285 commands/tablecmds.c:11324
 #, c-format
 msgid "child table is missing column \"%s\""
 msgstr "в дочерней таблице не хватает столбца \"%s\""
 
-#: commands/tablecmds.c:11398
+#: commands/tablecmds.c:11412
 #, c-format
 msgid "child table \"%s\" has different definition for check constraint \"%s\""
 msgstr ""
 "дочерняя таблица \"%s\" содержит другое определение ограничения-проверки \"%s"
 "\""
 
-#: commands/tablecmds.c:11406
+#: commands/tablecmds.c:11420
 #, c-format
 msgid ""
 "constraint \"%s\" conflicts with non-inherited constraint on child table \"%s"
@@ -9971,7 +9971,7 @@ msgstr ""
 "ограничение \"%s\" конфликтует с ненаследуемым ограничением дочерней таблицы "
 "\"%s\""
 
-#: commands/tablecmds.c:11417
+#: commands/tablecmds.c:11431
 #, c-format
 msgid ""
 "constraint \"%s\" conflicts with NOT VALID constraint on child table \"%s\""
@@ -9979,81 +9979,81 @@ msgstr ""
 "ограничение \"%s\" конфликтует с непроверенным (NOT VALID) ограничением "
 "дочерней таблицы \"%s\""
 
-#: commands/tablecmds.c:11452
+#: commands/tablecmds.c:11466
 #, c-format
 msgid "child table is missing constraint \"%s\""
 msgstr "в дочерней таблице не хватает ограничения \"%s\""
 
-#: commands/tablecmds.c:11568
+#: commands/tablecmds.c:11582
 #, c-format
 msgid "relation \"%s\" is not a partition of relation \"%s\""
 msgstr "отношение \"%s\" не является секцией отношения \"%s\""
 
-#: commands/tablecmds.c:11574
+#: commands/tablecmds.c:11588
 #, c-format
 msgid "relation \"%s\" is not a parent of relation \"%s\""
 msgstr "отношение \"%s\" не является предком отношения \"%s\""
 
-#: commands/tablecmds.c:11800
+#: commands/tablecmds.c:11814
 #, c-format
 msgid "typed tables cannot inherit"
 msgstr "типизированные таблицы не могут наследоваться"
 
-#: commands/tablecmds.c:11831
+#: commands/tablecmds.c:11845
 #, c-format
 msgid "table is missing column \"%s\""
 msgstr "в таблице не хватает столбца \"%s\""
 
-#: commands/tablecmds.c:11841
+#: commands/tablecmds.c:11855
 #, c-format
 msgid "table has column \"%s\" where type requires \"%s\""
 msgstr "таблица содержит столбец \"%s\", тогда как тип требует \"%s\""
 
-#: commands/tablecmds.c:11850
+#: commands/tablecmds.c:11864
 #, c-format
 msgid "table \"%s\" has different type for column \"%s\""
 msgstr "таблица \"%s\" содержит столбец \"%s\" другого типа"
 
-#: commands/tablecmds.c:11863
+#: commands/tablecmds.c:11877
 #, c-format
 msgid "table has extra column \"%s\""
 msgstr "таблица содержит лишний столбец \"%s\""
 
-#: commands/tablecmds.c:11915
+#: commands/tablecmds.c:11929
 #, c-format
 msgid "\"%s\" is not a typed table"
 msgstr "\"%s\" - это не типизированная таблица"
 
-#: commands/tablecmds.c:12097
+#: commands/tablecmds.c:12111
 #, c-format
 msgid "cannot use non-unique index \"%s\" as replica identity"
 msgstr ""
 "для идентификации реплики нельзя использовать неуникальный индекс \"%s\""
 
-#: commands/tablecmds.c:12103
+#: commands/tablecmds.c:12117
 #, c-format
 msgid "cannot use non-immediate index \"%s\" as replica identity"
 msgstr ""
 "для идентификации реплики нельзя использовать не непосредственный индекс \"%s"
 "\""
 
-#: commands/tablecmds.c:12109
+#: commands/tablecmds.c:12123
 #, c-format
 msgid "cannot use expression index \"%s\" as replica identity"
 msgstr ""
 "для идентификации реплики нельзя использовать индекс с выражением \"%s\""
 
-#: commands/tablecmds.c:12115
+#: commands/tablecmds.c:12129
 #, c-format
 msgid "cannot use partial index \"%s\" as replica identity"
 msgstr "для идентификации реплики нельзя использовать частичный индекс \"%s\""
 
-#: commands/tablecmds.c:12121
+#: commands/tablecmds.c:12135
 #, c-format
 msgid "cannot use invalid index \"%s\" as replica identity"
 msgstr "для идентификации реплики нельзя использовать нерабочий индекс \"%s\""
 
-#: commands/tablecmds.c:12142
+#: commands/tablecmds.c:12156
 #, c-format
 msgid ""
 "index \"%s\" cannot be used as replica identity because column %d is a "
@@ -10062,7 +10062,7 @@ msgstr ""
 "индекс \"%s\" нельзя использовать для идентификации реплики, так как столбец "
 "%d - системный"
 
-#: commands/tablecmds.c:12149
+#: commands/tablecmds.c:12163
 #, c-format
 msgid ""
 "index \"%s\" cannot be used as replica identity because column \"%s\" is "
@@ -10071,13 +10071,13 @@ msgstr ""
 "индекс \"%s\" нельзя использовать для идентификации реплики, так как столбец "
 "\"%s\" допускает NULL"
 
-#: commands/tablecmds.c:12342
+#: commands/tablecmds.c:12356
 #, c-format
 msgid "cannot change logged status of table \"%s\" because it is temporary"
 msgstr ""
 "изменить состояние журналирования таблицы %s нельзя, так как она временная"
 
-#: commands/tablecmds.c:12366
+#: commands/tablecmds.c:12380
 #, c-format
 msgid ""
 "cannot change table \"%s\" to unlogged because it is part of a publication"
@@ -10085,12 +10085,12 @@ msgstr ""
 "таблицу \"%s\" нельзя сделать нежурналируемой, так как она включена в "
 "публикацию"
 
-#: commands/tablecmds.c:12368
+#: commands/tablecmds.c:12382
 #, c-format
 msgid "Unlogged relations cannot be replicated."
 msgstr "Нежурналируемые отношения не поддерживают репликацию."
 
-#: commands/tablecmds.c:12413
+#: commands/tablecmds.c:12427
 #, c-format
 msgid ""
 "could not change table \"%s\" to logged because it references unlogged table "
@@ -10099,7 +10099,7 @@ msgstr ""
 "не удалось сделать таблицу \"%s\" журналируемой, так как она ссылается на "
 "нежурналируемую таблицу \"%s\""
 
-#: commands/tablecmds.c:12423
+#: commands/tablecmds.c:12437
 #, c-format
 msgid ""
 "could not change table \"%s\" to unlogged because it references logged table "
@@ -10108,22 +10108,22 @@ msgstr ""
 "не удалось сделать таблицу \"%s\" нежурналируемой, так как она ссылается на "
 "журналируемую таблицу \"%s\""
 
-#: commands/tablecmds.c:12481
+#: commands/tablecmds.c:12495
 #, c-format
 msgid "cannot move an owned sequence into another schema"
 msgstr "переместить последовательность с владельцем в другую схему нельзя"
 
-#: commands/tablecmds.c:12587
+#: commands/tablecmds.c:12601
 #, c-format
 msgid "relation \"%s\" already exists in schema \"%s\""
 msgstr "отношение \"%s\" уже существует в схеме \"%s\""
 
-#: commands/tablecmds.c:13113
+#: commands/tablecmds.c:13127
 #, c-format
 msgid "\"%s\" is not a composite type"
 msgstr "\"%s\" - это не составной тип"
 
-#: commands/tablecmds.c:13144
+#: commands/tablecmds.c:13158
 #, c-format
 msgid ""
 "\"%s\" is not a table, view, materialized view, sequence, or foreign table"
@@ -10131,63 +10131,63 @@ msgstr ""
 "\"%s\" - это не таблица, представление, мат. представление, "
 "последовательность или сторонняя таблица"
 
-#: commands/tablecmds.c:13177
+#: commands/tablecmds.c:13191
 #, c-format
 msgid "unrecognized partitioning strategy \"%s\""
 msgstr "нераспознанная стратегия секционирования \"%s\""
 
-#: commands/tablecmds.c:13185
+#: commands/tablecmds.c:13199
 #, c-format
 msgid "cannot use \"list\" partition strategy with more than one column"
 msgstr "стратегия секционирования по списку не поддерживает несколько столбцов"
 
-#: commands/tablecmds.c:13210
+#: commands/tablecmds.c:13224
 #, c-format
 msgid "column \"%s\" appears more than once in partition key"
 msgstr "столбец \"%s\" фигурирует в ключе разбиения неоднократно"
 
-#: commands/tablecmds.c:13263
+#: commands/tablecmds.c:13277
 #, c-format
 msgid "column \"%s\" named in partition key does not exist"
 msgstr "столбец \"%s\", упомянутый в ключе разбиения, не существует"
 
-#: commands/tablecmds.c:13270
+#: commands/tablecmds.c:13284
 #, c-format
 msgid "cannot use system column \"%s\" in partition key"
 msgstr "системный столбец \"%s\" нельзя использовать в ключе разбиения"
 
-#: commands/tablecmds.c:13333
+#: commands/tablecmds.c:13347
 #, c-format
 msgid "functions in partition key expression must be marked IMMUTABLE"
 msgstr "функции в выражении ключа разбиения должны быть помечены как IMMUTABLE"
 
-#: commands/tablecmds.c:13350
+#: commands/tablecmds.c:13364
 #, c-format
 msgid "partition key expressions cannot contain whole-row references"
 msgstr "выражения ключей разбиения не могут содержать ссылки на кортеж целиком"
 
-#: commands/tablecmds.c:13357
+#: commands/tablecmds.c:13371
 #, c-format
 msgid "partition key expressions cannot contain system column references"
 msgstr ""
 "выражения ключей разбиения не могут содержать ссылки на системный столбец"
 
-#: commands/tablecmds.c:13367
+#: commands/tablecmds.c:13381
 #, c-format
 msgid "cannot use constant expression as partition key"
 msgstr "в качестве ключа разбиения нельзя использовать константное выражение"
 
-#: commands/tablecmds.c:13388
+#: commands/tablecmds.c:13402
 #, c-format
 msgid "could not determine which collation to use for partition expression"
 msgstr "не удалось определить правило сортировки для выражения разбиения"
 
-#: commands/tablecmds.c:13413
+#: commands/tablecmds.c:13427
 #, c-format
 msgid "data type %s has no default btree operator class"
 msgstr "для типа данных %s не определён класс операторов B-дерева по умолчанию"
 
-#: commands/tablecmds.c:13415
+#: commands/tablecmds.c:13429
 #, c-format
 msgid ""
 "You must specify a btree operator class or define a default btree operator "
@@ -10196,27 +10196,27 @@ msgstr ""
 "Вы должны указать класс операторов B-дерева или определить класс операторов "
 "B-дерева по умолчанию для этого типа данных."
 
-#: commands/tablecmds.c:13463
+#: commands/tablecmds.c:13477
 #, c-format
 msgid "\"%s\" is already a partition"
 msgstr "\"%s\" уже является секцией"
 
-#: commands/tablecmds.c:13469
+#: commands/tablecmds.c:13483
 #, c-format
 msgid "cannot attach a typed table as partition"
 msgstr "подключить типизированную таблицу в качестве секции нельзя"
 
-#: commands/tablecmds.c:13485
+#: commands/tablecmds.c:13499
 #, c-format
 msgid "cannot attach inheritance child as partition"
 msgstr "подключить потомок в иерархии наследования в качестве секции нельзя"
 
-#: commands/tablecmds.c:13499
+#: commands/tablecmds.c:13513
 #, c-format
 msgid "cannot attach inheritance parent as partition"
 msgstr "подключить родитель в иерархии наследования в качестве секции нельзя"
 
-#: commands/tablecmds.c:13533
+#: commands/tablecmds.c:13547
 #, c-format
 msgid ""
 "cannot attach a permanent relation as partition of temporary relation \"%s\""
@@ -10224,18 +10224,18 @@ msgstr ""
 "подключить постоянное отношение в качестве секции временного отношения \"%s"
 "\" нельзя"
 
-#: commands/tablecmds.c:13541
+#: commands/tablecmds.c:13555
 #, c-format
 msgid "cannot attach as partition of temporary relation of another session"
 msgstr "подключить секцию к временному отношению в другом сеансе нельзя"
 
-#: commands/tablecmds.c:13548
+#: commands/tablecmds.c:13562
 #, c-format
 msgid "cannot attach temporary relation of another session as partition"
 msgstr ""
 "подключить временное отношение из другого сеанса в качестве секции нельзя"
 
-#: commands/tablecmds.c:13554
+#: commands/tablecmds.c:13568
 #, c-format
 msgid ""
 "cannot attach table \"%s\" without OIDs as partition of table \"%s\" with "
@@ -10244,7 +10244,7 @@ msgstr ""
 "нельзя подключить таблицу \"%s\" без OID в качестве секции таблицы \"%s\" с "
 "OID"
 
-#: commands/tablecmds.c:13562
+#: commands/tablecmds.c:13576
 #, c-format
 msgid ""
 "cannot attach table \"%s\" with OIDs as partition of table \"%s\" without "
@@ -10253,30 +10253,30 @@ msgstr ""
 "нельзя подключить таблицу \"%s\" с OID в качестве секции таблицы \"%s\" без "
 "OID"
 
-#: commands/tablecmds.c:13584
+#: commands/tablecmds.c:13598
 #, c-format
 msgid "table \"%s\" contains column \"%s\" not found in parent \"%s\""
 msgstr ""
 "таблица \"%s\" содержит столбец \"%s\", отсутствующий в родителе \"%s\""
 
-#: commands/tablecmds.c:13587
+#: commands/tablecmds.c:13601
 #, c-format
 msgid "The new partition may contain only the columns present in parent."
 msgstr ""
 "Новая секция может содержать только столбцы, имеющиеся в родительской "
 "таблице."
 
-#: commands/tablecmds.c:13599
+#: commands/tablecmds.c:13613
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming a partition"
 msgstr "триггер \"%s\" не позволяет сделать таблицу \"%s\" секцией"
 
-#: commands/tablecmds.c:13601 commands/trigger.c:393
+#: commands/tablecmds.c:13615 commands/trigger.c:393
 #, c-format
 msgid "ROW triggers with transition tables are not supported on partitions"
 msgstr "триггеры ROW с переходными таблицами для секций не поддерживаются"
 
-#: commands/tablecmds.c:13726
+#: commands/tablecmds.c:13740
 #, c-format
 msgid ""
 "partition constraint for table \"%s\" is implied by existing constraints"
@@ -16283,168 +16283,168 @@ msgstr "создать секционированную таблицу в вид
 msgid "%s will create implicit sequence \"%s\" for serial column \"%s.%s\""
 msgstr "%s создаст последовательность \"%s\" для столбца serial \"%s.%s\""
 
-#: parser/parse_utilcmd.c:554
+#: parser/parse_utilcmd.c:562
 #, c-format
 msgid "array of serial is not implemented"
 msgstr "массивы с типом serial не реализованы"
 
-#: parser/parse_utilcmd.c:630 parser/parse_utilcmd.c:642
+#: parser/parse_utilcmd.c:638 parser/parse_utilcmd.c:650
 #, c-format
 msgid ""
 "conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\""
 msgstr "конфликт NULL/NOT NULL в объявлении столбца \"%s\" таблицы \"%s\""
 
-#: parser/parse_utilcmd.c:654
+#: parser/parse_utilcmd.c:662
 #, c-format
 msgid "multiple default values specified for column \"%s\" of table \"%s\""
 msgstr ""
 "для столбца \"%s\" таблицы \"%s\" указано несколько значений по умолчанию"
 
-#: parser/parse_utilcmd.c:671
+#: parser/parse_utilcmd.c:679
 #, c-format
-msgid "identity colums are not supported on typed tables"
+msgid "identity columns are not supported on typed tables"
 msgstr "столбцы идентификации не поддерживаются с типизированными таблицами"
 
-#: parser/parse_utilcmd.c:675
+#: parser/parse_utilcmd.c:683
 #, c-format
 msgid "identity columns are not supported on partitions"
 msgstr "столбцы идентификации не поддерживаются с секциями"
 
-#: parser/parse_utilcmd.c:684
+#: parser/parse_utilcmd.c:692
 #, c-format
 msgid "multiple identity specifications for column \"%s\" of table \"%s\""
 msgstr ""
 "для столбца \"%s\" таблицы \"%s\" свойство identity задано неоднократно"
 
-#: parser/parse_utilcmd.c:707 parser/parse_utilcmd.c:824
+#: parser/parse_utilcmd.c:715 parser/parse_utilcmd.c:832
 #, c-format
 msgid "primary key constraints are not supported on foreign tables"
 msgstr "ограничения первичного ключа для сторонних таблиц не поддерживаются"
 
-#: parser/parse_utilcmd.c:713 parser/parse_utilcmd.c:830
+#: parser/parse_utilcmd.c:721 parser/parse_utilcmd.c:838
 #, c-format
 msgid "primary key constraints are not supported on partitioned tables"
 msgstr ""
 "ограничения первичного ключа для секционированных таблиц не поддерживаются"
 
-#: parser/parse_utilcmd.c:722 parser/parse_utilcmd.c:840
+#: parser/parse_utilcmd.c:730 parser/parse_utilcmd.c:848
 #, c-format
 msgid "unique constraints are not supported on foreign tables"
 msgstr "ограничения уникальности для сторонних таблиц не поддерживаются"
 
-#: parser/parse_utilcmd.c:728 parser/parse_utilcmd.c:846
+#: parser/parse_utilcmd.c:736 parser/parse_utilcmd.c:854
 #, c-format
 msgid "unique constraints are not supported on partitioned tables"
 msgstr "ограничения уникальности для секционированных таблиц не поддерживаются"
 
-#: parser/parse_utilcmd.c:745 parser/parse_utilcmd.c:876
+#: parser/parse_utilcmd.c:753 parser/parse_utilcmd.c:884
 #, c-format
 msgid "foreign key constraints are not supported on foreign tables"
 msgstr "ограничения внешнего ключа для сторонних таблиц не поддерживаются"
 
-#: parser/parse_utilcmd.c:751 parser/parse_utilcmd.c:882
+#: parser/parse_utilcmd.c:759 parser/parse_utilcmd.c:890
 #, c-format
 msgid "foreign key constraints are not supported on partitioned tables"
 msgstr ""
 "ограничения внешнего ключа для секционированных таблиц не поддерживаются"
 
-#: parser/parse_utilcmd.c:779
+#: parser/parse_utilcmd.c:787
 #, c-format
 msgid "both default and identity specified for column \"%s\" of table \"%s\""
 msgstr ""
 "для столбца \"%s\" таблицы \"%s\" задано и значение по умолчанию, и свойство "
 "identity"
 
-#: parser/parse_utilcmd.c:856
+#: parser/parse_utilcmd.c:864
 #, c-format
 msgid "exclusion constraints are not supported on foreign tables"
 msgstr "ограничения-исключения для сторонних таблиц не поддерживаются"
 
-#: parser/parse_utilcmd.c:862
+#: parser/parse_utilcmd.c:870
 #, c-format
 msgid "exclusion constraints are not supported on partitioned tables"
 msgstr "ограничения-исключения для секционированных таблиц не поддерживаются"
 
-#: parser/parse_utilcmd.c:932
+#: parser/parse_utilcmd.c:940
 #, c-format
 msgid "LIKE is not supported for creating foreign tables"
 msgstr "LIKE при создании сторонних таблиц не поддерживается"
 
-#: parser/parse_utilcmd.c:1487 parser/parse_utilcmd.c:1563
+#: parser/parse_utilcmd.c:1495 parser/parse_utilcmd.c:1571
 #, c-format
 msgid "Index \"%s\" contains a whole-row table reference."
 msgstr "Индекс \"%s\" ссылается на тип всей строки таблицы."
 
-#: parser/parse_utilcmd.c:1832
+#: parser/parse_utilcmd.c:1840
 #, c-format
 msgid "cannot use an existing index in CREATE TABLE"
 msgstr "в CREATE TABLE нельзя использовать существующий индекс"
 
-#: parser/parse_utilcmd.c:1852
+#: parser/parse_utilcmd.c:1860
 #, c-format
 msgid "index \"%s\" is already associated with a constraint"
 msgstr "индекс \"%s\" уже связан с ограничением"
 
-#: parser/parse_utilcmd.c:1860
+#: parser/parse_utilcmd.c:1868
 #, c-format
 msgid "index \"%s\" does not belong to table \"%s\""
 msgstr "индекс \"%s\" не принадлежит таблице \"%s\""
 
-#: parser/parse_utilcmd.c:1867
+#: parser/parse_utilcmd.c:1875
 #, c-format
 msgid "index \"%s\" is not valid"
 msgstr "индекс \"%s\" - нерабочий"
 
-#: parser/parse_utilcmd.c:1873
+#: parser/parse_utilcmd.c:1881
 #, c-format
 msgid "\"%s\" is not a unique index"
 msgstr "\"%s\" не является уникальным индексом"
 
-#: parser/parse_utilcmd.c:1874 parser/parse_utilcmd.c:1881
-#: parser/parse_utilcmd.c:1888 parser/parse_utilcmd.c:1958
+#: parser/parse_utilcmd.c:1882 parser/parse_utilcmd.c:1889
+#: parser/parse_utilcmd.c:1896 parser/parse_utilcmd.c:1966
 #, c-format
 msgid "Cannot create a primary key or unique constraint using such an index."
 msgstr ""
 "Создать первичный ключ или ограничение уникальности для такого индекса "
 "нельзя."
 
-#: parser/parse_utilcmd.c:1880
+#: parser/parse_utilcmd.c:1888
 #, c-format
 msgid "index \"%s\" contains expressions"
 msgstr "индекс \"%s\" содержит выражения"
 
-#: parser/parse_utilcmd.c:1887
+#: parser/parse_utilcmd.c:1895
 #, c-format
 msgid "\"%s\" is a partial index"
 msgstr "\"%s\" - частичный индекс"
 
-#: parser/parse_utilcmd.c:1899
+#: parser/parse_utilcmd.c:1907
 #, c-format
 msgid "\"%s\" is a deferrable index"
 msgstr "\"%s\" - откладываемый индекс"
 
-#: parser/parse_utilcmd.c:1900
+#: parser/parse_utilcmd.c:1908
 #, c-format
 msgid "Cannot create a non-deferrable constraint using a deferrable index."
 msgstr ""
 "Создать не откладываемое ограничение на базе откладываемого индекса нельзя."
 
-#: parser/parse_utilcmd.c:1957
+#: parser/parse_utilcmd.c:1965
 #, c-format
 msgid "index \"%s\" does not have default sorting behavior"
 msgstr "для индекса \"%s\" не определено поведение при сортировке по умолчанию"
 
-#: parser/parse_utilcmd.c:2101
+#: parser/parse_utilcmd.c:2109
 #, c-format
 msgid "column \"%s\" appears twice in primary key constraint"
 msgstr "столбец \"%s\" фигурирует в первичном ключе дважды"
 
-#: parser/parse_utilcmd.c:2107
+#: parser/parse_utilcmd.c:2115
 #, c-format
 msgid "column \"%s\" appears twice in unique constraint"
 msgstr "столбец \"%s\" фигурирует в ограничении уникальности дважды"
 
-#: parser/parse_utilcmd.c:2316
+#: parser/parse_utilcmd.c:2324
 #, c-format
 msgid ""
 "index expressions and predicates can refer only to the table being indexed"
@@ -16452,17 +16452,17 @@ msgstr ""
 "индексные выражения и предикаты могут ссылаться только на индексируемую "
 "таблицу"
 
-#: parser/parse_utilcmd.c:2362
+#: parser/parse_utilcmd.c:2370
 #, c-format
 msgid "rules on materialized views are not supported"
 msgstr "правила для материализованных представлений не поддерживаются"
 
-#: parser/parse_utilcmd.c:2423
+#: parser/parse_utilcmd.c:2431
 #, c-format
 msgid "rule WHERE condition cannot contain references to other relations"
 msgstr "в условиях WHERE для правил нельзя ссылаться на другие отношения"
 
-#: parser/parse_utilcmd.c:2495
+#: parser/parse_utilcmd.c:2503
 #, c-format
 msgid ""
 "rules with WHERE conditions can only have SELECT, INSERT, UPDATE, or DELETE "
@@ -16471,131 +16471,131 @@ msgstr ""
 "правила с условиями WHERE могут содержать только действия SELECT, INSERT, "
 "UPDATE или DELETE"
 
-#: parser/parse_utilcmd.c:2513 parser/parse_utilcmd.c:2612
+#: parser/parse_utilcmd.c:2521 parser/parse_utilcmd.c:2620
 #: rewrite/rewriteHandler.c:498 rewrite/rewriteManip.c:1015
 #, c-format
 msgid "conditional UNION/INTERSECT/EXCEPT statements are not implemented"
 msgstr "условные операторы UNION/INTERSECT/EXCEPT не реализованы"
 
-#: parser/parse_utilcmd.c:2531
+#: parser/parse_utilcmd.c:2539
 #, c-format
 msgid "ON SELECT rule cannot use OLD"
 msgstr "в правиле ON SELECT нельзя использовать OLD"
 
-#: parser/parse_utilcmd.c:2535
+#: parser/parse_utilcmd.c:2543
 #, c-format
 msgid "ON SELECT rule cannot use NEW"
 msgstr "в правиле ON SELECT нельзя использовать NEW"
 
-#: parser/parse_utilcmd.c:2544
+#: parser/parse_utilcmd.c:2552
 #, c-format
 msgid "ON INSERT rule cannot use OLD"
 msgstr "в правиле ON INSERT нельзя использовать OLD"
 
-#: parser/parse_utilcmd.c:2550
+#: parser/parse_utilcmd.c:2558
 #, c-format
 msgid "ON DELETE rule cannot use NEW"
 msgstr "в правиле ON DELETE нельзя использовать NEW"
 
-#: parser/parse_utilcmd.c:2578
+#: parser/parse_utilcmd.c:2586
 #, c-format
 msgid "cannot refer to OLD within WITH query"
 msgstr "в запросе WITH нельзя ссылаться на OLD"
 
-#: parser/parse_utilcmd.c:2585
+#: parser/parse_utilcmd.c:2593
 #, c-format
 msgid "cannot refer to NEW within WITH query"
 msgstr "в запросе WITH нельзя ссылаться на NEW"
 
-#: parser/parse_utilcmd.c:3019
+#: parser/parse_utilcmd.c:3027
 #, c-format
 msgid "misplaced DEFERRABLE clause"
 msgstr "предложение DEFERRABLE расположено неправильно"
 
-#: parser/parse_utilcmd.c:3024 parser/parse_utilcmd.c:3039
+#: parser/parse_utilcmd.c:3032 parser/parse_utilcmd.c:3047
 #, c-format
 msgid "multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed"
 msgstr "DEFERRABLE/NOT DEFERRABLE можно указать только один раз"
 
-#: parser/parse_utilcmd.c:3034
+#: parser/parse_utilcmd.c:3042
 #, c-format
 msgid "misplaced NOT DEFERRABLE clause"
 msgstr "предложение NOT DEFERRABLE расположено неправильно"
 
-#: parser/parse_utilcmd.c:3047 parser/parse_utilcmd.c:3073 gram.y:5363
+#: parser/parse_utilcmd.c:3055 parser/parse_utilcmd.c:3081 gram.y:5363
 #, c-format
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 msgstr ""
 "ограничение с характеристикой INITIALLY DEFERRED должно быть объявлено как "
 "DEFERRABLE"
 
-#: parser/parse_utilcmd.c:3055
+#: parser/parse_utilcmd.c:3063
 #, c-format
 msgid "misplaced INITIALLY DEFERRED clause"
 msgstr "предложение INITIALLY DEFERRED расположено неправильно"
 
-#: parser/parse_utilcmd.c:3060 parser/parse_utilcmd.c:3086
+#: parser/parse_utilcmd.c:3068 parser/parse_utilcmd.c:3094
 #, c-format
 msgid "multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed"
 msgstr "INITIALLY IMMEDIATE/DEFERRED можно указать только один раз"
 
-#: parser/parse_utilcmd.c:3081
+#: parser/parse_utilcmd.c:3089
 #, c-format
 msgid "misplaced INITIALLY IMMEDIATE clause"
 msgstr "предложение INITIALLY IMMEDIATE расположено неправильно"
 
-#: parser/parse_utilcmd.c:3272
+#: parser/parse_utilcmd.c:3280
 #, c-format
 msgid ""
 "CREATE specifies a schema (%s) different from the one being created (%s)"
 msgstr "в CREATE указана схема (%s), отличная от создаваемой (%s)"
 
-#: parser/parse_utilcmd.c:3331
+#: parser/parse_utilcmd.c:3339
 #, c-format
 msgid "invalid bound specification for a list partition"
 msgstr "неправильное указание ограничения для секции по списку"
 
-#: parser/parse_utilcmd.c:3387
+#: parser/parse_utilcmd.c:3395
 #, c-format
 msgid "invalid bound specification for a range partition"
 msgstr "неправильное указание ограничения для секции по диапазону"
 
-#: parser/parse_utilcmd.c:3393
+#: parser/parse_utilcmd.c:3401
 #, c-format
 msgid "FROM must specify exactly one value per partitioning column"
 msgstr "во FROM должно указываться ровно одно значение для столбца разбиения"
 
-#: parser/parse_utilcmd.c:3397
+#: parser/parse_utilcmd.c:3405
 #, c-format
 msgid "TO must specify exactly one value per partitioning column"
 msgstr "в TO должно указываться ровно одно значение для столбца разбиения"
 
-#: parser/parse_utilcmd.c:3444 parser/parse_utilcmd.c:3458
+#: parser/parse_utilcmd.c:3452 parser/parse_utilcmd.c:3466
 #, c-format
 msgid "cannot specify NULL in range bound"
 msgstr "указать NULL в диапазонном ограничении нельзя"
 
-#: parser/parse_utilcmd.c:3505
+#: parser/parse_utilcmd.c:3513
 #, c-format
 msgid "every bound following MAXVALUE must also be MAXVALUE"
 msgstr "за границей MAXVALUE могут следовать только границы MAXVALUE"
 
-#: parser/parse_utilcmd.c:3511
+#: parser/parse_utilcmd.c:3519
 #, c-format
 msgid "every bound following MINVALUE must also be MINVALUE"
 msgstr "за границей MINVALUE могут следовать только границы MINVALUE"
 
-#: parser/parse_utilcmd.c:3541 parser/parse_utilcmd.c:3553
+#: parser/parse_utilcmd.c:3549 parser/parse_utilcmd.c:3561
 #, c-format
 msgid "specified value cannot be cast to type %s for column \"%s\""
 msgstr "указанное значение нельзя привести к типу %s столбца \"%s\""
 
-#: parser/parse_utilcmd.c:3555
+#: parser/parse_utilcmd.c:3563
 #, c-format
 msgid "The cast requires a non-immutable conversion."
 msgstr "Для этого приведения требуется непостоянное преобразование."
 
-#: parser/parse_utilcmd.c:3556
+#: parser/parse_utilcmd.c:3564
 #, c-format
 msgid "Try putting the literal value in single quotes."
 msgstr "Попробуйте заключить буквальное значение в апострофы."
@@ -19296,7 +19296,7 @@ msgstr "Для переопределения укажите OVERRIDING SYSTEM V
 msgid "column \"%s\" can only be updated to DEFAULT"
 msgstr "столбцу \"%s\" можно присвоить только значение DEFAULT"
 
-#: rewrite/rewriteHandler.c:1010 rewrite/rewriteHandler.c:1028
+#: rewrite/rewriteHandler.c:1000 rewrite/rewriteHandler.c:1018
 #, c-format
 msgid "multiple assignments to same column \"%s\""
 msgstr "многочисленные присвоения одному столбцу \"%s\""

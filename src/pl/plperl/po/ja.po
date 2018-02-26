@@ -1,193 +1,242 @@
 # LANGUAGE message translation file for plperl
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+# Honda Shigehiro <honda@postgresql.jp>, 2012.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.1 beta 2\n"
+"Project-Id-Version: plperl (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-11 17:49+0900\n"
-"PO-Revision-Date: 2012-08-11 17:51+0900\n"
-"Last-Translator: Honda Shigehiro\n"
+"POT-Creation-Date: 2018-01-29 10:46+0900\n"
+"PO-Revision-Date: 2018-02-13 11:13+0900\n"
+"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 2.0.6\n"
 
-#: plperl.c:365
-msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
-msgstr "真ならば信頼し、信頼されないPerlのコードはstrictモードでコンパイルされます。"
+#: plperl.c:407
+msgid ""
+"If true, trusted and untrusted Perl code will be compiled in strict mode."
+msgstr ""
+"true の場合、trusted および untrusted な Perl のコードはいずれも strict モー"
+"ドでコンパイルされます。"
 
-#: plperl.c:379
-msgid "Perl initialization code to execute when a Perl interpreter is initialized."
-msgstr "Perl のインタプリタが初期化される際に実行されるべき Perl 初期化コード"
+#: plperl.c:421
+msgid ""
+"Perl initialization code to execute when a Perl interpreter is initialized."
+msgstr ""
+"Perl のインタプリタが初期化される際に実行されるべき Perl の初期化コード。"
 
-#: plperl.c:401
+#: plperl.c:443
 msgid "Perl initialization code to execute once when plperl is first used."
-msgstr "plperl が最初に使用される際に一度実行されるべき Perl 初期化コード"
+msgstr "plperl が最初に使用される際に一度だけ実行される Perl の初期化コード。"
 
-#: plperl.c:409
+#: plperl.c:451
 msgid "Perl initialization code to execute once when plperlu is first used."
-msgstr "plperlu が最初に使用される際に一度実行されるべき Perl 初期化コード"
+msgstr "plperlu が最初に使用される際に一度だけ実行される Perl の初期化コード。"
 
-#: plperl.c:626 plperl.c:788 plperl.c:793 plperl.c:897 plperl.c:908
-#: plperl.c:949 plperl.c:970 plperl.c:1943 plperl.c:2038 plperl.c:2100
+#: plperl.c:648
+#, c-format
+msgid "cannot allocate multiple Perl interpreters on this platform"
+msgstr "このプラットフォームでは複数の Perl インタプリタを設定できません"
+
+#: plperl.c:671 plperl.c:855 plperl.c:861 plperl.c:978 plperl.c:990
+#: plperl.c:1033 plperl.c:1056 plperl.c:2120 plperl.c:2230 plperl.c:2298
+#: plperl.c:2361
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plperl.c:627
+#: plperl.c:672
 #, c-format
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
-msgstr "PostgreSQL::InServer::SPI::bootstrap の実行中に"
+msgstr "PostgreSQL::InServer::SPI::bootstrap の実行中"
 
-#: plperl.c:789
+#: plperl.c:856
 #, c-format
 msgid "while parsing Perl initialization"
-msgstr "Perl 初期化処理のパース中に"
+msgstr "Perl 初期化処理のパース中"
 
-#: plperl.c:794
+#: plperl.c:862
 #, c-format
 msgid "while running Perl initialization"
-msgstr "Perl 初期化処理の実行中に"
+msgstr "Perl 初期化処理の実行中"
 
-#: plperl.c:898
+#: plperl.c:979
 #, c-format
 msgid "while executing PLC_TRUSTED"
-msgstr "PLC_TRUSTED の実行中に"
+msgstr "PLC_TRUSTED の実行中"
 
-#: plperl.c:909
+#: plperl.c:991
 #, c-format
 msgid "while executing utf8fix"
-msgstr "utf8fix の実行中に"
+msgstr "utf8fix の実行中"
 
-#: plperl.c:950
+#: plperl.c:1034
 #, c-format
 msgid "while executing plperl.on_plperl_init"
-msgstr "plperl.on_plperl_init の実行中に"
+msgstr "plperl.on_plperl_init の実行中"
 
-#: plperl.c:971
+#: plperl.c:1057
 #, c-format
 msgid "while executing plperl.on_plperlu_init"
-msgstr "plperl.on_plperlu_init の実行中に"
+msgstr "plperl.on_plperlu_init の実行中"
 
-#: plperl.c:1015 plperl.c:1615
+#: plperl.c:1102 plperl.c:1764
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
-msgstr "Perlハッシュに存在しない列\"%s\"が含まれます"
+msgstr "Perl ハッシュに存在しない列 \"%s\" があります"
 
-#: plperl.c:1100
+#: plperl.c:1107 plperl.c:1769
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "システム属性 \"%s\" をセットできません"
+
+#: plperl.c:1195
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
-msgstr "配列の次数(%d)が上限(%d)を超えています"
+msgstr "配列の次元数(%d)が制限値(%d)を超えています"
 
-#: plperl.c:1112 plperl.c:1129
+#: plperl.c:1207 plperl.c:1224
 #, c-format
-msgid "multidimensional arrays must have array expressions with matching dimensions"
-msgstr "多次元配列は次数に合った配列式を持たなければなりません"
+msgid ""
+"multidimensional arrays must have array expressions with matching dimensions"
+msgstr "多次元配列は次元数に合った配列式を持たなければなりません"
 
-#: plperl.c:1166
+#: plperl.c:1260
 #, c-format
 msgid "cannot convert Perl array to non-array type %s"
-msgstr "Perl配列を非配列型%sに変換できません"
+msgstr "Perl 配列を非配列型 %s に変換できません"
 
-#: plperl.c:1262
+#: plperl.c:1362
 #, c-format
 msgid "cannot convert Perl hash to non-composite type %s"
-msgstr "Perlハッシュを非複合型%sに変換できません"
+msgstr "Perl ハッシュを非複合型 %s に変換できません"
 
-#: plperl.c:1273
+#: plperl.c:1373
 #, c-format
-msgid "function returning record called in context that cannot accept type record"
-msgstr "レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されました"
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr ""
+"レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されまし"
+"た"
 
-#: plperl.c:1288
+#: plperl.c:1388
 #, c-format
 msgid "PL/Perl function must return reference to hash or array"
-msgstr "PL/Perl関数はハッシュまたは配列への参照を返す必要があります"
+msgstr "PL/Perl 関数はハッシュまたは配列への参照を返す必要があります"
 
-#: plperl.c:1592
+#: plperl.c:1425
+#, c-format
+msgid "lookup failed for type %s"
+msgstr "型 %s の検索に失敗しました"
+
+#: plperl.c:1740
 #, c-format
 msgid "$_TD->{new} does not exist"
-msgstr "$_TD->{new}は存在しません"
+msgstr "$_TD->{new} は存在しません"
 
-#: plperl.c:1596
+#: plperl.c:1744
 #, c-format
 msgid "$_TD->{new} is not a hash reference"
-msgstr "$_TD->{new}はハッシュへの参照ではありません"
+msgstr "$_TD->{new} はハッシュへの参照ではありません"
 
-#: plperl.c:1820 plperl.c:2518
+#: plperl.c:1995 plperl.c:2833
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
-msgstr "PL/Perl関数は%s型を返すことができません"
+msgstr "PL/Perl 関数は %s 型を返すことができません"
 
-#: plperl.c:1833 plperl.c:2565
+#: plperl.c:2008 plperl.c:2875
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
-msgstr "PL/Perl関数は%s型を受け付けられません"
+msgstr "PL/Perl 関数は %s 型を受け付けられません"
 
-#: plperl.c:1947
+#: plperl.c:2125
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "関数 \"%s\" のコンパイルからはコード参照を取得しませんでした"
 
-#: plperl.c:2151
+#: plperl.c:2218
+#, c-format
+msgid "didn't get a return item from function"
+msgstr "関数からは戻り項目を取得しませんでした"
+
+#: plperl.c:2262 plperl.c:2329
+#, c-format
+msgid "couldn't fetch $_TD"
+msgstr "$_TD を取り出せませんでした"
+
+#: plperl.c:2286 plperl.c:2349
+#, c-format
+msgid "didn't get a return item from trigger function"
+msgstr "トリガー関数から項目を取得しませんでした"
+
+#: plperl.c:2406
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr "このコンテキストで集合値の関数は集合を受け付けられません"
+msgstr "集合を受け付けられないコンテキストで集合値関数が呼ばれました"
 
-#: plperl.c:2195
+#: plperl.c:2451
 #, c-format
-msgid "set-returning PL/Perl function must return reference to array or use return_next"
-msgstr "集合を返すPL/Perl関数は配列への参照を返す、または、return_nextを使用する必要があります"
+msgid ""
+"set-returning PL/Perl function must return reference to array or use "
+"return_next"
+msgstr ""
+"集合を返す PL/Perl 関数は、配列への参照を返すかまたは return_next を使う必要"
+"があります"
 
-#: plperl.c:2315
+#: plperl.c:2572
 #, c-format
 msgid "ignoring modified row in DELETE trigger"
-msgstr "DELETEトリガにて変更された行を無視します"
+msgstr "DELETE トリガーで変更された行を無視しています"
 
-#: plperl.c:2323
+#: plperl.c:2580
 #, c-format
-msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
-msgstr "PL/Perlトリガ関数の結果は\"SKIP\"または\"MODIFY\"でなければなりません"
+msgid ""
+"result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
+msgstr ""
+"PL/Perl のトリガー関数の結果は undef、\"SKIP\"、\"MODIFY\" のいずれかでなけ"
+"ればなりません"
 
-#: plperl.c:2449 plperl.c:2455
-#, c-format
-msgid "out of memory"
-msgstr "メモリ不足です"
-
-#: plperl.c:2509
+#: plperl.c:2828
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "トリガー関数はトリガーとしてのみコールできます"
 
-#: plperl.c:2885
+#: plperl.c:3170
+#, c-format
+msgid "query result has too many rows to fit in a Perl array"
+msgstr "問い合わせの結果に含まれる行数が Perl の配列に対して多すぎます"
+
+#: plperl.c:3240
 #, c-format
 msgid "cannot use return_next in a non-SETOF function"
-msgstr "SETOF関数以外ではreturn_nextを使用することはできません"
+msgstr "集合を返す関数以外で return_next を使うことはできません"
 
-#: plperl.c:2941
+#: plperl.c:3300
 #, c-format
-msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
-msgstr "複合型のSETOFを返すPL/Perl関数はハッシュへの参照を持つreturn_nextを呼び出さなければなりません"
+msgid ""
+"SETOF-composite-returning PL/Perl function must call return_next with "
+"reference to hash"
+msgstr ""
+"複合型の集合を返す PL/Perl 関数は、ハッシュへの参照を持つ return_next を呼び"
+"出さなければなりません"
 
-#: plperl.c:3652
+#: plperl.c:4009
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "PL/Perl 関数 \"%s\""
 
-#: plperl.c:3664
+#: plperl.c:4021
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "PL/Perl 関数 \"%s\" のコンパイル"
 
-#: plperl.c:3673
+#: plperl.c:4030
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "PL/Perl の無名コードブロック"
-
-#~ msgid "composite-returning PL/Perl function must return reference to hash"
-#~ msgstr "複合型を返すPL/Perl関数はハッシュへの参照を返す必要があります"
