@@ -22,8 +22,10 @@ exit_nicely(PGconn *conn1, PGconn *conn2)
 }
 
 static void
-check_conn(PGconn *conn, const char *dbName)
+check_prepare_conn(PGconn *conn, const char *dbName)
 {
+	PGresult   *res;
+
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) != CONNECTION_OK)
 	{
@@ -31,6 +33,17 @@ check_conn(PGconn *conn, const char *dbName)
 				dbName, PQerrorMessage(conn));
 		exit(1);
 	}
+
+	/* Set always-secure search path, so malicous users can't take control. */
+	res = PQexec(conn,
+				 "SELECT pg_catalog.set_config('search_path', '', false)");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
+		PQclear(res);
+		exit(1);
+	}
+	PQclear(res);
 }
 
 int
@@ -80,10 +93,10 @@ main(int argc, char **argv)
 
 	/* make a connection to the database */
 	conn1 = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName1);
-	check_conn(conn1, dbName1);
+	check_prepare_conn(conn1, dbName1);
 
 	conn2 = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName2);
-	check_conn(conn2, dbName2);
+	check_prepare_conn(conn2, dbName2);
 
 	/* start a transaction block */
 	res1 = PQexec(conn1, "BEGIN");
