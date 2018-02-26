@@ -8,7 +8,7 @@ use File::Copy;
 
 if ($ENV{with_openssl} eq 'yes')
 {
-	plan tests => 62;
+	plan tests => 64;
 }
 else
 {
@@ -38,7 +38,7 @@ chmod 0600, "ssl/client-revoked_tmp.key";
 copy("ssl/client.key", "ssl/client_wrongperms_tmp.key");
 chmod 0644, "ssl/client_wrongperms_tmp.key";
 
-#### Part 0. Set up the server.
+#### Set up the server.
 
 note "setting up data directory";
 my $node = get_new_node('master');
@@ -50,15 +50,40 @@ $ENV{PGHOST} = $node->host;
 $ENV{PGPORT} = $node->port;
 $node->start;
 configure_test_server_for_ssl($node, $SERVERHOSTADDR, 'trust');
-switch_server_cert($node, 'server-cn-only');
 
-### Part 1. Run client-side tests.
+note "testing password-protected keys";
+
+open my $sslconf, '>', $node->data_dir."/sslconfig.conf";
+print $sslconf "ssl=on\n";
+print $sslconf "ssl_cert_file='server-cn-only.crt'\n";
+print $sslconf "ssl_key_file='server-password.key'\n";
+print $sslconf "ssl_passphrase_command='echo wrongpassword'\n";
+close $sslconf;
+
+command_fails(['pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart'],
+			  'restart fails with password-protected key file with wrong password');
+$node->_update_pid(0);
+
+open $sslconf, '>', $node->data_dir."/sslconfig.conf";
+print $sslconf "ssl=on\n";
+print $sslconf "ssl_cert_file='server-cn-only.crt'\n";
+print $sslconf "ssl_key_file='server-password.key'\n";
+print $sslconf "ssl_passphrase_command='echo secret1'\n";
+close $sslconf;
+
+command_ok(['pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart'],
+		   'restart succeeds with password-protected key file');
+$node->_update_pid(1);
+
+### Run client-side tests.
 ###
 ### Test that libpq accepts/rejects the connection correctly, depending
 ### on sslmode and whether the server's certificate looks correct. No
 ### client certificate is used in these tests.
 
 note "running client tests";
+
+switch_server_cert($node, 'server-cn-only');
 
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
@@ -235,7 +260,7 @@ test_connect_fails($common_connstr,
 				   qr/SSL error/,
 				   "does not connect with client-side CRL");
 
-### Part 2. Server-side tests.
+### Server-side tests.
 ###
 ### Test certificate authorization.
 

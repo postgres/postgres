@@ -45,6 +45,8 @@ char	   *ssl_key_file;
 char	   *ssl_ca_file;
 char	   *ssl_crl_file;
 char	   *ssl_dh_params_file;
+char	   *ssl_passphrase_command;
+bool		ssl_passphrase_command_supports_reload;
 
 #ifdef USE_SSL
 bool		ssl_loaded_verify_locations = false;

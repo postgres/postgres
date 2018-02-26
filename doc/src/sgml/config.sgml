@@ -1313,6 +1313,66 @@ include_dir 'conf.d'
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry id="guc-ssl-passphrase-command" xreflabel="ssl_passphrase_command">
+      <term><varname>ssl_passphrase_command</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>ssl_passphrase_command</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets an external command to be invoked when a passphrase for
+        decrypting an SSL file such as a private key needs to be obtained.  By
+        default, this parameter is empty, which means the built-in prompting
+        mechanism is used.
+       </para>
+       <para>
+        The command must print the passphrase to the standard output and exit
+        with code 0.  In the parameter value, <literal>%p</literal> is
+        replaced by a prompt string.  (Write <literal>%%</literal> for a
+        literal <literal>%</literal>.)  Note that the prompt string will
+        probably contain whitespace, so be sure to quote adequately.  A single
+        newline is stripped from the end of the output if present.
+       </para>
+       <para>
+        The command does not actually have to prompt the user for a
+        passphrase.  It can read it from a file, obtain it from a keychain
+        facility, or similar.  It is up to the user to make sure the chosen
+        mechanism is adequately secure.
+       </para>
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-ssl-passphrase-command-supports-reload" xreflabel="ssl_passphrase_command_supports_reload">
+      <term><varname>ssl_passphrase_command_supports_reload</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>ssl_passphrase_command_supports_reload</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This setting determines whether the passphrase command set by
+        <varname>ssl_passphrase_command</varname> will also be called during a
+        configuration reload if a key file needs a passphrase.  If this
+        setting is false (the default), then
+        <varname>ssl_passphrase_command</varname> will be ignored during a
+        reload and the SSL configuration will not be reloaded if a passphrase
+        is needed.  That setting is appropriate for a command that requires a
+        TTY for prompting, which might not be available when the server is
+        running.  Setting this to true might be appropriate if the passphrase
+        is obtained from a file, for example.
+       </para>
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
     </sect2>
    </sect1>

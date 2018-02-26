@@ -989,6 +989,15 @@ static struct config_bool ConfigureNamesBool[] =
 		check_ssl, NULL, NULL
 	},
 	{
+		{"ssl_passphrase_command_supports_reload", PGC_SIGHUP, CONN_AUTH_SSL,
+			gettext_noop("Also use ssl_passphrase_command during server reload."),
+			NULL
+		},
+		&ssl_passphrase_command_supports_reload,
+		false,
+		NULL, NULL, NULL
+	},
+	{
 		{"ssl_prefer_server_ciphers", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Give priority to server ciphersuite order."),
 			NULL
@@ -3651,6 +3660,16 @@ static struct config_string ConfigureNamesString[] =
 			GUC_SUPERUSER_ONLY
 		},
 		&ssl_dh_params_file,
+		"",
+		NULL, NULL, NULL
+	},
+
+	{
+		{"ssl_passphrase_command", PGC_SIGHUP, CONN_AUTH_SSL,
+			gettext_noop("Command to obtain passphrases for SSL."),
+			NULL
+		},
+		&ssl_passphrase_command,
 		"",
 		NULL, NULL, NULL
 	},

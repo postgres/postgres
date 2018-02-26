@@ -48,6 +48,9 @@ server-no-names
 server-ss
 	same as server-cn-only, but self-signed.
 
+server-password
+	same as server-cn-only, but password-protected.
+
 client
 	a client certificate, for user "ssltestuser". Signed by client_ca.
 
