@@ -1999,7 +1999,7 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 
 		default:
 			estate->err_stmt = save_estmt;
-			elog(ERROR, "unrecognized cmdtype: %d", stmt->cmd_type);
+			elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
 	}
 
 	/* Let the plugin know that we have finished executing this statement */
