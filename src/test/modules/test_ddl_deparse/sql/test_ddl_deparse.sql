@@ -13,13 +13,13 @@ BEGIN
 	FOR r IN SELECT * FROM pg_event_trigger_ddl_commands()
 	LOOP
 		-- verify that tags match
-		tag = get_command_tag(r.command);
+		tag = public.get_command_tag(r.command);
 		IF tag <> r.command_tag THEN
 			RAISE NOTICE 'tag % doesn''t match %', tag, r.command_tag;
 		END IF;
 
 		-- log the operation
-		cmdtype = get_command_type(r.command);
+		cmdtype = public.get_command_type(r.command);
 		IF cmdtype <> 'grant' THEN
 			RAISE NOTICE 'DDL test: type %, tag %', cmdtype, tag;
 		ELSE
@@ -29,7 +29,7 @@ BEGIN
 		-- if alter table, log more
 		IF cmdtype = 'alter table' THEN
 			FOR r2 IN SELECT *
-						FROM unnest(get_altertable_subcmdtypes(r.command))
+						FROM unnest(public.get_altertable_subcmdtypes(r.command))
 			LOOP
 				RAISE NOTICE '  subcommand: %', r2.unnest;
 			END LOOP;
