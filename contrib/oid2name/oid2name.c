@@ -16,6 +16,7 @@
 
 extern char *optarg;
 
+#include "fe_utils/connect.h"
 #include "libpq-fe.h"
 
 /* an extensible array to keep track of elements to show */
@@ -269,6 +270,7 @@ sql_conn(struct options * my_opts)
 	PGconn	   *conn;
 	char	   *password = NULL;
 	bool		new_pass;
+	PGresult   *res;
 
 	/*
 	 * Start the connection.  Loop until we have a password if requested by
@@ -327,6 +329,17 @@ sql_conn(struct options * my_opts)
 		PQfinish(conn);
 		exit(1);
 	}
+
+	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		fprintf(stderr, "oid2name: could not clear search_path: %s\n",
+				PQerrorMessage(conn));
+		PQclear(res);
+		PQfinish(conn);
+		exit(-1);
+	}
+	PQclear(res);
 
 	/* return the conn if good */
 	return conn;

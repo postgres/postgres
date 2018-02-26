@@ -9,6 +9,7 @@
 
 #include "postgres_fe.h"
 
+#include "fe_utils/connect.h"
 #include "pg_upgrade.h"
 
 
@@ -38,6 +39,8 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 		printf("Failure, exiting\n");
 		exit(1);
 	}
+
+	PQclear(executeQueryOrDie(conn, ALWAYS_SECURE_SEARCH_PATH_SQL));
 
 	return conn;
 }

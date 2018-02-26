@@ -246,7 +246,7 @@ main(int argc, char *argv[])
 		login = TRI_YES;
 
 	conn = connectDatabase("postgres", host, port, username, prompt_password,
-						   progname, false);
+						   progname, echo, false);
 
 	initPQExpBuffer(&sql);
 
