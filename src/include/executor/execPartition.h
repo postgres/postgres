@@ -58,11 +58,15 @@ typedef struct PartitionDispatchData *PartitionDispatch;
  *								partition tree.
  * num_dispatch					number of partitioned tables in the partition
  *								tree (= length of partition_dispatch_info[])
- * partition_oids				Array of leaf partitions OIDs
+ * partition_oids				Array of leaf partitions OIDs with one entry
+ *								for every leaf partition in the partition tree,
+ *								initialized in full by
+ *								ExecSetupPartitionTupleRouting.
  * partitions					Array of ResultRelInfo* objects with one entry
- *								for every leaf partition in the partition tree.
+ *								for every leaf partition in the partition tree,
+ *								initialized lazily by ExecInitPartitionInfo.
  * num_partitions				Number of leaf partitions in the partition tree
- *								(= 'partitions' array length)
+ *								(= 'partitions_oid'/'partitions' array length)
  * parent_child_tupconv_maps	Array of TupleConversionMap objects with one
  *								entry for every leaf partition (required to
  *								convert tuple from the root table's rowtype to
