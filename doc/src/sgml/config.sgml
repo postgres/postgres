@@ -6228,6 +6228,13 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
+        For more information on schema handling, see
+        <xref linkend="ddl-schemas">.  In particular, the default
+        configuration is suitable only when the database has a single user or
+        a few mutually-trusting users.
+       </para>
+
+       <para>
         The current effective value of the search path can be examined
         via the <acronym>SQL</acronym> function
         <function>current_schemas</>
@@ -6236,10 +6243,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         examining the value of <varname>search_path</varname>, since
         <function>current_schemas</> shows how the items
         appearing in <varname>search_path</varname> were resolved.
-       </para>
-
-       <para>
-        For more information on schema handling, see <xref linkend="ddl-schemas">.
        </para>
       </listitem>
      </varlistentry>
