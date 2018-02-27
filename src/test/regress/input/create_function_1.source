@@ -12,12 +12,12 @@ CREATE FUNCTION widget_out(widget)
    AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION city_budget_in(cstring)
+CREATE FUNCTION int44in(cstring)
    RETURNS city_budget
    AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C STRICT IMMUTABLE;
 
-CREATE FUNCTION city_budget_out(city_budget)
+CREATE FUNCTION int44out(city_budget)
    RETURNS cstring
    AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C STRICT IMMUTABLE;
