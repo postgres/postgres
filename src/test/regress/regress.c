@@ -444,6 +444,22 @@ funny_dup17(PG_FUNCTION_ARGS)
 	return PointerGetDatum(tuple);
 }
 
+PG_FUNCTION_INFO_V1(trigger_return_old);
+
+Datum
+trigger_return_old(PG_FUNCTION_ARGS)
+{
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
+	HeapTuple	tuple;
+
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "trigger_return_old: not fired by trigger manager");
+
+	tuple = trigdata->tg_trigtuple;
+
+	return PointerGetDatum(tuple);
+}
+
 #define TTDUMMY_INFINITY	999999
 
 static SPIPlanPtr splan = NULL;
