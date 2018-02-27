@@ -25,17 +25,17 @@ all: $(PROGRAMS)
 %: %.o $(WIN32RES)
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-SCRIPTS_COMMON = common.o dumputils.o kwlookup.o keywords.o
-createdb: createdb.o $(SCRIPTS_COMMON) | submake-libpq submake-libpgport
-createlang: createlang.o $(SCRIPTS_COMMON) print.o mbprint.o | submake-libpq submake-libpgport
-createuser: createuser.o $(SCRIPTS_COMMON) | submake-libpq submake-libpgport
-dropdb: dropdb.o $(SCRIPTS_COMMON) | submake-libpq submake-libpgport
-droplang: droplang.o $(SCRIPTS_COMMON) print.o mbprint.o | submake-libpq submake-libpgport
-dropuser: dropuser.o $(SCRIPTS_COMMON) | submake-libpq submake-libpgport
-clusterdb: clusterdb.o $(SCRIPTS_COMMON) | submake-libpq submake-libpgport
-vacuumdb: vacuumdb.o $(SCRIPTS_COMMON) | submake-libpq submake-libpgport
-reindexdb: reindexdb.o $(SCRIPTS_COMMON) | submake-libpq submake-libpgport
-pg_isready: pg_isready.o $(SCRIPTS_COMMON) | submake-libpq submake-libpgport
+createdb: createdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+createlang: createlang.o common.o dumputils.o kwlookup.o keywords.o print.o mbprint.o | submake-libpq submake-libpgport
+createuser: createuser.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+dropdb: dropdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+droplang: droplang.o common.o dumputils.o kwlookup.o keywords.o print.o mbprint.o | submake-libpq submake-libpgport
+dropuser: dropuser.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+clusterdb: clusterdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+vacuumdb: vacuumdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+reindexdb: reindexdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+pg_isready: pg_isready.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+
 
 dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
 	rm -f $@ && $(LN_S) $< .
@@ -66,7 +66,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS))
-	rm -f $(SCRIPTS_COMMON) print.o mbprint.o $(WIN32RES)
+	rm -f common.o dumputils.o kwlookup.o keywords.o print.o mbprint.o $(WIN32RES)
 	rm -f dumputils.c print.c mbprint.c kwlookup.c keywords.c
 	rm -rf tmp_check
 
