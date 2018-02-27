@@ -103,6 +103,22 @@ DROP TABLE pkeys;
 DROP TABLE fkeys;
 DROP TABLE fkeys2;
 
+-- Check behavior when trigger returns unmodified trigtuple
+create table trigtest (f1 int, f2 text);
+
+create trigger trigger_return_old
+	before insert or delete or update on trigtest
+	for each row execute procedure trigger_return_old();
+
+insert into trigtest values(1, 'foo');
+select * from trigtest;
+update trigtest set f2 = f2 || 'bar';
+select * from trigtest;
+delete from trigtest;
+select * from trigtest;
+
+drop table trigtest;
+
 create sequence ttdummy_seq increment 10 start 0 minvalue 0;
 
 create table tttest (
