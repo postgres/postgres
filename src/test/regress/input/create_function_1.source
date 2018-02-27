@@ -37,11 +37,6 @@ CREATE FUNCTION autoinc ()
 	AS '@libdir@/autoinc@DLSUFFIX@'
 	LANGUAGE C;
 
-CREATE FUNCTION funny_dup17 ()
-        RETURNS trigger
-        AS '@libdir@/regress@DLSUFFIX@'
-        LANGUAGE C;
-
 CREATE FUNCTION ttdummy ()
         RETURNS trigger
         AS '@libdir@/regress@DLSUFFIX@'
