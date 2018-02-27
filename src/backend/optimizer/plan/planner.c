@@ -195,12 +195,11 @@ static void add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 						  double dNumGroups, List *havingQual);
 static void add_paths_to_partial_grouping_rel(PlannerInfo *root,
 								  RelOptInfo *input_rel,
-								  RelOptInfo *partial_grouped_rel,
+								  RelOptInfo *partially_grouped_rel,
 								  AggClauseCosts *agg_partial_costs,
 								  grouping_sets_data *gd,
 								  bool can_sort,
-								  bool can_hash,
-								  List *havingQual);
+								  bool can_hash);
 static bool can_parallel_agg(PlannerInfo *root, RelOptInfo *input_rel,
 				 RelOptInfo *grouped_rel, const AggClauseCosts *agg_costs);
 
@@ -3838,8 +3837,7 @@ create_grouping_paths(PlannerInfo *root,
 		add_paths_to_partial_grouping_rel(root, input_rel,
 										  partially_grouped_rel,
 										  &agg_partial_costs,
-										  gd, can_sort, can_hash,
-										  (List *) parse->havingQual);
+										  gd, can_sort, can_hash);
 	}
 
 	/* Build final grouping paths */
@@ -6224,8 +6222,7 @@ add_paths_to_partial_grouping_rel(PlannerInfo *root,
 								  AggClauseCosts *agg_partial_costs,
 								  grouping_sets_data *gd,
 								  bool can_sort,
-								  bool can_hash,
-								  List *havingQual)
+								  bool can_hash)
 {
 	Query	   *parse = root->parse;
 	Path	   *cheapest_partial_path = linitial(input_rel->partial_pathlist);
