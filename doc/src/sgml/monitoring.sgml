@@ -1068,7 +1068,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>oldserxid</literal></entry>
-         <entry>Waiting to I/O on an oldserxid buffer.</entry>
+         <entry>Waiting for I/O on an oldserxid buffer.</entry>
         </row>
         <row>
          <entry><literal>wal_insert</literal></entry>
