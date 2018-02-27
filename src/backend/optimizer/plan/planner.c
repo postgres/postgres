@@ -6339,6 +6339,9 @@ add_paths_to_partial_grouping_rel(PlannerInfo *root,
 	 */
 	generate_gather_paths(root, partially_grouped_rel, true);
 
+	/* Get cheapest partial path from partially_grouped_rel */
+	cheapest_partial_path = linitial(partially_grouped_rel->partial_pathlist);
+
 	/*
 	 * generate_gather_paths won't consider sorting the cheapest path to match
 	 * the group keys and then applying a Gather Merge node to the result;
