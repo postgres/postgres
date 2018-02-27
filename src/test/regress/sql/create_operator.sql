@@ -32,6 +32,10 @@ CREATE OPERATOR #%# (
    procedure = numeric_fac
 );
 
+-- Test operator created above
+SELECT point '(1,2)' <% widget '(0,0,3)' AS t,
+       point '(1,2)' <% widget '(0,0,1)' AS f;
+
 -- Test comments
 COMMENT ON OPERATOR ###### (int4, NONE) IS 'bad right unary';
 

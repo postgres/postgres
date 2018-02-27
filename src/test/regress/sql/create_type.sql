@@ -18,8 +18,8 @@ CREATE TYPE widget (
 
 CREATE TYPE city_budget (
    internallength = 16,
-   input = int44in,
-   output = int44out,
+   input = city_budget_in,
+   output = city_budget_out,
    element = int4,
    category = 'x',   -- just to verify the system will take it
    preferred = true  -- ditto
@@ -144,3 +144,7 @@ CREATE TEMP TABLE mytab (foo widget(42,13));
 
 SELECT format_type(atttypid,atttypmod) FROM pg_attribute
 WHERE attrelid = 'mytab'::regclass AND attnum > 0;
+
+-- might as well exercise the widget type while we're here
+INSERT INTO mytab VALUES ('(1,2,3)'), ('(-44,5.5,12)');
+TABLE mytab;

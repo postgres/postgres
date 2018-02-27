@@ -427,19 +427,19 @@ set_ttdummy(PG_FUNCTION_ARGS)
 
 
 /*
- * Type int44 has no real-world use, but the regression tests use it.
+ * Type city_budget has no real-world use, but the regression tests use it.
  * It's a four-element vector of int4's.
  */
 
 /*
- *		int44in			- converts "num num ..." to internal form
+ *		city_budget_in			- converts "num, num, ..." to internal form
  *
  *		Note: Fills any missing positions with zeroes.
  */
-PG_FUNCTION_INFO_V1(int44in);
+PG_FUNCTION_INFO_V1(city_budget_in);
 
 Datum
-int44in(PG_FUNCTION_ARGS)
+city_budget_in(PG_FUNCTION_ARGS)
 {
 	char	   *input_string = PG_GETARG_CSTRING(0);
 	int32	   *result = (int32 *) palloc(4 * sizeof(int32));
@@ -458,27 +458,22 @@ int44in(PG_FUNCTION_ARGS)
 }
 
 /*
- *		int44out		- converts internal form to "num num ..."
+ *		city_budget_out		- converts internal form to "num, num, ..."
  */
-PG_FUNCTION_INFO_V1(int44out);
+PG_FUNCTION_INFO_V1(city_budget_out);
 
 Datum
-int44out(PG_FUNCTION_ARGS)
+city_budget_out(PG_FUNCTION_ARGS)
 {
 	int32	   *an_array = (int32 *) PG_GETARG_POINTER(0);
-	char	   *result = (char *) palloc(16 * 4);	/* Allow 14 digits + sign */
-	int			i;
-	char	   *walk;
+	char	   *result = (char *) palloc(16 * 4);
 
-	walk = result;
-	for (i = 0; i < 4; i++)
-	{
-		pg_ltoa(an_array[i], walk);
-		while (*++walk != '\0')
-			;
-		*walk++ = ' ';
-	}
-	*--walk = '\0';
+	snprintf(result, 16 * 4, "%d,%d,%d,%d",
+			 an_array[0],
+			 an_array[1],
+			 an_array[2],
+			 an_array[3]);
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -861,5 +856,6 @@ PG_FUNCTION_INFO_V1(test_fdw_handler);
 Datum
 test_fdw_handler(PG_FUNCTION_ARGS)
 {
+	elog(ERROR, "test_fdw_handler is not implemented");
 	PG_RETURN_NULL();
 }
