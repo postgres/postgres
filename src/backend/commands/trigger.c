@@ -2815,7 +2815,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 			return NULL;		/* "do nothing" */
 		}
 	}
-	if (trigtuple != fdw_trigtuple)
+	if (trigtuple != fdw_trigtuple && trigtuple != newtuple)
 		heap_freetuple(trigtuple);
 
 	if (newtuple != slottuple)
