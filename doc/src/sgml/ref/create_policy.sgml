@@ -445,8 +445,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <row>
        <entry><command>INSERT ... RETURNING</command></entry>
        <entry>
-        New row
-        <footnote id="rls-select-priv">
+        New row <footnote id="rls-select-priv">
          <para>
           If read access is required to the existing or new row (for example,
           a <literal>WHERE</literal> or <literal>RETURNING</literal> clause
@@ -462,8 +461,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <row>
        <entry><command>UPDATE</command></entry>
        <entry>
-        Existing &amp; new rows
-        <footnoteref linkend="rls-select-priv"/>
+        Existing &amp; new rows <footnoteref linkend="rls-select-priv"/>
        </entry>
        <entry>&mdash;</entry>
        <entry>Existing row</entry>
@@ -473,8 +471,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <row>
        <entry><command>DELETE</command></entry>
        <entry>
-        Existing row
-        <footnoteref linkend="rls-select-priv"/>
+        Existing row <footnoteref linkend="rls-select-priv"/>
        </entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
