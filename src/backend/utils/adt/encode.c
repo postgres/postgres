@@ -215,7 +215,7 @@ static const int8 b64lookup[128] = {
 };
 
 static unsigned
-b64_encode(const char *src, unsigned len, char *dst)
+pg_base64_encode(const char *src, unsigned len, char *dst)
 {
 	char	   *p,
 			   *lend = dst + 76;
@@ -262,7 +262,7 @@ b64_encode(const char *src, unsigned len, char *dst)
 }
 
 static unsigned
-b64_decode(const char *src, unsigned len, char *dst)
+pg_base64_decode(const char *src, unsigned len, char *dst)
 {
 	const char *srcend = src + len,
 			   *s = src;
@@ -332,14 +332,14 @@ b64_decode(const char *src, unsigned len, char *dst)
 
 
 static unsigned
-b64_enc_len(const char *src, unsigned srclen)
+pg_base64_enc_len(const char *src, unsigned srclen)
 {
 	/* 3 bytes will be converted to 4, linefeed after 76 chars */
 	return (srclen + 2) * 4 / 3 + srclen / (76 * 3 / 4);
 }
 
 static unsigned
-b64_dec_len(const char *src, unsigned srclen)
+pg_base64_dec_len(const char *src, unsigned srclen)
 {
 	return (srclen * 3) >> 2;
 }
@@ -532,7 +532,7 @@ static const struct
 	{
 		"base64",
 		{
-			b64_enc_len, b64_dec_len, b64_encode, b64_decode
+			pg_base64_enc_len, pg_base64_dec_len, pg_base64_encode, pg_base64_decode
 		}
 	},
 	{
