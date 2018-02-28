@@ -42,7 +42,7 @@ static const unsigned char _base64[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static int
-b64_encode(const uint8 *src, unsigned len, uint8 *dst)
+pg_base64_encode(const uint8 *src, unsigned len, uint8 *dst)
 {
 	uint8	   *p,
 			   *lend = dst + 76;
@@ -92,7 +92,7 @@ b64_encode(const uint8 *src, unsigned len, uint8 *dst)
 
 /* probably should use lookup table */
 static int
-b64_decode(const uint8 *src, unsigned len, uint8 *dst)
+pg_base64_decode(const uint8 *src, unsigned len, uint8 *dst)
 {
 	const uint8 *srcend = src + len,
 			   *s = src;
@@ -160,7 +160,7 @@ b64_decode(const uint8 *src, unsigned len, uint8 *dst)
 }
 
 static unsigned
-b64_enc_len(unsigned srclen)
+pg_base64_enc_len(unsigned srclen)
 {
 	/*
 	 * 3 bytes will be converted to 4, linefeed after 76 chars
@@ -169,7 +169,7 @@ b64_enc_len(unsigned srclen)
 }
 
 static unsigned
-b64_dec_len(unsigned srclen)
+pg_base64_dec_len(unsigned srclen)
 {
 	return (srclen * 3) >> 2;
 }
@@ -218,11 +218,11 @@ pgp_armor_encode(const uint8 *src, unsigned len, StringInfo dst,
 		appendStringInfo(dst, "%s: %s\n", keys[n], values[n]);
 	appendStringInfoChar(dst, '\n');
 
-	/* make sure we have enough room to b64_encode() */
-	b64len = b64_enc_len(len);
+	/* make sure we have enough room to pg_base64_encode() */
+	b64len = pg_base64_enc_len(len);
 	enlargeStringInfo(dst, (int) b64len);
 
-	res = b64_encode(src, len, (uint8 *) dst->data + dst->len);
+	res = pg_base64_encode(src, len, (uint8 *) dst->data + dst->len);
 	if (res > b64len)
 		elog(FATAL, "overflow - encode estimate too small");
 	dst->len += res;
@@ -358,14 +358,14 @@ pgp_armor_decode(const uint8 *src, int len, StringInfo dst)
 		goto out;
 
 	/* decode crc */
-	if (b64_decode(p + 1, 4, buf) != 3)
+	if (pg_base64_decode(p + 1, 4, buf) != 3)
 		goto out;
 	crc = (((long) buf[0]) << 16) + (((long) buf[1]) << 8) + (long) buf[2];
 
 	/* decode data */
-	blen = (int) b64_dec_len(len);
+	blen = (int) pg_base64_dec_len(len);
 	enlargeStringInfo(dst, blen);
-	res = b64_decode(base64_start, base64_end - base64_start, (uint8 *) dst->data);
+	res = pg_base64_decode(base64_start, base64_end - base64_start, (uint8 *) dst->data);
 	if (res > blen)
 		elog(FATAL, "overflow - decode estimate too small");
 	if (res >= 0)
