@@ -42,7 +42,7 @@ static const unsigned char _base64[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static int
-b64_encode(const uint8 *src, unsigned len, uint8 *dst)
+pg_base64_encode(const uint8 *src, unsigned len, uint8 *dst)
 {
 	uint8	   *p,
 			   *lend = dst + 76;
@@ -92,7 +92,7 @@ b64_encode(const uint8 *src, unsigned len, uint8 *dst)
 
 /* probably should use lookup table */
 static int
-b64_decode(const uint8 *src, unsigned len, uint8 *dst)
+pg_base64_decode(const uint8 *src, unsigned len, uint8 *dst)
 {
 	const uint8 *srcend = src + len,
 			   *s = src;
@@ -160,7 +160,7 @@ b64_decode(const uint8 *src, unsigned len, uint8 *dst)
 }
 
 static unsigned
-b64_enc_len(unsigned srclen)
+pg_base64_enc_len(unsigned srclen)
 {
 	/*
 	 * 3 bytes will be converted to 4, linefeed after 76 chars
@@ -169,7 +169,7 @@ b64_enc_len(unsigned srclen)
 }
 
 static unsigned
-b64_dec_len(unsigned srclen)
+pg_base64_dec_len(unsigned srclen)
 {
 	return (srclen * 3) >> 2;
 }
@@ -214,7 +214,7 @@ pgp_armor_encode(const uint8 *src, unsigned len, uint8 *dst)
 	memcpy(pos, armor_header, n);
 	pos += n;
 
-	n = b64_encode(src, len, pos);
+	n = pg_base64_encode(src, len, pos);
 	pos += n;
 
 	if (*(pos - 1) != '\n')
@@ -355,12 +355,12 @@ pgp_armor_decode(const uint8 *src, unsigned len, uint8 *dst)
 		goto out;
 
 	/* decode crc */
-	if (b64_decode(p + 1, 4, buf) != 3)
+	if (pg_base64_decode(p + 1, 4, buf) != 3)
 		goto out;
 	crc = (((long) buf[0]) << 16) + (((long) buf[1]) << 8) + (long) buf[2];
 
 	/* decode data */
-	res = b64_decode(base64_start, base64_end - base64_start, dst);
+	res = pg_base64_decode(base64_start, base64_end - base64_start, dst);
 
 	/* check crc */
 	if (res >= 0 && crc24(dst, res) != crc)
@@ -372,11 +372,11 @@ out:
 unsigned
 pgp_armor_enc_len(unsigned len)
 {
-	return b64_enc_len(len) + strlen(armor_header) + strlen(armor_footer) + 16;
+	return pg_base64_enc_len(len) + strlen(armor_header) + strlen(armor_footer) + 16;
 }
 
 unsigned
 pgp_armor_dec_len(unsigned len)
 {
-	return b64_dec_len(len);
+	return pg_base64_dec_len(len);
 }
