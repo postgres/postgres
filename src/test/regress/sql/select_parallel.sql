@@ -49,6 +49,12 @@ explain (costs off)
 select round(avg(aa)), sum(aa) from a_star a4;
 reset enable_parallel_append;
 
+-- Parallel Append that runs serially
+create or replace function foobar() returns setof text as
+$$ select 'foo'::varchar union all select 'bar'::varchar $$
+language sql stable;
+select foobar() order by 1;
+
 -- test with leader participation disabled
 set parallel_leader_participation = off;
 explain (costs off)

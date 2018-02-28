@@ -162,7 +162,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	appendstate->as_whichplan =
 		appendstate->ps.plan->parallel_aware ? INVALID_SUBPLAN_INDEX : 0;
 
-	/* If parallel-aware, this will be overridden later. */
+	/* For parallel query, this will be overridden later. */
 	appendstate->choose_next_subplan = choose_next_subplan_locally;
 
 	return appendstate;
@@ -361,14 +361,21 @@ choose_next_subplan_locally(AppendState *node)
 {
 	int			whichplan = node->as_whichplan;
 
-	/* We should never see INVALID_SUBPLAN_INDEX in this case. */
-	Assert(whichplan >= 0 && whichplan <= node->as_nplans);
-
 	if (ScanDirectionIsForward(node->ps.state->es_direction))
 	{
-		if (whichplan >= node->as_nplans - 1)
-			return false;
-		node->as_whichplan++;
+		/*
+		 * We won't normally see INVALID_SUBPLAN_INDEX in this case, but we
+		 * might if a plan intended to be run in parallel ends up being run
+		 * serially.
+		 */
+		if (whichplan == INVALID_SUBPLAN_INDEX)
+			node->as_whichplan = 0;
+		else
+		{
+			if (whichplan >= node->as_nplans - 1)
+				return false;
+			node->as_whichplan++;
+		}
 	}
 	else
 	{
