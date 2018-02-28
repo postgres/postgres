@@ -1891,7 +1891,7 @@ find_partition_scheme(PlannerInfo *root, Relation relation)
 				   sizeof(Oid) * partnatts) != 0 ||
 			memcmp(partkey->partopcintype, part_scheme->partopcintype,
 				   sizeof(Oid) * partnatts) != 0 ||
-			memcmp(partkey->parttypcoll, part_scheme->parttypcoll,
+			memcmp(partkey->partcollation, part_scheme->partcollation,
 				   sizeof(Oid) * partnatts) != 0)
 			continue;
 
@@ -1926,8 +1926,8 @@ find_partition_scheme(PlannerInfo *root, Relation relation)
 	memcpy(part_scheme->partopcintype, partkey->partopcintype,
 		   sizeof(Oid) * partnatts);
 
-	part_scheme->parttypcoll = (Oid *) palloc(sizeof(Oid) * partnatts);
-	memcpy(part_scheme->parttypcoll, partkey->parttypcoll,
+	part_scheme->partcollation = (Oid *) palloc(sizeof(Oid) * partnatts);
+	memcpy(part_scheme->partcollation, partkey->partcollation,
 		   sizeof(Oid) * partnatts);
 
 	part_scheme->parttyplen = (int16 *) palloc(sizeof(int16) * partnatts);
