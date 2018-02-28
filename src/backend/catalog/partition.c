@@ -1725,14 +1725,11 @@ make_partition_op_expr(PartitionKey key, int keynum,
 /*
  * get_qual_for_hash
  *
- * Given a list of partition columns, modulus and remainder corresponding to a
- * partition, this function returns CHECK constraint expression Node for that
- * partition.
+ * Returns a CHECK constraint expression to use as a hash partition's
+ * constraint, given the parent relation and partition bound structure.
  *
  * The partition constraint for a hash partition is always a call to the
- * built-in function satisfies_hash_partition().  The first two arguments are
- * the modulus and remainder for the partition; the remaining arguments are the
- * values to be hashed.
+ * built-in function satisfies_hash_partition().
  */
 static List *
 get_qual_for_hash(Relation parent, PartitionBoundSpec *spec)
@@ -1812,7 +1809,7 @@ get_qual_for_hash(Relation parent, PartitionBoundSpec *spec)
  * get_qual_for_list
  *
  * Returns an implicit-AND list of expressions to use as a list partition's
- * constraint, given the partition key and bound structures.
+ * constraint, given the parent relation and partition bound structure.
  *
  * The function returns NIL for a default partition when it's the only
  * partition since in that case there is no constraint.
@@ -2086,7 +2083,7 @@ get_range_nulltest(PartitionKey key)
  * get_qual_for_range
  *
  * Returns an implicit-AND list of expressions to use as a range partition's
- * constraint, given the partition key and bound structures.
+ * constraint, given the parent relation and partition bound structure.
  *
  * For a multi-column range partition key, say (a, b, c), with (al, bl, cl)
  * as the lower bound tuple and (au, bu, cu) as the upper bound tuple, we
