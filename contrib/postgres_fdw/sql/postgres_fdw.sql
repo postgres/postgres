@@ -39,6 +39,9 @@ CREATE TABLE "S 1"."T 1" (
 	c8 user_enum,
 	CONSTRAINT t1_pkey PRIMARY KEY ("C 1")
 );
+-- "S 1"."T 1" will be heavily updated below, so disable autovacuum for
+-- the table to avoid unexpected effects of that
+ALTER TABLE "S 1"."T 1" SET (autovacuum_enabled = 'false');
 CREATE TABLE "S 1"."T 2" (
 	c1 int NOT NULL,
 	c2 text,
@@ -1068,11 +1071,6 @@ explain (verbose, costs off) select * from ft3 f, loct3 l
 -- ===================================================================
 -- test writable foreign table stuff
 -- ===================================================================
--- Autovacuum on the remote side might affect remote estimates,
--- so use local stats on ft2 as well
-ALTER FOREIGN TABLE ft2 OPTIONS (SET use_remote_estimate 'false');
-ANALYZE ft2;
-
 EXPLAIN (verbose, costs off)
 INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
 INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
@@ -1213,9 +1211,7 @@ commit;
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 select c2, count(*) from "S 1"."T 1" where c2 < 500 group by 1 order by 1;
 
--- Go back to use remote-estimate mode on ft2
 VACUUM ANALYZE "S 1"."T 1";
-ALTER FOREIGN TABLE ft2 OPTIONS (SET use_remote_estimate 'true');
 
 -- Above DMLs add data with c6 as NULL in ft1, so test ORDER BY NULLS LAST and NULLs
 -- FIRST behavior here.
