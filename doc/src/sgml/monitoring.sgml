@@ -845,7 +845,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="63"><literal>LWLock</literal></entry>
+        <entry morerows="64"><literal>LWLock</literal></entry>
         <entry><literal>ShmemIndexLock</literal></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
@@ -1120,6 +1120,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry><literal>parallel_append</literal></entry>
          <entry>Waiting to choose the next subplan during Parallel Append plan
          execution.</entry>
+        </row>
+        <row>
+         <entry><literal>parallel_hash_join</literal></entry>
+         <entry>Waiting to allocate or exchange a chunk of memory or update
+         counters during Parallel Hash plan execution.</entry>
         </row>
         <row>
          <entry morerows="9"><literal>Lock</literal></entry>
