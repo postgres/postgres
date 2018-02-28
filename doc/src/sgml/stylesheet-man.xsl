@@ -191,6 +191,12 @@
   <xsl:template match="indexterm"/>
 
 
+<!-- https://github.com/docbook/xslt10-stylesheets/issues/59 -->
+<xsl:template match="a/sup">
+  <xsl:apply-templates/>
+</xsl:template>
+
+
 <!-- Gentext customization -->
 
 <!-- see http://www.sagehill.net/docbookxsl/CustomGentext.html -->
