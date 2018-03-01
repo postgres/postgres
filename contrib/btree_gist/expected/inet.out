@@ -64,3 +64,42 @@ SELECT count(*) FROM inettmp WHERE a >  '89.225.196.191'::inet;
    386
 (1 row)
 
+VACUUM inettmp;
+-- gist_inet_ops lacks a fetch function, so this should not be index-only scan
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on inettmp
+         Recheck Cond: (a = '89.225.196.191'::inet)
+         ->  Bitmap Index Scan on inetidx
+               Index Cond: (a = '89.225.196.191'::inet)
+(5 rows)
+
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
+ count 
+-------
+     1
+(1 row)
+
+DROP INDEX inetidx;
+CREATE INDEX ON inettmp USING gist (a gist_inet_ops, a inet_ops);
+-- likewise here (checks for core planner bug)
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on inettmp
+         Recheck Cond: (a = '89.225.196.191'::inet)
+         ->  Bitmap Index Scan on inettmp_a_a1_idx
+               Index Cond: (a = '89.225.196.191'::inet)
+(5 rows)
+
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
+ count 
+-------
+     1
+(1 row)
+
