@@ -63,17 +63,23 @@ format_type(PG_FUNCTION_ARGS)
 	Oid			type_oid;
 	int32		typemod;
 	char	   *result;
+	bits16		flags = FORMAT_TYPE_ALLOW_INVALID;
 
 	/* Since this function is not strict, we must test for null args */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
 	type_oid = PG_GETARG_OID(0);
-	typemod = PG_ARGISNULL(1) ? -1 : PG_GETARG_INT32(1);
 
-	result = format_type_extended(type_oid, typemod,
-								  FORMAT_TYPE_TYPEMOD_GIVEN |
-								  FORMAT_TYPE_ALLOW_INVALID);
+	if (PG_ARGISNULL(1))
+		typemod = -1;
+	else
+	{
+		typemod = PG_GETARG_INT32(1);
+		flags |= FORMAT_TYPE_TYPEMOD_GIVEN;
+	}
+
+	result = format_type_extended(type_oid, typemod, flags);
 
 	PG_RETURN_TEXT_P(cstring_to_text(result));
 }
@@ -82,21 +88,23 @@ format_type(PG_FUNCTION_ARGS)
  * format_type_extended
  *		Generate a possibly-qualified type name.
  *
- * The default is to only qualify if the type is not in the search path, to
- * ignore the given typmod, and to raise an error if a non-existent type_oid is
- * given.
+ * The default behavior is to only qualify if the type is not in the search
+ * path, to ignore the given typmod, and to raise an error if a non-existent
+ * type_oid is given.
  *
  * The following bits in 'flags' modify the behavior:
  * - FORMAT_TYPE_TYPEMOD_GIVEN
- *			consider the given typmod in the output (may be -1 to request
- *			the default behavior)
- *
+ *			include the typmod in the output (typmod could still be -1 though)
  * - FORMAT_TYPE_ALLOW_INVALID
  *			if the type OID is invalid or unknown, return ??? or such instead
  *			of failing
- *
  * - FORMAT_TYPE_FORCE_QUALIFY
  *			always schema-qualify type names, regardless of search_path
+ *
+ * Note that TYPEMOD_GIVEN is not interchangeable with "typemod == -1";
+ * see the comments above for format_type().
+ *
+ * Returns a palloc'd string.
  */
 char *
 format_type_extended(Oid type_oid, int32 typemod, bits16 flags)

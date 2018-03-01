@@ -854,7 +854,7 @@ foreign_expr_walker(Node *node,
 static char *
 deparse_type_name(Oid type_oid, int32 typemod)
 {
-	uint8 flags = FORMAT_TYPE_TYPEMOD_GIVEN;
+	bits16		flags = FORMAT_TYPE_TYPEMOD_GIVEN;
 
 	if (!is_builtin(type_oid))
 		flags |= FORMAT_TYPE_FORCE_QUALIFY;

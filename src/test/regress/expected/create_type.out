@@ -191,3 +191,23 @@ TABLE mytab;
  (-44,5.5,12)
 (2 rows)
 
+-- and test format_type() a bit more, too
+select format_type('varchar'::regtype, 42);
+      format_type      
+-----------------------
+ character varying(38)
+(1 row)
+
+select format_type('bpchar'::regtype, null);
+ format_type 
+-------------
+ character
+(1 row)
+
+-- this behavior difference is intentional
+select format_type('bpchar'::regtype, -1);
+ format_type 
+-------------
+ bpchar
+(1 row)
+
