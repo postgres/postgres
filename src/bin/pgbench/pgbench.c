@@ -502,6 +502,7 @@ static void pgbench_error(const char *fmt,...) pg_attribute_printf(1, 2);
 static void addScript(ParsedScript script);
 static void *threadRun(void *arg);
 static void setalarm(int seconds);
+static void finishCon(CState *st);
 
 
 /* callback functions for our flex lexer */
@@ -2982,8 +2983,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 
 				if (is_connect)
 				{
-					PQfinish(st->con);
-					st->con = NULL;
+					finishCon(st);
 					INSTR_TIME_SET_ZERO(now);
 				}
 
@@ -3020,11 +3020,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 				 */
 			case CSTATE_ABORTED:
 			case CSTATE_FINISHED:
-				if (st->con != NULL)
-				{
-					PQfinish(st->con);
-					st->con = NULL;
-				}
+				finishCon(st);
 				return;
 		}
 	}
@@ -3172,13 +3168,7 @@ disconnect_all(CState *state, int length)
 	int			i;
 
 	for (i = 0; i < length; i++)
-	{
-		if (state[i].con)
-		{
-			PQfinish(state[i].con);
-			state[i].con = NULL;
-		}
-	}
+		finishCon(&state[i]);
 }
 
 /*
@@ -5266,8 +5256,7 @@ threadRun(void *arg)
 			{
 				/* interrupt client that has not started a transaction */
 				st->state = CSTATE_FINISHED;
-				PQfinish(st->con);
-				st->con = NULL;
+				finishCon(st);
 				remains--;
 			}
 			else if (st->state == CSTATE_SLEEP || st->state == CSTATE_THROTTLE)
@@ -5545,6 +5534,16 @@ done:
 		thread->logfile = NULL;
 	}
 	return NULL;
+}
+
+static void
+finishCon(CState *st)
+{
+	if (st->con != NULL)
+	{
+		PQfinish(st->con);
+		st->con = NULL;
+	}
 }
 
 /*
