@@ -42,7 +42,7 @@ comment			("#"{non_newline}*)
 %%
 
 %{
-	litbuf = pg_malloc(LITBUF_INIT);
+	litbuf = malloc(LITBUF_INIT);
 	litbufsize = LITBUF_INIT;
 %}
 
@@ -108,7 +108,7 @@ addlitchar(char c)
 	{
 		/* Double the size of litbuf if it gets full */
 		litbufsize += litbufsize;
-		litbuf = pg_realloc(litbuf, litbufsize);
+		litbuf = realloc(litbuf, litbufsize);
 	}
 	litbuf[litbufpos++] = c;
 }
