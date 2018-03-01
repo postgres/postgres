@@ -1332,9 +1332,10 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
    <para>
     The <literal>random</literal> function generates values using a uniform
     distribution, that is all the values are drawn within the specified
-    range with equal probability. The <literal>random_exponential</literal> and
-    <literal>random_gaussian</literal> functions require an additional double
-    parameter which determines the precise shape of the distribution.
+    range with equal probability. The <literal>random_exponential</literal>, 
+    <literal>random_gaussian</literal> and <literal>random_zipfian</literal>
+    functions require an additional double parameter which determines the precise
+    shape of the distribution.
    </para>
 
    <itemizedlist>
