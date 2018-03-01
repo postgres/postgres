@@ -891,7 +891,7 @@ readpage:
 
 			itup = (IndexTuple) PageGetItem(rpage,
 											PageGetItemId(rpage, roffnum));
-			itemsz = IndexTupleDSize(*itup);
+			itemsz = IndexTupleSize(itup);
 			itemsz = MAXALIGN(itemsz);
 
 			/*

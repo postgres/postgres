@@ -51,9 +51,15 @@ _bt_restore_page(Page page, char *from, int len)
 	i = 0;
 	while (from < end)
 	{
-		/* Need to copy tuple header due to alignment considerations */
+		/*
+		 * As we step through the items, 'from' won't always be properly
+		 * aligned, so we need to use memcpy().  Further, we use Item (which
+		 * is just a char*) here for our items array for the same reason;
+		 * wouldn't want the compiler or anyone thinking that an item is
+		 * aligned when it isn't.
+		 */
 		memcpy(&itupdata, from, sizeof(IndexTupleData));
-		itemsz = IndexTupleDSize(itupdata);
+		itemsz = IndexTupleSize(&itupdata);
 		itemsz = MAXALIGN(itemsz);
 
 		items[i] = (Item) from;
@@ -205,7 +211,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 	BTPageOpaque ropaque;
 	char	   *datapos;
 	Size		datalen;
-	Item		left_hikey = NULL;
+	IndexTuple	left_hikey = NULL;
 	Size		left_hikeysz = 0;
 	BlockNumber leftsib;
 	BlockNumber rightsib;
@@ -248,7 +254,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 	{
 		ItemId		hiItemId = PageGetItemId(rpage, P_FIRSTDATAKEY(ropaque));
 
-		left_hikey = PageGetItem(rpage, hiItemId);
+		left_hikey = (IndexTuple) PageGetItem(rpage, hiItemId);
 		left_hikeysz = ItemIdGetLength(hiItemId);
 	}
 
@@ -272,7 +278,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 		Page		lpage = (Page) BufferGetPage(lbuf);
 		BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 		OffsetNumber off;
-		Item		newitem = NULL;
+		IndexTuple	newitem = NULL;
 		Size		newitemsz = 0;
 		Page		newlpage;
 		OffsetNumber leftoff;
@@ -281,7 +287,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 
 		if (onleft)
 		{
-			newitem = (Item) datapos;
+			newitem = (IndexTuple) datapos;
 			newitemsz = MAXALIGN(IndexTupleSize(newitem));
 			datapos += newitemsz;
 			datalen -= newitemsz;
@@ -290,7 +296,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 		/* Extract left hikey and its size (assuming 16-bit alignment) */
 		if (!isleaf)
 		{
-			left_hikey = (Item) datapos;
+			left_hikey = (IndexTuple) datapos;
 			left_hikeysz = MAXALIGN(IndexTupleSize(left_hikey));
 			datapos += left_hikeysz;
 			datalen -= left_hikeysz;
@@ -301,7 +307,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 
 		/* Set high key */
 		leftoff = P_HIKEY;
-		if (PageAddItem(newlpage, left_hikey, left_hikeysz,
+		if (PageAddItem(newlpage, (Item) left_hikey, left_hikeysz,
 						P_HIKEY, false, false) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add high key to left page after split");
 		leftoff = OffsetNumberNext(leftoff);
@@ -310,12 +316,12 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 		{
 			ItemId		itemid;
 			Size		itemsz;
-			Item		item;
+			IndexTuple	item;
 
 			/* add the new item if it was inserted on left page */
 			if (onleft && off == xlrec->newitemoff)
 			{
-				if (PageAddItem(newlpage, newitem, newitemsz, leftoff,
+				if (PageAddItem(newlpage, (Item) newitem, newitemsz, leftoff,
 								false, false) == InvalidOffsetNumber)
 					elog(ERROR, "failed to add new item to left page after split");
 				leftoff = OffsetNumberNext(leftoff);
@@ -323,8 +329,8 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 
 			itemid = PageGetItemId(lpage, off);
 			itemsz = ItemIdGetLength(itemid);
-			item = PageGetItem(lpage, itemid);
-			if (PageAddItem(newlpage, item, itemsz, leftoff,
+			item = (IndexTuple) PageGetItem(lpage, itemid);
+			if (PageAddItem(newlpage, (Item) item, itemsz, leftoff,
 							false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add old item to left page after split");
 			leftoff = OffsetNumberNext(leftoff);
@@ -333,7 +339,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 		/* cope with possibility that newitem goes at the end */
 		if (onleft && off == xlrec->newitemoff)
 		{
-			if (PageAddItem(newlpage, newitem, newitemsz, leftoff,
+			if (PageAddItem(newlpage, (Item) newitem, newitemsz, leftoff,
 							false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add new item to left page after split");
 			leftoff = OffsetNumberNext(leftoff);

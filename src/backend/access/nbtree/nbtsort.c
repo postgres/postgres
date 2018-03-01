@@ -813,7 +813,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	last_off = state->btps_lastoff;
 
 	pgspc = PageGetFreeSpace(npage);
-	itupsz = IndexTupleDSize(*itup);
+	itupsz = IndexTupleSize(itup);
 	itupsz = MAXALIGN(itupsz);
 
 	/*

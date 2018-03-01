@@ -558,7 +558,7 @@ _bt_findinsertloc(Relation rel,
 
 	lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	itemsz = IndexTupleDSize(*newtup);
+	itemsz = IndexTupleSize(newtup);
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
@@ -755,7 +755,7 @@ _bt_insertonpg(Relation rel,
 		elog(ERROR, "cannot insert to incompletely split page %u",
 			 BufferGetBlockNumber(buf));
 
-	itemsz = IndexTupleDSize(*itup);
+	itemsz = IndexTupleSize(itup);
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
@@ -914,7 +914,7 @@ _bt_insertonpg(Relation rel,
 									sizeof(IndexTupleData));
 			}
 			else
-				XLogRegisterBufData(0, (char *) itup, IndexTupleDSize(*itup));
+				XLogRegisterBufData(0, (char *) itup, IndexTupleSize(itup));
 
 			recptr = XLogInsert(RM_BTREE_ID, xlinfo);
 

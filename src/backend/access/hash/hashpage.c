@@ -1173,7 +1173,7 @@ _hash_splitbucket(Relation rel,
 				 * the current page in the new bucket, we must allocate a new
 				 * overflow page and place the tuple on that page instead.
 				 */
-				itemsz = IndexTupleDSize(*new_itup);
+				itemsz = IndexTupleSize(new_itup);
 				itemsz = MAXALIGN(itemsz);
 
 				if (PageGetFreeSpaceForMultipleTuples(npage, nitups + 1) < (all_tups_size + itemsz))

@@ -55,7 +55,7 @@ _hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel)
 	hashkey = _hash_get_indextuple_hashkey(itup);
 
 	/* compute item size too */
-	itemsz = IndexTupleDSize(*itup);
+	itemsz = IndexTupleSize(itup);
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
@@ -222,7 +222,7 @@ restart_insert:
 		XLogRegisterBuffer(1, metabuf, REGBUF_STANDARD);
 
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
-		XLogRegisterBufData(0, (char *) itup, IndexTupleDSize(*itup));
+		XLogRegisterBufData(0, (char *) itup, IndexTupleSize(itup));
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_INSERT);
 
@@ -309,7 +309,7 @@ _hash_pgaddmultitup(Relation rel, Buffer buf, IndexTuple *itups,
 	{
 		Size		itemsize;
 
-		itemsize = IndexTupleDSize(*itups[i]);
+		itemsize = IndexTupleSize(itups[i]);
 		itemsize = MAXALIGN(itemsize);
 
 		/* Find where to insert the tuple (preserving page's hashkey ordering) */

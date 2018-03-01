@@ -558,7 +558,7 @@ hash_xlog_move_page_contents(XLogReaderState *record)
 				Size		itemsz;
 				OffsetNumber l;
 
-				itemsz = IndexTupleDSize(*itup);
+				itemsz = IndexTupleSize(itup);
 				itemsz = MAXALIGN(itemsz);
 
 				data += itemsz;
@@ -686,7 +686,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 				Size		itemsz;
 				OffsetNumber l;
 
-				itemsz = IndexTupleDSize(*itup);
+				itemsz = IndexTupleSize(itup);
 				itemsz = MAXALIGN(itemsz);
 
 				data += itemsz;

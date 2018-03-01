@@ -67,9 +67,9 @@ RelationPutHeapTuple(Relation relation,
 	if (!token)
 	{
 		ItemId		itemId = PageGetItemId(pageHeader, offnum);
-		Item		item = PageGetItem(pageHeader, itemId);
+		HeapTupleHeader item = (HeapTupleHeader) PageGetItem(pageHeader, itemId);
 
-		((HeapTupleHeader) item)->t_ctid = tuple->t_self;
+		item->t_ctid = tuple->t_self;
 	}
 }
 

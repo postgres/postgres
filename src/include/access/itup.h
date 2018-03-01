@@ -67,8 +67,7 @@ typedef IndexAttributeBitMapData * IndexAttributeBitMap;
 #define INDEX_VAR_MASK	0x4000
 #define INDEX_NULL_MASK 0x8000
 
-#define IndexTupleSize(itup)		((Size) (((IndexTuple) (itup))->t_info & INDEX_SIZE_MASK))
-#define IndexTupleDSize(itup)		((Size) ((itup).t_info & INDEX_SIZE_MASK))
+#define IndexTupleSize(itup)		((Size) ((itup)->t_info & INDEX_SIZE_MASK))
 #define IndexTupleHasNulls(itup)	((((IndexTuple) (itup))->t_info & INDEX_NULL_MASK))
 #define IndexTupleHasVarwidths(itup) ((((IndexTuple) (itup))->t_info & INDEX_VAR_MASK))
 
