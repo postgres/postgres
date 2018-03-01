@@ -676,6 +676,17 @@ make -C src/bin check PROVE_FLAGS='--timer'
    </para>
 
    <para>
+    The <command>make</command> variable <varname>PROVE_TESTS</varname>
+    can be used to define a whitespace-separated list of paths relative
+    to the <filename>Makefile</filename> invoking <command>prove</command>
+    to run the specified subset of tests instead of the default
+    <filename>t/*.pl</filename>.  For example:
+<programlisting>
+make check PROVE_TESTS='t/001_test1.pl t/003_test3.pl'
+</programlisting>
+   </para>
+
+   <para>
     The TAP tests require the Perl module <literal>IPC::Run</literal>.
     This module is available from CPAN or an operating system package.
    </para>
