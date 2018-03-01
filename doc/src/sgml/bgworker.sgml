@@ -259,10 +259,21 @@ typedef struct BackgroundWorker
    <function>WaitForBackgroundWorkerStartup(<parameter>BackgroundWorkerHandle
    *handle</parameter>, <parameter>pid_t *</parameter>)</function> function.
    This function will block until the postmaster has attempted to start the
-   background worker, or until the postmaster dies.  If the background runner
-   is running, the return value will <literal>BGWH_STARTED</literal>, and
+   background worker, or until the postmaster dies.  If the background worker
+   is running, the return value will be <literal>BGWH_STARTED</literal>, and
    the PID will be written to the provided address.  Otherwise, the return
    value will be <literal>BGWH_STOPPED</literal> or
+   <literal>BGWH_POSTMASTER_DIED</literal>.
+  </para>
+
+  <para>
+   A process can also wait for a background worker to shut down, by using the
+   <function>WaitForBackgroundWorkerShutdown(<parameter>BackgroundWorkerHandle
+   *handle</parameter>)</function> function and passing the
+   <type>BackgroundWorkerHandle *</type> obtained at registration. This
+   function will block until the background worker exits, or postmaster dies.
+   When the background worker exits, the return value is
+   <literal>BGWH_STOPPED</literal>, if postmaster dies it will return
    <literal>BGWH_POSTMASTER_DIED</literal>.
   </para>
 
