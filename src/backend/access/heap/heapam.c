@@ -6799,7 +6799,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 			 * independent of committedness, since a committed lock holder has
 			 * released the lock).
 			 */
-			if (!(tuple->t_infomask & HEAP_XMAX_LOCK_ONLY) &&
+			if (!HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask) &&
 				TransactionIdDidCommit(xid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
