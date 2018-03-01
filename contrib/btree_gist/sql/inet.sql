@@ -29,3 +29,21 @@ SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
 SELECT count(*) FROM inettmp WHERE a >= '89.225.196.191'::inet;
 
 SELECT count(*) FROM inettmp WHERE a >  '89.225.196.191'::inet;
+
+VACUUM inettmp;
+
+-- gist_inet_ops lacks a fetch function, so this should not be index-only scan
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
+
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
+
+DROP INDEX inetidx;
+
+CREATE INDEX ON inettmp USING gist (a gist_inet_ops, a inet_ops);
+
+-- likewise here (checks for core planner bug)
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
+
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
