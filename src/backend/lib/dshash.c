@@ -129,7 +129,7 @@ struct dshash_table
 
 /* How many buckets are there in each partition at a given size? */
 #define BUCKETS_PER_PARTITION(size_log2)		\
-	(UINT64CONST(1) << NUM_SPLITS(size_log2))
+	(((size_t) 1) << NUM_SPLITS(size_log2))
 
 /* Max entries before we need to grow.  Half + quarter = 75% load factor. */
 #define MAX_COUNT_PER_PARTITION(hash_table)				\

@@ -55,7 +55,7 @@ typedef struct dshash_parameters
 	int			tranche_id;		/* The tranche ID to use for locks */
 } dshash_parameters;
 
-/* Forward declaration of private types for use only by dht.c. */
+/* Forward declaration of private types for use only by dshash.c. */
 struct dshash_table_item;
 typedef struct dshash_table_item dshash_table_item;
 
