@@ -32,6 +32,7 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	BlockNumber npages,
 				blkno;
 	BlockNumber totFreePages;
+	double		tuplesCount;
 	bool		needLock;
 
 	/* No-op in ANALYZE ONLY mode */
@@ -40,17 +41,7 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 
 	/* Set up all-zero stats if gistbulkdelete wasn't called */
 	if (stats == NULL)
-	{
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
-		/* use heap's tuple count */
-		stats->num_index_tuples = info->num_heap_tuples;
-		stats->estimated_count = info->estimated_count;
-
-		/*
-		 * XXX the above is wrong if index is partial.  Would it be OK to just
-		 * return NULL, or is there work we must do below?
-		 */
-	}
 
 	/*
 	 * Need lock unless it's local to this backend.
@@ -65,6 +56,7 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		UnlockRelationForExtension(rel, ExclusiveLock);
 
 	totFreePages = 0;
+	tuplesCount = 0;
 	for (blkno = GIST_ROOT_BLKNO + 1; blkno < npages; blkno++)
 	{
 		Buffer		buffer;
@@ -82,6 +74,11 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 			totFreePages++;
 			RecordFreeIndexPage(rel, blkno);
 		}
+		else if (GistPageIsLeaf(page))
+		{
+			/* count tuples in index (considering only leaf tuples) */
+			tuplesCount += PageGetMaxOffsetNumber(page);
+		}
 		UnlockReleaseBuffer(buffer);
 	}
 
@@ -95,6 +92,8 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	stats->num_pages = RelationGetNumberOfBlocks(rel);
 	if (needLock)
 		UnlockRelationForExtension(rel, ExclusiveLock);
+	stats->num_index_tuples = tuplesCount;
+	stats->estimated_count = false;
 
 	return stats;
 }
