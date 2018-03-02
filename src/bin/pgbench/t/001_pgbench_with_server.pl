@@ -605,24 +605,26 @@ sub check_pgbench_logs
 	ok(unlink(@logs), "remove log files");
 }
 
+my $bdir = $node->basedir;
+
 # with sampling rate
 pgbench(
-'-n -S -t 50 -c 2 --log --log-prefix=001_pgbench_log_2 --sampling-rate=0.5',
+"-n -S -t 50 -c 2 --log --log-prefix=$bdir/001_pgbench_log_2 --sampling-rate=0.5",
 	0,
 	[ qr{select only}, qr{processed: 100/100} ],
 	[qr{^$}],
 	'pgbench logs');
 
-check_pgbench_logs('001_pgbench_log_2', 1, 8, 92,
+check_pgbench_logs("$bdir/001_pgbench_log_2", 1, 8, 92,
 	qr{^0 \d{1,2} \d+ \d \d+ \d+$});
 
 # check log file in some detail
 pgbench(
-	'-n -b se -t 10 -l --log-prefix=001_pgbench_log_3',
+	"-n -b se -t 10 -l --log-prefix=$bdir/001_pgbench_log_3",
 	0, [ qr{select only}, qr{processed: 10/10} ],
 	[qr{^$}], 'pgbench logs contents');
 
-check_pgbench_logs('001_pgbench_log_3', 1, 10, 10,
+check_pgbench_logs("$bdir/001_pgbench_log_3", 1, 10, 10,
 	qr{^\d \d{1,2} \d+ \d \d+ \d+$});
 
 # done
