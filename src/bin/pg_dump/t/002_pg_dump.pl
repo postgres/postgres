@@ -6257,8 +6257,7 @@ qr/^GRANT SELECT ON TABLE dump_test_second_schema.measurement_y2006m2 TO regress
 						   prorows,
 						   provariadic,
 						   protransform,
-						   proisagg,
-						   proiswindow,
+						   prokind,
 						   prosecdef,
 						   proleakproof,
 						   proisstrict,
@@ -6290,8 +6289,7 @@ qr/^GRANT SELECT ON TABLE dump_test_second_schema.measurement_y2006m2 TO regress
 		\QGRANT SELECT(prorows) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
 		\QGRANT SELECT(provariadic) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
 		\QGRANT SELECT(protransform) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proisagg) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proiswindow) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
+		\QGRANT SELECT(prokind) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
 		\QGRANT SELECT(prosecdef) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
 		\QGRANT SELECT(proleakproof) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
 		\QGRANT SELECT(proisstrict) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*

@@ -573,7 +573,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	estate.err_text = NULL;
 	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
 	rc = exec_stmt_block(&estate, func->action);
-	if (rc != PLPGSQL_RC_RETURN && func->fn_rettype)
+	if (rc != PLPGSQL_RC_RETURN)
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = NULL;
@@ -617,9 +617,10 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	}
 	else if (!estate.retisnull)
 	{
-		if (!func->fn_rettype)
+		if (func->fn_prokind == PROKIND_PROCEDURE)
 			ereport(ERROR,
-					(errmsg("cannot return a value from a procedure")));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot return a value from a procedure")));
 
 		/*
 		 * Cast result value to function's declared result type, and copy it
@@ -2956,9 +2957,10 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 	/*
 	 * Special hack for function returning VOID: instead of NULL, return a
 	 * non-null VOID value.  This is of dubious importance but is kept for
-	 * backwards compatibility.
+	 * backwards compatibility.  We don't do it for procedures, though.
 	 */
-	if (estate->fn_rettype == VOIDOID)
+	if (estate->fn_rettype == VOIDOID &&
+		estate->func->fn_prokind != PROKIND_PROCEDURE)
 	{
 		estate->retval = (Datum) 0;
 		estate->retisnull = false;

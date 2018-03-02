@@ -271,6 +271,15 @@ ERROR:  could not find a function named "functest_b_1"
 DROP FUNCTION functest_b_2;  -- error, ambiguous
 ERROR:  function name "functest_b_2" is not unique
 HINT:  Specify the argument list to select the function unambiguously.
+-- CREATE OR REPLACE tests
+CREATE FUNCTION functest1(a int) RETURNS int LANGUAGE SQL AS 'SELECT $1';
+CREATE OR REPLACE FUNCTION functest1(a int) RETURNS int LANGUAGE SQL WINDOW AS 'SELECT $1';
+ERROR:  cannot change routine kind
+DETAIL:  "functest1" is a function.
+CREATE OR REPLACE PROCEDURE functest1(a int) LANGUAGE SQL AS 'SELECT $1';
+ERROR:  cannot change routine kind
+DETAIL:  "functest1" is a function.
+DROP FUNCTION functest1(a int);
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;
 NOTICE:  drop cascades to 16 other objects

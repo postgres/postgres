@@ -1614,14 +1614,27 @@ func_get_detail(List *funcname,
 				*argdefaults = defaults;
 			}
 		}
-		if (pform->proisagg)
-			result = FUNCDETAIL_AGGREGATE;
-		else if (pform->proiswindow)
-			result = FUNCDETAIL_WINDOWFUNC;
-		else if (pform->prorettype == InvalidOid)
-			result = FUNCDETAIL_PROCEDURE;
-		else
-			result = FUNCDETAIL_NORMAL;
+
+		switch (pform->prokind)
+		{
+			case PROKIND_AGGREGATE:
+				result = FUNCDETAIL_AGGREGATE;
+				break;
+			case PROKIND_FUNCTION:
+				result = FUNCDETAIL_NORMAL;
+				break;
+			case PROKIND_PROCEDURE:
+				result = FUNCDETAIL_PROCEDURE;
+				break;
+			case PROKIND_WINDOW:
+				result = FUNCDETAIL_WINDOWFUNC;
+				break;
+			default:
+				elog(ERROR, "unrecognized prokind: %c", pform->prokind);
+				result = FUNCDETAIL_NORMAL; /* keep compiler quiet */
+				break;
+		}
+
 		ReleaseSysCache(ftup);
 		return result;
 	}
@@ -2067,7 +2080,7 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool noError)
 	if (objtype == OBJECT_FUNCTION)
 	{
 		/* Make sure it's a function, not a procedure */
-		if (oid && get_func_rettype(oid) == InvalidOid)
+		if (oid && get_func_prokind(oid) == PROKIND_PROCEDURE)
 		{
 			if (noError)
 				return InvalidOid;
@@ -2098,7 +2111,7 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool noError)
 		}
 
 		/* Make sure it's a procedure */
-		if (get_func_rettype(oid) != InvalidOid)
+		if (get_func_prokind(oid) != PROKIND_PROCEDURE)
 		{
 			if (noError)
 				return InvalidOid;
@@ -2134,7 +2147,7 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool noError)
 		}
 
 		/* Make sure it's an aggregate */
-		if (!get_func_isagg(oid))
+		if (get_func_prokind(oid) != PROKIND_AGGREGATE)
 		{
 			if (noError)
 				return InvalidOid;

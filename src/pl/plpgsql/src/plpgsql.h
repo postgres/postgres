@@ -918,6 +918,7 @@ typedef struct PLpgSQL_function
 	bool		fn_retisdomain;
 	bool		fn_retset;
 	bool		fn_readonly;
+	char		fn_prokind;
 
 	int			fn_nargs;
 	int			fn_argvarnos[FUNC_MAX_ARGS];

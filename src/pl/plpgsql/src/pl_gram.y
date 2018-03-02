@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "catalog/namespace.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "parser/parser.h"
 #include "parser/parse_type.h"
@@ -3137,7 +3138,8 @@ make_return_stmt(int location)
 					 parser_errposition(yylloc)));
 		new->retvarno = plpgsql_curr_compile->out_param_varno;
 	}
-	else if (plpgsql_curr_compile->fn_rettype == VOIDOID)
+	else if (plpgsql_curr_compile->fn_rettype == VOIDOID &&
+			 plpgsql_curr_compile->fn_prokind != PROKIND_PROCEDURE)
 	{
 		if (yylex() != ';')
 			ereport(ERROR,

@@ -4047,11 +4047,11 @@ getProcedureTypeDescription(StringInfo buffer, Oid procid)
 		elog(ERROR, "cache lookup failed for procedure %u", procid);
 	procForm = (Form_pg_proc) GETSTRUCT(procTup);
 
-	if (procForm->proisagg)
+	if (procForm->prokind == PROKIND_AGGREGATE)
 		appendStringInfoString(buffer, "aggregate");
-	else if (procForm->prorettype == InvalidOid)
+	else if (procForm->prokind == PROKIND_PROCEDURE)
 		appendStringInfoString(buffer, "procedure");
-	else
+	else						/* function or window function */
 		appendStringInfoString(buffer, "function");
 
 	ReleaseSysCache(procTup);

@@ -830,21 +830,17 @@ objectsInSchemaToOids(ObjectType objtype, List *nspnames)
 								BTEqualStrategyNumber, F_OIDEQ,
 								ObjectIdGetDatum(namespaceId));
 
-					/*
-					 * When looking for functions, check for return type <>0.
-					 * When looking for procedures, check for return type ==0.
-					 * When looking for routines, don't check the return type.
-					 */
 					if (objtype == OBJECT_FUNCTION)
+						/* includes aggregates and window functions */
 						ScanKeyInit(&key[keycount++],
-									Anum_pg_proc_prorettype,
-									BTEqualStrategyNumber, F_OIDNE,
-									InvalidOid);
+									Anum_pg_proc_prokind,
+									BTEqualStrategyNumber, F_CHARNE,
+									CharGetDatum(PROKIND_PROCEDURE));
 					else if (objtype == OBJECT_PROCEDURE)
 						ScanKeyInit(&key[keycount++],
-									Anum_pg_proc_prorettype,
-									BTEqualStrategyNumber, F_OIDEQ,
-									InvalidOid);
+									Anum_pg_proc_prokind,
+									BTEqualStrategyNumber, F_CHAREQ,
+									CharGetDatum(PROKIND_PROCEDURE));
 
 					rel = heap_open(ProcedureRelationId, AccessShareLock);
 					scan = heap_beginscan_catalog(rel, keycount, key);

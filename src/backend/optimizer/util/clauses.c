@@ -4484,12 +4484,12 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 
 	/*
 	 * Forget it if the function is not SQL-language or has other showstopper
-	 * properties.  (The nargs check is just paranoia.)
+	 * properties.  (The prokind and nargs checks are just paranoia.)
 	 */
 	if (funcform->prolang != SQLlanguageId ||
 		funcform->prosecdef ||
+		funcform->prokind != PROKIND_FUNCTION ||
 		funcform->proretset ||
-		funcform->prorettype == InvalidOid ||
 		funcform->prorettype == RECORDOID ||
 		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig) ||
 		funcform->pronargs != list_length(args))

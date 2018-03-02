@@ -1523,9 +1523,9 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		 * Get the required information for input conversion of the
 		 * return value.
 		 ************************************************************/
-		prodesc->fn_is_procedure = (procStruct->prorettype == InvalidOid);
+		prodesc->fn_is_procedure = (procStruct->prokind == PROKIND_PROCEDURE);
 
-		if (!is_trigger && !is_event_trigger && procStruct->prorettype)
+		if (!is_trigger && !is_event_trigger && !prodesc->fn_is_procedure)
 		{
 			Oid			rettype = procStruct->prorettype;
 

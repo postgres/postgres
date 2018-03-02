@@ -83,21 +83,21 @@ ERROR:  must be owner of function alt_agg3
 ALTER AGGREGATE alt_agg2(int) SET SCHEMA alt_nsp2;  -- failed (name conflict)
 ERROR:  function alt_agg2(integer) already exists in schema "alt_nsp2"
 RESET SESSION AUTHORIZATION;
-SELECT n.nspname, proname, prorettype::regtype, proisagg, a.rolname
+SELECT n.nspname, proname, prorettype::regtype, prokind, a.rolname
   FROM pg_proc p, pg_namespace n, pg_authid a
   WHERE p.pronamespace = n.oid AND p.proowner = a.oid
     AND n.nspname IN ('alt_nsp1', 'alt_nsp2')
   ORDER BY nspname, proname;
- nspname  |  proname  | prorettype | proisagg |       rolname       
-----------+-----------+------------+----------+---------------------
- alt_nsp1 | alt_agg2  | integer    | t        | regress_alter_user2
- alt_nsp1 | alt_agg3  | integer    | t        | regress_alter_user1
- alt_nsp1 | alt_agg4  | integer    | t        | regress_alter_user2
- alt_nsp1 | alt_func2 | integer    | f        | regress_alter_user2
- alt_nsp1 | alt_func3 | integer    | f        | regress_alter_user1
- alt_nsp1 | alt_func4 | integer    | f        | regress_alter_user2
- alt_nsp2 | alt_agg2  | integer    | t        | regress_alter_user3
- alt_nsp2 | alt_func2 | integer    | f        | regress_alter_user3
+ nspname  |  proname  | prorettype | prokind |       rolname       
+----------+-----------+------------+---------+---------------------
+ alt_nsp1 | alt_agg2  | integer    | a       | regress_alter_user2
+ alt_nsp1 | alt_agg3  | integer    | a       | regress_alter_user1
+ alt_nsp1 | alt_agg4  | integer    | a       | regress_alter_user2
+ alt_nsp1 | alt_func2 | integer    | f       | regress_alter_user2
+ alt_nsp1 | alt_func3 | integer    | f       | regress_alter_user1
+ alt_nsp1 | alt_func4 | integer    | f       | regress_alter_user2
+ alt_nsp2 | alt_agg2  | integer    | a       | regress_alter_user3
+ alt_nsp2 | alt_func2 | integer    | f       | regress_alter_user3
 (8 rows)
 
 --

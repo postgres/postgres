@@ -74,8 +74,7 @@ ProcedureCreate(const char *procedureName,
 				Oid languageValidator,
 				const char *prosrc,
 				const char *probin,
-				bool isAgg,
-				bool isWindowFunc,
+				char prokind,
 				bool security_definer,
 				bool isLeakProof,
 				bool isStrict,
@@ -335,8 +334,7 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_prorows - 1] = Float4GetDatum(prorows);
 	values[Anum_pg_proc_provariadic - 1] = ObjectIdGetDatum(variadicType);
 	values[Anum_pg_proc_protransform - 1] = ObjectIdGetDatum(InvalidOid);
-	values[Anum_pg_proc_proisagg - 1] = BoolGetDatum(isAgg);
-	values[Anum_pg_proc_proiswindow - 1] = BoolGetDatum(isWindowFunc);
+	values[Anum_pg_proc_prokind - 1] = CharGetDatum(prokind);
 	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);
 	values[Anum_pg_proc_proleakproof - 1] = BoolGetDatum(isLeakProof);
 	values[Anum_pg_proc_proisstrict - 1] = BoolGetDatum(isStrict);
@@ -402,6 +400,21 @@ ProcedureCreate(const char *procedureName,
 		if (!pg_proc_ownercheck(HeapTupleGetOid(oldtup), proowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 						   procedureName);
+
+		/* Not okay to change routine kind */
+		if (oldproc->prokind != prokind)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot change routine kind"),
+					 (oldproc->prokind == PROKIND_AGGREGATE ?
+					  errdetail("\"%s\" is an aggregate function.", procedureName) :
+					  oldproc->prokind == PROKIND_FUNCTION ?
+					  errdetail("\"%s\" is a function.", procedureName) :
+					  oldproc->prokind == PROKIND_PROCEDURE ?
+					  errdetail("\"%s\" is a procedure.", procedureName) :
+					  oldproc->prokind == PROKIND_WINDOW ?
+					  errdetail("\"%s\" is a window function.", procedureName) :
+					  0)));
 
 		/*
 		 * Not okay to change the return type of the existing proc, since
@@ -533,34 +546,6 @@ ProcedureCreate(const char *procedureName,
 									 format_procedure(HeapTupleGetOid(oldtup)))));
 				newlc = lnext(newlc);
 			}
-		}
-
-		/* Can't change aggregate or window-function status, either */
-		if (oldproc->proisagg != isAgg)
-		{
-			if (oldproc->proisagg)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is an aggregate function",
-								procedureName)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is not an aggregate function",
-								procedureName)));
-		}
-		if (oldproc->proiswindow != isWindowFunc)
-		{
-			if (oldproc->proiswindow)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is a window function",
-								procedureName)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is not a window function",
-								procedureName)));
 		}
 
 		/*
@@ -857,8 +842,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 
 	/* Disallow pseudotype result */
 	/* except for RECORD, VOID, or polymorphic */
-	if (proc->prorettype &&
-		get_typtype(proc->prorettype) == TYPTYPE_PSEUDO &&
+	if (get_typtype(proc->prorettype) == TYPTYPE_PSEUDO &&
 		proc->prorettype != RECORDOID &&
 		proc->prorettype != VOIDOID &&
 		!IsPolymorphicType(proc->prorettype))

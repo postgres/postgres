@@ -100,12 +100,20 @@ describeAggregates(const char *pattern, bool verbose, bool showSystem)
 						  "  pg_catalog.format_type(p.proargtypes[0], NULL) AS \"%s\",\n",
 						  gettext_noop("Argument data types"));
 
-	appendPQExpBuffer(&buf,
-					  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"\n"
-					  "FROM pg_catalog.pg_proc p\n"
-					  "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
-					  "WHERE p.proisagg\n",
-					  gettext_noop("Description"));
+	if (pset.sversion >= 110000)
+		appendPQExpBuffer(&buf,
+						  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"\n"
+						  "FROM pg_catalog.pg_proc p\n"
+						  "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
+						  "WHERE p.prokind = 'a'\n",
+						  gettext_noop("Description"));
+	else
+		appendPQExpBuffer(&buf,
+						  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"\n"
+						  "FROM pg_catalog.pg_proc p\n"
+						  "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
+						  "WHERE p.proisagg\n",
+						  gettext_noop("Description"));
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
@@ -346,15 +354,14 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"));
 
-	if (pset.sversion >= 80400)
+	if (pset.sversion >= 110000)
 		appendPQExpBuffer(&buf,
 						  "  pg_catalog.pg_get_function_result(p.oid) as \"%s\",\n"
 						  "  pg_catalog.pg_get_function_arguments(p.oid) as \"%s\",\n"
-						  " CASE\n"
-						  "  WHEN p.proisagg THEN '%s'\n"
-						  "  WHEN p.proiswindow THEN '%s'\n"
-						  "  WHEN p.prorettype = 0 THEN '%s'\n"
-						  "  WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN '%s'\n"
+						  " CASE p.prokind\n"
+						  "  WHEN 'a' THEN '%s'\n"
+						  "  WHEN 'w' THEN '%s'\n"
+						  "  WHEN 'p' THEN '%s'\n"
 						  "  ELSE '%s'\n"
 						  " END as \"%s\"",
 						  gettext_noop("Result data type"),
@@ -363,6 +370,23 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 						  gettext_noop("agg"),
 						  gettext_noop("window"),
 						  gettext_noop("proc"),
+						  gettext_noop("func"),
+						  gettext_noop("Type"));
+	else if (pset.sversion >= 80400)
+		appendPQExpBuffer(&buf,
+						  "  pg_catalog.pg_get_function_result(p.oid) as \"%s\",\n"
+						  "  pg_catalog.pg_get_function_arguments(p.oid) as \"%s\",\n"
+						  " CASE\n"
+						  "  WHEN p.proisagg THEN '%s'\n"
+						  "  WHEN p.proiswindow THEN '%s'\n"
+						  "  WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN '%s'\n"
+						  "  ELSE '%s'\n"
+						  " END as \"%s\"",
+						  gettext_noop("Result data type"),
+						  gettext_noop("Argument data types"),
+		/* translator: "agg" is short for "aggregate" */
+						  gettext_noop("agg"),
+						  gettext_noop("window"),
 						  gettext_noop("trigger"),
 						  gettext_noop("func"),
 						  gettext_noop("Type"));
@@ -494,7 +518,10 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 				appendPQExpBufferStr(&buf, "WHERE ");
 				have_where = true;
 			}
-			appendPQExpBufferStr(&buf, "NOT p.proisagg\n");
+			if (pset.sversion >= 110000)
+				appendPQExpBufferStr(&buf, "p.prokind <> 'a'\n");
+			else
+				appendPQExpBufferStr(&buf, "NOT p.proisagg\n");
 		}
 		if (!showTrigger)
 		{
@@ -516,7 +543,10 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 				appendPQExpBufferStr(&buf, "WHERE ");
 				have_where = true;
 			}
-			appendPQExpBufferStr(&buf, "NOT p.proiswindow\n");
+			if (pset.sversion >= 110000)
+				appendPQExpBufferStr(&buf, "p.prokind <> 'w'\n");
+			else
+				appendPQExpBufferStr(&buf, "NOT p.proiswindow\n");
 		}
 	}
 	else
@@ -528,7 +558,10 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		/* Note: at least one of these must be true ... */
 		if (showAggregate)
 		{
-			appendPQExpBufferStr(&buf, "p.proisagg\n");
+			if (pset.sversion >= 110000)
+				appendPQExpBufferStr(&buf, "p.prokind = 'a'\n");
+			else
+				appendPQExpBufferStr(&buf, "p.proisagg\n");
 			needs_or = true;
 		}
 		if (showTrigger)
@@ -543,7 +576,10 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		{
 			if (needs_or)
 				appendPQExpBufferStr(&buf, "       OR ");
-			appendPQExpBufferStr(&buf, "p.proiswindow\n");
+			if (pset.sversion >= 110000)
+				appendPQExpBufferStr(&buf, "p.prokind = 'w'\n");
+			else
+				appendPQExpBufferStr(&buf, "p.proiswindow\n");
 			needs_or = true;
 		}
 		appendPQExpBufferStr(&buf, "      )\n");

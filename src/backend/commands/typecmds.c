@@ -1672,8 +1672,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 								 F_FMGR_INTERNAL_VALIDATOR, /* language validator */
 								 prosrc[i], /* prosrc */
 								 NULL,	/* probin */
-								 false, /* isAgg */
-								 false, /* isWindowFunc */
+								 PROKIND_FUNCTION,
 								 false, /* security_definer */
 								 false, /* leakproof */
 								 false, /* isStrict */

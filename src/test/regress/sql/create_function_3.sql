@@ -175,6 +175,14 @@ DROP FUNCTION functest_b_1;  -- error, not found
 DROP FUNCTION functest_b_2;  -- error, ambiguous
 
 
+-- CREATE OR REPLACE tests
+
+CREATE FUNCTION functest1(a int) RETURNS int LANGUAGE SQL AS 'SELECT $1';
+CREATE OR REPLACE FUNCTION functest1(a int) RETURNS int LANGUAGE SQL WINDOW AS 'SELECT $1';
+CREATE OR REPLACE PROCEDURE functest1(a int) LANGUAGE SQL AS 'SELECT $1';
+DROP FUNCTION functest1(a int);
+
+
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;
 DROP USER regress_unpriv_user;

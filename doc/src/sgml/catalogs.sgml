@@ -5062,15 +5062,17 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </indexterm>
 
   <para>
-   The catalog <structname>pg_proc</structname> stores information about functions (or procedures).
-   See <xref linkend="sql-createfunction"/>
-   and <xref linkend="xfunc"/> for more information.
+   The catalog <structname>pg_proc</structname> stores information about
+   functions, procedures, aggregate functions, and window functions
+   (collectively also known as routines).  See <xref
+   linkend="sql-createfunction"/>, <xref linkend="sql-createprocedure"/>, and
+   <xref linkend="xfunc"/> for more information.
   </para>
 
   <para>
-   The table contains data for aggregate functions as well as plain functions.
-   If <structfield>proisagg</structfield> is true, there should be a matching
-   row in <structfield>pg_aggregate</structfield>.
+   If <structfield>prokind</structfield> indicates that the entry is for an
+   aggregate function, there should be a matching row in
+   <structfield>pg_aggregate</structfield>.
   </para>
 
   <table>
@@ -5157,17 +5159,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
-      <entry><structfield>proisagg</structfield></entry>
-      <entry><type>bool</type></entry>
+      <entry><structfield>prokind</structfield></entry>
+      <entry><type>char</type></entry>
       <entry></entry>
-      <entry>Function is an aggregate function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>proiswindow</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Function is a window function</entry>
+      <entry><literal>f</literal> for a normal function, <literal>p</literal>
+      for a procedure, <literal>a</literal> for an aggregate function, or
+      <literal>w</literal> for a window function</entry>
      </row>
 
      <row>
@@ -5264,7 +5261,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><structfield>prorettype</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>Data type of the return value, or null for a procedure</entry>
+      <entry>Data type of the return value</entry>
      </row>
 
      <row>

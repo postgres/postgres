@@ -92,7 +92,7 @@ RemoveObjects(DropStmt *stmt)
 		 */
 		if (stmt->removeType == OBJECT_FUNCTION)
 		{
-			if (get_func_isagg(address.objectId))
+			if (get_func_prokind(address.objectId) == PROKIND_AGGREGATE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is an aggregate function",

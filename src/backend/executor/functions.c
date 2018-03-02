@@ -573,8 +573,7 @@ init_execution_state(List *queryTree_list,
 	 *
 	 * Note: don't set setsResult if the function returns VOID, as evidenced
 	 * by not having made a junkfilter.  This ensures we'll throw away any
-	 * output from a utility statement that check_sql_fn_retval deemed to not
-	 * have output.
+	 * output from the last statement in such a function.
 	 */
 	if (lasttages && fcache->junkFilter)
 	{
@@ -659,8 +658,7 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	fcache->rettype = rettype;
 
 	/* Fetch the typlen and byval info for the result type */
-	if (rettype)
-		get_typlenbyval(rettype, &fcache->typlen, &fcache->typbyval);
+	get_typlenbyval(rettype, &fcache->typlen, &fcache->typbyval);
 
 	/* Remember whether we're returning setof something */
 	fcache->returnsSet = procedureStruct->proretset;
@@ -1324,8 +1322,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* Should only get here for procedures and VOID functions */
-			Assert(fcache->rettype == InvalidOid || fcache->rettype == VOIDOID);
+			/* Should only get here for VOID functions and procedures */
+			Assert(fcache->rettype == VOIDOID);
 			fcinfo->isnull = true;
 			result = (Datum) 0;
 		}
@@ -1549,9 +1547,13 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	if (modifyTargetList)
 		*modifyTargetList = false;	/* initialize for no change */
 	if (junkFilter)
-		*junkFilter = NULL;		/* initialize in case of procedure/VOID result */
+		*junkFilter = NULL;		/* initialize in case of VOID result */
 
-	if (!rettype)
+	/*
+	 * If it's declared to return VOID, we don't care what's in the function.
+	 * (This takes care of the procedure case, as well.)
+	 */
+	if (rettype == VOIDOID)
 		return false;
 
 	/*
@@ -1597,21 +1599,17 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	else
 	{
 		/* Empty function body, or last statement is a utility command */
-		if (rettype && rettype != VOIDOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
-					 errdetail("Function's final statement must be SELECT or INSERT/UPDATE/DELETE RETURNING.")));
-		return false;
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("return type mismatch in function declared to return %s",
+						format_type_be(rettype)),
+				 errdetail("Function's final statement must be SELECT or INSERT/UPDATE/DELETE RETURNING.")));
+		return false;			/* keep compiler quiet */
 	}
 
 	/*
 	 * OK, check that the targetlist returns something matching the declared
-	 * type.  (We used to insist that the declared type not be VOID in this
-	 * case, but that makes it hard to write a void function that exits after
-	 * calling another void function.  Instead, we insist that the tlist
-	 * return void ... so void is treated as if it were a scalar type below.)
+	 * type.
 	 */
 
 	/*
@@ -1624,8 +1622,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	if (fn_typtype == TYPTYPE_BASE ||
 		fn_typtype == TYPTYPE_DOMAIN ||
 		fn_typtype == TYPTYPE_ENUM ||
-		fn_typtype == TYPTYPE_RANGE ||
-		rettype == VOIDOID)
+		fn_typtype == TYPTYPE_RANGE)
 	{
 		/*
 		 * For scalar-type returns, the target list must have exactly one

@@ -129,8 +129,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 									  F_FMGR_C_VALIDATOR,
 									  pltemplate->tmplhandler,
 									  pltemplate->tmpllibrary,
-									  false,	/* isAgg */
-									  false,	/* isWindowFunc */
+									  PROKIND_FUNCTION,
 									  false,	/* security_definer */
 									  false,	/* isLeakProof */
 									  false,	/* isStrict */
@@ -169,8 +168,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										  F_FMGR_C_VALIDATOR,
 										  pltemplate->tmplinline,
 										  pltemplate->tmpllibrary,
-										  false,	/* isAgg */
-										  false,	/* isWindowFunc */
+										  PROKIND_FUNCTION,
 										  false,	/* security_definer */
 										  false,	/* isLeakProof */
 										  true, /* isStrict */
@@ -212,8 +210,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										  F_FMGR_C_VALIDATOR,
 										  pltemplate->tmplvalidator,
 										  pltemplate->tmpllibrary,
-										  false,	/* isAgg */
-										  false,	/* isWindowFunc */
+										  PROKIND_FUNCTION,
 										  false,	/* security_definer */
 										  false,	/* isLeakProof */
 										  true, /* isStrict */

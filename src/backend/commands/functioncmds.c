@@ -1003,9 +1003,12 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 
 	if (stmt->is_procedure)
 	{
+		/*
+		 * Sometime in the future, procedures might be allowed to return
+		 * results; for now, they all return VOID.
+		 */
 		Assert(!stmt->returnType);
-
-		prorettype = InvalidOid;
+		prorettype = VOIDOID;
 		returnsSet = false;
 	}
 	else if (stmt->returnType)
@@ -1097,8 +1100,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 						   languageValidator,
 						   prosrc_str,	/* converted to text later */
 						   probin_str,	/* converted to text later */
-						   false,	/* not an aggregate */
-						   isWindowFunc,
+						   stmt->is_procedure ? PROKIND_PROCEDURE : (isWindowFunc ? PROKIND_WINDOW : PROKIND_FUNCTION),
 						   security,
 						   isLeakProof,
 						   isStrict,
@@ -1126,7 +1128,7 @@ RemoveFunctionById(Oid funcOid)
 {
 	Relation	relation;
 	HeapTuple	tup;
-	bool		isagg;
+	char		prokind;
 
 	/*
 	 * Delete the pg_proc tuple.
@@ -1137,7 +1139,7 @@ RemoveFunctionById(Oid funcOid)
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for function %u", funcOid);
 
-	isagg = ((Form_pg_proc) GETSTRUCT(tup))->proisagg;
+	prokind = ((Form_pg_proc) GETSTRUCT(tup))->prokind;
 
 	CatalogTupleDelete(relation, &tup->t_self);
 
@@ -1148,7 +1150,7 @@ RemoveFunctionById(Oid funcOid)
 	/*
 	 * If there's a pg_aggregate tuple, delete that too.
 	 */
-	if (isagg)
+	if (prokind == PROKIND_AGGREGATE)
 	{
 		relation = heap_open(AggregateRelationId, RowExclusiveLock);
 
@@ -1203,13 +1205,13 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, stmt->objtype,
 					   NameListToString(stmt->func->objname));
 
-	if (procForm->proisagg)
+	if (procForm->prokind == PROKIND_AGGREGATE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is an aggregate function",
 						NameListToString(stmt->func->objname))));
 
-	is_procedure = (procForm->prorettype == InvalidOid);
+	is_procedure = (procForm->prokind == PROKIND_PROCEDURE);
 
 	/* Examine requested actions. */
 	foreach(l, stmt->actions)
@@ -1525,14 +1527,10 @@ CreateCast(CreateCastStmt *stmt)
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("cast function must not be volatile")));
 #endif
-		if (procstruct->proisagg)
+		if (procstruct->prokind != PROKIND_FUNCTION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("cast function must not be an aggregate function")));
-		if (procstruct->proiswindow)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("cast function must not be a window function")));
+					 errmsg("cast function must be a normal function")));
 		if (procstruct->proretset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1777,14 +1775,10 @@ check_transform_function(Form_pg_proc procstruct)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("transform function must not be volatile")));
-	if (procstruct->proisagg)
+	if (procstruct->prokind != PROKIND_FUNCTION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("transform function must not be an aggregate function")));
-	if (procstruct->proiswindow)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("transform function must not be a window function")));
+				 errmsg("transform function must be a normal function")));
 	if (procstruct->proretset)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),

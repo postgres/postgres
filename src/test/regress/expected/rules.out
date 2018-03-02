@@ -1521,9 +1521,11 @@ UNION ALL
  SELECT l.objoid,
     l.classoid,
     l.objsubid,
-        CASE
-            WHEN (pro.proisagg = true) THEN 'aggregate'::text
-            WHEN (pro.proisagg = false) THEN 'function'::text
+        CASE pro.prokind
+            WHEN 'a'::"char" THEN 'aggregate'::text
+            WHEN 'f'::"char" THEN 'function'::text
+            WHEN 'p'::"char" THEN 'procedure'::text
+            WHEN 'w'::"char" THEN 'window'::text
             ELSE NULL::text
         END AS objtype,
     pro.pronamespace AS objnamespace,

@@ -5407,10 +5407,14 @@ getAggregates(Archive *fout, int *numAggs)
 		PQExpBuffer racl_subquery = createPQExpBuffer();
 		PQExpBuffer initacl_subquery = createPQExpBuffer();
 		PQExpBuffer initracl_subquery = createPQExpBuffer();
+		const char *agg_check;
 
 		buildACLQueries(acl_subquery, racl_subquery, initacl_subquery,
 						initracl_subquery, "p.proacl", "p.proowner", "'f'",
 						dopt->binary_upgrade);
+
+		agg_check = (fout->remoteVersion >= 110000 ? "p.prokind = 'a'"
+					 : "p.proisagg");
 
 		appendPQExpBuffer(query, "SELECT p.tableoid, p.oid, "
 						  "p.proname AS aggname, "
@@ -5426,7 +5430,7 @@ getAggregates(Archive *fout, int *numAggs)
 						  "(p.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_proc'::regclass "
 						  "AND pip.objsubid = 0) "
-						  "WHERE p.proisagg AND ("
+						  "WHERE %s AND ("
 						  "p.pronamespace != "
 						  "(SELECT oid FROM pg_namespace "
 						  "WHERE nspname = 'pg_catalog') OR "
@@ -5435,7 +5439,8 @@ getAggregates(Archive *fout, int *numAggs)
 						  acl_subquery->data,
 						  racl_subquery->data,
 						  initacl_subquery->data,
-						  initracl_subquery->data);
+						  initracl_subquery->data,
+						  agg_check);
 		if (dopt->binary_upgrade)
 			appendPQExpBufferStr(query,
 								 " OR EXISTS(SELECT 1 FROM pg_depend WHERE "
@@ -5616,10 +5621,14 @@ getFuncs(Archive *fout, int *numFuncs)
 		PQExpBuffer racl_subquery = createPQExpBuffer();
 		PQExpBuffer initacl_subquery = createPQExpBuffer();
 		PQExpBuffer initracl_subquery = createPQExpBuffer();
+		const char *not_agg_check;
 
 		buildACLQueries(acl_subquery, racl_subquery, initacl_subquery,
 						initracl_subquery, "p.proacl", "p.proowner", "'f'",
 						dopt->binary_upgrade);
+
+		not_agg_check = (fout->remoteVersion >= 110000 ? "p.prokind <> 'a'"
+						 : "NOT p.proisagg");
 
 		appendPQExpBuffer(query,
 						  "SELECT p.tableoid, p.oid, p.proname, p.prolang, "
@@ -5635,7 +5644,7 @@ getFuncs(Archive *fout, int *numFuncs)
 						  "(p.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_proc'::regclass "
 						  "AND pip.objsubid = 0) "
-						  "WHERE NOT proisagg"
+						  "WHERE %s"
 						  "\n  AND NOT EXISTS (SELECT 1 FROM pg_depend "
 						  "WHERE classid = 'pg_proc'::regclass AND "
 						  "objid = p.oid AND deptype = 'i')"
@@ -5655,6 +5664,7 @@ getFuncs(Archive *fout, int *numFuncs)
 						  initacl_subquery->data,
 						  initracl_subquery->data,
 						  username_subquery,
+						  not_agg_check,
 						  g_last_builtin_oid,
 						  g_last_builtin_oid);
 		if (dopt->binary_upgrade)
@@ -11424,12 +11434,11 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	   *funcargs;
 	char	   *funciargs;
 	char	   *funcresult;
-	bool		is_procedure;
 	char	   *proallargtypes;
 	char	   *proargmodes;
 	char	   *proargnames;
 	char	   *protrftypes;
-	char	   *proiswindow;
+	char	   *prokind;
 	char	   *provolatile;
 	char	   *proisstrict;
 	char	   *prosecdef;
@@ -11459,7 +11468,26 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	asPart = createPQExpBuffer();
 
 	/* Fetch function-specific details */
-	if (fout->remoteVersion >= 90600)
+	if (fout->remoteVersion >= 110000)
+	{
+		/*
+		 * prokind was added in 11
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+						  "pg_catalog.pg_get_function_arguments(oid) AS funcargs, "
+						  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
+						  "pg_catalog.pg_get_function_result(oid) AS funcresult, "
+						  "array_to_string(protrftypes, ' ') AS protrftypes, "
+						  "prokind, provolatile, proisstrict, prosecdef, "
+						  "proleakproof, proconfig, procost, prorows, "
+						  "proparallel, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (fout->remoteVersion >= 90600)
 	{
 		/*
 		 * proparallel was added in 9.6
@@ -11470,7 +11498,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
 						  "pg_catalog.pg_get_function_result(oid) AS funcresult, "
 						  "array_to_string(protrftypes, ' ') AS protrftypes, "
-						  "proiswindow, provolatile, proisstrict, prosecdef, "
+						  "CASE WHEN proiswindow THEN 'w' ELSE 'f' END AS prokind, "
+						  "provolatile, proisstrict, prosecdef, "
 						  "proleakproof, proconfig, procost, prorows, "
 						  "proparallel, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
@@ -11489,7 +11518,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
 						  "pg_catalog.pg_get_function_result(oid) AS funcresult, "
 						  "array_to_string(protrftypes, ' ') AS protrftypes, "
-						  "proiswindow, provolatile, proisstrict, prosecdef, "
+						  "CASE WHEN proiswindow THEN 'w' ELSE 'f' END AS prokind, "
+						  "provolatile, proisstrict, prosecdef, "
 						  "proleakproof, proconfig, procost, prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
 						  "FROM pg_catalog.pg_proc "
@@ -11506,7 +11536,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "pg_catalog.pg_get_function_arguments(oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
 						  "pg_catalog.pg_get_function_result(oid) AS funcresult, "
-						  "proiswindow, provolatile, proisstrict, prosecdef, "
+						  "CASE WHEN proiswindow THEN 'w' ELSE 'f' END AS prokind, "
+						  "provolatile, proisstrict, prosecdef, "
 						  "proleakproof, proconfig, procost, prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
 						  "FROM pg_catalog.pg_proc "
@@ -11524,7 +11555,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "pg_catalog.pg_get_function_arguments(oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
 						  "pg_catalog.pg_get_function_result(oid) AS funcresult, "
-						  "proiswindow, provolatile, proisstrict, prosecdef, "
+						  "CASE WHEN proiswindow THEN 'w' ELSE 'f' END AS prokind, "
+						  "provolatile, proisstrict, prosecdef, "
 						  "false AS proleakproof, "
 						  " proconfig, procost, prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
@@ -11537,7 +11569,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
 						  "proallargtypes, proargmodes, proargnames, "
-						  "false AS proiswindow, "
+						  "'f' AS prokind, "
 						  "provolatile, proisstrict, prosecdef, "
 						  "false AS proleakproof, "
 						  "proconfig, procost, prorows, "
@@ -11551,7 +11583,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
 						  "proallargtypes, proargmodes, proargnames, "
-						  "false AS proiswindow, "
+						  "'f' AS prokind, "
 						  "provolatile, proisstrict, prosecdef, "
 						  "false AS proleakproof, "
 						  "null AS proconfig, 0 AS procost, 0 AS prorows, "
@@ -11567,7 +11599,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "null AS proallargtypes, "
 						  "null AS proargmodes, "
 						  "proargnames, "
-						  "false AS proiswindow, "
+						  "'f' AS prokind, "
 						  "provolatile, proisstrict, prosecdef, "
 						  "false AS proleakproof, "
 						  "null AS proconfig, 0 AS procost, 0 AS prorows, "
@@ -11586,11 +11618,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	{
 		funcargs = PQgetvalue(res, 0, PQfnumber(res, "funcargs"));
 		funciargs = PQgetvalue(res, 0, PQfnumber(res, "funciargs"));
-		is_procedure = PQgetisnull(res, 0, PQfnumber(res, "funcresult"));
-		if (is_procedure)
-			funcresult = NULL;
-		else
-			funcresult = PQgetvalue(res, 0, PQfnumber(res, "funcresult"));
+		funcresult = PQgetvalue(res, 0, PQfnumber(res, "funcresult"));
 		proallargtypes = proargmodes = proargnames = NULL;
 	}
 	else
@@ -11599,13 +11627,12 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		proargmodes = PQgetvalue(res, 0, PQfnumber(res, "proargmodes"));
 		proargnames = PQgetvalue(res, 0, PQfnumber(res, "proargnames"));
 		funcargs = funciargs = funcresult = NULL;
-		is_procedure = false;
 	}
 	if (PQfnumber(res, "protrftypes") != -1)
 		protrftypes = PQgetvalue(res, 0, PQfnumber(res, "protrftypes"));
 	else
 		protrftypes = NULL;
-	proiswindow = PQgetvalue(res, 0, PQfnumber(res, "proiswindow"));
+	prokind = PQgetvalue(res, 0, PQfnumber(res, "prokind"));
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
 	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
@@ -11731,7 +11758,10 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	funcsig_tag = format_function_signature(fout, finfo, false);
 
-	keyword = is_procedure ? "PROCEDURE" : "FUNCTION";
+	if (prokind[0] == PROKIND_PROCEDURE)
+		keyword = "PROCEDURE";
+	else
+		keyword = "FUNCTION";	/* works for window functions too */
 
 	appendPQExpBuffer(delqry, "DROP %s %s.%s;\n",
 					  keyword,
@@ -11744,8 +11774,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 					  funcfullsig ? funcfullsig :
 					  funcsig);
 
-	if (is_procedure)
-		;
+	if (prokind[0] == PROKIND_PROCEDURE)
+		 /* no result type to output */ ;
 	else if (funcresult)
 		appendPQExpBuffer(q, " RETURNS %s", funcresult);
 	else
@@ -11776,7 +11806,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-	if (proiswindow[0] == 't')
+	if (prokind[0] == PROKIND_WINDOW)
 		appendPQExpBufferStr(q, " WINDOW");
 
 	if (provolatile[0] != PROVOLATILE_VOLATILE)
