@@ -1711,11 +1711,17 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_CONST("(");
 	/* ALTER INDEX <foo> SET|RESET ( */
 	else if (Matches5("ALTER", "INDEX", MatchAny, "RESET", "("))
-		COMPLETE_WITH_LIST3("fillfactor", "fastupdate",
-							"gin_pending_list_limit");
+		COMPLETE_WITH_LIST6("fillfactor",
+							"fastupdate", "gin_pending_list_limit",	/* GIN */
+							"buffering",	/* GiST */
+							"pages_per_range", "autosummarize"	/* BRIN */
+			);
 	else if (Matches5("ALTER", "INDEX", MatchAny, "SET", "("))
-		COMPLETE_WITH_LIST3("fillfactor =", "fastupdate =",
-							"gin_pending_list_limit =");
+		COMPLETE_WITH_LIST6("fillfactor =",
+							"fastupdate =", "gin_pending_list_limit =",	/* GIN */
+							"buffering =",	/* GiST */
+							"pages_per_range =", "autosummarize ="	/* BRIN */
+			);
 
 	/* ALTER LANGUAGE <name> */
 	else if (Matches3("ALTER", "LANGUAGE", MatchAny))
