@@ -3743,7 +3743,7 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
 -->
       <para>
        Add columns to <link
-       linkend="monitoring-stats-views-table"><structname>pg_stat_replication</structname></link>
+       linkend="pg-stat-replication-view"><structname>pg_stat_replication</structname></link>
        to report replication delay times (Thomas Munro)
       </para>
 

@@ -890,7 +890,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     </para>
     <para>
      You can retrieve a list of WAL sender processes via the
-     <link linkend="monitoring-stats-views-table">
+     <link linkend="pg-stat-replication-view">
      <literal>pg_stat_replication</></link> view. Large differences between
      <function>pg_current_wal_lsn</> and the view's <literal>sent_lsn</> field
      might indicate that the master server is under heavy load, while
