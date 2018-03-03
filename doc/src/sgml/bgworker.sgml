@@ -41,7 +41,7 @@
   *worker, BackgroundWorkerHandle **handle</type>)</function>.  Unlike
   <function>RegisterBackgroundWorker</function>, which can only be called from within
   the postmaster, <function>RegisterDynamicBackgroundWorker</function> must be
-  called from a regular backend, possibly another background worker.
+  called from a regular backend or another background worker.
  </para>
 
  <para>
