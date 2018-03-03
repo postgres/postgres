@@ -156,151 +156,83 @@ foreach my $catname (@{ $catalogs->{names} })
 		print $bki "open $catname\n";
 	}
 
-	if (defined $catalog->{data})
-	{
-
-		# Ordinary catalog with DATA line(s)
-		foreach my $row (@{ $catalog->{data} })
-		{
-
-			# Split line into tokens without interpreting their meaning.
-			my %bki_values;
-			@bki_values{@attnames} =
-			  Catalog::SplitDataLine($row->{bki_values});
-
-			# Perform required substitutions on fields
-			foreach my $column (@$schema)
-			{
-				my $attname = $column->{name};
-				my $atttype = $column->{type};
-
-				# Substitute constant values we acquired above.
-				# (It's intentional that this can apply to parts of a field).
-				$bki_values{$attname} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
-				$bki_values{$attname} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
-
-				# Replace regproc columns' values with OIDs.
-				# If we don't have a unique value to substitute,
-				# just do nothing (regprocin will complain).
-				if ($atttype eq 'regproc')
-				{
-					my $procoid = $regprocoids{ $bki_values{$attname} };
-					$bki_values{$attname} = $procoid
-					  if defined($procoid) && $procoid ne 'MULTIPLE';
-				}
-			}
-
-			# Save pg_proc oids for use in later regproc substitutions.
-			# This relies on the order we process the files in!
-			if ($catname eq 'pg_proc')
-			{
-				if (defined($regprocoids{ $bki_values{proname} }))
-				{
-					$regprocoids{ $bki_values{proname} } = 'MULTIPLE';
-				}
-				else
-				{
-					$regprocoids{ $bki_values{proname} } = $row->{oid};
-				}
-			}
-
-			# Save pg_type info for pg_attribute processing below
-			if ($catname eq 'pg_type')
-			{
-				my %type = %bki_values;
-				$type{oid} = $row->{oid};
-				$types{ $type{typname} } = \%type;
-			}
-
-			# Write to postgres.bki
-			my $oid = $row->{oid} ? "OID = $row->{oid} " : '';
-			printf $bki "insert %s( %s )\n", $oid,
-			  join(' ', @bki_values{@attnames});
-
-			# Write comments to postgres.description and
-			# postgres.shdescription
-			if (defined $row->{descr})
-			{
-				printf $descr "%s\t%s\t0\t%s\n",
-				  $row->{oid}, $catname, $row->{descr};
-			}
-			if (defined $row->{shdescr})
-			{
-				printf $shdescr "%s\t%s\t%s\n",
-				  $row->{oid}, $catname, $row->{shdescr};
-			}
-		}
-	}
+	# For pg_attribute.h, we generate data entries ourselves.
+	# NB: pg_type.h must come before pg_attribute.h in the input list
+	# of catalog names, since we use info from pg_type.h here.
 	if ($catname eq 'pg_attribute')
 	{
+		gen_pg_attribute($schema, @attnames);
+	}
 
-		# For pg_attribute.h, we generate DATA entries ourselves.
-		# NB: pg_type.h must come before pg_attribute.h in the input list
-		# of catalog names, since we use info from pg_type.h here.
-		foreach my $table_name (@{ $catalogs->{names} })
+	# Ordinary catalog with DATA line(s)
+	foreach my $row (@{ $catalog->{data} })
+	{
+
+		# Split line into tokens without interpreting their meaning.
+		my %bki_values;
+		@bki_values{@attnames} =
+		  Catalog::SplitDataLine($row->{bki_values});
+
+		# Perform required substitutions on fields
+		foreach my $column (@$schema)
 		{
-			my $table = $catalogs->{$table_name};
+			my $attname = $column->{name};
+			my $atttype = $column->{type};
 
-			# Currently, all bootstrapped relations also need schemapg.h
-			# entries, so skip if the relation isn't to be in schemapg.h.
-			next if !$table->{schema_macro};
+			# Substitute constant values we acquired above.
+			# (It's intentional that this can apply to parts of a field).
+			$bki_values{$attname} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
+			$bki_values{$attname} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
 
-			$schemapg_entries{$table_name} = [];
-			push @tables_needing_macros, $table_name;
-
-			# Generate entries for user attributes.
-			my $attnum       = 0;
-			my $priornotnull = 1;
-			foreach my $attr (@{ $table->{columns} })
+			# Replace regproc columns' values with OIDs.
+			# If we don't have a unique value to substitute,
+			# just do nothing (regprocin will complain).
+			if ($atttype eq 'regproc')
 			{
-				$attnum++;
-				my %row;
-				$row{attnum}   = $attnum;
-				$row{attrelid} = $table->{relation_oid};
-
-				morph_row_for_pgattr(\%row, $schema, $attr, $priornotnull);
-				$priornotnull &= ($row{attnotnull} eq 't');
-
-				# If it's bootstrapped, put an entry in postgres.bki.
-				print_bki_insert(\%row, @attnames) if $table->{bootstrap};
-
-				# Store schemapg entries for later.
-				morph_row_for_schemapg(\%row, $schema);
-				push @{ $schemapg_entries{$table_name} },
-				  sprintf "{ %s }",
-				    join(', ', grep { defined $_ } @row{@attnames});
+				my $procoid = $regprocoids{ $bki_values{$attname} };
+				$bki_values{$attname} = $procoid
+				  if defined($procoid) && $procoid ne 'MULTIPLE';
 			}
+		}
 
-			# Generate entries for system attributes.
-			# We only need postgres.bki entries, not schemapg.h entries.
-			if ($table->{bootstrap})
+		# Save pg_proc oids for use in later regproc substitutions.
+		# This relies on the order we process the files in!
+		if ($catname eq 'pg_proc')
+		{
+			if (defined($regprocoids{ $bki_values{proname} }))
 			{
-				$attnum = 0;
-				my @SYS_ATTRS = (
-					{ name => 'ctid',     type => 'tid' },
-					{ name => 'oid',      type => 'oid' },
-					{ name => 'xmin',     type => 'xid' },
-					{ name => 'cmin',     type => 'cid' },
-					{ name => 'xmax',     type => 'xid' },
-					{ name => 'cmax',     type => 'cid' },
-					{ name => 'tableoid', type => 'oid' });
-				foreach my $attr (@SYS_ATTRS)
-				{
-					$attnum--;
-					my %row;
-					$row{attnum}        = $attnum;
-					$row{attrelid}      = $table->{relation_oid};
-					$row{attstattarget} = '0';
-
-					# Omit the oid column if the catalog doesn't have them
-					next
-					  if $table->{without_oids}
-						  && $attr->{name} eq 'oid';
-
-					morph_row_for_pgattr(\%row, $schema, $attr, 1);
-					print_bki_insert(\%row, @attnames);
-				}
+				$regprocoids{ $bki_values{proname} } = 'MULTIPLE';
 			}
+			else
+			{
+				$regprocoids{ $bki_values{proname} } = $row->{oid};
+			}
+		}
+
+		# Save pg_type info for pg_attribute processing below
+		if ($catname eq 'pg_type')
+		{
+			my %type = %bki_values;
+			$type{oid} = $row->{oid};
+			$types{ $type{typname} } = \%type;
+		}
+
+		# Write to postgres.bki
+		my $oid = $row->{oid} ? "OID = $row->{oid} " : '';
+		printf $bki "insert %s( %s )\n", $oid,
+		  join(' ', @bki_values{@attnames});
+
+		# Write comments to postgres.description and
+		# postgres.shdescription
+		if (defined $row->{descr})
+		{
+			printf $descr "%s\t%s\t0\t%s\n",
+			  $row->{oid}, $catname, $row->{descr};
+		}
+		if (defined $row->{shdescr})
+		{
+			printf $shdescr "%s\t%s\t%s\n",
+			  $row->{oid}, $catname, $row->{shdescr};
 		}
 	}
 
@@ -374,6 +306,82 @@ exit 0;
 
 #################### Subroutines ########################
 
+
+# For each catalog marked as needing a schema macro, generate the
+# per-user-attribute data to be incorporated into schemapg.h.  Also, for
+# bootstrap catalogs, emit pg_attribute entries into the .bki file
+# for both user and system attributes.
+sub gen_pg_attribute
+{
+	my $schema = shift;
+	my @attnames = @_;
+
+	foreach my $table_name (@{ $catalogs->{names} })
+	{
+		my $table = $catalogs->{$table_name};
+
+		# Currently, all bootstrapped relations also need schemapg.h
+		# entries, so skip if the relation isn't to be in schemapg.h.
+		next if !$table->{schema_macro};
+
+		$schemapg_entries{$table_name} = [];
+		push @tables_needing_macros, $table_name;
+
+		# Generate entries for user attributes.
+		my $attnum       = 0;
+		my $priornotnull = 1;
+		foreach my $attr (@{ $table->{columns} })
+		{
+			$attnum++;
+			my %row;
+			$row{attnum}   = $attnum;
+			$row{attrelid} = $table->{relation_oid};
+
+			morph_row_for_pgattr(\%row, $schema, $attr, $priornotnull);
+			$priornotnull &= ($row{attnotnull} eq 't');
+
+			# If it's bootstrapped, put an entry in postgres.bki.
+			print_bki_insert(\%row, @attnames) if $table->{bootstrap};
+
+			# Store schemapg entries for later.
+			morph_row_for_schemapg(\%row, $schema);
+			push @{ $schemapg_entries{$table_name} },
+			  sprintf "{ %s }",
+				join(', ', grep { defined $_ } @row{@attnames});
+		}
+
+		# Generate entries for system attributes.
+		# We only need postgres.bki entries, not schemapg.h entries.
+		if ($table->{bootstrap})
+		{
+			$attnum = 0;
+			my @SYS_ATTRS = (
+				{ name => 'ctid',     type => 'tid' },
+				{ name => 'oid',      type => 'oid' },
+				{ name => 'xmin',     type => 'xid' },
+				{ name => 'cmin',     type => 'cid' },
+				{ name => 'xmax',     type => 'xid' },
+				{ name => 'cmax',     type => 'cid' },
+				{ name => 'tableoid', type => 'oid' });
+			foreach my $attr (@SYS_ATTRS)
+			{
+				$attnum--;
+				my %row;
+				$row{attnum}        = $attnum;
+				$row{attrelid}      = $table->{relation_oid};
+				$row{attstattarget} = '0';
+
+				# Omit the oid column if the catalog doesn't have them
+				next
+				  if $table->{without_oids}
+					  && $attr->{name} eq 'oid';
+
+				morph_row_for_pgattr(\%row, $schema, $attr, 1);
+				print_bki_insert(\%row, @attnames);
+			}
+		}
+	}
+}
 
 # Given $pgattr_schema (the pg_attribute schema for a catalog sufficient for
 # AddDefaultValues), $attr (the description of a catalog row), and
