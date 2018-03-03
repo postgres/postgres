@@ -58,9 +58,8 @@ typedef FormData_pg_tablespace *Form_pg_tablespace;
 #define Anum_pg_tablespace_spcoptions	4
 
 DATA(insert OID = 1663 ( pg_default PGUID _null_ _null_ ));
-DATA(insert OID = 1664 ( pg_global	PGUID _null_ _null_ ));
-
 #define DEFAULTTABLESPACE_OID 1663
+DATA(insert OID = 1664 ( pg_global	PGUID _null_ _null_ ));
 #define GLOBALTABLESPACE_OID 1664
 
 #endif							/* PG_TABLESPACE_H */

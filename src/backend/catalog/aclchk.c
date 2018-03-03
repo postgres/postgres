@@ -5969,8 +5969,8 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid, Acl *new_a
 			MemSet(nulls, false, sizeof(nulls));
 			MemSet(replace, false, sizeof(replace));
 
-			values[Anum_pg_init_privs_privs - 1] = PointerGetDatum(new_acl);
-			replace[Anum_pg_init_privs_privs - 1] = true;
+			values[Anum_pg_init_privs_initprivs - 1] = PointerGetDatum(new_acl);
+			replace[Anum_pg_init_privs_initprivs - 1] = true;
 
 			oldtuple = heap_modify_tuple(oldtuple, RelationGetDescr(relation),
 										 values, nulls, replace);
@@ -6007,7 +6007,7 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid, Acl *new_a
 			values[Anum_pg_init_privs_privtype - 1] =
 				CharGetDatum(INITPRIVS_EXTENSION);
 
-			values[Anum_pg_init_privs_privs - 1] = PointerGetDatum(new_acl);
+			values[Anum_pg_init_privs_initprivs - 1] = PointerGetDatum(new_acl);
 
 			tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 

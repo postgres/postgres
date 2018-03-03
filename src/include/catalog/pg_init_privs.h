@@ -69,7 +69,7 @@ typedef FormData_pg_init_privs * Form_pg_init_privs;
 #define Anum_pg_init_privs_classoid		2
 #define Anum_pg_init_privs_objsubid		3
 #define Anum_pg_init_privs_privtype		4
-#define Anum_pg_init_privs_privs		5
+#define Anum_pg_init_privs_initprivs	5
 
 /*
  * It is important to know if the initial privileges are from initdb or from an
