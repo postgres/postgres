@@ -708,6 +708,7 @@ with_uuid
 with_systemd
 with_selinux
 with_openssl
+with_ldap
 krb_srvtab
 with_python
 with_perl
@@ -5923,6 +5924,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_ldap" >&5
 $as_echo "$with_ldap" >&6; }
+
 
 
 #

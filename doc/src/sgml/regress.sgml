@@ -211,6 +211,44 @@ make installcheck-world
    option <option>--enable-tap-tests</option>.  This is recommended for
    development, but can be omitted if there is no suitable Perl installation.
   </para>
+
+  <para>
+   Some test suites are not run by default, either because they are not secure
+   to run on a multiuser system or because they require special software.  You
+   can decide which test suites to run additionally by setting the
+   <command>make</command> or environment variable
+   <varname>PG_TEST_EXTRA</varname> to a whitespace-separated list, for
+   example:
+<programlisting>
+make check-world PG_TEST_EXTRA='ldap ssl'
+</programlisting>
+   The following values are currently supported:
+   <variablelist>
+    <varlistentry>
+     <term><literal>ldap</literal></term>
+     <listitem>
+      <para>
+       Runs the test suite under <filename>src/test/ldap</filename>.  This
+       requires an <productname>OpenLDAP</productname> installation and opens
+       TCP/IP listen sockets.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>ssl</literal></term>
+     <listitem>
+      <para>
+       Runs the test suite under <filename>src/test/ssl</filename>.  This opens TCP/IP listen sockets.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   Tests for features that are not supported by the current build
+   configuration are not run even if they are mentioned in
+   <varname>PG_TEST_EXTRA</varname>.
+  </para>
   </sect2>
 
   <sect2>

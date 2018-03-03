@@ -682,6 +682,7 @@ PGAC_ARG_BOOL(with, ldap, no,
               [build with LDAP support],
               [AC_DEFINE([USE_LDAP], 1, [Define to 1 to build with LDAP support. (--with-ldap)])])
 AC_MSG_RESULT([$with_ldap])
+AC_SUBST(with_ldap)
 
 
 #
