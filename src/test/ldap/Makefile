@@ -13,6 +13,8 @@ subdir = src/test/ldap
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+export with_ldap
+
 check:
 	$(prove_check)
 

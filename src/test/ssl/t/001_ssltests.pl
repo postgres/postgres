@@ -2,9 +2,18 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 62;
+use Test::More;
 use ServerSetup;
 use File::Copy;
+
+if ($ENV{with_openssl} eq 'yes')
+{
+	plan tests => 62;
+}
+else
+{
+	plan skip_all => 'SSL not supported by this build';
+}
 
 #### Some configuration
 

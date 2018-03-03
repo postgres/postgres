@@ -2,7 +2,16 @@ use strict;
 use warnings;
 use TestLib;
 use PostgresNode;
-use Test::More tests => 19;
+use Test::More;
+
+if ($ENV{with_ldap} eq 'yes')
+{
+	plan tests => 19;
+}
+else
+{
+	plan skip_all => 'LDAP not supported by this build';
+}
 
 my ($slapd, $ldap_bin_dir, $ldap_schema_dir);
 

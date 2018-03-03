@@ -4,9 +4,18 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 6;
+use Test::More;
 use ServerSetup;
 use File::Copy;
+
+if ($ENV{with_openssl} eq 'yes')
+{
+	plan tests => 6;
+}
+else
+{
+	plan skip_all => 'SSL not supported by this build';
+}
 
 # This is the hostname used to connect to the server.
 my $SERVERHOSTADDR = '127.0.0.1';
