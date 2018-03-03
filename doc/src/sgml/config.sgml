@@ -2778,7 +2778,7 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Write a message to the server log if checkpoints caused by
-        the filling of checkpoint segment files happen closer together
+        the filling of WAL segment files happen closer together
         than this many seconds (which suggests that
         <varname>max_wal_size</varname> ought to be raised).  The default is
         30 seconds (<literal>30s</literal>).  Zero disables the warning.
