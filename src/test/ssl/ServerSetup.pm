@@ -143,7 +143,7 @@ sub switch_server_cert
 	print $sslconf "ssl_crl_file='root+client.crl'\n";
 	close $sslconf;
 
-	$node->reload;
+	$node->restart;
 }
 
 sub configure_hba_for_ssl
