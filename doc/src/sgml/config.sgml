@@ -3035,7 +3035,7 @@ include_dir 'conf.d'
         earlier in this list, and
         that are both currently connected and streaming data in real-time
         (as shown by a state of <literal>streaming</literal> in the
-        <link linkend="monitoring-stats-views-table">
+        <link linkend="pg-stat-replication-view">
         <literal>pg_stat_replication</></link> view).
         Other standby servers appearing later in this list represent potential
         synchronous standbys. If any of the current synchronous
@@ -3244,7 +3244,7 @@ include_dir 'conf.d'
        Specifies the minimum frequency for the WAL receiver
        process on the standby to send information about replication progress
        to the primary or upstream standby, where it can be seen using the
-       <link linkend="monitoring-stats-views-table">
+       <link linkend="pg-stat-replication-view">
        <literal>pg_stat_replication</></link> view.  The standby will report
        the last transaction log position it has written, the last position it
        has flushed to disk, and the last position it has applied.
