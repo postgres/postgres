@@ -9667,7 +9667,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
       <listitem>
        <para>
         Add system view <link
-        linkend="monitoring-stats-views-table"><structname>pg_stat_replication</structname></link>
+        linkend="pg-stat-replication-view"><structname>pg_stat_replication</structname></link>
         which displays activity of <acronym>WAL</acronym> sender processes (Itagaki
         Takahiro, Simon Riggs)
        </para>

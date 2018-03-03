@@ -6911,7 +6911,7 @@ max_wal_size = (3 * checkpoint_segments) * 16MB
 -->
      <para>
       The <link
-      linkend="monitoring-stats-views-table"><structname>pg_stat_replication</structname></link>
+      linkend="pg-stat-replication-view"><structname>pg_stat_replication</structname></link>
       system view's <structfield>sent</structfield> field is now NULL, not zero, when
       it has no valid value (Magnus Hagander)
      </para>
