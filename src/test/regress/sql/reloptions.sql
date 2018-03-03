@@ -47,12 +47,12 @@ SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass;
 ALTER TABLE reloptions_test RESET (autovacuum_enabled,
 	autovacuum_analyze_scale_factor);
 SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass AND
-reloptions IS NULL;
+       reloptions IS NULL;
 
 -- RESET fails if a value is specified
 ALTER TABLE reloptions_test RESET (fillfactor=12);
 
--- The OIDS option is not stored
+-- The OIDS option is not stored as reloption
 DROP TABLE reloptions_test;
 CREATE TABLE reloptions_test(i INT) WITH (fillfactor=20, oids=true);
 SELECT reloptions, relhasoids FROM pg_class WHERE oid = 'reloptions_test'::regclass;
