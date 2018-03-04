@@ -103,7 +103,7 @@ extern int inet_net_pton(int af, const char *src,
 			  void *dst, size_t size);
 
 /* network.c */
-extern double convert_network_to_scalar(Datum value, Oid typid);
+extern double convert_network_to_scalar(Datum value, Oid typid, bool *failure);
 extern Datum network_scan_first(Datum in);
 extern Datum network_scan_last(Datum in);
 extern void clean_ipv6_addr(int addr_family, char *addr);
