@@ -864,9 +864,12 @@ network_hostmask(PG_FUNCTION_ARGS)
  * Convert a value of a network datatype to an approximate scalar value.
  * This is used for estimating selectivities of inequality operators
  * involving network types.
+ *
+ * On failure (e.g., unsupported typid), set *failure to true;
+ * otherwise, that variable is not changed.
  */
 double
-convert_network_to_scalar(Datum value, Oid typid)
+convert_network_to_scalar(Datum value, Oid typid, bool *failure)
 {
 	switch (typid)
 	{
@@ -893,8 +896,6 @@ convert_network_to_scalar(Datum value, Oid typid)
 					res += ip_addr(ip)[i];
 				}
 				return res;
-
-				break;
 			}
 		case MACADDROID:
 			{
@@ -908,11 +909,7 @@ convert_network_to_scalar(Datum value, Oid typid)
 			}
 	}
 
-	/*
-	 * Can't get here unless someone tries to use scalarltsel/scalargtsel on
-	 * an operator with one network and one non-network operand.
-	 */
-	elog(ERROR, "unsupported type: %u", typid);
+	*failure = true;
 	return 0;
 }
 
