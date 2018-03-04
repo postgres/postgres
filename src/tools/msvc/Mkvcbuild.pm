@@ -527,7 +527,7 @@ sub mkvcbuild
 		# Starting with ActivePerl 5.24, both  perlnn.lib and libperlnn.a are provided.
 		# In this case, prefer .lib.
 		my @perl_libs =
-		  grep { /perl\d+\.lib$|libperl\d+\.a$/ } glob($perl_path);
+		  reverse sort grep { /perl\d+\.lib$|libperl\d+\.a$/ } glob($perl_path);
 		if (@perl_libs > 0)
 		{
 			$plperl->AddLibrary($perl_libs[0]);
