@@ -3138,14 +3138,21 @@ make_return_stmt(int location)
 					 parser_errposition(yylloc)));
 		new->retvarno = plpgsql_curr_compile->out_param_varno;
 	}
-	else if (plpgsql_curr_compile->fn_rettype == VOIDOID &&
-			 plpgsql_curr_compile->fn_prokind != PROKIND_PROCEDURE)
+	else if (plpgsql_curr_compile->fn_rettype == VOIDOID)
 	{
 		if (yylex() != ';')
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("RETURN cannot have a parameter in function returning void"),
-					 parser_errposition(yylloc)));
+		{
+			if (plpgsql_curr_compile->fn_prokind == PROKIND_PROCEDURE)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("RETURN cannot have a parameter in a procedure"),
+						 parser_errposition(yylloc)));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("RETURN cannot have a parameter in function returning void"),
+						 parser_errposition(yylloc)));
+		}
 	}
 	else
 	{

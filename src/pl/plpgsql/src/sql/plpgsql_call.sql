@@ -22,8 +22,6 @@ BEGIN
 END;
 $$;
 
-CALL test_proc2();
-
 
 CREATE TABLE test1 (a int);
 
@@ -58,7 +56,6 @@ SELECT * FROM test1;
 
 
 DROP PROCEDURE test_proc1;
-DROP PROCEDURE test_proc2;
 DROP PROCEDURE test_proc3;
 DROP PROCEDURE test_proc4;
 

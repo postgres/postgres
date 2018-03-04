@@ -17,9 +17,9 @@ BEGIN
     RETURN 5;
 END;
 $$;
-CALL test_proc2();
-ERROR:  cannot return a value from a procedure
-CONTEXT:  PL/pgSQL function test_proc2() while casting return value to function's return type
+ERROR:  RETURN cannot have a parameter in a procedure
+LINE 5:     RETURN 5;
+                   ^
 CREATE TABLE test1 (a int);
 CREATE PROCEDURE test_proc3(x int)
 LANGUAGE plpgsql
@@ -54,7 +54,6 @@ SELECT * FROM test1;
 (2 rows)
 
 DROP PROCEDURE test_proc1;
-DROP PROCEDURE test_proc2;
 DROP PROCEDURE test_proc3;
 DROP PROCEDURE test_proc4;
 DROP TABLE test1;

@@ -617,11 +617,6 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	}
 	else if (!estate.retisnull)
 	{
-		if (func->fn_prokind == PROKIND_PROCEDURE)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot return a value from a procedure")));
-
 		/*
 		 * Cast result value to function's declared result type, and copy it
 		 * out to the upper executor memory context.  We must treat tuple
