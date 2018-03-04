@@ -167,7 +167,7 @@ static double eqjoinsel_semi(Oid operator,
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
-static double convert_numeric_to_scalar(Datum value, Oid typid);
+static double convert_numeric_to_scalar(Datum value, Oid typid, bool *failure);
 static void convert_string_to_scalar(char *value,
 						 double *scaledvalue,
 						 char *lobound,
@@ -184,8 +184,9 @@ static double convert_one_string_to_scalar(char *value,
 							 int rangelo, int rangehi);
 static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
-static char *convert_string_datum(Datum value, Oid typid);
-static double convert_timevalue_to_scalar(Datum value, Oid typid);
+static char *convert_string_datum(Datum value, Oid typid, bool *failure);
+static double convert_timevalue_to_scalar(Datum value, Oid typid,
+							bool *failure);
 static void examine_simple_variable(PlannerInfo *root, Var *var,
 						VariableStatData *vardata);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
@@ -530,7 +531,8 @@ neqsel(PG_FUNCTION_ARGS)
  *
  * This routine works for any datatype (or pair of datatypes) known to
  * convert_to_scalar().  If it is applied to some other datatype,
- * it will return a default estimate.
+ * it will return an approximate estimate based on assuming that the constant
+ * value falls in the middle of the bin identified by binary search.
  */
 static double
 scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
@@ -3707,10 +3709,15 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound)
 {
+	bool		failure = false;
+
 	/*
 	 * Both the valuetypid and the boundstypid should exactly match the
-	 * declared input type(s) of the operator we are invoked for, so we just
-	 * error out if either is not recognized.
+	 * declared input type(s) of the operator we are invoked for.  However,
+	 * extensions might try to use scalarineqsel as estimator for operators
+	 * with input type(s) we don't handle here; in such cases, we want to
+	 * return false, not fail.  In any case, we mustn't assume that valuetypid
+	 * and boundstypid are identical.
 	 *
 	 * XXX The histogram we are interpolating between points of could belong
 	 * to a column that's only binary-compatible with the declared type. In
@@ -3745,10 +3752,13 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case REGDICTIONARYOID:
 		case REGROLEOID:
 		case REGNAMESPACEOID:
-			*scaledvalue = convert_numeric_to_scalar(value, valuetypid);
-			*scaledlobound = convert_numeric_to_scalar(lobound, boundstypid);
-			*scaledhibound = convert_numeric_to_scalar(hibound, boundstypid);
-			return true;
+			*scaledvalue = convert_numeric_to_scalar(value, valuetypid,
+													 &failure);
+			*scaledlobound = convert_numeric_to_scalar(lobound, boundstypid,
+													   &failure);
+			*scaledhibound = convert_numeric_to_scalar(hibound, boundstypid,
+													   &failure);
+			return !failure;
 
 			/*
 			 * Built-in string types
@@ -3759,9 +3769,20 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case TEXTOID:
 		case NAMEOID:
 			{
-				char	   *valstr = convert_string_datum(value, valuetypid);
-				char	   *lostr = convert_string_datum(lobound, boundstypid);
-				char	   *histr = convert_string_datum(hibound, boundstypid);
+				char	   *valstr = convert_string_datum(value, valuetypid,
+														  &failure);
+				char	   *lostr = convert_string_datum(lobound, boundstypid,
+														 &failure);
+				char	   *histr = convert_string_datum(hibound, boundstypid,
+														 &failure);
+
+				/*
+				 * Bail out if any of the values is not of string type.  We
+				 * might leak converted strings for the other value(s), but
+				 * that's not worth troubling over.
+				 */
+				if (failure)
+					return false;
 
 				convert_string_to_scalar(valstr, scaledvalue,
 										 lostr, scaledlobound,
@@ -3777,6 +3798,9 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 			 */
 		case BYTEAOID:
 			{
+				/* We only support bytea vs bytea comparison */
+				if (boundstypid != BYTEAOID)
+					return false;
 				convert_bytea_to_scalar(value, scaledvalue,
 										lobound, scaledlobound,
 										hibound, scaledhibound);
@@ -3795,10 +3819,13 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case TINTERVALOID:
 		case TIMEOID:
 		case TIMETZOID:
-			*scaledvalue = convert_timevalue_to_scalar(value, valuetypid);
-			*scaledlobound = convert_timevalue_to_scalar(lobound, boundstypid);
-			*scaledhibound = convert_timevalue_to_scalar(hibound, boundstypid);
-			return true;
+			*scaledvalue = convert_timevalue_to_scalar(value, valuetypid,
+													   &failure);
+			*scaledlobound = convert_timevalue_to_scalar(lobound, boundstypid,
+														 &failure);
+			*scaledhibound = convert_timevalue_to_scalar(hibound, boundstypid,
+														 &failure);
+			return !failure;
 
 			/*
 			 * Built-in network types
@@ -3806,10 +3833,13 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case INETOID:
 		case CIDROID:
 		case MACADDROID:
-			*scaledvalue = convert_network_to_scalar(value, valuetypid);
-			*scaledlobound = convert_network_to_scalar(lobound, boundstypid);
-			*scaledhibound = convert_network_to_scalar(hibound, boundstypid);
-			return true;
+			*scaledvalue = convert_network_to_scalar(value, valuetypid,
+													 &failure);
+			*scaledlobound = convert_network_to_scalar(lobound, boundstypid,
+													   &failure);
+			*scaledhibound = convert_network_to_scalar(hibound, boundstypid,
+													   &failure);
+			return !failure;
 	}
 	/* Don't know how to convert */
 	*scaledvalue = *scaledlobound = *scaledhibound = 0;
@@ -3818,9 +3848,12 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 
 /*
  * Do convert_to_scalar()'s work for any numeric data type.
+ *
+ * On failure (e.g., unsupported typid), set *failure to true;
+ * otherwise, that variable is not changed.
  */
 static double
-convert_numeric_to_scalar(Datum value, Oid typid)
+convert_numeric_to_scalar(Datum value, Oid typid, bool *failure)
 {
 	switch (typid)
 	{
@@ -3856,11 +3889,7 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 			return (double) DatumGetObjectId(value);
 	}
 
-	/*
-	 * Can't get here unless someone tries to use scalarltsel/scalargtsel on
-	 * an operator with one numeric and one non-numeric operand.
-	 */
-	elog(ERROR, "unsupported type: %u", typid);
+	*failure = true;
 	return 0;
 }
 
@@ -4009,11 +4038,14 @@ convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
 /*
  * Convert a string-type Datum into a palloc'd, null-terminated string.
  *
+ * On failure (e.g., unsupported typid), set *failure to true;
+ * otherwise, that variable is not changed.  (We'll return NULL on failure.)
+ *
  * When using a non-C locale, we must pass the string through strxfrm()
  * before continuing, so as to generate correct locale-specific results.
  */
 static char *
-convert_string_datum(Datum value, Oid typid)
+convert_string_datum(Datum value, Oid typid, bool *failure)
 {
 	char	   *val;
 
@@ -4037,12 +4069,7 @@ convert_string_datum(Datum value, Oid typid)
 				break;
 			}
 		default:
-
-			/*
-			 * Can't get here unless someone tries to use scalarltsel on an
-			 * operator with one string and one non-string operand.
-			 */
-			elog(ERROR, "unsupported type: %u", typid);
+			*failure = true;
 			return NULL;
 	}
 
@@ -4119,16 +4146,19 @@ convert_bytea_to_scalar(Datum value,
 						Datum hibound,
 						double *scaledhibound)
 {
+	bytea	   *valuep = DatumGetByteaPP(value);
+	bytea	   *loboundp = DatumGetByteaPP(lobound);
+	bytea	   *hiboundp = DatumGetByteaPP(hibound);
 	int			rangelo,
 				rangehi,
-				valuelen = VARSIZE(DatumGetPointer(value)) - VARHDRSZ,
-				loboundlen = VARSIZE(DatumGetPointer(lobound)) - VARHDRSZ,
-				hiboundlen = VARSIZE(DatumGetPointer(hibound)) - VARHDRSZ,
+				valuelen = VARSIZE_ANY_EXHDR(valuep),
+				loboundlen = VARSIZE_ANY_EXHDR(loboundp),
+				hiboundlen = VARSIZE_ANY_EXHDR(hiboundp),
 				i,
 				minlen;
-	unsigned char *valstr = (unsigned char *) VARDATA(DatumGetPointer(value)),
-			   *lostr = (unsigned char *) VARDATA(DatumGetPointer(lobound)),
-			   *histr = (unsigned char *) VARDATA(DatumGetPointer(hibound));
+	unsigned char *valstr = (unsigned char *) VARDATA_ANY(valuep);
+	unsigned char *lostr = (unsigned char *) VARDATA_ANY(loboundp);
+	unsigned char *histr = (unsigned char *) VARDATA_ANY(hiboundp);
 
 	/*
 	 * Assume bytea data is uniformly distributed across all byte values.
@@ -4195,9 +4225,12 @@ convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 
 /*
  * Do convert_to_scalar()'s work for any timevalue data type.
+ *
+ * On failure (e.g., unsupported typid), set *failure to true;
+ * otherwise, that variable is not changed.
  */
 static double
-convert_timevalue_to_scalar(Datum value, Oid typid)
+convert_timevalue_to_scalar(Datum value, Oid typid, bool *failure)
 {
 	switch (typid)
 	{
@@ -4261,11 +4294,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 			}
 	}
 
-	/*
-	 * Can't get here unless someone tries to use scalarltsel/scalargtsel on
-	 * an operator with one timevalue and one non-timevalue operand.
-	 */
-	elog(ERROR, "unsupported type: %u", typid);
+	*failure = true;
 	return 0;
 }
 
