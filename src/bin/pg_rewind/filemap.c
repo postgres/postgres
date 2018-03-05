@@ -19,6 +19,7 @@
 #include "pg_rewind.h"
 
 #include "common/string.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "storage/fd.h"
 
@@ -554,7 +555,6 @@ print_filemap(void)
 static bool
 isRelDataFile(const char *path)
 {
-	char		buf[20 + 1];
 	RelFileNode rnode;
 	unsigned int segNo;
 	int			nmatch;
@@ -569,7 +569,7 @@ isRelDataFile(const char *path)
 	 * base/<db oid>/
 	 *		regular relations, default tablespace
 	 *
-	 * pg_tblspc/<tblspc oid>/PG_9.4_201403261/
+	 * pg_tblspc/<tblspc oid>/<tblspc version>/
 	 *		within a non-default tablespace (the name of the directory
 	 *		depends on version)
 	 *
@@ -603,21 +603,19 @@ isRelDataFile(const char *path)
 		}
 		else
 		{
-			nmatch = sscanf(path, "pg_tblspc/%u/PG_%20s/%u/%u.%u",
-							&rnode.spcNode, buf, &rnode.dbNode, &rnode.relNode,
+			nmatch = sscanf(path, "pg_tblspc/%u/" TABLESPACE_VERSION_DIRECTORY "/%u/%u.%u",
+							&rnode.spcNode, &rnode.dbNode, &rnode.relNode,
 							&segNo);
-			if (nmatch == 4 || nmatch == 5)
+			if (nmatch == 3 || nmatch == 4)
 				matched = true;
 		}
 	}
 
 	/*
 	 * The sscanf tests above can match files that have extra characters at
-	 * the end, and the last check can also match a path belonging to a
-	 * different version (different TABLESPACE_VERSION_DIRECTORY). To make
-	 * eliminate such cases, cross-check that GetRelationPath creates the
-	 * exact same filename, when passed the RelFileNode information we
-	 * extracted from the filename.
+	 * the end. To eliminate such cases, cross-check that GetRelationPath
+	 * creates the exact same filename, when passed the RelFileNode information
+	 * we extracted from the filename.
 	 */
 	if (matched)
 	{
