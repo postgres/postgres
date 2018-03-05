@@ -3636,12 +3636,13 @@ TableLikeOptionList:
 		;
 
 TableLikeOption:
-				DEFAULTS			{ $$ = CREATE_TABLE_LIKE_DEFAULTS; }
+				COMMENTS			{ $$ = CREATE_TABLE_LIKE_COMMENTS; }
 				| CONSTRAINTS		{ $$ = CREATE_TABLE_LIKE_CONSTRAINTS; }
+				| DEFAULTS			{ $$ = CREATE_TABLE_LIKE_DEFAULTS; }
 				| IDENTITY_P		{ $$ = CREATE_TABLE_LIKE_IDENTITY; }
 				| INDEXES			{ $$ = CREATE_TABLE_LIKE_INDEXES; }
+				| STATISTICS		{ $$ = CREATE_TABLE_LIKE_STATISTICS; }
 				| STORAGE			{ $$ = CREATE_TABLE_LIKE_STORAGE; }
-				| COMMENTS			{ $$ = CREATE_TABLE_LIKE_COMMENTS; }
 				| ALL				{ $$ = CREATE_TABLE_LIKE_ALL; }
 		;
 
@@ -3980,6 +3981,7 @@ CreateStatsStmt:
 					n->stat_types = $4;
 					n->exprs = $6;
 					n->relations = $8;
+					n->stxcomment = NULL;
 					n->if_not_exists = false;
 					$$ = (Node *)n;
 				}
@@ -3991,6 +3993,7 @@ CreateStatsStmt:
 					n->stat_types = $7;
 					n->exprs = $9;
 					n->relations = $11;
+					n->stxcomment = NULL;
 					n->if_not_exists = true;
 					$$ = (Node *)n;
 				}

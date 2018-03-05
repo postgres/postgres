@@ -1805,7 +1805,8 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
 /*
  *	makeObjectName()
  *
- *	Create a name for an implicitly created index, sequence, constraint, etc.
+ *	Create a name for an implicitly created index, sequence, constraint,
+ *	extended statistics, etc.
  *
  *	The parameters are typically: the original table name, the original field
  *	name, and a "type" string (such as "seq" or "pkey").    The field name
@@ -1981,6 +1982,8 @@ ChooseIndexName(const char *tabname, Oid namespaceId,
  *
  * We know that less than NAMEDATALEN characters will actually be used,
  * so we can truncate the result once we've generated that many.
+ *
+ * XXX See also ChooseExtendedStatisticNameAddition.
  */
 static char *
 ChooseIndexNameAddition(List *colnames)

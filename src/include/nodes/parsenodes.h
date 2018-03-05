@@ -674,12 +674,13 @@ typedef struct TableLikeClause
 
 typedef enum TableLikeOption
 {
-	CREATE_TABLE_LIKE_DEFAULTS = 1 << 0,
+	CREATE_TABLE_LIKE_COMMENTS = 1 << 0,
 	CREATE_TABLE_LIKE_CONSTRAINTS = 1 << 1,
-	CREATE_TABLE_LIKE_IDENTITY = 1 << 2,
-	CREATE_TABLE_LIKE_INDEXES = 1 << 3,
-	CREATE_TABLE_LIKE_STORAGE = 1 << 4,
-	CREATE_TABLE_LIKE_COMMENTS = 1 << 5,
+	CREATE_TABLE_LIKE_DEFAULTS = 1 << 2,
+	CREATE_TABLE_LIKE_IDENTITY = 1 << 3,
+	CREATE_TABLE_LIKE_INDEXES = 1 << 4,
+	CREATE_TABLE_LIKE_STATISTICS = 1 << 5,
+	CREATE_TABLE_LIKE_STORAGE = 1 << 6,
 	CREATE_TABLE_LIKE_ALL = PG_INT32_MAX
 } TableLikeOption;
 
@@ -2741,6 +2742,7 @@ typedef struct CreateStatsStmt
 	List	   *stat_types;		/* stat types (list of Value strings) */
 	List	   *exprs;			/* expressions to build statistics on */
 	List	   *relations;		/* rels to build stats on (list of RangeVar) */
+	char	   *stxcomment;		/* comment to apply to stats, or NULL */
 	bool		if_not_exists;	/* do nothing if stats name already exists */
 } CreateStatsStmt;
 

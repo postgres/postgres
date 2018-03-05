@@ -137,6 +137,8 @@ DROP TABLE inhz;
 CREATE TABLE ctlt1 (a text CHECK (length(a) > 2) PRIMARY KEY, b text);
 CREATE INDEX ctlt1_b_key ON ctlt1 (b);
 CREATE INDEX ctlt1_fnidx ON ctlt1 ((a || b));
+CREATE STATISTICS ctlt1_a_b_stat ON a,b FROM ctlt1;
+COMMENT ON STATISTICS ctlt1_a_b_stat IS 'ab stats';
 COMMENT ON COLUMN ctlt1.a IS 'A';
 COMMENT ON COLUMN ctlt1.b IS 'B';
 COMMENT ON CONSTRAINT ctlt1_a_check ON ctlt1 IS 't1_a_check';
@@ -240,6 +242,8 @@ Indexes:
     "ctlt_all_expr_idx" btree ((a || b))
 Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
+Statistics objects:
+    "public"."ctlt_all_a_b_stat" (ndistinct, dependencies) ON a, b FROM ctlt_all
 
 SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 'ctlt_all'::regclass ORDER BY c.relname, objsubid;
     relname     | objsubid | description 
@@ -247,6 +251,12 @@ SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_clas
  ctlt_all_b_idx |        0 | index b_key
  ctlt_all_pkey  |        0 | index pkey
 (2 rows)
+
+SELECT s.stxname, objsubid, description FROM pg_description, pg_statistic_ext s WHERE classoid = 'pg_statistic_ext'::regclass AND objoid = s.oid AND s.stxrelid = 'ctlt_all'::regclass ORDER BY s.stxname, objsubid;
+      stxname      | objsubid | description 
+-------------------+----------+-------------
+ ctlt_all_a_b_stat |        0 | ab stats
+(1 row)
 
 CREATE TABLE inh_error1 () INHERITS (ctlt1, ctlt4);
 NOTICE:  merging multiple inherited definitions of column "a"

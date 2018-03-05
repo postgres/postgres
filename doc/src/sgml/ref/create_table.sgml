@@ -82,7 +82,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 <phrase>and <replaceable class="parameter">like_option</replaceable> is:</phrase>
 
-{ INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | IDENTITY | INDEXES | STORAGE | COMMENTS | ALL }
+{ INCLUDING | EXCLUDING } { COMMENTS | CONSTRAINTS | DEFAULTS | IDENTITY | INDEXES | STATISTICS | STORAGE | ALL }
 
 <phrase>and <replaceable class="parameter">partition_bound_spec</replaceable> is:</phrase>
 
@@ -592,6 +592,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       constraints.
      </para>
      <para>
+      Extended statistics are copied to the new table if
+      <literal>INCLUDING STATISTICS</literal> is specified.
+     </para>
+     <para>
       Indexes, <literal>PRIMARY KEY</literal>, <literal>UNIQUE</literal>,
       and <literal>EXCLUDE</literal> constraints on the original table will be
       created on the new table only if <literal>INCLUDING INDEXES</literal>
@@ -616,7 +620,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
      <para>
       <literal>INCLUDING ALL</literal> is an abbreviated form of
-      <literal>INCLUDING DEFAULTS INCLUDING IDENTITY INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING STORAGE INCLUDING COMMENTS</literal>.
+      <literal>INCLUDING COMMENTS INCLUDING CONSTRAINTS INCLUDING DEFAULTS INCLUDING IDENTITY INCLUDING INDEXES INCLUDING STATISTICS INCLUDING STORAGE</literal>.
      </para>
      <para>
       Note that unlike <literal>INHERITS</literal>, columns and
