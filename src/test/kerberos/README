@@ -1,0 +1,35 @@
+src/test/kerberos/README
+
+Tests for Kerberos/GSSAPI functionality
+=======================================
+
+This directory contains a test suite for Kerberos/GSSAPI
+functionality.  This requires a full MIT Kerberos installation,
+including server and client tools, and is therefore kept separate and
+not run by default.
+
+Also, this test suite creates a KDC server that listens for TCP/IP
+connections on localhost without any real access control, so it is not
+safe to run this on a system where there might be untrusted local
+users.
+
+Running the tests
+=================
+
+    make check
+
+or
+
+    make installcheck
+
+Requirements
+============
+
+MIT Kerberos server and client tools are required.  Heimdal is not
+supported.
+
+Debian/Ubuntu packages: krb5-admin-server krb5-kdc krb5-user
+
+RHEL/CentOS packages: krb5-server krb5-workstation
+
+FreeBSD port: krb5 (base system has Heimdal)

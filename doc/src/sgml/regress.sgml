@@ -220,10 +220,20 @@ make installcheck-world
    <varname>PG_TEST_EXTRA</varname> to a whitespace-separated list, for
    example:
 <programlisting>
-make check-world PG_TEST_EXTRA='ldap ssl'
+make check-world PG_TEST_EXTRA='kerberos ldap ssl'
 </programlisting>
    The following values are currently supported:
    <variablelist>
+    <varlistentry>
+     <term><literal>kerberos</literal></term>
+     <listitem>
+      <para>
+       Runs the test suite under <filename>src/test/kerberos</filename>.  This
+       requires an MIT Kerberos installation and opens TCP/IP listen sockets.
+      </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry>
      <term><literal>ldap</literal></term>
      <listitem>

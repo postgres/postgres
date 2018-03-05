@@ -709,7 +709,9 @@ with_systemd
 with_selinux
 with_openssl
 with_ldap
+with_krb_srvnam
 krb_srvtab
+with_gssapi
 with_python
 with_perl
 with_tcl
@@ -5788,6 +5790,7 @@ $as_echo "$with_gssapi" >&6; }
 
 
 
+
 #
 # Kerberos configuration parameters
 #
@@ -5812,6 +5815,7 @@ if test "${with_krb_srvnam+set}" = set; then :
 else
   with_krb_srvnam="postgres"
 fi
+
 
 
 

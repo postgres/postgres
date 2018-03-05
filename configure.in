@@ -638,6 +638,7 @@ PGAC_ARG_BOOL(with, gssapi, no, [build with GSSAPI support],
   krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
 ])
 AC_MSG_RESULT([$with_gssapi])
+AC_SUBST(with_gssapi)
 
 
 AC_SUBST(krb_srvtab)
@@ -650,6 +651,7 @@ PGAC_ARG_REQ(with, krb-srvnam,
              [NAME], [default service principal name in Kerberos (GSSAPI) [postgres]],
              [],
              [with_krb_srvnam="postgres"])
+AC_SUBST(with_krb_srvnam)
 AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
                    [Define to the name of the default PostgreSQL service principal in Kerberos (GSSAPI). (--with-krb-srvnam=NAME)])
 
