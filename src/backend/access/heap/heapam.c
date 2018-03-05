@@ -2411,7 +2411,7 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
  * This causes rows to be frozen, which is an MVCC violation and
  * requires explicit options chosen by user.
  *
- * HEAP_INSERT_IS_SPECULATIVE is used on so-called "speculative insertions",
+ * HEAP_INSERT_SPECULATIVE is used on so-called "speculative insertions",
  * which can be backed out afterwards without aborting the whole transaction.
  * Other sessions can wait for the speculative insertion to be confirmed,
  * turning it into a regular tuple, or aborted, as if it never existed.
@@ -2420,8 +2420,8 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
  *
  * Note that most of these options will be applied when inserting into the
  * heap's TOAST table, too, if the tuple requires any out-of-line data.  Only
- * HEAP_INSERT_IS_SPECULATIVE is explicitly ignored, as the toast data does
- * not partake in speculative insertion.
+ * HEAP_INSERT_SPECULATIVE is explicitly ignored, as the toast data does not
+ * partake in speculative insertion.
  *
  * The BulkInsertState object (if any; bistate can be NULL for default
  * behavior) is also just passed through to RelationGetBufferForTuple.
