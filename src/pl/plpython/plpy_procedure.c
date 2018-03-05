@@ -206,9 +206,9 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 		/*
 		 * get information required for output conversion of the return value,
-		 * but only if this isn't a trigger or procedure.
+		 * but only if this isn't a trigger.
 		 */
-		if (!is_trigger && procStruct->prokind != PROKIND_PROCEDURE)
+		if (!is_trigger)
 		{
 			Oid			rettype = procStruct->prorettype;
 			HeapTuple	rvTypeTup;

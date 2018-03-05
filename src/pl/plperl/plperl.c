@@ -2832,8 +2832,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 		 * Get the required information for input conversion of the
 		 * return value.
 		 ************************************************************/
-		if (!is_trigger && !is_event_trigger &&
-			procStruct->prokind != PROKIND_PROCEDURE)
+		if (!is_trigger && !is_event_trigger)
 		{
 			Oid			rettype = procStruct->prorettype;
 
