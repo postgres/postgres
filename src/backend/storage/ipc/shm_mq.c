@@ -1058,7 +1058,19 @@ shm_mq_receive_bytes(shm_mq_handle *mqh, Size bytes_needed, bool nowait,
 		 * detached.
 		 */
 		if (mq->mq_detached)
+		{
+			/*
+			 * If the writer advanced mq_bytes_written and then set
+			 * mq_detached, we might not have read the final value of
+			 * mq_bytes_written above.  Insert a read barrier and then check
+			 * again if mq_bytes_written has advanced.
+			 */
+			pg_read_barrier();
+			if (written != pg_atomic_read_u64(&mq->mq_bytes_written))
+				continue;
+
 			return SHM_MQ_DETACHED;
+		}
 
 		/*
 		 * We didn't get enough data to satisfy the request, so mark any data
