@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CALL <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> ] [ , ...] )
+CALL <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> ] [, ...] )
 </synopsis>
  </refsynopsisdiv>
 
