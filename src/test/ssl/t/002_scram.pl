@@ -68,7 +68,7 @@ else
 {
 	test_connect_fails($common_connstr,
 					"scram_channel_binding=tls-server-end-point",
-					qr/unsupported SCRAM channel-binding type/,
+					qr/channel binding type "tls-server-end-point" is not supported by this build/,
 					"SCRAM authentication with tls-server-end-point as channel binding");
 }
 test_connect_fails($common_connstr,
