@@ -18,8 +18,8 @@ use File::Temp ();
 use IPC::Run;
 use SimpleTee;
 
-# specify a recent enough version of Test::More  to support the note() function
-use Test::More 0.82;
+# specify a recent enough version of Test::More to support the done_testing() function
+use Test::More 0.87;
 
 our @EXPORT = qw(
   generate_ascii_string
