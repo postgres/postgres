@@ -57,6 +57,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	int16		attnums[STATS_MAX_DIMENSIONS];
 	int			numcols = 0;
 	char	   *namestr;
+	NameData	stxname;
 	Oid			statoid;
 	Oid			namespaceId;
 	Oid			stxowner = GetUserId();
@@ -135,7 +136,8 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 * object in the same namespace as the relation, and cons up a name for it.
 	 */
 	if (stmt->defnames)
-		namespaceId = QualifiedNameGetCreationNamespace(stmt->defnames, &namestr);
+		namespaceId = QualifiedNameGetCreationNamespace(stmt->defnames,
+														&namestr);
 	else
 	{
 		namespaceId = RelationGetNamespace(rel);
@@ -144,6 +146,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 											  "stat",
 											  namespaceId);
 	}
+	namestrcpy(&stxname, namestr);
 
 	/*
 	 * Deal with the possibility that the statistics object already exists.
@@ -307,7 +310,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 	values[Anum_pg_statistic_ext_stxrelid - 1] = ObjectIdGetDatum(relid);
-	values[Anum_pg_statistic_ext_stxname - 1] = CStringGetDatum(namestr);
+	values[Anum_pg_statistic_ext_stxname - 1] = NameGetDatum(&stxname);
 	values[Anum_pg_statistic_ext_stxnamespace - 1] = ObjectIdGetDatum(namespaceId);
 	values[Anum_pg_statistic_ext_stxowner - 1] = ObjectIdGetDatum(stxowner);
 	values[Anum_pg_statistic_ext_stxkeys - 1] = PointerGetDatum(stxkeys);

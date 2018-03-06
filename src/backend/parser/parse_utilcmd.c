@@ -2250,7 +2250,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
  * transformExtendedStatistics
  *     Handle extended statistic objects
  *
- * Right now, there's nothing to do here, so we just copy the list.
+ * Right now, there's nothing to do here, so we just append the list to
+ * the existing "after" list.
  */
 static void
 transformExtendedStatistics(CreateStmtContext *cxt)
