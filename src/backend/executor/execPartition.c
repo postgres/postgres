@@ -413,7 +413,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 		{
 			WithCheckOption *wco = castNode(WithCheckOption, lfirst(ll));
 			ExprState  *wcoExpr = ExecInitQual(castNode(List, wco->qual),
-											   mtstate->mt_plans[0]);
+											   &mtstate->ps);
 
 			wcoExprs = lappend(wcoExprs, wcoExpr);
 		}
