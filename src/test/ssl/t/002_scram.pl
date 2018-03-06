@@ -8,14 +8,12 @@ use Test::More;
 use ServerSetup;
 use File::Copy;
 
-if ($ENV{with_openssl} eq 'yes')
-{
-	plan tests => 6;
-}
-else
+if ($ENV{with_openssl} ne 'yes')
 {
 	plan skip_all => 'SSL not supported by this build';
 }
+
+my $number_of_tests = 6;
 
 # This is the hostname used to connect to the server.
 my $SERVERHOSTADDR = '127.0.0.1';
@@ -70,8 +68,11 @@ else
 					"scram_channel_binding=tls-server-end-point",
 					qr/channel binding type "tls-server-end-point" is not supported by this build/,
 					"SCRAM authentication with tls-server-end-point as channel binding");
+	$number_of_tests++;
 }
 test_connect_fails($common_connstr,
 	"scram_channel_binding=not-exists",
 	qr/unsupported SCRAM channel-binding type/,
 	"SCRAM authentication with invalid channel binding");
+
+done_testing($number_of_tests);
