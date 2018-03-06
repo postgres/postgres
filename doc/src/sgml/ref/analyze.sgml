@@ -21,9 +21,14 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+ANALYZE [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <replaceable class="parameter">table_and_columns</replaceable> [, ...] ]
 ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replaceable> [, ...] ]
 
-<phrase>where <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
+<phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
+
+    VERBOSE
+
+<phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
     <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
 </synopsis>
@@ -48,6 +53,13 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
    With a list, <command>ANALYZE</command> processes only those table(s).
    It is further possible to give a list of column names for a table,
    in which case only the statistics for those columns are collected.
+  </para>
+
+  <para>
+   When the option list is surrounded by parentheses, the options can be
+   written in any order.  The parenthesized syntax was added in
+   <productname>PostgreSQL</productname> 11;  the unparenthesized syntax
+   is deprecated.
   </para>
  </refsect1>
 
