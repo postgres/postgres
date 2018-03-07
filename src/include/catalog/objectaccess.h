@@ -133,7 +133,7 @@ extern void RunObjectDropHook(Oid classId, Oid objectId, int subId,
 				  int dropflags);
 extern void RunObjectPostAlterHook(Oid classId, Oid objectId, int subId,
 					   Oid auxiliaryId, bool is_internal);
-extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_volation);
+extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_violation);
 extern void RunFunctionExecuteHook(Oid objectId);
 
 /*
