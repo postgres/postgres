@@ -1752,12 +1752,19 @@ sequence_options(Oid relid)
 		elog(ERROR, "cache lookup failed for sequence %u", relid);
 	pgsform = (Form_pg_sequence) GETSTRUCT(pgstuple);
 
-	options = lappend(options, makeDefElem("cache", (Node *) makeInteger(pgsform->seqcache), -1));
-	options = lappend(options, makeDefElem("cycle", (Node *) makeInteger(pgsform->seqcycle), -1));
-	options = lappend(options, makeDefElem("increment", (Node *) makeInteger(pgsform->seqincrement), -1));
-	options = lappend(options, makeDefElem("maxvalue", (Node *) makeInteger(pgsform->seqmax), -1));
-	options = lappend(options, makeDefElem("minvalue", (Node *) makeInteger(pgsform->seqmin), -1));
-	options = lappend(options, makeDefElem("start", (Node *) makeInteger(pgsform->seqstart), -1));
+	/* Use makeFloat() for 64-bit integers, like gram.y does. */
+	options = lappend(options,
+					  makeDefElem("cache", (Node *) makeFloat(psprintf(INT64_FORMAT, pgsform->seqcache)), -1));
+	options = lappend(options,
+					  makeDefElem("cycle", (Node *) makeInteger(pgsform->seqcycle), -1));
+	options = lappend(options,
+					  makeDefElem("increment", (Node *) makeFloat(psprintf(INT64_FORMAT, pgsform->seqincrement)), -1));
+	options = lappend(options,
+					  makeDefElem("maxvalue", (Node *) makeFloat(psprintf(INT64_FORMAT, pgsform->seqmax)), -1));
+	options = lappend(options,
+					  makeDefElem("minvalue", (Node *) makeFloat(psprintf(INT64_FORMAT, pgsform->seqmin)), -1));
+	options = lappend(options,
+					  makeDefElem("start", (Node *) makeFloat(psprintf(INT64_FORMAT, pgsform->seqstart)), -1));
 
 	ReleaseSysCache(pgstuple);
 
