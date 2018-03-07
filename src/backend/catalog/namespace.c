@@ -202,7 +202,7 @@ static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 
 
 /*
- * RangeVarGetRelid
+ * RangeVarGetRelidExtended
  *		Given a RangeVar describing an existing relation,
  *		select the proper namespace and look up the relation OID.
  *
