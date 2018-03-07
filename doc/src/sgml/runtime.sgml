@@ -1472,14 +1472,14 @@ export PG_OOM_ADJUST_VALUE=0
     the kernel setting <varname>vm.nr_hugepages</varname>. To estimate the
     number of huge pages needed, start <productname>PostgreSQL</productname>
     without huge pages enabled and check the
-    postmaster's <varname>VmPeak</varname> value, as well as the system's
+    postmaster's anonymous shared memory segment size, as well as the system's
     huge page size, using the <filename>/proc</filename> file system.  This might
     look like:
 <programlisting>
 $ <userinput>head -1 $PGDATA/postmaster.pid</userinput>
 4170
-$ <userinput>grep ^VmPeak /proc/4170/status</userinput>
-VmPeak:  6490428 kB
+$ <userinput>pmap 4170 | awk '/rw-s/ &amp;&amp; /zero/ {print $2}'</userinput>
+6490428K
 $ <userinput>grep ^Hugepagesize /proc/meminfo</userinput>
 Hugepagesize:       2048 kB
 </programlisting>
