@@ -2158,6 +2158,9 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    enabled at build time (see <xref linkend="installation"/>).
   </para>
 
+  <sect2 id="ssl-setup">
+   <title>Basic Setup</title>
+
   <para>
    With <acronym>SSL</acronym> support compiled in, the
    <productname>PostgreSQL</productname> server can be started with
@@ -2170,35 +2173,6 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    linkend="auth-pg-hba-conf"/> about how to set up the server to require
    use of <acronym>SSL</acronym> for some or all connections.
   </para>
-
-  <para>
-   <productname>PostgreSQL</productname> reads the system-wide
-   <productname>OpenSSL</productname> configuration file. By default, this
-   file is named <filename>openssl.cnf</filename> and is located in the
-   directory reported by <literal>openssl version -d</literal>.
-   This default can be overridden by setting environment variable
-   <envar>OPENSSL_CONF</envar> to the name of the desired configuration file.
-  </para>
-
-  <para>
-   <productname>OpenSSL</productname> supports a wide range of ciphers
-   and authentication algorithms, of varying strength.  While a list of
-   ciphers can be specified in the <productname>OpenSSL</productname>
-   configuration file, you can specify ciphers specifically for use by
-   the database server by modifying <xref linkend="guc-ssl-ciphers"/> in
-   <filename>postgresql.conf</filename>.
-  </para>
-
-  <note>
-   <para>
-    It is possible to have authentication without encryption overhead by
-    using <literal>NULL-SHA</literal> or <literal>NULL-MD5</literal> ciphers.  However,
-    a man-in-the-middle could read and pass communications between client
-    and server.  Also, encryption overhead is minimal compared to the
-    overhead of authentication.  For these reasons NULL ciphers are not
-    recommended.
-   </para>
-  </note>
 
   <para>
    To start in <acronym>SSL</acronym> mode, files containing the server certificate
@@ -2245,6 +2219,40 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <filename>server.crt</filename>.  Instead, clients must have the root
    certificate of the server's certificate chain.
   </para>
+  </sect2>
+
+  <sect2 id="ssl-openssl-config">
+   <title>OpenSSL Configuration</title>
+
+  <para>
+   <productname>PostgreSQL</productname> reads the system-wide
+   <productname>OpenSSL</productname> configuration file. By default, this
+   file is named <filename>openssl.cnf</filename> and is located in the
+   directory reported by <literal>openssl version -d</literal>.
+   This default can be overridden by setting environment variable
+   <envar>OPENSSL_CONF</envar> to the name of the desired configuration file.
+  </para>
+
+  <para>
+   <productname>OpenSSL</productname> supports a wide range of ciphers
+   and authentication algorithms, of varying strength.  While a list of
+   ciphers can be specified in the <productname>OpenSSL</productname>
+   configuration file, you can specify ciphers specifically for use by
+   the database server by modifying <xref linkend="guc-ssl-ciphers"/> in
+   <filename>postgresql.conf</filename>.
+  </para>
+
+  <note>
+   <para>
+    It is possible to have authentication without encryption overhead by
+    using <literal>NULL-SHA</literal> or <literal>NULL-MD5</literal> ciphers.  However,
+    a man-in-the-middle could read and pass communications between client
+    and server.  Also, encryption overhead is minimal compared to the
+    overhead of authentication.  For these reasons NULL ciphers are not
+    recommended.
+   </para>
+  </note>
+  </sect2>
 
   <sect2 id="ssl-client-certificates">
    <title>Using Client Certificates</title>
