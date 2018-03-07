@@ -1635,16 +1635,27 @@ that cannot support <literal>tls-unique</literal> for some reason.
 
 <para>
 To initiate streaming replication, the frontend sends the
-<literal>replication</literal> parameter in the startup message. A Boolean value
-of <literal>true</literal> tells the backend to go into walsender mode, wherein a
-small set of replication commands can be issued instead of SQL statements. Only
-the simple query protocol can be used in walsender mode.
-Replication commands are logged in the server log when
-<xref linkend="guc-log-replication-commands"/> is enabled.
-Passing <literal>database</literal> as the value instructs walsender to connect to
-the database specified in the <literal>dbname</literal> parameter, which will allow
-the connection to be used for logical replication from that database.
+<literal>replication</literal> parameter in the startup message. A Boolean
+value of <literal>true</literal> (or <literal>on</literal>,
+<literal>yes</literal>, <literal>1</literal>) tells the backend to go into
+physical replication walsender mode, wherein a small set of replication
+commands, shown below, can be issued instead of SQL statements.
 </para>
+
+<para>
+Passing <literal>database</literal> as the value for the
+<literal>replication</literal> parameter instructs the backend to go into
+logical replication walsender mode, connecting to the database specified in
+the <literal>dbname</literal> parameter.  In logical replication walsender
+mode, the replication commands shown below as well as normal SQL commands can
+be issued.
+</para>
+
+<para>
+In either physical replication or logical replication walsender mode, only the
+simple query protocol can be used.
+</para>
+
 <para>
  For the purpose of testing replication commands, you can make a replication
  connection via <application>psql</application> or any other <literal>libpq</literal>-using
@@ -1659,7 +1670,12 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
 </para>
 
 <para>
-The commands accepted in walsender mode are:
+Replication commands are logged in the server log when
+<xref linkend="guc-log-replication-commands"/> is enabled.
+</para>
+
+<para>
+The commands accepted in replication mode are:
 <variablelist>
   <varlistentry>
     <term><literal>IDENTIFY_SYSTEM</literal>

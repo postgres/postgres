@@ -1262,6 +1262,64 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-replication" xreflabel="replication">
+      <term><literal>replication</literal></term>
+      <listitem>
+      <para>
+       This option determines whether the connection should use the
+       replication protocol instead of the normal protocol.  This is what
+       PostgreSQL replication connections as well as tools such as
+       <application>pg_basebackup</application> use internally, but it can
+       also be used by third-party applications.  For a description of the
+       replication protocol, consult <xref linkend="protocol-replication"/>.
+      </para>
+
+      <para>
+       The following values, which are case-insensitive, are supported:
+       <variablelist>
+        <varlistentry>
+         <term>
+          <literal>true</literal>, <literal>on</literal>,
+          <literal>yes</literal>, <literal>1</literal>
+         </term>
+         <listitem>
+          <para>
+           The connection goes into physical replication mode.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><literal>database</literal></term>
+         <listitem>
+          <para>
+           The connection goes into logical replication mode, connecting to
+           the database specified in the <literal>dbname</literal> parameter.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term>
+          <literal>false</literal>, <literal>off</literal>,
+          <literal>no</literal>, <literal>0</literal>
+         </term>
+         <listitem>
+          <para>
+           The connection is a regular one, which is the default behavior.
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </para>
+
+      <para>
+       In physical or logical replication mode, only the simple query protocol
+       can be used.
+      </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-sslmode" xreflabel="sslmode">
       <term><literal>sslmode</literal></term>
       <listitem>
