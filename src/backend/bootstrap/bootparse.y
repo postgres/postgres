@@ -292,6 +292,8 @@ Boot_DeclareIndexStmt:
 					IndexStmt *stmt = makeNode(IndexStmt);
 					Oid		relationId;
 
+					elog(DEBUG4, "creating index \"%s\"", $3);
+
 					do_start();
 
 					stmt->idxname = $3;
@@ -338,6 +340,8 @@ Boot_DeclareUniqueIndexStmt:
 					IndexStmt *stmt = makeNode(IndexStmt);
 					Oid		relationId;
 
+					elog(DEBUG4, "creating unique index \"%s\"", $4);
+
 					do_start();
 
 					stmt->idxname = $4;
@@ -381,6 +385,8 @@ Boot_DeclareUniqueIndexStmt:
 Boot_DeclareToastStmt:
 		  XDECLARE XTOAST oidspec oidspec ON boot_ident
 				{
+					elog(DEBUG4, "creating toast table for table \"%s\"", $6);
+
 					do_start();
 
 					BootstrapToastTable($6, $3, $4);
