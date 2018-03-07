@@ -3143,6 +3143,8 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
  * 'outer_path' is the outer input to the join
  * 'inner_path' is the inner input to the join
  * 'extra' contains miscellaneous information about the join
+ * 'parallel_hash' indicates that inner_path is partial and that a shared
+ *		hash table will be built in parallel
  */
 void
 initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,

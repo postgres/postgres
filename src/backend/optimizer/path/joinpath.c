@@ -814,7 +814,7 @@ try_partial_hashjoin_path(PlannerInfo *root,
 	 * cost.  Bail out right away if it looks terrible.
 	 */
 	initial_cost_hashjoin(root, &workspace, jointype, hashclauses,
-						  outer_path, inner_path, extra, true);
+						  outer_path, inner_path, extra, parallel_hash);
 	if (!add_partial_path_precheck(joinrel, workspace.total_cost, NIL))
 		return;
 
