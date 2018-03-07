@@ -66,13 +66,13 @@ SELECT * FROM inhg; /* Two records with three columns in order x=x, xx=text, y=y
 (2 rows)
 
 DROP TABLE inhg;
-CREATE TABLE test_like_id_1 (a int GENERATED ALWAYS AS IDENTITY, b text);
+CREATE TABLE test_like_id_1 (a bigint GENERATED ALWAYS AS IDENTITY, b text);
 \d test_like_id_1
                      Table "public.test_like_id_1"
- Column |  Type   | Collation | Nullable |           Default            
---------+---------+-----------+----------+------------------------------
- a      | integer |           | not null | generated always as identity
- b      | text    |           |          | 
+ Column |  Type  | Collation | Nullable |           Default            
+--------+--------+-----------+----------+------------------------------
+ a      | bigint |           | not null | generated always as identity
+ b      | text   |           |          | 
 
 INSERT INTO test_like_id_1 (b) VALUES ('b1');
 SELECT * FROM test_like_id_1;
@@ -83,11 +83,11 @@ SELECT * FROM test_like_id_1;
 
 CREATE TABLE test_like_id_2 (LIKE test_like_id_1);
 \d test_like_id_2
-           Table "public.test_like_id_2"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
- a      | integer |           | not null | 
- b      | text    |           |          | 
+          Table "public.test_like_id_2"
+ Column |  Type  | Collation | Nullable | Default 
+--------+--------+-----------+----------+---------
+ a      | bigint |           | not null | 
+ b      | text   |           |          | 
 
 INSERT INTO test_like_id_2 (b) VALUES ('b2');
 ERROR:  null value in column "a" violates not-null constraint
@@ -100,10 +100,10 @@ SELECT * FROM test_like_id_2;  -- identity was not copied
 CREATE TABLE test_like_id_3 (LIKE test_like_id_1 INCLUDING IDENTITY);
 \d test_like_id_3
                      Table "public.test_like_id_3"
- Column |  Type   | Collation | Nullable |           Default            
---------+---------+-----------+----------+------------------------------
- a      | integer |           | not null | generated always as identity
- b      | text    |           |          | 
+ Column |  Type  | Collation | Nullable |           Default            
+--------+--------+-----------+----------+------------------------------
+ a      | bigint |           | not null | generated always as identity
+ b      | text   |           |          | 
 
 INSERT INTO test_like_id_3 (b) VALUES ('b3');
 SELECT * FROM test_like_id_3;  -- identity was copied and applied
