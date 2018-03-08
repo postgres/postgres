@@ -87,23 +87,6 @@ ANALYZE "S 1"."T 1";
 ANALYZE "S 1"."T 2";
 ANALYZE "S 1"."T 3";
 ANALYZE "S 1"."T 4";
--- record relpages for T 1
-create temp table save_t_1_relpages as
-  select relpages as old_relpages from pg_class where relname = 'T 1';
-select relpages - (select old_relpages from save_t_1_relpages) as pg_delta,
-  reltuples from pg_class where relname = 'T 1';
- pg_delta | reltuples 
-----------+-----------
-        0 |      1000
-(1 row)
-
-select (histogram_bounds::text::int[])[array_length(histogram_bounds,1)]
-  from pg_stats where tablename = 'T 1' and attname = 'C 1';
- histogram_bounds 
-------------------
-             1000
-(1 row)
-
 -- ===================================================================
 -- create foreign tables
 -- ===================================================================
@@ -5536,20 +5519,6 @@ UPDATE ft2 SET c3 = 'bar' WHERE postgres_fdw_abs(c1) > 2000 RETURNING *;
  2009 |  9 | bar |    |    |    | ft2        | 
  2010 |  0 | bar |    |    |    | ft2        | 
 (10 rows)
-
-select relpages - (select old_relpages from save_t_1_relpages) as pg_delta,
-  reltuples from pg_class where relname = 'T 1';
- pg_delta | reltuples 
-----------+-----------
-        0 |      1000
-(1 row)
-
-select (histogram_bounds::text::int[])[array_length(histogram_bounds,1)]
-  from pg_stats where tablename = 'T 1' and attname = 'C 1';
- histogram_bounds 
-------------------
-             1000
-(1 row)
 
 EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c3 = 'baz'

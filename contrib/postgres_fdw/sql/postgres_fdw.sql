@@ -95,15 +95,6 @@ ANALYZE "S 1"."T 2";
 ANALYZE "S 1"."T 3";
 ANALYZE "S 1"."T 4";
 
--- record relpages for T 1
-create temp table save_t_1_relpages as
-  select relpages as old_relpages from pg_class where relname = 'T 1';
-
-select relpages - (select old_relpages from save_t_1_relpages) as pg_delta,
-  reltuples from pg_class where relname = 'T 1';
-select (histogram_bounds::text::int[])[array_length(histogram_bounds,1)]
-  from pg_stats where tablename = 'T 1' and attname = 'C 1';
-
 -- ===================================================================
 -- create foreign tables
 -- ===================================================================
@@ -1148,10 +1139,6 @@ INSERT INTO ft2 (c1,c2,c3)
 EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c3 = 'bar' WHERE postgres_fdw_abs(c1) > 2000 RETURNING *;            -- can't be pushed down
 UPDATE ft2 SET c3 = 'bar' WHERE postgres_fdw_abs(c1) > 2000 RETURNING *;
-select relpages - (select old_relpages from save_t_1_relpages) as pg_delta,
-  reltuples from pg_class where relname = 'T 1';
-select (histogram_bounds::text::int[])[array_length(histogram_bounds,1)]
-  from pg_stats where tablename = 'T 1' and attname = 'C 1';
 EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c3 = 'baz'
   FROM ft4 INNER JOIN ft5 ON (ft4.c1 = ft5.c1)
