@@ -137,6 +137,7 @@ static Size estimate_hashagg_tablesize(Path *path,
 static RelOptInfo *create_grouping_paths(PlannerInfo *root,
 					  RelOptInfo *input_rel,
 					  PathTarget *target,
+					  bool target_parallel_safe,
 					  const AggClauseCosts *agg_costs,
 					  grouping_sets_data *gd);
 static void consider_groupingsets_paths(PlannerInfo *root,
@@ -152,6 +153,7 @@ static RelOptInfo *create_window_paths(PlannerInfo *root,
 					RelOptInfo *input_rel,
 					PathTarget *input_target,
 					PathTarget *output_target,
+					bool output_target_parallel_safe,
 					List *tlist,
 					WindowFuncLists *wflists,
 					List *activeWindows);
@@ -168,6 +170,7 @@ static RelOptInfo *create_distinct_paths(PlannerInfo *root,
 static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
 					 PathTarget *target,
+					 bool target_parallel_safe,
 					 double limit_tuples);
 static PathTarget *make_group_input_target(PlannerInfo *root,
 						PathTarget *final_target);
@@ -1583,6 +1586,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	PathTarget *final_target;
 	List	   *final_targets;
 	List	   *final_targets_contain_srfs;
+	bool		final_target_parallel_safe;
 	RelOptInfo *current_rel;
 	RelOptInfo *final_rel;
 	ListCell   *lc;
@@ -1645,6 +1649,10 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		/* Also extract the PathTarget form of the setop result tlist */
 		final_target = current_rel->cheapest_total_path->pathtarget;
 
+		/* And check whether it's parallel safe */
+		final_target_parallel_safe =
+			is_parallel_safe(root, (Node *) final_target->exprs);
+
 		/* The setop result tlist couldn't contain any SRFs */
 		Assert(!parse->hasTargetSRFs);
 		final_targets = final_targets_contain_srfs = NIL;
@@ -1676,12 +1684,15 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		PathTarget *sort_input_target;
 		List	   *sort_input_targets;
 		List	   *sort_input_targets_contain_srfs;
+		bool		sort_input_target_parallel_safe;
 		PathTarget *grouping_target;
 		List	   *grouping_targets;
 		List	   *grouping_targets_contain_srfs;
+		bool		grouping_target_parallel_safe;
 		PathTarget *scanjoin_target;
 		List	   *scanjoin_targets;
 		List	   *scanjoin_targets_contain_srfs;
+		bool		scanjoin_target_parallel_safe;
 		bool		have_grouping;
 		AggClauseCosts agg_costs;
 		WindowFuncLists *wflists = NULL;
@@ -1805,6 +1816,8 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * that were obtained within query_planner().
 		 */
 		final_target = create_pathtarget(root, tlist);
+		final_target_parallel_safe =
+			is_parallel_safe(root, (Node *) final_target->exprs);
 
 		/*
 		 * If ORDER BY was given, consider whether we should use a post-sort
@@ -1812,11 +1825,18 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * so.
 		 */
 		if (parse->sortClause)
+		{
 			sort_input_target = make_sort_input_target(root,
 													   final_target,
 													   &have_postponed_srfs);
+			sort_input_target_parallel_safe =
+				is_parallel_safe(root, (Node *) sort_input_target->exprs);
+		}
 		else
+		{
 			sort_input_target = final_target;
+			sort_input_target_parallel_safe = final_target_parallel_safe;
+		}
 
 		/*
 		 * If we have window functions to deal with, the output from any
@@ -1824,11 +1844,18 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * otherwise, it should be sort_input_target.
 		 */
 		if (activeWindows)
+		{
 			grouping_target = make_window_input_target(root,
 													   final_target,
 													   activeWindows);
+			grouping_target_parallel_safe =
+				is_parallel_safe(root, (Node *) grouping_target->exprs);
+		}
 		else
+		{
 			grouping_target = sort_input_target;
+			grouping_target_parallel_safe = sort_input_target_parallel_safe;
+		}
 
 		/*
 		 * If we have grouping or aggregation to do, the topmost scan/join
@@ -1838,9 +1865,16 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		have_grouping = (parse->groupClause || parse->groupingSets ||
 						 parse->hasAggs || root->hasHavingQual);
 		if (have_grouping)
+		{
 			scanjoin_target = make_group_input_target(root, final_target);
+			scanjoin_target_parallel_safe =
+				is_parallel_safe(root, (Node *) grouping_target->exprs);
+		}
 		else
+		{
 			scanjoin_target = grouping_target;
+			scanjoin_target_parallel_safe = grouping_target_parallel_safe;
+		}
 
 		/*
 		 * If there are any SRFs in the targetlist, we must separate each of
@@ -1922,8 +1956,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * for partial paths.  But only parallel-safe expressions can be
 		 * computed by partial paths.
 		 */
-		if (current_rel->partial_pathlist &&
-			is_parallel_safe(root, (Node *) scanjoin_target->exprs))
+		if (current_rel->partial_pathlist && scanjoin_target_parallel_safe)
 		{
 			/* Apply the scan/join target to each partial path */
 			foreach(lc, current_rel->partial_pathlist)
@@ -1984,6 +2017,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			current_rel = create_grouping_paths(root,
 												current_rel,
 												grouping_target,
+												grouping_target_parallel_safe,
 												&agg_costs,
 												gset_data);
 			/* Fix things up if grouping_target contains SRFs */
@@ -2003,6 +2037,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 											  current_rel,
 											  grouping_target,
 											  sort_input_target,
+											  sort_input_target_parallel_safe,
 											  tlist,
 											  wflists,
 											  activeWindows);
@@ -2036,6 +2071,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		current_rel = create_ordered_paths(root,
 										   current_rel,
 										   final_target,
+										   final_target_parallel_safe,
 										   have_postponed_srfs ? -1.0 :
 										   limit_tuples);
 		/* Fix things up if final_target contains SRFs */
@@ -3623,6 +3659,7 @@ static RelOptInfo *
 create_grouping_paths(PlannerInfo *root,
 					  RelOptInfo *input_rel,
 					  PathTarget *target,
+					  bool target_parallel_safe,
 					  const AggClauseCosts *agg_costs,
 					  grouping_sets_data *gd)
 {
@@ -3652,8 +3689,7 @@ create_grouping_paths(PlannerInfo *root,
 	 * target list and HAVING quals are parallel-safe.  The partially grouped
 	 * relation obeys the same rules.
 	 */
-	if (input_rel->consider_parallel &&
-		is_parallel_safe(root, (Node *) target->exprs) &&
+	if (input_rel->consider_parallel && target_parallel_safe &&
 		is_parallel_safe(root, (Node *) parse->havingQual))
 	{
 		grouped_rel->consider_parallel = true;
@@ -4230,6 +4266,7 @@ create_window_paths(PlannerInfo *root,
 					RelOptInfo *input_rel,
 					PathTarget *input_target,
 					PathTarget *output_target,
+					bool output_target_parallel_safe,
 					List *tlist,
 					WindowFuncLists *wflists,
 					List *activeWindows)
@@ -4245,8 +4282,7 @@ create_window_paths(PlannerInfo *root,
 	 * can't be parallel-safe, either.  Otherwise, we need to examine the
 	 * target list and active windows for non-parallel-safe constructs.
 	 */
-	if (input_rel->consider_parallel &&
-		is_parallel_safe(root, (Node *) output_target->exprs) &&
+	if (input_rel->consider_parallel && output_target_parallel_safe &&
 		is_parallel_safe(root, (Node *) activeWindows))
 		window_rel->consider_parallel = true;
 
@@ -4621,6 +4657,7 @@ static RelOptInfo *
 create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
 					 PathTarget *target,
+					 bool target_parallel_safe,
 					 double limit_tuples)
 {
 	Path	   *cheapest_input_path = input_rel->cheapest_total_path;
@@ -4635,8 +4672,7 @@ create_ordered_paths(PlannerInfo *root,
 	 * can't be parallel-safe, either.  Otherwise, it's parallel-safe if the
 	 * target list is parallel-safe.
 	 */
-	if (input_rel->consider_parallel &&
-		is_parallel_safe(root, (Node *) target->exprs))
+	if (input_rel->consider_parallel && target_parallel_safe)
 		ordered_rel->consider_parallel = true;
 
 	/*
