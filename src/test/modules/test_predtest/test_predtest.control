@@ -1,0 +1,4 @@
+comment = 'Test code for optimizer/util/predtest.c'
+default_version = '1.0'
+module_pathname = '$libdir/test_predtest'
+relocatable = true
