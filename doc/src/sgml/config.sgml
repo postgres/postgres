@@ -696,8 +696,9 @@ include_dir 'conf.d'
 
        <para>
         The default value is three connections. The value must be less
-        than the value of <varname>max_connections</varname>. This
-        parameter can only be set at server start.
+        than <varname>max_connections</varname> minus
+        <xref linkend="guc-max-wal-senders"/>.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -2982,13 +2983,16 @@ include_dir 'conf.d'
         maximum number of simultaneously running WAL sender
         processes). The default is 10. The value 0 means replication is
         disabled. WAL sender processes count towards the total number
-        of connections, so the parameter cannot be set higher than
-        <xref linkend="guc-max-connections"/>.  Abrupt streaming client
-        disconnection might cause an orphaned connection slot until
+        of connections, so this parameter's value must be less than
+        <xref linkend="guc-max-connections"/> minus
+        <xref linkend="guc-superuser-reserved-connections"/>.
+        Abrupt streaming client disconnection might leave an orphaned
+        connection slot behind until
         a timeout is reached, so this parameter should be set slightly
         higher than the maximum number of expected clients so disconnected
         clients can immediately reconnect.  This parameter can only
-        be set at server start. <varname>wal_level</varname> must be set to
+        be set at server start.
+        Also, <varname>wal_level</varname> must be set to
         <literal>replica</literal> or higher to allow connections from standby
         servers.
        </para>
@@ -3007,10 +3011,11 @@ include_dir 'conf.d'
          (see <xref linkend="streaming-replication-slots"/>) that the server
          can support. The default is 10.  This parameter can only be set at
          server start.
-         <varname>wal_level</varname> must be set
-         to <literal>replica</literal> or higher to allow replication slots to
-         be used. Setting it to a lower value than the number of currently
+         Setting it to a lower value than the number of currently
          existing replication slots will prevent the server from starting.
+         Also, <varname>wal_level</varname> must be set
+         to <literal>replica</literal> or higher to allow replication slots to
+         be used.
         </para>
        </listitem>
       </varlistentry>

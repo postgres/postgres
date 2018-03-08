@@ -778,7 +778,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
-	 * The last few connections slots are reserved for superusers. Although
+	 * The last few connection slots are reserved for superusers.  Although
 	 * replication connections currently require superuser privileges, we
 	 * don't allow them to consume the reserved slots, which are intended for
 	 * interactive use.

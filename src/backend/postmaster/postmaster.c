@@ -202,9 +202,9 @@ char	   *ListenAddresses;
 
 /*
  * ReservedBackends is the number of backends reserved for superuser use.
- * This number is taken out of the pool size given by MaxBackends so
+ * This number is taken out of the pool size given by MaxConnections so
  * number of backend slots available to non-superusers is
- * (MaxBackends - ReservedBackends).  Note what this really means is
+ * (MaxConnections - ReservedBackends).  Note what this really means is
  * "if there are <= ReservedBackends connections available, only superusers
  * can make new connections" --- pre-existing superuser connections don't
  * count against the limit.
@@ -882,14 +882,11 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Check for invalid combinations of GUC settings.
 	 */
-	if (ReservedBackends >= MaxConnections)
+	if (ReservedBackends + max_wal_senders >= MaxConnections)
 	{
-		write_stderr("%s: superuser_reserved_connections must be less than max_connections\n", progname);
-		ExitPostmaster(1);
-	}
-	if (max_wal_senders >= MaxConnections)
-	{
-		write_stderr("%s: max_wal_senders must be less than max_connections\n", progname);
+		write_stderr("%s: superuser_reserved_connections (%d) plus max_wal_senders (%d) must be less than max_connections (%d)\n",
+					 progname,
+					 ReservedBackends, max_wal_senders, MaxConnections);
 		ExitPostmaster(1);
 	}
 	if (XLogArchiveMode > ARCHIVE_MODE_OFF && wal_level == WAL_LEVEL_MINIMAL)
