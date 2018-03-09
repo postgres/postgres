@@ -119,7 +119,6 @@ select * from test_predtest($$
 select x is not true, x
 from booleans
 $$);
-WARNING:  weak_refuted_by result is incorrect
 -[ RECORD 1 ]-----+--
 strong_implied_by | f
 weak_implied_by   | f
@@ -128,7 +127,7 @@ weak_refuted_by   | t
 s_i_holds         | f
 w_i_holds         | f
 s_r_holds         | t
-w_r_holds         | f
+w_r_holds         | t
 
 select * from test_predtest($$
 select x, x is not true
@@ -176,7 +175,6 @@ select * from test_predtest($$
 select x is unknown, x
 from booleans
 $$);
-WARNING:  weak_refuted_by result is incorrect
 -[ RECORD 1 ]-----+--
 strong_implied_by | f
 weak_implied_by   | f
@@ -185,7 +183,7 @@ weak_refuted_by   | t
 s_i_holds         | f
 w_i_holds         | f
 s_r_holds         | t
-w_r_holds         | f
+w_r_holds         | t
 
 select * from test_predtest($$
 select x, x is unknown
@@ -214,7 +212,7 @@ weak_refuted_by   | f
 s_i_holds         | f
 w_i_holds         | f
 s_r_holds         | t
-w_r_holds         | f
+w_r_holds         | t
 
 select * from test_predtest($$
 select x, x is null
@@ -650,7 +648,7 @@ weak_refuted_by   | f
 s_i_holds         | f
 w_i_holds         | f
 s_r_holds         | t
-w_r_holds         | f
+w_r_holds         | t
 
 select * from test_predtest($$
 select x is null, int4lt(x,8)
@@ -664,7 +662,7 @@ weak_refuted_by   | f
 s_i_holds         | f
 w_i_holds         | f
 s_r_holds         | t
-w_r_holds         | f
+w_r_holds         | t
 
 select * from test_predtest($$
 select x is not null, x < 'foo'

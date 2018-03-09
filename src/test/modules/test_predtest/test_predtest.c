@@ -104,14 +104,18 @@ test_predtest(PG_FUNCTION_ARGS)
 			c2 = 'f';
 
 		/* Check for violations of various proof conditions */
+
+		/* strong implication: truth of c2 implies truth of c1 */
 		if (c2 == 't' && c1 != 't')
 			s_i_holds = false;
+		/* weak implication: non-falsity of c2 implies non-falsity of c1 */
 		if (c2 != 'f' && c1 == 'f')
 			w_i_holds = false;
+		/* strong refutation: truth of c2 implies falsity of c1 */
 		if (c2 == 't' && c1 != 'f')
 			s_r_holds = false;
-		/* XXX is this the correct definition for weak refutation? */
-		if (c2 != 'f' && c1 == 't')
+		/* weak refutation: truth of c2 implies non-truth of c1 */
+		if (c2 == 't' && c1 == 't')
 			w_r_holds = false;
 	}
 
