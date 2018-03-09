@@ -21,6 +21,10 @@ select
   case (i/11)%11 when 10 then null else (i/11)%11 end as y
 from generate_series(0, 11*11-1) i;
 
+-- and a simple strict function that's opaque to the optimizer
+create function strictf(bool, bool) returns bool
+language plpgsql as $$begin return $1 and not $2; end$$ strict;
+
 -- Basic proof rules for single boolean variables
 
 select * from test_predtest($$
@@ -88,7 +92,8 @@ select x, x is unknown
 from booleans
 $$);
 
--- XXX seems like we should be able to refute x is null here
+-- Assorted not-so-trivial refutation rules
+
 select * from test_predtest($$
 select x is null, x
 from booleans
@@ -97,6 +102,26 @@ $$);
 select * from test_predtest($$
 select x, x is null
 from booleans
+$$);
+
+select * from test_predtest($$
+select strictf(x,y), x is null
+from booleans
+$$);
+
+select * from test_predtest($$
+select (x is not null) is not true, x
+from booleans
+$$);
+
+select * from test_predtest($$
+select strictf(x,y), (x is not null) is false
+from booleans
+$$);
+
+select * from test_predtest($$
+select x > y, (y < x) is false
+from integers
 $$);
 
 -- Tests involving AND/OR constructs
@@ -148,6 +173,11 @@ $$);
 
 select * from test_predtest($$
 select x or y or z, x or z
+from booleans
+$$);
+
+select * from test_predtest($$
+select x and z, x and y and z
 from booleans
 $$);
 
@@ -276,7 +306,7 @@ select x <= 5, x in (1,3,5,7)
 from integers
 $$);
 
--- XXX ideally, we could prove this case too
+-- XXX ideally, we could prove this case too, for strong implication
 select * from test_predtest($$
 select x <= 5, x in (1,3,5,null)
 from integers

@@ -13651,10 +13651,11 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 
 /*
  * PartConstraintImpliedByRelConstraint
- *		Does scanrel's existing constraints imply the partition constraint?
+ *		Do scanrel's existing constraints imply the partition constraint?
  *
- * Existing constraints includes its check constraints and column-level
- * NOT NULL constraints and partConstraint describes the partition constraint.
+ * "Existing constraints" include its check constraints and column-level
+ * NOT NULL constraints.  partConstraint describes the partition constraint,
+ * in implicit-AND form.
  */
 bool
 PartConstraintImpliedByRelConstraint(Relation scanrel,
@@ -13724,10 +13725,15 @@ PartConstraintImpliedByRelConstraint(Relation scanrel,
 									  make_ands_implicit((Expr *) cexpr));
 	}
 
-	if (existConstraint != NIL)
-		existConstraint = list_make1(make_ands_explicit(existConstraint));
-
-	/* And away we go ... */
+	/*
+	 * Try to make the proof.  Since we are comparing CHECK constraints, we
+	 * need to use weak implication, i.e., we assume existConstraint is
+	 * not-false and try to prove the same for partConstraint.
+	 *
+	 * Note that predicate_implied_by assumes its first argument is known
+	 * immutable.  That should always be true for partition constraints, so we
+	 * don't test it here.
+	 */
 	return predicate_implied_by(partConstraint, existConstraint, true);
 }
 

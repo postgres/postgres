@@ -1421,7 +1421,11 @@ relation_excluded_by_constraints(PlannerInfo *root,
 			safe_restrictions = lappend(safe_restrictions, rinfo->clause);
 	}
 
-	if (predicate_refuted_by(safe_restrictions, safe_restrictions, false))
+	/*
+	 * We can use weak refutation here, since we're comparing restriction
+	 * clauses with restriction clauses.
+	 */
+	if (predicate_refuted_by(safe_restrictions, safe_restrictions, true))
 		return true;
 
 	/*
@@ -1469,6 +1473,9 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	 * an obvious optimization.  Some of the clauses might be OR clauses that
 	 * have volatile and nonvolatile subclauses, and it's OK to make
 	 * deductions with the nonvolatile parts.
+	 *
+	 * We need strong refutation because we have to prove that the constraints
+	 * would yield false, not just NULL.
 	 */
 	if (predicate_refuted_by(safe_constraints, rel->baserestrictinfo, false))
 		return true;

@@ -16,6 +16,9 @@ select
   case i%11 when 10 then null else i%11 end as x,
   case (i/11)%11 when 10 then null else (i/11)%11 end as y
 from generate_series(0, 11*11-1) i;
+-- and a simple strict function that's opaque to the optimizer
+create function strictf(bool, bool) returns bool
+language plpgsql as $$begin return $1 and not $2; end$$ strict;
 -- Basic proof rules for single boolean variables
 select * from test_predtest($$
 select x, x
@@ -109,7 +112,7 @@ $$);
 strong_implied_by | f
 weak_implied_by   | f
 strong_refuted_by | t
-weak_refuted_by   | f
+weak_refuted_by   | t
 s_i_holds         | f
 w_i_holds         | f
 s_r_holds         | t
@@ -199,7 +202,7 @@ w_i_holds         | t
 s_r_holds         | f
 w_r_holds         | t
 
--- XXX seems like we should be able to refute x is null here
+-- Assorted not-so-trivial refutation rules
 select * from test_predtest($$
 select x is null, x
 from booleans
@@ -207,8 +210,8 @@ $$);
 -[ RECORD 1 ]-----+--
 strong_implied_by | f
 weak_implied_by   | f
-strong_refuted_by | f
-weak_refuted_by   | f
+strong_refuted_by | t
+weak_refuted_by   | t
 s_i_holds         | f
 w_i_holds         | f
 s_r_holds         | t
@@ -222,10 +225,66 @@ $$);
 strong_implied_by | f
 weak_implied_by   | f
 strong_refuted_by | f
-weak_refuted_by   | f
+weak_refuted_by   | t
 s_i_holds         | f
 w_i_holds         | t
 s_r_holds         | f
+w_r_holds         | t
+
+select * from test_predtest($$
+select strictf(x,y), x is null
+from booleans
+$$);
+-[ RECORD 1 ]-----+--
+strong_implied_by | f
+weak_implied_by   | f
+strong_refuted_by | f
+weak_refuted_by   | t
+s_i_holds         | f
+w_i_holds         | t
+s_r_holds         | f
+w_r_holds         | t
+
+select * from test_predtest($$
+select (x is not null) is not true, x
+from booleans
+$$);
+-[ RECORD 1 ]-----+--
+strong_implied_by | f
+weak_implied_by   | f
+strong_refuted_by | t
+weak_refuted_by   | t
+s_i_holds         | f
+w_i_holds         | f
+s_r_holds         | t
+w_r_holds         | t
+
+select * from test_predtest($$
+select strictf(x,y), (x is not null) is false
+from booleans
+$$);
+-[ RECORD 1 ]-----+--
+strong_implied_by | f
+weak_implied_by   | f
+strong_refuted_by | f
+weak_refuted_by   | t
+s_i_holds         | f
+w_i_holds         | t
+s_r_holds         | f
+w_r_holds         | t
+
+select * from test_predtest($$
+select x > y, (y < x) is false
+from integers
+$$);
+-[ RECORD 1 ]-----+--
+strong_implied_by | f
+weak_implied_by   | f
+strong_refuted_by | t
+weak_refuted_by   | t
+s_i_holds         | f
+w_i_holds         | f
+s_r_holds         | t
 w_r_holds         | t
 
 -- Tests involving AND/OR constructs
@@ -357,6 +416,20 @@ w_r_holds         | f
 
 select * from test_predtest($$
 select x or y or z, x or z
+from booleans
+$$);
+-[ RECORD 1 ]-----+--
+strong_implied_by | t
+weak_implied_by   | t
+strong_refuted_by | f
+weak_refuted_by   | f
+s_i_holds         | t
+w_i_holds         | t
+s_r_holds         | f
+w_r_holds         | f
+
+select * from test_predtest($$
+select x and z, x and y and z
 from booleans
 $$);
 -[ RECORD 1 ]-----+--
@@ -644,7 +717,7 @@ $$);
 strong_implied_by | f
 weak_implied_by   | f
 strong_refuted_by | t
-weak_refuted_by   | f
+weak_refuted_by   | t
 s_i_holds         | f
 w_i_holds         | f
 s_r_holds         | t
@@ -658,7 +731,7 @@ $$);
 strong_implied_by | f
 weak_implied_by   | f
 strong_refuted_by | t
-weak_refuted_by   | f
+weak_refuted_by   | t
 s_i_holds         | f
 w_i_holds         | f
 s_r_holds         | t
@@ -708,7 +781,7 @@ w_i_holds         | f
 s_r_holds         | f
 w_r_holds         | f
 
--- XXX ideally, we could prove this case too
+-- XXX ideally, we could prove this case too, for strong implication
 select * from test_predtest($$
 select x <= 5, x in (1,3,5,null)
 from integers

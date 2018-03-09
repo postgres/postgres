@@ -60,7 +60,7 @@ explain (costs off) select * from rlp where 1 > a;	/* commuted */
 explain (costs off) select * from rlp where a <= 1;
 explain (costs off) select * from rlp where a = 1;
 explain (costs off) select * from rlp where a = 1::bigint;		/* same as above */
-explain (costs off) select * from rlp where a = 1::numeric;	/* no pruning */
+explain (costs off) select * from rlp where a = 1::numeric;	/* only null can be pruned */
 explain (costs off) select * from rlp where a <= 10;
 explain (costs off) select * from rlp where a > 10;
 explain (costs off) select * from rlp where a < 15;

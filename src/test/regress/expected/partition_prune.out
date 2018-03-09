@@ -235,7 +235,7 @@ explain (costs off) select * from rlp where a = 1::bigint;		/* same as above */
          Filter: (a = '1'::bigint)
 (3 rows)
 
-explain (costs off) select * from rlp where a = 1::numeric;	/* no pruning */
+explain (costs off) select * from rlp where a = 1::numeric;	/* only null can be pruned */
                   QUERY PLAN                   
 -----------------------------------------------
  Append
@@ -265,11 +265,9 @@ explain (costs off) select * from rlp where a = 1::numeric;	/* no pruning */
          Filter: ((a)::numeric = '1'::numeric)
    ->  Seq Scan on rlp_default_30
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp_default_null
-         Filter: ((a)::numeric = '1'::numeric)
    ->  Seq Scan on rlp_default_default
          Filter: ((a)::numeric = '1'::numeric)
-(31 rows)
+(29 rows)
 
 explain (costs off) select * from rlp where a <= 10;
               QUERY PLAN               
