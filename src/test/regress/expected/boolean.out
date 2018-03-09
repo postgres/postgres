@@ -465,6 +465,88 @@ FROM booltbl3 ORDER BY o;
  null  | f      | t         | f       | t          | t         | f
 (3 rows)
 
+-- Test to make sure short-circuiting and NULL handling is
+-- correct. Use a table as source to prevent constant simplification
+-- to interfer.
+CREATE TABLE booltbl4(isfalse bool, istrue bool, isnul bool);
+INSERT INTO booltbl4 VALUES (false, true, null);
+\pset null '(null)'
+-- AND expression need to return null if there's any nulls and not all
+-- of the value are true
+SELECT istrue AND isnul AND istrue FROM booltbl4;
+ ?column? 
+----------
+ (null)
+(1 row)
+
+SELECT istrue AND istrue AND isnul FROM booltbl4;
+ ?column? 
+----------
+ (null)
+(1 row)
+
+SELECT isnul AND istrue AND istrue FROM booltbl4;
+ ?column? 
+----------
+ (null)
+(1 row)
+
+SELECT isfalse AND isnul AND istrue FROM booltbl4;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT istrue AND isfalse AND isnul FROM booltbl4;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT isnul AND istrue AND isfalse FROM booltbl4;
+ ?column? 
+----------
+ f
+(1 row)
+
+-- OR expression need to return null if there's any nulls and none
+-- of the value is true
+SELECT isfalse OR isnul OR isfalse FROM booltbl4;
+ ?column? 
+----------
+ (null)
+(1 row)
+
+SELECT isfalse OR isfalse OR isnul FROM booltbl4;
+ ?column? 
+----------
+ (null)
+(1 row)
+
+SELECT isnul OR isfalse OR isfalse FROM booltbl4;
+ ?column? 
+----------
+ (null)
+(1 row)
+
+SELECT isfalse OR isnul OR istrue FROM booltbl4;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT istrue OR isfalse OR isnul FROM booltbl4;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT isnul OR istrue OR isfalse FROM booltbl4;
+ ?column? 
+----------
+ t
+(1 row)
+
 --
 -- Clean up
 -- Many tables are retained by the regression test, but these do not seem
@@ -474,3 +556,4 @@ FROM booltbl3 ORDER BY o;
 DROP TABLE  BOOLTBL1;
 DROP TABLE  BOOLTBL2;
 DROP TABLE  BOOLTBL3;
+DROP TABLE  BOOLTBL4;

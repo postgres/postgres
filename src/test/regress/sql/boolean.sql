@@ -219,6 +219,33 @@ SELECT
     b IS NOT UNKNOWN AS isnotunknown
 FROM booltbl3 ORDER BY o;
 
+
+-- Test to make sure short-circuiting and NULL handling is
+-- correct. Use a table as source to prevent constant simplification
+-- to interfer.
+CREATE TABLE booltbl4(isfalse bool, istrue bool, isnul bool);
+INSERT INTO booltbl4 VALUES (false, true, null);
+\pset null '(null)'
+
+-- AND expression need to return null if there's any nulls and not all
+-- of the value are true
+SELECT istrue AND isnul AND istrue FROM booltbl4;
+SELECT istrue AND istrue AND isnul FROM booltbl4;
+SELECT isnul AND istrue AND istrue FROM booltbl4;
+SELECT isfalse AND isnul AND istrue FROM booltbl4;
+SELECT istrue AND isfalse AND isnul FROM booltbl4;
+SELECT isnul AND istrue AND isfalse FROM booltbl4;
+
+-- OR expression need to return null if there's any nulls and none
+-- of the value is true
+SELECT isfalse OR isnul OR isfalse FROM booltbl4;
+SELECT isfalse OR isfalse OR isnul FROM booltbl4;
+SELECT isnul OR isfalse OR isfalse FROM booltbl4;
+SELECT isfalse OR isnul OR istrue FROM booltbl4;
+SELECT istrue OR isfalse OR isnul FROM booltbl4;
+SELECT isnul OR istrue OR isfalse FROM booltbl4;
+
+
 --
 -- Clean up
 -- Many tables are retained by the regression test, but these do not seem
@@ -231,3 +258,5 @@ DROP TABLE  BOOLTBL1;
 DROP TABLE  BOOLTBL2;
 
 DROP TABLE  BOOLTBL3;
+
+DROP TABLE  BOOLTBL4;
