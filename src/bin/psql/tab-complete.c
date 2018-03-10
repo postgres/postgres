@@ -461,6 +461,7 @@ static const SchemaQuery Query_for_list_of_domains = {
 	NULL
 };
 
+/* Note: this intentionally accepts aggregates as well as plain functions */
 static const SchemaQuery Query_for_list_of_functions[] = {
 	{
 		/* min_server_version */
@@ -468,7 +469,7 @@ static const SchemaQuery Query_for_list_of_functions[] = {
 		/* catname */
 		"pg_catalog.pg_proc p",
 		/* selcondition */
-		"p.prokind IN ('f', 'w')",
+		"p.prokind != 'p'",
 		/* viscondition */
 		"pg_catalog.pg_function_is_visible(p.oid)",
 		/* namespace */
