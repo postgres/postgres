@@ -1177,7 +1177,7 @@ get_relation_constraints(PlannerInfo *root,
 			 */
 			cexpr = eval_const_expressions(root, cexpr);
 
-			cexpr = (Node *) canonicalize_qual((Expr *) cexpr);
+			cexpr = (Node *) canonicalize_qual_ext((Expr *) cexpr, true);
 
 			/* Fix Vars to have the desired varno */
 			if (varno != 1)

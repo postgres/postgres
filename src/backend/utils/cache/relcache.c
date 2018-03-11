@@ -4263,7 +4263,8 @@ RelationGetIndexExpressions(Relation relation)
 	 * Run the expressions through eval_const_expressions. This is not just an
 	 * optimization, but is necessary, because the planner will be comparing
 	 * them to similarly-processed qual clauses, and may fail to detect valid
-	 * matches without this.  We don't bother with canonicalize_qual, however.
+	 * matches without this.  We must not use canonicalize_qual, however,
+	 * since these aren't qual expressions.
 	 */
 	result = (List *) eval_const_expressions(NULL, (Node *) result);
 
@@ -4331,7 +4332,7 @@ RelationGetIndexPredicate(Relation relation)
 	 */
 	result = (List *) eval_const_expressions(NULL, (Node *) result);
 
-	result = (List *) canonicalize_qual((Expr *) result);
+	result = (List *) canonicalize_qual_ext((Expr *) result, false);
 
 	/* Also convert to implicit-AND format */
 	result = make_ands_implicit((Expr *) result);

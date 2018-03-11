@@ -562,3 +562,15 @@ FROM generate_series(1, 3) g(i);
 reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
+
+--
+-- Check handling of a constant-null CHECK constraint
+--
+create table cnullparent (f1 int);
+create table cnullchild (check (f1 = 1 or f1 = null)) inherits(cnullparent);
+insert into cnullchild values(1);
+insert into cnullchild values(2);
+insert into cnullchild values(null);
+select * from cnullparent;
+select * from cnullparent where f1 = 2;
+drop table cnullparent cascade;
