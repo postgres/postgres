@@ -1740,7 +1740,7 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 	 * subroot.
 	 */
 	whereClause = eval_const_expressions(root, whereClause);
-	whereClause = (Node *) canonicalize_qual((Expr *) whereClause);
+	whereClause = (Node *) canonicalize_qual((Expr *) whereClause, false);
 	whereClause = (Node *) make_ands_implicit((Expr *) whereClause);
 
 	/*

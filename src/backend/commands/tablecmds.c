@@ -13719,7 +13719,7 @@ PartConstraintImpliedByRelConstraint(Relation scanrel,
 		 * fail to detect valid matches without this.
 		 */
 		cexpr = eval_const_expressions(NULL, cexpr);
-		cexpr = (Node *) canonicalize_qual((Expr *) cexpr);
+		cexpr = (Node *) canonicalize_qual((Expr *) cexpr, true);
 
 		existConstraint = list_concat(existConstraint,
 									  make_ands_implicit((Expr *) cexpr));
@@ -14058,10 +14058,18 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	/* Skip validation if there are no constraints to validate. */
 	if (partConstraint)
 	{
+		/*
+		 * Run the partition quals through const-simplification similar to
+		 * check constraints.  We skip canonicalize_qual, though, because
+		 * partition quals should be in canonical form already; also, since
+		 * the qual is in implicit-AND format, we'd have to explicitly convert
+		 * it to explicit-AND format and back again.
+		 */
 		partConstraint =
 			(List *) eval_const_expressions(NULL,
 											(Node *) partConstraint);
-		partConstraint = (List *) canonicalize_qual((Expr *) partConstraint);
+
+		/* XXX this sure looks wrong */
 		partConstraint = list_make1(make_ands_explicit(partConstraint));
 
 		/*

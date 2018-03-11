@@ -19,7 +19,6 @@
 #include "funcapi.h"
 #include "optimizer/clauses.h"
 #include "optimizer/predtest.h"
-#include "optimizer/prep.h"
 #include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
@@ -137,18 +136,18 @@ test_predtest(PG_FUNCTION_ARGS)
 
 	/*
 	 * Because the clauses are in the SELECT list, preprocess_expression did
-	 * not pass them through canonicalize_qual nor make_ands_implicit.  We can
-	 * do that here, though, and should do so to match the planner's normal
-	 * usage of the predicate proof functions.
+	 * not pass them through canonicalize_qual nor make_ands_implicit.
 	 *
-	 * This still does not exactly duplicate the normal usage of the proof
-	 * functions, in that they are often given qual clauses containing
-	 * RestrictInfo nodes.  But since predtest.c just looks through those
-	 * anyway, it seems OK to not worry about that point.
+	 * We can't do canonicalize_qual here, since it's unclear whether the
+	 * expressions ought to be treated as WHERE or CHECK clauses. Fortunately,
+	 * useful test expressions wouldn't be affected by those transformations
+	 * anyway.  We should do make_ands_implicit, though.
+	 *
+	 * Another way in which this does not exactly duplicate the normal usage
+	 * of the proof functions is that they are often given qual clauses
+	 * containing RestrictInfo nodes.  But since predtest.c just looks through
+	 * those anyway, it seems OK to not worry about that point.
 	 */
-	clause1 = canonicalize_qual(clause1);
-	clause2 = canonicalize_qual(clause2);
-
 	clause1 = (Expr *) make_ands_implicit(clause1);
 	clause2 = (Expr *) make_ands_implicit(clause2);
 

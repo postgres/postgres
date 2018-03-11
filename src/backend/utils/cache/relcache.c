@@ -900,8 +900,9 @@ RelationBuildPartitionKey(Relation relation)
 		 * will be comparing them to similarly-processed qual clause operands,
 		 * and may fail to detect valid matches without this step; fix
 		 * opfuncids while at it.  We don't need to bother with
-		 * canonicalize_qual() though, because partition expressions are not
-		 * full-fledged qualification clauses.
+		 * canonicalize_qual() though, because partition expressions should be
+		 * in canonical form already (ie, no need for OR-merging or constant
+		 * elimination).
 		 */
 		expr = eval_const_expressions(NULL, expr);
 		fix_opfuncids(expr);
@@ -4713,11 +4714,10 @@ RelationGetIndexExpressions(Relation relation)
 	 * Run the expressions through eval_const_expressions. This is not just an
 	 * optimization, but is necessary, because the planner will be comparing
 	 * them to similarly-processed qual clauses, and may fail to detect valid
-	 * matches without this.  We don't bother with canonicalize_qual, however.
+	 * matches without this.  We must not use canonicalize_qual, however,
+	 * since these aren't qual expressions.
 	 */
 	result = (List *) eval_const_expressions(NULL, (Node *) result);
-
-	result = (List *) canonicalize_qual((Expr *) result);
 
 	/* May as well fix opfuncids too */
 	fix_opfuncids((Node *) result);
@@ -4783,7 +4783,7 @@ RelationGetIndexPredicate(Relation relation)
 	 */
 	result = (List *) eval_const_expressions(NULL, (Node *) result);
 
-	result = (List *) canonicalize_qual((Expr *) result);
+	result = (List *) canonicalize_qual((Expr *) result, false);
 
 	/* Also convert to implicit-AND format */
 	result = make_ands_implicit((Expr *) result);
