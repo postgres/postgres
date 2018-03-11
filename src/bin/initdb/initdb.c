@@ -2323,7 +2323,7 @@ usage(const char *progname)
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
 	printf(_("  -X, --waldir=WALDIR       location for the write-ahead log directory\n"));
-	printf(_("      --wal-segsize=SIZE    size of wal segment size\n"));
+	printf(_("      --wal-segsize=SIZE    size of wal segment size in megabytes\n"));
 	printf(_("\nLess commonly used options:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("  -k, --data-checksums      use data page checksums\n"));
