@@ -1187,7 +1187,7 @@ get_relation_constraints(PlannerInfo *root,
 			 */
 			cexpr = eval_const_expressions(root, cexpr);
 
-			cexpr = (Node *) canonicalize_qual((Expr *) cexpr);
+			cexpr = (Node *) canonicalize_qual_ext((Expr *) cexpr, true);
 
 			/* Fix Vars to have the desired varno */
 			if (varno != 1)
@@ -1240,11 +1240,13 @@ get_relation_constraints(PlannerInfo *root,
 	if (pcqual)
 	{
 		/*
-		 * Run each expression through const-simplification and
-		 * canonicalization similar to check constraints.
+		 * Run the partition quals through const-simplification similar to
+		 * check constraints.  We skip canonicalize_qual, though, because
+		 * partition quals should be in canonical form already; also, since
+		 * the qual is in implicit-AND format, we'd have to explicitly convert
+		 * it to explicit-AND format and back again.
 		 */
 		pcqual = (List *) eval_const_expressions(root, (Node *) pcqual);
-		pcqual = (List *) canonicalize_qual((Expr *) pcqual);
 
 		/* Fix Vars to have the desired varno */
 		if (varno != 1)

@@ -13636,9 +13636,17 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	partConstraint = list_concat(get_qual_from_partbound(attachrel, rel,
 														 cmd->bound),
 								 RelationGetPartitionQual(rel));
+
+	/*
+	 * Run the partition quals through const-simplification similar to check
+	 * constraints.  We skip canonicalize_qual, though, because partition
+	 * quals should be in canonical form already; also, since the qual is in
+	 * implicit-AND format, we'd have to explicitly convert it to explicit-AND
+	 * format and back again.
+	 */
 	partConstraint = (List *) eval_const_expressions(NULL,
 													 (Node *) partConstraint);
-	partConstraint = (List *) canonicalize_qual((Expr *) partConstraint);
+
 	partConstraint = list_make1(make_ands_explicit(partConstraint));
 
 	/*
@@ -13720,13 +13728,11 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 			 * to detect valid matches without this.
 			 */
 			cexpr = eval_const_expressions(NULL, cexpr);
-			cexpr = (Node *) canonicalize_qual((Expr *) cexpr);
+			cexpr = (Node *) canonicalize_qual_ext((Expr *) cexpr, true);
 
 			existConstraint = list_concat(existConstraint,
 										  make_ands_implicit((Expr *) cexpr));
 		}
-
-		existConstraint = list_make1(make_ands_explicit(existConstraint));
 
 		/* And away we go ... */
 		if (predicate_implied_by(partConstraint, existConstraint, true))

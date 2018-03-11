@@ -34,6 +34,7 @@ extern Relids get_relids_for_join(PlannerInfo *root, int joinrelid);
  */
 extern Node *negate_clause(Node *node);
 extern Expr *canonicalize_qual(Expr *qual);
+extern Expr *canonicalize_qual_ext(Expr *qual, bool is_check);
 
 /*
  * prototypes for preptlist.c
