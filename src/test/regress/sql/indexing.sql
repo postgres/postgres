@@ -444,15 +444,15 @@ select conname, contype, conrelid::regclass, conindid::regclass, conkey
 drop table idxpart;
 
 -- Verify that multi-layer partitioning honors the requirement that all
--- columns in the partition key must appear in primary key
+-- columns in the partition key must appear in primary/unique key
 create table idxpart (a int, b int, primary key (a)) partition by range (a);
 create table idxpart2 partition of idxpart
 for values from (0) to (1000) partition by range (b); -- fail
 drop table idxpart;
 
 -- Ditto for the ATTACH PARTITION case
-create table idxpart (a int primary key, b int) partition by range (a);
-create table idxpart1 (a int not null, b int, primary key (a, b))
+create table idxpart (a int unique, b int) partition by range (a);
+create table idxpart1 (a int not null, b int, unique (a, b))
   partition by range (a, b);
 alter table idxpart attach partition idxpart1 for values from (1) to (1000);
 DROP TABLE idxpart, idxpart1;
@@ -493,6 +493,22 @@ select indrelid::regclass, indexrelid::regclass, inhparent::regclass, indisvalid
   where indrelid::regclass::text like 'idxpart%'
   order by indexrelid::regclass::text collate "C";
 drop table idxpart;
+
+-- If the partition to be attached already has a primary key, fail if
+-- it doesn't match the parent's PK.
+CREATE TABLE idxpart (c1 INT PRIMARY KEY, c2 INT, c3 VARCHAR(10)) PARTITION BY RANGE(c1);
+CREATE TABLE idxpart1 (LIKE idxpart);
+ALTER TABLE idxpart1 ADD PRIMARY KEY (c1, c2);
+ALTER TABLE idxpart ATTACH PARTITION idxpart1 FOR VALUES FROM (100) TO (200);
+DROP TABLE idxpart, idxpart1;
+
+-- Ditto if there is some distance between the PKs (subpartitioning)
+create table idxpart (a int, b int, primary key (a)) partition by range (a);
+create table idxpart1 (a int not null, b int) partition by range (a);
+create table idxpart11 (a int not null, b int primary key);
+alter table idxpart1 attach partition idxpart11 for values from (0) to (1000);
+alter table idxpart attach partition idxpart1 for values from (0) to (10000);
+drop table idxpart, idxpart1, idxpart11;
 
 -- If a partitioned table has a constraint whose index is not valid,
 -- attaching a missing partition makes it valid.

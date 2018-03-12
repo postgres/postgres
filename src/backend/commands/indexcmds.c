@@ -973,7 +973,7 @@ DefineIndex(Oid relationId,
 								InvalidOid,			/* no predefined OID */
 								indexRelationId,	/* this is our child */
 								createdConstraintId,
-								false, check_rights, check_not_in_use,
+								is_alter_table, check_rights, check_not_in_use,
 								false, quiet);
 				}
 
