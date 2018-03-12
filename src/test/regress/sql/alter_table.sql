@@ -2348,7 +2348,7 @@ ALTER TABLE part_5 ATTACH PARTITION list_parted2 FOR VALUES IN ('b');
 ALTER TABLE list_parted2 ATTACH PARTITION list_parted2 FOR VALUES IN (0);
 
 -- If a partitioned table being created or an existing table being attached
--- as a paritition does not have a constraint that would allow validation scan
+-- as a partition does not have a constraint that would allow validation scan
 -- to be skipped, but an individual partition does, then the partition's
 -- validation scan is skipped.
 CREATE TABLE quuux (a int, b text) PARTITION BY LIST (a);

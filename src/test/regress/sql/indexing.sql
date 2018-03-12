@@ -450,6 +450,13 @@ create table idxpart2 partition of idxpart
 for values from (0) to (1000) partition by range (b); -- fail
 drop table idxpart;
 
+-- Ditto for the ATTACH PARTITION case
+create table idxpart (a int primary key, b int) partition by range (a);
+create table idxpart1 (a int not null, b int, primary key (a, b))
+  partition by range (a, b);
+alter table idxpart attach partition idxpart1 for values from (1) to (1000);
+DROP TABLE idxpart, idxpart1;
+
 -- Multi-layer partitioning works correctly in this case:
 create table idxpart (a int, b int, primary key (a, b)) partition by range (a);
 create table idxpart2 partition of idxpart for values from (0) to (1000) partition by range (b);
