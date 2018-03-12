@@ -2962,9 +2962,8 @@ VALUES ('Albany', NULL, NULL, 'NY');
     Partitions may themselves be defined as partitioned tables, using what is
     called <firstterm>sub-partitioning</firstterm>.  Partitions may have their
     own indexes, constraints and default values, distinct from those of other
-    partitions.  Indexes must be created separately for each partition.  See
-    <xref linkend="sql-createtable"/> for more details on creating partitioned
-    tables and partitions.
+    partitions.  See <xref linkend="sql-createtable"/> for more details on
+    creating partitioned tables and partitions.
    </para>
 
    <para>
