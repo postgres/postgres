@@ -1975,6 +1975,15 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		}
 
 		/*
+		 * Generate Gather or Gather Merge paths for the topmost scan/join
+		 * relation.  Once that's done, we must re-determine which paths are
+		 * cheapest.  (The previously-cheapest path might even have been
+		 * pfree'd!)
+		 */
+		generate_gather_paths(root, current_rel, false);
+		set_cheapest(current_rel);
+
+		/*
 		 * Forcibly apply SRF-free scan/join target to all the Paths for the
 		 * scan/join rel.
 		 */

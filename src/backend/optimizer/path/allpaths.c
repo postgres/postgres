@@ -479,13 +479,20 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * If this is a baserel, consider gathering any partial paths we may have
-	 * created for it.  (If we tried to gather inheritance children, we could
+	 * If this is a baserel, we should normally consider gathering any partial
+	 * paths we may have created for it.
+	 *
+	 * However, if this is an inheritance child, skip it.  Otherwise, we could
 	 * end up with a very large number of gather nodes, each trying to grab
-	 * its own pool of workers, so don't do this for otherrels.  Instead,
-	 * we'll consider gathering partial paths for the parent appendrel.)
+	 * its own pool of workers.  Instead, we'll consider gathering partial
+	 * paths for the parent appendrel.
+	 *
+	 * Also, if this is the topmost scan/join rel (that is, the only baserel),
+	 * we postpone this until the final scan/join targelist is available (see
+	 * grouping_planner).
 	 */
-	if (rel->reloptkind == RELOPT_BASEREL)
+	if (rel->reloptkind == RELOPT_BASEREL &&
+		bms_membership(root->all_baserels) != BMS_SINGLETON)
 		generate_gather_paths(root, rel, false);
 
 	/*
@@ -2699,8 +2706,13 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 			/* Create paths for partitionwise joins. */
 			generate_partitionwise_join_paths(root, rel);
 
-			/* Create GatherPaths for any useful partial paths for rel */
-			generate_gather_paths(root, rel, false);
+			/*
+			 * Except for the topmost scan/join rel, consider gathering
+			 * partial paths.  We'll do the same for the topmost scan/join rel
+			 * once we know the final targetlist (see grouping_planner).
+			 */
+			if (lev < levels_needed)
+				generate_gather_paths(root, rel, false);
 
 			/* Find and save the cheapest paths for this rel */
 			set_cheapest(rel);
