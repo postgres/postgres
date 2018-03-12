@@ -732,12 +732,9 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 
 						errno = 0;
 						val = strtol((char *)yytext, &endptr,10);
-						if (*endptr != '\0' || errno == ERANGE
-#ifdef HAVE_LONG_INT_64
-							/* if long > 32 bits, check for overflow of int4 */
-							|| val != (long) ((int32) val)
-#endif
-							)
+						if (*endptr != '\0' || errno == ERANGE ||
+							/* check for overflow of int */
+							val != (int) val)
 						{
 							errno = 0;
 							base_yylval.str = mm_strdup(yytext);

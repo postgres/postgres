@@ -224,13 +224,9 @@ nodeTokenType(char *token, int length)
 
 		errno = 0;
 		val = strtol(token, &endptr, 10);
-		(void) val;				/* avoid compiler warning if unused */
-		if (endptr != token + length || errno == ERANGE
-#ifdef HAVE_LONG_INT_64
-		/* if long > 32 bits, check for overflow of int4 */
-			|| val != (long) ((int32) val)
-#endif
-			)
+		if (endptr != token + length || errno == ERANGE ||
+			/* check for overflow of int */
+			val != (int) val)
 			return T_Float;
 		return T_Integer;
 	}
@@ -387,9 +383,9 @@ nodeRead(char *token, int tok_len)
 		case T_Integer:
 
 			/*
-			 * we know that the token terminates on a char atol will stop at
+			 * we know that the token terminates on a char atoi will stop at
 			 */
-			result = (Node *) makeInteger(atol(token));
+			result = (Node *) makeInteger(atoi(token));
 			break;
 		case T_Float:
 			{

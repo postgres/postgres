@@ -20,7 +20,7 @@
  *	makeInteger
  */
 Value *
-makeInteger(long i)
+makeInteger(int i)
 {
 	Value	   *v = makeNode(Value);
 

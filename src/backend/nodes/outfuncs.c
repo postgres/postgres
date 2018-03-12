@@ -3235,7 +3235,7 @@ _outValue(StringInfo str, const Value *value)
 	switch (value->type)
 	{
 		case T_Integer:
-			appendStringInfo(str, "%ld", value->val.ival);
+			appendStringInfo(str, "%d", value->val.ival);
 			break;
 		case T_Float:
 
