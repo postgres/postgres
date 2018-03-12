@@ -3308,7 +3308,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
     <itemizedlist>
      <listitem>
       <para>
-       There is no way to create a
+       There is no way to create an
        exclusion constraint spanning all partitions; it is only possible
        to constrain each leaf partition individually.
       </para>
