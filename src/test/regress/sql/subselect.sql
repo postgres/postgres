@@ -99,8 +99,8 @@ SELECT *, pg_typeof(f1) FROM
 
 -- ... unless there's context to suggest differently
 
-explain verbose select '42' union all select '43';
-explain verbose select '42' union all select 43;
+explain (verbose, costs off) select '42' union all select '43';
+explain (verbose, costs off) select '42' union all select 43;
 
 -- check materialization of an initplan reference (bug #14524)
 explain (verbose, costs off)
