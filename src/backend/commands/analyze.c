@@ -1249,19 +1249,22 @@ acquire_sample_rows(Relation onerel, int elevel,
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
 
 	/*
-	 * Estimate total numbers of rows in relation.  For live rows, use
-	 * vac_estimate_reltuples; for dead rows, we have no source of old
-	 * information, so we have to assume the density is the same in unseen
-	 * pages as in the pages we scanned.
+	 * Estimate total numbers of live and dead rows in relation, extrapolating
+	 * on the assumption that the average tuple density in pages we didn't
+	 * scan is the same as in the pages we did scan.  Since what we scanned is
+	 * a random sample of the pages in the relation, this should be a good
+	 * assumption.
 	 */
-	*totalrows = vac_estimate_reltuples(onerel, true,
-										totalblocks,
-										bs.m,
-										liverows);
 	if (bs.m > 0)
+	{
+		*totalrows = floor((liverows / bs.m) * totalblocks + 0.5);
 		*totaldeadrows = floor((deadrows / bs.m) * totalblocks + 0.5);
+	}
 	else
+	{
+		*totalrows = 0.0;
 		*totaldeadrows = 0.0;
+	}
 
 	/*
 	 * Emit some interesting relation info

@@ -162,7 +162,7 @@ extern void vacuum(int options, List *relations, VacuumParams *params,
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
 				 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);
-extern double vac_estimate_reltuples(Relation relation, bool is_analyze,
+extern double vac_estimate_reltuples(Relation relation,
 					   BlockNumber total_pages,
 					   BlockNumber scanned_pages,
 					   double scanned_tuples);

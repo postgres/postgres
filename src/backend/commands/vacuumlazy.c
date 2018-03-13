@@ -1286,7 +1286,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	vacrelstats->new_dead_tuples = nkeep;
 
 	/* now we can compute the new value for pg_class.reltuples */
-	vacrelstats->new_rel_tuples = vac_estimate_reltuples(onerel, false,
+	vacrelstats->new_rel_tuples = vac_estimate_reltuples(onerel,
 														 nblocks,
 														 vacrelstats->tupcount_pages,
 														 num_tuples);
