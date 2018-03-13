@@ -2195,6 +2195,22 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	}
 
 	/*
+	 * Generate partial paths for final_rel, too, if outer query levels might
+	 * be able to make use of them.
+	 */
+	if (final_rel->consider_parallel && root->query_level > 1 &&
+		!limit_needed(parse))
+	{
+		Assert(!parse->rowMarks && parse->commandType == CMD_SELECT);
+		foreach(lc, current_rel->partial_pathlist)
+		{
+			Path	   *partial_path = (Path *) lfirst(lc);
+
+			add_partial_path(final_rel, partial_path);
+		}
+	}
+
+	/*
 	 * If there is an FDW that's responsible for all baserels of the query,
 	 * let it consider adding ForeignPaths.
 	 */

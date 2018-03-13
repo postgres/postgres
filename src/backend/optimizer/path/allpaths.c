@@ -2179,6 +2179,28 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 create_subqueryscan_path(root, rel, subpath,
 										  pathkeys, required_outer));
 	}
+
+	/* If consider_parallel is false, there should be no partial paths. */
+	Assert(sub_final_rel->consider_parallel ||
+		   sub_final_rel->partial_pathlist == NIL);
+
+	/* Same for partial paths. */
+	foreach(lc, sub_final_rel->partial_pathlist)
+	{
+		Path	   *subpath = (Path *) lfirst(lc);
+		List	   *pathkeys;
+
+		/* Convert subpath's pathkeys to outer representation */
+		pathkeys = convert_subquery_pathkeys(root,
+											 rel,
+											 subpath->pathkeys,
+											 make_tlist_from_pathtarget(subpath->pathtarget));
+
+		/* Generate outer path using this subpath */
+		add_partial_path(rel, (Path *)
+						 create_subqueryscan_path(root, rel, subpath,
+												  pathkeys, required_outer));
+	}
 }
 
 /*

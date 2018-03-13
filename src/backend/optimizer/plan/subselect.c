@@ -2202,6 +2202,13 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 		path->parallel_safe = false;
 	}
 
+	/*
+	 * Forget about any partial paths and clear consider_parallel, too;
+	 * they're not usable if we attached an initPlan.
+	 */
+	final_rel->partial_pathlist = NIL;
+	final_rel->consider_parallel = false;
+
 	/* We needn't do set_cheapest() here, caller will do it */
 }
 
@@ -2407,10 +2414,16 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 			{
 				SubqueryScan *sscan = (SubqueryScan *) plan;
 				RelOptInfo *rel;
+				Bitmapset  *subquery_params;
 
-				/* We must run SS_finalize_plan on the subquery */
+				/* We must run finalize_plan on the subquery */
 				rel = find_base_rel(root, sscan->scan.scanrelid);
-				SS_finalize_plan(rel->subroot, sscan->subplan);
+				subquery_params = rel->subroot->outer_params;
+				if (gather_param >= 0)
+					subquery_params = bms_add_member(bms_copy(subquery_params),
+													 gather_param);
+				finalize_plan(rel->subroot, sscan->subplan, gather_param,
+							  subquery_params, NULL);
 
 				/* Now we can add its extParams to the parent's params */
 				context.paramids = bms_add_members(context.paramids,
