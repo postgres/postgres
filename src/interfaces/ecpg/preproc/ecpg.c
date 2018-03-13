@@ -323,6 +323,7 @@ main(int argc, char *const argv[])
 						fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
 								progname, output_filename, strerror(errno));
 						free(output_filename);
+						output_filename = NULL;
 						free(input_filename);
 						continue;
 					}
@@ -470,8 +471,10 @@ main(int argc, char *const argv[])
 				}
 			}
 
-			if (output_filename && out_option == 0)
+			if (output_filename && out_option == 0) {
 				free(output_filename);
+				output_filename = NULL;
+			}
 
 			free(input_filename);
 		}
