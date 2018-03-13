@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+EXEC SQL INCLUDE ../regression;
+
+static void warn();
+
+/* Compatible handling of char array to retrieve varchar field to char array
+   should be fixed-length, blank-padded, then null-terminated.
+   Conforms to the ANSI Fixed Character type. */
+
+int main() {
+
+  ECPGdebug(1, stderr);
+  EXEC SQL CONNECT TO REGRESSDB1;
+
+  EXEC SQL WHENEVER SQLWARNING do warn();
+  EXEC SQL WHENEVER SQLERROR SQLPRINT;
+
+  const char *ppppp = "XXXXX";
+
+  EXEC SQL BEGIN DECLARE SECTION;
+  char shortstr[5];
+  char bigstr[11];
+  short shstr_ind = 0;
+  short bigstr_ind = 0;
+  EXEC SQL END DECLARE SECTION;
+
+  EXEC SQL CREATE TABLE strdbase (strval varchar(10));
+  EXEC SQL INSERT INTO strdbase values ('');
+  EXEC SQL INSERT INTO strdbase values ('AB');
+  EXEC SQL INSERT INTO strdbase values ('ABCD');
+  EXEC SQL INSERT INTO strdbase values ('ABCDE');
+  EXEC SQL INSERT INTO strdbase values ('ABCDEF');
+  EXEC SQL INSERT INTO strdbase values ('ABCDEFGHIJ');
+
+  EXEC SQL declare C cursor for select strval, strval from strdbase;
+  EXEC SQL OPEN C;
+
+  EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+  printf("Full Str.  :  Short  Ind.\n");
+  while(1) {
+    strncpy(shortstr, ppppp, sizeof shortstr);
+    memset(bigstr, 0, sizeof bigstr);
+    EXEC SQL FETCH C into :bigstr :bigstr_ind, :shortstr :shstr_ind;
+    printf("\"%s\": \"%s\"  %d\n", bigstr, shortstr, shstr_ind);
+  }
+
+  EXEC SQL close cstr;
+  EXEC SQL DROP TABLE strdbase;
+
+  printf("\nGOOD-BYE!!\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+  EXEC SQL DISCONNECT ALL;
+
+  return 0;
+}
+
+static void warn(void)
+{
+  fprintf(stderr, "Warning: At least one column was truncated\n");
+}

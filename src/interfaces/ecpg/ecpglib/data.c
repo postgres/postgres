@@ -464,7 +464,45 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 						if (varcharsize == 0 || varcharsize > size)
 						{
-							strncpy(str, pval, size + 1);
+							/* compatibility mode, blank pad and null terminate char array */
+							if (ORACLE_MODE(compat) && (type == ECPGt_char || type == ECPGt_unsigned_char))
+							{
+								memset(str, ' ', varcharsize);
+								memcpy(str, pval, size);
+								str[varcharsize-1] = '\0';
+
+								/* compatiblity mode empty string gets -1 indicator but no warning */
+								if (size == 0) {
+									/* truncation */
+									switch (ind_type)
+									{
+										case ECPGt_short:
+										case ECPGt_unsigned_short:
+											*((short *) (ind + ind_offset * act_tuple)) = -1;
+											break;
+										case ECPGt_int:
+										case ECPGt_unsigned_int:
+											*((int *) (ind + ind_offset * act_tuple)) = -1;
+											break;
+										case ECPGt_long:
+										case ECPGt_unsigned_long:
+											*((long *) (ind + ind_offset * act_tuple)) = -1;
+											break;
+	#ifdef HAVE_LONG_LONG_INT
+										case ECPGt_long_long:
+										case ECPGt_unsigned_long_long:
+											*((long long int *) (ind + ind_offset * act_tuple)) = -1;
+											break;
+	#endif							/* HAVE_LONG_LONG_INT */
+										default:
+											break;
+									}
+								}
+							}
+							else
+							{
+								strncpy(str, pval, size + 1);
+							}
 							/* do the rtrim() */
 							if (type == ECPGt_string)
 							{
@@ -481,7 +519,14 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							strncpy(str, pval, varcharsize);
 
-							if (varcharsize < size)
+							/* compatibility mode, null terminate char array */
+							if (ORACLE_MODE(compat) && (varcharsize - 1) < size)
+							{
+								if (type == ECPGt_char || type == ECPGt_unsigned_char)
+									str[varcharsize-1] = '\0';
+							}
+
+							if (varcharsize < size || (ORACLE_MODE(compat) && (varcharsize - 1) < size))
 							{
 								/* truncation */
 								switch (ind_type)

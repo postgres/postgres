@@ -30,6 +30,7 @@ all install installdirs uninstall distprep:
 	$(MAKE) -C pgtypeslib $@
 	$(MAKE) -C preproc $@
 	$(MAKE) -C compat_informix $@
+	$(MAKE) -C compat_oracle $@
 	$(MAKE) -C thread $@
 
 clean distclean maintainer-clean:
@@ -38,6 +39,7 @@ clean distclean maintainer-clean:
 	$(MAKE) -C pgtypeslib $@
 	$(MAKE) -C preproc $@
 	$(MAKE) -C compat_informix $@
+	$(MAKE) -C compat_oracle $@
 	$(MAKE) -C thread $@
 	rm -rf tmp_check results log
 	rm -f pg_regress regression.diffs regression.out pg_regress_ecpg.o $(WIN32RES)

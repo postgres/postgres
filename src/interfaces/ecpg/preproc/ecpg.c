@@ -41,7 +41,7 @@ help(const char *progname)
 	printf(_("  -c             automatically generate C code from embedded SQL code;\n"
 			 "                 this affects EXEC SQL TYPE\n"));
 	printf(_("  -C MODE        set compatibility mode; MODE can be one of\n"
-			 "                 \"INFORMIX\", \"INFORMIX_SE\"\n"));
+			 "                 \"INFORMIX\", \"INFORMIX_SE\", \"ORACLE\"\n"));
 #ifdef YYDEBUG
 	printf(_("  -d             generate parser debug output\n"));
 #endif
@@ -207,6 +207,10 @@ main(int argc, char *const argv[])
 					get_pkginclude_path(my_exec_path, pkginclude_path);
 					snprintf(informix_path, MAXPGPATH, "%s/informix/esql", pkginclude_path);
 					add_include_path(informix_path);
+				}
+				else if (strncmp(optarg, "ORACLE", strlen("ORACLE")) == 0)
+				{
+					compat = ECPG_COMPAT_ORACLE;
 				}
 				else
 				{

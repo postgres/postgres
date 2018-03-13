@@ -1,0 +1,10 @@
+Full Str.  :  Short  Ind.
+"          ": "    "  -1
+"AB        ": "AB  "  0
+"ABCD      ": "ABCD"  0
+"ABCDE     ": "ABCD"  5
+"ABCDEF    ": "ABCD"  6
+"ABCDEFGHIJ": "ABCD"  10
+
+GOOD-BYE!!
+
