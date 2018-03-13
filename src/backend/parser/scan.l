@@ -34,6 +34,7 @@
 #include <ctype.h>
 #include <unistd.h>
 
+#include "common/string.h"
 #include "parser/gramparse.h"
 #include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/scansup.h"
@@ -1211,14 +1212,12 @@ litbufdup(core_yyscan_t yyscanner)
 static int
 process_integer_literal(const char *token, YYSTYPE *lval)
 {
-	long		val;
+	int			val;
 	char	   *endptr;
 
 	errno = 0;
-	val = strtol(token, &endptr, 10);
-	if (*endptr != '\0' || errno == ERANGE ||
-		/* check for overflow of int */
-		val != (int) val)
+	val = strtoint(token, &endptr, 10);
+	if (*endptr != '\0' || errno == ERANGE)
 	{
 		/* integer too large, treat it as a float */
 		lval->str = pstrdup(token);

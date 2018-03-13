@@ -9,24 +9,12 @@
 #error -ffast-math is known to break this code
 #endif
 
+#include "common/string.h"
+
 #include "extern.h"
 #include "dt.h"
 #include "pgtypes_error.h"
 #include "pgtypes_interval.h"
-
-/* copy&pasted from .../src/backend/utils/adt/datetime.c */
-static int
-strtoint(const char *nptr, char **endptr, int base)
-{
-	long		val;
-
-	val = strtol(nptr, endptr, base);
-#ifdef HAVE_LONG_INT_64
-	if (val != (long) ((int32) val))
-		errno = ERANGE;
-#endif
-	return (int) val;
-}
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
  * and changesd struct pg_tm to struct tm

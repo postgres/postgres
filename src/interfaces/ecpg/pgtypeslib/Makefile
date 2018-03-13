@@ -32,6 +32,7 @@ SHLIB_EXPORTS = exports.txt
 OBJS= numeric.o datetime.o common.o dt_common.o timestamp.o interval.o \
 	pgstrcasecmp.o \
 	$(filter rint.o snprintf.o strnlen.o, $(LIBOBJS)) \
+	string.o \
 	$(WIN32RES)
 
 all: all-lib
@@ -47,6 +48,9 @@ include $(top_srcdir)/src/Makefile.shlib
 pgstrcasecmp.c rint.c snprintf.c strnlen.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
+string.c: % : $(top_srcdir)/src/common/%
+	rm -f $@ && $(LN_S) $< .
+
 install: all installdirs install-lib
 
 installdirs: installdirs-lib
@@ -54,6 +58,6 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib
 
 clean distclean: clean-lib
-	rm -f $(OBJS) pgstrcasecmp.c rint.c snprintf.c strnlen.c
+	rm -f $(OBJS) pgstrcasecmp.c rint.c snprintf.c strnlen.c string.c
 
 maintainer-clean: distclean maintainer-clean-lib

@@ -21,6 +21,7 @@
 
 #include <ctype.h>
 
+#include "common/string.h"
 #include "nodes/pg_list.h"
 #include "nodes/readfuncs.h"
 #include "nodes/value.h"
@@ -215,18 +216,15 @@ nodeTokenType(char *token, int length)
 	{
 		/*
 		 * Yes.  Figure out whether it is integral or float; this requires
-		 * both a syntax check and a range check. strtol() can do both for us.
-		 * We know the token will end at a character that strtol will stop at,
+		 * both a syntax check and a range check. strtoint() can do both for us.
+		 * We know the token will end at a character that strtoint will stop at,
 		 * so we do not need to modify the string.
 		 */
-		long		val;
 		char	   *endptr;
 
 		errno = 0;
-		val = strtol(token, &endptr, 10);
-		if (endptr != token + length || errno == ERANGE ||
-			/* check for overflow of int */
-			val != (int) val)
+		(void) strtoint(token, &endptr, 10);
+		if (endptr != token + length || errno == ERANGE)
 			return T_Float;
 		return T_Integer;
 	}

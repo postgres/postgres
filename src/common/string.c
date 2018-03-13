@@ -41,3 +41,18 @@ pg_str_endswith(const char *str, const char *end)
 	str += slen - elen;
 	return strcmp(str, end) == 0;
 }
+
+
+/*
+ * strtoint --- just like strtol, but returns int not long
+ */
+int
+strtoint(const char *restrict str, char **restrict endptr, int base)
+{
+	long		val;
+
+	val = strtol(str, endptr, base);
+	if (val != (int) val)
+		errno = ERANGE;
+	return (int) val;
+}
