@@ -141,7 +141,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 /*
  * ExecProcessReturning --- evaluate a RETURNING list
  *
- * projectReturning: RETURNING projection info for current result rel
+ * resultRelInfo: current result rel
  * tupleSlot: slot holding tuple actually inserted/updated/deleted
  * planSlot: slot holding tuple returned by top subplan node
  *
