@@ -61,7 +61,6 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	 */
 	int16		relchecks;		/* # of CHECK constraints for class */
 	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
-	bool		relhaspkey;		/* has (or has had) PRIMARY KEY index */
 	bool		relhasrules;	/* has (or has had) any rules */
 	bool		relhastriggers; /* has (or has had) any TRIGGERs */
 	bool		relhassubclass; /* has (or has had) derived classes */
@@ -99,7 +98,7 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-#define Natts_pg_class						33
+#define Natts_pg_class						32
 #define Anum_pg_class_relname				1
 #define Anum_pg_class_relnamespace			2
 #define Anum_pg_class_reltype				3
@@ -119,20 +118,19 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relnatts				17
 #define Anum_pg_class_relchecks				18
 #define Anum_pg_class_relhasoids			19
-#define Anum_pg_class_relhaspkey			20
-#define Anum_pg_class_relhasrules			21
-#define Anum_pg_class_relhastriggers		22
-#define Anum_pg_class_relhassubclass		23
-#define Anum_pg_class_relrowsecurity		24
-#define Anum_pg_class_relforcerowsecurity	25
-#define Anum_pg_class_relispopulated		26
-#define Anum_pg_class_relreplident			27
-#define Anum_pg_class_relispartition		28
-#define Anum_pg_class_relfrozenxid			29
-#define Anum_pg_class_relminmxid			30
-#define Anum_pg_class_relacl				31
-#define Anum_pg_class_reloptions			32
-#define Anum_pg_class_relpartbound			33
+#define Anum_pg_class_relhasrules			20
+#define Anum_pg_class_relhastriggers		21
+#define Anum_pg_class_relhassubclass		22
+#define Anum_pg_class_relrowsecurity		23
+#define Anum_pg_class_relforcerowsecurity	24
+#define Anum_pg_class_relispopulated		25
+#define Anum_pg_class_relreplident			26
+#define Anum_pg_class_relispartition		27
+#define Anum_pg_class_relfrozenxid			28
+#define Anum_pg_class_relminmxid			29
+#define Anum_pg_class_relacl				30
+#define Anum_pg_class_reloptions			31
+#define Anum_pg_class_relpartbound			32
 
 /* ----------------
  *		initial contents of pg_class
@@ -147,13 +145,13 @@ typedef FormData_pg_class *Form_pg_class;
  * Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId;
  * similarly, "1" in relminmxid stands for FirstMultiXactId
  */
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f p r 30 0 t f f f f f f t n f 3 1 _null_ _null_ _null_));
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f p r 30 0 t f f f f f t n f 3 1 _null_ _null_ _null_));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r 22 0 f f f f f f f t n f 3 1 _null_ _null_ _null_));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r 22 0 f f f f f f t n f 3 1 _null_ _null_ _null_));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f p r 28 0 t f f f f f f t n f 3 1 _null_ _null_ _null_));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f p r 28 0 t f f f f f t n f 3 1 _null_ _null_ _null_));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r 33 0 t f f f f f f t n f 3 1 _null_ _null_ _null_));
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r 32 0 t f f f f f t n f 3 1 _null_ _null_ _null_));
 DESCR("");
 
 

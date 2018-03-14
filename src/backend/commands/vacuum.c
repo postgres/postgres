@@ -909,16 +909,6 @@ vac_update_relstats(Relation relation,
 			dirty = true;
 		}
 
-		/*
-		 * If we have discovered that there are no indexes, then there's no
-		 * primary key either.  This could be done more thoroughly...
-		 */
-		if (pgcform->relhaspkey && !hasindex)
-		{
-			pgcform->relhaspkey = false;
-			dirty = true;
-		}
-
 		/* We also clear relhasrules and relhastriggers if needed */
 		if (pgcform->relhasrules && relation->rd_rules == NULL)
 		{

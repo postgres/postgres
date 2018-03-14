@@ -1849,15 +1849,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
-      <entry><structfield>relhaspkey</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>
-       True if the table has (or once had) a primary key
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>relhasrules</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>

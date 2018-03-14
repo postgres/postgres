@@ -125,7 +125,7 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					bool isvalid,
 					bool isready);
 static void index_update_stats(Relation rel,
-				   bool hasindex, bool isprimary,
+				   bool hasindex,
 				   double reltuples);
 static void IndexCheckExclusion(Relation heapRelation,
 					Relation indexRelation,
@@ -1162,7 +1162,6 @@ index_create(Relation heapRelation,
 		 */
 		index_update_stats(heapRelation,
 						   true,
-						   isprimary,
 						   -1.0);
 		/* Make the above update visible */
 		CommandCounterIncrement();
@@ -1363,21 +1362,6 @@ index_constraint_create(Relation heapRelation,
 		(void) CreateTrigger(trigger, NULL, RelationGetRelid(heapRelation),
 							 InvalidOid, conOid, indexRelationId, true);
 	}
-
-	/*
-	 * If needed, mark the table as having a primary key.  We assume it can't
-	 * have been so marked already, so no need to clear the flag in the other
-	 * case.
-	 *
-	 * Note: this might better be done by callers.  We do it here to avoid
-	 * exposing index_update_stats() globally, but that wouldn't be necessary
-	 * if relhaspkey went away.
-	 */
-	if (mark_as_primary)
-		index_update_stats(heapRelation,
-						   true,
-						   true,
-						   -1.0);
 
 	/*
 	 * If needed, mark the index as primary and/or deferred in pg_index.
@@ -2041,7 +2025,6 @@ FormIndexDatum(IndexInfo *indexInfo,
  * to ensure we can do all the necessary work in just one update.
  *
  * hasindex: set relhasindex to this value
- * isprimary: if true, set relhaspkey true; else no change
  * reltuples: if >= 0, set reltuples to this value; else no change
  *
  * If reltuples >= 0, relpages and relallvisible are also updated (using
@@ -2058,7 +2041,6 @@ FormIndexDatum(IndexInfo *indexInfo,
 static void
 index_update_stats(Relation rel,
 				   bool hasindex,
-				   bool isprimary,
 				   double reltuples)
 {
 	Oid			relid = RelationGetRelid(rel);
@@ -2088,7 +2070,7 @@ index_update_stats(Relation rel,
 	 * It is safe to use a non-transactional update even though our
 	 * transaction could still fail before committing.  Setting relhasindex
 	 * true is safe even if there are no indexes (VACUUM will eventually fix
-	 * it), likewise for relhaspkey.  And of course the new relpages and
+	 * it).  And of course the new relpages and
 	 * reltuples counts are correct regardless.  However, we don't want to
 	 * change relpages (or relallvisible) if the caller isn't providing an
 	 * updated reltuples count, because that would bollix the
@@ -2139,14 +2121,6 @@ index_update_stats(Relation rel,
 	{
 		rd_rel->relhasindex = hasindex;
 		dirty = true;
-	}
-	if (isprimary)
-	{
-		if (!rd_rel->relhaspkey)
-		{
-			rd_rel->relhaspkey = true;
-			dirty = true;
-		}
 	}
 
 	if (reltuples >= 0)
@@ -2356,11 +2330,9 @@ index_build(Relation heapRelation,
 	 */
 	index_update_stats(heapRelation,
 					   true,
-					   isprimary,
 					   stats->heap_tuples);
 
 	index_update_stats(indexRelation,
-					   false,
 					   false,
 					   stats->index_tuples);
 
