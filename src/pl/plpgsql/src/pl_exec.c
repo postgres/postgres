@@ -2086,7 +2086,7 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			FuncExpr   *funcexpr;
 			int			i;
 			HeapTuple	tuple;
-			int			numargs;
+			int			numargs PG_USED_FOR_ASSERTS_ONLY;
 			Oid		   *argtypes;
 			char	  **argnames;
 			char	   *argmodes;
