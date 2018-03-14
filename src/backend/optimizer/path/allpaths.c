@@ -1574,7 +1574,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * If the use of parallel append is permitted, always request at least
-		 * log2(# of children) paths.  We assume it can be useful to have
+		 * log2(# of children) workers.  We assume it can be useful to have
 		 * extra workers in this case because they will be spread out across
 		 * the children.  The precise formula is just a guess, but we don't
 		 * want to end up with a radically different answer for a table with N
