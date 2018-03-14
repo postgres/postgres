@@ -71,7 +71,7 @@ extern void AutovacuumWorkerIAm(void);
 extern void AutovacuumLauncherIAm(void);
 #endif
 
-extern void AutoVacuumRequestWork(AutoVacuumWorkItemType type,
+extern bool AutoVacuumRequestWork(AutoVacuumWorkItemType type,
 					  Oid relationId, BlockNumber blkno);
 
 /* shared memory stuff */

@@ -187,9 +187,19 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 				brinGetTupleForHeapBlock(revmap, lastPageRange, &buf, &off,
 										 NULL, BUFFER_LOCK_SHARE, NULL);
 			if (!lastPageTuple)
-				AutoVacuumRequestWork(AVW_BRINSummarizeRange,
-									  RelationGetRelid(idxRel),
-									  lastPageRange);
+			{
+				bool	recorded;
+
+				recorded = AutoVacuumRequestWork(AVW_BRINSummarizeRange,
+												 RelationGetRelid(idxRel),
+												 lastPageRange);
+				if (!recorded)
+					ereport(LOG,
+							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							 errmsg("request for BRIN range summarization for index \"%s\" page %u was not recorded",
+									RelationGetRelationName(idxRel),
+									lastPageRange)));
+			}
 			else
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		}

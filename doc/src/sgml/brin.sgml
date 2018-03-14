@@ -86,6 +86,18 @@
    representation because the existing values have changed.
   </para>
 
+  <para>
+   When autosummarization is enabled, each time a page range is filled a
+   request is sent to autovacuum for it to execute a targeted summarization
+   for that range, to be fulfilled at the end of the next worker run on the
+   same database.  If the request queue is full, the request is not recorded
+   and a message is sent to the server log:
+<screen>
+LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was not recorded
+</screen>
+   When this happens, the range will be summarized normally during the next
+   regular vacuum of the table.
+  </para>
  </sect2>
 </sect1>
 

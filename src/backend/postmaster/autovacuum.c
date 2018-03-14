@@ -3227,12 +3227,14 @@ AutoVacuumingActive(void)
 
 /*
  * Request one work item to the next autovacuum run processing our database.
+ * Return false if the request can't be recorded.
  */
-void
+bool
 AutoVacuumRequestWork(AutoVacuumWorkItemType type, Oid relationId,
 					  BlockNumber blkno)
 {
 	int			i;
+	bool		result = false;
 
 	LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
 
@@ -3252,12 +3254,15 @@ AutoVacuumRequestWork(AutoVacuumWorkItemType type, Oid relationId,
 		workitem->avw_database = MyDatabaseId;
 		workitem->avw_relation = relationId;
 		workitem->avw_blockNumber = blkno;
+		result = true;
 
 		/* done */
 		break;
 	}
 
 	LWLockRelease(AutovacuumLock);
+
+	return result;
 }
 
 /*
