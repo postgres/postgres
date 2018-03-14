@@ -3504,7 +3504,7 @@ standard_qp_callback(PlannerInfo *root, void *extra)
  * Estimate number of groups produced by grouping clauses (1 if not grouping)
  *
  * path_rows: number of output rows from scan/join step
- * gsets: grouping set data, or NULL if not doing grouping sets
+ * gd: grouping sets data including list of grouping sets and their clauses
  *
  * If doing grouping sets, we also annotate the gsets data with the estimates
  * for each set and each individual rollup list, with a view to later
@@ -3659,9 +3659,7 @@ estimate_hashagg_tablesize(Path *path, const AggClauseCosts *agg_costs,
  * input_rel: contains the source-data Paths
  * target: the pathtarget for the result Paths to compute
  * agg_costs: cost info about all aggregates in query (in AGGSPLIT_SIMPLE mode)
- * rollup_lists: list of grouping sets, or NIL if not doing grouping sets
- * rollup_groupclauses: list of grouping clauses for grouping sets,
- *		or NIL if not doing grouping sets
+ * gd: grouping sets data including list of grouping sets and their clauses
  *
  * Note: all Paths in input_rel are expected to return the target computed
  * by make_group_input_target.
