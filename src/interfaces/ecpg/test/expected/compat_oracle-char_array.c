@@ -22,18 +22,16 @@
 #line 5 "char_array.pgc"
 
 
-static void warn();
+static void warn(void)
+{
+  fprintf(stderr, "Warning: At least one column was truncated\n");
+}
 
 /* Compatible handling of char array to retrieve varchar field to char array
    should be fixed-length, blank-padded, then null-terminated.
    Conforms to the ANSI Fixed Character type. */
 
 int main() {
-
-  ECPGdebug(1, stderr);
-  { ECPGconnect(__LINE__, 3, "ecpg1_regression" , NULL, NULL , NULL, 0); }
-#line 16 "char_array.pgc"
-
 
   /* exec sql whenever sql_warning  do warn ( ) ; */
 #line 18 "char_array.pgc"
@@ -65,85 +63,96 @@ int main() {
 #line 28 "char_array.pgc"
 
 
-  { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "create table strdbase ( strval varchar ( 10 ) )", ECPGt_EOIT, ECPGt_EORT);
-#line 30 "char_array.pgc"
+  ECPGdebug(1, stderr);
+  { ECPGconnect(__LINE__, 3, "ecpg1_regression" , NULL, NULL , NULL, 0); 
+#line 31 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 30 "char_array.pgc"
+#line 31 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 30 "char_array.pgc"
+#line 31 "char_array.pgc"
+
+
+  { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "create table strdbase ( strval varchar ( 10 ) )", ECPGt_EOIT, ECPGt_EORT);
+#line 33 "char_array.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') warn ( );
+#line 33 "char_array.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 33 "char_array.pgc"
 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "insert into strdbase values ( '' )", ECPGt_EOIT, ECPGt_EORT);
-#line 31 "char_array.pgc"
+#line 34 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 31 "char_array.pgc"
+#line 34 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 31 "char_array.pgc"
+#line 34 "char_array.pgc"
 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "insert into strdbase values ( 'AB' )", ECPGt_EOIT, ECPGt_EORT);
-#line 32 "char_array.pgc"
+#line 35 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 32 "char_array.pgc"
+#line 35 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 32 "char_array.pgc"
+#line 35 "char_array.pgc"
 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "insert into strdbase values ( 'ABCD' )", ECPGt_EOIT, ECPGt_EORT);
-#line 33 "char_array.pgc"
+#line 36 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 33 "char_array.pgc"
+#line 36 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 33 "char_array.pgc"
+#line 36 "char_array.pgc"
 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "insert into strdbase values ( 'ABCDE' )", ECPGt_EOIT, ECPGt_EORT);
-#line 34 "char_array.pgc"
+#line 37 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 34 "char_array.pgc"
+#line 37 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 34 "char_array.pgc"
+#line 37 "char_array.pgc"
 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "insert into strdbase values ( 'ABCDEF' )", ECPGt_EOIT, ECPGt_EORT);
-#line 35 "char_array.pgc"
+#line 38 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 35 "char_array.pgc"
+#line 38 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 35 "char_array.pgc"
+#line 38 "char_array.pgc"
 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "insert into strdbase values ( 'ABCDEFGHIJ' )", ECPGt_EOIT, ECPGt_EORT);
-#line 36 "char_array.pgc"
+#line 39 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 36 "char_array.pgc"
+#line 39 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 36 "char_array.pgc"
+#line 39 "char_array.pgc"
 
 
   /* declare C cursor for select strval , strval from strdbase */
-#line 38 "char_array.pgc"
+#line 41 "char_array.pgc"
 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "declare C cursor for select strval , strval from strdbase", ECPGt_EOIT, ECPGt_EORT);
-#line 39 "char_array.pgc"
+#line 42 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 39 "char_array.pgc"
+#line 42 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 39 "char_array.pgc"
+#line 42 "char_array.pgc"
 
 
   /* exec sql whenever not found  break ; */
-#line 41 "char_array.pgc"
+#line 44 "char_array.pgc"
 
 
   printf("Full Str.  :  Short  Ind.\n");
@@ -155,65 +164,60 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	ECPGt_short,&(bigstr_ind),(long)1,(long)1,sizeof(short), 
 	ECPGt_char,(shortstr),(long)5,(long)1,(5)*sizeof(char), 
 	ECPGt_short,&(shstr_ind),(long)1,(long)1,sizeof(short), ECPGt_EORT);
-#line 47 "char_array.pgc"
+#line 50 "char_array.pgc"
 
 if (sqlca.sqlcode == ECPG_NOT_FOUND) break;
-#line 47 "char_array.pgc"
+#line 50 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 47 "char_array.pgc"
+#line 50 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 47 "char_array.pgc"
+#line 50 "char_array.pgc"
 
     printf("\"%s\": \"%s\"  %d\n", bigstr, shortstr, shstr_ind);
   }
 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "close cstr", ECPGt_EOIT, ECPGt_EORT);
-#line 51 "char_array.pgc"
+#line 54 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 51 "char_array.pgc"
+#line 54 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 51 "char_array.pgc"
+#line 54 "char_array.pgc"
 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "drop table strdbase", ECPGt_EOIT, ECPGt_EORT);
-#line 52 "char_array.pgc"
+#line 55 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 52 "char_array.pgc"
+#line 55 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 52 "char_array.pgc"
+#line 55 "char_array.pgc"
 
 
   printf("\nGOOD-BYE!!\n\n");
 
   { ECPGtrans(__LINE__, NULL, "commit work");
-#line 56 "char_array.pgc"
+#line 59 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 56 "char_array.pgc"
+#line 59 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 56 "char_array.pgc"
+#line 59 "char_array.pgc"
 
 
   { ECPGdisconnect(__LINE__, "ALL");
-#line 58 "char_array.pgc"
+#line 61 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
-#line 58 "char_array.pgc"
+#line 61 "char_array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 58 "char_array.pgc"
+#line 61 "char_array.pgc"
 
 
   return 0;
-}
-
-static void warn(void)
-{
-  fprintf(stderr, "Warning: At least one column was truncated\n");
 }

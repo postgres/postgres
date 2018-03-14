@@ -4,16 +4,16 @@
 
 EXEC SQL INCLUDE ../regression;
 
-static void warn();
+static void warn(void)
+{
+  fprintf(stderr, "Warning: At least one column was truncated\n");
+}
 
 /* Compatible handling of char array to retrieve varchar field to char array
    should be fixed-length, blank-padded, then null-terminated.
    Conforms to the ANSI Fixed Character type. */
 
 int main() {
-
-  ECPGdebug(1, stderr);
-  EXEC SQL CONNECT TO REGRESSDB1;
 
   EXEC SQL WHENEVER SQLWARNING do warn();
   EXEC SQL WHENEVER SQLERROR SQLPRINT;
@@ -26,6 +26,9 @@ int main() {
   short shstr_ind = 0;
   short bigstr_ind = 0;
   EXEC SQL END DECLARE SECTION;
+
+  ECPGdebug(1, stderr);
+  EXEC SQL CONNECT TO REGRESSDB1;
 
   EXEC SQL CREATE TABLE strdbase (strval varchar(10));
   EXEC SQL INSERT INTO strdbase values ('');
@@ -58,9 +61,4 @@ int main() {
   EXEC SQL DISCONNECT ALL;
 
   return 0;
-}
-
-static void warn(void)
-{
-  fprintf(stderr, "Warning: At least one column was truncated\n");
 }
