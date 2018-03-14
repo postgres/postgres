@@ -197,7 +197,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %type <stmt>	proc_stmt pl_block
 %type <stmt>	stmt_assign stmt_if stmt_loop stmt_while stmt_exit
 %type <stmt>	stmt_return stmt_raise stmt_assert stmt_execsql
-%type <stmt>	stmt_dynexecute stmt_for stmt_perform stmt_getdiag
+%type <stmt>	stmt_dynexecute stmt_for stmt_perform stmt_call stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_move stmt_close stmt_null
 %type <stmt>	stmt_commit stmt_rollback
 %type <stmt>	stmt_case stmt_foreach_a
@@ -257,6 +257,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %token <keyword>	K_BACKWARD
 %token <keyword>	K_BEGIN
 %token <keyword>	K_BY
+%token <keyword>	K_CALL
 %token <keyword>	K_CASE
 %token <keyword>	K_CLOSE
 %token <keyword>	K_COLLATE
@@ -872,6 +873,8 @@ proc_stmt		: pl_block ';'
 						{ $$ = $1; }
 				| stmt_perform
 						{ $$ = $1; }
+				| stmt_call
+						{ $$ = $1; }
 				| stmt_getdiag
 						{ $$ = $1; }
 				| stmt_open
@@ -898,6 +901,19 @@ stmt_perform	: K_PERFORM expr_until_semi
 						new->cmd_type = PLPGSQL_STMT_PERFORM;
 						new->lineno   = plpgsql_location_to_lineno(@1);
 						new->expr  = $2;
+
+						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+stmt_call		: K_CALL
+					{
+						PLpgSQL_stmt_call *new;
+
+						new = palloc0(sizeof(PLpgSQL_stmt_call));
+						new->cmd_type = PLPGSQL_STMT_CALL;
+						new->lineno = plpgsql_location_to_lineno(@1);
+						new->expr = read_sql_stmt("CALL ");
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
@@ -2401,6 +2417,7 @@ unreserved_keyword	:
 				| K_ARRAY
 				| K_ASSERT
 				| K_BACKWARD
+				| K_CALL
 				| K_CLOSE
 				| K_COLLATE
 				| K_COLUMN
@@ -3129,15 +3146,6 @@ make_return_stmt(int location)
 					 errhint("Use RETURN NEXT or RETURN QUERY."),
 					 parser_errposition(yylloc)));
 	}
-	else if (plpgsql_curr_compile->out_param_varno >= 0)
-	{
-		if (yylex() != ';')
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("RETURN cannot have a parameter in function with OUT parameters"),
-					 parser_errposition(yylloc)));
-		new->retvarno = plpgsql_curr_compile->out_param_varno;
-	}
 	else if (plpgsql_curr_compile->fn_rettype == VOIDOID)
 	{
 		if (yylex() != ';')
@@ -3153,6 +3161,15 @@ make_return_stmt(int location)
 						 errmsg("RETURN cannot have a parameter in function returning void"),
 						 parser_errposition(yylloc)));
 		}
+	}
+	else if (plpgsql_curr_compile->out_param_varno >= 0)
+	{
+		if (yylex() != ';')
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("RETURN cannot have a parameter in function with OUT parameters"),
+					 parser_errposition(yylloc)));
+		new->retvarno = plpgsql_curr_compile->out_param_varno;
 	}
 	else
 	{

@@ -98,7 +98,7 @@ SELECT transaction_test3();
 ERROR:  invalid transaction termination
 CONTEXT:  PL/pgSQL function transaction_test1() line 6 at COMMIT
 SQL statement "CALL transaction_test1()"
-PL/pgSQL function transaction_test3() line 3 at SQL statement
+PL/pgSQL function transaction_test3() line 3 at CALL
 SELECT * FROM test1;
  a | b 
 ---+---

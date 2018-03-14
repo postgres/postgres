@@ -721,6 +721,8 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 									  list_copy(queryTree_sublist));
 	}
 
+	check_sql_fn_statements(flat_query_list);
+
 	/*
 	 * Check that the function returns the type it claims to.  Although in
 	 * simple cases this was already done when the function was defined, we
@@ -1486,6 +1488,55 @@ ShutdownSQLFunction(Datum arg)
 	fcache->shutdown_reg = false;
 }
 
+/*
+ * check_sql_fn_statements
+ *
+ * Check statements in an SQL function.  Error out if there is anything that
+ * is not acceptable.
+ */
+void
+check_sql_fn_statements(List *queryTreeList)
+{
+	ListCell   *lc;
+
+	foreach(lc, queryTreeList)
+	{
+		Query	   *query = lfirst_node(Query, lc);
+
+		/*
+		 * Disallow procedures with output arguments.  The current
+		 * implementation would just throw the output values away, unless the
+		 * statement is the last one.  Per SQL standard, we should assign the
+		 * output values by name.  By disallowing this here, we preserve an
+		 * opportunity for future improvement.
+		 */
+		if (query->commandType == CMD_UTILITY &&
+			IsA(query->utilityStmt, CallStmt))
+		{
+			CallStmt   *stmt = castNode(CallStmt, query->utilityStmt);
+			HeapTuple	tuple;
+			int			numargs;
+			Oid		   *argtypes;
+			char	  **argnames;
+			char	   *argmodes;
+			int			i;
+
+			tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(stmt->funcexpr->funcid));
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "cache lookup failed for function %u", stmt->funcexpr->funcid);
+			numargs = get_func_arg_info(tuple, &argtypes, &argnames, &argmodes);
+			ReleaseSysCache(tuple);
+
+			for (i = 0; i < numargs; i++)
+			{
+				if (argmodes && (argmodes[i] == PROARGMODE_INOUT || argmodes[i] == PROARGMODE_OUT))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("calling procedures with output arguments is not supported in SQL functions")));
+			}
+		}
+	}
+}
 
 /*
  * check_sql_fn_retval() -- check return value of a list of sql parse trees.

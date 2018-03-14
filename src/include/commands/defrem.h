@@ -17,6 +17,7 @@
 #include "catalog/objectaddress.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
+#include "tcop/dest.h"
 #include "utils/array.h"
 
 /* commands/dropcmds.c */
@@ -62,7 +63,7 @@ extern void DropTransformById(Oid transformOid);
 extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
 						   oidvector *proargtypes, Oid nspOid);
 extern void ExecuteDoStmt(DoStmt *stmt, bool atomic);
-extern void ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic);
+extern void ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver *dest);
 extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 extern Oid	get_transform_oid(Oid type_id, Oid lang_id, bool missing_ok);
 extern void interpret_function_parameter_list(ParseState *pstate,

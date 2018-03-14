@@ -68,6 +68,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 #include "utils/tqual.h"
 
 /*
@@ -281,10 +282,11 @@ interpret_function_parameter_list(ParseState *pstate,
 
 		if (objtype == OBJECT_PROCEDURE)
 		{
-			if (fp->mode == FUNC_PARAM_OUT || fp->mode == FUNC_PARAM_INOUT)
+			if (fp->mode == FUNC_PARAM_OUT)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 (errmsg("procedures cannot have OUT parameters"))));
+						 (errmsg("procedures cannot have OUT arguments"),
+						  errhint("INOUT arguments are permitted."))));
 		}
 
 		/* handle input parameters */
@@ -302,7 +304,9 @@ interpret_function_parameter_list(ParseState *pstate,
 		/* handle output parameters */
 		if (fp->mode != FUNC_PARAM_IN && fp->mode != FUNC_PARAM_VARIADIC)
 		{
-			if (outCount == 0)	/* save first output param's type */
+			if (objtype == OBJECT_PROCEDURE)
+				*requiredResultType = RECORDOID;
+			else if (outCount == 0)	/* save first output param's type */
 				*requiredResultType = toid;
 			outCount++;
 		}
@@ -1003,12 +1007,8 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 
 	if (stmt->is_procedure)
 	{
-		/*
-		 * Sometime in the future, procedures might be allowed to return
-		 * results; for now, they all return VOID.
-		 */
 		Assert(!stmt->returnType);
-		prorettype = VOIDOID;
+		prorettype = requiredResultType ? requiredResultType : VOIDOID;
 		returnsSet = false;
 	}
 	else if (stmt->returnType)
@@ -2206,7 +2206,7 @@ ExecuteDoStmt(DoStmt *stmt, bool atomic)
  * commits that might occur inside the procedure.
  */
 void
-ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic)
+ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver *dest)
 {
 	ListCell   *lc;
 	FuncExpr   *fexpr;
@@ -2219,6 +2219,7 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic)
 	EState	   *estate;
 	ExprContext *econtext;
 	HeapTuple	tp;
+	Datum		retval;
 
 	fexpr = stmt->funcexpr;
 	Assert(fexpr);
@@ -2285,7 +2286,51 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic)
 		i++;
 	}
 
-	FunctionCallInvoke(&fcinfo);
+	retval = FunctionCallInvoke(&fcinfo);
+
+	if (fexpr->funcresulttype == VOIDOID)
+	{
+		/* do nothing */
+	}
+	else if (fexpr->funcresulttype == RECORDOID)
+	{
+		/*
+		 * send tuple to client
+		 */
+
+		HeapTupleHeader td;
+		Oid			tupType;
+		int32		tupTypmod;
+		TupleDesc	retdesc;
+		HeapTupleData rettupdata;
+		TupOutputState *tstate;
+		TupleTableSlot *slot;
+
+		if (fcinfo.isnull)
+			elog(ERROR, "procedure returned null record");
+
+		td = DatumGetHeapTupleHeader(retval);
+		tupType = HeapTupleHeaderGetTypeId(td);
+		tupTypmod = HeapTupleHeaderGetTypMod(td);
+		retdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
+		tstate = begin_tup_output_tupdesc(dest, retdesc);
+
+		rettupdata.t_len = HeapTupleHeaderGetDatumLength(td);
+		ItemPointerSetInvalid(&(rettupdata.t_self));
+		rettupdata.t_tableOid = InvalidOid;
+		rettupdata.t_data = td;
+
+		slot = ExecStoreTuple(&rettupdata, tstate->slot, InvalidBuffer, false);
+		tstate->dest->receiveSlot(slot, tstate->dest);
+
+		end_tup_output(tstate);
+
+		ReleaseTupleDesc(retdesc);
+	}
+	else
+		elog(ERROR, "unexpected result type for procedure: %u",
+			 fexpr->funcresulttype);
 
 	FreeExecutorState(estate);
 }

@@ -96,8 +96,11 @@ CREATE [ OR REPLACE ] PROCEDURE
 
      <listitem>
       <para>
-       The mode of an argument: <literal>IN</literal> or <literal>VARIADIC</literal>.
-       If omitted, the default is <literal>IN</literal>.
+       The mode of an argument: <literal>IN</literal>,
+       <literal>INOUT</literal>, or <literal>VARIADIC</literal>.  If omitted,
+       the default is <literal>IN</literal>.  (<literal>OUT</literal>
+       arguments are currently not supported for procedures.  Use
+       <literal>INOUT</literal> instead.)
       </para>
      </listitem>
     </varlistentry>

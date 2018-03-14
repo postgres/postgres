@@ -34,6 +34,26 @@ CALL test_proc3(55);
 SELECT * FROM test1;
 
 
+-- output arguments
+
+CREATE PROCEDURE test_proc5(INOUT a text)
+LANGUAGE plpythonu
+AS $$
+return [a + '+' + a]
+$$;
+
+CALL test_proc5('abc');
+
+
+CREATE PROCEDURE test_proc6(a int, INOUT b int, INOUT c int)
+LANGUAGE plpythonu
+AS $$
+return (b * a, c * a)
+$$;
+
+CALL test_proc6(2, 3, 4);
+
+
 DROP PROCEDURE test_proc1;
 DROP PROCEDURE test_proc2;
 DROP PROCEDURE test_proc3;

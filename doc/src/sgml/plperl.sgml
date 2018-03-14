@@ -279,6 +279,20 @@ SELECT * FROM perl_row();
   </para>
 
   <para>
+   Similarly, output arguments of procedures can be returned as a hash
+   reference:
+
+<programlisting>
+CREATE PROCEDURE perl_triple(INOUT a integer, INOUT b integer) AS $$
+    my ($a, $b) = @_;
+    return {a =&gt; $a * 3, b =&gt; $b * 3};
+$$ LANGUAGE plperl;
+
+CALL perl_triple(5, 10);
+</programlisting>
+  </para>
+
+  <para>
     PL/Perl functions can also return sets of either scalar or
     composite types.  Usually you'll want to return rows one at a
     time, both to speed up startup time and to keep from queuing up

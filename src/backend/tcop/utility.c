@@ -661,7 +661,8 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CallStmt:
 			ExecuteCallStmt(castNode(CallStmt, parsetree), params,
-							(context != PROCESS_UTILITY_TOPLEVEL || IsTransactionBlock()));
+							(context != PROCESS_UTILITY_TOPLEVEL || IsTransactionBlock()),
+							dest);
 			break;
 
 		case T_ClusterStmt:

@@ -53,6 +53,118 @@ SELECT * FROM test1;
  66
 (2 rows)
 
+-- output arguments
+CREATE PROCEDURE test_proc5(INOUT a text)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    a := a || '+' || a;
+END;
+$$;
+CALL test_proc5('abc');
+    a    
+---------
+ abc+abc
+(1 row)
+
+CREATE PROCEDURE test_proc6(a int, INOUT b int, INOUT c int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    b := b * a;
+    c := c * a;
+END;
+$$;
+CALL test_proc6(2, 3, 4);
+ b | c 
+---+---
+ 6 | 8
+(1 row)
+
+DO
+LANGUAGE plpgsql
+$$
+DECLARE
+    x int := 3;
+    y int := 4;
+BEGIN
+    CALL test_proc6(2, x, y);
+    RAISE INFO 'x = %, y = %', x, y;
+END;
+$$;
+INFO:  x = 6, y = 8
+DO
+LANGUAGE plpgsql
+$$
+DECLARE
+    x int := 3;
+    y int := 4;
+BEGIN
+    CALL test_proc6(2, x + 1, y);  -- error
+    RAISE INFO 'x = %, y = %', x, y;
+END;
+$$;
+ERROR:  argument 2 is an output argument but is not writable
+CONTEXT:  PL/pgSQL function inline_code_block line 6 at CALL
+DO
+LANGUAGE plpgsql
+$$
+DECLARE
+    x int := 3;
+    y int := 4;
+BEGIN
+    FOR i IN 1..5 LOOP
+        CALL test_proc6(i, x, y);
+        RAISE INFO 'x = %, y = %', x, y;
+    END LOOP;
+END;
+$$;
+INFO:  x = 3, y = 4
+INFO:  x = 6, y = 8
+INFO:  x = 18, y = 24
+INFO:  x = 72, y = 96
+INFO:  x = 360, y = 480
+-- recursive with output arguments
+CREATE PROCEDURE test_proc7(x int, INOUT a int, INOUT b numeric)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+IF x > 1 THEN
+    a := x / 10;
+    b := x / 2;
+    CALL test_proc7(b::int, a, b);
+END IF;
+END;
+$$;
+CALL test_proc7(100, -1, -1);
+ a | b 
+---+---
+ 0 | 1
+(1 row)
+
+-- transition variable assignment
+TRUNCATE test1;
+CREATE FUNCTION triggerfunc1() RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    z int := 0;
+BEGIN
+    CALL test_proc6(2, NEW.a, NEW.a);
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER t1 BEFORE INSERT ON test1 EXECUTE PROCEDURE triggerfunc1();
+INSERT INTO test1 VALUES (1), (2), (3);
+UPDATE test1 SET a = 22 WHERE a = 2;
+SELECT * FROM test1 ORDER BY a;
+ a  
+----
+  1
+  3
+ 22
+(3 rows)
+
 DROP PROCEDURE test_proc1;
 DROP PROCEDURE test_proc3;
 DROP PROCEDURE test_proc4;

@@ -1870,6 +1870,22 @@ SELECT * FROM get_available_flightid(CURRENT_DATE);
      then <symbol>NULL</symbol> must be returned.  Returning any other value
      will result in an error.
     </para>
+
+    <para>
+     If a procedure has output parameters, then the output values can be
+     assigned to the parameters as if they were variables.  For example:
+<programlisting>
+CREATE PROCEDURE triple(INOUT x int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    x := x * 3;
+END;
+$$;
+
+CALL triple(5);
+</programlisting>
+    </para>
    </sect2>
 
    <sect2 id="plpgsql-conditionals">

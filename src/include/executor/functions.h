@@ -29,6 +29,8 @@ extern SQLFunctionParseInfoPtr prepare_sql_fn_parse_info(HeapTuple procedureTupl
 extern void sql_fn_parser_setup(struct ParseState *pstate,
 					SQLFunctionParseInfoPtr pinfo);
 
+extern void check_sql_fn_statements(List *queryTreeList);
+
 extern bool check_sql_fn_retval(Oid func_id, Oid rettype,
 					List *queryTreeList,
 					bool *modifyTargetList,

@@ -284,6 +284,8 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 			return "CLOSE";
 		case PLPGSQL_STMT_PERFORM:
 			return "PERFORM";
+		case PLPGSQL_STMT_CALL:
+			return "CALL";
 		case PLPGSQL_STMT_COMMIT:
 			return "COMMIT";
 		case PLPGSQL_STMT_ROLLBACK:
@@ -367,6 +369,7 @@ static void free_open(PLpgSQL_stmt_open *stmt);
 static void free_fetch(PLpgSQL_stmt_fetch *stmt);
 static void free_close(PLpgSQL_stmt_close *stmt);
 static void free_perform(PLpgSQL_stmt_perform *stmt);
+static void free_call(PLpgSQL_stmt_call *stmt);
 static void free_commit(PLpgSQL_stmt_commit *stmt);
 static void free_rollback(PLpgSQL_stmt_rollback *stmt);
 static void free_expr(PLpgSQL_expr *expr);
@@ -448,6 +451,9 @@ free_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_PERFORM:
 			free_perform((PLpgSQL_stmt_perform *) stmt);
+			break;
+		case PLPGSQL_STMT_CALL:
+			free_call((PLpgSQL_stmt_call *) stmt);
 			break;
 		case PLPGSQL_STMT_COMMIT:
 			free_commit((PLpgSQL_stmt_commit *) stmt);
@@ -598,6 +604,12 @@ free_close(PLpgSQL_stmt_close *stmt)
 
 static void
 free_perform(PLpgSQL_stmt_perform *stmt)
+{
+	free_expr(stmt->expr);
+}
+
+static void
+free_call(PLpgSQL_stmt_call *stmt)
 {
 	free_expr(stmt->expr);
 }
@@ -805,6 +817,7 @@ static void dump_fetch(PLpgSQL_stmt_fetch *stmt);
 static void dump_cursor_direction(PLpgSQL_stmt_fetch *stmt);
 static void dump_close(PLpgSQL_stmt_close *stmt);
 static void dump_perform(PLpgSQL_stmt_perform *stmt);
+static void dump_call(PLpgSQL_stmt_call *stmt);
 static void dump_commit(PLpgSQL_stmt_commit *stmt);
 static void dump_rollback(PLpgSQL_stmt_rollback *stmt);
 static void dump_expr(PLpgSQL_expr *expr);
@@ -896,6 +909,9 @@ dump_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_PERFORM:
 			dump_perform((PLpgSQL_stmt_perform *) stmt);
+			break;
+		case PLPGSQL_STMT_CALL:
+			dump_call((PLpgSQL_stmt_call *) stmt);
 			break;
 		case PLPGSQL_STMT_COMMIT:
 			dump_commit((PLpgSQL_stmt_commit *) stmt);
@@ -1271,6 +1287,15 @@ dump_perform(PLpgSQL_stmt_perform *stmt)
 {
 	dump_ind();
 	printf("PERFORM expr = ");
+	dump_expr(stmt->expr);
+	printf("\n");
+}
+
+static void
+dump_call(PLpgSQL_stmt_call *stmt)
+{
+	dump_ind();
+	printf("CALL expr = ");
 	dump_expr(stmt->expr);
 	printf("\n");
 }

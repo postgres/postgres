@@ -46,6 +46,25 @@ CALL ptest3('b');
 SELECT * FROM cp_test;
 
 
+-- output arguments
+
+CREATE PROCEDURE ptest4a(INOUT a int, INOUT b int)
+LANGUAGE SQL
+AS $$
+SELECT 1, 2;
+$$;
+
+CALL ptest4a(NULL, NULL);
+
+CREATE PROCEDURE ptest4b(INOUT b int, INOUT a int)
+LANGUAGE SQL
+AS $$
+CALL ptest4a(a, b);  -- error, not supported
+$$;
+
+DROP PROCEDURE ptest4a;
+
+
 -- various error cases
 
 CALL version();  -- error: not a procedure

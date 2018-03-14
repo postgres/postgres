@@ -31,6 +31,10 @@ CALL <replaceable class="parameter">name</replaceable> ( [ <replaceable class="p
   <para>
    <command>CALL</command> executes a procedure.
   </para>
+
+  <para>
+   If the procedure has output arguments, then a result row will be returned.
+  </para>
  </refsect1>
 
  <refsect1>

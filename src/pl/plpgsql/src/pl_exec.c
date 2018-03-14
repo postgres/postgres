@@ -24,6 +24,7 @@
 #include "catalog/pg_type.h"
 #include "executor/execExpr.h"
 #include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -40,6 +41,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
+#include "utils/syscache.h"
 #include "utils/typcache.h"
 
 #include "plpgsql.h"
@@ -253,6 +255,8 @@ static int exec_stmt_assign(PLpgSQL_execstate *estate,
 				 PLpgSQL_stmt_assign *stmt);
 static int exec_stmt_perform(PLpgSQL_execstate *estate,
 				  PLpgSQL_stmt_perform *stmt);
+static int exec_stmt_call(PLpgSQL_execstate *estate,
+				  PLpgSQL_stmt_call *stmt);
 static int exec_stmt_getdiag(PLpgSQL_execstate *estate,
 				  PLpgSQL_stmt_getdiag *stmt);
 static int exec_stmt_if(PLpgSQL_execstate *estate,
@@ -1901,6 +1905,10 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 			rc = exec_stmt_perform(estate, (PLpgSQL_stmt_perform *) stmt);
 			break;
 
+		case PLPGSQL_STMT_CALL:
+			rc = exec_stmt_call(estate, (PLpgSQL_stmt_call *) stmt);
+			break;
+
 		case PLPGSQL_STMT_GETDIAG:
 			rc = exec_stmt_getdiag(estate, (PLpgSQL_stmt_getdiag *) stmt);
 			break;
@@ -2037,6 +2045,121 @@ exec_stmt_perform(PLpgSQL_execstate *estate, PLpgSQL_stmt_perform *stmt)
 	(void) exec_run_select(estate, expr, 0, NULL);
 	exec_set_found(estate, (estate->eval_processed != 0));
 	exec_eval_cleanup(estate);
+
+	return PLPGSQL_RC_OK;
+}
+
+/*
+ * exec_stmt_call
+ */
+static int
+exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
+{
+	PLpgSQL_expr *expr = stmt->expr;
+	ParamListInfo paramLI;
+	int			rc;
+
+	if (expr->plan == NULL)
+		exec_prepare_plan(estate, expr, 0);
+
+	paramLI = setup_param_list(estate, expr);
+
+	rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
+										 estate->readonly_func, 0);
+
+	if (rc < 0)
+		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
+			 expr->query, SPI_result_code_string(rc));
+
+	if (SPI_processed == 1)
+	{
+		SPITupleTable *tuptab = SPI_tuptable;
+
+		/*
+		 * Construct a dummy target row based on the output arguments of the
+		 * procedure call.
+		 */
+		if (!stmt->target)
+		{
+			Node	   *node;
+			ListCell   *lc;
+			FuncExpr   *funcexpr;
+			int			i;
+			HeapTuple	tuple;
+			int			numargs;
+			Oid		   *argtypes;
+			char	  **argnames;
+			char	   *argmodes;
+			MemoryContext oldcontext;
+			PLpgSQL_row *row;
+			int			nfields;
+
+			/*
+			 * Get the original CallStmt
+			 */
+			node = linitial_node(Query, ((CachedPlanSource *) linitial(expr->plan->plancache_list))->query_list)->utilityStmt;
+			if (!IsA(node, CallStmt))
+				elog(ERROR, "returned row from not a CallStmt");
+
+			funcexpr = castNode(CallStmt, node)->funcexpr;
+
+			/*
+			 * Get the argument modes
+			 */
+			tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcexpr->funcid));
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "cache lookup failed for function %u", funcexpr->funcid);
+			numargs = get_func_arg_info(tuple, &argtypes, &argnames, &argmodes);
+			ReleaseSysCache(tuple);
+
+			Assert(numargs == list_length(funcexpr->args));
+
+			/*
+			 * Construct row
+			 */
+			oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
+
+			row = palloc0(sizeof(*row));
+			row->dtype = PLPGSQL_DTYPE_ROW;
+			row->lineno = -1;
+			row->varnos = palloc(sizeof(int) * FUNC_MAX_ARGS);
+
+			nfields = 0;
+			i = 0;
+			foreach (lc, funcexpr->args)
+			{
+				Node *n = lfirst(lc);
+
+				if (argmodes && argmodes[i] == PROARGMODE_INOUT)
+				{
+					Param	   *param;
+
+					if (!IsA(n, Param))
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("argument %d is an output argument but is not writable", i + 1)));
+
+					param = castNode(Param, n);
+					/* paramid is offset by 1 (see make_datum_param()) */
+					row->varnos[nfields++] = param->paramid - 1;
+				}
+				i++;
+			}
+
+			row->nfields = nfields;
+
+			MemoryContextSwitchTo(oldcontext);
+
+			stmt->target = (PLpgSQL_variable *) row;
+		}
+
+		exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
+	}
+	else if (SPI_processed > 1)
+		elog(ERROR, "procedure call returned more than one row");
+
+	exec_eval_cleanup(estate);
+	SPI_freetuptable(SPI_tuptable);
 
 	return PLPGSQL_RC_OK;
 }
@@ -6763,7 +6886,7 @@ exec_move_row_from_fields(PLpgSQL_execstate *estate,
 		return;
 	}
 
-	elog(ERROR, "unsupported target");
+	elog(ERROR, "unsupported target type: %d", target->dtype);
 }
 
 /*

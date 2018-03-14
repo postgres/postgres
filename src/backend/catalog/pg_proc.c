@@ -438,7 +438,8 @@ ProcedureCreate(const char *procedureName,
 			TupleDesc	newdesc;
 
 			olddesc = build_function_result_tupdesc_t(oldtup);
-			newdesc = build_function_result_tupdesc_d(allParameterTypes,
+			newdesc = build_function_result_tupdesc_d(prokind,
+													  allParameterTypes,
 													  parameterModes,
 													  parameterNames);
 			if (olddesc == NULL && newdesc == NULL)
@@ -925,6 +926,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 											 querytree_sublist);
 			}
 
+			check_sql_fn_statements(querytree_list);
 			(void) check_sql_fn_retval(funcoid, proc->prorettype,
 									   querytree_list,
 									   NULL, NULL);

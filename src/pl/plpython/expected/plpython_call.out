@@ -29,6 +29,29 @@ SELECT * FROM test1;
  55
 (1 row)
 
+-- output arguments
+CREATE PROCEDURE test_proc5(INOUT a text)
+LANGUAGE plpythonu
+AS $$
+return [a + '+' + a]
+$$;
+CALL test_proc5('abc');
+    a    
+---------
+ abc+abc
+(1 row)
+
+CREATE PROCEDURE test_proc6(a int, INOUT b int, INOUT c int)
+LANGUAGE plpythonu
+AS $$
+return (b * a, c * a)
+$$;
+CALL test_proc6(2, 3, 4);
+ b | c 
+---+---
+ 6 | 8
+(1 row)
+
 DROP PROCEDURE test_proc1;
 DROP PROCEDURE test_proc2;
 DROP PROCEDURE test_proc3;

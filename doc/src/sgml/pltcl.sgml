@@ -186,6 +186,18 @@ $$ LANGUAGE pltcl;
 </programlisting>
     </para>
 
+    <para>
+     Output arguments of procedures are returned in the same way, for example:
+
+<programlisting>
+CREATE PROCEDURE tcl_triple(INOUT a integer, INOUT b integer) AS $$
+    return [list a [expr {$1 * 3}] b [expr {$2 * 3}]]
+$$ LANGUAGE pltcl;
+
+CALL tcl_triple(5, 10);
+</programlisting>
+    </para>
+
     <tip>
      <para>
       The result list can be made from an array representation of the

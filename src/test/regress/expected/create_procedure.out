@@ -71,6 +71,26 @@ SELECT * FROM cp_test;
  1 | b
 (2 rows)
 
+-- output arguments
+CREATE PROCEDURE ptest4a(INOUT a int, INOUT b int)
+LANGUAGE SQL
+AS $$
+SELECT 1, 2;
+$$;
+CALL ptest4a(NULL, NULL);
+ a | b 
+---+---
+ 1 | 2
+(1 row)
+
+CREATE PROCEDURE ptest4b(INOUT b int, INOUT a int)
+LANGUAGE SQL
+AS $$
+CALL ptest4a(a, b);  -- error, not supported
+$$;
+ERROR:  calling procedures with output arguments is not supported in SQL functions
+CONTEXT:  SQL function "ptest4b"
+DROP PROCEDURE ptest4a;
 -- various error cases
 CALL version();  -- error: not a procedure
 ERROR:  version() is not a procedure
@@ -90,7 +110,8 @@ ERROR:  invalid attribute in procedure definition
 LINE 1: CREATE PROCEDURE ptestx() LANGUAGE SQL STRICT AS $$ INSERT I...
                                                ^
 CREATE PROCEDURE ptestx(OUT a int) LANGUAGE SQL AS $$ INSERT INTO cp_test VALUES (1, 'a') $$;
-ERROR:  procedures cannot have OUT parameters
+ERROR:  procedures cannot have OUT arguments
+HINT:  INOUT arguments are permitted.
 ALTER PROCEDURE ptest1(text) STRICT;
 ERROR:  invalid attribute in procedure definition
 LINE 1: ALTER PROCEDURE ptest1(text) STRICT;

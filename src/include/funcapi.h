@@ -187,7 +187,8 @@ extern int get_func_input_arg_names(Datum proargnames, Datum proargmodes,
 extern int	get_func_trftypes(HeapTuple procTup, Oid **p_trftypes);
 extern char *get_func_result_name(Oid functionId);
 
-extern TupleDesc build_function_result_tupdesc_d(Datum proallargtypes,
+extern TupleDesc build_function_result_tupdesc_d(char prokind,
+								Datum proallargtypes,
 								Datum proargmodes,
 								Datum proargnames);
 extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);

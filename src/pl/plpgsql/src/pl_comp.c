@@ -475,11 +475,11 @@ do_compile(FunctionCallInfo fcinfo,
 			/*
 			 * If there's just one OUT parameter, out_param_varno points
 			 * directly to it.  If there's more than one, build a row that
-			 * holds all of them.
+			 * holds all of them.  Procedures return a row even for one OUT
+			 * parameter.
 			 */
-			if (num_out_args == 1)
-				function->out_param_varno = out_arg_variables[0]->dno;
-			else if (num_out_args > 1)
+			if (num_out_args > 1 ||
+				(num_out_args == 1 && function->fn_prokind == PROKIND_PROCEDURE))
 			{
 				PLpgSQL_row *row = build_row_from_vars(out_arg_variables,
 													   num_out_args);
@@ -487,6 +487,8 @@ do_compile(FunctionCallInfo fcinfo,
 				plpgsql_adddatum((PLpgSQL_datum *) row);
 				function->out_param_varno = row->dno;
 			}
+			else if (num_out_args == 1)
+				function->out_param_varno = out_arg_variables[0]->dno;
 
 			/*
 			 * Check for a polymorphic returntype. If found, use the actual

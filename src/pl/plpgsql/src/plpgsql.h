@@ -125,6 +125,7 @@ typedef enum PLpgSQL_stmt_type
 	PLPGSQL_STMT_FETCH,
 	PLPGSQL_STMT_CLOSE,
 	PLPGSQL_STMT_PERFORM,
+	PLPGSQL_STMT_CALL,
 	PLPGSQL_STMT_COMMIT,
 	PLPGSQL_STMT_ROLLBACK
 } PLpgSQL_stmt_type;
@@ -507,6 +508,17 @@ typedef struct PLpgSQL_stmt_perform
 	int			lineno;
 	PLpgSQL_expr *expr;
 } PLpgSQL_stmt_perform;
+
+/*
+ * CALL statement
+ */
+typedef struct PLpgSQL_stmt_call
+{
+	PLpgSQL_stmt_type cmd_type;
+	int			lineno;
+	PLpgSQL_expr *expr;
+	PLpgSQL_variable *target;
+} PLpgSQL_stmt_call;
 
 /*
  * COMMIT statement
