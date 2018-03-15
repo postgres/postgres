@@ -388,26 +388,26 @@ select tableoid::regclass, * from mlparted_def;
 create table key_desc (a int, b int) partition by list ((a+0));
 create table key_desc_1 partition of key_desc for values in (1) partition by range (b);
 
-create user someone_else;
-grant select (a) on key_desc_1 to someone_else;
-grant insert on key_desc to someone_else;
+create user regress_insert_other_user;
+grant select (a) on key_desc_1 to regress_insert_other_user;
+grant insert on key_desc to regress_insert_other_user;
 
-set role someone_else;
+set role regress_insert_other_user;
 -- no key description is shown
 insert into key_desc values (1, 1);
 
 reset role;
-grant select (b) on key_desc_1 to someone_else;
-set role someone_else;
+grant select (b) on key_desc_1 to regress_insert_other_user;
+set role regress_insert_other_user;
 -- key description (b)=(1) is now shown
 insert into key_desc values (1, 1);
 
 -- key description is not shown if key contains expression
 insert into key_desc values (2, 1);
 reset role;
-revoke all on key_desc from someone_else;
-revoke all on key_desc_1 from someone_else;
-drop role someone_else;
+revoke all on key_desc from regress_insert_other_user;
+revoke all on key_desc_1 from regress_insert_other_user;
+drop role regress_insert_other_user;
 drop table key_desc, key_desc_1;
 
 -- test minvalue/maxvalue restrictions

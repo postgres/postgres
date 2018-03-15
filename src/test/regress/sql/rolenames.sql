@@ -385,7 +385,7 @@ GRANT regress_testrol0 TO pg_signal_backend; -- success
 
 SET ROLE pg_signal_backend; --success
 RESET ROLE;
-CREATE SCHEMA test_schema AUTHORIZATION pg_signal_backend; --success
+CREATE SCHEMA test_roles_schema AUTHORIZATION pg_signal_backend; --success
 SET ROLE regress_testrol2;
 
 UPDATE pg_proc SET proacl = null WHERE proname LIKE 'testagg_';
@@ -441,7 +441,7 @@ SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
 -- clean up
 \c
 
-DROP SCHEMA test_schema;
+DROP SCHEMA test_roles_schema;
 DROP OWNED BY regress_testrol0, "Public", "current_user", regress_testrol1, regress_testrol2, regress_testrolx CASCADE;
 DROP ROLE regress_testrol0, regress_testrol1, regress_testrol2, regress_testrolx;
 DROP ROLE "Public", "None", "current_user", "session_user", "user";

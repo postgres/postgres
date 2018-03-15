@@ -1,7 +1,7 @@
 --
 -- Regression tests for schemas (namespaces)
 --
-CREATE SCHEMA test_schema_1
+CREATE SCHEMA test_ns_schema_1
        CREATE UNIQUE INDEX abc_a_idx ON abc (a)
        CREATE VIEW abc_view AS
               SELECT a+1 AS a, b+1 AS b FROM abc
@@ -11,16 +11,16 @@ CREATE SCHEMA test_schema_1
        );
 -- verify that the objects were created
 SELECT COUNT(*) FROM pg_class WHERE relnamespace =
-    (SELECT oid FROM pg_namespace WHERE nspname = 'test_schema_1');
+    (SELECT oid FROM pg_namespace WHERE nspname = 'test_ns_schema_1');
  count 
 -------
      5
 (1 row)
 
-INSERT INTO test_schema_1.abc DEFAULT VALUES;
-INSERT INTO test_schema_1.abc DEFAULT VALUES;
-INSERT INTO test_schema_1.abc DEFAULT VALUES;
-SELECT * FROM test_schema_1.abc;
+INSERT INTO test_ns_schema_1.abc DEFAULT VALUES;
+INSERT INTO test_ns_schema_1.abc DEFAULT VALUES;
+INSERT INTO test_ns_schema_1.abc DEFAULT VALUES;
+SELECT * FROM test_ns_schema_1.abc;
  a | b 
 ---+---
  1 |  
@@ -28,7 +28,7 @@ SELECT * FROM test_schema_1.abc;
  3 |  
 (3 rows)
 
-SELECT * FROM test_schema_1.abc_view;
+SELECT * FROM test_ns_schema_1.abc_view;
  a | b 
 ---+---
  2 |  
@@ -36,20 +36,20 @@ SELECT * FROM test_schema_1.abc_view;
  4 |  
 (3 rows)
 
-ALTER SCHEMA test_schema_1 RENAME TO test_schema_renamed;
+ALTER SCHEMA test_ns_schema_1 RENAME TO test_ns_schema_renamed;
 SELECT COUNT(*) FROM pg_class WHERE relnamespace =
-    (SELECT oid FROM pg_namespace WHERE nspname = 'test_schema_1');
+    (SELECT oid FROM pg_namespace WHERE nspname = 'test_ns_schema_1');
  count 
 -------
      0
 (1 row)
 
 -- test IF NOT EXISTS cases
-CREATE SCHEMA test_schema_renamed; -- fail, already exists
-ERROR:  schema "test_schema_renamed" already exists
-CREATE SCHEMA IF NOT EXISTS test_schema_renamed; -- ok with notice
-NOTICE:  schema "test_schema_renamed" already exists, skipping
-CREATE SCHEMA IF NOT EXISTS test_schema_renamed -- fail, disallowed
+CREATE SCHEMA test_ns_schema_renamed; -- fail, already exists
+ERROR:  schema "test_ns_schema_renamed" already exists
+CREATE SCHEMA IF NOT EXISTS test_ns_schema_renamed; -- ok with notice
+NOTICE:  schema "test_ns_schema_renamed" already exists, skipping
+CREATE SCHEMA IF NOT EXISTS test_ns_schema_renamed -- fail, disallowed
        CREATE TABLE abc (
               a serial,
               b int UNIQUE
@@ -57,13 +57,13 @@ CREATE SCHEMA IF NOT EXISTS test_schema_renamed -- fail, disallowed
 ERROR:  CREATE SCHEMA IF NOT EXISTS cannot include schema elements
 LINE 2:        CREATE TABLE abc (
                ^
-DROP SCHEMA test_schema_renamed CASCADE;
+DROP SCHEMA test_ns_schema_renamed CASCADE;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to table test_schema_renamed.abc
-drop cascades to view test_schema_renamed.abc_view
+DETAIL:  drop cascades to table test_ns_schema_renamed.abc
+drop cascades to view test_ns_schema_renamed.abc_view
 -- verify that the objects were dropped
 SELECT COUNT(*) FROM pg_class WHERE relnamespace =
-    (SELECT oid FROM pg_namespace WHERE nspname = 'test_schema_renamed');
+    (SELECT oid FROM pg_namespace WHERE nspname = 'test_ns_schema_renamed');
  count 
 -------
      0
