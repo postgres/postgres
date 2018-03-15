@@ -3337,10 +3337,11 @@ void
 ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
 					 ExplainState *es)
 {
-	char		buf[256];
+	char	   *buf;
 
-	snprintf(buf, sizeof(buf), "%.*f", ndigits, value);
+	buf = psprintf("%.*f", ndigits, value);
 	ExplainProperty(qlabel, buf, true, es);
+	pfree(buf);
 }
 
 /*

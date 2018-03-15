@@ -117,13 +117,6 @@
 #define DCH_MAX_ITEM_SIZ	   12	/* max localized day name		*/
 #define NUM_MAX_ITEM_SIZ		8	/* roman number (RN has 15 chars)	*/
 
-/* ----------
- * More is in float.c
- * ----------
- */
-#define MAXFLOATWIDTH	60
-#define MAXDOUBLEWIDTH	500
-
 
 /* ----------
  * Format parser structs
@@ -3911,9 +3904,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 			tmfc.tzm < 0 || tmfc.tzm >= MINS_PER_HOUR)
 			DateTimeParseError(DTERR_TZDISP_OVERFLOW, date_str, "timestamp");
 
-		tz = palloc(7);
-
-		snprintf(tz, 7, "%c%02d:%02d",
+		tz = psprintf("%c%02d:%02d",
 				 tmfc.tzsign > 0 ? '+' : '-', tmfc.tzh, tmfc.tzm);
 
 		tm->tm_zone = tz;
@@ -4135,7 +4126,7 @@ int_to_roman(int number)
 				num = 0;
 	char	   *p = NULL,
 			   *result,
-				numstr[5];
+				numstr[12];
 
 	result = (char *) palloc(16);
 	*result = '\0';
@@ -5441,8 +5432,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 		/* we can do it easily because float8 won't lose any precision */
 		float8		val = (float8) value;
 
-		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
-		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, val);
+		orgnum = (char *) psprintf("%+.*e", Num.post, val);
 
 		/*
 		 * Swap a leading positive sign for a space.
@@ -5641,7 +5631,6 @@ float4_to_char(PG_FUNCTION_ARGS)
 		numstr = orgnum = int_to_roman((int) rint(value));
 	else if (IS_EEEE(&Num))
 	{
-		numstr = orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
 		if (isnan(value) || is_infinite(value))
 		{
 			/*
@@ -5655,7 +5644,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, value);
+			numstr = orgnum = psprintf("%+.*e", Num.post, value);
 
 			/*
 			 * Swap a leading positive sign for a space.
@@ -5679,8 +5668,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 			Num.pre += Num.multi;
 		}
 
-		orgnum = (char *) palloc(MAXFLOATWIDTH + 1);
-		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.0f", fabs(val));
+		orgnum = (char *) psprintf("%.0f", fabs(val));
 		numstr_pre_len = strlen(orgnum);
 
 		/* adjust post digits to fit max float digits */
@@ -5688,7 +5676,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 			Num.post = 0;
 		else if (numstr_pre_len + Num.post > FLT_DIG)
 			Num.post = FLT_DIG - numstr_pre_len;
-		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.*f", Num.post, val);
+		orgnum = psprintf("%.*f", Num.post, val);
 
 		if (*orgnum == '-')
 		{						/* < 0 */
@@ -5747,7 +5735,6 @@ float8_to_char(PG_FUNCTION_ARGS)
 		numstr = orgnum = int_to_roman((int) rint(value));
 	else if (IS_EEEE(&Num))
 	{
-		numstr = orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
 		if (isnan(value) || is_infinite(value))
 		{
 			/*
@@ -5761,7 +5748,7 @@ float8_to_char(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, value);
+			numstr = orgnum = (char *) psprintf("%+.*e", Num.post, value);
 
 			/*
 			 * Swap a leading positive sign for a space.
@@ -5784,15 +5771,15 @@ float8_to_char(PG_FUNCTION_ARGS)
 			val = value * multi;
 			Num.pre += Num.multi;
 		}
-		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
-		numstr_pre_len = snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.0f", fabs(val));
+		orgnum = psprintf("%.0f", fabs(val));
+		numstr_pre_len = strlen(orgnum);
 
 		/* adjust post digits to fit max double digits */
 		if (numstr_pre_len >= DBL_DIG)
 			Num.post = 0;
 		else if (numstr_pre_len + Num.post > DBL_DIG)
 			Num.post = DBL_DIG - numstr_pre_len;
-		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.*f", Num.post, val);
+		orgnum = psprintf("%.*f", Num.post, val);
 
 		if (*orgnum == '-')
 		{						/* < 0 */

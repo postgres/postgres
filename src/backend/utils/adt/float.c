@@ -44,10 +44,6 @@ static const uint32 nan[2] = {0xffffffff, 0x7fffffff};
 #define NAN (*(const double *) nan)
 #endif
 
-/* not sure what the following should be, but better to make it over-sufficient */
-#define MAXFLOATWIDTH	64
-#define MAXDOUBLEWIDTH	128
-
 /*
  * check to see if a float4/8 val has underflowed or overflowed
  */
@@ -360,18 +356,18 @@ Datum
 float4out(PG_FUNCTION_ARGS)
 {
 	float4		num = PG_GETARG_FLOAT4(0);
-	char	   *ascii = (char *) palloc(MAXFLOATWIDTH + 1);
+	char	   *ascii;
 
 	if (isnan(num))
-		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
+		PG_RETURN_CSTRING(pstrdup("NaN"));
 
 	switch (is_infinite(num))
 	{
 		case 1:
-			strcpy(ascii, "Infinity");
+			ascii = pstrdup("Infinity");
 			break;
 		case -1:
-			strcpy(ascii, "-Infinity");
+			ascii = pstrdup("-Infinity");
 			break;
 		default:
 			{
@@ -380,7 +376,7 @@ float4out(PG_FUNCTION_ARGS)
 				if (ndig < 1)
 					ndig = 1;
 
-				snprintf(ascii, MAXFLOATWIDTH + 1, "%.*g", ndig, num);
+				ascii = psprintf("%.*g", ndig, num);
 			}
 	}
 
@@ -596,18 +592,18 @@ float8out(PG_FUNCTION_ARGS)
 char *
 float8out_internal(double num)
 {
-	char	   *ascii = (char *) palloc(MAXDOUBLEWIDTH + 1);
+	char	   *ascii;
 
 	if (isnan(num))
-		return strcpy(ascii, "NaN");
+		return pstrdup("NaN");
 
 	switch (is_infinite(num))
 	{
 		case 1:
-			strcpy(ascii, "Infinity");
+			ascii = pstrdup("Infinity");
 			break;
 		case -1:
-			strcpy(ascii, "-Infinity");
+			ascii = pstrdup("-Infinity");
 			break;
 		default:
 			{
@@ -616,7 +612,7 @@ float8out_internal(double num)
 				if (ndig < 1)
 					ndig = 1;
 
-				snprintf(ascii, MAXDOUBLEWIDTH + 1, "%.*g", ndig, num);
+				ascii = psprintf("%.*g", ndig, num);
 			}
 	}
 

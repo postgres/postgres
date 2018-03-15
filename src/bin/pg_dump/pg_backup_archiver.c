@@ -1532,7 +1532,7 @@ SetOutput(ArchiveHandle *AH, const char *filename, int compression)
 #ifdef HAVE_LIBZ
 	if (compression != 0)
 	{
-		char		fmode[10];
+		char		fmode[14];
 
 		/* Don't use PG_BINARY_x since this is zlib */
 		sprintf(fmode, "wb%d", compression);

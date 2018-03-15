@@ -1436,7 +1436,7 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 
 	if (strcmp(attribute_name, "key_bits") == 0)
 	{
-		static char sslbits_str[10];
+		static char sslbits_str[12];
 		int			sslbits;
 
 		SSL_get_cipher_bits(conn->ssl, &sslbits);

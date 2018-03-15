@@ -335,7 +335,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	TAR_MEMBER *tm;
 
 #ifdef HAVE_LIBZ
-	char		fmode[10];
+	char		fmode[14];
 #endif
 
 	if (mode == 'r')

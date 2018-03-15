@@ -3591,7 +3591,7 @@ parseQuery(Command *cmd)
 	p = sql;
 	while ((p = strchr(p, ':')) != NULL)
 	{
-		char		var[12];
+		char		var[13];
 		char	   *name;
 		int			eaten;
 
@@ -5432,7 +5432,7 @@ threadRun(void *arg)
 							sqlat,
 							lag,
 							stdev;
-				char		tbuf[64];
+				char		tbuf[315];
 
 				/*
 				 * Add up the statistics of all threads.

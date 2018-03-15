@@ -1456,7 +1456,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		Datum		prosrcdatum;
 		bool		isnull;
 		char	   *proc_source;
-		char		buf[32];
+		char		buf[48];
 		Tcl_Interp *interp;
 		int			i;
 		int			tcl_rc;
