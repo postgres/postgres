@@ -37,6 +37,6 @@ extern void logicalrep_rel_close(LogicalRepRelMapEntry *rel,
 					 LOCKMODE lockmode);
 
 extern void logicalrep_typmap_update(LogicalRepTyp *remotetyp);
-extern Oid	logicalrep_typmap_getid(Oid remoteid);
+extern char *logicalrep_typmap_gettypname(Oid remoteid);
 
 #endif							/* LOGICALRELATION_H */

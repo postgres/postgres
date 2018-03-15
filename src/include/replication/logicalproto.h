@@ -55,10 +55,9 @@ typedef struct LogicalRepRelation
 /* Type mapping info */
 typedef struct LogicalRepTyp
 {
-	Oid			remoteid;		/* unique id of the type */
-	char	   *nspname;		/* schema name */
-	char	   *typname;		/* name of the type */
-	Oid			typoid;			/* local type Oid */
+	Oid			remoteid;		/* unique id of the remote type */
+	char	   *nspname;		/* schema name of remote type */
+	char	   *typname;		/* name of the remote type */
 } LogicalRepTyp;
 
 /* Transaction info */

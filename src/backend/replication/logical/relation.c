@@ -35,8 +35,6 @@ static MemoryContext LogicalRepRelMapContext = NULL;
 static HTAB *LogicalRepRelMap = NULL;
 static HTAB *LogicalRepTypMap = NULL;
 
-static void logicalrep_typmap_invalidate_cb(Datum arg, int cacheid,
-								uint32 hashvalue);
 
 /*
  * Relcache invalidation callback for our relation map cache.
@@ -114,8 +112,6 @@ logicalrep_relmap_init(void)
 
 	/* Watch for invalidation events. */
 	CacheRegisterRelcacheCallback(logicalrep_relmap_invalidate_cb,
-								  (Datum) 0);
-	CacheRegisterSyscacheCallback(TYPEOID, logicalrep_typmap_invalidate_cb,
 								  (Datum) 0);
 }
 
@@ -375,27 +371,6 @@ logicalrep_rel_close(LogicalRepRelMapEntry *rel, LOCKMODE lockmode)
 	rel->localrel = NULL;
 }
 
-
-/*
- * Type cache invalidation callback for our type map cache.
- */
-static void
-logicalrep_typmap_invalidate_cb(Datum arg, int cacheid, uint32 hashvalue)
-{
-	HASH_SEQ_STATUS status;
-	LogicalRepTyp *entry;
-
-	/* Just to be sure. */
-	if (LogicalRepTypMap == NULL)
-		return;
-
-	/* invalidate all cache entries */
-	hash_seq_init(&status, LogicalRepTypMap);
-
-	while ((entry = (LogicalRepTyp *) hash_seq_search(&status)) != NULL)
-		entry->typoid = InvalidOid;
-}
-
 /*
  * Free the type map cache entry data.
  */
@@ -404,8 +379,6 @@ logicalrep_typmap_free_entry(LogicalRepTyp *entry)
 {
 	pfree(entry->nspname);
 	pfree(entry->typname);
-
-	entry->typoid = InvalidOid;
 }
 
 /*
@@ -436,58 +409,53 @@ logicalrep_typmap_update(LogicalRepTyp *remotetyp)
 	entry->nspname = pstrdup(remotetyp->nspname);
 	entry->typname = pstrdup(remotetyp->typname);
 	MemoryContextSwitchTo(oldctx);
-	entry->typoid = InvalidOid;
 }
 
 /*
- * Fetch type info from the cache.
+ * Fetch type name from the cache by remote type OID.
+ *
+ * Return a substitute value if we cannot find the data type; no message is
+ * sent to the log in that case, because this is used by error callback
+ * already.
  */
-Oid
-logicalrep_typmap_getid(Oid remoteid)
+char *
+logicalrep_typmap_gettypname(Oid remoteid)
 {
 	LogicalRepTyp *entry;
 	bool		found;
-	Oid			nspoid;
 
 	/* Internal types are mapped directly. */
 	if (remoteid < FirstNormalObjectId)
 	{
 		if (!get_typisdefined(remoteid))
-			ereport(ERROR,
-					(errmsg("built-in type %u not found", remoteid),
-					 errhint("This can be caused by having a publisher with a higher PostgreSQL major version than the subscriber.")));
-		return remoteid;
+		{
+			/*
+			 * This can be caused by having a publisher with a higher
+			 * PostgreSQL major version than the subscriber.
+			 */
+			return psprintf("unrecognized %u", remoteid);
+		}
+
+		return format_type_be(remoteid);
 	}
 
 	if (LogicalRepTypMap == NULL)
-		logicalrep_relmap_init();
+	{
+		/*
+		 * If the typemap is not initialized yet, we cannot possibly attempt
+		 * to search the hash table; but there's no way we know the type
+		 * locally yet, since we haven't received a message about this type,
+		 * so this is the best we can do.
+		 */
+		return psprintf("unrecognized %u", remoteid);
+	}
 
-	/* Try finding the mapping. */
+	/* search the mapping */
 	entry = hash_search(LogicalRepTypMap, (void *) &remoteid,
 						HASH_FIND, &found);
-
 	if (!found)
-		elog(ERROR, "no type map entry for remote type %u",
-			 remoteid);
+		return psprintf("unrecognized %u", remoteid);
 
-	/* Found and mapped, return the oid. */
-	if (OidIsValid(entry->typoid))
-		return entry->typoid;
-
-	/* Otherwise, try to map to local type. */
-	nspoid = LookupExplicitNamespace(entry->nspname, true);
-	if (OidIsValid(nspoid))
-		entry->typoid = GetSysCacheOid2(TYPENAMENSP,
-										PointerGetDatum(entry->typname),
-										ObjectIdGetDatum(nspoid));
-	else
-		entry->typoid = InvalidOid;
-
-	if (!OidIsValid(entry->typoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("data type \"%s.%s\" required for logical replication does not exist",
-						entry->nspname, entry->typname)));
-
-	return entry->typoid;
+	Assert(OidIsValid(entry->remoteid));
+	return psprintf("%s.%s", entry->nspname, entry->typname);
 }
