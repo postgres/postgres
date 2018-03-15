@@ -579,25 +579,25 @@ DROP TRIGGER trigtest_after_row ON foreign_schema.foreign_table_1;
 DROP FUNCTION dummy_trigger();
 
 -- Table inheritance
-CREATE TABLE pt1 (
+CREATE TABLE fd_pt1 (
 	c1 integer NOT NULL,
 	c2 text,
 	c3 date
 );
-CREATE FOREIGN TABLE ft2 () INHERITS (pt1)
+CREATE FOREIGN TABLE ft2 () INHERITS (fd_pt1)
   SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
-\d+ pt1
+\d+ fd_pt1
 \d+ ft2
 DROP FOREIGN TABLE ft2;
-\d+ pt1
+\d+ fd_pt1
 CREATE FOREIGN TABLE ft2 (
 	c1 integer NOT NULL,
 	c2 text,
 	c3 date
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 \d+ ft2
-ALTER FOREIGN TABLE ft2 INHERIT pt1;
-\d+ pt1
+ALTER FOREIGN TABLE ft2 INHERIT fd_pt1;
+\d+ fd_pt1
 \d+ ft2
 CREATE TABLE ct3() INHERITS(ft2);
 CREATE FOREIGN TABLE ft3 (
@@ -611,50 +611,50 @@ CREATE FOREIGN TABLE ft3 (
 \d+ ft3
 
 -- add attributes recursively
-ALTER TABLE pt1 ADD COLUMN c4 integer;
-ALTER TABLE pt1 ADD COLUMN c5 integer DEFAULT 0;
-ALTER TABLE pt1 ADD COLUMN c6 integer;
-ALTER TABLE pt1 ADD COLUMN c7 integer NOT NULL;
-ALTER TABLE pt1 ADD COLUMN c8 integer;
-\d+ pt1
+ALTER TABLE fd_pt1 ADD COLUMN c4 integer;
+ALTER TABLE fd_pt1 ADD COLUMN c5 integer DEFAULT 0;
+ALTER TABLE fd_pt1 ADD COLUMN c6 integer;
+ALTER TABLE fd_pt1 ADD COLUMN c7 integer NOT NULL;
+ALTER TABLE fd_pt1 ADD COLUMN c8 integer;
+\d+ fd_pt1
 \d+ ft2
 \d+ ct3
 \d+ ft3
 
 -- alter attributes recursively
-ALTER TABLE pt1 ALTER COLUMN c4 SET DEFAULT 0;
-ALTER TABLE pt1 ALTER COLUMN c5 DROP DEFAULT;
-ALTER TABLE pt1 ALTER COLUMN c6 SET NOT NULL;
-ALTER TABLE pt1 ALTER COLUMN c7 DROP NOT NULL;
-ALTER TABLE pt1 ALTER COLUMN c8 TYPE char(10) USING '0';        -- ERROR
-ALTER TABLE pt1 ALTER COLUMN c8 TYPE char(10);
-ALTER TABLE pt1 ALTER COLUMN c8 SET DATA TYPE text;
-ALTER TABLE pt1 ALTER COLUMN c1 SET STATISTICS 10000;
-ALTER TABLE pt1 ALTER COLUMN c1 SET (n_distinct = 100);
-ALTER TABLE pt1 ALTER COLUMN c8 SET STATISTICS -1;
-ALTER TABLE pt1 ALTER COLUMN c8 SET STORAGE EXTERNAL;
-\d+ pt1
+ALTER TABLE fd_pt1 ALTER COLUMN c4 SET DEFAULT 0;
+ALTER TABLE fd_pt1 ALTER COLUMN c5 DROP DEFAULT;
+ALTER TABLE fd_pt1 ALTER COLUMN c6 SET NOT NULL;
+ALTER TABLE fd_pt1 ALTER COLUMN c7 DROP NOT NULL;
+ALTER TABLE fd_pt1 ALTER COLUMN c8 TYPE char(10) USING '0';        -- ERROR
+ALTER TABLE fd_pt1 ALTER COLUMN c8 TYPE char(10);
+ALTER TABLE fd_pt1 ALTER COLUMN c8 SET DATA TYPE text;
+ALTER TABLE fd_pt1 ALTER COLUMN c1 SET STATISTICS 10000;
+ALTER TABLE fd_pt1 ALTER COLUMN c1 SET (n_distinct = 100);
+ALTER TABLE fd_pt1 ALTER COLUMN c8 SET STATISTICS -1;
+ALTER TABLE fd_pt1 ALTER COLUMN c8 SET STORAGE EXTERNAL;
+\d+ fd_pt1
 \d+ ft2
 
 -- drop attributes recursively
-ALTER TABLE pt1 DROP COLUMN c4;
-ALTER TABLE pt1 DROP COLUMN c5;
-ALTER TABLE pt1 DROP COLUMN c6;
-ALTER TABLE pt1 DROP COLUMN c7;
-ALTER TABLE pt1 DROP COLUMN c8;
-\d+ pt1
+ALTER TABLE fd_pt1 DROP COLUMN c4;
+ALTER TABLE fd_pt1 DROP COLUMN c5;
+ALTER TABLE fd_pt1 DROP COLUMN c6;
+ALTER TABLE fd_pt1 DROP COLUMN c7;
+ALTER TABLE fd_pt1 DROP COLUMN c8;
+\d+ fd_pt1
 \d+ ft2
 
 -- add constraints recursively
-ALTER TABLE pt1 ADD CONSTRAINT pt1chk1 CHECK (c1 > 0) NO INHERIT;
-ALTER TABLE pt1 ADD CONSTRAINT pt1chk2 CHECK (c2 <> '');
+ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk1 CHECK (c1 > 0) NO INHERIT;
+ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk2 CHECK (c2 <> '');
 -- connoinherit should be true for NO INHERIT constraint
 SELECT relname, conname, contype, conislocal, coninhcount, connoinherit
   FROM pg_class AS pc JOIN pg_constraint AS pgc ON (conrelid = pc.oid)
-  WHERE pc.relname = 'pt1'
+  WHERE pc.relname = 'fd_pt1'
   ORDER BY 1,2;
 -- child does not inherit NO INHERIT constraints
-\d+ pt1
+\d+ fd_pt1
 \d+ ft2
 \set VERBOSITY terse
 DROP FOREIGN TABLE ft2; -- ERROR
@@ -666,50 +666,50 @@ CREATE FOREIGN TABLE ft2 (
 	c3 date
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 -- child must have parent's INHERIT constraints
-ALTER FOREIGN TABLE ft2 INHERIT pt1;                            -- ERROR
-ALTER FOREIGN TABLE ft2 ADD CONSTRAINT pt1chk2 CHECK (c2 <> '');
-ALTER FOREIGN TABLE ft2 INHERIT pt1;
+ALTER FOREIGN TABLE ft2 INHERIT fd_pt1;                            -- ERROR
+ALTER FOREIGN TABLE ft2 ADD CONSTRAINT fd_pt1chk2 CHECK (c2 <> '');
+ALTER FOREIGN TABLE ft2 INHERIT fd_pt1;
 -- child does not inherit NO INHERIT constraints
-\d+ pt1
+\d+ fd_pt1
 \d+ ft2
 
 -- drop constraints recursively
-ALTER TABLE pt1 DROP CONSTRAINT pt1chk1 CASCADE;
-ALTER TABLE pt1 DROP CONSTRAINT pt1chk2 CASCADE;
+ALTER TABLE fd_pt1 DROP CONSTRAINT fd_pt1chk1 CASCADE;
+ALTER TABLE fd_pt1 DROP CONSTRAINT fd_pt1chk2 CASCADE;
 
 -- NOT VALID case
-INSERT INTO pt1 VALUES (1, 'pt1'::text, '1994-01-01'::date);
-ALTER TABLE pt1 ADD CONSTRAINT pt1chk3 CHECK (c2 <> '') NOT VALID;
-\d+ pt1
+INSERT INTO fd_pt1 VALUES (1, 'fd_pt1'::text, '1994-01-01'::date);
+ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk3 CHECK (c2 <> '') NOT VALID;
+\d+ fd_pt1
 \d+ ft2
 -- VALIDATE CONSTRAINT need do nothing on foreign tables
-ALTER TABLE pt1 VALIDATE CONSTRAINT pt1chk3;
-\d+ pt1
+ALTER TABLE fd_pt1 VALIDATE CONSTRAINT fd_pt1chk3;
+\d+ fd_pt1
 \d+ ft2
 
 -- OID system column
-ALTER TABLE pt1 SET WITH OIDS;
-\d+ pt1
+ALTER TABLE fd_pt1 SET WITH OIDS;
+\d+ fd_pt1
 \d+ ft2
 ALTER TABLE ft2 SET WITHOUT OIDS;  -- ERROR
-ALTER TABLE pt1 SET WITHOUT OIDS;
-\d+ pt1
+ALTER TABLE fd_pt1 SET WITHOUT OIDS;
+\d+ fd_pt1
 \d+ ft2
 
 -- changes name of an attribute recursively
-ALTER TABLE pt1 RENAME COLUMN c1 TO f1;
-ALTER TABLE pt1 RENAME COLUMN c2 TO f2;
-ALTER TABLE pt1 RENAME COLUMN c3 TO f3;
+ALTER TABLE fd_pt1 RENAME COLUMN c1 TO f1;
+ALTER TABLE fd_pt1 RENAME COLUMN c2 TO f2;
+ALTER TABLE fd_pt1 RENAME COLUMN c3 TO f3;
 -- changes name of a constraint recursively
-ALTER TABLE pt1 RENAME CONSTRAINT pt1chk3 TO f2_check;
-\d+ pt1
+ALTER TABLE fd_pt1 RENAME CONSTRAINT fd_pt1chk3 TO f2_check;
+\d+ fd_pt1
 \d+ ft2
 
 -- TRUNCATE doesn't work on foreign tables, either directly or recursively
 TRUNCATE ft2;  -- ERROR
-TRUNCATE pt1;  -- ERROR
+TRUNCATE fd_pt1;  -- ERROR
 
-DROP TABLE pt1 CASCADE;
+DROP TABLE fd_pt1 CASCADE;
 
 -- IMPORT FOREIGN SCHEMA
 IMPORT FOREIGN SCHEMA s1 FROM SERVER s9 INTO public; -- ERROR
@@ -729,75 +729,75 @@ DROP OWNED BY regress_test_role2;
 DROP OWNED BY regress_test_role2 CASCADE;
 
 -- Foreign partition DDL stuff
-CREATE TABLE pt2 (
+CREATE TABLE fd_pt2 (
 	c1 integer NOT NULL,
 	c2 text,
 	c3 date
 ) PARTITION BY LIST (c1);
-CREATE FOREIGN TABLE pt2_1 PARTITION OF pt2 FOR VALUES IN (1)
+CREATE FOREIGN TABLE fd_pt2_1 PARTITION OF fd_pt2 FOR VALUES IN (1)
   SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
-\d+ pt2
-\d+ pt2_1
+\d+ fd_pt2
+\d+ fd_pt2_1
 
 -- partition cannot have additional columns
-DROP FOREIGN TABLE pt2_1;
-CREATE FOREIGN TABLE pt2_1 (
+DROP FOREIGN TABLE fd_pt2_1;
+CREATE FOREIGN TABLE fd_pt2_1 (
 	c1 integer NOT NULL,
 	c2 text,
 	c3 date,
 	c4 char
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
-\d+ pt2_1
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
+\d+ fd_pt2_1
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);       -- ERROR
 
-DROP FOREIGN TABLE pt2_1;
-\d+ pt2
-CREATE FOREIGN TABLE pt2_1 (
+DROP FOREIGN TABLE fd_pt2_1;
+\d+ fd_pt2
+CREATE FOREIGN TABLE fd_pt2_1 (
 	c1 integer NOT NULL,
 	c2 text,
 	c3 date
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
-\d+ pt2_1
+\d+ fd_pt2_1
 -- no attach partition validation occurs for foreign tables
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
-\d+ pt2
-\d+ pt2_1
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);
+\d+ fd_pt2
+\d+ fd_pt2_1
 
 -- cannot add column to a partition
-ALTER TABLE pt2_1 ADD c4 char;
+ALTER TABLE fd_pt2_1 ADD c4 char;
 
 -- ok to have a partition's own constraints though
-ALTER TABLE pt2_1 ALTER c3 SET NOT NULL;
-ALTER TABLE pt2_1 ADD CONSTRAINT p21chk CHECK (c2 <> '');
-\d+ pt2
-\d+ pt2_1
+ALTER TABLE fd_pt2_1 ALTER c3 SET NOT NULL;
+ALTER TABLE fd_pt2_1 ADD CONSTRAINT p21chk CHECK (c2 <> '');
+\d+ fd_pt2
+\d+ fd_pt2_1
 
 -- cannot drop inherited NOT NULL constraint from a partition
-ALTER TABLE pt2_1 ALTER c1 DROP NOT NULL;
+ALTER TABLE fd_pt2_1 ALTER c1 DROP NOT NULL;
 
 -- partition must have parent's constraints
-ALTER TABLE pt2 DETACH PARTITION pt2_1;
-ALTER TABLE pt2 ALTER c2 SET NOT NULL;
-\d+ pt2
-\d+ pt2_1
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
-ALTER FOREIGN TABLE pt2_1 ALTER c2 SET NOT NULL;
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
+ALTER TABLE fd_pt2 DETACH PARTITION fd_pt2_1;
+ALTER TABLE fd_pt2 ALTER c2 SET NOT NULL;
+\d+ fd_pt2
+\d+ fd_pt2_1
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);       -- ERROR
+ALTER FOREIGN TABLE fd_pt2_1 ALTER c2 SET NOT NULL;
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);
 
-ALTER TABLE pt2 DETACH PARTITION pt2_1;
-ALTER TABLE pt2 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
-\d+ pt2
-\d+ pt2_1
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
-ALTER FOREIGN TABLE pt2_1 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
+ALTER TABLE fd_pt2 DETACH PARTITION fd_pt2_1;
+ALTER TABLE fd_pt2 ADD CONSTRAINT fd_pt2chk1 CHECK (c1 > 0);
+\d+ fd_pt2
+\d+ fd_pt2_1
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);       -- ERROR
+ALTER FOREIGN TABLE fd_pt2_1 ADD CONSTRAINT fd_pt2chk1 CHECK (c1 > 0);
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);
 
 -- TRUNCATE doesn't work on foreign tables, either directly or recursively
-TRUNCATE pt2_1;  -- ERROR
-TRUNCATE pt2;  -- ERROR
+TRUNCATE fd_pt2_1;  -- ERROR
+TRUNCATE fd_pt2;  -- ERROR
 
-DROP FOREIGN TABLE pt2_1;
-DROP TABLE pt2;
+DROP FOREIGN TABLE fd_pt2_1;
+DROP TABLE fd_pt2;
 
 -- Cleanup
 DROP SCHEMA foreign_schema CASCADE;

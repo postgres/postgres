@@ -1648,7 +1648,7 @@ create table perform_test (
 	b	INT
 );
 
-create function simple_func(int) returns boolean as '
+create function perform_simple_func(int) returns boolean as '
 BEGIN
 	IF $1 < 20 THEN
 		INSERT INTO perform_test VALUES ($1, $1 + 10);
@@ -1664,13 +1664,13 @@ BEGIN
 		INSERT INTO perform_test VALUES (100, 100);
 	END IF;
 
-	PERFORM simple_func(5);
+	PERFORM perform_simple_func(5);
 
 	IF FOUND then
 		INSERT INTO perform_test VALUES (100, 100);
 	END IF;
 
-	PERFORM simple_func(50);
+	PERFORM perform_simple_func(50);
 
 	IF FOUND then
 		INSERT INTO perform_test VALUES (100, 100);
@@ -2332,7 +2332,7 @@ create temp table foo (f1 int, f2 int);
 
 insert into foo values (1,2), (3,4);
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
@@ -2340,9 +2340,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail due to implicit strict
@@ -2350,9 +2350,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
@@ -2360,9 +2360,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- this should work since EXECUTE isn't as picky
@@ -2370,11 +2370,11 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
 select * from foo;
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
@@ -2382,9 +2382,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, no rows
@@ -2392,9 +2392,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, too many rows
@@ -2402,9 +2402,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
@@ -2412,9 +2412,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, no rows
@@ -2422,9 +2422,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, too many rows
@@ -2432,15 +2432,15 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-drop function footest();
+drop function stricttest();
 
 -- test printing parameters after failure due to STRICT
 
 set plpgsql.print_strict_params to true;
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare
 x record;
 p1 int := 2;
@@ -2451,9 +2451,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare
 x record;
 p1 int := 2;
@@ -2464,9 +2464,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- too many rows, no params
@@ -2474,9 +2474,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- no rows
@@ -2484,9 +2484,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- too many rows
@@ -2494,9 +2494,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- too many rows, no parameters
@@ -2504,9 +2504,9 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 -- override the global
 #print_strict_params off
 declare
@@ -2519,11 +2519,11 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
 reset plpgsql.print_strict_params;
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 -- override the global
 #print_strict_params on
 declare
@@ -2536,7 +2536,7 @@ begin
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
 
-select footest();
+select stricttest();
 
 -- test warnings and errors
 set plpgsql.extra_warnings to 'all';

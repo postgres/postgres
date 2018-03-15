@@ -1792,25 +1792,25 @@ delete from xx1 using lateral (select * from int4_tbl where f1 = x1) ss;
 -- test LATERAL reference propagation down a multi-level inheritance hierarchy
 -- produced for a multi-level partitioned table hierarchy.
 --
-create table pt1 (a int, b int, c varchar) partition by range(a);
-create table pt1p1 partition of pt1 for values from (0) to (100) partition by range(b);
-create table pt1p2 partition of pt1 for values from (100) to (200);
-create table pt1p1p1 partition of pt1p1 for values from (0) to (100);
-insert into pt1 values (1, 1, 'x'), (101, 101, 'y');
-create table ut1 (a int, b int, c varchar);
-insert into ut1 values (101, 101, 'y'), (2, 2, 'z');
+create table join_pt1 (a int, b int, c varchar) partition by range(a);
+create table join_pt1p1 partition of join_pt1 for values from (0) to (100) partition by range(b);
+create table join_pt1p2 partition of join_pt1 for values from (100) to (200);
+create table join_pt1p1p1 partition of join_pt1p1 for values from (0) to (100);
+insert into join_pt1 values (1, 1, 'x'), (101, 101, 'y');
+create table join_ut1 (a int, b int, c varchar);
+insert into join_ut1 values (101, 101, 'y'), (2, 2, 'z');
 explain (verbose, costs off)
-select t1.b, ss.phv from ut1 t1 left join lateral
+select t1.b, ss.phv from join_ut1 t1 left join lateral
               (select t2.a as t2a, t3.a t3a, least(t1.a, t2.a, t3.a) phv
-					  from pt1 t2 join ut1 t3 on t2.a = t3.b) ss
+					  from join_pt1 t2 join join_ut1 t3 on t2.a = t3.b) ss
               on t1.a = ss.t2a order by t1.a;
-select t1.b, ss.phv from ut1 t1 left join lateral
+select t1.b, ss.phv from join_ut1 t1 left join lateral
               (select t2.a as t2a, t3.a t3a, least(t1.a, t2.a, t3.a) phv
-					  from pt1 t2 join ut1 t3 on t2.a = t3.b) ss
+					  from join_pt1 t2 join join_ut1 t3 on t2.a = t3.b) ss
               on t1.a = ss.t2a order by t1.a;
 
-drop table pt1;
-drop table ut1;
+drop table join_pt1;
+drop table join_ut1;
 --
 -- test that foreign key join estimation performs sanely for outer joins
 --
@@ -2281,10 +2281,10 @@ rollback to settings;
 -- Exercise rescans.  We'll turn off parallel_leader_participation so
 -- that we can check that instrumentation comes back correctly.
 
-create table foo as select generate_series(1, 3) as id, 'xxxxx'::text as t;
-alter table foo set (parallel_workers = 0);
-create table bar as select generate_series(1, 10000) as id, 'xxxxx'::text as t;
-alter table bar set (parallel_workers = 2);
+create table join_foo as select generate_series(1, 3) as id, 'xxxxx'::text as t;
+alter table join_foo set (parallel_workers = 0);
+create table join_bar as select generate_series(1, 10000) as id, 'xxxxx'::text as t;
+alter table join_bar set (parallel_workers = 2);
 
 -- multi-batch with rescan, parallel-oblivious
 savepoint settings;
@@ -2298,18 +2298,18 @@ set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '64kB';
 explain (costs off)
-  select count(*) from foo
-    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
-select count(*) from foo
-  left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-  on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+  select count(*) from join_foo
+    left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+    on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
+select count(*) from join_foo
+  left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+  on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
 select final > 1 as multibatch
   from hash_join_batches(
 $$
-  select count(*) from foo
-    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+  select count(*) from join_foo
+    left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+    on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
 $$);
 rollback to settings;
 
@@ -2325,18 +2325,18 @@ set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '4MB';
 explain (costs off)
-  select count(*) from foo
-    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
-select count(*) from foo
-  left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-  on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+  select count(*) from join_foo
+    left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+    on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
+select count(*) from join_foo
+  left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+  on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
 select final > 1 as multibatch
   from hash_join_batches(
 $$
-  select count(*) from foo
-    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+  select count(*) from join_foo
+    left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+    on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
 $$);
 rollback to settings;
 
@@ -2352,18 +2352,18 @@ set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '64kB';
 explain (costs off)
-  select count(*) from foo
-    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
-select count(*) from foo
-  left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-  on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+  select count(*) from join_foo
+    left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+    on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
+select count(*) from join_foo
+  left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+  on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
 select final > 1 as multibatch
   from hash_join_batches(
 $$
-  select count(*) from foo
-    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+  select count(*) from join_foo
+    left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+    on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
 $$);
 rollback to settings;
 
@@ -2379,18 +2379,18 @@ set enable_material = off;
 set enable_mergejoin = off;
 set work_mem = '4MB';
 explain (costs off)
-  select count(*) from foo
-    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
-select count(*) from foo
-  left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-  on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+  select count(*) from join_foo
+    left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+    on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
+select count(*) from join_foo
+  left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+  on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
 select final > 1 as multibatch
   from hash_join_batches(
 $$
-  select count(*) from foo
-    left join (select b1.id, b1.t from bar b1 join bar b2 using (id)) ss
-    on foo.id < ss.id + 1 and foo.id > ss.id - 1;
+  select count(*) from join_foo
+    left join (select b1.id, b1.t from join_bar b1 join join_bar b2 using (id)) ss
+    on join_foo.id < ss.id + 1 and join_foo.id > ss.id - 1;
 $$);
 rollback to settings;
 

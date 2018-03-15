@@ -1870,7 +1870,7 @@ create table perform_test (
 	a	INT,
 	b	INT
 );
-create function simple_func(int) returns boolean as '
+create function perform_simple_func(int) returns boolean as '
 BEGIN
 	IF $1 < 20 THEN
 		INSERT INTO perform_test VALUES ($1, $1 + 10);
@@ -1885,13 +1885,13 @@ BEGIN
 		INSERT INTO perform_test VALUES (100, 100);
 	END IF;
 
-	PERFORM simple_func(5);
+	PERFORM perform_simple_func(5);
 
 	IF FOUND then
 		INSERT INTO perform_test VALUES (100, 100);
 	END IF;
 
-	PERFORM simple_func(50);
+	PERFORM perform_simple_func(50);
 
 	IF FOUND then
 		INSERT INTO perform_test VALUES (100, 100);
@@ -2755,55 +2755,55 @@ select multi_datum_use(42);
 --
 create temp table foo (f1 int, f2 int);
 insert into foo values (1,2), (3,4);
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
   insert into foo values(5,6) returning * into x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 5, x.f2 = 6
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail due to implicit strict
   insert into foo values(7,8),(9,10) returning * into x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at SQL statement
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
   execute 'insert into foo values(5,6) returning *' into x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 5, x.f2 = 6
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- this should work since EXECUTE isn't as picky
   execute 'insert into foo values(7,8),(9,10) returning *' into x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 7, x.f2 = 8
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
@@ -2818,78 +2818,78 @@ select * from foo;
   9 | 10
 (6 rows)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
   select * from foo where f1 = 3 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 3, x.f2 = 4
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, no rows
   select * from foo where f1 = 0 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function footest() line 5 at SQL statement
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, too many rows
   select * from foo where f1 > 3 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at SQL statement
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
   execute 'select * from foo where f1 = 3' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 3, x.f2 = 4
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, no rows
   execute 'select * from foo where f1 = 0' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, too many rows
   execute 'select * from foo where f1 > 3' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-drop function footest();
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+drop function stricttest();
 -- test printing parameters after failure due to STRICT
 set plpgsql.print_strict_params to true;
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare
 x record;
 p1 int := 2;
@@ -2899,11 +2899,11 @@ begin
   select * from foo where f1 = p1 and f1::text = p3 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned no rows
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
-CONTEXT:  PL/pgSQL function footest() line 8 at SQL statement
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 8 at SQL statement
+create or replace function stricttest() returns void as $$
 declare
 x record;
 p1 int := 2;
@@ -2913,53 +2913,53 @@ begin
   select * from foo where f1 > p1 or f1::text = p3  into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
-CONTEXT:  PL/pgSQL function footest() line 8 at SQL statement
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 8 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- too many rows, no params
   select * from foo where f1 > 3 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at SQL statement
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- no rows
   execute 'select * from foo where f1 = $1 or f1::text = $2' using 0, 'foo' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned no rows
 DETAIL:  parameters: $1 = '0', $2 = 'foo'
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- too many rows
   execute 'select * from foo where f1 > $1' using 1 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: $1 = '1'
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- too many rows, no parameters
   execute 'select * from foo where f1 > 3' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+create or replace function stricttest() returns void as $$
 -- override the global
 #print_strict_params off
 declare
@@ -2971,11 +2971,11 @@ begin
   select * from foo where f1 > p1 or f1::text = p3  into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 10 at SQL statement
+CONTEXT:  PL/pgSQL function stricttest() line 10 at SQL statement
 reset plpgsql.print_strict_params;
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 -- override the global
 #print_strict_params on
 declare
@@ -2987,10 +2987,10 @@ begin
   select * from foo where f1 > p1 or f1::text = p3  into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
-CONTEXT:  PL/pgSQL function footest() line 10 at SQL statement
+CONTEXT:  PL/pgSQL function stricttest() line 10 at SQL statement
 -- test warnings and errors
 set plpgsql.extra_warnings to 'all';
 set plpgsql.extra_warnings to 'none';

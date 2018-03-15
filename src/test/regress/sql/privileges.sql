@@ -440,54 +440,54 @@ GRANT USAGE ON LANGUAGE c TO PUBLIC; -- fail
 
 SET SESSION AUTHORIZATION regress_priv_user1;
 GRANT USAGE ON LANGUAGE sql TO regress_priv_user2; -- fail
-CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
-CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
-CREATE AGGREGATE testagg1(int) (sfunc = int4pl, stype = int4);
-CREATE PROCEDURE testproc1(int) AS 'select $1;' LANGUAGE sql;
+CREATE FUNCTION priv_testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
+CREATE FUNCTION priv_testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+CREATE AGGREGATE priv_testagg1(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE priv_testproc1(int) AS 'select $1;' LANGUAGE sql;
 
-REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) TO regress_priv_user2;
-REVOKE ALL ON FUNCTION testproc1(int) FROM PUBLIC; -- fail, not a function
-REVOKE ALL ON PROCEDURE testproc1(int) FROM PUBLIC;
-GRANT EXECUTE ON PROCEDURE testproc1(int) TO regress_priv_user2;
-GRANT USAGE ON FUNCTION testfunc1(int) TO regress_priv_user3; -- semantic error
-GRANT USAGE ON FUNCTION testagg1(int) TO regress_priv_user3; -- semantic error
-GRANT USAGE ON PROCEDURE testproc1(int) TO regress_priv_user3; -- semantic error
-GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regress_priv_user4;
-GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regress_priv_user4;
-GRANT ALL PRIVILEGES ON FUNCTION testagg1(int) TO regress_priv_user4;
-GRANT ALL PRIVILEGES ON PROCEDURE testproc1(int) TO regress_priv_user4;
+REVOKE ALL ON FUNCTION priv_testfunc1(int), priv_testfunc2(int), priv_testagg1(int) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION priv_testfunc1(int), priv_testfunc2(int), priv_testagg1(int) TO regress_priv_user2;
+REVOKE ALL ON FUNCTION priv_testproc1(int) FROM PUBLIC; -- fail, not a function
+REVOKE ALL ON PROCEDURE priv_testproc1(int) FROM PUBLIC;
+GRANT EXECUTE ON PROCEDURE priv_testproc1(int) TO regress_priv_user2;
+GRANT USAGE ON FUNCTION priv_testfunc1(int) TO regress_priv_user3; -- semantic error
+GRANT USAGE ON FUNCTION priv_testagg1(int) TO regress_priv_user3; -- semantic error
+GRANT USAGE ON PROCEDURE priv_testproc1(int) TO regress_priv_user3; -- semantic error
+GRANT ALL PRIVILEGES ON FUNCTION priv_testfunc1(int) TO regress_priv_user4;
+GRANT ALL PRIVILEGES ON FUNCTION priv_testfunc_nosuch(int) TO regress_priv_user4;
+GRANT ALL PRIVILEGES ON FUNCTION priv_testagg1(int) TO regress_priv_user4;
+GRANT ALL PRIVILEGES ON PROCEDURE priv_testproc1(int) TO regress_priv_user4;
 
-CREATE FUNCTION testfunc4(boolean) RETURNS text
+CREATE FUNCTION priv_testfunc4(boolean) RETURNS text
   AS 'select col1 from atest2 where col2 = $1;'
   LANGUAGE sql SECURITY DEFINER;
-GRANT EXECUTE ON FUNCTION testfunc4(boolean) TO regress_priv_user3;
+GRANT EXECUTE ON FUNCTION priv_testfunc4(boolean) TO regress_priv_user3;
 
 SET SESSION AUTHORIZATION regress_priv_user2;
-SELECT testfunc1(5), testfunc2(5); -- ok
-CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
-SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
-CALL testproc1(6); -- ok
+SELECT priv_testfunc1(5), priv_testfunc2(5); -- ok
+CREATE FUNCTION priv_testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
+SELECT priv_testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+CALL priv_testproc1(6); -- ok
 
 SET SESSION AUTHORIZATION regress_priv_user3;
-SELECT testfunc1(5); -- fail
-SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- fail
-CALL testproc1(6); -- fail
+SELECT priv_testfunc1(5); -- fail
+SELECT priv_testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- fail
+CALL priv_testproc1(6); -- fail
 SELECT col1 FROM atest2 WHERE col2 = true; -- fail
-SELECT testfunc4(true); -- ok
+SELECT priv_testfunc4(true); -- ok
 
 SET SESSION AUTHORIZATION regress_priv_user4;
-SELECT testfunc1(5); -- ok
-SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
-CALL testproc1(6); -- ok
+SELECT priv_testfunc1(5); -- ok
+SELECT priv_testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+CALL priv_testproc1(6); -- ok
 
-DROP FUNCTION testfunc1(int); -- fail
-DROP AGGREGATE testagg1(int); -- fail
-DROP PROCEDURE testproc1(int); -- fail
+DROP FUNCTION priv_testfunc1(int); -- fail
+DROP AGGREGATE priv_testagg1(int); -- fail
+DROP PROCEDURE priv_testproc1(int); -- fail
 
 \c -
 
-DROP FUNCTION testfunc1(int); -- ok
+DROP FUNCTION priv_testfunc1(int); -- ok
 -- restore to sanity
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
 
@@ -505,108 +505,108 @@ ROLLBACK;
 -- switch to superuser
 \c -
 
-CREATE TYPE testtype1 AS (a int, b text);
-REVOKE USAGE ON TYPE testtype1 FROM PUBLIC;
-GRANT USAGE ON TYPE testtype1 TO regress_priv_user2;
-GRANT USAGE ON TYPE _testtype1 TO regress_priv_user2; -- fail
-GRANT USAGE ON DOMAIN testtype1 TO regress_priv_user2; -- fail
+CREATE TYPE priv_testtype1 AS (a int, b text);
+REVOKE USAGE ON TYPE priv_testtype1 FROM PUBLIC;
+GRANT USAGE ON TYPE priv_testtype1 TO regress_priv_user2;
+GRANT USAGE ON TYPE _priv_testtype1 TO regress_priv_user2; -- fail
+GRANT USAGE ON DOMAIN priv_testtype1 TO regress_priv_user2; -- fail
 
-CREATE DOMAIN testdomain1 AS int;
-REVOKE USAGE on DOMAIN testdomain1 FROM PUBLIC;
-GRANT USAGE ON DOMAIN testdomain1 TO regress_priv_user2;
-GRANT USAGE ON TYPE testdomain1 TO regress_priv_user2; -- ok
+CREATE DOMAIN priv_testdomain1 AS int;
+REVOKE USAGE on DOMAIN priv_testdomain1 FROM PUBLIC;
+GRANT USAGE ON DOMAIN priv_testdomain1 TO regress_priv_user2;
+GRANT USAGE ON TYPE priv_testdomain1 TO regress_priv_user2; -- ok
 
 SET SESSION AUTHORIZATION regress_priv_user1;
 
 -- commands that should fail
 
-CREATE AGGREGATE testagg1a(testdomain1) (sfunc = int4_sum, stype = bigint);
+CREATE AGGREGATE priv_testagg1a(priv_testdomain1) (sfunc = int4_sum, stype = bigint);
 
-CREATE DOMAIN testdomain2a AS testdomain1;
+CREATE DOMAIN priv_testdomain2a AS priv_testdomain1;
 
-CREATE DOMAIN testdomain3a AS int;
-CREATE FUNCTION castfunc(int) RETURNS testdomain3a AS $$ SELECT $1::testdomain3a $$ LANGUAGE SQL;
-CREATE CAST (testdomain1 AS testdomain3a) WITH FUNCTION castfunc(int);
+CREATE DOMAIN priv_testdomain3a AS int;
+CREATE FUNCTION castfunc(int) RETURNS priv_testdomain3a AS $$ SELECT $1::priv_testdomain3a $$ LANGUAGE SQL;
+CREATE CAST (priv_testdomain1 AS priv_testdomain3a) WITH FUNCTION castfunc(int);
 DROP FUNCTION castfunc(int) CASCADE;
-DROP DOMAIN testdomain3a;
+DROP DOMAIN priv_testdomain3a;
 
-CREATE FUNCTION testfunc5a(a testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
-CREATE FUNCTION testfunc6a(b int) RETURNS testdomain1 LANGUAGE SQL AS $$ SELECT $1::testdomain1 $$;
+CREATE FUNCTION priv_testfunc5a(a priv_testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
+CREATE FUNCTION priv_testfunc6a(b int) RETURNS priv_testdomain1 LANGUAGE SQL AS $$ SELECT $1::priv_testdomain1 $$;
 
-CREATE OPERATOR !+! (PROCEDURE = int4pl, LEFTARG = testdomain1, RIGHTARG = testdomain1);
+CREATE OPERATOR !+! (PROCEDURE = int4pl, LEFTARG = priv_testdomain1, RIGHTARG = priv_testdomain1);
 
-CREATE TABLE test5a (a int, b testdomain1);
-CREATE TABLE test6a OF testtype1;
-CREATE TABLE test10a (a int[], b testtype1[]);
+CREATE TABLE test5a (a int, b priv_testdomain1);
+CREATE TABLE test6a OF priv_testtype1;
+CREATE TABLE test10a (a int[], b priv_testtype1[]);
 
 CREATE TABLE test9a (a int, b int);
-ALTER TABLE test9a ADD COLUMN c testdomain1;
-ALTER TABLE test9a ALTER COLUMN b TYPE testdomain1;
+ALTER TABLE test9a ADD COLUMN c priv_testdomain1;
+ALTER TABLE test9a ALTER COLUMN b TYPE priv_testdomain1;
 
-CREATE TYPE test7a AS (a int, b testdomain1);
+CREATE TYPE test7a AS (a int, b priv_testdomain1);
 
 CREATE TYPE test8a AS (a int, b int);
-ALTER TYPE test8a ADD ATTRIBUTE c testdomain1;
-ALTER TYPE test8a ALTER ATTRIBUTE b TYPE testdomain1;
+ALTER TYPE test8a ADD ATTRIBUTE c priv_testdomain1;
+ALTER TYPE test8a ALTER ATTRIBUTE b TYPE priv_testdomain1;
 
-CREATE TABLE test11a AS (SELECT 1::testdomain1 AS a);
+CREATE TABLE test11a AS (SELECT 1::priv_testdomain1 AS a);
 
-REVOKE ALL ON TYPE testtype1 FROM PUBLIC;
+REVOKE ALL ON TYPE priv_testtype1 FROM PUBLIC;
 
 SET SESSION AUTHORIZATION regress_priv_user2;
 
 -- commands that should succeed
 
-CREATE AGGREGATE testagg1b(testdomain1) (sfunc = int4_sum, stype = bigint);
+CREATE AGGREGATE priv_testagg1b(priv_testdomain1) (sfunc = int4_sum, stype = bigint);
 
-CREATE DOMAIN testdomain2b AS testdomain1;
+CREATE DOMAIN priv_testdomain2b AS priv_testdomain1;
 
-CREATE DOMAIN testdomain3b AS int;
-CREATE FUNCTION castfunc(int) RETURNS testdomain3b AS $$ SELECT $1::testdomain3b $$ LANGUAGE SQL;
-CREATE CAST (testdomain1 AS testdomain3b) WITH FUNCTION castfunc(int);
+CREATE DOMAIN priv_testdomain3b AS int;
+CREATE FUNCTION castfunc(int) RETURNS priv_testdomain3b AS $$ SELECT $1::priv_testdomain3b $$ LANGUAGE SQL;
+CREATE CAST (priv_testdomain1 AS priv_testdomain3b) WITH FUNCTION castfunc(int);
 
-CREATE FUNCTION testfunc5b(a testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
-CREATE FUNCTION testfunc6b(b int) RETURNS testdomain1 LANGUAGE SQL AS $$ SELECT $1::testdomain1 $$;
+CREATE FUNCTION priv_testfunc5b(a priv_testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
+CREATE FUNCTION priv_testfunc6b(b int) RETURNS priv_testdomain1 LANGUAGE SQL AS $$ SELECT $1::priv_testdomain1 $$;
 
-CREATE OPERATOR !! (PROCEDURE = testfunc5b, RIGHTARG = testdomain1);
+CREATE OPERATOR !! (PROCEDURE = priv_testfunc5b, RIGHTARG = priv_testdomain1);
 
-CREATE TABLE test5b (a int, b testdomain1);
-CREATE TABLE test6b OF testtype1;
-CREATE TABLE test10b (a int[], b testtype1[]);
+CREATE TABLE test5b (a int, b priv_testdomain1);
+CREATE TABLE test6b OF priv_testtype1;
+CREATE TABLE test10b (a int[], b priv_testtype1[]);
 
 CREATE TABLE test9b (a int, b int);
-ALTER TABLE test9b ADD COLUMN c testdomain1;
-ALTER TABLE test9b ALTER COLUMN b TYPE testdomain1;
+ALTER TABLE test9b ADD COLUMN c priv_testdomain1;
+ALTER TABLE test9b ALTER COLUMN b TYPE priv_testdomain1;
 
-CREATE TYPE test7b AS (a int, b testdomain1);
+CREATE TYPE test7b AS (a int, b priv_testdomain1);
 
 CREATE TYPE test8b AS (a int, b int);
-ALTER TYPE test8b ADD ATTRIBUTE c testdomain1;
-ALTER TYPE test8b ALTER ATTRIBUTE b TYPE testdomain1;
+ALTER TYPE test8b ADD ATTRIBUTE c priv_testdomain1;
+ALTER TYPE test8b ALTER ATTRIBUTE b TYPE priv_testdomain1;
 
-CREATE TABLE test11b AS (SELECT 1::testdomain1 AS a);
+CREATE TABLE test11b AS (SELECT 1::priv_testdomain1 AS a);
 
-REVOKE ALL ON TYPE testtype1 FROM PUBLIC;
+REVOKE ALL ON TYPE priv_testtype1 FROM PUBLIC;
 
 \c -
-DROP AGGREGATE testagg1b(testdomain1);
-DROP DOMAIN testdomain2b;
-DROP OPERATOR !! (NONE, testdomain1);
-DROP FUNCTION testfunc5b(a testdomain1);
-DROP FUNCTION testfunc6b(b int);
+DROP AGGREGATE priv_testagg1b(priv_testdomain1);
+DROP DOMAIN priv_testdomain2b;
+DROP OPERATOR !! (NONE, priv_testdomain1);
+DROP FUNCTION priv_testfunc5b(a priv_testdomain1);
+DROP FUNCTION priv_testfunc6b(b int);
 DROP TABLE test5b;
 DROP TABLE test6b;
 DROP TABLE test9b;
 DROP TABLE test10b;
 DROP TYPE test7b;
 DROP TYPE test8b;
-DROP CAST (testdomain1 AS testdomain3b);
+DROP CAST (priv_testdomain1 AS priv_testdomain3b);
 DROP FUNCTION castfunc(int) CASCADE;
-DROP DOMAIN testdomain3b;
+DROP DOMAIN priv_testdomain3b;
 DROP TABLE test11b;
 
-DROP TYPE testtype1; -- ok
-DROP DOMAIN testdomain1; -- ok
+DROP TYPE priv_testtype1; -- ok
+DROP DOMAIN priv_testdomain1; -- ok
 
 
 -- truncate
@@ -974,18 +974,18 @@ DROP PROCEDURE testns.bar();
 
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_priv_user1 REVOKE USAGE ON TYPES FROM public;
 
-CREATE DOMAIN testns.testdomain1 AS int;
+CREATE DOMAIN testns.priv_testdomain1 AS int;
 
-SELECT has_type_privilege('regress_priv_user2', 'testns.testdomain1', 'USAGE'); -- no
+SELECT has_type_privilege('regress_priv_user2', 'testns.priv_testdomain1', 'USAGE'); -- no
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT USAGE ON TYPES to public;
 
-DROP DOMAIN testns.testdomain1;
-CREATE DOMAIN testns.testdomain1 AS int;
+DROP DOMAIN testns.priv_testdomain1;
+CREATE DOMAIN testns.priv_testdomain1 AS int;
 
-SELECT has_type_privilege('regress_priv_user2', 'testns.testdomain1', 'USAGE'); -- yes
+SELECT has_type_privilege('regress_priv_user2', 'testns.priv_testdomain1', 'USAGE'); -- yes
 
-DROP DOMAIN testns.testdomain1;
+DROP DOMAIN testns.priv_testdomain1;
 
 RESET ROLE;
 
@@ -1023,29 +1023,29 @@ REVOKE ALL ON ALL TABLES IN SCHEMA testns FROM regress_priv_user1;
 SELECT has_table_privilege('regress_priv_user1', 'testns.t1', 'SELECT'); -- false
 SELECT has_table_privilege('regress_priv_user1', 'testns.t2', 'SELECT'); -- false
 
-CREATE FUNCTION testns.testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
-CREATE AGGREGATE testns.testagg(int) (sfunc = int4pl, stype = int4);
-CREATE PROCEDURE testns.testproc(int) AS 'select 3' LANGUAGE sql;
+CREATE FUNCTION testns.priv_testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+CREATE AGGREGATE testns.priv_testagg(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testns.priv_testproc(int) AS 'select 3' LANGUAGE sql;
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true by default
-SELECT has_function_privilege('regress_priv_user1', 'testns.testagg(int)', 'EXECUTE'); -- true by default
-SELECT has_function_privilege('regress_priv_user1', 'testns.testproc(int)', 'EXECUTE'); -- true by default
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testfunc(int)', 'EXECUTE'); -- true by default
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testagg(int)', 'EXECUTE'); -- true by default
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)', 'EXECUTE'); -- true by default
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA testns FROM PUBLIC;
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testfunc(int)', 'EXECUTE'); -- false
-SELECT has_function_privilege('regress_priv_user1', 'testns.testagg(int)', 'EXECUTE'); -- false
-SELECT has_function_privilege('regress_priv_user1', 'testns.testproc(int)', 'EXECUTE'); -- still true, not a function
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testfunc(int)', 'EXECUTE'); -- false
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testagg(int)', 'EXECUTE'); -- false
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)', 'EXECUTE'); -- still true, not a function
 
 REVOKE ALL ON ALL PROCEDURES IN SCHEMA testns FROM PUBLIC;
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testproc(int)', 'EXECUTE'); -- now false
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)', 'EXECUTE'); -- now false
 
 GRANT ALL ON ALL ROUTINES IN SCHEMA testns TO PUBLIC;
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true
-SELECT has_function_privilege('regress_priv_user1', 'testns.testagg(int)', 'EXECUTE'); -- true
-SELECT has_function_privilege('regress_priv_user1', 'testns.testproc(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testfunc(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testagg(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)', 'EXECUTE'); -- true
 
 \set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
@@ -1109,10 +1109,10 @@ drop table dep_priv_test;
 
 drop sequence x_seq;
 
-DROP AGGREGATE testagg1(int);
-DROP FUNCTION testfunc2(int);
-DROP FUNCTION testfunc4(boolean);
-DROP PROCEDURE testproc1(int);
+DROP AGGREGATE priv_testagg1(int);
+DROP FUNCTION priv_testfunc2(int);
+DROP FUNCTION priv_testfunc4(boolean);
+DROP PROCEDURE priv_testproc1(int);
 
 DROP VIEW atestv0;
 DROP VIEW atestv1;

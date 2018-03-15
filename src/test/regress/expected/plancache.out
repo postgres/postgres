@@ -254,27 +254,27 @@ NOTICE:  3
 
 -- Check that addition or removal of any partition is correctly dealt with by
 -- default partition table when it is being used in prepared statement.
-create table list_parted (a int) partition by list(a);
-create table list_part_null partition of list_parted for values in (null);
-create table list_part_1 partition of list_parted for values in (1);
-create table list_part_def partition of list_parted default;
-prepare pstmt_def_insert (int) as insert into list_part_def values($1);
+create table pc_list_parted (a int) partition by list(a);
+create table pc_list_part_null partition of pc_list_parted for values in (null);
+create table pc_list_part_1 partition of pc_list_parted for values in (1);
+create table pc_list_part_def partition of pc_list_parted default;
+prepare pstmt_def_insert (int) as insert into pc_list_part_def values($1);
 -- should fail
 execute pstmt_def_insert(null);
-ERROR:  new row for relation "list_part_def" violates partition constraint
+ERROR:  new row for relation "pc_list_part_def" violates partition constraint
 DETAIL:  Failing row contains (null).
 execute pstmt_def_insert(1);
-ERROR:  new row for relation "list_part_def" violates partition constraint
+ERROR:  new row for relation "pc_list_part_def" violates partition constraint
 DETAIL:  Failing row contains (1).
-create table list_part_2 partition of list_parted for values in (2);
+create table pc_list_part_2 partition of pc_list_parted for values in (2);
 execute pstmt_def_insert(2);
-ERROR:  new row for relation "list_part_def" violates partition constraint
+ERROR:  new row for relation "pc_list_part_def" violates partition constraint
 DETAIL:  Failing row contains (2).
-alter table list_parted detach partition list_part_null;
+alter table pc_list_parted detach partition pc_list_part_null;
 -- should be ok
 execute pstmt_def_insert(null);
-drop table list_part_1;
+drop table pc_list_part_1;
 -- should be ok
 execute pstmt_def_insert(1);
-drop table list_parted, list_part_null;
+drop table pc_list_parted, pc_list_part_null;
 deallocate pstmt_def_insert;

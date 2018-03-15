@@ -1,28 +1,28 @@
-CREATE TABLE toasttest(descr text, cnt int DEFAULT 0, f1 text, f2 text);
+CREATE TABLE indtoasttest(descr text, cnt int DEFAULT 0, f1 text, f2 text);
 
-INSERT INTO toasttest(descr, f1, f2) VALUES('two-compressed', repeat('1234567890',1000), repeat('1234567890',1000));
-INSERT INTO toasttest(descr, f1, f2) VALUES('two-toasted', repeat('1234567890',30000), repeat('1234567890',50000));
-INSERT INTO toasttest(descr, f1, f2) VALUES('one-compressed,one-null', NULL, repeat('1234567890',1000));
-INSERT INTO toasttest(descr, f1, f2) VALUES('one-toasted,one-null', NULL, repeat('1234567890',50000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('two-compressed', repeat('1234567890',1000), repeat('1234567890',1000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('two-toasted', repeat('1234567890',30000), repeat('1234567890',50000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('one-compressed,one-null', NULL, repeat('1234567890',1000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('one-toasted,one-null', NULL, repeat('1234567890',50000));
 
 -- check whether indirect tuples works on the most basic level
-SELECT descr, substring(make_tuple_indirect(toasttest)::text, 1, 200) FROM toasttest;
+SELECT descr, substring(make_tuple_indirect(indtoasttest)::text, 1, 200) FROM indtoasttest;
 
 -- modification without changing varlenas
-UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1 RETURNING substring(indtoasttest::text, 1, 200);
 
 -- modification without modifying assigned value
-UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(indtoasttest::text, 1, 200);
 
 -- modification modifying, but effectively not changing
-UPDATE toasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(indtoasttest::text, 1, 200);
 
-UPDATE toasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(indtoasttest::text, 1, 200);
 
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
+SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
 -- check we didn't screw with main/toast tuple visibility
-VACUUM FREEZE toasttest;
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
+VACUUM FREEZE indtoasttest;
+SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
 
 -- now create a trigger that forces all Datums to be indirect ones
 CREATE FUNCTION update_using_indirect()
@@ -33,29 +33,29 @@ BEGIN
     RETURN NEW;
 END$$;
 
-CREATE TRIGGER toasttest_update_indirect
+CREATE TRIGGER indtoasttest_update_indirect
         BEFORE INSERT OR UPDATE
-        ON toasttest
+        ON indtoasttest
         FOR EACH ROW
         EXECUTE PROCEDURE update_using_indirect();
 
 -- modification without changing varlenas
-UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1 RETURNING substring(indtoasttest::text, 1, 200);
 
 -- modification without modifying assigned value
-UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(indtoasttest::text, 1, 200);
 
 -- modification modifying, but effectively not changing
-UPDATE toasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(indtoasttest::text, 1, 200);
 
-UPDATE toasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(indtoasttest::text, 1, 200);
 
-INSERT INTO toasttest(descr, f1, f2) VALUES('one-toasted,one-null, via indirect', repeat('1234567890',30000), NULL);
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('one-toasted,one-null, via indirect', repeat('1234567890',30000), NULL);
 
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
+SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
 -- check we didn't screw with main/toast tuple visibility
-VACUUM FREEZE toasttest;
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
+VACUUM FREEZE indtoasttest;
+SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
 
-DROP TABLE toasttest;
+DROP TABLE indtoasttest;
 DROP FUNCTION update_using_indirect();

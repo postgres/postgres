@@ -1,10 +1,10 @@
-CREATE TABLE toasttest(descr text, cnt int DEFAULT 0, f1 text, f2 text);
-INSERT INTO toasttest(descr, f1, f2) VALUES('two-compressed', repeat('1234567890',1000), repeat('1234567890',1000));
-INSERT INTO toasttest(descr, f1, f2) VALUES('two-toasted', repeat('1234567890',30000), repeat('1234567890',50000));
-INSERT INTO toasttest(descr, f1, f2) VALUES('one-compressed,one-null', NULL, repeat('1234567890',1000));
-INSERT INTO toasttest(descr, f1, f2) VALUES('one-toasted,one-null', NULL, repeat('1234567890',50000));
+CREATE TABLE indtoasttest(descr text, cnt int DEFAULT 0, f1 text, f2 text);
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('two-compressed', repeat('1234567890',1000), repeat('1234567890',1000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('two-toasted', repeat('1234567890',30000), repeat('1234567890',50000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('one-compressed,one-null', NULL, repeat('1234567890',1000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('one-toasted,one-null', NULL, repeat('1234567890',50000));
 -- check whether indirect tuples works on the most basic level
-SELECT descr, substring(make_tuple_indirect(toasttest)::text, 1, 200) FROM toasttest;
+SELECT descr, substring(make_tuple_indirect(indtoasttest)::text, 1, 200) FROM indtoasttest;
           descr          |                                                                                                substring                                                                                                 
 -------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  two-compressed          | (two-compressed,0,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
@@ -14,7 +14,7 @@ SELECT descr, substring(make_tuple_indirect(toasttest)::text, 1, 200) FROM toast
 (4 rows)
 
 -- modification without changing varlenas
-UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1 RETURNING substring(indtoasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,1,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
@@ -24,7 +24,7 @@ UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
 (4 rows)
 
 -- modification without modifying assigned value
-UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(indtoasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,2,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
@@ -34,7 +34,7 @@ UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 
 (4 rows)
 
 -- modification modifying, but effectively not changing
-UPDATE toasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(indtoasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,3,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
@@ -43,7 +43,7 @@ UPDATE toasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(toasttest::te
  ("one-toasted,one-null",3,,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
 (4 rows)
 
-UPDATE toasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(indtoasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,4,-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
@@ -52,7 +52,7 @@ UPDATE toasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(toastte
  ("one-toasted,one-null",4,,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
 (4 rows)
 
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
+SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,4,-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
@@ -62,8 +62,8 @@ SELECT substring(toasttest::text, 1, 200) FROM toasttest;
 (4 rows)
 
 -- check we didn't screw with main/toast tuple visibility
-VACUUM FREEZE toasttest;
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
+VACUUM FREEZE indtoasttest;
+SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,4,-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
@@ -80,13 +80,13 @@ BEGIN
     NEW := make_tuple_indirect(NEW);
     RETURN NEW;
 END$$;
-CREATE TRIGGER toasttest_update_indirect
+CREATE TRIGGER indtoasttest_update_indirect
         BEFORE INSERT OR UPDATE
-        ON toasttest
+        ON indtoasttest
         FOR EACH ROW
         EXECUTE PROCEDURE update_using_indirect();
 -- modification without changing varlenas
-UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1 RETURNING substring(indtoasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,5,-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
@@ -96,7 +96,7 @@ UPDATE toasttest SET cnt = cnt +1 RETURNING substring(toasttest::text, 1, 200);
 (4 rows)
 
 -- modification without modifying assigned value
-UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(indtoasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,6,-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
@@ -106,7 +106,7 @@ UPDATE toasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(toasttest::text, 
 (4 rows)
 
 -- modification modifying, but effectively not changing
-UPDATE toasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(indtoasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,7,-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
@@ -115,7 +115,7 @@ UPDATE toasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(toasttest::te
  ("one-toasted,one-null",7,,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
 (4 rows)
 
-UPDATE toasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(toasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(indtoasttest::text, 1, 200);
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,8,--123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -124,8 +124,8 @@ UPDATE toasttest SET cnt = cnt +1, f1 = '-'||f1||'-' RETURNING substring(toastte
  ("one-toasted,one-null",8,,12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
 (4 rows)
 
-INSERT INTO toasttest(descr, f1, f2) VALUES('one-toasted,one-null, via indirect', repeat('1234567890',30000), NULL);
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('one-toasted,one-null, via indirect', repeat('1234567890',30000), NULL);
+SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,8,--123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -136,8 +136,8 @@ SELECT substring(toasttest::text, 1, 200) FROM toasttest;
 (5 rows)
 
 -- check we didn't screw with main/toast tuple visibility
-VACUUM FREEZE toasttest;
-SELECT substring(toasttest::text, 1, 200) FROM toasttest;
+VACUUM FREEZE indtoasttest;
+SELECT substring(indtoasttest::text, 1, 200) FROM indtoasttest;
                                                                                                 substring                                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  (two-compressed,8,--123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -147,5 +147,5 @@ SELECT substring(toasttest::text, 1, 200) FROM toasttest;
  ("one-toasted,one-null, via indirect",0,1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 (5 rows)
 
-DROP TABLE toasttest;
+DROP TABLE indtoasttest;
 DROP FUNCTION update_using_indirect();

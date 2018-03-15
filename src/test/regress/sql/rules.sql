@@ -700,34 +700,34 @@ SELECT count(*) FROM shoe;
 --
 -- Simple test of qualified ON INSERT ... this did not work in 7.0 ...
 --
-create table foo (f1 int);
-create table foo2 (f1 int);
+create table rules_foo (f1 int);
+create table rules_foo2 (f1 int);
 
-create rule foorule as on insert to foo where f1 < 100
+create rule rules_foorule as on insert to rules_foo where f1 < 100
 do instead nothing;
 
-insert into foo values(1);
-insert into foo values(1001);
-select * from foo;
+insert into rules_foo values(1);
+insert into rules_foo values(1001);
+select * from rules_foo;
 
-drop rule foorule on foo;
+drop rule rules_foorule on rules_foo;
 
 -- this should fail because f1 is not exposed for unqualified reference:
-create rule foorule as on insert to foo where f1 < 100
-do instead insert into foo2 values (f1);
+create rule rules_foorule as on insert to rules_foo where f1 < 100
+do instead insert into rules_foo2 values (f1);
 -- this is the correct way:
-create rule foorule as on insert to foo where f1 < 100
-do instead insert into foo2 values (new.f1);
+create rule rules_foorule as on insert to rules_foo where f1 < 100
+do instead insert into rules_foo2 values (new.f1);
 
-insert into foo values(2);
-insert into foo values(100);
+insert into rules_foo values(2);
+insert into rules_foo values(100);
 
-select * from foo;
-select * from foo2;
+select * from rules_foo;
+select * from rules_foo2;
 
-drop rule foorule on foo;
-drop table foo;
-drop table foo2;
+drop rule rules_foorule on rules_foo;
+drop table rules_foo;
+drop table rules_foo2;
 
 
 --
@@ -876,36 +876,36 @@ insert into rule_and_refint_t3 values (1, 13, 11, 'row8');
 -- disallow dropping a view's rule (bug #5072)
 --
 
-create view fooview as select 'foo'::text;
-drop rule "_RETURN" on fooview;
-drop view fooview;
+create view rules_fooview as select 'rules_foo'::text;
+drop rule "_RETURN" on rules_fooview;
+drop view rules_fooview;
 
 --
 -- test conversion of table to view (needed to load some pg_dump files)
 --
 
-create table fooview (x int, y text);
-select xmin, * from fooview;
+create table rules_fooview (x int, y text);
+select xmin, * from rules_fooview;
 
-create rule "_RETURN" as on select to fooview do instead
+create rule "_RETURN" as on select to rules_fooview do instead
   select 1 as x, 'aaa'::text as y;
 
-select * from fooview;
-select xmin, * from fooview;  -- fail, views don't have such a column
+select * from rules_fooview;
+select xmin, * from rules_fooview;  -- fail, views don't have such a column
 
 select reltoastrelid, relkind, relfrozenxid
-  from pg_class where oid = 'fooview'::regclass;
+  from pg_class where oid = 'rules_fooview'::regclass;
 
-drop view fooview;
+drop view rules_fooview;
 
 -- trying to convert a partitioned table to view is not allowed
-create table fooview (x int, y text) partition by list (x);
-create rule "_RETURN" as on select to fooview do instead
+create table rules_fooview (x int, y text) partition by list (x);
+create rule "_RETURN" as on select to rules_fooview do instead
   select 1 as x, 'aaa'::text as y;
 
 -- nor can one convert a partition to view
-create table fooview_part partition of fooview for values in (1);
-create rule "_RETURN" as on select to fooview_part do instead
+create table rules_fooview_part partition of rules_fooview for values in (1);
+create rule "_RETURN" as on select to rules_fooview_part do instead
   select 1 as x, 'aaa'::text as y;
 
 --
@@ -1171,12 +1171,12 @@ SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
 SELECT pg_get_partkeydef(0);
 
 -- test rename for a rule defined on a partitioned table
-CREATE TABLE parted_table (a int) PARTITION BY LIST (a);
-CREATE TABLE parted_table_1 PARTITION OF parted_table FOR VALUES IN (1);
-CREATE RULE parted_table_insert AS ON INSERT to parted_table
-    DO INSTEAD INSERT INTO parted_table_1 VALUES (NEW.*);
-ALTER RULE parted_table_insert ON parted_table RENAME TO parted_table_insert_redirect;
-DROP TABLE parted_table;
+CREATE TABLE rules_parted_table (a int) PARTITION BY LIST (a);
+CREATE TABLE rules_parted_table_1 PARTITION OF rules_parted_table FOR VALUES IN (1);
+CREATE RULE rules_parted_table_insert AS ON INSERT to rules_parted_table
+    DO INSTEAD INSERT INTO rules_parted_table_1 VALUES (NEW.*);
+ALTER RULE rules_parted_table_insert ON rules_parted_table RENAME TO rules_parted_table_insert_redirect;
+DROP TABLE rules_parted_table;
 
 --
 -- Test enabling/disabling

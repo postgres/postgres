@@ -1322,15 +1322,15 @@ DROP TRIGGER trigtest_after_stmt ON foreign_schema.foreign_table_1;
 DROP TRIGGER trigtest_after_row ON foreign_schema.foreign_table_1;
 DROP FUNCTION dummy_trigger();
 -- Table inheritance
-CREATE TABLE pt1 (
+CREATE TABLE fd_pt1 (
 	c1 integer NOT NULL,
 	c2 text,
 	c3 date
 );
-CREATE FOREIGN TABLE ft2 () INHERITS (pt1)
+CREATE FOREIGN TABLE ft2 () INHERITS (fd_pt1)
   SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
-\d+ pt1
-                                    Table "public.pt1"
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1347,11 +1347,11 @@ Child tables: ft2
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 
 DROP FOREIGN TABLE ft2;
-\d+ pt1
-                                    Table "public.pt1"
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1373,9 +1373,9 @@ CREATE FOREIGN TABLE ft2 (
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
-ALTER FOREIGN TABLE ft2 INHERIT pt1;
-\d+ pt1
-                                    Table "public.pt1"
+ALTER FOREIGN TABLE ft2 INHERIT fd_pt1;
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1392,7 +1392,7 @@ Child tables: ft2
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 
 CREATE TABLE ct3() INHERITS(ft2);
 CREATE FOREIGN TABLE ft3 (
@@ -1413,7 +1413,7 @@ NOTICE:  merging column "c3" with inherited definition
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 Child tables: ct3,
               ft3
 
@@ -1437,13 +1437,13 @@ Server: s0
 Inherits: ft2
 
 -- add attributes recursively
-ALTER TABLE pt1 ADD COLUMN c4 integer;
-ALTER TABLE pt1 ADD COLUMN c5 integer DEFAULT 0;
-ALTER TABLE pt1 ADD COLUMN c6 integer;
-ALTER TABLE pt1 ADD COLUMN c7 integer NOT NULL;
-ALTER TABLE pt1 ADD COLUMN c8 integer;
-\d+ pt1
-                                    Table "public.pt1"
+ALTER TABLE fd_pt1 ADD COLUMN c4 integer;
+ALTER TABLE fd_pt1 ADD COLUMN c5 integer DEFAULT 0;
+ALTER TABLE fd_pt1 ADD COLUMN c6 integer;
+ALTER TABLE fd_pt1 ADD COLUMN c7 integer NOT NULL;
+ALTER TABLE fd_pt1 ADD COLUMN c8 integer;
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1470,7 +1470,7 @@ Child tables: ft2
  c8     | integer |           |          |         |             | plain    |              | 
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 Child tables: ct3,
               ft3
 
@@ -1504,20 +1504,20 @@ Server: s0
 Inherits: ft2
 
 -- alter attributes recursively
-ALTER TABLE pt1 ALTER COLUMN c4 SET DEFAULT 0;
-ALTER TABLE pt1 ALTER COLUMN c5 DROP DEFAULT;
-ALTER TABLE pt1 ALTER COLUMN c6 SET NOT NULL;
-ALTER TABLE pt1 ALTER COLUMN c7 DROP NOT NULL;
-ALTER TABLE pt1 ALTER COLUMN c8 TYPE char(10) USING '0';        -- ERROR
+ALTER TABLE fd_pt1 ALTER COLUMN c4 SET DEFAULT 0;
+ALTER TABLE fd_pt1 ALTER COLUMN c5 DROP DEFAULT;
+ALTER TABLE fd_pt1 ALTER COLUMN c6 SET NOT NULL;
+ALTER TABLE fd_pt1 ALTER COLUMN c7 DROP NOT NULL;
+ALTER TABLE fd_pt1 ALTER COLUMN c8 TYPE char(10) USING '0';        -- ERROR
 ERROR:  "ft2" is not a table
-ALTER TABLE pt1 ALTER COLUMN c8 TYPE char(10);
-ALTER TABLE pt1 ALTER COLUMN c8 SET DATA TYPE text;
-ALTER TABLE pt1 ALTER COLUMN c1 SET STATISTICS 10000;
-ALTER TABLE pt1 ALTER COLUMN c1 SET (n_distinct = 100);
-ALTER TABLE pt1 ALTER COLUMN c8 SET STATISTICS -1;
-ALTER TABLE pt1 ALTER COLUMN c8 SET STORAGE EXTERNAL;
-\d+ pt1
-                                    Table "public.pt1"
+ALTER TABLE fd_pt1 ALTER COLUMN c8 TYPE char(10);
+ALTER TABLE fd_pt1 ALTER COLUMN c8 SET DATA TYPE text;
+ALTER TABLE fd_pt1 ALTER COLUMN c1 SET STATISTICS 10000;
+ALTER TABLE fd_pt1 ALTER COLUMN c1 SET (n_distinct = 100);
+ALTER TABLE fd_pt1 ALTER COLUMN c8 SET STATISTICS -1;
+ALTER TABLE fd_pt1 ALTER COLUMN c8 SET STORAGE EXTERNAL;
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    | 10000        | 
@@ -1544,18 +1544,18 @@ Child tables: ft2
  c8     | text    |           |          |         |             | external |              | 
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 Child tables: ct3,
               ft3
 
 -- drop attributes recursively
-ALTER TABLE pt1 DROP COLUMN c4;
-ALTER TABLE pt1 DROP COLUMN c5;
-ALTER TABLE pt1 DROP COLUMN c6;
-ALTER TABLE pt1 DROP COLUMN c7;
-ALTER TABLE pt1 DROP COLUMN c8;
-\d+ pt1
-                                    Table "public.pt1"
+ALTER TABLE fd_pt1 DROP COLUMN c4;
+ALTER TABLE fd_pt1 DROP COLUMN c5;
+ALTER TABLE fd_pt1 DROP COLUMN c6;
+ALTER TABLE fd_pt1 DROP COLUMN c7;
+ALTER TABLE fd_pt1 DROP COLUMN c8;
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    | 10000        | 
@@ -1572,35 +1572,35 @@ Child tables: ft2
  c3     | date    |           |          |         |             | plain    |              | 
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 Child tables: ct3,
               ft3
 
 -- add constraints recursively
-ALTER TABLE pt1 ADD CONSTRAINT pt1chk1 CHECK (c1 > 0) NO INHERIT;
-ALTER TABLE pt1 ADD CONSTRAINT pt1chk2 CHECK (c2 <> '');
+ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk1 CHECK (c1 > 0) NO INHERIT;
+ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk2 CHECK (c2 <> '');
 -- connoinherit should be true for NO INHERIT constraint
 SELECT relname, conname, contype, conislocal, coninhcount, connoinherit
   FROM pg_class AS pc JOIN pg_constraint AS pgc ON (conrelid = pc.oid)
-  WHERE pc.relname = 'pt1'
+  WHERE pc.relname = 'fd_pt1'
   ORDER BY 1,2;
- relname | conname | contype | conislocal | coninhcount | connoinherit 
----------+---------+---------+------------+-------------+--------------
- pt1     | pt1chk1 | c       | t          |           0 | t
- pt1     | pt1chk2 | c       | t          |           0 | f
+ relname |  conname   | contype | conislocal | coninhcount | connoinherit 
+---------+------------+---------+------------+-------------+--------------
+ fd_pt1  | fd_pt1chk1 | c       | t          |           0 | t
+ fd_pt1  | fd_pt1chk2 | c       | t          |           0 | f
 (2 rows)
 
 -- child does not inherit NO INHERIT constraints
-\d+ pt1
-                                    Table "public.pt1"
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    | 10000        | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Check constraints:
-    "pt1chk1" CHECK (c1 > 0) NO INHERIT
-    "pt1chk2" CHECK (c2 <> ''::text)
+    "fd_pt1chk1" CHECK (c1 > 0) NO INHERIT
+    "fd_pt1chk2" CHECK (c2 <> ''::text)
 Child tables: ft2
 
 \d+ ft2
@@ -1611,10 +1611,10 @@ Child tables: ft2
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Check constraints:
-    "pt1chk2" CHECK (c2 <> ''::text)
+    "fd_pt1chk2" CHECK (c2 <> ''::text)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 Child tables: ct3,
               ft3
 
@@ -1630,21 +1630,21 @@ CREATE FOREIGN TABLE ft2 (
 	c3 date
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 -- child must have parent's INHERIT constraints
-ALTER FOREIGN TABLE ft2 INHERIT pt1;                            -- ERROR
-ERROR:  child table is missing constraint "pt1chk2"
-ALTER FOREIGN TABLE ft2 ADD CONSTRAINT pt1chk2 CHECK (c2 <> '');
-ALTER FOREIGN TABLE ft2 INHERIT pt1;
+ALTER FOREIGN TABLE ft2 INHERIT fd_pt1;                            -- ERROR
+ERROR:  child table is missing constraint "fd_pt1chk2"
+ALTER FOREIGN TABLE ft2 ADD CONSTRAINT fd_pt1chk2 CHECK (c2 <> '');
+ALTER FOREIGN TABLE ft2 INHERIT fd_pt1;
 -- child does not inherit NO INHERIT constraints
-\d+ pt1
-                                    Table "public.pt1"
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    | 10000        | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Check constraints:
-    "pt1chk1" CHECK (c1 > 0) NO INHERIT
-    "pt1chk2" CHECK (c2 <> ''::text)
+    "fd_pt1chk1" CHECK (c1 > 0) NO INHERIT
+    "fd_pt1chk2" CHECK (c2 <> ''::text)
 Child tables: ft2
 
 \d+ ft2
@@ -1655,26 +1655,26 @@ Child tables: ft2
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Check constraints:
-    "pt1chk2" CHECK (c2 <> ''::text)
+    "fd_pt1chk2" CHECK (c2 <> ''::text)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 
 -- drop constraints recursively
-ALTER TABLE pt1 DROP CONSTRAINT pt1chk1 CASCADE;
-ALTER TABLE pt1 DROP CONSTRAINT pt1chk2 CASCADE;
+ALTER TABLE fd_pt1 DROP CONSTRAINT fd_pt1chk1 CASCADE;
+ALTER TABLE fd_pt1 DROP CONSTRAINT fd_pt1chk2 CASCADE;
 -- NOT VALID case
-INSERT INTO pt1 VALUES (1, 'pt1'::text, '1994-01-01'::date);
-ALTER TABLE pt1 ADD CONSTRAINT pt1chk3 CHECK (c2 <> '') NOT VALID;
-\d+ pt1
-                                    Table "public.pt1"
+INSERT INTO fd_pt1 VALUES (1, 'fd_pt1'::text, '1994-01-01'::date);
+ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk3 CHECK (c2 <> '') NOT VALID;
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    | 10000        | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Check constraints:
-    "pt1chk3" CHECK (c2 <> ''::text) NOT VALID
+    "fd_pt1chk3" CHECK (c2 <> ''::text) NOT VALID
 Child tables: ft2
 
 \d+ ft2
@@ -1685,23 +1685,23 @@ Child tables: ft2
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Check constraints:
-    "pt1chk2" CHECK (c2 <> ''::text)
-    "pt1chk3" CHECK (c2 <> ''::text) NOT VALID
+    "fd_pt1chk2" CHECK (c2 <> ''::text)
+    "fd_pt1chk3" CHECK (c2 <> ''::text) NOT VALID
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 
 -- VALIDATE CONSTRAINT need do nothing on foreign tables
-ALTER TABLE pt1 VALIDATE CONSTRAINT pt1chk3;
-\d+ pt1
-                                    Table "public.pt1"
+ALTER TABLE fd_pt1 VALIDATE CONSTRAINT fd_pt1chk3;
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    | 10000        | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Check constraints:
-    "pt1chk3" CHECK (c2 <> ''::text)
+    "fd_pt1chk3" CHECK (c2 <> ''::text)
 Child tables: ft2
 
 \d+ ft2
@@ -1712,23 +1712,23 @@ Child tables: ft2
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Check constraints:
-    "pt1chk2" CHECK (c2 <> ''::text)
-    "pt1chk3" CHECK (c2 <> ''::text)
+    "fd_pt1chk2" CHECK (c2 <> ''::text)
+    "fd_pt1chk3" CHECK (c2 <> ''::text)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 
 -- OID system column
-ALTER TABLE pt1 SET WITH OIDS;
-\d+ pt1
-                                    Table "public.pt1"
+ALTER TABLE fd_pt1 SET WITH OIDS;
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    | 10000        | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Check constraints:
-    "pt1chk3" CHECK (c2 <> ''::text)
+    "fd_pt1chk3" CHECK (c2 <> ''::text)
 Child tables: ft2
 Has OIDs: yes
 
@@ -1740,25 +1740,25 @@ Has OIDs: yes
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Check constraints:
-    "pt1chk2" CHECK (c2 <> ''::text)
-    "pt1chk3" CHECK (c2 <> ''::text)
+    "fd_pt1chk2" CHECK (c2 <> ''::text)
+    "fd_pt1chk3" CHECK (c2 <> ''::text)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 Has OIDs: yes
 
 ALTER TABLE ft2 SET WITHOUT OIDS;  -- ERROR
 ERROR:  cannot drop inherited column "oid"
-ALTER TABLE pt1 SET WITHOUT OIDS;
-\d+ pt1
-                                    Table "public.pt1"
+ALTER TABLE fd_pt1 SET WITHOUT OIDS;
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    | 10000        | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Check constraints:
-    "pt1chk3" CHECK (c2 <> ''::text)
+    "fd_pt1chk3" CHECK (c2 <> ''::text)
 Child tables: ft2
 
 \d+ ft2
@@ -1769,20 +1769,20 @@ Child tables: ft2
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
 Check constraints:
-    "pt1chk2" CHECK (c2 <> ''::text)
-    "pt1chk3" CHECK (c2 <> ''::text)
+    "fd_pt1chk2" CHECK (c2 <> ''::text)
+    "fd_pt1chk3" CHECK (c2 <> ''::text)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 
 -- changes name of an attribute recursively
-ALTER TABLE pt1 RENAME COLUMN c1 TO f1;
-ALTER TABLE pt1 RENAME COLUMN c2 TO f2;
-ALTER TABLE pt1 RENAME COLUMN c3 TO f3;
+ALTER TABLE fd_pt1 RENAME COLUMN c1 TO f1;
+ALTER TABLE fd_pt1 RENAME COLUMN c2 TO f2;
+ALTER TABLE fd_pt1 RENAME COLUMN c3 TO f3;
 -- changes name of a constraint recursively
-ALTER TABLE pt1 RENAME CONSTRAINT pt1chk3 TO f2_check;
-\d+ pt1
-                                    Table "public.pt1"
+ALTER TABLE fd_pt1 RENAME CONSTRAINT fd_pt1chk3 TO f2_check;
+\d+ fd_pt1
+                                   Table "public.fd_pt1"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  f1     | integer |           | not null |         | plain    | 10000        | 
@@ -1801,17 +1801,17 @@ Child tables: ft2
  f3     | date    |           |          |         |             | plain    |              | 
 Check constraints:
     "f2_check" CHECK (f2 <> ''::text)
-    "pt1chk2" CHECK (f2 <> ''::text)
+    "fd_pt1chk2" CHECK (f2 <> ''::text)
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: pt1
+Inherits: fd_pt1
 
 -- TRUNCATE doesn't work on foreign tables, either directly or recursively
 TRUNCATE ft2;  -- ERROR
 ERROR:  "ft2" is not a table
-TRUNCATE pt1;  -- ERROR
+TRUNCATE fd_pt1;  -- ERROR
 ERROR:  "ft2" is not a table
-DROP TABLE pt1 CASCADE;
+DROP TABLE fd_pt1 CASCADE;
 NOTICE:  drop cascades to foreign table ft2
 -- IMPORT FOREIGN SCHEMA
 IMPORT FOREIGN SCHEMA s1 FROM SERVER s9 INTO public; -- ERROR
@@ -1838,45 +1838,45 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP OWNED BY regress_test_role2 CASCADE;
 NOTICE:  drop cascades to user mapping for regress_test_role on server s5
 -- Foreign partition DDL stuff
-CREATE TABLE pt2 (
+CREATE TABLE fd_pt2 (
 	c1 integer NOT NULL,
 	c2 text,
 	c3 date
 ) PARTITION BY LIST (c1);
-CREATE FOREIGN TABLE pt2_1 PARTITION OF pt2 FOR VALUES IN (1)
+CREATE FOREIGN TABLE fd_pt2_1 PARTITION OF fd_pt2 FOR VALUES IN (1)
   SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
-\d+ pt2
-                                    Table "public.pt2"
+\d+ fd_pt2
+                                   Table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Partition key: LIST (c1)
-Partitions: pt2_1 FOR VALUES IN (1)
+Partitions: fd_pt2_1 FOR VALUES IN (1)
 
-\d+ pt2_1
-                                      Foreign table "public.pt2_1"
+\d+ fd_pt2_1
+                                     Foreign table "public.fd_pt2_1"
  Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
-Partition of: pt2 FOR VALUES IN (1)
+Partition of: fd_pt2 FOR VALUES IN (1)
 Partition constraint: ((c1 IS NOT NULL) AND (c1 = 1))
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 -- partition cannot have additional columns
-DROP FOREIGN TABLE pt2_1;
-CREATE FOREIGN TABLE pt2_1 (
+DROP FOREIGN TABLE fd_pt2_1;
+CREATE FOREIGN TABLE fd_pt2_1 (
 	c1 integer NOT NULL,
 	c2 text,
 	c3 date,
 	c4 char
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
-\d+ pt2_1
-                                         Foreign table "public.pt2_1"
+\d+ fd_pt2_1
+                                       Foreign table "public.fd_pt2_1"
  Column |     Type     | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+--------------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer      |           | not null |         |             | plain    |              | 
@@ -1886,12 +1886,12 @@ CREATE FOREIGN TABLE pt2_1 (
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
-ERROR:  table "pt2_1" contains column "c4" not found in parent "pt2"
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);       -- ERROR
+ERROR:  table "fd_pt2_1" contains column "c4" not found in parent "fd_pt2"
 DETAIL:  The new partition may contain only the columns present in parent.
-DROP FOREIGN TABLE pt2_1;
-\d+ pt2
-                                    Table "public.pt2"
+DROP FOREIGN TABLE fd_pt2_1;
+\d+ fd_pt2
+                                   Table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1900,13 +1900,13 @@ DROP FOREIGN TABLE pt2_1;
 Partition key: LIST (c1)
 Number of partitions: 0
 
-CREATE FOREIGN TABLE pt2_1 (
+CREATE FOREIGN TABLE fd_pt2_1 (
 	c1 integer NOT NULL,
 	c2 text,
 	c3 date
 ) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
-\d+ pt2_1
-                                      Foreign table "public.pt2_1"
+\d+ fd_pt2_1
+                                     Foreign table "public.fd_pt2_1"
  Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
@@ -1916,53 +1916,53 @@ Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 -- no attach partition validation occurs for foreign tables
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
-\d+ pt2
-                                    Table "public.pt2"
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);
+\d+ fd_pt2
+                                   Table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Partition key: LIST (c1)
-Partitions: pt2_1 FOR VALUES IN (1)
+Partitions: fd_pt2_1 FOR VALUES IN (1)
 
-\d+ pt2_1
-                                      Foreign table "public.pt2_1"
+\d+ fd_pt2_1
+                                     Foreign table "public.fd_pt2_1"
  Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           |          |         |             | plain    |              | 
-Partition of: pt2 FOR VALUES IN (1)
+Partition of: fd_pt2 FOR VALUES IN (1)
 Partition constraint: ((c1 IS NOT NULL) AND (c1 = 1))
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 -- cannot add column to a partition
-ALTER TABLE pt2_1 ADD c4 char;
+ALTER TABLE fd_pt2_1 ADD c4 char;
 ERROR:  cannot add column to a partition
 -- ok to have a partition's own constraints though
-ALTER TABLE pt2_1 ALTER c3 SET NOT NULL;
-ALTER TABLE pt2_1 ADD CONSTRAINT p21chk CHECK (c2 <> '');
-\d+ pt2
-                                    Table "public.pt2"
+ALTER TABLE fd_pt2_1 ALTER c3 SET NOT NULL;
+ALTER TABLE fd_pt2_1 ADD CONSTRAINT p21chk CHECK (c2 <> '');
+\d+ fd_pt2
+                                   Table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Partition key: LIST (c1)
-Partitions: pt2_1 FOR VALUES IN (1)
+Partitions: fd_pt2_1 FOR VALUES IN (1)
 
-\d+ pt2_1
-                                      Foreign table "public.pt2_1"
+\d+ fd_pt2_1
+                                     Foreign table "public.fd_pt2_1"
  Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
  c2     | text    |           |          |         |             | extended |              | 
  c3     | date    |           | not null |         |             | plain    |              | 
-Partition of: pt2 FOR VALUES IN (1)
+Partition of: fd_pt2 FOR VALUES IN (1)
 Partition constraint: ((c1 IS NOT NULL) AND (c1 = 1))
 Check constraints:
     "p21chk" CHECK (c2 <> ''::text)
@@ -1970,13 +1970,13 @@ Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
 -- cannot drop inherited NOT NULL constraint from a partition
-ALTER TABLE pt2_1 ALTER c1 DROP NOT NULL;
+ALTER TABLE fd_pt2_1 ALTER c1 DROP NOT NULL;
 ERROR:  column "c1" is marked NOT NULL in parent table
 -- partition must have parent's constraints
-ALTER TABLE pt2 DETACH PARTITION pt2_1;
-ALTER TABLE pt2 ALTER c2 SET NOT NULL;
-\d+ pt2
-                                    Table "public.pt2"
+ALTER TABLE fd_pt2 DETACH PARTITION fd_pt2_1;
+ALTER TABLE fd_pt2 ALTER c2 SET NOT NULL;
+\d+ fd_pt2
+                                   Table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1985,8 +1985,8 @@ ALTER TABLE pt2 ALTER c2 SET NOT NULL;
 Partition key: LIST (c1)
 Number of partitions: 0
 
-\d+ pt2_1
-                                      Foreign table "public.pt2_1"
+\d+ fd_pt2_1
+                                     Foreign table "public.fd_pt2_1"
  Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
@@ -1997,14 +1997,14 @@ Check constraints:
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);       -- ERROR
 ERROR:  column "c2" in child table must be marked NOT NULL
-ALTER FOREIGN TABLE pt2_1 ALTER c2 SET NOT NULL;
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
-ALTER TABLE pt2 DETACH PARTITION pt2_1;
-ALTER TABLE pt2 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
-\d+ pt2
-                                    Table "public.pt2"
+ALTER FOREIGN TABLE fd_pt2_1 ALTER c2 SET NOT NULL;
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);
+ALTER TABLE fd_pt2 DETACH PARTITION fd_pt2_1;
+ALTER TABLE fd_pt2 ADD CONSTRAINT fd_pt2chk1 CHECK (c1 > 0);
+\d+ fd_pt2
+                                   Table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -2012,11 +2012,11 @@ ALTER TABLE pt2 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
  c3     | date    |           |          |         | plain    |              | 
 Partition key: LIST (c1)
 Check constraints:
-    "pt2chk1" CHECK (c1 > 0)
+    "fd_pt2chk1" CHECK (c1 > 0)
 Number of partitions: 0
 
-\d+ pt2_1
-                                      Foreign table "public.pt2_1"
+\d+ fd_pt2_1
+                                     Foreign table "public.fd_pt2_1"
  Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
  c1     | integer |           | not null |         |             | plain    |              | 
@@ -2027,17 +2027,17 @@ Check constraints:
 Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
-ERROR:  child table is missing constraint "pt2chk1"
-ALTER FOREIGN TABLE pt2_1 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
-ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);       -- ERROR
+ERROR:  child table is missing constraint "fd_pt2chk1"
+ALTER FOREIGN TABLE fd_pt2_1 ADD CONSTRAINT fd_pt2chk1 CHECK (c1 > 0);
+ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);
 -- TRUNCATE doesn't work on foreign tables, either directly or recursively
-TRUNCATE pt2_1;  -- ERROR
-ERROR:  "pt2_1" is not a table
-TRUNCATE pt2;  -- ERROR
-ERROR:  "pt2_1" is not a table
-DROP FOREIGN TABLE pt2_1;
-DROP TABLE pt2;
+TRUNCATE fd_pt2_1;  -- ERROR
+ERROR:  "fd_pt2_1" is not a table
+TRUNCATE fd_pt2;  -- ERROR
+ERROR:  "fd_pt2_1" is not a table
+DROP FOREIGN TABLE fd_pt2_1;
+DROP TABLE fd_pt2;
 -- Cleanup
 DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR

@@ -1175,47 +1175,47 @@ SELECT count(*) FROM shoe;
 --
 -- Simple test of qualified ON INSERT ... this did not work in 7.0 ...
 --
-create table foo (f1 int);
-create table foo2 (f1 int);
-create rule foorule as on insert to foo where f1 < 100
+create table rules_foo (f1 int);
+create table rules_foo2 (f1 int);
+create rule rules_foorule as on insert to rules_foo where f1 < 100
 do instead nothing;
-insert into foo values(1);
-insert into foo values(1001);
-select * from foo;
+insert into rules_foo values(1);
+insert into rules_foo values(1001);
+select * from rules_foo;
   f1  
 ------
  1001
 (1 row)
 
-drop rule foorule on foo;
+drop rule rules_foorule on rules_foo;
 -- this should fail because f1 is not exposed for unqualified reference:
-create rule foorule as on insert to foo where f1 < 100
-do instead insert into foo2 values (f1);
+create rule rules_foorule as on insert to rules_foo where f1 < 100
+do instead insert into rules_foo2 values (f1);
 ERROR:  column "f1" does not exist
-LINE 2: do instead insert into foo2 values (f1);
-                                            ^
+LINE 2: do instead insert into rules_foo2 values (f1);
+                                                  ^
 HINT:  There is a column named "f1" in table "old", but it cannot be referenced from this part of the query.
 -- this is the correct way:
-create rule foorule as on insert to foo where f1 < 100
-do instead insert into foo2 values (new.f1);
-insert into foo values(2);
-insert into foo values(100);
-select * from foo;
+create rule rules_foorule as on insert to rules_foo where f1 < 100
+do instead insert into rules_foo2 values (new.f1);
+insert into rules_foo values(2);
+insert into rules_foo values(100);
+select * from rules_foo;
   f1  
 ------
  1001
   100
 (2 rows)
 
-select * from foo2;
+select * from rules_foo2;
  f1 
 ----
   2
 (1 row)
 
-drop rule foorule on foo;
-drop table foo;
-drop table foo2;
+drop rule rules_foorule on rules_foo;
+drop table rules_foo;
+drop table rules_foo2;
 --
 -- Test rules containing INSERT ... SELECT, which is a very ugly special
 -- case as of 7.1.  Example is based on bug report from Joel Burton.
@@ -2535,50 +2535,50 @@ DETAIL:  Key (id3a, id3b)=(1, 13) is not present in table "rule_and_refint_t1".
 --
 -- disallow dropping a view's rule (bug #5072)
 --
-create view fooview as select 'foo'::text;
-drop rule "_RETURN" on fooview;
-ERROR:  cannot drop rule _RETURN on view fooview because view fooview requires it
-HINT:  You can drop view fooview instead.
-drop view fooview;
+create view rules_fooview as select 'rules_foo'::text;
+drop rule "_RETURN" on rules_fooview;
+ERROR:  cannot drop rule _RETURN on view rules_fooview because view rules_fooview requires it
+HINT:  You can drop view rules_fooview instead.
+drop view rules_fooview;
 --
 -- test conversion of table to view (needed to load some pg_dump files)
 --
-create table fooview (x int, y text);
-select xmin, * from fooview;
+create table rules_fooview (x int, y text);
+select xmin, * from rules_fooview;
  xmin | x | y 
 ------+---+---
 (0 rows)
 
-create rule "_RETURN" as on select to fooview do instead
+create rule "_RETURN" as on select to rules_fooview do instead
   select 1 as x, 'aaa'::text as y;
-select * from fooview;
+select * from rules_fooview;
  x |  y  
 ---+-----
  1 | aaa
 (1 row)
 
-select xmin, * from fooview;  -- fail, views don't have such a column
+select xmin, * from rules_fooview;  -- fail, views don't have such a column
 ERROR:  column "xmin" does not exist
-LINE 1: select xmin, * from fooview;
+LINE 1: select xmin, * from rules_fooview;
                ^
 select reltoastrelid, relkind, relfrozenxid
-  from pg_class where oid = 'fooview'::regclass;
+  from pg_class where oid = 'rules_fooview'::regclass;
  reltoastrelid | relkind | relfrozenxid 
 ---------------+---------+--------------
              0 | v       |            0
 (1 row)
 
-drop view fooview;
+drop view rules_fooview;
 -- trying to convert a partitioned table to view is not allowed
-create table fooview (x int, y text) partition by list (x);
-create rule "_RETURN" as on select to fooview do instead
+create table rules_fooview (x int, y text) partition by list (x);
+create rule "_RETURN" as on select to rules_fooview do instead
   select 1 as x, 'aaa'::text as y;
-ERROR:  cannot convert partitioned table "fooview" to a view
+ERROR:  cannot convert partitioned table "rules_fooview" to a view
 -- nor can one convert a partition to view
-create table fooview_part partition of fooview for values in (1);
-create rule "_RETURN" as on select to fooview_part do instead
+create table rules_fooview_part partition of rules_fooview for values in (1);
+create rule "_RETURN" as on select to rules_fooview_part do instead
   select 1 as x, 'aaa'::text as y;
-ERROR:  cannot convert partition "fooview_part" to a view
+ERROR:  cannot convert partition "rules_fooview_part" to a view
 --
 -- check for planner problems with complex inherited UPDATES
 --
@@ -3229,12 +3229,12 @@ SELECT pg_get_partkeydef(0);
 (1 row)
 
 -- test rename for a rule defined on a partitioned table
-CREATE TABLE parted_table (a int) PARTITION BY LIST (a);
-CREATE TABLE parted_table_1 PARTITION OF parted_table FOR VALUES IN (1);
-CREATE RULE parted_table_insert AS ON INSERT to parted_table
-    DO INSTEAD INSERT INTO parted_table_1 VALUES (NEW.*);
-ALTER RULE parted_table_insert ON parted_table RENAME TO parted_table_insert_redirect;
-DROP TABLE parted_table;
+CREATE TABLE rules_parted_table (a int) PARTITION BY LIST (a);
+CREATE TABLE rules_parted_table_1 PARTITION OF rules_parted_table FOR VALUES IN (1);
+CREATE RULE rules_parted_table_insert AS ON INSERT to rules_parted_table
+    DO INSTEAD INSERT INTO rules_parted_table_1 VALUES (NEW.*);
+ALTER RULE rules_parted_table_insert ON rules_parted_table RENAME TO rules_parted_table_insert_redirect;
+DROP TABLE rules_parted_table;
 --
 -- Test enabling/disabling
 --

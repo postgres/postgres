@@ -8,7 +8,7 @@ ERROR:  random() is not a procedure
 LINE 1: CALL random();
              ^
 HINT:  To call a function, use SELECT.
-CREATE FUNCTION testfunc1(a int) RETURNS int LANGUAGE SQL AS $$ SELECT a $$;
+CREATE FUNCTION cp_testfunc1(a int) RETURNS int LANGUAGE SQL AS $$ SELECT a $$;
 CREATE TABLE cp_test (a int, b text);
 CREATE PROCEDURE ptest1(x text)
 LANGUAGE SQL
@@ -118,14 +118,14 @@ LINE 1: ALTER PROCEDURE ptest1(text) STRICT;
                                      ^
 ALTER FUNCTION ptest1(text) VOLATILE;  -- error: not a function
 ERROR:  ptest1(text) is not a function
-ALTER PROCEDURE testfunc1(int) VOLATILE;  -- error: not a procedure
-ERROR:  testfunc1(integer) is not a procedure
+ALTER PROCEDURE cp_testfunc1(int) VOLATILE;  -- error: not a procedure
+ERROR:  cp_testfunc1(integer) is not a procedure
 ALTER PROCEDURE nonexistent() VOLATILE;
 ERROR:  procedure nonexistent() does not exist
 DROP FUNCTION ptest1(text);  -- error: not a function
 ERROR:  ptest1(text) is not a function
-DROP PROCEDURE testfunc1(int);  -- error: not a procedure
-ERROR:  testfunc1(integer) is not a procedure
+DROP PROCEDURE cp_testfunc1(int);  -- error: not a procedure
+ERROR:  cp_testfunc1(integer) is not a procedure
 DROP PROCEDURE nonexistent();
 ERROR:  procedure nonexistent() does not exist
 -- privileges
@@ -141,11 +141,11 @@ SET ROLE regress_cp_user1;
 CALL ptest1('a');  -- ok
 RESET ROLE;
 -- ROUTINE syntax
-ALTER ROUTINE testfunc1(int) RENAME TO testfunc1a;
-ALTER ROUTINE testfunc1a RENAME TO testfunc1;
+ALTER ROUTINE cp_testfunc1(int) RENAME TO cp_testfunc1a;
+ALTER ROUTINE cp_testfunc1a RENAME TO cp_testfunc1;
 ALTER ROUTINE ptest1(text) RENAME TO ptest1a;
 ALTER ROUTINE ptest1a RENAME TO ptest1;
-DROP ROUTINE testfunc1(int);
+DROP ROUTINE cp_testfunc1(int);
 -- cleanup
 DROP PROCEDURE ptest1;
 DROP PROCEDURE ptest2;

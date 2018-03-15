@@ -2,7 +2,7 @@
 -- PARALLEL
 --
 
-create or replace function parallel_restricted(int) returns int as
+create function sp_parallel_restricted(int) returns int as
   $$begin return $1; end$$ language plpgsql parallel restricted;
 
 -- Serializable isolation would disable parallel query, so explicitly use an
@@ -50,10 +50,10 @@ select round(avg(aa)), sum(aa) from a_star a4;
 reset enable_parallel_append;
 
 -- Parallel Append that runs serially
-create or replace function foobar() returns setof text as
+create function sp_test_func() returns setof text as
 $$ select 'foo'::varchar union all select 'bar'::varchar $$
 language sql stable;
-select foobar() order by 1;
+select sp_test_func() order by 1;
 
 -- test with leader participation disabled
 set parallel_leader_participation = off;
@@ -74,7 +74,7 @@ reset parallel_leader_participation;
 -- test that parallel_restricted function doesn't run in worker
 alter table tenk1 set (parallel_workers = 4);
 explain (verbose, costs off)
-select parallel_restricted(unique1) from tenk1
+select sp_parallel_restricted(unique1) from tenk1
   where stringu1 = 'GRAAAA' order by 1;
 
 -- test parallel plan when group by expression is in target list.
@@ -88,8 +88,8 @@ explain (costs off)
 -- test that parallel plan for aggregates is not selected when
 -- target list contains parallel restricted clause.
 explain (costs off)
-	select  sum(parallel_restricted(unique1)) from tenk1
-	group by(parallel_restricted(unique1));
+	select  sum(sp_parallel_restricted(unique1)) from tenk1
+	group by(sp_parallel_restricted(unique1));
 
 -- test prepared statement
 prepare tenk1_count(integer) As select  count((unique1)) from tenk1 where hundred > $1;
@@ -240,7 +240,7 @@ explain (costs off)
 select count(*) from tenk1 group by twenty;
 
 --test expressions in targetlist are pushed down for gather merge
-create or replace function simple_func(var1 integer) returns integer
+create function sp_simple_func(var1 integer) returns integer
 as $$
 begin
         return var1 + 10;
@@ -248,9 +248,9 @@ end;
 $$ language plpgsql PARALLEL SAFE;
 
 explain (costs off, verbose)
-    select ten, simple_func(ten) from tenk1 where ten < 100 order by ten;
+    select ten, sp_simple_func(ten) from tenk1 where ten < 100 order by ten;
 
-drop function simple_func(integer);
+drop function sp_simple_func(integer);
 
 -- test gather merge with parallel leader participation disabled
 set parallel_leader_participation = off;
@@ -316,7 +316,7 @@ explain (costs off)
 ROLLBACK TO SAVEPOINT settings;
 
 -- exercise record typmod remapping between backends
-CREATE OR REPLACE FUNCTION make_record(n int)
+CREATE FUNCTION make_record(n int)
   RETURNS RECORD LANGUAGE plpgsql PARALLEL SAFE AS
 $$
 BEGIN

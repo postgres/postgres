@@ -2,15 +2,15 @@
 -- SELECT_INTO
 --
 SELECT *
-   INTO TABLE tmp1
+   INTO TABLE sitmp1
    FROM onek
    WHERE onek.unique1 < 2;
-DROP TABLE tmp1;
+DROP TABLE sitmp1;
 SELECT *
-   INTO TABLE tmp1
+   INTO TABLE sitmp1
    FROM onek2
    WHERE onek2.unique1 < 2;
-DROP TABLE tmp1;
+DROP TABLE sitmp1;
 --
 -- SELECT INTO and INSERT permission, if owner is not allowed to insert.
 --

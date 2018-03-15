@@ -26,8 +26,8 @@ CREATE VIEW rw_view15 AS SELECT a, upper(b) FROM base_tbl; -- Expression/functio
 CREATE VIEW rw_view16 AS SELECT a, b, a AS aa FROM base_tbl; -- Repeated column may be part of an updatable view
 CREATE VIEW ro_view17 AS SELECT * FROM ro_view1; -- Base relation not updatable
 CREATE VIEW ro_view18 AS SELECT * FROM (VALUES(1)) AS tmp(a); -- VALUES in rangetable
-CREATE SEQUENCE seq;
-CREATE VIEW ro_view19 AS SELECT * FROM seq; -- View based on a sequence
+CREATE SEQUENCE uv_seq;
+CREATE VIEW ro_view19 AS SELECT * FROM uv_seq; -- View based on a sequence
 CREATE VIEW ro_view20 AS SELECT a, b, generate_series(1, a) g FROM base_tbl; -- SRF in targetlist not supported
 
 SELECT table_name, is_insertable_into
@@ -100,7 +100,7 @@ UPDATE ro_view20 SET b=upper(b);
 
 DROP TABLE base_tbl CASCADE;
 DROP VIEW ro_view10, ro_view12, ro_view18;
-DROP SEQUENCE seq CASCADE;
+DROP SEQUENCE uv_seq CASCADE;
 
 -- simple updatable view
 
@@ -1114,33 +1114,33 @@ DROP VIEW v1;
 DROP TABLE t1;
 
 -- check that an auto-updatable view on a partitioned table works correctly
-create table pt (a int, b int, v varchar) partition by range (a, b);
-create table pt1 (b int not null, v varchar, a int not null) partition by range (b);
-create table pt11 (like pt1);
-alter table pt11 drop a;
-alter table pt11 add a int;
-alter table pt11 drop a;
-alter table pt11 add a int not null;
-alter table pt1 attach partition pt11 for values from (2) to (5);
-alter table pt attach partition pt1 for values from (1, 2) to (1, 10);
+create table uv_pt (a int, b int, v varchar) partition by range (a, b);
+create table uv_pt1 (b int not null, v varchar, a int not null) partition by range (b);
+create table uv_pt11 (like uv_pt1);
+alter table uv_pt11 drop a;
+alter table uv_pt11 add a int;
+alter table uv_pt11 drop a;
+alter table uv_pt11 add a int not null;
+alter table uv_pt1 attach partition uv_pt11 for values from (2) to (5);
+alter table uv_pt attach partition uv_pt1 for values from (1, 2) to (1, 10);
 
-create view ptv as select * from pt;
+create view uv_ptv as select * from uv_pt;
 select events & 4 != 0 AS upd,
        events & 8 != 0 AS ins,
        events & 16 != 0 AS del
-  from pg_catalog.pg_relation_is_updatable('pt'::regclass, false) t(events);
-select pg_catalog.pg_column_is_updatable('pt'::regclass, 1::smallint, false);
-select pg_catalog.pg_column_is_updatable('pt'::regclass, 2::smallint, false);
+  from pg_catalog.pg_relation_is_updatable('uv_pt'::regclass, false) t(events);
+select pg_catalog.pg_column_is_updatable('uv_pt'::regclass, 1::smallint, false);
+select pg_catalog.pg_column_is_updatable('uv_pt'::regclass, 2::smallint, false);
 select table_name, is_updatable, is_insertable_into
-  from information_schema.views where table_name = 'ptv';
+  from information_schema.views where table_name = 'uv_ptv';
 select table_name, column_name, is_updatable
-  from information_schema.columns where table_name = 'ptv' order by column_name;
-insert into ptv values (1, 2);
-select tableoid::regclass, * from pt;
-create view ptv_wco as select * from pt where a = 0 with check option;
-insert into ptv_wco values (1, 2);
-drop view ptv, ptv_wco;
-drop table pt, pt1, pt11;
+  from information_schema.columns where table_name = 'uv_ptv' order by column_name;
+insert into uv_ptv values (1, 2);
+select tableoid::regclass, * from uv_pt;
+create view uv_ptv_wco as select * from uv_pt where a = 0 with check option;
+insert into uv_ptv_wco values (1, 2);
+drop view uv_ptv, uv_ptv_wco;
+drop table uv_pt, uv_pt1, uv_pt11;
 
 -- check that wholerow vars appearing in WITH CHECK OPTION constraint expressions
 -- work fine with partitioned tables

@@ -1303,31 +1303,31 @@ ERROR:  cannot change name of input parameter "c"
 HINT:  Use DROP FUNCTION dfunc(character varying,numeric) first.
 drop function dfunc(varchar, numeric);
 --fail, named parameters are not unique
-create function testfoo(a int, a int) returns int as $$ select 1;$$ language sql;
+create function testpolym(a int, a int) returns int as $$ select 1;$$ language sql;
 ERROR:  parameter name "a" used more than once
-create function testfoo(int, out a int, out a int) returns int as $$ select 1;$$ language sql;
+create function testpolym(int, out a int, out a int) returns int as $$ select 1;$$ language sql;
 ERROR:  parameter name "a" used more than once
-create function testfoo(out a int, inout a int) returns int as $$ select 1;$$ language sql;
+create function testpolym(out a int, inout a int) returns int as $$ select 1;$$ language sql;
 ERROR:  parameter name "a" used more than once
-create function testfoo(a int, inout a int) returns int as $$ select 1;$$ language sql;
+create function testpolym(a int, inout a int) returns int as $$ select 1;$$ language sql;
 ERROR:  parameter name "a" used more than once
 -- valid
-create function testfoo(a int, out a int) returns int as $$ select $1;$$ language sql;
-select testfoo(37);
- testfoo 
----------
-      37
+create function testpolym(a int, out a int) returns int as $$ select $1;$$ language sql;
+select testpolym(37);
+ testpolym 
+-----------
+        37
 (1 row)
 
-drop function testfoo(int);
-create function testfoo(a int) returns table(a int) as $$ select $1;$$ language sql;
-select * from testfoo(37);
+drop function testpolym(int);
+create function testpolym(a int) returns table(a int) as $$ select $1;$$ language sql;
+select * from testpolym(37);
  a  
 ----
  37
 (1 row)
 
-drop function testfoo(int);
+drop function testpolym(int);
 -- test polymorphic params and defaults
 create function dfunc(a anyelement, b anyelement = null, flag bool = true)
 returns anyelement as $$

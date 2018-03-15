@@ -649,84 +649,84 @@ DETAIL:  GRANT and REVOKE are not allowed on untrusted languages, because only s
 SET SESSION AUTHORIZATION regress_priv_user1;
 GRANT USAGE ON LANGUAGE sql TO regress_priv_user2; -- fail
 WARNING:  no privileges were granted for "sql"
-CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
-CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
-CREATE AGGREGATE testagg1(int) (sfunc = int4pl, stype = int4);
-CREATE PROCEDURE testproc1(int) AS 'select $1;' LANGUAGE sql;
-REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int), testagg1(int) TO regress_priv_user2;
-REVOKE ALL ON FUNCTION testproc1(int) FROM PUBLIC; -- fail, not a function
-ERROR:  testproc1(integer) is not a function
-REVOKE ALL ON PROCEDURE testproc1(int) FROM PUBLIC;
-GRANT EXECUTE ON PROCEDURE testproc1(int) TO regress_priv_user2;
-GRANT USAGE ON FUNCTION testfunc1(int) TO regress_priv_user3; -- semantic error
+CREATE FUNCTION priv_testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
+CREATE FUNCTION priv_testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+CREATE AGGREGATE priv_testagg1(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE priv_testproc1(int) AS 'select $1;' LANGUAGE sql;
+REVOKE ALL ON FUNCTION priv_testfunc1(int), priv_testfunc2(int), priv_testagg1(int) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION priv_testfunc1(int), priv_testfunc2(int), priv_testagg1(int) TO regress_priv_user2;
+REVOKE ALL ON FUNCTION priv_testproc1(int) FROM PUBLIC; -- fail, not a function
+ERROR:  priv_testproc1(integer) is not a function
+REVOKE ALL ON PROCEDURE priv_testproc1(int) FROM PUBLIC;
+GRANT EXECUTE ON PROCEDURE priv_testproc1(int) TO regress_priv_user2;
+GRANT USAGE ON FUNCTION priv_testfunc1(int) TO regress_priv_user3; -- semantic error
 ERROR:  invalid privilege type USAGE for function
-GRANT USAGE ON FUNCTION testagg1(int) TO regress_priv_user3; -- semantic error
+GRANT USAGE ON FUNCTION priv_testagg1(int) TO regress_priv_user3; -- semantic error
 ERROR:  invalid privilege type USAGE for function
-GRANT USAGE ON PROCEDURE testproc1(int) TO regress_priv_user3; -- semantic error
+GRANT USAGE ON PROCEDURE priv_testproc1(int) TO regress_priv_user3; -- semantic error
 ERROR:  invalid privilege type USAGE for procedure
-GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regress_priv_user4;
-GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regress_priv_user4;
-ERROR:  function testfunc_nosuch(integer) does not exist
-GRANT ALL PRIVILEGES ON FUNCTION testagg1(int) TO regress_priv_user4;
-GRANT ALL PRIVILEGES ON PROCEDURE testproc1(int) TO regress_priv_user4;
-CREATE FUNCTION testfunc4(boolean) RETURNS text
+GRANT ALL PRIVILEGES ON FUNCTION priv_testfunc1(int) TO regress_priv_user4;
+GRANT ALL PRIVILEGES ON FUNCTION priv_testfunc_nosuch(int) TO regress_priv_user4;
+ERROR:  function priv_testfunc_nosuch(integer) does not exist
+GRANT ALL PRIVILEGES ON FUNCTION priv_testagg1(int) TO regress_priv_user4;
+GRANT ALL PRIVILEGES ON PROCEDURE priv_testproc1(int) TO regress_priv_user4;
+CREATE FUNCTION priv_testfunc4(boolean) RETURNS text
   AS 'select col1 from atest2 where col2 = $1;'
   LANGUAGE sql SECURITY DEFINER;
-GRANT EXECUTE ON FUNCTION testfunc4(boolean) TO regress_priv_user3;
+GRANT EXECUTE ON FUNCTION priv_testfunc4(boolean) TO regress_priv_user3;
 SET SESSION AUTHORIZATION regress_priv_user2;
-SELECT testfunc1(5), testfunc2(5); -- ok
- testfunc1 | testfunc2 
------------+-----------
-        10 |        15
+SELECT priv_testfunc1(5), priv_testfunc2(5); -- ok
+ priv_testfunc1 | priv_testfunc2 
+----------------+----------------
+             10 |             15
 (1 row)
 
-CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
+CREATE FUNCTION priv_testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
 ERROR:  permission denied for language sql
-SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
- testagg1 
-----------
-        6
+SELECT priv_testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+ priv_testagg1 
+---------------
+             6
 (1 row)
 
-CALL testproc1(6); -- ok
+CALL priv_testproc1(6); -- ok
 SET SESSION AUTHORIZATION regress_priv_user3;
-SELECT testfunc1(5); -- fail
-ERROR:  permission denied for function testfunc1
-SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- fail
-ERROR:  permission denied for aggregate testagg1
-CALL testproc1(6); -- fail
-ERROR:  permission denied for procedure testproc1
+SELECT priv_testfunc1(5); -- fail
+ERROR:  permission denied for function priv_testfunc1
+SELECT priv_testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- fail
+ERROR:  permission denied for aggregate priv_testagg1
+CALL priv_testproc1(6); -- fail
+ERROR:  permission denied for procedure priv_testproc1
 SELECT col1 FROM atest2 WHERE col2 = true; -- fail
 ERROR:  permission denied for table atest2
-SELECT testfunc4(true); -- ok
- testfunc4 
------------
+SELECT priv_testfunc4(true); -- ok
+ priv_testfunc4 
+----------------
  bar
 (1 row)
 
 SET SESSION AUTHORIZATION regress_priv_user4;
-SELECT testfunc1(5); -- ok
- testfunc1 
------------
-        10
+SELECT priv_testfunc1(5); -- ok
+ priv_testfunc1 
+----------------
+             10
 (1 row)
 
-SELECT testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
- testagg1 
-----------
-        6
+SELECT priv_testagg1(x) FROM (VALUES (1), (2), (3)) _(x); -- ok
+ priv_testagg1 
+---------------
+             6
 (1 row)
 
-CALL testproc1(6); -- ok
-DROP FUNCTION testfunc1(int); -- fail
-ERROR:  must be owner of function testfunc1
-DROP AGGREGATE testagg1(int); -- fail
-ERROR:  must be owner of aggregate testagg1
-DROP PROCEDURE testproc1(int); -- fail
-ERROR:  must be owner of procedure testproc1
+CALL priv_testproc1(6); -- ok
+DROP FUNCTION priv_testfunc1(int); -- fail
+ERROR:  must be owner of function priv_testfunc1
+DROP AGGREGATE priv_testagg1(int); -- fail
+ERROR:  must be owner of aggregate priv_testagg1
+DROP PROCEDURE priv_testproc1(int); -- fail
+ERROR:  must be owner of procedure priv_testproc1
 \c -
-DROP FUNCTION testfunc1(int); -- ok
+DROP FUNCTION priv_testfunc1(int); -- ok
 -- restore to sanity
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
 -- verify privilege checks on array-element coercions
@@ -751,100 +751,100 @@ ROLLBACK;
 -- privileges on types
 -- switch to superuser
 \c -
-CREATE TYPE testtype1 AS (a int, b text);
-REVOKE USAGE ON TYPE testtype1 FROM PUBLIC;
-GRANT USAGE ON TYPE testtype1 TO regress_priv_user2;
-GRANT USAGE ON TYPE _testtype1 TO regress_priv_user2; -- fail
+CREATE TYPE priv_testtype1 AS (a int, b text);
+REVOKE USAGE ON TYPE priv_testtype1 FROM PUBLIC;
+GRANT USAGE ON TYPE priv_testtype1 TO regress_priv_user2;
+GRANT USAGE ON TYPE _priv_testtype1 TO regress_priv_user2; -- fail
 ERROR:  cannot set privileges of array types
 HINT:  Set the privileges of the element type instead.
-GRANT USAGE ON DOMAIN testtype1 TO regress_priv_user2; -- fail
-ERROR:  "testtype1" is not a domain
-CREATE DOMAIN testdomain1 AS int;
-REVOKE USAGE on DOMAIN testdomain1 FROM PUBLIC;
-GRANT USAGE ON DOMAIN testdomain1 TO regress_priv_user2;
-GRANT USAGE ON TYPE testdomain1 TO regress_priv_user2; -- ok
+GRANT USAGE ON DOMAIN priv_testtype1 TO regress_priv_user2; -- fail
+ERROR:  "priv_testtype1" is not a domain
+CREATE DOMAIN priv_testdomain1 AS int;
+REVOKE USAGE on DOMAIN priv_testdomain1 FROM PUBLIC;
+GRANT USAGE ON DOMAIN priv_testdomain1 TO regress_priv_user2;
+GRANT USAGE ON TYPE priv_testdomain1 TO regress_priv_user2; -- ok
 SET SESSION AUTHORIZATION regress_priv_user1;
 -- commands that should fail
-CREATE AGGREGATE testagg1a(testdomain1) (sfunc = int4_sum, stype = bigint);
-ERROR:  permission denied for type testdomain1
-CREATE DOMAIN testdomain2a AS testdomain1;
-ERROR:  permission denied for type testdomain1
-CREATE DOMAIN testdomain3a AS int;
-CREATE FUNCTION castfunc(int) RETURNS testdomain3a AS $$ SELECT $1::testdomain3a $$ LANGUAGE SQL;
-CREATE CAST (testdomain1 AS testdomain3a) WITH FUNCTION castfunc(int);
-ERROR:  permission denied for type testdomain1
+CREATE AGGREGATE priv_testagg1a(priv_testdomain1) (sfunc = int4_sum, stype = bigint);
+ERROR:  permission denied for type priv_testdomain1
+CREATE DOMAIN priv_testdomain2a AS priv_testdomain1;
+ERROR:  permission denied for type priv_testdomain1
+CREATE DOMAIN priv_testdomain3a AS int;
+CREATE FUNCTION castfunc(int) RETURNS priv_testdomain3a AS $$ SELECT $1::priv_testdomain3a $$ LANGUAGE SQL;
+CREATE CAST (priv_testdomain1 AS priv_testdomain3a) WITH FUNCTION castfunc(int);
+ERROR:  permission denied for type priv_testdomain1
 DROP FUNCTION castfunc(int) CASCADE;
-DROP DOMAIN testdomain3a;
-CREATE FUNCTION testfunc5a(a testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
-ERROR:  permission denied for type testdomain1
-CREATE FUNCTION testfunc6a(b int) RETURNS testdomain1 LANGUAGE SQL AS $$ SELECT $1::testdomain1 $$;
-ERROR:  permission denied for type testdomain1
-CREATE OPERATOR !+! (PROCEDURE = int4pl, LEFTARG = testdomain1, RIGHTARG = testdomain1);
-ERROR:  permission denied for type testdomain1
-CREATE TABLE test5a (a int, b testdomain1);
-ERROR:  permission denied for type testdomain1
-CREATE TABLE test6a OF testtype1;
-ERROR:  permission denied for type testtype1
-CREATE TABLE test10a (a int[], b testtype1[]);
-ERROR:  permission denied for type testtype1
+DROP DOMAIN priv_testdomain3a;
+CREATE FUNCTION priv_testfunc5a(a priv_testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
+ERROR:  permission denied for type priv_testdomain1
+CREATE FUNCTION priv_testfunc6a(b int) RETURNS priv_testdomain1 LANGUAGE SQL AS $$ SELECT $1::priv_testdomain1 $$;
+ERROR:  permission denied for type priv_testdomain1
+CREATE OPERATOR !+! (PROCEDURE = int4pl, LEFTARG = priv_testdomain1, RIGHTARG = priv_testdomain1);
+ERROR:  permission denied for type priv_testdomain1
+CREATE TABLE test5a (a int, b priv_testdomain1);
+ERROR:  permission denied for type priv_testdomain1
+CREATE TABLE test6a OF priv_testtype1;
+ERROR:  permission denied for type priv_testtype1
+CREATE TABLE test10a (a int[], b priv_testtype1[]);
+ERROR:  permission denied for type priv_testtype1
 CREATE TABLE test9a (a int, b int);
-ALTER TABLE test9a ADD COLUMN c testdomain1;
-ERROR:  permission denied for type testdomain1
-ALTER TABLE test9a ALTER COLUMN b TYPE testdomain1;
-ERROR:  permission denied for type testdomain1
-CREATE TYPE test7a AS (a int, b testdomain1);
-ERROR:  permission denied for type testdomain1
+ALTER TABLE test9a ADD COLUMN c priv_testdomain1;
+ERROR:  permission denied for type priv_testdomain1
+ALTER TABLE test9a ALTER COLUMN b TYPE priv_testdomain1;
+ERROR:  permission denied for type priv_testdomain1
+CREATE TYPE test7a AS (a int, b priv_testdomain1);
+ERROR:  permission denied for type priv_testdomain1
 CREATE TYPE test8a AS (a int, b int);
-ALTER TYPE test8a ADD ATTRIBUTE c testdomain1;
-ERROR:  permission denied for type testdomain1
-ALTER TYPE test8a ALTER ATTRIBUTE b TYPE testdomain1;
-ERROR:  permission denied for type testdomain1
-CREATE TABLE test11a AS (SELECT 1::testdomain1 AS a);
-ERROR:  permission denied for type testdomain1
-REVOKE ALL ON TYPE testtype1 FROM PUBLIC;
-ERROR:  permission denied for type testtype1
+ALTER TYPE test8a ADD ATTRIBUTE c priv_testdomain1;
+ERROR:  permission denied for type priv_testdomain1
+ALTER TYPE test8a ALTER ATTRIBUTE b TYPE priv_testdomain1;
+ERROR:  permission denied for type priv_testdomain1
+CREATE TABLE test11a AS (SELECT 1::priv_testdomain1 AS a);
+ERROR:  permission denied for type priv_testdomain1
+REVOKE ALL ON TYPE priv_testtype1 FROM PUBLIC;
+ERROR:  permission denied for type priv_testtype1
 SET SESSION AUTHORIZATION regress_priv_user2;
 -- commands that should succeed
-CREATE AGGREGATE testagg1b(testdomain1) (sfunc = int4_sum, stype = bigint);
-CREATE DOMAIN testdomain2b AS testdomain1;
-CREATE DOMAIN testdomain3b AS int;
-CREATE FUNCTION castfunc(int) RETURNS testdomain3b AS $$ SELECT $1::testdomain3b $$ LANGUAGE SQL;
-CREATE CAST (testdomain1 AS testdomain3b) WITH FUNCTION castfunc(int);
+CREATE AGGREGATE priv_testagg1b(priv_testdomain1) (sfunc = int4_sum, stype = bigint);
+CREATE DOMAIN priv_testdomain2b AS priv_testdomain1;
+CREATE DOMAIN priv_testdomain3b AS int;
+CREATE FUNCTION castfunc(int) RETURNS priv_testdomain3b AS $$ SELECT $1::priv_testdomain3b $$ LANGUAGE SQL;
+CREATE CAST (priv_testdomain1 AS priv_testdomain3b) WITH FUNCTION castfunc(int);
 WARNING:  cast will be ignored because the source data type is a domain
-CREATE FUNCTION testfunc5b(a testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
-CREATE FUNCTION testfunc6b(b int) RETURNS testdomain1 LANGUAGE SQL AS $$ SELECT $1::testdomain1 $$;
-CREATE OPERATOR !! (PROCEDURE = testfunc5b, RIGHTARG = testdomain1);
-CREATE TABLE test5b (a int, b testdomain1);
-CREATE TABLE test6b OF testtype1;
-CREATE TABLE test10b (a int[], b testtype1[]);
+CREATE FUNCTION priv_testfunc5b(a priv_testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
+CREATE FUNCTION priv_testfunc6b(b int) RETURNS priv_testdomain1 LANGUAGE SQL AS $$ SELECT $1::priv_testdomain1 $$;
+CREATE OPERATOR !! (PROCEDURE = priv_testfunc5b, RIGHTARG = priv_testdomain1);
+CREATE TABLE test5b (a int, b priv_testdomain1);
+CREATE TABLE test6b OF priv_testtype1;
+CREATE TABLE test10b (a int[], b priv_testtype1[]);
 CREATE TABLE test9b (a int, b int);
-ALTER TABLE test9b ADD COLUMN c testdomain1;
-ALTER TABLE test9b ALTER COLUMN b TYPE testdomain1;
-CREATE TYPE test7b AS (a int, b testdomain1);
+ALTER TABLE test9b ADD COLUMN c priv_testdomain1;
+ALTER TABLE test9b ALTER COLUMN b TYPE priv_testdomain1;
+CREATE TYPE test7b AS (a int, b priv_testdomain1);
 CREATE TYPE test8b AS (a int, b int);
-ALTER TYPE test8b ADD ATTRIBUTE c testdomain1;
-ALTER TYPE test8b ALTER ATTRIBUTE b TYPE testdomain1;
-CREATE TABLE test11b AS (SELECT 1::testdomain1 AS a);
-REVOKE ALL ON TYPE testtype1 FROM PUBLIC;
-WARNING:  no privileges could be revoked for "testtype1"
+ALTER TYPE test8b ADD ATTRIBUTE c priv_testdomain1;
+ALTER TYPE test8b ALTER ATTRIBUTE b TYPE priv_testdomain1;
+CREATE TABLE test11b AS (SELECT 1::priv_testdomain1 AS a);
+REVOKE ALL ON TYPE priv_testtype1 FROM PUBLIC;
+WARNING:  no privileges could be revoked for "priv_testtype1"
 \c -
-DROP AGGREGATE testagg1b(testdomain1);
-DROP DOMAIN testdomain2b;
-DROP OPERATOR !! (NONE, testdomain1);
-DROP FUNCTION testfunc5b(a testdomain1);
-DROP FUNCTION testfunc6b(b int);
+DROP AGGREGATE priv_testagg1b(priv_testdomain1);
+DROP DOMAIN priv_testdomain2b;
+DROP OPERATOR !! (NONE, priv_testdomain1);
+DROP FUNCTION priv_testfunc5b(a priv_testdomain1);
+DROP FUNCTION priv_testfunc6b(b int);
 DROP TABLE test5b;
 DROP TABLE test6b;
 DROP TABLE test9b;
 DROP TABLE test10b;
 DROP TYPE test7b;
 DROP TYPE test8b;
-DROP CAST (testdomain1 AS testdomain3b);
+DROP CAST (priv_testdomain1 AS priv_testdomain3b);
 DROP FUNCTION castfunc(int) CASCADE;
-DROP DOMAIN testdomain3b;
+DROP DOMAIN priv_testdomain3b;
 DROP TABLE test11b;
-DROP TYPE testtype1; -- ok
-DROP DOMAIN testdomain1; -- ok
+DROP TYPE priv_testtype1; -- ok
+DROP DOMAIN priv_testdomain1; -- ok
 -- truncate
 SET SESSION AUTHORIZATION regress_priv_user5;
 TRUNCATE atest2; -- ok
@@ -1620,23 +1620,23 @@ DROP FUNCTION testns.foo();
 DROP AGGREGATE testns.agg1(int);
 DROP PROCEDURE testns.bar();
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_priv_user1 REVOKE USAGE ON TYPES FROM public;
-CREATE DOMAIN testns.testdomain1 AS int;
-SELECT has_type_privilege('regress_priv_user2', 'testns.testdomain1', 'USAGE'); -- no
+CREATE DOMAIN testns.priv_testdomain1 AS int;
+SELECT has_type_privilege('regress_priv_user2', 'testns.priv_testdomain1', 'USAGE'); -- no
  has_type_privilege 
 --------------------
  f
 (1 row)
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT USAGE ON TYPES to public;
-DROP DOMAIN testns.testdomain1;
-CREATE DOMAIN testns.testdomain1 AS int;
-SELECT has_type_privilege('regress_priv_user2', 'testns.testdomain1', 'USAGE'); -- yes
+DROP DOMAIN testns.priv_testdomain1;
+CREATE DOMAIN testns.priv_testdomain1 AS int;
+SELECT has_type_privilege('regress_priv_user2', 'testns.priv_testdomain1', 'USAGE'); -- yes
  has_type_privilege 
 --------------------
  t
 (1 row)
 
-DROP DOMAIN testns.testdomain1;
+DROP DOMAIN testns.priv_testdomain1;
 RESET ROLE;
 SELECT count(*)
   FROM pg_default_acl d LEFT JOIN pg_namespace n ON defaclnamespace = n.oid
@@ -1696,67 +1696,67 @@ SELECT has_table_privilege('regress_priv_user1', 'testns.t2', 'SELECT'); -- fals
  f
 (1 row)
 
-CREATE FUNCTION testns.testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
-CREATE AGGREGATE testns.testagg(int) (sfunc = int4pl, stype = int4);
-CREATE PROCEDURE testns.testproc(int) AS 'select 3' LANGUAGE sql;
-SELECT has_function_privilege('regress_priv_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true by default
+CREATE FUNCTION testns.priv_testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+CREATE AGGREGATE testns.priv_testagg(int) (sfunc = int4pl, stype = int4);
+CREATE PROCEDURE testns.priv_testproc(int) AS 'select 3' LANGUAGE sql;
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testfunc(int)', 'EXECUTE'); -- true by default
  has_function_privilege 
 ------------------------
  t
 (1 row)
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testagg(int)', 'EXECUTE'); -- true by default
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testagg(int)', 'EXECUTE'); -- true by default
  has_function_privilege 
 ------------------------
  t
 (1 row)
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testproc(int)', 'EXECUTE'); -- true by default
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)', 'EXECUTE'); -- true by default
  has_function_privilege 
 ------------------------
  t
 (1 row)
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA testns FROM PUBLIC;
-SELECT has_function_privilege('regress_priv_user1', 'testns.testfunc(int)', 'EXECUTE'); -- false
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testfunc(int)', 'EXECUTE'); -- false
  has_function_privilege 
 ------------------------
  f
 (1 row)
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testagg(int)', 'EXECUTE'); -- false
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testagg(int)', 'EXECUTE'); -- false
  has_function_privilege 
 ------------------------
  f
 (1 row)
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testproc(int)', 'EXECUTE'); -- still true, not a function
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)', 'EXECUTE'); -- still true, not a function
  has_function_privilege 
 ------------------------
  t
 (1 row)
 
 REVOKE ALL ON ALL PROCEDURES IN SCHEMA testns FROM PUBLIC;
-SELECT has_function_privilege('regress_priv_user1', 'testns.testproc(int)', 'EXECUTE'); -- now false
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)', 'EXECUTE'); -- now false
  has_function_privilege 
 ------------------------
  f
 (1 row)
 
 GRANT ALL ON ALL ROUTINES IN SCHEMA testns TO PUBLIC;
-SELECT has_function_privilege('regress_priv_user1', 'testns.testfunc(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testfunc(int)', 'EXECUTE'); -- true
  has_function_privilege 
 ------------------------
  t
 (1 row)
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testagg(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testagg(int)', 'EXECUTE'); -- true
  has_function_privilege 
 ------------------------
  t
 (1 row)
 
-SELECT has_function_privilege('regress_priv_user1', 'testns.testproc(int)', 'EXECUTE'); -- true
+SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)', 'EXECUTE'); -- true
  has_function_privilege 
 ------------------------
  t
@@ -1847,10 +1847,10 @@ drop table dep_priv_test;
 -- clean up
 \c
 drop sequence x_seq;
-DROP AGGREGATE testagg1(int);
-DROP FUNCTION testfunc2(int);
-DROP FUNCTION testfunc4(boolean);
-DROP PROCEDURE testproc1(int);
+DROP AGGREGATE priv_testagg1(int);
+DROP FUNCTION priv_testfunc2(int);
+DROP FUNCTION priv_testfunc4(boolean);
+DROP PROCEDURE priv_testproc1(int);
 DROP VIEW atestv0;
 DROP VIEW atestv1;
 DROP VIEW atestv2;

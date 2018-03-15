@@ -1,7 +1,7 @@
 CALL nonexistent();  -- error
 CALL random();  -- error
 
-CREATE FUNCTION testfunc1(a int) RETURNS int LANGUAGE SQL AS $$ SELECT a $$;
+CREATE FUNCTION cp_testfunc1(a int) RETURNS int LANGUAGE SQL AS $$ SELECT a $$;
 
 CREATE TABLE cp_test (a int, b text);
 
@@ -76,11 +76,11 @@ CREATE PROCEDURE ptestx(OUT a int) LANGUAGE SQL AS $$ INSERT INTO cp_test VALUES
 
 ALTER PROCEDURE ptest1(text) STRICT;
 ALTER FUNCTION ptest1(text) VOLATILE;  -- error: not a function
-ALTER PROCEDURE testfunc1(int) VOLATILE;  -- error: not a procedure
+ALTER PROCEDURE cp_testfunc1(int) VOLATILE;  -- error: not a procedure
 ALTER PROCEDURE nonexistent() VOLATILE;
 
 DROP FUNCTION ptest1(text);  -- error: not a function
-DROP PROCEDURE testfunc1(int);  -- error: not a procedure
+DROP PROCEDURE cp_testfunc1(int);  -- error: not a procedure
 DROP PROCEDURE nonexistent();
 
 
@@ -100,13 +100,13 @@ RESET ROLE;
 
 -- ROUTINE syntax
 
-ALTER ROUTINE testfunc1(int) RENAME TO testfunc1a;
-ALTER ROUTINE testfunc1a RENAME TO testfunc1;
+ALTER ROUTINE cp_testfunc1(int) RENAME TO cp_testfunc1a;
+ALTER ROUTINE cp_testfunc1a RENAME TO cp_testfunc1;
 
 ALTER ROUTINE ptest1(text) RENAME TO ptest1a;
 ALTER ROUTINE ptest1a RENAME TO ptest1;
 
-DROP ROUTINE testfunc1(int);
+DROP ROUTINE cp_testfunc1(int);
 
 
 -- cleanup
