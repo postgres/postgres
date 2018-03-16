@@ -472,7 +472,8 @@ ExecHashTableCreate(HashState *state, List *hashOperators, bool keepNulls)
 	 * Initialize the hash table control block.
 	 *
 	 * The hashtable control block is just palloc'd from the executor's
-	 * per-query memory context.
+	 * per-query memory context.  Everything else should be kept inside the
+	 * subsidiary hashCxt or batchCxt.
 	 */
 	hashtable = (HashJoinTable) palloc(sizeof(HashJoinTableData));
 	hashtable->nbuckets = nbuckets;
@@ -515,6 +516,22 @@ ExecHashTableCreate(HashState *state, List *hashOperators, bool keepNulls)
 #endif
 
 	/*
+	 * Create temporary memory contexts in which to keep the hashtable working
+	 * storage.  See notes in executor/hashjoin.h.
+	 */
+	hashtable->hashCxt = AllocSetContextCreate(CurrentMemoryContext,
+											   "HashTableContext",
+											   ALLOCSET_DEFAULT_SIZES);
+
+	hashtable->batchCxt = AllocSetContextCreate(hashtable->hashCxt,
+												"HashBatchContext",
+												ALLOCSET_DEFAULT_SIZES);
+
+	/* Allocate data that will live for the life of the hashjoin */
+
+	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
+
+	/*
 	 * Get info about the hash functions to be used for each hash key. Also
 	 * remember whether the join operators are strict.
 	 */
@@ -539,22 +556,6 @@ ExecHashTableCreate(HashState *state, List *hashOperators, bool keepNulls)
 		hashtable->hashStrict[i] = op_strict(hashop);
 		i++;
 	}
-
-	/*
-	 * Create temporary memory contexts in which to keep the hashtable working
-	 * storage.  See notes in executor/hashjoin.h.
-	 */
-	hashtable->hashCxt = AllocSetContextCreate(CurrentMemoryContext,
-											   "HashTableContext",
-											   ALLOCSET_DEFAULT_SIZES);
-
-	hashtable->batchCxt = AllocSetContextCreate(hashtable->hashCxt,
-												"HashBatchContext",
-												ALLOCSET_DEFAULT_SIZES);
-
-	/* Allocate data that will live for the life of the hashjoin */
-
-	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
 
 	if (nbatch > 1 && hashtable->parallel_state == NULL)
 	{
