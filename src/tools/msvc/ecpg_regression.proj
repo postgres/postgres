@@ -33,6 +33,9 @@
   <CreateProperty Value="-C INFORMIX -r no_indicator" Condition="'%(Pgc.FileName)'=='rnull'">
    <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
   </CreateProperty>
+  <CreateProperty Value="-C ORACLE" Condition="'%(Pgc.RelativeDir)'=='$(TESTDIR)\compat_oracle\'">
+   <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
+  </CreateProperty>
   <CreateProperty Value="-c" Condition="'%(Pgc.FileName)'=='array_of_struct'">
    <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
   </CreateProperty>
