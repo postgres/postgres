@@ -3060,16 +3060,24 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     <title>Implementation Details</title>
 
     <para>
+     Enum labels are case sensitive, so
+     <type>'happy'</type> is not the same as <type>'HAPPY'</type>.
+     White space in the labels is significant too.
+    </para>
+
+    <para>
+     Although enum types are primarily intended for static sets of values,
+     there is support for adding new values to an existing enum type, and for
+     renaming values (see <xref linkend="sql-altertype"/>).  Existing values
+     cannot be removed from an enum type, nor can the sort ordering of such
+     values be changed, short of dropping and re-creating the enum type.
+    </para>
+
+    <para>
      An enum value occupies four bytes on disk.  The length of an enum
      value's textual label is limited by the <symbol>NAMEDATALEN</symbol>
      setting compiled into <productname>PostgreSQL</productname>; in standard
      builds this means at most 63 bytes.
-    </para>
-
-    <para>
-     Enum labels are case sensitive, so
-     <type>'happy'</type> is not the same as <type>'HAPPY'</type>.
-     White space in the labels is significant too.
     </para>
 
     <para>
