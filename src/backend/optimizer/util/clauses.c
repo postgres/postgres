@@ -4487,8 +4487,8 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	 * properties.  (The prokind and nargs checks are just paranoia.)
 	 */
 	if (funcform->prolang != SQLlanguageId ||
-		funcform->prosecdef ||
 		funcform->prokind != PROKIND_FUNCTION ||
+		funcform->prosecdef ||
 		funcform->proretset ||
 		funcform->prorettype == RECORDOID ||
 		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig) ||
@@ -4623,9 +4623,18 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	/* Now we can grab the tlist expression */
 	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
 
-	/* Assert that check_sql_fn_retval did the right thing */
-	Assert(exprType(newexpr) == result_type);
-	/* It couldn't have made any dangerous tlist changes, either */
+	/*
+	 * If the SQL function returns VOID, we can only inline it if it is a
+	 * SELECT of an expression returning VOID (ie, it's just a redirection to
+	 * another VOID-returning function).  In all non-VOID-returning cases,
+	 * check_sql_fn_retval should ensure that newexpr returns the function's
+	 * declared result type, so this test shouldn't fail otherwise; but we may
+	 * as well cope gracefully if it does.
+	 */
+	if (exprType(newexpr) != result_type)
+		goto fail;
+
+	/* check_sql_fn_retval couldn't have made any dangerous tlist changes */
 	Assert(!modifyTargetList);
 
 	/*
@@ -5010,12 +5019,16 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 * properties.  In particular it mustn't be declared STRICT, since we
 	 * couldn't enforce that.  It also mustn't be VOLATILE, because that is
 	 * supposed to cause it to be executed with its own snapshot, rather than
-	 * sharing the snapshot of the calling query.  (Rechecking proretset is
-	 * just paranoia.)
+	 * sharing the snapshot of the calling query.  We also disallow returning
+	 * SETOF VOID, because inlining would result in exposing the actual result
+	 * of the function's last SELECT, which should not happen in that case.
+	 * (Rechecking prokind and proretset is just paranoia.)
 	 */
 	if (funcform->prolang != SQLlanguageId ||
+		funcform->prokind != PROKIND_FUNCTION ||
 		funcform->proisstrict ||
 		funcform->provolatile == PROVOLATILE_VOLATILE ||
+		funcform->prorettype == VOIDOID ||
 		funcform->prosecdef ||
 		!funcform->proretset ||
 		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig))

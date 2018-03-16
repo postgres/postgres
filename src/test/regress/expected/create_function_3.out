@@ -1,12 +1,16 @@
 --
 -- CREATE FUNCTION
 --
--- sanity check of pg_proc catalog to the given parameters
+-- Assorted tests using SQL-language functions
 --
+-- All objects made in this test are in temp_func_test schema
 CREATE USER regress_unpriv_user;
 CREATE SCHEMA temp_func_test;
 GRANT ALL ON SCHEMA temp_func_test TO public;
 SET search_path TO temp_func_test, public;
+--
+-- Make sanity checks on the pg_proc entries created by CREATE FUNCTION
+--
 --
 -- ARGUMENT and RETURN TYPES
 --
@@ -127,7 +131,7 @@ SELECT proname, proleakproof FROM pg_proc
  functest_e_2 | t
 (2 rows)
 
-ALTER FUNCTION functest_E_2(int) NOT LEAKPROOF;	-- remove leakproog attribute
+ALTER FUNCTION functest_E_2(int) NOT LEAKPROOF;	-- remove leakproof attribute
 SELECT proname, proleakproof FROM pg_proc
        WHERE oid in ('functest_E_1'::regproc,
                      'functest_E_2'::regproc) ORDER BY proname;
@@ -137,7 +141,7 @@ SELECT proname, proleakproof FROM pg_proc
  functest_e_2 | f
 (2 rows)
 
--- it takes superuser privilege to turn on leakproof, but not for turn off
+-- it takes superuser privilege to turn on leakproof, but not to turn off
 ALTER FUNCTION functest_E_1(int) OWNER TO regress_unpriv_user;
 ALTER FUNCTION functest_E_2(int) OWNER TO regress_unpriv_user;
 SET SESSION AUTHORIZATION regress_unpriv_user;
@@ -146,7 +150,7 @@ ALTER FUNCTION functest_E_1(int) NOT LEAKPROOF;
 ALTER FUNCTION functest_E_2(int) LEAKPROOF;
 ERROR:  only superuser can define a leakproof function
 CREATE FUNCTION functest_E_3(int) RETURNS bool LANGUAGE 'sql'
-       LEAKPROOF AS 'SELECT $1 < 200';	-- failed
+       LEAKPROOF AS 'SELECT $1 < 200';	-- fail
 ERROR:  only superuser can define a leakproof function
 RESET SESSION AUTHORIZATION;
 --
@@ -280,24 +284,66 @@ CREATE OR REPLACE PROCEDURE functest1(a int) LANGUAGE SQL AS 'SELECT $1';
 ERROR:  cannot change routine kind
 DETAIL:  "functest1" is a function.
 DROP FUNCTION functest1(a int);
--- Cleanups
+-- Check behavior of VOID-returning SQL functions
+CREATE FUNCTION voidtest1(a int) RETURNS VOID LANGUAGE SQL AS
+$$ SELECT a + 1 $$;
+SELECT voidtest1(42);
+ voidtest1 
+-----------
+ 
+(1 row)
+
+CREATE FUNCTION voidtest2(a int, b int) RETURNS VOID LANGUAGE SQL AS
+$$ SELECT voidtest1(a + b) $$;
+SELECT voidtest2(11,22);
+ voidtest2 
+-----------
+ 
+(1 row)
+
+-- currently, we can inline voidtest2 but not voidtest1
+EXPLAIN (verbose, costs off) SELECT voidtest2(11,22);
+       QUERY PLAN        
+-------------------------
+ Result
+   Output: voidtest1(33)
+(2 rows)
+
+CREATE TEMP TABLE sometable(f1 int);
+CREATE FUNCTION voidtest3(a int) RETURNS VOID LANGUAGE SQL AS
+$$ INSERT INTO sometable VALUES(a + 1) $$;
+SELECT voidtest3(17);
+ voidtest3 
+-----------
+ 
+(1 row)
+
+CREATE FUNCTION voidtest4(a int) RETURNS VOID LANGUAGE SQL AS
+$$ INSERT INTO sometable VALUES(a - 1) RETURNING f1 $$;
+SELECT voidtest4(39);
+ voidtest4 
+-----------
+ 
+(1 row)
+
+TABLE sometable;
+ f1 
+----
+ 18
+ 38
+(2 rows)
+
+CREATE FUNCTION voidtest5(a int) RETURNS SETOF VOID LANGUAGE SQL AS
+$$ SELECT generate_series(1, a) $$ STABLE;
+SELECT * FROM voidtest5(3);
+ voidtest5 
+-----------
+(0 rows)
+
+-- Cleanup
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 16 other objects
-DETAIL:  drop cascades to function functest_a_1(text,date)
-drop cascades to function functest_a_2(text[])
-drop cascades to function functest_a_3()
-drop cascades to function functest_b_2(integer)
-drop cascades to function functest_b_3(integer)
-drop cascades to function functest_b_4(integer)
-drop cascades to function functest_c_1(integer)
-drop cascades to function functest_c_2(integer)
-drop cascades to function functest_c_3(integer)
-drop cascades to function functest_e_1(integer)
-drop cascades to function functest_e_2(integer)
-drop cascades to function functest_f_1(integer)
-drop cascades to function functest_f_2(integer)
-drop cascades to function functest_f_3(integer)
-drop cascades to function functest_f_4(integer)
-drop cascades to function functest_b_2(bigint)
+NOTICE:  drop cascades to 21 other objects
+\set VERBOSITY default
 DROP USER regress_unpriv_user;
 RESET search_path;
