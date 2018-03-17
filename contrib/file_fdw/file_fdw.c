@@ -622,8 +622,8 @@ fileExplainForeignScan(ForeignScanState *node, ExplainState *es)
 
 		if (!is_program &&
 			stat(filename, &stat_buf) == 0)
-			ExplainPropertyLong("Foreign File Size", (long) stat_buf.st_size,
-								es);
+			ExplainPropertyInteger("Foreign File Size",
+								   (int64) stat_buf.st_size, es);
 	}
 }
 

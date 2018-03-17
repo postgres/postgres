@@ -1400,8 +1400,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
 			if (es->analyze)
-				ExplainPropertyLong("Heap Fetches",
-									((IndexOnlyScanState *) planstate)->ioss_HeapFetches, es);
+				ExplainPropertyInteger("Heap Fetches",
+									   ((IndexOnlyScanState *) planstate)->ioss_HeapFetches,
+									   es);
 			break;
 		case T_BitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
@@ -2325,7 +2326,7 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 		else
 		{
 			ExplainPropertyText("Sort Method", sortMethod, es);
-			ExplainPropertyLong("Sort Space Used", spaceUsed, es);
+			ExplainPropertyInteger("Sort Space Used", spaceUsed, es);
 			ExplainPropertyText("Sort Space Type", spaceType, es);
 		}
 	}
@@ -2366,7 +2367,7 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 				ExplainOpenGroup("Worker", NULL, true, es);
 				ExplainPropertyInteger("Worker Number", n, es);
 				ExplainPropertyText("Sort Method", sortMethod, es);
-				ExplainPropertyLong("Sort Space Used", spaceUsed, es);
+				ExplainPropertyInteger("Sort Space Used", spaceUsed, es);
 				ExplainPropertyText("Sort Space Type", spaceType, es);
 				ExplainCloseGroup("Worker", NULL, true, es);
 			}
@@ -2445,13 +2446,13 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 
 		if (es->format != EXPLAIN_FORMAT_TEXT)
 		{
-			ExplainPropertyLong("Hash Buckets", hinstrument.nbuckets, es);
-			ExplainPropertyLong("Original Hash Buckets",
+			ExplainPropertyInteger("Hash Buckets", hinstrument.nbuckets, es);
+			ExplainPropertyInteger("Original Hash Buckets",
 								hinstrument.nbuckets_original, es);
-			ExplainPropertyLong("Hash Batches", hinstrument.nbatch, es);
-			ExplainPropertyLong("Original Hash Batches",
+			ExplainPropertyInteger("Hash Batches", hinstrument.nbatch, es);
+			ExplainPropertyInteger("Original Hash Batches",
 								hinstrument.nbatch_original, es);
-			ExplainPropertyLong("Peak Memory Usage", spacePeakKb, es);
+			ExplainPropertyInteger("Peak Memory Usage", spacePeakKb, es);
 		}
 		else if (hinstrument.nbatch_original != hinstrument.nbatch ||
 				 hinstrument.nbuckets_original != hinstrument.nbuckets)
@@ -2484,8 +2485,10 @@ show_tidbitmap_info(BitmapHeapScanState *planstate, ExplainState *es)
 {
 	if (es->format != EXPLAIN_FORMAT_TEXT)
 	{
-		ExplainPropertyLong("Exact Heap Blocks", planstate->exact_pages, es);
-		ExplainPropertyLong("Lossy Heap Blocks", planstate->lossy_pages, es);
+		ExplainPropertyInteger("Exact Heap Blocks",
+							   planstate->exact_pages, es);
+		ExplainPropertyInteger("Lossy Heap Blocks",
+							   planstate->lossy_pages, es);
 	}
 	else
 	{
@@ -2695,16 +2698,26 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage)
 	}
 	else
 	{
-		ExplainPropertyLong("Shared Hit Blocks", usage->shared_blks_hit, es);
-		ExplainPropertyLong("Shared Read Blocks", usage->shared_blks_read, es);
-		ExplainPropertyLong("Shared Dirtied Blocks", usage->shared_blks_dirtied, es);
-		ExplainPropertyLong("Shared Written Blocks", usage->shared_blks_written, es);
-		ExplainPropertyLong("Local Hit Blocks", usage->local_blks_hit, es);
-		ExplainPropertyLong("Local Read Blocks", usage->local_blks_read, es);
-		ExplainPropertyLong("Local Dirtied Blocks", usage->local_blks_dirtied, es);
-		ExplainPropertyLong("Local Written Blocks", usage->local_blks_written, es);
-		ExplainPropertyLong("Temp Read Blocks", usage->temp_blks_read, es);
-		ExplainPropertyLong("Temp Written Blocks", usage->temp_blks_written, es);
+		ExplainPropertyInteger("Shared Hit Blocks",
+							   usage->shared_blks_hit, es);
+		ExplainPropertyInteger("Shared Read Blocks",
+							   usage->shared_blks_read, es);
+		ExplainPropertyInteger("Shared Dirtied Blocks",
+							   usage->shared_blks_dirtied, es);
+		ExplainPropertyInteger("Shared Written Blocks",
+							   usage->shared_blks_written, es);
+		ExplainPropertyInteger("Local Hit Blocks",
+							   usage->local_blks_hit, es);
+		ExplainPropertyInteger("Local Read Blocks",
+							   usage->local_blks_read, es);
+		ExplainPropertyInteger("Local Dirtied Blocks",
+							   usage->local_blks_dirtied, es);
+		ExplainPropertyInteger("Local Written Blocks",
+							   usage->local_blks_written, es);
+		ExplainPropertyInteger("Temp Read Blocks",
+							   usage->temp_blks_read, es);
+		ExplainPropertyInteger("Temp Written Blocks",
+							   usage->temp_blks_written, es);
 		if (track_io_timing)
 		{
 			ExplainPropertyFloat("I/O Read Time", INSTR_TIME_GET_MILLISEC(usage->blk_read_time), 3, es);
@@ -3309,23 +3322,11 @@ ExplainPropertyText(const char *qlabel, const char *value, ExplainState *es)
  * Explain an integer-valued property.
  */
 void
-ExplainPropertyInteger(const char *qlabel, int value, ExplainState *es)
+ExplainPropertyInteger(const char *qlabel, int64 value, ExplainState *es)
 {
 	char		buf[32];
 
-	snprintf(buf, sizeof(buf), "%d", value);
-	ExplainProperty(qlabel, buf, true, es);
-}
-
-/*
- * Explain a long-integer-valued property.
- */
-void
-ExplainPropertyLong(const char *qlabel, long value, ExplainState *es)
-{
-	char		buf[32];
-
-	snprintf(buf, sizeof(buf), "%ld", value);
+	snprintf(buf, sizeof(buf), INT64_FORMAT, value);
 	ExplainProperty(qlabel, buf, true, es);
 }
 
