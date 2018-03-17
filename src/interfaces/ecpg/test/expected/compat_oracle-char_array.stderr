@@ -121,24 +121,18 @@ Warning: At least one column was truncated
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 on line 50: no data found on line 50
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute on line 54: query: close cstr; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 54: query: close C; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 54: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult on line 54: bad response - ERROR:  cursor "cstr" does not exist
+[NO_PID]: ecpg_process_output on line 54: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 34000 (sqlcode -400): cursor "cstr" does not exist on line 54
-[NO_PID]: sqlca: code: -400, state: 34000
-SQL error: cursor "cstr" does not exist on line 54
 [NO_PID]: ecpg_execute on line 55: query: drop table strdbase; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 55: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult on line 55: bad response - ERROR:  current transaction is aborted, commands ignored until end of transaction block
+[NO_PID]: ecpg_process_output on line 55: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 25P02 (sqlcode -400): current transaction is aborted, commands ignored until end of transaction block on line 55
-[NO_PID]: sqlca: code: -400, state: 25P02
-SQL error: current transaction is aborted, commands ignored until end of transaction block on line 55
 [NO_PID]: ECPGtrans on line 59: action "commit work"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection ecpg1_regression closed

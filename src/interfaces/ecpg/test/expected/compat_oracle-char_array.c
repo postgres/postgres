@@ -178,7 +178,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
     printf("\"%s\": \"%s\"  %d\n", bigstr, shortstr, shstr_ind);
   }
 
-  { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "close cstr", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "close C", ECPGt_EOIT, ECPGt_EORT);
 #line 54 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
@@ -186,7 +186,7 @@ if (sqlca.sqlwarn[0] == 'W') warn ( );
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 54 "char_array.pgc"
-
+ 
   { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "drop table strdbase", ECPGt_EOIT, ECPGt_EORT);
 #line 55 "char_array.pgc"
 
