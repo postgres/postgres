@@ -1367,6 +1367,32 @@ slot_attisnull(TupleTableSlot *slot, int attnum)
 }
 
 /*
+ * slot_getsysattr
+ *		This function fetches a system attribute of the slot's current tuple.
+ *		Unlike slot_getattr, if the slot does not contain system attributes,
+ *		this will return false (with a NULL attribute value) instead of
+ *		throwing an error.
+ */
+bool
+slot_getsysattr(TupleTableSlot *slot, int attnum,
+				Datum *value, bool *isnull)
+{
+	HeapTuple	tuple = slot->tts_tuple;
+
+	Assert(attnum < 0);			/* else caller error */
+	if (tuple == NULL ||
+		tuple == &(slot->tts_minhdr))
+	{
+		/* No physical tuple, or minimal tuple, so fail */
+		*value = (Datum) 0;
+		*isnull = true;
+		return false;
+	}
+	*value = heap_getsysattr(tuple, attnum, slot->tts_tupleDescriptor, isnull);
+	return true;
+}
+
+/*
  * heap_freetuple
  */
 void

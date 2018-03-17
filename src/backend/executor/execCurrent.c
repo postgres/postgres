@@ -12,6 +12,7 @@
  */
 #include "postgres.h"
 
+#include "access/relscan.h"
 #include "access/sysattr.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
@@ -149,16 +150,13 @@ execCurrentOf(CurrentOfExpr *cexpr,
 	}
 	else
 	{
-		ScanState  *scanstate;
-		bool		lisnull;
-		Oid			tuple_tableoid PG_USED_FOR_ASSERTS_ONLY;
-		ItemPointer tuple_tid;
-
 		/*
 		 * Without FOR UPDATE, we dig through the cursor's plan to find the
 		 * scan node.  Fail if it's not there or buried underneath
 		 * aggregation.
 		 */
+		ScanState  *scanstate;
+
 		scanstate = search_plan_tree(queryDesc->planstate, table_oid);
 		if (!scanstate)
 			ereport(ERROR,
@@ -183,21 +181,62 @@ execCurrentOf(CurrentOfExpr *cexpr,
 		if (TupIsNull(scanstate->ss_ScanTupleSlot))
 			return false;
 
-		/* Use slot_getattr to catch any possible mistakes */
-		tuple_tableoid =
-			DatumGetObjectId(slot_getattr(scanstate->ss_ScanTupleSlot,
-										  TableOidAttributeNumber,
-										  &lisnull));
-		Assert(!lisnull);
-		tuple_tid = (ItemPointer)
-			DatumGetPointer(slot_getattr(scanstate->ss_ScanTupleSlot,
-										 SelfItemPointerAttributeNumber,
-										 &lisnull));
-		Assert(!lisnull);
+		/*
+		 * Extract TID of the scan's current row.  The mechanism for this is
+		 * in principle scan-type-dependent, but for most scan types, we can
+		 * just dig the TID out of the physical scan tuple.
+		 */
+		if (IsA(scanstate, IndexOnlyScanState))
+		{
+			/*
+			 * For IndexOnlyScan, the tuple stored in ss_ScanTupleSlot may be
+			 * a virtual tuple that does not have the ctid column, so we have
+			 * to get the TID from xs_ctup.t_self.
+			 */
+			IndexScanDesc scan = ((IndexOnlyScanState *) scanstate)->ioss_ScanDesc;
 
-		Assert(tuple_tableoid == table_oid);
+			*current_tid = scan->xs_ctup.t_self;
+		}
+		else
+		{
+			/*
+			 * Default case: try to fetch TID from the scan node's current
+			 * tuple.  As an extra cross-check, verify tableoid in the current
+			 * tuple.  If the scan hasn't provided a physical tuple, we have
+			 * to fail.
+			 */
+			Datum		ldatum;
+			bool		lisnull;
+			ItemPointer tuple_tid;
 
-		*current_tid = *tuple_tid;
+#ifdef USE_ASSERT_CHECKING
+			if (!slot_getsysattr(scanstate->ss_ScanTupleSlot,
+								 TableOidAttributeNumber,
+								 &ldatum,
+								 &lisnull))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_CURSOR_STATE),
+						 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
+								cursor_name, table_name)));
+			Assert(!lisnull);
+			Assert(DatumGetObjectId(ldatum) == table_oid);
+#endif
+
+			if (!slot_getsysattr(scanstate->ss_ScanTupleSlot,
+								 SelfItemPointerAttributeNumber,
+								 &ldatum,
+								 &lisnull))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_CURSOR_STATE),
+						 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
+								cursor_name, table_name)));
+			Assert(!lisnull);
+			tuple_tid = (ItemPointer) DatumGetPointer(ldatum);
+
+			*current_tid = *tuple_tid;
+		}
+
+		Assert(ItemPointerIsValid(current_tid));
 
 		return true;
 	}

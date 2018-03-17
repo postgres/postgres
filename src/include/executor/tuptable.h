@@ -170,5 +170,7 @@ extern Datum slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull);
 extern void slot_getallattrs(TupleTableSlot *slot);
 extern void slot_getsomeattrs(TupleTableSlot *slot, int attnum);
 extern bool slot_attisnull(TupleTableSlot *slot, int attnum);
+extern bool slot_getsysattr(TupleTableSlot *slot, int attnum,
+				Datum *value, bool *isnull);
 
 #endif							/* TUPTABLE_H */
