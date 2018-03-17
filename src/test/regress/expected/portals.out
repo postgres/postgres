@@ -1246,6 +1246,30 @@ FETCH FROM c1;
 DELETE FROM ucview WHERE CURRENT OF c1; -- fail, views not supported
 ERROR:  WHERE CURRENT OF on a view is not implemented
 ROLLBACK;
+-- Check WHERE CURRENT OF with an index-only scan
+BEGIN;
+EXPLAIN (costs off)
+DECLARE c1 CURSOR FOR SELECT stringu1 FROM onek WHERE stringu1 = 'DZAAAA';
+                 QUERY PLAN                  
+---------------------------------------------
+ Index Only Scan using onek_stringu1 on onek
+   Index Cond: (stringu1 = 'DZAAAA'::name)
+(2 rows)
+
+DECLARE c1 CURSOR FOR SELECT stringu1 FROM onek WHERE stringu1 = 'DZAAAA';
+FETCH FROM c1;
+ stringu1 
+----------
+ DZAAAA
+(1 row)
+
+DELETE FROM onek WHERE CURRENT OF c1;
+SELECT stringu1 FROM onek WHERE stringu1 = 'DZAAAA';
+ stringu1 
+----------
+(0 rows)
+
+ROLLBACK;
 -- Make sure snapshot management works okay, per bug report in
 -- 235395b90909301035v7228ce63q392931f15aa74b31@mail.gmail.com
 BEGIN;

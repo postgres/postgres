@@ -462,6 +462,16 @@ FETCH FROM c1;
 DELETE FROM ucview WHERE CURRENT OF c1; -- fail, views not supported
 ROLLBACK;
 
+-- Check WHERE CURRENT OF with an index-only scan
+BEGIN;
+EXPLAIN (costs off)
+DECLARE c1 CURSOR FOR SELECT stringu1 FROM onek WHERE stringu1 = 'DZAAAA';
+DECLARE c1 CURSOR FOR SELECT stringu1 FROM onek WHERE stringu1 = 'DZAAAA';
+FETCH FROM c1;
+DELETE FROM onek WHERE CURRENT OF c1;
+SELECT stringu1 FROM onek WHERE stringu1 = 'DZAAAA';
+ROLLBACK;
+
 -- Make sure snapshot management works okay, per bug report in
 -- 235395b90909301035v7228ce63q392931f15aa74b31@mail.gmail.com
 BEGIN;
