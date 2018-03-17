@@ -1438,19 +1438,28 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>sslcompression</literal></term>
       <listitem>
        <para>
-        If set to 1 (default), data sent over SSL connections will be
-        compressed.
-        If set to 0, compression will be disabled (this requires
-        <productname>OpenSSL</productname> 1.0.0 or later).
-        This parameter is ignored if a connection without SSL is made,
-        or if the version of <productname>OpenSSL</productname> used does not support
-        it.
+        If set to 1, data sent over SSL connections will be compressed.  If
+        set to 0, compression will be disabled.  The default is 0.  This
+        parameter is ignored if a connection without SSL is made.
        </para>
+
        <para>
-        Compression uses CPU time, but can improve throughput if
-        the network is the bottleneck.
-        Disabling compression can improve response time and throughput
-        if CPU performance is the limiting factor.
+        SSL compression is nowadays considered insecure and its use is no
+        longer recommended.  <productname>OpenSSL</productname> 1.1.0 disables
+        compression by default, and many operating system distributions
+        disable it in prior versions as well, so setting this parameter to on
+        will not have any effect if the server does not accept compression.
+        On the other hand, <productname>OpenSSL</productname> before 1.0.0
+        does not support disabling compression, so this parameter is ignored
+        with those versions, and whether compression is used depends on the
+        server.
+       </para>
+
+       <para>
+        If security is not a primary concern, compression can improve
+        throughput if the network is the bottleneck.  Disabling compression
+        can improve response time and throughput if CPU performance is the
+        limiting factor.
        </para>
       </listitem>
      </varlistentry>

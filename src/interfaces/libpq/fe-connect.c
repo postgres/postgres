@@ -279,7 +279,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"SSL-Mode", "", 12,		/* sizeof("verify-full") == 12 */
 	offsetof(struct pg_conn, sslmode)},
 
-	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
+	{"sslcompression", "PGSSLCOMPRESSION", "0", NULL,
 		"SSL-Compression", "", 1,
 	offsetof(struct pg_conn, sslcompression)},
 
