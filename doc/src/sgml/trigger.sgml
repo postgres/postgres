@@ -53,15 +53,21 @@
    <para>
     On views, triggers can be defined to execute instead of
     <command>INSERT</command>, <command>UPDATE</command>, or
-    <command>DELETE</command> operations.  <literal>INSTEAD OF</literal> triggers
+    <command>DELETE</command> operations.
+    Such <literal>INSTEAD OF</literal> triggers
     are fired once for each row that needs to be modified in the view.
     It is the responsibility of the
-    trigger's function to perform the necessary modifications to the
-    underlying base tables and, where appropriate, return the modified
+    trigger's function to perform the necessary modifications to the view's
+    underlying base table(s) and, where appropriate, return the modified
     row as it will appear in the view.  Triggers on views can also be defined
     to execute once per <acronym>SQL</acronym> statement, before or after
     <command>INSERT</command>, <command>UPDATE</command>, or
     <command>DELETE</command> operations.
+    However, such triggers are fired only if there is also
+    an <literal>INSTEAD OF</literal> trigger on the view.  Otherwise,
+    any statement targeting the view must be rewritten into a statement
+    affecting its underlying base table(s), and then the triggers
+    that will be fired are the ones attached to the base table(s).
    </para>
 
    <para>

@@ -500,6 +500,19 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </para>
 
   <para>
+   Statement-level triggers on a view are fired only if the action on the
+   view is handled by a row-level <literal>INSTEAD OF</literal> trigger.
+   If the action is handled by an <literal>INSTEAD</literal> rule, then
+   whatever statements are emitted by the rule are executed in place of the
+   original statement naming the view, so that the triggers that will be
+   fired are those on tables named in the replacement statements.
+   Similarly, if the view is automatically updatable, then the action is
+   handled by automatically rewriting the statement into an action on the
+   view's base table, so that the base table's statement-level triggers are
+   the ones that are fired.
+  </para>
+
+  <para>
    Modifying a partitioned table or a table with inheritance children fires
    statement-level triggers attached to the explicitly named table, but not
    statement-level triggers for its partitions or child tables.  In contrast,
