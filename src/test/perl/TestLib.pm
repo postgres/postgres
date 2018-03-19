@@ -11,6 +11,7 @@ use strict;
 use warnings;
 
 use Config;
+use Cwd;
 use Exporter 'import';
 use File::Basename;
 use File::Spec;
@@ -156,6 +157,23 @@ sub tempdir_short
 	# Use a separate temp dir outside the build tree for the
 	# Unix-domain socket, to avoid file name length issues.
 	return File::Temp::tempdir(CLEANUP => 1);
+}
+
+# Return the real directory for a virtual path directory under msys.
+# The directory  must exist. If it's not an existing directory or we're
+# not under msys, return the input argument unchanged.
+sub real_dir
+{
+    my $dir = "$_[0]";
+    return $dir unless -d $dir;
+    return $dir unless $Config{osname} eq 'msys';
+    my $here = cwd;
+    chdir $dir;
+	# this odd way of calling 'pwd -W' is the only way that seems to work.
+    $dir = qx{sh -c "pwd -W"};
+    chomp $dir;
+    chdir $here;
+    return $dir;
 }
 
 sub system_log
