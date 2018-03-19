@@ -203,7 +203,6 @@ static void ri_GenerateQual(StringInfo buf,
 				const char *leftop, Oid leftoptype,
 				Oid opoid,
 				const char *rightop, Oid rightoptype);
-static void ri_add_cast_to(StringInfo buf, Oid typid);
 static void ri_GenerateQualCollation(StringInfo buf, Oid collation);
 static int ri_NullCheck(HeapTuple tup,
 			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
@@ -2134,13 +2133,10 @@ quoteRelationName(char *buffer, Relation rel)
 /*
  * ri_GenerateQual --- generate a WHERE clause equating two variables
  *
- * The idea is to append " sep leftop op rightop" to buf.  The complexity
- * comes from needing to be sure that the parser will select the desired
- * operator.  We always name the operator using OPERATOR(schema.op) syntax
- * (readability isn't a big priority here), so as to avoid search-path
- * uncertainties.  We have to emit casts too, if either input isn't already
- * the input type of the operator; else we are at the mercy of the parser's
- * heuristics for ambiguous-operator resolution.
+ * This basically appends " sep leftop op rightop" to buf, adding casts
+ * and schema qualification as needed to ensure that the parser will select
+ * the operator we specify.  leftop and rightop should be parenthesized
+ * if they aren't variables or parameters.
  */
 static void
 ri_GenerateQual(StringInfo buf,
@@ -2149,60 +2145,9 @@ ri_GenerateQual(StringInfo buf,
 				Oid opoid,
 				const char *rightop, Oid rightoptype)
 {
-	HeapTuple	opertup;
-	Form_pg_operator operform;
-	char	   *oprname;
-	char	   *nspname;
-
-	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(opoid));
-	if (!HeapTupleIsValid(opertup))
-		elog(ERROR, "cache lookup failed for operator %u", opoid);
-	operform = (Form_pg_operator) GETSTRUCT(opertup);
-	Assert(operform->oprkind == 'b');
-	oprname = NameStr(operform->oprname);
-
-	nspname = get_namespace_name(operform->oprnamespace);
-
-	appendStringInfo(buf, " %s %s", sep, leftop);
-	if (leftoptype != operform->oprleft)
-		ri_add_cast_to(buf, operform->oprleft);
-	appendStringInfo(buf, " OPERATOR(%s.", quote_identifier(nspname));
-	appendStringInfoString(buf, oprname);
-	appendStringInfo(buf, ") %s", rightop);
-	if (rightoptype != operform->oprright)
-		ri_add_cast_to(buf, operform->oprright);
-
-	ReleaseSysCache(opertup);
-}
-
-/*
- * Add a cast specification to buf.  We spell out the type name the hard way,
- * intentionally not using format_type_be().  This is to avoid corner cases
- * for CHARACTER, BIT, and perhaps other types, where specifying the type
- * using SQL-standard syntax results in undesirable data truncation.  By
- * doing it this way we can be certain that the cast will have default (-1)
- * target typmod.
- */
-static void
-ri_add_cast_to(StringInfo buf, Oid typid)
-{
-	HeapTuple	typetup;
-	Form_pg_type typform;
-	char	   *typname;
-	char	   *nspname;
-
-	typetup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
-	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup failed for type %u", typid);
-	typform = (Form_pg_type) GETSTRUCT(typetup);
-
-	typname = NameStr(typform->typname);
-	nspname = get_namespace_name(typform->typnamespace);
-
-	appendStringInfo(buf, "::%s.%s",
-					 quote_identifier(nspname), quote_identifier(typname));
-
-	ReleaseSysCache(typetup);
+	appendStringInfo(buf, " %s ", sep);
+	generate_operator_clause(buf, leftop, leftoptype, opoid,
+							 rightop, rightoptype);
 }
 
 /*
