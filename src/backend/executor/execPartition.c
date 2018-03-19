@@ -363,8 +363,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	if (partrel->rd_rel->relhasindex &&
 		leaf_part_rri->ri_IndexRelationDescs == NULL)
 		ExecOpenIndices(leaf_part_rri,
-						(mtstate != NULL &&
-						 mtstate->mt_onconflict != ONCONFLICT_NONE));
+						(node != NULL &&
+						 node->onConflictAction != ONCONFLICT_NONE));
 
 	/*
 	 * Build WITH CHECK OPTION constraints for the partition.  Note that we

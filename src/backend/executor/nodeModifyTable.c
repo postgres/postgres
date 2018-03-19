@@ -263,8 +263,6 @@ static TupleTableSlot *
 ExecInsert(ModifyTableState *mtstate,
 		   TupleTableSlot *slot,
 		   TupleTableSlot *planSlot,
-		   List *arbiterIndexes,
-		   OnConflictAction onconflict,
 		   EState *estate,
 		   bool canSetTag)
 {
@@ -275,6 +273,8 @@ ExecInsert(ModifyTableState *mtstate,
 	List	   *recheckIndexes = NIL;
 	TupleTableSlot *result = NULL;
 	TransitionCaptureState *ar_insert_trig_tcs;
+	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
+	OnConflictAction onconflict = node->onConflictAction;
 
 	/*
 	 * get the heap tuple out of the tuple table slot, making sure we have a
@@ -365,6 +365,7 @@ ExecInsert(ModifyTableState *mtstate,
 	else
 	{
 		WCOKind		wco_kind;
+		bool		check_partition_constr;
 
 		/*
 		 * We always check the partition constraint, including when the tuple
@@ -373,8 +374,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * trigger might modify the tuple such that the partition constraint
 		 * is no longer satisfied, so we need to check in that case.
 		 */
-		bool		check_partition_constr =
-		(resultRelInfo->ri_PartitionCheck != NIL);
+		check_partition_constr = (resultRelInfo->ri_PartitionCheck != NIL);
 
 		/*
 		 * Constraints might reference the tableoid column, so initialize
@@ -420,6 +420,9 @@ ExecInsert(ModifyTableState *mtstate,
 			uint32		specToken;
 			ItemPointerData conflictTid;
 			bool		specConflict;
+			List	   *arbiterIndexes;
+
+			arbiterIndexes = node->arbiterIndexes;
 
 			/*
 			 * Do a non-conclusive check for conflicts first.
@@ -537,7 +540,7 @@ ExecInsert(ModifyTableState *mtstate,
 			if (resultRelInfo->ri_NumIndices > 0)
 				recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
 													   estate, false, NULL,
-													   arbiterIndexes);
+													   NIL);
 		}
 	}
 
@@ -1124,8 +1127,8 @@ lreplace:;
 			slot = ExecPrepareTupleRouting(mtstate, estate, proute,
 										   mtstate->rootResultRelInfo, slot);
 
-			ret_slot = ExecInsert(mtstate, slot, planSlot, NULL,
-								  ONCONFLICT_NONE, estate, canSetTag);
+			ret_slot = ExecInsert(mtstate, slot, planSlot,
+								  estate, canSetTag);
 
 			/* Revert ExecPrepareTupleRouting's node change. */
 			estate->es_result_relation_info = resultRelInfo;
@@ -1487,6 +1490,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 static void
 fireBSTriggers(ModifyTableState *node)
 {
+	ModifyTable *plan = (ModifyTable *) node->ps.plan;
 	ResultRelInfo *resultRelInfo = node->resultRelInfo;
 
 	/*
@@ -1501,7 +1505,7 @@ fireBSTriggers(ModifyTableState *node)
 	{
 		case CMD_INSERT:
 			ExecBSInsertTriggers(node->ps.state, resultRelInfo);
-			if (node->mt_onconflict == ONCONFLICT_UPDATE)
+			if (plan->onConflictAction == ONCONFLICT_UPDATE)
 				ExecBSUpdateTriggers(node->ps.state,
 									 resultRelInfo);
 			break;
@@ -1545,12 +1549,13 @@ getTargetResultRelInfo(ModifyTableState *node)
 static void
 fireASTriggers(ModifyTableState *node)
 {
+	ModifyTable *plan = (ModifyTable *) node->ps.plan;
 	ResultRelInfo *resultRelInfo = getTargetResultRelInfo(node);
 
 	switch (node->operation)
 	{
 		case CMD_INSERT:
-			if (node->mt_onconflict == ONCONFLICT_UPDATE)
+			if (plan->onConflictAction == ONCONFLICT_UPDATE)
 				ExecASUpdateTriggers(node->ps.state,
 									 resultRelInfo,
 									 node->mt_oc_transition_capture);
@@ -1578,6 +1583,7 @@ fireASTriggers(ModifyTableState *node)
 static void
 ExecSetupTransitionCaptureState(ModifyTableState *mtstate, EState *estate)
 {
+	ModifyTable *plan = (ModifyTable *) mtstate->ps.plan;
 	ResultRelInfo *targetRelInfo = getTargetResultRelInfo(mtstate);
 
 	/* Check for transition tables on the directly targeted relation. */
@@ -1585,8 +1591,8 @@ ExecSetupTransitionCaptureState(ModifyTableState *mtstate, EState *estate)
 		MakeTransitionCaptureState(targetRelInfo->ri_TrigDesc,
 								   RelationGetRelid(targetRelInfo->ri_RelationDesc),
 								   mtstate->operation);
-	if (mtstate->operation == CMD_INSERT &&
-		mtstate->mt_onconflict == ONCONFLICT_UPDATE)
+	if (plan->operation == CMD_INSERT &&
+		plan->onConflictAction == ONCONFLICT_UPDATE)
 		mtstate->mt_oc_transition_capture =
 			MakeTransitionCaptureState(targetRelInfo->ri_TrigDesc,
 									   RelationGetRelid(targetRelInfo->ri_RelationDesc),
@@ -2064,7 +2070,6 @@ ExecModifyTable(PlanState *pstate)
 					slot = ExecPrepareTupleRouting(node, estate, proute,
 												   resultRelInfo, slot);
 				slot = ExecInsert(node, slot, planSlot,
-								  node->mt_arbiterindexes, node->mt_onconflict,
 								  estate, node->canSetTag);
 				/* Revert ExecPrepareTupleRouting's state change. */
 				if (proute)
@@ -2151,8 +2156,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 	mtstate->mt_arowmarks = (List **) palloc0(sizeof(List *) * nplans);
 	mtstate->mt_nplans = nplans;
-	mtstate->mt_onconflict = node->onConflictAction;
-	mtstate->mt_arbiterindexes = node->arbiterIndexes;
 
 	/* set up epqstate with dummy subplan data for the moment */
 	EvalPlanQualInit(&mtstate->mt_epqstate, estate, NULL, NIL, node->epqParam);
@@ -2195,7 +2198,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		if (resultRelInfo->ri_RelationDesc->rd_rel->relhasindex &&
 			operation != CMD_DELETE &&
 			resultRelInfo->ri_IndexRelationDescs == NULL)
-			ExecOpenIndices(resultRelInfo, mtstate->mt_onconflict != ONCONFLICT_NONE);
+			ExecOpenIndices(resultRelInfo,
+							node->onConflictAction != ONCONFLICT_NONE);
 
 		/*
 		 * If this is an UPDATE and a BEFORE UPDATE trigger is present, the
