@@ -78,10 +78,10 @@ static Path *generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 					   List *refnames_tlist,
 					   List **pTargetList,
 					   double *pNumGroups);
-static List *recurse_union_children(Node *setOp, PlannerInfo *root,
-					   SetOperationStmt *top_union,
-					   List *refnames_tlist,
-					   List **tlist_list);
+static List *plan_union_children(PlannerInfo *root,
+					SetOperationStmt *top_union,
+					List *refnames_tlist,
+					List **tlist_list);
 static Path *make_union_unique(SetOperationStmt *op, Path *path, List *tlist,
 				  PlannerInfo *root);
 static bool choose_hashed_setop(PlannerInfo *root, List *groupClauses,
@@ -545,8 +545,6 @@ generate_union_path(SetOperationStmt *op, PlannerInfo *root,
 	RelOptInfo *result_rel = fetch_upper_rel(root, UPPERREL_SETOP, NULL);
 	double		save_fraction = root->tuple_fraction;
 	List	   *pathlist;
-	List	   *child_tlists1;
-	List	   *child_tlists2;
 	List	   *tlist_list;
 	List	   *tlist;
 	Path	   *path;
@@ -571,13 +569,7 @@ generate_union_path(SetOperationStmt *op, PlannerInfo *root,
 	 * only one Append and unique-ification for the lot.  Recurse to find such
 	 * nodes and compute their children's paths.
 	 */
-	pathlist = list_concat(recurse_union_children(op->larg, root,
-												  op, refnames_tlist,
-												  &child_tlists1),
-						   recurse_union_children(op->rarg, root,
-												  op, refnames_tlist,
-												  &child_tlists2));
-	tlist_list = list_concat(child_tlists1, child_tlists2);
+	pathlist = plan_union_children(root, op, refnames_tlist, &tlist_list);
 
 	/*
 	 * Generate tlist for Append plan node.
@@ -797,56 +789,58 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
  * generate_union_path will force a fresh sort if the top level is a UNION.
  */
 static List *
-recurse_union_children(Node *setOp, PlannerInfo *root,
-					   SetOperationStmt *top_union,
-					   List *refnames_tlist,
-					   List **tlist_list)
+plan_union_children(PlannerInfo *root,
+					SetOperationStmt *top_union,
+					List *refnames_tlist,
+					List **tlist_list)
 {
-	List	   *result;
+	List	   *pending_rels = list_make1(top_union);
+	List	   *result = NIL;
 	List	   *child_tlist;
 
-	if (IsA(setOp, SetOperationStmt))
+	*tlist_list = NIL;
+
+	while (pending_rels != NIL)
 	{
-		SetOperationStmt *op = (SetOperationStmt *) setOp;
+		Node	   *setOp = linitial(pending_rels);
 
-		if (op->op == top_union->op &&
-			(op->all == top_union->all || op->all) &&
-			equal(op->colTypes, top_union->colTypes))
+		pending_rels = list_delete_first(pending_rels);
+
+		if (IsA(setOp, SetOperationStmt))
 		{
-			/* Same UNION, so fold children into parent's subpath list */
-			List	   *child_tlists1;
-			List	   *child_tlists2;
+			SetOperationStmt *op = (SetOperationStmt *) setOp;
 
-			result = list_concat(recurse_union_children(op->larg, root,
-														top_union,
-														refnames_tlist,
-														&child_tlists1),
-								 recurse_union_children(op->rarg, root,
-														top_union,
-														refnames_tlist,
-														&child_tlists2));
-			*tlist_list = list_concat(child_tlists1, child_tlists2);
-			return result;
+			if (op->op == top_union->op &&
+				(op->all == top_union->all || op->all) &&
+				equal(op->colTypes, top_union->colTypes))
+			{
+				/* Same UNION, so fold children into parent */
+				pending_rels = lcons(op->rarg, pending_rels);
+				pending_rels = lcons(op->larg, pending_rels);
+				continue;
+			}
 		}
+
+		/*
+		 * Not same, so plan this child separately.
+		 *
+		 * Note we disallow any resjunk columns in child results.  This is
+		 * necessary since the Append node that implements the union won't do
+		 * any projection, and upper levels will get confused if some of our
+		 * output tuples have junk and some don't.  This case only arises when
+		 * we have an EXCEPT or INTERSECT as child, else there won't be
+		 * resjunk anyway.
+		 */
+		result = lappend(result, recurse_set_operations(setOp, root,
+														top_union->colTypes,
+														top_union->colCollations,
+														false, -1,
+														refnames_tlist,
+														&child_tlist,
+														NULL));
+		*tlist_list = lappend(*tlist_list, child_tlist);
 	}
 
-	/*
-	 * Not same, so plan this child separately.
-	 *
-	 * Note we disallow any resjunk columns in child results.  This is
-	 * necessary since the Append node that implements the union won't do any
-	 * projection, and upper levels will get confused if some of our output
-	 * tuples have junk and some don't.  This case only arises when we have an
-	 * EXCEPT or INTERSECT as child, else there won't be resjunk anyway.
-	 */
-	result = list_make1(recurse_set_operations(setOp, root,
-											   top_union->colTypes,
-											   top_union->colCollations,
-											   false, -1,
-											   refnames_tlist,
-											   &child_tlist,
-											   NULL));
-	*tlist_list = list_make1(child_tlist);
 	return result;
 }
 
