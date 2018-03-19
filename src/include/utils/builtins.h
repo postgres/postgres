@@ -704,6 +704,10 @@ extern List *select_rtable_names_for_explain(List *rtable,
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *qualifier,
 						   const char *ident);
+extern void generate_operator_clause(fmStringInfo buf,
+						 const char *leftop, Oid leftoptype,
+						 Oid opoid,
+						 const char *rightop, Oid rightoptype);
 extern char *generate_collation_name(Oid collid);
 
 
