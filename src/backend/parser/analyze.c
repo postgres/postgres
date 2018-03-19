@@ -325,6 +325,7 @@ transformStmt(ParseState *pstate, Node *parseTree)
 		case T_CallStmt:
 			result = transformCallStmt(pstate,
 									   (CallStmt *) parseTree);
+			break;
 
 		default:
 
