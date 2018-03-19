@@ -1116,7 +1116,10 @@ lreplace:;
 											  proute->root_tuple_slot,
 											  &slot);
 
-			/* Prepare for tuple routing */
+			/*
+			 * Prepare for tuple routing, making it look like we're inserting
+			 * into the root.
+			 */
 			Assert(mtstate->rootResultRelInfo != NULL);
 			slot = ExecPrepareTupleRouting(mtstate, estate, proute,
 										   mtstate->rootResultRelInfo, slot);
