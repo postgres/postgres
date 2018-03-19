@@ -716,6 +716,10 @@ extern Datum pg_get_function_arg_default(PG_FUNCTION_ARGS);
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *qualifier,
 						   const char *ident);
+extern void generate_operator_clause(fmStringInfo buf,
+						 const char *leftop, Oid leftoptype,
+						 Oid opoid,
+						 const char *rightop, Oid rightoptype);
 
 
 /* tid.c */
