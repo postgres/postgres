@@ -62,6 +62,10 @@ static bool ExecOnConflictUpdate(ModifyTableState *mtstate,
 					 EState *estate,
 					 bool canSetTag,
 					 TupleTableSlot **returning);
+static TupleTableSlot *ExecPrepareTupleRouting(ModifyTableState *mtstate,
+						EState *estate,
+						ResultRelInfo *targetRelInfo,
+						TupleTableSlot *slot);
 
 /*
  * Verify that the tuples to be produced by INSERT or UPDATE match the
@@ -259,7 +263,6 @@ ExecInsert(ModifyTableState *mtstate,
 {
 	HeapTuple	tuple;
 	ResultRelInfo *resultRelInfo;
-	ResultRelInfo *saved_resultRelInfo = NULL;
 	Relation	resultRelationDesc;
 	Oid			newId;
 	List	   *recheckIndexes = NIL;
@@ -275,100 +278,6 @@ ExecInsert(ModifyTableState *mtstate,
 	 * get information on the (current) result relation
 	 */
 	resultRelInfo = estate->es_result_relation_info;
-
-	/* Determine the partition to heap_insert the tuple into */
-	if (mtstate->mt_partition_dispatch_info)
-	{
-		int			leaf_part_index;
-		TupleConversionMap *map;
-
-		/*
-		 * Away we go ... If we end up not finding a partition after all,
-		 * ExecFindPartition() does not return and errors out instead.
-		 * Otherwise, the returned value is to be used as an index into arrays
-		 * mt_partitions[] and mt_partition_tupconv_maps[] that will get us
-		 * the ResultRelInfo and TupleConversionMap for the partition,
-		 * respectively.
-		 */
-		leaf_part_index = ExecFindPartition(resultRelInfo,
-											mtstate->mt_partition_dispatch_info,
-											slot,
-											estate);
-		Assert(leaf_part_index >= 0 &&
-			   leaf_part_index < mtstate->mt_num_partitions);
-
-		/*
-		 * Save the old ResultRelInfo and switch to the one corresponding to
-		 * the selected partition.
-		 */
-		saved_resultRelInfo = resultRelInfo;
-		resultRelInfo = mtstate->mt_partitions + leaf_part_index;
-
-		/* We do not yet have a way to insert into a foreign partition */
-		if (resultRelInfo->ri_FdwRoutine)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot route inserted tuples to a foreign table")));
-
-		/* For ExecInsertIndexTuples() to work on the partition's indexes */
-		estate->es_result_relation_info = resultRelInfo;
-
-		/*
-		 * If we're capturing transition tuples, we might need to convert from
-		 * the partition rowtype to parent rowtype.
-		 */
-		if (mtstate->mt_transition_capture != NULL)
-		{
-			if (resultRelInfo->ri_TrigDesc &&
-				(resultRelInfo->ri_TrigDesc->trig_insert_before_row ||
-				 resultRelInfo->ri_TrigDesc->trig_insert_instead_row))
-			{
-				/*
-				 * If there are any BEFORE or INSTEAD triggers on the
-				 * partition, we'll have to be ready to convert their result
-				 * back to tuplestore format.
-				 */
-				mtstate->mt_transition_capture->tcs_original_insert_tuple = NULL;
-				mtstate->mt_transition_capture->tcs_map =
-					mtstate->mt_transition_tupconv_maps[leaf_part_index];
-			}
-			else
-			{
-				/*
-				 * Otherwise, just remember the original unconverted tuple, to
-				 * avoid a needless round trip conversion.
-				 */
-				mtstate->mt_transition_capture->tcs_original_insert_tuple = tuple;
-				mtstate->mt_transition_capture->tcs_map = NULL;
-			}
-		}
-		if (mtstate->mt_oc_transition_capture != NULL)
-			mtstate->mt_oc_transition_capture->tcs_map =
-				mtstate->mt_transition_tupconv_maps[leaf_part_index];
-
-		/*
-		 * We might need to convert from the parent rowtype to the partition
-		 * rowtype.
-		 */
-		map = mtstate->mt_partition_tupconv_maps[leaf_part_index];
-		if (map)
-		{
-			Relation	partrel = resultRelInfo->ri_RelationDesc;
-
-			tuple = do_convert_tuple(tuple, map);
-
-			/*
-			 * We must use the partition's tuple descriptor from this point
-			 * on, until we're finished dealing with the partition. Use the
-			 * dedicated slot for that.
-			 */
-			slot = mtstate->mt_partition_tuple_slot;
-			Assert(slot != NULL);
-			ExecSetSlotDescriptor(slot, RelationGetDescr(partrel));
-			ExecStoreTuple(tuple, slot, InvalidBuffer, true);
-		}
-	}
-
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/*
@@ -477,7 +386,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * No need though if the tuple has been routed, and a BR trigger
 		 * doesn't exist.
 		 */
-		if (saved_resultRelInfo != NULL &&
+		if (resultRelInfo->ri_PartitionRoot != NULL &&
 			!(resultRelInfo->ri_TrigDesc &&
 			  resultRelInfo->ri_TrigDesc->trig_insert_before_row))
 			check_partition_constr = false;
@@ -644,9 +553,6 @@ ExecInsert(ModifyTableState *mtstate,
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
 		result = ExecProcessReturning(resultRelInfo, slot, planSlot);
-
-	if (saved_resultRelInfo)
-		estate->es_result_relation_info = saved_resultRelInfo;
 
 	return result;
 }
@@ -1545,6 +1451,111 @@ ExecSetupTransitionCaptureState(ModifyTableState *mtstate, EState *estate)
 	}
 }
 
+/*
+ * ExecPrepareTupleRouting --- prepare for routing one tuple
+ *
+ * Determine the partition in which the tuple in slot is to be inserted,
+ * and modify mtstate and estate to prepare for it.
+ *
+ * Caller must revert the estate changes after executing the insertion!
+ * In mtstate, transition capture changes may also need to be reverted.
+ *
+ * Returns a slot holding the tuple of the partition rowtype.
+ */
+static TupleTableSlot *
+ExecPrepareTupleRouting(ModifyTableState *mtstate,
+						EState *estate,
+						ResultRelInfo *targetRelInfo,
+						TupleTableSlot *slot)
+{
+	int			partidx;
+	ResultRelInfo *partrel;
+	HeapTuple	tuple;
+	TupleConversionMap *map;
+
+	/*
+	 * Determine the target partition.  If ExecFindPartition does not find
+	 * a partition after all, it doesn't return here; otherwise, the returned
+	 * value is to be used as an index into the arrays for the resultRelInfo
+	 * and TupleConversionMap for the partition.
+	 */
+	partidx = ExecFindPartition(targetRelInfo,
+								mtstate->mt_partition_dispatch_info,
+								slot,
+								estate);
+	Assert(partidx >= 0 && partidx < mtstate->mt_num_partitions);
+
+	/* Get the ResultRelInfo corresponding to the selected partition. */
+	partrel = &mtstate->mt_partitions[partidx];
+
+	/* We do not yet have a way to insert into a foreign partition */
+	if (partrel->ri_FdwRoutine)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot route inserted tuples to a foreign table")));
+
+	/*
+	 * Make it look like we are inserting into the partition.
+	 */
+	estate->es_result_relation_info = partrel;
+
+	/* Get the heap tuple out of the given slot. */
+	tuple = ExecMaterializeSlot(slot);
+
+	/*
+	 * If we're capturing transition tuples, we might need to convert from the
+	 * partition rowtype to parent rowtype.
+	 */
+	if (mtstate->mt_transition_capture != NULL)
+	{
+		if (partrel->ri_TrigDesc &&
+			partrel->ri_TrigDesc->trig_insert_before_row)
+		{
+			/*
+			 * If there are any BEFORE triggers on the partition, we'll have
+			 * to be ready to convert their result back to tuplestore format.
+			 */
+			mtstate->mt_transition_capture->tcs_original_insert_tuple = NULL;
+			mtstate->mt_transition_capture->tcs_map =
+				mtstate->mt_transition_tupconv_maps[partidx];
+		}
+		else
+		{
+			/*
+			 * Otherwise, just remember the original unconverted tuple, to
+			 * avoid a needless round trip conversion.
+			 */
+			mtstate->mt_transition_capture->tcs_original_insert_tuple = tuple;
+			mtstate->mt_transition_capture->tcs_map = NULL;
+		}
+	}
+	if (mtstate->mt_oc_transition_capture != NULL)
+	{
+		mtstate->mt_oc_transition_capture->tcs_map =
+			mtstate->mt_transition_tupconv_maps[partidx];
+	}
+
+	/*
+	 * Convert the tuple, if necessary.
+	 */
+	map = mtstate->mt_partition_tupconv_maps[partidx];
+	if (map)
+	{
+		tuple = do_convert_tuple(tuple, map);
+
+		/*
+		 * We must use the partition's tuple descriptor from this point on,
+		 * until we're finished dealing with the partition.  Use the
+		 * dedicated slot for that.
+		 */
+		slot = mtstate->mt_partition_tuple_slot;
+		ExecSetSlotDescriptor(slot, RelationGetDescr(partrel->ri_RelationDesc));
+		ExecStoreTuple(tuple, slot, InvalidBuffer, true);
+	}
+
+	return slot;
+}
+
 /* ----------------------------------------------------------------
  *	   ExecModifyTable
  *
@@ -1763,9 +1774,16 @@ ExecModifyTable(PlanState *pstate)
 		switch (operation)
 		{
 			case CMD_INSERT:
+				/* Prepare for tuple routing, if needed. */
+				if (node->mt_partition_dispatch_info)
+					slot = ExecPrepareTupleRouting(node, estate,
+												   resultRelInfo, slot);
 				slot = ExecInsert(node, slot, planSlot,
 								  node->mt_arbiterindexes, node->mt_onconflict,
 								  estate, node->canSetTag);
+				/* Revert ExecPrepareTupleRouting's node change. */
+				if (node->mt_partition_dispatch_info)
+					estate->es_result_relation_info = resultRelInfo;
 				break;
 			case CMD_UPDATE:
 				slot = ExecUpdate(node, tupleid, oldtuple, slot, planSlot,

@@ -981,15 +981,24 @@ typedef struct ModifyTableState
 	int			mt_num_partitions;	/* Number of members in the following
 									 * arrays */
 	ResultRelInfo *mt_partitions;	/* Per partition result relation */
-	TupleConversionMap **mt_partition_tupconv_maps;
+
 	/* Per partition tuple conversion map */
+	TupleConversionMap **mt_partition_tupconv_maps;
+
+	/*
+	 * Used to manipulate any given leaf partition's rowtype after that
+	 * partition is chosen for insertion by tuple-routing.
+	 */
 	TupleTableSlot *mt_partition_tuple_slot;
-	struct TransitionCaptureState *mt_transition_capture;
+
 	/* controls transition table population for specified operation */
-	struct TransitionCaptureState *mt_oc_transition_capture;
+	struct TransitionCaptureState *mt_transition_capture;
+
 	/* controls transition table population for INSERT...ON CONFLICT UPDATE */
-	TupleConversionMap **mt_transition_tupconv_maps;
+	struct TransitionCaptureState *mt_oc_transition_capture;
+
 	/* Per plan/partition tuple conversion */
+	TupleConversionMap **mt_transition_tupconv_maps;
 } ModifyTableState;
 
 /* ----------------
