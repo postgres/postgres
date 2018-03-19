@@ -748,6 +748,32 @@ drop role regress_coldesc_role;
 drop table inserttest3;
 drop table brtrigpartcon;
 drop function brtrigpartcon1trigf();
+-- check that "do nothing" BR triggers work with tuple-routing (this checks
+-- that estate->es_result_relation_info is appropriately set/reset for each
+-- routed tuple)
+create table donothingbrtrig_test (a int, b text) partition by list (a);
+create table donothingbrtrig_test1 (b text, a int);
+create table donothingbrtrig_test2 (c text, b text, a int);
+alter table donothingbrtrig_test2 drop column c;
+create or replace function donothingbrtrig_func() returns trigger as $$begin raise notice 'b: %', new.b; return NULL; end$$ language plpgsql;
+create trigger donothingbrtrig1 before insert on donothingbrtrig_test1 for each row execute procedure donothingbrtrig_func();
+create trigger donothingbrtrig2 before insert on donothingbrtrig_test2 for each row execute procedure donothingbrtrig_func();
+alter table donothingbrtrig_test attach partition donothingbrtrig_test1 for values in (1);
+alter table donothingbrtrig_test attach partition donothingbrtrig_test2 for values in (2);
+insert into donothingbrtrig_test values (1, 'foo'), (2, 'bar');
+NOTICE:  b: foo
+NOTICE:  b: bar
+copy donothingbrtrig_test from stdout;
+NOTICE:  b: baz
+NOTICE:  b: qux
+select tableoid::regclass, * from donothingbrtrig_test;
+ tableoid | a | b 
+----------+---+---
+(0 rows)
+
+-- cleanup
+drop table donothingbrtrig_test;
+drop function donothingbrtrig_func();
 -- check multi-column range partitioning with minvalue/maxvalue constraints
 create table mcrparted (a text, b int) partition by range(a, b);
 create table mcrparted1_lt_b partition of mcrparted for values from (minvalue, minvalue) to ('b', minvalue);

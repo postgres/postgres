@@ -995,14 +995,18 @@ typedef struct ModifyTableState
 	TupleTableSlot *mt_existing;	/* slot to store existing target tuple in */
 	List	   *mt_excludedtlist;	/* the excluded pseudo relation's tlist  */
 	TupleTableSlot *mt_conflproj;	/* CONFLICT ... SET ... projection target */
-	struct PartitionTupleRouting *mt_partition_tuple_routing;
+
 	/* Tuple-routing support info */
-	struct TransitionCaptureState *mt_transition_capture;
+	struct PartitionTupleRouting *mt_partition_tuple_routing;
+
 	/* controls transition table population for specified operation */
-	struct TransitionCaptureState *mt_oc_transition_capture;
+	struct TransitionCaptureState *mt_transition_capture;
+
 	/* controls transition table population for INSERT...ON CONFLICT UPDATE */
-	TupleConversionMap **mt_per_subplan_tupconv_maps;
+	struct TransitionCaptureState *mt_oc_transition_capture;
+
 	/* Per plan map for tuple conversion from child to root */
+	TupleConversionMap **mt_per_subplan_tupconv_maps;
 } ModifyTableState;
 
 /* ----------------
