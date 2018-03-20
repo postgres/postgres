@@ -2651,12 +2651,12 @@ GroupPath *
 create_group_path(PlannerInfo *root,
 				  RelOptInfo *rel,
 				  Path *subpath,
-				  PathTarget *target,
 				  List *groupClause,
 				  List *qual,
 				  double numGroups)
 {
 	GroupPath  *pathnode = makeNode(GroupPath);
+	PathTarget *target = rel->reltarget;
 
 	pathnode->path.pathtype = T_Group;
 	pathnode->path.parent = rel;
@@ -2828,7 +2828,6 @@ GroupingSetsPath *
 create_groupingsets_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 Path *subpath,
-						 PathTarget *target,
 						 List *having_qual,
 						 AggStrategy aggstrategy,
 						 List *rollups,
@@ -2836,6 +2835,7 @@ create_groupingsets_path(PlannerInfo *root,
 						 double numGroups)
 {
 	GroupingSetsPath *pathnode = makeNode(GroupingSetsPath);
+	PathTarget *target = rel->reltarget;
 	ListCell   *lc;
 	bool		is_first = true;
 	bool		is_first_sort = true;

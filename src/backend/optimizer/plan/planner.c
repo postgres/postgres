@@ -163,10 +163,10 @@ static RelOptInfo *create_grouping_paths(PlannerInfo *root,
 static bool is_degenerate_grouping(PlannerInfo *root);
 static void create_degenerate_grouping_paths(PlannerInfo *root,
 								 RelOptInfo *input_rel,
-								 PathTarget *target, RelOptInfo *grouped_rel);
+								 RelOptInfo *grouped_rel);
 static void create_ordinary_grouping_paths(PlannerInfo *root,
 							   RelOptInfo *input_rel,
-							   PathTarget *target, RelOptInfo *grouped_rel,
+							   RelOptInfo *grouped_rel,
 							   const AggClauseCosts *agg_costs,
 							   grouping_sets_data *gd, int flags);
 static void consider_groupingsets_paths(PlannerInfo *root,
@@ -174,7 +174,6 @@ static void consider_groupingsets_paths(PlannerInfo *root,
 							Path *path,
 							bool is_sorted,
 							bool can_hash,
-							PathTarget *target,
 							grouping_sets_data *gd,
 							const AggClauseCosts *agg_costs,
 							double dNumGroups);
@@ -220,7 +219,6 @@ static void adjust_paths_for_srfs(PlannerInfo *root, RelOptInfo *rel,
 					  List *targets, List *targets_contain_srfs);
 static void add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 						  RelOptInfo *grouped_rel,
-						  PathTarget *target,
 						  RelOptInfo *partially_grouped_rel,
 						  const AggClauseCosts *agg_costs,
 						  const AggClauseCosts *agg_final_costs,
@@ -3737,7 +3735,7 @@ create_grouping_paths(PlannerInfo *root,
 	 * grouping, as appropriate.
 	 */
 	if (is_degenerate_grouping(root))
-		create_degenerate_grouping_paths(root, input_rel, target, grouped_rel);
+		create_degenerate_grouping_paths(root, input_rel, grouped_rel);
 	else
 	{
 		int			flags = 0;
@@ -3788,7 +3786,7 @@ create_grouping_paths(PlannerInfo *root,
 		if (can_partial_agg(root, agg_costs))
 			flags |= GROUPING_CAN_PARTIAL_AGG;
 
-		create_ordinary_grouping_paths(root, input_rel, target, grouped_rel,
+		create_ordinary_grouping_paths(root, input_rel, grouped_rel,
 									   agg_costs, gd, flags);
 	}
 
@@ -3826,7 +3824,7 @@ is_degenerate_grouping(PlannerInfo *root)
  */
 static void
 create_degenerate_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
-								 PathTarget *target, RelOptInfo *grouped_rel)
+								 RelOptInfo *grouped_rel)
 {
 	Query	   *parse = root->parse;
 	int			nrows;
@@ -3848,7 +3846,7 @@ create_degenerate_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		{
 			path = (Path *)
 				create_result_path(root, grouped_rel,
-								   target,
+								   grouped_rel->reltarget,
 								   (List *) parse->havingQual);
 			paths = lappend(paths, path);
 		}
@@ -3861,14 +3859,13 @@ create_degenerate_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 							   false,
 							   NIL,
 							   -1);
-		path->pathtarget = target;
 	}
 	else
 	{
 		/* No grouping sets, or just one, so one output row */
 		path = (Path *)
 			create_result_path(root, grouped_rel,
-							   target,
+							   grouped_rel->reltarget,
 							   (List *) parse->havingQual);
 	}
 
@@ -3887,7 +3884,7 @@ create_degenerate_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
  */
 static void
 create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
-							   PathTarget *target, RelOptInfo *grouped_rel,
+							   RelOptInfo *grouped_rel,
 							   const AggClauseCosts *agg_costs,
 							   grouping_sets_data *gd, int flags)
 {
@@ -3929,7 +3926,7 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	}
 
 	/* Build final grouping paths */
-	add_paths_to_grouping_rel(root, input_rel, grouped_rel, target,
+	add_paths_to_grouping_rel(root, input_rel, grouped_rel,
 							  partially_grouped_rel, agg_costs,
 							  &agg_final_costs, gd, can_sort, can_hash,
 							  dNumGroups, (List *) parse->havingQual);
@@ -3968,7 +3965,6 @@ consider_groupingsets_paths(PlannerInfo *root,
 							Path *path,
 							bool is_sorted,
 							bool can_hash,
-							PathTarget *target,
 							grouping_sets_data *gd,
 							const AggClauseCosts *agg_costs,
 							double dNumGroups)
@@ -4110,7 +4106,6 @@ consider_groupingsets_paths(PlannerInfo *root,
 				 create_groupingsets_path(root,
 										  grouped_rel,
 										  path,
-										  target,
 										  (List *) parse->havingQual,
 										  strat,
 										  new_rollups,
@@ -4268,7 +4263,6 @@ consider_groupingsets_paths(PlannerInfo *root,
 					 create_groupingsets_path(root,
 											  grouped_rel,
 											  path,
-											  target,
 											  (List *) parse->havingQual,
 											  AGG_MIXED,
 											  rollups,
@@ -4285,7 +4279,6 @@ consider_groupingsets_paths(PlannerInfo *root,
 				 create_groupingsets_path(root,
 										  grouped_rel,
 										  path,
-										  target,
 										  (List *) parse->havingQual,
 										  AGG_SORTED,
 										  gd->rollups,
@@ -6087,7 +6080,6 @@ get_partitioned_child_rels_for_join(PlannerInfo *root, Relids join_relids)
 static void
 add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 						  RelOptInfo *grouped_rel,
-						  PathTarget *target,
 						  RelOptInfo *partially_grouped_rel,
 						  const AggClauseCosts *agg_costs,
 						  const AggClauseCosts *agg_final_costs,
@@ -6125,7 +6117,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				if (parse->groupingSets)
 				{
 					consider_groupingsets_paths(root, grouped_rel,
-												path, true, can_hash, target,
+												path, true, can_hash,
 												gd, agg_costs, dNumGroups);
 				}
 				else if (parse->hasAggs)
@@ -6138,7 +6130,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 							 create_agg_path(root,
 											 grouped_rel,
 											 path,
-											 target,
+											 grouped_rel->reltarget,
 											 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
 											 AGGSPLIT_SIMPLE,
 											 parse->groupClause,
@@ -6156,7 +6148,6 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 							 create_group_path(root,
 											   grouped_rel,
 											   path,
-											   target,
 											   parse->groupClause,
 											   havingQual,
 											   dNumGroups));
@@ -6199,7 +6190,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 							 create_agg_path(root,
 											 grouped_rel,
 											 path,
-											 target,
+											 grouped_rel->reltarget,
 											 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
 											 AGGSPLIT_FINAL_DESERIAL,
 											 parse->groupClause,
@@ -6211,7 +6202,6 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 							 create_group_path(root,
 											   grouped_rel,
 											   path,
-											   target,
 											   parse->groupClause,
 											   havingQual,
 											   dNumGroups));
@@ -6229,7 +6219,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			 * Try for a hash-only groupingsets path over unsorted input.
 			 */
 			consider_groupingsets_paths(root, grouped_rel,
-										cheapest_path, false, true, target,
+										cheapest_path, false, true,
 										gd, agg_costs, dNumGroups);
 		}
 		else
@@ -6254,7 +6244,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				add_path(grouped_rel, (Path *)
 						 create_agg_path(root, grouped_rel,
 										 cheapest_path,
-										 target,
+										 grouped_rel->reltarget,
 										 AGG_HASHED,
 										 AGGSPLIT_SIMPLE,
 										 parse->groupClause,
@@ -6282,7 +6272,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 						 create_agg_path(root,
 										 grouped_rel,
 										 path,
-										 target,
+										 grouped_rel->reltarget,
 										 AGG_HASHED,
 										 AGGSPLIT_FINAL_DESERIAL,
 										 parse->groupClause,
@@ -6420,7 +6410,6 @@ create_partial_grouping_paths(PlannerInfo *root,
 									 create_group_path(root,
 													   partially_grouped_rel,
 													   path,
-													   partially_grouped_rel->reltarget,
 													   parse->groupClause,
 													   NIL,
 													   dNumPartialGroups));
