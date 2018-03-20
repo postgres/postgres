@@ -25,6 +25,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeValuesscan.h"
+#include "jit/jit.h"
 #include "utils/expandeddatum.h"
 
 
@@ -98,6 +99,7 @@ ValuesNext(ValuesScanState *node)
 		bool	   *isnull;
 		ListCell   *lc;
 		int			resind;
+		int			saved_jit_flags;
 
 		/*
 		 * Get rid of any prior cycle's leftovers.  We use ReScanExprContext
@@ -128,7 +130,15 @@ ValuesNext(ValuesScanState *node)
 		oldsubplans = node->ss.ps.subPlan;
 		node->ss.ps.subPlan = NIL;
 
+		/*
+		 * As the expressions are only ever used once, disable JIT for
+		 * them. This is worthwhile because it's common to insert significant
+		 * amounts of data via VALUES().
+		 */
+		saved_jit_flags = econtext->ecxt_estate->es_jit_flags;
+		econtext->ecxt_estate->es_jit_flags = PGJIT_NONE;
 		exprstatelist = ExecInitExprList(exprlist, &node->ss.ps);
+		econtext->ecxt_estate->es_jit_flags = saved_jit_flags;
 
 		node->ss.ps.subPlan = oldsubplans;
 

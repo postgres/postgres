@@ -113,6 +113,8 @@ extern void fmgr_info_cxt(Oid functionId, FmgrInfo *finfo,
 extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
 			   MemoryContext destcxt);
 
+extern void fmgr_symbol(Oid functionId, char **mod, char **fn);
+
 /*
  * This macro initializes all the fields of a FunctionCallInfoData except
  * for the arg[] and argnull[] arrays.  Performance testing has shown that

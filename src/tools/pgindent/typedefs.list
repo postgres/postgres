@@ -363,6 +363,7 @@ CommitTimestampShared
 CommonEntry
 CommonTableExpr
 CompareScalarsContext
+CompiledExprState
 CompositeIOData
 CompositeTypeStmt
 CompoundAffixFlag

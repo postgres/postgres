@@ -36,6 +36,7 @@
 #include "executor/execExpr.h"
 #include "executor/nodeSubplan.h"
 #include "funcapi.h"
+#include "jit/jit.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -623,6 +624,9 @@ ExecCheck(ExprState *state, ExprContext *econtext)
 static void
 ExecReadyExpr(ExprState *state)
 {
+	if (jit_compile_expr(state))
+		return;
+
 	ExecReadyInterpretedExpr(state);
 }
 

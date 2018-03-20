@@ -1762,6 +1762,17 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"jit_expressions", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Allow JIT compilation of expressions."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&jit_expressions,
+		true,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"jit_profiling_support", PGC_SU_BACKEND, DEVELOPER_OPTIONS,
 			gettext_noop("Register JIT compiled function with perf profiler."),
 			NULL,

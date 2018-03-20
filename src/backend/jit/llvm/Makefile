@@ -39,7 +39,7 @@ OBJS=$(WIN32RES)
 # Infrastructure
 OBJS += llvmjit.o llvmjit_error.o llvmjit_wrap.o
 # Code generation
-OBJS +=
+OBJS += llvmjit_expr.o
 
 all: all-shared-lib llvmjit_types.bc
 

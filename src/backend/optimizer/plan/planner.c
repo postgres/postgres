@@ -544,6 +544,12 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		if (jit_optimize_above_cost >= 0 &&
 			top_plan->total_cost > jit_optimize_above_cost)
 			result->jitFlags |= PGJIT_OPT3;
+
+		/*
+		 * Decide which operations should be JITed.
+		 */
+		if (jit_expressions)
+			result->jitFlags |= PGJIT_EXPR;
 	}
 
 	return result;

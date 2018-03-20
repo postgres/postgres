@@ -29,6 +29,7 @@ extern "C"
 #endif
 
 
+#include "fmgr.h"
 #include "jit/jit.h"
 #include "nodes/pg_list.h"
 
@@ -91,7 +92,18 @@ extern void *llvm_get_function(LLVMJitContext *context, const char *funcname);
 extern void llvm_split_symbol_name(const char *name, char **modname, char **funcname);
 extern LLVMValueRef llvm_get_decl(LLVMModuleRef mod, LLVMValueRef f);
 extern void llvm_copy_attributes(LLVMValueRef from, LLVMValueRef to);
+extern LLVMValueRef llvm_function_reference(LLVMJitContext *context,
+						LLVMBuilderRef builder,
+						LLVMModuleRef mod,
+						FunctionCallInfo fcinfo);
 
+
+/*
+ ****************************************************************************
+ * Code ceneration functions.
+ ****************************************************************************
+ */
+extern bool llvm_compile_expr(struct ExprState *state);
 
 /*
  ****************************************************************************

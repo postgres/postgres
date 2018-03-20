@@ -59,7 +59,8 @@ static void fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple proc
 static CFuncHashTabEntry *lookup_C_func(HeapTuple procedureTuple);
 static void record_C_func(HeapTuple procedureTuple,
 			  PGFunction user_fn, const Pg_finfo_record *inforec);
-static Datum fmgr_security_definer(PG_FUNCTION_ARGS);
+/* extern so it's callable via JIT */
+extern Datum fmgr_security_definer(PG_FUNCTION_ARGS);
 
 
 /*
@@ -259,6 +260,95 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	finfo->fn_oid = functionId;
 	ReleaseSysCache(procedureTuple);
 }
+
+/*
+ * Return module and C function name providing implementation of functionId.
+ *
+ * If *mod == NULL and *fn == NULL, no C symbol is known to implement
+ * function.
+ *
+ * If *mod == NULL and *fn != NULL, the function is implemented by a symbol in
+ * the main binary.
+ *
+ * If *mod != NULL and *fn !=NULL the function is implemented in an extension
+ * shared object.
+ *
+ * The returned module and function names are pstrdup'ed into the current
+ * memory context.
+ */
+void
+fmgr_symbol(Oid functionId, char **mod, char **fn)
+{
+	HeapTuple	procedureTuple;
+	Form_pg_proc procedureStruct;
+	bool		isnull;
+	Datum		prosrcattr;
+	Datum		probinattr;
+
+	/* Otherwise we need the pg_proc entry */
+	procedureTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionId));
+	if (!HeapTupleIsValid(procedureTuple))
+		elog(ERROR, "cache lookup failed for function %u", functionId);
+	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
+
+	/*
+	 */
+	if (procedureStruct->prosecdef ||
+		!heap_attisnull(procedureTuple, Anum_pg_proc_proconfig) ||
+		FmgrHookIsNeeded(functionId))
+	{
+		*mod = NULL; /* core binary */
+		*fn = pstrdup("fmgr_security_definer");
+		ReleaseSysCache(procedureTuple);
+		return;
+	}
+
+	/* see fmgr_info_cxt_security for the individual cases */
+	switch (procedureStruct->prolang)
+	{
+		case INTERNALlanguageId:
+			prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
+										 Anum_pg_proc_prosrc, &isnull);
+			if (isnull)
+				elog(ERROR, "null prosrc");
+
+			*mod = NULL; /* core binary */
+			*fn = TextDatumGetCString(prosrcattr);
+			break;
+
+		case ClanguageId:
+			prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
+										 Anum_pg_proc_prosrc, &isnull);
+			if (isnull)
+				elog(ERROR, "null prosrc for C function %u", functionId);
+
+			probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
+										 Anum_pg_proc_probin, &isnull);
+			if (isnull)
+				elog(ERROR, "null probin for C function %u", functionId);
+
+			/*
+			 * No need to check symbol presence / API version here, already
+			 * checked in fmgr_info_cxt_security.
+			 */
+			*mod = TextDatumGetCString(probinattr);
+			*fn = TextDatumGetCString(prosrcattr);
+			break;
+
+		case SQLlanguageId:
+			*mod = NULL;  /* core binary */
+			*fn = pstrdup("fmgr_sql");
+			break;
+
+		default:
+			*mod = NULL;
+			*fn = NULL; /* unknown, pass pointer */
+			break;
+	}
+
+	ReleaseSysCache(procedureTuple);
+}
+
 
 /*
  * Special fmgr_info processing for C-language functions.  Note that
@@ -565,7 +655,7 @@ struct fmgr_security_definer_cache
  * the actual arguments, etc.) intact.  This is not re-entrant, but then
  * the fcinfo itself can't be used reentrantly anyway.
  */
-static Datum
+extern Datum
 fmgr_security_definer(PG_FUNCTION_ARGS)
 {
 	Datum		result;

@@ -24,6 +24,7 @@
 
 
 #include "fmgr.h"
+#include "executor/execExpr.h"
 #include "jit/jit.h"
 #include "miscadmin.h"
 #include "utils/resowner_private.h"
@@ -35,6 +36,7 @@ bool		jit_enabled = true;
 char	   *jit_provider = "llvmjit";
 bool		jit_debugging_support = false;
 bool		jit_dump_bitcode = false;
+bool		jit_expressions = true;
 bool		jit_profiling_support = false;
 double		jit_above_cost = 100000;
 double		jit_optimize_above_cost = 500000;
@@ -141,6 +143,41 @@ jit_release_context(JitContext *context)
 
 	ResourceOwnerForgetJIT(context->resowner, PointerGetDatum(context));
 	pfree(context);
+}
+
+/*
+ * Ask provider to JIT compile an expression.
+ *
+ * Returns true if successful, false if not.
+ */
+bool
+jit_compile_expr(struct ExprState *state)
+{
+	/*
+	 * We can easily create a one-off context for functions without an
+	 * associated PlanState (and thus EState). But because there's no executor
+	 * shutdown callback that could deallocate the created function, they'd
+	 * live to the end of the transactions, where they'd be cleaned up by the
+	 * resowner machinery. That can lead to a noticeable amount of memory
+	 * usage, and worse, trigger some quadratic behaviour in gdb. Therefore,
+	 * at least for now, don't create a JITed function in those circumstances.
+	 */
+	if (!state->parent)
+		return false;
+
+	/* if no jitting should be performed at all */
+	if (!(state->parent->state->es_jit_flags & PGJIT_PERFORM))
+		return false;
+
+	/* or if expressions aren't JITed */
+	if (!(state->parent->state->es_jit_flags & PGJIT_EXPR))
+		return false;
+
+	/* this also takes !jit_enabled into account */
+	if (provider_init())
+		return provider.compile_expr(state);
+
+	return false;
 }
 
 static bool

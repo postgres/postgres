@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "jit/llvmjit.h"
+#include "jit/llvmjit_emit.h"
 
 #include "miscadmin.h"
 
@@ -114,6 +115,7 @@ _PG_jit_provider_init(JitProviderCallbacks *cb)
 {
 	cb->reset_after_error = llvm_reset_after_error;
 	cb->release_context = llvm_release_context;
+	cb->compile_expr = llvm_compile_expr;
 }
 
 /*
@@ -337,6 +339,68 @@ llvm_copy_attributes(LLVMValueRef v_from, LLVMValueRef v_to)
 		LLVMAddAttributeAtIndex(v_to, LLVMAttributeFunctionIndex,
 								attrs[attno]);
 	}
+}
+
+/*
+ * Return a callable LLVMValueRef for fcinfo.
+ */
+LLVMValueRef
+llvm_function_reference(LLVMJitContext *context,
+						LLVMBuilderRef builder,
+						LLVMModuleRef mod,
+						FunctionCallInfo fcinfo)
+{
+	char	   *modname;
+	char	   *basename;
+	char	   *funcname;
+
+	LLVMValueRef v_fn;
+
+	fmgr_symbol(fcinfo->flinfo->fn_oid, &modname, &basename);
+
+	if (modname != NULL && basename != NULL)
+	{
+		/* external function in loadable library */
+		funcname = psprintf("pgextern.%s.%s", modname, basename);
+	}
+	else if (basename != NULL)
+	{
+		/* internal function */
+		funcname = psprintf("%s", basename);
+	}
+	else
+	{
+		/*
+		 * Function we don't know to handle, return pointer. We do so by
+		 * creating a global constant containing a pointer to the function.
+		 * Makes IR more readable.
+		 */
+		LLVMValueRef v_fn_addr;
+
+		funcname = psprintf("pgoidextern.%u",
+							fcinfo->flinfo->fn_oid);
+		v_fn = LLVMGetNamedGlobal(mod, funcname);
+		if (v_fn != 0)
+			return LLVMBuildLoad(builder, v_fn, "");
+
+		v_fn_addr = l_ptr_const(fcinfo->flinfo->fn_addr, TypePGFunction);
+
+		v_fn = LLVMAddGlobal(mod, TypePGFunction, funcname);
+		LLVMSetInitializer(v_fn, v_fn_addr);
+		LLVMSetGlobalConstant(v_fn, true);
+
+		return LLVMBuildLoad(builder, v_fn, "");
+		return v_fn;
+	}
+
+	/* check if function already has been added */
+	v_fn = LLVMGetNamedFunction(mod, funcname);
+	if (v_fn != 0)
+		return v_fn;
+
+	v_fn = LLVMAddFunction(mod, funcname, LLVMGetElementType(TypePGFunction));
+
+	return v_fn;
 }
 
 /*
