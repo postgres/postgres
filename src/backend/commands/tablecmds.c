@@ -864,13 +864,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			update_default_partition_oid(RelationGetRelid(parent), relationId);
 
 		heap_close(parent, NoLock);
-
-		/*
-		 * The code that follows may also update the pg_class tuple to update
-		 * relnumchecks, so bump up the command counter to avoid the "already
-		 * updated by self" error.
-		 */
-		CommandCounterIncrement();
 	}
 
 	/*
@@ -14584,8 +14577,6 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 			ConstraintSetParentConstraint(cldConstrId, constraintOid);
 
 		pfree(attmap);
-
-		CommandCounterIncrement();
 
 		validatePartitionedIndex(parentIdx, parentTbl);
 	}

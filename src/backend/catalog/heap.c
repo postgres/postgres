@@ -3298,6 +3298,9 @@ StorePartitionBound(Relation rel, Relation parent, PartitionBoundSpec *bound)
 	heap_freetuple(newtuple);
 	heap_close(classRel, RowExclusiveLock);
 
+	/* Make update visible */
+	CommandCounterIncrement();
+
 	/*
 	 * The partition constraint for the default partition depends on the
 	 * partition bounds of every other partition, so we must invalidate the

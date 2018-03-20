@@ -2512,5 +2512,8 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 
 			recordDependencyOn(&partIdx, &partitionTbl, DEPENDENCY_AUTO);
 		}
+
+		/* make our updates visible */
+		CommandCounterIncrement();
 	}
 }
