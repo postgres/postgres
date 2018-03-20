@@ -1361,6 +1361,24 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <term><envar>CXX</envar></term>
+       <listitem>
+        <para>
+         C++ compiler
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><envar>CXXFLAGS</envar></term>
+       <listitem>
+        <para>
+         options to pass to the C++ compiler
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><envar>DTRACE</envar></term>
        <listitem>
         <para>

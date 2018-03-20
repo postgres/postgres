@@ -477,6 +477,46 @@ AC_DEFUN([PGAC_PROG_CC_VAR_OPT],
 
 
 
+# PGAC_PROG_VARCXX_VARFLAGS_OPT
+# -----------------------
+# Given a compiler, variable name and a string, check if the compiler
+# supports the string as a command-line option. If it does, add the
+# string to the given variable.
+AC_DEFUN([PGAC_PROG_VARCXX_VARFLAGS_OPT],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_prog_$1_cxxflags_$3])])dnl
+AC_CACHE_CHECK([whether ${$1} supports $3, for $2], [Ac_cachevar],
+[pgac_save_CXXFLAGS=$CXXFLAGS
+pgac_save_CXX=$CXX
+CXX=${$1}
+CXXFLAGS="${$2} $3"
+ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+ac_cxx_werror_flag=yes
+AC_LANG_PUSH(C++)
+_AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
+                   [Ac_cachevar=yes],
+                   [Ac_cachevar=no])
+AC_LANG_POP([])
+ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+CXXFLAGS="$pgac_save_CXXFLAGS"
+CXX="$pgac_save_CXX"])
+if test x"$Ac_cachevar" = x"yes"; then
+  $2="${$2} $3"
+fi
+undefine([Ac_cachevar])dnl
+])# PGAC_PROG_VARCXX_VARFLAGS_OPT
+
+
+
+# PGAC_PROG_CXX_CFLAGS_OPT
+# -----------------------
+# Given a string, check if the compiler supports the string as a
+# command-line option. If it does, add the string to CXXFLAGS.
+AC_DEFUN([PGAC_PROG_CXX_CFLAGS_OPT],
+[PGAC_PROG_VARCXX_VARFLAGS_OPT(CXX, CXXFLAGS, $1)
+])# PGAC_PROG_CXX_VAR_OPT
+
+
+
 # PGAC_PROG_CC_LDFLAGS_OPT
 # ------------------------
 # Given a string, check if the compiler supports the string as a

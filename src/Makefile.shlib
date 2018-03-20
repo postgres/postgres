@@ -100,6 +100,7 @@ endif
 # Try to keep the sections in some kind of order, folks...
 
 override CFLAGS += $(CFLAGS_SL)
+override CXXFLAGS += $(CFLAGS_SL)
 ifdef SO_MAJOR_VERSION
 # libraries ought to use this to refer to versioned gettext domain names
 override CPPFLAGS += -DSO_MAJOR_VERSION=$(SO_MAJOR_VERSION)
