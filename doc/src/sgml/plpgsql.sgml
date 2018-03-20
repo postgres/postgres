@@ -3779,7 +3779,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
    command, declaring it as a function with no arguments and a return type of
    <type>trigger</type> (for data change triggers) or
    <type>event_trigger</type> (for database event triggers).
-   Special local variables named <varname>PG_<replaceable>something</replaceable></varname> are
+   Special local variables named <varname>TG_<replaceable>something</replaceable></varname> are
    automatically defined to describe the condition that triggered the call.
   </para>
 
