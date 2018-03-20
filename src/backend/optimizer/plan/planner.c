@@ -94,6 +94,25 @@ typedef struct
 } standard_qp_extra;
 
 /*
+ * Various flags indicating what kinds of grouping are possible.
+ *
+ * GROUPING_CAN_USE_SORT should be set if it's possible to perform
+ * sort-based implementations of grouping.  When grouping sets are in use,
+ * this will be true if sorting is potentially usable for any of the grouping
+ * sets, even if it's not usable for all of them.
+ *
+ * GROUPING_CAN_USE_HASH should be set if it's possible to perform
+ * hash-based implementations of grouping.
+ *
+ * GROUPING_CAN_PARTIAL_AGG should be set if the aggregation is of a type
+ * for which we support partial aggregation (not, for example, grouping sets).
+ * It says nothing about parallel-safety or the availability of suitable paths.
+ */
+#define GROUPING_CAN_USE_SORT       0x0001
+#define GROUPING_CAN_USE_HASH       0x0002
+#define GROUPING_CAN_PARTIAL_AGG	0x0004
+
+/*
  * Data specific to grouping sets
  */
 
@@ -149,7 +168,7 @@ static void create_ordinary_grouping_paths(PlannerInfo *root,
 							   RelOptInfo *input_rel,
 							   PathTarget *target, RelOptInfo *grouped_rel,
 							   const AggClauseCosts *agg_costs,
-							   grouping_sets_data *gd);
+							   grouping_sets_data *gd, int flags);
 static void consider_groupingsets_paths(PlannerInfo *root,
 							RelOptInfo *grouped_rel,
 							Path *path,
@@ -215,8 +234,8 @@ static RelOptInfo *create_partial_grouping_paths(PlannerInfo *root,
 							  bool can_hash,
 							  AggClauseCosts *agg_final_costs);
 static void gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel);
-static bool can_parallel_agg(PlannerInfo *root, RelOptInfo *input_rel,
-				 RelOptInfo *grouped_rel, const AggClauseCosts *agg_costs);
+static bool can_partial_agg(PlannerInfo *root,
+				const AggClauseCosts *agg_costs);
 
 
 /*****************************************************************************
@@ -3720,8 +3739,58 @@ create_grouping_paths(PlannerInfo *root,
 	if (is_degenerate_grouping(root))
 		create_degenerate_grouping_paths(root, input_rel, target, grouped_rel);
 	else
+	{
+		int			flags = 0;
+
+		/*
+		 * Determine whether it's possible to perform sort-based
+		 * implementations of grouping.  (Note that if groupClause is empty,
+		 * grouping_is_sortable() is trivially true, and all the
+		 * pathkeys_contained_in() tests will succeed too, so that we'll
+		 * consider every surviving input path.)
+		 *
+		 * If we have grouping sets, we might be able to sort some but not all
+		 * of them; in this case, we need can_sort to be true as long as we
+		 * must consider any sorted-input plan.
+		 */
+		if ((gd && gd->rollups != NIL)
+			|| grouping_is_sortable(parse->groupClause))
+			flags |= GROUPING_CAN_USE_SORT;
+
+		/*
+		 * Determine whether we should consider hash-based implementations of
+		 * grouping.
+		 *
+		 * Hashed aggregation only applies if we're grouping. If we have
+		 * grouping sets, some groups might be hashable but others not; in
+		 * this case we set can_hash true as long as there is nothing globally
+		 * preventing us from hashing (and we should therefore consider plans
+		 * with hashes).
+		 *
+		 * Executor doesn't support hashed aggregation with DISTINCT or ORDER
+		 * BY aggregates.  (Doing so would imply storing *all* the input
+		 * values in the hash table, and/or running many sorts in parallel,
+		 * either of which seems like a certain loser.)  We similarly don't
+		 * support ordered-set aggregates in hashed aggregation, but that case
+		 * is also included in the numOrderedAggs count.
+		 *
+		 * Note: grouping_is_hashable() is much more expensive to check than
+		 * the other gating conditions, so we want to do it last.
+		 */
+		if ((parse->groupClause != NIL &&
+			 agg_costs->numOrderedAggs == 0 &&
+			 (gd ? gd->any_hashable : grouping_is_hashable(parse->groupClause))))
+			flags |= GROUPING_CAN_USE_HASH;
+
+		/*
+		 * Determine whether partial aggregation is possible.
+		 */
+		if (can_partial_agg(root, agg_costs))
+			flags |= GROUPING_CAN_PARTIAL_AGG;
+
 		create_ordinary_grouping_paths(root, input_rel, target, grouped_rel,
-									   agg_costs, gd);
+									   agg_costs, gd, flags);
+	}
 
 	set_cheapest(grouped_rel);
 	return grouped_rel;
@@ -3820,15 +3889,15 @@ static void
 create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 							   PathTarget *target, RelOptInfo *grouped_rel,
 							   const AggClauseCosts *agg_costs,
-							   grouping_sets_data *gd)
+							   grouping_sets_data *gd, int flags)
 {
 	Query	   *parse = root->parse;
 	Path	   *cheapest_path = input_rel->cheapest_total_path;
 	RelOptInfo *partially_grouped_rel = NULL;
 	AggClauseCosts agg_final_costs; /* parallel only */
 	double		dNumGroups;
-	bool		can_hash;
-	bool		can_sort;
+	bool		can_hash = (flags & GROUPING_CAN_USE_HASH) != 0;
+	bool		can_sort = (flags & GROUPING_CAN_USE_SORT) != 0;
 
 	/*
 	 * Estimate number of groups.
@@ -3839,49 +3908,13 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 									  parse->targetList);
 
 	/*
-	 * Determine whether it's possible to perform sort-based implementations
-	 * of grouping.  (Note that if groupClause is empty,
-	 * grouping_is_sortable() is trivially true, and all the
-	 * pathkeys_contained_in() tests will succeed too, so that we'll consider
-	 * every surviving input path.)
-	 *
-	 * If we have grouping sets, we might be able to sort some but not all of
-	 * them; in this case, we need can_sort to be true as long as we must
-	 * consider any sorted-input plan.
-	 */
-	can_sort = (gd && gd->rollups != NIL)
-		|| grouping_is_sortable(parse->groupClause);
-
-	/*
-	 * Determine whether we should consider hash-based implementations of
-	 * grouping.
-	 *
-	 * Hashed aggregation only applies if we're grouping. If we have grouping
-	 * sets, some groups might be hashable but others not; in this case we set
-	 * can_hash true as long as there is nothing globally preventing us from
-	 * hashing (and we should therefore consider plans with hashes).
-	 *
-	 * Executor doesn't support hashed aggregation with DISTINCT or ORDER BY
-	 * aggregates.  (Doing so would imply storing *all* the input values in
-	 * the hash table, and/or running many sorts in parallel, either of which
-	 * seems like a certain loser.)  We similarly don't support ordered-set
-	 * aggregates in hashed aggregation, but that case is also included in the
-	 * numOrderedAggs count.
-	 *
-	 * Note: grouping_is_hashable() is much more expensive to check than the
-	 * other gating conditions, so we want to do it last.
-	 */
-	can_hash = (parse->groupClause != NIL &&
-				agg_costs->numOrderedAggs == 0 &&
-				(gd ? gd->any_hashable : grouping_is_hashable(parse->groupClause)));
-
-	/*
 	 * Before generating paths for grouped_rel, we first generate any possible
 	 * partially grouped paths; that way, later code can easily consider both
 	 * parallel and non-parallel approaches to grouping.
 	 */
 	MemSet(&agg_final_costs, 0, sizeof(AggClauseCosts));
-	if (can_parallel_agg(root, input_rel, grouped_rel, agg_costs))
+	if (grouped_rel->consider_parallel && input_rel->partial_pathlist != NIL
+		&& (flags & GROUPING_CAN_PARTIAL_AGG) != 0)
 	{
 		partially_grouped_rel =
 			create_partial_grouping_paths(root,
@@ -6490,28 +6523,17 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 }
 
 /*
- * can_parallel_agg
+ * can_partial_agg
  *
- * Determines whether or not parallel grouping and/or aggregation is possible.
+ * Determines whether or not partial grouping and/or aggregation is possible.
  * Returns true when possible, false otherwise.
  */
 static bool
-can_parallel_agg(PlannerInfo *root, RelOptInfo *input_rel,
-				 RelOptInfo *grouped_rel, const AggClauseCosts *agg_costs)
+can_partial_agg(PlannerInfo *root, const AggClauseCosts *agg_costs)
 {
 	Query	   *parse = root->parse;
 
-	if (!grouped_rel->consider_parallel)
-	{
-		/* Not even parallel-safe. */
-		return false;
-	}
-	else if (input_rel->partial_pathlist == NIL)
-	{
-		/* Nothing to use as input for partial aggregate. */
-		return false;
-	}
-	else if (!parse->hasAggs && parse->groupClause == NIL)
+	if (!parse->hasAggs && parse->groupClause == NIL)
 	{
 		/*
 		 * We don't know how to do parallel aggregation unless we have either
