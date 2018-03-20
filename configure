@@ -10203,7 +10203,7 @@ else
 fi
 
   fi
-  for ac_func in SSL_get_current_compression X509_get_signature_nid
+  for ac_func in SSL_clear_options SSL_get_current_compression X509_get_signature_nid
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

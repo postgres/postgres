@@ -1194,8 +1194,16 @@ initialize_SSL(PGconn *conn)
 #ifdef SSL_OP_NO_COMPRESSION
 	if (conn->sslcompression && conn->sslcompression[0] == '0')
 		SSL_set_options(conn->ssl, SSL_OP_NO_COMPRESSION);
+	/*
+	 * Mainline OpenSSL introduced SSL_clear_options() before
+	 * SSL_OP_NO_COMPRESSION, so this following #ifdef should not be
+	 * necessary, but some old NetBSD version have a locally modified libssl
+	 * that has SSL_OP_NO_COMPRESSION but not SSL_clear_options().
+	 */
+#ifdef HAVE_SSL_CLEAR_OPTIONS
 	else
 		SSL_clear_options(conn->ssl, SSL_OP_NO_COMPRESSION);
+#endif
 #endif
 
 	return 0;
