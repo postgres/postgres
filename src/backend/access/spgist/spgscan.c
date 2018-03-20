@@ -194,6 +194,9 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 	so->tempCxt = AllocSetContextCreate(CurrentMemoryContext,
 										"SP-GiST search temporary context",
 										ALLOCSET_DEFAULT_SIZES);
+	so->traversalCxt = AllocSetContextCreate(CurrentMemoryContext,
+											 "SP-GiST traversal-value context",
+											 ALLOCSET_DEFAULT_SIZES);
 
 	/* Set up indexTupDesc and xs_hitupdesc in case it's an index-only scan */
 	so->indexTupDesc = scan->xs_hitupdesc = RelationGetDescr(rel);
@@ -208,6 +211,9 @@ spgrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 		  ScanKey orderbys, int norderbys)
 {
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
+
+	/* clear traversal context before proceeding to the next scan */
+	MemoryContextReset(so->traversalCxt);
 
 	/* copy scankeys into local storage */
 	if (scankey && scan->numberOfKeys > 0)
@@ -229,6 +235,7 @@ spgendscan(IndexScanDesc scan)
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
 	MemoryContextDelete(so->tempCxt);
+	MemoryContextDelete(so->traversalCxt);
 }
 
 /*
@@ -463,7 +470,7 @@ redirect:
 			in.scankeys = so->keyData;
 			in.nkeys = so->numberOfKeys;
 			in.reconstructedValue = stackEntry->reconstructedValue;
-			in.traversalMemoryContext = oldCtx;
+			in.traversalMemoryContext = so->traversalCxt;
 			in.traversalValue = stackEntry->traversalValue;
 			in.level = stackEntry->level;
 			in.returnData = so->want_itup;
