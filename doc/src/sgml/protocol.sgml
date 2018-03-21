@@ -5784,7 +5784,7 @@ StartupMessage (F)
 </varlistentry>
 </variablelist>
 
-                In addition to the above, others parameter may be listed.
+                In addition to the above, other parameters may be listed.
                 Parameter names beginning with <literal>_pq_.</literal> are
                 reserved for use as protocol extensions, while others are
                 treated as run-time parameters to be set at backend start
