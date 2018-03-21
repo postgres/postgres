@@ -1403,6 +1403,13 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 						goto change_done;
 
 					/*
+					 * Ignore temporary heaps created during DDL unless the
+					 * plugin has asked for them.
+					 */
+					if (relation->rd_rel->relrewrite && !rb->output_rewrites)
+						goto change_done;
+
+					/*
 					 * For now ignore sequence changes entirely. Most of the
 					 * time they don't log changes using records we
 					 * understand, so it doesn't make sense to handle the few

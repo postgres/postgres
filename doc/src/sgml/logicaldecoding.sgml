@@ -486,12 +486,17 @@ typedef void (*LogicalDecodeStartupCB) (struct LogicalDecodingContext *ctx,
 typedef struct OutputPluginOptions
 {
     OutputPluginOutputType output_type;
+    bool        receive_rewrites;
 } OutputPluginOptions;
 </programlisting>
       <literal>output_type</literal> has to either be set to
       <literal>OUTPUT_PLUGIN_TEXTUAL_OUTPUT</literal>
       or <literal>OUTPUT_PLUGIN_BINARY_OUTPUT</literal>. See also
       <xref linkend="logicaldecoding-output-mode"/>.
+      If <literal>receive_rewrites</literal> is true, the output plugin will
+      also be called for changes made by heap rewrites during certain DDL
+      operations.  These are of interest to plugins that handle DDL
+      replication, but they require special handling.
      </para>
 
      <para>

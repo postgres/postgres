@@ -101,6 +101,7 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	ctx->output_plugin_private = data;
 
 	opt->output_type = OUTPUT_PLUGIN_TEXTUAL_OUTPUT;
+	opt->receive_rewrites = false;
 
 	foreach(option, ctx->output_plugin_options)
 	{
@@ -161,6 +162,17 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			if (elem->arg == NULL)
 				data->only_local = true;
 			else if (!parse_bool(strVal(elem->arg), &data->only_local))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
+								strVal(elem->arg), elem->defname)));
+		}
+		else if (strcmp(elem->defname, "include-rewrites") == 0)
+		{
+
+			if (elem->arg == NULL)
+				continue;
+			else if (!parse_bool(strVal(elem->arg), &opt->receive_rewrites))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
@@ -412,6 +424,8 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 						   quote_qualified_identifier(
 													  get_namespace_name(
 																		 get_rel_namespace(RelationGetRelid(relation))),
+													  class_form->relrewrite ?
+													  get_rel_name(class_form->relrewrite) :
 													  NameStr(class_form->relname)));
 	appendStringInfoChar(ctx->out, ':');
 

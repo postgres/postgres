@@ -1924,6 +1924,18 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
+      <entry><structfield>relrewrite</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>
+       For new relations being written during a DDL operation that requires a
+       table rewrite, this contains the OID of the original relation;
+       otherwise 0.  That state is only visible internally; this field should
+       never contain anything other than 0 for a user-visible relation.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>relfrozenxid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>

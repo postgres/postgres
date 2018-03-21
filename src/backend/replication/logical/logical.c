@@ -317,6 +317,8 @@ CreateInitDecodingContext(char *plugin,
 		startup_cb_wrapper(ctx, &ctx->options, true);
 	MemoryContextSwitchTo(old_context);
 
+	ctx->reorder->output_rewrites = ctx->options.receive_rewrites;
+
 	return ctx;
 }
 
@@ -409,6 +411,8 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 	if (ctx->callbacks.startup_cb != NULL)
 		startup_cb_wrapper(ctx, &ctx->options, false);
 	MemoryContextSwitchTo(old_context);
+
+	ctx->reorder->output_rewrites = ctx->options.receive_rewrites;
 
 	ereport(LOG,
 			(errmsg("starting logical decoding for slot \"%s\"",

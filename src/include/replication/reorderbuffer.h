@@ -337,6 +337,11 @@ struct ReorderBuffer
 	void	   *private_data;
 
 	/*
+	 * Saved output plugin option
+	 */
+	bool		output_rewrites;
+
+	/*
 	 * Private memory context.
 	 */
 	MemoryContext context;

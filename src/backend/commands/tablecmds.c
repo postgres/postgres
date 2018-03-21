@@ -764,6 +764,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  true,
 										  allowSystemTableMods,
 										  false,
+										  InvalidOid,
 										  typaddress);
 
 	/* Store inheritance information for new rel. */
