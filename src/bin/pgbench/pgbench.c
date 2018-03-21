@@ -61,6 +61,14 @@
 #define ERRCODE_UNDEFINED_TABLE  "42P01"
 
 /*
+ * Hashing constants
+ */
+#define FNV_PRIME 0x100000001b3
+#define FNV_OFFSET_BASIS 0xcbf29ce484222325
+#define MM2_MUL 0xc6a4a7935bd1e995
+#define MM2_ROT 47
+
+/*
  * Multi-platform pthread implementations
  */
 
@@ -913,6 +921,54 @@ getZipfianRand(TState *thread, int64 min, int64 max, double s)
 	return min - 1 + ((s > 1)
 					  ? computeIterativeZipfian(thread, n, s)
 					  : computeHarmonicZipfian(thread, n, s));
+}
+
+/*
+ * FNV-1a hash function
+ */
+static int64
+getHashFnv1a(int64 val, uint64 seed)
+{
+	int64	result;
+	int		i;
+
+	result = FNV_OFFSET_BASIS ^ seed;
+	for (i = 0; i < 8; ++i)
+	{
+		int32 octet = val & 0xff;
+
+		val = val >> 8;
+		result = result ^ octet;
+		result = result * FNV_PRIME;
+	}
+
+	return result;
+}
+
+/*
+ * Murmur2 hash function
+ *
+ * Based on original work of Austin Appleby
+ * https://github.com/aappleby/smhasher/blob/master/src/MurmurHash2.cpp
+ */
+static int64
+getHashMurmur2(int64 val, uint64 seed)
+{
+	uint64	result = seed ^ (sizeof(int64) * MM2_MUL);
+	uint64	k = (uint64) val;
+
+	k *= MM2_MUL;
+	k ^= k >> MM2_ROT;
+	k *= MM2_MUL;
+
+	result ^= k;
+	result *= MM2_MUL;
+
+	result ^= result >> MM2_ROT;
+	result *= MM2_MUL;
+	result ^= result >> MM2_ROT;
+
+	return (int64) result;
 }
 
 /*
@@ -2208,6 +2264,30 @@ evalStandardFunc(TState *thread, CState *st,
 				setBoolValue(retval,
 							 vargs[0].type == vargs[1].type &&
 							 vargs[0].u.bval == vargs[1].u.bval);
+				return true;
+			}
+
+			/* hashing */
+		case PGBENCH_HASH_FNV1A:
+		case PGBENCH_HASH_MURMUR2:
+			{
+				int64	val,
+						seed;
+
+				Assert(nargs == 2);
+
+				if (!coerceToInt(&vargs[0], &val) ||
+					!coerceToInt(&vargs[1], &seed))
+					return false;
+
+				if (func == PGBENCH_HASH_MURMUR2)
+					setIntValue(retval, getHashMurmur2(val, seed));
+				else if (func == PGBENCH_HASH_FNV1A)
+					setIntValue(retval, getHashFnv1a(val, seed));
+				else
+					/* cannot get here */
+					Assert(0);
+
 				return true;
 			}
 
@@ -4963,6 +5043,10 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* set random seed */
+	INSTR_TIME_SET_CURRENT(start_time);
+	srandom((unsigned int) INSTR_TIME_GET_MICROSEC(start_time));
+
 	if (internal_script_used)
 	{
 		/*
@@ -5024,6 +5108,19 @@ main(int argc, char **argv)
 		}
 	}
 
+	/* set default seed for hash functions */
+	if (lookupVariable(&state[0], "default_seed") == NULL)
+	{
+		uint64	seed = ((uint64) (random() & 0xFFFF) << 48) |
+					   ((uint64) (random() & 0xFFFF) << 32) |
+					   ((uint64) (random() & 0xFFFF) << 16) |
+					   (uint64) (random() & 0xFFFF);
+
+		for (i = 0; i < nclients; i++)
+			if (!putVariableInt(&state[i], "startup", "default_seed", (int64) seed))
+				exit(1);
+	}
+
 	if (!is_no_vacuum)
 	{
 		fprintf(stderr, "starting vacuum...");
@@ -5040,10 +5137,6 @@ main(int argc, char **argv)
 		}
 	}
 	PQfinish(con);
-
-	/* set random seed */
-	INSTR_TIME_SET_CURRENT(start_time);
-	srandom((unsigned int) INSTR_TIME_GET_MICROSEC(start_time));
 
 	/* set up thread data structures */
 	threads = (TState *) pg_malloc(sizeof(TState) * nthreads);

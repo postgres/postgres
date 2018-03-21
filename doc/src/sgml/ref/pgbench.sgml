@@ -874,13 +874,18 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
 
      <tbody>
       <row>
-       <entry> <literal>scale</literal> </entry>
-       <entry>current scale factor</entry>
+       <entry> <literal>client_id</literal> </entry>
+       <entry>unique number identifying the client session (starts from zero)</entry>
       </row>
 
       <row>
-       <entry> <literal>client_id</literal> </entry>
-       <entry>unique number identifying the client session (starts from zero)</entry>
+       <entry> <literal>default_seed</literal> </entry>
+       <entry>seed used in hash functions by default</entry>
+      </row>
+
+      <row>
+       <entry> <literal>scale</literal> </entry>
+       <entry>current scale factor</entry>
       </row>
      </tbody>
     </tgroup>
@@ -1246,6 +1251,27 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <entry><literal>5</literal></entry>
       </row>
       <row>
+       <entry><literal><function>hash(<replaceable>a</replaceable> [, <replaceable>seed</replaceable> ] )</function></literal></entry>
+       <entry>integer</entry>
+       <entry>alias for <literal>hash_murmur2()</literal></entry>
+       <entry><literal>hash(10, 5432)</literal></entry>
+       <entry><literal>-5817877081768721676</literal></entry>
+      </row>
+      <row>
+       <entry><literal><function>hash_fnv1a(<replaceable>a</replaceable> [, <replaceable>seed</replaceable> ] )</function></literal></entry>
+       <entry>integer</entry>
+       <entry><ulink url="https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function">FNV-1a hash</ulink></entry>
+       <entry><literal>hash_fnv1a(10, 5432)</literal></entry>
+       <entry><literal>-7793829335365542153</literal></entry>
+      </row>
+      <row>
+       <entry><literal><function>hash_murmur2(<replaceable>a</replaceable> [, <replaceable>seed</replaceable> ] )</function></literal></entry>
+       <entry>integer</entry>
+       <entry><ulink url="https://en.wikipedia.org/wiki/MurmurHash">MurmurHash2 hash</ulink></entry>
+       <entry><literal>hash_murmur2(10, 5432)</literal></entry>
+       <entry><literal>-5817877081768721676</literal></entry>
+      </row>
+      <row>
        <entry><literal><function>int(<replaceable>x</replaceable>)</function></literal></entry>
        <entry>integer</entry>
        <entry>cast to int</entry>
@@ -1422,6 +1448,31 @@ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
      </para>
     </listitem>
    </itemizedlist>
+
+  <para>
+    Hash functions <literal>hash</literal>, <literal>hash_murmur2</literal> and
+    <literal>hash_fnv1a</literal> accept an input value and an optional seed parameter.
+    In case the seed isn't provided the value of <literal>:default_seed</literal>
+    is used, which is initialized randomly unless set by the command-line
+    <literal>-D</literal> option. Hash functions can be used to scatter the
+    distribution of random functions such as <literal>random_zipfian</literal> or
+    <literal>random_exponential</literal>. For instance, the following pgbench
+    script simulates possible real world workload typical for social media and
+    blogging platforms where few accounts generate excessive load:
+
+<programlisting>
+\set r random_zipfian(0, 100000000, 1.07)
+\set k abs(hash(:r)) % 1000000
+</programlisting>
+
+    In some cases several distinct distributions are needed which don't correlate
+    with each other and this is when implicit seed parameter comes in handy:
+
+<programlisting>
+\set k1 abs(hash(:r), :default_seed + 123) % 1000000
+\set k2 abs(hash(:r), :default_seed + 321) % 1000000
+</programlisting>
+  </para>
 
   <para>
    As an example, the full definition of the built-in TPC-B-like

@@ -16,6 +16,10 @@
 
 #include "pgbench.h"
 
+#define PGBENCH_NARGS_VARIABLE	(-1)
+#define PGBENCH_NARGS_CASE		(-2)
+#define PGBENCH_NARGS_HASH		(-3)
+
 PgBenchExpr *expr_parse_result;
 
 static PgBenchExprList *make_elist(PgBenchExpr *exp, PgBenchExprList *list);
@@ -226,9 +230,13 @@ make_uop(yyscan_t yyscanner, const char *operator, PgBenchExpr *expr)
 /*
  * List of available functions:
  * - fname: function name, "!..." for special internal functions
- * - nargs: number of arguments
- *			-1 is a special value for least & greatest meaning #args >= 1
- *			-2 is for the "CASE WHEN ..." function, which has #args >= 3 and odd
+ * - nargs: number of arguments. Special cases:
+ *			- PGBENCH_NARGS_VARIABLE is a special value for least & greatest
+ *			  meaning #args >= 1;
+ *			- PGBENCH_NARGS_CASE is for the "CASE WHEN ..." function, which
+ *			  has #args >= 3 and odd;
+ * 			- PGBENCH_NARGS_HASH is for hash functions, which have one required
+ *			  and one optional argument;
  * - tag: function identifier from PgBenchFunction enum
  */
 static const struct
@@ -259,10 +267,10 @@ static const struct
 		"abs", 1, PGBENCH_ABS
 	},
 	{
-		"least", -1, PGBENCH_LEAST
+		"least", PGBENCH_NARGS_VARIABLE, PGBENCH_LEAST
 	},
 	{
-		"greatest", -1, PGBENCH_GREATEST
+		"greatest", PGBENCH_NARGS_VARIABLE, PGBENCH_GREATEST
 	},
 	{
 		"debug", 1, PGBENCH_DEBUG
@@ -347,7 +355,25 @@ static const struct
 	},
 	/* "case when ... then ... else ... end" construction */
 	{
-		"!case_end", -2, PGBENCH_CASE
+		"!case_end", PGBENCH_NARGS_CASE, PGBENCH_CASE
+	},
+	{
+		"hash", PGBENCH_NARGS_HASH, PGBENCH_HASH_MURMUR2
+	},
+	{
+		"hash_murmur2", PGBENCH_NARGS_HASH, PGBENCH_HASH_MURMUR2
+	},
+	{
+		"hash_fnv1a", PGBENCH_NARGS_HASH, PGBENCH_HASH_FNV1A
+	},
+	{
+		"hash", PGBENCH_NARGS_HASH, PGBENCH_HASH_MURMUR2
+	},
+	{
+		"hash_murmur2", PGBENCH_NARGS_HASH, PGBENCH_HASH_MURMUR2
+	},
+	{
+		"hash_fnv1a", PGBENCH_NARGS_HASH, PGBENCH_HASH_FNV1A
 	},
 	/* keep as last array element */
 	{
@@ -423,29 +449,51 @@ elist_length(PgBenchExprList *list)
 static PgBenchExpr *
 make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args)
 {
+	int len = elist_length(args);
+
 	PgBenchExpr *expr = pg_malloc(sizeof(PgBenchExpr));
 
 	Assert(fnumber >= 0);
 
-	if (PGBENCH_FUNCTIONS[fnumber].nargs >= 0 &&
-		PGBENCH_FUNCTIONS[fnumber].nargs != elist_length(args))
-		expr_yyerror_more(yyscanner, "unexpected number of arguments",
-						  PGBENCH_FUNCTIONS[fnumber].fname);
-
-	/* check at least one arg for least & greatest */
-	if (PGBENCH_FUNCTIONS[fnumber].nargs == -1 &&
-		elist_length(args) == 0)
-		expr_yyerror_more(yyscanner, "at least one argument expected",
-						  PGBENCH_FUNCTIONS[fnumber].fname);
-	/* special case: case (when ... then ...)+ (else ...)? end */
-	if (PGBENCH_FUNCTIONS[fnumber].nargs == -2)
+	/* validate arguments number including few special cases */
+	switch (PGBENCH_FUNCTIONS[fnumber].nargs)
 	{
-		int len = elist_length(args);
+		/* check at least one arg for least & greatest */
+		case PGBENCH_NARGS_VARIABLE:
+			if (len == 0)
+				expr_yyerror_more(yyscanner, "at least one argument expected",
+								  PGBENCH_FUNCTIONS[fnumber].fname);
+			break;
 
-		/* 'else' branch is always present, but could be a NULL-constant */
-		if (len < 3 || len % 2 != 1)
-			expr_yyerror_more(yyscanner, "odd and >= 3 number of arguments expected",
-							  "case control structure");
+		/* case (when ... then ...)+ (else ...)? end */
+		case PGBENCH_NARGS_CASE:
+			/* 'else' branch is always present, but could be a NULL-constant */
+			if (len < 3 || len % 2 != 1)
+				expr_yyerror_more(yyscanner,
+								  "odd and >= 3 number of arguments expected",
+								  "case control structure");
+			break;
+
+		/* hash functions with optional seed argument */
+		case PGBENCH_NARGS_HASH:
+			if (len > 2)
+				expr_yyerror_more(yyscanner, "unexpected number of arguments",
+								  PGBENCH_FUNCTIONS[fnumber].fname);
+
+			if (len == 1)
+			{
+				PgBenchExpr *var = make_variable("default_seed");
+				args = make_elist(var, args);
+			}
+			break;
+
+		/* common case: positive arguments number */
+		default:
+			Assert(PGBENCH_FUNCTIONS[fnumber].nargs >= 0);
+
+			if (PGBENCH_FUNCTIONS[fnumber].nargs != len)
+				expr_yyerror_more(yyscanner, "unexpected number of arguments",
+								  PGBENCH_FUNCTIONS[fnumber].fname);
 	}
 
 	expr->etype = ENODE_FUNCTION;

@@ -259,6 +259,11 @@ pgbench(
 		qr{command=46.: int 46\b},
 		qr{command=47.: boolean true\b},
 		qr{command=48.: boolean true\b},
+		qr{command=49.: int -5817877081768721676\b},
+		qr{command=50.: boolean true\b},
+		qr{command=51.: int -7793829335365542153\b},
+		qr{command=52.: int -?\d+\b},
+		qr{command=53.: boolean true\b},
 	],
 	'pgbench expressions',
 	{   '001_pgbench_expressions' => q{-- integer functions
@@ -327,6 +332,12 @@ pgbench(
 \set n6 debug(:n IS NULL AND NOT :f AND :t)
 -- conditional truth
 \set cs debug(CASE WHEN 1 THEN TRUE END AND CASE WHEN 1.0 THEN TRUE END AND CASE WHEN :n THEN NULL ELSE TRUE END)
+-- hash functions
+\set h0 debug(hash(10, 5432))
+\set h1 debug(:h0 = hash_murmur2(10, 5432))
+\set h3 debug(hash_fnv1a(10, 5432))
+\set h4 debug(hash(10))
+\set h5 debug(hash(10) = hash(10, :default_seed))
 -- lazy evaluation
 \set zy 0
 \set yz debug(case when :zy = 0 then -1 else (1 / :zy) end)
