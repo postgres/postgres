@@ -98,6 +98,22 @@
    don't. */
 #define HAVE_DECL_F_FULLFSYNC 0
 
+/* Define to 1 if you have the declaration of `LLVMGetHostCPUName', and to 0
+   if you don't. */
+#define HAVE_DECL_LLVMGETHOSTCPUNAME 0
+
+/* Define to 1 if you have the declaration of `LLVMOrcGetSymbolAddressIn', and
+   to 0 if you don't. */
+#define HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN 0
+
+/* Define to 1 if you have the declaration of `LLVMOrcRegisterGDB', and to 0
+   if you don't. */
+#define HAVE_DECL_LLVMORCREGISTERGDB 0
+
+/* Define to 1 if you have the declaration of `LLVMOrcRegisterPerf', and to 0
+   if you don't. */
+#define HAVE_DECL_LLVMORCREGISTERPERF 0
+
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #define HAVE_DECL_SNPRINTF 1
@@ -630,6 +646,9 @@
 
 /* Define to 1 to build with LDAP support. (--with-ldap) */
 /* #undef USE_LDAP */
+
+/* Define to 1 to build with LLVM based JIT support. (--with-llvm) */
+/* #undef USE_LLVM */
 
 /* Define to select named POSIX semaphores. */
 /* #undef USE_NAMED_POSIX_SEMAPHORES */

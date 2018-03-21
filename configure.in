@@ -375,6 +375,19 @@ choke me
 
 AC_SUBST(SUN_STUDIO_CC)
 
+
+#
+# LLVM
+#
+# Checked early because subsequent tests depend on it.
+PGAC_ARG_BOOL(with, llvm, no, [build with LLVM based JIT support],
+              [AC_DEFINE([USE_LLVM], 1, [Define to 1 to build with LLVM based JIT support. (--with-llvm)])])
+AC_SUBST(with_llvm)
+if test "$with_llvm" = yes ; then
+   PGAC_LLVM_SUPPORT()
+fi
+
+
 unset CFLAGS
 
 #
@@ -419,11 +432,32 @@ else
   fi
 fi
 
+# When generating bitcode (for inlining) we always want to use -O2
+# even when --enable-debug is specified. The bitcode it's not going to
+# be used for line-by-line debugging, and JIT inlining doesn't work
+# without at least -O1 (otherwise clang will emit 'noinline'
+# attributes everywhere), which is bad for testing.  Still allow the
+# environment to override if done explicitly.
+if test "$ac_env_BITCODE_CFLAGS_set" = set; then
+  BITCODE_CFLAGS=$ac_env_BITCODE_CFLAGS_value
+else
+  BITCODE_CFLAGS="-O2 $BITCODE_CFLAGS"
+fi
+if test "$ac_env_BITCODE_CXXFLAGS_set" = set; then
+  BITCODE_CXXFLAGS=$ac_env_BITCODE_CXXFLAGS_value
+else
+  BITCODE_CXXFLAGS="-O2 BITCODE_CXXFLAGS"
+fi
+
 # C[XX]FLAGS we determined above will be added back at the end
 user_CFLAGS=$CFLAGS
 CFLAGS=""
 user_CXXFLAGS=$CXXFLAGS
 CXXFLAGS=""
+user_BITCODE_CFLAGS=$BITCODE_CFLAGS
+BITCODE_CFLAGS=""
+user_BITCODE_CXXFLAGS=$BITCODE_CXXFLAGS
+BITCODE_CXXFLAGS=""
 
 # set CFLAGS_VECTOR from the environment, if available
 if test "$ac_env_CFLAGS_VECTOR_set" = set; then
@@ -490,6 +524,20 @@ fi
 
 AC_SUBST(CFLAGS_VECTOR, $CFLAGS_VECTOR)
 
+# Determine flags used to emit bitcode for JIT inlining. Need to test
+# for behaviour changing compiler flags, to keep compatibility with
+# compiler used for normal postgres code.
+if test "$with_llvm" = yes ; then
+  CLANGXX="$CLANG -xc++"
+
+  PGAC_PROG_VARCC_VARFLAGS_OPT(CLANG, BITCODE_CFLAGS, [-fno-strict-aliasing])
+  PGAC_PROG_VARCXX_VARFLAGS_OPT(CLANGXX, BITCODE_CXXFLAGS, [-fno-strict-aliasing])
+  PGAC_PROG_VARCC_VARFLAGS_OPT(CLANG, BITCODE_CFLAGS, [-fwrapv])
+  PGAC_PROG_VARCXX_VARFLAGS_OPT(CLANGXX, BITCODE_CXXFLAGS, [-fwrapv])
+  PGAC_PROG_VARCC_VARFLAGS_OPT(CLANG, BITCODE_CFLAGS, [-fexcess-precision=standard])
+  PGAC_PROG_VARCXX_VARFLAGS_OPT(CLANGXX, BITCODE_CXXFLAGS, [-fexcess-precision=standard])
+fi
+
 # supply -g if --enable-debug
 if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
@@ -531,6 +579,11 @@ fi
 # the automatic additions.
 CFLAGS="$CFLAGS $user_CFLAGS"
 CXXFLAGS="$CXXFLAGS $user_CXXFLAGS"
+BITCODE_CFLAGS="$BITCODE_CFLAGS $user_BITCODE_CFLAGS"
+BITCODE_CXXFLAGS="$BITCODE_CXXFLAGS $user_BITCODE_CXXFLAGS"
+
+AC_SUBST(BITCODE_CFLAGS, $BITCODE_CFLAGS)
+AC_SUBST(BITCODE_CXXFLAGS, $BITCODE_CXXFLAGS)
 
 # Check if the compiler still works with the final flag settings
 # (note, we're not checking that for CXX, which is optional)
@@ -2246,9 +2299,16 @@ AC_SUBST(PG_VERSION_NUM)
 
 AC_MSG_NOTICE([using compiler=$cc_string])
 AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
-AC_MSG_NOTICE([using CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
+# Currently only used when LLVM is used
+if test "$with_llvm" = yes ; then
+   AC_MSG_NOTICE([using CXX=$CXX])
+   AC_MSG_NOTICE([using CXXFLAGS=$CXXFLAGS])
+   AC_MSG_NOTICE([using CLANG=$CLANG])
+   AC_MSG_NOTICE([using BITCODE_CFLAGS=$BITCODE_CFLAGS])
+   AC_MSG_NOTICE([using BITCODE_CXXFLAGS=$BITCODE_CXXFLAGS])
+fi
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.

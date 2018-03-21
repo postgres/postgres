@@ -676,7 +676,6 @@ FLEX
 BISONFLAGS
 BISON
 MKDIR_P
-AWK
 LN_S
 TAR
 install_bin
@@ -727,7 +726,18 @@ autodepend
 TAS
 GCC
 CPP
+BITCODE_CXXFLAGS
+BITCODE_CFLAGS
 CFLAGS_VECTOR
+LLVM_BINPATH
+LLVM_CXXFLAGS
+LLVM_CFLAGS
+LLVM_CPPFLAGS
+LLVM_LIBS
+CLANG
+LLVM_CONFIG
+AWK
+with_llvm
 SUN_STUDIO_CC
 ac_ct_CXX
 CXXFLAGS
@@ -826,6 +836,7 @@ with_blocksize
 with_segsize
 with_wal_blocksize
 with_CC
+with_llvm
 enable_depend
 enable_cassert
 enable_thread_safety
@@ -867,6 +878,8 @@ CPPFLAGS
 CXX
 CXXFLAGS
 CCC
+LLVM_CONFIG
+CLANG
 CPP
 PKG_CONFIG
 PKG_CONFIG_PATH
@@ -1525,6 +1538,7 @@ Optional Packages:
   --with-wal-blocksize=BLOCKSIZE
                           set WAL block size in kB [8]
   --with-CC=CMD           set compiler (deprecated)
+  --with-llvm             build with LLVM based JIT support
   --with-icu              build with ICU support
   --with-tcl              build Tcl modules (PL/Tcl)
   --with-tclconfig=DIR    tclConfig.sh is in DIR
@@ -1562,6 +1576,8 @@ Some influential environment variables:
               you have headers in a nonstandard directory <include dir>
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
+  LLVM_CONFIG path to llvm-config command
+  CLANG       path to clang compiler to generate bitcode
   CPP         C preprocessor
   PKG_CONFIG  path to pkg-config utility
   PKG_CONFIG_PATH
@@ -1730,6 +1746,52 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_cxx_try_compile
+
+# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
+# ---------------------------------------------
+# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
+# accordingly.
+ac_fn_c_check_decl ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  as_decl_name=`echo $2|sed 's/ *(.*//'`
+  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
+$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+#ifndef $as_decl_name
+#ifdef __cplusplus
+  (void) $as_decl_use;
+#else
+  (void) $as_decl_name;
+#endif
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$3=yes"
+else
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_decl
 
 # ac_fn_c_try_link LINENO
 # -----------------------
@@ -2338,52 +2400,6 @@ rm -f conftest.val
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_compute_int
-
-# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
-# ---------------------------------------------
-# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
-# accordingly.
-ac_fn_c_check_decl ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  as_decl_name=`echo $2|sed 's/ *(.*//'`
-  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
-$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-#ifndef $as_decl_name
-#ifdef __cplusplus
-  (void) $as_decl_use;
-#else
-  (void) $as_decl_name;
-#endif
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_decl
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -4714,6 +4730,331 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 
+
+#
+# LLVM
+#
+# Checked early because subsequent tests depend on it.
+
+
+
+# Check whether --with-llvm was given.
+if test "${with_llvm+set}" = set; then :
+  withval=$with_llvm;
+  case $withval in
+    yes)
+
+$as_echo "#define USE_LLVM 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-llvm option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_llvm=no
+
+fi
+
+
+
+if test "$with_llvm" = yes ; then
+   for ac_prog in gawk mawk nawk awk
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AWK+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AWK"; then
+  ac_cv_prog_AWK="$AWK" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AWK="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+AWK=$ac_cv_prog_AWK
+if test -n "$AWK"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AWK" >&5
+$as_echo "$AWK" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$AWK" && break
+done
+
+
+
+
+
+  if test -z "$LLVM_CONFIG"; then
+  for ac_prog in llvm-config llvm-config-6.0 llvm-config-5.0 llvm-config-4.0 llvm-config-3.9
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_LLVM_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $LLVM_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_LLVM_CONFIG="$LLVM_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_LLVM_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+LLVM_CONFIG=$ac_cv_path_LLVM_CONFIG
+if test -n "$LLVM_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LLVM_CONFIG" >&5
+$as_echo "$LLVM_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$LLVM_CONFIG" && break
+done
+
+else
+  # Report the value of LLVM_CONFIG in configure's output in all cases.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LLVM_CONFIG" >&5
+$as_echo_n "checking for LLVM_CONFIG... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LLVM_CONFIG" >&5
+$as_echo "$LLVM_CONFIG" >&6; }
+fi
+
+
+  # no point continuing if llvm wasn't found
+  if test -z "$LLVM_CONFIG"; then
+    as_fn_error $? "llvm-config not found, but required when compiling --with-llvm, specify with LLVM_CONFIG=" "$LINENO" 5
+  fi
+  # check if detected $LLVM_CONFIG is executable
+  pgac_llvm_version="$($LLVM_CONFIG --version 2> /dev/null || echo no)"
+  if test "x$pgac_llvm_version" = "xno"; then
+    as_fn_error $? "$LLVM_CONFIG does not work" "$LINENO" 5
+  fi
+  # and whether the version is supported
+  if echo $pgac_llvm_version | $AWK -F '.' '{ if ($1 >= 4 || ($1 == 3 && $2 >= 9)) exit 1; else exit 0;}';then
+    as_fn_error $? "$LLVM_CONFIG version is $pgac_llvm_version but at least 3.9 is required" "$LINENO" 5
+  fi
+
+  # need clang to create some bitcode files
+
+  if test -z "$CLANG"; then
+  for ac_prog in clang clang-6.0 clang-5.0 clang-4.0 clang-3.9
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_CLANG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $CLANG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_CLANG="$CLANG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_CLANG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+CLANG=$ac_cv_path_CLANG
+if test -n "$CLANG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CLANG" >&5
+$as_echo "$CLANG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$CLANG" && break
+done
+
+else
+  # Report the value of CLANG in configure's output in all cases.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CLANG" >&5
+$as_echo_n "checking for CLANG... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CLANG" >&5
+$as_echo "$CLANG" >&6; }
+fi
+
+  if test -z "$CLANG"; then
+    as_fn_error $? "clang not found, but required when compiling --with-llvm, specify with CLANG=" "$LINENO" 5
+  fi
+  # make sure clang is executable
+  if test "x$($CLANG --version 2> /dev/null || echo no)" = "xno"; then
+    as_fn_error $? "$CLANG does not work" "$LINENO" 5
+  fi
+  # Could check clang version, but it doesn't seem that
+  # important. Systems with a new enough LLVM version are usually
+  # going to have a decent clang version too. It's also not entirely
+  # clear what the minimum version is.
+
+  # Collect compiler flags necessary to build the LLVM dependent
+  # shared library.
+  for pgac_option in `$LLVM_CONFIG --cppflags`; do
+    case $pgac_option in
+      -I*|-D*) LLVM_CPPFLAGS="$pgac_option $LLVM_CPPFLAGS";;
+    esac
+  done
+
+  for pgac_option in `$LLVM_CONFIG --ldflags`; do
+    case $pgac_option in
+      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+    esac
+  done
+
+  # ABI influencing options, standard influencing options
+  for pgac_option in `$LLVM_CONFIG --cxxflags`; do
+    case $pgac_option in
+      -fno-rtti*) LLVM_CXXFLAGS="$LLVM_CXXFLAGS $pgac_option";;
+      -std=*) LLVM_CXXFLAGS="$LLVM_CXXFLAGS $pgac_option";;
+    esac
+  done
+
+  # Look for components we're interested in, collect necessary
+  # libs. As some components are optional, we can't just list all of
+  # them as it'd raise an error.
+  pgac_components='';
+  for pgac_component in `$LLVM_CONFIG --components`; do
+    case $pgac_component in
+      engine) pgac_components="$pgac_components $pgac_component";;
+      debuginfodwarf) pgac_components="$pgac_components $pgac_component";;
+      orcjit) pgac_components="$pgac_components $pgac_component";;
+      passes) pgac_components="$pgac_components $pgac_component";;
+      perfjitevents) pgac_components="$pgac_components $pgac_component";;
+    esac
+  done;
+
+  # And then get the libraries that need to be linked in for the
+  # selected components.  They're large libraries, we only want to
+  # link them into the LLVM using shared library.
+  for pgac_option in `$LLVM_CONFIG --libs --system-libs $pgac_components`; do
+    case $pgac_option in
+      -l*) LLVM_LIBS="$LLVM_LIBS $pgac_option";;
+    esac
+  done
+
+  LLVM_BINPATH=`$LLVM_CONFIG --bindir`
+
+  # Check which functionality is present
+  SAVE_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $LLVM_CPPFLAGS"
+  ac_fn_c_check_decl "$LINENO" "LLVMOrcGetSymbolAddressIn" "ac_cv_have_decl_LLVMOrcGetSymbolAddressIn" "#include <llvm-c/OrcBindings.h>
+"
+if test "x$ac_cv_have_decl_LLVMOrcGetSymbolAddressIn" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "LLVMOrcRegisterGDB" "ac_cv_have_decl_LLVMOrcRegisterGDB" "#include <llvm-c/OrcBindings.h>
+"
+if test "x$ac_cv_have_decl_LLVMOrcRegisterGDB" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMORCREGISTERGDB $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "LLVMOrcRegisterPerf" "ac_cv_have_decl_LLVMOrcRegisterPerf" "#include <llvm-c/OrcBindings.h>
+"
+if test "x$ac_cv_have_decl_LLVMOrcRegisterPerf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMORCREGISTERPERF $ac_have_decl
+_ACEOF
+
+  ac_fn_c_check_decl "$LINENO" "LLVMGetHostCPUName" "ac_cv_have_decl_LLVMGetHostCPUName" "#include <llvm-c/TargetMachine.h>
+"
+if test "x$ac_cv_have_decl_LLVMGetHostCPUName" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMGETHOSTCPUNAME $ac_have_decl
+_ACEOF
+
+  CPPFLAGS="$SAVE_CPPFLAGS"
+
+  # LLVM_CONFIG, CLANG are already output via AC_ARG_VAR
+
+
+
+
+
+
+
+fi
+
+
 unset CFLAGS
 
 #
@@ -4758,11 +5099,32 @@ else
   fi
 fi
 
+# When generating bitcode (for inlining) we always want to use -O2
+# even when --enable-debug is specified. The bitcode it's not going to
+# be used for line-by-line debugging, and JIT inlining doesn't work
+# without at least -O1 (otherwise clang will emit 'noinline'
+# attributes everywhere), which is bad for testing.  Still allow the
+# environment to override if done explicitly.
+if test "$ac_env_BITCODE_CFLAGS_set" = set; then
+  BITCODE_CFLAGS=$ac_env_BITCODE_CFLAGS_value
+else
+  BITCODE_CFLAGS="-O2 $BITCODE_CFLAGS"
+fi
+if test "$ac_env_BITCODE_CXXFLAGS_set" = set; then
+  BITCODE_CXXFLAGS=$ac_env_BITCODE_CXXFLAGS_value
+else
+  BITCODE_CXXFLAGS="-O2 BITCODE_CXXFLAGS"
+fi
+
 # C[XX]FLAGS we determined above will be added back at the end
 user_CFLAGS=$CFLAGS
 CFLAGS=""
 user_CXXFLAGS=$CXXFLAGS
 CXXFLAGS=""
+user_BITCODE_CFLAGS=$BITCODE_CFLAGS
+BITCODE_CFLAGS=""
+user_BITCODE_CXXFLAGS=$BITCODE_CXXFLAGS
+BITCODE_CXXFLAGS=""
 
 # set CFLAGS_VECTOR from the environment, if available
 if test "$ac_env_CFLAGS_VECTOR_set" = set; then
@@ -5962,6 +6324,278 @@ fi
 CFLAGS_VECTOR=$CFLAGS_VECTOR
 
 
+# Determine flags used to emit bitcode for JIT inlining. Need to test
+# for behaviour changing compiler flags, to keep compatibility with
+# compiler used for normal postgres code.
+if test "$with_llvm" = yes ; then
+  CLANGXX="$CLANG -xc++"
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CLANG} supports -fno-strict-aliasing, for BITCODE_CFLAGS" >&5
+$as_echo_n "checking whether ${CLANG} supports -fno-strict-aliasing, for BITCODE_CFLAGS... " >&6; }
+if ${pgac_cv_prog_CLANG_cflags__fno_strict_aliasing+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+pgac_save_CC=$CC
+CC=${CLANG}
+CFLAGS="${BITCODE_CFLAGS} -fno-strict-aliasing"
+ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_prog_CLANG_cflags__fno_strict_aliasing=yes
+else
+  pgac_cv_prog_CLANG_cflags__fno_strict_aliasing=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_c_werror_flag
+CFLAGS="$pgac_save_CFLAGS"
+CC="$pgac_save_CC"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CLANG_cflags__fno_strict_aliasing" >&5
+$as_echo "$pgac_cv_prog_CLANG_cflags__fno_strict_aliasing" >&6; }
+if test x"$pgac_cv_prog_CLANG_cflags__fno_strict_aliasing" = x"yes"; then
+  BITCODE_CFLAGS="${BITCODE_CFLAGS} -fno-strict-aliasing"
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CLANGXX} supports -fno-strict-aliasing, for BITCODE_CXXFLAGS" >&5
+$as_echo_n "checking whether ${CLANGXX} supports -fno-strict-aliasing, for BITCODE_CXXFLAGS... " >&6; }
+if ${pgac_cv_prog_CLANGXX_cxxflags__fno_strict_aliasing+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CXXFLAGS=$CXXFLAGS
+pgac_save_CXX=$CXX
+CXX=${CLANGXX}
+CXXFLAGS="${BITCODE_CXXFLAGS} -fno-strict-aliasing"
+ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+ac_cxx_werror_flag=yes
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  pgac_cv_prog_CLANGXX_cxxflags__fno_strict_aliasing=yes
+else
+  pgac_cv_prog_CLANGXX_cxxflags__fno_strict_aliasing=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+CXXFLAGS="$pgac_save_CXXFLAGS"
+CXX="$pgac_save_CXX"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CLANGXX_cxxflags__fno_strict_aliasing" >&5
+$as_echo "$pgac_cv_prog_CLANGXX_cxxflags__fno_strict_aliasing" >&6; }
+if test x"$pgac_cv_prog_CLANGXX_cxxflags__fno_strict_aliasing" = x"yes"; then
+  BITCODE_CXXFLAGS="${BITCODE_CXXFLAGS} -fno-strict-aliasing"
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CLANG} supports -fwrapv, for BITCODE_CFLAGS" >&5
+$as_echo_n "checking whether ${CLANG} supports -fwrapv, for BITCODE_CFLAGS... " >&6; }
+if ${pgac_cv_prog_CLANG_cflags__fwrapv+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+pgac_save_CC=$CC
+CC=${CLANG}
+CFLAGS="${BITCODE_CFLAGS} -fwrapv"
+ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_prog_CLANG_cflags__fwrapv=yes
+else
+  pgac_cv_prog_CLANG_cflags__fwrapv=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_c_werror_flag
+CFLAGS="$pgac_save_CFLAGS"
+CC="$pgac_save_CC"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CLANG_cflags__fwrapv" >&5
+$as_echo "$pgac_cv_prog_CLANG_cflags__fwrapv" >&6; }
+if test x"$pgac_cv_prog_CLANG_cflags__fwrapv" = x"yes"; then
+  BITCODE_CFLAGS="${BITCODE_CFLAGS} -fwrapv"
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CLANGXX} supports -fwrapv, for BITCODE_CXXFLAGS" >&5
+$as_echo_n "checking whether ${CLANGXX} supports -fwrapv, for BITCODE_CXXFLAGS... " >&6; }
+if ${pgac_cv_prog_CLANGXX_cxxflags__fwrapv+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CXXFLAGS=$CXXFLAGS
+pgac_save_CXX=$CXX
+CXX=${CLANGXX}
+CXXFLAGS="${BITCODE_CXXFLAGS} -fwrapv"
+ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+ac_cxx_werror_flag=yes
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  pgac_cv_prog_CLANGXX_cxxflags__fwrapv=yes
+else
+  pgac_cv_prog_CLANGXX_cxxflags__fwrapv=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+CXXFLAGS="$pgac_save_CXXFLAGS"
+CXX="$pgac_save_CXX"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CLANGXX_cxxflags__fwrapv" >&5
+$as_echo "$pgac_cv_prog_CLANGXX_cxxflags__fwrapv" >&6; }
+if test x"$pgac_cv_prog_CLANGXX_cxxflags__fwrapv" = x"yes"; then
+  BITCODE_CXXFLAGS="${BITCODE_CXXFLAGS} -fwrapv"
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CLANG} supports -fexcess-precision=standard, for BITCODE_CFLAGS" >&5
+$as_echo_n "checking whether ${CLANG} supports -fexcess-precision=standard, for BITCODE_CFLAGS... " >&6; }
+if ${pgac_cv_prog_CLANG_cflags__fexcess_precision_standard+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+pgac_save_CC=$CC
+CC=${CLANG}
+CFLAGS="${BITCODE_CFLAGS} -fexcess-precision=standard"
+ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_prog_CLANG_cflags__fexcess_precision_standard=yes
+else
+  pgac_cv_prog_CLANG_cflags__fexcess_precision_standard=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_c_werror_flag
+CFLAGS="$pgac_save_CFLAGS"
+CC="$pgac_save_CC"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CLANG_cflags__fexcess_precision_standard" >&5
+$as_echo "$pgac_cv_prog_CLANG_cflags__fexcess_precision_standard" >&6; }
+if test x"$pgac_cv_prog_CLANG_cflags__fexcess_precision_standard" = x"yes"; then
+  BITCODE_CFLAGS="${BITCODE_CFLAGS} -fexcess-precision=standard"
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CLANGXX} supports -fexcess-precision=standard, for BITCODE_CXXFLAGS" >&5
+$as_echo_n "checking whether ${CLANGXX} supports -fexcess-precision=standard, for BITCODE_CXXFLAGS... " >&6; }
+if ${pgac_cv_prog_CLANGXX_cxxflags__fexcess_precision_standard+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CXXFLAGS=$CXXFLAGS
+pgac_save_CXX=$CXX
+CXX=${CLANGXX}
+CXXFLAGS="${BITCODE_CXXFLAGS} -fexcess-precision=standard"
+ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+ac_cxx_werror_flag=yes
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  pgac_cv_prog_CLANGXX_cxxflags__fexcess_precision_standard=yes
+else
+  pgac_cv_prog_CLANGXX_cxxflags__fexcess_precision_standard=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+CXXFLAGS="$pgac_save_CXXFLAGS"
+CXX="$pgac_save_CXX"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CLANGXX_cxxflags__fexcess_precision_standard" >&5
+$as_echo "$pgac_cv_prog_CLANGXX_cxxflags__fexcess_precision_standard" >&6; }
+if test x"$pgac_cv_prog_CLANGXX_cxxflags__fexcess_precision_standard" = x"yes"; then
+  BITCODE_CXXFLAGS="${BITCODE_CXXFLAGS} -fexcess-precision=standard"
+fi
+
+fi
+
 # supply -g if --enable-debug
 if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
@@ -6004,6 +6638,13 @@ fi
 # the automatic additions.
 CFLAGS="$CFLAGS $user_CFLAGS"
 CXXFLAGS="$CXXFLAGS $user_CXXFLAGS"
+BITCODE_CFLAGS="$BITCODE_CFLAGS $user_BITCODE_CFLAGS"
+BITCODE_CXXFLAGS="$BITCODE_CXXFLAGS $user_BITCODE_CXXFLAGS"
+
+BITCODE_CFLAGS=$BITCODE_CFLAGS
+
+BITCODE_CXXFLAGS=$BITCODE_CXXFLAGS
+
 
 # Check if the compiler still works with the final flag settings
 # (note, we're not checking that for CXX, which is optional)
@@ -17844,12 +18485,23 @@ _ACEOF
 $as_echo "$as_me: using compiler=$cc_string" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: using CFLAGS=$CFLAGS" >&5
 $as_echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: using CXXFLAGS=$CXXFLAGS" >&5
-$as_echo "$as_me: using CXXFLAGS=$CXXFLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: using CPPFLAGS=$CPPFLAGS" >&5
 $as_echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: using LDFLAGS=$LDFLAGS" >&5
 $as_echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
+# Currently only used when LLVM is used
+if test "$with_llvm" = yes ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: using CXX=$CXX" >&5
+$as_echo "$as_me: using CXX=$CXX" >&6;}
+   { $as_echo "$as_me:${as_lineno-$LINENO}: using CXXFLAGS=$CXXFLAGS" >&5
+$as_echo "$as_me: using CXXFLAGS=$CXXFLAGS" >&6;}
+   { $as_echo "$as_me:${as_lineno-$LINENO}: using CLANG=$CLANG" >&5
+$as_echo "$as_me: using CLANG=$CLANG" >&6;}
+   { $as_echo "$as_me:${as_lineno-$LINENO}: using BITCODE_CFLAGS=$BITCODE_CFLAGS" >&5
+$as_echo "$as_me: using BITCODE_CFLAGS=$BITCODE_CFLAGS" >&6;}
+   { $as_echo "$as_me:${as_lineno-$LINENO}: using BITCODE_CXXFLAGS=$BITCODE_CXXFLAGS" >&5
+$as_echo "$as_me: using BITCODE_CXXFLAGS=$BITCODE_CXXFLAGS" >&6;}
+fi
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.
