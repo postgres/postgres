@@ -1245,6 +1245,8 @@ AC_SUBST(UUID_LIBS)
 ## Header files
 ##
 
+AC_HEADER_STDBOOL
+
 AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/ipc.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
 
 # On BSD, test for net/if.h will fail unless sys/socket.h
@@ -1502,6 +1504,11 @@ AC_CHECK_SIZEOF([off_t])
 if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
    AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.])
 fi
+
+AC_CHECK_SIZEOF([bool], [],
+[#ifdef HAVE_STDBOOL_H
+#include <stdbool.h>
+#endif])
 
 
 ##

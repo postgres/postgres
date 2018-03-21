@@ -501,6 +501,9 @@
 /* Define to 1 if you have the `SSL_get_current_compression' function. */
 #undef HAVE_SSL_GET_CURRENT_COMPRESSION
 
+/* Define to 1 if stdbool.h conforms to C99. */
+#undef HAVE_STDBOOL_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -703,6 +706,9 @@
 /* Define to 1 if you have the `X509_get_signature_nid' function. */
 #undef HAVE_X509_GET_SIGNATURE_NID
 
+/* Define to 1 if the system has the type `_Bool'. */
+#undef HAVE__BOOL
+
 /* Define to 1 if your compiler understands __builtin_bswap16. */
 #undef HAVE__BUILTIN_BSWAP16
 
@@ -811,6 +817,9 @@
    save a few cycles in md.c, but is not absolutely required. Changing
    RELSEG_SIZE requires an initdb. */
 #undef RELSEG_SIZE
+
+/* The size of `bool', as computed by sizeof. */
+#undef SIZEOF_BOOL
 
 /* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
