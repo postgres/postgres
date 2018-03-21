@@ -292,6 +292,11 @@ explain (costs off)
   select a, b, grouping(a,b), array_agg(v order by v)
     from gstest1 group by cube(a,b);
 
+-- unsortable cases
+select unsortable_col, count(*)
+  from gstest4 group by grouping sets ((unsortable_col),(unsortable_col))
+  order by unsortable_col::text;
+
 -- mixed hashable/sortable cases
 select unhashable_col, unsortable_col,
        grouping(unhashable_col, unsortable_col),
