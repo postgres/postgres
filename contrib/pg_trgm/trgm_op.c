@@ -456,7 +456,7 @@ iterate_word_similarity(int *trg2indexes,
 			lastpos[trgindex] = i;
 		}
 
-		/* Adjust lower bound if this trigram is present in required substring */
+		/* Adjust upper bound if this trigram is present in required substring */
 		if (found[trgindex])
 		{
 			int			prev_lower,
@@ -473,7 +473,7 @@ iterate_word_similarity(int *trg2indexes,
 
 			smlr_cur = CALCSML(count, ulen1, ulen2);
 
-			/* Also try to adjust upper bound for greater similarity */
+			/* Also try to adjust lower bound for greater similarity */
 			tmp_count = count;
 			tmp_ulen2 = ulen2;
 			prev_lower = lower;
