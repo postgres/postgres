@@ -18,6 +18,3 @@ PERLTIDY=${PERLTIDY:-perltidy}
 ) |
 sort -u |
 xargs $PERLTIDY --profile=src/tools/pgindent/perltidyrc
-
-# perltidyrc specifies --backup-and-modify-in-place, so get rid of .bak files
-find . -type f -name '*.bak' | xargs rm
