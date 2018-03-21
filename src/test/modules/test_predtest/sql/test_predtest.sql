@@ -306,7 +306,6 @@ select x <= 5, x in (1,3,5,7)
 from integers
 $$);
 
--- XXX ideally, we could prove this case too, for strong implication
 select * from test_predtest($$
 select x <= 5, x in (1,3,5,null)
 from integers

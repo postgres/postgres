@@ -1739,11 +1739,7 @@ explain (costs off) select * from list_parted where a = 'ab' or a in (null, 'cd'
  Append
    ->  Seq Scan on part_ab_cd
          Filter: (((a)::text = 'ab'::text) OR ((a)::text = ANY ('{NULL,cd}'::text[])))
-   ->  Seq Scan on part_ef_gh
-         Filter: (((a)::text = 'ab'::text) OR ((a)::text = ANY ('{NULL,cd}'::text[])))
-   ->  Seq Scan on part_null_xy
-         Filter: (((a)::text = 'ab'::text) OR ((a)::text = ANY ('{NULL,cd}'::text[])))
-(7 rows)
+(3 rows)
 
 explain (costs off) select * from list_parted where a = 'ab';
                 QUERY PLAN                

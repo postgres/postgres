@@ -100,7 +100,7 @@ static Node *extract_not_arg(Node *clause);
 static Node *extract_strong_not_arg(Node *clause);
 static bool clause_is_strict_for(Node *clause, Node *subexpr);
 static bool operator_predicate_proof(Expr *predicate, Node *clause,
-						 bool refute_it);
+						 bool refute_it, bool weak);
 static bool operator_same_subexprs_proof(Oid pred_op, Oid clause_op,
 							 bool refute_it);
 static bool operator_same_subexprs_lookup(Oid pred_op, Oid clause_op,
@@ -1137,7 +1137,7 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause,
 	}
 
 	/* Else try operator-related knowledge */
-	return operator_predicate_proof(predicate, clause, false);
+	return operator_predicate_proof(predicate, clause, false, weak);
 }
 
 /*----------
@@ -1232,7 +1232,7 @@ predicate_refuted_by_simple_clause(Expr *predicate, Node *clause,
 	}
 
 	/* Else try operator-related knowledge */
-	return operator_predicate_proof(predicate, clause, true);
+	return operator_predicate_proof(predicate, clause, true, weak);
 }
 
 
@@ -1498,9 +1498,8 @@ static const StrategyNumber BT_refute_table[6][6] = {
  * values, since then the operators aren't being given identical inputs.  But
  * we only support that for btree operators, for which we can assume that all
  * non-null inputs result in non-null outputs, so that it doesn't matter which
- * two non-null constants we consider.  Currently the code below just reports
- * "proof failed" if either constant is NULL, but in some cases we could be
- * smarter (and that likely would require checking strong vs. weak proofs).
+ * two non-null constants we consider.  If either constant is NULL, we have
+ * to think harder, but sometimes the proof still works, as explained below.
  *
  * We can make proofs involving several expression forms (here "foo" and "bar"
  * represent subexpressions that are identical according to equal()):
@@ -1528,7 +1527,8 @@ static const StrategyNumber BT_refute_table[6][6] = {
  * and we dare not make deductions with those.
  */
 static bool
-operator_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
+operator_predicate_proof(Expr *predicate, Node *clause,
+						 bool refute_it, bool weak)
 {
 	OpExpr	   *pred_opexpr,
 			   *clause_opexpr;
@@ -1675,17 +1675,46 @@ operator_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 	 * We have two identical subexpressions, and two other subexpressions that
 	 * are not identical but are both Consts; and we have commuted the
 	 * operators if necessary so that the Consts are on the right.  We'll need
-	 * to compare the Consts' values.  If either is NULL, fail.
-	 *
-	 * Future work: in some cases the desired proof might hold even with NULL
-	 * constants.  But beware that we've not yet identified the operators as
-	 * btree ops, so for instance it'd be quite unsafe to assume they are
-	 * strict without checking.
+	 * to compare the Consts' values.  If either is NULL, we can't do that, so
+	 * usually the proof fails ... but in some cases we can claim success.
 	 */
-	if (pred_const->constisnull)
-		return false;
 	if (clause_const->constisnull)
+	{
+		/* If clause_op isn't strict, we can't prove anything */
+		if (!op_strict(clause_op))
+			return false;
+
+		/*
+		 * At this point we know that the clause returns NULL.  For proof
+		 * types that assume truth of the clause, this means the proof is
+		 * vacuously true (a/k/a "false implies anything").  That's all proof
+		 * types except weak implication.
+		 */
+		if (!(weak && !refute_it))
+			return true;
+
+		/*
+		 * For weak implication, it's still possible for the proof to succeed,
+		 * if the predicate can also be proven NULL.  In that case we've got
+		 * NULL => NULL which is valid for this proof type.
+		 */
+		if (pred_const->constisnull && op_strict(pred_op))
+			return true;
+		/* Else the proof fails */
 		return false;
+	}
+	if (pred_const->constisnull)
+	{
+		/*
+		 * If the pred_op is strict, we know the predicate yields NULL, which
+		 * means the proof succeeds for either weak implication or weak
+		 * refutation.
+		 */
+		if (weak && op_strict(pred_op))
+			return true;
+		/* Else the proof fails */
+		return false;
+	}
 
 	/*
 	 * Lookup the constant-comparison operator using the system catalogs and
