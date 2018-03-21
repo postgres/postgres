@@ -99,12 +99,10 @@
       </entry>
       <entry><type>real</type></entry>
       <entry>
-       Returns a number that indicates how similar the first string
-       to the most similar word of the second string. The function searches in
-       the second string a most similar word not a most similar substring.  The
-       range of the result is zero (indicating that the two strings are
-       completely dissimilar) to one (indicating that the first string is
-       identical to one of the words of the second string).
+       Returns a number that indicates the greatest similarity between
+       the set of trigrams in the first string and any continuous extent
+       of an ordered set of trigrams in the second string.  For details, see
+       the explanation below.
       </entry>
      </row>
      <row>
@@ -131,6 +129,34 @@
    </tgroup>
   </table>
 
+  <para>
+   Consider the following example:
+
+<programlisting>
+# SELECT word_similarity('word', 'two words');
+ word_similarity
+-----------------
+             0.8
+(1 row)
+</programlisting>
+
+   In the first string, the set of trigrams is
+   <literal>{"  w"," wo","ord","wor","rd "}</literal>.
+   In the second string, the ordered set of trigrams is
+   <literal>{"  t"," tw",two,"wo ","  w"," wo","wor","ord","rds", ds "}</literal>.
+   The most similar extent of an ordered set of trigrams in the second string
+   is <literal>{"  w"," wo","wor","ord"}</literal>, and the similarity is
+   <literal>0.8</literal>.
+  </para>
+
+  <para>
+   This function returns a value that can be approximately understood as the
+   greatest similarity between the first string and any substring of the second
+   string.  However, this function does not add padding to the boundaries of
+   the extent.  Thus, a whole word match gets a higher score than a match with
+   a part of the word.
+  </para>
+
   <table id="pgtrgm-op-table">
    <title><filename>pg_trgm</filename> Operators</title>
    <tgroup cols="3">
@@ -156,10 +182,11 @@
       <entry><type>text</type> <literal>&lt;%</literal> <type>text</type></entry>
       <entry><type>boolean</type></entry>
       <entry>
-       Returns <literal>true</literal> if its first argument has the similar word in
-       the second argument and they have a similarity that is greater than the
-       current word similarity threshold set by
-       <varname>pg_trgm.word_similarity_threshold</varname> parameter.
+       Returns <literal>true</literal> if the similarity between the trigram
+       set in the first argument and a continuous extent of an ordered trigram
+       set in the second argument is greater than the current word similarity
+       threshold set by <varname>pg_trgm.word_similarity_threshold</varname>
+       parameter.
       </entry>
      </row>
      <row>
@@ -302,10 +329,11 @@ SELECT t, word_similarity('<replaceable>word</replaceable>', t) AS sml
   WHERE '<replaceable>word</replaceable>' &lt;% t
   ORDER BY sml DESC, t;
 </programlisting>
-   This will return all values in the text column that have a word
-   which sufficiently similar to <replaceable>word</replaceable>, sorted from best
-   match to worst.  The index will be used to make this a fast operation
-   even over very large data sets.
+   This will return all values in the text column for which there is a
+   continuous extent in the corresponding ordered trigram set that is
+   sufficiently similar to the trigram set of <replaceable>word</replaceable>,
+   sorted from best match to worst.  The index will be used to make this
+   a fast operation even over very large data sets.
   </para>
 
   <para>
