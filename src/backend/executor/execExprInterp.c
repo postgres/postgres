@@ -685,50 +685,17 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 		EEO_CASE(EEOP_FUNCEXPR_FUSAGE)
 		{
-			FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
-			PgStat_FunctionCallUsage fcusage;
-			Datum		d;
-
-			pgstat_init_function_usage(fcinfo, &fcusage);
-
-			fcinfo->isnull = false;
-			d = op->d.func.fn_addr(fcinfo);
-			*op->resvalue = d;
-			*op->resnull = fcinfo->isnull;
-
-			pgstat_end_function_usage(&fcusage, true);
+			/* not common enough to inline */
+			ExecEvalFuncExprFusage(state, op, econtext);
 
 			EEO_NEXT();
 		}
 
 		EEO_CASE(EEOP_FUNCEXPR_STRICT_FUSAGE)
 		{
-			FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
-			PgStat_FunctionCallUsage fcusage;
-			bool	   *argnull = fcinfo->argnull;
-			int			argno;
-			Datum		d;
+			/* not common enough to inline */
+			ExecEvalFuncExprStrictFusage(state, op, econtext);
 
-			/* strict function, so check for NULL args */
-			for (argno = 0; argno < op->d.func.nargs; argno++)
-			{
-				if (argnull[argno])
-				{
-					*op->resnull = true;
-					goto strictfail_fusage;
-				}
-			}
-
-			pgstat_init_function_usage(fcinfo, &fcusage);
-
-			fcinfo->isnull = false;
-			d = op->d.func.fn_addr(fcinfo);
-			*op->resvalue = d;
-			*op->resnull = fcinfo->isnull;
-
-			pgstat_end_function_usage(&fcusage, true);
-
-	strictfail_fusage:
 			EEO_NEXT();
 		}
 
@@ -2206,6 +2173,61 @@ ExecEvalStepOp(ExprState *state, ExprEvalStep *op)
 /*
  * Out-of-line helper functions for complex instructions.
  */
+
+/*
+ * Evaluate EEOP_FUNCEXPR_FUSAGE
+ */
+void
+ExecEvalFuncExprFusage(ExprState *state, ExprEvalStep *op,
+					   ExprContext *econtext)
+{
+	FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
+	PgStat_FunctionCallUsage fcusage;
+	Datum		d;
+
+	pgstat_init_function_usage(fcinfo, &fcusage);
+
+	fcinfo->isnull = false;
+	d = op->d.func.fn_addr(fcinfo);
+	*op->resvalue = d;
+	*op->resnull = fcinfo->isnull;
+
+	pgstat_end_function_usage(&fcusage, true);
+}
+
+/*
+ * Evaluate EEOP_FUNCEXPR_STRICT_FUSAGE
+ */
+void
+ExecEvalFuncExprStrictFusage(ExprState *state, ExprEvalStep *op,
+				  ExprContext *econtext)
+{
+
+	FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
+	PgStat_FunctionCallUsage fcusage;
+	bool	   *argnull = fcinfo->argnull;
+	int			argno;
+	Datum		d;
+
+	/* strict function, so check for NULL args */
+	for (argno = 0; argno < op->d.func.nargs; argno++)
+	{
+		if (argnull[argno])
+		{
+			*op->resnull = true;
+			return;
+		}
+	}
+
+	pgstat_init_function_usage(fcinfo, &fcusage);
+
+	fcinfo->isnull = false;
+	d = op->d.func.fn_addr(fcinfo);
+	*op->resvalue = d;
+	*op->resnull = fcinfo->isnull;
+
+	pgstat_end_function_usage(&fcusage, true);
+}
 
 /*
  * Evaluate a PARAM_EXEC parameter.
