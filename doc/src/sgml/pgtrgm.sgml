@@ -106,6 +106,17 @@
       </entry>
      </row>
      <row>
+      <entry>
+       <function>strict_word_similarity(text, text)</function>
+       <indexterm><primary>strict_word_similarity</primary></indexterm>
+      </entry>
+      <entry><type>real</type></entry>
+      <entry>
+       Same as <function>word_similarity(text, text)</function>, but forces
+       extent boundaries to match word boundaries.
+      </entry>
+     </row>
+     <row>
       <entry><function>show_limit()</function><indexterm><primary>show_limit</primary></indexterm></entry>
       <entry><type>real</type></entry>
       <entry>
@@ -157,6 +168,29 @@
    a part of the word.
   </para>
 
+  <para>
+   At the same time, <function>strict_word_similarity(text, text)</function>
+   has to select an extent that matches word boundaries.  In the example above,
+   <function>strict_word_similarity(text, text)</function> would select the
+   extent <literal>{"  w"," wo","wor","ord","rds", ds "}</literal>, which
+   corresponds to the whole word <literal>'words'</literal>.
+
+<programlisting>
+# SELECT strict_word_similarity('word', 'two words'), similarity('word', 'words');
+ strict_word_similarity | similarity
+------------------------+------------
+               0.571429 |   0.571429
+(1 row)
+</programlisting>
+  </para>
+
+  <para>
+   Thus, the <function>strict_word_similarity(text, text)</function> function
+   is useful for finding similar subsets of whole words, while
+   <function>word_similarity(text, text)</function> is more suitable for
+   searching similar parts of words.
+  </para>
+
   <table id="pgtrgm-op-table">
    <title><filename>pg_trgm</filename> Operators</title>
    <tgroup cols="3">
@@ -197,6 +231,24 @@
       </entry>
      </row>
      <row>
+      <entry><type>text</type> <literal>&lt;&lt;%</literal> <type>text</type></entry>
+      <entry><type>boolean</type></entry>
+      <entry>
+       Returns <literal>true</literal> if its second argument has a continuous
+       extent of an ordered trigram set that matches word boundaries,
+       and its similarity to the trigram set of the first argument is greater
+       than the current strict word similarity threshold set by the
+       <varname>pg_trgm.strict_word_similarity_threshold</varname> parameter.
+      </entry>
+     </row>
+     <row>
+      <entry><type>text</type> <literal>%&gt;&gt;</literal> <type>text</type></entry>
+      <entry><type>boolean</type></entry>
+      <entry>
+       Commutator of the <literal>&lt;&lt;%</literal> operator.
+      </entry>
+     </row>
+     <row>
       <entry><type>text</type> <literal>&lt;-&gt;</literal> <type>text</type></entry>
       <entry><type>real</type></entry>
       <entry>
@@ -221,6 +273,25 @@
       <entry><type>real</type></entry>
       <entry>
        Commutator of the <literal>&lt;&lt;-&gt;</literal> operator.
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <type>text</type> <literal>&lt;&lt;&lt;-&gt;</literal> <type>text</type>
+      </entry>
+      <entry><type>real</type></entry>
+      <entry>
+       Returns the <quote>distance</quote> between the arguments, that is
+       one minus the <function>strict_word_similarity()</function> value.
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <type>text</type> <literal>&lt;-&gt;&gt;&gt;</literal> <type>text</type>
+      </entry>
+      <entry><type>real</type></entry>
+      <entry>
+       Commutator of the <literal>&lt;&lt;&lt;-&gt;</literal> operator.
       </entry>
      </row>
     </tbody>
@@ -322,11 +393,18 @@ SELECT t, t &lt;-&gt; '<replaceable>word</replaceable>' AS dist
 
   <para>
    Also you can use an index on the <structfield>t</structfield> column for word
-   similarity.  For example:
+   similarity or strict word similarity.  Typical queries are:
 <programlisting>
 SELECT t, word_similarity('<replaceable>word</replaceable>', t) AS sml
   FROM test_trgm
   WHERE '<replaceable>word</replaceable>' &lt;% t
+  ORDER BY sml DESC, t;
+</programlisting>
+   and
+<programlisting>
+SELECT t, strict_word_similarity('<replaceable>word</replaceable>', t) AS sml
+  FROM test_trgm
+  WHERE '<replaceable>word</replaceable>' &lt;&lt;% t
   ORDER BY sml DESC, t;
 </programlisting>
    This will return all values in the text column for which there is a
@@ -337,9 +415,15 @@ SELECT t, word_similarity('<replaceable>word</replaceable>', t) AS sml
   </para>
 
   <para>
-   A variant of the above query is
+   Possible variants of the above queries are:
 <programlisting>
 SELECT t, '<replaceable>word</replaceable>' &lt;&lt;-&gt; t AS dist
+  FROM test_trgm
+  ORDER BY dist LIMIT 10;
+</programlisting>
+   and
+<programlisting>
+SELECT t, '<replaceable>word</replaceable>' &lt;&lt;&lt;-&gt; t AS dist
   FROM test_trgm
   ORDER BY dist LIMIT 10;
 </programlisting>

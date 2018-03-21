@@ -6,6 +6,7 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
+#include "access/stratnum.h"
 #include "storage/bufpage.h"
 
 /*
@@ -26,14 +27,16 @@
 #define DIVUNION
 
 /* operator strategy numbers */
-#define SimilarityStrategyNumber		1
-#define DistanceStrategyNumber			2
-#define LikeStrategyNumber				3
-#define ILikeStrategyNumber				4
-#define RegExpStrategyNumber			5
-#define RegExpICaseStrategyNumber		6
-#define WordSimilarityStrategyNumber	7
-#define WordDistanceStrategyNumber		8
+#define SimilarityStrategyNumber			1
+#define DistanceStrategyNumber				2
+#define LikeStrategyNumber					3
+#define ILikeStrategyNumber					4
+#define RegExpStrategyNumber				5
+#define RegExpICaseStrategyNumber			6
+#define WordSimilarityStrategyNumber		7
+#define WordDistanceStrategyNumber			8
+#define StrictWordSimilarityStrategyNumber	9
+#define StrictWordDistanceStrategyNumber	10
 
 typedef char trgm[3];
 
@@ -120,7 +123,9 @@ typedef struct TrgmPackedGraph TrgmPackedGraph;
 
 extern double similarity_threshold;
 extern double word_similarity_threshold;
+extern double strict_word_similarity_threshold;
 
+extern double index_strategy_get_limit(StrategyNumber strategy);
 extern uint32 trgm2int(trgm *ptr);
 extern void compact_trigram(trgm *tptr, char *str, int bytelen);
 extern TRGM *generate_trgm(char *str, int slen);

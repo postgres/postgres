@@ -1,0 +1,1025 @@
+DROP INDEX trgm_idx2;
+\copy test_trgm3 from 'data/trgm2.data'
+ERROR:  relation "test_trgm3" does not exist
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where 'Baykal' <<% t order by sml desc, t;
+                  t                  |   sml    
+-------------------------------------+----------
+ Baykal                              |        1
+ Boloto Baykal                       |        1
+ Boloto Malyy Baykal                 |        1
+ Kolkhoz Krasnyy Baykal              |        1
+ Ozero Baykal                        |        1
+ Polevoy Stan Baykal                 |        1
+ Port Baykal                         |        1
+ Prud Novyy Baykal                   |        1
+ Sanatoriy Baykal                    |        1
+ Stantsiya Baykal                    |        1
+ Zaliv Baykal                        |        1
+ Baykalo-Amurskaya Zheleznaya Doroga | 0.666667
+ Baykalovo                           | 0.545455
+ Baykalsko                           | 0.545455
+ Maloye Baykalovo                    | 0.545455
+ Baykalikha                          |      0.5
+ Baykalovsk                          |      0.5
+(17 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where 'Kabankala' <<% t order by sml desc, t;
+              t               |   sml    
+------------------------------+----------
+ Kabankala                    |        1
+ Kabankalan City Public Plaza |     0.75
+ Abankala                     | 0.583333
+ Kabakala                     | 0.583333
+(4 rows)
+
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where t %>> 'Baykal' order by sml desc, t;
+                  t                  |   sml    
+-------------------------------------+----------
+ Baykal                              |        1
+ Boloto Baykal                       |        1
+ Boloto Malyy Baykal                 |        1
+ Kolkhoz Krasnyy Baykal              |        1
+ Ozero Baykal                        |        1
+ Polevoy Stan Baykal                 |        1
+ Port Baykal                         |        1
+ Prud Novyy Baykal                   |        1
+ Sanatoriy Baykal                    |        1
+ Stantsiya Baykal                    |        1
+ Zaliv Baykal                        |        1
+ Baykalo-Amurskaya Zheleznaya Doroga | 0.666667
+ Baykalovo                           | 0.545455
+ Baykalsko                           | 0.545455
+ Maloye Baykalovo                    | 0.545455
+ Baykalikha                          |      0.5
+ Baykalovsk                          |      0.5
+(17 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where t %>> 'Kabankala' order by sml desc, t;
+              t               |   sml    
+------------------------------+----------
+ Kabankala                    |        1
+ Kabankalan City Public Plaza |     0.75
+ Abankala                     | 0.583333
+ Kabakala                     | 0.583333
+(4 rows)
+
+select t <->>> 'Alaikallupoddakulam', t from test_trgm2 order by t <->>> 'Alaikallupoddakulam' limit 7;
+ ?column? |            t             
+----------+--------------------------
+        0 | Alaikallupoddakulam
+     0.25 | Alaikallupodda Alankulam
+     0.32 | Alaikalluppodda Kulam
+ 0.615385 | Mulaikallu Kulam
+ 0.724138 | Koraikalapu Kulam
+     0.75 | Vaikaliththevakulam
+ 0.766667 | Karaivaikal Kulam
+(7 rows)
+
+create index trgm_idx2 on test_trgm2 using gist (t gist_trgm_ops);
+set enable_seqscan=off;
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where 'Baykal' <<% t order by sml desc, t;
+                  t                  |   sml    
+-------------------------------------+----------
+ Baykal                              |        1
+ Boloto Baykal                       |        1
+ Boloto Malyy Baykal                 |        1
+ Kolkhoz Krasnyy Baykal              |        1
+ Ozero Baykal                        |        1
+ Polevoy Stan Baykal                 |        1
+ Port Baykal                         |        1
+ Prud Novyy Baykal                   |        1
+ Sanatoriy Baykal                    |        1
+ Stantsiya Baykal                    |        1
+ Zaliv Baykal                        |        1
+ Baykalo-Amurskaya Zheleznaya Doroga | 0.666667
+ Baykalovo                           | 0.545455
+ Baykalsko                           | 0.545455
+ Maloye Baykalovo                    | 0.545455
+ Baykalikha                          |      0.5
+ Baykalovsk                          |      0.5
+(17 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where 'Kabankala' <<% t order by sml desc, t;
+              t               |   sml    
+------------------------------+----------
+ Kabankala                    |        1
+ Kabankalan City Public Plaza |     0.75
+ Abankala                     | 0.583333
+ Kabakala                     | 0.583333
+(4 rows)
+
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where t %>> 'Baykal' order by sml desc, t;
+                  t                  |   sml    
+-------------------------------------+----------
+ Baykal                              |        1
+ Boloto Baykal                       |        1
+ Boloto Malyy Baykal                 |        1
+ Kolkhoz Krasnyy Baykal              |        1
+ Ozero Baykal                        |        1
+ Polevoy Stan Baykal                 |        1
+ Port Baykal                         |        1
+ Prud Novyy Baykal                   |        1
+ Sanatoriy Baykal                    |        1
+ Stantsiya Baykal                    |        1
+ Zaliv Baykal                        |        1
+ Baykalo-Amurskaya Zheleznaya Doroga | 0.666667
+ Baykalovo                           | 0.545455
+ Baykalsko                           | 0.545455
+ Maloye Baykalovo                    | 0.545455
+ Baykalikha                          |      0.5
+ Baykalovsk                          |      0.5
+(17 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where t %>> 'Kabankala' order by sml desc, t;
+              t               |   sml    
+------------------------------+----------
+ Kabankala                    |        1
+ Kabankalan City Public Plaza |     0.75
+ Abankala                     | 0.583333
+ Kabakala                     | 0.583333
+(4 rows)
+
+explain (costs off)
+select t <->>> 'Alaikallupoddakulam', t from test_trgm2 order by t <->>> 'Alaikallupoddakulam' limit 7;
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Limit
+   ->  Index Scan using trgm_idx2 on test_trgm2
+         Order By: (t <->>> 'Alaikallupoddakulam'::text)
+(3 rows)
+
+select t <->>> 'Alaikallupoddakulam', t from test_trgm2 order by t <->>> 'Alaikallupoddakulam' limit 7;
+ ?column? |            t             
+----------+--------------------------
+        0 | Alaikallupoddakulam
+     0.25 | Alaikallupodda Alankulam
+     0.32 | Alaikalluppodda Kulam
+ 0.615385 | Mulaikallu Kulam
+ 0.724138 | Koraikalapu Kulam
+     0.75 | Vaikaliththevakulam
+ 0.766667 | Karaivaikal Kulam
+(7 rows)
+
+drop index trgm_idx2;
+create index trgm_idx2 on test_trgm2 using gin (t gin_trgm_ops);
+set enable_seqscan=off;
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where 'Baykal' <<% t order by sml desc, t;
+                  t                  |   sml    
+-------------------------------------+----------
+ Baykal                              |        1
+ Boloto Baykal                       |        1
+ Boloto Malyy Baykal                 |        1
+ Kolkhoz Krasnyy Baykal              |        1
+ Ozero Baykal                        |        1
+ Polevoy Stan Baykal                 |        1
+ Port Baykal                         |        1
+ Prud Novyy Baykal                   |        1
+ Sanatoriy Baykal                    |        1
+ Stantsiya Baykal                    |        1
+ Zaliv Baykal                        |        1
+ Baykalo-Amurskaya Zheleznaya Doroga | 0.666667
+ Baykalovo                           | 0.545455
+ Baykalsko                           | 0.545455
+ Maloye Baykalovo                    | 0.545455
+ Baykalikha                          |      0.5
+ Baykalovsk                          |      0.5
+(17 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where 'Kabankala' <<% t order by sml desc, t;
+              t               |   sml    
+------------------------------+----------
+ Kabankala                    |        1
+ Kabankalan City Public Plaza |     0.75
+ Abankala                     | 0.583333
+ Kabakala                     | 0.583333
+(4 rows)
+
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where t %>> 'Baykal' order by sml desc, t;
+                  t                  |   sml    
+-------------------------------------+----------
+ Baykal                              |        1
+ Boloto Baykal                       |        1
+ Boloto Malyy Baykal                 |        1
+ Kolkhoz Krasnyy Baykal              |        1
+ Ozero Baykal                        |        1
+ Polevoy Stan Baykal                 |        1
+ Port Baykal                         |        1
+ Prud Novyy Baykal                   |        1
+ Sanatoriy Baykal                    |        1
+ Stantsiya Baykal                    |        1
+ Zaliv Baykal                        |        1
+ Baykalo-Amurskaya Zheleznaya Doroga | 0.666667
+ Baykalovo                           | 0.545455
+ Baykalsko                           | 0.545455
+ Maloye Baykalovo                    | 0.545455
+ Baykalikha                          |      0.5
+ Baykalovsk                          |      0.5
+(17 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where t %>> 'Kabankala' order by sml desc, t;
+              t               |   sml    
+------------------------------+----------
+ Kabankala                    |        1
+ Kabankalan City Public Plaza |     0.75
+ Abankala                     | 0.583333
+ Kabakala                     | 0.583333
+(4 rows)
+
+set "pg_trgm.strict_word_similarity_threshold" to 0.4;
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where 'Baykal' <<% t order by sml desc, t;
+                  t                  |   sml    
+-------------------------------------+----------
+ Baykal                              |        1
+ Boloto Baykal                       |        1
+ Boloto Malyy Baykal                 |        1
+ Kolkhoz Krasnyy Baykal              |        1
+ Ozero Baykal                        |        1
+ Polevoy Stan Baykal                 |        1
+ Port Baykal                         |        1
+ Prud Novyy Baykal                   |        1
+ Sanatoriy Baykal                    |        1
+ Stantsiya Baykal                    |        1
+ Zaliv Baykal                        |        1
+ Baykalo-Amurskaya Zheleznaya Doroga | 0.666667
+ Baykalovo                           | 0.545455
+ Baykalsko                           | 0.545455
+ Maloye Baykalovo                    | 0.545455
+ Baykalikha                          |      0.5
+ Baykalovsk                          |      0.5
+ Zabaykal                            | 0.454545
+ Air Bakal-kecil                     | 0.444444
+ Bakal                               | 0.444444
+ Bakal Batu                          | 0.444444
+ Bakal Dos                           | 0.444444
+ Bakal Julu                          | 0.444444
+ Bakal Khel                          | 0.444444
+ Bakal Lama                          | 0.444444
+ Bakal Tres                          | 0.444444
+ Bakal Uno                           | 0.444444
+ Daang Bakal                         | 0.444444
+ Desa Bakal                          | 0.444444
+ Eat Bakal                           | 0.444444
+ Gunung Bakal                        | 0.444444
+ Sidi Bakal                          | 0.444444
+ Stantsiya Bakal                     | 0.444444
+ Sungai Bakal                        | 0.444444
+ Talang Bakal                        | 0.444444
+ Uruk Bakal                          | 0.444444
+ Zaouia Oulad Bakal                  | 0.444444
+ Baykalovskiy                        | 0.428571
+ Baykalovskiy Rayon                  | 0.428571
+ Baikal                              |      0.4
+ Baikal Airfield                     |      0.4
+ Baikal Business Centre              |      0.4
+ Baikal Hotel Moscow                 |      0.4
+ Baikal Listvyanka Hotel             |      0.4
+ Baikal Mountains                    |      0.4
+ Baikal Plaza                        |      0.4
+ Bajkal                              |      0.4
+ Bankal                              |      0.4
+ Bankal School                       |      0.4
+ Barkal                              |      0.4
+ Jabal Barkal                        |      0.4
+ Lake Baikal                         |      0.4
+ Oulad el Bakkal                     |      0.4
+ Sidi Mohammed Bakkal                |      0.4
+(54 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where 'Kabankala' <<% t order by sml desc, t;
+              t               |   sml    
+------------------------------+----------
+ Kabankala                    |        1
+ Kabankalan City Public Plaza |     0.75
+ Abankala                     | 0.583333
+ Kabakala                     | 0.583333
+ Kabikala                     | 0.461538
+(5 rows)
+
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where t %>> 'Baykal' order by sml desc, t;
+                  t                  |   sml    
+-------------------------------------+----------
+ Baykal                              |        1
+ Boloto Baykal                       |        1
+ Boloto Malyy Baykal                 |        1
+ Kolkhoz Krasnyy Baykal              |        1
+ Ozero Baykal                        |        1
+ Polevoy Stan Baykal                 |        1
+ Port Baykal                         |        1
+ Prud Novyy Baykal                   |        1
+ Sanatoriy Baykal                    |        1
+ Stantsiya Baykal                    |        1
+ Zaliv Baykal                        |        1
+ Baykalo-Amurskaya Zheleznaya Doroga | 0.666667
+ Baykalovo                           | 0.545455
+ Baykalsko                           | 0.545455
+ Maloye Baykalovo                    | 0.545455
+ Baykalikha                          |      0.5
+ Baykalovsk                          |      0.5
+ Zabaykal                            | 0.454545
+ Air Bakal-kecil                     | 0.444444
+ Bakal                               | 0.444444
+ Bakal Batu                          | 0.444444
+ Bakal Dos                           | 0.444444
+ Bakal Julu                          | 0.444444
+ Bakal Khel                          | 0.444444
+ Bakal Lama                          | 0.444444
+ Bakal Tres                          | 0.444444
+ Bakal Uno                           | 0.444444
+ Daang Bakal                         | 0.444444
+ Desa Bakal                          | 0.444444
+ Eat Bakal                           | 0.444444
+ Gunung Bakal                        | 0.444444
+ Sidi Bakal                          | 0.444444
+ Stantsiya Bakal                     | 0.444444
+ Sungai Bakal                        | 0.444444
+ Talang Bakal                        | 0.444444
+ Uruk Bakal                          | 0.444444
+ Zaouia Oulad Bakal                  | 0.444444
+ Baykalovskiy                        | 0.428571
+ Baykalovskiy Rayon                  | 0.428571
+ Baikal                              |      0.4
+ Baikal Airfield                     |      0.4
+ Baikal Business Centre              |      0.4
+ Baikal Hotel Moscow                 |      0.4
+ Baikal Listvyanka Hotel             |      0.4
+ Baikal Mountains                    |      0.4
+ Baikal Plaza                        |      0.4
+ Bajkal                              |      0.4
+ Bankal                              |      0.4
+ Bankal School                       |      0.4
+ Barkal                              |      0.4
+ Jabal Barkal                        |      0.4
+ Lake Baikal                         |      0.4
+ Oulad el Bakkal                     |      0.4
+ Sidi Mohammed Bakkal                |      0.4
+(54 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where t %>> 'Kabankala' order by sml desc, t;
+              t               |   sml    
+------------------------------+----------
+ Kabankala                    |        1
+ Kabankalan City Public Plaza |     0.75
+ Abankala                     | 0.583333
+ Kabakala                     | 0.583333
+ Kabikala                     | 0.461538
+(5 rows)
+
+set "pg_trgm.strict_word_similarity_threshold" to 0.2;
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where 'Baykal' <<% t order by sml desc, t;
+                             t                             |   sml    
+-----------------------------------------------------------+----------
+ Baykal                                                    |        1
+ Boloto Baykal                                             |        1
+ Boloto Malyy Baykal                                       |        1
+ Kolkhoz Krasnyy Baykal                                    |        1
+ Ozero Baykal                                              |        1
+ Polevoy Stan Baykal                                       |        1
+ Port Baykal                                               |        1
+ Prud Novyy Baykal                                         |        1
+ Sanatoriy Baykal                                          |        1
+ Stantsiya Baykal                                          |        1
+ Zaliv Baykal                                              |        1
+ Baykalo-Amurskaya Zheleznaya Doroga                       | 0.666667
+ Baykalovo                                                 | 0.545455
+ Baykalsko                                                 | 0.545455
+ Maloye Baykalovo                                          | 0.545455
+ Baykalikha                                                |      0.5
+ Baykalovsk                                                |      0.5
+ Zabaykal                                                  | 0.454545
+ Air Bakal-kecil                                           | 0.444444
+ Bakal                                                     | 0.444444
+ Bakal Batu                                                | 0.444444
+ Bakal Dos                                                 | 0.444444
+ Bakal Julu                                                | 0.444444
+ Bakal Khel                                                | 0.444444
+ Bakal Lama                                                | 0.444444
+ Bakal Tres                                                | 0.444444
+ Bakal Uno                                                 | 0.444444
+ Daang Bakal                                               | 0.444444
+ Desa Bakal                                                | 0.444444
+ Eat Bakal                                                 | 0.444444
+ Gunung Bakal                                              | 0.444444
+ Sidi Bakal                                                | 0.444444
+ Stantsiya Bakal                                           | 0.444444
+ Sungai Bakal                                              | 0.444444
+ Talang Bakal                                              | 0.444444
+ Uruk Bakal                                                | 0.444444
+ Zaouia Oulad Bakal                                        | 0.444444
+ Baykalovskiy                                              | 0.428571
+ Baykalovskiy Rayon                                        | 0.428571
+ Baikal                                                    |      0.4
+ Baikal Airfield                                           |      0.4
+ Baikal Business Centre                                    |      0.4
+ Baikal Hotel Moscow                                       |      0.4
+ Baikal Listvyanka Hotel                                   |      0.4
+ Baikal Mountains                                          |      0.4
+ Baikal Plaza                                              |      0.4
+ Bajkal                                                    |      0.4
+ Bankal                                                    |      0.4
+ Bankal School                                             |      0.4
+ Barkal                                                    |      0.4
+ Jabal Barkal                                              |      0.4
+ Lake Baikal                                               |      0.4
+ Oulad el Bakkal                                           |      0.4
+ Sidi Mohammed Bakkal                                      |      0.4
+ Bay of Backaland                                          |    0.375
+ Boikalakalawa Bay                                         |    0.375
+ Waikalabubu Bay                                           |    0.375
+ Bairkal                                                   | 0.363636
+ Bairkal Dhora                                             | 0.363636
+ Bairkal Jabal                                             | 0.363636
+ Batikal                                                   | 0.363636
+ Bakaleyka                                                 | 0.307692
+ Bakkalmal                                                 | 0.307692
+ Bikal                                                     |      0.3
+ Al Barkali                                                | 0.285714
+ Zabaykalka                                                | 0.285714
+ Baidal                                                    | 0.272727
+ Baihal                                                    | 0.272727
+ Baipal                                                    | 0.272727
+ Bakala                                                    | 0.272727
+ Bakala Koupi                                              | 0.272727
+ Bakale                                                    | 0.272727
+ Bakali                                                    | 0.272727
+ Bakall                                                    | 0.272727
+ Bakaly                                                    | 0.272727
+ Bakaly TV Mast                                            | 0.272727
+ Buur Bakale                                               | 0.272727
+ Gory Bakaly                                               | 0.272727
+ Kusu-Bakali                                               | 0.272727
+ Kwala Bakala                                              | 0.272727
+ Mbay Bakala                                               | 0.272727
+ Ngao Bakala                                               | 0.272727
+ Sidi Mohammed el Bakali                                   | 0.272727
+ Sopka Bakaly                                              | 0.272727
+ Sungai Bakala                                             | 0.272727
+ Urochishche Bakaly                                        | 0.272727
+ Alue Bakkala                                              |     0.25
+ Azib el Bakkali                                           |     0.25
+ Ba Kaliin                                                 |     0.25
+ Baikaluobbal                                              |     0.25
+ Bakalam                                                   |     0.25
+ Bakalan                                                   |     0.25
+ Bakalan Barat                                             |     0.25
+ Bakalan Dua                                               |     0.25
+ Bakalan Kidul                                             |     0.25
+ Bakalan Kulon                                             |     0.25
+ Bakalan Lor                                               |     0.25
+ Bakalan River                                             |     0.25
+ Bakalan Tengah                                            |     0.25
+ Bakalan Wetan                                             |     0.25
+ Bakalao Asibi Point                                       |     0.25
+ Bakalao Point                                             |     0.25
+ Bakalar Air Force Base (historical)                       |     0.25
+ Bakalar Lake                                              |     0.25
+ Bakalar Library                                           |     0.25
+ Bakalda                                                   |     0.25
+ Bakaldy                                                   |     0.25
+ Bakaley                                                   |     0.25
+ Bakalha                                                   |     0.25
+ Bakalia Char                                              |     0.25
+ Bakalka                                                   |     0.25
+ Bakalod Island                                            |     0.25
+ Bakalou                                                   |     0.25
+ Bakalua                                                   |     0.25
+ Bakalum                                                   |     0.25
+ Bakkala Cemetery                                          |     0.25
+ Bankali                                                   |     0.25
+ Barkala                                                   |     0.25
+ Barkala Park                                              |     0.25
+ Barkala Rao                                               |     0.25
+ Barkala Reserved Forest                                   |     0.25
+ Barkald                                                   |     0.25
+ Barkald stasjon                                           |     0.25
+ Barkale                                                   |     0.25
+ Barkali                                                   |     0.25
+ Baukala                                                   |     0.25
+ Buur Bakaley                                              |     0.25
+ Columbus Bakalar Municipal Airport                        |     0.25
+ Dakshin Bakalia                                           |     0.25
+ Danau Bakalan                                             |     0.25
+ Desa Bakalan                                              |     0.25
+ Gunung Bakalan                                            |     0.25
+ Kali Bakalan                                              |     0.25
+ Khrebet Batkali                                           |     0.25
+ Kordon Barkalo                                            |     0.25
+ Krajan Bakalan                                            |     0.25
+ Ovrag Bakalda                                             |     0.25
+ Pulau Bakalan                                             |     0.25
+ Selat Bakalan                                             |     0.25
+ Teluk Bakalan                                             |     0.25
+ Tukad Bakalan                                             |     0.25
+ Urochishche Batkali                                       |     0.25
+ Babakale                                                  | 0.230769
+ Babakalo                                                  | 0.230769
+ Bagkalen                                                  | 0.230769
+ Bakalalan Airport                                         | 0.230769
+ Bakalang                                                  | 0.230769
+ Bakalarr                                                  | 0.230769
+ Bakalawa                                                  | 0.230769
+ Bakaldum                                                  | 0.230769
+ Bakaleko                                                  | 0.230769
+ Bakalica                                                  | 0.230769
+ Bakalino                                                  | 0.230769
+ Bakalite                                                  | 0.230769
+ Bakalovo                                                  | 0.230769
+ Bakalsen                                                  | 0.230769
+ Bakaltua Bank                                             | 0.230769
+ Bakalukalu                                                | 0.230769
+ Bakalukalu Shan                                           | 0.230769
+ Bakkalia                                                  | 0.230769
+ Bankalol                                                  | 0.230769
+ Barkaleh                                                  | 0.230769
+ Barkalne                                                  | 0.230769
+ Barkalow Hollow                                           | 0.230769
+ Bawkalut                                                  | 0.230769
+ Bawkalut Chaung                                           | 0.230769
+ Clifton T Barkalow Elementary School                      | 0.230769
+ Efrejtor Bakalovo                                         | 0.230769
+ Efreytor-Bakalovo                                         | 0.230769
+ Gora Barkalyu                                             | 0.230769
+ Ile Bakalibu                                              | 0.230769
+ Khor Bakallii                                             | 0.230769
+ Nehalla Bankalah Reserved Forest                          | 0.230769
+ Ragha Bakalzai                                            | 0.230769
+ Tanjung Batikala                                          | 0.230769
+ Teluk Bakalang                                            | 0.230769
+ Urochishche Bakalovo                                      | 0.230769
+ Banjar Kubakal                                            | 0.222222
+ Darreh Pumba Kal                                          | 0.222222
+ Zabaykalovskiy                                            | 0.222222
+ Aparthotel Adagio Premium Dubai Al Barsha                 | 0.214286
+ Babakalia                                                 | 0.214286
+ Bahkalleh                                                 | 0.214286
+ Baikalovo                                                 | 0.214286
+ Bakalaale                                                 | 0.214286
+ Bakalabwa Pans                                            | 0.214286
+ Bakalaeng                                                 | 0.214286
+ Bakalauri                                                 | 0.214286
+ Bakalbhar                                                 | 0.214286
+ Bakalbuah                                                 | 0.214286
+ Bakalerek                                                 | 0.214286
+ Bakalinga                                                 | 0.214286
+ Bakalipur                                                 | 0.214286
+ Bakaljaya                                                 | 0.214286
+ Bakalnica                                                 | 0.214286
+ Bakalongo                                                 | 0.214286
+ Bakalovka                                                 | 0.214286
+ Bakalrejo                                                 | 0.214286
+ Bakkalale                                                 | 0.214286
+ Bambakala                                                 | 0.214286
+ Bambakalo                                                 | 0.214286
+ Barkalare                                                 | 0.214286
+ Barkalden                                                 | 0.214286
+ Barkallou                                                 | 0.214286
+ Barkalova                                                 | 0.214286
+ Baskalino                                                 | 0.214286
+ Baskaltsi                                                 | 0.214286
+ Desa Bakalrejo                                            | 0.214286
+ Doubletree By Hilton Dubai Al Barsha Hotel and Res        | 0.214286
+ Doubletree By Hilton Hotel and Apartments Dubai Al Barsha | 0.214286
+ Doubletree Res.Dubai-Al Barsha                            | 0.214286
+ Gora Barkalova                                            | 0.214286
+ Holiday Inn Dubai Al Barsha                               | 0.214286
+ Novotel Dubai Al Barsha                                   | 0.214286
+ Park Inn By Radisson Dubai Al Barsha                      | 0.214286
+ Ramee Rose Hotel Dubai Al Barsha                          | 0.214286
+ Ras Barkallah                                             | 0.214286
+ Salu Bakalaeng                                            | 0.214286
+ Tanjung Bakalinga                                         | 0.214286
+ Tubu Bakalekuk                                            | 0.214286
+ Baikalakko                                                |      0.2
+ Bakalauri1                                                |      0.2
+ Bakalauri2                                                |      0.2
+ Bakalauri3                                                |      0.2
+ Bakalauri4                                                |      0.2
+ Bakalauri5                                                |      0.2
+ Bakalauri6                                                |      0.2
+ Bakalauri7                                                |      0.2
+ Bakalauri8                                                |      0.2
+ Bakalauri9                                                |      0.2
+ Bakaldalam                                                |      0.2
+ Bakaldukuh                                                |      0.2
+ Bakaloolay                                                |      0.2
+ Bakalovina                                                |      0.2
+ Bakalpokok                                                |      0.2
+ Bakalshile                                                |      0.2
+ Bakalukudu                                                |      0.2
+ Bambakalia                                                |      0.2
+ Barkaladja Pool                                           |      0.2
+ Barkalovka                                                |      0.2
+ Bavkalasis                                                |      0.2
+ Gora Bakalyadyr                                           |      0.2
+ Kampong Bakaladong                                        |      0.2
+ Urochishche Bakalarnyn-Ayasy                              |      0.2
+ Urochishche Bakaldikha                                    |      0.2
+(245 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where 'Kabankala' <<% t order by sml desc, t;
+                t                 |   sml    
+----------------------------------+----------
+ Kabankala                        |        1
+ Kabankalan City Public Plaza     |     0.75
+ Abankala                         | 0.583333
+ Kabakala                         | 0.583333
+ Kabikala                         | 0.461538
+ Ntombankala School               |    0.375
+ Nehalla Bankalah Reserved Forest | 0.357143
+ Jabba Kalai                      | 0.333333
+ Kambakala                        | 0.333333
+ Ker Samba Kalla                  | 0.333333
+ Bankal                           | 0.307692
+ Bankal School                    | 0.307692
+ Kanampumba-Kalawa                | 0.307692
+ Bankali                          | 0.285714
+ Mwalaba-Kalamba                  | 0.285714
+ Tumba-Kalamba                    | 0.285714
+ Darreh Pumba Kal                 | 0.272727
+ Bankalol                         | 0.266667
+ Dabakala                         | 0.266667
+ Purba Kalaujan                   | 0.266667
+ Kali Purbakala                   | 0.263158
+ Dalabakala                       |     0.25
+ Demba Kali                       |     0.25
+ Gagaba Kalo                      |     0.25
+ Golba Kalo                       |     0.25
+ Habakkala                        |     0.25
+ Kali Bakalan                     |     0.25
+ Kimbakala                        |     0.25
+ Kombakala                        |     0.25
+ Jaba Kalle                       | 0.235294
+ Kaikalahun Indian Reserve 25     | 0.235294
+ Kwala Bakala                     | 0.235294
+ Gereba Kaler                     | 0.230769
+ Goth Soba Kaloi                  | 0.230769
+ Guba Kaldo                       | 0.230769
+ Gulba Kalle                      | 0.230769
+ Guba Kalgalaksha                 | 0.222222
+ Kalibakalako                     | 0.222222
+ Ba Kaliin                        | 0.214286
+ Bakala                           | 0.214286
+ Bakala Koupi                     | 0.214286
+ Bikala                           | 0.214286
+ Bikala Madila                    | 0.214286
+ Bugor Arba-Kalgan                | 0.214286
+ Bumba-Kaloki                     | 0.214286
+ Guba Kalita                      | 0.214286
+ Kamba-Kalele                     | 0.214286
+ Mbay Bakala                      | 0.214286
+ Ngao Bakala                      | 0.214286
+ Sungai Bakala                    | 0.214286
+ Fayzabadkala                     | 0.210526
+ Gora Fayzabadkala                | 0.210526
+ Alue Bakkala                     |      0.2
+ Bakkala Cemetery                 |      0.2
+ Barkala                          |      0.2
+ Barkala Park                     |      0.2
+ Barkala Rao                      |      0.2
+ Barkala Reserved Forest          |      0.2
+ Baukala                          |      0.2
+ Beikala                          |      0.2
+ Bomba-Kalende                    |      0.2
+ Bumba-Kalumba                    |      0.2
+ Haikala                          |      0.2
+ Kahambikalela                    |      0.2
+ Kaikalapettai                    |      0.2
+ Kaikale                          |      0.2
+ Laikala                          |      0.2
+ Maikala Range                    |      0.2
+ Matamba-Kalenga                  |      0.2
+ Matamba-Kalenge                  |      0.2
+ Naikala                          |      0.2
+ Tumba-Kalumba                    |      0.2
+ Tumba-Kalunga                    |      0.2
+ Waikala                          |      0.2
+(74 rows)
+
+select t,strict_word_similarity('Baykal',t) as sml from test_trgm2 where t %>> 'Baykal' order by sml desc, t;
+                             t                             |   sml    
+-----------------------------------------------------------+----------
+ Baykal                                                    |        1
+ Boloto Baykal                                             |        1
+ Boloto Malyy Baykal                                       |        1
+ Kolkhoz Krasnyy Baykal                                    |        1
+ Ozero Baykal                                              |        1
+ Polevoy Stan Baykal                                       |        1
+ Port Baykal                                               |        1
+ Prud Novyy Baykal                                         |        1
+ Sanatoriy Baykal                                          |        1
+ Stantsiya Baykal                                          |        1
+ Zaliv Baykal                                              |        1
+ Baykalo-Amurskaya Zheleznaya Doroga                       | 0.666667
+ Baykalovo                                                 | 0.545455
+ Baykalsko                                                 | 0.545455
+ Maloye Baykalovo                                          | 0.545455
+ Baykalikha                                                |      0.5
+ Baykalovsk                                                |      0.5
+ Zabaykal                                                  | 0.454545
+ Air Bakal-kecil                                           | 0.444444
+ Bakal                                                     | 0.444444
+ Bakal Batu                                                | 0.444444
+ Bakal Dos                                                 | 0.444444
+ Bakal Julu                                                | 0.444444
+ Bakal Khel                                                | 0.444444
+ Bakal Lama                                                | 0.444444
+ Bakal Tres                                                | 0.444444
+ Bakal Uno                                                 | 0.444444
+ Daang Bakal                                               | 0.444444
+ Desa Bakal                                                | 0.444444
+ Eat Bakal                                                 | 0.444444
+ Gunung Bakal                                              | 0.444444
+ Sidi Bakal                                                | 0.444444
+ Stantsiya Bakal                                           | 0.444444
+ Sungai Bakal                                              | 0.444444
+ Talang Bakal                                              | 0.444444
+ Uruk Bakal                                                | 0.444444
+ Zaouia Oulad Bakal                                        | 0.444444
+ Baykalovskiy                                              | 0.428571
+ Baykalovskiy Rayon                                        | 0.428571
+ Baikal                                                    |      0.4
+ Baikal Airfield                                           |      0.4
+ Baikal Business Centre                                    |      0.4
+ Baikal Hotel Moscow                                       |      0.4
+ Baikal Listvyanka Hotel                                   |      0.4
+ Baikal Mountains                                          |      0.4
+ Baikal Plaza                                              |      0.4
+ Bajkal                                                    |      0.4
+ Bankal                                                    |      0.4
+ Bankal School                                             |      0.4
+ Barkal                                                    |      0.4
+ Jabal Barkal                                              |      0.4
+ Lake Baikal                                               |      0.4
+ Oulad el Bakkal                                           |      0.4
+ Sidi Mohammed Bakkal                                      |      0.4
+ Bay of Backaland                                          |    0.375
+ Boikalakalawa Bay                                         |    0.375
+ Waikalabubu Bay                                           |    0.375
+ Bairkal                                                   | 0.363636
+ Bairkal Dhora                                             | 0.363636
+ Bairkal Jabal                                             | 0.363636
+ Batikal                                                   | 0.363636
+ Bakaleyka                                                 | 0.307692
+ Bakkalmal                                                 | 0.307692
+ Bikal                                                     |      0.3
+ Al Barkali                                                | 0.285714
+ Zabaykalka                                                | 0.285714
+ Baidal                                                    | 0.272727
+ Baihal                                                    | 0.272727
+ Baipal                                                    | 0.272727
+ Bakala                                                    | 0.272727
+ Bakala Koupi                                              | 0.272727
+ Bakale                                                    | 0.272727
+ Bakali                                                    | 0.272727
+ Bakall                                                    | 0.272727
+ Bakaly                                                    | 0.272727
+ Bakaly TV Mast                                            | 0.272727
+ Buur Bakale                                               | 0.272727
+ Gory Bakaly                                               | 0.272727
+ Kusu-Bakali                                               | 0.272727
+ Kwala Bakala                                              | 0.272727
+ Mbay Bakala                                               | 0.272727
+ Ngao Bakala                                               | 0.272727
+ Sidi Mohammed el Bakali                                   | 0.272727
+ Sopka Bakaly                                              | 0.272727
+ Sungai Bakala                                             | 0.272727
+ Urochishche Bakaly                                        | 0.272727
+ Alue Bakkala                                              |     0.25
+ Azib el Bakkali                                           |     0.25
+ Ba Kaliin                                                 |     0.25
+ Baikaluobbal                                              |     0.25
+ Bakalam                                                   |     0.25
+ Bakalan                                                   |     0.25
+ Bakalan Barat                                             |     0.25
+ Bakalan Dua                                               |     0.25
+ Bakalan Kidul                                             |     0.25
+ Bakalan Kulon                                             |     0.25
+ Bakalan Lor                                               |     0.25
+ Bakalan River                                             |     0.25
+ Bakalan Tengah                                            |     0.25
+ Bakalan Wetan                                             |     0.25
+ Bakalao Asibi Point                                       |     0.25
+ Bakalao Point                                             |     0.25
+ Bakalar Air Force Base (historical)                       |     0.25
+ Bakalar Lake                                              |     0.25
+ Bakalar Library                                           |     0.25
+ Bakalda                                                   |     0.25
+ Bakaldy                                                   |     0.25
+ Bakaley                                                   |     0.25
+ Bakalha                                                   |     0.25
+ Bakalia Char                                              |     0.25
+ Bakalka                                                   |     0.25
+ Bakalod Island                                            |     0.25
+ Bakalou                                                   |     0.25
+ Bakalua                                                   |     0.25
+ Bakalum                                                   |     0.25
+ Bakkala Cemetery                                          |     0.25
+ Bankali                                                   |     0.25
+ Barkala                                                   |     0.25
+ Barkala Park                                              |     0.25
+ Barkala Rao                                               |     0.25
+ Barkala Reserved Forest                                   |     0.25
+ Barkald                                                   |     0.25
+ Barkald stasjon                                           |     0.25
+ Barkale                                                   |     0.25
+ Barkali                                                   |     0.25
+ Baukala                                                   |     0.25
+ Buur Bakaley                                              |     0.25
+ Columbus Bakalar Municipal Airport                        |     0.25
+ Dakshin Bakalia                                           |     0.25
+ Danau Bakalan                                             |     0.25
+ Desa Bakalan                                              |     0.25
+ Gunung Bakalan                                            |     0.25
+ Kali Bakalan                                              |     0.25
+ Khrebet Batkali                                           |     0.25
+ Kordon Barkalo                                            |     0.25
+ Krajan Bakalan                                            |     0.25
+ Ovrag Bakalda                                             |     0.25
+ Pulau Bakalan                                             |     0.25
+ Selat Bakalan                                             |     0.25
+ Teluk Bakalan                                             |     0.25
+ Tukad Bakalan                                             |     0.25
+ Urochishche Batkali                                       |     0.25
+ Babakale                                                  | 0.230769
+ Babakalo                                                  | 0.230769
+ Bagkalen                                                  | 0.230769
+ Bakalalan Airport                                         | 0.230769
+ Bakalang                                                  | 0.230769
+ Bakalarr                                                  | 0.230769
+ Bakalawa                                                  | 0.230769
+ Bakaldum                                                  | 0.230769
+ Bakaleko                                                  | 0.230769
+ Bakalica                                                  | 0.230769
+ Bakalino                                                  | 0.230769
+ Bakalite                                                  | 0.230769
+ Bakalovo                                                  | 0.230769
+ Bakalsen                                                  | 0.230769
+ Bakaltua Bank                                             | 0.230769
+ Bakalukalu                                                | 0.230769
+ Bakalukalu Shan                                           | 0.230769
+ Bakkalia                                                  | 0.230769
+ Bankalol                                                  | 0.230769
+ Barkaleh                                                  | 0.230769
+ Barkalne                                                  | 0.230769
+ Barkalow Hollow                                           | 0.230769
+ Bawkalut                                                  | 0.230769
+ Bawkalut Chaung                                           | 0.230769
+ Clifton T Barkalow Elementary School                      | 0.230769
+ Efrejtor Bakalovo                                         | 0.230769
+ Efreytor-Bakalovo                                         | 0.230769
+ Gora Barkalyu                                             | 0.230769
+ Ile Bakalibu                                              | 0.230769
+ Khor Bakallii                                             | 0.230769
+ Nehalla Bankalah Reserved Forest                          | 0.230769
+ Ragha Bakalzai                                            | 0.230769
+ Tanjung Batikala                                          | 0.230769
+ Teluk Bakalang                                            | 0.230769
+ Urochishche Bakalovo                                      | 0.230769
+ Banjar Kubakal                                            | 0.222222
+ Darreh Pumba Kal                                          | 0.222222
+ Zabaykalovskiy                                            | 0.222222
+ Aparthotel Adagio Premium Dubai Al Barsha                 | 0.214286
+ Babakalia                                                 | 0.214286
+ Bahkalleh                                                 | 0.214286
+ Baikalovo                                                 | 0.214286
+ Bakalaale                                                 | 0.214286
+ Bakalabwa Pans                                            | 0.214286
+ Bakalaeng                                                 | 0.214286
+ Bakalauri                                                 | 0.214286
+ Bakalbhar                                                 | 0.214286
+ Bakalbuah                                                 | 0.214286
+ Bakalerek                                                 | 0.214286
+ Bakalinga                                                 | 0.214286
+ Bakalipur                                                 | 0.214286
+ Bakaljaya                                                 | 0.214286
+ Bakalnica                                                 | 0.214286
+ Bakalongo                                                 | 0.214286
+ Bakalovka                                                 | 0.214286
+ Bakalrejo                                                 | 0.214286
+ Bakkalale                                                 | 0.214286
+ Bambakala                                                 | 0.214286
+ Bambakalo                                                 | 0.214286
+ Barkalare                                                 | 0.214286
+ Barkalden                                                 | 0.214286
+ Barkallou                                                 | 0.214286
+ Barkalova                                                 | 0.214286
+ Baskalino                                                 | 0.214286
+ Baskaltsi                                                 | 0.214286
+ Desa Bakalrejo                                            | 0.214286
+ Doubletree By Hilton Dubai Al Barsha Hotel and Res        | 0.214286
+ Doubletree By Hilton Hotel and Apartments Dubai Al Barsha | 0.214286
+ Doubletree Res.Dubai-Al Barsha                            | 0.214286
+ Gora Barkalova                                            | 0.214286
+ Holiday Inn Dubai Al Barsha                               | 0.214286
+ Novotel Dubai Al Barsha                                   | 0.214286
+ Park Inn By Radisson Dubai Al Barsha                      | 0.214286
+ Ramee Rose Hotel Dubai Al Barsha                          | 0.214286
+ Ras Barkallah                                             | 0.214286
+ Salu Bakalaeng                                            | 0.214286
+ Tanjung Bakalinga                                         | 0.214286
+ Tubu Bakalekuk                                            | 0.214286
+ Baikalakko                                                |      0.2
+ Bakalauri1                                                |      0.2
+ Bakalauri2                                                |      0.2
+ Bakalauri3                                                |      0.2
+ Bakalauri4                                                |      0.2
+ Bakalauri5                                                |      0.2
+ Bakalauri6                                                |      0.2
+ Bakalauri7                                                |      0.2
+ Bakalauri8                                                |      0.2
+ Bakalauri9                                                |      0.2
+ Bakaldalam                                                |      0.2
+ Bakaldukuh                                                |      0.2
+ Bakaloolay                                                |      0.2
+ Bakalovina                                                |      0.2
+ Bakalpokok                                                |      0.2
+ Bakalshile                                                |      0.2
+ Bakalukudu                                                |      0.2
+ Bambakalia                                                |      0.2
+ Barkaladja Pool                                           |      0.2
+ Barkalovka                                                |      0.2
+ Bavkalasis                                                |      0.2
+ Gora Bakalyadyr                                           |      0.2
+ Kampong Bakaladong                                        |      0.2
+ Urochishche Bakalarnyn-Ayasy                              |      0.2
+ Urochishche Bakaldikha                                    |      0.2
+(245 rows)
+
+select t,strict_word_similarity('Kabankala',t) as sml from test_trgm2 where t %>> 'Kabankala' order by sml desc, t;
+                t                 |   sml    
+----------------------------------+----------
+ Kabankala                        |        1
+ Kabankalan City Public Plaza     |     0.75
+ Abankala                         | 0.583333
+ Kabakala                         | 0.583333
+ Kabikala                         | 0.461538
+ Ntombankala School               |    0.375
+ Nehalla Bankalah Reserved Forest | 0.357143
+ Jabba Kalai                      | 0.333333
+ Kambakala                        | 0.333333
+ Ker Samba Kalla                  | 0.333333
+ Bankal                           | 0.307692
+ Bankal School                    | 0.307692
+ Kanampumba-Kalawa                | 0.307692
+ Bankali                          | 0.285714
+ Mwalaba-Kalamba                  | 0.285714
+ Tumba-Kalamba                    | 0.285714
+ Darreh Pumba Kal                 | 0.272727
+ Bankalol                         | 0.266667
+ Dabakala                         | 0.266667
+ Purba Kalaujan                   | 0.266667
+ Kali Purbakala                   | 0.263158
+ Dalabakala                       |     0.25
+ Demba Kali                       |     0.25
+ Gagaba Kalo                      |     0.25
+ Golba Kalo                       |     0.25
+ Habakkala                        |     0.25
+ Kali Bakalan                     |     0.25
+ Kimbakala                        |     0.25
+ Kombakala                        |     0.25
+ Jaba Kalle                       | 0.235294
+ Kaikalahun Indian Reserve 25     | 0.235294
+ Kwala Bakala                     | 0.235294
+ Gereba Kaler                     | 0.230769
+ Goth Soba Kaloi                  | 0.230769
+ Guba Kaldo                       | 0.230769
+ Gulba Kalle                      | 0.230769
+ Guba Kalgalaksha                 | 0.222222
+ Kalibakalako                     | 0.222222
+ Ba Kaliin                        | 0.214286
+ Bakala                           | 0.214286
+ Bakala Koupi                     | 0.214286
+ Bikala                           | 0.214286
+ Bikala Madila                    | 0.214286
+ Bugor Arba-Kalgan                | 0.214286
+ Bumba-Kaloki                     | 0.214286
+ Guba Kalita                      | 0.214286
+ Kamba-Kalele                     | 0.214286
+ Mbay Bakala                      | 0.214286
+ Ngao Bakala                      | 0.214286
+ Sungai Bakala                    | 0.214286
+ Fayzabadkala                     | 0.210526
+ Gora Fayzabadkala                | 0.210526
+ Alue Bakkala                     |      0.2
+ Bakkala Cemetery                 |      0.2
+ Barkala                          |      0.2
+ Barkala Park                     |      0.2
+ Barkala Rao                      |      0.2
+ Barkala Reserved Forest          |      0.2
+ Baukala                          |      0.2
+ Beikala                          |      0.2
+ Bomba-Kalende                    |      0.2
+ Bumba-Kalumba                    |      0.2
+ Haikala                          |      0.2
+ Kahambikalela                    |      0.2
+ Kaikalapettai                    |      0.2
+ Kaikale                          |      0.2
+ Laikala                          |      0.2
+ Maikala Range                    |      0.2
+ Matamba-Kalenga                  |      0.2
+ Matamba-Kalenge                  |      0.2
+ Naikala                          |      0.2
+ Tumba-Kalumba                    |      0.2
+ Tumba-Kalunga                    |      0.2
+ Waikala                          |      0.2
+(74 rows)
+
