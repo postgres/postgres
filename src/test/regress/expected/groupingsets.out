@@ -1018,6 +1018,18 @@ explain (costs off)
          ->  Values Scan on "*VALUES*"
 (9 rows)
 
+-- unsortable cases
+select unsortable_col, count(*)
+  from gstest4 group by grouping sets ((unsortable_col),(unsortable_col))
+  order by unsortable_col::text;
+ unsortable_col | count 
+----------------+-------
+              1 |     4
+              1 |     4
+              2 |     4
+              2 |     4
+(4 rows)
+
 -- mixed hashable/sortable cases
 select unhashable_col, unsortable_col,
        grouping(unhashable_col, unsortable_col),
