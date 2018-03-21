@@ -1773,7 +1773,8 @@ heap_drop_with_catalog(Oid relid)
 	 * could attempt to access the just-dropped relation as its partition. We
 	 * must therefore take a table lock strong enough to prevent all queries
 	 * on the table from proceeding until we commit and send out a
-	 * shared-cache-inval notice that will make them update their index lists.
+	 * shared-cache-inval notice that will make them update their partition
+	 * descriptors.
 	 */
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
@@ -3251,6 +3252,9 @@ RemovePartitionKeyByRelId(Oid relid)
  *		Update pg_class tuple of rel to store the partition bound and set
  *		relispartition to true
  *
+ * If this is the default partition, also update the default partition OID in
+ * pg_partitioned_table.
+ *
  * Also, invalidate the parent's relcache, so that the next rebuild will load
  * the new partition's info into its partition descriptor.  If there is a
  * default partition, we must invalidate its relcache entry as well.
@@ -3302,7 +3306,15 @@ StorePartitionBound(Relation rel, Relation parent, PartitionBoundSpec *bound)
 	heap_freetuple(newtuple);
 	heap_close(classRel, RowExclusiveLock);
 
-	/* Make update visible */
+	/*
+	 * If we're storing bounds for the default partition, update
+	 * pg_partitioned_table too.
+	 */
+	if (bound->is_default)
+		update_default_partition_oid(RelationGetRelid(parent),
+									 RelationGetRelid(rel));
+
+	/* Make these updates visible */
 	CommandCounterIncrement();
 
 	/*

@@ -860,10 +860,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		/* Update the pg_class entry. */
 		StorePartitionBound(rel, parent, bound);
 
-		/* Update the default partition oid */
-		if (bound->is_default)
-			update_default_partition_oid(RelationGetRelid(parent), relationId);
-
 		heap_close(parent, NoLock);
 	}
 
@@ -14021,11 +14017,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	/* OK to create inheritance.  Rest of the checks performed there */
 	CreateInheritance(attachrel, rel);
 
-	/* Update the default partition oid */
-	if (cmd->bound->is_default)
-		update_default_partition_oid(RelationGetRelid(rel),
-									 RelationGetRelid(attachrel));
-
 	/*
 	 * Check that the new partition's bound is valid and does not overlap any
 	 * of existing partitions of the parent - note that it does not return on
@@ -14286,7 +14277,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 
 	/*
 	 * We must lock the default partition, because detaching this partition
-	 * will changing its partition constrant.
+	 * will change its partition constraint.
 	 */
 	defaultPartOid =
 		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel));
@@ -14329,19 +14320,17 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	if (OidIsValid(defaultPartOid))
 	{
 		/*
-		 * If the detach relation is the default partition itself, invalidate
-		 * its entry in pg_partitioned_table.
+		 * If the relation being detached is the default partition itself,
+		 * remove it from the parent's pg_partitioned_table entry.
+		 *
+		 * If not, we must invalidate default partition's relcache entry, as
+		 * in StorePartitionBound: its partition constraint depends on every
+		 * other partition's partition constraint.
 		 */
 		if (RelationGetRelid(partRel) == defaultPartOid)
 			update_default_partition_oid(RelationGetRelid(rel), InvalidOid);
 		else
-		{
-			/*
-			 * We must invalidate default partition's relcache, for the same
-			 * reasons explained in StorePartitionBound().
-			 */
 			CacheInvalidateRelcacheByRelid(defaultPartOid);
-		}
 	}
 
 	/* detach indexes too */

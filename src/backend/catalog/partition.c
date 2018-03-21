@@ -227,13 +227,6 @@ RelationBuildPartitionDesc(Relation rel)
 	/* Range partitioning specific */
 	PartitionRangeBound **rbounds = NULL;
 
-	/*
-	 * The following could happen in situations where rel has a pg_class entry
-	 * but not the pg_partitioned_table entry yet.
-	 */
-	if (key == NULL)
-		return;
-
 	/* Get partition oids from pg_inherits */
 	inhoids = find_inheritance_children(RelationGetRelid(rel), NoLock);
 
