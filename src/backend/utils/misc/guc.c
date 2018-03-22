@@ -7607,6 +7607,15 @@ init_custom_variable(const char *name,
 		elog(FATAL, "cannot create PGC_POSTMASTER variables after startup");
 
 	/*
+	 * We can't support custom GUC_LIST_QUOTE variables, because the wrong
+	 * things would happen if such a variable were set or pg_dump'd when the
+	 * defining extension isn't loaded.  Again, treat this as fatal because
+	 * the loadable module may be partly initialized already.
+	 */
+	if (flags & GUC_LIST_QUOTE)
+		elog(FATAL, "extensions cannot define GUC_LIST_QUOTE variables");
+
+	/*
 	 * Before pljava commit 398f3b876ed402bdaec8bc804f29e2be95c75139
 	 * (2015-12-15), two of that module's PGC_USERSET variables facilitated
 	 * trivial escalation to superuser privileges.  Restrict the variables to
