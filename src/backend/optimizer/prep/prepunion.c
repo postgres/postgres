@@ -299,11 +299,17 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		set_subquery_size_estimates(root, rel);
 
 		/*
+		 * Since we may want to add a partial path to this relation, we must
+		 * set its consider_parallel flag correctly.
+		 */
+		final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
+		rel->consider_parallel = final_rel->consider_parallel;
+
+		/*
 		 * For the moment, we consider only a single Path for the subquery.
 		 * This should change soon (make it look more like
 		 * set_subquery_pathlist).
 		 */
-		final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
 		subpath = get_cheapest_fractional_path(final_rel,
 											   root->tuple_fraction);
 
@@ -319,6 +325,23 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 												 NIL, NULL);
 
 		add_path(rel, path);
+
+		/*
+		 * If we have a partial path for the child relation, we can use that
+		 * to build a partial path for this relation.  But there's no point in
+		 * considering any path but the cheapest.
+		 */
+		if (final_rel->partial_pathlist != NIL)
+		{
+			Path	   *partial_subpath;
+			Path	   *partial_path;
+
+			partial_subpath = linitial(final_rel->partial_pathlist);
+			partial_path = (Path *)
+				create_subqueryscan_path(root, rel, partial_subpath,
+										 NIL, NULL);
+			add_partial_path(rel, partial_path);
+		}
 
 		/*
 		 * Estimate number of groups if caller wants it.  If the subquery used
@@ -552,6 +575,9 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	double		save_fraction = root->tuple_fraction;
 	ListCell   *lc;
 	List	   *pathlist = NIL;
+	List	   *partial_pathlist = NIL;
+	bool		partial_paths_valid = true;
+	bool		consider_parallel = true;
 	List	   *rellist;
 	List	   *tlist_list;
 	List	   *tlist;
@@ -591,18 +617,34 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 
 	*pTargetList = tlist;
 
-	/* Build path list and relid set. */
+	/* Build path lists and relid set. */
 	foreach(lc, rellist)
 	{
 		RelOptInfo *rel = lfirst(lc);
 
 		pathlist = lappend(pathlist, rel->cheapest_total_path);
+
+		if (consider_parallel)
+		{
+			if (!rel->consider_parallel)
+			{
+				consider_parallel = false;
+				partial_paths_valid = false;
+			}
+			else if (rel->partial_pathlist == NIL)
+				partial_paths_valid = false;
+			else
+				partial_pathlist = lappend(partial_pathlist,
+										   linitial(rel->partial_pathlist));
+		}
+
 		relids = bms_union(relids, rel->relids);
 	}
 
 	/* Build result relation. */
 	result_rel = fetch_upper_rel(root, UPPERREL_SETOP, relids);
 	result_rel->reltarget = create_pathtarget(root, tlist);
+	result_rel->consider_parallel = consider_parallel;
 
 	/*
 	 * Append the child results together.
@@ -625,6 +667,53 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	 * estimates anyway.
 	 */
 	result_rel->rows = path->rows;
+
+	/*
+	 * Now consider doing the same thing using the partial paths plus Append
+	 * plus Gather.
+	 */
+	if (partial_paths_valid)
+	{
+		Path	   *ppath;
+		ListCell   *lc;
+		int			parallel_workers = 0;
+
+		/* Find the highest number of workers requested for any subpath. */
+		foreach(lc, partial_pathlist)
+		{
+			Path	   *path = lfirst(lc);
+
+			parallel_workers = Max(parallel_workers, path->parallel_workers);
+		}
+		Assert(parallel_workers > 0);
+
+		/*
+		 * If the use of parallel append is permitted, always request at least
+		 * log2(# of children) paths.  We assume it can be useful to have
+		 * extra workers in this case because they will be spread out across
+		 * the children.  The precise formula is just a guess; see
+		 * add_paths_to_append_rel.
+		 */
+		if (enable_parallel_append)
+		{
+			parallel_workers = Max(parallel_workers,
+								   fls(list_length(partial_pathlist)));
+			parallel_workers = Min(parallel_workers,
+								   max_parallel_workers_per_gather);
+		}
+		Assert(parallel_workers > 0);
+
+		ppath = (Path *)
+			create_append_path(result_rel, NIL, partial_pathlist,
+							   NULL, parallel_workers, enable_parallel_append,
+							   NIL, -1);
+		ppath = (Path *)
+			create_gather_path(root, result_rel, ppath,
+							   result_rel->reltarget, NULL, NULL);
+		if (!op->all)
+			ppath = make_union_unique(op, ppath, tlist, root);
+		add_path(result_rel, ppath);
+	}
 
 	/* Undo effects of possibly forcing tuple_fraction to 0 */
 	root->tuple_fraction = save_fraction;
