@@ -56,4 +56,6 @@ extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 				const char *acl_column, const char *acl_owner,
 				const char *obj_kind, bool binary_upgrade);
 
+extern bool variable_is_guc_list_quote(const char *name);
+
 #endif							/* DUMPUTILS_H */
