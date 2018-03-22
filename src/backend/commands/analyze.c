@@ -1769,6 +1769,12 @@ static void compute_scalar_stats(VacAttrStatsP stats,
 					 double totalrows);
 static int	compare_scalars(const void *a, const void *b, void *arg);
 static int	compare_mcvs(const void *a, const void *b);
+static int analyze_mcv_list(int *mcv_counts,
+				 int num_mcv,
+				 double stadistinct,
+				 double stanullfrac,
+				 int samplerows,
+				 double totalrows);
 
 
 /*
@@ -2187,9 +2193,7 @@ compute_distinct_stats(VacAttrStatsP stats,
 		 * we are able to generate a complete MCV list (all the values in the
 		 * sample will fit, and we think these are all the ones in the table),
 		 * then do so.  Otherwise, store only those values that are
-		 * significantly more common than the (estimated) average. We set the
-		 * threshold rather arbitrarily at 25% more than average, with at
-		 * least 2 instances in the sample.
+		 * significantly more common than the values not in the list.
 		 *
 		 * Note: the first of these cases is meant to address columns with
 		 * small, fixed sets of possible values, such as boolean or enum
@@ -2198,8 +2202,7 @@ compute_distinct_stats(VacAttrStatsP stats,
 		 * so and thus provide the planner with complete information.  But if
 		 * the MCV list is not complete, it's generally worth being more
 		 * selective, and not just filling it all the way up to the stats
-		 * target.  So for an incomplete list, we try to take only MCVs that
-		 * are significantly more common than average.
+		 * target.
 		 */
 		if (track_cnt < track_max && toowide_cnt == 0 &&
 			stats->stadistinct > 0 &&
@@ -2210,28 +2213,22 @@ compute_distinct_stats(VacAttrStatsP stats,
 		}
 		else
 		{
-			double		ndistinct_table = stats->stadistinct;
-			double		avgcount,
-						mincount;
+			int		   *mcv_counts;
 
-			/* Re-extract estimate of # distinct nonnull values in table */
-			if (ndistinct_table < 0)
-				ndistinct_table = -ndistinct_table * totalrows;
-			/* estimate # occurrences in sample of a typical nonnull value */
-			avgcount = (double) nonnull_cnt / ndistinct_table;
-			/* set minimum threshold count to store a value */
-			mincount = avgcount * 1.25;
-			if (mincount < 2)
-				mincount = 2;
+			/* Incomplete list; decide how many values are worth keeping */
 			if (num_mcv > track_cnt)
 				num_mcv = track_cnt;
-			for (i = 0; i < num_mcv; i++)
+
+			if (num_mcv > 0)
 			{
-				if (track[i].count < mincount)
-				{
-					num_mcv = i;
-					break;
-				}
+				mcv_counts = (int *) palloc(num_mcv * sizeof(int));
+				for (i = 0; i < num_mcv; i++)
+					mcv_counts[i] = track[i].count;
+
+				num_mcv = analyze_mcv_list(mcv_counts, num_mcv,
+										   stats->stadistinct,
+										   stats->stanullfrac,
+										   samplerows, totalrows);
 			}
 		}
 
@@ -2561,14 +2558,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 		 * we are able to generate a complete MCV list (all the values in the
 		 * sample will fit, and we think these are all the ones in the table),
 		 * then do so.  Otherwise, store only those values that are
-		 * significantly more common than the (estimated) average. We set the
-		 * threshold rather arbitrarily at 25% more than average, with at
-		 * least 2 instances in the sample.  Also, we won't suppress values
-		 * that have a frequency of at least 1/K where K is the intended
-		 * number of histogram bins; such values might otherwise cause us to
-		 * emit duplicate histogram bin boundaries.  (We might end up with
-		 * duplicate histogram entries anyway, if the distribution is skewed;
-		 * but we prefer to treat such values as MCVs if at all possible.)
+		 * significantly more common than the values not in the list.
 		 *
 		 * Note: the first of these cases is meant to address columns with
 		 * small, fixed sets of possible values, such as boolean or enum
@@ -2577,8 +2567,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 		 * so and thus provide the planner with complete information.  But if
 		 * the MCV list is not complete, it's generally worth being more
 		 * selective, and not just filling it all the way up to the stats
-		 * target.  So for an incomplete list, we try to take only MCVs that
-		 * are significantly more common than average.
+		 * target.
 		 */
 		if (track_cnt == ndistinct && toowide_cnt == 0 &&
 			stats->stadistinct > 0 &&
@@ -2589,33 +2578,22 @@ compute_scalar_stats(VacAttrStatsP stats,
 		}
 		else
 		{
-			double		ndistinct_table = stats->stadistinct;
-			double		avgcount,
-						mincount,
-						maxmincount;
+			int		   *mcv_counts;
 
-			/* Re-extract estimate of # distinct nonnull values in table */
-			if (ndistinct_table < 0)
-				ndistinct_table = -ndistinct_table * totalrows;
-			/* estimate # occurrences in sample of a typical nonnull value */
-			avgcount = (double) nonnull_cnt / ndistinct_table;
-			/* set minimum threshold count to store a value */
-			mincount = avgcount * 1.25;
-			if (mincount < 2)
-				mincount = 2;
-			/* don't let threshold exceed 1/K, however */
-			maxmincount = (double) values_cnt / (double) num_bins;
-			if (mincount > maxmincount)
-				mincount = maxmincount;
+			/* Incomplete list; decide how many values are worth keeping */
 			if (num_mcv > track_cnt)
 				num_mcv = track_cnt;
-			for (i = 0; i < num_mcv; i++)
+
+			if (num_mcv > 0)
 			{
-				if (track[i].count < mincount)
-				{
-					num_mcv = i;
-					break;
-				}
+				mcv_counts = (int *) palloc(num_mcv * sizeof(int));
+				for (i = 0; i < num_mcv; i++)
+					mcv_counts[i] = track[i].count;
+
+				num_mcv = analyze_mcv_list(mcv_counts, num_mcv,
+										   stats->stadistinct,
+										   stats->stanullfrac,
+										   samplerows, totalrows);
 			}
 		}
 
@@ -2880,4 +2858,126 @@ compare_mcvs(const void *a, const void *b)
 	int			db = ((const ScalarMCVItem *) b)->first;
 
 	return da - db;
+}
+
+/*
+ * Analyze the list of common values in the sample and decide how many are
+ * worth storing in the table's MCV list.
+ *
+ * mcv_counts is assumed to be a list of the counts of the most common values
+ * seen in the sample, starting with the most common.  The return value is the
+ * number that are significantly more common than the values not in the list,
+ * and which are therefore deemed worth storing in the table's MCV list.
+ */
+static int
+analyze_mcv_list(int *mcv_counts,
+				 int num_mcv,
+				 double stadistinct,
+				 double stanullfrac,
+				 int samplerows,
+				 double totalrows)
+{
+	double		ndistinct_table;
+	double		sumcount;
+	int			i;
+
+	/*
+	 * If the entire table was sampled, keep the whole list.  This also
+	 * protects us against division by zero in the code below.
+	 */
+	if (samplerows == totalrows || totalrows <= 1.0)
+		return num_mcv;
+
+	/* Re-extract the estimated number of distinct nonnull values in table */
+	ndistinct_table = stadistinct;
+	if (ndistinct_table < 0)
+		ndistinct_table = -ndistinct_table * totalrows;
+
+	/*
+	 * Exclude the least common values from the MCV list, if they are not
+	 * significantly more common than the estimated selectivity they would
+	 * have if they weren't in the list.  All non-MCV values are assumed to be
+	 * equally common, after taking into account the frequencies of all the
+	 * the values in the MCV list and the number of nulls (c.f. eqsel()).
+	 *
+	 * Here sumcount tracks the total count of all but the last (least common)
+	 * value in the MCV list, allowing us to determine the effect of excluding
+	 * that value from the list.
+	 *
+	 * Note that we deliberately do this by removing values from the full
+	 * list, rather than starting with an empty list and adding values,
+	 * because the latter approach can fail to add any values if all the most
+	 * common values have around the same frequency and make up the majority
+	 * of the table, so that the overall average frequency of all values is
+	 * roughly the same as that of the common values.  This would lead to any
+	 * uncommon values being significantly overestimated.
+	 */
+	sumcount = 0.0;
+	for (i = 0; i < num_mcv - 1; i++)
+		sumcount += mcv_counts[i];
+
+	while (num_mcv > 0)
+	{
+		double		selec,
+					otherdistinct,
+					N,
+					n,
+					K,
+					variance,
+					stddev;
+
+		/*
+		 * Estimated selectivity the least common value would have if it
+		 * wasn't in the MCV list (c.f. eqsel()).
+		 */
+		selec = 1.0 - sumcount / samplerows - stanullfrac;
+		if (selec < 0.0)
+			selec = 0.0;
+		if (selec > 1.0)
+			selec = 1.0;
+		otherdistinct = ndistinct_table - (num_mcv - 1);
+		if (otherdistinct > 1)
+			selec /= otherdistinct;
+
+		/*
+		 * If the value is kept in the MCV list, its population frequency is
+		 * assumed to equal its sample frequency.  We use the lower end of a
+		 * textbook continuity-corrected Wald-type confidence interval to
+		 * determine if that is significantly more common than the non-MCV
+		 * frequency --- specifically we assume the population frequency is
+		 * highly likely to be within around 2 standard errors of the sample
+		 * frequency, which equates to an interval of 2 standard deviations
+		 * either side of the sample count, plus an additional 0.5 for the
+		 * continuity correction.  Since we are sampling without replacement,
+		 * this is a hypergeometric distribution.
+		 *
+		 * XXX: Empirically, this approach seems to work quite well, but it
+		 * may be worth considering more advanced techniques for estimating
+		 * the confidence interval of the hypergeometric distribution.
+		 */
+		N = totalrows;
+		n = samplerows;
+		K = N * mcv_counts[num_mcv - 1] / n;
+		variance = n * K * (N - K) * (N - n) / (N * N * (N - 1));
+		stddev = sqrt(variance);
+
+		if (mcv_counts[num_mcv - 1] > selec * samplerows + 2 * stddev + 0.5)
+		{
+			/*
+			 * The value is significantly more common than the non-MCV
+			 * selectivity would suggest.  Keep it, and all the other more
+			 * common values in the list.
+			 */
+			break;
+		}
+		else
+		{
+			/* Discard this value and consider the next least common value */
+			num_mcv--;
+			if (num_mcv == 0)
+				break;
+			sumcount -= mcv_counts[num_mcv - 1];
+		}
+	}
+	return num_mcv;
 }
