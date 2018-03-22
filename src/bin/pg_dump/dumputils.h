@@ -75,4 +75,6 @@ extern void set_dump_section(const char *arg, int *dumpSections);
 extern void simple_string_list_append(SimpleStringList *list, const char *val);
 extern bool simple_string_list_member(SimpleStringList *list, const char *val);
 
+extern bool variable_is_guc_list_quote(const char *name);
+
 #endif   /* DUMPUTILS_H */

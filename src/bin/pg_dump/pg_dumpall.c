@@ -1610,10 +1610,15 @@ makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 	appendPQExpBuffer(buf, "SET %s TO ", fmtId(mine));
 
 	/*
-	 * Some GUC variable names are 'LIST' type and hence must not be quoted.
+	 * Variables that are marked GUC_LIST_QUOTE were already fully quoted by
+	 * flatten_set_variable_args() before they were put into the setconfig
+	 * array; we mustn't re-quote them or we'll make a mess.  Variables that
+	 * are not so marked should just be emitted as simple string literals.  If
+	 * the variable is not known to variable_is_guc_list_quote(), we'll do the
+	 * latter; this makes it unsafe to use GUC_LIST_QUOTE for extension
+	 * variables.
 	 */
-	if (pg_strcasecmp(mine, "DateStyle") == 0
-		|| pg_strcasecmp(mine, "search_path") == 0)
+	if (variable_is_guc_list_quote(mine))
 		appendPQExpBufferStr(buf, pos + 1);
 	else
 		appendStringLiteralConn(buf, pos + 1, conn);
