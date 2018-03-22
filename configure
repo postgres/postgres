@@ -5056,6 +5056,7 @@ fi
 
 
 unset CFLAGS
+unset CXXFLAGS
 
 #
 # Read the template
