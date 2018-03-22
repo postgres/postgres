@@ -2686,3 +2686,28 @@ View definition:
    FROM ( VALUES (1,2)) v(q, w);
 
 drop view rule_v1;
+-- test for pg_get_functiondef properly regurgitating SET parameters
+-- Note that the function is kept around to stress pg_dump.
+CREATE FUNCTION func_with_set_params() RETURNS integer
+    AS 'select 1;'
+    LANGUAGE SQL
+    SET extra_float_digits TO 2
+    SET work_mem TO '4MB'
+    SET datestyle to iso, mdy
+    SET search_path TO PG_CATALOG, "Mixed/Case", 'c:/"a"/path'
+    IMMUTABLE STRICT;
+SELECT pg_get_functiondef('func_with_set_params()'::regprocedure);
+                      pg_get_functiondef                       
+---------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION public.func_with_set_params()     +
+  RETURNS integer                                             +
+  LANGUAGE sql                                                +
+  IMMUTABLE STRICT                                            +
+  SET extra_float_digits TO '2'                               +
+  SET work_mem TO '4MB'                                       +
+  SET "DateStyle" TO 'iso, mdy'                               +
+  SET search_path TO pg_catalog, "Mixed/Case", "c:/""a""/path"+
+ AS $function$select 1;$function$                             +
+ 
+(1 row)
+
