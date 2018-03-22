@@ -86,6 +86,7 @@
 #define PARALLEL_KEY_BTREE_SHARED		UINT64CONST(0xA000000000000001)
 #define PARALLEL_KEY_TUPLESORT			UINT64CONST(0xA000000000000002)
 #define PARALLEL_KEY_TUPLESORT_SPOOL2	UINT64CONST(0xA000000000000003)
+#define PARALLEL_KEY_QUERY_TEXT			UINT64CONST(0xA000000000000004)
 
 /*
  * DISABLE_LEADER_PARTICIPATION disables the leader's participation in
@@ -1195,6 +1196,8 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	BTSpool    *btspool = buildstate->spool;
 	BTLeader   *btleader = (BTLeader *) palloc0(sizeof(BTLeader));
 	bool		leaderparticipates = true;
+	char	   *sharedquery;
+	int			querylen;
 
 #ifdef DISABLE_LEADER_PARTICIPATION
 	leaderparticipates = false;
@@ -1223,9 +1226,8 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 		snapshot = RegisterSnapshot(GetTransactionSnapshot());
 
 	/*
-	 * Estimate size for at least two keys -- our own
-	 * PARALLEL_KEY_BTREE_SHARED workspace, and PARALLEL_KEY_TUPLESORT
-	 * tuplesort workspace
+	 * Estimate size for our own PARALLEL_KEY_BTREE_SHARED workspace, and
+	 * PARALLEL_KEY_TUPLESORT tuplesort workspace
 	 */
 	estbtshared = _bt_parallel_estimate_shared(snapshot);
 	shm_toc_estimate_chunk(&pcxt->estimator, estbtshared);
@@ -1234,7 +1236,7 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 
 	/*
 	 * Unique case requires a second spool, and so we may have to account for
-	 * a third shared workspace -- PARALLEL_KEY_TUPLESORT_SPOOL2
+	 * another shared workspace for that -- PARALLEL_KEY_TUPLESORT_SPOOL2
 	 */
 	if (!btspool->isunique)
 		shm_toc_estimate_keys(&pcxt->estimator, 2);
@@ -1243,6 +1245,11 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 		shm_toc_estimate_chunk(&pcxt->estimator, estsort);
 		shm_toc_estimate_keys(&pcxt->estimator, 3);
 	}
+
+	/* Finally, estimate PARALLEL_KEY_QUERY_TEXT space */
+	querylen = strlen(debug_query_string);
+	shm_toc_estimate_chunk(&pcxt->estimator, querylen + 1);
+	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/* Everyone's had a chance to ask for space, so now create the DSM */
 	InitializeParallelDSM(pcxt);
@@ -1292,6 +1299,11 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_TUPLESORT_SPOOL2, sharedsort2);
 	}
+
+	/* Store query string for workers */
+	sharedquery = (char *) shm_toc_allocate(pcxt->toc, querylen + 1);
+	memcpy(sharedquery, debug_query_string, querylen + 1);
+	shm_toc_insert(pcxt->toc, PARALLEL_KEY_QUERY_TEXT, sharedquery);
 
 	/* Launch workers, saving status for leader/caller */
 	LaunchParallelWorkers(pcxt);
@@ -1459,6 +1471,7 @@ _bt_leader_participate_as_worker(BTBuildState *buildstate)
 void
 _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 {
+	char	   *sharedquery;
 	BTSpool    *btspool;
 	BTSpool    *btspool2;
 	BTShared   *btshared;
@@ -1475,7 +1488,14 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 		ResetUsage();
 #endif							/* BTREE_BUILD_STATS */
 
-	/* Look up shared state */
+	/* Set debug_query_string for individual workers first */
+	sharedquery = shm_toc_lookup(toc, PARALLEL_KEY_QUERY_TEXT, false);
+	debug_query_string = sharedquery;
+
+	/* Report the query string from leader */
+	pgstat_report_activity(STATE_RUNNING, debug_query_string);
+
+	/* Look up nbtree shared state */
 	btshared = shm_toc_lookup(toc, PARALLEL_KEY_BTREE_SHARED, false);
 
 	/* Open relations using lock modes known to be obtained by index.c */
