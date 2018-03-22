@@ -70,24 +70,25 @@ select count(*) >= 0 as ok from pg_prepared_xacts;
 -- This is to record the prevailing planner enable_foo settings during
 -- a regression test run.
 select name, setting from pg_settings where name like 'enable%';
-           name            | setting 
----------------------------+---------
- enable_bitmapscan         | on
- enable_gathermerge        | on
- enable_hashagg            | on
- enable_hashjoin           | on
- enable_indexonlyscan      | on
- enable_indexscan          | on
- enable_material           | on
- enable_mergejoin          | on
- enable_nestloop           | on
- enable_parallel_append    | on
- enable_parallel_hash      | on
- enable_partitionwise_join | off
- enable_seqscan            | on
- enable_sort               | on
- enable_tidscan            | on
-(15 rows)
+              name              | setting 
+--------------------------------+---------
+ enable_bitmapscan              | on
+ enable_gathermerge             | on
+ enable_hashagg                 | on
+ enable_hashjoin                | on
+ enable_indexonlyscan           | on
+ enable_indexscan               | on
+ enable_material                | on
+ enable_mergejoin               | on
+ enable_nestloop                | on
+ enable_parallel_append         | on
+ enable_parallel_hash           | on
+ enable_partitionwise_aggregate | off
+ enable_partitionwise_join      | off
+ enable_seqscan                 | on
+ enable_sort                    | on
+ enable_tidscan                 | on
+(16 rows)
 
 -- Test that the pg_timezone_names and pg_timezone_abbrevs views are
 -- more-or-less working.  We can't test their contents in any great detail

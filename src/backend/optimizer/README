@@ -1079,6 +1079,7 @@ busy for a long time to come.
 
 Partitionwise joins
 -------------------
+
 A join between two similarly partitioned tables can be broken down into joins
 between their matching partitions if there exists an equi-join condition
 between the partition keys of the joining tables. The equi-join between
@@ -1102,3 +1103,16 @@ any two partitioned relations with same partitioning scheme point to the same
 PartitionSchemeData object.  This reduces memory consumed by
 PartitionSchemeData objects and makes it easy to compare the partition schemes
 of joining relations.
+
+Partition-wise aggregates/grouping
+----------------------------------
+
+If the GROUP BY clause has contains all of the partition keys, all the rows
+that belong to a given group must come from a single partition; therefore,
+aggregation can be done completely separately for each partition. Otherwise,
+partial aggregates can be computed for each partition, and then finalized
+after appending the results from the individual partitions.  This technique of
+breaking down aggregation or grouping over a partitioned relation into
+aggregation or grouping over its partitions is called partitionwise
+aggregation.  Especially when the partition keys match the GROUP BY clause,
+this can be significantly faster than the regular method.

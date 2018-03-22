@@ -553,6 +553,7 @@ typedef enum RelOptKind
 	RELOPT_OTHER_MEMBER_REL,
 	RELOPT_OTHER_JOINREL,
 	RELOPT_UPPER_REL,
+	RELOPT_OTHER_UPPER_REL,
 	RELOPT_DEADREL
 } RelOptKind;
 
@@ -570,12 +571,15 @@ typedef enum RelOptKind
 	 (rel)->reloptkind == RELOPT_OTHER_JOINREL)
 
 /* Is the given relation an upper relation? */
-#define IS_UPPER_REL(rel) ((rel)->reloptkind == RELOPT_UPPER_REL)
+#define IS_UPPER_REL(rel)	\
+	((rel)->reloptkind == RELOPT_UPPER_REL || \
+	 (rel)->reloptkind == RELOPT_OTHER_UPPER_REL)
 
 /* Is the given relation an "other" relation? */
 #define IS_OTHER_REL(rel) \
 	((rel)->reloptkind == RELOPT_OTHER_MEMBER_REL || \
-	 (rel)->reloptkind == RELOPT_OTHER_JOINREL)
+	 (rel)->reloptkind == RELOPT_OTHER_JOINREL || \
+	 (rel)->reloptkind == RELOPT_OTHER_UPPER_REL)
 
 typedef struct RelOptInfo
 {
@@ -2290,6 +2294,73 @@ typedef struct JoinPathExtraData
 	SemiAntiJoinFactors semifactors;
 	Relids		param_source_rels;
 } JoinPathExtraData;
+
+/*
+ * Various flags indicating what kinds of grouping are possible.
+ *
+ * GROUPING_CAN_USE_SORT should be set if it's possible to perform
+ * sort-based implementations of grouping.  When grouping sets are in use,
+ * this will be true if sorting is potentially usable for any of the grouping
+ * sets, even if it's not usable for all of them.
+ *
+ * GROUPING_CAN_USE_HASH should be set if it's possible to perform
+ * hash-based implementations of grouping.
+ *
+ * GROUPING_CAN_PARTIAL_AGG should be set if the aggregation is of a type
+ * for which we support partial aggregation (not, for example, grouping sets).
+ * It says nothing about parallel-safety or the availability of suitable paths.
+ */
+#define GROUPING_CAN_USE_SORT       0x0001
+#define GROUPING_CAN_USE_HASH       0x0002
+#define GROUPING_CAN_PARTIAL_AGG	0x0004
+
+/*
+ * What kind of partitionwise aggregation is in use?
+ *
+ * PARTITIONWISE_AGGREGATE_NONE: Not used.
+ *
+ * PARTITIONWISE_AGGREGATE_FULL: Aggregate each partition separately, and
+ * append the results.
+ *
+ * PARTITIONWISE_AGGREGATE_PARTIAL: Partially aggregate each partition
+ * separately, append the results, and then finalize aggregation.
+ */
+typedef enum
+{
+	PARTITIONWISE_AGGREGATE_NONE,
+	PARTITIONWISE_AGGREGATE_FULL,
+	PARTITIONWISE_AGGREGATE_PARTIAL
+} PartitionwiseAggregateType;
+
+/*
+ * Struct for extra information passed to subroutines of create_grouping_paths
+ *
+ * flags indicating what kinds of grouping are possible.
+ * partial_costs_set is true if the agg_partial_costs and agg_final_costs
+ * 		have been initialized.
+ * agg_partial_costs gives partial aggregation costs.
+ * agg_final_costs gives finalization costs.
+ * target is the PathTarget to be used while creating paths.
+ * target_parallel_safe is true if target is parallel safe.
+ * havingQual gives list of quals to be applied after aggregation.
+ * targetList gives list of columns to be projected.
+ * patype is the type of partitionwise aggregation that is being performed.
+ */
+typedef struct
+{
+	/* Data which remains constant once set. */
+	int			flags;
+	bool		partial_costs_set;
+	AggClauseCosts agg_partial_costs;
+	AggClauseCosts agg_final_costs;
+
+	/* Data which may differ across partitions. */
+	PathTarget *target;
+	bool		target_parallel_safe;
+	Node	   *havingQual;
+	List	   *targetList;
+	PartitionwiseAggregateType patype;
+} GroupPathExtraData;
 
 /*
  * For speed reasons, cost estimation for join paths is performed in two

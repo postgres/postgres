@@ -884,6 +884,7 @@ GrantStmt
 GrantTargetType
 Group
 GroupPath
+GroupPathExtraData
 GroupState
 GroupVarInfo
 GroupingFunc
@@ -1597,6 +1598,7 @@ PartitionScheme
 PartitionSpec
 PartitionTupleRouting
 PartitionedChildRelInfo
+PartitionwiseAggregateType
 PasswordType
 Path
 PathClauseUsage

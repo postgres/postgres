@@ -134,8 +134,6 @@ static void subquery_push_qual(Query *subquery,
 static void recurse_push_qual(Node *setOp, Query *topquery,
 				  RangeTblEntry *rte, Index rti, Node *qual);
 static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel);
-static void add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
-						List *live_childrels);
 
 
 /*
@@ -1326,7 +1324,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
  * parameterization or ordering. Similarly it collects partial paths from
  * non-dummy children to create partial append paths.
  */
-static void
+void
 add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 						List *live_childrels)
 {
@@ -1413,8 +1411,12 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		 * If child has an unparameterized cheapest-total path, add that to
 		 * the unparameterized Append path we are constructing for the parent.
 		 * If not, there's no workable unparameterized path.
+		 *
+		 * With partitionwise aggregates, the child rel's pathlist may be
+		 * empty, so don't assume that a path exists here.
 		 */
-		if (childrel->cheapest_total_path->param_info == NULL)
+		if (childrel->pathlist != NIL &&
+			childrel->cheapest_total_path->param_info == NULL)
 			accumulate_append_subpath(childrel->cheapest_total_path,
 									  &subpaths, NULL);
 		else
@@ -1681,6 +1683,13 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		{
 			RelOptInfo *childrel = (RelOptInfo *) lfirst(lcr);
 			Path	   *subpath;
+
+			if (childrel->pathlist == NIL)
+			{
+				/* failed to make a suitable path for this child */
+				subpaths_valid = false;
+				break;
+			}
 
 			subpath = get_cheapest_parameterized_child_path(root,
 															childrel,

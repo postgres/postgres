@@ -924,6 +924,15 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"enable_partitionwise_aggregate", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables partitionwise aggregation and grouping."),
+			NULL
+		},
+		&enable_partitionwise_aggregate,
+		false,
+		NULL, NULL, NULL
+	},
+	{
 		{"enable_parallel_append", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of parallel append plans."),
 			NULL

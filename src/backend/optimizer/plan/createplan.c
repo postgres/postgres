@@ -1670,7 +1670,15 @@ create_sort_plan(PlannerInfo *root, SortPath *best_path, int flags)
 	subplan = create_plan_recurse(root, best_path->subpath,
 								  flags | CP_SMALL_TLIST);
 
-	plan = make_sort_from_pathkeys(subplan, best_path->path.pathkeys, NULL);
+	/*
+	 * make_sort_from_pathkeys() indirectly calls find_ec_member_for_tle(),
+	 * which will ignore any child EC members that don't belong to the given
+	 * relids. Thus, if this sort path is based on a child relation, we must
+	 * pass its relids.
+	 */
+	plan = make_sort_from_pathkeys(subplan, best_path->path.pathkeys,
+								   IS_OTHER_REL(best_path->subpath->parent) ?
+								   best_path->path.parent->relids : NULL);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 

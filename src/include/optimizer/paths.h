@@ -236,5 +236,7 @@ extern bool has_useful_pathkeys(PlannerInfo *root, RelOptInfo *rel);
 extern PathKey *make_canonical_pathkey(PlannerInfo *root,
 					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first);
+extern void add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
+						List *live_childrels);
 
 #endif							/* PATHS_H */
