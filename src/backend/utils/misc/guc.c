@@ -1735,6 +1735,22 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"jit_debugging_support", PGC_SU_BACKEND, DEVELOPER_OPTIONS,
+			gettext_noop("Register JIT compiled function with debugger."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&jit_debugging_support,
+		false,
+		/*
+		 * This is not guaranteed to be available, but given it's a developer
+		 * oriented option, it doesn't seem worth adding code checking
+		 * availability.
+		 */
+		NULL, NULL, NULL
+	},
+
+	{
 		{"jit_dump_bitcode", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("Write out LLVM bitcode to facilitate JIT debugging."),
 			NULL,
@@ -1742,6 +1758,22 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&jit_dump_bitcode,
 		false,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"jit_profiling_support", PGC_SU_BACKEND, DEVELOPER_OPTIONS,
+			gettext_noop("Register JIT compiled function with perf profiler."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&jit_profiling_support,
+		false,
+		/*
+		 * This is not guaranteed to be available, but given it's a developer
+		 * oriented option, it doesn't seem worth adding code checking
+		 * availability.
+		 */
 		NULL, NULL, NULL
 	},
 

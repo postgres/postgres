@@ -541,6 +541,21 @@ llvm_session_initialize(void)
 	llvm_opt0_orc = LLVMOrcCreateInstance(llvm_opt0_targetmachine);
 	llvm_opt3_orc = LLVMOrcCreateInstance(llvm_opt3_targetmachine);
 
+#if defined(HAVE_DECL_LLVMORCREGISTERGDB) && HAVE_DECL_LLVMORCREGISTERGDB
+	if (jit_debugging_support)
+	{
+		LLVMOrcRegisterGDB(llvm_opt0_orc);
+		LLVMOrcRegisterGDB(llvm_opt3_orc);
+	}
+#endif
+#if defined(HAVE_DECL_LLVMORCREGISTERPERF) && HAVE_DECL_LLVMORCREGISTERPERF
+	if (jit_profiling_support)
+	{
+		LLVMOrcRegisterPerf(llvm_opt0_orc);
+		LLVMOrcRegisterPerf(llvm_opt3_orc);
+	}
+#endif
+
 	before_shmem_exit(llvm_shutdown, 0);
 
 	llvm_session_initialized = true;
@@ -551,6 +566,27 @@ llvm_session_initialize(void)
 static void
 llvm_shutdown(int code, Datum arg)
 {
+	/* unregister profiling support, needs to be flushed to be useful */
+
+	if (llvm_opt3_orc)
+	{
+#if defined(HAVE_DECL_LLVMORCREGISTERPERF) && HAVE_DECL_LLVMORCREGISTERPERF
+		if (jit_profiling_support)
+			LLVMOrcUnregisterPerf(llvm_opt3_orc);
+#endif
+		LLVMOrcDisposeInstance(llvm_opt3_orc);
+		llvm_opt3_orc = NULL;
+	}
+
+	if (llvm_opt0_orc)
+	{
+#if defined(HAVE_DECL_LLVMORCREGISTERPERF) && HAVE_DECL_LLVMORCREGISTERPERF
+		if (jit_profiling_support)
+			LLVMOrcUnregisterPerf(llvm_opt0_orc);
+#endif
+		LLVMOrcDisposeInstance(llvm_opt0_orc);
+		llvm_opt0_orc = NULL;
+	}
 }
 
 /* helper for llvm_create_types */

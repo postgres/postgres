@@ -58,7 +58,9 @@ struct JitProviderCallbacks
 /* GUCs */
 extern bool jit_enabled;
 extern char *jit_provider;
+extern bool jit_debugging_support;
 extern bool jit_dump_bitcode;
+extern bool jit_profiling_support;
 
 
 extern void jit_reset_after_error(void);
