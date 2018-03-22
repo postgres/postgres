@@ -44,6 +44,23 @@ extern void llvm_assert_in_fatal_section(void);
 
 extern LLVMJitContext *llvm_create_context(int jitFlags);
 
+
+/*
+ ****************************************************************************
+ * Extensions / Backward compatibility section of the LLVM C API
+ * Error handling related functions.
+ ****************************************************************************
+ */
+#if defined(HAVE_DECL_LLVMGETHOSTCPUNAME) && !HAVE_DECL_LLVMGETHOSTCPUNAME
+/** Get the host CPU as a string. The result needs to be disposed with
+  LLVMDisposeMessage. */
+extern char *LLVMGetHostCPUName(void);
+#endif
+
+/** Get the host CPU features as a string. The result needs to be disposed
+  with LLVMDisposeMessage. */
+extern char *LLVMGetHostCPUFeatures(void);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
