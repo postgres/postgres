@@ -1102,6 +1102,7 @@ LDAPMessage
 LDAPURLDesc
 LDAP_TIMEVAL
 LINE
+LLVMBuilderRef
 LLVMJitContext
 LLVMJitHandle
 LLVMTypeRef
