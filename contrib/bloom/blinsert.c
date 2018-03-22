@@ -33,10 +33,11 @@ PG_MODULE_MAGIC;
 typedef struct
 {
 	BloomState	blstate;		/* bloom index state */
+	int64		indtuples;		/* total number of tuples indexed */
 	MemoryContext tmpCtx;		/* temporary memory context reset after each
 								 * tuple */
 	char		data[BLCKSZ];	/* cached page */
-	int64		count;			/* number of tuples in cached page */
+	int			count;			/* number of tuples in cached page */
 } BloomBuildState;
 
 /*
@@ -102,7 +103,13 @@ bloomBuildCallback(Relation index, HeapTuple htup, Datum *values,
 			/* We shouldn't be here since we're inserting to the empty page */
 			elog(ERROR, "could not add new bloom tuple to empty page");
 		}
+
+		/* Next item was added successfully */
+		buildstate->count++;
 	}
+
+	/* Update total tuple count */
+	buildstate->indtuples += 1;
 
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextReset(buildstate->tmpCtx);
@@ -138,17 +145,15 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 								   bloomBuildCallback, (void *) &buildstate,
 								   NULL);
 
-	/*
-	 * There are could be some items in cached page.  Flush this page if
-	 * needed.
-	 */
+	/* Flush last page if needed (it will be, unless heap was empty) */
 	if (buildstate.count > 0)
 		flushCachedPage(index, &buildstate);
 
 	MemoryContextDelete(buildstate.tmpCtx);
 
 	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
-	result->heap_tuples = result->index_tuples = reltuples;
+	result->heap_tuples = reltuples;
+	result->index_tuples = buildstate.indtuples;
 
 	return result;
 }
