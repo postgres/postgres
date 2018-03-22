@@ -1932,7 +1932,7 @@ ZeroMultiXactMemberPage(int pageno, bool writeXlog)
  * MaybeExtendOffsetSlru
  *		Extend the offsets SLRU area, if necessary
  *
- * After a binary upgrade from <= 9.2, the pg_multixact/offset SLRU area might
+ * After a binary upgrade from <= 9.2, the pg_multixact/offsets SLRU area might
  * contain files that are shorter than necessary; this would occur if the old
  * installation had used multixacts beyond the first page (files cannot be
  * copied, because the on-disk representation is different).  pg_upgrade would
