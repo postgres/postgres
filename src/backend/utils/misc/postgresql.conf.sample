@@ -606,6 +606,8 @@
 
 #dynamic_library_path = '$libdir'
 
+#jit = on				# allow JIT compilation
+#jit_provider = 'llvmjit'		# JIT implementation to use
 
 #------------------------------------------------------------------------------
 # LOCK MANAGEMENT

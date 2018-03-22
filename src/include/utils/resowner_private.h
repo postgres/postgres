@@ -88,4 +88,11 @@ extern void ResourceOwnerRememberDSM(ResourceOwner owner,
 extern void ResourceOwnerForgetDSM(ResourceOwner owner,
 					   dsm_segment *);
 
+/* support for JITContext management */
+extern void ResourceOwnerEnlargeJIT(ResourceOwner owner);
+extern void ResourceOwnerRememberJIT(ResourceOwner owner,
+									 Datum handle);
+extern void ResourceOwnerForgetJIT(ResourceOwner owner,
+								   Datum handle);
+
 #endif							/* RESOWNER_PRIVATE_H */

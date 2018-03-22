@@ -42,6 +42,7 @@
 #include "commands/variable.h"
 #include "commands/trigger.h"
 #include "funcapi.h"
+#include "jit/jit.h"
 #include "libpq/auth.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -1710,6 +1711,16 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Should gather nodes also run subplans, or just gather tuples?")
 		},
 		&parallel_leader_participation,
+		true,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"jit", PGC_USERSET, QUERY_TUNING_OTHER,
+			gettext_noop("Allow JIT compilation."),
+			NULL
+		},
+		&jit_enabled,
 		true,
 		NULL, NULL, NULL
 	},
@@ -3705,6 +3716,17 @@ static struct config_string ConfigureNamesString[] =
 		&wal_consistency_checking_string,
 		"",
 		check_wal_consistency_checking, assign_wal_consistency_checking, NULL
+	},
+
+	{
+		{"jit_provider", PGC_POSTMASTER, FILE_LOCATIONS,
+			gettext_noop("JIT provider to use."),
+			NULL,
+			GUC_SUPERUSER_ONLY
+		},
+		&jit_provider,
+		"llvmjit",
+		NULL, NULL, NULL
 	},
 
 	/* End-of-list marker */
