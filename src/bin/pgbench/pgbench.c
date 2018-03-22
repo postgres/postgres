@@ -64,10 +64,10 @@
 /*
  * Hashing constants
  */
-#define FNV_PRIME 0x100000001b3
-#define FNV_OFFSET_BASIS 0xcbf29ce484222325
-#define MM2_MUL 0xc6a4a7935bd1e995
-#define MM2_ROT 47
+#define FNV_PRIME			UINT64CONST(0x100000001b3)
+#define FNV_OFFSET_BASIS	UINT64CONST(0xcbf29ce484222325)
+#define MM2_MUL				UINT64CONST(0xc6a4a7935bd1e995)
+#define MM2_ROT				47
 
 /*
  * Multi-platform pthread implementations
