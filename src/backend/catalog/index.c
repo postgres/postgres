@@ -2366,12 +2366,12 @@ index_build(Relation heapRelation,
  * things to add it to the new index.  After we return, the AM's index
  * build procedure does whatever cleanup it needs.
  *
- * The total count of heap tuples is returned.  This is for updating pg_class
- * statistics.  (It's annoying not to be able to do that here, but we want
- * to merge that update with others; see index_update_stats.)  Note that the
- * index AM itself must keep track of the number of index tuples; we don't do
- * so here because the AM might reject some of the tuples for its own reasons,
- * such as being unable to store NULLs.
+ * The total count of live heap tuples is returned.  This is for updating
+ * pg_class statistics.  (It's annoying not to be able to do that here, but we
+ * want to merge that update with others; see index_update_stats.)  Note that
+ * the index AM itself must keep track of the number of index tuples; we don't
+ * do so here because the AM might reject some of the tuples for its own
+ * reasons, such as being unable to store NULLs.
  *
  * A side effect is to set indexInfo->ii_BrokenHotChain to true if we detect
  * any potentially broken HOT chains.  Currently, we set this if there are
@@ -2402,8 +2402,8 @@ IndexBuildHeapScan(Relation heapRelation,
  * to scan cannot be done when requesting syncscan.
  *
  * When "anyvisible" mode is requested, all tuples visible to any transaction
- * are considered, including those inserted or deleted by transactions that are
- * still in progress.
+ * are indexed and counted as live, including those inserted or deleted by
+ * transactions that are still in progress.
  */
 double
 IndexBuildHeapRangeScan(Relation heapRelation,
@@ -2599,6 +2599,12 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 			 */
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
+			/*
+			 * The criteria for counting a tuple as live in this block need to
+			 * match what analyze.c's acquire_sample_rows() does, otherwise
+			 * CREATE INDEX and ANALYZE may produce wildly different reltuples
+			 * values, e.g. when there are many recently-dead tuples.
+			 */
 			switch (HeapTupleSatisfiesVacuum(heapTuple, OldestXmin,
 											 scan->rs_cbuf))
 			{
@@ -2611,6 +2617,8 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 					/* Normal case, index and unique-check it */
 					indexIt = true;
 					tupleIsAlive = true;
+					/* Count it as live, too */
+					reltuples += 1;
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
 
@@ -2624,6 +2632,9 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 					 * the live tuple at the end of the HOT-chain.  Since this
 					 * breaks semantics for pre-existing snapshots, mark the
 					 * index as unusable for them.
+					 *
+					 * We don't count recently-dead tuples in reltuples, even
+					 * if we index them; see acquire_sample_rows().
 					 */
 					if (HeapTupleIsHotUpdated(heapTuple))
 					{
@@ -2646,6 +2657,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 					{
 						indexIt = true;
 						tupleIsAlive = true;
+						reltuples += 1;
 						break;
 					}
 
@@ -2683,6 +2695,15 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 							goto recheck;
 						}
 					}
+					else
+					{
+						/*
+						 * For consistency with acquire_sample_rows(), count
+						 * HEAPTUPLE_INSERT_IN_PROGRESS tuples as live only
+						 * when inserted by our own transaction.
+						 */
+						reltuples += 1;
+					}
 
 					/*
 					 * We must index such tuples, since if the index build
@@ -2702,6 +2723,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 					{
 						indexIt = true;
 						tupleIsAlive = false;
+						reltuples += 1;
 						break;
 					}
 
@@ -2745,6 +2767,14 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 						 * the same as a RECENTLY_DEAD tuple.
 						 */
 						indexIt = true;
+
+						/*
+						 * Count HEAPTUPLE_DELETE_IN_PROGRESS tuples as live,
+						 * if they were not deleted by the current
+						 * transaction.  That's what acquire_sample_rows()
+						 * does, and we want the behavior to be consistent.
+						 */
+						reltuples += 1;
 					}
 					else if (HeapTupleIsHotUpdated(heapTuple))
 					{
@@ -2762,8 +2792,8 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 					{
 						/*
 						 * It's a regular tuple deleted by our own xact. Index
-						 * it but don't check for uniqueness, the same as a
-						 * RECENTLY_DEAD tuple.
+						 * it, but don't check for uniqueness nor count in
+						 * reltuples, the same as a RECENTLY_DEAD tuple.
 						 */
 						indexIt = true;
 					}
@@ -2786,8 +2816,6 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 			/* heap_getnext did the time qual check */
 			tupleIsAlive = true;
 		}
-
-		reltuples += 1;
 
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 

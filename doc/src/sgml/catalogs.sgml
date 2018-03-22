@@ -1739,8 +1739,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>float4</type></entry>
       <entry></entry>
       <entry>
-       Number of rows in the table.  This is only an estimate used by the
-       planner.  It is updated by <command>VACUUM</command>,
+       Number of live rows in the table.  This is only an estimate used by
+       the planner.  It is updated by <command>VACUUM</command>,
        <command>ANALYZE</command>, and a few DDL commands such as
        <command>CREATE INDEX</command>.
       </entry>
