@@ -31,6 +31,7 @@
 typedef struct
 {
 	SpGistState spgstate;		/* SPGiST's working state */
+	int64		indtuples;		/* total number of tuples indexed */
 	MemoryContext tmpCtx;		/* per-tuple temporary context */
 } SpGistBuildState;
 
@@ -57,6 +58,9 @@ spgistBuildCallback(Relation index, HeapTuple htup, Datum *values,
 	{
 		MemoryContextReset(buildstate->tmpCtx);
 	}
+
+	/* Update total tuple count */
+	buildstate->indtuples += 1;
 
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextReset(buildstate->tmpCtx);
@@ -131,6 +135,7 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 */
 	initSpGistState(&buildstate.spgstate, index);
 	buildstate.spgstate.isBuild = true;
+	buildstate.indtuples = 0;
 
 	buildstate.tmpCtx = AllocSetContextCreate(CurrentMemoryContext,
 										   "SP-GiST build temporary context",
@@ -144,7 +149,8 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	SpGistUpdateMetaPage(index);
 
 	result = (IndexBuildResult *) palloc0(sizeof(IndexBuildResult));
-	result->heap_tuples = result->index_tuples = reltuples;
+	result->heap_tuples = reltuples;
+	result->index_tuples = buildstate.indtuples;
 
 	return result;
 }
