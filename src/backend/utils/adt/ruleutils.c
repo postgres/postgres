@@ -61,6 +61,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -2597,11 +2598,15 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 								 quote_identifier(configitem));
 
 				/*
-				 * Some GUC variable names are 'LIST' type and hence must not
-				 * be quoted.
+				 * Variables that are marked GUC_LIST_QUOTE were already fully
+				 * quoted by flatten_set_variable_args() before they were put
+				 * into the proconfig array; we mustn't re-quote them or we'll
+				 * make a mess.  Variables that are not so marked should just
+				 * be emitted as simple string literals.  If the variable is
+				 * not known to guc.c, we'll do the latter; this makes it
+				 * unsafe to use GUC_LIST_QUOTE for extension variables.
 				 */
-				if (pg_strcasecmp(configitem, "DateStyle") == 0
-					|| pg_strcasecmp(configitem, "search_path") == 0)
+				if (GetConfigOptionFlags(configitem, true) & GUC_LIST_QUOTE)
 					appendStringInfoString(&buf, pos);
 				else
 					simple_quote_literal(&buf, pos);

@@ -851,6 +851,29 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 }
 
 /*
+ * Detect whether the given GUC variable is of GUC_LIST_QUOTE type.
+ *
+ * It'd be better if we could inquire this directly from the backend; but even
+ * if there were a function for that, it could only tell us about variables
+ * currently known to guc.c, so that it'd be unsafe for extensions to declare
+ * GUC_LIST_QUOTE variables anyway.  Lacking a solution for that, it doesn't
+ * seem worth the work to do more than have this list, which must be kept in
+ * sync with the variables actually marked GUC_LIST_QUOTE in guc.c.
+ */
+bool
+variable_is_guc_list_quote(const char *name)
+{
+	if (pg_strcasecmp(name, "temp_tablespaces") == 0 ||
+		pg_strcasecmp(name, "session_preload_libraries") == 0 ||
+		pg_strcasecmp(name, "shared_preload_libraries") == 0 ||
+		pg_strcasecmp(name, "local_preload_libraries") == 0 ||
+		pg_strcasecmp(name, "search_path") == 0)
+		return true;
+	else
+		return false;
+}
+
+/*
  * Helper function for dumping "ALTER DATABASE/ROLE SET ..." commands.
  *
  * Parse the contents of configitem (a "name=value" string), wrap it in
@@ -887,11 +910,15 @@ makeAlterConfigCommand(PGconn *conn, const char *configitem,
 	appendPQExpBuffer(buf, "SET %s TO ", fmtId(mine));
 
 	/*
-	 * Some GUC variable names are 'LIST' type and hence must not be quoted.
-	 * XXX this list is incomplete ...
+	 * Variables that are marked GUC_LIST_QUOTE were already fully quoted by
+	 * flatten_set_variable_args() before they were put into the setconfig
+	 * array; we mustn't re-quote them or we'll make a mess.  Variables that
+	 * are not so marked should just be emitted as simple string literals.  If
+	 * the variable is not known to variable_is_guc_list_quote(), we'll do the
+	 * latter; this makes it unsafe to use GUC_LIST_QUOTE for extension
+	 * variables.
 	 */
-	if (pg_strcasecmp(mine, "DateStyle") == 0
-		|| pg_strcasecmp(mine, "search_path") == 0)
+	if (variable_is_guc_list_quote(mine))
 		appendPQExpBufferStr(buf, pos);
 	else
 		appendStringLiteralConn(buf, pos, conn);

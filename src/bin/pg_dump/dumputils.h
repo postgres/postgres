@@ -56,6 +56,8 @@ extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 				const char *acl_column, const char *acl_owner,
 				const char *obj_kind, bool binary_upgrade);
 
+extern bool variable_is_guc_list_quote(const char *name);
+
 extern void makeAlterConfigCommand(PGconn *conn, const char *configitem,
 					   const char *type, const char *name,
 					   const char *type2, const char *name2,

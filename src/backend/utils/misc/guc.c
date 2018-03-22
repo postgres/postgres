@@ -796,8 +796,8 @@ static const unit_conversion time_unit_conversion_table[] =
  *
  * 6. Don't forget to document the option (at least in config.sgml).
  *
- * 7. If it's a new GUC_LIST option you must edit pg_dumpall.c to ensure
- *	  it is not single quoted at dump time.
+ * 7. If it's a new GUC_LIST_QUOTE option, you must add it to
+ *	  variable_is_guc_list_quote() in src/bin/pg_dump/dumputils.c.
  */
 
 
@@ -6857,6 +6857,30 @@ GetConfigOptionResetString(const char *name)
 											   ((struct config_enum *) record)->reset_val);
 	}
 	return NULL;
+}
+
+/*
+ * Get the GUC flags associated with the given option.
+ *
+ * If the option doesn't exist, return 0 if missing_ok is true,
+ * otherwise throw an ereport and don't return.
+ */
+int
+GetConfigOptionFlags(const char *name, bool missing_ok)
+{
+	struct config_generic *record;
+
+	record = find_option(name, false, WARNING);
+	if (record == NULL)
+	{
+		if (missing_ok)
+			return 0;
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("unrecognized configuration parameter \"%s\"",
+						name)));
+	}
+	return record->flags;
 }
 
 

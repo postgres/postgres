@@ -11877,11 +11877,15 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		appendPQExpBuffer(q, "\n    SET %s TO ", fmtId(configitem));
 
 		/*
-		 * Some GUC variable names are 'LIST' type and hence must not be
-		 * quoted.
+		 * Variables that are marked GUC_LIST_QUOTE were already fully quoted
+		 * by flatten_set_variable_args() before they were put into the
+		 * proconfig array; we mustn't re-quote them or we'll make a mess.
+		 * Variables that are not so marked should just be emitted as simple
+		 * string literals.  If the variable is not known to
+		 * variable_is_guc_list_quote(), we'll do the latter; this makes it
+		 * unsafe to use GUC_LIST_QUOTE for extension variables.
 		 */
-		if (pg_strcasecmp(configitem, "DateStyle") == 0
-			|| pg_strcasecmp(configitem, "search_path") == 0)
+		if (variable_is_guc_list_quote(configitem))
 			appendPQExpBufferStr(q, pos);
 		else
 			appendStringLiteralAH(q, pos, fout);
