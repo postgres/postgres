@@ -41,15 +41,23 @@ OBJS += llvmjit.o llvmjit_error.o llvmjit_wrap.o
 # Code generation
 OBJS +=
 
-all: all-shared-lib
+all: all-shared-lib llvmjit_types.bc
 
-install: all installdirs install-lib
+install: all installdirs install-lib install-types
 
 installdirs: installdirs-lib
 
-uninstall: uninstall-lib
+uninstall: uninstall-lib uninstall-types
+
+# Note this is intentionally not in bitcodedir, as it's not for inlining */
+install-types: llvmjit_types.bc
+	$(INSTALL_DATA) llvmjit_types.bc '$(DESTDIR)$(pkglibdir)'
+
+uninstall-types:
+	rm -f '$(DESTDIR)$(pkglibdir)/llvmjit_types.bc'
 
 include $(top_srcdir)/src/Makefile.shlib
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)
+	rm -f llvmjit_types.bc

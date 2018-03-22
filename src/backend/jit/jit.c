@@ -33,6 +33,7 @@
 /* GUCs */
 bool		jit_enabled = true;
 char	   *jit_provider = "llvmjit";
+bool		jit_dump_bitcode = false;
 
 static JitProviderCallbacks provider;
 static bool provider_successfully_loaded = false;

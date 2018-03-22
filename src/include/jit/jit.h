@@ -11,14 +11,34 @@
 #ifndef JIT_H
 #define JIT_H
 
+#include "executor/instrument.h"
 #include "utils/resowner.h"
+
+
+/* Flags deterimining what kind of JIT operations to perform */
+#define PGJIT_NONE     0
+#define PGJIT_PERFORM  1 << 0
+#define PGJIT_OPT3     1 << 1
 
 
 typedef struct JitContext
 {
+	/* see PGJIT_* above */
 	int			flags;
 
 	ResourceOwner resowner;
+
+	/* number of emitted functions */
+	size_t		created_functions;
+
+	/* accumulated time to generate code */
+	instr_time	generation_counter;
+
+	/* accumulated time for optimization */
+	instr_time	optimization_counter;
+
+	/* accumulated time for code emission */
+	instr_time	emission_counter;
 } JitContext;
 
 typedef struct JitProviderCallbacks JitProviderCallbacks;
@@ -38,6 +58,7 @@ struct JitProviderCallbacks
 /* GUCs */
 extern bool jit_enabled;
 extern char *jit_provider;
+extern bool jit_dump_bitcode;
 
 
 extern void jit_reset_after_error(void);

@@ -46,3 +46,4 @@ clean-local:
 	rm -f $(subsysfilename) $(OBJS)
 
 $(call recurse,coverage)
+$(call recurse,install)

@@ -951,3 +951,24 @@ coverage-clean:
 	rm -f `find . -name '*.gcda' -print`
 
 endif # enable_coverage
+
+##########################################################################
+#
+# LLVM support
+#
+
+ifndef COMPILE.c.bc
+# -Wno-ignored-attributes added so gnu_printf doesn't trigger
+# warnings, when the main binary is compiled with C.
+COMPILE.c.bc = $(CLANG) -Wno-ignored-attributes $(BITCODE_CFLAGS) $(CPPFLAGS) -flto=thin -emit-llvm -c
+endif
+
+ifndef COMPILE.cxx.bc
+COMPILE.cxx.bc = $(CLANG) -xc++ -Wno-ignored-attributes $(BITCODE_CXXFLAGS) $(CPPFLAGS) -flto=thin -emit-llvm -c
+endif
+
+%.bc : %.c
+	$(COMPILE.c.bc) -o $@ $<
+
+%.bc : %.cpp
+	$(COMPILE.cxx.bc) -o $@ $<
