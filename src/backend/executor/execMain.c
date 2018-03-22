@@ -48,6 +48,7 @@
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
 #include "foreign/fdwapi.h"
+#include "jit/jit.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -248,6 +249,9 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	estate->es_crosscheck_snapshot = RegisterSnapshot(queryDesc->crosscheck_snapshot);
 	estate->es_top_eflags = eflags;
 	estate->es_instrument = queryDesc->instrument_options;
+
+	if (queryDesc->plannedstmt)
+		estate->es_jit_flags = queryDesc->plannedstmt->jitFlags;
 
 	/*
 	 * Set up an AFTER-trigger statement context, unless told not to, or
@@ -495,6 +499,10 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	/* do away with our snapshots */
 	UnregisterSnapshot(estate->es_snapshot);
 	UnregisterSnapshot(estate->es_crosscheck_snapshot);
+
+	/* release JIT context, if allocated */
+	if (estate->es_jit)
+		jit_release_context(estate->es_jit);
 
 	/*
 	 * Must switch out of context before destroying it

@@ -318,6 +318,12 @@
 #cpu_operator_cost = 0.0025		# same scale as above
 #parallel_tuple_cost = 0.1		# same scale as above
 #parallel_setup_cost = 1000.0	# same scale as above
+
+#jit_above_cost = 100000		# perform JIT compilation if available
+					# and query more expensive, -1 disables
+#jit_optimize_above_cost = 500000	# optimize JITed functions if query is
+					# more expensive, -1 disables
+
 #min_parallel_table_scan_size = 8MB
 #min_parallel_index_scan_size = 512kB
 #effective_cache_size = 4GB

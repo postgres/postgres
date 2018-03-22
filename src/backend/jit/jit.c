@@ -36,6 +36,8 @@ char	   *jit_provider = "llvmjit";
 bool		jit_debugging_support = false;
 bool		jit_dump_bitcode = false;
 bool		jit_profiling_support = false;
+double		jit_above_cost = 100000;
+double		jit_optimize_above_cost = 500000;
 
 static JitProviderCallbacks provider;
 static bool provider_successfully_loaded = false;

@@ -87,6 +87,7 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_SCALAR_FIELD(transientPlan);
 	COPY_SCALAR_FIELD(dependsOnRole);
 	COPY_SCALAR_FIELD(parallelModeNeeded);
+	COPY_SCALAR_FIELD(jitFlags);
 	COPY_NODE_FIELD(planTree);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(resultRelations);

@@ -61,6 +61,8 @@ extern char *jit_provider;
 extern bool jit_debugging_support;
 extern bool jit_dump_bitcode;
 extern bool jit_profiling_support;
+extern double jit_above_cost;
+extern double jit_optimize_above_cost;
 
 
 extern void jit_reset_after_error(void);
