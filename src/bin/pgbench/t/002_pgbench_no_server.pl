@@ -8,6 +8,16 @@ use warnings;
 use TestLib;
 use Test::More;
 
+# create a directory for scripts
+my $testname = $0;
+$testname =~ s,.*/,,;
+$testname =~ s/\.pl$//;
+
+my $testdir = "$TestLib::tmp_check/t_${testname}_stuff";
+mkdir $testdir
+	or
+	BAIL_OUT("could not create test directory \"${testdir}\": $!");
+
 # invoke pgbench
 sub pgbench
 {
@@ -15,6 +25,28 @@ sub pgbench
 	print STDERR "opts=$opts, stat=$stat, out=$out, err=$err, name=$name";
 	command_checks_all([ 'pgbench', split(/\s+/, $opts) ],
 		$stat, $out, $err, $name);
+}
+
+# invoke pgbench with scripts
+sub pgbench_scripts
+{
+	my ($opts, $stat, $out, $err, $name, $files) = @_;
+	my @cmd = ('pgbench', split /\s+/, $opts);
+	my @filenames = ();
+	if (defined $files)
+	{
+		for my $fn (sort keys %$files)
+		{
+			my $filename = $testdir . '/' . $fn;
+			# cleanup file weight if any
+			$filename =~ s/\@\d+$//;
+			# cleanup from prior runs
+			unlink $filename;
+			append_to_file($filename, $$files{$fn});
+			push @cmd, '-f', $filename;
+		}
+	}
+	command_checks_all(\@cmd, $stat, $out, $err, $name);
 }
 
 #
@@ -124,5 +156,25 @@ pgbench(
 	[   qr{Available builtin scripts:}, qr{tpcb-like},
 		qr{simple-update},              qr{select-only} ],
 	'pgbench builtin list');
+
+my @script_tests = (
+	# name, err, { file => contents }
+	[ 'missing endif', [qr{\\if without matching \\endif}], {'if-noendif.sql' => '\if 1'} ],
+	[ 'missing if on elif', [qr{\\elif without matching \\if}], {'elif-noif.sql' => '\elif 1'} ],
+	[ 'missing if on else', [qr{\\else without matching \\if}], {'else-noif.sql' => '\else'} ],
+	[ 'missing if on endif', [qr{\\endif without matching \\if}], {'endif-noif.sql' => '\endif'} ],
+	[ 'elif after else', [qr{\\elif after \\else}], {'else-elif.sql' => "\\if 1\n\\else\n\\elif 0\n\\endif"} ],
+	[ 'else after else', [qr{\\else after \\else}], {'else-else.sql' => "\\if 1\n\\else\n\\else\n\\endif"} ],
+	[ 'if syntax error', [qr{syntax error in command "if"}], {'if-bad.sql' => "\\if\n\\endif\n"} ],
+	[ 'elif syntax error', [qr{syntax error in command "elif"}], {'elif-bad.sql' => "\\if 0\n\\elif +\n\\endif\n"} ],
+	[ 'else syntax error', [qr{unexpected argument in command "else"}], {'else-bad.sql' => "\\if 0\n\\else BAD\n\\endif\n"} ],
+	[ 'endif syntax error', [qr{unexpected argument in command "endif"}], {'endif-bad.sql' => "\\if 0\n\\endif BAD\n"} ],
+);
+
+for my $t (@script_tests)
+{
+	my ($name, $err, $files) = @$t;
+	pgbench_scripts('', 1, [qr{^$}], $err, 'pgbench option error: ' . $name, $files);
+}
 
 done_testing();

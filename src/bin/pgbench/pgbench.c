@@ -32,6 +32,7 @@
 #endif							/* ! WIN32 */
 
 #include "postgres_fe.h"
+#include "fe_utils/conditional.h"
 
 #include "getopt_long.h"
 #include "libpq-fe.h"
@@ -282,6 +283,9 @@ typedef enum
 	 * and we enter the CSTATE_SLEEP state to wait for it to expire. Other
 	 * meta-commands are executed immediately.
 	 *
+	 * CSTATE_SKIP_COMMAND for conditional branches which are not executed,
+	 * quickly skip commands that do not need any evaluation.
+	 *
 	 * CSTATE_WAIT_RESULT waits until we get a result set back from the server
 	 * for the current command.
 	 *
@@ -291,6 +295,7 @@ typedef enum
 	 * command counter, and loops back to CSTATE_START_COMMAND state.
 	 */
 	CSTATE_START_COMMAND,
+	CSTATE_SKIP_COMMAND,
 	CSTATE_WAIT_RESULT,
 	CSTATE_SLEEP,
 	CSTATE_END_COMMAND,
@@ -320,6 +325,7 @@ typedef struct
 	PGconn	   *con;			/* connection handle to DB */
 	int			id;				/* client No. */
 	ConnectionStateEnum state;	/* state machine's current state. */
+	ConditionalStack cstack;	/* enclosing conditionals state */
 
 	int			use_file;		/* index in sql_script for this client */
 	int			command;		/* command number in script */
@@ -408,7 +414,11 @@ typedef enum MetaCommand
 	META_SET,					/* \set */
 	META_SETSHELL,				/* \setshell */
 	META_SHELL,					/* \shell */
-	META_SLEEP					/* \sleep */
+	META_SLEEP,					/* \sleep */
+	META_IF,					/* \if */
+	META_ELIF,					/* \elif */
+	META_ELSE,					/* \else */
+	META_ENDIF					/* \endif */
 } MetaCommand;
 
 typedef enum QueryMode
@@ -1645,6 +1655,7 @@ setBoolValue(PgBenchValue *pv, bool bval)
 	pv->type = PGBT_BOOLEAN;
 	pv->u.bval = bval;
 }
+
 /* assign an integer value */
 static void
 setIntValue(PgBenchValue *pv, int64 ival)
@@ -2377,6 +2388,14 @@ getMetaCommand(const char *cmd)
 		mc = META_SHELL;
 	else if (pg_strcasecmp(cmd, "sleep") == 0)
 		mc = META_SLEEP;
+	else if (pg_strcasecmp(cmd, "if") == 0)
+		mc = META_IF;
+	else if (pg_strcasecmp(cmd, "elif") == 0)
+		mc = META_ELIF;
+	else if (pg_strcasecmp(cmd, "else") == 0)
+		mc = META_ELSE;
+	else if (pg_strcasecmp(cmd, "endif") == 0)
+		mc = META_ENDIF;
 	else
 		mc = META_NONE;
 	return mc;
@@ -2498,11 +2517,11 @@ preparedStatementName(char *buffer, int file, int state)
 }
 
 static void
-commandFailed(CState *st, const char *message)
+commandFailed(CState *st, const char *cmd, const char *message)
 {
 	fprintf(stderr,
-			"client %d aborted in command %d of script %d; %s\n",
-			st->id, st->command, st->use_file, message);
+			"client %d aborted in command %d (%s) of script %d; %s\n",
+			st->id, st->command, cmd, st->use_file, message);
 }
 
 /* return a script number with a weighted choice. */
@@ -2690,6 +2709,8 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 					st->state = CSTATE_START_THROTTLE;
 				else
 					st->state = CSTATE_START_TX;
+				/* check consistency */
+				Assert(conditional_stack_empty(st->cstack));
 				break;
 
 				/*
@@ -2855,7 +2876,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 				{
 					if (!sendCommand(st, command))
 					{
-						commandFailed(st, "SQL command send failed");
+						commandFailed(st, "SQL", "SQL command send failed");
 						st->state = CSTATE_ABORTED;
 					}
 					else
@@ -2888,7 +2909,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 
 						if (!evaluateSleep(st, argc, argv, &usec))
 						{
-							commandFailed(st, "execution of meta-command 'sleep' failed");
+							commandFailed(st, "sleep", "execution of meta-command failed");
 							st->state = CSTATE_ABORTED;
 							break;
 						}
@@ -2899,77 +2920,209 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 						st->state = CSTATE_SLEEP;
 						break;
 					}
-					else
+					else if (command->meta == META_SET ||
+							 command->meta == META_IF ||
+							 command->meta == META_ELIF)
 					{
+						/* backslash commands with an expression to evaluate */
+						PgBenchExpr *expr = command->expr;
+						PgBenchValue result;
+
+						if (command->meta == META_ELIF &&
+							conditional_stack_peek(st->cstack) == IFSTATE_TRUE)
+						{
+							/* elif after executed block, skip eval and wait for endif */
+							conditional_stack_poke(st->cstack, IFSTATE_IGNORED);
+							goto move_to_end_command;
+						}
+
+						if (!evaluateExpr(thread, st, expr, &result))
+						{
+							commandFailed(st, argv[0], "evaluation of meta-command failed");
+							st->state = CSTATE_ABORTED;
+							break;
+						}
+
 						if (command->meta == META_SET)
 						{
-							PgBenchExpr *expr = command->expr;
-							PgBenchValue result;
-
-							if (!evaluateExpr(thread, st, expr, &result))
-							{
-								commandFailed(st, "evaluation of meta-command 'set' failed");
-								st->state = CSTATE_ABORTED;
-								break;
-							}
-
 							if (!putVariableValue(st, argv[0], argv[1], &result))
 							{
-								commandFailed(st, "assignment of meta-command 'set' failed");
+								commandFailed(st, "set", "assignment of meta-command failed");
 								st->state = CSTATE_ABORTED;
 								break;
 							}
 						}
-						else if (command->meta == META_SETSHELL)
+						else /* if and elif evaluated cases */
 						{
-							bool		ret = runShellCommand(st, argv[1], argv + 2, argc - 2);
+							bool cond = valueTruth(&result);
 
-							if (timer_exceeded) /* timeout */
+							/* execute or not depending on evaluated condition */
+							if (command->meta == META_IF)
 							{
-								st->state = CSTATE_FINISHED;
-								break;
+								conditional_stack_push(st->cstack, cond ? IFSTATE_TRUE : IFSTATE_FALSE);
 							}
-							else if (!ret)	/* on error */
+							else /* elif */
 							{
-								commandFailed(st, "execution of meta-command 'setshell' failed");
-								st->state = CSTATE_ABORTED;
-								break;
-							}
-							else
-							{
-								/* succeeded */
+								/* we should get here only if the "elif" needed evaluation */
+								Assert(conditional_stack_peek(st->cstack) == IFSTATE_FALSE);
+								conditional_stack_poke(st->cstack, cond ? IFSTATE_TRUE : IFSTATE_FALSE);
 							}
 						}
-						else if (command->meta == META_SHELL)
-						{
-							bool		ret = runShellCommand(st, NULL, argv + 1, argc - 1);
-
-							if (timer_exceeded) /* timeout */
-							{
-								st->state = CSTATE_FINISHED;
-								break;
-							}
-							else if (!ret)	/* on error */
-							{
-								commandFailed(st, "execution of meta-command 'shell' failed");
-								st->state = CSTATE_ABORTED;
-								break;
-							}
-							else
-							{
-								/* succeeded */
-							}
-						}
-
-						/*
-						 * executing the expression or shell command might
-						 * take a non-negligible amount of time, so reset
-						 * 'now'
-						 */
-						INSTR_TIME_SET_ZERO(now);
-
-						st->state = CSTATE_END_COMMAND;
 					}
+					else if (command->meta == META_ELSE)
+					{
+						switch (conditional_stack_peek(st->cstack))
+						{
+							case IFSTATE_TRUE:
+								conditional_stack_poke(st->cstack, IFSTATE_ELSE_FALSE);
+								break;
+							case IFSTATE_FALSE: /* inconsistent if active */
+							case IFSTATE_IGNORED: /* inconsistent if active */
+							case IFSTATE_NONE: /* else without if */
+							case IFSTATE_ELSE_TRUE: /* else after else */
+							case IFSTATE_ELSE_FALSE: /* else after else */
+							default:
+								/* dead code if conditional check is ok */
+								Assert(false);
+						}
+						goto move_to_end_command;
+					}
+					else if (command->meta == META_ENDIF)
+					{
+						Assert(!conditional_stack_empty(st->cstack));
+						conditional_stack_pop(st->cstack);
+						goto move_to_end_command;
+					}
+					else if (command->meta == META_SETSHELL)
+					{
+						bool		ret = runShellCommand(st, argv[1], argv + 2, argc - 2);
+
+						if (timer_exceeded) /* timeout */
+						{
+							st->state = CSTATE_FINISHED;
+							break;
+						}
+						else if (!ret)	/* on error */
+						{
+							commandFailed(st, "setshell", "execution of meta-command failed");
+							st->state = CSTATE_ABORTED;
+							break;
+						}
+						else
+						{
+							/* succeeded */
+						}
+					}
+					else if (command->meta == META_SHELL)
+					{
+						bool		ret = runShellCommand(st, NULL, argv + 1, argc - 1);
+
+						if (timer_exceeded) /* timeout */
+						{
+							st->state = CSTATE_FINISHED;
+							break;
+						}
+						else if (!ret)	/* on error */
+						{
+							commandFailed(st, "shell", "execution of meta-command failed");
+							st->state = CSTATE_ABORTED;
+							break;
+						}
+						else
+						{
+							/* succeeded */
+						}
+					}
+
+					move_to_end_command:
+					/*
+					 * executing the expression or shell command might
+					 * take a non-negligible amount of time, so reset
+					 * 'now'
+					 */
+					INSTR_TIME_SET_ZERO(now);
+
+					st->state = CSTATE_END_COMMAND;
+				}
+				break;
+
+				/*
+				 * non executed conditional branch
+				 */
+			case CSTATE_SKIP_COMMAND:
+				Assert(!conditional_active(st->cstack));
+				/* quickly skip commands until something to do... */
+				while (true)
+				{
+					command = sql_script[st->use_file].commands[st->command];
+
+					/* cannot reach end of script in that state */
+					Assert(command != NULL);
+
+					/* if this is conditional related, update conditional state */
+					if (command->type == META_COMMAND &&
+						(command->meta == META_IF ||
+						 command->meta == META_ELIF ||
+						 command->meta == META_ELSE ||
+						 command->meta == META_ENDIF))
+					{
+						switch (conditional_stack_peek(st->cstack))
+						{
+						case IFSTATE_FALSE:
+							if (command->meta == META_IF || command->meta == META_ELIF)
+							{
+								/* we must evaluate the condition */
+								st->state = CSTATE_START_COMMAND;
+							}
+							else if (command->meta == META_ELSE)
+							{
+								/* we must execute next command */
+								conditional_stack_poke(st->cstack, IFSTATE_ELSE_TRUE);
+								st->state = CSTATE_START_COMMAND;
+								st->command++;
+							}
+							else if (command->meta == META_ENDIF)
+							{
+								Assert(!conditional_stack_empty(st->cstack));
+								conditional_stack_pop(st->cstack);
+								if (conditional_active(st->cstack))
+									st->state = CSTATE_START_COMMAND;
+								/* else state remains in CSTATE_SKIP_COMMAND */
+								st->command++;
+							}
+							break;
+
+						case IFSTATE_IGNORED:
+						case IFSTATE_ELSE_FALSE:
+							if (command->meta == META_IF)
+								conditional_stack_push(st->cstack, IFSTATE_IGNORED);
+							else if (command->meta == META_ENDIF)
+							{
+								Assert(!conditional_stack_empty(st->cstack));
+								conditional_stack_pop(st->cstack);
+								if (conditional_active(st->cstack))
+									st->state = CSTATE_START_COMMAND;
+							}
+							/* could detect "else" & "elif" after "else" */
+							st->command++;
+							break;
+
+						case IFSTATE_NONE:
+						case IFSTATE_TRUE:
+						case IFSTATE_ELSE_TRUE:
+						default:
+							/* inconsistent if inactive, unreachable dead code */
+							Assert(false);
+						}
+					}
+					else
+					{
+						/* skip and consider next */
+						st->command++;
+					}
+
+					if (st->state != CSTATE_SKIP_COMMAND)
+						break;
 				}
 				break;
 
@@ -2982,7 +3135,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 					fprintf(stderr, "client %d receiving\n", st->id);
 				if (!PQconsumeInput(st->con))
 				{				/* there's something wrong */
-					commandFailed(st, "perhaps the backend died while processing");
+					commandFailed(st, "SQL", "perhaps the backend died while processing");
 					st->state = CSTATE_ABORTED;
 					break;
 				}
@@ -3004,7 +3157,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 						st->state = CSTATE_END_COMMAND;
 						break;
 					default:
-						commandFailed(st, PQerrorMessage(st->con));
+						commandFailed(st, "SQL", PQerrorMessage(st->con));
 						PQclear(res);
 						st->state = CSTATE_ABORTED;
 						break;
@@ -3048,9 +3201,10 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 									 INSTR_TIME_GET_DOUBLE(st->stmt_begin));
 				}
 
-				/* Go ahead with next command */
+				/* Go ahead with next command, to be executed or skipped */
 				st->command++;
-				st->state = CSTATE_START_COMMAND;
+				st->state = conditional_active(st->cstack) ?
+					CSTATE_START_COMMAND : CSTATE_SKIP_COMMAND;
 				break;
 
 				/*
@@ -3060,6 +3214,13 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 
 				/* transaction finished: calculate latency and do log */
 				processXactStats(thread, st, &now, false, agg);
+
+				/* conditional stack must be empty */
+				if (!conditional_stack_empty(st->cstack))
+				{
+					fprintf(stderr, "end of script reached within a conditional, missing \\endif\n");
+					exit(1);
+				}
 
 				if (is_connect)
 				{
@@ -3870,19 +4031,25 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 	/* ... and convert it to enum form */
 	my_command->meta = getMetaCommand(my_command->argv[0]);
 
-	if (my_command->meta == META_SET)
+	if (my_command->meta == META_SET ||
+		my_command->meta == META_IF ||
+		my_command->meta == META_ELIF)
 	{
-		/* For \set, collect var name, then lex the expression. */
 		yyscan_t	yyscanner;
 
-		if (!expr_lex_one_word(sstate, &word_buf, &word_offset))
-			syntax_error(source, lineno, my_command->line, my_command->argv[0],
-						 "missing argument", NULL, -1);
+		/* For \set, collect var name */
+		if (my_command->meta == META_SET)
+		{
+			if (!expr_lex_one_word(sstate, &word_buf, &word_offset))
+				syntax_error(source, lineno, my_command->line, my_command->argv[0],
+							 "missing argument", NULL, -1);
 
-		offsets[j] = word_offset;
-		my_command->argv[j++] = pg_strdup(word_buf.data);
-		my_command->argc++;
+			offsets[j] = word_offset;
+			my_command->argv[j++] = pg_strdup(word_buf.data);
+			my_command->argc++;
+		}
 
+		/* then for all parse the expression */
 		yyscanner = expr_scanner_init(sstate, source, lineno, start_offset,
 									  my_command->argv[0]);
 
@@ -3978,6 +4145,12 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 			syntax_error(source, lineno, my_command->line, my_command->argv[0],
 						 "missing command", NULL, -1);
 	}
+	else if (my_command->meta == META_ELSE || my_command->meta == META_ENDIF)
+	{
+		if (my_command->argc != 1)
+			syntax_error(source, lineno, my_command->line, my_command->argv[0],
+						 "unexpected argument", NULL, -1);
+	}
 	else
 	{
 		/* my_command->meta == META_NONE */
@@ -3988,6 +4161,62 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 	termPQExpBuffer(&word_buf);
 
 	return my_command;
+}
+
+static void
+ConditionError(const char *desc, int cmdn, const char *msg)
+{
+	fprintf(stderr,
+			"condition error in script \"%s\" command %d: %s\n",
+			desc, cmdn, msg);
+	exit(1);
+}
+
+/*
+ * Partial evaluation of conditionals before recording and running the script.
+ */
+static void
+CheckConditional(ParsedScript ps)
+{
+	/* statically check conditional structure */
+	ConditionalStack cs = conditional_stack_create();
+	int i;
+	for (i = 0 ; ps.commands[i] != NULL ; i++)
+	{
+		Command *cmd = ps.commands[i];
+		if (cmd->type == META_COMMAND)
+		{
+			switch (cmd->meta)
+			{
+			case META_IF:
+				conditional_stack_push(cs, IFSTATE_FALSE);
+				break;
+			case META_ELIF:
+				if (conditional_stack_empty(cs))
+					ConditionError(ps.desc, i+1, "\\elif without matching \\if");
+				if (conditional_stack_peek(cs) == IFSTATE_ELSE_FALSE)
+					ConditionError(ps.desc, i+1, "\\elif after \\else");
+				break;
+			case META_ELSE:
+				if (conditional_stack_empty(cs))
+					ConditionError(ps.desc, i+1, "\\else without matching \\if");
+				if (conditional_stack_peek(cs) == IFSTATE_ELSE_FALSE)
+					ConditionError(ps.desc, i+1, "\\else after \\else");
+				conditional_stack_poke(cs, IFSTATE_ELSE_FALSE);
+				break;
+			case META_ENDIF:
+				if (!conditional_stack_pop(cs))
+					ConditionError(ps.desc, i+1, "\\endif without matching \\if");
+				break;
+			default:
+				/* ignore anything else... */
+				break;
+			}
+		}
+	}
+	if (!conditional_stack_empty(cs))
+		ConditionError(ps.desc, i+1, "\\if without matching \\endif");
+	conditional_stack_destroy(cs);
 }
 
 /*
@@ -4274,6 +4503,8 @@ addScript(ParsedScript script)
 		fprintf(stderr, "at most %d SQL scripts are allowed\n", MAX_SCRIPTS);
 		exit(1);
 	}
+
+	CheckConditional(script);
 
 	sql_script[num_scripts] = script;
 	num_scripts++;
@@ -5019,6 +5250,12 @@ main(int argc, char **argv)
 				}
 			}
 		}
+	}
+
+	/* other CState initializations */
+	for (i = 0; i < nclients; i++)
+	{
+		state[i].cstack = conditional_stack_create();
 	}
 
 	if (debug)

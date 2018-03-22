@@ -2169,7 +2169,7 @@ hello 10
       </varlistentry>
 
 
-      <varlistentry>
+      <varlistentry id="psql-metacommand-if">
         <term><literal>\if</literal> <replaceable class="parameter">expression</replaceable></term>
         <term><literal>\elif</literal> <replaceable class="parameter">expression</replaceable></term>
         <term><literal>\else</literal></term>

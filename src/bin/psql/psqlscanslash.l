@@ -19,7 +19,7 @@
 #include "postgres_fe.h"
 
 #include "psqlscanslash.h"
-#include "conditional.h"
+#include "fe_utils/conditional.h"
 
 #include "libpq-fe.h"
 }

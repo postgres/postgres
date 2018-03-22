@@ -264,6 +264,12 @@ pgbench(
 		qr{command=51.: int -7793829335365542153\b},
 		qr{command=52.: int -?\d+\b},
 		qr{command=53.: boolean true\b},
+		qr{command=65.: int 65\b},
+		qr{command=74.: int 74\b},
+		qr{command=83.: int 83\b},
+		qr{command=86.: int 86\b},
+		qr{command=93.: int 93\b},
+		qr{command=95.: int 0\b},
 	],
 	'pgbench expressions',
 	{   '001_pgbench_expressions' => q{-- integer functions
@@ -349,6 +355,41 @@ pgbench(
 \set v2 5432
 \set v3 -54.21E-2
 SELECT :v0, :v1, :v2, :v3;
+-- if tests
+\set nope 0
+\if 1 > 0
+\set id debug(65)
+\elif 0
+\set nope 1
+\else
+\set nope 1
+\endif
+\if 1 < 0
+\set nope 1
+\elif 1 > 0
+\set ie debug(74)
+\else
+\set nope 1
+\endif
+\if 1 < 0
+\set nope 1
+\elif 1 < 0
+\set nope 1
+\else
+\set if debug(83)
+\endif
+\if 1 = 1
+\set ig debug(86)
+\elif 0
+\set nope 1
+\endif
+\if 1 = 0
+\set nope 1
+\elif 1 <> 0
+\set ih debug(93)
+\endif
+-- must be zero if false branches where skipped
+\set nope debug(:nope)
 } });
 
 # backslash commands
@@ -396,7 +437,7 @@ SELECT LEAST(:i, :i, :i, :i, :i, :i, :i, :i, :i, :i, :i);
 
 	# SHELL
 	[   'shell bad command',               0,
-		[qr{meta-command 'shell' failed}], q{\shell no-such-command} ],
+		[qr{\(shell\) .* meta-command failed}], q{\shell no-such-command} ],
 	[   'shell undefined variable', 0,
 		[qr{undefined variable ":nosuchvariable"}],
 		q{-- undefined variable in shell

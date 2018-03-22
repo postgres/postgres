@@ -900,6 +900,21 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
   </para>
 
   <variablelist>
+   <varlistentry>
+    <term><literal>\if</literal> <replaceable class="parameter">expression</replaceable></term>
+    <term><literal>\elif</literal> <replaceable class="parameter">expression</replaceable></term>
+    <term><literal>\else</literal></term>
+    <term><literal>\endif</literal></term>
+    <listitem>
+     <para> 
+      This group of commands implements nestable conditional blocks,
+      similarly to <literal>psql</literal>'s <xref linkend="psql-metacommand-if"/>.
+      Conditional expressions are identical to those with <literal>\set</literal>,
+      with non-zero values interpreted as true.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id='pgbench-metacommand-set'>
     <term>
      <literal>\set <replaceable>varname</replaceable> <replaceable>expression</replaceable></literal>

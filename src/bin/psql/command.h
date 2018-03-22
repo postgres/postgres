@@ -10,7 +10,7 @@
 
 #include "fe_utils/print.h"
 #include "fe_utils/psqlscan.h"
-#include "conditional.h"
+#include "fe_utils/conditional.h"
 
 
 typedef enum _backslashResult
