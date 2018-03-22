@@ -277,7 +277,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options"),
-						 errhint("option \"force_not_null\" supplied more than once for a column")));
+						 errhint("Option \"force_not_null\" supplied more than once for a column.")));
 			force_not_null = def;
 			/* Don't care what the value is, as long as it's a legal boolean */
 			(void) defGetBoolean(def);
@@ -289,7 +289,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options"),
-						 errhint("option \"force_null\" supplied more than once for a column")));
+						 errhint("Option \"force_null\" supplied more than once for a column.")));
 			force_null = def;
 			(void) defGetBoolean(def);
 		}

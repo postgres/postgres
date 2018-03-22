@@ -196,7 +196,7 @@ InitPgFdwOptions(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_OUT_OF_MEMORY),
 				 errmsg("out of memory"),
-				 errdetail("could not get libpq's default connection options")));
+				 errdetail("Could not get libpq's default connection options.")));
 
 	/* Count how many libpq options are available. */
 	num_libpq_opts = 0;

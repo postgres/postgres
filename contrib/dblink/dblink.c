@@ -113,7 +113,7 @@ static char *generate_relation_name(Relation rel);
 static void dblink_connstr_check(const char *connstr);
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
-				 const char *dblink_context_msg, bool fail);
+				 bool fail, const char *fmt,...) pg_attribute_printf(5, 6);
 static char *get_connect_string(const char *servername);
 static char *escape_param_str(const char *from);
 static void validate_pkattnums(Relation rel,
@@ -441,7 +441,8 @@ dblink_open(PG_FUNCTION_ARGS)
 	res = PQexec(conn, buf.data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		dblink_res_error(conn, conname, res, "could not open cursor", fail);
+		dblink_res_error(conn, conname, res, fail,
+						 "while opening cursor \"%s\"", curname);
 		PG_RETURN_TEXT_P(cstring_to_text("ERROR"));
 	}
 
@@ -509,7 +510,8 @@ dblink_close(PG_FUNCTION_ARGS)
 	res = PQexec(conn, buf.data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		dblink_res_error(conn, conname, res, "could not close cursor", fail);
+		dblink_res_error(conn, conname, res, fail,
+						 "while closing cursor \"%s\"", curname);
 		PG_RETURN_TEXT_P(cstring_to_text("ERROR"));
 	}
 
@@ -612,8 +614,8 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		(PQresultStatus(res) != PGRES_COMMAND_OK &&
 		 PQresultStatus(res) != PGRES_TUPLES_OK))
 	{
-		dblink_res_error(conn, conname, res,
-						 "could not fetch from cursor", fail);
+		dblink_res_error(conn, conname, res, fail,
+						 "while fetching from cursor \"%s\"", curname);
 		return (Datum) 0;
 	}
 	else if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -763,8 +765,8 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 				if (PQresultStatus(res) != PGRES_COMMAND_OK &&
 					PQresultStatus(res) != PGRES_TUPLES_OK)
 				{
-					dblink_res_error(conn, conname, res,
-									 "could not execute query", fail);
+					dblink_res_error(conn, conname, res, fail,
+									 "while executing query");
 					/* if fail isn't set, we'll return an empty query result */
 				}
 				else
@@ -1009,8 +1011,8 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 			PGresult   *res1 = res;
 
 			res = NULL;
-			dblink_res_error(conn, conname, res1,
-							 "could not execute query", fail);
+			dblink_res_error(conn, conname, res1, fail,
+							 "while executing query");
 			/* if fail isn't set, we'll return an empty query result */
 		}
 		else if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -1438,8 +1440,8 @@ dblink_exec(PG_FUNCTION_ARGS)
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
 		{
-			dblink_res_error(conn, conname, res,
-							 "could not execute command", fail);
+			dblink_res_error(conn, conname, res, fail,
+							 "while executing command");
 
 			/*
 			 * and save a copy of the command status string to return as our
@@ -1980,7 +1982,7 @@ dblink_fdw_validator(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_OUT_OF_MEMORY),
 					 errmsg("out of memory"),
-					 errdetail("could not get libpq's default connection options")));
+					 errdetail("Could not get libpq's default connection options.")));
 	}
 
 	/* Validate each supplied option. */
@@ -2676,9 +2678,17 @@ dblink_connstr_check(const char *connstr)
 	}
 }
 
+/*
+ * Report an error received from the remote server
+ *
+ * res: the received error result (will be freed)
+ * fail: true for ERROR ereport, false for NOTICE
+ * fmt and following args: sprintf-style format and values for errcontext;
+ * the resulting string should be worded like "while <some action>"
+ */
 static void
 dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
-				 const char *dblink_context_msg, bool fail)
+				 bool fail, const char *fmt,...)
 {
 	int			level;
 	char	   *pg_diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
@@ -2691,7 +2701,8 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	char	   *message_detail;
 	char	   *message_hint;
 	char	   *message_context;
-	const char *dblink_context_conname = "unnamed";
+	va_list		ap;
+	char		dblink_context_msg[512];
 
 	if (fail)
 		level = ERROR;
@@ -2720,11 +2731,25 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	if (message_primary == NULL)
 		message_primary = pchomp(PQerrorMessage(conn));
 
+	/*
+	 * Now that we've copied all the data we need out of the PGresult, it's
+	 * safe to free it.  We must do this to avoid PGresult leakage.  We're
+	 * leaking all the strings too, but those are in palloc'd memory that will
+	 * get cleaned up eventually.
+	 */
 	if (res)
 		PQclear(res);
 
-	if (conname)
-		dblink_context_conname = conname;
+	/*
+	 * Format the basic errcontext string.  Below, we'll add on something
+	 * about the connection name.  That's a violation of the translatability
+	 * guidelines about constructing error messages out of parts, but since
+	 * there's no translation support for dblink, there's no need to worry
+	 * about that (yet).
+	 */
+	va_start(ap, fmt);
+	vsnprintf(dblink_context_msg, sizeof(dblink_context_msg), fmt, ap);
+	va_end(ap);
 
 	ereport(level,
 			(errcode(sqlstate),
@@ -2732,9 +2757,12 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 			 errmsg("could not obtain message string for remote error"),
 			 message_detail ? errdetail_internal("%s", message_detail) : 0,
 			 message_hint ? errhint("%s", message_hint) : 0,
-			 message_context ? errcontext("%s", message_context) : 0,
-			 errcontext("Error occurred on dblink connection named \"%s\": %s.",
-						dblink_context_conname, dblink_context_msg)));
+			 message_context ? (errcontext("%s", message_context)) : 0,
+			 conname ?
+			 (errcontext("%s on dblink connection named \"%s\"",
+						 dblink_context_msg, conname)) :
+			 (errcontext("%s on unnamed dblink connection",
+						 dblink_context_msg))));
 }
 
 /*
@@ -2769,7 +2797,7 @@ get_connect_string(const char *servername)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_OUT_OF_MEMORY),
 					 errmsg("out of memory"),
-					 errdetail("could not get libpq's default connection options")));
+					 errdetail("Could not get libpq's default connection options.")));
 	}
 
 	/* first gather the server connstr options */

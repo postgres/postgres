@@ -630,7 +630,7 @@ pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
 				 message_detail ? errdetail_internal("%s", message_detail) : 0,
 				 message_hint ? errhint("%s", message_hint) : 0,
 				 message_context ? errcontext("%s", message_context) : 0,
-				 sql ? errcontext("Remote SQL command: %s", sql) : 0));
+				 sql ? errcontext("remote SQL command: %s", sql) : 0));
 	}
 	PG_CATCH();
 	{

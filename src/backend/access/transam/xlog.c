@@ -9328,7 +9328,7 @@ CreateRestartPoint(int flags)
 	ereport((log_checkpoints ? LOG : DEBUG2),
 			(errmsg("recovery restart point at %X/%X",
 					(uint32) (lastCheckPoint.redo >> 32), (uint32) lastCheckPoint.redo),
-			 xtime ? errdetail("last completed transaction was at log time %s",
+			 xtime ? errdetail("Last completed transaction was at log time %s.",
 							   timestamptz_to_str(xtime)) : 0));
 
 	LWLockRelease(CheckpointLock);
