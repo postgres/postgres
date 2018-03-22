@@ -323,23 +323,40 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     more other tables using a nested loop, hash join, or merge join.  The
     inner side of the join may be any kind of non-parallel plan that is
     otherwise supported by the planner provided that it is safe to run within
-    a parallel worker.  For example, if a nested loop join is chosen, the
-    inner plan may be an index scan which looks up a value taken from the outer
-    side of the join.
+    a parallel worker.  Depending on the join type, the inner side may also be
+    a parallel plan.
   </para>
 
-  <para>
-    Each worker will execute the inner side of the join in full.  This is
-    typically not a problem for nested loops, but may be inefficient for
-    cases involving hash or merge joins.  For example, for a hash join, this
-    restriction means that an identical hash table is built in each worker
-    process, which works fine for joins against small tables but may not be
-    efficient when the inner table is large.  For a merge join, it might mean
-    that each worker performs a separate sort of the inner relation, which
-    could be slow.  Of course, in cases where a parallel plan of this type
-    would be inefficient, the query planner will normally choose some other
-    plan (possibly one which does not use parallelism) instead.
-  </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+        In a <emphasis>nested loop join</emphasis>, the inner side is always
+        non-parallel.  Although it is executed in full, this is efficient if
+        the inner side is an index scan, because the outer tuples and thus
+        the loops that look up values in the index are divided over the
+        cooperating processes.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        In a <emphasis>merge join</emphasis>, the inner side is always
+        a non-parallel plan and therefore executed in full.  This may be
+        inefficient, especially if a sort must be performed, because the work
+        and resulting data are duplicated in every cooperating process.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        In a <emphasis>hash join</emphasis> (without the "parallel" prefix),
+        the inner side is executed in full by every cooperating process
+        to build identical copies of the hash table.  This may be inefficient
+        if the hash table is large or the plan is expensive.  In a
+        <emphasis>parallel hash join</emphasis>, the inner side is a
+        <emphasis>parallel hash</emphasis> that divides the work of building
+        a shared hash table over the cooperating processes.
+      </para>
+    </listitem>
+  </itemizedlist>
  </sect2>
 
  <sect2 id="parallel-aggregation">
