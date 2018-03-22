@@ -447,7 +447,7 @@ fi
 if test "$ac_env_BITCODE_CXXFLAGS_set" = set; then
   BITCODE_CXXFLAGS=$ac_env_BITCODE_CXXFLAGS_value
 else
-  BITCODE_CXXFLAGS="-O2 BITCODE_CXXFLAGS"
+  BITCODE_CXXFLAGS="-O2 $BITCODE_CXXFLAGS"
 fi
 
 # C[XX]FLAGS we determined above will be added back at the end
