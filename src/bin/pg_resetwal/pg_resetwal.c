@@ -601,7 +601,7 @@ ReadControlFile(void)
 			fprintf(stderr,
 					_("%s: pg_control specifies invalid WAL segment size (%d bytes); proceed with caution \n"),
 					progname, WalSegSz);
-			guessed = true;
+			return false;
 		}
 
 		return true;
@@ -678,7 +678,7 @@ GuessControlValues(void)
 	ControlFile.floatFormat = FLOATFORMAT_VALUE;
 	ControlFile.blcksz = BLCKSZ;
 	ControlFile.relseg_size = RELSEG_SIZE;
-	ControlFile.xlog_blcksz = XLOG_BLCKSZ;
+	WalSegSz = ControlFile.xlog_blcksz = XLOG_BLCKSZ;
 	ControlFile.xlog_seg_size = DEFAULT_XLOG_SEG_SIZE;
 	ControlFile.nameDataLen = NAMEDATALEN;
 	ControlFile.indexMaxKeys = INDEX_MAX_KEYS;
