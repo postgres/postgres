@@ -40,7 +40,10 @@ dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
 kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
 	rm -f $@ && $(LN_S) $< .
 
-sql_help.c: sql_help.h ;
+# See notes in src/backend/parser/Makefile about the following two rules
+sql_help.c: sql_help.h
+	touch $@
+
 sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 	$(PERL) $< $(REFDOCDIR) $*
 
@@ -50,7 +53,7 @@ mainloop.o: psqlscan.c
 psqlscan.c: FLEXFLAGS = -Cfe -p -p
 psqlscan.c: FLEX_NO_BACKUP=yes
 
-distprep: sql_help.h psqlscan.c
+distprep: sql_help.h sql_help.c psqlscan.c
 
 install: all installdirs
 	$(INSTALL_PROGRAM) psql$(X) '$(DESTDIR)$(bindir)/psql$(X)'
