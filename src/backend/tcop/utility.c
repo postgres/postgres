@@ -382,6 +382,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 {
 	Node	   *parsetree = pstmt->utilityStmt;
 	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
+	bool		isAtomicContext = (context != PROCESS_UTILITY_TOPLEVEL || IsTransactionBlock());
 	ParseState *pstate;
 
 	check_xact_readonly(parsetree);
@@ -514,8 +515,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			break;
 
 		case T_DoStmt:
-			ExecuteDoStmt((DoStmt *) parsetree,
-						  (context != PROCESS_UTILITY_TOPLEVEL || IsTransactionBlock()));
+			ExecuteDoStmt((DoStmt *) parsetree, isAtomicContext);
 			break;
 
 		case T_CreateTableSpaceStmt:
@@ -644,9 +644,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			break;
 
 		case T_CallStmt:
-			ExecuteCallStmt(castNode(CallStmt, parsetree), params,
-							(context != PROCESS_UTILITY_TOPLEVEL || IsTransactionBlock()),
-							dest);
+			ExecuteCallStmt(castNode(CallStmt, parsetree), params, isAtomicContext, dest);
 			break;
 
 		case T_ClusterStmt:
