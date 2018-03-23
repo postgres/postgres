@@ -51,7 +51,7 @@ int main() {
     printf("\"%s\": \"%s\"  %d\n", bigstr, shortstr, shstr_ind);
   }
 
-  EXEC SQL CLOSE C; 
+  EXEC SQL CLOSE C;
   EXEC SQL DROP TABLE strdbase;
 
   printf("\nGOOD-BYE!!\n\n");
