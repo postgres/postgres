@@ -20,8 +20,9 @@ all: errcodes.h fmgroids.h probes.h
 
 $(SUBDIRS:%=%-recursive): fmgroids.h
 
-# see explanation in ../parser/Makefile
-fmgroids.h: fmgrtab.c ;
+# see notes in src/backend/parser/Makefile
+fmgroids.h: fmgrtab.c
+	touch $@
 
 fmgrtab.c: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
 	$(PERL) -I $(catalogdir) $< $(top_srcdir)/src/include/catalog/pg_proc.h
