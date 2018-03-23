@@ -315,13 +315,9 @@ else # PORTNAME == aix
 
 # AIX case
 
-# There is no correct way to write a rule that generates two files.
-# Rules with two targets don't have that meaning, they are merely
-# shorthand for two otherwise separate rules.  To be safe for parallel
-# make, we must chain the dependencies like this.  The semicolon is
-# important, otherwise make will choose some built-in rule.
-
-$(stlib): $(shlib) ;
+# See notes in src/backend/parser/Makefile about the following two rules
+$(stlib): $(shlib)
+	touch $@
 
 $(shlib): $(OBJS) | $(SHLIB_PREREQS)
 	rm -f $(stlib)
@@ -352,13 +348,9 @@ else
 
 # Win32 case
 
-# There is no correct way to write a rule that generates two files.
-# Rules with two targets don't have that meaning, they are merely
-# shorthand for two otherwise separate rules.  To be safe for parallel
-# make, we must chain the dependencies like this.  The semicolon is
-# important, otherwise make will choose some built-in rule.
-
-$(stlib): $(shlib) ;
+# See notes in src/backend/parser/Makefile about the following two rules
+$(stlib): $(shlib)
+	touch $@
 
 # XXX A backend that loads a module linked with libgcc_s_dw2-1.dll will exit
 # uncleanly, hence -static-libgcc.  (Last verified with MinGW-w64 compilers

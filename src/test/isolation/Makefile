@@ -36,15 +36,6 @@ isolationtester$(X): $(OBJS) | submake-libpq submake-libpgport
 
 distprep: specparse.c specscanner.c
 
-# There is no correct way to write a rule that generates two files.
-# Rules with two targets don't have that meaning, they are merely
-# shorthand for two otherwise separate rules.  To be safe for parallel
-# make, we must chain the dependencies like this.  The semicolon is
-# important, otherwise make will choose the built-in rule for
-# gram.y=>gram.c.
-
-specparse.h: specparse.c ;
-
 # specscanner is compiled as part of specparse
 specparse.o: specscanner.c
 

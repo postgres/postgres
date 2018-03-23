@@ -23,12 +23,17 @@ include $(top_srcdir)/src/backend/common.mk
 
 # There is no correct way to write a rule that generates two files.
 # Rules with two targets don't have that meaning, they are merely
-# shorthand for two otherwise separate rules.  To be safe for parallel
-# make, we must chain the dependencies like this.  The semicolon is
-# important, otherwise make will choose the built-in rule for
-# gram.y=>gram.c.
+# shorthand for two otherwise separate rules.  If we have an action
+# that in fact generates two or more files, we must choose one of them
+# as primary and show it as the action's output, then make all of the
+# other output files dependent on the primary, like this.  Furthermore,
+# the "touch" action is essential, because it ensures that gram.h is
+# marked as newer than (or at least no older than) gram.c.  Without that,
+# make is likely to try to rebuild gram.h in subsequent runs, which causes
+# failures in VPATH builds from tarballs.
 
-gram.h: gram.c ;
+gram.h: gram.c
+	touch $@
 
 gram.c: BISONFLAGS += -d
 gram.c: BISON_CHECK_CMD = $(PERL) $(srcdir)/check_keywords.pl $< $(top_srcdir)/src/include/parser/kwlist.h

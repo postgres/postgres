@@ -35,7 +35,10 @@ psql: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 
 help.o: sql_help.h
 
-sql_help.c: sql_help.h ;
+# See notes in src/backend/parser/Makefile about the following two rules
+sql_help.c: sql_help.h
+	touch $@
+
 sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 	$(PERL) $< $(REFDOCDIR) $*
 
@@ -43,7 +46,7 @@ psqlscanslash.c: FLEXFLAGS = -Cfe -p -p
 psqlscanslash.c: FLEX_NO_BACKUP=yes
 psqlscanslash.c: FLEX_FIX_WARNING=yes
 
-distprep: sql_help.h psqlscanslash.c
+distprep: sql_help.h sql_help.c psqlscanslash.c
 
 install: all installdirs
 	$(INSTALL_PROGRAM) psql$(X) '$(DESTDIR)$(bindir)/psql$(X)'

@@ -63,7 +63,9 @@ uninstall-headers:
 pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o pl_scanner.o: plpgsql.h pl_gram.h plerrcodes.h
 
 # See notes in src/backend/parser/Makefile about the following two rules
-pl_gram.h: pl_gram.c ;
+pl_gram.h: pl_gram.c
+	touch $@
+
 pl_gram.c: BISONFLAGS += -d
 
 # generate plerrcodes.h from src/backend/utils/errcodes.txt
