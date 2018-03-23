@@ -2570,6 +2570,12 @@ The commands accepted in replication mode are:
        </listitem>
        <listitem>
         <para>
+         Unlogged relations, except for the init fork which is required to
+         recreate the (empty) unlogged relation on recovery.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
          <filename>pg_wal</filename>, including subdirectories. If the backup is run
          with WAL files included, a synthesized version of <filename>pg_wal</filename> will be
          included, but it will only contain the files necessary for the

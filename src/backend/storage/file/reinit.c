@@ -28,8 +28,6 @@ static void ResetUnloggedRelationsInTablespaceDir(const char *tsdirname,
 									  int op);
 static void ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname,
 								   int op);
-static bool parse_filename_for_nontemp_relation(const char *name,
-									int *oidchars, ForkNumber *fork);
 
 typedef struct
 {
@@ -373,7 +371,7 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
  * portion of the filename.  This is critical to protect against a possible
  * buffer overrun.
  */
-static bool
+bool
 parse_filename_for_nontemp_relation(const char *name, int *oidchars,
 									ForkNumber *fork)
 {

@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 79;
+use Test::More tests => 87;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -66,6 +66,16 @@ foreach my $filename (
 # positive.
 $node->safe_psql('postgres', 'SELECT 1;');
 
+# Create an unlogged table to test that forks other than init are not copied.
+$node->safe_psql('postgres', 'CREATE UNLOGGED TABLE base_unlogged (id int)');
+
+my $baseUnloggedPath = $node->safe_psql('postgres',
+	q{select pg_relation_filepath('base_unlogged')});
+
+# Make sure main and init forks exist
+ok(-f "$pgdata/${baseUnloggedPath}_init", 'unlogged init fork in base');
+ok(-f "$pgdata/$baseUnloggedPath", 'unlogged main fork in base');
+
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '-X', 'none' ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
@@ -95,6 +105,12 @@ foreach my $filename (
 {
 	ok(!-f "$tempdir/backup/$filename", "$filename not copied");
 }
+
+# Unlogged relation forks other than init should not be copied
+ok(-f "$tempdir/backup/${baseUnloggedPath}_init",
+	'unlogged init fork in backup');
+ok(!-f "$tempdir/backup/$baseUnloggedPath",
+	'unlogged main fork not in backup');
 
 # Make sure existing backup_label was ignored.
 isnt(slurp_file("$tempdir/backup/backup_label"),
@@ -147,7 +163,7 @@ unlink "$pgdata/$superlongname";
 # skip on Windows.
 SKIP:
 {
-	skip "symlinks not supported on Windows", 11 if ($windows_os);
+	skip "symlinks not supported on Windows", 15 if ($windows_os);
 
 	# Move pg_replslot out of $pgdata and create a symlink to it.
 	$node->stop;
@@ -177,6 +193,19 @@ SKIP:
 	my @tblspc_tars = glob "$tempdir/tarbackup2/[0-9]*.tar";
 	is(scalar(@tblspc_tars), 1, 'one tablespace tar was created');
 
+	# Create an unlogged table to test that forks other than init are not copied.
+	$node->safe_psql('postgres',
+		'CREATE UNLOGGED TABLE tblspc1_unlogged (id int) TABLESPACE tblspc1;');
+
+	my $tblspc1UnloggedPath = $node->safe_psql(
+		'postgres', q{select pg_relation_filepath('tblspc1_unlogged')});
+
+	# Make sure main and init forks exist
+	ok(-f "$pgdata/${tblspc1UnloggedPath}_init",
+		'unlogged init fork in tablespace');
+	ok(-f "$pgdata/$tblspc1UnloggedPath",
+		'unlogged main fork in tablespace');
+
 	$node->command_fails(
 		[ 'pg_basebackup', '-D', "$tempdir/backup1", '-Fp' ],
 		'plain format with tablespaces fails without tablespace mapping');
@@ -195,11 +224,20 @@ SKIP:
 		"tablespace symlink was updated");
 	closedir $dh;
 
+	# Unlogged relation forks other than init should not be copied
+	my ($tblspc1UnloggedBackupPath) = $tblspc1UnloggedPath =~ /[^\/]*\/[^\/]*\/[^\/]*$/g;
+
+	ok(-f "$tempdir/tbackup/tblspc1/${tblspc1UnloggedBackupPath}_init",
+		'unlogged init fork in tablespace backup');
+	ok(!-f "$tempdir/tbackup/tblspc1/$tblspc1UnloggedBackupPath",
+		'unlogged main fork not in tablespace backup');
+
 	ok( -d "$tempdir/backup1/pg_replslot",
 		'pg_replslot symlink copied as directory');
 
 	mkdir "$tempdir/tbl=spc2";
 	$node->safe_psql('postgres', "DROP TABLE test1;");
+	$node->safe_psql('postgres', "DROP TABLE tblspc1_unlogged;");
 	$node->safe_psql('postgres', "DROP TABLESPACE tblspc1;");
 	$node->safe_psql('postgres',
 		"CREATE TABLESPACE tblspc2 LOCATION '$shorter_tempdir/tbl=spc2';");
