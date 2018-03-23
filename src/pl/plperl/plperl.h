@@ -50,6 +50,18 @@
 #define __inline__ inline
 #endif
 
+/*
+ * Regarding bool, both PostgreSQL and Perl might use stdbool.h or not,
+ * depending on configuration.  If both agree, things are relatively harmless.
+ * If not, things get tricky.  If PostgreSQL does but Perl does not, define
+ * HAS_BOOL here so that Perl does not redefine bool; this avoids compiler
+ * warnings.  If PostgreSQL does not but Perl does, we need to undefine bool
+ * after we include the Perl headers; see below.
+ */
+#ifdef USE_STDBOOL
+#define HAS_BOOL 1
+#endif
+
 
 /*
  * Get the basic Perl API.  We use PERL_NO_GET_CONTEXT mode so that our code
