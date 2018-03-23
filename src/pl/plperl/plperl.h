@@ -50,6 +50,11 @@
 #define __inline__ inline
 #endif
 
+/*
+ * Prevent perl from redefining "bool".
+ */
+#define HAS_BOOL 1
+
 
 /*
  * Get the basic Perl API.  We use PERL_NO_GET_CONTEXT mode so that our code
@@ -90,11 +95,6 @@
 #define NEED_newRV_noinc
 #define NEED_sv_2pv_flags
 #include "ppport.h"
-
-/* perl may have a different width of "bool", don't buy it */
-#ifdef bool
-#undef bool
-#endif
 
 /* supply HeUTF8 if it's missing - ppport.h doesn't supply it, unfortunately */
 #ifndef HeUTF8

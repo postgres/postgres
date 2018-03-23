@@ -51,8 +51,8 @@ typedef struct GinStatsData
 /*
  * A ternary value used by tri-consistent functions.
  *
- * For convenience, this is compatible with booleans. A boolean can be
- * safely cast to a GinTernaryValue.
+ * This must be of the same size as a bool because some code will cast a
+ * pointer to a bool to a pointer to a GinTernaryValue.
  */
 typedef char GinTernaryValue;
 

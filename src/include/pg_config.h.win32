@@ -356,6 +356,9 @@
 /* Define to 1 if you have the `SSL_get_current_compression' function. */
 #define HAVE_SSL_GET_CURRENT_COMPRESSION 1
 
+/* Define to 1 if stdbool.h conforms to C99. */
+/* #undef HAVE_STDBOOL_H */
+
 /* Define to 1 if you have the <stdint.h> header file. */
 /* #undef HAVE_STDINT_H */
 
@@ -524,6 +527,9 @@
 /* Define to 1 if you have the <winldap.h> header file. */
 /* #undef HAVE_WINLDAP_H */
 
+/* Define to 1 if the system has the type `_Bool'. */
+/* #undef HAVE__BOOL */
+
 /* Define to 1 if your compiler understands __builtin_bswap16. */
 /* #undef HAVE__BUILTIN_BSWAP16 */
 
@@ -605,6 +611,9 @@
 
 /* A string containing the version number, platform, and C compiler */
 #define PG_VERSION_STR "Uninitialized version string (win32)"
+
+/* The size of `bool', as computed by sizeof. */
+#define SIZEOF_BOOL 0
 
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 4
