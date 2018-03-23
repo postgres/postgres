@@ -141,6 +141,12 @@ postgres.o: $(OBJS)
 # The following targets are specified in make commands that appear in
 # the make files in our subdirectories. Note that it's important we
 # match the dependencies shown in the subdirectory makefiles!
+# Also, in cases where a subdirectory makefile generates two files in
+# what's really one step, such as bison producing both gram.h and gram.c,
+# we must request making the one that is shown as the secondary (dependent)
+# output, else the timestamp on it might be wrong.  By project convention,
+# the .h file is the dependent one for bison output, so we need only request
+# that; but in other cases, request both for safety.
 
 parser/gram.h: parser/gram.y
 	$(MAKE) -C parser gram.h
