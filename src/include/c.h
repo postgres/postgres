@@ -268,6 +268,7 @@
 
 #if defined(HAVE_STDBOOL_H) && SIZEOF_BOOL == 1
 #include <stdbool.h>
+#define USE_STDBOOL 1
 #else
 
 #ifndef bool

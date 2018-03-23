@@ -50,11 +50,6 @@
 #define __inline__ inline
 #endif
 
-/*
- * Prevent perl from redefining "bool".
- */
-#define HAS_BOOL 1
-
 
 /*
  * Get the basic Perl API.  We use PERL_NO_GET_CONTEXT mode so that our code
@@ -95,6 +90,19 @@
 #define NEED_newRV_noinc
 #define NEED_sv_2pv_flags
 #include "ppport.h"
+
+/*
+ * perl might have included stdbool.h.  If we also did that earlier (see c.h),
+ * then that's fine.  If not, we probably rejected it for some reason.  In
+ * that case, undef bool and proceed with our own bool.  (Note that stdbool.h
+ * makes bool a macro, but our own replacement is a typedef, so the undef
+ * makes ours visible again).
+ */
+#ifndef USE_STDBOOL
+#ifdef bool
+#undef bool
+#endif
+#endif
 
 /* supply HeUTF8 if it's missing - ppport.h doesn't supply it, unfortunately */
 #ifndef HeUTF8
