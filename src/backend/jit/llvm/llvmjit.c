@@ -46,6 +46,8 @@ typedef struct LLVMJitHandle
 
 /* types & functions commonly needed for JITing */
 LLVMTypeRef TypeSizeT;
+LLVMTypeRef TypeParamBool;
+LLVMTypeRef TypeStorageBool;
 LLVMTypeRef TypePGFunction;
 LLVMTypeRef StructHeapTupleFieldsField3;
 LLVMTypeRef StructHeapTupleFields;
@@ -682,7 +684,7 @@ llvm_shutdown(int code, Datum arg)
 	}
 }
 
-/* helper for llvm_create_types */
+/* helper for llvm_create_types, returning a global var's type */
 static LLVMTypeRef
 load_type(LLVMModuleRef mod, const char *name)
 {
@@ -699,6 +701,31 @@ load_type(LLVMModuleRef mod, const char *name)
 	Assert(typ != NULL);
 	typ = LLVMGetElementType(typ);
 	Assert(typ != NULL);
+	return typ;
+}
+
+/* helper for llvm_create_types, returning a function's return type */
+static LLVMTypeRef
+load_return_type(LLVMModuleRef mod, const char *name)
+{
+	LLVMValueRef value;
+	LLVMTypeRef typ;
+
+	/* this'll return a *pointer* to the function */
+	value = LLVMGetNamedFunction(mod, name);
+	if (!value)
+		elog(ERROR, "function %s is unknown", name);
+
+	/* get type of function pointer */
+	typ = LLVMTypeOf(value);
+	Assert(typ != NULL);
+	/* dereference pointer */
+	typ = LLVMGetElementType(typ);
+	Assert(typ != NULL);
+	/* and look at return type */
+	typ = LLVMGetReturnType(typ);
+	Assert(typ != NULL);
+
 	return typ;
 }
 
@@ -740,6 +767,8 @@ llvm_create_types(void)
 	llvm_layout = pstrdup(LLVMGetDataLayoutStr(mod));
 
 	TypeSizeT = load_type(mod, "TypeSizeT");
+	TypeParamBool = load_return_type(mod, "FunctionReturningBool");
+	TypeStorageBool = load_type(mod, "TypeStorageBool");
 	TypePGFunction = load_type(mod, "TypePGFunction");
 	StructExprContext = load_type(mod, "StructExprContext");
 	StructExprEvalStep = load_type(mod, "StructExprEvalStep");

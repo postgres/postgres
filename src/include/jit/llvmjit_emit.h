@@ -79,6 +79,24 @@ l_sizet_const(size_t i)
 }
 
 /*
+ * Emit constant boolean, as used for storage (e.g. global vars, structs).
+ */
+static inline LLVMValueRef
+l_sbool_const(bool i)
+{
+	return LLVMConstInt(TypeStorageBool, (int) i, false);
+}
+
+/*
+ * Emit constant boolean, as used for parameters (e.g. function parameters).
+ */
+static inline LLVMValueRef
+l_pbool_const(bool i)
+{
+	return LLVMConstInt(TypeParamBool, (int) i, false);
+}
+
+/*
  * Load a pointer member idx from a struct.
  */
 static inline LLVMValueRef

@@ -152,7 +152,7 @@ llvm_compile_expr(ExprState *state)
 
 		param_types[0] = l_ptr(StructExprState);	/* state */
 		param_types[1] = l_ptr(StructExprContext);	/* econtext */
-		param_types[2] = l_ptr(LLVMInt8Type()); /* isnull */
+		param_types[2] = l_ptr(TypeParamBool);		/* isnull */
 
 		eval_sig = LLVMFunctionType(TypeSizeT,
 									param_types, lengthof(param_types),
@@ -248,7 +248,7 @@ llvm_compile_expr(ExprState *state)
 		opcode = ExecEvalStepOp(state, op);
 
 		v_resvaluep = l_ptr_const(op->resvalue, l_ptr(TypeSizeT));
-		v_resnullp = l_ptr_const(op->resnull, l_ptr(LLVMInt8Type()));
+		v_resnullp = l_ptr_const(op->resnull, l_ptr(TypeStorageBool));
 
 		switch (opcode)
 		{
@@ -259,6 +259,8 @@ llvm_compile_expr(ExprState *state)
 
 					v_tmpvalue = LLVMBuildLoad(b, v_tmpvaluep, "");
 					v_tmpisnull = LLVMBuildLoad(b, v_tmpisnullp, "");
+					v_tmpisnull =
+						LLVMBuildTrunc(b, v_tmpisnull, TypeParamBool, "");
 
 					LLVMBuildStore(b, v_tmpisnull, v_isnullp);
 
@@ -521,7 +523,7 @@ llvm_compile_expr(ExprState *state)
 					/* check if value is NULL */
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_isnull,
-												  l_int8_const(0), ""),
+												  l_sbool_const(0), ""),
 									b_notnull, opblocks[i + 1]);
 
 					/* if value is not null, convert to RO datum */
@@ -545,7 +547,7 @@ llvm_compile_expr(ExprState *state)
 								v_constnull;
 
 					v_constvalue = l_sizet_const(op->d.constval.value);
-					v_constnull = l_int8_const(op->d.constval.isnull);
+					v_constnull = l_sbool_const(op->d.constval.isnull);
 
 					LLVMBuildStore(b, v_constvalue, v_resvaluep);
 					LLVMBuildStore(b, v_constnull, v_resnullp);
@@ -587,7 +589,7 @@ llvm_compile_expr(ExprState *state)
 					 * set resnull to true, if the function is actually
 					 * called, it'll be reset
 					 */
-					LLVMBuildStore(b, l_int8_const(1), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
 
 					/* create blocks for checking args, one for each */
 					b_checkargnulls =
@@ -619,7 +621,7 @@ llvm_compile_expr(ExprState *state)
 						LLVMBuildCondBr(b,
 										LLVMBuildICmp(b, LLVMIntEQ,
 													  v_argisnull,
-													  l_int8_const(1),
+													  l_sbool_const(1),
 													  ""),
 										opblocks[i + 1],
 										b_argnotnull);
@@ -661,8 +663,8 @@ llvm_compile_expr(ExprState *state)
 					LLVMValueRef v_boolanynullp;
 
 					v_boolanynullp = l_ptr_const(op->d.boolexpr.anynull,
-												 l_ptr(LLVMInt8Type()));
-					LLVMBuildStore(b, l_int8_const(0), v_boolanynullp);
+												 l_ptr(TypeStorageBool));
+					LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
 
 					/* intentionally fall through */
 				}
@@ -697,7 +699,7 @@ llvm_compile_expr(ExprState *state)
 											   "b.%d.boolcont", i);
 
 					v_boolanynullp = l_ptr_const(op->d.boolexpr.anynull,
-												 l_ptr(LLVMInt8Type()));
+												 l_ptr(TypeStorageBool));
 
 					v_boolnull = LLVMBuildLoad(b, v_resnullp, "");
 					v_boolvalue = LLVMBuildLoad(b, v_resvaluep, "");
@@ -710,14 +712,14 @@ llvm_compile_expr(ExprState *state)
 					/* check if current input is NULL */
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_boolnull,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									b_boolisnull,
 									b_boolcheckfalse);
 
 					/* build block that sets anynull */
 					LLVMPositionBuilderAtEnd(b, b_boolisnull);
 					/* set boolanynull to true */
-					LLVMBuildStore(b, l_int8_const(1), v_boolanynullp);
+					LLVMBuildStore(b, l_sbool_const(1), v_boolanynullp);
 					/* and jump to next block */
 					LLVMBuildBr(b, b_boolcont);
 
@@ -746,12 +748,12 @@ llvm_compile_expr(ExprState *state)
 					/* set value to NULL if any previous values were NULL */
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_boolanynull,
-												  l_int8_const(0), ""),
+												  l_sbool_const(0), ""),
 									opblocks[i + 1], b_boolisanynull);
 
 					LLVMPositionBuilderAtEnd(b, b_boolisanynull);
 					/* set resnull to true */
-					LLVMBuildStore(b, l_int8_const(1), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
 					/* reset resvalue */
 					LLVMBuildStore(b, l_sizet_const(0), v_resvaluep);
 
@@ -763,8 +765,8 @@ llvm_compile_expr(ExprState *state)
 					LLVMValueRef v_boolanynullp;
 
 					v_boolanynullp = l_ptr_const(op->d.boolexpr.anynull,
-												 l_ptr(LLVMInt8Type()));
-					LLVMBuildStore(b, l_int8_const(0), v_boolanynullp);
+												 l_ptr(TypeStorageBool));
+					LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
 
 					/* intentionally fall through */
 				}
@@ -800,7 +802,7 @@ llvm_compile_expr(ExprState *state)
 											   "b.%d.boolcont", i);
 
 					v_boolanynullp = l_ptr_const(op->d.boolexpr.anynull,
-												 l_ptr(LLVMInt8Type()));
+												 l_ptr(TypeStorageBool));
 
 					v_boolnull = LLVMBuildLoad(b, v_resnullp, "");
 					v_boolvalue = LLVMBuildLoad(b, v_resvaluep, "");
@@ -812,14 +814,14 @@ llvm_compile_expr(ExprState *state)
 
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_boolnull,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									b_boolisnull,
 									b_boolchecktrue);
 
 					/* build block that sets anynull */
 					LLVMPositionBuilderAtEnd(b, b_boolisnull);
 					/* set boolanynull to true */
-					LLVMBuildStore(b, l_int8_const(1), v_boolanynullp);
+					LLVMBuildStore(b, l_sbool_const(1), v_boolanynullp);
 					/* and jump to next block */
 					LLVMBuildBr(b, b_boolcont);
 
@@ -848,12 +850,12 @@ llvm_compile_expr(ExprState *state)
 					/* set value to NULL if any previous values were NULL */
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_boolanynull,
-												  l_int8_const(0), ""),
+												  l_sbool_const(0), ""),
 									opblocks[i + 1], b_boolisanynull);
 
 					LLVMPositionBuilderAtEnd(b, b_boolisanynull);
 					/* set resnull to true */
-					LLVMBuildStore(b, l_int8_const(1), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
 					/* reset resvalue */
 					LLVMBuildStore(b, l_sizet_const(0), v_resvaluep);
 
@@ -901,7 +903,7 @@ llvm_compile_expr(ExprState *state)
 					v_nullorfalse =
 						LLVMBuildOr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									LLVMBuildICmp(b, LLVMIntEQ, v_resvalue,
 												  l_sizet_const(0), ""),
 									"");
@@ -914,7 +916,7 @@ llvm_compile_expr(ExprState *state)
 					/* build block handling NULL or false */
 					LLVMPositionBuilderAtEnd(b, b_qualfail);
 					/* set resnull to false */
-					LLVMBuildStore(b, l_int8_const(0), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
 					/* set resvalue to false */
 					LLVMBuildStore(b, l_sizet_const(0), v_resvaluep);
 					/* and jump out */
@@ -938,7 +940,7 @@ llvm_compile_expr(ExprState *state)
 
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									opblocks[op->d.jump.jumpdone],
 									opblocks[i + 1]);
 					break;
@@ -954,7 +956,7 @@ llvm_compile_expr(ExprState *state)
 
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
-												  l_int8_const(0), ""),
+												  l_sbool_const(0), ""),
 									opblocks[op->d.jump.jumpdone],
 									opblocks[i + 1]);
 					break;
@@ -975,7 +977,7 @@ llvm_compile_expr(ExprState *state)
 					v_nullorfalse =
 						LLVMBuildOr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									LLVMBuildICmp(b, LLVMIntEQ, v_resvalue,
 												  l_sizet_const(0), ""),
 									"");
@@ -995,12 +997,12 @@ llvm_compile_expr(ExprState *state)
 					v_resvalue =
 						LLVMBuildSelect(b,
 										LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
-													  l_int8_const(1), ""),
+													  l_sbool_const(1), ""),
 										l_sizet_const(1),
 										l_sizet_const(0),
 										"");
 					LLVMBuildStore(b, v_resvalue, v_resvaluep);
-					LLVMBuildStore(b, l_int8_const(0), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
 
 					LLVMBuildBr(b, opblocks[i + 1]);
 					break;
@@ -1014,12 +1016,12 @@ llvm_compile_expr(ExprState *state)
 					v_resvalue =
 						LLVMBuildSelect(b,
 										LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
-													  l_int8_const(1), ""),
+													  l_sbool_const(1), ""),
 										l_sizet_const(0),
 										l_sizet_const(1),
 										"");
 					LLVMBuildStore(b, v_resvalue, v_resvaluep);
-					LLVMBuildStore(b, l_int8_const(0), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
 
 					LLVMBuildBr(b, opblocks[i + 1]);
 					break;
@@ -1054,14 +1056,14 @@ llvm_compile_expr(ExprState *state)
 					/* check if value is NULL */
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									b_isnull, b_notnull);
 
 					/* if value is NULL, return false */
 					LLVMPositionBuilderAtEnd(b, b_isnull);
 
 					/* result is not null */
-					LLVMBuildStore(b, l_int8_const(0), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
 
 					if (opcode == EEOP_BOOLTEST_IS_TRUE ||
 						opcode == EEOP_BOOLTEST_IS_FALSE)
@@ -1179,7 +1181,7 @@ llvm_compile_expr(ExprState *state)
 					v_casevaluep = l_ptr_const(op->d.casetest.value,
 											   l_ptr(TypeSizeT));
 					v_casenullp = l_ptr_const(op->d.casetest.isnull,
-											  l_ptr(LLVMInt8Type()));
+											  l_ptr(TypeStorageBool));
 
 					v_casevaluenull =
 						LLVMBuildICmp(b, LLVMIntEQ,
@@ -1225,7 +1227,7 @@ llvm_compile_expr(ExprState *state)
 											  "op.%d.readonly.notnull", i);
 
 					v_nullp = l_ptr_const(op->d.make_readonly.isnull,
-										  l_ptr(LLVMInt8Type()));
+										  l_ptr(TypeStorageBool));
 
 					v_null = LLVMBuildLoad(b, v_nullp, "");
 
@@ -1235,7 +1237,7 @@ llvm_compile_expr(ExprState *state)
 					/* check if value is NULL */
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_null,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									opblocks[i + 1], b_notnull);
 
 					/* if value is not null, convert to RO datum */
@@ -1324,7 +1326,7 @@ llvm_compile_expr(ExprState *state)
 					v_resnull = LLVMBuildLoad(b, v_resnullp, "");
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									b_skipoutput,
 									b_calloutput);
 
@@ -1340,7 +1342,7 @@ llvm_compile_expr(ExprState *state)
 								   v_resvalue,
 								   LLVMBuildStructGEP(b, v_out_argp, 0, ""));
 					LLVMBuildStore(b,
-								   l_int8_const(0),
+								   l_sbool_const(0),
 								   LLVMBuildStructGEP(b, v_out_argnullp,
 													  0, ""));
 					/* and call output function (can never return NULL) */
@@ -1397,7 +1399,7 @@ llvm_compile_expr(ExprState *state)
 					/* arg2: typmod: preset in execExpr.c  */
 
 					/* reset fcinfo_in->isnull */
-					LLVMBuildStore(b, l_int8_const(0), v_fcinfo_in_isnullp);
+					LLVMBuildStore(b, l_sbool_const(0), v_fcinfo_in_isnullp);
 					/* and call function */
 					v_retval = LLVMBuildCall(b, v_fn_addr_in, &v_fcinfo_in, 1,
 											 "funccall_iocoerce_in");
@@ -1448,11 +1450,11 @@ llvm_compile_expr(ExprState *state)
 					/* load argnull[0|1] for both arguments */
 					v_argnull0 = l_load_struct_gep(b, v_argnullp, 0, "");
 					v_argisnull0 = LLVMBuildICmp(b, LLVMIntEQ, v_argnull0,
-												 l_int8_const(1), "");
+												 l_sbool_const(1), "");
 
 					v_argnull1 = l_load_struct_gep(b, v_argnullp, 1, "");
 					v_argisnull1 = LLVMBuildICmp(b, LLVMIntEQ, v_argnull1,
-												 l_int8_const(1), "");
+												 l_sbool_const(1), "");
 
 					v_anyargisnull = LLVMBuildOr(b, v_argisnull0, v_argisnull1, "");
 					v_bothargisnull = LLVMBuildAnd(b, v_argisnull0, v_argisnull1, "");
@@ -1475,7 +1477,7 @@ llvm_compile_expr(ExprState *state)
 
 					/* Both NULL? Then is not distinct... */
 					LLVMPositionBuilderAtEnd(b, b_bothargnull);
-					LLVMBuildStore(b, l_int8_const(0), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
 					if (opcode == EEOP_NOT_DISTINCT)
 						LLVMBuildStore(b, l_sizet_const(1), v_resvaluep);
 					else
@@ -1485,7 +1487,7 @@ llvm_compile_expr(ExprState *state)
 
 					/* Only one is NULL? Then is distinct... */
 					LLVMPositionBuilderAtEnd(b, b_anyargnull);
-					LLVMBuildStore(b, l_int8_const(0), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
 					if (opcode == EEOP_NOT_DISTINCT)
 						LLVMBuildStore(b, l_sizet_const(0), v_resvaluep);
 					else
@@ -1562,9 +1564,9 @@ llvm_compile_expr(ExprState *state)
 					v_anyargisnull =
 						LLVMBuildOr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_argnull0,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									LLVMBuildICmp(b, LLVMIntEQ, v_argnull1,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									"");
 
 					LLVMBuildCondBr(b, v_anyargisnull, b_hasnull, b_nonull);
@@ -1589,7 +1591,7 @@ llvm_compile_expr(ExprState *state)
 					v_argsequal = LLVMBuildAnd(b,
 											   LLVMBuildICmp(b, LLVMIntEQ,
 															 v_fcinfo_isnull,
-															 l_int8_const(0),
+															 l_sbool_const(0),
 															 ""),
 											   LLVMBuildICmp(b, LLVMIntEQ,
 															 v_retval,
@@ -1600,7 +1602,7 @@ llvm_compile_expr(ExprState *state)
 
 					/* build block setting result to NULL, if args are equal */
 					LLVMPositionBuilderAtEnd(b, b_argsequal);
-					LLVMBuildStore(b, l_int8_const(1), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
 					LLVMBuildStore(b, l_sizet_const(0), v_resvaluep);
 					LLVMBuildStore(b, v_retval, v_resvaluep);
 
@@ -1691,11 +1693,11 @@ llvm_compile_expr(ExprState *state)
 										LLVMBuildICmp(b,
 													  LLVMIntEQ,
 													  v_argnull0,
-													  l_int8_const(1),
+													  l_sbool_const(1),
 													  ""),
 										LLVMBuildICmp(b, LLVMIntEQ,
 													  v_argnull1,
-													  l_int8_const(1), ""),
+													  l_sbool_const(1), ""),
 										"");
 
 						LLVMBuildCondBr(b, v_anyargisnull, b_null, b_compare);
@@ -1718,7 +1720,7 @@ llvm_compile_expr(ExprState *state)
 									LLVMBuildICmp(b,
 												  LLVMIntEQ,
 												  v_fcinfo_isnull,
-												  l_int8_const(0),
+												  l_sbool_const(0),
 												  ""),
 									b_compare_result,
 									b_null);
@@ -1740,7 +1742,7 @@ llvm_compile_expr(ExprState *state)
 					 * result.
 					 */
 					LLVMPositionBuilderAtEnd(b, b_null);
-					LLVMBuildStore(b, l_int8_const(1), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
 					LLVMBuildBr(b, opblocks[op->d.rowcompare_step.jumpnull]);
 
 					break;
@@ -1792,7 +1794,7 @@ llvm_compile_expr(ExprState *state)
 											 "");
 					v_result = LLVMBuildZExt(b, v_result, TypeSizeT, "");
 
-					LLVMBuildStore(b, l_int8_const(0), v_resnullp);
+					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
 					LLVMBuildStore(b, v_result, v_resvaluep);
 
 					LLVMBuildBr(b, opblocks[i + 1]);
@@ -1836,10 +1838,11 @@ llvm_compile_expr(ExprState *state)
 					v_params[1] = l_ptr_const(op, l_ptr(StructExprEvalStep));
 					v_ret = LLVMBuildCall(b, v_fn,
 										  v_params, lengthof(v_params), "");
+					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
 
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_ret,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									opblocks[i + 1],
 									opblocks[jumpdone]);
 					break;
@@ -1863,7 +1866,7 @@ llvm_compile_expr(ExprState *state)
 					v_casevaluep = l_ptr_const(op->d.casetest.value,
 											   l_ptr(TypeSizeT));
 					v_casenullp = l_ptr_const(op->d.casetest.isnull,
-											  l_ptr(LLVMInt8Type()));
+											  l_ptr(TypeStorageBool));
 
 					v_casevaluenull =
 						LLVMBuildICmp(b, LLVMIntEQ,
@@ -2032,7 +2035,7 @@ llvm_compile_expr(ExprState *state)
 									LLVMBuildICmp(b,
 												  LLVMIntEQ,
 												  v_argnull0,
-												  l_int8_const(1),
+												  l_sbool_const(1),
 												  ""),
 									opblocks[op->d.agg_deserialize.jumpnull],
 									b_deserialize);
@@ -2080,7 +2083,7 @@ llvm_compile_expr(ExprState *state)
 					LLVMBasicBlockRef *b_checknulls;
 
 					jumpnull = op->d.agg_strict_input_check.jumpnull;
-					v_nullp = l_ptr_const(nulls, l_ptr(LLVMInt8Type()));
+					v_nullp = l_ptr_const(nulls, l_ptr(TypeStorageBool));
 
 					/* create blocks for checking args */
 					b_checknulls = palloc(sizeof(LLVMBasicBlockRef *) * nargs);
@@ -2114,7 +2117,7 @@ llvm_compile_expr(ExprState *state)
 										LLVMBuildICmp(b,
 													  LLVMIntEQ,
 													  v_argisnull,
-													  l_int8_const(1), ""),
+													  l_sbool_const(1), ""),
 										opblocks[jumpnull],
 										b_argnotnull);
 					}
@@ -2175,7 +2178,7 @@ llvm_compile_expr(ExprState *state)
 
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_notransvalue,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									b_init,
 									opblocks[i + 1]);
 
@@ -2240,7 +2243,7 @@ llvm_compile_expr(ExprState *state)
 
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_transnull,
-												  l_int8_const(1), ""),
+												  l_sbool_const(1), ""),
 									opblocks[jumpnull],
 									opblocks[i + 1]);
 
@@ -2417,9 +2420,11 @@ llvm_compile_expr(ExprState *state)
 						params[0] = v_aggstatep;
 						params[1] = v_pertransp;
 						params[2] = v_retval;
-						params[3] = v_fcinfo_isnull;
+						params[3] = LLVMBuildTrunc(b, v_fcinfo_isnull,
+												   TypeParamBool, "");
 						params[4] = v_transvalue;
-						params[5] = v_transnull;
+						params[5] = LLVMBuildTrunc(b, v_transnull,
+												   TypeParamBool, "");
 
 						v_fn = llvm_get_decl(mod, FuncExecAggTransReparent);
 						v_newval =
@@ -2536,8 +2541,7 @@ BuildV1Call(LLVMJitContext *context, LLVMBuilderRef b,
 	v_fcinfo_isnullp = LLVMBuildStructGEP(b, v_fcinfo,
 										  FIELDNO_FUNCTIONCALLINFODATA_ISNULL,
 										  "v_fcinfo_isnull");
-	LLVMBuildStore(b, l_int8_const(0),
-				   v_fcinfo_isnullp);
+	LLVMBuildStore(b, l_sbool_const(0), v_fcinfo_isnullp);
 
 	v_retval = LLVMBuildCall(b, v_fn, &v_fcinfo, 1, "funccall");
 

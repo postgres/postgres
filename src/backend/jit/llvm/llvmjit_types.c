@@ -45,8 +45,9 @@
  * clang/LLVM will omit them.  As this file will never be linked into
  * anything, that's harmless.
  */
-size_t		TypeSizeT;
 PGFunction	TypePGFunction;
+size_t		TypeSizeT;
+bool		TypeStorageBool;
 
 AggState	StructAggState;
 AggStatePerGroupData StructAggStatePerGroupData;
@@ -73,6 +74,19 @@ AttributeTemplate(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
+/*
+ * Clang represents stdbool.h style booleans that are returned by functions
+ * differently (as i1) than stored ones (as i8). Therefore we do not just need
+ * TypeBool (above), but also a way to determine the width of a returned
+ * integer. This allows us to keep compatible with non-stdbool using
+ * architectures.
+ */
+extern bool FunctionReturningBool(void);
+bool
+FunctionReturningBool(void)
+{
+	return false;
+}
 
 /*
  * To force signatures of functions used during JITing to be present,

@@ -56,8 +56,11 @@ typedef struct LLVMJitContext
 
 
 /* type and struct definitions */
-extern LLVMTypeRef TypeSizeT;
+extern LLVMTypeRef TypeParamBool;
 extern LLVMTypeRef TypePGFunction;
+extern LLVMTypeRef TypeSizeT;
+extern LLVMTypeRef TypeStorageBool;
+
 extern LLVMTypeRef StructtupleDesc;
 extern LLVMTypeRef StructHeapTupleData;
 extern LLVMTypeRef StructTupleTableSlot;
