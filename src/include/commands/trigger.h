@@ -159,7 +159,8 @@ extern PGDLLIMPORT int SessionReplicationRole;
 
 extern ObjectAddress CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			  Oid relOid, Oid refRelOid, Oid constraintOid, Oid indexOid,
-			  bool isInternal);
+			  Oid funcoid, Oid parentTriggerOid, Node *whenClause,
+			  bool isInternal, bool in_partition);
 
 extern void RemoveTriggerById(Oid trigOid);
 extern Oid	get_trigger_oid(Oid relid, const char *name, bool missing_ok);
@@ -167,7 +168,7 @@ extern Oid	get_trigger_oid(Oid relid, const char *name, bool missing_ok);
 extern ObjectAddress renametrig(RenameStmt *stmt);
 
 extern void EnableDisableTrigger(Relation rel, const char *tgname,
-					 char fires_when, bool skip_system);
+					 char fires_when, bool skip_system, LOCKMODE lockmode);
 
 extern void RelationBuildTriggers(Relation relation);
 

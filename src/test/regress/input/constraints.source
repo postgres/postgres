@@ -394,6 +394,22 @@ SET CONSTRAINTS ALL IMMEDIATE; -- should fail
 
 COMMIT;
 
+-- test deferrable UNIQUE with a partitioned table
+CREATE TABLE parted_uniq_tbl (i int UNIQUE DEFERRABLE) partition by range (i);
+CREATE TABLE parted_uniq_tbl_1 PARTITION OF parted_uniq_tbl FOR VALUES FROM (0) TO (10);
+CREATE TABLE parted_uniq_tbl_2 PARTITION OF parted_uniq_tbl FOR VALUES FROM (20) TO (30);
+SELECT conname, conrelid::regclass FROM pg_constraint
+  WHERE conname LIKE 'parted_uniq%' ORDER BY conname;
+BEGIN;
+INSERT INTO parted_uniq_tbl VALUES (1);
+SAVEPOINT f;
+INSERT INTO parted_uniq_tbl VALUES (1);	-- unique violation
+ROLLBACK TO f;
+SET CONSTRAINTS parted_uniq_tbl_i_key DEFERRED;
+INSERT INTO parted_uniq_tbl VALUES (1);	-- OK now, fail at commit
+COMMIT;
+DROP TABLE parted_uniq_tbl;
+
 -- test a HOT update that invalidates the conflicting tuple.
 -- the trigger should still fire and catch the violation
 

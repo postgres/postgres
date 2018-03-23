@@ -513,6 +513,13 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </para>
 
   <para>
+   Creating a row-level trigger on a partitioned table will cause identical
+   triggers to be created in all its existing partitions; and any partitions
+   created or attached later will contain an identical trigger, too.
+   Triggers on partitioned tables may only be <literal>AFTER</literal>.
+  </para>
+
+  <para>
    Modifying a partitioned table or a table with inheritance children fires
    statement-level triggers attached to the explicitly named table, but not
    statement-level triggers for its partitions or child tables.  In contrast,

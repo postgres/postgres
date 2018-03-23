@@ -128,6 +128,8 @@ DECLARE_INDEX(pg_constraint_contypid_index, 2666, on pg_constraint using btree(c
 #define ConstraintTypidIndexId	2666
 DECLARE_UNIQUE_INDEX(pg_constraint_oid_index, 2667, on pg_constraint using btree(oid oid_ops));
 #define ConstraintOidIndexId  2667
+DECLARE_INDEX(pg_constraint_conparentid_index, 2579, on pg_constraint using btree(conparentid oid_ops));
+#define ConstraintParentIndexId	2579
 
 DECLARE_UNIQUE_INDEX(pg_conversion_default_index, 2668, on pg_conversion using btree(connamespace oid_ops, conforencoding int4_ops, contoencoding int4_ops, oid oid_ops));
 #define ConversionDefaultIndexId  2668

@@ -1492,7 +1492,8 @@ ProcessUtilitySlow(ParseState *pstate,
 			case T_CreateTrigStmt:
 				address = CreateTrigger((CreateTrigStmt *) parsetree,
 										queryString, InvalidOid, InvalidOid,
-										InvalidOid, InvalidOid, false);
+										InvalidOid, InvalidOid, InvalidOid,
+										InvalidOid, NULL, false, false);
 				break;
 
 			case T_CreatePLangStmt:

@@ -2121,6 +2121,7 @@ StoreRelCheck(Relation rel, const char *ccname, Node *expr,
 							  false,	/* Is Deferrable */
 							  false,	/* Is Deferred */
 							  is_validated,
+							  InvalidOid,	/* no parent constraint */
 							  RelationGetRelid(rel),	/* relation */
 							  attNos,	/* attrs in the constraint */
 							  keycount, /* # attrs in the constraint */

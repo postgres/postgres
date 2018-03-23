@@ -52,6 +52,7 @@ CreateConstraintEntry(const char *constraintName,
 					  bool isDeferrable,
 					  bool isDeferred,
 					  bool isValidated,
+					  Oid parentConstrId,
 					  Oid relId,
 					  const int16 *constraintKey,
 					  int constraintNKeys,
@@ -170,6 +171,7 @@ CreateConstraintEntry(const char *constraintName,
 	values[Anum_pg_constraint_conrelid - 1] = ObjectIdGetDatum(relId);
 	values[Anum_pg_constraint_contypid - 1] = ObjectIdGetDatum(domainId);
 	values[Anum_pg_constraint_conindid - 1] = ObjectIdGetDatum(indexRelId);
+	values[Anum_pg_constraint_conparentid - 1] = ObjectIdGetDatum(parentConstrId);
 	values[Anum_pg_constraint_confrelid - 1] = ObjectIdGetDatum(foreignRelId);
 	values[Anum_pg_constraint_confupdtype - 1] = CharGetDatum(foreignUpdateType);
 	values[Anum_pg_constraint_confdeltype - 1] = CharGetDatum(foreignDeleteType);
@@ -772,6 +774,7 @@ ConstraintSetParentConstraint(Oid childConstrId, Oid parentConstrId)
 	constrForm = (Form_pg_constraint) GETSTRUCT(newtup);
 	constrForm->conislocal = false;
 	constrForm->coninhcount++;
+	constrForm->conparentid = parentConstrId;
 	CatalogTupleUpdate(constrRel, &tuple->t_self, newtup);
 	ReleaseSysCache(tuple);
 

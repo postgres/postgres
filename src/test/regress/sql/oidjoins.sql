@@ -185,6 +185,10 @@ SELECT	ctid, conindid
 FROM	pg_catalog.pg_constraint fk
 WHERE	conindid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.conindid);
+SELECT	ctid, conparentid
+FROM	pg_catalog.pg_constraint fk
+WHERE	conparentid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_constraint pk WHERE pk.oid = fk.conparentid);
 SELECT	ctid, confrelid
 FROM	pg_catalog.pg_constraint fk
 WHERE	confrelid != 0 AND

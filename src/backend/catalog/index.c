@@ -1282,6 +1282,7 @@ index_constraint_create(Relation heapRelation,
 								   deferrable,
 								   initdeferred,
 								   true,
+								   parentConstraintId,
 								   RelationGetRelid(heapRelation),
 								   indexInfo->ii_KeyAttrNumbers,
 								   indexInfo->ii_NumIndexAttrs,
@@ -1360,7 +1361,8 @@ index_constraint_create(Relation heapRelation,
 		trigger->constrrel = NULL;
 
 		(void) CreateTrigger(trigger, NULL, RelationGetRelid(heapRelation),
-							 InvalidOid, conOid, indexRelationId, true);
+							 InvalidOid, conOid, indexRelationId, InvalidOid,
+							 InvalidOid, NULL, true, false);
 	}
 
 	/*
