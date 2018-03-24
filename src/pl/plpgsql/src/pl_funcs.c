@@ -285,7 +285,7 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 		case PLPGSQL_STMT_PERFORM:
 			return "PERFORM";
 		case PLPGSQL_STMT_CALL:
-			return "CALL";
+			return ((PLpgSQL_stmt_call *) stmt)->is_call ? "CALL" : "DO";
 		case PLPGSQL_STMT_COMMIT:
 			return "COMMIT";
 		case PLPGSQL_STMT_ROLLBACK:
@@ -1295,7 +1295,7 @@ static void
 dump_call(PLpgSQL_stmt_call *stmt)
 {
 	dump_ind();
-	printf("CALL expr = ");
+	printf("%s expr = ", stmt->is_call ? "CALL" : "DO");
 	dump_expr(stmt->expr);
 	printf("\n");
 }

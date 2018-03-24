@@ -276,6 +276,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %token <keyword>	K_DEFAULT
 %token <keyword>	K_DETAIL
 %token <keyword>	K_DIAGNOSTICS
+%token <keyword>	K_DO
 %token <keyword>	K_DUMP
 %token <keyword>	K_ELSE
 %token <keyword>	K_ELSIF
@@ -914,8 +915,24 @@ stmt_call		: K_CALL
 						new->cmd_type = PLPGSQL_STMT_CALL;
 						new->lineno = plpgsql_location_to_lineno(@1);
 						new->expr = read_sql_stmt("CALL ");
+						new->is_call = true;
 
 						$$ = (PLpgSQL_stmt *)new;
+
+					}
+				| K_DO
+					{
+						/* use the same structures as for CALL, for simplicity */
+						PLpgSQL_stmt_call *new;
+
+						new = palloc0(sizeof(PLpgSQL_stmt_call));
+						new->cmd_type = PLPGSQL_STMT_CALL;
+						new->lineno = plpgsql_location_to_lineno(@1);
+						new->expr = read_sql_stmt("DO ");
+						new->is_call = false;
+
+						$$ = (PLpgSQL_stmt *)new;
+
 					}
 				;
 
@@ -2434,6 +2451,7 @@ unreserved_keyword	:
 				| K_DEFAULT
 				| K_DETAIL
 				| K_DIAGNOSTICS
+				| K_DO
 				| K_DUMP
 				| K_ELSIF
 				| K_ERRCODE

@@ -2041,8 +2041,11 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 	 *
 	 * In the first two cases, we can just push the snap onto the stack once
 	 * for the whole plan list.
+	 *
+	 * But if the plan has no_snapshots set to true, then don't manage
+	 * snapshots at all.  The caller should then take care of that.
 	 */
-	if (snapshot != InvalidSnapshot)
+	if (snapshot != InvalidSnapshot && !plan->no_snapshots)
 	{
 		if (read_only)
 		{
@@ -2121,7 +2124,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 		 * In the default non-read-only case, get a new snapshot, replacing
 		 * any that we pushed in a previous cycle.
 		 */
-		if (snapshot == InvalidSnapshot && !read_only)
+		if (snapshot == InvalidSnapshot && !read_only && !plan->no_snapshots)
 		{
 			if (pushed_active_snap)
 				PopActiveSnapshot();
@@ -2172,7 +2175,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			 * If not read-only mode, advance the command counter before each
 			 * command and update the snapshot.
 			 */
-			if (!read_only)
+			if (!read_only && !plan->no_snapshots)
 			{
 				CommandCounterIncrement();
 				UpdateActiveSnapshotCommandId();
@@ -2203,10 +2206,23 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			else
 			{
 				char		completionTag[COMPLETION_TAG_BUFSIZE];
+				ProcessUtilityContext context;
+
+				/*
+				 * If the SPI context is atomic, or we are asked to manage
+				 * snapshots, then we are in an atomic execution context.
+				 * Conversely, to propagate a nonatomic execution context, the
+				 * caller must be in a nonatomic SPI context and manage
+				 * snapshots itself.
+				 */
+				if (_SPI_current->atomic || !plan->no_snapshots)
+					context = PROCESS_UTILITY_QUERY;
+				else
+					context = PROCESS_UTILITY_QUERY_NONATOMIC;
 
 				ProcessUtility(stmt,
 							   plansource->query_string,
-							   PROCESS_UTILITY_QUERY,
+							   context,
 							   paramLI,
 							   _SPI_current->queryEnv,
 							   dest,
@@ -2638,11 +2654,8 @@ _SPI_make_plan_non_temp(SPIPlanPtr plan)
 	oldcxt = MemoryContextSwitchTo(plancxt);
 
 	/* Copy the SPI_plan struct and subsidiary data into the new context */
-	newplan = (SPIPlanPtr) palloc(sizeof(_SPI_plan));
+	newplan = (SPIPlanPtr) palloc0(sizeof(_SPI_plan));
 	newplan->magic = _SPI_PLAN_MAGIC;
-	newplan->saved = false;
-	newplan->oneshot = false;
-	newplan->plancache_list = NIL;
 	newplan->plancxt = plancxt;
 	newplan->cursor_options = plan->cursor_options;
 	newplan->nargs = plan->nargs;
@@ -2705,11 +2718,8 @@ _SPI_save_plan(SPIPlanPtr plan)
 	oldcxt = MemoryContextSwitchTo(plancxt);
 
 	/* Copy the SPI plan into its own context */
-	newplan = (SPIPlanPtr) palloc(sizeof(_SPI_plan));
+	newplan = (SPIPlanPtr) palloc0(sizeof(_SPI_plan));
 	newplan->magic = _SPI_PLAN_MAGIC;
-	newplan->saved = false;
-	newplan->oneshot = false;
-	newplan->plancache_list = NIL;
 	newplan->plancxt = plancxt;
 	newplan->cursor_options = plan->cursor_options;
 	newplan->nargs = plan->nargs;

@@ -3463,9 +3463,9 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
    <title>Transaction Management</title>
 
    <para>
-    In procedures invoked by the <command>CALL</command> command from the top
-    level as well as in anonymous code blocks (<command>DO</command> command)
-    called from the top level, it is possible to end transactions using the
+    In procedures invoked by the <command>CALL</command> command
+    as well as in anonymous code blocks (<command>DO</command> command),
+    it is possible to end transactions using the
     commands <command>COMMIT</command> and <command>ROLLBACK</command>.  A new
     transaction is started automatically after a transaction is ended using
     these commands, so there is no separate <command>START
@@ -3493,6 +3493,20 @@ $$;
 
 CALL transaction_test1();
 </programlisting>
+   </para>
+
+   <para>
+    Transaction control is only possible in <command>CALL</command> or
+    <command>DO</command> invocations from the top level or nested
+    <command>CALL</command> or <command>DO</command> invocations without any
+    other intervening command.  For example, if the call stack is
+    <command>CALL proc1()</command> &rarr; <command>CALL proc2()</command>
+    &rarr; <command>CALL proc3()</command>, then the second and third
+    procedures can perform transaction control actions.  But if the call stack
+    is <command>CALL proc1()</command> &rarr; <command>SELECT
+    func2()</command> &rarr; <command>CALL proc3()</command>, then the last
+    procedure cannot do transaction control, because of the
+    <command>SELECT</command> in between.
    </para>
 
    <para>

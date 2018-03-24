@@ -22,6 +22,7 @@
 #include "access/tupconvert.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "executor/execExpr.h"
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
@@ -33,6 +34,7 @@
 #include "parser/scansup.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+#include "tcop/utility.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
@@ -311,7 +313,8 @@ static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
 static void exec_eval_cleanup(PLpgSQL_execstate *estate);
 
 static void exec_prepare_plan(PLpgSQL_execstate *estate,
-				  PLpgSQL_expr *expr, int cursorOptions);
+							  PLpgSQL_expr *expr, int cursorOptions,
+							  bool keepplan);
 static void exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr);
 static void exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan);
 static void exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno);
@@ -440,7 +443,7 @@ static char *format_preparedparamsdata(PLpgSQL_execstate *estate,
  */
 Datum
 plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
-					  EState *simple_eval_estate)
+					  EState *simple_eval_estate, bool atomic)
 {
 	PLpgSQL_execstate estate;
 	ErrorContextCallback plerrcontext;
@@ -452,6 +455,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	 */
 	plpgsql_estate_setup(&estate, func, (ReturnSetInfo *) fcinfo->resultinfo,
 						 simple_eval_estate);
+	estate.atomic = atomic;
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -2057,19 +2061,47 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 {
 	PLpgSQL_expr *expr = stmt->expr;
 	ParamListInfo paramLI;
+	LocalTransactionId before_lxid;
+	LocalTransactionId after_lxid;
 	int			rc;
 
 	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr, 0);
+	{
+		/*
+		 * Don't save the plan if not in atomic context.  Otherwise,
+		 * transaction ends would cause warnings about plan leaks.
+		 */
+		exec_prepare_plan(estate, expr, 0, estate->atomic);
+
+		/*
+		 * The procedure call could end transactions, which would upset the
+		 * snapshot management in SPI_execute*, so don't let it do it.
+		 */
+		expr->plan->no_snapshots = true;
+	}
 
 	paramLI = setup_param_list(estate, expr);
+
+	before_lxid = MyProc->lxid;
 
 	rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 										 estate->readonly_func, 0);
 
+	after_lxid = MyProc->lxid;
+
 	if (rc < 0)
 		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
 			 expr->query, SPI_result_code_string(rc));
+
+	/*
+	 * If we are in a new transaction after the call, we need to reset some
+	 * internal state.
+	 */
+	if (before_lxid != after_lxid)
+	{
+		estate->simple_eval_estate = NULL;
+		plpgsql_create_econtext(estate);
+	}
 
 	if (SPI_processed == 1)
 	{
@@ -2705,7 +2737,7 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 	Assert(query);
 
 	if (query->plan == NULL)
-		exec_prepare_plan(estate, query, curvar->cursor_options);
+		exec_prepare_plan(estate, query, curvar->cursor_options, true);
 
 	/*
 	 * Set up ParamListInfo for this query
@@ -3719,6 +3751,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->retisset = func->fn_retset;
 
 	estate->readonly_func = func->fn_readonly;
+	estate->atomic = true;
 
 	estate->exitlabel = NULL;
 	estate->cur_error = NULL;
@@ -3863,7 +3896,8 @@ exec_eval_cleanup(PLpgSQL_execstate *estate)
  */
 static void
 exec_prepare_plan(PLpgSQL_execstate *estate,
-				  PLpgSQL_expr *expr, int cursorOptions)
+				  PLpgSQL_expr *expr, int cursorOptions,
+				  bool keepplan)
 {
 	SPIPlanPtr	plan;
 
@@ -3899,7 +3933,8 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 					 expr->query, SPI_result_code_string(SPI_result));
 		}
 	}
-	SPI_keepplan(plan);
+	if (keepplan)
+		SPI_keepplan(plan);
 	expr->plan = plan;
 
 	/* Check to see if it's a simple expression */
@@ -3938,7 +3973,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	{
 		ListCell   *l;
 
-		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK);
+		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, true);
 		stmt->mod_stmt = false;
 		foreach(l, SPI_plan_get_plan_sources(expr->plan))
 		{
@@ -4396,7 +4431,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 */
 		query = stmt->query;
 		if (query->plan == NULL)
-			exec_prepare_plan(estate, query, stmt->cursor_options);
+			exec_prepare_plan(estate, query, stmt->cursor_options, true);
 	}
 	else if (stmt->dynquery != NULL)
 	{
@@ -4467,7 +4502,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 
 		query = curvar->cursor_explicit_expr;
 		if (query->plan == NULL)
-			exec_prepare_plan(estate, query, curvar->cursor_options);
+			exec_prepare_plan(estate, query, curvar->cursor_options, true);
 	}
 
 	/*
@@ -4707,7 +4742,7 @@ exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 	 */
 	if (expr->plan == NULL)
 	{
-		exec_prepare_plan(estate, expr, 0);
+		exec_prepare_plan(estate, expr, 0, true);
 		if (target->dtype == PLPGSQL_DTYPE_VAR)
 			exec_check_rw_parameter(expr, target->dno);
 	}
@@ -5566,7 +5601,7 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	 * If first time through, create a plan for this expression.
 	 */
 	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK);
+		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, true);
 
 	/*
 	 * If this is a simple expression, bypass SPI and use the executor
@@ -5652,7 +5687,7 @@ exec_run_select(PLpgSQL_execstate *estate,
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr,
-						  portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0);
+						  portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
 
 	/*
 	 * Set up ParamListInfo to pass to executor
@@ -7834,11 +7869,13 @@ plpgsql_create_econtext(PLpgSQL_execstate *estate)
 	{
 		MemoryContext oldcontext;
 
-		Assert(shared_simple_eval_estate == NULL);
-		oldcontext = MemoryContextSwitchTo(TopTransactionContext);
-		shared_simple_eval_estate = CreateExecutorState();
+		if (shared_simple_eval_estate == NULL)
+		{
+			oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+			shared_simple_eval_estate = CreateExecutorState();
+			MemoryContextSwitchTo(oldcontext);
+		}
 		estate->simple_eval_estate = shared_simple_eval_estate;
-		MemoryContextSwitchTo(oldcontext);
 	}
 
 	/*

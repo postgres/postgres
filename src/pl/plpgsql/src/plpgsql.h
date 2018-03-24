@@ -517,6 +517,7 @@ typedef struct PLpgSQL_stmt_call
 	PLpgSQL_stmt_type cmd_type;
 	int			lineno;
 	PLpgSQL_expr *expr;
+	bool		is_call;
 	PLpgSQL_variable *target;
 } PLpgSQL_stmt_call;
 
@@ -979,6 +980,7 @@ typedef struct PLpgSQL_execstate
 	bool		retisset;
 
 	bool		readonly_func;
+	bool		atomic;
 
 	char	   *exitlabel;		/* the "target" label of the current EXIT or
 								 * CONTINUE stmt, if any */
@@ -1194,7 +1196,8 @@ extern void _PG_init(void);
  */
 extern Datum plpgsql_exec_function(PLpgSQL_function *func,
 					  FunctionCallInfo fcinfo,
-					  EState *simple_eval_estate);
+					  EState *simple_eval_estate,
+					  bool atomic);
 extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function *func,
 					 TriggerData *trigdata);
 extern void plpgsql_exec_event_trigger(PLpgSQL_function *func,

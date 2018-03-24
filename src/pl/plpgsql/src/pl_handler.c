@@ -260,7 +260,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 			retval = (Datum) 0;
 		}
 		else
-			retval = plpgsql_exec_function(func, fcinfo, NULL);
+			retval = plpgsql_exec_function(func, fcinfo, NULL, !nonatomic);
 	}
 	PG_CATCH();
 	{
@@ -332,7 +332,7 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	/* And run the function */
 	PG_TRY();
 	{
-		retval = plpgsql_exec_function(func, &fake_fcinfo, simple_eval_estate);
+		retval = plpgsql_exec_function(func, &fake_fcinfo, simple_eval_estate, codeblock->atomic);
 	}
 	PG_CATCH();
 	{

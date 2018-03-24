@@ -1,12 +1,12 @@
 CREATE TABLE test1 (a int, b text);
 
 
-CREATE PROCEDURE transaction_test1()
+CREATE PROCEDURE transaction_test1(x int, y text)
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    FOR i IN 0..9 LOOP
-        INSERT INTO test1 (a) VALUES (i);
+    FOR i IN 0..x LOOP
+        INSERT INTO test1 (a, b) VALUES (i, y);
         IF i % 2 = 0 THEN
             COMMIT;
         ELSE
@@ -16,7 +16,7 @@ BEGIN
 END
 $$;
 
-CALL transaction_test1();
+CALL transaction_test1(9, 'foo');
 
 SELECT * FROM test1;
 
@@ -43,7 +43,7 @@ SELECT * FROM test1;
 
 -- transaction commands not allowed when called in transaction block
 START TRANSACTION;
-CALL transaction_test1();
+CALL transaction_test1(9, 'error');
 COMMIT;
 
 START TRANSACTION;
@@ -80,7 +80,7 @@ CREATE FUNCTION transaction_test3() RETURNS int
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    CALL transaction_test1();
+    CALL transaction_test1(9, 'error');
     RETURN 1;
 END;
 $$;
@@ -114,6 +114,46 @@ END;
 $$;
 
 CALL transaction_test5();
+
+
+TRUNCATE test1;
+
+-- nested procedure calls
+CREATE PROCEDURE transaction_test6(c text)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    CALL transaction_test1(9, c);
+END;
+$$;
+
+CALL transaction_test6('bar');
+
+SELECT * FROM test1;
+
+TRUNCATE test1;
+
+CREATE PROCEDURE transaction_test7()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DO 'BEGIN CALL transaction_test1(9, $x$baz$x$); END;';
+END;
+$$;
+
+CALL transaction_test7();
+
+SELECT * FROM test1;
+
+CREATE PROCEDURE transaction_test8()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    EXECUTE 'CALL transaction_test1(10, $x$baz$x$)';
+END;
+$$;
+
+CALL transaction_test8();
 
 
 -- commit inside cursor loop

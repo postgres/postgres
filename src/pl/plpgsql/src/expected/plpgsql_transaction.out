@@ -1,10 +1,10 @@
 CREATE TABLE test1 (a int, b text);
-CREATE PROCEDURE transaction_test1()
+CREATE PROCEDURE transaction_test1(x int, y text)
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    FOR i IN 0..9 LOOP
-        INSERT INTO test1 (a) VALUES (i);
+    FOR i IN 0..x LOOP
+        INSERT INTO test1 (a, b) VALUES (i, y);
         IF i % 2 = 0 THEN
             COMMIT;
         ELSE
@@ -13,15 +13,15 @@ BEGIN
     END LOOP;
 END
 $$;
-CALL transaction_test1();
+CALL transaction_test1(9, 'foo');
 SELECT * FROM test1;
- a | b 
----+---
- 0 | 
- 2 | 
- 4 | 
- 6 | 
- 8 | 
+ a |  b  
+---+-----
+ 0 | foo
+ 2 | foo
+ 4 | foo
+ 6 | foo
+ 8 | foo
 (5 rows)
 
 TRUNCATE test1;
@@ -51,9 +51,9 @@ SELECT * FROM test1;
 
 -- transaction commands not allowed when called in transaction block
 START TRANSACTION;
-CALL transaction_test1();
+CALL transaction_test1(9, 'error');
 ERROR:  invalid transaction termination
-CONTEXT:  PL/pgSQL function transaction_test1() line 6 at COMMIT
+CONTEXT:  PL/pgSQL function transaction_test1(integer,text) line 6 at COMMIT
 COMMIT;
 START TRANSACTION;
 DO LANGUAGE plpgsql $$ BEGIN COMMIT; END $$;
@@ -90,14 +90,14 @@ CREATE FUNCTION transaction_test3() RETURNS int
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    CALL transaction_test1();
+    CALL transaction_test1(9, 'error');
     RETURN 1;
 END;
 $$;
 SELECT transaction_test3();
 ERROR:  invalid transaction termination
-CONTEXT:  PL/pgSQL function transaction_test1() line 6 at COMMIT
-SQL statement "CALL transaction_test1()"
+CONTEXT:  PL/pgSQL function transaction_test1(integer,text) line 6 at COMMIT
+SQL statement "CALL transaction_test1(9, 'error')"
 PL/pgSQL function transaction_test3() line 3 at CALL
 SELECT * FROM test1;
  a | b 
@@ -130,6 +130,57 @@ $$;
 CALL transaction_test5();
 ERROR:  invalid transaction termination
 CONTEXT:  PL/pgSQL function transaction_test5() line 3 at COMMIT
+TRUNCATE test1;
+-- nested procedure calls
+CREATE PROCEDURE transaction_test6(c text)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    CALL transaction_test1(9, c);
+END;
+$$;
+CALL transaction_test6('bar');
+SELECT * FROM test1;
+ a |  b  
+---+-----
+ 0 | bar
+ 2 | bar
+ 4 | bar
+ 6 | bar
+ 8 | bar
+(5 rows)
+
+TRUNCATE test1;
+CREATE PROCEDURE transaction_test7()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DO 'BEGIN CALL transaction_test1(9, $x$baz$x$); END;';
+END;
+$$;
+CALL transaction_test7();
+SELECT * FROM test1;
+ a |  b  
+---+-----
+ 0 | baz
+ 2 | baz
+ 4 | baz
+ 6 | baz
+ 8 | baz
+(5 rows)
+
+CREATE PROCEDURE transaction_test8()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    EXECUTE 'CALL transaction_test1(10, $x$baz$x$)';
+END;
+$$;
+CALL transaction_test8();
+ERROR:  invalid transaction termination
+CONTEXT:  PL/pgSQL function transaction_test1(integer,text) line 6 at COMMIT
+SQL statement "CALL transaction_test1(10, $x$baz$x$)"
+PL/pgSQL function transaction_test8() line 3 at EXECUTE
 -- commit inside cursor loop
 CREATE TABLE test2 (x int);
 INSERT INTO test2 VALUES (0), (1), (2), (3), (4);

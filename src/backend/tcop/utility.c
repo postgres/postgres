@@ -382,7 +382,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 {
 	Node	   *parsetree = pstmt->utilityStmt;
 	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-	bool		isAtomicContext = (context != PROCESS_UTILITY_TOPLEVEL || IsTransactionBlock());
+	bool		isAtomicContext = (!(context == PROCESS_UTILITY_TOPLEVEL || context == PROCESS_UTILITY_QUERY_NONATOMIC) || IsTransactionBlock());
 	ParseState *pstate;
 
 	check_xact_readonly(parsetree);
