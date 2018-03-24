@@ -1010,13 +1010,12 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</replaceabl
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pair" to load this file. \quit
 
-CREATE TYPE pair AS ( k pg_catalog.text, v pg_catalog.text );
+CREATE TYPE pair AS ( k text, v text );
 
-CREATE OR REPLACE FUNCTION pair(pg_catalog.text, pg_catalog.text)
+CREATE OR REPLACE FUNCTION pair(text, text)
 RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::@extschema@.pair;';
 
-CREATE OPERATOR ~> (LEFTARG = pg_catalog.text,
-                    RIGHTARG = pg_catalog.text, PROCEDURE = pair);
+CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = text, PROCEDURE = pair);
 
 -- "SET search_path" is easy to get right, but qualified names perform better.
 CREATE OR REPLACE FUNCTION lower(pair)
