@@ -62,7 +62,7 @@ PostgreSQL documentation
    values will be substituted for the missing data.  Most of the fields can be
    expected to match, but manual assistance might be needed for the next OID,
    next transaction ID and epoch, next multitransaction ID and offset, and
-   WAL starting address fields. These fields can be set using the options
+   WAL starting location fields. These fields can be set using the options
    discussed below. If you are not able to determine correct values for all
    these fields, <option>-f</option> can still be used, but
    the recovered database must be treated with even more suspicion than
@@ -167,17 +167,25 @@ PostgreSQL documentation
     <term><option>-l</option> <replaceable class="parameter">walfile</replaceable></term>
     <listitem>
      <para>
-      Manually set the WAL starting address.
+      Manually set the WAL starting location by specifying the name of the
+      next WAL segment file.
      </para>
 
      <para>
-      The WAL starting address should be
+      The name of next WAL segment file should be
       larger than any WAL segment file name currently existing in
       the directory <filename>pg_wal</filename> under the data directory.
       These names are also in hexadecimal and have three parts.  The first
       part is the <quote>timeline ID</quote> and should usually be kept the same.
       For example, if <filename>00000001000000320000004A</filename> is the
       largest entry in <filename>pg_wal</filename>, use <literal>-l 00000001000000320000004B</literal> or higher.
+     </para>
+
+     <para>
+      Note that when using nondefault WAL segment sizes, the numbers in the WAL
+      file names are different from the LSNs that are reported by system
+      functions and system views.  This option takes a WAL file name, not an
+      LSN.
      </para>
 
      <note>
