@@ -1056,7 +1056,8 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 				 * If any other type of fork, check if there is an init fork
 				 * with the same OID. If so, the file can be excluded.
 				 */
-				strncpy(relOid, de->d_name, relOidChars);
+				memcpy(relOid, de->d_name, relOidChars);
+				relOid[relOidChars] = '\0';
 				snprintf(initForkFile, sizeof(initForkFile), "%s/%s_init",
 						 path, relOid);
 
