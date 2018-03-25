@@ -88,6 +88,20 @@ static void usage(void);
 int
 main(int argc, char *argv[])
 {
+	static struct option long_options[] = {
+		{"commit-timestamp-ids", required_argument, NULL, 'c'},
+		{"pgdata", required_argument, NULL, 'D'},
+		{"epoch", required_argument, NULL, 'e'},
+		{"force", no_argument, NULL, 'f'},
+		{"next-wal-file", required_argument, NULL, 'l'},
+		{"multixact-ids", required_argument, NULL, 'm'},
+		{"dry-run", no_argument, NULL, 'n'},
+		{"next-oid", required_argument, NULL, 'o'},
+		{"multixact-offset", required_argument, NULL, 'O'},
+		{"next-transaction-id", required_argument, NULL, 'x'},
+		{NULL, 0, NULL, 0}
+	};
+
 	int			c;
 	bool		force = false;
 	bool		noupdate = false;
@@ -117,7 +131,7 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "c:D:e:fl:m:no:O:x:")) != -1)
+	while ((c = getopt_long(argc, argv, "c:D:e:fl:m:no:O:x:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
@@ -1251,18 +1265,19 @@ usage(void)
 	printf(_("%s resets the PostgreSQL write-ahead log.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
-	printf(_("  -c XID,XID       set oldest and newest transactions bearing commit timestamp\n"));
-	printf(_("                   (zero in either value means no change)\n"));
-	printf(_(" [-D] DATADIR      data directory\n"));
-	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
-	printf(_("  -f               force update to be done\n"));
-	printf(_("  -l WALFILE       force minimum WAL starting location for new write-ahead log\n"));
-	printf(_("  -m MXID,MXID     set next and oldest multitransaction ID\n"));
-	printf(_("  -n               no update, just show what would be done (for testing)\n"));
-	printf(_("  -o OID           set next OID\n"));
-	printf(_("  -O OFFSET        set next multitransaction offset\n"));
-	printf(_("  -V, --version    output version information, then exit\n"));
-	printf(_("  -x XID           set next transaction ID\n"));
-	printf(_("  -?, --help       show this help, then exit\n"));
+	printf(_("  -c, --commit-timestamp-ids=XID,XID\n"
+			 "                                 set oldest and newest transactions bearing\n"
+			 "                                 commit timestamp (zero means no change)\n"));
+	printf(_(" [-D, --pgdata=]DATADIR          data directory\n"));
+	printf(_("  -e, --epoch=XIDEPOCH           set next transaction ID epoch\n"));
+	printf(_("  -f, --force                    force update to be done\n"));
+	printf(_("  -l, --next-wal-file=WALFILE    set minimum starting location for new WAL\n"));
+	printf(_("  -m, --multixact-ids=MXID,MXID  set next and oldest multitransaction ID\n"));
+	printf(_("  -n, --dry-run                  no update, just show what would be done\n"));
+	printf(_("  -o, --next-oid=OID             set next OID\n"));
+	printf(_("  -O, --multixact-offset=OFFSET  set next multitransaction offset\n"));
+	printf(_("  -V, --version                  output version information, then exit\n"));
+	printf(_("  -x, --next-transaction-id=XID  set next transaction ID\n"));
+	printf(_("  -?, --help                     show this help, then exit\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

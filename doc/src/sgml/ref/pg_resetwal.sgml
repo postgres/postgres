@@ -22,10 +22,22 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_resetwal</command>
-   <arg choice="opt"><option>-f</option></arg>
-   <arg choice="opt"><option>-n</option></arg>
+   <group choice="opt">
+    <arg choice="plain"><option>--force</option></arg>
+    <arg choice="plain"><option>-f</option></arg>
+   </group>
+   <group choice="opt">
+    <arg choice="plain"><option>--dry-run</option></arg>
+    <arg choice="plain"><option>-n</option></arg>
+   </group>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <arg choice="req"><arg choice="opt"><option>-D</option></arg> <replaceable class="parameter">datadir</replaceable></arg>
+   <group choice="plain">
+    <group choice="opt">
+     <arg choice="plain"><option>--pgdata</option></arg>
+     <arg choice="plain"><option>-D</option></arg>
+    </group>
+    <replaceable class="parameter"> datadir</replaceable>
+   </group>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -78,6 +90,7 @@ PostgreSQL documentation
   <variablelist>
    <varlistentry>
     <term><option>-f</option></term>
+    <term><option>--force</option></term>
     <listitem>
      <para>
       Force <command>pg_resetwal</command> to proceed even if it cannot determine
@@ -88,9 +101,10 @@ PostgreSQL documentation
 
    <varlistentry>
     <term><option>-n</option></term>
+    <term><option>--dry-run</option></term>
     <listitem>
      <para>
-      The <option>-n</option> (no operation) option instructs
+      The <option>-n</option>/<option>--dry-run</option> option instructs
       <command>pg_resetwal</command> to print the values reconstructed from
       <filename>pg_control</filename> and values about to be changed, and then exit
       without modifying anything. This is mainly a debugging tool, but can be
@@ -123,7 +137,8 @@ PostgreSQL documentation
 
   <variablelist>
    <varlistentry>
-    <term><option>-c</option> <replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></term>
+    <term><option>-c <replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></option></term>
+    <term><option>--commit-timestamp-ids=<replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></option></term>
     <listitem>
      <para>
       Manually set the oldest and newest transaction IDs for which the commit
@@ -144,7 +159,8 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><option>-e</option> <replaceable class="parameter">xid_epoch</replaceable></term>
+    <term><option>-e <replaceable class="parameter">xid_epoch</replaceable></option></term>
+    <term><option>--epoch=<replaceable class="parameter">xid_epoch</replaceable></option></term>
     <listitem>
      <para>
       Manually set the next transaction ID's epoch.
@@ -164,7 +180,8 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><option>-l</option> <replaceable class="parameter">walfile</replaceable></term>
+    <term><option>-l <replaceable class="parameter">walfile</replaceable></option></term>
+    <term><option>--next-wal-file=<replaceable class="parameter">walfile</replaceable></option></term>
     <listitem>
      <para>
       Manually set the WAL starting location by specifying the name of the
@@ -203,7 +220,8 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><option>-m</option> <replaceable class="parameter">mxid</replaceable>,<replaceable class="parameter">mxid</replaceable></term>
+    <term><option>-m <replaceable class="parameter">mxid</replaceable>,<replaceable class="parameter">mxid</replaceable></option></term>
+    <term><option>--multixact-ids=<replaceable class="parameter">mxid</replaceable>,<replaceable class="parameter">mxid</replaceable></option></term>
     <listitem>
      <para>
       Manually set the next and oldest multitransaction ID.
@@ -224,7 +242,8 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><option>-o</option> <replaceable class="parameter">oid</replaceable></term>
+    <term><option>-o <replaceable class="parameter">oid</replaceable></option></term>
+    <term><option>--next-oid=<replaceable class="parameter">oid</replaceable></option></term>
     <listitem>
      <para>
       Manually set the next OID.
@@ -239,7 +258,8 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><option>-O</option> <replaceable class="parameter">mxoff</replaceable></term>
+    <term><option>-O <replaceable class="parameter">mxoff</replaceable></option></term>
+    <term><option>--multixact-offset=<replaceable class="parameter">mxoff</replaceable></option></term>
     <listitem>
      <para>
       Manually set the next multitransaction offset.
@@ -256,7 +276,8 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><option>-x</option> <replaceable class="parameter">xid</replaceable></term>
+    <term><option>-x <replaceable class="parameter">xid</replaceable></option></term>
+    <term><option>--next-transaction-id=<replaceable class="parameter">xid</replaceable></option></term>
     <listitem>
      <para>
       Manually set the next transaction ID.

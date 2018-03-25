@@ -23,7 +23,13 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_controldata</command>
    <arg choice="opt"><replaceable class="parameter">option</replaceable></arg>
-   <arg choice="opt"><arg choice="opt"><option>-D</option></arg> <replaceable class="parameter">datadir</replaceable></arg>
+   <group choice="opt">
+    <group choice="opt">
+     <arg choice="plain"><option>--pgdata</option></arg>
+     <arg choice="plain"><option>-D</option></arg>
+    </group>
+    <replaceable class="parameter"> datadir</replaceable>
+   </group>
   </cmdsynopsis>
  </refsynopsisdiv>
 
