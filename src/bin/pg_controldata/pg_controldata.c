@@ -25,6 +25,7 @@
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
 #include "pg_getopt.h"
+#include "getopt_long.h"
 
 
 static void
