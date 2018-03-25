@@ -72,6 +72,7 @@ static MultiXactOffset set_mxoff = (MultiXactOffset) -1;
 static uint32 minXlogTli = 0;
 static XLogSegNo minXlogSegNo = 0;
 static int	WalSegSz;
+static int	set_wal_segsize;
 
 static void CheckDataVersion(void);
 static bool ReadControlFile(void);
@@ -100,6 +101,7 @@ main(int argc, char *argv[])
 		{"next-oid", required_argument, NULL, 'o'},
 		{"multixact-offset", required_argument, NULL, 'O'},
 		{"next-transaction-id", required_argument, NULL, 'x'},
+		{"wal-segsize", required_argument, NULL, 1},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -290,6 +292,24 @@ main(int argc, char *argv[])
 				log_fname = pg_strdup(optarg);
 				break;
 
+			case 1:
+				set_wal_segsize = strtol(optarg, &endptr, 10) * 1024 * 1024;
+				if (endptr == optarg || *endptr != '\0')
+				{
+					fprintf(stderr,
+							_("%s: argument of --wal-segsize must be a number\n"),
+							progname);
+					exit(1);
+				}
+				if (!IsValidWalSegSize(set_wal_segsize))
+				{
+					fprintf(stderr,
+							_("%s: argument of --wal-segsize must be a power of 2 between 1 and 1024\n"),
+							progname);
+					exit(1);
+				}
+				break;
+
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -372,6 +392,14 @@ main(int argc, char *argv[])
 	if (!ReadControlFile())
 		GuessControlValues();
 
+	/*
+	 * If no new WAL segment size was specified, use the control file value.
+	 */
+	if (set_wal_segsize != 0)
+		WalSegSz = set_wal_segsize;
+	else
+		WalSegSz = ControlFile.xlog_seg_size;
+
 	if (log_fname != NULL)
 		XLogFromFileName(log_fname, &minXlogTli, &minXlogSegNo, WalSegSz);
 
@@ -437,6 +465,9 @@ main(int argc, char *argv[])
 		ControlFile.checkPointCopy.ThisTimeLineID = minXlogTli;
 		ControlFile.checkPointCopy.PrevTimeLineID = minXlogTli;
 	}
+
+	if (set_wal_segsize != 0)
+		ControlFile.xlog_seg_size = WalSegSz;
 
 	if (minXlogSegNo > newXlogSegNo)
 		newXlogSegNo = minXlogSegNo;
@@ -608,14 +639,13 @@ ReadControlFile(void)
 		}
 
 		memcpy(&ControlFile, buffer, sizeof(ControlFile));
-		WalSegSz = ControlFile.xlog_seg_size;
 
-		/* return false if WalSegSz is not valid */
-		if (!IsValidWalSegSize(WalSegSz))
+		/* return false if WAL segment size is not valid */
+		if (!IsValidWalSegSize(ControlFile.xlog_seg_size))
 		{
 			fprintf(stderr,
 					_("%s: pg_control specifies invalid WAL segment size (%d bytes); proceed with caution \n"),
-					progname, WalSegSz);
+					progname, ControlFile.xlog_seg_size);
 			return false;
 		}
 
@@ -694,7 +724,7 @@ GuessControlValues(void)
 	ControlFile.blcksz = BLCKSZ;
 	ControlFile.relseg_size = RELSEG_SIZE;
 	ControlFile.xlog_blcksz = XLOG_BLCKSZ;
-	WalSegSz = ControlFile.xlog_seg_size = DEFAULT_XLOG_SEG_SIZE;
+	ControlFile.xlog_seg_size = DEFAULT_XLOG_SEG_SIZE;
 	ControlFile.nameDataLen = NAMEDATALEN;
 	ControlFile.indexMaxKeys = INDEX_MAX_KEYS;
 	ControlFile.toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
@@ -859,6 +889,12 @@ PrintNewControlValues(void)
 		printf(_("newestCommitTsXid:                    %u\n"),
 			   ControlFile.checkPointCopy.newestCommitTsXid);
 	}
+
+	if (set_wal_segsize != 0)
+	{
+		printf(_("Bytes per WAL segment:                %u\n"),
+			   ControlFile.xlog_seg_size);
+	}
 }
 
 
@@ -909,9 +945,6 @@ RewriteControlFile(void)
 	ControlFile.max_worker_processes = 8;
 	ControlFile.max_prepared_xacts = 0;
 	ControlFile.max_locks_per_xact = 64;
-
-	/* Now we can force the recorded xlog seg size to the right thing. */
-	ControlFile.xlog_seg_size = WalSegSz;
 
 	/* Contents are protected with a CRC */
 	INIT_CRC32C(ControlFile.crc);
@@ -1048,7 +1081,7 @@ FindEndOfXLOG(void)
 	 * are in virgin territory.
 	 */
 	xlogbytepos = newXlogSegNo * ControlFile.xlog_seg_size;
-	newXlogSegNo = (xlogbytepos + WalSegSz - 1) / WalSegSz;
+	newXlogSegNo = (xlogbytepos + ControlFile.xlog_seg_size - 1) / WalSegSz;
 	newXlogSegNo++;
 }
 
@@ -1279,6 +1312,7 @@ usage(void)
 	printf(_("  -O, --multixact-offset=OFFSET  set next multitransaction offset\n"));
 	printf(_("  -V, --version                  output version information, then exit\n"));
 	printf(_("  -x, --next-transaction-id=XID  set next transaction ID\n"));
+	printf(_("      --wal-segsize=SIZE         size of WAL segments, in megabytes\n"));
 	printf(_("  -?, --help                     show this help, then exit\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
