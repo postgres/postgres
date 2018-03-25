@@ -14,7 +14,7 @@ $$;
 SELECT ptest1('x');  -- error
 CALL ptest1('a');  -- ok
 CALL ptest1('xy' || 'zzy');  -- ok, constant-folded arg
-CALL ptest1(substring(random()::text, 1, 1));  -- ok, volatile arg
+CALL ptest1(substring(random()::numeric(20,15)::text, 1, 1));  -- ok, volatile arg
 
 \df ptest1
 SELECT pg_get_functiondef('ptest1'::regproc);
