@@ -12761,7 +12761,7 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
          <literal>
-          <function>array_fill</function>(<type>anyelement</type>, <type>int[]</type>,
+          <function>array_fill</function>(<type>anyelement</type>, <type>int[]</type>
           <optional>, <type>int[]</type></optional>)
          </literal>
         </entry>
