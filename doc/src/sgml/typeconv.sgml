@@ -1077,6 +1077,36 @@ but <type>integer</type> can be implicitly cast to <type>real</type>, the union
 result type is resolved as <type>real</type>.
 </para>
 </example>
+
+<example>
+<title>Type Resolution in a Nested Union</title>
+
+<para>
+<screen>
+SELECT NULL UNION SELECT NULL UNION SELECT 1;
+
+ERROR:  UNION types text and integer cannot be matched
+</screen>
+This failure occurs because <productname>PostgreSQL</productname> treats
+multiple <literal>UNION</literal>s as a nest of pairwise operations;
+that is, this input is the same as
+<screen>
+(SELECT NULL UNION SELECT NULL) UNION SELECT 1;
+</screen>
+The inner <literal>UNION</literal> is resolved as emitting
+type <type>text</type>, according to the rules given above.  Then the
+outer <literal>UNION</literal> has inputs of types <type>text</type>
+and <type>integer</type>, leading to the observed error.  The problem
+can be fixed by ensuring that the leftmost <literal>UNION</literal>
+has at least one input of the desired result type.
+</para>
+
+<para>
+<literal>INTERSECT</literal> and <literal>EXCEPT</literal> operations are
+likewise resolved pairwise.  However, the other constructs described in this
+section consider all of their inputs in one resolution step.
+</para>
+</example>
 </sect1>
 
 <sect1 id="typeconv-select">
