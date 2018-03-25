@@ -3224,7 +3224,7 @@ main(int argc, char *argv[])
 		wal_segment_size_mb = strtol(str_wal_segment_size_mb, &endptr, 10);
 
 		/* verify that wal segment size is valid */
-		if (*endptr != '\0')
+		if (endptr == str_wal_segment_size_mb || *endptr != '\0')
 		{
 			fprintf(stderr,
 					_("%s: argument of --wal-segsize must be a number\n"),
@@ -3234,7 +3234,7 @@ main(int argc, char *argv[])
 		if (!IsValidWalSegSize(wal_segment_size_mb * 1024 * 1024))
 		{
 			fprintf(stderr,
-					_("%s: argument of --wal-segsize must be a power of two between 1 and 1024\n"),
+					_("%s: argument of --wal-segsize must be a power of 2 between 1 and 1024\n"),
 					progname);
 			exit(1);
 		}
