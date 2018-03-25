@@ -367,8 +367,8 @@ a3nsOzKTXUfS9VyaXo8IrncM6n7fdaXpwba/3tNsAhJG4lDv1k4g9v8Ix2dfv6Rs
 -- check BUG #11905, problem with messages 6 less than a power of 2.
 select pgp_sym_decrypt(pgp_sym_encrypt(repeat('x',65530),'1'),'1') = repeat('x',65530);
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 -- expected: true
 -- Negative tests
 -- Decryption with a certain incorrect key yields an apparent Literal Data
@@ -390,8 +390,8 @@ ERROR:  Wrong key or corrupt data
 -- Routine text/binary mismatch.
 select pgp_sym_decrypt(pgp_sym_encrypt_bytea('P', 'key'), 'key', 'debug=1');
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 -- Decryption with a certain incorrect key yields an apparent BZip2-compressed
 -- plaintext.  Ciphertext source: iterative pgp_sym_encrypt('secret', 'key')
 -- until the random prefix gave rise to that property.

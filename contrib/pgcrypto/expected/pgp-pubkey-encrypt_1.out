@@ -9,29 +9,29 @@ select pgp_pub_decrypt(
 	dearmor(seckey))
 from keytbl where keytbl.id=1;
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 select pgp_pub_decrypt(
 		pgp_pub_encrypt('Secret msg', dearmor(pubkey)),
 		dearmor(seckey))
 from keytbl where keytbl.id=2;
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 select pgp_pub_decrypt(
 		pgp_pub_encrypt('Secret msg', dearmor(pubkey)),
 		dearmor(seckey))
 from keytbl where keytbl.id=3;
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 select pgp_pub_decrypt(
 		pgp_pub_encrypt('Secret msg', dearmor(pubkey)),
 		dearmor(seckey))
 from keytbl where keytbl.id=6;
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 -- try with rsa-sign only
 select pgp_pub_decrypt(
 		pgp_pub_encrypt('Secret msg', dearmor(pubkey)),
@@ -50,13 +50,13 @@ select pgp_pub_decrypt_bytea(
 		dearmor(seckey))
 from keytbl where keytbl.id=1;
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 -- and bytea-to-text?
 select pgp_pub_decrypt(
 		pgp_pub_encrypt_bytea('Secret msg', dearmor(pubkey)),
 		dearmor(seckey))
 from keytbl where keytbl.id=1;
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.

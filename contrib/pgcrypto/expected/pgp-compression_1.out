@@ -18,25 +18,25 @@ select pgp_sym_decrypt(
 	pgp_sym_encrypt('Secret message', 'key', 'compress-algo=0'),
 	'key', 'expect-compress-algo=0');
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 select pgp_sym_decrypt(
 	pgp_sym_encrypt('Secret message', 'key', 'compress-algo=1'),
 	'key', 'expect-compress-algo=1');
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 select pgp_sym_decrypt(
 	pgp_sym_encrypt('Secret message', 'key', 'compress-algo=2'),
 	'key', 'expect-compress-algo=2');
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
 -- level=0 should turn compression off
 select pgp_sym_decrypt(
 	pgp_sym_encrypt('Secret message', 'key',
 			'compress-algo=2, compress-level=0'),
 	'key', 'expect-compress-algo=0');
 ERROR:  generating random data is not supported by this build
-DETAIL:  This functionality requires a source of strong random numbers
-HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+DETAIL:  This functionality requires a source of strong random numbers.
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random.
