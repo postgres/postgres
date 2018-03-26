@@ -7,6 +7,8 @@
 SET enable_partitionwise_aggregate TO true;
 -- Enable partitionwise join, which by default is disabled.
 SET enable_partitionwise_join TO true;
+-- Disable parallel plans.
+SET max_parallel_workers_per_gather TO 0;
 
 --
 -- Tests for list partitioned tables.
@@ -206,6 +208,9 @@ ALTER TABLE pagg_tab_ml ATTACH PARTITION pagg_tab_ml_p3 FOR VALUES FROM (20) TO 
 INSERT INTO pagg_tab_ml SELECT i % 30, i % 10, to_char(i % 4, 'FM0000') FROM generate_series(0, 29999) i;
 ANALYZE pagg_tab_ml;
 
+-- For Parallel Append
+SET max_parallel_workers_per_gather TO 2;
+
 -- Full aggregation at level 1 as GROUP BY clause matches with PARTITION KEY
 -- for level 1 only. For subpartitions, GROUP BY clause does not match with
 -- PARTITION KEY, but still we do not see a partial aggregation as array_agg()
@@ -238,7 +243,6 @@ SELECT a, sum(b), count(*) FROM pagg_tab_ml GROUP BY a, b, c HAVING avg(b) > 7 O
 
 -- Parallelism within partitionwise aggregates
 
-SET max_parallel_workers_per_gather TO 2;
 SET min_parallel_table_scan_size TO '8kB';
 SET parallel_setup_cost TO 0;
 
