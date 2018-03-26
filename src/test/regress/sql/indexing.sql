@@ -592,8 +592,6 @@ vacuum fastpath;
 set enable_seqscan to false;
 set enable_bitmapscan to false;
 
-explain select sum(a) from fastpath where a = 6456;
-explain select sum(a) from fastpath where a >= 5000 and a < 5700;
 select sum(a) from fastpath where a = 6456;
 select sum(a) from fastpath where a >= 5000 and a < 5700;
 

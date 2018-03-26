@@ -1082,22 +1082,6 @@ insert into fastpath select generate_series(1,10000), 'b', 100;
 vacuum fastpath;
 set enable_seqscan to false;
 set enable_bitmapscan to false;
-explain select sum(a) from fastpath where a = 6456;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
- Aggregate  (cost=4.31..4.32 rows=1 width=8)
-   ->  Index Only Scan using fpindex1 on fastpath  (cost=0.29..4.30 rows=1 width=4)
-         Index Cond: (a = 6456)
-(3 rows)
-
-explain select sum(a) from fastpath where a >= 5000 and a < 5700;
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
- Aggregate  (cost=5.41..5.42 rows=1 width=8)
-   ->  Index Only Scan using fpindex1 on fastpath  (cost=0.29..5.29 rows=50 width=4)
-         Index Cond: ((a >= 5000) AND (a < 5700))
-(3 rows)
-
 select sum(a) from fastpath where a = 6456;
  sum  
 ------
