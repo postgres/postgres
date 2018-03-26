@@ -1555,6 +1555,7 @@ alter table parted_trigger attach partition parted_trigger_3 for values from (20
 select tgname, conname, t.tgrelid::regclass, t.tgconstrrelid::regclass,
   c.conrelid::regclass, c.confrelid::regclass
   from pg_trigger t join pg_constraint c on (t.tgconstraint = c.oid)
+  where tgname = 'parted_trigger'
   order by t.tgrelid::regclass::text;
 drop table parted_referenced, parted_trigger, unparted_trigger;
 
