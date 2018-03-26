@@ -155,6 +155,9 @@ int64		latency_limit = 0;
 char	   *tablespace = NULL;
 char	   *index_tablespace = NULL;
 
+/* random seed used when calling srandom() */
+int64 random_seed = -1;
+
 /*
  * end of configurable parameters
  *********************************************************************/
@@ -579,6 +582,7 @@ usage(void)
 		   "  --log-prefix=PREFIX      prefix for transaction time log file\n"
 		   "                           (default: \"pgbench_log\")\n"
 		   "  --progress-timestamp     use Unix epoch timestamps for progress\n"
+		   "  --random-seed=SEED       set random seed (\"time\", \"rand\", integer)\n"
 		   "  --sampling-rate=NUM      fraction of transactions to log (e.g., 0.01 for 1%%)\n"
 		   "\nCommon options:\n"
 		   "  -d, --debug              print debugging output\n"
@@ -4664,6 +4668,49 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	}
 }
 
+/* call srandom based on some seed. NULL triggers the default behavior. */
+static void
+set_random_seed(const char *seed, const char *origin)
+{
+	/* srandom expects an unsigned int */
+	unsigned int iseed;
+
+	if (seed == NULL || strcmp(seed, "time") == 0)
+	{
+		/* rely on current time */
+		instr_time	now;
+		INSTR_TIME_SET_CURRENT(now);
+		iseed = (unsigned int) INSTR_TIME_GET_MICROSEC(now);
+	}
+	else if (strcmp(seed, "rand") == 0)
+	{
+		/* use some "strong" random source */
+		if (!pg_strong_random(&iseed, sizeof(iseed)))
+		{
+			fprintf(stderr, "cannot seed random from a strong source\n");
+			exit(1);
+		}
+	}
+	else
+	{
+		/* parse seed unsigned int value */
+		char garbage;
+		if (sscanf(seed, "%u%c", &iseed, &garbage) != 1)
+		{
+			fprintf(stderr,
+					"error while scanning '%s' from %s, expecting an unsigned integer, 'time' or 'rand'\n",
+					seed, origin);
+			exit(1);
+		}
+	}
+
+	if (seed != NULL)
+		fprintf(stderr, "setting random seed to %u\n", iseed);
+	srandom(iseed);
+	/* no precision loss: 32 bit unsigned int cast to 64 bit int */
+	random_seed = iseed;
+}
+
 
 int
 main(int argc, char **argv)
@@ -4706,6 +4753,7 @@ main(int argc, char **argv)
 		{"progress-timestamp", no_argument, NULL, 6},
 		{"log-prefix", required_argument, NULL, 7},
 		{"foreign-keys", no_argument, NULL, 8},
+		{"random-seed", required_argument, NULL, 9},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -4773,6 +4821,9 @@ main(int argc, char **argv)
 
 	state = (CState *) pg_malloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
+
+	/* set random seed early, because it may be used while parsing scripts. */
+	set_random_seed(getenv("PGBENCH_RANDOM_SEED"), "PGBENCH_RANDOM_SEED environment variable");
 
 	while ((c = getopt_long(argc, argv, "iI:h:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
 	{
@@ -5046,6 +5097,10 @@ main(int argc, char **argv)
 				initialization_option_set = true;
 				foreign_keys = true;
 				break;
+			case 9:				/* random-seed */
+				benchmarking_option_set = true;
+				set_random_seed(optarg, "--random-seed option");
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -5280,10 +5335,6 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* set random seed */
-	INSTR_TIME_SET_CURRENT(start_time);
-	srandom((unsigned int) INSTR_TIME_GET_MICROSEC(start_time));
-
 	if (internal_script_used)
 	{
 		/*
@@ -5339,10 +5390,8 @@ main(int argc, char **argv)
 	if (lookupVariable(&state[0], "client_id") == NULL)
 	{
 		for (i = 0; i < nclients; i++)
-		{
 			if (!putVariableInt(&state[i], "startup", "client_id", i))
 				exit(1);
-		}
 	}
 
 	/* set default seed for hash functions */
@@ -5355,6 +5404,14 @@ main(int argc, char **argv)
 
 		for (i = 0; i < nclients; i++)
 			if (!putVariableInt(&state[i], "startup", "default_seed", (int64) seed))
+				exit(1);
+	}
+
+	/* set random seed unless overwritten */
+	if (lookupVariable(&state[0], "random_seed") == NULL)
+	{
+		for (i = 0; i < nclients; i++)
+			if (!putVariableInt(&state[i], "startup", "random_seed", random_seed))
 				exit(1);
 	}
 
