@@ -531,6 +531,7 @@ llvm_compile_module(LLVMJitContext *context)
 	{
 		orc_handle = LLVMOrcAddEagerlyCompiledIR(compile_orc, context->module,
 												 llvm_resolve_symbol, NULL);
+		LLVMDisposeModule(context->module);
 	}
 #else
 	{
