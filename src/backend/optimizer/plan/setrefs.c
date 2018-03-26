@@ -892,7 +892,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				 * following list contains the RT indexes of partitioned child
 				 * relations including the root, which are not included in the
 				 * above list.  We also keep RT indexes of the roots
-				 * separately to be identitied as such during the executor
+				 * separately to be identified as such during the executor
 				 * initialization.
 				 */
 				if (splan->partitioned_rels != NIL)
