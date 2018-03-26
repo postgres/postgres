@@ -4,7 +4,7 @@
  *	  LLVM error related handling that requires interfacing with C++
  *
  * Unfortunately neither (re)setting the C++ new handler, nor the LLVM OOM
- * handler are exposed to C. Therefore this file wraps the necesary code.
+ * handler are exposed to C. Therefore this file wraps the necessary code.
  *
  * Copyright (c) 2016-2018, PostgreSQL Global Development Group
  *
@@ -39,12 +39,12 @@ static void fatal_llvm_error_handler(void *user_data, const std::string& reason,
  *
  * This is necessary for LLVM as LLVM's error handling for such cases
  * (exit()ing, throwing std::bad_alloc() if compiled with exceptions, abort())
- * isn't compatible with postgres error handling.  Thus in section where LLVM
+ * isn't compatible with postgres error handling.  Thus in sections where LLVM
  * code, not LLVM generated functions!, is executing, standard new, LLVM OOM
  * and LLVM fatal errors (some OOM errors masquerade as those) are redirected
  * to our own error handlers.
  *
- * These error handlers FATAL, because there's no reliable way from within
+ * These error handlers use FATAL, because there's no reliable way from within
  * LLVM to throw an error that's guaranteed not to corrupt LLVM's state.
  *
  * To avoid disturbing extensions using C++ and/or LLVM, these handlers are

@@ -247,7 +247,7 @@ llvm_get_function(LLVMJitContext *context, const char *funcname)
 
 	/*
 	 * If there is a pending / not emitted module, compile and emit now.
-	 * Otherwise we migh not find the [correct] function.
+	 * Otherwise we might not find the [correct] function.
 	 */
 	if (!context->compiled)
 	{
@@ -266,7 +266,7 @@ llvm_get_function(LLVMJitContext *context, const char *funcname)
 
 		addr = 0;
 		if (LLVMOrcGetSymbolAddressIn(handle->stack, &addr, handle->orc_handle, funcname))
-			elog(ERROR, "failed to lookup symbol \"%s\"", funcname);
+			elog(ERROR, "failed to look up symbol \"%s\"", funcname);
 		if (addr)
 			return (void *) (uintptr_t) addr;
 	}
@@ -280,11 +280,11 @@ llvm_get_function(LLVMJitContext *context, const char *funcname)
 		return (void *) (uintptr_t) addr;
 #else
 	if (LLVMOrcGetSymbolAddress(llvm_opt0_orc, &addr, funcname))
-		elog(ERROR, "failed to lookup symbol \"%s\"", funcname);
+		elog(ERROR, "failed to look up symbol \"%s\"", funcname);
 	if (addr)
 		return (void *) (uintptr_t) addr;
 	if (LLVMOrcGetSymbolAddress(llvm_opt3_orc, &addr, funcname))
-		elog(ERROR, "failed to lookup symbol \"%s\"", funcname);
+		elog(ERROR, "failed to look up symbol \"%s\"", funcname);
 	if (addr)
 		return (void *) (uintptr_t) addr;
 #endif							/* LLVM_VERSION_MAJOR */
@@ -540,7 +540,7 @@ llvm_compile_module(LLVMJitContext *context)
 		if (LLVMOrcAddEagerlyCompiledIR(compile_orc, &orc_handle, smod,
 										llvm_resolve_symbol, NULL))
 		{
-			elog(ERROR, "failed to jit module");
+			elog(ERROR, "failed to JIT module");
 		}
 		LLVMOrcDisposeSharedModuleRef(smod);
 	}
@@ -847,7 +847,7 @@ llvm_resolve_symbol(const char *symname, void *ctx)
 	char	   *modname;
 
 	/*
-	 * OSX prefixes all object level symbols with an underscore. But neither
+	 * macOS prefixes all object level symbols with an underscore. But neither
 	 * dlsym() nor PG's inliner expect that. So undo.
 	 */
 #if defined(__darwin__)

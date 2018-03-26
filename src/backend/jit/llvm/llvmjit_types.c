@@ -8,7 +8,7 @@
  * low chance of definitions getting out of sync, this file lists types and
  * functions that directly need to be accessed from LLVM.
  *
- * When LlVM is first used in a backend, a bitcode version of this file, will
+ * When LLVM is first used in a backend, a bitcode version of this file will
  * be loaded. The needed types and signatures will be stored into Struct*,
  * Type*, Func* variables.
  *
