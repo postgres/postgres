@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
+#include "storage/smgr.h"
 #include "utils/tqual.h"
 
 
@@ -85,7 +86,6 @@ static bool _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 			int keysz, ScanKey scankey);
 static void _bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel);
 
-
 /*
  *	_bt_doinsert() -- Handle insertion of a single index tuple in the tree.
  *
@@ -111,32 +111,121 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 	bool		is_unique = false;
 	int			natts = rel->rd_rel->relnatts;
 	ScanKey		itup_scankey;
-	BTStack		stack;
+	BTStack		stack = NULL;
 	Buffer		buf;
 	OffsetNumber offset;
+	bool		fastpath;
 
 	/* we need an insertion scan key to do our search, so build one */
 	itup_scankey = _bt_mkscankey(rel, itup);
 
-top:
-	/* find the first page containing this key */
-	stack = _bt_search(rel, natts, itup_scankey, false, &buf, BT_WRITE, NULL);
-
-	offset = InvalidOffsetNumber;
-
-	/* trade in our read lock for a write lock */
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	LockBuffer(buf, BT_WRITE);
-
 	/*
-	 * If the page was split between the time that we surrendered our read
-	 * lock and acquired our write lock, then this page may no longer be the
-	 * right place for the key we want to insert.  In this case, we need to
-	 * move right in the tree.  See Lehman and Yao for an excruciatingly
-	 * precise description.
+	 * It's very common to have an index on an auto-incremented or
+	 * monotonically increasing value. In such cases, every insertion happens
+	 * towards the end of the index. We try to optimise that case by caching
+	 * the right-most leaf of the index. If our cached block is still the
+	 * rightmost leaf, has enough free space to accommodate a new entry and
+	 * the insertion key is strictly greater than the first key in this page,
+	 * then we can safely conclude that the new key will be inserted in the
+	 * cached block. So we simply search within the cached block and insert the
+	 * key at the appropriate location. We call it a fastpath.
+	 *
+	 * Testing has revealed, though, that the fastpath can result in increased
+	 * contention on the exclusive-lock on the rightmost leaf page. So we
+	 * conditionally check if the lock is available. If it's not available then
+	 * we simply abandon the fastpath and take the regular path. This makes
+	 * sense because unavailability of the lock also signals that some other
+	 * backend might be concurrently inserting into the page, thus reducing our
+	 * chances to finding an insertion place in this page.
 	 */
-	buf = _bt_moveright(rel, buf, natts, itup_scankey, false,
-						true, stack, BT_WRITE, NULL);
+top:
+	fastpath = false;
+	offset = InvalidOffsetNumber;
+	if (RelationGetTargetBlock(rel) != InvalidBlockNumber)
+	{
+		Size 			itemsz;
+		Page			page;
+		BTPageOpaque	lpageop;
+
+		/*
+		 * Conditionally acquire exclusive lock on the buffer before doing any
+		 * checks. If we don't get the lock, we simply follow slowpath. If we
+		 * do get the lock, this ensures that the index state cannot change, as
+		 * far as the rightmost part of the index is concerned.
+		 */
+		buf = ReadBuffer(rel, RelationGetTargetBlock(rel));
+
+		if (ConditionalLockBuffer(buf))
+		{
+			_bt_checkpage(rel, buf);
+
+			page = BufferGetPage(buf);
+
+			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+			itemsz = IndexTupleSize(itup);
+			itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this
+										 * but we need to be consistent */
+
+			/*
+			 * Check if the page is still the rightmost leaf page, has enough
+			 * free space to accommodate the new tuple, no split is in progress
+			 * and the scankey is greater than or equal to the first key on the
+			 * page.
+			 */
+			if (P_ISLEAF(lpageop) && P_RIGHTMOST(lpageop) &&
+					!P_INCOMPLETE_SPLIT(lpageop) &&
+					!P_IGNORE(lpageop) &&
+					(PageGetFreeSpace(page) > itemsz) &&
+					PageGetMaxOffsetNumber(page) >= P_FIRSTDATAKEY(lpageop) &&
+					_bt_compare(rel, natts, itup_scankey, page,
+						P_FIRSTDATAKEY(lpageop)) > 0)
+			{
+				fastpath = true;
+			}
+			else
+			{
+				_bt_relbuf(rel, buf);
+
+				/*
+				 * Something did not workout. Just forget about the cached
+				 * block and follow the normal path. It might be set again if
+				 * the conditions are favourble.
+				 */
+				RelationSetTargetBlock(rel, InvalidBlockNumber);
+			}
+		}
+		else
+		{
+			ReleaseBuffer(buf);
+
+			/*
+			 * If someone's holding a lock, it's likely to change anyway,
+			 * so don't try again until we get an updated rightmost leaf.
+			 */
+			RelationSetTargetBlock(rel, InvalidBlockNumber);
+		}
+	}
+
+	if (!fastpath)
+	{
+		/* find the first page containing this key */
+		stack = _bt_search(rel, natts, itup_scankey, false, &buf, BT_WRITE,
+						   NULL);
+
+		/* trade in our read lock for a write lock */
+		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+		LockBuffer(buf, BT_WRITE);
+
+		/*
+		 * If the page was split between the time that we surrendered our read
+		 * lock and acquired our write lock, then this page may no longer be
+		 * the right place for the key we want to insert.  In this case, we
+		 * need to move right in the tree.  See Lehman and Yao for an
+		 * excruciatingly precise description.
+		 */
+		buf = _bt_moveright(rel, buf, natts, itup_scankey, false,
+							true, stack, BT_WRITE, NULL);
+	}
 
 	/*
 	 * If we're not allowing duplicates, make sure the key isn't already in
@@ -184,7 +273,8 @@ top:
 				XactLockTableWait(xwait, rel, &itup->t_tid, XLTW_InsertIndex);
 
 			/* start over... */
-			_bt_freestack(stack);
+			if (stack)
+				_bt_freestack(stack);
 			goto top;
 		}
 	}
@@ -211,7 +301,8 @@ top:
 	}
 
 	/* be tidy */
-	_bt_freestack(stack);
+	if (stack)
+		_bt_freestack(stack);
 	_bt_freeskey(itup_scankey);
 
 	return is_unique;
@@ -879,7 +970,16 @@ _bt_insertonpg(Relation rel,
 			XLogRegisterData((char *) &xlrec, SizeOfBtreeInsert);
 
 			if (P_ISLEAF(lpageop))
+			{
 				xlinfo = XLOG_BTREE_INSERT_LEAF;
+
+				/*
+				 * Cache the block information if we just inserted into the
+				 * rightmost leaf page of the index.
+				 */
+				if (P_RIGHTMOST(lpageop))
+					RelationSetTargetBlock(rel, BufferGetBlockNumber(buf));
+			}
 			else
 			{
 				/*
