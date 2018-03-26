@@ -1788,6 +1788,17 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"jit_tuple_deforming", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Allow JIT compilation of tuple deforming."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&jit_tuple_deforming,
+		true,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL, NULL

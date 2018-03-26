@@ -2287,18 +2287,21 @@ ExecPushExprSlots(ExprState *state, LastAttnumInfo *info)
 	{
 		scratch.opcode = EEOP_INNER_FETCHSOME;
 		scratch.d.fetch.last_var = info->last_inner;
+		scratch.d.fetch.known_desc = NULL;
 		ExprEvalPushStep(state, &scratch);
 	}
 	if (info->last_outer > 0)
 	{
 		scratch.opcode = EEOP_OUTER_FETCHSOME;
 		scratch.d.fetch.last_var = info->last_outer;
+		scratch.d.fetch.known_desc = NULL;
 		ExprEvalPushStep(state, &scratch);
 	}
 	if (info->last_scan > 0)
 	{
 		scratch.opcode = EEOP_SCAN_FETCHSOME;
 		scratch.d.fetch.last_var = info->last_scan;
+		scratch.d.fetch.known_desc = NULL;
 		ExprEvalPushStep(state, &scratch);
 	}
 }
@@ -3250,10 +3253,12 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 	/* push deform steps */
 	scratch.opcode = EEOP_INNER_FETCHSOME;
 	scratch.d.fetch.last_var = maxatt;
+	scratch.d.fetch.known_desc = ldesc;
 	ExprEvalPushStep(state, &scratch);
 
 	scratch.opcode = EEOP_OUTER_FETCHSOME;
 	scratch.d.fetch.last_var = maxatt;
+	scratch.d.fetch.known_desc = rdesc;
 	ExprEvalPushStep(state, &scratch);
 
 	/*

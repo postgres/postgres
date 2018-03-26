@@ -920,6 +920,7 @@ typedef struct PlanState
 	ExprState  *qual;			/* boolean qual condition */
 	struct PlanState *lefttree; /* input plan tree(s) */
 	struct PlanState *righttree;
+
 	List	   *initPlan;		/* Init SubPlanState nodes (un-correlated expr
 								 * subselects) */
 	List	   *subPlan;		/* SubPlanState nodes in my expressions */
@@ -935,6 +936,13 @@ typedef struct PlanState
 	TupleTableSlot *ps_ResultTupleSlot; /* slot for my result tuples */
 	ExprContext *ps_ExprContext;	/* node's expression-evaluation context */
 	ProjectionInfo *ps_ProjInfo;	/* info for doing tuple projection */
+
+	/*
+	 * Scanslot's descriptor if known. This is a bit of a hack, but otherwise
+	 * it's hard for expression compilation to optimize based on the
+	 * descriptor, without encoding knowledge about all executor nodes.
+	 */
+	TupleDesc	scandesc;
 } PlanState;
 
 /* ----------------

@@ -32,6 +32,7 @@ extern "C"
 #include "fmgr.h"
 #include "jit/jit.h"
 #include "nodes/pg_list.h"
+#include "access/tupdesc.h"
 
 
 typedef struct LLVMJitContext
@@ -75,6 +76,7 @@ extern LLVMTypeRef StructAggStatePerGroupData;
 
 extern LLVMValueRef AttributeTemplate;
 extern LLVMValueRef FuncStrlen;
+extern LLVMValueRef FuncVarsizeAny;
 extern LLVMValueRef FuncSlotGetsomeattrs;
 extern LLVMValueRef FuncHeapGetsysattr;
 extern LLVMValueRef FuncMakeExpandedObjectReadOnlyInternal;
@@ -107,6 +109,7 @@ extern LLVMValueRef llvm_function_reference(LLVMJitContext *context,
  ****************************************************************************
  */
 extern bool llvm_compile_expr(struct ExprState *state);
+extern LLVMValueRef slot_compile_deform(struct LLVMJitContext *context, TupleDesc desc, int natts);
 
 /*
  ****************************************************************************

@@ -262,6 +262,7 @@ typedef struct ExprEvalStep
 		{
 			/* attribute number up to which to fetch (inclusive) */
 			int			last_var;
+			TupleDesc	known_desc;
 		}			fetch;
 
 		/* for EEOP_INNER/OUTER/SCAN_[SYS]VAR[_FIRST] */

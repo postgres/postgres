@@ -21,6 +21,7 @@
 #define PGJIT_OPT3     1 << 1
 /* reserved for PGJIT_INLINE */
 #define PGJIT_EXPR	   1 << 3
+#define PGJIT_DEFORM   1 << 4
 
 
 typedef struct JitContext
@@ -67,6 +68,7 @@ extern bool jit_debugging_support;
 extern bool jit_dump_bitcode;
 extern bool jit_expressions;
 extern bool jit_profiling_support;
+extern bool jit_tuple_deforming;
 extern double jit_above_cost;
 extern double jit_optimize_above_cost;
 

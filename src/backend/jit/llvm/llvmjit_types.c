@@ -96,6 +96,7 @@ FunctionReturningBool(void)
 void	   *referenced_functions[] =
 {
 	strlen,
+	varsize_any,
 	slot_getsomeattrs,
 	heap_getsysattr,
 	MakeExpandedObjectReadOnlyInternal,

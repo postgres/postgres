@@ -38,6 +38,7 @@ bool		jit_debugging_support = false;
 bool		jit_dump_bitcode = false;
 bool		jit_expressions = true;
 bool		jit_profiling_support = false;
+bool		jit_tuple_deforming = true;
 double		jit_above_cost = 100000;
 double		jit_optimize_above_cost = 500000;
 

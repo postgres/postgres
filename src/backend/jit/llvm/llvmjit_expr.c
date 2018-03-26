@@ -152,7 +152,7 @@ llvm_compile_expr(ExprState *state)
 
 		param_types[0] = l_ptr(StructExprState);	/* state */
 		param_types[1] = l_ptr(StructExprContext);	/* econtext */
-		param_types[2] = l_ptr(TypeParamBool);		/* isnull */
+		param_types[2] = l_ptr(TypeParamBool);	/* isnull */
 
 		eval_sig = LLVMFunctionType(TypeSizeT,
 									param_types, lengthof(param_types),
@@ -272,6 +272,7 @@ llvm_compile_expr(ExprState *state)
 			case EEOP_OUTER_FETCHSOME:
 			case EEOP_SCAN_FETCHSOME:
 				{
+					TupleDesc	desc = NULL;
 					LLVMValueRef v_slot;
 					LLVMBasicBlockRef b_fetch;
 					LLVMValueRef v_nvalid;
@@ -279,17 +280,38 @@ llvm_compile_expr(ExprState *state)
 					b_fetch = l_bb_before_v(opblocks[i + 1],
 											"op.%d.fetch", i);
 
+					if (op->d.fetch.known_desc)
+						desc = op->d.fetch.known_desc;
+
 					if (opcode == EEOP_INNER_FETCHSOME)
 					{
+						PlanState  *is = innerPlanState(parent);
+
 						v_slot = v_innerslot;
+
+						if (!desc &&
+							is &&
+							is->ps_ResultTupleSlot &&
+							is->ps_ResultTupleSlot->tts_fixedTupleDescriptor)
+							desc = is->ps_ResultTupleSlot->tts_tupleDescriptor;
 					}
 					else if (opcode == EEOP_OUTER_FETCHSOME)
 					{
+						PlanState  *os = outerPlanState(parent);
+
 						v_slot = v_outerslot;
+
+						if (!desc &&
+							os &&
+							os->ps_ResultTupleSlot &&
+							os->ps_ResultTupleSlot->tts_fixedTupleDescriptor)
+							desc = os->ps_ResultTupleSlot->tts_tupleDescriptor;
 					}
 					else
 					{
 						v_slot = v_scanslot;
+						if (!desc && parent)
+							desc = parent->scandesc;
 					}
 
 					/*
@@ -308,6 +330,27 @@ llvm_compile_expr(ExprState *state)
 
 					LLVMPositionBuilderAtEnd(b, b_fetch);
 
+					/*
+					 * If the tupledesc of the to-be-deformed tuple is known,
+					 * and JITing of deforming is enabled, build deform
+					 * function specific to tupledesc and the exact number of
+					 * to-be-extracted attributes.
+					 */
+					if (desc && (context->base.flags & PGJIT_DEFORM))
+					{
+						LLVMValueRef params[1];
+						LLVMValueRef l_jit_deform;
+
+						l_jit_deform =
+							slot_compile_deform(context, desc,
+												op->d.fetch.last_var);
+						params[0] = v_slot;
+
+						LLVMBuildCall(b, l_jit_deform,
+									  params, lengthof(params), "");
+
+					}
+					else
 					{
 						LLVMValueRef params[2];
 

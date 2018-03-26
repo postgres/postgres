@@ -550,6 +550,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		 */
 		if (jit_expressions)
 			result->jitFlags |= PGJIT_EXPR;
+		if (jit_tuple_deforming)
+			result->jitFlags |= PGJIT_DEFORM;
 	}
 
 	return result;

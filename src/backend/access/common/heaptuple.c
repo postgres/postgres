@@ -1556,3 +1556,13 @@ minimal_tuple_from_heap_tuple(HeapTuple htup)
 	result->t_len = len;
 	return result;
 }
+
+/*
+ * This mainly exists so JIT can inline the definition, but it's also
+ * sometimes useful in debugging sessions.
+ */
+size_t
+varsize_any(void *p)
+{
+	return VARSIZE_ANY(p);
+}

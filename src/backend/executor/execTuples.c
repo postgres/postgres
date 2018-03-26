@@ -896,6 +896,7 @@ ExecInitScanTupleSlot(EState *estate, ScanState *scanstate, TupleDesc tupledesc)
 {
 	scanstate->ss_ScanTupleSlot = ExecAllocTableSlot(&estate->es_tupleTable,
 													 tupledesc);
+	scanstate->ps.scandesc = tupledesc;
 }
 
 /* ----------------
