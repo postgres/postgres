@@ -518,6 +518,14 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
     not duplicate each other in terms of attributes constrained by an
     arbiter index or constraint.
    </para>
+
+   <para>
+    Note that it is currently not supported for the
+    <literal>ON CONFLICT DO UPDATE</literal> clause of an
+    <command>INSERT</command> applied to a partitioned table to update the
+    partition key of a conflicting row such that it requires the row be moved
+    to a new partition.
+   </para>
    <tip>
     <para>
      It is often preferable to use unique index inference rather than

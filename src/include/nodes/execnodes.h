@@ -363,6 +363,20 @@ typedef struct JunkFilter
 } JunkFilter;
 
 /*
+ * OnConflictSetState
+ *
+ * Executor state of an ON CONFLICT DO UPDATE operation.
+ */
+typedef struct OnConflictSetState
+{
+	NodeTag		type;
+
+	ProjectionInfo *oc_ProjInfo;	/* for ON CONFLICT DO UPDATE SET */
+	TupleDesc	oc_ProjTupdesc; /* TupleDesc for the above projection */
+	ExprState  *oc_WhereClause; /* state for the WHERE clause */
+} OnConflictSetState;
+
+/*
  * ResultRelInfo
  *
  * Whenever we update an existing relation, we have to update indexes on the
@@ -424,11 +438,11 @@ typedef struct ResultRelInfo
 	/* for computing a RETURNING list */
 	ProjectionInfo *ri_projectReturning;
 
-	/* for computing ON CONFLICT DO UPDATE SET */
-	ProjectionInfo *ri_onConflictSetProj;
+	/* list of arbiter indexes to use to check conflicts */
+	List	   *ri_onConflictArbiterIndexes;
 
-	/* list of ON CONFLICT DO UPDATE exprs (qual) */
-	ExprState  *ri_onConflictSetWhere;
+	/* ON CONFLICT evaluation state */
+	OnConflictSetState *ri_onConflict;
 
 	/* partition check expression */
 	List	   *ri_PartitionCheck;

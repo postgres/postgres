@@ -138,6 +138,10 @@ typedef struct PartitionRangeBound
 	bool		lower;			/* this is the lower (vs upper) bound */
 } PartitionRangeBound;
 
+
+static Oid	get_partition_parent_worker(Relation inhRel, Oid relid);
+static void get_partition_ancestors_worker(Relation inhRel, Oid relid,
+							   List **ancestors);
 static int32 qsort_partition_hbound_cmp(const void *a, const void *b);
 static int32 qsort_partition_list_value_cmp(const void *a, const void *b,
 							   void *arg);
@@ -1377,6 +1381,7 @@ check_default_allows_bound(Relation parent, Relation default_rel,
 
 /*
  * get_partition_parent
+ *		Obtain direct parent of given relation
  *
  * Returns inheritance parent of a partition by scanning pg_inherits
  *
@@ -1387,14 +1392,33 @@ check_default_allows_bound(Relation parent, Relation default_rel,
 Oid
 get_partition_parent(Oid relid)
 {
-	Form_pg_inherits form;
 	Relation	catalogRelation;
-	SysScanDesc scan;
-	ScanKeyData key[2];
-	HeapTuple	tuple;
 	Oid			result;
 
 	catalogRelation = heap_open(InheritsRelationId, AccessShareLock);
+
+	result = get_partition_parent_worker(catalogRelation, relid);
+
+	if (!OidIsValid(result))
+		elog(ERROR, "could not find tuple for parent of relation %u", relid);
+
+	heap_close(catalogRelation, AccessShareLock);
+
+	return result;
+}
+
+/*
+ * get_partition_parent_worker
+ *		Scan the pg_inherits relation to return the OID of the parent of the
+ *		given relation
+ */
+static Oid
+get_partition_parent_worker(Relation inhRel, Oid relid)
+{
+	SysScanDesc scan;
+	ScanKeyData key[2];
+	Oid			result = InvalidOid;
+	HeapTuple	tuple;
 
 	ScanKeyInit(&key[0],
 				Anum_pg_inherits_inhrelid,
@@ -1405,20 +1429,62 @@ get_partition_parent(Oid relid)
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(1));
 
-	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId, true,
+	scan = systable_beginscan(inhRel, InheritsRelidSeqnoIndexId, true,
 							  NULL, 2, key);
-
 	tuple = systable_getnext(scan);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "could not find tuple for parent of relation %u", relid);
+	if (HeapTupleIsValid(tuple))
+	{
+		Form_pg_inherits form = (Form_pg_inherits) GETSTRUCT(tuple);
 
-	form = (Form_pg_inherits) GETSTRUCT(tuple);
-	result = form->inhparent;
+		result = form->inhparent;
+	}
 
 	systable_endscan(scan);
-	heap_close(catalogRelation, AccessShareLock);
 
 	return result;
+}
+
+/*
+ * get_partition_ancestors
+ *		Obtain ancestors of given relation
+ *
+ * Returns a list of ancestors of the given relation.
+ *
+ * Note: Because this function assumes that the relation whose OID is passed
+ * as an argument and each ancestor will have precisely one parent, it should
+ * only be called when it is known that the relation is a partition.
+ */
+List *
+get_partition_ancestors(Oid relid)
+{
+	List	   *result = NIL;
+	Relation	inhRel;
+
+	inhRel = heap_open(InheritsRelationId, AccessShareLock);
+
+	get_partition_ancestors_worker(inhRel, relid, &result);
+
+	heap_close(inhRel, AccessShareLock);
+
+	return result;
+}
+
+/*
+ * get_partition_ancestors_worker
+ *		recursive worker for get_partition_ancestors
+ */
+static void
+get_partition_ancestors_worker(Relation inhRel, Oid relid, List **ancestors)
+{
+	Oid			parentOid;
+
+	/* Recursion ends at the topmost level, ie., when there's no parent */
+	parentOid = get_partition_parent_worker(inhRel, relid);
+	if (parentOid == InvalidOid)
+		return;
+
+	*ancestors = lappend_oid(*ancestors, parentOid);
+	get_partition_ancestors_worker(inhRel, parentOid, ancestors);
 }
 
 /*

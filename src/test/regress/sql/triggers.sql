@@ -1983,6 +1983,39 @@ insert into my_table values (3, 'CCC'), (4, 'DDD')
   update set b = my_table.b || ':' || excluded.b;
 
 --
+-- now using a partitioned table
+--
+
+create table iocdu_tt_parted (a int primary key, b text) partition by list (a);
+create table iocdu_tt_parted1 partition of iocdu_tt_parted for values in (1);
+create table iocdu_tt_parted2 partition of iocdu_tt_parted for values in (2);
+create table iocdu_tt_parted3 partition of iocdu_tt_parted for values in (3);
+create table iocdu_tt_parted4 partition of iocdu_tt_parted for values in (4);
+create trigger iocdu_tt_parted_insert_trig
+  after insert on iocdu_tt_parted referencing new table as new_table
+  for each statement execute procedure dump_insert();
+create trigger iocdu_tt_parted_update_trig
+  after update on iocdu_tt_parted referencing old table as old_table new table as new_table
+  for each statement execute procedure dump_update();
+
+-- inserts only
+insert into iocdu_tt_parted values (1, 'AAA'), (2, 'BBB')
+  on conflict (a) do
+  update set b = iocdu_tt_parted.b || ':' || excluded.b;
+
+-- mixture of inserts and updates
+insert into iocdu_tt_parted values (1, 'AAA'), (2, 'BBB'), (3, 'CCC'), (4, 'DDD')
+  on conflict (a) do
+  update set b = iocdu_tt_parted.b || ':' || excluded.b;
+
+-- updates only
+insert into iocdu_tt_parted values (3, 'CCC'), (4, 'DDD')
+  on conflict (a) do
+  update set b = iocdu_tt_parted.b || ':' || excluded.b;
+
+drop table iocdu_tt_parted;
+
+--
 -- Verify that you can't create a trigger with transition tables for
 -- more than one event.
 --

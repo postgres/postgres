@@ -15,10 +15,12 @@
 #include "postgres.h"
 
 #include "catalog/pg_inherits_fn.h"
+#include "catalog/pg_type.h"
 #include "executor/execPartition.h"
 #include "executor/executor.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/rls.h"
 #include "utils/ruleutils.h"
@@ -36,6 +38,8 @@ static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
 									 Datum *values,
 									 bool *isnull,
 									 int maxfieldlen);
+static List *adjust_partition_tlist(List *tlist, TupleConversionMap *map);
+
 
 /*
  * ExecSetupPartitionTupleRouting - sets up information needed during
@@ -64,6 +68,8 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 	int			num_update_rri = 0,
 				update_rri_index = 0;
 	PartitionTupleRouting *proute;
+	int			nparts;
+	ModifyTable *node = mtstate ? (ModifyTable *) mtstate->ps.plan : NULL;
 
 	/*
 	 * Get the information about the partition tree after locking all the
@@ -74,20 +80,16 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 	proute->partition_dispatch_info =
 		RelationGetPartitionDispatchInfo(rel, &proute->num_dispatch,
 										 &leaf_parts);
-	proute->num_partitions = list_length(leaf_parts);
-	proute->partitions = (ResultRelInfo **) palloc(proute->num_partitions *
-												   sizeof(ResultRelInfo *));
+	proute->num_partitions = nparts = list_length(leaf_parts);
+	proute->partitions =
+		(ResultRelInfo **) palloc(nparts * sizeof(ResultRelInfo *));
 	proute->parent_child_tupconv_maps =
-		(TupleConversionMap **) palloc0(proute->num_partitions *
-										sizeof(TupleConversionMap *));
-	proute->partition_oids = (Oid *) palloc(proute->num_partitions *
-											sizeof(Oid));
+		(TupleConversionMap **) palloc0(nparts * sizeof(TupleConversionMap *));
+	proute->partition_oids = (Oid *) palloc(nparts * sizeof(Oid));
 
 	/* Set up details specific to the type of tuple routing we are doing. */
-	if (mtstate && mtstate->operation == CMD_UPDATE)
+	if (node && node->operation == CMD_UPDATE)
 	{
-		ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
-
 		update_rri = mtstate->resultRelInfo;
 		num_update_rri = list_length(node->plans);
 		proute->subplan_partition_offsets =
@@ -328,7 +330,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	 */
 	oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
 
-	leaf_part_rri = (ResultRelInfo *) palloc0(sizeof(ResultRelInfo));
+	leaf_part_rri = makeNode(ResultRelInfo);
 	InitResultRelInfo(leaf_part_rri,
 					  partrel,
 					  node ? node->nominalRelation : 1,
@@ -475,9 +477,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 									&mtstate->ps, RelationGetDescr(partrel));
 	}
 
-	Assert(proute->partitions[partidx] == NULL);
-	proute->partitions[partidx] = leaf_part_rri;
-
 	/*
 	 * Save a tuple conversion map to convert a tuple routed to this partition
 	 * from the parent's type to the partition's.
@@ -486,6 +485,145 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 		convert_tuples_by_name(RelationGetDescr(rootrel),
 							   RelationGetDescr(partrel),
 							   gettext_noop("could not convert row type"));
+
+	/*
+	 * If there is an ON CONFLICT clause, initialize state for it.
+	 */
+	if (node && node->onConflictAction != ONCONFLICT_NONE)
+	{
+		TupleConversionMap *map = proute->parent_child_tupconv_maps[partidx];
+		int			firstVarno = mtstate->resultRelInfo[0].ri_RangeTableIndex;
+		Relation	firstResultRel = mtstate->resultRelInfo[0].ri_RelationDesc;
+		TupleDesc	partrelDesc = RelationGetDescr(partrel);
+		ExprContext *econtext = mtstate->ps.ps_ExprContext;
+		ListCell   *lc;
+		List	   *arbiterIndexes = NIL;
+
+		/*
+		 * If there is a list of arbiter indexes, map it to a list of indexes
+		 * in the partition.  We do that by scanning the partition's index
+		 * list and searching for ancestry relationships to each index in the
+		 * ancestor table.
+		 */
+		if (list_length(resultRelInfo->ri_onConflictArbiterIndexes) > 0)
+		{
+			List	   *childIdxs;
+
+			childIdxs = RelationGetIndexList(leaf_part_rri->ri_RelationDesc);
+
+			foreach(lc, childIdxs)
+			{
+				Oid			childIdx = lfirst_oid(lc);
+				List	   *ancestors;
+				ListCell   *lc2;
+
+				ancestors = get_partition_ancestors(childIdx);
+				foreach(lc2, resultRelInfo->ri_onConflictArbiterIndexes)
+				{
+					if (list_member_oid(ancestors, lfirst_oid(lc2)))
+						arbiterIndexes = lappend_oid(arbiterIndexes, childIdx);
+				}
+				list_free(ancestors);
+			}
+		}
+
+		/*
+		 * If the resulting lists are of inequal length, something is wrong.
+		 * (This shouldn't happen, since arbiter index selection should not
+		 * pick up an invalid index.)
+		 */
+		if (list_length(resultRelInfo->ri_onConflictArbiterIndexes) !=
+			list_length(arbiterIndexes))
+			elog(ERROR, "invalid arbiter index list");
+		leaf_part_rri->ri_onConflictArbiterIndexes = arbiterIndexes;
+
+		/*
+		 * In the DO UPDATE case, we have some more state to initialize.
+		 */
+		if (node->onConflictAction == ONCONFLICT_UPDATE)
+		{
+			Assert(node->onConflictSet != NIL);
+			Assert(resultRelInfo->ri_onConflict != NULL);
+
+			/*
+			 * If the partition's tuple descriptor matches exactly the root
+			 * parent (the common case), we can simply re-use the parent's ON
+			 * CONFLICT SET state, skipping a bunch of work.  Otherwise, we
+			 * need to create state specific to this partition.
+			 */
+			if (map == NULL)
+				leaf_part_rri->ri_onConflict = resultRelInfo->ri_onConflict;
+			else
+			{
+				List	   *onconflset;
+				TupleDesc	tupDesc;
+				bool		found_whole_row;
+
+				leaf_part_rri->ri_onConflict = makeNode(OnConflictSetState);
+
+				/*
+				 * Translate expressions in onConflictSet to account for
+				 * different attribute numbers.  For that, map partition
+				 * varattnos twice: first to catch the EXCLUDED
+				 * pseudo-relation (INNER_VAR), and second to handle the main
+				 * target relation (firstVarno).
+				 */
+				onconflset = (List *) copyObject((Node *) node->onConflictSet);
+				onconflset =
+					map_partition_varattnos(onconflset, INNER_VAR, partrel,
+											firstResultRel, &found_whole_row);
+				Assert(!found_whole_row);
+				onconflset =
+					map_partition_varattnos(onconflset, firstVarno, partrel,
+											firstResultRel, &found_whole_row);
+				Assert(!found_whole_row);
+
+				/* Finally, adjust this tlist to match the partition. */
+				onconflset = adjust_partition_tlist(onconflset, map);
+
+				/*
+				 * Build UPDATE SET's projection info.  The user of this
+				 * projection is responsible for setting the slot's tupdesc!
+				 * We set aside a tupdesc that's good for the common case of a
+				 * partition that's tupdesc-equal to the partitioned table;
+				 * partitions of different tupdescs must generate their own.
+				 */
+				tupDesc = ExecTypeFromTL(onconflset, partrelDesc->tdhasoid);
+				ExecSetSlotDescriptor(mtstate->mt_conflproj, tupDesc);
+				leaf_part_rri->ri_onConflict->oc_ProjInfo =
+					ExecBuildProjectionInfo(onconflset, econtext,
+											mtstate->mt_conflproj,
+											&mtstate->ps, partrelDesc);
+				leaf_part_rri->ri_onConflict->oc_ProjTupdesc = tupDesc;
+
+				/*
+				 * If there is a WHERE clause, initialize state where it will
+				 * be evaluated, mapping the attribute numbers appropriately.
+				 * As with onConflictSet, we need to map partition varattnos
+				 * to the partition's tupdesc.
+				 */
+				if (node->onConflictWhere)
+				{
+					List	   *clause;
+
+					clause = copyObject((List *) node->onConflictWhere);
+					clause = map_partition_varattnos(clause, INNER_VAR,
+													 partrel, firstResultRel,
+													 &found_whole_row);
+					Assert(!found_whole_row);
+					clause = map_partition_varattnos(clause, firstVarno,
+													 partrel, firstResultRel,
+													 &found_whole_row);
+					Assert(!found_whole_row);
+					leaf_part_rri->ri_onConflict->oc_WhereClause =
+						ExecInitQual((List *) clause, &mtstate->ps);
+				}
+			}
+		}
+	}
+
+	Assert(proute->partitions[partidx] == NULL);
+	proute->partitions[partidx] = leaf_part_rri;
 
 	MemoryContextSwitchTo(oldContext);
 
@@ -945,4 +1083,71 @@ ExecBuildSlotPartitionKeyDescription(Relation rel,
 	appendStringInfoChar(&buf, ')');
 
 	return buf.data;
+}
+
+/*
+ * adjust_partition_tlist
+ *		Adjust the targetlist entries for a given partition to account for
+ *		attribute differences between parent and the partition
+ *
+ * The expressions have already been fixed, but here we fix the list to make
+ * target resnos match the partition's attribute numbers.  This results in a
+ * copy of the original target list in which the entries appear in resno
+ * order, including both the existing entries (that may have their resno
+ * changed in-place) and the newly added entries for columns that don't exist
+ * in the parent.
+ *
+ * Scribbles on the input tlist, so callers must make sure to make a copy
+ * before passing it to us.
+ */
+static List *
+adjust_partition_tlist(List *tlist, TupleConversionMap *map)
+{
+	List	   *new_tlist = NIL;
+	TupleDesc	tupdesc = map->outdesc;
+	AttrNumber *attrMap = map->attrMap;
+	AttrNumber	attrno;
+
+	for (attrno = 1; attrno <= tupdesc->natts; attrno++)
+	{
+		Form_pg_attribute att_tup = TupleDescAttr(tupdesc, attrno - 1);
+		TargetEntry *tle;
+
+		if (attrMap[attrno - 1] != InvalidAttrNumber)
+		{
+			Assert(!att_tup->attisdropped);
+
+			/*
+			 * Use the corresponding entry from the parent's tlist, adjusting
+			 * the resno the match the partition's attno.
+			 */
+			tle = (TargetEntry *) list_nth(tlist, attrMap[attrno - 1] - 1);
+			tle->resno = attrno;
+		}
+		else
+		{
+			Const	   *expr;
+
+			/*
+			 * For a dropped attribute in the partition, generate a dummy
+			 * entry with resno matching the partition's attno.
+			 */
+			Assert(att_tup->attisdropped);
+			expr = makeConst(INT4OID,
+							 -1,
+							 InvalidOid,
+							 sizeof(int32),
+							 (Datum) 0,
+							 true,	/* isnull */
+							 true /* byval */ );
+			tle = makeTargetEntry((Expr *) expr,
+								  attrno,
+								  pstrdup(NameStr(att_tup->attname)),
+								  false);
+		}
+
+		new_tlist = lappend(new_tlist, tle);
+	}
+
+	return new_tlist;
 }

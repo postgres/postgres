@@ -2624,6 +2624,39 @@ insert into my_table values (3, 'CCC'), (4, 'DDD')
 NOTICE:  trigger = my_table_update_trig, old table = (3,CCC), (4,DDD), new table = (3,CCC:CCC), (4,DDD:DDD)
 NOTICE:  trigger = my_table_insert_trig, new table = <NULL>
 --
+-- now using a partitioned table
+--
+create table iocdu_tt_parted (a int primary key, b text) partition by list (a);
+create table iocdu_tt_parted1 partition of iocdu_tt_parted for values in (1);
+create table iocdu_tt_parted2 partition of iocdu_tt_parted for values in (2);
+create table iocdu_tt_parted3 partition of iocdu_tt_parted for values in (3);
+create table iocdu_tt_parted4 partition of iocdu_tt_parted for values in (4);
+create trigger iocdu_tt_parted_insert_trig
+  after insert on iocdu_tt_parted referencing new table as new_table
+  for each statement execute procedure dump_insert();
+create trigger iocdu_tt_parted_update_trig
+  after update on iocdu_tt_parted referencing old table as old_table new table as new_table
+  for each statement execute procedure dump_update();
+-- inserts only
+insert into iocdu_tt_parted values (1, 'AAA'), (2, 'BBB')
+  on conflict (a) do
+  update set b = iocdu_tt_parted.b || ':' || excluded.b;
+NOTICE:  trigger = iocdu_tt_parted_update_trig, old table = <NULL>, new table = <NULL>
+NOTICE:  trigger = iocdu_tt_parted_insert_trig, new table = (1,AAA), (2,BBB)
+-- mixture of inserts and updates
+insert into iocdu_tt_parted values (1, 'AAA'), (2, 'BBB'), (3, 'CCC'), (4, 'DDD')
+  on conflict (a) do
+  update set b = iocdu_tt_parted.b || ':' || excluded.b;
+NOTICE:  trigger = iocdu_tt_parted_update_trig, old table = (1,AAA), (2,BBB), new table = (1,AAA:AAA), (2,BBB:BBB)
+NOTICE:  trigger = iocdu_tt_parted_insert_trig, new table = (3,CCC), (4,DDD)
+-- updates only
+insert into iocdu_tt_parted values (3, 'CCC'), (4, 'DDD')
+  on conflict (a) do
+  update set b = iocdu_tt_parted.b || ':' || excluded.b;
+NOTICE:  trigger = iocdu_tt_parted_update_trig, old table = (3,CCC), (4,DDD), new table = (3,CCC:CCC), (4,DDD:DDD)
+NOTICE:  trigger = iocdu_tt_parted_insert_trig, new table = <NULL>
+drop table iocdu_tt_parted;
+--
 -- Verify that you can't create a trigger with transition tables for
 -- more than one event.
 --

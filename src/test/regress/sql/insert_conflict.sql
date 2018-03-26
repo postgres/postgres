@@ -472,15 +472,90 @@ select * from selfconflict;
 
 drop table selfconflict;
 
--- check that the following works:
--- insert into partitioned_table on conflict do nothing
-create table parted_conflict_test (a int, b char) partition by list (a);
-create table parted_conflict_test_1 partition of parted_conflict_test (b unique) for values in (1);
+-- check ON CONFLICT handling with partitioned tables
+create table parted_conflict_test (a int unique, b char) partition by list (a);
+create table parted_conflict_test_1 partition of parted_conflict_test (b unique) for values in (1, 2);
+
+-- no indexes required here
 insert into parted_conflict_test values (1, 'a') on conflict do nothing;
-insert into parted_conflict_test values (1, 'a') on conflict do nothing;
--- however, on conflict do update is not supported yet
-insert into parted_conflict_test values (1) on conflict (b) do update set a = excluded.a;
--- but it works OK if we target the partition directly
-insert into parted_conflict_test_1 values (1) on conflict (b) do
-update set a = excluded.a;
+
+-- index on a required, which does exist in parent
+insert into parted_conflict_test values (1, 'a') on conflict (a) do nothing;
+insert into parted_conflict_test values (1, 'a') on conflict (a) do update set b = excluded.b;
+
+-- targeting partition directly will work
+insert into parted_conflict_test_1 values (1, 'a') on conflict (a) do nothing;
+insert into parted_conflict_test_1 values (1, 'b') on conflict (a) do update set b = excluded.b;
+
+-- index on b required, which doesn't exist in parent
+insert into parted_conflict_test values (2, 'b') on conflict (b) do update set a = excluded.a;
+
+-- targeting partition directly will work
+insert into parted_conflict_test_1 values (2, 'b') on conflict (b) do update set a = excluded.a;
+
+-- should see (2, 'b')
+select * from parted_conflict_test order by a;
+
+-- now check that DO UPDATE works correctly for target partition with
+-- different attribute numbers
+create table parted_conflict_test_2 (b char, a int unique);
+alter table parted_conflict_test attach partition parted_conflict_test_2 for values in (3);
+truncate parted_conflict_test;
+insert into parted_conflict_test values (3, 'a') on conflict (a) do update set b = excluded.b;
+insert into parted_conflict_test values (3, 'b') on conflict (a) do update set b = excluded.b;
+
+-- should see (3, 'b')
+select * from parted_conflict_test order by a;
+
+-- case where parent will have a dropped column, but the partition won't
+alter table parted_conflict_test drop b, add b char;
+create table parted_conflict_test_3 partition of parted_conflict_test for values in (4);
+truncate parted_conflict_test;
+insert into parted_conflict_test (a, b) values (4, 'a') on conflict (a) do update set b = excluded.b;
+insert into parted_conflict_test (a, b) values (4, 'b') on conflict (a) do update set b = excluded.b where parted_conflict_test.b = 'a';
+
+-- should see (4, 'b')
+select * from parted_conflict_test order by a;
+
+-- case with multi-level partitioning
+create table parted_conflict_test_4 partition of parted_conflict_test for values in (5) partition by list (a);
+create table parted_conflict_test_4_1 partition of parted_conflict_test_4 for values in (5);
+truncate parted_conflict_test;
+insert into parted_conflict_test (a, b) values (5, 'a') on conflict (a) do update set b = excluded.b;
+insert into parted_conflict_test (a, b) values (5, 'b') on conflict (a) do update set b = excluded.b where parted_conflict_test.b = 'a';
+
+-- should see (5, 'b')
+select * from parted_conflict_test order by a;
+
+-- test with multiple rows
+truncate parted_conflict_test;
+insert into parted_conflict_test (a, b) values (1, 'a'), (2, 'a'), (4, 'a') on conflict (a) do update set b = excluded.b where excluded.b = 'b';
+insert into parted_conflict_test (a, b) values (1, 'b'), (2, 'c'), (4, 'b') on conflict (a) do update set b = excluded.b where excluded.b = 'b';
+
+-- should see (1, 'b'), (2, 'a'), (4, 'b')
+select * from parted_conflict_test order by a;
+
 drop table parted_conflict_test;
+
+-- test behavior of inserting a conflicting tuple into an intermediate
+-- partitioning level
+create table parted_conflict (a int primary key, b text) partition by range (a);
+create table parted_conflict_1 partition of parted_conflict for values from (0) to (1000) partition by range (a);
+create table parted_conflict_1_1 partition of parted_conflict_1 for values from (0) to (500);
+insert into parted_conflict values (40, 'forty');
+insert into parted_conflict_1 values (40, 'cuarenta')
+  on conflict (a) do update set b = excluded.b;
+drop table parted_conflict;
+
+-- same thing, but this time try to use an index that's created not in the
+-- partition
+create table parted_conflict (a int, b text) partition by range (a);
+create table parted_conflict_1 partition of parted_conflict for values from (0) to (1000) partition by range (a);
+create unique index on only parted_conflict_1 (a);
+create unique index on only parted_conflict (a);
+alter index parted_conflict_a_idx attach partition parted_conflict_1_a_idx;
+create table parted_conflict_1_1 partition of parted_conflict_1 for values from (0) to (500);
+insert into parted_conflict values (40, 'forty');
+insert into parted_conflict_1 values (40, 'cuarenta')
+  on conflict (a) do update set b = excluded.b;
+drop table parted_conflict;

@@ -3324,21 +3324,6 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
 
      <listitem>
       <para>
-       Using the <literal>ON CONFLICT</literal> clause with partitioned tables
-       will cause an error if the conflict target is specified (see
-       <xref linkend="sql-on-conflict" /> for more details on how the clause
-       works).  Therefore, it is not possible to specify
-       <literal>DO UPDATE</literal> as the alternative action, because
-       specifying the conflict target is mandatory in that case.  On the other
-       hand, specifying <literal>DO NOTHING</literal> as the alternative action
-       works fine provided the conflict target is not specified.  In that case,
-       unique constraints (or exclusion constraints) of the individual leaf
-       partitions are considered.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        When an <command>UPDATE</command> causes a row to move from one
        partition to another, there is a chance that another concurrent
        <command>UPDATE</command> or <command>DELETE</command> misses this row.

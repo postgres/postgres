@@ -422,7 +422,7 @@ ExecInsert(ModifyTableState *mtstate,
 			bool		specConflict;
 			List	   *arbiterIndexes;
 
-			arbiterIndexes = node->arbiterIndexes;
+			arbiterIndexes = resultRelInfo->ri_onConflictArbiterIndexes;
 
 			/*
 			 * Do a non-conclusive check for conflicts first.
@@ -1056,6 +1056,18 @@ lreplace:;
 			TupleConversionMap *tupconv_map;
 
 			/*
+			 * Disallow an INSERT ON CONFLICT DO UPDATE that causes the
+			 * original row to migrate to a different partition.  Maybe this
+			 * can be implemented some day, but it seems a fringe feature with
+			 * little redeeming value.
+			 */
+			if (((ModifyTable *) mtstate->ps.plan)->onConflictAction == ONCONFLICT_UPDATE)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("invalid ON UPDATE specification"),
+						 errdetail("The result tuple would appear in a different partition than the original tuple.")));
+
+			/*
 			 * When an UPDATE is run on a leaf partition, we will not have
 			 * partition tuple routing set up. In that case, fail with
 			 * partition constraint violation error.
@@ -1313,7 +1325,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 {
 	ExprContext *econtext = mtstate->ps.ps_ExprContext;
 	Relation	relation = resultRelInfo->ri_RelationDesc;
-	ExprState  *onConflictSetWhere = resultRelInfo->ri_onConflictSetWhere;
+	ExprState  *onConflictSetWhere = resultRelInfo->ri_onConflict->oc_WhereClause;
 	HeapTupleData tuple;
 	HeapUpdateFailureData hufd;
 	LockTupleMode lockmode;
@@ -1462,7 +1474,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	}
 
 	/* Project the new tuple version */
-	ExecProject(resultRelInfo->ri_onConflictSetProj);
+	ExecProject(resultRelInfo->ri_onConflict->oc_ProjInfo);
 
 	/*
 	 * Note that it is possible that the target tuple has been modified in
@@ -1639,6 +1651,7 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 						ResultRelInfo *targetRelInfo,
 						TupleTableSlot *slot)
 {
+	ModifyTable *node;
 	int			partidx;
 	ResultRelInfo *partrel;
 	HeapTuple	tuple;
@@ -1719,6 +1732,19 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 							  tuple,
 							  proute->partition_tuple_slot,
 							  &slot);
+
+	/* Initialize information needed to handle ON CONFLICT DO UPDATE. */
+	Assert(mtstate != NULL);
+	node = (ModifyTable *) mtstate->ps.plan;
+	if (node->onConflictAction == ONCONFLICT_UPDATE)
+	{
+		Assert(mtstate->mt_existing != NULL);
+		ExecSetSlotDescriptor(mtstate->mt_existing,
+							  RelationGetDescr(partrel->ri_RelationDesc));
+		Assert(mtstate->mt_conflproj != NULL);
+		ExecSetSlotDescriptor(mtstate->mt_conflproj,
+							  partrel->ri_onConflict->oc_ProjTupdesc);
+	}
 
 	return slot;
 }
@@ -2347,11 +2373,15 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->ps.ps_ExprContext = NULL;
 	}
 
+	/* Set the list of arbiter indexes if needed for ON CONFLICT */
+	resultRelInfo = mtstate->resultRelInfo;
+	if (node->onConflictAction != ONCONFLICT_NONE)
+		resultRelInfo->ri_onConflictArbiterIndexes = node->arbiterIndexes;
+
 	/*
 	 * If needed, Initialize target list, projection and qual for ON CONFLICT
 	 * DO UPDATE.
 	 */
-	resultRelInfo = mtstate->resultRelInfo;
 	if (node->onConflictAction == ONCONFLICT_UPDATE)
 	{
 		ExprContext *econtext;
@@ -2368,34 +2398,54 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		econtext = mtstate->ps.ps_ExprContext;
 		relationDesc = resultRelInfo->ri_RelationDesc->rd_att;
 
-		/* initialize slot for the existing tuple */
+		/*
+		 * Initialize slot for the existing tuple.  If we'll be performing
+		 * tuple routing, the tuple descriptor to use for this will be
+		 * determined based on which relation the update is actually applied
+		 * to, so we don't set its tuple descriptor here.
+		 */
 		mtstate->mt_existing =
-			ExecInitExtraTupleSlot(mtstate->ps.state, relationDesc);
+			ExecInitExtraTupleSlot(mtstate->ps.state,
+								   mtstate->mt_partition_tuple_routing ?
+								   NULL : relationDesc);
 
 		/* carried forward solely for the benefit of explain */
 		mtstate->mt_excludedtlist = node->exclRelTlist;
 
-		/* create target slot for UPDATE SET projection */
+		/* create state for DO UPDATE SET operation */
+		resultRelInfo->ri_onConflict = makeNode(OnConflictSetState);
+
+		/*
+		 * Create the tuple slot for the UPDATE SET projection.
+		 *
+		 * Just like mt_existing above, we leave it without a tuple descriptor
+		 * in the case of partitioning tuple routing, so that it can be
+		 * changed by ExecPrepareTupleRouting.  In that case, we still save
+		 * the tupdesc in the parent's state: it can be reused by partitions
+		 * with an identical descriptor to the parent.
+		 */
 		tupDesc = ExecTypeFromTL((List *) node->onConflictSet,
 								 relationDesc->tdhasoid);
 		mtstate->mt_conflproj =
-			ExecInitExtraTupleSlot(mtstate->ps.state, tupDesc);
+			ExecInitExtraTupleSlot(mtstate->ps.state,
+								   mtstate->mt_partition_tuple_routing ?
+								   NULL : tupDesc);
+		resultRelInfo->ri_onConflict->oc_ProjTupdesc = tupDesc;
 
 		/* build UPDATE SET projection state */
-		resultRelInfo->ri_onConflictSetProj =
+		resultRelInfo->ri_onConflict->oc_ProjInfo =
 			ExecBuildProjectionInfo(node->onConflictSet, econtext,
 									mtstate->mt_conflproj, &mtstate->ps,
 									relationDesc);
 
-		/* build DO UPDATE WHERE clause expression */
+		/* initialize state to evaluate the WHERE clause, if any */
 		if (node->onConflictWhere)
 		{
 			ExprState  *qualexpr;
 
 			qualexpr = ExecInitQual((List *) node->onConflictWhere,
 									&mtstate->ps);
-
-			resultRelInfo->ri_onConflictSetWhere = qualexpr;
+			resultRelInfo->ri_onConflict->oc_WhereClause = qualexpr;
 		}
 	}
 

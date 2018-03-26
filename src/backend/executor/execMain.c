@@ -1347,11 +1347,15 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 		resultRelInfo->ri_FdwRoutine = GetFdwRoutineForRelation(resultRelationDesc, true);
 	else
 		resultRelInfo->ri_FdwRoutine = NULL;
+
+	/* The following fields are set later if needed */
 	resultRelInfo->ri_FdwState = NULL;
 	resultRelInfo->ri_usesFdwDirectModify = false;
 	resultRelInfo->ri_ConstraintExprs = NULL;
 	resultRelInfo->ri_junkFilter = NULL;
 	resultRelInfo->ri_projectReturning = NULL;
+	resultRelInfo->ri_onConflictArbiterIndexes = NIL;
+	resultRelInfo->ri_onConflict = NULL;
 
 	/*
 	 * Partition constraint, which also includes the partition constraint of
