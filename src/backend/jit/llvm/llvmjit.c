@@ -527,13 +527,17 @@ llvm_compile_module(LLVMJitContext *context)
 	 * faster instruction selection mechanism is used.
 	 */
 	INSTR_TIME_SET_CURRENT(starttime);
-#if LLVM_VERSION_MAJOR < 5
+#if LLVM_VERSION_MAJOR > 6
 	{
-		orc_handle = LLVMOrcAddEagerlyCompiledIR(compile_orc, context->module,
-												 llvm_resolve_symbol, NULL);
-		LLVMDisposeModule(context->module);
+		if (LLVMOrcAddEagerlyCompiledIR(compile_orc, &orc_handle, context->module,
+										llvm_resolve_symbol, NULL))
+		{
+			elog(ERROR, "failed to JIT module");
+		}
+
+		/* LLVMOrcAddEagerlyCompiledIR takes ownership of the module */
 	}
-#else
+#elif LLVM_VERSION_MAJOR > 4
 	{
 		LLVMSharedModuleRef smod;
 
@@ -544,6 +548,12 @@ llvm_compile_module(LLVMJitContext *context)
 			elog(ERROR, "failed to JIT module");
 		}
 		LLVMOrcDisposeSharedModuleRef(smod);
+	}
+#else							/* LLVM 4.0 and 3.9 */
+	{
+		orc_handle = LLVMOrcAddEagerlyCompiledIR(compile_orc, context->module,
+												 llvm_resolve_symbol, NULL);
+		LLVMDisposeModule(context->module);
 	}
 #endif
 	INSTR_TIME_SET_CURRENT(endtime);
