@@ -26,6 +26,7 @@
 #include "access/amapi.h"
 #include "access/multixact.h"
 #include "access/relscan.h"
+#include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/visibilitymap.h"
@@ -3863,7 +3864,7 @@ reindex_relation(Oid relid, int flags, int options)
 
 	/* Ensure rd_indexattr is valid; see comments for RelationSetIndexList */
 	if (is_pg_class)
-		(void) RelationGetIndexAttrBitmap(rel, INDEX_ATTR_BITMAP_ALL);
+		(void) RelationGetIndexAttrBitmap(rel, INDEX_ATTR_BITMAP_HOT);
 
 	PG_TRY();
 	{

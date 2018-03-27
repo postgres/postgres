@@ -309,8 +309,41 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    <para>
     The optional <literal>WITH</literal> clause specifies <firstterm>storage
     parameters</firstterm> for the index.  Each index method has its own set of allowed
-    storage parameters.  The B-tree, hash, GiST and SP-GiST index methods all
-    accept this parameter:
+    storage parameters.  All indexes accept the following parameter:
+   </para>
+
+   <variablelist>
+   <varlistentry>
+    <term><literal>recheck_on_update</literal></term>
+    <listitem>
+     <para>
+       Specifies whether to recheck a functional index value to see whether
+       we can use a HOT update or not. The default value is on for functional
+       indexes with an total expression cost less than 1000, otherwise off.
+       You might decide to turn this off if you knew that a function used in
+       an index is unlikely to return the same value when one of the input
+       columns is updated and so the recheck is not worth the additional cost
+       of executing the function.
+     </para>
+       
+     <para>
+       Functional indexes are used frequently for the case where the function
+       returns a subset of the argument. Examples of this would be accessing
+       part of a string with <literal>SUBSTR()</literal> or accessing a single
+       field in a JSON document using an expression such as
+       <literal>(bookinfo-&gt;&gt;'isbn')</literal>. In this example, the JSON
+       document might be updated frequently, yet it is uncommon for the ISBN
+       field for a book to change so we would keep the parameter set to on
+       for that index. A more frequently changing field might have an index
+       with this parameter turned off, while very frequently changing fields
+       might be better to avoid indexing at all under high load.
+     </para>
+    </listitem>
+   </varlistentry>
+   </variablelist>
+
+   <para>
+     The B-tree, hash, GiST and SP-GiST index methods all accept this parameter:
    </para>
 
    <variablelist>
