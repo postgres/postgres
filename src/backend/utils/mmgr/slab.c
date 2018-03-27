@@ -131,7 +131,8 @@ static void SlabReset(MemoryContext context);
 static void SlabDelete(MemoryContext context);
 static Size SlabGetChunkSpace(MemoryContext context, void *pointer);
 static bool SlabIsEmpty(MemoryContext context);
-static void SlabStats(MemoryContext context, int level, bool print,
+static void SlabStats(MemoryContext context,
+		  MemoryStatsPrintFunc printfunc, void *passthru,
 		  MemoryContextCounters *totals);
 #ifdef MEMORY_CONTEXT_CHECKING
 static void SlabCheck(MemoryContext context);
@@ -176,27 +177,22 @@ static const MemoryContextMethods SlabMethods = {
  *		Create a new Slab context.
  *
  * parent: parent context, or NULL if top-level context
- * name: name of context (for debugging only, need not be unique)
- * flags: bitmask of MEMCONTEXT_XXX option flags
+ * name: name of context (must be statically allocated)
  * blockSize: allocation block size
  * chunkSize: allocation chunk size
  *
- * Notes: if flags & MEMCONTEXT_COPY_NAME, the name string will be copied into
- * context-lifespan storage; otherwise, it had better be statically allocated.
  * The chunkSize may not exceed:
  *		MAXALIGN_DOWN(SIZE_MAX) - MAXALIGN(sizeof(SlabBlock)) - SLAB_CHUNKHDRSZ
  */
 MemoryContext
 SlabContextCreate(MemoryContext parent,
 				  const char *name,
-				  int flags,
 				  Size blockSize,
 				  Size chunkSize)
 {
 	int			chunksPerBlock;
 	Size		fullChunkSize;
 	Size		freelistSize;
-	Size		nameOffset;
 	Size		headerSize;
 	SlabContext *slab;
 	int			i;
@@ -231,12 +227,8 @@ SlabContextCreate(MemoryContext parent,
 	 * this with the first regular block; not worth the extra complication.
 	 */
 
-	/* Size of the memory context header, including name storage if needed */
-	nameOffset = offsetof(SlabContext, freelist) + freelistSize;
-	if (flags & MEMCONTEXT_COPY_NAME)
-		headerSize = nameOffset + strlen(name) + 1;
-	else
-		headerSize = nameOffset;
+	/* Size of the memory context header */
+	headerSize = offsetof(SlabContext, freelist) + freelistSize;
 
 	slab = (SlabContext *) malloc(headerSize);
 	if (slab == NULL)
@@ -270,12 +262,9 @@ SlabContextCreate(MemoryContext parent,
 	/* Finally, do the type-independent part of context creation */
 	MemoryContextCreate((MemoryContext) slab,
 						T_SlabContext,
-						headerSize,
-						nameOffset,
 						&SlabMethods,
 						parent,
-						name,
-						flags);
+						name);
 
 	return (MemoryContext) slab;
 }
@@ -634,12 +623,13 @@ SlabIsEmpty(MemoryContext context)
  * SlabStats
  *		Compute stats about memory consumption of a Slab context.
  *
- * level: recursion level (0 at top level); used for print indentation.
- * print: true to print stats to stderr.
- * totals: if not NULL, add stats about this Slab into *totals.
+ * printfunc: if not NULL, pass a human-readable stats string to this.
+ * passthru: pass this pointer through to printfunc.
+ * totals: if not NULL, add stats about this context into *totals.
  */
 static void
-SlabStats(MemoryContext context, int level, bool print,
+SlabStats(MemoryContext context,
+		  MemoryStatsPrintFunc printfunc, void *passthru,
 		  MemoryContextCounters *totals)
 {
 	SlabContext *slab = castNode(SlabContext, context);
@@ -667,14 +657,15 @@ SlabStats(MemoryContext context, int level, bool print,
 		}
 	}
 
-	if (print)
+	if (printfunc)
 	{
-		for (i = 0; i < level; i++)
-			fprintf(stderr, "  ");
-		fprintf(stderr,
-				"Slab: %s: %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
-				slab->header.name, totalspace, nblocks, freespace, freechunks,
-				totalspace - freespace);
+		char		stats_string[200];
+
+		snprintf(stats_string, sizeof(stats_string),
+				 "%zu total in %zd blocks; %zu free (%zd chunks); %zu used",
+				 totalspace, nblocks, freespace, freechunks,
+				 totalspace - freespace);
+		printfunc(context, passthru, stats_string);
 	}
 
 	if (totals)

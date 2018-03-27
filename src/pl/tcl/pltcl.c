@@ -1479,12 +1479,10 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 
 		/************************************************************
 		 * Allocate a context that will hold all PG data for the procedure.
-		 * We use the internal proc name as the context name.
 		 ************************************************************/
-		proc_cxt = AllocSetContextCreateExtended(TopMemoryContext,
-												 internal_proname,
-												 MEMCONTEXT_COPY_NAME,
-												 ALLOCSET_SMALL_SIZES);
+		proc_cxt = AllocSetContextCreate(TopMemoryContext,
+										 "PL/Tcl function",
+										 ALLOCSET_SMALL_SIZES);
 
 		/************************************************************
 		 * Allocate and fill a new procedure description block.
@@ -1493,6 +1491,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		oldcontext = MemoryContextSwitchTo(proc_cxt);
 		prodesc = (pltcl_proc_desc *) palloc0(sizeof(pltcl_proc_desc));
 		prodesc->user_proname = pstrdup(NameStr(procStruct->proname));
+		MemoryContextSetIdentifier(proc_cxt, prodesc->user_proname);
 		prodesc->internal_proname = pstrdup(internal_proname);
 		prodesc->fn_cxt = proc_cxt;
 		prodesc->fn_refcount = 0;

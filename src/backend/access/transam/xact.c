@@ -999,7 +999,6 @@ AtStart_Memory(void)
 		TransactionAbortContext =
 			AllocSetContextCreateExtended(TopMemoryContext,
 										  "TransactionAbortContext",
-										  0,
 										  32 * 1024,
 										  32 * 1024,
 										  32 * 1024);

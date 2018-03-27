@@ -340,11 +340,9 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 			CurrentDynaHashCxt = info->hcxt;
 		else
 			CurrentDynaHashCxt = TopMemoryContext;
-		CurrentDynaHashCxt =
-			AllocSetContextCreateExtended(CurrentDynaHashCxt,
-										  tabname,
-										  MEMCONTEXT_COPY_NAME,
-										  ALLOCSET_DEFAULT_SIZES);
+		CurrentDynaHashCxt = AllocSetContextCreate(CurrentDynaHashCxt,
+												   "dynahash",
+												   ALLOCSET_DEFAULT_SIZES);
 	}
 
 	/* Initialize the hash header, plus a copy of the table name */
@@ -353,6 +351,10 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 
 	hashp->tabname = (char *) (hashp + 1);
 	strcpy(hashp->tabname, tabname);
+
+	/* If we have a private context, label it with hashtable's name */
+	if (!(flags & HASH_SHARED_MEM))
+		MemoryContextSetIdentifier(CurrentDynaHashCxt, hashp->tabname);
 
 	/*
 	 * Select the appropriate hash function (see comments at head of file).

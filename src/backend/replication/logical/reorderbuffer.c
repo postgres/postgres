@@ -243,19 +243,16 @@ ReorderBufferAllocate(void)
 
 	buffer->change_context = SlabContextCreate(new_ctx,
 											   "Change",
-											   0,
 											   SLAB_DEFAULT_BLOCK_SIZE,
 											   sizeof(ReorderBufferChange));
 
 	buffer->txn_context = SlabContextCreate(new_ctx,
 											"TXN",
-											0,
 											SLAB_DEFAULT_BLOCK_SIZE,
 											sizeof(ReorderBufferTXN));
 
 	buffer->tup_context = GenerationContextCreate(new_ctx,
 												  "Tuples",
-												  0,
 												  SLAB_LARGE_BLOCK_SIZE);
 
 	hash_ctl.keysize = sizeof(TransactionId);

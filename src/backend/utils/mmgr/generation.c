@@ -61,7 +61,6 @@ typedef struct GenerationContext
 
 	/* Generational context parameters */
 	Size		blockSize;		/* standard block size */
-	Size		headerSize;		/* allocated size of context header */
 
 	GenerationBlock *block;		/* current (most recently allocated) block */
 	dlist_head	blocks;			/* list of blocks */
@@ -154,7 +153,8 @@ static void GenerationReset(MemoryContext context);
 static void GenerationDelete(MemoryContext context);
 static Size GenerationGetChunkSpace(MemoryContext context, void *pointer);
 static bool GenerationIsEmpty(MemoryContext context);
-static void GenerationStats(MemoryContext context, int level, bool print,
+static void GenerationStats(MemoryContext context,
+				MemoryStatsPrintFunc printfunc, void *passthru,
 				MemoryContextCounters *totals);
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -203,14 +203,16 @@ static const MemoryContextMethods GenerationMethods = {
 /*
  * GenerationContextCreate
  *		Create a new Generation context.
+ *
+ * parent: parent context, or NULL if top-level context
+ * name: name of context (must be statically allocated)
+ * blockSize: generation block size
  */
 MemoryContext
 GenerationContextCreate(MemoryContext parent,
 						const char *name,
-						int flags,
 						Size blockSize)
 {
-	Size		headerSize;
 	GenerationContext *set;
 
 	/* Assert we padded GenerationChunk properly */
@@ -238,13 +240,7 @@ GenerationContextCreate(MemoryContext parent,
 	 * freeing the first generation of allocations.
 	 */
 
-	/* Size of the memory context header, including name storage if needed */
-	if (flags & MEMCONTEXT_COPY_NAME)
-		headerSize = MAXALIGN(sizeof(GenerationContext) + strlen(name) + 1);
-	else
-		headerSize = MAXALIGN(sizeof(GenerationContext));
-
-	set = (GenerationContext *) malloc(headerSize);
+	set = (GenerationContext *) malloc(MAXALIGN(sizeof(GenerationContext)));
 	if (set == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -262,19 +258,15 @@ GenerationContextCreate(MemoryContext parent,
 
 	/* Fill in GenerationContext-specific header fields */
 	set->blockSize = blockSize;
-	set->headerSize = headerSize;
 	set->block = NULL;
 	dlist_init(&set->blocks);
 
 	/* Finally, do the type-independent part of context creation */
 	MemoryContextCreate((MemoryContext) set,
 						T_GenerationContext,
-						headerSize,
-						sizeof(GenerationContext),
 						&GenerationMethods,
 						parent,
-						name,
-						flags);
+						name);
 
 	return (MemoryContext) set;
 }
@@ -683,15 +675,16 @@ GenerationIsEmpty(MemoryContext context)
  * GenerationStats
  *		Compute stats about memory consumption of a Generation context.
  *
- * level: recursion level (0 at top level); used for print indentation.
- * print: true to print stats to stderr.
- * totals: if not NULL, add stats about this Generation into *totals.
+ * printfunc: if not NULL, pass a human-readable stats string to this.
+ * passthru: pass this pointer through to printfunc.
+ * totals: if not NULL, add stats about this context into *totals.
  *
  * XXX freespace only accounts for empty space at the end of the block, not
  * space of freed chunks (which is unknown).
  */
 static void
-GenerationStats(MemoryContext context, int level, bool print,
+GenerationStats(MemoryContext context,
+				MemoryStatsPrintFunc printfunc, void *passthru,
 				MemoryContextCounters *totals)
 {
 	GenerationContext *set = (GenerationContext *) context;
@@ -703,7 +696,7 @@ GenerationStats(MemoryContext context, int level, bool print,
 	dlist_iter	iter;
 
 	/* Include context header in totalspace */
-	totalspace = set->headerSize;
+	totalspace = MAXALIGN(sizeof(GenerationContext));
 
 	dlist_foreach(iter, &set->blocks)
 	{
@@ -716,16 +709,15 @@ GenerationStats(MemoryContext context, int level, bool print,
 		freespace += (block->endptr - block->freeptr);
 	}
 
-	if (print)
+	if (printfunc)
 	{
-		int			i;
+		char		stats_string[200];
 
-		for (i = 0; i < level; i++)
-			fprintf(stderr, "  ");
-		fprintf(stderr,
-				"Generation: %s: %zu total in %zd blocks (%zd chunks); %zu free (%zd chunks); %zu used\n",
-				((MemoryContext) set)->name, totalspace, nblocks, nchunks, freespace,
-				nfreechunks, totalspace - freespace);
+		snprintf(stats_string, sizeof(stats_string),
+				 "%zu total in %zd blocks (%zd chunks); %zu free (%zd chunks); %zu used",
+				 totalspace, nblocks, nchunks, freespace,
+				 nfreechunks, totalspace - freespace);
+		printfunc(context, passthru, stats_string);
 	}
 
 	if (totals)

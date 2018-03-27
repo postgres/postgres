@@ -76,6 +76,7 @@ extern void MemoryContextDelete(MemoryContext context);
 extern void MemoryContextResetOnly(MemoryContext context);
 extern void MemoryContextResetChildren(MemoryContext context);
 extern void MemoryContextDeleteChildren(MemoryContext context);
+extern void MemoryContextSetIdentifier(MemoryContext context, const char *id);
 extern void MemoryContextSetParent(MemoryContext context,
 					   MemoryContext new_parent);
 extern Size GetMemoryChunkSpace(void *pointer);
@@ -90,6 +91,10 @@ extern void MemoryContextAllowInCriticalSection(MemoryContext context,
 extern void MemoryContextCheck(MemoryContext context);
 #endif
 extern bool MemoryContextContains(MemoryContext context, void *pointer);
+
+/* Handy macro for copying and assigning context ID ... but note double eval */
+#define MemoryContextCopySetIdentifier(cxt, id) \
+	MemoryContextSetIdentifier(cxt, MemoryContextStrdup(cxt, id))
 
 /*
  * GetMemoryChunkContext
@@ -133,11 +138,10 @@ GetMemoryChunkContext(void *pointer)
  * specific creation routines, and noplace else.
  */
 extern void MemoryContextCreate(MemoryContext node,
-					NodeTag tag, Size size, Size nameoffset,
+					NodeTag tag,
 					const MemoryContextMethods *methods,
 					MemoryContext parent,
-					const char *name,
-					int flags);
+					const char *name);
 
 
 /*
@@ -147,45 +151,36 @@ extern void MemoryContextCreate(MemoryContext node,
 /* aset.c */
 extern MemoryContext AllocSetContextCreateExtended(MemoryContext parent,
 							  const char *name,
-							  int flags,
 							  Size minContextSize,
 							  Size initBlockSize,
 							  Size maxBlockSize);
 
 /*
- * This backwards compatibility macro only works for constant context names,
- * and you must specify block sizes with one of the abstraction macros below.
+ * This wrapper macro exists to check for non-constant strings used as context
+ * names; that's no longer supported.  (Use MemoryContextSetIdentifier if you
+ * want to provide a variable identifier.)  Note you must specify block sizes
+ * with one of the abstraction macros below.
  */
 #ifdef HAVE__BUILTIN_CONSTANT_P
 #define AllocSetContextCreate(parent, name, allocparams) \
 	(StaticAssertExpr(__builtin_constant_p(name), \
-					  "Use AllocSetContextCreateExtended with MEMCONTEXT_COPY_NAME for non-constant context names"), \
-	 AllocSetContextCreateExtended(parent, name, 0, allocparams))
+					  "memory context names must be constant strings"), \
+	 AllocSetContextCreateExtended(parent, name, allocparams))
 #else
 #define AllocSetContextCreate(parent, name, allocparams) \
-	AllocSetContextCreateExtended(parent, name, 0, allocparams)
+	AllocSetContextCreateExtended(parent, name, allocparams)
 #endif
 
 /* slab.c */
 extern MemoryContext SlabContextCreate(MemoryContext parent,
 				  const char *name,
-				  int flags,
 				  Size blockSize,
 				  Size chunkSize);
 
 /* generation.c */
 extern MemoryContext GenerationContextCreate(MemoryContext parent,
 						const char *name,
-						int flags,
 						Size blockSize);
-
-/*
- * Flag option bits for FooContextCreate functions.
- * In future, some of these might be relevant to only some context types.
- *
- * COPY_NAME: FooContextCreate's name argument is not a constant string
- */
-#define MEMCONTEXT_COPY_NAME		0x0001	/* is passed name transient? */
 
 /*
  * Recommended default alloc parameters, suitable for "ordinary" contexts

@@ -612,7 +612,7 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	 * must be a child of whatever context holds the FmgrInfo.
 	 */
 	fcontext = AllocSetContextCreate(finfo->fn_mcxt,
-									 "SQL function data",
+									 "SQL function",
 									 ALLOCSET_DEFAULT_SIZES);
 
 	oldcontext = MemoryContextSwitchTo(fcontext);
@@ -635,9 +635,11 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 
 	/*
-	 * copy function name immediately for use by error reporting callback
+	 * copy function name immediately for use by error reporting callback, and
+	 * for use as memory context identifier
 	 */
 	fcache->fname = pstrdup(NameStr(procedureStruct->proname));
+	MemoryContextSetIdentifier(fcontext, fcache->fname);
 
 	/*
 	 * get the result type from the procedure tuple, and check for polymorphic

@@ -74,7 +74,8 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 	MemoryContext cxt;
 	MemoryContext oldcxt;
 
-	cxt = AllocSetContextCreate(CurrentMemoryContext, "stats ext",
+	cxt = AllocSetContextCreate(CurrentMemoryContext,
+								"BuildRelationExtStatistics",
 								ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(cxt);
 

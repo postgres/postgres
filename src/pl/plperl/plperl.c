@@ -2782,10 +2782,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 		/************************************************************
 		 * Allocate a context that will hold all PG data for the procedure.
 		 ************************************************************/
-		proc_cxt = AllocSetContextCreateExtended(TopMemoryContext,
-												 NameStr(procStruct->proname),
-												 MEMCONTEXT_COPY_NAME,
-												 ALLOCSET_SMALL_SIZES);
+		proc_cxt = AllocSetContextCreate(TopMemoryContext,
+										 "PL/Perl function",
+										 ALLOCSET_SMALL_SIZES);
 
 		/************************************************************
 		 * Allocate and fill a new procedure description block.
@@ -2794,6 +2793,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 		oldcontext = MemoryContextSwitchTo(proc_cxt);
 		prodesc = (plperl_proc_desc *) palloc0(sizeof(plperl_proc_desc));
 		prodesc->proname = pstrdup(NameStr(procStruct->proname));
+		MemoryContextSetIdentifier(proc_cxt, prodesc->proname);
 		prodesc->fn_cxt = proc_cxt;
 		prodesc->fn_refcount = 0;
 		prodesc->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);

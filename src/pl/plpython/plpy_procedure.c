@@ -164,10 +164,9 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	}
 
 	/* Create long-lived context that all procedure info will live in */
-	cxt = AllocSetContextCreateExtended(TopMemoryContext,
-										procName,
-										MEMCONTEXT_COPY_NAME,
-										ALLOCSET_DEFAULT_SIZES);
+	cxt = AllocSetContextCreate(TopMemoryContext,
+								"PL/Python function",
+								ALLOCSET_DEFAULT_SIZES);
 
 	oldcxt = MemoryContextSwitchTo(cxt);
 
@@ -183,6 +182,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		int			i;
 
 		proc->proname = pstrdup(NameStr(procStruct->proname));
+		MemoryContextSetIdentifier(cxt, proc->proname);
 		proc->pyname = pstrdup(procName);
 		proc->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
 		proc->fn_tid = procTup->t_self;

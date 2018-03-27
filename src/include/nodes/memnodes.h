@@ -39,17 +39,20 @@ typedef struct MemoryContextCounters
  *		A logical context in which memory allocations occur.
  *
  * MemoryContext itself is an abstract type that can have multiple
- * implementations, though for now we have only AllocSetContext.
+ * implementations.
  * The function pointers in MemoryContextMethods define one specific
  * implementation of MemoryContext --- they are a virtual function table
  * in C++ terms.
  *
  * Node types that are actual implementations of memory contexts must
- * begin with the same fields as MemoryContext.
+ * begin with the same fields as MemoryContextData.
  *
  * Note: for largely historical reasons, typedef MemoryContext is a pointer
  * to the context struct rather than the struct type itself.
  */
+
+typedef void (*MemoryStatsPrintFunc) (MemoryContext context, void *passthru,
+									  const char *stats_string);
 
 typedef struct MemoryContextMethods
 {
@@ -61,7 +64,8 @@ typedef struct MemoryContextMethods
 	void		(*delete_context) (MemoryContext context);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
-	void		(*stats) (MemoryContext context, int level, bool print,
+	void		(*stats) (MemoryContext context,
+						  MemoryStatsPrintFunc printfunc, void *passthru,
 						  MemoryContextCounters *totals);
 #ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
@@ -81,6 +85,7 @@ typedef struct MemoryContextData
 	MemoryContext prevchild;	/* previous child of same parent */
 	MemoryContext nextchild;	/* next child of same parent */
 	const char *name;			/* context name (just for debugging) */
+	const char *ident;			/* context ID if any (just for debugging) */
 	MemoryContextCallback *reset_cbs;	/* list of reset/delete callbacks */
 } MemoryContextData;
 

@@ -214,6 +214,9 @@ RelationBuildRowSecurity(Relation relation)
 		SysScanDesc sscan;
 		HeapTuple	tuple;
 
+		MemoryContextCopySetIdentifier(rscxt,
+									   RelationGetRelationName(relation));
+
 		rsdesc = MemoryContextAllocZero(rscxt, sizeof(RowSecurityDesc));
 		rsdesc->rscxt = rscxt;
 

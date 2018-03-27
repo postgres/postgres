@@ -21,6 +21,7 @@
 
 #include "postgres.h"
 
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
@@ -55,6 +56,8 @@ static void MemoryContextCallResetCallbacks(MemoryContext context);
 static void MemoryContextStatsInternal(MemoryContext context, int level,
 						   bool print, int max_children,
 						   MemoryContextCounters *totals);
+static void MemoryContextStatsPrint(MemoryContext context, void *passthru,
+						const char *stats_string);
 
 /*
  * You should not do memory allocations within a critical section, because
@@ -118,7 +121,6 @@ MemoryContextInit(void)
 	 */
 	ErrorContext = AllocSetContextCreateExtended(TopMemoryContext,
 												 "ErrorContext",
-												 0,
 												 8 * 1024,
 												 8 * 1024,
 												 8 * 1024);
@@ -158,6 +160,17 @@ MemoryContextResetOnly(MemoryContext context)
 	if (!context->isReset)
 	{
 		MemoryContextCallResetCallbacks(context);
+
+		/*
+		 * If context->ident points into the context's memory, it will become
+		 * a dangling pointer.  We could prevent that by setting it to NULL
+		 * here, but that would break valid coding patterns that keep the
+		 * ident elsewhere, e.g. in a parent context.  Another idea is to use
+		 * MemoryContextContains(), but we don't require ident strings to be
+		 * in separately-palloc'd chunks, so that risks false positives.  So
+		 * for now we assume the programmer got it right.
+		 */
+
 		context->methods->reset(context);
 		context->isReset = true;
 		VALGRIND_DESTROY_MEMPOOL(context);
@@ -221,6 +234,13 @@ MemoryContextDelete(MemoryContext context)
 	 * to the context tree.  Better a leak than a crash.
 	 */
 	MemoryContextSetParent(context, NULL);
+
+	/*
+	 * Also reset the context's ident pointer, in case it points into the
+	 * context.  This would only matter if someone tries to get stats on the
+	 * (already unlinked) context, which is unlikely, but let's be safe.
+	 */
+	context->ident = NULL;
 
 	context->methods->delete_context(context);
 
@@ -293,6 +313,23 @@ MemoryContextCallResetCallbacks(MemoryContext context)
 		context->reset_cbs = cb->next;
 		cb->func(cb->arg);
 	}
+}
+
+/*
+ * MemoryContextSetIdentifier
+ *		Set the identifier string for a memory context.
+ *
+ * An identifier can be provided to help distinguish among different contexts
+ * of the same kind in memory context stats dumps.  The identifier string
+ * must live at least as long as the context it is for; typically it is
+ * allocated inside that context, so that it automatically goes away on
+ * context deletion.  Pass id = NULL to forget any old identifier.
+ */
+void
+MemoryContextSetIdentifier(MemoryContext context, const char *id)
+{
+	AssertArg(MemoryContextIsValid(context));
+	context->ident = id;
 }
 
 /*
@@ -480,7 +517,10 @@ MemoryContextStatsInternal(MemoryContext context, int level,
 	AssertArg(MemoryContextIsValid(context));
 
 	/* Examine the context itself */
-	context->methods->stats(context, level, print, totals);
+	context->methods->stats(context,
+							print ? MemoryContextStatsPrint : NULL,
+							(void *) &level,
+							totals);
 
 	/*
 	 * Examine children.  If there are more than max_children of them, we do
@@ -529,6 +569,67 @@ MemoryContextStatsInternal(MemoryContext context, int level,
 			totals->freespace += local_totals.freespace;
 		}
 	}
+}
+
+/*
+ * MemoryContextStatsPrint
+ *		Print callback used by MemoryContextStatsInternal
+ *
+ * For now, the passthru pointer just points to "int level"; later we might
+ * make that more complicated.
+ */
+static void
+MemoryContextStatsPrint(MemoryContext context, void *passthru,
+						const char *stats_string)
+{
+	int			level = *(int *) passthru;
+	const char *name = context->name;
+	const char *ident = context->ident;
+	int			i;
+
+	/*
+	 * It seems preferable to label dynahash contexts with just the hash table
+	 * name.  Those are already unique enough, so the "dynahash" part isn't
+	 * very helpful, and this way is more consistent with pre-v11 practice.
+	 */
+	if (ident && strcmp(name, "dynahash") == 0)
+	{
+		name = ident;
+		ident = NULL;
+	}
+
+	for (i = 0; i < level; i++)
+		fprintf(stderr, "  ");
+	fprintf(stderr, "%s: %s", name, stats_string);
+	if (ident)
+	{
+		/*
+		 * Some contexts may have very long identifiers (e.g., SQL queries).
+		 * Arbitrarily truncate at 100 bytes, but be careful not to break
+		 * multibyte characters.  Also, replace ASCII control characters, such
+		 * as newlines, with spaces.
+		 */
+		int			idlen = strlen(ident);
+		bool		truncated = false;
+
+		if (idlen > 100)
+		{
+			idlen = pg_mbcliplen(ident, idlen, 100);
+			truncated = true;
+		}
+		fprintf(stderr, ": ");
+		while (idlen-- > 0)
+		{
+			unsigned char c = *ident++;
+
+			if (c < ' ')
+				c = ' ';
+			fputc(c, stderr);
+		}
+		if (truncated)
+			fprintf(stderr, "...");
+	}
+	fputc('\n', stderr);
 }
 
 /*
@@ -612,33 +713,22 @@ MemoryContextContains(MemoryContext context, void *pointer)
  *
  * node: the as-yet-uninitialized common part of the context header node.
  * tag: NodeTag code identifying the memory context type.
- * size: total size of context header including context-type-specific fields,
- *		as well as space for the context name if MEMCONTEXT_COPY_NAME is set.
- * nameoffset: where within the "size" space to insert the context name.
  * methods: context-type-specific methods (usually statically allocated).
  * parent: parent context, or NULL if this will be a top-level context.
- * name: name of context (for debugging only, need not be unique).
- * flags: bitmask of MEMCONTEXT_XXX option flags.
+ * name: name of context (must be statically allocated).
  *
  * Context routines generally assume that MemoryContextCreate can't fail,
  * so this can contain Assert but not elog/ereport.
  */
 void
 MemoryContextCreate(MemoryContext node,
-					NodeTag tag, Size size, Size nameoffset,
+					NodeTag tag,
 					const MemoryContextMethods *methods,
 					MemoryContext parent,
-					const char *name,
-					int flags)
+					const char *name)
 {
 	/* Creating new memory contexts is not allowed in a critical section */
 	Assert(CritSectionCount == 0);
-
-	/* Check size is sane */
-	Assert(nameoffset >= sizeof(MemoryContextData));
-	Assert((flags & MEMCONTEXT_COPY_NAME) ?
-		   size >= nameoffset + strlen(name) + 1 :
-		   size >= nameoffset);
 
 	/* Initialize all standard fields of memory context header */
 	node->type = tag;
@@ -647,21 +737,9 @@ MemoryContextCreate(MemoryContext node,
 	node->parent = parent;
 	node->firstchild = NULL;
 	node->prevchild = NULL;
+	node->name = name;
+	node->ident = NULL;
 	node->reset_cbs = NULL;
-
-	if (flags & MEMCONTEXT_COPY_NAME)
-	{
-		/* Insert context name into space reserved for it */
-		char	   *namecopy = ((char *) node) + nameoffset;
-
-		node->name = namecopy;
-		strcpy(namecopy, name);
-	}
-	else
-	{
-		/* Assume the passed-in name is statically allocated */
-		node->name = name;
-	}
 
 	/* OK to link node into context tree */
 	if (parent)

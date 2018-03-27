@@ -130,7 +130,6 @@ typedef struct AllocSetContext
 	Size		initBlockSize;	/* initial block size */
 	Size		maxBlockSize;	/* maximum block size */
 	Size		nextBlockSize;	/* next block size to allocate */
-	Size		headerSize;		/* allocated size of context header */
 	Size		allocChunkLimit;	/* effective chunk size limit */
 	AllocBlock	keeper;			/* keep this block over resets */
 	/* freelist this context could be put in, or -1 if not a candidate: */
@@ -228,10 +227,7 @@ typedef struct AllocChunkData
  * only its initial malloc chunk and no others.  To be a candidate for a
  * freelist, a context must have the same minContextSize/initBlockSize as
  * other contexts in the list; but its maxBlockSize is irrelevant since that
- * doesn't affect the size of the initial chunk.  Also, candidate contexts
- * *must not* use MEMCONTEXT_COPY_NAME since that would make their header size
- * variable.  (We currently insist that all flags be zero, since other flags
- * would likely make the contexts less interchangeable, too.)
+ * doesn't affect the size of the initial chunk.
  *
  * We currently provide one freelist for ALLOCSET_DEFAULT_SIZES contexts
  * and one for ALLOCSET_SMALL_SIZES contexts; the latter works for
@@ -276,7 +272,8 @@ static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
 static bool AllocSetIsEmpty(MemoryContext context);
-static void AllocSetStats(MemoryContext context, int level, bool print,
+static void AllocSetStats(MemoryContext context,
+			  MemoryStatsPrintFunc printfunc, void *passthru,
 			  MemoryContextCounters *totals);
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -378,14 +375,11 @@ AllocSetFreeIndex(Size size)
  *		Create a new AllocSet context.
  *
  * parent: parent context, or NULL if top-level context
- * name: name of context (for debugging only, need not be unique)
- * flags: bitmask of MEMCONTEXT_XXX option flags
+ * name: name of context (must be statically allocated)
  * minContextSize: minimum context size
  * initBlockSize: initial allocation block size
  * maxBlockSize: maximum allocation block size
  *
- * Notes: if flags & MEMCONTEXT_COPY_NAME, the name string will be copied into
- * context-lifespan storage; otherwise, it had better be statically allocated.
  * Most callers should abstract the context size parameters using a macro
  * such as ALLOCSET_DEFAULT_SIZES.  (This is now *required* when going
  * through the AllocSetContextCreate macro.)
@@ -393,13 +387,11 @@ AllocSetFreeIndex(Size size)
 MemoryContext
 AllocSetContextCreateExtended(MemoryContext parent,
 							  const char *name,
-							  int flags,
 							  Size minContextSize,
 							  Size initBlockSize,
 							  Size maxBlockSize)
 {
 	int			freeListIndex;
-	Size		headerSize;
 	Size		firstBlockSize;
 	AllocSet	set;
 	AllocBlock	block;
@@ -431,12 +423,10 @@ AllocSetContextCreateExtended(MemoryContext parent,
 	 * Check whether the parameters match either available freelist.  We do
 	 * not need to demand a match of maxBlockSize.
 	 */
-	if (flags == 0 &&
-		minContextSize == ALLOCSET_DEFAULT_MINSIZE &&
+	if (minContextSize == ALLOCSET_DEFAULT_MINSIZE &&
 		initBlockSize == ALLOCSET_DEFAULT_INITSIZE)
 		freeListIndex = 0;
-	else if (flags == 0 &&
-			 minContextSize == ALLOCSET_SMALL_MINSIZE &&
+	else if (minContextSize == ALLOCSET_SMALL_MINSIZE &&
 			 initBlockSize == ALLOCSET_SMALL_INITSIZE)
 		freeListIndex = 1;
 	else
@@ -462,25 +452,17 @@ AllocSetContextCreateExtended(MemoryContext parent,
 			/* Reinitialize its header, installing correct name and parent */
 			MemoryContextCreate((MemoryContext) set,
 								T_AllocSetContext,
-								set->headerSize,
-								sizeof(AllocSetContext),
 								&AllocSetMethods,
 								parent,
-								name,
-								flags);
+								name);
 
 			return (MemoryContext) set;
 		}
 	}
 
-	/* Size of the memory context header, including name storage if needed */
-	if (flags & MEMCONTEXT_COPY_NAME)
-		headerSize = MAXALIGN(sizeof(AllocSetContext) + strlen(name) + 1);
-	else
-		headerSize = MAXALIGN(sizeof(AllocSetContext));
-
 	/* Determine size of initial block */
-	firstBlockSize = headerSize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
+	firstBlockSize = MAXALIGN(sizeof(AllocSetContext)) +
+		ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 	if (minContextSize != 0)
 		firstBlockSize = Max(firstBlockSize, minContextSize);
 	else
@@ -508,7 +490,7 @@ AllocSetContextCreateExtended(MemoryContext parent,
 	 */
 
 	/* Fill in the initial block's block header */
-	block = (AllocBlock) (((char *) set) + headerSize);
+	block = (AllocBlock) (((char *) set) + MAXALIGN(sizeof(AllocSetContext)));
 	block->aset = set;
 	block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
 	block->endptr = ((char *) set) + firstBlockSize;
@@ -529,7 +511,6 @@ AllocSetContextCreateExtended(MemoryContext parent,
 	set->initBlockSize = initBlockSize;
 	set->maxBlockSize = maxBlockSize;
 	set->nextBlockSize = initBlockSize;
-	set->headerSize = headerSize;
 	set->freeListIndex = freeListIndex;
 
 	/*
@@ -559,12 +540,9 @@ AllocSetContextCreateExtended(MemoryContext parent,
 	/* Finally, do the type-independent part of context creation */
 	MemoryContextCreate((MemoryContext) set,
 						T_AllocSetContext,
-						headerSize,
-						sizeof(AllocSetContext),
 						&AllocSetMethods,
 						parent,
-						name,
-						flags);
+						name);
 
 	return (MemoryContext) set;
 }
@@ -1327,12 +1305,13 @@ AllocSetIsEmpty(MemoryContext context)
  * AllocSetStats
  *		Compute stats about memory consumption of an allocset.
  *
- * level: recursion level (0 at top level); used for print indentation.
- * print: true to print stats to stderr.
- * totals: if not NULL, add stats about this allocset into *totals.
+ * printfunc: if not NULL, pass a human-readable stats string to this.
+ * passthru: pass this pointer through to printfunc.
+ * totals: if not NULL, add stats about this context into *totals.
  */
 static void
-AllocSetStats(MemoryContext context, int level, bool print,
+AllocSetStats(MemoryContext context,
+			  MemoryStatsPrintFunc printfunc, void *passthru,
 			  MemoryContextCounters *totals)
 {
 	AllocSet	set = (AllocSet) context;
@@ -1344,7 +1323,7 @@ AllocSetStats(MemoryContext context, int level, bool print,
 	int			fidx;
 
 	/* Include context header in totalspace */
-	totalspace = set->headerSize;
+	totalspace = MAXALIGN(sizeof(AllocSetContext));
 
 	for (block = set->blocks; block != NULL; block = block->next)
 	{
@@ -1364,16 +1343,15 @@ AllocSetStats(MemoryContext context, int level, bool print,
 		}
 	}
 
-	if (print)
+	if (printfunc)
 	{
-		int			i;
+		char		stats_string[200];
 
-		for (i = 0; i < level; i++)
-			fprintf(stderr, "  ");
-		fprintf(stderr,
-				"%s: %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
-				set->header.name, totalspace, nblocks, freespace, freechunks,
-				totalspace - freespace);
+		snprintf(stats_string, sizeof(stats_string),
+				 "%zu total in %zd blocks; %zu free (%zd chunks); %zu used",
+				 totalspace, nblocks, freespace, freechunks,
+				 totalspace - freespace);
+		printfunc(context, passthru, stats_string);
 	}
 
 	if (totals)

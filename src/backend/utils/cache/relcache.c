@@ -675,11 +675,12 @@ RelationBuildRuleLock(Relation relation)
 	/*
 	 * Make the private context.  Assume it'll not contain much data.
 	 */
-	rulescxt = AllocSetContextCreateExtended(CacheMemoryContext,
-											 RelationGetRelationName(relation),
-											 MEMCONTEXT_COPY_NAME,
-											 ALLOCSET_SMALL_SIZES);
+	rulescxt = AllocSetContextCreate(CacheMemoryContext,
+									 "relation rules",
+									 ALLOCSET_SMALL_SIZES);
 	relation->rd_rulescxt = rulescxt;
+	MemoryContextCopySetIdentifier(rulescxt,
+								   RelationGetRelationName(relation));
 
 	/*
 	 * allocate an array to hold the rewrite rules (the array is extended if
@@ -852,10 +853,11 @@ RelationBuildPartitionKey(Relation relation)
 	if (!HeapTupleIsValid(tuple))
 		return;
 
-	partkeycxt = AllocSetContextCreateExtended(CurTransactionContext,
-											   RelationGetRelationName(relation),
-											   MEMCONTEXT_COPY_NAME,
-											   ALLOCSET_SMALL_SIZES);
+	partkeycxt = AllocSetContextCreate(CurTransactionContext,
+									   "partition key",
+									   ALLOCSET_SMALL_SIZES);
+	MemoryContextCopySetIdentifier(partkeycxt,
+								   RelationGetRelationName(relation));
 
 	key = (PartitionKey) MemoryContextAllocZero(partkeycxt,
 												sizeof(PartitionKeyData));
@@ -1533,11 +1535,12 @@ RelationInitIndexAccessInfo(Relation relation)
 	 * a context, and not just a couple of pallocs, is so that we won't leak
 	 * any subsidiary info attached to fmgr lookup records.
 	 */
-	indexcxt = AllocSetContextCreateExtended(CacheMemoryContext,
-											 RelationGetRelationName(relation),
-											 MEMCONTEXT_COPY_NAME,
-											 ALLOCSET_SMALL_SIZES);
+	indexcxt = AllocSetContextCreate(CacheMemoryContext,
+									 "index info",
+									 ALLOCSET_SMALL_SIZES);
 	relation->rd_indexcxt = indexcxt;
+	MemoryContextCopySetIdentifier(indexcxt,
+								   RelationGetRelationName(relation));
 
 	/*
 	 * Now we can fetch the index AM's API struct
@@ -5603,12 +5606,12 @@ load_relcache_init_file(bool shared)
 			 * prepare index info context --- parameters should match
 			 * RelationInitIndexAccessInfo
 			 */
-			indexcxt =
-				AllocSetContextCreateExtended(CacheMemoryContext,
-											  RelationGetRelationName(rel),
-											  MEMCONTEXT_COPY_NAME,
-											  ALLOCSET_SMALL_SIZES);
+			indexcxt = AllocSetContextCreate(CacheMemoryContext,
+											 "index info",
+											 ALLOCSET_SMALL_SIZES);
 			rel->rd_indexcxt = indexcxt;
+			MemoryContextCopySetIdentifier(indexcxt,
+										   RelationGetRelationName(rel));
 
 			/*
 			 * Now we can fetch the index AM's API struct.  (We can't store

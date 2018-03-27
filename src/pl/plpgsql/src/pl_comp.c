@@ -342,11 +342,12 @@ do_compile(FunctionCallInfo fcinfo,
 	 * per-function memory context, so it can be reclaimed easily.
 	 */
 	func_cxt = AllocSetContextCreate(TopMemoryContext,
-									 "PL/pgSQL function context",
+									 "PL/pgSQL function",
 									 ALLOCSET_DEFAULT_SIZES);
 	plpgsql_compile_tmp_cxt = MemoryContextSwitchTo(func_cxt);
 
 	function->fn_signature = format_procedure(fcinfo->flinfo->fn_oid);
+	MemoryContextSetIdentifier(func_cxt, function->fn_signature);
 	function->fn_oid = fcinfo->flinfo->fn_oid;
 	function->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
 	function->fn_tid = procTup->t_self;
@@ -2453,7 +2454,7 @@ plpgsql_HashTableInit(void)
 	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(PLpgSQL_func_hashkey);
 	ctl.entrysize = sizeof(plpgsql_HashEnt);
-	plpgsql_HashTable = hash_create("PLpgSQL function cache",
+	plpgsql_HashTable = hash_create("PLpgSQL function hash",
 									FUNCS_PER_USER,
 									&ctl,
 									HASH_ELEM | HASH_BLOBS);
