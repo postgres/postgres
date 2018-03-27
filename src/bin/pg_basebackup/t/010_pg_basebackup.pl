@@ -183,7 +183,7 @@ unlink "$pgdata/$superlongname";
 # skip on Windows.
 SKIP:
 {
-	skip "symlinks not supported on Windows", 15 if ($windows_os);
+	skip "symlinks not supported on Windows", 17 if ($windows_os);
 
 	# Move pg_replslot out of $pgdata and create a symlink to it.
 	$node->stop;
