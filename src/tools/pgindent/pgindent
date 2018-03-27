@@ -50,6 +50,19 @@ $code_base ||= '.' unless @ARGV;
 $excludes ||= "$code_base/src/tools/pgindent/exclude_file_patterns"
   if $code_base && -f "$code_base/src/tools/pgindent/exclude_file_patterns";
 
+# The typedef list that's mechanically extracted by the buildfarm may omit
+# some names we want to treat like typedefs, e.g. "bool" (which is a macro
+# according to <stdbool.h>), and may include some names we don't want
+# treated as typedefs, although various headers that some builds include
+# might make them so.  For the moment we just hardwire a whitelist of names
+# to add and a blacklist of names to remove; eventually this may need to be
+# easier to configure.  Note that the typedefs need trailing newlines.
+my @whitelist = ("bool\n");
+
+my %blacklist = map { +"$_\n" => 1 }
+  qw( FD_SET date interval timestamp ANY
+      abs allocfunc iterator other pointer printfunc reference string type );
+
 # globals
 my @files;
 my $filtered_typedefs_fh;
@@ -118,9 +131,11 @@ sub load_typedefs
 		}
 	}
 
-	# remove certain entries
-	@typedefs =
-	  grep { !m/^(FD_SET|date|interval|timestamp|ANY)\n?$/ } @typedefs;
+	# add whitelisted entries
+	push(@typedefs, @whitelist);
+
+	# remove blacklisted entries
+	@typedefs = grep { ! $blacklist{$_} } @typedefs;
 
 	# write filtered typedefs
 	my $filter_typedefs_fh = new File::Temp(TEMPLATE => "pgtypedefXXXXX");
