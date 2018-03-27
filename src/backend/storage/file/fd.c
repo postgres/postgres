@@ -325,7 +325,6 @@ static void RemovePgTempFilesInDir(const char *tmpdirname, bool missing_ok,
 					   bool unlink_all);
 static void RemovePgTempRelationFiles(const char *tsdirname);
 static void RemovePgTempRelationFilesInDbspace(const char *dbspacedirname);
-static bool looks_like_temp_rel_name(const char *name);
 
 static void walkdir(const char *path,
 		void (*action) (const char *fname, bool isdir, int elevel),
@@ -3192,7 +3191,7 @@ RemovePgTempRelationFilesInDbspace(const char *dbspacedirname)
 }
 
 /* t<digits>_<digits>, or t<digits>_<digits>_<forkname> */
-static bool
+bool
 looks_like_temp_rel_name(const char *name)
 {
 	int			pos;

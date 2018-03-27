@@ -1072,6 +1072,16 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			}
 		}
 
+		/* Exclude temporary relations */
+		if (isDbDir && looks_like_temp_rel_name(de->d_name))
+		{
+			elog(DEBUG2,
+				 "temporary relation file \"%s\" excluded from backup",
+				 de->d_name);
+
+			continue;
+		}
+
 		snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path, de->d_name);
 
 		/* Skip pg_control here to back up it last */

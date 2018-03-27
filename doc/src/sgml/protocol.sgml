@@ -2565,7 +2565,7 @@ The commands accepted in replication mode are:
         <para>
          Various temporary files and directories created during the operation
          of the PostgreSQL server, such as any file or directory beginning
-         with <filename>pgsql_tmp</filename>.
+         with <filename>pgsql_tmp</filename> and temporary relations.
         </para>
        </listitem>
        <listitem>

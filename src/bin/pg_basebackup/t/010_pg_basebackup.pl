@@ -2,9 +2,10 @@ use strict;
 use warnings;
 use Cwd;
 use Config;
+use File::Basename qw(basename dirname);
 use PostgresNode;
 use TestLib;
-use Test::More tests => 87;
+use Test::More tests => 93;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -76,6 +77,18 @@ my $baseUnloggedPath = $node->safe_psql('postgres',
 ok(-f "$pgdata/${baseUnloggedPath}_init", 'unlogged init fork in base');
 ok(-f "$pgdata/$baseUnloggedPath", 'unlogged main fork in base');
 
+# Create files that look like temporary relations to ensure they are ignored.
+my $postgresOid = $node->safe_psql('postgres',
+	q{select oid from pg_database where datname = 'postgres'});
+
+my @tempRelationFiles = qw(t999_999 t9999_999.1 t999_9999_vm t99999_99999_vm.1);
+
+foreach my $filename (@tempRelationFiles)
+{
+	append_to_file("$pgdata/base/$postgresOid/$filename", 'TEMP_RELATION');
+}
+
+# Run base backup.
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '-X', 'none' ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
@@ -111,6 +124,13 @@ ok(-f "$tempdir/backup/${baseUnloggedPath}_init",
 	'unlogged init fork in backup');
 ok(!-f "$tempdir/backup/$baseUnloggedPath",
 	'unlogged main fork not in backup');
+
+# Temp relations should not be copied.
+foreach my $filename (@tempRelationFiles)
+{
+	ok(!-f "$tempdir/backup/base/$postgresOid/$filename",
+	   "base/$postgresOid/$filename not copied");
+}
 
 # Make sure existing backup_label was ignored.
 isnt(slurp_file("$tempdir/backup/backup_label"),
@@ -206,6 +226,19 @@ SKIP:
 	ok(-f "$pgdata/$tblspc1UnloggedPath",
 		'unlogged main fork in tablespace');
 
+	# Create files that look like temporary relations to ensure they are ignored
+	# in a tablespace.
+	my @tempRelationFiles = qw(t888_888 t888888_888888_vm.1);
+	my $tblSpc1Id = basename(dirname(dirname($node->safe_psql('postgres',
+		q{select pg_relation_filepath('test1')}))));
+
+	foreach my $filename (@tempRelationFiles)
+	{
+		append_to_file(
+			"$shorter_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename",
+			'TEMP_RELATION');
+	}
+
 	$node->command_fails(
 		[ 'pg_basebackup', '-D', "$tempdir/backup1", '-Fp' ],
 		'plain format with tablespaces fails without tablespace mapping');
@@ -231,6 +264,20 @@ SKIP:
 		'unlogged init fork in tablespace backup');
 	ok(!-f "$tempdir/tbackup/tblspc1/$tblspc1UnloggedBackupPath",
 		'unlogged main fork not in tablespace backup');
+
+	# Temp relations should not be copied.
+	foreach my $filename (@tempRelationFiles)
+	{
+		ok(!-f "$tempdir/tbackup/tblspc1/$tblSpc1Id/$postgresOid/$filename",
+		   "[tblspc1]/$postgresOid/$filename not copied");
+
+		# Also remove temp relation files or tablespace drop will fail.
+		my $filepath =
+			"$shorter_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename";
+
+		unlink($filepath)
+			or BAIL_OUT("unable to unlink $filepath");
+	}
 
 	ok( -d "$tempdir/backup1/pg_replslot",
 		'pg_replslot symlink copied as directory');
