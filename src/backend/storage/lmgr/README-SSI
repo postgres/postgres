@@ -374,10 +374,11 @@ however, a search discovers that no root page has yet been created, a
 predicate lock on the index relation is required.
 
     * GiST searches can determine that there are no matches at any
-level of the index, so there must be a predicate lock at each index
+level of the index, so we acquire predicate lock at each index
 level during a GiST search. An index insert at the leaf level can
 then be trusted to ripple up to all levels and locations where
-conflicting predicate locks may exist.
+conflicting predicate locks may exist. In case there is a page split,
+we need to copy predicate lock from an original page to all new pages.
 
     * The effects of page splits, overflows, consolidations, and
 removals must be carefully reviewed to ensure that predicate locks

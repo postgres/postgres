@@ -18,6 +18,8 @@
 #include "access/gistscan.h"
 #include "catalog/pg_collation.h"
 #include "miscadmin.h"
+#include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "nodes/execnodes.h"
 #include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
@@ -70,7 +72,7 @@ gisthandler(PG_FUNCTION_ARGS)
 	amroutine->amsearchnulls = true;
 	amroutine->amstorage = true;
 	amroutine->amclusterable = true;
-	amroutine->ampredlocks = false;
+	amroutine->ampredlocks = true;
 	amroutine->amcanparallel = false;
 	amroutine->amkeytype = InvalidOid;
 
@@ -337,6 +339,9 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			GISTInitBuffer(ptr->buffer, (is_leaf) ? F_LEAF : 0);
 			ptr->page = BufferGetPage(ptr->buffer);
 			ptr->block.blkno = BufferGetBlockNumber(ptr->buffer);
+			PredicateLockPageSplit(rel,
+						BufferGetBlockNumber(buffer),
+						BufferGetBlockNumber(ptr->buffer));
 		}
 
 		/*
@@ -1212,6 +1217,12 @@ gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 {
 	List	   *splitinfo;
 	bool		is_split;
+
+	/*
+	 * Check for any rw conflicts (in serialisation isolation level)
+	 * just before we intend to modify the page
+	 */
+	CheckForSerializableConflictIn(state->r, NULL, stack->buffer);
 
 	/* Insert the tuple(s) to the page, splitting the page if necessary */
 	is_split = gistplacetopage(state->r, state->freespace, giststate,
