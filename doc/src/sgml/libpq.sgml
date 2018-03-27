@@ -1692,7 +1692,7 @@ char *PQpass(const PGconn *conn);
 
      <listitem>
       <para>
-       Returns the server host name of the connection.
+       Returns the server host name of the active connection.
        This can be a host name, an IP address, or a directory path if the
        connection is via Unix socket.  (The path case can be distinguished
        because it will always be an absolute path, beginning
@@ -1700,6 +1700,30 @@ char *PQpass(const PGconn *conn);
 <synopsis>
 char *PQhost(const PGconn *conn);
 </synopsis>
+      </para>
+
+      <para>
+       If the connection parameters specified both <literal>host</literal> and
+       <literal>hostaddr</literal>, then <function>PQhost</function> will
+       return the <literal>host</literal> information.  If only
+       <literal>hostaddr</literal> was specified, then that is returned.
+       If multiple hosts were specified in the connection parameters,
+       <function>PQhost</function> returns the host actually connected to.
+      </para>
+
+      <para>
+       <function>PQhost</function> returns <symbol>NULL</symbol> if the
+       <parameter>conn</parameter> argument is <symbol>NULL</symbol>.
+       Otherwise, if there is an error producing the host information (perhaps
+       if the connection has not been fully established or there was an
+       error), it returns an empty string.
+      </para>
+
+      <para>
+       If multiple hosts were specified in the connection parameters, it is
+       not possible to rely on the result of <function>PQhost</function> until
+       the connection is established.  The status of the connection can be
+       checked using the function <function>PQstatus</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -1714,11 +1738,31 @@ char *PQhost(const PGconn *conn);
 
      <listitem>
       <para>
-       Returns the port of the connection.
+       Returns the port of the active connection.
 
 <synopsis>
 char *PQport(const PGconn *conn);
 </synopsis>
+      </para>
+
+      <para>
+       If multiple ports were specified in the connection parameters,
+       <function>PQport</function> returns the port actually connected to.
+      </para>
+
+      <para>
+       <function>PQport</function> returns <symbol>NULL</symbol> if the
+       <parameter>conn</parameter> argument is <symbol>NULL</symbol>.
+       Otherwise, if there is an error producing the port information (perhaps
+       if the connection has not been fully established or there was an
+       error), it returns an empty string.
+      </para>
+
+      <para>
+       If multiple ports were specified in the connection parameters, it is
+       not possible to rely on the result of <function>PQport</function> until
+       the connection is established.  The status of the connection can be
+       checked using the function <function>PQstatus</function>.
       </para>
      </listitem>
     </varlistentry>
