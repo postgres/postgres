@@ -343,7 +343,20 @@ extern int	getpeereid(int sock, uid_t *uid, gid_t *gid);
 
 #ifndef HAVE_ISINF
 extern int	isinf(double x);
-#endif
+#else
+/*
+ * Glibc doesn't use the builtin for clang due to a *gcc* bug in a version
+ * newer than the gcc compatibility clang claims to have. This would cause a
+ * *lot* of superflous function calls, therefore revert when using clang.
+ */
+#ifdef __clang__
+/* needs to be separate to not confuse other compilers */
+#if __has_builtin(__builtin_isinf)
+#undef isinf
+#define isinf __builtin_isinf
+#endif							/* __has_builtin(isinf) */
+#endif							/* __clang__ */
+#endif							/* !HAVE_ISINF */
 
 #ifndef HAVE_MKDTEMP
 extern char *mkdtemp(char *path);
