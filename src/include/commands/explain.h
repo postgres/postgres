@@ -81,6 +81,8 @@ extern void ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into,
 extern void ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc);
 extern void ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc);
 
+extern void ExplainPrintJIT(ExplainState *es, QueryDesc *queryDesc);
+
 extern void ExplainQueryText(ExplainState *es, QueryDesc *queryDesc);
 
 extern void ExplainBeginOutput(ExplainState *es);

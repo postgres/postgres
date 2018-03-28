@@ -21,6 +21,7 @@
 #include "commands/prepare.h"
 #include "executor/nodeHash.h"
 #include "foreign/fdwapi.h"
+#include "jit/jit.h"
 #include "nodes/extensible.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -557,6 +558,16 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 		ExplainPrintTriggers(es, queryDesc);
 
 	/*
+	 * Print info about JITing. Tied to es->costs because we don't want to
+	 * display this in regression tests, as it'd cause output differences
+	 * depending on build options.  Might want to separate that out from COSTS
+	 * at a later stage.
+	 */
+	if (queryDesc->estate->es_jit && es->costs &&
+		queryDesc->estate->es_jit->created_functions > 0)
+		ExplainPrintJIT(es, queryDesc);
+
+	/*
 	 * Close down the query and free resources.  Include time for this in the
 	 * total execution time (although it should be pretty minimal).
 	 */
@@ -675,6 +686,54 @@ ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
 	}
 
 	ExplainCloseGroup("Triggers", "Triggers", false, es);
+}
+
+/*
+ * ExplainPrintJIT -
+ *	  Append information about JITing to es->str.
+ */
+void
+ExplainPrintJIT(ExplainState *es, QueryDesc *queryDesc)
+{
+	JitContext *jc = queryDesc->estate->es_jit;
+
+	ExplainOpenGroup("JIT", "JIT", true, es);
+
+	if (es->format == EXPLAIN_FORMAT_TEXT)
+	{
+		es->indent += 1;
+		appendStringInfo(es->str, "JIT:\n");
+	}
+
+	ExplainPropertyInteger("Functions", NULL, jc->created_functions, es);
+	if (es->analyze && es->timing)
+		ExplainPropertyFloat("Generation Time", "ms",
+							 1000.0 * INSTR_TIME_GET_DOUBLE(jc->generation_counter),
+							 3, es);
+
+	ExplainPropertyBool("Inlining", jc->flags & PGJIT_INLINE, es);
+
+	if (es->analyze && es->timing)
+		ExplainPropertyFloat("Inlining Time", "ms",
+							 1000.0 * INSTR_TIME_GET_DOUBLE(jc->inlining_counter),
+							 3, es);
+
+	ExplainPropertyBool("Optimization", jc->flags & PGJIT_OPT3, es);
+	if (es->analyze && es->timing)
+		ExplainPropertyFloat("Optimization Time", "ms",
+							 1000.0 * INSTR_TIME_GET_DOUBLE(jc->optimization_counter),
+							 3, es);
+
+	if (es->analyze && es->timing)
+		ExplainPropertyFloat("Emission Time", "ms",
+							 1000.0 * INSTR_TIME_GET_DOUBLE(jc->emission_counter),
+							 3, es);
+
+	ExplainCloseGroup("JIT", "JIT", true, es);
+	if (es->format == EXPLAIN_FORMAT_TEXT)
+	{
+		es->indent -= 1;
+	}
 }
 
 /*
