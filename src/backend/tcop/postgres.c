@@ -3938,6 +3938,8 @@ PostgresMain(int argc, char *argv[],
 		if (am_walsender)
 			WalSndErrorCleanup();
 
+		PortalErrorCleanup();
+
 		/*
 		 * We can't release replication slots inside AbortTransaction() as we
 		 * need to be able to start and abort transactions while having a slot

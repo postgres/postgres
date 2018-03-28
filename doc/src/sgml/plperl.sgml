@@ -722,11 +722,6 @@ $$;
 CALL transaction_test1();
 </programlisting>
       </para>
-
-      <para>
-       Transactions cannot be ended when a cursor created by
-       <function>spi_query</function> is open.
-      </para>
      </listitem>
     </varlistentry>
    </variablelist>

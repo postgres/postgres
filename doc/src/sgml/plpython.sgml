@@ -1416,9 +1416,7 @@ CALL transaction_test1();
   </para>
 
   <para>
-   Transactions cannot be ended when a cursor created by
-   <literal>plpy.cursor</literal> is open or when an explicit subtransaction
-   is active.
+   Transactions cannot be ended when an explicit subtransaction is active.
   </para>
  </sect1>
 

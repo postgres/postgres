@@ -195,11 +195,47 @@ BEGIN
     END LOOP;
 END;
 $$;
-ERROR:  committing inside a cursor loop is not supported
-CONTEXT:  PL/pgSQL function inline_code_block line 7 at COMMIT
 SELECT * FROM test1;
  a | b 
 ---+---
+ 0 | 
+ 1 | 
+ 2 | 
+ 3 | 
+ 4 | 
+(5 rows)
+
+-- check that this doesn't leak a holdable portal
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
+(0 rows)
+
+-- error in cursor loop with commit
+TRUNCATE test1;
+DO LANGUAGE plpgsql $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN SELECT * FROM test2 ORDER BY x LOOP
+        INSERT INTO test1 (a) VALUES (12/(r.x-2));
+        COMMIT;
+    END LOOP;
+END;
+$$;
+ERROR:  division by zero
+CONTEXT:  SQL statement "INSERT INTO test1 (a) VALUES (12/(r.x-2))"
+PL/pgSQL function inline_code_block line 6 at SQL statement
+SELECT * FROM test1;
+  a  | b 
+-----+---
+  -6 | 
+ -12 | 
+(2 rows)
+
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
 (0 rows)
 
 -- rollback inside cursor loop
@@ -214,11 +250,77 @@ BEGIN
     END LOOP;
 END;
 $$;
-ERROR:  cannot abort transaction inside a cursor loop
+SELECT * FROM test1;
+ a | b 
+---+---
+(0 rows)
+
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
+(0 rows)
+
+-- first commit then rollback inside cursor loop
+TRUNCATE test1;
+DO LANGUAGE plpgsql $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN SELECT * FROM test2 ORDER BY x LOOP
+        INSERT INTO test1 (a) VALUES (r.x);
+        IF r.x % 2 = 0 THEN
+            COMMIT;
+        ELSE
+            ROLLBACK;
+        END IF;
+    END LOOP;
+END;
+$$;
+SELECT * FROM test1;
+ a | b 
+---+---
+ 0 | 
+ 2 | 
+ 4 | 
+(3 rows)
+
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
+(0 rows)
+
+-- rollback inside cursor loop
+TRUNCATE test1;
+DO LANGUAGE plpgsql $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN UPDATE test2 SET x = x * 2 RETURNING x LOOP
+        INSERT INTO test1 (a) VALUES (r.x);
+        ROLLBACK;
+    END LOOP;
+END;
+$$;
+ERROR:  cannot perform transaction commands inside a cursor loop that is not read-only
 CONTEXT:  PL/pgSQL function inline_code_block line 7 at ROLLBACK
 SELECT * FROM test1;
  a | b 
 ---+---
+(0 rows)
+
+SELECT * FROM test2;
+ x 
+---
+ 0
+ 1
+ 2
+ 3
+ 4
+(5 rows)
+
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
 (0 rows)
 
 -- commit inside block with exception handler

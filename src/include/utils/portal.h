@@ -147,6 +147,8 @@ typedef struct PortalData
 	/* Status data */
 	PortalStatus status;		/* see above */
 	bool		portalPinned;	/* a pinned portal can't be dropped */
+	bool		autoHeld;		/* was automatically converted from pinned to
+								 * held (see HoldPinnedPortals()) */
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */
 	QueryDesc  *queryDesc;		/* info needed for executor invocation */
@@ -204,6 +206,7 @@ extern void EnablePortalManager(void);
 extern bool PreCommit_Portals(bool isPrepare);
 extern void AtAbort_Portals(void);
 extern void AtCleanup_Portals(void);
+extern void PortalErrorCleanup(void);
 extern void AtSubCommit_Portals(SubTransactionId mySubid,
 					SubTransactionId parentSubid,
 					ResourceOwner parentXactOwner);
@@ -231,6 +234,6 @@ extern PlannedStmt *PortalGetPrimaryStmt(Portal portal);
 extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);
 extern bool ThereAreNoReadyPortals(void);
-extern bool ThereArePinnedPortals(void);
+extern void HoldPinnedPortals(void);
 
 #endif							/* PORTAL_H */

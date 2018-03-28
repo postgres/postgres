@@ -594,10 +594,7 @@ PLy_commit(PyObject *self, PyObject *args)
 {
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 
-	if (ThereArePinnedPortals())
-	   ereport(ERROR,
-			   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot commit transaction while a cursor is open")));
+	HoldPinnedPortals();
 
 	SPI_commit();
 	SPI_start_transaction();
@@ -613,10 +610,7 @@ PLy_rollback(PyObject *self, PyObject *args)
 {
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 
-	if (ThereArePinnedPortals())
-	   ereport(ERROR,
-			   (errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
-				errmsg("cannot abort transaction while a cursor is open")));
+	HoldPinnedPortals();
 
 	SPI_rollback();
 	SPI_start_transaction();

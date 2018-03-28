@@ -3965,10 +3965,7 @@ plperl_spi_commit(void)
 
 	PG_TRY();
 	{
-		if (ThereArePinnedPortals())
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot commit transaction while a cursor is open")));
+		HoldPinnedPortals();
 
 		SPI_commit();
 		SPI_start_transaction();
@@ -3995,10 +3992,7 @@ plperl_spi_rollback(void)
 
 	PG_TRY();
 	{
-		if (ThereArePinnedPortals())
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
-					 errmsg("cannot abort transaction while a cursor is open")));
+		HoldPinnedPortals();
 
 		SPI_rollback();
 		SPI_start_transaction();

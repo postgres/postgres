@@ -99,6 +99,23 @@ $$;
 
 SELECT * FROM test1;
 
+-- check that this doesn't leak a holdable portal
+SELECT * FROM pg_cursors;
+
+
+-- error in cursor loop with commit
+TRUNCATE test1;
+
+DO LANGUAGE plpythonu $$
+for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
+    plpy.execute("INSERT INTO test1 (a) VALUES (12/(%s-2))" % row['x'])
+    plpy.commit()
+$$;
+
+SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
+
 
 -- rollback inside cursor loop
 TRUNCATE test1;
@@ -110,6 +127,25 @@ for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
 $$;
 
 SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
+
+
+-- first commit then rollback inside cursor loop
+TRUNCATE test1;
+
+DO LANGUAGE plpythonu $$
+for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
+    plpy.execute("INSERT INTO test1 (a) VALUES (%s)" % row['x'])
+    if row['x'] % 2 == 0:
+        plpy.commit()
+    else:
+        plpy.rollback()
+$$;
+
+SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
 
 
 DROP TABLE test1;

@@ -111,11 +111,44 @@ for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
     plpy.execute("INSERT INTO test1 (a) VALUES (%s)" % row['x'])
     plpy.commit()
 $$;
-ERROR:  cannot commit transaction while a cursor is open
-CONTEXT:  PL/Python anonymous code block
 SELECT * FROM test1;
  a | b 
 ---+---
+ 0 | 
+ 1 | 
+ 2 | 
+ 3 | 
+ 4 | 
+(5 rows)
+
+-- check that this doesn't leak a holdable portal
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
+(0 rows)
+
+-- error in cursor loop with commit
+TRUNCATE test1;
+DO LANGUAGE plpythonu $$
+for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
+    plpy.execute("INSERT INTO test1 (a) VALUES (12/(%s-2))" % row['x'])
+    plpy.commit()
+$$;
+ERROR:  spiexceptions.DivisionByZero: division by zero
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 3, in <module>
+    plpy.execute("INSERT INTO test1 (a) VALUES (12/(%s-2))" % row['x'])
+PL/Python anonymous code block
+SELECT * FROM test1;
+  a  | b 
+-----+---
+  -6 | 
+ -12 | 
+(2 rows)
+
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
 (0 rows)
 
 -- rollback inside cursor loop
@@ -125,11 +158,37 @@ for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
     plpy.execute("INSERT INTO test1 (a) VALUES (%s)" % row['x'])
     plpy.rollback()
 $$;
-ERROR:  cannot abort transaction while a cursor is open
-CONTEXT:  PL/Python anonymous code block
 SELECT * FROM test1;
  a | b 
 ---+---
+(0 rows)
+
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
+(0 rows)
+
+-- first commit then rollback inside cursor loop
+TRUNCATE test1;
+DO LANGUAGE plpythonu $$
+for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
+    plpy.execute("INSERT INTO test1 (a) VALUES (%s)" % row['x'])
+    if row['x'] % 2 == 0:
+        plpy.commit()
+    else:
+        plpy.rollback()
+$$;
+SELECT * FROM test1;
+ a | b 
+---+---
+ 0 | 
+ 2 | 
+ 4 | 
+(3 rows)
+
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
 (0 rows)
 
 DROP TABLE test1;

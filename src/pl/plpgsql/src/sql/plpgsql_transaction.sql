@@ -175,6 +175,28 @@ $$;
 
 SELECT * FROM test1;
 
+-- check that this doesn't leak a holdable portal
+SELECT * FROM pg_cursors;
+
+
+-- error in cursor loop with commit
+TRUNCATE test1;
+
+DO LANGUAGE plpgsql $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN SELECT * FROM test2 ORDER BY x LOOP
+        INSERT INTO test1 (a) VALUES (12/(r.x-2));
+        COMMIT;
+    END LOOP;
+END;
+$$;
+
+SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
+
 
 -- rollback inside cursor loop
 TRUNCATE test1;
@@ -191,6 +213,51 @@ END;
 $$;
 
 SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
+
+
+-- first commit then rollback inside cursor loop
+TRUNCATE test1;
+
+DO LANGUAGE plpgsql $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN SELECT * FROM test2 ORDER BY x LOOP
+        INSERT INTO test1 (a) VALUES (r.x);
+        IF r.x % 2 = 0 THEN
+            COMMIT;
+        ELSE
+            ROLLBACK;
+        END IF;
+    END LOOP;
+END;
+$$;
+
+SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
+
+
+-- rollback inside cursor loop
+TRUNCATE test1;
+
+DO LANGUAGE plpgsql $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN UPDATE test2 SET x = x * 2 RETURNING x LOOP
+        INSERT INTO test1 (a) VALUES (r.x);
+        ROLLBACK;
+    END LOOP;
+END;
+$$;
+
+SELECT * FROM test1;
+SELECT * FROM test2;
+
+SELECT * FROM pg_cursors;
 
 
 -- commit inside block with exception handler

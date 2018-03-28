@@ -3510,8 +3510,41 @@ CALL transaction_test1();
    </para>
 
    <para>
-    A transaction cannot be ended inside a loop over a query result, nor
-    inside a block with exception handlers.
+    Special considerations apply to cursor loops.  Consider this example:
+<programlisting>
+CREATE PROCEDURE transaction_test2()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN SELECT * FROM test2 ORDER BY x LOOP
+        INSERT INTO test1 (a) VALUES (r.x);
+        COMMIT;
+    END LOOP;
+END;
+$$;
+
+CALL transaction_test2();
+</programlisting>
+    Normally, cursors are automatically closed at transaction commit.
+    However, a cursor created as part of a loop like this is automatically
+    converted to a holdable cursor by the first <command>COMMIT</command> or
+    <command>ROLLBACK</command>.  That means that the cursor is fully
+    evaluated at the first <command>COMMIT</command> or
+    <command>ROLLBACK</command> rather than row by row.  The cursor is still
+    removed automatically after the loop, so this is mostly invisible to the
+    user.
+   </para>
+
+   <para>
+    Transaction commands are not allowed in cursor loops driven by commands
+    that are not read-only (for example <command>UPDATE
+    ... RETURNING</command>).
+   </para>
+
+   <para>
+    A transaction cannot be ended inside a block with exception handlers.
    </para>
   </sect1>
 

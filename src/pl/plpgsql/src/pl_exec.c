@@ -4677,14 +4677,7 @@ exec_stmt_close(PLpgSQL_execstate *estate, PLpgSQL_stmt_close *stmt)
 static int
 exec_stmt_commit(PLpgSQL_execstate *estate, PLpgSQL_stmt_commit *stmt)
 {
-	/*
-	 * XXX This could be implemented by converting the pinned portals to
-	 * holdable ones and organizing the cleanup separately.
-	 */
-	if (ThereArePinnedPortals())
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("committing inside a cursor loop is not supported")));
+	HoldPinnedPortals();
 
 	SPI_commit();
 	SPI_start_transaction();
@@ -4703,14 +4696,7 @@ exec_stmt_commit(PLpgSQL_execstate *estate, PLpgSQL_stmt_commit *stmt)
 static int
 exec_stmt_rollback(PLpgSQL_execstate *estate, PLpgSQL_stmt_rollback *stmt)
 {
-	/*
-	 * Unlike the COMMIT case above, this might not make sense at all,
-	 * especially if the query driving the cursor loop has side effects.
-	 */
-	if (ThereArePinnedPortals())
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
-				 errmsg("cannot abort transaction inside a cursor loop")));
+	HoldPinnedPortals();
 
 	SPI_rollback();
 	SPI_start_transaction();

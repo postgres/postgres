@@ -620,6 +620,36 @@ PortalHashTableDeleteAll(void)
 	}
 }
 
+/*
+ * "Hold" a portal.  Prepare it for access by later transactions.
+ */
+static void
+HoldPortal(Portal portal)
+{
+	/*
+	 * Note that PersistHoldablePortal() must release all resources
+	 * used by the portal that are local to the creating transaction.
+	 */
+	PortalCreateHoldStore(portal);
+	PersistHoldablePortal(portal);
+
+	/* drop cached plan reference, if any */
+	PortalReleaseCachedPlan(portal);
+
+	/*
+	 * Any resources belonging to the portal will be released in the
+	 * upcoming transaction-wide cleanup; the portal will no longer
+	 * have its own resources.
+	 */
+	portal->resowner = NULL;
+
+	/*
+	 * Having successfully exported the holdable cursor, mark it as
+	 * not belonging to this transaction.
+	 */
+	portal->createSubid = InvalidSubTransactionId;
+	portal->activeSubid = InvalidSubTransactionId;
+}
 
 /*
  * Pre-commit processing for portals.
@@ -648,9 +678,10 @@ PreCommit_Portals(bool isPrepare)
 
 		/*
 		 * There should be no pinned portals anymore. Complain if someone
-		 * leaked one.
+		 * leaked one. Auto-held portals are allowed; we assume that whoever
+		 * pinned them is managing them.
 		 */
-		if (portal->portalPinned)
+		if (portal->portalPinned && !portal->autoHeld)
 			elog(ERROR, "cannot commit while a portal is pinned");
 
 		/*
@@ -684,29 +715,7 @@ PreCommit_Portals(bool isPrepare)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("cannot PREPARE a transaction that has created a cursor WITH HOLD")));
 
-			/*
-			 * Note that PersistHoldablePortal() must release all resources
-			 * used by the portal that are local to the creating transaction.
-			 */
-			PortalCreateHoldStore(portal);
-			PersistHoldablePortal(portal);
-
-			/* drop cached plan reference, if any */
-			PortalReleaseCachedPlan(portal);
-
-			/*
-			 * Any resources belonging to the portal will be released in the
-			 * upcoming transaction-wide cleanup; the portal will no longer
-			 * have its own resources.
-			 */
-			portal->resowner = NULL;
-
-			/*
-			 * Having successfully exported the holdable cursor, mark it as
-			 * not belonging to this transaction.
-			 */
-			portal->createSubid = InvalidSubTransactionId;
-			portal->activeSubid = InvalidSubTransactionId;
+			HoldPortal(portal);
 
 			/* Report we changed state */
 			result = true;
@@ -772,6 +781,14 @@ AtAbort_Portals(void)
 			continue;
 
 		/*
+		 * Do nothing to auto-held cursors.  This is similar to the case of a
+		 * cursor from a previous transaction, but it could also be that the
+		 * cursor was auto-held in this transaction, so it wants to live on.
+		 */
+		if (portal->autoHeld)
+			continue;
+
+		/*
 		 * If it was created in the current transaction, we can't do normal
 		 * shutdown on a READY portal either; it might refer to objects
 		 * created in the failed transaction.  See comments in
@@ -834,8 +851,11 @@ AtCleanup_Portals(void)
 		if (portal->status == PORTAL_ACTIVE)
 			continue;
 
-		/* Do nothing to cursors held over from a previous transaction */
-		if (portal->createSubid == InvalidSubTransactionId)
+		/*
+		 * Do nothing to cursors held over from a previous transaction or
+		 * auto-held ones.
+		 */
+		if (portal->createSubid == InvalidSubTransactionId || portal->autoHeld)
 		{
 			Assert(portal->status != PORTAL_ACTIVE);
 			Assert(portal->resowner == NULL);
@@ -862,6 +882,32 @@ AtCleanup_Portals(void)
 
 		/* Zap it. */
 		PortalDrop(portal, false);
+	}
+}
+
+/*
+ * Portal-related cleanup when we return to the main loop on error.
+ *
+ * This is different from the cleanup at transaction abort.  Auto-held portals
+ * are cleaned up on error but not on transaction abort.
+ */
+void
+PortalErrorCleanup(void)
+{
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+
+	hash_seq_init(&status, PortalHashTable);
+
+	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Portal		portal = hentry->portal;
+
+		if (portal->autoHeld)
+		{
+			portal->portalPinned = false;
+			PortalDrop(portal, false);
+		}
 	}
 }
 
@@ -1164,8 +1210,19 @@ ThereAreNoReadyPortals(void)
 	return true;
 }
 
-bool
-ThereArePinnedPortals(void)
+/*
+ * Hold all pinned portals.
+ *
+ * A procedural language implementation that uses pinned portals for its
+ * internally generated cursors can call this in its COMMIT command to convert
+ * those cursors to held cursors, so that they survive the transaction end.
+ * We mark those portals as "auto-held" so that exception exit knows to clean
+ * them up.  (In normal, non-exception code paths, the PL needs to clean those
+ * portals itself, since transaction end won't do it anymore, but that should
+ * be normal practice anyway.)
+ */
+void
+HoldPinnedPortals(void)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
@@ -1176,9 +1233,24 @@ ThereArePinnedPortals(void)
 	{
 		Portal		portal = hentry->portal;
 
-		if (portal->portalPinned)
-			return true;
-	}
+		if (portal->portalPinned && !portal->autoHeld)
+		{
+			/*
+			 * Doing transaction control, especially abort, inside a cursor
+			 * loop that is not read-only, for example using UPDATE
+			 * ... RETURNING, has weird semantics issues.  Also, this
+			 * implementation wouldn't work, because such portals cannot be
+			 * held.  (The core grammar enforces that only SELECT statements
+			 * can drive a cursor, but for example PL/pgSQL does not restrict
+			 * it.)
+			 */
+			if (portal->strategy != PORTAL_ONE_SELECT)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
+						 errmsg("cannot perform transaction commands inside a cursor loop that is not read-only")));
 
-	return false;
+			portal->autoHeld = true;
+			HoldPortal(portal);
+		}
+	}
 }

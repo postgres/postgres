@@ -100,6 +100,26 @@ $$;
 
 SELECT * FROM test1;
 
+-- check that this doesn't leak a holdable portal
+SELECT * FROM pg_cursors;
+
+
+-- error in cursor loop with commit
+TRUNCATE test1;
+
+DO LANGUAGE plperl $$
+my $sth = spi_query("SELECT * FROM test2 ORDER BY x");
+my $row;
+while (defined($row = spi_fetchrow($sth))) {
+    spi_exec_query("INSERT INTO test1 (a) VALUES (12/(" . $row->{x} . "-2))");
+    spi_commit();
+}
+$$;
+
+SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
+
 
 -- rollback inside cursor loop
 TRUNCATE test1;
@@ -114,6 +134,29 @@ while (defined($row = spi_fetchrow($sth))) {
 $$;
 
 SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
+
+
+-- first commit then rollback inside cursor loop
+TRUNCATE test1;
+
+DO LANGUAGE plperl $$
+my $sth = spi_query("SELECT * FROM test2 ORDER BY x");
+my $row;
+while (defined($row = spi_fetchrow($sth))) {
+    spi_exec_query("INSERT INTO test1 (a) VALUES (" . $row->{x} . ")");
+    if ($row->{x} % 2 == 0) {
+        spi_commit();
+    } else {
+        spi_rollback();
+    }
+}
+$$;
+
+SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
 
 
 DROP TABLE test1;
