@@ -103,6 +103,9 @@ static TimestampTz throttled_last;
  * The contents of these directories are removed or recreated during server
  * start so they are not included in backups.  The directories themselves are
  * kept and included as empty to preserve access permissions.
+ *
+ * Note: this list should be kept in sync with the filter lists in pg_rewind's
+ * filemap.c.
  */
 static const char *excludeDirContents[] =
 {

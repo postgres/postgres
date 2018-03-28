@@ -231,7 +231,19 @@ PostgreSQL documentation
      <para>
       Copy all other files such as <filename>pg_xact</filename> and
       configuration files from the source cluster to the target cluster
-      (everything except the relation files).
+      (everything except the relation files). Similarly to base backups,
+      the contents of the directories <filename>pg_dynshmem/</filename>,
+      <filename>pg_notify/</filename>, <filename>pg_replslot/</filename>,
+      <filename>pg_serial/</filename>, <filename>pg_snapshots/</filename>,
+      <filename>pg_stat_tmp/</filename>, and
+      <filename>pg_subtrans/</filename> are omitted from the data copied
+      from the source cluster. Any file or directory beginning with
+      <filename>pgsql_tmp</filename> is omitted, as well as are
+      <filename>backup_label</filename>,
+      <filename>tablespace_map</filename>,
+      <filename>pg_internal.init</filename>,
+      <filename>postmaster.opts</filename> and
+      <filename>postmaster.pid</filename>.
      </para>
     </step>
     <step>
