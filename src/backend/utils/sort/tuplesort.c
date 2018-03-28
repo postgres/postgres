@@ -1664,6 +1664,12 @@ tuplesort_performsort(Tuplesortstate *state)
  * Internal routine to fetch the next tuple in either forward or back
  * direction into *stup.  Returns FALSE if no more tuples.
  * If *should_free is set, the caller must pfree stup.tuple when done with it.
+ * Otherwise, caller should not use tuple following next call here.
+ *
+ * Note:  Public tuplesort fetch routine callers cannot rely on tuple being
+ * allocated in their own memory context when should_free is TRUE.  It may be
+ * necessary to create a new copy of the tuple to meet the requirements of
+ * public fetch routine callers.
  */
 static bool
 tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
@@ -1865,6 +1871,11 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
  * Fetch the next tuple in either forward or back direction.
  * If successful, put tuple in slot and return TRUE; else, clear the slot
  * and return FALSE.
+ *
+ * The slot receives a tuple that's been copied into the caller's memory
+ * context, so that it will stay valid regardless of future manipulations of
+ * the tuplesort's state (up to and including deleting the tuplesort).
+ * This differs from similar routines for other types of tuplesorts.
  */
 bool
 tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
@@ -1881,7 +1892,24 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 
 	if (stup.tuple)
 	{
-		ExecStoreMinimalTuple((MinimalTuple) stup.tuple, slot, should_free);
+		/*
+		 * Callers rely on tuple being in their own memory context, which is
+		 * not guaranteed by tuplesort_gettuple_common(), even when should_free
+		 * is set to TRUE.  We must always copy here, since our interface does
+		 * not allow callers to opt into arrangement where tuple memory can go
+		 * away on the next call here, or after tuplesort_end() is called.
+		 */
+		ExecStoreMinimalTuple(heap_copy_minimal_tuple((MinimalTuple) stup.tuple),
+							  slot, true);
+
+		/*
+		 * Free local copy if needed.  It would be very invasive to get
+		 * tuplesort_gettuple_common() to allocate tuple in caller's context
+		 * for us, so we just do this instead.
+		 */
+		if (should_free)
+			pfree(stup.tuple);
+
 		return true;
 	}
 	else
@@ -1895,6 +1923,8 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
  * Fetch the next tuple in either forward or back direction.
  * Returns NULL if no more tuples.  If *should_free is set, the
  * caller must pfree the returned tuple when done with it.
+ * If it is not set, caller should not use tuple following next
+ * call here.  It's never okay to use it after tuplesort_end().
  */
 HeapTuple
 tuplesort_getheaptuple(Tuplesortstate *state, bool forward, bool *should_free)
@@ -1914,6 +1944,8 @@ tuplesort_getheaptuple(Tuplesortstate *state, bool forward, bool *should_free)
  * Fetch the next index tuple in either forward or back direction.
  * Returns NULL if no more tuples.  If *should_free is set, the
  * caller must pfree the returned tuple when done with it.
+ * If it is not set, caller should not use tuple following next
+ * call here.  It's never okay to use it after tuplesort_end().
  */
 IndexTuple
 tuplesort_getindextuple(Tuplesortstate *state, bool forward,
@@ -1935,7 +1967,8 @@ tuplesort_getindextuple(Tuplesortstate *state, bool forward,
  * Returns FALSE if no more datums.
  *
  * If the Datum is pass-by-ref type, the returned value is freshly palloc'd
- * and is now owned by the caller.
+ * in caller's context, and is now owned by the caller (this differs from
+ * similar routines for other types of tuplesorts).
  */
 bool
 tuplesort_getdatum(Tuplesortstate *state, bool forward,
@@ -1951,6 +1984,9 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 		return false;
 	}
 
+	/* Ensure we copy into caller's memory context */
+	MemoryContextSwitchTo(oldcontext);
+
 	if (stup.isnull1 || state->datumTypeByVal)
 	{
 		*val = stup.datum1;
@@ -1958,16 +1994,26 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 	}
 	else
 	{
-		/* use stup.tuple because stup.datum1 may be an abbreviation */
-
-		if (should_free)
-			*val = PointerGetDatum(stup.tuple);
-		else
-			*val = datumCopy(PointerGetDatum(stup.tuple), false, state->datumTypeLen);
+		/*
+		 * Callers rely on datum being in their own memory context, which is
+		 * not guaranteed by tuplesort_gettuple_common(), even when should_free
+		 * is set to TRUE.  We must always copy here, since our interface does
+		 * not allow callers to opt into arrangement where tuple memory can go
+		 * away on the next call here, or after tuplesort_end() is called.
+		 *
+		 * Use stup.tuple because stup.datum1 may be an abbreviation.
+		 */
+		*val = datumCopy(PointerGetDatum(stup.tuple), false, state->datumTypeLen);
 		*isNull = false;
-	}
 
-	MemoryContextSwitchTo(oldcontext);
+		/*
+		 * Free local copy if needed.  It would be very invasive to get
+		 * tuplesort_gettuple_common() to allocate tuple in caller's context
+		 * for us, so we just do this instead.
+		 */
+		if (should_free)
+			pfree(stup.tuple);
+	}
 
 	return true;
 }
