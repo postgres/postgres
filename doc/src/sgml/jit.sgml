@@ -32,9 +32,9 @@
   </para>
 
   <para>
-   <productname>PostgreSQL</productname> has builtin support perform
+   <productname>PostgreSQL</productname> has builtin support to perform
    <acronym>JIT</acronym> using <ulink
-   url="https://llvm.org/"><productname>LLVM</productname></ulink> when built
+   url="https://llvm.org/"><productname>LLVM</productname></ulink> when
    <productname>PostgreSQL</productname> was built with
    <literal>--with-llvm</literal> (see <xref linkend="configure-with-llvm"/>).
   </para>

@@ -74,7 +74,7 @@ the shared library providing JIT support can be loaded (i.e. postgres
 was compiled with LLVM support and the shared library is installed),
 the task of JIT compiling an expression gets handed of to shared
 library. This obviously requires that the function in jit.c is allowed
-to fail in case not JIT provider can be loaded.
+to fail in case no JIT provider can be loaded.
 
 Which shared library is loaded is determined by the jit_provider GUC,
 defaulting to "llvmjit".
@@ -174,7 +174,7 @@ least a few postgres types.  While it is possible to inform LLVM about
 type definitions by recreating them manually in C code, that is failure
 prone and labor intensive.
 
-Instead the is one small file (llvmjit_types.c) which references each of
+Instead there is one small file (llvmjit_types.c) which references each of
 the types required for JITing. That file is translated to bitcode at
 compile time, and loaded when LLVM is initialized in a backend.
 
@@ -232,10 +232,16 @@ an ExprState, rather than absolute pointers into memory.
 
 Once that is addressed, adding an LRU cache that's keyed by the
 generated LLVM IR will allow to use optimized functions even for
-shorter functions.
+faster queries.
 
 A longer term project is to move expression compilation to the planner
-stage, allowing to tie
+stage, allowing e.g. to tie compiled expressions to prepared
+statements.
+
+An even more advanced approach would be to use JIT with few
+optimizations initially, and build an optimized version in the
+background. But that's even further off.
+
 
 What to JIT
 ===========

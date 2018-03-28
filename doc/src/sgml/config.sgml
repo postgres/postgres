@@ -7498,7 +7498,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         used. The built-in default is <literal>llvmjit</literal>.
        </para>
        <para>
-        If set to a non-existent library <acronym>JIT</acronym> will not
+        If set to a non-existent library <acronym>JIT</acronym> will not be
         available, but no error will be raised. This allows JIT support to be
         installed separately from the main
         <productname>PostgreSQL</productname> package.
