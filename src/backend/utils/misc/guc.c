@@ -3118,6 +3118,16 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
+		{"jit_inline_above_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Perform JIT inlining if query is more expensive."),
+			gettext_noop("-1 disables inlining.")
+		},
+		&jit_inline_above_cost,
+		500000, -1, DBL_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"cursor_tuple_fraction", PGC_USERSET, QUERY_TUNING_OTHER,
 			gettext_noop("Sets the planner's estimate of the fraction of "
 						 "a cursor's rows that will be retrieved."),

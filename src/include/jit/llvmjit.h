@@ -103,6 +103,7 @@ extern LLVMValueRef llvm_function_reference(LLVMJitContext *context,
 						LLVMModuleRef mod,
 						FunctionCallInfo fcinfo);
 
+extern void llvm_inline(LLVMModuleRef mod);
 
 /*
  ****************************************************************************

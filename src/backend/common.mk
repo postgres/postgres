@@ -30,6 +30,10 @@ objfiles.txt: Makefile $(SUBDIROBJS) $(OBJS)
 # Don't rebuild the list if only the OBJS have changed.
 	$(if $(filter-out $(OBJS),$?),( $(if $(SUBDIROBJS),cat $(SUBDIROBJS); )echo $(addprefix $(subdir)/,$(OBJS)) ) >$@,touch $@)
 
+ifeq ($(with_llvm), yes)
+objfiles.txt: $(patsubst %.o,%.bc, $(OBJS))
+endif
+
 # make function to expand objfiles.txt contents
 expand_subsys = $(foreach file,$(1),$(if $(filter %/objfiles.txt,$(file)),$(patsubst ../../src/backend/%,%,$(addprefix $(top_builddir)/,$(shell cat $(file)))),$(file)))
 
@@ -43,7 +47,7 @@ $(SUBDIRS:%=%-recursive):
 $(call recurse,clean)
 clean: clean-local
 clean-local:
-	rm -f $(subsysfilename) $(OBJS)
+	rm -f $(subsysfilename) $(OBJS) $(patsubst %.o,%.bc, $(OBJS))
 
 $(call recurse,coverage)
 $(call recurse,install)

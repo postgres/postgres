@@ -40,6 +40,7 @@ bool		jit_expressions = true;
 bool		jit_profiling_support = false;
 bool		jit_tuple_deforming = true;
 double		jit_above_cost = 100000;
+double		jit_inline_above_cost = 500000;
 double		jit_optimize_above_cost = 500000;
 
 static JitProviderCallbacks provider;

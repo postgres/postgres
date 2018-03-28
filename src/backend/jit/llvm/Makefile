@@ -37,7 +37,7 @@ override COMPILER = $(CXX) $(CFLAGS)
 OBJS=$(WIN32RES)
 
 # Infrastructure
-OBJS += llvmjit.o llvmjit_error.o llvmjit_wrap.o
+OBJS += llvmjit.o llvmjit_error.o llvmjit_inline.o llvmjit_wrap.o
 # Code generation
 OBJS += llvmjit_expr.o llvmjit_deform.o
 

@@ -171,6 +171,7 @@ endif # PGXS
 includedir_server = $(pkgincludedir)/server
 includedir_internal = $(pkgincludedir)/internal
 pgxsdir = $(pkglibdir)/pgxs
+bitcodedir = $(pkglibdir)/bitcode
 
 
 ##########################################################################
@@ -972,3 +973,36 @@ endif
 
 %.bc : %.cpp
 	$(COMPILE.cxx.bc) -o $@ $<
+
+# Install LLVM bitcode module (for JITing).
+#
+# The arguments are:
+# $(1) name of the module (e.g. an extension's name or postgres for core code)
+# $(2) source objects, with .o suffix
+#
+define install_llvm_module
+# Create target directory
+$(MKDIR_P) "$(DESTDIR)${bitcodedir}/$(1)"
+# Create sub-directories, if files are in subdirectories
+$(MKDIR_P) $(sort $(dir $(addprefix $(DESTDIR)${bitcodedir}/$(1)/, $(2))))
+# Then install files
+#
+# The many INSTALL_DATA invocations aren't particularly fast, it'd be
+# good if we could coalesce them, but I didn't find a good way.
+$(foreach obj, ${2}, $(INSTALL_DATA) $(patsubst %.o,%.bc, $(obj)) $(DESTDIR)/${bitcodedir}/$(1)/$(dir $(obj));
+)
+# and generate index
+(cd "$(DESTDIR)${bitcodedir}" && $(LLVM_BINPATH)/llvm-lto -thinlto -thinlto-action=thinlink -o $(1).index.bc $(addprefix $(1)/,$(patsubst %.o,%.bc, $(2))))
+endef
+
+# Uninstall LLVM bitcode module.
+#
+# The arguments are:
+# $(1) name of the module (e.g. an extension's name or postgres for core code)
+#
+# This intentionally doesn't use the explicit installed file list,
+# seems too likely to change regularly.
+define uninstall_llvm_module
+rm -rf "$(DESTDIR)${bitcodedir}/$(1)/"
+rm -f "$(DESTDIR)${bitcodedir}/$(1).index.bc"
+endef

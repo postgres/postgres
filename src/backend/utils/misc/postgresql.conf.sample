@@ -323,6 +323,9 @@
 					# and query more expensive, -1 disables
 #jit_optimize_above_cost = 500000	# optimize JITed functions if query is
 					# more expensive, -1 disables
+#jit_inline_above_cost = 500000		# attempt to inline operators and
+					# functions if query is more expensive,
+					# -1 disables
 
 #min_parallel_table_scan_size = 8MB
 #min_parallel_index_scan_size = 512kB

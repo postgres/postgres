@@ -19,7 +19,7 @@
 #define PGJIT_NONE     0
 #define PGJIT_PERFORM  1 << 0
 #define PGJIT_OPT3     1 << 1
-/* reserved for PGJIT_INLINE */
+#define PGJIT_INLINE   1 << 2
 #define PGJIT_EXPR	   1 << 3
 #define PGJIT_DEFORM   1 << 4
 
@@ -36,6 +36,9 @@ typedef struct JitContext
 
 	/* accumulated time to generate code */
 	instr_time	generation_counter;
+
+	/* accumulated time for inlining */
+	instr_time	inlining_counter;
 
 	/* accumulated time for optimization */
 	instr_time	optimization_counter;
@@ -70,6 +73,7 @@ extern bool jit_expressions;
 extern bool jit_profiling_support;
 extern bool jit_tuple_deforming;
 extern double jit_above_cost;
+extern double jit_inline_above_cost;
 extern double jit_optimize_above_cost;
 
 
