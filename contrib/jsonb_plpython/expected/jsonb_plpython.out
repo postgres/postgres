@@ -6,11 +6,10 @@ LANGUAGE plpythonu
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert isinstance(val, dict)
-plpy.info(sorted(val.items()))
+assert(val == {'a': 1, 'c': 'NULL'})
 return len(val)
 $$;
 SELECT test1('{"a": 1, "c": "NULL"}'::jsonb);
-INFO:  [('a', Decimal('1')), ('c', 'NULL')]
  test1 
 -------
      2

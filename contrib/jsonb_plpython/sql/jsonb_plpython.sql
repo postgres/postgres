@@ -6,7 +6,7 @@ LANGUAGE plpythonu
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert isinstance(val, dict)
-plpy.info(sorted(val.items()))
+assert(val == {'a': 1, 'c': 'NULL'})
 return len(val)
 $$;
 
