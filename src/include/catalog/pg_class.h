@@ -149,7 +149,7 @@ typedef FormData_pg_class *Form_pg_class;
  */
 DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f p r 30 0 t f f f f f t n f 0 3 1 _null_ _null_ _null_));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r 22 0 f f f f f f t n f 0 3 1 _null_ _null_ _null_));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r 24 0 f f f f f f t n f 0 3 1 _null_ _null_ _null_));
 DESCR("");
 DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f p r 28 0 t f f f f f t n f 0 3 1 _null_ _null_ _null_));
 DESCR("");

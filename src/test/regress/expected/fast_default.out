@@ -1,0 +1,515 @@
+--
+-- ALTER TABLE ADD COLUMN DEFAULT test
+--
+SET search_path = fast_default;
+CREATE SCHEMA fast_default;
+CREATE TABLE m(id OID);
+INSERT INTO m VALUES (NULL::OID);
+CREATE FUNCTION set(tabname name) RETURNS VOID
+AS $$
+BEGIN
+  UPDATE m
+  SET id = (SELECT c.relfilenode
+            FROM pg_class AS c, pg_namespace AS s
+            WHERE c.relname = tabname
+                AND c.relnamespace = s.oid
+                AND s.nspname = 'fast_default');
+END;
+$$ LANGUAGE 'plpgsql';
+CREATE FUNCTION comp() RETURNS TEXT
+AS $$
+BEGIN
+  RETURN (SELECT CASE
+               WHEN m.id = c.relfilenode THEN 'Unchanged'
+               ELSE 'Rewritten'
+               END
+           FROM m, pg_class AS c, pg_namespace AS s
+           WHERE c.relname = 't'
+               AND c.relnamespace = s.oid
+               AND s.nspname = 'fast_default');
+END;
+$$ LANGUAGE 'plpgsql';
+CREATE FUNCTION log_rewrite() RETURNS event_trigger
+LANGUAGE plpgsql as
+$func$
+
+declare
+   this_schema text;
+begin
+    select into this_schema relnamespace::regnamespace::text
+    from pg_class
+    where oid = pg_event_trigger_table_rewrite_oid();
+    if this_schema = 'fast_default'
+    then
+        RAISE NOTICE 'rewriting table % for reason %',
+          pg_event_trigger_table_rewrite_oid()::regclass,
+          pg_event_trigger_table_rewrite_reason();
+    end if;
+end;
+$func$;
+CREATE TABLE has_volatile AS
+SELECT * FROM generate_series(1,10) id;
+CREATE EVENT TRIGGER has_volatile_rewrite
+                  ON table_rewrite
+   EXECUTE PROCEDURE log_rewrite();
+-- only the last of these should trigger a rewrite
+ALTER TABLE has_volatile ADD col1 int;
+ALTER TABLE has_volatile ADD col2 int DEFAULT 1;
+ALTER TABLE has_volatile ADD col3 timestamptz DEFAULT current_timestamp;
+ALTER TABLE has_volatile ADD col4 int DEFAULT (random() * 10000)::int;
+NOTICE:  rewriting table has_volatile for reason 2
+-- Test a large sample of different datatypes
+CREATE TABLE T(pk INT NOT NULL PRIMARY KEY, c_int INT DEFAULT 1);
+SELECT set('t');
+ set 
+-----
+ 
+(1 row)
+
+INSERT INTO T VALUES (1), (2);
+ALTER TABLE T ADD COLUMN c_bpchar BPCHAR(5) DEFAULT 'hello',
+              ALTER COLUMN c_int SET DEFAULT 2;
+INSERT INTO T VALUES (3), (4);
+ALTER TABLE T ADD COLUMN c_text TEXT  DEFAULT 'world',
+              ALTER COLUMN c_bpchar SET DEFAULT 'dog';
+INSERT INTO T VALUES (5), (6);
+ALTER TABLE T ADD COLUMN c_date DATE DEFAULT '2016-06-02',
+              ALTER COLUMN c_text SET DEFAULT 'cat';
+INSERT INTO T VALUES (7), (8);
+ALTER TABLE T ADD COLUMN c_timestamp TIMESTAMP DEFAULT '2016-09-01 12:00:00',
+              ADD COLUMN c_timestamp_null TIMESTAMP,
+              ALTER COLUMN c_date SET DEFAULT '2010-01-01';
+INSERT INTO T VALUES (9), (10);
+ALTER TABLE T ADD COLUMN c_array TEXT[]
+                  DEFAULT '{"This", "is", "the", "real", "world"}',
+              ALTER COLUMN c_timestamp SET DEFAULT '1970-12-31 11:12:13',
+              ALTER COLUMN c_timestamp_null SET DEFAULT '2016-09-29 12:00:00';
+INSERT INTO T VALUES (11), (12);
+ALTER TABLE T ADD COLUMN c_small SMALLINT DEFAULT -5,
+              ADD COLUMN c_small_null SMALLINT,
+              ALTER COLUMN c_array
+                  SET DEFAULT '{"This", "is", "no", "fantasy"}';
+INSERT INTO T VALUES (13), (14);
+ALTER TABLE T ADD COLUMN c_big BIGINT DEFAULT 180000000000018,
+              ALTER COLUMN c_small SET DEFAULT 9,
+              ALTER COLUMN c_small_null SET DEFAULT 13;
+INSERT INTO T VALUES (15), (16);
+ALTER TABLE T ADD COLUMN c_num NUMERIC DEFAULT 1.00000000001,
+              ALTER COLUMN c_big SET DEFAULT -9999999999999999;
+INSERT INTO T VALUES (17), (18);
+ALTER TABLE T ADD COLUMN c_time TIME DEFAULT '12:00:00',
+              ALTER COLUMN c_num SET DEFAULT 2.000000000000002;
+INSERT INTO T VALUES (19), (20);
+ALTER TABLE T ADD COLUMN c_interval INTERVAL DEFAULT '1 day',
+              ALTER COLUMN c_time SET DEFAULT '23:59:59';
+INSERT INTO T VALUES (21), (22);
+ALTER TABLE T ADD COLUMN c_hugetext TEXT DEFAULT repeat('abcdefg',1000),
+              ALTER COLUMN c_interval SET DEFAULT '3 hours';
+INSERT INTO T VALUES (23), (24);
+ALTER TABLE T ALTER COLUMN c_interval DROP DEFAULT,
+              ALTER COLUMN c_hugetext SET DEFAULT repeat('poiuyt', 1000);
+INSERT INTO T VALUES (25), (26);
+ALTER TABLE T ALTER COLUMN c_bpchar    DROP DEFAULT,
+              ALTER COLUMN c_date      DROP DEFAULT,
+              ALTER COLUMN c_text      DROP DEFAULT,
+              ALTER COLUMN c_timestamp DROP DEFAULT,
+              ALTER COLUMN c_array     DROP DEFAULT,
+              ALTER COLUMN c_small     DROP DEFAULT,
+              ALTER COLUMN c_big       DROP DEFAULT,
+              ALTER COLUMN c_num       DROP DEFAULT,
+              ALTER COLUMN c_time      DROP DEFAULT,
+              ALTER COLUMN c_hugetext  DROP DEFAULT;
+INSERT INTO T VALUES (27), (28);
+SELECT pk, c_int, c_bpchar, c_text, c_date, c_timestamp,
+       c_timestamp_null, c_array, c_small, c_small_null,
+       c_big, c_num, c_time, c_interval,
+       c_hugetext = repeat('abcdefg',1000) as c_hugetext_origdef,
+       c_hugetext = repeat('poiuyt', 1000) as c_hugetext_newdef
+FROM T ORDER BY pk;
+ pk | c_int | c_bpchar | c_text |   c_date   |       c_timestamp        |     c_timestamp_null     |         c_array          | c_small | c_small_null |       c_big       |       c_num       |  c_time  | c_interval | c_hugetext_origdef | c_hugetext_newdef 
+----+-------+----------+--------+------------+--------------------------+--------------------------+--------------------------+---------+--------------+-------------------+-------------------+----------+------------+--------------------+-------------------
+  1 |     1 | hello    | world  | 06-02-2016 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+  2 |     1 | hello    | world  | 06-02-2016 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+  3 |     2 | hello    | world  | 06-02-2016 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+  4 |     2 | hello    | world  | 06-02-2016 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+  5 |     2 | dog      | world  | 06-02-2016 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+  6 |     2 | dog      | world  | 06-02-2016 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+  7 |     2 | dog      | cat    | 06-02-2016 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+  8 |     2 | dog      | cat    | 06-02-2016 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+  9 |     2 | dog      | cat    | 01-01-2010 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 10 |     2 | dog      | cat    | 01-01-2010 | Thu Sep 01 12:00:00 2016 |                          | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 11 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 12 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,the,real,world} |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 13 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 14 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |      -5 |              |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 15 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 16 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 |   180000000000018 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 17 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 18 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 |     1.00000000001 | 12:00:00 | @ 1 day    | t                  | f
+ 19 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 | 2.000000000000002 | 12:00:00 | @ 1 day    | t                  | f
+ 20 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 | 2.000000000000002 | 12:00:00 | @ 1 day    | t                  | f
+ 21 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 | 2.000000000000002 | 23:59:59 | @ 1 day    | t                  | f
+ 22 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 | 2.000000000000002 | 23:59:59 | @ 1 day    | t                  | f
+ 23 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 | 2.000000000000002 | 23:59:59 | @ 3 hours  | t                  | f
+ 24 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 | 2.000000000000002 | 23:59:59 | @ 3 hours  | t                  | f
+ 25 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 | 2.000000000000002 | 23:59:59 |            | f                  | t
+ 26 |     2 | dog      | cat    | 01-01-2010 | Thu Dec 31 11:12:13 1970 | Thu Sep 29 12:00:00 2016 | {This,is,no,fantasy}     |       9 |           13 | -9999999999999999 | 2.000000000000002 | 23:59:59 |            | f                  | t
+ 27 |     2 |          |        |            |                          | Thu Sep 29 12:00:00 2016 |                          |         |           13 |                   |                   |          |            |                    | 
+ 28 |     2 |          |        |            |                          | Thu Sep 29 12:00:00 2016 |                          |         |           13 |                   |                   |          |            |                    | 
+(28 rows)
+
+SELECT comp();
+   comp    
+-----------
+ Unchanged
+(1 row)
+
+DROP TABLE T;
+-- Test expressions in the defaults
+CREATE OR REPLACE FUNCTION foo(a INT) RETURNS TEXT AS $$
+DECLARE res TEXT := '';
+        i INT;
+BEGIN
+  i := 0;
+  WHILE (i < a) LOOP
+    res := res || chr(ascii('a') + i);
+    i := i + 1;
+  END LOOP;
+  RETURN res;
+END; $$ LANGUAGE PLPGSQL STABLE;
+CREATE TABLE T(pk INT NOT NULL PRIMARY KEY, c_int INT DEFAULT LENGTH(foo(6)));
+SELECT set('t');
+ set 
+-----
+ 
+(1 row)
+
+INSERT INTO T VALUES (1), (2);
+ALTER TABLE T ADD COLUMN c_bpchar BPCHAR(5) DEFAULT foo(4),
+              ALTER COLUMN c_int SET DEFAULT LENGTH(foo(8));
+INSERT INTO T VALUES (3), (4);
+ALTER TABLE T ADD COLUMN c_text TEXT  DEFAULT foo(6),
+              ALTER COLUMN c_bpchar SET DEFAULT foo(3);
+INSERT INTO T VALUES (5), (6);
+ALTER TABLE T ADD COLUMN c_date DATE
+                  DEFAULT '2016-06-02'::DATE  + LENGTH(foo(10)),
+              ALTER COLUMN c_text SET DEFAULT foo(12);
+INSERT INTO T VALUES (7), (8);
+ALTER TABLE T ADD COLUMN c_timestamp TIMESTAMP
+                  DEFAULT '2016-09-01'::DATE + LENGTH(foo(10)),
+              ALTER COLUMN c_date
+                  SET DEFAULT '2010-01-01'::DATE - LENGTH(foo(4));
+INSERT INTO T VALUES (9), (10);
+ALTER TABLE T ADD COLUMN c_array TEXT[]
+                  DEFAULT ('{"This", "is", "' || foo(4) ||
+                           '","the", "real", "world"}')::TEXT[],
+              ALTER COLUMN c_timestamp
+                  SET DEFAULT '1970-12-31'::DATE + LENGTH(foo(30));
+INSERT INTO T VALUES (11), (12);
+ALTER TABLE T ALTER COLUMN c_int DROP DEFAULT,
+              ALTER COLUMN c_array
+                  SET DEFAULT ('{"This", "is", "' || foo(1) ||
+                               '", "fantasy"}')::text[];
+INSERT INTO T VALUES (13), (14);
+ALTER TABLE T ALTER COLUMN c_bpchar    DROP DEFAULT,
+              ALTER COLUMN c_date      DROP DEFAULT,
+              ALTER COLUMN c_text      DROP DEFAULT,
+              ALTER COLUMN c_timestamp DROP DEFAULT,
+              ALTER COLUMN c_array     DROP DEFAULT;
+INSERT INTO T VALUES (15), (16);
+SELECT * FROM T;
+ pk | c_int | c_bpchar |    c_text    |   c_date   |       c_timestamp        |            c_array            
+----+-------+----------+--------------+------------+--------------------------+-------------------------------
+  1 |     6 | abcd     | abcdef       | 06-12-2016 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+  2 |     6 | abcd     | abcdef       | 06-12-2016 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+  3 |     8 | abcd     | abcdef       | 06-12-2016 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+  4 |     8 | abcd     | abcdef       | 06-12-2016 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+  5 |     8 | abc      | abcdef       | 06-12-2016 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+  6 |     8 | abc      | abcdef       | 06-12-2016 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+  7 |     8 | abc      | abcdefghijkl | 06-12-2016 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+  8 |     8 | abc      | abcdefghijkl | 06-12-2016 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+  9 |     8 | abc      | abcdefghijkl | 12-28-2009 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+ 10 |     8 | abc      | abcdefghijkl | 12-28-2009 | Sun Sep 11 00:00:00 2016 | {This,is,abcd,the,real,world}
+ 11 |     8 | abc      | abcdefghijkl | 12-28-2009 | Sat Jan 30 00:00:00 1971 | {This,is,abcd,the,real,world}
+ 12 |     8 | abc      | abcdefghijkl | 12-28-2009 | Sat Jan 30 00:00:00 1971 | {This,is,abcd,the,real,world}
+ 13 |       | abc      | abcdefghijkl | 12-28-2009 | Sat Jan 30 00:00:00 1971 | {This,is,a,fantasy}
+ 14 |       | abc      | abcdefghijkl | 12-28-2009 | Sat Jan 30 00:00:00 1971 | {This,is,a,fantasy}
+ 15 |       |          |              |            |                          | 
+ 16 |       |          |              |            |                          | 
+(16 rows)
+
+SELECT comp();
+   comp    
+-----------
+ Unchanged
+(1 row)
+
+DROP TABLE T;
+DROP FUNCTION foo(INT);
+-- Fall back to full rewrite for volatile expressions
+CREATE TABLE T(pk INT NOT NULL PRIMARY KEY);
+INSERT INTO T VALUES (1);
+SELECT set('t');
+ set 
+-----
+ 
+(1 row)
+
+-- now() is stable, because it returns the transaction timestamp
+ALTER TABLE T ADD COLUMN c1 TIMESTAMP DEFAULT now();
+SELECT comp();
+   comp    
+-----------
+ Unchanged
+(1 row)
+
+-- clock_timestamp() is volatile
+ALTER TABLE T ADD COLUMN c2 TIMESTAMP DEFAULT clock_timestamp();
+NOTICE:  rewriting table t for reason 2
+SELECT comp();
+   comp    
+-----------
+ Rewritten
+(1 row)
+
+DROP TABLE T;
+-- Simple querie
+CREATE TABLE T (pk INT NOT NULL PRIMARY KEY);
+SELECT set('t');
+ set 
+-----
+ 
+(1 row)
+
+INSERT INTO T SELECT * FROM generate_series(1, 10) a;
+ALTER TABLE T ADD COLUMN c_bigint BIGINT NOT NULL DEFAULT -1;
+INSERT INTO T SELECT b, b - 10 FROM generate_series(11, 20) a(b);
+ALTER TABLE T ADD COLUMN c_text TEXT DEFAULT 'hello';
+INSERT INTO T SELECT b, b - 10, (b + 10)::text FROM generate_series(21, 30) a(b);
+-- WHERE clause
+SELECT c_bigint, c_text FROM T WHERE c_bigint = -1 LIMIT 1;
+ c_bigint | c_text 
+----------+--------
+       -1 | hello
+(1 row)
+
+EXPLAIN (VERBOSE TRUE, COSTS FALSE)
+SELECT c_bigint, c_text FROM T WHERE c_bigint = -1 LIMIT 1;
+                  QUERY PLAN                  
+----------------------------------------------
+ Limit
+   Output: c_bigint, c_text
+   ->  Seq Scan on fast_default.t
+         Output: c_bigint, c_text
+         Filter: (t.c_bigint = '-1'::integer)
+(5 rows)
+
+SELECT c_bigint, c_text FROM T WHERE c_text = 'hello' LIMIT 1;
+ c_bigint | c_text 
+----------+--------
+       -1 | hello
+(1 row)
+
+EXPLAIN (VERBOSE TRUE, COSTS FALSE) SELECT c_bigint, c_text FROM T WHERE c_text = 'hello' LIMIT 1;
+                 QUERY PLAN                 
+--------------------------------------------
+ Limit
+   Output: c_bigint, c_text
+   ->  Seq Scan on fast_default.t
+         Output: c_bigint, c_text
+         Filter: (t.c_text = 'hello'::text)
+(5 rows)
+
+-- COALESCE
+SELECT COALESCE(c_bigint, pk), COALESCE(c_text, pk::text)
+FROM T
+ORDER BY pk LIMIT 10;
+ coalesce | coalesce 
+----------+----------
+       -1 | hello
+       -1 | hello
+       -1 | hello
+       -1 | hello
+       -1 | hello
+       -1 | hello
+       -1 | hello
+       -1 | hello
+       -1 | hello
+       -1 | hello
+(10 rows)
+
+-- Aggregate function
+SELECT SUM(c_bigint), MAX(c_text), MIN(c_text) FROM T;
+ sum |  max  | min 
+-----+-------+-----
+ 200 | hello | 31
+(1 row)
+
+-- ORDER BY
+SELECT * FROM T ORDER BY c_bigint, c_text, pk LIMIT 10;
+ pk | c_bigint | c_text 
+----+----------+--------
+  1 |       -1 | hello
+  2 |       -1 | hello
+  3 |       -1 | hello
+  4 |       -1 | hello
+  5 |       -1 | hello
+  6 |       -1 | hello
+  7 |       -1 | hello
+  8 |       -1 | hello
+  9 |       -1 | hello
+ 10 |       -1 | hello
+(10 rows)
+
+EXPLAIN (VERBOSE TRUE, COSTS FALSE)
+SELECT * FROM T ORDER BY c_bigint, c_text, pk LIMIT 10;
+                  QUERY PLAN                  
+----------------------------------------------
+ Limit
+   Output: pk, c_bigint, c_text
+   ->  Sort
+         Output: pk, c_bigint, c_text
+         Sort Key: t.c_bigint, t.c_text, t.pk
+         ->  Seq Scan on fast_default.t
+               Output: pk, c_bigint, c_text
+(7 rows)
+
+-- LIMIT
+SELECT * FROM T WHERE c_bigint > -1 ORDER BY c_bigint, c_text, pk LIMIT 10;
+ pk | c_bigint | c_text 
+----+----------+--------
+ 11 |        1 | hello
+ 12 |        2 | hello
+ 13 |        3 | hello
+ 14 |        4 | hello
+ 15 |        5 | hello
+ 16 |        6 | hello
+ 17 |        7 | hello
+ 18 |        8 | hello
+ 19 |        9 | hello
+ 20 |       10 | hello
+(10 rows)
+
+EXPLAIN (VERBOSE TRUE, COSTS FALSE)
+SELECT * FROM T WHERE c_bigint > -1 ORDER BY c_bigint, c_text, pk LIMIT 10;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Limit
+   Output: pk, c_bigint, c_text
+   ->  Sort
+         Output: pk, c_bigint, c_text
+         Sort Key: t.c_bigint, t.c_text, t.pk
+         ->  Seq Scan on fast_default.t
+               Output: pk, c_bigint, c_text
+               Filter: (t.c_bigint > '-1'::integer)
+(8 rows)
+
+--  DELETE with RETURNING
+DELETE FROM T WHERE pk BETWEEN 10 AND 20 RETURNING *;
+ pk | c_bigint | c_text 
+----+----------+--------
+ 10 |       -1 | hello
+ 11 |        1 | hello
+ 12 |        2 | hello
+ 13 |        3 | hello
+ 14 |        4 | hello
+ 15 |        5 | hello
+ 16 |        6 | hello
+ 17 |        7 | hello
+ 18 |        8 | hello
+ 19 |        9 | hello
+ 20 |       10 | hello
+(11 rows)
+
+EXPLAIN (VERBOSE TRUE, COSTS FALSE)
+DELETE FROM T WHERE pk BETWEEN 10 AND 20 RETURNING *;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Delete on fast_default.t
+   Output: pk, c_bigint, c_text
+   ->  Bitmap Heap Scan on fast_default.t
+         Output: ctid
+         Recheck Cond: ((t.pk >= 10) AND (t.pk <= 20))
+         ->  Bitmap Index Scan on t_pkey
+               Index Cond: ((t.pk >= 10) AND (t.pk <= 20))
+(7 rows)
+
+-- UPDATE
+UPDATE T SET c_text = '"' || c_text || '"'  WHERE pk < 10;
+SELECT * FROM T WHERE c_text LIKE '"%"' ORDER BY PK;
+ pk | c_bigint | c_text  
+----+----------+---------
+  1 |       -1 | "hello"
+  2 |       -1 | "hello"
+  3 |       -1 | "hello"
+  4 |       -1 | "hello"
+  5 |       -1 | "hello"
+  6 |       -1 | "hello"
+  7 |       -1 | "hello"
+  8 |       -1 | "hello"
+  9 |       -1 | "hello"
+(9 rows)
+
+SELECT comp();
+   comp    
+-----------
+ Unchanged
+(1 row)
+
+DROP TABLE T;
+-- Combine with other DDL
+CREATE TABLE T(pk INT NOT NULL PRIMARY KEY);
+SELECT set('t');
+ set 
+-----
+ 
+(1 row)
+
+INSERT INTO T VALUES (1), (2);
+ALTER TABLE T ADD COLUMN c_int INT NOT NULL DEFAULT -1;
+INSERT INTO T VALUES (3), (4);
+ALTER TABLE T ADD COLUMN c_text TEXT DEFAULT 'Hello';
+INSERT INTO T VALUES (5), (6);
+ALTER TABLE T ALTER COLUMN c_text SET DEFAULT 'world',
+              ALTER COLUMN c_int  SET DEFAULT 1;
+INSERT INTO T VALUES (7), (8);
+SELECT * FROM T ORDER BY pk;
+ pk | c_int | c_text 
+----+-------+--------
+  1 |    -1 | Hello
+  2 |    -1 | Hello
+  3 |    -1 | Hello
+  4 |    -1 | Hello
+  5 |    -1 | Hello
+  6 |    -1 | Hello
+  7 |     1 | world
+  8 |     1 | world
+(8 rows)
+
+-- Add an index
+CREATE INDEX i ON T(c_int, c_text);
+SELECT c_text FROM T WHERE c_int = -1;
+ c_text 
+--------
+ Hello
+ Hello
+ Hello
+ Hello
+ Hello
+ Hello
+(6 rows)
+
+SELECT comp();
+   comp    
+-----------
+ Unchanged
+(1 row)
+
+DROP TABLE T;
+DROP FUNCTION set(name);
+DROP FUNCTION comp();
+DROP TABLE m;
+DROP TABLE has_volatile;
+DROP EVENT TRIGGER has_volatile_rewrite;
+DROP FUNCTION log_rewrite;
+DROP SCHEMA fast_default;

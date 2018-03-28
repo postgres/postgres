@@ -1091,8 +1091,8 @@ get_func_result_name(Oid functionId)
 		elog(ERROR, "cache lookup failed for function %u", functionId);
 
 	/* If there are no named OUT parameters, return NULL */
-	if (heap_attisnull(procTuple, Anum_pg_proc_proargmodes) ||
-		heap_attisnull(procTuple, Anum_pg_proc_proargnames))
+	if (heap_attisnull(procTuple, Anum_pg_proc_proargmodes, NULL) ||
+		heap_attisnull(procTuple, Anum_pg_proc_proargnames, NULL))
 		result = NULL;
 	else
 	{
@@ -1186,8 +1186,8 @@ build_function_result_tupdesc_t(HeapTuple procTuple)
 		return NULL;
 
 	/* If there are no OUT parameters, return NULL */
-	if (heap_attisnull(procTuple, Anum_pg_proc_proallargtypes) ||
-		heap_attisnull(procTuple, Anum_pg_proc_proargmodes))
+	if (heap_attisnull(procTuple, Anum_pg_proc_proallargtypes, NULL) ||
+		heap_attisnull(procTuple, Anum_pg_proc_proargmodes, NULL))
 		return NULL;
 
 	/* Get the data out of the tuple */

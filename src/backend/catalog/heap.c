@@ -60,9 +60,12 @@
 #include "catalog/storage_xlog.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/var.h"
+#include "optimizer/planner.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
@@ -72,6 +75,7 @@
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
@@ -144,37 +148,37 @@ static List *insert_ordered_unique_oid(List *list, Oid datum);
 static FormData_pg_attribute a1 = {
 	0, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
 	SelfItemPointerAttributeNumber, 0, -1, -1,
-	false, 'p', 's', true, false, '\0', false, true, 0
+	false, 'p', 's', true, false, false, '\0', false, true, 0
 };
 
 static FormData_pg_attribute a2 = {
 	0, {"oid"}, OIDOID, 0, sizeof(Oid),
 	ObjectIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, '\0', false, true, 0
+	true, 'p', 'i', true, false, false, '\0', false, true, 0
 };
 
 static FormData_pg_attribute a3 = {
 	0, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
 	MinTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, '\0', false, true, 0
+	true, 'p', 'i', true, false, false, '\0', false, true, 0
 };
 
 static FormData_pg_attribute a4 = {
 	0, {"cmin"}, CIDOID, 0, sizeof(CommandId),
 	MinCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, '\0', false, true, 0
+	true, 'p', 'i', true, false, false, '\0', false, true, 0
 };
 
 static FormData_pg_attribute a5 = {
 	0, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
 	MaxTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, '\0', false, true, 0
+	true, 'p', 'i', true, false, false, '\0', false, true, 0
 };
 
 static FormData_pg_attribute a6 = {
 	0, {"cmax"}, CIDOID, 0, sizeof(CommandId),
 	MaxCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, '\0', false, true, 0
+	true, 'p', 'i', true, false, false, '\0', false, true, 0
 };
 
 /*
@@ -186,7 +190,7 @@ static FormData_pg_attribute a6 = {
 static FormData_pg_attribute a7 = {
 	0, {"tableoid"}, OIDOID, 0, sizeof(Oid),
 	TableOidAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, '\0', false, true, 0
+	true, 'p', 'i', true, false, false, '\0', false, true, 0
 };
 
 static const Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
@@ -624,6 +628,7 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	values[Anum_pg_attribute_attalign - 1] = CharGetDatum(new_attribute->attalign);
 	values[Anum_pg_attribute_attnotnull - 1] = BoolGetDatum(new_attribute->attnotnull);
 	values[Anum_pg_attribute_atthasdef - 1] = BoolGetDatum(new_attribute->atthasdef);
+	values[Anum_pg_attribute_atthasmissing - 1] = BoolGetDatum(new_attribute->atthasmissing);
 	values[Anum_pg_attribute_attidentity - 1] = CharGetDatum(new_attribute->attidentity);
 	values[Anum_pg_attribute_attisdropped - 1] = BoolGetDatum(new_attribute->attisdropped);
 	values[Anum_pg_attribute_attislocal - 1] = BoolGetDatum(new_attribute->attislocal);
@@ -634,6 +639,7 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	nulls[Anum_pg_attribute_attacl - 1] = true;
 	nulls[Anum_pg_attribute_attoptions - 1] = true;
 	nulls[Anum_pg_attribute_attfdwoptions - 1] = true;
+	nulls[Anum_pg_attribute_attmissingval - 1] = true;
 
 	tup = heap_form_tuple(RelationGetDescr(pg_attribute_rel), values, nulls);
 
@@ -1926,13 +1932,90 @@ heap_drop_with_catalog(Oid relid)
 
 
 /*
+ * RelationClearMissing
+ *
+ * Set atthasmissing and attmissingval to false/null for all attributes
+ * where they are currently set. This can be safely and usefully done if
+ * the table is rewritten (e.g. by VACUUM FULL or CLUSTER) where we know there
+ * are no rows left with less than a full complement of attributes.
+ *
+ * The caller must have an AccessExclusive lock on the relation.
+ */
+void
+RelationClearMissing(Relation rel)
+{
+	Relation	attr_rel;
+	Oid			relid = RelationGetRelid(rel);
+	int			natts = RelationGetNumberOfAttributes(rel);
+	int			attnum;
+	Datum		repl_val[Natts_pg_attribute];
+	bool		repl_null[Natts_pg_attribute];
+	bool		repl_repl[Natts_pg_attribute];
+	Form_pg_attribute attrtuple;
+	HeapTuple	tuple,
+				newtuple;
+
+	memset(repl_val, 0, sizeof(repl_val));
+	memset(repl_null, false, sizeof(repl_null));
+	memset(repl_repl, false, sizeof(repl_repl));
+
+	repl_val[Anum_pg_attribute_atthasmissing - 1] = BoolGetDatum(false);
+	repl_null[Anum_pg_attribute_attmissingval - 1] = true;
+
+	repl_repl[Anum_pg_attribute_atthasmissing - 1] = true;
+	repl_repl[Anum_pg_attribute_attmissingval - 1] = true;
+
+
+	/* Get a lock on pg_attribute */
+	attr_rel = heap_open(AttributeRelationId, RowExclusiveLock);
+
+	/* process each non-system attribute, including any dropped columns */
+	for (attnum = 1; attnum <= natts; attnum++)
+	{
+		tuple = SearchSysCache2(ATTNUM,
+								ObjectIdGetDatum(relid),
+								Int16GetDatum(attnum));
+		if (!HeapTupleIsValid(tuple))	/* shouldn't happen */
+			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+				 attnum, relid);
+
+		attrtuple = (Form_pg_attribute) GETSTRUCT(tuple);
+
+		/* ignore any where atthasmissing is not true */
+		if (attrtuple->atthasmissing)
+		{
+			newtuple = heap_modify_tuple(tuple, RelationGetDescr(attr_rel),
+										 repl_val, repl_null, repl_repl);
+
+			CatalogTupleUpdate(attr_rel, &newtuple->t_self, newtuple);
+
+			heap_freetuple(newtuple);
+		}
+
+		ReleaseSysCache(tuple);
+	}
+
+	/*
+	 * Our update of the pg_attribute rows will force a relcache rebuild, so
+	 * there's nothing else to do here.
+	 */
+	heap_close(attr_rel, RowExclusiveLock);
+}
+
+/*
  * Store a default expression for column attnum of relation rel.
  *
  * Returns the OID of the new pg_attrdef tuple.
+ *
+ * add_column_mode must be true if we are storing the default for a new
+ * attribute, and false if it's for an already existing attribute. The reason
+ * for this is that the missing value must never be updated after it is set,
+ * which can only be when a column is added to the table. Otherwise we would
+ * in effect be changing existing tuples.
  */
 Oid
 StoreAttrDefault(Relation rel, AttrNumber attnum,
-				 Node *expr, bool is_internal)
+				 Node *expr, bool is_internal, bool add_column_mode)
 {
 	char	   *adbin;
 	char	   *adsrc;
@@ -2000,8 +2083,69 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
 	if (!attStruct->atthasdef)
 	{
-		attStruct->atthasdef = true;
+		Form_pg_attribute defAttStruct;
+
+		ExprState  *exprState;
+		Expr	   *expr2 = (Expr *) expr;
+		EState	   *estate = NULL;
+		ExprContext *econtext;
+		Datum		valuesAtt[Natts_pg_attribute];
+		bool		nullsAtt[Natts_pg_attribute];
+		bool		replacesAtt[Natts_pg_attribute];
+		Datum		missingval = (Datum) 0;
+		bool		missingIsNull = true;
+
+		MemSet(valuesAtt, 0, sizeof(valuesAtt));
+		MemSet(nullsAtt, false, sizeof(nullsAtt));
+		MemSet(replacesAtt, false, sizeof(replacesAtt));
+		valuesAtt[Anum_pg_attribute_atthasdef - 1] = true;
+		replacesAtt[Anum_pg_attribute_atthasdef - 1] = true;
+
+		if (add_column_mode)
+		{
+			expr2 = expression_planner(expr2);
+			estate = CreateExecutorState();
+			exprState = ExecPrepareExpr(expr2, estate);
+			econtext = GetPerTupleExprContext(estate);
+
+			missingval = ExecEvalExpr(exprState, econtext,
+									  &missingIsNull);
+
+			FreeExecutorState(estate);
+
+			defAttStruct = TupleDescAttr(rel->rd_att, attnum - 1);
+
+			if (missingIsNull)
+			{
+				/* if the default evaluates to NULL, just store a NULL array */
+				missingval = (Datum) 0;
+			}
+			else
+			{
+				/* otherwise make a one-element array of the value */
+				missingval = PointerGetDatum(
+											 construct_array(&missingval,
+															 1,
+															 defAttStruct->atttypid,
+															 defAttStruct->attlen,
+															 defAttStruct->attbyval,
+															 defAttStruct->attalign));
+			}
+
+			valuesAtt[Anum_pg_attribute_atthasmissing - 1] = !missingIsNull;
+			replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
+			valuesAtt[Anum_pg_attribute_attmissingval - 1] = missingval;
+			replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
+			nullsAtt[Anum_pg_attribute_attmissingval - 1] = missingIsNull;
+		}
+		atttup = heap_modify_tuple(atttup, RelationGetDescr(attrrel),
+								   valuesAtt, nullsAtt, replacesAtt);
+
 		CatalogTupleUpdate(attrrel, &atttup->t_self, atttup);
+
+		if (!missingIsNull)
+			pfree(DatumGetPointer(missingval));
+
 	}
 	heap_close(attrrel, RowExclusiveLock);
 	heap_freetuple(atttup);
@@ -2185,7 +2329,7 @@ StoreConstraints(Relation rel, List *cooked_constraints, bool is_internal)
 		{
 			case CONSTR_DEFAULT:
 				con->conoid = StoreAttrDefault(rel, con->attnum, con->expr,
-											   is_internal);
+											   is_internal, false);
 				break;
 			case CONSTR_CHECK:
 				con->conoid =
@@ -2301,7 +2445,12 @@ AddRelationNewConstraints(Relation rel,
 			(IsA(expr, Const) &&((Const *) expr)->constisnull))
 			continue;
 
-		defOid = StoreAttrDefault(rel, colDef->attnum, expr, is_internal);
+		/* If the DEFAULT is volatile we cannot use a missing value */
+		if (colDef->missingMode && contain_volatile_functions((Node *) expr))
+			colDef->missingMode = false;
+
+		defOid = StoreAttrDefault(rel, colDef->attnum, expr, is_internal,
+								  colDef->missingMode);
 
 		cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
 		cooked->contype = CONSTR_DEFAULT;

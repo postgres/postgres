@@ -2980,8 +2980,17 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 								false, NULL))
 					elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
 
-				/* successful, copy tuple */
-				copyTuple = heap_copytuple(&tuple);
+				if (HeapTupleHeaderGetNatts(tuple.t_data) <
+					RelationGetDescr(erm->relation)->natts)
+				{
+					copyTuple = heap_expand_tuple(&tuple,
+												  RelationGetDescr(erm->relation));
+				}
+				else
+				{
+					/* successful, copy tuple */
+					copyTuple = heap_copytuple(&tuple);
+				}
 				ReleaseBuffer(buffer);
 			}
 

@@ -799,7 +799,7 @@ extern void heap_fill_tuple(TupleDesc tupleDesc,
 				Datum *values, bool *isnull,
 				char *data, Size data_size,
 				uint16 *infomask, bits8 *bit);
-extern bool heap_attisnull(HeapTuple tup, int attnum);
+extern bool heap_attisnull(HeapTuple tup, int attnum, TupleDesc tupleDesc);
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
 			   TupleDesc att);
 extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
@@ -830,5 +830,7 @@ extern MinimalTuple heap_copy_minimal_tuple(MinimalTuple mtup);
 extern HeapTuple heap_tuple_from_minimal_tuple(MinimalTuple mtup);
 extern MinimalTuple minimal_tuple_from_heap_tuple(HeapTuple htup);
 extern size_t varsize_any(void *p);
+extern HeapTuple heap_expand_tuple(HeapTuple sourceTuple, TupleDesc tupleDesc);
+extern MinimalTuple minimal_expand_tuple(HeapTuple sourceTuple, TupleDesc tupleDesc);
 
 #endif							/* HTUP_DETAILS_H */

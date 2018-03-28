@@ -1150,6 +1150,19 @@
      </row>
 
      <row>
+      <entry><structfield>atthasmissing</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       This column has a value which is used where the column is entirely
+       missing from the row, as happens when a column is added with a
+       non-volatile <literal>DEFAULT</literal> value after the row is created.
+       The actual value used is stored in the
+       <structfield>attmissingval</structfield> column.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>attidentity</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
@@ -1226,6 +1239,20 @@
       <entry></entry>
       <entry>
        Attribute-level foreign data wrapper options, as <quote>keyword=value</quote> strings
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>attmissingval</structfield></entry>
+      <entry><type>anyarray</type></entry>
+      <entry></entry>
+      <entry>
+       This column has a one element array containing the value used when the
+       column is entirely missing from the row, as happens when the column is
+       added with a non-volatile <literal>DEFAULT</literal> value after the
+       row is created.  The value is only used when
+       <structfield>atthasmissing</structfield> is true.  If there is no value
+       the column is null.
       </entry>
      </row>
 

@@ -2505,7 +2505,7 @@ ExecEvalRowNullInt(ExprState *state, ExprEvalStep *op,
 		/* ignore dropped columns */
 		if (TupleDescAttr(tupDesc, att - 1)->attisdropped)
 			continue;
-		if (heap_attisnull(&tmptup, att))
+		if (heap_attisnull(&tmptup, att, tupDesc))
 		{
 			/* null field disproves IS NOT NULL */
 			if (!checkisnull)

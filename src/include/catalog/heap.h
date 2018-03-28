@@ -23,6 +23,7 @@ typedef struct RawColumnDefault
 {
 	AttrNumber	attnum;			/* attribute to attach default to */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
+	bool		missingMode;	/* true if part of add column processing */
 } RawColumnDefault;
 
 typedef struct CookedConstraint
@@ -103,8 +104,11 @@ extern List *AddRelationNewConstraints(Relation rel,
 						  bool is_local,
 						  bool is_internal);
 
+extern void RelationClearMissing(Relation rel);
+
 extern Oid StoreAttrDefault(Relation rel, AttrNumber attnum,
-				 Node *expr, bool is_internal);
+				 Node *expr, bool is_internal,
+				 bool add_column_mode);
 
 extern Node *cookDefault(ParseState *pstate,
 			Node *raw_default,

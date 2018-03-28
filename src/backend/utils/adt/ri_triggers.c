@@ -204,7 +204,7 @@ static void ri_GenerateQual(StringInfo buf,
 				Oid opoid,
 				const char *rightop, Oid rightoptype);
 static void ri_GenerateQualCollation(StringInfo buf, Oid collation);
-static int ri_NullCheck(HeapTuple tup,
+static int ri_NullCheck(TupleDesc tupdesc, HeapTuple tup,
 			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static void ri_BuildQueryKey(RI_QueryKey *key,
 				 const RI_ConstraintInfo *riinfo,
@@ -307,7 +307,7 @@ RI_FKey_check(TriggerData *trigdata)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("MATCH PARTIAL not yet implemented")));
 
-	switch (ri_NullCheck(new_row, riinfo, false))
+	switch (ri_NullCheck(RelationGetDescr(fk_rel), new_row, riinfo, false))
 	{
 		case RI_KEYS_ALL_NULL:
 
@@ -514,7 +514,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	bool		result;
 
 	/* Only called for non-null rows */
-	Assert(ri_NullCheck(old_row, riinfo, true) == RI_KEYS_NONE_NULL);
+	Assert(ri_NullCheck(RelationGetDescr(fk_rel), old_row, riinfo, true) == RI_KEYS_NONE_NULL);
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
@@ -724,7 +724,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			switch (ri_NullCheck(old_row, riinfo, true))
+			switch (ri_NullCheck(RelationGetDescr(pk_rel), old_row, riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -911,7 +911,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			switch (ri_NullCheck(old_row, riinfo, true))
+			switch (ri_NullCheck(RelationGetDescr(pk_rel), old_row, riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -1071,7 +1071,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			switch (ri_NullCheck(old_row, riinfo, true))
+			switch (ri_NullCheck(RelationGetDescr(pk_rel), old_row, riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -1285,7 +1285,7 @@ ri_setnull(TriggerData *trigdata)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			switch (ri_NullCheck(old_row, riinfo, true))
+			switch (ri_NullCheck(RelationGetDescr(pk_rel), old_row, riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -1501,7 +1501,7 @@ ri_setdefault(TriggerData *trigdata)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			switch (ri_NullCheck(old_row, riinfo, true))
+			switch (ri_NullCheck(RelationGetDescr(pk_rel), old_row, riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -1676,7 +1676,7 @@ RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
 			 * If any old key value is NULL, the row could not have been
 			 * referenced by an FK row, so no check is needed.
 			 */
-			if (ri_NullCheck(old_row, riinfo, true) != RI_KEYS_NONE_NULL)
+			if (ri_NullCheck(RelationGetDescr(pk_rel), old_row, riinfo, true) != RI_KEYS_NONE_NULL)
 				return false;
 
 			/* If all old and new key values are equal, no check is needed */
@@ -1732,7 +1732,7 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 			 * If any new key value is NULL, the row must satisfy the
 			 * constraint, so no check is needed.
 			 */
-			if (ri_NullCheck(new_row, riinfo, false) != RI_KEYS_NONE_NULL)
+			if (ri_NullCheck(RelationGetDescr(fk_rel), new_row, riinfo, false) != RI_KEYS_NONE_NULL)
 				return false;
 
 			/*
@@ -1763,7 +1763,7 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 			 * invalidated before the constraint is to be checked, but we
 			 * should queue the event to apply the check later.
 			 */
-			switch (ri_NullCheck(new_row, riinfo, false))
+			switch (ri_NullCheck(RelationGetDescr(fk_rel), new_row, riinfo, false))
 			{
 				case RI_KEYS_ALL_NULL:
 					return false;
@@ -2057,7 +2057,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 		 * disallows partially-null FK rows.
 		 */
 		if (fake_riinfo.confmatchtype == FKCONSTR_MATCH_FULL &&
-			ri_NullCheck(tuple, &fake_riinfo, false) != RI_KEYS_NONE_NULL)
+			ri_NullCheck(tupdesc, tuple, &fake_riinfo, false) != RI_KEYS_NONE_NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
 					 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
@@ -2860,7 +2860,8 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
  * ----------
  */
 static int
-ri_NullCheck(HeapTuple tup,
+ri_NullCheck(TupleDesc tupDesc,
+			 HeapTuple tup,
 			 const RI_ConstraintInfo *riinfo, bool rel_is_pk)
 {
 	const int16 *attnums;
@@ -2875,7 +2876,7 @@ ri_NullCheck(HeapTuple tup,
 
 	for (i = 0; i < riinfo->nkeys; i++)
 	{
-		if (heap_attisnull(tup, attnums[i]))
+		if (heap_attisnull(tup, attnums[i], tupDesc))
 			nonenull = false;
 		else
 			allnull = false;

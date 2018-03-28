@@ -200,7 +200,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	 */
 	if (!ignore_security &&
 		(procedureStruct->prosecdef ||
-		 !heap_attisnull(procedureTuple, Anum_pg_proc_proconfig) ||
+		 !heap_attisnull(procedureTuple, Anum_pg_proc_proconfig, NULL) ||
 		 FmgrHookIsNeeded(functionId)))
 	{
 		finfo->fn_addr = fmgr_security_definer;
@@ -294,7 +294,7 @@ fmgr_symbol(Oid functionId, char **mod, char **fn)
 	/*
 	 */
 	if (procedureStruct->prosecdef ||
-		!heap_attisnull(procedureTuple, Anum_pg_proc_proconfig) ||
+		!heap_attisnull(procedureTuple, Anum_pg_proc_proconfig, NULL) ||
 		FmgrHookIsNeeded(functionId))
 	{
 		*mod = NULL; /* core binary */

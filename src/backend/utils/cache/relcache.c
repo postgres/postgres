@@ -36,6 +36,7 @@
 #include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
+#include "access/tupdesc_details.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
@@ -79,6 +80,7 @@
 #include "storage/smgr.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
@@ -495,6 +497,7 @@ RelationBuildTupleDesc(Relation relation)
 	int			need;
 	TupleConstr *constr;
 	AttrDefault *attrdef = NULL;
+	AttrMissing *attrmiss = NULL;
 	int			ndef = 0;
 
 	/* copy some fields from pg_class row to rd_att */
@@ -540,15 +543,17 @@ RelationBuildTupleDesc(Relation relation)
 	while (HeapTupleIsValid(pg_attribute_tuple = systable_getnext(pg_attribute_scan)))
 	{
 		Form_pg_attribute attp;
+		int			attnum;
 
 		attp = (Form_pg_attribute) GETSTRUCT(pg_attribute_tuple);
 
-		if (attp->attnum <= 0 ||
-			attp->attnum > relation->rd_rel->relnatts)
+		attnum = attp->attnum;
+		if (attnum <= 0 || attnum > relation->rd_rel->relnatts)
 			elog(ERROR, "invalid attribute number %d for %s",
 				 attp->attnum, RelationGetRelationName(relation));
 
-		memcpy(TupleDescAttr(relation->rd_att, attp->attnum - 1),
+
+		memcpy(TupleDescAttr(relation->rd_att, attnum - 1),
 			   attp,
 			   ATTRIBUTE_FIXED_PART_SIZE);
 
@@ -556,6 +561,7 @@ RelationBuildTupleDesc(Relation relation)
 		if (attp->attnotnull)
 			constr->has_not_null = true;
 
+		/* If the column has a default, fill it into the attrdef array */
 		if (attp->atthasdef)
 		{
 			if (attrdef == NULL)
@@ -563,9 +569,62 @@ RelationBuildTupleDesc(Relation relation)
 					MemoryContextAllocZero(CacheMemoryContext,
 										   relation->rd_rel->relnatts *
 										   sizeof(AttrDefault));
-			attrdef[ndef].adnum = attp->attnum;
+			attrdef[ndef].adnum = attnum;
 			attrdef[ndef].adbin = NULL;
+
 			ndef++;
+		}
+
+		/* Likewise for a missing value */
+		if (attp->atthasmissing)
+		{
+			Datum		missingval;
+			bool		missingNull;
+
+			/* Do we have a missing value? */
+			missingval = heap_getattr(pg_attribute_tuple,
+									  Anum_pg_attribute_attmissingval,
+									  pg_attribute_desc->rd_att,
+									  &missingNull);
+			if (!missingNull)
+			{
+				/* Yes, fetch from the array */
+				MemoryContext oldcxt;
+				bool		is_null;
+				int			one = 1;
+				Datum		missval;
+
+				if (attrmiss == NULL)
+					attrmiss = (AttrMissing *)
+						MemoryContextAllocZero(CacheMemoryContext,
+											   relation->rd_rel->relnatts *
+											   sizeof(AttrMissing));
+
+				missval = array_get_element(missingval,
+											1,
+											&one,
+											-1,
+											attp->attlen,
+											attp->attbyval,
+											attp->attalign,
+											&is_null);
+				Assert(!is_null);
+				if (attp->attbyval)
+				{
+					/* for copy by val just copy the datum direct */
+					attrmiss[attnum - 1].ammissing = missval;
+				}
+				else
+				{
+					/* otherwise copy in the correct context */
+					oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+					attrmiss[attnum - 1].ammissing = datumCopy(missval,
+															   attp->attbyval,
+															   attp->attlen);
+					MemoryContextSwitchTo(oldcxt);
+				}
+				attrmiss[attnum - 1].ammissingPresent = true;
+			}
 		}
 		need--;
 		if (need == 0)
@@ -607,7 +666,8 @@ RelationBuildTupleDesc(Relation relation)
 	/*
 	 * Set up constraint/default info
 	 */
-	if (constr->has_not_null || ndef > 0 || relation->rd_rel->relchecks)
+	if (constr->has_not_null || ndef > 0 ||
+		attrmiss || relation->rd_rel->relchecks)
 	{
 		relation->rd_att->constr = constr;
 
@@ -623,6 +683,8 @@ RelationBuildTupleDesc(Relation relation)
 		}
 		else
 			constr->num_defval = 0;
+
+		constr->missing = attrmiss;
 
 		if (relation->rd_rel->relchecks > 0)	/* CHECKs */
 		{
@@ -4063,10 +4125,6 @@ AttrDefaultFetch(Relation relation)
 
 	systable_endscan(adscan);
 	heap_close(adrel, AccessShareLock);
-
-	if (found != ndef)
-		elog(WARNING, "%d attrdef record(s) missing for rel %s",
-			 ndef - found, RelationGetRelationName(relation));
 }
 
 /*
@@ -4405,7 +4463,7 @@ RelationGetIndexList(Relation relation)
 		 */
 		if (!IndexIsValid(index) || !index->indisunique ||
 			!index->indimmediate ||
-			!heap_attisnull(htup, Anum_pg_index_indpred))
+			!heap_attisnull(htup, Anum_pg_index_indpred, NULL))
 			continue;
 
 		/* Check to see if is a usable btree index on OID */
@@ -4700,7 +4758,7 @@ RelationGetIndexExpressions(Relation relation)
 
 	/* Quick exit if there is nothing to do. */
 	if (relation->rd_indextuple == NULL ||
-		heap_attisnull(relation->rd_indextuple, Anum_pg_index_indexprs))
+		heap_attisnull(relation->rd_indextuple, Anum_pg_index_indexprs, NULL))
 		return NIL;
 
 	/*
@@ -4762,7 +4820,7 @@ RelationGetIndexPredicate(Relation relation)
 
 	/* Quick exit if there is nothing to do. */
 	if (relation->rd_indextuple == NULL ||
-		heap_attisnull(relation->rd_indextuple, Anum_pg_index_indpred))
+		heap_attisnull(relation->rd_indextuple, Anum_pg_index_indpred, NULL))
 		return NIL;
 
 	/*

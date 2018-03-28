@@ -21,12 +21,14 @@
 
 #include "access/hash.h"
 #include "access/htup_details.h"
+#include "access/tupdesc_details.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/hashutils.h"
 #include "utils/resowner_private.h"
 #include "utils/syscache.h"
@@ -129,6 +131,7 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 
 		att->attnotnull = false;
 		att->atthasdef = false;
+		att->atthasmissing = false;
 		att->attidentity = '\0';
 	}
 
@@ -173,6 +176,23 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 			{
 				if (constr->defval[i].adbin)
 					cpy->defval[i].adbin = pstrdup(constr->defval[i].adbin);
+			}
+		}
+
+		if (constr->missing)
+		{
+			cpy->missing = (AttrMissing *) palloc(tupdesc->natts * sizeof(AttrMissing));
+			memcpy(cpy->missing, constr->missing, tupdesc->natts * sizeof(AttrMissing));
+			for (i = tupdesc->natts - 1; i >= 0; i--)
+			{
+				if (constr->missing[i].ammissingPresent)
+				{
+					Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+					cpy->missing[i].ammissing = datumCopy(constr->missing[i].ammissing,
+														  attr->attbyval,
+														  attr->attlen);
+				}
 			}
 		}
 
@@ -227,6 +247,7 @@ TupleDescCopy(TupleDesc dst, TupleDesc src)
 
 		att->attnotnull = false;
 		att->atthasdef = false;
+		att->atthasmissing = false;
 		att->attidentity = '\0';
 	}
 	dst->constr = NULL;
@@ -279,6 +300,7 @@ TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 	/* since we're not copying constraints or defaults, clear these */
 	dstAtt->attnotnull = false;
 	dstAtt->atthasdef = false;
+	dstAtt->atthasmissing = false;
 	dstAtt->attidentity = '\0';
 }
 
@@ -308,6 +330,18 @@ FreeTupleDesc(TupleDesc tupdesc)
 					pfree(attrdef[i].adbin);
 			}
 			pfree(attrdef);
+		}
+		if (tupdesc->constr->missing)
+		{
+			AttrMissing *attrmiss = tupdesc->constr->missing;
+
+			for (i = tupdesc->natts - 1; i >= 0; i--)
+			{
+				if (attrmiss[i].ammissingPresent
+					&& !TupleDescAttr(tupdesc, i)->attbyval)
+					pfree(DatumGetPointer(attrmiss[i].ammissing));
+			}
+			pfree(attrmiss);
 		}
 		if (tupdesc->constr->num_check > 0)
 		{
@@ -469,6 +503,29 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			if (strcmp(defval1->adbin, defval2->adbin) != 0)
 				return false;
 		}
+		if (constr1->missing)
+		{
+			if (!constr2->missing)
+				return false;
+			for (i = 0; i < tupdesc1->natts; i++)
+			{
+				AttrMissing *missval1 = constr1->missing + i;
+				AttrMissing *missval2 = constr2->missing + i;
+
+				if (missval1->ammissingPresent != missval2->ammissingPresent)
+					return false;
+				if (missval1->ammissingPresent)
+				{
+					Form_pg_attribute missatt1 = TupleDescAttr(tupdesc1, i);
+
+					if (!datumIsEqual(missval1->ammissing, missval2->ammissing,
+									  missatt1->attbyval, missatt1->attlen))
+						return false;
+				}
+			}
+		}
+		else if (constr2->missing)
+			return false;
 		n = constr1->num_check;
 		if (n != (int) constr2->num_check)
 			return false;
@@ -584,6 +641,7 @@ TupleDescInitEntry(TupleDesc desc,
 
 	att->attnotnull = false;
 	att->atthasdef = false;
+	att->atthasmissing = false;
 	att->attidentity = '\0';
 	att->attisdropped = false;
 	att->attislocal = true;
@@ -642,6 +700,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 
 	att->attnotnull = false;
 	att->atthasdef = false;
+	att->atthasmissing = false;
 	att->attidentity = '\0';
 	att->attisdropped = false;
 	att->attislocal = true;
@@ -797,6 +856,7 @@ BuildDescForRelation(List *schema)
 
 		constr->has_not_null = true;
 		constr->defval = NULL;
+		constr->missing = NULL;
 		constr->num_defval = 0;
 		constr->check = NULL;
 		constr->num_check = 0;

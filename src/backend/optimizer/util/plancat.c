@@ -1493,8 +1493,8 @@ relation_excluded_by_constraints(PlannerInfo *root,
  * in order.  The executor can special-case such tlists to avoid a projection
  * step at runtime, so we use such tlists preferentially for scan nodes.
  *
- * Exception: if there are any dropped columns, we punt and return NIL.
- * Ideally we would like to handle the dropped-column case too.  However this
+ * Exception: if there are any dropped or missing columns, we punt and return
+ * NIL.  Ideally we would like to handle these cases too.  However this
  * creates problems for ExecTypeFromTL, which may be asked to build a tupdesc
  * for a tlist that includes vars of no-longer-existent types.  In theory we
  * could dig out the required info from the pg_attribute entries of the
@@ -1533,9 +1533,9 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 				Form_pg_attribute att_tup = TupleDescAttr(relation->rd_att,
 														  attrno - 1);
 
-				if (att_tup->attisdropped)
+				if (att_tup->attisdropped || att_tup->atthasmissing)
 				{
-					/* found a dropped col, so punt */
+					/* found a dropped or missing col, so punt */
 					tlist = NIL;
 					break;
 				}

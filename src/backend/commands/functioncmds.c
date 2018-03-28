@@ -2252,7 +2252,7 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(fexpr->funcid));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for function %u", fexpr->funcid);
-	if (!heap_attisnull(tp, Anum_pg_proc_proconfig))
+	if (!heap_attisnull(tp, Anum_pg_proc_proconfig, NULL))
 		callcontext->atomic = true;
 	ReleaseSysCache(tp);
 

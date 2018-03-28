@@ -25,6 +25,8 @@ typedef struct attrDefault
 	char	   *adbin;			/* nodeToString representation of expr */
 } AttrDefault;
 
+typedef struct attrMissing *MissingPtr;
+
 typedef struct constrCheck
 {
 	char	   *ccname;
@@ -38,6 +40,7 @@ typedef struct tupleConstr
 {
 	AttrDefault *defval;		/* array */
 	ConstrCheck *check;			/* array */
+	MissingPtr	missing;		/* missing attributes values, NULL if none */
 	uint16		num_defval;
 	uint16		num_check;
 	bool		has_not_null;

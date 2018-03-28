@@ -133,6 +133,9 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	/* Has DEFAULT value or not */
 	bool		atthasdef BKI_DEFAULT(f);
 
+	/* Has a missing value or not */
+	bool		atthasmissing BKI_DEFAULT(f);
+
 	/* One of the ATTRIBUTE_IDENTITY_* constants below, or '\0' */
 	char		attidentity BKI_DEFAULT("");
 
@@ -167,6 +170,12 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 
 	/* Column-level FDW options */
 	text		attfdwoptions[1] BKI_DEFAULT(_null_);
+
+	/*
+	 * Missing value for added columns. This is a one element array which lets
+	 * us store a value of the attribute type here.
+	 */
+	anyarray	attmissingval BKI_DEFAULT(_null_);
 #endif
 } FormData_pg_attribute;
 
@@ -191,7 +200,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
  * ----------------
  */
 
-#define Natts_pg_attribute				22
+#define Natts_pg_attribute				24
 #define Anum_pg_attribute_attrelid		1
 #define Anum_pg_attribute_attname		2
 #define Anum_pg_attribute_atttypid		3
@@ -206,15 +215,16 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attalign		12
 #define Anum_pg_attribute_attnotnull	13
 #define Anum_pg_attribute_atthasdef		14
-#define Anum_pg_attribute_attidentity	15
-#define Anum_pg_attribute_attisdropped	16
-#define Anum_pg_attribute_attislocal	17
-#define Anum_pg_attribute_attinhcount	18
-#define Anum_pg_attribute_attcollation	19
-#define Anum_pg_attribute_attacl		20
-#define Anum_pg_attribute_attoptions	21
-#define Anum_pg_attribute_attfdwoptions 22
-
+#define Anum_pg_attribute_atthasmissing	15
+#define Anum_pg_attribute_attidentity	16
+#define Anum_pg_attribute_attisdropped	17
+#define Anum_pg_attribute_attislocal	18
+#define Anum_pg_attribute_attinhcount	19
+#define Anum_pg_attribute_attcollation	20
+#define Anum_pg_attribute_attacl		21
+#define Anum_pg_attribute_attoptions	22
+#define Anum_pg_attribute_attfdwoptions	23
+#define Anum_pg_attribute_attmissingval	24
 
 /* ----------------
  *		initial contents of pg_attribute

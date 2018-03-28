@@ -215,8 +215,8 @@ CheckIndexCompatible(Oid oldId,
 	 * We don't assess expressions or predicates; assume incompatibility.
 	 * Also, if the index is invalid for any reason, treat it as incompatible.
 	 */
-	if (!(heap_attisnull(tuple, Anum_pg_index_indpred) &&
-		  heap_attisnull(tuple, Anum_pg_index_indexprs) &&
+	if (!(heap_attisnull(tuple, Anum_pg_index_indpred, NULL) &&
+		  heap_attisnull(tuple, Anum_pg_index_indexprs, NULL) &&
 		  IndexIsValid(indexForm)))
 	{
 		ReleaseSysCache(tuple);

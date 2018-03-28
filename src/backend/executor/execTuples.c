@@ -625,7 +625,15 @@ ExecCopySlotMinimalTuple(TupleTableSlot *slot)
 	if (slot->tts_mintuple)
 		return heap_copy_minimal_tuple(slot->tts_mintuple);
 	if (slot->tts_tuple)
-		return minimal_tuple_from_heap_tuple(slot->tts_tuple);
+	{
+		if (TTS_HAS_PHYSICAL_TUPLE(slot) &&
+			HeapTupleHeaderGetNatts(slot->tts_tuple->t_data)
+			< slot->tts_tupleDescriptor->natts)
+			return minimal_expand_tuple(slot->tts_tuple,
+										slot->tts_tupleDescriptor);
+		else
+			return minimal_tuple_from_heap_tuple(slot->tts_tuple);
+	}
 
 	/*
 	 * Otherwise we need to build a tuple from the Datum array.
@@ -663,7 +671,23 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
 	 * If we have a regular physical tuple then just return it.
 	 */
 	if (TTS_HAS_PHYSICAL_TUPLE(slot))
-		return slot->tts_tuple;
+	{
+		if (HeapTupleHeaderGetNatts(slot->tts_tuple->t_data) <
+			slot->tts_tupleDescriptor->natts)
+		{
+			MemoryContext oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+
+			slot->tts_tuple = heap_expand_tuple(slot->tts_tuple,
+												slot->tts_tupleDescriptor);
+			slot->tts_shouldFree = true;
+			MemoryContextSwitchTo(oldContext);
+			return slot->tts_tuple;
+		}
+		else
+		{
+			return slot->tts_tuple;
+		}
+	}
 
 	/*
 	 * Otherwise materialize the slot...

@@ -4491,7 +4491,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 		funcform->prosecdef ||
 		funcform->proretset ||
 		funcform->prorettype == RECORDOID ||
-		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig) ||
+		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig, NULL) ||
 		funcform->pronargs != list_length(args))
 		return NULL;
 
@@ -5031,7 +5031,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 		funcform->prorettype == VOIDOID ||
 		funcform->prosecdef ||
 		!funcform->proretset ||
-		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig))
+		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig, NULL))
 	{
 		ReleaseSysCache(func_tuple);
 		return NULL;

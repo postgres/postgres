@@ -389,8 +389,6 @@ alter table rewriteme alter column foo type numeric;
 ERROR:  rewrites not allowed
 CONTEXT:  PL/pgSQL function test_evtrig_no_rewrite() line 3 at RAISE
 alter table rewriteme add column baz int default 0;
-ERROR:  rewrites not allowed
-CONTEXT:  PL/pgSQL function test_evtrig_no_rewrite() line 3 at RAISE
 -- test with more than one reason to rewrite a single table
 CREATE OR REPLACE FUNCTION test_evtrig_no_rewrite() RETURNS event_trigger
 LANGUAGE plpgsql AS $$
@@ -404,7 +402,7 @@ alter table rewriteme
  add column onemore int default 0,
  add column another int default -1,
  alter column foo type numeric(10,4);
-NOTICE:  Table 'rewriteme' is being rewritten (reason = 6)
+NOTICE:  Table 'rewriteme' is being rewritten (reason = 4)
 -- shouldn't trigger a table_rewrite event
 alter table rewriteme alter column foo type numeric(12,4);
 -- typed tables are rewritten when their type changes.  Don't emit table
