@@ -163,6 +163,7 @@
   &diskusage;
   &wal;
   &logical-replication;
+  &jit;
   &regress;
 
  </part>

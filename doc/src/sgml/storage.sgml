@@ -875,7 +875,7 @@ data. Empty in ordinary tables.</entry>
   <filename>src/include/storage/bufpage.h</filename>.
  </para>
 
- <para>
+ <para id="heaptuple">
 
   Following the page header are item identifiers
   (<type>ItemIdData</type>), each requiring four bytes.

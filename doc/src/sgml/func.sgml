@@ -15943,6 +15943,14 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       </row>
 
       <row>
+       <entry><literal><function>pg_jit_available()</function></literal></entry>
+       <entry><type>boolean</type></entry>
+       <entry>is <acronym>JIT</acronym> available in this session (see <xref
+       linkend="jit"/>)? Returns <literal>false</literal> if <xref
+       linkend="guc-jit"/> is set to false.</entry>
+      </row>
+
+      <row>
        <entry><literal><function>pg_listening_channels()</function></literal></entry>
        <entry><type>setof text</type></entry>
        <entry>channel names that the session is currently listening on</entry>

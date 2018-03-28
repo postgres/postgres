@@ -48,6 +48,7 @@
 <!ENTITY user-manag    SYSTEM "user-manag.sgml">
 <!ENTITY wal           SYSTEM "wal.sgml">
 <!ENTITY logical-replication    SYSTEM "logical-replication.sgml">
+<!ENTITY jit    SYSTEM "jit.sgml">
 
 <!-- programmer's guide -->
 <!ENTITY bgworker   SYSTEM "bgworker.sgml">

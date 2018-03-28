@@ -758,6 +758,39 @@ su - postgres
        </listitem>
       </varlistentry>
 
+      <varlistentry id="configure-with-llvm">
+       <term><option>--with-llvm</option></term>
+       <listitem>
+        <para>
+         Build with support for <productname>LLVM</productname> based
+         <acronym>JIT</acronym> compilation (see <xref linkend="jit"/>).  This
+         requires the <productname>LLVM</productname> library to be installed.
+         The minimum required version of <productname>LLVM</productname> is
+         currently 3.9.
+        </para>
+        <para>
+         <command>llvm-config</command><indexterm><primary>llvm-config</primary></indexterm>
+         will be used to find the required compilation options.
+         <command>llvm-config</command>, and then
+         <command>llvm-config-$major-$minor</command> for all supported
+         versions, will be searched on <envar>PATH</envar>. If that would not
+         yield the correct binary, use <envar>LLVM_CONFIG</envar> to specify a
+         path to the correct <command>llvm-config</command>. For example
+<programlisting>
+./configure ... --with-llvm LLVM_CONFIG='/path/to/llvm/bin/llvm-config'
+</programlisting>
+        </para>
+
+        <para>
+         <productname>LLVM</productname> support requires a compatible
+         <command>clang</command> compiler (specified, if necessary, using the
+         <envar>CLANG</envar> environment variable), and a working C++
+         compiler (specified, if necessary, using the <envar>CXX</envar>
+         environment variable).
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry>
        <term><option>--with-icu</option></term>
        <listitem>
@@ -1343,6 +1376,16 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <term><envar>CLANG</envar></term>
+       <listitem>
+        <para>
+         path to <command>clang</command> program used to process source code
+         for inlining when compiling with <literal>--with-llvm</literal>
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><envar>CPP</envar></term>
        <listitem>
         <para>
@@ -1428,6 +1471,16 @@ su - postgres
        <listitem>
         <para>
          additional options for linking shared libraries only
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><envar>LLVM_CONFIG</envar></term>
+       <listitem>
+        <para>
+         <command>llvm-config</command> program used to locate the
+         <productname>LLVM</productname> installation.
         </para>
        </listitem>
       </varlistentry>
