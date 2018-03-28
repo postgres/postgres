@@ -311,15 +311,19 @@ receiveFileChunks(const char *sql)
 		chunk = PQgetvalue(res, 0, 2);
 
 		/*
-		 * It's possible that the file was deleted on remote side after we
-		 * created the file map. In this case simply ignore it, as if it was
-		 * not there in the first place, and move on.
+		 * If a file has been deleted on the source, remove it on the target
+		 * as well.  Note that multiple unlink() calls may happen on the same
+		 * file if multiple data chunks are associated with it, hence ignore
+		 * unconditionally anything missing.  If this file is not a relation
+		 * data file, then it has been already truncated when creating the
+		 * file chunk list at the previous execution of the filemap.
 		 */
 		if (PQgetisnull(res, 0, 2))
 		{
 			pg_log(PG_DEBUG,
 				   "received null value for chunk for file \"%s\", file has been deleted\n",
 				   filename);
+			remove_target_file(filename, true);
 			pg_free(filename);
 			PQclear(res);
 			continue;
