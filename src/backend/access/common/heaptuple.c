@@ -112,9 +112,13 @@ getmissingattr(TupleDesc tupleDesc,
 }
 
 /*
- * Fill in missing values for a TupleTableSlot
+ * Fill in missing values for a TupleTableSlot.
+ *
+ * This is only exposed because it's needed for JIT compiled tuple
+ * deforming. That exception aside, there should be no callers outside of this
+ * file.
  */
-static void
+void
 slot_getmissingattrs(TupleTableSlot *slot, int startAttNum, int lastAttNum)
 {
 	AttrMissing *attrmiss = NULL;

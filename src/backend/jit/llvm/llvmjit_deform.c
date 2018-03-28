@@ -21,12 +21,10 @@
 #include <llvm-c/Core.h>
 
 #include "access/htup_details.h"
+#include "access/tupdesc_details.h"
 #include "executor/tuptable.h"
 #include "jit/llvmjit.h"
 #include "jit/llvmjit_emit.h"
-
-
-static LLVMValueRef get_memset(LLVMModuleRef mod);
 
 
 /*
@@ -100,10 +98,23 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 	 */
 	for (attnum = 0; attnum < desc->natts; attnum++)
 	{
-		if (TupleDescAttr(desc, attnum)->attnotnull)
-		{
+		Form_pg_attribute att = TupleDescAttr(desc, attnum);
+
+		/*
+		 * If the column is possibly missing, we can't rely on its (or
+		 * subsequent) NOT NULL constraints to indicate minimum attributes in
+		 * the tuple, so stop here.
+		 */
+		if (att->atthasmissing)
+			break;
+
+		/*
+		 * Column is NOT NULL and there've been no preceding missing columns,
+		 * it's guaranteed that all columns up to here exist at least in the
+		 * NULL bitmap.
+		 */
+		if (att->attnotnull)
 			guaranteed_column_number = attnum;
-		}
 	}
 
 	/* Create the signature and function */
@@ -242,9 +253,8 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 
 	/*
 	 * Check if's guaranteed the all the desired attributes are available in
-	 * tuple. If so, we can start deforming. If not, need to make sure
-	 * tts_values/isnull is set appropriately for columns not available in the
-	 * tuple.
+	 * tuple. If so, we can start deforming. If not, need to make sure to
+	 * fetch the missing columns.
 	 */
 	if ((natts - 1) <= guaranteed_column_number)
 	{
@@ -255,9 +265,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 	}
 	else
 	{
-		LLVMValueRef v_set;
-		LLVMValueRef v_startset;
-		LLVMValueRef v_params[5];
+		LLVMValueRef v_params[3];
 
 		/* branch if not all columns available */
 		LLVMBuildCondBr(b,
@@ -271,19 +279,10 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 		/* if not, memset tts_isnull of relevant cols to true */
 		LLVMPositionBuilderAtEnd(b, b_adjust_unavail_cols);
 
-		v_set = LLVMBuildSub(b,
-							 l_int16_const(attnum),
-							 v_maxatt, "");
-
-		v_startset = LLVMBuildGEP(b, v_tts_nulls, &v_maxatt, 1, "");
-
-		v_params[0] = v_startset;
-		v_params[1] = l_int8_const(1);
-		v_params[2] = LLVMBuildZExt(b, v_set, LLVMInt32Type(), "");
-		v_params[3] = l_int32_const(1);
-		v_params[4] = LLVMConstInt(LLVMInt1Type(), 0, false);
-
-		LLVMBuildCall(b, get_memset(mod),
+		v_params[0] = v_slot;
+		v_params[1] = LLVMBuildZExt(b, v_maxatt, LLVMInt32Type(), "");
+		v_params[2] = l_int32_const(natts);
+		LLVMBuildCall(b, llvm_get_decl(mod, FuncSlotGetmissingattrs),
 					  v_params, lengthof(v_params), "");
 		LLVMBuildBr(b, b_find_start);
 	}
@@ -358,7 +357,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 		{
 			LLVMValueRef v_islast;
 
-			v_islast = LLVMBuildICmp(b, LLVMIntEQ,
+			v_islast = LLVMBuildICmp(b, LLVMIntUGE,
 									 l_attno,
 									 v_maxatt,
 									 "heap_natts");
@@ -366,7 +365,11 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 		}
 		LLVMPositionBuilderAtEnd(b, attstartblocks[attnum]);
 
-		/* check for nulls if necessary */
+		/*
+		 * Check for nulls if necessary. No need to take missing attributes
+		 * into account, because in case they're present the heaptuple's natts
+		 * would have indicated that a slot_getmissingattrs() is needed.
+		 */
 		if (!att->attnotnull)
 		{
 			LLVMBasicBlockRef b_ifnotnull;
@@ -698,32 +701,4 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 	LLVMDisposeBuilder(b);
 
 	return v_deform_fn;
-}
-
-static LLVMValueRef
-get_memset(LLVMModuleRef mod)
-{
-	LLVMTypeRef sig;
-	LLVMValueRef v_fn;
-	LLVMTypeRef param_types[5];
-	const char *nm = "llvm.memset.p0i8.i32";
-
-	v_fn = LLVMGetNamedFunction(mod, nm);
-	if (v_fn)
-		return v_fn;
-
-	param_types[0] = LLVMPointerType(LLVMInt8Type(), 0);	/* addr */
-	param_types[1] = LLVMInt8Type();	/* val */
-	param_types[2] = LLVMInt32Type();	/* len */
-	param_types[3] = LLVMInt32Type();	/* align */
-	param_types[4] = LLVMInt1Type();	/* volatile */
-
-	sig = LLVMFunctionType(LLVMVoidType(), param_types, lengthof(param_types), 0);
-	v_fn = LLVMAddFunction(mod, nm, sig);
-
-	LLVMSetFunctionCallConv(v_fn, LLVMCCallConv);
-
-	Assert(LLVMGetIntrinsicID(v_fn));
-
-	return v_fn;
 }

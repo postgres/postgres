@@ -98,6 +98,7 @@ void	   *referenced_functions[] =
 	strlen,
 	varsize_any,
 	slot_getsomeattrs,
+	slot_getmissingattrs,
 	heap_getsysattr,
 	MakeExpandedObjectReadOnlyInternal,
 	ExecEvalArrayRefSubscript,

@@ -76,6 +76,7 @@ LLVMValueRef AttributeTemplate;
 LLVMValueRef FuncStrlen;
 LLVMValueRef FuncVarsizeAny;
 LLVMValueRef FuncSlotGetsomeattrs;
+LLVMValueRef FuncSlotGetmissingattrs;
 LLVMValueRef FuncHeapGetsysattr;
 LLVMValueRef FuncMakeExpandedObjectReadOnlyInternal;
 LLVMValueRef FuncExecEvalArrayRefSubscript;
@@ -798,6 +799,7 @@ llvm_create_types(void)
 	FuncStrlen = LLVMGetNamedFunction(mod, "strlen");
 	FuncVarsizeAny = LLVMGetNamedFunction(mod, "varsize_any");
 	FuncSlotGetsomeattrs = LLVMGetNamedFunction(mod, "slot_getsomeattrs");
+	FuncSlotGetmissingattrs = LLVMGetNamedFunction(mod, "slot_getmissingattrs");
 	FuncHeapGetsysattr = LLVMGetNamedFunction(mod, "heap_getsysattr");
 	FuncMakeExpandedObjectReadOnlyInternal = LLVMGetNamedFunction(mod, "MakeExpandedObjectReadOnlyInternal");
 	FuncExecEvalArrayRefSubscript = LLVMGetNamedFunction(mod, "ExecEvalArrayRefSubscript");

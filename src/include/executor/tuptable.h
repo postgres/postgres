@@ -179,5 +179,6 @@ extern void slot_getsomeattrs(TupleTableSlot *slot, int attnum);
 extern bool slot_attisnull(TupleTableSlot *slot, int attnum);
 extern bool slot_getsysattr(TupleTableSlot *slot, int attnum,
 				Datum *value, bool *isnull);
+extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum, int lastAttNum);
 
 #endif							/* TUPTABLE_H */
