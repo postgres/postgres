@@ -458,10 +458,9 @@ percentile_disc_final(PG_FUNCTION_ARGS)
 		elog(ERROR, "missing row in percentile_disc");
 
 	/*
-	 * Note: we *cannot* clean up the tuplesort object here, because the value
-	 * to be returned is allocated inside its sortcontext.  We could use
-	 * datumCopy to copy it out of there, but it doesn't seem worth the
-	 * trouble, since the cleanup callback will clear the tuplesort later.
+	 * Note: we could clean up the tuplesort object here, but it doesn't seem
+	 * worth the trouble, since the cleanup callback will clear the tuplesort
+	 * later.
 	 */
 
 	/* We shouldn't have stored any nulls, but do the right thing anyway */
@@ -576,10 +575,9 @@ percentile_cont_final_common(FunctionCallInfo fcinfo,
 	}
 
 	/*
-	 * Note: we *cannot* clean up the tuplesort object here, because the value
-	 * to be returned may be allocated inside its sortcontext.  We could use
-	 * datumCopy to copy it out of there, but it doesn't seem worth the
-	 * trouble, since the cleanup callback will clear the tuplesort later.
+	 * Note: we could clean up the tuplesort object here, but it doesn't seem
+	 * worth the trouble, since the cleanup callback will clear the tuplesort
+	 * later.
 	 */
 
 	PG_RETURN_DATUM(val);
@@ -1098,10 +1096,9 @@ mode_final(PG_FUNCTION_ARGS)
 		pfree(DatumGetPointer(last_val));
 
 	/*
-	 * Note: we *cannot* clean up the tuplesort object here, because the value
-	 * to be returned is allocated inside its sortcontext.  We could use
-	 * datumCopy to copy it out of there, but it doesn't seem worth the
-	 * trouble, since the cleanup callback will clear the tuplesort later.
+	 * Note: we could clean up the tuplesort object here, but it doesn't seem
+	 * worth the trouble, since the cleanup callback will clear the tuplesort
+	 * later.
 	 */
 
 	if (mode_freq)
