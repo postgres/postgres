@@ -1,0 +1,6 @@
+# jsonb_plpythonu extension
+comment = 'transform between jsonb and plpythonu'
+default_version = '1.0'
+module_pathname = '$libdir/jsonb_plpython2'
+relocatable = true
+requires = 'plpythonu'

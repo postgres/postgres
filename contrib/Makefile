@@ -81,9 +81,9 @@ ALWAYS_SUBDIRS += hstore_plperl
 endif
 
 ifeq ($(with_python),yes)
-SUBDIRS += hstore_plpython ltree_plpython
+SUBDIRS += hstore_plpython jsonb_plpython ltree_plpython
 else
-ALWAYS_SUBDIRS += hstore_plpython ltree_plpython
+ALWAYS_SUBDIRS += hstore_plpython jsonb_plpython ltree_plpython
 endif
 
 # Missing:

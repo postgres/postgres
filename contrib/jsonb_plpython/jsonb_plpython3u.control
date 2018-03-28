@@ -1,0 +1,6 @@
+# jsonb_plpython3u extension
+comment = 'transform between jsonb and plpython3u'
+default_version = '1.0'
+module_pathname = '$libdir/jsonb_plpython3'
+relocatable = true
+requires = 'plpython3u'
