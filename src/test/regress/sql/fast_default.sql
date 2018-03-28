@@ -290,7 +290,7 @@ FROM T
 ORDER BY pk LIMIT 10;
 
 -- Aggregate function
-SELECT SUM(c_bigint), MAX(c_text), MIN(c_text) FROM T;
+SELECT SUM(c_bigint), MAX(c_text COLLATE "C" ), MIN(c_text COLLATE "C") FROM T;
 
 -- ORDER BY
 SELECT * FROM T ORDER BY c_bigint, c_text, pk LIMIT 10;
