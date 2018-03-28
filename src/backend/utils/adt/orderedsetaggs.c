@@ -329,10 +329,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
  *
  * In the case where we're not expecting multiple finalfn calls, we could
  * arguably rely on the finalfn to clean up; but it's easier and more testable
- * if we just do it the same way in either case.  Note that many of the
- * finalfns could *not* free the tuplesort object, at least not without extra
- * data copying, because what they return is a pointer to a datum inside the
- * tuplesort object.
+ * if we just do it the same way in either case.
  */
 static void
 ordered_set_shutdown(Datum arg)

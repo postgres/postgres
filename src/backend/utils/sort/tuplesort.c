@@ -2147,12 +2147,13 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
  * NULL value in leading attribute will set abbreviated value to zeroed
  * representation, which caller may rely on in abbreviated inequality check.
  *
- * If copy is true, the slot receives a copied tuple that will stay valid
- * regardless of future manipulations of the tuplesort's state.  Memory is
- * owned by the caller.  If copy is false, the slot will just receive a
- * pointer to a tuple held within the tuplesort, which is more efficient, but
- * only safe for callers that are prepared to have any subsequent manipulation
- * of the tuplesort's state invalidate slot contents.
+ * If copy is true, the slot receives a tuple that's been copied into the
+ * caller's memory context, so that it will stay valid regardless of future
+ * manipulations of the tuplesort's state (up to and including deleting the
+ * tuplesort).  If copy is false, the slot will just receive a pointer to a
+ * tuple held within the tuplesort, which is more efficient, but only safe for
+ * callers that are prepared to have any subsequent manipulation of the
+ * tuplesort's state invalidate slot contents.
  */
 bool
 tuplesort_gettupleslot(Tuplesortstate *state, bool forward, bool copy,
@@ -2230,8 +2231,8 @@ tuplesort_getindextuple(Tuplesortstate *state, bool forward)
  * Returns false if no more datums.
  *
  * If the Datum is pass-by-ref type, the returned value is freshly palloc'd
- * and is now owned by the caller (this differs from similar routines for
- * other types of tuplesorts).
+ * in caller's context, and is now owned by the caller (this differs from
+ * similar routines for other types of tuplesorts).
  *
  * Caller may optionally be passed back abbreviated value (on true return
  * value) when abbreviation was used, which can be used to cheaply avoid
@@ -2253,6 +2254,9 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 		return false;
 	}
 
+	/* Ensure we copy into caller's memory context */
+	MemoryContextSwitchTo(oldcontext);
+
 	/* Record abbreviated key for caller */
 	if (state->sortKeys->abbrev_converter && abbrev)
 		*abbrev = stup.datum1;
@@ -2268,8 +2272,6 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 		*val = datumCopy(PointerGetDatum(stup.tuple), false, state->datumTypeLen);
 		*isNull = false;
 	}
-
-	MemoryContextSwitchTo(oldcontext);
 
 	return true;
 }
