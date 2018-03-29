@@ -866,7 +866,7 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 			if (fsm_get_avail(page, slot) != child_avail)
 			{
 				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-				fsm_set_avail(BufferGetPage(buf), slot, child_avail);
+				fsm_set_avail(page, slot, child_avail);
 				MarkBufferDirtyHint(buf, false);
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			}
@@ -874,12 +874,13 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 	}
 
 	/* Now get the maximum value on the page, to return to caller */
-	max_avail = fsm_get_max_avail(BufferGetPage(buf));
+	max_avail = fsm_get_max_avail(page);
 
 	/*
 	 * Reset the next slot pointer. This encourages the use of low-numbered
 	 * pages, increasing the chances that a later vacuum can truncate the
-	 * relation.
+	 * relation.  We don't bother with a lock here, nor with marking the page
+	 * dirty if it wasn't already, since this is just a hint.
 	 */
 	((FSMPage) PageGetContents(page))->fp_next_slot = 0;
 
