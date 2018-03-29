@@ -4,7 +4,7 @@
  *
  *	Implements the custom output format.
  *
- *	The comments with the routined in this code are a good place to
+ *	The comments with the routines in this code are a good place to
  *	understand how to write a new format.
  *
  *	See the headers to pg_restore for more details.
