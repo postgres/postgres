@@ -1,4 +1,4 @@
-# Basic logical replication test
+# This test checks that constraints work on subscriber
 use strict;
 use warnings;
 use PostgresNode;
