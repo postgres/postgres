@@ -189,8 +189,8 @@ reality, InvalidBlockNumber.
 After computing the ostensibly-correct bucket number based on our cached
 copy of the metapage, we lock the corresponding primary bucket page and
 check whether the bucket count stored in hasho_prevblkno is greater than
-our the number of buckets stored in our cached copy of the metapage.  If
-so, the bucket has certainly been split, because the must originally
+the number of buckets stored in our cached copy of the metapage.  If
+so, the bucket has certainly been split, because the count must originally
 have been less than the number of buckets that existed at that time and
 can't have increased except due to a split.  If not, the bucket can't have
 been split, because a split would have created a new bucket with a higher
