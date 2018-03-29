@@ -305,6 +305,8 @@ static int exec_stmt_commit(PLpgSQL_execstate *estate,
 				 PLpgSQL_stmt_commit *stmt);
 static int exec_stmt_rollback(PLpgSQL_execstate *estate,
 				   PLpgSQL_stmt_rollback *stmt);
+static int exec_stmt_set(PLpgSQL_execstate *estate,
+				   PLpgSQL_stmt_set *stmt);
 
 static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
 					 PLpgSQL_function *func,
@@ -2003,6 +2005,10 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 
 		case PLPGSQL_STMT_ROLLBACK:
 			rc = exec_stmt_rollback(estate, (PLpgSQL_stmt_rollback *) stmt);
+			break;
+
+		case PLPGSQL_STMT_SET:
+			rc = exec_stmt_set(estate, (PLpgSQL_stmt_set *) stmt);
 			break;
 
 		default:
@@ -4728,6 +4734,35 @@ exec_stmt_rollback(PLpgSQL_execstate *estate, PLpgSQL_stmt_rollback *stmt)
 
 	estate->simple_eval_estate = NULL;
 	plpgsql_create_econtext(estate);
+
+	return PLPGSQL_RC_OK;
+}
+
+/*
+ * exec_stmt_set
+ *
+ * Execute SET/RESET statement.
+ *
+ * We just parse and execute the statement normally, but we have to do it
+ * without setting a snapshot, for things like SET TRANSACTION.
+ */
+static int
+exec_stmt_set(PLpgSQL_execstate *estate, PLpgSQL_stmt_set *stmt)
+{
+	PLpgSQL_expr *expr = stmt->expr;
+	int			rc;
+
+	if (expr->plan == NULL)
+	{
+		exec_prepare_plan(estate, expr, 0, true);
+		expr->plan->no_snapshots = true;
+	}
+
+	rc = SPI_execute_plan(expr->plan, NULL, NULL, estate->readonly_func, 0);
+
+	if (rc != SPI_OK_UTILITY)
+		elog(ERROR, "SPI_execute_plan failed executing query \"%s\": %s",
+			 expr->query, SPI_result_code_string(rc));
 
 	return PLPGSQL_RC_OK;
 }

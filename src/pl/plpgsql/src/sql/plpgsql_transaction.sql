@@ -317,6 +317,31 @@ $$;
 SELECT * FROM test3;
 
 
+-- SET TRANSACTION
+DO LANGUAGE plpgsql $$
+BEGIN
+    PERFORM 1;
+    RAISE INFO '%', current_setting('transaction_isolation');
+    COMMIT;
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    PERFORM 1;
+    RAISE INFO '%', current_setting('transaction_isolation');
+    COMMIT;
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    RESET TRANSACTION ISOLATION LEVEL;
+    PERFORM 1;
+    RAISE INFO '%', current_setting('transaction_isolation');
+    COMMIT;
+END;
+$$;
+
+-- error case
+DO LANGUAGE plpgsql $$
+BEGIN
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+END;
+$$;
+
 DROP TABLE test1;
 DROP TABLE test2;
 DROP TABLE test3;
