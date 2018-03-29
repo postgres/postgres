@@ -2340,7 +2340,6 @@ typedef enum
  * 		have been initialized.
  * agg_partial_costs gives partial aggregation costs.
  * agg_final_costs gives finalization costs.
- * target is the PathTarget to be used while creating paths.
  * target_parallel_safe is true if target is parallel safe.
  * havingQual gives list of quals to be applied after aggregation.
  * targetList gives list of columns to be projected.
@@ -2355,7 +2354,6 @@ typedef struct
 	AggClauseCosts agg_final_costs;
 
 	/* Data which may differ across partitions. */
-	PathTarget *target;
 	bool		target_parallel_safe;
 	Node	   *havingQual;
 	List	   *targetList;

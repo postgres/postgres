@@ -3744,7 +3744,6 @@ create_grouping_paths(PlannerInfo *root,
 			flags |= GROUPING_CAN_PARTIAL_AGG;
 
 		extra.flags = flags;
-		extra.target = target;
 		extra.target_parallel_safe = target_parallel_safe;
 		extra.havingQual = parse->havingQual;
 		extra.targetList = parse->targetList;
@@ -7029,7 +7028,7 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 	int			cnt_parts;
 	List	   *grouped_live_children = NIL;
 	List	   *partially_grouped_live_children = NIL;
-	PathTarget *target = extra->target;
+	PathTarget *target = grouped_rel->reltarget;
 
 	Assert(patype != PARTITIONWISE_AGGREGATE_NONE);
 	Assert(patype != PARTITIONWISE_AGGREGATE_PARTIAL ||
@@ -7062,7 +7061,6 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 			adjust_appendrel_attrs(root,
 								   (Node *) target->exprs,
 								   nappinfos, appinfos);
-		child_extra.target = child_target;
 
 		/* Translate havingQual and targetList. */
 		child_extra.havingQual = (Node *)
