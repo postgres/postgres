@@ -180,13 +180,13 @@ have a corrupted page, with a parent somewhere with too small a value.
 Secondly, if we detect corrupted pages while we search, traversing down
 the tree. That check will notice if a parent node is set to too high a value.
 In both cases, the upper nodes on the page are immediately rebuilt, fixing
-the corruption.
+the corruption so far as that page is concerned.
 
-Vacuum updates all the bottom level pages with correct amount of free space
-on the heap pages, fixing any outdated values there. After the heap and
-index passes are done, FreeSpaceMapVacuum is called, and the FSM tree is
-scanned in depth-first order. This fixes any discrepancies between upper
-and lower level FSM pages.
+VACUUM updates all the bottom-level FSM pages with the correct amount of free
+space on corresponding heap pages, as it proceeds through the heap.  This
+goes through fsm_set_avail(), so that the upper nodes on those pages are
+immediately updated.  Periodically, VACUUM calls FreeSpaceMapVacuum[Range]
+to propagate the new free-space info into the upper pages of the FSM tree.
 
 TODO
 ----

@@ -85,6 +85,15 @@
 #define VACUUM_TRUNCATE_LOCK_TIMEOUT			5000	/* ms */
 
 /*
+ * When a table has no indexes, vacuum the FSM after every 8GB, approximately
+ * (it won't be exact because we only vacuum FSM after processing a heap page
+ * that has some removable tuples).  When there are indexes, this is ignored,
+ * and we vacuum FSM after each index/heap cleaning pass.
+ */
+#define VACUUM_FSM_EVERY_PAGES \
+	((BlockNumber) (((uint64) 8 * 1024 * 1024 * 1024) / BLCKSZ))
+
+/*
  * Guesstimation of number of dead tuples per page.  This is used to
  * provide an upper limit to memory allocated when vacuuming small
  * tables.
@@ -285,9 +294,6 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
 								 PROGRESS_VACUUM_PHASE_FINAL_CLEANUP);
 
-	/* Vacuum the Free Space Map */
-	FreeSpaceMapVacuum(onerel);
-
 	/*
 	 * Update statistics in pg_class.
 	 *
@@ -465,7 +471,8 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	TransactionId relfrozenxid = onerel->rd_rel->relfrozenxid;
 	TransactionId relminmxid = onerel->rd_rel->relminmxid;
 	BlockNumber empty_pages,
-				vacuumed_pages;
+				vacuumed_pages,
+				next_fsm_block_to_vacuum;
 	double		num_tuples,		/* total number of nonremovable tuples */
 				live_tuples,	/* live tuples (reltuples estimate) */
 				tups_vacuumed,	/* tuples cleaned up by vacuum */
@@ -501,6 +508,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 						relname)));
 
 	empty_pages = vacuumed_pages = 0;
+	next_fsm_block_to_vacuum = (BlockNumber) 0;
 	num_tuples = live_tuples = tups_vacuumed = nkeep = nunused = 0;
 
 	indstats = (IndexBulkDeleteResult **)
@@ -751,6 +759,13 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 			 */
 			vacrelstats->num_dead_tuples = 0;
 			vacrelstats->num_index_scans++;
+
+			/*
+			 * Vacuum the Free Space Map to make newly-freed space visible on
+			 * upper-level FSM pages.  Note we have not yet processed blkno.
+			 */
+			FreeSpaceMapVacuumRange(onerel, next_fsm_block_to_vacuum, blkno);
+			next_fsm_block_to_vacuum = blkno;
 
 			/* Report that we are once again scanning the heap */
 			pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
@@ -1200,6 +1215,19 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 			 */
 			vacrelstats->num_dead_tuples = 0;
 			vacuumed_pages++;
+
+			/*
+			 * Periodically do incremental FSM vacuuming to make newly-freed
+			 * space visible on upper FSM pages.  Note: although we've cleaned
+			 * the current block, we haven't yet updated its FSM entry (that
+			 * happens further down), so passing end == blkno is correct.
+			 */
+			if (blkno - next_fsm_block_to_vacuum >= VACUUM_FSM_EVERY_PAGES)
+			{
+				FreeSpaceMapVacuumRange(onerel, next_fsm_block_to_vacuum,
+										blkno);
+				next_fsm_block_to_vacuum = blkno;
+			}
 		}
 
 		freespace = PageGetHeapFreeSpace(page);
@@ -1367,6 +1395,13 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 		lazy_vacuum_heap(onerel, vacrelstats);
 		vacrelstats->num_index_scans++;
 	}
+
+	/*
+	 * Vacuum the remainder of the Free Space Map.  We must do this whether or
+	 * not there were indexes.
+	 */
+	if (blkno > next_fsm_block_to_vacuum)
+		FreeSpaceMapVacuumRange(onerel, next_fsm_block_to_vacuum, blkno);
 
 	/* report all blocks vacuumed; and that we're cleaning up */
 	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_VACUUMED, blkno);

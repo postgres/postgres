@@ -108,7 +108,9 @@ static Size fsm_space_cat_to_avail(uint8 cat);
 static int fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 				   uint8 newValue, uint8 minValue);
 static BlockNumber fsm_search(Relation rel, uint8 min_cat);
-static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof);
+static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr,
+				BlockNumber start, BlockNumber end,
+				bool *eof);
 static BlockNumber fsm_get_lastblckno(Relation rel, FSMAddress addr);
 static void fsm_update_recursive(Relation rel, FSMAddress addr, uint8 new_cat);
 
@@ -370,21 +372,48 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	 */
 	if (rel->rd_smgr)
 		rel->rd_smgr->smgr_fsm_nblocks = new_nfsmblocks;
+
+	/*
+	 * Update upper-level FSM pages to account for the truncation.  This is
+	 * important because the just-truncated pages were likely marked as
+	 * all-free, and would be preferentially selected.
+	 */
+	FreeSpaceMapVacuumRange(rel, nblocks, InvalidBlockNumber);
 }
 
 /*
- * FreeSpaceMapVacuum - scan and fix any inconsistencies in the FSM
+ * FreeSpaceMapVacuum - update upper-level pages in the rel's FSM
+ *
+ * We assume that the bottom-level pages have already been updated with
+ * new free-space information.
  */
 void
 FreeSpaceMapVacuum(Relation rel)
 {
 	bool		dummy;
 
-	/*
-	 * Traverse the tree in depth-first order. The tree is stored physically
-	 * in depth-first order, so this should be pretty I/O efficient.
-	 */
-	fsm_vacuum_page(rel, FSM_ROOT_ADDRESS, &dummy);
+	/* Recursively scan the tree, starting at the root */
+	(void) fsm_vacuum_page(rel, FSM_ROOT_ADDRESS,
+						   (BlockNumber) 0, InvalidBlockNumber,
+						   &dummy);
+}
+
+/*
+ * FreeSpaceMapVacuumRange - update upper-level pages in the rel's FSM
+ *
+ * As above, but assume that only heap pages between start and end-1 inclusive
+ * have new free-space information, so update only the upper-level slots
+ * covering that block range.  end == InvalidBlockNumber is equivalent to
+ * "all the rest of the relation".
+ */
+void
+FreeSpaceMapVacuumRange(Relation rel, BlockNumber start, BlockNumber end)
+{
+	bool		dummy;
+
+	/* Recursively scan the tree, starting at the root */
+	if (end > start)
+		(void) fsm_vacuum_page(rel, FSM_ROOT_ADDRESS, start, end, &dummy);
 }
 
 /******** Internal routines ********/
@@ -783,9 +812,21 @@ fsm_search(Relation rel, uint8 min_cat)
 
 /*
  * Recursive guts of FreeSpaceMapVacuum
+ *
+ * Examine the FSM page indicated by addr, as well as its children, updating
+ * upper-level nodes that cover the heap block range from start to end-1.
+ * (It's okay if end is beyond the actual end of the map.)
+ * Return the maximum freespace value on this page.
+ *
+ * If addr is past the end of the FSM, set *eof_p to true and return 0.
+ *
+ * This traverses the tree in depth-first order.  The tree is stored
+ * physically in depth-first order, so this should be pretty I/O efficient.
  */
 static uint8
-fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
+fsm_vacuum_page(Relation rel, FSMAddress addr,
+				BlockNumber start, BlockNumber end,
+				bool *eof_p)
 {
 	Buffer		buf;
 	Page		page;
@@ -804,15 +845,52 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 	page = BufferGetPage(buf);
 
 	/*
-	 * Recurse into children, and fix the information stored about them at
-	 * this level.
+	 * If we're above the bottom level, recurse into children, and fix the
+	 * information stored about them at this level.
 	 */
 	if (addr.level > FSM_BOTTOM_LEVEL)
 	{
-		int			slot;
+		FSMAddress	fsm_start,
+					fsm_end;
+		uint16		fsm_start_slot,
+					fsm_end_slot;
+		int			slot,
+					start_slot,
+					end_slot;
 		bool		eof = false;
 
-		for (slot = 0; slot < SlotsPerFSMPage; slot++)
+		/*
+		 * Compute the range of slots we need to update on this page, given
+		 * the requested range of heap blocks to consider.  The first slot to
+		 * update is the one covering the "start" block, and the last slot is
+		 * the one covering "end - 1".  (Some of this work will be duplicated
+		 * in each recursive call, but it's cheap enough to not worry about.)
+		 */
+		fsm_start = fsm_get_location(start, &fsm_start_slot);
+		fsm_end = fsm_get_location(end - 1, &fsm_end_slot);
+
+		while (fsm_start.level < addr.level)
+		{
+			fsm_start = fsm_get_parent(fsm_start, &fsm_start_slot);
+			fsm_end = fsm_get_parent(fsm_end, &fsm_end_slot);
+		}
+		Assert(fsm_start.level == addr.level);
+
+		if (fsm_start.logpageno == addr.logpageno)
+			start_slot = fsm_start_slot;
+		else if (fsm_start.logpageno > addr.logpageno)
+			start_slot = SlotsPerFSMPage;	/* shouldn't get here... */
+		else
+			start_slot = 0;
+
+		if (fsm_end.logpageno == addr.logpageno)
+			end_slot = fsm_end_slot;
+		else if (fsm_end.logpageno > addr.logpageno)
+			end_slot = SlotsPerFSMPage - 1;
+		else
+			end_slot = -1;		/* shouldn't get here... */
+
+		for (slot = start_slot; slot <= end_slot; slot++)
 		{
 			int			child_avail;
 
@@ -820,7 +898,9 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 
 			/* After we hit end-of-file, just clear the rest of the slots */
 			if (!eof)
-				child_avail = fsm_vacuum_page(rel, fsm_get_child(addr, slot), &eof);
+				child_avail = fsm_vacuum_page(rel, fsm_get_child(addr, slot),
+											  start, end,
+											  &eof);
 			else
 				child_avail = 0;
 
@@ -835,6 +915,7 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 		}
 	}
 
+	/* Now get the maximum value on the page, to return to caller */
 	max_avail = fsm_get_max_avail(BufferGetPage(buf));
 
 	/*
