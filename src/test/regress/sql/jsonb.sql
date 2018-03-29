@@ -1105,3 +1105,25 @@ select ts_headline('english', '{"a": "aaa bbb", "b": {"c": "ccc ddd fff", "c1": 
 select ts_headline('null'::jsonb, tsquery('aaa & bbb'));
 select ts_headline('{}'::jsonb, tsquery('aaa & bbb'));
 select ts_headline('[]'::jsonb, tsquery('aaa & bbb'));
+
+-- casts
+select 'true'::jsonb::bool;
+select '[]'::jsonb::bool;
+select '1.0'::jsonb::float;
+select '[1.0]'::jsonb::float;
+select '12345'::jsonb::int4;
+select '"hello"'::jsonb::int4;
+select '12345'::jsonb::numeric;
+select '{}'::jsonb::numeric;
+select '12345.05'::jsonb::numeric;
+select '12345.05'::jsonb::float4;
+select '12345.05'::jsonb::float8;
+select '12345.05'::jsonb::int2;
+select '12345.05'::jsonb::int4;
+select '12345.05'::jsonb::int8;
+select '12345.0000000000000000000000000000000000000000000005'::jsonb::numeric;
+select '12345.0000000000000000000000000000000000000000000005'::jsonb::float4;
+select '12345.0000000000000000000000000000000000000000000005'::jsonb::float8;
+select '12345.0000000000000000000000000000000000000000000005'::jsonb::int2;
+select '12345.0000000000000000000000000000000000000000000005'::jsonb::int4;
+select '12345.0000000000000000000000000000000000000000000005'::jsonb::int8;

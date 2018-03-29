@@ -392,4 +392,13 @@ DATA(insert ( 1700 1700 1703 i f ));
 DATA(insert (  114 3802    0 a i ));
 DATA(insert ( 3802	114    0 a i ));
 
+/* jsonb to numeric and bool types */
+DATA(insert ( 3802	16	 3556 e f ));
+DATA(insert ( 3802	1700 3449 e f ));
+DATA(insert ( 3802	21   3450 e f ));
+DATA(insert ( 3802	23   3451 e f ));
+DATA(insert ( 3802	20   3452 e f ));
+DATA(insert ( 3802	700  3453 e f ));
+DATA(insert ( 3802	701  2580 e f ));
+
 #endif							/* PG_CAST_H */
