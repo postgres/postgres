@@ -222,9 +222,10 @@ static bool can_partial_agg(PlannerInfo *root,
 				const AggClauseCosts *agg_costs);
 static void apply_scanjoin_target_to_paths(PlannerInfo *root,
 							   RelOptInfo *rel,
-							   PathTarget *scanjoin_target,
+							   List *scanjoin_targets,
+							   List *scanjoin_targets_contain_srfs,
 							   bool scanjoin_target_parallel_safe,
-							   bool modify_in_place);
+							   bool tlist_same_exprs);
 static void create_partitionwise_grouping_paths(PlannerInfo *root,
 									RelOptInfo *input_rel,
 									RelOptInfo *grouped_rel,
@@ -1749,6 +1750,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		List	   *scanjoin_targets;
 		List	   *scanjoin_targets_contain_srfs;
 		bool		scanjoin_target_parallel_safe;
+		bool		scanjoin_target_same_exprs;
 		bool		have_grouping;
 		AggClauseCosts agg_costs;
 		WindowFuncLists *wflists = NULL;
@@ -1967,34 +1969,33 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		}
 		else
 		{
-			/* initialize lists, just to keep compiler quiet */
+			/* initialize lists; for most of these, dummy values are OK */
 			final_targets = final_targets_contain_srfs = NIL;
 			sort_input_targets = sort_input_targets_contain_srfs = NIL;
 			grouping_targets = grouping_targets_contain_srfs = NIL;
-			scanjoin_targets = scanjoin_targets_contain_srfs = NIL;
+			scanjoin_targets = list_make1(scanjoin_target);
+			scanjoin_targets_contain_srfs = NIL;
 		}
 
 		/*
-		 * Generate Gather or Gather Merge paths for the topmost scan/join
-		 * relation.  Once that's done, we must re-determine which paths are
-		 * cheapest.  (The previously-cheapest path might even have been
-		 * pfree'd!)
+		 * If the final scan/join target is not parallel-safe, we must
+		 * generate Gather paths now, since no partial paths will be generated
+		 * with the final scan/join targetlist.  Otherwise, the Gather or
+		 * Gather Merge paths generated within apply_scanjoin_target_to_paths
+		 * will be superior to any we might generate now in that the
+		 * projection will be done in by each participant rather than only in
+		 * the leader.
 		 */
-		generate_gather_paths(root, current_rel, false);
-		set_cheapest(current_rel);
+		if (!scanjoin_target_parallel_safe)
+			generate_gather_paths(root, current_rel, false);
 
-		/*
-		 * Forcibly apply SRF-free scan/join target to all the Paths for the
-		 * scan/join rel.
-		 */
-		apply_scanjoin_target_to_paths(root, current_rel, scanjoin_target,
-									   scanjoin_target_parallel_safe, true);
-
-		/* Now fix things up if scan/join target contains SRFs */
-		if (parse->hasTargetSRFs)
-			adjust_paths_for_srfs(root, current_rel,
-								  scanjoin_targets,
-								  scanjoin_targets_contain_srfs);
+		/* Apply scan/join target. */
+		scanjoin_target_same_exprs = list_length(scanjoin_targets) == 1
+			&& equal(scanjoin_target->exprs, current_rel->reltarget->exprs);
+		apply_scanjoin_target_to_paths(root, current_rel, scanjoin_targets,
+									   scanjoin_targets_contain_srfs,
+									   scanjoin_target_parallel_safe,
+									   scanjoin_target_same_exprs);
 
 		/*
 		 * Save the various upper-rel PathTargets we just computed into
@@ -6796,24 +6797,88 @@ can_partial_agg(PlannerInfo *root, const AggClauseCosts *agg_costs)
 /*
  * apply_scanjoin_target_to_paths
  *
- * Applies scan/join target to all the Paths for the scan/join rel.
+ * Adjust the final scan/join relation, and recursively all of its children,
+ * to generate the final scan/join target.  It would be more correct to model
+ * this as a separate planning step with a new RelOptInfo at the toplevel and
+ * for each child relation, but doing it this way is noticeably cheaper.
+ * Maybe that problem can be solved at some point, but for now we do this.
+ *
+ * If tlist_same_exprs is true, then the scan/join target to be applied has
+ * the same expressions as the existing reltarget, so we need only insert the
+ * appropriate sortgroupref information.  By avoiding the creation of
+ * projection paths we save effort both immediately and at plan creation time.
  */
 static void
 apply_scanjoin_target_to_paths(PlannerInfo *root,
 							   RelOptInfo *rel,
-							   PathTarget *scanjoin_target,
+							   List *scanjoin_targets,
+							   List *scanjoin_targets_contain_srfs,
 							   bool scanjoin_target_parallel_safe,
-							   bool modify_in_place)
+							   bool tlist_same_exprs)
 {
 	ListCell   *lc;
+	PathTarget *scanjoin_target;
+
+	check_stack_depth();
 
 	/*
-	 * In principle we should re-run set_cheapest() here to identify the
-	 * cheapest path, but it seems unlikely that adding the same tlist eval
-	 * costs to all the paths would change that, so we don't bother. Instead,
-	 * just assume that the cheapest-startup and cheapest-total paths remain
-	 * so.  (There should be no parameterized paths anymore, so we needn't
-	 * worry about updating cheapest_parameterized_paths.)
+	 * If the scan/join target is not parallel-safe, then the new partial
+	 * pathlist is the empty list.
+	 */
+	if (!scanjoin_target_parallel_safe)
+	{
+		rel->partial_pathlist = NIL;
+		rel->consider_parallel = false;
+	}
+
+	/*
+	 * Update the reltarget.  This may not be strictly necessary in all cases,
+	 * but it is at least necessary when create_append_path() gets called
+	 * below directly or indirectly, since that function uses the reltarget as
+	 * the pathtarget for the resulting path.  It seems like a good idea to do
+	 * it unconditionally.
+	 */
+	rel->reltarget = llast_node(PathTarget, scanjoin_targets);
+
+	/* Special case: handly dummy relations separately. */
+	if (IS_DUMMY_REL(rel))
+	{
+		/*
+		 * Since this is a dummy rel, it's got a single Append path with no
+		 * child paths.  Replace it with a new path having the final scan/join
+		 * target.  (Note that since Append is not projection-capable, it
+		 * would be bad to handle this using the general purpose code below;
+		 * we'd end up putting a ProjectionPath on top of the existing Append
+		 * node, which would cause this relation to stop appearing to be a
+		 * dummy rel.)
+		 */
+		rel->pathlist = list_make1(create_append_path(rel, NIL, NIL, NULL,
+													  0, false, NIL, -1));
+		rel->partial_pathlist = NIL;
+		set_cheapest(rel);
+		Assert(IS_DUMMY_REL(rel));
+
+		/*
+		 * Forget about any child relations.  There's no point in adjusting
+		 * them and no point in using them for later planning stages (in
+		 * particular, partitionwise aggregate).
+		 */
+		rel->nparts = 0;
+		rel->part_rels = NULL;
+		rel->boundinfo = NULL;
+
+		return;
+	}
+
+	/* Extract SRF-free scan/join target. */
+	scanjoin_target = linitial_node(PathTarget, scanjoin_targets);
+
+	/*
+	 * Adjust each input path.  If the tlist exprs are the same, we can just
+	 * inject the sortgroupref information into the existing pathtarget.
+	 * Otherwise, replace each path with a projection path that generates the
+	 * SRF-free scan/join target.  This can't change the ordering of paths
+	 * within rel->pathlist, so we just modify the list in place.
 	 */
 	foreach(lc, rel->pathlist)
 	{
@@ -6822,52 +6887,31 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 
 		Assert(subpath->param_info == NULL);
 
-		/*
-		 * Don't use apply_projection_to_path() when modify_in_place is false,
-		 * because there could be other pointers to these paths, and therefore
-		 * we mustn't modify them in place.
-		 */
-		if (modify_in_place)
-			newpath = apply_projection_to_path(root, rel, subpath,
-											   scanjoin_target);
+		if (tlist_same_exprs)
+			subpath->pathtarget->sortgrouprefs =
+				scanjoin_target->sortgrouprefs;
 		else
+		{
 			newpath = (Path *) create_projection_path(root, rel, subpath,
 													  scanjoin_target);
-
-		/* If we had to add a Result, newpath is different from subpath */
-		if (newpath != subpath)
-		{
 			lfirst(lc) = newpath;
-			if (subpath == rel->cheapest_startup_path)
-				rel->cheapest_startup_path = newpath;
-			if (subpath == rel->cheapest_total_path)
-				rel->cheapest_total_path = newpath;
 		}
 	}
 
-	/*
-	 * Upper planning steps which make use of the top scan/join rel's partial
-	 * pathlist will expect partial paths for that rel to produce the same
-	 * output as complete paths ... and we just changed the output for the
-	 * complete paths, so we'll need to do the same thing for partial paths.
-	 * But only parallel-safe expressions can be computed by partial paths.
-	 */
-	if (rel->partial_pathlist && scanjoin_target_parallel_safe)
+	/* Same for partial paths. */
+	foreach(lc, rel->partial_pathlist)
 	{
-		/* Apply the scan/join target to each partial path */
-		foreach(lc, rel->partial_pathlist)
+		Path	   *subpath = (Path *) lfirst(lc);
+		Path	   *newpath;
+
+		/* Shouldn't have any parameterized paths anymore */
+		Assert(subpath->param_info == NULL);
+
+		if (tlist_same_exprs)
+			subpath->pathtarget->sortgrouprefs =
+				scanjoin_target->sortgrouprefs;
+		else
 		{
-			Path	   *subpath = (Path *) lfirst(lc);
-			Path	   *newpath;
-
-			/* Shouldn't have any parameterized paths anymore */
-			Assert(subpath->param_info == NULL);
-
-			/*
-			 * Don't use apply_projection_to_path() here, because there could
-			 * be other pointers to these paths, and therefore we mustn't
-			 * modify them in place.
-			 */
 			newpath = (Path *) create_projection_path(root,
 													  rel,
 													  subpath,
@@ -6875,16 +6919,83 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 			lfirst(lc) = newpath;
 		}
 	}
-	else
+
+	/* Now fix things up if scan/join target contains SRFs */
+	if (root->parse->hasTargetSRFs)
+		adjust_paths_for_srfs(root, rel,
+							  scanjoin_targets,
+							  scanjoin_targets_contain_srfs);
+
+	/*
+	 * If the relation is partitioned, recurseively apply the same changes to
+	 * all partitions and generate new Append paths. Since Append is not
+	 * projection-capable, that might save a separate Result node, and it also
+	 * is important for partitionwise aggregate.
+	 */
+	if (rel->part_scheme && rel->part_rels)
 	{
-		/*
-		 * In the unfortunate event that scanjoin_target is not parallel-safe,
-		 * we can't apply it to the partial paths; in that case, we'll need to
-		 * forget about the partial paths, which aren't valid input for upper
-		 * planning steps.
-		 */
-		rel->partial_pathlist = NIL;
+		int			partition_idx;
+		List	   *live_children = NIL;
+
+		/* Adjust each partition. */
+		for (partition_idx = 0; partition_idx < rel->nparts; partition_idx++)
+		{
+			RelOptInfo *child_rel = rel->part_rels[partition_idx];
+			ListCell   *lc;
+			AppendRelInfo **appinfos;
+			int			nappinfos;
+			List	   *child_scanjoin_targets = NIL;
+
+			/* Translate scan/join targets for this child. */
+			appinfos = find_appinfos_by_relids(root, child_rel->relids,
+											   &nappinfos);
+			foreach(lc, scanjoin_targets)
+			{
+				PathTarget *target = lfirst_node(PathTarget, lc);
+
+				target = copy_pathtarget(target);
+				target->exprs = (List *)
+					adjust_appendrel_attrs(root,
+										   (Node *) target->exprs,
+										   nappinfos, appinfos);
+				child_scanjoin_targets = lappend(child_scanjoin_targets,
+												 target);
+			}
+			pfree(appinfos);
+
+			/* Recursion does the real work. */
+			apply_scanjoin_target_to_paths(root, child_rel,
+										   child_scanjoin_targets,
+										   scanjoin_targets_contain_srfs,
+										   scanjoin_target_parallel_safe,
+										   tlist_same_exprs);
+
+			/* Save non-dummy children for Append paths. */
+			if (!IS_DUMMY_REL(child_rel))
+				live_children = lappend(live_children, child_rel);
+		}
+
+		/* Build new paths for this relation by appending child paths. */
+		if (live_children != NIL)
+			add_paths_to_append_rel(root, rel, live_children);
 	}
+
+	/*
+	 * Consider generating Gather or Gather Merge paths.  We must only do this
+	 * if the relation is parallel safe, and we don't do it for child rels to
+	 * avoid creating multiple Gather nodes within the same plan. We must do
+	 * this after all paths have been generated and before set_cheapest, since
+	 * one of the generated paths may turn out to be the cheapest one.
+	 */
+	if (rel->consider_parallel && !IS_OTHER_REL(rel))
+		generate_gather_paths(root, rel, false);
+
+	/*
+	 * Reassess which paths are the cheapest, now that we've potentially added
+	 * new Gather (or Gather Merge) and/or Append (or MergeAppend) paths to
+	 * this relation.
+	 */
+	set_cheapest(rel);
 }
 
 /*
@@ -6931,7 +7042,6 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 		PathTarget *child_target = copy_pathtarget(target);
 		AppendRelInfo **appinfos;
 		int			nappinfos;
-		PathTarget *scanjoin_target;
 		GroupPathExtraData child_extra;
 		RelOptInfo *child_grouped_rel;
 		RelOptInfo *child_partially_grouped_rel;
@@ -6987,26 +7097,6 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 
 			continue;
 		}
-
-		/*
-		 * Copy pathtarget from underneath scan/join as we are modifying it
-		 * and translate its Vars with respect to this appendrel.  The input
-		 * relation's reltarget might not be the final scanjoin_target, but
-		 * the pathtarget any given individual path should be.
-		 */
-		scanjoin_target =
-			copy_pathtarget(input_rel->cheapest_startup_path->pathtarget);
-		scanjoin_target->exprs = (List *)
-			adjust_appendrel_attrs(root,
-								   (Node *) scanjoin_target->exprs,
-								   nappinfos, appinfos);
-
-		/*
-		 * Forcibly apply scan/join target to all the Paths for the scan/join
-		 * rel.
-		 */
-		apply_scanjoin_target_to_paths(root, child_input_rel, scanjoin_target,
-									   extra->target_parallel_safe, false);
 
 		/* Create grouping paths for this child relation. */
 		create_ordinary_grouping_paths(root, child_input_rel,
