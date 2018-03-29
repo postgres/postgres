@@ -177,13 +177,10 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 static void
 RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 {
-	Page		page;
-	BlockNumber blockNum = InvalidBlockNumber,
+	BlockNumber blockNum,
 				firstBlock = InvalidBlockNumber;
-	int			extraBlocks = 0;
-	int			lockWaiters = 0;
-	Size		freespace = 0;
-	Buffer		buffer;
+	int			extraBlocks;
+	int			lockWaiters;
 
 	/* Use the length of the lock wait queue to judge how much to extend. */
 	lockWaiters = RelationExtensionLockWaiterCount(relation);
@@ -198,18 +195,40 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 	 */
 	extraBlocks = Min(512, lockWaiters * 20);
 
-	while (extraBlocks-- >= 0)
+	do
 	{
-		/* Ouch - an unnecessary lseek() each time through the loop! */
+		Buffer		buffer;
+		Page		page;
+		Size		freespace;
+
+		/*
+		 * Extend by one page.  This should generally match the main-line
+		 * extension code in RelationGetBufferForTuple, except that we hold
+		 * the relation extension lock throughout.
+		 */
 		buffer = ReadBufferBI(relation, P_NEW, bistate);
 
-		/* Extend by one page. */
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		page = BufferGetPage(buffer);
+
+		if (!PageIsNew(page))
+			elog(ERROR, "page %u of relation \"%s\" should be empty but is not",
+				 BufferGetBlockNumber(buffer),
+				 RelationGetRelationName(relation));
+
 		PageInit(page, BufferGetPageSize(buffer), 0);
+
+		/*
+		 * We mark all the new buffers dirty, but do nothing to write them
+		 * out; they'll probably get used soon, and even if they are not, a
+		 * crash will leave an okay all-zeroes page on disk.
+		 */
 		MarkBufferDirty(buffer);
+
+		/* we'll need this info below */
 		blockNum = BufferGetBlockNumber(buffer);
 		freespace = PageGetHeapFreeSpace(page);
+
 		UnlockReleaseBuffer(buffer);
 
 		/* Remember first block number thus added. */
@@ -223,18 +242,15 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 		 */
 		RecordPageWithFreeSpace(relation, blockNum, freespace);
 	}
+	while (--extraBlocks > 0);
 
 	/*
 	 * Updating the upper levels of the free space map is too expensive to do
 	 * for every block, but it's worth doing once at the end to make sure that
 	 * subsequent insertion activity sees all of those nifty free pages we
 	 * just inserted.
-	 *
-	 * Note that we're using the freespace value that was reported for the
-	 * last block we added as if it were the freespace value for every block
-	 * we added.  That's actually true, because they're all equally empty.
 	 */
-	UpdateFreeSpaceMap(relation, firstBlock, blockNum, freespace);
+	FreeSpaceMapVacuumRange(relation, firstBlock, blockNum + 1);
 }
 
 /*
