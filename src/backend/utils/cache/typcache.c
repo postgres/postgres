@@ -198,7 +198,7 @@ typedef struct SharedTypmodTableEntry
 } SharedTypmodTableEntry;
 
 /*
- * A comparator function for SharedTupleDescTableKey.
+ * A comparator function for SharedRecordTableKey.
  */
 static int
 shared_record_table_compare(const void *a, const void *b, size_t size,
