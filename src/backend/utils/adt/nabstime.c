@@ -694,7 +694,7 @@ reltime2tm(RelativeTime time, struct pg_tm *tm)
 
 
 /*
- *		tintervalin		- converts an tinterval string to internal format
+ *		tintervalin		- converts a tinterval string to internal format
  */
 Datum
 tintervalin(PG_FUNCTION_ARGS)

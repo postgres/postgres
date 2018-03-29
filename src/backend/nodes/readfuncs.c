@@ -77,7 +77,7 @@
 	token = pg_strtok(&length);		/* get field value */ \
 	local_node->fldname = pg_strtouint64(token, NULL, 10)
 
-/* Read an long integer field (anything written as ":fldname %ld") */
+/* Read a long integer field (anything written as ":fldname %ld") */
 #define READ_LONG_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	token = pg_strtok(&length);		/* get field value */ \

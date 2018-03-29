@@ -5280,7 +5280,7 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 }
 
 /*
- * Ownership check for an publication (specified by OID).
+ * Ownership check for a publication (specified by OID).
  */
 bool
 pg_publication_ownercheck(Oid pub_oid, Oid roleid)

@@ -381,7 +381,7 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot)
 
 		/*
 		 * All subtree is empty - just return true to indicate that parent
-		 * must do a cleanup. Unless we are ROOT an there is way to go upper.
+		 * must do a cleanup, unless we are ROOT and there is way to go upper.
 		 */
 
 		if (hasEmptyChild && !hasNonEmptyChild && !isRoot)

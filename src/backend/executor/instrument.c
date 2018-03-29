@@ -49,7 +49,7 @@ InstrAlloc(int n, int instrument_options)
 	return instr;
 }
 
-/* Initialize an pre-allocated instrumentation structure. */
+/* Initialize a pre-allocated instrumentation structure. */
 void
 InstrInit(Instrumentation *instr, int instrument_options)
 {

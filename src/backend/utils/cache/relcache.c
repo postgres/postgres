@@ -2420,7 +2420,7 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
  *	 NB: when rebuilding, we'd better hold some lock on the relation,
  *	 else the catalog data we need to read could be changing under us.
  *	 Also, a rel to be rebuilt had better have refcnt > 0.  This is because
- *	 an sinval reset could happen while we're accessing the catalogs, and
+ *	 a sinval reset could happen while we're accessing the catalogs, and
  *	 the rel would get blown away underneath us by RelationCacheInvalidate
  *	 if it has zero refcnt.
  *

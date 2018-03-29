@@ -1539,7 +1539,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 						frozenXid, cutoffMulti, mapped_tables);
 
 	/*
-	 * If it's a system catalog, queue an sinval message to flush all
+	 * If it's a system catalog, queue a sinval message to flush all
 	 * catcaches on the catalog when we reach CommandCounterIncrement.
 	 */
 	if (is_system_catalog)

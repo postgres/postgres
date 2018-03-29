@@ -177,7 +177,7 @@ AC_DEFUN([PGAC_STRUCT_ADDRINFO],
 # handle ll, q, and I64.  The result is in shell variable
 # LONG_LONG_INT_MODIFIER.
 #
-# MinGW uses '%I64d', though gcc throws an warning with -Wall,
+# MinGW uses '%I64d', though gcc throws a warning with -Wall,
 # while '%lld' doesn't generate a warning, but doesn't work.
 #
 AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER],

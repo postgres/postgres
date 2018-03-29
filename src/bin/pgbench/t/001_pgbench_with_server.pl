@@ -583,7 +583,7 @@ SELECT LEAST(:i, :i, :i, :i, :i, :i, :i, :i, :i, :i, :i);
 		0,
 		[ qr{cannot coerce boolean to int} ],
 		q{\set i TRUE + 2} ],
-	[ 'set not an double',
+	[ 'set not a double',
 		0,
 		[ qr{cannot coerce boolean to double} ],
 		q{\set d ln(TRUE)} ],
