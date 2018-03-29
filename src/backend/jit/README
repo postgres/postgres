@@ -13,12 +13,12 @@ the CPU that just handles that expression, yielding a speedup.
 That this is done at query execution time, possibly even only in cases
 the relevant task is done a number of times, makes it JIT, rather than
 ahead-of-time (AOT). Given the way JIT compilation is used in
-postgres, the lines between interpretation, AOT and JIT are somewhat
+PostgreSQL, the lines between interpretation, AOT and JIT are somewhat
 blurry.
 
 Note that the interpreted program turned into a native program does
 not necessarily have to be a program in the classical sense. E.g. it
-is highly beneficial JIT compile tuple deforming into a native
+is highly beneficial to JIT compile tuple deforming into a native
 function just handling a specific type of table, despite tuple
 deforming not commonly being understood as a "program".
 
@@ -26,7 +26,7 @@ deforming not commonly being understood as a "program".
 Why JIT?
 ========
 
-Parts of postgres are commonly bottlenecked by comparatively small
+Parts of PostgreSQL are commonly bottlenecked by comparatively small
 pieces of CPU intensive code. In a number of cases that is because the
 relevant code has to be very generic (e.g. handling arbitrary SQL
 level expressions, over arbitrary tables, with arbitrary extensions
@@ -49,11 +49,11 @@ particularly beneficial for removing branches during tuple deforming.
 How to JIT
 ==========
 
-Postgres, by default, uses LLVM to perform JIT. LLVM was chosen
+PostgreSQL, by default, uses LLVM to perform JIT. LLVM was chosen
 because it is developed by several large corporations and therefore
 unlikely to be discontinued, because it has a license compatible with
-PostgreSQL, and because its LLVM IR can be generated from C
-using the clang compiler.
+PostgreSQL, and because its IR can be generated from C using the Clang
+compiler.
 
 
 Shared Library Separation
@@ -68,13 +68,13 @@ An additional benefit of doing so is that it is relatively easy to
 evaluate JIT compilation that does not use LLVM, by changing out the
 shared library used to provide JIT compilation.
 
-To achieve this code, e.g. expression evaluation, intending to perform
-JIT, calls a LLVM independent wrapper located in jit.c to do so. If
-the shared library providing JIT support can be loaded (i.e. postgres
-was compiled with LLVM support and the shared library is installed),
-the task of JIT compiling an expression gets handed of to shared
-library. This obviously requires that the function in jit.c is allowed
-to fail in case no JIT provider can be loaded.
+To achieve this, code intending to perform JIT (e.g. expression evaluation)
+calls an LLVM independent wrapper located in jit.c to do so. If the
+shared library providing JIT support can be loaded (i.e. PostgreSQL was
+compiled with LLVM support and the shared library is installed), the task
+of JIT compiling an expression gets handed off to the shared library. This
+obviously requires that the function in jit.c is allowed to fail in case
+no JIT provider can be loaded.
 
 Which shared library is loaded is determined by the jit_provider GUC,
 defaulting to "llvmjit".
@@ -82,8 +82,8 @@ defaulting to "llvmjit".
 Cloistering code performing JIT into a shared library unfortunately
 also means that code doing JIT compilation for various parts of code
 has to be located separately from the code doing so without
-JIT. E.g. the JITed version of execExprInterp.c is located in
-jit/llvm/ rather than executor/.
+JIT. E.g. the JIT version of execExprInterp.c is located in jit/llvm/
+rather than executor/.
 
 
 JIT Context
@@ -105,9 +105,9 @@ implementations.
 
 Emitting individual functions separately is more expensive than
 emitting several functions at once, and emitting them together can
-provide additional optimization opportunities. To facilitate that the
-LLVM provider separates function definition from emitting them in an
-executable way.
+provide additional optimization opportunities. To facilitate that, the
+LLVM provider separates defining functions from optimizing and
+emitting functions in an executable manner.
 
 Creating functions into the current mutable module (a module
 essentially is LLVM's equivalent of a translation unit in C) is done
@@ -127,7 +127,7 @@ used.
 Error Handling
 --------------
 
-There are two aspects to error handling.  Firstly, generated (LLVM IR)
+There are two aspects of error handling.  Firstly, generated (LLVM IR)
 and emitted functions (mmap()ed segments) need to be cleaned up both
 after a successful query execution and after an error. This is done by
 registering each created JITContext with the current resource owner,
@@ -140,12 +140,12 @@ cleaning up emitted code upon ERROR, but there's also the chance that
 LLVM itself runs out of memory. LLVM by default does *not* use any C++
 exceptions. Its allocations are primarily funneled through the
 standard "new" handlers, and some direct use of malloc() and
-mmap(). For the former a 'new handler' exists
-http://en.cppreference.com/w/cpp/memory/new/set_new_handler for the
-latter LLVM provides callback that get called upon failure
-(unfortunately mmap() failures are treated as fatal rather than OOM
-errors).  What we've, for now, chosen to do, is to have two functions
-that LLVM using code must use:
+mmap(). For the former a 'new handler' exists:
+http://en.cppreference.com/w/cpp/memory/new/set_new_handler
+For the latter LLVM provides callbacks that get called upon failure
+(unfortunately mmap() failures are treated as fatal rather than OOM errors).
+What we've chosen to do for now is have two functions that LLVM using code
+must use:
 extern void llvm_enter_fatal_on_oom(void);
 extern void llvm_leave_fatal_on_oom(void);
 before interacting with LLVM code.
@@ -160,7 +160,7 @@ the handlers instead are reset on toplevel sigsetjmp() level.
 
 Using a relatively small enter/leave protected section of code, rather
 than setting up these handlers globally, avoids negative interactions
-with extensions that might use C++ like e.g. postgis. As LLVM code
+with extensions that might use C++ such as PostGIS. As LLVM code
 generation should never execute arbitrary code, just setting these
 handlers temporarily ought to suffice.
 
@@ -168,9 +168,9 @@ handlers temporarily ought to suffice.
 Type Synchronization
 --------------------
 
-To able to generate code performing tasks that are done in "interpreted"
-postgres, it obviously is required that code generation knows about at
-least a few postgres types.  While it is possible to inform LLVM about
+To be able to generate code that can perform tasks done by "interpreted"
+PostgreSQL, it obviously is required that code generation knows about at
+least a few PostgreSQL types.  While it is possible to inform LLVM about
 type definitions by recreating them manually in C code, that is failure
 prone and labor intensive.
 
@@ -178,13 +178,13 @@ Instead there is one small file (llvmjit_types.c) which references each of
 the types required for JITing. That file is translated to bitcode at
 compile time, and loaded when LLVM is initialized in a backend.
 
-That works very well to synchronize the type definition, unfortunately
+That works very well to synchronize the type definition, but unfortunately
 it does *not* synchronize offsets as the IR level representation doesn't
-know field names.  Instead required offsets are maintained as defines in
-the original struct definition. E.g.
+know field names.  Instead, required offsets are maintained as defines in
+the original struct definition, like so:
 #define FIELDNO_TUPLETABLESLOT_NVALID 9
         int                     tts_nvalid;             /* # of valid values in tts_values */
-while that still needs to be defined, it's only required for a
+While that still needs to be defined, it's only required for a
 relatively small number of fields, and it's bunched together with the
 struct definition, so it's easily kept synchronized.
 
@@ -193,12 +193,12 @@ Inlining
 --------
 
 One big advantage of JITing expressions is that it can significantly
-reduce the overhead of postgres's extensible function/operator
-mechanism, by inlining the body of called functions / operators.
+reduce the overhead of PostgreSQL's extensible function/operator
+mechanism, by inlining the body of called functions/operators.
 
 It obviously is undesirable to maintain a second implementation of
 commonly used functions, just for inlining purposes. Instead we take
-advantage of the fact that the clang compiler can emit LLVM IR.
+advantage of the fact that the Clang compiler can emit LLVM IR.
 
 The ability to do so allows us to get the LLVM IR for all operators
 (e.g. int8eq, float8pl etc), without maintaining two copies.  These
@@ -225,7 +225,7 @@ Caching
 Currently it is not yet possible to cache generated functions, even
 though that'd be desirable from a performance point of view. The
 problem is that the generated functions commonly contain pointers into
-per-execution memory. The expression evaluation functionality needs to
+per-execution memory. The expression evaluation machinery needs to
 be redesigned a bit to avoid that. Basically all per-execution memory
 needs to be referenced as an offset to one block of memory stored in
 an ExprState, rather than absolute pointers into memory.
@@ -278,7 +278,7 @@ Currently there are a number of GUCs that influence JITing:
 - jit_inline_above_cost = -1, 0-DBL_MAX - inlining is tried if query has
   higher cost.
 
-whenever a query's total cost is above these limits, JITing is
+Whenever a query's total cost is above these limits, JITing is
 performed.
 
 Alternative costing models, e.g. by generating separate paths for
@@ -291,5 +291,5 @@ individual expressions.
 The obvious seeming approach of JITing expressions individually after
 a number of execution turns out not to work too well. Primarily
 because emitting many small functions individually has significant
-overhead. Secondarily because the time till JITing occurs causes
+overhead. Secondarily because the time until JITing occurs causes
 relative slowdowns that eat into the gain of JIT compilation.

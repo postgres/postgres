@@ -18,7 +18,7 @@
  </para>
 
  <sect1 id="jit-reason">
-  <title>What is <acronym>JIT</acronym>?</title>
+  <title>What is <acronym>JIT</acronym> compilation?</title>
 
   <para>
    Just-in-time compilation (<acronym>JIT</acronym>) is the process of turning
@@ -33,7 +33,7 @@
 
   <para>
    <productname>PostgreSQL</productname> has builtin support to perform
-   <acronym>JIT</acronym> using <ulink
+   <acronym>JIT</acronym> compilation using <ulink
    url="https://llvm.org/"><productname>LLVM</productname></ulink> when
    <productname>PostgreSQL</productname> was built with
    <literal>--with-llvm</literal> (see <xref linkend="configure-with-llvm"/>).
@@ -97,15 +97,15 @@
   <title>When to <acronym>JIT</acronym>?</title>
 
   <para>
-   <acronym>JIT</acronym> is beneficial primarily for long-running CPU bound
-   queries. Frequently these will be analytical queries.  For short queries
-   the overhead of performing <acronym>JIT</acronym> will often be higher than
-   the time it can save.
+   <acronym>JIT</acronym> compilation is beneficial primarily for long-running
+   CPU bound queries. Frequently these will be analytical queries.  For short
+   queries the added overhead of performing <acronym>JIT</acronym> compilation
+   will often be higher than the time it can save.
   </para>
 
   <para>
-   To determine whether <acronym>JIT</acronym> is used, the total cost of a
-   query (see <xref linkend="planner-stats-details"/> and <xref
+   To determine whether <acronym>JIT</acronym> compilation is used, the total
+   cost of a query (see <xref linkend="planner-stats-details"/> and <xref
    linkend="runtime-config-query-constants"/>) is used.
   </para>
 
@@ -117,9 +117,9 @@
 
   <para>
    If the planner, based on the above criterion, decided that
-   <acronym>JIT</acronym> is beneficial, two further decisions are
+   <acronym>JIT</acronym> compilation is beneficial, two further decisions are
    made. Firstly, if the query is more costly than the <xref
-   linkend="guc-jit-optimize-above-cost"/>, GUC expensive optimizations are
+   linkend="guc-jit-optimize-above-cost"/> GUC, expensive optimizations are
    used to improve the generated code. Secondly, if the query is more costly
    than the <xref linkend="guc-jit-inline-above-cost"/> GUC, short functions
    and operators used in the query will be inlined.  Both of these operations
@@ -187,8 +187,9 @@ SET
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
    </programlisting>
    As visible here, <acronym>JIT</acronym> was used, but inlining and
-   optimization were not. If <xref linkend="guc-jit-optimize-above-cost"/>,
-   <xref linkend="guc-jit-inline-above-cost"/> were lowered, just like <xref
+   expensive optimization were not. If <xref
+   linkend="guc-jit-optimize-above-cost"/>, <xref
+   linkend="guc-jit-inline-above-cost"/> were lowered, just like <xref
    linkend="guc-jit-above-cost"/>, that would change.
   </para>
  </sect1>
@@ -197,8 +198,8 @@ SET
   <title>Configuration</title>
 
   <para>
-   <xref linkend="guc-jit"/> determines whether <acronym>JIT</acronym> is
-   enabled or disabled.
+   <xref linkend="guc-jit"/> determines whether <acronym>JIT</acronym>
+   compilation is enabled or disabled.
   </para>
 
   <para>
