@@ -763,7 +763,9 @@ su - postgres
        <listitem>
         <para>
          Build with support for <productname>LLVM</productname> based
-         <acronym>JIT</acronym> compilation (see <xref linkend="jit"/>).  This
+         <acronym>JIT</acronym> compilation<phrase
+         condition="standalone-ignore"> (see <xref
+         linkend="jit"/>)</phrase>.  This
          requires the <productname>LLVM</productname> library to be installed.
          The minimum required version of <productname>LLVM</productname> is
          currently 3.9.
