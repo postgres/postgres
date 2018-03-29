@@ -493,7 +493,7 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 		return SHM_MQ_DETACHED;
 
 	/*
-	 * If the counterpary is known to have attached, we can read mq_receiver
+	 * If the counterparty is known to have attached, we can read mq_receiver
 	 * without acquiring the spinlock and assume it isn't NULL.  Otherwise,
 	 * more caution is needed.
 	 */
@@ -1203,9 +1203,9 @@ shm_mq_inc_bytes_read(shm_mq *mq, Size n)
 
 	/*
 	 * Separate prior reads of mq_ring from the increment of mq_bytes_read
-	 * which follows.  Pairs with the full barrier in shm_mq_send_bytes(). We
-	 * only need a read barrier here because the increment of mq_bytes_read is
-	 * actually a read followed by a dependent write.
+	 * which follows.  This pairs with the full barrier in shm_mq_send_bytes().
+	 * We only need a read barrier here because the increment of mq_bytes_read
+	 * is actually a read followed by a dependent write.
 	 */
 	pg_read_barrier();
 
