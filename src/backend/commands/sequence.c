@@ -432,8 +432,7 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	/* Open and lock sequence, and check for ownership along the way. */
 	relid = RangeVarGetRelidExtended(stmt->sequence,
 									 ShareRowExclusiveLock,
-									 stmt->missing_ok,
-									 false,
+									 stmt->missing_ok ? RVR_MISSING_OK : 0,
 									 RangeVarCallbackOwnsRelation,
 									 NULL);
 	if (relid == InvalidOid)

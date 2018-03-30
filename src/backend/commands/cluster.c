@@ -115,7 +115,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		/* Find, lock, and check permissions on the table */
 		tableOid = RangeVarGetRelidExtended(stmt->relation,
 											AccessExclusiveLock,
-											false, false,
+											0,
 											RangeVarCallbackOwnsTable, NULL);
 		rel = heap_open(tableOid, NoLock);
 

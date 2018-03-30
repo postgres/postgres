@@ -2091,7 +2091,7 @@ ReindexIndex(RangeVar *indexRelation, int options)
 	 * used here must match the index lock obtained in reindex_index().
 	 */
 	indOid = RangeVarGetRelidExtended(indexRelation, AccessExclusiveLock,
-									  false, false,
+									  0,
 									  RangeVarCallbackForReindexIndex,
 									  (void *) &heapOid);
 
@@ -2183,7 +2183,7 @@ ReindexTable(RangeVar *relation, int options)
 	Oid			heapOid;
 
 	/* The lock level used here should match reindex_relation(). */
-	heapOid = RangeVarGetRelidExtended(relation, ShareLock, false, false,
+	heapOid = RangeVarGetRelidExtended(relation, ShareLock, 0,
 									   RangeVarCallbackOwnsTable, NULL);
 
 	if (!reindex_relation(heapOid,

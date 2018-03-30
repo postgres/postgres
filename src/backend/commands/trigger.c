@@ -1667,7 +1667,7 @@ renametrig(RenameStmt *stmt)
 	 * release until end of transaction).
 	 */
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-									 false, false,
+									 0,
 									 RangeVarCallbackForRenameTrigger,
 									 NULL);
 

@@ -161,7 +161,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * Get a lock until end of transaction.
 	 */
 	matviewOid = RangeVarGetRelidExtended(stmt->relation,
-										  lockmode, false, false,
+										  lockmode, 0,
 										  RangeVarCallbackOwnsTable, NULL);
 	matviewRel = heap_open(matviewOid, NoLock);
 

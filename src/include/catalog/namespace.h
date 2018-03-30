@@ -47,14 +47,24 @@ typedef struct OverrideSearchPath
 	bool		addTemp;		/* implicitly prepend temp schema? */
 } OverrideSearchPath;
 
+/*
+ * Option flag bits for RangeVarGetRelidExtended().
+ */
+typedef enum RVROption
+{
+	RVR_MISSING_OK = 1 << 0,	/* don't error if relation doesn't exist */
+	RVR_NOWAIT = 1 << 1			/* error if relation cannot be locked */
+} RVROption;
+
 typedef void (*RangeVarGetRelidCallback) (const RangeVar *relation, Oid relId,
 										  Oid oldRelId, void *callback_arg);
 
 #define RangeVarGetRelid(relation, lockmode, missing_ok) \
-	RangeVarGetRelidExtended(relation, lockmode, missing_ok, false, NULL, NULL)
+	RangeVarGetRelidExtended(relation, lockmode, \
+							 (missing_ok) ? RVR_MISSING_OK : 0, NULL, NULL)
 
 extern Oid RangeVarGetRelidExtended(const RangeVar *relation,
-						 LOCKMODE lockmode, bool missing_ok, bool nowait,
+						 LOCKMODE lockmode, uint32 flags,
 						 RangeVarGetRelidCallback callback,
 						 void *callback_arg);
 extern Oid	RangeVarGetCreationNamespace(const RangeVar *newRelation);

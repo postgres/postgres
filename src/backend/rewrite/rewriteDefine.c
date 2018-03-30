@@ -951,7 +951,7 @@ RenameRewriteRule(RangeVar *relation, const char *oldName,
 	 * release until end of transaction).
 	 */
 	relid = RangeVarGetRelidExtended(relation, AccessExclusiveLock,
-									 false, false,
+									 0,
 									 RangeVarCallbackForRenameRule,
 									 NULL);
 

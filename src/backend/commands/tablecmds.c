@@ -1159,8 +1159,7 @@ RemoveRelations(DropStmt *drop)
 		state.heapOid = InvalidOid;
 		state.partParentOid = InvalidOid;
 		state.concurrent = drop->concurrent;
-		relOid = RangeVarGetRelidExtended(rel, lockmode, true,
-										  false,
+		relOid = RangeVarGetRelidExtended(rel, lockmode, RVR_MISSING_OK,
 										  RangeVarCallbackForDropRelation,
 										  (void *) &state);
 
@@ -2793,7 +2792,7 @@ renameatt(RenameStmt *stmt)
 
 	/* lock level taken here should match renameatt_internal */
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-									 stmt->missing_ok, false,
+									 stmt->missing_ok ? RVR_MISSING_OK : 0,
 									 RangeVarCallbackForRenameAttribute,
 									 NULL);
 
@@ -2945,7 +2944,7 @@ RenameConstraint(RenameStmt *stmt)
 	{
 		/* lock level taken here should match rename_constraint_internal */
 		relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-										 stmt->missing_ok, false,
+										 stmt->missing_ok ? RVR_MISSING_OK : 0,
 										 RangeVarCallbackForRenameAttribute,
 										 NULL);
 		if (!OidIsValid(relid))
@@ -2987,7 +2986,7 @@ RenameRelation(RenameStmt *stmt)
 	 * escalation.
 	 */
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-									 stmt->missing_ok, false,
+									 stmt->missing_ok ? RVR_MISSING_OK : 0,
 									 RangeVarCallbackForAlterRelation,
 									 (void *) stmt);
 
@@ -3146,7 +3145,8 @@ CheckTableNotInUse(Relation rel, const char *stmt)
 Oid
 AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode)
 {
-	return RangeVarGetRelidExtended(stmt->relation, lockmode, stmt->missing_ok, false,
+	return RangeVarGetRelidExtended(stmt->relation, lockmode,
+									stmt->missing_ok ? RVR_MISSING_OK : 0,
 									RangeVarCallbackForAlterRelation,
 									(void *) stmt);
 }
@@ -12683,7 +12683,7 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt, Oid *oldschema)
 	ObjectAddress myself;
 
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-									 stmt->missing_ok, false,
+									 stmt->missing_ok ? RVR_MISSING_OK : 0,
 									 RangeVarCallbackForAlterRelation,
 									 (void *) stmt);
 
@@ -14613,7 +14613,7 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 	state.parentTblOid = parentIdx->rd_index->indrelid;
 	state.lockedParentTbl = false;
 	partIdxId =
-		RangeVarGetRelidExtended(name, AccessExclusiveLock, false, false,
+		RangeVarGetRelidExtended(name, AccessExclusiveLock, 0,
 								 RangeVarCallbackForAttachIndex,
 								 (void *) &state);
 	/* Not there? */

@@ -743,7 +743,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 
 	/* Get id of table.  Also handles permissions checks. */
 	table_id = RangeVarGetRelidExtended(stmt->table, AccessExclusiveLock,
-										false, false,
+										0,
 										RangeVarCallbackForPolicy,
 										(void *) stmt);
 
@@ -915,7 +915,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 
 	/* Get id of table.  Also handles permissions checks. */
 	table_id = RangeVarGetRelidExtended(stmt->table, AccessExclusiveLock,
-										false, false,
+										0,
 										RangeVarCallbackForPolicy,
 										(void *) stmt);
 
@@ -1215,7 +1215,7 @@ rename_policy(RenameStmt *stmt)
 
 	/* Get id of table.  Also handles permissions checks. */
 	table_id = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-										false, false,
+										0,
 										RangeVarCallbackForPolicy,
 										(void *) stmt);
 

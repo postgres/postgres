@@ -1305,7 +1305,7 @@ ProcessUtilitySlow(ParseState *pstate,
 						: ShareLock;
 					relid =
 						RangeVarGetRelidExtended(stmt->relation, lockmode,
-												 false, false,
+												 0,
 												 RangeVarCallbackOwnsRelation,
 												 NULL);
 

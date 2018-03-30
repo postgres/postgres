@@ -61,8 +61,8 @@ LockTableCommand(LockStmt *lockstmt)
 		bool		recurse = rv->inh;
 		Oid			reloid;
 
-		reloid = RangeVarGetRelidExtended(rv, lockstmt->mode, false,
-										  lockstmt->nowait,
+		reloid = RangeVarGetRelidExtended(rv, lockstmt->mode,
+										  lockstmt->nowait ? RVR_NOWAIT : 0,
 										  RangeVarCallbackForLockTable,
 										  (void *) &lockstmt->mode);
 
