@@ -318,11 +318,9 @@ static SlruCtlData OldSerXidSlruCtlData;
 #define OLDSERXID_ENTRIESPERPAGE	(OLDSERXID_PAGESIZE / OLDSERXID_ENTRYSIZE)
 
 /*
- * Set maximum pages based on the lesser of the number needed to track all
- * transactions and the maximum that SLRU supports.
+ * Set maximum pages based on the number needed to track all transactions.
  */
-#define OLDSERXID_MAX_PAGE			Min(SLRU_PAGES_PER_SEGMENT * 0x10000 - 1, \
-										(MaxTransactionId) / OLDSERXID_ENTRIESPERPAGE)
+#define OLDSERXID_MAX_PAGE			(MaxTransactionId / OLDSERXID_ENTRIESPERPAGE)
 
 #define OldSerXidNextPage(page) (((page) >= OLDSERXID_MAX_PAGE) ? 0 : (page) + 1)
 
@@ -330,15 +328,13 @@ static SlruCtlData OldSerXidSlruCtlData;
 	(OldSerXidSlruCtl->shared->page_buffer[slotno] + \
 	((((uint32) (xid)) % OLDSERXID_ENTRIESPERPAGE) * OLDSERXID_ENTRYSIZE))))
 
-#define OldSerXidPage(xid)	((((uint32) (xid)) / OLDSERXID_ENTRIESPERPAGE) % (OLDSERXID_MAX_PAGE + 1))
-#define OldSerXidSegment(page)	((page) / SLRU_PAGES_PER_SEGMENT)
+#define OldSerXidPage(xid)	(((uint32) (xid)) / OLDSERXID_ENTRIESPERPAGE)
 
 typedef struct OldSerXidControlData
 {
 	int			headPage;		/* newest initialized page */
 	TransactionId headXid;		/* newest valid Xid in the SLRU */
 	TransactionId tailXid;		/* oldest xmin we might be interested in */
-	bool		warningIssued;	/* have we issued SLRU wrap-around warning? */
 }			OldSerXidControlData;
 
 typedef struct OldSerXidControlData *OldSerXidControl;
@@ -826,7 +822,6 @@ OldSerXidInit(void)
 		oldSerXidControl->headPage = -1;
 		oldSerXidControl->headXid = InvalidTransactionId;
 		oldSerXidControl->tailXid = InvalidTransactionId;
-		oldSerXidControl->warningIssued = false;
 	}
 }
 
@@ -881,47 +876,6 @@ OldSerXidAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 		oldSerXidControl->headXid = xid;
 	if (isNewPage)
 		oldSerXidControl->headPage = targetPage;
-
-	/*
-	 * Give a warning if we're about to run out of SLRU pages.
-	 *
-	 * slru.c has a maximum of 64k segments, with 32 (SLRU_PAGES_PER_SEGMENT)
-	 * pages each. We need to store a 64-bit integer for each Xid, and with
-	 * default 8k block size, 65536*32 pages is only enough to cover 2^30
-	 * XIDs. If we're about to hit that limit and wrap around, warn the user.
-	 *
-	 * To avoid spamming the user, we only give one warning when we've used 1
-	 * billion XIDs, and stay silent until the situation is fixed and the
-	 * number of XIDs used falls below 800 million again.
-	 *
-	 * XXX: We have no safeguard to actually *prevent* the wrap-around,
-	 * though. All you get is a warning.
-	 */
-	if (oldSerXidControl->warningIssued)
-	{
-		TransactionId lowWatermark;
-
-		lowWatermark = tailXid + 800000000;
-		if (lowWatermark < FirstNormalTransactionId)
-			lowWatermark = FirstNormalTransactionId;
-		if (TransactionIdPrecedes(xid, lowWatermark))
-			oldSerXidControl->warningIssued = false;
-	}
-	else
-	{
-		TransactionId highWatermark;
-
-		highWatermark = tailXid + 1000000000;
-		if (highWatermark < FirstNormalTransactionId)
-			highWatermark = FirstNormalTransactionId;
-		if (TransactionIdFollows(xid, highWatermark))
-		{
-			oldSerXidControl->warningIssued = true;
-			ereport(WARNING,
-					(errmsg("memory for serializable conflict tracking is nearly exhausted"),
-					 errhint("There might be an idle transaction or a forgotten prepared transaction causing this.")));
-		}
-	}
 
 	if (isNewPage)
 	{
