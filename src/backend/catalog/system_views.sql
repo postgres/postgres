@@ -752,6 +752,8 @@ CREATE VIEW pg_stat_wal_receiver AS
             s.latest_end_lsn,
             s.latest_end_time,
             s.slot_name,
+            s.sender_host,
+            s.sender_port,
             s.conninfo
     FROM pg_stat_get_wal_receiver() s
     WHERE s.pid IS NOT NULL;

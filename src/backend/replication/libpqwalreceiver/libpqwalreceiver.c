@@ -53,6 +53,8 @@ static WalReceiverConn *libpqrcv_connect(const char *conninfo,
 				 char **err);
 static void libpqrcv_check_conninfo(const char *conninfo);
 static char *libpqrcv_get_conninfo(WalReceiverConn *conn);
+static void libpqrcv_get_senderinfo(WalReceiverConn *conn,
+					char **sender_host, int *sender_port);
 static char *libpqrcv_identify_system(WalReceiverConn *conn,
 						 TimeLineID *primary_tli,
 						 int *server_version);
@@ -82,6 +84,7 @@ static WalReceiverFunctionsType PQWalReceiverFunctions = {
 	libpqrcv_connect,
 	libpqrcv_check_conninfo,
 	libpqrcv_get_conninfo,
+	libpqrcv_get_senderinfo,
 	libpqrcv_identify_system,
 	libpqrcv_readtimelinehistoryfile,
 	libpqrcv_startstreaming,
@@ -280,6 +283,29 @@ libpqrcv_get_conninfo(WalReceiverConn *conn)
 	retval = PQExpBufferDataBroken(buf) ? NULL : pstrdup(buf.data);
 	termPQExpBuffer(&buf);
 	return retval;
+}
+
+/*
+ * Provides information of sender this WAL receiver is connected to.
+ */
+static void
+libpqrcv_get_senderinfo(WalReceiverConn *conn, char **sender_host,
+					  int *sender_port)
+{
+	char *ret = NULL;
+
+	*sender_host = NULL;
+	*sender_port = 0;
+
+	Assert(conn->streamConn != NULL);
+
+	ret = PQhost(conn->streamConn);
+	if (ret && strlen(ret) != 0)
+		*sender_host = pstrdup(ret);
+
+	ret = PQport(conn->streamConn);
+	if (ret && strlen(ret) != 0)
+		*sender_port = atoi(ret);
 }
 
 /*

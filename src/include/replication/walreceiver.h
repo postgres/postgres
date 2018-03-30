@@ -109,6 +109,13 @@ typedef struct
 	char		conninfo[MAXCONNINFO];
 
 	/*
+	 * Host name (this can be a host name, an IP address, or a directory
+	 * path) and port number of the active replication connection.
+	 */
+	char		sender_host[NI_MAXHOST];
+	int			sender_port;
+
+	/*
 	 * replication slot name; is also used for walreceiver to connect with the
 	 * primary
 	 */
@@ -197,6 +204,9 @@ typedef WalReceiverConn *(*walrcv_connect_fn) (const char *conninfo, bool logica
 											   char **err);
 typedef void (*walrcv_check_conninfo_fn) (const char *conninfo);
 typedef char *(*walrcv_get_conninfo_fn) (WalReceiverConn *conn);
+typedef void (*walrcv_get_senderinfo_fn) (WalReceiverConn *conn,
+										 char **sender_host,
+										 int *sender_port);
 typedef char *(*walrcv_identify_system_fn) (WalReceiverConn *conn,
 											TimeLineID *primary_tli,
 											int *server_version);
@@ -227,6 +237,7 @@ typedef struct WalReceiverFunctionsType
 	walrcv_connect_fn walrcv_connect;
 	walrcv_check_conninfo_fn walrcv_check_conninfo;
 	walrcv_get_conninfo_fn walrcv_get_conninfo;
+	walrcv_get_senderinfo_fn walrcv_get_senderinfo;
 	walrcv_identify_system_fn walrcv_identify_system;
 	walrcv_readtimelinehistoryfile_fn walrcv_readtimelinehistoryfile;
 	walrcv_startstreaming_fn walrcv_startstreaming;
@@ -246,6 +257,8 @@ extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 	WalReceiverFunctions->walrcv_check_conninfo(conninfo)
 #define walrcv_get_conninfo(conn) \
 	WalReceiverFunctions->walrcv_get_conninfo(conn)
+#define walrcv_get_senderinfo(conn, sender_host, sender_port) \
+	WalReceiverFunctions->walrcv_get_senderinfo(conn, sender_host, sender_port)
 #define walrcv_identify_system(conn, primary_tli, server_version) \
 	WalReceiverFunctions->walrcv_identify_system(conn, primary_tli, server_version)
 #define walrcv_readtimelinehistoryfile(conn, tli, filename, content, size) \

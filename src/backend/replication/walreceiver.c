@@ -52,6 +52,7 @@
 #include "access/xlog_internal.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
+#include "common/ip.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
@@ -199,6 +200,8 @@ WalReceiverMain(void)
 	TimestampTz now;
 	bool		ping_sent;
 	char	   *err;
+	char	   *sender_host = NULL;
+	int			sender_port = 0;
 
 	/*
 	 * WalRcv should be set up already (if we are a backend, we inherit this
@@ -308,18 +311,29 @@ WalReceiverMain(void)
 
 	/*
 	 * Save user-visible connection string.  This clobbers the original
-	 * conninfo, for security.
+	 * conninfo, for security. Also save host and port of the sender server
+	 * this walreceiver is connected to.
 	 */
 	tmp_conninfo = walrcv_get_conninfo(wrconn);
+	walrcv_get_senderinfo(wrconn, &sender_host, &sender_port);
 	SpinLockAcquire(&walrcv->mutex);
 	memset(walrcv->conninfo, 0, MAXCONNINFO);
 	if (tmp_conninfo)
 		strlcpy((char *) walrcv->conninfo, tmp_conninfo, MAXCONNINFO);
+
+	memset(walrcv->sender_host, 0, NI_MAXHOST);
+	if (sender_host)
+		strlcpy((char *) walrcv->sender_host, sender_host, NI_MAXHOST);
+
+	walrcv->sender_port = sender_port;
 	walrcv->ready_to_display = true;
 	SpinLockRelease(&walrcv->mutex);
 
 	if (tmp_conninfo)
 		pfree(tmp_conninfo);
+
+	if (sender_host)
+		pfree(sender_host);
 
 	first_stream = true;
 	for (;;)
@@ -1402,6 +1416,8 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	TimestampTz last_receipt_time;
 	XLogRecPtr	latest_end_lsn;
 	TimestampTz latest_end_time;
+	char		sender_host[NI_MAXHOST];
+	int			sender_port = 0;
 	char		slotname[NAMEDATALEN];
 	char		conninfo[MAXCONNINFO];
 
@@ -1419,6 +1435,8 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	latest_end_lsn = WalRcv->latestWalEnd;
 	latest_end_time = WalRcv->latestWalEndTime;
 	strlcpy(slotname, (char *) WalRcv->slotname, sizeof(slotname));
+	strlcpy(sender_host, (char *) WalRcv->sender_host, sizeof(sender_host));
+	sender_port = WalRcv->sender_port;
 	strlcpy(conninfo, (char *) WalRcv->conninfo, sizeof(conninfo));
 	SpinLockRelease(&WalRcv->mutex);
 
@@ -1482,10 +1500,18 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 			nulls[10] = true;
 		else
 			values[10] = CStringGetTextDatum(slotname);
-		if (*conninfo == '\0')
+		if (*sender_host == '\0')
 			nulls[11] = true;
 		else
-			values[11] = CStringGetTextDatum(conninfo);
+			values[11] = CStringGetTextDatum(sender_host);
+		if (sender_port == 0)
+			nulls[12] = true;
+		else
+			values[12] = Int32GetDatum(sender_port);
+		if (*conninfo == '\0')
+			nulls[13] = true;
+		else
+			values[13] = CStringGetTextDatum(conninfo);
 	}
 
 	/* Returns the record as Datum */
