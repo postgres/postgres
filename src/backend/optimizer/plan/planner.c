@@ -1977,18 +1977,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			scanjoin_targets_contain_srfs = NIL;
 		}
 
-		/*
-		 * If the final scan/join target is not parallel-safe, we must
-		 * generate Gather paths now, since no partial paths will be generated
-		 * with the final scan/join targetlist.  Otherwise, the Gather or
-		 * Gather Merge paths generated within apply_scanjoin_target_to_paths
-		 * will be superior to any we might generate now in that the
-		 * projection will be done in by each participant rather than only in
-		 * the leader.
-		 */
-		if (!scanjoin_target_parallel_safe)
-			generate_gather_paths(root, current_rel, false);
-
 		/* Apply scan/join target. */
 		scanjoin_target_same_exprs = list_length(scanjoin_targets) == 1
 			&& equal(scanjoin_target->exprs, current_rel->reltarget->exprs);
@@ -6817,15 +6805,29 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 {
 	ListCell   *lc;
 	PathTarget *scanjoin_target;
+	bool		is_dummy_rel = IS_DUMMY_REL(rel);
 
 	check_stack_depth();
 
 	/*
-	 * If the scan/join target is not parallel-safe, then the new partial
-	 * pathlist is the empty list.
+	 * If the scan/join target is not parallel-safe, partial paths cannot
+	 * generate it.
 	 */
 	if (!scanjoin_target_parallel_safe)
 	{
+		/*
+		 * Since we can't generate the final scan/join target, this is our
+		 * last opportunity to use any partial paths that exist.  We don't
+		 * do this if the case where the target is parallel-safe, since we
+		 * will be able to generate superior paths by doing it after the
+		 * final scan/join target has been applied.
+		 *
+		 * Note that this may invalidate rel->cheapest_total_path, so we must
+		 * not rely on it after this point without first calling set_cheapest.
+		 */
+		generate_gather_paths(root, rel, false);
+
+		/* Can't use parallel query above this level. */
 		rel->partial_pathlist = NIL;
 		rel->consider_parallel = false;
 	}
@@ -6840,7 +6842,7 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 	rel->reltarget = llast_node(PathTarget, scanjoin_targets);
 
 	/* Special case: handly dummy relations separately. */
-	if (IS_DUMMY_REL(rel))
+	if (is_dummy_rel)
 	{
 		/*
 		 * Since this is a dummy rel, it's got a single Append path with no
