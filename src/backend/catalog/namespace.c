@@ -212,6 +212,15 @@ static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
  * If flags contains RVR_NOWAIT, throw an error if we'd have to wait for a
  * lock.
  *
+ * If flags contains RVR_SKIP_LOCKED, return InvalidOid if we'd have to wait
+ * for a lock.
+ *
+ * flags cannot contain both RVR_NOWAIT and RVR_SKIP_LOCKED.
+ *
+ * Note that if RVR_MISSING_OK and RVR_SKIP_LOCKED are both specified, a
+ * return value of InvalidOid could either mean the relation is missing or it
+ * could not be locked.
+ *
  * Callback allows caller to check permissions or acquire additional locks
  * prior to grabbing the relation lock.
  */
@@ -225,6 +234,9 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 	Oid			oldRelId = InvalidOid;
 	bool		retry = false;
 	bool		missing_ok = (flags & RVR_MISSING_OK) != 0;
+
+	/* verify that flags do no conflict */
+	Assert(!((flags & RVR_NOWAIT) && (flags & RVR_SKIP_LOCKED)));
 
 	/*
 	 * We check the catalog name and then ignore it.
@@ -363,20 +375,24 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		 */
 		if (!OidIsValid(relId))
 			AcceptInvalidationMessages();
-		else if (!(flags & RVR_NOWAIT))
+		else if (!(flags & (RVR_NOWAIT | RVR_SKIP_LOCKED)))
 			LockRelationOid(relId, lockmode);
 		else if (!ConditionalLockRelationOid(relId, lockmode))
 		{
+			int			elevel = (flags & RVR_SKIP_LOCKED) ? DEBUG1 : ERROR;
+
 			if (relation->schemaname)
-				ereport(ERROR,
+				ereport(elevel,
 						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 						 errmsg("could not obtain lock on relation \"%s.%s\"",
 								relation->schemaname, relation->relname)));
 			else
-				ereport(ERROR,
+				ereport(elevel,
 						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 						 errmsg("could not obtain lock on relation \"%s\"",
 								relation->relname)));
+
+			return InvalidOid;
 		}
 
 		/*

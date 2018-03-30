@@ -53,7 +53,8 @@ typedef struct OverrideSearchPath
 typedef enum RVROption
 {
 	RVR_MISSING_OK = 1 << 0,	/* don't error if relation doesn't exist */
-	RVR_NOWAIT = 1 << 1			/* error if relation cannot be locked */
+	RVR_NOWAIT = 1 << 1,		/* error if relation cannot be locked */
+	RVR_SKIP_LOCKED = 1 << 2	/* skip if relation cannot be locked */
 } RVROption;
 
 typedef void (*RangeVarGetRelidCallback) (const RangeVar *relation, Oid relId,
