@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE USER MAPPING [IF NOT EXISTS] FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | PUBLIC }
+CREATE USER MAPPING [ IF NOT EXISTS ] FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | PUBLIC }
     SERVER <replaceable class="parameter">server_name</replaceable>
     [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [ , ... ] ) ]
 </synopsis>
