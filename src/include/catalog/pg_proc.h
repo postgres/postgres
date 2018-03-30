@@ -569,11 +569,11 @@ DATA(insert OID = 334 (  spghandler		PGNSP PGUID 12 1 0 0 0 f f f t f v s 1 0 32
 DESCR("spgist index access method handler");
 DATA(insert OID = 335 (  brinhandler	PGNSP PGUID 12 1 0 0 0 f f f t f v s 1 0 325 "2281" _null_ _null_ _null_ _null_ _null_	brinhandler _null_ _null_ _null_ ));
 DESCR("brin index access method handler");
-DATA(insert OID = 3952 (  brin_summarize_new_values PGNSP PGUID 12 1 0 0 0 f f f t f v s 1 0 23 "2205" _null_ _null_ _null_ _null_ _null_ brin_summarize_new_values _null_ _null_ _null_ ));
+DATA(insert OID = 3952 (  brin_summarize_new_values PGNSP PGUID 12 1 0 0 0 f f f t f v u 1 0 23 "2205" _null_ _null_ _null_ _null_ _null_ brin_summarize_new_values _null_ _null_ _null_ ));
 DESCR("brin: standalone scan new table pages");
-DATA(insert OID = 3999 (  brin_summarize_range PGNSP PGUID 12 1 0 0 0 f f f t f v s 2 0 23 "2205 20" _null_ _null_ _null_ _null_ _null_ brin_summarize_range _null_ _null_ _null_ ));
+DATA(insert OID = 3999 (  brin_summarize_range PGNSP PGUID 12 1 0 0 0 f f f t f v u 2 0 23 "2205 20" _null_ _null_ _null_ _null_ _null_ brin_summarize_range _null_ _null_ _null_ ));
 DESCR("brin: standalone scan new table pages");
-DATA(insert OID = 4014 (  brin_desummarize_range PGNSP PGUID 12 1 0 0 0 f f f t f v s 2 0 2278 "2205 20" _null_ _null_ _null_ _null_ _null_ brin_desummarize_range _null_ _null_ _null_ ));
+DATA(insert OID = 4014 (  brin_desummarize_range PGNSP PGUID 12 1 0 0 0 f f f t f v u 2 0 2278 "2205 20" _null_ _null_ _null_ _null_ _null_ brin_desummarize_range _null_ _null_ _null_ ));
 DESCR("brin: desummarize page range");
 
 DATA(insert OID = 338 (  amvalidate		PGNSP PGUID 12 1 0 0 0 f f f t f v s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_	amvalidate _null_ _null_ _null_ ));
@@ -4500,19 +4500,19 @@ DESCR("serialize an XML value to a character string");
 
 DATA(insert OID = 2923 (  table_to_xml				  PGNSP PGUID 12 100 0 0 0 f f f t f s r 4 0 142 "2205 16 16 25" _null_ _null_ "{tbl,nulls,tableforest,targetns}" _null_ _null_ table_to_xml _null_ _null_ _null_ ));
 DESCR("map table contents to XML");
-DATA(insert OID = 2924 (  query_to_xml				  PGNSP PGUID 12 100 0 0 0 f f f t f s u 4 0 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" _null_ _null_ query_to_xml _null_ _null_ _null_ ));
+DATA(insert OID = 2924 (  query_to_xml				  PGNSP PGUID 12 100 0 0 0 f f f t f v u 4 0 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" _null_ _null_ query_to_xml _null_ _null_ _null_ ));
 DESCR("map query result to XML");
-DATA(insert OID = 2925 (  cursor_to_xml				  PGNSP PGUID 12 100 0 0 0 f f f t f s r 5 0 142 "1790 23 16 16 25" _null_ _null_ "{cursor,count,nulls,tableforest,targetns}" _null_ _null_ cursor_to_xml _null_ _null_ _null_ ));
+DATA(insert OID = 2925 (  cursor_to_xml				  PGNSP PGUID 12 100 0 0 0 f f f t f v u 5 0 142 "1790 23 16 16 25" _null_ _null_ "{cursor,count,nulls,tableforest,targetns}" _null_ _null_ cursor_to_xml _null_ _null_ _null_ ));
 DESCR("map rows from cursor to XML");
 DATA(insert OID = 2926 (  table_to_xmlschema		  PGNSP PGUID 12 100 0 0 0 f f f t f s r 4 0 142 "2205 16 16 25" _null_ _null_ "{tbl,nulls,tableforest,targetns}" _null_ _null_ table_to_xmlschema _null_ _null_ _null_ ));
 DESCR("map table structure to XML Schema");
-DATA(insert OID = 2927 (  query_to_xmlschema		  PGNSP PGUID 12 100 0 0 0 f f f t f s u 4 0 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" _null_ _null_ query_to_xmlschema _null_ _null_ _null_ ));
+DATA(insert OID = 2927 (  query_to_xmlschema		  PGNSP PGUID 12 100 0 0 0 f f f t f v u 4 0 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" _null_ _null_ query_to_xmlschema _null_ _null_ _null_ ));
 DESCR("map query result structure to XML Schema");
-DATA(insert OID = 2928 (  cursor_to_xmlschema		  PGNSP PGUID 12 100 0 0 0 f f f t f s r 4 0 142 "1790 16 16 25" _null_ _null_ "{cursor,nulls,tableforest,targetns}" _null_ _null_ cursor_to_xmlschema _null_ _null_ _null_ ));
+DATA(insert OID = 2928 (  cursor_to_xmlschema		  PGNSP PGUID 12 100 0 0 0 f f f t f v u 4 0 142 "1790 16 16 25" _null_ _null_ "{cursor,nulls,tableforest,targetns}" _null_ _null_ cursor_to_xmlschema _null_ _null_ _null_ ));
 DESCR("map cursor structure to XML Schema");
 DATA(insert OID = 2929 (  table_to_xml_and_xmlschema  PGNSP PGUID 12 100 0 0 0 f f f t f s r 4 0 142 "2205 16 16 25" _null_ _null_ "{tbl,nulls,tableforest,targetns}" _null_ _null_ table_to_xml_and_xmlschema _null_ _null_ _null_ ));
 DESCR("map table contents and structure to XML and XML Schema");
-DATA(insert OID = 2930 (  query_to_xml_and_xmlschema  PGNSP PGUID 12 100 0 0 0 f f f t f s u 4 0 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" _null_ _null_ query_to_xml_and_xmlschema _null_ _null_ _null_ ));
+DATA(insert OID = 2930 (  query_to_xml_and_xmlschema  PGNSP PGUID 12 100 0 0 0 f f f t f v u 4 0 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" _null_ _null_ query_to_xml_and_xmlschema _null_ _null_ _null_ ));
 DESCR("map query result and structure to XML and XML Schema");
 
 DATA(insert OID = 2933 (  schema_to_xml				  PGNSP PGUID 12 100 0 0 0 f f f t f s r 4 0 142 "19 16 16 25" _null_ _null_ "{schema,nulls,tableforest,targetns}" _null_ _null_ schema_to_xml _null_ _null_ _null_ ));
@@ -4812,7 +4812,7 @@ DESCR("GIN tsvector support (obsolete)");
 DATA(insert OID = 3792 (  gin_tsquery_consistent PGNSP PGUID 12 1 0 0 0 f f f t f i s 8 0 16 "2281 21 3615 23 2281 2281 2281 2281" _null_ _null_ _null_ _null_ _null_ gin_tsquery_consistent_oldsig _null_ _null_ _null_ ));
 DESCR("GIN tsvector support (obsolete)");
 
-DATA(insert OID = 3789 (  gin_clean_pending_list PGNSP PGUID 12 1 0 0 0 f f f t f v s 1 0 20 "2205" _null_ _null_ _null_ _null_ _null_ gin_clean_pending_list _null_ _null_ _null_ ));
+DATA(insert OID = 3789 (  gin_clean_pending_list PGNSP PGUID 12 1 0 0 0 f f f t f v u 1 0 20 "2205" _null_ _null_ _null_ _null_ _null_ gin_clean_pending_list _null_ _null_ _null_ ));
 DESCR("clean up GIN pending list");
 
 DATA(insert OID = 3662 (  tsquery_lt			PGNSP PGUID 12 1 0 0 0 f f f t f i s 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ _null_ tsquery_lt _null_ _null_ _null_ ));
@@ -4841,7 +4841,7 @@ DESCR("show real useful query for GiST index");
 
 DATA(insert OID = 3684 (  ts_rewrite		PGNSP PGUID 12 1 0 0 0 f f f t f i s 3 0 3615 "3615 3615 3615" _null_ _null_ _null_ _null_ _null_ tsquery_rewrite _null_ _null_ _null_ ));
 DESCR("rewrite tsquery");
-DATA(insert OID = 3685 (  ts_rewrite		PGNSP PGUID 12 100 0 0 0 f f f t f v s 2 0 3615 "3615 25" _null_ _null_ _null_ _null_ _null_ tsquery_rewrite_query _null_ _null_ _null_ ));
+DATA(insert OID = 3685 (  ts_rewrite		PGNSP PGUID 12 100 0 0 0 f f f t f v u 2 0 3615 "3615 25" _null_ _null_ _null_ _null_ _null_ tsquery_rewrite_query _null_ _null_ _null_ ));
 DESCR("rewrite tsquery");
 
 DATA(insert OID = 3695 (  gtsquery_compress				PGNSP PGUID 12 1 0 0 0 f f f t f i s 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ gtsquery_compress _null_ _null_ _null_ ));
@@ -4866,9 +4866,9 @@ DESCR("join selectivity of tsvector @@ tsquery");
 DATA(insert OID = 3688 (  ts_typanalyze		PGNSP PGUID 12 1 0 0 0 f f f t f s s 1 0 16 "2281" _null_ _null_ _null_ _null_ _null_ ts_typanalyze _null_ _null_ _null_ ));
 DESCR("tsvector typanalyze");
 
-DATA(insert OID = 3689 (  ts_stat		PGNSP PGUID 12 10 10000 0 0 f f f t t v s 1 0 2249 "25" "{25,25,23,23}" "{i,o,o,o}" "{query,word,ndoc,nentry}" _null_ _null_ ts_stat1 _null_ _null_ _null_ ));
+DATA(insert OID = 3689 (  ts_stat		PGNSP PGUID 12 10 10000 0 0 f f f t t v u 1 0 2249 "25" "{25,25,23,23}" "{i,o,o,o}" "{query,word,ndoc,nentry}" _null_ _null_ ts_stat1 _null_ _null_ _null_ ));
 DESCR("statistics of tsvector column");
-DATA(insert OID = 3690 (  ts_stat		PGNSP PGUID 12 10 10000 0 0 f f f t t v s 2 0 2249 "25 25" "{25,25,25,23,23}" "{i,i,o,o,o}" "{query,weights,word,ndoc,nentry}" _null_ _null_ ts_stat2 _null_ _null_ _null_ ));
+DATA(insert OID = 3690 (  ts_stat		PGNSP PGUID 12 10 10000 0 0 f f f t t v u 2 0 2249 "25 25" "{25,25,25,23,23}" "{i,i,o,o,o}" "{query,weights,word,ndoc,nentry}" _null_ _null_ ts_stat2 _null_ _null_ _null_ ));
 DESCR("statistics of tsvector column");
 
 DATA(insert OID = 3703 (  ts_rank		PGNSP PGUID 12 1 0 0 0 f f f t f i s 4 0 700 "1021 3614 3615 23" _null_ _null_ _null_ _null_ _null_ ts_rank_wttf _null_ _null_ _null_ ));
@@ -5503,7 +5503,7 @@ DATA(insert OID = 3589 ( binary_upgrade_set_next_pg_enum_oid PGNSP PGUID  12 1 0
 DESCR("for use by pg_upgrade");
 DATA(insert OID = 3590 ( binary_upgrade_set_next_pg_authid_oid PGNSP PGUID	12 1 0 0 0 f f f t f v r 1 0 2278 "26" _null_ _null_ _null_ _null_ _null_ binary_upgrade_set_next_pg_authid_oid _null_ _null_ _null_ ));
 DESCR("for use by pg_upgrade");
-DATA(insert OID = 3591 ( binary_upgrade_create_empty_extension PGNSP PGUID	12 1 0 0 0 f f f f f v r 7 0 2278 "25 25 16 25 1028 1009 1009" _null_ _null_ _null_ _null_ _null_ binary_upgrade_create_empty_extension _null_ _null_ _null_ ));
+DATA(insert OID = 3591 ( binary_upgrade_create_empty_extension PGNSP PGUID	12 1 0 0 0 f f f f f v u 7 0 2278 "25 25 16 25 1028 1009 1009" _null_ _null_ _null_ _null_ _null_ binary_upgrade_create_empty_extension _null_ _null_ _null_ ));
 DESCR("for use by pg_upgrade");
 DATA(insert OID = 4083 ( binary_upgrade_set_record_init_privs PGNSP PGUID	12 1 0 0 0 f f f t f v r 1 0 2278 "16" _null_ _null_ _null_ _null_ _null_ binary_upgrade_set_record_init_privs _null_ _null_ _null_ ));
 DESCR("for use by pg_upgrade");
@@ -5575,7 +5575,7 @@ DATA(insert OID = 3444 ( pg_control_init PGNSP PGUID 12 1 0 0 0 f f f t f v s 0 
 DESCR("pg_controldata init state information as a function");
 
 /* collation management functions */
-DATA(insert OID = 3445 ( pg_import_system_collations PGNSP PGUID 12 100 0 0 0 f f f t f v r 1 0 23 "4089" _null_ _null_ _null_ _null_ _null_ pg_import_system_collations _null_ _null_ _null_ ));
+DATA(insert OID = 3445 ( pg_import_system_collations PGNSP PGUID 12 100 0 0 0 f f f t f v u 1 0 23 "4089" _null_ _null_ _null_ _null_ _null_ pg_import_system_collations _null_ _null_ _null_ ));
 DESCR("import collations from operating system");
 
 DATA(insert OID = 3448 ( pg_collation_actual_version PGNSP PGUID 12 100 0 0 0 f f f t f v s 1 0 25 "26" _null_ _null_ _null_ _null_ _null_ pg_collation_actual_version _null_ _null_ _null_ ));
