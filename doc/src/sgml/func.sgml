@@ -10399,6 +10399,24 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
     </para>
    </sect3>
 
+   <sect3>
+    <title><literal>IS NOT DOCUMENT</literal></title>
+
+    <indexterm>
+     <primary>IS NOT DOCUMENT</primary>
+    </indexterm>
+
+<synopsis>
+<replaceable>xml</replaceable> IS NOT DOCUMENT
+</synopsis>
+
+    <para>
+     The expression <literal>IS NOT DOCUMENT</literal> returns false if the
+     argument XML value is a proper XML document, true if it is not (that is,
+     it is a content fragment), or null if the argument is null.
+    </para>
+   </sect3>
+
    <sect3 id="xml-exists">
     <title><literal>XMLEXISTS</literal></title>
 
