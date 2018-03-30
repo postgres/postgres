@@ -846,6 +846,21 @@ spgvacuumscan(spgBulkDeleteState *bds)
 	SpGistUpdateMetaPage(index);
 
 	/*
+	 * If we found any empty pages (and recorded them in the FSM), then
+	 * forcibly update the upper-level FSM pages to ensure that searchers can
+	 * find them.  It's possible that the pages were also found during
+	 * previous scans and so this is a waste of time, but it's cheap enough
+	 * relative to scanning the index that it shouldn't matter much, and
+	 * making sure that free pages are available sooner not later seems
+	 * worthwhile.
+	 *
+	 * Note that if no empty pages exist, we don't bother vacuuming the FSM at
+	 * all.
+	 */
+	if (bds->stats->pages_deleted > 0)
+		IndexFreeSpaceMapVacuum(index);
+
+	/*
 	 * Truncate index if possible
 	 *
 	 * XXX disabled because it's unsafe due to possible concurrent inserts.
@@ -916,7 +931,6 @@ dummy_callback(ItemPointer itemptr, void *state)
 IndexBulkDeleteResult *
 spgvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 {
-	Relation	index = info->index;
 	spgBulkDeleteState bds;
 
 	/* No-op in ANALYZE ONLY mode */
@@ -926,8 +940,8 @@ spgvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	/*
 	 * We don't need to scan the index if there was a preceding bulkdelete
 	 * pass.  Otherwise, make a pass that won't delete any live tuples, but
-	 * might still accomplish useful stuff with redirect/placeholder cleanup,
-	 * and in any case will provide stats.
+	 * might still accomplish useful stuff with redirect/placeholder cleanup
+	 * and/or FSM housekeeping, and in any case will provide stats.
 	 */
 	if (stats == NULL)
 	{
@@ -939,9 +953,6 @@ spgvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 
 		spgvacuumscan(&bds);
 	}
-
-	/* Finally, vacuum the FSM */
-	IndexFreeSpaceMapVacuum(index);
 
 	/*
 	 * It's quite possible for us to be fooled by concurrent tuple moves into

@@ -832,9 +832,6 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		btvacuumscan(info, stats, NULL, NULL, 0);
 	}
 
-	/* Finally, vacuum the FSM */
-	IndexFreeSpaceMapVacuum(info->index);
-
 	/*
 	 * It's quite possible for us to be fooled by concurrent page splits into
 	 * double-counting some index tuples, so disbelieve any total that exceeds
@@ -975,6 +972,21 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	}
 
 	MemoryContextDelete(vstate.pagedelcontext);
+
+	/*
+	 * If we found any recyclable pages (and recorded them in the FSM), then
+	 * forcibly update the upper-level FSM pages to ensure that searchers can
+	 * find them.  It's possible that the pages were also found during
+	 * previous scans and so this is a waste of time, but it's cheap enough
+	 * relative to scanning the index that it shouldn't matter much, and
+	 * making sure that free pages are available sooner not later seems
+	 * worthwhile.
+	 *
+	 * Note that if no recyclable pages exist, we don't bother vacuuming the
+	 * FSM at all.
+	 */
+	if (vstate.totFreePages > 0)
+		IndexFreeSpaceMapVacuum(rel);
 
 	/* update statistics */
 	stats->num_pages = num_pages;
