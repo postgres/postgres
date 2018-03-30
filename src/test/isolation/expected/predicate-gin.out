@@ -1,0 +1,756 @@
+Parsed test spec with 2 sessions
+
+starting permutation: rxy1 wx1 c1 rxy2 wy2 c2
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c1: commit;
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10050          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c2: commit;
+
+starting permutation: rxy2 wy2 c2 rxy1 wx1 c1
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c2: commit;
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10050          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c1: commit;
+
+starting permutation: rxy3 wx3 c1 rxy4 wy4 c2
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+
+starting permutation: rxy4 wy4 c2 rxy3 wx3 c1
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+
+starting permutation: rxy1 wx1 rxy2 c1 wy2 c2
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step c1: commit;
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: commit;
+
+starting permutation: rxy1 wx1 rxy2 wy2 c1 c2
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 wx1 rxy2 wy2 c2 c1
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wx1 c1 wy2 c2
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c1: commit;
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: commit;
+
+starting permutation: rxy1 rxy2 wx1 wy2 c1 c2
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wx1 wy2 c2 c1
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wy2 wx1 c1 c2
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wy2 wx1 c2 c1
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wy2 c2 wx1 c1
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c2: commit;
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1: commit;
+
+starting permutation: rxy2 rxy1 wx1 c1 wy2 c2
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c1: commit;
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: commit;
+
+starting permutation: rxy2 rxy1 wx1 wy2 c1 c2
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 rxy1 wx1 wy2 c2 c1
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 rxy1 wy2 wx1 c1 c2
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 rxy1 wy2 wx1 c2 c1
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 rxy1 wy2 c2 wx1 c1
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step c2: commit;
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1: commit;
+
+starting permutation: rxy2 wy2 rxy1 wx1 c1 c2
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 wy2 rxy1 wx1 c2 c1
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 wy2 rxy1 c2 wx1 c1
+step rxy2: select count(*) from gin_tbl where p @> array[5,6];
+count          
+
+10000          
+step wy2: insert into gin_tbl select g, array[4,5] from
+              generate_series(20051, 20100) g;
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step c2: commit;
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1: commit;
+
+starting permutation: rxy3 wx3 rxy4 c1 wy4 c2
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step c1: commit;
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+
+starting permutation: rxy3 wx3 rxy4 wy4 c1 c2
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy3 wx3 rxy4 wy4 c2 c1
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy3 rxy4 wx3 c1 wy4 c2
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+
+starting permutation: rxy3 rxy4 wx3 wy4 c1 c2
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy3 rxy4 wx3 wy4 c2 c1
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy3 rxy4 wy4 wx3 c1 c2
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy3 rxy4 wy4 wx3 c2 c1
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy3 rxy4 wy4 c2 wx3 c1
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+
+starting permutation: rxy4 rxy3 wx3 c1 wy4 c2
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+
+starting permutation: rxy4 rxy3 wx3 wy4 c1 c2
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy4 rxy3 wx3 wy4 c2 c1
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy4 rxy3 wy4 wx3 c1 c2
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy4 rxy3 wy4 wx3 c2 c1
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy4 rxy3 wy4 c2 wx3 c1
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step c2: commit;
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+
+starting permutation: rxy4 wy4 rxy3 wx3 c1 c2
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy4 wy4 rxy3 wx3 c2 c1
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy4 wy4 rxy3 c2 wx3 c1
+step rxy4: select count(*) from gin_tbl where p @> array[4000,8000] or
+              p @> array[5000,10000] or p @> array[6000,12000] or
+              p @> array[8000,16000];
+count          
+
+4              
+step wy4: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (10000, 10050) g;
+step rxy3: select count(*) from gin_tbl where p @> array[1,2] or
+              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000];
+count          
+
+4              
+step c2: commit;
+step wx3: insert into gin_tbl select g, array[g,g*2] from generate_series
+              (1, 50) g;
+step c1: commit;
+
+starting permutation: rxy1 rxy2fu wx1 c1 wy2fu c2
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step rxy2fu: select count(*) from gin_tbl where p @> array[10000,10005];
+count          
+
+0              
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c1: commit;
+step wy2fu: insert into gin_tbl select g, array[10000,10005] from
+              generate_series(20051, 20100) g;
+step c2: commit;
+
+starting permutation: fu1 rxy1 rxy2fu wx1 c1 wy2fu c2
+step fu1: alter index ginidx set (fastupdate = on);
+			  commit;
+			  begin isolation level serializable; 
+  			  set enable_seqscan=off;
+step rxy1: select count(*) from gin_tbl where p @> array[4,5];
+count          
+
+10000          
+step rxy2fu: select count(*) from gin_tbl where p @> array[10000,10005];
+count          
+
+0              
+step wx1: insert into gin_tbl select g, array[5,6] from generate_series
+              (20001, 20050) g;
+step c1: commit;
+step wy2fu: insert into gin_tbl select g, array[10000,10005] from
+              generate_series(20051, 20100) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: commit;

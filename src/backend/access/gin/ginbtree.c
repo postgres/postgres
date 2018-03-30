@@ -17,6 +17,7 @@
 #include "access/gin_private.h"
 #include "access/ginxlog.h"
 #include "access/xloginsert.h"
+#include "storage/predicate.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -515,6 +516,19 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			btree->fillRoot(btree, newrootpg,
 							BufferGetBlockNumber(lbuffer), newlpage,
 							BufferGetBlockNumber(rbuffer), newrpage);
+
+			if (GinPageIsLeaf(BufferGetPage(stack->buffer)))
+			{
+
+				PredicateLockPageSplit(btree->index,
+						BufferGetBlockNumber(stack->buffer),
+						BufferGetBlockNumber(lbuffer));
+
+				PredicateLockPageSplit(btree->index,
+						BufferGetBlockNumber(stack->buffer),
+						BufferGetBlockNumber(rbuffer));
+			}
+
 		}
 		else
 		{
@@ -524,6 +538,14 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			GinPageGetOpaque(newrpage)->rightlink = savedRightLink;
 			GinPageGetOpaque(newlpage)->flags |= GIN_INCOMPLETE_SPLIT;
 			GinPageGetOpaque(newlpage)->rightlink = BufferGetBlockNumber(rbuffer);
+
+			if (GinPageIsLeaf(BufferGetPage(stack->buffer)))
+			{
+
+				PredicateLockPageSplit(btree->index,
+						BufferGetBlockNumber(stack->buffer),
+						BufferGetBlockNumber(rbuffer));
+			}
 		}
 
 		/*

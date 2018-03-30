@@ -103,6 +103,8 @@ extern Datum *ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 extern OffsetNumber gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple);
 extern Datum gintuple_get_key(GinState *ginstate, IndexTuple tuple,
 				 GinNullCategory *category);
+extern void GinCheckForSerializableConflictIn(Relation relation,
+				 HeapTuple tuple, Buffer buffer);
 
 /* gininsert.c */
 extern IndexBuildResult *ginbuild(Relation heap, Relation index,
@@ -217,7 +219,7 @@ extern ItemPointer GinDataLeafPageGetItems(Page page, int *nitems, ItemPointerDa
 extern int	GinDataLeafPageGetItemsToTbm(Page page, TIDBitmap *tbm);
 extern BlockNumber createPostingTree(Relation index,
 				  ItemPointerData *items, uint32 nitems,
-				  GinStatsData *buildStats);
+				  GinStatsData *buildStats, Buffer entrybuffer);
 extern void GinDataPageAddPostingItem(Page page, PostingItem *data, OffsetNumber offset);
 extern void GinPageDeletePostingItem(Page page, OffsetNumber offset);
 extern void ginInsertItemPointers(Relation index, BlockNumber rootBlkno,

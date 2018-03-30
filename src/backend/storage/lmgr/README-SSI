@@ -380,6 +380,15 @@ then be trusted to ripple up to all levels and locations where
 conflicting predicate locks may exist. In case there is a page split,
 we need to copy predicate lock from an original page to all new pages.
 
+    * GIN searches acquire predicate locks only on the leaf pages
+of entry tree and posting tree. During a page split, a predicate locks are
+copied from the original page to the new page. In the same way predicate locks
+are copied from entry tree leaf page to freshly created posting tree root.
+However, when fast update is enabled, a predicate lock on the whole index
+relation is required. Fast update postpones the insertion of tuples into index
+structure by temporarily storing them into pending list. That makes us unable
+to detect r-w conflicts using page-level locks.
+
     * The effects of page splits, overflows, consolidations, and
 removals must be carefully reviewed to ensure that predicate locks
 aren't "lost" during those operations, or kept with pages which could

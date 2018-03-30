@@ -22,6 +22,7 @@
 #include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "storage/indexfsm.h"
+#include "storage/predicate.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
@@ -48,7 +49,7 @@ static IndexTuple
 addItemPointersToLeafTuple(GinState *ginstate,
 						   IndexTuple old,
 						   ItemPointerData *items, uint32 nitem,
-						   GinStatsData *buildStats)
+						   GinStatsData *buildStats, Buffer buffer)
 {
 	OffsetNumber attnum;
 	Datum		key;
@@ -99,7 +100,8 @@ addItemPointersToLeafTuple(GinState *ginstate,
 		postingRoot = createPostingTree(ginstate->index,
 										oldItems,
 										oldNPosting,
-										buildStats);
+										buildStats,
+										buffer);
 
 		/* Now insert the TIDs-to-be-added into the posting tree */
 		ginInsertItemPointers(ginstate->index, postingRoot,
@@ -127,7 +129,7 @@ static IndexTuple
 buildFreshLeafTuple(GinState *ginstate,
 					OffsetNumber attnum, Datum key, GinNullCategory category,
 					ItemPointerData *items, uint32 nitem,
-					GinStatsData *buildStats)
+					GinStatsData *buildStats, Buffer buffer)
 {
 	IndexTuple	res = NULL;
 	GinPostingList *compressedList;
@@ -157,7 +159,7 @@ buildFreshLeafTuple(GinState *ginstate,
 		 * Initialize a new posting tree with the TIDs.
 		 */
 		postingRoot = createPostingTree(ginstate->index, items, nitem,
-										buildStats);
+										buildStats, buffer);
 
 		/* And save the root link in the result tuple */
 		GinSetPostingTree(res, postingRoot);
@@ -217,17 +219,19 @@ ginEntryInsert(GinState *ginstate,
 			return;
 		}
 
+		GinCheckForSerializableConflictIn(btree.index, NULL, stack->buffer);
 		/* modify an existing leaf entry */
 		itup = addItemPointersToLeafTuple(ginstate, itup,
-										  items, nitem, buildStats);
+										  items, nitem, buildStats, stack->buffer);
 
 		insertdata.isDelete = true;
 	}
 	else
 	{
+		GinCheckForSerializableConflictIn(btree.index, NULL, stack->buffer);
 		/* no match, so construct a new leaf entry */
 		itup = buildFreshLeafTuple(ginstate, attnum, key, category,
-								   items, nitem, buildStats);
+								   items, nitem, buildStats, stack->buffer);
 	}
 
 	/* Insert the new or modified leaf tuple */
@@ -513,6 +517,18 @@ gininsert(Relation index, Datum *values, bool *isnull,
 
 		memset(&collector, 0, sizeof(GinTupleCollector));
 
+		/*
+		 * With fastupdate on each scan and each insert begin with access to
+		 * pending list, so it effectively lock entire index. In this case
+		 * we aquire predicate lock and check for conflicts over index relation,
+		 * and hope that it will reduce locking overhead.
+		 *
+		 * Do not use GinCheckForSerializableConflictIn() here, because
+		 * it will do nothing (it does actual work only with fastupdate off).
+		 * Check for conflicts for entire index.
+		 */
+		CheckForSerializableConflictIn(index, NULL, InvalidBuffer);
+
 		for (i = 0; i < ginstate->origTupdesc->natts; i++)
 			ginHeapTupleFastCollect(ginstate, &collector,
 									(OffsetNumber) (i + 1),
@@ -523,6 +539,16 @@ gininsert(Relation index, Datum *values, bool *isnull,
 	}
 	else
 	{
+		GinStatsData	stats;
+
+		/*
+		 * Fastupdate is off but if pending list isn't empty then we need to
+		 * check conflicts with PredicateLockRelation in scanPendingInsert().
+		 */
+		ginGetStats(index, &stats);
+		if (stats.nPendingPages > 0)
+			CheckForSerializableConflictIn(index, NULL, InvalidBuffer);
+
 		for (i = 0; i < ginstate->origTupdesc->natts; i++)
 			ginHeapTupleInsert(ginstate, (OffsetNumber) (i + 1),
 							   values[i], isnull[i],

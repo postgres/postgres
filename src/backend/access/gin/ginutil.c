@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
 #include "utils/typcache.h"
@@ -49,7 +50,7 @@ ginhandler(PG_FUNCTION_ARGS)
 	amroutine->amsearchnulls = false;
 	amroutine->amstorage = true;
 	amroutine->amclusterable = false;
-	amroutine->ampredlocks = false;
+	amroutine->ampredlocks = true;
 	amroutine->amcanparallel = false;
 	amroutine->amkeytype = InvalidOid;
 
@@ -715,4 +716,11 @@ ginUpdateStats(Relation index, const GinStatsData *stats)
 	UnlockReleaseBuffer(metabuffer);
 
 	END_CRIT_SECTION();
+}
+
+void
+GinCheckForSerializableConflictIn(Relation relation, HeapTuple tuple, Buffer buffer)
+{
+	if (!GinGetUseFastUpdate(relation))
+		CheckForSerializableConflictIn(relation, tuple, buffer);
 }
