@@ -46,6 +46,11 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
   </para>
 
   <para>
+   When a view is specified to be locked, all relations appearing in the view
+   definition query are also locked recursively with the same lock mode. 
+  </para>
+
+  <para>
    When acquiring locks automatically for commands that reference
    tables, <productname>PostgreSQL</productname> always uses the least
    restrictive lock mode possible. <command>LOCK TABLE</command>
