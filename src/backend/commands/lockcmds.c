@@ -263,7 +263,6 @@ LockViewRecurse(Oid reloid, Oid root_reloid, LOCKMODE lockmode, bool nowait)
 
 	view = heap_open(reloid, NoLock);
 	viewquery = get_view_query(view);
-	heap_close(view, NoLock);
 
 	context.root_reloid = root_reloid;
 	context.lockmode = lockmode;
@@ -272,6 +271,8 @@ LockViewRecurse(Oid reloid, Oid root_reloid, LOCKMODE lockmode, bool nowait)
 	context.viewoid = reloid;
 
 	LockViewRecurse_walker((Node *) viewquery, &context);
+
+	heap_close(view, NoLock);
 }
 
 /*
