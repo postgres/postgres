@@ -127,7 +127,6 @@ slot_getmissingattrs(TupleTableSlot *slot, int startAttNum, int lastAttNum)
 	if (slot->tts_tupleDescriptor->constr)
 		attrmiss = slot->tts_tupleDescriptor->constr->missing;
 
-
 	if (!attrmiss)
 	{
 		/* no missing values array at all, so just fill everything in as NULL */
@@ -139,9 +138,9 @@ slot_getmissingattrs(TupleTableSlot *slot, int startAttNum, int lastAttNum)
 	else
 	{
 		/* if there is a missing values array we must process them one by one */
-		for (missattnum = lastAttNum - 1;
-			 missattnum >= startAttNum;
-			 missattnum--)
+		for (missattnum = startAttNum;
+			 missattnum < lastAttNum;
+			 missattnum++)
 		{
 			slot->tts_values[missattnum] = attrmiss[missattnum].ammissing;
 			slot->tts_isnull[missattnum] =
@@ -1636,6 +1635,8 @@ slot_getallattrs(TupleTableSlot *slot)
 
 	slot_deform_tuple(slot, attnum);
 
+	attnum = slot->tts_nvalid;
+
 	/*
 	 * If tuple doesn't have all the atts indicated by tupleDesc, read the
 	 * rest as NULLS or missing values.
@@ -1681,8 +1682,10 @@ slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 
 	slot_deform_tuple(slot, attno);
 
+	attno = slot->tts_nvalid;
+
 	/*
-	 * If tuple doesn't have all the atts indicated by tupleDesc, read the
+	 * If tuple doesn't have all the atts indicated by attnum, read the
 	 * rest as NULLs or missing values
 	 */
 	if (attno < attnum)

@@ -626,8 +626,7 @@ ExecCopySlotMinimalTuple(TupleTableSlot *slot)
 		return heap_copy_minimal_tuple(slot->tts_mintuple);
 	if (slot->tts_tuple)
 	{
-		if (TTS_HAS_PHYSICAL_TUPLE(slot) &&
-			HeapTupleHeaderGetNatts(slot->tts_tuple->t_data)
+		if (HeapTupleHeaderGetNatts(slot->tts_tuple->t_data)
 			< slot->tts_tupleDescriptor->natts)
 			return minimal_expand_tuple(slot->tts_tuple,
 										slot->tts_tupleDescriptor);
@@ -675,18 +674,15 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
 		if (HeapTupleHeaderGetNatts(slot->tts_tuple->t_data) <
 			slot->tts_tupleDescriptor->natts)
 		{
+			HeapTuple tuple;
 			MemoryContext oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 
-			slot->tts_tuple = heap_expand_tuple(slot->tts_tuple,
-												slot->tts_tupleDescriptor);
-			slot->tts_shouldFree = true;
+			tuple = heap_expand_tuple(slot->tts_tuple,
+									  slot->tts_tupleDescriptor);
 			MemoryContextSwitchTo(oldContext);
-			return slot->tts_tuple;
+			slot = ExecStoreTuple(tuple, slot, InvalidBuffer, true);
 		}
-		else
-		{
-			return slot->tts_tuple;
-		}
+		return slot->tts_tuple;
 	}
 
 	/*
