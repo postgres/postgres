@@ -8,13 +8,7 @@
 # this directory and SUBDIRS to subdirectories containing more things
 # to build.
 
-ifdef PARTIAL_LINKING
-# old style: linking using SUBSYS.o
-subsysfilename = SUBSYS.o
-else
-# new style: linking all object files at once
 subsysfilename = objfiles.txt
-endif
 
 SUBDIROBJS = $(SUBDIRS:%=%/$(subsysfilename))
 
