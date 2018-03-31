@@ -111,7 +111,8 @@ my @options = (
 		[qr{unrecognized initialization step},
 		 qr{allowed steps are} ] ],
 	[ 'bad random seed', '--random-seed=one',
-		[qr{error while scanning 'one' from --random-seed option, expecting an unsigned integer} ] ],
+		[qr{unrecognized random seed option "one": expecting an unsigned integer, "time" or "rand"},
+		 qr{error while setting random seed from --random-seed option} ] ],
 
 	# loging sub-options
 	[   'sampling => log', '--sampling-rate=0.01',

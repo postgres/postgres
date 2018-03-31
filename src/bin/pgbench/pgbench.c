@@ -4669,8 +4669,8 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 }
 
 /* call srandom based on some seed. NULL triggers the default behavior. */
-static void
-set_random_seed(const char *seed, const char *origin)
+static bool
+set_random_seed(const char *seed)
 {
 	/* srandom expects an unsigned int */
 	unsigned int iseed;
@@ -4685,10 +4685,14 @@ set_random_seed(const char *seed, const char *origin)
 	else if (strcmp(seed, "rand") == 0)
 	{
 		/* use some "strong" random source */
+#ifdef HAVE_STRONG_RANDOM
 		if (!pg_strong_random(&iseed, sizeof(iseed)))
+#endif
 		{
-			fprintf(stderr, "cannot seed random from a strong source\n");
-			exit(1);
+			fprintf(stderr,
+					"cannot seed random from a strong source, none available: "
+					"use \"time\" or an unsigned integer value.\n");
+			return false;
 		}
 	}
 	else
@@ -4698,9 +4702,9 @@ set_random_seed(const char *seed, const char *origin)
 		if (sscanf(seed, "%u%c", &iseed, &garbage) != 1)
 		{
 			fprintf(stderr,
-					"error while scanning '%s' from %s, expecting an unsigned integer, 'time' or 'rand'\n",
-					seed, origin);
-			exit(1);
+					"unrecognized random seed option \"%s\": expecting an unsigned integer, \"time\" or \"rand\"\n",
+					seed);
+			return false;
 		}
 	}
 
@@ -4709,6 +4713,7 @@ set_random_seed(const char *seed, const char *origin)
 	srandom(iseed);
 	/* no precision loss: 32 bit unsigned int cast to 64 bit int */
 	random_seed = iseed;
+	return true;
 }
 
 
@@ -4823,7 +4828,11 @@ main(int argc, char **argv)
 	memset(state, 0, sizeof(CState));
 
 	/* set random seed early, because it may be used while parsing scripts. */
-	set_random_seed(getenv("PGBENCH_RANDOM_SEED"), "PGBENCH_RANDOM_SEED environment variable");
+	if (!set_random_seed(getenv("PGBENCH_RANDOM_SEED")))
+	{
+		fprintf(stderr, "error while setting random seed from PGBENCH_RANDOM_SEED environment variable\n");
+		exit(1);
+	}
 
 	while ((c = getopt_long(argc, argv, "iI:h:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
 	{
@@ -5099,7 +5108,11 @@ main(int argc, char **argv)
 				break;
 			case 9:				/* random-seed */
 				benchmarking_option_set = true;
-				set_random_seed(optarg, "--random-seed option");
+				if (!set_random_seed(optarg))
+				{
+					fprintf(stderr, "error while setting random seed from --random-seed option\n");
+					exit(1);
+				}
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
