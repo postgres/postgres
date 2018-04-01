@@ -2590,6 +2590,7 @@ bitmapword
 bits16
 bits32
 bits8
+bloom_filter
 bool
 brin_column_state
 bytea

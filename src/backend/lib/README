@@ -3,6 +3,8 @@ in the backend:
 
 binaryheap.c - a binary heap
 
+bloomfilter.c - probabilistic, space-efficient set membership testing
+
 hyperloglog.c - a streaming cardinality estimator
 
 pairingheap.c - a pairing heap
