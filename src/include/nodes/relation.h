@@ -1444,7 +1444,7 @@ typedef JoinPath NestPath;
  * that the executor need find only one match per outer tuple, and that the
  * mergeclauses are sufficient to identify a match.  In such cases the
  * executor can immediately advance the outer relation after processing a
- * match, and therefoere it need never back up the inner relation.
+ * match, and therefore it need never back up the inner relation.
  *
  * materialize_inner is true if a Material node should be placed atop the
  * inner input.  This may appear with or without an inner Sort step.

@@ -121,7 +121,7 @@ sendFeedback(PGconn *conn, TimestampTz now, bool force, bool replyRequested)
 	int			len = 0;
 
 	/*
-	 * we normally don't want to send superfluous feedbacks, but if it's
+	 * we normally don't want to send superfluous feedback, but if it's
 	 * because of a timeout we need to, otherwise wal_sender_timeout will kill
 	 * us.
 	 */

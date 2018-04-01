@@ -104,7 +104,7 @@ typedef struct AggStatePerTransData
 	/*
 	 * Comparators for input columns --- only set/used when aggregate has
 	 * DISTINCT flag. equalfnOne version is used for single-column
-	 * commparisons, equalfnMulti for the case of multiple columns.
+	 * comparisons, equalfnMulti for the case of multiple columns.
 	 */
 	FmgrInfo	equalfnOne;
 	ExprState  *equalfnMulti;

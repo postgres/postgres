@@ -710,7 +710,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * using the parent relation as reference.  It must not do anything that
  * will not be correct when transposed to the child relation(s).  (Step 4
  * is incorrect by this light, since child relations might have different
- * colun ordering, but the planner will fix things by re-sorting the tlist
+ * column ordering, but the planner will fix things by re-sorting the tlist
  * for each child.)
  */
 static List *

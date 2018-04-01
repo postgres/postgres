@@ -107,7 +107,7 @@ extern void llvm_inline(LLVMModuleRef mod);
 
 /*
  ****************************************************************************
- * Code ceneration functions.
+ * Code generation functions.
  ****************************************************************************
  */
 extern bool llvm_compile_expr(struct ExprState *state);

@@ -6709,7 +6709,7 @@ create_partial_grouping_paths(PlannerInfo *root,
  * Gather Merge.
  *
  * NB: This function shouldn't be used for anything other than a grouped or
- * partially grouped relation not only because of the fact that it explcitly
+ * partially grouped relation not only because of the fact that it explicitly
  * references group_pathkeys but we pass "true" as the third argument to
  * generate_gather_paths().
  */
@@ -6841,7 +6841,7 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 	 */
 	rel->reltarget = llast_node(PathTarget, scanjoin_targets);
 
-	/* Special case: handly dummy relations separately. */
+	/* Special case: handle dummy relations separately. */
 	if (is_dummy_rel)
 	{
 		/*

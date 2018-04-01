@@ -811,7 +811,7 @@ main(int argc, char **argv)
 	/*
 	 * In binary-upgrade mode, we do not have to worry about the actual blob
 	 * data or the associated metadata that resides in the pg_largeobject and
-	 * pg_largeobject_metadata tables, respectivly.
+	 * pg_largeobject_metadata tables, respectively.
 	 *
 	 * However, we do need to collect blob information as there may be
 	 * comments or other information on blobs that we do need to dump out.

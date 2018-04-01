@@ -239,7 +239,7 @@ typedef HashScanOpaqueData *HashScanOpaque;
 #define HASH_SPLITPOINT_PHASE_MASK		(HASH_SPLITPOINT_PHASES_PER_GRP - 1)
 #define HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE	10
 
-/* defines max number of splitpoit phases a hash index can have */
+/* defines max number of splitpoint phases a hash index can have */
 #define HASH_MAX_SPLITPOINT_GROUP	32
 #define HASH_MAX_SPLITPOINTS \
 	(((HASH_MAX_SPLITPOINT_GROUP - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) * \

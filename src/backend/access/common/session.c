@@ -60,7 +60,7 @@ InitializeSession(void)
  * Initialize the per-session DSM segment if it isn't already initialized, and
  * return its handle so that worker processes can attach to it.
  *
- * Unlike the per-context DSM segment, this segement and its contents are
+ * Unlike the per-context DSM segment, this segment and its contents are
  * reused for future parallel queries.
  *
  * Return DSM_HANDLE_INVALID if a segment can't be allocated due to lack of

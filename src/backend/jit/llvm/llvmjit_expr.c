@@ -1768,7 +1768,7 @@ llvm_compile_expr(ExprState *state)
 									b_compare_result,
 									b_null);
 
-					/* build block analying the !NULL comparator result */
+					/* build block analyzing the !NULL comparator result */
 					LLVMPositionBuilderAtEnd(b, b_compare_result);
 
 					/* if results equal, compare next, otherwise done */

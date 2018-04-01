@@ -1172,7 +1172,7 @@ get_object_field_end(void *state, char *fname, bool isnull)
 	if (get_last && _state->result_start != NULL)
 	{
 		/*
-		 * make a text object from the string from the prevously noted json
+		 * make a text object from the string from the previously noted json
 		 * start up to the end of the previous token (the lexer is by now
 		 * ahead of us on whatever came after what we're interested in).
 		 */

@@ -190,7 +190,7 @@ typedef struct ParallelHashJoinBatch
 
 /*
  * Each backend requires a small amount of per-batch state to interact with
- * each ParalellHashJoinBatch.
+ * each ParallelHashJoinBatch.
  */
 typedef struct ParallelHashJoinBatchAccessor
 {
@@ -201,7 +201,7 @@ typedef struct ParallelHashJoinBatchAccessor
 	size_t		ntuples;		/* number of tuples */
 	size_t		size;			/* size of partition in memory */
 	size_t		estimated_size; /* size of partition on disk */
-	size_t		old_ntuples;	/* how many tuples before repartioning? */
+	size_t		old_ntuples;	/* how many tuples before repartitioning? */
 	bool		at_least_one_chunk; /* has this backend allocated a chunk? */
 
 	bool		done;			/* flag to remember that a batch is done */

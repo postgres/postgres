@@ -316,7 +316,7 @@ DecodeISO8601Interval(char *str,
  *	  places where DecodeTime is called; and added
  *		 int range = INTERVAL_FULL_RANGE;
  *
- *	* ECPG semes not to have a global IntervalStyle
+ *	* ECPG seems not to have a global IntervalStyle
  *	  so added
  *		int IntervalStyle = INTSTYLE_POSTGRES;
  */

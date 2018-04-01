@@ -471,7 +471,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 								memcpy(str, pval, size);
 								str[varcharsize-1] = '\0';
 
-								/* compatiblity mode empty string gets -1 indicator but no warning */
+								/* compatibility mode empty string gets -1 indicator but no warning */
 								if (size == 0) {
 									/* truncation */
 									switch (ind_type)

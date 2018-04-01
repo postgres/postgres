@@ -47,7 +47,7 @@ struct TableFuncScanState;
  *
  * DestroyBuilder shall release all resources associated with a table builder
  * context.  It may be called either because all rows have been consumed, or
- * because an error ocurred while processing the table expression.
+ * because an error occurred while processing the table expression.
  */
 typedef struct TableFuncRoutine
 {

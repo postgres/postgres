@@ -163,7 +163,7 @@ gen_tabs(void)
 				q;
 
 	/* log and power tables for GF(2**8) finite field with	*/
-	/* 0x11b as modular polynomial - the simplest prmitive	*/
+	/* 0x11b as modular polynomial - the simplest primitive	*/
 	/* root is 0x11, used here to generate the tables		*/
 
 	for (i = 0, p = 1; i < 256; ++i)

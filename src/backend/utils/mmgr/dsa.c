@@ -649,7 +649,7 @@ dsa_pin_mapping(dsa_area *area)
  * will result in an ERROR.
  *
  * DSA_ALLOC_NO_OOM causes this function to return InvalidDsaPointer when
- * no memory is available or a size limit establed by set_dsa_size_limit
+ * no memory is available or a size limit established by set_dsa_size_limit
  * would be exceeded.  Otherwise, such allocations will result in an ERROR.
  *
  * DSA_ALLOC_ZERO causes the allocated memory to be zeroed.  Otherwise, the

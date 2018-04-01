@@ -386,7 +386,7 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 				sts_flush_chunk(accessor);
 
 				/*
-				 * How many oveflow chunks to go?  This will allow readers to
+				 * How many overflow chunks to go?  This will allow readers to
 				 * skip all of them at once instead of reading each one.
 				 */
 				accessor->write_chunk->overflow = (size + STS_CHUNK_DATA_SIZE - 1) /

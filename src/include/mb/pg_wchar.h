@@ -410,7 +410,7 @@ extern const pg_wchar_tbl pg_wchar_table[];
  * points to a lookup table for the second byte. And so on.
  *
  * Physically, all the trees are stored in one big array, in 'chars16' or
- * 'chars32', depending on the maximum value that needs to be reprented. For
+ * 'chars32', depending on the maximum value that needs to be represented. For
  * each level in each tree, we also store lower and upper bound of allowed
  * values - values outside those bounds are considered invalid, and are left
  * out of the tables.

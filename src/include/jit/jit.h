@@ -15,7 +15,7 @@
 #include "utils/resowner.h"
 
 
-/* Flags deterimining what kind of JIT operations to perform */
+/* Flags determining what kind of JIT operations to perform */
 #define PGJIT_NONE     0
 #define PGJIT_PERFORM  1 << 0
 #define PGJIT_OPT3     1 << 1

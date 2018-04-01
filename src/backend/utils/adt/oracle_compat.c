@@ -912,7 +912,7 @@ ascii(PG_FUNCTION_ARGS)
  *
  *	Returns the character having the binary equivalent to val.
  *
- * For UTF8 we treat the argumwent as a Unicode code point.
+ * For UTF8 we treat the argument as a Unicode code point.
  * For other multi-byte encodings we raise an error for arguments
  * outside the strict ASCII range (1..127).
  *

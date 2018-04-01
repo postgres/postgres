@@ -187,9 +187,9 @@ top:
 				_bt_relbuf(rel, buf);
 
 				/*
-				 * Something did not workout. Just forget about the cached
+				 * Something did not work out. Just forget about the cached
 				 * block and follow the normal path. It might be set again if
-				 * the conditions are favourble.
+				 * the conditions are favourable.
 				 */
 				RelationSetTargetBlock(rel, InvalidBlockNumber);
 			}

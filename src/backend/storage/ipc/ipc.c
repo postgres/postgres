@@ -374,7 +374,7 @@ on_shmem_exit(pg_on_exit_callback function, Datum arg)
 /* ----------------------------------------------------------------
  *		cancel_before_shmem_exit
  *
- *		this function removes a previously-registed before_shmem_exit
+ *		this function removes a previously-registered before_shmem_exit
  *		callback.  For simplicity, only the latest entry can be
  *		removed.  (We could work harder but there is no need for
  *		current uses.)

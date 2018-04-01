@@ -347,7 +347,7 @@ extern int	isinf(double x);
 /*
  * Glibc doesn't use the builtin for clang due to a *gcc* bug in a version
  * newer than the gcc compatibility clang claims to have. This would cause a
- * *lot* of superflous function calls, therefore revert when using clang.
+ * *lot* of superfluous function calls, therefore revert when using clang.
  */
 #ifdef __clang__
 /* needs to be separate to not confuse other compilers */
