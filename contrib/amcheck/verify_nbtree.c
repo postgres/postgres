@@ -8,6 +8,11 @@
  * (the insertion scankey sort-wise NULL semantics are needed for
  * verification).
  *
+ * When index-to-heap verification is requested, a Bloom filter is used to
+ * fingerprint all tuples in the target index, as the index is traversed to
+ * verify its structure.  A heap scan later uses Bloom filter probes to verify
+ * that every visible heap tuple has a matching index tuple.
+ *
  *
  * Copyright (c) 2017-2018, PostgreSQL Global Development Group
  *
@@ -18,11 +23,14 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "access/transam.h"
+#include "access/xact.h"
 #include "catalog/index.h"
 #include "catalog/pg_am.h"
 #include "commands/tablecmds.h"
+#include "lib/bloomfilter.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
@@ -43,9 +51,10 @@ PG_MODULE_MAGIC;
  * target is the point of reference for a verification operation.
  *
  * Other B-Tree pages may be allocated, but those are always auxiliary (e.g.,
- * they are current target's child pages). Conceptually, problems are only
- * ever found in the current target page. Each page found by verification's
- * left/right, top/bottom scan becomes the target exactly once.
+ * they are current target's child pages).  Conceptually, problems are only
+ * ever found in the current target page (or for a particular heap tuple during
+ * heapallindexed verification).  Each page found by verification's left/right,
+ * top/bottom scan becomes the target exactly once.
  */
 typedef struct BtreeCheckState
 {
@@ -53,10 +62,13 @@ typedef struct BtreeCheckState
 	 * Unchanging state, established at start of verification:
 	 */
 
-	/* B-Tree Index Relation */
+	/* B-Tree Index Relation and associated heap relation */
 	Relation	rel;
+	Relation	heaprel;
 	/* ShareLock held on heap/index, rather than AccessShareLock? */
 	bool		readonly;
+	/* Also verifying heap has no unindexed tuples? */
+	bool		heapallindexed;
 	/* Per-page context */
 	MemoryContext targetcontext;
 	/* Buffer access strategy */
@@ -72,6 +84,15 @@ typedef struct BtreeCheckState
 	BlockNumber targetblock;
 	/* Target page's LSN */
 	XLogRecPtr	targetlsn;
+
+	/*
+	 * Mutable state, for optional heapallindexed verification:
+	 */
+
+	/* Bloom filter fingerprints B-Tree index */
+	bloom_filter *filter;
+	/* Debug counter */
+	int64		heaptuplespresent;
 } BtreeCheckState;
 
 /*
@@ -92,15 +113,20 @@ typedef struct BtreeLevel
 PG_FUNCTION_INFO_V1(bt_index_check);
 PG_FUNCTION_INFO_V1(bt_index_parent_check);
 
-static void bt_index_check_internal(Oid indrelid, bool parentcheck);
+static void bt_index_check_internal(Oid indrelid, bool parentcheck,
+						bool heapallindexed);
 static inline void btree_index_checkable(Relation rel);
-static void bt_check_every_level(Relation rel, bool readonly);
+static void bt_check_every_level(Relation rel, Relation heaprel,
+					 bool readonly, bool heapallindexed);
 static BtreeLevel bt_check_level_from_leftmost(BtreeCheckState *state,
 							 BtreeLevel level);
 static void bt_target_page_check(BtreeCheckState *state);
 static ScanKey bt_right_page_check_scankey(BtreeCheckState *state);
 static void bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 				  ScanKey targetkey);
+static void bt_tuple_present_callback(Relation index, HeapTuple htup,
+						  Datum *values, bool *isnull,
+						  bool tupleIsAlive, void *checkstate);
 static inline bool offset_is_negative_infinity(BTPageOpaque opaque,
 							OffsetNumber offset);
 static inline bool invariant_leq_offset(BtreeCheckState *state,
@@ -116,37 +142,47 @@ static inline bool invariant_leq_nontarget_offset(BtreeCheckState *state,
 static Page palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum);
 
 /*
- * bt_index_check(index regclass)
+ * bt_index_check(index regclass, heapallindexed boolean)
  *
  * Verify integrity of B-Tree index.
  *
  * Acquires AccessShareLock on heap & index relations.  Does not consider
- * invariants that exist between parent/child pages.
+ * invariants that exist between parent/child pages.  Optionally verifies
+ * that heap does not contain any unindexed or incorrectly indexed tuples.
  */
 Datum
 bt_index_check(PG_FUNCTION_ARGS)
 {
 	Oid			indrelid = PG_GETARG_OID(0);
+	bool		heapallindexed = false;
 
-	bt_index_check_internal(indrelid, false);
+	if (PG_NARGS() == 2)
+		heapallindexed = PG_GETARG_BOOL(1);
+
+	bt_index_check_internal(indrelid, false, heapallindexed);
 
 	PG_RETURN_VOID();
 }
 
 /*
- * bt_index_parent_check(index regclass)
+ * bt_index_parent_check(index regclass, heapallindexed boolean)
  *
  * Verify integrity of B-Tree index.
  *
  * Acquires ShareLock on heap & index relations.  Verifies that downlinks in
- * parent pages are valid lower bounds on child pages.
+ * parent pages are valid lower bounds on child pages.  Optionally verifies
+ * that heap does not contain any unindexed or incorrectly indexed tuples.
  */
 Datum
 bt_index_parent_check(PG_FUNCTION_ARGS)
 {
 	Oid			indrelid = PG_GETARG_OID(0);
+	bool		heapallindexed = false;
 
-	bt_index_check_internal(indrelid, true);
+	if (PG_NARGS() == 2)
+		heapallindexed = PG_GETARG_BOOL(1);
+
+	bt_index_check_internal(indrelid, true, heapallindexed);
 
 	PG_RETURN_VOID();
 }
@@ -155,7 +191,7 @@ bt_index_parent_check(PG_FUNCTION_ARGS)
  * Helper for bt_index_[parent_]check, coordinating the bulk of the work.
  */
 static void
-bt_index_check_internal(Oid indrelid, bool parentcheck)
+bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed)
 {
 	Oid			heapid;
 	Relation	indrel;
@@ -185,15 +221,20 @@ bt_index_check_internal(Oid indrelid, bool parentcheck)
 	 * Open the target index relations separately (like relation_openrv(), but
 	 * with heap relation locked first to prevent deadlocking).  In hot
 	 * standby mode this will raise an error when parentcheck is true.
+	 *
+	 * There is no need for the usual indcheckxmin usability horizon test here,
+	 * even in the heapallindexed case, because index undergoing verification
+	 * only needs to have entries for a new transaction snapshot.  (If this is
+	 * a parentcheck verification, there is no question about committed or
+	 * recently dead heap tuples lacking index entries due to concurrent
+	 * activity.)
 	 */
 	indrel = index_open(indrelid, lockmode);
 
 	/*
 	 * Since we did the IndexGetRelation call above without any lock, it's
 	 * barely possible that a race against an index drop/recreation could have
-	 * netted us the wrong table.  Although the table itself won't actually be
-	 * examined during verification currently, a recheck still seems like a
-	 * good idea.
+	 * netted us the wrong table.
 	 */
 	if (heaprel == NULL || heapid != IndexGetRelation(indrelid, false))
 		ereport(ERROR,
@@ -204,8 +245,8 @@ bt_index_check_internal(Oid indrelid, bool parentcheck)
 	/* Relation suitable for checking as B-Tree? */
 	btree_index_checkable(indrel);
 
-	/* Check index */
-	bt_check_every_level(indrel, parentcheck);
+	/* Check index, possibly against table it is an index on */
+	bt_check_every_level(indrel, heaprel, parentcheck, heapallindexed);
 
 	/*
 	 * Release locks early. That's ok here because nothing in the called
@@ -253,11 +294,14 @@ btree_index_checkable(Relation rel)
 
 /*
  * Main entry point for B-Tree SQL-callable functions. Walks the B-Tree in
- * logical order, verifying invariants as it goes.
+ * logical order, verifying invariants as it goes.  Optionally, verification
+ * checks if the heap relation contains any tuples that are not represented in
+ * the index but should be.
  *
  * It is the caller's responsibility to acquire appropriate heavyweight lock on
  * the index relation, and advise us if extra checks are safe when a ShareLock
- * is held.
+ * is held.  (A lock of the same type must also have been acquired on the heap
+ * relation.)
  *
  * A ShareLock is generally assumed to prevent any kind of physical
  * modification to the index structure, including modifications that VACUUM may
@@ -272,13 +316,15 @@ btree_index_checkable(Relation rel)
  * parent/child check cannot be affected.)
  */
 static void
-bt_check_every_level(Relation rel, bool readonly)
+bt_check_every_level(Relation rel, Relation heaprel, bool readonly,
+					 bool heapallindexed)
 {
 	BtreeCheckState *state;
 	Page		metapage;
 	BTMetaPageData *metad;
 	uint32		previouslevel;
 	BtreeLevel	current;
+	Snapshot	snapshot = SnapshotAny;
 
 	/*
 	 * RecentGlobalXmin assertion matches index_getnext_tid().  See note on
@@ -291,7 +337,57 @@ bt_check_every_level(Relation rel, bool readonly)
 	 */
 	state = palloc(sizeof(BtreeCheckState));
 	state->rel = rel;
+	state->heaprel = heaprel;
 	state->readonly = readonly;
+	state->heapallindexed = heapallindexed;
+
+	if (state->heapallindexed)
+	{
+		int64		total_elems;
+		uint64		seed;
+
+		/* Size Bloom filter based on estimated number of tuples in index */
+		total_elems = (int64) state->rel->rd_rel->reltuples;
+		/* Random seed relies on backend srandom() call to avoid repetition */
+		seed = random();
+		/* Create Bloom filter to fingerprint index */
+		state->filter = bloom_create(total_elems, maintenance_work_mem, seed);
+		state->heaptuplespresent = 0;
+
+		/*
+		 * Register our own snapshot in !readonly case, rather than asking
+		 * IndexBuildHeapScan() to do this for us later.  This needs to happen
+		 * before index fingerprinting begins, so we can later be certain that
+		 * index fingerprinting should have reached all tuples returned by
+		 * IndexBuildHeapScan().
+		 */
+		if (!state->readonly)
+		{
+			snapshot = RegisterSnapshot(GetTransactionSnapshot());
+
+			/*
+			 * GetTransactionSnapshot() always acquires a new MVCC snapshot in
+			 * READ COMMITTED mode.  A new snapshot is guaranteed to have all
+			 * the entries it requires in the index.
+			 *
+			 * We must defend against the possibility that an old xact snapshot
+			 * was returned at higher isolation levels when that snapshot is
+			 * not safe for index scans of the target index.  This is possible
+			 * when the snapshot sees tuples that are before the index's
+			 * indcheckxmin horizon.  Throwing an error here should be very
+			 * rare.  It doesn't seem worth using a secondary snapshot to avoid
+			 * this.
+			 */
+			if (IsolationUsesXactSnapshot() && rel->rd_index->indcheckxmin &&
+				!TransactionIdPrecedes(HeapTupleHeaderGetXmin(rel->rd_indextuple->t_data),
+									   snapshot->xmin))
+				ereport(ERROR,
+						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+						 errmsg("index \"%s\" cannot be verified using transaction snapshot",
+								RelationGetRelationName(rel))));
+		}
+	}
+
 	/* Create context for page */
 	state->targetcontext = AllocSetContextCreate(CurrentMemoryContext,
 												 "amcheck context",
@@ -343,6 +439,69 @@ bt_check_every_level(Relation rel, bool readonly)
 							RelationGetRelationName(rel), previouslevel)));
 
 		previouslevel = current.level;
+	}
+
+	/*
+	 * * Check whether heap contains unindexed/malformed tuples *
+	 */
+	if (state->heapallindexed)
+	{
+		IndexInfo  *indexinfo = BuildIndexInfo(state->rel);
+		HeapScanDesc scan;
+
+		/*
+		 * Create our own scan for IndexBuildHeapScan(), rather than getting it
+		 * to do so for us.  This is required so that we can actually use the
+		 * MVCC snapshot registered earlier in !readonly case.
+		 *
+		 * Note that IndexBuildHeapScan() calls heap_endscan() for us.
+		 */
+		scan = heap_beginscan_strat(state->heaprel, /* relation */
+									snapshot,	/* snapshot */
+									0,	/* number of keys */
+									NULL,	/* scan key */
+									true,	/* buffer access strategy OK */
+									true);	/* syncscan OK? */
+
+		/*
+		 * Scan will behave as the first scan of a CREATE INDEX CONCURRENTLY
+		 * behaves in !readonly case.
+		 *
+		 * It's okay that we don't actually use the same lock strength for the
+		 * heap relation as any other ii_Concurrent caller would in !readonly
+		 * case.  We have no reason to care about a concurrent VACUUM
+		 * operation, since there isn't going to be a second scan of the heap
+		 * that needs to be sure that there was no concurrent recycling of
+		 * TIDs.
+		 */
+		indexinfo->ii_Concurrent = !state->readonly;
+
+		/*
+		 * Don't wait for uncommitted tuple xact commit/abort when index is a
+		 * unique index on a catalog (or an index used by an exclusion
+		 * constraint).  This could otherwise happen in the readonly case.
+		 */
+		indexinfo->ii_Unique = false;
+		indexinfo->ii_ExclusionOps = NULL;
+		indexinfo->ii_ExclusionProcs = NULL;
+		indexinfo->ii_ExclusionStrats = NULL;
+
+		elog(DEBUG1, "verifying that tuples from index \"%s\" are present in \"%s\"",
+			 RelationGetRelationName(state->rel),
+			 RelationGetRelationName(state->heaprel));
+
+		IndexBuildHeapScan(state->heaprel, state->rel, indexinfo, true,
+						   bt_tuple_present_callback, (void *) state, scan);
+
+		ereport(DEBUG1,
+				(errmsg_internal("finished verifying presence of " INT64_FORMAT " tuples from table \"%s\" with bitset %.2f%% set",
+								 state->heaptuplespresent, RelationGetRelationName(heaprel),
+								 100.0 * bloom_prop_bits_set(state->filter))));
+
+		if (snapshot != SnapshotAny)
+			UnregisterSnapshot(snapshot);
+
+		bloom_free(state->filter);
 	}
 
 	/* Be tidy: */
@@ -497,7 +656,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 					 errdetail_internal("Block pointed to=%u expected level=%u level in pointed to block=%u.",
 										current, level.level, opaque->btpo.level)));
 
-		/* Verify invariants for page -- all important checks occur here */
+		/* Verify invariants for page */
 		bt_target_page_check(state);
 
 nextpage:
@@ -544,6 +703,9 @@ nextpage:
  *
  * - That all child pages respect downlinks lower bound.
  *
+ * This is also where heapallindexed callers use their Bloom filter to
+ * fingerprint IndexTuples.
+ *
  * Note:  Memory allocated in this routine is expected to be released by caller
  * resetting state->targetcontext.
  */
@@ -572,20 +734,45 @@ bt_target_page_check(BtreeCheckState *state)
 		ItemId		itemid;
 		IndexTuple	itup;
 		ScanKey		skey;
+		size_t		tupsize;
 
 		CHECK_FOR_INTERRUPTS();
 
+		itemid = PageGetItemId(state->target, offset);
+		itup = (IndexTuple) PageGetItem(state->target, itemid);
+		tupsize = IndexTupleSize(itup);
+
+		/*
+		 * lp_len should match the IndexTuple reported length exactly, since
+		 * lp_len is completely redundant in indexes, and both sources of tuple
+		 * length are MAXALIGN()'d.  nbtree does not use lp_len all that
+		 * frequently, and is surprisingly tolerant of corrupt lp_len fields.
+		 */
+		if (tupsize != ItemIdGetLength(itemid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index tuple size does not equal lp_len in index \"%s\"",
+							RelationGetRelationName(state->rel)),
+					 errdetail_internal("Index tid=(%u,%u) tuple size=%zu lp_len=%u page lsn=%X/%X.",
+										state->targetblock, offset,
+										tupsize, ItemIdGetLength(itemid),
+										(uint32) (state->targetlsn >> 32),
+										(uint32) state->targetlsn),
+					 errhint("This could be a torn page problem")));
+
 		/*
 		 * Don't try to generate scankey using "negative infinity" garbage
-		 * data
+		 * data on internal pages
 		 */
 		if (offset_is_negative_infinity(topaque, offset))
 			continue;
 
 		/* Build insertion scankey for current page offset */
-		itemid = PageGetItemId(state->target, offset);
-		itup = (IndexTuple) PageGetItem(state->target, itemid);
 		skey = _bt_mkscankey(state->rel, itup);
+
+		/* Fingerprint leaf page tuples (those that point to the heap) */
+		if (state->heapallindexed && P_ISLEAF(topaque) && !ItemIdIsDead(itemid))
+			bloom_add_element(state->filter, (unsigned char *) itup, tupsize);
 
 		/*
 		 * * High key check *
@@ -680,8 +867,10 @@ bt_target_page_check(BtreeCheckState *state)
 		 * * Last item check *
 		 *
 		 * Check last item against next/right page's first data item's when
-		 * last item on page is reached.  This additional check can detect
-		 * transposed pages.
+		 * last item on page is reached.  This additional check will detect
+		 * transposed pages iff the supposed right sibling page happens to
+		 * belong before target in the key space.  (Otherwise, a subsequent
+		 * heap verification will probably detect the problem.)
 		 *
 		 * This check is similar to the item order check that will have
 		 * already been performed for every other "real" item on target page
@@ -1057,6 +1246,106 @@ bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 	}
 
 	pfree(child);
+}
+
+/*
+ * Per-tuple callback from IndexBuildHeapScan, used to determine if index has
+ * all the entries that definitely should have been observed in leaf pages of
+ * the target index (that is, all IndexTuples that were fingerprinted by our
+ * Bloom filter).  All heapallindexed checks occur here.
+ *
+ * The redundancy between an index and the table it indexes provides a good
+ * opportunity to detect corruption, especially corruption within the table.
+ * The high level principle behind the verification performed here is that any
+ * IndexTuple that should be in an index following a fresh CREATE INDEX (based
+ * on the same index definition) should also have been in the original,
+ * existing index, which should have used exactly the same representation
+ *
+ * Since the overall structure of the index has already been verified, the most
+ * likely explanation for error here is a corrupt heap page (could be logical
+ * or physical corruption).  Index corruption may still be detected here,
+ * though.  Only readonly callers will have verified that left links and right
+ * links are in agreement, and so it's possible that a leaf page transposition
+ * within index is actually the source of corruption detected here (for
+ * !readonly callers).  The checks performed only for readonly callers might
+ * more accurately frame the problem as a cross-page invariant issue (this
+ * could even be due to recovery not replaying all WAL records).  The !readonly
+ * ERROR message raised here includes a HINT about retrying with readonly
+ * verification, just in case it's a cross-page invariant issue, though that
+ * isn't particularly likely.
+ *
+ * IndexBuildHeapScan() expects to be able to find the root tuple when a
+ * heap-only tuple (the live tuple at the end of some HOT chain) needs to be
+ * indexed, in order to replace the actual tuple's TID with the root tuple's
+ * TID (which is what we're actually passed back here).  The index build heap
+ * scan code will raise an error when a tuple that claims to be the root of the
+ * heap-only tuple's HOT chain cannot be located.  This catches cases where the
+ * original root item offset/root tuple for a HOT chain indicates (for whatever
+ * reason) that the entire HOT chain is dead, despite the fact that the latest
+ * heap-only tuple should be indexed.  When this happens, sequential scans may
+ * always give correct answers, and all indexes may be considered structurally
+ * consistent (i.e. the nbtree structural checks would not detect corruption).
+ * It may be the case that only index scans give wrong answers, and yet heap or
+ * SLRU corruption is the real culprit.  (While it's true that LP_DEAD bit
+ * setting will probably also leave the index in a corrupt state before too
+ * long, the problem is nonetheless that there is heap corruption.)
+ *
+ * Heap-only tuple handling within IndexBuildHeapScan() works in a way that
+ * helps us to detect index tuples that contain the wrong values (values that
+ * don't match the latest tuple in the HOT chain).  This can happen when there
+ * is no superseding index tuple due to a faulty assessment of HOT safety,
+ * perhaps during the original CREATE INDEX.  Because the latest tuple's
+ * contents are used with the root TID, an error will be raised when a tuple
+ * with the same TID but non-matching attribute values is passed back to us.
+ * Faulty assessment of HOT-safety was behind at least two distinct CREATE
+ * INDEX CONCURRENTLY bugs that made it into stable releases, one of which was
+ * undetected for many years.  In short, the same principle that allows a
+ * REINDEX to repair corruption when there was an (undetected) broken HOT chain
+ * also allows us to detect the corruption in many cases.
+ */
+static void
+bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
+						  bool *isnull, bool tupleIsAlive, void *checkstate)
+{
+	BtreeCheckState *state = (BtreeCheckState *) checkstate;
+	IndexTuple	itup;
+
+	Assert(state->heapallindexed);
+
+	/*
+	 * Generate an index tuple for fingerprinting.
+	 *
+	 * Index tuple formation is assumed to be deterministic, and IndexTuples
+	 * are assumed immutable.  While the LP_DEAD bit is mutable in leaf pages,
+	 * that's ItemId metadata, which was not fingerprinted.  (There will often
+	 * be some dead-to-everyone IndexTuples fingerprinted by the Bloom filter,
+	 * but we only try to detect the absence of needed tuples, so that's okay.)
+	 *
+	 * Note that we rely on deterministic index_form_tuple() TOAST compression.
+	 * If index_form_tuple() was ever enhanced to compress datums out-of-line,
+	 * or otherwise varied when or how compression was applied, our assumption
+	 * would break, leading to false positive reports of corruption.  For now,
+	 * we don't decompress/normalize toasted values as part of fingerprinting.
+	 */
+	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
+	itup->t_tid = htup->t_self;
+
+	/* Probe Bloom filter -- tuple should be present */
+	if (bloom_lacks_element(state->filter, (unsigned char *) itup,
+							IndexTupleSize(itup)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("heap tuple (%u,%u) from table \"%s\" lacks matching index tuple within index \"%s\"",
+						ItemPointerGetBlockNumber(&(itup->t_tid)),
+						ItemPointerGetOffsetNumber(&(itup->t_tid)),
+						RelationGetRelationName(state->heaprel),
+						RelationGetRelationName(state->rel)),
+				 !state->readonly
+				 ? errhint("Retrying verification using the function bt_index_parent_check() might provide a more specific error.")
+				 : 0));
+
+	state->heaptuplespresent++;
+	pfree(itup);
 }
 
 /*

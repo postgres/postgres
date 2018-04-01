@@ -9,13 +9,13 @@
 
  <para>
   The <filename>amcheck</filename> module provides functions that allow you to
-  verify the logical consistency of the structure of indexes.  If the
+  verify the logical consistency of the structure of relations.  If the
   structure appears to be valid, no error is raised.
  </para>
 
  <para>
   The functions verify various <emphasis>invariants</emphasis> in the
-  structure of the representation of particular indexes.  The
+  structure of the representation of particular relations.  The
   correctness of the access method functions behind index scans and
   other important operations relies on these invariants always
   holding.  For example, certain functions verify, among other things,
@@ -44,7 +44,7 @@
   <variablelist>
    <varlistentry>
     <term>
-     <function>bt_index_check(index regclass) returns void</function>
+     <function>bt_index_check(index regclass, heapallindexed boolean) returns void</function>
      <indexterm>
       <primary>bt_index_check</primary>
      </indexterm>
@@ -55,7 +55,9 @@
       <function>bt_index_check</function> tests that its target, a
       B-Tree index, respects a variety of invariants.  Example usage:
 <screen>
-test=# SELECT bt_index_check(c.oid), c.relname, c.relpages
+test=# SELECT bt_index_check(index =&gt; c.oid, heapallindexed =&gt; i.indisunique)
+               c.relname,
+               c.relpages
 FROM pg_index i
 JOIN pg_opclass op ON i.indclass[0] = op.oid
 JOIN pg_am am ON op.opcmethod = am.oid
@@ -83,9 +85,11 @@ ORDER BY c.relpages DESC LIMIT 10;
 </screen>
       This example shows a session that performs verification of every
       catalog index in the database <quote>test</quote>.  Details of just
-      the 10 largest indexes verified are displayed.  Since no error
-      is raised, all indexes tested appear to be logically consistent.
-      Naturally, this query could easily be changed to call
+      the 10 largest indexes verified are displayed.  Verification of
+      the presence of heap tuples as index tuples is requested for
+      unique indexes only.  Since no error is raised, all indexes
+      tested appear to be logically consistent.  Naturally, this query
+      could easily be changed to call
       <function>bt_index_check</function> for every index in the
       database where verification is supported.
      </para>
@@ -95,10 +99,11 @@ ORDER BY c.relpages DESC LIMIT 10;
       is the same lock mode acquired on relations by simple
       <literal>SELECT</literal> statements.
       <function>bt_index_check</function> does not verify invariants
-      that span child/parent relationships, nor does it verify that
-      the target index is consistent with its heap relation.  When a
-      routine, lightweight test for corruption is required in a live
-      production environment, using
+      that span child/parent relationships, but will verify the
+      presence of all heap tuples as index tuples within the index
+      when <parameter>heapallindexed</parameter> is
+      <literal>true</literal>.  When a routine, lightweight test for
+      corruption is required in a live production environment, using
       <function>bt_index_check</function> often provides the best
       trade-off between thoroughness of verification and limiting the
       impact on application performance and availability.
@@ -108,7 +113,7 @@ ORDER BY c.relpages DESC LIMIT 10;
 
    <varlistentry>
     <term>
-     <function>bt_index_parent_check(index regclass) returns void</function>
+     <function>bt_index_parent_check(index regclass, heapallindexed boolean) returns void</function>
      <indexterm>
       <primary>bt_index_parent_check</primary>
      </indexterm>
@@ -117,19 +122,21 @@ ORDER BY c.relpages DESC LIMIT 10;
     <listitem>
      <para>
       <function>bt_index_parent_check</function> tests that its
-      target, a B-Tree index, respects a variety of invariants.  The
-      checks performed by <function>bt_index_parent_check</function>
-      are a superset of the checks performed by
-      <function>bt_index_check</function>.
+      target, a B-Tree index, respects a variety of invariants.
+      Optionally, when the <parameter>heapallindexed</parameter>
+      argument is <literal>true</literal>, the function verifies the
+      presence of all heap tuples that should be found within the
+      index.  The checks that can be performed by
+      <function>bt_index_parent_check</function> are a superset of the
+      checks that can be performed by <function>bt_index_check</function>.
       <function>bt_index_parent_check</function> can be thought of as
       a more thorough variant of <function>bt_index_check</function>:
       unlike <function>bt_index_check</function>,
       <function>bt_index_parent_check</function> also checks
-      invariants that span parent/child relationships.  However, it
-      does not verify that the target index is consistent with its
-      heap relation.  <function>bt_index_parent_check</function>
-      follows the general convention of raising an error if it finds a
-      logical inconsistency or other problem.
+      invariants that span parent/child relationships.
+      <function>bt_index_parent_check</function> follows the general
+      convention of raising an error if it finds a logical
+      inconsistency or other problem.
      </para>
      <para>
       A <literal>ShareLock</literal> is required on the target index by
@@ -156,6 +163,47 @@ ORDER BY c.relpages DESC LIMIT 10;
     </listitem>
    </varlistentry>
   </variablelist>
+ </sect2>
+
+ <sect2>
+  <title>Optional <parameter>heapallindexed</parameter> verification</title>
+ <para>
+  When the <parameter>heapallindexed</parameter> argument to
+  verification functions is <literal>true</literal>, an additional
+  phase of verification is performed against the table associated with
+  the target index relation.  This consists of a <quote>dummy</quote>
+  <command>CREATE INDEX</command> operation, which checks for the
+  presence of all hypothetical new index tuples against a temporary,
+  in-memory summarizing structure (this is built when needed during
+  the basic first phase of verification).  The summarizing structure
+  <quote>fingerprints</quote> every tuple found within the target
+  index.  The high level principle behind
+  <parameter>heapallindexed</parameter> verification is that a new
+  index that is equivalent to the existing, target index must only
+  have entries that can be found in the existing structure.
+ </para>
+ <para>
+  The additional <parameter>heapallindexed</parameter> phase adds
+  significant overhead: verification will typically take several times
+  longer.  However, there is no change to the relation-level locks
+  acquired when <parameter>heapallindexed</parameter> verification is
+  performed.
+ </para>
+ <para>
+  The summarizing structure is bound in size by
+  <varname>maintenance_work_mem</varname>.  In order to ensure that
+  there is no more than a 2% probability of failure to detect an
+  inconsistency for each heap tuple that should be represented in the
+  index, approximately 2 bytes of memory are needed per tuple.  As
+  less memory is made available per tuple, the probability of missing
+  an inconsistency slowly increases.  This approach limits the
+  overhead of verification significantly, while only slightly reducing
+  the probability of detecting a problem, especially for installations
+  where verification is treated as a routine maintenance task.  Any
+  single absent or malformed tuple has a new opportunity to be
+  detected with each new verification attempt.
+ </para>
+
  </sect2>
 
  <sect2>
@@ -199,16 +247,29 @@ ORDER BY c.relpages DESC LIMIT 10;
    </listitem>
    <listitem>
     <para>
+     Structural inconsistencies between indexes and the heap relations
+     that are indexed (when <parameter>heapallindexed</parameter>
+     verification is performed).
+    </para>
+    <para>
+     There is no cross-checking of indexes against their heap relation
+     during normal operation.  Symptoms of heap corruption can be subtle.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
      Corruption caused by hypothetical undiscovered bugs in the
-     underlying <productname>PostgreSQL</productname> access method code or sort
-     code.
+     underlying <productname>PostgreSQL</productname> access method
+     code, sort code, or transaction management code.
     </para>
     <para>
      Automatic verification of the structural integrity of indexes
      plays a role in the general testing of new or proposed
      <productname>PostgreSQL</productname> features that could plausibly allow a
-     logical inconsistency to be introduced.  One obvious testing
-     strategy is to call <filename>amcheck</filename> functions continuously
+     logical inconsistency to be introduced.  Verification of table
+     structure and associated visibility and transaction status
+     information plays a similar role.  One obvious testing strategy
+     is to call <filename>amcheck</filename> functions continuously
      when running the standard regression tests.  See <xref
      linkend="regress-run"/> for details on running the tests.
     </para>
@@ -242,6 +303,12 @@ ORDER BY c.relpages DESC LIMIT 10;
      <emphasis>absolute</emphasis> protection against failures that
      result in memory corruption.
     </para>
+    <para>
+     When <parameter>heapallindexed</parameter> verification is
+     performed, there is generally a greatly increased chance of
+     detecting single-bit errors, since strict binary equality is
+     tested, and the indexed attributes within the heap are tested.
+    </para>
    </listitem>
   </itemizedlist>
   In general, <filename>amcheck</filename> can only prove the presence of
@@ -253,11 +320,10 @@ ORDER BY c.relpages DESC LIMIT 10;
   <title>Repairing corruption</title>
  <para>
   No error concerning corruption raised by <filename>amcheck</filename> should
-  ever be a false positive.  In practice, <filename>amcheck</filename> is more
-  likely to find software bugs than problems with hardware.
-  <filename>amcheck</filename> raises errors in the event of conditions that,
-  by definition, should never happen, and so careful analysis of
-  <filename>amcheck</filename> errors is often required.
+  ever be a false positive.  <filename>amcheck</filename> raises
+  errors in the event of conditions that, by definition, should never
+  happen, and so careful analysis of <filename>amcheck</filename>
+  errors is often required.
  </para>
  <para>
   There is no general method of repairing problems that
