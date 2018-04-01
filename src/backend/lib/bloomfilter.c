@@ -240,7 +240,7 @@ my_bloom_power(uint64 target_bitset_bits)
 static int
 optimal_k(uint64 bitset_bits, int64 total_elems)
 {
-	int			k = round(log(2.0) * bitset_bits / total_elems);
+	int			k = rint(log(2.0) * bitset_bits / total_elems);
 
 	return Max(1, Min(k, MAX_HASH_FUNCS));
 }
