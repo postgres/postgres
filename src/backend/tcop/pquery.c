@@ -193,6 +193,11 @@ ProcessQuery(PlannedStmt *plan,
 						 "DELETE " UINT64_FORMAT,
 						 queryDesc->estate->es_processed);
 				break;
+			case CMD_MERGE:
+				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+						 "MERGE " UINT64_FORMAT,
+						 queryDesc->estate->es_processed);
+				break;
 			default:
 				strcpy(completionTag, "???");
 				break;

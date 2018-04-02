@@ -1192,6 +1192,39 @@ ALTER RULE rules_parted_table_insert ON rules_parted_table RENAME TO rules_parte
 DROP TABLE rules_parted_table;
 
 --
+-- test MERGE
+--
+CREATE TABLE rule_merge1 (a int, b text);
+CREATE TABLE rule_merge2 (a int, b text);
+CREATE RULE rule1 AS ON INSERT TO rule_merge1
+	DO INSTEAD INSERT INTO rule_merge2 VALUES (NEW.*);
+CREATE RULE rule2 AS ON UPDATE TO rule_merge1
+	DO INSTEAD UPDATE rule_merge2 SET a = NEW.a, b = NEW.b
+	WHERE a = OLD.a;
+CREATE RULE rule3 AS ON DELETE TO rule_merge1
+	DO INSTEAD DELETE FROM rule_merge2 WHERE a = OLD.a;
+
+-- MERGE not supported for table with rules
+MERGE INTO rule_merge1 t USING (SELECT 1 AS a) s
+	ON t.a = s.a
+	WHEN MATCHED AND t.a < 2 THEN
+		UPDATE SET b = b || ' updated by merge'
+	WHEN MATCHED AND t.a > 2 THEN
+		DELETE
+	WHEN NOT MATCHED THEN
+		INSERT VALUES (s.a, '');
+
+-- should be ok with the other table though
+MERGE INTO rule_merge2 t USING (SELECT 1 AS a) s
+	ON t.a = s.a
+	WHEN MATCHED AND t.a < 2 THEN
+		UPDATE SET b = b || ' updated by merge'
+	WHEN MATCHED AND t.a > 2 THEN
+		DELETE
+	WHEN NOT MATCHED THEN
+		INSERT VALUES (s.a, '');
+
+--
 -- Test enabling/disabling
 --
 CREATE TABLE ruletest1 (a int);

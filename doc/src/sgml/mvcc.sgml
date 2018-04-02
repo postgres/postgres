@@ -423,6 +423,31 @@ COMMIT;
    </para>
 
    <para>
+    The <command>MERGE</command> allows the user to specify various combinations
+    of <command>INSERT</command>, <command>UPDATE</command> or
+    <command>DELETE</command> subcommands. A <command>MERGE</command> command
+    with both <command>INSERT</command> and <command>UPDATE</command>
+    subcommands looks similar to <command>INSERT</command> with an
+    <literal>ON CONFLICT DO UPDATE</literal> clause but does not guarantee
+    that either <command>INSERT</command> and <command>UPDATE</command> will occur.
+
+    If MERGE attempts an UPDATE or DELETE and the row is concurrently updated
+    but the join condition still passes for the current target and the current
+    source tuple, then MERGE will behave the same as the UPDATE or DELETE commands
+    and perform its action on the latest version of the row, using standard
+    EvalPlanQual. MERGE actions can be conditional, so conditions must be
+    re-evaluated on the latest row, starting from the first action.
+
+    On the other hand, if the row is concurrently updated or deleted so that
+    the join condition fails, then MERGE will execute a NOT MATCHED action, if it
+    exists and the AND WHEN qual evaluates to true.
+
+    If MERGE attempts an INSERT and a unique index is present and a duplicate
+    row is concurrently inserted then a uniqueness violation is raised. MERGE
+    does not attempt to avoid the ERROR by attempting an UPDATE.
+   </para>
+
+   <para>
     Because Read Committed mode starts each command with a new snapshot
     that includes all transactions committed up to that instant,
     subsequent commands in the same transaction will see the effects
@@ -900,7 +925,8 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
         <para>
          The commands <command>UPDATE</command>,
-         <command>DELETE</command>, and <command>INSERT</command>
+         <command>DELETE</command>, <command>INSERT</command> and
+         <command>MERGE</command>
          acquire this lock mode on the target table (in addition to
          <literal>ACCESS SHARE</literal> locks on any other referenced
          tables).  In general, this lock mode will be acquired by any

@@ -3055,9 +3055,9 @@ PQoidValue(const PGresult *res)
 
 /*
  * PQcmdTuples -
- *	If the last command was INSERT/UPDATE/DELETE/MOVE/FETCH/COPY, return
- *	a string containing the number of inserted/affected tuples. If not,
- *	return "".
+ *	If the last command was INSERT/UPDATE/DELETE/MERGE/MOVE/FETCH/COPY,
+ *	return a string containing the number of inserted/affected tuples.
+ *	If not, return "".
  *
  *	XXX: this should probably return an int
  */
@@ -3084,7 +3084,8 @@ PQcmdTuples(PGresult *res)
 			 strncmp(res->cmdStatus, "DELETE ", 7) == 0 ||
 			 strncmp(res->cmdStatus, "UPDATE ", 7) == 0)
 		p = res->cmdStatus + 7;
-	else if (strncmp(res->cmdStatus, "FETCH ", 6) == 0)
+	else if (strncmp(res->cmdStatus, "FETCH ", 6) == 0 ||
+			 strncmp(res->cmdStatus, "MERGE ", 6) == 0)
 		p = res->cmdStatus + 6;
 	else if (strncmp(res->cmdStatus, "MOVE ", 5) == 0 ||
 			 strncmp(res->cmdStatus, "COPY ", 5) == 0)

@@ -183,6 +183,26 @@
    </para>
 
    <para>
+    No separate triggers are defined for <command>MERGE</command>. Instead,
+    statement-level or row-level <command>UPDATE</command>,
+    <command>DELETE</command> and <command>INSERT</command> triggers are fired
+    depending on what actions are specified in the <command>MERGE</command> query
+    and what actions are activated.
+   </para>
+
+   <para>
+    While running a <command>MERGE</command> command, statement-level
+    <literal>BEFORE</literal> and <literal>AFTER</literal> triggers are fired for
+    events specified in the actions of the <command>MERGE</command> command,
+    irrespective of whether the action is finally activated or not. This is same as
+    an <command>UPDATE</command> statement that updates no rows, yet
+    statement-level triggers are fired. The row-level triggers are fired only
+    when a row is actually updated, inserted or deleted. So it's perfectly legal
+    that while statement-level triggers are fired for certain type of action, no
+    row-level triggers are fired for the same kind of action.
+   </para>
+
+   <para>
     Trigger functions invoked by per-statement triggers should always
     return <symbol>NULL</symbol>. Trigger functions invoked by per-row
     triggers can return a table row (a value of

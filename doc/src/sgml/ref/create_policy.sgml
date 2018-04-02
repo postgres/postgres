@@ -94,6 +94,13 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    exist, a <quote>default deny</quote> policy is assumed, so that no rows will
    be visible or updatable.
   </para>
+
+  <para>
+   No separate policy exists for <command>MERGE</command>. Instead policies
+   defined for <literal>SELECT</literal>, <literal>INSERT</literal>,
+   <literal>UPDATE</literal> and <literal>DELETE</literal> are applied
+   while executing MERGE, depending on the actions that are activated.
+  </para>
  </refsect1>
 
  <refsect1>
