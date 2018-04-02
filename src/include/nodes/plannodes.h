@@ -18,7 +18,6 @@
 #include "lib/stringinfo.h"
 #include "nodes/bitmapset.h"
 #include "nodes/lockoptions.h"
-#include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
 
 
@@ -43,7 +42,7 @@ typedef struct PlannedStmt
 {
 	NodeTag		type;
 
-	CmdType		commandType;	/* select|insert|update|delete|merge|utility */
+	CmdType		commandType;	/* select|insert|update|delete|utility */
 
 	uint64		queryId;		/* query identifier (copied from Query) */
 
@@ -217,14 +216,13 @@ typedef struct ProjectSet
 typedef struct ModifyTable
 {
 	Plan		plan;
-	CmdType		operation;		/* INSERT, UPDATE, DELETE or MERGE */
+	CmdType		operation;		/* INSERT, UPDATE, or DELETE */
 	bool		canSetTag;		/* do we set the command tag/es_processed? */
 	Index		nominalRelation;	/* Parent RT index for use of EXPLAIN */
 	/* RT indexes of non-leaf tables in a partition tree */
 	List	   *partitioned_rels;
 	bool		partColsUpdated;	/* some part key in hierarchy updated */
 	List	   *resultRelations;	/* integer list of RT indexes */
-	Index	    mergeTargetRelation;	/* RT index of the merge target */
 	int			resultRelIndex; /* index of first resultRel in plan's list */
 	int			rootResultRelIndex; /* index of the partitioned table root */
 	List	   *plans;			/* plan(s) producing source data */
@@ -240,8 +238,6 @@ typedef struct ModifyTable
 	Node	   *onConflictWhere;	/* WHERE for ON CONFLICT UPDATE */
 	Index		exclRelRTI;		/* RTI of the EXCLUDED pseudo relation */
 	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
-	List	   *mergeSourceTargetList;
-	List	   *mergeActionList;	/* actions for MERGE */
 } ModifyTable;
 
 /* ----------------

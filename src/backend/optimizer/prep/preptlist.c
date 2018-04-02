@@ -118,46 +118,6 @@ preprocess_targetlist(PlannerInfo *root)
 		tlist = expand_targetlist(tlist, command_type,
 								  result_relation, target_relation);
 
-	if (command_type == CMD_MERGE)
-	{
-		ListCell   *l;
-
-		/*
-		 * For MERGE, add any junk column(s) needed to allow the executor to
-		 * identify the rows to be updated or deleted, with different
-		 * handling for partitioned tables.
-		 */
-		rewriteTargetListMerge(parse, target_relation);
-
-		/*
-		 * For MERGE command, handle targetlist of each MergeAction separately.
-		 * Give the same treatment to MergeAction->targetList as we would have
-		 * given to a regular INSERT/UPDATE/DELETE.
-		 */
-		foreach(l, parse->mergeActionList)
-		{
-			MergeAction *action = (MergeAction *) lfirst(l);
-
-			switch (action->commandType)
-			{
-				case CMD_INSERT:
-				case CMD_UPDATE:
-					action->targetList = expand_targetlist(action->targetList,
-														   action->commandType,
-														   result_relation,
-														   target_relation);
-					break;
-				case CMD_DELETE:
-					break;
-				case CMD_NOTHING:
-					break;
-				default:
-					elog(ERROR, "unknown action in MERGE WHEN clause");
-
-			}
-		}
-	}
-
 	/*
 	 * Add necessary junk columns for rowmarked rels.  These values are needed
 	 * for locking of rels selected FOR UPDATE/SHARE, and to do EvalPlanQual
@@ -388,7 +348,6 @@ expand_targetlist(List *tlist, int command_type,
 													  true /* byval */ );
 					}
 					break;
-				case CMD_MERGE:
 				case CMD_UPDATE:
 					if (!att_tup->attisdropped)
 					{

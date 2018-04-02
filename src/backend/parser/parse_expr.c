@@ -1818,7 +1818,6 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_RETURNING:
 		case EXPR_KIND_VALUES:
 		case EXPR_KIND_VALUES_SINGLE:
-		case EXPR_KIND_MERGE_WHEN_AND:
 			/* okay */
 			break;
 		case EXPR_KIND_CHECK_CONSTRAINT:
@@ -3476,8 +3475,6 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "PARTITION BY";
 		case EXPR_KIND_CALL_ARGUMENT:
 			return "CALL";
-		case EXPR_KIND_MERGE_WHEN_AND:
-			return "MERGE WHEN AND";
 
 			/*
 			 * There is intentionally no default: case here, so that the

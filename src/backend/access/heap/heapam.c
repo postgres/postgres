@@ -3245,7 +3245,6 @@ l1:
 			   result == HeapTupleUpdated ||
 			   result == HeapTupleBeingUpdated);
 		Assert(!(tp.t_data->t_infomask & HEAP_XMAX_INVALID));
-		hufd->result = result;
 		hufd->ctid = tp.t_data->t_ctid;
 		hufd->xmax = HeapTupleHeaderGetUpdateXid(tp.t_data);
 		if (result == HeapTupleSelfUpdated)
@@ -3508,7 +3507,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 HTSU_Result
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 			CommandId cid, Snapshot crosscheck, bool wait,
-			HeapUpdateFailureData *hufd)
+			HeapUpdateFailureData *hufd, LockTupleMode *lockmode)
 {
 	HTSU_Result result;
 	TransactionId xid = GetCurrentTransactionId();
@@ -3548,10 +3547,8 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 				infomask2_old_tuple,
 				infomask_new_tuple,
 				infomask2_new_tuple;
-	LockTupleMode	lockmode;
 
 	Assert(ItemPointerIsValid(otid));
-	Assert(hufd != NULL);
 
 	/*
 	 * Forbid this during a parallel operation, lest it allocate a combocid.
@@ -3667,7 +3664,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 */
 	if (!bms_overlap(modified_attrs, key_attrs))
 	{
-		lockmode = hufd->lockmode = LockTupleNoKeyExclusive;
+		*lockmode = LockTupleNoKeyExclusive;
 		mxact_status = MultiXactStatusNoKeyUpdate;
 		key_intact = true;
 
@@ -3684,7 +3681,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	}
 	else
 	{
-		lockmode = hufd->lockmode = LockTupleExclusive;
+		*lockmode = LockTupleExclusive;
 		mxact_status = MultiXactStatusUpdate;
 		key_intact = false;
 	}
@@ -3762,12 +3759,12 @@ l2:
 			int			remain;
 
 			if (DoesMultiXactIdConflict((MultiXactId) xwait, infomask,
-										lockmode))
+										*lockmode))
 			{
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 				/* acquire tuple lock, if necessary */
-				heap_acquire_tuplock(relation, &(oldtup.t_self), lockmode,
+				heap_acquire_tuplock(relation, &(oldtup.t_self), *lockmode,
 									 LockWaitBlock, &have_tuple_lock);
 
 				/* wait for multixact */
@@ -3851,7 +3848,7 @@ l2:
 			 * lock.
 			 */
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			heap_acquire_tuplock(relation, &(oldtup.t_self), lockmode,
+			heap_acquire_tuplock(relation, &(oldtup.t_self), *lockmode,
 								 LockWaitBlock, &have_tuple_lock);
 			XactLockTableWait(xwait, relation, &oldtup.t_self,
 							  XLTW_Update);
@@ -3890,7 +3887,6 @@ l2:
 			   result == HeapTupleUpdated ||
 			   result == HeapTupleBeingUpdated);
 		Assert(!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID));
-		hufd->result = result;
 		hufd->ctid = oldtup.t_data->t_ctid;
 		hufd->xmax = HeapTupleHeaderGetUpdateXid(oldtup.t_data);
 		if (result == HeapTupleSelfUpdated)
@@ -3899,7 +3895,7 @@ l2:
 			hufd->cmax = InvalidCommandId;
 		UnlockReleaseBuffer(buffer);
 		if (have_tuple_lock)
-			UnlockTupleTuplock(relation, &(oldtup.t_self), lockmode);
+			UnlockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
 		if (vmbuffer != InvalidBuffer)
 			ReleaseBuffer(vmbuffer);
 		bms_free(hot_attrs);
@@ -3937,7 +3933,7 @@ l2:
 	compute_new_xmax_infomask(HeapTupleHeaderGetRawXmax(oldtup.t_data),
 							  oldtup.t_data->t_infomask,
 							  oldtup.t_data->t_infomask2,
-							  xid, lockmode, true,
+							  xid, *lockmode, true,
 							  &xmax_old_tuple, &infomask_old_tuple,
 							  &infomask2_old_tuple);
 
@@ -4054,7 +4050,7 @@ l2:
 		compute_new_xmax_infomask(HeapTupleHeaderGetRawXmax(oldtup.t_data),
 								  oldtup.t_data->t_infomask,
 								  oldtup.t_data->t_infomask2,
-								  xid, lockmode, false,
+								  xid, *lockmode, false,
 								  &xmax_lock_old_tuple, &infomask_lock_old_tuple,
 								  &infomask2_lock_old_tuple);
 
@@ -4366,7 +4362,7 @@ l2:
 	 * Release the lmgr tuple lock, if we had it.
 	 */
 	if (have_tuple_lock)
-		UnlockTupleTuplock(relation, &(oldtup.t_self), lockmode);
+		UnlockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
 
 	pgstat_count_heap_update(relation, use_hot_update);
 
@@ -4590,11 +4586,12 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 {
 	HTSU_Result result;
 	HeapUpdateFailureData hufd;
+	LockTupleMode lockmode;
 
 	result = heap_update(relation, otid, tup,
 						 GetCurrentCommandId(true), InvalidSnapshot,
 						 true /* wait for commit */ ,
-						 &hufd);
+						 &hufd, &lockmode);
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -5180,7 +5177,6 @@ failed:
 		Assert(result == HeapTupleSelfUpdated || result == HeapTupleUpdated ||
 			   result == HeapTupleWouldBlock);
 		Assert(!(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
-		hufd->result = result;
 		hufd->ctid = tuple->t_data->t_ctid;
 		hufd->xmax = HeapTupleHeaderGetUpdateXid(tuple->t_data);
 		if (result == HeapTupleSelfUpdated)

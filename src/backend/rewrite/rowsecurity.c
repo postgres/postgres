@@ -379,95 +379,6 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 		}
 	}
 
-	/*
-	 * FOR MERGE, we fetch policies for UPDATE, DELETE and INSERT (and ALL)
-	 * and set them up so that we can enforce the appropriate policy depending
-	 * on the final action we take.
-	 *
-	 * We don't fetch the SELECT policies since they are correctly applied to
-	 * the root->mergeTarget_relation. The target rows are selected after
-	 * joining the mergeTarget_relation and the source relation and hence it's
-	 * enough to apply SELECT policies to the mergeTarget_relation.
-	 *
-	 * We don't push the UPDATE/DELETE USING quals to the RTE because we don't
-	 * really want to apply them while scanning the relation since we don't
-	 * know whether we will be doing a UPDATE or a DELETE at the end. We apply
-	 * the respective policy once we decide the final action on the target
-	 * tuple.
-	 *
-	 * XXX We are setting up USING quals as WITH CHECK. If RLS prohibits
-	 * UPDATE/DELETE on the target row, we shall throw an error instead of
-	 * silently ignoring the row. This is different than how normal
-	 * UPDATE/DELETE works and more in line with INSERT ON CONFLICT DO UPDATE
-	 * handling.
-	 */
-	if (commandType == CMD_MERGE)
-	{
-		List	   *merge_permissive_policies;
-		List	   *merge_restrictive_policies;
-
-		/*
-		 * Fetch the UPDATE policies and set them up to execute on the
-		 * existing target row before doing UPDATE.
-		 */
-		get_policies_for_relation(rel, CMD_UPDATE, user_id,
-								  &merge_permissive_policies,
-								  &merge_restrictive_policies);
-
-		/*
-		 * WCO_RLS_MERGE_UPDATE_CHECK is used to check UPDATE USING quals on
-		 * the existing target row.
-		 */
-		add_with_check_options(rel, rt_index,
-							   WCO_RLS_MERGE_UPDATE_CHECK,
-							   merge_permissive_policies,
-							   merge_restrictive_policies,
-							   withCheckOptions,
-							   hasSubLinks,
-							   true);
-
-		/*
-		 * Same with DELETE policies.
-		 */
-		get_policies_for_relation(rel, CMD_DELETE, user_id,
-								  &merge_permissive_policies,
-								  &merge_restrictive_policies);
-
-		add_with_check_options(rel, rt_index,
-							   WCO_RLS_MERGE_DELETE_CHECK,
-							   merge_permissive_policies,
-							   merge_restrictive_policies,
-							   withCheckOptions,
-							   hasSubLinks,
-							   true);
-
-		/*
-		 * No special handling is required for INSERT policies. They will be
-		 * checked and enforced during ExecInsert(). But we must add them to
-		 * withCheckOptions.
-		 */
-		get_policies_for_relation(rel, CMD_INSERT, user_id,
-								  &merge_permissive_policies,
-								  &merge_restrictive_policies);
-
-		add_with_check_options(rel, rt_index,
-							   WCO_RLS_INSERT_CHECK,
-							   merge_permissive_policies,
-							   merge_restrictive_policies,
-							   withCheckOptions,
-							   hasSubLinks,
-							   false);
-
-		/* Enforce the WITH CHECK clauses of the UPDATE policies */
-		add_with_check_options(rel, rt_index,
-							   WCO_RLS_UPDATE_CHECK,
-							   merge_permissive_policies,
-							   merge_restrictive_policies,
-							   withCheckOptions,
-							   hasSubLinks,
-							   false);
-	}
-
 	heap_close(rel, NoLock);
 
 	/*
@@ -526,14 +437,6 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 				case CMD_DELETE:
 					if (policy->polcmd == ACL_DELETE_CHR)
 						cmd_matches = true;
-					break;
-				case CMD_MERGE:
-
-					/*
-					 * We do not support a separate policy for MERGE command.
-					 * Instead it derives from the policies defined for other
-					 * commands.
-					 */
 					break;
 				default:
 					elog(ERROR, "unrecognized policy command type %d",

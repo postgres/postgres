@@ -37,16 +37,6 @@ the plan tree returns the computed tuples to be updated, plus a "junk"
 one.  For DELETE, the plan tree need only deliver a CTID column, and the
 ModifyTable node visits each of those rows and marks the row deleted.
 
-MERGE runs one generic plan that returns candidate target rows. Each row
-consists of a super-row that contains all the columns needed by any of the
-individual actions, plus a CTID and a TABLEOID junk columns. The CTID column is
-required to know if a matching target row was found or not and the TABLEOID
-column is needed to find the underlying target partition, in case when the
-target table is a partition table. If the CTID column is set we attempt to
-activate WHEN MATCHED actions, or if it is NULL then we will attempt to
-activate WHEN NOT MATCHED actions. Once we know which action is activated we
-form the final result row and apply only those changes.
-
 XXX a great deal more documentation needs to be written here...
 
 

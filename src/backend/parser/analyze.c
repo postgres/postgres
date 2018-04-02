@@ -38,7 +38,6 @@
 #include "parser/parse_cte.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
-#include "parser/parse_merge.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_param.h"
 #include "parser/parse_relation.h"
@@ -54,6 +53,9 @@ post_parse_analyze_hook_type post_parse_analyze_hook = NULL;
 static Query *transformOptionalSelectInto(ParseState *pstate, Node *parseTree);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
 static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt);
+static List *transformInsertRow(ParseState *pstate, List *exprlist,
+				   List *stmtcols, List *icolumns, List *attrnos,
+				   bool strip_indirection);
 static OnConflictExpr *transformOnConflictClause(ParseState *pstate,
 						  OnConflictClause *onConflictClause);
 static int	count_rowexpr_columns(ParseState *pstate, Node *expr);
@@ -66,6 +68,8 @@ static void determineRecursiveColTypes(ParseState *pstate,
 						   Node *larg, List *nrtargetlist);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static List *transformReturningList(ParseState *pstate, List *returningList);
+static List *transformUpdateTargetList(ParseState *pstate,
+						  List *targetList);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
 						   DeclareCursorStmt *stmt);
 static Query *transformExplainStmt(ParseState *pstate,
@@ -263,7 +267,6 @@ transformStmt(ParseState *pstate, Node *parseTree)
 		case T_InsertStmt:
 		case T_UpdateStmt:
 		case T_DeleteStmt:
-		case T_MergeStmt:
 			(void) test_raw_expression_coverage(parseTree, NULL);
 			break;
 		default:
@@ -286,10 +289,6 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 		case T_UpdateStmt:
 			result = transformUpdateStmt(pstate, (UpdateStmt *) parseTree);
-			break;
-
-		case T_MergeStmt:
-			result = transformMergeStmt(pstate, (MergeStmt *) parseTree);
 			break;
 
 		case T_SelectStmt:
@@ -367,7 +366,6 @@ analyze_requires_snapshot(RawStmt *parseTree)
 		case T_InsertStmt:
 		case T_DeleteStmt:
 		case T_UpdateStmt:
-		case T_MergeStmt:
 		case T_SelectStmt:
 			result = true;
 			break;
@@ -898,7 +896,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
  * attrnos: integer column numbers (must be same length as icolumns)
  * strip_indirection: if true, remove any field/array assignment nodes
  */
-List *
+static List *
 transformInsertRow(ParseState *pstate, List *exprlist,
 				   List *stmtcols, List *icolumns, List *attrnos,
 				   bool strip_indirection)
@@ -2262,9 +2260,9 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 /*
  * transformUpdateTargetList -
- *	handle SET clause in UPDATE/MERGE/INSERT ... ON CONFLICT UPDATE
+ *	handle SET clause in UPDATE/INSERT ... ON CONFLICT UPDATE
  */
-List *
+static List *
 transformUpdateTargetList(ParseState *pstate, List *origTlist)
 {
 	List	   *tlist = NIL;
