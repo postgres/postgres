@@ -9516,6 +9516,18 @@ if test x"$PYTHON" = x""; then
 fi
 
 
+python_fullversion=`${PYTHON} -c "import sys; print(sys.version)" | sed q`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: using python $python_fullversion" >&5
+$as_echo "$as_me: using python $python_fullversion" >&6;}
+# python_fullversion is typically n.n.n plus some trailing junk
+python_majorversion=`echo "$python_fullversion" | sed 's/^\([0-9]*\).*/\1/'`
+python_minorversion=`echo "$python_fullversion" | sed 's/^[0-9]*\.\([0-9]*\).*/\1/'`
+python_version=`echo "$python_fullversion" | sed 's/^\([0-9]*\.[0-9]*\).*/\1/'`
+# Reject unsupported Python versions as soon as practical.
+if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 4; then
+  as_fn_error $? "Python version $python_version is too old (version 2.4 or later is required)" "$LINENO" 5
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python distutils module" >&5
 $as_echo_n "checking for Python distutils module... " >&6; }
 if "${PYTHON}" -c 'import distutils' 2>&5
@@ -9527,19 +9539,12 @@ else
 $as_echo "no" >&6; }
     as_fn_error $? "distutils module not found" "$LINENO" 5
 fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking Python configuration directory" >&5
 $as_echo_n "checking Python configuration directory... " >&6; }
-python_majorversion=`${PYTHON} -c "import sys; print(sys.version[0])"`
-python_minorversion=`${PYTHON} -c "import sys; print(sys.version[2])"`
-python_version=`${PYTHON} -c "import sys; print(sys.version[:3])"`
 python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBPL'))))"`
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $python_configdir" >&5
 $as_echo "$python_configdir" >&6; }
-
-# Reject unsupported Python versions as soon as practical.
-if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 4; then
-  as_fn_error $? "Python version $python_version is too old (version 2.4 or later is required)" "$LINENO" 5
-fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking Python include directories" >&5
 $as_echo_n "checking Python include directories... " >&6; }

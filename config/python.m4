@@ -22,6 +22,17 @@ fi
 # as well as the Python version.
 AC_DEFUN([_PGAC_CHECK_PYTHON_DIRS],
 [AC_REQUIRE([PGAC_PATH_PYTHON])
+python_fullversion=`${PYTHON} -c "import sys; print(sys.version)" | sed q`
+AC_MSG_NOTICE([using python $python_fullversion])
+# python_fullversion is typically n.n.n plus some trailing junk
+python_majorversion=`echo "$python_fullversion" | sed '[s/^\([0-9]*\).*/\1/]'`
+python_minorversion=`echo "$python_fullversion" | sed '[s/^[0-9]*\.\([0-9]*\).*/\1/]'`
+python_version=`echo "$python_fullversion" | sed '[s/^\([0-9]*\.[0-9]*\).*/\1/]'`
+# Reject unsupported Python versions as soon as practical.
+if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 4; then
+  AC_MSG_ERROR([Python version $python_version is too old (version 2.4 or later is required)])
+fi
+
 AC_MSG_CHECKING([for Python distutils module])
 if "${PYTHON}" -c 'import distutils' 2>&AS_MESSAGE_LOG_FD
 then
@@ -30,17 +41,10 @@ else
     AC_MSG_RESULT(no)
     AC_MSG_ERROR([distutils module not found])
 fi
+
 AC_MSG_CHECKING([Python configuration directory])
-python_majorversion=`${PYTHON} -c "import sys; print(sys.version[[0]])"`
-python_minorversion=`${PYTHON} -c "import sys; print(sys.version[[2]])"`
-python_version=`${PYTHON} -c "import sys; print(sys.version[[:3]])"`
 python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBPL'))))"`
 AC_MSG_RESULT([$python_configdir])
-
-# Reject unsupported Python versions as soon as practical.
-if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 4; then
-  AC_MSG_ERROR([Python version $python_version is too old (version 2.4 or later is required)])
-fi
 
 AC_MSG_CHECKING([Python include directories])
 python_includespec=`${PYTHON} -c "
