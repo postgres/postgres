@@ -3685,7 +3685,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_relations, NULL);
 
 	else if (TailMatchesCS1("\\ef"))
-		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_routines, NULL);
 	else if (TailMatchesCS1("\\ev"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
 
@@ -3794,7 +3794,7 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH_LIST_CS3("default", "verbose", "terse");
 	}
 	else if (TailMatchesCS1("\\sf*"))
-		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_routines, NULL);
 	else if (TailMatchesCS1("\\sv*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
 	else if (TailMatchesCS1("\\cd|\\e|\\edit|\\g|\\i|\\include|"
