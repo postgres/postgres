@@ -352,7 +352,8 @@ static bool postgresRecheckForeignScan(ForeignScanState *node,
 static void postgresGetForeignUpperPaths(PlannerInfo *root,
 							 UpperRelationKind stage,
 							 RelOptInfo *input_rel,
-							 RelOptInfo *output_rel);
+							 RelOptInfo *output_rel,
+							 void *extra);
 
 /*
  * Helper functions
@@ -419,7 +420,8 @@ static void conversion_error_callback(void *arg);
 static bool foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel,
 				JoinType jointype, RelOptInfo *outerrel, RelOptInfo *innerrel,
 				JoinPathExtraData *extra);
-static bool foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel);
+static bool foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
+					Node *havingQual);
 static List *get_useful_pathkeys_for_relation(PlannerInfo *root,
 								 RelOptInfo *rel);
 static List *get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel);
@@ -427,7 +429,8 @@ static void add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 								Path *epq_path);
 static void add_foreign_grouping_paths(PlannerInfo *root,
 						   RelOptInfo *input_rel,
-						   RelOptInfo *grouped_rel);
+						   RelOptInfo *grouped_rel,
+						   GroupPathExtraData *extra);
 static void apply_server_options(PgFdwRelationInfo *fpinfo);
 static void apply_table_options(PgFdwRelationInfo *fpinfo);
 static void merge_fdw_options(PgFdwRelationInfo *fpinfo,
@@ -2775,11 +2778,14 @@ estimate_path_cost_size(PlannerInfo *root,
 		else if (IS_UPPER_REL(foreignrel))
 		{
 			PgFdwRelationInfo *ofpinfo;
-			PathTarget *ptarget = root->upper_targets[UPPERREL_GROUP_AGG];
+			PathTarget *ptarget = foreignrel->reltarget;
 			AggClauseCosts aggcosts;
 			double		input_rows;
 			int			numGroupCols;
 			double		numGroups = 1;
+
+			/* Make sure the core code set the pathtarget. */
+			Assert(ptarget != NULL);
 
 			/*
 			 * This cost model is mixture of costing done for sorted and
@@ -2805,6 +2811,12 @@ estimate_path_cost_size(PlannerInfo *root,
 			{
 				get_agg_clause_costs(root, (Node *) fpinfo->grouped_tlist,
 									 AGGSPLIT_SIMPLE, &aggcosts);
+
+				/*
+				 * The cost of aggregates in the HAVING qual will be the same
+				 * for each child as it is for the parent, so there's no need
+				 * to use a translated version of havingQual.
+				 */
 				get_agg_clause_costs(root, (Node *) root->parse->havingQual,
 									 AGGSPLIT_SIMPLE, &aggcosts);
 			}
@@ -5017,11 +5029,12 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
  * this function to PgFdwRelationInfo of the input relation.
  */
 static bool
-foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel)
+foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
+					Node *havingQual)
 {
 	Query	   *query = root->parse;
-	PathTarget *grouping_target = root->upper_targets[UPPERREL_GROUP_AGG];
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) grouped_rel->fdw_private;
+	PathTarget *grouping_target = grouped_rel->reltarget;
 	PgFdwRelationInfo *ofpinfo;
 	List	   *aggvars;
 	ListCell   *lc;
@@ -5131,11 +5144,11 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel)
 	 * Classify the pushable and non-pushable HAVING clauses and save them in
 	 * remote_conds and local_conds of the grouped rel's fpinfo.
 	 */
-	if (root->hasHavingQual && query->havingQual)
+	if (havingQual)
 	{
 		ListCell   *lc;
 
-		foreach(lc, (List *) query->havingQual)
+		foreach(lc, (List *) havingQual)
 		{
 			Expr	   *expr = (Expr *) lfirst(lc);
 			RestrictInfo *rinfo;
@@ -5232,7 +5245,8 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel)
  */
 static void
 postgresGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
-							 RelOptInfo *input_rel, RelOptInfo *output_rel)
+							 RelOptInfo *input_rel, RelOptInfo *output_rel,
+							 void *extra)
 {
 	PgFdwRelationInfo *fpinfo;
 
@@ -5252,7 +5266,8 @@ postgresGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 	fpinfo->pushdown_safe = false;
 	output_rel->fdw_private = fpinfo;
 
-	add_foreign_grouping_paths(root, input_rel, output_rel);
+	add_foreign_grouping_paths(root, input_rel, output_rel,
+							   (GroupPathExtraData *) extra);
 }
 
 /*
@@ -5264,13 +5279,13 @@ postgresGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
  */
 static void
 add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
-						   RelOptInfo *grouped_rel)
+						   RelOptInfo *grouped_rel,
+						   GroupPathExtraData *extra)
 {
 	Query	   *parse = root->parse;
 	PgFdwRelationInfo *ifpinfo = input_rel->fdw_private;
 	PgFdwRelationInfo *fpinfo = grouped_rel->fdw_private;
 	ForeignPath *grouppath;
-	PathTarget *grouping_target;
 	double		rows;
 	int			width;
 	Cost		startup_cost;
@@ -5281,7 +5296,8 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		!root->hasHavingQual)
 		return;
 
-	grouping_target = root->upper_targets[UPPERREL_GROUP_AGG];
+	Assert(extra->patype == PARTITIONWISE_AGGREGATE_NONE ||
+		   extra->patype == PARTITIONWISE_AGGREGATE_FULL);
 
 	/* save the input_rel as outerrel in fpinfo */
 	fpinfo->outerrel = input_rel;
@@ -5295,8 +5311,13 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	fpinfo->user = ifpinfo->user;
 	merge_fdw_options(fpinfo, ifpinfo, NULL);
 
-	/* Assess if it is safe to push down aggregation and grouping. */
-	if (!foreign_grouping_ok(root, grouped_rel))
+	/*
+	 * Assess if it is safe to push down aggregation and grouping.
+	 *
+	 * Use HAVING qual from extra. In case of child partition, it will have
+	 * translated Vars.
+	 */
+	if (!foreign_grouping_ok(root, grouped_rel, extra->havingQual))
 		return;
 
 	/* Estimate the cost of push down */
@@ -5312,7 +5333,7 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	/* Create and add foreign path to the grouping relation. */
 	grouppath = create_foreignscan_path(root,
 										grouped_rel,
-										grouping_target,
+										grouped_rel->reltarget,
 										rows,
 										startup_cost,
 										total_cost,

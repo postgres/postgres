@@ -2206,12 +2206,13 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	if (final_rel->fdwroutine &&
 		final_rel->fdwroutine->GetForeignUpperPaths)
 		final_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_FINAL,
-													current_rel, final_rel);
+													current_rel, final_rel,
+													NULL);
 
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
 		(*create_upper_paths_hook) (root, UPPERREL_FINAL,
-									current_rel, final_rel);
+									current_rel, final_rel, NULL);
 
 	/* Note: currently, we leave it to callers to do set_cheapest() */
 }
@@ -4024,12 +4025,14 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	if (grouped_rel->fdwroutine &&
 		grouped_rel->fdwroutine->GetForeignUpperPaths)
 		grouped_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_GROUP_AGG,
-													  input_rel, grouped_rel);
+													  input_rel, grouped_rel,
+													  extra);
 
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
 		(*create_upper_paths_hook) (root, UPPERREL_GROUP_AGG,
-									input_rel, grouped_rel);
+									input_rel, grouped_rel,
+									extra);
 }
 
 /*
@@ -4461,12 +4464,13 @@ create_window_paths(PlannerInfo *root,
 	if (window_rel->fdwroutine &&
 		window_rel->fdwroutine->GetForeignUpperPaths)
 		window_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_WINDOW,
-													 input_rel, window_rel);
+													 input_rel, window_rel,
+													 NULL);
 
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
 		(*create_upper_paths_hook) (root, UPPERREL_WINDOW,
-									input_rel, window_rel);
+									input_rel, window_rel, NULL);
 
 	/* Now choose the best path(s) */
 	set_cheapest(window_rel);
@@ -4765,12 +4769,13 @@ create_distinct_paths(PlannerInfo *root,
 	if (distinct_rel->fdwroutine &&
 		distinct_rel->fdwroutine->GetForeignUpperPaths)
 		distinct_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_DISTINCT,
-													   input_rel, distinct_rel);
+													   input_rel, distinct_rel,
+													   NULL);
 
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
 		(*create_upper_paths_hook) (root, UPPERREL_DISTINCT,
-									input_rel, distinct_rel);
+									input_rel, distinct_rel, NULL);
 
 	/* Now choose the best path(s) */
 	set_cheapest(distinct_rel);
@@ -4908,12 +4913,13 @@ create_ordered_paths(PlannerInfo *root,
 	if (ordered_rel->fdwroutine &&
 		ordered_rel->fdwroutine->GetForeignUpperPaths)
 		ordered_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_ORDERED,
-													  input_rel, ordered_rel);
+													  input_rel, ordered_rel,
+													  NULL);
 
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
 		(*create_upper_paths_hook) (root, UPPERREL_ORDERED,
-									input_rel, ordered_rel);
+									input_rel, ordered_rel, NULL);
 
 	/*
 	 * No need to bother with set_cheapest here; grouping_planner does not
@@ -6694,7 +6700,8 @@ create_partial_grouping_paths(PlannerInfo *root,
 
 		fdwroutine->GetForeignUpperPaths(root,
 										 UPPERREL_PARTIAL_GROUP_AGG,
-										 input_rel, partially_grouped_rel);
+										 input_rel, partially_grouped_rel,
+										 extra);
 	}
 
 	return partially_grouped_rel;

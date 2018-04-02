@@ -1032,7 +1032,7 @@ postprocess_setop_rel(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	if (create_upper_paths_hook)
 		(*create_upper_paths_hook) (root, UPPERREL_SETOP,
-									NULL, rel);
+									NULL, rel, NULL);
 
 	/* Select cheapest path */
 	set_cheapest(rel);

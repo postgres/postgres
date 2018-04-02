@@ -62,7 +62,8 @@ typedef void (*GetForeignJoinPaths_function) (PlannerInfo *root,
 typedef void (*GetForeignUpperPaths_function) (PlannerInfo *root,
 											   UpperRelationKind stage,
 											   RelOptInfo *input_rel,
-											   RelOptInfo *output_rel);
+											   RelOptInfo *output_rel,
+											   void *extra);
 
 typedef void (*AddForeignUpdateTargets_function) (Query *parsetree,
 												  RangeTblEntry *target_rte,

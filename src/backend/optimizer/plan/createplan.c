@@ -3572,7 +3572,7 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	 * upper rel doesn't have relids set, but it covers all the base relations
 	 * participating in the underlying scan, so use root's all_baserels.
 	 */
-	if (IS_UPPER_REL(rel))
+	if (rel->reloptkind == RELOPT_UPPER_REL)
 		scan_plan->fs_relids = root->all_baserels;
 	else
 		scan_plan->fs_relids = best_path->path.parent->relids;

@@ -359,7 +359,8 @@ void
 GetForeignUpperPaths(PlannerInfo *root,
                      UpperRelationKind stage,
                      RelOptInfo *input_rel,
-                     RelOptInfo *output_rel);
+                     RelOptInfo *output_rel,
+                     void *extra);
 </programlisting>
      Create possible access paths for <firstterm>upper relation</firstterm> processing,
      which is the planner's term for all post-scan/join query processing, such
@@ -379,7 +380,11 @@ GetForeignUpperPaths(PlannerInfo *root,
      currently being considered.  <literal>output_rel</literal> is the upper relation
      that should receive paths representing computation of this step,
      and <literal>input_rel</literal> is the relation representing the input to this
-     step.  (Note that <structname>ForeignPath</structname> paths added
+     step.  The <literal>extra</literal> parameter provides additional details,
+     currently, it is set only for <literal>UPPERREL_PARTIAL_GROUP_AGG</>
+     or <literal>UPPERREL_GROUP_AGG</literal>, in which case it points to a
+     <literal>GroupPathExtraData</> structure.
+     (Note that <structname>ForeignPath</structname> paths added
      to <literal>output_rel</literal> would typically not have any direct dependency
      on paths of the <literal>input_rel</literal>, since their processing is expected
      to be done externally.  However, examining paths previously generated for
