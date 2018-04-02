@@ -127,41 +127,6 @@ SELECT roundtrip('[1, true]'::jsonb);
 SELECT roundtrip('[true, "string"]'::jsonb);
 SELECT roundtrip('["string", "string2"]'::jsonb);
 
--- test python infinity -> jsonb
-CREATE FUNCTION test1inf() RETURNS jsonb
-LANGUAGE plpythonu
-TRANSFORM FOR TYPE jsonb
-AS $$
-x = float('inf')
-print(x)
-return x
-$$;
-
-SELECT test1inf();
-
--- test python -infinity -> jsonb
-CREATE FUNCTION test2inf() RETURNS jsonb
-LANGUAGE plpythonu
-TRANSFORM FOR TYPE jsonb
-AS $$
-x = float('-inf')
-print(x)
-return x
-$$;
-
-SELECT test2inf();
-
--- test python NaN -> jsonb
-CREATE FUNCTION test1nan() RETURNS jsonb
-LANGUAGE plpythonu
-TRANSFORM FOR TYPE jsonb
-AS $$
-x = float('nan')
-return x
-$$;
-
-SELECT test1nan();
-
 -- complex numbers -> jsonb
 CREATE FUNCTION testComplexNumbers() RETURNS jsonb
 LANGUAGE plpythonu

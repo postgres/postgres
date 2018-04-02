@@ -236,46 +236,6 @@ SELECT roundtrip('["string", "string2"]'::jsonb);
  ["string", "string2"]
 (1 row)
 
--- test python infinity -> jsonb
-CREATE FUNCTION test1inf() RETURNS jsonb
-LANGUAGE plpythonu
-TRANSFORM FOR TYPE jsonb
-AS $$
-x = float('inf')
-print(x)
-return x
-$$;
-SELECT test1inf();
-ERROR:  could not convert value "inf" to jsonb
-CONTEXT:  while creating return value
-PL/Python function "test1inf"
--- test python -infinity -> jsonb
-CREATE FUNCTION test2inf() RETURNS jsonb
-LANGUAGE plpythonu
-TRANSFORM FOR TYPE jsonb
-AS $$
-x = float('-inf')
-print(x)
-return x
-$$;
-SELECT test2inf();
-ERROR:  could not convert value "-inf" to jsonb
-CONTEXT:  while creating return value
-PL/Python function "test2inf"
--- test python NaN -> jsonb
-CREATE FUNCTION test1nan() RETURNS jsonb
-LANGUAGE plpythonu
-TRANSFORM FOR TYPE jsonb
-AS $$
-x = float('nan')
-return x
-$$;
-SELECT test1nan();
- test1nan 
-----------
- NaN
-(1 row)
-
 -- complex numbers -> jsonb
 CREATE FUNCTION testComplexNumbers() RETURNS jsonb
 LANGUAGE plpythonu
