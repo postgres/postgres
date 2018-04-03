@@ -43,7 +43,7 @@ my $contrib_extrasource = {
 my @contrib_excludes = (
 	'commit_ts',       'hstore_plperl',
 	'hstore_plpython', 'intagg',
-	'jsonb_plpython',
+	'jsonb_plperl',    'jsonb_plpython',
 	'ltree_plpython',  'pgcrypto',
 	'sepgsql',         'brin',
 	'test_extensions', 'test_pg_dump',
@@ -746,15 +746,19 @@ sub mkvcbuild
 			}
 		}
 
-		# Add transform module dependent on plperl
+		# Add transform modules dependent on plperl
 		my $hstore_plperl = AddTransformModule(
 			'hstore_plperl', 'contrib/hstore_plperl',
 			'plperl',        'src/pl/plperl',
 			'hstore',        'contrib/hstore');
+		my $jsonb_plperl = AddTransformModule(
+			'jsonb_plperl', 'contrib/jsonb_plperl',
+			'plperl',        'src/pl/plperl');
 
 		foreach my $f (@perl_embed_ccflags)
 		{
 			$hstore_plperl->AddDefine($f);
+			$jsonb_plperl->AddDefine($f);
 		}
 	}
 

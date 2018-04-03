@@ -376,6 +376,7 @@ sub contribcheck
 		next if ($module eq "sslinfo"       && !defined($config->{openssl}));
 		next if ($module eq "xml2"          && !defined($config->{xml}));
 		next if ($module eq "hstore_plperl" && !defined($config->{perl}));
+		next if ($module eq "jsonb_plperl"  && !defined($config->{perl}));
 		next if ($module eq "hstore_plpython" && !defined($config->{python}));
 		next if ($module eq "jsonb_plpython"  && !defined($config->{python}));
 		next if ($module eq "ltree_plpython"  && !defined($config->{python}));

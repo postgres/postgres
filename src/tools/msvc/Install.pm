@@ -464,6 +464,7 @@ sub CopyContribFiles
 			next if ($d eq "sslinfo"         && !defined($config->{openssl}));
 			next if ($d eq "xml2"            && !defined($config->{xml}));
 			next if ($d eq "hstore_plperl"   && !defined($config->{perl}));
+			next if ($d eq "jsonb_plperl"    && !defined($config->{perl}));
 			next if ($d eq "hstore_plpython" && !defined($config->{python}));
 			next if ($d eq "jsonb_plpython"  && !defined($config->{python}));
 			next if ($d eq "ltree_plpython"  && !defined($config->{python}));
