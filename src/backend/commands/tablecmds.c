@@ -14336,6 +14336,10 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 		if (!TRIGGER_FOR_ROW(trigForm->tgtype))
 			continue;
 
+		/* We don't clone internal triggers, either */
+		if (trigForm->tgisinternal)
+			continue;
+
 		/*
 		 * Complain if we find an unexpected trigger type.
 		 */

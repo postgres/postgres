@@ -2234,6 +2234,29 @@ NOTICE:  trigger parted_trigger on parted_trigger_3_1 AFTER UPDATE for ROW: (a,b
 NOTICE:  trigger parted_trigger on parted_trigger_3_2 AFTER UPDATE for ROW: (a,b)=(2003,eeeeb)
 drop table parted_trigger;
 drop function trigger_notice_ab();
+-- Make sure we don't end up with unnecessary copies of triggers, when
+-- cloning them.
+create table trg_clone (a int) partition by range (a);
+create table trg_clone1 partition of trg_clone for values from (0) to (1000);
+alter table trg_clone add constraint uniq unique (a) deferrable;
+create table trg_clone2 partition of trg_clone for values from (1000) to (2000);
+create table trg_clone3 partition of trg_clone for values from (2000) to (3000)
+  partition by range (a);
+create table trg_clone_3_3 partition of trg_clone3 for values from (2000) to (2100);
+select tgrelid::regclass, count(*) from pg_trigger
+  where tgrelid::regclass in ('trg_clone', 'trg_clone1', 'trg_clone2',
+	'trg_clone3', 'trg_clone_3_3')
+  group by tgrelid::regclass order by tgrelid::regclass;
+    tgrelid    | count 
+---------------+-------
+ trg_clone     |     1
+ trg_clone1    |     1
+ trg_clone2    |     1
+ trg_clone3    |     1
+ trg_clone_3_3 |     1
+(5 rows)
+
+drop table trg_clone;
 --
 -- Test the interaction between transition tables and both kinds of
 -- inheritance.  We'll dump the contents of the transition tables in a
