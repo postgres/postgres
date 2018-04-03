@@ -75,9 +75,9 @@ ALWAYS_SUBDIRS += sepgsql
 endif
 
 ifeq ($(with_perl),yes)
-SUBDIRS += hstore_plperl
+SUBDIRS += hstore_plperl jsonb_plperl
 else
-ALWAYS_SUBDIRS += hstore_plperl
+ALWAYS_SUBDIRS += hstore_plperl jsonb_plperl
 endif
 
 ifeq ($(with_python),yes)

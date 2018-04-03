@@ -1,0 +1,211 @@
+CREATE EXTENSION jsonb_plperlu CASCADE;
+NOTICE:  installing required extension "plperlu"
+CREATE FUNCTION testHVToJsonb() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+$val = {a => 1, b => 'boo', c => undef};
+return $val;
+$$;
+SELECT testHVToJsonb();
+          testhvtojsonb          
+---------------------------------
+ {"a": 1, "b": "boo", "c": null}
+(1 row)
+
+CREATE FUNCTION testAVToJsonb() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+$val = [{a => 1, b => 'boo', c => undef}, {d => 2}];
+return $val;
+$$;
+SELECT testAVToJsonb();
+                testavtojsonb                
+---------------------------------------------
+ [{"a": 1, "b": "boo", "c": null}, {"d": 2}]
+(1 row)
+
+CREATE FUNCTION testSVToJsonb() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+$val = 1;
+return $val;
+$$;
+SELECT testSVToJsonb();
+ testsvtojsonb 
+---------------
+ 1
+(1 row)
+
+CREATE FUNCTION testRegexpToJsonb() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+return ('1' =~ m(0\t2));
+$$;
+SELECT testRegexpToJsonb();
+ERROR:  cannot transform this Perl type to jsonb
+CONTEXT:  PL/Perl function "testregexptojsonb"
+CREATE FUNCTION roundtrip(val jsonb) RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+return $_[0];
+$$;
+SELECT roundtrip('null');
+ roundtrip 
+-----------
+ null
+(1 row)
+
+SELECT roundtrip('1');
+ roundtrip 
+-----------
+ 1
+(1 row)
+
+SELECT roundtrip('1E+131071');
+ERROR:  cannot convert infinite value to jsonb
+CONTEXT:  PL/Perl function "roundtrip"
+SELECT roundtrip('-1');
+ roundtrip 
+-----------
+ -1
+(1 row)
+
+SELECT roundtrip('1.2');
+ roundtrip 
+-----------
+ 1.2
+(1 row)
+
+SELECT roundtrip('-1.2');
+ roundtrip 
+-----------
+ -1.2
+(1 row)
+
+SELECT roundtrip('"string"');
+ roundtrip 
+-----------
+ "string"
+(1 row)
+
+SELECT roundtrip('"NaN"');
+ roundtrip 
+-----------
+ "NaN"
+(1 row)
+
+SELECT roundtrip('true');
+ roundtrip 
+-----------
+ 1
+(1 row)
+
+SELECT roundtrip('false');
+ roundtrip 
+-----------
+ 0
+(1 row)
+
+SELECT roundtrip('[]');
+ roundtrip 
+-----------
+ []
+(1 row)
+
+SELECT roundtrip('[null, null]');
+  roundtrip   
+--------------
+ [null, null]
+(1 row)
+
+SELECT roundtrip('[1, 2, 3]');
+ roundtrip 
+-----------
+ [1, 2, 3]
+(1 row)
+
+SELECT roundtrip('[-1, 2, -3]');
+  roundtrip  
+-------------
+ [-1, 2, -3]
+(1 row)
+
+SELECT roundtrip('[1.2, 2.3, 3.4]');
+    roundtrip    
+-----------------
+ [1.2, 2.3, 3.4]
+(1 row)
+
+SELECT roundtrip('[-1.2, 2.3, -3.4]');
+     roundtrip     
+-------------------
+ [-1.2, 2.3, -3.4]
+(1 row)
+
+SELECT roundtrip('["string1", "string2"]');
+       roundtrip        
+------------------------
+ ["string1", "string2"]
+(1 row)
+
+SELECT roundtrip('{}');
+ roundtrip 
+-----------
+ {}
+(1 row)
+
+SELECT roundtrip('{"1": null}');
+  roundtrip  
+-------------
+ {"1": null}
+(1 row)
+
+SELECT roundtrip('{"1": 1}');
+ roundtrip 
+-----------
+ {"1": 1}
+(1 row)
+
+SELECT roundtrip('{"1": -1}');
+ roundtrip 
+-----------
+ {"1": -1}
+(1 row)
+
+SELECT roundtrip('{"1": 1.1}');
+ roundtrip  
+------------
+ {"1": 1.1}
+(1 row)
+
+SELECT roundtrip('{"1": -1.1}');
+  roundtrip  
+-------------
+ {"1": -1.1}
+(1 row)
+
+SELECT roundtrip('{"1": "string1"}');
+    roundtrip     
+------------------
+ {"1": "string1"}
+(1 row)
+
+SELECT roundtrip('{"1": {"2": [3, 4, 5]}, "2": 3}');
+            roundtrip            
+---------------------------------
+ {"1": {"2": [3, 4, 5]}, "2": 3}
+(1 row)
+
+DROP EXTENSION plperlu CASCADE;
+NOTICE:  drop cascades to 6 other objects
+DETAIL:  drop cascades to extension jsonb_plperlu
+drop cascades to function testhvtojsonb()
+drop cascades to function testavtojsonb()
+drop cascades to function testsvtojsonb()
+drop cascades to function testregexptojsonb()
+drop cascades to function roundtrip(jsonb)

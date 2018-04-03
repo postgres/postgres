@@ -575,8 +575,17 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
 
   <para>
    Additional extensions are available that implement transforms for the
-   <type>jsonb</type> type for the language PL/Python.  The extensions for
-   PL/Python are called <literal>jsonb_plpythonu</literal>,
+   <type>jsonb</type> type for different procedural languages.
+  </para>
+
+  <para>
+   The extensions for PL/Perl are called <literal>jsonb_plperl</literal> and
+   <literal>jsonb_plperlu</literal>.  If you use them, <type>jsonb</type>
+   values are mapped to Perl arrays, hashes, and scalars, as appropriate.
+  </para>
+
+  <para>
+   The extensions for PL/Python are called <literal>jsonb_plpythonu</literal>,
    <literal>jsonb_plpython2u</literal>, and
    <literal>jsonb_plpython3u</literal> (see <xref
    linkend="plpython-python23"/> for the PL/Python naming convention).  If you

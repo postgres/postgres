@@ -1,0 +1,6 @@
+# jsonb_plperl extension
+comment = 'transform between jsonb and plperl'
+default_version = '1.0'
+module_pathname = '$libdir/jsonb_plperl'
+relocatable = true
+requires = 'plperl'
