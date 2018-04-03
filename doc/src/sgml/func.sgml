@@ -2277,6 +2277,21 @@
       <row>
        <entry>
         <indexterm>
+         <primary>starts_with</primary>
+        </indexterm>
+        <literal><function>starts_with(<parameter>string</parameter>, <parameter>prefix</parameter>)</function></literal>
+       </entry>
+       <entry><type>bool</type></entry>
+       <entry>
+        Returns true if <parameter>string</parameter> starts with <parameter>prefix</parameter>.
+       </entry>
+       <entry><literal>starts_with('alphabet', 'alph')</literal></entry>
+       <entry><literal>t</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>to_ascii</primary>
         </indexterm>
         <literal><function>to_ascii(<parameter>string</parameter> <type>text</type>
@@ -4032,6 +4047,12 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     represent <function>NOT LIKE</function> and <function>NOT
     ILIKE</function>, respectively.  All of these operators are
     <productname>PostgreSQL</productname>-specific.
+   </para>
+
+   <para>
+    There is also the prefix operator <literal>^@</literal> and corresponding
+    <function>starts_with</function> function which covers cases when only
+    searching by beginning of the string is needed.
    </para>
   </sect2>
 

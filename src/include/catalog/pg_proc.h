@@ -209,6 +209,7 @@ DATA(insert OID =  64 (  int2lt			   PGNSP PGUID 12 1 0 0 0 f f t t f i s 2 0 16
 DATA(insert OID =  65 (  int4eq			   PGNSP PGUID 12 1 0 0 0 f f t t f i s 2 0 16 "23 23" _null_ _null_ _null_ _null_ _null_ int4eq _null_ _null_ _null_ ));
 DATA(insert OID =  66 (  int4lt			   PGNSP PGUID 12 1 0 0 0 f f t t f i s 2 0 16 "23 23" _null_ _null_ _null_ _null_ _null_ int4lt _null_ _null_ _null_ ));
 DATA(insert OID =  67 (  texteq			   PGNSP PGUID 12 1 0 0 0 f f t t f i s 2 0 16 "25 25" _null_ _null_ _null_ _null_ _null_ texteq _null_ _null_ _null_ ));
+DATA(insert OID =  3696 ( starts_with	   PGNSP PGUID 12 1 0 0 0 f f t t f i s 2 0 16 "25 25" _null_ _null_ _null_ _null_ _null_ text_starts_with _null_ _null_ _null_ ));
 DATA(insert OID =  68 (  xideq			   PGNSP PGUID 12 1 0 0 0 f f t t f i s 2 0 16 "28 28" _null_ _null_ _null_ _null_ _null_ xideq _null_ _null_ _null_ ));
 DATA(insert OID = 3308 (  xidneq		   PGNSP PGUID 12 1 0 0 0 f f t t f i s 2 0 16 "28 28" _null_ _null_ _null_ _null_ _null_ xidneq _null_ _null_ _null_ ));
 DATA(insert OID =  69 (  cideq			   PGNSP PGUID 12 1 0 0 0 f f t t f i s 2 0 16 "29 29" _null_ _null_ _null_ _null_ _null_ cideq _null_ _null_ _null_ ));
@@ -2584,6 +2585,10 @@ DATA(insert OID = 1828 ( nlikejoinsel		PGNSP PGUID 12 1 0 0 0 f f f t f s s 5 0 
 DESCR("join selectivity of NOT LIKE");
 DATA(insert OID = 1829 ( icregexnejoinsel	PGNSP PGUID 12 1 0 0 0 f f f t f s s 5 0 701 "2281 26 2281 21 2281" _null_ _null_ _null_ _null_  _null_ icregexnejoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of case-insensitive regex non-match");
+DATA(insert OID = 3437 ( prefixsel			PGNSP PGUID 12 1 0 0 0 f f f t f s s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_ _null_ prefixsel _null_ _null_ _null_ ));
+DESCR("restriction selectivity of exact prefix");
+DATA(insert OID = 3438 ( prefixjoinsel		PGNSP PGUID 12 1 0 0 0 f f f t f s s 5 0 701 "2281 26 2281 21 2281" _null_ _null_ _null_ _null_  _null_ prefixjoinsel _null_ _null_ _null_ ));
+DESCR("join selectivity of exact prefix");
 
 /* Aggregate-related functions */
 DATA(insert OID = 1830 (  float8_avg	   PGNSP PGUID 12 1 0 0 0 f f f t f i s 1 0 701 "1022" _null_ _null_ _null_ _null_ _null_ float8_avg _null_ _null_ _null_ ));

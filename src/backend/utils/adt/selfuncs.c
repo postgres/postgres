@@ -1488,6 +1488,16 @@ likesel(PG_FUNCTION_ARGS)
 }
 
 /*
+ *		prefixsel			- selectivity of prefix operator
+ */
+Datum
+prefixsel(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Prefix, false));
+}
+
+/*
+ *
  *		iclikesel			- Selectivity of ILIKE pattern match.
  */
 Datum
@@ -2904,6 +2914,15 @@ Datum
 likejoinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Like, false));
+}
+
+/*
+ *		prefixjoinsel			- Join selectivity of prefix operator
+ */
+Datum
+prefixjoinsel(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_FLOAT8(patternjoinsel(fcinfo, Pattern_Type_Prefix, false));
 }
 
 /*
@@ -5946,6 +5965,20 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
 		case Pattern_Type_Regex_IC:
 			result = regex_fixed_prefix(patt, true, collation,
 										prefix, rest_selec);
+			break;
+		case Pattern_Type_Prefix:
+			/* Prefix type work is trivial.  */
+			result = Pattern_Prefix_Partial;
+			*rest_selec = 1.0;	/* all */
+			*prefix = makeConst(patt->consttype,
+								patt->consttypmod,
+								patt->constcollid,
+								patt->constlen,
+								datumCopy(patt->constvalue,
+										  patt->constbyval,
+										  patt->constlen),
+								patt->constisnull,
+								patt->constbyval);
 			break;
 		default:
 			elog(ERROR, "unrecognized ptype: %d", (int) ptype);

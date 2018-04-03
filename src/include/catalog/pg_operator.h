@@ -134,6 +134,8 @@ DESCR("less than");
 DATA(insert OID =  98 ( "="		   PGNSP PGUID b t t	25	25	16	98 531 texteq eqsel eqjoinsel ));
 DESCR("equal");
 #define TextEqualOperator	98
+DATA(insert OID =  3877 ( "^@"	   PGNSP PGUID b f f	25	25	16	0 0 starts_with prefixsel prefixjoinsel ));
+DESCR("starts with");
 
 DATA(insert OID = 349 (  "||"	   PGNSP PGUID b f f 2277 2283 2277 0 0 array_append   -	   -	 ));
 DESCR("append element onto end of array");

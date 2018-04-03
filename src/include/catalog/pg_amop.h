@@ -799,6 +799,7 @@ DATA(insert (	4017   25 25 11 s	664 4000 0 ));
 DATA(insert (	4017   25 25 12 s	665 4000 0 ));
 DATA(insert (	4017   25 25 14 s	667 4000 0 ));
 DATA(insert (	4017   25 25 15 s	666 4000 0 ));
+DATA(insert (	4017   25 25 28 s	3877 4000 0 ));
 
 /*
  * btree jsonb_ops

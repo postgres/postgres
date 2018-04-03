@@ -87,8 +87,11 @@ typedef struct VariableStatData
 
 typedef enum
 {
-	Pattern_Type_Like, Pattern_Type_Like_IC,
-	Pattern_Type_Regex, Pattern_Type_Regex_IC
+	Pattern_Type_Like,
+	Pattern_Type_Like_IC,
+	Pattern_Type_Regex,
+	Pattern_Type_Regex_IC,
+	Pattern_Type_Prefix
 } Pattern_Type;
 
 typedef enum

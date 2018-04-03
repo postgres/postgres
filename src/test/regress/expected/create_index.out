@@ -372,6 +372,12 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         
     48
 (1 row)
 
+SELECT count(*) FROM radix_text_tbl WHERE t ^@  'Worth';
+ count 
+-------
+     2
+(1 row)
+
 SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
                        f1                        
 -------------------------------------------------
@@ -1183,6 +1189,21 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
+SELECT count(*) FROM radix_text_tbl WHERE t ^@	 'Worth';
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
+         Index Cond: (t ^@ 'Worth'::text)
+(3 rows)
+
+SELECT count(*) FROM radix_text_tbl WHERE t ^@	 'Worth';
+ count 
+-------
+     2
+(1 row)
+
+EXPLAIN (COSTS OFF)
 SELECT * FROM gpolygon_tbl ORDER BY f1 <-> '(0,0)'::point LIMIT 10;
                      QUERY PLAN                      
 -----------------------------------------------------
@@ -1761,6 +1782,23 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         
  count 
 -------
     48
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM radix_text_tbl WHERE t ^@	 'Worth';
+                   QUERY PLAN                   
+------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on radix_text_tbl
+         Recheck Cond: (t ^@ 'Worth'::text)
+         ->  Bitmap Index Scan on sp_radix_ind
+               Index Cond: (t ^@ 'Worth'::text)
+(5 rows)
+
+SELECT count(*) FROM radix_text_tbl WHERE t ^@	 'Worth';
+ count 
+-------
+     2
 (1 row)
 
 RESET enable_seqscan;

@@ -67,6 +67,20 @@
  */
 #define SPGIST_MAX_PREFIX_LENGTH	Max((int) (BLCKSZ - 258 * 16 - 100), 32)
 
+/*
+ * Strategy for collation aware operator on text is equal to btree strategy
+ * plus value of 10.
+ *
+ * Current collation aware strategies and their corresponding btree strategies:
+ * 11 BTLessStrategyNumber
+ * 12 BTLessEqualStrategyNumber
+ * 14 BTGreaterEqualStrategyNumber
+ * 15 BTGreaterStrategyNumber
+ */
+#define SPG_STRATEGY_ADDITION	(10)
+#define SPG_IS_COLLATION_AWARE_STRATEGY(s) ((s) > SPG_STRATEGY_ADDITION \
+										 && (s) != RTPrefixStrategyNumber)
+
 /* Struct for sorting values in picksplit */
 typedef struct spgNodePtr
 {
@@ -496,10 +510,10 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 			 * well end with a partial multibyte character, so that applying
 			 * any encoding-sensitive test to it would be risky anyhow.)
 			 */
-			if (strategy > 10)
+			if (SPG_IS_COLLATION_AWARE_STRATEGY(strategy))
 			{
 				if (collate_is_c)
-					strategy -= 10;
+					strategy -= SPG_STRATEGY_ADDITION;
 				else
 					continue;
 			}
@@ -524,6 +538,10 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 				case BTGreaterEqualStrategyNumber:
 				case BTGreaterStrategyNumber:
 					if (r < 0)
+						res = false;
+					break;
+				case RTPrefixStrategyNumber:
+					if (r != 0)
 						res = false;
 					break;
 				default:
@@ -605,10 +623,27 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 		int			queryLen = VARSIZE_ANY_EXHDR(query);
 		int			r;
 
-		if (strategy > 10)
+		if (strategy == RTPrefixStrategyNumber)
+		{
+			/*
+			 * if level >= length of query then reconstrValue is began with
+			 * query (prefix) string and we don't need to check it again.
+			 */
+
+			res = (level >= queryLen) ||
+					DatumGetBool(DirectFunctionCall2(text_starts_with,
+								 out->leafValue, PointerGetDatum(query)));
+
+			if (!res) /* no need to consider remaining conditions */
+				break;
+
+			continue;
+		}
+
+		if (SPG_IS_COLLATION_AWARE_STRATEGY(strategy))
 		{
 			/* Collation-aware comparison */
-			strategy -= 10;
+			strategy -= SPG_STRATEGY_ADDITION;
 
 			/* If asserts enabled, verify encoding of reconstructed string */
 			Assert(pg_verifymbstr(fullValue, fullLen, false));

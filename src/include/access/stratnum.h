@@ -68,8 +68,9 @@ typedef uint16 StrategyNumber;
 #define RTSubEqualStrategyNumber		25	/* for inet <<= */
 #define RTSuperStrategyNumber			26	/* for inet << */
 #define RTSuperEqualStrategyNumber		27	/* for inet >>= */
+#define RTPrefixStrategyNumber			28	/* for text ^@ */
 
-#define RTMaxStrategyNumber				27
+#define RTMaxStrategyNumber				28
 
 
 #endif							/* STRATNUM_H */

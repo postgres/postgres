@@ -718,6 +718,7 @@ sha224(bytea)
 sha256(bytea)
 sha384(bytea)
 sha512(bytea)
+starts_with(text,text)
 macaddr8_eq(macaddr8,macaddr8)
 macaddr8_lt(macaddr8,macaddr8)
 macaddr8_le(macaddr8,macaddr8)
@@ -1887,7 +1888,8 @@ ORDER BY 1, 2, 3;
        4000 |           25 | <<=
        4000 |           26 | >>
        4000 |           27 | >>=
-(121 rows)
+       4000 |           28 | ^@
+(122 rows)
 
 -- Check that all opclass search operators have selectivity estimators.
 -- This is not absolutely required, but it seems a reasonable thing

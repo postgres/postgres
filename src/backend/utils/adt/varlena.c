@@ -1762,6 +1762,34 @@ text_ge(PG_FUNCTION_ARGS)
 }
 
 Datum
+text_starts_with(PG_FUNCTION_ARGS)
+{
+	Datum		arg1 = PG_GETARG_DATUM(0);
+	Datum		arg2 = PG_GETARG_DATUM(1);
+	bool		result;
+	Size		len1,
+				len2;
+
+	len1 = toast_raw_datum_size(arg1);
+	len2 = toast_raw_datum_size(arg2);
+	if (len2 > len1)
+		result = false;
+	else
+	{
+		text	   *targ1 = DatumGetTextPP(arg1);
+		text	   *targ2 = DatumGetTextPP(arg2);
+
+		result = (memcmp(VARDATA_ANY(targ1), VARDATA_ANY(targ2),
+						 VARSIZE_ANY_EXHDR(targ2)) == 0);
+
+		PG_FREE_IF_COPY(targ1, 0);
+		PG_FREE_IF_COPY(targ2, 1);
+	}
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
 bttextcmp(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
