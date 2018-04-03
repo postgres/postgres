@@ -53,23 +53,34 @@ typedef enum LockTupleMode
  * When heap_update, heap_delete, or heap_lock_tuple fail because the target
  * tuple is already outdated, they fill in this struct to provide information
  * to the caller about what happened.
+ *
+ * result is the result of HeapTupleSatisfiesUpdate, leading to the failure.
+ * It's set to HeapTupleMayBeUpdated when there is no failure.
+ *
  * ctid is the target's ctid link: it is the same as the target's TID if the
  * target was deleted, or the location of the replacement tuple if the target
  * was updated.
+ *
  * xmax is the outdating transaction's XID.  If the caller wants to visit the
  * replacement tuple, it must check that this matches before believing the
  * replacement is really a match.
+ *
  * cmax is the outdating command's CID, but only when the failure code is
  * HeapTupleSelfUpdated (i.e., something in the current transaction outdated
  * the tuple); otherwise cmax is zero.  (We make this restriction because
  * HeapTupleHeaderGetCmax doesn't work for tuples outdated in other
  * transactions.)
+ *
+ * lockmode is only relevant for callers of heap_update() and is the mode which
+ * the caller should use in case it needs to lock the updated tuple.
  */
 typedef struct HeapUpdateFailureData
 {
+	HTSU_Result result;
 	ItemPointerData ctid;
 	TransactionId xmax;
 	CommandId	cmax;
+	LockTupleMode	lockmode;
 } HeapUpdateFailureData;
 
 
@@ -162,7 +173,7 @@ extern void heap_abort_speculative(Relation relation, HeapTuple tuple);
 extern HTSU_Result heap_update(Relation relation, ItemPointer otid,
 			HeapTuple newtup,
 			CommandId cid, Snapshot crosscheck, bool wait,
-			HeapUpdateFailureData *hufd, LockTupleMode *lockmode);
+			HeapUpdateFailureData *hufd);
 extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 				CommandId cid, LockTupleMode mode, LockWaitPolicy wait_policy,
 				bool follow_update,

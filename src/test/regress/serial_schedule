@@ -123,6 +123,7 @@ test: tablesample
 test: groupingsets
 test: drop_operator
 test: password
+test: merge
 test: alter_generic
 test: alter_operator
 test: misc

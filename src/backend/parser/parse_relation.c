@@ -728,6 +728,16 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, const char *colname,
 							colname),
 					 parser_errposition(pstate, location)));
 
+		/* In MERGE WHEN AND condition, no system column is allowed except tableOid or OID */
+		if (pstate->p_expr_kind == EXPR_KIND_MERGE_WHEN_AND &&
+			attnum < InvalidAttrNumber &&
+			!(attnum == TableOidAttributeNumber || attnum == ObjectIdAttributeNumber))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("system column \"%s\" reference in WHEN AND condition is invalid",
+							colname),
+					 parser_errposition(pstate, location)));
+
 		if (attnum != InvalidAttrNumber)
 		{
 			/* now check to see if column actually is defined */

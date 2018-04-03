@@ -2420,6 +2420,9 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 			else
 				res = SPI_OK_UPDATE;
 			break;
+		case CMD_MERGE:
+			res = SPI_OK_MERGE;
+			break;
 		default:
 			return SPI_ERROR_OPUNKNOWN;
 	}

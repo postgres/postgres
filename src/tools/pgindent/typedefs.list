@@ -1228,6 +1228,8 @@ MemoryContextCallbackFunction
 MemoryContextCounters
 MemoryContextData
 MemoryContextMethods
+MergeAction
+MergeActionState
 MergeAppend
 MergeAppendPath
 MergeAppendState
@@ -1235,6 +1237,7 @@ MergeJoin
 MergeJoinClause
 MergeJoinState
 MergePath
+MergeStmt
 MergeScanSelCache
 MetaCommand
 MinMaxAggInfo

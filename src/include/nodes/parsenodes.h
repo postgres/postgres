@@ -38,7 +38,7 @@ typedef enum OverridingKind
 typedef enum QuerySource
 {
 	QSRC_ORIGINAL,				/* original parsetree (explicit query) */
-	QSRC_PARSER,				/* added by parse analysis (now unused) */
+	QSRC_PARSER,				/* added by parse analysis in MERGE */
 	QSRC_INSTEAD_RULE,			/* added by unconditional INSTEAD rule */
 	QSRC_QUAL_INSTEAD_RULE,		/* added by conditional INSTEAD rule */
 	QSRC_NON_INSTEAD_RULE		/* added by non-INSTEAD rule */
@@ -107,7 +107,7 @@ typedef struct Query
 {
 	NodeTag		type;
 
-	CmdType		commandType;	/* select|insert|update|delete|utility */
+	CmdType		commandType;	/* select|insert|update|delete|merge|utility */
 
 	QuerySource querySource;	/* where did I come from? */
 
@@ -118,7 +118,7 @@ typedef struct Query
 	Node	   *utilityStmt;	/* non-null if commandType == CMD_UTILITY */
 
 	int			resultRelation; /* rtable index of target relation for
-								 * INSERT/UPDATE/DELETE; 0 for SELECT */
+								 * INSERT/UPDATE/DELETE/MERGE; 0 for SELECT */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasWindowFuncs; /* has window functions in tlist */
@@ -169,6 +169,9 @@ typedef struct Query
 	List	   *withCheckOptions;	/* a list of WithCheckOption's, which are
 									 * only added during rewrite and therefore
 									 * are not written out as part of Query. */
+	int			mergeTarget_relation;
+	List	   *mergeSourceTargetList;
+	List	   *mergeActionList;	/* list of actions for MERGE (only) */
 
 	/*
 	 * The following two fields identify the portion of the source text string
@@ -1128,7 +1131,9 @@ typedef enum WCOKind
 	WCO_VIEW_CHECK,				/* WCO on an auto-updatable view */
 	WCO_RLS_INSERT_CHECK,		/* RLS INSERT WITH CHECK policy */
 	WCO_RLS_UPDATE_CHECK,		/* RLS UPDATE WITH CHECK policy */
-	WCO_RLS_CONFLICT_CHECK		/* RLS ON CONFLICT DO UPDATE USING policy */
+	WCO_RLS_CONFLICT_CHECK,		/* RLS ON CONFLICT DO UPDATE USING policy */
+	WCO_RLS_MERGE_UPDATE_CHECK, /* RLS MERGE UPDATE USING policy */
+	WCO_RLS_MERGE_DELETE_CHECK	/* RLS MERGE DELETE USING policy */
 } WCOKind;
 
 typedef struct WithCheckOption
@@ -1502,6 +1507,30 @@ typedef struct UpdateStmt
 	List	   *returningList;	/* list of expressions to return */
 	WithClause *withClause;		/* WITH clause */
 } UpdateStmt;
+
+/* ----------------------
+ *		Merge Statement
+ * ----------------------
+ */
+typedef struct MergeStmt
+{
+	NodeTag		type;
+	RangeVar   *relation;			/* target relation to merge into */
+	Node	   *source_relation;	/* source relation */
+	Node	   *join_condition; /* join condition between source and target */
+	List	   *mergeActionList;	/* list of MergeAction(s) */
+} MergeStmt;
+
+typedef struct MergeAction
+{
+	NodeTag		type;
+	bool		matched;		/* true=MATCHED, false=NOT MATCHED */
+	Node	   *condition;		/* WHEN AND conditions (raw parser) */
+	Node	   *qual;			/* transformed WHEN AND conditions */
+	CmdType		commandType;	/* INSERT/UPDATE/DELETE/DO NOTHING */
+	Node	   *stmt;			/* T_UpdateStmt etc */
+	List	   *targetList;		/* the target list (of ResTarget) */
+} MergeAction;
 
 /* ----------------------
  *		Select Statement

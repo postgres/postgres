@@ -114,6 +114,7 @@ extern int ExecFindPartition(ResultRelInfo *resultRelInfo,
 				  PartitionDispatch *pd,
 				  TupleTableSlot *slot,
 				  EState *estate);
+extern int ExecFindPartitionByOid(PartitionTupleRouting *proute, Oid partoid);
 extern ResultRelInfo *ExecInitPartitionInfo(ModifyTableState *mtstate,
 					ResultRelInfo *resultRelInfo,
 					PartitionTupleRouting *proute,

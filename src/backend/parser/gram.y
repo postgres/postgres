@@ -282,6 +282,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		CreateMatViewStmt RefreshMatViewStmt CreateAmStmt
 		CreatePublicationStmt AlterPublicationStmt
 		CreateSubscriptionStmt AlterSubscriptionStmt DropSubscriptionStmt
+		MergeStmt
 
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select values_clause
@@ -584,6 +585,10 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>		hash_partbound partbound_datum_list range_datum_list
 %type <defelt>		hash_partbound_elem
 
+%type <node>	merge_when_clause opt_and_condition
+%type <list>	merge_when_list
+%type <node>	merge_update merge_delete merge_insert
+
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
  * They must be listed first so that their numeric codes do not depend on
@@ -651,7 +656,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	LEADING LEAKPROOF LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL
 	LOCALTIME LOCALTIMESTAMP LOCATION LOCK_P LOCKED LOGGED
 
-	MAPPING MATCH MATERIALIZED MAXVALUE METHOD MINUTE_P MINVALUE MODE MONTH_P MOVE
+	MAPPING MATCH MATCHED MATERIALIZED MAXVALUE MERGE METHOD
+	MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NONE
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
@@ -920,6 +926,7 @@ stmt :
 			| RefreshMatViewStmt
 			| LoadStmt
 			| LockStmt
+			| MergeStmt
 			| NotifyStmt
 			| PrepareStmt
 			| ReassignOwnedStmt
@@ -10660,6 +10667,7 @@ ExplainableStmt:
 			| InsertStmt
 			| UpdateStmt
 			| DeleteStmt
+			| MergeStmt
 			| DeclareCursorStmt
 			| CreateAsStmt
 			| CreateMatViewStmt
@@ -10722,6 +10730,7 @@ PreparableStmt:
 			| InsertStmt
 			| UpdateStmt
 			| DeleteStmt					/* by default all are $$=$1 */
+			| MergeStmt
 		;
 
 /*****************************************************************************
@@ -11087,6 +11096,151 @@ set_target_list:
 			| set_target_list ',' set_target		{ $$ = lappend($1,$3); }
 		;
 
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				MERGE STATEMENTS
+ *
+ *****************************************************************************/
+
+MergeStmt:
+			MERGE INTO relation_expr_opt_alias
+			USING table_ref
+			ON a_expr
+			merge_when_list
+				{
+					MergeStmt *m = makeNode(MergeStmt);
+
+					m->relation = $3;
+					m->source_relation = $5;
+					m->join_condition = $7;
+					m->mergeActionList = $8;
+
+					$$ = (Node *)m;
+				}
+			;
+
+
+merge_when_list:
+			merge_when_clause						{ $$ = list_make1($1); }
+			| merge_when_list merge_when_clause		{ $$ = lappend($1,$2); }
+			;
+
+merge_when_clause:
+			WHEN MATCHED opt_and_condition THEN merge_update
+				{
+					MergeAction *m = makeNode(MergeAction);
+
+					m->matched = true;
+					m->commandType = CMD_UPDATE;
+					m->condition = $3;
+					m->stmt = $5;
+
+					$$ = (Node *)m;
+				}
+			| WHEN MATCHED opt_and_condition THEN merge_delete
+				{
+					MergeAction *m = makeNode(MergeAction);
+
+					m->matched = true;
+					m->commandType = CMD_DELETE;
+					m->condition = $3;
+					m->stmt = $5;
+
+					$$ = (Node *)m;
+				}
+			| WHEN NOT MATCHED opt_and_condition THEN merge_insert
+				{
+					MergeAction *m = makeNode(MergeAction);
+
+					m->matched = false;
+					m->commandType = CMD_INSERT;
+					m->condition = $4;
+					m->stmt = $6;
+
+					$$ = (Node *)m;
+				}
+			| WHEN NOT MATCHED opt_and_condition THEN DO NOTHING
+				{
+					MergeAction *m = makeNode(MergeAction);
+
+					m->matched = false;
+					m->commandType = CMD_NOTHING;
+					m->condition = $4;
+					m->stmt = NULL;
+
+					$$ = (Node *)m;
+				}
+			;
+
+opt_and_condition:
+			AND a_expr 				{ $$ = $2; }
+			| 			 			{ $$ = NULL; }
+			;
+
+merge_delete:
+			DELETE_P
+				{
+					DeleteStmt *n = makeNode(DeleteStmt);
+					$$ = (Node *)n;
+				}
+			;
+
+merge_update:
+			UPDATE SET set_clause_list
+				{
+					UpdateStmt *n = makeNode(UpdateStmt);
+					n->targetList = $3;
+
+					$$ = (Node *)n;
+				}
+			;
+
+merge_insert:
+			INSERT values_clause
+				{
+					InsertStmt *n = makeNode(InsertStmt);
+					n->cols = NIL;
+					n->selectStmt = $2;
+
+					$$ = (Node *)n;
+				}
+			| INSERT OVERRIDING override_kind VALUE_P values_clause
+				{
+					InsertStmt *n = makeNode(InsertStmt);
+					n->cols = NIL;
+					n->override = $3;
+					n->selectStmt = $5;
+
+					$$ = (Node *)n;
+				}
+			| INSERT '(' insert_column_list ')' values_clause
+				{
+					InsertStmt *n = makeNode(InsertStmt);
+					n->cols = $3;
+					n->selectStmt = $5;
+
+					$$ = (Node *)n;
+				}
+			| INSERT '(' insert_column_list ')' OVERRIDING override_kind VALUE_P values_clause
+				{
+					InsertStmt *n = makeNode(InsertStmt);
+					n->cols = $3;
+					n->override = $6;
+					n->selectStmt = $8;
+
+					$$ = (Node *)n;
+				}
+			| INSERT DEFAULT VALUES
+				{
+					InsertStmt *n = makeNode(InsertStmt);
+					n->cols = NIL;
+					n->selectStmt = NULL;
+
+					$$ = (Node *)n;
+				}
+			;
 
 /*****************************************************************************
  *
@@ -15088,8 +15242,10 @@ unreserved_keyword:
 			| LOGGED
 			| MAPPING
 			| MATCH
+			| MATCHED
 			| MATERIALIZED
 			| MAXVALUE
+			| MERGE
 			| METHOD
 			| MINUTE_P
 			| MINVALUE
