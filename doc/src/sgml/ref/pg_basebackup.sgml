@@ -507,6 +507,22 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-k</option></term>
+      <term><option>--no-verify-checksums</option></term>
+      <listitem>
+       <para>
+        Disables verification of checksums, if they are enabled on the server
+        the base backup is taken from. 
+       </para>
+       <para>
+        By default, checksums are verified and checksum failures will result in
+        a non-zero exit status. However, the base backup will not be removed in
+        this case, as if the <literal>--no-clean</literal> option was used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-v</option></term>
       <term><option>--verbose</option></term>
       <listitem>

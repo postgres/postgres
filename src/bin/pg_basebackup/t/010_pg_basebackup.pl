@@ -5,7 +5,7 @@ use Config;
 use File::Basename qw(basename dirname);
 use PostgresNode;
 use TestLib;
-use Test::More tests => 93;
+use Test::More tests => 104;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -16,7 +16,7 @@ my $tempdir = TestLib::tempdir;
 my $node = get_new_node('main');
 
 # Initialize node without replication settings
-$node->init;
+$node->init(extra => [ '--data-checksums' ]);
 $node->start;
 my $pgdata = $node->data_dir;
 
@@ -402,3 +402,61 @@ like(
 	slurp_file("$tempdir/backupxs_sl_R/recovery.conf"),
 	qr/^primary_slot_name = 'slot1'\n/m,
 	'recovery.conf sets primary_slot_name');
+
+my $checksum = $node->safe_psql('postgres', 'SHOW data_checksums;');
+is($checksum, 'on', 'checksums are enabled');
+
+# get relfilenodes of relations to corrupt
+my $pg_class = $node->safe_psql('postgres',
+	q{SELECT pg_relation_filepath('pg_class')}
+);
+my $pg_index = $node->safe_psql('postgres',
+	q{SELECT pg_relation_filepath('pg_index')}
+);
+
+# induce corruption
+open $file, '+<', "$pgdata/$pg_class";
+seek($file, 4000, 0);
+syswrite($file, '\0\0\0\0\0\0\0\0\0');
+close $file;
+
+$node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt"],
+	1,
+	[qr{^$}],
+	[qr/^WARNING.*checksum verification failed/s],
+	'pg_basebackup reports checksum mismatch'
+);
+
+# induce further corruption in 5 more blocks
+open $file, '+<', "$pgdata/$pg_class";
+my @offsets = (12192, 20384, 28576, 36768, 44960);
+foreach my $offset (@offsets) {
+  seek($file, $offset, 0);
+  syswrite($file, '\0\0\0\0\0\0\0\0\0');
+}
+close $file;
+
+$node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt2"],
+        1,
+        [qr{^$}],
+        [qr/^WARNING.*further.*failures.*will.not.be.reported/s],
+        'pg_basebackup does not report more than 5 checksum mismatches'
+);
+
+# induce corruption in a second file
+open $file, '+<', "$pgdata/$pg_index";
+seek($file, 4000, 0);
+syswrite($file, '\0\0\0\0\0\0\0\0\0');
+close $file;
+
+$node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt3"],
+        1,
+        [qr{^$}],
+        [qr/^WARNING.*7 total checksum verification failures/s],
+        'pg_basebackup correctly report the total number of checksum mismatches'
+);
+
+# do not verify checksums, should return ok
+$node->command_ok(
+	[   'pg_basebackup', '-D', "$tempdir/backup_corrupt4", '-k' ],
+	'pg_basebackup with -k does not report checksum mismatch');

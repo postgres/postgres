@@ -31,6 +31,8 @@
 #include "replication/basebackup.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
+#include "storage/bufpage.h"
+#include "storage/checksum.h"
 #include "storage/dsm_impl.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -70,6 +72,7 @@ static void parse_basebackup_options(List *options, basebackup_options *opt);
 static void SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli);
 static int	compareWalFileNames(const void *a, const void *b);
 static void throttle(size_t increment);
+static bool is_checksummed_file(const char *fullpath, const char *filename);
 
 /* Was the backup currently in-progress initiated in recovery mode? */
 static bool backup_started_in_recovery = false;
@@ -98,6 +101,15 @@ static TimeOffset elapsed_min_unit;
 
 /* The last check of the transfer rate. */
 static TimestampTz throttled_last;
+
+/* The starting XLOG position of the base backup. */
+static XLogRecPtr startptr;
+
+/* Total number of checksum failures during base backup. */
+static int64 total_checksum_failures;
+
+/* Do not verify checksums. */
+static bool noverify_checksums = false;
 
 /*
  * The contents of these directories are removed or recreated during server
@@ -176,6 +188,18 @@ static const char *excludeFiles[] =
 };
 
 /*
+ * List of files excluded from checksum validation.
+ */
+static const char *noChecksumFiles[] = {
+	"pg_control",
+	"pg_filenode.map",
+	"pg_internal.init",
+	"PG_VERSION",
+	NULL,
+};
+
+
+/*
  * Called when ERROR or FATAL happens in perform_base_backup() after
  * we have started the backup - make sure we end it!
  */
@@ -194,7 +218,6 @@ base_backup_cleanup(int code, Datum arg)
 static void
 perform_base_backup(basebackup_options *opt)
 {
-	XLogRecPtr	startptr;
 	TimeLineID	starttli;
 	XLogRecPtr	endptr;
 	TimeLineID	endtli;
@@ -209,6 +232,8 @@ perform_base_backup(basebackup_options *opt)
 
 	labelfile = makeStringInfo();
 	tblspc_map_file = makeStringInfo();
+
+	total_checksum_failures = 0;
 
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
 								  labelfile, &tablespaces,
@@ -568,6 +593,17 @@ perform_base_backup(basebackup_options *opt)
 		pq_putemptymessage('c');
 	}
 	SendXlogRecPtrResult(endptr, endtli);
+
+	if (total_checksum_failures)
+	{
+		if (total_checksum_failures > 1)
+			ereport(WARNING,
+					(errmsg("%ld total checksum verification failures", total_checksum_failures)));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("checksum verification failure during base backup")));
+	}
+
 }
 
 /*
@@ -597,6 +633,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	bool		o_wal = false;
 	bool		o_maxrate = false;
 	bool		o_tablespace_map = false;
+	bool		o_noverify_checksums = false;
 
 	MemSet(opt, 0, sizeof(*opt));
 	foreach(lopt, options)
@@ -675,6 +712,15 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 						 errmsg("duplicate option \"%s\"", defel->defname)));
 			opt->sendtblspcmapfile = true;
 			o_tablespace_map = true;
+		}
+		else if (strcmp(defel->defname, "noverify_checksums") == 0)
+		{
+			if (o_noverify_checksums)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("duplicate option \"%s\"", defel->defname)));
+			noverify_checksums = true;
+			o_noverify_checksums = true;
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -1257,6 +1303,33 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 	return size;
 }
 
+/*
+ * Check if a file should have its checksum validated.
+ * We validate checksums on files in regular tablespaces
+ * (including global and default) only, and in those there
+ * are some files that are explicitly excluded.
+ */
+static bool
+is_checksummed_file(const char *fullpath, const char *filename)
+{
+	const char **f;
+
+	/* Check that the file is in a tablespace */
+	if (strncmp(fullpath, "./global/", 9) == 0 ||
+		strncmp(fullpath, "./base/", 7) == 0 ||
+		strncmp(fullpath, "/", 1) == 0)
+	{
+		/* Compare file against noChecksumFiles skiplist */
+		for (f = noChecksumFiles; *f; f++)
+			if (strcmp(*f, filename) == 0)
+				return false;
+
+		return true;
+	}
+	else
+		return false;
+}
+
 /*****
  * Functions for handling tar file format
  *
@@ -1277,10 +1350,20 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 		 bool missing_ok)
 {
 	FILE	   *fp;
+	BlockNumber blkno = 0;
+	bool		block_retry = false;
 	char		buf[TAR_SEND_SIZE];
+	uint16		checksum;
+	int			checksum_failures = 0;
 	size_t		cnt;
+	int			i;
 	pgoff_t		len = 0;
+	char	   *page;
 	size_t		pad;
+	PageHeader	phdr;
+	int			segmentno = 0;
+	char	   *segmentpath;
+	bool		verify_checksum = false;
 
 	fp = AllocateFile(readfilename, "rb");
 	if (fp == NULL)
@@ -1294,8 +1377,142 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 
 	_tarWriteHeader(tarfilename, NULL, statbuf, false);
 
+	if (!noverify_checksums && DataChecksumsEnabled())
+	{
+		char	   *filename;
+
+		/*
+		 * Get the filename (excluding path).  As last_dir_separator()
+		 * includes the last directory separator, we chop that off by
+		 * incrementing the pointer.
+		 */
+		filename = last_dir_separator(readfilename) + 1;
+
+		if (is_checksummed_file(readfilename, filename))
+		{
+			verify_checksum = true;
+
+			/*
+			 * Cut off at the segment boundary (".") to get the segment number
+			 * in order to mix it into the checksum.
+			 */
+			segmentpath = strstr(filename, ".");
+			if (segmentpath != NULL)
+			{
+				segmentno = atoi(segmentpath + 1);
+				if (segmentno == 0)
+					ereport(ERROR,
+							(errmsg("invalid segment number %d in file \"%s\"",
+									segmentno, filename)));
+			}
+		}
+	}
+
 	while ((cnt = fread(buf, 1, Min(sizeof(buf), statbuf->st_size - len), fp)) > 0)
 	{
+		if (verify_checksum)
+		{
+			/*
+			 * The checksums are verified at block level, so we iterate over
+			 * the buffer in chunks of BLCKSZ, after making sure that
+			 * TAR_SEND_SIZE/buf is divisible by BLCKSZ and we read a multiple
+			 * of BLCKSZ bytes.
+			 */
+			Assert(TAR_SEND_SIZE % BLCKSZ == 0);
+
+			if (cnt % BLCKSZ != 0)
+			{
+				ereport(WARNING,
+						(errmsg("cannot verify checksum in file \"%s\", block "
+								"%d: read buffer size %d and page size %d "
+								"differ",
+								readfilename, blkno, (int) cnt, BLCKSZ)));
+				verify_checksum = false;
+				continue;
+			}
+			for (i = 0; i < cnt / BLCKSZ; i++)
+			{
+				page = buf + BLCKSZ * i;
+
+				/*
+				 * Only check pages which have not been modified since the
+				 * start of the base backup. Otherwise, they might have been
+				 * written only halfway and the checksum would not be valid.
+				 * However, replaying WAL would reinstate the correct page in
+				 * this case.
+				 */
+				if (PageGetLSN(page) < startptr)
+				{
+					checksum = pg_checksum_page((char *) page, blkno + segmentno * RELSEG_SIZE);
+					phdr = (PageHeader) page;
+					if (phdr->pd_checksum != checksum)
+					{
+						/*
+						 * Retry the block on the first failure.  It's
+						 * possible that we read the first 4K page of the
+						 * block just before postgres updated the entire block
+						 * so it ends up looking torn to us.  We only need to
+						 * retry once because the LSN should be updated to
+						 * something we can ignore on the next pass.  If the
+						 * error happens again then it is a true validation
+						 * failure.
+						 */
+						if (block_retry == false)
+						{
+							/* Reread the failed block */
+							if (fseek(fp, -(cnt - BLCKSZ * i), SEEK_CUR) == -1)
+							{
+								ereport(ERROR,
+										(errcode_for_file_access(),
+										 errmsg("could not fseek in file \"%s\": %m",
+												readfilename)));
+							}
+
+							if (fread(buf + BLCKSZ * i, 1, BLCKSZ, fp) != BLCKSZ)
+							{
+								ereport(ERROR,
+										(errcode_for_file_access(),
+										 errmsg("could not reread block %d of file \"%s\": %m",
+												blkno, readfilename)));
+							}
+
+							if (fseek(fp, cnt - BLCKSZ * i - BLCKSZ, SEEK_CUR) == -1)
+							{
+								ereport(ERROR,
+										(errcode_for_file_access(),
+										 errmsg("could not fseek in file \"%s\": %m",
+												readfilename)));
+							}
+
+							/* Set flag so we know a retry was attempted */
+							block_retry = true;
+
+							/* Reset loop to validate the block again */
+							i--;
+							continue;
+						}
+
+						checksum_failures++;
+
+						if (checksum_failures <= 5)
+							ereport(WARNING,
+									(errmsg("checksum verification failed in "
+											"file \"%s\", block %d: calculated "
+											"%X but expected %X",
+											readfilename, blkno, checksum,
+											phdr->pd_checksum)));
+						if (checksum_failures == 5)
+							ereport(WARNING,
+									(errmsg("further checksum verification "
+											"failures in file \"%s\" will not "
+											"be reported", readfilename)));
+					}
+				}
+				block_retry = false;
+				blkno++;
+			}
+		}
+
 		/* Send the chunk as a CopyData message */
 		if (pq_putmessage('d', buf, cnt))
 			ereport(ERROR,
@@ -1340,6 +1557,14 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 	}
 
 	FreeFile(fp);
+
+	if (checksum_failures > 1)
+	{
+		ereport(WARNING,
+				(errmsg("file \"%s\" has a total of %d checksum verification "
+						"failures", readfilename, checksum_failures)));
+	}
+	total_checksum_failures += checksum_failures;
 
 	return true;
 }

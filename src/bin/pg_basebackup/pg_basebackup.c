@@ -39,6 +39,7 @@
 #include "replication/basebackup.h"
 #include "streamutil.h"
 
+#define ERRCODE_DATA_CORRUPTED	"XX001"
 
 typedef struct TablespaceListCell
 {
@@ -81,6 +82,7 @@ static char *xlog_dir = NULL;
 static char format = 'p';		/* p(lain)/t(ar) */
 static char *label = "pg_basebackup base backup";
 static bool noclean = false;
+static bool checksum_failure = false;
 static bool showprogress = false;
 static int	verbose = 0;
 static int	compresslevel = 0;
@@ -95,6 +97,7 @@ static char *replication_slot = NULL;
 static bool temp_replication_slot = true;
 static bool create_slot = false;
 static bool no_slot = false;
+static bool verify_checksums = true;
 
 static bool success = false;
 static bool made_new_pgdata = false;
@@ -155,7 +158,7 @@ cleanup_directories_atexit(void)
 	if (success || in_log_streamer)
 		return;
 
-	if (!noclean)
+	if (!noclean && !checksum_failure)
 	{
 		if (made_new_pgdata)
 		{
@@ -195,7 +198,7 @@ cleanup_directories_atexit(void)
 	}
 	else
 	{
-		if (made_new_pgdata || found_existing_pgdata)
+		if ((made_new_pgdata || found_existing_pgdata) && !checksum_failure)
 			fprintf(stderr,
 					_("%s: data directory \"%s\" not removed at user's request\n"),
 					progname, basedir);
@@ -206,7 +209,7 @@ cleanup_directories_atexit(void)
 					progname, xlog_dir);
 	}
 
-	if (made_tablespace_dirs || found_tablespace_dirs)
+	if ((made_tablespace_dirs || found_tablespace_dirs) && !checksum_failure)
 		fprintf(stderr,
 				_("%s: changes to tablespace directories will not be undone\n"),
 				progname);
@@ -360,6 +363,8 @@ usage(void)
 	printf(_("  -P, --progress         show progress information\n"));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
 	printf(_("      --no-slot          prevent creation of temporary replication slot\n"));
+	printf(_("  -k, --no-verify-checksums\n"
+			 "                         do not verify checksums\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
@@ -1808,14 +1813,15 @@ BaseBackup(void)
 	}
 
 	basebkp =
-		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s",
+		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s",
 				 escaped_label,
 				 showprogress ? "PROGRESS" : "",
 				 includewal == FETCH_WAL ? "WAL" : "",
 				 fastcheckpoint ? "FAST" : "",
 				 includewal == NO_WAL ? "" : "NOWAIT",
 				 maxrate_clause ? maxrate_clause : "",
-				 format == 't' ? "TABLESPACE_MAP" : "");
+				 format == 't' ? "TABLESPACE_MAP" : "",
+				 verify_checksums ? "" : "NOVERIFY_CHECKSUMS");
 
 	if (PQsendQuery(conn, basebkp) == 0)
 	{
@@ -1970,8 +1976,20 @@ BaseBackup(void)
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, _("%s: final receive failed: %s"),
-				progname, PQerrorMessage(conn));
+		const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+
+		if (sqlstate &&
+			strcmp(sqlstate, ERRCODE_DATA_CORRUPTED) == 0)
+		{
+			fprintf(stderr, _("%s: checksum error occured\n"),
+					progname);
+			checksum_failure = true;
+		}
+		else
+		{
+			fprintf(stderr, _("%s: final receive failed: %s"),
+					progname, PQerrorMessage(conn));
+		}
 		disconnect_and_exit(1);
 	}
 
@@ -2140,6 +2158,7 @@ main(int argc, char **argv)
 		{"progress", no_argument, NULL, 'P'},
 		{"waldir", required_argument, NULL, 1},
 		{"no-slot", no_argument, NULL, 2},
+		{"no-verify-checksums", no_argument, NULL, 'k'},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
@@ -2166,7 +2185,7 @@ main(int argc, char **argv)
 
 	atexit(cleanup_directories_atexit);
 
-	while ((c = getopt_long(argc, argv, "CD:F:r:RS:T:X:l:nNzZ:d:c:h:p:U:s:wWvP",
+	while ((c = getopt_long(argc, argv, "CD:F:r:RS:T:X:l:nNzZ:d:c:h:p:U:s:wWkvP",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -2307,6 +2326,9 @@ main(int argc, char **argv)
 				break;
 			case 'P':
 				showprogress = true;
+				break;
+			case 'k':
+				verify_checksums = false;
 				break;
 			default:
 

@@ -2382,7 +2382,7 @@ The commands accepted in replication mode are:
   </varlistentry>
 
   <varlistentry>
-    <term><literal>BASE_BACKUP</literal> [ <literal>LABEL</literal> <replaceable>'label'</replaceable> ] [ <literal>PROGRESS</literal> ] [ <literal>FAST</literal> ] [ <literal>WAL</literal> ] [ <literal>NOWAIT</literal> ] [ <literal>MAX_RATE</literal> <replaceable>rate</replaceable> ] [ <literal>TABLESPACE_MAP</literal> ]
+    <term><literal>BASE_BACKUP</literal> [ <literal>LABEL</literal> <replaceable>'label'</replaceable> ] [ <literal>PROGRESS</literal> ] [ <literal>FAST</literal> ] [ <literal>WAL</literal> ] [ <literal>NOWAIT</literal> ] [ <literal>MAX_RATE</literal> <replaceable>rate</replaceable> ] [ <literal>TABLESPACE_MAP</literal> ] [ <literal>NOVERIFY_CHECKSUMS</literal> ]
      <indexterm><primary>BASE_BACKUP</primary></indexterm>
     </term>
     <listitem>
@@ -2478,6 +2478,17 @@ The commands accepted in replication mode are:
           <filename>tablespace_map</filename>. The tablespace map file includes
           each symbolic link name as it exists in the directory
           <filename>pg_tblspc/</filename> and the full path of that symbolic link.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>NOVERIFY_CHECKSUMS</literal></term>
+        <listitem>
+         <para>
+          By default, checksums are verified during a base backup if they are
+          enabled. Specifying <literal>NOVERIFY_CHECKSUMS</literal> disables
+          this verification.
          </para>
         </listitem>
        </varlistentry>
