@@ -290,17 +290,26 @@ LLVM_LIBS=@LLVM_LIBS@
 LD = @LD@
 with_gnu_ld = @with_gnu_ld@
 
-# We want -L for libpgport.a and libpgcommon.a to be first in LDFLAGS.  We
-# also need LDFLAGS to be a "recursively expanded" variable, else adjustments
-# to rpathdir don't work right.  So we must NOT do LDFLAGS := something,
-# meaning this has to be done first and elsewhere we must only do LDFLAGS +=
-# something.
+# It's critical that within LDFLAGS, all -L switches pointing to build-tree
+# directories come before any -L switches pointing to external directories.
+# Otherwise it's possible for, e.g., a platform-provided copy of libpq.so
+# to get linked in place of the one we've built.  Therefore we adopt the
+# convention that the first component of LDFLAGS is an extra variable
+# LDFLAGS_INTERNAL, and -L and -l switches for PG's own libraries must be
+# put into LDFLAGS_INTERNAL, so they will appear ahead of those for external
+# libraries.
+#
+# We need LDFLAGS and LDFLAGS_INTERNAL to be "recursively expanded" variables,
+# else adjustments to, e.g., rpathdir don't work right.  So we must NOT do
+# "LDFLAGS := something" anywhere, ditto for LDFLAGS_INTERNAL.
+# These initial assignments must be "=" type, and elsewhere we must only do
+# "LDFLAGS += something" or "LDFLAGS_INTERNAL += something".
 ifdef PGXS
-  LDFLAGS = -L$(libdir)
+  LDFLAGS_INTERNAL = -L$(libdir)
 else
-  LDFLAGS = -L$(top_builddir)/src/port -L$(top_builddir)/src/common
+  LDFLAGS_INTERNAL = -L$(top_builddir)/src/port -L$(top_builddir)/src/common
 endif
-LDFLAGS += @LDFLAGS@
+LDFLAGS = $(LDFLAGS_INTERNAL) @LDFLAGS@
 
 LDFLAGS_EX = @LDFLAGS_EX@
 # LDFLAGS_SL might have already been assigned by calling makefile

@@ -24,12 +24,9 @@ subdir = src/common
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
-LIBS += $(PTHREAD_LIBS)
-
 # don't include subdirectory-path-dependent -I and -L switches
 STD_CPPFLAGS := $(filter-out -I$(top_srcdir)/src/include -I$(top_builddir)/src/include,$(CPPFLAGS))
-STD_LDFLAGS := $(filter-out -L$(top_builddir)/src/port,$(LDFLAGS))
+STD_LDFLAGS := $(filter-out -L$(top_builddir)/src/common -L$(top_builddir)/src/port,$(LDFLAGS))
 override CPPFLAGS += -DVAL_CONFIGURE="\"$(configure_args)\""
 override CPPFLAGS += -DVAL_CC="\"$(CC)\""
 override CPPFLAGS += -DVAL_CPPFLAGS="\"$(STD_CPPFLAGS)\""
@@ -39,6 +36,9 @@ override CPPFLAGS += -DVAL_LDFLAGS="\"$(STD_LDFLAGS)\""
 override CPPFLAGS += -DVAL_LDFLAGS_EX="\"$(LDFLAGS_EX)\""
 override CPPFLAGS += -DVAL_LDFLAGS_SL="\"$(LDFLAGS_SL)\""
 override CPPFLAGS += -DVAL_LIBS="\"$(LIBS)\""
+
+override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
+LIBS += $(PTHREAD_LIBS)
 
 OBJS_COMMON = base64.o config_info.o controldata_utils.o exec.o ip.o \
 	keywords.o md5.o pg_lzcompress.o pgfnames.o psprintf.o relpath.o \

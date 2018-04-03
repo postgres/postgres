@@ -28,7 +28,7 @@ ifeq ($(PORTNAME), win32)
 # these settings are the same as for plperl
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID -Wno-comment
 # ... see silliness in plperl Makefile ...
-SHLIB_LINK += $(sort $(wildcard ../../src/pl/plperl/libperl*.a))
+SHLIB_LINK_INTERNAL += $(sort $(wildcard ../../src/pl/plperl/libperl*.a))
 else
 rpathdir = $(perl_archlibexp)/CORE
 SHLIB_LINK += $(perl_embed_ldflags)
