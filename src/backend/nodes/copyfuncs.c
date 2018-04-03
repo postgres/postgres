@@ -3055,6 +3055,7 @@ _copyMergeStmt(const MergeStmt *from)
 	COPY_NODE_FIELD(source_relation);
 	COPY_NODE_FIELD(join_condition);
 	COPY_NODE_FIELD(mergeActionList);
+	COPY_NODE_FIELD(withClause);
 
 	return newnode;
 }

@@ -18,6 +18,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+[ WITH <replaceable class="parameter">with_query</replaceable> [, ...] ]
 MERGE INTO <replaceable class="parameter">target_table_name</replaceable> [ [ AS ] <replaceable class="parameter">target_alias</replaceable> ]
 USING <replaceable class="parameter">data_source</replaceable>
 ON <replaceable class="parameter">join_condition</replaceable>
@@ -391,6 +392,18 @@ DELETE
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><replaceable class="parameter">with_query</replaceable></term>
+    <listitem>
+     <para>
+      The <literal>WITH</literal> clause allows you to specify one or more
+      subqueries that can be referenced by name in the <command>MERGE</command>
+      query. See <xref linkend="queries-with"/> and <xref linkend="sql-select"/>
+      for details.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </refsect1>
 
@@ -597,7 +610,7 @@ WHEN MATCHED THEN
     This command conforms to the <acronym>SQL</acronym> standard.
   </para>
    <para>
-    The DO NOTHING action is an extension to the <acronym>SQL</acronym> standard.
+    The WITH clause and DO NOTHING action are extensions to the <acronym>SQL</acronym> standard.
   </para>
  </refsect1>
 </refentry>

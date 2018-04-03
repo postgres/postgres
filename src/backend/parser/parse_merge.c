@@ -24,6 +24,7 @@
 #include "parser/parsetree.h"
 #include "parser/parser.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_cte.h"
 #include "parser/parse_merge.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -202,6 +203,19 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	Assert(pstate->p_ctenamespace == NIL);
 
 	qry->commandType = CMD_MERGE;
+	qry->hasRecursive = false;
+
+	/* process the WITH clause independently of all else */
+	if (stmt->withClause)
+	{
+		if (stmt->withClause->recursive)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("WITH RECURSIVE is not supported for MERGE statement")));
+
+		qry->cteList = transformWithClause(pstate, stmt->withClause);
+		qry->hasModifyingCTE = pstate->p_hasModifyingCTE;
+	}
 
 	/*
 	 * Check WHEN clauses for permissions and sanity

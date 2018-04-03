@@ -1519,6 +1519,7 @@ typedef struct MergeStmt
 	Node	   *source_relation;	/* source relation */
 	Node	   *join_condition; /* join condition between source and target */
 	List	   *mergeActionList;	/* list of MergeAction(s) */
+	WithClause *withClause;		/* WITH clause */
 } MergeStmt;
 
 typedef struct MergeAction

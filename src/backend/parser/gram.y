@@ -11105,17 +11105,18 @@ set_target_list:
  *****************************************************************************/
 
 MergeStmt:
-			MERGE INTO relation_expr_opt_alias
+			opt_with_clause MERGE INTO relation_expr_opt_alias
 			USING table_ref
 			ON a_expr
 			merge_when_list
 				{
 					MergeStmt *m = makeNode(MergeStmt);
 
-					m->relation = $3;
-					m->source_relation = $5;
-					m->join_condition = $7;
-					m->mergeActionList = $8;
+					m->withClause = $1;
+					m->relation = $4;
+					m->source_relation = $6;
+					m->join_condition = $8;
+					m->mergeActionList = $9;
 
 					$$ = (Node *)m;
 				}

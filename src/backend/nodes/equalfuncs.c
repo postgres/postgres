@@ -1051,6 +1051,7 @@ _equalMergeStmt(const MergeStmt *a, const MergeStmt *b)
 	COMPARE_NODE_FIELD(source_relation);
 	COMPARE_NODE_FIELD(join_condition);
 	COMPARE_NODE_FIELD(mergeActionList);
+	COMPARE_NODE_FIELD(withClause);
 
 	return true;
 }

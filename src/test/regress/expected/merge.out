@@ -1210,9 +1210,6 @@ WHEN NOT MATCHED THEN
 WHEN MATCHED AND tid < 2 THEN
 	DELETE
 ;
-ERROR:  syntax error at or near "MERGE"
-LINE 4: MERGE INTO sq_target t
-        ^
 ROLLBACK;
 -- RETURNING
 BEGIN;

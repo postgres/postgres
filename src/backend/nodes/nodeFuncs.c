@@ -3446,6 +3446,8 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (walker(stmt->mergeActionList, context))
 					return true;
+				if (walker(stmt->withClause, context))
+					return true;
 			}
 			break;
 		case T_MergeAction:
