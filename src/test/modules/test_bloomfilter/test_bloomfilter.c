@@ -18,8 +18,8 @@
 
 PG_MODULE_MAGIC;
 
-/* Must fit decimal representation of PG_INT64_MAX + 2 bytes: */
-#define MAX_ELEMENT_BYTES		20
+/* Fits decimal representation of PG_INT64_MIN + 2 bytes: */
+#define MAX_ELEMENT_BYTES		21
 /* False positive rate WARNING threshold (1%): */
 #define FPOSITIVE_THRESHOLD		0.01
 
