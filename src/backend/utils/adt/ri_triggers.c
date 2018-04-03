@@ -514,7 +514,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	bool		result;
 
 	/* Only called for non-null rows */
-	Assert(ri_NullCheck(RelationGetDescr(fk_rel), old_row, riinfo, true) == RI_KEYS_NONE_NULL);
+	Assert(ri_NullCheck(RelationGetDescr(pk_rel), old_row, riinfo, true) == RI_KEYS_NONE_NULL);
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");

@@ -1381,6 +1381,19 @@ explain (costs off) delete from t1 where a = 1;
 (10 rows)
 
 delete from t1 where a = 1;
+-- Test a primary key with attributes located in later attnum positions
+-- compared to the fk attributes.
+create table pktable2 (a int, b int, c int, d int, e int, primary key (d, e));
+create table fktable2 (d int, e int, foreign key (d, e) references pktable2);
+insert into pktable2 values (1, 2, 3, 4, 5);
+insert into fktable2 values (4, 5);
+delete from pktable2;
+ERROR:  update or delete on table "pktable2" violates foreign key constraint "fktable2_d_fkey" on table "fktable2"
+DETAIL:  Key (d, e)=(4, 5) is still referenced from table "fktable2".
+update pktable2 set d = 5;
+ERROR:  update or delete on table "pktable2" violates foreign key constraint "fktable2_d_fkey" on table "fktable2"
+DETAIL:  Key (d, e)=(4, 5) is still referenced from table "fktable2".
+drop table pktable2, fktable2;
 --
 -- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
 --

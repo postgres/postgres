@@ -1020,6 +1020,16 @@ create rule r1 as on delete to t1 do delete from t2 where t2.b = old.a;
 explain (costs off) delete from t1 where a = 1;
 delete from t1 where a = 1;
 
+-- Test a primary key with attributes located in later attnum positions
+-- compared to the fk attributes.
+create table pktable2 (a int, b int, c int, d int, e int, primary key (d, e));
+create table fktable2 (d int, e int, foreign key (d, e) references pktable2);
+insert into pktable2 values (1, 2, 3, 4, 5);
+insert into fktable2 values (4, 5);
+delete from pktable2;
+update pktable2 set d = 5;
+drop table pktable2, fktable2;
+
 --
 -- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
 --
