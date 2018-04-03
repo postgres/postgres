@@ -150,6 +150,8 @@ HV_to_JsonbValue(HV *obj, JsonbParseState **jsonb_state)
 	dTHX;
 	JsonbValue	key;
 	SV		   *val;
+	char	   *kstr;
+	I32			klen;
 
 	key.type = jbvString;
 
@@ -157,9 +159,10 @@ HV_to_JsonbValue(HV *obj, JsonbParseState **jsonb_state)
 
 	(void) hv_iterinit(obj);
 
-	while ((val = hv_iternextsv(obj, &key.val.string.val, &key.val.string.len)))
+	while ((val = hv_iternextsv(obj, &kstr, &klen)))
 	{
-		key.val.string.val = pnstrdup(key.val.string.val, key.val.string.len);
+		key.val.string.val = pnstrdup(kstr, klen);
+		key.val.string.len = klen;
 		pushJsonbValue(jsonb_state, WJB_KEY, &key);
 		(void) SV_to_JsonbValue(val, jsonb_state, false);
 	}
