@@ -1410,26 +1410,26 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 
 	while ((cnt = fread(buf, 1, Min(sizeof(buf), statbuf->st_size - len), fp)) > 0)
 	{
+		/*
+		 * The checksums are verified at block level, so we iterate over
+		 * the buffer in chunks of BLCKSZ, after making sure that
+		 * TAR_SEND_SIZE/buf is divisible by BLCKSZ and we read a multiple
+		 * of BLCKSZ bytes.
+		 */
+		Assert(TAR_SEND_SIZE % BLCKSZ == 0);
+
+		if (verify_checksum && (cnt % BLCKSZ != 0))
+		{
+			ereport(WARNING,
+					(errmsg("cannot verify checksum in file \"%s\", block "
+							"%d: read buffer size %d and page size %d "
+							"differ",
+							readfilename, blkno, (int) cnt, BLCKSZ)));
+			verify_checksum = false;
+		}
+
 		if (verify_checksum)
 		{
-			/*
-			 * The checksums are verified at block level, so we iterate over
-			 * the buffer in chunks of BLCKSZ, after making sure that
-			 * TAR_SEND_SIZE/buf is divisible by BLCKSZ and we read a multiple
-			 * of BLCKSZ bytes.
-			 */
-			Assert(TAR_SEND_SIZE % BLCKSZ == 0);
-
-			if (cnt % BLCKSZ != 0)
-			{
-				ereport(WARNING,
-						(errmsg("cannot verify checksum in file \"%s\", block "
-								"%d: read buffer size %d and page size %d "
-								"differ",
-								readfilename, blkno, (int) cnt, BLCKSZ)));
-				verify_checksum = false;
-				continue;
-			}
 			for (i = 0; i < cnt / BLCKSZ; i++)
 			{
 				page = buf + BLCKSZ * i;
