@@ -597,8 +597,14 @@ perform_base_backup(basebackup_options *opt)
 	if (total_checksum_failures)
 	{
 		if (total_checksum_failures > 1)
+		{
+			char buf[64];
+
+			snprintf(buf, sizeof(buf), INT64_FORMAT, total_checksum_failures);
+
 			ereport(WARNING,
-					(errmsg("%ld total checksum verification failures", total_checksum_failures)));
+					(errmsg("%s total checksum verification failures", buf)));
+		}
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("checksum verification failure during base backup")));
