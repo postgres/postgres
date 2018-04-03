@@ -1204,7 +1204,10 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	dvalues = (Datum *) palloc(natts * sizeof(Datum));
 	nulls = (bool *) palloc(natts * sizeof(bool));
 
-	/* Call the "in" function for each non-dropped attribute */
+	/*
+	 * Call the "in" function for each non-dropped attribute, even for nulls,
+	 * to support domains.
+	 */
 	for (i = 0; i < natts; i++)
 	{
 		if (!TupleDescAttr(tupdesc, i)->attisdropped)
