@@ -409,6 +409,15 @@ static relopt_real realRelOpts[] =
 		},
 		0, -1.0, DBL_MAX
 	},
+	{
+		{
+			"vacuum_cleanup_index_scale_factor",
+			"Number of tuple inserts prior to index cleanup as a fraction of reltuples.",
+			RELOPT_KIND_BTREE,
+			ShareUpdateExclusiveLock
+		},
+		-1, 0.0, 100.0
+	},
 	/* list terminator */
 	{{NULL}}
 };
@@ -1371,7 +1380,9 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"user_catalog_table", RELOPT_TYPE_BOOL,
 		offsetof(StdRdOptions, user_catalog_table)},
 		{"parallel_workers", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, parallel_workers)}
+		offsetof(StdRdOptions, parallel_workers)},
+		{"vacuum_cleanup_index_scale_factor", RELOPT_TYPE_REAL,
+		offsetof(StdRdOptions, vacuum_cleanup_index_scale_factor)}
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);

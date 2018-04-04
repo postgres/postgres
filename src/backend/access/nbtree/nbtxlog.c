@@ -108,6 +108,8 @@ _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 	md->btm_level = xlrec->level;
 	md->btm_fastroot = xlrec->fastroot;
 	md->btm_fastlevel = xlrec->fastlevel;
+	md->btm_oldest_btpo_xact = xlrec->oldest_btpo_xact;
+	md->btm_last_cleanup_num_heap_tuples = xlrec->last_cleanup_num_heap_tuples;
 
 	pageop = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	pageop->btpo_flags = BTP_META;
@@ -985,7 +987,6 @@ btree_xlog_reuse_page(XLogReaderState *record)
 	}
 }
 
-
 void
 btree_redo(XLogReaderState *record)
 {
@@ -1026,6 +1027,9 @@ btree_redo(XLogReaderState *record)
 			break;
 		case XLOG_BTREE_REUSE_PAGE:
 			btree_xlog_reuse_page(record);
+			break;
+		case XLOG_BTREE_META_CLEANUP:
+			_bt_restore_meta(record, 0);
 			break;
 		default:
 			elog(PANIC, "btree_redo: unknown op code %u", info);

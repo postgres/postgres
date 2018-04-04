@@ -511,7 +511,7 @@ bt_metap(PG_FUNCTION_ARGS)
 	BTMetaPageData *metad;
 	TupleDesc	tupleDesc;
 	int			j;
-	char	   *values[6];
+	char	   *values[8];
 	Buffer		buffer;
 	Page		page;
 	HeapTuple	tuple;
@@ -555,6 +555,8 @@ bt_metap(PG_FUNCTION_ARGS)
 	values[j++] = psprintf("%d", metad->btm_level);
 	values[j++] = psprintf("%d", metad->btm_fastroot);
 	values[j++] = psprintf("%d", metad->btm_fastlevel);
+	values[j++] = psprintf("%u", metad->btm_oldest_btpo_xact);
+	values[j++] = psprintf("%lf", metad->btm_last_cleanup_num_heap_tuples);
 
 	tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
 								   values);

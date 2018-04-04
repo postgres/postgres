@@ -48,7 +48,7 @@ select version, tree_level,
     from pgstatindex('test_pkey');
  version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
 ---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
-       2 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+       3 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
 (1 row)
 
 select version, tree_level,
@@ -58,7 +58,7 @@ select version, tree_level,
     from pgstatindex('test_pkey'::text);
  version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
 ---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
-       2 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+       3 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
 (1 row)
 
 select version, tree_level,
@@ -68,7 +68,7 @@ select version, tree_level,
     from pgstatindex('test_pkey'::name);
  version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
 ---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
-       2 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+       3 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
 (1 row)
 
 select version, tree_level,
@@ -78,7 +78,7 @@ select version, tree_level,
     from pgstatindex('test_pkey'::regclass);
  version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
 ---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
-       2 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+       3 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
 (1 row)
 
 select pg_relpages('test');
@@ -229,7 +229,7 @@ create index test_partition_hash_idx on test_partition using hash (a);
 select pgstatindex('test_partition_idx');
          pgstatindex          
 ------------------------------
- (2,0,8192,0,0,0,0,0,NaN,NaN)
+ (3,0,8192,0,0,0,0,0,NaN,NaN)
 (1 row)
 
 select pgstathashindex('test_partition_hash_idx');

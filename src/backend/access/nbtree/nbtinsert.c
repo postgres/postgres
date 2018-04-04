@@ -939,6 +939,9 @@ _bt_insertonpg(Relation rel,
 
 		if (BufferIsValid(metabuf))
 		{
+			/* upgrade meta-page if needed */
+			if (metad->btm_version < BTREE_VERSION)
+				_bt_upgrademetapage(metapg);
 			metad->btm_fastroot = itup_blkno;
 			metad->btm_fastlevel = lpageop->btpo.level;
 			MarkBufferDirty(metabuf);
@@ -997,6 +1000,9 @@ _bt_insertonpg(Relation rel,
 				xlmeta.level = metad->btm_level;
 				xlmeta.fastroot = metad->btm_fastroot;
 				xlmeta.fastlevel = metad->btm_fastlevel;
+				xlmeta.oldest_btpo_xact = metad->btm_oldest_btpo_xact;
+				xlmeta.last_cleanup_num_heap_tuples =
+					metad->btm_last_cleanup_num_heap_tuples;
 
 				XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
 				XLogRegisterBufData(2, (char *) &xlmeta, sizeof(xl_btree_metadata));
@@ -2049,6 +2055,10 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 
+	/* upgrade metapage if needed */
+	if (metad->btm_version < BTREE_VERSION)
+		_bt_upgrademetapage(metapg);
+
 	/*
 	 * Create downlink item for left page (old root).  Since this will be the
 	 * first item in a non-leaf page, it implicitly has minus-infinity key
@@ -2138,6 +2148,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		md.level = metad->btm_level;
 		md.fastroot = rootblknum;
 		md.fastlevel = metad->btm_level;
+		md.oldest_btpo_xact = metad->btm_oldest_btpo_xact;
+		md.last_cleanup_num_heap_tuples = metad->btm_last_cleanup_num_heap_tuples;
 
 		XLogRegisterBufData(2, (char *) &md, sizeof(xl_btree_metadata));
 

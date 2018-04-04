@@ -60,6 +60,8 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
 	metad->btm_level = level;
 	metad->btm_fastroot = rootbknum;
 	metad->btm_fastlevel = level;
+	metad->btm_oldest_btpo_xact = InvalidTransactionId;
+	metad->btm_last_cleanup_num_heap_tuples = -1.0;
 
 	metaopaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	metaopaque->btpo_flags = BTP_META;
@@ -71,6 +73,114 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
 	 */
 	((PageHeader) page)->pd_lower =
 		((char *) metad + sizeof(BTMetaPageData)) - (char *) page;
+}
+
+/*
+ *	_bt_upgrademetapage() -- Upgrade a meta-page from an old format to the new.
+ *
+ *		This routine does purely in-memory image upgrade.  Caller is
+ *		responsible for locking, WAL-logging etc.
+ */
+void
+_bt_upgrademetapage(Page page)
+{
+	BTMetaPageData *metad;
+	BTPageOpaque metaopaque;
+
+	metad = BTPageGetMeta(page);
+	metaopaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	/* It must be really a meta page of upgradable version */
+	Assert(metaopaque->btpo_flags & BTP_META);
+	Assert(metad->btm_version < BTREE_VERSION);
+	Assert(metad->btm_version >= BTREE_MIN_VERSION);
+
+	/* Set version number and fill extra fields added into version 3 */
+	metad->btm_version = BTREE_VERSION;
+	metad->btm_oldest_btpo_xact = InvalidTransactionId;
+	metad->btm_last_cleanup_num_heap_tuples = -1.0;
+
+	/* Adjust pd_lower (see _bt_initmetapage() for details) */
+	((PageHeader) page)->pd_lower =
+		((char *) metad + sizeof(BTMetaPageData)) - (char *) page;
+}
+
+/*
+ *	_bt_update_meta_cleanup_info() -- Update cleanup-related information in
+ *									  the metapage.
+ *
+ *		This routine checks if provided cleanup-related information is matching
+ *		to those written in the metapage.  On mismatch, metapage is overritten.
+ */
+void
+_bt_update_meta_cleanup_info(Relation rel, TransactionId oldestBtpoXact,
+							 float8 numHeapTuples)
+{
+	Buffer			metabuf;
+	Page			metapg;
+	BTPageOpaque	metaopaque;
+	BTMetaPageData *metad;
+	bool			needsRewrite = false;
+	XLogRecPtr		recptr;
+
+	/* read the metapage and check if it needs rewrite */
+	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
+	metapg = BufferGetPage(metabuf);
+	metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
+	metad = BTPageGetMeta(metapg);
+
+	/* outdated version of metapage always needs rewrite */
+	if (metad->btm_version < BTREE_VERSION)
+		needsRewrite = true;
+	else if (metad->btm_oldest_btpo_xact != oldestBtpoXact ||
+			 metad->btm_last_cleanup_num_heap_tuples != numHeapTuples)
+		needsRewrite = true;
+
+	if (!needsRewrite)
+	{
+		_bt_relbuf(rel, metabuf);
+		return;
+	}
+
+	/* trade in our read lock for a write lock */
+	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+	LockBuffer(metabuf, BT_WRITE);
+
+	START_CRIT_SECTION();
+
+	/* upgrade meta-page if needed */
+	if (metad->btm_version < BTREE_VERSION)
+		_bt_upgrademetapage(metapg);
+
+	/* update cleanup-related infromation */
+	metad->btm_oldest_btpo_xact = oldestBtpoXact;
+	metad->btm_last_cleanup_num_heap_tuples = numHeapTuples;
+	MarkBufferDirty(metabuf);
+
+	/* write wal record if needed */
+	if (RelationNeedsWAL(rel))
+	{
+		xl_btree_metadata md;
+
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
+
+		md.root = metad->btm_root;
+		md.level = metad->btm_level;
+		md.fastroot = metad->btm_fastroot;
+		md.fastlevel = metad->btm_fastlevel;
+		md.oldest_btpo_xact = oldestBtpoXact;
+		md.last_cleanup_num_heap_tuples = numHeapTuples;
+
+		XLogRegisterBufData(0, (char *) &md, sizeof(xl_btree_metadata));
+
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_META_CLEANUP);
+
+		PageSetLSN(metapg, recptr);
+	}
+
+	END_CRIT_SECTION();
+	_bt_relbuf(rel, metabuf);
 }
 
 /*
@@ -124,7 +234,8 @@ _bt_getroot(Relation rel, int access)
 		metad = (BTMetaPageData *) rel->rd_amcache;
 		/* We shouldn't have cached it if any of these fail */
 		Assert(metad->btm_magic == BTREE_MAGIC);
-		Assert(metad->btm_version == BTREE_VERSION);
+		Assert(metad->btm_version >= BTREE_MIN_VERSION);
+		Assert(metad->btm_version <= BTREE_VERSION);
 		Assert(metad->btm_root != P_NONE);
 
 		rootblkno = metad->btm_fastroot;
@@ -170,12 +281,14 @@ _bt_getroot(Relation rel, int access)
 				 errmsg("index \"%s\" is not a btree",
 						RelationGetRelationName(rel))));
 
-	if (metad->btm_version != BTREE_VERSION)
+	if (metad->btm_version < BTREE_MIN_VERSION ||
+		metad->btm_version > BTREE_VERSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("version mismatch in index \"%s\": file version %d, code version %d",
+				 errmsg("version mismatch in index \"%s\": file version %d, "
+						"current version %d, minimal supported version %d",
 						RelationGetRelationName(rel),
-						metad->btm_version, BTREE_VERSION)));
+						metad->btm_version, BTREE_VERSION, BTREE_MIN_VERSION)));
 
 	/* if no root page initialized yet, do it */
 	if (metad->btm_root == P_NONE)
@@ -190,6 +303,10 @@ _bt_getroot(Relation rel, int access)
 		/* trade in our read lock for a write lock */
 		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 		LockBuffer(metabuf, BT_WRITE);
+
+		/* upgrade metapage if needed */
+		if (metad->btm_version < BTREE_VERSION)
+			_bt_upgrademetapage(metapg);
 
 		/*
 		 * Race condition:	if someone else initialized the metadata between
@@ -229,6 +346,8 @@ _bt_getroot(Relation rel, int access)
 		metad->btm_level = 0;
 		metad->btm_fastroot = rootblkno;
 		metad->btm_fastlevel = 0;
+		metad->btm_oldest_btpo_xact = InvalidTransactionId;
+		metad->btm_last_cleanup_num_heap_tuples = -1.0;
 
 		MarkBufferDirty(rootbuf);
 		MarkBufferDirty(metabuf);
@@ -248,6 +367,8 @@ _bt_getroot(Relation rel, int access)
 			md.level = 0;
 			md.fastroot = rootblkno;
 			md.fastlevel = 0;
+			md.oldest_btpo_xact = InvalidTransactionId;
+			md.last_cleanup_num_heap_tuples = -1.0;
 
 			XLogRegisterBufData(2, (char *) &md, sizeof(xl_btree_metadata));
 
@@ -373,12 +494,14 @@ _bt_gettrueroot(Relation rel)
 				 errmsg("index \"%s\" is not a btree",
 						RelationGetRelationName(rel))));
 
-	if (metad->btm_version != BTREE_VERSION)
+	if (metad->btm_version < BTREE_MIN_VERSION ||
+		metad->btm_version > BTREE_VERSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("version mismatch in index \"%s\": file version %d, code version %d",
+				 errmsg("version mismatch in index \"%s\": file version %d, "
+						"current version %d, minimal supported version %d",
 						RelationGetRelationName(rel),
-						metad->btm_version, BTREE_VERSION)));
+						metad->btm_version, BTREE_VERSION, BTREE_MIN_VERSION)));
 
 	/* if no root page initialized yet, fail */
 	if (metad->btm_root == P_NONE)
@@ -460,12 +583,14 @@ _bt_getrootheight(Relation rel)
 					 errmsg("index \"%s\" is not a btree",
 							RelationGetRelationName(rel))));
 
-		if (metad->btm_version != BTREE_VERSION)
+		if (metad->btm_version < BTREE_MIN_VERSION ||
+			metad->btm_version > BTREE_VERSION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("version mismatch in index \"%s\": file version %d, code version %d",
+					 errmsg("version mismatch in index \"%s\": file version %d, "
+							"current version %d, minimal supported version %d",
 							RelationGetRelationName(rel),
-							metad->btm_version, BTREE_VERSION)));
+							metad->btm_version, BTREE_VERSION, BTREE_MIN_VERSION)));
 
 		/*
 		 * If there's no root page yet, _bt_getroot() doesn't expect a cache
@@ -1784,6 +1909,9 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	/* And update the metapage, if needed */
 	if (BufferIsValid(metabuf))
 	{
+		/* upgrade metapage if needed */
+		if (metad->btm_version < BTREE_VERSION)
+			_bt_upgrademetapage(metapg);
 		metad->btm_fastroot = rightsib;
 		metad->btm_fastlevel = targetlevel;
 		MarkBufferDirty(metabuf);
@@ -1834,6 +1962,8 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 			xlmeta.level = metad->btm_level;
 			xlmeta.fastroot = metad->btm_fastroot;
 			xlmeta.fastlevel = metad->btm_fastlevel;
+			xlmeta.oldest_btpo_xact = metad->btm_oldest_btpo_xact;
+			xlmeta.last_cleanup_num_heap_tuples = metad->btm_last_cleanup_num_heap_tuples;
 
 			XLogRegisterBufData(4, (char *) &xlmeta, sizeof(xl_btree_metadata));
 			xlinfo = XLOG_BTREE_UNLINK_PAGE_META;

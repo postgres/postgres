@@ -3208,6 +3208,16 @@ static struct config_real ConfigureNamesReal[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"vacuum_cleanup_index_scale_factor", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Number of tuple inserts prior to index cleanup as a fraction of reltuples."),
+			NULL
+		},
+		&vacuum_cleanup_index_scale_factor,
+		0.1, 0.0, 100.0,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, 0.0, 0.0, 0.0, NULL, NULL, NULL

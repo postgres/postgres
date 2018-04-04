@@ -92,3 +92,22 @@ vacuum btree_tall_tbl;
 -- need to insert some rows to cause the fast root page to split.
 insert into btree_tall_tbl (id, t)
   select g, repeat('x', 100) from generate_series(1, 500) g;
+
+--
+-- Test vacuum_cleanup_index_scale_factor
+--
+
+-- Simple create
+create table btree_test(a int);
+create index btree_idx1 on btree_test(a) with (vacuum_cleanup_index_scale_factor = 40.0);
+select reloptions from pg_class WHERE oid = 'btree_idx1'::regclass;
+
+-- Fail while setting improper values
+create index btree_idx_err on btree_test(a) with (vacuum_cleanup_index_scale_factor = -10.0);
+create index btree_idx_err on btree_test(a) with (vacuum_cleanup_index_scale_factor = 100.0);
+create index btree_idx_err on btree_test(a) with (vacuum_cleanup_index_scale_factor = 'string');
+create index btree_idx_err on btree_test(a) with (vacuum_cleanup_index_scale_factor = true);
+
+-- Simple ALTER INDEX
+alter index btree_idx1 set (vacuum_cleanup_index_scale_factor = 70.0);
+select reloptions from pg_class WHERE oid = 'btree_idx1'::regclass;

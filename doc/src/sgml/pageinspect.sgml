@@ -247,13 +247,15 @@ test=# SELECT * FROM heap_page_item_attrs(get_raw_page('pg_class', 0), 'pg_class
       index's metapage.  For example:
 <screen>
 test=# SELECT * FROM bt_metap('pg_cast_oid_index');
--[ RECORD 1 ]-----
-magic     | 340322
-version   | 2
-root      | 1
-level     | 0
-fastroot  | 1
-fastlevel | 0
+-[ RECORD 1 ]-----------+-------
+magic                   | 340322
+version                 | 3
+root                    | 1
+level                   | 0
+fastroot                | 1
+fastlevel               | 0
+oldest_xact             | 582
+last_cleanup_num_tuples | 1000
 </screen>
      </para>
     </listitem>

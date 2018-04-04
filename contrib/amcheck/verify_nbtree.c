@@ -1500,12 +1500,14 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 					 errmsg("index \"%s\" meta page is corrupt",
 							RelationGetRelationName(state->rel))));
 
-		if (metad->btm_version != BTREE_VERSION)
+		if (metad->btm_version < BTREE_MIN_VERSION ||
+			metad->btm_version > BTREE_VERSION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("version mismatch in index \"%s\": file version %d, code version %d",
+					 errmsg("version mismatch in index \"%s\": file version %d, "
+							"current version %d, minimal supported version %d",
 							RelationGetRelationName(state->rel),
-							metad->btm_version, BTREE_VERSION)));
+							metad->btm_version, BTREE_VERSION, BTREE_MIN_VERSION)));
 	}
 
 	/*

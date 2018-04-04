@@ -38,6 +38,8 @@
 										 * vacuum */
 #define XLOG_BTREE_REUSE_PAGE	0xD0	/* old page is about to be reused from
 										 * FSM */
+#define XLOG_BTREE_META_CLEANUP	0xE0	/* update cleanup-related data in the
+										 * metapage */
 
 /*
  * All that we need to regenerate the meta-data page
@@ -48,6 +50,8 @@ typedef struct xl_btree_metadata
 	uint32		level;
 	BlockNumber fastroot;
 	uint32		fastlevel;
+	TransactionId oldest_btpo_xact;
+	double		last_cleanup_num_heap_tuples;
 } xl_btree_metadata;
 
 /*

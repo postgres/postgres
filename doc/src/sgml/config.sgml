@@ -1882,6 +1882,31 @@ include_dir 'conf.d'
      </note>
     </sect2>
 
+    <sect2 id="runtime-config-index-vacuum">
+     <title>Index Vacuum</title>
+     <variablelist>
+     <varlistentry id="guc-vacuum-cleanup-index-scale-factor" xreflabel="vacuum_cleanup_index_scale_factor">
+      <term><varname>vacuum_cleanup_index_scale_factor</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>vacuum_cleanup_index_scale_factor</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        When no tuples were deleted from the heap, B-tree indexes might still
+        be scanned during <command>VACUUM</command> cleanup stage by two
+        reasons.  The first reason is that B-tree index contains deleted pages
+        which can be recycled during cleanup.  The second reason is that B-tree
+        index statistics is stalled.  The criterion of stalled index statistics
+        is number of inserted tuples since previous statistics collection
+        is greater than <varname>vacuum_cleanup_index_scale_factor</varname>
+        fraction of total number of heap tuples.
+       </para>
+      </listitem>
+     </varlistentry>
+     </variablelist>
+    </sect2>
+
     <sect2 id="runtime-config-resource-background-writer">
      <title>Background Writer</title>
 
