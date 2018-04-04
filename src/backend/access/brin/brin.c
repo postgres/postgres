@@ -1121,16 +1121,22 @@ initialize_brin_buildstate(Relation idxRel, BrinRevmap *revmap,
 static void
 terminate_brin_buildstate(BrinBuildState *state)
 {
-	/* release the last index buffer used */
+	/*
+	 * Release the last index buffer used.  We might as well ensure that
+	 * whatever free space remains in that page is available in FSM, too.
+	 */
 	if (!BufferIsInvalid(state->bs_currentInsertBuf))
 	{
 		Page		page;
+		Size		freespace;
+		BlockNumber blk;
 
 		page = BufferGetPage(state->bs_currentInsertBuf);
-		RecordPageWithFreeSpace(state->bs_irel,
-								BufferGetBlockNumber(state->bs_currentInsertBuf),
-								PageGetFreeSpace(page));
+		freespace = PageGetFreeSpace(page);
+		blk = BufferGetBlockNumber(state->bs_currentInsertBuf);
 		ReleaseBuffer(state->bs_currentInsertBuf);
+		RecordPageWithFreeSpace(state->bs_irel, blk, freespace);
+		FreeSpaceMapVacuumRange(state->bs_irel, blk, blk + 1);
 	}
 
 	brin_free_desc(state->bs_bdesc);
@@ -1445,14 +1451,15 @@ union_tuples(BrinDesc *bdesc, BrinMemTuple *a, BrinTuple *b)
 static void
 brin_vacuum_scan(Relation idxrel, BufferAccessStrategy strategy)
 {
-	bool		vacuum_fsm = false;
+	BlockNumber nblocks;
 	BlockNumber blkno;
 
 	/*
 	 * Scan the index in physical order, and clean up any possible mess in
 	 * each page.
 	 */
-	for (blkno = 0; blkno < RelationGetNumberOfBlocks(idxrel); blkno++)
+	nblocks = RelationGetNumberOfBlocks(idxrel);
+	for (blkno = 0; blkno < nblocks; blkno++)
 	{
 		Buffer		buf;
 
@@ -1461,15 +1468,15 @@ brin_vacuum_scan(Relation idxrel, BufferAccessStrategy strategy)
 		buf = ReadBufferExtended(idxrel, MAIN_FORKNUM, blkno,
 								 RBM_NORMAL, strategy);
 
-		vacuum_fsm |= brin_page_cleanup(idxrel, buf);
+		brin_page_cleanup(idxrel, buf);
 
 		ReleaseBuffer(buf);
 	}
 
 	/*
-	 * If we made any change to the FSM, make sure the new info is visible all
-	 * the way to the top.
+	 * Update all upper pages in the index's FSM, as well.  This ensures not
+	 * only that we propagate leaf-page FSM updates made by brin_page_cleanup,
+	 * but also that any pre-existing damage or out-of-dateness is repaired.
 	 */
-	if (vacuum_fsm)
-		FreeSpaceMapVacuum(idxrel);
+	FreeSpaceMapVacuum(idxrel);
 }

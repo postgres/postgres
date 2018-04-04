@@ -33,6 +33,6 @@ extern bool brin_start_evacuating_page(Relation idxRel, Buffer buf);
 extern void brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 				   BrinRevmap *revmap, Buffer buf);
 
-extern bool brin_page_cleanup(Relation idxrel, Buffer buf);
+extern void brin_page_cleanup(Relation idxrel, Buffer buf);
 
 #endif							/* BRIN_PAGEOPS_H */
