@@ -39,17 +39,6 @@ SELECT testSVToJsonb();
  1
 (1 row)
 
--- unsupported (for now)
-CREATE FUNCTION testRegexpToJsonb() RETURNS jsonb
-LANGUAGE plperlu
-TRANSFORM FOR TYPE jsonb
-AS $$
-my $a = qr/foo/;
-return ($a);
-$$;
-SELECT testRegexpToJsonb();
-ERROR:  cannot transform this Perl type to jsonb
-CONTEXT:  PL/Perl function "testregexptojsonb"
 -- this revealed a bug in the original implementation
 CREATE FUNCTION testRegexpResultToJsonb() RETURNS jsonb
 LANGUAGE plperlu
@@ -218,4 +207,4 @@ SELECT roundtrip('{"1": {"2": [3, 4, 5]}, "2": 3}');
 
 \set VERBOSITY terse \\ -- suppress cascade details
 DROP EXTENSION plperlu CASCADE;
-NOTICE:  drop cascades to 7 other objects
+NOTICE:  drop cascades to 6 other objects

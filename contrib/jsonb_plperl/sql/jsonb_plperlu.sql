@@ -34,18 +34,6 @@ $$;
 SELECT testSVToJsonb();
 
 
--- unsupported (for now)
-CREATE FUNCTION testRegexpToJsonb() RETURNS jsonb
-LANGUAGE plperlu
-TRANSFORM FOR TYPE jsonb
-AS $$
-my $a = qr/foo/;
-return ($a);
-$$;
-
-SELECT testRegexpToJsonb();
-
-
 -- this revealed a bug in the original implementation
 CREATE FUNCTION testRegexpResultToJsonb() RETURNS jsonb
 LANGUAGE plperlu
