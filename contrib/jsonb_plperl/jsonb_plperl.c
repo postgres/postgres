@@ -1,11 +1,14 @@
 #include "postgres.h"
 
+#include <float.h>
+#include <math.h>
+
+/* Defined by Perl */
 #undef _
 
 #include "fmgr.h"
 #include "plperl.h"
 #include "plperl_helpers.h"
-
 #include "utils/jsonb.h"
 #include "utils/fmgrprotos.h"
 
@@ -188,46 +191,51 @@ SV_to_JsonbValue(SV *in, JsonbParseState **jsonb_state, bool is_elem)
 		case SVt_PVHV:
 			return HV_to_JsonbValue((HV *) in, jsonb_state);
 
-		case SVt_NV:
-		case SVt_IV:
-			{
-				char	   *str = sv2cstr(in);
-
-				/*
-				 * Use case-insensitive comparison because infinity
-				 * representation varies across Perl versions.
-				 */
-				if (pg_strcasecmp(str, "inf") == 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 (errmsg("cannot convert infinite value to jsonb"))));
-
-				out.type = jbvNumeric;
-				out.val.numeric = DatumGetNumeric(DirectFunctionCall3(numeric_in,
-																	  CStringGetDatum(str), 0, -1));
-			}
-			break;
-
 		case SVt_NULL:
 			out.type = jbvNull;
 			break;
 
-		case SVt_PV:			/* string */
-			out.type = jbvString;
-			out.val.string.val = sv2cstr(in);
-			out.val.string.len = strlen(out.val.string.val);
-			break;
-
 		default:
+			if (SvIOK(in))
+			{
+				IV			ival = SvIV(in);
 
-			/*
-			 * XXX It might be nice if we could include the Perl type in the
-			 * error message.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 (errmsg("cannot transform this Perl type to jsonb"))));
-			return NULL;
+				out.type = jbvNumeric;
+				out.val.numeric =
+					DatumGetNumeric(DirectFunctionCall1(int8_numeric,
+														Int64GetDatum((int64) ival)));
+			}
+			else if (SvNOK(in))
+			{
+				double		nval = SvNV(in);
+
+				if (isinf(nval))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 (errmsg("cannot convert infinite value to jsonb"))));
+
+				out.type = jbvNumeric;
+				out.val.numeric =
+					DatumGetNumeric(DirectFunctionCall1(float8_numeric,
+														Float8GetDatum(nval)));
+			}
+			else if (SvPOK(in))
+			{
+				out.type = jbvString;
+				out.val.string.val = sv2cstr(in);
+				out.val.string.len = strlen(out.val.string.val);
+			}
+			else
+			{
+				/*
+				 * XXX It might be nice if we could include the Perl type in
+				 * the error message.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 (errmsg("cannot transform this Perl type to jsonb"))));
+				return NULL;
+			}
 	}
 
 	/* Push result into 'jsonb_state' unless it is a raw scalar. */

@@ -34,14 +34,27 @@ $$;
 SELECT testSVToJsonb();
 
 
+-- unsupported (for now)
 CREATE FUNCTION testRegexpToJsonb() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+my $a = qr/foo/;
+return ($a);
+$$;
+
+SELECT testRegexpToJsonb();
+
+
+-- this revealed a bug in the original implementation
+CREATE FUNCTION testRegexpResultToJsonb() RETURNS jsonb
 LANGUAGE plperlu
 TRANSFORM FOR TYPE jsonb
 AS $$
 return ('1' =~ m(0\t2));
 $$;
 
-SELECT testRegexpToJsonb();
+SELECT testRegexpResultToJsonb();
 
 
 CREATE FUNCTION roundtrip(val jsonb) RETURNS jsonb
@@ -83,4 +96,5 @@ SELECT roundtrip('{"1": "string1"}');
 SELECT roundtrip('{"1": {"2": [3, 4, 5]}, "2": 3}');
 
 
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP EXTENSION plperlu CASCADE;

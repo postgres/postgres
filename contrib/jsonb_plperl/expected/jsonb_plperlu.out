@@ -39,15 +39,30 @@ SELECT testSVToJsonb();
  1
 (1 row)
 
+-- unsupported (for now)
 CREATE FUNCTION testRegexpToJsonb() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+my $a = qr/foo/;
+return ($a);
+$$;
+SELECT testRegexpToJsonb();
+ERROR:  cannot transform this Perl type to jsonb
+CONTEXT:  PL/Perl function "testregexptojsonb"
+-- this revealed a bug in the original implementation
+CREATE FUNCTION testRegexpResultToJsonb() RETURNS jsonb
 LANGUAGE plperlu
 TRANSFORM FOR TYPE jsonb
 AS $$
 return ('1' =~ m(0\t2));
 $$;
-SELECT testRegexpToJsonb();
-ERROR:  cannot transform this Perl type to jsonb
-CONTEXT:  PL/Perl function "testregexptojsonb"
+SELECT testRegexpResultToJsonb();
+ testregexpresulttojsonb 
+-------------------------
+ 0
+(1 row)
+
 CREATE FUNCTION roundtrip(val jsonb) RETURNS jsonb
 LANGUAGE plperlu
 TRANSFORM FOR TYPE jsonb
@@ -201,11 +216,6 @@ SELECT roundtrip('{"1": {"2": [3, 4, 5]}, "2": 3}');
  {"1": {"2": [3, 4, 5]}, "2": 3}
 (1 row)
 
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP EXTENSION plperlu CASCADE;
-NOTICE:  drop cascades to 6 other objects
-DETAIL:  drop cascades to extension jsonb_plperlu
-drop cascades to function testhvtojsonb()
-drop cascades to function testavtojsonb()
-drop cascades to function testsvtojsonb()
-drop cascades to function testregexptojsonb()
-drop cascades to function roundtrip(jsonb)
+NOTICE:  drop cascades to 7 other objects

@@ -11,6 +11,8 @@ DATA = jsonb_plperlu--1.0.sql jsonb_plperl--1.0.sql
 
 REGRESS = jsonb_plperl jsonb_plperlu
 
+SHLIB_LINK += $(filter -lm, $(LIBS))
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
