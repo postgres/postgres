@@ -7116,13 +7116,23 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 					  tbinfo->dobj.name);
 
 		resetPQExpBuffer(query);
-		appendPQExpBuffer(query,
-						  "SELECT tableoid, oid, conname, confrelid, "
-						  "pg_catalog.pg_get_constraintdef(oid) AS condef "
-						  "FROM pg_catalog.pg_constraint "
-						  "WHERE conrelid = '%u'::pg_catalog.oid "
-						  "AND contype = 'f'",
-						  tbinfo->dobj.catId.oid);
+		if (fout->remoteVersion >= 110000)
+			appendPQExpBuffer(query,
+							  "SELECT tableoid, oid, conname, confrelid, "
+							  "pg_catalog.pg_get_constraintdef(oid) AS condef "
+							  "FROM pg_catalog.pg_constraint "
+							  "WHERE conrelid = '%u'::pg_catalog.oid "
+							  "AND conparentid = 0 "
+							  "AND contype = 'f'",
+							  tbinfo->dobj.catId.oid);
+		else
+			appendPQExpBuffer(query,
+							  "SELECT tableoid, oid, conname, confrelid, "
+							  "pg_catalog.pg_get_constraintdef(oid) AS condef "
+							  "FROM pg_catalog.pg_constraint "
+							  "WHERE conrelid = '%u'::pg_catalog.oid "
+							  "AND contype = 'f'",
+							  tbinfo->dobj.catId.oid);
 		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 		ntups = PQntuples(res);
@@ -16374,18 +16384,28 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 	}
 	else if (coninfo->contype == 'f')
 	{
+		char *only;
+
+		/*
+		 * Foreign keys on partitioned tables are always declared as inheriting
+		 * to partitions; for all other cases, emit them as applying ONLY
+		 * directly to the named table, because that's how they work for
+		 * regular inherited tables.
+		 */
+		only = tbinfo->relkind == RELKIND_PARTITIONED_TABLE ? "" : "ONLY ";
+
 		/*
 		 * XXX Potentially wrap in a 'SET CONSTRAINTS OFF' block so that the
 		 * current table data is not processed
 		 */
-		appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
-						  fmtQualifiedDumpable(tbinfo));
+		appendPQExpBuffer(q, "ALTER TABLE %s%s\n",
+						  only, fmtQualifiedDumpable(tbinfo));
 		appendPQExpBuffer(q, "    ADD CONSTRAINT %s %s;\n",
 						  fmtId(coninfo->dobj.name),
 						  coninfo->condef);
 
-		appendPQExpBuffer(delq, "ALTER TABLE ONLY %s ",
-						  fmtQualifiedDumpable(tbinfo));
+		appendPQExpBuffer(delq, "ALTER TABLE %s%s ",
+						  only, fmtQualifiedDumpable(tbinfo));
 		appendPQExpBuffer(delq, "DROP CONSTRAINT %s;\n",
 						  fmtId(coninfo->dobj.name));
 

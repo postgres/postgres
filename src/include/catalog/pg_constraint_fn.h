@@ -27,6 +27,19 @@ typedef enum ConstraintCategory
 	CONSTRAINT_ASSERTION		/* for future expansion */
 } ConstraintCategory;
 
+/*
+ * Used when cloning a foreign key constraint to a partition, so that the
+ * caller can optionally set up a verification pass for it.
+ */
+typedef struct ClonedConstraint
+{
+	Oid		relid;
+	Oid		refrelid;
+	Oid		conindid;
+	Oid		conid;
+	Constraint *constraint;
+} ClonedConstraint;
+
 extern Oid CreateConstraintEntry(const char *constraintName,
 					  Oid constraintNamespace,
 					  char constraintType,
@@ -56,6 +69,9 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 					  int conInhCount,
 					  bool conNoInherit,
 					  bool is_internal);
+
+extern void CloneForeignKeyConstraints(Oid parentId, Oid relationId,
+						   List **cloned);
 
 extern void RemoveConstraintById(Oid conId);
 extern void RenameConstraintById(Oid conId, const char *newname);

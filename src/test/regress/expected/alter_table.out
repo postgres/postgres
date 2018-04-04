@@ -3305,10 +3305,6 @@ CREATE TABLE partitioned (
 	a int,
 	b int
 ) PARTITION BY RANGE (a, (a+b+1));
-ALTER TABLE partitioned ADD FOREIGN KEY (a) REFERENCES blah;
-ERROR:  foreign key constraints are not supported on partitioned tables
-LINE 1: ALTER TABLE partitioned ADD FOREIGN KEY (a) REFERENCES blah;
-                                    ^
 ALTER TABLE partitioned ADD EXCLUDE USING gist (a WITH &&);
 ERROR:  exclusion constraints are not supported on partitioned tables
 LINE 1: ALTER TABLE partitioned ADD EXCLUDE USING gist (a WITH &&);

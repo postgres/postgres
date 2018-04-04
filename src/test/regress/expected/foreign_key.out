@@ -1428,3 +1428,214 @@ alter table fktable2 drop constraint fktable2_f1_fkey;
 ERROR:  cannot ALTER TABLE "pktable2" because it has pending trigger events
 commit;
 drop table pktable2, fktable2;
+--
+-- Foreign keys and partitioned tables
+--
+-- partitioned table in the referenced side are not allowed
+CREATE TABLE fk_partitioned_pk (a int, b int, primary key (a, b))
+  PARTITION BY RANGE (a, b);
+-- verify with create table first ...
+CREATE TABLE fk_notpartitioned_fk (a int, b int,
+  FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk);
+ERROR:  cannot reference partitioned table "fk_partitioned_pk"
+-- and then with alter table.
+CREATE TABLE fk_notpartitioned_fk_2 (a int, b int);
+ALTER TABLE fk_notpartitioned_fk_2 ADD FOREIGN KEY (a, b)
+  REFERENCES fk_partitioned_pk;
+ERROR:  cannot reference partitioned table "fk_partitioned_pk"
+DROP TABLE fk_partitioned_pk, fk_notpartitioned_fk_2;
+-- Creation of a partitioned hierarchy with irregular definitions
+CREATE TABLE fk_notpartitioned_pk (fdrop1 int, a int, fdrop2 int, b int,
+  PRIMARY KEY (a, b));
+ALTER TABLE fk_notpartitioned_pk DROP COLUMN fdrop1, DROP COLUMN fdrop2;
+CREATE TABLE fk_partitioned_fk (b int, fdrop1 int, a int) PARTITION BY RANGE (a, b);
+ALTER TABLE fk_partitioned_fk DROP COLUMN fdrop1;
+CREATE TABLE fk_partitioned_fk_1 (fdrop1 int, fdrop2 int, a int, fdrop3 int, b int);
+ALTER TABLE fk_partitioned_fk_1 DROP COLUMN fdrop1, DROP COLUMN fdrop2, DROP COLUMN fdrop3;
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_1 FOR VALUES FROM (0,0) TO (1000,1000);
+ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk;
+CREATE TABLE fk_partitioned_fk_2 (b int, fdrop1 int, fdrop2 int, a int);
+ALTER TABLE fk_partitioned_fk_2 DROP COLUMN fdrop1, DROP COLUMN fdrop2;
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES FROM (1000,1000) TO (2000,2000);
+CREATE TABLE fk_partitioned_fk_3 (fdrop1 int, fdrop2 int, fdrop3 int, fdrop4 int, b int, a int)
+  PARTITION BY HASH (a);
+ALTER TABLE fk_partitioned_fk_3 DROP COLUMN fdrop1, DROP COLUMN fdrop2,
+	DROP COLUMN fdrop3, DROP COLUMN fdrop4;
+CREATE TABLE fk_partitioned_fk_3_0 PARTITION OF fk_partitioned_fk_3 FOR VALUES WITH (MODULUS 5, REMAINDER 0);
+CREATE TABLE fk_partitioned_fk_3_1 PARTITION OF fk_partitioned_fk_3 FOR VALUES WITH (MODULUS 5, REMAINDER 1);
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_3
+  FOR VALUES FROM (2000,2000) TO (3000,3000);
+-- these inserts, targetting both the partition directly as well as the
+-- partitioned table, should all fail
+INSERT INTO fk_partitioned_fk (a,b) VALUES (500, 501);
+ERROR:  insert or update on table "fk_partitioned_fk_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(500, 501) is not present in table "fk_notpartitioned_pk".
+INSERT INTO fk_partitioned_fk_1 (a,b) VALUES (500, 501);
+ERROR:  insert or update on table "fk_partitioned_fk_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(500, 501) is not present in table "fk_notpartitioned_pk".
+INSERT INTO fk_partitioned_fk (a,b) VALUES (1500, 1501);
+ERROR:  insert or update on table "fk_partitioned_fk_2" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(1500, 1501) is not present in table "fk_notpartitioned_pk".
+INSERT INTO fk_partitioned_fk_2 (a,b) VALUES (1500, 1501);
+ERROR:  insert or update on table "fk_partitioned_fk_2" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(1500, 1501) is not present in table "fk_notpartitioned_pk".
+INSERT INTO fk_partitioned_fk (a,b) VALUES (2500, 2502);
+ERROR:  insert or update on table "fk_partitioned_fk_3_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(2500, 2502) is not present in table "fk_notpartitioned_pk".
+INSERT INTO fk_partitioned_fk_3 (a,b) VALUES (2500, 2502);
+ERROR:  insert or update on table "fk_partitioned_fk_3_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(2500, 2502) is not present in table "fk_notpartitioned_pk".
+INSERT INTO fk_partitioned_fk (a,b) VALUES (2501, 2503);
+ERROR:  insert or update on table "fk_partitioned_fk_3_0" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(2501, 2503) is not present in table "fk_notpartitioned_pk".
+INSERT INTO fk_partitioned_fk_3 (a,b) VALUES (2501, 2503);
+ERROR:  insert or update on table "fk_partitioned_fk_3_0" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(2501, 2503) is not present in table "fk_notpartitioned_pk".
+-- but if we insert the values that make them valid, then they work
+INSERT INTO fk_notpartitioned_pk VALUES (500, 501), (1500, 1501),
+  (2500, 2502), (2501, 2503);
+INSERT INTO fk_partitioned_fk (a,b) VALUES (500, 501);
+INSERT INTO fk_partitioned_fk (a,b) VALUES (1500, 1501);
+INSERT INTO fk_partitioned_fk (a,b) VALUES (2500, 2502);
+INSERT INTO fk_partitioned_fk (a,b) VALUES (2501, 2503);
+-- this update fails because there is no referenced row
+UPDATE fk_partitioned_fk SET a = a + 1 WHERE a = 2501;
+ERROR:  insert or update on table "fk_partitioned_fk_3_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(2502, 2503) is not present in table "fk_notpartitioned_pk".
+-- but we can fix it thusly:
+INSERT INTO fk_notpartitioned_pk (a,b) VALUES (2502, 2503);
+UPDATE fk_partitioned_fk SET a = a + 1 WHERE a = 2501;
+-- these updates would leave lingering rows in the referencing table; disallow
+UPDATE fk_notpartitioned_pk SET b = 502 WHERE a = 500;
+ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_fkey" on table "fk_partitioned_fk"
+DETAIL:  Key (a, b)=(500, 501) is still referenced from table "fk_partitioned_fk".
+UPDATE fk_notpartitioned_pk SET b = 1502 WHERE a = 1500;
+ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_fkey" on table "fk_partitioned_fk"
+DETAIL:  Key (a, b)=(1500, 1501) is still referenced from table "fk_partitioned_fk".
+UPDATE fk_notpartitioned_pk SET b = 2504 WHERE a = 2500;
+ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_fkey" on table "fk_partitioned_fk"
+DETAIL:  Key (a, b)=(2500, 2502) is still referenced from table "fk_partitioned_fk".
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_fkey;
+-- done.
+DROP TABLE fk_notpartitioned_pk, fk_partitioned_fk;
+-- Test some other exotic foreign key features: MATCH SIMPLE, ON UPDATE/DELETE
+-- actions
+CREATE TABLE fk_notpartitioned_pk (a int, b int, primary key (a, b));
+CREATE TABLE fk_partitioned_fk (a int default 2501, b int default 142857) PARTITION BY LIST (a);
+CREATE TABLE fk_partitioned_fk_1 PARTITION OF fk_partitioned_fk FOR VALUES IN (NULL,500,501,502);
+ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
+  REFERENCES fk_notpartitioned_pk MATCH SIMPLE
+  ON DELETE SET NULL ON UPDATE SET NULL;
+CREATE TABLE fk_partitioned_fk_2 PARTITION OF fk_partitioned_fk FOR VALUES IN (1500,1502);
+CREATE TABLE fk_partitioned_fk_3 (a int, b int);
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_3 FOR VALUES IN (2500,2501,2502,2503);
+-- this insert fails
+INSERT INTO fk_partitioned_fk (a, b) VALUES (2502, 2503);
+ERROR:  insert or update on table "fk_partitioned_fk_3" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(2502, 2503) is not present in table "fk_notpartitioned_pk".
+INSERT INTO fk_partitioned_fk_3 (a, b) VALUES (2502, 2503);
+ERROR:  insert or update on table "fk_partitioned_fk_3" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(2502, 2503) is not present in table "fk_notpartitioned_pk".
+-- but since the FK is MATCH SIMPLE, this one doesn't
+INSERT INTO fk_partitioned_fk_3 (a, b) VALUES (2502, NULL);
+-- now create the referenced row ...
+INSERT INTO fk_notpartitioned_pk VALUES (2502, 2503);
+--- and now the same insert work
+INSERT INTO fk_partitioned_fk_3 (a, b) VALUES (2502, 2503);
+-- this always works
+INSERT INTO fk_partitioned_fk (a,b) VALUES (NULL, NULL);
+-- ON UPDATE SET NULL
+SELECT tableoid::regclass, a, b FROM fk_partitioned_fk WHERE b IS NULL ORDER BY a;
+      tableoid       |  a   | b 
+---------------------+------+---
+ fk_partitioned_fk_3 | 2502 |  
+ fk_partitioned_fk_1 |      |  
+(2 rows)
+
+UPDATE fk_notpartitioned_pk SET a = a + 1 WHERE a = 2502;
+SELECT tableoid::regclass, a, b FROM fk_partitioned_fk WHERE b IS NULL ORDER BY a;
+      tableoid       |  a   | b 
+---------------------+------+---
+ fk_partitioned_fk_3 | 2502 |  
+ fk_partitioned_fk_1 |      |  
+ fk_partitioned_fk_1 |      |  
+(3 rows)
+
+-- ON DELETE SET NULL
+INSERT INTO fk_partitioned_fk VALUES (2503, 2503);
+SELECT count(*) FROM fk_partitioned_fk WHERE a IS NULL;
+ count 
+-------
+     2
+(1 row)
+
+DELETE FROM fk_notpartitioned_pk;
+SELECT count(*) FROM fk_partitioned_fk WHERE a IS NULL;
+ count 
+-------
+     3
+(1 row)
+
+-- ON UPDATE/DELETE SET DEFAULT
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_fkey;
+ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
+  REFERENCES fk_notpartitioned_pk
+  ON DELETE SET DEFAULT ON UPDATE SET DEFAULT;
+INSERT INTO fk_notpartitioned_pk VALUES (2502, 2503);
+INSERT INTO fk_partitioned_fk_3 (a, b) VALUES (2502, 2503);
+-- this fails, because the defaults for the referencing table are not present
+-- in the referenced table:
+UPDATE fk_notpartitioned_pk SET a = 1500 WHERE a = 2502;
+ERROR:  insert or update on table "fk_partitioned_fk_3" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(2501, 142857) is not present in table "fk_notpartitioned_pk".
+-- but inserting the row we can make it work:
+INSERT INTO fk_notpartitioned_pk VALUES (2501, 142857);
+UPDATE fk_notpartitioned_pk SET a = 1500 WHERE a = 2502;
+SELECT * FROM fk_partitioned_fk WHERE b = 142857;
+  a   |   b    
+------+--------
+ 2501 | 142857
+(1 row)
+
+-- ON UPDATE/DELETE CASCADE
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_fkey;
+ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
+  REFERENCES fk_notpartitioned_pk
+  ON DELETE CASCADE ON UPDATE CASCADE;
+UPDATE fk_notpartitioned_pk SET a = 2502 WHERE a = 2501;
+SELECT * FROM fk_partitioned_fk WHERE b = 142857;
+  a   |   b    
+------+--------
+ 2502 | 142857
+(1 row)
+
+-- Now you see it ...
+SELECT * FROM fk_partitioned_fk WHERE b = 142857;
+  a   |   b    
+------+--------
+ 2502 | 142857
+(1 row)
+
+DELETE FROM fk_notpartitioned_pk WHERE b = 142857;
+-- now you don't.
+SELECT * FROM fk_partitioned_fk WHERE a = 142857;
+ a | b 
+---+---
+(0 rows)
+
+-- verify that DROP works
+DROP TABLE fk_partitioned_fk_2;
+-- verify that attaching a table checks that the existing data satisfies the
+-- constraint
+CREATE TABLE fk_partitioned_fk_2 (a int, b int) PARTITION BY RANGE (b);
+CREATE TABLE fk_partitioned_fk_2_1 PARTITION OF fk_partitioned_fk_2 FOR VALUES FROM (0) TO (1000);
+CREATE TABLE fk_partitioned_fk_2_2 PARTITION OF fk_partitioned_fk_2 FOR VALUES FROM (1000) TO (2000);
+INSERT INTO fk_partitioned_fk_2 VALUES (1600, 601), (1600, 1601);
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2
+  FOR VALUES IN (1600);
+ERROR:  insert or update on table "fk_partitioned_fk_2" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+DETAIL:  Key (a, b)=(1600, 601) is not present in table "fk_notpartitioned_pk".
+INSERT INTO fk_notpartitioned_pk VALUES (1600, 601), (1600, 1601);
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2
+  FOR VALUES IN (1600);
+-- leave these tables around intentionally

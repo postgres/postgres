@@ -74,6 +74,10 @@ extern void find_composite_type_dependencies(Oid typeOid,
 
 extern void check_of_type(HeapTuple typetuple);
 
+extern void createForeignKeyTriggers(Relation rel, Oid refRelOid,
+						 Constraint *fkconstraint, Oid constraintOid,
+						 Oid indexOid, bool create_action);
+
 extern void register_on_commit_action(Oid relid, OnCommitAction action);
 extern void remove_on_commit_action(Oid relid);
 

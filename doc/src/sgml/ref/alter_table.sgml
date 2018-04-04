@@ -368,7 +368,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       specified check constraints).  But the
       database will not assume that the constraint holds for all rows in
       the table, until it is validated by using the <literal>VALIDATE
-      CONSTRAINT</literal> option.
+      CONSTRAINT</literal> option.  Foreign key constraints on partitioned
+      tables may not be declared <literal>NOT VALID</literal> at present.
      </para>
 
      <para>

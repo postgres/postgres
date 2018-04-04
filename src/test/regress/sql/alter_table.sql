@@ -2035,7 +2035,6 @@ CREATE TABLE partitioned (
 	a int,
 	b int
 ) PARTITION BY RANGE (a, (a+b+1));
-ALTER TABLE partitioned ADD FOREIGN KEY (a) REFERENCES blah;
 ALTER TABLE partitioned ADD EXCLUDE USING gist (a WITH &&);
 
 -- cannot drop column that is part of the partition key
