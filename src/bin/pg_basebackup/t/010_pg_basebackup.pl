@@ -406,19 +406,25 @@ like(
 my $checksum = $node->safe_psql('postgres', 'SHOW data_checksums;');
 is($checksum, 'on', 'checksums are enabled');
 
-# get relfilenodes of relations to corrupt
-my $pg_class = $node->safe_psql('postgres',
-	q{SELECT pg_relation_filepath('pg_class')}
+# create tables to corrupt and get their relfilenodes
+my $file_corrupt1 = $node->safe_psql('postgres',
+        q{SELECT a INTO corrupt1 FROM generate_series(1,10000) AS a; ALTER TABLE corrupt1 SET (autovacuum_enabled=false); SELECT pg_relation_filepath('corrupt1')}
 );
-my $pg_index = $node->safe_psql('postgres',
-	q{SELECT pg_relation_filepath('pg_index')}
+my $file_corrupt2 = $node->safe_psql('postgres',
+        q{SELECT b INTO corrupt2 FROM generate_series(1,2) AS b; ALTER TABLE corrupt2 SET (autovacuum_enabled=false); SELECT pg_relation_filepath('corrupt2')}
 );
 
+# set page header and block sizes
+my $pageheader_size = 24;
+my $block_size = $node->safe_psql('postgres', 'SHOW block_size;');
+
 # induce corruption
-open $file, '+<', "$pgdata/$pg_class";
-seek($file, 4000, 0);
+system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
+open $file, '+<', "$pgdata/$file_corrupt1";
+seek($file, $pageheader_size, 0);
 syswrite($file, '\0\0\0\0\0\0\0\0\0');
 close $file;
+system_or_bail 'pg_ctl', '-D', $pgdata, 'start';
 
 $node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt"],
 	1,
@@ -428,13 +434,15 @@ $node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt"],
 );
 
 # induce further corruption in 5 more blocks
-open $file, '+<', "$pgdata/$pg_class";
-my @offsets = (12192, 20384, 28576, 36768, 44960);
-foreach my $offset (@offsets) {
+system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
+open $file, '+<', "$pgdata/$file_corrupt1";
+for my $i ( 1..5 ) {
+  my $offset = $pageheader_size + $i * $block_size;
   seek($file, $offset, 0);
   syswrite($file, '\0\0\0\0\0\0\0\0\0');
 }
 close $file;
+system_or_bail 'pg_ctl', '-D', $pgdata, 'start';
 
 $node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt2"],
         1,
@@ -444,10 +452,12 @@ $node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt2"],
 );
 
 # induce corruption in a second file
-open $file, '+<', "$pgdata/$pg_index";
+system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
+open $file, '+<', "$pgdata/$file_corrupt2";
 seek($file, 4000, 0);
 syswrite($file, '\0\0\0\0\0\0\0\0\0');
 close $file;
+system_or_bail 'pg_ctl', '-D', $pgdata, 'start';
 
 $node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt3"],
         1,
@@ -460,3 +470,6 @@ $node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt3"],
 $node->command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backup_corrupt4", '-k' ],
 	'pg_basebackup with -k does not report checksum mismatch');
+
+$node->safe_psql('postgres', "DROP TABLE corrupt1;");
+$node->safe_psql('postgres', "DROP TABLE corrupt2;");
