@@ -893,13 +893,13 @@
 /* Use replacement snprintf() functions. */
 #undef USE_REPL_SNPRINTF
 
-/* Define to 1 to use Intel SSE 4.2 CRC instructions with a runtime check. */
+/* Define to 1 to use software CRC-32C implementation (slicing-by-8). */
 #undef USE_SLICING_BY_8_CRC32C
 
 /* Define to 1 use Intel SSE 4.2 CRC instructions. */
 #undef USE_SSE42_CRC32C
 
-/* Define to 1 to use Intel SSSE 4.2 CRC instructions with a runtime check. */
+/* Define to 1 to use Intel SSE 4.2 CRC instructions with a runtime check. */
 #undef USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
 
 /* Define to build with systemd support. (--with-systemd) */
