@@ -646,6 +646,7 @@ MSGMERGE
 MSGFMT_FLAGS
 MSGFMT
 PG_CRC32C_OBJS
+CFLAGS_ARMV8_CRC32C
 CFLAGS_SSE42
 have_win32_dbghelp
 HAVE_IPV6
@@ -17254,28 +17255,175 @@ if ac_fn_c_try_compile "$LINENO"; then :
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
+# Check for ARMv8 CRC Extension intrinsics to do CRC calculations.
+#
+# First check if __crc32c* intrinsics can be used with the default compiler
+# flags. If not, check if adding -march=armv8-a+crc flag helps.
+# CFLAGS_ARMV8_CRC32C is set if the extra flag is required.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=" >&5
+$as_echo_n "checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=... " >&6; }
+if ${pgac_cv_armv8_crc32c_intrinsics_+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS "
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <arm_acle.h>
+int
+main ()
+{
+unsigned int crc = 0;
+   crc = __crc32cb(crc, 0);
+   crc = __crc32ch(crc, 0);
+   crc = __crc32cw(crc, 0);
+   crc = __crc32cd(crc, 0);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_armv8_crc32c_intrinsics_=yes
+else
+  pgac_cv_armv8_crc32c_intrinsics_=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_armv8_crc32c_intrinsics_" >&5
+$as_echo "$pgac_cv_armv8_crc32c_intrinsics_" >&6; }
+if test x"$pgac_cv_armv8_crc32c_intrinsics_" = x"yes"; then
+  CFLAGS_ARMV8_CRC32C=""
+  pgac_armv8_crc32c_intrinsics=yes
+fi
+
+if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=-march=armv8-a+crc" >&5
+$as_echo_n "checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=-march=armv8-a+crc... " >&6; }
+if ${pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -march=armv8-a+crc"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <arm_acle.h>
+int
+main ()
+{
+unsigned int crc = 0;
+   crc = __crc32cb(crc, 0);
+   crc = __crc32ch(crc, 0);
+   crc = __crc32cw(crc, 0);
+   crc = __crc32cd(crc, 0);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc=yes
+else
+  pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc" >&5
+$as_echo "$pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc" >&6; }
+if test x"$pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc" = x"yes"; then
+  CFLAGS_ARMV8_CRC32C="-march=armv8-a+crc"
+  pgac_armv8_crc32c_intrinsics=yes
+fi
+
+fi
+
+
+# In order to detect at runtime, if the ARM CRC Extension is available,
+# we will do "getauxval(AT_HWCAP) & HWCAP_CRC32". Check if we have
+# everything we need for that.
+for ac_func in getauxval
+do :
+  ac_fn_c_check_func "$LINENO" "getauxval" "ac_cv_func_getauxval"
+if test "x$ac_cv_func_getauxval" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GETAUXVAL 1
+_ACEOF
+
+fi
+done
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+
+int
+main ()
+{
+
+#ifndef AT_HWCAP
+#error AT_HWCAP not defined
+#endif
+#ifndef HWCAP_CRC32
+#error HWCAP_CRC32 not defined
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  HAVE_HWCAP_CRC32=1
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
 # Select CRC-32C implementation.
 #
-# If we are targeting a processor that has SSE 4.2 instructions, we can use the
-# special CRC instructions for calculating CRC-32C. If we're not targeting such
-# a processor, but we can nevertheless produce code that uses the SSE
-# intrinsics, perhaps with some extra CFLAGS, compile both implementations and
-# select which one to use at runtime, depending on whether SSE 4.2 is supported
-# by the processor we're running on.
+# If we are targeting a processor that has Intel SSE 4.2 instructions, we can
+# use the special CRC instructions for calculating CRC-32C. If we're not
+# targeting such a processor, but we can nevertheless produce code that uses
+# the SSE intrinsics, perhaps with some extra CFLAGS, compile both
+# implementations and select which one to use at runtime, depending on whether
+# SSE 4.2 is supported by the processor we're running on.
+#
+# Similarly, if we are targeting an ARM processor that has the CRC
+# instructions that are part of the ARMv8 CRC Extension, use them. And if
+# we're not targeting such a processor, but can nevertheless produce code that
+# uses the CRC instructions, compile both, and select at runtime.
 #
 # You can override this logic by setting the appropriate USE_*_CRC32 flag to 1
 # in the template or configure command line.
-if test x"$USE_SSE42_CRC32C" = x"" && test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"" && test x"$USE_SLICING_BY_8_CRC32C" = x""; then
+if test x"$USE_SLICING_BY_8_CRC32C" = x"" && test x"$USE_SSE42_CRC32C" = x"" && test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"" && test x"$USE_ARMV8_CRC32C" = x"" && test x"$USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK" = x""; then
+  # Use Intel SSE 4.2 if available.
   if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && test x"$SSE4_2_TARGETED" = x"1" ; then
     USE_SSE42_CRC32C=1
   else
-    # the CPUID instruction is needed for the runtime check.
+    # Intel SSE 4.2, with runtime check? The CPUID instruction is needed for
+    # the runtime check.
     if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && (test x"$pgac_cv__get_cpuid" = x"yes" || test x"$pgac_cv__cpuid" = x"yes"); then
       USE_SSE42_CRC32C_WITH_RUNTIME_CHECK=1
     else
-      # fall back to slicing-by-8 algorithm which doesn't require any special
-      # CPU support.
-      USE_SLICING_BY_8_CRC32C=1
+      # Use ARM CRC Extension if available.
+      if test x"$pgac_armv8_crc32c_intrinsics" = x"yes" && test x"$CFLAGS_ARMV8_CRC32C" = x""; then
+        USE_ARMV8_CRC32C=1
+      else
+        # ARM CRC Extension, with runtime check? The getauxval() function and
+        # HWCAP_CRC32 are needed for the runtime check.
+        if test x"$pgac_armv8_crc32c_intrinsics" = x"yes" && test x"$ac_cv_func_getauxval" = x"yes" && test x"$HAVE_HWCAP_CRC32" = x"1"; then
+          USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK=1
+        else
+          # fall back to slicing-by-8 algorithm, which doesn't require any
+          # special CPU support.
+          USE_SLICING_BY_8_CRC32C=1
+	fi
+      fi
     fi
   fi
 fi
@@ -17295,16 +17443,34 @@ else
 
 $as_echo "#define USE_SSE42_CRC32C_WITH_RUNTIME_CHECK 1" >>confdefs.h
 
-    PG_CRC32C_OBJS="pg_crc32c_sse42.o pg_crc32c_sb8.o pg_crc32c_choose.o"
+    PG_CRC32C_OBJS="pg_crc32c_sse42.o pg_crc32c_sb8.o pg_crc32c_sse42_choose.o"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: SSE 4.2 with runtime check" >&5
 $as_echo "SSE 4.2 with runtime check" >&6; }
   else
+    if test x"$USE_ARMV8_CRC32C" = x"1"; then
+
+$as_echo "#define USE_ARMV8_CRC32C 1" >>confdefs.h
+
+      PG_CRC32C_OBJS="pg_crc32c_armv8.o"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: ARMv8 CRC instructions" >&5
+$as_echo "ARMv8 CRC instructions" >&6; }
+    else
+      if test x"$USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK" = x"1"; then
+
+$as_echo "#define USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK 1" >>confdefs.h
+
+        PG_CRC32C_OBJS="pg_crc32c_armv8.o pg_crc32c_sb8.o pg_crc32c_armv8_choose.o"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: ARMv8 CRC instructions with runtime check" >&5
+$as_echo "ARMv8 CRC instructions with runtime check" >&6; }
+      else
 
 $as_echo "#define USE_SLICING_BY_8_CRC32C 1" >>confdefs.h
 
-    PG_CRC32C_OBJS="pg_crc32c_sb8.o"
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: slicing-by-8" >&5
+        PG_CRC32C_OBJS="pg_crc32c_sb8.o"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: slicing-by-8" >&5
 $as_echo "slicing-by-8" >&6; }
+      fi
+    fi
   fi
 fi
 

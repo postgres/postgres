@@ -239,6 +239,9 @@
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
+/* Define to 1 if you have the `getauxval' function. */
+#undef HAVE_GETAUXVAL
+
 /* Define to 1 if you have the `gethostbyname_r' function. */
 #undef HAVE_GETHOSTBYNAME_R
 
@@ -841,6 +844,12 @@
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
+
+/* Define to 1 to use ARMv8 CRC Extension. */
+#undef USE_ARMV8_CRC32C
+
+/* Define to 1 to use ARMv8 CRC Extension with a runtime check. */
+#undef USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK
 
 /* Define to 1 to build with assertion checks. (--enable-cassert) */
 #undef USE_ASSERT_CHECKING

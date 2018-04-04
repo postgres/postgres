@@ -2003,28 +2003,73 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
 #endif
 ])], [SSE4_2_TARGETED=1])
 
+# Check for ARMv8 CRC Extension intrinsics to do CRC calculations.
+#
+# First check if __crc32c* intrinsics can be used with the default compiler
+# flags. If not, check if adding -march=armv8-a+crc flag helps.
+# CFLAGS_ARMV8_CRC32C is set if the extra flag is required.
+PGAC_ARMV8_CRC32C_INTRINSICS([])
+if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
+  PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc])
+fi
+AC_SUBST(CFLAGS_ARMV8_CRC32C)
+
+# In order to detect at runtime, if the ARM CRC Extension is available,
+# we will do "getauxval(AT_HWCAP) & HWCAP_CRC32". Check if we have
+# everything we need for that.
+AC_CHECK_FUNCS([getauxval])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+], [
+#ifndef AT_HWCAP
+#error AT_HWCAP not defined
+#endif
+#ifndef HWCAP_CRC32
+#error HWCAP_CRC32 not defined
+#endif
+])], [HAVE_HWCAP_CRC32=1])
+
 # Select CRC-32C implementation.
 #
-# If we are targeting a processor that has SSE 4.2 instructions, we can use the
-# special CRC instructions for calculating CRC-32C. If we're not targeting such
-# a processor, but we can nevertheless produce code that uses the SSE
-# intrinsics, perhaps with some extra CFLAGS, compile both implementations and
-# select which one to use at runtime, depending on whether SSE 4.2 is supported
-# by the processor we're running on.
+# If we are targeting a processor that has Intel SSE 4.2 instructions, we can
+# use the special CRC instructions for calculating CRC-32C. If we're not
+# targeting such a processor, but we can nevertheless produce code that uses
+# the SSE intrinsics, perhaps with some extra CFLAGS, compile both
+# implementations and select which one to use at runtime, depending on whether
+# SSE 4.2 is supported by the processor we're running on.
+#
+# Similarly, if we are targeting an ARM processor that has the CRC
+# instructions that are part of the ARMv8 CRC Extension, use them. And if
+# we're not targeting such a processor, but can nevertheless produce code that
+# uses the CRC instructions, compile both, and select at runtime.
 #
 # You can override this logic by setting the appropriate USE_*_CRC32 flag to 1
 # in the template or configure command line.
-if test x"$USE_SSE42_CRC32C" = x"" && test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"" && test x"$USE_SLICING_BY_8_CRC32C" = x""; then
+if test x"$USE_SLICING_BY_8_CRC32C" = x"" && test x"$USE_SSE42_CRC32C" = x"" && test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"" && test x"$USE_ARMV8_CRC32C" = x"" && test x"$USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK" = x""; then
+  # Use Intel SSE 4.2 if available.
   if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && test x"$SSE4_2_TARGETED" = x"1" ; then
     USE_SSE42_CRC32C=1
   else
-    # the CPUID instruction is needed for the runtime check.
+    # Intel SSE 4.2, with runtime check? The CPUID instruction is needed for
+    # the runtime check.
     if test x"$pgac_sse42_crc32_intrinsics" = x"yes" && (test x"$pgac_cv__get_cpuid" = x"yes" || test x"$pgac_cv__cpuid" = x"yes"); then
       USE_SSE42_CRC32C_WITH_RUNTIME_CHECK=1
     else
-      # fall back to slicing-by-8 algorithm which doesn't require any special
-      # CPU support.
-      USE_SLICING_BY_8_CRC32C=1
+      # Use ARM CRC Extension if available.
+      if test x"$pgac_armv8_crc32c_intrinsics" = x"yes" && test x"$CFLAGS_ARMV8_CRC32C" = x""; then
+        USE_ARMV8_CRC32C=1
+      else
+        # ARM CRC Extension, with runtime check? The getauxval() function and
+        # HWCAP_CRC32 are needed for the runtime check.
+        if test x"$pgac_armv8_crc32c_intrinsics" = x"yes" && test x"$ac_cv_func_getauxval" = x"yes" && test x"$HAVE_HWCAP_CRC32" = x"1"; then
+          USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK=1
+        else
+          # fall back to slicing-by-8 algorithm, which doesn't require any
+          # special CPU support.
+          USE_SLICING_BY_8_CRC32C=1
+	fi
+      fi
     fi
   fi
 fi
@@ -2038,12 +2083,24 @@ if test x"$USE_SSE42_CRC32C" = x"1"; then
 else
   if test x"$USE_SSE42_CRC32C_WITH_RUNTIME_CHECK" = x"1"; then
     AC_DEFINE(USE_SSE42_CRC32C_WITH_RUNTIME_CHECK, 1, [Define to 1 to use Intel SSE 4.2 CRC instructions with a runtime check.])
-    PG_CRC32C_OBJS="pg_crc32c_sse42.o pg_crc32c_sb8.o pg_crc32c_choose.o"
+    PG_CRC32C_OBJS="pg_crc32c_sse42.o pg_crc32c_sb8.o pg_crc32c_sse42_choose.o"
     AC_MSG_RESULT(SSE 4.2 with runtime check)
   else
-    AC_DEFINE(USE_SLICING_BY_8_CRC32C, 1, [Define to 1 to use software CRC-32C implementation (slicing-by-8).])
-    PG_CRC32C_OBJS="pg_crc32c_sb8.o"
-    AC_MSG_RESULT(slicing-by-8)
+    if test x"$USE_ARMV8_CRC32C" = x"1"; then
+      AC_DEFINE(USE_ARMV8_CRC32C, 1, [Define to 1 to use ARMv8 CRC Extension.])
+      PG_CRC32C_OBJS="pg_crc32c_armv8.o"
+      AC_MSG_RESULT(ARMv8 CRC instructions)
+    else
+      if test x"$USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK" = x"1"; then
+        AC_DEFINE(USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK, 1, [Define to 1 to use ARMv8 CRC Extension with a runtime check.])
+        PG_CRC32C_OBJS="pg_crc32c_armv8.o pg_crc32c_sb8.o pg_crc32c_armv8_choose.o"
+        AC_MSG_RESULT(ARMv8 CRC instructions with runtime check)
+      else
+        AC_DEFINE(USE_SLICING_BY_8_CRC32C, 1, [Define to 1 to use software CRC-32C implementation (slicing-by-8).])
+        PG_CRC32C_OBJS="pg_crc32c_sb8.o"
+        AC_MSG_RESULT(slicing-by-8)
+      fi
+    fi
   fi
 fi
 AC_SUBST(PG_CRC32C_OBJS)

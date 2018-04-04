@@ -667,3 +667,37 @@ if test x"$Ac_cachevar" = x"yes"; then
 fi
 undefine([Ac_cachevar])dnl
 ])# PGAC_SSE42_CRC32_INTRINSICS
+
+
+# PGAC_ARMV8_CRC32C_INTRINSICS
+# -----------------------
+# Check if the compiler supports the CRC32C instructions using the __crc32cb,
+# __crc32ch, __crc32cw, and __crc32cd intrinsic functions. These instructions
+# were first introduced in ARMv8 in the optional CRC Extension, and became
+# mandatory in ARMv8.1.
+#
+# An optional compiler flag can be passed as argument (e.g.
+# -march=armv8-a+crc). If the intrinsics are supported, sets
+# pgac_armv8_crc32c_intrinsics, and CFLAGS_ARMV8_CRC32C.
+AC_DEFUN([PGAC_ARMV8_CRC32C_INTRINSICS],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_armv8_crc32c_intrinsics_$1])])dnl
+AC_CACHE_CHECK([for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=$1], [Ac_cachevar],
+[pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS $1"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <arm_acle.h>],
+  [unsigned int crc = 0;
+   crc = __crc32cb(crc, 0);
+   crc = __crc32ch(crc, 0);
+   crc = __crc32cw(crc, 0);
+   crc = __crc32cd(crc, 0);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;])],
+  [Ac_cachevar=yes],
+  [Ac_cachevar=no])
+CFLAGS="$pgac_save_CFLAGS"])
+if test x"$Ac_cachevar" = x"yes"; then
+  CFLAGS_ARMV8_CRC32C="$1"
+  pgac_armv8_crc32c_intrinsics=yes
+fi
+undefine([Ac_cachevar])dnl
+])# PGAC_ARMV8_CRC32C_INTRINSICS

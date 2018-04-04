@@ -65,6 +65,10 @@ thread.o: CFLAGS+=$(PTHREAD_CFLAGS)
 pg_crc32c_sse42.o: CFLAGS+=$(CFLAGS_SSE42)
 pg_crc32c_sse42_srv.o: CFLAGS+=$(CFLAGS_SSE42)
 
+# pg_crc32c_armv8.o and its _srv.o version need CFLAGS_ARMV8_CRC32C
+pg_crc32c_armv8.o: CFLAGS+=$(CFLAGS_ARMV8_CRC32C)
+pg_crc32c_armv8_srv.o: CFLAGS+=$(CFLAGS_ARMV8_CRC32C)
+
 #
 # Server versions of object files
 #

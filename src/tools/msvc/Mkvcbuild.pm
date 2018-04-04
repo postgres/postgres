@@ -101,7 +101,7 @@ sub mkvcbuild
 
 	if ($vsVersion >= '9.00')
 	{
-		push(@pgportfiles, 'pg_crc32c_choose.c');
+		push(@pgportfiles, 'pg_crc32c_sse42_choose.c');
 		push(@pgportfiles, 'pg_crc32c_sse42.c');
 		push(@pgportfiles, 'pg_crc32c_sb8.c');
 	}
