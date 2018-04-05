@@ -1902,12 +1902,6 @@ select websearch_to_tsquery('simple', 'abc orange');
  'abc' & 'orange'
 (1 row)
 
-select websearch_to_tsquery('simple', 'abc orтест');
- websearch_to_tsquery 
-----------------------
- 'abc' & 'orтест'
-(1 row)
-
 select websearch_to_tsquery('simple', 'abc OR1234');
  websearch_to_tsquery 
 ----------------------

@@ -591,7 +591,6 @@ select websearch_to_tsquery('simple', 'fat or ');
 
 -- ... but not here
 select websearch_to_tsquery('simple', 'abc orange');
-select websearch_to_tsquery('simple', 'abc orтест');
 select websearch_to_tsquery('simple', 'abc OR1234');
 select websearch_to_tsquery('simple', 'abc or-abc');
 select websearch_to_tsquery('simple', 'abc OR_abc');
