@@ -378,7 +378,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     <term><literal>vacuum_cleanup_index_scale_factor</literal></term>
     <listitem>
     <para>
-      Per-table value for <xref linkend="guc-vacuum-cleanup-index-scale-factor"/>.
+      Per-index value for <xref linkend="guc-vacuum-cleanup-index-scale-factor"/>.
     </para>
     </listitem>
    </varlistentry>
