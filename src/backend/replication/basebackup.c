@@ -1383,7 +1383,7 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 
 	_tarWriteHeader(tarfilename, NULL, statbuf, false);
 
-	if (!noverify_checksums && DataChecksumsEnabled())
+	if (!noverify_checksums && DataChecksumsNeedVerify())
 	{
 		char	   *filename;
 

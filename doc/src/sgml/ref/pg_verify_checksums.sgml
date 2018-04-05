@@ -1,0 +1,112 @@
+<!--
+doc/src/sgml/ref/pg_verify_checksums.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="pgverifychecksums">
+ <indexterm zone="pgverifychecksums">
+  <primary>pg_verify_checksums</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle><application>pg_verify_checksums</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_verify_checksums</refname>
+  <refpurpose>verify data checksums in an offline <productname>PostgreSQL</productname> database cluster</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_verify_checksums</command>
+   <arg choice="opt"><replaceable class="parameter">option</replaceable></arg>
+   <arg choice="opt"><arg choice="opt"><option>-D</option></arg> <replaceable class="parameter">datadir</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="r1-app-pg_verify_checksums-1">
+  <title>Description</title>
+  <para>
+   <command>pg_verify_checksums</command> verifies data checksums in a PostgreSQL
+   cluster. It must be run against a cluster that's offline.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+   <para>
+    The following command-line options are available:
+
+    <variablelist>
+
+     <varlistentry>
+      <term><option>-r <replaceable>relfilenode</replaceable></option></term>
+      <listitem>
+       <para>
+        Only validate checksums in the relation with specified relfilenode.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-f</option></term>
+      <listitem>
+       <para>
+        Force check even if checksums are disabled on cluster.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-d</option></term>
+      <listitem>
+       <para>
+        Enable debug output. Lists all checked blocks and their checksum.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
+       <listitem>
+       <para>
+       Print the <application>pg_verify_checksums</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-?</option></term>
+      <term><option>--help</option></term>
+       <listitem>
+        <para>
+         Show help about <application>pg_verify_checksums</application> command line
+         arguments, and exit.
+        </para>
+       </listitem>
+      </varlistentry>
+    </variablelist>
+   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+  <para>
+    Can only be run when the server is offline.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="checksums"/></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

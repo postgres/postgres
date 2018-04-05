@@ -5583,6 +5583,11 @@ DESCR("pg_controldata recovery state information as a function");
 DATA(insert OID = 3444 ( pg_control_init PGNSP PGUID 12 1 0 0 0 f f f t f v s 0 0 2249 "" "{23,23,23,23,23,23,23,23,23,16,16,23}" "{o,o,o,o,o,o,o,o,o,o,o,o}" "{max_data_alignment,database_block_size,blocks_per_segment,wal_block_size,bytes_per_wal_segment,max_identifier_length,max_index_columns,max_toast_chunk_size,large_object_chunk_size,float4_pass_by_value,float8_pass_by_value,data_page_checksum_version}" _null_ _null_ pg_control_init _null_ _null_ _null_ ));
 DESCR("pg_controldata init state information as a function");
 
+DATA(insert OID = 3996 ( pg_disable_data_checksums		PGNSP PGUID 12 1 0 0 0 f f f t f v s 0 0 2278 "" _null_ _null_ _null_ _null_ _null_ disable_data_checksums _null_ _null_ _null_ ));
+DESCR("disable data checksums");
+DATA(insert OID = 3998 ( pg_enable_data_checksums		PGNSP PGUID 12 1 0 0 0 f f f t f v s 2 0 2278 "23 23" _null_ _null_ "{cost_delay,cost_limit}" _null_ _null_ enable_data_checksums _null_ _null_ _null_ ));
+DESCR("enable data checksums");
+
 /* collation management functions */
 DATA(insert OID = 3445 ( pg_import_system_collations PGNSP PGUID 12 100 0 0 0 f f f t f v u 1 0 23 "4089" _null_ _null_ _null_ _null_ _null_ pg_import_system_collations _null_ _null_ _null_ ));
 DESCR("import collations from operating system");

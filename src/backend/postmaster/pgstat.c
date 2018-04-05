@@ -4125,6 +4125,11 @@ pgstat_get_backend_desc(BackendType backendType)
 		case B_WAL_WRITER:
 			backendDesc = "walwriter";
 			break;
+		case B_CHECKSUMHELPER_LAUNCHER:
+			backendDesc = "checksumhelper launcher";
+			break;
+		case B_CHECKSUMHELPER_WORKER:
+			backendDesc = "checksumhelper worker";
 	}
 
 	return backendDesc;

@@ -25,6 +25,7 @@
 #include "lib/stringinfo.h"
 #include "pgtime.h"
 #include "storage/block.h"
+#include "storage/checksum.h"
 #include "storage/relfilenode.h"
 
 
@@ -239,6 +240,12 @@ typedef struct xl_restore_point
 	TimestampTz rp_time;
 	char		rp_name[MAXFNAMELEN];
 } xl_restore_point;
+
+/* Information logged when checksum level is changed */
+typedef struct xl_checksum_state
+{
+	ChecksumType new_checksumtype;
+}			xl_checksum_state;
 
 /* End of recovery mark, when we don't do an END_OF_RECOVERY checkpoint */
 typedef struct xl_end_of_recovery
