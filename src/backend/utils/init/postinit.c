@@ -66,7 +66,7 @@
 static HeapTuple GetDatabaseTuple(const char *dbname);
 static HeapTuple GetDatabaseTupleByOid(Oid dboid);
 static void PerformAuthentication(Port *port);
-static void CheckMyDatabase(const char *name, bool am_superuser);
+static void CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connections);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
 static void StatementTimeoutHandler(void);
@@ -290,7 +290,7 @@ PerformAuthentication(Port *port)
  * CheckMyDatabase -- fetch information from the pg_database entry for our DB
  */
 static void
-CheckMyDatabase(const char *name, bool am_superuser)
+CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connections)
 {
 	HeapTuple	tup;
 	Form_pg_database dbform;
@@ -326,7 +326,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 		/*
 		 * Check that the database is currently allowing connections.
 		 */
-		if (!dbform->datallowconn)
+		if (!dbform->datallowconn && !override_allow_connections)
 			ereport(FATAL,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("database \"%s\" is not currently accepting connections",
@@ -563,7 +563,7 @@ BaseInit(void)
  */
 void
 InitPostgres(const char *in_dbname, Oid dboid, const char *username,
-			 Oid useroid, char *out_dbname)
+			 Oid useroid, char *out_dbname, bool override_allow_connections)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
 	bool		am_superuser;
@@ -1006,7 +1006,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * user is a superuser, so the above stuff has to happen first.)
 	 */
 	if (!bootstrap)
-		CheckMyDatabase(dbname, am_superuser);
+		CheckMyDatabase(dbname, am_superuser, override_allow_connections);
 
 	/*
 	 * Now process any command-line switches and any additional GUC variable

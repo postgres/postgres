@@ -445,7 +445,7 @@ autoprewarm_database_main(Datum main_arg)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not map dynamic shared memory segment")));
-	BackgroundWorkerInitializeConnectionByOid(apw_state->database, InvalidOid);
+	BackgroundWorkerInitializeConnectionByOid(apw_state->database, InvalidOid, 0);
 	block_info = (BlockInfoRecord *) dsm_segment_address(seg);
 	pos = apw_state->prewarm_start_idx;
 

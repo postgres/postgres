@@ -901,7 +901,7 @@ ApplyLauncherMain(Datum main_arg)
 	 * Establish connection to nailed catalogs (we only ever access
 	 * pg_subscription).
 	 */
-	BackgroundWorkerInitializeConnection(NULL, NULL);
+	BackgroundWorkerInitializeConnection(NULL, NULL, 0);
 
 	/* Enter main loop */
 	for (;;)

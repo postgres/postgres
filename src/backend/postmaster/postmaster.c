@@ -5582,7 +5582,7 @@ MaxLivePostmasterChildren(void)
  * Connect background worker to a database.
  */
 void
-BackgroundWorkerInitializeConnection(const char *dbname, const char *username)
+BackgroundWorkerInitializeConnection(const char *dbname, const char *username, uint32 flags)
 {
 	BackgroundWorker *worker = MyBgworkerEntry;
 
@@ -5592,7 +5592,7 @@ BackgroundWorkerInitializeConnection(const char *dbname, const char *username)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("database connection requirement not indicated during registration")));
 
-	InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
+	InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL, (flags & BGWORKER_BYPASS_ALLOWCONN) != 0);
 
 	/* it had better not gotten out of "init" mode yet */
 	if (!IsInitProcessingMode())
@@ -5605,7 +5605,7 @@ BackgroundWorkerInitializeConnection(const char *dbname, const char *username)
  * Connect background worker to a database using OIDs.
  */
 void
-BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid)
+BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid, uint32 flags)
 {
 	BackgroundWorker *worker = MyBgworkerEntry;
 
@@ -5615,7 +5615,7 @@ BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("database connection requirement not indicated during registration")));
 
-	InitPostgres(NULL, dboid, NULL, useroid, NULL);
+	InitPostgres(NULL, dboid, NULL, useroid, NULL, (flags & BGWORKER_BYPASS_ALLOWCONN) != 0);
 
 	/* it had better not gotten out of "init" mode yet */
 	if (!IsInitProcessingMode())

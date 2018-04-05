@@ -1324,7 +1324,8 @@ ParallelWorkerMain(Datum main_arg)
 
 	/* Restore database connection. */
 	BackgroundWorkerInitializeConnectionByOid(fps->database_id,
-											  fps->authenticated_user_id);
+											  fps->authenticated_user_id,
+											  0);
 
 	/*
 	 * Set the client encoding to the database encoding, since that is what

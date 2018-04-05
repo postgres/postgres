@@ -1544,7 +1544,8 @@ ApplyWorkerMain(Datum main_arg)
 
 	/* Connect to our database. */
 	BackgroundWorkerInitializeConnectionByOid(MyLogicalRepWorker->dbid,
-											  MyLogicalRepWorker->userid);
+											  MyLogicalRepWorker->userid,
+											  0);
 
 	/* Load the subscription into persistent memory context. */
 	ApplyContext = AllocSetContextCreate(TopMemoryContext,

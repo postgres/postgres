@@ -498,7 +498,7 @@ BootstrapModeMain(void)
 	 */
 	InitProcess();
 
-	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, NULL);
+	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, NULL, false);
 
 	/* Initialize stuff for bootstrap-file processing */
 	for (i = 0; i < MAXATTR; i++)
