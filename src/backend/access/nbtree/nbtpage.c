@@ -85,7 +85,7 @@ void
 _bt_upgrademetapage(Page page)
 {
 	BTMetaPageData *metad;
-	BTPageOpaque metaopaque;
+	BTPageOpaque metaopaque PG_USED_FOR_ASSERTS_ONLY;
 
 	metad = BTPageGetMeta(page);
 	metaopaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -118,7 +118,6 @@ _bt_update_meta_cleanup_info(Relation rel, TransactionId oldestBtpoXact,
 {
 	Buffer			metabuf;
 	Page			metapg;
-	BTPageOpaque	metaopaque;
 	BTMetaPageData *metad;
 	bool			needsRewrite = false;
 	XLogRecPtr		recptr;
@@ -126,7 +125,6 @@ _bt_update_meta_cleanup_info(Relation rel, TransactionId oldestBtpoXact,
 	/* read the metapage and check if it needs rewrite */
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
-	metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	metad = BTPageGetMeta(metapg);
 
 	/* outdated version of metapage always needs rewrite */

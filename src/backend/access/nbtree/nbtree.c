@@ -786,13 +786,11 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 {
 	Buffer			metabuf;
 	Page			metapg;
-	BTPageOpaque	metaopaque;
 	BTMetaPageData *metad;
 	bool			result = false;
 
 	metabuf = _bt_getbuf(info->index, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
-	metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	metad = BTPageGetMeta(metapg);
 
 	if (metad->btm_version < BTREE_VERSION)
