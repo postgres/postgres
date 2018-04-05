@@ -53,6 +53,16 @@ SELECT * FROM test1;
  66
 (2 rows)
 
+CALL test_proc4(66);
+SELECT * FROM test1;
+ a  
+----
+ 66
+ 66
+ 66
+ 66
+(4 rows)
+
 -- output arguments
 CREATE PROCEDURE test_proc5(INOUT a text)
 LANGUAGE plpgsql

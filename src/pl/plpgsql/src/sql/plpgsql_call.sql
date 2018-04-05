@@ -54,6 +54,10 @@ CALL test_proc4(66);
 
 SELECT * FROM test1;
 
+CALL test_proc4(66);
+
+SELECT * FROM test1;
+
 
 -- output arguments
 

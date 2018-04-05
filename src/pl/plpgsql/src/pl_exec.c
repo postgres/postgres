@@ -2060,6 +2060,7 @@ static int
 exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 {
 	PLpgSQL_expr *expr = stmt->expr;
+	SPIPlanPtr	plan;
 	ParamListInfo paramLI;
 	LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
@@ -2069,7 +2070,9 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 	{
 		/*
 		 * Don't save the plan if not in atomic context.  Otherwise,
-		 * transaction ends would cause warnings about plan leaks.
+		 * transaction ends would cause errors about plancache leaks.  XXX
+		 * This would be fixable with some plancache/resowner surgery
+		 * elsewhere, but for now we'll just work around this here.
 		 */
 		exec_prepare_plan(estate, expr, 0, estate->atomic);
 
@@ -2084,8 +2087,27 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 
 	before_lxid = MyProc->lxid;
 
-	rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
-										 estate->readonly_func, 0);
+	PG_TRY();
+	{
+		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
+											 estate->readonly_func, 0);
+	}
+	PG_CATCH();
+	{
+		/*
+		 * If we aren't saving the plan, unset the pointer.  Note that it
+		 * could have been unset already, in case of a recursive call.
+		 */
+		if (expr->plan && !expr->plan->saved)
+			expr->plan = NULL;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	plan = expr->plan;
+
+	if (expr->plan && !expr->plan->saved)
+		expr->plan = NULL;
 
 	after_lxid = MyProc->lxid;
 
@@ -2129,7 +2151,7 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			/*
 			 * Get the original CallStmt
 			 */
-			node = linitial_node(Query, ((CachedPlanSource *) linitial(expr->plan->plancache_list))->query_list)->utilityStmt;
+			node = linitial_node(Query, ((CachedPlanSource *) linitial(plan->plancache_list))->query_list)->utilityStmt;
 			if (!IsA(node, CallStmt))
 				elog(ERROR, "returned row from not a CallStmt");
 
