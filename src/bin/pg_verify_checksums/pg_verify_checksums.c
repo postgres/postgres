@@ -188,7 +188,11 @@ scan_directory(char *basedir, char *subdir)
 
 			scan_file(fn, segmentno);
 		}
+#ifndef WIN32
 		else if (S_ISDIR(st.st_mode) || S_ISLNK(st.st_mode))
+#else
+		else if (S_ISDIR(st.st_mode) || pgwin32_is_junction(fn))
+#endif
 			scan_directory(path, de->d_name);
 	}
 	closedir(dir);
