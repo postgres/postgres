@@ -41,7 +41,7 @@ and <replaceable class="parameter">merge_insert</replaceable> is
 
 INSERT [( <replaceable class="parameter">column_name</replaceable> [, ...] )]
 [ OVERRIDING { SYSTEM | USER } VALUE ]
-{ VALUES ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) | DEFAULT VALUES }
+{ VALUES ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } ) | DEFAULT VALUES }
 
 and <replaceable class="parameter">merge_update</replaceable> is
 
@@ -285,6 +285,7 @@ DELETE
       <command>INSERT</command> actions cannot contain sub-selects. 
      </para>
      <para>
+      Only one <literal>VALUES</literal> clause can be specified.
       The <literal>VALUES</literal> clause can only refer to columns from
       the source relation, since by definition there is no matching target row.
      </para>
