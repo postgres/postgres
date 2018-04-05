@@ -4971,6 +4971,8 @@ DATA(insert OID = 3747 (  plainto_tsquery	PGNSP PGUID 12 100 0 0 0 f f f t f i s
 DESCR("transform to tsquery");
 DATA(insert OID = 5006 (  phraseto_tsquery	PGNSP PGUID 12 100 0 0 0 f f f t f i s 2 0 3615 "3734 25" _null_ _null_ _null_ _null_ _null_ phraseto_tsquery_byid _null_ _null_ _null_ ));
 DESCR("transform to tsquery");
+DATA(insert OID = 8889 (  websearch_to_tsquery	PGNSP PGUID 12 100 0 0 0 f f f  t f i s 2 0 3615 "3734 25" _null_ _null_ _null_ _null_ _null_ websearch_to_tsquery_byid _null_ _null_ _null_ ));
+DESCR("transform to tsquery");
 DATA(insert OID = 3749 (  to_tsvector		PGNSP PGUID 12 100 0 0 0 f f f t f s s 1 0 3614 "25" _null_ _null_ _null_ _null_ _null_ to_tsvector _null_ _null_ _null_ ));
 DESCR("transform to tsvector");
 DATA(insert OID = 3750 (  to_tsquery		PGNSP PGUID 12 100 0 0 0 f f f t f s s 1 0 3615 "25" _null_ _null_ _null_ _null_ _null_ to_tsquery _null_ _null_ _null_ ));
@@ -4978,6 +4980,8 @@ DESCR("make tsquery");
 DATA(insert OID = 3751 (  plainto_tsquery	PGNSP PGUID 12 100 0 0 0 f f f t f s s 1 0 3615 "25" _null_ _null_ _null_ _null_ _null_ plainto_tsquery _null_ _null_ _null_ ));
 DESCR("transform to tsquery");
 DATA(insert OID = 5001 (  phraseto_tsquery	PGNSP PGUID 12 100 0 0 0 f f f t f s s 1 0 3615 "25" _null_ _null_ _null_ _null_ _null_ phraseto_tsquery _null_ _null_ _null_ ));
+DESCR("transform to tsquery");
+DATA(insert OID = 8890 (  websearch_to_tsquery	PGNSP PGUID 12 100 0 0 0 f f f t f s s 1 0 3615 "25" _null_ _null_ _null_ _null_ _null_ websearch_to_tsquery _null_ _null_ _null_ ));
 DESCR("transform to tsquery");
 DATA(insert OID = 4209 (  to_tsvector		PGNSP PGUID 12 100 0 0 0 f f f t f s s 1 0 3614 "3802" _null_ _null_ _null_ _null_ _null_ jsonb_to_tsvector _null_ _null_ _null_ ));
 DESCR("transform jsonb to tsvector");

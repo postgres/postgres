@@ -33,6 +33,7 @@ struct TSVectorParseStateData
 	int			eml;			/* max bytes per character */
 	bool		oprisdelim;		/* treat ! | * ( ) as delimiters? */
 	bool		is_tsquery;		/* say "tsquery" not "tsvector" in errors? */
+	bool		is_web;			/* we're in websearch_to_tsquery() */
 };
 
 
@@ -42,7 +43,7 @@ struct TSVectorParseStateData
  * ! | & ( )
  */
 TSVectorParseState
-init_tsvector_parser(char *input, bool oprisdelim, bool is_tsquery)
+init_tsvector_parser(char *input, int flags)
 {
 	TSVectorParseState state;
 
@@ -52,8 +53,9 @@ init_tsvector_parser(char *input, bool oprisdelim, bool is_tsquery)
 	state->len = 32;
 	state->word = (char *) palloc(state->len);
 	state->eml = pg_database_encoding_max_length();
-	state->oprisdelim = oprisdelim;
-	state->is_tsquery = is_tsquery;
+	state->oprisdelim = (flags & P_TSV_OPR_IS_DELIM) != 0;
+	state->is_tsquery = (flags & P_TSV_IS_TSQUERY) != 0;
+	state->is_web = (flags & P_TSV_IS_WEB) != 0;
 
 	return state;
 }
@@ -88,16 +90,6 @@ do { \
 		curpos = state->word + clen; \
 	} \
 } while (0)
-
-/* phrase operator begins with '<' */
-#define ISOPERATOR(x) \
-	( pg_mblen(x) == 1 && ( *(x) == '!' ||	\
-							*(x) == '&' ||	\
-							*(x) == '|' ||	\
-							*(x) == '(' ||	\
-							*(x) == ')' ||	\
-							*(x) == '<'		\
-						  ) )
 
 /* Fills gettoken_tsvector's output parameters, and returns true */
 #define RETURN_TOKEN \
@@ -183,14 +175,15 @@ gettoken_tsvector(TSVectorParseState state,
 		{
 			if (*(state->prsbuf) == '\0')
 				return false;
-			else if (t_iseq(state->prsbuf, '\''))
+			else if (!state->is_web && t_iseq(state->prsbuf, '\''))
 				statecode = WAITENDCMPLX;
-			else if (t_iseq(state->prsbuf, '\\'))
+			else if (!state->is_web && t_iseq(state->prsbuf, '\\'))
 			{
 				statecode = WAITNEXTCHAR;
 				oldstate = WAITENDWORD;
 			}
-			else if (state->oprisdelim && ISOPERATOR(state->prsbuf))
+			else if ((state->oprisdelim && ISOPERATOR(state->prsbuf)) ||
+					 (state->is_web && t_iseq(state->prsbuf, '"')))
 				PRSSYNTAXERROR;
 			else if (!t_isspace(state->prsbuf))
 			{
@@ -217,13 +210,14 @@ gettoken_tsvector(TSVectorParseState state,
 		}
 		else if (statecode == WAITENDWORD)
 		{
-			if (t_iseq(state->prsbuf, '\\'))
+			if (!state->is_web && t_iseq(state->prsbuf, '\\'))
 			{
 				statecode = WAITNEXTCHAR;
 				oldstate = WAITENDWORD;
 			}
 			else if (t_isspace(state->prsbuf) || *(state->prsbuf) == '\0' ||
-					 (state->oprisdelim && ISOPERATOR(state->prsbuf)))
+					 (state->oprisdelim && ISOPERATOR(state->prsbuf)) ||
+					 (state->is_web && t_iseq(state->prsbuf, '"')))
 			{
 				RESIZEPRSBUF;
 				if (curpos == state->word)
@@ -250,11 +244,11 @@ gettoken_tsvector(TSVectorParseState state,
 		}
 		else if (statecode == WAITENDCMPLX)
 		{
-			if (t_iseq(state->prsbuf, '\''))
+			if (!state->is_web && t_iseq(state->prsbuf, '\''))
 			{
 				statecode = WAITCHARCMPLX;
 			}
-			else if (t_iseq(state->prsbuf, '\\'))
+			else if (!state->is_web && t_iseq(state->prsbuf, '\\'))
 			{
 				statecode = WAITNEXTCHAR;
 				oldstate = WAITENDCMPLX;
@@ -270,7 +264,7 @@ gettoken_tsvector(TSVectorParseState state,
 		}
 		else if (statecode == WAITCHARCMPLX)
 		{
-			if (t_iseq(state->prsbuf, '\''))
+			if (!state->is_web && t_iseq(state->prsbuf, '\''))
 			{
 				RESIZEPRSBUF;
 				COPYCHAR(curpos, state->prsbuf);

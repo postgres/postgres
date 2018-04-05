@@ -25,15 +25,27 @@
 struct TSVectorParseStateData;	/* opaque struct in tsvector_parser.c */
 typedef struct TSVectorParseStateData *TSVectorParseState;
 
-extern TSVectorParseState init_tsvector_parser(char *input,
-					 bool oprisdelim,
-					 bool is_tsquery);
+#define P_TSV_OPR_IS_DELIM	(1 << 0)
+#define P_TSV_IS_TSQUERY	(1 << 1)
+#define P_TSV_IS_WEB		(1 << 2)
+
+extern TSVectorParseState init_tsvector_parser(char *input, int flags);
 extern void reset_tsvector_parser(TSVectorParseState state, char *input);
 extern bool gettoken_tsvector(TSVectorParseState state,
 				  char **token, int *len,
 				  WordEntryPos **pos, int *poslen,
 				  char **endptr);
 extern void close_tsvector_parser(TSVectorParseState state);
+
+/* phrase operator begins with '<' */
+#define ISOPERATOR(x) \
+	( pg_mblen(x) == 1 && ( *(x) == '!' ||	\
+							*(x) == '&' ||	\
+							*(x) == '|' ||	\
+							*(x) == '(' ||	\
+							*(x) == ')' ||	\
+							*(x) == '<'		\
+						  ) )
 
 /* parse_tsquery */
 
@@ -46,9 +58,13 @@ typedef void (*PushFunction) (Datum opaque, TSQueryParserState state,
 													 * QueryOperand struct */
 							  bool prefix);
 
+#define P_TSQ_PLAIN		(1 << 0)
+#define P_TSQ_WEB		(1 << 1)
+
 extern TSQuery parse_tsquery(char *buf,
-			  PushFunction pushval,
-			  Datum opaque, bool isplain);
+							 PushFunction pushval,
+							 Datum opaque,
+							 int flags);
 
 /* Functions for use by PushFunction implementations */
 extern void pushValue(TSQueryParserState state,

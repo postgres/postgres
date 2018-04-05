@@ -490,7 +490,7 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 	query = parse_tsquery(text_to_cstring(in),
 						  pushval_morph,
 						  PointerGetDatum(&data),
-						  false);
+						  0);
 
 	PG_RETURN_TSQUERY(query);
 }
@@ -520,7 +520,7 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 	query = parse_tsquery(text_to_cstring(in),
 						  pushval_morph,
 						  PointerGetDatum(&data),
-						  true);
+						  P_TSQ_PLAIN);
 
 	PG_RETURN_POINTER(query);
 }
@@ -551,7 +551,7 @@ phraseto_tsquery_byid(PG_FUNCTION_ARGS)
 	query = parse_tsquery(text_to_cstring(in),
 						  pushval_morph,
 						  PointerGetDatum(&data),
-						  true);
+						  P_TSQ_PLAIN);
 
 	PG_RETURN_TSQUERY(query);
 }
@@ -566,4 +566,36 @@ phraseto_tsquery(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(DirectFunctionCall2(phraseto_tsquery_byid,
 										ObjectIdGetDatum(cfgId),
 										PointerGetDatum(in)));
+}
+
+Datum
+websearch_to_tsquery_byid(PG_FUNCTION_ARGS)
+{
+	text	   *in = PG_GETARG_TEXT_PP(1);
+	MorphOpaque	data;
+	TSQuery		query = NULL;
+
+	data.cfg_id = PG_GETARG_OID(0);
+
+	data.qoperator = OP_AND;
+
+	query = parse_tsquery(text_to_cstring(in),
+						  pushval_morph,
+						  PointerGetDatum(&data),
+						  P_TSQ_WEB);
+
+	PG_RETURN_TSQUERY(query);
+}
+
+Datum
+websearch_to_tsquery(PG_FUNCTION_ARGS)
+{
+	text	   *in = PG_GETARG_TEXT_PP(0);
+	Oid			cfgId;
+
+	cfgId = getTSCurrentConfig(true);
+	PG_RETURN_DATUM(DirectFunctionCall2(websearch_to_tsquery_byid,
+										ObjectIdGetDatum(cfgId),
+										PointerGetDatum(in)));
+
 }

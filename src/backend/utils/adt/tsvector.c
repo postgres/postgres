@@ -200,7 +200,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 	char	   *cur;
 	int			buflen = 256;	/* allocated size of tmpbuf */
 
-	state = init_tsvector_parser(buf, false, false);
+	state = init_tsvector_parser(buf, 0);
 
 	arrlen = 64;
 	arr = (WordEntryIN *) palloc(sizeof(WordEntryIN) * arrlen);

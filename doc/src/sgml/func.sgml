@@ -9633,6 +9633,18 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        <row>
         <entry>
          <indexterm>
+          <primary>websearch_to_tsquery</primary>
+         </indexterm>
+          <literal><function>websearch_to_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type> , </optional> <replaceable class="parameter">query</replaceable> <type>text</type>)</function></literal>
+         </entry>
+        <entry><type>tsquery</type></entry>
+        <entry>produce <type>tsquery</type> from a web search style query</entry>
+        <entry><literal>websearch_to_tsquery('english', '"fat rat" or rat')</literal></entry>
+        <entry><literal>'fat' &lt;-&gt; 'rat' | 'rat'</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
           <primary>querytree</primary>
          </indexterm>
          <literal><function>querytree(<replaceable class="parameter">query</replaceable> <type>tsquery</type>)</function></literal>

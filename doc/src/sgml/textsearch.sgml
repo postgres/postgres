@@ -797,13 +797,16 @@ UPDATE tt SET ti =
    <para>
     <productname>PostgreSQL</productname> provides the
     functions <function>to_tsquery</function>,
-    <function>plainto_tsquery</function>, and
-    <function>phraseto_tsquery</function>
+    <function>plainto_tsquery</function>,
+    <function>phraseto_tsquery</function> and
+    <function>websearch_to_tsquery</function>
     for converting a query to the <type>tsquery</type> data type.
     <function>to_tsquery</function> offers access to more features
     than either <function>plainto_tsquery</function> or
-    <function>phraseto_tsquery</function>, but it is less forgiving
-    about its input.
+    <function>phraseto_tsquery</function>, but it is less forgiving about its
+    input. <function>websearch_to_tsquery</function> is a simplified version
+    of <function>to_tsquery</function> with an alternative syntax, similar
+    to the one used by web search engines.
    </para>
 
    <indexterm>
@@ -962,6 +965,87 @@ SELECT phraseto_tsquery('english', 'The Fat &amp; Rats:C');
 </screen>
    </para>
 
+<synopsis>
+websearch_to_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type>, </optional> <replaceable class="parameter">querytext</replaceable> <type>text</type>) returns <type>tsquery</type>
+</synopsis>
+
+   <para>
+    <function>websearch_to_tsquery</function> creates a <type>tsquery</type>
+    value from <replaceable>querytext</replaceable> using an alternative
+    syntax in which simple unformatted text is a valid query.
+    Unlike <function>plainto_tsquery</function>
+    and <function>phraseto_tsquery</function>, it also recognizes certain
+    operators. Moreover, this function should never raise syntax errors,
+    which makes it possible to use raw user-supplied input for search.
+    The following syntax is supported:
+    <itemizedlist  spacing="compact" mark="bullet">
+     <listitem>
+       <para>
+        <literal>unquoted text</literal>: text not inside quote marks will be
+        converted to terms separated by <literal>&amp;</literal> operators, as
+        if processed by
+        <function>plainto_tsquery</function>.
+      </para>
+     </listitem>
+     <listitem>
+       <para>
+        <literal>"quoted text"</literal>: text inside quote marks will be
+        converted to terms separated by <literal>&lt;-&gt;</literal>
+        operators, as if processed by <function>phraseto_tsquery</function>.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>OR</literal>: logical or will be converted to
+       the <literal>|</literal> operator.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>-</literal>: the logical not operator, converted to the
+       the <literal>!</literal> operator.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+   <para>
+    Examples:
+    <screen>
+      select websearch_to_tsquery('english', 'The fat rats');
+       websearch_to_tsquery
+      -----------------
+       'fat' &amp; 'rat'
+      (1 row)
+    </screen>
+    <screen>
+      select websearch_to_tsquery('english', '"supernovae stars" -crab');
+             websearch_to_tsquery
+      ----------------------------------
+       'supernova' &lt;-&gt; 'star' &amp; !'crab'
+      (1 row)
+    </screen>
+    <screen>
+      select websearch_to_tsquery('english', '"sad cat" or "fat rat"');
+             websearch_to_tsquery
+      -----------------------------------
+       'sad' &lt;-&gt; 'cat' | 'fat' &lt;-&gt; 'rat'
+      (1 row)
+    </screen>
+    <screen>
+      select websearch_to_tsquery('english', 'signal -"segmentation fault"');
+               websearch_to_tsquery
+      ---------------------------------------
+       'signal' &amp; !( 'segment' &lt;-&gt; 'fault' )
+      (1 row)
+    </screen>
+    <screen>
+      select websearch_to_tsquery('english', '""" )( dummy \\ query &lt;-&gt;');
+       websearch_to_tsquery
+      ----------------------
+       'dummi' &amp; 'queri'
+      (1 row)
+    </screen>
+    </para>
   </sect2>
 
   <sect2 id="textsearch-ranking">
