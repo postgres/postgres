@@ -1952,14 +1952,14 @@ SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression
 
 <programlisting>
 WITH regional_sales AS (
-        SELECT region, SUM(amount) AS total_sales
-        FROM orders
-        GROUP BY region
-     ), top_regions AS (
-        SELECT region
-        FROM regional_sales
-        WHERE total_sales &gt; (SELECT SUM(total_sales)/10 FROM regional_sales)
-     )
+    SELECT region, SUM(amount) AS total_sales
+    FROM orders
+    GROUP BY region
+), top_regions AS (
+    SELECT region
+    FROM regional_sales
+    WHERE total_sales &gt; (SELECT SUM(total_sales)/10 FROM regional_sales)
+)
 SELECT region,
        product,
        SUM(quantity) AS product_units,
@@ -2071,7 +2071,7 @@ WITH RECURSIVE included_parts(sub_part, part, quantity) AS (
     SELECT p.sub_part, p.part, p.quantity
     FROM included_parts pr, parts p
     WHERE p.part = pr.sub_part
-  )
+)
 SELECT sub_part, SUM(quantity) as total_quantity
 FROM included_parts
 GROUP BY sub_part
@@ -2093,12 +2093,12 @@ GROUP BY sub_part
 
 <programlisting>
 WITH RECURSIVE search_graph(id, link, data, depth) AS (
-        SELECT g.id, g.link, g.data, 1
-        FROM graph g
-      UNION ALL
-        SELECT g.id, g.link, g.data, sg.depth + 1
-        FROM graph g, search_graph sg
-        WHERE g.id = sg.link
+    SELECT g.id, g.link, g.data, 1
+    FROM graph g
+  UNION ALL
+    SELECT g.id, g.link, g.data, sg.depth + 1
+    FROM graph g, search_graph sg
+    WHERE g.id = sg.link
 )
 SELECT * FROM search_graph;
 </programlisting>
@@ -2112,16 +2112,16 @@ SELECT * FROM search_graph;
 
 <programlisting>
 WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
-        SELECT g.id, g.link, g.data, 1,
-          ARRAY[g.id],
-          false
-        FROM graph g
-      UNION ALL
-        SELECT g.id, g.link, g.data, sg.depth + 1,
-          path || g.id,
-          g.id = ANY(path)
-        FROM graph g, search_graph sg
-        WHERE g.id = sg.link AND NOT cycle
+    SELECT g.id, g.link, g.data, 1,
+      ARRAY[g.id],
+      false
+    FROM graph g
+  UNION ALL
+    SELECT g.id, g.link, g.data, sg.depth + 1,
+      path || g.id,
+      g.id = ANY(path)
+    FROM graph g, search_graph sg
+    WHERE g.id = sg.link AND NOT cycle
 )
 SELECT * FROM search_graph;
 </programlisting>
@@ -2137,16 +2137,16 @@ SELECT * FROM search_graph;
 
 <programlisting>
 WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
-        SELECT g.id, g.link, g.data, 1,
-          ARRAY[ROW(g.f1, g.f2)],
-          false
-        FROM graph g
-      UNION ALL
-        SELECT g.id, g.link, g.data, sg.depth + 1,
-          path || ROW(g.f1, g.f2),
-          ROW(g.f1, g.f2) = ANY(path)
-        FROM graph g, search_graph sg
-        WHERE g.id = sg.link AND NOT cycle
+    SELECT g.id, g.link, g.data, 1,
+      ARRAY[ROW(g.f1, g.f2)],
+      false
+    FROM graph g
+  UNION ALL
+    SELECT g.id, g.link, g.data, sg.depth + 1,
+      path || ROW(g.f1, g.f2),
+      ROW(g.f1, g.f2) = ANY(path)
+    FROM graph g, search_graph sg
+    WHERE g.id = sg.link AND NOT cycle
 )
 SELECT * FROM search_graph;
 </programlisting>
@@ -2295,7 +2295,7 @@ WITH RECURSIVE included_parts(sub_part, part) AS (
     SELECT p.sub_part, p.part
     FROM included_parts pr, parts p
     WHERE p.part = pr.sub_part
-  )
+)
 DELETE FROM parts
   WHERE part IN (SELECT part FROM included_parts);
 </programlisting>
