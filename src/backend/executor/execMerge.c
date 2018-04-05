@@ -48,13 +48,11 @@ ExecMerge(ModifyTableState *mtstate, EState *estate, TupleTableSlot *slot,
 	ItemPointer tupleid;
 	ItemPointerData tuple_ctid;
 	bool		matched = false;
-	char		relkind;
 	Datum		datum;
 	bool		isNull;
 
-	relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
-	Assert(relkind == RELKIND_RELATION ||
-		   relkind == RELKIND_PARTITIONED_TABLE);
+	Assert(resultRelInfo->ri_RelationDesc->rd_rel->relkind ||
+		   resultRelInfo->ri_RelationDesc->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
