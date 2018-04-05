@@ -585,7 +585,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>		hash_partbound partbound_datum_list range_datum_list
 %type <defelt>		hash_partbound_elem
 
-%type <node>	merge_when_clause opt_and_condition
+%type <node>	merge_when_clause opt_merge_when_and_condition
 %type <list>	merge_when_list
 %type <node>	merge_update merge_delete merge_insert
 
@@ -11129,7 +11129,7 @@ merge_when_list:
 			;
 
 merge_when_clause:
-			WHEN MATCHED opt_and_condition THEN merge_update
+			WHEN MATCHED opt_merge_when_and_condition THEN merge_update
 				{
 					MergeAction *m = makeNode(MergeAction);
 
@@ -11140,7 +11140,7 @@ merge_when_clause:
 
 					$$ = (Node *)m;
 				}
-			| WHEN MATCHED opt_and_condition THEN merge_delete
+			| WHEN MATCHED opt_merge_when_and_condition THEN merge_delete
 				{
 					MergeAction *m = makeNode(MergeAction);
 
@@ -11151,7 +11151,7 @@ merge_when_clause:
 
 					$$ = (Node *)m;
 				}
-			| WHEN NOT MATCHED opt_and_condition THEN merge_insert
+			| WHEN NOT MATCHED opt_merge_when_and_condition THEN merge_insert
 				{
 					MergeAction *m = makeNode(MergeAction);
 
@@ -11162,7 +11162,7 @@ merge_when_clause:
 
 					$$ = (Node *)m;
 				}
-			| WHEN NOT MATCHED opt_and_condition THEN DO NOTHING
+			| WHEN NOT MATCHED opt_merge_when_and_condition THEN DO NOTHING
 				{
 					MergeAction *m = makeNode(MergeAction);
 
@@ -11175,7 +11175,7 @@ merge_when_clause:
 				}
 			;
 
-opt_and_condition:
+opt_merge_when_and_condition:
 			AND a_expr 				{ $$ = $2; }
 			| 			 			{ $$ = NULL; }
 			;

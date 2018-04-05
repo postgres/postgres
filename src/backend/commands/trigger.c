@@ -96,6 +96,12 @@ static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 					FmgrInfo *finfo,
 					Instrumentation *instr,
 					MemoryContext per_tuple_context);
+static Tuplestorestate *AfterTriggerGetTransitionTable(int event,
+					HeapTuple oldtup,
+					HeapTuple newtup,
+					TransitionCaptureState *transition_capture);
+static void TransitionTableAddTuple(HeapTuple heaptup, Tuplestorestate *tuplestore,
+					TupleConversionMap *map);
 static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 					  int event, bool row_trigger,
 					  HeapTuple oldtup, HeapTuple newtup,
@@ -3846,6 +3852,14 @@ struct AfterTriggersTableData
 	bool		before_trig_done;	/* did we already queue BS triggers? */
 	bool		after_trig_done;	/* did we already queue AS triggers? */
 	AfterTriggerEventList after_trig_events;	/* if so, saved list pointer */
+
+	/*
+	 * We maintain separate transaction tables for UPDATE/INSERT/DELETE since
+	 * MERGE can run all three actions in a single statement. Note that UPDATE
+	 * needs both old and new transition tables whereas INSERT needs only new
+	 * and DELETE needs only old.
+	 */
+
 	/* "old" transition table for UPDATE, if any */
 	Tuplestorestate *old_upd_tuplestore;
 	/* "new" transition table for UPDATE, if any */
@@ -5716,6 +5730,84 @@ AfterTriggerPendingOnRel(Oid relid)
 	return false;
 }
 
+/*
+ * Get the transition table for the given event and depending on whether we are
+ * processing the old or the new tuple.
+ */
+static Tuplestorestate *
+AfterTriggerGetTransitionTable(int event,
+							   HeapTuple oldtup,
+							   HeapTuple newtup,
+							   TransitionCaptureState *transition_capture)
+{
+	Tuplestorestate	*tuplestore = NULL;
+	bool			delete_old_table = transition_capture->tcs_delete_old_table;
+	bool			update_old_table = transition_capture->tcs_update_old_table;
+	bool			update_new_table = transition_capture->tcs_update_new_table;
+	bool			insert_new_table = transition_capture->tcs_insert_new_table;;
+
+	/*
+	 * For INSERT events newtup should be non-NULL, for DELETE events
+	 * oldtup should be non-NULL, whereas for UPDATE events normally both
+	 * oldtup and newtup are non-NULL.  But for UPDATE events fired for
+	 * capturing transition tuples during UPDATE partition-key row
+	 * movement, oldtup is NULL when the event is for a row being inserted,
+	 * whereas newtup is NULL when the event is for a row being deleted.
+	 */
+	Assert(!(event == TRIGGER_EVENT_DELETE && delete_old_table &&
+				oldtup == NULL));
+	Assert(!(event == TRIGGER_EVENT_INSERT && insert_new_table &&
+				newtup == NULL));
+
+	/*
+	 * We're called either for the newtup or the oldtup, but not both at the
+	 * same time.
+	 */
+	Assert((oldtup != NULL) ^ (newtup != NULL));
+
+	if (oldtup != NULL)
+	{
+		if (event == TRIGGER_EVENT_DELETE && delete_old_table)
+			tuplestore = transition_capture->tcs_private->old_del_tuplestore;
+		else if (event == TRIGGER_EVENT_UPDATE && update_old_table)
+			tuplestore = transition_capture->tcs_private->old_upd_tuplestore;
+	}
+
+	if (newtup != NULL)
+	{
+		if (event == TRIGGER_EVENT_INSERT && insert_new_table)
+			tuplestore = transition_capture->tcs_private->new_ins_tuplestore;
+		else if (event == TRIGGER_EVENT_UPDATE && update_new_table)
+			tuplestore = transition_capture->tcs_private->new_upd_tuplestore;
+	}
+
+	return tuplestore;
+}
+
+/*
+ * Add the given heap tuple to the given tuplestore, applying the conversion
+ * map if necessary.
+ */
+static void
+TransitionTableAddTuple(HeapTuple heaptup, Tuplestorestate *tuplestore,
+						TupleConversionMap *map)
+{
+	/*
+	 * Nothing needs to be done if we don't have a tuplestore.
+	 */
+	if (tuplestore == NULL)
+		return;
+
+	if (map != NULL)
+	{
+		HeapTuple	converted = do_convert_tuple(heaptup, map);
+
+		tuplestore_puttuple(tuplestore, converted);
+		pfree(converted);
+	}
+	else
+		tuplestore_puttuple(tuplestore, heaptup);
+}
 
 /* ----------
  * AfterTriggerSaveEvent()
@@ -5777,95 +5869,37 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 	{
 		HeapTuple	original_insert_tuple = transition_capture->tcs_original_insert_tuple;
 		TupleConversionMap *map = transition_capture->tcs_map;
-		bool		delete_old_table = transition_capture->tcs_delete_old_table;
-		bool		update_old_table = transition_capture->tcs_update_old_table;
-		bool		update_new_table = transition_capture->tcs_update_new_table;
-		bool		insert_new_table = transition_capture->tcs_insert_new_table;;
 
 		/*
-		 * For INSERT events newtup should be non-NULL, for DELETE events
-		 * oldtup should be non-NULL, whereas for UPDATE events normally both
-		 * oldtup and newtup are non-NULL.  But for UPDATE events fired for
-		 * capturing transition tuples during UPDATE partition-key row
-		 * movement, oldtup is NULL when the event is for a row being inserted,
-		 * whereas newtup is NULL when the event is for a row being deleted.
+		 * Capture the old tuple in the appropriate transition table based on
+		 * the event.
 		 */
-		Assert(!(event == TRIGGER_EVENT_DELETE && delete_old_table &&
-				 oldtup == NULL));
-		Assert(!(event == TRIGGER_EVENT_INSERT && insert_new_table &&
-				 newtup == NULL));
-
-		if (oldtup != NULL &&
-			(event == TRIGGER_EVENT_DELETE && delete_old_table))
+		if (oldtup != NULL)
 		{
-			Tuplestorestate *old_tuplestore;
-
-			old_tuplestore = transition_capture->tcs_private->old_del_tuplestore;
-
-			if (map != NULL)
-			{
-				HeapTuple	converted = do_convert_tuple(oldtup, map);
-
-				tuplestore_puttuple(old_tuplestore, converted);
-				pfree(converted);
-			}
-			else
-				tuplestore_puttuple(old_tuplestore, oldtup);
+			Tuplestorestate *tuplestore =
+				AfterTriggerGetTransitionTable(event,
+											   oldtup,
+											   NULL,
+											   transition_capture);
+			TransitionTableAddTuple(oldtup, tuplestore, map);
 		}
-		if (oldtup != NULL &&
-			 (event == TRIGGER_EVENT_UPDATE && update_old_table))
+
+		/*
+		 * Capture the new tuple in the appropriate transition table based on
+		 * the event.
+		 */
+		if (newtup != NULL)
 		{
-			Tuplestorestate *old_tuplestore;
-
-			old_tuplestore = transition_capture->tcs_private->old_upd_tuplestore;
-
-			if (map != NULL)
-			{
-				HeapTuple	converted = do_convert_tuple(oldtup, map);
-
-				tuplestore_puttuple(old_tuplestore, converted);
-				pfree(converted);
-			}
-			else
-				tuplestore_puttuple(old_tuplestore, oldtup);
-		}
-		if (newtup != NULL &&
-			(event == TRIGGER_EVENT_INSERT && insert_new_table))
-		{
-			Tuplestorestate *new_tuplestore;
-
-			new_tuplestore = transition_capture->tcs_private->new_ins_tuplestore;
+			Tuplestorestate *tuplestore =
+				AfterTriggerGetTransitionTable(event,
+											   NULL,
+											   newtup,
+											   transition_capture);
 
 			if (original_insert_tuple != NULL)
-				tuplestore_puttuple(new_tuplestore, original_insert_tuple);
-			else if (map != NULL)
-			{
-				HeapTuple	converted = do_convert_tuple(newtup, map);
-
-				tuplestore_puttuple(new_tuplestore, converted);
-				pfree(converted);
-			}
+				tuplestore_puttuple(tuplestore, original_insert_tuple);
 			else
-				tuplestore_puttuple(new_tuplestore, newtup);
-		}
-		if (newtup != NULL &&
-			(event == TRIGGER_EVENT_UPDATE && update_new_table))
-		{
-			Tuplestorestate *new_tuplestore;
-
-			new_tuplestore = transition_capture->tcs_private->new_upd_tuplestore;
-
-			if (original_insert_tuple != NULL)
-				tuplestore_puttuple(new_tuplestore, original_insert_tuple);
-			else if (map != NULL)
-			{
-				HeapTuple	converted = do_convert_tuple(newtup, map);
-
-				tuplestore_puttuple(new_tuplestore, converted);
-				pfree(converted);
-			}
-			else
-				tuplestore_puttuple(new_tuplestore, newtup);
+				TransitionTableAddTuple(newtup, tuplestore, map);
 		}
 
 		/*

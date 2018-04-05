@@ -14,7 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = execAmi.o execCurrent.o execExpr.o execExprInterp.o \
        execGrouping.o execIndexing.o execJunk.o \
-       execMain.o execParallel.o execPartition.o execProcnode.o \
+       execMain.o execMerge.o execParallel.o execPartition.o execProcnode.o \
        execReplication.o execScan.o execSRF.o execTuples.o \
        execUtils.o functions.o instrument.o nodeAppend.o nodeAgg.o \
        nodeBitmapAnd.o nodeBitmapOr.o \
@@ -22,7 +22,7 @@ OBJS = execAmi.o execCurrent.o execExpr.o execExprInterp.o \
        nodeCustom.o nodeFunctionscan.o nodeGather.o \
        nodeHash.o nodeHashjoin.o nodeIndexscan.o nodeIndexonlyscan.o \
        nodeLimit.o nodeLockRows.o nodeGatherMerge.o \
-       nodeMaterial.o nodeMergeAppend.o nodeMergejoin.o nodeMerge.o nodeModifyTable.o \
+       nodeMaterial.o nodeMergeAppend.o nodeMergejoin.o nodeModifyTable.o \
        nodeNestloop.o nodeProjectSet.o nodeRecursiveunion.o nodeResult.o \
        nodeSamplescan.o nodeSeqscan.o nodeSetOp.o nodeSort.o nodeUnique.o \
        nodeValuesscan.o \

@@ -852,14 +852,14 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				}
 
 				/*
-				 * The MERGE produces the target rows by performing a right
-				 * join between the target relation and the source relation
-				 * (which could be a plain relation or a subquery). The INSERT
-				 * and UPDATE actions of the MERGE requires access to the
-				 * columns from the source relation. We arrange things so that
-				 * the source relation attributes are available as INNER_VAR
-				 * and the target relation attributes are available from the
-				 * scan tuple.
+				 * The MERGE statement produces the target rows by performing a
+				 * right join between the target relation and the source
+				 * relation (which could be a plain relation or a subquery).
+				 * The INSERT and UPDATE actions of the MERGE statement
+				 * requires access to the columns from the source relation. We
+				 * arrange things so that the source relation attributes are
+				 * available as INNER_VAR and the target relation attributes
+				 * are available from the scan tuple.
 				 */
 				if (splan->mergeActionList != NIL)
 				{

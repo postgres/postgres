@@ -42,7 +42,7 @@
 #include "commands/trigger.h"
 #include "executor/execPartition.h"
 #include "executor/executor.h"
-#include "executor/nodeMerge.h"
+#include "executor/execMerge.h"
 #include "executor/nodeModifyTable.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
@@ -69,11 +69,6 @@ static void ExecSetupChildParentMapForSubplan(ModifyTableState *mtstate);
 static TupleConversionMap *tupconv_map_for_subplan(ModifyTableState *node,
 						int whichplan);
 
-/* flags for mt_merge_subcommands */
-#define MERGE_INSERT	0x01
-#define MERGE_UPDATE	0x02
-#define MERGE_DELETE	0x04
-
 /*
  * Verify that the tuples to be produced by INSERT or UPDATE match the
  * target relation's rowtype
@@ -86,7 +81,7 @@ static TupleConversionMap *tupconv_map_for_subplan(ModifyTableState *node,
  * The plan output is represented by its targetlist, because that makes
  * handling the dropped-column case easier.
  */
-static void
+void
 ExecCheckPlanOutput(Relation resultRel, List *targetList)
 {
 	TupleDesc	resultDesc = RelationGetDescr(resultRel);
@@ -2660,104 +2655,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	}
 
 	resultRelInfo = mtstate->resultRelInfo;
-
-	if (node->mergeActionList)
-	{
-		ListCell   *l;
-		ExprContext *econtext;
-		List	   *mergeMatchedActionStates = NIL;
-		List	   *mergeNotMatchedActionStates = NIL;
-		TupleDesc	relationDesc = resultRelInfo->ri_RelationDesc->rd_att;
-
-		mtstate->mt_merge_subcommands = 0;
-
-		if (mtstate->ps.ps_ExprContext == NULL)
-			ExecAssignExprContext(estate, &mtstate->ps);
-
-		econtext = mtstate->ps.ps_ExprContext;
-
-		/* initialize slot for the existing tuple */
-		Assert(mtstate->mt_existing == NULL);
-		mtstate->mt_existing =
-			ExecInitExtraTupleSlot(mtstate->ps.state,
-								   mtstate->mt_partition_tuple_routing ?
-								   NULL : relationDesc);
-
-		/* initialize slot for merge actions */
-		Assert(mtstate->mt_mergeproj == NULL);
-		mtstate->mt_mergeproj =
-			ExecInitExtraTupleSlot(mtstate->ps.state,
-								   mtstate->mt_partition_tuple_routing ?
-								   NULL : relationDesc);
-
-		/*
-		 * Create a MergeActionState for each action on the mergeActionList
-		 * and add it to either a list of matched actions or not-matched
-		 * actions.
-		 */
-		foreach(l, node->mergeActionList)
-		{
-			MergeAction *action = (MergeAction *) lfirst(l);
-			MergeActionState *action_state = makeNode(MergeActionState);
-			TupleDesc	tupDesc;
-
-			action_state->matched = action->matched;
-			action_state->commandType = action->commandType;
-			action_state->whenqual = ExecInitQual((List *) action->qual,
-					&mtstate->ps);
-
-			/* create target slot for this action's projection */
-			tupDesc = ExecTypeFromTL((List *) action->targetList,
-					resultRelInfo->ri_RelationDesc->rd_rel->relhasoids);
-			action_state->tupDesc = tupDesc;
-
-			/* build action projection state */
-			action_state->proj =
-				ExecBuildProjectionInfo(action->targetList, econtext,
-						mtstate->mt_mergeproj, &mtstate->ps,
-						resultRelInfo->ri_RelationDesc->rd_att);
-
-			/*
-			 * We create two lists - one for WHEN MATCHED actions and one
-			 * for WHEN NOT MATCHED actions - and stick the
-			 * MergeActionState into the appropriate list.
-			 */
-			if (action_state->matched)
-				mergeMatchedActionStates =
-					lappend(mergeMatchedActionStates, action_state);
-			else
-				mergeNotMatchedActionStates =
-					lappend(mergeNotMatchedActionStates, action_state);
-
-			switch (action->commandType)
-			{
-				case CMD_INSERT:
-					ExecCheckPlanOutput(resultRelInfo->ri_RelationDesc,
-										action->targetList);
-					mtstate->mt_merge_subcommands |= MERGE_INSERT;
-					break;
-				case CMD_UPDATE:
-					ExecCheckPlanOutput(resultRelInfo->ri_RelationDesc,
-										action->targetList);
-					mtstate->mt_merge_subcommands |= MERGE_UPDATE;
-					break;
-				case CMD_DELETE:
-					mtstate->mt_merge_subcommands |= MERGE_DELETE;
-					break;
-				case CMD_NOTHING:
-					break;
-				default:
-					elog(ERROR, "unknown operation");
-					break;
-			}
-
-			resultRelInfo->ri_mergeState->matchedActionStates =
-						mergeMatchedActionStates;
-			resultRelInfo->ri_mergeState->notMatchedActionStates =
-						mergeNotMatchedActionStates;
-
-		}
-	}
+	if (mtstate->operation == CMD_MERGE)
+		ExecInitMerge(mtstate, estate, resultRelInfo);
 
 	/* select first subplan */
 	mtstate->mt_whichplan = 0;

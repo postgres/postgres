@@ -39,5 +39,6 @@ extern TupleTableSlot *ExecInsert(ModifyTableState *mtstate,
 		   EState *estate,
 		   MergeActionState *actionState,
 		   bool canSetTag);
+extern void ExecCheckPlanOutput(Relation resultRel, List *targetList);
 
 #endif							/* NODEMODIFYTABLE_H */
