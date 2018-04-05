@@ -314,9 +314,7 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
  * Given OID of the partition leaf, return the index of the leaf in the
  * partition hierarchy.
  *
- * NB: This is an O(N) operation. Unfortunately, there are many other problem
- * areas with more than a handful partitions, so we don't try to optimise this
- * code right now.
+ * XXX This is an O(N) operation and further optimization would be beneficial
  */
 int
 ExecFindPartitionByOid(PartitionTupleRouting *proute, Oid partoid)

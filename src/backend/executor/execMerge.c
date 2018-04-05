@@ -51,7 +51,7 @@ ExecMerge(ModifyTableState *mtstate, EState *estate, TupleTableSlot *slot,
 	Datum		datum;
 	bool		isNull;
 
-	Assert(resultRelInfo->ri_RelationDesc->rd_rel->relkind ||
+	Assert(resultRelInfo->ri_RelationDesc->rd_rel->relkind == RELKIND_RELATION ||
 		   resultRelInfo->ri_RelationDesc->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
 	/*
