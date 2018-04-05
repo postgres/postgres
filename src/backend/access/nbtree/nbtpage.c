@@ -33,6 +33,7 @@
 #include "storage/predicate.h"
 #include "utils/snapmgr.h"
 
+static void _bt_cachemetadata(Relation rel, BTMetaPageData *metad);
 static bool _bt_mark_page_halfdead(Relation rel, Buffer buf, BTStack stack);
 static bool _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf,
 						 bool *rightsib_empty);
@@ -103,6 +104,44 @@ _bt_upgrademetapage(Page page)
 	/* Adjust pd_lower (see _bt_initmetapage() for details) */
 	((PageHeader) page)->pd_lower =
 		((char *) metad + sizeof(BTMetaPageData)) - (char *) page;
+}
+
+/*
+ * Cache metadata from meta page to rel->rd_amcache.
+ */
+static void
+_bt_cachemetadata(Relation rel, BTMetaPageData *metad)
+{
+	/* We assume rel->rd_amcache was already freed by caller */
+	Assert(rel->rd_amcache == NULL);
+	rel->rd_amcache = MemoryContextAlloc(rel->rd_indexcxt,
+										 sizeof(BTMetaPageData));
+
+	/*
+	 * Meta page should be of supported version (should be already checked by
+	 * caller).
+	 */
+	Assert(metad->btm_version >= BTREE_MIN_VERSION &&
+		   metad->btm_version <= BTREE_VERSION);
+
+	if (metad->btm_version == BTREE_VERSION)
+	{
+		/* Last version of meta-data, no need to upgrade */
+		memcpy(rel->rd_amcache, metad, sizeof(BTMetaPageData));
+	}
+	else
+	{
+		BTMetaPageData *cached_metad = (BTMetaPageData *) rel->rd_amcache;
+
+		/*
+		 * Upgrade meta-data: copy available information from meta-page and
+		 * fill new fields with default values.
+		 */
+		memcpy(rel->rd_amcache, metad, offsetof(BTMetaPageData, btm_oldest_btpo_xact));
+		cached_metad->btm_version = BTREE_VERSION;
+		cached_metad->btm_oldest_btpo_xact = InvalidTransactionId;
+		cached_metad->btm_last_cleanup_num_heap_tuples = -1.0;
+	}
 }
 
 /*
@@ -403,9 +442,7 @@ _bt_getroot(Relation rel, int access)
 		/*
 		 * Cache the metapage data for next time
 		 */
-		rel->rd_amcache = MemoryContextAlloc(rel->rd_indexcxt,
-											 sizeof(BTMetaPageData));
-		memcpy(rel->rd_amcache, metad, sizeof(BTMetaPageData));
+		_bt_cachemetadata(rel, metad);
 
 		/*
 		 * We are done with the metapage; arrange to release it via first
@@ -604,9 +641,7 @@ _bt_getrootheight(Relation rel)
 		/*
 		 * Cache the metapage data for next time
 		 */
-		rel->rd_amcache = MemoryContextAlloc(rel->rd_indexcxt,
-											 sizeof(BTMetaPageData));
-		memcpy(rel->rd_amcache, metad, sizeof(BTMetaPageData));
+		_bt_cachemetadata(rel, metad);
 
 		_bt_relbuf(rel, metabuf);
 	}

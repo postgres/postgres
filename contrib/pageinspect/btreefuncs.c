@@ -555,8 +555,21 @@ bt_metap(PG_FUNCTION_ARGS)
 	values[j++] = psprintf("%d", metad->btm_level);
 	values[j++] = psprintf("%d", metad->btm_fastroot);
 	values[j++] = psprintf("%d", metad->btm_fastlevel);
-	values[j++] = psprintf("%u", metad->btm_oldest_btpo_xact);
-	values[j++] = psprintf("%lf", metad->btm_last_cleanup_num_heap_tuples);
+
+	/*
+	 * Get values of extended metadata if available, use default values
+	 * otherwise.
+	 */
+	if (metad->btm_version == BTREE_VERSION)
+	{
+		values[j++] = psprintf("%u", metad->btm_oldest_btpo_xact);
+		values[j++] = psprintf("%lf", metad->btm_last_cleanup_num_heap_tuples);
+	}
+	else
+	{
+		values[j++] = "0";
+		values[j++] = "-1";
+	}
 
 	tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
 								   values);
