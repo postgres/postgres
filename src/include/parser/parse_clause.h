@@ -23,7 +23,7 @@ extern bool interpretOidsOption(List *defList, bool allowOids);
 extern Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						RangeTblEntry **top_rte, int *top_rti,
 						RangeTblEntry **right_rte, int *right_rti,
-						List **namespace);
+						List **fnamespace);
 extern Node *transformWhereClause(ParseState *pstate, Node *clause,
 					 ParseExprKind exprKind, const char *constructName);
 extern Node *transformLimitClause(ParseState *pstate, Node *clause,

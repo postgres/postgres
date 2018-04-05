@@ -1108,7 +1108,7 @@ Node *
 transformFromClauseItem(ParseState *pstate, Node *n,
 						RangeTblEntry **top_rte, int *top_rti,
 						RangeTblEntry **right_rte, int *right_rti,
-						List **namespace)
+						List **fnamespace)
 {
 	if (IsA(n, RangeVar))
 	{
@@ -1130,7 +1130,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*namespace = list_make1(makeDefaultNSItem(rte));
+		*fnamespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -1148,7 +1148,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*namespace = list_make1(makeDefaultNSItem(rte));
+		*fnamespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -1166,7 +1166,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*namespace = list_make1(makeDefaultNSItem(rte));
+		*fnamespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -1184,7 +1184,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*namespace = list_make1(makeDefaultNSItem(rte));
+		*fnamespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -1199,7 +1199,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 
 		/* Recursively transform the contained relation */
 		rel = transformFromClauseItem(pstate, rts->relation,
-									  top_rte, top_rti, NULL, NULL, namespace);
+									  top_rte, top_rti, NULL, NULL, fnamespace);
 		/* Currently, grammar could only return a RangeVar as contained rel */
 		rtr = castNode(RangeTblRef, rel);
 		rte = rt_fetch(rtr->rtindex, pstate->p_rtable);
@@ -1558,7 +1558,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 * The join RTE itself is always made visible for unqualified column
 		 * names.  It's visible as a relation name only if it has an alias.
 		 */
-		*namespace = lappend(my_namespace,
+		*fnamespace = lappend(my_namespace,
 							 makeNamespaceItem(rte,
 											   (j->alias != NULL),
 											   true,
