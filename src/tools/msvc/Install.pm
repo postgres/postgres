@@ -134,6 +134,9 @@ sub Install
 		CopyFiles(
 			'Information schema data', $target . '/share/',
 			'src/backend/catalog/',    'sql_features.txt');
+		CopyFiles(
+			'Error code data', $target . '/share/',
+			'src/backend/utils/',    'errcodes.txt');
 		GenerateConversionScript($target);
 		GenerateTimezoneFiles($target, $conf);
 		GenerateTsearchFiles($target);

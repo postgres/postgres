@@ -247,6 +247,7 @@ endif
 endif
 	$(MAKE) -C catalog install-data
 	$(MAKE) -C tsearch install-data
+	$(MAKE) -C utils install-data
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample '$(DESTDIR)$(datadir)/pg_hba.conf.sample'
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample '$(DESTDIR)$(datadir)/pg_ident.conf.sample'
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample '$(DESTDIR)$(datadir)/postgresql.conf.sample'
@@ -312,6 +313,7 @@ endif
 endif
 	$(MAKE) -C catalog uninstall-data
 	$(MAKE) -C tsearch uninstall-data
+	$(MAKE) -C utils uninstall-data
 	rm -f '$(DESTDIR)$(datadir)/pg_hba.conf.sample' \
 	      '$(DESTDIR)$(datadir)/pg_ident.conf.sample' \
 	      '$(DESTDIR)$(datadir)/postgresql.conf.sample' \

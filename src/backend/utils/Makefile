@@ -46,6 +46,16 @@ else
 	sed -f $(srcdir)/Gen_dummy_probes.sed $< >$@
 endif
 
+.PHONY: install-data
+install-data: errcodes.txt installdirs
+	$(INSTALL_DATA) $(srcdir)/errcodes.txt '$(DESTDIR)$(datadir)/errcodes.txt'
+
+installdirs:
+	$(MKDIR_P) '$(DESTDIR)$(datadir)'
+
+.PHONY: uninstall-data
+uninstall-data:
+	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, errcodes.txt)
 
 # fmgroids.h, fmgrprotos.h, fmgrtab.c and errcodes.h are in the
 # distribution tarball, so they are not cleaned here.
