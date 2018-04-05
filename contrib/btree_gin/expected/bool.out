@@ -1,0 +1,119 @@
+set enable_seqscan=off;
+CREATE TABLE test_bool (
+	i boolean
+);
+INSERT INTO test_bool VALUES (false),(true),(null);
+CREATE INDEX idx_bool ON test_bool USING gin (i);
+SELECT * FROM test_bool WHERE i<true ORDER BY i;
+ i 
+---
+ f
+(1 row)
+
+SELECT * FROM test_bool WHERE i<=true ORDER BY i;
+ i 
+---
+ f
+ t
+(2 rows)
+
+SELECT * FROM test_bool WHERE i=true ORDER BY i;
+ i 
+---
+ t
+(1 row)
+
+SELECT * FROM test_bool WHERE i>=true ORDER BY i;
+ i 
+---
+ t
+(1 row)
+
+SELECT * FROM test_bool WHERE i>true ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_bool WHERE i<false ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_bool WHERE i<=false ORDER BY i;
+ i 
+---
+ f
+(1 row)
+
+SELECT * FROM test_bool WHERE i=false ORDER BY i;
+ i 
+---
+ f
+(1 row)
+
+SELECT * FROM test_bool WHERE i>=false ORDER BY i;
+ i 
+---
+ f
+ t
+(2 rows)
+
+SELECT * FROM test_bool WHERE i>false ORDER BY i;
+ i 
+---
+ t
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i<true ORDER BY i;
+                QUERY PLAN                 
+-------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_bool
+         Recheck Cond: (i < true)
+         ->  Bitmap Index Scan on idx_bool
+               Index Cond: (i < true)
+(6 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i<=true ORDER BY i;
+                QUERY PLAN                 
+-------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_bool
+         Recheck Cond: (i <= true)
+         ->  Bitmap Index Scan on idx_bool
+               Index Cond: (i <= true)
+(6 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i=true ORDER BY i;
+         QUERY PLAN          
+-----------------------------
+ Sort
+   Sort Key: i
+   ->  Seq Scan on test_bool
+         Filter: i
+(4 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i>=true ORDER BY i;
+                QUERY PLAN                 
+-------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_bool
+         Recheck Cond: (i >= true)
+         ->  Bitmap Index Scan on idx_bool
+               Index Cond: (i >= true)
+(6 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i>true ORDER BY i;
+                QUERY PLAN                 
+-------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_bool
+         Recheck Cond: (i > true)
+         ->  Bitmap Index Scan on idx_bool
+               Index Cond: (i > true)
+(6 rows)
+

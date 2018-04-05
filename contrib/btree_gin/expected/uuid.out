@@ -1,0 +1,104 @@
+set enable_seqscan=off;
+CREATE TABLE test_uuid (
+	i uuid
+);
+INSERT INTO test_uuid VALUES
+	( '00000000-0000-0000-0000-000000000000' ),
+	( '299bc99f-2f79-4e3e-bfea-2cbfd62a7c27' ),
+	( '6264af33-0d43-4337-bf4e-43509b8a4be8' ),
+	( 'ce41c936-6acb-4feb-8c91-852a673e5a5c' ),
+	( 'd2ce731f-f2a8-4a2b-be37-8f0ba637427f' ),
+	( 'ffffffff-ffff-ffff-ffff-ffffffffffff' )
+;
+CREATE INDEX idx_uuid ON test_uuid USING gin (i);
+SELECT * FROM test_uuid WHERE i<'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                  i                   
+--------------------------------------
+ 00000000-0000-0000-0000-000000000000
+ 299bc99f-2f79-4e3e-bfea-2cbfd62a7c27
+ 6264af33-0d43-4337-bf4e-43509b8a4be8
+(3 rows)
+
+SELECT * FROM test_uuid WHERE i<='ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                  i                   
+--------------------------------------
+ 00000000-0000-0000-0000-000000000000
+ 299bc99f-2f79-4e3e-bfea-2cbfd62a7c27
+ 6264af33-0d43-4337-bf4e-43509b8a4be8
+ ce41c936-6acb-4feb-8c91-852a673e5a5c
+(4 rows)
+
+SELECT * FROM test_uuid WHERE i='ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                  i                   
+--------------------------------------
+ ce41c936-6acb-4feb-8c91-852a673e5a5c
+(1 row)
+
+SELECT * FROM test_uuid WHERE i>='ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                  i                   
+--------------------------------------
+ ce41c936-6acb-4feb-8c91-852a673e5a5c
+ d2ce731f-f2a8-4a2b-be37-8f0ba637427f
+ ffffffff-ffff-ffff-ffff-ffffffffffff
+(3 rows)
+
+SELECT * FROM test_uuid WHERE i>'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                  i                   
+--------------------------------------
+ d2ce731f-f2a8-4a2b-be37-8f0ba637427f
+ ffffffff-ffff-ffff-ffff-ffffffffffff
+(2 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_uuid WHERE i<'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_uuid
+         Recheck Cond: (i < 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+         ->  Bitmap Index Scan on idx_uuid
+               Index Cond: (i < 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+(6 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_uuid WHERE i<='ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_uuid
+         Recheck Cond: (i <= 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+         ->  Bitmap Index Scan on idx_uuid
+               Index Cond: (i <= 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+(6 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_uuid WHERE i='ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Bitmap Heap Scan on test_uuid
+   Recheck Cond: (i = 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+   ->  Bitmap Index Scan on idx_uuid
+         Index Cond: (i = 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+(4 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_uuid WHERE i>='ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_uuid
+         Recheck Cond: (i >= 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+         ->  Bitmap Index Scan on idx_uuid
+               Index Cond: (i >= 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+(6 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM test_uuid WHERE i>'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid ORDER BY i;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_uuid
+         Recheck Cond: (i > 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+         ->  Bitmap Index Scan on idx_uuid
+               Index Cond: (i > 'ce41c936-6acb-4feb-8c91-852a673e5a5c'::uuid)
+(6 rows)
+
