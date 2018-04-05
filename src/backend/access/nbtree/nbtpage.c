@@ -110,7 +110,7 @@ _bt_upgrademetapage(Page page)
  *									  the metapage.
  *
  *		This routine checks if provided cleanup-related information is matching
- *		to those written in the metapage.  On mismatch, metapage is overritten.
+ *		to those written in the metapage.  On mismatch, metapage is overwritten.
  */
 void
 _bt_update_meta_cleanup_info(Relation rel, TransactionId oldestBtpoXact,
