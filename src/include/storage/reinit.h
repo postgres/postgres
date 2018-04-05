@@ -15,6 +15,9 @@
 #ifndef REINIT_H
 #define REINIT_H
 
+#include "common/relpath.h"
+
+
 extern void ResetUnloggedRelations(int op);
 extern bool parse_filename_for_nontemp_relation(
 	const char *name, int *oidchars, ForkNumber *fork);
