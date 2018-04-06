@@ -195,11 +195,6 @@ pg_read_file(PG_FUNCTION_ARGS)
 	char	   *filename;
 	text	   *result;
 
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to read files"))));
-
 	/* handle optional arguments */
 	if (PG_NARGS() >= 3)
 	{
@@ -235,11 +230,6 @@ pg_read_binary_file(PG_FUNCTION_ARGS)
 	bool		missing_ok = false;
 	char	   *filename;
 	bytea	   *result;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to read files"))));
 
 	/* handle optional arguments */
 	if (PG_NARGS() >= 3)
@@ -312,11 +302,6 @@ pg_stat_file(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	TupleDesc	tupdesc;
 	bool		missing_ok = false;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to get file information"))));
 
 	/* check the optional argument */
 	if (PG_NARGS() == 2)
@@ -398,11 +383,6 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 	struct dirent *de;
 	directory_fctx *fctx;
 	MemoryContext oldcontext;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to get directory listings"))));
 
 	if (SRF_IS_FIRSTCALL())
 	{
