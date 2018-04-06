@@ -220,6 +220,9 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	/* put portal in table (sets portal->name) */
 	PortalHashTableInsert(portal, name);
 
+	/* reuse portal->name copy */
+	MemoryContextSetIdentifier(portal->portalContext, portal->name);
+
 	return portal;
 }
 
