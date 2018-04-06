@@ -535,6 +535,21 @@ DROP ROLE doomed_role;
        <entry>Send signals to other backends (eg: cancel query, terminate).</entry>
       </row>
       <row>
+       <entry>pg_read_server_files</entry>
+       <entry>Allow reading files from any location the database can access on the server with COPY and
+       other file-access functions.</entry>
+      </row>
+      <row>
+       <entry>pg_write_server_files</entry>
+       <entry>Allow writing to files in any location the database can access on the server with COPY and
+       other file-access functions.</entry>
+      </row>
+      <row>
+       <entry>pg_execute_server_program</entry>
+       <entry>Allow executing programs on the database server as the user the database runs as with
+       COPY and other functions which allow executing a server-side program.</entry>
+      </row>
+      <row>
        <entry>pg_monitor</entry>
        <entry>Read/execute various monitoring views and functions.
        This role is a member of <literal>pg_read_all_settings</literal>,
@@ -544,6 +559,16 @@ DROP ROLE doomed_role;
      </tbody>
     </tgroup>
    </table>
+
+  <para>
+  The <literal>pg_read_server_files</literal>, <literal>pg_write_server_files</literal> and
+  <literal>pg_execute_server_program</literal> roles are intended to allow administrators to have
+  trusted, but non-superuser, roles which are able to access files and run programs on the
+  database server as the user the database runs as.  As these roles are able to access any file on
+  the server filesystem, they bypass all database-level permission checks when accessing files
+  directly and they could be used to gain superuser-level access, therefore care should be taken
+  when granting these roles to users.
+  </para>
 
   <para>
   The <literal>pg_monitor</literal>, <literal>pg_read_all_settings</literal>,
@@ -556,7 +581,8 @@ DROP ROLE doomed_role;
 
   <para>
   Care should be taken when granting these roles to ensure they are only used where
-  needed to perform the desired monitoring.
+  needed and with the understanding that these roles grant access to privileged
+  information.
   </para>
 
   <para>

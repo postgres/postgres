@@ -18,6 +18,7 @@
 #include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_foreign_table.h"
 #include "commands/copy.h"
 #include "commands/defrem.h"
@@ -202,24 +203,6 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 	ListCell   *cell;
 
 	/*
-	 * Only superusers are allowed to set options of a file_fdw foreign table.
-	 * This is because we don't want non-superusers to be able to control
-	 * which file gets read or which program gets executed.
-	 *
-	 * Putting this sort of permissions check in a validator is a bit of a
-	 * crock, but there doesn't seem to be any other place that can enforce
-	 * the check more cleanly.
-	 *
-	 * Note that the valid_options[] array disallows setting filename and
-	 * program at any options level other than foreign table --- otherwise
-	 * there'd still be a security hole.
-	 */
-	if (catalog == ForeignTableRelationId && !superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("only superuser can change options of a file_fdw foreign table")));
-
-	/*
 	 * Check that only options supported by file_fdw, and allowed for the
 	 * current object type, are given.
 	 */
@@ -264,6 +247,38 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
+
+			/*
+			 * Check permissions for changing which file or program is used by
+			 * the file_fdw.
+			 *
+			 * Only members of the role 'pg_read_server_files' are allowed to
+			 * set the 'filename' option of a file_fdw foreign table, while
+			 * only members of the role 'pg_execute_server_program' are
+			 * allowed to set the 'program' option.  This is because we don't
+			 * want regular users to be able to control which file gets read
+			 * or which program gets executed.
+			 *
+			 * Putting this sort of permissions check in a validator is a bit
+			 * of a crock, but there doesn't seem to be any other place that
+			 * can enforce the check more cleanly.
+			 *
+			 * Note that the valid_options[] array disallows setting filename
+			 * and program at any options level other than foreign table ---
+			 * otherwise there'd still be a security hole.
+			 */
+			if (strcmp(def->defname, "filename") == 0 &&
+				!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_SERVER_FILES))
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("only superuser or a member of the pg_read_server_files role may specify the filename option of a file_fdw foreign table")));
+
+			if (strcmp(def->defname, "program") == 0 &&
+				!is_member_of_role(GetUserId(), DEFAULT_ROLE_EXECUTE_SERVER_PROGRAM))
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("only superuser or a member of the pg_execute_server_program role may specify the program option of a file_fdw foreign table")));
+
 			filename = defGetString(def);
 		}
 

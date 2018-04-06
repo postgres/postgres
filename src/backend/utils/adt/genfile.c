@@ -22,6 +22,7 @@
 
 #include "access/htup_details.h"
 #include "access/xlog_internal.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -45,6 +46,12 @@ typedef struct
  *
  * Filename may be absolute or relative to the DataDir, but we only allow
  * absolute paths that match DataDir or Log_directory.
+ *
+ * This does a privilege check against the 'pg_read_server_files' role, so
+ * this function is really only appropriate for callers who are only checking
+ * 'read' access.  Do not use this function if you are looking for a check
+ * for 'write' or 'program' access without updating it to access the type
+ * of check as an argument and checking the appropriate role membership.
  */
 static char *
 convert_and_check_filename(text *arg)
@@ -54,6 +61,15 @@ convert_and_check_filename(text *arg)
 	filename = text_to_cstring(arg);
 	canonicalize_path(filename);	/* filename can change length here */
 
+	/*
+	 * Members of the 'pg_read_server_files' role are allowed to access any
+	 * files on the server as the PG user, so no need to do any further checks
+	 * here.
+	 */
+	if (is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_SERVER_FILES))
+		return filename;
+
+	/* User isn't a member of the default role, so check if it's allowable */
 	if (is_absolute_path(filename))
 	{
 		/* Disallow '/a/b/data/..' */

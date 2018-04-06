@@ -20119,10 +20119,21 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     linkend="functions-admin-genfile-table"/> provide native access to
     files on the machine hosting the server. Only files within the
     database cluster directory and the <varname>log_directory</varname> can be
-    accessed.  Use a relative path for files in the cluster directory,
-    and a path matching the <varname>log_directory</varname> configuration setting
-    for log files.  Use of these functions is restricted to superusers
-    except where stated otherwise.
+    accessed unless the user is granted the role
+    <literal>pg_read_server_files</literal>.  Use a relative path for files in
+    the cluster directory, and a path matching the <varname>log_directory</varname>
+    configuration setting for log files.
+   </para>
+
+   <para>
+    Note that granting users the EXECUTE privilege on the
+    <function>pg_read_file()</function>, or related, functions allows them the
+    ability to read any file on the server which the database can read and
+    that those reads bypass all in-database privilege checks.  This means that,
+    among other things, a user with this access is able to read the contents of the
+    <literal>pg_authid</literal> table where authentication information is contained,
+    as well as read any file in the database.  Therefore, granting access to these
+    functions should be carefully considered.
    </para>
 
    <table id="functions-admin-genfile-table">
@@ -20140,7 +20151,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        </entry>
        <entry><type>setof text</type></entry>
        <entry>
-        List the contents of a directory.
+        List the contents of a directory.  Restricted to superusers by default, but other users can be granted EXECUTE to run the function.
        </entry>
       </row>
       <row>
@@ -20171,7 +20182,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Return the contents of a text file.
+        Return the contents of a text file.  Restricted to superusers by default, but other users can be granted EXECUTE to run the function.
        </entry>
       </row>
       <row>
@@ -20180,7 +20191,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Return the contents of a file.
+        Return the contents of a file.  Restricted to superusers by default, but other users can be granted EXECUTE to run the function.
        </entry>
       </row>
       <row>
@@ -20189,7 +20200,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        </entry>
        <entry><type>record</type></entry>
        <entry>
-        Return information about a file.
+        Return information about a file.  Restricted to superusers by default, but other users can be granted EXECUTE to run the function.
        </entry>
       </row>
      </tbody>
