@@ -3,6 +3,7 @@ use warnings;
 use Cwd;
 use Config;
 use File::Basename qw(basename dirname);
+use File::Path qw(rmtree);
 use PostgresNode;
 use TestLib;
 use Test::More tests => 104;
@@ -135,6 +136,7 @@ foreach my $filename (@tempRelationFiles)
 # Make sure existing backup_label was ignored.
 isnt(slurp_file("$tempdir/backup/backup_label"),
 	'DONOTCOPY', 'existing backup_label not copied');
+rmtree("$tempdir/backup");
 
 $node->command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backup2", '--waldir',
@@ -142,10 +144,13 @@ $node->command_ok(
 	'separate xlog directory');
 ok(-f "$tempdir/backup2/PG_VERSION", 'backup was created');
 ok(-d "$tempdir/xlog2/",             'xlog directory was created');
+rmtree("$tempdir/backup2");
+rmtree("$tempdir/xlog2");
 
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup", '-Ft' ],
 	'tar format');
 ok(-f "$tempdir/tarbackup/base.tar", 'backup tar was created');
+rmtree("$tempdir/tarbackup");
 
 $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-T=/foo" ],
@@ -212,6 +217,7 @@ SKIP:
 	ok(-f "$tempdir/tarbackup2/base.tar", 'backup tar was created');
 	my @tblspc_tars = glob "$tempdir/tarbackup2/[0-9]*.tar";
 	is(scalar(@tblspc_tars), 1, 'one tablespace tar was created');
+	rmtree("$tempdir/tarbackup2");
 
 	# Create an unlogged table to test that forks other than init are not copied.
 	$node->safe_psql('postgres',
@@ -281,6 +287,7 @@ SKIP:
 
 	ok( -d "$tempdir/backup1/pg_replslot",
 		'pg_replslot symlink copied as directory');
+	rmtree("$tempdir/backup1");
 
 	mkdir "$tempdir/tbl=spc2";
 	$node->safe_psql('postgres', "DROP TABLE test1;");
@@ -295,6 +302,7 @@ SKIP:
 	ok(-d "$tempdir/tbackup/tbl=spc2",
 		'tablespace with = sign was relocated');
 	$node->safe_psql('postgres', "DROP TABLESPACE tblspc2;");
+	rmtree("$tempdir/backup3");
 
 	mkdir "$tempdir/$superlongname";
 	$node->safe_psql('postgres',
@@ -303,12 +311,14 @@ SKIP:
 		[ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
 		'pg_basebackup tar with long symlink target');
 	$node->safe_psql('postgres', "DROP TABLESPACE tblspc3;");
+	rmtree("$tempdir/tarbackup_l3");
 }
 
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backupR", '-R' ],
 	'pg_basebackup -R runs');
 ok(-f "$tempdir/backupR/recovery.conf", 'recovery.conf was created');
 my $recovery_conf = slurp_file "$tempdir/backupR/recovery.conf";
+rmtree("$tempdir/backupR");
 
 my $port = $node->port;
 like(
@@ -325,26 +335,31 @@ $node->command_ok(
 	'pg_basebackup runs in default xlog mode');
 ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxd/pg_wal")),
 	'WAL files copied');
+rmtree("$tempdir/backupxd");
 
 $node->command_ok(
 	[ 'pg_basebackup', '-D', "$tempdir/backupxf", '-X', 'fetch' ],
 	'pg_basebackup -X fetch runs');
 ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_wal")),
 	'WAL files copied');
+rmtree("$tempdir/backupxf");
 $node->command_ok(
 	[ 'pg_basebackup', '-D', "$tempdir/backupxs", '-X', 'stream' ],
 	'pg_basebackup -X stream runs');
 ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxs/pg_wal")),
 	'WAL files copied');
+rmtree("$tempdir/backupxs");
 $node->command_ok(
 	[ 'pg_basebackup', '-D', "$tempdir/backupxst", '-X', 'stream', '-Ft' ],
 	'pg_basebackup -X stream runs in tar mode');
 ok(-f "$tempdir/backupxst/pg_wal.tar", "tar file was created");
+rmtree("$tempdir/backupxst");
 $node->command_ok(
 	[   'pg_basebackup',         '-D',
 		"$tempdir/backupnoslot", '-X',
 		'stream',                '--no-slot' ],
 	'pg_basebackup -X stream runs with --no-slot');
+rmtree("$tempdir/backupnoslot");
 
 $node->command_fails(
 	[   'pg_basebackup',             '-D',
@@ -364,6 +379,7 @@ $node->command_fails(
 $node->command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backupxs_slot", '-C', '-S', 'slot0' ],
 	'pg_basebackup -C runs');
+rmtree("$tempdir/backupxs_slot");
 
 is($node->safe_psql('postgres', q{SELECT slot_name FROM pg_replication_slots WHERE slot_name = 'slot0'}),
    'slot0',
@@ -393,6 +409,7 @@ $lsn = $node->safe_psql('postgres',
 	q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'}
 );
 like($lsn, qr!^0/[0-9A-Z]{7,8}$!, 'restart LSN of slot has advanced');
+rmtree("$tempdir/backupxs_sl");
 
 $node->command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backupxs_sl_R", '-X',
@@ -405,6 +422,7 @@ like(
 
 my $checksum = $node->safe_psql('postgres', 'SHOW data_checksums;');
 is($checksum, 'on', 'checksums are enabled');
+rmtree("$tempdir/backupxs_sl_R");
 
 # create tables to corrupt and get their relfilenodes
 my $file_corrupt1 = $node->safe_psql('postgres',
@@ -432,6 +450,7 @@ $node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt"],
 	[qr/^WARNING.*checksum verification failed/s],
 	'pg_basebackup reports checksum mismatch'
 );
+rmtree("$tempdir/backup_corrupt");
 
 # induce further corruption in 5 more blocks
 system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
@@ -450,6 +469,7 @@ $node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt2"],
         [qr/^WARNING.*further.*failures.*will.not.be.reported/s],
         'pg_basebackup does not report more than 5 checksum mismatches'
 );
+rmtree("$tempdir/backup_corrupt2");
 
 # induce corruption in a second file
 system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
@@ -465,11 +485,13 @@ $node->command_checks_all([ 'pg_basebackup', '-D', "$tempdir/backup_corrupt3"],
         [qr/^WARNING.*7 total checksum verification failures/s],
         'pg_basebackup correctly report the total number of checksum mismatches'
 );
+rmtree("$tempdir/backup_corrupt3");
 
 # do not verify checksums, should return ok
 $node->command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backup_corrupt4", '-k' ],
 	'pg_basebackup with -k does not report checksum mismatch');
+rmtree("$tempdir/backup_corrupt4");
 
 $node->safe_psql('postgres', "DROP TABLE corrupt1;");
 $node->safe_psql('postgres', "DROP TABLE corrupt2;");
