@@ -396,16 +396,17 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 }
 
 static void
-_outMergeAction(StringInfo str, const MergeAction *node)
+_outMergeWhenClause(StringInfo str, const MergeWhenClause *node)
 {
-	WRITE_NODE_TYPE("MERGEACTION");
+	WRITE_NODE_TYPE("MERGEWHENCLAUSE");
 
 	WRITE_BOOL_FIELD(matched);
 	WRITE_ENUM_FIELD(commandType, CmdType);
 	WRITE_NODE_FIELD(condition);
-	WRITE_NODE_FIELD(qual);
-	WRITE_NODE_FIELD(stmt);
 	WRITE_NODE_FIELD(targetList);
+	WRITE_NODE_FIELD(cols);
+	WRITE_NODE_FIELD(values);
+	WRITE_ENUM_FIELD(override, OverridingKind);
 }
 
 static void
@@ -1722,6 +1723,17 @@ _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
 	WRITE_NODE_FIELD(onConflictWhere);
 	WRITE_INT_FIELD(exclRelIndex);
 	WRITE_NODE_FIELD(exclRelTlist);
+}
+
+static void
+_outMergeAction(StringInfo str, const MergeAction *node)
+{
+	WRITE_NODE_TYPE("MERGEACTION");
+
+	WRITE_BOOL_FIELD(matched);
+	WRITE_ENUM_FIELD(commandType, CmdType);
+	WRITE_NODE_FIELD(qual);
+	WRITE_NODE_FIELD(targetList);
 }
 
 /*****************************************************************************
@@ -3679,8 +3691,8 @@ outNode(StringInfo str, const void *obj)
 			case T_ModifyTable:
 				_outModifyTable(str, obj);
 				break;
-			case T_MergeAction:
-				_outMergeAction(str, obj);
+			case T_MergeWhenClause:
+				_outMergeWhenClause(str, obj);
 				break;
 			case T_Append:
 				_outAppend(str, obj);
@@ -3957,6 +3969,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_OnConflictExpr:
 				_outOnConflictExpr(str, obj);
+				break;
+			case T_MergeAction:
+				_outMergeAction(str, obj);
 				break;
 			case T_Path:
 				_outPath(str, obj);

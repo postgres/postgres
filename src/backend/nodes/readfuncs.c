@@ -1332,6 +1332,22 @@ _readOnConflictExpr(void)
 }
 
 /*
+ * _readMergeAction
+ */
+static MergeAction *
+_readMergeAction(void)
+{
+	READ_LOCALS(MergeAction);
+
+	READ_BOOL_FIELD(matched);
+	READ_ENUM_FIELD(commandType, CmdType);
+	READ_NODE_FIELD(qual);
+	READ_NODE_FIELD(targetList);
+
+	READ_DONE();
+}
+
+/*
  *	Stuff from parsenodes.h.
  */
 
@@ -1602,19 +1618,20 @@ _readModifyTable(void)
 }
 
 /*
- * _readMergeAction
+ * _readMergeWhenClause
  */
-static MergeAction *
-_readMergeAction(void)
+static MergeWhenClause *
+_readMergeWhenClause(void)
 {
-	READ_LOCALS(MergeAction);
+	READ_LOCALS(MergeWhenClause);
 
 	READ_BOOL_FIELD(matched);
 	READ_ENUM_FIELD(commandType, CmdType);
 	READ_NODE_FIELD(condition);
-	READ_NODE_FIELD(qual);
-	READ_NODE_FIELD(stmt);
 	READ_NODE_FIELD(targetList);
+	READ_NODE_FIELD(cols);
+	READ_NODE_FIELD(values);
+	READ_ENUM_FIELD(override, OverridingKind);
 
 	READ_DONE();
 }
@@ -2596,6 +2613,8 @@ parseNodeString(void)
 		return_value = _readFromExpr();
 	else if (MATCH("ONCONFLICTEXPR", 14))
 		return_value = _readOnConflictExpr();
+	else if (MATCH("MERGEACTION", 11))
+		return_value = _readMergeAction();
 	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
 	else if (MATCH("RANGETBLFUNCTION", 16))
@@ -2618,8 +2637,8 @@ parseNodeString(void)
 		return_value = _readProjectSet();
 	else if (MATCH("MODIFYTABLE", 11))
 		return_value = _readModifyTable();
-	else if (MATCH("MERGEACTION", 11))
-		return_value = _readMergeAction();
+	else if (MATCH("MERGEWHENCLAUSE", 15))
+		return_value = _readMergeWhenClause();
 	else if (MATCH("APPEND", 6))
 		return_value = _readAppend();
 	else if (MATCH("MERGEAPPEND", 11))

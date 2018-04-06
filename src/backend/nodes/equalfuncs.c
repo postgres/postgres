@@ -812,6 +812,18 @@ _equalOnConflictExpr(const OnConflictExpr *a, const OnConflictExpr *b)
 	return true;
 }
 
+
+static bool
+_equalMergeAction(const MergeAction *a, const MergeAction *b)
+{
+	COMPARE_SCALAR_FIELD(matched);
+	COMPARE_SCALAR_FIELD(commandType);
+	COMPARE_SCALAR_FIELD(override);
+	COMPARE_NODE_FIELD(qual);
+	COMPARE_NODE_FIELD(targetList);
+
+	return true;
+}
 /*
  * Stuff from relation.h
  */
@@ -1050,21 +1062,22 @@ _equalMergeStmt(const MergeStmt *a, const MergeStmt *b)
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(source_relation);
 	COMPARE_NODE_FIELD(join_condition);
-	COMPARE_NODE_FIELD(mergeActionList);
+	COMPARE_NODE_FIELD(mergeWhenClauses);
 	COMPARE_NODE_FIELD(withClause);
 
 	return true;
 }
 
 static bool
-_equalMergeAction(const MergeAction *a, const MergeAction *b)
+_equalMergeWhenClause(const MergeWhenClause *a, const MergeWhenClause *b)
 {
 	COMPARE_SCALAR_FIELD(matched);
 	COMPARE_SCALAR_FIELD(commandType);
 	COMPARE_NODE_FIELD(condition);
-	COMPARE_NODE_FIELD(qual);
-	COMPARE_NODE_FIELD(stmt);
 	COMPARE_NODE_FIELD(targetList);
+	COMPARE_NODE_FIELD(cols);
+	COMPARE_NODE_FIELD(values);
+	COMPARE_SCALAR_FIELD(override);
 
 	return true;
 }
@@ -3192,6 +3205,9 @@ equal(const void *a, const void *b)
 		case T_OnConflictExpr:
 			retval = _equalOnConflictExpr(a, b);
 			break;
+		case T_MergeAction:
+			retval = _equalMergeAction(a, b);
+			break;
 		case T_JoinExpr:
 			retval = _equalJoinExpr(a, b);
 			break;
@@ -3263,8 +3279,8 @@ equal(const void *a, const void *b)
 		case T_MergeStmt:
 			retval = _equalMergeStmt(a, b);
 			break;
-		case T_MergeAction:
-			retval = _equalMergeAction(a, b);
+		case T_MergeWhenClause:
+			retval = _equalMergeWhenClause(a, b);
 			break;
 		case T_SelectStmt:
 			retval = _equalSelectStmt(a, b);

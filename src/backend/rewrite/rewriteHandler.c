@@ -3417,12 +3417,10 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 						break;
 					case CMD_INSERT:
 						{
-							InsertStmt *istmt = (InsertStmt *) action->stmt;
-
 							action->targetList =
 								rewriteTargetListIU(action->targetList,
 													action->commandType,
-													istmt->override,
+													action->override,
 													rt_entry_relation,
 													parsetree->resultRelation,
 													NULL);

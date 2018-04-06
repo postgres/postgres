@@ -90,7 +90,9 @@ USING source AS s
 ON t.tid = s.sid
 WHEN NOT MATCHED THEN
 	INSERT VALUES (1,1), (2,2);
-ERROR:  Multiple VALUES clauses not allowed in MERGE INSERT statement
+ERROR:  syntax error at or near ","
+LINE 5:  INSERT VALUES (1,1), (2,2);
+                            ^
 ;
 -- SELECT query for INSERT
 MERGE INTO target t

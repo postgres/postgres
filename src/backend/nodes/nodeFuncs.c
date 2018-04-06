@@ -3444,19 +3444,23 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (walker(stmt->join_condition, context))
 					return true;
-				if (walker(stmt->mergeActionList, context))
+				if (walker(stmt->mergeWhenClauses, context))
 					return true;
 				if (walker(stmt->withClause, context))
 					return true;
 			}
 			break;
-		case T_MergeAction:
+		case T_MergeWhenClause:
 			{
-				MergeAction *action = (MergeAction *) node;
+				MergeWhenClause *mergeWhenClause = (MergeWhenClause *) node;
 
-				if (walker(action->targetList, context))
+				if (walker(mergeWhenClause->condition, context))
 					return true;
-				if (walker(action->qual, context))
+				if (walker(mergeWhenClause->targetList, context))
+					return true;
+				if (walker(mergeWhenClause->cols, context))
+					return true;
+				if (walker(mergeWhenClause->values, context))
 					return true;
 			}
 			break;

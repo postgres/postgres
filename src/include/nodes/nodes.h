@@ -269,6 +269,7 @@ typedef enum NodeTag
 	T_RollupData,
 	T_GroupingSetData,
 	T_StatisticExtInfo,
+	T_MergeAction,
 
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
@@ -310,7 +311,6 @@ typedef enum NodeTag
 	T_DeleteStmt,
 	T_UpdateStmt,
 	T_MergeStmt,
-	T_MergeAction,
 	T_SelectStmt,
 	T_AlterTableStmt,
 	T_AlterTableCmd,
@@ -475,6 +475,7 @@ typedef enum NodeTag
 	T_PartitionRangeDatum,
 	T_PartitionCmd,
 	T_VacuumRelation,
+	T_MergeWhenClause,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)

@@ -33,8 +33,8 @@
 
 static int transformMergeJoinClause(ParseState *pstate, Node *merge,
 						List **mergeSourceTargetList);
-static void setNamespaceForMergeAction(ParseState *pstate,
-						MergeAction *action);
+static void setNamespaceForMergeWhen(ParseState *pstate,
+						MergeWhenClause *mergeWhenClause);
 static void setNamespaceVisibilityForRTE(List *namespace, RangeTblEntry *rte,
 							 bool rel_visible,
 							 bool cols_visible);
@@ -138,7 +138,7 @@ transformMergeJoinClause(ParseState *pstate, Node *merge,
  * that columns can be referenced unqualified from these relations.
  */
 static void
-setNamespaceForMergeAction(ParseState *pstate, MergeAction *action)
+setNamespaceForMergeWhen(ParseState *pstate, MergeWhenClause *mergeWhenClause)
 {
 	RangeTblEntry *targetRelRTE,
 			   *sourceRelRTE;
@@ -152,7 +152,7 @@ setNamespaceForMergeAction(ParseState *pstate, MergeAction *action)
 	 */
 	sourceRelRTE = rt_fetch(list_length(pstate->p_rtable) - 1, pstate->p_rtable);
 
-	switch (action->commandType)
+	switch (mergeWhenClause->commandType)
 	{
 		case CMD_INSERT:
 
@@ -198,6 +198,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	bool			is_terminal[2];
 	JoinExpr	   *joinexpr;
 	RangeTblEntry  *resultRelRTE, *mergeRelRTE;
+	List		   *mergeActionList;
 
 	/* There can't be any outer WITH to worry about */
 	Assert(pstate->p_ctenamespace == NIL);
@@ -222,43 +223,18 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	 */
 	is_terminal[0] = false;
 	is_terminal[1] = false;
-	foreach(l, stmt->mergeActionList)
+	foreach(l, stmt->mergeWhenClauses)
 	{
-		MergeAction *action = (MergeAction *) lfirst(l);
-		int		when_type = (action->matched ? 0 : 1);
+		MergeWhenClause *mergeWhenClause = (MergeWhenClause *) lfirst(l);
+		int		when_type = (mergeWhenClause->matched ? 0 : 1);
 
 		/*
 		 * Collect action types so we can check Target permissions
 		 */
-		switch (action->commandType)
+		switch (mergeWhenClause->commandType)
 		{
 			case CMD_INSERT:
-				{
-					InsertStmt *istmt = (InsertStmt *) action->stmt;
-					SelectStmt *selectStmt = (SelectStmt *) istmt->selectStmt;
-
-					/*
-					 * The grammar allows attaching ORDER BY, LIMIT, FOR
-					 * UPDATE, or WITH to a VALUES clause and also multiple
-					 * VALUES clauses. If we have any of those, ERROR.
-					 */
-					if (selectStmt && (selectStmt->valuesLists == NIL ||
-									   selectStmt->sortClause != NIL ||
-									   selectStmt->limitOffset != NULL ||
-									   selectStmt->limitCount != NULL ||
-									   selectStmt->lockingClause != NIL ||
-									   selectStmt->withClause != NULL))
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("SELECT not allowed in MERGE INSERT statement")));
-
-					if (selectStmt && list_length(selectStmt->valuesLists) > 1)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("Multiple VALUES clauses not allowed in MERGE INSERT statement")));
-
-					targetPerms |= ACL_INSERT;
-				}
+				targetPerms |= ACL_INSERT;
 				break;
 			case CMD_UPDATE:
 				targetPerms |= ACL_UPDATE;
@@ -275,7 +251,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 		/*
 		 * Check for unreachable WHEN clauses
 		 */
-		if (action->condition == NULL)
+		if (mergeWhenClause->condition == NULL)
 			is_terminal[when_type] = true;
 		else if (is_terminal[when_type])
 			ereport(ERROR,
@@ -461,15 +437,20 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	 * both of those already have RTEs. There is nothing like the EXCLUDED
 	 * pseudo-relation for INSERT ON CONFLICT.
 	 */
-	foreach(l, stmt->mergeActionList)
+	mergeActionList = NIL;
+	foreach(l, stmt->mergeWhenClauses)
 	{
-		MergeAction *action = (MergeAction *) lfirst(l);
+		MergeWhenClause *mergeWhenClause = (MergeWhenClause *) lfirst(l);
+		MergeAction		  *action = makeNode(MergeAction);
+
+		action->commandType = mergeWhenClause->commandType;
+		action->matched = mergeWhenClause->matched;
 
 		/*
 		 * Set namespace for the specific action. This must be done before
 		 * analyzing the WHEN quals and the action targetlisst.
 		 */
-		setNamespaceForMergeAction(pstate, action);
+		setNamespaceForMergeWhen(pstate, mergeWhenClause);
 
 		/*
 		 * Transform the when condition.
@@ -478,7 +459,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 		 * are evaluated separately during execution to decide which of the
 		 * WHEN MATCHED or WHEN NOT MATCHED actions to execute.
 		 */
-		action->qual = transformWhereClause(pstate, action->condition,
+		action->qual = transformWhereClause(pstate, mergeWhenClause->condition,
 											EXPR_KIND_MERGE_WHEN_AND, "WHEN");
 
 		/*
@@ -488,8 +469,6 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 		{
 			case CMD_INSERT:
 				{
-					InsertStmt *istmt = (InsertStmt *) action->stmt;
-					SelectStmt *selectStmt = (SelectStmt *) istmt->selectStmt;
 					List	   *exprList = NIL;
 					ListCell   *lc;
 					RangeTblEntry *rte;
@@ -500,13 +479,17 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 
 					pstate->p_is_insert = true;
 
-					icolumns = checkInsertTargets(pstate, istmt->cols, &attrnos);
+					icolumns = checkInsertTargets(pstate,
+												  mergeWhenClause->cols,
+												  &attrnos);
 					Assert(list_length(icolumns) == list_length(attrnos));
+
+					action->override = mergeWhenClause->override;
 
 					/*
 					 * Handle INSERT much like in transformInsertStmt
 					 */
-					if (selectStmt == NULL)
+					if (mergeWhenClause->values == NIL)
 					{
 						/*
 						 * We have INSERT ... DEFAULT VALUES.  We can handle
@@ -525,23 +508,19 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 						 * as the Query's targetlist, with no VALUES RTE.  So
 						 * it works just like a SELECT without any FROM.
 						 */
-						List	   *valuesLists = selectStmt->valuesLists;
-
-						Assert(list_length(valuesLists) == 1);
-						Assert(selectStmt->intoClause == NULL);
 
 						/*
 						 * Do basic expression transformation (same as a ROW()
 						 * expr, but allow SetToDefault at top level)
 						 */
 						exprList = transformExpressionList(pstate,
-														   (List *) linitial(valuesLists),
+														   mergeWhenClause->values,
 														   EXPR_KIND_VALUES_SINGLE,
 														   true);
 
 						/* Prepare row for assignment to target table */
 						exprList = transformInsertRow(pstate, exprList,
-													  istmt->cols,
+													  mergeWhenClause->cols,
 													  icolumns, attrnos,
 													  false);
 					}
@@ -580,10 +559,9 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 				break;
 			case CMD_UPDATE:
 				{
-					UpdateStmt *ustmt = (UpdateStmt *) action->stmt;
-
 					pstate->p_is_insert = false;
-					action->targetList = transformUpdateTargetList(pstate, ustmt->targetList);
+					action->targetList = transformUpdateTargetList(pstate,
+																   mergeWhenClause->targetList);
 				}
 				break;
 			case CMD_DELETE:
@@ -595,9 +573,11 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 			default:
 				elog(ERROR, "unknown action in MERGE WHEN clause");
 		}
+
+		mergeActionList = lappend(mergeActionList, action);
 	}
 
-	qry->mergeActionList = stmt->mergeActionList;
+	qry->mergeActionList = mergeActionList;
 
 	/* XXX maybe later */
 	qry->returningList = NULL;

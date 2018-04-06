@@ -241,6 +241,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	PartitionSpec		*partspec;
 	PartitionBoundSpec	*partboundspec;
 	RoleSpec			*rolespec;
+	MergeWhenClause		*mergewhen;
 }
 
 %type <node>	stmt schema_stmt
@@ -400,6 +401,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				TriggerTransitions TriggerReferencing
 				publication_name_list
 				vacuum_relation_list opt_vacuum_relation_list
+				merge_values_clause
 
 %type <list>	group_by_list
 %type <node>	group_by_item empty_grouping_set rollup_clause cube_clause
@@ -460,6 +462,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <istmt>	insert_rest
 %type <infer>	opt_conf_expr
 %type <onconflict> opt_on_conflict
+%type <mergewhen>	merge_insert merge_update merge_delete
 
 %type <vsetstmt> generic_set set_rest set_rest_more generic_reset reset_rest
 				 SetResetClause FunctionSetResetClause
@@ -587,7 +590,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <node>	merge_when_clause opt_merge_when_and_condition
 %type <list>	merge_when_list
-%type <node>	merge_update merge_delete merge_insert
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -11116,7 +11118,7 @@ MergeStmt:
 					m->relation = $4;
 					m->source_relation = $6;
 					m->join_condition = $8;
-					m->mergeActionList = $9;
+					m->mergeWhenClauses = $9;
 
 					$$ = (Node *)m;
 				}
@@ -11131,45 +11133,37 @@ merge_when_list:
 merge_when_clause:
 			WHEN MATCHED opt_merge_when_and_condition THEN merge_update
 				{
-					MergeAction *m = makeNode(MergeAction);
+					$5->matched = true;
+					$5->commandType = CMD_UPDATE;
+					$5->condition = $3;
 
-					m->matched = true;
-					m->commandType = CMD_UPDATE;
-					m->condition = $3;
-					m->stmt = $5;
-
-					$$ = (Node *)m;
+					$$ = (Node *) $5;
 				}
 			| WHEN MATCHED opt_merge_when_and_condition THEN merge_delete
 				{
-					MergeAction *m = makeNode(MergeAction);
+					MergeWhenClause *m = makeNode(MergeWhenClause);
 
 					m->matched = true;
 					m->commandType = CMD_DELETE;
 					m->condition = $3;
-					m->stmt = $5;
 
 					$$ = (Node *)m;
 				}
 			| WHEN NOT MATCHED opt_merge_when_and_condition THEN merge_insert
 				{
-					MergeAction *m = makeNode(MergeAction);
+					$6->matched = false;
+					$6->commandType = CMD_INSERT;
+					$6->condition = $4;
 
-					m->matched = false;
-					m->commandType = CMD_INSERT;
-					m->condition = $4;
-					m->stmt = $6;
-
-					$$ = (Node *)m;
+					$$ = (Node *) $6;
 				}
 			| WHEN NOT MATCHED opt_merge_when_and_condition THEN DO NOTHING
 				{
-					MergeAction *m = makeNode(MergeAction);
+					MergeWhenClause *m = makeNode(MergeWhenClause);
 
 					m->matched = false;
 					m->commandType = CMD_NOTHING;
 					m->condition = $4;
-					m->stmt = NULL;
 
 					$$ = (Node *)m;
 				}
@@ -11181,65 +11175,63 @@ opt_merge_when_and_condition:
 			;
 
 merge_delete:
-			DELETE_P
-				{
-					DeleteStmt *n = makeNode(DeleteStmt);
-					$$ = (Node *)n;
-				}
+			DELETE_P 				{ $$ = NULL; }
 			;
 
 merge_update:
 			UPDATE SET set_clause_list
 				{
-					UpdateStmt *n = makeNode(UpdateStmt);
+					MergeWhenClause *n = makeNode(MergeWhenClause);
 					n->targetList = $3;
 
-					$$ = (Node *)n;
+					$$ = n;
 				}
 			;
 
 merge_insert:
-			INSERT values_clause
+			INSERT merge_values_clause
 				{
-					InsertStmt *n = makeNode(InsertStmt);
+					MergeWhenClause *n = makeNode(MergeWhenClause);
 					n->cols = NIL;
-					n->selectStmt = $2;
-
-					$$ = (Node *)n;
+					n->values = $2;
+					$$ = n;
 				}
-			| INSERT OVERRIDING override_kind VALUE_P values_clause
+			| INSERT OVERRIDING override_kind VALUE_P merge_values_clause
 				{
-					InsertStmt *n = makeNode(InsertStmt);
+					MergeWhenClause *n = makeNode(MergeWhenClause);
 					n->cols = NIL;
 					n->override = $3;
-					n->selectStmt = $5;
-
-					$$ = (Node *)n;
+					n->values = $5;
+					$$ = n;
 				}
-			| INSERT '(' insert_column_list ')' values_clause
+			| INSERT '(' insert_column_list ')' merge_values_clause
 				{
-					InsertStmt *n = makeNode(InsertStmt);
+					MergeWhenClause *n = makeNode(MergeWhenClause);
 					n->cols = $3;
-					n->selectStmt = $5;
-
-					$$ = (Node *)n;
+					n->values = $5;
+					$$ = n;
 				}
-			| INSERT '(' insert_column_list ')' OVERRIDING override_kind VALUE_P values_clause
+			| INSERT '(' insert_column_list ')' OVERRIDING override_kind VALUE_P merge_values_clause
 				{
-					InsertStmt *n = makeNode(InsertStmt);
+					MergeWhenClause *n = makeNode(MergeWhenClause);
 					n->cols = $3;
 					n->override = $6;
-					n->selectStmt = $8;
-
-					$$ = (Node *)n;
+					n->values = $8;
+					$$ = n;
 				}
 			| INSERT DEFAULT VALUES
 				{
-					InsertStmt *n = makeNode(InsertStmt);
+					MergeWhenClause *n = makeNode(MergeWhenClause);
 					n->cols = NIL;
-					n->selectStmt = NULL;
+					n->values = NIL;
+					$$ = n;
+				}
+			;
 
-					$$ = (Node *)n;
+merge_values_clause:
+			VALUES '(' expr_list ')'
+				{
+					$$ = $3;
 				}
 			;
 
