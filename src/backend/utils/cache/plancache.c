@@ -952,7 +952,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 		plan_context = AllocSetContextCreate(CurrentMemoryContext,
 											 "CachedPlan",
 											 ALLOCSET_START_SMALL_SIZES);
-		MemoryContextCopySetIdentifier(plan_context, plansource->query_string);
+		MemoryContextCopyAndSetIdentifier(plan_context, plansource->query_string);
 
 		/*
 		 * Copy plan into the new context.

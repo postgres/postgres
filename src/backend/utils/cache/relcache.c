@@ -741,7 +741,7 @@ RelationBuildRuleLock(Relation relation)
 									 "relation rules",
 									 ALLOCSET_SMALL_SIZES);
 	relation->rd_rulescxt = rulescxt;
-	MemoryContextCopySetIdentifier(rulescxt,
+	MemoryContextCopyAndSetIdentifier(rulescxt,
 								   RelationGetRelationName(relation));
 
 	/*
@@ -918,7 +918,7 @@ RelationBuildPartitionKey(Relation relation)
 	partkeycxt = AllocSetContextCreate(CurTransactionContext,
 									   "partition key",
 									   ALLOCSET_SMALL_SIZES);
-	MemoryContextCopySetIdentifier(partkeycxt,
+	MemoryContextCopyAndSetIdentifier(partkeycxt,
 								   RelationGetRelationName(relation));
 
 	key = (PartitionKey) MemoryContextAllocZero(partkeycxt,
@@ -1601,7 +1601,7 @@ RelationInitIndexAccessInfo(Relation relation)
 									 "index info",
 									 ALLOCSET_SMALL_SIZES);
 	relation->rd_indexcxt = indexcxt;
-	MemoryContextCopySetIdentifier(indexcxt,
+	MemoryContextCopyAndSetIdentifier(indexcxt,
 								   RelationGetRelationName(relation));
 
 	/*
@@ -5668,7 +5668,7 @@ load_relcache_init_file(bool shared)
 											 "index info",
 											 ALLOCSET_SMALL_SIZES);
 			rel->rd_indexcxt = indexcxt;
-			MemoryContextCopySetIdentifier(indexcxt,
+			MemoryContextCopyAndSetIdentifier(indexcxt,
 										   RelationGetRelationName(rel));
 
 			/*

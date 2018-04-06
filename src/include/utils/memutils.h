@@ -93,7 +93,7 @@ extern void MemoryContextCheck(MemoryContext context);
 extern bool MemoryContextContains(MemoryContext context, void *pointer);
 
 /* Handy macro for copying and assigning context ID ... but note double eval */
-#define MemoryContextCopySetIdentifier(cxt, id) \
+#define MemoryContextCopyAndSetIdentifier(cxt, id) \
 	MemoryContextSetIdentifier(cxt, MemoryContextStrdup(cxt, id))
 
 /*

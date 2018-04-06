@@ -528,7 +528,7 @@ RelationBuildPartitionDesc(Relation rel)
 	rel->rd_pdcxt = AllocSetContextCreate(CacheMemoryContext,
 										  "partition descriptor",
 										  ALLOCSET_DEFAULT_SIZES);
-	MemoryContextCopySetIdentifier(rel->rd_pdcxt, RelationGetRelationName(rel));
+	MemoryContextCopyAndSetIdentifier(rel->rd_pdcxt, RelationGetRelationName(rel));
 
 	oldcxt = MemoryContextSwitchTo(rel->rd_pdcxt);
 

@@ -297,7 +297,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 			saveCtx = AllocSetContextCreate(CacheMemoryContext,
 											"TS dictionary",
 											ALLOCSET_SMALL_SIZES);
-			MemoryContextCopySetIdentifier(saveCtx, NameStr(dict->dictname));
+			MemoryContextCopyAndSetIdentifier(saveCtx, NameStr(dict->dictname));
 		}
 		else
 		{
@@ -306,7 +306,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 			/* Don't let context's ident pointer dangle while we reset it */
 			MemoryContextSetIdentifier(saveCtx, NULL);
 			MemoryContextReset(saveCtx);
-			MemoryContextCopySetIdentifier(saveCtx, NameStr(dict->dictname));
+			MemoryContextCopyAndSetIdentifier(saveCtx, NameStr(dict->dictname));
 		}
 
 		MemSet(entry, 0, sizeof(TSDictionaryCacheEntry));
