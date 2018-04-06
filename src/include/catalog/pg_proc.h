@@ -3359,8 +3359,10 @@ DESCR("true if wal replay is paused");
 
 DATA(insert OID = 2621 ( pg_reload_conf			PGNSP PGUID 12 1 0 0 0 f f f t f v s 0 0 16 "" _null_ _null_ _null_ _null_ _null_ pg_reload_conf _null_ _null_ _null_ ));
 DESCR("reload configuration files");
-DATA(insert OID = 2622 ( pg_rotate_logfile		PGNSP PGUID 12 1 0 0 0 f f f t f v s 0 0 16 "" _null_ _null_ _null_ _null_ _null_ pg_rotate_logfile _null_ _null_ _null_ ));
+DATA(insert OID = 2622 ( pg_rotate_logfile		PGNSP PGUID 12 1 0 0 0 f f f t f v s 0 0 16 "" _null_ _null_ _null_ _null_ _null_ pg_rotate_logfile_v2 _null_ _null_ _null_ ));
 DESCR("rotate log file");
+DATA(insert OID = 4099 ( pg_rotate_logfile_old		PGNSP PGUID 12 1 0 0 0 f f f t f v s 0 0 16 "" _null_ _null_ _null_ _null_ _null_ pg_rotate_logfile _null_ _null_ _null_ ));
+DESCR("rotate log file - old version for adminpack 1.0");
 DATA(insert OID = 3800 ( pg_current_logfile				PGNSP PGUID 12 1 0 0 0 f f f f f v s 0 0 25 "" _null_ _null_ _null_ _null_ _null_ pg_current_logfile _null_ _null_ _null_ ));
 DESCR("current logging collector file location");
 DATA(insert OID = 3801 ( pg_current_logfile				PGNSP PGUID 12 1 0 0 0 f f f f f v s 1 0 25 "25" _null_ _null_ _null_ _null_ _null_ pg_current_logfile_1arg _null_ _null_ _null_ ));
@@ -3372,8 +3374,10 @@ DATA(insert OID = 3307 ( pg_stat_file		PGNSP PGUID 12 1 0 0 0 f f f t f v s 2 0 
 DESCR("get information about file");
 DATA(insert OID = 2624 ( pg_read_file		PGNSP PGUID 12 1 0 0 0 f f f t f v s 3 0 25 "25 20 20" _null_ _null_ _null_ _null_ _null_ pg_read_file_off_len _null_ _null_ _null_ ));
 DESCR("read text from a file");
-DATA(insert OID = 3293 ( pg_read_file		PGNSP PGUID 12 1 0 0 0 f f f t f v s 4 0 25 "25 20 20 16" _null_ _null_ _null_ _null_ _null_ pg_read_file _null_ _null_ _null_ ));
+DATA(insert OID = 3293 ( pg_read_file		PGNSP PGUID 12 1 0 0 0 f f f t f v s 4 0 25 "25 20 20 16" _null_ _null_ _null_ _null_ _null_ pg_read_file_v2 _null_ _null_ _null_ ));
 DESCR("read text from a file");
+DATA(insert OID = 4100 ( pg_read_file_old		PGNSP PGUID 12 1 0 0 0 f f f t f v s 3 0 25 "25 20 20" _null_ _null_ _null_ _null_ _null_ pg_read_file _null_ _null_ _null_ ));
+DESCR("read text from a file - old version for adminpack 1.0");
 DATA(insert OID = 3826 ( pg_read_file		PGNSP PGUID 12 1 0 0 0 f f f t f v s 1 0 25 "25" _null_ _null_ _null_ _null_ _null_ pg_read_file_all _null_ _null_ _null_ ));
 DESCR("read text from a file");
 DATA(insert OID = 3827 ( pg_read_binary_file	PGNSP PGUID 12 1 0 0 0 f f f t f v s 3 0 17 "25 20 20" _null_ _null_ _null_ _null_ _null_ pg_read_binary_file_off_len _null_ _null_ _null_ ));

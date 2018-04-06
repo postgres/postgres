@@ -12,7 +12,8 @@
   <application>pgAdmin</application> and other administration and management tools can
   use to provide additional functionality, such as remote management
   of server log files.
-  Use of all these functions is restricted to superusers.
+  Use of all these functions is only allowed to the superuser by default but may be
+  allowed to other users by using the <command>GRANT</command> command.
  </para>
 
  <para>
@@ -20,8 +21,10 @@
   write access to files on the machine hosting the server.  (See also the
   functions in <xref linkend="functions-admin-genfile-table"/>, which
   provide read-only access.)
-  Only files within the database cluster directory can be accessed, but
-  either a relative or absolute path is allowable.
+  Only files within the database cluster directory can be accessed, unless the
+  user is a superuser or given one of the pg_read_server_files, or pg_write_server_files
+  roles, as appropriate for the function, but either a relative or absolute path is
+  allowable.
  </para>
 
  <table id="functions-adminpack-table">
@@ -112,51 +115,5 @@
   default setting (<literal>postgresql-%Y-%m-%d_%H%M%S.log</literal>) to use this
   function.
  </para>
-
- <para>
-  The functions shown
-  in <xref linkend="functions-adminpack-deprecated-table"/> are deprecated
-  and should not be used in new applications; instead use those shown
-  in <xref linkend="functions-admin-signal-table"/>
-  and <xref linkend="functions-admin-genfile-table"/>.  These functions are
-  provided in <filename>adminpack</filename> only for compatibility with old
-  versions of <application>pgAdmin</application>.
- </para>
-
- <table id="functions-adminpack-deprecated-table">
-  <title>Deprecated <filename>adminpack</filename> Functions</title>
-  <tgroup cols="3">
-   <thead>
-    <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
-    </row>
-   </thead>
-
-   <tbody>
-    <row>
-     <entry><function>pg_catalog.pg_file_read(filename text, offset bigint, nbytes bigint)</function></entry>
-     <entry><type>text</type></entry>
-     <entry>
-      Alternate name for <function>pg_read_file()</function>
-     </entry>
-    </row>
-    <row>
-     <entry><function>pg_catalog.pg_file_length(filename text)</function></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Same as <structfield>size</structfield> column returned
-      by <function>pg_stat_file()</function>
-     </entry>
-    </row>
-    <row>
-     <entry><function>pg_catalog.pg_logfile_rotate()</function></entry>
-     <entry><type>integer</type></entry>
-     <entry>
-      Alternate name for <function>pg_rotate_logfile()</function>, but note that it
-      returns integer 0 or 1 rather than <type>boolean</type>
-     </entry>
-    </row>
-   </tbody>
-  </tgroup>
- </table>
 
 </sect1>

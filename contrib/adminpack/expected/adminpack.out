@@ -34,7 +34,12 @@ SELECT pg_read_file('test_file1');
  test1test1
 (1 row)
 
--- disallowed file paths
+-- disallowed file paths for non-superusers and users who are
+-- not members of pg_write_server_files
+CREATE ROLE regress_user1;
+GRANT pg_read_all_settings TO regress_user1;
+GRANT EXECUTE ON FUNCTION pg_file_write(text,text,bool) TO regress_user1;
+SET ROLE regress_user1;
 SELECT pg_file_write('../test_file0', 'test0', false);
 ERROR:  path must be in or below the current directory
 SELECT pg_file_write('/tmp/test_file0', 'test0', false);
@@ -47,6 +52,10 @@ SELECT pg_file_write(current_setting('data_directory') || '/test_file4', 'test4'
 
 SELECT pg_file_write(current_setting('data_directory') || '/../test_file4', 'test4', false);
 ERROR:  reference to parent directory ("..") not allowed
+RESET ROLE;
+REVOKE EXECUTE ON FUNCTION pg_file_write(text,text,bool) FROM regress_user1;
+REVOKE pg_read_all_settings FROM regress_user1;
+DROP ROLE regress_user1;
 -- rename file
 SELECT pg_file_rename('test_file1', 'test_file2');
  pg_file_rename 
@@ -132,14 +141,14 @@ SELECT pg_file_unlink('test_file4');
 CREATE USER regress_user1;
 SET ROLE regress_user1;
 SELECT pg_file_write('test_file0', 'test0', false);
-ERROR:  only superuser may access generic file functions
+ERROR:  permission denied for function pg_file_write
 SELECT pg_file_rename('test_file0', 'test_file0');
-ERROR:  only superuser may access generic file functions
+ERROR:  permission denied for function pg_file_rename
 CONTEXT:  SQL function "pg_file_rename" statement 1
 SELECT pg_file_unlink('test_file0');
-ERROR:  only superuser may access generic file functions
+ERROR:  permission denied for function pg_file_unlink
 SELECT pg_logdir_ls();
-ERROR:  only superuser can list the log directory
+ERROR:  permission denied for function pg_logdir_ls
 RESET ROLE;
 DROP USER regress_user1;
 -- no further tests for pg_logdir_ls() because it depends on the

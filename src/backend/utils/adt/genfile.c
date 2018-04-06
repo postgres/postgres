@@ -200,9 +200,56 @@ read_text_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 
 /*
  * Read a section of a file, returning it as text
+ *
+ * This function is kept to support adminpack 1.0.
  */
 Datum
 pg_read_file(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
+	int64		seek_offset = 0;
+	int64		bytes_to_read = -1;
+	bool		missing_ok = false;
+	char	   *filename;
+	text	   *result;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to read files with adminpack 1.0"),
+				  errhint("Consider using pg_file_read(), which is part of core, instead."))));
+
+	/* handle optional arguments */
+	if (PG_NARGS() >= 3)
+	{
+		seek_offset = PG_GETARG_INT64(1);
+		bytes_to_read = PG_GETARG_INT64(2);
+
+		if (bytes_to_read < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("requested length cannot be negative")));
+	}
+	if (PG_NARGS() >= 4)
+		missing_ok = PG_GETARG_BOOL(3);
+
+	filename = convert_and_check_filename(filename_t);
+
+	result = read_text_file(filename, seek_offset, bytes_to_read, missing_ok);
+	if (result)
+		PG_RETURN_TEXT_P(result);
+	else
+		PG_RETURN_NULL();
+}
+
+/*
+ * Read a section of a file, returning it as text
+ *
+ * No superuser check done here- instead privileges are handled by the
+ * GRANT system.
+ */
+Datum
+pg_read_file_v2(PG_FUNCTION_ARGS)
 {
 	text	   *filename_t = PG_GETARG_TEXT_PP(0);
 	int64		seek_offset = 0;
@@ -273,7 +320,7 @@ pg_read_binary_file(PG_FUNCTION_ARGS)
 
 
 /*
- * Wrapper functions for the 1 and 3 argument variants of pg_read_file()
+ * Wrapper functions for the 1 and 3 argument variants of pg_read_file_v2()
  * and pg_binary_read_file().
  *
  * These are necessary to pass the sanity check in opr_sanity, which checks
@@ -283,13 +330,13 @@ pg_read_binary_file(PG_FUNCTION_ARGS)
 Datum
 pg_read_file_off_len(PG_FUNCTION_ARGS)
 {
-	return pg_read_file(fcinfo);
+	return pg_read_file_v2(fcinfo);
 }
 
 Datum
 pg_read_file_all(PG_FUNCTION_ARGS)
 {
-	return pg_read_file(fcinfo);
+	return pg_read_file_v2(fcinfo);
 }
 
 Datum
