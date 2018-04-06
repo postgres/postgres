@@ -4064,8 +4064,7 @@ RemoveReindexPending(Oid indexOid)
 static void
 ResetReindexPending(void)
 {
-	if (IsInParallelMode())
-		elog(ERROR, "cannot modify reindex state during a parallel operation");
+	/* This may be called in leader error path */
 	pendingReindexedIndexes = NIL;
 }
 
