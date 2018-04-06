@@ -130,7 +130,7 @@ scan_directory(char *basedir, char *subdir)
 	DIR		   *dir;
 	struct dirent *de;
 
-	snprintf(path, MAXPGPATH, "%s/%s", basedir, subdir);
+	snprintf(path, sizeof(path), "%s/%s", basedir, subdir);
 	dir = opendir(path);
 	if (!dir)
 	{
@@ -140,13 +140,13 @@ scan_directory(char *basedir, char *subdir)
 	}
 	while ((de = readdir(dir)) != NULL)
 	{
-		char		fn[MAXPGPATH];
+		char		fn[MAXPGPATH + 1];
 		struct stat st;
 
 		if (skipfile(de->d_name))
 			continue;
 
-		snprintf(fn, MAXPGPATH, "%s/%s", path, de->d_name);
+		snprintf(fn, sizeof(fn), "%s/%s", path, de->d_name);
 		if (lstat(fn, &st) < 0)
 		{
 			fprintf(stderr, _("%s: could not stat file \"%s\": %m\n"),
