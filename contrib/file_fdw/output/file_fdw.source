@@ -221,6 +221,9 @@ SELECT * FROM agg_csv FOR UPDATE;
   42 |  324.78
 (3 rows)
 
+-- copy from isn't supported either
+COPY agg_csv FROM STDIN;
+ERROR:  cannot insert into foreign table "agg_csv"
 -- constraint exclusion tests
 \t on
 EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0;
@@ -315,7 +318,7 @@ SELECT tableoid::regclass, * FROM p2;
 (0 rows)
 
 COPY pt FROM '@abs_srcdir@/data/list2.bad' with (format 'csv', delimiter ','); -- ERROR
-ERROR:  cannot route inserted tuples to a foreign table
+ERROR:  cannot insert into foreign table "p1"
 CONTEXT:  COPY pt, line 2: "1,qux"
 COPY pt FROM '@abs_srcdir@/data/list2.csv' with (format 'csv', delimiter ',');
 SELECT tableoid::regclass, * FROM pt;
@@ -342,10 +345,10 @@ SELECT tableoid::regclass, * FROM p2;
 (2 rows)
 
 INSERT INTO pt VALUES (1, 'xyzzy'); -- ERROR
-ERROR:  cannot route inserted tuples to a foreign table
+ERROR:  cannot insert into foreign table "p1"
 INSERT INTO pt VALUES (2, 'xyzzy');
 UPDATE pt set a = 1 where a = 2; -- ERROR
-ERROR:  cannot route inserted tuples to a foreign table
+ERROR:  cannot insert into foreign table "p1"
 SELECT tableoid::regclass, * FROM pt;
  tableoid | a |   b   
 ----------+---+-------

@@ -98,6 +98,12 @@ typedef TupleTableSlot *(*ExecForeignDelete_function) (EState *estate,
 typedef void (*EndForeignModify_function) (EState *estate,
 										   ResultRelInfo *rinfo);
 
+typedef void (*BeginForeignInsert_function) (ModifyTableState *mtstate,
+											 ResultRelInfo *rinfo);
+
+typedef void (*EndForeignInsert_function) (EState *estate,
+										   ResultRelInfo *rinfo);
+
 typedef int (*IsForeignRelUpdatable_function) (Relation rel);
 
 typedef bool (*PlanDirectModify_function) (PlannerInfo *root,
@@ -205,6 +211,8 @@ typedef struct FdwRoutine
 	ExecForeignUpdate_function ExecForeignUpdate;
 	ExecForeignDelete_function ExecForeignDelete;
 	EndForeignModify_function EndForeignModify;
+	BeginForeignInsert_function BeginForeignInsert;
+	EndForeignInsert_function EndForeignInsert;
 	IsForeignRelUpdatable_function IsForeignRelUpdatable;
 	PlanDirectModify_function PlanDirectModify;
 	BeginDirectModify_function BeginDirectModify;

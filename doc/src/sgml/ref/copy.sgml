@@ -402,8 +402,9 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
-    <command>COPY FROM</command> can be used with plain tables and with views
-    that have <literal>INSTEAD OF INSERT</literal> triggers.
+    <command>COPY FROM</command> can be used with plain, foreign, or
+    partitioned tables or with views that have
+    <literal>INSTEAD OF INSERT</literal> triggers.
    </para>
 
    <para>

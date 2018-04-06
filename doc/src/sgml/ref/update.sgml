@@ -291,6 +291,9 @@ UPDATE <replaceable class="parameter">count</replaceable>
    concurrent <command>UPDATE</command> or <command>DELETE</command> on the
    same row may miss this row. For details see the section
    <xref linkend="ddl-partitioning-declarative-limitations"/>.
+   Currently, rows cannot be moved from a partition that is a
+   foreign table to some other partition, but they can be moved into a foreign
+   table if the foreign data wrapper supports it.
   </para>
  </refsect1>
 

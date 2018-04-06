@@ -1179,13 +1179,6 @@ CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation)
 			switch (operation)
 			{
 				case CMD_INSERT:
-
-					/*
-					 * If foreign partition to do tuple-routing for, skip the
-					 * check; it's disallowed elsewhere.
-					 */
-					if (resultRelInfo->ri_PartitionRoot)
-						break;
 					if (fdwroutine->ExecForeignInsert == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1378,6 +1371,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 
 	resultRelInfo->ri_PartitionCheck = partition_check;
 	resultRelInfo->ri_PartitionRoot = partition_root;
+	resultRelInfo->ri_PartitionReadyForRouting = false;
 }
 
 /*

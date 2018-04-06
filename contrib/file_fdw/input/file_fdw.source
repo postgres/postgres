@@ -136,6 +136,11 @@ DELETE FROM agg_csv WHERE a = 100;
 -- but this should be allowed
 SELECT * FROM agg_csv FOR UPDATE;
 
+-- copy from isn't supported either
+COPY agg_csv FROM STDIN;
+12	3.4
+\.
+
 -- constraint exclusion tests
 \t on
 EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0;

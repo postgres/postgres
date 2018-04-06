@@ -1826,11 +1826,21 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 										proute, estate,
 										partidx);
 
-	/* We do not yet have a way to insert into a foreign partition */
-	if (partrel->ri_FdwRoutine)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot route inserted tuples to a foreign table")));
+	/*
+	 * Set up information needed for routing tuples to the partition if we
+	 * didn't yet (ExecInitRoutingInfo would abort the operation if the
+	 * partition isn't routable).
+	 *
+	 * Note: an UPDATE of a partition key invokes an INSERT that moves the
+	 * tuple to a new partition.  This setup would be needed for a subplan
+	 * partition of such an UPDATE that is chosen as the partition to route
+	 * the tuple to.  The reason we do this setup here rather than in
+	 * ExecSetupPartitionTupleRouting is to avoid aborting such an UPDATE
+	 * unnecessarily due to non-routable subplan partitions that may not be
+	 * chosen for update tuple movement after all.
+	 */
+	if (!partrel->ri_PartitionReadyForRouting)
+		ExecInitRoutingInfo(mtstate, estate, proute, partrel, partidx);
 
 	/*
 	 * Make it look like we are inserting into the partition.
@@ -2531,6 +2541,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		{
 			List	   *rlist = (List *) lfirst(l);
 
+			resultRelInfo->ri_returningList = rlist;
 			resultRelInfo->ri_projectReturning =
 				ExecBuildProjectionInfo(rlist, econtext, slot, &mtstate->ps,
 										resultRelInfo->ri_RelationDesc->rd_att);
@@ -2830,7 +2841,7 @@ ExecEndModifyTable(ModifyTableState *node)
 
 	/* Close all the partitioned tables, leaf partitions, and their indices */
 	if (node->mt_partition_tuple_routing)
-		ExecCleanupTupleRouting(node->mt_partition_tuple_routing);
+		ExecCleanupTupleRouting(node, node->mt_partition_tuple_routing);
 
 	/*
 	 * Free the exprcontext

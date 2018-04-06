@@ -31,6 +31,7 @@
 #include "commands/trigger.h"
 #include "executor/execPartition.h"
 #include "executor/executor.h"
+#include "foreign/fdwapi.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
@@ -2302,6 +2303,7 @@ CopyFrom(CopyState cstate)
 	ResultRelInfo *resultRelInfo;
 	ResultRelInfo *saved_resultRelInfo = NULL;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
+	ModifyTableState *mtstate;
 	ExprContext *econtext;
 	TupleTableSlot *myslot;
 	MemoryContext oldcontext = CurrentMemoryContext;
@@ -2323,11 +2325,12 @@ CopyFrom(CopyState cstate)
 	Assert(cstate->rel);
 
 	/*
-	 * The target must be a plain relation or have an INSTEAD OF INSERT row
-	 * trigger.  (Currently, such triggers are only allowed on views, so we
-	 * only hint about them in the view case.)
+	 * The target must be a plain, foreign, or partitioned relation, or have
+	 * an INSTEAD OF INSERT row trigger.  (Currently, such triggers are only
+	 * allowed on views, so we only hint about them in the view case.)
 	 */
 	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION &&
+		cstate->rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
 		cstate->rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
 		!(cstate->rel->trigdesc &&
 		  cstate->rel->trigdesc->trig_insert_instead_row))
@@ -2342,11 +2345,6 @@ CopyFrom(CopyState cstate)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot copy to materialized view \"%s\"",
-							RelationGetRelationName(cstate->rel))));
-		else if (cstate->rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot copy to foreign table \"%s\"",
 							RelationGetRelationName(cstate->rel))));
 		else if (cstate->rel->rd_rel->relkind == RELKIND_SEQUENCE)
 			ereport(ERROR,
@@ -2454,6 +2452,9 @@ CopyFrom(CopyState cstate)
 					  NULL,
 					  0);
 
+	/* Verify the named relation is a valid target for INSERT */
+	CheckValidResultRel(resultRelInfo, CMD_INSERT);
+
 	ExecOpenIndices(resultRelInfo, false);
 
 	estate->es_result_relations = resultRelInfo;
@@ -2465,6 +2466,21 @@ CopyFrom(CopyState cstate)
 	myslot = ExecInitExtraTupleSlot(estate, tupDesc);
 	/* Triggers might need a slot as well */
 	estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate, NULL);
+
+	/*
+	 * Set up a ModifyTableState so we can let FDW(s) init themselves for
+	 * foreign-table result relation(s).
+	 */
+	mtstate = makeNode(ModifyTableState);
+	mtstate->ps.plan = NULL;
+	mtstate->ps.state = estate;
+	mtstate->operation = CMD_INSERT;
+	mtstate->resultRelInfo = estate->es_result_relations;
+
+	if (resultRelInfo->ri_FdwRoutine != NULL &&
+		resultRelInfo->ri_FdwRoutine->BeginForeignInsert != NULL)
+		resultRelInfo->ri_FdwRoutine->BeginForeignInsert(mtstate,
+														 resultRelInfo);
 
 	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
@@ -2507,11 +2523,12 @@ CopyFrom(CopyState cstate)
 	 * expressions. Such triggers or expressions might query the table we're
 	 * inserting to, and act differently if the tuples that have already been
 	 * processed and prepared for insertion are not there.  We also can't do
-	 * it if the table is partitioned.
+	 * it if the table is foreign or partitioned.
 	 */
 	if ((resultRelInfo->ri_TrigDesc != NULL &&
 		 (resultRelInfo->ri_TrigDesc->trig_insert_before_row ||
 		  resultRelInfo->ri_TrigDesc->trig_insert_instead_row)) ||
+		resultRelInfo->ri_FdwRoutine != NULL ||
 		cstate->partition_tuple_routing != NULL ||
 		cstate->volatile_defexprs)
 	{
@@ -2626,18 +2643,12 @@ CopyFrom(CopyState cstate)
 			resultRelInfo = proute->partitions[leaf_part_index];
 			if (resultRelInfo == NULL)
 			{
-				resultRelInfo = ExecInitPartitionInfo(NULL,
+				resultRelInfo = ExecInitPartitionInfo(mtstate,
 													  saved_resultRelInfo,
 													  proute, estate,
 													  leaf_part_index);
 				Assert(resultRelInfo != NULL);
 			}
-
-			/* We do not yet have a way to insert into a foreign partition */
-			if (resultRelInfo->ri_FdwRoutine)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot route inserted tuples to a foreign table")));
 
 			/*
 			 * For ExecInsertIndexTuples() to work on the partition's indexes
@@ -2726,9 +2737,13 @@ CopyFrom(CopyState cstate)
 					  resultRelInfo->ri_TrigDesc->trig_insert_before_row))
 					check_partition_constr = false;
 
-				/* Check the constraints of the tuple */
-				if (resultRelInfo->ri_RelationDesc->rd_att->constr ||
-					check_partition_constr)
+				/*
+				 * If the target is a plain table, check the constraints of
+				 * the tuple.
+				 */
+				if (resultRelInfo->ri_FdwRoutine == NULL &&
+					(resultRelInfo->ri_RelationDesc->rd_att->constr ||
+					 check_partition_constr))
 					ExecConstraints(resultRelInfo, slot, estate, true);
 
 				if (useHeapMultiInsert)
@@ -2760,10 +2775,32 @@ CopyFrom(CopyState cstate)
 				{
 					List	   *recheckIndexes = NIL;
 
-					/* OK, store the tuple and create index entries for it */
-					heap_insert(resultRelInfo->ri_RelationDesc, tuple, mycid,
-								hi_options, bistate);
+					/* OK, store the tuple */
+					if (resultRelInfo->ri_FdwRoutine != NULL)
+					{
+						slot = resultRelInfo->ri_FdwRoutine->ExecForeignInsert(estate,
+																			   resultRelInfo,
+																			   slot,
+																			   NULL);
 
+						if (slot == NULL)		/* "do nothing" */
+							goto next_tuple;
+
+						/* FDW might have changed tuple */
+						tuple = ExecMaterializeSlot(slot);
+
+						/*
+						 * AFTER ROW Triggers might reference the tableoid
+						 * column, so initialize t_tableOid before evaluating
+						 * them.
+						 */
+						tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+					}
+					else
+						heap_insert(resultRelInfo->ri_RelationDesc, tuple,
+									mycid, hi_options, bistate);
+
+					/* And create index entries for it */
 					if (resultRelInfo->ri_NumIndices > 0)
 						recheckIndexes = ExecInsertIndexTuples(slot,
 															   &(tuple->t_self),
@@ -2781,13 +2818,14 @@ CopyFrom(CopyState cstate)
 			}
 
 			/*
-			 * We count only tuples not suppressed by a BEFORE INSERT trigger;
-			 * this is the same definition used by execMain.c for counting
-			 * tuples inserted by an INSERT command.
+			 * We count only tuples not suppressed by a BEFORE INSERT trigger
+			 * or FDW; this is the same definition used by nodeModifyTable.c
+			 * for counting tuples inserted by an INSERT command.
 			 */
 			processed++;
 		}
 
+next_tuple:
 		/* Restore the saved ResultRelInfo */
 		if (saved_resultRelInfo)
 		{
@@ -2828,11 +2866,17 @@ CopyFrom(CopyState cstate)
 
 	ExecResetTupleTable(estate->es_tupleTable, false);
 
+	/* Allow the FDW to shut down */
+	if (resultRelInfo->ri_FdwRoutine != NULL &&
+		resultRelInfo->ri_FdwRoutine->EndForeignInsert != NULL)
+		resultRelInfo->ri_FdwRoutine->EndForeignInsert(estate,
+													   resultRelInfo);
+
 	ExecCloseIndices(resultRelInfo);
 
 	/* Close all the partitioned tables, leaf partitions, and their indices */
 	if (cstate->partition_tuple_routing)
-		ExecCleanupTupleRouting(cstate->partition_tuple_routing);
+		ExecCleanupTupleRouting(mtstate, cstate->partition_tuple_routing);
 
 	/* Close any trigger target relations */
 	ExecCleanUpTriggerState(estate);

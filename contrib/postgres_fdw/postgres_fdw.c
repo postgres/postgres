@@ -319,6 +319,10 @@ static TupleTableSlot *postgresExecForeignDelete(EState *estate,
 						  TupleTableSlot *planSlot);
 static void postgresEndForeignModify(EState *estate,
 						 ResultRelInfo *resultRelInfo);
+static void postgresBeginForeignInsert(ModifyTableState *mtstate,
+						   ResultRelInfo *resultRelInfo);
+static void postgresEndForeignInsert(EState *estate,
+						 ResultRelInfo *resultRelInfo);
 static int	postgresIsForeignRelUpdatable(Relation rel);
 static bool postgresPlanDirectModify(PlannerInfo *root,
 						 ModifyTable *plan,
@@ -473,6 +477,8 @@ postgres_fdw_handler(PG_FUNCTION_ARGS)
 	routine->ExecForeignUpdate = postgresExecForeignUpdate;
 	routine->ExecForeignDelete = postgresExecForeignDelete;
 	routine->EndForeignModify = postgresEndForeignModify;
+	routine->BeginForeignInsert = postgresBeginForeignInsert;
+	routine->EndForeignInsert = postgresEndForeignInsert;
 	routine->IsForeignRelUpdatable = postgresIsForeignRelUpdatable;
 	routine->PlanDirectModify = postgresPlanDirectModify;
 	routine->BeginDirectModify = postgresBeginDirectModify;
@@ -1954,6 +1960,96 @@ postgresEndForeignModify(EState *estate,
 	/* If fmstate is NULL, we are in EXPLAIN; nothing to do */
 	if (fmstate == NULL)
 		return;
+
+	/* Destroy the execution state */
+	finish_foreign_modify(fmstate);
+}
+
+/*
+ * postgresBeginForeignInsert
+ *		Begin an insert operation on a foreign table
+ */
+static void
+postgresBeginForeignInsert(ModifyTableState *mtstate,
+						   ResultRelInfo *resultRelInfo)
+{
+	PgFdwModifyState *fmstate;
+	Plan	   *plan = mtstate->ps.plan;
+	Relation	rel = resultRelInfo->ri_RelationDesc;
+	RangeTblEntry *rte;
+	Query	   *query;
+	PlannerInfo *root;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	int			attnum;
+	StringInfoData sql;
+	List	   *targetAttrs = NIL;
+	List	   *retrieved_attrs = NIL;
+	bool		doNothing = false;
+
+	initStringInfo(&sql);
+
+	/* Set up largely-dummy planner state. */
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
+	rte->relid = RelationGetRelid(rel);
+	rte->relkind = RELKIND_FOREIGN_TABLE;
+	query = makeNode(Query);
+	query->commandType = CMD_INSERT;
+	query->resultRelation = 1;
+	query->rtable = list_make1(rte);
+	root = makeNode(PlannerInfo);
+	root->parse = query;
+
+	/* We transmit all columns that are defined in the foreign table. */
+	for (attnum = 1; attnum <= tupdesc->natts; attnum++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
+		if (!attr->attisdropped)
+			targetAttrs = lappend_int(targetAttrs, attnum);
+	}
+
+	/* Check if we add the ON CONFLICT clause to the remote query. */
+	if (plan)
+	{
+		OnConflictAction onConflictAction = ((ModifyTable *) plan)->onConflictAction;
+
+		/* We only support DO NOTHING without an inference specification. */
+		if (onConflictAction == ONCONFLICT_NOTHING)
+			doNothing = true;
+		else if (onConflictAction != ONCONFLICT_NONE)
+			elog(ERROR, "unexpected ON CONFLICT specification: %d",
+				 (int) onConflictAction);
+	}
+
+	/* Construct the SQL command string. */
+	deparseInsertSql(&sql, root, 1, rel, targetAttrs, doNothing,
+					 resultRelInfo->ri_returningList, &retrieved_attrs);
+
+	/* Construct an execution state. */
+	fmstate = create_foreign_modify(mtstate->ps.state,
+									resultRelInfo,
+									CMD_INSERT,
+									NULL,
+									sql.data,
+									targetAttrs,
+									retrieved_attrs != NIL,
+									retrieved_attrs);
+
+	resultRelInfo->ri_FdwState = fmstate;
+}
+
+/*
+ * postgresEndForeignInsert
+ *		Finish an insert operation on a foreign table
+ */
+static void
+postgresEndForeignInsert(EState *estate,
+						 ResultRelInfo *resultRelInfo)
+{
+	PgFdwModifyState *fmstate = (PgFdwModifyState *) resultRelInfo->ri_FdwState;
+
+	Assert(fmstate != NULL);
 
 	/* Destroy the execution state */
 	finish_foreign_modify(fmstate);

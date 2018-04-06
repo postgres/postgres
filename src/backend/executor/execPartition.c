@@ -18,6 +18,7 @@
 #include "catalog/pg_type.h"
 #include "executor/execPartition.h"
 #include "executor/executor.h"
+#include "foreign/fdwapi.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -55,12 +56,13 @@ static List *adjust_partition_tlist(List *tlist, TupleConversionMap *map);
  * see ExecInitPartitionInfo.  However, if the function is invoked for update
  * tuple routing, caller would already have initialized ResultRelInfo's for
  * some of the partitions, which are reused and assigned to their respective
- * slot in the aforementioned array.
+ * slot in the aforementioned array.  For such partitions, we delay setting
+ * up objects such as TupleConversionMap until those are actually chosen as
+ * the partitions to route tuples to.  See ExecPrepareTupleRouting.
  */
 PartitionTupleRouting *
 ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 {
-	TupleDesc	tupDesc = RelationGetDescr(rel);
 	List	   *leaf_parts;
 	ListCell   *cell;
 	int			i;
@@ -141,11 +143,7 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 		if (update_rri_index < num_update_rri &&
 			RelationGetRelid(update_rri[update_rri_index].ri_RelationDesc) == leaf_oid)
 		{
-			Relation	partrel;
-			TupleDesc	part_tupdesc;
-
 			leaf_part_rri = &update_rri[update_rri_index];
-			partrel = leaf_part_rri->ri_RelationDesc;
 
 			/*
 			 * This is required in order to convert the partition's tuple to
@@ -159,23 +157,6 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 			proute->subplan_partition_offsets[update_rri_index] = i;
 
 			update_rri_index++;
-
-			part_tupdesc = RelationGetDescr(partrel);
-
-			/*
-			 * Save a tuple conversion map to convert a tuple routed to this
-			 * partition from the parent's type to the partition's.
-			 */
-			proute->parent_child_tupconv_maps[i] =
-				convert_tuples_by_name(tupDesc, part_tupdesc,
-									   gettext_noop("could not convert row type"));
-
-			/*
-			 * Verify result relation is a valid target for an INSERT.  An
-			 * UPDATE of a partition-key becomes a DELETE+INSERT operation, so
-			 * this check is required even when the operation is CMD_UPDATE.
-			 */
-			CheckValidResultRel(leaf_part_rri, CMD_INSERT);
 		}
 
 		proute->partitions[i] = leaf_part_rri;
@@ -347,10 +328,10 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 					  PartitionTupleRouting *proute,
 					  EState *estate, int partidx)
 {
+	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
 	Relation	rootrel = resultRelInfo->ri_RelationDesc,
 				partrel;
 	ResultRelInfo *leaf_part_rri;
-	ModifyTable *node = mtstate ? (ModifyTable *) mtstate->ps.plan : NULL;
 	MemoryContext oldContext;
 
 	/*
@@ -375,13 +356,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	leaf_part_rri->ri_PartitionLeafIndex = partidx;
 
 	/*
-	 * Verify result relation is a valid target for an INSERT.  An UPDATE of a
-	 * partition-key becomes a DELETE+INSERT operation, so this check is still
-	 * required when the operation is CMD_UPDATE.
-	 */
-	CheckValidResultRel(leaf_part_rri, CMD_INSERT);
-
-	/*
 	 * Since we've just initialized this ResultRelInfo, it's not in any list
 	 * attached to the estate as yet.  Add it, so that it can be found later.
 	 *
@@ -392,6 +366,9 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	estate->es_tuple_routing_result_relations =
 		lappend(estate->es_tuple_routing_result_relations,
 				leaf_part_rri);
+
+	/* Set up information needed for routing tuples to this partition. */
+	ExecInitRoutingInfo(mtstate, estate, proute, leaf_part_rri, partidx);
 
 	/*
 	 * Open partition indices.  The user may have asked to check for conflicts
@@ -498,6 +475,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 		returningList = map_partition_varattnos(returningList, firstVarno,
 												partrel, firstResultRel,
 												NULL);
+		leaf_part_rri->ri_returningList = returningList;
 
 		/*
 		 * Initialize the projection itself.
@@ -513,15 +491,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 			ExecBuildProjectionInfo(returningList, econtext, slot,
 									&mtstate->ps, RelationGetDescr(partrel));
 	}
-
-	/*
-	 * Save a tuple conversion map to convert a tuple routed to this partition
-	 * from the parent's type to the partition's.
-	 */
-	proute->parent_child_tupconv_maps[partidx] =
-		convert_tuples_by_name(RelationGetDescr(rootrel),
-							   RelationGetDescr(partrel),
-							   gettext_noop("could not convert row type"));
 
 	/*
 	 * If there is an ON CONFLICT clause, initialize state for it.
@@ -752,6 +721,50 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 }
 
 /*
+ * ExecInitRoutingInfo
+ *		Set up information needed for routing tuples to a leaf partition if
+ *		routable; else abort the operation
+ */
+void
+ExecInitRoutingInfo(ModifyTableState *mtstate,
+					EState *estate,
+					PartitionTupleRouting *proute,
+					ResultRelInfo *partRelInfo,
+					int partidx)
+{
+	MemoryContext oldContext;
+
+	/* Verify the partition is a valid target for INSERT */
+	CheckValidResultRel(partRelInfo, CMD_INSERT);
+
+	/*
+	 * Switch into per-query memory context.
+	 */
+	oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	/*
+	 * Set up a tuple conversion map to convert a tuple routed to the
+	 * partition from the parent's type to the partition's.
+	 */
+	proute->parent_child_tupconv_maps[partidx] =
+		convert_tuples_by_name(RelationGetDescr(partRelInfo->ri_PartitionRoot),
+							   RelationGetDescr(partRelInfo->ri_RelationDesc),
+							   gettext_noop("could not convert row type"));
+
+	/*
+	 * If the partition is a foreign table, let the FDW init itself for
+	 * routing tuples to the partition.
+	 */
+	if (partRelInfo->ri_FdwRoutine != NULL &&
+		partRelInfo->ri_FdwRoutine->BeginForeignInsert != NULL)
+		partRelInfo->ri_FdwRoutine->BeginForeignInsert(mtstate, partRelInfo);
+
+	MemoryContextSwitchTo(oldContext);
+
+	partRelInfo->ri_PartitionReadyForRouting = true;
+}
+
+/*
  * ExecSetupChildParentMapForLeaf -- Initialize the per-leaf-partition
  * child-to-root tuple conversion map array.
  *
@@ -853,7 +866,8 @@ ConvertPartitionTupleSlot(TupleConversionMap *map,
  * Close all the partitioned tables, leaf partitions, and their indices.
  */
 void
-ExecCleanupTupleRouting(PartitionTupleRouting *proute)
+ExecCleanupTupleRouting(ModifyTableState *mtstate,
+						PartitionTupleRouting *proute)
 {
 	int			i;
 	int			subplan_index = 0;
@@ -880,6 +894,13 @@ ExecCleanupTupleRouting(PartitionTupleRouting *proute)
 		/* skip further processsing for uninitialized partitions */
 		if (resultRelInfo == NULL)
 			continue;
+
+		/* Allow any FDWs to shut down if they've been exercised */
+		if (resultRelInfo->ri_PartitionReadyForRouting &&
+			resultRelInfo->ri_FdwRoutine != NULL &&
+			resultRelInfo->ri_FdwRoutine->EndForeignInsert != NULL)
+			resultRelInfo->ri_FdwRoutine->EndForeignInsert(mtstate->ps.state,
+														   resultRelInfo);
 
 		/*
 		 * If this result rel is one of the UPDATE subplan result rels, let

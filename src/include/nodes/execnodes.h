@@ -444,6 +444,9 @@ typedef struct ResultRelInfo
 	/* for removing junk attributes from tuples */
 	JunkFilter *ri_junkFilter;
 
+	/* list of RETURNING expressions */
+	List	   *ri_returningList;
+
 	/* for computing a RETURNING list */
 	ProjectionInfo *ri_projectReturning;
 
@@ -461,6 +464,9 @@ typedef struct ResultRelInfo
 
 	/* relation descriptor for root partitioned table */
 	Relation	ri_PartitionRoot;
+
+	/* true if ready for tuple routing */
+	bool		ri_PartitionReadyForRouting;
 
 	int			ri_PartitionLeafIndex;
 	/* for running MERGE on this result relation */
