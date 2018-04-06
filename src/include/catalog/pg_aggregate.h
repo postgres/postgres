@@ -216,8 +216,8 @@ DATA(insert ( 3527	n 0 enum_smaller	-				enum_smaller		-	-	-				-				-				f f r 
 DATA(insert ( 3565	n 0 network_smaller -				network_smaller		-	-	-				-				-				f f r r 1203	869		0	0		0	_null_ _null_ ));
 
 /* count */
-DATA(insert ( 2147	n 0 int8inc_any		-				int8pl	-	-	int8inc_any		int8dec_any		-				f f r r 0		20		0	20		0	"0" "0" ));
-DATA(insert ( 2803	n 0 int8inc			-				int8pl	-	-	int8inc			int8dec			-				f f r r 0		20		0	20		0	"0" "0" ));
+DATA(insert ( 2147	n 0 int8inc_any		-				int8pl	-	-	int8inc_any		int8dec_any		-				f f r r 0		20		0	20		0	0 0 ));
+DATA(insert ( 2803	n 0 int8inc			-				int8pl	-	-	int8inc			int8dec			-				f f r r 0		20		0	20		0	0 0 ));
 
 /* var_pop */
 DATA(insert ( 2718	n 0 int8_accum		numeric_var_pop			numeric_combine			numeric_serialize		numeric_deserialize			int8_accum		int8_accum_inv	numeric_var_pop			f f r r 0	2281	128 2281	128 _null_ _null_ ));
@@ -268,7 +268,7 @@ DATA(insert ( 2158	n 0 float8_accum	float8_stddev_samp			float8_combine			-					
 DATA(insert ( 2159	n 0 numeric_accum	numeric_stddev_samp			numeric_combine			numeric_serialize		numeric_deserialize			numeric_accum	numeric_accum_inv numeric_stddev_samp		f f r r 0	2281	128 2281	128 _null_ _null_ ));
 
 /* SQL2003 binary regression aggregates */
-DATA(insert ( 2818	n 0 int8inc_float8_float8	-					int8pl				-	-	-				-				-			f f r r 0	20		0	0		0	"0" _null_ ));
+DATA(insert ( 2818	n 0 int8inc_float8_float8	-					int8pl				-	-	-				-				-			f f r r 0	20		0	0		0	0 _null_ ));
 DATA(insert ( 2819	n 0 float8_regr_accum	float8_regr_sxx			float8_regr_combine -	-	-				-				-			f f r r 0	1022	0	0		0	"{0,0,0,0,0,0}" _null_ ));
 DATA(insert ( 2820	n 0 float8_regr_accum	float8_regr_syy			float8_regr_combine -	-	-				-				-			f f r r 0	1022	0	0		0	"{0,0,0,0,0,0}" _null_ ));
 DATA(insert ( 2821	n 0 float8_regr_accum	float8_regr_sxy			float8_regr_combine -	-	-				-				-			f f r r 0	1022	0	0		0	"{0,0,0,0,0,0}" _null_ ));

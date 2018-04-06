@@ -55,13 +55,13 @@ typedef FormData_pg_ts_template *Form_pg_ts_template;
  * ----------------
  */
 
-DATA(insert OID = 3727 ( "simple" PGNSP dsimple_init dsimple_lexize ));
+DATA(insert OID = 3727 ( simple PGNSP dsimple_init dsimple_lexize ));
 DESCR("simple dictionary: just lower case and check for stopword");
-DATA(insert OID = 3730 ( "synonym" PGNSP dsynonym_init dsynonym_lexize ));
+DATA(insert OID = 3730 ( synonym PGNSP dsynonym_init dsynonym_lexize ));
 DESCR("synonym dictionary: replace word by its synonym");
-DATA(insert OID = 3733 ( "ispell" PGNSP dispell_init dispell_lexize ));
+DATA(insert OID = 3733 ( ispell PGNSP dispell_init dispell_lexize ));
 DESCR("ispell dictionary");
-DATA(insert OID = 3742 ( "thesaurus" PGNSP thesaurus_init thesaurus_lexize ));
+DATA(insert OID = 3742 ( thesaurus PGNSP thesaurus_init thesaurus_lexize ));
 DESCR("thesaurus dictionary: phrase by phrase substitution");
 
 #endif							/* PG_TS_TEMPLATE_H */

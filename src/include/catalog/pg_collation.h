@@ -73,10 +73,10 @@ typedef FormData_pg_collation *Form_pg_collation;
 DATA(insert OID = 100 ( default		PGNSP PGUID d -1 "" "" _null_ ));
 DESCR("database's default collation");
 #define DEFAULT_COLLATION_OID	100
-DATA(insert OID = 950 ( C			PGNSP PGUID c -1 "C" "C" _null_ ));
+DATA(insert OID = 950 ( C			PGNSP PGUID c -1 C C _null_ ));
 DESCR("standard C collation");
 #define C_COLLATION_OID			950
-DATA(insert OID = 951 ( POSIX		PGNSP PGUID c -1 "POSIX" "POSIX" _null_ ));
+DATA(insert OID = 951 ( POSIX		PGNSP PGUID c -1 POSIX POSIX _null_ ));
 DESCR("standard POSIX collation");
 #define POSIX_COLLATION_OID		951
 

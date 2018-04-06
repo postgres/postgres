@@ -61,7 +61,7 @@ typedef FormData_pg_ts_parser *Form_pg_ts_parser;
  * ----------------
  */
 
-DATA(insert OID = 3722 ( "default" PGNSP prsd_start prsd_nexttoken prsd_end prsd_headline prsd_lextype ));
+DATA(insert OID = 3722 ( default PGNSP prsd_start prsd_nexttoken prsd_end prsd_headline prsd_lextype ));
 DESCR("default word parser");
 
 #endif							/* PG_TS_PARSER_H */
