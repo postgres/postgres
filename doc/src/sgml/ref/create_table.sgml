@@ -549,9 +549,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       Partitioned tables do not support <literal>EXCLUDE</literal> constraints;
       however, you can define these constraints on individual partitions.
       Also, while it's possible to define <literal>PRIMARY KEY</literal>
-      constraints on partitioned tables, it is not supported to create foreign
-      keys cannot that reference them.  This restriction will be lifted in a
-      future release.
+      constraints on partitioned tables, creating foreign keys that
+      reference a partitioned table is not yet supported.
      </para>
 
     </listitem>
