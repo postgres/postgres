@@ -1331,6 +1331,32 @@ _readOnConflictExpr(void)
 	READ_DONE();
 }
 
+static PartitionPruneStepOp *
+_readPartitionPruneStepOp(void)
+{
+	READ_LOCALS(PartitionPruneStepOp);
+
+	READ_INT_FIELD(step.step_id);
+	READ_INT_FIELD(opstrategy);
+	READ_NODE_FIELD(exprs);
+	READ_NODE_FIELD(cmpfns);
+	READ_BITMAPSET_FIELD(nullkeys);
+
+	READ_DONE();
+}
+
+static PartitionPruneStepCombine *
+_readPartitionPruneStepCombine(void)
+{
+	READ_LOCALS(PartitionPruneStepCombine);
+
+	READ_INT_FIELD(step.step_id);
+	READ_ENUM_FIELD(combineOp, PartitionPruneCombineOp);
+	READ_NODE_FIELD(source_stepids);
+
+	READ_DONE();
+}
+
 /*
  * _readMergeAction
  */
@@ -2615,6 +2641,10 @@ parseNodeString(void)
 		return_value = _readOnConflictExpr();
 	else if (MATCH("MERGEACTION", 11))
 		return_value = _readMergeAction();
+	else if (MATCH("PARTITIONPRUNESTEPOP", 20))
+		return_value = _readPartitionPruneStepOp();
+	else if (MATCH("PARTITIONPRUNESTEPCOMBINE", 25))
+		return_value = _readPartitionPruneStepCombine();
 	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
 	else if (MATCH("RANGETBLFUNCTION", 16))

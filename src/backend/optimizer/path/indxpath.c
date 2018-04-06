@@ -40,9 +40,7 @@
 #include "utils/selfuncs.h"
 
 
-#define IsBooleanOpfamily(opfamily) \
-	((opfamily) == BOOL_BTREE_FAM_OID || (opfamily) == BOOL_HASH_FAM_OID)
-
+/* XXX see PartCollMatchesExprColl */
 #define IndexCollMatchesExprColl(idxcollation, exprcollation) \
 	((idxcollation) == InvalidOid || (idxcollation) == (exprcollation))
 

@@ -154,9 +154,11 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->part_scheme = NULL;
 	rel->nparts = 0;
 	rel->boundinfo = NULL;
+	rel->partition_qual = NIL;
 	rel->part_rels = NULL;
 	rel->partexprs = NULL;
 	rel->nullable_partexprs = NULL;
+	rel->partitioned_child_rels = NIL;
 
 	/*
 	 * Pass top parent's relids down the inheritance hierarchy. If the parent
@@ -567,9 +569,11 @@ build_join_rel(PlannerInfo *root,
 	joinrel->part_scheme = NULL;
 	joinrel->nparts = 0;
 	joinrel->boundinfo = NULL;
+	joinrel->partition_qual = NIL;
 	joinrel->part_rels = NULL;
 	joinrel->partexprs = NULL;
 	joinrel->nullable_partexprs = NULL;
+	joinrel->partitioned_child_rels = NIL;
 
 	/* Compute information relevant to the foreign relations. */
 	set_foreign_rel_properties(joinrel, outer_rel, inner_rel);
@@ -734,9 +738,13 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 	joinrel->has_eclass_joins = false;
 	joinrel->top_parent_relids = NULL;
 	joinrel->part_scheme = NULL;
+	joinrel->nparts = 0;
+	joinrel->boundinfo = NULL;
+	joinrel->partition_qual = NIL;
 	joinrel->part_rels = NULL;
 	joinrel->partexprs = NULL;
 	joinrel->nullable_partexprs = NULL;
+	joinrel->partitioned_child_rels = NIL;
 
 	joinrel->top_parent_relids = bms_union(outer_rel->top_parent_relids,
 										   inner_rel->top_parent_relids);

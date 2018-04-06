@@ -208,16 +208,14 @@ explain (costs off) select * from rlp where 1 > a;	/* commuted */
 (3 rows)
 
 explain (costs off) select * from rlp where a <= 1;
-              QUERY PLAN               
----------------------------------------
+        QUERY PLAN        
+--------------------------
  Append
    ->  Seq Scan on rlp1
          Filter: (a <= 1)
    ->  Seq Scan on rlp2
          Filter: (a <= 1)
-   ->  Seq Scan on rlp_default_default
-         Filter: (a <= 1)
-(7 rows)
+(5 rows)
 
 explain (costs off) select * from rlp where a = 1;
        QUERY PLAN        
@@ -235,7 +233,7 @@ explain (costs off) select * from rlp where a = 1::bigint;		/* same as above */
          Filter: (a = '1'::bigint)
 (3 rows)
 
-explain (costs off) select * from rlp where a = 1::numeric;	/* only null can be pruned */
+explain (costs off) select * from rlp where a = 1::numeric;		/* no pruning */
                   QUERY PLAN                   
 -----------------------------------------------
  Append
@@ -265,9 +263,11 @@ explain (costs off) select * from rlp where a = 1::numeric;	/* only null can be 
          Filter: ((a)::numeric = '1'::numeric)
    ->  Seq Scan on rlp_default_30
          Filter: ((a)::numeric = '1'::numeric)
+   ->  Seq Scan on rlp_default_null
+         Filter: ((a)::numeric = '1'::numeric)
    ->  Seq Scan on rlp_default_default
          Filter: ((a)::numeric = '1'::numeric)
-(29 rows)
+(31 rows)
 
 explain (costs off) select * from rlp where a <= 10;
               QUERY PLAN               
@@ -575,7 +575,9 @@ explain (costs off) select * from rlp where a > 20 and a < 27;
          Filter: ((a > 20) AND (a < 27))
    ->  Seq Scan on rlp4_default
          Filter: ((a > 20) AND (a < 27))
-(7 rows)
+   ->  Seq Scan on rlp_default_default
+         Filter: ((a > 20) AND (a < 27))
+(9 rows)
 
 explain (costs off) select * from rlp where a = 29;
            QUERY PLAN           
@@ -714,9 +716,7 @@ explain (costs off) select * from mc3p where a = 1 and abs(b) = 1 and c < 8;
          Filter: ((c < 8) AND (a = 1) AND (abs(b) = 1))
    ->  Seq Scan on mc3p1
          Filter: ((c < 8) AND (a = 1) AND (abs(b) = 1))
-   ->  Seq Scan on mc3p_default
-         Filter: ((c < 8) AND (a = 1) AND (abs(b) = 1))
-(7 rows)
+(5 rows)
 
 explain (costs off) select * from mc3p where a = 10 and abs(b) between 5 and 35;
                            QUERY PLAN                            
@@ -892,6 +892,8 @@ explain (costs off) select * from mc3p where a = 1 or abs(b) = 1 or c = 1;
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
    ->  Seq Scan on mc3p2
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
+   ->  Seq Scan on mc3p3
+         Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
    ->  Seq Scan on mc3p4
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
    ->  Seq Scan on mc3p5
@@ -902,7 +904,7 @@ explain (costs off) select * from mc3p where a = 1 or abs(b) = 1 or c = 1;
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
    ->  Seq Scan on mc3p_default
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
-(17 rows)
+(19 rows)
 
 explain (costs off) select * from mc3p where (a = 1 and abs(b) = 1) or (a = 10 and abs(b) = 10);
                                   QUERY PLAN                                  
@@ -1007,24 +1009,20 @@ explain (costs off) select * from boolpart where a in (true, false);
 (5 rows)
 
 explain (costs off) select * from boolpart where a = false;
-             QUERY PLAN             
-------------------------------------
+          QUERY PLAN          
+------------------------------
  Append
    ->  Seq Scan on boolpart_f
          Filter: (NOT a)
-   ->  Seq Scan on boolpart_default
-         Filter: (NOT a)
-(5 rows)
+(3 rows)
 
 explain (costs off) select * from boolpart where not a = false;
-             QUERY PLAN             
-------------------------------------
+          QUERY PLAN          
+------------------------------
  Append
    ->  Seq Scan on boolpart_t
          Filter: a
-   ->  Seq Scan on boolpart_default
-         Filter: a
-(5 rows)
+(3 rows)
 
 explain (costs off) select * from boolpart where a is true or a is not true;
                     QUERY PLAN                    
@@ -1034,33 +1032,22 @@ explain (costs off) select * from boolpart where a is true or a is not true;
          Filter: ((a IS TRUE) OR (a IS NOT TRUE))
    ->  Seq Scan on boolpart_t
          Filter: ((a IS TRUE) OR (a IS NOT TRUE))
-   ->  Seq Scan on boolpart_default
-         Filter: ((a IS TRUE) OR (a IS NOT TRUE))
-(7 rows)
+(5 rows)
 
 explain (costs off) select * from boolpart where a is not true;
-             QUERY PLAN             
-------------------------------------
+           QUERY PLAN            
+---------------------------------
  Append
    ->  Seq Scan on boolpart_f
          Filter: (a IS NOT TRUE)
-   ->  Seq Scan on boolpart_t
-         Filter: (a IS NOT TRUE)
-   ->  Seq Scan on boolpart_default
-         Filter: (a IS NOT TRUE)
-(7 rows)
+(3 rows)
 
 explain (costs off) select * from boolpart where a is not true and a is not false;
-                       QUERY PLAN                       
---------------------------------------------------------
- Append
-   ->  Seq Scan on boolpart_f
-         Filter: ((a IS NOT TRUE) AND (a IS NOT FALSE))
-   ->  Seq Scan on boolpart_t
-         Filter: ((a IS NOT TRUE) AND (a IS NOT FALSE))
-   ->  Seq Scan on boolpart_default
-         Filter: ((a IS NOT TRUE) AND (a IS NOT FALSE))
-(7 rows)
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
 
 explain (costs off) select * from boolpart where a is unknown;
              QUERY PLAN             
@@ -1086,4 +1073,446 @@ explain (costs off) select * from boolpart where a is not unknown;
          Filter: (a IS NOT UNKNOWN)
 (7 rows)
 
-drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart;
+--
+-- some more cases
+--
+--
+-- pruning for partitioned table appearing inside a sub-query
+--
+-- pruning won't work for mc3p, because some keys are Params
+explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.a = t1.b and abs(t2.b) = 1 and t2.c = 1) s where t1.a = 1;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Nested Loop
+   ->  Append
+         ->  Seq Scan on mc2p1 t1
+               Filter: (a = 1)
+         ->  Seq Scan on mc2p2 t1_1
+               Filter: (a = 1)
+         ->  Seq Scan on mc2p_default t1_2
+               Filter: (a = 1)
+   ->  Aggregate
+         ->  Append
+               ->  Seq Scan on mc3p0 t2
+                     Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p1 t2_1
+                     Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p2 t2_2
+                     Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p3 t2_3
+                     Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p4 t2_4
+                     Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p5 t2_5
+                     Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p6 t2_6
+                     Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p7 t2_7
+                     Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p_default t2_8
+                     Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
+(28 rows)
+
+-- pruning should work fine, because values for a prefix of keys (a, b) are
+-- available
+explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.c = t1.b and abs(t2.b) = 1 and t2.a = 1) s where t1.a = 1;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Nested Loop
+   ->  Append
+         ->  Seq Scan on mc2p1 t1
+               Filter: (a = 1)
+         ->  Seq Scan on mc2p2 t1_1
+               Filter: (a = 1)
+         ->  Seq Scan on mc2p_default t1_2
+               Filter: (a = 1)
+   ->  Aggregate
+         ->  Append
+               ->  Seq Scan on mc3p0 t2
+                     Filter: ((c = t1.b) AND (a = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p1 t2_1
+                     Filter: ((c = t1.b) AND (a = 1) AND (abs(b) = 1))
+               ->  Seq Scan on mc3p_default t2_2
+                     Filter: ((c = t1.b) AND (a = 1) AND (abs(b) = 1))
+(16 rows)
+
+-- also here, because values for all keys are provided
+explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.a = 1 and abs(t2.b) = 1 and t2.c = 1) s where t1.a = 1;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Nested Loop
+   ->  Aggregate
+         ->  Append
+               ->  Seq Scan on mc3p1 t2
+                     Filter: ((a = 1) AND (c = 1) AND (abs(b) = 1))
+   ->  Append
+         ->  Seq Scan on mc2p1 t1
+               Filter: (a = 1)
+         ->  Seq Scan on mc2p2 t1_1
+               Filter: (a = 1)
+         ->  Seq Scan on mc2p_default t1_2
+               Filter: (a = 1)
+(12 rows)
+
+--
+-- pruning with clauses containing <> operator
+--
+-- doesn't prune range partitions
+create table rp (a int) partition by range (a);
+create table rp0 partition of rp for values from (minvalue) to (1);
+create table rp1 partition of rp for values from (1) to (2);
+create table rp2 partition of rp for values from (2) to (maxvalue);
+explain (costs off) select * from rp where a <> 1;
+        QUERY PLAN        
+--------------------------
+ Append
+   ->  Seq Scan on rp0
+         Filter: (a <> 1)
+   ->  Seq Scan on rp1
+         Filter: (a <> 1)
+   ->  Seq Scan on rp2
+         Filter: (a <> 1)
+(7 rows)
+
+explain (costs off) select * from rp where a <> 1 and a <> 2;
+               QUERY PLAN                
+-----------------------------------------
+ Append
+   ->  Seq Scan on rp0
+         Filter: ((a <> 1) AND (a <> 2))
+   ->  Seq Scan on rp1
+         Filter: ((a <> 1) AND (a <> 2))
+   ->  Seq Scan on rp2
+         Filter: ((a <> 1) AND (a <> 2))
+(7 rows)
+
+-- null partition should be eliminated due to strict <> clause.
+explain (costs off) select * from lp where a <> 'a';
+             QUERY PLAN             
+------------------------------------
+ Append
+   ->  Seq Scan on lp_ad
+         Filter: (a <> 'a'::bpchar)
+   ->  Seq Scan on lp_bc
+         Filter: (a <> 'a'::bpchar)
+   ->  Seq Scan on lp_ef
+         Filter: (a <> 'a'::bpchar)
+   ->  Seq Scan on lp_g
+         Filter: (a <> 'a'::bpchar)
+   ->  Seq Scan on lp_default
+         Filter: (a <> 'a'::bpchar)
+(11 rows)
+
+-- ensure we detect contradictions in clauses; a can't be NULL and NOT NULL.
+explain (costs off) select * from lp where a <> 'a' and a is null;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+explain (costs off) select * from lp where (a <> 'a' and a <> 'd') or a is null;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Append
+   ->  Seq Scan on lp_bc
+         Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
+   ->  Seq Scan on lp_ef
+         Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
+   ->  Seq Scan on lp_g
+         Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
+   ->  Seq Scan on lp_null
+         Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
+   ->  Seq Scan on lp_default
+         Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
+(11 rows)
+
+-- check that it also works for a partitioned table that's not root,
+-- which in this case are partitions of rlp that are themselves
+-- list-partitioned on b
+explain (costs off) select * from rlp where a = 15 and b <> 'ab' and b <> 'cd' and b <> 'xy' and b is not null;
+                                                                QUERY PLAN                                                                
+------------------------------------------------------------------------------------------------------------------------------------------
+ Append
+   ->  Seq Scan on rlp3efgh
+         Filter: ((b IS NOT NULL) AND ((b)::text <> 'ab'::text) AND ((b)::text <> 'cd'::text) AND ((b)::text <> 'xy'::text) AND (a = 15))
+   ->  Seq Scan on rlp3_default
+         Filter: ((b IS NOT NULL) AND ((b)::text <> 'ab'::text) AND ((b)::text <> 'cd'::text) AND ((b)::text <> 'xy'::text) AND (a = 15))
+(5 rows)
+
+--
+-- different collations for different keys with same expression
+--
+create table coll_pruning_multi (a text) partition by range (substr(a, 1) collate "POSIX", substr(a, 1) collate "C");
+create table coll_pruning_multi1 partition of coll_pruning_multi for values from ('a', 'a') to ('a', 'e');
+create table coll_pruning_multi2 partition of coll_pruning_multi for values from ('a', 'e') to ('a', 'z');
+create table coll_pruning_multi3 partition of coll_pruning_multi for values from ('b', 'a') to ('b', 'e');
+-- no pruning, because no value for the leading key
+explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'e' collate "C";
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Append
+   ->  Seq Scan on coll_pruning_multi1
+         Filter: (substr(a, 1) = 'e'::text COLLATE "C")
+   ->  Seq Scan on coll_pruning_multi2
+         Filter: (substr(a, 1) = 'e'::text COLLATE "C")
+   ->  Seq Scan on coll_pruning_multi3
+         Filter: (substr(a, 1) = 'e'::text COLLATE "C")
+(7 rows)
+
+-- pruning, with a value provided for the leading key
+explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'a' collate "POSIX";
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Append
+   ->  Seq Scan on coll_pruning_multi1
+         Filter: (substr(a, 1) = 'a'::text COLLATE "POSIX")
+   ->  Seq Scan on coll_pruning_multi2
+         Filter: (substr(a, 1) = 'a'::text COLLATE "POSIX")
+(5 rows)
+
+-- pruning, with values provided for both keys
+explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'e' collate "C" and substr(a, 1) = 'a' collate "POSIX";
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
+ Append
+   ->  Seq Scan on coll_pruning_multi2
+         Filter: ((substr(a, 1) = 'e'::text COLLATE "C") AND (substr(a, 1) = 'a'::text COLLATE "POSIX"))
+(3 rows)
+
+--
+-- LIKE operators don't prune
+--
+create table like_op_noprune (a text) partition by list (a);
+create table like_op_noprune1 partition of like_op_noprune for values in ('ABC');
+create table like_op_noprune2 partition of like_op_noprune for values in ('BCD');
+explain (costs off) select * from like_op_noprune where a like '%BC';
+             QUERY PLAN             
+------------------------------------
+ Append
+   ->  Seq Scan on like_op_noprune1
+         Filter: (a ~~ '%BC'::text)
+   ->  Seq Scan on like_op_noprune2
+         Filter: (a ~~ '%BC'::text)
+(5 rows)
+
+--
+-- tests wherein clause value requires a cross-type comparison function
+--
+create table lparted_by_int2 (a smallint) partition by list (a);
+create table lparted_by_int2_1 partition of lparted_by_int2 for values in (1);
+create table lparted_by_int2_16384 partition of lparted_by_int2 for values in (16384);
+explain (costs off) select * from lparted_by_int2 where a = 100000000000000;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+create table rparted_by_int2 (a smallint) partition by range (a);
+create table rparted_by_int2_1 partition of rparted_by_int2 for values from (1) to (10);
+create table rparted_by_int2_16384 partition of rparted_by_int2 for values from (10) to (16384);
+-- all partitions pruned
+explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+create table rparted_by_int2_maxvalue partition of rparted_by_int2 for values from (16384) to (maxvalue);
+-- all partitions but rparted_by_int2_maxvalue pruned
+explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on rparted_by_int2_maxvalue
+         Filter: (a > '100000000000000'::bigint)
+(3 rows)
+
+drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, rp, coll_pruning_multi, like_op_noprune, lparted_by_int2, rparted_by_int2;
+-- hash partitioning
+create table hp (a int, b text) partition by hash (a, b);
+create table hp0 partition of hp for values with (modulus 4, remainder 0);
+create table hp3 partition of hp for values with (modulus 4, remainder 3);
+create table hp1 partition of hp for values with (modulus 4, remainder 1);
+create table hp2 partition of hp for values with (modulus 4, remainder 2);
+insert into hp values (null, null);
+insert into hp values (1, null);
+insert into hp values (1, 'xxx');
+insert into hp values (null, 'xxx');
+insert into hp values (10, 'xxx');
+insert into hp values (10, 'yyy');
+select tableoid::regclass, * from hp order by 1;
+ tableoid | a  |  b  
+----------+----+-----
+ hp0      |    | 
+ hp0      |  1 | 
+ hp0      |  1 | xxx
+ hp3      | 10 | yyy
+ hp1      |    | xxx
+ hp2      | 10 | xxx
+(6 rows)
+
+-- partial keys won't prune, nor would non-equality conditions
+explain (costs off) select * from hp where a = 1;
+       QUERY PLAN        
+-------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (a = 1)
+   ->  Seq Scan on hp1
+         Filter: (a = 1)
+   ->  Seq Scan on hp2
+         Filter: (a = 1)
+   ->  Seq Scan on hp3
+         Filter: (a = 1)
+(9 rows)
+
+explain (costs off) select * from hp where b = 'xxx';
+            QUERY PLAN             
+-----------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (b = 'xxx'::text)
+   ->  Seq Scan on hp1
+         Filter: (b = 'xxx'::text)
+   ->  Seq Scan on hp2
+         Filter: (b = 'xxx'::text)
+   ->  Seq Scan on hp3
+         Filter: (b = 'xxx'::text)
+(9 rows)
+
+explain (costs off) select * from hp where a is null;
+         QUERY PLAN          
+-----------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (a IS NULL)
+   ->  Seq Scan on hp1
+         Filter: (a IS NULL)
+   ->  Seq Scan on hp2
+         Filter: (a IS NULL)
+   ->  Seq Scan on hp3
+         Filter: (a IS NULL)
+(9 rows)
+
+explain (costs off) select * from hp where b is null;
+         QUERY PLAN          
+-----------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (b IS NULL)
+   ->  Seq Scan on hp1
+         Filter: (b IS NULL)
+   ->  Seq Scan on hp2
+         Filter: (b IS NULL)
+   ->  Seq Scan on hp3
+         Filter: (b IS NULL)
+(9 rows)
+
+explain (costs off) select * from hp where a < 1 and b = 'xxx';
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a < 1) AND (b = 'xxx'::text))
+   ->  Seq Scan on hp1
+         Filter: ((a < 1) AND (b = 'xxx'::text))
+   ->  Seq Scan on hp2
+         Filter: ((a < 1) AND (b = 'xxx'::text))
+   ->  Seq Scan on hp3
+         Filter: ((a < 1) AND (b = 'xxx'::text))
+(9 rows)
+
+explain (costs off) select * from hp where a <> 1 and b = 'yyy';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a <> 1) AND (b = 'yyy'::text))
+   ->  Seq Scan on hp1
+         Filter: ((a <> 1) AND (b = 'yyy'::text))
+   ->  Seq Scan on hp2
+         Filter: ((a <> 1) AND (b = 'yyy'::text))
+   ->  Seq Scan on hp3
+         Filter: ((a <> 1) AND (b = 'yyy'::text))
+(9 rows)
+
+-- pruning should work if non-null values are provided for all the keys
+explain (costs off) select * from hp where a is null and b is null;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a IS NULL) AND (b IS NULL))
+(3 rows)
+
+explain (costs off) select * from hp where a = 1 and b is null;
+                QUERY PLAN                 
+-------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((b IS NULL) AND (a = 1))
+(3 rows)
+
+explain (costs off) select * from hp where a = 1 and b = 'xxx';
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a = 1) AND (b = 'xxx'::text))
+(3 rows)
+
+explain (costs off) select * from hp where a is null and b = 'xxx';
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Append
+   ->  Seq Scan on hp1
+         Filter: ((a IS NULL) AND (b = 'xxx'::text))
+(3 rows)
+
+explain (costs off) select * from hp where a = 10 and b = 'xxx';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Append
+   ->  Seq Scan on hp2
+         Filter: ((a = 10) AND (b = 'xxx'::text))
+(3 rows)
+
+explain (costs off) select * from hp where a = 10 and b = 'yyy';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Append
+   ->  Seq Scan on hp3
+         Filter: ((a = 10) AND (b = 'yyy'::text))
+(3 rows)
+
+explain (costs off) select * from hp where (a = 10 and b = 'yyy') or (a = 10 and b = 'xxx') or (a is null and b is null);
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (((a = 10) AND (b = 'yyy'::text)) OR ((a = 10) AND (b = 'xxx'::text)) OR ((a IS NULL) AND (b IS NULL)))
+   ->  Seq Scan on hp2
+         Filter: (((a = 10) AND (b = 'yyy'::text)) OR ((a = 10) AND (b = 'xxx'::text)) OR ((a IS NULL) AND (b IS NULL)))
+   ->  Seq Scan on hp3
+         Filter: (((a = 10) AND (b = 'yyy'::text)) OR ((a = 10) AND (b = 'xxx'::text)) OR ((a IS NULL) AND (b IS NULL)))
+(7 rows)
+
+-- hash partitiong pruning doesn't occur with <> operator clauses
+explain (costs off) select * from hp where a <> 1 and b <> 'xxx';
+                    QUERY PLAN                     
+---------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a <> 1) AND (b <> 'xxx'::text))
+   ->  Seq Scan on hp1
+         Filter: ((a <> 1) AND (b <> 'xxx'::text))
+   ->  Seq Scan on hp2
+         Filter: ((a <> 1) AND (b <> 'xxx'::text))
+   ->  Seq Scan on hp3
+         Filter: ((a <> 1) AND (b <> 'xxx'::text))
+(9 rows)
+
+drop table hp;

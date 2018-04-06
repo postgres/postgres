@@ -1951,11 +1951,13 @@ explain (costs off) select * from mcrparted where abs(b) = 5;	-- scans all parti
          Filter: (abs(b) = 5)
    ->  Seq Scan on mcrparted3
          Filter: (abs(b) = 5)
+   ->  Seq Scan on mcrparted4
+         Filter: (abs(b) = 5)
    ->  Seq Scan on mcrparted5
          Filter: (abs(b) = 5)
    ->  Seq Scan on mcrparted_def
          Filter: (abs(b) = 5)
-(13 rows)
+(15 rows)
 
 explain (costs off) select * from mcrparted where a > -1;	-- scans all partitions
              QUERY PLAN              

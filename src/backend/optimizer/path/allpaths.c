@@ -43,6 +43,7 @@
 #include "optimizer/var.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
+#include "partitioning/partprune.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
@@ -874,11 +875,38 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	double	   *parent_attrsizes;
 	int			nattrs;
 	ListCell   *l;
+	Relids		live_children = NULL;
+	bool		did_pruning = false;
 
 	/* Guard against stack overflow due to overly deep inheritance tree. */
 	check_stack_depth();
 
 	Assert(IS_SIMPLE_REL(rel));
+
+	/*
+	 * Initialize partitioned_child_rels to contain this RT index.
+	 *
+	 * Note that during the set_append_rel_pathlist() phase, we will bubble up
+	 * the indexes of partitioned relations that appear down in the tree, so
+	 * that when we've created Paths for all the children, the root
+	 * partitioned table's list will contain all such indexes.
+	 */
+	if (rte->relkind == RELKIND_PARTITIONED_TABLE)
+		rel->partitioned_child_rels = list_make1_int(rti);
+
+	/*
+	 * If the partitioned relation has any baserestrictinfo quals then we
+	 * attempt to use these quals to prune away partitions that cannot
+	 * possibly contain any tuples matching these quals.  In this case we'll
+	 * store the relids of all partitions which could possibly contain a
+	 * matching tuple, and skip anything else in the loop below.
+	 */
+	if (rte->relkind == RELKIND_PARTITIONED_TABLE &&
+		rel->baserestrictinfo != NIL)
+	{
+		live_children = prune_append_rel_partitions(rel);
+		did_pruning = true;
+	}
 
 	/*
 	 * Initialize to compute size estimates for whole append relation.
@@ -1128,6 +1156,13 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			continue;
 		}
 
+		if (did_pruning && !bms_is_member(appinfo->child_relid, live_children))
+		{
+			/* This partition was pruned; skip it. */
+			set_dummy_rel_pathlist(childrel);
+			continue;
+		}
+
 		if (relation_excluded_by_constraints(root, childrel, childRTE))
 		{
 			/*
@@ -1309,6 +1344,12 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		if (IS_DUMMY_REL(childrel))
 			continue;
 
+		/* Bubble up childrel's partitioned children. */
+		if (rel->part_scheme)
+			rel->partitioned_child_rels =
+				list_concat(rel->partitioned_child_rels,
+							list_copy(childrel->partitioned_child_rels));
+
 		/*
 		 * Child is live, so add it to the live_childrels list for use below.
 		 */
@@ -1346,49 +1387,55 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	List	   *all_child_outers = NIL;
 	ListCell   *l;
 	List	   *partitioned_rels = NIL;
-	RangeTblEntry *rte;
 	bool		build_partitioned_rels = false;
 	double		partial_rows = -1;
 
-	if (IS_SIMPLE_REL(rel))
+	/*
+	 * AppendPath generated for partitioned tables must record the RT indexes
+	 * of partitioned tables that are direct or indirect children of this
+	 * Append rel.
+	 *
+	 * AppendPath may be for a sub-query RTE (UNION ALL), in which case, 'rel'
+	 * itself does not represent a partitioned relation, but the child sub-
+	 * queries may contain references to partitioned relations.  The loop
+	 * below will look for such children and collect them in a list to be
+	 * passed to the path creation function.  (This assumes that we don't need
+	 * to look through multiple levels of subquery RTEs; if we ever do, we
+	 * could consider stuffing the list we generate here into sub-query RTE's
+	 * RelOptInfo, just like we do for partitioned rels, which would be used
+	 * when populating our parent rel with paths.  For the present, that
+	 * appears to be unnecessary.)
+	 */
+	if (rel->part_scheme != NULL)
 	{
-		/*
-		 * A root partition will already have a PartitionedChildRelInfo, and a
-		 * non-root partitioned table doesn't need one, because its Append
-		 * paths will get flattened into the parent anyway.  For a subquery
-		 * RTE, no PartitionedChildRelInfo exists; we collect all
-		 * partitioned_rels associated with any child.  (This assumes that we
-		 * don't need to look through multiple levels of subquery RTEs; if we
-		 * ever do, we could create a PartitionedChildRelInfo with the
-		 * accumulated list of partitioned_rels which would then be found when
-		 * populated our parent rel with paths.  For the present, that appears
-		 * to be unnecessary.)
-		 */
-		rte = planner_rt_fetch(rel->relid, root);
-		switch (rte->rtekind)
+		if (IS_SIMPLE_REL(rel))
+			partitioned_rels = rel->partitioned_child_rels;
+		else if (IS_JOIN_REL(rel))
 		{
-			case RTE_RELATION:
-				if (rte->relkind == RELKIND_PARTITIONED_TABLE)
-					partitioned_rels =
-						get_partitioned_child_rels(root, rel->relid, NULL);
-				break;
-			case RTE_SUBQUERY:
-				build_partitioned_rels = true;
-				break;
-			default:
-				elog(ERROR, "unexpected rtekind: %d", (int) rte->rtekind);
+			int			relid = -1;
+
+			/*
+			 * For a partitioned joinrel, concatenate the component rels'
+			 * partitioned_child_rels lists.
+			 */
+			while ((relid = bms_next_member(rel->relids, relid)) >= 0)
+			{
+				RelOptInfo *component;
+
+				Assert(relid >= 1 && relid < root->simple_rel_array_size);
+				component = root->simple_rel_array[relid];
+				Assert(component->part_scheme != NULL);
+				Assert(list_length(component->partitioned_child_rels) >= 1);
+				partitioned_rels =
+					list_concat(partitioned_rels,
+								list_copy(component->partitioned_child_rels));
+			}
 		}
+
+		Assert(list_length(partitioned_rels) >= 1);
 	}
-	else if (rel->reloptkind == RELOPT_JOINREL && rel->part_scheme)
-	{
-		/*
-		 * Associate PartitionedChildRelInfo of the root partitioned tables
-		 * being joined with the root partitioned join (indicated by
-		 * RELOPT_JOINREL).
-		 */
-		partitioned_rels = get_partitioned_child_rels_for_join(root,
-															   rel->relids);
-	}
+	else if (rel->rtekind == RTE_SUBQUERY)
+		build_partitioned_rels = true;
 
 	/*
 	 * For every non-dummy child, remember the cheapest path.  Also, identify
@@ -1407,9 +1454,8 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		if (build_partitioned_rels)
 		{
-			List	   *cprels;
+			List	   *cprels = childrel->partitioned_child_rels;
 
-			cprels = get_partitioned_child_rels(root, childrel->relid, NULL);
 			partitioned_rels = list_concat(partitioned_rels,
 										   list_copy(cprels));
 		}

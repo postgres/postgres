@@ -15,6 +15,7 @@
 #define RELATION_H
 
 #include "access/sdir.h"
+#include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
@@ -253,8 +254,6 @@ typedef struct PlannerInfo
 
 	List	   *append_rel_list;	/* list of AppendRelInfos */
 
-	List	   *pcinfo_list;	/* list of PartitionedChildRelInfos */
-
 	List	   *rowMarks;		/* list of PlanRowMarks */
 
 	List	   *placeholder_list;	/* list of PlaceHolderInfos */
@@ -319,6 +318,9 @@ typedef struct PlannerInfo
 
 	/* optional private data for join_search_hook, e.g., GEQO */
 	void	   *join_search_private;
+
+	/* Does this query modify any partition key columns? */
+	bool		partColsUpdated;
 } PlannerInfo;
 
 
@@ -356,6 +358,9 @@ typedef struct PartitionSchemeData
 	/* Cached information about partition key data types. */
 	int16	   *parttyplen;
 	bool	   *parttypbyval;
+
+	/* Cached information about partition comparison functions. */
+	FmgrInfo   *partsupfunc;
 }			PartitionSchemeData;
 
 typedef struct PartitionSchemeData *PartitionScheme;
@@ -528,11 +533,15 @@ typedef struct PartitionSchemeData *PartitionScheme;
  *
  * If the relation is partitioned, these fields will be set:
  *
- * 		part_scheme - Partitioning scheme of the relation
- * 		boundinfo - Partition bounds
- * 		nparts - Number of partitions
- * 		part_rels - RelOptInfos for each partition
- * 		partexprs, nullable_partexprs - Partition key expressions
+ *		part_scheme - Partitioning scheme of the relation
+ *		nparts - Number of partitions
+ *		boundinfo - Partition bounds
+ *		partition_qual - Partition constraint if not the root
+ *		part_rels - RelOptInfos for each partition
+ *		partexprs, nullable_partexprs - Partition key expressions
+ *		partitioned_child_rels - RT indexes of unpruned partitions of
+ *								 relation that are partitioned tables
+ *								 themselves
  *
  * Note: A base relation always has only one set of partition keys, but a join
  * relation may have as many sets of partition keys as the number of relations
@@ -663,10 +672,12 @@ typedef struct RelOptInfo
 	PartitionScheme part_scheme;	/* Partitioning scheme. */
 	int			nparts;			/* number of partitions */
 	struct PartitionBoundInfoData *boundinfo;	/* Partition bounds */
+	List	   *partition_qual; /* partition constraint */
 	struct RelOptInfo **part_rels;	/* Array of RelOptInfos of partitions,
 									 * stored in the same order of bounds */
 	List	  **partexprs;		/* Non-nullable partition key expressions. */
 	List	  **nullable_partexprs; /* Nullable partition key expressions. */
+	List	   *partitioned_child_rels; /* List of RT indexes. */
 } RelOptInfo;
 
 /*
@@ -1686,7 +1697,7 @@ typedef struct ModifyTablePath
 	List	   *partitioned_rels;
 	bool		partColsUpdated;	/* some part key in hierarchy updated */
 	List	   *resultRelations;	/* integer list of RT indexes */
-	Index	  	mergeTargetRelation;/* RT index of merge target relation */
+	Index		mergeTargetRelation;	/* RT index of merge target relation */
 	List	   *subpaths;		/* Path(s) producing source data */
 	List	   *subroots;		/* per-target-table PlannerInfos */
 	List	   *withCheckOptionLists;	/* per-target-table WCO lists */
@@ -2120,27 +2131,6 @@ typedef struct AppendRelInfo
 	 */
 	Oid			parent_reloid;	/* OID of parent relation */
 } AppendRelInfo;
-
-/*
- * For a partitioned table, this maps its RT index to the list of RT indexes
- * of the partitioned child tables in the partition tree.  We need to
- * separately store this information, because we do not create AppendRelInfos
- * for the partitioned child tables of a parent table, since AppendRelInfos
- * contain information that is unnecessary for the partitioned child tables.
- * The child_rels list must contain at least one element, because the parent
- * partitioned table is itself counted as a child.
- *
- * These structs are kept in the PlannerInfo node's pcinfo_list.
- */
-typedef struct PartitionedChildRelInfo
-{
-	NodeTag		type;
-
-	Index		parent_relid;
-	List	   *child_rels;
-	bool		part_cols_updated;	/* is the partition key of any of
-									 * the partitioned tables updated? */
-} PartitionedChildRelInfo;
 
 /*
  * For each distinct placeholder expression generated during planning, we

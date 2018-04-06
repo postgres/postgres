@@ -1711,6 +1711,28 @@ _outFromExpr(StringInfo str, const FromExpr *node)
 }
 
 static void
+_outPartitionPruneStepOp(StringInfo str, const PartitionPruneStepOp *node)
+{
+	WRITE_NODE_TYPE("PARTITIONPRUNESTEPOP");
+
+	WRITE_INT_FIELD(step.step_id);
+	WRITE_INT_FIELD(opstrategy);
+	WRITE_NODE_FIELD(exprs);
+	WRITE_NODE_FIELD(cmpfns);
+	WRITE_BITMAPSET_FIELD(nullkeys);
+}
+
+static void
+_outPartitionPruneStepCombine(StringInfo str, const PartitionPruneStepCombine *node)
+{
+	WRITE_NODE_TYPE("PARTITIONPRUNESTEPCOMBINE");
+
+	WRITE_INT_FIELD(step.step_id);
+	WRITE_ENUM_FIELD(combineOp, PartitionPruneCombineOp);
+	WRITE_NODE_FIELD(source_stepids);
+}
+
+static void
 _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
 {
 	WRITE_NODE_TYPE("ONCONFLICTEXPR");
@@ -2261,7 +2283,6 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_NODE_FIELD(full_join_clauses);
 	WRITE_NODE_FIELD(join_info_list);
 	WRITE_NODE_FIELD(append_rel_list);
-	WRITE_NODE_FIELD(pcinfo_list);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(placeholder_list);
 	WRITE_NODE_FIELD(fkey_list);
@@ -2286,6 +2307,7 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_INT_FIELD(wt_param_id);
 	WRITE_BITMAPSET_FIELD(curOuterRels);
 	WRITE_NODE_FIELD(curOuterParams);
+	WRITE_BOOL_FIELD(partColsUpdated);
 }
 
 static void
@@ -2335,6 +2357,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BOOL_FIELD(has_eclass_joins);
 	WRITE_BITMAPSET_FIELD(top_parent_relids);
+	WRITE_NODE_FIELD(partitioned_child_rels);
 }
 
 static void
@@ -2557,16 +2580,6 @@ _outAppendRelInfo(StringInfo str, const AppendRelInfo *node)
 	WRITE_OID_FIELD(child_reltype);
 	WRITE_NODE_FIELD(translated_vars);
 	WRITE_OID_FIELD(parent_reloid);
-}
-
-static void
-_outPartitionedChildRelInfo(StringInfo str, const PartitionedChildRelInfo *node)
-{
-	WRITE_NODE_TYPE("PARTITIONEDCHILDRELINFO");
-
-	WRITE_UINT_FIELD(parent_relid);
-	WRITE_NODE_FIELD(child_rels);
-	WRITE_BOOL_FIELD(part_cols_updated);
 }
 
 static void
@@ -3973,6 +3986,12 @@ outNode(StringInfo str, const void *obj)
 			case T_MergeAction:
 				_outMergeAction(str, obj);
 				break;
+			case T_PartitionPruneStepOp:
+				_outPartitionPruneStepOp(str, obj);
+				break;
+			case T_PartitionPruneStepCombine:
+				_outPartitionPruneStepCombine(str, obj);
+				break;
 			case T_Path:
 				_outPath(str, obj);
 				break;
@@ -4113,9 +4132,6 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_AppendRelInfo:
 				_outAppendRelInfo(str, obj);
-				break;
-			case T_PartitionedChildRelInfo:
-				_outPartitionedChildRelInfo(str, obj);
 				break;
 			case T_PlaceHolderInfo:
 				_outPlaceHolderInfo(str, obj);

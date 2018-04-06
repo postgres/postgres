@@ -60,7 +60,7 @@ explain (costs off) select * from rlp where 1 > a;	/* commuted */
 explain (costs off) select * from rlp where a <= 1;
 explain (costs off) select * from rlp where a = 1;
 explain (costs off) select * from rlp where a = 1::bigint;		/* same as above */
-explain (costs off) select * from rlp where a = 1::numeric;	/* only null can be pruned */
+explain (costs off) select * from rlp where a = 1::numeric;		/* no pruning */
 explain (costs off) select * from rlp where a <= 10;
 explain (costs off) select * from rlp where a > 10;
 explain (costs off) select * from rlp where a < 15;
@@ -152,4 +152,125 @@ explain (costs off) select * from boolpart where a is not true and a is not fals
 explain (costs off) select * from boolpart where a is unknown;
 explain (costs off) select * from boolpart where a is not unknown;
 
-drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart;
+--
+-- some more cases
+--
+
+--
+-- pruning for partitioned table appearing inside a sub-query
+--
+-- pruning won't work for mc3p, because some keys are Params
+explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.a = t1.b and abs(t2.b) = 1 and t2.c = 1) s where t1.a = 1;
+
+-- pruning should work fine, because values for a prefix of keys (a, b) are
+-- available
+explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.c = t1.b and abs(t2.b) = 1 and t2.a = 1) s where t1.a = 1;
+
+-- also here, because values for all keys are provided
+explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.a = 1 and abs(t2.b) = 1 and t2.c = 1) s where t1.a = 1;
+
+--
+-- pruning with clauses containing <> operator
+--
+
+-- doesn't prune range partitions
+create table rp (a int) partition by range (a);
+create table rp0 partition of rp for values from (minvalue) to (1);
+create table rp1 partition of rp for values from (1) to (2);
+create table rp2 partition of rp for values from (2) to (maxvalue);
+
+explain (costs off) select * from rp where a <> 1;
+explain (costs off) select * from rp where a <> 1 and a <> 2;
+
+-- null partition should be eliminated due to strict <> clause.
+explain (costs off) select * from lp where a <> 'a';
+
+-- ensure we detect contradictions in clauses; a can't be NULL and NOT NULL.
+explain (costs off) select * from lp where a <> 'a' and a is null;
+explain (costs off) select * from lp where (a <> 'a' and a <> 'd') or a is null;
+
+-- check that it also works for a partitioned table that's not root,
+-- which in this case are partitions of rlp that are themselves
+-- list-partitioned on b
+explain (costs off) select * from rlp where a = 15 and b <> 'ab' and b <> 'cd' and b <> 'xy' and b is not null;
+
+--
+-- different collations for different keys with same expression
+--
+create table coll_pruning_multi (a text) partition by range (substr(a, 1) collate "POSIX", substr(a, 1) collate "C");
+create table coll_pruning_multi1 partition of coll_pruning_multi for values from ('a', 'a') to ('a', 'e');
+create table coll_pruning_multi2 partition of coll_pruning_multi for values from ('a', 'e') to ('a', 'z');
+create table coll_pruning_multi3 partition of coll_pruning_multi for values from ('b', 'a') to ('b', 'e');
+
+-- no pruning, because no value for the leading key
+explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'e' collate "C";
+
+-- pruning, with a value provided for the leading key
+explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'a' collate "POSIX";
+
+-- pruning, with values provided for both keys
+explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'e' collate "C" and substr(a, 1) = 'a' collate "POSIX";
+
+--
+-- LIKE operators don't prune
+--
+create table like_op_noprune (a text) partition by list (a);
+create table like_op_noprune1 partition of like_op_noprune for values in ('ABC');
+create table like_op_noprune2 partition of like_op_noprune for values in ('BCD');
+explain (costs off) select * from like_op_noprune where a like '%BC';
+
+--
+-- tests wherein clause value requires a cross-type comparison function
+--
+create table lparted_by_int2 (a smallint) partition by list (a);
+create table lparted_by_int2_1 partition of lparted_by_int2 for values in (1);
+create table lparted_by_int2_16384 partition of lparted_by_int2 for values in (16384);
+explain (costs off) select * from lparted_by_int2 where a = 100000000000000;
+
+create table rparted_by_int2 (a smallint) partition by range (a);
+create table rparted_by_int2_1 partition of rparted_by_int2 for values from (1) to (10);
+create table rparted_by_int2_16384 partition of rparted_by_int2 for values from (10) to (16384);
+-- all partitions pruned
+explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
+create table rparted_by_int2_maxvalue partition of rparted_by_int2 for values from (16384) to (maxvalue);
+-- all partitions but rparted_by_int2_maxvalue pruned
+explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
+
+drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, rp, coll_pruning_multi, like_op_noprune, lparted_by_int2, rparted_by_int2;
+
+-- hash partitioning
+create table hp (a int, b text) partition by hash (a, b);
+create table hp0 partition of hp for values with (modulus 4, remainder 0);
+create table hp3 partition of hp for values with (modulus 4, remainder 3);
+create table hp1 partition of hp for values with (modulus 4, remainder 1);
+create table hp2 partition of hp for values with (modulus 4, remainder 2);
+
+insert into hp values (null, null);
+insert into hp values (1, null);
+insert into hp values (1, 'xxx');
+insert into hp values (null, 'xxx');
+insert into hp values (10, 'xxx');
+insert into hp values (10, 'yyy');
+select tableoid::regclass, * from hp order by 1;
+
+-- partial keys won't prune, nor would non-equality conditions
+explain (costs off) select * from hp where a = 1;
+explain (costs off) select * from hp where b = 'xxx';
+explain (costs off) select * from hp where a is null;
+explain (costs off) select * from hp where b is null;
+explain (costs off) select * from hp where a < 1 and b = 'xxx';
+explain (costs off) select * from hp where a <> 1 and b = 'yyy';
+
+-- pruning should work if non-null values are provided for all the keys
+explain (costs off) select * from hp where a is null and b is null;
+explain (costs off) select * from hp where a = 1 and b is null;
+explain (costs off) select * from hp where a = 1 and b = 'xxx';
+explain (costs off) select * from hp where a is null and b = 'xxx';
+explain (costs off) select * from hp where a = 10 and b = 'xxx';
+explain (costs off) select * from hp where a = 10 and b = 'yyy';
+explain (costs off) select * from hp where (a = 10 and b = 'yyy') or (a = 10 and b = 'xxx') or (a is null and b is null);
+
+-- hash partitiong pruning doesn't occur with <> operator clauses
+explain (costs off) select * from hp where a <> 1 and b <> 'xxx';
+
+drop table hp;

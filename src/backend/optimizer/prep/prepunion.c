@@ -104,8 +104,7 @@ static void expand_partitioned_rtentry(PlannerInfo *root,
 						   RangeTblEntry *parentrte,
 						   Index parentRTindex, Relation parentrel,
 						   PlanRowMark *top_parentrc, LOCKMODE lockmode,
-						   List **appinfos, List **partitioned_child_rels,
-						   bool *part_cols_updated);
+						   List **appinfos);
 static void expand_single_inheritance_child(PlannerInfo *root,
 								RangeTblEntry *parentrte,
 								Index parentRTindex, Relation parentrel,
@@ -1587,9 +1586,6 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	/* Scan the inheritance set and expand it */
 	if (RelationGetPartitionDesc(oldrelation) != NULL)
 	{
-		List	   *partitioned_child_rels = NIL;
-		bool		part_cols_updated = false;
-
 		Assert(rte->relkind == RELKIND_PARTITIONED_TABLE);
 
 		/*
@@ -1598,28 +1594,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		 * extract the partition key columns of all the partitioned tables.
 		 */
 		expand_partitioned_rtentry(root, rte, rti, oldrelation, oldrc,
-								   lockmode, &root->append_rel_list,
-								   &partitioned_child_rels,
-								   &part_cols_updated);
-
-		/*
-		 * We keep a list of objects in root, each of which maps a root
-		 * partitioned parent RT index to the list of RT indexes of descendant
-		 * partitioned child tables.  When creating an Append or a ModifyTable
-		 * path for the parent, we copy the child RT index list verbatim to
-		 * the path so that it could be carried over to the executor so that
-		 * the latter could identify the partitioned child tables.
-		 */
-		if (rte->inh && partitioned_child_rels != NIL)
-		{
-			PartitionedChildRelInfo *pcinfo;
-
-			pcinfo = makeNode(PartitionedChildRelInfo);
-			pcinfo->parent_relid = rti;
-			pcinfo->child_rels = partitioned_child_rels;
-			pcinfo->part_cols_updated = part_cols_updated;
-			root->pcinfo_list = lappend(root->pcinfo_list, pcinfo);
-		}
+								   lockmode, &root->append_rel_list);
 	}
 	else
 	{
@@ -1694,8 +1669,7 @@ static void
 expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 						   Index parentRTindex, Relation parentrel,
 						   PlanRowMark *top_parentrc, LOCKMODE lockmode,
-						   List **appinfos, List **partitioned_child_rels,
-						   bool *part_cols_updated)
+						   List **appinfos)
 {
 	int			i;
 	RangeTblEntry *childrte;
@@ -1717,22 +1691,14 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 	 * parentrte already has the root partrel's updatedCols translated to match
 	 * the attribute ordering of parentrel.
 	 */
-	if (!*part_cols_updated)
-		*part_cols_updated =
+	if (!root->partColsUpdated)
+		root->partColsUpdated =
 			has_partition_attrs(parentrel, parentrte->updatedCols, NULL);
 
 	/* First expand the partitioned table itself. */
 	expand_single_inheritance_child(root, parentrte, parentRTindex, parentrel,
 									top_parentrc, parentrel,
 									appinfos, &childrte, &childRTindex);
-
-	/*
-	 * The partitioned table does not have data for itself but still need to
-	 * be locked. Update given list of partitioned children with RTI of this
-	 * partitioned relation.
-	 */
-	*partitioned_child_rels = lappend_int(*partitioned_child_rels,
-										  childRTindex);
 
 	for (i = 0; i < partdesc->nparts; i++)
 	{
@@ -1760,8 +1726,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 		if (childrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 			expand_partitioned_rtentry(root, childrte, childRTindex,
 									   childrel, top_parentrc, lockmode,
-									   appinfos, partitioned_child_rels,
-									   part_cols_updated);
+									   appinfos);
 
 		/* Close child relation, but keep locks */
 		heap_close(childrel, NoLock);

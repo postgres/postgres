@@ -53,6 +53,9 @@ typedef FormData_pg_opfamily *Form_pg_opfamily;
 #define Anum_pg_opfamily_opfnamespace	3
 #define Anum_pg_opfamily_opfowner		4
 
+#define IsBooleanOpfamily(opfamily) \
+	((opfamily) == BOOL_BTREE_FAM_OID || (opfamily) == BOOL_HASH_FAM_OID)
+
 /* ----------------
  *		initial contents of pg_opfamily
  * ----------------

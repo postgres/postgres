@@ -26,7 +26,7 @@
  * PartitionBoundInfo encapsulates a set of partition bounds.  It is usually
  * associated with partitioned tables as part of its partition descriptor.
  *
- * The internal structure is opaque outside partition.c.
+ * The internal structure appears in partbounds.h.
  */
 typedef struct PartitionBoundInfoData *PartitionBoundInfo;
 
@@ -70,7 +70,6 @@ extern void check_default_allows_bound(Relation parent, Relation defaultRel,
 						   PartitionBoundSpec *new_spec);
 extern List *get_proposed_default_constraint(List *new_part_constaints);
 
-/* For tuple routing */
 extern int get_partition_for_tuple(Relation relation, Datum *values,
 						bool *isnull);
 

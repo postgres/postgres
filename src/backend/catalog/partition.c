@@ -41,6 +41,7 @@
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
+#include "partitioning/partbounds.h"
 #include "rewrite/rewriteManip.h"
 #include "storage/lmgr.h"
 #include "utils/array.h"
@@ -54,89 +55,6 @@
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
 #include "utils/syscache.h"
-
-/*
- * Information about bounds of a partitioned relation
- *
- * A list partition datum that is known to be NULL is never put into the
- * datums array. Instead, it is tracked using the null_index field.
- *
- * In the case of range partitioning, ndatums will typically be far less than
- * 2 * nparts, because a partition's upper bound and the next partition's lower
- * bound are the same in most common cases, and we only store one of them (the
- * upper bound).  In case of hash partitioning, ndatums will be same as the
- * number of partitions.
- *
- * For range and list partitioned tables, datums is an array of datum-tuples
- * with key->partnatts datums each.  For hash partitioned tables, it is an array
- * of datum-tuples with 2 datums, modulus and remainder, corresponding to a
- * given partition.
- *
- * The datums in datums array are arranged in increasing order as defined by
- * functions qsort_partition_rbound_cmp(), qsort_partition_list_value_cmp() and
- * qsort_partition_hbound_cmp() for range, list and hash partitioned tables
- * respectively. For range and list partitions this simply means that the
- * datums in the datums array are arranged in increasing order as defined by
- * the partition key's operator classes and collations.
- *
- * In the case of list partitioning, the indexes array stores one entry for
- * every datum, which is the index of the partition that accepts a given datum.
- * In case of range partitioning, it stores one entry per distinct range
- * datum, which is the index of the partition for which a given datum
- * is an upper bound.  In the case of hash partitioning, the number of the
- * entries in the indexes array is same as the greatest modulus amongst all
- * partitions.  For a given partition key datum-tuple, the index of the
- * partition which would accept that datum-tuple would be given by the entry
- * pointed by remainder produced when hash value of the datum-tuple is divided
- * by the greatest modulus.
- */
-
-typedef struct PartitionBoundInfoData
-{
-	char		strategy;		/* hash, list or range? */
-	int			ndatums;		/* Length of the datums following array */
-	Datum	  **datums;
-	PartitionRangeDatumKind **kind; /* The kind of each range bound datum;
-									 * NULL for hash and list partitioned
-									 * tables */
-	int		   *indexes;		/* Partition indexes */
-	int			null_index;		/* Index of the null-accepting partition; -1
-								 * if there isn't one */
-	int			default_index;	/* Index of the default partition; -1 if there
-								 * isn't one */
-} PartitionBoundInfoData;
-
-#define partition_bound_accepts_nulls(bi) ((bi)->null_index != -1)
-#define partition_bound_has_default(bi) ((bi)->default_index != -1)
-
-/*
- * When qsort'ing partition bounds after reading from the catalog, each bound
- * is represented with one of the following structs.
- */
-
-/* One bound of a hash partition */
-typedef struct PartitionHashBound
-{
-	int			modulus;
-	int			remainder;
-	int			index;
-} PartitionHashBound;
-
-/* One value coming from some (index'th) list partition */
-typedef struct PartitionListValue
-{
-	int			index;
-	Datum		value;
-} PartitionListValue;
-
-/* One bound of a range partition */
-typedef struct PartitionRangeBound
-{
-	int			index;
-	Datum	   *datums;			/* range bound datums */
-	PartitionRangeDatumKind *kind;	/* the kind of each datum */
-	bool		lower;			/* this is the lower (vs upper) bound */
-} PartitionRangeBound;
 
 
 static Oid	get_partition_parent_worker(Relation inhRel, Oid relid);
@@ -173,29 +91,9 @@ static int32 partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
 					 Oid *partcollation, Datum *datums1,
 					 PartitionRangeDatumKind *kind1, bool lower1,
 					 PartitionRangeBound *b2);
-static int32 partition_rbound_datum_cmp(FmgrInfo *partsupfunc,
-						   Oid *partcollation,
-						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
-						   Datum *tuple_datums, int n_tuple_datums);
-
-static int partition_list_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
-					   PartitionBoundInfo boundinfo,
-					   Datum value, bool *is_equal);
-static int partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
-						Oid *partcollation,
-						PartitionBoundInfo boundinfo,
-						PartitionRangeBound *probe, bool *is_equal);
-static int partition_range_datum_bsearch(FmgrInfo *partsupfunc,
-							  Oid *partcollation,
-							  PartitionBoundInfo boundinfo,
-							  int nvalues, Datum *values, bool *is_equal);
-static int partition_hash_bsearch(PartitionBoundInfo boundinfo,
-					   int modulus, int remainder);
 
 static int	get_partition_bound_num_indexes(PartitionBoundInfo b);
-static int	get_greatest_modulus(PartitionBoundInfo b);
-static uint64 compute_hash_value(int partnatts, FmgrInfo *partsupfunc,
-								 Datum *values, bool *isnull);
+
 
 /*
  * RelationBuildPartitionDesc
@@ -765,13 +663,13 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
 
 	if (b1->strategy == PARTITION_STRATEGY_HASH)
 	{
-		int			greatest_modulus = get_greatest_modulus(b1);
+		int			greatest_modulus = get_hash_partition_greatest_modulus(b1);
 
 		/*
 		 * If two hash partitioned tables have different greatest moduli,
 		 * their partition schemes don't match.
 		 */
-		if (greatest_modulus != get_greatest_modulus(b2))
+		if (greatest_modulus != get_hash_partition_greatest_modulus(b2))
 			return false;
 
 		/*
@@ -1029,7 +927,7 @@ check_new_partition_bound(char *relname, Relation parent,
 								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 								 errmsg("every hash partition modulus must be a factor of the next larger modulus")));
 
-					greatest_modulus = get_greatest_modulus(boundinfo);
+					greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
 					remainder = spec->remainder;
 
 					/*
@@ -1620,7 +1518,6 @@ get_partition_qual_relid(Oid relid)
 	return result;
 }
 
-/* Module-local functions */
 
 /*
  * get_partition_operator
@@ -2637,7 +2534,7 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 		case PARTITION_STRATEGY_HASH:
 			{
 				PartitionBoundInfo boundinfo = partdesc->boundinfo;
-				int			greatest_modulus = get_greatest_modulus(boundinfo);
+				int			greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
 				uint64		rowHash = compute_hash_value(key->partnatts,
 														 key->partsupfunc,
 														 values, isnull);
@@ -2971,7 +2868,7 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc, Oid *partcollation,
  * of attributes resp.
  *
  */
-static int32
+int32
 partition_rbound_datum_cmp(FmgrInfo *partsupfunc, Oid *partcollation,
 						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
 						   Datum *tuple_datums, int n_tuple_datums)
@@ -3005,7 +2902,7 @@ partition_rbound_datum_cmp(FmgrInfo *partsupfunc, Oid *partcollation,
  * *is_equal is set to true if the bound datum at the returned index is equal
  * to the input value.
  */
-static int
+int
 partition_list_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
 					   PartitionBoundInfo boundinfo,
 					   Datum value, bool *is_equal)
@@ -3048,7 +2945,7 @@ partition_list_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
  * *is_equal is set to true if the range bound at the returned index is equal
  * to the input range bound
  */
-static int
+int
 partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
 						Oid *partcollation,
 						PartitionBoundInfo boundinfo,
@@ -3093,7 +2990,7 @@ partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
  * *is_equal is set to true if the range bound at the returned index is equal
  * to the input tuple.
  */
-static int
+int
 partition_range_datum_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
 							  PartitionBoundInfo boundinfo,
 							  int nvalues, Datum *values, bool *is_equal)
@@ -3136,7 +3033,7 @@ partition_range_datum_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
  *		less than or equal to the given (modulus, remainder) pair or -1 if
  *		all of them are greater
  */
-static int
+int
 partition_hash_bsearch(PartitionBoundInfo boundinfo,
 					   int modulus, int remainder)
 {
@@ -3294,7 +3191,7 @@ get_partition_bound_num_indexes(PartitionBoundInfo bound)
 			 * The number of the entries in the indexes array is same as the
 			 * greatest modulus.
 			 */
-			num_indexes = get_greatest_modulus(bound);
+			num_indexes = get_hash_partition_greatest_modulus(bound);
 			break;
 
 		case PARTITION_STRATEGY_LIST:
@@ -3315,14 +3212,14 @@ get_partition_bound_num_indexes(PartitionBoundInfo bound)
 }
 
 /*
- * get_greatest_modulus
+ * get_hash_partition_greatest_modulus
  *
  * Returns the greatest modulus of the hash partition bound. The greatest
  * modulus will be at the end of the datums array because hash partitions are
  * arranged in the ascending order of their modulus and remainders.
  */
-static int
-get_greatest_modulus(PartitionBoundInfo bound)
+int
+get_hash_partition_greatest_modulus(PartitionBoundInfo bound)
 {
 	Assert(bound && bound->strategy == PARTITION_STRATEGY_HASH);
 	Assert(bound->datums && bound->ndatums > 0);
@@ -3336,7 +3233,7 @@ get_greatest_modulus(PartitionBoundInfo bound)
  *
  * Compute the hash value for given not null partition key values.
  */
-static uint64
+uint64
 compute_hash_value(int partnatts, FmgrInfo *partsupfunc,
 				   Datum *values, bool *isnull)
 {
