@@ -24,6 +24,7 @@
 #include "access/xlog_internal.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
+#include "common/file_perm.h"
 #include "common/restricted_token.h"
 #include "getopt_long.h"
 #include "storage/bufpage.h"
@@ -184,6 +185,16 @@ main(int argc, char **argv)
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
+
+	/* Set mask based on PGDATA permissions */
+	if (!GetDataDirectoryCreatePerm(datadir_target))
+	{
+		fprintf(stderr, _("%s: unable to read permissions from \"%s\"\n"),
+				progname, datadir_target);
+		exit(1);
+	}
+
+	umask(pg_mode_mask);
 
 	/*
 	 * Don't allow pg_rewind to be run as root, to avoid overwriting the

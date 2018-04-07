@@ -194,6 +194,7 @@ static void assign_application_name(const char *newval, void *extra);
 static bool check_cluster_name(char **newval, void **extra, GucSource source);
 static const char *show_unix_socket_permissions(void);
 static const char *show_log_file_mode(void);
+static const char *show_data_directory_mode(void);
 
 /* Private functions in guc-file.l that need to be called from guc.c */
 static ConfigVariable *ProcessConfigFileInternal(GucContext context,
@@ -2042,6 +2043,21 @@ static struct config_int ConfigureNamesInt[] =
 		&Log_file_mode,
 		0600, 0000, 0777,
 		NULL, NULL, show_log_file_mode
+	},
+
+
+	{
+		{"data_directory_mode", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Mode of the data directory."),
+			gettext_noop("The parameter value is a numeric mode specification "
+						 "in the form accepted by the chmod and umask system "
+						 "calls. (To use the customary octal format the number "
+						 "must start with a 0 (zero).)"),
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&data_directory_mode,
+		0700, 0000, 0777,
+		NULL, NULL, show_data_directory_mode
 	},
 
 	{
@@ -10741,6 +10757,15 @@ show_log_file_mode(void)
 	static char buf[12];
 
 	snprintf(buf, sizeof(buf), "%04o", Log_file_mode);
+	return buf;
+}
+
+static const char *
+show_data_directory_mode(void)
+{
+	static char buf[12];
+
+	snprintf(buf, sizeof(buf), "%04o", data_directory_mode);
 	return buf;
 }
 

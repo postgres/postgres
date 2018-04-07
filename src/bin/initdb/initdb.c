@@ -1168,6 +1168,19 @@ setup_config(void)
 								  "password_encryption = scram-sha-256");
 	}
 
+	/*
+	 * If group access has been enabled for the cluster then it makes sense to
+	 * ensure that the log files also allow group access.  Otherwise a backup
+	 * from a user in the group would fail if the log files were not
+	 * relocated.
+	 */
+	if (pg_dir_create_mode == PG_DIR_MODE_GROUP)
+	{
+		conflines = replace_token(conflines,
+								  "#log_file_mode = 0600",
+								  "log_file_mode = 0640");
+	}
+
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
 	writefile(path, conflines);
@@ -2312,6 +2325,7 @@ usage(const char *progname)
 	printf(_("      --auth-local=METHOD   default authentication method for local-socket connections\n"));
 	printf(_(" [-D, --pgdata=]DATADIR     location for this database cluster\n"));
 	printf(_("  -E, --encoding=ENCODING   set default encoding for new databases\n"));
+	printf(_("  -g, --allow-group-access  allow group read/execute on data directory\n"));
 	printf(_("      --locale=LOCALE       set default locale for new databases\n"));
 	printf(_("      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 			 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
@@ -2883,8 +2897,13 @@ initialize_data_directory(void)
 
 	setup_signals();
 
-	/* Set dir/file mode mask */
-	umask(PG_MODE_MASK_OWNER);
+	/*
+	 * Set mask based on requested PGDATA permissions.  pg_mode_mask, and
+	 * friends like pg_dir_create_mode, are set to owner-only by default and
+	 * then updated if -g is passed in by calling SetDataDirectoryCreatePerm()
+	 * when parsing our options (see above).
+	 */
+	umask(pg_mode_mask);
 
 	create_data_directory();
 
@@ -3018,6 +3037,7 @@ main(int argc, char *argv[])
 		{"waldir", required_argument, NULL, 'X'},
 		{"wal-segsize", required_argument, NULL, 12},
 		{"data-checksums", no_argument, NULL, 'k'},
+		{"allow-group-access", no_argument, NULL, 'g'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -3059,7 +3079,7 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-	while ((c = getopt_long(argc, argv, "dD:E:kL:nNU:WA:sST:X:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "dD:E:kL:nNU:WA:sST:X:g", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -3152,6 +3172,9 @@ main(int argc, char *argv[])
 				break;
 			case 12:
 				str_wal_segment_size_mb = pg_strdup(optarg);
+				break;
+			case 'g':
+				SetDataDirectoryCreatePerm(PG_DIR_MODE_GROUP);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */

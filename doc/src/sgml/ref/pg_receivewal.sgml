@@ -425,6 +425,12 @@ PostgreSQL documentation
    not keep up with fetching the WAL data.
   </para>
 
+  <para>
+   <application>pg_receivewal</application> will preserve group permissions on
+   the received WAL files if group permissions are enabled on the source
+   cluster.
+  </para>
+
  </refsect1>
 
  <refsect1>

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 4;
+use Test::More tests => 6;
 
 use RewindTest;
 
@@ -9,7 +9,7 @@ sub run_test
 {
 	my $test_mode = shift;
 
-	RewindTest::setup_cluster($test_mode);
+	RewindTest::setup_cluster($test_mode, ['-g']);
 	RewindTest::start_master();
 
 	# Create a database in master.
@@ -41,6 +41,15 @@ template0
 template1
 ),
 		'database names');
+
+	# Permissions on PGDATA should have group permissions
+	SKIP:
+	{
+		skip "unix-style permissions not supported on Windows", 1 if ($windows_os);
+
+		ok(check_mode_recursive($node_master->data_dir(), 0750, 0640),
+			'check PGDATA permissions');
+	}
 
 	RewindTest::clean_rewind_test();
 }

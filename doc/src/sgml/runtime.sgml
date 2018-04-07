@@ -137,7 +137,22 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    database, it is essential that it be secured from unauthorized
    access. <command>initdb</command> therefore revokes access
    permissions from everyone but the
-   <productname>PostgreSQL</productname> user.
+   <productname>PostgreSQL</productname> user, and optionally, group.
+   Group access, when enabled, is read-only.  This allows an unprivileged
+   user in the same group as the cluster owner to take a backup of the
+   cluster data or perform other operations that only require read access.
+  </para>
+
+  <para>
+   Note that enabling or disabling group access on an existing cluster requires
+   the cluster to be shut down and the appropriate mode to be set on all
+   directories and files before restarting
+   <productname>PostgreSQL</productname>.  Otherwise, a mix of modes might
+   exist in the data directory.  For clusters that allow access only by the
+   owner, the appropriate modes are <literal>0700</literal> for directories
+   and <literal>0600</literal> for files.  For clusters that also allow
+   reads by the group, the appropriate modes are <literal>0750</literal>
+   for directories and <literal>0640</literal> for files.
   </para>
 
   <para>
@@ -2192,6 +2207,15 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    and key files are managed by the operating system.  The user under which
    the <productname>PostgreSQL</productname> server runs should then be made a
    member of the group that has access to those certificate and key files.
+  </para>
+
+  <para>
+    If the data directory allows group read access then certificate files may
+    need to be located outside of the data directory in order to conform to the
+    security requirements outlined above.  Generally, group access is enabled
+    to allow an unprivileged user to backup the database, and in that case the
+    backup software will not be able to read the certificate files and will
+    likely error.
   </para>
 
   <para>

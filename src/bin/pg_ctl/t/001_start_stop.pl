@@ -2,9 +2,11 @@ use strict;
 use warnings;
 
 use Config;
+use Fcntl ':mode';
+use File::stat qw{lstat};
 use PostgresNode;
 use TestLib;
-use Test::More tests => 21;
+use Test::More tests => 24;
 
 my $tempdir       = TestLib::tempdir;
 my $tempdir_short = TestLib::tempdir_short;
@@ -72,6 +74,27 @@ SKIP:
 
 	ok(-f $logFileName);
 	ok(check_mode_recursive("$tempdir/data", 0700, 0600));
+}
+
+# Log file for group access test
+$logFileName = "$tempdir/data/perm-test-640.log";
+
+SKIP:
+{
+	skip "group access not supported on Windows", 3 if ($windows_os);
+
+	system_or_bail 'pg_ctl', 'stop', '-D', "$tempdir/data";
+
+	# Change the data dir mode so log file will be created with group read
+	# privileges on the next start
+	chmod_recursive("$tempdir/data", 0750, 0640);
+
+	command_ok(
+		[ 'pg_ctl', 'start', '-D', "$tempdir/data", '-l', $logFileName ],
+		'start server to check group permissions');
+
+	ok(-f $logFileName);
+	ok(check_mode_recursive("$tempdir/data", 0750, 0640));
 }
 
 command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data" ],

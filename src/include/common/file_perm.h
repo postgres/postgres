@@ -21,14 +21,34 @@
  */
 #define PG_MODE_MASK_OWNER		    (S_IRWXG | S_IRWXO)
 
+/*
+ * Mode mask for data directory permissions that also allows group read/execute.
+ */
+#define PG_MODE_MASK_GROUP			(S_IWGRP | S_IRWXO)
+
 /* Default mode for creating directories */
 #define PG_DIR_MODE_OWNER			S_IRWXU
+
+/* Mode for creating directories that allows group read/execute */
+#define PG_DIR_MODE_GROUP			(S_IRWXU | S_IRGRP | S_IXGRP)
 
 /* Default mode for creating files */
 #define PG_FILE_MODE_OWNER		    (S_IRUSR | S_IWUSR)
 
+/* Mode for creating files that allows group read */
+#define PG_FILE_MODE_GROUP			(S_IRUSR | S_IWUSR | S_IRGRP)
+
 /* Modes for creating directories and files in the data directory */
-extern int pg_dir_create_mode;
-extern int pg_file_create_mode;
+extern int	pg_dir_create_mode;
+extern int	pg_file_create_mode;
+
+/* Mode mask to pass to umask() */
+extern int	pg_mode_mask;
+
+/* Set permissions and mask based on the provided mode */
+extern void SetDataDirectoryCreatePerm(int dataDirMode);
+
+/* Set permissions and mask based on the mode of the data directory */
+extern bool GetDataDirectoryCreatePerm(const char *dataDir);
 
 #endif							/* FILE_PERM_H */

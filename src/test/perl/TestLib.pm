@@ -31,6 +31,7 @@ our @EXPORT = qw(
   slurp_file
   append_to_file
   check_mode_recursive
+  chmod_recursive
   check_pg_config
   system_or_bail
   system_log
@@ -311,6 +312,30 @@ sub check_mode_recursive
 	);
 
 	return $result;
+}
+
+# Change mode recursively on a directory
+sub chmod_recursive
+{
+	my ($dir, $dir_mode, $file_mode) = @_;
+
+	find
+	(
+		{follow_fast => 1,
+		wanted =>
+			sub
+			{
+				my $file_stat = stat($File::Find::name);
+
+				if (defined($file_stat))
+				{
+					chmod(S_ISDIR($file_stat->mode) ? $dir_mode : $file_mode,
+						  $File::Find::name)
+						or die "unable to chmod $File::Find::name";
+				}
+			}},
+		$dir
+	);
 }
 
 # Check presence of a given regexp within pg_config.h for the installation

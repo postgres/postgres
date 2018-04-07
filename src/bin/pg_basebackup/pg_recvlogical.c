@@ -23,6 +23,7 @@
 #include "streamutil.h"
 
 #include "access/xlog_internal.h"
+#include "common/file_perm.h"
 #include "common/fe_memutils.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
@@ -958,6 +959,16 @@ main(int argc, char **argv)
 				progname);
 		disconnect_and_exit(1);
 	}
+
+	/*
+	 * Set umask so that directories/files are created with the same
+	 * permissions as directories/files in the source data directory.
+	 *
+	 * pg_mode_mask is set to owner-only by default and then updated in
+	 * GetConnection() where we get the mode from the server-side with
+	 * RetrieveDataDirCreatePerm() and then call SetDataDirectoryCreatePerm().
+	 */
+	umask(pg_mode_mask);
 
 	/* Drop a replication slot. */
 	if (do_drop_slot)

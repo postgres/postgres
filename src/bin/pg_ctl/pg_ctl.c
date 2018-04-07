@@ -2171,7 +2171,7 @@ main(int argc, char **argv)
 	 */
 	argv0 = argv[0];
 
-	/* Set dir/file mode mask */
+	/* Set restrictive mode mask until PGDATA permissions are checked */
 	umask(PG_MODE_MASK_OWNER);
 
 	/* support --help and --version even if invoked as root */
@@ -2407,6 +2407,16 @@ main(int argc, char **argv)
 		snprintf(version_file, MAXPGPATH, "%s/PG_VERSION", pg_data);
 		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
 		snprintf(backup_file, MAXPGPATH, "%s/backup_label", pg_data);
+
+		/*
+		 * Set mask based on PGDATA permissions,
+		 *
+		 * Don't error here if the data directory cannot be stat'd. This is
+		 * handled differently based on the command and we don't want to
+		 * interfere with that logic.
+		 */
+		if (GetDataDirectoryCreatePerm(pg_data))
+			umask(pg_mode_mask);
 	}
 
 	switch (ctl_command)

@@ -400,6 +400,17 @@ PostgreSQL documentation
  </refsect1>
 
  <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <application>pg_recvlogical</application> will preserve group permissions on
+   the received WAL files if group permissions are enabled on the source
+   cluster.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
   <title>Examples</title>
 
   <para>

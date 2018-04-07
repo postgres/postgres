@@ -8144,6 +8144,23 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-data-directory-mode" xreflabel="data_directory_mode">
+      <term><varname>data_directory_mode</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>data_directory_mode</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        On Unix systems this parameter reports the permissions of the data
+        directory defined by (<xref linkend="guc-data-directory"/>) at startup.
+        (On Microsoft Windows this parameter will always display
+        <literal>0700</literal>). See
+        <xref linkend="app-initdb-allow-group-access"/> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-debug-assertions" xreflabel="debug_assertions">
       <term><varname>debug_assertions</varname> (<type>boolean</type>)
       <indexterm>

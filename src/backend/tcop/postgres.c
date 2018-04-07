@@ -3731,8 +3731,7 @@ PostgresMain(int argc, char *argv[],
 		 * Validate we have been given a reasonable-looking DataDir (if under
 		 * postmaster, assume postmaster did this already).
 		 */
-		Assert(DataDir);
-		ValidatePgVersion(DataDir);
+		checkDataDir();
 
 		/* Change into DataDir (if under postmaster, was done already) */
 		ChangeToDataDir();

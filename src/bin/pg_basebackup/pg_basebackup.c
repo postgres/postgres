@@ -2470,14 +2470,6 @@ main(int argc, char **argv)
 	}
 #endif
 
-	/*
-	 * Verify that the target directory exists, or create it. For plaintext
-	 * backups, always require the directory. For tar backups, require it
-	 * unless we are writing to stdout.
-	 */
-	if (format == 'p' || strcmp(basedir, "-") != 0)
-		verify_dir_is_empty_or_create(basedir, &made_new_pgdata, &found_existing_pgdata);
-
 	/* connection in replication mode to server */
 	conn = GetConnection();
 	if (!conn)
@@ -2485,6 +2477,24 @@ main(int argc, char **argv)
 		/* Error message already written in GetConnection() */
 		exit(1);
 	}
+
+	/*
+	 * Set umask so that directories/files are created with the same
+	 * permissions as directories/files in the source data directory.
+	 *
+	 * pg_mode_mask is set to owner-only by default and then updated in
+	 * GetConnection() where we get the mode from the server-side with
+	 * RetrieveDataDirCreatePerm() and then call SetDataDirectoryCreatePerm().
+	 */
+	umask(pg_mode_mask);
+
+	/*
+	 * Verify that the target directory exists, or create it. For plaintext
+	 * backups, always require the directory. For tar backups, require it
+	 * unless we are writing to stdout.
+	 */
+	if (format == 'p' || strcmp(basedir, "-") != 0)
+		verify_dir_is_empty_or_create(basedir, &made_new_pgdata, &found_existing_pgdata);
 
 	/* determine remote server's xlog segment size */
 	if (!RetrieveWalSegSize(conn))

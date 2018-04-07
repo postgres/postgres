@@ -86,9 +86,11 @@ use Carp;
 use Config;
 use Cwd;
 use Exporter 'import';
+use Fcntl qw(:mode);
 use File::Basename;
 use File::Path qw(rmtree);
 use File::Spec;
+use File::stat qw(stat);
 use File::Temp ();
 use IPC::Run;
 use RecursiveCopy;
@@ -265,6 +267,26 @@ sub connstr
 	$dbname =~ s#\'#\\\'#g;
 
 	return "port=$pgport host=$pghost dbname='$dbname'";
+}
+
+=pod
+
+=item $node->group_access()
+
+Does the data dir allow group access?
+
+=cut
+
+sub group_access
+{
+	my ($self) = @_;
+
+	my $dir_stat = stat($self->data_dir);
+
+	defined($dir_stat)
+		or die('unable to stat ' . $self->data_dir);
+
+	return (S_IMODE($dir_stat->mode) == 0750);
 }
 
 =pod
@@ -460,6 +482,9 @@ sub init
 	}
 	close $conf;
 
+    chmod($self->group_access ? 0640 : 0600, "$pgdata/postgresql.conf")
+        or die("unable to set permissions for $pgdata/postgresql.conf");
+
 	$self->set_replication_conf if $params{allows_streaming};
 	$self->enable_archiving     if $params{has_archiving};
 }
@@ -485,7 +510,7 @@ sub append_conf
 
 	TestLib::append_to_file($conffile, $str . "\n");
 
-    chmod(0600, $conffile)
+    chmod($self->group_access() ? 0640 : 0600, $conffile)
         or die("unable to set permissions for $conffile");
 }
 

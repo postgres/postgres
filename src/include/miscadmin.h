@@ -153,6 +153,7 @@ extern PGDLLIMPORT bool IsBinaryUpgrade;
 extern PGDLLIMPORT bool ExitOnAnyError;
 
 extern PGDLLIMPORT char *DataDir;
+extern PGDLLIMPORT int data_directory_mode;
 
 extern PGDLLIMPORT int NBuffers;
 extern PGDLLIMPORT int MaxBackends;
@@ -323,6 +324,7 @@ extern void SetSessionAuthorization(Oid userid, bool is_superuser);
 extern Oid	GetCurrentRoleId(void);
 extern void SetCurrentRoleId(Oid roleid, bool is_superuser);
 
+extern void checkDataDir(void);
 extern void SetDataDir(const char *dir);
 extern void ChangeToDataDir(void);
 

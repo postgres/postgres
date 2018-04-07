@@ -20,9 +20,9 @@ unset MAKELEVEL
 # Run a given "initdb" binary and overlay the regression testing
 # authentication configuration.
 standard_initdb() {
-	# To increase coverage of non-standard segment size without
-	# increase test runtime, run these tests with a lower setting.
-	"$1" -N --wal-segsize 1
+	# To increase coverage of non-standard segment size and group access
+	# without increasing test runtime, run these tests with a custom setting.
+	"$1" -N --wal-segsize 1 -g
 	if [ -n "$TEMP_CONFIG" -a -r "$TEMP_CONFIG" ]
 	then
 		cat "$TEMP_CONFIG" >> "$PGDATA/postgresql.conf"
@@ -230,14 +230,14 @@ standard_initdb 'initdb'
 
 pg_upgrade $PG_UPGRADE_OPTS -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir" -p "$PGPORT" -P "$PGPORT"
 
-# make sure all directories and files have correct permissions
-if [ $(find ${PGDATA} -type f ! -perm 600 | wc -l) -ne 0 ]; then
-	echo "files in PGDATA with permission != 600";
+# make sure all directories and files have group permissions
+if [ $(find ${PGDATA} -type f ! -perm 640 | wc -l) -ne 0 ]; then
+	echo "files in PGDATA with permission != 640";
 	exit 1;
 fi
 
-if [ $(find ${PGDATA} -type d ! -perm 700 | wc -l) -ne 0 ]; then
-	echo "directories in PGDATA with permission != 700";
+if [ $(find ${PGDATA} -type d ! -perm 750 | wc -l) -ne 0 ]; then
+	echo "directories in PGDATA with permission != 750";
 	exit 1;
 fi
 

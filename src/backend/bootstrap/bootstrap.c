@@ -349,13 +349,15 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);
 	}
 
-	/* Validate we have been given a reasonable-looking DataDir */
-	Assert(DataDir);
-	ValidatePgVersion(DataDir);
-
-	/* Change into DataDir (if under postmaster, should be done already) */
+	/*
+	 * Validate we have been given a reasonable-looking DataDir and change
+	 * into it (if under postmaster, should be done already).
+	 */
 	if (!IsUnderPostmaster)
+	{
+		checkDataDir();
 		ChangeToDataDir();
+	}
 
 	/* If standalone, create lockfile for data directory */
 	if (!IsUnderPostmaster)

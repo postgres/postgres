@@ -391,7 +391,7 @@ static DNSServiceRef bonjour_sdref = NULL;
 static void CloseServerPorts(int status, Datum arg);
 static void unlink_external_pid_file(int status, Datum arg);
 static void getInstallationPaths(const char *argv0);
-static void checkDataDir(void);
+static void checkControlFile(void);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
 static void reset_shared(int port);
@@ -588,7 +588,12 @@ PostmasterMain(int argc, char *argv[])
 	IsPostmasterEnvironment = true;
 
 	/*
-	 * for security, no dir or file created can be group or other accessible
+	 * We should not be creating any files or directories before we check the
+	 * data directory (see checkDataDir()), but just in case set the umask to
+	 * the most restrictive (owner-only) permissions.
+	 *
+	 * checkDataDir() will reset the umask based on the data directory
+	 * permissions.
 	 */
 	umask(PG_MODE_MASK_OWNER);
 
@@ -876,6 +881,9 @@ PostmasterMain(int argc, char *argv[])
 
 	/* Verify that DataDir looks reasonable */
 	checkDataDir();
+
+	/* Check that pg_control exists */
+	checkControlFile();
 
 	/* And switch working directory into it */
 	ChangeToDataDir();
@@ -1469,82 +1477,17 @@ getInstallationPaths(const char *argv0)
 	 */
 }
 
-
 /*
- * Validate the proposed data directory
+ * Check that pg_control exists in the correct location in the data directory.
+ *
+ * No attempt is made to validate the contents of pg_control here.  This is
+ * just a sanity check to see if we are looking at a real data directory.
  */
 static void
-checkDataDir(void)
+checkControlFile(void)
 {
 	char		path[MAXPGPATH];
 	FILE	   *fp;
-	struct stat stat_buf;
-
-	Assert(DataDir);
-
-	if (stat(DataDir, &stat_buf) != 0)
-	{
-		if (errno == ENOENT)
-			ereport(FATAL,
-					(errcode_for_file_access(),
-					 errmsg("data directory \"%s\" does not exist",
-							DataDir)));
-		else
-			ereport(FATAL,
-					(errcode_for_file_access(),
-					 errmsg("could not read permissions of directory \"%s\": %m",
-							DataDir)));
-	}
-
-	/* eventual chdir would fail anyway, but let's test ... */
-	if (!S_ISDIR(stat_buf.st_mode))
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("specified data directory \"%s\" is not a directory",
-						DataDir)));
-
-	/*
-	 * Check that the directory belongs to my userid; if not, reject.
-	 *
-	 * This check is an essential part of the interlock that prevents two
-	 * postmasters from starting in the same directory (see CreateLockFile()).
-	 * Do not remove or weaken it.
-	 *
-	 * XXX can we safely enable this check on Windows?
-	 */
-#if !defined(WIN32) && !defined(__CYGWIN__)
-	if (stat_buf.st_uid != geteuid())
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("data directory \"%s\" has wrong ownership",
-						DataDir),
-				 errhint("The server must be started by the user that owns the data directory.")));
-#endif
-
-	/*
-	 * Check if the directory has group or world access.  If so, reject.
-	 *
-	 * It would be possible to allow weaker constraints (for example, allow
-	 * group access) but we cannot make a general assumption that that is
-	 * okay; for example there are platforms where nearly all users
-	 * customarily belong to the same group.  Perhaps this test should be
-	 * configurable.
-	 *
-	 * XXX temporarily suppress check when on Windows, because there may not
-	 * be proper support for Unix-y file permissions.  Need to think of a
-	 * reasonable check to apply on Windows.
-	 */
-#if !defined(WIN32) && !defined(__CYGWIN__)
-	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("data directory \"%s\" has group or world access",
-						DataDir),
-				 errdetail("Permissions should be u=rwx (0700).")));
-#endif
-
-	/* Look for PG_VERSION before looking for pg_control */
-	ValidatePgVersion(DataDir);
 
 	snprintf(path, sizeof(path), "%s/global/pg_control", DataDir);
 

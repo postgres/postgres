@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "common/file_perm.h"
 #include "libpq-fe.h"
 #include "access/xlog_internal.h"
 #include "getopt_long.h"
@@ -702,6 +703,16 @@ main(int argc, char **argv)
 	 */
 	if (!RunIdentifySystem(conn, NULL, NULL, NULL, &db_name))
 		disconnect_and_exit(1);
+
+	/*
+	 * Set umask so that directories/files are created with the same
+	 * permissions as directories/files in the source data directory.
+	 *
+	 * pg_mode_mask is set to owner-only by default and then updated in
+	 * GetConnection() where we get the mode from the server-side with
+	 * RetrieveDataDirCreatePerm() and then call SetDataDirectoryCreatePerm().
+	 */
+	umask(pg_mode_mask);
 
 	/* determine remote server's xlog segment size */
 	if (!RetrieveWalSegSize(conn))

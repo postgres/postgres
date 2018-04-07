@@ -23,6 +23,7 @@
 
 #include "access/xlog_internal.h"
 #include "common/fe_memutils.h"
+#include "common/file_perm.h"
 #include "datatype/timestamp.h"
 #include "fe_utils/connect.h"
 #include "port/pg_bswap.h"
@@ -32,8 +33,15 @@
 
 uint32		WalSegSz;
 
+static bool RetrieveDataDirCreatePerm(PGconn *conn);
+
 /* SHOW command for replication connection was introduced in version 10 */
 #define MINIMUM_VERSION_FOR_SHOW_CMD 100000
+
+/*
+ * Group access is supported from version 11.
+ */
+#define MINIMUM_VERSION_FOR_GROUP_ACCESS 110000
 
 const char *progname;
 char	   *connection_string = NULL;
@@ -254,6 +262,16 @@ GetConnection(void)
 		exit(1);
 	}
 
+	/*
+	 * Retrieve the source data directory mode and use it to construct a umask
+	 * for creating directories and files.
+	 */
+	if (!RetrieveDataDirCreatePerm(tmpconn))
+	{
+		PQfinish(tmpconn);
+		exit(1);
+	}
+
 	return tmpconn;
 }
 
@@ -322,6 +340,64 @@ RetrieveWalSegSize(PGconn *conn)
 				progname, WalSegSz);
 		return false;
 	}
+
+	PQclear(res);
+	return true;
+}
+
+/*
+ * RetrieveDataDirCreatePerm
+ *
+ * This function is used to determine the privileges on the server's PG data
+ * directory and, based on that, set what the permissions will be for
+ * directories and files we create.
+ *
+ * PG11 added support for (optionally) group read/execute rights to be set on
+ * the data directory.  Prior to PG11, only the owner was allowed to have rights
+ * on the data directory.
+ */
+static bool
+RetrieveDataDirCreatePerm(PGconn *conn)
+{
+	PGresult   *res;
+	int			data_directory_mode;
+
+	/* check connection existence */
+	Assert(conn != NULL);
+
+	/* for previous versions leave the default group access */
+	if (PQserverVersion(conn) < MINIMUM_VERSION_FOR_GROUP_ACCESS)
+		return true;
+
+	res = PQexec(conn, "SHOW data_directory_mode");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		fprintf(stderr, _("%s: could not send replication command \"%s\": %s\n"),
+				progname, "SHOW data_directory_mode", PQerrorMessage(conn));
+
+		PQclear(res);
+		return false;
+	}
+	if (PQntuples(res) != 1 || PQnfields(res) < 1)
+	{
+		fprintf(stderr,
+				_("%s: could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields\n"),
+				progname, PQntuples(res), PQnfields(res), 1, 1);
+
+		PQclear(res);
+		return false;
+	}
+
+	if (sscanf(PQgetvalue(res, 0, 0), "%o", &data_directory_mode) != 1)
+	{
+		fprintf(stderr, _("%s: group access flag could not be parsed: %s\n"),
+				progname, PQgetvalue(res, 0, 0));
+
+		PQclear(res);
+		return false;
+	}
+
+	SetDataDirectoryCreatePerm(data_directory_mode);
 
 	PQclear(res);
 	return true;

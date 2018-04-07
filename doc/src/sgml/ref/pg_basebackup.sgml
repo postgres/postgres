@@ -737,6 +737,12 @@ PostgreSQL documentation
    or later.
   </para>
 
+  <para>
+   <application>pg_basebackup</application> will preserve group permissions in
+   both the <literal>plain</literal> and <literal>tar</literal> formats if group
+   permissions are enabled on the source cluster.
+  </para>
+
  </refsect1>
 
  <refsect1>

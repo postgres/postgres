@@ -363,6 +363,16 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* Set mask based on PGDATA permissions */
+	if (!GetDataDirectoryCreatePerm(DataDir))
+	{
+		fprintf(stderr, _("%s: unable to read permissions from \"%s\"\n"),
+				progname, DataDir);
+		exit(1);
+	}
+
+	umask(pg_mode_mask);
+
 	/* Check that data directory matches our server version */
 	CheckDataVersion();
 

@@ -79,7 +79,7 @@ main(int argc, char **argv)
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_upgrade"));
 
-	/* Ensure that all files created by pg_upgrade are non-world-readable */
+	/* Set default restrictive mask until new cluster permissions are read */
 	umask(PG_MODE_MASK_OWNER);
 
 	parseCommandLine(argc, argv);
@@ -99,6 +99,16 @@ main(int argc, char **argv)
 	get_sock_dir(&new_cluster, false);
 
 	check_cluster_compatibility(live_check);
+
+	/* Set mask based on PGDATA permissions */
+	if (!GetDataDirectoryCreatePerm(new_cluster.pgdata))
+	{
+		pg_log(PG_FATAL, "unable to read permissions from \"%s\"\n",
+			   new_cluster.pgdata);
+		exit(1);
+	}
+
+	umask(pg_mode_mask);
 
 	check_and_dump_old_cluster(live_check);
 
