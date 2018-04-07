@@ -1,0 +1,187 @@
+--
+-- Test Partition pruning for HASH partitioning
+-- We keep this as a seperate test as hash functions return
+-- values will vary based on CPU architecture.
+--
+create table hp (a int, b text) partition by hash (a, b);
+create table hp0 partition of hp for values with (modulus 4, remainder 0);
+create table hp3 partition of hp for values with (modulus 4, remainder 3);
+create table hp1 partition of hp for values with (modulus 4, remainder 1);
+create table hp2 partition of hp for values with (modulus 4, remainder 2);
+insert into hp values (null, null);
+insert into hp values (1, null);
+insert into hp values (1, 'xxx');
+insert into hp values (null, 'xxx');
+insert into hp values (10, 'xxx');
+insert into hp values (10, 'yyy');
+select tableoid::regclass, * from hp order by 1;
+ tableoid | a  |  b  
+----------+----+-----
+ hp0      |    | 
+ hp0      |  1 | 
+ hp0      | 10 | xxx
+ hp3      |    | xxx
+ hp3      | 10 | yyy
+ hp2      |  1 | xxx
+(6 rows)
+
+-- partial keys won't prune, nor would non-equality conditions
+explain (costs off) select * from hp where a = 1;
+       QUERY PLAN        
+-------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (a = 1)
+   ->  Seq Scan on hp1
+         Filter: (a = 1)
+   ->  Seq Scan on hp2
+         Filter: (a = 1)
+   ->  Seq Scan on hp3
+         Filter: (a = 1)
+(9 rows)
+
+explain (costs off) select * from hp where b = 'xxx';
+            QUERY PLAN             
+-----------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (b = 'xxx'::text)
+   ->  Seq Scan on hp1
+         Filter: (b = 'xxx'::text)
+   ->  Seq Scan on hp2
+         Filter: (b = 'xxx'::text)
+   ->  Seq Scan on hp3
+         Filter: (b = 'xxx'::text)
+(9 rows)
+
+explain (costs off) select * from hp where a is null;
+         QUERY PLAN          
+-----------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (a IS NULL)
+   ->  Seq Scan on hp1
+         Filter: (a IS NULL)
+   ->  Seq Scan on hp2
+         Filter: (a IS NULL)
+   ->  Seq Scan on hp3
+         Filter: (a IS NULL)
+(9 rows)
+
+explain (costs off) select * from hp where b is null;
+         QUERY PLAN          
+-----------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (b IS NULL)
+   ->  Seq Scan on hp1
+         Filter: (b IS NULL)
+   ->  Seq Scan on hp2
+         Filter: (b IS NULL)
+   ->  Seq Scan on hp3
+         Filter: (b IS NULL)
+(9 rows)
+
+explain (costs off) select * from hp where a < 1 and b = 'xxx';
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a < 1) AND (b = 'xxx'::text))
+   ->  Seq Scan on hp1
+         Filter: ((a < 1) AND (b = 'xxx'::text))
+   ->  Seq Scan on hp2
+         Filter: ((a < 1) AND (b = 'xxx'::text))
+   ->  Seq Scan on hp3
+         Filter: ((a < 1) AND (b = 'xxx'::text))
+(9 rows)
+
+explain (costs off) select * from hp where a <> 1 and b = 'yyy';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a <> 1) AND (b = 'yyy'::text))
+   ->  Seq Scan on hp1
+         Filter: ((a <> 1) AND (b = 'yyy'::text))
+   ->  Seq Scan on hp2
+         Filter: ((a <> 1) AND (b = 'yyy'::text))
+   ->  Seq Scan on hp3
+         Filter: ((a <> 1) AND (b = 'yyy'::text))
+(9 rows)
+
+-- pruning should work if non-null values are provided for all the keys
+explain (costs off) select * from hp where a is null and b is null;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a IS NULL) AND (b IS NULL))
+(3 rows)
+
+explain (costs off) select * from hp where a = 1 and b is null;
+                QUERY PLAN                 
+-------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((b IS NULL) AND (a = 1))
+(3 rows)
+
+explain (costs off) select * from hp where a = 1 and b = 'xxx';
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on hp2
+         Filter: ((a = 1) AND (b = 'xxx'::text))
+(3 rows)
+
+explain (costs off) select * from hp where a is null and b = 'xxx';
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Append
+   ->  Seq Scan on hp3
+         Filter: ((a IS NULL) AND (b = 'xxx'::text))
+(3 rows)
+
+explain (costs off) select * from hp where a = 10 and b = 'xxx';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a = 10) AND (b = 'xxx'::text))
+(3 rows)
+
+explain (costs off) select * from hp where a = 10 and b = 'yyy';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Append
+   ->  Seq Scan on hp3
+         Filter: ((a = 10) AND (b = 'yyy'::text))
+(3 rows)
+
+explain (costs off) select * from hp where (a = 10 and b = 'yyy') or (a = 10 and b = 'xxx') or (a is null and b is null);
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: (((a = 10) AND (b = 'yyy'::text)) OR ((a = 10) AND (b = 'xxx'::text)) OR ((a IS NULL) AND (b IS NULL)))
+   ->  Seq Scan on hp3
+         Filter: (((a = 10) AND (b = 'yyy'::text)) OR ((a = 10) AND (b = 'xxx'::text)) OR ((a IS NULL) AND (b IS NULL)))
+(5 rows)
+
+-- hash partitiong pruning doesn't occur with <> operator clauses
+explain (costs off) select * from hp where a <> 1 and b <> 'xxx';
+                    QUERY PLAN                     
+---------------------------------------------------
+ Append
+   ->  Seq Scan on hp0
+         Filter: ((a <> 1) AND (b <> 'xxx'::text))
+   ->  Seq Scan on hp1
+         Filter: ((a <> 1) AND (b <> 'xxx'::text))
+   ->  Seq Scan on hp2
+         Filter: ((a <> 1) AND (b <> 'xxx'::text))
+   ->  Seq Scan on hp3
+         Filter: ((a <> 1) AND (b <> 'xxx'::text))
+(9 rows)
+
+drop table hp;

@@ -184,6 +184,7 @@ test: xml
 test: identity
 test: partition_join
 test: partition_prune
+test: partition_prune_hash
 test: reloptions
 test: hash_part
 test: indexing
