@@ -552,6 +552,9 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		if (!HeapTupleHeaderIsHotUpdated(htup))
 			break;
 
+		/* HOT implies it can't have moved to different partition */
+		Assert(!HeapTupleHeaderIndicatesMovedPartitions(htup));
+
 		/*
 		 * Advance to next chain member.
 		 */
@@ -822,6 +825,9 @@ heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 			/* Advance to next chain member, if any */
 			if (!HeapTupleHeaderIsHotUpdated(htup))
 				break;
+
+			/* HOT implies it can't have moved to different partition */
+			Assert(!HeapTupleHeaderIndicatesMovedPartitions(htup));
 
 			nextoffnum = ItemPointerGetOffsetNumber(&htup->t_ctid);
 			priorXmax = HeapTupleHeaderGetUpdateXid(htup);

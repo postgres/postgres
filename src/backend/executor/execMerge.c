@@ -324,7 +324,8 @@ lmerge_matched:;
 				slot = ExecDelete(mtstate, tupleid, NULL,
 								  slot, epqstate, estate,
 								  &tuple_deleted, false, &hufd, action,
-								  mtstate->canSetTag);
+								  mtstate->canSetTag,
+								  false /* changingPart */);
 
 				break;
 

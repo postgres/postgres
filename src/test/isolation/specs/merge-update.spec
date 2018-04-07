@@ -129,4 +129,5 @@ permutation "merge1" "merge2a" "a1" "select2" "c2"
 permutation "merge1" "merge2b" "c1" "select2" "c2"
 permutation "merge1" "merge2c" "c1" "select2" "c2"
 permutation "pa_merge1" "pa_merge2a" "c1" "pa_select2" "c2"
-permutation "pa_merge2" "pa_merge2a" "c1" "pa_select2" "c2"
+permutation "pa_merge2" "pa_merge2a" "c1" "pa_select2" "c2" # fails
+permutation "pa_merge2" "c1" "pa_merge2a" "pa_select2" "c2" # succeeds

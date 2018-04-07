@@ -83,8 +83,10 @@
  *
  * A word about t_ctid: whenever a new tuple is stored on disk, its t_ctid
  * is initialized with its own TID (location).  If the tuple is ever updated,
- * its t_ctid is changed to point to the replacement version of the tuple.
- * Thus, a tuple is the latest version of its row iff XMAX is invalid or
+ * its t_ctid is changed to point to the replacement version of the tuple or
+ * the block number (ip_blkid) is invalidated if the tuple is moved from one
+ * partition to another partition relation due to an update of the partition
+ * key.  Thus, a tuple is the latest version of its row iff XMAX is invalid or
  * t_ctid points to itself (in which case, if XMAX is valid, the tuple is
  * either locked or deleted).  One can follow the chain of t_ctid links
  * to find the newest version of the row.  Beware however that VACUUM might
@@ -444,6 +446,12 @@ do { \
 ( \
 	ItemPointerSet(&(tup)->t_ctid, token, SpecTokenOffsetNumber) \
 )
+
+#define HeapTupleHeaderSetMovedPartitions(tup) \
+	ItemPointerSetMovedPartitions(&(tup)->t_ctid)
+
+#define HeapTupleHeaderIndicatesMovedPartitions(tup) \
+	ItemPointerIndicatesMovedPartitions(&tup->t_ctid)
 
 #define HeapTupleHeaderGetDatumLength(tup) \
 	VARSIZE(tup)

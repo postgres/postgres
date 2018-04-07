@@ -154,6 +154,22 @@ typedef ItemPointerData *ItemPointer;
 	(pointer)->ip_posid = InvalidOffsetNumber \
 )
 
+/*
+ * ItemPointerIndicatesMovedPartitions
+ *		True iff the block number indicates the tuple has moved to another
+ *		partition.
+ */
+#define ItemPointerIndicatesMovedPartitions(pointer) \
+	!BlockNumberIsValid(ItemPointerGetBlockNumberNoCheck(pointer))
+
+/*
+ * ItemPointerSetMovedPartitions
+ *		Indicate that the item referenced by the itempointer has moved into a
+ *		different partition.
+ */
+#define ItemPointerSetMovedPartitions(pointer) \
+	ItemPointerSetBlockNumber((pointer), InvalidBlockNumber)
+
 /* ----------------
  *		externs
  * ----------------

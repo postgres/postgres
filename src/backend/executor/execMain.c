@@ -2733,6 +2733,10 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 						ereport(ERROR,
 								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 								 errmsg("could not serialize access due to concurrent update")));
+					if (ItemPointerIndicatesMovedPartitions(&hufd.ctid))
+						ereport(ERROR,
+								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+								 errmsg("tuple to be locked was already moved to another partition due to concurrent update")));
 
 					/* Should not encounter speculative tuple on recheck */
 					Assert(!HeapTupleHeaderIsSpeculative(tuple.t_data));
@@ -2801,6 +2805,14 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 		 * As above, it should be safe to examine xmax and t_ctid without the
 		 * buffer content lock, because they can't be changing.
 		 */
+
+		/* check whether next version would be in a different partition */
+		if (HeapTupleHeaderIndicatesMovedPartitions(tuple.t_data))
+			ereport(ERROR,
+					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+					 errmsg("tuple to be locked was already moved to another partition due to concurrent update")));
+
+		/* check whether tuple has been deleted */
 		if (ItemPointerEquals(&tuple.t_self, &tuple.t_data->t_ctid))
 		{
 			/* deleted, so forget about it */

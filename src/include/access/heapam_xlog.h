@@ -93,6 +93,7 @@
 #define XLH_DELETE_CONTAINS_OLD_TUPLE			(1<<1)
 #define XLH_DELETE_CONTAINS_OLD_KEY				(1<<2)
 #define XLH_DELETE_IS_SUPER						(1<<3)
+#define XLH_DELETE_IS_PARTITION_MOVE			(1<<4)
 
 /* convenience macro for checking whether any form of old tuple was logged */
 #define XLH_DELETE_CONTAINS_OLD						\

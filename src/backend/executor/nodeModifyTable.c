@@ -645,7 +645,8 @@ ExecDelete(ModifyTableState *mtstate,
 		   bool processReturning,
 		   HeapUpdateFailureData *hufdp,
 		   MergeActionState *actionState,
-		   bool canSetTag)
+		   bool canSetTag,
+		   bool changingPart)
 {
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
@@ -744,7 +745,8 @@ ldelete:;
 							 estate->es_output_cid,
 							 estate->es_crosscheck_snapshot,
 							 true /* wait for commit */ ,
-							 &hufd);
+							 &hufd,
+							 changingPart);
 
 		/*
 		 * Copy the necessary information, if the caller has asked for it. We
@@ -803,6 +805,10 @@ ldelete:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
+				if (ItemPointerIndicatesMovedPartitions(&hufd.ctid))
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("tuple to be deleted was already moved to another partition due to concurrent update")));
 
 				if (!ItemPointerEquals(tupleid, &hufd.ctid))
 				{
@@ -1157,7 +1163,7 @@ lreplace:;
 			 */
 			ExecDelete(mtstate, tupleid, oldtuple, planSlot, epqstate,
 					   estate, &tuple_deleted, false, hufdp, NULL,
-					   false);
+					   false /* canSetTag */, true /* changingPart */);
 
 			/*
 			 * For some reason if DELETE didn't happen (e.g. trigger prevented
@@ -1333,6 +1339,10 @@ lreplace:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
+				if (ItemPointerIndicatesMovedPartitions(&hufd.ctid))
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("tuple to be updated was already moved to another partition due to concurrent update")));
 
 				if (!ItemPointerEquals(tupleid, &hufd.ctid))
 				{
@@ -1521,6 +1531,14 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to concurrent update")));
+
+			/*
+			 * As long as we don't support an UPDATE of INSERT ON CONFLICT for
+			 * a partitioned table we shouldn't reach to a case where tuple to
+			 * be lock is moved to another partition due to concurrent update
+			 * of the partition key.
+			 */
+			Assert(!ItemPointerIndicatesMovedPartitions(&hufd.ctid));
 
 			/*
 			 * Tell caller to try again from the very start.
@@ -2274,7 +2292,8 @@ ExecModifyTable(PlanState *pstate)
 			case CMD_DELETE:
 				slot = ExecDelete(node, tupleid, oldtuple, planSlot,
 								  &node->mt_epqstate, estate,
-								  NULL, true, NULL, NULL, node->canSetTag);
+								  NULL, true, NULL, NULL, node->canSetTag,
+								  false /* changingPart */);
 				break;
 			default:
 				elog(ERROR, "unknown operation");
