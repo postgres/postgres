@@ -68,18 +68,35 @@ pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr)
 #else
 	SpinLockInit((slock_t *) &ptr->sema);
 #endif
+
+	ptr->value = false;
 }
 
 bool
 pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	return TAS((slock_t *) &ptr->sema);
+	uint32		oldval;
+
+	SpinLockAcquire((slock_t *) &ptr->sema);
+	oldval = ptr->value;
+	ptr->value = true;
+	SpinLockRelease((slock_t *) &ptr->sema);
+
+	return oldval == 0;
 }
 
 void
 pg_atomic_clear_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	S_UNLOCK((slock_t *) &ptr->sema);
+	SpinLockAcquire((slock_t *) &ptr->sema);
+	ptr->value = false;
+	SpinLockRelease((slock_t *) &ptr->sema);
+}
+
+bool
+pg_atomic_unlocked_test_flag_impl(volatile pg_atomic_flag *ptr)
+{
+	return ptr->value == 0;
 }
 
 #endif							/* PG_HAVE_ATOMIC_FLAG_SIMULATION */
