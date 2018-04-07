@@ -1,10 +1,28 @@
 /*-------------------------------------------------------------------------
  *
  * partprune.c
- *		Parses clauses attempting to match them up to partition keys of a
- *		given relation and generates a set of "pruning steps", which can be
- *		later "executed" either from the planner or the executor to determine
- *		the minimum set of partitions which match the given clauses.
+ *		Support for partition pruning during query planning
+ *
+ * This module implements partition pruning using the information contained in
+ * table's partition descriptor and query clauses.
+ *
+ * During planning, clauses that can be matched to the table's partition key
+ * are turned into a set of "pruning steps", which are then executed to
+ * produce a set of partitions (as indexes of the RelOptInfo->part_rels array)
+ * that satisfy the constraints in the step Partitions not in the set are said
+ * to have been pruned.
+ *
+ * There are two kinds of pruning steps: a "base" pruning step, which contains
+ * information extracted from one or more clauses that are matched to the
+ * (possibly multi-column) partition key, such as the expressions whose values
+ * to match against partition bounds and operator strategy to associate to
+ * each expression.  The other kind is a "combine" pruning step, which combines
+ * the outputs of some other steps using the appropriate combination method.
+ * All steps that are constructed are executed in succession such that for any
+ * "combine" step, all of the steps whose output it depends on are executed
+ * first and their ouput preserved.
+ *
+ * See gen_partprune_steps_internal() for more details on step generation.
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -256,7 +274,8 @@ prune_append_rel_partitions(RelOptInfo *rel)
  * get_matching_partitions
  *		Determine partitions that survive partition pruning
  *
- * Returns a Bitmapset of indexes of surviving partitions.
+ * Returns a Bitmapset of the RelOptInfo->part_rels indexes of the surviving
+ * partitions.
  */
 Bitmapset *
 get_matching_partitions(PartitionPruneContext *context, List *pruning_steps)
