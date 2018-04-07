@@ -32,9 +32,6 @@ LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_re
 (6 rows)
 
 SELECT * FROM t1p WHERE o > 50 AND p like '%64%';
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4le(integer,integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4le(integer,integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4le(integer,integer)"
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="public.t1p"
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1p column o"
 LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table t1p column p"
