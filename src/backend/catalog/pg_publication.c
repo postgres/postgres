@@ -376,6 +376,7 @@ GetPublication(Oid pubid)
 	pub->pubactions.pubinsert = pubform->pubinsert;
 	pub->pubactions.pubupdate = pubform->pubupdate;
 	pub->pubactions.pubdelete = pubform->pubdelete;
+	pub->pubactions.pubtruncate = pubform->pubtruncate;
 
 	ReleaseSysCache(tup);
 

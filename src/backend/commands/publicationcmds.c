@@ -62,7 +62,8 @@ parse_publication_options(List *options,
 						  bool *publish_given,
 						  bool *publish_insert,
 						  bool *publish_update,
-						  bool *publish_delete)
+						  bool *publish_delete,
+						  bool *publish_truncate)
 {
 	ListCell   *lc;
 
@@ -72,6 +73,7 @@ parse_publication_options(List *options,
 	*publish_insert = true;
 	*publish_update = true;
 	*publish_delete = true;
+	*publish_truncate = true;
 
 	/* Parse options */
 	foreach(lc, options)
@@ -96,6 +98,7 @@ parse_publication_options(List *options,
 			*publish_insert = false;
 			*publish_update = false;
 			*publish_delete = false;
+			*publish_truncate = false;
 
 			*publish_given = true;
 			publish = defGetString(defel);
@@ -116,6 +119,8 @@ parse_publication_options(List *options,
 					*publish_update = true;
 				else if (strcmp(publish_opt, "delete") == 0)
 					*publish_delete = true;
+				else if (strcmp(publish_opt, "truncate") == 0)
+					*publish_truncate = true;
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
@@ -145,6 +150,7 @@ CreatePublication(CreatePublicationStmt *stmt)
 	bool		publish_insert;
 	bool		publish_update;
 	bool		publish_delete;
+	bool		publish_truncate;
 	AclResult	aclresult;
 
 	/* must have CREATE privilege on database */
@@ -181,7 +187,8 @@ CreatePublication(CreatePublicationStmt *stmt)
 
 	parse_publication_options(stmt->options,
 							  &publish_given, &publish_insert,
-							  &publish_update, &publish_delete);
+							  &publish_update, &publish_delete,
+							  &publish_truncate);
 
 	values[Anum_pg_publication_puballtables - 1] =
 		BoolGetDatum(stmt->for_all_tables);
@@ -191,6 +198,8 @@ CreatePublication(CreatePublicationStmt *stmt)
 		BoolGetDatum(publish_update);
 	values[Anum_pg_publication_pubdelete - 1] =
 		BoolGetDatum(publish_delete);
+	values[Anum_pg_publication_pubtruncate - 1] =
+		BoolGetDatum(publish_truncate);
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
@@ -237,11 +246,13 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 	bool		publish_insert;
 	bool		publish_update;
 	bool		publish_delete;
+	bool		publish_truncate;
 	ObjectAddress obj;
 
 	parse_publication_options(stmt->options,
 							  &publish_given, &publish_insert,
-							  &publish_update, &publish_delete);
+							  &publish_update, &publish_delete,
+							  &publish_truncate);
 
 	/* Everything ok, form a new tuple. */
 	memset(values, 0, sizeof(values));
@@ -258,6 +269,9 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 
 		values[Anum_pg_publication_pubdelete - 1] = BoolGetDatum(publish_delete);
 		replaces[Anum_pg_publication_pubdelete - 1] = true;
+
+		values[Anum_pg_publication_pubtruncate - 1] = BoolGetDatum(publish_truncate);
+		replaces[Anum_pg_publication_pubtruncate - 1] = true;
 	}
 
 	tup = heap_modify_tuple(tup, RelationGetDescr(rel), values, nulls,

@@ -30,10 +30,12 @@
 #include "access/xact.h"
 #include "access/xlog_internal.h"
 
+#include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
 
+#include "commands/tablecmds.h"
 #include "commands/trigger.h"
 
 #include "executor/executor.h"
@@ -83,6 +85,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/timeout.h"
 #include "utils/tqual.h"
 #include "utils/syscache.h"
@@ -888,6 +891,67 @@ apply_handle_delete(StringInfo s)
 	CommandCounterIncrement();
 }
 
+/*
+ * Handle TRUNCATE message.
+ *
+ * TODO: FDW support
+ */
+static void
+apply_handle_truncate(StringInfo s)
+{
+	bool	 cascade = false;
+	bool	 restart_seqs = false;
+	List	*remote_relids = NIL;
+	List    *remote_rels = NIL;
+	List    *rels = NIL;
+	List    *relids = NIL;
+	List	*relids_logged = NIL;
+	ListCell *lc;
+
+	ensure_transaction();
+
+	remote_relids = logicalrep_read_truncate(s, &cascade, &restart_seqs);
+
+	foreach(lc, remote_relids)
+	{
+		LogicalRepRelId relid = lfirst_oid(lc);
+		LogicalRepRelMapEntry *rel;
+
+		rel = logicalrep_rel_open(relid, RowExclusiveLock);
+		if (!should_apply_changes_for_rel(rel))
+		{
+			/*
+			 * The relation can't become interesting in the middle of the
+			 * transaction so it's safe to unlock it.
+			 */
+			logicalrep_rel_close(rel, RowExclusiveLock);
+			continue;
+		}
+
+		remote_rels = lappend(remote_rels, rel);
+		rels = lappend(rels, rel->localrel);
+		relids = lappend_oid(relids, rel->localreloid);
+		if (RelationIsLogicallyLogged(rel->localrel))
+			relids_logged = lappend_oid(relids, rel->localreloid);
+	}
+
+	/*
+	 * Even if we used CASCADE on the upstream master we explicitly
+	 * default to replaying changes without further cascading.
+	 * This might be later changeable with a user specified option.
+	 */
+	ExecuteTruncateGuts(rels, relids, relids_logged, DROP_RESTRICT, restart_seqs);
+
+	foreach(lc, remote_rels)
+	{
+		LogicalRepRelMapEntry *rel = lfirst(lc);
+
+		logicalrep_rel_close(rel, NoLock);
+	}
+
+	CommandCounterIncrement();
+}
+
 
 /*
  * Logical replication protocol message dispatcher.
@@ -918,6 +982,10 @@ apply_dispatch(StringInfo s)
 			/* DELETE */
 		case 'D':
 			apply_handle_delete(s);
+			break;
+			/* TRUNCATE */
+		case 'T':
+			apply_handle_truncate(s);
 			break;
 			/* RELATION */
 		case 'R':

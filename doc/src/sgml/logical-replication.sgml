@@ -108,8 +108,8 @@
 
   <para>
    Publications can choose to limit the changes they produce to
-   any combination of <command>INSERT</command>, <command>UPDATE</command>, and
-   <command>DELETE</command>, similar to how triggers are fired by
+   any combination of <command>INSERT</command>, <command>UPDATE</command>,
+   <command>DELETE</command>, and <command>TRUNCATE</command>, similar to how triggers are fired by
    particular event types.  By default, all operation types are replicated.
   </para>
 
@@ -361,15 +361,6 @@
      current data from the publisher (perhaps
      using <command>pg_dump</command>) or by determining a sufficiently high
      value from the tables themselves.
-    </para>
-   </listitem>
-
-   <listitem>
-    <para>
-     <command>TRUNCATE</command> commands are not replicated.  This can, of
-     course, be worked around by using <command>DELETE</command> instead.  To
-     avoid accidental <command>TRUNCATE</command> invocations, you can revoke
-     the <literal>TRUNCATE</literal> privilege from tables.
     </para>
    </listitem>
 

@@ -106,10 +106,11 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
           This parameter determines which DML operations will be published by
           the new publication to the subscribers.  The value is
           comma-separated list of operations.  The allowed operations are
-          <literal>insert</literal>, <literal>update</literal>, and
-          <literal>delete</literal>.  The default is to publish all actions,
+          <literal>insert</literal>, <literal>update</literal>,
+          <literal>delete</literal>, and <literal>truncate</literal>.
+          The default is to publish all actions,
           and so the default value for this option is
-          <literal>'insert, update, delete'</literal>.
+          <literal>'insert, update, delete, truncate'</literal>.
          </para>
         </listitem>
        </varlistentry>
@@ -168,8 +169,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   <command>TRUNCATE</command> and <acronym>DDL</acronym> operations
-   are not published.
+   <acronym>DDL</acronym> operations are not published.
   </para>
  </refsect1>
 

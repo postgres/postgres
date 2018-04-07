@@ -21,20 +21,20 @@ ERROR:  unrecognized publication parameter: foo
 CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
 ERROR:  unrecognized "publish" value: "cluster"
 \dRp
-                                   List of publications
-        Name        |          Owner           | All tables | Inserts | Updates | Deletes 
---------------------+--------------------------+------------+---------+---------+---------
- testpib_ins_trunct | regress_publication_user | f          | t       | f       | f
- testpub_default    | regress_publication_user | f          | f       | t       | f
+                                         List of publications
+        Name        |          Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+--------------------+--------------------------+------------+---------+---------+---------+-----------
+ testpib_ins_trunct | regress_publication_user | f          | t       | f       | f       | f
+ testpub_default    | regress_publication_user | f          | f       | t       | f       | f
 (2 rows)
 
 ALTER PUBLICATION testpub_default SET (publish = 'insert, update, delete');
 \dRp
-                                   List of publications
-        Name        |          Owner           | All tables | Inserts | Updates | Deletes 
---------------------+--------------------------+------------+---------+---------+---------
- testpib_ins_trunct | regress_publication_user | f          | t       | f       | f
- testpub_default    | regress_publication_user | f          | t       | t       | t
+                                         List of publications
+        Name        |          Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+--------------------+--------------------------+------------+---------+---------+---------+-----------
+ testpib_ins_trunct | regress_publication_user | f          | t       | f       | f       | f
+ testpub_default    | regress_publication_user | f          | t       | t       | t       | f
 (2 rows)
 
 --- adding tables
@@ -76,10 +76,10 @@ Publications:
     "testpub_foralltables"
 
 \dRp+ testpub_foralltables
-                  Publication testpub_foralltables
-          Owner           | All tables | Inserts | Updates | Deletes 
---------------------------+------------+---------+---------+---------
- regress_publication_user | t          | t       | t       | f
+                        Publication testpub_foralltables
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+--------------------------+------------+---------+---------+---------+-----------
+ regress_publication_user | t          | t       | t       | f       | f
 (1 row)
 
 DROP TABLE testpub_tbl2;
@@ -89,19 +89,19 @@ CREATE TABLE testpub_tbl3a (b text) INHERITS (testpub_tbl3);
 CREATE PUBLICATION testpub3 FOR TABLE testpub_tbl3;
 CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl3;
 \dRp+ testpub3
-                        Publication testpub3
-          Owner           | All tables | Inserts | Updates | Deletes 
---------------------------+------------+---------+---------+---------
- regress_publication_user | f          | t       | t       | t
+                              Publication testpub3
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+--------------------------+------------+---------+---------+---------+-----------
+ regress_publication_user | f          | t       | t       | t       | t
 Tables:
     "public.testpub_tbl3"
     "public.testpub_tbl3a"
 
 \dRp+ testpub4
-                        Publication testpub4
-          Owner           | All tables | Inserts | Updates | Deletes 
---------------------------+------------+---------+---------+---------
- regress_publication_user | f          | t       | t       | t
+                              Publication testpub4
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+--------------------------+------------+---------+---------+---------+-----------
+ regress_publication_user | f          | t       | t       | t       | t
 Tables:
     "public.testpub_tbl3"
 
@@ -119,10 +119,10 @@ ERROR:  relation "testpub_tbl1" is already member of publication "testpub_fortbl
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1;
 ERROR:  publication "testpub_fortbl" already exists
 \dRp+ testpub_fortbl
-                     Publication testpub_fortbl
-          Owner           | All tables | Inserts | Updates | Deletes 
---------------------------+------------+---------+---------+---------
- regress_publication_user | f          | t       | t       | t
+                           Publication testpub_fortbl
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+--------------------------+------------+---------+---------+---------+-----------
+ regress_publication_user | f          | t       | t       | t       | t
 Tables:
     "pub_test.testpub_nopk"
     "public.testpub_tbl1"
@@ -165,10 +165,10 @@ Publications:
     "testpub_fortbl"
 
 \dRp+ testpub_default
-                     Publication testpub_default
-          Owner           | All tables | Inserts | Updates | Deletes 
---------------------------+------------+---------+---------+---------
- regress_publication_user | f          | t       | t       | t
+                           Publication testpub_default
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+--------------------------+------------+---------+---------+---------+-----------
+ regress_publication_user | f          | t       | t       | t       | f
 Tables:
     "pub_test.testpub_nopk"
     "public.testpub_tbl1"
@@ -210,10 +210,10 @@ DROP TABLE testpub_parted;
 DROP VIEW testpub_view;
 DROP TABLE testpub_tbl1;
 \dRp+ testpub_default
-                     Publication testpub_default
-          Owner           | All tables | Inserts | Updates | Deletes 
---------------------------+------------+---------+---------+---------
- regress_publication_user | f          | t       | t       | t
+                           Publication testpub_default
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+--------------------------+------------+---------+---------+---------+-----------
+ regress_publication_user | f          | t       | t       | t       | f
 (1 row)
 
 -- fail - must be owner of publication
@@ -223,20 +223,20 @@ ERROR:  must be owner of publication testpub_default
 RESET ROLE;
 ALTER PUBLICATION testpub_default RENAME TO testpub_foo;
 \dRp testpub_foo
-                               List of publications
-    Name     |          Owner           | All tables | Inserts | Updates | Deletes 
--------------+--------------------------+------------+---------+---------+---------
- testpub_foo | regress_publication_user | f          | t       | t       | t
+                                     List of publications
+    Name     |          Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+-------------+--------------------------+------------+---------+---------+---------+-----------
+ testpub_foo | regress_publication_user | f          | t       | t       | t       | f
 (1 row)
 
 -- rename back to keep the rest simple
 ALTER PUBLICATION testpub_foo RENAME TO testpub_default;
 ALTER PUBLICATION testpub_default OWNER TO regress_publication_user2;
 \dRp testpub_default
-                                  List of publications
-      Name       |           Owner           | All tables | Inserts | Updates | Deletes 
------------------+---------------------------+------------+---------+---------+---------
- testpub_default | regress_publication_user2 | f          | t       | t       | t
+                                        List of publications
+      Name       |           Owner           | All tables | Inserts | Updates | Deletes | Truncates 
+-----------------+---------------------------+------------+---------+---------+---------+-----------
+ testpub_default | regress_publication_user2 | f          | t       | t       | t       | f
 (1 row)
 
 DROP PUBLICATION testpub_default;

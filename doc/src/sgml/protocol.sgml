@@ -6774,6 +6774,62 @@ Delete
 </listitem>
 </varlistentry>
 
+<varlistentry>
+<term>
+Truncate
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('T')
+</term>
+<listitem>
+<para>
+                Identifies the message as a truncate message.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Number of relations
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int8
+</term>
+<listitem>
+<para>
+                Option bits for <command>TRUNCATE</command>:
+                1 for <literal>CASCADE</literal>, 2 for <literal>RESTART IDENTITY</literal>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                ID of the relation corresponding to the ID in the relation
+                message.  This field is repeated for each relation.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
+
 </variablelist>
 
 <para>

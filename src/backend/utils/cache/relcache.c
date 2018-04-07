@@ -5339,6 +5339,7 @@ GetRelationPublicationActions(Relation relation)
 		pubactions->pubinsert |= pubform->pubinsert;
 		pubactions->pubupdate |= pubform->pubupdate;
 		pubactions->pubdelete |= pubform->pubdelete;
+		pubactions->pubtruncate |= pubform->pubtruncate;
 
 		ReleaseSysCache(tup);
 
@@ -5347,7 +5348,7 @@ GetRelationPublicationActions(Relation relation)
 		 * other publications.
 		 */
 		if (pubactions->pubinsert && pubactions->pubupdate &&
-			pubactions->pubdelete)
+			pubactions->pubdelete && pubactions->pubtruncate)
 			break;
 	}
 

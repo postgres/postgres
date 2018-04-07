@@ -2038,7 +2038,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_order => 50,
 		create_sql   => 'CREATE PUBLICATION pub1;',
 		regexp       => qr/^
-			\QCREATE PUBLICATION pub1 WITH (publish = 'insert, update, delete');\E
+			\QCREATE PUBLICATION pub1 WITH (publish = 'insert, update, delete, truncate');\E
 			/xm,
 		like => {
 			%full_runs,

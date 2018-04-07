@@ -3712,6 +3712,7 @@ getPublications(Archive *fout)
 	int			i_pubinsert;
 	int			i_pubupdate;
 	int			i_pubdelete;
+	int			i_pubtruncate;
 	int			i,
 				ntups;
 
@@ -3723,12 +3724,20 @@ getPublications(Archive *fout)
 	resetPQExpBuffer(query);
 
 	/* Get the publications. */
-	appendPQExpBuffer(query,
-					  "SELECT p.tableoid, p.oid, p.pubname, "
-					  "(%s p.pubowner) AS rolname, "
-					  "p.puballtables, p.pubinsert, p.pubupdate, p.pubdelete "
-					  "FROM pg_publication p",
-					  username_subquery);
+	if (fout->remoteVersion >= 110000)
+		appendPQExpBuffer(query,
+						  "SELECT p.tableoid, p.oid, p.pubname, "
+						  "(%s p.pubowner) AS rolname, "
+						  "p.puballtables, p.pubinsert, p.pubupdate, p.pubdelete, p.pubtruncate "
+						  "FROM pg_publication p",
+						  username_subquery);
+	else
+		appendPQExpBuffer(query,
+						  "SELECT p.tableoid, p.oid, p.pubname, "
+						  "(%s p.pubowner) AS rolname, "
+						  "p.puballtables, p.pubinsert, p.pubupdate, p.pubdelete, false AS pubtruncate "
+						  "FROM pg_publication p",
+						  username_subquery);
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -3742,6 +3751,7 @@ getPublications(Archive *fout)
 	i_pubinsert = PQfnumber(res, "pubinsert");
 	i_pubupdate = PQfnumber(res, "pubupdate");
 	i_pubdelete = PQfnumber(res, "pubdelete");
+	i_pubtruncate = PQfnumber(res, "pubtruncate");
 
 	pubinfo = pg_malloc(ntups * sizeof(PublicationInfo));
 
@@ -3762,6 +3772,8 @@ getPublications(Archive *fout)
 			(strcmp(PQgetvalue(res, i, i_pubupdate), "t") == 0);
 		pubinfo[i].pubdelete =
 			(strcmp(PQgetvalue(res, i, i_pubdelete), "t") == 0);
+		pubinfo[i].pubtruncate =
+			(strcmp(PQgetvalue(res, i, i_pubtruncate), "t") == 0);
 
 		if (strlen(pubinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of publication \"%s\" appears to be invalid\n",
@@ -3826,6 +3838,15 @@ dumpPublication(Archive *fout, PublicationInfo *pubinfo)
 			appendPQExpBufferStr(query, ", ");
 
 		appendPQExpBufferStr(query, "delete");
+		first = false;
+	}
+
+	if (pubinfo->pubtruncate)
+	{
+		if (!first)
+			appendPQExpBufferStr(query, ", ");
+
+		appendPQExpBufferStr(query, "truncate");
 		first = false;
 	}
 
