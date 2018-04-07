@@ -10,6 +10,7 @@
 #include "postgres_fe.h"
 
 #include "access/visibilitymap.h"
+#include "common/file_perm.h"
 #include "pg_upgrade.h"
 #include "storage/bufpage.h"
 #include "storage/checksum.h"
@@ -44,7 +45,7 @@ copyFile(const char *src, const char *dst,
 				 schemaName, relName, src, strerror(errno));
 
 	if ((dest_fd = open(dst, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
-						S_IRUSR | S_IWUSR)) < 0)
+						pg_file_create_mode)) < 0)
 		pg_fatal("error while copying relation \"%s.%s\": could not create file \"%s\": %s\n",
 				 schemaName, relName, dst, strerror(errno));
 
@@ -151,7 +152,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 				 schemaName, relName, fromfile, strerror(errno));
 
 	if ((dst_fd = open(tofile, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
-					   S_IRUSR | S_IWUSR)) < 0)
+					   pg_file_create_mode)) < 0)
 		pg_fatal("error while copying relation \"%s.%s\": could not create file \"%s\": %s\n",
 				 schemaName, relName, tofile, strerror(errno));
 

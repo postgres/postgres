@@ -2,11 +2,14 @@ use strict;
 use warnings;
 use TestLib;
 use PostgresNode;
-use Test::More tests => 18;
+use Test::More tests => 19;
 
 program_help_ok('pg_receivewal');
 program_version_ok('pg_receivewal');
 program_options_handling_ok('pg_receivewal');
+
+# Set umask so test directories and files are created with default permissions
+umask(0077);
 
 my $primary = get_new_node('primary');
 $primary->init(allows_streaming => 1);
@@ -56,3 +59,12 @@ $primary->command_ok(
 	[   'pg_receivewal', '-D',     $stream_dir,     '--verbose',
 		'--endpos',      $nextlsn, '--synchronous', '--no-loop' ],
 	'streaming some WAL with --synchronous');
+
+# Permissions on WAL files should be default
+SKIP:
+{
+	skip "unix-style permissions not supported on Windows", 1 if ($windows_os);
+
+	ok(check_mode_recursive($stream_dir, 0700, 0600),
+	   "check stream dir permissions");
+}

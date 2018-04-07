@@ -13,8 +13,11 @@ use warnings;
 use Config;
 use Cwd;
 use Exporter 'import';
+use Fcntl qw(:mode);
 use File::Basename;
+use File::Find;
 use File::Spec;
+use File::stat qw(stat);
 use File::Temp ();
 use IPC::Run;
 use SimpleTee;
@@ -27,6 +30,7 @@ our @EXPORT = qw(
   slurp_dir
   slurp_file
   append_to_file
+  check_mode_recursive
   check_pg_config
   system_or_bail
   system_log
@@ -238,6 +242,75 @@ sub append_to_file
 	  or die "could not write \"$filename\": $!";
 	print $fh $str;
 	close $fh;
+}
+
+# Check that all file/dir modes in a directory match the expected values,
+# ignoring the mode of any specified files.
+sub check_mode_recursive
+{
+	my ($dir, $expected_dir_mode, $expected_file_mode, $ignore_list) = @_;
+
+	# Result defaults to true
+	my $result = 1;
+
+	find
+	(
+		{follow_fast => 1,
+		wanted =>
+			sub
+			{
+				my $file_stat = stat($File::Find::name);
+
+				# Is file in the ignore list?
+				foreach my $ignore ($ignore_list ? @{$ignore_list} : [])
+				{
+					if ("$dir/$ignore" eq $File::Find::name)
+					{
+						return;
+					}
+				}
+
+				defined($file_stat)
+					or die("unable to stat $File::Find::name");
+
+				my $file_mode = S_IMODE($file_stat->mode);
+
+				# Is this a file?
+				if (S_ISREG($file_stat->mode))
+				{
+					if ($file_mode != $expected_file_mode)
+					{
+						print(*STDERR,
+							sprintf("$File::Find::name mode must be %04o\n",
+							$expected_file_mode));
+
+						$result = 0;
+						return;
+					}
+				}
+				# Else a directory?
+				elsif (S_ISDIR($file_stat->mode))
+				{
+					if ($file_mode != $expected_dir_mode)
+					{
+						print(*STDERR,
+							sprintf("$File::Find::name mode must be %04o\n",
+							$expected_dir_mode));
+
+						$result = 0;
+						return;
+					}
+				}
+				# Else something we can't handle
+				else
+				{
+					die "unknown file type for $File::Find::name";
+				}
+			}},
+		$dir
+	);
+
+	return $result;
 }
 
 # Check presence of a given regexp within pg_config.h for the installation

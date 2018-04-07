@@ -237,6 +237,10 @@ sub run_pg_rewind
 		"$tmp_folder/master-postgresql.conf.tmp",
 		"$master_pgdata/postgresql.conf");
 
+	chmod(0600, "$master_pgdata/postgresql.conf")
+		or BAIL_OUT(
+			"unable to set permissions for $master_pgdata/postgresql.conf");
+
 	# Plug-in rewound node to the now-promoted standby node
 	my $port_standby = $node_standby->port;
 	$node_master->append_conf(

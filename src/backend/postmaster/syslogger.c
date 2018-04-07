@@ -41,6 +41,7 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "storage/dsm.h"
+#include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pg_shmem.h"
@@ -322,7 +323,7 @@ SysLoggerMain(int argc, char *argv[])
 				/*
 				 * Also, create new directory if not present; ignore errors
 				 */
-				mkdir(Log_directory, S_IRWXU);
+				(void) MakePGDirectory(Log_directory);
 			}
 			if (strcmp(Log_filename, currentLogFilename) != 0)
 			{
@@ -564,7 +565,7 @@ SysLogger_Start(void)
 	/*
 	 * Create log directory if not present; ignore errors
 	 */
-	mkdir(Log_directory, S_IRWXU);
+	(void) MakePGDirectory(Log_directory);
 
 	/*
 	 * The initial logfile is created right in the postmaster, to verify that

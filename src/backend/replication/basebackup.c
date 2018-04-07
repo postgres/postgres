@@ -19,6 +19,7 @@
 #include "access/xlog_internal.h"	/* for pg_start/stop_backup */
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
+#include "common/file_perm.h"
 #include "lib/stringinfo.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -930,7 +931,7 @@ sendFileWithContent(const char *filename, const char *content)
 	statbuf.st_gid = getegid();
 #endif
 	statbuf.st_mtime = time(NULL);
-	statbuf.st_mode = S_IRUSR | S_IWUSR;
+	statbuf.st_mode = pg_file_create_mode;
 	statbuf.st_size = len;
 
 	_tarWriteHeader(filename, NULL, &statbuf, false);
@@ -1628,7 +1629,7 @@ _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
 #else
 	if (pgwin32_is_junction(pathbuf))
 #endif
-		statbuf->st_mode = S_IFDIR | S_IRWXU;
+		statbuf->st_mode = S_IFDIR | pg_dir_create_mode;
 
 	return _tarWriteHeader(pathbuf + basepathlen + 1, NULL, statbuf, sizeonly);
 }

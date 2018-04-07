@@ -1166,13 +1166,14 @@ CreateSlotOnDisk(ReplicationSlot *slot)
 	 * It's just barely possible that some previous effort to create or drop a
 	 * slot with this name left a temp directory lying around. If that seems
 	 * to be the case, try to remove it.  If the rmtree() fails, we'll error
-	 * out at the mkdir() below, so we don't bother checking success.
+	 * out at the MakePGDirectory() below, so we don't bother checking
+	 * success.
 	 */
 	if (stat(tmppath, &st) == 0 && S_ISDIR(st.st_mode))
 		rmtree(tmppath, true);
 
 	/* Create and fsync the temporary slot directory. */
-	if (mkdir(tmppath, S_IRWXU) < 0)
+	if (MakePGDirectory(tmppath) < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create directory \"%s\": %m",

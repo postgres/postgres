@@ -38,6 +38,7 @@
 
 #include "pg_upgrade.h"
 #include "catalog/pg_class.h"
+#include "common/file_perm.h"
 #include "common/restricted_token.h"
 #include "fe_utils/string_utils.h"
 
@@ -79,7 +80,7 @@ main(int argc, char **argv)
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_upgrade"));
 
 	/* Ensure that all files created by pg_upgrade are non-world-readable */
-	umask(S_IRWXG | S_IRWXO);
+	umask(PG_MODE_MASK_OWNER);
 
 	parseCommandLine(argc, argv);
 

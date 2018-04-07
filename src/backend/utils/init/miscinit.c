@@ -32,6 +32,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_authid.h"
+#include "common/file_perm.h"
 #include "libpq/libpq.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -831,7 +832,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * Think not to make the file protection weaker than 0600.  See
 		 * comments below.
 		 */
-		fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
+		fd = open(filename, O_RDWR | O_CREAT | O_EXCL, pg_file_create_mode);
 		if (fd >= 0)
 			break;				/* Success; exit the retry loop */
 
@@ -848,7 +849,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * Read the file to get the old owner's PID.  Note race condition
 		 * here: file might have been deleted since we tried to create it.
 		 */
-		fd = open(filename, O_RDONLY, 0600);
+		fd = open(filename, O_RDONLY, pg_file_create_mode);
 		if (fd < 0)
 		{
 			if (errno == ENOENT)

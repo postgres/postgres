@@ -84,6 +84,7 @@
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
+#include "common/file_perm.h"
 #include "pgstat.h"
 #include "portability/mem.h"
 #include "storage/fd.h"
@@ -123,12 +124,6 @@
  * ones, choke.
  */
 #define FD_MINFREE				10
-
-/*
- * Default mode for created files, unless something else is specified using
- * the *Perm() function variants.
- */
-#define PG_FILE_MODE_DEFAULT	(S_IRUSR | S_IWUSR)
 
 /*
  * A number of platforms allow individual processes to open many more files
@@ -937,7 +932,7 @@ set_max_safe_fds(void)
 int
 BasicOpenFile(const char *fileName, int fileFlags)
 {
-	return BasicOpenFilePerm(fileName, fileFlags, PG_FILE_MODE_DEFAULT);
+	return BasicOpenFilePerm(fileName, fileFlags, pg_file_create_mode);
 }
 
 /*
@@ -1356,7 +1351,7 @@ FileInvalidate(File file)
 File
 PathNameOpenFile(const char *fileName, int fileFlags)
 {
-	return PathNameOpenFilePerm(fileName, fileFlags, PG_FILE_MODE_DEFAULT);
+	return PathNameOpenFilePerm(fileName, fileFlags, pg_file_create_mode);
 }
 
 /*
@@ -1434,7 +1429,7 @@ PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 void
 PathNameCreateTemporaryDir(const char *basedir, const char *directory)
 {
-	if (mkdir(directory, S_IRWXU) < 0)
+	if (MakePGDirectory(directory) < 0)
 	{
 		if (errno == EEXIST)
 			return;
@@ -1444,14 +1439,14 @@ PathNameCreateTemporaryDir(const char *basedir, const char *directory)
 		 * EEXIST to close a race against another process following the same
 		 * algorithm.
 		 */
-		if (mkdir(basedir, S_IRWXU) < 0 && errno != EEXIST)
+		if (MakePGDirectory(basedir) < 0 && errno != EEXIST)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("cannot create temporary directory \"%s\": %m",
 							basedir)));
 
 		/* Try again. */
-		if (mkdir(directory, S_IRWXU) < 0 && errno != EEXIST)
+		if (MakePGDirectory(directory) < 0 && errno != EEXIST)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("cannot create temporary subdirectory \"%s\": %m",
@@ -1601,11 +1596,11 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
 		 * We might need to create the tablespace's tempfile directory, if no
 		 * one has yet done so.
 		 *
-		 * Don't check for error from mkdir; it could fail if someone else
-		 * just did the same thing.  If it doesn't work then we'll bomb out on
-		 * the second create attempt, instead.
+		 * Don't check for an error from MakePGDirectory; it could fail if
+		 * someone else just did the same thing.  If it doesn't work then
+		 * we'll bomb out on the second create attempt, instead.
 		 */
-		mkdir(tempdirpath, S_IRWXU);
+		(void) MakePGDirectory(tempdirpath);
 
 		file = PathNameOpenFile(tempfilepath,
 								O_RDWR | O_CREAT | O_TRUNC | PG_BINARY);
@@ -2401,7 +2396,7 @@ TryAgain:
 int
 OpenTransientFile(const char *fileName, int fileFlags)
 {
-	return OpenTransientFilePerm(fileName, fileFlags, PG_FILE_MODE_DEFAULT);
+	return OpenTransientFilePerm(fileName, fileFlags, pg_file_create_mode);
 }
 
 /*
@@ -3553,4 +3548,28 @@ fsync_parent_path(const char *fname, int elevel)
 		return -1;
 
 	return 0;
+}
+
+/*
+ * Create a PostgreSQL data sub-directory
+ *
+ * The data directory itself, along with most other directories, are created at
+ * initdb-time, but we do have some occations where we create directories from
+ * the backend (CREATE TABLESPACE, for example).  In those cases, we want to
+ * make sure that those directories are created consistently.  Today, that means
+ * making sure that the created directory has the correct permissions, which is
+ * what pg_dir_create_mode tracks for us.
+ *
+ * Note that we also set the umask() based on what we understand the correct
+ * permissions to be (see file_perm.c).
+ *
+ * For permissions other than the default mkdir() can be used directly, but be
+ * sure to consider carefully such cases -- a directory with incorrect
+ * permissions in a PostgreSQL data directory could cause backups and other
+ * processes to fail.
+ */
+int
+MakePGDirectory(const char *directoryName)
+{
+	return mkdir(directoryName, pg_dir_create_mode);
 }

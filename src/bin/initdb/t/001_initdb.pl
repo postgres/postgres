@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 15;
+use Test::More tests => 16;
 
 my $tempdir = TestLib::tempdir;
 my $xlogdir = "$tempdir/pgxlog";
@@ -45,6 +45,15 @@ mkdir $datadir;
 
 	command_ok([ 'initdb', '-N', '-T', 'german', '-X', $xlogdir, $datadir ],
 		'successful creation');
+
+	# Permissions on PGDATA should be default
+	SKIP:
+	{
+		skip "unix-style permissions not supported on Windows", 1 if ($windows_os);
+
+		ok(check_mode_recursive($datadir, 0700, 0600),
+		   "check PGDATA permissions");
+	}
 }
 command_ok([ 'initdb', '-S', $datadir ], 'sync only');
 command_fails([ 'initdb', $datadir ], 'existing data directory');

@@ -64,6 +64,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_collation.h"
+#include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/restricted_token.h"
 #include "common/username.h"
@@ -1170,7 +1171,7 @@ setup_config(void)
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
 	writefile(path, conflines);
-	if (chmod(path, S_IRUSR | S_IWUSR) != 0)
+	if (chmod(path, pg_file_create_mode) != 0)
 	{
 		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
 				progname, path, strerror(errno));
@@ -1190,7 +1191,7 @@ setup_config(void)
 	sprintf(path, "%s/postgresql.auto.conf", pg_data);
 
 	writefile(path, autoconflines);
-	if (chmod(path, S_IRUSR | S_IWUSR) != 0)
+	if (chmod(path, pg_file_create_mode) != 0)
 	{
 		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
 				progname, path, strerror(errno));
@@ -1277,7 +1278,7 @@ setup_config(void)
 	snprintf(path, sizeof(path), "%s/pg_hba.conf", pg_data);
 
 	writefile(path, conflines);
-	if (chmod(path, S_IRUSR | S_IWUSR) != 0)
+	if (chmod(path, pg_file_create_mode) != 0)
 	{
 		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
 				progname, path, strerror(errno));
@@ -1293,7 +1294,7 @@ setup_config(void)
 	snprintf(path, sizeof(path), "%s/pg_ident.conf", pg_data);
 
 	writefile(path, conflines);
-	if (chmod(path, S_IRUSR | S_IWUSR) != 0)
+	if (chmod(path, pg_file_create_mode) != 0)
 	{
 		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
 				progname, path, strerror(errno));
@@ -2692,7 +2693,7 @@ create_data_directory(void)
 				   pg_data);
 			fflush(stdout);
 
-			if (pg_mkdir_p(pg_data, S_IRWXU) != 0)
+			if (pg_mkdir_p(pg_data, pg_dir_create_mode) != 0)
 			{
 				fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 						progname, pg_data, strerror(errno));
@@ -2710,7 +2711,7 @@ create_data_directory(void)
 				   pg_data);
 			fflush(stdout);
 
-			if (chmod(pg_data, S_IRWXU) != 0)
+			if (chmod(pg_data, pg_dir_create_mode) != 0)
 			{
 				fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
 						progname, pg_data, strerror(errno));
@@ -2778,7 +2779,7 @@ create_xlog_or_symlink(void)
 					   xlog_dir);
 				fflush(stdout);
 
-				if (pg_mkdir_p(xlog_dir, S_IRWXU) != 0)
+				if (pg_mkdir_p(xlog_dir, pg_dir_create_mode) != 0)
 				{
 					fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 							progname, xlog_dir, strerror(errno));
@@ -2796,7 +2797,7 @@ create_xlog_or_symlink(void)
 					   xlog_dir);
 				fflush(stdout);
 
-				if (chmod(xlog_dir, S_IRWXU) != 0)
+				if (chmod(xlog_dir, pg_dir_create_mode) != 0)
 				{
 					fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
 							progname, xlog_dir, strerror(errno));
@@ -2846,7 +2847,7 @@ create_xlog_or_symlink(void)
 	else
 	{
 		/* Without -X option, just make the subdirectory normally */
-		if (mkdir(subdirloc, S_IRWXU) < 0)
+		if (mkdir(subdirloc, pg_dir_create_mode) < 0)
 		{
 			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 					progname, subdirloc, strerror(errno));
@@ -2882,7 +2883,8 @@ initialize_data_directory(void)
 
 	setup_signals();
 
-	umask(S_IRWXG | S_IRWXO);
+	/* Set dir/file mode mask */
+	umask(PG_MODE_MASK_OWNER);
 
 	create_data_directory();
 
@@ -2902,7 +2904,7 @@ initialize_data_directory(void)
 		 * The parent directory already exists, so we only need mkdir() not
 		 * pg_mkdir_p() here, which avoids some failure modes; cf bug #13853.
 		 */
-		if (mkdir(path, S_IRWXU) < 0)
+		if (mkdir(path, pg_dir_create_mode) < 0)
 		{
 			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 					progname, path, strerror(errno));

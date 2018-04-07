@@ -112,6 +112,9 @@ extern int	CloseTransientFile(int fd);
 extern int	BasicOpenFile(const char *fileName, int fileFlags);
 extern int	BasicOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 
+ /* Make a directory with default permissions */
+extern int	MakePGDirectory(const char *directoryName);
+
 /* Miscellaneous support routines */
 extern void InitFileAccess(void);
 extern void set_max_safe_fds(void);

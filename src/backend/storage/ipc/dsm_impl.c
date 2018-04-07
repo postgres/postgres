@@ -60,6 +60,7 @@
 #ifdef HAVE_SYS_SHM_H
 #include <sys/shm.h>
 #endif
+#include "common/file_perm.h"
 #include "pgstat.h"
 
 #include "portability/mem.h"
@@ -285,7 +286,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 	 * returning.
 	 */
 	flags = O_RDWR | (op == DSM_OP_CREATE ? O_CREAT | O_EXCL : 0);
-	if ((fd = shm_open(name, flags, 0600)) == -1)
+	if ((fd = shm_open(name, flags, PG_FILE_MODE_OWNER)) == -1)
 	{
 		if (errno != EEXIST)
 			ereport(elevel,

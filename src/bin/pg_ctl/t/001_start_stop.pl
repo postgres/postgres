@@ -4,7 +4,7 @@ use warnings;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 19;
+use Test::More tests => 21;
 
 my $tempdir       = TestLib::tempdir;
 my $tempdir_short = TestLib::tempdir_short;
@@ -57,9 +57,23 @@ command_ok([ 'pg_ctl', 'stop', '-D', "$tempdir/data" ], 'pg_ctl stop');
 command_fails([ 'pg_ctl', 'stop', '-D', "$tempdir/data" ],
 	'second pg_ctl stop fails');
 
+# Log file for default permission test.  The permissions won't be checked on
+# Windows but we still want to do the restart test.
+my $logFileName = "$tempdir/data/perm-test-600.log";
+
 command_ok(
-	[ 'pg_ctl', 'restart', '-D', "$tempdir/data" ],
+	[ 'pg_ctl', 'restart', '-D', "$tempdir/data", '-l', $logFileName ],
 	'pg_ctl restart with server not running');
+
+# Permissions on log file should be default
+SKIP:
+{
+	skip "unix-style permissions not supported on Windows", 2 if ($windows_os);
+
+	ok(-f $logFileName);
+	ok(check_mode_recursive("$tempdir/data", 0700, 0600));
+}
+
 command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data" ],
 	'pg_ctl restart with server running');
 

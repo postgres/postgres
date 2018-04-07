@@ -22,6 +22,7 @@
 #endif
 
 #include "pgtar.h"
+#include "common/file_perm.h"
 #include "common/file_utils.h"
 
 #include "receivelog.h"
@@ -89,7 +90,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	 * does not do any system calls to fsync() to make changes permanent on
 	 * disk.
 	 */
-	fd = open(tmppath, O_WRONLY | O_CREAT | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = open(tmppath, O_WRONLY | O_CREAT | PG_BINARY, pg_file_create_mode);
 	if (fd < 0)
 		return NULL;
 
@@ -534,7 +535,8 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		 * We open the tar file only when we first try to write to it.
 		 */
 		tar_data->fd = open(tar_data->tarfilename,
-							O_WRONLY | O_CREAT | PG_BINARY, S_IRUSR | S_IWUSR);
+							O_WRONLY | O_CREAT | PG_BINARY,
+							pg_file_create_mode);
 		if (tar_data->fd < 0)
 			return NULL;
 

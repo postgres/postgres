@@ -25,6 +25,7 @@
 
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
+#include "common/file_perm.h"
 #include "getopt_long.h"
 #include "utils/pidfile.h"
 
@@ -2170,7 +2171,8 @@ main(int argc, char **argv)
 	 */
 	argv0 = argv[0];
 
-	umask(S_IRWXG | S_IRWXO);
+	/* Set dir/file mode mask */
+	umask(PG_MODE_MASK_OWNER);
 
 	/* support --help and --version even if invoked as root */
 	if (argc > 1)

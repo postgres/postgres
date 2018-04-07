@@ -484,6 +484,9 @@ sub append_conf
 	my $conffile = $self->data_dir . '/' . $filename;
 
 	TestLib::append_to_file($conffile, $str . "\n");
+
+    chmod(0600, $conffile)
+        or die("unable to set permissions for $conffile");
 }
 
 =pod

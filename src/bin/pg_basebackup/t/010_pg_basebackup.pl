@@ -6,7 +6,7 @@ use File::Basename qw(basename dirname);
 use File::Path qw(rmtree);
 use PostgresNode;
 use TestLib;
-use Test::More tests => 104;
+use Test::More tests => 105;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -15,6 +15,9 @@ program_options_handling_ok('pg_basebackup');
 my $tempdir = TestLib::tempdir;
 
 my $node = get_new_node('main');
+
+# Set umask so test directories and files are created with default permissions
+umask(0077);
 
 # Initialize node without replication settings
 $node->init(extra => [ '--data-checksums' ]);
@@ -93,6 +96,15 @@ foreach my $filename (@tempRelationFiles)
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '-X', 'none' ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
+
+# Permissions on backup should be default
+SKIP:
+{
+	skip "unix-style permissions not supported on Windows", 1 if ($windows_os);
+
+	ok(check_mode_recursive("$tempdir/backup", 0700, 0600),
+	   "check backup dir permissions");
+}
 
 # Only archive_status directory should be copied in pg_wal/.
 is_deeply(
