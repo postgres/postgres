@@ -4802,6 +4802,14 @@ SubPostmasterMain(int argc, char *argv[])
 	read_nondefault_variables();
 
 	/*
+	 * Check that the data directory looks valid, which will also check the
+	 * privileges on the data directory and update our umask and file/group
+	 * variables for creating files later.  Note: this should really be done
+	 * before we create any files or directories.
+	 */
+	checkDataDir();
+
+	/*
 	 * (re-)read control file, as it contains config. The postmaster will
 	 * already have read this, but this process doesn't know about that.
 	 */
