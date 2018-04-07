@@ -1,0 +1,659 @@
+Parsed test spec with 2 sessions
+
+starting permutation: rxy1 wx1 c1 rxy2 wy2 c2
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c1: commit;
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+600            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c2: commit;
+
+starting permutation: rxy2 wy2 c2 rxy1 wx1 c1
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c2: commit;
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+400            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c1: commit;
+
+starting permutation: rxy3 wx3 c1 rxy4 wy4 c2
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+
+starting permutation: rxy4 wy4 c2 rxy3 wx3 c1
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;
+
+starting permutation: rxy1 wx1 rxy2 c1 wy2 c2
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step c1: commit;
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: commit;
+
+starting permutation: rxy1 wx1 rxy2 wy2 c1 c2
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 wx1 rxy2 wy2 c2 c1
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wx1 c1 wy2 c2
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c1: commit;
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: commit;
+
+starting permutation: rxy1 rxy2 wx1 wy2 c1 c2
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wx1 wy2 c2 c1
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wy2 wx1 c1 c2
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wy2 wx1 c2 c1
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy1 rxy2 wy2 c2 wx1 c1
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c2: commit;
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1: commit;
+
+starting permutation: rxy2 rxy1 wx1 c1 wy2 c2
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c1: commit;
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: commit;
+
+starting permutation: rxy2 rxy1 wx1 wy2 c1 c2
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 rxy1 wx1 wy2 c2 c1
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 rxy1 wy2 wx1 c1 c2
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 rxy1 wy2 wx1 c2 c1
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 rxy1 wy2 c2 wx1 c1
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step c2: commit;
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1: commit;
+
+starting permutation: rxy2 wy2 rxy1 wx1 c1 c2
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c1: commit;
+step c2: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 wy2 rxy1 wx1 c2 c1
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+step c2: commit;
+step c1: commit;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxy2 wy2 rxy1 c2 wx1 c1
+step rxy2: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy2: insert into hash_tbl (id, p)
+			  select g, 20 from generate_series(51, 60) g;
+step rxy1: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step c2: commit;
+step wx1: insert into hash_tbl (id, p)
+			  select g, 30 from generate_series(41, 50) g;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1: commit;
+
+starting permutation: rxy3 wx3 rxy4 c1 wy4 c2
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step c1: commit;
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+
+starting permutation: rxy3 wx3 rxy4 wy4 c1 c2
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy3 wx3 rxy4 wy4 c2 c1
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy3 rxy4 wx3 c1 wy4 c2
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+
+starting permutation: rxy3 rxy4 wx3 wy4 c1 c2
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy3 rxy4 wx3 wy4 c2 c1
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy3 rxy4 wy4 wx3 c1 c2
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy3 rxy4 wy4 wx3 c2 c1
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy3 rxy4 wy4 c2 wx3 c1
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;
+
+starting permutation: rxy4 rxy3 wx3 c1 wy4 c2
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+
+starting permutation: rxy4 rxy3 wx3 wy4 c1 c2
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy4 rxy3 wx3 wy4 c2 c1
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy4 rxy3 wy4 wx3 c1 c2
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy4 rxy3 wy4 wx3 c2 c1
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy4 rxy3 wy4 c2 wx3 c1
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step c2: commit;
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;
+
+starting permutation: rxy4 wy4 rxy3 wx3 c1 c2
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;
+step c2: commit;
+
+starting permutation: rxy4 wy4 rxy3 wx3 c2 c1
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c2: commit;
+step c1: commit;
+
+starting permutation: rxy4 wy4 rxy3 c2 wx3 c1
+step rxy4: select sum(p) from hash_tbl where p=30;
+sum            
+
+300            
+step wy4: insert into hash_tbl (id, p)
+			  select g, 60 from generate_series(51, 60) g;
+step rxy3: select sum(p) from hash_tbl where p=20;
+sum            
+
+200            
+step c2: commit;
+step wx3: insert into hash_tbl (id, p)
+			  select g, 50 from generate_series(41, 50) g;
+step c1: commit;

@@ -22,6 +22,7 @@
 #include "utils/rel.h"
 #include "storage/lwlock.h"
 #include "storage/buf_internals.h"
+#include "storage/predicate.h"
 
 static void _hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
 					  RelFileNode hnode);
@@ -87,6 +88,8 @@ restart_insert:
 	buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_WRITE,
 										  &usedmetap);
 	Assert(usedmetap != NULL);
+
+	CheckForSerializableConflictIn(rel, NULL, buf);
 
 	/* remember the primary bucket buffer to release the pin on it at end. */
 	bucket_buf = buf;

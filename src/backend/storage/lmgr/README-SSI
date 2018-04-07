@@ -389,6 +389,13 @@ relation is required. Fast update postpones the insertion of tuples into index
 structure by temporarily storing them into pending list. That makes us unable
 to detect r-w conflicts using page-level locks.
 
+    * Hash index searches acquire predicate locks on the primary
+page of a bucket. It acquires a lock on both the old and new buckets
+for scans that happen concurrently with page splits. During a bucket
+split, a predicate lock is copied from the primary page of an old
+bucket to the primary page of a new bucket.
+
+
     * The effects of page splits, overflows, consolidations, and
 removals must be carefully reviewed to ensure that predicate locks
 aren't "lost" during those operations, or kept with pages which could
