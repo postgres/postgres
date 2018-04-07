@@ -52,6 +52,10 @@ static void pg_decode_commit_txn(LogicalDecodingContext *ctx,
 static void pg_decode_change(LogicalDecodingContext *ctx,
 				 ReorderBufferTXN *txn, Relation rel,
 				 ReorderBufferChange *change);
+static void pg_decode_truncate(LogicalDecodingContext *ctx,
+							   ReorderBufferTXN *txn,
+							   int nrelations, Relation relations[],
+							   ReorderBufferChange *change);
 static bool pg_decode_filter(LogicalDecodingContext *ctx,
 				 RepOriginId origin_id);
 static void pg_decode_message(LogicalDecodingContext *ctx,
@@ -74,6 +78,7 @@ _PG_output_plugin_init(OutputPluginCallbacks *cb)
 	cb->startup_cb = pg_decode_startup;
 	cb->begin_cb = pg_decode_begin_txn;
 	cb->change_cb = pg_decode_change;
+	cb->truncate_cb = pg_decode_truncate;
 	cb->commit_cb = pg_decode_commit_txn;
 	cb->filter_by_origin_cb = pg_decode_filter;
 	cb->shutdown_cb = pg_decode_shutdown;
@@ -473,6 +478,59 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 		default:
 			Assert(false);
 	}
+
+	MemoryContextSwitchTo(old);
+	MemoryContextReset(data->context);
+
+	OutputPluginWrite(ctx, true);
+}
+
+static void
+pg_decode_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
+				   int nrelations, Relation relations[], ReorderBufferChange *change)
+{
+	TestDecodingData *data;
+	MemoryContext old;
+	int			i;
+
+	data = ctx->output_plugin_private;
+
+	/* output BEGIN if we haven't yet */
+	if (data->skip_empty_xacts && !data->xact_wrote_changes)
+	{
+		pg_output_begin(ctx, data, txn, false);
+	}
+	data->xact_wrote_changes = true;
+
+	/* Avoid leaking memory by using and resetting our own context */
+	old = MemoryContextSwitchTo(data->context);
+
+	OutputPluginPrepareWrite(ctx, true);
+
+	appendStringInfoString(ctx->out, "table ");
+
+	for (i = 0; i < nrelations; i++)
+	{
+		if (i > 0)
+			appendStringInfoString(ctx->out, ", ");
+
+		appendStringInfoString(ctx->out,
+							   quote_qualified_identifier(get_namespace_name(relations[i]->rd_rel->relnamespace),
+														  NameStr(relations[i]->rd_rel->relname)));
+	}
+
+	appendStringInfoString(ctx->out, ": TRUNCATE:");
+
+	if (change->data.truncate.restart_seqs
+		|| change->data.truncate.cascade)
+	{
+		if (change->data.truncate.restart_seqs)
+			appendStringInfo(ctx->out, " restart_seqs");
+		if (change->data.truncate.cascade)
+			appendStringInfo(ctx->out, " cascade");
+	}
+	else
+		appendStringInfoString(ctx->out, " (no-flags)");
 
 	MemoryContextSwitchTo(old);
 	MemoryContextReset(data->context);

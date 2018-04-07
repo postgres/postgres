@@ -383,6 +383,7 @@ typedef struct OutputPluginCallbacks
     LogicalDecodeStartupCB startup_cb;
     LogicalDecodeBeginCB begin_cb;
     LogicalDecodeChangeCB change_cb;
+    LogicalDecodeTruncateCB truncate_cb;
     LogicalDecodeCommitCB commit_cb;
     LogicalDecodeMessageCB message_cb;
     LogicalDecodeFilterByOriginCB filter_by_origin_cb;
@@ -394,8 +395,10 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
      The <function>begin_cb</function>, <function>change_cb</function>
      and <function>commit_cb</function> callbacks are required,
      while <function>startup_cb</function>,
-     <function>filter_by_origin_cb</function>
+     <function>filter_by_origin_cb</function>, <function>truncate_cb</function>,
      and <function>shutdown_cb</function> are optional.
+     If <function>truncate_cb</function> is not set but a
+     <command>TRUNCATE</command> is to be decoded, the action will be ignored.
     </para>
    </sect2>
 
@@ -588,6 +591,28 @@ typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
        logical decoding.
       </para>
      </note>
+    </sect3>
+
+    <sect3 id="logicaldecoding-output-plugin-truncate">
+     <title>Truncate Callback</title>
+
+     <para>
+      The <function>truncate_cb</function> callback is called for a
+      <command>TRUNCATE</command> command.
+<programlisting>
+typedef void (*LogicalDecodeTruncateCB) (struct LogicalDecodingContext *ctx,
+                                         ReorderBufferTXN *txn,
+                                         int nrelations,
+                                         Relation relations[],
+                                         ReorderBufferChange *change);
+</programlisting>
+      The parameters are analogous to the <function>change_cb</function>
+      callback.  However, because <command>TRUNCATE</command> actions on
+      tables connected by foreign keys need to be executed together, this
+      callback receives an array of relations instead of just a single one.
+      See the description of the <xref linkend="sql-truncate"/> statement for
+      details.
+     </para>
     </sect3>
 
      <sect3 id="logicaldecoding-output-plugin-filter-origin">

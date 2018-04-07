@@ -62,6 +62,15 @@ typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
 									   ReorderBufferChange *change);
 
 /*
+ * Callback for every TRUNCATE in a successful transaction.
+ */
+typedef void (*LogicalDecodeTruncateCB) (struct LogicalDecodingContext *ctx,
+										 ReorderBufferTXN *txn,
+										 int nrelations,
+										 Relation relations[],
+										 ReorderBufferChange *change);
+
+/*
  * Called for every (explicit or implicit) COMMIT of a successful transaction.
  */
 typedef void (*LogicalDecodeCommitCB) (struct LogicalDecodingContext *ctx,
@@ -98,6 +107,7 @@ typedef struct OutputPluginCallbacks
 	LogicalDecodeStartupCB startup_cb;
 	LogicalDecodeBeginCB begin_cb;
 	LogicalDecodeChangeCB change_cb;
+	LogicalDecodeTruncateCB truncate_cb;
 	LogicalDecodeCommitCB commit_cb;
 	LogicalDecodeMessageCB message_cb;
 	LogicalDecodeFilterByOriginCB filter_by_origin_cb;

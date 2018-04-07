@@ -415,6 +415,7 @@ ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change)
 		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM:
 		case REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID:
 		case REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID:
+		case REORDER_BUFFER_CHANGE_TRUNCATE:
 			break;
 	}
 
@@ -1491,6 +1492,38 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					specinsert = change;
 					break;
 
+				case REORDER_BUFFER_CHANGE_TRUNCATE:
+				{
+					int			i;
+					int			nrelids = change->data.truncate.nrelids;
+					int			nrelations = 0;
+					Relation   *relations;
+
+					relations = palloc0(nrelids * sizeof(Relation));
+					for (i = 0; i < nrelids; i++)
+					{
+						Oid			relid = change->data.truncate.relids[i];
+						Relation	relation;
+
+						relation = RelationIdGetRelation(relid);
+
+						if (relation == NULL)
+							elog(ERROR, "could not open relation with OID %u", relid);
+
+						if (!RelationIsLogicallyLogged(relation))
+							continue;
+
+						relations[nrelations++] = relation;
+					}
+
+					rb->apply_truncate(rb, txn, nrelations, relations, change);
+
+					for (i = 0; i < nrelations; i++)
+						RelationClose(relations[i]);
+
+					break;
+				}
+
 				case REORDER_BUFFER_CHANGE_MESSAGE:
 					rb->message(rb, txn, change->lsn, true,
 								change->data.msg.prefix,
@@ -2255,6 +2288,7 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				}
 				break;
 			}
+		case REORDER_BUFFER_CHANGE_TRUNCATE:
 		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM:
 		case REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID:
 		case REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID:
@@ -2534,6 +2568,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				break;
 			}
 			/* the base struct contains all the data, easy peasy */
+		case REORDER_BUFFER_CHANGE_TRUNCATE:
 		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM:
 		case REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID:
 		case REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID:
