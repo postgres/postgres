@@ -58,6 +58,9 @@
  * rightmost_one_pos[x] gives the bit number (0-7) of the rightmost one bit
  * in a nonzero byte value x.  The entry for x=0 is never used.
  *
+ * leftmost_one_pos[x] gives the bit number (0-7) of the leftmost one bit in a
+ * nonzero byte value x.  The entry for x=0 is never used.
+ *
  * number_of_ones[x] gives the number of one-bits (0-8) in a byte value x.
  *
  * We could make these tables larger and reduce the number of iterations
@@ -82,6 +85,25 @@ static const uint8 rightmost_one_pos[256] = {
 	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
 	5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
 	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0
+};
+
+static const uint8 leftmost_one_pos[256] = {
+	0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+	4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+	6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+	6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+	6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+	6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
 };
 
 static const uint8 number_of_ones[256] = {
@@ -1079,6 +1101,79 @@ bms_next_member(const Bitmapset *a, int prevbit)
 				result += 8;
 			}
 			result += rightmost_one_pos[w & 255];
+			return result;
+		}
+
+		/* in subsequent words, consider all bits */
+		mask = (~(bitmapword) 0);
+	}
+	return -2;
+}
+
+/*
+ * bms_prev_member - find prev member of a set
+ *
+ * Returns largest member less than "prevbit", or -2 if there is none.
+ * "prevbit" must NOT be more than one above the highest possible bit that can
+ * be set at the Bitmapset at its current size.
+ *
+ * To ease finding the highest set bit for the initial loop, the special
+ * prevbit value of -1 can be passed to have the function find the highest
+ * valued member in the set.
+ *
+ * This is intended as support for iterating through the members of a set in
+ * reverse.  The typical pattern is
+ *
+ *			x = -1;
+ *			while ((x = bms_prev_member(inputset, x)) >= 0)
+ *				process member x;
+ *
+ * Notice that when there are no more members, we return -2, not -1 as you
+ * might expect.  The rationale for that is to allow distinguishing the
+ * loop-not-started state (x == -1) from the loop-completed state (x == -2).
+ * It makes no difference in simple loop usage, but complex iteration logic
+ * might need such an ability.
+ */
+
+int
+bms_prev_member(const Bitmapset *a, int prevbit)
+{
+	int			wordnum;
+	int			ushiftbits;
+	bitmapword	mask;
+
+	/*
+	 * If set is NULL or if there are no more bits to the right then we've
+	 * nothing to do.
+	 */
+	if (a == NULL || prevbit == 0)
+		return -2;
+
+	/* transform -1 to the highest possible bit we could have set */
+	if (prevbit == -1)
+		prevbit = a->nwords * BITS_PER_BITMAPWORD - 1;
+	else
+		prevbit--;
+
+	ushiftbits = BITS_PER_BITMAPWORD - (BITNUM(prevbit) + 1);
+	mask = (~(bitmapword) 0) >> ushiftbits;
+	for (wordnum = WORDNUM(prevbit); wordnum >= 0; wordnum--)
+	{
+		bitmapword	w = a->words[wordnum];
+
+		/* mask out bits left of prevbit */
+		w &= mask;
+
+		if (w != 0)
+		{
+			int			result;
+			int			shift = 24;
+			result = wordnum * BITS_PER_BITMAPWORD;
+
+			while ((w >> shift) == 0)
+				shift -= 8;
+
+			result += shift + leftmost_one_pos[(w >> shift) & 255];
 			return result;
 		}
 
