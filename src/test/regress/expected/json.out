@@ -2324,6 +2324,86 @@ select to_tsvector('english', '{"a": "aaa in bbb ddd ccc", "b": ["the eee fff gg
  'aaa':1 'bbb':3 'ccc':5 'ddd':4 'eee':8 'fff':9 'ggg':10 'hhh':12 'iii':13
 (1 row)
 
+-- json to tsvector with numeric values
+select to_tsvector('english', '{"a": "aaa in bbb ddd ccc", "b": 123, "c": 456}'::json);
+           to_tsvector           
+---------------------------------
+ 'aaa':1 'bbb':3 'ccc':5 'ddd':4
+(1 row)
+
+-- json_to_tsvector
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"all"');
+                                    json_to_tsvector                                    
+----------------------------------------------------------------------------------------
+ '123':8 '456':12 'aaa':2 'b':6 'bbb':4 'c':10 'd':14 'f':18 'fals':20 'g':22 'true':16
+(1 row)
+
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"key"');
+        json_to_tsvector        
+--------------------------------
+ 'b':2 'c':4 'd':6 'f':8 'g':10
+(1 row)
+
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"string"');
+ json_to_tsvector 
+------------------
+ 'aaa':1 'bbb':3
+(1 row)
+
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"numeric"');
+ json_to_tsvector 
+------------------
+ '123':1 '456':3
+(1 row)
+
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"boolean"');
+ json_to_tsvector  
+-------------------
+ 'fals':3 'true':1
+(1 row)
+
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '["string", "numeric"]');
+        json_to_tsvector         
+---------------------------------
+ '123':5 '456':7 'aaa':1 'bbb':3
+(1 row)
+
+select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"all"');
+                                    json_to_tsvector                                    
+----------------------------------------------------------------------------------------
+ '123':8 '456':12 'aaa':2 'b':6 'bbb':4 'c':10 'd':14 'f':18 'fals':20 'g':22 'true':16
+(1 row)
+
+select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"key"');
+        json_to_tsvector        
+--------------------------------
+ 'b':2 'c':4 'd':6 'f':8 'g':10
+(1 row)
+
+select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"string"');
+ json_to_tsvector 
+------------------
+ 'aaa':1 'bbb':3
+(1 row)
+
+select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"numeric"');
+ json_to_tsvector 
+------------------
+ '123':1 '456':3
+(1 row)
+
+select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '"boolean"');
+ json_to_tsvector  
+-------------------
+ 'fals':3 'true':1
+(1 row)
+
+select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '["string", "numeric"]');
+        json_to_tsvector         
+---------------------------------
+ '123':5 '456':7 'aaa':1 'bbb':3
+(1 row)
+
 -- ts_vector corner cases
 select to_tsvector('""'::json);
  to_tsvector 
@@ -2349,6 +2429,48 @@ select to_tsvector('null'::json);
  
 (1 row)
 
+-- json_to_tsvector corner cases
+select json_to_tsvector('""'::json, '"all"');
+ json_to_tsvector 
+------------------
+ 
+(1 row)
+
+select json_to_tsvector('{}'::json, '"all"');
+ json_to_tsvector 
+------------------
+ 
+(1 row)
+
+select json_to_tsvector('[]'::json, '"all"');
+ json_to_tsvector 
+------------------
+ 
+(1 row)
+
+select json_to_tsvector('null'::json, '"all"');
+ json_to_tsvector 
+------------------
+ 
+(1 row)
+
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '""');
+ERROR:  wrong flag in flag array: ""
+HINT:  Possible values are: "string", "numeric", "boolean", "key" and "all"
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '{}');
+ERROR:  wrong flag type, only arrays and scalars are allowed
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '[]');
+ json_to_tsvector 
+------------------
+ 
+(1 row)
+
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, 'null');
+ERROR:  flag array element is not a string
+HINT:  Possible values are: "string", "numeric", "boolean", "key" and "all"
+select json_to_tsvector('{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '["all", null]');
+ERROR:  flag array element is not a string
+HINT:  Possible values are: "string", "numeric", "boolean", "key" and "all"
 -- ts_headline for json
 select ts_headline('{"a": "aaa bbb", "b": {"c": "ccc ddd fff", "c1": "ccc1 ddd1"}, "d": ["ggg hhh", "iii jjj"]}'::json, tsquery('bbb & ddd & hhh'));
                                                ts_headline                                               
