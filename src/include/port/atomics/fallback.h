@@ -80,6 +80,7 @@ typedef struct pg_atomic_flag
 #else
 	int			sema;
 #endif
+	volatile bool value;
 } pg_atomic_flag;
 
 #endif /* PG_HAVE_ATOMIC_FLAG_SUPPORT */
@@ -132,17 +133,7 @@ extern bool pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr);
 extern void pg_atomic_clear_flag_impl(volatile pg_atomic_flag *ptr);
 
 #define PG_HAVE_ATOMIC_UNLOCKED_TEST_FLAG
-static inline bool
-pg_atomic_unlocked_test_flag_impl(volatile pg_atomic_flag *ptr)
-{
-	/*
-	 * Can't do this efficiently in the semaphore based implementation - we'd
-	 * have to try to acquire the semaphore - so always return true. That's
-	 * correct, because this is only an unlocked test anyway. Do this in the
-	 * header so compilers can optimize the test away.
-	 */
-	return true;
-}
+extern bool pg_atomic_unlocked_test_flag_impl(volatile pg_atomic_flag *ptr);
 
 #endif /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
 
