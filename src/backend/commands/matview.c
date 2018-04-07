@@ -602,7 +602,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 										  RelationGetRelationName(tempRel));
 	diffname = make_temptable_name_n(tempname, 2);
 
-	relnatts = matviewRel->rd_rel->relnatts;
+	relnatts = RelationGetNumberOfAttributes(matviewRel);
 
 	/* Open SPI context. */
 	if (SPI_connect() != SPI_OK_CONNECT)
@@ -680,7 +680,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 		if (is_usable_unique_index(indexRel))
 		{
 			Form_pg_index indexStruct = indexRel->rd_index;
-			int			numatts = indexStruct->indnatts;
+			int			indnkeyatts = indexStruct->indnkeyatts;
 			oidvector  *indclass;
 			Datum		indclassDatum;
 			bool		isnull;
@@ -695,7 +695,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 			indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 			/* Add quals for all columns from this index. */
-			for (i = 0; i < numatts; i++)
+			for (i = 0; i < indnkeyatts; i++)
 			{
 				int			attnum = indexStruct->indkey.values[i];
 				Oid			opclass = indclass->values[i];

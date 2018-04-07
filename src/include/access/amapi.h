@@ -191,6 +191,8 @@ typedef struct IndexAmRoutine
 	bool		ampredlocks;
 	/* does AM support parallel scan? */
 	bool		amcanparallel;
+	/* does AM support columns included with clause INCLUDE? */
+	bool		amcaninclude;
 	/* type of data stored in index, or InvalidOid if variable */
 	Oid			amkeytype;
 

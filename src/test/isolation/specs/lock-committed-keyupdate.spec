@@ -8,7 +8,7 @@
 setup
 {
     DROP TABLE IF EXISTS lcku_table;
-    CREATE TABLE lcku_table (id INTEGER PRIMARY KEY, value TEXT);
+    CREATE TABLE lcku_table (id INTEGER, value TEXT, PRIMARY KEY (id) INCLUDE (value));
     INSERT INTO lcku_table VALUES (1, 'one');
     INSERT INTO lcku_table VALUES (3, 'two');
 }

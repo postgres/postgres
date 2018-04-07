@@ -6726,7 +6726,8 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_indexname,
 				i_parentidx,
 				i_indexdef,
-				i_indnkeys,
+				i_indnnkeyatts,
+				i_indnatts,
 				i_indkey,
 				i_indisclustered,
 				i_indisreplident,
@@ -6783,6 +6784,8 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "t.relname AS indexname, "
 							  "inh.inhparent AS parentidx, "
 							  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+							  "i.indnkeyatts AS indnkeyatts, "
+							  "i.indnatts AS indnatts, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
 							  "i.indisreplident, t.relpages, "
@@ -6819,6 +6822,8 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "t.relname AS indexname, "
 							  "0 AS parentidx, "
 							  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+							  "i.indnatts AS indnkeyatts, "
+							  "i.indnatts AS indnatts, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
 							  "i.indisreplident, t.relpages, "
@@ -6851,6 +6856,8 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "t.relname AS indexname, "
 							  "0 AS parentidx, "
 							  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+							  "i.indnatts AS indnkeyatts, "
+							  "i.indnatts AS indnatts, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
 							  "false AS indisreplident, t.relpages, "
@@ -6879,6 +6886,8 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "t.relname AS indexname, "
 							  "0 AS parentidx, "
 							  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+							  "i.indnatts AS indnkeyatts, "
+							  "i.indnatts AS indnatts, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
 							  "false AS indisreplident, t.relpages, "
@@ -6943,7 +6952,8 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 		i_indexname = PQfnumber(res, "indexname");
 		i_parentidx = PQfnumber(res, "parentidx");
 		i_indexdef = PQfnumber(res, "indexdef");
-		i_indnkeys = PQfnumber(res, "indnkeys");
+		i_indnnkeyatts = PQfnumber(res, "indnkeyatts");
+		i_indnatts = PQfnumber(res, "indnatts");
 		i_indkey = PQfnumber(res, "indkey");
 		i_indisclustered = PQfnumber(res, "indisclustered");
 		i_indisreplident = PQfnumber(res, "indisreplident");
@@ -6976,12 +6986,13 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			indxinfo[j].dobj.namespace = tbinfo->dobj.namespace;
 			indxinfo[j].indextable = tbinfo;
 			indxinfo[j].indexdef = pg_strdup(PQgetvalue(res, j, i_indexdef));
-			indxinfo[j].indnkeys = atoi(PQgetvalue(res, j, i_indnkeys));
+			indxinfo[j].indnkeyattrs = atoi(PQgetvalue(res, j, i_indnnkeyatts));
+			indxinfo[j].indnattrs = atoi(PQgetvalue(res, j, i_indnatts));
 			indxinfo[j].tablespace = pg_strdup(PQgetvalue(res, j, i_tablespace));
 			indxinfo[j].indreloptions = pg_strdup(PQgetvalue(res, j, i_indreloptions));
-			indxinfo[j].indkeys = (Oid *) pg_malloc(indxinfo[j].indnkeys * sizeof(Oid));
+			indxinfo[j].indkeys = (Oid *) pg_malloc(indxinfo[j].indnattrs * sizeof(Oid));
 			parseOidArray(PQgetvalue(res, j, i_indkey),
-						  indxinfo[j].indkeys, indxinfo[j].indnkeys);
+						  indxinfo[j].indkeys, indxinfo[j].indnattrs);
 			indxinfo[j].indisclustered = (PQgetvalue(res, j, i_indisclustered)[0] == 't');
 			indxinfo[j].indisreplident = (PQgetvalue(res, j, i_indisreplident)[0] == 't');
 			indxinfo[j].parentidx = atooid(PQgetvalue(res, j, i_parentidx));
@@ -16342,7 +16353,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		{
 			appendPQExpBuffer(q, "%s (",
 							  coninfo->contype == 'p' ? "PRIMARY KEY" : "UNIQUE");
-			for (k = 0; k < indxinfo->indnkeys; k++)
+			for (k = 0; k < indxinfo->indnkeyattrs; k++)
 			{
 				int			indkey = (int) indxinfo->indkeys[k];
 				const char *attname;
@@ -16353,6 +16364,23 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 
 				appendPQExpBuffer(q, "%s%s",
 								  (k == 0) ? "" : ", ",
+								  fmtId(attname));
+			}
+
+			if (indxinfo->indnkeyattrs < indxinfo->indnattrs)
+				appendPQExpBuffer(q, ") INCLUDE (");
+
+			for (k = indxinfo->indnkeyattrs; k < indxinfo->indnattrs; k++)
+			{
+				int			indkey = (int) indxinfo->indkeys[k];
+				const char *attname;
+
+				if (indkey == InvalidAttrNumber)
+					break;
+				attname = getAttrName(indkey, tbinfo);
+
+				appendPQExpBuffer(q, "%s%s",
+								  (k == indxinfo->indnkeyattrs) ? "" : ", ",
 								  fmtId(attname));
 			}
 

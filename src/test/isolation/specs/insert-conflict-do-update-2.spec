@@ -7,7 +7,7 @@
 setup
 {
   CREATE TABLE upsert (key text not null, payload text);
-  CREATE UNIQUE INDEX ON upsert(lower(key));
+  CREATE UNIQUE INDEX ON upsert(lower(key)) INCLUDE (payload);
 }
 
 teardown

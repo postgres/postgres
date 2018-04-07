@@ -1143,7 +1143,7 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 	 * Locate the downlink of "child" in the parent (updating the stack entry
 	 * if needed)
 	 */
-	ItemPointerSet(&(stack->bts_btentry.t_tid), child, P_HIKEY);
+	stack->bts_btentry = child;
 	pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 	if (pbuf == InvalidBuffer)
 		elog(ERROR, "failed to re-find parent key in index \"%s\" for deletion target page %u",
@@ -1414,8 +1414,9 @@ _bt_pagedel(Relation rel, Buffer buf)
 				/* we need an insertion scan key for the search, so build one */
 				itup_scankey = _bt_mkscankey(rel, targetkey);
 				/* find the leftmost leaf page containing this key */
-				stack = _bt_search(rel, rel->rd_rel->relnatts, itup_scankey,
-								   false, &lbuf, BT_READ, NULL);
+				stack = _bt_search(rel,
+								   IndexRelationGetNumberOfKeyAttributes(rel),
+								   itup_scankey, false, &lbuf, BT_READ, NULL);
 				/* don't need a pin on the page */
 				_bt_relbuf(rel, lbuf);
 
@@ -1551,15 +1552,15 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 #ifdef USE_ASSERT_CHECKING
 	itemid = PageGetItemId(page, topoff);
 	itup = (IndexTuple) PageGetItem(page, itemid);
-	Assert(ItemPointerGetBlockNumber(&(itup->t_tid)) == target);
+	Assert(BTreeInnerTupleGetDownLink(itup) == target);
 #endif
 
 	nextoffset = OffsetNumberNext(topoff);
 	itemid = PageGetItemId(page, nextoffset);
 	itup = (IndexTuple) PageGetItem(page, itemid);
-	if (ItemPointerGetBlockNumber(&(itup->t_tid)) != rightsib)
+	if (BTreeInnerTupleGetDownLink(itup) != rightsib)
 		elog(ERROR, "right sibling %u of block %u is not next child %u of block %u in index \"%s\"",
-			 rightsib, target, ItemPointerGetBlockNumber(&(itup->t_tid)),
+			 rightsib, target, BTreeInnerTupleGetDownLink(itup),
 			 BufferGetBlockNumber(topparent), RelationGetRelationName(rel));
 
 	/*
@@ -1582,7 +1583,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 
 	itemid = PageGetItemId(page, topoff);
 	itup = (IndexTuple) PageGetItem(page, itemid);
-	ItemPointerSet(&(itup->t_tid), rightsib, P_HIKEY);
+	BTreeInnerTupleSetDownLink(itup, rightsib);
 
 	nextoffset = OffsetNumberNext(topoff);
 	PageIndexTupleDelete(page, nextoffset);
@@ -1601,7 +1602,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	MemSet(&trunctuple, 0, sizeof(IndexTupleData));
 	trunctuple.t_info = sizeof(IndexTupleData);
 	if (target != leafblkno)
-		ItemPointerSet(&trunctuple.t_tid, target, P_HIKEY);
+		ItemPointerSetBlockNumber(&trunctuple.t_tid, target);
 	else
 		ItemPointerSetInvalid(&trunctuple.t_tid);
 	if (PageAddItem(page, (Item) &trunctuple, sizeof(IndexTupleData), P_HIKEY,
@@ -1713,7 +1714,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 */
 	if (ItemPointerIsValid(leafhikey))
 	{
-		target = ItemPointerGetBlockNumber(leafhikey);
+		target = ItemPointerGetBlockNumberNoCheck(leafhikey);
 		Assert(target != leafblkno);
 
 		/* fetch the block number of the topmost parent's left sibling */
@@ -1829,7 +1830,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 
 		/* remember the next non-leaf child down in the branch. */
 		itemid = PageGetItemId(page, P_FIRSTDATAKEY(opaque));
-		nextchild = ItemPointerGetBlockNumber(&((IndexTuple) PageGetItem(page, itemid))->t_tid);
+		nextchild = BTreeInnerTupleGetDownLink((IndexTuple) PageGetItem(page, itemid));
 		if (nextchild == leafblkno)
 			nextchild = InvalidBlockNumber;
 	}
@@ -1920,7 +1921,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 		if (nextchild == InvalidBlockNumber)
 			ItemPointerSetInvalid(leafhikey);
 		else
-			ItemPointerSet(leafhikey, nextchild, P_HIKEY);
+			ItemPointerSetBlockNumber(leafhikey, nextchild);
 	}
 
 	/*

@@ -238,7 +238,7 @@ index_check_primary_key(Relation heapRel,
 	 * null, otherwise attempt to ALTER TABLE .. SET NOT NULL
 	 */
 	cmds = NIL;
-	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+	for (i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
 	{
 		AttrNumber	attnum = indexInfo->ii_KeyAttrNumbers[i];
 		HeapTuple	atttuple;
@@ -447,32 +447,40 @@ ConstructTupleDescriptor(Relation heapRelation,
 
 		/*
 		 * Check the opclass and index AM to see if either provides a keytype
-		 * (overriding the attribute type).  Opclass takes precedence.
+		 * (overriding the attribute type).  Opclass (if exists) takes
+		 * precedence.
 		 */
-		tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(classObjectId[i]));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for opclass %u",
-				 classObjectId[i]);
-		opclassTup = (Form_pg_opclass) GETSTRUCT(tuple);
-		if (OidIsValid(opclassTup->opckeytype))
-			keyType = opclassTup->opckeytype;
-		else
-			keyType = amroutine->amkeytype;
+		keyType = amroutine->amkeytype;
 
 		/*
-		 * If keytype is specified as ANYELEMENT, and opcintype is ANYARRAY,
-		 * then the attribute type must be an array (else it'd not have
-		 * matched this opclass); use its element type.
+		 * Code below is concerned to the opclasses which are not used with
+		 * the included columns.
 		 */
-		if (keyType == ANYELEMENTOID && opclassTup->opcintype == ANYARRAYOID)
+		if (i < indexInfo->ii_NumIndexKeyAttrs)
 		{
-			keyType = get_base_element_type(to->atttypid);
-			if (!OidIsValid(keyType))
-				elog(ERROR, "could not get element type of array type %u",
-					 to->atttypid);
-		}
+			tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(classObjectId[i]));
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "cache lookup failed for opclass %u",
+					 classObjectId[i]);
+			opclassTup = (Form_pg_opclass) GETSTRUCT(tuple);
+			if (OidIsValid(opclassTup->opckeytype))
+				keyType = opclassTup->opckeytype;
 
-		ReleaseSysCache(tuple);
+			/*
+			 * If keytype is specified as ANYELEMENT, and opcintype is
+			 * ANYARRAY, then the attribute type must be an array (else it'd
+			 * not have matched this opclass); use its element type.
+			 */
+			if (keyType == ANYELEMENTOID && opclassTup->opcintype == ANYARRAYOID)
+			{
+				keyType = get_base_element_type(to->atttypid);
+				if (!OidIsValid(keyType))
+					elog(ERROR, "could not get element type of array type %u",
+						 to->atttypid);
+			}
+
+			ReleaseSysCache(tuple);
+		}
 
 		/*
 		 * If a key type different from the heap value is specified, update
@@ -602,7 +610,7 @@ UpdateIndexRelation(Oid indexoid,
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		indkey->values[i] = indexInfo->ii_KeyAttrNumbers[i];
 	indcollation = buildoidvector(collationOids, indexInfo->ii_NumIndexAttrs);
-	indclass = buildoidvector(classOids, indexInfo->ii_NumIndexAttrs);
+	indclass = buildoidvector(classOids, indexInfo->ii_NumIndexKeyAttrs);
 	indoption = buildint2vector(coloptions, indexInfo->ii_NumIndexAttrs);
 
 	/*
@@ -647,6 +655,7 @@ UpdateIndexRelation(Oid indexoid,
 	values[Anum_pg_index_indexrelid - 1] = ObjectIdGetDatum(indexoid);
 	values[Anum_pg_index_indrelid - 1] = ObjectIdGetDatum(heapoid);
 	values[Anum_pg_index_indnatts - 1] = Int16GetDatum(indexInfo->ii_NumIndexAttrs);
+	values[Anum_pg_index_indnkeyatts - 1] = Int16GetDatum(indexInfo->ii_NumIndexKeyAttrs);
 	values[Anum_pg_index_indisunique - 1] = BoolGetDatum(indexInfo->ii_Unique);
 	values[Anum_pg_index_indisprimary - 1] = BoolGetDatum(primary);
 	values[Anum_pg_index_indisexclusion - 1] = BoolGetDatum(isexclusion);
@@ -1086,7 +1095,7 @@ index_create(Relation heapRelation,
 		}
 
 		/* Store dependency on operator classes */
-		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+		for (i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
 		{
 			referenced.classId = OperatorClassRelationId;
 			referenced.objectId = classObjectId[i];
@@ -1141,6 +1150,8 @@ index_create(Relation heapRelation,
 		RelationInitIndexAccessInfo(indexRelation);
 	else
 		Assert(indexRelation->rd_indexcxt != NULL);
+
+	indexRelation->rd_index->indnkeyatts = indexInfo->ii_NumIndexKeyAttrs;
 
 	/*
 	 * If this is bootstrap (initdb) time, then we don't actually fill in the
@@ -1287,6 +1298,7 @@ index_constraint_create(Relation heapRelation,
 								   parentConstraintId,
 								   RelationGetRelid(heapRelation),
 								   indexInfo->ii_KeyAttrNumbers,
+								   indexInfo->ii_NumIndexKeyAttrs,
 								   indexInfo->ii_NumIndexAttrs,
 								   InvalidOid,	/* no domain */
 								   indexRelationId, /* index OID */
@@ -1732,15 +1744,19 @@ BuildIndexInfo(Relation index)
 	IndexInfo  *ii = makeNode(IndexInfo);
 	Form_pg_index indexStruct = index->rd_index;
 	int			i;
-	int			numKeys;
+	int			numAtts;
 
 	/* check the number of keys, and copy attr numbers into the IndexInfo */
-	numKeys = indexStruct->indnatts;
-	if (numKeys < 1 || numKeys > INDEX_MAX_KEYS)
+	numAtts = indexStruct->indnatts;
+	if (numAtts < 1 || numAtts > INDEX_MAX_KEYS)
 		elog(ERROR, "invalid indnatts %d for index %u",
-			 numKeys, RelationGetRelid(index));
-	ii->ii_NumIndexAttrs = numKeys;
-	for (i = 0; i < numKeys; i++)
+			 numAtts, RelationGetRelid(index));
+	ii->ii_NumIndexAttrs = numAtts;
+	ii->ii_NumIndexKeyAttrs = indexStruct->indnkeyatts;
+	Assert(ii->ii_NumIndexKeyAttrs != 0);
+	Assert(ii->ii_NumIndexKeyAttrs <= ii->ii_NumIndexAttrs);
+
+	for (i = 0; i < numAtts; i++)
 		ii->ii_KeyAttrNumbers[i] = indexStruct->indkey.values[i];
 
 	/* fetch any expressions needed for expressional indexes */
@@ -1911,8 +1927,10 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 void
 BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 {
-	int			ncols = index->rd_rel->relnatts;
+	int			indnkeyatts;
 	int			i;
+
+	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(index);
 
 	/*
 	 * fetch info for checking unique indexes
@@ -1922,16 +1940,16 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 	if (index->rd_rel->relam != BTREE_AM_OID)
 		elog(ERROR, "unexpected non-btree speculative unique index");
 
-	ii->ii_UniqueOps = (Oid *) palloc(sizeof(Oid) * ncols);
-	ii->ii_UniqueProcs = (Oid *) palloc(sizeof(Oid) * ncols);
-	ii->ii_UniqueStrats = (uint16 *) palloc(sizeof(uint16) * ncols);
+	ii->ii_UniqueOps = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
+	ii->ii_UniqueProcs = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
+	ii->ii_UniqueStrats = (uint16 *) palloc(sizeof(uint16) * indnkeyatts);
 
 	/*
 	 * We have to look up the operator's strategy number.  This provides a
 	 * cross-check that the operator does match the index.
 	 */
 	/* We need the func OIDs and strategy numbers too */
-	for (i = 0; i < ncols; i++)
+	for (i = 0; i < indnkeyatts; i++)
 	{
 		ii->ii_UniqueStrats[i] = BTEqualStrategyNumber;
 		ii->ii_UniqueOps[i] =

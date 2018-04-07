@@ -140,31 +140,6 @@ typedef struct BTMetaPageData
 #define BTREE_NONLEAF_FILLFACTOR	70
 
 /*
- *	Test whether two btree entries are "the same".
- *
- *	Old comments:
- *	In addition, we must guarantee that all tuples in the index are unique,
- *	in order to satisfy some assumptions in Lehman and Yao.  The way that we
- *	do this is by generating a new OID for every insertion that we do in the
- *	tree.  This adds eight bytes to the size of btree index tuples.  Note
- *	that we do not use the OID as part of a composite key; the OID only
- *	serves as a unique identifier for a given index tuple (logical position
- *	within a page).
- *
- *	New comments:
- *	actually, we must guarantee that all tuples in A LEVEL
- *	are unique, not in ALL INDEX. So, we can use the t_tid
- *	as unique identifier for a given index tuple (logical position
- *	within a level). - vadim 04/09/97
- */
-#define BTTidSame(i1, i2)	\
-	((ItemPointerGetBlockNumber(&(i1)) == ItemPointerGetBlockNumber(&(i2))) && \
-	 (ItemPointerGetOffsetNumber(&(i1)) == ItemPointerGetOffsetNumber(&(i2))))
-#define BTEntrySame(i1, i2) \
-	BTTidSame((i1)->t_tid, (i2)->t_tid)
-
-
-/*
  *	In general, the btree code tries to localize its knowledge about
  *	page layout to a couple of routines.  However, we need a special
  *	value to indicate "no page number" in those places where we expect
@@ -211,6 +186,68 @@ typedef struct BTMetaPageData
 #define P_FIRSTKEY			((OffsetNumber) 2)
 #define P_FIRSTDATAKEY(opaque)	(P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY)
 
+
+/*
+ * B-tree index with INCLUDE clause has non-key (included) attributes, which
+ * are used solely in index-only scans.  Those non-key attributes are present
+ * in leaf index tuples which point to corresponding heap tuples.  However,
+ * tree also contains "pivot" tuples.  Pivot tuples are used for navigation
+ * during tree traversal.  Pivot tuples include tuples on non-leaf pages and
+ * high key tuples.  Such, tuples don't need to included attributes, because
+ * they have no use during tree traversal.  This is why we truncate them in
+ * order to save some space.  Therefore, B-tree index with INCLUDE clause
+ * contain tuples with variable number of attributes.
+ *
+ * In order to keep on-disk compatibility with upcoming suffix truncation of
+ * pivot tuples, we store number of attributes present inside tuple itself.
+ * Thankfully, offset number is always unused in pivot tuple.  So, we use free
+ * bit of index tuple flags as sign that offset have alternative meaning: it
+ * stores number of keys present in index tuple (12 bit is far enough for that).
+ * And we have 4 bits reserved for future usage.
+ *
+ * Right now INDEX_ALT_TID_MASK is set only on truncation of non-key
+ * attributes of included indexes.  But potentially every pivot index tuple
+ * might have INDEX_ALT_TID_MASK set.  Then this tuple should have number of
+ * attributes correctly set in BT_N_KEYS_OFFSET_MASK, and in future it might
+ * use some bits of BT_RESERVED_OFFSET_MASK.
+ *
+ * Non-pivot tuples might also use bit of BT_RESERVED_OFFSET_MASK.  Despite
+ * they store heap tuple offset, higher bits of offset are always free.
+ */
+#define INDEX_ALT_TID_MASK		INDEX_AM_RESERVED_BIT	/* flag indicating t_tid
+														 * offset has an
+														 * alternative meaning */
+#define BT_RESERVED_OFFSET_MASK	0xF000	/* mask of bits in t_tid offset
+										 * reserved for future usage */
+#define BT_N_KEYS_OFFSET_MASK	0x0FFF	/* mask of bits in t_tid offset
+										 * holding number of attributes
+										 * actually present in index tuple */
+
+/* Acess to downlink block number */
+#define BTreeInnerTupleGetDownLink(itup) \
+	ItemPointerGetBlockNumberNoCheck(&((itup)->t_tid))
+
+#define BTreeInnerTupleSetDownLink(itup, blkno) \
+	ItemPointerSetBlockNumber(&((itup)->t_tid), (blkno))
+
+/* Set number of attributes to B-tree index tuple overriding t_tid offset */
+#define BTreeTupSetNAtts(itup, n) \
+	do { \
+		(itup)->t_info |= INDEX_ALT_TID_MASK; \
+		ItemPointerSetOffsetNumber(&(itup)->t_tid, n); \
+	} while(0)
+
+/* Get number of attributes in B-tree index tuple */
+#define BTreeTupGetNAtts(itup, index)	\
+	( \
+		(itup)->t_info & INDEX_ALT_TID_MASK ? \
+		( \
+			AssertMacro((ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) & BT_RESERVED_OFFSET_MASK) == 0), \
+			ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) & BT_N_KEYS_OFFSET_MASK \
+		) \
+		: \
+		IndexRelationGetNumberOfAttributes(index) \
+	)
 
 /*
  *	Operator strategy numbers for B-tree have been moved to access/stratnum.h,
@@ -265,7 +302,7 @@ typedef struct BTStackData
 {
 	BlockNumber bts_blkno;
 	OffsetNumber bts_offset;
-	IndexTupleData bts_btentry;
+	BlockNumber bts_btentry;
 	struct BTStackData *bts_parent;
 } BTStackData;
 
@@ -524,6 +561,7 @@ extern bool _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
 				 Snapshot snapshot);
+extern bool _bt_check_natts(Relation index, Page page, OffsetNumber offnum);
 
 /*
  * prototypes for functions in nbtutils.c
@@ -552,6 +590,7 @@ extern bytea *btoptions(Datum reloptions, bool validate);
 extern bool btproperty(Oid index_oid, int attno,
 		   IndexAMProperty prop, const char *propname,
 		   bool *res, bool *isnull);
+extern IndexTuple _bt_truncate_tuple(Relation idxrel, IndexTuple olditup);
 
 /*
  * prototypes for functions in nbtvalidate.c

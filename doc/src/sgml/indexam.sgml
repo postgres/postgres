@@ -114,6 +114,8 @@ typedef struct IndexAmRoutine
     bool        amcanparallel;
     /* type of data stored in index, or InvalidOid if variable */
     Oid         amkeytype;
+    /* does AM support columns included with clause INCLUDE? */
+    bool        amcaninclude;
 
     /* interface functions */
     ambuild_function ambuild;
@@ -985,7 +987,8 @@ amparallelrescan (IndexScanDesc scan);
    using <firstterm>unique indexes</firstterm>, which are indexes that disallow
    multiple entries with identical keys.  An access method that supports this
    feature sets <structfield>amcanunique</structfield> true.
-   (At present, only b-tree supports it.)
+   (At present, only b-tree supports it.) Columns listed in the
+    <literal>INCLUDE</literal> clause are not used to enforce uniqueness.
   </para>
 
   <para>

@@ -73,8 +73,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
-  UNIQUE ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
-  PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
+  UNIQUE ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> <optional> INCLUDE (<replaceable class="parameter">column_name</replaceable> [, ...]) </optional> |
+  PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> <optional> INCLUDE (<replaceable class="parameter">column_name</replaceable> [, ...]) </optional> |
   EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
   FOREIGN KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
@@ -769,7 +769,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
    <varlistentry>
     <term><literal>UNIQUE</literal> (column constraint)</term>
-    <term><literal>UNIQUE ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal> (table constraint)</term>
+    <term><literal>UNIQUE ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal>
+    <optional> INCLUDE ( <replaceable class="parameter">column_name</replaceable> [, ...]) </optional> (table constraint)</term>
 
     <listitem>
      <para>
@@ -798,12 +799,25 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       partitioned table, as well as those of all its descendant partitioned
       tables, must be included in the constraint definition.
      </para>
+
+     <para>
+      Adding a unique constraint will automatically create a unique btree
+      index on the column or group of columns used in the constraint.
+      The optional clause <literal>INCLUDE</literal> adds to that index
+      one or more columns on which the uniqueness is not enforced.
+      Note that although the constraint is not enforced on the included columns,
+      it still depends on them.  Consequently, some operations on these columns
+      (e.g. <literal>DROP COLUMN</literal>) can cause cascade constraint and
+      index deletion.  See paragraph about <literal>INCLUDE</literal> in
+      <xref linkend="sql-createindex"/> for more information.
+     </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term><literal>PRIMARY KEY</literal> (column constraint)</term>
-    <term><literal>PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal> (table constraint)</term>
+    <term><literal>PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal>
+    <optional> INCLUDE ( <replaceable class="parameter">column_name</replaceable> [, ...]) </optional> (table constraint)</term>
     <listitem>
      <para>
       The <literal>PRIMARY KEY</literal> constraint specifies that a column or
@@ -833,6 +847,17 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       tables.
      </para>
 
+     <para>
+      Adding a <literal>PRIMARY KEY</literal> constraint will automatically
+      create a unique btree index on the column or group of columns used in the
+      constraint.  The optional <literal>INCLUDE</literal> clause allows a list
+      of columns to be specified which will be included in the non-key portion
+      of the index.  Although uniqueness is not enforced on the included columns,
+      the constraint still depends on them. Consequently, some operations on the
+      included columns (e.g. <literal>DROP COLUMN</literal>) can cause cascade
+      constraint and index deletion. See paragraph about <literal>INCLUDE</literal>
+      in <xref linkend="sql-createindex"/> for more information.
+     </para>
     </listitem>
    </varlistentry>
 

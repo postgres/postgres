@@ -565,10 +565,12 @@ of scanning the relation and the resulting ordering of the tuples.
 Sequential scan Paths have NIL pathkeys, indicating no known ordering.
 Index scans have Path.pathkeys that represent the chosen index's ordering,
 if any.  A single-key index would create a single-PathKey list, while a
-multi-column index generates a list with one element per index column.
-(Actually, since an index can be scanned either forward or backward, there
-are two possible sort orders and two possible PathKey lists it can
-generate.)
+multi-column index generates a list with one element per key index column.
+Non-key columns specified in the INCLUDE clause of covering indexes don't
+have corresponding PathKeys in the list, because the have no influence on
+index ordering.  (Actually, since an index can be scanned either forward or
+backward, there are two possible sort orders and two possible PathKey lists
+it can generate.)
 
 Note that a bitmap scan has NIL pathkeys since we can say nothing about
 the overall order of its result.  Also, an indexscan on an unordered type

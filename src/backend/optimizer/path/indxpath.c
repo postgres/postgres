@@ -2162,7 +2162,7 @@ match_eclass_clauses_to_index(PlannerInfo *root, IndexOptInfo *index,
 	if (!index->rel->has_eclass_joins)
 		return;
 
-	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
+	for (indexcol = 0; indexcol < index->nkeycolumns; indexcol++)
 	{
 		ec_member_matches_arg arg;
 		List	   *clauses;

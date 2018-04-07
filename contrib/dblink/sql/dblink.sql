@@ -38,6 +38,44 @@ SELECT dblink_build_sql_delete('foo','1 2',2,'{"0", "a"}');
 -- too many pk fields, should fail
 SELECT dblink_build_sql_delete('foo','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}');
 
+-- repeat the test for table with primary key index with included columns
+CREATE TABLE foo_1(f1 int, f2 text, f3 text[], primary key (f1,f2) include (f3));
+INSERT INTO foo_1 VALUES (0,'a','{"a0","b0","c0"}');
+INSERT INTO foo_1 VALUES (1,'b','{"a1","b1","c1"}');
+INSERT INTO foo_1 VALUES (2,'c','{"a2","b2","c2"}');
+INSERT INTO foo_1 VALUES (3,'d','{"a3","b3","c3"}');
+INSERT INTO foo_1 VALUES (4,'e','{"a4","b4","c4"}');
+INSERT INTO foo_1 VALUES (5,'f','{"a5","b5","c5"}');
+INSERT INTO foo_1 VALUES (6,'g','{"a6","b6","c6"}');
+INSERT INTO foo_1 VALUES (7,'h','{"a7","b7","c7"}');
+INSERT INTO foo_1 VALUES (8,'i','{"a8","b8","c8"}');
+INSERT INTO foo_1 VALUES (9,'j','{"a9","b9","c9"}');
+
+-- misc utilities
+
+-- list the primary key fields
+SELECT *
+FROM dblink_get_pkey('foo_1');
+
+-- build an insert statement based on a local tuple,
+-- replacing the primary key values with new ones
+SELECT dblink_build_sql_insert('foo_1','1 2',2,'{"0", "a"}','{"99", "xyz"}');
+-- too many pk fields, should fail
+SELECT dblink_build_sql_insert('foo_1','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}','{"99", "xyz", "{za0,zb0,zc0}"}');
+
+-- build an update statement based on a local tuple,
+-- replacing the primary key values with new ones
+SELECT dblink_build_sql_update('foo_1','1 2',2,'{"0", "a"}','{"99", "xyz"}');
+-- too many pk fields, should fail
+SELECT dblink_build_sql_update('foo_1','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}','{"99", "xyz", "{za0,zb0,zc0}"}');
+
+-- build a delete statement based on a local tuple,
+SELECT dblink_build_sql_delete('foo_1','1 2',2,'{"0", "a"}');
+-- too many pk fields, should fail
+SELECT dblink_build_sql_delete('foo_1','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}');
+
+DROP TABLE foo_1;
+
 -- retest using a quoted and schema qualified table
 CREATE SCHEMA "MySchema";
 CREATE TABLE "MySchema"."Foo"(f1 int, f2 text, f3 text[], primary key (f1,f2));

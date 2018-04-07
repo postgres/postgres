@@ -63,7 +63,7 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 	opclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 	/* Build scankey for every attribute in the index. */
-	for (attoff = 0; attoff < RelationGetNumberOfAttributes(idxrel); attoff++)
+	for (attoff = 0; attoff < IndexRelationGetNumberOfKeyAttributes(idxrel); attoff++)
 	{
 		Oid			operator;
 		Oid			opfamily;
@@ -131,7 +131,7 @@ RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 	/* Start an index scan. */
 	InitDirtySnapshot(snap);
 	scan = index_beginscan(rel, idxrel, &snap,
-						   RelationGetNumberOfAttributes(idxrel),
+						   IndexRelationGetNumberOfKeyAttributes(idxrel),
 						   0);
 
 	/* Build scan key. */
@@ -140,7 +140,7 @@ RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 retry:
 	found = false;
 
-	index_rescan(scan, skey, RelationGetNumberOfAttributes(idxrel), NULL, 0);
+	index_rescan(scan, skey, IndexRelationGetNumberOfKeyAttributes(idxrel), NULL, 0);
 
 	/* Try to find the tuple */
 	if ((scantuple = index_getnext(scan, ForwardScanDirection)) != NULL)

@@ -447,8 +447,10 @@ get_cheapest_parallel_safe_total_inner(List *paths)
  * If 'scandir' is BackwardScanDirection, build pathkeys representing a
  * backwards scan of the index.
  *
- * The result is canonical, meaning that redundant pathkeys are removed;
- * it may therefore have fewer entries than there are index columns.
+ * We iterate only key columns of covering indexes, since non-key columns
+ * don't influence index ordering.  The result is canonical, meaning that
+ * redundant pathkeys are removed; it may therefore have fewer entries than
+ * there are key columns in the index.
  *
  * Another reason for stopping early is that we may be able to tell that
  * an index column's sort order is uninteresting for this query.  However,
@@ -476,6 +478,13 @@ build_index_pathkeys(PlannerInfo *root,
 		bool		reverse_sort;
 		bool		nulls_first;
 		PathKey    *cpathkey;
+
+		/*
+		 * INCLUDE columns are stored in index unordered, so they don't
+		 * support ordered index scan.
+		 */
+		if (i >= index->nkeycolumns)
+			break;
 
 		/* We assume we don't need to make a copy of the tlist item */
 		indexkey = indextle->expr;

@@ -105,6 +105,12 @@ CATALOG(pg_constraint,2606)
 	int16		conkey[1];
 
 	/*
+	 * Columns of conrelid that the constraint does not apply to, but included
+	 * into the same index with key columns.
+	 */
+	int16		conincluding[1];
+
+	/*
 	 * If a foreign key, the referenced columns of confrelid
 	 */
 	int16		confkey[1];
@@ -156,7 +162,7 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  *		compiler constants for pg_constraint
  * ----------------
  */
-#define Natts_pg_constraint					25
+#define Natts_pg_constraint					26
 #define Anum_pg_constraint_conname			1
 #define Anum_pg_constraint_connamespace		2
 #define Anum_pg_constraint_contype			3
@@ -175,13 +181,14 @@ typedef FormData_pg_constraint *Form_pg_constraint;
 #define Anum_pg_constraint_coninhcount		16
 #define Anum_pg_constraint_connoinherit		17
 #define Anum_pg_constraint_conkey			18
-#define Anum_pg_constraint_confkey			19
-#define Anum_pg_constraint_conpfeqop		20
-#define Anum_pg_constraint_conppeqop		21
-#define Anum_pg_constraint_conffeqop		22
-#define Anum_pg_constraint_conexclop		23
-#define Anum_pg_constraint_conbin			24
-#define Anum_pg_constraint_consrc			25
+#define Anum_pg_constraint_conincluding		19
+#define Anum_pg_constraint_confkey			20
+#define Anum_pg_constraint_conpfeqop		21
+#define Anum_pg_constraint_conppeqop		22
+#define Anum_pg_constraint_conffeqop		23
+#define Anum_pg_constraint_conexclop		24
+#define Anum_pg_constraint_conbin			25
+#define Anum_pg_constraint_consrc			26
 
 /* ----------------
  *		initial contents of pg_constraint

@@ -617,7 +617,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 				/* Internal page -- downlink gets leftmost on next level */
 				itemid = PageGetItemId(state->target, P_FIRSTDATAKEY(opaque));
 				itup = (IndexTuple) PageGetItem(state->target, itemid);
-				nextleveldown.leftmost = ItemPointerGetBlockNumber(&(itup->t_tid));
+				nextleveldown.leftmost = ItemPointerGetBlockNumberNoCheck(&(itup->t_tid));
 				nextleveldown.level = opaque->btpo.level - 1;
 			}
 			else
@@ -722,6 +722,39 @@ bt_target_page_check(BtreeCheckState *state)
 	elog(DEBUG2, "verifying %u items on %s block %u", max,
 		 P_ISLEAF(topaque) ? "leaf" : "internal", state->targetblock);
 
+
+	/* Check the number of attributes in high key if any */
+	if (!P_RIGHTMOST(topaque))
+	{
+		if (!_bt_check_natts(state->rel, state->target, P_HIKEY))
+		{
+			ItemId		itemid;
+			IndexTuple	itup;
+			char	   *itid,
+					   *htid;
+
+			itemid = PageGetItemId(state->target, P_HIKEY);
+			itup = (IndexTuple) PageGetItem(state->target, itemid);
+			itid = psprintf("(%u,%u)", state->targetblock, P_HIKEY);
+			htid = psprintf("(%u,%u)",
+							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
+							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
+
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("wrong number of index tuple attributes for index \"%s\"",
+							RelationGetRelationName(state->rel)),
+					 errdetail_internal("Index tid=%s natts=%u points to %s tid=%s page lsn=%X/%X.",
+										itid,
+										BTreeTupGetNAtts(itup, state->rel),
+										P_ISLEAF(topaque) ? "heap" : "index",
+										htid,
+										(uint32) (state->targetlsn >> 32),
+										(uint32) state->targetlsn)));
+		}
+	}
+
+
 	/*
 	 * Loop over page items, starting from first non-highkey item, not high
 	 * key (if any).  Also, immediately skip "negative infinity" real item (if
@@ -759,6 +792,30 @@ bt_target_page_check(BtreeCheckState *state)
 										(uint32) (state->targetlsn >> 32),
 										(uint32) state->targetlsn),
 					 errhint("This could be a torn page problem")));
+
+		/* Check the number of index tuple attributes */
+		if (!_bt_check_natts(state->rel, state->target, offset))
+		{
+			char	   *itid,
+					   *htid;
+
+			itid = psprintf("(%u,%u)", state->targetblock, offset);
+			htid = psprintf("(%u,%u)",
+							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
+							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
+
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("wrong number of index tuple attributes for index \"%s\"",
+							RelationGetRelationName(state->rel)),
+					 errdetail_internal("Index tid=%s natts=%u points to %s tid=%s page lsn=%X/%X.",
+										itid,
+										BTreeTupGetNAtts(itup, state->rel),
+										P_ISLEAF(topaque) ? "heap" : "index",
+										htid,
+										(uint32) (state->targetlsn >> 32),
+										(uint32) state->targetlsn)));
+		}
 
 		/*
 		 * Don't try to generate scankey using "negative infinity" garbage
@@ -802,8 +859,8 @@ bt_target_page_check(BtreeCheckState *state)
 
 			itid = psprintf("(%u,%u)", state->targetblock, offset);
 			htid = psprintf("(%u,%u)",
-							ItemPointerGetBlockNumber(&(itup->t_tid)),
-							ItemPointerGetOffsetNumber(&(itup->t_tid)));
+							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
+							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -834,8 +891,8 @@ bt_target_page_check(BtreeCheckState *state)
 
 			itid = psprintf("(%u,%u)", state->targetblock, offset);
 			htid = psprintf("(%u,%u)",
-							ItemPointerGetBlockNumber(&(itup->t_tid)),
-							ItemPointerGetOffsetNumber(&(itup->t_tid)));
+							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
+							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
 			nitid = psprintf("(%u,%u)", state->targetblock,
 							 OffsetNumberNext(offset));
 
@@ -843,8 +900,8 @@ bt_target_page_check(BtreeCheckState *state)
 			itemid = PageGetItemId(state->target, OffsetNumberNext(offset));
 			itup = (IndexTuple) PageGetItem(state->target, itemid);
 			nhtid = psprintf("(%u,%u)",
-							 ItemPointerGetBlockNumber(&(itup->t_tid)),
-							 ItemPointerGetOffsetNumber(&(itup->t_tid)));
+							 ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
+							 ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -932,7 +989,7 @@ bt_target_page_check(BtreeCheckState *state)
 		 */
 		if (!P_ISLEAF(topaque) && state->readonly)
 		{
-			BlockNumber childblock = ItemPointerGetBlockNumber(&(itup->t_tid));
+			BlockNumber childblock = ItemPointerGetBlockNumberNoCheck(&(itup->t_tid));
 
 			bt_downlink_check(state, childblock, skey);
 		}
@@ -1326,6 +1383,11 @@ bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
 	 * or otherwise varied when or how compression was applied, our assumption
 	 * would break, leading to false positive reports of corruption.  For now,
 	 * we don't decompress/normalize toasted values as part of fingerprinting.
+	 *
+	 * In future, non-pivot index tuples might get use of
+	 * BT_N_KEYS_OFFSET_MASK. Then binary representation of index tuple linked
+	 * to particular heap tuple might vary and meeds to be normalized before
+	 * bloom filter lookup.
 	 */
 	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
 	itup->t_tid = htup->t_self;
@@ -1336,8 +1398,8 @@ bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("heap tuple (%u,%u) from table \"%s\" lacks matching index tuple within index \"%s\"",
-						ItemPointerGetBlockNumber(&(itup->t_tid)),
-						ItemPointerGetOffsetNumber(&(itup->t_tid)),
+						ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
+						ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)),
 						RelationGetRelationName(state->heaprel),
 						RelationGetRelationName(state->rel)),
 				 !state->readonly
@@ -1368,6 +1430,10 @@ offset_is_negative_infinity(BTPageOpaque opaque, OffsetNumber offset)
 	 * infinity item is either first or second line item, or there is none
 	 * within page.
 	 *
+	 * "Negative infinity" tuple is a special corner case of pivot tuples,
+	 * it has zero attributes while rest of pivot tuples have nkeyatts number
+	 * of attributes.
+	 *
 	 * Right-most pages don't have a high key, but could be said to
 	 * conceptually have a "positive infinity" high key.  Thus, there is a
 	 * symmetry between down link items in parent pages, and high keys in
@@ -1391,10 +1457,10 @@ static inline bool
 invariant_leq_offset(BtreeCheckState *state, ScanKey key,
 					 OffsetNumber upperbound)
 {
-	int16		natts = state->rel->rd_rel->relnatts;
+	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
 	int32		cmp;
 
-	cmp = _bt_compare(state->rel, natts, key, state->target, upperbound);
+	cmp = _bt_compare(state->rel, nkeyatts, key, state->target, upperbound);
 
 	return cmp <= 0;
 }
@@ -1410,10 +1476,10 @@ static inline bool
 invariant_geq_offset(BtreeCheckState *state, ScanKey key,
 					 OffsetNumber lowerbound)
 {
-	int16		natts = state->rel->rd_rel->relnatts;
+	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
 	int32		cmp;
 
-	cmp = _bt_compare(state->rel, natts, key, state->target, lowerbound);
+	cmp = _bt_compare(state->rel, nkeyatts, key, state->target, lowerbound);
 
 	return cmp >= 0;
 }
@@ -1433,10 +1499,10 @@ invariant_leq_nontarget_offset(BtreeCheckState *state,
 							   Page nontarget, ScanKey key,
 							   OffsetNumber upperbound)
 {
-	int16		natts = state->rel->rd_rel->relnatts;
+	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
 	int32		cmp;
 
-	cmp = _bt_compare(state->rel, natts, key, nontarget, upperbound);
+	cmp = _bt_compare(state->rel, nkeyatts, key, nontarget, upperbound);
 
 	return cmp <= 0;
 }

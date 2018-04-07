@@ -8023,7 +8023,6 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 	TupleDesc	desc = RelationGetDescr(relation);
 	Oid			replidindex;
 	Relation	idx_rel;
-	TupleDesc	idx_desc;
 	char		replident = relation->rd_rel->relreplident;
 	HeapTuple	key_tuple = NULL;
 	bool		nulls[MaxHeapAttributeNumber];
@@ -8066,7 +8065,6 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 	}
 
 	idx_rel = RelationIdGetRelation(replidindex);
-	idx_desc = RelationGetDescr(idx_rel);
 
 	/* deform tuple, so we have fast access to columns */
 	heap_deform_tuple(tp, desc, values, nulls);
@@ -8078,7 +8076,7 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 	 * Now set all columns contained in the index to NOT NULL, they cannot
 	 * currently be NULL.
 	 */
-	for (natt = 0; natt < idx_desc->natts; natt++)
+	for (natt = 0; natt < IndexRelationGetNumberOfKeyAttributes(idx_rel); natt++)
 	{
 		int			attno = idx_rel->rd_index->indkey.values[natt];
 

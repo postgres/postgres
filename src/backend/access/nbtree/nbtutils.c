@@ -63,17 +63,28 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 {
 	ScanKey		skey;
 	TupleDesc	itupdesc;
-	int			natts;
+	int			indnatts PG_USED_FOR_ASSERTS_ONLY;
+	int			indnkeyatts;
 	int16	   *indoption;
 	int			i;
 
 	itupdesc = RelationGetDescr(rel);
-	natts = RelationGetNumberOfAttributes(rel);
+	indnatts = IndexRelationGetNumberOfAttributes(rel);
+	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 	indoption = rel->rd_indoption;
 
-	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
+	Assert(indnkeyatts != 0);
+	Assert(indnkeyatts <= indnatts);
+	Assert(BTreeTupGetNAtts(itup, rel) == indnatts ||
+		   BTreeTupGetNAtts(itup, rel) == indnkeyatts);
 
-	for (i = 0; i < natts; i++)
+	/*
+	 * We'll execute search using ScanKey constructed on key columns. Non key
+	 * (included) columns must be omitted.
+	 */
+	skey = (ScanKey) palloc(indnkeyatts * sizeof(ScanKeyData));
+
+	for (i = 0; i < indnkeyatts; i++)
 	{
 		FmgrInfo   *procinfo;
 		Datum		arg;
@@ -115,16 +126,16 @@ ScanKey
 _bt_mkscankey_nodata(Relation rel)
 {
 	ScanKey		skey;
-	int			natts;
+	int			indnkeyatts;
 	int16	   *indoption;
 	int			i;
 
-	natts = RelationGetNumberOfAttributes(rel);
+	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 	indoption = rel->rd_indoption;
 
-	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
+	skey = (ScanKey) palloc(indnkeyatts * sizeof(ScanKeyData));
 
-	for (i = 0; i < natts; i++)
+	for (i = 0; i < indnkeyatts; i++)
 	{
 		FmgrInfo   *procinfo;
 		int			flags;
@@ -2068,4 +2079,31 @@ btproperty(Oid index_oid, int attno,
 		default:
 			return false;		/* punt to generic code */
 	}
+}
+
+/*
+ *	_bt_truncate_tuple() -- remove non-key (INCLUDE) attributes from index
+ *							tuple.
+ *
+ *	Transforms an ordinal B-tree leaf index tuple into pivot tuple to be used
+ *	as hikey or non-leaf page tuple with downlink.  Note that t_tid offset
+ *	will be overritten in order to represent number of present tuple attributes.
+ */
+IndexTuple
+_bt_truncate_tuple(Relation idxrel, IndexTuple olditup)
+{
+	IndexTuple	newitup;
+	int			nkeyattrs = IndexRelationGetNumberOfKeyAttributes(idxrel);
+
+	/*
+	 * We're assuming to truncate only regular leaf index tuples which have
+	 * both key and non-key attributes.
+	 */
+	Assert(BTreeTupGetNAtts(olditup, idxrel) == IndexRelationGetNumberOfAttributes(idxrel));
+
+	newitup = index_truncate_tuple(RelationGetDescr(idxrel),
+								   olditup, nkeyattrs);
+	BTreeTupSetNAtts(newitup, nkeyattrs);
+
+	return newitup;
 }

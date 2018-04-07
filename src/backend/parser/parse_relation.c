@@ -3089,7 +3089,7 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 {
 	int			i;
 
-	for (i = 0; i < rd->rd_rel->relnatts; i++)
+	for (i = 0; i < RelationGetNumberOfAttributes(rd); i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(rd->rd_att, i);
 

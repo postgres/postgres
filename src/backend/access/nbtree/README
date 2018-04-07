@@ -590,6 +590,23 @@ original search scankey is consulted as each index entry is sequentially
 scanned to decide whether to return the entry and whether the scan can
 stop (see _bt_checkkeys()).
 
+We use term "pivot" index tuples to distinguish tuples which don't point
+to heap tuples, but rather used for tree navigation.  Pivot tuples includes
+all tuples on non-leaf pages and high keys on leaf pages.  Note that pivot
+index tuples are only used to represent which part of the key space belongs
+on each page, and can have attribute values copied from non-pivot tuples
+that were deleted and killed by VACUUM some time ago.  In principle, we could
+truncate away attributes that are not needed for a page high key during a leaf
+page split, provided that the remaining attributes distinguish the last index
+tuple on the post-split left page as belonging on the left page, and the first
+index tuple on the post-split right page as belonging on the right page.  This
+optimization is sometimes called suffix truncation, and may appear in a future
+release. Since the high key is subsequently reused as the downlink in the
+parent page for the new right page, suffix truncation can increase index
+fan-out considerably by keeping pivot tuples short.  INCLUDE indexes similarly
+truncate away non-key attributes at the time of a leaf page split,
+increasing fan-out.
+
 Notes About Data Representation
 -------------------------------
 

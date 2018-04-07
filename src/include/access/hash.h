@@ -280,7 +280,7 @@ typedef HashMetaPageData *HashMetaPage;
 				  sizeof(ItemIdData) - \
 				  MAXALIGN(sizeof(HashPageOpaqueData)))
 
-#define INDEX_MOVED_BY_SPLIT_MASK	0x2000
+#define INDEX_MOVED_BY_SPLIT_MASK	INDEX_AM_RESERVED_BIT
 
 #define HASH_MIN_FILLFACTOR			10
 #define HASH_DEFAULT_FILLFACTOR		75

@@ -3157,6 +3157,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 							  InvalidOid,	/* not a relation constraint */
 							  NULL,
 							  0,
+							  0,
 							  domainOid,	/* domain constraint */
 							  InvalidOid,	/* no associated index */
 							  InvalidOid,	/* Foreign key fields */

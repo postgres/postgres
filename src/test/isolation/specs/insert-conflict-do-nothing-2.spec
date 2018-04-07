@@ -3,7 +3,7 @@
 
 setup
 {
-  CREATE TABLE ints (key int primary key, val text);
+  CREATE TABLE ints (key int, val text, PRIMARY KEY (key) INCLUDE (val));
 }
 
 teardown
