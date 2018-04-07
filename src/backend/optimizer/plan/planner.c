@@ -3920,7 +3920,8 @@ create_degenerate_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 			paths = lappend(paths, path);
 		}
 		path = (Path *)
-			create_append_path(grouped_rel,
+			create_append_path(root,
+							   grouped_rel,
 							   paths,
 							   NIL,
 							   NULL,
@@ -6852,8 +6853,9 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 		 * node, which would cause this relation to stop appearing to be a
 		 * dummy rel.)
 		 */
-		rel->pathlist = list_make1(create_append_path(rel, NIL, NIL, NULL,
-													  0, false, NIL, -1));
+		rel->pathlist = list_make1(create_append_path(root, rel, NIL, NIL,
+													  NULL, 0, false, NIL,
+													  -1));
 		rel->partial_pathlist = NIL;
 		set_cheapest(rel);
 		Assert(IS_DUMMY_REL(rel));

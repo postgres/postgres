@@ -196,6 +196,7 @@ typedef enum NodeTag
 	T_PartitionPruneStep,
 	T_PartitionPruneStepOp,
 	T_PartitionPruneStepCombine,
+	T_PartitionPruneInfo,
 
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)

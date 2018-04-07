@@ -41,6 +41,7 @@
 #include "optimizer/var.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
+#include "partitioning/partprune.h"
 #include "utils/lsyscache.h"
 
 
@@ -210,7 +211,7 @@ static NamedTuplestoreScan *make_namedtuplestorescan(List *qptlist, List *qpqual
 static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
 static Append *make_append(List *appendplans, int first_partial_plan,
-			List *tlist, List *partitioned_rels);
+			List *tlist, List *partitioned_rels, List *partpruneinfos);
 static RecursiveUnion *make_recursive_union(List *tlist,
 					 Plan *lefttree,
 					 Plan *righttree,
@@ -1041,6 +1042,8 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	List	   *tlist = build_path_tlist(root, &best_path->path);
 	List	   *subplans = NIL;
 	ListCell   *subpaths;
+	RelOptInfo *rel = best_path->path.parent;
+	List	   *partpruneinfos = NIL;
 
 	/*
 	 * The subpaths list could be empty, if every child was proven empty by
@@ -1078,6 +1081,38 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 		subplans = lappend(subplans, subplan);
 	}
 
+	if (rel->reloptkind == RELOPT_BASEREL &&
+		best_path->partitioned_rels != NIL)
+	{
+		List	   *prunequal;
+
+		prunequal = extract_actual_clauses(rel->baserestrictinfo, false);
+
+		if (best_path->path.param_info)
+		{
+
+			List	   *prmquals = best_path->path.param_info->ppi_clauses;
+
+			prmquals = extract_actual_clauses(prmquals, false);
+			prmquals = (List *) replace_nestloop_params(root,
+														(Node *) prmquals);
+
+			prunequal = list_concat(prunequal, prmquals);
+		}
+
+		/*
+		 * If any quals exist, they may be useful to perform further partition
+		 * pruning during execution.  Generate a PartitionPruneInfo for each
+		 * partitioned rel to store these quals and allow translation of
+		 * partition indexes into subpath indexes.
+		 */
+		if (prunequal != NIL)
+			partpruneinfos =
+				make_partition_pruneinfo(root,
+										 best_path->partitioned_rels,
+										 best_path->subpaths, prunequal);
+	}
+
 	/*
 	 * XXX ideally, if there's just one child, we'd not bother to generate an
 	 * Append node but just return the single child.  At the moment this does
@@ -1086,7 +1121,8 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	 */
 
 	plan = make_append(subplans, best_path->first_partial_path,
-					   tlist, best_path->partitioned_rels);
+					   tlist, best_path->partitioned_rels,
+					   partpruneinfos);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
@@ -5382,7 +5418,8 @@ make_foreignscan(List *qptlist,
 
 static Append *
 make_append(List *appendplans, int first_partial_plan,
-			List *tlist, List *partitioned_rels)
+			List *tlist, List *partitioned_rels,
+			List *partpruneinfos)
 {
 	Append	   *node = makeNode(Append);
 	Plan	   *plan = &node->plan;
@@ -5394,7 +5431,7 @@ make_append(List *appendplans, int first_partial_plan,
 	node->partitioned_rels = partitioned_rels;
 	node->appendplans = appendplans;
 	node->first_partial_plan = first_partial_plan;
-
+	node->part_prune_infos = partpruneinfos;
 	return node;
 }
 

@@ -256,6 +256,11 @@ typedef struct Append
 	List	   *partitioned_rels;
 	List	   *appendplans;
 	int			first_partial_plan;
+
+	/*
+	 * Mapping details for run-time subplan pruning, one per partitioned_rels
+	 */
+	List	   *part_prune_infos;
 } Append;
 
 /* ----------------

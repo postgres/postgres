@@ -419,6 +419,7 @@ _outAppend(StringInfo str, const Append *node)
 	WRITE_NODE_FIELD(partitioned_rels);
 	WRITE_NODE_FIELD(appendplans);
 	WRITE_INT_FIELD(first_partial_plan);
+	WRITE_NODE_FIELD(part_prune_infos);
 }
 
 static void
@@ -1756,6 +1757,30 @@ _outMergeAction(StringInfo str, const MergeAction *node)
 	WRITE_ENUM_FIELD(commandType, CmdType);
 	WRITE_NODE_FIELD(qual);
 	WRITE_NODE_FIELD(targetList);
+}
+
+static void
+_outPartitionPruneInfo(StringInfo str, const PartitionPruneInfo *node)
+{
+	int			i;
+
+	WRITE_NODE_TYPE("PARTITIONPRUNEINFO");
+
+	WRITE_OID_FIELD(reloid);
+	WRITE_NODE_FIELD(pruning_steps);
+	WRITE_BITMAPSET_FIELD(present_parts);
+	WRITE_INT_FIELD(nparts);
+
+	appendStringInfoString(str, " :subnode_map");
+	for (i = 0; i < node->nparts; i++)
+		appendStringInfo(str, " %d", node->subnode_map[i]);
+
+	appendStringInfoString(str, " :subpart_map");
+	for (i = 0; i < node->nparts; i++)
+		appendStringInfo(str, " %d", node->subpart_map[i]);
+
+	WRITE_BITMAPSET_FIELD(extparams);
+	WRITE_BITMAPSET_FIELD(execparams);
 }
 
 /*****************************************************************************
@@ -3995,6 +4020,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_PartitionPruneStepCombine:
 				_outPartitionPruneStepCombine(str, obj);
+				break;
+			case T_PartitionPruneInfo:
+				_outPartitionPruneInfo(str, obj);
 				break;
 			case T_Path:
 				_outPath(str, obj);

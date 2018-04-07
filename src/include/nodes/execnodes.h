@@ -1123,8 +1123,13 @@ typedef struct ModifyTableState
 /* ----------------
  *	 AppendState information
  *
- *		nplans			how many plans are in the array
- *		whichplan		which plan is being executed (0 .. n-1)
+ *		nplans				how many plans are in the array
+ *		whichplan			which plan is being executed (0 .. n-1), or a
+ *							special negative value. See nodeAppend.c.
+ *		pruningstate		details required to allow partitions to be
+ *							eliminated from the scan, or NULL if not possible.
+ *		valid_subplans		for runtime pruning, valid appendplans indexes to
+ *							scan.
  * ----------------
  */
 
@@ -1132,6 +1137,7 @@ struct AppendState;
 typedef struct AppendState AppendState;
 struct ParallelAppendState;
 typedef struct ParallelAppendState ParallelAppendState;
+struct PartitionPruneState;
 
 struct AppendState
 {
@@ -1141,6 +1147,8 @@ struct AppendState
 	int			as_whichplan;
 	ParallelAppendState *as_pstate; /* parallel coordination info */
 	Size		pstate_len;		/* size of parallel coordination info */
+	struct PartitionPruneState *as_prune_state;
+	Bitmapset  *as_valid_subplans;
 	bool		(*choose_next_subplan) (AppendState *);
 };
 

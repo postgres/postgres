@@ -1581,4 +1581,27 @@ typedef struct PartitionPruneStepCombine
 	List	   *source_stepids;
 } PartitionPruneStepCombine;
 
+/*----------
+ * PartitionPruneInfo - Details required to allow the executor to prune
+ * partitions.
+ *
+ * Here we store mapping details to allow translation of a partitioned table's
+ * index into subnode indexes for node types which support arbitrary numbers
+ * of sub nodes, such as Append.
+ *----------
+ */
+typedef struct PartitionPruneInfo
+{
+	NodeTag		type;
+	Oid			reloid;			/* Oid of partition rel */
+	List	   *pruning_steps;	/* List of PartitionPruneStep */
+	Bitmapset  *present_parts;	/* Indexes of all partitions which subnodes
+								 * are present for. */
+	int			nparts;			/* The length of the following two arrays */
+	int		   *subnode_map;	/* subnode index by partition id, or -1 */
+	int		   *subpart_map;	/* subpart index by partition id, or -1 */
+	Bitmapset  *extparams;		/* All external paramids seen in prunesteps */
+	Bitmapset  *execparams;		/* All exec paramids seen in prunesteps */
+} PartitionPruneInfo;
+
 #endif							/* PRIMNODES_H */

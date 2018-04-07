@@ -1,16 +1,21 @@
 /*-------------------------------------------------------------------------
  *
  * partprune.c
- *		Support for partition pruning during query planning
+ *		Support for partition pruning during query planning and execution
  *
  * This module implements partition pruning using the information contained in
- * table's partition descriptor and query clauses.
+ * table's partition descriptor, query clauses, and run-time parameters.
  *
  * During planning, clauses that can be matched to the table's partition key
  * are turned into a set of "pruning steps", which are then executed to
  * produce a set of partitions (as indexes of the RelOptInfo->part_rels array)
- * that satisfy the constraints in the step Partitions not in the set are said
+ * that satisfy the constraints in the step.  Partitions not in the set are said
  * to have been pruned.
+ *
+ * A base pruning step may also consist of expressions whose values are only
+ * known during execution, such as Params, in which case pruning cannot occur
+ * entirely during planning.  In that case, such steps are included alongside
+ * the plan, so that they can be used by the executor for further pruning.
  *
  * There are two kinds of pruning steps: a "base" pruning step, which contains
  * information extracted from one or more clauses that are matched to the
@@ -39,10 +44,12 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_type.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/pathnode.h"
 #include "optimizer/planner.h"
 #include "optimizer/predtest.h"
 #include "optimizer/prep.h"
@@ -153,6 +160,7 @@ static PruneStepResult *get_matching_list_bounds(PartitionPruneContext *context,
 static PruneStepResult *get_matching_range_bounds(PartitionPruneContext *context,
 						  StrategyNumber opstrategy, Datum *values, int nvalues,
 						  FmgrInfo *partsupfunc, Bitmapset *nullkeys);
+static bool pull_partkey_params(PartitionPruneInfo *pinfo, List *steps);
 static PruneStepResult *perform_pruning_base_step(PartitionPruneContext *context,
 						  PartitionPruneStepOp *opstep);
 static PruneStepResult *perform_pruning_combine_step(PartitionPruneContext *context,
@@ -163,6 +171,181 @@ static bool match_boolean_partition_clause(Oid partopfamily, Expr *clause,
 static bool partkey_datum_from_expr(PartitionPruneContext *context,
 						Expr *expr, Datum *value);
 
+/*
+ * make_partition_pruneinfo
+ *		Build List of PartitionPruneInfos, one for each 'partitioned_rels'.
+ *		These can be used in the executor to allow additional partition
+ *		pruning to take place.
+ *
+ * Here we generate partition pruning steps for 'prunequal' and also build a
+ * data stucture which allows mapping of partition indexes into 'subpaths'
+ * indexes.
+ *
+ * If no Params were found to match the partition key in any of the
+ * 'partitioned_rels', then we return NIL.  In such a case run-time partition
+ * pruning would be useless.
+ */
+List *
+make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
+						 List *subpaths, List *prunequal)
+{
+	RelOptInfo *targetpart = NULL;
+	ListCell   *lc;
+	List	   *pinfolist = NIL;
+	int		   *relid_subnode_map;
+	int		   *relid_subpart_map;
+	int			i;
+	bool		gotparam = false;
+
+	/*
+	 * Allocate two arrays to store the 1-based indexes of the 'subpaths' and
+	 * 'partitioned_rels' by relid.
+	 */
+	relid_subnode_map = palloc0(sizeof(int) * root->simple_rel_array_size);
+	relid_subpart_map = palloc0(sizeof(int) * root->simple_rel_array_size);
+
+	i = 1;
+	foreach(lc, subpaths)
+	{
+		Path	   *path = (Path *) lfirst(lc);
+		RelOptInfo *pathrel = path->parent;
+
+		Assert(IS_SIMPLE_REL(pathrel));
+		Assert(pathrel->relid < root->simple_rel_array_size);
+
+		relid_subnode_map[pathrel->relid] = i++;
+	}
+
+	/* Likewise for the partition_rels */
+	i = 1;
+	foreach(lc, partition_rels)
+	{
+		Index		rti = lfirst_int(lc);
+
+		Assert(rti < root->simple_rel_array_size);
+
+		relid_subpart_map[rti] = i++;
+	}
+
+	/* We now build a PartitionPruneInfo for each partition_rels */
+	foreach(lc, partition_rels)
+	{
+		Index		rti = lfirst_int(lc);
+		RelOptInfo *subpart = find_base_rel(root, rti);
+		PartitionPruneInfo *pinfo;
+		RangeTblEntry *rte;
+		Bitmapset  *present_parts;
+		int			nparts = subpart->nparts;
+		int		   *subnode_map;
+		int		   *subpart_map;
+		List	   *partprunequal;
+		List	   *pruning_steps;
+		bool		contradictory;
+
+		/*
+		 * The first item in the list is the target partitioned relation.  The
+		 * quals belong to this relation, so require no translation.
+		 */
+		if (!targetpart)
+		{
+			targetpart = subpart;
+			partprunequal = prunequal;
+		}
+		else
+		{
+			/*
+			 * For sub-partitioned tables the columns may not be in the same
+			 * order as the parent, so we must translate the prunequal to make
+			 * it compatible with this relation.
+			 */
+			partprunequal = (List *)
+				adjust_appendrel_attrs_multilevel(root,
+												  (Node *) prunequal,
+												  subpart->relids,
+												  targetpart->relids);
+		}
+
+		pruning_steps = gen_partprune_steps(subpart, partprunequal,
+											&contradictory);
+
+		if (contradictory)
+		{
+			/*
+			 * This shouldn't happen as the planner should have detected this
+			 * earlier. However, we do use additional quals from parameterized
+			 * paths here. These do only compare Params to the partition key,
+			 * so this shouldn't cause the discovery of any new qual
+			 * contradictions that were not previously discovered as the Param
+			 * values are unknown during planning.  Anyway, we'd better do
+			 * something sane here, so let's just disable run-time pruning.
+			 */
+			return NIL;
+		}
+
+		subnode_map = (int *) palloc(nparts * sizeof(int));
+		subpart_map = (int *) palloc(nparts * sizeof(int));
+		present_parts = NULL;
+
+		/*
+		 * Loop over each partition of the partitioned rel and record the
+		 * subpath index for each.  Any partitions which are not present in
+		 * the subpaths List will be set to -1, and any sub-partitioned table
+		 * which is not present will also be set to -1.
+		 */
+		for (i = 0; i < nparts; i++)
+		{
+			RelOptInfo *partrel = subpart->part_rels[i];
+			int			subnodeidx = relid_subnode_map[partrel->relid] - 1;
+			int			subpartidx = relid_subpart_map[partrel->relid] - 1;
+
+			subnode_map[i] = subnodeidx;
+			subpart_map[i] = subpartidx;
+
+			/*
+			 * Record the indexes of all the partition indexes that we have
+			 * subnodes or subparts for.  This allows an optimization to skip
+			 * attempting any run-time pruning when no Params are found
+			 * matching the partition key at this level.
+			 */
+			if (subnodeidx >= 0 || subpartidx >= 0)
+				present_parts = bms_add_member(present_parts, i);
+		}
+
+		rte = root->simple_rte_array[subpart->relid];
+
+		pinfo = makeNode(PartitionPruneInfo);
+		pinfo->reloid = rte->relid;
+		pinfo->pruning_steps = pruning_steps;
+		pinfo->present_parts = present_parts;
+		pinfo->nparts = nparts;
+		pinfo->extparams = NULL;
+		pinfo->execparams = NULL;
+		pinfo->subnode_map = subnode_map;
+		pinfo->subpart_map = subpart_map;
+
+		/*
+		 * Extract Params matching partition key and record if we got any.
+		 * We'll not bother enabling run-time pruning if no params matched the
+		 * partition key at any level of partitioning.
+		 */
+		gotparam |= pull_partkey_params(pinfo, pruning_steps);
+
+		pinfolist = lappend(pinfolist, pinfo);
+	}
+
+	pfree(relid_subnode_map);
+	pfree(relid_subpart_map);
+
+	if (gotparam)
+		return pinfolist;
+
+	/*
+	 * If no Params were found to match the partition key on any of the
+	 * partitioned relations then there's no point doing any run-time
+	 * partition pruning.
+	 */
+	return NIL;
+}
 
 /*
  * gen_partprune_steps
@@ -257,6 +440,10 @@ prune_append_rel_partitions(RelOptInfo *rel)
 	context.partsupfunc = rel->part_scheme->partsupfunc;
 	context.nparts = rel->nparts;
 	context.boundinfo = rel->boundinfo;
+
+	/* Not valid when being called from the planner */
+	context.planstate = NULL;
+	context.safeparams = NULL;
 
 	/* Actual pruning happens here. */
 	partindexes = get_matching_partitions(&context, pruning_steps);
@@ -2493,6 +2680,57 @@ get_matching_range_bounds(PartitionPruneContext *context,
 }
 
 /*
+ * pull_partkey_params
+ *		Loop through each pruning step and record each external and exec
+ *		Params being compared to the partition keys.
+ */
+static bool
+pull_partkey_params(PartitionPruneInfo *pinfo, List *steps)
+{
+	ListCell   *lc;
+	bool		gotone = false;
+
+	foreach(lc, steps)
+	{
+		PartitionPruneStepOp *stepop = lfirst(lc);
+		ListCell   *lc2;
+
+		if (!IsA(stepop, PartitionPruneStepOp))
+			continue;
+
+		foreach(lc2, stepop->exprs)
+		{
+			Expr	   *expr = lfirst(lc2);
+
+			if (IsA(expr, Param))
+			{
+				Param	   *param = (Param *) expr;
+
+				switch (param->paramkind)
+				{
+					case PARAM_EXTERN:
+						pinfo->extparams = bms_add_member(pinfo->extparams,
+														  param->paramid);
+						break;
+					case PARAM_EXEC:
+						pinfo->execparams = bms_add_member(pinfo->execparams,
+														   param->paramid);
+						break;
+
+					default:
+						elog(ERROR, "unrecognized paramkind: %d",
+							 (int) param->paramkind);
+						break;
+				}
+				gotone = true;
+			}
+		}
+	}
+
+	return gotone;
+}
+
+/*
  * perform_pruning_base_step
  *		Determines the indexes of datums that satisfy conditions specified in
  *		'opstep'.
@@ -2792,6 +3030,29 @@ partkey_datum_from_expr(PartitionPruneContext *context,
 		case T_Const:
 			*value = ((Const *) expr)->constvalue;
 			return true;
+
+		case T_Param:
+
+			/*
+			 * When being called from the executor we may be able to evaluate
+			 * the Param's value.
+			 */
+			if (context->planstate &&
+				bms_is_member(((Param *) expr)->paramid, context->safeparams))
+			{
+				ExprState  *exprstate;
+				bool		isNull;
+
+				exprstate = ExecInitExpr(expr, context->planstate);
+
+				*value = ExecEvalExprSwitchContext(exprstate,
+												   context->planstate->ps_ExprContext,
+												   &isNull);
+				if (isNull)
+					return false;
+
+				return true;
+			}
 
 		default:
 			break;

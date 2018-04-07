@@ -118,8 +118,8 @@ static void ExplainModifyTarget(ModifyTable *plan, ExplainState *es);
 static void ExplainTargetRel(Plan *plan, Index rti, ExplainState *es);
 static void show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 					  ExplainState *es);
-static void ExplainMemberNodes(List *plans, PlanState **planstates,
-				   List *ancestors, ExplainState *es);
+static void ExplainMemberNodes(PlanState **planstates, int nsubnodes,
+				   int nplans, List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
 				const char *relationship, ExplainState *es);
 static void ExplainCustomChildren(CustomScanState *css,
@@ -1811,28 +1811,33 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	switch (nodeTag(plan))
 	{
 		case T_ModifyTable:
-			ExplainMemberNodes(((ModifyTable *) plan)->plans,
-							   ((ModifyTableState *) planstate)->mt_plans,
+			ExplainMemberNodes(((ModifyTableState *) planstate)->mt_plans,
+							   ((ModifyTableState *) planstate)->mt_nplans,
+							   list_length(((ModifyTable *) plan)->plans),
 							   ancestors, es);
 			break;
 		case T_Append:
-			ExplainMemberNodes(((Append *) plan)->appendplans,
-							   ((AppendState *) planstate)->appendplans,
+			ExplainMemberNodes(((AppendState *) planstate)->appendplans,
+							   ((AppendState *) planstate)->as_nplans,
+							   list_length(((Append *) plan)->appendplans),
 							   ancestors, es);
 			break;
 		case T_MergeAppend:
-			ExplainMemberNodes(((MergeAppend *) plan)->mergeplans,
-							   ((MergeAppendState *) planstate)->mergeplans,
+			ExplainMemberNodes(((MergeAppendState *) planstate)->mergeplans,
+							   ((MergeAppendState *) planstate)->ms_nplans,
+							   list_length(((MergeAppend *) plan)->mergeplans),
 							   ancestors, es);
 			break;
 		case T_BitmapAnd:
-			ExplainMemberNodes(((BitmapAnd *) plan)->bitmapplans,
-							   ((BitmapAndState *) planstate)->bitmapplans,
+			ExplainMemberNodes(((BitmapAndState *) planstate)->bitmapplans,
+							   ((BitmapAndState *) planstate)->nplans,
+							   list_length(((BitmapAnd *) plan)->bitmapplans),
 							   ancestors, es);
 			break;
 		case T_BitmapOr:
-			ExplainMemberNodes(((BitmapOr *) plan)->bitmapplans,
-							   ((BitmapOrState *) planstate)->bitmapplans,
+			ExplainMemberNodes(((BitmapOrState *) planstate)->bitmapplans,
+							   ((BitmapOrState *) planstate)->nplans,
+							   list_length(((BitmapOr *) plan)->bitmapplans),
 							   ancestors, es);
 			break;
 		case T_SubqueryScan:
@@ -3173,18 +3178,28 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
  *
  * The ancestors list should already contain the immediate parent of these
  * plans.
- *
- * Note: we don't actually need to examine the Plan list members, but
- * we need the list in order to determine the length of the PlanState array.
+*
+* nsubnodes indicates the number of items in the planstates array.
+* nplans indicates the original number of subnodes in the Plan, some of these
+* may have been pruned by the run-time pruning code.
  */
 static void
-ExplainMemberNodes(List *plans, PlanState **planstates,
+ExplainMemberNodes(PlanState **planstates, int nsubnodes, int nplans,
 				   List *ancestors, ExplainState *es)
 {
-	int			nplans = list_length(plans);
 	int			j;
 
-	for (j = 0; j < nplans; j++)
+	/*
+	 * The number of subnodes being lower than the number of subplans that was
+	 * specified in the plan means that some subnodes have been ignored per
+	 * instruction for the partition pruning code during the executor
+	 * initialization.  To make this a bit less mysterious, we'll indicate
+	 * here that this has happened.
+	 */
+	if (nsubnodes < nplans)
+		ExplainPropertyInteger("Subplans Removed", NULL, nplans - nsubnodes, es);
+
+	for (j = 0; j < nsubnodes; j++)
 		ExplainNode(planstates[j], ancestors,
 					"Member", NULL, es);
 }

@@ -248,6 +248,7 @@ _copyAppend(const Append *from)
 	COPY_NODE_FIELD(partitioned_rels);
 	COPY_NODE_FIELD(appendplans);
 	COPY_SCALAR_FIELD(first_partial_plan);
+	COPY_NODE_FIELD(part_prune_infos);
 
 	return newnode;
 }
@@ -2178,6 +2179,23 @@ _copyPartitionPruneStepCombine(const PartitionPruneStepCombine *from)
 	COPY_SCALAR_FIELD(step.step_id);
 	COPY_SCALAR_FIELD(combineOp);
 	COPY_NODE_FIELD(source_stepids);
+
+	return newnode;
+}
+
+static PartitionPruneInfo *
+_copyPartitionPruneInfo(const PartitionPruneInfo *from)
+{
+	PartitionPruneInfo *newnode = makeNode(PartitionPruneInfo);
+
+	COPY_SCALAR_FIELD(reloid);
+	COPY_NODE_FIELD(pruning_steps);
+	COPY_BITMAPSET_FIELD(present_parts);
+	COPY_SCALAR_FIELD(nparts);
+	COPY_POINTER_FIELD(subnode_map, from->nparts * sizeof(int));
+	COPY_POINTER_FIELD(subpart_map, from->nparts * sizeof(int));
+	COPY_BITMAPSET_FIELD(extparams);
+	COPY_BITMAPSET_FIELD(execparams);
 
 	return newnode;
 }
@@ -5122,6 +5140,9 @@ copyObjectImpl(const void *from)
 			break;
 		case T_PlaceHolderInfo:
 			retval = _copyPlaceHolderInfo(from);
+			break;
+		case T_PartitionPruneInfo:
+			retval = _copyPartitionPruneInfo(from);
 			break;
 
 			/*
