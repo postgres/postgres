@@ -215,8 +215,6 @@ STATIC_IF_INLINE_DECLARE uint64 pg_atomic_sub_fetch_u64(volatile pg_atomic_uint6
 STATIC_IF_INLINE_DECLARE void
 pg_atomic_init_flag(volatile pg_atomic_flag *ptr)
 {
-	AssertPointerAlignment(ptr, sizeof(*ptr));
-
 	pg_atomic_init_flag_impl(ptr);
 }
 
@@ -230,8 +228,6 @@ pg_atomic_init_flag(volatile pg_atomic_flag *ptr)
 STATIC_IF_INLINE_DECLARE bool
 pg_atomic_test_set_flag(volatile pg_atomic_flag *ptr)
 {
-	AssertPointerAlignment(ptr, sizeof(*ptr));
-
 	return pg_atomic_test_set_flag_impl(ptr);
 }
 
@@ -245,8 +241,6 @@ pg_atomic_test_set_flag(volatile pg_atomic_flag *ptr)
 STATIC_IF_INLINE_DECLARE bool
 pg_atomic_unlocked_test_flag(volatile pg_atomic_flag *ptr)
 {
-	AssertPointerAlignment(ptr, sizeof(*ptr));
-
 	return pg_atomic_unlocked_test_flag_impl(ptr);
 }
 
@@ -258,8 +252,6 @@ pg_atomic_unlocked_test_flag(volatile pg_atomic_flag *ptr)
 STATIC_IF_INLINE_DECLARE void
 pg_atomic_clear_flag(volatile pg_atomic_flag *ptr)
 {
-	AssertPointerAlignment(ptr, sizeof(*ptr));
-
 	pg_atomic_clear_flag_impl(ptr);
 }
 
