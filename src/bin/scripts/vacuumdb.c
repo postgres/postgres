@@ -16,7 +16,7 @@
 #include <sys/select.h>
 #endif
 
-#include "catalog/pg_class.h"
+#include "catalog/pg_class_d.h"
 
 #include "common.h"
 #include "fe_utils/simple_list.h"

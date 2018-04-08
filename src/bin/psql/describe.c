@@ -14,9 +14,9 @@
 
 #include <ctype.h>
 
-#include "catalog/pg_attribute.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_default_acl.h"
+#include "catalog/pg_attribute_d.h"
+#include "catalog/pg_class_d.h"
+#include "catalog/pg_default_acl_d.h"
 #include "fe_utils/string_utils.h"
 
 #include "common.h"

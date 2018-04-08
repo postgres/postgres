@@ -41,7 +41,7 @@
 
 #include <ctype.h>
 
-#include "catalog/pg_class.h"
+#include "catalog/pg_class_d.h"
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"

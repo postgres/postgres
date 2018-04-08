@@ -7,7 +7,7 @@
  */
 #include "postgres_fe.h"
 
-#include "catalog/pg_class.h"
+#include "catalog/pg_class_d.h"
 
 #include "fe_utils/connect.h"
 #include "libpq-fe.h"

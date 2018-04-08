@@ -32,7 +32,7 @@
 
 #include "fe_utils/print.h"
 
-#include "catalog/pg_type.h"
+#include "catalog/pg_type_d.h"
 #include "fe_utils/mbprint.h"
 
 

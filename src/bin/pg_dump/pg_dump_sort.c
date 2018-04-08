@@ -19,7 +19,7 @@
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
 
-#include "catalog/pg_class.h"
+#include "catalog/pg_class_d.h"
 
 /* translator: this is a module name */
 static const char *modulename = gettext_noop("sorter");

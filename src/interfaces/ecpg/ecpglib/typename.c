@@ -3,12 +3,13 @@
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
+#include "catalog/pg_type_d.h"
+
 #include "ecpgtype.h"
 #include "ecpglib.h"
 #include "extern.h"
 #include "sqltypes.h"
 #include "sql3types.h"
-#include "pg_type.h"
 
 /*
  * This function is used to generate the correct type names.

@@ -21,7 +21,7 @@
 
 #include <ctype.h>
 
-#include "catalog/pg_class.h"
+#include "catalog/pg_class_d.h"
 #include "fe_utils/string_utils.h"
 
 

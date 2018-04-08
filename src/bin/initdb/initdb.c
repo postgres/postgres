@@ -61,9 +61,8 @@
 
 #include "access/xlog_internal.h"
 #include "catalog/catalog.h"
-#include "catalog/pg_authid.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_collation.h"
+#include "catalog/pg_authid_d.h"
+#include "catalog/pg_collation_d.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/restricted_token.h"

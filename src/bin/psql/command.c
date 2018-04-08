@@ -23,7 +23,7 @@
 #include <sys/stat.h>			/* for stat() */
 #endif
 
-#include "catalog/pg_class.h"
+#include "catalog/pg_class_d.h"
 #include "portability/instr_time.h"
 
 #include "libpq-fe.h"

@@ -19,7 +19,7 @@
 #include <float.h>
 #include <math.h>
 
-#include "pg_type.h"
+#include "catalog/pg_type_d.h"
 
 #include "ecpgtype.h"
 #include "ecpglib.h"

@@ -12,7 +12,7 @@
 #include "pg_upgrade.h"
 
 #include <sys/stat.h>
-#include "catalog/pg_class.h"
+#include "catalog/pg_class_d.h"
 #include "access/transam.h"
 
 

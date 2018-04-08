@@ -37,7 +37,7 @@
 #include "postgres_fe.h"
 
 #include "pg_upgrade.h"
-#include "catalog/pg_class.h"
+#include "catalog/pg_class_d.h"
 #include "common/file_perm.h"
 #include "common/restricted_token.h"
 #include "fe_utils/string_utils.h"

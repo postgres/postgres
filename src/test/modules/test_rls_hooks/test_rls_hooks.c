@@ -18,16 +18,16 @@
 
 #include "test_rls_hooks.h"
 
-#include <catalog/pg_type.h>
-#include <nodes/makefuncs.h>
-#include <nodes/makefuncs.h>
-#include <parser/parse_clause.h>
-#include <parser/parse_node.h>
-#include <parser/parse_relation.h>
-#include <rewrite/rowsecurity.h>
-#include <utils/acl.h>
-#include <utils/rel.h>
-#include <utils/relcache.h>
+#include "catalog/pg_type.h"
+#include "nodes/makefuncs.h"
+#include "nodes/makefuncs.h"
+#include "parser/parse_clause.h"
+#include "parser/parse_node.h"
+#include "parser/parse_relation.h"
+#include "rewrite/rowsecurity.h"
+#include "utils/acl.h"
+#include "utils/rel.h"
+#include "utils/relcache.h"
 
 PG_MODULE_MAGIC;
 

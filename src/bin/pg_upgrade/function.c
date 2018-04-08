@@ -12,7 +12,7 @@
 #include "pg_upgrade.h"
 
 #include "access/transam.h"
-#include "catalog/pg_language.h"
+#include "catalog/pg_language_d.h"
 
 
 /*
