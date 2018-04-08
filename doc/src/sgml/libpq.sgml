@@ -3566,7 +3566,7 @@ Oid PQftype(const PGresult *res,
        You can query the system table <literal>pg_type</literal> to
        obtain the names and properties of the various data types. The
        <acronym>OID</acronym>s of the built-in data types are defined
-       in the file <filename>src/include/catalog/pg_type.h</filename>
+       in the file <filename>src/include/catalog/pg_type_d.h</filename>
        in the source tree.
       </para>
      </listitem>

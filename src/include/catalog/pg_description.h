@@ -3,6 +3,10 @@
  * pg_description.h
  *	  definition of the system "description" relation (pg_description)
  *
+ * Because the contents of this table are taken from the *.dat files
+ * of other catalogs, there is no pg_description.dat file. The initial
+ * contents are assembled by genbki.pl and loaded during initdb.
+ *
  * NOTE: an object is identified by the OID of the row that primarily
  * defines the object, plus the OID of the table that that row appears in.
  * For example, a function is identified by the OID of its pg_proc row
@@ -25,11 +29,8 @@
  * src/include/catalog/pg_description.h
  *
  * NOTES
- *		the genbki.pl script reads this file and generates .bki
- *		information from the DATA() statements.
- *
- *		XXX do NOT break up DATA() statements into multiple lines!
- *			the scripts are not as smart as you might think...
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -37,15 +38,14 @@
 #define PG_DESCRIPTION_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_description_d.h"
 
 /* ----------------
  *		pg_description definition.  cpp turns this into
  *		typedef struct FormData_pg_description
  * ----------------
  */
-#define DescriptionRelationId  2609
-
-CATALOG(pg_description,2609) BKI_WITHOUT_OIDS
+CATALOG(pg_description,2609,DescriptionRelationId) BKI_WITHOUT_OIDS
 {
 	Oid			objoid;			/* OID of object itself */
 	Oid			classoid;		/* OID of table containing object */
@@ -62,26 +62,5 @@ CATALOG(pg_description,2609) BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_pg_description * Form_pg_description;
-
-/* ----------------
- *		compiler constants for pg_description
- * ----------------
- */
-#define Natts_pg_description			4
-#define Anum_pg_description_objoid		1
-#define Anum_pg_description_classoid	2
-#define Anum_pg_description_objsubid	3
-#define Anum_pg_description_description 4
-
-/* ----------------
- *		initial contents of pg_description
- * ----------------
- */
-
-/*
- *	Because the contents of this table are taken from the other *.h files,
- *	there is no initialization here.  The initial contents are extracted
- *	by genbki.pl and loaded during initdb.
- */
 
 #endif							/* PG_DESCRIPTION_H */

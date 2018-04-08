@@ -2,7 +2,6 @@
  *
  * pg_partitioned_table.h
  *	  definition of the system "partitioned table" relation
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -10,8 +9,8 @@
  * src/include/catalog/pg_partitioned_table.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -19,15 +18,14 @@
 #define PG_PARTITIONED_TABLE_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_partitioned_table_d.h"
 
 /* ----------------
  *		pg_partitioned_table definition.  cpp turns this into
  *		typedef struct FormData_pg_partitioned_table
  * ----------------
  */
-#define PartitionedRelationId 3350
-
-CATALOG(pg_partitioned_table,3350) BKI_WITHOUT_OIDS
+CATALOG(pg_partitioned_table,3350,PartitionedRelationId) BKI_WITHOUT_OIDS
 {
 	Oid			partrelid;		/* partitioned table oid */
 	char		partstrat;		/* partitioning strategy */
@@ -59,19 +57,5 @@ CATALOG(pg_partitioned_table,3350) BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_pg_partitioned_table *Form_pg_partitioned_table;
-
-/* ----------------
- *		compiler constants for pg_partitioned_table
- * ----------------
- */
-#define Natts_pg_partitioned_table				8
-#define Anum_pg_partitioned_table_partrelid		1
-#define Anum_pg_partitioned_table_partstrat		2
-#define Anum_pg_partitioned_table_partnatts		3
-#define Anum_pg_partitioned_table_partdefid		4
-#define Anum_pg_partitioned_table_partattrs		5
-#define Anum_pg_partitioned_table_partclass		6
-#define Anum_pg_partitioned_table_partcollation 7
-#define Anum_pg_partitioned_table_partexprs		8
 
 #endif							/* PG_PARTITIONED_TABLE_H */

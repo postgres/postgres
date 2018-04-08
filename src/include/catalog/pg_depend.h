@@ -2,7 +2,18 @@
  *
  * pg_depend.h
  *	  definition of the system "dependency" relation (pg_depend)
- *	  along with the relation's initial contents.
+ *
+ * pg_depend has no preloaded contents, so there is no pg_depend.dat
+ * file; system-defined dependencies are loaded into it during a late stage
+ * of the initdb process.
+ *
+ * NOTE: we do not represent all possible dependency pairs in pg_depend;
+ * for example, there's not much value in creating an explicit dependency
+ * from an attribute to its relation.  Usually we make a dependency for
+ * cases where the relationship is conditional rather than essential
+ * (for example, not all triggers are dependent on constraints, but all
+ * attributes are dependent on relations) or where the dependency is not
+ * convenient to find from the contents of other catalogs.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +22,8 @@
  * src/include/catalog/pg_depend.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +31,14 @@
 #define PG_DEPEND_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_depend_d.h"
 
 /* ----------------
  *		pg_depend definition.  cpp turns this into
  *		typedef struct FormData_pg_depend
  * ----------------
  */
-#define DependRelationId  2608
-
-CATALOG(pg_depend,2608) BKI_WITHOUT_OIDS
+CATALOG(pg_depend,2608,DependRelationId) BKI_WITHOUT_OIDS
 {
 	/*
 	 * Identification of the dependent (referencing) object.
@@ -59,32 +69,5 @@ CATALOG(pg_depend,2608) BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_pg_depend *Form_pg_depend;
-
-/* ----------------
- *		compiler constants for pg_depend
- * ----------------
- */
-#define Natts_pg_depend				7
-#define Anum_pg_depend_classid		1
-#define Anum_pg_depend_objid		2
-#define Anum_pg_depend_objsubid		3
-#define Anum_pg_depend_refclassid	4
-#define Anum_pg_depend_refobjid		5
-#define Anum_pg_depend_refobjsubid	6
-#define Anum_pg_depend_deptype		7
-
-
-/*
- * pg_depend has no preloaded contents; system-defined dependencies are
- * loaded into it during a late stage of the initdb process.
- *
- * NOTE: we do not represent all possible dependency pairs in pg_depend;
- * for example, there's not much value in creating an explicit dependency
- * from an attribute to its relation.  Usually we make a dependency for
- * cases where the relationship is conditional rather than essential
- * (for example, not all triggers are dependent on constraints, but all
- * attributes are dependent on relations) or where the dependency is not
- * convenient to find from the contents of other catalogs.
- */
 
 #endif							/* PG_DEPEND_H */

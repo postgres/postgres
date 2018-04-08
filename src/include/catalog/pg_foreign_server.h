@@ -9,8 +9,8 @@
  * src/include/catalog/pg_foreign_server.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -18,15 +18,14 @@
 #define PG_FOREIGN_SERVER_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_foreign_server_d.h"
 
 /* ----------------
  *		pg_foreign_server definition.  cpp turns this into
  *		typedef struct FormData_pg_foreign_server
  * ----------------
  */
-#define ForeignServerRelationId 1417
-
-CATALOG(pg_foreign_server,1417)
+CATALOG(pg_foreign_server,1417,ForeignServerRelationId)
 {
 	NameData	srvname;		/* foreign server name */
 	Oid			srvowner;		/* server owner */
@@ -46,19 +45,5 @@ CATALOG(pg_foreign_server,1417)
  * ----------------
  */
 typedef FormData_pg_foreign_server *Form_pg_foreign_server;
-
-/* ----------------
- *		compiler constants for pg_foreign_server
- * ----------------
- */
-
-#define Natts_pg_foreign_server					7
-#define Anum_pg_foreign_server_srvname			1
-#define Anum_pg_foreign_server_srvowner			2
-#define Anum_pg_foreign_server_srvfdw			3
-#define Anum_pg_foreign_server_srvtype			4
-#define Anum_pg_foreign_server_srvversion		5
-#define Anum_pg_foreign_server_srvacl			6
-#define Anum_pg_foreign_server_srvoptions		7
 
 #endif							/* PG_FOREIGN_SERVER_H */

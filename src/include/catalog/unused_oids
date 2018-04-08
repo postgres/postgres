@@ -25,12 +25,12 @@ export FIRSTOBJECTID
 
 # this part (down to the uniq step) should match the duplicate_oids script
 # note: we exclude BKI_BOOTSTRAP relations since they are expected to have
-# matching DATA lines in pg_class.h and pg_type.h
+# matching data entries in pg_class.dat and pg_type.dat
 
-cat pg_*.h toasting.h indexing.h | \
+cat pg_*.h pg_*.dat toasting.h indexing.h |
 egrep -v -e '^CATALOG\(.*BKI_BOOTSTRAP' | \
-sed -n	-e 's/^DATA(insert *OID *= *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*BKI_ROWTYPE_OID(\([0-9][0-9]*\)).*$/\1,\2/p' \
+sed -n	-e 's/.*\boid *=> *'\''\([0-9][0-9]*\)'\''.*$/\1/p' \
+	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*BKI_ROWTYPE_OID(\([0-9][0-9]*\),.*$/\1,\2/p' \
 	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
 	-e 's/^DECLARE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
 	-e 's/^DECLARE_UNIQUE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \

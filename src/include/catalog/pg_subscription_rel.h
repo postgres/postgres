@@ -12,8 +12,9 @@
 #ifndef PG_SUBSCRIPTION_REL_H
 #define PG_SUBSCRIPTION_REL_H
 
-#include "access/xlogdefs.h"
 #include "catalog/genbki.h"
+#include "catalog/pg_subscription_rel_d.h"
+#include "access/xlogdefs.h"
 #include "nodes/pg_list.h"
 
 /* ----------------
@@ -21,9 +22,7 @@
  *		typedef struct FormData_pg_subscription_rel
  * ----------------
  */
-#define SubscriptionRelRelationId			6102
-
-CATALOG(pg_subscription_rel,6102) BKI_WITHOUT_OIDS
+CATALOG(pg_subscription_rel,6102,SubscriptionRelRelationId) BKI_WITHOUT_OIDS
 {
 	Oid			srsubid;		/* Oid of subscription */
 	Oid			srrelid;		/* Oid of relation */
@@ -34,15 +33,7 @@ CATALOG(pg_subscription_rel,6102) BKI_WITHOUT_OIDS
 
 typedef FormData_pg_subscription_rel *Form_pg_subscription_rel;
 
-/* ----------------
- *		compiler constants for pg_subscription_rel
- * ----------------
- */
-#define Natts_pg_subscription_rel				4
-#define Anum_pg_subscription_rel_srsubid		1
-#define Anum_pg_subscription_rel_srrelid		2
-#define Anum_pg_subscription_rel_srsubstate		3
-#define Anum_pg_subscription_rel_srsublsn		4
+#ifdef EXPOSE_TO_CLIENT_CODE
 
 /* ----------------
  *		substate constants
@@ -59,6 +50,8 @@ typedef FormData_pg_subscription_rel *Form_pg_subscription_rel;
 #define SUBREL_STATE_UNKNOWN	'\0'	/* unknown state */
 #define SUBREL_STATE_SYNCWAIT	'w' /* waiting for sync */
 #define SUBREL_STATE_CATCHUP	'c' /* catching up with apply */
+
+#endif							/* EXPOSE_TO_CLIENT_CODE */
 
 typedef struct SubscriptionRelState
 {

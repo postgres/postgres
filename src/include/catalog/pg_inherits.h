@@ -2,7 +2,6 @@
  *
  * pg_inherits.h
  *	  definition of the system "inherits" relation (pg_inherits)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_inherits.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +19,14 @@
 #define PG_INHERITS_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_inherits_d.h"
 
 /* ----------------
  *		pg_inherits definition.  cpp turns this into
  *		typedef struct FormData_pg_inherits
  * ----------------
  */
-#define InheritsRelationId	2611
-
-CATALOG(pg_inherits,2611) BKI_WITHOUT_OIDS
+CATALOG(pg_inherits,2611,InheritsRelationId) BKI_WITHOUT_OIDS
 {
 	Oid			inhrelid;
 	Oid			inhparent;
@@ -41,19 +39,5 @@ CATALOG(pg_inherits,2611) BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_pg_inherits *Form_pg_inherits;
-
-/* ----------------
- *		compiler constants for pg_inherits
- * ----------------
- */
-#define Natts_pg_inherits				3
-#define Anum_pg_inherits_inhrelid		1
-#define Anum_pg_inherits_inhparent		2
-#define Anum_pg_inherits_inhseqno		3
-
-/* ----------------
- *		pg_inherits has no initial contents
- * ----------------
- */
 
 #endif							/* PG_INHERITS_H */

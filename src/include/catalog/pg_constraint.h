@@ -2,7 +2,6 @@
  *
  * pg_constraint.h
  *	  definition of the system "constraint" relation (pg_constraint)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_constraint.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +19,14 @@
 #define PG_CONSTRAINT_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_constraint_d.h"
 
 /* ----------------
  *		pg_constraint definition.  cpp turns this into
  *		typedef struct FormData_pg_constraint
  * ----------------
  */
-#define ConstraintRelationId  2606
-
-CATALOG(pg_constraint,2606)
+CATALOG(pg_constraint,2606,ConstraintRelationId)
 {
 	/*
 	 * conname + connamespace is deliberately not unique; we allow, for
@@ -105,8 +103,8 @@ CATALOG(pg_constraint,2606)
 	int16		conkey[1];
 
 	/*
-	 * Columns of conrelid that the constraint does not apply to, but included
-	 * into the same index with key columns.
+	 * Columns of conrelid that the constraint does not apply to, but are
+	 * included into the same index as the key columns
 	 */
 	int16		conincluding[1];
 
@@ -158,45 +156,7 @@ CATALOG(pg_constraint,2606)
  */
 typedef FormData_pg_constraint *Form_pg_constraint;
 
-/* ----------------
- *		compiler constants for pg_constraint
- * ----------------
- */
-#define Natts_pg_constraint					26
-#define Anum_pg_constraint_conname			1
-#define Anum_pg_constraint_connamespace		2
-#define Anum_pg_constraint_contype			3
-#define Anum_pg_constraint_condeferrable	4
-#define Anum_pg_constraint_condeferred		5
-#define Anum_pg_constraint_convalidated		6
-#define Anum_pg_constraint_conrelid			7
-#define Anum_pg_constraint_contypid			8
-#define Anum_pg_constraint_conindid			9
-#define Anum_pg_constraint_conparentid		10
-#define Anum_pg_constraint_confrelid		11
-#define Anum_pg_constraint_confupdtype		12
-#define Anum_pg_constraint_confdeltype		13
-#define Anum_pg_constraint_confmatchtype	14
-#define Anum_pg_constraint_conislocal		15
-#define Anum_pg_constraint_coninhcount		16
-#define Anum_pg_constraint_connoinherit		17
-#define Anum_pg_constraint_conkey			18
-#define Anum_pg_constraint_conincluding		19
-#define Anum_pg_constraint_confkey			20
-#define Anum_pg_constraint_conpfeqop		21
-#define Anum_pg_constraint_conppeqop		22
-#define Anum_pg_constraint_conffeqop		23
-#define Anum_pg_constraint_conexclop		24
-#define Anum_pg_constraint_conbin			25
-#define Anum_pg_constraint_consrc			26
-
-/* ----------------
- *		initial contents of pg_constraint
- * ----------------
- */
-
-/* nothing, at present */
-
+#ifdef EXPOSE_TO_CLIENT_CODE
 
 /* Valid values for contype */
 #define CONSTRAINT_CHECK			'c'
@@ -211,5 +171,7 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  * constants defined in parsenodes.h.  Valid values for confmatchtype are
  * the FKCONSTR_MATCH_xxx constants defined in parsenodes.h.
  */
+
+#endif							/* EXPOSE_TO_CLIENT_CODE */
 
 #endif							/* PG_CONSTRAINT_H */

@@ -2,8 +2,15 @@
  *
  * pg_shdepend.h
  *	  definition of the system "shared dependency" relation (pg_shdepend)
- *	  along with the relation's initial contents.
  *
+ * pg_shdepend has no preloaded contents, so there is no pg_shdepend.dat
+ * file; system-defined dependencies are loaded into it during a late stage
+ * of the initdb process.
+ *
+ * NOTE: we do not represent all possible dependency pairs in pg_shdepend;
+ * for example, there's not much value in creating an explicit dependency
+ * from a relation to its database.  Currently, only dependencies on roles
+ * are explicitly stored in pg_shdepend.
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -11,8 +18,8 @@
  * src/include/catalog/pg_shdepend.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +27,14 @@
 #define PG_SHDEPEND_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_shdepend_d.h"
 
 /* ----------------
  *		pg_shdepend definition.  cpp turns this into
  *		typedef struct FormData_pg_shdepend
  * ----------------
  */
-#define SharedDependRelationId	1214
-
-CATALOG(pg_shdepend,1214) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(pg_shdepend,1214,SharedDependRelationId) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 {
 	/*
 	 * Identification of the dependent (referencing) object.
@@ -62,29 +68,5 @@ CATALOG(pg_shdepend,1214) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_pg_shdepend *Form_pg_shdepend;
-
-/* ----------------
- *		compiler constants for pg_shdepend
- * ----------------
- */
-#define Natts_pg_shdepend			7
-#define Anum_pg_shdepend_dbid		1
-#define Anum_pg_shdepend_classid	2
-#define Anum_pg_shdepend_objid		3
-#define Anum_pg_shdepend_objsubid	4
-#define Anum_pg_shdepend_refclassid 5
-#define Anum_pg_shdepend_refobjid	6
-#define Anum_pg_shdepend_deptype	7
-
-
-/*
- * pg_shdepend has no preloaded contents; system-defined dependencies are
- * loaded into it during a late stage of the initdb process.
- *
- * NOTE: we do not represent all possible dependency pairs in pg_shdepend;
- * for example, there's not much value in creating an explicit dependency
- * from a relation to its database.  Currently, only dependencies on roles
- * are explicitly stored in pg_shdepend.
- */
 
 #endif							/* PG_SHDEPEND_H */

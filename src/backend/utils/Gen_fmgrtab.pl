@@ -3,7 +3,7 @@
 #
 # Gen_fmgrtab.pl
 #    Perl script that generates fmgroids.h, fmgrprotos.h, and fmgrtab.c
-#    from pg_proc.h
+#    from pg_proc.dat
 #
 # Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
@@ -20,7 +20,7 @@ use strict;
 use warnings;
 
 # Collect arguments
-my $infile;    # pg_proc.h
+my @input_files;
 my $output_path = '';
 my @include_path;
 
@@ -29,7 +29,7 @@ while (@ARGV)
 	my $arg = shift @ARGV;
 	if ($arg !~ /^-/)
 	{
-		$infile = $arg;
+		push @input_files, $arg;
 	}
 	elsif ($arg =~ /^-o/)
 	{
@@ -52,38 +52,50 @@ if ($output_path ne '' && substr($output_path, -1) ne '/')
 }
 
 # Sanity check arguments.
-die "No input files.\n"                                     if !$infile;
+die "No input files.\n"                                     if !@input_files;
 die "No include path; you must specify -I at least once.\n" if !@include_path;
 
-my $FirstBootstrapObjectId =
-	Catalog::FindDefinedSymbol('access/transam.h', \@include_path, 'FirstBootstrapObjectId');
-my $INTERNALlanguageId =
-	Catalog::FindDefinedSymbol('catalog/pg_language.h', \@include_path, 'INTERNALlanguageId');
-
-# Read all the data from the include/catalog files.
-my $catalogs = Catalog::Catalogs($infile);
-
-# Collect the raw data from pg_proc.h.
-my @fmgr = ();
-my @attnames;
-foreach my $column (@{ $catalogs->{pg_proc}->{columns} })
+# Read all the input files into internal data structures.
+# Note: We pass data file names as arguments and then look for matching
+# headers to parse the schema from. This is backwards from genbki.pl,
+# but the Makefile dependencies look more sensible this way.
+my %catalogs;
+my %catalog_data;
+foreach my $datfile (@input_files)
 {
-	push @attnames, $column->{name};
+	$datfile =~ /(.+)\.dat$/
+	  or die "Input files need to be data (.dat) files.\n";
+
+	my $header = "$1.h";
+	die "There in no header file corresponding to $datfile"
+	  if ! -e $header;
+
+	my $catalog = Catalog::ParseHeader($header);
+	my $catname = $catalog->{catname};
+	my $schema  = $catalog->{columns};
+
+	$catalogs{$catname} = $catalog;
+	$catalog_data{$catname} = Catalog::ParseData($datfile, $schema, 0);
 }
 
-my $data = $catalogs->{pg_proc}->{data};
-foreach my $row (@$data)
-{
+# Fetch some values for later.
+my $FirstBootstrapObjectId = Catalog::FindDefinedSymbol(
+	'access/transam.h', \@include_path, 'FirstBootstrapObjectId');
+my $INTERNALlanguageId = Catalog::FindDefinedSymbolFromData(
+	$catalog_data{pg_language}, 'INTERNALlanguageId');
 
-	# Split line into tokens without interpreting their meaning.
-	my %bki_values;
-	@bki_values{@attnames} = Catalog::SplitDataLine($row->{bki_values});
+# Collect certain fields from pg_proc.dat.
+my @fmgr = ();
+
+foreach my $row (@{ $catalog_data{pg_proc} })
+{
+	my %bki_values = %$row;
 
 	# Select out just the rows for internal-language procedures.
 	next if $bki_values{prolang} ne $INTERNALlanguageId;
 
 	push @fmgr,
-	  { oid    => $row->{oid},
+	  { oid    => $bki_values{oid},
 		strict => $bki_values{proisstrict},
 		retset => $bki_values{proretset},
 		nargs  => $bki_values{pronargs},
@@ -281,10 +293,10 @@ Catalog::RenameTempFile($tabfile,    $tmpext);
 sub usage
 {
 	die <<EOM;
-Usage: perl -I [directory of Catalog.pm] Gen_fmgrtab.pl [path to pg_proc.h]
+Usage: perl -I [directory of Catalog.pm] Gen_fmgrtab.pl -I [include path] [path to pg_proc.dat]
 
 Gen_fmgrtab.pl generates fmgroids.h, fmgrprotos.h, and fmgrtab.c from
-pg_proc.h
+pg_proc.dat
 
 Report bugs to <pgsql-bugs\@postgresql.org>.
 EOM

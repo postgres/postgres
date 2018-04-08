@@ -1,0 +1,34 @@
+#----------------------------------------------------------------------
+#
+# pg_am.dat
+#    Initial contents of the pg_am system relation.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_am.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+{ oid => '403', oid_symbol => 'BTREE_AM_OID',
+  descr => 'b-tree index access method',
+  amname => 'btree', amhandler => 'bthandler', amtype => 'i' },
+{ oid => '405', oid_symbol => 'HASH_AM_OID',
+  descr => 'hash index access method',
+  amname => 'hash', amhandler => 'hashhandler', amtype => 'i' },
+{ oid => '783', oid_symbol => 'GIST_AM_OID',
+  descr => 'GiST index access method',
+  amname => 'gist', amhandler => 'gisthandler', amtype => 'i' },
+{ oid => '2742', oid_symbol => 'GIN_AM_OID',
+  descr => 'GIN index access method',
+  amname => 'gin', amhandler => 'ginhandler', amtype => 'i' },
+{ oid => '4000', oid_symbol => 'SPGIST_AM_OID',
+  descr => 'SP-GiST index access method',
+  amname => 'spgist', amhandler => 'spghandler', amtype => 'i' },
+{ oid => '3580', oid_symbol => 'BRIN_AM_OID',
+  descr => 'block range index (BRIN) access method',
+  amname => 'brin', amhandler => 'brinhandler', amtype => 'i' },
+
+]

@@ -2,7 +2,6 @@
  *
  * pg_tablespace.h
  *	  definition of the system "tablespace" relation (pg_tablespace)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_tablespace.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +19,14 @@
 #define PG_TABLESPACE_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_tablespace_d.h"
 
 /* ----------------
  *		pg_tablespace definition.  cpp turns this into
  *		typedef struct FormData_pg_tablespace
  * ----------------
  */
-#define TableSpaceRelationId  1213
-
-CATALOG(pg_tablespace,1213) BKI_SHARED_RELATION
+CATALOG(pg_tablespace,1213,TableSpaceRelationId) BKI_SHARED_RELATION
 {
 	NameData	spcname;		/* tablespace name */
 	Oid			spcowner;		/* owner of tablespace */
@@ -45,21 +43,5 @@ CATALOG(pg_tablespace,1213) BKI_SHARED_RELATION
  * ----------------
  */
 typedef FormData_pg_tablespace *Form_pg_tablespace;
-
-/* ----------------
- *		compiler constants for pg_tablespace
- * ----------------
- */
-
-#define Natts_pg_tablespace				4
-#define Anum_pg_tablespace_spcname		1
-#define Anum_pg_tablespace_spcowner		2
-#define Anum_pg_tablespace_spcacl		3
-#define Anum_pg_tablespace_spcoptions	4
-
-DATA(insert OID = 1663 ( pg_default PGUID _null_ _null_ ));
-#define DEFAULTTABLESPACE_OID 1663
-DATA(insert OID = 1664 ( pg_global	PGUID _null_ _null_ ));
-#define GLOBALTABLESPACE_OID 1664
 
 #endif							/* PG_TABLESPACE_H */

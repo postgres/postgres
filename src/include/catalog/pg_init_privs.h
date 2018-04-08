@@ -15,17 +15,20 @@
  * for a table itself, so that it is distinct from any column privilege.
  * Currently, objsubid is unused and zero for all other kinds of objects.
  *
+ * Because the contents of this table depend on what is done with the other
+ * objects in the system (and, in particular, may change due to changes in
+ * system_views.sql), there is no pg_init_privs.dat file. The initial contents
+ * are loaded near the end of initdb.
+ *
+ *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_init_privs.h
  *
  * NOTES
- *		the genbki.pl script reads this file and generates .bki
- *		information from the DATA() statements.
- *
- *		XXX do NOT break up DATA() statements into multiple lines!
- *			the scripts are not as smart as you might think...
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -33,15 +36,14 @@
 #define PG_INIT_PRIVS_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_init_privs_d.h"
 
 /* ----------------
  *		pg_init_privs definition.  cpp turns this into
  *		typedef struct FormData_pg_init_privs
  * ----------------
  */
-#define InitPrivsRelationId  3394
-
-CATALOG(pg_init_privs,3394) BKI_WITHOUT_OIDS
+CATALOG(pg_init_privs,3394,InitPrivsRelationId) BKI_WITHOUT_OIDS
 {
 	Oid			objoid;			/* OID of object itself */
 	Oid			classoid;		/* OID of table containing object */
@@ -60,17 +62,6 @@ CATALOG(pg_init_privs,3394) BKI_WITHOUT_OIDS
  */
 typedef FormData_pg_init_privs * Form_pg_init_privs;
 
-/* ----------------
- *		compiler constants for pg_init_privs
- * ----------------
- */
-#define Natts_pg_init_privs				5
-#define Anum_pg_init_privs_objoid		1
-#define Anum_pg_init_privs_classoid		2
-#define Anum_pg_init_privs_objsubid		3
-#define Anum_pg_init_privs_privtype		4
-#define Anum_pg_init_privs_initprivs	5
-
 /*
  * It is important to know if the initial privileges are from initdb or from an
  * extension.  This enum is used to provide that differentiation and the two
@@ -83,18 +74,5 @@ typedef enum InitPrivsType
 	INITPRIVS_INITDB = 'i',
 	INITPRIVS_EXTENSION = 'e'
 } InitPrivsType;
-
-/* ----------------
- *		initial contents of pg_init_privs
- * ----------------
- */
-
-/*
- *	Because the contents of this table depend on what is done with the other
- *	objects in the system (and, in particular, may change due to changes is
- *	system_views.sql), there is no initialization here.
- *
- *	The initial contents are loaded near the end of initdb.
- */
 
 #endif							/* PG_INIT_PRIVS_H */

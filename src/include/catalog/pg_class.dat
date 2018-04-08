@@ -1,0 +1,68 @@
+#----------------------------------------------------------------------
+#
+# pg_class.dat
+#    Initial contents of the pg_class system relation.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_class.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+# Note: only "bootstrapped" relations, ie those marked BKI_BOOTSTRAP, need to
+# have entries here.  Be sure that the OIDs listed here match those given in
+# their CATALOG and BKI_ROWTYPE_OID macros, and that the relnatts values are
+# correct.
+
+# Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId;
+# similarly, "1" in relminmxid stands for FirstMultiXactId
+
+{ oid => '1247',
+  relname => 'pg_type', relnamespace => 'PGNSP', reltype => '71',
+  reloftype => '0', relowner => 'PGUID', relam => '0', relfilenode => '0',
+  reltablespace => '0', relpages => '0', reltuples => '0', relallvisible => '0',
+  reltoastrelid => '0', relhasindex => 'f', relisshared => 'f',
+  relpersistence => 'p', relkind => 'r', relnatts => '30', relchecks => '0',
+  relhasoids => 't', relhasrules => 'f', relhastriggers => 'f',
+  relhassubclass => 'f', relrowsecurity => 'f', relforcerowsecurity => 'f',
+  relispopulated => 't', relreplident => 'n', relispartition => 'f',
+  relrewrite => '0', relfrozenxid => '3', relminmxid => '1', relacl => '_null_',
+  reloptions => '_null_', relpartbound => '_null_' },
+{ oid => '1249',
+  relname => 'pg_attribute', relnamespace => 'PGNSP', reltype => '75',
+  reloftype => '0', relowner => 'PGUID', relam => '0', relfilenode => '0',
+  reltablespace => '0', relpages => '0', reltuples => '0', relallvisible => '0',
+  reltoastrelid => '0', relhasindex => 'f', relisshared => 'f',
+  relpersistence => 'p', relkind => 'r', relnatts => '24', relchecks => '0',
+  relhasoids => 'f', relhasrules => 'f', relhastriggers => 'f',
+  relhassubclass => 'f', relrowsecurity => 'f', relforcerowsecurity => 'f',
+  relispopulated => 't', relreplident => 'n', relispartition => 'f',
+  relrewrite => '0', relfrozenxid => '3', relminmxid => '1', relacl => '_null_',
+  reloptions => '_null_', relpartbound => '_null_' },
+{ oid => '1255',
+  relname => 'pg_proc', relnamespace => 'PGNSP', reltype => '81',
+  reloftype => '0', relowner => 'PGUID', relam => '0', relfilenode => '0',
+  reltablespace => '0', relpages => '0', reltuples => '0', relallvisible => '0',
+  reltoastrelid => '0', relhasindex => 'f', relisshared => 'f',
+  relpersistence => 'p', relkind => 'r', relnatts => '28', relchecks => '0',
+  relhasoids => 't', relhasrules => 'f', relhastriggers => 'f',
+  relhassubclass => 'f', relrowsecurity => 'f', relforcerowsecurity => 'f',
+  relispopulated => 't', relreplident => 'n', relispartition => 'f',
+  relrewrite => '0', relfrozenxid => '3', relminmxid => '1', relacl => '_null_',
+  reloptions => '_null_', relpartbound => '_null_' },
+{ oid => '1259',
+  relname => 'pg_class', relnamespace => 'PGNSP', reltype => '83',
+  reloftype => '0', relowner => 'PGUID', relam => '0', relfilenode => '0',
+  reltablespace => '0', relpages => '0', reltuples => '0', relallvisible => '0',
+  reltoastrelid => '0', relhasindex => 'f', relisshared => 'f',
+  relpersistence => 'p', relkind => 'r', relnatts => '33', relchecks => '0',
+  relhasoids => 't', relhasrules => 'f', relhastriggers => 'f',
+  relhassubclass => 'f', relrowsecurity => 'f', relforcerowsecurity => 'f',
+  relispopulated => 't', relreplident => 'n', relispartition => 'f',
+  relrewrite => '0', relfrozenxid => '3', relminmxid => '1', relacl => '_null_',
+  reloptions => '_null_', relpartbound => '_null_' },
+
+]

@@ -1,0 +1,67 @@
+#----------------------------------------------------------------------
+#
+# pg_authid.dat
+#    Initial contents of the pg_authid system relation.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_authid.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+# POSTGRES will be replaced at initdb time with a user choice that might
+# contain non-word characters, so we must double-quote it.
+
+# The C code typically refers to these roles using the #define symbols,
+# so make sure every entry has an oid_symbol value.
+
+{ oid => '10', oid_symbol => 'BOOTSTRAP_SUPERUSERID',
+  rolname => '"POSTGRES"', rolsuper => 't', rolinherit => 't',
+  rolcreaterole => 't', rolcreatedb => 't', rolcanlogin => 't',
+  rolreplication => 't', rolbypassrls => 't', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '3373', oid_symbol => 'DEFAULT_ROLE_MONITOR',
+  rolname => 'pg_monitor', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '3374', oid_symbol => 'DEFAULT_ROLE_READ_ALL_SETTINGS',
+  rolname => 'pg_read_all_settings', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '3375', oid_symbol => 'DEFAULT_ROLE_READ_ALL_STATS',
+  rolname => 'pg_read_all_stats', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '3377', oid_symbol => 'DEFAULT_ROLE_STAT_SCAN_TABLES',
+  rolname => 'pg_stat_scan_tables', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '4569', oid_symbol => 'DEFAULT_ROLE_READ_SERVER_FILES',
+  rolname => 'pg_read_server_files', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '4570', oid_symbol => 'DEFAULT_ROLE_WRITE_SERVER_FILES',
+  rolname => 'pg_write_server_files', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '4571', oid_symbol => 'DEFAULT_ROLE_EXECUTE_SERVER_PROGRAM',
+  rolname => 'pg_execute_server_program', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+{ oid => '4200', oid_symbol => 'DEFAULT_ROLE_SIGNAL_BACKENDID',
+  rolname => 'pg_signal_backend', rolsuper => 'f', rolinherit => 't',
+  rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
+  rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
+  rolpassword => '_null_', rolvaliduntil => '_null_' },
+
+]

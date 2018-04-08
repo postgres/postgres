@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------
 #
 # Catalog.pm
-#    Perl module that extracts info from catalog headers into Perl
+#    Perl module that extracts info from catalog files into Perl
 #    data structures
 #
 # Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -16,12 +16,11 @@ package Catalog;
 use strict;
 use warnings;
 
-# Call this function with an array of names of header files to parse.
-# Returns a nested data structure describing the data in the headers.
-sub Catalogs
+# Parses a catalog header file into a data structure describing the schema
+# of the catalog.
+sub ParseHeader
 {
-	my (%catalogs, $catname, $declaring_attributes, $most_recent);
-	$catalogs{names} = [];
+	my $input_file = shift;
 
 	# There are a few types which are given one name in the C source, but a
 	# different name at the SQL level.  These are enumerated here.
@@ -34,108 +33,68 @@ sub Catalogs
 		'TransactionId' => 'xid',
 		'XLogRecPtr'    => 'pg_lsn');
 
-	foreach my $input_file (@_)
-	{
 		my %catalog;
+		my $declaring_attributes = 0;
 		my $is_varlen     = 0;
+		my $is_client_code = 0;
 
 		$catalog{columns} = [];
-		$catalog{data}    = [];
+		$catalog{toasting} = [];
+		$catalog{indexing} = [];
+		$catalog{client_code} = [];
 
 		open(my $ifh, '<', $input_file) || die "$input_file: $!";
-
-		my ($filename) = ($input_file =~ m/(\w+)\.h$/);
-		my $natts_pat = "Natts_$filename";
 
 		# Scan the input file.
 		while (<$ifh>)
 		{
 
-			# Strip C-style comments.
-			s;/\*(.|\n)*\*/;;g;
-			if (m;/\*;)
+			# Set appropriate flag when we're in certain code sections.
+			if (/^#/)
 			{
-
-				# handle multi-line comments properly.
-				my $next_line = <$ifh>;
-				die "$input_file: ends within C-style comment\n"
-				  if !defined $next_line;
-				$_ .= $next_line;
-				redo;
+				$is_varlen = 1 if /^#ifdef\s+CATALOG_VARLEN/;
+				if (/^#ifdef\s+EXPOSE_TO_CLIENT_CODE/)
+				{
+					$is_client_code = 1;
+					next;
+				}
+				next if !$is_client_code;
 			}
 
-			# Remember input line number for later.
-			my $input_line_number = $.;
+			if (!$is_client_code)
+			{
+				# Strip C-style comments.
+				s;/\*(.|\n)*\*/;;g;
+				if (m;/\*;)
+				{
 
-			# Strip useless whitespace and trailing semicolons.
-			chomp;
-			s/^\s+//;
-			s/;\s*$//;
-			s/\s+/ /g;
+					# handle multi-line comments properly.
+					my $next_line = <$ifh>;
+					die "$input_file: ends within C-style comment\n"
+					  if !defined $next_line;
+					$_ .= $next_line;
+					redo;
+				}
+
+				# Strip useless whitespace and trailing semicolons.
+				chomp;
+				s/^\s+//;
+				s/;\s*$//;
+				s/\s+/ /g;
+			}
 
 			# Push the data into the appropriate data structure.
-			if (/$natts_pat\s+(\d+)/)
+			if (/^DECLARE_TOAST\(\s*(\w+),\s*(\d+),\s*(\d+)\)/)
 			{
-				$catalog{natts} = $1;
-			}
-			elsif (
-				/^DATA\(insert(\s+OID\s+=\s+(\d+))?\s+\(\s*(.*)\s*\)\s*\)$/)
-			{
-				check_natts($filename, $catalog{natts}, $3, $input_file,
-					$input_line_number);
-
-				push @{ $catalog{data} }, { oid => $2, bki_values => $3 };
-			}
-			elsif (/^DESCR\(\"(.*)\"\)$/)
-			{
-				$most_recent = $catalog{data}->[-1];
-
-				# this tests if most recent line is not a DATA() statement
-				if (ref $most_recent ne 'HASH')
-				{
-					die "DESCR() does not apply to any catalog ($input_file)";
-				}
-				if (!defined $most_recent->{oid})
-				{
-					die "DESCR() does not apply to any oid ($input_file)";
-				}
-				elsif ($1 ne '')
-				{
-					$most_recent->{descr} = $1;
-				}
-			}
-			elsif (/^SHDESCR\(\"(.*)\"\)$/)
-			{
-				$most_recent = $catalog{data}->[-1];
-
-				# this tests if most recent line is not a DATA() statement
-				if (ref $most_recent ne 'HASH')
-				{
-					die
-					  "SHDESCR() does not apply to any catalog ($input_file)";
-				}
-				if (!defined $most_recent->{oid})
-				{
-					die "SHDESCR() does not apply to any oid ($input_file)";
-				}
-				elsif ($1 ne '')
-				{
-					$most_recent->{shdescr} = $1;
-				}
-			}
-			elsif (/^DECLARE_TOAST\(\s*(\w+),\s*(\d+),\s*(\d+)\)/)
-			{
-				$catname = 'toasting';
 				my ($toast_name, $toast_oid, $index_oid) = ($1, $2, $3);
-				push @{ $catalog{data} },
+				push @{ $catalog{toasting} },
 				  "declare toast $toast_oid $index_oid on $toast_name\n";
 			}
 			elsif (/^DECLARE_(UNIQUE_)?INDEX\(\s*(\w+),\s*(\d+),\s*(.+)\)/)
 			{
-				$catname = 'indexing';
 				my ($is_unique, $index_name, $index_oid, $using) =
 				  ($1, $2, $3, $4);
-				push @{ $catalog{data} },
+				push @{ $catalog{indexing} },
 				  sprintf(
 					"declare %sindex %s %s %s\n",
 					$is_unique ? 'unique ' : '',
@@ -143,37 +102,51 @@ sub Catalogs
 			}
 			elsif (/^BUILD_INDICES/)
 			{
-				push @{ $catalog{data} }, "build indices\n";
+				push @{ $catalog{indexing} }, "build indices\n";
 			}
-			elsif (/^CATALOG\(([^,]*),(\d+)\)/)
+			elsif (/^CATALOG\((\w+),(\d+),(\w+)\)/)
 			{
-				$catname = $1;
+				$catalog{catname} = $1;
 				$catalog{relation_oid} = $2;
-
-				# Store pg_* catalog names in the same order we receive them
-				push @{ $catalogs{names} }, $catname;
+				$catalog{relation_oid_macro} = $3;
 
 				$catalog{bootstrap} = /BKI_BOOTSTRAP/ ? ' bootstrap' : '';
 				$catalog{shared_relation} =
 				  /BKI_SHARED_RELATION/ ? ' shared_relation' : '';
 				$catalog{without_oids} =
 				  /BKI_WITHOUT_OIDS/ ? ' without_oids' : '';
-				$catalog{rowtype_oid} =
-				  /BKI_ROWTYPE_OID\((\d+)\)/ ? " rowtype_oid $1" : '';
+				if (/BKI_ROWTYPE_OID\((\d+),(\w+)\)/)
+				{
+					$catalog{rowtype_oid} = $1;
+					$catalog{rowtype_oid_clause} = " rowtype_oid $1";
+					$catalog{rowtype_oid_macro} = $2;
+				}
+				else
+				{
+					$catalog{rowtype_oid} = '';
+					$catalog{rowtype_oid_clause} = '';
+					$catalog{rowtype_oid_macro} = '';
+				}
 				$catalog{schema_macro} = /BKI_SCHEMA_MACRO/ ? 1 : 0;
 				$declaring_attributes = 1;
+			}
+			elsif ($is_client_code)
+			{
+				if (/^#endif/)
+				{
+					$is_client_code = 0;
+				}
+				else
+				{
+					push @{ $catalog{client_code} }, $_;
+				}
 			}
 			elsif ($declaring_attributes)
 			{
 				next if (/^{|^$/);
-				if (/^#/)
-				{
-					$is_varlen = 1 if /^#ifdef\s+CATALOG_VARLEN/;
-					next;
-				}
 				if (/^}/)
 				{
-					undef $declaring_attributes;
+					$declaring_attributes = 0;
 				}
 				else
 				{
@@ -208,9 +181,16 @@ sub Catalogs
 						{
 							$column{forcenotnull} = 1;
 						}
-						elsif ($attopt =~ /BKI_DEFAULT\((\S+)\)/)
+						# We use quotes for values like \0 and \054, to
+						# make sure all compilers and syntax highlighters
+						# can recognize them properly.
+						elsif ($attopt =~ /BKI_DEFAULT\(['"]?([^'"]+)['"]?\)/)
 						{
 							$column{default} = $1;
+						}
+						elsif ($attopt =~ /BKI_LOOKUP\((\w+)\)/)
+						{
+							$column{lookup} = $1;
 						}
 						else
 						{
@@ -227,41 +207,89 @@ sub Catalogs
 				}
 			}
 		}
-		$catalogs{$catname} = \%catalog;
 		close $ifh;
-	}
-	return \%catalogs;
+	return \%catalog;
 }
 
-# Split a DATA line into fields.
-# Call this on the bki_values element of a DATA item returned by Catalogs();
-# it returns a list of field values.  We don't strip quoting from the fields.
-# Note: it should be safe to assign the result to a list of length equal to
-# the nominal number of catalog fields, because check_natts already checked
-# the number of fields.
-sub SplitDataLine
+# Parses a file containing Perl data structure literals, returning live data.
+#
+# The parameter $preserve_formatting needs to be set for callers that want
+# to work with non-data lines in the data files, such as comments and blank
+# lines. If a caller just wants to consume the data, leave it unset.
+sub ParseData
 {
-	my $bki_values = shift;
+	my ($input_file, $schema, $preserve_formatting) = @_;
 
-	# This handling of quoted strings might look too simplistic, but it
-	# matches what bootscanner.l does: that has no provision for quote marks
-	# inside quoted strings, either.  If we don't have a quoted string, just
-	# snarf everything till next whitespace.  That will accept some things
-	# that bootscanner.l will see as erroneous tokens; but it seems wiser
-	# to do that and let bootscanner.l complain than to silently drop
-	# non-whitespace characters.
-	my @result = $bki_values =~ /"[^"]*"|\S+/g;
+	open(my $ifd, '<', $input_file) || die "$input_file: $!";
+	$input_file =~ /(\w+)\.dat$/
+	  or die "Input file needs to be a .dat file.\n";
+	my $catname = $1;
+	my $data = [];
 
-	return @result;
+	# Scan the input file.
+	while (<$ifd>)
+	{
+		my $hash_ref;
+
+		if (/{/)
+		{
+			# Capture the hash ref
+			# NB: Assumes that the next hash ref can't start on the
+			# same line where the present one ended.
+			# Not foolproof, but we shouldn't need a full parser,
+			# since we expect relatively well-behaved input.
+
+			# Quick hack to detect when we have a full hash ref to
+			# parse. We can't just use a regex because of values in
+			# pg_aggregate and pg_proc like '{0,0}'.
+			my $lcnt = tr/{//;
+			my $rcnt = tr/}//;
+
+			if ($lcnt == $rcnt)
+			{
+				eval '$hash_ref = ' . $_;
+				if (!ref $hash_ref)
+				{
+					die "Error parsing $_\n$!";
+				}
+
+				# Expand tuples to their full representation.
+				AddDefaultValues($hash_ref, $schema, $catname);
+			}
+			else
+			{
+				my $next_line = <$ifd>;
+				die "$input_file: ends within Perl hash\n"
+				  if !defined $next_line;
+				$_ .= $next_line;
+				redo;
+			}
+		}
+
+		# If we found a hash reference, keep it
+		# and annotate the line number.
+		# Only keep non-data strings if we
+		# are told to preserve formatting.
+		if (defined $hash_ref)
+		{
+			$hash_ref->{line_number} = $.;
+			push @$data, $hash_ref;
+		}
+		elsif ($preserve_formatting)
+		{
+			push @$data, $_;
+		}
+	}
+	close $ifd;
+	return $data;
 }
 
-# Fill in default values of a record using the given schema. It's the
-# caller's responsibility to specify other values beforehand.
+# Fill in default values of a record using the given schema.
+# It's the caller's responsibility to specify other values beforehand.
 sub AddDefaultValues
 {
-	my ($row, $schema) = @_;
+	my ($row, $schema, $catname) = @_;
 	my @missing_fields;
-	my $msg;
 
 	foreach my $column (@$schema)
 	{
@@ -276,6 +304,13 @@ sub AddDefaultValues
 		{
 			$row->{$attname} = $column->{default};
 		}
+		elsif ($catname eq 'pg_proc' && $attname eq 'pronargs' &&
+			   defined($row->{proargtypes}))
+		{
+			# pg_proc.pronargs can be derived from proargtypes.
+			my @proargtypes = split /\s+/, $row->{proargtypes};
+			$row->{$attname} = scalar(@proargtypes);
+		}
 		else
 		{
 			# Failed to find a value.
@@ -285,14 +320,15 @@ sub AddDefaultValues
 
 	if (@missing_fields)
 	{
-		$msg = "Missing values for: " . join(', ', @missing_fields);
-		$msg .= "\nShowing other values for context:\n";
+		my $msg = "Failed to form full tuple for $catname\n";
+		$msg .= "Missing values for: " . join(', ', @missing_fields);
+		$msg .= "\nOther values for row:\n";
 		while (my($key, $value) = each %$row)
 		{
 			$msg .= "$key => $value, ";
 		}
+		die $msg;
 	}
-	return $msg;
 }
 
 # Rename temporary files to final names.
@@ -307,7 +343,6 @@ sub RenameTempFile
 	print "Writing $final_name\n";
 	rename($temp_name, $final_name) || die "rename: $temp_name: $!";
 }
-
 
 # Find a symbol defined in a particular header file and extract the value.
 #
@@ -340,22 +375,18 @@ sub FindDefinedSymbol
 	die "$catalog_header: not found in any include directory\n";
 }
 
-
-# verify the number of fields in the passed-in DATA line
-sub check_natts
+# Similar to FindDefinedSymbol, but looks in the bootstrap metadata.
+sub FindDefinedSymbolFromData
 {
-	my ($catname, $natts, $bki_val, $file, $line) = @_;
-
-	die
-"Could not find definition for Natts_${catname} before start of DATA() in $file\n"
-	  unless defined $natts;
-
-	my $nfields = scalar(SplitDataLine($bki_val));
-
-	die sprintf
-"Wrong number of attributes in DATA() entry at %s:%d (expected %d but got %d)\n",
-	  $file, $line, $natts, $nfields
-	  unless $natts == $nfields;
+	my ($data, $symbol) = @_;
+	foreach my $row (@{ $data })
+	{
+		if ($row->{oid_symbol} eq $symbol)
+		{
+			return $row->{oid};
+		}
+	}
+	die "no definition found for $symbol\n";
 }
 
 1;

@@ -213,8 +213,8 @@ sub pre_indent
 s!(^#ifdef[ \t]+__cplusplus.*\nextern[ \t]+"C"[ \t]*\n)\{[ \t]*$!$1$extern_c_start!gm;
 	$source =~ s!(^#ifdef[ \t]+__cplusplus.*\n)\}[ \t]*$!$1$extern_c_stop!gm;
 
-	# Protect backslashes in DATA() and wrapping in CATALOG()
-	$source =~ s!^((DATA|CATALOG)\(.*)$!/*$1*/!gm;
+	# Protect wrapping in CATALOG()
+	$source =~ s!^(CATALOG\(.*)$!/*$1*/!gm;
 
 	return $source;
 }
@@ -225,8 +225,8 @@ sub post_indent
 	my $source          = shift;
 	my $source_filename = shift;
 
-	# Restore DATA/CATALOG lines
-	$source =~ s!^/\*((DATA|CATALOG)\(.*)\*/$!$1!gm;
+	# Restore CATALOG lines
+	$source =~ s!^/\*(CATALOG\(.*)\*/$!$1!gm;
 
 	# Put back braces for extern "C"
 	$source =~ s!^/\* Open extern "C" \*/$!{!gm;

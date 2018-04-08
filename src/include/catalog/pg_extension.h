@@ -2,7 +2,6 @@
  *
  * pg_extension.h
  *	  definition of the system "extension" relation (pg_extension)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_extension.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +19,14 @@
 #define PG_EXTENSION_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_extension_d.h"
 
 /* ----------------
  *		pg_extension definition.  cpp turns this into
  *		typedef struct FormData_pg_extension
  * ----------------
  */
-#define ExtensionRelationId 3079
-
-CATALOG(pg_extension,3079)
+CATALOG(pg_extension,3079,ExtensionRelationId)
 {
 	NameData	extname;		/* extension name */
 	Oid			extowner;		/* extension owner */
@@ -49,24 +47,5 @@ CATALOG(pg_extension,3079)
  * ----------------
  */
 typedef FormData_pg_extension *Form_pg_extension;
-
-/* ----------------
- *		compiler constants for pg_extension
- * ----------------
- */
-
-#define Natts_pg_extension					7
-#define Anum_pg_extension_extname			1
-#define Anum_pg_extension_extowner			2
-#define Anum_pg_extension_extnamespace		3
-#define Anum_pg_extension_extrelocatable	4
-#define Anum_pg_extension_extversion		5
-#define Anum_pg_extension_extconfig			6
-#define Anum_pg_extension_extcondition		7
-
-/* ----------------
- *		pg_extension has no initial contents
- * ----------------
- */
 
 #endif							/* PG_EXTENSION_H */

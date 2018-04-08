@@ -2,7 +2,6 @@
  *
  * pg_index.h
  *	  definition of the system "index" relation (pg_index)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_index.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +19,14 @@
 #define PG_INDEX_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_index_d.h"
 
 /* ----------------
  *		pg_index definition.  cpp turns this into
  *		typedef struct FormData_pg_index.
  * ----------------
  */
-#define IndexRelationId  2610
-
-CATALOG(pg_index,2610) BKI_WITHOUT_OIDS BKI_SCHEMA_MACRO
+CATALOG(pg_index,2610,IndexRelationId) BKI_WITHOUT_OIDS BKI_SCHEMA_MACRO
 {
 	Oid			indexrelid;		/* OID of the index */
 	Oid			indrelid;		/* OID of the relation it indexes */
@@ -67,31 +65,7 @@ CATALOG(pg_index,2610) BKI_WITHOUT_OIDS BKI_SCHEMA_MACRO
  */
 typedef FormData_pg_index *Form_pg_index;
 
-/* ----------------
- *		compiler constants for pg_index
- * ----------------
- */
-#define Natts_pg_index					20
-#define Anum_pg_index_indexrelid		1
-#define Anum_pg_index_indrelid			2
-#define Anum_pg_index_indnatts			3
-#define Anum_pg_index_indnkeyatts		4
-#define Anum_pg_index_indisunique		5
-#define Anum_pg_index_indisprimary		6
-#define Anum_pg_index_indisexclusion	7
-#define Anum_pg_index_indimmediate		8
-#define Anum_pg_index_indisclustered	9
-#define Anum_pg_index_indisvalid		10
-#define Anum_pg_index_indcheckxmin		11
-#define Anum_pg_index_indisready		12
-#define Anum_pg_index_indislive			13
-#define Anum_pg_index_indisreplident	14
-#define Anum_pg_index_indkey			15
-#define Anum_pg_index_indcollation		16
-#define Anum_pg_index_indclass			17
-#define Anum_pg_index_indoption			18
-#define Anum_pg_index_indexprs			19
-#define Anum_pg_index_indpred			20
+#ifdef EXPOSE_TO_CLIENT_CODE
 
 /*
  * Index AMs that support ordered scans must support these two indoption
@@ -100,6 +74,8 @@ typedef FormData_pg_index *Form_pg_index;
  */
 #define INDOPTION_DESC			0x0001	/* values are in reverse order */
 #define INDOPTION_NULLS_FIRST	0x0002	/* NULLs are first instead of last */
+
+#endif							/* EXPOSE_TO_CLIENT_CODE */
 
 /*
  * Use of these macros is recommended over direct examination of the state

@@ -1,0 +1,35 @@
+#----------------------------------------------------------------------
+#
+# pg_ts_config_map.dat
+#    Initial contents of the pg_ts_config_map system relation.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_ts_config_map.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+{ mapcfg => '3748', maptokentype => '1', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '2', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '3', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '4', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '5', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '6', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '7', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '8', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '9', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '10', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '11', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '15', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '16', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '17', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '18', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '19', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '20', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '21', mapseqno => '1', mapdict => '3765' },
+{ mapcfg => '3748', maptokentype => '22', mapseqno => '1', mapdict => '3765' },
+
+]

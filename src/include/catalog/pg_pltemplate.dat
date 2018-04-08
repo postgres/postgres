@@ -1,0 +1,51 @@
+#----------------------------------------------------------------------
+#
+# pg_pltemplate.dat
+#    Initial contents of the pg_pltemplate system relation.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_pltemplate.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+{ tmplname => 'plpgsql', tmpltrusted => 't', tmpldbacreate => 't',
+  tmplhandler => 'plpgsql_call_handler', tmplinline => 'plpgsql_inline_handler',
+  tmplvalidator => 'plpgsql_validator', tmpllibrary => '$libdir/plpgsql',
+  tmplacl => '_null_' },
+{ tmplname => 'pltcl', tmpltrusted => 't', tmpldbacreate => 't',
+  tmplhandler => 'pltcl_call_handler', tmplinline => '_null_',
+  tmplvalidator => '_null_', tmpllibrary => '$libdir/pltcl',
+  tmplacl => '_null_' },
+{ tmplname => 'pltclu', tmpltrusted => 'f', tmpldbacreate => 'f',
+  tmplhandler => 'pltclu_call_handler', tmplinline => '_null_',
+  tmplvalidator => '_null_', tmpllibrary => '$libdir/pltcl',
+  tmplacl => '_null_' },
+{ tmplname => 'plperl', tmpltrusted => 't', tmpldbacreate => 't',
+  tmplhandler => 'plperl_call_handler', tmplinline => 'plperl_inline_handler',
+  tmplvalidator => 'plperl_validator', tmpllibrary => '$libdir/plperl',
+  tmplacl => '_null_' },
+{ tmplname => 'plperlu', tmpltrusted => 'f', tmpldbacreate => 'f',
+  tmplhandler => 'plperlu_call_handler', tmplinline => 'plperlu_inline_handler',
+  tmplvalidator => 'plperlu_validator', tmpllibrary => '$libdir/plperl',
+  tmplacl => '_null_' },
+{ tmplname => 'plpythonu', tmpltrusted => 'f', tmpldbacreate => 'f',
+  tmplhandler => 'plpython_call_handler',
+  tmplinline => 'plpython_inline_handler',
+  tmplvalidator => 'plpython_validator', tmpllibrary => '$libdir/plpython2',
+  tmplacl => '_null_' },
+{ tmplname => 'plpython2u', tmpltrusted => 'f', tmpldbacreate => 'f',
+  tmplhandler => 'plpython2_call_handler',
+  tmplinline => 'plpython2_inline_handler',
+  tmplvalidator => 'plpython2_validator', tmpllibrary => '$libdir/plpython2',
+  tmplacl => '_null_' },
+{ tmplname => 'plpython3u', tmpltrusted => 'f', tmpldbacreate => 'f',
+  tmplhandler => 'plpython3_call_handler',
+  tmplinline => 'plpython3_inline_handler',
+  tmplvalidator => 'plpython3_validator', tmpllibrary => '$libdir/plpython3',
+  tmplacl => '_null_' },
+
+]

@@ -2,7 +2,6 @@
  *
  * pg_largeobject.h
  *	  definition of the system "largeobject" relation (pg_largeobject)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_largeobject.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +19,14 @@
 #define PG_LARGEOBJECT_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_largeobject_d.h"
 
 /* ----------------
  *		pg_largeobject definition.  cpp turns this into
  *		typedef struct FormData_pg_largeobject
  * ----------------
  */
-#define LargeObjectRelationId  2613
-
-CATALOG(pg_largeobject,2613) BKI_WITHOUT_OIDS
+CATALOG(pg_largeobject,2613,LargeObjectRelationId) BKI_WITHOUT_OIDS
 {
 	Oid			loid;			/* Identifier of large object */
 	int32		pageno;			/* Page number (starting from 0) */
@@ -44,15 +42,6 @@ CATALOG(pg_largeobject,2613) BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_pg_largeobject *Form_pg_largeobject;
-
-/* ----------------
- *		compiler constants for pg_largeobject
- * ----------------
- */
-#define Natts_pg_largeobject			3
-#define Anum_pg_largeobject_loid		1
-#define Anum_pg_largeobject_pageno		2
-#define Anum_pg_largeobject_data		3
 
 extern Oid	LargeObjectCreate(Oid loid);
 extern void LargeObjectDrop(Oid loid);

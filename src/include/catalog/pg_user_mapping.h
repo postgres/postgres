@@ -9,8 +9,8 @@
  * src/include/catalog/pg_user_mapping.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -18,15 +18,14 @@
 #define PG_USER_MAPPING_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_user_mapping_d.h"
 
 /* ----------------
  *		pg_user_mapping definition.  cpp turns this into
  *		typedef struct FormData_pg_user_mapping
  * ----------------
  */
-#define UserMappingRelationId	1418
-
-CATALOG(pg_user_mapping,1418)
+CATALOG(pg_user_mapping,1418,UserMappingRelationId)
 {
 	Oid			umuser;			/* Id of the user, InvalidOid if PUBLIC is
 								 * wanted */
@@ -43,15 +42,5 @@ CATALOG(pg_user_mapping,1418)
  * ----------------
  */
 typedef FormData_pg_user_mapping *Form_pg_user_mapping;
-
-/* ----------------
- *		compiler constants for pg_user_mapping
- * ----------------
- */
-
-#define Natts_pg_user_mapping				3
-#define Anum_pg_user_mapping_umuser			1
-#define Anum_pg_user_mapping_umserver		2
-#define Anum_pg_user_mapping_umoptions		3
 
 #endif							/* PG_USER_MAPPING_H */

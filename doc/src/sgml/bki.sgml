@@ -1,37 +1,646 @@
 <!-- doc/src/sgml/bki.sgml -->
 
 <chapter id="bki">
- <title><acronym>BKI</acronym> Backend Interface</title>
+ <title>System Catalog Declarations and Initial Contents</title>
 
  <para>
-  Backend Interface (<acronym>BKI</acronym>) files are scripts in a
-  special language that is understood by the
-  <productname>PostgreSQL</productname> backend when running in the
-  <quote>bootstrap</quote> mode.  The bootstrap mode allows system catalogs
-  to be created and filled from scratch, whereas ordinary SQL commands
-  require the catalogs to exist already.
-  <acronym>BKI</acronym> files can therefore be used to create the
-  database system in the first place.  (And they are probably not
-  useful for anything else.)
+  <productname>PostgreSQL</productname> uses many different system catalogs
+  to keep track of the existence and properties of database objects, such as
+  tables and functions.  Physically there is no difference between a system
+  catalog and a plain user table, but the backend C code knows the structure
+  and properties of each catalog, and can manipulate it directly at a low
+  level.  Thus, for example, it is inadvisable to attempt to alter the
+  structure of a catalog on-the-fly; that would break assumptions built into
+  the C code about how rows of the catalog are laid out.  But the structure
+  of the catalogs can change between major versions.
  </para>
 
  <para>
-  <application>initdb</application> uses a <acronym>BKI</acronym> file
-  to do part of its job when creating a new database cluster.  The
-  input file used by <application>initdb</application> is created as
-  part of building and installing <productname>PostgreSQL</productname>
-  by a program named <filename>genbki.pl</filename>, which reads some
-  specially formatted C header files in the <filename>src/include/catalog/</filename>
-  directory of the source tree.  The created <acronym>BKI</acronym> file
-  is called <filename>postgres.bki</filename> and is
-  normally installed in the
-  <filename>share</filename> subdirectory of the installation tree.
+  The structures of the catalogs are declared in specially formatted C
+  header files in the <filename>src/include/catalog/</filename> directory of
+  the source tree.  In particular, for each catalog there is a header file
+  named after the catalog (e.g., <filename>pg_class.h</filename>
+  for <structname>pg_class</structname>), which defines the set of columns
+  the catalog has, as well as some other basic properties such as its OID.
+  Other critical files defining the catalog structure
+  include <filename>indexing.h</filename>, which defines the indexes present
+  on all the system catalogs, and <filename>toasting.h</filename>, which
+  defines TOAST tables for catalogs that need one.
  </para>
 
  <para>
-  Related information can be found in the documentation for
-  <application>initdb</application>.
+  Many of the catalogs have initial data that must be loaded into them
+  during the <quote>bootstrap</quote> phase
+  of <application>initdb</application>, to bring the system up to a point
+  where it is capable of executing SQL commands.  (For
+  example, <filename>pg_class.h</filename> must contain an entry for itself,
+  as well as one for each other system catalog and index.)  This
+  initial data is kept in editable form in data files that are also stored
+  in the <filename>src/include/catalog/</filename> directory.  For example,
+  <filename>pg_proc.dat</filename> describes all the initial rows that must
+  be inserted into the <structname>pg_proc</structname> catalog.
  </para>
+
+ <para>
+  To create the catalog files and load this initial data into them, a
+  backend running in bootstrap mode reads a <acronym>BKI</acronym>
+  (Backend Interface) file containing commands and initial data.
+  The <filename>postgres.bki</filename> file used in this mode is prepared
+  from the aforementioned header and data files, while building
+  a <productname>PostgreSQL</productname> distribution, by a Perl script
+  named <filename>genbki.pl</filename>.
+  Although it's specific to a particular <productname>PostgreSQL</productname>
+  release, <filename>postgres.bki</filename> is platform-independent and is
+  installed in the <filename>share</filename> subdirectory of the
+  installation tree.
+ </para>
+
+ <para>
+  <filename>genbki.pl</filename> also produces a derived header file for
+  each catalog, for example <filename>pg_class_d.h</filename> for
+  the <structname>pg_class</structname> catalog.  This file contains
+  automatically-generated macro definitions, and may contain other macros,
+  enum declarations, and so on that can be useful for client C code that
+  reads a particular catalog.
+ </para>
+
+ <para>
+  Most Postgres developers don't need to be directly concerned with
+  the <acronym>BKI</acronym> file, but almost any nontrivial feature
+  addition in the backend will require modifying the catalog header files
+  and/or initial data files.  The rest of this chapter gives some
+  information about that, and for completeness describes
+  the <acronym>BKI</acronym> file format.
+ </para>
+
+ <sect1 id="system-catalog-declarations">
+  <title>System Catalog Declaration Rules</title>
+
+  <para>
+   The key part of a catalog header file is a C structure definition
+   describing the layout of each row of the catalog.  This begins with
+   a <literal>CATALOG</literal> macro, which so far as the C compiler is
+   concerned is just shorthand for <literal>typedef struct
+   FormData_<replaceable>catalogname</replaceable></literal>.
+   Each field in the struct gives rise to a catalog column.
+   Fields can be annotated using the BKI property macros described
+   in <filename>genbki.h</filename>, for example to define a default value
+   for a field or mark it as nullable or not nullable.
+   The <literal>CATALOG</literal> line can also be annotated, with some
+   other BKI property macros described in <filename>genbki.h</filename>, to
+   define other properties of the catalog as a whole, such as whether
+   it has OIDs (by default, it does).
+  </para>
+
+  <para>
+   The system catalog cache code (and most catalog-munging code in general)
+   assumes that the fixed-length portions of all system catalog tuples are
+   in fact present, because it maps this C struct declaration onto them.
+   Thus, all variable-length fields and nullable fields must be placed at
+   the end, and they cannot be accessed as struct fields.
+   For example, if you tried to
+   set <structname>pg_type</structname>.<structfield>typrelid</structfield>
+   to be NULL, it would fail when some piece of code tried to reference
+   <literal>typetup-&gt;typrelid</literal> (or worse,
+   <literal>typetup-&gt;typelem</literal>, because that follows
+   <structfield>typrelid</structfield>).  This would result in
+   random errors or even segmentation violations.
+  </para>
+
+  <para>
+   As a partial guard against this type of error, variable-length or
+   nullable fields should not be made directly visible to the C compiler.
+   This is accomplished by wrapping them in <literal>#ifdef
+   CATALOG_VARLEN</literal> ... <literal>#endif</literal> (where
+   <literal>CATALOG_VARLEN</literal> is a symbol that is never defined).
+   This prevents C code from carelessly trying to access fields that might
+   not be there or might be at some other offset.
+   As an independent guard against creating incorrect rows, we
+   require all columns that should be non-nullable to be marked so
+   in <structname>pg_attribute</structname>.  The bootstrap code will
+   automatically mark catalog columns as <literal>NOT NULL</literal>
+   if they are fixed-width and are not preceded by any nullable column.
+   Where this rule is inadequate, you can force correct marking by using
+   <literal>BKI_FORCE_NOT_NULL</literal>
+   and <literal>BKI_FORCE_NULL</literal> annotations as needed.  But note
+   that <literal>NOT NULL</literal> constraints are only enforced in the
+   executor, not against tuples that are generated by random C code,
+   so care is still needed when manually creating or updating catalog rows.
+  </para>
+
+  <para>
+   Frontend code should not include any <structname>pg_xxx.h</structname>
+   catalog header file, as these files may contain C code that won't compile
+   outside the backend.  (Typically, that happens because these files also
+   contain declarations for functions
+   in <filename>src/backend/catalog/</filename> files.)
+   Instead, frontend code may include the corresponding
+   generated <structname>pg_xxx_d.h</structname> header, which will contain
+   OID <literal>#define</literal>s and any other data that might be of use
+   on the client side.  If you want macros or other code in a catalog header
+   to be visible to frontend code, write <literal>#ifdef
+   EXPOSE_TO_CLIENT_CODE</literal> ... <literal>#endif</literal> around that
+   section to instruct <filename>genbki.pl</filename> to copy that section
+   to the <structname>pg_xxx_d.h</structname> header.
+  </para>
+
+  <para>
+   A few of the catalogs are so fundamental that they can't even be created
+   by the <acronym>BKI</acronym> <literal>create</literal> command that's
+   used for most catalogs, because that command needs to write information
+   into these catalogs to describe the new catalog.  These are
+   called <firstterm>bootstrap</firstterm> catalogs, and defining one takes
+   a lot of extra work: you have to manually prepare appropriate entries for
+   them in the pre-loaded contents of <structname>pg_class</structname>
+   and <structname>pg_type</structname>, and those entries will need to be
+   updated for subsequent changes to the catalog's structure.
+   (Bootstrap catalogs also need pre-loaded entries
+   in <structname>pg_attribute</structname>, but
+   fortunately <filename>genbki.pl</filename> handles that chore nowadays.)
+   Avoid making new catalogs be bootstrap catalogs if at all possible.
+  </para>
+ </sect1>
+
+ <sect1 id="system-catalog-initial-data">
+  <title>System Catalog Initial Data</title>
+
+  <para>
+   Each catalog that has any manually-created initial data (some do not)
+   has a corresponding <literal>.dat</literal> file that contains its
+   initial data in an editable format.
+  </para>
+
+  <sect2 id="system-catalog-initial-data-format">
+   <title>Data File Format</title>
+
+   <para>
+    Each <literal>.dat</literal> file contains Perl data structure literals
+    that are simply eval'd to produce an in-memory data structure consisting
+    of an array of hash references, one per catalog row.
+    A slightly modified excerpt from <filename>pg_database.dat</filename>
+    will demonstrate the key features:
+   </para>
+
+<programlisting>
+[
+
+# LC_COLLATE and LC_CTYPE will be replaced at initdb time with user choices
+# that might contain non-word characters, so we must double-quote them.
+
+{ oid =&gt; '1', oid_symbol =&gt; 'TemplateDbOid',
+  descr =&gt; 'database\'s default template',
+  datname =&gt; 'template1', datdba =&gt; 'PGUID', encoding =&gt; 'ENCODING',
+  datcollate =&gt; '"LC_COLLATE"', datctype =&gt; '"LC_CTYPE"', datistemplate =&gt; 't',
+  datallowconn =&gt; 't', datconnlimit =&gt; '-1', datlastsysoid =&gt; '0',
+  datfrozenxid =&gt; '0', datminmxid =&gt; '1', dattablespace =&gt; '1663',
+  datacl =&gt; '_null_' },
+
+]
+</programlisting>
+
+   <para>
+    Points to note:
+   </para>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      The overall file layout is: open square bracket, one or more sets of
+      curly braces each of which represents a catalog row, close square
+      bracket.  Write a comma after each closing curly brace.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Within each catalog row, write comma-separated
+      <replaceable>key</replaceable> <literal>=&gt;</literal>
+      <replaceable>value</replaceable> pairs.  The
+      allowed <replaceable>key</replaceable>s are the names of the catalog's
+      columns, plus the metadata keys <literal>oid</literal>,
+      <literal>oid_symbol</literal>, and <literal>descr</literal>.
+      (The use of <literal>oid</literal> and <literal>oid_symbol</literal>
+      is described in <xref linkend="system-catalog-oid-assignment"/>
+      below.  <literal>descr</literal> supplies a description string for
+      the object, which will be inserted
+      into <structname>pg_description</structname>
+      or <structname>pg_shdescription</structname> as appropriate.)
+      While the metadata keys are optional, the catalog's defined columns
+      must all be provided, except when the catalog's <literal>.h</literal>
+      file specifies a default value for the column.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      All values must be single-quoted.  Escape single quotes used within
+      a value with a backslash.  (Backslashes meant as data need not be
+      doubled, however; this follows Perl's rules for simple quoted
+      literals.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Null values are represented by <literal>_null_</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If a value is a macro to be expanded
+      by <application>initdb</application>, it should also contain double
+      quotes as shown above, unless we know that no special characters can
+      appear within the string that will be substituted.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Comments are preceded by <literal>#</literal>, and must be on their
+      own lines.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      To aid readability, field values that are OIDs of other catalog
+      entries can be represented by names rather than numeric OIDs.
+      This is described in <xref linkend="system-catalog-oid-references"/>
+      below.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Since hashes are unordered data structures, field order and line
+      layout aren't semantically significant.  However, to maintain a
+      consistent appearance, we set a few rules that are applied by the
+      formatting script <filename>reformat_dat_file.pl</filename>:
+
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         Within each pair of curly braces, the metadata
+         fields <literal>oid</literal>, <literal>oid_symbol</literal>,
+         and <literal>descr</literal> (if present) come first, in that
+         order, then the catalog's own fields appear in their defined order.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Newlines are inserted between fields as needed to limit line length
+         to 80 characters, if possible.  A newline is also inserted between
+         the metadata fields and the regular fields.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         If the catalog's <literal>.h</literal> file specifies a default
+         value for a column, and a data entry has that same
+         value, <filename>reformat_dat_file.pl</filename> will omit it from
+         the data file.  This keeps the data representation compact.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <filename>reformat_dat_file.pl</filename> preserves blank lines
+         and comment lines as-is.
+        </para>
+       </listitem>
+
+      </itemizedlist>
+
+      It's recommended to run <filename>reformat_dat_file.pl</filename>
+      before submitting catalog data patches.  For convenience, you can
+      simply change to <filename>src/include/catalog/</filename> and
+      run <literal>make reformat-dat-files</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If you want to add a new method of making the data representation
+      smaller, you must implement it
+      in <filename>reformat_dat_file.pl</filename> and also
+      teach <function>Catalog::ParseData()</function> how to expand the
+      data back into the full representation.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect2>
+
+  <sect2 id="system-catalog-oid-assignment">
+   <title>OID Assignment</title>
+
+   <para>
+    A catalog row appearing in the initial data can be given a
+    manually-assigned OID by writing an <literal>oid
+    =&gt; <replaceable>nnnn</replaceable></literal> metadata field.
+    Furthermore, if an OID is assigned, a C macro for that OID can be
+    created by writing an <literal>oid_symbol
+    =&gt; <replaceable>name</replaceable></literal> metadata field.
+   </para>
+
+   <para>
+    Pre-loaded catalog rows must have preassigned OIDs if there are OID
+    references to them in other pre-loaded rows.  A preassigned OID is
+    also needed if the row's OID must be referenced from C code.
+    If neither case applies, the <literal>oid</literal> metadata field can
+    be omitted, in which case the bootstrap code assigns an OID
+    automatically, or leaves it zero in a catalog that has no OIDs.
+    In practice we usually preassign OIDs for all or none of the pre-loaded
+    rows in a given catalog, even if only some of them are actually
+    cross-referenced.
+   </para>
+
+   <para>
+    Writing the actual numeric value of any OID in C code is considered
+    very bad form; always use a macro, instead.  Direct references
+    to <structname>pg_proc</structname> OIDs are common enough that there's
+    a special mechanism to create the necessary macros automatically;
+    see <filename>src/backend/utils/Gen_fmgrtab.pl</filename>.  Similarly
+    &mdash; but, for historical reasons, not done the same way &mdash;
+    there's an automatic method for creating macros
+    for <structname>pg_type</structname>
+    OIDs.  <literal>oid_symbol</literal> entries are therefore not
+    necessary in those two catalogs.  Likewise, macros for
+    the <structname>pg_class</structname> OIDs of system catalogs and
+    indexes are set up automatically.  For all other system catalogs, you
+    have to manually specify any macros you need
+    via <literal>oid_symbol</literal> entries.
+   </para>
+
+   <para>
+    To find an available OID for a new pre-loaded row, run the
+    script <filename>src/include/catalog/unused_oids</filename>.
+    It prints inclusive ranges of unused OIDs (e.g., the output
+    line <quote>45-900</quote> means OIDs 45 through 900 have not been
+    allocated yet).  Currently, OIDs 1-9999 are reserved for manual
+    assignment; the <filename>unused_oids</filename> script simply looks
+    through the catalog headers and <filename>.dat</filename> files
+    to see which ones do not appear.  You can also use
+    the <filename>duplicate_oids</filename> script to check for mistakes.
+    (That script is run automatically at compile time, and will stop the
+    build if a duplicate is found.)
+   </para>
+
+   <para>
+    The OID counter starts at 10000 at the beginning of a bootstrap run.
+    If a catalog row is in a table that requires OIDs, but no OID was
+    preassigned by an <literal>oid</literal> field, then it will
+    receive an OID of 10000 or above.
+   </para>
+  </sect2>
+
+  <sect2 id="system-catalog-oid-references">
+   <title>OID Reference Lookup</title>
+
+   <para>
+    Cross-references from one initial catalog row to another can be written
+    by just writing the preassigned OID of the referenced row.  But
+    that's error-prone and hard to understand, so for frequently-referenced
+    catalogs, <filename>genbki.pl</filename> provides mechanisms to write
+    symbolic references instead.  Currently this is possible for references
+    to access methods, functions, operators, opclasses, opfamilies, and
+    types.  The rules are as follows:
+   </para>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Use of symbolic references is enabled in a particular catalog column
+      by attaching <literal>BKI_LOOKUP(<replaceable>lookuprule</replaceable>)</literal>
+      to the column's definition, where <replaceable>lookuprule</replaceable>
+      is <structname>pg_am</structname>, <structname>pg_proc</structname>,
+      <structname>pg_operator</structname>,
+      <structname>pg_opclass</structname>,
+      <structname>pg_opfamily</structname>,
+      or <structname>pg_type</structname>.
+      <literal>BKI_LOOKUP</literal> can be attached to columns of
+      type <type>Oid</type>, <type>regproc</type>, <type>oidvector</type>,
+      or <type>Oid[]</type>; in the latter two cases it implies performing a
+      lookup on each element of the array.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In such a column, all entries must use the symbolic format except
+      when writing <literal>0</literal> for InvalidOid.  (If the column is
+      declared <type>regproc</type>, you can optionally
+      write <literal>-</literal> instead of <literal>0</literal>.)
+      <filename>genbki.pl</filename> will warn about unrecognized names.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Access methods are just represented by their names, as are types.
+      Type names must match the referenced <structname>pg_type</structname>
+      entry's <structfield>typname</structfield>; you do not get to use any
+      aliases such as <literal>integer</literal>
+      for <literal>int4</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A function can be represented by
+      its <structfield>proname</structfield>, if that is unique among
+      the <filename>pg_proc.dat</filename> entries (this works like regproc
+      input).  Otherwise, write it
+      as <replaceable>proname(argtypename,argtypename,...)</replaceable>,
+      like regprocedure.  The argument type names must be spelled exactly as
+      they are in the <filename>pg_proc.dat</filename> entry's
+      <structfield>proargtypes</structfield> field.  Do not insert any
+      spaces.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Operators are represented
+      by <replaceable>oprname(lefttype,righttype)</replaceable>,
+      writing the type names exactly as they appear in
+      the <filename>pg_operator.dat</filename>
+      entry's <structfield>oprleft</structfield>
+      and <structfield>oprright</structfield> fields.
+      (Write <literal>0</literal> for the omitted operand of a unary
+      operator.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The names of opclasses and opfamilies are only unique within an
+      access method, so they are represented
+      by <replaceable>access_method_name</replaceable><literal>/</literal><replaceable>object_name</replaceable>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In none of these cases is there any provision for
+      schema-qualification; all objects created during bootstrap are
+      expected to be in the pg_catalog schema.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   <para>
+    <filename>genbki.pl</filename> resolves all symbolic references while it
+    runs, and puts simple numeric OIDs into the emitted BKI file.  There is
+    therefore no need for the bootstrap backend to deal with symbolic
+    references.
+   </para>
+  </sect2>
+
+  <sect2 id="system-catalog-recipes">
+   <title>Recipes for Editing Data Files</title>
+
+   <para>
+    Here are some suggestions about the easiest ways to perform common tasks
+    when updating catalog data files.
+   </para>
+
+   <formalpara>
+    <title>Add a new column with a default to a catalog:</title>
+    <para>
+     Add the column to the header file with
+     a <literal>BKI_DEFAULT(<replaceable>value</replaceable>)</literal>
+     annotation.  The data file need only be adjusted by adding the field
+     in existing rows where a non-default value is needed.
+    </para>
+   </formalpara>
+
+   <formalpara>
+    <title>Add a default value to an existing column that doesn't have
+     one:</title>
+    <para>
+     Add a <literal>BKI_DEFAULT</literal> annotation to the header file,
+     then run <literal>make reformat-dat-files</literal> to remove
+     now-redundant field entries.
+    </para>
+   </formalpara>
+
+   <formalpara>
+    <title>Remove a column, whether it has a default or not:</title>
+    <para>
+     Remove the column from the header, then run <literal>make
+     reformat-dat-files</literal> to remove now-useless field entries.
+    </para>
+   </formalpara>
+
+   <formalpara>
+    <title>Change or remove an existing default value:</title>
+    <para>
+     You cannot simply change the header file, since that will cause the
+     current data to be interpreted incorrectly.  First run <literal>make
+     expand-dat-files</literal> to rewrite the data files with all
+     default values inserted explicitly, then change or remove
+     the <literal>BKI_DEFAULT</literal> annotation, then run <literal>make
+     reformat-dat-files</literal> to remove superfluous fields again.
+    </para>
+   </formalpara>
+
+   <formalpara>
+    <title>Ad-hoc bulk editing:</title>
+    <para>
+     <filename>reformat_dat_file.pl</filename> can be adapted to perform
+     many kinds of bulk changes.  Look for its block comments showing where
+     one-off code can be inserted.  In the following example, we are going
+     to consolidate two boolean fields in <structname>pg_proc</structname>
+     into a char field:
+
+     <orderedlist>
+      <listitem>
+       <para>
+        Add the new column, with a default,
+        to <filename>pg_proc.h</filename>:
+<programlisting>
++    /* see PROKIND_ categories below */
++    char        prokind BKI_DEFAULT(f);
+</programlisting>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Create a new script based on <filename>reformat_dat_file.pl</filename>
+        to insert appropriate values on-the-fly:
+<programlisting>
+-           # At this point we have the full row in memory as a hash
+-           # and can do any operations we want. As written, it only
+-           # removes default values, but this script can be adapted to
+-           # do one-off bulk-editing.
++           # One-off change to migrate to prokind
++           # Default has already been filled in by now, so change to other
++           # values as appropriate
++           if ($values{proisagg} eq 't')
++           {
++               $values{prokind} = 'a';
++           }
++           elsif ($values{proiswindow} eq 't')
++           {
++               $values{prokind} = 'w';
++           }
+</programlisting>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Run the new script:
+<programlisting>
+$ cd src/include/catalog
+$ perl -I ../../backend/catalog  rewrite_dat_with_prokind.pl  pg_proc.dat
+</programlisting>
+        At this point <filename>pg_proc.dat</filename> has all three
+        columns, <structfield>prokind</structfield>,
+        <structfield>proisagg</structfield>,
+        and <structfield>proiswindow</structfield>, though they will appear
+        only in rows where they have non-default values.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove the old columns from <filename>pg_proc.h</filename>:
+<programlisting>
+-    /* is it an aggregate? */
+-    bool        proisagg BKI_DEFAULT(f);
+-
+-    /* is it a window function? */
+-    bool        proiswindow BKI_DEFAULT(f);
+</programlisting>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Finally, run <literal>make reformat-dat-files</literal> to remove
+        the useless old entries from <filename>pg_proc.dat</filename>.
+       </para>
+      </listitem>
+     </orderedlist>
+
+     For further examples of scripts used for bulk editing, see
+     <filename>convert_oid2name.pl</filename>
+     and <filename>remove_pg_type_oid_symbols.pl</filename> attached to this
+     message:
+     <ulink url="https://www.postgresql.org/message-id/CAJVSVGVX8gXnPm+Xa=DxR7kFYprcQ1tNcCT5D0O3ShfnM6jehA@mail.gmail.com"></ulink>
+    </para>
+   </formalpara>
+  </sect2>
+ </sect1>
 
  <sect1 id="bki-format">
   <title><acronym>BKI</acronym> File Format</title>
@@ -76,10 +685,10 @@
      <optional><literal>rowtype_oid</literal> <replaceable>oid</replaceable></optional>
      (<replaceable class="parameter">name1</replaceable> =
      <replaceable class="parameter">type1</replaceable>
-     <optional>FORCE NOT NULL | FORCE NULL </optional> <optional>,
+     <optional><literal>FORCE NOT NULL</literal> | <literal>FORCE NULL</literal> </optional> <optional>,
      <replaceable class="parameter">name2</replaceable> =
      <replaceable class="parameter">type2</replaceable>
-     <optional>FORCE NOT NULL | FORCE NULL </optional>,
+     <optional><literal>FORCE NOT NULL</literal> | <literal>FORCE NULL</literal> </optional>,
      ...</optional>)
     </term>
 
@@ -106,7 +715,7 @@
       tables containing columns of other types, this cannot be done until
       after <structname>pg_type</structname> has been created and filled with
       appropriate entries.  (That effectively means that only these
-      column types can be used in bootstrapped tables, but non-bootstrap
+      column types can be used in bootstrap catalogs, but non-bootstrap
       catalogs can contain any built-in type.)
      </para>
 
@@ -340,7 +949,7 @@
  </sect1>
 
  <sect1 id="bki-example">
-  <title>Example</title>
+  <title>BKI Example</title>
 
   <para>
    The following sequence of commands will create the

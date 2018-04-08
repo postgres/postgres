@@ -1,0 +1,30 @@
+#----------------------------------------------------------------------
+#
+# pg_ts_template.dat
+#    Initial contents of the pg_ts_template system relation.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_ts_template.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+{ oid => '3727',
+  descr => 'simple dictionary: just lower case and check for stopword',
+  tmplname => 'simple', tmplinit => 'dsimple_init',
+  tmpllexize => 'dsimple_lexize' },
+{ oid => '3730', descr => 'synonym dictionary: replace word by its synonym',
+  tmplname => 'synonym', tmplinit => 'dsynonym_init',
+  tmpllexize => 'dsynonym_lexize' },
+{ oid => '3733', descr => 'ispell dictionary',
+  tmplname => 'ispell', tmplinit => 'dispell_init',
+  tmpllexize => 'dispell_lexize' },
+{ oid => '3742',
+  descr => 'thesaurus dictionary: phrase by phrase substitution',
+  tmplname => 'thesaurus', tmplinit => 'thesaurus_init',
+  tmpllexize => 'thesaurus_lexize' },
+
+]

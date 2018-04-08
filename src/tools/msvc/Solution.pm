@@ -264,15 +264,23 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 		"src/interfaces/ecpg/pgtypeslib/exports.txt",
 		"LIBPGTYPES");
 
+	chdir('src/backend/utils');
+	my $pg_language_dat = '../../../src/include/catalog/pg_language.dat';
+	my $pg_proc_dat = '../../../src/include/catalog/pg_proc.dat';
 	if (IsNewer(
-			'src/backend/utils/fmgrtab.c', 'src/include/catalog/pg_proc.h'))
+			'fmgrtab.c', $pg_language_dat)
+		|| IsNewer(
+			'fmgrtab.c', $pg_proc_dat)
+		|| IsNewer(
+			'fmgrtab.c', '../../../src/include/access/transam.h')
+		)
 	{
 		print "Generating fmgrtab.c, fmgroids.h, fmgrprotos.h...\n";
-		chdir('src/backend/utils');
 		system(
-"perl -I ../catalog Gen_fmgrtab.pl -I../../../src/include/ ../../../src/include/catalog/pg_proc.h");
-		chdir('../../..');
+"perl -I ../catalog Gen_fmgrtab.pl -I../../../src/include/ $pg_language_dat $pg_proc_dat");
 	}
+	chdir('../../..');
+
 	if (IsNewer(
 			'src/include/utils/fmgroids.h',
 			'src/backend/utils/fmgroids.h'))
@@ -456,23 +464,38 @@ EOF
 
 	my $mf = Project::read_file('src/backend/catalog/Makefile');
 	$mf =~ s{\\\r?\n}{}g;
-	$mf =~ /^POSTGRES_BKI_SRCS\s*:?=[^,]+,(.*)\)$/gm
-	  || croak "Could not find POSTGRES_BKI_SRCS in Makefile\n";
-	my @allbki = split /\s+/, $1;
-	foreach my $bki (@allbki)
+	$mf =~ /^CATALOG_HEADERS\s*:?=(.*)$/gm
+	  || croak "Could not find CATALOG_HEADERS in Makefile\n";
+	my @bki_srcs = split /\s+/, $1;
+	push @bki_srcs, 'toasting.h';
+	push @bki_srcs, 'indexing.h';
+	$mf =~ /^POSTGRES_BKI_DATA\s*:?=[^,]+,(.*)\)$/gm
+	  || croak "Could not find POSTGRES_BKI_DATA in Makefile\n";
+	my @bki_data = split /\s+/, $1;
+	foreach my $bki (@bki_srcs, @bki_data)
 	{
 		next if $bki eq "";
 		if (IsNewer(
 				'src/backend/catalog/postgres.bki',
 				"src/include/catalog/$bki"))
 		{
-			print "Generating postgres.bki and schemapg.h...\n";
+			print "Generating BKI files and symbol definition headers...\n";
 			chdir('src/backend/catalog');
-			my $bki_srcs = join(' ../../../src/include/catalog/', @allbki);
-			system(
-"perl genbki.pl -I../../../src/include/catalog --set-version=$self->{majorver} $bki_srcs"
-			);
+			my $bki_srcs = join(' ../../../src/include/catalog/', @bki_srcs);
+			system("perl genbki.pl --set-version=$self->{majorver} $bki_srcs");
 			chdir('../../..');
+
+			# Copy generated headers to include directory.
+			opendir(my $dh, 'src/backend/catalog/')
+			  || die "Can't opendir src/backend/catalog/ $!";
+			my @def_headers = grep { /pg_\w+_d\.h$/  } readdir($dh);
+			closedir $dh;
+			foreach my $def_header (@def_headers)
+			{
+				copyFile(
+				"src/backend/catalog/$def_header",
+				"src/include/catalog/$def_header");
+			}
 			copyFile(
 				'src/backend/catalog/schemapg.h',
 				'src/include/catalog/schemapg.h');

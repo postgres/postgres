@@ -2,7 +2,6 @@
  *
  * pg_event_trigger.h
  *	  definition of the system "event trigger" relation (pg_event_trigger)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_event_trigger.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +19,14 @@
 #define PG_EVENT_TRIGGER_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_event_trigger_d.h"
 
 /* ----------------
  *		pg_event_trigger definition.    cpp turns this into
  *		typedef struct FormData_pg_event_trigger
  * ----------------
  */
-#define EventTriggerRelationId	3466
-
-CATALOG(pg_event_trigger,3466)
+CATALOG(pg_event_trigger,3466,EventTriggerRelationId)
 {
 	NameData	evtname;		/* trigger's name */
 	NameData	evtevent;		/* trigger's event */
@@ -48,17 +46,5 @@ CATALOG(pg_event_trigger,3466)
  * ----------------
  */
 typedef FormData_pg_event_trigger *Form_pg_event_trigger;
-
-/* ----------------
- *		compiler constants for pg_event_trigger
- * ----------------
- */
-#define Natts_pg_event_trigger					6
-#define Anum_pg_event_trigger_evtname			1
-#define Anum_pg_event_trigger_evtevent			2
-#define Anum_pg_event_trigger_evtowner			3
-#define Anum_pg_event_trigger_evtfoid			4
-#define Anum_pg_event_trigger_evtenabled		5
-#define Anum_pg_event_trigger_evttags			6
 
 #endif							/* PG_EVENT_TRIGGER_H */

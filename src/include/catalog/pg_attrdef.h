@@ -2,7 +2,6 @@
  *
  * pg_attrdef.h
  *	  definition of the system "attribute defaults" relation (pg_attrdef)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_attrdef.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +19,14 @@
 #define PG_ATTRDEF_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_attrdef_d.h"
 
 /* ----------------
  *		pg_attrdef definition.  cpp turns this into
  *		typedef struct FormData_pg_attrdef
  * ----------------
  */
-#define AttrDefaultRelationId  2604
-
-CATALOG(pg_attrdef,2604)
+CATALOG(pg_attrdef,2604,AttrDefaultRelationId)
 {
 	Oid			adrelid;		/* OID of table containing attribute */
 	int16		adnum;			/* attnum of attribute */
@@ -45,15 +43,5 @@ CATALOG(pg_attrdef,2604)
  * ----------------
  */
 typedef FormData_pg_attrdef *Form_pg_attrdef;
-
-/* ----------------
- *		compiler constants for pg_attrdef
- * ----------------
- */
-#define Natts_pg_attrdef				4
-#define Anum_pg_attrdef_adrelid			1
-#define Anum_pg_attrdef_adnum			2
-#define Anum_pg_attrdef_adbin			3
-#define Anum_pg_attrdef_adsrc			4
 
 #endif							/* PG_ATTRDEF_H */

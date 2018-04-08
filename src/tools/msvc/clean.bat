@@ -48,6 +48,7 @@ if exist src\include\utils\fmgrprotos.h del /q src\include\utils\fmgrprotos.h
 if exist src\include\storage\lwlocknames.h del /q src\include\storage\lwlocknames.h
 if exist src\include\utils\probes.h del /q src\include\utils\probes.h
 if exist src\include\catalog\schemapg.h del /q src\include\catalog\schemapg.h
+if exist src\include\catalog\pg_*_d.h del /q src\include\catalog\pg_*_d.h
 if exist doc\src\sgml\version.sgml del /q doc\src\sgml\version.sgml
 
 if %DIST%==1 if exist src\backend\utils\fmgroids.h del /q src\backend\utils\fmgroids.h
@@ -67,6 +68,7 @@ if %DIST%==1 if exist src\backend\catalog\postgres.bki del /q src\backend\catalo
 if %DIST%==1 if exist src\backend\catalog\postgres.description del /q src\backend\catalog\postgres.description
 if %DIST%==1 if exist src\backend\catalog\postgres.shdescription del /q src\backend\catalog\postgres.shdescription
 if %DIST%==1 if exist src\backend\catalog\schemapg.h del /q src\backend\catalog\schemapg.h
+if %DIST%==1 if exist src\backend\catalog\pg_*_d.h del /q src\backend\catalog\pg_*_d.h
 if %DIST%==1 if exist src\backend\parser\scan.c del /q src\backend\parser\scan.c
 if %DIST%==1 if exist src\backend\parser\gram.c del /q src\backend\parser\gram.c
 if %DIST%==1 if exist src\backend\bootstrap\bootscanner.c del /q src\backend\bootstrap\bootscanner.c

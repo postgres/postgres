@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_db_role_setting.h
- *	definition of configuration settings
+ *	  definition of per-database/per-user configuration settings relation
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -10,17 +10,16 @@
  * src/include/catalog/pg_db_role_setting.h
  *
  * NOTES
- *		the genbki.pl script reads this file and generates .bki
- *		information from the DATA() statements.
- *
- *		XXX do NOT break up DATA() statements into multiple lines!
- *			the scripts are not as smart as you might think...
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PG_DB_ROLE_SETTING_H
 #define PG_DB_ROLE_SETTING_H
 
+#include "catalog/genbki.h"
+#include "catalog/pg_db_role_setting_d.h"
 #include "utils/guc.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
@@ -30,9 +29,7 @@
  *		typedef struct FormData_pg_db_role_setting
  * ----------------
  */
-#define DbRoleSettingRelationId 2964
-
-CATALOG(pg_db_role_setting,2964) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(pg_db_role_setting,2964,DbRoleSettingRelationId) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 {
 	Oid			setdatabase;	/* database */
 	Oid			setrole;		/* role */
@@ -43,20 +40,6 @@ CATALOG(pg_db_role_setting,2964) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 } FormData_pg_db_role_setting;
 
 typedef FormData_pg_db_role_setting * Form_pg_db_role_setting;
-
-/* ----------------
- *		compiler constants for pg_db_role_setting
- * ----------------
- */
-#define Natts_pg_db_role_setting				3
-#define Anum_pg_db_role_setting_setdatabase		1
-#define Anum_pg_db_role_setting_setrole			2
-#define Anum_pg_db_role_setting_setconfig		3
-
-/* ----------------
- *		initial contents of pg_db_role_setting are NOTHING
- * ----------------
- */
 
 /*
  * prototypes for functions in pg_db_role_setting.h

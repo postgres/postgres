@@ -2,7 +2,6 @@
  *
  * pg_trigger.h
  *	  definition of the system "trigger" relation (pg_trigger)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_trigger.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +19,7 @@
 #define PG_TRIGGER_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_trigger_d.h"
 
 /* ----------------
  *		pg_trigger definition.  cpp turns this into
@@ -31,9 +31,7 @@
  * to be associated with a deferrable constraint.
  * ----------------
  */
-#define TriggerRelationId  2620
-
-CATALOG(pg_trigger,2620)
+CATALOG(pg_trigger,2620,TriggerRelationId)
 {
 	Oid			tgrelid;		/* relation trigger is attached to */
 	NameData	tgname;			/* trigger's name */
@@ -71,28 +69,7 @@ CATALOG(pg_trigger,2620)
  */
 typedef FormData_pg_trigger *Form_pg_trigger;
 
-/* ----------------
- *		compiler constants for pg_trigger
- * ----------------
- */
-#define Natts_pg_trigger				17
-#define Anum_pg_trigger_tgrelid			1
-#define Anum_pg_trigger_tgname			2
-#define Anum_pg_trigger_tgfoid			3
-#define Anum_pg_trigger_tgtype			4
-#define Anum_pg_trigger_tgenabled		5
-#define Anum_pg_trigger_tgisinternal	6
-#define Anum_pg_trigger_tgconstrrelid	7
-#define Anum_pg_trigger_tgconstrindid	8
-#define Anum_pg_trigger_tgconstraint	9
-#define Anum_pg_trigger_tgdeferrable	10
-#define Anum_pg_trigger_tginitdeferred	11
-#define Anum_pg_trigger_tgnargs			12
-#define Anum_pg_trigger_tgattr			13
-#define Anum_pg_trigger_tgargs			14
-#define Anum_pg_trigger_tgqual			15
-#define Anum_pg_trigger_tgoldtable		16
-#define Anum_pg_trigger_tgnewtable		17
+#ifdef EXPOSE_TO_CLIENT_CODE
 
 /* Bits within tgtype */
 #define TRIGGER_TYPE_ROW				(1 << 0)
@@ -152,5 +129,7 @@ typedef FormData_pg_trigger *Form_pg_trigger;
  */
 #define TRIGGER_USES_TRANSITION_TABLE(namepointer) \
 	((namepointer) != (char *) NULL)
+
+#endif							/* EXPOSE_TO_CLIENT_CODE */
 
 #endif							/* PG_TRIGGER_H */

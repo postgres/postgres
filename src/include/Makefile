@@ -54,7 +54,7 @@ install: all installdirs
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$dir/*.h  || exit; \
 	done
 ifeq ($(vpath_build),yes)
-	for file in dynloader.h catalog/schemapg.h parser/gram.h storage/lwlocknames.h utils/probes.h; do \
+	for file in dynloader.h catalog/schemapg.h catalog/pg_*_d.h parser/gram.h storage/lwlocknames.h utils/probes.h; do \
 	  cp $$file '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	done
@@ -73,7 +73,9 @@ uninstall:
 
 
 clean:
-	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/errcodes.h parser/gram.h utils/probes.h catalog/schemapg.h
+	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/errcodes.h
+	rm -f parser/gram.h storage/lwlocknames.h utils/probes.h
+	rm -f catalog/schemapg.h catalog/pg_*_d.h catalog/header-stamp
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h pg_config_ext.h pg_config_os.h dynloader.h stamp-h stamp-ext-h

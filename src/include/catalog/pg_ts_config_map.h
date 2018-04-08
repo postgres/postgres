@@ -10,11 +10,8 @@
  * src/include/catalog/pg_ts_config_map.h
  *
  * NOTES
- *		the genbki.pl script reads this file and generates .bki
- *		information from the DATA() statements.
- *
- *		XXX do NOT break up DATA() statements into multiple lines!
- *			the scripts are not as smart as you might think...
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -22,15 +19,14 @@
 #define PG_TS_CONFIG_MAP_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_ts_config_map_d.h"
 
 /* ----------------
  *		pg_ts_config_map definition.  cpp turns this into
  *		typedef struct FormData_pg_ts_config_map
  * ----------------
  */
-#define TSConfigMapRelationId	3603
-
-CATALOG(pg_ts_config_map,3603) BKI_WITHOUT_OIDS
+CATALOG(pg_ts_config_map,3603,TSConfigMapRelationId) BKI_WITHOUT_OIDS
 {
 	Oid			mapcfg;			/* OID of configuration owning this entry */
 	int32		maptokentype;	/* token type from parser */
@@ -39,40 +35,5 @@ CATALOG(pg_ts_config_map,3603) BKI_WITHOUT_OIDS
 } FormData_pg_ts_config_map;
 
 typedef FormData_pg_ts_config_map *Form_pg_ts_config_map;
-
-/* ----------------
- *		compiler constants for pg_ts_config_map
- * ----------------
- */
-#define Natts_pg_ts_config_map				4
-#define Anum_pg_ts_config_map_mapcfg		1
-#define Anum_pg_ts_config_map_maptokentype	2
-#define Anum_pg_ts_config_map_mapseqno		3
-#define Anum_pg_ts_config_map_mapdict		4
-
-/* ----------------
- *		initial contents of pg_ts_config_map
- * ----------------
- */
-
-DATA(insert ( 3748	1	1	3765 ));
-DATA(insert ( 3748	2	1	3765 ));
-DATA(insert ( 3748	3	1	3765 ));
-DATA(insert ( 3748	4	1	3765 ));
-DATA(insert ( 3748	5	1	3765 ));
-DATA(insert ( 3748	6	1	3765 ));
-DATA(insert ( 3748	7	1	3765 ));
-DATA(insert ( 3748	8	1	3765 ));
-DATA(insert ( 3748	9	1	3765 ));
-DATA(insert ( 3748	10	1	3765 ));
-DATA(insert ( 3748	11	1	3765 ));
-DATA(insert ( 3748	15	1	3765 ));
-DATA(insert ( 3748	16	1	3765 ));
-DATA(insert ( 3748	17	1	3765 ));
-DATA(insert ( 3748	18	1	3765 ));
-DATA(insert ( 3748	19	1	3765 ));
-DATA(insert ( 3748	20	1	3765 ));
-DATA(insert ( 3748	21	1	3765 ));
-DATA(insert ( 3748	22	1	3765 ));
 
 #endif							/* PG_TS_CONFIG_MAP_H */

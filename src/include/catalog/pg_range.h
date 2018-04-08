@@ -2,7 +2,6 @@
  *
  * pg_range.h
  *	  definition of the system "range" relation (pg_range)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,11 +10,8 @@
  * src/include/catalog/pg_range.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
- *
- *	  XXX do NOT break up DATA() statements into multiple lines!
- *		  the scripts are not as smart as you might think...
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -23,22 +19,32 @@
 #define PG_RANGE_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_range_d.h"
 
 /* ----------------
  *		pg_range definition.  cpp turns this into
  *		typedef struct FormData_pg_range
  * ----------------
  */
-#define RangeRelationId 3541
-
-CATALOG(pg_range,3541) BKI_WITHOUT_OIDS
+CATALOG(pg_range,3541,RangeRelationId) BKI_WITHOUT_OIDS
 {
-	Oid			rngtypid;		/* OID of owning range type */
-	Oid			rngsubtype;		/* OID of range's element type (subtype) */
-	Oid			rngcollation;	/* collation for this range type, or 0 */
-	Oid			rngsubopc;		/* subtype's btree opclass */
-	regproc		rngcanonical;	/* canonicalize range, or 0 */
-	regproc		rngsubdiff;		/* subtype difference as a float8, or 0 */
+	/* OID of owning range type */
+	Oid			rngtypid BKI_LOOKUP(pg_type);
+
+	/* OID of range's element type (subtype) */
+	Oid			rngsubtype BKI_LOOKUP(pg_type);
+
+	/* collation for this range type, or 0 */
+	Oid			rngcollation BKI_DEFAULT(0);
+
+	/* subtype's btree opclass */
+	Oid			rngsubopc BKI_LOOKUP(pg_opclass);
+
+	/* canonicalize range, or 0 */
+	regproc		rngcanonical BKI_LOOKUP(pg_proc);
+
+	/* subtype difference as a float8, or 0 */
+	regproc		rngsubdiff BKI_LOOKUP(pg_proc);
 } FormData_pg_range;
 
 /* ----------------
@@ -47,31 +53,6 @@ CATALOG(pg_range,3541) BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_pg_range *Form_pg_range;
-
-/* ----------------
- *		compiler constants for pg_range
- * ----------------
- */
-#define Natts_pg_range					6
-#define Anum_pg_range_rngtypid			1
-#define Anum_pg_range_rngsubtype		2
-#define Anum_pg_range_rngcollation		3
-#define Anum_pg_range_rngsubopc			4
-#define Anum_pg_range_rngcanonical		5
-#define Anum_pg_range_rngsubdiff		6
-
-
-/* ----------------
- *		initial contents of pg_range
- * ----------------
- */
-DATA(insert ( 3904 23	0 1978 int4range_canonical int4range_subdiff));
-DATA(insert ( 3906 1700 0 3125 - numrange_subdiff));
-DATA(insert ( 3908 1114 0 3128 - tsrange_subdiff));
-DATA(insert ( 3910 1184 0 3127 - tstzrange_subdiff));
-DATA(insert ( 3912 1082 0 3122 daterange_canonical daterange_subdiff));
-DATA(insert ( 3926 20	0 3124 int8range_canonical int8range_subdiff));
-
 
 /*
  * prototypes for functions in pg_range.c

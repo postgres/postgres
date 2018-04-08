@@ -30,7 +30,7 @@ extern void BootstrapToastTable(char *relName,
 
 /*
  * This macro is just to keep the C compiler from spitting up on the
- * upcoming commands for genbki.pl.
+ * upcoming commands for Catalog.pm.
  */
 #define DECLARE_TOAST(name,toastoid,indexoid) extern int no_such_variable
 

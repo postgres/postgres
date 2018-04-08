@@ -43,7 +43,7 @@ extern void CatalogTupleDelete(Relation heapRel, ItemPointer tid);
 
 /*
  * These macros are just to keep the C compiler from spitting up on the
- * upcoming commands for genbki.pl.
+ * upcoming commands for Catalog.pm.
  */
 #define DECLARE_INDEX(name,oid,decl) extern int no_such_variable
 #define DECLARE_UNIQUE_INDEX(name,oid,decl) extern int no_such_variable

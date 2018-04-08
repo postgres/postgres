@@ -9,8 +9,8 @@
  * src/include/catalog/pg_publication.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -18,17 +18,15 @@
 #define PG_PUBLICATION_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_publication_d.h"
 #include "catalog/objectaddress.h"
 
 /* ----------------
  *		pg_publication definition.  cpp turns this into
  *		typedef struct FormData_pg_publication
- *
  * ----------------
  */
-#define PublicationRelationId			6104
-
-CATALOG(pg_publication,6104)
+CATALOG(pg_publication,6104,PublicationRelationId)
 {
 	NameData	pubname;		/* name of the publication */
 
@@ -60,20 +58,6 @@ CATALOG(pg_publication,6104)
  * ----------------
  */
 typedef FormData_pg_publication *Form_pg_publication;
-
-/* ----------------
- *		compiler constants for pg_publication
- * ----------------
- */
-
-#define Natts_pg_publication				7
-#define Anum_pg_publication_pubname			1
-#define Anum_pg_publication_pubowner		2
-#define Anum_pg_publication_puballtables	3
-#define Anum_pg_publication_pubinsert		4
-#define Anum_pg_publication_pubupdate		5
-#define Anum_pg_publication_pubdelete		6
-#define Anum_pg_publication_pubtruncate		7
 
 typedef struct PublicationActions
 {

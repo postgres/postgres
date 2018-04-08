@@ -1,0 +1,31 @@
+#----------------------------------------------------------------------
+#
+# pg_range.dat
+#    Initial contents of the pg_range system relation.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_range.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+{ rngtypid => 'int4range', rngsubtype => 'int4', rngsubopc => 'btree/int4_ops',
+  rngcanonical => 'int4range_canonical', rngsubdiff => 'int4range_subdiff' },
+{ rngtypid => 'numrange', rngsubtype => 'numeric',
+  rngsubopc => 'btree/numeric_ops', rngcanonical => '-',
+  rngsubdiff => 'numrange_subdiff' },
+{ rngtypid => 'tsrange', rngsubtype => 'timestamp',
+  rngsubopc => 'btree/timestamp_ops', rngcanonical => '-',
+  rngsubdiff => 'tsrange_subdiff' },
+{ rngtypid => 'tstzrange', rngsubtype => 'timestamptz',
+  rngsubopc => 'btree/timestamptz_ops', rngcanonical => '-',
+  rngsubdiff => 'tstzrange_subdiff' },
+{ rngtypid => 'daterange', rngsubtype => 'date', rngsubopc => 'btree/date_ops',
+  rngcanonical => 'daterange_canonical', rngsubdiff => 'daterange_subdiff' },
+{ rngtypid => 'int8range', rngsubtype => 'int8', rngsubopc => 'btree/int8_ops',
+  rngcanonical => 'int8range_canonical', rngsubdiff => 'int8range_subdiff' },
+
+]

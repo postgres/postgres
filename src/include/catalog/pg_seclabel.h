@@ -12,15 +12,14 @@
 #define PG_SECLABEL_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_seclabel_d.h"
 
 /* ----------------
  *		pg_seclabel definition.  cpp turns this into
  *		typedef struct FormData_pg_seclabel
  * ----------------
  */
-#define SecLabelRelationId		3596
-
-CATALOG(pg_seclabel,3596) BKI_WITHOUT_OIDS
+CATALOG(pg_seclabel,3596,SecLabelRelationId) BKI_WITHOUT_OIDS
 {
 	Oid			objoid;			/* OID of the object itself */
 	Oid			classoid;		/* OID of table containing the object */
@@ -31,16 +30,5 @@ CATALOG(pg_seclabel,3596) BKI_WITHOUT_OIDS
 	text		label BKI_FORCE_NOT_NULL;	/* security label of the object */
 #endif
 } FormData_pg_seclabel;
-
-/* ----------------
- *		compiler constants for pg_seclabel
- * ----------------
- */
-#define Natts_pg_seclabel			5
-#define Anum_pg_seclabel_objoid		1
-#define Anum_pg_seclabel_classoid	2
-#define Anum_pg_seclabel_objsubid	3
-#define Anum_pg_seclabel_provider	4
-#define Anum_pg_seclabel_label		5
 
 #endif							/* PG_SECLABEL_H */

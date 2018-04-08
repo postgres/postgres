@@ -2,7 +2,6 @@
  *
  * pg_conversion.h
  *	  definition of the system "conversion" relation (pg_conversion)
- *	  along with the relation's initial contents.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -11,8 +10,8 @@
  * src/include/catalog/pg_conversion.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +19,7 @@
 #define PG_CONVERSION_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_conversion_d.h"
 
 /* ----------------------------------------------------------------
  *		pg_conversion definition.
@@ -35,9 +35,7 @@
  *	condefault			true if this is a default conversion
  * ----------------------------------------------------------------
  */
-#define ConversionRelationId  2607
-
-CATALOG(pg_conversion,2607)
+CATALOG(pg_conversion,2607,ConversionRelationId)
 {
 	NameData	conname;
 	Oid			connamespace;
@@ -54,24 +52,5 @@ CATALOG(pg_conversion,2607)
  * ----------------
  */
 typedef FormData_pg_conversion *Form_pg_conversion;
-
-/* ----------------
- *		compiler constants for pg_conversion
- * ----------------
- */
-
-#define Natts_pg_conversion				7
-#define Anum_pg_conversion_conname		1
-#define Anum_pg_conversion_connamespace 2
-#define Anum_pg_conversion_conowner		3
-#define Anum_pg_conversion_conforencoding		4
-#define Anum_pg_conversion_contoencoding		5
-#define Anum_pg_conversion_conproc		6
-#define Anum_pg_conversion_condefault	7
-
-/* ----------------
- * initial contents of pg_conversion
- * ---------------
- */
 
 #endif							/* PG_CONVERSION_H */

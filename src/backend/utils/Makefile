@@ -1,8 +1,13 @@
+#-------------------------------------------------------------------------
 #
-# Makefile for utils
+# Makefile for backend/utils
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/backend/utils/Makefile
 #
+#-------------------------------------------------------------------------
 
 subdir = src/backend/utils
 top_builddir = ../../..
@@ -20,6 +25,10 @@ all: errcodes.h fmgroids.h fmgrprotos.h probes.h
 
 $(SUBDIRS:%=%-recursive): fmgroids.h fmgrprotos.h
 
+FMGR_DATA := $(addprefix $(top_srcdir)/src/include/catalog/,\
+	pg_language.dat pg_proc.dat \
+	)
+
 # see notes in src/backend/parser/Makefile
 fmgrprotos.h: fmgroids.h
 	touch $@
@@ -27,8 +36,8 @@ fmgrprotos.h: fmgroids.h
 fmgroids.h: fmgrtab.c
 	touch $@
 
-fmgrtab.c: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
-	$(PERL) -I $(catalogdir) $< -I $(top_srcdir)/src/include/ $(top_srcdir)/src/include/catalog/pg_proc.h
+fmgrtab.c: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(FMGR_DATA) $(top_srcdir)/src/include/access/transam.h
+	$(PERL) -I $(catalogdir) $< -I $(top_srcdir)/src/include/ $(FMGR_DATA)
 
 errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
 	$(PERL) $(srcdir)/generate-errcodes.pl $< > $@

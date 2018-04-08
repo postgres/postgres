@@ -5,7 +5,7 @@ use warnings;
 
 BEGIN
 {
-	@ARGV = (glob("pg_*.h"), qw(indexing.h toasting.h));
+	@ARGV = (glob("pg_*.h"), glob("pg_*.dat"), qw(indexing.h toasting.h));
 }
 
 my %oidcounts;
@@ -14,8 +14,8 @@ while (<>)
 {
 	next if /^CATALOG\(.*BKI_BOOTSTRAP/;
 	next
-	  unless /^DATA\(insert *OID *= *(\d+)/
-		  || /^CATALOG\([^,]*, *(\d+).*BKI_ROWTYPE_OID\((\d+)\)/
+	  unless /\boid *=> *'(\d+)'/
+		  || /^CATALOG\([^,]*, *(\d+).*BKI_ROWTYPE_OID\((\d+),/
 		  || /^CATALOG\([^,]*, *(\d+)/
 		  || /^DECLARE_INDEX\([^,]*, *(\d+)/
 		  || /^DECLARE_UNIQUE_INDEX\([^,]*, *(\d+)/
