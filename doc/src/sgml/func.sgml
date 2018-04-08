@@ -17555,6 +17555,12 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
       <entry>Does the access method support exclusion constraints?
       </entry>
      </row>
+     <row>
+      <entry><literal>can_include</literal></entry>
+      <entry>Does the access method support the <literal>INCLUDE</literal>
+        clause of <literal>CREATE INDEX</literal>?
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

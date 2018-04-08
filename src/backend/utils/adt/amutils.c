@@ -80,7 +80,10 @@ static const struct am_propname am_propnames[] =
 	},
 	{
 		"can_exclude", AMPROP_CAN_EXCLUDE
-	}
+	},
+	{
+		"can_include", AMPROP_CAN_INCLUDE
+	},
 };
 
 static IndexAMProperty
@@ -101,7 +104,8 @@ lookup_prop_name(const char *name)
 /*
  * Common code for properties that are just bit tests of indoptions.
  *
- * relid/attno: identify the index column to test the indoptions of.
+ * tuple: the pg_index heaptuple
+ * attno: identify the index column to test the indoptions of.
  * guard: if false, a boolean false result is forced (saves code in caller).
  * iopt_mask: mask for interesting indoption bit.
  * iopt_expect: value for a "true" result (should be 0 or iopt_mask).
@@ -110,12 +114,10 @@ lookup_prop_name(const char *name)
  * otherwise sets *res to the boolean value to return.
  */
 static bool
-test_indoption(Oid relid, int attno, bool guard,
+test_indoption(HeapTuple tuple, int attno, bool guard,
 			   int16 iopt_mask, int16 iopt_expect,
 			   bool *res)
 {
-	HeapTuple	tuple;
-	Form_pg_index rd_index PG_USED_FOR_ASSERTS_ONLY;
 	Datum		datum;
 	bool		isnull;
 	int2vector *indoption;
@@ -127,14 +129,6 @@ test_indoption(Oid relid, int attno, bool guard,
 		return true;
 	}
 
-	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(relid));
-	if (!HeapTupleIsValid(tuple))
-		return false;
-	rd_index = (Form_pg_index) GETSTRUCT(tuple);
-
-	Assert(relid == rd_index->indexrelid);
-	Assert(attno > 0 && attno <= rd_index->indnatts);
-
 	datum = SysCacheGetAttr(INDEXRELID, tuple,
 							Anum_pg_index_indoption, &isnull);
 	Assert(!isnull);
@@ -143,8 +137,6 @@ test_indoption(Oid relid, int attno, bool guard,
 	indoption_val = indoption->values[attno - 1];
 
 	*res = (indoption_val & iopt_mask) == iopt_expect;
-
-	ReleaseSysCache(tuple);
 
 	return true;
 }
@@ -195,9 +187,10 @@ indexam_property(FunctionCallInfo fcinfo,
 	}
 
 	/*
-	 * At this point, either index_oid == InvalidOid or it's a valid index
-	 * OID.  Also, after this test, either attno == 0 for index-wide or
-	 * AM-wide tests, or it's a valid column number in a valid index.
+	 * At this point, either index_oid == InvalidOid or it's a valid index OID.
+	 * Also, after this test and the one below, either attno == 0 for
+	 * index-wide or AM-wide tests, or it's a valid column number in a valid
+	 * index.
 	 */
 	if (attno < 0 || attno > natts)
 		PG_RETURN_NULL();
@@ -224,80 +217,138 @@ indexam_property(FunctionCallInfo fcinfo,
 
 	if (attno > 0)
 	{
-		/* Handle column-level properties */
+		HeapTuple	tuple;
+		Form_pg_index rd_index;
+		bool		iskey = true;
+
+		/*
+		 * Handle column-level properties. Many of these need the pg_index row
+		 * (which we also need to use to check for nonkey atts) so we fetch
+		 * that first.
+		 */
+		tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(index_oid));
+		if (!HeapTupleIsValid(tuple))
+			PG_RETURN_NULL();
+		rd_index = (Form_pg_index) GETSTRUCT(tuple);
+
+		Assert(index_oid == rd_index->indexrelid);
+		Assert(attno > 0 && attno <= rd_index->indnatts);
+
+		isnull = true;
+
+		/*
+		 * If amcaninclude, we might be looking at an attno for a nonkey
+		 * column, for which we (generically) assume that most properties are
+		 * null.
+		 */
+		if (routine->amcaninclude
+			&& attno > rd_index->indnkeyatts)
+			iskey = false;
+
 		switch (prop)
 		{
 			case AMPROP_ASC:
-				if (test_indoption(index_oid, attno, routine->amcanorder,
+				if (iskey &&
+					test_indoption(tuple, attno, routine->amcanorder,
 								   INDOPTION_DESC, 0, &res))
-					PG_RETURN_BOOL(res);
-				PG_RETURN_NULL();
+					isnull = false;
+				break;
 
 			case AMPROP_DESC:
-				if (test_indoption(index_oid, attno, routine->amcanorder,
+				if (iskey &&
+					test_indoption(tuple, attno, routine->amcanorder,
 								   INDOPTION_DESC, INDOPTION_DESC, &res))
-					PG_RETURN_BOOL(res);
-				PG_RETURN_NULL();
+					isnull = false;
+				break;
 
 			case AMPROP_NULLS_FIRST:
-				if (test_indoption(index_oid, attno, routine->amcanorder,
+				if (iskey &&
+					test_indoption(tuple, attno, routine->amcanorder,
 								   INDOPTION_NULLS_FIRST, INDOPTION_NULLS_FIRST, &res))
-					PG_RETURN_BOOL(res);
-				PG_RETURN_NULL();
+					isnull = false;
+				break;
 
 			case AMPROP_NULLS_LAST:
-				if (test_indoption(index_oid, attno, routine->amcanorder,
+				if (iskey &&
+					test_indoption(tuple, attno, routine->amcanorder,
 								   INDOPTION_NULLS_FIRST, 0, &res))
-					PG_RETURN_BOOL(res);
-				PG_RETURN_NULL();
+					isnull = false;
+				break;
 
 			case AMPROP_ORDERABLE:
-				PG_RETURN_BOOL(routine->amcanorder);
+				/*
+				 * generic assumption is that nonkey columns are not orderable
+				 */
+				res = iskey ? routine->amcanorder : false;
+				isnull = false;
+				break;
 
 			case AMPROP_DISTANCE_ORDERABLE:
 
 				/*
 				 * The conditions for whether a column is distance-orderable
 				 * are really up to the AM (at time of writing, only GiST
-				 * supports it at all).  The planner has its own idea based on
+				 * supports it at all). The planner has its own idea based on
 				 * whether it finds an operator with amoppurpose 'o', but
 				 * getting there from just the index column type seems like a
-				 * lot of work.  So instead we expect the AM to handle this in
-				 * its amproperty routine.  The generic result is to return
-				 * false if the AM says it never supports this, and null
-				 * otherwise (meaning we don't know).
+				 * lot of work. So instead we expect the AM to handle this in
+				 * its amproperty routine. The generic result is to return
+				 * false if the AM says it never supports this, or if this is a
+				 * nonkey column, and null otherwise (meaning we don't know).
 				 */
-				if (!routine->amcanorderbyop)
-					PG_RETURN_BOOL(false);
-				PG_RETURN_NULL();
+				if (!iskey || !routine->amcanorderbyop)
+				{
+					res = false;
+					isnull = false;
+				}
+				break;
 
 			case AMPROP_RETURNABLE:
-				if (!routine->amcanreturn)
-					PG_RETURN_BOOL(false);
 
-				/*
-				 * If possible, the AM should handle this test in its
-				 * amproperty function without opening the rel.  But this is
-				 * the generic fallback if it does not.
-				 */
+				/* note that we ignore iskey for this property */
+
+				isnull = false;
+				res = false;
+
+				if (routine->amcanreturn)
 				{
+					/*
+					 * If possible, the AM should handle this test in its
+					 * amproperty function without opening the rel. But this is the
+					 * generic fallback if it does not.
+					 */
 					Relation	indexrel = index_open(index_oid, AccessShareLock);
 
 					res = index_can_return(indexrel, attno);
 					index_close(indexrel, AccessShareLock);
 				}
-
-				PG_RETURN_BOOL(res);
+				break;
 
 			case AMPROP_SEARCH_ARRAY:
-				PG_RETURN_BOOL(routine->amsearcharray);
+				if (iskey)
+				{
+					res = routine->amsearcharray;
+					isnull = false;
+				}
+				break;
 
 			case AMPROP_SEARCH_NULLS:
-				PG_RETURN_BOOL(routine->amsearchnulls);
+				if (iskey)
+				{
+					res = routine->amsearchnulls;
+					isnull = false;
+				}
+				break;
 
 			default:
-				PG_RETURN_NULL();
+				break;
 		}
+
+		ReleaseSysCache(tuple);
+
+		if (!isnull)
+			PG_RETURN_BOOL(res);
+		PG_RETURN_NULL();
 	}
 
 	if (OidIsValid(index_oid))
@@ -343,6 +394,9 @@ indexam_property(FunctionCallInfo fcinfo,
 
 		case AMPROP_CAN_EXCLUDE:
 			PG_RETURN_BOOL(routine->amgettuple ? true : false);
+
+		case AMPROP_CAN_INCLUDE:
+			PG_RETURN_BOOL(routine->amcaninclude);
 
 		default:
 			PG_RETURN_NULL();
