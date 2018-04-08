@@ -177,7 +177,7 @@ pg_file_write_v1_1(PG_FUNCTION_ARGS)
  *
  * This handles the actual work for pg_file_write.
  */
-int64
+static int64
 pg_file_write_internal(text *file, text *data, bool replace)
 {
 	FILE	   *f;
@@ -286,7 +286,7 @@ pg_file_rename_v1_1(PG_FUNCTION_ARGS)
  *
  * This handles the actual work for pg_file_rename.
  */
-bool
+static bool
 pg_file_rename_internal(text *file1, text *file2, text *file3)
 {
 	char	   *fn1,
@@ -480,7 +480,7 @@ pg_logdir_ls_v1_1(PG_FUNCTION_ARGS)
 	return (pg_logdir_ls_internal(fcinfo));
 }
 
-Datum
+static Datum
 pg_logdir_ls_internal(FunctionCallInfo fcinfo)
 {
 	FuncCallContext *funcctx;
