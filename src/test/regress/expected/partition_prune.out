@@ -1347,6 +1347,10 @@ create table ab_a3 partition of ab for values in(3) partition by list (b);
 create table ab_a3_b1 partition of ab_a3 for values in (1);
 create table ab_a3_b2 partition of ab_a3 for values in (2);
 create table ab_a3_b3 partition of ab_a3 for values in (3);
+-- Disallow index only scans as concurrent transactions may stop visibility
+-- bits being set causing "Heap Fetches" to be unstable in the EXPLAIN ANALYZE
+-- output.
+set enable_indexonlyscan = off;
 prepare ab_q1 (int, int, int) as
 select * from ab where a between $1 and $2 and b <= $3;
 -- Execute query 5 times to allow choose_custom_plan
@@ -1754,8 +1758,8 @@ execute ab_q6 (1, 2, 3);
 (1 row)
 
 explain (analyze, costs off, summary off, timing off) execute ab_q6 (0, 0, 1);
-                                               QUERY PLAN                                               
---------------------------------------------------------------------------------------------------------
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather (actual rows=2 loops=1)
          Workers Planned: 1
@@ -1765,39 +1769,30 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (0, 0, 1);
                      ->  Parallel Seq Scan on lprt_a a (actual rows=51 loops=2)
                            Filter: (a = ANY ('{0,0,1}'::integer[]))
                      ->  Append (actual rows=0 loops=102)
-                           ->  Index Only Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a1_b2_a_idx on ab_a1_b2 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a1_b3_a_idx on ab_a1_b3 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b1_a_idx on ab_a2_b1 (never executed)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b2_a_idx on ab_a2_b2 (never executed)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b3_a_idx on ab_a2_b3 (never executed)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b1_a_idx on ab_a3_b1 (never executed)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b2_a_idx on ab_a3_b2 (never executed)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b3_a_idx on ab_a3_b3 (never executed)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-(36 rows)
+(27 rows)
 
 insert into lprt_a values(3),(3);
 explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 3);
-                                               QUERY PLAN                                               
---------------------------------------------------------------------------------------------------------
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather (actual rows=2 loops=1)
          Workers Planned: 1
@@ -1807,38 +1802,29 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 3);
                      ->  Parallel Seq Scan on lprt_a a (actual rows=52 loops=2)
                            Filter: (a = ANY ('{1,0,3}'::integer[]))
                      ->  Append (actual rows=0 loops=104)
-                           ->  Index Only Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a1_b2_a_idx on ab_a1_b2 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a1_b3_a_idx on ab_a1_b3 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b1_a_idx on ab_a2_b1 (never executed)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b2_a_idx on ab_a2_b2 (never executed)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b3_a_idx on ab_a2_b3 (never executed)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b1_a_idx on ab_a3_b1 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b2_a_idx on ab_a3_b2 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b3_a_idx on ab_a3_b3 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-(36 rows)
+(27 rows)
 
 explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
-                                               QUERY PLAN                                               
---------------------------------------------------------------------------------------------------------
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather (actual rows=2 loops=1)
          Workers Planned: 1
@@ -1849,39 +1835,30 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
                            Rows Removed by Filter: 1
                      ->  Append (actual rows=0 loops=102)
-                           ->  Index Only Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a1_b2_a_idx on ab_a1_b2 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a1_b3_a_idx on ab_a1_b3 (actual rows=0 loops=2)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b1_a_idx on ab_a2_b1 (never executed)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b2_a_idx on ab_a2_b2 (never executed)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b3_a_idx on ab_a2_b3 (never executed)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b1_a_idx on ab_a3_b1 (never executed)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b2_a_idx on ab_a3_b2 (never executed)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b3_a_idx on ab_a3_b3 (never executed)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-(37 rows)
+(28 rows)
 
 delete from lprt_a where a = 1;
 explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
-                                           QUERY PLAN                                            
--------------------------------------------------------------------------------------------------
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather (actual rows=2 loops=1)
          Workers Planned: 1
@@ -1892,34 +1869,25 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
                            Rows Removed by Filter: 1
                      ->  Append (actual rows=0 loops=100)
-                           ->  Index Only Scan using ab_a1_b1_a_idx on ab_a1_b1 (never executed)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a1_b2_a_idx on ab_a1_b2 (never executed)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a1_b3_a_idx on ab_a1_b3 (never executed)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b1_a_idx on ab_a2_b1 (never executed)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b2_a_idx on ab_a2_b2 (never executed)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a2_b3_a_idx on ab_a2_b3 (never executed)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b1_a_idx on ab_a3_b1 (never executed)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b2_a_idx on ab_a3_b2 (never executed)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-                           ->  Index Only Scan using ab_a3_b3_a_idx on ab_a3_b3 (never executed)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 (never executed)
                                  Index Cond: (a = a.a)
-                                 Heap Fetches: 0
-(37 rows)
+(28 rows)
 
 reset enable_hashjoin;
 reset enable_mergejoin;
@@ -2015,57 +1983,45 @@ set enable_hashjoin = off;
 set enable_mergejoin = off;
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=6 loops=1)
    ->  Seq Scan on tbl1 (actual rows=2 loops=1)
    ->  Append (actual rows=3 loops=2)
-         ->  Index Only Scan using tprt1_idx on tprt_1 (actual rows=2 loops=2)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 4
-         ->  Index Only Scan using tprt2_idx on tprt_2 (actual rows=2 loops=1)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 2
-         ->  Index Only Scan using tprt3_idx on tprt_3 (never executed)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt4_idx on tprt_4 (never executed)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt5_idx on tprt_5 (never executed)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt6_idx on tprt_6 (never executed)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 0
-(21 rows)
+         ->  Index Scan using tprt1_idx on tprt_1 (actual rows=2 loops=2)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=2 loops=1)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt3_idx on tprt_3 (never executed)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
+               Index Cond: (tbl1.col1 > col1)
+(15 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=2 loops=1)
    ->  Seq Scan on tbl1 (actual rows=2 loops=1)
    ->  Append (actual rows=1 loops=2)
-         ->  Index Only Scan using tprt1_idx on tprt_1 (never executed)
+         ->  Index Scan using tprt1_idx on tprt_1 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt2_idx on tprt_2 (actual rows=1 loops=2)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=1 loops=2)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 2
-         ->  Index Only Scan using tprt3_idx on tprt_3 (never executed)
+         ->  Index Scan using tprt3_idx on tprt_3 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt4_idx on tprt_4 (never executed)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt5_idx on tprt_5 (never executed)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt6_idx on tprt_6 (never executed)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-(21 rows)
+(15 rows)
 
 select tbl1.col1, tprt.col1 from tbl1
 inner join tprt on tbl1.col1 > tprt.col1
@@ -2093,57 +2049,45 @@ order by tbl1.col1, tprt.col1;
 insert into tbl1 values (1001), (1010), (1011);
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 inner join tprt on tbl1.col1 > tprt.col1;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=23 loops=1)
    ->  Seq Scan on tbl1 (actual rows=5 loops=1)
    ->  Append (actual rows=5 loops=5)
-         ->  Index Only Scan using tprt1_idx on tprt_1 (actual rows=2 loops=5)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 10
-         ->  Index Only Scan using tprt2_idx on tprt_2 (actual rows=3 loops=4)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 11
-         ->  Index Only Scan using tprt3_idx on tprt_3 (actual rows=1 loops=2)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 2
-         ->  Index Only Scan using tprt4_idx on tprt_4 (never executed)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt5_idx on tprt_5 (never executed)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt6_idx on tprt_6 (never executed)
-               Index Cond: (col1 < tbl1.col1)
-               Heap Fetches: 0
-(21 rows)
+         ->  Index Scan using tprt1_idx on tprt_1 (actual rows=2 loops=5)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=3 loops=4)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt3_idx on tprt_3 (actual rows=1 loops=2)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
+               Index Cond: (tbl1.col1 > col1)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
+               Index Cond: (tbl1.col1 > col1)
+(15 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 inner join tprt on tbl1.col1 = tprt.col1;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=3 loops=1)
    ->  Seq Scan on tbl1 (actual rows=5 loops=1)
    ->  Append (actual rows=1 loops=5)
-         ->  Index Only Scan using tprt1_idx on tprt_1 (never executed)
+         ->  Index Scan using tprt1_idx on tprt_1 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt2_idx on tprt_2 (actual rows=1 loops=2)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=1 loops=2)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 2
-         ->  Index Only Scan using tprt3_idx on tprt_3 (actual rows=0 loops=3)
+         ->  Index Scan using tprt3_idx on tprt_3 (actual rows=0 loops=3)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 1
-         ->  Index Only Scan using tprt4_idx on tprt_4 (never executed)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt5_idx on tprt_5 (never executed)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt6_idx on tprt_6 (never executed)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-(21 rows)
+(15 rows)
 
 select tbl1.col1, tprt.col1 from tbl1
 inner join tprt on tbl1.col1 > tprt.col1
@@ -2190,30 +2134,24 @@ delete from tbl1;
 insert into tbl1 values (4400);
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 < tprt.col1;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=1 loops=1)
    ->  Seq Scan on tbl1 (actual rows=1 loops=1)
    ->  Append (actual rows=1 loops=1)
-         ->  Index Only Scan using tprt1_idx on tprt_1 (never executed)
-               Index Cond: (col1 > tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt2_idx on tprt_2 (never executed)
-               Index Cond: (col1 > tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt3_idx on tprt_3 (never executed)
-               Index Cond: (col1 > tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt4_idx on tprt_4 (never executed)
-               Index Cond: (col1 > tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt5_idx on tprt_5 (never executed)
-               Index Cond: (col1 > tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt6_idx on tprt_6 (actual rows=1 loops=1)
-               Index Cond: (col1 > tbl1.col1)
-               Heap Fetches: 1
-(21 rows)
+         ->  Index Scan using tprt1_idx on tprt_1 (never executed)
+               Index Cond: (tbl1.col1 < col1)
+         ->  Index Scan using tprt2_idx on tprt_2 (never executed)
+               Index Cond: (tbl1.col1 < col1)
+         ->  Index Scan using tprt3_idx on tprt_3 (never executed)
+               Index Cond: (tbl1.col1 < col1)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
+               Index Cond: (tbl1.col1 < col1)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
+               Index Cond: (tbl1.col1 < col1)
+         ->  Index Scan using tprt6_idx on tprt_6 (actual rows=1 loops=1)
+               Index Cond: (tbl1.col1 < col1)
+(15 rows)
 
 select tbl1.col1, tprt.col1 from tbl1
 inner join tprt on tbl1.col1 < tprt.col1
@@ -2228,30 +2166,24 @@ delete from tbl1;
 insert into tbl1 values (10000);
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Nested Loop (actual rows=0 loops=1)
    ->  Seq Scan on tbl1 (actual rows=1 loops=1)
    ->  Append (actual rows=0 loops=1)
-         ->  Index Only Scan using tprt1_idx on tprt_1 (never executed)
+         ->  Index Scan using tprt1_idx on tprt_1 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt2_idx on tprt_2 (never executed)
+         ->  Index Scan using tprt2_idx on tprt_2 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt3_idx on tprt_3 (never executed)
+         ->  Index Scan using tprt3_idx on tprt_3 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt4_idx on tprt_4 (never executed)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt5_idx on tprt_5 (never executed)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-         ->  Index Only Scan using tprt6_idx on tprt_6 (never executed)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
                Index Cond: (col1 = tbl1.col1)
-               Heap Fetches: 0
-(21 rows)
+(15 rows)
 
 select tbl1.col1, tprt.col1 from tbl1
 inner join tprt on tbl1.col1 = tprt.col1
@@ -2466,3 +2398,4 @@ select * from boolp where a = (select value from boolvalues where not value);
 (9 rows)
 
 drop table boolp;
+reset enable_indexonlyscan;

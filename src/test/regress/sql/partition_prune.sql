@@ -256,6 +256,11 @@ create table ab_a3_b1 partition of ab_a3 for values in (1);
 create table ab_a3_b2 partition of ab_a3 for values in (2);
 create table ab_a3_b3 partition of ab_a3 for values in (3);
 
+-- Disallow index only scans as concurrent transactions may stop visibility
+-- bits being set causing "Heap Fetches" to be unstable in the EXPLAIN ANALYZE
+-- output.
+set enable_indexonlyscan = off;
+
 prepare ab_q1 (int, int, int) as
 select * from ab where a between $1 and $2 and b <= $3;
 
@@ -581,3 +586,5 @@ explain (analyze, costs off, summary off, timing off)
 select * from boolp where a = (select value from boolvalues where not value);
 
 drop table boolp;
+
+reset enable_indexonlyscan;
