@@ -35,7 +35,7 @@
    <xref linkend="app-pgdump"/> for this purpose. The basic usage of this
    command is:
 <synopsis>
-pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable class="parameter">outfile</replaceable>
+pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable class="parameter">dumpfile</replaceable>
 </synopsis>
    As you see, <application>pg_dump</application> writes its result to the
    standard output. We will see below how this can be useful.
@@ -109,9 +109,9 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
     be read in by the <application>psql</application> program. The
     general command form to restore a dump is
 <synopsis>
-psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class="parameter">infile</replaceable>
+psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class="parameter">dumpfile</replaceable>
 </synopsis>
-    where <replaceable class="parameter">infile</replaceable> is the
+    where <replaceable class="parameter">dumpfile</replaceable> is the
     file output by the <application>pg_dump</application> command. The database <replaceable
     class="parameter">dbname</replaceable> will not be created by this
     command, so you must create it yourself from <literal>template0</literal>
@@ -141,7 +141,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     behavior and have <application>psql</application> exit with an
     exit status of 3 if an SQL error occurs:
 <programlisting>
-psql --set ON_ERROR_STOP=on dbname &lt; infile
+psql --set ON_ERROR_STOP=on dbname &lt; dumpfile
 </programlisting>
     Either way, you will only have a partially restored database.
     Alternatively, you can specify that the whole dump should be
@@ -201,11 +201,11 @@ pg_dump -h <replaceable>host1</replaceable> <replaceable>dbname</replaceable> | 
     cluster, and also preserves cluster-wide data such as role and
     tablespace definitions. The basic usage of this command is:
 <synopsis>
-pg_dumpall &gt; <replaceable>outfile</replaceable>
+pg_dumpall &gt; <replaceable>dumpfile</replaceable>
 </synopsis>
     The resulting dump can be restored with <application>psql</application>:
 <synopsis>
-psql -f <replaceable class="parameter">infile</replaceable> postgres
+psql -f <replaceable class="parameter">dumpfile</replaceable> postgres
 </synopsis>
     (Actually, you can specify any existing database name to start from,
     but if you are loading into an empty cluster then <literal>postgres</literal>
