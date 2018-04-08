@@ -2244,8 +2244,8 @@ match_clause_to_index(IndexOptInfo *index,
 	if (!restriction_is_securely_promotable(rinfo, index->rel))
 		return;
 
-	/* OK, check each index column for a match */
-	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
+	/* OK, check each index key column for a match */
+	for (indexcol = 0; indexcol < index->nkeycolumns; indexcol++)
 	{
 		if (match_clause_to_indexcol(index,
 									 indexcol,
