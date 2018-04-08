@@ -10,7 +10,6 @@
 #include "access/transam.h"
 #include "funcapi.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_proc_fn.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"

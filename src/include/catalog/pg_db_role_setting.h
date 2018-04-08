@@ -20,6 +20,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/pg_db_role_setting_d.h"
+
 #include "utils/guc.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"

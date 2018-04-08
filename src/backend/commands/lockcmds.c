@@ -15,7 +15,7 @@
 #include "postgres.h"
 
 #include "catalog/namespace.h"
-#include "catalog/pg_inherits_fn.h"
+#include "catalog/pg_inherits.h"
 #include "commands/lockcmds.h"
 #include "miscadmin.h"
 #include "parser/parse_clause.h"

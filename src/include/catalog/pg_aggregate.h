@@ -21,6 +21,9 @@
 #include "catalog/genbki.h"
 #include "catalog/pg_aggregate_d.h"
 
+#include "catalog/objectaddress.h"
+#include "nodes/pg_list.h"
+
 /* ----------------------------------------------------------------
  *		pg_aggregate definition.
  *		cpp turns this into typedef struct FormData_pg_aggregate
@@ -135,5 +138,38 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
 #define AGGMODIFY_READ_WRITE		'w'
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */
+
+
+extern ObjectAddress AggregateCreate(const char *aggName,
+				Oid aggNamespace,
+				char aggKind,
+				int numArgs,
+				int numDirectArgs,
+				oidvector *parameterTypes,
+				Datum allParameterTypes,
+				Datum parameterModes,
+				Datum parameterNames,
+				List *parameterDefaults,
+				Oid variadicArgType,
+				List *aggtransfnName,
+				List *aggfinalfnName,
+				List *aggcombinefnName,
+				List *aggserialfnName,
+				List *aggdeserialfnName,
+				List *aggmtransfnName,
+				List *aggminvtransfnName,
+				List *aggmfinalfnName,
+				bool finalfnExtraArgs,
+				bool mfinalfnExtraArgs,
+				char finalfnModify,
+				char mfinalfnModify,
+				List *aggsortopName,
+				Oid aggTransType,
+				int32 aggTransSpace,
+				Oid aggmTransType,
+				int32 aggmTransSpace,
+				const char *agginitval,
+				const char *aggminitval,
+				char proparallel);
 
 #endif							/* PG_AGGREGATE_H */

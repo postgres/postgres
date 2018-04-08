@@ -38,7 +38,7 @@
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
-#include "catalog/pg_inherits_fn.h"
+#include "catalog/pg_inherits.h"
 #include "catalog/pg_policy.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"

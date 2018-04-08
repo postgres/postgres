@@ -19,6 +19,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/pg_publication_d.h"
+
 #include "catalog/objectaddress.h"
 
 /* ----------------

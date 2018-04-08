@@ -21,6 +21,9 @@
 #include "catalog/genbki.h"
 #include "catalog/pg_inherits_d.h"
 
+#include "nodes/pg_list.h"
+#include "storage/lock.h"
+
 /* ----------------
  *		pg_inherits definition.  cpp turns this into
  *		typedef struct FormData_pg_inherits
@@ -39,5 +42,16 @@ CATALOG(pg_inherits,2611,InheritsRelationId) BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_pg_inherits *Form_pg_inherits;
+
+
+extern List *find_inheritance_children(Oid parentrelId, LOCKMODE lockmode);
+extern List *find_all_inheritors(Oid parentrelId, LOCKMODE lockmode,
+					List **parents);
+extern bool has_subclass(Oid relationId);
+extern bool has_superclass(Oid relationId);
+extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
+extern void StoreSingleInheritance(Oid relationId, Oid parentOid,
+					   int32 seqNumber);
+extern bool DeleteInheritsTuple(Oid inhrelid, Oid inhparent);
 
 #endif							/* PG_INHERITS_H */

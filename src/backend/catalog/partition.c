@@ -26,7 +26,6 @@
 #include "catalog/partition.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_type.h"

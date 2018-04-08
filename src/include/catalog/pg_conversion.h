@@ -21,6 +21,8 @@
 #include "catalog/genbki.h"
 #include "catalog/pg_conversion_d.h"
 
+#include "catalog/objectaddress.h"
+
 /* ----------------------------------------------------------------
  *		pg_conversion definition.
  *
@@ -52,5 +54,14 @@ CATALOG(pg_conversion,2607,ConversionRelationId)
  * ----------------
  */
 typedef FormData_pg_conversion *Form_pg_conversion;
+
+
+extern ObjectAddress ConversionCreate(const char *conname, Oid connamespace,
+				 Oid conowner,
+				 int32 conforencoding, int32 contoencoding,
+				 Oid conproc, bool def);
+extern void RemoveConversionById(Oid conversionOid);
+extern Oid FindDefaultConversion(Oid connamespace, int32 for_encoding,
+					  int32 to_encoding);
 
 #endif							/* PG_CONVERSION_H */

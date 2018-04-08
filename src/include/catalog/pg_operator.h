@@ -21,6 +21,9 @@
 #include "catalog/genbki.h"
 #include "catalog/pg_operator_d.h"
 
+#include "catalog/objectaddress.h"
+#include "nodes/pg_list.h"
+
 /* ----------------
  *		pg_operator definition.  cpp turns this into
  *		typedef struct FormData_pg_operator
@@ -77,5 +80,22 @@ CATALOG(pg_operator,2617,OperatorRelationId)
  * ----------------
  */
 typedef FormData_pg_operator *Form_pg_operator;
+
+
+extern ObjectAddress OperatorCreate(const char *operatorName,
+			   Oid operatorNamespace,
+			   Oid leftTypeId,
+			   Oid rightTypeId,
+			   Oid procedureId,
+			   List *commutatorName,
+			   List *negatorName,
+			   Oid restrictionId,
+			   Oid joinId,
+			   bool canMerge,
+			   bool canHash);
+
+extern ObjectAddress makeOperatorDependencies(HeapTuple tuple, bool isUpdate);
+
+extern void OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete);
 
 #endif							/* PG_OPERATOR_H */

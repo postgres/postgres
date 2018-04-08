@@ -13,6 +13,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/pg_subscription_d.h"
+
 #include "nodes/pg_list.h"
 
 /* ----------------

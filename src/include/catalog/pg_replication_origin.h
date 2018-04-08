@@ -19,6 +19,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/pg_replication_origin_d.h"
+
 #include "access/xlogdefs.h"
 
 /* ----------------

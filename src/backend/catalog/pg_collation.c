@@ -22,7 +22,6 @@
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_collation.h"
-#include "catalog/pg_collation_fn.h"
 #include "catalog/pg_namespace.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"

@@ -22,7 +22,7 @@
 #include "access/parallel.h"
 #include "access/sysattr.h"
 #include "access/xact.h"
-#include "catalog/pg_constraint_fn.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
