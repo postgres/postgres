@@ -255,6 +255,11 @@ typedef struct Append
 	/* RT indexes of non-leaf tables in a partition tree */
 	List	   *partitioned_rels;
 	List	   *appendplans;
+
+	/*
+	 * All 'appendplans' preceding this index are non-partial plans. All
+	 * 'appendplans' from this index onwards are partial plans.
+	 */
 	int			first_partial_plan;
 
 	/*

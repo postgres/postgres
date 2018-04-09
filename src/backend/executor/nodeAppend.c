@@ -547,6 +547,11 @@ choose_next_subplan_for_leader(AppendState *node)
 			LWLockRelease(&pstate->pa_lock);
 			return false;
 		}
+
+		/*
+		 * We needn't pay attention to as_valid_subplans here as all invalid
+		 * plans have been marked as finished.
+		 */
 		node->as_whichplan--;
 	}
 
@@ -612,18 +617,28 @@ choose_next_subplan_for_worker(AppendState *node)
 	/* Save the plan from which we are starting the search. */
 	node->as_whichplan = pstate->pa_next_plan;
 
-	/* Loop until we find a subplan to execute. */
+	/* Loop until we find a valid subplan to execute. */
 	while (pstate->pa_finished[pstate->pa_next_plan])
 	{
-		if (pstate->pa_next_plan < node->as_nplans - 1)
+		int			nextplan;
+
+		nextplan = bms_next_member(node->as_valid_subplans,
+								   pstate->pa_next_plan);
+		if (nextplan >= 0)
 		{
-			/* Advance to next plan. */
-			pstate->pa_next_plan++;
+			/* Advance to the next valid plan. */
+			pstate->pa_next_plan = nextplan;
 		}
 		else if (node->as_whichplan > append->first_partial_plan)
 		{
-			/* Loop back to first partial plan. */
-			pstate->pa_next_plan = append->first_partial_plan;
+			/*
+			 * Try looping back to the first valid partial plan, if there is
+			 * one.  If there isn't, arrange to bail out below.
+			 */
+			nextplan = bms_next_member(node->as_valid_subplans,
+									   append->first_partial_plan - 1);
+			pstate->pa_next_plan =
+				nextplan < 0 ? node->as_whichplan : nextplan;
 		}
 		else
 		{
@@ -644,16 +659,27 @@ choose_next_subplan_for_worker(AppendState *node)
 	}
 
 	/* Pick the plan we found, and advance pa_next_plan one more time. */
-	node->as_whichplan = pstate->pa_next_plan++;
-	if (pstate->pa_next_plan >= node->as_nplans)
+	node->as_whichplan = pstate->pa_next_plan;
+	pstate->pa_next_plan = bms_next_member(node->as_valid_subplans,
+										   pstate->pa_next_plan);
+
+	/*
+	 * If there are no more valid plans then try setting the next plan to the
+	 * first valid partial plan.
+	 */
+	if (pstate->pa_next_plan < 0)
 	{
-		if (append->first_partial_plan < node->as_nplans)
-			pstate->pa_next_plan = append->first_partial_plan;
+		int			nextplan = bms_next_member(node->as_valid_subplans,
+											   append->first_partial_plan - 1);
+
+		if (nextplan >= 0)
+			pstate->pa_next_plan = nextplan;
 		else
 		{
 			/*
-			 * We have only non-partial plans, and we already chose the last
-			 * one; so arrange for the other workers to immediately bail out.
+			 * There are no valid partial plans, and we already chose the last
+			 * non-partial plan; so flag that there's nothing more for our
+			 * fellow workers to do.
 			 */
 			pstate->pa_next_plan = INVALID_SUBPLAN_INDEX;
 		}
