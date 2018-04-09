@@ -230,16 +230,23 @@ standard_initdb 'initdb'
 
 pg_upgrade $PG_UPGRADE_OPTS -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir" -p "$PGPORT" -P "$PGPORT"
 
-# make sure all directories and files have group permissions
-if [ $(find ${PGDATA} -type f ! -perm 640 | wc -l) -ne 0 ]; then
-	echo "files in PGDATA with permission != 640";
-	exit 1;
-fi
+# make sure all directories and files have group permissions, on Unix hosts
+# Windows hosts don't support Unix-y permissions.
+case $testhost in
+	MINGW*) ;;
+	*)	if [ $(find ${PGDATA} -type f ! -perm 640 | wc -l) -ne 0 ]; then
+			echo "files in PGDATA with permission != 640";
+			exit 1;
+		fi ;;
+esac
 
-if [ $(find ${PGDATA} -type d ! -perm 750 | wc -l) -ne 0 ]; then
-	echo "directories in PGDATA with permission != 750";
-	exit 1;
-fi
+case $testhost in
+	MINGW*) ;;
+	*)	if [ $(find ${PGDATA} -type d ! -perm 750 | wc -l) -ne 0 ]; then
+			echo "directories in PGDATA with permission != 750";
+			exit 1;
+		fi ;;
+esac
 
 pg_ctl start -l "$logdir/postmaster2.log" -o "$POSTMASTER_OPTS" -w
 
