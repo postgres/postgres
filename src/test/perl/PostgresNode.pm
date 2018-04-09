@@ -1541,7 +1541,7 @@ sub wait_for_catchup
 	  . $standby_name . "'s "
 	  . $mode
 	  . "_lsn to pass "
-	  . $target_lsn . " on "
+	  . $lsn_expr . " on "
 	  . $self->name . "\n";
 	my $query =
 qq[SELECT $lsn_expr <= ${mode}_lsn FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];

@@ -48,7 +48,7 @@ ok(!-d "$tempdir/backup", 'backup directory was cleaned up');
 # but leave the data directory behind
 mkdir("$tempdir/backup")
 	or BAIL_OUT("unable to create $tempdir/backup");
-append_to_file("$tempdir/backup/dir-not-empty.txt");
+append_to_file("$tempdir/backup/dir-not-empty.txt", "Some data");
 
 $node->command_fails([ 'pg_basebackup', '-D', "$tempdir/backup", '-n' ],
 	'failing run with no-clean option');
