@@ -9,8 +9,7 @@ have a very low measured incidence according to research on large server farms,
 http://www.cs.toronto.edu/~bianca/papers/sigmetrics09.pdf, discussed
 2010/12/22 on -hackers list.
 
-Checksums can be enabled at initdb time, but can also be turned on and off
-using pg_enable_data_checksums()/pg_disable_data_checksums() at runtime.
+Current implementation requires this be enabled system-wide at initdb time.
 
 The checksum is not valid at all times on a data page!!
 The checksum is valid when the page leaves the shared pool and is checked

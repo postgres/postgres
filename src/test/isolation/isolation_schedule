@@ -76,7 +76,3 @@ test: predicate-gin
 test: partition-key-update-1
 test: partition-key-update-2
 test: partition-key-update-3
-# The checksum_enable suite will enable checksums for the cluster so should
-# not run before anything expecting the cluster to have checksums turned off
-# test: checksum_cancel
-# test: checksum_enable

@@ -1027,11 +1027,6 @@ CREATE OR REPLACE FUNCTION pg_stop_backup (
   RETURNS SETOF record STRICT VOLATILE LANGUAGE internal as 'pg_stop_backup_v2'
   PARALLEL RESTRICTED;
 
-CREATE OR REPLACE FUNCTION pg_enable_data_checksums (
-        cost_delay int DEFAULT 0, cost_limit int DEFAULT 100)
-  RETURNS void STRICT VOLATILE LANGUAGE internal AS 'enable_data_checksums'
-  PARALLEL RESTRICTED;
-
 -- legacy definition for compatibility with 9.3
 CREATE OR REPLACE FUNCTION
   json_populate_record(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)

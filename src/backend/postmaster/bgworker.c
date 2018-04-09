@@ -20,7 +20,6 @@
 #include "pgstat.h"
 #include "port/atomics.h"
 #include "postmaster/bgworker_internals.h"
-#include "postmaster/checksumhelper.h"
 #include "postmaster/postmaster.h"
 #include "replication/logicallauncher.h"
 #include "replication/logicalworker.h"
@@ -130,12 +129,6 @@ static const struct
 	},
 	{
 		"ApplyWorkerMain", ApplyWorkerMain
-	},
-	{
-		"ChecksumHelperLauncherMain", ChecksumHelperLauncherMain
-	},
-	{
-		"ChecksumHelperWorkerMain", ChecksumHelperWorkerMain
 	}
 };
 

@@ -214,9 +214,9 @@ PostgreSQL documentation
        <para>
         Use checksums on data pages to help detect corruption by the
         I/O system that would otherwise be silent. Enabling checksums
-        may incur a noticeable performance penalty. If set, checksums
-        are calculated for all objects, in all databases. See
-        <xref linkend="checksums" /> for details.
+        may incur a noticeable performance penalty. This option can only
+        be set during initialization, and cannot be changed later. If
+        set, checksums are calculated for all objects, in all databases.
        </para>
       </listitem>
      </varlistentry>

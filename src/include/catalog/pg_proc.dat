@@ -10169,14 +10169,6 @@
   proargnames => '{max_data_alignment,database_block_size,blocks_per_segment,wal_block_size,bytes_per_wal_segment,max_identifier_length,max_index_columns,max_toast_chunk_size,large_object_chunk_size,float4_pass_by_value,float8_pass_by_value,data_page_checksum_version}',
   prosrc => 'pg_control_init' },
 
-{ oid => '3996', descr => 'disable data checksums',
-  proname => 'pg_disable_data_checksums', provolatile => 'v',
-  prorettype => 'void', proargtypes => '', prosrc => 'disable_data_checksums' },
-{ oid => '3998', descr => 'enable data checksums',
-  proname => 'pg_enable_data_checksums', provolatile => 'v',
-  prorettype => 'void', proargtypes => 'int4 int4',
-  proargnames => '{cost_delay,cost_limit}', prosrc => 'enable_data_checksums' },
-
 # collation management functions
 { oid => '3445', descr => 'import collations from operating system',
   proname => 'pg_import_system_collations', procost => '100',

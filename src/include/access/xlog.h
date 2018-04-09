@@ -154,7 +154,7 @@ extern PGDLLIMPORT int wal_level;
  * of the bits make it to disk, but the checksum wouldn't match.  Also WAL-log
  * them if forced by wal_log_hints=on.
  */
-#define XLogHintBitIsNeeded() (DataChecksumsNeedWrite() || wal_log_hints)
+#define XLogHintBitIsNeeded() (DataChecksumsEnabled() || wal_log_hints)
 
 /* Do we need to WAL-log information required only for Hot Standby and logical replication? */
 #define XLogStandbyInfoActive() (wal_level >= WAL_LEVEL_REPLICA)
@@ -257,13 +257,7 @@ extern char *XLogFileNameP(TimeLineID tli, XLogSegNo segno);
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);
 extern char *GetMockAuthenticationNonce(void);
-extern bool DataChecksumsNeedWrite(void);
-extern bool DataChecksumsNeedVerify(void);
-extern bool DataChecksumsInProgress(void);
-extern void SetDataChecksumsInProgress(void);
-extern void SetDataChecksumsOn(void);
-extern void SetDataChecksumsOff(void);
-extern const char *show_data_checksums(void);
+extern bool DataChecksumsEnabled(void);
 extern XLogRecPtr GetFakeLSNForUnloggedRel(void);
 extern Size XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
