@@ -129,19 +129,19 @@
   </para>
 
   <para>
-   Frontend code should not include any <structname>pg_xxx.h</structname>
+   Frontend code should not include any <filename>pg_xxx.h</filename>
    catalog header file, as these files may contain C code that won't compile
    outside the backend.  (Typically, that happens because these files also
    contain declarations for functions
    in <filename>src/backend/catalog/</filename> files.)
    Instead, frontend code may include the corresponding
-   generated <structname>pg_xxx_d.h</structname> header, which will contain
+   generated <filename>pg_xxx_d.h</filename> header, which will contain
    OID <literal>#define</literal>s and any other data that might be of use
    on the client side.  If you want macros or other code in a catalog header
    to be visible to frontend code, write <literal>#ifdef
    EXPOSE_TO_CLIENT_CODE</literal> ... <literal>#endif</literal> around that
    section to instruct <filename>genbki.pl</filename> to copy that section
-   to the <structname>pg_xxx_d.h</structname> header.
+   to the <filename>pg_xxx_d.h</filename> header.
   </para>
 
   <para>
@@ -419,11 +419,9 @@
       Use of symbolic references is enabled in a particular catalog column
       by attaching <literal>BKI_LOOKUP(<replaceable>lookuprule</replaceable>)</literal>
       to the column's definition, where <replaceable>lookuprule</replaceable>
-      is <structname>pg_am</structname>, <structname>pg_proc</structname>,
-      <structname>pg_operator</structname>,
-      <structname>pg_opclass</structname>,
-      <structname>pg_opfamily</structname>,
-      or <structname>pg_type</structname>.
+      is <literal>pg_am</literal>, <literal>pg_proc</literal>,
+      <literal>pg_operator</literal>, <literal>pg_opclass</literal>,
+      <literal>pg_opfamily</literal>, or <literal>pg_type</literal>.
       <literal>BKI_LOOKUP</literal> can be attached to columns of
       type <type>Oid</type>, <type>regproc</type>, <type>oidvector</type>,
       or <type>Oid[]</type>; in the latter two cases it implies performing a

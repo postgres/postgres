@@ -7,8 +7,7 @@
 #
 #    Metadata entries (if any) come first, with normal attributes
 #    starting on the following line, in the same order they would be in
-#    the corresponding table. Comments and non-consecutive blank lines
-#    are preserved.
+#    the corresponding table. Comments and blank lines are preserved.
 #
 # Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
@@ -109,7 +108,6 @@ foreach my $catname (@catnames)
 	my $catalog = $catalogs{$catname};
 	my @attnames;
 	my $schema = $catalog->{columns};
-	my $prev_blank = 0;
 
 	foreach my $column (@$schema)
 	{
@@ -158,27 +156,22 @@ foreach my $catname (@catnames)
 			my $data_str = format_hash(\%values, @attnames);
 			print $dat $data_str;
 			print $dat " },\n";
-			$prev_blank = 0;
 		}
 
 		# Strings -- handle accordingly or ignore. It was necessary to
 		# ignore bare commas during the initial data conversion. This
 		# should be a no-op now, but we may as well keep that behavior.
-		# Note: We don't update $prev_blank if we ignore a string.
 
-		# Preserve non-consecutive blank lines.
+		# Preserve blank lines.
 		elsif ($data =~ /^\s*$/)
 		{
-			next if $prev_blank;
 			print $dat "\n";
-			$prev_blank = 1;
 		}
 
 		# Preserve comments or brackets that are on their own line.
 		elsif ($data =~ /^\s*(\[|\]|#.*?)\s*$/)
 		{
 			print $dat "$1\n";
-			$prev_blank = 0;
 		}
 	}
 	close $dat;
