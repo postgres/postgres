@@ -208,6 +208,7 @@ main(int argc, char **argv)
 		fprintf(stderr, _("cannot be executed by \"root\"\n"));
 		fprintf(stderr, _("You must run %s as the PostgreSQL superuser.\n"),
 				progname);
+		exit(1);
 	}
 #endif
 
