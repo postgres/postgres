@@ -2923,7 +2923,8 @@ perform_pruning_combine_step(PartitionPruneContext *context,
 				if (firststep)
 				{
 					/* Copy step's result the first time. */
-					result->bound_offsets = step_result->bound_offsets;
+					result->bound_offsets =
+						bms_copy(step_result->bound_offsets);
 					result->scan_null = step_result->scan_null;
 					result->scan_default = step_result->scan_default;
 					firststep = false;
