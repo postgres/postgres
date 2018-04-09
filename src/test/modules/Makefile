@@ -20,6 +20,4 @@ SUBDIRS = \
 		  test_shm_mq \
 		  worker_spi
 
-all: submake-generated-headers
-
 $(recurse)

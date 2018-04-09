@@ -99,9 +99,6 @@ include $(top_srcdir)/src/Makefile.shlib
 
 all: all-lib
 
-$(OBJS): | submake-generated-headers
-
-
 install: all install-lib install-data
 
 installdirs: installdirs-lib

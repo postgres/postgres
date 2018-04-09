@@ -111,14 +111,6 @@ endif
 
 endif # aix
 
-# Update the commonly used headers before building the subdirectories
-$(SUBDIRS:%=%-recursive): | generated-headers
-
-# src/port needs a convenient way to force just errcodes.h to get built
-submake-errcodes: $(top_builddir)/src/include/utils/errcodes.h
-
-.PHONY: submake-errcodes
-
 $(top_builddir)/src/port/libpgport_srv.a: | submake-libpgport
 
 

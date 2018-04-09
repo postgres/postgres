@@ -348,11 +348,39 @@ XGETTEXT = @XGETTEXT@
 GZIP	= gzip
 BZIP2	= bzip2
 
+
+# Tree-wide build support
+
+# Just about every code subdirectory wants to have the generated headers
+# available before building, but we don't want parallel makes all trying
+# to build the same headers.  These rules, together with the recursion rules
+# below, ensure that we update the generated headers once, if needed,
+# at the top level of any "make all" or "make install" request.  If a
+# particular subdirectory knows this isn't needed in itself or its children,
+# it can set NO_GENERATED_HEADERS.
+
+all install: submake-generated-headers
+
+.PHONY: submake-generated-headers
+
+submake-generated-headers:
+ifndef NO_GENERATED_HEADERS
+ifeq ($(MAKELEVEL),0)
+	$(MAKE) -C $(top_builddir)/src/backend generated-headers
+endif
+endif
+
+
 # Testing
+
+# In much the same way as above, these rules ensure that we build a temp
+# install tree just once in any recursive "make check".  The additional test
+# on abs_top_builddir prevents doing anything foolish to the root directory.
 
 check: temp-install
 
 .PHONY: temp-install
+
 temp-install:
 ifndef NO_TEMP_INSTALL
 ifneq ($(abs_top_builddir),)
@@ -544,10 +572,7 @@ submake-libpgfeutils:
 	$(MAKE) -C $(top_builddir)/src/common all
 	$(MAKE) -C $(top_builddir)/src/fe_utils all
 
-submake-generated-headers:
-	$(MAKE) -C $(top_builddir)/src/backend generated-headers
-
-.PHONY: submake-libpq submake-libpgport submake-libpgfeutils submake-generated-headers
+.PHONY: submake-libpq submake-libpgport submake-libpgfeutils
 
 
 ##########################################################################
@@ -782,7 +807,9 @@ endif
 
 # This function is only for internal use below.  It should be called
 # using $(eval).  It will set up a target so that it recurses into
-# a given subdirectory.  Note that to avoid a nasty bug in make 3.80,
+# a given subdirectory.  For the tree-wide all/install/check cases,
+# ensure we do our one-time tasks before recursing (see targets above).
+# Note that to avoid a nasty bug in make 3.80,
 # this function has to avoid using any complicated constructs (like
 # multiple targets on a line) and also not contain any lines that expand
 # to more than about 200 bytes.  This is why we make it apply to just one
@@ -793,7 +820,7 @@ endif
 define _create_recursive_target
 .PHONY: $(1)-$(2)-recurse
 $(1): $(1)-$(2)-recurse
-$(1)-$(2)-recurse: $(if $(filter check, $(3)), temp-install)
+$(1)-$(2)-recurse: $(if $(filter all install, $(3)), submake-generated-headers) $(if $(filter check, $(3)), temp-install)
 	$$(MAKE) -C $(2) $(3)
 endef
 # Note that the use of $$ on the last line above is important; we want

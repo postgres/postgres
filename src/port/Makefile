@@ -87,13 +87,6 @@ libpgport_srv.a: $(OBJS_SRV)
 %_srv.o: %.c %.o
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
-$(OBJS_SRV): | submake-errcodes
-
-.PHONY: submake-errcodes
-
-submake-errcodes:
-	$(MAKE) -C ../backend submake-errcodes
-
 # Dependency is to ensure that path changes propagate
 
 path.o: path.c pg_config_paths.h

@@ -17,6 +17,8 @@
 # to want to use.
 html:
 
+# We don't need the tree-wide headers or install support here.
+NO_GENERATED_HEADERS=yes
 NO_TEMP_INSTALL=yes
 
 subdir = doc/src/sgml

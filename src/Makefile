@@ -41,11 +41,6 @@ endif
 
 $(recurse)
 
-# Update the commonly used headers before building the subdirectories;
-# otherwise, in a parallel build, several different sub-jobs will try to
-# remake them concurrently
-$(SUBDIRS:%=all-%-recurse): | submake-generated-headers
-
 install: install-local
 
 install-local: installdirs-local

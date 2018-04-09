@@ -88,13 +88,6 @@ libpgcommon_srv.a: $(OBJS_SRV)
 %_srv.o: %.c %.o
 	$(CC) $(CFLAGS) $(subst -DFRONTEND ,, $(CPPFLAGS)) -c $< -o $@
 
-$(OBJS_SRV): | submake-errcodes
-
-.PHONY: submake-errcodes
-
-submake-errcodes:
-	$(MAKE) -C ../backend submake-errcodes
-
 # Dependencies of keywords.o need to be managed explicitly to make sure
 # that you don't get broken parsing code, even in a non-enable-depend build.
 # Note that gram.h isn't required for the frontend version of keywords.o.

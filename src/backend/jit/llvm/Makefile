@@ -27,7 +27,6 @@ CFLAGS += $(LLVM_CFLAGS)
 CXXFLAGS += $(LLVM_CXXFLAGS)
 override CPPFLAGS := $(LLVM_CPPFLAGS) $(CPPFLAGS)
 SHLIB_LINK += $(LLVM_LIBS)
-SHLIB_PREREQS += submake-generated-headers
 
 # Because this module includes C++ files, we need to use a C++
 # compiler for linking. Makefile.shlib uses $(COMPILER) to build
