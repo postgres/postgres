@@ -1524,9 +1524,12 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubnodes)
 
 	/*
 	 * Record that partition pruning has been performed for external params.
-	 * This partly also serves to ensure we never call this function twice
-	 * with the same input and also so that ExecFindMatchingSubPlans is aware
-	 * that pruning has already been performed for external Params.
+	 * These are not required again afterwards, and nullifying them helps
+	 * ensure nothing accidentally calls this function twice on the same
+	 * PartitionPruneState.
+	 *
+	 * (Note we keep prunestate->allparams, because we do use that one
+	 * repeatedly in ExecFindMatchingSubPlans).
 	 */
 	bms_free(prunestate->extparams);
 	prunestate->extparams = NULL;
@@ -1607,7 +1610,7 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubnodes)
 
 /*
  * ExecFindMatchingSubPlans
- *		Determine which subplans match the the pruning steps detailed in
+ *		Determine which subplans match the pruning steps detailed in
  *		'pprune' for the current Param values.
  *
  * Here we utilize both external and exec Params for pruning.

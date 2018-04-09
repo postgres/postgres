@@ -40,7 +40,7 @@ typedef struct PartitionPruneContext
 
 	/*
 	 * Can be set when the context is used from the executor to allow params
-	 * found matching the partition key to be evaulated.
+	 * found matching the partition key to be evaluated.
 	 */
 	PlanState  *planstate;
 
