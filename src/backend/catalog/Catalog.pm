@@ -340,7 +340,6 @@ sub RenameTempFile
 	my $final_name = shift;
 	my $extension  = shift;
 	my $temp_name  = $final_name . $extension;
-	print "Writing $final_name\n";
 	rename($temp_name, $final_name) || die "rename: $temp_name: $!";
 }
 

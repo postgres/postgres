@@ -84,6 +84,8 @@ my $FirstBootstrapObjectId = Catalog::FindDefinedSymbol(
 my $INTERNALlanguageId = Catalog::FindDefinedSymbolFromData(
 	$catalog_data{pg_language}, 'INTERNALlanguageId');
 
+print "Generating fmgrtab.c, fmgroids.h, and fmgrprotos.h...\n";
+
 # Collect certain fields from pg_proc.dat.
 my @fmgr = ();
 

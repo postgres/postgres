@@ -275,7 +275,6 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 			'fmgrtab.c', '../../../src/include/access/transam.h')
 		)
 	{
-		print "Generating fmgrtab.c, fmgroids.h, fmgrprotos.h...\n";
 		system(
 "perl -I ../catalog Gen_fmgrtab.pl -I../../../src/include/ $pg_language_dat $pg_proc_dat");
 	}
@@ -479,7 +478,6 @@ EOF
 				'src/backend/catalog/postgres.bki',
 				"src/include/catalog/$bki"))
 		{
-			print "Generating BKI files and symbol definition headers...\n";
 			chdir('src/backend/catalog');
 			my $bki_srcs = join(' ../../../src/include/catalog/', @bki_srcs);
 			system("perl genbki.pl --set-version=$self->{majorver} $bki_srcs");

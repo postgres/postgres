@@ -217,6 +217,7 @@ my %lookup_kind = (
 
 # Generate postgres.bki, postgres.description, postgres.shdescription,
 # and pg_*_d.h headers.
+print "Generating BKI files and symbol definition headers...\n";
 
 # version marker for .bki file
 print $bki "# PostgreSQL $major_version\n";
