@@ -73,7 +73,6 @@
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "access/xlog.h"
-#include "catalog/catalog.h"
 #include "catalog/index.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"

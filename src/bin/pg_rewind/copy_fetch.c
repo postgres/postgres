@@ -21,8 +21,6 @@
 #include "logging.h"
 #include "pg_rewind.h"
 
-#include "catalog/catalog.h"
-
 static void recurse_dir(const char *datadir, const char *path,
 			process_file_callback_t callback);
 

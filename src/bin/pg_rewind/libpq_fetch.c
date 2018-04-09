@@ -22,7 +22,6 @@
 #include "logging.h"
 
 #include "libpq-fe.h"
-#include "catalog/catalog.h"
 #include "catalog/pg_type_d.h"
 #include "fe_utils/connect.h"
 #include "port/pg_bswap.h"

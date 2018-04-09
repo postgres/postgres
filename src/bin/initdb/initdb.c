@@ -60,8 +60,8 @@
 #endif
 
 #include "access/xlog_internal.h"
-#include "catalog/catalog.h"
 #include "catalog/pg_authid_d.h"
+#include "catalog/pg_class_d.h" /* pgrminclude ignore */
 #include "catalog/pg_collation_d.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"

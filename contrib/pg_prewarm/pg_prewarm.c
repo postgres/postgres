@@ -16,7 +16,6 @@
 #include <unistd.h>
 
 #include "access/heapam.h"
-#include "catalog/catalog.h"
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"

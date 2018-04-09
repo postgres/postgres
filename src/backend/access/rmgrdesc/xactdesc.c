@@ -16,7 +16,6 @@
 
 #include "access/transam.h"
 #include "access/xact.h"
-#include "catalog/catalog.h"
 #include "storage/sinval.h"
 #include "storage/standbydefs.h"
 #include "utils/timestamp.h"

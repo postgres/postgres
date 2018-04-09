@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include "catalog/catalog.h"
 #include "catalog/storage_xlog.h"
 
 
