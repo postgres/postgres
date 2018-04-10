@@ -171,9 +171,9 @@ top:
 
 			/*
 			 * Check if the page is still the rightmost leaf page, has enough
-			 * free space to accommodate the new tuple, no split is in progress
-			 * and the scankey is greater than or equal to the first key on the
-			 * page.
+			 * free space to accommodate the new tuple, no split is in
+			 * progress, and the insertion scan key is strictly greater than
+			 * the first key on the page.
 			 */
 			if (P_ISLEAF(lpageop) && P_RIGHTMOST(lpageop) &&
 				!P_INCOMPLETE_SPLIT(lpageop) &&
