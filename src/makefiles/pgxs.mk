@@ -62,6 +62,12 @@ endif
 
 
 ifdef PGXS
+
+# External extensions must assume generated headers are available
+NO_GENERATED_HEADERS=yes
+# The temp-install rule won't work, either
+NO_TEMP_INSTALL=yes
+
 # We assume that we are in src/makefiles/, so top is ...
 top_builddir := $(dir $(PGXS))../..
 include $(top_builddir)/src/Makefile.global
@@ -75,7 +81,8 @@ endif
 ifeq ($(FLEX),)
 FLEX = flex
 endif
-endif
+
+endif # PGXS
 
 
 override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
