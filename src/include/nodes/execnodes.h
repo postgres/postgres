@@ -1004,6 +1004,11 @@ typedef struct PlanState
 #define outerPlanState(node)		(((PlanState *)(node))->lefttree)
 
 /* Macros for inline access to certain instrumentation counters */
+#define InstrCountTuples2(node, delta) \
+	do { \
+		if (((PlanState *)(node))->instrument) \
+			((PlanState *)(node))->instrument->ntuples2 += (delta); \
+	} while (0)
 #define InstrCountFiltered1(node, delta) \
 	do { \
 		if (((PlanState *)(node))->instrument) \
@@ -1368,7 +1373,6 @@ typedef struct IndexScanState
  *		RelationDesc	   index relation descriptor
  *		ScanDesc		   index scan descriptor
  *		VMBuffer		   buffer in use for visibility map testing, if any
- *		HeapFetches		   number of tuples we were forced to fetch from heap
  *		ioss_PscanLen	   Size of parallel index-only scan descriptor
  * ----------------
  */
@@ -1387,7 +1391,6 @@ typedef struct IndexOnlyScanState
 	Relation	ioss_RelationDesc;
 	IndexScanDesc ioss_ScanDesc;
 	Buffer		ioss_VMBuffer;
-	long		ioss_HeapFetches;
 	Size		ioss_PscanLen;
 } IndexOnlyScanState;
 

@@ -461,7 +461,7 @@ ExecInsert(ModifyTableState *mtstate,
 											 &conflictTid, planSlot, slot,
 											 estate, canSetTag, &returning))
 					{
-						InstrCountFiltered2(&mtstate->ps, 1);
+						InstrCountTuples2(&mtstate->ps, 1);
 						return returning;
 					}
 					else
@@ -476,7 +476,7 @@ ExecInsert(ModifyTableState *mtstate,
 					 */
 					Assert(onconflict == ONCONFLICT_NOTHING);
 					ExecCheckTIDVisible(estate, resultRelInfo, &conflictTid);
-					InstrCountFiltered2(&mtstate->ps, 1);
+					InstrCountTuples2(&mtstate->ps, 1);
 					return NULL;
 				}
 			}

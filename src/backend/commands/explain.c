@@ -1459,12 +1459,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
 			if (es->analyze)
-			{
-				long		heapFetches =
-					((IndexOnlyScanState *) planstate)->ioss_HeapFetches;
-
-				ExplainPropertyInteger("Heap Fetches", NULL, heapFetches, es);
-			}
+				ExplainPropertyFloat("Heap Fetches", NULL,
+									 planstate->instrument->ntuples2, 0, es);
 			break;
 		case T_BitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
@@ -3132,7 +3128,7 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 
 			/* count the number of source rows */
 			total = mtstate->mt_plans[0]->instrument->ntuples;
-			other_path = mtstate->ps.instrument->nfiltered2;
+			other_path = mtstate->ps.instrument->ntuples2;
 			insert_path = total - other_path;
 
 			ExplainPropertyFloat("Tuples Inserted", NULL,
