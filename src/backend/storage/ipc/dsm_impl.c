@@ -924,7 +924,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 
 		/* Back out what's already been done. */
 		save_errno = errno;
-		close(fd);
+		CloseTransientFile(fd);
 		if (op == DSM_OP_CREATE)
 			unlink(name);
 		errno = save_errno;
