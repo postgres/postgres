@@ -173,9 +173,8 @@ top:
 
 			/*
 			 * Check if the page is still the rightmost leaf page, has enough
-			 * free space to accommodate the new tuple, no split is in
-			 * progress, and the insertion scan key is strictly greater than
-			 * the first key on the page.
+			 * free space to accommodate the new tuple, and the insertion
+			 * scan key is strictly greater than the first key on the page.
 			 */
 			if (P_ISLEAF(lpageop) && P_RIGHTMOST(lpageop) &&
 				!P_IGNORE(lpageop) &&
@@ -185,8 +184,8 @@ top:
 							P_FIRSTDATAKEY(lpageop)) > 0)
 			{
 				/*
-				 * The right-most block should never have incomplete split. But
-				 * be paranoid and check for it anyway.
+				 * The right-most block should never have an incomplete split.
+				 * But be paranoid and check for it anyway.
 				 */
 				Assert(!P_INCOMPLETE_SPLIT(lpageop));
 				fastpath = true;
