@@ -26,6 +26,8 @@
 #include "storage/smgr.h"
 #include "utils/tqual.h"
 
+/* Minimum tree height for application of fastpath optimization */
+#define BTREE_FASTPATH_MIN_LEVEL	2
 
 typedef struct
 {
@@ -125,7 +127,7 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 	/*
 	 * It's very common to have an index on an auto-incremented or
 	 * monotonically increasing value. In such cases, every insertion happens
-	 * towards the end of the index. We try to optimise that case by caching
+	 * towards the end of the index. We try to optimize that case by caching
 	 * the right-most leaf of the index. If our cached block is still the
 	 * rightmost leaf, has enough free space to accommodate a new entry and
 	 * the insertion key is strictly greater than the first key in this page,
@@ -176,13 +178,17 @@ top:
 			 * the first key on the page.
 			 */
 			if (P_ISLEAF(lpageop) && P_RIGHTMOST(lpageop) &&
-				!P_INCOMPLETE_SPLIT(lpageop) &&
 				!P_IGNORE(lpageop) &&
 				(PageGetFreeSpace(page) > itemsz) &&
 				PageGetMaxOffsetNumber(page) >= P_FIRSTDATAKEY(lpageop) &&
 				_bt_compare(rel, indnkeyatts, itup_scankey, page,
 							P_FIRSTDATAKEY(lpageop)) > 0)
 			{
+				/*
+				 * The right-most block should never have incomplete split. But
+				 * be paranoid and check for it anyway.
+				 */
+				Assert(!P_INCOMPLETE_SPLIT(lpageop));
 				fastpath = true;
 			}
 			else
@@ -868,6 +874,24 @@ _bt_insertonpg(Relation rel,
 		bool		newitemonleft;
 		Buffer		rbuf;
 
+		/*
+		 * If we're here then a pagesplit is needed. We should never reach here
+		 * if we're using the fastpath since we should have checked for all the
+		 * required conditions, including the fact that this page has enough
+		 * freespace. Note that this routine can in theory deal with the
+		 * situation where a NULL stack pointer is passed (that's what would
+		 * happen if the fastpath is taken), like it does during crash
+		 * recovery. But that path is much slower, defeating the very purpose
+		 * of the optimization.  The following assertion should protect us from
+		 * any future code changes that invalidate those assumptions.
+		 *
+		 * Note that whenever we fail to take the fastpath, we clear the
+		 * cached block. Checking for a valid cached block at this point is
+		 * enough to decide whether we're in a fastpath or not.
+		 */
+		Assert(!(P_ISLEAF(lpageop) &&
+				BlockNumberIsValid(RelationGetTargetBlock(rel))));
+
 		/* Choose the split point */
 		firstright = _bt_findsplitloc(rel, page,
 									  newitemoff, itemsz,
@@ -905,6 +929,7 @@ _bt_insertonpg(Relation rel,
 		BTMetaPageData *metad = NULL;
 		OffsetNumber itup_off;
 		BlockNumber itup_blkno;
+		BlockNumber	cachedBlock = InvalidBlockNumber;
 
 		itup_off = newitemoff;
 		itup_blkno = BufferGetBlockNumber(buf);
@@ -962,6 +987,15 @@ _bt_insertonpg(Relation rel,
 			MarkBufferDirty(cbuf);
 		}
 
+		/*
+		 * Cache the block information if we just inserted into the rightmost
+		 * leaf page of the index and it's not the root page.  For very small
+		 * index where root is also the leaf, there is no point trying for any
+		 * optimization.
+		 */
+		if (P_RIGHTMOST(lpageop) && P_ISLEAF(lpageop) && !P_ISROOT(lpageop))
+			cachedBlock = BufferGetBlockNumber(buf);
+
 		/* XLOG stuff */
 		if (RelationNeedsWAL(rel))
 		{
@@ -977,16 +1011,7 @@ _bt_insertonpg(Relation rel,
 			XLogRegisterData((char *) &xlrec, SizeOfBtreeInsert);
 
 			if (P_ISLEAF(lpageop))
-			{
 				xlinfo = XLOG_BTREE_INSERT_LEAF;
-
-				/*
-				 * Cache the block information if we just inserted into the
-				 * rightmost leaf page of the index.
-				 */
-				if (P_RIGHTMOST(lpageop))
-					RelationSetTargetBlock(rel, BufferGetBlockNumber(buf));
-			}
 			else
 			{
 				/*
@@ -1048,6 +1073,22 @@ _bt_insertonpg(Relation rel,
 		if (BufferIsValid(cbuf))
 			_bt_relbuf(rel, cbuf);
 		_bt_relbuf(rel, buf);
+
+		/*
+		 * If we decided to cache the insertion target block, then set it now.
+		 * But before that, check for the height of the tree and don't go for
+		 * the optimization for small indexes. We defer that check to this
+		 * point to ensure that we don't call _bt_getrootheight while holding
+		 * lock on any other block.
+		 *
+		 * We do this after dropping locks on all buffers. So the information
+		 * about whether the insertion block is still the rightmost block or
+		 * not may have changed in between. But we will deal with that during
+		 * next insert operation. No special care is required while setting it.
+		 */
+		if (BlockNumberIsValid(cachedBlock) &&
+			_bt_getrootheight(rel) >= BTREE_FASTPATH_MIN_LEVEL)
+			RelationSetTargetBlock(rel, cachedBlock);
 	}
 }
 

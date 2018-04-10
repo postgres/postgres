@@ -375,6 +375,25 @@ positives, so long as it never gives a false negative.  This makes it
 possible to implement the test with a small counter value stored on each
 index page.
 
+Fastpath For Index Insertion
+----------------------------
+
+We optimize for a common case of insertion of increasing index key
+values by caching the last page to which this backend inserted the last
+value, if this page was the rightmost leaf page. For the next insert, we
+can then quickly check if the cached page is still the rightmost leaf
+page and also the correct place to hold the current value. We can avoid
+the cost of walking down the tree in such common cases.
+
+The optimization works on the assumption that there can only be one
+non-ignorable leaf rightmost page, and so even a RecentGlobalXmin style
+interlock isn't required.  We cannot fail to detect that our hint was
+invalidated, because there can only be one such page in the B-Tree at
+any time. It's possible that the page will be deleted and recycled
+without a backend's cached page also being detected as invalidated, but
+only when we happen to recycle a block that once again gets recycled as the
+rightmost leaf page.
+
 On-the-Fly Deletion Of Index Tuples
 -----------------------------------
 
