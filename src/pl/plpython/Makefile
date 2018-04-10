@@ -99,6 +99,9 @@ include $(top_srcdir)/src/Makefile.shlib
 
 all: all-lib
 
+# Ensure parallel safety if a build is started in this directory
+$(OBJS): | submake-generated-headers
+
 install: all install-lib install-data
 
 installdirs: installdirs-lib

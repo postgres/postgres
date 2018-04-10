@@ -563,11 +563,11 @@ endif
 submake-libpq:
 	$(MAKE) -C $(libpq_builddir) all
 
-submake-libpgport:
+submake-libpgport: | submake-generated-headers
 	$(MAKE) -C $(top_builddir)/src/port all
 	$(MAKE) -C $(top_builddir)/src/common all
 
-submake-libpgfeutils:
+submake-libpgfeutils: | submake-generated-headers
 	$(MAKE) -C $(top_builddir)/src/port all
 	$(MAKE) -C $(top_builddir)/src/common all
 	$(MAKE) -C $(top_builddir)/src/fe_utils all

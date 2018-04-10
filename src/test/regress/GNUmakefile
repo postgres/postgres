@@ -43,7 +43,8 @@ pg_regress$(X): pg_regress.o pg_regress_main.o $(WIN32RES) | submake-libpgport
 pg_regress.o: pg_regress.c $(top_builddir)/src/port/pg_config_paths.h
 pg_regress.o: override CPPFLAGS += -I$(top_builddir)/src/port $(EXTRADEFS)
 
-$(top_builddir)/src/port/pg_config_paths.h: $(top_builddir)/src/Makefile.global
+# note: because of the submake dependency, this rule's action is really a no-op
+$(top_builddir)/src/port/pg_config_paths.h: | submake-libpgport
 	$(MAKE) -C $(top_builddir)/src/port pg_config_paths.h
 
 install: all installdirs
@@ -64,6 +65,9 @@ OBJS = $(WIN32RES) regress.o
 include $(top_srcdir)/src/Makefile.shlib
 
 all: all-lib
+
+# Ensure parallel safety if a build is started in this directory
+$(OBJS): | submake-libpgport submake-generated-headers
 
 # Test input and expected files.  These are created by pg_regress itself, so we
 # don't have a rule to create them.  We do need rules to clean them however.
@@ -105,7 +109,7 @@ $(top_builddir)/contrib/spi/refint$(DLSUFFIX): | submake-contrib-spi ;
 
 $(top_builddir)/contrib/spi/autoinc$(DLSUFFIX): | submake-contrib-spi ;
 
-submake-contrib-spi: | submake-libpgport
+submake-contrib-spi: | submake-libpgport submake-generated-headers
 	$(MAKE) -C $(top_builddir)/contrib/spi
 
 .PHONY: submake-contrib-spi
