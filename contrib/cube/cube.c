@@ -1555,7 +1555,6 @@ cube_coord_llur(PG_FUNCTION_ARGS)
 {
 	NDBOX	   *cube = PG_GETARG_NDBOX(0);
 	int			coord = PG_GETARG_INT32(1);
-	bool		inverse = false;
 	float8		result;
 
 	/* 0 is the only unsupported coordinate value */
@@ -1592,10 +1591,6 @@ cube_coord_llur(PG_FUNCTION_ARGS)
 		 */
 		result = 0.0;
 	}
-
-	/* Inverse value if needed */
-	if (inverse)
-		result = -result;
 
 	PG_RETURN_FLOAT8(result);
 }
