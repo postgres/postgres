@@ -2786,6 +2786,7 @@ pgstat_read_current_status(void)
 	PgBackendStatus *localtable;
 	PgBackendStatus *localentry;
 	char	   *localappname,
+			   *localclienthostname,
 			   *localactivity;
 	int			i;
 
@@ -2799,6 +2800,9 @@ pgstat_read_current_status(void)
 		MemoryContextAlloc(pgStatLocalContext,
 						   sizeof(PgBackendStatus) * MaxBackends);
 	localappname = (char *)
+		MemoryContextAlloc(pgStatLocalContext,
+						   NAMEDATALEN * MaxBackends);
+	localclienthostname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * MaxBackends);
 	localactivity = (char *)
@@ -2832,6 +2836,8 @@ pgstat_read_current_status(void)
 				 */
 				strcpy(localappname, (char *) beentry->st_appname);
 				localentry->st_appname = localappname;
+				strcpy(localclienthostname, (char *) beentry->st_clienthostname);
+				localentry->st_clienthostname = localclienthostname;
 				strcpy(localactivity, (char *) beentry->st_activity);
 				localentry->st_activity = localactivity;
 			}
@@ -2850,6 +2856,7 @@ pgstat_read_current_status(void)
 		{
 			localentry++;
 			localappname += NAMEDATALEN;
+			localclienthostname += NAMEDATALEN;
 			localactivity += pgstat_track_activity_query_size;
 			localNumBackends++;
 		}
