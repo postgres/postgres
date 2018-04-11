@@ -2564,3 +2564,21 @@ ANALYZE attmp;
 DROP TABLE attmp;
 
 DROP USER regress_alter_table_user1;
+
+-- check that violating rows are correctly reported when attaching as the
+-- default partition
+create table defpart_attach_test (a int) partition by list (a);
+create table defpart_attach_test1 partition of defpart_attach_test for values in (1);
+create table defpart_attach_test_d (like defpart_attach_test);
+insert into defpart_attach_test_d values (1), (2);
+
+-- error because its constraint as the default partition would be violated
+-- by the row containing 1
+alter table defpart_attach_test attach partition defpart_attach_test_d default;
+delete from defpart_attach_test_d where a = 1;
+alter table defpart_attach_test_d add check (a > 1);
+
+-- should be attached successfully and without needing to be scanned
+alter table defpart_attach_test attach partition defpart_attach_test_d default;
+
+drop table defpart_attach_test;
