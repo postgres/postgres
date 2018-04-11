@@ -342,7 +342,6 @@ DefineIndex(Oid relationId,
 	Oid			tablespaceId;
 	Oid			createdConstraintId = InvalidOid;
 	List	   *indexColNames;
-	List	   *allIndexParams;
 	Relation	rel;
 	Relation	indexRelation;
 	HeapTuple	tuple;
@@ -379,16 +378,16 @@ DefineIndex(Oid relationId,
 	numberOfKeyAttributes = list_length(stmt->indexParams);
 
 	/*
-	 * Calculate the new list of index columns including both key columns and
-	 * INCLUDE columns.  Later we can determine which of these are key columns,
-	 * and which are just part of the INCLUDE list by checking the list
-	 * position.  A list item in a position less than ii_NumIndexKeyAttrs is
-	 * part of the key columns, and anything equal to and over is part of the
-	 * INCLUDE columns.
+	 * We append any INCLUDE columns onto the indexParams list so that we have
+	 * one list with all columns.  Later we can determine which of these are
+	 * key columns, and which are just part of the INCLUDE list by checking
+	 * the list position.  A list item in a position less than
+	 * ii_NumIndexKeyAttrs is part of the key columns, and anything equal to
+	 * and over is part of the INCLUDE columns.
 	 */
-	allIndexParams = list_concat(list_copy(stmt->indexParams),
-								 list_copy(stmt->indexIncludingParams));
-	numberOfAttributes = list_length(allIndexParams);
+	stmt->indexParams = list_concat(stmt->indexParams,
+									stmt->indexIncludingParams);
+	numberOfAttributes = list_length(stmt->indexParams);
 
 	if (numberOfAttributes <= 0)
 		ereport(ERROR,
@@ -545,7 +544,7 @@ DefineIndex(Oid relationId,
 	/*
 	 * Choose the index column names.
 	 */
-	indexColNames = ChooseIndexColumnNames(allIndexParams);
+	indexColNames = ChooseIndexColumnNames(stmt->indexParams);
 
 	/*
 	 * Select name for index if caller didn't specify
@@ -659,7 +658,7 @@ DefineIndex(Oid relationId,
 	coloptions = (int16 *) palloc(numberOfAttributes * sizeof(int16));
 	ComputeIndexAttrs(indexInfo,
 					  typeObjectId, collationObjectId, classObjectId,
-					  coloptions, allIndexParams,
+					  coloptions, stmt->indexParams,
 					  stmt->excludeOpNames, relationId,
 					  accessMethodName, accessMethodId,
 					  amcanorder, stmt->isconstraint);
@@ -887,8 +886,8 @@ DefineIndex(Oid relationId,
 			memcpy(part_oids, partdesc->oids, sizeof(Oid) * nparts);
 
 			parentDesc = CreateTupleDescCopy(RelationGetDescr(rel));
-			opfamOids = palloc(sizeof(Oid) * numberOfKeyAttributes);
-			for (i = 0; i < numberOfKeyAttributes; i++)
+			opfamOids = palloc(sizeof(Oid) * numberOfAttributes);
+			for (i = 0; i < numberOfAttributes; i++)
 				opfamOids[i] = get_opclass_family(classObjectId[i]);
 
 			heap_close(rel, NoLock);

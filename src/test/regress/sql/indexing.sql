@@ -701,22 +701,3 @@ alter index idxpart2_a_idx attach partition idxpart22_a_idx;
 create index on idxpart (a);
 create table idxpart_another (a int, b int, primary key (a, b)) partition by range (a);
 create table idxpart_another_1 partition of idxpart_another for values from (0) to (100);
-
--- Test that covering partitioned indexes work in various cases
-create table covidxpart (a int, b int) partition by list (a);
-create unique index on covidxpart (a) include (b);
-create table covidxpart1 partition of covidxpart for values in (1);
-create table covidxpart2 partition of covidxpart for values in (2);
-insert into covidxpart values (1, 1);
-insert into covidxpart values (1, 1);
-create table covidxpart3 (b int, c int, a int);
-alter table covidxpart3 drop c;
-alter table covidxpart attach partition covidxpart3 for values in (3);
-insert into covidxpart values (3, 1);
-insert into covidxpart values (3, 1);
-create table covidxpart4 (b int, a int);
-create unique index on covidxpart4 (a) include (b);
-create unique index on covidxpart4 (a);
-alter table covidxpart attach partition covidxpart4 for values in (4);
-insert into covidxpart values (4, 1);
-insert into covidxpart values (4, 1);
