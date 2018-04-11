@@ -477,7 +477,14 @@
   <para>
    The role used for the replication connection must have
    the <literal>REPLICATION</literal> attribute (or be a superuser).  Access for the role must be
-   configured in <filename>pg_hba.conf</filename>.
+   configured in <filename>pg_hba.conf</filename> and it must have the
+   <literal>LOGIN</literal> attribute.
+  </para>
+
+  <para>
+   In order to be able to copy the initial table data, the role used for the
+   replication connection must have the <literal>SELECT</literal> privilege on
+   a published table (or be a superuser).
   </para>
 
   <para>
