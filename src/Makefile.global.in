@@ -355,11 +355,11 @@ BZIP2	= bzip2
 # available before building, but we don't want parallel makes all trying
 # to build the same headers.  These rules, together with the recursion rules
 # below, ensure that we update the generated headers once, if needed,
-# at the top level of any "make all" or "make install" request.  If a
-# particular subdirectory knows this isn't needed in itself or its children,
-# it can set NO_GENERATED_HEADERS.
+# at the top level of any "make all/install/check" request.  If a particular
+# subdirectory knows this isn't needed in itself or its children, it can set
+# NO_GENERATED_HEADERS.
 
-all install: submake-generated-headers
+all install check: submake-generated-headers
 
 .PHONY: submake-generated-headers
 
@@ -381,7 +381,7 @@ check: temp-install
 
 .PHONY: temp-install
 
-temp-install:
+temp-install: | submake-generated-headers
 ifndef NO_TEMP_INSTALL
 ifneq ($(abs_top_builddir),)
 ifeq ($(MAKELEVEL),0)
@@ -560,7 +560,7 @@ endif
 #
 # Commonly used submake targets
 
-submake-libpq:
+submake-libpq: | submake-generated-headers
 	$(MAKE) -C $(libpq_builddir) all
 
 submake-libpgport: | submake-generated-headers
@@ -820,7 +820,7 @@ endif
 define _create_recursive_target
 .PHONY: $(1)-$(2)-recurse
 $(1): $(1)-$(2)-recurse
-$(1)-$(2)-recurse: $(if $(filter all install, $(3)), submake-generated-headers) $(if $(filter check, $(3)), temp-install)
+$(1)-$(2)-recurse: $(if $(filter all install check, $(3)), submake-generated-headers) $(if $(filter check, $(3)), temp-install)
 	$$(MAKE) -C $(2) $(3)
 endef
 # Note that the use of $$ on the last line above is important; we want
