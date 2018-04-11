@@ -282,8 +282,12 @@ IsSharedRelation(Oid relationId)
  * managed to cycle through 2^32 OIDs and generate the same OID before we
  * finish inserting our row.  This seems unlikely to be a problem.  Note
  * that if we had to *commit* the row to end the race condition, the risk
- * would be rather higher; therefore we use SnapshotDirty in the test,
- * so that we will see uncommitted rows.
+ * would be rather higher; therefore we use SnapshotAny in the test, so that
+ * we will see uncommitted rows.  (We used to use SnapshotDirty, but that has
+ * the disadvantage that it ignores recently-deleted rows, creating a risk
+ * of transient conflicts for as long as our own MVCC snapshots think a
+ * recently-deleted row is live.  The risk is far higher when selecting TOAST
+ * OIDs, because SnapshotToast considers dead rows as active indefinitely.)
  */
 Oid
 GetNewOid(Relation relation)
@@ -336,7 +340,6 @@ Oid
 GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 {
 	Oid			newOid;
-	SnapshotData SnapshotDirty;
 	SysScanDesc scan;
 	ScanKeyData key;
 	bool		collides;
@@ -348,8 +351,6 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 	 * ensure that a type OID is determined by commands in the dump script.
 	 */
 	Assert(!IsBinaryUpgrade || RelationGetRelid(relation) != TypeRelationId);
-
-	InitDirtySnapshot(SnapshotDirty);
 
 	/* Generate new OIDs until we find one not in the table */
 	do
@@ -363,9 +364,9 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(newOid));
 
-		/* see notes above about using SnapshotDirty */
+		/* see notes above about using SnapshotAny */
 		scan = systable_beginscan(relation, indexId, true,
-								  &SnapshotDirty, 1, &key);
+								  SnapshotAny, 1, &key);
 
 		collides = HeapTupleIsValid(systable_getnext(scan));
 
