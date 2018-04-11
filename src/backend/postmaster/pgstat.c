@@ -2650,7 +2650,7 @@ CreateSharedBackendStatus(void)
 	}
 
 	/* Create or attach to the shared appname buffer */
-	size = mul_size(NAMEDATALEN, MaxBackends);
+	size = mul_size(NAMEDATALEN, NumBackendStatSlots);
 	BackendAppnameBuffer = (char *)
 		ShmemInitStruct("Backend Application Name Buffer", size, &found);
 
@@ -2668,7 +2668,7 @@ CreateSharedBackendStatus(void)
 	}
 
 	/* Create or attach to the shared client hostname buffer */
-	size = mul_size(NAMEDATALEN, MaxBackends);
+	size = mul_size(NAMEDATALEN, NumBackendStatSlots);
 	BackendClientHostnameBuffer = (char *)
 		ShmemInitStruct("Backend Client Host Name Buffer", size, &found);
 
