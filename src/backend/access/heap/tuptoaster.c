@@ -1796,7 +1796,9 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 /* ----------
  * toastrel_valueid_exists -
  *
- *	Test whether a toast value with the given ID exists in the toast relation
+ *	Test whether a toast value with the given ID exists in the toast relation.
+ *	For safety, we consider a value to exist if there are either live or dead
+ *	toast rows with that ID; see notes for GetNewOid().
  * ----------
  */
 static bool
@@ -1808,7 +1810,6 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 	int			num_indexes;
 	int			validIndex;
 	Relation   *toastidxs;
-	SnapshotData SnapshotToast;
 
 	/* Fetch a valid index relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -1827,10 +1828,9 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 	/*
 	 * Is there any such chunk?
 	 */
-	init_toast_snapshot(&SnapshotToast);
 	toastscan = systable_beginscan(toastrel,
 								   RelationGetRelid(toastidxs[validIndex]),
-								   true, &SnapshotToast, 1, &toastkey);
+								   true, SnapshotAny, 1, &toastkey);
 
 	if (systable_getnext(toastscan) != NULL)
 		result = true;
