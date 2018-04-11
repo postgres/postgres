@@ -1350,7 +1350,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <entry><literal>1.0</literal></entry>
       </row>
       <row>
-       <entry><literal><function>mod(<replaceable>i</replaceable>, <replaceable>bj</replaceable>)</function></literal></entry>
+       <entry><literal><function>mod(<replaceable>i</replaceable>, <replaceable>j</replaceable>)</function></literal></entry>
        <entry>integer</entry>
        <entry>modulo</entry>
        <entry><literal>mod(54, 32)</literal></entry>
@@ -1526,8 +1526,8 @@ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
     with each other and this is when implicit seed parameter comes in handy:
 
 <programlisting>
-\set k1 abs(hash(:r), :default_seed + 123) % 1000000
-\set k2 abs(hash(:r), :default_seed + 321) % 1000000
+\set k1 abs(hash(:r, :default_seed + 123)) % 1000000
+\set k2 abs(hash(:r, :default_seed + 321)) % 1000000
 </programlisting>
   </para>
 
