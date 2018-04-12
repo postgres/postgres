@@ -13997,10 +13997,9 @@ QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 			List	   *thisPartConstraint;
 
 			/*
-			 * This is the minimum lock we need to prevent concurrent data
-			 * additions.
+			 * This is the minimum lock we need to prevent deadlocks.
 			 */
-			part_rel = heap_open(partdesc->oids[i], ShareLock);
+			part_rel = heap_open(partdesc->oids[i], AccessExclusiveLock);
 
 			/*
 			 * Adjust the constraint for scanrel so that it matches this
@@ -14113,17 +14112,17 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	 *
 	 * We do that by checking if rel is a member of the list of attachrel's
 	 * partitions provided the latter is partitioned at all.  We want to avoid
-	 * having to construct this list again, so we request a lock on all
-	 * partitions.  We need ShareLock, preventing data changes, because we
-	 * may decide to scan them if we find out that the table being attached (or
-	 * its leaf partitions) may contain rows that violate the partition
-	 * constraint.  If the table has a constraint that would prevent such rows,
-	 * which by definition is present in all the partitions, we need not scan
-	 * the table, nor its partitions.  But we cannot risk a deadlock by taking
-	 * a weaker lock now and the stronger one only when needed.
+	 * having to construct this list again, so we request the strongest lock
+	 * on all partitions.  We need the strongest lock, because we may decide
+	 * to scan them if we find out that the table being attached (or its leaf
+	 * partitions) may contain rows that violate the partition constraint. If
+	 * the table has a constraint that would prevent such rows, which by
+	 * definition is present in all the partitions, we need not scan the
+	 * table, nor its partitions.  But we cannot risk a deadlock by taking a
+	 * weaker lock now and the stronger one only when needed.
 	 */
 	attachrel_children = find_all_inheritors(RelationGetRelid(attachrel),
-											 ShareLock, NULL);
+											 AccessExclusiveLock, NULL);
 	if (list_member_oid(attachrel_children, RelationGetRelid(rel)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_TABLE),
