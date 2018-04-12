@@ -290,7 +290,7 @@ typedef HashMetaPageData *HashMetaPage;
 
 /*
  *	When a new operator class is declared, we require that the user supply
- *	us with an amproc procudure for hashing a key of the new type.
+ *	us with an amproc procedure for hashing a key of the new type.
  *	Since we only have one such proc in amproc, it's number 1.
  */
 #define HASHPROC		1
