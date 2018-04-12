@@ -5065,7 +5065,7 @@ restart:
 		/* Collect simple attribute references */
 		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		{
-			int			attrnum = indexInfo->ii_KeyAttrNumbers[i];
+			int			attrnum = indexInfo->ii_IndexAttrNumbers[i];
 
 			/*
 			 * Since we have covering indexes with non-key columns, we must

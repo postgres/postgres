@@ -724,7 +724,7 @@ DefineIndex(Oid relationId,
 
 			for (j = 0; j < indexInfo->ii_NumIndexAttrs; j++)
 			{
-				if (key->partattrs[i] == indexInfo->ii_KeyAttrNumbers[j])
+				if (key->partattrs[i] == indexInfo->ii_IndexAttrNumbers[j])
 				{
 					found = true;
 					break;
@@ -753,7 +753,7 @@ DefineIndex(Oid relationId,
 	 */
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 	{
-		AttrNumber	attno = indexInfo->ii_KeyAttrNumbers[i];
+		AttrNumber	attno = indexInfo->ii_IndexAttrNumbers[i];
 
 		if (attno < 0 && attno != ObjectIdAttributeNumber)
 			ereport(ERROR,
@@ -1428,7 +1428,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 									attribute->name)));
 			}
 			attform = (Form_pg_attribute) GETSTRUCT(atttuple);
-			indexInfo->ii_KeyAttrNumbers[attn] = attform->attnum;
+			indexInfo->ii_IndexAttrNumbers[attn] = attform->attnum;
 			atttype = attform->atttypid;
 			attcollation = attform->attcollation;
 			ReleaseSysCache(atttuple);
@@ -1461,11 +1461,11 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				 * User wrote "(column)" or "(column COLLATE something)".
 				 * Treat it like simple attribute anyway.
 				 */
-				indexInfo->ii_KeyAttrNumbers[attn] = ((Var *) expr)->varattno;
+				indexInfo->ii_IndexAttrNumbers[attn] = ((Var *) expr)->varattno;
 			}
 			else
 			{
-				indexInfo->ii_KeyAttrNumbers[attn] = 0; /* marks expression */
+				indexInfo->ii_IndexAttrNumbers[attn] = 0; /* marks expression */
 				indexInfo->ii_Expressions = lappend(indexInfo->ii_Expressions,
 													expr);
 

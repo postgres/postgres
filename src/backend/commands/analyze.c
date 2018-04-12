@@ -495,7 +495,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 				tcnt = 0;
 				for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 				{
-					int			keycol = indexInfo->ii_KeyAttrNumbers[i];
+					int			keycol = indexInfo->ii_IndexAttrNumbers[i];
 
 					if (keycol == 0)
 					{
