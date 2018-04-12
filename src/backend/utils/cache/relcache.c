@@ -1034,7 +1034,7 @@ RelationBuildPartitionKey(Relation relation)
 							procnum,
 							format_type_be(opclassform->opcintype))));
 
-		fmgr_info(funcid, &key->partsupfunc[i]);
+		fmgr_info_cxt(funcid, &key->partsupfunc[i], partkeycxt);
 
 		/* Collation */
 		key->partcollation[i] = collation->values[i];

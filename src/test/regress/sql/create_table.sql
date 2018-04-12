@@ -688,10 +688,23 @@ CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, M
 \d+ range_parted4_3
 DROP TABLE range_parted4;
 
+-- user-defined operator class in partition key
+CREATE FUNCTION my_int4_sort(int4,int4) RETURNS int LANGUAGE sql
+  AS $$ SELECT CASE WHEN $1 = $2 THEN 0 WHEN $1 > $2 THEN 1 ELSE -1 END; $$;
+CREATE OPERATOR CLASS test_int4_ops FOR TYPE int4 USING btree AS
+  OPERATOR 1 < (int4,int4), OPERATOR 2 <= (int4,int4),
+  OPERATOR 3 = (int4,int4), OPERATOR 4 >= (int4,int4),
+  OPERATOR 5 > (int4,int4), FUNCTION 1 my_int4_sort(int4,int4);
+CREATE TABLE partkey_t (a int4) PARTITION BY RANGE (a test_int4_ops);
+CREATE TABLE partkey_t_1 PARTITION OF partkey_t FOR VALUES FROM (0) TO (1000);
+INSERT INTO partkey_t VALUES (100);
+INSERT INTO partkey_t VALUES (200);
+
 -- cleanup
 DROP TABLE parted, list_parted, range_parted, list_parted2, range_parted2, range_parted3;
-DROP TABLE hash_parted;
-DROP TABLE hash_parted2;
+DROP TABLE partkey_t, hash_parted, hash_parted2;
+DROP OPERATOR CLASS test_int4_ops USING btree;
+DROP FUNCTION my_int4_sort(int4,int4);
 
 -- comments on partitioned tables columns
 CREATE TABLE parted_col_comment (a int, b text) PARTITION BY LIST (a);
