@@ -659,28 +659,6 @@ static const SchemaQuery Query_for_list_of_updatables = {
 	NULL
 };
 
-/* Relations supporting MERGE */
-static const SchemaQuery Query_for_list_of_mergetargets = {
-	/* min_server_version */
-	110000,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
-	CppAsString2(RELKIND_PARTITIONED_TABLE) ") AND "
-	"c.relhasrules = false AND "
-	"(c.relhassubclass = false OR "
-	" c.relkind = " CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
-};
-
 static const SchemaQuery Query_for_list_of_relations = {
 	/* min_server_version */
 	0,
@@ -1627,7 +1605,7 @@ psql_completion(const char *text, int start, int end)
 		"COMMENT", "COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE",
 		"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN",
 		"FETCH", "GRANT", "IMPORT", "INSERT", "LISTEN", "LOAD", "LOCK",
-		"MERGE", "MOVE", "NOTIFY", "PREPARE",
+		"MOVE", "NOTIFY", "PREPARE",
 		"REASSIGN", "REFRESH MATERIALIZED VIEW", "REINDEX", "RELEASE",
 		"RESET", "REVOKE", "ROLLBACK",
 		"SAVEPOINT", "SECURITY LABEL", "SELECT", "SET", "SHOW", "START",
@@ -3021,15 +2999,14 @@ psql_completion(const char *text, int start, int end)
 	 * Complete EXPLAIN [ANALYZE] [VERBOSE] with list of EXPLAIN-able commands
 	 */
 	else if (Matches1("EXPLAIN"))
-		COMPLETE_WITH_LIST8("SELECT", "INSERT", "DELETE", "UPDATE", "MERGE",
-							"DECLARE", "ANALYZE", "VERBOSE");
+		COMPLETE_WITH_LIST7("SELECT", "INSERT", "DELETE", "UPDATE", "DECLARE",
+							"ANALYZE", "VERBOSE");
 	else if (Matches2("EXPLAIN", "ANALYZE"))
-		COMPLETE_WITH_LIST7("SELECT", "INSERT", "DELETE", "UPDATE", "MERGE",
-							"DECLARE", "VERBOSE");
+		COMPLETE_WITH_LIST6("SELECT", "INSERT", "DELETE", "UPDATE", "DECLARE",
+							"VERBOSE");
 	else if (Matches2("EXPLAIN", "VERBOSE") ||
 			 Matches3("EXPLAIN", "ANALYZE", "VERBOSE"))
-		COMPLETE_WITH_LIST6("SELECT", "INSERT", "DELETE", "UPDATE", "MERGE",
-							"DECLARE");
+		COMPLETE_WITH_LIST5("SELECT", "INSERT", "DELETE", "UPDATE", "DECLARE");
 
 /* FETCH && MOVE */
 	/* Complete FETCH with one of FORWARD, BACKWARD, RELATIVE */
@@ -3252,9 +3229,6 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_CONST("SCHEMA");
 
 /* INSERT --- can be inside EXPLAIN, RULE, etc */
-	/* Complete NOT MATCHED THEN INSERT */
-	else if (TailMatches4("NOT", "MATCHED", "THEN", "INSERT"))
-		COMPLETE_WITH_LIST2("VALUES", "(");
 	/* Complete INSERT with "INTO" */
 	else if (TailMatches1("INSERT"))
 		COMPLETE_WITH_CONST("INTO");
@@ -3326,55 +3300,6 @@ psql_completion(const char *text, int start, int end)
 			 Matches5("LOCK", "TABLE", MatchAny, "IN", "SHARE"))
 		COMPLETE_WITH_LIST3("MODE", "ROW EXCLUSIVE MODE",
 							"UPDATE EXCLUSIVE MODE");
-/* MERGE --- can be inside EXPLAIN */
-	else if (TailMatches1("MERGE"))
-		COMPLETE_WITH_CONST("INTO");
-	else if (TailMatches2("MERGE", "INTO"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_mergetargets, NULL);
-	else if (TailMatches3("MERGE", "INTO", MatchAny))
-		COMPLETE_WITH_LIST2("USING", "AS");
-	else if (TailMatches4("MERGE", "INTO", MatchAny, "USING"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
-	/* with [AS] alias */
-	else if (TailMatches5("MERGE", "INTO", MatchAny, "AS", MatchAny))
-		COMPLETE_WITH_CONST("USING");
-	else if (TailMatches4("MERGE", "INTO", MatchAny, MatchAny))
-		COMPLETE_WITH_CONST("USING");
-	else if (TailMatches6("MERGE", "INTO", MatchAny, "AS", MatchAny, "USING"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
-	else if (TailMatches5("MERGE", "INTO", MatchAny, MatchAny, "USING"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
-	/* ON */
-	else if (TailMatches5("MERGE", "INTO", MatchAny, "USING", MatchAny))
-		COMPLETE_WITH_CONST("ON");
-	else if (TailMatches8("INTO", MatchAny, "AS", MatchAny, "USING", MatchAny, "AS", MatchAny))
-		COMPLETE_WITH_CONST("ON");
-	else if (TailMatches6("INTO", MatchAny, MatchAny, "USING", MatchAny, MatchAny))
-		COMPLETE_WITH_CONST("ON");
-	/* ON condition */
-	else if (TailMatches5("INTO", MatchAny, "USING", MatchAny, "ON"))
-		COMPLETE_WITH_ATTR(prev4_wd, "");
-	else if (TailMatches9("INTO", MatchAny, "AS", MatchAny, "USING", MatchAny, "AS", MatchAny, "ON"))
-		COMPLETE_WITH_ATTR(prev8_wd, "");
-	else if (TailMatches7("INTO", MatchAny, MatchAny, "USING", MatchAny, MatchAny, "ON"))
-		COMPLETE_WITH_ATTR(prev6_wd, "");
-	/* WHEN [NOT] MATCHED */
-	else if (TailMatches4("USING", MatchAny, "ON", MatchAny))
-		COMPLETE_WITH_LIST2("WHEN MATCHED", "WHEN NOT MATCHED");
-	else if (TailMatches6("USING", MatchAny, "AS", MatchAny, "ON", MatchAny))
-		COMPLETE_WITH_LIST2("WHEN MATCHED", "WHEN NOT MATCHED");
-	else if (TailMatches5("USING", MatchAny, MatchAny, "ON", MatchAny))
-		COMPLETE_WITH_LIST2("WHEN MATCHED", "WHEN NOT MATCHED");
-	else if (TailMatches2("WHEN", "MATCHED"))
-		COMPLETE_WITH_LIST2("THEN", "AND");
-	else if (TailMatches3("WHEN", "NOT", "MATCHED"))
-		COMPLETE_WITH_LIST2("THEN", "AND");
-	else if (TailMatches3("WHEN", "MATCHED", "THEN"))
-		COMPLETE_WITH_LIST2("UPDATE", "DELETE");
-	else if (TailMatches4("WHEN", "NOT", "MATCHED", "THEN"))
-		COMPLETE_WITH_LIST2("INSERT", "DO");
-	else if (TailMatches5("WHEN", "NOT", "MATCHED", "THEN", "DO"))
-		COMPLETE_WITH_CONST("NOTHING");
 
 /* NOTIFY --- can be inside EXPLAIN, RULE, etc */
 	else if (TailMatches1("NOTIFY"))

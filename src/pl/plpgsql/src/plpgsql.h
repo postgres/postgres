@@ -857,8 +857,8 @@ typedef struct PLpgSQL_stmt_execsql
 	PLpgSQL_stmt_type cmd_type;
 	int			lineno;
 	PLpgSQL_expr *sqlstmt;
-	bool		mod_stmt;		/* is the stmt INSERT/UPDATE/DELETE/MERGE?
-								 * Note mod_stmt is set when we plan the query */
+	bool		mod_stmt;		/* is the stmt INSERT/UPDATE/DELETE?  Note:
+								 * mod_stmt is set when we plan the query */
 	bool		into;			/* INTO supplied? */
 	bool		strict;			/* INTO STRICT flag */
 	PLpgSQL_variable *target;	/* INTO target (record or row) */

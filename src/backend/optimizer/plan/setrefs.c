@@ -851,60 +851,6 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 						fix_scan_list(root, splan->exclRelTlist, rtoffset);
 				}
 
-				/*
-				 * The MERGE statement produces the target rows by performing a
-				 * right join between the target relation and the source
-				 * relation (which could be a plain relation or a subquery).
-				 * The INSERT and UPDATE actions of the MERGE statement
-				 * requires access to the columns from the source relation. We
-				 * arrange things so that the source relation attributes are
-				 * available as INNER_VAR and the target relation attributes
-				 * are available from the scan tuple.
-				 */
-				if (splan->mergeActionList != NIL)
-				{
-					/*
-					 * mergeSourceTargetList is already setup correctly to
-					 * include all Vars coming from the source relation. So we
-					 * fix the targetList of individual action nodes by
-					 * ensuring that the source relation Vars are referenced
-					 * as INNER_VAR. Note that for this to work correctly,
-					 * during execution, the ecxt_innertuple must be set to
-					 * the tuple obtained from the source relation.
-					 *
-					 * We leave the Vars from the result relation (i.e. the
-					 * target relation) unchanged i.e. those Vars would be
-					 * picked from the scan slot. So during execution, we must
-					 * ensure that ecxt_scantuple is setup correctly to refer
-					 * to the tuple from the target relation.
-					 */
-
-					indexed_tlist *itlist;
-
-					itlist = build_tlist_index(splan->mergeSourceTargetList);
-
-					splan->mergeTargetRelation += rtoffset;
-
-					foreach(l, splan->mergeActionList)
-					{
-						MergeAction *action = (MergeAction *) lfirst(l);
-
-						/* Fix targetList of each action. */
-						action->targetList = fix_join_expr(root,
-								action->targetList,
-								NULL, itlist,
-								linitial_int(splan->resultRelations),
-								rtoffset);
-
-						/* Fix quals too. */
-						action->qual = (Node *) fix_join_expr(root,
-								(List *) action->qual,
-								NULL, itlist,
-								linitial_int(splan->resultRelations),
-								rtoffset);
-					}
-				}
-
 				splan->nominalRelation += rtoffset;
 				splan->exclRelRTI += rtoffset;
 

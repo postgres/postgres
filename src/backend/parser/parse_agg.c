@@ -455,13 +455,6 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 		case EXPR_KIND_VALUES_SINGLE:
 			errkind = true;
 			break;
-		case EXPR_KIND_MERGE_WHEN_AND:
-			if (isAgg)
-				err = _("aggregate functions are not allowed in WHEN AND conditions");
-			else
-				err = _("grouping operations are not allowed in WHEN AND conditions");
-
-			break;
 		case EXPR_KIND_CHECK_CONSTRAINT:
 		case EXPR_KIND_DOMAIN_CHECK:
 			if (isAgg)
@@ -879,9 +872,6 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 		case EXPR_KIND_VALUES:
 		case EXPR_KIND_VALUES_SINGLE:
 			errkind = true;
-			break;
-		case EXPR_KIND_MERGE_WHEN_AND:
-			err = _("window functions are not allowed in WHEN AND conditions");
 			break;
 		case EXPR_KIND_CHECK_CONSTRAINT:
 		case EXPR_KIND_DOMAIN_CHECK:

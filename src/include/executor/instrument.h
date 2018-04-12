@@ -59,11 +59,8 @@ typedef struct Instrumentation
 	double		ntuples;		/* Total tuples produced */
 	double		ntuples2;		/* Secondary node-specific tuple counter */
 	double		nloops;			/* # of run cycles for this node */
-	double		nfiltered1;		/* # tuples removed by scanqual or joinqual OR
-								 * # tuples inserted by MERGE */
-	double		nfiltered2;		/* # tuples removed by "other" quals OR
-								 * # tuples updated by MERGE */
-	double		nfiltered3;		/* # tuples deleted by MERGE */
+	double      nfiltered1;     /* # tuples removed by scanqual or joinqual */
+	double      nfiltered2;     /* # tuples removed by "other" quals */
 	BufferUsage bufusage;		/* Total buffer usage */
 } Instrumentation;
 

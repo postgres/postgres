@@ -289,13 +289,9 @@ static ModifyTable *make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
 				 Index nominalRelation, List *partitioned_rels,
 				 bool partColsUpdated,
-				 List *resultRelations,
-				 Index mergeTargetRelation,
-				 List *subplans,
+				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
-				 List *rowMarks, OnConflictExpr *onconflict,
-				 List *mergeSourceTargetList,
-				 List *mergeActionList, int epqParam);
+				 List *rowMarks, OnConflictExpr *onconflict, int epqParam);
 static GatherMerge *create_gather_merge_plan(PlannerInfo *root,
 						 GatherMergePath *best_path);
 
@@ -2486,14 +2482,11 @@ create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path)
 							best_path->partitioned_rels,
 							best_path->partColsUpdated,
 							best_path->resultRelations,
-							best_path->mergeTargetRelation,
 							subplans,
 							best_path->withCheckOptionLists,
 							best_path->returningLists,
 							best_path->rowMarks,
 							best_path->onconflict,
-							best_path->mergeSourceTargetList,
-							best_path->mergeActionList,
 							best_path->epqParam);
 
 	copy_generic_path_info(&plan->plan, &best_path->path);
@@ -6561,13 +6554,9 @@ make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
 				 Index nominalRelation, List *partitioned_rels,
 				 bool partColsUpdated,
-				 List *resultRelations,
-				 Index mergeTargetRelation,
-				 List *subplans,
+				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
-				 List *rowMarks, OnConflictExpr *onconflict,
-				 List *mergeSourceTargetList,
-				 List *mergeActionList, int epqParam)
+				 List *rowMarks, OnConflictExpr *onconflict, int epqParam)
 {
 	ModifyTable *node = makeNode(ModifyTable);
 	List	   *fdw_private_list;
@@ -6593,7 +6582,6 @@ make_modifytable(PlannerInfo *root,
 	node->partitioned_rels = partitioned_rels;
 	node->partColsUpdated = partColsUpdated;
 	node->resultRelations = resultRelations;
-	node->mergeTargetRelation = mergeTargetRelation;
 	node->resultRelIndex = -1;	/* will be set correctly in setrefs.c */
 	node->rootResultRelIndex = -1;	/* will be set correctly in setrefs.c */
 	node->plans = subplans;
@@ -6626,8 +6614,6 @@ make_modifytable(PlannerInfo *root,
 	node->withCheckOptionLists = withCheckOptionLists;
 	node->returningLists = returningLists;
 	node->rowMarks = rowMarks;
-	node->mergeSourceTargetList = mergeSourceTargetList;
-	node->mergeActionList = mergeActionList;
 	node->epqParam = epqParam;
 
 	/*

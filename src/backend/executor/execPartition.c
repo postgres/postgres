@@ -73,8 +73,6 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 	ResultRelInfo *update_rri = NULL;
 	int			num_update_rri = 0,
 				update_rri_index = 0;
-	bool		is_update = false;
-	bool		is_merge = false;
 	PartitionTupleRouting *proute;
 	int			nparts;
 	ModifyTable *node = mtstate ? (ModifyTable *) mtstate->ps.plan : NULL;
@@ -97,22 +95,13 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 
 	/* Set up details specific to the type of tuple routing we are doing. */
 	if (node && node->operation == CMD_UPDATE)
-		is_update = true;
-	else if (node && node->operation == CMD_MERGE)
-		is_merge = true;
-
-	if (is_update)
 	{
 		update_rri = mtstate->resultRelInfo;
 		num_update_rri = list_length(node->plans);
 		proute->subplan_partition_offsets =
 			palloc(num_update_rri * sizeof(int));
 		proute->num_subplan_partition_offsets = num_update_rri;
-	}
 
-
-	if (is_update || is_merge)
-	{
 		/*
 		 * We need an additional tuple slot for storing transient tuples that
 		 * are converted to the root table descriptor.
@@ -296,30 +285,6 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 }
 
 /*
- * Given OID of the partition leaf, return the index of the leaf in the
- * partition hierarchy.
- *
- * XXX This is an O(N) operation and further optimization would be beneficial
- */
-int
-ExecFindPartitionByOid(PartitionTupleRouting *proute, Oid partoid)
-{
-	int	i;
-
-	for (i = 0; i < proute->num_partitions; i++)
-	{
-		if (proute->partition_oids[i] == partoid)
-			break;
-	}
-
-	if (i >= proute->num_partitions)
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("no partition found for OID %u", partoid)));
-	return i;
-}
-
-/*
  * ExecInitPartitionInfo
  *		Initialize ResultRelInfo and other information for a partition if not
  *		already done
@@ -356,8 +321,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 					  node ? node->nominalRelation : 1,
 					  rootrel,
 					  estate->es_instrument);
-
-	leaf_part_rri->ri_PartitionLeafIndex = partidx;
 
 	/*
 	 * Since we've just initialized this ResultRelInfo, it's not in any list
@@ -635,90 +598,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	Assert(proute->partitions[partidx] == NULL);
 	proute->partitions[partidx] = leaf_part_rri;
 
-	/*
-	 * Initialize information about this partition that's needed to handle
-	 * MERGE.
-	 */
-	if (node && node->operation == CMD_MERGE)
-	{
-		TupleDesc	partrelDesc = RelationGetDescr(partrel);
-		TupleConversionMap *map = proute->parent_child_tupconv_maps[partidx];
-		int			firstVarno = mtstate->resultRelInfo[0].ri_RangeTableIndex;
-		Relation	firstResultRel = mtstate->resultRelInfo[0].ri_RelationDesc;
-
-		/*
-		 * If the root parent and partition have the same tuple
-		 * descriptor, just reuse the original MERGE state for partition.
-		 */
-		if (map == NULL)
-		{
-			leaf_part_rri->ri_mergeState = resultRelInfo->ri_mergeState;
-		}
-		else
-		{
-			/* Convert expressions contain partition's attnos. */
-			List	   *conv_tl, *conv_qual;
-			ListCell   *l;
-			List	   *matchedActionStates = NIL;
-			List	   *notMatchedActionStates = NIL;
-
-			foreach (l, node->mergeActionList)
-			{
-				MergeAction *action = lfirst_node(MergeAction, l);
-				MergeActionState *action_state = makeNode(MergeActionState);
-				TupleDesc	tupDesc;
-				ExprContext *econtext;
-
-				action_state->matched = action->matched;
-				action_state->commandType = action->commandType;
-
-				conv_qual = (List *) action->qual;
-				conv_qual = map_partition_varattnos(conv_qual,
-							firstVarno, partrel,
-							firstResultRel, NULL);
-
-				action_state->whenqual = ExecInitQual(conv_qual, &mtstate->ps);
-
-				conv_tl = (List *) action->targetList;
-				conv_tl = map_partition_varattnos(conv_tl,
-							firstVarno, partrel,
-							firstResultRel, NULL);
-
-				conv_tl = adjust_partition_tlist( conv_tl, map);
-
-				tupDesc = ExecTypeFromTL(conv_tl, partrelDesc->tdhasoid);
-				action_state->tupDesc = tupDesc;
-
-				/* build action projection state */
-				econtext = mtstate->ps.ps_ExprContext;
-				action_state->proj =
-					ExecBuildProjectionInfo(conv_tl, econtext,
-							mtstate->mt_mergeproj,
-							&mtstate->ps,
-							partrelDesc);
-
-				if (action_state->matched)
-					matchedActionStates =
-						lappend(matchedActionStates, action_state);
-				else
-					notMatchedActionStates =
-						lappend(notMatchedActionStates, action_state);
-			}
-			leaf_part_rri->ri_mergeState->matchedActionStates =
-				matchedActionStates;
-			leaf_part_rri->ri_mergeState->notMatchedActionStates =
-				notMatchedActionStates;
-		}
-
-		/*
-		 * get_partition_dispatch_recurse() and expand_partitioned_rtentry()
-		 * fetch the leaf OIDs in the same order. So we can safely derive the
-		 * index of the merge target relation corresponding to this partition
-		 * by simply adding partidx + 1 to the root's merge target relation.
-		 */
-		leaf_part_rri->ri_mergeTargetRTI = node->mergeTargetRelation +
-			partidx + 1;
-	}
 	MemoryContextSwitchTo(oldContext);
 
 	return leaf_part_rri;

@@ -97,7 +97,6 @@ typedef enum NodeTag
 	T_PlanState,
 	T_ResultState,
 	T_ProjectSetState,
-	T_MergeActionState,
 	T_ModifyTableState,
 	T_AppendState,
 	T_MergeAppendState,
@@ -272,7 +271,6 @@ typedef enum NodeTag
 	T_RollupData,
 	T_GroupingSetData,
 	T_StatisticExtInfo,
-	T_MergeAction,
 
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
@@ -313,7 +311,6 @@ typedef enum NodeTag
 	T_InsertStmt,
 	T_DeleteStmt,
 	T_UpdateStmt,
-	T_MergeStmt,
 	T_SelectStmt,
 	T_AlterTableStmt,
 	T_AlterTableCmd,
@@ -478,7 +475,6 @@ typedef enum NodeTag
 	T_PartitionRangeDatum,
 	T_PartitionCmd,
 	T_VacuumRelation,
-	T_MergeWhenClause,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)
@@ -664,8 +660,7 @@ typedef enum CmdType
 	CMD_SELECT,					/* select stmt */
 	CMD_UPDATE,					/* update stmt */
 	CMD_INSERT,					/* insert stmt */
-	CMD_DELETE,					/* delete stmt */
-	CMD_MERGE,					/* merge stmt */
+	CMD_DELETE,
 	CMD_UTILITY,				/* cmds like create, destroy, copy, vacuum,
 								 * etc. */
 	CMD_NOTHING					/* dummy command for instead nothing rules

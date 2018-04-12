@@ -192,52 +192,6 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
  COMMIT
 (33 rows)
 
--- MERGE support
-BEGIN;
-MERGE INTO replication_example t
-	USING (SELECT i as id, i as data, i as num FROM generate_series(-20, 5) i) s
-	ON t.id = s.id
-	WHEN MATCHED AND t.id < 0 THEN
-		UPDATE SET somenum = somenum + 1
-	WHEN MATCHED AND t.id >= 0 THEN
-		DELETE
-	WHEN NOT MATCHED THEN
-		INSERT VALUES (s.*);
-COMMIT;
-/* display results */
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
-                                                                       data                                                                       
---------------------------------------------------------------------------------------------------------------------------------------------------
- BEGIN
- table public.replication_example: INSERT: id[integer]:-20 somedata[integer]:-20 somenum[integer]:-20 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: INSERT: id[integer]:-19 somedata[integer]:-19 somenum[integer]:-19 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: INSERT: id[integer]:-18 somedata[integer]:-18 somenum[integer]:-18 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: INSERT: id[integer]:-17 somedata[integer]:-17 somenum[integer]:-17 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: INSERT: id[integer]:-16 somedata[integer]:-16 somenum[integer]:-16 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-15 somedata[integer]:-15 somenum[integer]:-14 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-14 somedata[integer]:-14 somenum[integer]:-13 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-13 somedata[integer]:-13 somenum[integer]:-12 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-12 somedata[integer]:-12 somenum[integer]:-11 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-11 somedata[integer]:-11 somenum[integer]:-10 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-10 somedata[integer]:-10 somenum[integer]:-9 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-9 somedata[integer]:-9 somenum[integer]:-8 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-8 somedata[integer]:-8 somenum[integer]:-7 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-7 somedata[integer]:-7 somenum[integer]:-6 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-6 somedata[integer]:-6 somenum[integer]:-5 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-5 somedata[integer]:-5 somenum[integer]:-4 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-4 somedata[integer]:-4 somenum[integer]:-3 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-3 somedata[integer]:-3 somenum[integer]:-2 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-2 somedata[integer]:-2 somenum[integer]:-1 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: UPDATE: id[integer]:-1 somedata[integer]:-1 somenum[integer]:0 zaphod1[integer]:null zaphod2[integer]:null
- table public.replication_example: DELETE: id[integer]:0
- table public.replication_example: DELETE: id[integer]:1
- table public.replication_example: DELETE: id[integer]:2
- table public.replication_example: DELETE: id[integer]:3
- table public.replication_example: DELETE: id[integer]:4
- table public.replication_example: DELETE: id[integer]:5
- COMMIT
-(28 rows)
-
 CREATE TABLE tr_unique(id2 serial unique NOT NULL, data int);
 INSERT INTO tr_unique(data) VALUES(10);
 ALTER TABLE tr_unique RENAME TO tr_pkey;
