@@ -1370,8 +1370,10 @@ NISortAffixes(IspellDict *Conf)
 		if ((Affix->flagflags & FF_COMPOUNDFLAG) && Affix->replen > 0 &&
 			isAffixInUse(Conf, (char) Affix->flag))
 		{
+			bool		issuffix = (Affix->type == FF_SUFFIX);
+
 			if (ptr == Conf->CompoundAffix ||
-				ptr->issuffix != (ptr - 1)->issuffix ||
+				issuffix != (ptr - 1)->issuffix ||
 				strbncmp((const unsigned char *) (ptr - 1)->affix,
 						 (const unsigned char *) Affix->repl,
 						 (ptr - 1)->len))
@@ -1379,7 +1381,7 @@ NISortAffixes(IspellDict *Conf)
 				/* leave only unique and minimals suffixes */
 				ptr->affix = Affix->repl;
 				ptr->len = Affix->replen;
-				ptr->issuffix = (Affix->type == FF_SUFFIX) ? true : false;
+				ptr->issuffix = issuffix;
 				ptr++;
 			}
 		}
