@@ -131,7 +131,7 @@ installcheck: submake-pg-regress
 
 
 .PHONY: submake-pg-regress
-submake-pg-regress:
+submake-pg-regress: | submake-generated-headers
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
 clean distclean: clean-lib
