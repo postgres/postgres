@@ -859,10 +859,11 @@ omicron         bryanh                  guest1
  <sect1 id="auth-methods">
   <title>Authentication Methods</title>
   <para>
-   The following subsections describe the authentication methods in more detail.
+   The following sections describe the authentication methods in more detail.
   </para>
+ </sect1>
 
-  <sect2 id="auth-trust">
+  <sect1 id="auth-trust">
    <title>Trust Authentication</title>
 
    <para>
@@ -908,9 +909,9 @@ omicron         bryanh                  guest1
     for any TCP/IP connections other than those from <systemitem>localhost</systemitem> (127.0.0.1).
    </para>
 
-  </sect2>
+  </sect1>
 
-  <sect2 id="auth-password">
+  <sect1 id="auth-password">
    <title>Password Authentication</title>
 
    <indexterm>
@@ -1038,9 +1039,9 @@ omicron         bryanh                  guest1
     and change the authentication method specifications
     in <filename>pg_hba.conf</filename> to <literal>scram-sha-256</literal>.
    </para>
-  </sect2>
+  </sect1>
 
-  <sect2 id="gssapi-auth">
+  <sect1 id="gssapi-auth">
    <title>GSSAPI Authentication</title>
 
    <indexterm zone="gssapi-auth">
@@ -1192,9 +1193,9 @@ omicron         bryanh                  guest1
      </varlistentry>
     </variablelist>
    </para>
-  </sect2>
+  </sect1>
 
-  <sect2 id="sspi-auth">
+  <sect1 id="sspi-auth">
    <title>SSPI Authentication</title>
 
    <indexterm zone="sspi-auth">
@@ -1310,9 +1311,9 @@ omicron         bryanh                  guest1
      </varlistentry>
     </variablelist>
    </para>
-  </sect2>
+  </sect1>
 
-  <sect2 id="auth-ident">
+  <sect1 id="auth-ident">
    <title>Ident Authentication</title>
 
    <indexterm>
@@ -1391,9 +1392,9 @@ omicron         bryanh                  guest1
     since <productname>PostgreSQL</productname> does not have any way to decrypt the
     returned string to determine the actual user name.
    </para>
-  </sect2>
+  </sect1>
 
-  <sect2 id="auth-peer">
+  <sect1 id="auth-peer">
    <title>Peer Authentication</title>
 
    <indexterm>
@@ -1432,9 +1433,9 @@ omicron         bryanh                  guest1
     and <systemitem class="osname">Solaris</systemitem>.
    </para>
 
-  </sect2>
+  </sect1>
 
-  <sect2 id="auth-ldap">
+  <sect1 id="auth-ldap">
    <title>LDAP Authentication</title>
 
    <indexterm zone="auth-ldap">
@@ -1723,9 +1724,9 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
     </para>
    </tip>
 
-  </sect2>
+  </sect1>
 
-  <sect2 id="auth-radius">
+  <sect1 id="auth-radius">
    <title>RADIUS Authentication</title>
 
    <indexterm zone="auth-radius">
@@ -1824,9 +1825,9 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
 
      </variablelist>
    </para>
-  </sect2>
+  </sect1>
 
-  <sect2 id="auth-cert">
+  <sect1 id="auth-cert">
    <title>Certificate Authentication</title>
 
    <indexterm zone="auth-cert">
@@ -1870,9 +1871,9 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
     is a check that the <literal>cn</literal> attribute matches the database
     user name.
    </para>
-  </sect2>
+  </sect1>
 
-  <sect2 id="auth-pam">
+  <sect1 id="auth-pam">
    <title>PAM Authentication</title>
 
    <indexterm zone="auth-pam">
@@ -1928,9 +1929,9 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
      LDAP or other authentication methods.
     </para>
    </note>
-  </sect2>
+  </sect1>
 
-  <sect2 id="auth-bsd">
+  <sect1 id="auth-bsd">
    <title>BSD Authentication</title>
 
    <indexterm zone="auth-bsd">
@@ -1963,8 +1964,7 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
      exists by default on OpenBSD systems.
     </para>
    </note>
-  </sect2>
- </sect1>
+  </sect1>
 
   <sect1 id="client-authentication-problems">
    <title>Authentication Problems</title>
