@@ -242,7 +242,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info->nkeycolumns = nkeycolumns = index->indnkeyatts;
 
 			info->indexkeys = (int *) palloc(sizeof(int) * ncolumns);
-			info->indexcollations = (Oid *) palloc(sizeof(Oid) * ncolumns);
+			info->indexcollations = (Oid *) palloc(sizeof(Oid) * nkeycolumns);
 			info->opfamily = (Oid *) palloc(sizeof(Oid) * nkeycolumns);
 			info->opcintype = (Oid *) palloc(sizeof(Oid) * nkeycolumns);
 			info->canreturn = (bool *) palloc(sizeof(bool) * ncolumns);
@@ -250,7 +250,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			for (i = 0; i < ncolumns; i++)
 			{
 				info->indexkeys[i] = index->indkey.values[i];
-				info->indexcollations[i] = indexRelation->rd_indcollation[i];
 				info->canreturn[i] = index_can_return(indexRelation, i + 1);
 			}
 
@@ -258,6 +257,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			{
 				info->opfamily[i] = indexRelation->rd_opfamily[i];
 				info->opcintype[i] = indexRelation->rd_opcintype[i];
+				info->indexcollations[i] = indexRelation->rd_indcollation[i];
 			}
 
 			info->relam = indexRelation->rd_rel->relam;

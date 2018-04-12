@@ -7437,6 +7437,8 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 	int32		searchMode = GIN_SEARCH_MODE_DEFAULT;
 	int32		i;
 
+	Assert(indexcol < index->nkeycolumns);
+
 	/*
 	 * Get the operator's strategy number and declared input data types within
 	 * the index opfamily.  (We don't need the latter, but we use

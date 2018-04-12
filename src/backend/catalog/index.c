@@ -297,6 +297,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 						 Oid *classObjectId)
 {
 	int			numatts = indexInfo->ii_NumIndexAttrs;
+	int			numkeyatts = indexInfo->ii_NumIndexKeyAttrs;
 	ListCell   *colnames_item = list_head(indexColNames);
 	ListCell   *indexpr_item = list_head(indexInfo->ii_Expressions);
 	IndexAmRoutine *amroutine;
@@ -375,7 +376,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->attidentity = '\0';
 			to->attislocal = true;
 			to->attinhcount = 0;
-			to->attcollation = collationObjectId[i];
+			to->attcollation = (i < numkeyatts) ?
+							collationObjectId[i] : InvalidOid;
 		}
 		else
 		{
@@ -411,7 +413,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->attcacheoff = -1;
 			to->atttypmod = exprTypmod(indexkey);
 			to->attislocal = true;
-			to->attcollation = collationObjectId[i];
+			to->attcollation = (i < numkeyatts) ?
+							collationObjectId[i] : InvalidOid;
 
 			ReleaseSysCache(tuple);
 
@@ -608,9 +611,9 @@ UpdateIndexRelation(Oid indexoid,
 	indkey = buildint2vector(NULL, indexInfo->ii_NumIndexAttrs);
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		indkey->values[i] = indexInfo->ii_IndexAttrNumbers[i];
-	indcollation = buildoidvector(collationOids, indexInfo->ii_NumIndexAttrs);
+	indcollation = buildoidvector(collationOids, indexInfo->ii_NumIndexKeyAttrs);
 	indclass = buildoidvector(classOids, indexInfo->ii_NumIndexKeyAttrs);
-	indoption = buildint2vector(coloptions, indexInfo->ii_NumIndexAttrs);
+	indoption = buildint2vector(coloptions, indexInfo->ii_NumIndexKeyAttrs);
 
 	/*
 	 * Convert the index expressions (if any) to a text datum
@@ -1081,7 +1084,7 @@ index_create(Relation heapRelation,
 
 		/* Store dependency on collations */
 		/* The default collation is pinned, so don't bother recording it */
-		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+		for (i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
 		{
 			if (OidIsValid(collationObjectId[i]) &&
 				collationObjectId[i] != DEFAULT_COLLATION_OID)
@@ -1832,6 +1835,11 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 	if (info1->ii_NumIndexAttrs != info2->ii_NumIndexAttrs)
 		return false;
 
+	/* and same number of key attributes */
+	if (info1->ii_NumIndexKeyAttrs != info2->ii_NumIndexKeyAttrs)
+		return false;
+
+
 	/*
 	 * and columns match through the attribute map (actual attribute numbers
 	 * might differ!)  Note that this implies that index columns that are
@@ -1848,6 +1856,10 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 			(attmap[info2->ii_IndexAttrNumbers[i] - 1] !=
 			info1->ii_IndexAttrNumbers[i]))
 			return false;
+
+		/* collation and opfamily is not valid for including columns */
+		if (i >= info1->ii_NumIndexKeyAttrs)
+			continue;
 
 		if (collations1[i] != collations2[i])
 			return false;

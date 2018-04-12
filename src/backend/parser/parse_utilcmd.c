@@ -1588,9 +1588,6 @@ generateClonedIndexStmt(RangeVar *heapRel, Oid heapRelid, Relation source_idx,
 		/* Copy the original index column name */
 		iparam->indexcolname = pstrdup(NameStr(attr->attname));
 
-		/* Add the collation name, if non-default */
-		iparam->collation = get_collation(indcollation->values[keyno], keycoltype);
-
 		index->indexIncludingParams = lappend(index->indexIncludingParams, iparam);
 	}
 	/* Copy reloptions if any */

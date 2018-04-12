@@ -1637,10 +1637,10 @@ RelationInitIndexAccessInfo(Relation relation)
 	}
 
 	relation->rd_indcollation = (Oid *)
-		MemoryContextAllocZero(indexcxt, indnatts * sizeof(Oid));
+		MemoryContextAllocZero(indexcxt, indnkeyatts * sizeof(Oid));
 
 	relation->rd_indoption = (int16 *)
-		MemoryContextAllocZero(indexcxt, indnatts * sizeof(int16));
+		MemoryContextAllocZero(indexcxt, indnkeyatts * sizeof(int16));
 
 	/*
 	 * indcollation cannot be referenced directly through the C struct,
@@ -1653,7 +1653,7 @@ RelationInitIndexAccessInfo(Relation relation)
 							   &isnull);
 	Assert(!isnull);
 	indcoll = (oidvector *) DatumGetPointer(indcollDatum);
-	memcpy(relation->rd_indcollation, indcoll->values, indnatts * sizeof(Oid));
+	memcpy(relation->rd_indcollation, indcoll->values, indnkeyatts * sizeof(Oid));
 
 	/*
 	 * indclass cannot be referenced directly through the C struct, because it
@@ -1685,7 +1685,7 @@ RelationInitIndexAccessInfo(Relation relation)
 								 &isnull);
 	Assert(!isnull);
 	indoption = (int2vector *) DatumGetPointer(indoptionDatum);
-	memcpy(relation->rd_indoption, indoption->values, indnatts * sizeof(int16));
+	memcpy(relation->rd_indoption, indoption->values, indnkeyatts * sizeof(int16));
 
 	/*
 	 * expressions, predicate, exclusion caches will be filled later

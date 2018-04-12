@@ -1356,14 +1356,14 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 		{
 			Oid			indcoll;
 
+			if (keyno >= idxrec->indnkeyatts)
+				continue;
+
 			/* Add collation, if not default for column */
 			indcoll = indcollation->values[keyno];
 			if (OidIsValid(indcoll) && indcoll != keycolcollation)
 				appendStringInfo(&buf, " COLLATE %s",
 								 generate_collation_name((indcoll)));
-
-			if (keyno >= idxrec->indnkeyatts)
-				continue;
 
 			/* Add the operator class name, if not default */
 			get_opclass_name(indclass->values[keyno], keycoltype, &buf);

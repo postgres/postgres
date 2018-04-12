@@ -1359,7 +1359,8 @@ CheckPredicate(Expr *predicate)
 
 /*
  * Compute per-index-column information, including indexed column numbers
- * or index expressions, opclasses, and indoptions.
+ * or index expressions, opclasses, and indoptions. Note, all output vectors
+ * should be allocated for all columns, including "including" ones.
  */
 static void
 ComputeIndexAttrs(IndexInfo *indexInfo,
@@ -1491,6 +1492,36 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		typeOidP[attn] = atttype;
 
 		/*
+		 * Included columns have no collation, no opclass and no ordering options.
+		 */
+		if (attn >= nkeycols)
+		{
+			if (attribute->collation)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("including column does not support a collation")));
+			if (attribute->opclass)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("including column does not support an operator class")));
+			if (attribute->ordering != SORTBY_DEFAULT)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("including column does not support ASC/DESC options")));
+			if (attribute->nulls_ordering != SORTBY_NULLS_DEFAULT)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("including column does not support NULLS FIRST/LAST options")));
+
+			classOidP[attn] = InvalidOid;
+			colOptionP[attn] = 0;
+			collationOidP[attn] = InvalidOid;
+			attn++;
+
+			continue;
+		}
+
+		/*
 		 * Apply collation override if any
 		 */
 		if (attribute->collation)
@@ -1520,17 +1551,6 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		}
 
 		collationOidP[attn] = attcollation;
-
-		/*
-		 * Included columns have no opclass and no ordering options.
-		 */
-		if (attn >= nkeycols)
-		{
-			classOidP[attn] = InvalidOid;
-			colOptionP[attn] = 0;
-			attn++;
-			continue;
-		}
 
 		/*
 		 * Identify the opclass to use.
