@@ -490,6 +490,8 @@ static ObjectAddress ATExecAttachPartitionIdx(List **wqueue, Relation rel,
 static void validatePartitionedIndex(Relation partedIdx, Relation partedTbl);
 static void refuseDupeIndexAttach(Relation parentIdx, Relation partIdx,
 					  Relation partitionTbl);
+static void update_relispartition(Relation classRel, Oid relationId,
+					  bool newval);
 
 
 /* ----------------------------------------------------------------
@@ -14405,10 +14407,11 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 		 */
 		for (i = 0; i < list_length(attachRelIdxs); i++)
 		{
+			Oid		cldIdxId = RelationGetRelid(attachrelIdxRels[i]);
 			Oid		cldConstrOid = InvalidOid;
 
 			/* does this index have a parent?  if so, can't use it */
-			if (has_superclass(RelationGetRelid(attachrelIdxRels[i])))
+			if (attachrelIdxRels[i]->rd_rel->relispartition)
 				continue;
 
 			if (CompareIndexInfo(attachInfos[i], info,
@@ -14429,7 +14432,7 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 				{
 					cldConstrOid =
 						get_relation_idx_constraint_oid(RelationGetRelid(attachrel),
-														RelationGetRelid(attachrelIdxRels[i]));
+														cldIdxId);
 					/* no dice */
 					if (!OidIsValid(cldConstrOid))
 						continue;
@@ -14439,6 +14442,7 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 				IndexSetParentIndex(attachrelIdxRels[i], idx);
 				if (OidIsValid(constraintOid))
 					ConstraintSetParentConstraint(cldConstrOid, constraintOid);
+				update_relispartition(NULL, cldIdxId, true);
 				found = true;
 				break;
 			}
@@ -14659,7 +14663,6 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	((Form_pg_class) GETSTRUCT(newtuple))->relispartition = false;
 	CatalogTupleUpdate(classRel, &newtuple->t_self, newtuple);
 	heap_freetuple(newtuple);
-	heap_close(classRel, RowExclusiveLock);
 
 	if (OidIsValid(defaultPartOid))
 	{
@@ -14692,8 +14695,10 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 
 		idx = index_open(idxid, AccessExclusiveLock);
 		IndexSetParentIndex(idx, InvalidOid);
+		update_relispartition(classRel, idxid, false);
 		relation_close(idx, AccessExclusiveLock);
 	}
+	heap_close(classRel, RowExclusiveLock);
 
 	/*
 	 * Invalidate the parent's relcache so that the partition is no longer
@@ -14815,8 +14820,8 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 	ObjectAddressSet(address, RelationRelationId, RelationGetRelid(partIdx));
 
 	/* Silently do nothing if already in the right state */
-	currParent = !has_superclass(partIdxId) ? InvalidOid :
-		get_partition_parent(partIdxId);
+	currParent = partIdx->rd_rel->relispartition ?
+		get_partition_parent(partIdxId) : InvalidOid;
 	if (currParent != RelationGetRelid(parentIdx))
 	{
 		IndexInfo  *childInfo;
@@ -14909,6 +14914,7 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 		IndexSetParentIndex(partIdx, RelationGetRelid(parentIdx));
 		if (OidIsValid(constraintOid))
 			ConstraintSetParentConstraint(cldConstrId, constraintOid);
+		update_relispartition(NULL, partIdxId, true);
 
 		pfree(attmap);
 
@@ -15036,8 +15042,7 @@ validatePartitionedIndex(Relation partedIdx, Relation partedTbl)
 	 * If this index is in turn a partition of a larger index, validating it
 	 * might cause the parent to become valid also.  Try that.
 	 */
-	if (updated &&
-		has_superclass(RelationGetRelid(partedIdx)))
+	if (updated && partedIdx->rd_rel->relispartition)
 	{
 		Oid			parentIdxId,
 					parentTblId;
@@ -15058,4 +15063,36 @@ validatePartitionedIndex(Relation partedIdx, Relation partedTbl)
 		relation_close(parentIdx, AccessExclusiveLock);
 		relation_close(parentTbl, AccessExclusiveLock);
 	}
+}
+
+/*
+ * Update the relispartition flag of the given relation to the given value.
+ *
+ * classRel is the pg_class relation, already open and suitably locked.
+ * It can be passed as NULL, in which case it's opened and closed locally.
+ */
+static void
+update_relispartition(Relation classRel, Oid relationId, bool newval)
+{
+	HeapTuple	tup;
+	HeapTuple	newtup;
+	Form_pg_class classForm;
+	bool		opened = false;
+
+	if (classRel == NULL)
+	{
+		classRel = heap_open(RelationRelationId, RowExclusiveLock);
+		opened = true;
+	}
+
+	tup = SearchSysCache1(RELOID, ObjectIdGetDatum(relationId));
+	newtup = heap_copytuple(tup);
+	classForm = (Form_pg_class) GETSTRUCT(newtup);
+	classForm->relispartition = newval;
+	CatalogTupleUpdate(classRel, &tup->t_self, newtup);
+	heap_freetuple(newtup);
+	ReleaseSysCache(tup);
+
+	if (opened)
+		heap_close(classRel, RowExclusiveLock);
 }
