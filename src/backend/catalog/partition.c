@@ -858,6 +858,12 @@ check_new_partition_bound(char *relname, Relation parent,
 
 	if (spec->is_default)
 	{
+		/*
+		 * The default partition bound never conflicts with any other
+		 * partition's; if that's what we're attaching, the only possible
+		 * problem is that one already exists, so check for that and we're
+		 * done.
+		 */
 		if (boundinfo == NULL || !partition_bound_has_default(boundinfo))
 			return;
 
