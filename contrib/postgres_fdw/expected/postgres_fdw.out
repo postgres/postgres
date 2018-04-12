@@ -5367,49 +5367,49 @@ SELECT c1,c2,c3,c4 FROM ft2 ORDER BY c1;
 (819 rows)
 
 EXPLAIN (verbose, costs off)
-INSERT INTO ft2 (c1,c2,c3) VALUES (9999,999,'foo') RETURNING tableoid::regclass;
+INSERT INTO ft2 (c1,c2,c3) VALUES (1200,999,'foo') RETURNING tableoid::regclass;
                                                                                            QUERY PLAN                                                                                            
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Insert on public.ft2
    Output: (tableoid)::regclass
    Remote SQL: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
    ->  Result
-         Output: 9999, 999, NULL::integer, 'foo'::text, NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft2       '::character(10), NULL::user_enum
+         Output: 1200, 999, NULL::integer, 'foo'::text, NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft2       '::character(10), NULL::user_enum
 (5 rows)
 
-INSERT INTO ft2 (c1,c2,c3) VALUES (9999,999,'foo') RETURNING tableoid::regclass;
+INSERT INTO ft2 (c1,c2,c3) VALUES (1200,999,'foo') RETURNING tableoid::regclass;
  tableoid 
 ----------
  ft2
 (1 row)
 
 EXPLAIN (verbose, costs off)
-UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;             -- can be pushed down
+UPDATE ft2 SET c3 = 'bar' WHERE c1 = 1200 RETURNING tableoid::regclass;             -- can be pushed down
                                      QUERY PLAN                                     
 ------------------------------------------------------------------------------------
  Update on public.ft2
    Output: (tableoid)::regclass
    ->  Foreign Update on public.ft2
-         Remote SQL: UPDATE "S 1"."T 1" SET c3 = 'bar'::text WHERE (("C 1" = 9999))
+         Remote SQL: UPDATE "S 1"."T 1" SET c3 = 'bar'::text WHERE (("C 1" = 1200))
 (4 rows)
 
-UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;
+UPDATE ft2 SET c3 = 'bar' WHERE c1 = 1200 RETURNING tableoid::regclass;
  tableoid 
 ----------
  ft2
 (1 row)
 
 EXPLAIN (verbose, costs off)
-DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;                       -- can be pushed down
+DELETE FROM ft2 WHERE c1 = 1200 RETURNING tableoid::regclass;                       -- can be pushed down
                              QUERY PLAN                             
 --------------------------------------------------------------------
  Delete on public.ft2
    Output: (tableoid)::regclass
    ->  Foreign Delete on public.ft2
-         Remote SQL: DELETE FROM "S 1"."T 1" WHERE (("C 1" = 9999))
+         Remote SQL: DELETE FROM "S 1"."T 1" WHERE (("C 1" = 1200))
 (4 rows)
 
-DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;
+DELETE FROM ft2 WHERE c1 = 1200 RETURNING tableoid::regclass;
  tableoid 
 ----------
  ft2
