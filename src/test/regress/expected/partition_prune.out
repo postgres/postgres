@@ -1563,7 +1563,10 @@ select avg(a) from ab where a between $1 and $2 and b < 4;
 set parallel_setup_cost = 0;
 set parallel_tuple_cost = 0;
 set min_parallel_table_scan_size = 0;
+-- set this so we get a parallel plan
 set max_parallel_workers_per_gather = 2;
+-- and zero this so that workers don't destabilize the explain output
+set max_parallel_workers = 0;
 -- Execute query 5 times to allow choose_custom_plan
 -- to start considering a generic plan.
 execute ab_q4 (1, 8);
@@ -1600,11 +1603,11 @@ explain (analyze, costs off, summary off, timing off) execute ab_q4 (2, 2);
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=3 loops=1)
+   ->  Gather (actual rows=1 loops=1)
          Workers Planned: 2
-         Workers Launched: 2
-         ->  Partial Aggregate (actual rows=1 loops=3)
-               ->  Parallel Append (actual rows=0 loops=3)
+         Workers Launched: 0
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Parallel Append (actual rows=0 loops=1)
                      Subplans Removed: 6
                      ->  Parallel Seq Scan on ab_a2_b1 (actual rows=0 loops=1)
                            Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
@@ -1653,11 +1656,11 @@ explain (analyze, costs off, summary off, timing off) execute ab_q5 (1, 1, 1);
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=3 loops=1)
+   ->  Gather (actual rows=1 loops=1)
          Workers Planned: 2
-         Workers Launched: 2
-         ->  Partial Aggregate (actual rows=1 loops=3)
-               ->  Parallel Append (actual rows=0 loops=3)
+         Workers Launched: 0
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Parallel Append (actual rows=0 loops=1)
                      Subplans Removed: 6
                      ->  Parallel Seq Scan on ab_a1_b1 (actual rows=0 loops=1)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
@@ -1671,11 +1674,11 @@ explain (analyze, costs off, summary off, timing off) execute ab_q5 (2, 3, 3);
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=3 loops=1)
+   ->  Gather (actual rows=1 loops=1)
          Workers Planned: 2
-         Workers Launched: 2
-         ->  Partial Aggregate (actual rows=1 loops=3)
-               ->  Parallel Append (actual rows=0 loops=3)
+         Workers Launched: 0
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Parallel Append (actual rows=0 loops=1)
                      Subplans Removed: 3
                      ->  Parallel Seq Scan on ab_a2_b1 (actual rows=0 loops=1)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
@@ -1697,11 +1700,11 @@ explain (analyze, costs off, summary off, timing off) execute ab_q5 (33, 44, 55)
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=3 loops=1)
+   ->  Gather (actual rows=1 loops=1)
          Workers Planned: 2
-         Workers Launched: 2
-         ->  Partial Aggregate (actual rows=1 loops=3)
-               ->  Parallel Append (actual rows=0 loops=3)
+         Workers Launched: 0
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Parallel Append (actual rows=0 loops=1)
                      Subplans Removed: 8
                      ->  Parallel Seq Scan on ab_a1_b1 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
@@ -1761,12 +1764,12 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (0, 0, 1);
                                             QUERY PLAN                                             
 ---------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=2 loops=1)
+   ->  Gather (actual rows=1 loops=1)
          Workers Planned: 1
-         Workers Launched: 1
-         ->  Partial Aggregate (actual rows=1 loops=2)
-               ->  Nested Loop (actual rows=0 loops=2)
-                     ->  Parallel Seq Scan on lprt_a a (actual rows=51 loops=2)
+         Workers Launched: 0
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Nested Loop (actual rows=0 loops=1)
+                     ->  Parallel Seq Scan on lprt_a a (actual rows=102 loops=1)
                            Filter: (a = ANY ('{0,0,1}'::integer[]))
                      ->  Append (actual rows=0 loops=102)
                            ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
@@ -1794,12 +1797,12 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 3);
                                             QUERY PLAN                                             
 ---------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=2 loops=1)
+   ->  Gather (actual rows=1 loops=1)
          Workers Planned: 1
-         Workers Launched: 1
-         ->  Partial Aggregate (actual rows=1 loops=2)
-               ->  Nested Loop (actual rows=0 loops=2)
-                     ->  Parallel Seq Scan on lprt_a a (actual rows=52 loops=2)
+         Workers Launched: 0
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Nested Loop (actual rows=0 loops=1)
+                     ->  Parallel Seq Scan on lprt_a a (actual rows=104 loops=1)
                            Filter: (a = ANY ('{1,0,3}'::integer[]))
                      ->  Append (actual rows=0 loops=104)
                            ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
@@ -1826,14 +1829,14 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
                                             QUERY PLAN                                             
 ---------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=2 loops=1)
+   ->  Gather (actual rows=1 loops=1)
          Workers Planned: 1
-         Workers Launched: 1
-         ->  Partial Aggregate (actual rows=1 loops=2)
-               ->  Nested Loop (actual rows=0 loops=2)
-                     ->  Parallel Seq Scan on lprt_a a (actual rows=51 loops=2)
+         Workers Launched: 0
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Nested Loop (actual rows=0 loops=1)
+                     ->  Parallel Seq Scan on lprt_a a (actual rows=102 loops=1)
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
-                           Rows Removed by Filter: 1
+                           Rows Removed by Filter: 2
                      ->  Append (actual rows=0 loops=102)
                            ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
                                  Index Cond: (a = a.a)
@@ -1860,14 +1863,14 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
                                          QUERY PLAN                                         
 --------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
-   ->  Gather (actual rows=2 loops=1)
+   ->  Gather (actual rows=1 loops=1)
          Workers Planned: 1
-         Workers Launched: 1
-         ->  Partial Aggregate (actual rows=1 loops=2)
-               ->  Nested Loop (actual rows=0 loops=2)
-                     ->  Parallel Seq Scan on lprt_a a (actual rows=50 loops=2)
+         Workers Launched: 0
+         ->  Partial Aggregate (actual rows=1 loops=1)
+               ->  Nested Loop (actual rows=0 loops=1)
+                     ->  Parallel Seq Scan on lprt_a a (actual rows=100 loops=1)
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
-                           Rows Removed by Filter: 1
+                           Rows Removed by Filter: 2
                      ->  Append (actual rows=0 loops=100)
                            ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (never executed)
                                  Index Cond: (a = a.a)

@@ -325,7 +325,12 @@ select avg(a) from ab where a between $1 and $2 and b < 4;
 set parallel_setup_cost = 0;
 set parallel_tuple_cost = 0;
 set min_parallel_table_scan_size = 0;
+
+-- set this so we get a parallel plan
 set max_parallel_workers_per_gather = 2;
+
+-- and zero this so that workers don't destabilize the explain output
+set max_parallel_workers = 0;
 
 -- Execute query 5 times to allow choose_custom_plan
 -- to start considering a generic plan.
