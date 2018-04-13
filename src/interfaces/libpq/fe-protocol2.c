@@ -967,6 +967,14 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	char	   *splitp;
 
 	/*
+	 * If this is an error message, pre-emptively clear any incomplete query
+	 * result we may have.  We'd just throw it away below anyway, and
+	 * releasing it before collecting the error might avoid out-of-memory.
+	 */
+	if (isError)
+		pqClearAsyncResult(conn);
+
+	/*
 	 * Since the message might be pretty long, we create a temporary
 	 * PQExpBuffer rather than using conn->workBuffer.  workBuffer is intended
 	 * for stuff that is expected to be short.
@@ -1038,7 +1046,7 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	 */
 	if (isError)
 	{
-		pqClearAsyncResult(conn);
+		pqClearAsyncResult(conn);	/* redundant, but be safe */
 		conn->result = res;
 		resetPQExpBuffer(&conn->errorMessage);
 		if (res && !PQExpBufferDataBroken(workBuf) && res->errMsg)
