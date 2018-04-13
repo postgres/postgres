@@ -981,7 +981,7 @@ expand_tuple(HeapTuple *targetHeapTuple,
 
 		Form_pg_attribute attr = TupleDescAttr(tupleDesc, attnum);
 
-		if (attrmiss[attnum].ammissingPresent)
+		if (attrmiss && attrmiss[attnum].ammissingPresent)
 		{
 			fill_val(attr,
 					 nullBits ? &nullBits : NULL,
