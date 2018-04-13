@@ -116,7 +116,7 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid c
 # ----------
 # Another group of parallel tests
 # ----------
-test: identity partition_join partition_prune partition_prune_hash reloptions hash_part indexing partition_aggregate fast_default
+test: identity partition_join partition_prune reloptions hash_part indexing partition_aggregate fast_default
 
 # event triggers cannot run concurrently with any test that runs DDL
 test: event_trigger

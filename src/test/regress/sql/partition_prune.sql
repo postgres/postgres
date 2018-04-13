@@ -238,6 +238,48 @@ explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
 
 drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, rp, coll_pruning_multi, like_op_noprune, lparted_by_int2, rparted_by_int2;
 
+--
+-- Test Partition pruning for HASH partitioning
+--
+-- Use hand-rolled hash functions and operator classes to get predictable
+-- result on different matchines.  See the definitions of
+-- part_part_test_int4_ops and part_test_text_ops in insert.sql.
+--
+
+create table hp (a int, b text) partition by hash (a part_test_int4_ops, b part_test_text_ops);
+create table hp0 partition of hp for values with (modulus 4, remainder 0);
+create table hp3 partition of hp for values with (modulus 4, remainder 3);
+create table hp1 partition of hp for values with (modulus 4, remainder 1);
+create table hp2 partition of hp for values with (modulus 4, remainder 2);
+
+insert into hp values (null, null);
+insert into hp values (1, null);
+insert into hp values (1, 'xxx');
+insert into hp values (null, 'xxx');
+insert into hp values (2, 'xxx');
+insert into hp values (1, 'abcde');
+select tableoid::regclass, * from hp order by 1;
+
+-- partial keys won't prune, nor would non-equality conditions
+explain (costs off) select * from hp where a = 1;
+explain (costs off) select * from hp where b = 'xxx';
+explain (costs off) select * from hp where a is null;
+explain (costs off) select * from hp where b is null;
+explain (costs off) select * from hp where a < 1 and b = 'xxx';
+explain (costs off) select * from hp where a <> 1 and b = 'yyy';
+explain (costs off) select * from hp where a <> 1 and b <> 'xxx';
+
+-- pruning should work if either a value or a IS NULL clause is provided for
+-- each of the keys
+explain (costs off) select * from hp where a is null and b is null;
+explain (costs off) select * from hp where a = 1 and b is null;
+explain (costs off) select * from hp where a = 1 and b = 'xxx';
+explain (costs off) select * from hp where a is null and b = 'xxx';
+explain (costs off) select * from hp where a = 2 and b = 'xxx';
+explain (costs off) select * from hp where a = 1 and b = 'abcde';
+explain (costs off) select * from hp where (a = 1 and b = 'abcde') or (a = 2 and b = 'xxx') or (a is null and b is null);
+
+drop table hp;
 
 --
 -- Test runtime partition pruning

@@ -387,15 +387,31 @@ select tableoid::regclass::text, a, min(b) as min_b, max(b) as max_b from list_p
 (9 rows)
 
 -- direct partition inserts should check hash partition bound constraint
--- create custom operator class and hash function, for the same reason
--- explained in alter_table.sql
-create or replace function dummy_hashint4(a int4, seed int8) returns int8 as
-$$ begin return (a + seed); end; $$ language 'plpgsql' immutable;
-create operator class custom_opclass for type int4 using hash as
-operator 1 = , function 2 dummy_hashint4(int4, int8);
+-- Use hand-rolled hash functions and operator classes to get predictable
+-- result on different matchines.  The hash function for int4 simply returns
+-- the sum of the values passed to it and the one for text returns the length
+-- of the non-empty string value passed to it or 0.
+create or replace function part_hashint4_noop(value int4, seed int8)
+returns int8 as $$
+select value + seed;
+$$ language sql immutable;
+create operator class part_test_int4_ops
+for type int4
+using hash as
+operator 1 =,
+function 2 part_hashint4_noop(int4, int8);
+create or replace function part_hashtext_length(value text, seed int8)
+RETURNS int8 AS $$
+select length(coalesce(value, ''))::int8
+$$ language sql immutable;
+create operator class part_test_text_ops
+for type text
+using hash as
+operator 1 =,
+function 2 part_hashtext_length(text, int8);
 create table hash_parted (
 	a int
-) partition by hash (a custom_opclass);
+) partition by hash (a part_test_int4_ops);
 create table hpart0 partition of hash_parted for values with (modulus 4, remainder 0);
 create table hpart1 partition of hash_parted for values with (modulus 4, remainder 1);
 create table hpart2 partition of hash_parted for values with (modulus 4, remainder 2);
@@ -449,8 +465,6 @@ Partitions: part_aa_bb FOR VALUES IN ('aa', 'bb'),
 -- cleanup
 drop table range_parted, list_parted;
 drop table hash_parted;
-drop operator class custom_opclass using hash;
-drop function dummy_hashint4(a int4, seed int8);
 -- test that a default partition added as the first partition accepts any value
 -- including null
 create table list_parted (a int) partition by list (a);

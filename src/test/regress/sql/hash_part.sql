@@ -2,18 +2,12 @@
 -- Hash partitioning.
 --
 
-CREATE OR REPLACE FUNCTION hashint4_noop(int4, int8) RETURNS int8 AS
-$$SELECT coalesce($1,0)::int8$$ LANGUAGE sql IMMUTABLE;
-CREATE OPERATOR CLASS test_int4_ops FOR TYPE int4 USING HASH AS
-OPERATOR 1 = , FUNCTION 2 hashint4_noop(int4, int8);
-
-CREATE OR REPLACE FUNCTION hashtext_length(text, int8) RETURNS int8 AS
-$$SELECT length(coalesce($1,''))::int8$$ LANGUAGE sql IMMUTABLE;
-CREATE OPERATOR CLASS test_text_ops FOR TYPE text USING HASH AS
-OPERATOR 1 = , FUNCTION 2 hashtext_length(text, int8);
+-- Use hand-rolled hash functions and operator classes to get predictable
+-- result on different matchines.  See the definitions of
+-- part_part_test_int4_ops and part_test_text_ops in insert.sql.
 
 CREATE TABLE mchash (a int, b text, c jsonb)
-  PARTITION BY HASH (a test_int4_ops, b test_text_ops);
+  PARTITION BY HASH (a part_test_int4_ops, b part_test_text_ops);
 CREATE TABLE mchash1
   PARTITION OF mchash FOR VALUES WITH (MODULUS 4, REMAINDER 0);
 
@@ -54,7 +48,7 @@ SELECT satisfies_hash_partition('mchash'::regclass, 2, 1, NULL::int, NULL::int);
 SELECT satisfies_hash_partition('mchash'::regclass, 4, 0, 0, ''::text);
 
 -- ok, should be true
-SELECT satisfies_hash_partition('mchash'::regclass, 4, 0, 1, ''::text);
+SELECT satisfies_hash_partition('mchash'::regclass, 4, 0, 2, ''::text);
 
 -- argument via variadic syntax, should fail because not all partitioning
 -- columns are of the correct type
@@ -63,7 +57,7 @@ SELECT satisfies_hash_partition('mchash'::regclass, 2, 1,
 
 -- multiple partitioning columns of the same type
 CREATE TABLE mcinthash (a int, b int, c jsonb)
-  PARTITION BY HASH (a test_int4_ops, b test_int4_ops);
+  PARTITION BY HASH (a part_test_int4_ops, b part_test_int4_ops);
 
 -- now variadic should work, should be false
 SELECT satisfies_hash_partition('mcinthash'::regclass, 4, 0,
@@ -71,7 +65,7 @@ SELECT satisfies_hash_partition('mcinthash'::regclass, 4, 0,
 
 -- should be true
 SELECT satisfies_hash_partition('mcinthash'::regclass, 4, 0,
-								variadic array[1, 0]);
+								variadic array[0, 1]);
 
 -- wrong length
 SELECT satisfies_hash_partition('mcinthash'::regclass, 4, 0,
@@ -84,7 +78,3 @@ SELECT satisfies_hash_partition('mcinthash'::regclass, 4, 0,
 -- cleanup
 DROP TABLE mchash;
 DROP TABLE mcinthash;
-DROP OPERATOR CLASS test_text_ops USING hash;
-DROP OPERATOR CLASS test_int4_ops USING hash;
-DROP FUNCTION hashint4_noop(int4, int8);
-DROP FUNCTION hashtext_length(text, int8);
