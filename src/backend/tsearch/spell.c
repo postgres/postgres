@@ -1303,7 +1303,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 			{
 				Conf->useFlagAliases = true;
 				naffix = atoi(sflag);
-				if (naffix == 0)
+				if (naffix <= 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("invalid number of flag vector aliases")));
@@ -1318,7 +1318,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 				Conf->AffixData[curaffix] = VoidString;
 				curaffix++;
 			}
-			/* Other lines is aliases */
+			/* Other lines are aliases */
 			else
 			{
 				if (curaffix < naffix)
@@ -1326,6 +1326,11 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 					Conf->AffixData[curaffix] = cpstrdup(Conf, sflag);
 					curaffix++;
 				}
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("number of aliases exceeds specified number %d",
+									naffix - 1)));
 			}
 			goto nextline;
 		}

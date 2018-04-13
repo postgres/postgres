@@ -1,15 +1,23 @@
 FLAG long
 
-AF 7
+AF 11
 AF cZ		#1
 AF cL		#2
 AF sGsJpUsS	#3
 AF sSpB		#4
 AF cZsS		#5
-AF sScZs\	#6
+AF sScZs\sE	#6
 AF sA		#7
+AF CaCp		#8
+AF CcCp		#9
+AF sD		#10
+AF sB		#11
 
 COMPOUNDFLAG cZ
+COMPOUNDBEGIN Ca
+COMPOUNDMIDDLE Cb
+COMPOUNDEND Cc
+COMPOUNDPERMITFLAG Cp
 ONLYINCOMPOUND cL
 
 PFX pB Y 1
@@ -28,7 +36,18 @@ SFX sS Y 1
 SFX sS   0	S	[^SXZHY]
 
 SFX sA Y 1
-SFX sA   Y	IES	[^AEIOU]Y
+SFX sA   Y	IES	[^AEIOU]Y{1}
 
+SFX sB Y 1
+SFX sB   0	ED	K{1}
+
+# Affixes with compound flags
 SFX s\ N 1
 SFX s\   0	Y/2	[^Y]
+
+SFX sE N 1
+SFX sE   0	S/2	[^S]
+
+# Check duplicate affixes
+SFX sD N 1
+SFX sD   0	S/2	[^S]

@@ -18,6 +18,14 @@ SFX 302   0	ING		[^E]
 SFX 303 Y 1
 SFX 303   0	S	[^SXZHY]
 
+# Remove ED suffix from lexeme for base words with K ending
+SFX 306 Y 1
+SFX 306   0	ED	K{1}
+
+# Just add Y to lexeme for base words with Y ending
+SFX 307 Y 1
+SFX 307   Y	0	Y*
+
 SFX 304 Y 1
 SFX 304   Y	IES	[^AEIOU]Y
 
