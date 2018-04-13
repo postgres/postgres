@@ -2146,7 +2146,6 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			FuncExpr   *funcexpr;
 			int			i;
 			HeapTuple	tuple;
-			int			numargs PG_USED_FOR_ASSERTS_ONLY;
 			Oid		   *argtypes;
 			char	  **argnames;
 			char	   *argmodes;
@@ -2169,10 +2168,8 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcexpr->funcid));
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "cache lookup failed for function %u", funcexpr->funcid);
-			numargs = get_func_arg_info(tuple, &argtypes, &argnames, &argmodes);
+			get_func_arg_info(tuple, &argtypes, &argnames, &argmodes);
 			ReleaseSysCache(tuple);
-
-			Assert(numargs == list_length(funcexpr->args));
 
 			/*
 			 * Construct row
@@ -2192,16 +2189,36 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 
 				if (argmodes && argmodes[i] == PROARGMODE_INOUT)
 				{
-					Param	   *param;
+					if (IsA(n, Param))
+					{
+						Param	   *param = castNode(Param, n);
 
-					if (!IsA(n, Param))
+						/* paramid is offset by 1 (see make_datum_param()) */
+						row->varnos[nfields++] = param->paramid - 1;
+					}
+					else if (IsA(n, NamedArgExpr))
+					{
+						NamedArgExpr *nexpr = castNode(NamedArgExpr, n);
+						Param	   *param;
+
+						if (!IsA(nexpr->arg, Param))
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("argument %d is an output argument but is not writable", i + 1)));
+
+						param = castNode(Param, nexpr->arg);
+
+						/*
+						 * Named arguments must be after positional arguments,
+						 * so we can increase nfields.
+						 */
+						row->varnos[nexpr->argnumber] = param->paramid - 1;
+						nfields++;
+					}
+					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("argument %d is an output argument but is not writable", i + 1)));
-
-					param = castNode(Param, n);
-					/* paramid is offset by 1 (see make_datum_param()) */
-					row->varnos[nfields++] = param->paramid - 1;
 				}
 				i++;
 			}

@@ -130,8 +130,6 @@ static Expr *simplify_function(Oid funcid,
 				  Oid result_collid, Oid input_collid, List **args_p,
 				  bool funcvariadic, bool process_args, bool allow_non_const,
 				  eval_const_expressions_context *context);
-static List *expand_function_arguments(List *args, Oid result_type,
-						  HeapTuple func_tuple);
 static List *reorder_function_arguments(List *args, HeapTuple func_tuple);
 static List *add_function_defaults(List *args, HeapTuple func_tuple);
 static List *fetch_function_defaults(HeapTuple func_tuple);
@@ -4112,7 +4110,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
  * cases it handles should never occur there.  This should be OK since it
  * will fall through very quickly if there's nothing to do.
  */
-static List *
+List *
 expand_function_arguments(List *args, Oid result_type, HeapTuple func_tuple)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);

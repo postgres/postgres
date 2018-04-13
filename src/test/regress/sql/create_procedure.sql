@@ -65,6 +65,25 @@ $$;
 DROP PROCEDURE ptest4a;
 
 
+-- named and default parameters
+
+CREATE OR REPLACE PROCEDURE ptest5(a int, b text, c int default 100)
+LANGUAGE SQL
+AS $$
+INSERT INTO cp_test VALUES(a, b);
+INSERT INTO cp_test VALUES(c, b);
+$$;
+
+TRUNCATE cp_test;
+
+CALL ptest5(10, 'Hello', 20);
+CALL ptest5(10, 'Hello');
+CALL ptest5(10, b => 'Hello');
+CALL ptest5(b => 'Hello', a => 10);
+
+SELECT * FROM cp_test;
+
+
 -- various error cases
 
 CALL version();  -- error: not a procedure

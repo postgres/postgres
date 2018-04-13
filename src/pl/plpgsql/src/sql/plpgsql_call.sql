@@ -142,6 +142,80 @@ $$;
 CALL test_proc7(100, -1, -1);
 
 
+-- named parameters and defaults
+
+CREATE PROCEDURE test_proc8a(INOUT a int, INOUT b int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE NOTICE 'a: %, b: %', a, b;
+  a := a * 10;
+  b := b + 10;
+END;
+$$;
+
+CALL test_proc8a(10, 20);
+CALL test_proc8a(b => 20, a => 10);
+
+DO $$
+DECLARE _a int; _b int;
+BEGIN
+  _a := 10; _b := 30;
+  CALL test_proc8a(_a, _b);
+  RAISE NOTICE '_a: %, _b: %', _a, _b;
+  CALL test_proc8a(b => _b, a => _a);
+  RAISE NOTICE '_a: %, _b: %', _a, _b;
+END
+$$;
+
+
+CREATE PROCEDURE test_proc8b(INOUT a int, INOUT b int, INOUT c int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE NOTICE 'a: %, b: %, c: %', a, b, c;
+  a := a * 10;
+  b := b + 10;
+  c := c * -10;
+END;
+$$;
+
+DO $$
+DECLARE _a int; _b int; _c int;
+BEGIN
+  _a := 10; _b := 30; _c := 50;
+  CALL test_proc8b(_a, _b, _c);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+  CALL test_proc8b(_a, c => _c, b => _b);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+END
+$$;
+
+
+CREATE PROCEDURE test_proc8c(INOUT a int, INOUT b int, INOUT c int DEFAULT 11)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE NOTICE 'a: %, b: %, c: %', a, b, c;
+  a := a * 10;
+  b := b + 10;
+  c := c * -10;
+END;
+$$;
+
+DO $$
+DECLARE _a int; _b int; _c int;
+BEGIN
+  _a := 10; _b := 30; _c := 50;
+  CALL test_proc8c(_a, _b);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+  _a := 10; _b := 30; _c := 50;
+  CALL test_proc8c(_a, b => _b);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+END
+$$;
+
+
 -- transition variable assignment
 
 TRUNCATE test1;
