@@ -1560,7 +1560,26 @@ ApplyRetrieveRule(Query *parsetree,
 	AcquireRewriteLocks(rule_action, true, forUpdatePushedDown);
 
 	/*
+	 * If FOR [KEY] UPDATE/SHARE of view, mark all the contained tables as
+	 * implicit FOR [KEY] UPDATE/SHARE, the same as the parser would have done
+	 * if the view's subquery had been written out explicitly.
+	 *
+	 * Note: we needn't consider forUpdatePushedDown for this; if there was an
+	 * ancestor query level with a relevant FOR [KEY] UPDATE/SHARE clause,
+	 * that's already been pushed down to here and is reflected in "rc".
+	 */
+	if (rc != NULL)
+		markQueryForLocking(rule_action, (Node *) rule_action->jointree,
+							rc->strength, rc->waitPolicy, true);
+
+	/*
 	 * Recursively expand any view references inside the view.
+	 *
+	 * Note: this must happen after markQueryForLocking.  That way, any UPDATE
+	 * permission bits needed for sub-views are initially applied to their
+	 * RTE_RELATION RTEs by markQueryForLocking, and then transferred to their
+	 * OLD rangetable entries by the action below (in a recursive call of this
+	 * routine).
 	 */
 	rule_action = fireRIRrules(rule_action, activeRIRs, forUpdatePushedDown);
 
@@ -1593,18 +1612,6 @@ ApplyRetrieveRule(Query *parsetree,
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
-
-	/*
-	 * If FOR [KEY] UPDATE/SHARE of view, mark all the contained tables as
-	 * implicit FOR [KEY] UPDATE/SHARE, the same as the parser would have done
-	 * if the view's subquery had been written out explicitly.
-	 *
-	 * Note: we don't consider forUpdatePushedDown here; such marks will be
-	 * made by recursing from the upper level in markQueryForLocking.
-	 */
-	if (rc != NULL)
-		markQueryForLocking(rule_action, (Node *) rule_action->jointree,
-							rc->strength, rc->waitPolicy, true);
 
 	return parsetree;
 }
