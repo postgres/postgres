@@ -9,6 +9,11 @@ setup
  CREATE TABLE accounts (accountid text PRIMARY KEY, balance numeric not null);
  INSERT INTO accounts VALUES ('checking', 600), ('savings', 600);
 
+ CREATE TABLE accounts_ext (accountid text PRIMARY KEY, balance numeric not null, other text);
+ INSERT INTO accounts_ext VALUES ('checking', 600, 'other'), ('savings', 700, null);
+ ALTER TABLE accounts_ext ADD COLUMN newcol int DEFAULT 42;
+ ALTER TABLE accounts_ext ADD COLUMN newcol2 text DEFAULT NULL;
+
  CREATE TABLE p (a int, b int, c int);
  CREATE TABLE c1 () INHERITS (p);
  CREATE TABLE c2 () INHERITS (p);
@@ -29,6 +34,7 @@ setup
 teardown
 {
  DROP TABLE accounts;
+ DROP TABLE accounts_ext;
  DROP TABLE p CASCADE;
  DROP TABLE table_a, table_b, jointest;
 }
@@ -72,6 +78,11 @@ step "lockwithvalues"	{
 	  WHERE a1.accountid = v.id
 	  FOR UPDATE OF a1;
 }
+step "partiallock_ext"	{
+	SELECT * FROM accounts_ext a1, accounts_ext a2
+	  WHERE a1.accountid = a2.accountid
+	  FOR UPDATE OF a1;
+}
 
 # these tests exercise EvalPlanQual with a SubLink sub-select (which should be
 # unaffected by any EPQ recheck behavior in the outer query); cf bug #14034
@@ -105,6 +116,7 @@ step "upsert2"	{
 	INSERT INTO accounts SELECT 'savings', 1234
 	  WHERE NOT EXISTS (SELECT 1 FROM upsert);
 }
+step "wx2_ext"	{ UPDATE accounts_ext SET balance = balance + 450; }
 step "readp2"	{ SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; }
 step "returningp1" {
 	WITH u AS ( UPDATE p SET b = b WHERE a > 0 RETURNING * )
@@ -124,6 +136,7 @@ step "c2"	{ COMMIT; }
 session "s3"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step "read"	{ SELECT * FROM accounts ORDER BY accountid; }
+step "read_ext"	{ SELECT * FROM accounts_ext ORDER BY accountid; }
 
 # this test exercises EvalPlanQual with a CTE, cf bug #14328
 step "readwcte"	{
@@ -156,6 +169,7 @@ permutation "readp1" "writep1" "readp2" "c1" "c2"
 permutation "writep2" "returningp1" "c1" "c2"
 permutation "wx2" "partiallock" "c2" "c1" "read"
 permutation "wx2" "lockwithvalues" "c2" "c1" "read"
+permutation "wx2_ext" "partiallock_ext" "c2" "c1" "read_ext"
 permutation "updateforss" "readforss" "c1" "c2"
 permutation "wrtwcte" "readwcte" "c1" "c2"
 permutation "wrjt" "selectjoinforupdate" "c2" "c1"
