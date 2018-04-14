@@ -132,8 +132,16 @@ typedef IndexAttributeBitMapData * IndexAttributeBitMap;
  * bitmap, so we can safely assume it's at least 1 byte bigger than a bare
  * IndexTupleData struct.  We arrive at the divisor because each tuple
  * must be maxaligned, and it must have an associated item pointer.
+ *
+ * To be index-type-independent, this does not account for any special space
+ * on the page, and is thus conservative.
+ *
+ * Note: in btree non-leaf pages, the first tuple has no key (it's implicitly
+ * minus infinity), thus breaking the "at least 1 byte bigger" assumption.
+ * On such a page, N tuples could take one MAXALIGN quantum less space than
+ * estimated here, seemingly allowing one more tuple than estimated here.
+ * But such a page always has at least MAXALIGN special space, so we're safe.
  */
-#define MinIndexTupleSize MAXALIGN(sizeof(IndexTupleData) + 1)
 #define MaxIndexTuplesPerPage	\
 	((int) ((BLCKSZ - SizeOfPageHeaderData) / \
 			(MAXALIGN(sizeof(IndexTupleData) + 1) + sizeof(ItemIdData))))
