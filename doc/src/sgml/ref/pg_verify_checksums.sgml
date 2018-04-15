@@ -93,12 +93,4 @@ PostgreSQL documentation
   </para>
  </refsect1>
 
- <refsect1>
-  <title>See Also</title>
-
-  <simplelist type="inline">
-   <member><xref linkend="checksums"/></member>
-  </simplelist>
- </refsect1>
-
 </refentry>
