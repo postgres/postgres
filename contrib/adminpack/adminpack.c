@@ -173,7 +173,7 @@ pg_file_rename(PG_FUNCTION_ARGS)
 	fn1 = convert_and_check_filename(PG_GETARG_TEXT_PP(0), false);
 	fn2 = convert_and_check_filename(PG_GETARG_TEXT_PP(1), false);
 	if (PG_ARGISNULL(2))
-		fn3 = 0;
+		fn3 = NULL;
 	else
 		fn3 = convert_and_check_filename(PG_GETARG_TEXT_PP(2), false);
 
@@ -195,7 +195,7 @@ pg_file_rename(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	}
 
-	rc = access(fn3 ? fn3 : fn2, 2);
+	rc = access(fn3 ? fn3 : fn2, W_OK);
 	if (rc >= 0 || errno != ENOENT)
 	{
 		ereport(ERROR,
