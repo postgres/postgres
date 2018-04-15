@@ -53,15 +53,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-f</option></term>
-      <listitem>
-       <para>
-        Force check even if checksums are disabled on cluster.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-d</option></term>
       <listitem>
        <para>

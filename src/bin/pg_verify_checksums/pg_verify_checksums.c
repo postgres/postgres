@@ -42,7 +42,6 @@ usage()
 	printf(_("  %s [OPTION] [DATADIR]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_(" [-D] DATADIR    data directory\n"));
-	printf(_("  -f,            force check even if checksums are disabled\n"));
 	printf(_("  -r relfilenode check only relation with specified relfilenode\n"));
 	printf(_("  -d             debug output, listing all checked blocks\n"));
 	printf(_("  -V, --version  output version information, then exit\n"));
@@ -202,7 +201,6 @@ int
 main(int argc, char *argv[])
 {
 	char	   *DataDir = NULL;
-	bool		force = false;
 	int			c;
 	bool		crc_ok;
 
@@ -224,7 +222,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt(argc, argv, "D:fr:d")) != -1)
+	while ((c = getopt(argc, argv, "D:r:d")) != -1)
 	{
 		switch (c)
 		{
@@ -233,9 +231,6 @@ main(int argc, char *argv[])
 				break;
 			case 'D':
 				DataDir = optarg;
-				break;
-			case 'f':
-				force = true;
 				break;
 			case 'r':
 				if (atoi(optarg) <= 0)
@@ -292,7 +287,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (ControlFile->data_checksum_version == 0 && !force)
+	if (ControlFile->data_checksum_version == 0)
 	{
 		fprintf(stderr, _("%s: data checksums are not enabled in cluster.\n"), progname);
 		exit(1);
