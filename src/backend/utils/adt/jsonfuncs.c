@@ -1745,6 +1745,7 @@ each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 			 * matter what shape it is.
 			 */
 			r = JsonbIteratorNext(&it, &v, skipNested);
+			Assert(r != WJB_DONE);
 
 			values[0] = PointerGetDatum(key);
 
@@ -4111,6 +4112,7 @@ addJsonbToParseState(JsonbParseState **jbps, Jsonb *jb)
 	if (JB_ROOT_IS_SCALAR(jb))
 	{
 		(void) JsonbIteratorNext(&it, &v, false);	/* skip array header */
+		Assert(v.type == jbvArray);
 		(void) JsonbIteratorNext(&it, &v, false);	/* fetch scalar value */
 
 		switch (o->type)
@@ -4224,7 +4226,7 @@ jsonb_delete(PG_FUNCTION_ARGS)
 
 	it = JsonbIteratorInit(&in->root);
 
-	while ((r = JsonbIteratorNext(&it, &v, skipNested)) != 0)
+	while ((r = JsonbIteratorNext(&it, &v, skipNested)) != WJB_DONE)
 	{
 		skipNested = true;
 
@@ -4234,7 +4236,7 @@ jsonb_delete(PG_FUNCTION_ARGS)
 		{
 			/* skip corresponding value as well */
 			if (r == WJB_KEY)
-				JsonbIteratorNext(&it, &v, true);
+				(void) JsonbIteratorNext(&it, &v, true);
 
 			continue;
 		}
@@ -4289,7 +4291,7 @@ jsonb_delete_array(PG_FUNCTION_ARGS)
 
 	it = JsonbIteratorInit(&in->root);
 
-	while ((r = JsonbIteratorNext(&it, &v, skipNested)) != 0)
+	while ((r = JsonbIteratorNext(&it, &v, skipNested)) != WJB_DONE)
 	{
 		skipNested = true;
 
@@ -4319,7 +4321,7 @@ jsonb_delete_array(PG_FUNCTION_ARGS)
 			{
 				/* skip corresponding value as well */
 				if (r == WJB_KEY)
-					JsonbIteratorNext(&it, &v, true);
+					(void) JsonbIteratorNext(&it, &v, true);
 
 				continue;
 			}
@@ -4385,7 +4387,7 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 
 	pushJsonbValue(&state, r, NULL);
 
-	while ((r = JsonbIteratorNext(&it, &v, true)) != 0)
+	while ((r = JsonbIteratorNext(&it, &v, true)) != WJB_DONE)
 	{
 		if (r == WJB_ELEM)
 		{
@@ -4576,7 +4578,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 		 * Append the all tokens from v2 to res, include last WJB_END_OBJECT
 		 * (the concatenation will be completed).
 		 */
-		while ((r2 = JsonbIteratorNext(it2, &v2, true)) != 0)
+		while ((r2 = JsonbIteratorNext(it2, &v2, true)) != WJB_DONE)
 			res = pushJsonbValue(state, r2, r2 != WJB_END_OBJECT ? &v2 : NULL);
 	}
 
@@ -4616,10 +4618,10 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 		if (prepend)
 		{
 			pushJsonbValue(state, WJB_BEGIN_OBJECT, NULL);
-			while ((r1 = JsonbIteratorNext(it_object, &v1, true)) != 0)
+			while ((r1 = JsonbIteratorNext(it_object, &v1, true)) != WJB_DONE)
 				pushJsonbValue(state, r1, r1 != WJB_END_OBJECT ? &v1 : NULL);
 
-			while ((r2 = JsonbIteratorNext(it_array, &v2, true)) != 0)
+			while ((r2 = JsonbIteratorNext(it_array, &v2, true)) != WJB_DONE)
 				res = pushJsonbValue(state, r2, r2 != WJB_END_ARRAY ? &v2 : NULL);
 		}
 		else
@@ -4628,7 +4630,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 				pushJsonbValue(state, r1, &v1);
 
 			pushJsonbValue(state, WJB_BEGIN_OBJECT, NULL);
-			while ((r2 = JsonbIteratorNext(it_object, &v2, true)) != 0)
+			while ((r2 = JsonbIteratorNext(it_object, &v2, true)) != WJB_DONE)
 				pushJsonbValue(state, r2, r2 != WJB_END_OBJECT ? &v2 : NULL);
 
 			res = pushJsonbValue(state, WJB_END_ARRAY, NULL);
@@ -4959,7 +4961,7 @@ parse_jsonb_index_flags(Jsonb *jb)
 
 	/*
 	 * We iterate over array (scalar internally is represented as array, so, we
-	 * will accept it too) to check all its elements. Flag's names are choosen
+	 * will accept it too) to check all its elements.  Flag names are chosen
 	 * the same as jsonb_typeof uses.
 	 */
 	if (type != WJB_BEGIN_ARRAY)
@@ -4997,12 +4999,14 @@ parse_jsonb_index_flags(Jsonb *jb)
 					 errhint("Possible values are: \"string\", \"numeric\", \"boolean\", \"key\" and \"all\"")));
 	}
 
-	/* user should not get it */
+	/* expect end of array now */
 	if (type != WJB_END_ARRAY)
 		elog(ERROR, "unexpected end of flag array");
 
 	/* get final WJB_DONE and free iterator */
-	JsonbIteratorNext(&it, &v, false);
+	type = JsonbIteratorNext(&it, &v, false);
+	if (type != WJB_DONE)
+		elog(ERROR, "unexpected end of flag array");
 
 	return flags;
 }
