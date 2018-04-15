@@ -77,8 +77,7 @@ static void markQueryForLocking(Query *qry, Node *jtnode,
 					bool pushedDown);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree, bool *hasUpdate);
-static Query *fireRIRrules(Query *parsetree, List *activeRIRs,
-			 bool forUpdatePushedDown);
+static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
 static bool view_has_instead_trigger(Relation view, CmdType event);
 static Bitmapset *adjust_view_column_set(Bitmapset *cols, List *targetlist);
 
@@ -1453,8 +1452,7 @@ ApplyRetrieveRule(Query *parsetree,
 				  RewriteRule *rule,
 				  int rt_index,
 				  Relation relation,
-				  List *activeRIRs,
-				  bool forUpdatePushedDown)
+				  List *activeRIRs)
 {
 	Query	   *rule_action;
 	RangeTblEntry *rte,
@@ -1545,28 +1543,27 @@ ApplyRetrieveRule(Query *parsetree,
 	}
 
 	/*
-	 * If FOR [KEY] UPDATE/SHARE of view, be sure we get right initial lock on
-	 * the relations it references.
+	 * Check if there's a FOR [KEY] UPDATE/SHARE clause applying to this view.
+	 *
+	 * Note: we needn't explicitly consider any such clauses appearing in
+	 * ancestor query levels; their effects have already been pushed down to
+	 * here by markQueryForLocking, and will be reflected in "rc".
 	 */
 	rc = get_parse_rowmark(parsetree, rt_index);
-	forUpdatePushedDown |= (rc != NULL);
 
 	/*
 	 * Make a modifiable copy of the view query, and acquire needed locks on
-	 * the relations it mentions.
+	 * the relations it mentions.  Force at least RowShareLock for all such
+	 * rels if there's a FOR [KEY] UPDATE/SHARE clause affecting this view.
 	 */
 	rule_action = copyObject(linitial(rule->actions));
 
-	AcquireRewriteLocks(rule_action, true, forUpdatePushedDown);
+	AcquireRewriteLocks(rule_action, true, (rc != NULL));
 
 	/*
 	 * If FOR [KEY] UPDATE/SHARE of view, mark all the contained tables as
 	 * implicit FOR [KEY] UPDATE/SHARE, the same as the parser would have done
 	 * if the view's subquery had been written out explicitly.
-	 *
-	 * Note: we needn't consider forUpdatePushedDown for this; if there was an
-	 * ancestor query level with a relevant FOR [KEY] UPDATE/SHARE clause,
-	 * that's already been pushed down to here and is reflected in "rc".
 	 */
 	if (rc != NULL)
 		markQueryForLocking(rule_action, (Node *) rule_action->jointree,
@@ -1581,7 +1578,7 @@ ApplyRetrieveRule(Query *parsetree,
 	 * OLD rangetable entries by the action below (in a recursive call of this
 	 * routine).
 	 */
-	rule_action = fireRIRrules(rule_action, activeRIRs, forUpdatePushedDown);
+	rule_action = fireRIRrules(rule_action, activeRIRs);
 
 	/*
 	 * Now, plug the view query in as a subselect, replacing the relation's
@@ -1698,7 +1695,7 @@ fireRIRonSubLink(Node *node, List *activeRIRs)
 
 		/* Do what we came for */
 		sub->subselect = (Node *) fireRIRrules((Query *) sub->subselect,
-											   activeRIRs, false);
+											   activeRIRs);
 		/* Fall through to process lefthand args of SubLink */
 	}
 
@@ -1713,10 +1710,13 @@ fireRIRonSubLink(Node *node, List *activeRIRs)
 
 /*
  * fireRIRrules -
- *	Apply all RIR rules on each rangetable entry in a query
+ *	Apply all RIR rules on each rangetable entry in the given query
+ *
+ * activeRIRs is a list of the OIDs of views we're already processing RIR
+ * rules for, used to detect/reject recursion.
  */
 static Query *
-fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
+fireRIRrules(Query *parsetree, List *activeRIRs)
 {
 	int			origResultRelation = parsetree->resultRelation;
 	int			rt_index;
@@ -1747,9 +1747,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		 */
 		if (rte->rtekind == RTE_SUBQUERY)
 		{
-			rte->subquery = fireRIRrules(rte->subquery, activeRIRs,
-										 (forUpdatePushedDown ||
-										  get_parse_rowmark(parsetree, rt_index) != NULL));
+			rte->subquery = fireRIRrules(rte->subquery, activeRIRs);
 			continue;
 		}
 
@@ -1835,8 +1833,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 												  rule,
 												  rt_index,
 												  rel,
-												  activeRIRs,
-												  forUpdatePushedDown);
+												  activeRIRs);
 				}
 
 				activeRIRs = list_delete_first(activeRIRs);
@@ -1852,7 +1849,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
 
 		cte->ctequery = (Node *)
-			fireRIRrules((Query *) cte->ctequery, activeRIRs, false);
+			fireRIRrules((Query *) cte->ctequery, activeRIRs);
 	}
 
 	/*
@@ -3604,7 +3601,7 @@ QueryRewrite(Query *parsetree)
 	{
 		Query	   *query = (Query *) lfirst(l);
 
-		query = fireRIRrules(query, NIL, false);
+		query = fireRIRrules(query, NIL);
 
 		query->queryId = input_query_id;
 
