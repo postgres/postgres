@@ -30,8 +30,8 @@ PostgreSQL documentation
  <refsect1 id="r1-app-pg_verify_checksums-1">
   <title>Description</title>
   <para>
-   <command>pg_verify_checksums</command> verifies data checksums in a PostgreSQL
-   cluster. It must be run against a cluster that's offline.
+   <command>pg_verify_checksums</command> verifies data checksums in a
+   <productname>PostgreSQL</productname> cluster.
   </para>
  </refsect1>
 
@@ -88,7 +88,8 @@ PostgreSQL documentation
  <refsect1>
   <title>Notes</title>
   <para>
-    Can only be run when the server is offline.
+   The cluster must be shut down cleanly before running
+   <application>pg_verify_checksums</application>.
   </para>
  </refsect1>
 
