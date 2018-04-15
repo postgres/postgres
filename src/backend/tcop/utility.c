@@ -68,6 +68,7 @@
 #include "utils/acl.h"
 #include "utils/guc.h"
 #include "utils/syscache.h"
+#include "utils/rel.h"
 
 
 /* Hook for plugins to get control in ProcessUtility() */

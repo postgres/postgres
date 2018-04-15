@@ -11,9 +11,9 @@
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
+#include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_type.h"
 #include "executor/execPartition.h"
@@ -22,9 +22,14 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "partitioning/partbounds.h"
+#include "partitioning/partprune.h"
 #include "utils/lsyscache.h"
+#include "utils/partcache.h"
+#include "utils/rel.h"
 #include "utils/rls.h"
 #include "utils/ruleutils.h"
+
 
 static PartitionDispatch *RelationGetPartitionDispatchInfo(Relation rel,
 								 int *num_parted, List **leaf_part_oids);
@@ -35,6 +40,8 @@ static void FormPartitionKeyDatum(PartitionDispatch pd,
 					  EState *estate,
 					  Datum *values,
 					  bool *isnull);
+static int get_partition_for_tuple(Relation relation, Datum *values,
+						bool *isnull);
 static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
 									 Datum *values,
 									 bool *isnull,
@@ -1020,6 +1027,110 @@ FormPartitionKeyDatum(PartitionDispatch pd,
 
 	if (partexpr_item != NULL)
 		elog(ERROR, "wrong number of partition key expressions");
+}
+
+/*
+ * get_partition_for_tuple
+ *		Finds partition of relation which accepts the partition key specified
+ *		in values and isnull
+ *
+ * Return value is index of the partition (>= 0 and < partdesc->nparts) if one
+ * found or -1 if none found.
+ */
+int
+get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
+{
+	int			bound_offset;
+	int			part_index = -1;
+	PartitionKey key = RelationGetPartitionKey(relation);
+	PartitionDesc partdesc = RelationGetPartitionDesc(relation);
+
+	/* Route as appropriate based on partitioning strategy. */
+	switch (key->strategy)
+	{
+		case PARTITION_STRATEGY_HASH:
+			{
+				PartitionBoundInfo boundinfo = partdesc->boundinfo;
+				int			greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
+				uint64		rowHash = compute_hash_value(key->partnatts,
+														 key->partsupfunc,
+														 values, isnull);
+
+				part_index = boundinfo->indexes[rowHash % greatest_modulus];
+			}
+			break;
+
+		case PARTITION_STRATEGY_LIST:
+			if (isnull[0])
+			{
+				if (partition_bound_accepts_nulls(partdesc->boundinfo))
+					part_index = partdesc->boundinfo->null_index;
+			}
+			else
+			{
+				bool		equal = false;
+
+				bound_offset = partition_list_bsearch(key->partsupfunc,
+													  key->partcollation,
+													  partdesc->boundinfo,
+													  values[0], &equal);
+				if (bound_offset >= 0 && equal)
+					part_index = partdesc->boundinfo->indexes[bound_offset];
+			}
+			break;
+
+		case PARTITION_STRATEGY_RANGE:
+			{
+				bool		equal = false,
+							range_partkey_has_null = false;
+				int			i;
+
+				/*
+				 * No range includes NULL, so this will be accepted by the
+				 * default partition if there is one, and otherwise rejected.
+				 */
+				for (i = 0; i < key->partnatts; i++)
+				{
+					if (isnull[i])
+					{
+						range_partkey_has_null = true;
+						break;
+					}
+				}
+
+				if (!range_partkey_has_null)
+				{
+					bound_offset = partition_range_datum_bsearch(key->partsupfunc,
+																 key->partcollation,
+																 partdesc->boundinfo,
+																 key->partnatts,
+																 values,
+																 &equal);
+
+					/*
+					 * The bound at bound_offset is less than or equal to the
+					 * tuple value, so the bound at offset+1 is the upper
+					 * bound of the partition we're looking for, if there
+					 * actually exists one.
+					 */
+					part_index = partdesc->boundinfo->indexes[bound_offset + 1];
+				}
+			}
+			break;
+
+		default:
+			elog(ERROR, "unexpected partition strategy: %d",
+				 (int) key->strategy);
+	}
+
+	/*
+	 * part_index < 0 means we failed to find a partition of this parent. Use
+	 * the default partition, if there is one.
+	 */
+	if (part_index < 0)
+		part_index = partdesc->boundinfo->default_index;
+
+	return part_index;
 }
 
 /*

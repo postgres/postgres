@@ -76,6 +76,7 @@
 #include "storage/ipc.h"
 #include "storage/spin.h"
 #include "tcop/utility.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 

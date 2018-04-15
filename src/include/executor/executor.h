@@ -14,7 +14,6 @@
 #ifndef EXECUTOR_H
 #define EXECUTOR_H
 
-#include "catalog/partition.h"
 #include "executor/execdesc.h"
 #include "nodes/parsenodes.h"
 #include "utils/memutils.h"

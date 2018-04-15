@@ -19,6 +19,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 
 PG_FUNCTION_INFO_V1(hash_page_type);
 PG_FUNCTION_INFO_V1(hash_page_stats);

@@ -14,8 +14,9 @@
 #ifndef PARTPRUNE_H
 #define PARTPRUNE_H
 
-#include "catalog/partition.h"
+#include "nodes/execnodes.h"
 #include "nodes/relation.h"
+
 
 /*
  * PartitionPruneContext

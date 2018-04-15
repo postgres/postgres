@@ -38,6 +38,7 @@
 #include "optimizer/plancat.h"
 #include "optimizer/predtest.h"
 #include "optimizer/prep.h"
+#include "partitioning/partbounds.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
@@ -45,8 +46,9 @@
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
+#include "utils/partcache.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 #include "utils/snapmgr.h"
 
 

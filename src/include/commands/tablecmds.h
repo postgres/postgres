@@ -18,7 +18,6 @@
 #include "catalog/dependency.h"
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
-#include "catalog/partition.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
 

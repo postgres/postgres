@@ -13,7 +13,6 @@
 #ifndef EXECPARTITION_H
 #define EXECPARTITION_H
 
-#include "catalog/partition.h"
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"

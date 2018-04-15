@@ -12,6 +12,6 @@ subdir = src/backend/partitioning
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = partprune.o
+OBJS = partprune.o partbounds.o
 
 include $(top_srcdir)/src/backend/common.mk

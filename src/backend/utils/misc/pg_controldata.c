@@ -15,13 +15,14 @@
 
 #include "postgres.h"
 
-#include "funcapi.h"
-#include "miscadmin.h"
 #include "access/htup_details.h"
 #include "access/xlog_internal.h"
+#include "access/xlog.h"
 #include "catalog/pg_control.h"
 #include "catalog/pg_type.h"
 #include "common/controldata_utils.h"
+#include "funcapi.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/pg_lsn.h"
 #include "utils/timestamp.h"
