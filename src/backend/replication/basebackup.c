@@ -1446,8 +1446,10 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 				 * written only halfway and the checksum would not be valid.
 				 * However, replaying WAL would reinstate the correct page in
 				 * this case.
+				 * We also skip completely new pages, since they don't have
+				 * a checksum yet.
 				 */
-				if (PageGetLSN(page) < startptr)
+				if (!PageIsNew(page) && PageGetLSN(page) < startptr)
 				{
 					checksum = pg_checksum_page((char *) page, blkno + segmentno * RELSEG_SIZE);
 					phdr = (PageHeader) page;

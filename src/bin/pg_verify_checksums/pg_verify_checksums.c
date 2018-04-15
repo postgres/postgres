@@ -106,6 +106,10 @@ scan_file(char *fn, int segmentno)
 		}
 		blocks++;
 
+		/* New pages have no checksum yet */
+		if (PageIsNew(buf))
+			continue;
+
 		csum = pg_checksum_page(buf, blockno + segmentno * RELSEG_SIZE);
 		if (csum != header->pd_checksum)
 		{
