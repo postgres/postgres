@@ -298,7 +298,7 @@ pg_file_rename_internal(text *file1, text *file2, text *file3)
 	fn2 = convert_and_check_filename(file2, false);
 
 	if (file3 == NULL)
-		fn3 = 0;
+		fn3 = NULL;
 	else
 		fn3 = convert_and_check_filename(file3, false);
 
@@ -320,7 +320,7 @@ pg_file_rename_internal(text *file1, text *file2, text *file3)
 		return false;
 	}
 
-	rc = access(fn3 ? fn3 : fn2, 2);
+	rc = access(fn3 ? fn3 : fn2, W_OK);
 	if (rc >= 0 || errno != ENOENT)
 	{
 		ereport(ERROR,
