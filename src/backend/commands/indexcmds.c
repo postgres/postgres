@@ -758,6 +758,8 @@ DefineIndex(Oid relationId,
 	 */
 	validate_index(relationId, indexRelationId, snapshot);
 
+	PrintSnapMgrStatus("concurrent index build, before snapshot release");
+
 	/*
 	 * Drop the reference snapshot.  We must do this before waiting out other
 	 * snapshot holders, else we will deadlock against other processes also
@@ -770,8 +772,12 @@ DefineIndex(Oid relationId,
 	limitXmin = snapshot->xmin;
 
 	PopActiveSnapshot();
+	PrintSnapMgrStatus("concurrent index build, after PopActiveSnapshot");
 	UnregisterSnapshot(snapshot);
+	PrintSnapMgrStatus("concurrent index build, after UnregisterSnapshot");
 	InvalidateCatalogSnapshot();
+
+	PrintSnapMgrStatus("concurrent index build, after InvalidateCatalogSnapshot");
 
 	/*
 	 * The index is now valid in the sense that it contains all currently
