@@ -773,9 +773,6 @@ DefineIndex(Oid relationId,
 	UnregisterSnapshot(snapshot);
 	InvalidateCatalogSnapshot();
 
-	/* Temporary debug check: we should be advertising we have no snapshots. */
-	Assert(MyPgXact->xmin == InvalidTransactionId);
-
 	/*
 	 * The index is now valid in the sense that it contains all currently
 	 * interesting tuples.  But since it might not contain tuples deleted just
