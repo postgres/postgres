@@ -626,15 +626,15 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 		if (strategy == RTPrefixStrategyNumber)
 		{
 			/*
-			 * if level >= length of query then reconstrValue is began with
-			 * query (prefix) string and we don't need to check it again.
+			 * if level >= length of query then reconstrValue must begin with
+			 * query (prefix) string, so we don't need to check it again.
 			 */
-
 			res = (level >= queryLen) ||
-					DatumGetBool(DirectFunctionCall2(text_starts_with,
-								 out->leafValue, PointerGetDatum(query)));
+				DatumGetBool(DirectFunctionCall2(text_starts_with,
+												 out->leafValue,
+												 PointerGetDatum(query)));
 
-			if (!res) /* no need to consider remaining conditions */
+			if (!res)			/* no need to consider remaining conditions */
 				break;
 
 			continue;
@@ -648,22 +648,22 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 			/* If asserts enabled, verify encoding of reconstructed string */
 			Assert(pg_verifymbstr(fullValue, fullLen, false));
 
-			r = varstr_cmp(fullValue, Min(queryLen, fullLen),
-						   VARDATA_ANY(query), Min(queryLen, fullLen),
+			r = varstr_cmp(fullValue, fullLen,
+						   VARDATA_ANY(query), queryLen,
 						   PG_GET_COLLATION());
 		}
 		else
 		{
 			/* Non-collation-aware comparison */
 			r = memcmp(fullValue, VARDATA_ANY(query), Min(queryLen, fullLen));
-		}
 
-		if (r == 0)
-		{
-			if (queryLen > fullLen)
-				r = -1;
-			else if (queryLen < fullLen)
-				r = 1;
+			if (r == 0)
+			{
+				if (queryLen > fullLen)
+					r = -1;
+				else if (queryLen < fullLen)
+					r = 1;
+			}
 		}
 
 		switch (strategy)
