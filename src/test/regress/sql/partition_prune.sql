@@ -360,6 +360,29 @@ execute ab_q3 (1, 8);
 explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
 
 -- Parallel append
+
+-- Suppress the number of loops each parallel node runs for.  This is because
+-- more than one worker may run the same parallel node if timing conditions
+-- are just right, which destabilizes the test.
+create function explain_parallel_append(text, int[]) returns setof text
+language plpgsql as
+$$
+declare
+    ln text;
+    args text := string_agg(u::text, ', ') from unnest($2) u;
+begin
+    for ln in
+        execute format('explain (analyze, costs off, summary off, timing off) execute %s(%s)',
+            $1, args)
+    loop
+        if ln like '%Parallel%' then
+            ln := regexp_replace(ln, 'loops=\d*',  'loops=N');
+        end if;
+        return next ln;
+    end loop;
+end;
+$$;
+
 prepare ab_q4 (int, int) as
 select avg(a) from ab where a between $1 and $2 and b < 4;
 
@@ -367,12 +390,7 @@ select avg(a) from ab where a between $1 and $2 and b < 4;
 set parallel_setup_cost = 0;
 set parallel_tuple_cost = 0;
 set min_parallel_table_scan_size = 0;
-
--- set this so we get a parallel plan
 set max_parallel_workers_per_gather = 2;
-
--- and zero this so that workers don't destabilize the explain output
-set max_parallel_workers = 0;
 
 -- Execute query 5 times to allow choose_custom_plan
 -- to start considering a generic plan.
@@ -381,8 +399,7 @@ execute ab_q4 (1, 8);
 execute ab_q4 (1, 8);
 execute ab_q4 (1, 8);
 execute ab_q4 (1, 8);
-
-explain (analyze, costs off, summary off, timing off) execute ab_q4 (2, 2);
+select explain_parallel_append('ab_q4', '{2, 2}');
 
 -- Test run-time pruning with IN lists.
 prepare ab_q5 (int, int, int) as
@@ -396,12 +413,12 @@ execute ab_q5 (1, 2, 3);
 execute ab_q5 (1, 2, 3);
 execute ab_q5 (1, 2, 3);
 
-explain (analyze, costs off, summary off, timing off) execute ab_q5 (1, 1, 1);
-explain (analyze, costs off, summary off, timing off) execute ab_q5 (2, 3, 3);
+select explain_parallel_append('ab_q5', '{1, 1, 1}');
+select explain_parallel_append('ab_q5', '{2, 3, 3}');
 
 -- Try some params whose values do not belong to any partition.
 -- We'll still get a single subplan in this case, but it should not be scanned.
-explain (analyze, costs off, summary off, timing off) execute ab_q5 (33, 44, 55);
+select explain_parallel_append('ab_q5', '{33, 44, 55}');
 
 -- Test parallel Append with IN list and parameterized nested loops
 create table lprt_a (a int not null);
@@ -434,7 +451,7 @@ execute ab_q6 (1, 2, 3);
 execute ab_q6 (1, 2, 3);
 execute ab_q6 (1, 2, 3);
 
-explain (analyze, costs off, summary off, timing off) execute ab_q6 (0, 0, 1);
+select explain_parallel_append('ab_q6', '{0, 0, 1}');
 
 insert into lprt_a values(3),(3);
 
