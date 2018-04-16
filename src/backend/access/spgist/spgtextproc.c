@@ -613,22 +613,22 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 			/* If asserts enabled, verify encoding of reconstructed string */
 			Assert(pg_verifymbstr(fullValue, fullLen, false));
 
-			r = varstr_cmp(fullValue, Min(queryLen, fullLen),
-						   VARDATA_ANY(query), Min(queryLen, fullLen),
+			r = varstr_cmp(fullValue, fullLen,
+						   VARDATA_ANY(query), queryLen,
 						   PG_GET_COLLATION());
 		}
 		else
 		{
 			/* Non-collation-aware comparison */
 			r = memcmp(fullValue, VARDATA_ANY(query), Min(queryLen, fullLen));
-		}
 
-		if (r == 0)
-		{
-			if (queryLen > fullLen)
-				r = -1;
-			else if (queryLen < fullLen)
-				r = 1;
+			if (r == 0)
+			{
+				if (queryLen > fullLen)
+					r = -1;
+				else if (queryLen < fullLen)
+					r = 1;
+			}
 		}
 
 		switch (strategy)
