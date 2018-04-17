@@ -46,8 +46,8 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
   </para>
 
   <para>
-   When a view is specified to be locked, all relations appearing in the view
-   definition query are also locked recursively with the same lock mode. 
+   When a view is locked, all relations appearing in the view definition
+   query are also locked recursively with the same lock mode.
   </para>
 
   <para>
@@ -171,6 +171,13 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
     or <literal>TRUNCATE</literal> privileges on the target table. All other forms of
     <command>LOCK</command> require table-level <literal>UPDATE</literal>, <literal>DELETE</literal>,
     or <literal>TRUNCATE</literal> privileges.
+   </para>
+
+   <para>
+    The user performing the lock on the view must have the corresponding privilege
+    on the view.  In addition the view's owner must have the relevant privileges on
+    the underlying base relations, but the user performing the lock does
+    not need any permissions on the underlying base relations.
    </para>
 
    <para>

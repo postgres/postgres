@@ -84,6 +84,15 @@ select relname from pg_locks l, pg_class c
  where l.relation = c.oid and relname like '%lock_%' and mode = 'ExclusiveLock'
  order by relname;
 ROLLBACK;
+-- detecting infinite recursions in view definitions
+CREATE OR REPLACE VIEW lock_view2 AS SELECT * from lock_view3;
+BEGIN TRANSACTION;
+LOCK TABLE lock_view2 IN EXCLUSIVE MODE;
+ROLLBACK;
+CREATE VIEW lock_view7 AS SELECT * from lock_view2;
+BEGIN TRANSACTION;
+LOCK TABLE lock_view7 IN EXCLUSIVE MODE;
+ROLLBACK;
 
 -- Verify that we can lock a table with inheritance children.
 CREATE TABLE lock_tbl2 (b BIGINT) INHERITS (lock_tbl1);
@@ -107,11 +116,11 @@ RESET ROLE;
 --
 -- Clean up
 --
+DROP VIEW lock_view7;
 DROP VIEW lock_view6;
 DROP VIEW lock_view5;
 DROP VIEW lock_view4;
-DROP VIEW lock_view3;
-DROP VIEW lock_view2;
+DROP VIEW lock_view3 CASCADE;
 DROP VIEW lock_view1;
 DROP TABLE lock_tbl3;
 DROP TABLE lock_tbl2;

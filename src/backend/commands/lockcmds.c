@@ -31,7 +31,7 @@ static void LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, Oid use
 static AclResult LockTableAclCheck(Oid relid, LOCKMODE lockmode, Oid userid);
 static void RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid,
 							 Oid oldrelid, void *arg);
-static void LockViewRecurse(Oid reloid, Oid root_reloid, LOCKMODE lockmode, bool nowait);
+static void LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, List *ancestor_views);
 
 /*
  * LOCK TABLE
@@ -67,7 +67,7 @@ LockTableCommand(LockStmt *lockstmt)
 										  (void *) &lockstmt->mode);
 
 		if (get_rel_relkind(reloid) == RELKIND_VIEW)
-			LockViewRecurse(reloid, reloid, lockstmt->mode, lockstmt->nowait);
+			LockViewRecurse(reloid, lockstmt->mode, lockstmt->nowait, NIL);
 		else if (recurse)
 			LockTableRecurse(reloid, lockstmt->mode, lockstmt->nowait, GetUserId());
 	}
@@ -91,7 +91,6 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 	if (!relkind)
 		return;					/* woops, concurrently dropped; no permissions
 								 * check */
-
 
 	/* Currently, we only allow plain tables or views to be locked */
 	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE &&
@@ -178,11 +177,11 @@ LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, Oid userid)
 
 typedef struct
 {
-	Oid root_reloid;
-	LOCKMODE lockmode;
-	bool nowait;
-	Oid viewowner;
-	Oid viewoid;
+	LOCKMODE	lockmode;		/* lock mode to use */
+	bool		nowait;			/* no wait mode */
+	Oid			viewowner;		/* view owner for checking the privilege */
+	Oid			viewoid;		/* OID of the view to be locked */
+	List	   *ancestor_views;	/* OIDs of ancestor views */
 } LockViewRecurse_context;
 
 static bool
@@ -193,19 +192,22 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 
 	if (IsA(node, Query))
 	{
-		Query		*query = (Query *) node;
-		ListCell	*rtable;
+		Query	   *query = (Query *) node;
+		ListCell   *rtable;
 
 		foreach(rtable, query->rtable)
 		{
-			RangeTblEntry	*rte = lfirst(rtable);
-			AclResult		 aclresult;
+			RangeTblEntry *rte = lfirst(rtable);
+			AclResult	aclresult;
 
-			Oid relid = rte->relid;
-			char relkind = rte->relkind;
-			char *relname = get_rel_name(relid);
+			Oid			relid = rte->relid;
+			char		relkind = rte->relkind;
+			char	   *relname = get_rel_name(relid);
 
-			/* The OLD and NEW placeholder entries in the view's rtable are skipped. */
+			/*
+			 * The OLD and NEW placeholder entries in the view's rtable are
+			 * skipped.
+			 */
 			if (relid == context->viewoid &&
 				(!strcmp(rte->eref->aliasname, "old") || !strcmp(rte->eref->aliasname, "new")))
 				continue;
@@ -216,11 +218,11 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 				continue;
 
 			/* Check infinite recursion in the view definition. */
-			if (relid == context->root_reloid)
+			if (list_member_oid(context->ancestor_views, relid))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						errmsg("infinite recursion detected in rules for relation \"%s\"",
-								get_rel_name(context->root_reloid))));
+						 errmsg("infinite recursion detected in rules for relation \"%s\"",
+								get_rel_name(relid))));
 
 			/* Check permissions with the view owner's privilege. */
 			aclresult = LockTableAclCheck(relid, context->lockmode, context->viewowner);
@@ -233,11 +235,11 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 			else if (!ConditionalLockRelationOid(relid, context->lockmode))
 				ereport(ERROR,
 						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-						errmsg("could not obtain lock on relation \"%s\"",
+						 errmsg("could not obtain lock on relation \"%s\"",
 								relname)));
 
 			if (relkind == RELKIND_VIEW)
-				LockViewRecurse(relid, context->root_reloid, context->lockmode, context->nowait);
+				LockViewRecurse(relid, context->lockmode, context->nowait, context->ancestor_views);
 			else if (rte->inh)
 				LockTableRecurse(relid, context->lockmode, context->nowait, context->viewowner);
 		}
@@ -254,23 +256,25 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 }
 
 static void
-LockViewRecurse(Oid reloid, Oid root_reloid, LOCKMODE lockmode, bool nowait)
+LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, List *ancestor_views)
 {
 	LockViewRecurse_context context;
 
-	Relation		 view;
-	Query			*viewquery;
+	Relation	view;
+	Query	   *viewquery;
 
 	view = heap_open(reloid, NoLock);
 	viewquery = get_view_query(view);
 
-	context.root_reloid = root_reloid;
 	context.lockmode = lockmode;
 	context.nowait = nowait;
 	context.viewowner = view->rd_rel->relowner;
 	context.viewoid = reloid;
+	context.ancestor_views = lcons_oid(reloid, ancestor_views);
 
 	LockViewRecurse_walker((Node *) viewquery, &context);
+
+	ancestor_views = list_delete_oid(ancestor_views, reloid);
 
 	heap_close(view, NoLock);
 }

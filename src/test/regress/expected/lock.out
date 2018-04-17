@@ -121,6 +121,17 @@ select relname from pg_locks l, pg_class c
 (2 rows)
 
 ROLLBACK;
+-- detecting infinite recursions in view definitions
+CREATE OR REPLACE VIEW lock_view2 AS SELECT * from lock_view3;
+BEGIN TRANSACTION;
+LOCK TABLE lock_view2 IN EXCLUSIVE MODE;
+ERROR:  infinite recursion detected in rules for relation "lock_view2"
+ROLLBACK;
+CREATE VIEW lock_view7 AS SELECT * from lock_view2;
+BEGIN TRANSACTION;
+LOCK TABLE lock_view7 IN EXCLUSIVE MODE;
+ERROR:  infinite recursion detected in rules for relation "lock_view2"
+ROLLBACK;
 -- Verify that we can lock a table with inheritance children.
 CREATE TABLE lock_tbl2 (b BIGINT) INHERITS (lock_tbl1);
 CREATE TABLE lock_tbl3 () INHERITS (lock_tbl2);
@@ -142,11 +153,12 @@ RESET ROLE;
 --
 -- Clean up
 --
+DROP VIEW lock_view7;
 DROP VIEW lock_view6;
 DROP VIEW lock_view5;
 DROP VIEW lock_view4;
-DROP VIEW lock_view3;
-DROP VIEW lock_view2;
+DROP VIEW lock_view3 CASCADE;
+NOTICE:  drop cascades to view lock_view2
 DROP VIEW lock_view1;
 DROP TABLE lock_tbl3;
 DROP TABLE lock_tbl2;
