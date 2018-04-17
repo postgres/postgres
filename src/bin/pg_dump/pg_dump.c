@@ -6726,7 +6726,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_indexname,
 				i_parentidx,
 				i_indexdef,
-				i_indnnkeyatts,
+				i_indnkeyatts,
 				i_indnatts,
 				i_indkey,
 				i_indisclustered,
@@ -6952,7 +6952,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 		i_indexname = PQfnumber(res, "indexname");
 		i_parentidx = PQfnumber(res, "parentidx");
 		i_indexdef = PQfnumber(res, "indexdef");
-		i_indnnkeyatts = PQfnumber(res, "indnkeyatts");
+		i_indnkeyatts = PQfnumber(res, "indnkeyatts");
 		i_indnatts = PQfnumber(res, "indnatts");
 		i_indkey = PQfnumber(res, "indkey");
 		i_indisclustered = PQfnumber(res, "indisclustered");
@@ -6986,7 +6986,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			indxinfo[j].dobj.namespace = tbinfo->dobj.namespace;
 			indxinfo[j].indextable = tbinfo;
 			indxinfo[j].indexdef = pg_strdup(PQgetvalue(res, j, i_indexdef));
-			indxinfo[j].indnkeyattrs = atoi(PQgetvalue(res, j, i_indnnkeyatts));
+			indxinfo[j].indnkeyattrs = atoi(PQgetvalue(res, j, i_indnkeyatts));
 			indxinfo[j].indnattrs = atoi(PQgetvalue(res, j, i_indnatts));
 			indxinfo[j].tablespace = pg_strdup(PQgetvalue(res, j, i_tablespace));
 			indxinfo[j].indreloptions = pg_strdup(PQgetvalue(res, j, i_indreloptions));

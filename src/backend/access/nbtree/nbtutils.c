@@ -2087,7 +2087,8 @@ btproperty(Oid index_oid, int attno,
  *
  *	Transforms an ordinal B-tree leaf index tuple into pivot tuple to be used
  *	as hikey or non-leaf page tuple with downlink.  Note that t_tid offset
- *	will be overritten in order to represent number of present tuple attributes.
+ *	will be overwritten in order to represent number of present tuple
+ *	attributes.
  */
 IndexTuple
 _bt_truncate_tuple(Relation idxrel, IndexTuple olditup)

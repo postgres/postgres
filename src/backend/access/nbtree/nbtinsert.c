@@ -1733,8 +1733,8 @@ _bt_checksplitloc(FindSplitData *state,
 	/*
 	 * The first item on the right page becomes the high key of the left page;
 	 * therefore it counts against left space as well as right space. When
-	 * index has included attribues, then those attributes of left page high
-	 * key will be truncate leaving that page with slightly more free space.
+	 * index has included attributes, then those attributes of left page high
+	 * key will be truncated leaving that page with slightly more free space.
 	 * However, that shouldn't affect our ability to find valid split
 	 * location, because anyway split location should exists even without high
 	 * key truncation.
