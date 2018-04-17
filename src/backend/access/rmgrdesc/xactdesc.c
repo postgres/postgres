@@ -104,18 +104,18 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 
 		if (parsed->xinfo & XACT_XINFO_HAS_GID)
 		{
-			int gidlen;
 			strlcpy(parsed->twophase_gid, data, sizeof(parsed->twophase_gid));
-			gidlen = strlen(data) + 1;
-			data += MAXALIGN(gidlen);
+			data += strlen(data) + 1;
 		}
 	}
+
+	/* Note: no alignment is guaranteed after this point */
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
 	{
 		xl_xact_origin xl_origin;
 
-		/* we're only guaranteed 4 byte alignment, so copy onto stack */
+		/* no alignment is guaranteed, so copy onto stack */
 		memcpy(&xl_origin, data, sizeof(xl_origin));
 
 		parsed->origin_lsn = xl_origin.origin_lsn;
@@ -188,18 +188,18 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 
 		if (parsed->xinfo & XACT_XINFO_HAS_GID)
 		{
-			int gidlen;
 			strlcpy(parsed->twophase_gid, data, sizeof(parsed->twophase_gid));
-			gidlen = strlen(data) + 1;
-			data += MAXALIGN(gidlen);
+			data += strlen(data) + 1;
 		}
 	}
+
+	/* Note: no alignment is guaranteed after this point */
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
 	{
 		xl_xact_origin xl_origin;
 
-		/* we're only guaranteed 4 byte alignment, so copy onto stack */
+		/* no alignment is guaranteed, so copy onto stack */
 		memcpy(&xl_origin, data, sizeof(xl_origin));
 
 		parsed->origin_lsn = xl_origin.origin_lsn;

@@ -1129,9 +1129,11 @@ EndPrepare(GlobalTransaction gxact)
 	gxact->prepare_end_lsn = XLogInsert(RM_XACT_ID, XLOG_XACT_PREPARE);
 
 	if (replorigin)
+	{
 		/* Move LSNs forward for this replication origin */
 		replorigin_session_advance(replorigin_session_origin_lsn,
 								   gxact->prepare_end_lsn);
+	}
 
 	XLogFlush(gxact->prepare_end_lsn);
 
