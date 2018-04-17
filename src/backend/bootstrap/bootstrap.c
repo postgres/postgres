@@ -1037,36 +1037,6 @@ AllocateAttribute(void)
 }
 
 /*
- *		MapArrayTypeName
- *
- * Given a type name, produce the corresponding array type name by prepending
- * '_' and truncating as needed to fit in NAMEDATALEN-1 bytes.  This is only
- * used in bootstrap mode, so we can get away with assuming that the input is
- * ASCII and we don't need multibyte-aware truncation.
- *
- * The given string normally ends with '[]' or '[digits]'; we discard that.
- *
- * The result is a palloc'd string.
- */
-char *
-MapArrayTypeName(const char *s)
-{
-	int			i,
-				j;
-	char		newStr[NAMEDATALEN];
-
-	newStr[0] = '_';
-	j = 1;
-	for (i = 0; i < NAMEDATALEN - 2 && s[i] != '['; i++, j++)
-		newStr[j] = s[i];
-
-	newStr[j] = '\0';
-
-	return pstrdup(newStr);
-}
-
-
-/*
  *	index_register() -- record an index that has been set up for building
  *						later.
  *

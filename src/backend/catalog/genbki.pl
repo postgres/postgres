@@ -351,7 +351,7 @@ EOM
 
 			# Replace OID synonyms with OIDs per the appropriate lookup rule.
 			#
-			# If the column type is oidvector or oid[], we have to replace
+			# If the column type is oidvector or _oid, we have to replace
 			# each element of the array as per the lookup rule.
 			if ($column->{lookup})
 			{
@@ -369,7 +369,7 @@ EOM
 											  \%bki_values, @lookupnames);
 					$bki_values{$attname} = join(' ', @lookupoids);
 				}
-				elsif ($atttype eq 'oid[]')
+				elsif ($atttype eq '_oid')
 				{
 					if ($bki_values{$attname} ne '_null_')
 					{
@@ -597,10 +597,6 @@ sub morph_row_for_pgattr
 	my $atttype = $attr->{type};
 
 	$row->{attname} = $attname;
-
-	# Adjust type name for arrays: foo[] becomes _foo, so we can look it up in
-	# pg_type
-	$atttype = '_' . $1 if $atttype =~ /(.+)\[\]$/;
 
 	# Copy the type data from pg_type, and add some type-dependent items
 	my $type = $types{$atttype};

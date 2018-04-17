@@ -161,10 +161,14 @@ sub ParseHeader
 					{
 						$atttype = $RENAME_ATTTYPE{$atttype};
 					}
-					if ($attname =~ /(.*)\[.*\]/)    # array attribute
+
+					# If the C name ends with '[]' or '[digits]', we have
+					# an array type, so we discard that from the name and
+					# prepend '_' to the type.
+					if ($attname =~ /(\w+)\[\d*\]/)
 					{
 						$attname = $1;
-						$atttype .= '[]';
+						$atttype = '_' . $atttype;
 					}
 
 					$column{type} = $atttype;
