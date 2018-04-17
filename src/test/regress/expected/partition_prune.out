@@ -1751,16 +1751,15 @@ explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
 -- Suppress the number of loops each parallel node runs for.  This is because
 -- more than one worker may run the same parallel node if timing conditions
 -- are just right, which destabilizes the test.
-create function explain_parallel_append(text, int[]) returns setof text
+create function explain_parallel_append(text) returns setof text
 language plpgsql as
 $$
 declare
     ln text;
-    args text := string_agg(u::text, ', ') from unnest($2) u;
 begin
     for ln in
-        execute format('explain (analyze, costs off, summary off, timing off) execute %s(%s)',
-            $1, args)
+        execute format('explain (analyze, costs off, summary off, timing off) %s',
+            $1)
     loop
         if ln like '%Parallel%' then
             ln := regexp_replace(ln, 'loops=\d*',  'loops=N');
@@ -1808,7 +1807,7 @@ execute ab_q4 (1, 8);
     
 (1 row)
 
-select explain_parallel_append('ab_q4', '{2, 2}');
+select explain_parallel_append('execute ab_q4 (2, 2)');
                             explain_parallel_append                            
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
@@ -1861,7 +1860,7 @@ execute ab_q5 (1, 2, 3);
     
 (1 row)
 
-select explain_parallel_append('ab_q5', '{1, 1, 1}');
+select explain_parallel_append('execute ab_q5 (1, 1, 1)');
                             explain_parallel_append                            
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
@@ -1879,7 +1878,7 @@ select explain_parallel_append('ab_q5', '{1, 1, 1}');
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
 (13 rows)
 
-select explain_parallel_append('ab_q5', '{2, 3, 3}');
+select explain_parallel_append('execute ab_q5 (2, 3, 3)');
                             explain_parallel_append                            
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
@@ -1905,7 +1904,7 @@ select explain_parallel_append('ab_q5', '{2, 3, 3}');
 
 -- Try some params whose values do not belong to any partition.
 -- We'll still get a single subplan in this case, but it should not be scanned.
-select explain_parallel_append('ab_q5', '{33, 44, 55}');
+select explain_parallel_append('execute ab_q5 (33, 44, 55)');
                             explain_parallel_append                            
 -------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
@@ -1919,7 +1918,29 @@ select explain_parallel_append('ab_q5', '{33, 44, 55}');
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
 (9 rows)
 
--- Test parallel Append with IN list and parameterized nested loops
+-- Test Parallel Append with exec params
+select explain_parallel_append('select count(*) from ab where (a = (select 1) or a = (select 3)) and b = 2');
+                         explain_parallel_append                         
+-------------------------------------------------------------------------
+ Aggregate (actual rows=1 loops=1)
+   InitPlan 1 (returns $0)
+     ->  Result (actual rows=1 loops=1)
+   InitPlan 2 (returns $1)
+     ->  Result (actual rows=1 loops=1)
+   ->  Gather (actual rows=0 loops=1)
+         Workers Planned: 2
+         Params Evaluated: $0, $1
+         Workers Launched: 2
+         ->  Parallel Append (actual rows=0 loops=N)
+               ->  Parallel Seq Scan on ab_a1_b2 (actual rows=0 loops=N)
+                     Filter: ((b = 2) AND ((a = $0) OR (a = $1)))
+               ->  Parallel Seq Scan on ab_a2_b2 (never executed)
+                     Filter: ((b = 2) AND ((a = $0) OR (a = $1)))
+               ->  Parallel Seq Scan on ab_a3_b2 (actual rows=0 loops=N)
+                     Filter: ((b = 2) AND ((a = $0) OR (a = $1)))
+(16 rows)
+
+-- Test pruning during parallel nested loop query
 create table lprt_a (a int not null);
 -- Insert some values we won't find in ab
 insert into lprt_a select 0 from generate_series(1,100);
@@ -1937,39 +1958,7 @@ create index ab_a3_b2_a_idx on ab_a3_b2 (a);
 create index ab_a3_b3_a_idx on ab_a3_b3 (a);
 set enable_hashjoin = 0;
 set enable_mergejoin = 0;
-prepare ab_q6 (int, int, int) as
-select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in($1,$2,$3);
-execute ab_q6 (1, 2, 3);
- avg 
------
-    
-(1 row)
-
-execute ab_q6 (1, 2, 3);
- avg 
------
-    
-(1 row)
-
-execute ab_q6 (1, 2, 3);
- avg 
------
-    
-(1 row)
-
-execute ab_q6 (1, 2, 3);
- avg 
------
-    
-(1 row)
-
-execute ab_q6 (1, 2, 3);
- avg 
------
-    
-(1 row)
-
-select explain_parallel_append('ab_q6', '{0, 0, 1}');
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(0, 0, 1)');
                                       explain_parallel_append                                      
 ---------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
@@ -2002,8 +1991,8 @@ select explain_parallel_append('ab_q6', '{0, 0, 1}');
 (27 rows)
 
 insert into lprt_a values(3),(3);
-explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 3);
-                                            QUERY PLAN                                             
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 3)');
+                                      explain_parallel_append                                      
 ---------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather (actual rows=2 loops=1)
@@ -2011,7 +2000,7 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 3);
          Workers Launched: 1
          ->  Partial Aggregate (actual rows=1 loops=2)
                ->  Nested Loop (actual rows=0 loops=2)
-                     ->  Parallel Seq Scan on lprt_a a (actual rows=52 loops=2)
+                     ->  Parallel Seq Scan on lprt_a a (actual rows=52 loops=N)
                            Filter: (a = ANY ('{1,0,3}'::integer[]))
                      ->  Append (actual rows=0 loops=104)
                            ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
@@ -2034,8 +2023,8 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 3);
                                  Index Cond: (a = a.a)
 (27 rows)
 
-explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
-                                            QUERY PLAN                                             
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
+                                      explain_parallel_append                                      
 ---------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather (actual rows=2 loops=1)
@@ -2043,7 +2032,7 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
          Workers Launched: 1
          ->  Partial Aggregate (actual rows=1 loops=2)
                ->  Nested Loop (actual rows=0 loops=2)
-                     ->  Parallel Seq Scan on lprt_a a (actual rows=51 loops=2)
+                     ->  Parallel Seq Scan on lprt_a a (actual rows=51 loops=N)
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
                            Rows Removed by Filter: 1
                      ->  Append (actual rows=0 loops=102)
@@ -2068,8 +2057,8 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
 (28 rows)
 
 delete from lprt_a where a = 1;
-explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
-                                         QUERY PLAN                                         
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
+                                  explain_parallel_append                                   
 --------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=1 loops=1)
    ->  Gather (actual rows=2 loops=1)
@@ -2077,7 +2066,7 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
          Workers Launched: 1
          ->  Partial Aggregate (actual rows=1 loops=2)
                ->  Nested Loop (actual rows=0 loops=2)
-                     ->  Parallel Seq Scan on lprt_a a (actual rows=50 loops=2)
+                     ->  Parallel Seq Scan on lprt_a a (actual rows=50 loops=N)
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
                            Rows Removed by Filter: 1
                      ->  Append (actual rows=0 loops=100)
@@ -2171,7 +2160,6 @@ deallocate ab_q2;
 deallocate ab_q3;
 deallocate ab_q4;
 deallocate ab_q5;
-deallocate ab_q6;
 drop table ab, lprt_a;
 -- Join
 create table tbl1(col1 int);

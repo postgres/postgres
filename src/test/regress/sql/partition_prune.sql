@@ -364,16 +364,15 @@ explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
 -- Suppress the number of loops each parallel node runs for.  This is because
 -- more than one worker may run the same parallel node if timing conditions
 -- are just right, which destabilizes the test.
-create function explain_parallel_append(text, int[]) returns setof text
+create function explain_parallel_append(text) returns setof text
 language plpgsql as
 $$
 declare
     ln text;
-    args text := string_agg(u::text, ', ') from unnest($2) u;
 begin
     for ln in
-        execute format('explain (analyze, costs off, summary off, timing off) execute %s(%s)',
-            $1, args)
+        execute format('explain (analyze, costs off, summary off, timing off) %s',
+            $1)
     loop
         if ln like '%Parallel%' then
             ln := regexp_replace(ln, 'loops=\d*',  'loops=N');
@@ -399,7 +398,7 @@ execute ab_q4 (1, 8);
 execute ab_q4 (1, 8);
 execute ab_q4 (1, 8);
 execute ab_q4 (1, 8);
-select explain_parallel_append('ab_q4', '{2, 2}');
+select explain_parallel_append('execute ab_q4 (2, 2)');
 
 -- Test run-time pruning with IN lists.
 prepare ab_q5 (int, int, int) as
@@ -413,14 +412,17 @@ execute ab_q5 (1, 2, 3);
 execute ab_q5 (1, 2, 3);
 execute ab_q5 (1, 2, 3);
 
-select explain_parallel_append('ab_q5', '{1, 1, 1}');
-select explain_parallel_append('ab_q5', '{2, 3, 3}');
+select explain_parallel_append('execute ab_q5 (1, 1, 1)');
+select explain_parallel_append('execute ab_q5 (2, 3, 3)');
 
 -- Try some params whose values do not belong to any partition.
 -- We'll still get a single subplan in this case, but it should not be scanned.
-select explain_parallel_append('ab_q5', '{33, 44, 55}');
+select explain_parallel_append('execute ab_q5 (33, 44, 55)');
 
--- Test parallel Append with IN list and parameterized nested loops
+-- Test Parallel Append with exec params
+select explain_parallel_append('select count(*) from ab where (a = (select 1) or a = (select 3)) and b = 2');
+
+-- Test pruning during parallel nested loop query
 create table lprt_a (a int not null);
 -- Insert some values we won't find in ab
 insert into lprt_a select 0 from generate_series(1,100);
@@ -443,24 +445,16 @@ create index ab_a3_b3_a_idx on ab_a3_b3 (a);
 set enable_hashjoin = 0;
 set enable_mergejoin = 0;
 
-prepare ab_q6 (int, int, int) as
-select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in($1,$2,$3);
-execute ab_q6 (1, 2, 3);
-execute ab_q6 (1, 2, 3);
-execute ab_q6 (1, 2, 3);
-execute ab_q6 (1, 2, 3);
-execute ab_q6 (1, 2, 3);
-
-select explain_parallel_append('ab_q6', '{0, 0, 1}');
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(0, 0, 1)');
 
 insert into lprt_a values(3),(3);
 
-explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 3);
-explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 3)');
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
 
 delete from lprt_a where a = 1;
 
-explain (analyze, costs off, summary off, timing off) execute ab_q6 (1, 0, 0);
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
 
 reset enable_hashjoin;
 reset enable_mergejoin;
@@ -478,7 +472,6 @@ deallocate ab_q2;
 deallocate ab_q3;
 deallocate ab_q4;
 deallocate ab_q5;
-deallocate ab_q6;
 
 drop table ab, lprt_a;
 
