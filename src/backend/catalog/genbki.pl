@@ -645,9 +645,7 @@ sub morph_row_for_pgattr
 	Catalog::AddDefaultValues($row, $pgattr_schema, 'pg_attribute');
 }
 
-# Write an entry to postgres.bki. Adding quotes here allows us to keep
-# most double quotes out of the catalog data files for readability. See
-# bootscanner.l for what tokens need quoting.
+# Write an entry to postgres.bki.
 sub print_bki_insert
 {
 	my $row    = shift;
@@ -666,26 +664,12 @@ sub print_bki_insert
 		# since that represents a NUL char in C code.
 		$bki_value = '' if $bki_value eq '\0';
 
+		# Quote value if needed.  We need not quote values that satisfy
+		# the "id" pattern in bootscanner.l, currently "[-A-Za-z0-9_]+".
 		$bki_value = sprintf(qq'"%s"', $bki_value)
-		  if  $bki_value ne '_null_'
-		  and $bki_value !~ /^"[^"]+"$/
-		  and ( length($bki_value) == 0       # Empty string
-				or $bki_value =~ /\s/         # Contains whitespace
-
-				# To preserve historical formatting, operator names are
-				# always quoted. Likewise for values of multi-element types,
-				# even if they only contain a single element.
-				or $attname eq 'oprname'
-				or $atttype eq 'oidvector'
-				or $atttype eq 'int2vector'
-				or $atttype =~ /\[\]$/
-
-				# Quote strings that have non-word characters. We make
-				# exceptions for values that are octals or negative numbers,
-				# for the same historical reason as above.
-				or (    $bki_value =~ /\W/
-					and $bki_value !~ /^\\\d{3}$/
-					and $bki_value !~ /^-\d*$/));
+		  if $bki_value !~ /^"[^"]+"$/
+		  and ( length($bki_value) == 0
+				or $bki_value =~ /[^-A-Za-z0-9_]/);
 
 		push @bki_values, $bki_value;
 	}

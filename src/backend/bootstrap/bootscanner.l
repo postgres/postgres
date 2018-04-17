@@ -66,8 +66,7 @@ static int	yyline = 1;			/* line number for error reporting */
 
 
 D		[0-9]
-oct		\\{D}{D}{D}
-id		([A-Za-z0-9_]|{oct}|\-)+
+id		[-A-Za-z0-9_]+
 sid		\"([^\"])*\"
 arrayid [A-Za-z0-9_]+\[{D}*\]
 
