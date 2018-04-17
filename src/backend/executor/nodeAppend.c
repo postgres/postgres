@@ -104,6 +104,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	PlanState **appendplanstates;
 	Bitmapset  *validsubplans;
 	int			nplans;
+	int			firstvalid;
 	int			i,
 				j;
 	ListCell   *lc;
@@ -207,19 +208,30 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	/*
 	 * call ExecInitNode on each of the valid plans to be executed and save
 	 * the results into the appendplanstates array.
+	 *
+	 * While at it, find out the first valid partial plan.
 	 */
 	j = i = 0;
+	firstvalid = nplans;
 	foreach(lc, node->appendplans)
 	{
 		if (bms_is_member(i, validsubplans))
 		{
 			Plan	   *initNode = (Plan *) lfirst(lc);
 
+			/*
+			 * Record the lowest appendplans index which is a valid partial
+			 * plan.
+			 */
+			if (i >= node->first_partial_plan && j < firstvalid)
+				firstvalid = j;
+
 			appendplanstates[j++] = ExecInitNode(initNode, estate, eflags);
 		}
 		i++;
 	}
 
+	appendstate->as_first_partial_plan = firstvalid;
 	appendstate->appendplans = appendplanstates;
 	appendstate->as_nplans = nplans;
 
@@ -499,7 +511,6 @@ static bool
 choose_next_subplan_for_leader(AppendState *node)
 {
 	ParallelAppendState *pstate = node->as_pstate;
-	Append	   *append = (Append *) node->ps.plan;
 
 	/* Backward scan is not supported by parallel-aware plans */
 	Assert(ScanDirectionIsForward(node->ps.state->es_direction));
@@ -556,7 +567,7 @@ choose_next_subplan_for_leader(AppendState *node)
 	}
 
 	/* If non-partial, immediately mark as finished. */
-	if (node->as_whichplan < append->first_partial_plan)
+	if (node->as_whichplan < node->as_first_partial_plan)
 		node->as_pstate->pa_finished[node->as_whichplan] = true;
 
 	LWLockRelease(&pstate->pa_lock);
@@ -581,7 +592,6 @@ static bool
 choose_next_subplan_for_worker(AppendState *node)
 {
 	ParallelAppendState *pstate = node->as_pstate;
-	Append	   *append = (Append *) node->ps.plan;
 
 	/* Backward scan is not supported by parallel-aware plans */
 	Assert(ScanDirectionIsForward(node->ps.state->es_direction));
@@ -629,14 +639,14 @@ choose_next_subplan_for_worker(AppendState *node)
 			/* Advance to the next valid plan. */
 			pstate->pa_next_plan = nextplan;
 		}
-		else if (node->as_whichplan > append->first_partial_plan)
+		else if (node->as_whichplan > node->as_first_partial_plan)
 		{
 			/*
 			 * Try looping back to the first valid partial plan, if there is
 			 * one.  If there isn't, arrange to bail out below.
 			 */
 			nextplan = bms_next_member(node->as_valid_subplans,
-									   append->first_partial_plan - 1);
+									   node->as_first_partial_plan - 1);
 			pstate->pa_next_plan =
 				nextplan < 0 ? node->as_whichplan : nextplan;
 		}
@@ -670,7 +680,7 @@ choose_next_subplan_for_worker(AppendState *node)
 	if (pstate->pa_next_plan < 0)
 	{
 		int			nextplan = bms_next_member(node->as_valid_subplans,
-											   append->first_partial_plan - 1);
+											   node->as_first_partial_plan - 1);
 
 		if (nextplan >= 0)
 			pstate->pa_next_plan = nextplan;
@@ -686,7 +696,7 @@ choose_next_subplan_for_worker(AppendState *node)
 	}
 
 	/* If non-partial, immediately mark as finished. */
-	if (node->as_whichplan < append->first_partial_plan)
+	if (node->as_whichplan < node->as_first_partial_plan)
 		node->as_pstate->pa_finished[node->as_whichplan] = true;
 
 	LWLockRelease(&pstate->pa_lock);
