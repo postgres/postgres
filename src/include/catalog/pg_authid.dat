@@ -12,14 +12,11 @@
 
 [
 
-# POSTGRES will be replaced at initdb time with a user choice that might
-# contain non-word characters, so we must double-quote it.
-
 # The C code typically refers to these roles using the #define symbols,
 # so make sure every entry has an oid_symbol value.
 
 { oid => '10', oid_symbol => 'BOOTSTRAP_SUPERUSERID',
-  rolname => '"POSTGRES"', rolsuper => 't', rolinherit => 't',
+  rolname => 'POSTGRES', rolsuper => 't', rolinherit => 't',
   rolcreaterole => 't', rolcreatedb => 't', rolcanlogin => 't',
   rolreplication => 't', rolbypassrls => 't', rolconnlimit => '-1',
   rolpassword => '_null_', rolvaliduntil => '_null_' },

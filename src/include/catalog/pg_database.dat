@@ -12,13 +12,10 @@
 
 [
 
-# LC_COLLATE and LC_CTYPE will be replaced at initdb time with user choices
-# that might contain non-word characters, so we must double-quote them.
-
 { oid => '1', oid_symbol => 'TemplateDbOid',
   descr => 'default template for new databases',
   datname => 'template1', datdba => 'PGUID', encoding => 'ENCODING',
-  datcollate => '"LC_COLLATE"', datctype => '"LC_CTYPE"', datistemplate => 't',
+  datcollate => 'LC_COLLATE', datctype => 'LC_CTYPE', datistemplate => 't',
   datallowconn => 't', datconnlimit => '-1', datlastsysoid => '0',
   datfrozenxid => '0', datminmxid => '1', dattablespace => '1663',
   datacl => '_null_' },

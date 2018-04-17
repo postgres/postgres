@@ -184,13 +184,11 @@
 <programlisting>
 [
 
-# LC_COLLATE and LC_CTYPE will be replaced at initdb time with user choices
-# that might contain non-word characters, so we must double-quote them.
-
+# A comment could appear here.
 { oid =&gt; '1', oid_symbol =&gt; 'TemplateDbOid',
   descr =&gt; 'database\'s default template',
   datname =&gt; 'template1', datdba =&gt; 'PGUID', encoding =&gt; 'ENCODING',
-  datcollate =&gt; '"LC_COLLATE"', datctype =&gt; '"LC_CTYPE"', datistemplate =&gt; 't',
+  datcollate =&gt; 'LC_COLLATE', datctype =&gt; 'LC_CTYPE', datistemplate =&gt; 't',
   datallowconn =&gt; 't', datconnlimit =&gt; '-1', datlastsysoid =&gt; '0',
   datfrozenxid =&gt; '0', datminmxid =&gt; '1', dattablespace =&gt; '1663',
   datacl =&gt; '_null_' },
@@ -234,25 +232,22 @@
 
     <listitem>
      <para>
-      All values must be single-quoted.  Escape single quotes used within
-      a value with a backslash.  (Backslashes meant as data need not be
-      doubled, however; this follows Perl's rules for simple quoted
-      literals.)
+      All values must be single-quoted.  Escape single quotes used within a
+      value with a backslash.  Backslashes meant as data can, but need not,
+      be doubled; this follows Perl's rules for simple quoted literals.
+      Note that backslashes appearing as data will be treated as escapes by
+      the bootstrap scanner, according to the same rules as for escape string
+      constants (see <xref linkend="sql-syntax-strings-escape"/>); for
+      example <literal>\t</literal> converts to a tab character.  If you
+      actually want a backslash in the final value, you will need to write
+      four of them: Perl strips two, leaving <literal>\\</literal> for the
+      bootstrap scanner to see.
      </para>
     </listitem>
 
     <listitem>
      <para>
       Null values are represented by <literal>_null_</literal>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      If a value is a macro to be expanded
-      by <application>initdb</application>, it should also contain double
-      quotes as shown above, unless we know that no special characters can
-      appear within the string that will be substituted.
      </para>
     </listitem>
 

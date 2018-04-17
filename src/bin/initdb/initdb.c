@@ -265,6 +265,7 @@ static void make_postgres(FILE *cmdfd);
 static void trapsig(int signum);
 static void check_ok(void);
 static char *escape_quotes(const char *src);
+static char *escape_quotes_bki(const char *src);
 static int	locale_date_order(const char *locale);
 static void check_locale_name(int category, const char *locale,
 				  char **canonname);
@@ -324,6 +325,10 @@ do { \
 		output_failed = true, output_errno = errno; \
 } while (0)
 
+/*
+ * Escape single quotes and backslashes, suitably for insertions into
+ * configuration files or SQL E'' strings.
+ */
 static char *
 escape_quotes(const char *src)
 {
@@ -334,6 +339,52 @@ escape_quotes(const char *src)
 		fprintf(stderr, _("%s: out of memory\n"), progname);
 		exit(1);
 	}
+	return result;
+}
+
+/*
+ * Escape a field value to be inserted into the BKI data.
+ * Here, we first run the value through escape_quotes (which
+ * will be inverted by the backend's scanstr() function) and
+ * then overlay special processing of double quotes, which
+ * bootscanner.l will only accept as data if converted to octal
+ * representation ("\042").  We always wrap the value in double
+ * quotes, even if that isn't strictly necessary.
+ */
+static char *
+escape_quotes_bki(const char *src)
+{
+	char	   *result;
+	char	   *data = escape_quotes(src);
+	char	   *resultp;
+	char	   *datap;
+	int			nquotes = 0;
+
+	/* count double quotes in data */
+	datap = data;
+	while ((datap = strchr(datap, '"')) != NULL)
+	{
+		nquotes++;
+		datap++;
+	}
+
+	result = (char *) pg_malloc(strlen(data) + 3 + nquotes * 3);
+	resultp = result;
+	*resultp++ = '"';
+	for (datap = data; *datap; datap++)
+	{
+		if (*datap == '"')
+		{
+			strcpy(resultp, "\\042");
+			resultp += 4;
+		}
+		else
+			*resultp++ = *datap;
+	}
+	*resultp++ = '"';
+	*resultp = '\0';
+
+	free(data);
 	return result;
 }
 
@@ -1368,13 +1419,17 @@ bootstrap_template1(void)
 	bki_lines = replace_token(bki_lines, "FLOAT8PASSBYVAL",
 							  FLOAT8PASSBYVAL ? "true" : "false");
 
-	bki_lines = replace_token(bki_lines, "POSTGRES", escape_quotes(username));
+	bki_lines = replace_token(bki_lines, "POSTGRES",
+							  escape_quotes_bki(username));
 
-	bki_lines = replace_token(bki_lines, "ENCODING", encodingid_to_string(encodingid));
+	bki_lines = replace_token(bki_lines, "ENCODING",
+							  encodingid_to_string(encodingid));
 
-	bki_lines = replace_token(bki_lines, "LC_COLLATE", escape_quotes(lc_collate));
+	bki_lines = replace_token(bki_lines, "LC_COLLATE",
+							  escape_quotes_bki(lc_collate));
 
-	bki_lines = replace_token(bki_lines, "LC_CTYPE", escape_quotes(lc_ctype));
+	bki_lines = replace_token(bki_lines, "LC_CTYPE",
+							  escape_quotes_bki(lc_ctype));
 
 	/*
 	 * Pass correct LC_xxx environment to bootstrap.

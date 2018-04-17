@@ -660,12 +660,19 @@ sub print_bki_insert
 		# since that represents a NUL char in C code.
 		$bki_value = '' if $bki_value eq '\0';
 
+		# Handle single quotes by doubling them, and double quotes by
+		# converting them to octal escapes, because that's what the
+		# bootstrap scanner requires.  We do not process backslashes
+		# specially; this allows escape-string-style backslash escapes
+		# to be used in catalog data.
+		$bki_value =~ s/'/''/g;
+		$bki_value =~ s/"/\\042/g;
+
 		# Quote value if needed.  We need not quote values that satisfy
 		# the "id" pattern in bootscanner.l, currently "[-A-Za-z0-9_]+".
 		$bki_value = sprintf(qq'"%s"', $bki_value)
-		  if $bki_value !~ /^"[^"]+"$/
-		  and ( length($bki_value) == 0
-				or $bki_value =~ /[^-A-Za-z0-9_]/);
+		  if length($bki_value) == 0
+			 or $bki_value =~ /[^-A-Za-z0-9_]/;
 
 		push @bki_values, $bki_value;
 	}
