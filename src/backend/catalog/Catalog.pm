@@ -226,7 +226,7 @@ sub ParseData
 
 	open(my $ifd, '<', $input_file) || die "$input_file: $!";
 	$input_file =~ /(\w+)\.dat$/
-	  or die "Input file needs to be a .dat file.\n";
+	  or die "Input file $input_file needs to be a .dat file.\n";
 	my $catname = $1;
 	my $data = [];
 
@@ -245,7 +245,9 @@ sub ParseData
 
 			# Quick hack to detect when we have a full hash ref to
 			# parse. We can't just use a regex because of values in
-			# pg_aggregate and pg_proc like '{0,0}'.
+			# pg_aggregate and pg_proc like '{0,0}'.  This will need
+			# work if we ever need to allow unbalanced braces within
+			# a field value.
 			my $lcnt = tr/{//;
 			my $rcnt = tr/}//;
 
@@ -254,8 +256,11 @@ sub ParseData
 				eval '$hash_ref = ' . $_;
 				if (!ref $hash_ref)
 				{
-					die "Error parsing $_\n$!";
+					die "$input_file: error parsing line $.:\n$_\n";
 				}
+
+				# Annotate each hash with the source line number.
+				$hash_ref->{line_number} = $.;
 
 				# Expand tuples to their full representation.
 				AddDefaultValues($hash_ref, $schema, $catname);
@@ -263,20 +268,18 @@ sub ParseData
 			else
 			{
 				my $next_line = <$ifd>;
-				die "$input_file: ends within Perl hash\n"
+				die "$input_file: file ends within Perl hash\n"
 				  if !defined $next_line;
 				$_ .= $next_line;
 				redo;
 			}
 		}
 
-		# If we found a hash reference, keep it
-		# and annotate the line number.
+		# If we found a hash reference, keep it.
 		# Only keep non-data strings if we
 		# are told to preserve formatting.
 		if (defined $hash_ref)
 		{
-			$hash_ref->{line_number} = $.;
 			push @$data, $hash_ref;
 		}
 		elsif ($preserve_formatting)
@@ -324,14 +327,8 @@ sub AddDefaultValues
 
 	if (@missing_fields)
 	{
-		my $msg = "Failed to form full tuple for $catname\n";
-		$msg .= "Missing values for: " . join(', ', @missing_fields);
-		$msg .= "\nOther values for row:\n";
-		while (my($key, $value) = each %$row)
-		{
-			$msg .= "$key => $value, ";
-		}
-		die $msg;
+		die sprintf "missing values for field(s) %s in %s.dat line %s\n",
+			join(', ', @missing_fields), $catname, $row->{line_number};
 	}
 }
 

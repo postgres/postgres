@@ -280,12 +280,16 @@ EOM
 
 	print $bki "\n (\n";
 	my $schema = $catalog->{columns};
+	my %attnames;
 	my $attnum = 0;
 	foreach my $column (@$schema)
 	{
 		$attnum++;
 		my $attname = $column->{name};
 		my $atttype = $column->{type};
+
+		# Build hash of column names for use later
+		$attnames{$attname} = 1;
 
 		# Emit column definitions
 		if (!$first)
@@ -337,6 +341,16 @@ EOM
 	foreach my $row (@{ $catalog_data{$catname} })
 	{
 		my %bki_values = %$row;
+
+		# Complain about unrecognized keys; they are presumably misspelled
+		foreach my $key (keys %bki_values)
+		{
+			next if $key eq "oid" || $key eq "oid_symbol" || $key eq "descr"
+				|| $key eq "line_number";
+			die sprintf "unrecognized field name \"%s\" in %s.dat line %s\n",
+				$key, $catname, $bki_values{line_number}
+				if (!exists($attnames{$key}));
+		}
 
 		# Perform required substitutions on fields
 		foreach my $column (@$schema)
@@ -724,6 +738,9 @@ sub morph_row_for_schemapg
 # Perform OID lookups on an array of OID names.
 # If we don't have a unique value to substitute, warn and
 # leave the entry unchanged.
+# (A warning seems sufficient because the bootstrap backend will reject
+# non-numeric values anyway.  So we might as well detect multiple problems
+# within this genbki.pl run.)
 sub lookup_oids
 {
 	my ($lookup, $catname, $bki_values, @lookupnames) = @_;
@@ -739,7 +756,7 @@ sub lookup_oids
 		else
 		{
 			push @lookupoids, $lookupname;
-			warn sprintf "unresolved OID reference \"%s\" in %s.dat line %s",
+			warn sprintf "unresolved OID reference \"%s\" in %s.dat line %s\n",
 				$lookupname, $catname, $bki_values->{line_number}
 				if $lookupname ne '-' and $lookupname ne '0';
 		}
