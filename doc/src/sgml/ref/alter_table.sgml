@@ -125,6 +125,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
 <phrase><replaceable class="parameter">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
 
+[ INCLUDE ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ]
 [ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 [ USING INDEX TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
