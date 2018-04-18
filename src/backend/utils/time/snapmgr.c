@@ -1401,17 +1401,3 @@ HistoricSnapshotGetTupleCids(void)
 	Assert(HistoricSnapshotActive());
 	return tuplecid_data;
 }
-
-void
-PrintSnapMgrStatus(const char *context)
-{
-	int			asdepth = 0;
-	ActiveSnapshotElt *active;
-
-	for (active = ActiveSnapshot; active != NULL; active = active->as_next)
-		asdepth++;
-
-	elog(LOG, "%s: %d reg snaps, %d active snaps, cat snap %p, xmin %u",
-		 context, RegisteredSnapshots, asdepth,
-		 CatalogSnapshot, MyPgXact->xmin);
-}
