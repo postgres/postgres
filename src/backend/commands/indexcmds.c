@@ -773,8 +773,6 @@ DefineIndex(Oid relationId,
 
 	PopActiveSnapshot();
 	PrintSnapMgrStatus("concurrent index build, after PopActiveSnapshot");
-	elog(LOG, "concurrent index build: releasing snap %p with regd_count %d, active_count %d",
-		 snapshot, snapshot->regd_count, snapshot->active_count);
 	UnregisterSnapshot(snapshot);
 	PrintSnapMgrStatus("concurrent index build, after UnregisterSnapshot");
 	InvalidateCatalogSnapshot();
