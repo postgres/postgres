@@ -2599,3 +2599,141 @@ select * from boolp where a = (select value from boolvalues where not value);
 
 drop table boolp;
 reset enable_indexonlyscan;
+--
+-- check that pruning works properly when the partition key is of a
+-- pseudotype
+--
+-- array type list partition key
+create table pp_arrpart (a int[]) partition by list (a);
+create table pp_arrpart1 partition of pp_arrpart for values in ('{1}');
+create table pp_arrpart2 partition of pp_arrpart for values in ('{2, 3}', '{4, 5}');
+explain (costs off) select * from pp_arrpart where a = '{1}';
+               QUERY PLAN               
+----------------------------------------
+ Append
+   ->  Seq Scan on pp_arrpart1
+         Filter: (a = '{1}'::integer[])
+(3 rows)
+
+explain (costs off) select * from pp_arrpart where a = '{1, 2}';
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+explain (costs off) select * from pp_arrpart where a in ('{4, 5}', '{1}');
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Append
+   ->  Seq Scan on pp_arrpart1
+         Filter: ((a = '{4,5}'::integer[]) OR (a = '{1}'::integer[]))
+   ->  Seq Scan on pp_arrpart2
+         Filter: ((a = '{4,5}'::integer[]) OR (a = '{1}'::integer[]))
+(5 rows)
+
+drop table pp_arrpart;
+-- array type hash partition key
+create table pph_arrpart (a int[]) partition by hash (a);
+create table pph_arrpart1 partition of pph_arrpart for values with (modulus 2, remainder 0);
+create table pph_arrpart2 partition of pph_arrpart for values with (modulus 2, remainder 1);
+insert into pph_arrpart values ('{1}'), ('{1, 2}'), ('{4, 5}');
+select tableoid::regclass, * from pph_arrpart order by 1;
+   tableoid   |   a   
+--------------+-------
+ pph_arrpart1 | {1,2}
+ pph_arrpart1 | {4,5}
+ pph_arrpart2 | {1}
+(3 rows)
+
+explain (costs off) select * from pph_arrpart where a = '{1}';
+               QUERY PLAN               
+----------------------------------------
+ Append
+   ->  Seq Scan on pph_arrpart2
+         Filter: (a = '{1}'::integer[])
+(3 rows)
+
+explain (costs off) select * from pph_arrpart where a = '{1, 2}';
+                QUERY PLAN                
+------------------------------------------
+ Append
+   ->  Seq Scan on pph_arrpart1
+         Filter: (a = '{1,2}'::integer[])
+(3 rows)
+
+explain (costs off) select * from pph_arrpart where a in ('{4, 5}', '{1}');
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Append
+   ->  Seq Scan on pph_arrpart1
+         Filter: ((a = '{4,5}'::integer[]) OR (a = '{1}'::integer[]))
+   ->  Seq Scan on pph_arrpart2
+         Filter: ((a = '{4,5}'::integer[]) OR (a = '{1}'::integer[]))
+(5 rows)
+
+drop table pph_arrpart;
+-- enum type list partition key
+create type pp_colors as enum ('green', 'blue', 'black');
+create table pp_enumpart (a pp_colors) partition by list (a);
+create table pp_enumpart_green partition of pp_enumpart for values in ('green');
+create table pp_enumpart_blue partition of pp_enumpart for values in ('blue');
+explain (costs off) select * from pp_enumpart where a = 'blue';
+               QUERY PLAN                
+-----------------------------------------
+ Append
+   ->  Seq Scan on pp_enumpart_blue
+         Filter: (a = 'blue'::pp_colors)
+(3 rows)
+
+explain (costs off) select * from pp_enumpart where a = 'black';
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+drop table pp_enumpart;
+drop type pp_colors;
+-- record type as partition key
+create type pp_rectype as (a int, b int);
+create table pp_recpart (a pp_rectype) partition by list (a);
+create table pp_recpart_11 partition of pp_recpart for values in ('(1,1)');
+create table pp_recpart_23 partition of pp_recpart for values in ('(2,3)');
+explain (costs off) select * from pp_recpart where a = '(1,1)'::pp_rectype;
+                QUERY PLAN                 
+-------------------------------------------
+ Append
+   ->  Seq Scan on pp_recpart_11
+         Filter: (a = '(1,1)'::pp_rectype)
+(3 rows)
+
+explain (costs off) select * from pp_recpart where a = '(1,2)'::pp_rectype;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+drop table pp_recpart;
+drop type pp_rectype;
+-- range type partition key
+create table pp_intrangepart (a int4range) partition by list (a);
+create table pp_intrangepart12 partition of pp_intrangepart for values in ('[1,2]');
+create table pp_intrangepart2inf partition of pp_intrangepart for values in ('[2,)');
+explain (costs off) select * from pp_intrangepart where a = '[1,2]'::int4range;
+                QUERY PLAN                
+------------------------------------------
+ Append
+   ->  Seq Scan on pp_intrangepart12
+         Filter: (a = '[1,3)'::int4range)
+(3 rows)
+
+explain (costs off) select * from pp_intrangepart where a = '(1,2)'::int4range;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+drop table pp_intrangepart;

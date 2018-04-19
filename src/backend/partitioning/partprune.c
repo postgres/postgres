@@ -946,13 +946,7 @@ gen_prune_step_op(GeneratePruningStepsContext *context,
 	 * InvalidStrategy to signal get_matching_list_bounds to do the right
 	 * thing.
 	 */
-	if (op_is_ne)
-	{
-		Assert(opstrategy == BTEqualStrategyNumber);
-		opstep->opstrategy = InvalidStrategy;
-	}
-	else
-		opstep->opstrategy = opstrategy;
+	opstep->opstrategy = op_is_ne ? InvalidStrategy : opstrategy;
 	Assert(list_length(exprs) == list_length(cmpfns));
 	opstep->exprs = exprs;
 	opstep->cmpfns = cmpfns;
@@ -1426,10 +1420,12 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		OpExpr	   *opclause = (OpExpr *) clause;
 		Expr	   *leftop,
 				   *rightop;
-		Oid			commutator = InvalidOid,
+		Oid			op_lefttype,
+					op_righttype,
+					commutator = InvalidOid,
 					negator = InvalidOid;
 		Oid			cmpfn;
-		Oid			exprtype;
+		int			op_strategy;
 		bool		is_opne_listp = false;
 		PartClauseInfo *partclause;
 
@@ -1483,33 +1479,38 @@ match_clause_to_partition_key(RelOptInfo *rel,
 			return PARTCLAUSE_UNSUPPORTED;
 
 		/*
-		 * Normally we only bother with operators that are listed as being
-		 * part of the partitioning operator family.  But we make an exception
-		 * in one case -- operators named '<>' are not listed in any operator
-		 * family whatsoever, in which case, we try to perform partition
-		 * pruning with it only if list partitioning is in use.
+		 * Determine the input types of the operator we're considering.
+		 *
+		 * Normally we only care about operators that are listed as being part
+		 * of the partitioning operator family.  But there is one exception:
+		 * the not-equals operators are not listed in any operator family
+		 * whatsoever, but their negators (equality) are.  We can use one of
+		 * those if we find it, but only for list partitioning.
 		 */
-		if (!op_in_opfamily(opclause->opno, partopfamily))
+		if (op_in_opfamily(opclause->opno, partopfamily))
 		{
+			Oid		oper;
+
+			oper = OidIsValid(commutator) ? commutator : opclause->opno;
+			get_op_opfamily_properties(oper, partopfamily, false,
+									   &op_strategy, &op_lefttype,
+									   &op_righttype);
+		}
+		else
+		{
+			/* Not good unless list partitioning */
 			if (part_scheme->strategy != PARTITION_STRATEGY_LIST)
 				return PARTCLAUSE_UNSUPPORTED;
 
-			/*
-			 * To confirm if the operator is really '<>', check if its negator
-			 * is a btree equality operator.
-			 */
+			/* See if the negator is equality */
 			negator = get_negator(opclause->opno);
 			if (OidIsValid(negator) && op_in_opfamily(negator, partopfamily))
 			{
-				Oid			lefttype;
-				Oid			righttype;
-				int			strategy;
-
 				get_op_opfamily_properties(negator, partopfamily, false,
-										   &strategy, &lefttype, &righttype);
-
-				if (strategy == BTEqualStrategyNumber)
-					is_opne_listp = true;
+										   &op_strategy, &op_lefttype,
+										   &op_righttype);
+				if (op_strategy == BTEqualStrategyNumber)
+					is_opne_listp = true;	/* bingo */
 			}
 
 			/* Operator isn't really what we were hoping it'd be. */
@@ -1517,24 +1518,41 @@ match_clause_to_partition_key(RelOptInfo *rel,
 				return PARTCLAUSE_UNSUPPORTED;
 		}
 
-		/* Check if we're going to need a cross-type comparison function. */
-		exprtype = exprType((Node *) expr);
-		if (exprtype != part_scheme->partopcintype[partkeyidx])
+		/*
+		 * Now find the procedure to use, based on the types.  If the clause's
+		 * other argument is of the same type as the partitioning opclass's
+		 * declared input type, we can use the procedure cached in
+		 * PartitionKey.  If not, search for a cross-type one in the same
+		 * opfamily; if one doesn't exist, give up on pruning for this clause.
+		 */
+		if (op_righttype == part_scheme->partopcintype[partkeyidx])
+			cmpfn = part_scheme->partsupfunc[partkeyidx].fn_oid;
+		else
 		{
 			switch (part_scheme->strategy)
 			{
+				/*
+				 * For range and list partitioning, we need the ordering
+				 * procedure with lefttype being the partition key's type, and
+				 * righttype the clause's operator's right type.
+				 */
 				case PARTITION_STRATEGY_LIST:
 				case PARTITION_STRATEGY_RANGE:
 					cmpfn =
 						get_opfamily_proc(part_scheme->partopfamily[partkeyidx],
 										  part_scheme->partopcintype[partkeyidx],
-										  exprtype, BTORDER_PROC);
+										  op_righttype, BTORDER_PROC);
 					break;
 
+				/*
+				 * For hash partitioning, we need the hashing procedure for
+				 * the clause's type.
+				 */
 				case PARTITION_STRATEGY_HASH:
 					cmpfn =
 						get_opfamily_proc(part_scheme->partopfamily[partkeyidx],
-										  exprtype, exprtype, HASHEXTENDED_PROC);
+										  op_righttype, op_righttype,
+										  HASHEXTENDED_PROC);
 					break;
 
 				default:
@@ -1547,34 +1565,26 @@ match_clause_to_partition_key(RelOptInfo *rel,
 			if (!OidIsValid(cmpfn))
 				return PARTCLAUSE_UNSUPPORTED;
 		}
-		else
-			cmpfn = part_scheme->partsupfunc[partkeyidx].fn_oid;
 
+		/*
+		 * Build the clause, passing the negator or commutator if applicable.
+		 */
 		partclause = (PartClauseInfo *) palloc(sizeof(PartClauseInfo));
 		partclause->keyno = partkeyidx;
-
-		/* For <> operator clauses, pass on the negator. */
-		partclause->op_is_ne = false;
-		partclause->op_strategy = InvalidStrategy;
-
 		if (is_opne_listp)
 		{
 			Assert(OidIsValid(negator));
 			partclause->opno = negator;
 			partclause->op_is_ne = true;
-
-			/*
-			 * We already know the strategy in this case, so may as well set
-			 * it rather than having to look it up later.
-			 */
-			partclause->op_strategy = BTEqualStrategyNumber;
+			partclause->op_strategy = InvalidStrategy;
 		}
-		/* And if commuted before matching, pass on the commutator */
-		else if (OidIsValid(commutator))
-			partclause->opno = commutator;
 		else
-			partclause->opno = opclause->opno;
-
+		{
+			partclause->opno = OidIsValid(commutator) ?
+				commutator : opclause->opno;
+			partclause->op_is_ne = false;
+			partclause->op_strategy = op_strategy;
+		}
 		partclause->expr = expr;
 		partclause->cmpfn = cmpfn;
 
