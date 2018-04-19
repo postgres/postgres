@@ -817,18 +817,18 @@ _bt_findinsertloc(Relation rel,
  *		insertion, and the buffer must be pinned and write-locked.  On return,
  *		we will have dropped both the pin and the lock on the buffer.
  *
- *		When inserting to a non-leaf page, 'cbuf' is the left-sibling of the
- *		page we're inserting the downlink for.  This function will clear the
+ *		This routine only performs retail tuple insertions.  'itup' should
+ *		always be either a non-highkey leaf item, or a downlink (new high
+ *		key items are created indirectly, when a page is split).  When
+ *		inserting to a non-leaf page, 'cbuf' is the left-sibling of the page
+ *		we're inserting the downlink for.  This function will clear the
  *		INCOMPLETE_SPLIT flag on it, and release the buffer.
  *
  *		The locking interactions in this code are critical.  You should
  *		grok Lehman and Yao's paper before making any changes.  In addition,
  *		you need to understand how we disambiguate duplicate keys in this
  *		implementation, in order to be able to find our location using
- *		L&Y "move right" operations.  Since we may insert duplicate user
- *		keys, and since these dups may propagate up the tree, we use the
- *		'afteritem' parameter to position ourselves correctly for the
- *		insertion on internal pages.
+ *		L&Y "move right" operations.
  *----------
  */
 static void
