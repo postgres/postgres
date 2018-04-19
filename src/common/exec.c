@@ -308,7 +308,7 @@ find_other_exec(const char *argv0, const char *target,
 				const char *versionstr, char *retpath)
 {
 	char		cmd[MAXPGPATH];
-	char		line[100];
+	char		line[MAXPGPATH];
 
 	if (find_my_exec(argv0, retpath) < 0)
 		return -1;
