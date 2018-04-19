@@ -52,7 +52,7 @@ typedef struct xl_btree_metadata
 	BlockNumber fastroot;
 	uint32		fastlevel;
 	TransactionId oldest_btpo_xact;
-	double		last_cleanup_num_heap_tuples;
+	float8		last_cleanup_num_heap_tuples;
 } xl_btree_metadata;
 
 /*

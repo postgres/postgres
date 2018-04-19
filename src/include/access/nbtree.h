@@ -105,7 +105,7 @@ typedef struct BTMetaPageData
 	/* following fields are available since page version 3 */
 	TransactionId btm_oldest_btpo_xact;	/* oldest btpo_xact among of
 										 * deleted pages */
-	float4		btm_last_cleanup_num_heap_tuples; /* number of heap tuples
+	float8		btm_last_cleanup_num_heap_tuples; /* number of heap tuples
 												   * during last cleanup */
 } BTMetaPageData;
 
