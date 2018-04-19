@@ -3371,6 +3371,33 @@ order by fault;
          | 123 |   122
 (1 row)
 
+explain (costs off)
+select * from
+(values (1, array[10,20]), (2, array[20,30])) as v1(v1x,v1ys)
+left join (values (1, 10), (2, 20)) as v2(v2x,v2y) on v2x = v1x
+left join unnest(v1ys) as u1(u1y) on u1y = v2y;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Nested Loop Left Join
+   ->  Values Scan on "*VALUES*"
+   ->  Hash Right Join
+         Hash Cond: (u1.u1y = "*VALUES*_1".column2)
+         Filter: ("*VALUES*_1".column1 = "*VALUES*".column1)
+         ->  Function Scan on unnest u1
+         ->  Hash
+               ->  Values Scan on "*VALUES*_1"
+(8 rows)
+
+select * from
+(values (1, array[10,20]), (2, array[20,30])) as v1(v1x,v1ys)
+left join (values (1, 10), (2, 20)) as v2(v2x,v2y) on v2x = v1x
+left join unnest(v1ys) as u1(u1y) on u1y = v2y;
+ v1x |  v1ys   | v2x | v2y | u1y 
+-----+---------+-----+-----+-----
+   1 | {10,20} |   1 |  10 |  10
+   2 | {20,30} |   2 |  20 |  20
+(2 rows)
+
 --
 -- test handling of potential equivalence clauses above outer joins
 --
