@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * pg_default_acl.h
- *	  definition of default ACLs for new objects.
+ *	  definition of the system catalog for default ACLs of new objects
+ *	  (pg_default_acl)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

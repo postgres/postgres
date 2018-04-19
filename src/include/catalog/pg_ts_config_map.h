@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * pg_ts_config_map.h
- *	definition of token mappings for configurations of tsearch
+ *	  definition of the system catalog for text search token mappings
+ *	  (pg_ts_config_map)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

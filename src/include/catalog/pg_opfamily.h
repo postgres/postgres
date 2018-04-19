@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_opfamily.h
- *	  definition of the system "opfamily" relation (pg_opfamily)
+ *	  definition of the "operator family" system catalog (pg_opfamily)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

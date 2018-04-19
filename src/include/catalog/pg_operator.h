@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_operator.h
- *	  definition of the system "operator" relation (pg_operator)
+ *	  definition of the "operator" system catalog (pg_operator)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_statistic.h
- *	  definition of the system "statistic" relation (pg_statistic)
+ *	  definition of the "statistics" system catalog (pg_statistic)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

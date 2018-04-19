@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_index.h
- *	  definition of the system "index" relation (pg_index)
+ *	  definition of the "index" system catalog (pg_index)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

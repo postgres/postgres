@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_ts_template.h
- *	definition of dictionary templates for tsearch
+ *	  definition of the "text search template" system catalog (pg_ts_template)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

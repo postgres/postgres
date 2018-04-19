@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_namespace.h
- *	  definition of the system "namespace" relation (pg_namespace)
+ *	  definition of the "namespace" system catalog (pg_namespace)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

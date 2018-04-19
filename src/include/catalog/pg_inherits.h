@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_inherits.h
- *	  definition of the system "inherits" relation (pg_inherits)
+ *	  definition of the "inherits" system catalog (pg_inherits)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

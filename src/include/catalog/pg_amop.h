@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_amop.h
- *	  definition of the system "amop" relation (pg_amop)
+ *	  definition of the "access method operator" system catalog (pg_amop)
  *
  * The amop table identifies the operators associated with each index operator
  * family and operator class (classes are subsets of families).  An associated

@@ -1,14 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * pg_collation.h
- *	  definition of the system "collation" relation (pg_collation)
+ *	  definition of the "collation" system catalog (pg_collation)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * IDENTIFICATION
- *		src/include/catalog/pg_collation.h
+ * src/include/catalog/pg_collation.h
  *
  * NOTES
  *	  The Catalog.pm module reads this file and derives schema

@@ -1,10 +1,16 @@
 /* -------------------------------------------------------------------------
  *
  * pg_subscription.h
- *		Definition of the subscription catalog (pg_subscription).
+ *	  definition of the "subscription" system catalog (pg_subscription)
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/catalog/pg_subscription.h
+ *
+ * NOTES
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  * -------------------------------------------------------------------------
  */

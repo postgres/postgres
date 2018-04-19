@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_event_trigger.h
- *	  definition of the system "event trigger" relation (pg_event_trigger)
+ *	  definition of the "event trigger" system catalog (pg_event_trigger)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

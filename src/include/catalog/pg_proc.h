@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_proc.h
- *	  definition of the system "procedure" relation (pg_proc)
+ *	  definition of the "procedure" system catalog (pg_proc)
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

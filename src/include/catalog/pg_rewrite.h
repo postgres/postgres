@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_rewrite.h
- *	  definition of the system "rewrite-rule" relation (pg_rewrite)
+ *	  definition of the "rewrite rule" system catalog (pg_rewrite)
  *
  * As of Postgres 7.3, the primary key for this table is <ev_class, rulename>
  * --- ie, rule names are only unique among the rules of a given table.

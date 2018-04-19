@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * pg_ts_config.h
- *	definition of configuration of tsearch
+ *	  definition of the "text search configuration" system catalog
+ *	  (pg_ts_config)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

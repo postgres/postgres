@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_auth_members.h
- *	  definition of the system "authorization identifier members" relation
+ *	  definition of the "authorization identifier members" system catalog
  *	  (pg_auth_members).
  *
  *

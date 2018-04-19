@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_transform.h
- *	  definition of the system "transform" relation (pg_transform)
+ *	  definition of the "transform" system catalog (pg_transform)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

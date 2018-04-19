@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_opclass.h
- *	  definition of the system "opclass" relation (pg_opclass)
+ *	  definition of the "operator class" system catalog (pg_opclass)
  *
  * The primary key for this table is <opcmethod, opcname, opcnamespace> ---
  * that is, there is a row for each valid combination of opclass name and

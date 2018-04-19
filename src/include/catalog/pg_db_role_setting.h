@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * pg_db_role_setting.h
- *	  definition of per-database/per-user configuration settings relation
+ *	  definition of the system catalog for per-database/per-user
+ *	  configuration settings (pg_db_role_setting)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

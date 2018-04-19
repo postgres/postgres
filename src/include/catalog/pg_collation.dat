@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------
 #
 # pg_collation.dat
-#    Initial contents of the pg_collation system relation.
+#    Initial contents of the pg_collation system catalog.
 #
 # Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California

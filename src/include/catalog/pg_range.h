@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_range.h
- *	  definition of the system "range" relation (pg_range)
+ *	  definition of the "range type" system catalog (pg_range)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

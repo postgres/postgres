@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_policy.h
- *	 definition of the system "policy" relation (pg_policy)
+ *	  definition of the "policy" system catalog (pg_policy)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

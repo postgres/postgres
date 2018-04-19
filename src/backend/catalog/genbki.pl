@@ -535,8 +535,8 @@ sub gen_pg_attribute
 	{
 		my $table = $catalogs{$table_name};
 
-		# Currently, all bootstrapped relations also need schemapg.h
-		# entries, so skip if the relation isn't to be in schemapg.h.
+		# Currently, all bootstrap catalogs also need schemapg.h
+		# entries, so skip if it isn't to be in schemapg.h.
 		next if !$table->{schema_macro};
 
 		$schemapg_entries{$table_name} = [];
@@ -769,7 +769,7 @@ sub form_pg_type_symbol
 {
 	my $typename = shift;
 
-	# Skip for rowtypes of bootstrap tables, since they have their
+	# Skip for rowtypes of bootstrap catalogs, since they have their
 	# own naming convention defined elsewhere.
 	return
 	  if $typename eq 'pg_type'

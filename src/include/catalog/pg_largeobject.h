@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_largeobject.h
- *	  definition of the system "largeobject" relation (pg_largeobject)
+ *	  definition of the "large object" system catalog (pg_largeobject)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_init_privs.h
- *	  definition of the system "initial privileges" relation (pg_init_privs)
+ *	  definition of the "initial privileges" system catalog (pg_init_privs)
  *
  * NOTE: an object is identified by the OID of the row that primarily
  * defines the object, plus the OID of the table that that row appears in.

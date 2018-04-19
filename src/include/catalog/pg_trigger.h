@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_trigger.h
- *	  definition of the system "trigger" relation (pg_trigger)
+ *	  definition of the "trigger" system catalog (pg_trigger)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

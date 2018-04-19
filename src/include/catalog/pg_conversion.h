@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_conversion.h
- *	  definition of the system "conversion" relation (pg_conversion)
+ *	  definition of the "conversion" system catalog (pg_conversion)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

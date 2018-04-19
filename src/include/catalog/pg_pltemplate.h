@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_pltemplate.h
- *	  definition of the system "PL template" relation (pg_pltemplate)
+ *	  definition of the "PL template" system catalog (pg_pltemplate)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

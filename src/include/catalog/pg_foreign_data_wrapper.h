@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_foreign_data_wrapper.h
- *	  definition of the system "foreign-data wrapper" relation (pg_foreign_data_wrapper)
+ *	  definition of the "foreign-data wrapper" system catalog (pg_foreign_data_wrapper)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_constraint.h
- *	  definition of the system "constraint" relation (pg_constraint)
+ *	  definition of the "constraint" system catalog (pg_constraint)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

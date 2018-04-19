@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_statistic_ext.h
- *	  definition of the system "extended statistic" relation (pg_statistic_ext)
+ *	  definition of the "extended statistics" system catalog (pg_statistic_ext)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

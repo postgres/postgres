@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_database.h
- *	  definition of the system "database" relation (pg_database)
+ *	  definition of the "database" system catalog (pg_database)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

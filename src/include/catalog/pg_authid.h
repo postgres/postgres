@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_authid.h
- *	  definition of the system "authorization identifier" relation (pg_authid)
+ *	  definition of the "authorization identifier" system catalog (pg_authid)
  *
  *	  pg_shadow and pg_group are now publicly accessible views on pg_authid.
  *

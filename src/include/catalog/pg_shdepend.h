@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_shdepend.h
- *	  definition of the system "shared dependency" relation (pg_shdepend)
+ *	  definition of the "shared dependency" system catalog (pg_shdepend)
  *
  * pg_shdepend has no preloaded contents, so there is no pg_shdepend.dat
  * file; system-defined dependencies are loaded into it during a late stage

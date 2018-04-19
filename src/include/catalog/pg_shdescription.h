@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_shdescription.h
- *	  definition of the system "shared description" relation
+ *	  definition of the "shared description" system catalog
  *	  (pg_shdescription)
  *
  * Because the contents of this table are taken from the *.dat files

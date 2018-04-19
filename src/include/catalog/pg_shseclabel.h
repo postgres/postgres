@@ -1,10 +1,16 @@
 /* -------------------------------------------------------------------------
  *
  * pg_shseclabel.h
- *	  definition of the system "shared security label" relation (pg_shseclabel)
+ *	  definition of the "shared security label" system catalog (pg_shseclabel)
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/catalog/pg_shseclabel.h
+ *
+ * NOTES
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  * -------------------------------------------------------------------------
  */

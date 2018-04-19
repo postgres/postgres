@@ -1,10 +1,11 @@
 /*-------------------------------------------------------------------------
  *
  * pg_enum.h
- *	  definition of the system "enum" relation (pg_enum)
+ *	  definition of the "enum" system catalog (pg_enum)
  *
  *
- * Copyright (c) 2006-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_enum.h
  *

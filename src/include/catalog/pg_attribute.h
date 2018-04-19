@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_attribute.h
- *	  definition of the system "attribute" relation (pg_attribute)
+ *	  definition of the "attribute" system catalog (pg_attribute)
  *
  * The initial contents of pg_attribute are generated at compile time by
  * genbki.pl, so there is no pg_attribute.dat file.  Only "bootstrapped"

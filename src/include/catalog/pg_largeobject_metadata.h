@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * pg_largeobject_metadata.h
- *	  definition of the system "largeobject_metadata" relation (pg_largeobject_metadata)
+ *	  definition of the "large object metadata" system catalog
+ *	  (pg_largeobject_metadata)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

@@ -1,10 +1,16 @@
 /* -------------------------------------------------------------------------
  *
  * pg_seclabel.h
- *	  definition of the system "security label" relation (pg_seclabel)
+ *	  definition of the "security label" system catalog (pg_seclabel)
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/catalog/pg_seclabel.h
+ *
+ * NOTES
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  * -------------------------------------------------------------------------
  */

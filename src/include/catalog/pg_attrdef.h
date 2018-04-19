@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_attrdef.h
- *	  definition of the system "attribute defaults" relation (pg_attrdef)
+ *	  definition of the "attribute defaults" system catalog (pg_attrdef)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

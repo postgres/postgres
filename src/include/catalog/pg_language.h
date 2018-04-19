@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_language.h
- *	  definition of the system "language" relation (pg_language)
+ *	  definition of the "language" system catalog (pg_language)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

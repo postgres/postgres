@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_description.h
- *	  definition of the system "description" relation (pg_description)
+ *	  definition of the "description" system catalog (pg_description)
  *
  * Because the contents of this table are taken from the *.dat files
  * of other catalogs, there is no pg_description.dat file. The initial

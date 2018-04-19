@@ -1,10 +1,16 @@
 /* -------------------------------------------------------------------------
  *
  * pg_sequence.h
- *	  definition of the system "sequence" relation (pg_sequence)
+ *	  definition of the "sequence" system catalog (pg_sequence)
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/catalog/pg_sequence.h
+ *
+ * NOTES
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  * -------------------------------------------------------------------------
  */

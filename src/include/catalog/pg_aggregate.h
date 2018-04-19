@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_aggregate.h
- *	  definition of the system "aggregate" relation (pg_aggregate)
+ *	  definition of the "aggregate" system catalog (pg_aggregate)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

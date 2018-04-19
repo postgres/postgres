@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_am.h
- *	  definition of the system "access method" relation (pg_am)
+ *	  definition of the "access method" system catalog (pg_am)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

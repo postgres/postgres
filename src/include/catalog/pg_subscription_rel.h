@@ -1,11 +1,17 @@
 /* -------------------------------------------------------------------------
  *
  * pg_subscription_rel.h
- *		Local info about tables that come from the publisher of a
- *		subscription (pg_subscription_rel).
+ *	  definition of the system catalog containing the state for each
+ *	  replicated table in each subscription (pg_subscription_rel)
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/catalog/pg_subscription_rel.h
+ *
+ * NOTES
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  * -------------------------------------------------------------------------
  */

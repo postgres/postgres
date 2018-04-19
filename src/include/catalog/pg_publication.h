@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_publication.h
- *	  definition of the relation sets relation (pg_publication)
+ *	  definition of the "publication" system catalog (pg_publication)
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

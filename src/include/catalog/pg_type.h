@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_type.h
- *	  definition of the system "type" relation (pg_type)
+ *	  definition of the "type" system catalog (pg_type)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

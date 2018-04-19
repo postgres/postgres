@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_extension.h
- *	  definition of the system "extension" relation (pg_extension)
+ *	  definition of the "extension" system catalog (pg_extension)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

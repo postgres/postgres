@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_class.h
- *	  definition of the system "relation" relation (pg_class)
+ *	  definition of the "relation" system catalog (pg_class)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_depend.h
- *	  definition of the system "dependency" relation (pg_depend)
+ *	  definition of the "dependency" system catalog (pg_depend)
  *
  * pg_depend has no preloaded contents, so there is no pg_depend.dat
  * file; system-defined dependencies are loaded into it during a late stage

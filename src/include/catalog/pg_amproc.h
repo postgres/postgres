@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_amproc.h
- *	  definition of the system "amproc" relation (pg_amproc)
+ *	  definition of the "access method procedure" system catalog (pg_amproc)
  *
  * The amproc table identifies support procedures associated with index
  * operator families and classes.  These procedures can't be listed in pg_amop

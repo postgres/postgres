@@ -1,10 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * pg_partitioned_table.h
- *	  definition of the system "partitioned table" relation
+ *	  definition of the "partitioned table" system catalog
+ *	  (pg_partitioned_table)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_partitioned_table.h
  *

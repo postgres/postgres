@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_tablespace.h
- *	  definition of the system "tablespace" relation (pg_tablespace)
+ *	  definition of the "tablespace" system catalog (pg_tablespace)
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
