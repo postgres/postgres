@@ -73,14 +73,14 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 	indoption = rel->rd_indoption;
 
-	Assert(indnkeyatts != 0);
+	Assert(indnkeyatts > 0);
 	Assert(indnkeyatts <= indnatts);
-	Assert(BTreeTupGetNAtts(itup, rel) == indnatts ||
-		   BTreeTupGetNAtts(itup, rel) == indnkeyatts);
+	Assert(BTreeTupleGetNAtts(itup, rel) == indnatts ||
+		   BTreeTupleGetNAtts(itup, rel) == indnkeyatts);
 
 	/*
-	 * We'll execute search using ScanKey constructed on key columns. Non key
-	 * (included) columns must be omitted.
+	 * We'll execute search using scan key constructed on key columns. Non-key
+	 * (INCLUDE index) columns are always omitted from scan keys.
 	 */
 	skey = (ScanKey) palloc(indnkeyatts * sizeof(ScanKeyData));
 
@@ -1427,6 +1427,7 @@ _bt_checkkeys(IndexScanDesc scan,
 		bool		isNull;
 		Datum		test;
 
+		Assert(key->sk_attno <= BTreeTupleGetNAtts(tuple, scan->indexRelation));
 		/* row-comparison keys need special processing */
 		if (key->sk_flags & SK_ROW_HEADER)
 		{
@@ -2082,29 +2083,133 @@ btproperty(Oid index_oid, int attno,
 }
 
 /*
- *	_bt_truncate_tuple() -- remove non-key (INCLUDE) attributes from index
- *							tuple.
+ *	_bt_nonkey_truncate() -- create tuple without non-key suffix attributes.
  *
- *	Transforms an ordinal B-tree leaf index tuple into pivot tuple to be used
- *	as hikey or non-leaf page tuple with downlink.  Note that t_tid offset
- *	will be overwritten in order to represent number of present tuple
- *	attributes.
+ * Returns truncated index tuple allocated in caller's memory context, with key
+ * attributes copied from caller's itup argument.  Currently, suffix truncation
+ * is only performed to create pivot tuples in INCLUDE indexes, but some day it
+ * could be generalized to remove suffix attributes after the first
+ * distinguishing key attribute.
+ *
+ * Truncated tuple is guaranteed to be no larger than the original, which is
+ * important for staying under the 1/3 of a page restriction on tuple size.
+ *
+ * Note that returned tuple's t_tid offset will hold the number of attributes
+ * present, so the original item pointer offset is not represented.  Caller
+ * should only change truncated tuple's downlink.
  */
 IndexTuple
-_bt_truncate_tuple(Relation idxrel, IndexTuple olditup)
+_bt_nonkey_truncate(Relation rel, IndexTuple itup)
 {
-	IndexTuple	newitup;
-	int			nkeyattrs = IndexRelationGetNumberOfKeyAttributes(idxrel);
+	int				nkeyattrs = IndexRelationGetNumberOfKeyAttributes(rel);
+	IndexTuple		truncated;
 
 	/*
-	 * We're assuming to truncate only regular leaf index tuples which have
-	 * both key and non-key attributes.
+	 * We should only ever truncate leaf index tuples, which must have both key
+	 * and non-key attributes.  It's never okay to truncate a second time.
 	 */
-	Assert(BTreeTupGetNAtts(olditup, idxrel) == IndexRelationGetNumberOfAttributes(idxrel));
+	Assert(BTreeTupleGetNAtts(itup, rel) ==
+		   IndexRelationGetNumberOfAttributes(rel));
 
-	newitup = index_truncate_tuple(RelationGetDescr(idxrel),
-								   olditup, nkeyattrs);
-	BTreeTupSetNAtts(newitup, nkeyattrs);
+	truncated = index_truncate_tuple(RelationGetDescr(rel), itup, nkeyattrs);
+	BTreeTupleSetNAtts(truncated, nkeyattrs);
 
-	return newitup;
+	return truncated;
+}
+
+/*
+ *  _bt_check_natts() -- Verify tuple has expected number of attributes.
+ *
+ * Returns value indicating if the expected number of attributes were found
+ * for a particular offset on page.  This can be used as a general purpose
+ * sanity check.
+ *
+ * Testing a tuple directly with BTreeTupleGetNAtts() should generally be
+ * preferred to calling here.  That's usually more convenient, and is always
+ * more explicit.  Call here instead when offnum's tuple may be a negative
+ * infinity tuple that uses the pre-v11 on-disk representation, or when a low
+ * context check is appropriate.
+ */
+bool
+_bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
+{
+	int16			natts = IndexRelationGetNumberOfAttributes(rel);
+	int16			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
+	BTPageOpaque	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	IndexTuple		itup;
+
+	/*
+	 * We cannot reliably test a deleted or half-deleted page, since they have
+	 * dummy high keys
+	 */
+	if (P_IGNORE(opaque))
+		return true;
+
+	Assert(offnum >= FirstOffsetNumber &&
+		   offnum <= PageGetMaxOffsetNumber(page));
+	/*
+	 * Mask allocated for number of keys in index tuple must be able to fit
+	 * maximum possible number of index attributes
+	 */
+	StaticAssertStmt(BT_N_KEYS_OFFSET_MASK >= INDEX_MAX_KEYS,
+					 "BT_N_KEYS_OFFSET_MASK can't fit INDEX_MAX_KEYS");
+
+	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+
+	if (P_ISLEAF(opaque))
+	{
+		if (offnum >= P_FIRSTDATAKEY(opaque))
+		{
+			/*
+			 * Leaf tuples that are not the page high key (non-pivot tuples)
+			 * should never be truncated
+			 */
+			return BTreeTupleGetNAtts(itup, rel) == natts;
+		}
+		else
+		{
+			/*
+			 * Rightmost page doesn't contain a page high key, so tuple was
+			 * checked above as ordinary leaf tuple
+			 */
+			Assert(!P_RIGHTMOST(opaque));
+
+			/* Page high key tuple contains only key attributes */
+			return BTreeTupleGetNAtts(itup, rel) == nkeyatts;
+		}
+	}
+	else  /* !P_ISLEAF(opaque) */
+	{
+		if (offnum == P_FIRSTDATAKEY(opaque))
+		{
+			/*
+			 * The first tuple on any internal page (possibly the first after
+			 * its high key) is its negative infinity tuple.  Negative infinity
+			 * tuples are always truncated to zero attributes.  They are a
+			 * particular kind of pivot tuple.
+			 *
+			 * The number of attributes won't be explicitly represented if the
+			 * negative infinity tuple was generated during a page split that
+			 * occurred with a version of Postgres before v11.  There must be a
+			 * problem when there is an explicit representation that is
+			 * non-zero, or when there is no explicit representation and the
+			 * tuple is evidently not a pre-pg_upgrade tuple.
+			 *
+			 * Prior to v11, downlinks always had P_HIKEY as their offset.  Use
+			 * that to decide if the tuple is a pre-v11 tuple.
+			 */
+			return BTreeTupleGetNAtts(itup, rel) == 0 ||
+					((itup->t_info & INDEX_ALT_TID_MASK) == 0 &&
+					 ItemPointerGetOffsetNumber(&(itup->t_tid)) == P_HIKEY);
+		}
+		else
+		{
+			/*
+			 * Tuple contains only key attributes despite on is it page high
+			 * key or not
+			 */
+			return BTreeTupleGetNAtts(itup, rel) == nkeyatts;
+		}
+
+	}
 }

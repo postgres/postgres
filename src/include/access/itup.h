@@ -155,7 +155,7 @@ extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
 extern void index_deform_tuple(IndexTuple tup, TupleDesc tupleDescriptor,
 				   Datum *values, bool *isnull);
 extern IndexTuple CopyIndexTuple(IndexTuple source);
-extern IndexTuple index_truncate_tuple(TupleDesc tupleDescriptor,
-					 IndexTuple olditup, int new_indnatts);
+extern IndexTuple index_truncate_tuple(TupleDesc sourceDescriptor,
+					 IndexTuple source, int leavenatts);
 
 #endif							/* ITUP_H */

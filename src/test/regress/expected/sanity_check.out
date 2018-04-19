@@ -185,6 +185,12 @@ sql_sizing|f
 sql_sizing_profiles|f
 stud_emp|f
 student|f
+tbl_include_box|t
+tbl_include_box_pk|f
+tbl_include_pk|t
+tbl_include_reg|t
+tbl_include_unique1|t
+tbl_include_unique2|f
 tenk1|t
 tenk2|t
 test_range_excl|t

@@ -154,7 +154,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		 * We need to save the location of the index entry we chose in the
 		 * parent page on a stack. In case we split the tree, we'll use the
 		 * stack to work back up to the parent page.  We also save the actual
-		 * downlink (TID) to uniquely identify the index entry, in case it
+		 * downlink (block) to uniquely identify the index entry, in case it
 		 * moves right while we're working lower in the tree.  See the paper
 		 * by Lehman and Yao for how this is detected and handled. (We use the
 		 * child link to disambiguate duplicate keys in the index -- Lehman
@@ -436,14 +436,7 @@ _bt_compare(Relation rel,
 	IndexTuple	itup;
 	int			i;
 
-	/*
-	 * Check tuple has correct number of attributes.
-	 */
-	if (unlikely(!_bt_check_natts(rel, page, offnum)))
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("tuple has wrong number of attributes in index \"%s\"",
-						RelationGetRelationName(rel))));
+	Assert(_bt_check_natts(rel, page, offnum));
 
 	/*
 	 * Force result ">" if target item is first data item on an internal page
@@ -1967,52 +1960,4 @@ _bt_initialize_more_data(BTScanOpaque so, ScanDirection dir)
 	}
 	so->numKilled = 0;			/* just paranoia */
 	so->markItemIndex = -1;		/* ditto */
-}
-
-/*
- * Check if index tuple have appropriate number of attributes.
- */
-bool
-_bt_check_natts(Relation index, Page page, OffsetNumber offnum)
-{
-	int16		natts = IndexRelationGetNumberOfAttributes(index);
-	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(index);
-	ItemId		itemid;
-	IndexTuple	itup;
-	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-
-	/*
-	 * Assert that mask allocated for number of keys in index tuple can fit
-	 * maximum number of index keys.
-	 */
-	StaticAssertStmt(BT_N_KEYS_OFFSET_MASK >= INDEX_MAX_KEYS,
-					 "BT_N_KEYS_OFFSET_MASK can't fit INDEX_MAX_KEYS");
-
-	itemid = PageGetItemId(page, offnum);
-	itup = (IndexTuple) PageGetItem(page, itemid);
-
-	if (P_ISLEAF(opaque) && offnum >= P_FIRSTDATAKEY(opaque))
-	{
-		/*
-		 * Regular leaf tuples have as every index attributes
-		 */
-		return (BTreeTupGetNAtts(itup, index) == natts);
-	}
-	else if (!P_ISLEAF(opaque) && offnum == P_FIRSTDATAKEY(opaque))
-	{
-		/*
-		 * Leftmost tuples on non-leaf pages have no attributes, or haven't
-		 * INDEX_ALT_TID_MASK set in pg_upgraded indexes.
-		 */
-		return (BTreeTupGetNAtts(itup, index) == 0 ||
-				((itup->t_info & INDEX_ALT_TID_MASK) == 0));
-	}
-	else
-	{
-		/*
-		 * Pivot tuples stored in non-leaf pages and hikeys of leaf pages
-		 * contain only key attributes
-		 */
-		return (BTreeTupGetNAtts(itup, index) == nkeyatts);
-	}
 }

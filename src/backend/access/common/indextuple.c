@@ -19,7 +19,6 @@
 #include "access/heapam.h"
 #include "access/itup.h"
 #include "access/tuptoaster.h"
-#include "utils/rel.h"
 
 
 /* ----------------------------------------------------------------
@@ -32,6 +31,9 @@
  *
  *		This shouldn't leak any memory; otherwise, callers such as
  *		tuplesort_putindextuplevalues() will be very unhappy.
+ *
+ *		This shouldn't perform external table access provided caller
+ *		does not pass values that are stored EXTERNAL.
  * ----------------
  */
 IndexTuple
@@ -448,30 +450,49 @@ CopyIndexTuple(IndexTuple source)
 }
 
 /*
- * Truncate tailing attributes from given index tuple leaving it with
- * new_indnatts number of attributes.
+ * Create a palloc'd copy of an index tuple, leaving only the first
+ * leavenatts attributes remaining.
+ *
+ * Truncation is guaranteed to result in an index tuple that is no
+ * larger than the original.  It is safe to use the IndexTuple with
+ * the original tuple descriptor, but caller must avoid actually
+ * accessing truncated attributes from returned tuple!  In practice
+ * this means that index_getattr() must be called with special care,
+ * and that the truncated tuple should only ever be accessed by code
+ * under caller's direct control.
+ *
+ * It's safe to call this function with a buffer lock held, since it
+ * never performs external table access.  If it ever became possible
+ * for index tuples to contain EXTERNAL TOAST values, then this would
+ * have to be revisited.
  */
 IndexTuple
-index_truncate_tuple(TupleDesc tupleDescriptor, IndexTuple olditup,
-					 int new_indnatts)
+index_truncate_tuple(TupleDesc sourceDescriptor, IndexTuple source,
+					 int leavenatts)
 {
-	TupleDesc	itupdesc = CreateTupleDescCopyConstr(tupleDescriptor);
+	TupleDesc	truncdesc;
 	Datum		values[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
-	IndexTuple	newitup;
+	IndexTuple	truncated;
 
-	Assert(tupleDescriptor->natts <= INDEX_MAX_KEYS);
-	Assert(new_indnatts > 0);
-	Assert(new_indnatts < tupleDescriptor->natts);
+	Assert(leavenatts < sourceDescriptor->natts);
 
-	index_deform_tuple(olditup, tupleDescriptor, values, isnull);
+	/* Create temporary descriptor to scribble on */
+	truncdesc = palloc(TupleDescSize(sourceDescriptor));
+	TupleDescCopy(truncdesc, sourceDescriptor);
+	truncdesc->natts = leavenatts;
 
-	/* form new tuple that will contain only key attributes */
-	itupdesc->natts = new_indnatts;
-	newitup = index_form_tuple(itupdesc, values, isnull);
-	newitup->t_tid = olditup->t_tid;
+	/* Deform, form copy of tuple with fewer attributes */
+	index_deform_tuple(source, truncdesc, values, isnull);
+	truncated = index_form_tuple(truncdesc, values, isnull);
+	truncated->t_tid = source->t_tid;
+	Assert(IndexTupleSize(truncated) <= IndexTupleSize(source));
 
-	FreeTupleDesc(itupdesc);
-	Assert(IndexTupleSize(newitup) <= IndexTupleSize(olditup));
-	return newitup;
+	/*
+	 * Cannot leak memory here, TupleDescCopy() doesn't allocate any
+	 * inner structure, so, plain pfree() should clean all allocated memory
+	 */
+	pfree(truncdesc);
+
+	return truncated;
 }

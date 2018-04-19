@@ -1605,6 +1605,8 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 		ItemPointerSetBlockNumber(&trunctuple.t_tid, target);
 	else
 		ItemPointerSetInvalid(&trunctuple.t_tid);
+	BTreeTupleSetNAtts(&trunctuple, 0);
+
 	if (PageAddItem(page, (Item) &trunctuple, sizeof(IndexTupleData), P_HIKEY,
 					false, false) == InvalidOffsetNumber)
 		elog(ERROR, "could not add dummy high key to half-dead page");

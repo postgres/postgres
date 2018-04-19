@@ -186,59 +186,51 @@ typedef struct BTMetaPageData
 #define P_FIRSTKEY			((OffsetNumber) 2)
 #define P_FIRSTDATAKEY(opaque)	(P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY)
 
-
 /*
- * B-tree index with INCLUDE clause has non-key (included) attributes, which
- * are used solely in index-only scans.  Those non-key attributes are present
- * in leaf index tuples which point to corresponding heap tuples.  However,
- * tree also contains "pivot" tuples.  Pivot tuples are used for navigation
- * during tree traversal.  Pivot tuples include tuples on non-leaf pages and
- * high key tuples.  Such, tuples don't need to included attributes, because
- * they have no use during tree traversal.  This is why we truncate them in
- * order to save some space.  Therefore, B-tree index with INCLUDE clause
- * contain tuples with variable number of attributes.
+ * INCLUDE B-Tree indexes have non-key attributes.  These are extra
+ * attributes that may be returned by index-only scans, but do not influence
+ * the order of items in the index (formally, non-key attributes are not
+ * considered to be part of the key space).  Non-key attributes are only
+ * present in leaf index tuples whose item pointers actually point to heap
+ * tuples.  All other types of index tuples (collectively, "pivot" tuples)
+ * only have key attributes, since pivot tuples only ever need to represent
+ * how the key space is separated.  In general, any B-Tree index that has
+ * more than one level (i.e. any index that does not just consist of a
+ * metapage and a single leaf root page) must have some number of pivot
+ * tuples, since pivot tuples are used for traversing the tree.
  *
- * In order to keep on-disk compatibility with upcoming suffix truncation of
- * pivot tuples, we store number of attributes present inside tuple itself.
- * Thankfully, offset number is always unused in pivot tuple.  So, we use free
- * bit of index tuple flags as sign that offset have alternative meaning: it
- * stores number of keys present in index tuple (12 bit is far enough for that).
- * And we have 4 bits reserved for future usage.
+ * We store the number of attributes present inside pivot tuples by abusing
+ * their item pointer offset field, since pivot tuples never need to store a
+ * real offset (downlinks only need to store a block number).  The offset
+ * field only stores the number of attributes when the INDEX_ALT_TID_MASK
+ * bit is set (we never assume that pivot tuples must explicitly store the
+ * number of attributes, and currently do not bother storing the number of
+ * attributes unless indnkeyatts actually differs from indnatts).
+ * INDEX_ALT_TID_MASK is only used for pivot tuples at present, though it's
+ * possible that it will be used within non-pivot tuples in the future.  Do
+ * not assume that a tuple with INDEX_ALT_TID_MASK set must be a pivot
+ * tuple.
  *
- * Right now INDEX_ALT_TID_MASK is set only on truncation of non-key
- * attributes of included indexes.  But potentially every pivot index tuple
- * might have INDEX_ALT_TID_MASK set.  Then this tuple should have number of
- * attributes correctly set in BT_N_KEYS_OFFSET_MASK, and in future it might
- * use some bits of BT_RESERVED_OFFSET_MASK.
- *
- * Non-pivot tuples might also use bit of BT_RESERVED_OFFSET_MASK.  Despite
- * they store heap tuple offset, higher bits of offset are always free.
+ * The 12 least significant offset bits are used to represent the number of
+ * attributes in INDEX_ALT_TID_MASK tuples, leaving 4 bits that are reserved
+ * for future use (BT_RESERVED_OFFSET_MASK bits). BT_N_KEYS_OFFSET_MASK should
+ * be large enough to store any number <= INDEX_MAX_KEYS.
  */
-#define INDEX_ALT_TID_MASK		INDEX_AM_RESERVED_BIT	/* flag indicating t_tid
-														 * offset has an
-														 * alternative meaning */
-#define BT_RESERVED_OFFSET_MASK	0xF000	/* mask of bits in t_tid offset
-										 * reserved for future usage */
-#define BT_N_KEYS_OFFSET_MASK	0x0FFF	/* mask of bits in t_tid offset
-										 * holding number of attributes
-										 * actually present in index tuple */
+#define INDEX_ALT_TID_MASK			INDEX_AM_RESERVED_BIT
+#define BT_RESERVED_OFFSET_MASK		0xF000
+#define BT_N_KEYS_OFFSET_MASK		0x0FFF
 
-/* Acess to downlink block number */
+/* Get/set downlink block number */
 #define BTreeInnerTupleGetDownLink(itup) \
 	ItemPointerGetBlockNumberNoCheck(&((itup)->t_tid))
-
 #define BTreeInnerTupleSetDownLink(itup, blkno) \
 	ItemPointerSetBlockNumber(&((itup)->t_tid), (blkno))
 
-/* Set number of attributes to B-tree index tuple overriding t_tid offset */
-#define BTreeTupSetNAtts(itup, n) \
-	do { \
-		(itup)->t_info |= INDEX_ALT_TID_MASK; \
-		ItemPointerSetOffsetNumber(&(itup)->t_tid, n); \
-	} while(0)
-
-/* Get number of attributes in B-tree index tuple */
-#define BTreeTupGetNAtts(itup, index)	\
+/*
+ * Get/set number of attributes within B-tree index tuple. Asserts should be
+ * removed when BT_RESERVED_OFFSET_MASK bits will be used.
+ */
+#define BTreeTupleGetNAtts(itup, rel)	\
 	( \
 		(itup)->t_info & INDEX_ALT_TID_MASK ? \
 		( \
@@ -246,8 +238,14 @@ typedef struct BTMetaPageData
 			ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) & BT_N_KEYS_OFFSET_MASK \
 		) \
 		: \
-		IndexRelationGetNumberOfAttributes(index) \
+		IndexRelationGetNumberOfAttributes(rel) \
 	)
+#define BTreeTupleSetNAtts(itup, n) \
+	do { \
+		(itup)->t_info |= INDEX_ALT_TID_MASK; \
+		Assert(((n) & BT_RESERVED_OFFSET_MASK) == 0); \
+		ItemPointerSetOffsetNumber(&(itup)->t_tid, (n) & BT_N_KEYS_OFFSET_MASK); \
+	} while(0)
 
 /*
  *	Operator strategy numbers for B-tree have been moved to access/stratnum.h,
@@ -561,7 +559,6 @@ extern bool _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
 				 Snapshot snapshot);
-extern bool _bt_check_natts(Relation index, Page page, OffsetNumber offnum);
 
 /*
  * prototypes for functions in nbtutils.c
@@ -590,7 +587,8 @@ extern bytea *btoptions(Datum reloptions, bool validate);
 extern bool btproperty(Oid index_oid, int attno,
 		   IndexAMProperty prop, const char *propname,
 		   bool *res, bool *isnull);
-extern IndexTuple _bt_truncate_tuple(Relation idxrel, IndexTuple olditup);
+extern IndexTuple _bt_nonkey_truncate(Relation rel, IndexTuple itup);
+extern bool _bt_check_natts(Relation rel, Page page, OffsetNumber offnum);
 
 /*
  * prototypes for functions in nbtvalidate.c

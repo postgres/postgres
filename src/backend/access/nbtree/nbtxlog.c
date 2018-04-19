@@ -248,17 +248,16 @@ btree_xlog_split(bool onleft, bool lhighkey, XLogReaderState *record)
 
 	_bt_restore_page(rpage, datapos, datalen);
 
-	/* Non-leaf page should always have its high key logged. */
-	Assert(isleaf || lhighkey);
-
 	/*
 	 * When the high key isn't present is the wal record, then we assume it to
-	 * be equal to the first key on the right page.
+	 * be equal to the first key on the right page.  It must be from the leaf
+	 * level.
 	 */
 	if (!lhighkey)
 	{
 		ItemId		hiItemId = PageGetItemId(rpage, P_FIRSTDATAKEY(ropaque));
 
+		Assert(isleaf);
 		left_hikey = (IndexTuple) PageGetItem(rpage, hiItemId);
 		left_hikeysz = ItemIdGetLength(hiItemId);
 	}
@@ -620,7 +619,7 @@ btree_xlog_delete_get_latestRemovedXid(XLogReaderState *record)
 		 * heap_fetch, since it uses ReadBuffer rather than XLogReadBuffer.
 		 * Note that we are not looking at tuple data here, just headers.
 		 */
-		hoffnum = ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid));
+		hoffnum = ItemPointerGetOffsetNumber(&(itup->t_tid));
 		hitemid = PageGetItemId(hpage, hoffnum);
 
 		/*
@@ -805,6 +804,8 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 		ItemPointerSetBlockNumber(&trunctuple.t_tid, xlrec->topparent);
 	else
 		ItemPointerSetInvalid(&trunctuple.t_tid);
+	BTreeTupleSetNAtts(&trunctuple, 0);
+
 	if (PageAddItem(page, (Item) &trunctuple, sizeof(IndexTupleData), P_HIKEY,
 					false, false) == InvalidOffsetNumber)
 		elog(ERROR, "could not add dummy high key to half-dead page");
@@ -915,6 +916,8 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 			ItemPointerSetBlockNumber(&trunctuple.t_tid, xlrec->topparent);
 		else
 			ItemPointerSetInvalid(&trunctuple.t_tid);
+		BTreeTupleSetNAtts(&trunctuple, 0);
+
 		if (PageAddItem(page, (Item) &trunctuple, sizeof(IndexTupleData), P_HIKEY,
 						false, false) == InvalidOffsetNumber)
 			elog(ERROR, "could not add dummy high key to half-dead page");

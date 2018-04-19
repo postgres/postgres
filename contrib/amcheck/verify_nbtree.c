@@ -698,6 +698,9 @@ nextpage:
  *	 "real" data item on the page to the right (if such a first item is
  *	 available).
  *
+ * - That tuples report that they have the expected number of attributes.
+ *	 INCLUDE index pivot tuples should not contain non-key attributes.
+ *
  * Furthermore, when state passed shows ShareLock held, and target page is
  * internal page, function also checks:
  *
@@ -722,43 +725,35 @@ bt_target_page_check(BtreeCheckState *state)
 	elog(DEBUG2, "verifying %u items on %s block %u", max,
 		 P_ISLEAF(topaque) ? "leaf" : "internal", state->targetblock);
 
-
-	/* Check the number of attributes in high key if any */
-	if (!P_RIGHTMOST(topaque))
+	/*
+	 * Check the number of attributes in high key. Note, rightmost page doesn't
+	 * contain a high key, so nothing to check
+	 */
+	if (!P_RIGHTMOST(topaque) &&
+		!_bt_check_natts(state->rel, state->target, P_HIKEY))
 	{
-		if (!_bt_check_natts(state->rel, state->target, P_HIKEY))
-		{
-			ItemId		itemid;
-			IndexTuple	itup;
-			char	   *itid,
-					   *htid;
+		ItemId		itemid;
+		IndexTuple	itup;
 
-			itemid = PageGetItemId(state->target, P_HIKEY);
-			itup = (IndexTuple) PageGetItem(state->target, itemid);
-			itid = psprintf("(%u,%u)", state->targetblock, P_HIKEY);
-			htid = psprintf("(%u,%u)",
-							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
-							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
+		itemid = PageGetItemId(state->target, P_HIKEY);
+		itup = (IndexTuple) PageGetItem(state->target, itemid);
 
-			ereport(ERROR,
-					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("wrong number of index tuple attributes for index \"%s\"",
-							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Index tid=%s natts=%u points to %s tid=%s page lsn=%X/%X.",
-										itid,
-										BTreeTupGetNAtts(itup, state->rel),
-										P_ISLEAF(topaque) ? "heap" : "index",
-										htid,
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn)));
-		}
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("wrong number of high key index tuple attributes in index \"%s\"",
+						RelationGetRelationName(state->rel)),
+				 errdetail_internal("Index block=%u natts=%u block type=%s page lsn=%X/%X.",
+									state->targetblock,
+									BTreeTupleGetNAtts(itup, state->rel),
+									P_ISLEAF(topaque) ? "heap" : "index",
+									(uint32) (state->targetlsn >> 32),
+									(uint32) state->targetlsn)));
 	}
-
 
 	/*
 	 * Loop over page items, starting from first non-highkey item, not high
-	 * key (if any).  Also, immediately skip "negative infinity" real item (if
-	 * any).
+	 * key (if any).  Most tests are not performed for the "negative infinity"
+	 * real item (if any).
 	 */
 	for (offset = P_FIRSTDATAKEY(topaque);
 		 offset <= max;
@@ -791,7 +786,7 @@ bt_target_page_check(BtreeCheckState *state)
 										tupsize, ItemIdGetLength(itemid),
 										(uint32) (state->targetlsn >> 32),
 										(uint32) state->targetlsn),
-					 errhint("This could be a torn page problem")));
+					 errhint("This could be a torn page problem.")));
 
 		/* Check the number of index tuple attributes */
 		if (!_bt_check_natts(state->rel, state->target, offset))
@@ -806,11 +801,11 @@ bt_target_page_check(BtreeCheckState *state)
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("wrong number of index tuple attributes for index \"%s\"",
+					 errmsg("wrong number of index tuple attributes in index \"%s\"",
 							RelationGetRelationName(state->rel)),
 					 errdetail_internal("Index tid=%s natts=%u points to %s tid=%s page lsn=%X/%X.",
 										itid,
-										BTreeTupGetNAtts(itup, state->rel),
+										BTreeTupleGetNAtts(itup, state->rel),
 										P_ISLEAF(topaque) ? "heap" : "index",
 										htid,
 										(uint32) (state->targetlsn >> 32),
@@ -818,8 +813,8 @@ bt_target_page_check(BtreeCheckState *state)
 		}
 
 		/*
-		 * Don't try to generate scankey using "negative infinity" garbage
-		 * data on internal pages
+		 * Don't try to generate scankey using "negative infinity" item on
+		 * internal pages. They are always truncated to zero attributes.
 		 */
 		if (offset_is_negative_infinity(topaque, offset))
 			continue;
@@ -1430,9 +1425,9 @@ offset_is_negative_infinity(BTPageOpaque opaque, OffsetNumber offset)
 	 * infinity item is either first or second line item, or there is none
 	 * within page.
 	 *
-	 * "Negative infinity" tuple is a special corner case of pivot tuples,
-	 * it has zero attributes while rest of pivot tuples have nkeyatts number
-	 * of attributes.
+	 * Negative infinity items are a special case among pivot tuples.  They
+	 * always have zero attributes, while all other pivot tuples always have
+	 * nkeyatts attributes.
 	 *
 	 * Right-most pages don't have a high key, but could be said to
 	 * conceptually have a "positive infinity" high key.  Thus, there is a
