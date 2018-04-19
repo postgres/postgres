@@ -130,7 +130,7 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
 			return false;
 
 		/*
-		 * We arrange the partitions in the ascending order of their modulus
+		 * We arrange the partitions in the ascending order of their moduli
 		 * and remainders.  Also every modulus is factor of next larger
 		 * modulus.  Therefore we can safely store index of a given partition
 		 * in indexes array at remainder of that partition.  Also entries at
@@ -744,7 +744,7 @@ check_default_allows_bound(Relation parent, Relation default_rel,
  *
  * Returns the greatest modulus of the hash partition bound. The greatest
  * modulus will be at the end of the datums array because hash partitions are
- * arranged in the ascending order of their modulus and remainders.
+ * arranged in the ascending order of their moduli and remainders.
  */
 int
 get_hash_partition_greatest_modulus(PartitionBoundInfo bound)
@@ -912,7 +912,7 @@ partition_rbound_datum_cmp(FmgrInfo *partsupfunc, Oid *partcollation,
 /*
  * partition_hbound_cmp
  *
- * Compares modulus first, then remainder if modulus are equal.
+ * Compares modulus first, then remainder if modulus is equal.
  */
 int32
 partition_hbound_cmp(int modulus1, int remainder1, int modulus2, int remainder2)

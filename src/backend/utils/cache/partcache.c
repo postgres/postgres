@@ -612,7 +612,7 @@ RelationBuildPartitionDesc(Relation rel)
 		{
 			case PARTITION_STRATEGY_HASH:
 				{
-					/* Modulus are stored in ascending order */
+					/* Moduli are stored in ascending order */
 					int			greatest_modulus = hbounds[ndatums - 1]->modulus;
 
 					boundinfo->indexes = (int *) palloc(greatest_modulus *
