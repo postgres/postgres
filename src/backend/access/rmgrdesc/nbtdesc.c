@@ -96,6 +96,15 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 								 xlrec->node.relNode, xlrec->latestRemovedXid);
 				break;
 			}
+		case XLOG_BTREE_META_CLEANUP:
+			{
+				xl_btree_metadata *xlrec = (xl_btree_metadata *) rec;
+
+				appendStringInfo(buf, "oldest_btpo_xact %u; last_cleanup_num_heap_tuples: %lf",
+								 xlrec->oldest_btpo_xact,
+								 xlrec->last_cleanup_num_heap_tuples);
+				break;
+			}
 	}
 }
 
@@ -147,6 +156,9 @@ btree_identify(uint8 info)
 			break;
 		case XLOG_BTREE_REUSE_PAGE:
 			id = "REUSE_PAGE";
+			break;
+		case XLOG_BTREE_META_CLEANUP:
+			id = "META_CLEANUP";
 			break;
 	}
 
