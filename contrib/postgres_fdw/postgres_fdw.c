@@ -3976,7 +3976,9 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 
 	/* Separate restrict list into join quals and quals on join relation */
 	if (IS_OUTER_JOIN(jointype))
-		extract_actual_join_clauses(extra->restrictlist, &joinclauses, &otherclauses);
+		extract_actual_join_clauses(extra->restrictlist,
+									joinrel->relids,
+									&joinclauses, &otherclauses);
 	else
 	{
 		/*
