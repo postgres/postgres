@@ -108,7 +108,7 @@ extern void reduce_unique_semijoins(PlannerInfo *root);
 extern bool query_supports_distinctness(Query *query);
 extern bool query_is_distinct_for(Query *query, List *colnos, List *opids);
 extern bool innerrel_is_unique(PlannerInfo *root,
-				   Relids outerrelids, RelOptInfo *innerrel,
+				   Relids joinrelids, Relids outerrelids, RelOptInfo *innerrel,
 				   JoinType jointype, List *restrictlist, bool force_cache);
 
 /*

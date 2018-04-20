@@ -171,6 +171,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 			break;
 		case JOIN_UNIQUE_OUTER:
 			extra.inner_unique = innerrel_is_unique(root,
+													joinrel->relids,
 													outerrel->relids,
 													innerrel,
 													JOIN_INNER,
@@ -179,6 +180,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 			break;
 		default:
 			extra.inner_unique = innerrel_is_unique(root,
+													joinrel->relids,
 													outerrel->relids,
 													innerrel,
 													jointype,
@@ -207,7 +209,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * for cost estimation.  These will be the same for all paths.
 	 */
 	if (jointype == JOIN_SEMI || jointype == JOIN_ANTI || extra.inner_unique)
-		compute_semi_anti_join_factors(root, outerrel, innerrel,
+		compute_semi_anti_join_factors(root, joinrel, outerrel, innerrel,
 									   jointype, sjinfo, restrictlist,
 									   &extra.semifactors);
 

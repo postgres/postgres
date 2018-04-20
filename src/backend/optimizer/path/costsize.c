@@ -4023,6 +4023,7 @@ get_restriction_qual_cost(PlannerInfo *root, RelOptInfo *baserel,
  * them to all the join cost estimation functions.
  *
  * Input parameters:
+ *	joinrel: join relation under consideration
  *	outerrel: outer relation under consideration
  *	innerrel: inner relation under consideration
  *	jointype: if not JOIN_SEMI or JOIN_ANTI, we assume it's inner_unique
@@ -4033,6 +4034,7 @@ get_restriction_qual_cost(PlannerInfo *root, RelOptInfo *baserel,
  */
 void
 compute_semi_anti_join_factors(PlannerInfo *root,
+							   RelOptInfo *joinrel,
 							   RelOptInfo *outerrel,
 							   RelOptInfo *innerrel,
 							   JoinType jointype,
@@ -4056,14 +4058,12 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	 */
 	if (IS_OUTER_JOIN(jointype))
 	{
-		Relids		joinrelids = bms_union(outerrel->relids, innerrel->relids);
-
 		joinquals = NIL;
 		foreach(l, restrictlist)
 		{
 			RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
-			if (!RINFO_IS_PUSHED_DOWN(rinfo, joinrelids))
+			if (!RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
 				joinquals = lappend(joinquals, rinfo);
 		}
 	}

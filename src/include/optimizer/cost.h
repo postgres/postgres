@@ -166,6 +166,7 @@ extern void cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan);
 extern void cost_qual_eval(QualCost *cost, List *quals, PlannerInfo *root);
 extern void cost_qual_eval_node(QualCost *cost, Node *qual, PlannerInfo *root);
 extern void compute_semi_anti_join_factors(PlannerInfo *root,
+							   RelOptInfo *joinrel,
 							   RelOptInfo *outerrel,
 							   RelOptInfo *innerrel,
 							   JoinType jointype,
