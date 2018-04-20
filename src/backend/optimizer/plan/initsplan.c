@@ -1775,6 +1775,11 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * attach quals to the lowest level where they can be evaluated.  But
 	 * if we were ever to re-introduce a mechanism for delaying evaluation
 	 * of "expensive" quals, this area would need work.
+	 *
+	 * Note: generally, use of is_pushed_down has to go through the macro
+	 * RINFO_IS_PUSHED_DOWN, because that flag alone is not always sufficient
+	 * to tell whether a clause must be treated as pushed-down in context.
+	 * This seems like another reason why it should perhaps be rethought.
 	 *----------
 	 */
 	if (is_deduced)

@@ -373,7 +373,7 @@ extract_actual_clauses(List *restrictinfo_list,
  * extract_actual_join_clauses
  *
  * Extract bare clauses from 'restrictinfo_list', separating those that
- * syntactically match the join level from those that were pushed down.
+ * semantically match the join level from those that were pushed down.
  * Pseudoconstant clauses are excluded from the results.
  *
  * This is only used at outer joins, since for plain joins we don't care
@@ -394,15 +394,7 @@ extract_actual_join_clauses(List *restrictinfo_list,
 	{
 		RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
-		/*
-		 * We must check both is_pushed_down and required_relids, since an
-		 * outer-join clause that's been pushed down to some lower join level
-		 * via path parameterization will not be marked is_pushed_down;
-		 * nonetheless, it must be treated as a filter clause not a join
-		 * clause so far as the lower join level is concerned.
-		 */
-		if (rinfo->is_pushed_down ||
-			!bms_is_subset(rinfo->required_relids, joinrelids))
+		if (RINFO_IS_PUSHED_DOWN(rinfo, joinrelids))
 		{
 			if (!rinfo->pseudoconstant)
 				*otherquals = lappend(*otherquals, rinfo->clause);

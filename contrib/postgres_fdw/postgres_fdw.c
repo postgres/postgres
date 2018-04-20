@@ -4705,7 +4705,8 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 		bool		is_remote_clause = is_foreign_expr(root, joinrel,
 													   rinfo->clause);
 
-		if (IS_OUTER_JOIN(jointype) && !rinfo->is_pushed_down)
+		if (IS_OUTER_JOIN(jointype) &&
+			!RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
 		{
 			if (!is_remote_clause)
 				return false;

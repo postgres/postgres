@@ -1700,7 +1700,7 @@ hash_inner_and_outer(PlannerInfo *root,
 		 * If processing an outer join, only use its own join clauses for
 		 * hashing.  For inner joins we need not be so picky.
 		 */
-		if (isouterjoin && restrictinfo->is_pushed_down)
+		if (isouterjoin && RINFO_IS_PUSHED_DOWN(restrictinfo, joinrel->relids))
 			continue;
 
 		if (!restrictinfo->can_join ||
@@ -1947,7 +1947,7 @@ select_mergejoin_clauses(PlannerInfo *root,
 		 * we don't set have_nonmergeable_joinclause here because pushed-down
 		 * clauses will become otherquals not joinquals.)
 		 */
-		if (isouterjoin && restrictinfo->is_pushed_down)
+		if (isouterjoin && RINFO_IS_PUSHED_DOWN(restrictinfo, joinrel->relids))
 			continue;
 
 		/* Check that clause is a mergeable operator clause */
