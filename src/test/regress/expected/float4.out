@@ -125,6 +125,18 @@ SELECT 'nan'::numeric::float4;
     NaN
 (1 row)
 
+SELECT 'nan'::float8::float4;
+ float4 
+--------
+    NaN
+(1 row)
+
+SELECT 'nan'::float4::float8;
+ float8 
+--------
+    NaN
+(1 row)
+
 SELECT '' AS five, * FROM FLOAT4_TBL;
  five |     f1      
 ------+-------------
