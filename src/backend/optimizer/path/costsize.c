@@ -147,6 +147,7 @@ static bool has_indexed_join_quals(NestPath *joinpath);
 static double approx_tuple_count(PlannerInfo *root, JoinPath *path,
 				   List *quals);
 static double calc_joinrel_size_estimate(PlannerInfo *root,
+						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,
 						   double outer_rows,
@@ -3542,13 +3543,15 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	 */
 	if (jointype == JOIN_ANTI)
 	{
+		Relids		joinrelids = bms_union(outerrel->relids, innerrel->relids);
+
 		joinquals = NIL;
 		foreach(l, restrictlist)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 			Assert(IsA(rinfo, RestrictInfo));
-			if (!rinfo->is_pushed_down)
+			if (!RINFO_IS_PUSHED_DOWN(rinfo, joinrelids))
 				joinquals = lappend(joinquals, rinfo);
 		}
 	}
@@ -3863,6 +3866,7 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   List *restrictlist)
 {
 	rel->rows = calc_joinrel_size_estimate(root,
+										   rel,
 										   outer_rel,
 										   inner_rel,
 										   outer_rel->rows,
@@ -3905,6 +3909,7 @@ get_parameterized_joinrel_size(PlannerInfo *root, RelOptInfo *rel,
 	 * estimate for any pair with the same parameterization.
 	 */
 	nrows = calc_joinrel_size_estimate(root,
+									   rel,
 									   outer_path->parent,
 									   inner_path->parent,
 									   outer_path->rows,
@@ -3928,6 +3933,7 @@ get_parameterized_joinrel_size(PlannerInfo *root, RelOptInfo *rel,
  */
 static double
 calc_joinrel_size_estimate(PlannerInfo *root,
+						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,
 						   double outer_rows,
@@ -3981,7 +3987,7 @@ calc_joinrel_size_estimate(PlannerInfo *root,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 			Assert(IsA(rinfo, RestrictInfo));
-			if (rinfo->is_pushed_down)
+			if (RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
 				pushedquals = lappend(pushedquals, rinfo);
 			else
 				joinquals = lappend(joinquals, rinfo);
