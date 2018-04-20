@@ -1990,7 +1990,7 @@ findRangeSubOpclass(List *opcname, Oid subtype)
 		opcid = GetDefaultOpClass(subtype, BTREE_AM_OID);
 		if (!OidIsValid(opcid))
 		{
-			/* We spell the error message identically to GetIndexOpClass */
+			/* We spell the error message identically to ResolveOpClass */
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("data type %s has no default operator class for access method \"%s\"",

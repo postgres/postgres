@@ -2062,7 +2062,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * get_object_address is pretty sensitive to the length its input lists;
+	 * get_object_address is pretty sensitive to the length of its input lists;
 	 * check that they're what it wants.
 	 */
 	switch (type)
