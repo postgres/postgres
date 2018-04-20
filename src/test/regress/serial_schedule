@@ -188,6 +188,6 @@ test: reloptions
 test: hash_part
 test: indexing
 test: partition_aggregate
-test: fast_default
 test: event_trigger
+test: fast_default
 test: stats
