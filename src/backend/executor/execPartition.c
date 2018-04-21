@@ -1081,7 +1081,7 @@ FormPartitionKeyDatum(PartitionDispatch pd,
  * Return value is index of the partition (>= 0 and < partdesc->nparts) if one
  * found or -1 if none found.
  */
-int
+static int
 get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 {
 	int			bound_offset;
