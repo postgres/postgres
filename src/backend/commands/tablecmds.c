@@ -14568,7 +14568,8 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 
 				col = TupleDescAttr(parent->rd_att,
 									trigForm->tgattr.values[i] - 1);
-				cols = lappend(cols, makeString(NameStr(col->attname)));
+				cols = lappend(cols,
+							   makeString(pstrdup(NameStr(col->attname))));
 			}
 		}
 
