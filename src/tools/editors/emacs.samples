@@ -48,7 +48,7 @@
   (setq perl-brace-imaginary-offset 0)
   (setq perl-brace-offset 0)
   (setq perl-continued-brace-offset 4)
-  (setq perl-continued-statement-offset 4)
+  (setq perl-continued-statement-offset 2)
   (setq perl-indent-level 4)
   (setq perl-label-offset -2)
   (setq indent-tabs-mode t)
