@@ -836,10 +836,6 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 				case PARTCLAUSE_UNSUPPORTED:
 					/* This clause cannot be used for pruning. */
 					break;
-
-				default:
-					Assert(false);
-					break;
 			}
 
 			/* done; go check the next clause. */
