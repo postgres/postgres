@@ -359,6 +359,31 @@ execute ab_q3 (1, 8);
 
 explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
 
+-- Test a backwards Append scan
+create table list_part (a int) partition by list (a);
+create table list_part1 partition of list_part for values in (1);
+create table list_part2 partition of list_part for values in (2);
+create table list_part3 partition of list_part for values in (3);
+create table list_part4 partition of list_part for values in (4);
+
+insert into list_part select generate_series(1,4);
+
+begin;
+
+-- Don't select an actual value out of the table as the order of the Append's
+-- subnodes may not be stable.
+declare cur SCROLL CURSOR for select 1 from list_part where a > (select 1) and a < (select 4);
+
+-- move beyond the final row
+move 3 from cur;
+
+-- Ensure we get two rows.
+fetch backward all from cur;
+
+commit;
+
+drop table list_part;
+
 -- Parallel append
 
 -- Suppress the number of loops each parallel node runs for.  This is because

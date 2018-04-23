@@ -1167,7 +1167,7 @@ bms_prev_member(const Bitmapset *a, int prevbit)
 		if (w != 0)
 		{
 			int			result;
-			int			shift = 24;
+			int			shift = BITS_PER_BITMAPWORD - 8;
 			result = wordnum * BITS_PER_BITMAPWORD;
 
 			while ((w >> shift) == 0)
