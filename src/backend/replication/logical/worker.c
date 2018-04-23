@@ -932,7 +932,7 @@ apply_handle_truncate(StringInfo s)
 		rels = lappend(rels, rel->localrel);
 		relids = lappend_oid(relids, rel->localreloid);
 		if (RelationIsLogicallyLogged(rel->localrel))
-			relids_logged = lappend_oid(relids, rel->localreloid);
+			relids_logged = lappend_oid(relids_logged, rel->localreloid);
 	}
 
 	/*
