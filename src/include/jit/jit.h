@@ -17,11 +17,11 @@
 
 /* Flags determining what kind of JIT operations to perform */
 #define PGJIT_NONE     0
-#define PGJIT_PERFORM  1 << 0
-#define PGJIT_OPT3     1 << 1
-#define PGJIT_INLINE   1 << 2
-#define PGJIT_EXPR	   1 << 3
-#define PGJIT_DEFORM   1 << 4
+#define PGJIT_PERFORM  (1 << 0)
+#define PGJIT_OPT3     (1 << 1)
+#define PGJIT_INLINE   (1 << 2)
+#define PGJIT_EXPR	   (1 << 3)
+#define PGJIT_DEFORM   (1 << 4)
 
 
 typedef struct JitContext
