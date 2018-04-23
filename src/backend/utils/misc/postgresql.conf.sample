@@ -308,6 +308,7 @@
 #enable_partitionwise_join = off
 #enable_partitionwise_aggregate = off
 #enable_parallel_hash = on
+#enable_partition_pruning = on
 
 # - Planner Cost Constants -
 

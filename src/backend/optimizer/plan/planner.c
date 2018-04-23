@@ -623,7 +623,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->grouping_map = NULL;
 	root->minmax_aggs = NIL;
 	root->qual_security_level = 0;
-	root->hasInheritedTarget = false;
+	root->inhTargetKind = INHKIND_NONE;
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
 		root->wt_param_id = SS_assign_special_param(root);
@@ -1424,8 +1424,13 @@ inheritance_planner(PlannerInfo *root)
 		Assert(subroot->join_info_list == NIL);
 		/* and we haven't created PlaceHolderInfos, either */
 		Assert(subroot->placeholder_list == NIL);
-		/* hack to mark target relation as an inheritance partition */
-		subroot->hasInheritedTarget = true;
+
+		/*
+		 * Mark if we're planning a query to a partitioned table or an
+		 * inheritance parent.
+		 */
+		subroot->inhTargetKind =
+			partitioned_relids ? INHKIND_PARTITIONED : INHKIND_INHERITED;
 
 		/*
 		 * If the child is further partitioned, remember it as a parent. Since

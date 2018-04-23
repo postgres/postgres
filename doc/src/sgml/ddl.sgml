@@ -3196,7 +3196,7 @@ CREATE INDEX ON measurement (logdate);
 
       <listitem>
        <para>
-        Ensure that the <xref linkend="guc-constraint-exclusion"/>
+        Ensure that the <xref linkend="guc-enable-partition-pruning"/>
         configuration parameter is not disabled in <filename>postgresql.conf</filename>.
         If it is, queries will not be optimized as desired.
        </para>

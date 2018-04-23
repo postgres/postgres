@@ -3826,6 +3826,23 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-enable-partition-pruning" xreflabel="enable_partition_pruning">
+      <term><varname>enable_partition_pruning</varname> (<type>boolean</type>)
+       <indexterm>
+        <primary><varname>enable_partition_pruning</varname> configuration parameter</primary>
+       </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's ability to eliminate a
+        partitioned table's partitions from query plans.  This also controls
+        the planner's ability to generate query plans which allow the query
+        executor to remove (ignore) partitions during query execution.  The
+        default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-partitionwise-join" xreflabel="enable_partitionwise_join">
       <term><varname>enable_partitionwise_join</varname> (<type>boolean</type>)
       <indexterm>
@@ -4417,8 +4434,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         <literal>partition</literal> (examine constraints only for inheritance child
         tables and <literal>UNION ALL</literal> subqueries).
         <literal>partition</literal> is the default setting.
-        It is often used with inheritance and partitioned tables to
-        improve performance.
+        It is often used with inheritance tables to improve performance.
       </para>
 
        <para>
@@ -4441,11 +4457,11 @@ SELECT * FROM parent WHERE key = 2400;
 
        <para>
         Currently, constraint exclusion is enabled by default
-        only for cases that are often used to implement table partitioning.
-        Turning it on for all tables imposes extra planning overhead that is
-        quite noticeable on simple queries, and most often will yield no
-        benefit for simple queries.  If you have no partitioned tables
-        you might prefer to turn it off entirely.
+        only for cases that are often used to implement table partitioning via
+        inheritance tables.  Turning it on for all tables imposes extra
+        planning overhead that is quite noticeable on simple queries, and most
+        often will yield no benefit for simple queries.  If you have no
+        inheritance partitioned tables you might prefer to turn it off entirely.
        </para>
 
        <para>

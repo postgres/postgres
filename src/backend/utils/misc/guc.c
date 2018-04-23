@@ -952,6 +952,17 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"enable_partition_pruning", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable plan-time and run-time partition pruning."),
+			gettext_noop("Allows the query planner and executor to compare partition "
+						 "bounds to conditions in the query to determine which "
+						 "partitions must be scanned.")
+		},
+		&enable_partition_pruning,
+		true,
+		NULL, NULL, NULL
+	},
+	{
 		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("Enables genetic query optimization."),
 			gettext_noop("This algorithm attempts to do planning without "

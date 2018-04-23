@@ -2760,3 +2760,167 @@ explain (costs off) select * from pp_intrangepart where a = '(1,2)'::int4range;
 (2 rows)
 
 drop table pp_intrangepart;
+--
+-- Ensure the enable_partition_prune GUC properly disables partition pruning.
+--
+create table pp_lp (a int, value int) partition by list (a);
+create table pp_lp1 partition of pp_lp for values in(1);
+create table pp_lp2 partition of pp_lp for values in(2);
+explain (costs off) select * from pp_lp where a = 1;
+        QUERY PLAN        
+--------------------------
+ Append
+   ->  Seq Scan on pp_lp1
+         Filter: (a = 1)
+(3 rows)
+
+explain (costs off) update pp_lp set value = 10 where a = 1;
+        QUERY PLAN        
+--------------------------
+ Update on pp_lp
+   Update on pp_lp1
+   ->  Seq Scan on pp_lp1
+         Filter: (a = 1)
+(4 rows)
+
+explain (costs off) delete from pp_lp where a = 1;
+        QUERY PLAN        
+--------------------------
+ Delete on pp_lp
+   Delete on pp_lp1
+   ->  Seq Scan on pp_lp1
+         Filter: (a = 1)
+(4 rows)
+
+set enable_partition_pruning = off;
+set constraint_exclusion = 'partition'; -- this should not affect the result.
+explain (costs off) select * from pp_lp where a = 1;
+        QUERY PLAN        
+--------------------------
+ Append
+   ->  Seq Scan on pp_lp1
+         Filter: (a = 1)
+   ->  Seq Scan on pp_lp2
+         Filter: (a = 1)
+(5 rows)
+
+explain (costs off) update pp_lp set value = 10 where a = 1;
+        QUERY PLAN        
+--------------------------
+ Update on pp_lp
+   Update on pp_lp1
+   Update on pp_lp2
+   ->  Seq Scan on pp_lp1
+         Filter: (a = 1)
+   ->  Seq Scan on pp_lp2
+         Filter: (a = 1)
+(7 rows)
+
+explain (costs off) delete from pp_lp where a = 1;
+        QUERY PLAN        
+--------------------------
+ Delete on pp_lp
+   Delete on pp_lp1
+   Delete on pp_lp2
+   ->  Seq Scan on pp_lp1
+         Filter: (a = 1)
+   ->  Seq Scan on pp_lp2
+         Filter: (a = 1)
+(7 rows)
+
+set constraint_exclusion = 'off'; -- this should not affect the result.
+explain (costs off) select * from pp_lp where a = 1;
+        QUERY PLAN        
+--------------------------
+ Append
+   ->  Seq Scan on pp_lp1
+         Filter: (a = 1)
+   ->  Seq Scan on pp_lp2
+         Filter: (a = 1)
+(5 rows)
+
+explain (costs off) update pp_lp set value = 10 where a = 1;
+        QUERY PLAN        
+--------------------------
+ Update on pp_lp
+   Update on pp_lp1
+   Update on pp_lp2
+   ->  Seq Scan on pp_lp1
+         Filter: (a = 1)
+   ->  Seq Scan on pp_lp2
+         Filter: (a = 1)
+(7 rows)
+
+explain (costs off) delete from pp_lp where a = 1;
+        QUERY PLAN        
+--------------------------
+ Delete on pp_lp
+   Delete on pp_lp1
+   Delete on pp_lp2
+   ->  Seq Scan on pp_lp1
+         Filter: (a = 1)
+   ->  Seq Scan on pp_lp2
+         Filter: (a = 1)
+(7 rows)
+
+drop table pp_lp;
+-- Ensure enable_partition_prune does not affect non-partitioned tables.
+create table inh_lp (a int, value int);
+create table inh_lp1 (a int, value int, check(a = 1)) inherits (inh_lp);
+NOTICE:  merging column "a" with inherited definition
+NOTICE:  merging column "value" with inherited definition
+create table inh_lp2 (a int, value int, check(a = 2)) inherits (inh_lp);
+NOTICE:  merging column "a" with inherited definition
+NOTICE:  merging column "value" with inherited definition
+set constraint_exclusion = 'partition';
+-- inh_lp2 should be removed in the following 3 cases.
+explain (costs off) select * from inh_lp where a = 1;
+        QUERY PLAN         
+---------------------------
+ Append
+   ->  Seq Scan on inh_lp
+         Filter: (a = 1)
+   ->  Seq Scan on inh_lp1
+         Filter: (a = 1)
+(5 rows)
+
+explain (costs off) update inh_lp set value = 10 where a = 1;
+        QUERY PLAN         
+---------------------------
+ Update on inh_lp
+   Update on inh_lp
+   Update on inh_lp1
+   ->  Seq Scan on inh_lp
+         Filter: (a = 1)
+   ->  Seq Scan on inh_lp1
+         Filter: (a = 1)
+(7 rows)
+
+explain (costs off) delete from inh_lp where a = 1;
+        QUERY PLAN         
+---------------------------
+ Delete on inh_lp
+   Delete on inh_lp
+   Delete on inh_lp1
+   ->  Seq Scan on inh_lp
+         Filter: (a = 1)
+   ->  Seq Scan on inh_lp1
+         Filter: (a = 1)
+(7 rows)
+
+-- Ensure we don't exclude normal relations when we only expect to exclude
+-- inheritance children
+explain (costs off) update inh_lp1 set value = 10 where a = 2;
+        QUERY PLAN         
+---------------------------
+ Update on inh_lp1
+   ->  Seq Scan on inh_lp1
+         Filter: (a = 2)
+(3 rows)
+
+\set VERBOSITY terse	\\ -- suppress cascade details
+drop table inh_lp cascade;
+NOTICE:  drop cascades to 2 other objects
+\set VERBOSITY default
+reset enable_partition_pruning;
+reset constraint_exclusion;

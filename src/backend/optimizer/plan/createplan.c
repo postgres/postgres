@@ -1077,7 +1077,8 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 		subplans = lappend(subplans, subplan);
 	}
 
-	if (rel->reloptkind == RELOPT_BASEREL &&
+	if (enable_partition_pruning &&
+		rel->reloptkind == RELOPT_BASEREL &&
 		best_path->partitioned_rels != NIL)
 	{
 		List	   *prunequal;
@@ -1979,7 +1980,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 	 * create_modifytable_plan).  Fortunately we can't be because there would
 	 * never be grouping in an UPDATE/DELETE; but let's Assert that.
 	 */
-	Assert(!root->hasInheritedTarget);
+	Assert(root->inhTargetKind == INHKIND_NONE);
 	Assert(root->grouping_map == NULL);
 	root->grouping_map = grouping_map;
 
@@ -2141,7 +2142,7 @@ create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path)
 	 * create_modifytable_plan).  Fortunately we can't be because there would
 	 * never be aggregates in an UPDATE/DELETE; but let's Assert that.
 	 */
-	Assert(!root->hasInheritedTarget);
+	Assert(root->inhTargetKind == INHKIND_NONE);
 	Assert(root->minmax_aggs == NIL);
 	root->minmax_aggs = best_path->mmaggregates;
 

@@ -723,3 +723,55 @@ create table pp_intrangepart2inf partition of pp_intrangepart for values in ('[2
 explain (costs off) select * from pp_intrangepart where a = '[1,2]'::int4range;
 explain (costs off) select * from pp_intrangepart where a = '(1,2)'::int4range;
 drop table pp_intrangepart;
+
+--
+-- Ensure the enable_partition_prune GUC properly disables partition pruning.
+--
+
+create table pp_lp (a int, value int) partition by list (a);
+create table pp_lp1 partition of pp_lp for values in(1);
+create table pp_lp2 partition of pp_lp for values in(2);
+
+explain (costs off) select * from pp_lp where a = 1;
+explain (costs off) update pp_lp set value = 10 where a = 1;
+explain (costs off) delete from pp_lp where a = 1;
+
+set enable_partition_pruning = off;
+
+set constraint_exclusion = 'partition'; -- this should not affect the result.
+
+explain (costs off) select * from pp_lp where a = 1;
+explain (costs off) update pp_lp set value = 10 where a = 1;
+explain (costs off) delete from pp_lp where a = 1;
+
+set constraint_exclusion = 'off'; -- this should not affect the result.
+
+explain (costs off) select * from pp_lp where a = 1;
+explain (costs off) update pp_lp set value = 10 where a = 1;
+explain (costs off) delete from pp_lp where a = 1;
+
+drop table pp_lp;
+
+-- Ensure enable_partition_prune does not affect non-partitioned tables.
+
+create table inh_lp (a int, value int);
+create table inh_lp1 (a int, value int, check(a = 1)) inherits (inh_lp);
+create table inh_lp2 (a int, value int, check(a = 2)) inherits (inh_lp);
+
+set constraint_exclusion = 'partition';
+
+-- inh_lp2 should be removed in the following 3 cases.
+explain (costs off) select * from inh_lp where a = 1;
+explain (costs off) update inh_lp set value = 10 where a = 1;
+explain (costs off) delete from inh_lp where a = 1;
+
+-- Ensure we don't exclude normal relations when we only expect to exclude
+-- inheritance children
+explain (costs off) update inh_lp1 set value = 10 where a = 2;
+
+\set VERBOSITY terse	\\ -- suppress cascade details
+drop table inh_lp cascade;
+\set VERBOSITY default
+
+reset enable_partition_pruning;
+reset constraint_exclusion;

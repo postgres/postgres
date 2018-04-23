@@ -901,7 +901,8 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	 * store the relids of all partitions which could possibly contain a
 	 * matching tuple, and skip anything else in the loop below.
 	 */
-	if (rte->relkind == RELKIND_PARTITIONED_TABLE &&
+	if (enable_partition_pruning &&
+		rte->relkind == RELKIND_PARTITIONED_TABLE &&
 		rel->baserestrictinfo != NIL)
 	{
 		live_children = prune_append_rel_partitions(rel);
