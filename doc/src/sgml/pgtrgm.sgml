@@ -152,9 +152,9 @@
 </programlisting>
 
    In the first string, the set of trigrams is
-   <literal>{"  w"," wo","ord","wor","rd "}</literal>.
+   <literal>{"  w"," wo","wor","ord","rd "}</literal>.
    In the second string, the ordered set of trigrams is
-   <literal>{"  t"," tw",two,"wo ","  w"," wo","wor","ord","rds", ds "}</literal>.
+   <literal>{"  t"," tw","two","wo ","  w"," wo","wor","ord","rds","ds "}</literal>.
    The most similar extent of an ordered set of trigrams in the second string
    is <literal>{"  w"," wo","wor","ord"}</literal>, and the similarity is
    <literal>0.8</literal>.
@@ -172,7 +172,7 @@
    At the same time, <function>strict_word_similarity(text, text)</function>
    has to select an extent that matches word boundaries.  In the example above,
    <function>strict_word_similarity(text, text)</function> would select the
-   extent <literal>{"  w"," wo","wor","ord","rds", ds "}</literal>, which
+   extent <literal>{"  w"," wo","wor","ord","rds","ds "}</literal>, which
    corresponds to the whole word <literal>'words'</literal>.
 
 <programlisting>
