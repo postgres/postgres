@@ -1062,6 +1062,17 @@ explain (costs off)
   select * from boolindex where not b order by i limit 10;
 
 --
+-- Test for multilevel page deletion
+--
+CREATE TABLE delete_test_table (a bigint, b bigint, c bigint, d bigint);
+INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,80000) i;
+ALTER TABLE delete_test_table ADD PRIMARY KEY (a,b,c,d);
+DELETE FROM delete_test_table WHERE a > 40000;
+VACUUM delete_test_table;
+DELETE FROM delete_test_table WHERE a > 10;
+VACUUM delete_test_table;
+
+--
 -- REINDEX (VERBOSE)
 --
 CREATE TABLE reindex_verbose(id integer primary key);

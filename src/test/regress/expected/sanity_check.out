@@ -38,6 +38,7 @@ d_star|f
 date_tbl|f
 default_tbl|f
 defaultexpr_tbl|f
+delete_test_table|t
 dept|f
 dupindexcols|t
 e_star|f

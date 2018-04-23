@@ -227,6 +227,20 @@ typedef struct BTMetaPageData
 	ItemPointerSetBlockNumber(&((itup)->t_tid), (blkno))
 
 /*
+ * Get/set leaf page highkey's link. During the second phase of deletion, the
+ * target leaf page's high key may point to an ancestor page (at all other
+ * times, the leaf level high key's link is not used).  See the nbtree README
+ * for full details.
+ */
+#define BTreeTupleGetTopParent(itup) \
+	ItemPointerGetBlockNumberNoCheck(&((itup)->t_tid))
+#define BTreeTupleSetTopParent(itup, blkno)	\
+	do { \
+		ItemPointerSetBlockNumber(&((itup)->t_tid), (blkno)); \
+		BTreeTupleSetNAtts((itup), 0); \
+	} while(0)
+
+/*
  * Get/set number of attributes within B-tree index tuple. Asserts should be
  * removed when BT_RESERVED_OFFSET_MASK bits will be used.
  */

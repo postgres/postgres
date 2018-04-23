@@ -800,11 +800,7 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 	 */
 	MemSet(&trunctuple, 0, sizeof(IndexTupleData));
 	trunctuple.t_info = sizeof(IndexTupleData);
-	if (xlrec->topparent != InvalidBlockNumber)
-		ItemPointerSetBlockNumber(&trunctuple.t_tid, xlrec->topparent);
-	else
-		ItemPointerSetInvalid(&trunctuple.t_tid);
-	BTreeTupleSetNAtts(&trunctuple, 0);
+	BTreeTupleSetTopParent(&trunctuple, xlrec->topparent);
 
 	if (PageAddItem(page, (Item) &trunctuple, sizeof(IndexTupleData), P_HIKEY,
 					false, false) == InvalidOffsetNumber)
@@ -912,11 +908,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 		/* Add a dummy hikey item */
 		MemSet(&trunctuple, 0, sizeof(IndexTupleData));
 		trunctuple.t_info = sizeof(IndexTupleData);
-		if (xlrec->topparent != InvalidBlockNumber)
-			ItemPointerSetBlockNumber(&trunctuple.t_tid, xlrec->topparent);
-		else
-			ItemPointerSetInvalid(&trunctuple.t_tid);
-		BTreeTupleSetNAtts(&trunctuple, 0);
+		BTreeTupleSetTopParent(&trunctuple, xlrec->topparent);
 
 		if (PageAddItem(page, (Item) &trunctuple, sizeof(IndexTupleData), P_HIKEY,
 						false, false) == InvalidOffsetNumber)
