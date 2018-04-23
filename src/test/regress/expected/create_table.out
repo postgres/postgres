@@ -885,3 +885,17 @@ Partition of: arrlp FOR VALUES IN ('{1}', '{2}')
 Partition constraint: ((a IS NOT NULL) AND (((a)::anyarray OPERATOR(pg_catalog.=) '{1}'::integer[]) OR ((a)::anyarray OPERATOR(pg_catalog.=) '{2}'::integer[])))
 
 DROP TABLE arrlp;
+-- partition on boolean column
+create table boolspart (a bool) partition by list (a);
+create table boolspart_t partition of boolspart for values in (true);
+create table boolspart_f partition of boolspart for values in (false);
+\d+ boolspart
+                                 Table "public.boolspart"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | boolean |           |          |         | plain   |              | 
+Partition key: LIST (a)
+Partitions: boolspart_f FOR VALUES IN (false),
+            boolspart_t FOR VALUES IN (true)
+
+drop table boolspart;

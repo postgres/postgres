@@ -86,9 +86,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 <phrase>and <replaceable class="parameter">partition_bound_spec</replaceable> is:</phrase>
 
-IN ( { <replaceable class="parameter">numeric_literal</replaceable> | <replaceable class="parameter">string_literal</replaceable> | NULL } [, ...] ) |
-FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replaceable class="parameter">string_literal</replaceable> | MINVALUE | MAXVALUE } [, ...] )
-  TO ( { <replaceable class="parameter">numeric_literal</replaceable> | <replaceable class="parameter">string_literal</replaceable> | MINVALUE | MAXVALUE } [, ...] ) |
+IN ( { <replaceable class="parameter">numeric_literal</replaceable> | <replaceable class="parameter">string_literal</replaceable> | TRUE | FALSE | NULL } [, ...] ) |
+FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replaceable class="parameter">string_literal</replaceable> | TRUE | FALSE | MINVALUE | MAXVALUE } [, ...] )
+  TO ( { <replaceable class="parameter">numeric_literal</replaceable> | <replaceable class="parameter">string_literal</replaceable> | TRUE | FALSE | MINVALUE | MAXVALUE } [, ...] ) |
 WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REMAINDER <replaceable class="parameter">numeric_literal</replaceable> )
 
 <phrase><replaceable class="parameter">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>

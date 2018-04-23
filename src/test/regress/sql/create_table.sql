@@ -719,3 +719,10 @@ CREATE TABLE arrlp (a int[]) PARTITION BY LIST (a);
 CREATE TABLE arrlp12 PARTITION OF arrlp FOR VALUES IN ('{1}', '{2}');
 \d+ arrlp12
 DROP TABLE arrlp;
+
+-- partition on boolean column
+create table boolspart (a bool) partition by list (a);
+create table boolspart_t partition of boolspart for values in (true);
+create table boolspart_f partition of boolspart for values in (false);
+\d+ boolspart
+drop table boolspart;

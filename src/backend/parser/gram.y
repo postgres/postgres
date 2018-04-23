@@ -2798,6 +2798,8 @@ hash_partbound:
 partbound_datum:
 			Sconst			{ $$ = makeStringConst($1, @1); }
 			| NumericOnly	{ $$ = makeAConst($1, @1); }
+			| TRUE_P		{ $$ = makeStringConst(pstrdup("true"), @1); }
+			| FALSE_P		{ $$ = makeStringConst(pstrdup("false"), @1); }
 			| NULL_P		{ $$ = makeNullAConst(@1); }
 		;
 
