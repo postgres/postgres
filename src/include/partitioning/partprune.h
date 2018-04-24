@@ -50,8 +50,17 @@ typedef struct PartitionPruneContext
 	 * are not safe to use until the executor is running.
 	 */
 	Bitmapset  *safeparams;
+
+	/*
+	 * Array of ExprStates, indexed as per PruneCtxStateIdx; one for each
+	 * partkey in each pruning step.  Allocated if planstate is non-NULL,
+	 * otherwise NULL.
+	 */
+	ExprState **exprstates;
 } PartitionPruneContext;
 
+#define PruneCxtStateIdx(partnatts, step_id, keyno) \
+	((partnatts) * (step_id) + (keyno))
 
 extern List *make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 						 List *subpaths, List *prunequal);

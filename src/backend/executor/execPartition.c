@@ -1442,7 +1442,9 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 		PartitionDesc partdesc;
 		Relation	rel;
 		PartitionKey partkey;
+		ListCell   *lc2;
 		int			partnatts;
+		int			n_steps;
 
 		pprune->present_parts = bms_copy(pinfo->present_parts);
 		pprune->subnode_map = palloc(sizeof(int) * pinfo->nparts);
@@ -1465,6 +1467,7 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 
 		partkey = RelationGetPartitionKey(rel);
 		partdesc = RelationGetPartitionDesc(rel);
+		n_steps = list_length(pinfo->pruning_steps);
 
 		context->strategy = partkey->strategy;
 		context->partnatts = partnatts = partkey->partnatts;
@@ -1476,6 +1479,38 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 		context->boundinfo = partition_bounds_copy(partdesc->boundinfo, partkey);
 		context->planstate = planstate;
 		context->safeparams = NULL; /* empty for now */
+		context->exprstates = palloc0(sizeof(ExprState *) * n_steps * partnatts);
+
+		/* Initialize expression states for each expression */
+		foreach(lc2, pinfo->pruning_steps)
+		{
+			PartitionPruneStepOp *step = (PartitionPruneStepOp *) lfirst(lc2);
+			ListCell   *lc3;
+			int			keyno;
+
+			/* not needed for other step kinds */
+			if (!IsA(step, PartitionPruneStepOp))
+				continue;
+
+			Assert(list_length(step->exprs) <= partnatts);
+
+			keyno = 0;
+			foreach(lc3, step->exprs)
+			{
+				Expr	   *expr = (Expr *) lfirst(lc3);
+				int			stateidx;
+
+				/* not needed for Consts */
+				if (!IsA(expr, Const))
+				{
+					stateidx = PruneCxtStateIdx(partnatts,
+												step->step.step_id, keyno);
+					context->exprstates[stateidx] =
+						ExecInitExpr(expr, context->planstate);
+				}
+				keyno++;
+			}
+		}
 
 		pprune->pruning_steps = pinfo->pruning_steps;
 		pprune->extparams = bms_copy(pinfo->extparams);

@@ -169,7 +169,7 @@ static PruneStepResult *perform_pruning_combine_step(PartitionPruneContext *cont
 static bool match_boolean_partition_clause(Oid partopfamily, Expr *clause,
 							   Expr *partkey, Expr **outconst);
 static bool partkey_datum_from_expr(PartitionPruneContext *context,
-						Expr *expr, Datum *value);
+						Expr *expr, int stateidx, Datum *value);
 
 /*
  * make_partition_pruneinfo
@@ -444,6 +444,7 @@ prune_append_rel_partitions(RelOptInfo *rel)
 	/* Not valid when being called from the planner */
 	context.planstate = NULL;
 	context.safeparams = NULL;
+	context.exprstates = NULL;
 
 	/* Actual pruning happens here. */
 	partindexes = get_matching_partitions(&context, pruning_steps);
@@ -2788,10 +2789,13 @@ perform_pruning_base_step(PartitionPruneContext *context,
 		if (lc1 != NULL)
 		{
 			Expr	   *expr;
+			int			stateidx;
 			Datum		datum;
 
 			expr = lfirst(lc1);
-			if (partkey_datum_from_expr(context, expr, &datum))
+			stateidx = PruneCxtStateIdx(context->partnatts,
+										opstep->step.step_id, keyno);
+			if (partkey_datum_from_expr(context, expr, stateidx, &datum))
 			{
 				Oid			cmpfn;
 
@@ -3025,12 +3029,15 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
 
 /*
  * partkey_datum_from_expr
- *		Evaluate 'expr', set *value to the resulting Datum. Return true if
- *		evaluation was possible, otherwise false.
+ *		Evaluate expression for potential partition pruning
+ *
+ * Evaluate 'expr', whose ExprState is stateidx of the context exprstate
+ * array; set *value to the resulting Datum.  Return true if evaluation was
+ * possible, otherwise false.
  */
 static bool
 partkey_datum_from_expr(PartitionPruneContext *context,
-						Expr *expr, Datum *value)
+						Expr *expr, int stateidx, Datum *value)
 {
 	switch (nodeTag(expr))
 	{
@@ -3048,18 +3055,18 @@ partkey_datum_from_expr(PartitionPruneContext *context,
 				bms_is_member(((Param *) expr)->paramid, context->safeparams))
 			{
 				ExprState  *exprstate;
+				ExprContext *ectx;
 				bool		isNull;
 
-				exprstate = ExecInitExpr(expr, context->planstate);
-
-				*value = ExecEvalExprSwitchContext(exprstate,
-												   context->planstate->ps_ExprContext,
-												   &isNull);
+				exprstate = context->exprstates[stateidx];
+				ectx = context->planstate->ps_ExprContext;
+				*value = ExecEvalExprSwitchContext(exprstate, ectx, &isNull);
 				if (isNull)
 					return false;
 
 				return true;
 			}
+			break;
 
 		default:
 			break;
