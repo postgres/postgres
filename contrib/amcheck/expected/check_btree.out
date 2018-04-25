@@ -1,7 +1,12 @@
--- minimal test, basically just verifying that amcheck
 CREATE TABLE bttest_a(id int8);
 CREATE TABLE bttest_b(id int8);
 CREATE TABLE bttest_multi(id int8, data int8);
+CREATE TABLE delete_test_table (a bigint, b bigint, c bigint, d bigint);
+-- Stabalize tests
+ALTER TABLE bttest_a SET (autovacuum_enabled = false);
+ALTER TABLE bttest_b SET (autovacuum_enabled = false);
+ALTER TABLE bttest_multi SET (autovacuum_enabled = false);
+ALTER TABLE delete_test_table SET (autovacuum_enabled = false);
 INSERT INTO bttest_a SELECT * FROM generate_series(1, 100000);
 INSERT INTO bttest_b SELECT * FROM generate_series(100000, 1, -1);
 INSERT INTO bttest_multi SELECT i, i%2  FROM generate_series(1, 100000) as i;
@@ -120,9 +125,25 @@ SELECT bt_index_parent_check('bttest_multi_idx', true);
  
 (1 row)
 
+--
+-- Test for multilevel page deletion/downlink present checks
+--
+INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,80000) i;
+ALTER TABLE delete_test_table ADD PRIMARY KEY (a,b,c,d);
+DELETE FROM delete_test_table WHERE a > 40000;
+VACUUM delete_test_table;
+DELETE FROM delete_test_table WHERE a > 10;
+VACUUM delete_test_table;
+SELECT bt_index_parent_check('delete_test_table_pkey', true);
+ bt_index_parent_check 
+-----------------------
+ 
+(1 row)
+
 -- cleanup
 DROP TABLE bttest_a;
 DROP TABLE bttest_b;
 DROP TABLE bttest_multi;
+DROP TABLE delete_test_table;
 DROP OWNED BY bttest_role; -- permissions
 DROP ROLE bttest_role;

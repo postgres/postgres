@@ -340,7 +340,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool readonly,
 	/*
 	 * Initialize state for entire verification operation
 	 */
-	state = palloc(sizeof(BtreeCheckState));
+	state = palloc0(sizeof(BtreeCheckState));
 	state->rel = rel;
 	state->heaprel = heaprel;
 	state->readonly = readonly;
@@ -772,13 +772,15 @@ nextpage:
  * - That tuples report that they have the expected number of attributes.
  *	 INCLUDE index pivot tuples should not contain non-key attributes.
  *
- * Furthermore, when state passed shows ShareLock held, and target page is
- * internal page, function also checks:
+ * Furthermore, when state passed shows ShareLock held, function also checks:
  *
  * - That all child pages respect downlinks lower bound.
  *
+ * - That downlink to block was encountered in parent where that's expected.
+ *   (Limited to heapallindexed readonly callers.)
+ *
  * This is also where heapallindexed callers use their Bloom filter to
- * fingerprint IndexTuples.
+ * fingerprint IndexTuples for later IndexBuildHeapScan() verification.
  *
  * Note:  Memory allocated in this routine is expected to be released by caller
  * resetting state->targetcontext.
@@ -1074,7 +1076,7 @@ bt_target_page_check(BtreeCheckState *state)
 	/*
 	 * * Check if page has a downlink in parent *
 	 *
-	 * This can only be checked in readonly + heapallindexed case.
+	 * This can only be checked in heapallindexed + readonly case.
 	 */
 	if (state->heapallindexed && state->readonly)
 		bt_downlink_missing_check(state);
@@ -1561,7 +1563,7 @@ bt_downlink_missing_check(BtreeCheckState *state)
 	 * infinity items.  Besides, bt_downlink_check() is unwilling to descend
 	 * multiple levels.  (The similar bt_downlink_check() P_ISDELETED() check
 	 * within bt_check_level_from_leftmost() won't reach the page either, since
-	 * the leaf's live siblings should have their sibling links updating to
+	 * the leaf's live siblings should have their sibling links updated to
 	 * bypass the deletion target page when it is marked fully dead.)
 	 *
 	 * If this error is raised, it might be due to a previous multi-level page
