@@ -86,23 +86,16 @@ sub ParseHeader
 		# Push the data into the appropriate data structure.
 		if (/^DECLARE_TOAST\(\s*(\w+),\s*(\d+),\s*(\d+)\)/)
 		{
-			my ($toast_name, $toast_oid, $index_oid) = ($1, $2, $3);
 			push @{ $catalog{toasting} },
-			  "declare toast $toast_oid $index_oid on $toast_name\n";
+			  { parent_table => $1, toast_oid => $2, toast_index_oid => $3 };
 		}
 		elsif (/^DECLARE_(UNIQUE_)?INDEX\(\s*(\w+),\s*(\d+),\s*(.+)\)/)
 		{
-			my ($is_unique, $index_name, $index_oid, $using) =
-			  ($1, $2, $3, $4);
 			push @{ $catalog{indexing} },
-			  sprintf(
-				"declare %sindex %s %s %s\n",
-				$is_unique ? 'unique ' : '',
-				$index_name, $index_oid, $using);
-		}
-		elsif (/^BUILD_INDICES/)
-		{
-			push @{ $catalog{indexing} }, "build indices\n";
+			  { is_unique => $1 ? 1 : 0,
+				index_name => $2,
+				index_oid  => $3,
+				index_decl => $4 };
 		}
 		elsif (/^CATALOG\((\w+),(\d+),(\w+)\)/)
 		{

@@ -72,8 +72,7 @@ my $shdescrfile = $output_path . 'postgres.shdescription';
 open my $shdescr, '>', $shdescrfile . $tmpext
   or die "can't open $shdescrfile$tmpext: $!";
 
-# Read all the files into internal data structures. Not all catalogs
-# will have a data file.
+# Read all the files into internal data structures.
 my @catnames;
 my %catalogs;
 my %catalog_data;
@@ -95,18 +94,28 @@ foreach my $header (@input_files)
 		$catalogs{$catname} = $catalog;
 	}
 
+	# Not all catalogs have a data file.
 	if (-e $datfile)
 	{
 		$catalog_data{$catname} = Catalog::ParseData($datfile, $schema, 0);
 	}
 
-	foreach my $toast_decl (@{ $catalog->{toasting} })
+	# If the header file contained toast or index info, build BKI
+	# commands for those, which we'll output later.
+	foreach my $toast (@{ $catalog->{toasting} })
 	{
-		push @toast_decls, $toast_decl;
+		push @toast_decls,
+		  sprintf "declare toast %s %s on %s\n",
+		  $toast->{toast_oid}, $toast->{toast_index_oid},
+		  $toast->{parent_table};
 	}
-	foreach my $index_decl (@{ $catalog->{indexing} })
+	foreach my $index (@{ $catalog->{indexing} })
 	{
-		push @index_decls, $index_decl;
+		push @index_decls,
+		  sprintf "declare %sindex %s %s %s\n",
+		  $index->{is_unique} ? 'unique ' : '',
+		  $index->{index_name}, $index->{index_oid},
+		  $index->{index_decl};
 	}
 }
 
@@ -466,6 +475,9 @@ foreach my $declaration (@index_decls)
 {
 	print $bki $declaration;
 }
+
+# last command in the BKI file: build the indexes declared above
+print $bki "build indices\n";
 
 
 # Now generate schemapg.h
