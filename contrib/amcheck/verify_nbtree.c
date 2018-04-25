@@ -91,6 +91,10 @@ typedef struct BtreeCheckState
 
 	/* Bloom filter fingerprints B-Tree index */
 	bloom_filter *filter;
+	/* Bloom filter fingerprints downlink blocks within tree */
+	bloom_filter *downlinkfilter;
+	/* Right half of incomplete split marker */
+	bool		rightsplit;
 	/* Debug counter */
 	int64		heaptuplespresent;
 } BtreeCheckState;
@@ -124,6 +128,7 @@ static void bt_target_page_check(BtreeCheckState *state);
 static ScanKey bt_right_page_check_scankey(BtreeCheckState *state);
 static void bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 				  ScanKey targetkey);
+static void bt_downlink_missing_check(BtreeCheckState *state);
 static void bt_tuple_present_callback(Relation index, HeapTuple htup,
 						  Datum *values, bool *isnull,
 						  bool tupleIsAlive, void *checkstate);
@@ -360,6 +365,9 @@ bt_check_every_level(Relation rel, Relation heaprel, bool readonly,
 		 * before index fingerprinting begins, so we can later be certain that
 		 * index fingerprinting should have reached all tuples returned by
 		 * IndexBuildHeapScan().
+		 *
+		 * In readonly case, we also check for problems with missing downlinks.
+		 * A second Bloom filter is used for this.
 		 */
 		if (!state->readonly)
 		{
@@ -385,6 +393,23 @@ bt_check_every_level(Relation rel, Relation heaprel, bool readonly,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("index \"%s\" cannot be verified using transaction snapshot",
 								RelationGetRelationName(rel))));
+		}
+		else
+		{
+			int64	total_pages;
+
+			/*
+			 * Extra readonly downlink check.
+			 *
+			 * In readonly case, we know that there cannot be a concurrent page
+			 * split or a concurrent page deletion, which gives us the
+			 * opportunity to verify that every non-ignorable page had a
+			 * downlink one level up.  We must be tolerant of interrupted page
+			 * splits and page deletions, though.  This is taken care of in
+			 * bt_downlink_missing_check().
+			 */
+			total_pages = (int64) state->rel->rd_rel->relpages;
+			state->downlinkfilter = bloom_create(total_pages, work_mem, seed);
 		}
 	}
 
@@ -427,6 +452,12 @@ bt_check_every_level(Relation rel, Relation heaprel, bool readonly,
 	while (current.leftmost != P_NONE)
 	{
 		/*
+		 * Leftmost page on level cannot be right half of incomplete split.
+		 * This can go stale immediately in !readonly case.
+		 */
+		state->rightsplit = false;
+
+		/*
 		 * Verify this level, and get left most page for next level down, if
 		 * not at leaf level
 		 */
@@ -448,6 +479,16 @@ bt_check_every_level(Relation rel, Relation heaprel, bool readonly,
 	{
 		IndexInfo  *indexinfo = BuildIndexInfo(state->rel);
 		HeapScanDesc scan;
+
+		/* Report on extra downlink checks performed in readonly case */
+		if (state->readonly)
+		{
+			ereport(DEBUG1,
+					(errmsg_internal("finished verifying presence of downlink blocks within index \"%s\" with bitset %.2f%% set",
+									 RelationGetRelationName(rel),
+									 100.0 * bloom_prop_bits_set(state->downlinkfilter))));
+			bloom_free(state->downlinkfilter);
+		}
 
 		/*
 		 * Create our own scan for IndexBuildHeapScan(), rather than getting it
@@ -564,6 +605,25 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 
 		if (P_IGNORE(opaque))
 		{
+			/*
+			 * Since there cannot be a concurrent VACUUM operation in readonly
+			 * mode, and since a page has no links within other pages (siblings
+			 * and parent) once it is marked fully deleted, it should be
+			 * impossible to land on a fully deleted page in readonly mode.
+			 * See bt_downlink_check() for further details.
+			 *
+			 * The bt_downlink_check() P_ISDELETED() check is repeated here so
+			 * that pages that are only reachable through sibling links get
+			 * checked.
+			 */
+			if (state->readonly && P_ISDELETED(opaque))
+				ereport(ERROR,
+						(errcode(ERRCODE_INDEX_CORRUPTED),
+						 errmsg("downlink or sibling link points to deleted block in index \"%s\"",
+								RelationGetRelationName(state->rel)),
+						 errdetail_internal("Block=%u left block=%u left link from block=%u.",
+											current, leftcurrent, opaque->btpo_prev)));
+
 			if (P_RIGHTMOST(opaque))
 				ereport(ERROR,
 						(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -617,7 +677,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 				/* Internal page -- downlink gets leftmost on next level */
 				itemid = PageGetItemId(state->target, P_FIRSTDATAKEY(opaque));
 				itup = (IndexTuple) PageGetItem(state->target, itemid);
-				nextleveldown.leftmost = ItemPointerGetBlockNumberNoCheck(&(itup->t_tid));
+				nextleveldown.leftmost = BTreeInnerTupleGetDownLink(itup);
 				nextleveldown.level = opaque->btpo.level - 1;
 			}
 			else
@@ -639,6 +699,10 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 			 */
 		}
 
+		/*
+		 * readonly mode can only ever land on live pages and half-dead pages,
+		 * so sibling pointers should always be in mutual agreement
+		 */
 		if (state->readonly && opaque->btpo_prev != leftcurrent)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -667,6 +731,13 @@ nextpage:
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("circular link chain found in block %u of index \"%s\"",
 							current, RelationGetRelationName(state->rel))));
+
+		/*
+		 * Record if page that is about to become target is the right half of
+		 * an incomplete page split.  This can go stale immediately in
+		 * !readonly case.
+		 */
+		state->rightsplit = P_INCOMPLETE_SPLIT(opaque);
 
 		leftcurrent = current;
 		current = opaque->btpo_next;
@@ -810,6 +881,16 @@ bt_target_page_check(BtreeCheckState *state)
 										htid,
 										(uint32) (state->targetlsn >> 32),
 										(uint32) state->targetlsn)));
+		}
+
+		/* Fingerprint downlink blocks in heapallindexed + readonly case */
+		if (state->heapallindexed && state->readonly && !P_ISLEAF(topaque))
+		{
+			BlockNumber childblock = BTreeInnerTupleGetDownLink(itup);
+
+			bloom_add_element(state->downlinkfilter,
+							  (unsigned char *) &childblock,
+							  sizeof(BlockNumber));
 		}
 
 		/*
@@ -984,11 +1065,19 @@ bt_target_page_check(BtreeCheckState *state)
 		 */
 		if (!P_ISLEAF(topaque) && state->readonly)
 		{
-			BlockNumber childblock = ItemPointerGetBlockNumberNoCheck(&(itup->t_tid));
+			BlockNumber childblock = BTreeInnerTupleGetDownLink(itup);
 
 			bt_downlink_check(state, childblock, skey);
 		}
 	}
+
+	/*
+	 * * Check if page has a downlink in parent *
+	 *
+	 * This can only be checked in readonly + heapallindexed case.
+	 */
+	if (state->heapallindexed && state->readonly)
+		bt_downlink_missing_check(state);
 }
 
 /*
@@ -1272,6 +1361,40 @@ bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 	copaque = (BTPageOpaque) PageGetSpecialPointer(child);
 	maxoffset = PageGetMaxOffsetNumber(child);
 
+	/*
+	 * Since there cannot be a concurrent VACUUM operation in readonly mode,
+	 * and since a page has no links within other pages (siblings and parent)
+	 * once it is marked fully deleted, it should be impossible to land on a
+	 * fully deleted page.
+	 *
+	 * It does not quite make sense to enforce that the page cannot even be
+	 * half-dead, despite the fact the downlink is modified at the same stage
+	 * that the child leaf page is marked half-dead.  That's incorrect because
+	 * there may occasionally be multiple downlinks from a chain of pages
+	 * undergoing deletion, where multiple successive calls are made to
+	 * _bt_unlink_halfdead_page() by VACUUM before it can finally safely mark
+	 * the leaf page as fully dead.  While _bt_mark_page_halfdead() usually
+	 * removes the downlink to the leaf page that is marked half-dead, that's
+	 * not guaranteed, so it's possible we'll land on a half-dead page with a
+	 * downlink due to an interrupted multi-level page deletion.
+	 *
+	 * We go ahead with our checks if the child page is half-dead.  It's safe
+	 * to do so because we do not test the child's high key, so it does not
+	 * matter that the original high key will have been replaced by a dummy
+	 * truncated high key within _bt_mark_page_halfdead().  All other page
+	 * items are left intact on a half-dead page, so there is still something
+	 * to test.
+	 */
+	if (P_ISDELETED(copaque))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("downlink to deleted page found in index \"%s\"",
+						RelationGetRelationName(state->rel)),
+				 errdetail_internal("Parent block=%u child block=%u parent page lsn=%X/%X.",
+									state->targetblock, childblock,
+									(uint32) (state->targetlsn >> 32),
+									(uint32) state->targetlsn)));
+
 	for (offset = P_FIRSTDATAKEY(copaque);
 		 offset <= maxoffset;
 		 offset = OffsetNumberNext(offset))
@@ -1298,6 +1421,191 @@ bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 	}
 
 	pfree(child);
+}
+
+/*
+ * Checks if page is missing a downlink that it should have.
+ *
+ * A page that lacks a downlink/parent may indicate corruption.  However, we
+ * must account for the fact that a missing downlink can occasionally be
+ * encountered in a non-corrupt index.  This can be due to an interrupted page
+ * split, or an interrupted multi-level page deletion (i.e. there was a hard
+ * crash or an error during a page split, or while VACUUM was deleting a
+ * multi-level chain of pages).
+ *
+ * Note that this can only be called in readonly mode, so there is no need to
+ * be concerned about concurrent page splits or page deletions.
+ */
+static void
+bt_downlink_missing_check(BtreeCheckState *state)
+{
+	BTPageOpaque	topaque = (BTPageOpaque) PageGetSpecialPointer(state->target);
+	ItemId			itemid;
+	IndexTuple		itup;
+	Page			child;
+	BTPageOpaque	copaque;
+	uint32			level;
+	BlockNumber		childblk;
+
+	Assert(state->heapallindexed && state->readonly);
+	Assert(!P_IGNORE(topaque));
+
+	/* No next level up with downlinks to fingerprint from the true root */
+	if (P_ISROOT(topaque))
+		return;
+
+	/*
+	 * Incomplete (interrupted) page splits can account for the lack of a
+	 * downlink.  Some inserting transaction should eventually complete the
+	 * page split in passing, when it notices that the left sibling page is
+	 * P_INCOMPLETE_SPLIT().
+	 *
+	 * In general, VACUUM is not prepared for there to be no downlink to a page
+	 * that it deletes.  This is the main reason why the lack of a downlink can
+	 * be reported as corruption here.  It's not obvious that an invalid
+	 * missing downlink can result in wrong answers to queries, though, since
+	 * index scans that land on the child may end up consistently moving right.
+	 * The handling of concurrent page splits (and page deletions) within
+	 * _bt_moveright() cannot distinguish inconsistencies that last for a
+	 * moment from inconsistencies that are permanent and irrecoverable.
+	 *
+	 * VACUUM isn't even prepared to delete pages that have no downlink due to
+	 * an incomplete page split, but it can detect and reason about that case
+	 * by design, so it shouldn't be taken to indicate corruption.  See
+	 * _bt_pagedel() for full details.
+	 */
+	if (state->rightsplit)
+	{
+		ereport(DEBUG1,
+				(errcode(ERRCODE_NO_DATA),
+				 errmsg("harmless interrupted page split detected in index %s",
+						RelationGetRelationName(state->rel)),
+				 errdetail_internal("Block=%u level=%u left sibling=%u page lsn=%X/%X.",
+									state->targetblock, topaque->btpo.level,
+									topaque->btpo_prev,
+									(uint32) (state->targetlsn >> 32),
+									(uint32) state->targetlsn)));
+		return;
+	}
+
+	/* Target's downlink is typically present in parent/fingerprinted */
+	if (!bloom_lacks_element(state->downlinkfilter,
+							 (unsigned char *) &state->targetblock,
+							 sizeof(BlockNumber)))
+		return;
+
+	/*
+	 * Target is probably the "top parent" of a multi-level page deletion.
+	 * We'll need to descend the subtree to make sure that descendant pages are
+	 * consistent with that, though.
+	 *
+	 * If the target page (which must be non-ignorable) is a leaf page, then
+	 * clearly it can't be the top parent.  The lack of a downlink is probably
+	 * a symptom of a broad problem that could just as easily cause
+	 * inconsistencies anywhere else.
+	 */
+	if (P_ISLEAF(topaque))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("leaf index block lacks downlink in index \"%s\"",
+						RelationGetRelationName(state->rel)),
+				 errdetail_internal("Block=%u page lsn=%X/%X.",
+									state->targetblock,
+									(uint32) (state->targetlsn >> 32),
+									(uint32) state->targetlsn)));
+
+	/* Descend from the target page, which is an internal page */
+	elog(DEBUG1, "checking for interrupted multi-level deletion due to missing downlink in index \"%s\"",
+		 RelationGetRelationName(state->rel));
+
+	level = topaque->btpo.level;
+	itemid = PageGetItemId(state->target, P_FIRSTDATAKEY(topaque));
+	itup = (IndexTuple) PageGetItem(state->target, itemid);
+	childblk = BTreeInnerTupleGetDownLink(itup);
+	for (;;)
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		child = palloc_btree_page(state, childblk);
+		copaque = (BTPageOpaque) PageGetSpecialPointer(child);
+
+		if (P_ISLEAF(copaque))
+			break;
+
+		/* Do an extra sanity check in passing on internal pages */
+		if (copaque->btpo.level != level - 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg_internal("downlink points to block in index \"%s\" whose level is not one level down",
+									 RelationGetRelationName(state->rel)),
+					 errdetail_internal("Top parent/target block=%u block pointed to=%u expected level=%u level in pointed to block=%u.",
+										state->targetblock, childblk,
+										level - 1, copaque->btpo.level)));
+
+		level = copaque->btpo.level;
+		itemid = PageGetItemId(child, P_FIRSTDATAKEY(copaque));
+		itup = (IndexTuple) PageGetItem(child, itemid);
+		childblk = BTreeInnerTupleGetDownLink(itup);
+		/* Be slightly more pro-active in freeing this memory, just in case */
+		pfree(child);
+	}
+
+	/*
+	 * Since there cannot be a concurrent VACUUM operation in readonly mode,
+	 * and since a page has no links within other pages (siblings and parent)
+	 * once it is marked fully deleted, it should be impossible to land on a
+	 * fully deleted page.  See bt_downlink_check() for further details.
+	 *
+	 * The bt_downlink_check() P_ISDELETED() check is repeated here because
+	 * bt_downlink_check() does not visit pages reachable through negative
+	 * infinity items.  Besides, bt_downlink_check() is unwilling to descend
+	 * multiple levels.  (The similar bt_downlink_check() P_ISDELETED() check
+	 * within bt_check_level_from_leftmost() won't reach the page either, since
+	 * the leaf's live siblings should have their sibling links updating to
+	 * bypass the deletion target page when it is marked fully dead.)
+	 *
+	 * If this error is raised, it might be due to a previous multi-level page
+	 * deletion that failed to realize that it wasn't yet safe to mark the leaf
+	 * page as fully dead.  A "dangling downlink" will still remain when this
+	 * happens.  The fact that the dangling downlink's page (the leaf's
+	 * parent/ancestor page) lacked a downlink is incidental.
+	 */
+	if (P_ISDELETED(copaque))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("downlink to deleted leaf page found in index \"%s\"",
+								 RelationGetRelationName(state->rel)),
+				 errdetail_internal("Top parent/target block=%u leaf block=%u top parent/target lsn=%X/%X.",
+									state->targetblock, childblk,
+									(uint32) (state->targetlsn >> 32),
+									(uint32) state->targetlsn)));
+
+	/*
+	 * Iff leaf page is half-dead, its high key top parent link should point to
+	 * what VACUUM considered to be the top parent page at the instant it was
+	 * interrupted.  Provided the high key link actually points to the target
+	 * page, the missing downlink we detected is consistent with there having
+	 * been an interrupted multi-level page deletion.  This means that the
+	 * subtree with the target page at its root (a page deletion chain) is in a
+	 * consistent state, enabling VACUUM to resume deleting the entire chain
+	 * the next time it encounters the half-dead leaf page.
+	 */
+	if (P_ISHALFDEAD(copaque) && !P_RIGHTMOST(copaque))
+	{
+		itemid = PageGetItemId(child, P_HIKEY);
+		itup = (IndexTuple) PageGetItem(child, itemid);
+		if (BTreeTupleGetTopParent(itup) == state->targetblock)
+			return;
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INDEX_CORRUPTED),
+			 errmsg("internal index block lacks downlink in index \"%s\"",
+					RelationGetRelationName(state->rel)),
+			 errdetail_internal("Block=%u level=%u page lsn=%X/%X.",
+								state->targetblock, topaque->btpo.level,
+								(uint32) (state->targetlsn >> 32),
+								(uint32) state->targetlsn)));
 }
 
 /*
@@ -1376,13 +1684,11 @@ bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
 	 * Note that we rely on deterministic index_form_tuple() TOAST compression.
 	 * If index_form_tuple() was ever enhanced to compress datums out-of-line,
 	 * or otherwise varied when or how compression was applied, our assumption
-	 * would break, leading to false positive reports of corruption.  For now,
-	 * we don't decompress/normalize toasted values as part of fingerprinting.
-	 *
-	 * In future, non-pivot index tuples might get use of
-	 * BT_N_KEYS_OFFSET_MASK. Then binary representation of index tuple linked
-	 * to particular heap tuple might vary and meeds to be normalized before
-	 * bloom filter lookup.
+	 * would break, leading to false positive reports of corruption.  It's also
+	 * possible that non-pivot tuples could in the future have alternative
+	 * equivalent representations (e.g. by using the INDEX_ALT_TID_MASK bit).
+	 * For now, we don't decompress/normalize toasted values as part of
+	 * fingerprinting.
 	 */
 	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
 	itup->t_tid = htup->t_self;
@@ -1393,8 +1699,8 @@ bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("heap tuple (%u,%u) from table \"%s\" lacks matching index tuple within index \"%s\"",
-						ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
-						ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)),
+						ItemPointerGetBlockNumber(&(itup->t_tid)),
+						ItemPointerGetOffsetNumber(&(itup->t_tid)),
 						RelationGetRelationName(state->heaprel),
 						RelationGetRelationName(state->rel)),
 				 !state->readonly
@@ -1520,6 +1826,7 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 	Buffer		buffer;
 	Page		page;
 	BTPageOpaque opaque;
+	OffsetNumber maxoffset;
 
 	page = palloc(BLCKSZ);
 
@@ -1566,9 +1873,13 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("version mismatch in index \"%s\": file version %d, "
-							"current version %d, minimal supported version %d",
+							"current version %d, minimum supported version %d",
 							RelationGetRelationName(state->rel),
-							metad->btm_version, BTREE_VERSION, BTREE_MIN_VERSION)));
+							metad->btm_version, BTREE_VERSION,
+							BTREE_MIN_VERSION)));
+
+		/* Finished with metapage checks */
+		return page;
 	}
 
 	/*
@@ -1581,12 +1892,66 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 				 errmsg("invalid leaf page level %u for block %u in index \"%s\"",
 						opaque->btpo.level, blocknum, RelationGetRelationName(state->rel))));
 
-	if (blocknum != BTREE_METAPAGE && !P_ISLEAF(opaque) &&
-		!P_ISDELETED(opaque) && opaque->btpo.level == 0)
+	if (!P_ISLEAF(opaque) && !P_ISDELETED(opaque) &&
+		opaque->btpo.level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("invalid internal page level 0 for block %u in index \"%s\"",
-						opaque->btpo.level, RelationGetRelationName(state->rel))));
+						blocknum, RelationGetRelationName(state->rel))));
+
+	/*
+	 * Sanity checks for number of items on page.
+	 *
+	 * As noted at the beginning of _bt_binsrch(), an internal page must have
+	 * children, since there must always be a negative infinity downlink (there
+	 * may also be a highkey).  In the case of non-rightmost leaf pages, there
+	 * must be at least a highkey.
+	 *
+	 * This is correct when pages are half-dead, since internal pages are never
+	 * half-dead, and leaf pages must have a high key when half-dead (the
+	 * rightmost page can never be deleted).  It's also correct with fully
+	 * deleted pages: _bt_unlink_halfdead_page() doesn't change anything about
+	 * the target page other than setting the page as fully dead, and setting
+	 * its xact field.  In particular, it doesn't change the sibling links in
+	 * the deletion target itself, since they're required when index scans land
+	 * on the deletion target, and then need to move right (or need to move
+	 * left, in the case of backward index scans).
+	 */
+	maxoffset = PageGetMaxOffsetNumber(page);
+	if (maxoffset > MaxIndexTuplesPerPage)
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("Number of items on block %u of index \"%s\" exceeds MaxIndexTuplesPerPage (%u)",
+						blocknum, RelationGetRelationName(state->rel),
+						MaxIndexTuplesPerPage)));
+
+	if (!P_ISLEAF(opaque) && maxoffset < P_FIRSTDATAKEY(opaque))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("internal block %u in index \"%s\" lacks high key and/or at least one downlink",
+						blocknum, RelationGetRelationName(state->rel))));
+
+	if (P_ISLEAF(opaque) && !P_RIGHTMOST(opaque) && maxoffset < P_HIKEY)
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("non-rightmost leaf block %u in index \"%s\" lacks high key item",
+						blocknum, RelationGetRelationName(state->rel))));
+
+	/*
+	 * In general, internal pages are never marked half-dead, except on
+	 * versions of Postgres prior to 9.4, where it can be valid transient
+	 * state.  This state is nonetheless treated as corruption by VACUUM on
+	 * from version 9.4 on, so do the same here.  See _bt_pagedel() for full
+	 * details.
+	 *
+	 * Internal pages should never have garbage items, either.
+	 */
+	if (!P_ISLEAF(opaque) && P_ISHALFDEAD(opaque))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("internal page block %u in index \"%s\" is half-dead",
+						blocknum, RelationGetRelationName(state->rel)),
+				 errhint("This can be caused by an interrupted VACUUM in version 9.3 or older, before upgrade. Please REINDEX it.")));
 
 	if (!P_ISLEAF(opaque) && P_HAS_GARBAGE(opaque))
 		ereport(ERROR,

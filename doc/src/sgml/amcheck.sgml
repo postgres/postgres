@@ -55,7 +55,7 @@
       <function>bt_index_check</function> tests that its target, a
       B-Tree index, respects a variety of invariants.  Example usage:
 <screen>
-test=# SELECT bt_index_check(index =&gt; c.oid, heapallindexed =&gt; i.indisunique)
+test=# SELECT bt_index_check(index =&gt; c.oid, heapallindexed =&gt; i.indisunique),
                c.relname,
                c.relpages
 FROM pg_index i
@@ -67,7 +67,7 @@ WHERE am.amname = 'btree' AND n.nspname = 'pg_catalog'
 -- Don't check temp tables, which may be from another session:
 AND c.relpersistence != 't'
 -- Function may throw an error when this is omitted:
-AND i.indisready AND i.indisvalid
+AND c.relkind = 'i' AND i.indisready AND i.indisvalid
 ORDER BY c.relpages DESC LIMIT 10;
  bt_index_check |             relname             | relpages 
 ----------------+---------------------------------+----------
@@ -126,7 +126,8 @@ ORDER BY c.relpages DESC LIMIT 10;
       Optionally, when the <parameter>heapallindexed</parameter>
       argument is <literal>true</literal>, the function verifies the
       presence of all heap tuples that should be found within the
-      index.  The checks that can be performed by
+      index, and that there are no missing downlinks in the index
+      structure.  The checks that can be performed by
       <function>bt_index_parent_check</function> are a superset of the
       checks that can be performed by <function>bt_index_check</function>.
       <function>bt_index_parent_check</function> can be thought of as
