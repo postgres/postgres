@@ -384,4 +384,55 @@ sub FindDefinedSymbolFromData
 	die "no definition found for $symbol\n";
 }
 
+# Extract an array of all the OIDs assigned in the specified catalog headers
+# and their associated data files (if any).
+sub FindAllOidsFromHeaders
+{
+	my @input_files = @_;
+
+	my @oids = ();
+
+	foreach my $header (@input_files)
+	{
+		$header =~ /(.+)\.h$/
+		  or die "Input files need to be header files.\n";
+		my $datfile = "$1.dat";
+
+		my $catalog = Catalog::ParseHeader($header);
+
+		# We ignore the pg_class OID and rowtype OID of bootstrap catalogs,
+		# as those are expected to appear in the initial data for pg_class
+		# and pg_type.  For regular catalogs, include these OIDs.
+		if (!$catalog->{bootstrap})
+		{
+			push @oids, $catalog->{relation_oid}
+			  if ($catalog->{relation_oid});
+			push @oids, $catalog->{rowtype_oid} if ($catalog->{rowtype_oid});
+		}
+
+		# Not all catalogs have a data file.
+		if (-e $datfile)
+		{
+			my $catdata =
+			  Catalog::ParseData($datfile, $catalog->{columns}, 0);
+
+			foreach my $row (@$catdata)
+			{
+				push @oids, $row->{oid} if defined $row->{oid};
+			}
+		}
+
+		foreach my $toast (@{ $catalog->{toasting} })
+		{
+			push @oids, $toast->{toast_oid}, $toast->{toast_index_oid};
+		}
+		foreach my $index (@{ $catalog->{indexing} })
+		{
+			push @oids, $index->{index_oid};
+		}
+	}
+
+	return \@oids;
+}
+
 1;

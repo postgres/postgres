@@ -1,27 +1,20 @@
 #!/usr/bin/perl
 
+use lib '../../backend/catalog/';
+use Catalog;
+
 use strict;
 use warnings;
 
-BEGIN
-{
-	@ARGV = (glob("pg_*.h"), glob("pg_*.dat"), qw(indexing.h toasting.h));
-}
+my @input_files = (glob("pg_*.h"), qw(indexing.h toasting.h));
+
+my $oids = Catalog::FindAllOidsFromHeaders(@input_files);
 
 my %oidcounts;
 
-while (<>)
+foreach my $oid (@{$oids})
 {
-	next if /^CATALOG\(.*BKI_BOOTSTRAP/;
-	next
-	  unless /\boid *=> *'(\d+)'/
-	  || /^CATALOG\([^,]*, *(\d+).*BKI_ROWTYPE_OID\((\d+),/
-	  || /^CATALOG\([^,]*, *(\d+)/
-	  || /^DECLARE_INDEX\([^,]*, *(\d+)/
-	  || /^DECLARE_UNIQUE_INDEX\([^,]*, *(\d+)/
-	  || /^DECLARE_TOAST\([^,]*, *(\d+), *(\d+)/;
-	$oidcounts{$1}++;
-	$oidcounts{$2}++ if $2;
+	$oidcounts{$oid}++;
 }
 
 my $found = 0;

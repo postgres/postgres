@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/perl
 #
 # unused_oids
 #
@@ -15,43 +15,40 @@
 #
 #	run this script in src/include/catalog.
 #
+use lib '../../backend/catalog/';
+use Catalog;
 
+use strict;
+use warnings;
 
-AWK="awk"
+my @input_files = (glob("pg_*.h"), qw(indexing.h toasting.h));
 
-# Get FirstBootstrapObjectId from access/transam.h
-FIRSTOBJECTID=`grep '#define[ 	]*FirstBootstrapObjectId' ../access/transam.h | $AWK '{ print $3 }'`
-export FIRSTOBJECTID
+my $oids = Catalog::FindAllOidsFromHeaders(@input_files);
 
-# this part (down to the uniq step) should match the duplicate_oids script
-# note: we exclude BKI_BOOTSTRAP relations since they are expected to have
-# matching data entries in pg_class.dat and pg_type.dat
+# Also push FirstBootstrapObjectId to serve as a terminator for the last gap.
+my $FirstBootstrapObjectId =
+  Catalog::FindDefinedSymbol('access/transam.h', [".."],
+	'FirstBootstrapObjectId');
+push @{$oids}, $FirstBootstrapObjectId;
 
-cat pg_*.h pg_*.dat toasting.h indexing.h |
-egrep -v -e '^CATALOG\(.*BKI_BOOTSTRAP' | \
-sed -n	-e 's/.*\boid *=> *'\''\([0-9][0-9]*\)'\''.*$/\1/p' \
-	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*BKI_ROWTYPE_OID(\([0-9][0-9]*\),.*$/\1,\2/p' \
-	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_UNIQUE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_TOAST([^,]*, *\([0-9][0-9]*\), *\([0-9][0-9]*\).*$/\1,\2/p' | \
-tr ',' '\n' | \
-sort -n | \
-uniq | \
-$AWK '
-BEGIN {
-	last = 0;
-}
-/^[0-9]/ {
-	if ($1 > last + 1) {
-		if ($1 > last + 2) {
-			print last + 1, "-", $1 - 1;
-		} else {
-			print last + 1;
+my $prev_oid = 0;
+foreach my $oid (sort { $a <=> $b } @{$oids})
+{
+	if ($oid > $prev_oid + 1)
+	{
+		if ($oid > $prev_oid + 2)
+		{
+			printf "%d - %d\n", $prev_oid + 1, $oid - 1;
+		}
+		else
+		{
+			printf "%d\n", $prev_oid + 1;
 		}
 	}
-	last = $1;
+	elsif ($oid == $prev_oid)
+	{
+		print "Duplicate oid detected: $oid\n";
+		exit 1;
+	}
+	$prev_oid = $oid;
 }
-END {
-	print last + 1, "-", ENVIRON["FIRSTOBJECTID"]-1;
-}'
