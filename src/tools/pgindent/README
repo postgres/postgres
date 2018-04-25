@@ -14,9 +14,14 @@ PREREQUISITES:
    git clone https://git.postgresql.org/git/pg_bsd_indent.git
    then follow the directions in README.pg_bsd_indent therein.
 
-2) Install perltidy.  Please be sure it is v20090616 (older and newer
-   versions make different formatting choices, and we want consistency).  See
-   https://sourceforge.net/projects/perltidy/files/perltidy/perltidy-20090616/
+2) Install perltidy.  Please be sure it is version 20170521 (older and newer
+   versions make different formatting choices, and we want consistency).
+   You can get the correct version from
+   https://cpan.metacpan.org/authors/id/S/SH/SHANCOCK/
+   To install, follow the usual install process for a Perl module
+   ("man perlmodinstall" explains it).  Or, if you have cpan installed,
+   this should work:
+   cpan SHANCOCK/Perl-Tidy-20170521.tar.gz
 
 DOING THE INDENT RUN:
 
