@@ -294,8 +294,7 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 
 /*
  * ExecInitPartitionInfo
- *		Initialize ResultRelInfo and other information for a partition if not
- *		already done
+ *		Initialize ResultRelInfo and other information for a partition
  *
  * Returns the ResultRelInfo
  */
