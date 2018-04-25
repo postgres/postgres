@@ -139,7 +139,7 @@
     If <xref linkend="guc-jit"/> is set to <literal>off</literal>, or no
     <acronym>JIT</acronym> implementation is available (for example because
     the server was compiled without <literal>--with-llvm</literal>),
-    <acronym>JIT</acronym> will not performed, even if considered to be
+    <acronym>JIT</acronym> will not be performed, even if considered to be
     beneficial based on the above criteria.  Setting <xref linkend="guc-jit"/>
     to <literal>off</literal> takes effect both at plan and at execution time.
    </para>
