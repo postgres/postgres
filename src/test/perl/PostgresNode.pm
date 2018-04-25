@@ -284,7 +284,7 @@ sub group_access
 	my $dir_stat = stat($self->data_dir);
 
 	defined($dir_stat)
-		or die('unable to stat ' . $self->data_dir);
+	  or die('unable to stat ' . $self->data_dir);
 
 	return (S_IMODE($dir_stat->mode) == 0750);
 }
@@ -482,8 +482,8 @@ sub init
 	}
 	close $conf;
 
-    chmod($self->group_access ? 0640 : 0600, "$pgdata/postgresql.conf")
-        or die("unable to set permissions for $pgdata/postgresql.conf");
+	chmod($self->group_access ? 0640 : 0600, "$pgdata/postgresql.conf")
+	  or die("unable to set permissions for $pgdata/postgresql.conf");
 
 	$self->set_replication_conf if $params{allows_streaming};
 	$self->enable_archiving     if $params{has_archiving};
@@ -510,8 +510,8 @@ sub append_conf
 
 	TestLib::append_to_file($conffile, $str . "\n");
 
-    chmod($self->group_access() ? 0640 : 0600, $conffile)
-        or die("unable to set permissions for $conffile");
+	chmod($self->group_access() ? 0640 : 0600, $conffile)
+	  or die("unable to set permissions for $conffile");
 }
 
 =pod
@@ -1535,7 +1535,7 @@ sub wait_for_catchup
 	}
 	else
 	{
-		$lsn_expr = 'pg_current_wal_lsn()'
+		$lsn_expr = 'pg_current_wal_lsn()';
 	}
 	print "Waiting for replication conn "
 	  . $standby_name . "'s "
@@ -1686,8 +1686,8 @@ to check for timeout. retval is undef on timeout.
 
 sub pg_recvlogical_upto
 {
-	my ($self, $dbname, $slot_name, $endpos, $timeout_secs, %plugin_options) =
-	  @_;
+	my ($self, $dbname, $slot_name, $endpos, $timeout_secs, %plugin_options)
+	  = @_;
 	my ($stdout, $stderr);
 
 	my $timeout_exception = 'pg_recvlogical timed out';

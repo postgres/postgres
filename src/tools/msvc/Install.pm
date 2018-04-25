@@ -101,7 +101,7 @@ sub Install
 
 				# Don't find files of in-tree temporary installations.
 				$_ eq 'share' and $File::Find::prune = 1;
-			  }
+			}
 		},
 		@top_dir);
 	CopySetOfFiles('config files', $sample_files, $target . '/share/');
@@ -135,8 +135,8 @@ sub Install
 			'Information schema data', $target . '/share/',
 			'src/backend/catalog/',    'sql_features.txt');
 		CopyFiles(
-			'Error code data', $target . '/share/',
-			'src/backend/utils/',    'errcodes.txt');
+			'Error code data',    $target . '/share/',
+			'src/backend/utils/', 'errcodes.txt');
 		GenerateConversionScript($target);
 		GenerateTimezoneFiles($target, $conf);
 		GenerateTsearchFiles($target);
@@ -161,7 +161,7 @@ sub Install
 
 					# Don't find files of in-tree temporary installations.
 					$_ eq 'share' and $File::Find::prune = 1;
-				  }
+				}
 			},
 			@pldirs);
 		CopySetOfFiles('PL Extension files',
@@ -693,7 +693,7 @@ sub GenerateNLSFiles
 		{   wanted => sub {
 				/^nls\.mk\z/s
 				  && !push(@flist, $File::Find::name);
-			  }
+			}
 		},
 		"src");
 	foreach (@flist)

@@ -15,8 +15,7 @@ $testname =~ s/\.pl$//;
 
 my $testdir = "$TestLib::tmp_check/t_${testname}_stuff";
 mkdir $testdir
-	or
-	BAIL_OUT("could not create test directory \"${testdir}\": $!");
+  or BAIL_OUT("could not create test directory \"${testdir}\": $!");
 
 # invoke pgbench
 sub pgbench
@@ -38,8 +37,10 @@ sub pgbench_scripts
 		for my $fn (sort keys %$files)
 		{
 			my $filename = $testdir . '/' . $fn;
+
 			# cleanup file weight if any
 			$filename =~ s/\@\d+$//;
+
 			# cleanup from prior runs
 			unlink $filename;
 			append_to_file($filename, $$files{$fn});
@@ -105,14 +106,17 @@ my @options = (
 	[ 'ambiguous builtin', '-b s', [qr{ambiguous}] ],
 	[   '--progress-timestamp => --progress', '--progress-timestamp',
 		[qr{allowed only under}] ],
-	[ '-I without init option', '-I dtg',
+	[   '-I without init option',
+		'-I dtg',
 		[qr{cannot be used in benchmarking mode}] ],
-	[ 'invalid init step', '-i -I dta',
-		[qr{unrecognized initialization step},
-		 qr{allowed steps are} ] ],
-	[ 'bad random seed', '--random-seed=one',
-		[qr{unrecognized random seed option "one": expecting an unsigned integer, "time" or "rand"},
-		 qr{error while setting random seed from --random-seed option} ] ],
+	[   'invalid init step',
+		'-i -I dta',
+		[ qr{unrecognized initialization step}, qr{allowed steps are} ] ],
+	[   'bad random seed',
+		'--random-seed=one',
+		[
+qr{unrecognized random seed option "one": expecting an unsigned integer, "time" or "rand"},
+			qr{error while setting random seed from --random-seed option} ] ],
 
 	# loging sub-options
 	[   'sampling => log', '--sampling-rate=0.01',
@@ -161,23 +165,44 @@ pgbench(
 	'pgbench builtin list');
 
 my @script_tests = (
+
 	# name, err, { file => contents }
-	[ 'missing endif', [qr{\\if without matching \\endif}], {'if-noendif.sql' => '\if 1'} ],
-	[ 'missing if on elif', [qr{\\elif without matching \\if}], {'elif-noif.sql' => '\elif 1'} ],
-	[ 'missing if on else', [qr{\\else without matching \\if}], {'else-noif.sql' => '\else'} ],
-	[ 'missing if on endif', [qr{\\endif without matching \\if}], {'endif-noif.sql' => '\endif'} ],
-	[ 'elif after else', [qr{\\elif after \\else}], {'else-elif.sql' => "\\if 1\n\\else\n\\elif 0\n\\endif"} ],
-	[ 'else after else', [qr{\\else after \\else}], {'else-else.sql' => "\\if 1\n\\else\n\\else\n\\endif"} ],
-	[ 'if syntax error', [qr{syntax error in command "if"}], {'if-bad.sql' => "\\if\n\\endif\n"} ],
-	[ 'elif syntax error', [qr{syntax error in command "elif"}], {'elif-bad.sql' => "\\if 0\n\\elif +\n\\endif\n"} ],
-	[ 'else syntax error', [qr{unexpected argument in command "else"}], {'else-bad.sql' => "\\if 0\n\\else BAD\n\\endif\n"} ],
-	[ 'endif syntax error', [qr{unexpected argument in command "endif"}], {'endif-bad.sql' => "\\if 0\n\\endif BAD\n"} ],
-);
+	[   'missing endif',
+		[qr{\\if without matching \\endif}],
+		{ 'if-noendif.sql' => '\if 1' } ],
+	[   'missing if on elif',
+		[qr{\\elif without matching \\if}],
+		{ 'elif-noif.sql' => '\elif 1' } ],
+	[   'missing if on else',
+		[qr{\\else without matching \\if}],
+		{ 'else-noif.sql' => '\else' } ],
+	[   'missing if on endif',
+		[qr{\\endif without matching \\if}],
+		{ 'endif-noif.sql' => '\endif' } ],
+	[   'elif after else',
+		[qr{\\elif after \\else}],
+		{ 'else-elif.sql' => "\\if 1\n\\else\n\\elif 0\n\\endif" } ],
+	[   'else after else',
+		[qr{\\else after \\else}],
+		{ 'else-else.sql' => "\\if 1\n\\else\n\\else\n\\endif" } ],
+	[   'if syntax error',
+		[qr{syntax error in command "if"}],
+		{ 'if-bad.sql' => "\\if\n\\endif\n" } ],
+	[   'elif syntax error',
+		[qr{syntax error in command "elif"}],
+		{ 'elif-bad.sql' => "\\if 0\n\\elif +\n\\endif\n" } ],
+	[   'else syntax error',
+		[qr{unexpected argument in command "else"}],
+		{ 'else-bad.sql' => "\\if 0\n\\else BAD\n\\endif\n" } ],
+	[   'endif syntax error',
+		[qr{unexpected argument in command "endif"}],
+		{ 'endif-bad.sql' => "\\if 0\n\\endif BAD\n" } ],);
 
 for my $t (@script_tests)
 {
 	my ($name, $err, $files) = @$t;
-	pgbench_scripts('', 1, [qr{^$}], $err, 'pgbench option error: ' . $name, $files);
+	pgbench_scripts('', 1, [qr{^$}], $err, 'pgbench option error: ' . $name,
+		$files);
 }
 
 done_testing();

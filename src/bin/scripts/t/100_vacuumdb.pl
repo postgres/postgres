@@ -36,13 +36,17 @@ $node->issues_sql_like(
 $node->command_ok([qw(vacuumdb -Z --table=pg_am dbname=template1)],
 	'vacuumdb with connection string');
 
-$node->command_fails([qw(vacuumdb -Zt pg_am;ABORT postgres)],
+$node->command_fails(
+	[qw(vacuumdb -Zt pg_am;ABORT postgres)],
 	'trailing command in "-t", without COLUMNS');
+
 # Unwanted; better if it failed.
-$node->command_ok([qw(vacuumdb -Zt pg_am(amname);ABORT postgres)],
+$node->command_ok(
+	[qw(vacuumdb -Zt pg_am(amname);ABORT postgres)],
 	'trailing command in "-t", with COLUMNS');
 
-$node->safe_psql('postgres', q|
+$node->safe_psql(
+	'postgres', q|
   CREATE TABLE "need""q(uot" (")x" text);
 
   CREATE FUNCTION f0(int) RETURNS int LANGUAGE SQL AS 'SELECT $1 * $1';
@@ -53,5 +57,6 @@ $node->safe_psql('postgres', q|
 |);
 $node->command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 	'column list');
-$node->command_fails([qw|vacuumdb -Zt funcidx postgres|],
+$node->command_fails(
+	[qw|vacuumdb -Zt funcidx postgres|],
 	'unqualifed name via functional index');

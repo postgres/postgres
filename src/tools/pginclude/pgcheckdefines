@@ -58,7 +58,7 @@ while (<$pipe>)
 	chomp;
 	push @hfiles, $_
 	  unless m|^src/include/port/|
-		  || m|^src/backend/port/\w+/|;
+	  || m|^src/backend/port/\w+/|;
 }
 close $pipe or die "$FIND failed: $!";
 

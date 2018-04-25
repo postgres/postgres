@@ -51,7 +51,7 @@ sub _new
 	  unless $options->{wal_blocksize};    # undef or 0 means default
 	die "Bad wal_blocksize $options->{wal_blocksize}"
 	  unless grep { $_ == $options->{wal_blocksize} }
-		  (1, 2, 4, 8, 16, 32, 64);
+	  (1, 2, 4, 8, 16, 32, 64);
 	$options->{wal_segsize} = 16
 	  unless $options->{wal_segsize};      # undef or 0 means default
 	die "Bad wal_segsize $options->{wal_segsize}"
@@ -176,8 +176,7 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 		  "\n";
 		print $o "#define RELSEG_SIZE ",
 		  (1024 / $self->{options}->{blocksize}) *
-		  $self->{options}->{segsize} *
-		  1024, "\n";
+		  $self->{options}->{segsize} * 1024, "\n";
 		print $o "#define XLOG_BLCKSZ ",
 		  1024 * $self->{options}->{wal_blocksize}, "\n";
 
@@ -266,17 +265,14 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 
 	chdir('src/backend/utils');
 	my $pg_language_dat = '../../../src/include/catalog/pg_language.dat';
-	my $pg_proc_dat = '../../../src/include/catalog/pg_proc.dat';
-	if (IsNewer(
-			'fmgrtab.c', $pg_language_dat)
-		|| IsNewer(
-			'fmgrtab.c', $pg_proc_dat)
-		|| IsNewer(
-			'fmgrtab.c', '../../../src/include/access/transam.h')
-		)
+	my $pg_proc_dat     = '../../../src/include/catalog/pg_proc.dat';
+	if (   IsNewer('fmgrtab.c', $pg_language_dat)
+		|| IsNewer('fmgrtab.c', $pg_proc_dat)
+		|| IsNewer('fmgrtab.c', '../../../src/include/access/transam.h'))
 	{
 		system(
-"perl -I ../catalog Gen_fmgrtab.pl -I../../../src/include/ $pg_language_dat $pg_proc_dat");
+"perl -I ../catalog Gen_fmgrtab.pl -I../../../src/include/ $pg_language_dat $pg_proc_dat"
+		);
 	}
 	chdir('../../..');
 
@@ -471,6 +467,7 @@ EOF
 	$mf =~ /^POSTGRES_BKI_DATA\s*:?=[^,]+,(.*)\)$/gm
 	  || croak "Could not find POSTGRES_BKI_DATA in Makefile\n";
 	my @bki_data = split /\s+/, $1;
+
 	foreach my $bki (@bki_srcs, @bki_data)
 	{
 		next if $bki eq "";
@@ -480,19 +477,20 @@ EOF
 		{
 			chdir('src/backend/catalog');
 			my $bki_srcs = join(' ../../../src/include/catalog/', @bki_srcs);
-			system("perl genbki.pl --set-version=$self->{majorver} $bki_srcs");
+			system(
+				"perl genbki.pl --set-version=$self->{majorver} $bki_srcs");
 			chdir('../../..');
 
 			# Copy generated headers to include directory.
 			opendir(my $dh, 'src/backend/catalog/')
 			  || die "Can't opendir src/backend/catalog/ $!";
-			my @def_headers = grep { /pg_\w+_d\.h$/  } readdir($dh);
+			my @def_headers = grep { /pg_\w+_d\.h$/ } readdir($dh);
 			closedir $dh;
 			foreach my $def_header (@def_headers)
 			{
 				copyFile(
-				"src/backend/catalog/$def_header",
-				"src/include/catalog/$def_header");
+					"src/backend/catalog/$def_header",
+					"src/include/catalog/$def_header");
 			}
 			copyFile(
 				'src/backend/catalog/schemapg.h',

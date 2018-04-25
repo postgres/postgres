@@ -49,12 +49,13 @@ mkdir $datadir;
 		'successful creation');
 
 	# Permissions on PGDATA should be default
-	SKIP:
+  SKIP:
 	{
-		skip "unix-style permissions not supported on Windows", 1 if ($windows_os);
+		skip "unix-style permissions not supported on Windows", 1
+		  if ($windows_os);
 
 		ok(check_mode_recursive($datadir, 0700, 0600),
-		   "check PGDATA permissions");
+			"check PGDATA permissions");
 	}
 }
 command_ok([ 'initdb', '-S', $datadir ], 'sync only');
@@ -63,7 +64,8 @@ command_fails([ 'initdb', $datadir ], 'existing data directory');
 # Check group access on PGDATA
 SKIP:
 {
-	skip "unix-style permissions not supported on Windows", 2 if ($windows_os);
+	skip "unix-style permissions not supported on Windows", 2
+	  if ($windows_os);
 
 	# Init a new db with group access
 	my $datadir_group = "$tempdir/data_group";

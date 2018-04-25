@@ -192,7 +192,7 @@ sub AddDir
 		{
 			next
 			  if $subdir eq "\$(top_builddir)/src/timezone"
-			;    #special case for non-standard include
+			  ;    #special case for non-standard include
 			next
 			  if $reldir . "/" . $subdir eq "src/backend/port/darwin";
 

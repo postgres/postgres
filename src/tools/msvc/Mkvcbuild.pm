@@ -530,11 +530,12 @@ sub mkvcbuild
 
 		my $perl_path = $solution->{options}->{perl} . '\lib\CORE\*perl*';
 
-		# ActivePerl 5.16 provided perl516.lib; 5.18 provided libperl518.a
-		# Starting with ActivePerl 5.24, both  perlnn.lib and libperlnn.a are provided.
-		# In this case, prefer .lib.
+# ActivePerl 5.16 provided perl516.lib; 5.18 provided libperl518.a
+# Starting with ActivePerl 5.24, both  perlnn.lib and libperlnn.a are provided.
+# In this case, prefer .lib.
 		my @perl_libs =
-		  reverse sort grep { /perl\d+\.lib$|libperl\d+\.a$/ } glob($perl_path);
+		  reverse sort grep { /perl\d+\.lib$|libperl\d+\.a$/ }
+		  glob($perl_path);
 		if (@perl_libs > 0)
 		{
 			$plperl->AddLibrary($perl_libs[0]);
@@ -753,7 +754,7 @@ sub mkvcbuild
 			'hstore',        'contrib/hstore');
 		my $jsonb_plperl = AddTransformModule(
 			'jsonb_plperl', 'contrib/jsonb_plperl',
-			'plperl',        'src/pl/plperl');
+			'plperl',       'src/pl/plperl');
 
 		foreach my $f (@perl_embed_ccflags)
 		{
@@ -856,12 +857,12 @@ sub AddSimpleFrontend
 # Add a simple transform module
 sub AddTransformModule
 {
-	my $n              = shift;
-	my $n_src          = shift;
-	my $pl_proj_name   = shift;
-	my $pl_src         = shift;
-	my $type_name      = shift;
-	my $type_src       = shift;
+	my $n            = shift;
+	my $n_src        = shift;
+	my $pl_proj_name = shift;
+	my $pl_src       = shift;
+	my $type_name    = shift;
+	my $type_src     = shift;
 
 	my $type_proj = undef;
 	if ($type_name)
@@ -995,7 +996,7 @@ sub GenerateContribSqlFiles
 				print "Building $out from $in (contrib/$n)...\n";
 				my $cont = Project::read_file("contrib/$n/$in");
 				my $dn   = $out;
-				$dn   =~ s/\.sql$//;
+				$dn =~ s/\.sql$//;
 				$cont =~ s/MODULE_PATHNAME/\$libdir\/$dn/g;
 				my $o;
 				open($o, '>', "contrib/$n/$out")

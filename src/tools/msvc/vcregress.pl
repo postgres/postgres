@@ -254,13 +254,16 @@ sub plcheck
 	{
 		next unless -d "$dir/sql" && -d "$dir/expected";
 		my $lang;
-		if ($dir eq 'plpgsql/src') {
+		if ($dir eq 'plpgsql/src')
+		{
 			$lang = 'plpgsql';
 		}
-		elsif ($dir eq 'tcl') {
+		elsif ($dir eq 'tcl')
+		{
 			$lang = 'pltcl';
 		}
-		else {
+		else
+		{
 			$lang = $dir;
 		}
 		if ($lang eq 'plpython')

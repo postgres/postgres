@@ -11,7 +11,7 @@ my $node = get_new_node('main');
 $node->init;
 
 my $pg_control = $node->data_dir . '/global/pg_control';
-my $size = (stat($pg_control))[7];
+my $size       = (stat($pg_control))[7];
 
 # Read out the head of the file to get PG_CONTROL_VERSION in
 # particular.
@@ -27,11 +27,14 @@ binmode $fh;
 print $fh pack("x[$size]");
 close $fh;
 
-command_checks_all([ 'pg_resetwal', '-n', $node->data_dir ],
-                   0,
-                   [ qr/pg_control version number/ ],
-                   [ qr/pg_resetwal: pg_control exists but is broken or wrong version; ignoring it/ ],
-                   'processes corrupted pg_control all zeroes');
+command_checks_all(
+	[ 'pg_resetwal', '-n', $node->data_dir ],
+	0,
+	[qr/pg_control version number/],
+	[
+qr/pg_resetwal: pg_control exists but is broken or wrong version; ignoring it/
+	],
+	'processes corrupted pg_control all zeroes');
 
 # Put in the previously saved header data.  This uses a different code
 # path internally, allowing us to process a zero WAL segment size.
@@ -40,8 +43,11 @@ binmode $fh;
 print $fh $data, pack("x[" . ($size - 16) . "]");
 close $fh;
 
-command_checks_all([ 'pg_resetwal', '-n', $node->data_dir ],
-                   0,
-                   [ qr/pg_control version number/ ],
-                   [ qr/\Qpg_resetwal: pg_control specifies invalid WAL segment size (0 bytes); proceed with caution\E/ ],
-                   'processes zero WAL segment size');
+command_checks_all(
+	[ 'pg_resetwal', '-n', $node->data_dir ],
+	0,
+	[qr/pg_control version number/],
+	[
+qr/\Qpg_resetwal: pg_control specifies invalid WAL segment size (0 bytes); proceed with caution\E/
+	],
+	'processes zero WAL segment size');

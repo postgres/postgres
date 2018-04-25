@@ -87,9 +87,10 @@ in master, before promotion
 		'tail-copy');
 
 	# Permissions on PGDATA should be default
-	SKIP:
+  SKIP:
 	{
-		skip "unix-style permissions not supported on Windows", 1 if ($windows_os);
+		skip "unix-style permissions not supported on Windows", 1
+		  if ($windows_os);
 
 		ok(check_mode_recursive($node_master->data_dir(), 0700, 0600),
 			'check PGDATA permissions');

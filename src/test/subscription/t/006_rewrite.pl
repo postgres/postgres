@@ -30,18 +30,19 @@ $node_publisher->wait_for_catchup($appname);
 
 # Wait for initial sync to finish as well
 my $synced_query =
-    "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('s', 'r');";
+"SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('s', 'r');";
 $node_subscriber->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for subscriber to synchronize data";
 
-$node_publisher->safe_psql('postgres', q{INSERT INTO test1 (a, b) VALUES (1, 'one'), (2, 'two');});
+$node_publisher->safe_psql('postgres',
+	q{INSERT INTO test1 (a, b) VALUES (1, 'one'), (2, 'two');});
 
 $node_publisher->wait_for_catchup($appname);
 
-is($node_subscriber->safe_psql('postgres', q{SELECT a, b FROM test1}),
-   qq(1|one
+is( $node_subscriber->safe_psql('postgres', q{SELECT a, b FROM test1}),
+	qq(1|one
 2|two),
-   'initial data replicated to subscriber');
+	'initial data replicated to subscriber');
 
 # DDL that causes a heap rewrite
 my $ddl2 = "ALTER TABLE test1 ADD c int NOT NULL DEFAULT 0;";
@@ -50,15 +51,16 @@ $node_publisher->safe_psql('postgres', $ddl2);
 
 $node_publisher->wait_for_catchup($appname);
 
-$node_publisher->safe_psql('postgres', q{INSERT INTO test1 (a, b, c) VALUES (3, 'three', 33);});
+$node_publisher->safe_psql('postgres',
+	q{INSERT INTO test1 (a, b, c) VALUES (3, 'three', 33);});
 
 $node_publisher->wait_for_catchup($appname);
 
-is($node_subscriber->safe_psql('postgres', q{SELECT a, b, c FROM test1}),
-   qq(1|one|0
+is( $node_subscriber->safe_psql('postgres', q{SELECT a, b, c FROM test1}),
+	qq(1|one|0
 2|two|0
 3|three|33),
-   'data replicated to subscriber');
+	'data replicated to subscriber');
 
 $node_subscriber->stop;
 $node_publisher->stop;

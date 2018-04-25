@@ -169,16 +169,17 @@ sub tempdir_short
 # not under msys, return the input argument unchanged.
 sub real_dir
 {
-    my $dir = "$_[0]";
-    return $dir unless -d $dir;
-    return $dir unless $Config{osname} eq 'msys';
-    my $here = cwd;
-    chdir $dir;
+	my $dir = "$_[0]";
+	return $dir unless -d $dir;
+	return $dir unless $Config{osname} eq 'msys';
+	my $here = cwd;
+	chdir $dir;
+
 	# this odd way of calling 'pwd -W' is the only way that seems to work.
-    $dir = qx{sh -c "pwd -W"};
-    chomp $dir;
-    chdir $here;
-    return $dir;
+	$dir = qx{sh -c "pwd -W"};
+	chomp $dir;
+	chdir $here;
+	return $dir;
 }
 
 sub system_log
@@ -254,12 +255,9 @@ sub check_mode_recursive
 	# Result defaults to true
 	my $result = 1;
 
-	find
-	(
-		{follow_fast => 1,
-		wanted =>
-			sub
-			{
+	find(
+		{   follow_fast => 1,
+			wanted      => sub {
 				my $file_stat = stat($File::Find::name);
 
 				# Is file in the ignore list?
@@ -272,7 +270,7 @@ sub check_mode_recursive
 				}
 
 				defined($file_stat)
-					or die("unable to stat $File::Find::name");
+				  or die("unable to stat $File::Find::name");
 
 				my $file_mode = S_IMODE($file_stat->mode);
 
@@ -281,35 +279,39 @@ sub check_mode_recursive
 				{
 					if ($file_mode != $expected_file_mode)
 					{
-						print(*STDERR,
+						print(
+							*STDERR,
 							sprintf("$File::Find::name mode must be %04o\n",
-							$expected_file_mode));
+								$expected_file_mode));
 
 						$result = 0;
 						return;
 					}
 				}
+
 				# Else a directory?
 				elsif (S_ISDIR($file_stat->mode))
 				{
 					if ($file_mode != $expected_dir_mode)
 					{
-						print(*STDERR,
+						print(
+							*STDERR,
 							sprintf("$File::Find::name mode must be %04o\n",
-							$expected_dir_mode));
+								$expected_dir_mode));
 
 						$result = 0;
 						return;
 					}
 				}
+
 				# Else something we can't handle
 				else
 				{
 					die "unknown file type for $File::Find::name";
 				}
-			}},
-		$dir
-	);
+			}
+		},
+		$dir);
 
 	return $result;
 }
@@ -319,23 +321,21 @@ sub chmod_recursive
 {
 	my ($dir, $dir_mode, $file_mode) = @_;
 
-	find
-	(
-		{follow_fast => 1,
-		wanted =>
-			sub
-			{
+	find(
+		{   follow_fast => 1,
+			wanted      => sub {
 				my $file_stat = stat($File::Find::name);
 
 				if (defined($file_stat))
 				{
-					chmod(S_ISDIR($file_stat->mode) ? $dir_mode : $file_mode,
-						  $File::Find::name)
-						or die "unable to chmod $File::Find::name";
+					chmod(
+						S_ISDIR($file_stat->mode) ? $dir_mode : $file_mode,
+						$File::Find::name
+					) or die "unable to chmod $File::Find::name";
 				}
-			}},
-		$dir
-	);
+			}
+		},
+		$dir);
 }
 
 # Check presence of a given regexp within pg_config.h for the installation
@@ -351,7 +351,7 @@ sub check_pg_config
 	chomp($stdout);
 
 	open my $pg_config_h, '<', "$stdout/pg_config.h" or die "$!";
-	my $match = (grep {/^$regexp/} <$pg_config_h>);
+	my $match = (grep { /^$regexp/ } <$pg_config_h>);
 	close $pg_config_h;
 	return $match;
 }

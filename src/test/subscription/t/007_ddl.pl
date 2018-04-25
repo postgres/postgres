@@ -28,7 +28,8 @@ $node_subscriber->safe_psql('postgres',
 
 $node_publisher->wait_for_catchup($appname);
 
-$node_subscriber->safe_psql('postgres', q{
+$node_subscriber->safe_psql(
+	'postgres', q{
 BEGIN;
 ALTER SUBSCRIPTION mysub DISABLE;
 ALTER SUBSCRIPTION mysub SET (slot_name = NONE);

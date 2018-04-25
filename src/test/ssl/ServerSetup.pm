@@ -41,7 +41,8 @@ sub test_connect_ok
 	my ($common_connstr, $connstr, $test_name) = @_;
 
 	my $cmd = [
-		'psql', '-X', '-A', '-t', '-c', "SELECT \$\$connected with $connstr\$\$",
+		'psql', '-X', '-A', '-t', '-c',
+		"SELECT \$\$connected with $connstr\$\$",
 		'-d', "$common_connstr $connstr" ];
 
 	command_ok($cmd, $test_name);
@@ -52,7 +53,8 @@ sub test_connect_fails
 	my ($common_connstr, $connstr, $expected_stderr, $test_name) = @_;
 
 	my $cmd = [
-		'psql', '-X', '-A', '-t', '-c', "SELECT \$\$connected with $connstr\$\$",
+		'psql', '-X', '-A', '-t', '-c',
+		"SELECT \$\$connected with $connstr\$\$",
 		'-d', "$common_connstr $connstr" ];
 
 	command_fails_like($cmd, $expected_stderr, $test_name);
@@ -89,9 +91,11 @@ sub configure_test_server_for_ssl
 	if (defined($password))
 	{
 		$node->psql('postgres',
-"SET password_encryption='$password_enc'; ALTER USER ssltestuser PASSWORD '$password';");
+"SET password_encryption='$password_enc'; ALTER USER ssltestuser PASSWORD '$password';"
+		);
 		$node->psql('postgres',
-"SET password_encryption='$password_enc'; ALTER USER anotheruser PASSWORD '$password';");
+"SET password_encryption='$password_enc'; ALTER USER anotheruser PASSWORD '$password';"
+		);
 	}
 
 	# enable logging etc.
@@ -149,7 +153,7 @@ sub switch_server_cert
 sub configure_hba_for_ssl
 {
 	my ($node, $serverhost, $authmethod) = @_;
-	my $pgdata     = $node->data_dir;
+	my $pgdata = $node->data_dir;
 
   # Only accept SSL connections from localhost. Our tests don't depend on this
   # but seems best to keep it as narrow as possible for security reasons.

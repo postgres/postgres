@@ -15,11 +15,11 @@ while (<>)
 	next if /^CATALOG\(.*BKI_BOOTSTRAP/;
 	next
 	  unless /\boid *=> *'(\d+)'/
-		  || /^CATALOG\([^,]*, *(\d+).*BKI_ROWTYPE_OID\((\d+),/
-		  || /^CATALOG\([^,]*, *(\d+)/
-		  || /^DECLARE_INDEX\([^,]*, *(\d+)/
-		  || /^DECLARE_UNIQUE_INDEX\([^,]*, *(\d+)/
-		  || /^DECLARE_TOAST\([^,]*, *(\d+), *(\d+)/;
+	  || /^CATALOG\([^,]*, *(\d+).*BKI_ROWTYPE_OID\((\d+),/
+	  || /^CATALOG\([^,]*, *(\d+)/
+	  || /^DECLARE_INDEX\([^,]*, *(\d+)/
+	  || /^DECLARE_UNIQUE_INDEX\([^,]*, *(\d+)/
+	  || /^DECLARE_TOAST\([^,]*, *(\d+), *(\d+)/;
 	$oidcounts{$1}++;
 	$oidcounts{$2}++ if $2;
 }

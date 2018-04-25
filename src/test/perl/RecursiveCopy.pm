@@ -71,7 +71,7 @@ sub copypath
 	{
 		croak "if specified, filterfn must be a subroutine reference"
 		  unless defined(ref $params{filterfn})
-			  and (ref $params{filterfn} eq 'CODE');
+		  and (ref $params{filterfn} eq 'CODE');
 
 		$filterfn = $params{filterfn};
 	}

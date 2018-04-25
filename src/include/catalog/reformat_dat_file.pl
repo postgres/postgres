@@ -73,7 +73,7 @@ foreach my $datfile (@input_files)
 
 	my $header = "$1.h";
 	die "There in no header file corresponding to $datfile"
-	  if ! -e $header;
+	  if !-e $header;
 
 	my $catalog = Catalog::ParseHeader($header);
 	my $catname = $catalog->{catname};
@@ -186,7 +186,7 @@ sub strip_default_values
 	{
 		my $attname = $column->{name};
 		die "strip_default_values: $catname.$attname undefined\n"
-		  if ! defined $row->{$attname};
+		  if !defined $row->{$attname};
 
 		# Delete values that match defaults.
 		if (defined $column->{default}
@@ -196,8 +196,9 @@ sub strip_default_values
 		}
 
 		# Also delete pg_proc.pronargs, since that can be recomputed.
-		if ($catname eq 'pg_proc' && $attname eq 'pronargs' &&
-			defined($row->{proargtypes}))
+		if (   $catname eq 'pg_proc'
+			&& $attname eq 'pronargs'
+			&& defined($row->{proargtypes}))
 		{
 			delete $row->{$attname};
 		}
@@ -210,7 +211,7 @@ sub strip_default_values
 # data files.
 sub format_hash
 {
-	my $data = shift;
+	my $data          = shift;
 	my @orig_attnames = @_;
 
 	# Copy attname to new array if it has a value, so we can determine
@@ -228,7 +229,7 @@ sub format_hash
 	my $char_count = 1;
 
 	my $threshold;
-	my $hash_str = '';
+	my $hash_str      = '';
 	my $element_count = 0;
 
 	foreach my $attname (@attnames)
@@ -262,7 +263,7 @@ sub format_hash
 		# Include a leading space in the key-value pair, since this will
 		# always go after either a comma or an additional padding space on
 		# the next line.
-		my $element = " $attname => '$value'";
+		my $element        = " $attname => '$value'";
 		my $element_length = length($element);
 
 		# If adding the element to the current line would expand the line

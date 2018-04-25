@@ -115,16 +115,18 @@ sub check_query
 
 sub setup_cluster
 {
-	my $extra_name = shift;		# Used to differentiate clusters
-	my $extra = shift;			# Extra params for initdb
+	my $extra_name = shift;    # Used to differentiate clusters
+	my $extra      = shift;    # Extra params for initdb
 
 	# Initialize master, data checksums are mandatory
-	$node_master = get_new_node('master' . ($extra_name ? "_${extra_name}" : ''));
-	$node_master->init(
-		allows_streaming => 1, extra => $extra);
+	$node_master =
+	  get_new_node('master' . ($extra_name ? "_${extra_name}" : ''));
+	$node_master->init(allows_streaming => 1, extra => $extra);
+
 	# Set wal_keep_segments to prevent WAL segment recycling after enforced
 	# checkpoints in the tests.
-	$node_master->append_conf('postgresql.conf', qq(
+	$node_master->append_conf(
+		'postgresql.conf', qq(
 wal_keep_segments = 20
 ));
 }
@@ -141,7 +143,8 @@ sub create_standby
 {
 	my $extra_name = shift;
 
-	$node_standby = get_new_node('standby' . ($extra_name ? "_${extra_name}" : ''));
+	$node_standby =
+	  get_new_node('standby' . ($extra_name ? "_${extra_name}" : ''));
 	$node_master->backup('my_backup');
 	$node_standby->init_from_backup($node_master, 'my_backup');
 	my $connstr_master = $node_master->connstr();
@@ -239,10 +242,11 @@ sub run_pg_rewind
 		"$tmp_folder/master-postgresql.conf.tmp",
 		"$master_pgdata/postgresql.conf");
 
-	chmod($node_master->group_access() ? 0640 : 0600,
-		  "$master_pgdata/postgresql.conf")
-		or BAIL_OUT(
-			"unable to set permissions for $master_pgdata/postgresql.conf");
+	chmod(
+		$node_master->group_access() ? 0640 : 0600,
+		"$master_pgdata/postgresql.conf")
+	  or BAIL_OUT(
+		"unable to set permissions for $master_pgdata/postgresql.conf");
 
 	# Plug-in rewound node to the now-promoted standby node
 	my $port_standby = $node_standby->port;

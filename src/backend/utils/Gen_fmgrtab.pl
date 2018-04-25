@@ -68,7 +68,7 @@ foreach my $datfile (@input_files)
 
 	my $header = "$1.h";
 	die "There in no header file corresponding to $datfile"
-	  if ! -e $header;
+	  if !-e $header;
 
 	my $catalog = Catalog::ParseHeader($header);
 	my $catname = $catalog->{catname};
@@ -79,10 +79,12 @@ foreach my $datfile (@input_files)
 }
 
 # Fetch some values for later.
-my $FirstBootstrapObjectId = Catalog::FindDefinedSymbol(
-	'access/transam.h', \@include_path, 'FirstBootstrapObjectId');
-my $INTERNALlanguageId = Catalog::FindDefinedSymbolFromData(
-	$catalog_data{pg_language}, 'INTERNALlanguageId');
+my $FirstBootstrapObjectId =
+  Catalog::FindDefinedSymbol('access/transam.h', \@include_path,
+	'FirstBootstrapObjectId');
+my $INTERNALlanguageId =
+  Catalog::FindDefinedSymbolFromData($catalog_data{pg_language},
+	'INTERNALlanguageId');
 
 print "Generating fmgrtab.c, fmgroids.h, and fmgrprotos.h...\n";
 
@@ -230,7 +232,7 @@ foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 	print $tfh
 "  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} }";
 
-	$fmgr_builtin_oid_index[$s->{oid}] = $fmgr_count++;
+	$fmgr_builtin_oid_index[ $s->{oid} ] = $fmgr_count++;
 
 	if ($fmgr_count <= $#fmgr)
 	{

@@ -155,8 +155,8 @@ sub usage
 
 usage()
   unless scalar(@ARGV) == 2
-	  && (   ($ARGV[0] =~ /\\([^\\]+$)/)
-		  && ($ARGV[1] eq 'Win32' || $ARGV[1] eq 'x64'));
+  && ( ($ARGV[0] =~ /\\([^\\]+$)/)
+	&& ($ARGV[1] eq 'Win32' || $ARGV[1] eq 'x64'));
 my $defname  = uc $1;
 my $deffile  = "$ARGV[0]/$defname.def";
 my $platform = $ARGV[1];

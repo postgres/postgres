@@ -102,9 +102,9 @@ my %rel_tags;
 		{
 			my $commit = $1;
 			my $tag    = $2;
-			if ($tag =~ /^REL_\d+_\d+$/
-			    || $tag =~ /^REL\d+_\d+$/
-			    || $tag =~ /^REL\d+_\d+_\d+$/)
+			if (   $tag =~ /^REL_\d+_\d+$/
+				|| $tag =~ /^REL\d+_\d+$/
+				|| $tag =~ /^REL\d+_\d+_\d+$/)
 			{
 				$rel_tags{$commit} = $tag;
 			}

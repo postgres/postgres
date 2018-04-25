@@ -59,9 +59,8 @@ $excludes ||= "$code_base/src/tools/pgindent/exclude_file_patterns"
 # easier to configure.  Note that the typedefs need trailing newlines.
 my @whitelist = ("bool\n");
 
-my %blacklist = map { +"$_\n" => 1 }
-  qw( FD_SET date interval timestamp ANY
-      abs allocfunc iterator other pointer printfunc reference string type );
+my %blacklist = map { +"$_\n" => 1 } qw( FD_SET date interval timestamp ANY
+  abs allocfunc iterator other pointer printfunc reference string type );
 
 # globals
 my @files;
@@ -135,7 +134,7 @@ sub load_typedefs
 	push(@typedefs, @whitelist);
 
 	# remove blacklisted entries
-	@typedefs = grep { ! $blacklist{$_} } @typedefs;
+	@typedefs = grep { !$blacklist{$_} } @typedefs;
 
 	# write filtered typedefs
 	my $filter_typedefs_fh = new File::Temp(TEMPLATE => "pgtypedefXXXXX");
@@ -394,7 +393,7 @@ File::Find::find(
 			  && -f _
 			  && /^.*\.[ch]\z/s
 			  && push(@files, $File::Find::name);
-		  }
+		}
 	},
 	$code_base) if $code_base;
 

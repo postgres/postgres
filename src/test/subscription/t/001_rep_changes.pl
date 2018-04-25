@@ -32,7 +32,8 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_mixed (a, b) VALUES (1, 'foo')");
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab_include (a int, b text, CONSTRAINT covering PRIMARY KEY(a) INCLUDE(b))");
+"CREATE TABLE tab_include (a int, b text, CONSTRAINT covering PRIMARY KEY(a) INCLUDE(b))"
+);
 
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_notrep (a int)");
@@ -48,7 +49,8 @@ $node_subscriber->safe_psql('postgres',
 
 # replication of the table with included index
 $node_subscriber->safe_psql('postgres',
-	"CREATE TABLE tab_include (a int, b text, CONSTRAINT covering PRIMARY KEY(a) INCLUDE(b))");
+"CREATE TABLE tab_include (a int, b text, CONSTRAINT covering PRIMARY KEY(a) INCLUDE(b))"
+);
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
@@ -97,7 +99,8 @@ $node_publisher->safe_psql('postgres',
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_include SELECT generate_series(1,50)");
-$node_publisher->safe_psql('postgres', "DELETE FROM tab_include WHERE a > 20");
+$node_publisher->safe_psql('postgres',
+	"DELETE FROM tab_include WHERE a > 20");
 $node_publisher->safe_psql('postgres', "UPDATE tab_include SET a = -a");
 
 $node_publisher->wait_for_catchup($appname);
@@ -117,7 +120,8 @@ is( $result, qq(|foo|1
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_include");
-is($result, qq(20|-20|-1), 'check replicated changes with primary key index with included columns');
+is($result, qq(20|-20|-1),
+	'check replicated changes with primary key index with included columns');
 
 # insert some duplicate rows
 $node_publisher->safe_psql('postgres',

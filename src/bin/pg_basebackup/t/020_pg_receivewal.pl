@@ -41,7 +41,8 @@ is($slot->{'slot_type'}, 'physical', 'physical replication slot was created');
 is($slot->{'restart_lsn'}, '', 'restart LSN of new slot is null');
 $primary->command_ok([ 'pg_receivewal', '--slot', $slot_name, '--drop-slot' ],
 	'dropping a replication slot');
-is($primary->slot($slot_name)->{'slot_type'}, '', 'replication slot was removed');
+is($primary->slot($slot_name)->{'slot_type'},
+	'', 'replication slot was removed');
 
 # Generate some WAL.  Use --synchronous at the same time to add more
 # code coverage.  Switch to the next segment first so that subsequent
@@ -63,8 +64,9 @@ $primary->command_ok(
 # Permissions on WAL files should be default
 SKIP:
 {
-	skip "unix-style permissions not supported on Windows", 1 if ($windows_os);
+	skip "unix-style permissions not supported on Windows", 1
+	  if ($windows_os);
 
 	ok(check_mode_recursive($stream_dir, 0700, 0600),
-	   "check stream dir permissions");
+		"check stream dir permissions");
 }

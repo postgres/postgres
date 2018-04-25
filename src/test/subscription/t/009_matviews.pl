@@ -22,10 +22,13 @@ $node_subscriber->safe_psql('postgres',
 "CREATE SUBSCRIPTION mysub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION mypub;"
 );
 
-$node_publisher->safe_psql('postgres', q{CREATE TABLE test1 (a int PRIMARY KEY, b text)});
-$node_publisher->safe_psql('postgres', q{INSERT INTO test1 (a, b) VALUES (1, 'one'), (2, 'two');});
+$node_publisher->safe_psql('postgres',
+	q{CREATE TABLE test1 (a int PRIMARY KEY, b text)});
+$node_publisher->safe_psql('postgres',
+	q{INSERT INTO test1 (a, b) VALUES (1, 'one'), (2, 'two');});
 
-$node_subscriber->safe_psql('postgres', q{CREATE TABLE test1 (a int PRIMARY KEY, b text);});
+$node_subscriber->safe_psql('postgres',
+	q{CREATE TABLE test1 (a int PRIMARY KEY, b text);});
 
 $node_publisher->wait_for_catchup($appname);
 
@@ -34,8 +37,10 @@ $node_publisher->wait_for_catchup($appname);
 # need to make sure they are properly ignored. (bug #15044)
 
 # create a MV with some data
-$node_publisher->safe_psql('postgres', q{CREATE MATERIALIZED VIEW testmv1 AS SELECT * FROM test1;});
+$node_publisher->safe_psql('postgres',
+	q{CREATE MATERIALIZED VIEW testmv1 AS SELECT * FROM test1;});
 $node_publisher->wait_for_catchup($appname);
+
 # There is no equivalent relation on the subscriber, but MV data is
 # not replicated, so this does not hang.
 

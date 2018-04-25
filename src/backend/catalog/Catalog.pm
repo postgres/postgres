@@ -33,185 +33,186 @@ sub ParseHeader
 		'TransactionId' => 'xid',
 		'XLogRecPtr'    => 'pg_lsn');
 
-		my %catalog;
-		my $declaring_attributes = 0;
-		my $is_varlen     = 0;
-		my $is_client_code = 0;
+	my %catalog;
+	my $declaring_attributes = 0;
+	my $is_varlen            = 0;
+	my $is_client_code       = 0;
 
-		$catalog{columns} = [];
-		$catalog{toasting} = [];
-		$catalog{indexing} = [];
-		$catalog{client_code} = [];
+	$catalog{columns}     = [];
+	$catalog{toasting}    = [];
+	$catalog{indexing}    = [];
+	$catalog{client_code} = [];
 
-		open(my $ifh, '<', $input_file) || die "$input_file: $!";
+	open(my $ifh, '<', $input_file) || die "$input_file: $!";
 
-		# Scan the input file.
-		while (<$ifh>)
+	# Scan the input file.
+	while (<$ifh>)
+	{
+
+		# Set appropriate flag when we're in certain code sections.
+		if (/^#/)
 		{
-
-			# Set appropriate flag when we're in certain code sections.
-			if (/^#/)
+			$is_varlen = 1 if /^#ifdef\s+CATALOG_VARLEN/;
+			if (/^#ifdef\s+EXPOSE_TO_CLIENT_CODE/)
 			{
-				$is_varlen = 1 if /^#ifdef\s+CATALOG_VARLEN/;
-				if (/^#ifdef\s+EXPOSE_TO_CLIENT_CODE/)
-				{
-					$is_client_code = 1;
-					next;
-				}
-				next if !$is_client_code;
+				$is_client_code = 1;
+				next;
+			}
+			next if !$is_client_code;
+		}
+
+		if (!$is_client_code)
+		{
+			# Strip C-style comments.
+			s;/\*(.|\n)*\*/;;g;
+			if (m;/\*;)
+			{
+
+				# handle multi-line comments properly.
+				my $next_line = <$ifh>;
+				die "$input_file: ends within C-style comment\n"
+				  if !defined $next_line;
+				$_ .= $next_line;
+				redo;
 			}
 
-			if (!$is_client_code)
+			# Strip useless whitespace and trailing semicolons.
+			chomp;
+			s/^\s+//;
+			s/;\s*$//;
+			s/\s+/ /g;
+		}
+
+		# Push the data into the appropriate data structure.
+		if (/^DECLARE_TOAST\(\s*(\w+),\s*(\d+),\s*(\d+)\)/)
+		{
+			my ($toast_name, $toast_oid, $index_oid) = ($1, $2, $3);
+			push @{ $catalog{toasting} },
+			  "declare toast $toast_oid $index_oid on $toast_name\n";
+		}
+		elsif (/^DECLARE_(UNIQUE_)?INDEX\(\s*(\w+),\s*(\d+),\s*(.+)\)/)
+		{
+			my ($is_unique, $index_name, $index_oid, $using) =
+			  ($1, $2, $3, $4);
+			push @{ $catalog{indexing} },
+			  sprintf(
+				"declare %sindex %s %s %s\n",
+				$is_unique ? 'unique ' : '',
+				$index_name, $index_oid, $using);
+		}
+		elsif (/^BUILD_INDICES/)
+		{
+			push @{ $catalog{indexing} }, "build indices\n";
+		}
+		elsif (/^CATALOG\((\w+),(\d+),(\w+)\)/)
+		{
+			$catalog{catname}            = $1;
+			$catalog{relation_oid}       = $2;
+			$catalog{relation_oid_macro} = $3;
+
+			$catalog{bootstrap} = /BKI_BOOTSTRAP/ ? ' bootstrap' : '';
+			$catalog{shared_relation} =
+			  /BKI_SHARED_RELATION/ ? ' shared_relation' : '';
+			$catalog{without_oids} =
+			  /BKI_WITHOUT_OIDS/ ? ' without_oids' : '';
+			if (/BKI_ROWTYPE_OID\((\d+),(\w+)\)/)
 			{
-				# Strip C-style comments.
-				s;/\*(.|\n)*\*/;;g;
-				if (m;/\*;)
-				{
-
-					# handle multi-line comments properly.
-					my $next_line = <$ifh>;
-					die "$input_file: ends within C-style comment\n"
-					  if !defined $next_line;
-					$_ .= $next_line;
-					redo;
-				}
-
-				# Strip useless whitespace and trailing semicolons.
-				chomp;
-				s/^\s+//;
-				s/;\s*$//;
-				s/\s+/ /g;
+				$catalog{rowtype_oid}        = $1;
+				$catalog{rowtype_oid_clause} = " rowtype_oid $1";
+				$catalog{rowtype_oid_macro}  = $2;
 			}
-
-			# Push the data into the appropriate data structure.
-			if (/^DECLARE_TOAST\(\s*(\w+),\s*(\d+),\s*(\d+)\)/)
+			else
 			{
-				my ($toast_name, $toast_oid, $index_oid) = ($1, $2, $3);
-				push @{ $catalog{toasting} },
-				  "declare toast $toast_oid $index_oid on $toast_name\n";
+				$catalog{rowtype_oid}        = '';
+				$catalog{rowtype_oid_clause} = '';
+				$catalog{rowtype_oid_macro}  = '';
 			}
-			elsif (/^DECLARE_(UNIQUE_)?INDEX\(\s*(\w+),\s*(\d+),\s*(.+)\)/)
+			$catalog{schema_macro} = /BKI_SCHEMA_MACRO/ ? 1 : 0;
+			$declaring_attributes = 1;
+		}
+		elsif ($is_client_code)
+		{
+			if (/^#endif/)
 			{
-				my ($is_unique, $index_name, $index_oid, $using) =
-				  ($1, $2, $3, $4);
-				push @{ $catalog{indexing} },
-				  sprintf(
-					"declare %sindex %s %s %s\n",
-					$is_unique ? 'unique ' : '',
-					$index_name, $index_oid, $using);
+				$is_client_code = 0;
 			}
-			elsif (/^BUILD_INDICES/)
+			else
 			{
-				push @{ $catalog{indexing} }, "build indices\n";
-			}
-			elsif (/^CATALOG\((\w+),(\d+),(\w+)\)/)
-			{
-				$catalog{catname} = $1;
-				$catalog{relation_oid} = $2;
-				$catalog{relation_oid_macro} = $3;
-
-				$catalog{bootstrap} = /BKI_BOOTSTRAP/ ? ' bootstrap' : '';
-				$catalog{shared_relation} =
-				  /BKI_SHARED_RELATION/ ? ' shared_relation' : '';
-				$catalog{without_oids} =
-				  /BKI_WITHOUT_OIDS/ ? ' without_oids' : '';
-				if (/BKI_ROWTYPE_OID\((\d+),(\w+)\)/)
-				{
-					$catalog{rowtype_oid} = $1;
-					$catalog{rowtype_oid_clause} = " rowtype_oid $1";
-					$catalog{rowtype_oid_macro} = $2;
-				}
-				else
-				{
-					$catalog{rowtype_oid} = '';
-					$catalog{rowtype_oid_clause} = '';
-					$catalog{rowtype_oid_macro} = '';
-				}
-				$catalog{schema_macro} = /BKI_SCHEMA_MACRO/ ? 1 : 0;
-				$declaring_attributes = 1;
-			}
-			elsif ($is_client_code)
-			{
-				if (/^#endif/)
-				{
-					$is_client_code = 0;
-				}
-				else
-				{
-					push @{ $catalog{client_code} }, $_;
-				}
-			}
-			elsif ($declaring_attributes)
-			{
-				next if (/^{|^$/);
-				if (/^}/)
-				{
-					$declaring_attributes = 0;
-				}
-				else
-				{
-					my %column;
-					my @attopts = split /\s+/, $_;
-					my $atttype = shift @attopts;
-					my $attname = shift @attopts;
-					die "parse error ($input_file)"
-					  unless ($attname and $atttype);
-
-					if (exists $RENAME_ATTTYPE{$atttype})
-					{
-						$atttype = $RENAME_ATTTYPE{$atttype};
-					}
-
-					# If the C name ends with '[]' or '[digits]', we have
-					# an array type, so we discard that from the name and
-					# prepend '_' to the type.
-					if ($attname =~ /(\w+)\[\d*\]/)
-					{
-						$attname = $1;
-						$atttype = '_' . $atttype;
-					}
-
-					$column{type} = $atttype;
-					$column{name} = $attname;
-					$column{is_varlen} = 1 if $is_varlen;
-
-					foreach my $attopt (@attopts)
-					{
-						if ($attopt eq 'BKI_FORCE_NULL')
-						{
-							$column{forcenull} = 1;
-						}
-						elsif ($attopt eq 'BKI_FORCE_NOT_NULL')
-						{
-							$column{forcenotnull} = 1;
-						}
-						# We use quotes for values like \0 and \054, to
-						# make sure all compilers and syntax highlighters
-						# can recognize them properly.
-						elsif ($attopt =~ /BKI_DEFAULT\(['"]?([^'"]+)['"]?\)/)
-						{
-							$column{default} = $1;
-						}
-						elsif ($attopt =~ /BKI_LOOKUP\((\w+)\)/)
-						{
-							$column{lookup} = $1;
-						}
-						else
-						{
-							die
-"unknown column option $attopt on column $attname";
-						}
-
-						if ($column{forcenull} and $column{forcenotnull})
-						{
-							die "$attname is forced both null and not null";
-						}
-					}
-					push @{ $catalog{columns} }, \%column;
-				}
+				push @{ $catalog{client_code} }, $_;
 			}
 		}
-		close $ifh;
+		elsif ($declaring_attributes)
+		{
+			next if (/^{|^$/);
+			if (/^}/)
+			{
+				$declaring_attributes = 0;
+			}
+			else
+			{
+				my %column;
+				my @attopts = split /\s+/, $_;
+				my $atttype = shift @attopts;
+				my $attname = shift @attopts;
+				die "parse error ($input_file)"
+				  unless ($attname and $atttype);
+
+				if (exists $RENAME_ATTTYPE{$atttype})
+				{
+					$atttype = $RENAME_ATTTYPE{$atttype};
+				}
+
+				# If the C name ends with '[]' or '[digits]', we have
+				# an array type, so we discard that from the name and
+				# prepend '_' to the type.
+				if ($attname =~ /(\w+)\[\d*\]/)
+				{
+					$attname = $1;
+					$atttype = '_' . $atttype;
+				}
+
+				$column{type}      = $atttype;
+				$column{name}      = $attname;
+				$column{is_varlen} = 1 if $is_varlen;
+
+				foreach my $attopt (@attopts)
+				{
+					if ($attopt eq 'BKI_FORCE_NULL')
+					{
+						$column{forcenull} = 1;
+					}
+					elsif ($attopt eq 'BKI_FORCE_NOT_NULL')
+					{
+						$column{forcenotnull} = 1;
+					}
+
+					# We use quotes for values like \0 and \054, to
+					# make sure all compilers and syntax highlighters
+					# can recognize them properly.
+					elsif ($attopt =~ /BKI_DEFAULT\(['"]?([^'"]+)['"]?\)/)
+					{
+						$column{default} = $1;
+					}
+					elsif ($attopt =~ /BKI_LOOKUP\((\w+)\)/)
+					{
+						$column{lookup} = $1;
+					}
+					else
+					{
+						die
+						  "unknown column option $attopt on column $attname";
+					}
+
+					if ($column{forcenull} and $column{forcenotnull})
+					{
+						die "$attname is forced both null and not null";
+					}
+				}
+				push @{ $catalog{columns} }, \%column;
+			}
+		}
+	}
+	close $ifh;
 	return \%catalog;
 }
 
@@ -228,7 +229,7 @@ sub ParseData
 	$input_file =~ /(\w+)\.dat$/
 	  or die "Input file $input_file needs to be a .dat file.\n";
 	my $catname = $1;
-	my $data = [];
+	my $data    = [];
 
 	# Scan the input file.
 	while (<$ifd>)
@@ -311,8 +312,9 @@ sub AddDefaultValues
 		{
 			$row->{$attname} = $column->{default};
 		}
-		elsif ($catname eq 'pg_proc' && $attname eq 'pronargs' &&
-			   defined($row->{proargtypes}))
+		elsif ($catname eq 'pg_proc'
+			&& $attname eq 'pronargs'
+			&& defined($row->{proargtypes}))
 		{
 			# pg_proc.pronargs can be derived from proargtypes.
 			my @proargtypes = split /\s+/, $row->{proargtypes};
@@ -328,7 +330,7 @@ sub AddDefaultValues
 	if (@missing_fields)
 	{
 		die sprintf "missing values for field(s) %s in %s.dat line %s\n",
-			join(', ', @missing_fields), $catname, $row->{line_number};
+		  join(', ', @missing_fields), $catname, $row->{line_number};
 	}
 }
 
@@ -379,7 +381,7 @@ sub FindDefinedSymbol
 sub FindDefinedSymbolFromData
 {
 	my ($data, $symbol) = @_;
-	foreach my $row (@{ $data })
+	foreach my $row (@{$data})
 	{
 		if ($row->{oid_symbol} eq $symbol)
 		{

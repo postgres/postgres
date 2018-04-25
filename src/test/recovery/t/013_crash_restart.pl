@@ -30,8 +30,9 @@ $node->init(allows_streaming => 1);
 $node->start();
 
 # by default PostgresNode doesn't doesn't restart after a crash
-$node->safe_psql('postgres',
-				 q[ALTER SYSTEM SET restart_after_crash = 1;
+$node->safe_psql(
+	'postgres',
+	q[ALTER SYSTEM SET restart_after_crash = 1;
 				   ALTER SYSTEM SET log_connections = 1;
 				   SELECT pg_reload_conf();]);
 
@@ -68,7 +69,7 @@ INSERT INTO alive VALUES($$committed-before-sigquit$$);
 SELECT pg_backend_pid();
 ];
 ok(pump_until($killme, \$killme_stdout, qr/[[:digit:]]+[\r\n]$/m),
-   'acquired pid for SIGQUIT');
+	'acquired pid for SIGQUIT');
 my $pid = $killme_stdout;
 chomp($pid);
 $killme_stdout = '';
@@ -80,7 +81,7 @@ BEGIN;
 INSERT INTO alive VALUES($$in-progress-before-sigquit$$) RETURNING status;
 ];
 ok(pump_until($killme, \$killme_stdout, qr/in-progress-before-sigquit/m),
-   'inserted in-progress-before-sigquit');
+	'inserted in-progress-before-sigquit');
 $killme_stdout = '';
 $killme_stderr = '';
 
@@ -93,7 +94,7 @@ SELECT $$psql-connected$$;
 SELECT pg_sleep(3600);
 ];
 ok(pump_until($monitor, \$monitor_stdout, qr/psql-connected/m),
-   'monitor connected');
+	'monitor connected');
 $monitor_stdout = '';
 $monitor_stderr = '';
 
@@ -107,8 +108,12 @@ is($ret, 0, "killed process with SIGQUIT");
 $killme_stdin .= q[
 SELECT 1;
 ];
-ok(pump_until($killme, \$killme_stderr, qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m),
-   "psql query died successfully after SIGQUIT");
+ok( pump_until(
+		$killme,
+		\$killme_stderr,
+qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m
+	),
+	"psql query died successfully after SIGQUIT");
 $killme_stderr = '';
 $killme_stdout = '';
 $killme->finish;
@@ -116,13 +121,21 @@ $killme->finish;
 # Wait till server restarts - we should get the WARNING here, but
 # sometimes the server is unable to send that, if interrupted while
 # sending.
-ok(pump_until($monitor, \$monitor_stderr, qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m),
-   "psql monitor died successfully after SIGQUIT");
+ok( pump_until(
+		$monitor,
+		\$monitor_stderr,
+qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m
+	),
+	"psql monitor died successfully after SIGQUIT");
 $monitor->finish;
 
 # Wait till server restarts
-is($node->poll_query_until('postgres', 'SELECT $$restarted after sigquit$$;', 'restarted after sigquit'),
-   "1", "reconnected after SIGQUIT");
+is( $node->poll_query_until(
+		'postgres',
+		'SELECT $$restarted after sigquit$$;',
+		'restarted after sigquit'),
+	"1",
+	"reconnected after SIGQUIT");
 
 
 # restart psql processes, now that the crash cycle finished
@@ -137,10 +150,10 @@ $killme_stdin .= q[
 SELECT pg_backend_pid();
 ];
 ok(pump_until($killme, \$killme_stdout, qr/[[:digit:]]+[\r\n]$/m),
-   "acquired pid for SIGKILL");
+	"acquired pid for SIGKILL");
 $pid = $killme_stdout;
 chomp($pid);
-$pid = $killme_stdout;
+$pid           = $killme_stdout;
 $killme_stdout = '';
 $killme_stderr = '';
 
@@ -151,7 +164,7 @@ BEGIN;
 INSERT INTO alive VALUES($$in-progress-before-sigkill$$) RETURNING status;
 ];
 ok(pump_until($killme, \$killme_stdout, qr/in-progress-before-sigkill/m),
-   'inserted in-progress-before-sigkill');
+	'inserted in-progress-before-sigkill');
 $killme_stdout = '';
 $killme_stderr = '';
 
@@ -164,7 +177,7 @@ SELECT $$psql-connected$$;
 SELECT pg_sleep(3600);
 ];
 ok(pump_until($monitor, \$monitor_stdout, qr/psql-connected/m),
-   'monitor connected');
+	'monitor connected');
 $monitor_stdout = '';
 $monitor_stderr = '';
 
@@ -179,35 +192,51 @@ is($ret, 0, "killed process with KILL");
 $killme_stdin .= q[
 SELECT 1;
 ];
-ok(pump_until($killme, \$killme_stderr, qr/server closed the connection unexpectedly/m),
-   "psql query died successfully after SIGKILL");
+ok( pump_until(
+		$killme, \$killme_stderr,
+		qr/server closed the connection unexpectedly/m),
+	"psql query died successfully after SIGKILL");
 $killme->finish;
 
 # Wait till server restarts - we should get the WARNING here, but
 # sometimes the server is unable to send that, if interrupted while
 # sending.
-ok(pump_until($monitor, \$monitor_stderr, qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m),
-   "psql monitor died successfully after SIGKILL");
+ok( pump_until(
+		$monitor,
+		\$monitor_stderr,
+qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m
+	),
+	"psql monitor died successfully after SIGKILL");
 $monitor->finish;
 
 # Wait till server restarts
-is($node->poll_query_until('postgres', 'SELECT 1', '1'), "1", "reconnected after SIGKILL");
+is($node->poll_query_until('postgres', 'SELECT 1', '1'),
+	"1", "reconnected after SIGKILL");
 
 # Make sure the committed rows survived, in-progress ones not
-is($node->safe_psql('postgres', 'SELECT * FROM alive'),
-   "committed-before-sigquit\ncommitted-before-sigkill", 'data survived');
+is( $node->safe_psql('postgres', 'SELECT * FROM alive'),
+	"committed-before-sigquit\ncommitted-before-sigkill",
+	'data survived');
 
-is($node->safe_psql('postgres', 'INSERT INTO alive VALUES($$before-orderly-restart$$) RETURNING status'),
-   'before-orderly-restart', 'can still write after crash restart');
+is( $node->safe_psql(
+		'postgres',
+'INSERT INTO alive VALUES($$before-orderly-restart$$) RETURNING status'),
+	'before-orderly-restart',
+	'can still write after crash restart');
 
 # Just to be sure, check that an orderly restart now still works
 $node->restart();
 
-is($node->safe_psql('postgres', 'SELECT * FROM alive'),
-   "committed-before-sigquit\ncommitted-before-sigkill\nbefore-orderly-restart", 'data survived');
+is( $node->safe_psql('postgres', 'SELECT * FROM alive'),
+"committed-before-sigquit\ncommitted-before-sigkill\nbefore-orderly-restart",
+	'data survived');
 
-is($node->safe_psql('postgres', 'INSERT INTO alive VALUES($$after-orderly-restart$$) RETURNING status'),
-   'after-orderly-restart', 'can still write after orderly restart');
+is( $node->safe_psql(
+		'postgres',
+		'INSERT INTO alive VALUES($$after-orderly-restart$$) RETURNING status'
+	),
+	'after-orderly-restart',
+	'can still write after orderly restart');
 
 $node->stop();
 
@@ -221,7 +250,7 @@ sub pump_until
 		if ($psql_timeout->is_expired)
 		{
 			diag("aborting wait: program timed out");
-			diag("stream contents: >>", $$stream,"<<");
+			diag("stream contents: >>", $$stream, "<<");
 			diag("pattern searched for: ", $untl);
 
 			return 0;
@@ -229,7 +258,7 @@ sub pump_until
 		if (not $proc->pumpable())
 		{
 			diag("aborting wait: program died");
-			diag("stream contents: >>", $$stream,"<<");
+			diag("stream contents: >>", $$stream, "<<");
 			diag("pattern searched for: ", $untl);
 
 			return 0;
@@ -239,4 +268,4 @@ sub pump_until
 	}
 	return 1;
 
-};
+}
