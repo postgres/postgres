@@ -770,6 +770,12 @@ add_partial_path(RelOptInfo *parent_rel, Path *new_path)
 	/* Check for query cancel. */
 	CHECK_FOR_INTERRUPTS();
 
+	/* Path to be added must be parallel safe. */
+	Assert(new_path->parallel_safe);
+
+	/* Relation should be OK for parallelism, too. */
+	Assert(parent_rel->consider_parallel);
+
 	/*
 	 * As in add_path, throw out any paths which are dominated by the new
 	 * path, but throw out the new path if some existing path dominates it.

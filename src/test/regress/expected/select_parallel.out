@@ -955,4 +955,23 @@ ORDER BY 1, 2, 3;
 ------------------------------+---------------------------+-------------+--------------
 (0 rows)
 
+-- test interation between subquery and partial_paths
+SET LOCAL min_parallel_table_scan_size TO 0;
+CREATE VIEW tenk1_vw_sec WITH (security_barrier) AS SELECT * FROM tenk1;
+EXPLAIN (COSTS OFF)
+SELECT 1 FROM tenk1_vw_sec WHERE EXISTS (SELECT 1 WHERE unique1 = 0);
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Subquery Scan on tenk1_vw_sec
+   Filter: (alternatives: SubPlan 1 or hashed SubPlan 2)
+   ->  Gather
+         Workers Planned: 4
+         ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
+   SubPlan 1
+     ->  Result
+           One-Time Filter: (tenk1_vw_sec.unique1 = 0)
+   SubPlan 2
+     ->  Result
+(10 rows)
+
 rollback;

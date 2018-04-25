@@ -330,7 +330,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * to build a partial path for this relation.  But there's no point in
 		 * considering any path but the cheapest.
 		 */
-		if (final_rel->partial_pathlist != NIL)
+		if (rel->consider_parallel && bms_is_empty(rel->lateral_relids) &&
+			final_rel->partial_pathlist != NIL)
 		{
 			Path	   *partial_subpath;
 			Path	   *partial_path;

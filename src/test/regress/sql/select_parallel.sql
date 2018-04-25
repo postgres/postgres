@@ -383,4 +383,10 @@ ORDER BY 1;
 SELECT * FROM information_schema.foreign_data_wrapper_options
 ORDER BY 1, 2, 3;
 
+-- test interation between subquery and partial_paths
+SET LOCAL min_parallel_table_scan_size TO 0;
+CREATE VIEW tenk1_vw_sec WITH (security_barrier) AS SELECT * FROM tenk1;
+EXPLAIN (COSTS OFF)
+SELECT 1 FROM tenk1_vw_sec WHERE EXISTS (SELECT 1 WHERE unique1 = 0);
+
 rollback;
