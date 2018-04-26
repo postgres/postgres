@@ -134,20 +134,20 @@ sub main
 
 		chomp;
 
-  # comment out the line below to make the result file match (blank line wise)
-  # the prior version.
-  #next if ($_ eq '');
+		# comment out the line below to make the result file match (blank line wise)
+		# the prior version.
+		#next if ($_ eq '');
 
-   # Dump the action for a rule -
-   # stmt_mode indicates if we are processing the 'stmt:'
-   # rule (mode==0 means normal,  mode==1 means stmt:)
-   # flds are the fields to use. These may start with a '$' - in
-   # which case they are the result of a previous non-terminal
-   #
-   # if they dont start with a '$' then they are token name
-   #
-   # len is the number of fields in flds...
-   # leadin is the padding to apply at the beginning (just use for formatting)
+		# Dump the action for a rule -
+		# stmt_mode indicates if we are processing the 'stmt:'
+		# rule (mode==0 means normal,  mode==1 means stmt:)
+		# flds are the fields to use. These may start with a '$' - in
+		# which case they are the result of a previous non-terminal
+		#
+		# if they dont start with a '$' then they are token name
+		#
+		# len is the number of fields in flds...
+		# leadin is the padding to apply at the beginning (just use for formatting)
 
 		if (/^%%/)
 		{
@@ -223,7 +223,7 @@ sub main
 			next line;
 		}
 
-	   # Dont worry about anything if we're not in the right section of gram.y
+		# Dont worry about anything if we're not in the right section of gram.y
 		if ($yaccmode != 1)
 		{
 			next line;
@@ -632,8 +632,8 @@ sub preload_addons
 	my $filename = $path . "/ecpg.addons";
 	open(my $fh, '<', $filename) or die;
 
- # there may be multiple lines starting ECPG: and then multiple lines of code.
- # the code need to be add to all prior ECPG records.
+	# there may be multiple lines starting ECPG: and then multiple lines of code.
+	# the code need to be add to all prior ECPG records.
 	my (@needsRules, @code, $record);
 
 	# there may be comments before the first ECPG line, skip them

@@ -213,7 +213,7 @@ SKIP:
 	# Move pg_replslot out of $pgdata and create a symlink to it.
 	$node->stop;
 
-  # Set umask so test directories and files are created with group permissions
+	# Set umask so test directories and files are created with group permissions
 	umask(0027);
 
 	# Enable group permissions on PGDATA
@@ -245,7 +245,7 @@ SKIP:
 	is(scalar(@tblspc_tars), 1, 'one tablespace tar was created');
 	rmtree("$tempdir/tarbackup2");
 
- # Create an unlogged table to test that forks other than init are not copied.
+	# Create an unlogged table to test that forks other than init are not copied.
 	$node->safe_psql('postgres',
 		'CREATE UNLOGGED TABLE tblspc1_unlogged (id int) TABLESPACE tblspc1;'
 	);
@@ -258,8 +258,8 @@ SKIP:
 		'unlogged init fork in tablespace');
 	ok(-f "$pgdata/$tblspc1UnloggedPath", 'unlogged main fork in tablespace');
 
-  # Create files that look like temporary relations to ensure they are ignored
-  # in a tablespace.
+	# Create files that look like temporary relations to ensure they are ignored
+	# in a tablespace.
 	my @tempRelationFiles = qw(t888_888 t888888_888888_vm.1);
 	my $tblSpc1Id         = basename(
 		dirname(

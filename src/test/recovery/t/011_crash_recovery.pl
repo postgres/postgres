@@ -10,7 +10,7 @@ use Config;
 if ($Config{osname} eq 'MSWin32')
 {
 
-   # some Windows Perls at least don't like IPC::Run's start/kill_kill regime.
+	# some Windows Perls at least don't like IPC::Run's start/kill_kill regime.
 	plan skip_all => "Test fails on Windows perl";
 }
 else

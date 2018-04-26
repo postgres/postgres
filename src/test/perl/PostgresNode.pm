@@ -1197,12 +1197,12 @@ sub psql
 
 	my $ret;
 
-   # Run psql and capture any possible exceptions.  If the exception is
-   # because of a timeout and the caller requested to handle that, just return
-   # and set the flag.  Otherwise, and for any other exception, rethrow.
-   #
-   # For background, see
-   # http://search.cpan.org/~ether/Try-Tiny-0.24/lib/Try/Tiny.pm
+	# Run psql and capture any possible exceptions.  If the exception is
+	# because of a timeout and the caller requested to handle that, just return
+	# and set the flag.  Otherwise, and for any other exception, rethrow.
+	#
+	# For background, see
+	# http://search.cpan.org/~ether/Try-Tiny-0.24/lib/Try/Tiny.pm
 	do
 	{
 		local $@;

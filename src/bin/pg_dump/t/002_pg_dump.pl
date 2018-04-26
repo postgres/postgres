@@ -2864,7 +2864,7 @@ foreach my $run (sort keys %pgdump_runs)
 			next;
 		}
 
-# If there is a like entry, but no unlike entry, then we will test the like case
+		# If there is a like entry, but no unlike entry, then we will test the like case
 		if ($tests{$test}->{like}->{$test_key}
 			&& !defined($tests{$test}->{unlike}->{$test_key}))
 		{

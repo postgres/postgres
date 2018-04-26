@@ -345,15 +345,15 @@ sub Save
 {
 	my ($self) = @_;
 
-# If doing DLL and haven't specified a DEF file, do a full export of all symbols
-# in the project.
+	# If doing DLL and haven't specified a DEF file, do a full export of all symbols
+	# in the project.
 	if ($self->{type} eq "dll" && !$self->{def})
 	{
 		$self->FullExportDLL($self->{name} . ".lib");
 	}
 
-# Warning 4197 is about double exporting, disable this per
-# http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99193
+	# Warning 4197 is about double exporting, disable this per
+	# http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99193
 	$self->DisableLinkerWarnings('4197') if ($self->{platform} eq 'x64');
 
 	# Dump the project

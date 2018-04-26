@@ -670,7 +670,7 @@ pgbench(
 
 pgbench(
 
-   # given the expected rate and the 2 ms tx duration, at most one is executed
+	# given the expected rate and the 2 ms tx duration, at most one is executed
 	'-t 10 --rate=100000 --latency-limit=1 -n -r',
 	0,
 	[   qr{processed: [01]/10},

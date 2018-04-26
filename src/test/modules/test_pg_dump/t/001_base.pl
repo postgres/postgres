@@ -370,7 +370,7 @@ my %tests = (
 			section_pre_data => 1, },
 		unlike => { no_privs => 1, }, },
 
- # Objects included in extension part of a schema created by this extension */
+	# Objects included in extension part of a schema created by this extension */
 	'CREATE TABLE regress_pg_dump_schema.test_table' => {
 		regexp => qr/^
 			\QCREATE TABLE regress_pg_dump_schema.test_table (\E
@@ -498,7 +498,7 @@ foreach my $run (sort keys %pgdump_runs)
 	# Then count all the tests run against each run
 	foreach my $test (sort keys %tests)
 	{
-# If there is a like entry, but no unlike entry, then we will test the like case
+		# If there is a like entry, but no unlike entry, then we will test the like case
 		if ($tests{$test}->{like}->{$test_key}
 			&& !defined($tests{$test}->{unlike}->{$test_key}))
 		{
