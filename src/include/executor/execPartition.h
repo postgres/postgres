@@ -90,6 +90,10 @@ typedef struct PartitionDispatchData *PartitionDispatch;
  *								given leaf partition's rowtype after that
  *								partition is chosen for insertion by
  *								tuple-routing.
+ * root_tuple_slot				TupleTableSlot to be used to transiently hold
+ *								copy of a tuple that's being moved across
+ *								partitions in the root partitioned table's
+ *								rowtype
  *-----------------------
  */
 typedef struct PartitionTupleRouting
