@@ -57,27 +57,14 @@ if ($output_path ne '' && substr($output_path, -1) ne '/')
 	$output_path .= '/';
 }
 
-# Open temp files
-my $tmpext  = ".tmp$$";
-my $bkifile = $output_path . 'postgres.bki';
-open my $bki, '>', $bkifile . $tmpext
-  or die "can't open $bkifile$tmpext: $!";
-my $schemafile = $output_path . 'schemapg.h';
-open my $schemapg, '>', $schemafile . $tmpext
-  or die "can't open $schemafile$tmpext: $!";
-my $descrfile = $output_path . 'postgres.description';
-open my $descr, '>', $descrfile . $tmpext
-  or die "can't open $descrfile$tmpext: $!";
-my $shdescrfile = $output_path . 'postgres.shdescription';
-open my $shdescr, '>', $shdescrfile . $tmpext
-  or die "can't open $shdescrfile$tmpext: $!";
-
 # Read all the files into internal data structures.
 my @catnames;
 my %catalogs;
 my %catalog_data;
 my @toast_decls;
 my @index_decls;
+my %oidcounts;
+
 foreach my $header (@input_files)
 {
 	$header =~ /(.+)\.h$/
@@ -94,10 +81,30 @@ foreach my $header (@input_files)
 		$catalogs{$catname} = $catalog;
 	}
 
+	# While checking for duplicated OIDs, we ignore the pg_class OID and
+	# rowtype OID of bootstrap catalogs, as those are expected to appear
+	# in the initial data for pg_class and pg_type.  For regular catalogs,
+	# include these OIDs.  (See also Catalog::FindAllOidsFromHeaders
+	# if you change this logic.)
+	if (!$catalog->{bootstrap})
+	{
+		$oidcounts{ $catalog->{relation_oid} }++
+		  if ($catalog->{relation_oid});
+		$oidcounts{ $catalog->{rowtype_oid} }++
+		  if ($catalog->{rowtype_oid});
+	}
+
 	# Not all catalogs have a data file.
 	if (-e $datfile)
 	{
-		$catalog_data{$catname} = Catalog::ParseData($datfile, $schema, 0);
+		my $data = Catalog::ParseData($datfile, $schema, 0);
+		$catalog_data{$catname} = $data;
+
+		# Check for duplicated OIDs while we're at it.
+		foreach my $row (@$data)
+		{
+			$oidcounts{ $row->{oid} }++ if defined $row->{oid};
+		}
 	}
 
 	# If the header file contained toast or index info, build BKI
@@ -108,6 +115,8 @@ foreach my $header (@input_files)
 		  sprintf "declare toast %s %s on %s\n",
 		  $toast->{toast_oid}, $toast->{toast_index_oid},
 		  $toast->{parent_table};
+		$oidcounts{ $toast->{toast_oid} }++;
+		$oidcounts{ $toast->{toast_index_oid} }++;
 	}
 	foreach my $index (@{ $catalog->{indexing} })
 	{
@@ -116,8 +125,23 @@ foreach my $header (@input_files)
 		  $index->{is_unique} ? 'unique ' : '',
 		  $index->{index_name}, $index->{index_oid},
 		  $index->{index_decl};
+		$oidcounts{ $index->{index_oid} }++;
 	}
 }
+
+# Complain and exit if we found any duplicate OIDs.
+# While duplicate OIDs would only cause a failure if they appear in
+# the same catalog, our project policy is that manually assigned OIDs
+# should be globally unique, to avoid confusion.
+my $found = 0;
+foreach my $oid (keys %oidcounts)
+{
+	next unless $oidcounts{$oid} > 1;
+	print "Duplicate oids detected:\n" if !$found;
+	print "$oid\n";
+	$found++;
+}
+die "found $found duplicate OID(s) in catalog data\n" if $found;
 
 # Fetch some special data that we will substitute into the output file.
 # CAUTION: be wary about what symbols you substitute into the .bki file here!
@@ -223,6 +247,21 @@ my %lookup_kind = (
 	pg_proc     => \%procoids,
 	pg_type     => \%typeoids);
 
+
+# Open temp files
+my $tmpext  = ".tmp$$";
+my $bkifile = $output_path . 'postgres.bki';
+open my $bki, '>', $bkifile . $tmpext
+  or die "can't open $bkifile$tmpext: $!";
+my $schemafile = $output_path . 'schemapg.h';
+open my $schemapg, '>', $schemafile . $tmpext
+  or die "can't open $schemafile$tmpext: $!";
+my $descrfile = $output_path . 'postgres.description';
+open my $descr, '>', $descrfile . $tmpext
+  or die "can't open $descrfile$tmpext: $!";
+my $shdescrfile = $output_path . 'postgres.shdescription';
+open my $shdescr, '>', $shdescrfile . $tmpext
+  or die "can't open $shdescrfile$tmpext: $!";
 
 # Generate postgres.bki, postgres.description, postgres.shdescription,
 # and pg_*_d.h headers.

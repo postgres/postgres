@@ -386,6 +386,8 @@ sub FindDefinedSymbolFromData
 
 # Extract an array of all the OIDs assigned in the specified catalog headers
 # and their associated data files (if any).
+# Caution: genbki.pl contains equivalent logic; change it too if you need to
+# touch this.
 sub FindAllOidsFromHeaders
 {
 	my @input_files = @_;

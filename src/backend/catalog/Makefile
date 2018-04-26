@@ -84,8 +84,7 @@ generated-header-symlinks: $(top_builddir)/src/include/catalog/header-stamp
 # configure run, even in distribution tarballs.  So depending on configure.in
 # instead is cheating a bit, but it will achieve the goal of updating the
 # version number when it changes.
-bki-stamp: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS) $(POSTGRES_BKI_DATA) $(top_srcdir)/configure.in $(top_srcdir)/src/include/catalog/duplicate_oids
-	cd $(top_srcdir)/src/include/catalog && $(PERL) ./duplicate_oids
+bki-stamp: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS) $(POSTGRES_BKI_DATA) $(top_srcdir)/configure.in
 	$(PERL) -I $(catalogdir) $< --set-version=$(MAJORVERSION) $(POSTGRES_BKI_SRCS)
 	touch $@
 

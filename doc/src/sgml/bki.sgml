@@ -382,8 +382,8 @@
     through the catalog headers and <filename>.dat</filename> files
     to see which ones do not appear.  You can also use
     the <filename>duplicate_oids</filename> script to check for mistakes.
-    (That script is run automatically at compile time, and will stop the
-    build if a duplicate is found.)
+    (<filename>genbki.pl</filename> will also detect duplicate OIDs
+    at compile time.)
    </para>
 
    <para>
