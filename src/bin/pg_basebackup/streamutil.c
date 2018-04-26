@@ -223,7 +223,7 @@ GetConnection(void)
 	 * 10, so the search path cannot be changed (by us or attackers) on
 	 * earlier versions.
 	 */
-	if (dbname != NULL && PQserverVersion(conn) >= 100000)
+	if (dbname != NULL && PQserverVersion(tmpconn) >= 100000)
 	{
 		PGresult   *res;
 
