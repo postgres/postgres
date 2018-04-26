@@ -2365,7 +2365,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				/* for each grouping set */
 				for (i = 0; i < phasedata->numsets; i++)
 				{
-					int		length = phasedata->gset_lengths[i];
+					int			length = phasedata->gset_lengths[i];
 
 					if (phasedata->eqfunctions[length - 1] != NULL)
 						continue;

@@ -1846,7 +1846,8 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 static PTOKEN_PRIVILEGES
 GetPrivilegesToDelete(HANDLE hToken)
 {
-	int			i, j;
+	int			i,
+				j;
 	DWORD		length;
 	PTOKEN_PRIVILEGES tokenPrivs;
 	LUID		luidLockPages;

@@ -98,9 +98,9 @@ extern void logicalrep_write_delete(StringInfo out, Relation rel,
 extern LogicalRepRelId logicalrep_read_delete(StringInfo in,
 					   LogicalRepTupleData *oldtup);
 extern void logicalrep_write_truncate(StringInfo out, int nrelids, Oid relids[],
-						bool cascade, bool restart_seqs);
+						  bool cascade, bool restart_seqs);
 extern List *logicalrep_read_truncate(StringInfo in,
-						bool *cascade, bool *restart_seqs);
+						 bool *cascade, bool *restart_seqs);
 extern void logicalrep_write_rel(StringInfo out, Relation rel);
 extern LogicalRepRelation *logicalrep_read_rel(StringInfo in);
 extern void logicalrep_write_typ(StringInfo out, Oid typoid);

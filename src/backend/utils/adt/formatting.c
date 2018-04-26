@@ -3905,7 +3905,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 			DateTimeParseError(DTERR_TZDISP_OVERFLOW, date_str, "timestamp");
 
 		tz = psprintf("%c%02d:%02d",
-				 tmfc.tzsign > 0 ? '+' : '-', tmfc.tzh, tmfc.tzm);
+					  tmfc.tzsign > 0 ? '+' : '-', tmfc.tzh, tmfc.tzm);
 
 		tm->tm_zone = tz;
 	}

@@ -67,7 +67,8 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	bool		relispopulated; /* matview currently holds query results */
 	char		relreplident;	/* see REPLICA_IDENTITY_xxx constants  */
 	bool		relispartition; /* is relation a partition? */
-	Oid			relrewrite;		/* heap for rewrite during DDL, link to original rel */
+	Oid			relrewrite;		/* heap for rewrite during DDL, link to
+								 * original rel */
 	TransactionId relfrozenxid; /* all Xids < this are frozen in this rel */
 	TransactionId relminmxid;	/* all multixacts in this rel are >= this.
 								 * this is really a MultiXactId */

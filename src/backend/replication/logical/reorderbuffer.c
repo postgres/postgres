@@ -1493,36 +1493,36 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					break;
 
 				case REORDER_BUFFER_CHANGE_TRUNCATE:
-				{
-					int			i;
-					int			nrelids = change->data.truncate.nrelids;
-					int			nrelations = 0;
-					Relation   *relations;
-
-					relations = palloc0(nrelids * sizeof(Relation));
-					for (i = 0; i < nrelids; i++)
 					{
-						Oid			relid = change->data.truncate.relids[i];
-						Relation	relation;
+						int			i;
+						int			nrelids = change->data.truncate.nrelids;
+						int			nrelations = 0;
+						Relation   *relations;
 
-						relation = RelationIdGetRelation(relid);
+						relations = palloc0(nrelids * sizeof(Relation));
+						for (i = 0; i < nrelids; i++)
+						{
+							Oid			relid = change->data.truncate.relids[i];
+							Relation	relation;
 
-						if (relation == NULL)
-							elog(ERROR, "could not open relation with OID %u", relid);
+							relation = RelationIdGetRelation(relid);
 
-						if (!RelationIsLogicallyLogged(relation))
-							continue;
+							if (relation == NULL)
+								elog(ERROR, "could not open relation with OID %u", relid);
 
-						relations[nrelations++] = relation;
+							if (!RelationIsLogicallyLogged(relation))
+								continue;
+
+							relations[nrelations++] = relation;
+						}
+
+						rb->apply_truncate(rb, txn, nrelations, relations, change);
+
+						for (i = 0; i < nrelations; i++)
+							RelationClose(relations[i]);
+
+						break;
 					}
-
-					rb->apply_truncate(rb, txn, nrelations, relations, change);
-
-					for (i = 0; i < nrelations; i++)
-						RelationClose(relations[i]);
-
-					break;
-				}
 
 				case REORDER_BUFFER_CHANGE_MESSAGE:
 					rb->message(rb, txn, change->lsn, true,
@@ -1744,7 +1744,7 @@ ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid)
 			if (txn->serialized && txn->final_lsn == 0)
 			{
 				ReorderBufferChange *last =
-					dlist_tail_element(ReorderBufferChange, node, &txn->changes);
+				dlist_tail_element(ReorderBufferChange, node, &txn->changes);
 
 				txn->final_lsn = last->lsn;
 			}
@@ -2660,9 +2660,9 @@ ReorderBufferSerializedPath(char *path, ReplicationSlot *slot, TransactionId xid
 	XLogSegNoOffsetToRecPtr(segno, 0, recptr, wal_segment_size);
 
 	snprintf(path, MAXPGPATH, "pg_replslot/%s/xid-%u-lsn-%X-%X.snap",
-			NameStr(MyReplicationSlot->data.name),
-			xid,
-			(uint32) (recptr >> 32), (uint32) recptr);
+			 NameStr(MyReplicationSlot->data.name),
+			 xid,
+			 (uint32) (recptr >> 32), (uint32) recptr);
 }
 
 /*

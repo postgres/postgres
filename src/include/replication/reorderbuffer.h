@@ -101,8 +101,8 @@ typedef struct ReorderBufferChange
 		}			tp;
 
 		/*
-		 * Truncate data for REORDER_BUFFER_CHANGE_TRUNCATE representing
-		 * one set of relations to be truncated.
+		 * Truncate data for REORDER_BUFFER_CHANGE_TRUNCATE representing one
+		 * set of relations to be truncated.
 		 */
 		struct
 		{
@@ -110,7 +110,7 @@ typedef struct ReorderBufferChange
 			bool		cascade;
 			bool		restart_seqs;
 			Oid		   *relids;
-		}	truncate;
+		}			truncate;
 
 		/* Message with arbitrary data. */
 		struct

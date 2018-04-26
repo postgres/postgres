@@ -628,7 +628,7 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 		{
 			PlanState  *outerPlan = outerPlanState(gm_state);
 			TupleTableSlot *outerTupleSlot;
-			EState *estate = gm_state->ps.state;
+			EState	   *estate = gm_state->ps.state;
 
 			/* Install our DSA area while executing the plan. */
 			estate->es_query_dsa = gm_state->pei ? gm_state->pei->area : NULL;

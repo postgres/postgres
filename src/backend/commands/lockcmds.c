@@ -181,7 +181,7 @@ typedef struct
 	bool		nowait;			/* no wait mode */
 	Oid			viewowner;		/* view owner for checking the privilege */
 	Oid			viewoid;		/* OID of the view to be locked */
-	List	   *ancestor_views;	/* OIDs of ancestor views */
+	List	   *ancestor_views; /* OIDs of ancestor views */
 } LockViewRecurse_context;
 
 static bool

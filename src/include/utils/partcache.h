@@ -44,7 +44,7 @@ typedef struct PartitionKeyData
 	bool	   *parttypbyval;
 	char	   *parttypalign;
 	Oid		   *parttypcoll;
-} PartitionKeyData;
+}			PartitionKeyData;
 
 extern void RelationBuildPartitionKey(Relation relation);
 extern void RelationBuildPartitionDesc(Relation rel);

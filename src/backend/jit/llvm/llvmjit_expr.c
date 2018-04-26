@@ -2019,8 +2019,8 @@ llvm_compile_expr(ExprState *state)
 								isnull;
 
 					/*
-					 * At this point aggref->wfuncno is not yet set (it's
-					 * set up in ExecInitWindowAgg() after initializing the
+					 * At this point aggref->wfuncno is not yet set (it's set
+					 * up in ExecInitWindowAgg() after initializing the
 					 * expression). So load it from memory each time round.
 					 */
 					v_wfuncnop = l_ptr_const(&wfunc->wfuncno,

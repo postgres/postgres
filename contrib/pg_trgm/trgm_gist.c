@@ -292,7 +292,11 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 		case SimilarityStrategyNumber:
 		case WordSimilarityStrategyNumber:
 		case StrictWordSimilarityStrategyNumber:
-			/* Similarity search is exact. (Strict) word similarity search is inexact */
+
+			/*
+			 * Similarity search is exact. (Strict) word similarity search is
+			 * inexact
+			 */
 			*recheck = (strategy != SimilarityStrategyNumber);
 
 			nlimit = index_strategy_get_limit(strategy);

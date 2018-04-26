@@ -25,7 +25,7 @@ static PyObject *decimal_constructor;
 
 static PyObject *PLyObject_FromJsonbContainer(JsonbContainer *jsonb);
 static JsonbValue *PLyObject_ToJsonbValue(PyObject *obj,
-					  JsonbParseState **jsonb_state, bool is_elem);
+					   JsonbParseState **jsonb_state, bool is_elem);
 
 #if PY_MAJOR_VERSION >= 3
 typedef PyObject *(*PLyUnicode_FromStringAndSize_t)
@@ -373,10 +373,11 @@ PLyObject_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state, bool is_ele
 		out->type = jbvNull;
 	else if (PyString_Check(obj) || PyUnicode_Check(obj))
 		PLyString_ToJsonbValue(obj, out);
-   /*
-	* PyNumber_Check() returns true for booleans, so boolean check should come
-	* first.
-	*/
+
+	/*
+	 * PyNumber_Check() returns true for booleans, so boolean check should
+	 * come first.
+	 */
 	else if (PyBool_Check(obj))
 	{
 		out = palloc(sizeof(JsonbValue));

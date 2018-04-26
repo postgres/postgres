@@ -519,12 +519,12 @@ gininsert(Relation index, Datum *values, bool *isnull,
 
 		/*
 		 * With fastupdate on each scan and each insert begin with access to
-		 * pending list, so it effectively lock entire index. In this case
-		 * we aquire predicate lock and check for conflicts over index relation,
+		 * pending list, so it effectively lock entire index. In this case we
+		 * aquire predicate lock and check for conflicts over index relation,
 		 * and hope that it will reduce locking overhead.
 		 *
-		 * Do not use GinCheckForSerializableConflictIn() here, because
-		 * it will do nothing (it does actual work only with fastupdate off).
+		 * Do not use GinCheckForSerializableConflictIn() here, because it
+		 * will do nothing (it does actual work only with fastupdate off).
 		 * Check for conflicts for entire index.
 		 */
 		CheckForSerializableConflictIn(index, NULL, InvalidBuffer);
@@ -539,7 +539,7 @@ gininsert(Relation index, Datum *values, bool *isnull,
 	}
 	else
 	{
-		GinStatsData	stats;
+		GinStatsData stats;
 
 		/*
 		 * Fastupdate is off but if pending list isn't empty then we need to

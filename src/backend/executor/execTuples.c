@@ -674,7 +674,7 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
 		if (HeapTupleHeaderGetNatts(slot->tts_tuple->t_data) <
 			slot->tts_tupleDescriptor->natts)
 		{
-			HeapTuple tuple;
+			HeapTuple	tuple;
 			MemoryContext oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 
 			tuple = heap_expand_tuple(slot->tts_tuple,

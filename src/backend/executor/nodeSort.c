@@ -214,8 +214,8 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	ExecCreateScanSlotFromOuterPlan(estate, &sortstate->ss);
 
 	/*
-	 * Initialize return slot and type. No need to initialize projection info because
-	 * this node doesn't do projections.
+	 * Initialize return slot and type. No need to initialize projection info
+	 * because this node doesn't do projections.
 	 */
 	ExecInitResultTupleSlotTL(estate, &sortstate->ss.ps);
 	sortstate->ss.ps.ps_ProjInfo = NULL;

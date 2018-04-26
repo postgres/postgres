@@ -6797,10 +6797,10 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 	{
 		/*
 		 * Since we can't generate the final scan/join target, this is our
-		 * last opportunity to use any partial paths that exist.  We don't
-		 * do this if the case where the target is parallel-safe, since we
-		 * will be able to generate superior paths by doing it after the
-		 * final scan/join target has been applied.
+		 * last opportunity to use any partial paths that exist.  We don't do
+		 * this if the case where the target is parallel-safe, since we will
+		 * be able to generate superior paths by doing it after the final
+		 * scan/join target has been applied.
 		 *
 		 * Note that this may invalidate rel->cheapest_total_path, so we must
 		 * not rely on it after this point without first calling set_cheapest.

@@ -1153,7 +1153,7 @@ static void
 WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 				bool last_write)
 {
-	TimestampTz	now;
+	TimestampTz now;
 
 	/* output previously gathered data in a CopyData packet */
 	pq_putmessage_noblock('d', ctx->out->data, ctx->out->len);
@@ -3247,9 +3247,9 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		if (!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
 		{
 			/*
-			 * Only superusers and members of pg_read_all_stats can see details.
-			 * Other users only get the pid value to know it's a walsender,
-			 * but no details.
+			 * Only superusers and members of pg_read_all_stats can see
+			 * details. Other users only get the pid value to know it's a
+			 * walsender, but no details.
 			 */
 			MemSet(&nulls[1], true, PG_STAT_GET_WAL_SENDERS_COLS - 1);
 		}

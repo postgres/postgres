@@ -341,8 +341,8 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			ptr->page = BufferGetPage(ptr->buffer);
 			ptr->block.blkno = BufferGetBlockNumber(ptr->buffer);
 			PredicateLockPageSplit(rel,
-						BufferGetBlockNumber(buffer),
-						BufferGetBlockNumber(ptr->buffer));
+								   BufferGetBlockNumber(buffer),
+								   BufferGetBlockNumber(ptr->buffer));
 		}
 
 		/*
@@ -1220,8 +1220,8 @@ gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 	bool		is_split;
 
 	/*
-	 * Check for any rw conflicts (in serialisation isolation level)
-	 * just before we intend to modify the page
+	 * Check for any rw conflicts (in serialisation isolation level) just
+	 * before we intend to modify the page
 	 */
 	CheckForSerializableConflictIn(state->r, NULL, stack->buffer);
 

@@ -133,7 +133,8 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 * If the node has a name, split it up and determine creation namespace.
 	 * If not (a possibility not considered by the grammar, but one which can
 	 * occur via the "CREATE TABLE ... (LIKE)" command), then we put the
-	 * object in the same namespace as the relation, and cons up a name for it.
+	 * object in the same namespace as the relation, and cons up a name for
+	 * it.
 	 */
 	if (stmt->defnames)
 		namespaceId = QualifiedNameGetCreationNamespace(stmt->defnames,
@@ -462,7 +463,7 @@ ChooseExtendedStatisticName(const char *name1, const char *name2,
 
 	for (;;)
 	{
-		Oid		existingstats;
+		Oid			existingstats;
 
 		stxname = makeObjectName(name1, name2, modlabel);
 
@@ -500,7 +501,7 @@ ChooseExtendedStatisticNameAddition(List *exprs)
 	buf[0] = '\0';
 	foreach(lc, exprs)
 	{
-		ColumnRef *cref = (ColumnRef *) lfirst(lc);
+		ColumnRef  *cref = (ColumnRef *) lfirst(lc);
 		const char *name;
 
 		/* It should be one of these, but just skip if it happens not to be */

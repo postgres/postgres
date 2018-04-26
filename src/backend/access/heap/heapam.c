@@ -3460,7 +3460,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 	result = heap_delete(relation, tid,
 						 GetCurrentCommandId(true), InvalidSnapshot,
 						 true /* wait for commit */ ,
-						 &hufd, false /* changingPart */);
+						 &hufd, false /* changingPart */ );
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -4483,29 +4483,31 @@ heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
  * functional index. Compare the new and old values of the indexed
  * expression to see if we are able to use a HOT update or not.
  */
-static bool ProjIndexIsUnchanged(Relation relation, HeapTuple oldtup, HeapTuple newtup)
+static bool
+ProjIndexIsUnchanged(Relation relation, HeapTuple oldtup, HeapTuple newtup)
 {
-	ListCell       *l;
-	List	       *indexoidlist = RelationGetIndexList(relation);
-	EState         *estate = CreateExecutorState();
-	ExprContext    *econtext = GetPerTupleExprContext(estate);
+	ListCell   *l;
+	List	   *indexoidlist = RelationGetIndexList(relation);
+	EState	   *estate = CreateExecutorState();
+	ExprContext *econtext = GetPerTupleExprContext(estate);
 	TupleTableSlot *slot = MakeSingleTupleTableSlot(RelationGetDescr(relation));
-	bool            equals = true;
-	Datum	   	    old_values[INDEX_MAX_KEYS];
-	bool		    old_isnull[INDEX_MAX_KEYS];
-	Datum	   	    new_values[INDEX_MAX_KEYS];
-	bool		    new_isnull[INDEX_MAX_KEYS];
-	int             indexno = 0;
+	bool		equals = true;
+	Datum		old_values[INDEX_MAX_KEYS];
+	bool		old_isnull[INDEX_MAX_KEYS];
+	Datum		new_values[INDEX_MAX_KEYS];
+	bool		new_isnull[INDEX_MAX_KEYS];
+	int			indexno = 0;
+
 	econtext->ecxt_scantuple = slot;
 
 	foreach(l, indexoidlist)
 	{
 		if (bms_is_member(indexno, relation->rd_projidx))
 		{
-			Oid		    indexOid = lfirst_oid(l);
-			Relation    indexDesc = index_open(indexOid, AccessShareLock);
+			Oid			indexOid = lfirst_oid(l);
+			Relation	indexDesc = index_open(indexOid, AccessShareLock);
 			IndexInfo  *indexInfo = BuildIndexInfo(indexDesc);
-			int         i;
+			int			i;
 
 			ResetExprContext(econtext);
 			ExecStoreTuple(oldtup, slot, InvalidBuffer, false);
@@ -4532,6 +4534,7 @@ static bool ProjIndexIsUnchanged(Relation relation, HeapTuple oldtup, HeapTuple 
 				else if (!old_isnull[i])
 				{
 					Form_pg_attribute att = TupleDescAttr(RelationGetDescr(indexDesc), i);
+
 					if (!datumIsEqual(old_values[i], new_values[i], att->attbyval, att->attlen))
 					{
 						equals = false;
@@ -6533,8 +6536,8 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 		/*
 		 * This old multi cannot possibly have members still running, but
 		 * verify just in case.  If it was a locker only, it can be removed
-		 * without any further consideration; but if it contained an update, we
-		 * might need to preserve it.
+		 * without any further consideration; but if it contained an update,
+		 * we might need to preserve it.
 		 */
 		if (MultiXactIdIsRunning(multi,
 								 HEAP_XMAX_IS_LOCKED_ONLY(t_infomask)))
@@ -6681,8 +6684,8 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			else
 			{
 				/*
-				 * Not in progress, not committed -- must be aborted or crashed;
-				 * we can ignore it.
+				 * Not in progress, not committed -- must be aborted or
+				 * crashed; we can ignore it.
 				 */
 			}
 
@@ -9275,6 +9278,7 @@ heap_redo(XLogReaderState *record)
 			heap_xlog_update(record, false);
 			break;
 		case XLOG_HEAP_TRUNCATE:
+
 			/*
 			 * TRUNCATE is a no-op because the actions are already logged as
 			 * SMGR WAL records.  TRUNCATE WAL record only exists for logical

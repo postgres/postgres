@@ -448,7 +448,7 @@ StoreSingleInheritance(Oid relationId, Oid parentOid, int32 seqNumber)
 bool
 DeleteInheritsTuple(Oid inhrelid, Oid inhparent)
 {
-	bool	found = false;
+	bool		found = false;
 	Relation	catalogRelation;
 	ScanKeyData key;
 	SysScanDesc scan;

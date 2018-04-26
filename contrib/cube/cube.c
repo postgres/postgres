@@ -1361,9 +1361,10 @@ g_cube_distance(PG_FUNCTION_ARGS)
 		if (coord <= 2 * DIM(cube))
 		{
 			/* dimension index */
-			int		index = (coord - 1) / 2;
+			int			index = (coord - 1) / 2;
+
 			/* whether this is upper bound (lower bound otherwise) */
-			bool	upper = ((coord - 1) % 2 == 1);
+			bool		upper = ((coord - 1) % 2 == 1);
 
 			if (IS_POINT(cube))
 			{
@@ -1596,9 +1597,10 @@ cube_coord_llur(PG_FUNCTION_ARGS)
 	if (coord <= 2 * DIM(cube))
 	{
 		/* dimension index */
-		int		index = (coord - 1) / 2;
+		int			index = (coord - 1) / 2;
+
 		/* whether this is upper bound (lower bound otherwise) */
-		bool	upper = ((coord - 1) % 2 == 1);
+		bool		upper = ((coord - 1) % 2 == 1);
 
 		if (IS_POINT(cube))
 		{
@@ -1615,8 +1617,8 @@ cube_coord_llur(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * Return zero if coordinate is out of bound.  That reproduces logic of
-		 * how cubes with low dimension number are expanded during GiST
+		 * Return zero if coordinate is out of bound.  That reproduces logic
+		 * of how cubes with low dimension number are expanded during GiST
 		 * indexing.
 		 */
 		result = 0.0;

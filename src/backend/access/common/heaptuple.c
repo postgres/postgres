@@ -1685,8 +1685,8 @@ slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 	attno = slot->tts_nvalid;
 
 	/*
-	 * If tuple doesn't have all the atts indicated by attnum, read the
-	 * rest as NULLs or missing values
+	 * If tuple doesn't have all the atts indicated by attnum, read the rest
+	 * as NULLs or missing values
 	 */
 	if (attno < attnum)
 		slot_getmissingattrs(slot, attno, attnum);

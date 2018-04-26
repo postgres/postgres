@@ -1495,9 +1495,9 @@ index_reloptions(amoptions_function amoptions, Datum reloptions, bool validate)
 bytea *
 index_generic_reloptions(Datum reloptions, bool validate)
 {
-	int              numoptions;
+	int			numoptions;
 	GenericIndexOpts *idxopts;
-	relopt_value     *options;
+	relopt_value *options;
 	static const relopt_parse_elt tab[] = {
 		{"recheck_on_update", RELOPT_TYPE_BOOL, offsetof(GenericIndexOpts, recheck_on_update)}
 	};
@@ -1512,12 +1512,12 @@ index_generic_reloptions(Datum reloptions, bool validate)
 
 	idxopts = allocateReloptStruct(sizeof(GenericIndexOpts), options, numoptions);
 
-	fillRelOptions((void *)idxopts, sizeof(GenericIndexOpts), options, numoptions,
+	fillRelOptions((void *) idxopts, sizeof(GenericIndexOpts), options, numoptions,
 				   validate, tab, lengthof(tab));
 
 	pfree(options);
 
-	return (bytea*) idxopts;
+	return (bytea *) idxopts;
 }
 
 /*

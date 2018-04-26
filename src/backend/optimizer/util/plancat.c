@@ -1421,6 +1421,7 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	switch (constraint_exclusion)
 	{
 		case CONSTRAINT_EXCLUSION_OFF:
+
 			/*
 			 * Don't prune if feature turned off -- except if the relation is
 			 * a partition.  While partprune.c-style partition pruning is not
@@ -1435,6 +1436,7 @@ relation_excluded_by_constraints(PlannerInfo *root,
 			return false;
 
 		case CONSTRAINT_EXCLUSION_PARTITION:
+
 			/*
 			 * When constraint_exclusion is set to 'partition' we only handle
 			 * OTHER_MEMBER_RELs, or BASERELs in cases where the result target
@@ -1444,11 +1446,11 @@ relation_excluded_by_constraints(PlannerInfo *root,
 				!(rel->reloptkind == RELOPT_BASEREL &&
 				  root->inhTargetKind != INHKIND_NONE &&
 				  rel->relid == root->parse->resultRelation))
-				  return false;
+				return false;
 			break;
 
 		case CONSTRAINT_EXCLUSION_ON:
-			break;		/* always try to exclude */
+			break;				/* always try to exclude */
 	}
 
 	/*

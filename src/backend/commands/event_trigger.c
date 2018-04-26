@@ -2184,7 +2184,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 												  "GRANT" : "REVOKE");
 				/* object_type */
 				values[i++] = CStringGetTextDatum(stringify_grant_objtype(
-																		 cmd->d.grant.istmt->objtype));
+																		  cmd->d.grant.istmt->objtype));
 				/* schema */
 				nulls[i++] = true;
 				/* identity */
@@ -2244,7 +2244,7 @@ stringify_grant_objtype(ObjectType objtype)
 			return "TABLESPACE";
 		case OBJECT_TYPE:
 			return "TYPE";
-		/* these currently aren't used */
+			/* these currently aren't used */
 		case OBJECT_ACCESS_METHOD:
 		case OBJECT_AGGREGATE:
 		case OBJECT_AMOP:
@@ -2326,7 +2326,7 @@ stringify_adefprivs_objtype(ObjectType objtype)
 			return "TABLESPACES";
 		case OBJECT_TYPE:
 			return "TYPES";
-		/* these currently aren't used */
+			/* these currently aren't used */
 		case OBJECT_ACCESS_METHOD:
 		case OBJECT_AGGREGATE:
 		case OBJECT_AMOP:

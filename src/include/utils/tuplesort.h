@@ -54,7 +54,7 @@ typedef struct SortCoordinateData
 
 	/* Private opaque state (points to shared memory) */
 	Sharedsort *sharedsort;
-} SortCoordinateData;
+}			SortCoordinateData;
 
 typedef struct SortCoordinateData *SortCoordinate;
 

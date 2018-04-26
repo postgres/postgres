@@ -51,7 +51,7 @@ typedef enum relopt_kind
 	RELOPT_KIND_PARTITIONED = (1 << 11),
 	/* if you add a new kind, make sure you update "last_default" too */
 	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_PARTITIONED,
-	RELOPT_KIND_INDEX = RELOPT_KIND_BTREE|RELOPT_KIND_HASH|RELOPT_KIND_GIN|RELOPT_KIND_SPGIST,
+	RELOPT_KIND_INDEX = RELOPT_KIND_BTREE | RELOPT_KIND_HASH | RELOPT_KIND_GIN | RELOPT_KIND_SPGIST,
 	/* some compilers treat enums as signed ints, so we can't use 1 << 31 */
 	RELOPT_KIND_MAX = (1 << 30)
 } relopt_kind;

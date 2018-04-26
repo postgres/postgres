@@ -112,9 +112,9 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 static bool
 EnableLockPagesPrivilege(int elevel)
 {
-	HANDLE hToken;
+	HANDLE		hToken;
 	TOKEN_PRIVILEGES tp;
-	LUID luid;
+	LUID		luid;
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
 	{
@@ -267,8 +267,8 @@ retry:
 					 size);
 
 				/*
-				 * Use the original size, not the rounded-up value, when falling back
-				 * to non-huge pages.
+				 * Use the original size, not the rounded-up value, when
+				 * falling back to non-huge pages.
 				 */
 				size = orig_size;
 				flProtect = PAGE_READWRITE;

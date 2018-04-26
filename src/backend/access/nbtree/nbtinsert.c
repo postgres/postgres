@@ -132,31 +132,31 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 	 * rightmost leaf, has enough free space to accommodate a new entry and
 	 * the insertion key is strictly greater than the first key in this page,
 	 * then we can safely conclude that the new key will be inserted in the
-	 * cached block. So we simply search within the cached block and insert the
-	 * key at the appropriate location. We call it a fastpath.
+	 * cached block. So we simply search within the cached block and insert
+	 * the key at the appropriate location. We call it a fastpath.
 	 *
 	 * Testing has revealed, though, that the fastpath can result in increased
 	 * contention on the exclusive-lock on the rightmost leaf page. So we
-	 * conditionally check if the lock is available. If it's not available then
-	 * we simply abandon the fastpath and take the regular path. This makes
-	 * sense because unavailability of the lock also signals that some other
-	 * backend might be concurrently inserting into the page, thus reducing our
-	 * chances to finding an insertion place in this page.
+	 * conditionally check if the lock is available. If it's not available
+	 * then we simply abandon the fastpath and take the regular path. This
+	 * makes sense because unavailability of the lock also signals that some
+	 * other backend might be concurrently inserting into the page, thus
+	 * reducing our chances to finding an insertion place in this page.
 	 */
 top:
 	fastpath = false;
 	offset = InvalidOffsetNumber;
 	if (RelationGetTargetBlock(rel) != InvalidBlockNumber)
 	{
-		Size 			itemsz;
-		Page			page;
-		BTPageOpaque	lpageop;
+		Size		itemsz;
+		Page		page;
+		BTPageOpaque lpageop;
 
 		/*
 		 * Conditionally acquire exclusive lock on the buffer before doing any
 		 * checks. If we don't get the lock, we simply follow slowpath. If we
-		 * do get the lock, this ensures that the index state cannot change, as
-		 * far as the rightmost part of the index is concerned.
+		 * do get the lock, this ensures that the index state cannot change,
+		 * as far as the rightmost part of the index is concerned.
 		 */
 		buf = ReadBuffer(rel, RelationGetTargetBlock(rel));
 
@@ -173,8 +173,8 @@ top:
 
 			/*
 			 * Check if the page is still the rightmost leaf page, has enough
-			 * free space to accommodate the new tuple, and the insertion
-			 * scan key is strictly greater than the first key on the page.
+			 * free space to accommodate the new tuple, and the insertion scan
+			 * key is strictly greater than the first key on the page.
 			 */
 			if (P_ISLEAF(lpageop) && P_RIGHTMOST(lpageop) &&
 				!P_IGNORE(lpageop) &&
@@ -207,8 +207,8 @@ top:
 			ReleaseBuffer(buf);
 
 			/*
-			 * If someone's holding a lock, it's likely to change anyway,
-			 * so don't try again until we get an updated rightmost leaf.
+			 * If someone's holding a lock, it's likely to change anyway, so
+			 * don't try again until we get an updated rightmost leaf.
 			 */
 			RelationSetTargetBlock(rel, InvalidBlockNumber);
 		}
@@ -882,22 +882,22 @@ _bt_insertonpg(Relation rel,
 		Buffer		rbuf;
 
 		/*
-		 * If we're here then a pagesplit is needed. We should never reach here
-		 * if we're using the fastpath since we should have checked for all the
-		 * required conditions, including the fact that this page has enough
-		 * freespace. Note that this routine can in theory deal with the
-		 * situation where a NULL stack pointer is passed (that's what would
-		 * happen if the fastpath is taken), like it does during crash
+		 * If we're here then a pagesplit is needed. We should never reach
+		 * here if we're using the fastpath since we should have checked for
+		 * all the required conditions, including the fact that this page has
+		 * enough freespace. Note that this routine can in theory deal with
+		 * the situation where a NULL stack pointer is passed (that's what
+		 * would happen if the fastpath is taken), like it does during crash
 		 * recovery. But that path is much slower, defeating the very purpose
-		 * of the optimization.  The following assertion should protect us from
-		 * any future code changes that invalidate those assumptions.
+		 * of the optimization.  The following assertion should protect us
+		 * from any future code changes that invalidate those assumptions.
 		 *
 		 * Note that whenever we fail to take the fastpath, we clear the
 		 * cached block. Checking for a valid cached block at this point is
 		 * enough to decide whether we're in a fastpath or not.
 		 */
 		Assert(!(P_ISLEAF(lpageop) &&
-				BlockNumberIsValid(RelationGetTargetBlock(rel))));
+				 BlockNumberIsValid(RelationGetTargetBlock(rel))));
 
 		/* Choose the split point */
 		firstright = _bt_findsplitloc(rel, page,
@@ -936,7 +936,7 @@ _bt_insertonpg(Relation rel,
 		BTMetaPageData *metad = NULL;
 		OffsetNumber itup_off;
 		BlockNumber itup_blkno;
-		BlockNumber	cachedBlock = InvalidBlockNumber;
+		BlockNumber cachedBlock = InvalidBlockNumber;
 
 		itup_off = newitemoff;
 		itup_blkno = BufferGetBlockNumber(buf);
@@ -1093,7 +1093,8 @@ _bt_insertonpg(Relation rel,
 		 * We do this after dropping locks on all buffers. So the information
 		 * about whether the insertion block is still the rightmost block or
 		 * not may have changed in between. But we will deal with that during
-		 * next insert operation. No special care is required while setting it.
+		 * next insert operation. No special care is required while setting
+		 * it.
 		 */
 		if (BlockNumberIsValid(cachedBlock) &&
 			_bt_getrootheight(rel) >= BTREE_FASTPATH_MIN_LEVEL)

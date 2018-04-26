@@ -134,7 +134,7 @@ typedef struct TupleTableSlot
 	HeapTupleData tts_minhdr;	/* workspace for minimal-tuple-only case */
 #define FIELDNO_TUPLETABLESLOT_OFF 14
 	uint32		tts_off;		/* saved state for slot_deform_tuple */
-	bool		tts_fixedTupleDescriptor; /* descriptor can't be changed */
+	bool		tts_fixedTupleDescriptor;	/* descriptor can't be changed */
 } TupleTableSlot;
 
 #define TTS_HAS_PHYSICAL_TUPLE(slot)  \

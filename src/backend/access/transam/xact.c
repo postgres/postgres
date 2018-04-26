@@ -3267,8 +3267,8 @@ bool
 IsInTransactionBlock(bool isTopLevel)
 {
 	/*
-	 * Return true on same conditions that would make PreventInTransactionBlock
-	 * error out
+	 * Return true on same conditions that would make
+	 * PreventInTransactionBlock error out
 	 */
 	if (IsTransactionBlock())
 		return true;
@@ -5448,9 +5448,9 @@ XactLogAbortRecord(TimestampTz abort_time,
 	}
 
 	/* dump transaction origin information only for abort prepared */
-	if ( (replorigin_session_origin != InvalidRepOriginId) &&
-			TransactionIdIsValid(twophase_xid) &&
-			XLogLogicalInfoActive())
+	if ((replorigin_session_origin != InvalidRepOriginId) &&
+		TransactionIdIsValid(twophase_xid) &&
+		XLogLogicalInfoActive())
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_ORIGIN;
 

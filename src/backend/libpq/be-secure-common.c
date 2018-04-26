@@ -130,7 +130,7 @@ bool
 check_ssl_key_file_permissions(const char *ssl_key_file, bool isServerStart)
 {
 	int			loglevel = isServerStart ? FATAL : LOG;
-	struct stat	buf;
+	struct stat buf;
 
 	if (stat(ssl_key_file, &buf) != 0)
 	{

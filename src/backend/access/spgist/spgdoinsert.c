@@ -1908,11 +1908,12 @@ spgdoinsert(Relation index, SpGistState *state,
 	/*
 	 * Prepare the leaf datum to insert.
 	 *
-	 * If an optional "compress" method is provided, then call it to form
-	 * the leaf datum from the input datum.  Otherwise store the input datum as
-	 * is.  Since we don't use index_form_tuple in this AM, we have to make sure
-	 * value to be inserted is not toasted; FormIndexDatum doesn't guarantee
-	 * that.  But we assume the "compress" method to return an untoasted value.
+	 * If an optional "compress" method is provided, then call it to form the
+	 * leaf datum from the input datum.  Otherwise store the input datum as
+	 * is.  Since we don't use index_form_tuple in this AM, we have to make
+	 * sure value to be inserted is not toasted; FormIndexDatum doesn't
+	 * guarantee that.  But we assume the "compress" method to return an
+	 * untoasted value.
 	 */
 	if (!isnull)
 	{

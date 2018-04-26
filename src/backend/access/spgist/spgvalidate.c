@@ -53,7 +53,7 @@ spgvalidate(Oid opclassoid)
 	OpFamilyOpFuncGroup *opclassgroup;
 	int			i;
 	ListCell   *lc;
-	spgConfigIn	configIn;
+	spgConfigIn configIn;
 	spgConfigOut configOut;
 	Oid			configOutLefttype = InvalidOid;
 	Oid			configOutRighttype = InvalidOid;
@@ -119,9 +119,9 @@ spgvalidate(Oid opclassoid)
 				configOutRighttype = procform->amprocrighttype;
 
 				/*
-				 * When leaf and attribute types are the same, compress function
-				 * is not required and we set corresponding bit in functionset
-				 * for later group consistency check.
+				 * When leaf and attribute types are the same, compress
+				 * function is not required and we set corresponding bit in
+				 * functionset for later group consistency check.
 				 */
 				if (!OidIsValid(configOut.leafType) ||
 					configOut.leafType == configIn.attType)

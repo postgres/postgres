@@ -126,7 +126,7 @@ typedef struct xl_heap_truncate
 	Oid			dbId;
 	uint32		nrelids;
 	uint8		flags;
-	Oid relids[FLEXIBLE_ARRAY_MEMBER];
+	Oid			relids[FLEXIBLE_ARRAY_MEMBER];
 } xl_heap_truncate;
 
 #define SizeOfHeapTruncate	(offsetof(xl_heap_truncate, relids))

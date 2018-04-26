@@ -48,14 +48,14 @@ typedef struct
 
 /* Trigram bound type */
 typedef uint8 TrgmBound;
-#define TRGM_BOUND_LEFT				0x01 /* trigram is left bound of word */
-#define TRGM_BOUND_RIGHT			0x02 /* trigram is right bound of word */
+#define TRGM_BOUND_LEFT				0x01	/* trigram is left bound of word */
+#define TRGM_BOUND_RIGHT			0x02	/* trigram is right bound of word */
 
 /* Word similarity flags */
-#define WORD_SIMILARITY_CHECK_ONLY	0x01 /* only check existence of similar
-										  * search pattern in text */
-#define WORD_SIMILARITY_STRICT		0x02 /* force bounds of extent to match
-										  * word bounds */
+#define WORD_SIMILARITY_CHECK_ONLY	0x01	/* only check existence of similar
+											 * search pattern in text */
+#define WORD_SIMILARITY_STRICT		0x02	/* force bounds of extent to match
+											 * word bounds */
 
 /*
  * Module load callback
@@ -144,7 +144,7 @@ index_strategy_get_limit(StrategyNumber strategy)
 			break;
 	}
 
-	return 0.0;	/* keep compiler quiet */
+	return 0.0;					/* keep compiler quiet */
 }
 
 /*
@@ -496,13 +496,13 @@ iterate_word_similarity(int *trg2indexes,
 
 	/* Select appropriate threshold */
 	threshold = (flags & WORD_SIMILARITY_STRICT) ?
-				 strict_word_similarity_threshold :
-				 word_similarity_threshold;
+		strict_word_similarity_threshold :
+		word_similarity_threshold;
 
 	/*
-	 * Consider first trigram as initial lower bount for strict word similarity,
-	 * or initialize it later with first trigram present for plain word
-	 * similarity.
+	 * Consider first trigram as initial lower bount for strict word
+	 * similarity, or initialize it later with first trigram present for plain
+	 * word similarity.
 	 */
 	lower = (flags & WORD_SIMILARITY_STRICT) ? 0 : -1;
 
@@ -533,7 +533,7 @@ iterate_word_similarity(int *trg2indexes,
 		 * plain word similarity
 		 */
 		if ((flags & WORD_SIMILARITY_STRICT) ? (bounds[i] & TRGM_BOUND_RIGHT)
-											 : found[trgindex])
+			: found[trgindex])
 		{
 			int			prev_lower,
 						tmp_ulen2,
@@ -597,8 +597,8 @@ iterate_word_similarity(int *trg2indexes,
 			smlr_max = Max(smlr_max, smlr_cur);
 
 			/*
-			 * if we only check that word similarity is greater than
-			 * threshold we do not need to calculate a maximum similarity.
+			 * if we only check that word similarity is greater than threshold
+			 * we do not need to calculate a maximum similarity.
 			 */
 			if ((flags & WORD_SIMILARITY_CHECK_ONLY) && smlr_max >= threshold)
 				break;
@@ -653,7 +653,7 @@ calc_word_similarity(char *str1, int slen1, char *str2, int slen2,
 				ulen1;
 	int		   *trg2indexes;
 	float4		result;
-	TrgmBound	   *bounds;
+	TrgmBound  *bounds;
 
 	protect_out_of_mem(slen1 + slen2);
 

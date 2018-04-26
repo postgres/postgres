@@ -305,7 +305,7 @@ interpret_function_parameter_list(ParseState *pstate,
 		{
 			if (objtype == OBJECT_PROCEDURE)
 				*requiredResultType = RECORDOID;
-			else if (outCount == 0)	/* save first output param's type */
+			else if (outCount == 0) /* save first output param's type */
 				*requiredResultType = toid;
 			outCount++;
 		}

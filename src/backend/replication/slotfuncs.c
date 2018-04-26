@@ -342,8 +342,8 @@ static XLogRecPtr
 pg_logical_replication_slot_advance(XLogRecPtr startlsn, XLogRecPtr moveto)
 {
 	LogicalDecodingContext *ctx;
-	ResourceOwner	old_resowner = CurrentResourceOwner;
-	XLogRecPtr		retlsn = InvalidXLogRecPtr;
+	ResourceOwner old_resowner = CurrentResourceOwner;
+	XLogRecPtr	retlsn = InvalidXLogRecPtr;
 
 	PG_TRY();
 	{

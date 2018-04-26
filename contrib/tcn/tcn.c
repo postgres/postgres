@@ -138,7 +138,7 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 		/* we're only interested if it is the primary key and valid */
 		if (index->indisprimary && IndexIsValid(index))
 		{
-			int     indnkeyatts = index->indnkeyatts;
+			int			indnkeyatts = index->indnkeyatts;
 
 			if (indnkeyatts > 0)
 			{

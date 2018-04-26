@@ -349,7 +349,7 @@ struct pg_conn
 										 * retransmits */
 	char	   *keepalives_count;	/* maximum number of TCP keepalive
 									 * retransmits */
-	char	   *scram_channel_binding; /* SCRAM channel binding type */
+	char	   *scram_channel_binding;	/* SCRAM channel binding type */
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
 	char	   *sslcompression; /* SSL compression (0 or 1) */
 	char	   *sslkey;			/* client key filename */
@@ -742,8 +742,8 @@ extern char *pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len);
  *
  */
 extern int pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
-														   int *names_examined,
-														   char **first_name);
+												int *names_examined,
+												char **first_name);
 
 /* === miscellaneous macros === */
 

@@ -464,15 +464,22 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 						if (varcharsize == 0 || varcharsize > size)
 						{
-							/* compatibility mode, blank pad and null terminate char array */
+							/*
+							 * compatibility mode, blank pad and null
+							 * terminate char array
+							 */
 							if (ORACLE_MODE(compat) && (type == ECPGt_char || type == ECPGt_unsigned_char))
 							{
 								memset(str, ' ', varcharsize);
 								memcpy(str, pval, size);
-								str[varcharsize-1] = '\0';
+								str[varcharsize - 1] = '\0';
 
-								/* compatibility mode empty string gets -1 indicator but no warning */
-								if (size == 0) {
+								/*
+								 * compatibility mode empty string gets -1
+								 * indicator but no warning
+								 */
+								if (size == 0)
+								{
 									/* truncation */
 									switch (ind_type)
 									{
@@ -488,12 +495,12 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 										case ECPGt_unsigned_long:
 											*((long *) (ind + ind_offset * act_tuple)) = -1;
 											break;
-	#ifdef HAVE_LONG_LONG_INT
+#ifdef HAVE_LONG_LONG_INT
 										case ECPGt_long_long:
 										case ECPGt_unsigned_long_long:
 											*((long long int *) (ind + ind_offset * act_tuple)) = -1;
 											break;
-	#endif							/* HAVE_LONG_LONG_INT */
+#endif							/* HAVE_LONG_LONG_INT */
 										default:
 											break;
 									}
@@ -523,7 +530,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							if (ORACLE_MODE(compat) && (varcharsize - 1) < size)
 							{
 								if (type == ECPGt_char || type == ECPGt_unsigned_char)
-									str[varcharsize-1] = '\0';
+									str[varcharsize - 1] = '\0';
 							}
 
 							if (varcharsize < size || (ORACLE_MODE(compat) && (varcharsize - 1) < size))

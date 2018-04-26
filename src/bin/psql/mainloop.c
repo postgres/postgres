@@ -247,9 +247,8 @@ MainLoop(FILE *source)
 			/*
 			 * If we found a command word, check whether the rest of the line
 			 * contains only whitespace plus maybe one semicolon.  If not,
-			 * ignore the command word after all.  These commands are only
-			 * for compatibility with other SQL clients and are not
-			 * documented.
+			 * ignore the command word after all.  These commands are only for
+			 * compatibility with other SQL clients and are not documented.
 			 */
 			if (rest_of_line != NULL)
 			{
@@ -330,18 +329,17 @@ MainLoop(FILE *source)
 			}
 
 			/*
-			 * If they typed "\q" in a place where "\q" is not active,
-			 * supply a hint.  The text is still added to the query
-			 * buffer.
+			 * If they typed "\q" in a place where "\q" is not active, supply
+			 * a hint.  The text is still added to the query buffer.
 			 */
 			if (found_q && query_buf->len != 0 &&
 				prompt_status != PROMPT_READY &&
 				prompt_status != PROMPT_CONTINUE &&
 				prompt_status != PROMPT_PAREN)
 #ifndef WIN32
-					puts(_("Use control-D to quit."));
+				puts(_("Use control-D to quit."));
 #else
-					puts(_("Use control-C to quit."));
+				puts(_("Use control-C to quit."));
 #endif
 		}
 

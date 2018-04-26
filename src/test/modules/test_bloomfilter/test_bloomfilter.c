@@ -93,7 +93,7 @@ create_and_test_bloom(int power, int64 nelements, int callerseed)
 	nfalsepos = nfalsepos_for_missing_strings(filter, nelements);
 
 	ereport((nfalsepos > nelements * FPOSITIVE_THRESHOLD) ? WARNING : DEBUG1,
-			(errmsg_internal("seed: " UINT64_FORMAT " false positives: " INT64_FORMAT " (%.6f%%) bitset %.2f%% set" ,
+			(errmsg_internal("seed: " UINT64_FORMAT " false positives: " INT64_FORMAT " (%.6f%%) bitset %.2f%% set",
 							 seed, nfalsepos, (double) nfalsepos / nelements,
 							 100.0 * bloom_prop_bits_set(filter))));
 

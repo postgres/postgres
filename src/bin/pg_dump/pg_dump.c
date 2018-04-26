@@ -16433,13 +16433,13 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 	}
 	else if (coninfo->contype == 'f')
 	{
-		char *only;
+		char	   *only;
 
 		/*
-		 * Foreign keys on partitioned tables are always declared as inheriting
-		 * to partitions; for all other cases, emit them as applying ONLY
-		 * directly to the named table, because that's how they work for
-		 * regular inherited tables.
+		 * Foreign keys on partitioned tables are always declared as
+		 * inheriting to partitions; for all other cases, emit them as
+		 * applying ONLY directly to the named table, because that's how they
+		 * work for regular inherited tables.
 		 */
 		only = tbinfo->relkind == RELKIND_PARTITIONED_TABLE ? "" : "ONLY ";
 

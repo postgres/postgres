@@ -484,10 +484,10 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	cxt->blist = lappend(cxt->blist, seqstmt);
 
 	/*
-	 * Store the identity sequence name that we decided on.  ALTER TABLE
-	 * ... ADD COLUMN ... IDENTITY needs this so that it can fill the new
-	 * column with values from the sequence, while the association of the
-	 * sequence with the table is not set until after the ALTER TABLE.
+	 * Store the identity sequence name that we decided on.  ALTER TABLE ...
+	 * ADD COLUMN ... IDENTITY needs this so that it can fill the new column
+	 * with values from the sequence, while the association of the sequence
+	 * with the table is not set until after the ALTER TABLE.
 	 */
 	column->identitySequence = seqstmt->sequence;
 
@@ -1193,14 +1193,14 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	 */
 	if (table_like_clause->options & CREATE_TABLE_LIKE_STATISTICS)
 	{
-		List		   *parent_extstats;
-		ListCell	   *l;
+		List	   *parent_extstats;
+		ListCell   *l;
 
 		parent_extstats = RelationGetStatExtList(relation);
 
 		foreach(l, parent_extstats)
 		{
-			Oid		parent_stat_oid = lfirst_oid(l);
+			Oid			parent_stat_oid = lfirst_oid(l);
 			CreateStatsStmt *stats_stmt;
 
 			stats_stmt = generateClonedExtStatsStmt(cxt->relation,
@@ -1643,16 +1643,16 @@ static CreateStatsStmt *
 generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 						   Oid source_statsid)
 {
-	HeapTuple		ht_stats;
+	HeapTuple	ht_stats;
 	Form_pg_statistic_ext statsrec;
 	CreateStatsStmt *stats;
-	List		   *stat_types = NIL;
-	List		   *def_names = NIL;
-	bool			 isnull;
-	Datum			datum;
-	ArrayType	   *arr;
-	char		   *enabled;
-	int				i;
+	List	   *stat_types = NIL;
+	List	   *def_names = NIL;
+	bool		isnull;
+	Datum		datum;
+	ArrayType  *arr;
+	char	   *enabled;
+	int			i;
 
 	Assert(OidIsValid(heapRelid));
 	Assert(heapRel != NULL);

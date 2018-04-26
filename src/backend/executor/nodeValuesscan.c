@@ -131,8 +131,8 @@ ValuesNext(ValuesScanState *node)
 		node->ss.ps.subPlan = NIL;
 
 		/*
-		 * As the expressions are only ever used once, disable JIT for
-		 * them. This is worthwhile because it's common to insert significant
+		 * As the expressions are only ever used once, disable JIT for them.
+		 * This is worthwhile because it's common to insert significant
 		 * amounts of data via VALUES().
 		 */
 		saved_jit_flags = econtext->ecxt_estate->es_jit_flags;

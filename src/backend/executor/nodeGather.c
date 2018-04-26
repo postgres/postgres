@@ -268,7 +268,7 @@ gather_getnext(GatherState *gatherstate)
 
 		if (gatherstate->need_to_scan_locally)
 		{
-			EState *estate = gatherstate->ps.state;
+			EState	   *estate = gatherstate->ps.state;
 
 			/* Install our DSA area while executing the plan. */
 			estate->es_query_dsa =

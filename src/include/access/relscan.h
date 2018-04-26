@@ -41,7 +41,7 @@ typedef struct ParallelHeapScanDescData
 										 * workers so far. */
 	bool		phs_snapshot_any;	/* SnapshotAny, not phs_snapshot_data? */
 	char		phs_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
-}			ParallelHeapScanDescData;
+} ParallelHeapScanDescData;
 
 typedef struct HeapScanDescData
 {

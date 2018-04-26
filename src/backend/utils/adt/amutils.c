@@ -187,8 +187,8 @@ indexam_property(FunctionCallInfo fcinfo,
 	}
 
 	/*
-	 * At this point, either index_oid == InvalidOid or it's a valid index OID.
-	 * Also, after this test and the one below, either attno == 0 for
+	 * At this point, either index_oid == InvalidOid or it's a valid index
+	 * OID. Also, after this test and the one below, either attno == 0 for
 	 * index-wide or AM-wide tests, or it's a valid column number in a valid
 	 * index.
 	 */
@@ -276,6 +276,7 @@ indexam_property(FunctionCallInfo fcinfo,
 				break;
 
 			case AMPROP_ORDERABLE:
+
 				/*
 				 * generic assumption is that nonkey columns are not orderable
 				 */
@@ -293,8 +294,9 @@ indexam_property(FunctionCallInfo fcinfo,
 				 * getting there from just the index column type seems like a
 				 * lot of work. So instead we expect the AM to handle this in
 				 * its amproperty routine. The generic result is to return
-				 * false if the AM says it never supports this, or if this is a
-				 * nonkey column, and null otherwise (meaning we don't know).
+				 * false if the AM says it never supports this, or if this is
+				 * a nonkey column, and null otherwise (meaning we don't
+				 * know).
 				 */
 				if (!iskey || !routine->amcanorderbyop)
 				{
@@ -314,8 +316,8 @@ indexam_property(FunctionCallInfo fcinfo,
 				{
 					/*
 					 * If possible, the AM should handle this test in its
-					 * amproperty function without opening the rel. But this is the
-					 * generic fallback if it does not.
+					 * amproperty function without opening the rel. But this
+					 * is the generic fallback if it does not.
 					 */
 					Relation	indexrel = index_open(index_oid, AccessShareLock);
 

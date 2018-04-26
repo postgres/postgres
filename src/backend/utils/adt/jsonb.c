@@ -1861,8 +1861,8 @@ JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res)
 		return NULL;
 
 	/*
-	 * A root scalar is stored as an array of one element, so we get the
-	 * array and then its first (and only) member.
+	 * A root scalar is stored as an array of one element, so we get the array
+	 * and then its first (and only) member.
 	 */
 	it = JsonbIteratorInit(jbc);
 
@@ -1871,11 +1871,11 @@ JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res)
 	Assert(tmp.val.array.nElems == 1 && tmp.val.array.rawScalar);
 
 	tok = JsonbIteratorNext(&it, res, true);
-	Assert (tok == WJB_ELEM);
+	Assert(tok == WJB_ELEM);
 	Assert(IsAJsonbScalar(res));
 
 	tok = JsonbIteratorNext(&it, &tmp, true);
-	Assert (tok == WJB_END_ARRAY);
+	Assert(tok == WJB_END_ARRAY);
 
 	tok = JsonbIteratorNext(&it, &tmp, true);
 	Assert(tok == WJB_DONE);
@@ -1912,7 +1912,8 @@ jsonb_numeric(PG_FUNCTION_ARGS)
 				 errmsg("jsonb value must be numeric")));
 
 	/*
-	 * v.val.numeric points into jsonb body, so we need to make a copy to return
+	 * v.val.numeric points into jsonb body, so we need to make a copy to
+	 * return
 	 */
 	retValue = DatumGetNumericCopy(NumericGetDatum(v.val.numeric));
 
@@ -1925,7 +1926,7 @@ Datum
 jsonb_int2(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
-	JsonbValue  v;
+	JsonbValue	v;
 	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
@@ -1945,7 +1946,7 @@ Datum
 jsonb_int4(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
-	JsonbValue  v;
+	JsonbValue	v;
 	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
@@ -1965,7 +1966,7 @@ Datum
 jsonb_int8(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
-	JsonbValue  v;
+	JsonbValue	v;
 	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)

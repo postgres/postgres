@@ -125,6 +125,7 @@ be_tls_init(bool isServerStart)
 		if (ssl_passphrase_command[0] && ssl_passphrase_command_supports_reload)
 			SSL_CTX_set_default_passwd_cb(context, ssl_external_passwd_cb);
 		else
+
 			/*
 			 * If reloading and no external command is configured, override
 			 * OpenSSL's default handling of passphrase-protected files,
@@ -1139,8 +1140,8 @@ be_tls_get_certificate_hash(Port *port, size_t *len)
 		return NULL;
 
 	/*
-	 * Get the signature algorithm of the certificate to determine the
-	 * hash algorithm to use for the result.
+	 * Get the signature algorithm of the certificate to determine the hash
+	 * algorithm to use for the result.
 	 */
 	if (!OBJ_find_sigid_algs(X509_get_signature_nid(server_cert),
 							 &algo_nid, NULL))

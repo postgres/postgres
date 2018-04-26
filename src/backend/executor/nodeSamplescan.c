@@ -153,8 +153,8 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 						  RelationGetDescr(scanstate->ss.ss_currentRelation));
 
 	/*
-	 * Initialize result slot, type and projection.
-	 * tuple table and result tuple initialization
+	 * Initialize result slot, type and projection. tuple table and result
+	 * tuple initialization
 	 */
 	ExecInitResultTupleSlotTL(estate, &scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);

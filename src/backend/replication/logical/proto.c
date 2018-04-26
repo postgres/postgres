@@ -305,7 +305,7 @@ logicalrep_write_truncate(StringInfo out,
 						  bool cascade, bool restart_seqs)
 {
 	int			i;
-	uint8 flags = 0;
+	uint8		flags = 0;
 
 	pq_sendbyte(out, 'T');		/* action TRUNCATE */
 
@@ -332,7 +332,7 @@ logicalrep_read_truncate(StringInfo in,
 	int			i;
 	int			nrelids;
 	List	   *relids = NIL;
-	uint8 flags;
+	uint8		flags;
 
 	nrelids = pq_getmsgint(in, 4);
 

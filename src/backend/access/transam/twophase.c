@@ -913,7 +913,7 @@ typedef struct TwoPhaseFileHeader
 	bool		initfileinval;	/* does relcache init file need invalidation? */
 	uint16		gidlen;			/* length of the GID - GID follows the header */
 	XLogRecPtr	origin_lsn;		/* lsn of this record at origin node */
-	TimestampTz origin_timestamp; /* time of prepare at origin node */
+	TimestampTz origin_timestamp;	/* time of prepare at origin node */
 } TwoPhaseFileHeader;
 
 /*
@@ -1065,7 +1065,7 @@ EndPrepare(GlobalTransaction gxact)
 {
 	TwoPhaseFileHeader *hdr;
 	StateFileChunk *record;
-	bool			replorigin;
+	bool		replorigin;
 
 	/* Add the end sentinel to the list of 2PC records */
 	RegisterTwoPhaseRecord(TWOPHASE_RM_END_ID, 0,
@@ -1317,7 +1317,7 @@ void
 ParsePrepareRecord(uint8 info, char *xlrec, xl_xact_parsed_prepare *parsed)
 {
 	TwoPhaseFileHeader *hdr;
-	char *bufptr;
+	char	   *bufptr;
 
 	hdr = (TwoPhaseFileHeader *) xlrec;
 	bufptr = xlrec + MAXALIGN(sizeof(TwoPhaseFileHeader));

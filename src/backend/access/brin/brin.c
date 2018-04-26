@@ -189,7 +189,7 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 										 NULL, BUFFER_LOCK_SHARE, NULL);
 			if (!lastPageTuple)
 			{
-				bool	recorded;
+				bool		recorded;
 
 				recorded = AutoVacuumRequestWork(AVW_BRINSummarizeRange,
 												 RelationGetRelid(idxRel),

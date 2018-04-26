@@ -963,10 +963,10 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			/*
 			 * We need attr_needed data for building targetlist of a join
 			 * relation representing join between matching partitions for
-			 * partitionwise join. A given attribute of a child will be
-			 * needed in the same highest joinrel where the corresponding
-			 * attribute of parent is needed. Hence it suffices to use the
-			 * same Relids set for parent and child.
+			 * partitionwise join. A given attribute of a child will be needed
+			 * in the same highest joinrel where the corresponding attribute
+			 * of parent is needed. Hence it suffices to use the same Relids
+			 * set for parent and child.
 			 */
 			for (attno = rel->min_attr; attno <= rel->max_attr; attno++)
 			{
@@ -2742,11 +2742,10 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 		join_search_one_level(root, lev);
 
 		/*
-		 * Run generate_partitionwise_join_paths() and
-		 * generate_gather_paths() for each just-processed joinrel.  We could
-		 * not do this earlier because both regular and partial paths can get
-		 * added to a particular joinrel at multiple times within
-		 * join_search_one_level.
+		 * Run generate_partitionwise_join_paths() and generate_gather_paths()
+		 * for each just-processed joinrel.  We could not do this earlier
+		 * because both regular and partial paths can get added to a
+		 * particular joinrel at multiple times within join_search_one_level.
 		 *
 		 * After that, we're done creating paths for the joinrel, so run
 		 * set_cheapest().

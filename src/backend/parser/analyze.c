@@ -77,7 +77,7 @@ static Query *transformExplainStmt(ParseState *pstate,
 static Query *transformCreateTableAsStmt(ParseState *pstate,
 						   CreateTableAsStmt *stmt);
 static Query *transformCallStmt(ParseState *pstate,
-					 CallStmt *stmt);
+				  CallStmt *stmt);
 static void transformLockingClause(ParseState *pstate, Query *qry,
 					   LockingClause *lc, bool pushedDown);
 #ifdef RAW_EXPRESSION_COVERAGE_TEST

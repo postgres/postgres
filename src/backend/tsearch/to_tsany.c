@@ -660,7 +660,7 @@ Datum
 websearch_to_tsquery_byid(PG_FUNCTION_ARGS)
 {
 	text	   *in = PG_GETARG_TEXT_PP(1);
-	MorphOpaque	data;
+	MorphOpaque data;
 	TSQuery		query = NULL;
 
 	data.cfg_id = PG_GETARG_OID(0);

@@ -446,6 +446,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	switch (stmt->objtype)
 	{
 		case OBJECT_TABLE:
+
 			/*
 			 * Because this might be a sequence, we test both relation and
 			 * sequence bits, and later do a more limited test when we know
@@ -3458,7 +3459,7 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 					case OBJECT_VIEW:
 						msg = gettext_noop("permission denied for view %s");
 						break;
-					/* these currently aren't used */
+						/* these currently aren't used */
 					case OBJECT_ACCESS_METHOD:
 					case OBJECT_AMOP:
 					case OBJECT_AMPROC:
@@ -3583,11 +3584,13 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 					case OBJECT_TSDICTIONARY:
 						msg = gettext_noop("must be owner of text search dictionary %s");
 						break;
-					/*
-					 * Special cases: For these, the error message talks about
-					 * "relation", because that's where the ownership is
-					 * attached.  See also check_object_ownership().
-					 */
+
+						/*
+						 * Special cases: For these, the error message talks
+						 * about "relation", because that's where the
+						 * ownership is attached.  See also
+						 * check_object_ownership().
+						 */
 					case OBJECT_COLUMN:
 					case OBJECT_POLICY:
 					case OBJECT_RULE:
@@ -3595,7 +3598,7 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 					case OBJECT_TRIGGER:
 						msg = gettext_noop("must be owner of relation %s");
 						break;
-					/* these currently aren't used */
+						/* these currently aren't used */
 					case OBJECT_ACCESS_METHOD:
 					case OBJECT_AMOP:
 					case OBJECT_AMPROC:

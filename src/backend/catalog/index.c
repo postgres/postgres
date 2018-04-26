@@ -377,7 +377,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->attislocal = true;
 			to->attinhcount = 0;
 			to->attcollation = (i < numkeyatts) ?
-							collationObjectId[i] : InvalidOid;
+				collationObjectId[i] : InvalidOid;
 		}
 		else
 		{
@@ -414,7 +414,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->atttypmod = exprTypmod(indexkey);
 			to->attislocal = true;
 			to->attcollation = (i < numkeyatts) ?
-							collationObjectId[i] : InvalidOid;
+				collationObjectId[i] : InvalidOid;
 
 			ReleaseSysCache(tuple);
 
@@ -1023,21 +1023,21 @@ index_create(Relation heapRelation,
 			}
 
 			localaddr = index_constraint_create(heapRelation,
-									indexRelationId,
-									parentConstraintId,
-									indexInfo,
-									indexRelationName,
-									constraintType,
-									constr_flags,
-									allow_system_table_mods,
-									is_internal);
+												indexRelationId,
+												parentConstraintId,
+												indexInfo,
+												indexRelationName,
+												constraintType,
+												constr_flags,
+												allow_system_table_mods,
+												is_internal);
 			if (constraintId)
 				*constraintId = localaddr.objectId;
 		}
 		else
 		{
 			bool		have_simple_col = false;
-			DependencyType	deptype;
+			DependencyType deptype;
 
 			deptype = OidIsValid(parentIndexRelid) ? DEPENDENCY_INTERNAL_AUTO : DEPENDENCY_AUTO;
 
@@ -1340,12 +1340,12 @@ index_constraint_create(Relation heapRelation,
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
 
 	/*
-	 * Also, if this is a constraint on a partition, mark it as depending
-	 * on the constraint in the parent.
+	 * Also, if this is a constraint on a partition, mark it as depending on
+	 * the constraint in the parent.
 	 */
 	if (OidIsValid(parentConstraintId))
 	{
-		ObjectAddress	parentConstr;
+		ObjectAddress parentConstr;
 
 		ObjectAddressSet(parentConstr, ConstraintRelationId, parentConstraintId);
 		recordDependencyOn(&referenced, &parentConstr, DEPENDENCY_INTERNAL_AUTO);
@@ -1822,7 +1822,7 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 				 Oid *opfamilies1, Oid *opfamilies2,
 				 AttrNumber *attmap, int maplen)
 {
-	int		i;
+	int			i;
 
 	if (info1->ii_Unique != info2->ii_Unique)
 		return false;
@@ -1854,7 +1854,7 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 		/* ignore expressions at this stage */
 		if ((info1->ii_IndexAttrNumbers[i] != InvalidAttrNumber) &&
 			(attmap[info2->ii_IndexAttrNumbers[i] - 1] !=
-			info1->ii_IndexAttrNumbers[i]))
+			 info1->ii_IndexAttrNumbers[i]))
 			return false;
 
 		/* collation and opfamily is not valid for including columns */
@@ -1875,8 +1875,8 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 		return false;
 	if (info1->ii_Expressions != NIL)
 	{
-		bool	found_whole_row;
-		Node   *mapped;
+		bool		found_whole_row;
+		Node	   *mapped;
 
 		mapped = map_variable_attnos((Node *) info2->ii_Expressions,
 									 1, 0, attmap, maplen,
@@ -1899,8 +1899,8 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 		return false;
 	if (info1->ii_Predicate != NULL)
 	{
-		bool	found_whole_row;
-		Node   *mapped;
+		bool		found_whole_row;
+		Node	   *mapped;
 
 		mapped = map_variable_attnos((Node *) info2->ii_Predicate,
 									 1, 0, attmap, maplen,
@@ -2105,11 +2105,11 @@ index_update_stats(Relation rel,
 	 * It is safe to use a non-transactional update even though our
 	 * transaction could still fail before committing.  Setting relhasindex
 	 * true is safe even if there are no indexes (VACUUM will eventually fix
-	 * it).  And of course the new relpages and
-	 * reltuples counts are correct regardless.  However, we don't want to
-	 * change relpages (or relallvisible) if the caller isn't providing an
-	 * updated reltuples count, because that would bollix the
-	 * reltuples/relpages ratio which is what's really important.
+	 * it).  And of course the new relpages and reltuples counts are correct
+	 * regardless.  However, we don't want to change relpages (or
+	 * relallvisible) if the caller isn't providing an updated reltuples
+	 * count, because that would bollix the reltuples/relpages ratio which is
+	 * what's really important.
 	 */
 
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
@@ -4136,7 +4136,7 @@ RestoreReindexState(void *reindexstate)
 {
 	SerializedReindexState *sistate = (SerializedReindexState *) reindexstate;
 	int			c = 0;
-	MemoryContext	oldcontext;
+	MemoryContext oldcontext;
 
 	currentlyReindexedHeap = sistate->currentlyReindexedHeap;
 	currentlyReindexedIndex = sistate->currentlyReindexedIndex;

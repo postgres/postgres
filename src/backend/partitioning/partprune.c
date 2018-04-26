@@ -1486,7 +1486,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		 */
 		if (op_in_opfamily(opclause->opno, partopfamily))
 		{
-			Oid		oper;
+			Oid			oper;
 
 			oper = OidIsValid(commutator) ? commutator : opclause->opno;
 			get_op_opfamily_properties(oper, partopfamily, false,
@@ -1528,11 +1528,11 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		{
 			switch (part_scheme->strategy)
 			{
-				/*
-				 * For range and list partitioning, we need the ordering
-				 * procedure with lefttype being the partition key's type, and
-				 * righttype the clause's operator's right type.
-				 */
+					/*
+					 * For range and list partitioning, we need the ordering
+					 * procedure with lefttype being the partition key's type,
+					 * and righttype the clause's operator's right type.
+					 */
 				case PARTITION_STRATEGY_LIST:
 				case PARTITION_STRATEGY_RANGE:
 					cmpfn =
@@ -1541,10 +1541,10 @@ match_clause_to_partition_key(RelOptInfo *rel,
 										  op_righttype, BTORDER_PROC);
 					break;
 
-				/*
-				 * For hash partitioning, we need the hashing procedure for
-				 * the clause's type.
-				 */
+					/*
+					 * For hash partitioning, we need the hashing procedure
+					 * for the clause's type.
+					 */
 				case PARTITION_STRATEGY_HASH:
 					cmpfn =
 						get_opfamily_proc(part_scheme->partopfamily[partkeyidx],

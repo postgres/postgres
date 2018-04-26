@@ -63,9 +63,9 @@ typedef enum
  * *strval, *lenval and *weight are filled in when return value is PT_VAL
  *
  */
-typedef ts_tokentype (*ts_tokenizer)(TSQueryParserState state, int8 *operator,
-									 int *lenval, char **strval,
-									 int16 *weight, bool *prefix);
+typedef ts_tokentype (*ts_tokenizer) (TSQueryParserState state, int8 *operator,
+									  int *lenval, char **strval,
+									  int16 *weight, bool *prefix);
 
 struct TSQueryParserStateData
 {
@@ -233,7 +233,7 @@ parse_phrase_operator(TSQueryParserState pstate, int16 *distance)
 static bool
 parse_or_operator(TSQueryParserState pstate)
 {
-	char *ptr = pstate->buf;
+	char	   *ptr = pstate->buf;
 
 	if (pstate->in_quotes)
 		return false;
@@ -245,26 +245,26 @@ parse_or_operator(TSQueryParserState pstate)
 	ptr += 2;
 
 	/*
-	 * it shouldn't be a part of any word but somewhere later it should be some
-	 * operand
+	 * it shouldn't be a part of any word but somewhere later it should be
+	 * some operand
 	 */
-	if (*ptr == '\0') /* no operand */
+	if (*ptr == '\0')			/* no operand */
 		return false;
 
 	/* it shouldn't be a part of any word */
-   if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalpha(ptr) || t_isdigit(ptr))
+	if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalpha(ptr) || t_isdigit(ptr))
 		return false;
 
-	for(;;)
+	for (;;)
 	{
 		ptr += pg_mblen(ptr);
 
-		if (*ptr == '\0') /* got end of string without operand */
+		if (*ptr == '\0')		/* got end of string without operand */
 			return false;
 
 		/*
-		 * Suppose, we found an operand, but could be a not correct operand. So
-		 * we still treat OR literal as operation with possibly incorrect
+		 * Suppose, we found an operand, but could be a not correct operand.
+		 * So we still treat OR literal as operation with possibly incorrect
 		 * operand and  will not search it as lexeme
 		 */
 		if (!t_isspace(ptr))
@@ -312,7 +312,10 @@ gettoken_query_standard(TSQueryParserState state, int8 *operator,
 				}
 				else if (!t_isspace(state->buf))
 				{
-					/* We rely on the tsvector parser to parse the value for us */
+					/*
+					 * We rely on the tsvector parser to parse the value for
+					 * us
+					 */
 					reset_tsvector_parser(state->valstate, state->buf);
 					if (gettoken_tsvector(state->valstate, strval, lenval,
 										  NULL, NULL, &state->buf))
@@ -437,7 +440,10 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 				}
 				else if (!t_isspace(state->buf))
 				{
-					/* We rely on the tsvector parser to parse the value for us */
+					/*
+					 * We rely on the tsvector parser to parse the value for
+					 * us
+					 */
 					reset_tsvector_parser(state->valstate, state->buf);
 					if (gettoken_tsvector(state->valstate, strval, lenval,
 										  NULL, NULL, &state->buf))
@@ -464,8 +470,8 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 					if (!state->in_quotes)
 					{
 						/*
-						 * put implicit AND after an operand
-						 * and handle this quote in WAITOPERAND
+						 * put implicit AND after an operand and handle this
+						 * quote in WAITOPERAND
 						 */
 						state->state = WAITOPERAND;
 						*operator = OP_AND;

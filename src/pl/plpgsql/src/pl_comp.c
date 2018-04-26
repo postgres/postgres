@@ -545,7 +545,7 @@ do_compile(FunctionCallInfo fcinfo,
 			{
 				if (rettypeid == VOIDOID ||
 					rettypeid == RECORDOID)
-					/* okay */ ;
+					 /* okay */ ;
 				else if (rettypeid == TRIGGEROID || rettypeid == EVTTRIGGEROID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -563,9 +563,9 @@ do_compile(FunctionCallInfo fcinfo,
 			function->fn_rettyplen = typeStruct->typlen;
 
 			/*
-			 * install $0 reference, but only for polymorphic return
-			 * types, and not when the return is specified through an
-			 * output parameter.
+			 * install $0 reference, but only for polymorphic return types,
+			 * and not when the return is specified through an output
+			 * parameter.
 			 */
 			if (IsPolymorphicType(procStruct->prorettype) &&
 				num_out_args == 0)

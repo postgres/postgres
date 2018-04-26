@@ -54,7 +54,7 @@ static WalReceiverConn *libpqrcv_connect(const char *conninfo,
 static void libpqrcv_check_conninfo(const char *conninfo);
 static char *libpqrcv_get_conninfo(WalReceiverConn *conn);
 static void libpqrcv_get_senderinfo(WalReceiverConn *conn,
-					char **sender_host, int *sender_port);
+						char **sender_host, int *sender_port);
 static char *libpqrcv_identify_system(WalReceiverConn *conn,
 						 TimeLineID *primary_tli,
 						 int *server_version);
@@ -291,9 +291,9 @@ libpqrcv_get_conninfo(WalReceiverConn *conn)
  */
 static void
 libpqrcv_get_senderinfo(WalReceiverConn *conn, char **sender_host,
-					  int *sender_port)
+						int *sender_port)
 {
-	char *ret = NULL;
+	char	   *ret = NULL;
 
 	*sender_host = NULL;
 	*sender_port = 0;

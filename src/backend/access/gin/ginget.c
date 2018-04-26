@@ -42,11 +42,11 @@ static void
 GinPredicateLockPage(Relation index, BlockNumber blkno, Snapshot snapshot)
 {
 	/*
-	 * When fast update is on then no need in locking pages, because we
-	 * anyway need to lock the whole index.
+	 * When fast update is on then no need in locking pages, because we anyway
+	 * need to lock the whole index.
 	 */
 	if (!GinGetUseFastUpdate(index))
-			PredicateLockPage(index, blkno, snapshot);
+		PredicateLockPage(index, blkno, snapshot);
 }
 
 /*
@@ -426,8 +426,8 @@ restartScanEntry:
 			entry->buffer = stack->buffer;
 
 			/*
-			 * Predicate lock visited posting tree page, following pages
-			 * will be locked by moveRightIfItNeeded or entryLoadMoreItems
+			 * Predicate lock visited posting tree page, following pages will
+			 * be locked by moveRightIfItNeeded or entryLoadMoreItems
 			 */
 			GinPredicateLockPage(ginstate->index, BufferGetBlockNumber(entry->buffer), snapshot);
 
@@ -1779,9 +1779,9 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 		UnlockReleaseBuffer(metabuffer);
 
 		/*
-		 * If fast update is enabled, we acquire a predicate lock on the entire
-		 * relation as fast update postpones the insertion of tuples into index
-		 * structure due to which we can't detect rw conflicts.
+		 * If fast update is enabled, we acquire a predicate lock on the
+		 * entire relation as fast update postpones the insertion of tuples
+		 * into index structure due to which we can't detect rw conflicts.
 		 */
 		if (GinGetUseFastUpdate(scan->indexRelation))
 			PredicateLockRelation(scan->indexRelation, scan->xs_snapshot);

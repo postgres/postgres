@@ -2783,7 +2783,7 @@ CopyFrom(CopyState cstate)
 																			   slot,
 																			   NULL);
 
-						if (slot == NULL)		/* "do nothing" */
+						if (slot == NULL)	/* "do nothing" */
 							goto next_tuple;
 
 						/* FDW might have changed tuple */

@@ -35,7 +35,7 @@ pg_add_s16_overflow(int16 a, int16 b, int16 *result)
 
 	if (res > PG_INT16_MAX || res < PG_INT16_MIN)
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = (int16) res;
@@ -58,7 +58,7 @@ pg_sub_s16_overflow(int16 a, int16 b, int16 *result)
 
 	if (res > PG_INT16_MAX || res < PG_INT16_MIN)
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = (int16) res;
@@ -81,7 +81,7 @@ pg_mul_s16_overflow(int16 a, int16 b, int16 *result)
 
 	if (res > PG_INT16_MAX || res < PG_INT16_MIN)
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = (int16) res;
@@ -104,7 +104,7 @@ pg_add_s32_overflow(int32 a, int32 b, int32 *result)
 
 	if (res > PG_INT32_MAX || res < PG_INT32_MIN)
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = (int32) res;
@@ -127,7 +127,7 @@ pg_sub_s32_overflow(int32 a, int32 b, int32 *result)
 
 	if (res > PG_INT32_MAX || res < PG_INT32_MIN)
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = (int32) res;
@@ -150,7 +150,7 @@ pg_mul_s32_overflow(int32 a, int32 b, int32 *result)
 
 	if (res > PG_INT32_MAX || res < PG_INT32_MIN)
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = (int32) res;
@@ -173,7 +173,7 @@ pg_add_s64_overflow(int64 a, int64 b, int64 *result)
 
 	if (res > PG_INT64_MAX || res < PG_INT64_MIN)
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = (int64) res;
@@ -182,7 +182,7 @@ pg_add_s64_overflow(int64 a, int64 b, int64 *result)
 	if ((a > 0 && b > 0 && a > PG_INT64_MAX - b) ||
 		(a < 0 && b < 0 && a < PG_INT64_MIN - b))
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = a + b;
@@ -205,7 +205,7 @@ pg_sub_s64_overflow(int64 a, int64 b, int64 *result)
 
 	if (res > PG_INT64_MAX || res < PG_INT64_MIN)
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = (int64) res;
@@ -214,7 +214,7 @@ pg_sub_s64_overflow(int64 a, int64 b, int64 *result)
 	if ((a < 0 && b > 0 && a < PG_INT64_MIN + b) ||
 		(a > 0 && b < 0 && a > PG_INT64_MAX + b))
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = a - b;
@@ -237,7 +237,7 @@ pg_mul_s64_overflow(int64 a, int64 b, int64 *result)
 
 	if (res > PG_INT64_MAX || res < PG_INT64_MIN)
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = (int64) res;
@@ -262,7 +262,7 @@ pg_mul_s64_overflow(int64 a, int64 b, int64 *result)
 		 (a < 0 && b > 0 && a < PG_INT64_MIN / b) ||
 		 (a < 0 && b < 0 && a < PG_INT64_MAX / b)))
 	{
-		*result = 0x5EED; /* to avoid spurious warnings */
+		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
 	}
 	*result = a * b;

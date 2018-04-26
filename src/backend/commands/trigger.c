@@ -5741,8 +5741,9 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		 * oldtup should be non-NULL, whereas for UPDATE events normally both
 		 * oldtup and newtup are non-NULL.  But for UPDATE events fired for
 		 * capturing transition tuples during UPDATE partition-key row
-		 * movement, oldtup is NULL when the event is for a row being inserted,
-		 * whereas newtup is NULL when the event is for a row being deleted.
+		 * movement, oldtup is NULL when the event is for a row being
+		 * inserted, whereas newtup is NULL when the event is for a row being
+		 * deleted.
 		 */
 		Assert(!(event == TRIGGER_EVENT_DELETE && delete_old_table &&
 				 oldtup == NULL));
@@ -5769,7 +5770,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		}
 		if (newtup != NULL &&
 			((event == TRIGGER_EVENT_INSERT && insert_new_table) ||
-			(event == TRIGGER_EVENT_UPDATE && update_new_table)))
+			 (event == TRIGGER_EVENT_UPDATE && update_new_table)))
 		{
 			Tuplestorestate *new_tuplestore;
 
@@ -5791,9 +5792,9 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		/*
 		 * If transition tables are the only reason we're here, return. As
 		 * mentioned above, we can also be here during update tuple routing in
-		 * presence of transition tables, in which case this function is called
-		 * separately for oldtup and newtup, so we expect exactly one of them
-		 * to be NULL.
+		 * presence of transition tables, in which case this function is
+		 * called separately for oldtup and newtup, so we expect exactly one
+		 * of them to be NULL.
 		 */
 		if (trigdesc == NULL ||
 			(event == TRIGGER_EVENT_DELETE && !trigdesc->trig_delete_after_row) ||

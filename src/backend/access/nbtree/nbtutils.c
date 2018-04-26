@@ -2101,12 +2101,12 @@ btproperty(Oid index_oid, int attno,
 IndexTuple
 _bt_nonkey_truncate(Relation rel, IndexTuple itup)
 {
-	int				nkeyattrs = IndexRelationGetNumberOfKeyAttributes(rel);
-	IndexTuple		truncated;
+	int			nkeyattrs = IndexRelationGetNumberOfKeyAttributes(rel);
+	IndexTuple	truncated;
 
 	/*
-	 * We should only ever truncate leaf index tuples, which must have both key
-	 * and non-key attributes.  It's never okay to truncate a second time.
+	 * We should only ever truncate leaf index tuples, which must have both
+	 * key and non-key attributes.  It's never okay to truncate a second time.
 	 */
 	Assert(BTreeTupleGetNAtts(itup, rel) ==
 		   IndexRelationGetNumberOfAttributes(rel));
@@ -2133,10 +2133,10 @@ _bt_nonkey_truncate(Relation rel, IndexTuple itup)
 bool
 _bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
 {
-	int16			natts = IndexRelationGetNumberOfAttributes(rel);
-	int16			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
-	BTPageOpaque	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	IndexTuple		itup;
+	int16		natts = IndexRelationGetNumberOfAttributes(rel);
+	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	IndexTuple	itup;
 
 	/*
 	 * We cannot reliably test a deleted or half-deleted page, since they have
@@ -2147,6 +2147,7 @@ _bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
 
 	Assert(offnum >= FirstOffsetNumber &&
 		   offnum <= PageGetMaxOffsetNumber(page));
+
 	/*
 	 * Mask allocated for number of keys in index tuple must be able to fit
 	 * maximum possible number of index attributes
@@ -2178,29 +2179,29 @@ _bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
 			return BTreeTupleGetNAtts(itup, rel) == nkeyatts;
 		}
 	}
-	else  /* !P_ISLEAF(opaque) */
+	else						/* !P_ISLEAF(opaque) */
 	{
 		if (offnum == P_FIRSTDATAKEY(opaque))
 		{
 			/*
 			 * The first tuple on any internal page (possibly the first after
-			 * its high key) is its negative infinity tuple.  Negative infinity
-			 * tuples are always truncated to zero attributes.  They are a
-			 * particular kind of pivot tuple.
+			 * its high key) is its negative infinity tuple.  Negative
+			 * infinity tuples are always truncated to zero attributes.  They
+			 * are a particular kind of pivot tuple.
 			 *
 			 * The number of attributes won't be explicitly represented if the
 			 * negative infinity tuple was generated during a page split that
-			 * occurred with a version of Postgres before v11.  There must be a
-			 * problem when there is an explicit representation that is
+			 * occurred with a version of Postgres before v11.  There must be
+			 * a problem when there is an explicit representation that is
 			 * non-zero, or when there is no explicit representation and the
 			 * tuple is evidently not a pre-pg_upgrade tuple.
 			 *
-			 * Prior to v11, downlinks always had P_HIKEY as their offset.  Use
-			 * that to decide if the tuple is a pre-v11 tuple.
+			 * Prior to v11, downlinks always had P_HIKEY as their offset.
+			 * Use that to decide if the tuple is a pre-v11 tuple.
 			 */
 			return BTreeTupleGetNAtts(itup, rel) == 0 ||
-					((itup->t_info & INDEX_ALT_TID_MASK) == 0 &&
-					 ItemPointerGetOffsetNumber(&(itup->t_tid)) == P_HIKEY);
+				((itup->t_info & INDEX_ALT_TID_MASK) == 0 &&
+				 ItemPointerGetOffsetNumber(&(itup->t_tid)) == P_HIKEY);
 		}
 		else
 		{

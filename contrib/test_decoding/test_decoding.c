@@ -53,9 +53,9 @@ static void pg_decode_change(LogicalDecodingContext *ctx,
 				 ReorderBufferTXN *txn, Relation rel,
 				 ReorderBufferChange *change);
 static void pg_decode_truncate(LogicalDecodingContext *ctx,
-							   ReorderBufferTXN *txn,
-							   int nrelations, Relation relations[],
-							   ReorderBufferChange *change);
+				   ReorderBufferTXN *txn,
+				   int nrelations, Relation relations[],
+				   ReorderBufferChange *change);
 static bool pg_decode_filter(LogicalDecodingContext *ctx,
 				 RepOriginId origin_id);
 static void pg_decode_message(LogicalDecodingContext *ctx,

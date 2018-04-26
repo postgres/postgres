@@ -743,7 +743,7 @@ RelationBuildRuleLock(Relation relation)
 									 ALLOCSET_SMALL_SIZES);
 	relation->rd_rulescxt = rulescxt;
 	MemoryContextCopyAndSetIdentifier(rulescxt,
-								   RelationGetRelationName(relation));
+									  RelationGetRelationName(relation));
 
 	/*
 	 * allocate an array to hold the rewrite rules (the array is extended if
@@ -1400,7 +1400,7 @@ RelationInitIndexAccessInfo(Relation relation)
 									 ALLOCSET_SMALL_SIZES);
 	relation->rd_indexcxt = indexcxt;
 	MemoryContextCopyAndSetIdentifier(indexcxt,
-								   RelationGetRelationName(relation));
+									  RelationGetRelationName(relation));
 
 	/*
 	 * Now we can fetch the index AM's API struct
@@ -4678,16 +4678,17 @@ RelationGetIndexPredicate(Relation relation)
 	  expensive, so we don't attempt it by default.
  * 2. "recheck_on_update" index option explicitly set by user, which overrides 1)
  */
-static bool IsProjectionFunctionalIndex(Relation index, IndexInfo* ii)
+static bool
+IsProjectionFunctionalIndex(Relation index, IndexInfo *ii)
 {
-	bool is_projection = false;
+	bool		is_projection = false;
 
 	if (ii->ii_Expressions)
 	{
-		HeapTuple       tuple;
-		Datum           reloptions;
-		bool            isnull;
-		QualCost index_expr_cost;
+		HeapTuple	tuple;
+		Datum		reloptions;
+		bool		isnull;
+		QualCost	index_expr_cost;
 
 		/* by default functional index is considered as non-injective */
 		is_projection = true;
@@ -4704,7 +4705,7 @@ static bool IsProjectionFunctionalIndex(Relation index, IndexInfo* ii)
 		 * inserting a new index entry for the changed value.
 		 */
 		if ((index_expr_cost.startup + index_expr_cost.per_tuple) >
-								HEURISTIC_MAX_HOT_RECHECK_EXPR_COST)
+			HEURISTIC_MAX_HOT_RECHECK_EXPR_COST)
 			is_projection = false;
 
 		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(RelationGetRelid(index)));
@@ -4758,7 +4759,7 @@ Bitmapset *
 RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
 {
 	Bitmapset  *indexattrs;		/* columns used in non-projection indexes */
-	Bitmapset  *projindexattrs;	/* columns used in projection indexes */
+	Bitmapset  *projindexattrs; /* columns used in projection indexes */
 	Bitmapset  *uindexattrs;	/* columns in unique indexes */
 	Bitmapset  *pkindexattrs;	/* columns in the primary index */
 	Bitmapset  *idindexattrs;	/* columns in the replica identity */
@@ -4769,7 +4770,7 @@ RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
 	Oid			relreplindex;
 	ListCell   *l;
 	MemoryContext oldcxt;
-	int         indexno;
+	int			indexno;
 
 	/* Quick exit if we already computed the result. */
 	if (relation->rd_indexattr != NULL)
@@ -5479,7 +5480,7 @@ load_relcache_init_file(bool shared)
 											 ALLOCSET_SMALL_SIZES);
 			rel->rd_indexcxt = indexcxt;
 			MemoryContextCopyAndSetIdentifier(indexcxt,
-										   RelationGetRelationName(rel));
+											  RelationGetRelationName(rel));
 
 			/*
 			 * Now we can fetch the index AM's API struct.  (We can't store

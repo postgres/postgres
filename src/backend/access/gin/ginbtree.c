@@ -521,12 +521,12 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			{
 
 				PredicateLockPageSplit(btree->index,
-						BufferGetBlockNumber(stack->buffer),
-						BufferGetBlockNumber(lbuffer));
+									   BufferGetBlockNumber(stack->buffer),
+									   BufferGetBlockNumber(lbuffer));
 
 				PredicateLockPageSplit(btree->index,
-						BufferGetBlockNumber(stack->buffer),
-						BufferGetBlockNumber(rbuffer));
+									   BufferGetBlockNumber(stack->buffer),
+									   BufferGetBlockNumber(rbuffer));
 			}
 
 		}
@@ -543,8 +543,8 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			{
 
 				PredicateLockPageSplit(btree->index,
-						BufferGetBlockNumber(stack->buffer),
-						BufferGetBlockNumber(rbuffer));
+									   BufferGetBlockNumber(stack->buffer),
+									   BufferGetBlockNumber(rbuffer));
 			}
 		}
 

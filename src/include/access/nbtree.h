@@ -103,10 +103,10 @@ typedef struct BTMetaPageData
 	BlockNumber btm_fastroot;	/* current "fast" root location */
 	uint32		btm_fastlevel;	/* tree level of the "fast" root page */
 	/* following fields are available since page version 3 */
-	TransactionId btm_oldest_btpo_xact;	/* oldest btpo_xact among of
-										 * deleted pages */
-	float8		btm_last_cleanup_num_heap_tuples; /* number of heap tuples
-												   * during last cleanup */
+	TransactionId btm_oldest_btpo_xact; /* oldest btpo_xact among of deleted
+										 * pages */
+	float8		btm_last_cleanup_num_heap_tuples;	/* number of heap tuples
+													 * during last cleanup */
 } BTMetaPageData;
 
 #define BTPageGetMeta(p) \
@@ -115,7 +115,7 @@ typedef struct BTMetaPageData
 #define BTREE_METAPAGE	0		/* first page is meta */
 #define BTREE_MAGIC		0x053162	/* magic number of btree pages */
 #define BTREE_VERSION	3		/* current version number */
-#define BTREE_MIN_VERSION	2		/* minimal supported version number */
+#define BTREE_MIN_VERSION	2	/* minimal supported version number */
 
 /*
  * Maximum size of a btree index entry, including its tuple header.
@@ -537,7 +537,7 @@ extern void _bt_finish_split(Relation rel, Buffer bbuf, BTStack stack);
  */
 extern void _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level);
 extern void _bt_update_meta_cleanup_info(Relation rel,
-							TransactionId oldestBtpoXact, float8 numHeapTuples);
+							 TransactionId oldestBtpoXact, float8 numHeapTuples);
 extern void _bt_upgrademetapage(Page page);
 extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_gettrueroot(Relation rel);

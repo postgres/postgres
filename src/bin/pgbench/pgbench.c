@@ -156,7 +156,7 @@ char	   *tablespace = NULL;
 char	   *index_tablespace = NULL;
 
 /* random seed used when calling srandom() */
-int64 random_seed = -1;
+int64		random_seed = -1;
 
 /*
  * end of configurable parameters
@@ -820,7 +820,7 @@ generalizedHarmonicNumber(int64 n, double s)
 
 /* set harmonicn and other parameters to cache cell */
 static void
-zipfSetCacheCell(ZipfCell * cell, int64 n, double s)
+zipfSetCacheCell(ZipfCell *cell, int64 n, double s)
 {
 	double		harmonic2;
 
@@ -840,7 +840,7 @@ zipfSetCacheCell(ZipfCell * cell, int64 n, double s)
  * and create new cell if it does not exist
  */
 static ZipfCell *
-zipfFindOrCreateCacheCell(ZipfCache * cache, int64 n, double s)
+zipfFindOrCreateCacheCell(ZipfCache *cache, int64 n, double s)
 {
 	int			i,
 				least_recently_used = 0;
@@ -943,13 +943,13 @@ getZipfianRand(TState *thread, int64 min, int64 max, double s)
 static int64
 getHashFnv1a(int64 val, uint64 seed)
 {
-	int64	result;
-	int		i;
+	int64		result;
+	int			i;
 
 	result = FNV_OFFSET_BASIS ^ seed;
 	for (i = 0; i < 8; ++i)
 	{
-		int32 octet = val & 0xff;
+		int32		octet = val & 0xff;
 
 		val = val >> 8;
 		result = result ^ octet;
@@ -968,8 +968,8 @@ getHashFnv1a(int64 val, uint64 seed)
 static int64
 getHashMurmur2(int64 val, uint64 seed)
 {
-	uint64	result = seed ^ (sizeof(int64) * MM2_MUL);
-	uint64	k = (uint64) val;
+	uint64		result = seed ^ (sizeof(int64) * MM2_MUL);
+	uint64		k = (uint64) val;
 
 	k *= MM2_MUL;
 	k ^= k >> MM2_ROT;
@@ -1236,7 +1236,7 @@ getVariable(CState *st, char *name)
 	else if (var->value.type == PGBT_DOUBLE)
 		snprintf(stringform, sizeof(stringform),
 				 "%.*g", DBL_DIG, var->value.u.dval);
-	else /* internal error, unexpected type */
+	else						/* internal error, unexpected type */
 		Assert(0);
 	var->svalue = pg_strdup(stringform);
 	return var->svalue;
@@ -1246,7 +1246,7 @@ getVariable(CState *st, char *name)
 static bool
 makeVariableValue(Variable *var)
 {
-	size_t slen;
+	size_t		slen;
 
 	if (var->value.type != PGBT_NO_VALUE)
 		return true;			/* no work */
@@ -1261,10 +1261,10 @@ makeVariableValue(Variable *var)
 	{
 		setNullValue(&var->value);
 	}
+
 	/*
-	 * accept prefixes such as y, ye, n, no... but not for "o".
-	 * 0/1 are recognized later as an int, which is converted
-	 * to bool if needed.
+	 * accept prefixes such as y, ye, n, no... but not for "o". 0/1 are
+	 * recognized later as an int, which is converted to bool if needed.
 	 */
 	else if (pg_strncasecmp(var->svalue, "true", slen) == 0 ||
 			 pg_strncasecmp(var->svalue, "yes", slen) == 0 ||
@@ -1410,7 +1410,7 @@ putVariable(CState *st, const char *context, char *name, const char *value)
 /* Returns false on failure (bad name) */
 static bool
 putVariableValue(CState *st, const char *context, char *name,
-				  const PgBenchValue *value)
+				 const PgBenchValue *value)
 {
 	Variable   *var;
 
@@ -1563,7 +1563,7 @@ coerceToBool(PgBenchValue *pval, bool *bval)
 		*bval = pval->u.bval;
 		return true;
 	}
-	else /* NULL, INT or DOUBLE */
+	else						/* NULL, INT or DOUBLE */
 	{
 		fprintf(stderr, "cannot coerce %s to boolean\n", valueTypeName(pval));
 		*bval = false;			/* suppress uninitialized-variable warnings */
@@ -1616,7 +1616,7 @@ coerceToInt(PgBenchValue *pval, int64 *ival)
 		*ival = (int64) dval;
 		return true;
 	}
-	else /* BOOLEAN or NULL */
+	else						/* BOOLEAN or NULL */
 	{
 		fprintf(stderr, "cannot coerce %s to int\n", valueTypeName(pval));
 		return false;
@@ -1637,7 +1637,7 @@ coerceToDouble(PgBenchValue *pval, double *dval)
 		*dval = (double) pval->u.ival;
 		return true;
 	}
-	else /* BOOLEAN or NULL */
+	else						/* BOOLEAN or NULL */
 	{
 		fprintf(stderr, "cannot coerce %s to double\n", valueTypeName(pval));
 		return false;
@@ -1676,7 +1676,8 @@ setDoubleValue(PgBenchValue *pv, double dval)
 	pv->u.dval = dval;
 }
 
-static bool isLazyFunc(PgBenchFunction func)
+static bool
+isLazyFunc(PgBenchFunction func)
 {
 	return func == PGBENCH_AND || func == PGBENCH_OR || func == PGBENCH_CASE;
 }
@@ -1686,8 +1687,10 @@ static bool
 evalLazyFunc(TState *thread, CState *st,
 			 PgBenchFunction func, PgBenchExprLink *args, PgBenchValue *retval)
 {
-	PgBenchValue a1, a2;
-	bool ba1, ba2;
+	PgBenchValue a1,
+				a2;
+	bool		ba1,
+				ba2;
 
 	Assert(isLazyFunc(func) && args != NULL && args->next != NULL);
 
@@ -1700,92 +1703,92 @@ evalLazyFunc(TState *thread, CState *st,
 
 	switch (func)
 	{
-	case PGBENCH_AND:
-		if (a1.type == PGBT_NULL)
-		{
-			setNullValue(retval);
+		case PGBENCH_AND:
+			if (a1.type == PGBT_NULL)
+			{
+				setNullValue(retval);
+				return true;
+			}
+
+			if (!coerceToBool(&a1, &ba1))
+				return false;
+
+			if (!ba1)
+			{
+				setBoolValue(retval, false);
+				return true;
+			}
+
+			if (!evaluateExpr(thread, st, args->expr, &a2))
+				return false;
+
+			if (a2.type == PGBT_NULL)
+			{
+				setNullValue(retval);
+				return true;
+			}
+			else if (!coerceToBool(&a2, &ba2))
+				return false;
+			else
+			{
+				setBoolValue(retval, ba2);
+				return true;
+			}
+
 			return true;
-		}
 
-		if (!coerceToBool(&a1, &ba1))
-			return false;
+		case PGBENCH_OR:
 
-		if (!ba1)
-		{
-			setBoolValue(retval, false);
-			return true;
-		}
+			if (a1.type == PGBT_NULL)
+			{
+				setNullValue(retval);
+				return true;
+			}
 
-		if (!evaluateExpr(thread, st, args->expr, &a2))
-			return false;
+			if (!coerceToBool(&a1, &ba1))
+				return false;
 
-		if (a2.type == PGBT_NULL)
-		{
-			setNullValue(retval);
-			return true;
-		}
-		else if (!coerceToBool(&a2, &ba2))
-			return false;
-		else
-		{
-			setBoolValue(retval, ba2);
-			return true;
-		}
+			if (ba1)
+			{
+				setBoolValue(retval, true);
+				return true;
+			}
 
-		return true;
+			if (!evaluateExpr(thread, st, args->expr, &a2))
+				return false;
 
-	case PGBENCH_OR:
+			if (a2.type == PGBT_NULL)
+			{
+				setNullValue(retval);
+				return true;
+			}
+			else if (!coerceToBool(&a2, &ba2))
+				return false;
+			else
+			{
+				setBoolValue(retval, ba2);
+				return true;
+			}
 
-		if (a1.type == PGBT_NULL)
-		{
-			setNullValue(retval);
-			return true;
-		}
+		case PGBENCH_CASE:
+			/* when true, execute branch */
+			if (valueTruth(&a1))
+				return evaluateExpr(thread, st, args->expr, retval);
 
-		if (!coerceToBool(&a1, &ba1))
-			return false;
+			/* now args contains next condition or final else expression */
+			args = args->next;
 
-		if (ba1)
-		{
-			setBoolValue(retval, true);
-			return true;
-		}
+			/* final else case? */
+			if (args->next == NULL)
+				return evaluateExpr(thread, st, args->expr, retval);
 
-		if (!evaluateExpr(thread, st, args->expr, &a2))
-			return false;
+			/* no, another when, proceed */
+			return evalLazyFunc(thread, st, PGBENCH_CASE, args, retval);
 
-		if (a2.type == PGBT_NULL)
-		{
-			setNullValue(retval);
-			return true;
-		}
-		else if (!coerceToBool(&a2, &ba2))
-			return false;
-		else
-		{
-			setBoolValue(retval, ba2);
-			return true;
-		}
-
-	case PGBENCH_CASE:
-		/* when true, execute branch */
-		if (valueTruth(&a1))
-			return evaluateExpr(thread, st, args->expr, retval);
-
-		/* now args contains next condition or final else expression */
-		args = args->next;
-
-		/* final else case? */
-		if (args->next == NULL)
-			return evaluateExpr(thread, st, args->expr, retval);
-
-		/* no, another when, proceed */
-		return evalLazyFunc(thread, st, PGBENCH_CASE, args, retval);
-
-	default:
-		/* internal error, cannot get here */
-		Assert(0);
-		break;
+		default:
+			/* internal error, cannot get here */
+			Assert(0);
+			break;
 	}
 	return false;
 }
@@ -1803,10 +1806,10 @@ evalStandardFunc(TState *thread, CState *st,
 				 PgBenchValue *retval)
 {
 	/* evaluate all function arguments */
-	int				nargs = 0;
-	PgBenchValue	vargs[MAX_FARGS];
+	int			nargs = 0;
+	PgBenchValue vargs[MAX_FARGS];
 	PgBenchExprLink *l = args;
-	bool			has_null = false;
+	bool		has_null = false;
 
 	for (nargs = 0; nargs < MAX_FARGS && l != NULL; nargs++, l = l->next)
 	{
@@ -1984,7 +1987,8 @@ evalStandardFunc(TState *thread, CState *st,
 		case PGBENCH_LSHIFT:
 		case PGBENCH_RSHIFT:
 			{
-				int64 li, ri;
+				int64		li,
+							ri;
 
 				if (!coerceToInt(&vargs[0], &li) || !coerceToInt(&vargs[1], &ri))
 					return false;
@@ -1999,7 +2003,7 @@ evalStandardFunc(TState *thread, CState *st,
 					setIntValue(retval, li << ri);
 				else if (func == PGBENCH_RSHIFT)
 					setIntValue(retval, li >> ri);
-				else /* cannot get here */
+				else			/* cannot get here */
 					Assert(0);
 
 				return true;
@@ -2008,7 +2012,8 @@ evalStandardFunc(TState *thread, CState *st,
 			/* logical operators */
 		case PGBENCH_NOT:
 			{
-				bool b;
+				bool		b;
+
 				if (!coerceToBool(&vargs[0], &b))
 					return false;
 
@@ -2062,7 +2067,7 @@ evalStandardFunc(TState *thread, CState *st,
 					fprintf(stderr, "int " INT64_FORMAT "\n", varg->u.ival);
 				else if (varg->type == PGBT_DOUBLE)
 					fprintf(stderr, "double %.*g\n", DBL_DIG, varg->u.dval);
-				else /* internal error, unexpected type */
+				else			/* internal error, unexpected type */
 					Assert(0);
 
 				*retval = *varg;
@@ -2275,7 +2280,11 @@ evalStandardFunc(TState *thread, CState *st,
 		case PGBENCH_IS:
 			{
 				Assert(nargs == 2);
-				/* note: this simple implementation is more permissive than SQL */
+
+				/*
+				 * note: this simple implementation is more permissive than
+				 * SQL
+				 */
 				setBoolValue(retval,
 							 vargs[0].type == vargs[1].type &&
 							 vargs[0].u.bval == vargs[1].u.bval);
@@ -2286,8 +2295,8 @@ evalStandardFunc(TState *thread, CState *st,
 		case PGBENCH_HASH_FNV1A:
 		case PGBENCH_HASH_MURMUR2:
 			{
-				int64	val,
-						seed;
+				int64		val,
+							seed;
 
 				Assert(nargs == 2);
 
@@ -2935,7 +2944,10 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 						if (command->meta == META_ELIF &&
 							conditional_stack_peek(st->cstack) == IFSTATE_TRUE)
 						{
-							/* elif after executed block, skip eval and wait for endif */
+							/*
+							 * elif after executed block, skip eval and wait
+							 * for endif
+							 */
 							conditional_stack_poke(st->cstack, IFSTATE_IGNORED);
 							goto move_to_end_command;
 						}
@@ -2956,18 +2968,21 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 								break;
 							}
 						}
-						else /* if and elif evaluated cases */
+						else	/* if and elif evaluated cases */
 						{
-							bool cond = valueTruth(&result);
+							bool		cond = valueTruth(&result);
 
 							/* execute or not depending on evaluated condition */
 							if (command->meta == META_IF)
 							{
 								conditional_stack_push(st->cstack, cond ? IFSTATE_TRUE : IFSTATE_FALSE);
 							}
-							else /* elif */
+							else	/* elif */
 							{
-								/* we should get here only if the "elif" needed evaluation */
+								/*
+								 * we should get here only if the "elif"
+								 * needed evaluation
+								 */
 								Assert(conditional_stack_peek(st->cstack) == IFSTATE_FALSE);
 								conditional_stack_poke(st->cstack, cond ? IFSTATE_TRUE : IFSTATE_FALSE);
 							}
@@ -2981,10 +2996,10 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 								conditional_stack_poke(st->cstack, IFSTATE_ELSE_FALSE);
 								break;
 							case IFSTATE_FALSE: /* inconsistent if active */
-							case IFSTATE_IGNORED: /* inconsistent if active */
-							case IFSTATE_NONE: /* else without if */
+							case IFSTATE_IGNORED:	/* inconsistent if active */
+							case IFSTATE_NONE:	/* else without if */
 							case IFSTATE_ELSE_TRUE: /* else after else */
-							case IFSTATE_ELSE_FALSE: /* else after else */
+							case IFSTATE_ELSE_FALSE:	/* else after else */
 							default:
 								/* dead code if conditional check is ok */
 								Assert(false);
@@ -3038,11 +3053,11 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 						}
 					}
 
-					move_to_end_command:
+			move_to_end_command:
+
 					/*
-					 * executing the expression or shell command might
-					 * take a non-negligible amount of time, so reset
-					 * 'now'
+					 * executing the expression or shell command might take a
+					 * non-negligible amount of time, so reset 'now'
 					 */
 					INSTR_TIME_SET_ZERO(now);
 
@@ -3063,7 +3078,10 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 					/* cannot reach end of script in that state */
 					Assert(command != NULL);
 
-					/* if this is conditional related, update conditional state */
+					/*
+					 * if this is conditional related, update conditional
+					 * state
+					 */
 					if (command->type == META_COMMAND &&
 						(command->meta == META_IF ||
 						 command->meta == META_ELIF ||
@@ -3072,51 +3090,59 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 					{
 						switch (conditional_stack_peek(st->cstack))
 						{
-						case IFSTATE_FALSE:
-							if (command->meta == META_IF || command->meta == META_ELIF)
-							{
-								/* we must evaluate the condition */
-								st->state = CSTATE_START_COMMAND;
-							}
-							else if (command->meta == META_ELSE)
-							{
-								/* we must execute next command */
-								conditional_stack_poke(st->cstack, IFSTATE_ELSE_TRUE);
-								st->state = CSTATE_START_COMMAND;
-								st->command++;
-							}
-							else if (command->meta == META_ENDIF)
-							{
-								Assert(!conditional_stack_empty(st->cstack));
-								conditional_stack_pop(st->cstack);
-								if (conditional_active(st->cstack))
+							case IFSTATE_FALSE:
+								if (command->meta == META_IF || command->meta == META_ELIF)
+								{
+									/* we must evaluate the condition */
 									st->state = CSTATE_START_COMMAND;
-								/* else state remains in CSTATE_SKIP_COMMAND */
-								st->command++;
-							}
-							break;
-
-						case IFSTATE_IGNORED:
-						case IFSTATE_ELSE_FALSE:
-							if (command->meta == META_IF)
-								conditional_stack_push(st->cstack, IFSTATE_IGNORED);
-							else if (command->meta == META_ENDIF)
-							{
-								Assert(!conditional_stack_empty(st->cstack));
-								conditional_stack_pop(st->cstack);
-								if (conditional_active(st->cstack))
+								}
+								else if (command->meta == META_ELSE)
+								{
+									/* we must execute next command */
+									conditional_stack_poke(st->cstack, IFSTATE_ELSE_TRUE);
 									st->state = CSTATE_START_COMMAND;
-							}
-							/* could detect "else" & "elif" after "else" */
-							st->command++;
-							break;
+									st->command++;
+								}
+								else if (command->meta == META_ENDIF)
+								{
+									Assert(!conditional_stack_empty(st->cstack));
+									conditional_stack_pop(st->cstack);
+									if (conditional_active(st->cstack))
+										st->state = CSTATE_START_COMMAND;
 
-						case IFSTATE_NONE:
-						case IFSTATE_TRUE:
-						case IFSTATE_ELSE_TRUE:
-						default:
-							/* inconsistent if inactive, unreachable dead code */
-							Assert(false);
+									/*
+									 * else state remains in
+									 * CSTATE_SKIP_COMMAND
+									 */
+									st->command++;
+								}
+								break;
+
+							case IFSTATE_IGNORED:
+							case IFSTATE_ELSE_FALSE:
+								if (command->meta == META_IF)
+									conditional_stack_push(st->cstack, IFSTATE_IGNORED);
+								else if (command->meta == META_ENDIF)
+								{
+									Assert(!conditional_stack_empty(st->cstack));
+									conditional_stack_pop(st->cstack);
+									if (conditional_active(st->cstack))
+										st->state = CSTATE_START_COMMAND;
+								}
+								/* could detect "else" & "elif" after "else" */
+								st->command++;
+								break;
+
+							case IFSTATE_NONE:
+							case IFSTATE_TRUE:
+							case IFSTATE_ELSE_TRUE:
+							default:
+
+								/*
+								 * inconsistent if inactive, unreachable dead
+								 * code
+								 */
+								Assert(false);
 						}
 					}
 					else
@@ -4184,42 +4210,44 @@ CheckConditional(ParsedScript ps)
 {
 	/* statically check conditional structure */
 	ConditionalStack cs = conditional_stack_create();
-	int i;
-	for (i = 0 ; ps.commands[i] != NULL ; i++)
+	int			i;
+
+	for (i = 0; ps.commands[i] != NULL; i++)
 	{
-		Command *cmd = ps.commands[i];
+		Command    *cmd = ps.commands[i];
+
 		if (cmd->type == META_COMMAND)
 		{
 			switch (cmd->meta)
 			{
-			case META_IF:
-				conditional_stack_push(cs, IFSTATE_FALSE);
-				break;
-			case META_ELIF:
-				if (conditional_stack_empty(cs))
-					ConditionError(ps.desc, i+1, "\\elif without matching \\if");
-				if (conditional_stack_peek(cs) == IFSTATE_ELSE_FALSE)
-					ConditionError(ps.desc, i+1, "\\elif after \\else");
-				break;
-			case META_ELSE:
-				if (conditional_stack_empty(cs))
-					ConditionError(ps.desc, i+1, "\\else without matching \\if");
-				if (conditional_stack_peek(cs) == IFSTATE_ELSE_FALSE)
-					ConditionError(ps.desc, i+1, "\\else after \\else");
-				conditional_stack_poke(cs, IFSTATE_ELSE_FALSE);
-				break;
-			case META_ENDIF:
-				if (!conditional_stack_pop(cs))
-					ConditionError(ps.desc, i+1, "\\endif without matching \\if");
-				break;
-			default:
-				/* ignore anything else... */
-				break;
+				case META_IF:
+					conditional_stack_push(cs, IFSTATE_FALSE);
+					break;
+				case META_ELIF:
+					if (conditional_stack_empty(cs))
+						ConditionError(ps.desc, i + 1, "\\elif without matching \\if");
+					if (conditional_stack_peek(cs) == IFSTATE_ELSE_FALSE)
+						ConditionError(ps.desc, i + 1, "\\elif after \\else");
+					break;
+				case META_ELSE:
+					if (conditional_stack_empty(cs))
+						ConditionError(ps.desc, i + 1, "\\else without matching \\if");
+					if (conditional_stack_peek(cs) == IFSTATE_ELSE_FALSE)
+						ConditionError(ps.desc, i + 1, "\\else after \\else");
+					conditional_stack_poke(cs, IFSTATE_ELSE_FALSE);
+					break;
+				case META_ENDIF:
+					if (!conditional_stack_pop(cs))
+						ConditionError(ps.desc, i + 1, "\\endif without matching \\if");
+					break;
+				default:
+					/* ignore anything else... */
+					break;
 			}
 		}
 	}
 	if (!conditional_stack_empty(cs))
-		ConditionError(ps.desc, i+1, "\\if without matching \\endif");
+		ConditionError(ps.desc, i + 1, "\\if without matching \\endif");
 	conditional_stack_destroy(cs);
 }
 
@@ -4679,6 +4707,7 @@ set_random_seed(const char *seed)
 	{
 		/* rely on current time */
 		instr_time	now;
+
 		INSTR_TIME_SET_CURRENT(now);
 		iseed = (unsigned int) INSTR_TIME_GET_MICROSEC(now);
 	}
@@ -4698,7 +4727,8 @@ set_random_seed(const char *seed)
 	else
 	{
 		/* parse seed unsigned int value */
-		char garbage;
+		char		garbage;
+
 		if (sscanf(seed, "%u%c", &iseed, &garbage) != 1)
 		{
 			fprintf(stderr,
@@ -5307,7 +5337,7 @@ main(int argc, char **argv)
 				if (var->value.type != PGBT_NO_VALUE)
 				{
 					if (!putVariableValue(&state[i], "startup",
-										   var->name, &var->value))
+										  var->name, &var->value))
 						exit(1);
 				}
 				else
@@ -5410,10 +5440,10 @@ main(int argc, char **argv)
 	/* set default seed for hash functions */
 	if (lookupVariable(&state[0], "default_seed") == NULL)
 	{
-		uint64	seed = ((uint64) (random() & 0xFFFF) << 48) |
-					   ((uint64) (random() & 0xFFFF) << 32) |
-					   ((uint64) (random() & 0xFFFF) << 16) |
-					   (uint64) (random() & 0xFFFF);
+		uint64		seed = ((uint64) (random() & 0xFFFF) << 48) |
+		((uint64) (random() & 0xFFFF) << 32) |
+		((uint64) (random() & 0xFFFF) << 16) |
+		(uint64) (random() & 0xFFFF);
 
 		for (i = 0; i < nclients; i++)
 			if (!putVariableInt(&state[i], "startup", "default_seed", (int64) seed))

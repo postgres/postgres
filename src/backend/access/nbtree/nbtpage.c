@@ -155,11 +155,11 @@ void
 _bt_update_meta_cleanup_info(Relation rel, TransactionId oldestBtpoXact,
 							 float8 numHeapTuples)
 {
-	Buffer			metabuf;
-	Page			metapg;
+	Buffer		metabuf;
+	Page		metapg;
 	BTMetaPageData *metad;
-	bool			needsRewrite = false;
-	XLogRecPtr		recptr;
+	bool		needsRewrite = false;
+	XLogRecPtr	recptr;
 
 	/* read the metapage and check if it needs rewrite */
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);

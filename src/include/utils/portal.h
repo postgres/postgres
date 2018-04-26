@@ -116,7 +116,7 @@ typedef struct PortalData
 	/* Bookkeeping data */
 	const char *name;			/* portal's name */
 	const char *prepStmtName;	/* source prepared statement (NULL if none) */
-	MemoryContext portalContext;/* subsidiary memory for portal */
+	MemoryContext portalContext;	/* subsidiary memory for portal */
 	ResourceOwner resowner;		/* resources owned by portal */
 	void		(*cleanup) (Portal portal); /* cleanup hook */
 

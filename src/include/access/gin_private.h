@@ -104,7 +104,7 @@ extern OffsetNumber gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple);
 extern Datum gintuple_get_key(GinState *ginstate, IndexTuple tuple,
 				 GinNullCategory *category);
 extern void GinCheckForSerializableConflictIn(Relation relation,
-				 HeapTuple tuple, Buffer buffer);
+								  HeapTuple tuple, Buffer buffer);
 
 /* gininsert.c */
 extern IndexBuildResult *ginbuild(Relation heap, Relation index,

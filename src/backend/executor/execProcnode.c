@@ -407,10 +407,9 @@ ExecSetExecProcNode(PlanState *node, ExecProcNodeMtd function)
 {
 	/*
 	 * Add a wrapper around the ExecProcNode callback that checks stack depth
-	 * during the first execution and maybe adds an instrumentation
-	 * wrapper. When the callback is changed after execution has already begun
-	 * that means we'll superfluously execute ExecProcNodeFirst, but that seems
-	 * ok.
+	 * during the first execution and maybe adds an instrumentation wrapper.
+	 * When the callback is changed after execution has already begun that
+	 * means we'll superfluously execute ExecProcNodeFirst, but that seems ok.
 	 */
 	node->ExecProcNodeReal = function;
 	node->ExecProcNode = ExecProcNodeFirst;

@@ -326,7 +326,7 @@ DefineIndex(Oid relationId,
 			IndexStmt *stmt,
 			Oid indexRelationId,
 			Oid parentIndexId,
-			Oid	parentConstraintId,
+			Oid parentConstraintId,
 			bool is_alter_table,
 			bool check_rights,
 			bool check_not_in_use,
@@ -381,11 +381,11 @@ DefineIndex(Oid relationId,
 
 	/*
 	 * Calculate the new list of index columns including both key columns and
-	 * INCLUDE columns.  Later we can determine which of these are key columns,
-	 * and which are just part of the INCLUDE list by checking the list
-	 * position.  A list item in a position less than ii_NumIndexKeyAttrs is
-	 * part of the key columns, and anything equal to and over is part of the
-	 * INCLUDE columns.
+	 * INCLUDE columns.  Later we can determine which of these are key
+	 * columns, and which are just part of the INCLUDE list by checking the
+	 * list position.  A list item in a position less than ii_NumIndexKeyAttrs
+	 * is part of the key columns, and anything equal to and over is part of
+	 * the INCLUDE columns.
 	 */
 	allIndexParams = list_concat(list_copy(stmt->indexParams),
 								 list_copy(stmt->indexIncludingParams));
@@ -431,6 +431,7 @@ DefineIndex(Oid relationId,
 			/* OK */
 			break;
 		case RELKIND_FOREIGN_TABLE:
+
 			/*
 			 * Custom error message for FOREIGN TABLE since the term is close
 			 * to a regular table and can confuse the user.
@@ -691,13 +692,13 @@ DefineIndex(Oid relationId,
 		 * partition-local index can enforce global uniqueness iff the PK
 		 * value completely determines the partition that a row is in.
 		 *
-		 * Thus, verify that all the columns in the partition key appear
-		 * in the unique key definition.
+		 * Thus, verify that all the columns in the partition key appear in
+		 * the unique key definition.
 		 */
 		for (i = 0; i < key->partnatts; i++)
 		{
-			bool	found = false;
-			int		j;
+			bool		found = false;
+			int			j;
 			const char *constraint_type;
 
 			if (stmt->primary)
@@ -722,7 +723,7 @@ DefineIndex(Oid relationId,
 						 errmsg("unsupported %s constraint with partition key definition",
 								constraint_type),
 						 errdetail("%s constraints cannot be used when partition keys include expressions.",
-								constraint_type)));
+								   constraint_type)));
 
 			for (j = 0; j < indexInfo->ii_NumIndexAttrs; j++)
 			{
@@ -820,8 +821,8 @@ DefineIndex(Oid relationId,
 	/*
 	 * Make the catalog entries for the index, including constraints. This
 	 * step also actually builds the index, except if caller requested not to
-	 * or in concurrent mode, in which case it'll be done later, or
-	 * doing a partitioned index (because those don't have storage).
+	 * or in concurrent mode, in which case it'll be done later, or doing a
+	 * partitioned index (because those don't have storage).
 	 */
 	flags = constr_flags = 0;
 	if (stmt->isconstraint)
@@ -871,8 +872,8 @@ DefineIndex(Oid relationId,
 	if (partitioned)
 	{
 		/*
-		 * Unless caller specified to skip this step (via ONLY), process
-		 * each partition to make sure they all contain a corresponding index.
+		 * Unless caller specified to skip this step (via ONLY), process each
+		 * partition to make sure they all contain a corresponding index.
 		 *
 		 * If we're called internally (no stmt->relation), recurse always.
 		 */
@@ -904,13 +905,13 @@ DefineIndex(Oid relationId,
 			 */
 			for (i = 0; i < nparts; i++)
 			{
-				Oid		childRelid = part_oids[i];
-				Relation childrel;
-				List   *childidxs;
-				ListCell *cell;
+				Oid			childRelid = part_oids[i];
+				Relation	childrel;
+				List	   *childidxs;
+				ListCell   *cell;
 				AttrNumber *attmap;
-				bool	found = false;
-				int		maplen;
+				bool		found = false;
+				int			maplen;
 
 				childrel = heap_open(childRelid, lockmode);
 				childidxs = RelationGetIndexList(childrel);
@@ -940,7 +941,7 @@ DefineIndex(Oid relationId,
 										 opfamOids,
 										 attmap, maplen))
 					{
-						Oid		cldConstrOid = InvalidOid;
+						Oid			cldConstrOid = InvalidOid;
 
 						/*
 						 * Found a match.
@@ -1002,7 +1003,7 @@ DefineIndex(Oid relationId,
 					childStmt->idxname = NULL;
 					childStmt->relationId = childRelid;
 					DefineIndex(childRelid, childStmt,
-								InvalidOid,			/* no predefined OID */
+								InvalidOid, /* no predefined OID */
 								indexRelationId,	/* this is our child */
 								createdConstraintId,
 								is_alter_table, check_rights, check_not_in_use,
@@ -1014,9 +1015,8 @@ DefineIndex(Oid relationId,
 
 			/*
 			 * The pg_index row we inserted for this index was marked
-			 * indisvalid=true.  But if we attached an existing index that
-			 * is invalid, this is incorrect, so update our row to
-			 * invalid too.
+			 * indisvalid=true.  But if we attached an existing index that is
+			 * invalid, this is incorrect, so update our row to invalid too.
 			 */
 			if (invalidate_parent)
 			{
@@ -1479,7 +1479,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			}
 			else
 			{
-				indexInfo->ii_IndexAttrNumbers[attn] = 0; /* marks expression */
+				indexInfo->ii_IndexAttrNumbers[attn] = 0;	/* marks expression */
 				indexInfo->ii_Expressions = lappend(indexInfo->ii_Expressions,
 													expr);
 
@@ -1505,7 +1505,8 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		typeOidP[attn] = atttype;
 
 		/*
-		 * Included columns have no collation, no opclass and no ordering options.
+		 * Included columns have no collation, no opclass and no ordering
+		 * options.
 		 */
 		if (attn >= nkeycols)
 		{
@@ -2465,8 +2466,8 @@ void
 IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 {
 	Relation	pg_inherits;
-	ScanKeyData	key[2];
-	SysScanDesc	scan;
+	ScanKeyData key[2];
+	SysScanDesc scan;
 	Oid			partRelid = RelationGetRelid(partitionIdx);
 	HeapTuple	tuple;
 	bool		fix_dependencies;
@@ -2496,15 +2497,15 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 		if (parentOid == InvalidOid)
 		{
 			/*
-			 * No pg_inherits row, and no parent wanted: nothing to do in
-			 * this case.
+			 * No pg_inherits row, and no parent wanted: nothing to do in this
+			 * case.
 			 */
 			fix_dependencies = false;
 		}
 		else
 		{
-			Datum	values[Natts_pg_inherits];
-			bool	isnull[Natts_pg_inherits];
+			Datum		values[Natts_pg_inherits];
+			bool		isnull[Natts_pg_inherits];
 
 			/*
 			 * No pg_inherits row exists, and we want a parent for this index,
@@ -2525,7 +2526,7 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 	}
 	else
 	{
-		Form_pg_inherits	inhForm = (Form_pg_inherits) GETSTRUCT(tuple);
+		Form_pg_inherits inhForm = (Form_pg_inherits) GETSTRUCT(tuple);
 
 		if (parentOid == InvalidOid)
 		{
@@ -2572,14 +2573,14 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 
 		if (OidIsValid(parentOid))
 		{
-			ObjectAddress	parentIdx;
+			ObjectAddress parentIdx;
 
 			ObjectAddressSet(parentIdx, RelationRelationId, parentOid);
 			recordDependencyOn(&partIdx, &parentIdx, DEPENDENCY_INTERNAL_AUTO);
 		}
 		else
 		{
-			ObjectAddress	partitionTbl;
+			ObjectAddress partitionTbl;
 
 			ObjectAddressSet(partitionTbl, RelationRelationId,
 							 partitionIdx->rd_index->indrelid);

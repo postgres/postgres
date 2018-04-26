@@ -792,9 +792,9 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						 * intended effect!
 						 */
 						PreventInTransactionBlock(isTopLevel,
-												(stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
-												(stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
-												"REINDEX DATABASE");
+												  (stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
+												  (stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
+												  "REINDEX DATABASE");
 						ReindexMultipleTables(stmt->name, stmt->kind, stmt->options);
 						break;
 					default:
@@ -1291,7 +1291,7 @@ ProcessUtilitySlow(ParseState *pstate,
 
 					if (stmt->concurrent)
 						PreventInTransactionBlock(isTopLevel,
-												"CREATE INDEX CONCURRENTLY");
+												  "CREATE INDEX CONCURRENTLY");
 
 					/*
 					 * Look up the relation OID just once, right here at the
@@ -1700,7 +1700,7 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 		case OBJECT_INDEX:
 			if (stmt->concurrent)
 				PreventInTransactionBlock(isTopLevel,
-										"DROP INDEX CONCURRENTLY");
+										  "DROP INDEX CONCURRENTLY");
 			/* fall through */
 
 		case OBJECT_TABLE:

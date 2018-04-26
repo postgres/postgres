@@ -4918,8 +4918,8 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 								&rows, &width, &startup_cost, &total_cost);
 
 		/*
-		 * The EPQ path must be at least as well sorted as the path itself,
-		 * in case it gets used as input to a mergejoin.
+		 * The EPQ path must be at least as well sorted as the path itself, in
+		 * case it gets used as input to a mergejoin.
 		 */
 		sorted_epq_path = epq_path;
 		if (sorted_epq_path != NULL &&

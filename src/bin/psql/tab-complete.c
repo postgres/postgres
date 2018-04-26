@@ -1856,13 +1856,13 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER INDEX <foo> SET|RESET ( */
 	else if (Matches5("ALTER", "INDEX", MatchAny, "RESET", "("))
 		COMPLETE_WITH_LIST7("fillfactor", "recheck_on_update",
-							"fastupdate", "gin_pending_list_limit",	/* GIN */
+							"fastupdate", "gin_pending_list_limit", /* GIN */
 							"buffering",	/* GiST */
 							"pages_per_range", "autosummarize"	/* BRIN */
 			);
 	else if (Matches5("ALTER", "INDEX", MatchAny, "SET", "("))
 		COMPLETE_WITH_LIST7("fillfactor =", "recheck_on_update =",
-							"fastupdate =", "gin_pending_list_limit =",	/* GIN */
+							"fastupdate =", "gin_pending_list_limit =", /* GIN */
 							"buffering =",	/* GiST */
 							"pages_per_range =", "autosummarize ="	/* BRIN */
 			);
@@ -2511,6 +2511,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes,
 								   " UNION SELECT 'ON'"
 								   " UNION SELECT 'CONCURRENTLY'");
+
 	/*
 	 * Complete ... INDEX|CONCURRENTLY [<name>] ON with a list of relations
 	 * that can indexes can be created on
@@ -3458,7 +3459,11 @@ psql_completion(const char *text, int start, int end)
 	/* Complete SET <var> with "TO" */
 	else if (Matches2("SET", MatchAny))
 		COMPLETE_WITH_CONST("TO");
-	/* Complete ALTER DATABASE|FUNCTION||PROCEDURE|ROLE|ROUTINE|USER ... SET <name> */
+
+	/*
+	 * Complete ALTER DATABASE|FUNCTION||PROCEDURE|ROLE|ROUTINE|USER ... SET
+	 * <name>
+	 */
 	else if (HeadMatches2("ALTER", "DATABASE|FUNCTION|PROCEDURE|ROLE|ROUTINE|USER") &&
 			 TailMatches2("SET", MatchAny))
 		COMPLETE_WITH_LIST2("FROM CURRENT", "TO");

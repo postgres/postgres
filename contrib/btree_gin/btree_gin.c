@@ -483,8 +483,12 @@ GIN_SUPPORT(anyenum, false, leftmostvalue_enum, gin_enum_cmp)
 static Datum
 leftmostvalue_uuid(void)
 {
-	/* palloc0 will create the UUID with all zeroes: "00000000-0000-0000-0000-000000000000" */
-	pg_uuid_t	*retval = (pg_uuid_t *) palloc0(sizeof(pg_uuid_t));
+	/*
+	 * palloc0 will create the UUID with all zeroes:
+	 * "00000000-0000-0000-0000-000000000000"
+	 */
+	pg_uuid_t  *retval = (pg_uuid_t *) palloc0(sizeof(pg_uuid_t));
+
 	return UUIDPGetDatum(retval);
 }
 
@@ -493,7 +497,8 @@ GIN_SUPPORT(uuid, false, leftmostvalue_uuid, uuid_cmp)
 static Datum
 leftmostvalue_name(void)
 {
-	NameData* result = (NameData *) palloc0(NAMEDATALEN);
+	NameData   *result = (NameData *) palloc0(NAMEDATALEN);
+
 	return NameGetDatum(result);
 }
 

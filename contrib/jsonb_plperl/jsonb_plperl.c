@@ -18,7 +18,7 @@ static SV  *Jsonb_to_SV(JsonbContainer *jsonb);
 static JsonbValue *SV_to_JsonbValue(SV *obj, JsonbParseState **ps, bool is_elem);
 
 
-static SV *
+static SV  *
 JsonbValue_to_SV(JsonbValue *jbv)
 {
 	dTHX;
@@ -33,6 +33,7 @@ JsonbValue_to_SV(JsonbValue *jbv)
 				char	   *str = DatumGetCString(DirectFunctionCall1(numeric_out,
 																	  NumericGetDatum(jbv->val.numeric)));
 				SV		   *result = newSVnv(SvNV(cstr2sv(str)));
+
 				pfree(str);
 				return result;
 			}
@@ -42,6 +43,7 @@ JsonbValue_to_SV(JsonbValue *jbv)
 				char	   *str = pnstrdup(jbv->val.string.val,
 										   jbv->val.string.len);
 				SV		   *result = cstr2sv(str);
+
 				pfree(str);
 				return result;
 			}

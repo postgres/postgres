@@ -433,7 +433,7 @@ extern void ExecScanReScan(ScanState *node);
 extern void ExecInitResultTupleSlotTL(EState *estate, PlanState *planstate);
 extern void ExecInitScanTupleSlot(EState *estate, ScanState *scanstate, TupleDesc tupleDesc);
 extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate,
-					  TupleDesc tupleDesc);
+					   TupleDesc tupleDesc);
 extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
 					  TupleDesc tupType);
 extern TupleDesc ExecTypeFromTL(List *targetList, bool hasoid);

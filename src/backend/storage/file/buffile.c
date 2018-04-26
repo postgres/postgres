@@ -213,9 +213,9 @@ MakeNewSharedSegment(BufFile *buffile, int segment)
 
 	/*
 	 * It is possible that there are files left over from before a crash
-	 * restart with the same name.  In order for BufFileOpenShared()
-	 * not to get confused about how many segments there are, we'll unlink
-	 * the next segment number if it already exists.
+	 * restart with the same name.  In order for BufFileOpenShared() not to
+	 * get confused about how many segments there are, we'll unlink the next
+	 * segment number if it already exists.
 	 */
 	SharedSegmentName(name, buffile->name, segment + 1);
 	SharedFileSetDelete(buffile->fileset, name, true);

@@ -1688,9 +1688,9 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 	/*
 	 * Note down whether any partition key cols are being updated. Though it's
 	 * the root partitioned table's updatedCols we are interested in, we
-	 * instead use parentrte to get the updatedCols. This is convenient because
-	 * parentrte already has the root partrel's updatedCols translated to match
-	 * the attribute ordering of parentrel.
+	 * instead use parentrte to get the updatedCols. This is convenient
+	 * because parentrte already has the root partrel's updatedCols translated
+	 * to match the attribute ordering of parentrel.
 	 */
 	if (!root->partColsUpdated)
 		root->partColsUpdated =

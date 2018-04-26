@@ -75,8 +75,9 @@ conditional_stack_depth(ConditionalStack cstack)
 		return -1;
 	else
 	{
-		IfStackElem	*p = cstack->head;
+		IfStackElem *p = cstack->head;
 		int			depth = 0;
+
 		while (p != NULL)
 		{
 			depth++;

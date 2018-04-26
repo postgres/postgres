@@ -108,8 +108,8 @@ EnablePortalManager(void)
 	Assert(TopPortalContext == NULL);
 
 	TopPortalContext = AllocSetContextCreate(TopMemoryContext,
-										 "TopPortalContext",
-										 ALLOCSET_DEFAULT_SIZES);
+											 "TopPortalContext",
+											 ALLOCSET_DEFAULT_SIZES);
 
 	ctl.keysize = MAX_PORTALNAME_LEN;
 	ctl.entrysize = sizeof(PortalHashEnt);
@@ -630,8 +630,8 @@ static void
 HoldPortal(Portal portal)
 {
 	/*
-	 * Note that PersistHoldablePortal() must release all resources
-	 * used by the portal that are local to the creating transaction.
+	 * Note that PersistHoldablePortal() must release all resources used by
+	 * the portal that are local to the creating transaction.
 	 */
 	PortalCreateHoldStore(portal);
 	PersistHoldablePortal(portal);
@@ -640,15 +640,15 @@ HoldPortal(Portal portal)
 	PortalReleaseCachedPlan(portal);
 
 	/*
-	 * Any resources belonging to the portal will be released in the
-	 * upcoming transaction-wide cleanup; the portal will no longer
-	 * have its own resources.
+	 * Any resources belonging to the portal will be released in the upcoming
+	 * transaction-wide cleanup; the portal will no longer have its own
+	 * resources.
 	 */
 	portal->resowner = NULL;
 
 	/*
-	 * Having successfully exported the holdable cursor, mark it as
-	 * not belonging to this transaction.
+	 * Having successfully exported the holdable cursor, mark it as not
+	 * belonging to this transaction.
 	 */
 	portal->createSubid = InvalidSubTransactionId;
 	portal->activeSubid = InvalidSubTransactionId;
@@ -1240,8 +1240,8 @@ HoldPinnedPortals(void)
 		{
 			/*
 			 * Doing transaction control, especially abort, inside a cursor
-			 * loop that is not read-only, for example using UPDATE
-			 * ... RETURNING, has weird semantics issues.  Also, this
+			 * loop that is not read-only, for example using UPDATE ...
+			 * RETURNING, has weird semantics issues.  Also, this
 			 * implementation wouldn't work, because such portals cannot be
 			 * held.  (The core grammar enforces that only SELECT statements
 			 * can drive a cursor, but for example PL/pgSQL does not restrict

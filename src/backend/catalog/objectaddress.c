@@ -2062,8 +2062,8 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * get_object_address is pretty sensitive to the length of its input lists;
-	 * check that they're what it wants.
+	 * get_object_address is pretty sensitive to the length of its input
+	 * lists; check that they're what it wants.
 	 */
 	switch (type)
 	{
@@ -5130,7 +5130,11 @@ get_relkind_objtype(char relkind)
 			return OBJECT_MATVIEW;
 		case RELKIND_FOREIGN_TABLE:
 			return OBJECT_FOREIGN_TABLE;
-		/* other relkinds are not supported here because they don't map to OBJECT_* values */
+
+			/*
+			 * other relkinds are not supported here because they don't map to
+			 * OBJECT_* values
+			 */
 		default:
 			elog(ERROR, "unexpected relkind: %d", relkind);
 			return 0;

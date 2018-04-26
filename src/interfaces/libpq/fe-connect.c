@@ -266,7 +266,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 
 	{"scram_channel_binding", NULL, DefaultSCRAMChannelBinding, NULL,
 		"SCRAM-Channel-Binding", "D",
-		21,	/* sizeof("tls-server-end-point") == 21 */
+		21,						/* sizeof("tls-server-end-point") == 21 */
 	offsetof(struct pg_conn, scram_channel_binding)},
 
 	/*

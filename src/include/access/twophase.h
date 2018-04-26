@@ -48,7 +48,7 @@ extern bool StandbyTransactionIdIsPrepared(TransactionId xid);
 extern TransactionId PrescanPreparedTransactions(TransactionId **xids_p,
 							int *nxids_p);
 extern void ParsePrepareRecord(uint8 info, char *xlrec,
-							xl_xact_parsed_prepare *parsed);
+				   xl_xact_parsed_prepare *parsed);
 extern void StandbyRecoverPreparedTransactions(void);
 extern void RecoverPreparedTransactions(void);
 

@@ -120,7 +120,7 @@ typedef struct SpGistState
 	spgConfigOut config;		/* filled in by opclass config method */
 
 	SpGistTypeDesc attType;		/* type of values to be indexed/restored */
-	SpGistTypeDesc attLeafType;		/* type of leaf-tuple values */
+	SpGistTypeDesc attLeafType; /* type of leaf-tuple values */
 	SpGistTypeDesc attPrefixType;	/* type of inner-tuple prefix values */
 	SpGistTypeDesc attLabelType;	/* type of node label values */
 
@@ -181,7 +181,7 @@ typedef struct SpGistCache
 	spgConfigOut config;		/* filled in by opclass config method */
 
 	SpGistTypeDesc attType;		/* type of values to be indexed/restored */
-	SpGistTypeDesc attLeafType;		/* type of leaf-tuple values */
+	SpGistTypeDesc attLeafType; /* type of leaf-tuple values */
 	SpGistTypeDesc attPrefixType;	/* type of inner-tuple prefix values */
 	SpGistTypeDesc attLabelType;	/* type of node label values */
 

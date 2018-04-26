@@ -199,10 +199,10 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		error_context_stack = &plerrcontext;
 
 		/*
-		 * For a procedure or function declared to return void, the Python return value
-		 * must be None. For void-returning functions, we also treat a None
-		 * return value as a special "void datum" rather than NULL (as is the
-		 * case for non-void-returning functions).
+		 * For a procedure or function declared to return void, the Python
+		 * return value must be None. For void-returning functions, we also
+		 * treat a None return value as a special "void datum" rather than
+		 * NULL (as is the case for non-void-returning functions).
 		 */
 		if (proc->result.typoid == VOIDOID)
 		{

@@ -110,8 +110,8 @@ typedef struct
 	char		conninfo[MAXCONNINFO];
 
 	/*
-	 * Host name (this can be a host name, an IP address, or a directory
-	 * path) and port number of the active replication connection.
+	 * Host name (this can be a host name, an IP address, or a directory path)
+	 * and port number of the active replication connection.
 	 */
 	char		sender_host[NI_MAXHOST];
 	int			sender_port;
@@ -206,8 +206,8 @@ typedef WalReceiverConn *(*walrcv_connect_fn) (const char *conninfo, bool logica
 typedef void (*walrcv_check_conninfo_fn) (const char *conninfo);
 typedef char *(*walrcv_get_conninfo_fn) (WalReceiverConn *conn);
 typedef void (*walrcv_get_senderinfo_fn) (WalReceiverConn *conn,
-										 char **sender_host,
-										 int *sender_port);
+										  char **sender_host,
+										  int *sender_port);
 typedef char *(*walrcv_identify_system_fn) (WalReceiverConn *conn,
 											TimeLineID *primary_tli,
 											int *server_version);

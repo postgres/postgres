@@ -216,9 +216,9 @@ nodeTokenType(char *token, int length)
 	{
 		/*
 		 * Yes.  Figure out whether it is integral or float; this requires
-		 * both a syntax check and a range check. strtoint() can do both for us.
-		 * We know the token will end at a character that strtoint will stop at,
-		 * so we do not need to modify the string.
+		 * both a syntax check and a range check. strtoint() can do both for
+		 * us. We know the token will end at a character that strtoint will
+		 * stop at, so we do not need to modify the string.
 		 */
 		char	   *endptr;
 

@@ -1088,7 +1088,7 @@ lreplace:;
 			 */
 			ExecDelete(mtstate, tupleid, oldtuple, planSlot, epqstate,
 					   estate, &tuple_deleted, false,
-					   false /* canSetTag */, true /* changingPart */);
+					   false /* canSetTag */ , true /* changingPart */ );
 
 			/*
 			 * For some reason if DELETE didn't happen (e.g. trigger prevented
@@ -1678,8 +1678,8 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	HeapTuple	tuple;
 
 	/*
-	 * Determine the target partition.  If ExecFindPartition does not find
-	 * a partition after all, it doesn't return here; otherwise, the returned
+	 * Determine the target partition.  If ExecFindPartition does not find a
+	 * partition after all, it doesn't return here; otherwise, the returned
 	 * value is to be used as an index into the arrays for the ResultRelInfo
 	 * and TupleConversionMap for the partition.
 	 */
@@ -2140,7 +2140,7 @@ ExecModifyTable(PlanState *pstate)
 				slot = ExecDelete(node, tupleid, oldtuple, planSlot,
 								  &node->mt_epqstate, estate,
 								  NULL, true, node->canSetTag,
-								  false /* changingPart */);
+								  false /* changingPart */ );
 				break;
 			default:
 				elog(ERROR, "unknown operation");
@@ -2310,7 +2310,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
 		(operation == CMD_INSERT || update_tuple_routing_needed))
 		mtstate->mt_partition_tuple_routing =
-						ExecSetupPartitionTupleRouting(mtstate, rel);
+			ExecSetupPartitionTupleRouting(mtstate, rel);
 
 	/*
 	 * Build state for collecting transition tuples.  This requires having a

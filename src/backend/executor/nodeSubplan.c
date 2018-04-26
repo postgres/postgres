@@ -974,7 +974,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 
 		/*
 		 * Create comparator for lookups of rows in the table (potentially
-		 *  across-type comparison).
+		 * across-type comparison).
 		 */
 		sstate->cur_eq_comp = ExecBuildGroupingEqual(tupDescLeft, tupDescRight,
 													 ncols,

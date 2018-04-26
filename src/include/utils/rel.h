@@ -116,7 +116,7 @@ typedef struct RelationData
 	Bitmapset  *rd_keyattr;		/* cols that can be ref'd by foreign keys */
 	Bitmapset  *rd_pkattr;		/* cols included in primary key */
 	Bitmapset  *rd_idattr;		/* included in replica identity index */
-	Bitmapset  *rd_projidx;     /* Oids of projection indexes */
+	Bitmapset  *rd_projidx;		/* Oids of projection indexes */
 
 	PublicationActions *rd_pubactions;	/* publication actions */
 
@@ -223,7 +223,7 @@ typedef struct ForeignKeyCacheInfo
 typedef struct GenericIndexOpts
 {
 	int32		vl_len_;
-	bool        recheck_on_update;
+	bool		recheck_on_update;
 } GenericIndexOpts;
 
 /*

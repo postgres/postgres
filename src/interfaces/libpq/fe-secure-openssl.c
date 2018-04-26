@@ -63,8 +63,8 @@
 
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static int openssl_verify_peer_name_matches_certificate_name(PGconn *conn,
-										  ASN1_STRING *name,
-										  char **store_name);
+												  ASN1_STRING *name,
+												  char **store_name);
 static void destroy_ssl_system(void);
 static int	initialize_SSL(PGconn *conn);
 static PostgresPollingStatusType open_client_SSL(PGconn *);
@@ -560,8 +560,8 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 
 				(*names_examined)++;
 				rc = openssl_verify_peer_name_matches_certificate_name(conn,
-															   name->d.dNSName,
-															   &alt_name);
+																	   name->d.dNSName,
+																	   &alt_name);
 
 				if (alt_name)
 				{
@@ -599,10 +599,10 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 			{
 				(*names_examined)++;
 				rc = openssl_verify_peer_name_matches_certificate_name(
-															   conn,
-															   X509_NAME_ENTRY_get_data(
-																						X509_NAME_get_entry(subject_name, cn_index)),
-															   first_name);
+																	   conn,
+																	   X509_NAME_ENTRY_get_data(
+																								X509_NAME_get_entry(subject_name, cn_index)),
+																	   first_name);
 			}
 		}
 	}
@@ -1194,6 +1194,7 @@ initialize_SSL(PGconn *conn)
 #ifdef SSL_OP_NO_COMPRESSION
 	if (conn->sslcompression && conn->sslcompression[0] == '0')
 		SSL_set_options(conn->ssl, SSL_OP_NO_COMPRESSION);
+
 	/*
 	 * Mainline OpenSSL introduced SSL_clear_options() before
 	 * SSL_OP_NO_COMPRESSION, so this following #ifdef should not be

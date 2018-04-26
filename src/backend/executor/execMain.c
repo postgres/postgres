@@ -1417,6 +1417,7 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 		rInfo++;
 		nr--;
 	}
+
 	/*
 	 * Third, search through the result relations that were created during
 	 * tuple routing, if any.

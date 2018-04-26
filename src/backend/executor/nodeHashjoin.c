@@ -596,7 +596,8 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	List	   *lclauses;
 	List	   *rclauses;
 	List	   *hoperators;
-	TupleDesc	outerDesc, innerDesc;
+	TupleDesc	outerDesc,
+				innerDesc;
 	ListCell   *l;
 
 	/* check for unsupported flags */

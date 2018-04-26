@@ -1754,6 +1754,7 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&jit_debugging_support,
 		false,
+
 		/*
 		 * This is not guaranteed to be available, but given it's a developer
 		 * oriented option, it doesn't seem worth adding code checking
@@ -1792,6 +1793,7 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&jit_profiling_support,
 		false,
+
 		/*
 		 * This is not guaranteed to be available, but given it's a developer
 		 * oriented option, it doesn't seem worth adding code checking

@@ -2696,6 +2696,7 @@ match_clause_to_ordering_op(IndexOptInfo *index,
 
 	opfamily = index->opfamily[indexcol];
 	idxcollation = index->indexcollations[indexcol];
+
 	/*
 	 * Clause must be a binary opclause.
 	 */
@@ -3945,7 +3946,7 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 				IndexCollMatchesExprColl(index->indexcollations[i],
 										 lfirst_oid(collids_cell)))
 
-			break;
+				break;
 		}
 		if (i >= index->ncolumns)
 			break;				/* no match found */

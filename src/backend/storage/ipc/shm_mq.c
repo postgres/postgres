@@ -1203,9 +1203,10 @@ shm_mq_inc_bytes_read(shm_mq *mq, Size n)
 
 	/*
 	 * Separate prior reads of mq_ring from the increment of mq_bytes_read
-	 * which follows.  This pairs with the full barrier in shm_mq_send_bytes().
-	 * We only need a read barrier here because the increment of mq_bytes_read
-	 * is actually a read followed by a dependent write.
+	 * which follows.  This pairs with the full barrier in
+	 * shm_mq_send_bytes(). We only need a read barrier here because the
+	 * increment of mq_bytes_read is actually a read followed by a dependent
+	 * write.
 	 */
 	pg_read_barrier();
 

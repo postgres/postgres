@@ -47,7 +47,7 @@ typedef struct SharedTuplestoreChunk
 	int			ntuples;		/* Number of tuples in this chunk. */
 	int			overflow;		/* If overflow, how many including this one? */
 	char		data[FLEXIBLE_ARRAY_MEMBER];
-}			SharedTuplestoreChunk;
+} SharedTuplestoreChunk;
 
 /* Per-participant shared state. */
 typedef struct SharedTuplestoreParticipant
@@ -56,7 +56,7 @@ typedef struct SharedTuplestoreParticipant
 	BlockNumber read_page;		/* Page number for next read. */
 	BlockNumber npages;			/* Number of pages written. */
 	bool		writing;		/* Used only for assertions. */
-}			SharedTuplestoreParticipant;
+} SharedTuplestoreParticipant;
 
 /* The control object that lives in shared memory. */
 struct SharedTuplestore

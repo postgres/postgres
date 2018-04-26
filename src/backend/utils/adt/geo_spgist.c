@@ -686,10 +686,10 @@ spg_box_quad_leaf_consistent(PG_FUNCTION_ARGS)
 	/* Perform the required comparison(s) */
 	for (i = 0; i < in->nkeys; i++)
 	{
-		StrategyNumber	strategy = in->scankeys[i].sk_strategy;
-		BOX			   *box = spg_box_quad_get_scankey_bbox(&in->scankeys[i],
-															&out->recheck);
-		Datum			query = BoxPGetDatum(box);
+		StrategyNumber strategy = in->scankeys[i].sk_strategy;
+		BOX		   *box = spg_box_quad_get_scankey_bbox(&in->scankeys[i],
+														&out->recheck);
+		Datum		query = BoxPGetDatum(box);
 
 		switch (strategy)
 		{
@@ -790,7 +790,7 @@ spg_bbox_quad_config(PG_FUNCTION_ARGS)
 Datum
 spg_poly_quad_compress(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *polygon = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polygon = PG_GETARG_POLYGON_P(0);
 	BOX		   *box;
 
 	box = box_copy(&polygon->boundbox);

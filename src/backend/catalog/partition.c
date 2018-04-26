@@ -205,7 +205,7 @@ map_partition_varattnos(List *expr, int fromrel_varno,
 bool
 has_partition_attrs(Relation rel, Bitmapset *attnums, bool *used_in_expr)
 {
-	PartitionKey	key;
+	PartitionKey key;
 	int			partnatts;
 	List	   *partexprs;
 	ListCell   *partexprs_item;

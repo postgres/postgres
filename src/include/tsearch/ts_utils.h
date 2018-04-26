@@ -62,9 +62,9 @@ typedef void (*PushFunction) (Datum opaque, TSQueryParserState state,
 #define P_TSQ_WEB		(1 << 1)
 
 extern TSQuery parse_tsquery(char *buf,
-							 PushFunction pushval,
-							 Datum opaque,
-							 int flags);
+			  PushFunction pushval,
+			  Datum opaque,
+			  int flags);
 
 /* Functions for use by PushFunction implementations */
 extern void pushValue(TSQueryParserState state,

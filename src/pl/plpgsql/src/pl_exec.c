@@ -258,7 +258,7 @@ static int exec_stmt_assign(PLpgSQL_execstate *estate,
 static int exec_stmt_perform(PLpgSQL_execstate *estate,
 				  PLpgSQL_stmt_perform *stmt);
 static int exec_stmt_call(PLpgSQL_execstate *estate,
-				  PLpgSQL_stmt_call *stmt);
+			   PLpgSQL_stmt_call *stmt);
 static int exec_stmt_getdiag(PLpgSQL_execstate *estate,
 				  PLpgSQL_stmt_getdiag *stmt);
 static int exec_stmt_if(PLpgSQL_execstate *estate,
@@ -306,7 +306,7 @@ static int exec_stmt_commit(PLpgSQL_execstate *estate,
 static int exec_stmt_rollback(PLpgSQL_execstate *estate,
 				   PLpgSQL_stmt_rollback *stmt);
 static int exec_stmt_set(PLpgSQL_execstate *estate,
-				   PLpgSQL_stmt_set *stmt);
+			  PLpgSQL_stmt_set *stmt);
 
 static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
 					 PLpgSQL_function *func,
@@ -315,8 +315,8 @@ static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
 static void exec_eval_cleanup(PLpgSQL_execstate *estate);
 
 static void exec_prepare_plan(PLpgSQL_execstate *estate,
-							  PLpgSQL_expr *expr, int cursorOptions,
-							  bool keepplan);
+				  PLpgSQL_expr *expr, int cursorOptions,
+				  bool keepplan);
 static void exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr);
 static void exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan);
 static void exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno);
@@ -2183,9 +2183,9 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 
 			nfields = 0;
 			i = 0;
-			foreach (lc, funcexpr->args)
+			foreach(lc, funcexpr->args)
 			{
-				Node *n = lfirst(lc);
+				Node	   *n = lfirst(lc);
 
 				if (argmodes && argmodes[i] == PROARGMODE_INOUT)
 				{

@@ -262,7 +262,8 @@ static void
 k_hashes(bloom_filter *filter, uint32 *hashes, unsigned char *elem, size_t len)
 {
 	uint64		hash;
-	uint32		x, y;
+	uint32		x,
+				y;
 	uint64		m;
 	int			i;
 

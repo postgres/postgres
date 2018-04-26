@@ -785,10 +785,10 @@ _bt_parallel_advance_array_keys(IndexScanDesc scan)
 static bool
 _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 {
-	Buffer			metabuf;
-	Page			metapg;
+	Buffer		metabuf;
+	Page		metapg;
 	BTMetaPageData *metad;
-	bool			result = false;
+	bool		result = false;
 
 	metabuf = _bt_getbuf(info->index, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
@@ -814,8 +814,8 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 	}
 	else
 	{
-		StdRdOptions   *relopts;
-		float8			cleanup_scale_factor;
+		StdRdOptions *relopts;
+		float8		cleanup_scale_factor;
 
 		/*
 		 * If table receives large enough amount of insertions and no cleanup
@@ -825,14 +825,14 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 		 */
 		relopts = (StdRdOptions *) info->index->rd_options;
 		cleanup_scale_factor = (relopts &&
-			relopts->vacuum_cleanup_index_scale_factor >= 0)
-				? relopts->vacuum_cleanup_index_scale_factor
-				: vacuum_cleanup_index_scale_factor;
+								relopts->vacuum_cleanup_index_scale_factor >= 0)
+			? relopts->vacuum_cleanup_index_scale_factor
+			: vacuum_cleanup_index_scale_factor;
 
 		if (cleanup_scale_factor < 0 ||
 			metad->btm_last_cleanup_num_heap_tuples < 0 ||
 			info->num_heap_tuples > (1.0 + cleanup_scale_factor) *
-									metad->btm_last_cleanup_num_heap_tuples)
+			metad->btm_last_cleanup_num_heap_tuples)
 			result = true;
 	}
 
@@ -862,7 +862,7 @@ btbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	/* The ENSURE stuff ensures we clean up shared memory on failure */
 	PG_ENSURE_ERROR_CLEANUP(_bt_end_vacuum_callback, PointerGetDatum(rel));
 	{
-		TransactionId	oldestBtpoXact;
+		TransactionId oldestBtpoXact;
 
 		cycleid = _bt_start_vacuum(rel);
 
@@ -907,7 +907,7 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 */
 	if (stats == NULL)
 	{
-		TransactionId	oldestBtpoXact;
+		TransactionId oldestBtpoXact;
 
 		/* Check if we need a cleanup */
 		if (!_bt_vacuum_needs_cleanup(info))

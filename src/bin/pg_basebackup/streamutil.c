@@ -219,9 +219,9 @@ GetConnection(void)
 
 	/*
 	 * Set always-secure search path, so malicious users can't get control.
-	 * The capacity to run normal SQL queries was added in PostgreSQL
-	 * 10, so the search path cannot be changed (by us or attackers) on
-	 * earlier versions.
+	 * The capacity to run normal SQL queries was added in PostgreSQL 10, so
+	 * the search path cannot be changed (by us or attackers) on earlier
+	 * versions.
 	 */
 	if (dbname != NULL && PQserverVersion(tmpconn) >= 100000)
 	{

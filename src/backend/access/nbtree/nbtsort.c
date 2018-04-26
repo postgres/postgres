@@ -897,10 +897,10 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 			/*
 			 * Truncate any non-key attributes from high key on leaf level
 			 * (i.e. truncate on leaf level if we're building an INCLUDE
-			 * index).  This is only done at the leaf level because
-			 * downlinks in internal pages are either negative infinity
-			 * items, or get their contents from copying from one level
-			 * down.  See also: _bt_split().
+			 * index).  This is only done at the leaf level because downlinks
+			 * in internal pages are either negative infinity items, or get
+			 * their contents from copying from one level down.  See also:
+			 * _bt_split().
 			 *
 			 * Since the truncated tuple is probably smaller than the
 			 * original, it cannot just be copied in place (besides, we want
@@ -908,11 +908,11 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 			 * original high key, and add our own truncated high key at the
 			 * same offset.
 			 *
-			 * Note that the page layout won't be changed very much.  oitup
-			 * is already located at the physical beginning of tuple space,
-			 * so we only shift the line pointer array back and forth, and
-			 * overwrite the latter portion of the space occupied by the
-			 * original tuple.  This is fairly cheap.
+			 * Note that the page layout won't be changed very much.  oitup is
+			 * already located at the physical beginning of tuple space, so we
+			 * only shift the line pointer array back and forth, and overwrite
+			 * the latter portion of the space occupied by the original tuple.
+			 * This is fairly cheap.
 			 */
 			truncated = _bt_nonkey_truncate(wstate->index, oitup);
 			truncsz = IndexTupleSize(truncated);
@@ -978,7 +978,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	 */
 	if (last_off == P_HIKEY)
 	{
-		BTPageOpaque	npageop;
+		BTPageOpaque npageop;
 
 		Assert(state->btps_minkey == NULL);
 

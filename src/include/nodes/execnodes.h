@@ -502,8 +502,8 @@ typedef struct EState
 	int			es_num_root_result_relations;	/* length of the array */
 
 	/*
-	 * The following list contains ResultRelInfos created by the tuple
-	 * routing code for partitions that don't already have one.
+	 * The following list contains ResultRelInfos created by the tuple routing
+	 * code for partitions that don't already have one.
 	 */
 	List	   *es_tuple_routing_result_relations;
 
@@ -836,7 +836,8 @@ typedef struct SubPlanState
 	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
 	ExprContext *innerecontext; /* econtext for computing inner tuples */
 	AttrNumber *keyColIdx;		/* control data for hash tables */
-	Oid		   *tab_eq_funcoids;/* equality func oids for table datatype(s) */
+	Oid		   *tab_eq_funcoids;	/* equality func oids for table
+									 * datatype(s) */
 	FmgrInfo   *tab_hash_funcs; /* hash functions for table datatype(s) */
 	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
 	FmgrInfo   *lhs_hash_funcs; /* hash functions for lefthand datatype(s) */
@@ -1087,8 +1088,8 @@ struct AppendState
 	PlanState **appendplans;	/* array of PlanStates for my inputs */
 	int			as_nplans;
 	int			as_whichplan;
-	int			as_first_partial_plan; /* Index of 'appendplans' containing
-										* the first partial plan */
+	int			as_first_partial_plan;	/* Index of 'appendplans' containing
+										 * the first partial plan */
 	ParallelAppendState *as_pstate; /* parallel coordination info */
 	Size		pstate_len;		/* size of parallel coordination info */
 	struct PartitionPruneState *as_prune_state;
@@ -1958,8 +1959,8 @@ typedef struct WindowAggState
 
 	WindowStatePerFunc perfunc; /* per-window-function information */
 	WindowStatePerAgg peragg;	/* per-plain-aggregate information */
-	ExprState  *partEqfunction;	/* equality funcs for partition columns */
-	ExprState  *ordEqfunction; /* equality funcs for ordering columns */
+	ExprState  *partEqfunction; /* equality funcs for partition columns */
+	ExprState  *ordEqfunction;	/* equality funcs for ordering columns */
 	Tuplestorestate *buffer;	/* stores rows of current partition */
 	int			current_ptr;	/* read pointer # for current row */
 	int			framehead_ptr;	/* read pointer # for frame head, if used */
@@ -2037,7 +2038,7 @@ typedef struct WindowAggState
 typedef struct UniqueState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	ExprState   *eqfunction;		/* tuple equality qual */
+	ExprState  *eqfunction;		/* tuple equality qual */
 } UniqueState;
 
 /* ----------------

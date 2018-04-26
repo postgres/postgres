@@ -40,8 +40,8 @@ static void pgoutput_change(LogicalDecodingContext *ctx,
 				ReorderBufferTXN *txn, Relation rel,
 				ReorderBufferChange *change);
 static void pgoutput_truncate(LogicalDecodingContext *ctx,
-							  ReorderBufferTXN *txn, int nrelations, Relation relations[],
-							  ReorderBufferChange *change);
+				  ReorderBufferTXN *txn, int nrelations, Relation relations[],
+				  ReorderBufferChange *change);
 static bool pgoutput_origin_filter(LogicalDecodingContext *ctx,
 					   RepOriginId origin_id);
 

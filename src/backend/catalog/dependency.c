@@ -631,9 +631,9 @@ findDependentObjects(const ObjectAddress *object,
 				 * transform this deletion request into a delete of this
 				 * owning object.
 				 *
-				 * For INTERNAL_AUTO dependencies, we don't enforce this;
-				 * in other words, we don't follow the links back to the
-				 * owning object.
+				 * For INTERNAL_AUTO dependencies, we don't enforce this; in
+				 * other words, we don't follow the links back to the owning
+				 * object.
 				 */
 				if (foundDep->deptype == DEPENDENCY_INTERNAL_AUTO)
 					break;

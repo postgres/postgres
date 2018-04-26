@@ -1812,8 +1812,8 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 	blkno = BufferGetBlockNumber(buffer);
 
 	/*
-	 * Copy a predicate lock from entry tree leaf (containing posting list)
-	 * to  posting tree.
+	 * Copy a predicate lock from entry tree leaf (containing posting list) to
+	 * posting tree.
 	 */
 	PredicateLockPageSplit(index, BufferGetBlockNumber(entrybuffer), blkno);
 

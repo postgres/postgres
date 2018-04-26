@@ -59,6 +59,7 @@ static void fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple proc
 static CFuncHashTabEntry *lookup_C_func(HeapTuple procedureTuple);
 static void record_C_func(HeapTuple procedureTuple,
 			  PGFunction user_fn, const Pg_finfo_record *inforec);
+
 /* extern so it's callable via JIT */
 extern Datum fmgr_security_definer(PG_FUNCTION_ARGS);
 
@@ -297,7 +298,7 @@ fmgr_symbol(Oid functionId, char **mod, char **fn)
 		!heap_attisnull(procedureTuple, Anum_pg_proc_proconfig, NULL) ||
 		FmgrHookIsNeeded(functionId))
 	{
-		*mod = NULL; /* core binary */
+		*mod = NULL;			/* core binary */
 		*fn = pstrdup("fmgr_security_definer");
 		ReleaseSysCache(procedureTuple);
 		return;
@@ -312,7 +313,7 @@ fmgr_symbol(Oid functionId, char **mod, char **fn)
 			if (isnull)
 				elog(ERROR, "null prosrc");
 
-			*mod = NULL; /* core binary */
+			*mod = NULL;		/* core binary */
 			*fn = TextDatumGetCString(prosrcattr);
 			break;
 
@@ -336,13 +337,13 @@ fmgr_symbol(Oid functionId, char **mod, char **fn)
 			break;
 
 		case SQLlanguageId:
-			*mod = NULL;  /* core binary */
+			*mod = NULL;		/* core binary */
 			*fn = pstrdup("fmgr_sql");
 			break;
 
 		default:
 			*mod = NULL;
-			*fn = NULL; /* unknown, pass pointer */
+			*fn = NULL;			/* unknown, pass pointer */
 			break;
 	}
 

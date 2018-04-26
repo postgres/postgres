@@ -41,9 +41,9 @@ static void populate_joinrel_with_paths(PlannerInfo *root, RelOptInfo *rel1,
 							RelOptInfo *rel2, RelOptInfo *joinrel,
 							SpecialJoinInfo *sjinfo, List *restrictlist);
 static void try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1,
-						RelOptInfo *rel2, RelOptInfo *joinrel,
-						SpecialJoinInfo *parent_sjinfo,
-						List *parent_restrictlist);
+					   RelOptInfo *rel2, RelOptInfo *joinrel,
+					   SpecialJoinInfo *parent_sjinfo,
+					   List *parent_restrictlist);
 static int match_expr_to_partition_keys(Expr *expr, RelOptInfo *rel,
 							 bool strict_op);
 
@@ -1309,8 +1309,8 @@ restriction_is_constant_false(List *restrictlist,
  */
 static void
 try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
-						RelOptInfo *joinrel, SpecialJoinInfo *parent_sjinfo,
-						List *parent_restrictlist)
+					   RelOptInfo *joinrel, SpecialJoinInfo *parent_sjinfo,
+					   List *parent_restrictlist)
 {
 	int			nparts;
 	int			cnt_parts;
@@ -1338,8 +1338,8 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		   joinrel->part_scheme == rel2->part_scheme);
 
 	/*
-	 * Since we allow partitionwise join only when the partition bounds of
-	 * the joining relations exactly match, the partition bounds of the join
+	 * Since we allow partitionwise join only when the partition bounds of the
+	 * joining relations exactly match, the partition bounds of the join
 	 * should match those of the joining relations.
 	 */
 	Assert(partition_bounds_equal(joinrel->part_scheme->partnatts,

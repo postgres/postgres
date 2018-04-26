@@ -46,11 +46,11 @@ typedef struct LogicalDecodingContext
 	struct SnapBuild *snapshot_builder;
 
 	/*
-	 * Marks the logical decoding context as fast forward decoding one.
-	 * Such a context does not have plugin loaded so most of the the following
+	 * Marks the logical decoding context as fast forward decoding one. Such a
+	 * context does not have plugin loaded so most of the the following
 	 * properties are unused.
 	 */
-	bool fast_forward;
+	bool		fast_forward;
 
 	OutputPluginCallbacks callbacks;
 	OutputPluginOptions options;

@@ -2200,7 +2200,7 @@ ExecEvalFuncExprFusage(ExprState *state, ExprEvalStep *op,
  */
 void
 ExecEvalFuncExprStrictFusage(ExprState *state, ExprEvalStep *op,
-				  ExprContext *econtext)
+							 ExprContext *econtext)
 {
 
 	FunctionCallInfo fcinfo = op->d.func.fcinfo_data;

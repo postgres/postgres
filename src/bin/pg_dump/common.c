@@ -350,8 +350,8 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			findParentsByOid(&tblinfo[i], inhinfo, numInherits);
 
 		/*
-		 * If needed, mark the parents as interesting for getTableAttrs
-		 * and getIndexes.
+		 * If needed, mark the parents as interesting for getTableAttrs and
+		 * getIndexes.
 		 */
 		if (mark_parents)
 		{
@@ -372,9 +372,9 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 static void
 flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 {
-	int		i,
-			j,
-			k;
+	int			i,
+				j,
+				k;
 	DumpableObject ***parentIndexArray;
 
 	parentIndexArray = (DumpableObject ***)
@@ -382,7 +382,7 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 
 	for (i = 0; i < numTables; i++)
 	{
-		TableInfo	   *parenttbl;
+		TableInfo  *parenttbl;
 		IndexAttachInfo *attachinfo;
 
 		if (!tblinfo[i].ispartition || tblinfo[i].numParents == 0)
@@ -430,9 +430,9 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 
 			/*
 			 * We want dependencies from parent to partition (so that the
-			 * partition index is created first), and another one from
-			 * attach object to parent (so that the partition index is
-			 * attached once the parent index has been created).
+			 * partition index is created first), and another one from attach
+			 * object to parent (so that the partition index is attached once
+			 * the parent index has been created).
 			 */
 			addObjectDependency(&parentidx->dobj, index->dobj.dumpId);
 			addObjectDependency(&attachinfo[k].dobj, parentidx->dobj.dumpId);

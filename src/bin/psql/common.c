@@ -2047,8 +2047,8 @@ command_no_begin(const char *query)
 
 	/*
 	 * Commands not allowed within transactions.  The statements checked for
-	 * here should be exactly those that call PreventInTransactionBlock() in the
-	 * backend.
+	 * here should be exactly those that call PreventInTransactionBlock() in
+	 * the backend.
 	 */
 	if (wordlen == 6 && pg_strncasecmp(query, "vacuum", 6) == 0)
 		return true;
