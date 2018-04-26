@@ -59,8 +59,10 @@ $excludes ||= "$code_base/src/tools/pgindent/exclude_file_patterns"
 # easier to configure.  Note that the typedefs need trailing newlines.
 my @whitelist = ("bool\n");
 
-my %blacklist = map { +"$_\n" => 1 } qw( FD_SET date interval timestamp ANY
-  abs allocfunc iterator other pointer printfunc reference string type );
+my %blacklist = map { +"$_\n" => 1 } qw(
+  ANY FD_SET U abs allocfunc boolean date digit ilist interval iterator other
+  pointer printfunc reference string timestamp type wrap
+);
 
 # globals
 my @files;

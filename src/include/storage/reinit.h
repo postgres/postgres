@@ -19,8 +19,8 @@
 
 
 extern void ResetUnloggedRelations(int op);
-extern bool parse_filename_for_nontemp_relation(
-	const char *name, int *oidchars, ForkNumber *fork);
+extern bool parse_filename_for_nontemp_relation(const char *name,
+												int *oidchars, ForkNumber *fork);
 
 #define UNLOGGED_RELATION_CLEANUP		0x0001
 #define UNLOGGED_RELATION_INIT			0x0002

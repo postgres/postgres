@@ -114,8 +114,8 @@ run_ssl_passphrase_command(const char *prompt, bool is_server_start, char *buf, 
 
 	/* strip trailing newline */
 	len = strlen(buf);
-	if (buf[len - 1] == '\n')
-		buf[len-- -1] = '\0';
+	if (len > 0 && buf[len - 1] == '\n')
+		buf[--len] = '\0';
 
 error:
 	pfree(command.data);

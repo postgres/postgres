@@ -48,14 +48,14 @@ typedef struct
 
 /* Trigram bound type */
 typedef uint8 TrgmBound;
-#define TRGM_BOUND_LEFT				(0x01) /* trigram is left bound of word */
-#define TRGM_BOUND_RIGHT			(0x02) /* trigram is right bound of word */
+#define TRGM_BOUND_LEFT				0x01 /* trigram is left bound of word */
+#define TRGM_BOUND_RIGHT			0x02 /* trigram is right bound of word */
 
 /* Word similarity flags */
-#define WORD_SIMILARITY_CHECK_ONLY	(0x01) /* if set then only check existence
-											* of similar search pattern in text */
-#define WORD_SIMILARITY_STRICT		(0x02) /* force bounds of extent to match
-											* word bounds */
+#define WORD_SIMILARITY_CHECK_ONLY	0x01 /* only check existence of similar
+										  * search pattern in text */
+#define WORD_SIMILARITY_STRICT		0x02 /* force bounds of extent to match
+										  * word bounds */
 
 /*
  * Module load callback
