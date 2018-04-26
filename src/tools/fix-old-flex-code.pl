@@ -37,7 +37,7 @@ exit 0 if $1 >= 36;
 
 # Apply the desired patch.
 $ccode =~
-s|(struct yyguts_t \* yyg = \(struct yyguts_t\*\)yyscanner; /\* This var may be unused depending upon options. \*/
+  s|(struct yyguts_t \* yyg = \(struct yyguts_t\*\)yyscanner; /\* This var may be unused depending upon options. \*/
 .*?)
 	return yy_is_jam \? 0 : yy_current_state;
 |$1

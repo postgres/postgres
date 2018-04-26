@@ -82,7 +82,7 @@ while (<>)
 			&& !grep { $cur_nonterminal eq $_ } @rhs)
 		{
 			print
-"Right recursion in rule $rule_number: $cur_nonterminal := $rhs\n";
+			  "Right recursion in rule $rule_number: $cur_nonterminal := $rhs\n";
 		}
 	}
 }

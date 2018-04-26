@@ -45,35 +45,36 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_dump', '-s', '-a' ],
-qr/\Qpg_dump: options -s\/--schema-only and -a\/--data-only cannot be used together\E/,
-'pg_dump: options -s/--schema-only and -a/--data-only cannot be used together'
+	qr/\Qpg_dump: options -s\/--schema-only and -a\/--data-only cannot be used together\E/,
+	'pg_dump: options -s/--schema-only and -a/--data-only cannot be used together'
 );
 
 command_fails_like(
 	[ 'pg_restore', '-s', '-a' ],
-qr/\Qpg_restore: options -s\/--schema-only and -a\/--data-only cannot be used together\E/,
-'pg_restore: options -s/--schema-only and -a/--data-only cannot be used together'
+	qr/\Qpg_restore: options -s\/--schema-only and -a\/--data-only cannot be used together\E/,
+	'pg_restore: options -s/--schema-only and -a/--data-only cannot be used together'
 );
 
 command_fails_like(
 	[ 'pg_restore', '-d', 'xxx', '-f', 'xxx' ],
-qr/\Qpg_restore: options -d\/--dbname and -f\/--file cannot be used together\E/,
+	qr/\Qpg_restore: options -d\/--dbname and -f\/--file cannot be used together\E/,
 	'pg_restore: options -d/--dbname and -f/--file cannot be used together');
 
 command_fails_like(
 	[ 'pg_dump', '-c', '-a' ],
-qr/\Qpg_dump: options -c\/--clean and -a\/--data-only cannot be used together\E/,
+	qr/\Qpg_dump: options -c\/--clean and -a\/--data-only cannot be used together\E/,
 	'pg_dump: options -c/--clean and -a/--data-only cannot be used together');
 
 command_fails_like(
 	[ 'pg_restore', '-c', '-a' ],
-qr/\Qpg_restore: options -c\/--clean and -a\/--data-only cannot be used together\E/,
-'pg_restore: options -c/--clean and -a/--data-only cannot be used together');
+	qr/\Qpg_restore: options -c\/--clean and -a\/--data-only cannot be used together\E/,
+	'pg_restore: options -c/--clean and -a/--data-only cannot be used together'
+);
 
 command_fails_like(
 	[ 'pg_dump', '--inserts', '-o' ],
-qr/\Qpg_dump: options --inserts\/--column-inserts and -o\/--oids cannot be used together\E/,
-'pg_dump: options --inserts/--column-inserts and -o/--oids cannot be used together'
+	qr/\Qpg_dump: options --inserts\/--column-inserts and -o\/--oids cannot be used together\E/,
+	'pg_dump: options --inserts/--column-inserts and -o/--oids cannot be used together'
 );
 
 command_fails_like(
@@ -103,7 +104,7 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_restore', '--single-transaction', '-j3' ],
-qr/\Qpg_restore: cannot specify both --single-transaction and multiple jobs\E/,
+	qr/\Qpg_restore: cannot specify both --single-transaction and multiple jobs\E/,
 	'pg_restore: cannot specify both --single-transaction and multiple jobs');
 
 command_fails_like(
@@ -124,20 +125,20 @@ command_fails_like(
 # pg_dumpall command-line argument checks
 command_fails_like(
 	[ 'pg_dumpall', '-g', '-r' ],
-qr/\Qpg_dumpall: options -g\/--globals-only and -r\/--roles-only cannot be used together\E/,
-'pg_dumpall: options -g/--globals-only and -r/--roles-only cannot be used together'
+	qr/\Qpg_dumpall: options -g\/--globals-only and -r\/--roles-only cannot be used together\E/,
+	'pg_dumpall: options -g/--globals-only and -r/--roles-only cannot be used together'
 );
 
 command_fails_like(
 	[ 'pg_dumpall', '-g', '-t' ],
-qr/\Qpg_dumpall: options -g\/--globals-only and -t\/--tablespaces-only cannot be used together\E/,
-'pg_dumpall: options -g/--globals-only and -t/--tablespaces-only cannot be used together'
+	qr/\Qpg_dumpall: options -g\/--globals-only and -t\/--tablespaces-only cannot be used together\E/,
+	'pg_dumpall: options -g/--globals-only and -t/--tablespaces-only cannot be used together'
 );
 
 command_fails_like(
 	[ 'pg_dumpall', '-r', '-t' ],
-qr/\Qpg_dumpall: options -r\/--roles-only and -t\/--tablespaces-only cannot be used together\E/,
-'pg_dumpall: options -r/--roles-only and -t/--tablespaces-only cannot be used together'
+	qr/\Qpg_dumpall: options -r\/--roles-only and -t\/--tablespaces-only cannot be used together\E/,
+	'pg_dumpall: options -r/--roles-only and -t/--tablespaces-only cannot be used together'
 );
 
 command_fails_like(

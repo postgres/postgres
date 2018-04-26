@@ -543,7 +543,7 @@ sub mkvcbuild
 		else
 		{
 			die
-"could not identify perl library version matching pattern $perl_path\n";
+			  "could not identify perl library version matching pattern $perl_path\n";
 		}
 
 		# Add defines from Perl's ccflags; see PGAC_CHECK_PERL_EMBED_CCFLAGS

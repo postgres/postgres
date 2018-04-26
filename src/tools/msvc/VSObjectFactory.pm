@@ -123,14 +123,14 @@ sub DetermineVisualStudioVersion
 	my $output = `nmake /? 2>&1`;
 	$? >> 8 == 0
 	  or croak
-"Unable to determine Visual Studio version: The nmake command wasn't found.";
+	  "Unable to determine Visual Studio version: The nmake command wasn't found.";
 	if ($output =~ /(\d+)\.(\d+)\.\d+(\.\d+)?$/m)
 	{
 		return _GetVisualStudioVersion($1, $2);
 	}
 
 	croak
-"Unable to determine Visual Studio version: The nmake version could not be determined.";
+	  "Unable to determine Visual Studio version: The nmake version could not be determined.";
 }
 
 sub _GetVisualStudioVersion
@@ -141,13 +141,13 @@ sub _GetVisualStudioVersion
 	if ($major > 14)
 	{
 		carp
-"The determined version of Visual Studio is newer than the latest supported version. Returning the latest supported version instead.";
+		  "The determined version of Visual Studio is newer than the latest supported version. Returning the latest supported version instead.";
 		return '14.00';
 	}
 	elsif ($major < 6)
 	{
 		croak
-"Unable to determine Visual Studio version: Visual Studio versions before 6.0 aren't supported.";
+		  "Unable to determine Visual Studio version: Visual Studio versions before 6.0 aren't supported.";
 	}
 	return "$major.$minor";
 }

@@ -22,7 +22,7 @@ $node->safe_psql(
 	 '
 );
 my $count = $node->safe_psql('postgres',
-"select count(*) from brin_page_items(get_raw_page('brin_wi_idx', 2), 'brin_wi_idx'::regclass)"
+	"select count(*) from brin_page_items(get_raw_page('brin_wi_idx', 2), 'brin_wi_idx'::regclass)"
 );
 is($count, '1', "initial index state is correct");
 
@@ -31,11 +31,11 @@ $node->safe_psql('postgres',
 
 $node->poll_query_until(
 	'postgres',
-"select count(*) > 1 from brin_page_items(get_raw_page('brin_wi_idx', 2), 'brin_wi_idx'::regclass)",
+	"select count(*) > 1 from brin_page_items(get_raw_page('brin_wi_idx', 2), 'brin_wi_idx'::regclass)",
 	't');
 
 $count = $node->safe_psql('postgres',
-"select count(*) > 1 from brin_page_items(get_raw_page('brin_wi_idx', 2), 'brin_wi_idx'::regclass)"
+	"select count(*) > 1 from brin_page_items(get_raw_page('brin_wi_idx', 2), 'brin_wi_idx'::regclass)"
 );
 is($count, 't', "index got summarized");
 $node->stop;

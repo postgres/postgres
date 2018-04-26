@@ -361,14 +361,14 @@ sub GenerateConversionScript
 		my $obj  = shift @pieces;
 		$sql .= "-- $se --> $de\n";
 		$sql .=
-"CREATE OR REPLACE FUNCTION $func (INTEGER, INTEGER, CSTRING, INTERNAL, INTEGER) RETURNS VOID AS '\$libdir/$obj', '$func' LANGUAGE C STRICT;\n";
+		  "CREATE OR REPLACE FUNCTION $func (INTEGER, INTEGER, CSTRING, INTERNAL, INTEGER) RETURNS VOID AS '\$libdir/$obj', '$func' LANGUAGE C STRICT;\n";
 		$sql .=
-"COMMENT ON FUNCTION $func(INTEGER, INTEGER, CSTRING, INTERNAL, INTEGER) IS 'internal conversion function for $se to $de';\n";
+		  "COMMENT ON FUNCTION $func(INTEGER, INTEGER, CSTRING, INTERNAL, INTEGER) IS 'internal conversion function for $se to $de';\n";
 		$sql .= "DROP CONVERSION pg_catalog.$name;\n";
 		$sql .=
-"CREATE DEFAULT CONVERSION pg_catalog.$name FOR '$se' TO '$de' FROM $func;\n";
+		  "CREATE DEFAULT CONVERSION pg_catalog.$name FOR '$se' TO '$de' FROM $func;\n";
 		$sql .=
-"COMMENT ON CONVERSION pg_catalog.$name IS 'conversion for $se to $de';\n\n";
+		  "COMMENT ON CONVERSION pg_catalog.$name IS 'conversion for $se to $de';\n\n";
 	}
 	open($F, '>', "$target/share/conversion_create.sql")
 	  || die "Could not write to conversion_create.sql\n";
@@ -554,7 +554,7 @@ sub CopySubdirFiles
 
 		# Special case for contrib/spi
 		$flist =
-"autoinc.example insert_username.example moddatetime.example refint.example timetravel.example"
+		  "autoinc.example insert_username.example moddatetime.example refint.example timetravel.example"
 		  if ($module eq 'spi');
 		foreach my $f (split /\s+/, $flist)
 		{
@@ -713,7 +713,7 @@ sub GenerateNLSFiles
 			my @args = (
 				"$nlspath\\bin\\msgfmt",
 				'-o',
-"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo",
+				"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo",
 				$_);
 			system(@args) && croak("Could not run msgfmt on $dir\\$_");
 			print ".";

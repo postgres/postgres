@@ -19,14 +19,14 @@ $node_subscriber->start;
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_fk (bid int PRIMARY KEY);");
 $node_publisher->safe_psql('postgres',
-"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));"
+	"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));"
 );
 
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_fk (bid int PRIMARY KEY);");
 $node_subscriber->safe_psql('postgres',
-"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));"
+	"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));"
 );
 
 # Setup logical replication
@@ -36,7 +36,7 @@ $node_publisher->safe_psql('postgres',
 
 my $appname = 'tap_sub';
 $node_subscriber->safe_psql('postgres',
-"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (copy_data = false)"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (copy_data = false)"
 );
 
 $node_publisher->wait_for_catchup($appname);

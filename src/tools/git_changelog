@@ -343,7 +343,7 @@ sub parse_datetime
 {
 	my ($dt) = @_;
 	$dt =~
-/^(\d\d\d\d)-(\d\d)-(\d\d)\s+(\d\d):(\d\d):(\d\d)\s+([-+])(\d\d)(\d\d)$/;
+	  /^(\d\d\d\d)-(\d\d)-(\d\d)\s+(\d\d):(\d\d):(\d\d)\s+([-+])(\d\d)(\d\d)$/;
 	my $gm = Time::Local::timegm($6, $5, $4, $3, $2 - 1, $1);
 	my $tzoffset = ($8 * 60 + $9) * 60;
 	$tzoffset = -$tzoffset if $7 eq '-';

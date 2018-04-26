@@ -420,13 +420,15 @@ rmtree("$tempdir/backupxs_slot");
 
 is( $node->safe_psql(
 		'postgres',
-q{SELECT slot_name FROM pg_replication_slots WHERE slot_name = 'slot0'}),
+		q{SELECT slot_name FROM pg_replication_slots WHERE slot_name = 'slot0'}
+	),
 	'slot0',
 	'replication slot was created');
 isnt(
 	$node->safe_psql(
 		'postgres',
-q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot0'}),
+		q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot0'}
+	),
 	'',
 	'restart LSN of new slot is not null');
 
@@ -468,10 +470,10 @@ rmtree("$tempdir/backupxs_sl_R");
 
 # create tables to corrupt and get their relfilenodes
 my $file_corrupt1 = $node->safe_psql('postgres',
-q{SELECT a INTO corrupt1 FROM generate_series(1,10000) AS a; ALTER TABLE corrupt1 SET (autovacuum_enabled=false); SELECT pg_relation_filepath('corrupt1')}
+	q{SELECT a INTO corrupt1 FROM generate_series(1,10000) AS a; ALTER TABLE corrupt1 SET (autovacuum_enabled=false); SELECT pg_relation_filepath('corrupt1')}
 );
 my $file_corrupt2 = $node->safe_psql('postgres',
-q{SELECT b INTO corrupt2 FROM generate_series(1,2) AS b; ALTER TABLE corrupt2 SET (autovacuum_enabled=false); SELECT pg_relation_filepath('corrupt2')}
+	q{SELECT b INTO corrupt2 FROM generate_series(1,2) AS b; ALTER TABLE corrupt2 SET (autovacuum_enabled=false); SELECT pg_relation_filepath('corrupt2')}
 );
 
 # set page header and block sizes

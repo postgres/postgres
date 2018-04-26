@@ -22,7 +22,7 @@ $node->command_fails([ 'clusterdb', '-t', 'nonexistent' ],
 	'fails with nonexistent table');
 
 $node->safe_psql('postgres',
-'CREATE TABLE test1 (a int); CREATE INDEX test1x ON test1 (a); CLUSTER test1 USING test1x'
+	'CREATE TABLE test1 (a int); CREATE INDEX test1x ON test1 (a); CLUSTER test1 USING test1x'
 );
 $node->issues_sql_like(
 	[ 'clusterdb', '-t', 'test1' ],

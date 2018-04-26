@@ -119,7 +119,7 @@ foreach my $file (@hfiles, @cfiles)
 			$top_builddir = $top_builddir . "/..";
 		}
 		$MAKECMD =
-"$MAKE -qp 'subdir=$subdir' 'top_builddir=$top_builddir' -f '$top_builddir/src/Makefile.global'";
+		  "$MAKE -qp 'subdir=$subdir' 'top_builddir=$top_builddir' -f '$top_builddir/src/Makefile.global'";
 	}
 
 	my ($CPPFLAGS, $CFLAGS, $CFLAGS_SL, $PTHREAD_CFLAGS, $CC);

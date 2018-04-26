@@ -91,10 +91,10 @@ sub configure_test_server_for_ssl
 	if (defined($password))
 	{
 		$node->psql('postgres',
-"SET password_encryption='$password_enc'; ALTER USER ssltestuser PASSWORD '$password';"
+			"SET password_encryption='$password_enc'; ALTER USER ssltestuser PASSWORD '$password';"
 		);
 		$node->psql('postgres',
-"SET password_encryption='$password_enc'; ALTER USER anotheruser PASSWORD '$password';"
+			"SET password_encryption='$password_enc'; ALTER USER anotheruser PASSWORD '$password';"
 		);
 	}
 
@@ -161,14 +161,14 @@ sub configure_hba_for_ssl
   # When connecting to certdb, also check the client certificate.
 	open my $hba, '>', "$pgdata/pg_hba.conf";
 	print $hba
-"# TYPE  DATABASE        USER            ADDRESS                 METHOD\n";
+	  "# TYPE  DATABASE        USER            ADDRESS                 METHOD\n";
 	print $hba
-"hostssl trustdb         all             $serverhost/32            $authmethod\n";
+	  "hostssl trustdb         all             $serverhost/32            $authmethod\n";
 	print $hba
-"hostssl trustdb         all             ::1/128                 $authmethod\n";
+	  "hostssl trustdb         all             ::1/128                 $authmethod\n";
 	print $hba
-"hostssl certdb          all             $serverhost/32            cert\n";
+	  "hostssl certdb          all             $serverhost/32            cert\n";
 	print $hba
-"hostssl certdb          all             ::1/128                 cert\n";
+	  "hostssl certdb          all             ::1/128                 cert\n";
 	close $hba;
 }

@@ -40,7 +40,7 @@ $standby->restart;
 
 my ($psql_ret, $standby_ts_stdout, $standby_ts_stderr) = $standby->psql(
 	'postgres',
-qq{SELECT ts.* FROM pg_class, pg_xact_commit_timestamp(xmin) AS ts WHERE relname = 't10'}
+	qq{SELECT ts.* FROM pg_class, pg_xact_commit_timestamp(xmin) AS ts WHERE relname = 't10'}
 );
 is($psql_ret, 3, 'expect error when getting commit timestamp after restart');
 is($standby_ts_stdout, '', "standby does not return a value after restart");
@@ -58,7 +58,7 @@ system_or_bail('pg_ctl', '-D', $standby->data_dir, 'promote');
 
 $standby->safe_psql('postgres', "create table t11()");
 my $standby_ts = $standby->safe_psql('postgres',
-qq{SELECT ts.* FROM pg_class, pg_xact_commit_timestamp(xmin) AS ts WHERE relname = 't11'}
+	qq{SELECT ts.* FROM pg_class, pg_xact_commit_timestamp(xmin) AS ts WHERE relname = 't11'}
 );
 isnt($standby_ts, '',
 	"standby gives valid value ($standby_ts) after promotion");

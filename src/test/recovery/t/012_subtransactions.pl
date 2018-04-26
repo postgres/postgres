@@ -177,7 +177,7 @@ recovery_target_timeline='latest'
 $node_standby->start;
 $psql_rc = $node_master->psql('postgres', "COMMIT PREPARED 'xact_012_1'");
 is($psql_rc, '0',
-"Restore of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted standby"
+	"Restore of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted standby"
 );
 
 $node_master->psql(
@@ -218,7 +218,7 @@ recovery_target_timeline='latest'
 $node_standby->start;
 $psql_rc = $node_master->psql('postgres', "ROLLBACK PREPARED 'xact_012_1'");
 is($psql_rc, '0',
-"Rollback of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted standby"
+	"Rollback of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted standby"
 );
 
 $node_master->psql(

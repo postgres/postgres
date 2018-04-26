@@ -114,8 +114,7 @@ my @options = (
 		[ qr{unrecognized initialization step}, qr{allowed steps are} ] ],
 	[   'bad random seed',
 		'--random-seed=one',
-		[
-qr{unrecognized random seed option "one": expecting an unsigned integer, "time" or "rand"},
+		[   qr{unrecognized random seed option "one": expecting an unsigned integer, "time" or "rand"},
 			qr{error while setting random seed from --random-seed option} ] ],
 
 	# loging sub-options

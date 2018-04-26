@@ -190,7 +190,7 @@ my %tests = (
 	'ALTER EXTENSION test_pg_dump' => {
 		create_order => 9,
 		create_sql =>
-'ALTER EXTENSION test_pg_dump ADD TABLE regress_pg_dump_table_added;',
+		  'ALTER EXTENSION test_pg_dump ADD TABLE regress_pg_dump_table_added;',
 		regexp => qr/^
 			\QCREATE TABLE public.regress_pg_dump_table_added (\E
 			\n\s+\Qcol1 integer NOT NULL,\E
@@ -231,7 +231,7 @@ my %tests = (
 	'CREATE TABLE regress_pg_dump_table_added' => {
 		create_order => 7,
 		create_sql =>
-'CREATE TABLE regress_pg_dump_table_added (col1 int not null, col2 int);',
+		  'CREATE TABLE regress_pg_dump_table_added (col1 int not null, col2 int);',
 		regexp => qr/^
 			\QCREATE TABLE public.regress_pg_dump_table_added (\E
 			\n\s+\Qcol1 integer NOT NULL,\E
@@ -288,7 +288,7 @@ my %tests = (
 	'GRANT SELECT regress_pg_dump_table_added pre-ALTER EXTENSION' => {
 		create_order => 8,
 		create_sql =>
-'GRANT SELECT ON regress_pg_dump_table_added TO regress_dump_test_role;',
+		  'GRANT SELECT ON regress_pg_dump_table_added TO regress_dump_test_role;',
 		regexp => qr/^
 			\QGRANT SELECT ON TABLE public.regress_pg_dump_table_added TO regress_dump_test_role;\E
 			\n/xm,
@@ -297,7 +297,7 @@ my %tests = (
 	'REVOKE SELECT regress_pg_dump_table_added post-ALTER EXTENSION' => {
 		create_order => 10,
 		create_sql =>
-'REVOKE SELECT ON regress_pg_dump_table_added FROM regress_dump_test_role;',
+		  'REVOKE SELECT ON regress_pg_dump_table_added FROM regress_dump_test_role;',
 		regexp => qr/^
 			\QREVOKE SELECT ON TABLE public.regress_pg_dump_table_added FROM regress_dump_test_role;\E
 			\n/xm,

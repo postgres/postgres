@@ -7,7 +7,7 @@ use Test::More tests => 11;
 
 # Query checking sync_priority and sync_state of each standby
 my $check_sql =
-"SELECT application_name, sync_priority, sync_state FROM pg_stat_replication ORDER BY application_name;";
+  "SELECT application_name, sync_priority, sync_state FROM pg_stat_replication ORDER BY application_name;";
 
 # Check that sync_state of each standby is expected (waiting till it is).
 # If $setting is given, synchronous_standby_names is set to it and

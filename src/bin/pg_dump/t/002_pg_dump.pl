@@ -533,7 +533,7 @@ my %tests = (
 	'ALTER TABLE ONLY test_table ALTER COLUMN col1 SET STATISTICS 90' => {
 		create_order => 93,
 		create_sql =>
-'ALTER TABLE dump_test.test_table ALTER COLUMN col1 SET STATISTICS 90;',
+		  'ALTER TABLE dump_test.test_table ALTER COLUMN col1 SET STATISTICS 90;',
 		regexp => qr/^
 			\QALTER TABLE ONLY dump_test.test_table ALTER COLUMN col1 SET STATISTICS 90;\E\n
 			/xm,
@@ -549,7 +549,7 @@ my %tests = (
 	'ALTER TABLE ONLY test_table ALTER COLUMN col2 SET STORAGE' => {
 		create_order => 94,
 		create_sql =>
-'ALTER TABLE dump_test.test_table ALTER COLUMN col2 SET STORAGE EXTERNAL;',
+		  'ALTER TABLE dump_test.test_table ALTER COLUMN col2 SET STORAGE EXTERNAL;',
 		regexp => qr/^
 			\QALTER TABLE ONLY dump_test.test_table ALTER COLUMN col2 SET STORAGE EXTERNAL;\E\n
 			/xm,
@@ -565,7 +565,7 @@ my %tests = (
 	'ALTER TABLE ONLY test_table ALTER COLUMN col3 SET STORAGE' => {
 		create_order => 95,
 		create_sql =>
-'ALTER TABLE dump_test.test_table ALTER COLUMN col3 SET STORAGE MAIN;',
+		  'ALTER TABLE dump_test.test_table ALTER COLUMN col3 SET STORAGE MAIN;',
 		regexp => qr/^
 			\QALTER TABLE ONLY dump_test.test_table ALTER COLUMN col3 SET STORAGE MAIN;\E\n
 			/xm,
@@ -581,7 +581,7 @@ my %tests = (
 	'ALTER TABLE ONLY test_table ALTER COLUMN col4 SET n_distinct' => {
 		create_order => 95,
 		create_sql =>
-'ALTER TABLE dump_test.test_table ALTER COLUMN col4 SET (n_distinct = 10);',
+		  'ALTER TABLE dump_test.test_table ALTER COLUMN col4 SET (n_distinct = 10);',
 		regexp => qr/^
 			\QALTER TABLE ONLY dump_test.test_table ALTER COLUMN col4 SET (n_distinct=10);\E\n
 			/xm,
@@ -594,7 +594,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table       => 1, }, },
 
-'ALTER TABLE ONLY dump_test.measurement ATTACH PARTITION measurement_y2006m2'
+	'ALTER TABLE ONLY dump_test.measurement ATTACH PARTITION measurement_y2006m2'
 	  => {
 		regexp => qr/^
 			\QALTER TABLE ONLY dump_test.measurement ATTACH PARTITION dump_test_second_schema.measurement_y2006m2 \E
@@ -674,7 +674,7 @@ my %tests = (
 
 	'ALTER TABLE test_third_table OWNER TO' => {
 		regexp =>
-qr/^ALTER TABLE dump_test_second_schema.test_third_table OWNER TO .*;/m,
+		  qr/^ALTER TABLE dump_test_second_schema.test_third_table OWNER TO .*;/m,
 		like => {
 			%full_runs,
 			role             => 1,
@@ -691,7 +691,7 @@ qr/^ALTER TABLE dump_test_second_schema.test_third_table OWNER TO .*;/m,
 
 	'ALTER TABLE measurement_y2006m2 OWNER TO' => {
 		regexp =>
-qr/^ALTER TABLE dump_test_second_schema.measurement_y2006m2 OWNER TO .*;/m,
+		  qr/^ALTER TABLE dump_test_second_schema.measurement_y2006m2 OWNER TO .*;/m,
 		like => {
 			%full_runs,
 			role             => 1,
@@ -709,7 +709,7 @@ qr/^ALTER TABLE dump_test_second_schema.measurement_y2006m2 OWNER TO .*;/m,
 
 	'ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 OWNER TO' => {
 		regexp =>
-qr/^ALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 OWNER TO .*;/m,
+		  qr/^ALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 OWNER TO .*;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -718,7 +718,7 @@ qr/^ALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 OWNER TO .*;/m,
 
 	'ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 OWNER TO' => {
 		regexp =>
-qr/^ALTER TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 OWNER TO .*;/m,
+		  qr/^ALTER TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 OWNER TO .*;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -730,7 +730,7 @@ qr/^ALTER TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 OWNER TO .*;/m,
 	'BLOB create (using lo_from_bytea)' => {
 		create_order => 50,
 		create_sql =>
-'SELECT pg_catalog.lo_from_bytea(0, \'\\x310a320a330a340a350a360a370a380a390a\');',
+		  'SELECT pg_catalog.lo_from_bytea(0, \'\\x310a320a330a340a350a360a370a380a390a\');',
 		regexp => qr/^SELECT pg_catalog\.lo_create\('\d+'\);/m,
 		like   => {
 			%full_runs,
@@ -841,7 +841,7 @@ qr/^ALTER TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 OWNER TO .*;/m,
 		create_sql   => 'COMMENT ON CONVERSION dump_test.test_conversion
 					   IS \'comment on test conversion\';',
 		regexp =>
-qr/^COMMENT ON CONVERSION dump_test.test_conversion IS 'comment on test conversion';/m,
+		  qr/^COMMENT ON CONVERSION dump_test.test_conversion IS 'comment on test conversion';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, }, },
@@ -851,7 +851,7 @@ qr/^COMMENT ON CONVERSION dump_test.test_conversion IS 'comment on test conversi
 		create_sql   => 'COMMENT ON COLLATION test0
 					   IS \'comment on test0 collation\';',
 		regexp =>
-qr/^COMMENT ON COLLATION public.test0 IS 'comment on test0 collation';/m,
+		  qr/^COMMENT ON COLLATION public.test0 IS 'comment on test0 collation';/m,
 		collation => 1,
 		like      => { %full_runs, section_pre_data => 1, }, },
 
@@ -899,7 +899,7 @@ qr/^COMMENT ON COLLATION public.test0 IS 'comment on test0 collation';/m,
 		  'COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1
 					   IS \'comment on text search configuration\';',
 		regexp =>
-qr/^COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 IS 'comment on text search configuration';/m,
+		  qr/^COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 IS 'comment on text search configuration';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, }, },
@@ -910,7 +910,7 @@ qr/^COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 IS 'comment on t
 		  'COMMENT ON TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1
 					   IS \'comment on text search dictionary\';',
 		regexp =>
-qr/^COMMENT ON TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 IS 'comment on text search dictionary';/m,
+		  qr/^COMMENT ON TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 IS 'comment on text search dictionary';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, }, },
@@ -920,7 +920,7 @@ qr/^COMMENT ON TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 IS 'comment on text
 		create_sql   => 'COMMENT ON TEXT SEARCH PARSER dump_test.alt_ts_prs1
 					   IS \'comment on text search parser\';',
 		regexp =>
-qr/^COMMENT ON TEXT SEARCH PARSER dump_test.alt_ts_prs1 IS 'comment on text search parser';/m,
+		  qr/^COMMENT ON TEXT SEARCH PARSER dump_test.alt_ts_prs1 IS 'comment on text search parser';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, }, },
@@ -930,7 +930,7 @@ qr/^COMMENT ON TEXT SEARCH PARSER dump_test.alt_ts_prs1 IS 'comment on text sear
 		create_sql => 'COMMENT ON TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1
 					   IS \'comment on text search template\';',
 		regexp =>
-qr/^COMMENT ON TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 IS 'comment on text search template';/m,
+		  qr/^COMMENT ON TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 IS 'comment on text search template';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, }, },
@@ -950,7 +950,7 @@ qr/^COMMENT ON TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 IS 'comment on text s
 		create_sql   => 'COMMENT ON TYPE dump_test.textrange
 					   IS \'comment on range type\';',
 		regexp =>
-qr/^COMMENT ON TYPE dump_test.textrange IS 'comment on range type';/m,
+		  qr/^COMMENT ON TYPE dump_test.textrange IS 'comment on range type';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, }, },
@@ -970,7 +970,7 @@ qr/^COMMENT ON TYPE dump_test.textrange IS 'comment on range type';/m,
 		create_sql   => 'COMMENT ON TYPE dump_test.undefined
 					   IS \'comment on undefined type\';',
 		regexp =>
-qr/^COMMENT ON TYPE dump_test.undefined IS 'comment on undefined type';/m,
+		  qr/^COMMENT ON TYPE dump_test.undefined IS 'comment on undefined type';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, }, },
@@ -1095,7 +1095,7 @@ qr/^COMMENT ON TYPE dump_test.undefined IS 'comment on undefined type';/m,
 	'COPY test_fifth_table' => {
 		create_order => 54,
 		create_sql =>
-'INSERT INTO dump_test.test_fifth_table VALUES (NULL, true, false, \'11001\'::bit(5), \'NaN\');',
+		  'INSERT INTO dump_test.test_fifth_table VALUES (NULL, true, false, \'11001\'::bit(5), \'NaN\');',
 		regexp => qr/^
 			\QCOPY dump_test.test_fifth_table (col1, col2, col3, col4, col5) FROM stdin;\E
 			\n\\N\tt\tf\t11001\tNaN\n\\\.\n
@@ -1113,7 +1113,7 @@ qr/^COMMENT ON TYPE dump_test.undefined IS 'comment on undefined type';/m,
 	'COPY test_table_identity' => {
 		create_order => 54,
 		create_sql =>
-'INSERT INTO dump_test.test_table_identity (col2) VALUES (\'test\');',
+		  'INSERT INTO dump_test.test_table_identity (col2) VALUES (\'test\');',
 		regexp => qr/^
 			\QCOPY dump_test.test_table_identity (col1, col2) FROM stdin;\E
 			\n1\ttest\n\\\.\n
@@ -1153,12 +1153,12 @@ qr/^COMMENT ON TYPE dump_test.undefined IS 'comment on undefined type';/m,
 
 	'INSERT INTO test_fifth_table' => {
 		regexp =>
-qr/^\QINSERT INTO dump_test.test_fifth_table (col1, col2, col3, col4, col5) VALUES (NULL, true, false, B'11001', 'NaN');\E/m,
+		  qr/^\QINSERT INTO dump_test.test_fifth_table (col1, col2, col3, col4, col5) VALUES (NULL, true, false, B'11001', 'NaN');\E/m,
 		like => { column_inserts => 1, }, },
 
 	'INSERT INTO test_table_identity' => {
 		regexp =>
-qr/^\QINSERT INTO dump_test.test_table_identity (col1, col2) OVERRIDING SYSTEM VALUE VALUES (1, 'test');\E/m,
+		  qr/^\QINSERT INTO dump_test.test_table_identity (col1, col2) OVERRIDING SYSTEM VALUE VALUES (1, 'test');\E/m,
 		like => { column_inserts => 1, }, },
 
 	'CREATE ROLE regress_dump_test_role' => {
@@ -1189,9 +1189,9 @@ qr/^\QINSERT INTO dump_test.test_table_identity (col1, col2) OVERRIDING SYSTEM V
 	'CREATE CAST FOR timestamptz' => {
 		create_order => 51,
 		create_sql =>
-'CREATE CAST (timestamptz AS interval) WITH FUNCTION age(timestamptz) AS ASSIGNMENT;',
+		  'CREATE CAST (timestamptz AS interval) WITH FUNCTION age(timestamptz) AS ASSIGNMENT;',
 		regexp =>
-qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog\.age\(timestamp with time zone\) AS ASSIGNMENT;/m,
+		  qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog\.age\(timestamp with time zone\) AS ASSIGNMENT;/m,
 		like => { %full_runs, section_pre_data => 1, }, },
 
 	'CREATE DATABASE postgres' => {
@@ -1244,9 +1244,9 @@ qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog
 	'CREATE CONVERSION dump_test.test_conversion' => {
 		create_order => 78,
 		create_sql =>
-'CREATE DEFAULT CONVERSION dump_test.test_conversion FOR \'LATIN1\' TO \'UTF8\' FROM iso8859_1_to_utf8;',
+		  'CREATE DEFAULT CONVERSION dump_test.test_conversion FOR \'LATIN1\' TO \'UTF8\' FROM iso8859_1_to_utf8;',
 		regexp =>
-qr/^\QCREATE DEFAULT CONVERSION dump_test.test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;\E/xm,
+		  qr/^\QCREATE DEFAULT CONVERSION dump_test.test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;\E/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, }, },
@@ -1437,7 +1437,7 @@ qr/^\QCREATE DEFAULT CONVERSION dump_test.test_conversion FOR 'LATIN1' TO 'UTF8'
 	'CREATE TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1' => {
 		create_order => 80,
 		create_sql =>
-'CREATE TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 (copy=english);',
+		  'CREATE TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 (copy=english);',
 		regexp => qr/^
 			\QCREATE TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 (\E\n
 			\s+\QPARSER = pg_catalog."default" );\E/xm,
@@ -1512,7 +1512,7 @@ qr/^\QCREATE DEFAULT CONVERSION dump_test.test_conversion FOR 'LATIN1' TO 'UTF8'
 	'CREATE TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1' => {
 		create_order => 81,
 		create_sql =>
-'CREATE TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 (lexize=dsimple_lexize);',
+		  'CREATE TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 (lexize=dsimple_lexize);',
 		regexp => qr/^
 			\QCREATE TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 (\E\n
 			\s+\QLEXIZE = dsimple_lexize );\E/xm,
@@ -1538,7 +1538,7 @@ qr/^\QCREATE DEFAULT CONVERSION dump_test.test_conversion FOR 'LATIN1' TO 'UTF8'
 	'CREATE TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1' => {
 		create_order => 83,
 		create_sql =>
-'CREATE TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 (template=simple);',
+		  'CREATE TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 (template=simple);',
 		regexp => qr/^
 			\QCREATE TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 (\E\n
 			\s+\QTEMPLATE = pg_catalog.simple );\E\n
@@ -1650,7 +1650,7 @@ qr/^\QCREATE DEFAULT CONVERSION dump_test.test_conversion FOR 'LATIN1' TO 'UTF8'
 	'CREATE FOREIGN TABLE dump_test.foreign_table SERVER s1' => {
 		create_order => 88,
 		create_sql =>
-'CREATE FOREIGN TABLE dump_test.foreign_table (c1 int options (column_name \'col1\'))
+		  'CREATE FOREIGN TABLE dump_test.foreign_table (c1 int options (column_name \'col1\'))
 						SERVER s1 OPTIONS (schema_name \'x1\');',
 		regexp => qr/
 			\QCREATE FOREIGN TABLE dump_test.foreign_table (\E\n
@@ -1676,9 +1676,9 @@ qr/^\QCREATE DEFAULT CONVERSION dump_test.test_conversion FOR 'LATIN1' TO 'UTF8'
 	'CREATE TRANSFORM FOR int' => {
 		create_order => 34,
 		create_sql =>
-'CREATE TRANSFORM FOR int LANGUAGE SQL (FROM SQL WITH FUNCTION varchar_transform(internal), TO SQL WITH FUNCTION int4recv(internal));',
+		  'CREATE TRANSFORM FOR int LANGUAGE SQL (FROM SQL WITH FUNCTION varchar_transform(internal), TO SQL WITH FUNCTION int4recv(internal));',
 		regexp =>
-qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog\.varchar_transform\(internal\), TO SQL WITH FUNCTION pg_catalog\.int4recv\(internal\)\);/m,
+		  qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog\.varchar_transform\(internal\), TO SQL WITH FUNCTION pg_catalog\.int4recv\(internal\)\);/m,
 		like => { %full_runs, section_pre_data => 1, }, },
 
 	'CREATE LANGUAGE pltestlang' => {
@@ -2215,7 +2215,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		catch_all    => 'CREATE ... commands',
 		create_order => 93,
 		create_sql =>
-'ALTER TABLE dump_test.measurement ADD PRIMARY KEY (city_id, logdate);',
+		  'ALTER TABLE dump_test.measurement ADD PRIMARY KEY (city_id, logdate);',
 		regexp => qr/^
 			\QALTER TABLE ONLY dump_test.measurement\E \n^\s+
 			\QADD CONSTRAINT measurement_pkey PRIMARY KEY (city_id, logdate);\E
@@ -2443,7 +2443,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 	'GRANT USAGE ON DOMAIN dump_test.us_postal_code' => {
 		create_order => 72,
 		create_sql =>
-'GRANT USAGE ON DOMAIN dump_test.us_postal_code TO regress_dump_test_role;',
+		  'GRANT USAGE ON DOMAIN dump_test.us_postal_code TO regress_dump_test_role;',
 		regexp => qr/^
 			\QGRANT ALL ON TYPE dump_test.us_postal_code TO regress_dump_test_role;\E
 			/xm,
@@ -2482,7 +2482,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 	'GRANT USAGE ON TYPE dump_test.textrange - RANGE' => {
 		create_order => 67,
 		create_sql =>
-'GRANT USAGE ON TYPE dump_test.textrange TO regress_dump_test_role;',
+		  'GRANT USAGE ON TYPE dump_test.textrange TO regress_dump_test_role;',
 		regexp => qr/^
 			\QGRANT ALL ON TYPE dump_test.textrange TO regress_dump_test_role;\E
 			/xm,
@@ -2506,7 +2506,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 		create_sql   => 'GRANT SELECT ON TABLE dump_test.test_table
 						   TO regress_dump_test_role;',
 		regexp =>
-qr/^GRANT SELECT ON TABLE dump_test.test_table TO regress_dump_test_role;/m,
+		  qr/^GRANT SELECT ON TABLE dump_test.test_table TO regress_dump_test_role;/m,
 		like => {
 			%full_runs,
 			%dump_test_schema_runs,
@@ -2523,7 +2523,7 @@ qr/^GRANT SELECT ON TABLE dump_test.test_table TO regress_dump_test_role;/m,
 						   TABLE dump_test_second_schema.test_third_table
 						   TO regress_dump_test_role;',
 		regexp =>
-qr/^GRANT SELECT ON TABLE dump_test_second_schema.test_third_table TO regress_dump_test_role;/m,
+		  qr/^GRANT SELECT ON TABLE dump_test_second_schema.test_third_table TO regress_dump_test_role;/m,
 		like => {
 			%full_runs,
 			role             => 1,
@@ -2550,7 +2550,7 @@ qr/^GRANT SELECT ON TABLE dump_test_second_schema.test_third_table TO regress_du
 						   TABLE dump_test.measurement
 						   TO regress_dump_test_role;',
 		regexp =>
-qr/^GRANT SELECT ON TABLE dump_test.measurement TO regress_dump_test_role;/m,
+		  qr/^GRANT SELECT ON TABLE dump_test.measurement TO regress_dump_test_role;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -2563,7 +2563,7 @@ qr/^GRANT SELECT ON TABLE dump_test.measurement TO regress_dump_test_role;/m,
 						   TABLE dump_test_second_schema.measurement_y2006m2
 						   TO regress_dump_test_role;',
 		regexp =>
-qr/^GRANT SELECT ON TABLE dump_test_second_schema.measurement_y2006m2 TO regress_dump_test_role;/m,
+		  qr/^GRANT SELECT ON TABLE dump_test_second_schema.measurement_y2006m2 TO regress_dump_test_role;/m,
 		like => {
 			%full_runs,
 			role             => 1,
@@ -2937,8 +2937,8 @@ foreach my $db (sort keys %create_sql)
 
 command_fails_like(
 	[ 'pg_dump', '-p', "$port", 'qqq' ],
-qr/\Qpg_dump: [archiver (db)] connection to database "qqq" failed: FATAL:  database "qqq" does not exist\E/,
-'pg_dump: [archiver (db)] connection to database "qqq" failed: FATAL:  database "qqq" does not exist'
+	qr/\Qpg_dump: [archiver (db)] connection to database "qqq" failed: FATAL:  database "qqq" does not exist\E/,
+	'pg_dump: [archiver (db)] connection to database "qqq" failed: FATAL:  database "qqq" does not exist'
 );
 
 #########################################
@@ -2946,7 +2946,7 @@ qr/\Qpg_dump: [archiver (db)] connection to database "qqq" failed: FATAL:  datab
 
 command_fails_like(
 	[ 'pg_dump', '-p', "$port", '--role=regress_dump_test_role' ],
-qr/\Qpg_dump: [archiver (db)] query failed: ERROR:  permission denied for\E/,
+	qr/\Qpg_dump: [archiver (db)] query failed: ERROR:  permission denied for\E/,
 	'pg_dump: [archiver (db)] query failed: ERROR:  permission denied for');
 
 #########################################

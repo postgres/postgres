@@ -88,7 +88,7 @@ note "running client tests";
 switch_server_cert($node, 'server-cn-only');
 
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
+  "user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
 
 # The server should not accept non-SSL connections.
 test_connect_fails(
@@ -167,20 +167,20 @@ test_connect_ok(
 # A CRL belonging to a different CA is not accepted, fails
 test_connect_fails(
 	$common_connstr,
-"sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/client.crl",
+	"sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/client.crl",
 	qr/SSL error/,
 	"CRL belonging to a different CA");
 
 # With the correct CRL, succeeds (this cert is not revoked)
 test_connect_ok(
 	$common_connstr,
-"sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/root+server.crl",
+	"sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/root+server.crl",
 	"CRL with a non-revoked cert");
 
 # Check that connecting with verify-full fails, when the hostname doesn't
 # match the hostname in the server's certificate.
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
+  "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
 
 test_connect_ok(
 	$common_connstr,
@@ -193,14 +193,14 @@ test_connect_ok(
 test_connect_fails(
 	$common_connstr,
 	"sslmode=verify-full host=wronghost.test",
-qr/\Qserver certificate for "common-name.pg-ssltest.test" does not match host name "wronghost.test"\E/,
+	qr/\Qserver certificate for "common-name.pg-ssltest.test" does not match host name "wronghost.test"\E/,
 	"mismatch between host name and server certificate sslmode=verify-full");
 
 # Test Subject Alternative Names.
 switch_server_cert($node, 'server-multiple-alt-names');
 
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+  "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
 test_connect_ok(
 	$common_connstr,
@@ -218,12 +218,12 @@ test_connect_ok(
 test_connect_fails(
 	$common_connstr,
 	"host=wronghost.alt-name.pg-ssltest.test",
-qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 2 other names) does not match host name "wronghost.alt-name.pg-ssltest.test"\E/,
+	qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 2 other names) does not match host name "wronghost.alt-name.pg-ssltest.test"\E/,
 	"host name not matching with X.509 Subject Alternative Names");
 test_connect_fails(
 	$common_connstr,
 	"host=deep.subdomain.wildcard.pg-ssltest.test",
-qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 2 other names) does not match host name "deep.subdomain.wildcard.pg-ssltest.test"\E/,
+	qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 2 other names) does not match host name "deep.subdomain.wildcard.pg-ssltest.test"\E/,
 	"host name not matching with X.509 Subject Alternative Names wildcard");
 
 # Test certificate with a single Subject Alternative Name. (this gives a
@@ -231,7 +231,7 @@ qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 2 other names) 
 switch_server_cert($node, 'server-single-alt-name');
 
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+  "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
 test_connect_ok(
 	$common_connstr,
@@ -241,13 +241,13 @@ test_connect_ok(
 test_connect_fails(
 	$common_connstr,
 	"host=wronghost.alt-name.pg-ssltest.test",
-qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match host name "wronghost.alt-name.pg-ssltest.test"\E/,
+	qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match host name "wronghost.alt-name.pg-ssltest.test"\E/,
 	"host name not matching with a single X.509 Subject Alternative Name");
 test_connect_fails(
 	$common_connstr,
 	"host=deep.subdomain.wildcard.pg-ssltest.test",
-qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match host name "deep.subdomain.wildcard.pg-ssltest.test"\E/,
-"host name not matching with a single X.509 Subject Alternative Name wildcard"
+	qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match host name "deep.subdomain.wildcard.pg-ssltest.test"\E/,
+	"host name not matching with a single X.509 Subject Alternative Name wildcard"
 );
 
 # Test server certificate with a CN and SANs. Per RFCs 2818 and 6125, the CN
@@ -255,7 +255,7 @@ qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match hos
 switch_server_cert($node, 'server-cn-and-alt-names');
 
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+  "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
 test_connect_ok(
 	$common_connstr,
@@ -268,14 +268,14 @@ test_connect_ok(
 test_connect_fails(
 	$common_connstr,
 	"host=common-name.pg-ssltest.test",
-qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 1 other name) does not match host name "common-name.pg-ssltest.test"\E/,
+	qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 1 other name) does not match host name "common-name.pg-ssltest.test"\E/,
 	"certificate with both a CN and SANs ignores CN");
 
 # Finally, test a server certificate that has no CN or SANs. Of course, that's
 # not a very sensible certificate, but libpq should handle it gracefully.
 switch_server_cert($node, 'server-no-names');
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
+  "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
 
 test_connect_ok(
 	$common_connstr,
@@ -291,7 +291,7 @@ test_connect_fails(
 switch_server_cert($node, 'server-revoked');
 
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
+  "user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
 
 # Without the CRL, succeeds. With it, fails.
 test_connect_ok(
@@ -300,7 +300,7 @@ test_connect_ok(
 	"connects without client-side CRL");
 test_connect_fails(
 	$common_connstr,
-"sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/root+server.crl",
+	"sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/root+server.crl",
 	qr/SSL error/,
 	"does not connect with client-side CRL");
 
@@ -311,7 +311,7 @@ test_connect_fails(
 note "running server tests";
 
 $common_connstr =
-"sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR";
+  "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR";
 
 # no client cert
 test_connect_fails(
@@ -329,8 +329,8 @@ test_connect_ok(
 # client key with wrong permissions
 test_connect_fails(
 	$common_connstr,
-"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
-qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!,
+	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
+	qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!,
 	"certificate authorization fails because of file permissions");
 
 # client cert belonging to another user
@@ -338,19 +338,20 @@ test_connect_fails(
 	$common_connstr,
 	"user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
 	qr/certificate authentication failed for user "anotheruser"/,
-"certificate authorization fails with client cert belonging to another user");
+	"certificate authorization fails with client cert belonging to another user"
+);
 
 # revoked client cert
 test_connect_fails(
 	$common_connstr,
-"user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
+	"user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
 	qr/SSL error/,
 	"certificate authorization fails with revoked client cert");
 
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, 'server-cn-only', 'root_ca');
 $common_connstr =
-"user=ssltestuser dbname=certdb sslkey=ssl/client_tmp.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
+  "user=ssltestuser dbname=certdb sslkey=ssl/client_tmp.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
 
 test_connect_ok(
 	$common_connstr,

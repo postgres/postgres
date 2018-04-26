@@ -168,7 +168,7 @@ sub print_from_utf8_combined_map
 
 	printf $out "\n/* Combined character map */\n";
 	printf $out
-"static const pg_utf_to_local_combined ULmap${charset}_combined[ %d ] = {",
+	  "static const pg_utf_to_local_combined ULmap${charset}_combined[ %d ] = {",
 	  scalar(@$table);
 	my $first = 1;
 	foreach my $i (sort { $a->{utf8} <=> $b->{utf8} } @$table)
@@ -202,7 +202,7 @@ sub print_to_utf8_combined_map
 
 	printf $out "\n/* Combined character map */\n";
 	printf $out
-"static const pg_local_to_utf_combined LUmap${charset}_combined[ %d ] = {",
+	  "static const pg_local_to_utf_combined LUmap${charset}_combined[ %d ] = {",
 	  scalar(@$table);
 
 	my $first = 1;
@@ -613,7 +613,7 @@ sub print_radix_table
 		if ($seg->{overlaid_trail_zeros})
 		{
 			printf $out
-"    /* $seg->{overlaid_trail_zeros} trailing zero values shared with next segment */\n";
+			  "    /* $seg->{overlaid_trail_zeros} trailing zero values shared with next segment */\n";
 		}
 	}
 
@@ -728,7 +728,7 @@ sub make_charmap
 		if (defined $charmap{$src})
 		{
 			printf STDERR
-"Error: duplicate source code on %s:%d: 0x%04x => 0x%04x, 0x%04x\n",
+			  "Error: duplicate source code on %s:%d: 0x%04x => 0x%04x, 0x%04x\n",
 			  $c->{f}, $c->{l}, $src, $charmap{$src}, $dst;
 			exit;
 		}

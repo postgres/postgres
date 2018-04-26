@@ -48,7 +48,7 @@ $node_master->start;
 note "testing logical timeline following with a filesystem-level copy";
 
 $node_master->safe_psql('postgres',
-"SELECT pg_create_logical_replication_slot('before_basebackup', 'test_decoding');"
+	"SELECT pg_create_logical_replication_slot('before_basebackup', 'test_decoding');"
 );
 $node_master->safe_psql('postgres', "CREATE TABLE decoding(blah text);");
 $node_master->safe_psql('postgres',
@@ -60,7 +60,8 @@ $node_master->safe_psql('postgres',
 # the same physical copy trick, so:
 $node_master->safe_psql('postgres', 'CREATE DATABASE dropme;');
 $node_master->safe_psql('dropme',
-"SELECT pg_create_logical_replication_slot('dropme_slot', 'test_decoding');");
+	"SELECT pg_create_logical_replication_slot('dropme_slot', 'test_decoding');"
+);
 
 $node_master->safe_psql('postgres', 'CHECKPOINT;');
 
@@ -95,7 +96,7 @@ is($node_master->slot('dropme_slot')->{'slot_name'},
 
 # Back to testing failover...
 $node_master->safe_psql('postgres',
-"SELECT pg_create_logical_replication_slot('after_basebackup', 'test_decoding');"
+	"SELECT pg_create_logical_replication_slot('after_basebackup', 'test_decoding');"
 );
 $node_master->safe_psql('postgres',
 	"INSERT INTO decoding(blah) VALUES ('afterbb');");
@@ -141,7 +142,7 @@ $node_replica->safe_psql('postgres',
 
 # Shouldn't be able to read from slot created after base backup
 ($ret, $stdout, $stderr) = $node_replica->psql('postgres',
-"SELECT data FROM pg_logical_slot_peek_changes('after_basebackup', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');"
+	"SELECT data FROM pg_logical_slot_peek_changes('after_basebackup', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');"
 );
 is($ret, 3, 'replaying from after_basebackup slot fails');
 like(
@@ -152,7 +153,7 @@ like(
 # Should be able to read from slot created before base backup
 ($ret, $stdout, $stderr) = $node_replica->psql(
 	'postgres',
-"SELECT data FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');",
+	"SELECT data FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');",
 	timeout => 30);
 is($ret, 0, 'replay from slot before_basebackup succeeds');
 
@@ -174,7 +175,7 @@ is($stderr, '', 'replay from slot before_basebackup produces no stderr');
 # of the last transaction. There's no max(pg_lsn), so:
 
 my $endpos = $node_replica->safe_psql('postgres',
-"SELECT lsn FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL) ORDER BY lsn DESC LIMIT 1;"
+	"SELECT lsn FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL) ORDER BY lsn DESC LIMIT 1;"
 );
 
 # now use the walsender protocol to peek the slot changes and make sure we see

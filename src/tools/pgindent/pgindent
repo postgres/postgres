@@ -16,7 +16,7 @@ my $INDENT_VERSION = "2.0";
 
 # Our standard indent settings
 my $indent_opts =
-"-bad -bap -bbb -bc -bl -cli1 -cp33 -cdb -nce -d0 -di12 -nfc1 -i4 -l79 -lp -lpl -nip -npro -sac -tpg -ts4";
+  "-bad -bap -bbb -bc -bl -cli1 -cp33 -cdb -nce -d0 -di12 -nfc1 -i4 -l79 -lp -lpl -nip -npro -sac -tpg -ts4";
 
 my $devnull = File::Spec->devnull;
 
@@ -82,7 +82,7 @@ sub check_indent
 	if (`$indent --version` !~ m/ $INDENT_VERSION$/)
 	{
 		print STDERR
-"You do not appear to have $indent version $INDENT_VERSION installed on your system.\n";
+		  "You do not appear to have $indent version $INDENT_VERSION installed on your system.\n";
 		exit 1;
 	}
 
@@ -211,7 +211,7 @@ sub pre_indent
 	my $extern_c_start = '/* Open extern "C" */';
 	my $extern_c_stop  = '/* Close extern "C" */';
 	$source =~
-s!(^#ifdef[ \t]+__cplusplus.*\nextern[ \t]+"C"[ \t]*\n)\{[ \t]*$!$1$extern_c_start!gm;
+	  s!(^#ifdef[ \t]+__cplusplus.*\nextern[ \t]+"C"[ \t]*\n)\{[ \t]*$!$1$extern_c_start!gm;
 	$source =~ s!(^#ifdef[ \t]+__cplusplus.*\n)\}[ \t]*$!$1$extern_c_stop!gm;
 
 	# Protect wrapping in CATALOG()

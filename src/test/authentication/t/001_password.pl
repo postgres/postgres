@@ -57,10 +57,11 @@ $node->start;
 # Create 3 roles with different password methods for each one. The same
 # password is used for all of them.
 $node->safe_psql('postgres',
-"SET password_encryption='scram-sha-256'; CREATE ROLE scram_role LOGIN PASSWORD 'pass';"
+	"SET password_encryption='scram-sha-256'; CREATE ROLE scram_role LOGIN PASSWORD 'pass';"
 );
 $node->safe_psql('postgres',
-"SET password_encryption='md5'; CREATE ROLE md5_role LOGIN PASSWORD 'pass';");
+	"SET password_encryption='md5'; CREATE ROLE md5_role LOGIN PASSWORD 'pass';"
+);
 $ENV{"PGPASSWORD"} = 'pass';
 
 # For "trust" method, all users should be able to connect.

@@ -170,7 +170,7 @@ EOF
 			if ($grammarFile =~ /\.y$/)
 			{
 				$outputFile =~
-s{^src\\pl\\plpgsql\\src\\gram.c$}{src\\pl\\plpgsql\\src\\pl_gram.c};
+				  s{^src\\pl\\plpgsql\\src\\gram.c$}{src\\pl\\plpgsql\\src\\pl_gram.c};
 				print $f <<EOF;
     <CustomBuild Include="$grammarFile">
       <Message Condition="'\$(Configuration)|\$(Platform)'=='Debug|$self->{platform}'">Running bison on $grammarFile</Message>
@@ -328,7 +328,7 @@ EOF
 	if ($self->{disablelinkerwarnings})
 	{
 		print $f
-"      <AdditionalOptions>/ignore:$self->{disablelinkerwarnings} \%(AdditionalOptions)</AdditionalOptions>\n";
+		  "      <AdditionalOptions>/ignore:$self->{disablelinkerwarnings} \%(AdditionalOptions)</AdditionalOptions>\n";
 	}
 	if ($self->{implib})
 	{

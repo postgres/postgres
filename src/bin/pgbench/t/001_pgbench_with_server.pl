@@ -89,7 +89,7 @@ pgbench(
 
 # Again, with all possible options
 pgbench(
-'--initialize --init-steps=dtpvg --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=pg_default --index-tablespace=pg_default',
+	'--initialize --init-steps=dtpvg --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=pg_default --index-tablespace=pg_default',
 	0,
 	[qr{^$}i],
 	[   qr{dropping old tables},
@@ -102,7 +102,7 @@ pgbench(
 
 # Test interaction of --init-steps with legacy step-selection options
 pgbench(
-'--initialize --init-steps=dtpvgvv --no-vacuum --foreign-keys --unlogged-tables',
+	'--initialize --init-steps=dtpvgvv --no-vacuum --foreign-keys --unlogged-tables',
 	0,
 	[qr{^$}],
 	[   qr{dropping old tables},
@@ -126,7 +126,7 @@ pgbench(
 	'pgbench tpcb-like');
 
 pgbench(
-'--transactions=20 --client=5 -M extended --builtin=si -C --no-vacuum -s 1',
+	'--transactions=20 --client=5 -M extended --builtin=si -C --no-vacuum -s 1',
 	0,
 	[   qr{builtin: simple update},
 		qr{clients: 5\b},
@@ -221,7 +221,7 @@ COMMIT;
 # test expressions
 # command 1..3 and 23 depend on random seed which is used to call srandom.
 pgbench(
-'--random-seed=5432 -t 1 -Dfoo=-10.1 -Dbla=false -Di=+3 -Dminint=-9223372036854775808 -Dn=null -Dt=t -Df=of -Dd=1.0',
+	'--random-seed=5432 -t 1 -Dfoo=-10.1 -Dbla=false -Di=+3 -Dminint=-9223372036854775808 -Dn=null -Dt=t -Df=of -Dd=1.0',
 	0,
 	[ qr{type: .*/001_pgbench_expressions}, qr{processed: 1/1} ],
 	[   qr{setting random seed to 5432\b},
@@ -415,7 +415,7 @@ SELECT :v0, :v1, :v2, :v3;
 
 # random determinism when seeded
 $node->safe_psql('postgres',
-'CREATE UNLOGGED TABLE seeded_random(seed INT8 NOT NULL, rand TEXT NOT NULL, val INTEGER NOT NULL);'
+	'CREATE UNLOGGED TABLE seeded_random(seed INT8 NOT NULL, rand TEXT NOT NULL, val INTEGER NOT NULL);'
 );
 
 # same value to check for determinism
@@ -443,7 +443,7 @@ INSERT INTO seeded_random(seed, rand, val) VALUES
 
 # check that all runs generated the same 4 values
 my ($ret, $out, $err) = $node->psql('postgres',
-'SELECT seed, rand, val, COUNT(*) FROM seeded_random GROUP BY seed, rand, val'
+	'SELECT seed, rand, val, COUNT(*) FROM seeded_random GROUP BY seed, rand, val'
 );
 
 ok($ret == 0,  "psql seeded_random count ok");
@@ -627,7 +627,7 @@ for my $e (@errors)
 	my $n = '001_pgbench_error_' . $name;
 	$n =~ s/ /_/g;
 	pgbench(
-'-n -t 1 -Dfoo=bla -Dnull=null -Dtrue=true -Done=1 -Dzero=0.0 -Dbadtrue=trueXXX -M prepared',
+		'-n -t 1 -Dfoo=bla -Dnull=null -Dtrue=true -Done=1 -Dzero=0.0 -Dbadtrue=trueXXX -M prepared',
 		$status,
 		[ $status ? qr{^$} : qr{processed: 0/1} ],
 		$re,
@@ -710,7 +710,7 @@ my $bdir = $node->basedir;
 
 # with sampling rate
 pgbench(
-"-n -S -t 50 -c 2 --log --log-prefix=$bdir/001_pgbench_log_2 --sampling-rate=0.5",
+	"-n -S -t 50 -c 2 --log --log-prefix=$bdir/001_pgbench_log_2 --sampling-rate=0.5",
 	0,
 	[ qr{select only}, qr{processed: 100/100} ],
 	[qr{^$}],

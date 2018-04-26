@@ -389,7 +389,7 @@ sub set_replication_conf
 	if ($TestLib::windows_os)
 	{
 		print $hba
-"host replication all $test_localhost/32 sspi include_realm=1 map=regress\n";
+		  "host replication all $test_localhost/32 sspi include_realm=1 map=regress\n";
 	}
 	close $hba;
 }
@@ -652,7 +652,7 @@ sub init_from_backup
 	$params{has_restoring} = 0 unless defined $params{has_restoring};
 
 	print
-"# Initializing node \"$node_name\" from backup \"$backup_name\" of node \"$root_name\"\n";
+	  "# Initializing node \"$node_name\" from backup \"$backup_name\" of node \"$root_name\"\n";
 	croak "Backup \"$backup_name\" does not exist at $backup_path"
 	  unless -d $backup_path;
 
@@ -1272,7 +1272,7 @@ sub psql
 		die "connection error: '$$stderr'\nwhile running '@psql_params'"
 		  if $ret == 2;
 		die
-"error running SQL: '$$stderr'\nwhile running '@psql_params' with sql '$sql'"
+		  "error running SQL: '$$stderr'\nwhile running '@psql_params' with sql '$sql'"
 		  if $ret == 3;
 		die "psql returns $ret: '$$stderr'\nwhile running '@psql_params'";
 	}
@@ -1544,7 +1544,7 @@ sub wait_for_catchup
 	  . $lsn_expr . " on "
 	  . $self->name . "\n";
 	my $query =
-qq[SELECT $lsn_expr <= ${mode}_lsn FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
+	  qq[SELECT $lsn_expr <= ${mode}_lsn FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
 	$self->poll_query_until('postgres', $query)
 	  or croak "timed out waiting for catchup";
 	print "done\n";
@@ -1586,7 +1586,7 @@ sub wait_for_slot_catchup
 	  . $target_lsn . " on "
 	  . $self->name . "\n";
 	my $query =
-qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name';];
+	  qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name';];
 	$self->poll_query_until('postgres', $query)
 	  or croak "timed out waiting for catchup";
 	print "done\n";
@@ -1661,7 +1661,7 @@ sub slot
 		'restart_lsn');
 	return $self->query_hash(
 		'postgres',
-"SELECT __COLUMNS__ FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name'",
+		"SELECT __COLUMNS__ FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name'",
 		@columns);
 }
 
@@ -1736,7 +1736,7 @@ sub pg_recvlogical_upto
 			  unless $timeout->is_expired;
 
 			die
-"$exc_save waiting for endpos $endpos with stdout '$stdout', stderr '$stderr'"
+			  "$exc_save waiting for endpos $endpos with stdout '$stdout', stderr '$stderr'"
 			  unless wantarray;
 		}
 	};
@@ -1751,7 +1751,7 @@ sub pg_recvlogical_upto
 	else
 	{
 		die
-"pg_recvlogical exited with code '$ret', stdout '$stdout' and stderr '$stderr'"
+		  "pg_recvlogical exited with code '$ret', stdout '$stdout' and stderr '$stderr'"
 		  if $ret;
 		return $stdout;
 	}

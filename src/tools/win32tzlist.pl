@@ -102,7 +102,7 @@ for my $sys (@system_zones)
 			if ($sys->{display} ne $file->{display})
 			{
 				print
-"Timezone $sys->{std} changed displayname ('$sys->{display}' from '$file->{display}')!\n";
+				  "Timezone $sys->{std} changed displayname ('$sys->{display}' from '$file->{display}')!\n";
 			}
 			last;
 		}
@@ -119,7 +119,7 @@ if (@add)
 	for my $z (@add)
 	{
 		print
-"\t{\n\t\t\"$z->{std}\", \"$z->{dlt}\",\n\t\t\"FIXME\"\n\t},\t\t\t\t\t\t\t/* $z->{display} */\n";
+		  "\t{\n\t\t\"$z->{std}\", \"$z->{dlt}\",\n\t\t\"FIXME\"\n\t},\t\t\t\t\t\t\t/* $z->{display} */\n";
 	}
 }
 

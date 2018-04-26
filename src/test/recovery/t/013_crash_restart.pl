@@ -111,7 +111,7 @@ SELECT 1;
 ok( pump_until(
 		$killme,
 		\$killme_stderr,
-qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m
+		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m
 	),
 	"psql query died successfully after SIGQUIT");
 $killme_stderr = '';
@@ -124,7 +124,7 @@ $killme->finish;
 ok( pump_until(
 		$monitor,
 		\$monitor_stderr,
-qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m
+		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m
 	),
 	"psql monitor died successfully after SIGQUIT");
 $monitor->finish;
@@ -204,7 +204,7 @@ $killme->finish;
 ok( pump_until(
 		$monitor,
 		\$monitor_stderr,
-qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m
+		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m
 	),
 	"psql monitor died successfully after SIGKILL");
 $monitor->finish;
@@ -220,7 +220,8 @@ is( $node->safe_psql('postgres', 'SELECT * FROM alive'),
 
 is( $node->safe_psql(
 		'postgres',
-'INSERT INTO alive VALUES($$before-orderly-restart$$) RETURNING status'),
+		'INSERT INTO alive VALUES($$before-orderly-restart$$) RETURNING status'
+	),
 	'before-orderly-restart',
 	'can still write after crash restart');
 
@@ -228,7 +229,7 @@ is( $node->safe_psql(
 $node->restart();
 
 is( $node->safe_psql('postgres', 'SELECT * FROM alive'),
-"committed-before-sigquit\ncommitted-before-sigkill\nbefore-orderly-restart",
+	"committed-before-sigquit\ncommitted-before-sigkill\nbefore-orderly-restart",
 	'data survived');
 
 is( $node->safe_psql(

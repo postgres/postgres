@@ -16,7 +16,7 @@ sub test_index_replay
 	# Wait for standby to catch up
 	my $applname = $node_standby->name;
 	my $caughtup_query =
-"SELECT pg_current_wal_lsn() <= write_lsn FROM pg_stat_replication WHERE application_name = '$applname';";
+	  "SELECT pg_current_wal_lsn() <= write_lsn FROM pg_stat_replication WHERE application_name = '$applname';";
 	$node_master->poll_query_until('postgres', $caughtup_query)
 	  or die "Timed out while waiting for standby 1 to catch up";
 
@@ -57,7 +57,7 @@ $node_standby->start;
 $node_master->safe_psql("postgres", "CREATE EXTENSION bloom;");
 $node_master->safe_psql("postgres", "CREATE TABLE tst (i int4, t text);");
 $node_master->safe_psql("postgres",
-"INSERT INTO tst SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series(1,100000) i;"
+	"INSERT INTO tst SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series(1,100000) i;"
 );
 $node_master->safe_psql("postgres",
 	"CREATE INDEX bloomidx ON tst USING bloom (i, t) WITH (col1 = 3);");
@@ -74,7 +74,7 @@ for my $i (1 .. 10)
 	test_index_replay("vacuum $i");
 	my ($start, $end) = (100001 + ($i - 1) * 10000, 100000 + $i * 10000);
 	$node_master->safe_psql("postgres",
-"INSERT INTO tst SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series($start,$end) i;"
+		"INSERT INTO tst SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series($start,$end) i;"
 	);
 	test_index_replay("insert $i");
 }

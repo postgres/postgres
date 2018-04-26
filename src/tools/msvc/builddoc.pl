@@ -58,7 +58,7 @@ $cmd =
 system($cmd);
 die "features_unsupported" if $?;
 $cmd =
-"perl generate-errcodes-table.pl \"../../../src/backend/utils/errcodes.txt\" "
+  "perl generate-errcodes-table.pl \"../../../src/backend/utils/errcodes.txt\" "
   . "> errcodes-table.sgml";
 system($cmd);
 die "errcodes-table" if $?;

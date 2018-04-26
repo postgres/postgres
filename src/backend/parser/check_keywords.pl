@@ -177,14 +177,14 @@ kwlist_line: while (<$kwlist>)
 		if ($kwstring !~ /^[a-z_]+$/)
 		{
 			error
-"'$kwstring' is not a valid keyword string, must be all lower-case ASCII chars";
+			  "'$kwstring' is not a valid keyword string, must be all lower-case ASCII chars";
 		}
 
 		# Check that the keyword name is valid: all upper-case ASCII chars
 		if ($kwname !~ /^[A-Z_]+$/)
 		{
 			error
-"'$kwname' is not a valid keyword name, must be all upper-case ASCII chars";
+			  "'$kwname' is not a valid keyword name, must be all upper-case ASCII chars";
 		}
 
 		# Check that the keyword string matches keyword name
@@ -193,7 +193,7 @@ kwlist_line: while (<$kwlist>)
 		if ($bare_kwname ne uc($kwstring))
 		{
 			error
-"keyword name '$kwname' doesn't match keyword string '$kwstring'";
+			  "keyword name '$kwname' doesn't match keyword string '$kwstring'";
 		}
 
 		# Check that the keyword is present in the grammar

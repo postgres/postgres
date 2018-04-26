@@ -95,7 +95,7 @@ sub test_target_session_attrs
 		extra_params => [ '-d', $connstr ]);
 	is( $status == $ret && $stdout eq $target_node->port,
 		1,
-"connect to node $target_name if mode \"$mode\" and $node1_name,$node2_name listed"
+		"connect to node $target_name if mode \"$mode\" and $node1_name,$node2_name listed"
 	);
 }
 
@@ -183,7 +183,7 @@ $node_master->safe_psql('postgres', 'CREATE TABLE replayed(val integer);');
 sub replay_check
 {
 	my $newval = $node_master->safe_psql('postgres',
-'INSERT INTO replayed(val) SELECT coalesce(max(val),0) + 1 AS newval FROM replayed RETURNING val'
+		'INSERT INTO replayed(val) SELECT coalesce(max(val),0) + 1 AS newval FROM replayed RETURNING val'
 	);
 	$node_master->wait_for_catchup($node_standby_1, 'replay',
 		$node_master->lsn('insert'));
