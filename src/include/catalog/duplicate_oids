@@ -1,10 +1,30 @@
 #!/usr/bin/perl
-
-use lib '../../backend/catalog/';
-use Catalog;
+#----------------------------------------------------------------------
+#
+# duplicate_oids
+#    Identifies any manually-assigned OIDs that are used multiple times
+#    in the Postgres catalog data.
+#
+#    While duplicate OIDs would only cause a failure if they appear in
+#    the same catalog, our project policy is that manually assigned OIDs
+#    should be globally unique, to avoid confusion.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/duplicate_oids
+#
+#----------------------------------------------------------------------
 
 use strict;
 use warnings;
+
+# Must run in src/include/catalog
+use FindBin;
+chdir $FindBin::RealBin or die "could not cd to $FindBin::RealBin: $!\n";
+
+use lib "$FindBin::RealBin/../../backend/catalog/";
+use Catalog;
 
 my @input_files = (glob("pg_*.h"), qw(indexing.h toasting.h));
 
