@@ -146,7 +146,7 @@
   <para>
    There are several administration tools available for
    <productname>PostgreSQL</productname>. The most popular is
-   <application><ulink url="http://www.pgadmin.org/">pgAdmin III</ulink></application>,
+   <application><ulink url="http://www.pgadmin.org/">pgAdmin</ulink></application>,
    and there are several commercially available ones as well.
   </para>
  </sect1>
