@@ -81,7 +81,7 @@ DO [ LANGUAGE <replaceable class="parameter">lang_name</replaceable> ] <replacea
 
   <para>
    The procedural language to be used must already have been installed
-   into the current database by means of <command>CREATE LANGUAGE</command>.
+   into the current database by means of <command>CREATE EXTENSION</command>.
    <literal>plpgsql</literal> is installed by default, but other languages are not.
   </para>
 
