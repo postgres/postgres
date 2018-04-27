@@ -47,8 +47,7 @@
  *
  * To further make the I/Os more sequential, we can use a larger buffer
  * when reading, and read multiple blocks from the same tape in one go,
- * whenever the buffer becomes empty.  LogicalTapeAssignReadBufferSize()
- * can be used to set the size of the read buffer.
+ * whenever the buffer becomes empty.
  *
  * To support the above policy of writing to the lowest free block,
  * ltsGetFreeBlock sorts the list of free block numbers into decreasing
