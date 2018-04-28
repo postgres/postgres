@@ -594,7 +594,7 @@
         Run the new script:
 <programlisting>
 $ cd src/include/catalog
-$ perl -I ../../backend/catalog  rewrite_dat_with_prokind.pl  pg_proc.dat
+$ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
 </programlisting>
         At this point <filename>pg_proc.dat</filename> has all three
         columns, <structfield>prokind</structfield>,

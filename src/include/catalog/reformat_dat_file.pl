@@ -1,13 +1,14 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #----------------------------------------------------------------------
 #
 # reformat_dat_file.pl
-#    Perl script that reads in a catalog data file and writes out
-#    a functionally equivalent file in a standard format.
+#    Perl script that reads in catalog data file(s) and writes out
+#    functionally equivalent file(s) in a standard format.
 #
-#    Metadata entries (if any) come first, with normal attributes
-#    starting on the following line, in the same order they would be in
-#    the corresponding table. Comments and blank lines are preserved.
+#    In each entry of a reformatted file, metadata fields (if any) come
+#    first, with normal attributes starting on the following line, in
+#    the same order as the columns of the corresponding catalog.
+#    Comments and blank lines are preserved.
 #
 # Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
@@ -16,10 +17,14 @@
 #
 #----------------------------------------------------------------------
 
-use Catalog;
-
 use strict;
 use warnings;
+
+# If you copy this script to somewhere other than src/include/catalog,
+# you'll need to modify this "use lib" or provide a suitable -I switch.
+use FindBin;
+use lib "$FindBin::RealBin/../../backend/catalog/";
+use Catalog;
 
 my @input_files;
 my $output_path = '';
@@ -293,13 +298,10 @@ sub usage
 Usage: reformat_dat_file.pl [options] datafile...
 
 Options:
-    -o               output path
+    -o PATH          write output files to PATH instead of current directory
     --full-tuples    write out full tuples, including default values
 
 Expects a list of .dat files as arguments.
-
-Make sure location of Catalog.pm is passed to the perl interpreter:
-perl -I /path/to/Catalog.pm/ ...
 
 EOM
 }
