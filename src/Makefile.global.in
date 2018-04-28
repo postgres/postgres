@@ -1019,12 +1019,15 @@ endif
 #
 # The many INSTALL_DATA invocations aren't particularly fast, it'd be
 # good if we could coalesce them, but I didn't find a good way.
+#
+# Note: blank line at end of macro is necessary to let it be used in foreach
 define install_llvm_module
 $(MKDIR_P) '$(DESTDIR)${bitcodedir}/$(1)'
 $(MKDIR_P) $(sort $(dir $(addprefix '$(DESTDIR)${bitcodedir}'/$(1)/, $(2))))
 $(foreach obj, ${2}, $(INSTALL_DATA) $(patsubst %.o,%.bc, $(obj)) '$(DESTDIR)${bitcodedir}'/$(1)/$(dir $(obj))
 )
 cd '$(DESTDIR)${bitcodedir}' && $(LLVM_BINPATH)/llvm-lto -thinlto -thinlto-action=thinlink -o $(1).index.bc $(addprefix $(1)/,$(patsubst %.o,%.bc, $(2)))
+
 endef
 
 # Uninstall LLVM bitcode module.
@@ -1037,4 +1040,5 @@ endef
 define uninstall_llvm_module
 rm -rf '$(DESTDIR)${bitcodedir}/$(1)/'
 rm -f '$(DESTDIR)${bitcodedir}/$(1).index.bc'
+
 endef
