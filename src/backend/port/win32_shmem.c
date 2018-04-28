@@ -191,6 +191,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	SIZE_T		largePageSize = 0;
 	Size		orig_size = size;
 	DWORD		flProtect = PAGE_READWRITE;
+	MEMORY_BASIC_INFORMATION info;
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
@@ -359,6 +360,14 @@ retry:
 	/* Register on-exit routine to delete the new segment */
 	on_shmem_exit(pgwin32_SharedMemoryDelete, PointerGetDatum(hmap2));
 
+	/* Log information about the segment's virtual memory use */
+	if (VirtualQuery(memAddress, &info, sizeof(info)) != 0)
+		elog(LOG, "mapped shared memory segment at %p, requested size %zu, mapped size %zu",
+			 memAddress, size, info.RegionSize);
+	else
+		elog(LOG, "VirtualQuery(%p) failed: error code %lu",
+			 memAddress, GetLastError());
+
 	*shim = hdr;
 	return hdr;
 }
@@ -392,8 +401,21 @@ PGSharedMemoryReAttach(void)
 
 	hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
 	if (!hdr)
+	{
+		DWORD		maperr = GetLastError();
+		MEMORY_BASIC_INFORMATION info;
+
+		if (VirtualQuery(UsedShmemSegAddr, &info, sizeof(info)) != 0)
+			elog(LOG, "VirtualQuery(%p) reports region of size %zu, base %p, has state 0x%lx",
+				 UsedShmemSegAddr, info.RegionSize,
+				 info.AllocationBase, info.State);
+		else
+			elog(LOG, "VirtualQuery(%p) failed: error code %lu",
+				 UsedShmemSegAddr, GetLastError());
+
 		elog(FATAL, "could not reattach to shared memory (key=%p, addr=%p): error code %lu",
-			 UsedShmemSegID, UsedShmemSegAddr, GetLastError());
+			 UsedShmemSegID, UsedShmemSegAddr, maperr);
+	}
 	if (hdr != origUsedShmemSegAddr)
 		elog(FATAL, "reattaching to shared memory returned unexpected address (got %p, expected %p)",
 			 hdr, origUsedShmemSegAddr);
