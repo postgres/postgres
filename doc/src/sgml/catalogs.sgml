@@ -5690,6 +5690,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    see <xref linkend="replication-origins"/>.
   </para>
 
+  <para>
+   Unlike most system catalogs, <structname>pg_replication_origin</structname>
+   is shared across all databases of a cluster: there is only one copy
+   of <structname>pg_replication_origin</structname> per cluster, not one per
+   database.
+  </para>
+
   <table>
 
    <title><structname>pg_replication_origin</structname> Columns</title>
@@ -6608,7 +6615,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    Unlike most system catalogs, <structname>pg_subscription</structname> is
-   shared across all databases of a cluster: There is only one copy
+   shared across all databases of a cluster: there is only one copy
    of <structname>pg_subscription</structname> per cluster, not one per
    database.
   </para>
