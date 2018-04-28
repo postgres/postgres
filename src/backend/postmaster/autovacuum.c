@@ -531,7 +531,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 		}
 		AtEOXact_Buffers(false);
 		AtEOXact_SMgr();
-		AtEOXact_Files();
+		AtEOXact_Files(false);
 		AtEOXact_HashTables(false);
 
 		/*

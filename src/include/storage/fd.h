@@ -123,7 +123,7 @@ extern void SetTempTablespaces(Oid *tableSpaces, int numSpaces);
 extern bool TempTablespacesAreSet(void);
 extern int	GetTempTablespaces(Oid *tableSpaces, int numSpaces);
 extern Oid	GetNextTempTableSpace(void);
-extern void AtEOXact_Files(void);
+extern void AtEOXact_Files(bool isCommit);
 extern void AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
 				  SubTransactionId parentSubid);
 extern void RemovePgTempFiles(void);

@@ -314,7 +314,7 @@ static bool reserveAllocatedDesc(void);
 static int	FreeDesc(AllocateDesc *desc);
 
 static void AtProcExit_Files(int code, Datum arg);
-static void CleanupTempFiles(bool isProcExit);
+static void CleanupTempFiles(bool isCommit, bool isProcExit);
 static void RemovePgTempFilesInDir(const char *tmpdirname, bool missing_ok,
 					   bool unlink_all);
 static void RemovePgTempRelationFiles(const char *tsdirname);
@@ -2902,17 +2902,19 @@ AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
 /*
  * AtEOXact_Files
  *
- * This routine is called during transaction commit or abort (it doesn't
- * particularly care which).  All still-open per-transaction temporary file
- * VFDs are closed, which also causes the underlying files to be deleted
- * (although they should've been closed already by the ResourceOwner
- * cleanup). Furthermore, all "allocated" stdio files are closed. We also
- * forget any transaction-local temp tablespace list.
+ * This routine is called during transaction commit or abort.  All still-open
+ * per-transaction temporary file VFDs are closed, which also causes the
+ * underlying files to be deleted (although they should've been closed already
+ * by the ResourceOwner cleanup). Furthermore, all "allocated" stdio files are
+ * closed. We also forget any transaction-local temp tablespace list.
+ *
+ * The isCommit flag is used only to decide whether to emit warnings about
+ * unclosed files.
  */
 void
-AtEOXact_Files(void)
+AtEOXact_Files(bool isCommit)
 {
-	CleanupTempFiles(false);
+	CleanupTempFiles(isCommit, false);
 	tempTableSpaces = NULL;
 	numTempTableSpaces = -1;
 }
@@ -2926,11 +2928,14 @@ AtEOXact_Files(void)
 static void
 AtProcExit_Files(int code, Datum arg)
 {
-	CleanupTempFiles(true);
+	CleanupTempFiles(false, true);
 }
 
 /*
  * Close temporary files and delete their underlying files.
+ *
+ * isCommit: if true, this is normal transaction commit, and we don't
+ * expect any remaining files; warn if there are some.
  *
  * isProcExit: if true, this is being called as the backend process is
  * exiting. If that's the case, we should remove all temporary files; if
@@ -2939,7 +2944,7 @@ AtProcExit_Files(int code, Datum arg)
  * also clean up "allocated" stdio files, dirs and fds.
  */
 static void
-CleanupTempFiles(bool isProcExit)
+CleanupTempFiles(bool isCommit, bool isProcExit)
 {
 	Index		i;
 
@@ -2978,6 +2983,11 @@ CleanupTempFiles(bool isProcExit)
 
 		have_xact_temporary_files = false;
 	}
+
+	/* Complain if any allocated files remain open at commit. */
+	if (isCommit && numAllocatedDescs > 0)
+		elog(WARNING, "%d temporary files and directories not closed at end-of-transaction",
+			 numAllocatedDescs);
 
 	/* Clean up "allocated" stdio files, dirs and fds. */
 	while (numAllocatedDescs > 0)
