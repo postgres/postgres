@@ -177,31 +177,31 @@ foreach my $catname (@catnames)
 	close $dat;
 }
 
-# Leave values out if there is a matching default.
+# Remove column values for which there is a matching default,
+# or if the value can be computed from other columns.
 sub strip_default_values
 {
 	my ($row, $schema, $catname) = @_;
 
+	# Delete values that match defaults.
 	foreach my $column (@$schema)
 	{
 		my $attname = $column->{name};
 		die "strip_default_values: $catname.$attname undefined\n"
 		  if !defined $row->{$attname};
 
-		# Delete values that match defaults.
 		if (defined $column->{default}
 			and ($row->{$attname} eq $column->{default}))
 		{
 			delete $row->{$attname};
 		}
+	}
 
-		# Also delete pg_proc.pronargs, since that can be recomputed.
-		if (   $catname eq 'pg_proc'
-			&& $attname eq 'pronargs'
-			&& defined($row->{proargtypes}))
-		{
-			delete $row->{$attname};
-		}
+	# Delete computed values.  See AddDefaultValues() in Catalog.pm.
+	# Note: This must be done after deleting values matching defaults.
+	if ($catname eq 'pg_proc')
+	{
+		delete $row->{pronargs} if defined $row->{proargtypes};
 	}
 }
 

@@ -30,6 +30,9 @@
 # "convert srctypename to desttypename" for cast functions
 # "less-equal-greater" for B-tree comparison functions
 
+# Note: pronargs is computed when this file is read, so it does not need
+# to be specified in entries here.  See AddDefaultValues() in Catalog.pm.
+
 # Once upon a time these entries were ordered by OID.  Lately it's often
 # been the custom to insert new entries adjacent to related older entries.
 # Try to do one or the other though, don't just insert entries at random.
