@@ -28,16 +28,30 @@
  */
 CATALOG(pg_language,2612,LanguageRelationId)
 {
-	NameData	lanname;		/* Language name */
-	Oid			lanowner;		/* Language's owner */
-	bool		lanispl;		/* Is a procedural language */
-	bool		lanpltrusted;	/* PL is trusted */
-	Oid			lanplcallfoid;	/* Call handler for PL */
-	Oid			laninline;		/* Optional anonymous-block handler function */
-	Oid			lanvalidator;	/* Optional validation function */
+	/* Language name */
+	NameData	lanname;
+
+	/* Language's owner */
+	Oid			lanowner BKI_DEFAULT(PGUID);
+
+	/* Is a procedural language */
+	bool		lanispl BKI_DEFAULT(f);
+
+	/* PL is trusted */
+	bool		lanpltrusted BKI_DEFAULT(f);
+
+	/* Call handler, if it's a PL */
+	Oid			lanplcallfoid BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
+
+	/* Optional anonymous-block handler function */
+	Oid			laninline BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
+
+	/* Optional validation function */
+	Oid			lanvalidator BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	aclitem		lanacl[1];		/* Access privileges */
+	/* Access privileges */
+	aclitem		lanacl[1] BKI_DEFAULT(_null_);
 #endif
 } FormData_pg_language;
 
