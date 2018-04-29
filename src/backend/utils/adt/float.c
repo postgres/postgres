@@ -1566,14 +1566,15 @@ dpow(PG_FUNCTION_ARGS)
 	 * pow() sets errno only on some platforms, depending on whether it
 	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so we try to avoid using
 	 * errno.  However, some platform/CPU combinations return errno == EDOM
-	 * and result == Nan for negative arg1 and very large arg2 (they must be
+	 * and result == NaN for negative arg1 and very large arg2 (they must be
 	 * using something different from our floor() test to decide it's
 	 * invalid).  Other platforms (HPPA) return errno == ERANGE and a large
-	 * (HUGE_VAL) but finite result to signal overflow.
+	 * (HUGE_VAL) but finite result to signal overflow.  Also, some versions
+	 * of MSVC return errno == EDOM and result == NaN for NaN inputs.
 	 */
 	errno = 0;
 	result = pow(arg1, arg2);
-	if (errno == EDOM && isnan(result))
+	if (errno == EDOM && isnan(result) && !isnan(arg1) && !isnan(arg2))
 	{
 		if ((fabs(arg1) > 1 && arg2 >= 0) || (fabs(arg1) < 1 && arg2 < 0))
 			/* The sign of Inf is not significant in this case. */

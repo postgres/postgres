@@ -344,6 +344,36 @@ SELECT power(float8 '144', float8 '0.5');
     12
 (1 row)
 
+SELECT power(float8 'NaN', float8 '0.5');
+ power 
+-------
+   NaN
+(1 row)
+
+SELECT power(float8 '144', float8 'NaN');
+ power 
+-------
+   NaN
+(1 row)
+
+SELECT power(float8 'NaN', float8 'NaN');
+ power 
+-------
+   NaN
+(1 row)
+
+SELECT power(float8 '1', float8 'NaN');
+ power 
+-------
+     1
+(1 row)
+
+SELECT power(float8 'NaN', float8 '0');
+ power 
+-------
+     1
+(1 row)
+
 -- take exp of ln(f.f1)
 SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
    FROM FLOAT8_TBL f
