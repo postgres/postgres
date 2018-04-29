@@ -108,6 +108,11 @@ SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
 
 -- power
 SELECT power(float8 '144', float8 '0.5');
+SELECT power(float8 'NaN', float8 '0.5');
+SELECT power(float8 '144', float8 'NaN');
+SELECT power(float8 'NaN', float8 'NaN');
+SELECT power(float8 '1', float8 'NaN');
+SELECT power(float8 'NaN', float8 '0');
 
 -- take exp of ln(f.f1)
 SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
