@@ -1549,6 +1549,25 @@ dpow(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
+	 * The POSIX spec says that NaN ^ 0 = 1, and 1 ^ NaN = 1, while all other
+	 * cases with NaN inputs yield NaN (with no error).  Many older platforms
+	 * get one or more of these cases wrong, so deal with them via explicit
+	 * logic rather than trusting pow(3).
+	 */
+	if (isnan(arg1))
+	{
+		if (isnan(arg2) || arg2 != 0.0)
+			PG_RETURN_FLOAT8(get_float8_nan());
+		PG_RETURN_FLOAT8(1.0);
+	}
+	if (isnan(arg2))
+	{
+		if (arg1 != 1.0)
+			PG_RETURN_FLOAT8(get_float8_nan());
+		PG_RETURN_FLOAT8(1.0);
+	}
+
+	/*
 	 * The SQL spec requires that we emit a particular SQLSTATE error code for
 	 * certain error conditions.  Specifically, we don't return a
 	 * divide-by-zero error code for 0 ^ -1.
@@ -1569,12 +1588,11 @@ dpow(PG_FUNCTION_ARGS)
 	 * and result == NaN for negative arg1 and very large arg2 (they must be
 	 * using something different from our floor() test to decide it's
 	 * invalid).  Other platforms (HPPA) return errno == ERANGE and a large
-	 * (HUGE_VAL) but finite result to signal overflow.  Also, some versions
-	 * of MSVC return errno == EDOM and result == NaN for NaN inputs.
+	 * (HUGE_VAL) but finite result to signal overflow.
 	 */
 	errno = 0;
 	result = pow(arg1, arg2);
-	if (errno == EDOM && isnan(result) && !isnan(arg1) && !isnan(arg2))
+	if (errno == EDOM && isnan(result))
 	{
 		if ((fabs(arg1) > 1 && arg2 >= 0) || (fabs(arg1) < 1 && arg2 < 0))
 			/* The sign of Inf is not significant in this case. */
