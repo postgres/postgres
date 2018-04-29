@@ -362,6 +362,12 @@ SELECT power(float8 'NaN', float8 'NaN');
    NaN
 (1 row)
 
+SELECT power(float8 '-1', float8 'NaN');
+ power 
+-------
+   NaN
+(1 row)
+
 SELECT power(float8 '1', float8 'NaN');
  power 
 -------
