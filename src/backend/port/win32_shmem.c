@@ -12,6 +12,7 @@
  */
 #include "postgres.h"
 
+#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
@@ -54,13 +55,17 @@ mi_state(DWORD code)
 	return "???";
 }
 
+/*
+ * Append memory dump to buf.  To avoid affecting the memory map mid-run,
+ * buf should be preallocated to be bigger than needed.
+ */
 static void
-dumpmem(const char *reason)
+dumpmem(StringInfo buf, const char *reason)
 {
 	char	   *addr = 0;
 	MEMORY_BASIC_INFORMATION mi;
 
-	elog(LOG, "%s memory map", reason);
+	appendStringInfo(buf, "%s memory map:", reason);
 	do
 	{
 		memset(&mi, 0, sizeof(mi));
@@ -68,12 +73,13 @@ dumpmem(const char *reason)
 		{
 			if (GetLastError() == ERROR_INVALID_PARAMETER)
 				break;
-			elog(LOG, "VirtualQuery failed: %lu", GetLastError());
+			appendStringInfo(buf, "\nVirtualQuery failed: %lu", GetLastError());
 			break;
 		}
-		elog(LOG, "0x%p+0x%p %s (alloc 0x%p) %s",
-			 mi.BaseAddress, (void *) mi.RegionSize,
-			 mi_type(mi.Type), mi.AllocationBase, mi_state(mi.State));
+		appendStringInfo(buf, "\n0x%p+0x%p %s (alloc 0x%p) %s",
+						 mi.BaseAddress, (void *) mi.RegionSize,
+						 mi_type(mi.Type), mi.AllocationBase,
+						 mi_state(mi.State));
 		addr += mi.RegionSize;
 	} while (addr > 0);
 }
@@ -442,11 +448,16 @@ PGSharedMemoryReAttach(void)
 {
 	PGShmemHeader *hdr;
 	void	   *origUsedShmemSegAddr = UsedShmemSegAddr;
+	StringInfoData buf;
 
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(IsUnderPostmaster);
 
-	dumpmem("before VirtualFree");
+	/* Ensure buf is big enough that it won't grow mid-operation */
+	initStringInfo(&buf);
+	enlargeStringInfo(&buf, 128 * 1024);
+
+	dumpmem(&buf, "before VirtualFree");
 
 	/*
 	 * Release memory region reservation that was made by the postmaster
@@ -455,26 +466,27 @@ PGSharedMemoryReAttach(void)
 		elog(FATAL, "failed to release reserved memory region (addr=%p): error code %lu",
 			 UsedShmemSegAddr, GetLastError());
 
-	dumpmem("after VirtualFree");
+	dumpmem(&buf, "after VirtualFree");
 
 	hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
 	if (!hdr)
 	{
 		DWORD		maperr = GetLastError();
 
-		dumpmem("after failed MapViewOfFileEx");
+		dumpmem(&buf, "after failed MapViewOfFileEx");
+		elog(LOG, "%s", buf.data);
 
 		elog(FATAL, "could not reattach to shared memory (key=%p, addr=%p): error code %lu",
 			 UsedShmemSegID, UsedShmemSegAddr, maperr);
 	}
-	else
-		dumpmem("after MapViewOfFileEx");
 	if (hdr != origUsedShmemSegAddr)
 		elog(FATAL, "reattaching to shared memory returned unexpected address (got %p, expected %p)",
 			 hdr, origUsedShmemSegAddr);
 	if (hdr->magic != PGShmemMagic)
 		elog(FATAL, "reattaching to shared memory returned non-PostgreSQL memory");
 	dsm_set_control_handle(hdr->dsm_control);
+
+	pfree(buf.data);
 
 	UsedShmemSegAddr = hdr;		/* probably redundant */
 }
