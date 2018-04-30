@@ -389,16 +389,18 @@ PGSharedMemoryReAttach(void)
 	PGShmemHeader *hdr;
 	void	   *origUsedShmemSegAddr = UsedShmemSegAddr;
 	MEMORY_BASIC_INFORMATION previnfo;
-	DWORD		queryerr;
+	MEMORY_BASIC_INFORMATION afterinfo;
+	DWORD		preverr;
+	DWORD		aftererr;
 
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(IsUnderPostmaster);
 
 	/* Preliminary probe of region we intend to release */
 	if (VirtualQuery(UsedShmemSegAddr, &previnfo, sizeof(previnfo)) != 0)
-		queryerr = 0;
+		preverr = 0;
 	else
-		queryerr = GetLastError();
+		preverr = GetLastError();
 
 	/*
 	 * Release memory region reservation that was made by the postmaster
@@ -407,27 +409,48 @@ PGSharedMemoryReAttach(void)
 		elog(FATAL, "failed to release reserved memory region (addr=%p): error code %lu",
 			 UsedShmemSegAddr, GetLastError());
 
+	/* Verify post-release state */
+	if (VirtualQuery(UsedShmemSegAddr, &afterinfo, sizeof(afterinfo)) != 0)
+		aftererr = 0;
+	else
+		aftererr = GetLastError();
+
 	hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
 	if (!hdr)
 	{
 		DWORD		maperr = GetLastError();
-		MEMORY_BASIC_INFORMATION info;
+		MEMORY_BASIC_INFORMATION postinfo;
+		DWORD		posterr;
 
-		if (queryerr == 0)
+		/* Capture post-failure state */
+		if (VirtualQuery(UsedShmemSegAddr, &postinfo, sizeof(postinfo)) != 0)
+			posterr = 0;
+		else
+			posterr = GetLastError();
+
+		if (preverr == 0)
 			elog(LOG, "VirtualQuery(%p) before free reports region of size %zu, base %p, has state 0x%lx",
 				 UsedShmemSegAddr, previnfo.RegionSize,
 				 previnfo.AllocationBase, previnfo.State);
 		else
 			elog(LOG, "VirtualQuery(%p) before free failed: error code %lu",
-				 UsedShmemSegAddr, queryerr);
+				 UsedShmemSegAddr, preverr);
 
-		if (VirtualQuery(UsedShmemSegAddr, &info, sizeof(info)) != 0)
+		if (aftererr == 0)
 			elog(LOG, "VirtualQuery(%p) after free reports region of size %zu, base %p, has state 0x%lx",
-				 UsedShmemSegAddr, info.RegionSize,
-				 info.AllocationBase, info.State);
+				 UsedShmemSegAddr, afterinfo.RegionSize,
+				 afterinfo.AllocationBase, afterinfo.State);
 		else
 			elog(LOG, "VirtualQuery(%p) after free failed: error code %lu",
-				 UsedShmemSegAddr, GetLastError());
+				 UsedShmemSegAddr, aftererr);
+
+		if (posterr == 0)
+			elog(LOG, "VirtualQuery(%p) after map reports region of size %zu, base %p, has state 0x%lx",
+				 UsedShmemSegAddr, postinfo.RegionSize,
+				 postinfo.AllocationBase, postinfo.State);
+		else
+			elog(LOG, "VirtualQuery(%p) after map failed: error code %lu",
+				 UsedShmemSegAddr, posterr);
 
 		elog(FATAL, "could not reattach to shared memory (key=%p, addr=%p): error code %lu",
 			 UsedShmemSegID, UsedShmemSegAddr, maperr);
