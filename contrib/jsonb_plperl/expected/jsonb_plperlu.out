@@ -39,6 +39,26 @@ SELECT testSVToJsonb();
  1
 (1 row)
 
+CREATE FUNCTION testInf() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+$val = 0 + 'Inf';
+return $val;
+$$;
+SELECT testInf();
+ERROR:  cannot convert infinity to jsonb
+CONTEXT:  PL/Perl function "testinf"
+CREATE FUNCTION testNaN() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+$val = 0 + 'NaN';
+return $val;
+$$;
+SELECT testNaN();
+ERROR:  cannot convert NaN to jsonb
+CONTEXT:  PL/Perl function "testnan"
 -- this revealed a bug in the original implementation
 CREATE FUNCTION testRegexpResultToJsonb() RETURNS jsonb
 LANGUAGE plperlu
@@ -71,7 +91,7 @@ SELECT roundtrip('1');
 (1 row)
 
 SELECT roundtrip('1E+131071');
-ERROR:  cannot convert infinite value to jsonb
+ERROR:  cannot convert infinity to jsonb
 CONTEXT:  PL/Perl function "roundtrip"
 SELECT roundtrip('-1');
  roundtrip 
@@ -207,4 +227,4 @@ SELECT roundtrip('{"1": {"2": [3, 4, 5]}, "2": 3}');
 
 \set VERBOSITY terse \\ -- suppress cascade details
 DROP EXTENSION plperlu CASCADE;
-NOTICE:  drop cascades to 6 other objects
+NOTICE:  drop cascades to 8 other objects

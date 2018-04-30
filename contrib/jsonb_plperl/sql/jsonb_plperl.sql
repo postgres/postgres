@@ -34,6 +34,28 @@ $$;
 SELECT testSVToJsonb();
 
 
+CREATE FUNCTION testInf() RETURNS jsonb
+LANGUAGE plperl
+TRANSFORM FOR TYPE jsonb
+AS $$
+$val = 0 + 'Inf';
+return $val;
+$$;
+
+SELECT testInf();
+
+
+CREATE FUNCTION testNaN() RETURNS jsonb
+LANGUAGE plperl
+TRANSFORM FOR TYPE jsonb
+AS $$
+$val = 0 + 'NaN';
+return $val;
+$$;
+
+SELECT testNaN();
+
+
 -- this revealed a bug in the original implementation
 CREATE FUNCTION testRegexpResultToJsonb() RETURNS jsonb
 LANGUAGE plperl
