@@ -407,13 +407,16 @@ pgoutput_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 		maybe_send_schema(ctx, relation, relentry);
 	}
 
-	OutputPluginPrepareWrite(ctx, true);
-	logicalrep_write_truncate(ctx->out,
-							  nrelids,
-							  relids,
-							  change->data.truncate.cascade,
-							  change->data.truncate.restart_seqs);
-	OutputPluginWrite(ctx, true);
+	if (nrelids > 0)
+	{
+		OutputPluginPrepareWrite(ctx, true);
+		logicalrep_write_truncate(ctx->out,
+								  nrelids,
+								  relids,
+								  change->data.truncate.cascade,
+								  change->data.truncate.restart_seqs);
+		OutputPluginWrite(ctx, true);
+	}
 
 	MemoryContextSwitchTo(old);
 	MemoryContextReset(data->context);
