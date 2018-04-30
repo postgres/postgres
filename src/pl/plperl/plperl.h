@@ -17,13 +17,6 @@
 /* stop perl headers from hijacking stdio and other stuff on Windows */
 #ifdef WIN32
 #define WIN32IO_IS_STDIO
-/*
- * isnan is defined in both the perl and mingw headers. We don't use it,
- * so this just clears up the compile warning.
- */
-#ifdef isnan
-#undef isnan
-#endif
 #endif							/* WIN32 */
 
 /*
