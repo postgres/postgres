@@ -65,7 +65,7 @@ dumpmem(StringInfo buf, const char *reason)
 	char	   *addr = 0;
 	MEMORY_BASIC_INFORMATION mi;
 
-	appendStringInfo(buf, "%s memory map:", reason);
+	appendStringInfo(buf, "%s memory map:\n", reason);
 	do
 	{
 		memset(&mi, 0, sizeof(mi));
@@ -73,10 +73,10 @@ dumpmem(StringInfo buf, const char *reason)
 		{
 			if (GetLastError() == ERROR_INVALID_PARAMETER)
 				break;
-			appendStringInfo(buf, "\nVirtualQuery failed: %lu", GetLastError());
+			appendStringInfo(buf, "VirtualQuery failed: %lu\n", GetLastError());
 			break;
 		}
-		appendStringInfo(buf, "\n0x%p+0x%p %s (alloc 0x%p) %s",
+		appendStringInfo(buf, "0x%p+0x%p %s (alloc 0x%p) %s\n",
 						 mi.BaseAddress, (void *) mi.RegionSize,
 						 mi_type(mi.Type), mi.AllocationBase,
 						 mi_state(mi.State));
@@ -457,6 +457,22 @@ PGSharedMemoryReAttach(void)
 	initStringInfo(&buf);
 	enlargeStringInfo(&buf, 128 * 1024);
 
+	dumpmem(&buf, "beginning PGSharedMemoryReAttach");
+
+	hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, NULL);
+	if (hdr)
+	{
+		if (!UnmapViewOfFile(hdr))
+			elog(LOG, "could not unmap temporary view of shared memory: error code %lu",
+				 GetLastError());
+	}
+	else
+	{
+		/* This isn't fatal, just unpromising ... */
+		elog(LOG, "could not attach to shared memory (key=%p) at any address: error code %lu",
+			 UsedShmemSegID, GetLastError());
+	}
+
 	dumpmem(&buf, "before VirtualFree");
 
 	/*
@@ -479,6 +495,10 @@ PGSharedMemoryReAttach(void)
 		elog(FATAL, "could not reattach to shared memory (key=%p, addr=%p): error code %lu",
 			 UsedShmemSegID, UsedShmemSegAddr, maperr);
 	}
+
+	dumpmem(&buf, "after MapViewOfFileEx");
+	elog(LOG, "%s", buf.data);
+
 	if (hdr != origUsedShmemSegAddr)
 		elog(FATAL, "reattaching to shared memory returned unexpected address (got %p, expected %p)",
 			 hdr, origUsedShmemSegAddr);
