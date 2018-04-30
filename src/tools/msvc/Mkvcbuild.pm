@@ -174,10 +174,8 @@ sub mkvcbuild
 		'repl_gram.y',             'syncrep_scanner.l',
 		'syncrep_gram.y');
 	$postgres->AddDefine('BUILDING_DLL');
-	$postgres->AddDefine('PSAPI_VERSION=1');
 	$postgres->AddLibrary('secur32.lib');
 	$postgres->AddLibrary('ws2_32.lib');
-	$postgres->AddLibrary('psapi.lib');
 	$postgres->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
 	$postgres->FullExportDLL('postgres.lib');
 

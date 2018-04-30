@@ -1,7 +1,5 @@
 # src/makefiles/Makefile.win32
 
-override CPPFLAGS+= -DPSAPI_VERSION=1
-
 ifdef PGXS
 BE_DLLLIBS= -L$(libdir) -lpostgres
 override CPPFLAGS+= -I$(includedir_server)/port/win32

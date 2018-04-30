@@ -79,7 +79,7 @@ libpostgres.a: postgres
 endif # cygwin
 
 ifeq ($(PORTNAME), win32)
-LIBS += -lsecur32 -lpsapi
+LIBS += -lsecur32
 
 postgres: $(OBJS) $(WIN32RES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) -Wl,--stack=$(WIN32_STACK_RLIMIT) -Wl,--export-all-symbols -Wl,--out-implib=libpostgres.a $(call expand_subsys,$(OBJS)) $(WIN32RES) $(LIBS) -o $@$(X)
