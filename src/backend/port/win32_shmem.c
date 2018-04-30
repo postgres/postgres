@@ -12,6 +12,8 @@
  */
 #include "postgres.h"
 
+#include <psapi.h>
+
 #include "miscadmin.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
@@ -23,6 +25,88 @@ static Size UsedShmemSegSize = 0;
 
 static bool EnableLockPagesPrivilege(int elevel);
 static void pgwin32_SharedMemoryDelete(int status, Datum shmId);
+
+/* Dump all modules loaded into proc */
+static void
+dumpdlls(HANDLE proc)
+{
+	HMODULE		dll[1024];
+	DWORD		size_used = 1;
+	int			i,
+				n;
+
+	if (!EnumProcessModules(proc, dll, sizeof(dll), &size_used))
+	{
+		elog(LOG, "EnumProcessModules failed: %lu", GetLastError());
+		return;
+	}
+	n = (int) (size_used / sizeof(*dll));
+	elog(LOG, "EnumProcessModules: %d modules in process 0x%p", n, proc);
+	for (i = 0; i < n; i++)
+	{
+		char		name[MAXPGPATH];
+
+		if (!GetModuleFileNameEx(proc, dll[i], name, sizeof(name)))
+			sprintf(name, "GetModuleFileNameEx failed: %lu", GetLastError());
+		elog(LOG, "%d: 0x%p %s", i + 1, dll[i], name);
+	}
+}
+
+static const char *
+mi_type(DWORD code)
+{
+	switch (code)
+	{
+		case MEM_IMAGE:
+			return "img";
+		case MEM_MAPPED:
+			return "map";
+		case MEM_PRIVATE:
+			return "prv";
+	}
+	return "???";
+}
+
+static const char *
+mi_state(DWORD code)
+{
+	switch (code)
+	{
+		case MEM_COMMIT:
+			return "commit";
+		case MEM_FREE:
+			return "free  ";
+		case MEM_RESERVE:
+			return "reserv";
+	}
+	return "???";
+}
+
+static void
+dumpmem(const char *reason, HANDLE proc)
+{
+	char	   *addr = 0;
+	MEMORY_BASIC_INFORMATION mi;
+
+	elog(LOG, "%s memory map", reason);
+	do
+	{
+		memset(&mi, 0, sizeof(mi));
+		if (!VirtualQueryEx(proc, addr, &mi, sizeof(mi)))
+		{
+			if (GetLastError() == ERROR_INVALID_PARAMETER)
+				break;
+			elog(LOG, "VirtualQueryEx failed: %lu", GetLastError());
+			break;
+		}
+		elog(LOG, "0x%p+0x%p %s (alloc 0x%p) %s",
+			 mi.BaseAddress, (void *) mi.RegionSize,
+			 mi_type(mi.Type), mi.AllocationBase, mi_state(mi.State));
+		addr += mi.RegionSize;
+	} while (addr > 0);
+
+	dumpdlls(proc);
+}
 
 /*
  * Generate shared memory segment name. Expand the data directory, to generate
@@ -388,19 +472,11 @@ PGSharedMemoryReAttach(void)
 {
 	PGShmemHeader *hdr;
 	void	   *origUsedShmemSegAddr = UsedShmemSegAddr;
-	MEMORY_BASIC_INFORMATION previnfo;
-	MEMORY_BASIC_INFORMATION afterinfo;
-	DWORD		preverr;
-	DWORD		aftererr;
 
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(IsUnderPostmaster);
 
-	/* Preliminary probe of region we intend to release */
-	if (VirtualQuery(UsedShmemSegAddr, &previnfo, sizeof(previnfo)) != 0)
-		preverr = 0;
-	else
-		preverr = GetLastError();
+	dumpmem("before VirtualFree", GetCurrentProcess());
 
 	/*
 	 * Release memory region reservation that was made by the postmaster
@@ -409,48 +485,14 @@ PGSharedMemoryReAttach(void)
 		elog(FATAL, "failed to release reserved memory region (addr=%p): error code %lu",
 			 UsedShmemSegAddr, GetLastError());
 
-	/* Verify post-release state */
-	if (VirtualQuery(UsedShmemSegAddr, &afterinfo, sizeof(afterinfo)) != 0)
-		aftererr = 0;
-	else
-		aftererr = GetLastError();
+	dumpmem("after VirtualFree", GetCurrentProcess());
 
 	hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
 	if (!hdr)
 	{
 		DWORD		maperr = GetLastError();
-		MEMORY_BASIC_INFORMATION postinfo;
-		DWORD		posterr;
 
-		/* Capture post-failure state */
-		if (VirtualQuery(UsedShmemSegAddr, &postinfo, sizeof(postinfo)) != 0)
-			posterr = 0;
-		else
-			posterr = GetLastError();
-
-		if (preverr == 0)
-			elog(LOG, "VirtualQuery(%p) before free reports region of size %zu, base %p, has state 0x%lx",
-				 UsedShmemSegAddr, previnfo.RegionSize,
-				 previnfo.AllocationBase, previnfo.State);
-		else
-			elog(LOG, "VirtualQuery(%p) before free failed: error code %lu",
-				 UsedShmemSegAddr, preverr);
-
-		if (aftererr == 0)
-			elog(LOG, "VirtualQuery(%p) after free reports region of size %zu, base %p, has state 0x%lx",
-				 UsedShmemSegAddr, afterinfo.RegionSize,
-				 afterinfo.AllocationBase, afterinfo.State);
-		else
-			elog(LOG, "VirtualQuery(%p) after free failed: error code %lu",
-				 UsedShmemSegAddr, aftererr);
-
-		if (posterr == 0)
-			elog(LOG, "VirtualQuery(%p) after map reports region of size %zu, base %p, has state 0x%lx",
-				 UsedShmemSegAddr, postinfo.RegionSize,
-				 postinfo.AllocationBase, postinfo.State);
-		else
-			elog(LOG, "VirtualQuery(%p) after map failed: error code %lu",
-				 UsedShmemSegAddr, posterr);
+		dumpmem("after MapViewOfFileEx", GetCurrentProcess());
 
 		elog(FATAL, "could not reattach to shared memory (key=%p, addr=%p): error code %lu",
 			 UsedShmemSegID, UsedShmemSegAddr, maperr);
@@ -596,6 +638,8 @@ pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
 		VirtualFreeEx(hChild, address, 0, MEM_RELEASE);
 		return false;
 	}
+
+	dumpmem("after reserve", hChild);
 
 	return true;
 }
