@@ -83,13 +83,15 @@
  *
  * A word about t_ctid: whenever a new tuple is stored on disk, its t_ctid
  * is initialized with its own TID (location).  If the tuple is ever updated,
- * its t_ctid is changed to point to the replacement version of the tuple or
- * the block number (ip_blkid) is invalidated if the tuple is moved from one
- * partition to another partition relation due to an update of the partition
- * key.  Thus, a tuple is the latest version of its row iff XMAX is invalid or
+ * its t_ctid is changed to point to the replacement version of the tuple.  Or
+ * if the tuple is moved from one partition to another, due to an update of
+ * the partition key, t_ctid is set to a special value to indicate that
+ * (see ItemPointerSetMovedPartitions).  Thus, a tuple is the latest version
+ * of its row iff XMAX is invalid or
  * t_ctid points to itself (in which case, if XMAX is valid, the tuple is
  * either locked or deleted).  One can follow the chain of t_ctid links
- * to find the newest version of the row.  Beware however that VACUUM might
+ * to find the newest version of the row, unless it was moved to a different
+ * partition.  Beware however that VACUUM might
  * erase the pointed-to (newer) tuple before erasing the pointing (older)
  * tuple.  Hence, when following a t_ctid link, it is necessary to check
  * to see if the referenced slot is empty or contains an unrelated tuple.
@@ -288,14 +290,6 @@ struct HeapTupleHeaderData
 #define HEAP_TUPLE_HAS_MATCH	HEAP_ONLY_TUPLE /* tuple has a join match */
 
 /*
- * Special value used in t_ctid.ip_posid, to indicate that it holds a
- * speculative insertion token rather than a real TID.  This must be higher
- * than MaxOffsetNumber, so that it can be distinguished from a valid
- * offset number in a regular item pointer.
- */
-#define SpecTokenOffsetNumber		0xfffe
-
-/*
  * HeapTupleHeader accessor macros
  *
  * Note: beware of multiple evaluations of "tup" argument.  But the Set
@@ -447,11 +441,12 @@ do { \
 	ItemPointerSet(&(tup)->t_ctid, token, SpecTokenOffsetNumber) \
 )
 
-#define HeapTupleHeaderSetMovedPartitions(tup) \
-	ItemPointerSetMovedPartitions(&(tup)->t_ctid)
-
 #define HeapTupleHeaderIndicatesMovedPartitions(tup) \
-	ItemPointerIndicatesMovedPartitions(&tup->t_ctid)
+	(ItemPointerGetOffsetNumber(&(tup)->t_ctid) == MovedPartitionsOffsetNumber && \
+	 ItemPointerGetBlockNumberNoCheck(&(tup)->t_ctid) == MovedPartitionsBlockNumber)
+
+#define HeapTupleHeaderSetMovedPartitions(tup) \
+	ItemPointerSet(&(tup)->t_ctid, MovedPartitionsBlockNumber, MovedPartitionsOffsetNumber)
 
 #define HeapTupleHeaderGetDatumLength(tup) \
 	VARSIZE(tup)

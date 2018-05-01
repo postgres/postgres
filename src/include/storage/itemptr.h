@@ -49,6 +49,28 @@ ItemPointerData;
 typedef ItemPointerData *ItemPointer;
 
 /* ----------------
+ *		special values used in heap tuples (t_ctid)
+ * ----------------
+ */
+
+/*
+ * If a heap tuple holds a speculative insertion token rather than a real
+ * TID, ip_posid is set to SpecTokenOffsetNumber, and the token is stored in
+ * ip_blkid. SpecTokenOffsetNumber must be higher than MaxOffsetNumber, so
+ * that it can be distinguished from a valid offset number in a regular item
+ * pointer.
+ */
+#define SpecTokenOffsetNumber		0xfffe
+
+/*
+ * When a tuple is moved to a different partition by UPDATE, the t_ctid of
+ * the old tuple version is set to this magic value.
+ */
+#define MovedPartitionsOffsetNumber 0xfffd
+#define MovedPartitionsBlockNumber	InvalidBlockNumber
+
+
+/* ----------------
  *		support macros
  * ----------------
  */
@@ -160,7 +182,10 @@ typedef ItemPointerData *ItemPointer;
  *		partition.
  */
 #define ItemPointerIndicatesMovedPartitions(pointer) \
-	!BlockNumberIsValid(ItemPointerGetBlockNumberNoCheck(pointer))
+( \
+	ItemPointerGetOffsetNumber(pointer) == MovedPartitionsOffsetNumber && \
+	ItemPointerGetBlockNumberNoCheck(pointer) == MovedPartitionsBlockNumber \
+)
 
 /*
  * ItemPointerSetMovedPartitions
@@ -168,7 +193,7 @@ typedef ItemPointerData *ItemPointer;
  *		different partition.
  */
 #define ItemPointerSetMovedPartitions(pointer) \
-	ItemPointerSetBlockNumber((pointer), InvalidBlockNumber)
+	ItemPointerSet((pointer), MovedPartitionsBlockNumber, MovedPartitionsOffsetNumber)
 
 /* ----------------
  *		externs
