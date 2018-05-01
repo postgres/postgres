@@ -14,8 +14,10 @@ or
 
     make installcheck
 
-NOTE: This creates a temporary installation (in the case of "check"),
-and some tests may create one or multiple nodes, for the purpose of
-the tests.
+This requires the --enable-tap-tests argument to configure.
 
-NOTE: This requires the --enable-tap-tests argument to configure.
+Running the tests creates a temporary installation (in the case of
+"check"), and some tests may create one or multiple nodes, for the
+purpose of the tests.
+
+Running installcheck requires the hstore extension to be installed.
