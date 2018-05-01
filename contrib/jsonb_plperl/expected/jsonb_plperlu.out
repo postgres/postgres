@@ -43,7 +43,7 @@ CREATE FUNCTION testInf() RETURNS jsonb
 LANGUAGE plperlu
 TRANSFORM FOR TYPE jsonb
 AS $$
-$val = 0 + 'Inf';
+$val = 9**9**9;  # we assume this will overflow to +Inf
 return $val;
 $$;
 SELECT testInf();
@@ -53,7 +53,7 @@ CREATE FUNCTION testNaN() RETURNS jsonb
 LANGUAGE plperlu
 TRANSFORM FOR TYPE jsonb
 AS $$
-$val = 0 + 'NaN';
+$val = sin(9**9**9);  # we assume sin(inf) will yield NaN
 return $val;
 $$;
 SELECT testNaN();
