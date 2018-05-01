@@ -1700,20 +1700,24 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 										partidx);
 
 	/*
-	 * Set up information needed for routing tuples to the partition if we
-	 * didn't yet (ExecInitRoutingInfo would abort the operation if the
-	 * partition isn't routable).
+	 * Check whether the partition is routable if we didn't yet
 	 *
 	 * Note: an UPDATE of a partition key invokes an INSERT that moves the
-	 * tuple to a new partition.  This setup would be needed for a subplan
+	 * tuple to a new partition.  This check would be applied to a subplan
 	 * partition of such an UPDATE that is chosen as the partition to route
-	 * the tuple to.  The reason we do this setup here rather than in
+	 * the tuple to.  The reason we do this check here rather than in
 	 * ExecSetupPartitionTupleRouting is to avoid aborting such an UPDATE
 	 * unnecessarily due to non-routable subplan partitions that may not be
 	 * chosen for update tuple movement after all.
 	 */
 	if (!partrel->ri_PartitionReadyForRouting)
+	{
+		/* Verify the partition is a valid target for INSERT. */
+		CheckValidResultRel(partrel, CMD_INSERT);
+
+		/* Set up information needed for routing tuples to the partition. */
 		ExecInitRoutingInfo(mtstate, estate, proute, partrel, partidx);
+	}
 
 	/*
 	 * Make it look like we are inserting into the partition.

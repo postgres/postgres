@@ -381,6 +381,7 @@ static void create_cursor(ForeignScanState *node);
 static void fetch_more_data(ForeignScanState *node);
 static void close_cursor(PGconn *conn, unsigned int cursor_number);
 static PgFdwModifyState *create_foreign_modify(EState *estate,
+					  RangeTblEntry *rte,
 					  ResultRelInfo *resultRelInfo,
 					  CmdType operation,
 					  Plan *subplan,
@@ -1653,17 +1654,17 @@ postgresPlanForeignModify(PlannerInfo *root,
 	switch (operation)
 	{
 		case CMD_INSERT:
-			deparseInsertSql(&sql, root, resultRelation, rel,
+			deparseInsertSql(&sql, rte, resultRelation, rel,
 							 targetAttrs, doNothing, returningList,
 							 &retrieved_attrs);
 			break;
 		case CMD_UPDATE:
-			deparseUpdateSql(&sql, root, resultRelation, rel,
+			deparseUpdateSql(&sql, rte, resultRelation, rel,
 							 targetAttrs, returningList,
 							 &retrieved_attrs);
 			break;
 		case CMD_DELETE:
-			deparseDeleteSql(&sql, root, resultRelation, rel,
+			deparseDeleteSql(&sql, rte, resultRelation, rel,
 							 returningList,
 							 &retrieved_attrs);
 			break;
@@ -1700,6 +1701,7 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 	List	   *target_attrs;
 	bool		has_returning;
 	List	   *retrieved_attrs;
+	RangeTblEntry *rte;
 
 	/*
 	 * Do nothing in EXPLAIN (no ANALYZE) case.  resultRelInfo->ri_FdwState
@@ -1718,8 +1720,13 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 	retrieved_attrs = (List *) list_nth(fdw_private,
 										FdwModifyPrivateRetrievedAttrs);
 
+	/* Find RTE. */
+	rte = rt_fetch(resultRelInfo->ri_RangeTableIndex,
+				   mtstate->ps.state->es_range_table);
+
 	/* Construct an execution state. */
 	fmstate = create_foreign_modify(mtstate->ps.state,
+									rte,
 									resultRelInfo,
 									mtstate->operation,
 									mtstate->mt_plans[subplan_index]->plan,
@@ -1974,11 +1981,11 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 						   ResultRelInfo *resultRelInfo)
 {
 	PgFdwModifyState *fmstate;
-	Plan	   *plan = mtstate->ps.plan;
+	ModifyTable *plan = castNode(ModifyTable, mtstate->ps.plan);
+	EState	   *estate = mtstate->ps.state;
+	Index		resultRelation = resultRelInfo->ri_RangeTableIndex;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 	RangeTblEntry *rte;
-	Query	   *query;
-	PlannerInfo *root;
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	int			attnum;
 	StringInfoData sql;
@@ -1987,18 +1994,6 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 	bool		doNothing = false;
 
 	initStringInfo(&sql);
-
-	/* Set up largely-dummy planner state. */
-	rte = makeNode(RangeTblEntry);
-	rte->rtekind = RTE_RELATION;
-	rte->relid = RelationGetRelid(rel);
-	rte->relkind = RELKIND_FOREIGN_TABLE;
-	query = makeNode(Query);
-	query->commandType = CMD_INSERT;
-	query->resultRelation = 1;
-	query->rtable = list_make1(rte);
-	root = makeNode(PlannerInfo);
-	root->parse = query;
 
 	/* We transmit all columns that are defined in the foreign table. */
 	for (attnum = 1; attnum <= tupdesc->natts; attnum++)
@@ -2022,12 +2017,41 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 				 (int) onConflictAction);
 	}
 
+	/*
+	 * If the foreign table is a partition, we need to create a new RTE
+	 * describing the foreign table for use by deparseInsertSql and
+	 * create_foreign_modify() below, after first copying the parent's
+	 * RTE and modifying some fields to describe the foreign partition to
+	 * work on. However, if this is invoked by UPDATE, the existing RTE
+	 * may already correspond to this partition if it is one of the
+	 * UPDATE subplan target rels; in that case, we can just use the
+	 * existing RTE as-is.
+	 */
+	rte = list_nth(estate->es_range_table, resultRelation - 1);
+	if (rte->relid != RelationGetRelid(rel))
+	{
+		rte = copyObject(rte);
+		rte->relid = RelationGetRelid(rel);
+		rte->relkind = RELKIND_FOREIGN_TABLE;
+
+		/*
+		 * For UPDATE, we must use the RT index of the first subplan
+		 * target rel's RTE, because the core code would have built
+		 * expressions for the partition, such as RETURNING, using that
+		 * RT index as varno of Vars contained in those expressions.
+		 */
+		if (plan && plan->operation == CMD_UPDATE &&
+			resultRelation == plan->nominalRelation)
+			resultRelation = mtstate->resultRelInfo[0].ri_RangeTableIndex;
+	}
+
 	/* Construct the SQL command string. */
-	deparseInsertSql(&sql, root, 1, rel, targetAttrs, doNothing,
+	deparseInsertSql(&sql, rte, resultRelation, rel, targetAttrs, doNothing,
 					 resultRelInfo->ri_returningList, &retrieved_attrs);
 
 	/* Construct an execution state. */
 	fmstate = create_foreign_modify(mtstate->ps.state,
+									rte,
 									resultRelInfo,
 									CMD_INSERT,
 									NULL,
@@ -3255,6 +3279,7 @@ close_cursor(PGconn *conn, unsigned int cursor_number)
  */
 static PgFdwModifyState *
 create_foreign_modify(EState *estate,
+					  RangeTblEntry *rte,
 					  ResultRelInfo *resultRelInfo,
 					  CmdType operation,
 					  Plan *subplan,
@@ -3266,7 +3291,6 @@ create_foreign_modify(EState *estate,
 	PgFdwModifyState *fmstate;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 	TupleDesc	tupdesc = RelationGetDescr(rel);
-	RangeTblEntry *rte;
 	Oid			userid;
 	ForeignTable *table;
 	UserMapping *user;
@@ -3283,7 +3307,6 @@ create_foreign_modify(EState *estate,
 	 * Identify which user to do the remote access as.  This should match what
 	 * ExecCheckRTEPerms() does.
 	 */
-	rte = rt_fetch(resultRelInfo->ri_RangeTableIndex, estate->es_range_table);
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
 	/* Get info about foreign table. */

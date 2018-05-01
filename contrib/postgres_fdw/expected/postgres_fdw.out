@@ -7454,6 +7454,48 @@ select tableoid::regclass, * FROM itrtest;
  remp1    | 1 | foo
 (1 row)
 
+delete from itrtest;
+drop index loct1_idx;
+-- Test that remote triggers work with insert tuple routing
+create function br_insert_trigfunc() returns trigger as $$
+begin
+	new.b := new.b || ' triggered !';
+	return new;
+end
+$$ language plpgsql;
+create trigger loct1_br_insert_trigger before insert on loct1
+	for each row execute procedure br_insert_trigfunc();
+create trigger loct2_br_insert_trigger before insert on loct2
+	for each row execute procedure br_insert_trigfunc();
+-- The new values are concatenated with ' triggered !'
+insert into itrtest values (1, 'foo') returning *;
+ a |        b        
+---+-----------------
+ 1 | foo triggered !
+(1 row)
+
+insert into itrtest values (2, 'qux') returning *;
+ a |        b        
+---+-----------------
+ 2 | qux triggered !
+(1 row)
+
+insert into itrtest values (1, 'test1'), (2, 'test2') returning *;
+ a |         b         
+---+-------------------
+ 1 | test1 triggered !
+ 2 | test2 triggered !
+(2 rows)
+
+with result as (insert into itrtest values (1, 'test1'), (2, 'test2') returning *) select * from result;
+ a |         b         
+---+-------------------
+ 1 | test1 triggered !
+ 2 | test2 triggered !
+(2 rows)
+
+drop trigger loct1_br_insert_trigger on loct1;
+drop trigger loct2_br_insert_trigger on loct2;
 drop table itrtest;
 drop table loct1;
 drop table loct2;
@@ -7518,6 +7560,57 @@ select tableoid::regclass, * FROM locp;
 
 -- The executor should not let unexercised FDWs shut down
 update utrtest set a = 1 where b = 'foo';
+-- Test that remote triggers work with update tuple routing
+create trigger loct_br_insert_trigger before insert on loct
+	for each row execute procedure br_insert_trigfunc();
+delete from utrtest;
+insert into utrtest values (2, 'qux');
+-- Check case where the foreign partition is a subplan target rel
+explain (verbose, costs off)
+update utrtest set a = 1 where a = 1 or a = 2 returning *;
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Update on public.utrtest
+   Output: remp.a, remp.b
+   Foreign Update on public.remp
+   Update on public.locp
+   ->  Foreign Update on public.remp
+         Remote SQL: UPDATE public.loct SET a = 1 WHERE (((a = 1) OR (a = 2))) RETURNING a, b
+   ->  Seq Scan on public.locp
+         Output: 1, locp.b, locp.ctid
+         Filter: ((locp.a = 1) OR (locp.a = 2))
+(9 rows)
+
+-- The new values are concatenated with ' triggered !'
+update utrtest set a = 1 where a = 1 or a = 2 returning *;
+ a |        b        
+---+-----------------
+ 1 | qux triggered !
+(1 row)
+
+delete from utrtest;
+insert into utrtest values (2, 'qux');
+-- Check case where the foreign partition isn't a subplan target rel
+explain (verbose, costs off)
+update utrtest set a = 1 where a = 2 returning *;
+              QUERY PLAN              
+--------------------------------------
+ Update on public.utrtest
+   Output: locp.a, locp.b
+   Update on public.locp
+   ->  Seq Scan on public.locp
+         Output: 1, locp.b, locp.ctid
+         Filter: (locp.a = 2)
+(6 rows)
+
+-- The new values are concatenated with ' triggered !'
+update utrtest set a = 1 where a = 2 returning *;
+ a |        b        
+---+-----------------
+ 1 | qux triggered !
+(1 row)
+
+drop trigger loct_br_insert_trigger on loct;
 drop table utrtest;
 drop table loct;
 -- Test copy tuple routing

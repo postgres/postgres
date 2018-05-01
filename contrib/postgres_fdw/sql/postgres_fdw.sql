@@ -1804,6 +1804,31 @@ insert into itrtest values (1, 'bar') on conflict (a) do update set b = excluded
 
 select tableoid::regclass, * FROM itrtest;
 
+delete from itrtest;
+
+drop index loct1_idx;
+
+-- Test that remote triggers work with insert tuple routing
+create function br_insert_trigfunc() returns trigger as $$
+begin
+	new.b := new.b || ' triggered !';
+	return new;
+end
+$$ language plpgsql;
+create trigger loct1_br_insert_trigger before insert on loct1
+	for each row execute procedure br_insert_trigfunc();
+create trigger loct2_br_insert_trigger before insert on loct2
+	for each row execute procedure br_insert_trigfunc();
+
+-- The new values are concatenated with ' triggered !'
+insert into itrtest values (1, 'foo') returning *;
+insert into itrtest values (2, 'qux') returning *;
+insert into itrtest values (1, 'test1'), (2, 'test2') returning *;
+with result as (insert into itrtest values (1, 'test1'), (2, 'test2') returning *) select * from result;
+
+drop trigger loct1_br_insert_trigger on loct1;
+drop trigger loct2_br_insert_trigger on loct2;
+
 drop table itrtest;
 drop table loct1;
 drop table loct2;
@@ -1835,6 +1860,30 @@ select tableoid::regclass, * FROM locp;
 
 -- The executor should not let unexercised FDWs shut down
 update utrtest set a = 1 where b = 'foo';
+
+-- Test that remote triggers work with update tuple routing
+create trigger loct_br_insert_trigger before insert on loct
+	for each row execute procedure br_insert_trigfunc();
+
+delete from utrtest;
+insert into utrtest values (2, 'qux');
+
+-- Check case where the foreign partition is a subplan target rel
+explain (verbose, costs off)
+update utrtest set a = 1 where a = 1 or a = 2 returning *;
+-- The new values are concatenated with ' triggered !'
+update utrtest set a = 1 where a = 1 or a = 2 returning *;
+
+delete from utrtest;
+insert into utrtest values (2, 'qux');
+
+-- Check case where the foreign partition isn't a subplan target rel
+explain (verbose, costs off)
+update utrtest set a = 1 where a = 2 returning *;
+-- The new values are concatenated with ' triggered !'
+update utrtest set a = 1 where a = 2 returning *;
+
+drop trigger loct_br_insert_trigger on loct;
 
 drop table utrtest;
 drop table loct;

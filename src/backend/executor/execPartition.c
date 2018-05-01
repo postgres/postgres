@@ -333,6 +333,13 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 					  estate->es_instrument);
 
 	/*
+	 * Verify result relation is a valid target for an INSERT.  An UPDATE of a
+	 * partition-key becomes a DELETE+INSERT operation, so this check is still
+	 * required when the operation is CMD_UPDATE.
+	 */
+	CheckValidResultRel(leaf_part_rri, CMD_INSERT);
+
+	/*
 	 * Since we've just initialized this ResultRelInfo, it's not in any list
 	 * attached to the estate as yet.  Add it, so that it can be found later.
 	 *
@@ -343,9 +350,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	estate->es_tuple_routing_result_relations =
 		lappend(estate->es_tuple_routing_result_relations,
 				leaf_part_rri);
-
-	/* Set up information needed for routing tuples to this partition. */
-	ExecInitRoutingInfo(mtstate, estate, proute, leaf_part_rri, partidx);
 
 	/*
 	 * Open partition indices.  The user may have asked to check for conflicts
@@ -488,6 +492,9 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 			ExecBuildProjectionInfo(returningList, econtext, slot,
 									&mtstate->ps, RelationGetDescr(partrel));
 	}
+
+	/* Set up information needed for routing tuples to the partition. */
+	ExecInitRoutingInfo(mtstate, estate, proute, leaf_part_rri, partidx);
 
 	/*
 	 * If there is an ON CONFLICT clause, initialize state for it.
@@ -655,8 +662,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 
 /*
  * ExecInitRoutingInfo
- *		Set up information needed for routing tuples to a leaf partition if
- *		routable; else abort the operation
+ *		Set up information needed for routing tuples to a leaf partition
  */
 void
 ExecInitRoutingInfo(ModifyTableState *mtstate,
@@ -666,9 +672,6 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 					int partidx)
 {
 	MemoryContext oldContext;
-
-	/* Verify the partition is a valid target for INSERT */
-	CheckValidResultRel(partRelInfo, CMD_INSERT);
 
 	/*
 	 * Switch into per-query memory context.
