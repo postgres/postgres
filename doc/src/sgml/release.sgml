@@ -27,7 +27,8 @@ non-ASCII characters            find using grep -P '[\x80-\xFF]'
                        http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
 
         We cannot use UTF8 because back branches still use SGML Docbook,
-	which does not support it.
+	which does not support it.  Also, rendering engines have to
+	support the referenced characters.
 
         Do not use numeric _UTF_ numeric character escapes (&#nnn;),
         we can only use Latin1.
