@@ -2451,7 +2451,8 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 				Tcl_SetObjResult(interp, Tcl_NewIntObj(0));
 				break;
 			}
-			/* FALL THRU for utility returning tuples */
+			/* fall through for utility returning tuples */
+			/* FALLTHROUGH */
 
 		case SPI_OK_SELECT:
 		case SPI_OK_INSERT_RETURNING:

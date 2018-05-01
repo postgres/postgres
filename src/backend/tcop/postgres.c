@@ -2762,7 +2762,8 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 				if (!IsWaitingForLock())
 					return;
 
-				/* Intentional drop through to check wait for pin */
+				/* Intentional fall through to check wait for pin */
+				/* FALLTHROUGH */
 
 			case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
 
@@ -2775,7 +2776,8 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 
 				MyProc->recoveryConflictPending = true;
 
-				/* Intentional drop through to error handling */
+				/* Intentional fall through to error handling */
+				/* FALLTHROUGH */
 
 			case PROCSIG_RECOVERY_CONFLICT_LOCK:
 			case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
@@ -2819,7 +2821,8 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 					break;
 				}
 
-				/* Intentional drop through to session cancel */
+				/* Intentional fall through to session cancel */
+				/* FALLTHROUGH */
 
 			case PROCSIG_RECOVERY_CONFLICT_DATABASE:
 				RecoveryConflictPending = true;

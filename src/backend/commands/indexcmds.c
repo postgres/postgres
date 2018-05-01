@@ -440,6 +440,7 @@ DefineIndex(Oid relationId,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot create index on foreign table \"%s\"",
 							RelationGetRelationName(rel))));
+			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),

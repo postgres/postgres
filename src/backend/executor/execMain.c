@@ -2741,6 +2741,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 
 				case HeapTupleInvisible:
 					elog(ERROR, "attempted to lock invisible tuple");
+					break;
 
 				default:
 					ReleaseBuffer(buffer);

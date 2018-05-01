@@ -202,6 +202,7 @@ retry:
 				goto retry;
 			case HeapTupleInvisible:
 				elog(ERROR, "attempted to lock invisible tuple");
+				break;
 			default:
 				elog(ERROR, "unexpected heap_lock_tuple status: %u", res);
 				break;
@@ -365,6 +366,7 @@ retry:
 				goto retry;
 			case HeapTupleInvisible:
 				elog(ERROR, "attempted to lock invisible tuple");
+				break;
 			default:
 				elog(ERROR, "unexpected heap_lock_tuple status: %u", res);
 				break;

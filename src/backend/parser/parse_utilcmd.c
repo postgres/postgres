@@ -3829,12 +3829,14 @@ validateInfiniteBounds(ParseState *pstate, List *blist)
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("every bound following MAXVALUE must also be MAXVALUE"),
 						 parser_errposition(pstate, exprLocation((Node *) prd))));
+				break;
 
 			case PARTITION_RANGE_DATUM_MINVALUE:
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("every bound following MINVALUE must also be MINVALUE"),
 						 parser_errposition(pstate, exprLocation((Node *) prd))));
+				break;
 		}
 	}
 }

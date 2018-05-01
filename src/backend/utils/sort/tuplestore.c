@@ -972,7 +972,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 							(errcode_for_file_access(),
 							 errmsg("could not seek in tuplestore temporary file: %m")));
 			state->status = TSS_READFILE;
-			/* FALL THRU into READFILE case */
+			/* FALLTHROUGH */
 
 		case TSS_READFILE:
 			*should_free = true;

@@ -5216,6 +5216,7 @@ get_rolespec_tuple(const RoleSpec *role)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("role \"%s\" does not exist", "public")));
 			tuple = NULL;		/* make compiler happy */
+			break;
 
 		default:
 			elog(ERROR, "unexpected role type %d", role->roletype);

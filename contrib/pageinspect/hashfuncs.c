@@ -97,18 +97,22 @@ verify_hash_page(bytea *raw_page, int flags)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("page is not a hash meta page")));
+				break;
 			case LH_BUCKET_PAGE | LH_OVERFLOW_PAGE:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("page is not a hash bucket or overflow page")));
+				break;
 			case LH_OVERFLOW_PAGE:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("page is not a hash overflow page")));
+				break;
 			default:
 				elog(ERROR,
 					 "hash page of type %08x not in mask %08x",
 					 pagetype, flags);
+				break;
 		}
 	}
 
