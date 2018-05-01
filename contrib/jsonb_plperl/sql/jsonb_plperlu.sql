@@ -34,28 +34,6 @@ $$;
 SELECT testSVToJsonb();
 
 
-CREATE FUNCTION testInf() RETURNS jsonb
-LANGUAGE plperlu
-TRANSFORM FOR TYPE jsonb
-AS $$
-$val = 9**9**9;  # we assume this will overflow to +Inf
-return $val;
-$$;
-
-SELECT testInf();
-
-
-CREATE FUNCTION testNaN() RETURNS jsonb
-LANGUAGE plperlu
-TRANSFORM FOR TYPE jsonb
-AS $$
-$val = sin(9**9**9);  # we assume sin(inf) will yield NaN
-return $val;
-$$;
-
-SELECT testNaN();
-
-
 -- this revealed a bug in the original implementation
 CREATE FUNCTION testRegexpResultToJsonb() RETURNS jsonb
 LANGUAGE plperlu
