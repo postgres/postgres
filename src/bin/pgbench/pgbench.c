@@ -67,6 +67,7 @@
 #define FNV_PRIME			UINT64CONST(0x100000001b3)
 #define FNV_OFFSET_BASIS	UINT64CONST(0xcbf29ce484222325)
 #define MM2_MUL				UINT64CONST(0xc6a4a7935bd1e995)
+#define MM2_MUL_TIMES_8		UINT64CONST(0x35253c9ade8f4ca8)
 #define MM2_ROT				47
 
 /*
@@ -968,7 +969,7 @@ getHashFnv1a(int64 val, uint64 seed)
 static int64
 getHashMurmur2(int64 val, uint64 seed)
 {
-	uint64		result = seed ^ (sizeof(int64) * MM2_MUL);
+	uint64		result = seed ^ MM2_MUL_TIMES_8;	/* sizeof(int64) */
 	uint64		k = (uint64) val;
 
 	k *= MM2_MUL;

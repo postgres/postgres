@@ -1361,7 +1361,7 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 	char		buf[TAR_SEND_SIZE];
 	uint16		checksum;
 	int			checksum_failures = 0;
-	size_t		cnt;
+	off_t		cnt;
 	int			i;
 	pgoff_t		len = 0;
 	char	   *page;

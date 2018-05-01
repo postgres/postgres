@@ -357,7 +357,9 @@
 #define HAVE_SSL_GET_CURRENT_COMPRESSION 1
 
 /* Define to 1 if stdbool.h conforms to C99. */
-/* #undef HAVE_STDBOOL_H */
+#if (_MSC_VER >= 1800)
+#define HAVE_STDBOOL_H 1
+#endif
 
 /* Define to 1 if you have the <stdint.h> header file. */
 /* #undef HAVE_STDINT_H */
