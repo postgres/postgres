@@ -12,7 +12,6 @@
  */
 #include "postgres.h"
 
-#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
@@ -24,65 +23,6 @@ static Size UsedShmemSegSize = 0;
 
 static bool EnableLockPagesPrivilege(int elevel);
 static void pgwin32_SharedMemoryDelete(int status, Datum shmId);
-
-static const char *
-mi_type(DWORD code)
-{
-	switch (code)
-	{
-		case MEM_IMAGE:
-			return "img";
-		case MEM_MAPPED:
-			return "map";
-		case MEM_PRIVATE:
-			return "prv";
-	}
-	return "???";
-}
-
-static const char *
-mi_state(DWORD code)
-{
-	switch (code)
-	{
-		case MEM_COMMIT:
-			return "commit";
-		case MEM_FREE:
-			return "free  ";
-		case MEM_RESERVE:
-			return "reserv";
-	}
-	return "???";
-}
-
-/*
- * Append memory dump to buf.  To avoid affecting the memory map mid-run,
- * buf should be preallocated to be bigger than needed.
- */
-static void
-dumpmem(StringInfo buf, const char *reason)
-{
-	char	   *addr = 0;
-	MEMORY_BASIC_INFORMATION mi;
-
-	appendStringInfo(buf, "%s memory map:\n", reason);
-	do
-	{
-		memset(&mi, 0, sizeof(mi));
-		if (!VirtualQuery(addr, &mi, sizeof(mi)))
-		{
-			if (GetLastError() == ERROR_INVALID_PARAMETER)
-				break;
-			appendStringInfo(buf, "VirtualQuery failed: %lu\n", GetLastError());
-			break;
-		}
-		appendStringInfo(buf, "0x%p+0x%p %s (alloc 0x%p) %s\n",
-						 mi.BaseAddress, (void *) mi.RegionSize,
-						 mi_type(mi.Type), mi.AllocationBase,
-						 mi_state(mi.State));
-		addr += mi.RegionSize;
-	} while (addr > 0);
-}
 
 /*
  * Generate shared memory segment name. Expand the data directory, to generate
@@ -251,7 +191,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	SIZE_T		largePageSize = 0;
 	Size		orig_size = size;
 	DWORD		flProtect = PAGE_READWRITE;
-	MEMORY_BASIC_INFORMATION info;
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
@@ -420,14 +359,6 @@ retry:
 	/* Register on-exit routine to delete the new segment */
 	on_shmem_exit(pgwin32_SharedMemoryDelete, PointerGetDatum(hmap2));
 
-	/* Log information about the segment's virtual memory use */
-	if (VirtualQuery(memAddress, &info, sizeof(info)) != 0)
-		elog(LOG, "mapped shared memory segment at %p, requested size 0x%zx, mapped size 0x%zx",
-			 memAddress, size, info.RegionSize);
-	else
-		elog(LOG, "VirtualQuery(%p) failed: error code %lu",
-			 memAddress, GetLastError());
-
 	*shim = hdr;
 	return hdr;
 }
@@ -448,21 +379,9 @@ PGSharedMemoryReAttach(void)
 {
 	PGShmemHeader *hdr;
 	void	   *origUsedShmemSegAddr = UsedShmemSegAddr;
-	StringInfoData buf;
 
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(IsUnderPostmaster);
-
-	/* Ensure buf is big enough that it won't grow mid-operation */
-	initStringInfo(&buf);
-	enlargeStringInfo(&buf, 128 * 1024);
-	/* ... and let's just be sure all that space is committed */
-	memset(buf.data, 0, buf.maxlen);
-
-	/* Test: see if this lets the process address space quiesce */
-	pg_usleep(1000000L);
-
-	dumpmem(&buf, "before VirtualFree");
 
 	/*
 	 * Release memory region reservation that was made by the postmaster
@@ -471,31 +390,16 @@ PGSharedMemoryReAttach(void)
 		elog(FATAL, "failed to release reserved memory region (addr=%p): error code %lu",
 			 UsedShmemSegAddr, GetLastError());
 
-	dumpmem(&buf, "after VirtualFree");
-
 	hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
 	if (!hdr)
-	{
-		DWORD		maperr = GetLastError();
-
-		dumpmem(&buf, "after failed MapViewOfFileEx");
-		elog(LOG, "%s", buf.data);
-
 		elog(FATAL, "could not reattach to shared memory (key=%p, addr=%p): error code %lu",
-			 UsedShmemSegID, UsedShmemSegAddr, maperr);
-	}
-
-	dumpmem(&buf, "after MapViewOfFileEx");
-	elog(LOG, "%s", buf.data);
-
+			 UsedShmemSegID, UsedShmemSegAddr, GetLastError());
 	if (hdr != origUsedShmemSegAddr)
 		elog(FATAL, "reattaching to shared memory returned unexpected address (got %p, expected %p)",
 			 hdr, origUsedShmemSegAddr);
 	if (hdr->magic != PGShmemMagic)
 		elog(FATAL, "reattaching to shared memory returned non-PostgreSQL memory");
 	dsm_set_control_handle(hdr->dsm_control);
-
-	pfree(buf.data);
 
 	UsedShmemSegAddr = hdr;		/* probably redundant */
 }
