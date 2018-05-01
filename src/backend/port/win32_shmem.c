@@ -456,22 +456,11 @@ PGSharedMemoryReAttach(void)
 	/* Ensure buf is big enough that it won't grow mid-operation */
 	initStringInfo(&buf);
 	enlargeStringInfo(&buf, 128 * 1024);
+	/* ... and let's just be sure all that space is committed */
+	memset(buf.data, 0, buf.maxlen);
 
-	dumpmem(&buf, "beginning PGSharedMemoryReAttach");
-
-	hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, NULL);
-	if (hdr)
-	{
-		if (!UnmapViewOfFile(hdr))
-			elog(LOG, "could not unmap temporary view of shared memory: error code %lu",
-				 GetLastError());
-	}
-	else
-	{
-		/* This isn't fatal, just unpromising ... */
-		elog(LOG, "could not attach to shared memory (key=%p) at any address: error code %lu",
-			 UsedShmemSegID, GetLastError());
-	}
+	/* Test: see if this lets the process address space quiesce */
+	pg_usleep(1000000L);
 
 	dumpmem(&buf, "before VirtualFree");
 
