@@ -3315,8 +3315,8 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      <listitem>
       <para>
        While primary keys are supported on partitioned tables, foreign
-       keys referencing partitioned tables are not supported, nor are foreign
-       key references from a partitioned table to some other table.
+       keys referencing partitioned tables are not supported.  (Foreign key
+       references from a partitioned table to some other table are supported.)
       </para>
      </listitem>
 
@@ -3338,13 +3338,6 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
        session 2 would have identified the newly updated row and carried out
        the <command>UPDATE</command>/<command>DELETE</command> on this new row
        version.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Row triggers, if necessary, must be defined on individual partitions,
-       not the partitioned table.
       </para>
      </listitem>
     </itemizedlist>
