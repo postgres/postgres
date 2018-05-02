@@ -672,7 +672,8 @@ llvm_compile_expr(ExprState *state)
 
 					LLVMPositionBuilderAtEnd(b, b_nonull);
 				}
-				/* explicit fallthrough */
+				/* FALLTHROUGH */
+
 			case EEOP_FUNCEXPR:
 				{
 					FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
@@ -709,8 +710,8 @@ llvm_compile_expr(ExprState *state)
 												 l_ptr(TypeStorageBool));
 					LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
 
-					/* intentionally fall through */
 				}
+				/* FALLTHROUGH */
 
 				/*
 				 * Treat them the same for now, optimizer can remove
@@ -810,9 +811,8 @@ llvm_compile_expr(ExprState *state)
 					v_boolanynullp = l_ptr_const(op->d.boolexpr.anynull,
 												 l_ptr(TypeStorageBool));
 					LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
-
-					/* intentionally fall through */
 				}
+				/* FALLTHROUGH */
 
 				/*
 				 * Treat them the same for now, optimizer can remove
@@ -2083,9 +2083,8 @@ llvm_compile_expr(ExprState *state)
 									opblocks[op->d.agg_deserialize.jumpnull],
 									b_deserialize);
 					LLVMPositionBuilderAtEnd(b, b_deserialize);
-
-					/* fallthrough */
 				}
+				/* FALLTHROUGH */
 
 			case EEOP_AGG_DESERIALIZE:
 				{
