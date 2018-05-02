@@ -631,20 +631,27 @@ dependency_implies_attribute(MVDependency *dependency, AttrNumber attnum)
 MVDependencies *
 statext_dependencies_load(Oid mvoid)
 {
+	MVDependencies *result;
 	bool		isnull;
 	Datum		deps;
-	HeapTuple	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(mvoid));
+	HeapTuple	htup;
 
+	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(mvoid));
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
 
 	deps = SysCacheGetAttr(STATEXTOID, htup,
 						   Anum_pg_statistic_ext_stxdependencies, &isnull);
-	Assert(!isnull);
+	if (isnull)
+		elog(ERROR,
+			 "requested statistic kind \"%c\" is not yet built for statistics object %u",
+			 STATS_EXT_DEPENDENCIES, mvoid);
+
+	result = statext_dependencies_deserialize(DatumGetByteaPP(deps));
 
 	ReleaseSysCache(htup);
 
-	return statext_dependencies_deserialize(DatumGetByteaP(deps));
+	return result;
 }
 
 /*
