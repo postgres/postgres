@@ -126,24 +126,27 @@ statext_ndistinct_build(double totalrows, int numrows, HeapTuple *rows,
 MVNDistinct *
 statext_ndistinct_load(Oid mvoid)
 {
-	bool		isnull = false;
+	MVNDistinct *result;
+	bool		isnull;
 	Datum		ndist;
 	HeapTuple	htup;
 
 	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(mvoid));
-	if (!htup)
+	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
 
 	ndist = SysCacheGetAttr(STATEXTOID, htup,
 							Anum_pg_statistic_ext_stxndistinct, &isnull);
 	if (isnull)
 		elog(ERROR,
-			 "requested statistic kind %c is not yet built for statistics object %u",
+			 "requested statistic kind \"%c\" is not yet built for statistics object %u",
 			 STATS_EXT_NDISTINCT, mvoid);
+
+	result = statext_ndistinct_deserialize(DatumGetByteaPP(ndist));
 
 	ReleaseSysCache(htup);
 
-	return statext_ndistinct_deserialize(DatumGetByteaP(ndist));
+	return result;
 }
 
 /*
