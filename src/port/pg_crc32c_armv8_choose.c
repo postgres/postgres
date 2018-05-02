@@ -8,10 +8,6 @@
  * computation. Otherwise, fall back to the pure software implementation
  * (slicing-by-8).
  *
- * XXX: The glibc-specific getauxval() function, with the HWCAP_CRC32
- * flag, is used to determine if the CRC Extension is available on the
- * current platform. Is there a more portable way to determine that?
- *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -24,17 +20,38 @@
 
 #include "c.h"
 
-#include <sys/auxv.h>
-#include <asm/hwcap.h>
+#include <setjmp.h>
 
+#include "libpq/pqsignal.h"
 #include "port/pg_crc32c.h"
+
+
+static sigjmp_buf illegal_instruction_jump;
+
+/*
+ * Probe by trying to execute pg_comp_crc32c_armv8().  If the instruction
+ * isn't available, we expect to get SIGILL, which we can trap.
+ */
+static void
+illegal_instruction_handler(int signo)
+{
+	siglongjmp(illegal_instruction_jump, 1);
+}
 
 static bool
 pg_crc32c_armv8_available(void)
 {
-	unsigned long auxv = getauxval(AT_HWCAP);
+	uint64		data = 42;
+	bool		result;
 
-	return (auxv & HWCAP_CRC32) != 0;
+	pqsignal(SIGILL, illegal_instruction_handler);
+	if (sigsetjmp(illegal_instruction_jump, 1) == 0)
+		result = (pg_comp_crc32c_armv8(0, &data, sizeof(data)) == 0xdd439b0d);
+	else
+		result = false;
+	pqsignal(SIGILL, SIG_DFL);
+
+	return result;
 }
 
 /*

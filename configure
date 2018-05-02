@@ -17344,46 +17344,6 @@ fi
 fi
 
 
-# In order to detect at runtime, if the ARM CRC Extension is available,
-# we will do "getauxval(AT_HWCAP) & HWCAP_CRC32". Check if we have
-# everything we need for that.
-for ac_func in getauxval
-do :
-  ac_fn_c_check_func "$LINENO" "getauxval" "ac_cv_func_getauxval"
-if test "x$ac_cv_func_getauxval" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_GETAUXVAL 1
-_ACEOF
-
-fi
-done
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <sys/auxv.h>
-#include <asm/hwcap.h>
-
-int
-main ()
-{
-
-#ifndef AT_HWCAP
-#error AT_HWCAP not defined
-#endif
-#ifndef HWCAP_CRC32
-#error HWCAP_CRC32 not defined
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  HAVE_HWCAP_CRC32=1
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
 # Select CRC-32C implementation.
 #
 # If we are targeting a processor that has Intel SSE 4.2 instructions, we can
@@ -17414,9 +17374,8 @@ if test x"$USE_SLICING_BY_8_CRC32C" = x"" && test x"$USE_SSE42_CRC32C" = x"" && 
       if test x"$pgac_armv8_crc32c_intrinsics" = x"yes" && test x"$CFLAGS_ARMV8_CRC32C" = x""; then
         USE_ARMV8_CRC32C=1
       else
-        # ARM CRC Extension, with runtime check? The getauxval() function and
-        # HWCAP_CRC32 are needed for the runtime check.
-        if test x"$pgac_armv8_crc32c_intrinsics" = x"yes" && test x"$ac_cv_func_getauxval" = x"yes" && test x"$HAVE_HWCAP_CRC32" = x"1"; then
+        # ARM CRC Extension, with runtime check?
+        if test x"$pgac_armv8_crc32c_intrinsics" = x"yes"; then
           USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK=1
         else
           # fall back to slicing-by-8 algorithm, which doesn't require any
