@@ -1980,7 +1980,8 @@ evalStandardFunc(TState *thread, CState *st,
 					}
 				}
 
-				break;			/* NOTREACHED */
+				Assert(0);
+				return false;	/* NOTREACHED */
 			}
 
 			/* integer bitwise operators */
