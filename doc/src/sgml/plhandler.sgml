@@ -11,9 +11,8 @@
    <para>
     All calls to functions that are written in a language other than
     the current <quote>version 1</quote> interface for compiled
-    languages (this includes functions in user-defined procedural languages,
-    functions written in SQL, and functions using the version 0 compiled
-    language interface) go through a <firstterm>call handler</firstterm>
+    languages (this includes functions in user-defined procedural languages
+    and functions written in SQL) go through a <firstterm>call handler</firstterm>
     function for the specific language.  It is the responsibility of
     the call handler to execute the function in a meaningful way, such
     as by interpreting the supplied source text.  This chapter outlines
