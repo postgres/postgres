@@ -426,11 +426,17 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 	{
 		char		filename[MAXPGPATH];
 		BufFile    *file;
+		off_t		filesize;
 
 		lt = &lts->tapes[i];
 
 		pg_itoa(i, filename);
 		file = BufFileOpenShared(fileset, filename);
+		filesize = BufFileSize(file);
+		if (filesize < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not determine size of temporary file \"%s\"", filename)));
 
 		/*
 		 * Stash first BufFile, and concatenate subsequent BufFiles to that.
@@ -447,8 +453,8 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 			lt->offsetBlockNumber = BufFileAppend(lts->pfile, file);
 		}
 		/* Don't allocate more for read buffer than could possibly help */
-		lt->max_size = Min(MaxAllocSize, shared[i].buffilesize);
-		tapeblocks = shared[i].buffilesize / BLCKSZ;
+		lt->max_size = Min(MaxAllocSize, filesize);
+		tapeblocks = filesize / BLCKSZ;
 		nphysicalblocks += tapeblocks;
 	}
 
@@ -938,7 +944,6 @@ LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum, TapeShare *share)
 	{
 		BufFileExportShared(lts->pfile);
 		share->firstblocknumber = lt->firstBlockNumber;
-		share->buffilesize = BufFileSize(lts->pfile);
 	}
 }
 

@@ -44,13 +44,10 @@ typedef struct LogicalTapeSet LogicalTapeSet;
 typedef struct TapeShare
 {
 	/*
-	 * firstblocknumber is first block that should be read from materialized
-	 * tape.
-	 *
-	 * buffilesize is the size of associated BufFile following freezing.
+	 * Currently, all the leader process needs is the location of the
+	 * materialized tape's first block.
 	 */
 	long		firstblocknumber;
-	off_t		buffilesize;
 } TapeShare;
 
 /*

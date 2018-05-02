@@ -802,14 +802,24 @@ BufFileTellBlock(BufFile *file)
 #endif
 
 /*
- * Return the current file size.  Counts any holes left behind by
- * BufFileViewAppend as part of the size.
+ * Return the current file size.
+ *
+ * Counts any holes left behind by BufFileAppend as part of the size.
+ * Returns -1 on error.
  */
 off_t
 BufFileSize(BufFile *file)
 {
+	off_t		lastFileSize;
+
+	/* Get the size of the last physical file by seeking to end. */
+	lastFileSize = FileSeek(file->files[file->numFiles - 1], 0, SEEK_END);
+	if (lastFileSize < 0)
+		return -1;
+	file->offsets[file->numFiles - 1] = lastFileSize;
+
 	return ((file->numFiles - 1) * (off_t) MAX_PHYSICAL_FILESIZE) +
-		FileGetSize(file->files[file->numFiles - 1]);
+		lastFileSize;
 }
 
 /*
@@ -853,7 +863,7 @@ BufFileAppend(BufFile *target, BufFile *source)
 	for (i = target->numFiles; i < newNumFiles; i++)
 	{
 		target->files[i] = source->files[i - target->numFiles];
-		target->offsets[i] = 0L;
+		target->offsets[i] = source->offsets[i - target->numFiles];
 	}
 	target->numFiles = newNumFiles;
 

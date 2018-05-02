@@ -4395,7 +4395,6 @@ tuplesort_initialize_shared(Sharedsort *shared, int nWorkers, dsm_segment *seg)
 	for (i = 0; i < nWorkers; i++)
 	{
 		shared->tapes[i].firstblocknumber = 0L;
-		shared->tapes[i].buffilesize = 0;
 	}
 }
 

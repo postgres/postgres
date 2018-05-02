@@ -78,7 +78,6 @@ extern char *FilePathName(File file);
 extern int	FileGetRawDesc(File file);
 extern int	FileGetRawFlags(File file);
 extern mode_t FileGetRawMode(File file);
-extern off_t FileGetSize(File file);
 
 /* Operations used for sharing named temporary files */
 extern File PathNameCreateTemporaryFile(const char *name, bool error_on_failure);

@@ -2256,16 +2256,6 @@ FileGetRawMode(File file)
 }
 
 /*
- * FileGetSize - returns the size of file
- */
-off_t
-FileGetSize(File file)
-{
-	Assert(FileIsValid(file));
-	return VfdCache[file].fileSize;
-}
-
-/*
  * Make room for another allocatedDescs[] array entry if needed and possible.
  * Returns true if an array element is available.
  */
