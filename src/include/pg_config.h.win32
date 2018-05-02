@@ -615,7 +615,7 @@
 #define PG_VERSION_STR "Uninitialized version string (win32)"
 
 /* The size of `bool', as computed by sizeof. */
-#define SIZEOF_BOOL 0
+#define SIZEOF_BOOL 1
 
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 4
