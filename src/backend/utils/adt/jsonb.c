@@ -343,6 +343,7 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
 	JsonbValue	v;
+	Datum		numd;
 
 	switch (tokentype)
 	{
@@ -361,18 +362,19 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 			 */
 			Assert(token != NULL);
 			v.type = jbvNumeric;
-			v.val.numeric = DatumGetNumeric(DirectFunctionCall3(numeric_in, CStringGetDatum(token), 0, -1));
-
+			numd = DirectFunctionCall3(numeric_in,
+									   CStringGetDatum(token),
+									   ObjectIdGetDatum(InvalidOid),
+									   Int32GetDatum(-1));
+			v.val.numeric = DatumGetNumeric(numd);
 			break;
 		case JSON_TOKEN_TRUE:
 			v.type = jbvBool;
 			v.val.boolean = true;
-
 			break;
 		case JSON_TOKEN_FALSE:
 			v.type = jbvBool;
 			v.val.boolean = false;
-
 			break;
 		case JSON_TOKEN_NULL:
 			v.type = jbvNull;
@@ -772,9 +774,14 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 									 strchr(outputstr, 'n') != NULL);
 					if (!numeric_error)
 					{
-						jb.type = jbvNumeric;
-						jb.val.numeric = DatumGetNumeric(DirectFunctionCall3(numeric_in, CStringGetDatum(outputstr), 0, -1));
+						Datum		numd;
 
+						jb.type = jbvNumeric;
+						numd = DirectFunctionCall3(numeric_in,
+												   CStringGetDatum(outputstr),
+												   ObjectIdGetDatum(InvalidOid),
+												   Int32GetDatum(-1));
+						jb.val.numeric = DatumGetNumeric(numd);
 						pfree(outputstr);
 					}
 					else

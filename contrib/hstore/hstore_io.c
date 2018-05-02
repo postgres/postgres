@@ -1462,10 +1462,14 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 								   HSTORE_VALLEN(entries, i));
 			if (IsValidJsonNumber(tmp.data, tmp.len))
 			{
+				Datum		numd;
+
 				val.type = jbvNumeric;
-				val.val.numeric = DatumGetNumeric(
-												  DirectFunctionCall3(numeric_in,
-																	  CStringGetDatum(tmp.data), 0, -1));
+				numd = DirectFunctionCall3(numeric_in,
+										   CStringGetDatum(tmp.data),
+										   ObjectIdGetDatum(InvalidOid),
+										   Int32GetDatum(-1));
+				val.val.numeric = DatumGetNumeric(numd);
 			}
 			else
 			{

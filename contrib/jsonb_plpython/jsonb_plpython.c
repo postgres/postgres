@@ -325,8 +325,13 @@ PLyNumber_ToJsonbValue(PyObject *obj, JsonbValue *jbvNum)
 
 	PG_TRY();
 	{
-		num = DatumGetNumeric(DirectFunctionCall3(numeric_in,
-												  CStringGetDatum(str), 0, -1));
+		Datum		numd;
+
+		numd = DirectFunctionCall3(numeric_in,
+								   CStringGetDatum(str),
+								   ObjectIdGetDatum(InvalidOid),
+								   Int32GetDatum(-1));
+		num = DatumGetNumeric(numd);
 	}
 	PG_CATCH();
 	{

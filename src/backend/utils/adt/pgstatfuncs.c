@@ -813,7 +813,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					 */
 					nulls[12] = true;
 					nulls[13] = true;
-					values[14] = DatumGetInt32(-1);
+					values[14] = Int32GetDatum(-1);
 				}
 				else
 				{

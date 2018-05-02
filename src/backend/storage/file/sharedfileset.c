@@ -214,9 +214,9 @@ SharedFileSetPath(char *path, SharedFileSet *fileset, Oid tablespace)
 	char		tempdirpath[MAXPGPATH];
 
 	TempTablespacePath(tempdirpath, tablespace);
-	snprintf(path, MAXPGPATH, "%s/%s%d.%u.sharedfileset",
+	snprintf(path, MAXPGPATH, "%s/%s%lu.%u.sharedfileset",
 			 tempdirpath, PG_TEMP_FILE_PREFIX,
-			 fileset->creator_pid, fileset->number);
+			 (unsigned long) fileset->creator_pid, fileset->number);
 }
 
 /*

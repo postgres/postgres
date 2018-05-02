@@ -3818,8 +3818,8 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 	/* sumX */
 	temp = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
-							   InvalidOid,
-							   -1);
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 	init_var_from_num(DatumGetNumeric(temp), &tmp_var);
 	accum_sum_add(&(result->sumX), &tmp_var);
 
@@ -3941,16 +3941,16 @@ numeric_deserialize(PG_FUNCTION_ARGS)
 	/* sumX */
 	temp = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
-							   InvalidOid,
-							   -1);
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 	init_var_from_num(DatumGetNumeric(temp), &sumX_var);
 	accum_sum_add(&(result->sumX), &sumX_var);
 
 	/* sumX2 */
 	temp = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
-							   InvalidOid,
-							   -1);
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 	init_var_from_num(DatumGetNumeric(temp), &sumX2_var);
 	accum_sum_add(&(result->sumX2), &sumX2_var);
 
@@ -4340,14 +4340,14 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 	/* sumX */
 	sumX = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
-							   InvalidOid,
-							   -1);
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 
 	/* sumX2 */
 	sumX2 = DirectFunctionCall3(numeric_recv,
 								PointerGetDatum(&buf),
-								InvalidOid,
-								-1);
+								ObjectIdGetDatum(InvalidOid),
+								Int32GetDatum(-1));
 
 	init_var_from_num(DatumGetNumeric(sumX), &sumX_var);
 #ifdef HAVE_INT128
@@ -4550,8 +4550,8 @@ int8_avg_deserialize(PG_FUNCTION_ARGS)
 	/* sumX */
 	temp = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
-							   InvalidOid,
-							   -1);
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 	init_var_from_num(DatumGetNumeric(temp), &num);
 #ifdef HAVE_INT128
 	numericvar_to_int128(&num, &result->sumX);
