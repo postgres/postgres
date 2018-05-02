@@ -3340,6 +3340,13 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
        version.
       </para>
      </listitem>
+
+     <listitem>
+      <para>
+       <literal>BEFORE ROW</literal> triggers, if necessary, must be defined
+       on individual partitions, not the partitioned table.
+      </para>
+     </listitem>
     </itemizedlist>
     </para>
     </sect3>
