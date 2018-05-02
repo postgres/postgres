@@ -4583,17 +4583,19 @@ INSERT INTO a SELECT * FROM a;
 
 PG_MODULE_MAGIC;
 
-int64 execq(text *sql, int cnt);
+PG_FUNCTION_INFO_V1(execq);
 
-int64
-execq(text *sql, int cnt)
+Datum
+execq(PG_FUNCTION_ARGS)
 {
     char *command;
+    int cnt;
     int ret;
     uint64 proc;
 
     /* Convert given text object to a C string */
-    command = text_to_cstring(sql);
+    command = text_to_cstring(PG_GETARG_TEXT_PP(1));
+    cnt = PG_GETARG_INT32(2);
 
     SPI_connect();
 
@@ -4626,15 +4628,9 @@ execq(text *sql, int cnt)
     SPI_finish();
     pfree(command);
 
-    return proc;
+    PG_RETURN_INT64(proc);
 }
 </programlisting>
-
-  <para>
-   (This function uses call convention version 0, to make the example
-   easier to understand.  In real applications you should use the new
-   version 1 interface.)
-  </para>
 
   <para>
    This is how you declare the function after having compiled it into
