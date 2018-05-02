@@ -261,34 +261,36 @@ SPI_rollback(void)
 }
 
 /*
+ * Clean up SPI state.  Called on transaction end (of non-SPI-internal
+ * transactions) and when returning to the main loop on error.
+ */
+void
+SPICleanup(void)
+{
+	_SPI_current = NULL;
+	_SPI_connected = -1;
+	SPI_processed = 0;
+	SPI_lastoid = InvalidOid;
+	SPI_tuptable = NULL;
+}
+
+/*
  * Clean up SPI state at transaction commit or abort.
  */
 void
 AtEOXact_SPI(bool isCommit)
 {
-	/*
-	 * Do nothing if the transaction end was initiated by SPI.
-	 */
+	/* Do nothing if the transaction end was initiated by SPI. */
 	if (_SPI_current && _SPI_current->internal_xact)
 		return;
 
-	/*
-	 * Note that memory contexts belonging to SPI stack entries will be freed
-	 * automatically, so we can ignore them here.  We just need to restore our
-	 * static variables to initial state.
-	 */
 	if (isCommit && _SPI_connected != -1)
 		ereport(WARNING,
 				(errcode(ERRCODE_WARNING),
 				 errmsg("transaction left non-empty SPI stack"),
 				 errhint("Check for missing \"SPI_finish\" calls.")));
 
-	_SPI_current = _SPI_stack = NULL;
-	_SPI_stack_depth = 0;
-	_SPI_connected = -1;
-	SPI_processed = 0;
-	SPI_lastoid = InvalidOid;
-	SPI_tuptable = NULL;
+	SPICleanup();
 }
 
 /*
