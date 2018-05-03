@@ -2007,7 +2007,7 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 	/* Check if we add the ON CONFLICT clause to the remote query. */
 	if (plan)
 	{
-		OnConflictAction onConflictAction = ((ModifyTable *) plan)->onConflictAction;
+		OnConflictAction onConflictAction = plan->onConflictAction;
 
 		/* We only support DO NOTHING without an inference specification. */
 		if (onConflictAction == ONCONFLICT_NOTHING)
