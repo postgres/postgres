@@ -1487,6 +1487,9 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	/* compute latestXid among all children */
 	latestXid = TransactionIdLatest(xid, hdr->nsubxacts, children);
 
+	/* Prevent cancel/die interrupt while cleaning up */
+	HOLD_INTERRUPTS();
+
 	/*
 	 * The order of operations here is critical: make the XLOG entry for
 	 * commit or abort, then mark the transaction committed or aborted in
@@ -1577,6 +1580,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	RemoveGXact(gxact);
 	LWLockRelease(TwoPhaseStateLock);
 	MyLockedGxact = NULL;
+
+	RESUME_INTERRUPTS();
 
 	pfree(buf);
 }
