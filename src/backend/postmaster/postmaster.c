@@ -957,7 +957,15 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	CreateDataDirLockFile(true);
 
-	/* read control file (error checking and contains config) */
+	/*
+	 * Read the control file (for error checking and config info).
+	 *
+	 * Since we verify the control file's CRC, this has a useful side effect
+	 * on machines where we need a run-time test for CRC support instructions.
+	 * The postmaster will do the test once at startup, and then its child
+	 * processes will inherit the correct function pointer and not need to
+	 * repeat the test.
+	 */
 	LocalProcessControlFile(false);
 
 	/*
