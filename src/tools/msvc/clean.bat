@@ -54,10 +54,11 @@ if exist doc\src\sgml\version.sgml del /q doc\src\sgml\version.sgml
 if %DIST%==1 if exist src\backend\utils\fmgroids.h del /q src\backend\utils\fmgroids.h
 if %DIST%==1 if exist src\backend\utils\fmgrprotos.h del /q src\backend\utils\fmgrprotos.h
 if %DIST%==1 if exist src\backend\utils\fmgrtab.c del /q src\backend\utils\fmgrtab.c
+if %DIST%==1 if exist src\backend\utils\fmgr-stamp del /q src\backend\utils\fmgr-stamp
+if %DIST%==1 if exist src\backend\utils\errcodes.h del /q src\backend\utils\errcodes.h
 if %DIST%==1 if exist src\backend\storage\lmgr\lwlocknames.c del /q src\backend\storage\lmgr\lwlocknames.c
 if %DIST%==1 if exist src\backend\storage\lmgr\lwlocknames.h del /q src\backend\storage\lmgr\lwlocknames.h
 if %DIST%==1 if exist src\pl\plpython\spiexceptions.h del /q src\pl\plpython\spiexceptions.h
-if %DIST%==1 if exist src\backend\utils\errcodes.h del /q src\backend\utils\errcodes.h
 if %DIST%==1 if exist src\pl\plpgsql\src\plerrcodes.h del /q src\pl\plpgsql\src\plerrcodes.h
 if %DIST%==1 if exist src\pl\tcl\pltclerrcodes.h del /q src\pl\tcl\pltclerrcodes.h
 if %DIST%==1 if exist src\backend\utils\sort\qsort_tuple.c del /q src\backend\utils\sort\qsort_tuple.c
@@ -69,6 +70,7 @@ if %DIST%==1 if exist src\backend\catalog\postgres.description del /q src\backen
 if %DIST%==1 if exist src\backend\catalog\postgres.shdescription del /q src\backend\catalog\postgres.shdescription
 if %DIST%==1 if exist src\backend\catalog\schemapg.h del /q src\backend\catalog\schemapg.h
 if %DIST%==1 if exist src\backend\catalog\pg_*_d.h del /q src\backend\catalog\pg_*_d.h
+if %DIST%==1 if exist src\backend\catalog\bki-stamp del /q src\backend\catalog\bki-stamp
 if %DIST%==1 if exist src\backend\parser\scan.c del /q src\backend\parser\scan.c
 if %DIST%==1 if exist src\backend\parser\gram.c del /q src\backend\parser\gram.c
 if %DIST%==1 if exist src\backend\bootstrap\bootscanner.c del /q src\backend\bootstrap\bootscanner.c

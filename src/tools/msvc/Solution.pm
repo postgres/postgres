@@ -266,13 +266,18 @@ sub GenerateFiles
 	chdir('src/backend/utils');
 	my $pg_language_dat = '../../../src/include/catalog/pg_language.dat';
 	my $pg_proc_dat     = '../../../src/include/catalog/pg_proc.dat';
-	if (   IsNewer('fmgrtab.c', $pg_language_dat)
-		|| IsNewer('fmgrtab.c', $pg_proc_dat)
-		|| IsNewer('fmgrtab.c', '../../../src/include/access/transam.h'))
+	if (   IsNewer('fmgr-stamp', 'Gen_fmgrtab.pl')
+		|| IsNewer('fmgr-stamp', '../catalog/Catalog.pm')
+		|| IsNewer('fmgr-stamp', $pg_language_dat)
+		|| IsNewer('fmgr-stamp', $pg_proc_dat)
+		|| IsNewer('fmgr-stamp', '../../../src/include/access/transam.h'))
 	{
 		system(
 			"perl -I ../catalog Gen_fmgrtab.pl -I../../../src/include/ $pg_language_dat $pg_proc_dat"
 		);
+		open(my $f, '>', 'fmgr-stamp')
+		  || confess "Could not touch fmgr-stamp";
+		close($f);
 	}
 	chdir('../../..');
 
@@ -468,35 +473,48 @@ EOF
 	  || croak "Could not find POSTGRES_BKI_DATA in Makefile\n";
 	my @bki_data = split /\s+/, $1;
 
+	my $need_genbki = 0;
 	foreach my $bki (@bki_srcs, @bki_data)
 	{
 		next if $bki eq "";
 		if (IsNewer(
-				'src/backend/catalog/postgres.bki',
+				'src/backend/catalog/bki-stamp',
 				"src/include/catalog/$bki"))
 		{
-			chdir('src/backend/catalog');
-			my $bki_srcs = join(' ../../../src/include/catalog/', @bki_srcs);
-			system(
-				"perl genbki.pl --set-version=$self->{majorver} $bki_srcs");
-			chdir('../../..');
-
-			# Copy generated headers to include directory.
-			opendir(my $dh, 'src/backend/catalog/')
-			  || die "Can't opendir src/backend/catalog/ $!";
-			my @def_headers = grep { /pg_\w+_d\.h$/ } readdir($dh);
-			closedir $dh;
-			foreach my $def_header (@def_headers)
-			{
-				copyFile(
-					"src/backend/catalog/$def_header",
-					"src/include/catalog/$def_header");
-			}
-			copyFile(
-				'src/backend/catalog/schemapg.h',
-				'src/include/catalog/schemapg.h');
+			$need_genbki = 1;
 			last;
 		}
+	}
+	$need_genbki = 1
+	  if IsNewer('src/backend/catalog/bki-stamp',
+		'src/backend/catalog/genbki.pl');
+	$need_genbki = 1
+	  if IsNewer('src/backend/catalog/bki-stamp',
+		'src/backend/catalog/Catalog.pm');
+	if ($need_genbki)
+	{
+		chdir('src/backend/catalog');
+		my $bki_srcs = join(' ../../../src/include/catalog/', @bki_srcs);
+		system("perl genbki.pl --set-version=$self->{majorver} $bki_srcs");
+		open(my $f, '>', 'bki-stamp')
+		  || confess "Could not touch bki-stamp";
+		close($f);
+		chdir('../../..');
+
+		# Copy generated headers to include directory.
+		opendir(my $dh, 'src/backend/catalog/')
+		  || die "Can't opendir src/backend/catalog/ $!";
+		my @def_headers = grep { /pg_\w+_d\.h$/ } readdir($dh);
+		closedir $dh;
+		foreach my $def_header (@def_headers)
+		{
+			copyFile(
+				"src/backend/catalog/$def_header",
+				"src/include/catalog/$def_header");
+		}
+		copyFile(
+			'src/backend/catalog/schemapg.h',
+			'src/include/catalog/schemapg.h');
 	}
 
 	open(my $o, '>', "doc/src/sgml/version.sgml")
