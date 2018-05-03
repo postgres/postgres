@@ -16,6 +16,9 @@ package Catalog;
 use strict;
 use warnings;
 
+use File::Compare;
+
+
 # Parses a catalog header file into a data structure describing the schema
 # of the catalog.
 sub ParseHeader
@@ -336,15 +339,29 @@ sub AddDefaultValues
 }
 
 # Rename temporary files to final names.
-# Call this function with the final file name and the .tmp extension
+# Call this function with the final file name and the .tmp extension.
+#
+# If the final file already exists and has identical contents, don't
+# overwrite it; this behavior avoids unnecessary recompiles due to
+# updating the mod date on unchanged header files.
+#
 # Note: recommended extension is ".tmp$$", so that parallel make steps
-# can't use the same temp files
+# can't use the same temp files.
 sub RenameTempFile
 {
 	my $final_name = shift;
 	my $extension  = shift;
 	my $temp_name  = $final_name . $extension;
-	rename($temp_name, $final_name) || die "rename: $temp_name: $!";
+
+	if (-f $final_name
+		&& compare($temp_name, $final_name) == 0)
+	{
+		unlink $temp_name || die "unlink: $temp_name: $!";
+	}
+	else
+	{
+		rename($temp_name, $final_name) || die "rename: $temp_name: $!";
+	}
 }
 
 # Find a symbol defined in a particular header file and extract the value.
