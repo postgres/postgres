@@ -53,7 +53,7 @@ endif
 
 ##########################################################################
 
-all: submake-libpgport submake-catalog-headers postgres $(POSTGRES_IMP)
+all: submake-libpgport submake-catalog-headers submake-utils-headers postgres $(POSTGRES_IMP)
 
 ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
@@ -136,24 +136,15 @@ parser/gram.h: parser/gram.y
 storage/lmgr/lwlocknames.h: storage/lmgr/generate-lwlocknames.pl storage/lmgr/lwlocknames.txt
 	$(MAKE) -C storage/lmgr lwlocknames.h lwlocknames.c
 
-utils/errcodes.h: utils/generate-errcodes.pl utils/errcodes.txt
-	$(MAKE) -C utils errcodes.h
-
-# see notes in src/backend/parser/Makefile
-utils/fmgrprotos.h: utils/fmgroids.h
-	touch $@
-
-utils/fmgroids.h: utils/Gen_fmgrtab.pl catalog/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.dat $(top_srcdir)/src/include/access/transam.h
-	$(MAKE) -C utils fmgroids.h fmgrprotos.h
-
-utils/probes.h: utils/probes.d
-	$(MAKE) -C utils probes.h
-
 # run this unconditionally to avoid needing to know its dependencies here:
 submake-catalog-headers:
 	$(MAKE) -C catalog distprep generated-header-symlinks
 
-.PHONY: submake-catalog-headers
+# run this unconditionally to avoid needing to know its dependencies here:
+submake-utils-headers:
+	$(MAKE) -C utils distprep generated-header-symlinks
+
+.PHONY: submake-catalog-headers submake-utils-headers
 
 # Make symlinks for these headers in the include directory. That way
 # we can cut down on the -I options. Also, a symlink is automatically
@@ -168,7 +159,7 @@ submake-catalog-headers:
 
 .PHONY: generated-headers
 
-generated-headers: $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/storage/lwlocknames.h $(top_builddir)/src/include/utils/errcodes.h $(top_builddir)/src/include/utils/fmgroids.h $(top_builddir)/src/include/utils/fmgrprotos.h $(top_builddir)/src/include/utils/probes.h submake-catalog-headers
+generated-headers: $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/storage/lwlocknames.h submake-catalog-headers submake-utils-headers
 
 $(top_builddir)/src/include/parser/gram.h: parser/gram.h
 	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
@@ -179,25 +170,6 @@ $(top_builddir)/src/include/storage/lwlocknames.h: storage/lmgr/lwlocknames.h
 	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
 	  cd '$(dir $@)' && rm -f $(notdir $@) && \
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
-
-$(top_builddir)/src/include/utils/errcodes.h: utils/errcodes.h
-	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
-	  cd '$(dir $@)' && rm -f $(notdir $@) && \
-	  $(LN_S) "$$prereqdir/$(notdir $<)" .
-
-$(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
-	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
-	  cd '$(dir $@)' && rm -f $(notdir $@) && \
-	  $(LN_S) "$$prereqdir/$(notdir $<)" .
-
-$(top_builddir)/src/include/utils/fmgrprotos.h: utils/fmgrprotos.h
-	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
-	  cd '$(dir $@)' && rm -f $(notdir $@) && \
-	  $(LN_S) "$$prereqdir/$(notdir $<)" .
-
-$(top_builddir)/src/include/utils/probes.h: utils/probes.h
-	cd '$(dir $@)' && rm -f $(notdir $@) && \
-	    $(LN_S) "../../../$(subdir)/utils/probes.h" .
 
 
 utils/probes.o: utils/probes.d $(SUBDIROBJS)
@@ -213,7 +185,7 @@ distprep:
 	$(MAKE) -C catalog	distprep
 	$(MAKE) -C replication	repl_gram.c repl_scanner.c syncrep_gram.c syncrep_scanner.c
 	$(MAKE) -C storage/lmgr	lwlocknames.h lwlocknames.c
-	$(MAKE) -C utils	fmgrtab.c fmgroids.h fmgrprotos.h errcodes.h
+	$(MAKE) -C utils	distprep
 	$(MAKE) -C utils/misc	guc-file.c
 	$(MAKE) -C utils/sort	qsort_tuple.c
 
@@ -325,6 +297,7 @@ distclean: clean
 
 maintainer-clean: distclean
 	$(MAKE) -C catalog $@
+	$(MAKE) -C utils $@
 	rm -f bootstrap/bootparse.c \
 	      bootstrap/bootscanner.c \
 	      parser/gram.c \
@@ -336,10 +309,6 @@ maintainer-clean: distclean
 	      replication/syncrep_scanner.c \
 	      storage/lmgr/lwlocknames.c \
 	      storage/lmgr/lwlocknames.h \
-	      utils/fmgroids.h \
-	      utils/fmgrprotos.h \
-	      utils/fmgrtab.c \
-	      utils/errcodes.h \
 	      utils/misc/guc-file.c \
 	      utils/sort/qsort_tuple.c
 

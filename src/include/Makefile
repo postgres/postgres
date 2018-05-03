@@ -77,7 +77,7 @@ uninstall:
 
 
 clean:
-	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/errcodes.h
+	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/errcodes.h utils/header-stamp
 	rm -f parser/gram.h storage/lwlocknames.h utils/probes.h
 	rm -f catalog/schemapg.h catalog/pg_*_d.h catalog/header-stamp
 

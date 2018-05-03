@@ -21,23 +21,26 @@ catalogdir  = $(top_srcdir)/src/backend/catalog
 
 include $(top_srcdir)/src/backend/common.mk
 
-all: errcodes.h fmgroids.h fmgrprotos.h probes.h
+all: distprep probes.h generated-header-symlinks
 
-$(SUBDIRS:%=%-recursive): fmgroids.h fmgrprotos.h
+distprep: fmgr-stamp errcodes.h
+
+.PHONY: generated-header-symlinks
+
+generated-header-symlinks: $(top_builddir)/src/include/utils/header-stamp $(top_builddir)/src/include/utils/probes.h
+
+$(SUBDIRS:%=%-recursive): fmgr-stamp errcodes.h
 
 FMGR_DATA := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_language.dat pg_proc.dat \
 	)
 
-# see notes in src/backend/parser/Makefile
-fmgrprotos.h: fmgroids.h
-	touch $@
-
-fmgroids.h: fmgrtab.c
-	touch $@
-
-fmgrtab.c: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(FMGR_DATA) $(top_srcdir)/src/include/access/transam.h
+# fmgr-stamp records the last time we ran Gen_fmgrtab.pl.  We don't rely on
+# the timestamps of the individual output files, because the Perl script
+# won't update them if they didn't change (to avoid unnecessary recompiles).
+fmgr-stamp: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(FMGR_DATA) $(top_srcdir)/src/include/access/transam.h
 	$(PERL) -I $(catalogdir) $< -I $(top_srcdir)/src/include/ $(FMGR_DATA)
+	touch $@
 
 errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
 	$(PERL) $(srcdir)/generate-errcodes.pl $< > $@
@@ -55,6 +58,23 @@ else
 	sed -f $(srcdir)/Gen_dummy_probes.sed $< >$@
 endif
 
+# These generated headers must be symlinked into builddir/src/include/,
+# using absolute links for the reasons explained in src/backend/Makefile.
+# We use header-stamp to record that we've done this because the symlinks
+# themselves may appear older than fmgr-stamp.
+$(top_builddir)/src/include/utils/header-stamp: fmgr-stamp errcodes.h
+	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
+	cd '$(dir $@)' && for file in fmgroids.h fmgrprotos.h errcodes.h; do \
+	  rm -f $$file && $(LN_S) "$$prereqdir/$$file" . ; \
+	done
+	touch $@
+
+# probes.h is handled differently because it's not in the distribution tarball.
+$(top_builddir)/src/include/utils/probes.h: probes.h
+	cd '$(dir $@)' && rm -f $(notdir $@) && \
+	    $(LN_S) "../../../$(subdir)/probes.h" .
+
+
 .PHONY: install-data
 install-data: errcodes.txt installdirs
 	$(INSTALL_DATA) $(srcdir)/errcodes.txt '$(DESTDIR)$(datadir)/errcodes.txt'
@@ -66,10 +86,10 @@ installdirs:
 uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, errcodes.txt)
 
-# fmgroids.h, fmgrprotos.h, fmgrtab.c and errcodes.h are in the
+# fmgroids.h, fmgrprotos.h, fmgrtab.c, fmgr-stamp, and errcodes.h are in the
 # distribution tarball, so they are not cleaned here.
 clean:
 	rm -f probes.h
 
 maintainer-clean: clean
-	rm -f fmgroids.h fmgrprotos.h fmgrtab.c errcodes.h
+	rm -f fmgroids.h fmgrprotos.h fmgrtab.c fmgr-stamp errcodes.h

@@ -79,8 +79,11 @@ distprep: bki-stamp
 
 generated-header-symlinks: $(top_builddir)/src/include/catalog/header-stamp
 
+# bki-stamp records the last time we ran genbki.pl.  We don't rely on
+# the timestamps of the individual output files, because the Perl script
+# won't update them if they didn't change (to avoid unnecessary recompiles).
 # Technically, this should depend on Makefile.global which supplies
-# $(MAJORVERSION); but then postgres.bki would need to be rebuilt after every
+# $(MAJORVERSION); but then genbki.pl would need to be re-run after every
 # configure run, even in distribution tarballs.  So depending on configure.in
 # instead is cheating a bit, but it will achieve the goal of updating the
 # version number when it changes.
