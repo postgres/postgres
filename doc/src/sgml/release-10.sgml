@@ -1,6 +1,1070 @@
 <!-- doc/src/sgml/release-10.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-10-4">
+  <title>Release 10.4</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2018-05-10</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 10.3.
+   For information about new features in major release 10, see
+   <xref linkend="release-10"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 10.4</title>
+
+   <para>
+    A dump/restore is not required for those running 10.X.
+   </para>
+
+   <para>
+    However, if the function marking mistakes mentioned in the first two
+    changelog entries below affect you, you will want to take steps to
+    correct your database catalogs.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 10.3,
+    see <xref linkend="release-10-3"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [11002f8af] 2018-03-30 18:14:51 -0400
+Branch: REL_10_STABLE [283262cd9] 2018-03-30 18:14:51 -0400
+Branch: REL9_6_STABLE [91d82317d] 2018-03-30 18:14:51 -0400
+Branch: REL9_5_STABLE [ea83c7e66] 2018-03-30 18:14:51 -0400
+Branch: REL9_4_STABLE [b7537ffb1] 2018-03-30 18:14:51 -0400
+Branch: REL9_3_STABLE [485857d44] 2018-03-30 18:14:51 -0400
+-->
+     <para>
+      Fix incorrect volatility markings on a few built-in functions
+      (Thomas Munro, Tom Lane)
+     </para>
+
+     <para>
+      The functions
+      <function>query_to_xml</function>,
+      <function>cursor_to_xml</function>,
+      <function>cursor_to_xmlschema</function>,
+      <function>query_to_xmlschema</function>, and
+      <function>query_to_xml_and_xmlschema</function>
+      should be marked volatile because they execute user-supplied queries
+      that might contain volatile operations.  They were not, leading to a
+      risk of incorrect query optimization.  This has been repaired for new
+      installations by correcting the initial catalog data, but existing
+      installations will continue to contain the incorrect markings.
+      Practical use of these functions seems to pose little hazard, but in
+      case of trouble, it can be fixed by manually updating these
+      functions' <structname>pg_proc</structname> entries.  (Note that that
+      will need to be done in each database of the installation.)  Another
+      option is to <application>pg_upgrade</application> the database to a
+      version containing the corrected initial data.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [11002f8af] 2018-03-30 18:14:51 -0400
+Branch: REL_10_STABLE [283262cd9] 2018-03-30 18:14:51 -0400
+Branch: REL9_6_STABLE [91d82317d] 2018-03-30 18:14:51 -0400
+-->
+     <para>
+      Fix incorrect parallel-safety markings on a few built-in functions
+      (Thomas Munro, Tom Lane)
+     </para>
+
+     <para>
+      The functions
+      <function>brin_summarize_new_values</function>,
+      <function>brin_summarize_range</function>,
+      <function>brin_desummarize_range</function>,
+      <function>gin_clean_pending_list</function>,
+      <function>cursor_to_xml</function>,
+      <function>cursor_to_xmlschema</function>,
+      <function>ts_rewrite</function>,
+      <function>ts_stat</function>,
+      <function>binary_upgrade_create_empty_extension</function>, and
+      <function>pg_import_system_collations</function>
+      should be marked parallel-unsafe; some because they perform database
+      modifications directly, and others because they execute user-supplied
+      queries that might do so.  They were marked parallel-restricted
+      instead, leading to a risk of unexpected query errors.  This has been
+      repaired for new installations by correcting the initial catalog
+      data, but existing installations will continue to contain the
+      incorrect markings.  Practical use of these functions seems to pose
+      little hazard unless <varname>force_parallel_mode</varname> is turned
+      on.  In case of trouble, it can be fixed by manually updating these
+      functions' <structname>pg_proc</structname> entries.  (Note that that
+      will need to be done in each database of the installation.)  Another
+      option is to <application>pg_upgrade</application> the database to a
+      version containing the corrected initial data.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0408e1ed5] 2018-04-11 17:41:22 -0400
+Branch: REL_10_STABLE [5a11bf970] 2018-04-11 17:41:23 -0400
+Branch: REL9_6_STABLE [8bba10f7e] 2018-04-11 17:41:25 -0400
+Branch: REL9_5_STABLE [3767216fb] 2018-04-11 17:41:26 -0400
+Branch: REL9_4_STABLE [5b3ed6b78] 2018-04-11 17:41:27 -0400
+Branch: REL9_3_STABLE [7448e7e23] 2018-04-11 17:41:28 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d1e907929] 2018-04-11 18:11:29 -0400
+Branch: REL_10_STABLE [08e6cda1c] 2018-04-11 18:11:29 -0400
+Branch: REL9_6_STABLE [060bb38d0] 2018-04-11 18:11:30 -0400
+Branch: REL9_5_STABLE [efbe36a2c] 2018-04-11 18:11:30 -0400
+Branch: REL9_4_STABLE [6943fb927] 2018-04-11 18:11:30 -0400
+Branch: REL9_3_STABLE [66d4b6bb8] 2018-04-11 18:11:30 -0400
+-->
+     <para>
+      Avoid re-using TOAST value OIDs that match dead-but-not-yet-vacuumed
+      TOAST entries (Pavan Deolasee)
+     </para>
+
+     <para>
+      Once the OID counter has wrapped around, it's possible to assign a
+      TOAST value whose OID matches a previously deleted entry in the same
+      TOAST table.  If that entry were not yet vacuumed away, this resulted
+      in <quote>unexpected chunk number 0 (expected 1) for toast
+      value <replaceable>nnnnn</replaceable></quote> errors, which would
+      persist until the dead entry was removed
+      by <command>VACUUM</command>.  Fix by not selecting such OIDs when
+      creating a new TOAST entry.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [cfbecf810] 2018-04-06 11:42:28 -0400
+Branch: REL_10_STABLE [29ab1e24a] 2018-04-06 11:52:38 -0400
+-->
+     <para>
+      Correctly enforce any <literal>CHECK</literal> constraints on
+      individual partitions during <command>COPY</command> to a partitioned
+      table (Etsuro Fujita)
+     </para>
+
+     <para>
+      Previously, only constraints declared for the partitioned table as a
+      whole were checked.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [4df58f7ed] 2018-04-23 15:29:11 -0400
+Branch: REL_10_STABLE [1222db999] 2018-04-23 15:29:12 -0400
+-->
+     <para>
+      Accept <literal>TRUE</literal> and <literal>FALSE</literal> as
+      partition bound values (Amit Langote)
+     </para>
+
+     <para>
+      Previously, only string-literal values were accepted for a boolean
+      partitioning column.  But then <application>pg_dump</application>
+      would print such values as <literal>TRUE</literal>
+      or <literal>FALSE</literal>, leading to dump/reload failures.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [a4d56f583] 2018-04-12 15:08:10 -0300
+Branch: REL_10_STABLE [5f11c6ec6] 2018-04-12 15:08:25 -0300
+-->
+     <para>
+      Fix memory management for partition key comparison functions
+      (&Aacute;lvaro Herrera, Amit Langote)
+     </para>
+
+     <para>
+      This error could lead to crashes when using user-defined operator
+      classes for partition keys.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [6666ee49f] 2018-03-19 17:45:53 -0300
+Branch: REL_10_STABLE [e3faddf53] 2018-03-19 17:43:55 -0300
+-->
+     <para>
+      Fix possible crash when a query inserts tuples in several partitions
+      of a partitioned table, and those partitions don't have identical row
+      types (Etsuro Fujita, Amit Langote)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d04900de7] 2018-03-13 13:24:27 -0400
+Branch: REL_10_STABLE [1bfb56723] 2018-03-13 13:24:27 -0400
+Branch: REL9_6_STABLE [c2c4bc628] 2018-03-13 13:24:27 -0400
+Branch: REL9_5_STABLE [c9414e786] 2018-03-13 13:24:27 -0400
+Branch: REL9_4_STABLE [25a2ba35e] 2018-03-13 13:24:27 -0400
+Branch: REL9_3_STABLE [d44ce7b1a] 2018-03-13 13:24:27 -0400
+-->
+     <para>
+      Change <command>ANALYZE</command>'s algorithm for updating
+      <structname>pg_class</structname>.<structfield>reltuples</structfield>
+      (David Gould)
+     </para>
+
+     <para>
+      Previously, pages not actually scanned by <command>ANALYZE</command>
+      were assumed to retain their old tuple density.  In a large table
+      where <command>ANALYZE</command> samples only a small fraction of the
+      pages, this meant that the overall tuple density estimate could not
+      change very much, so that <structfield>reltuples</structfield> would
+      change nearly proportionally to changes in the table's physical size
+      (<structfield>relpages</structfield>) regardless of what was actually
+      happening in the table.  This has been observed to result
+      in <structfield>reltuples</structfield> becoming so much larger than
+      reality as to effectively shut off autovacuuming.  To fix, assume
+      that <command>ANALYZE</command>'s sample is a statistically unbiased
+      sample of the table (as it should be), and just extrapolate the
+      density observed within those pages to the whole table.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [5564c1181] 2018-03-05 19:37:19 -0300
+Branch: REL_10_STABLE [911e6236b] 2018-03-05 19:37:19 -0300
+-->
+     <para>
+      Include extended-statistics objects in the set of table properties
+      duplicated by <command>CREATE TABLE ... LIKE ... INCLUDING
+      ALL</command> (David Rowley)
+     </para>
+
+     <para>
+      Also add an <literal>INCLUDING STATISTICS</literal> option, to allow
+      finer-grained control over whether this happens.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter_e@gmx.net>
+Branch: master [377b5ac48] 2018-03-13 09:41:30 -0400
+Branch: REL_10_STABLE [c32f44c4a] 2018-03-13 09:41:36 -0400
+-->
+     <para>
+      Fix <command>CREATE TABLE ... LIKE</command> with <type>bigint</type>
+      identity columns (Peter Eisentraut)
+     </para>
+
+     <para>
+      On platforms where <type>long</type> is 32 bits (which includes
+      64-bit Windows as well as most 32-bit machines), copied sequence
+      parameters would be truncated to 32 bits.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [1dec82068] 2018-04-18 12:07:37 -0400
+Branch: REL_10_STABLE [94a898f69] 2018-04-18 12:07:37 -0400
+Branch: REL9_6_STABLE [69e3a548e] 2018-04-18 12:07:37 -0400
+Branch: REL9_5_STABLE [82acf3eb7] 2018-04-18 12:07:38 -0400
+Branch: REL9_4_STABLE [7490ce725] 2018-04-18 12:07:38 -0400
+-->
+     <para>
+      Avoid deadlocks in concurrent <command>CREATE INDEX
+      CONCURRENTLY</command> commands that are run
+      under <literal>SERIALIZABLE</literal> or <literal>REPEATABLE
+      READ</literal> transaction isolation (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6fbd5cce2] 2018-03-19 17:23:21 -0400
+Branch: REL_10_STABLE [1568156d8] 2018-03-19 17:23:23 -0400
+Branch: REL9_6_STABLE [ebcf34d46] 2018-03-19 17:23:07 -0400
+Branch: REL9_5_STABLE [c553e4a50] 2018-03-19 17:23:07 -0400
+Branch: REL9_4_STABLE [b6ba94ec4] 2018-03-19 17:23:07 -0400
+-->
+     <para>
+      Fix possible slow execution of <command>REFRESH MATERIALIZED VIEW
+      CONCURRENTLY</command> (Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8f5ac4404] 2018-03-17 14:59:49 -0400
+Branch: REL_10_STABLE [ee7bf0fd9] 2018-03-17 14:59:31 -0400
+Branch: REL9_6_STABLE [12d18b487] 2018-03-17 14:59:31 -0400
+Branch: REL9_5_STABLE [7de7ddb27] 2018-03-17 14:59:31 -0400
+Branch: REL9_4_STABLE [0a0721f84] 2018-03-17 14:59:31 -0400
+Branch: REL9_3_STABLE [5b77c11da] 2018-03-17 14:59:31 -0400
+-->
+     <para>
+      Fix <literal>UPDATE/DELETE ... WHERE CURRENT OF</literal> to not fail
+      when the referenced cursor uses an index-only-scan plan (Yugo Nagata,
+      Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e5d83995e] 2018-04-19 15:49:30 -0400
+Branch: REL_10_STABLE [68fab04f7] 2018-04-19 15:49:12 -0400
+Branch: REL9_6_STABLE [0c141fcaa] 2018-04-19 15:49:12 -0400
+Branch: REL9_5_STABLE [e4e43a16b] 2018-04-19 15:49:12 -0400
+Branch: REL9_4_STABLE [a347d5210] 2018-04-19 15:49:12 -0400
+Branch: REL9_3_STABLE [e1d4398c0] 2018-04-19 15:49:12 -0400
+Branch: REL9_6_STABLE [306d6e59f] 2018-04-19 18:29:39 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c792c7db4] 2018-04-20 15:19:16 -0400
+Branch: REL_10_STABLE [8b6294c7a] 2018-04-20 15:19:16 -0400
+Branch: REL9_6_STABLE [64ad85860] 2018-04-20 15:19:17 -0400
+Branch: REL9_5_STABLE [80e12a621] 2018-04-20 15:19:17 -0400
+Branch: REL9_4_STABLE [58fec9526] 2018-04-20 15:19:17 -0400
+Branch: REL9_3_STABLE [9680c120e] 2018-04-20 15:19:17 -0400
+-->
+     <para>
+      Fix incorrect planning of join clauses pushed into parameterized
+      paths (Andrew Gierth, Tom Lane)
+     </para>
+
+     <para>
+      This error could result in misclassifying a condition as
+      a <quote>join filter</quote> for an outer join when it should be a
+      plain <quote>filter</quote> condition, leading to incorrect join
+      output.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b5febc1d1] 2018-03-01 15:35:03 -0500
+Branch: REL_10_STABLE [147b59971] 2018-03-01 15:35:03 -0500
+Branch: REL9_6_STABLE [3f26be83e] 2018-03-01 15:35:03 -0500
+Branch: REL9_5_STABLE [be55bfc93] 2018-03-01 15:35:03 -0500
+-->
+     <para>
+      Fix possibly incorrect generation of an index-only-scan plan when the
+      same table column appears in multiple index columns, and only some of
+      those index columns use operator classes that can return the column
+      value (Kyotaro Horiguchi)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [4a4e2442a] 2018-03-11 18:10:42 -0400
+Branch: REL_10_STABLE [e2ed3c4a3] 2018-03-11 18:10:42 -0400
+Branch: REL9_6_STABLE [976e5844e] 2018-03-11 18:10:42 -0400
+Branch: REL9_5_STABLE [106d58805] 2018-03-11 18:10:42 -0400
+Branch: REL9_4_STABLE [e556fb137] 2018-03-11 18:10:42 -0400
+Branch: REL9_3_STABLE [925581d89] 2018-03-11 18:10:43 -0400
+-->
+     <para>
+      Fix misoptimization of <literal>CHECK</literal> constraints having
+      provably-NULL subclauses of
+      top-level <literal>AND</literal>/<literal>OR</literal> conditions
+      (Tom Lane, Dean Rasheed)
+     </para>
+
+     <para>
+      This could, for example, allow constraint exclusion to exclude a
+      child table that should not be excluded from a query.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Gierth <rhodiumtoad@postgresql.org>
+Branch: master [d2d79887e] 2018-03-21 11:39:28 +0000
+Branch: REL_10_STABLE [cf21c4649] 2018-03-21 11:41:53 +0000
+-->
+     <para>
+      Prevent planner crash when a query has multiple <literal>GROUPING
+      SETS</literal>, none of which can be implemented by sorting (Andrew
+      Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c2d4eb1b1] 2018-03-28 13:26:57 -0400
+Branch: REL_10_STABLE [c98f218fb] 2018-03-28 13:26:43 -0400
+Branch: REL9_6_STABLE [90decdba3] 2018-03-28 13:26:43 -0400
+Branch: REL9_5_STABLE [e4ff71158] 2018-03-28 13:26:43 -0400
+-->
+     <para>
+      Fix executor crash due to double free in some <literal>GROUPING
+      SET</literal> usages (Peter Geoghegan)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e98a4de7d] 2018-02-27 15:56:51 -0500
+Branch: REL_10_STABLE [b9dac4a6e] 2018-02-27 15:56:51 -0500
+-->
+     <para>
+      Fix misexecution of self-joins on transition tables (Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b1b71f165] 2018-04-20 17:15:31 -0400
+Branch: REL_10_STABLE [fab4ecacc] 2018-04-20 17:15:31 -0400
+Branch: REL9_6_STABLE [c76d0eed2] 2018-04-20 17:15:31 -0400
+Branch: REL9_5_STABLE [168df1b84] 2018-04-20 17:15:31 -0400
+-->
+     <para>
+      Avoid crash if a table rewrite event trigger is added concurrently
+      with a command that could call such a trigger (&Aacute;lvaro Herrera,
+      Andrew Gierth, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Teodor Sigaev <teodor@sigaev.ru>
+Branch: master [8f9be261f] 2018-05-03 20:08:29 +0300
+Branch: REL_10_STABLE [ee492e3de] 2018-05-03 20:09:02 +0300
+Branch: REL9_6_STABLE [d9b3bc552] 2018-05-03 20:09:28 +0300
+Branch: REL9_5_STABLE [d3fc427f4] 2018-05-03 20:09:47 +0300
+Branch: REL9_4_STABLE [6bd659f19] 2018-05-03 20:10:11 +0300
+Branch: REL9_3_STABLE [540e7a6e5] 2018-05-03 20:10:34 +0300
+-->
+     <para>
+      Avoid failure if a query-cancel or session-termination interrupt
+      occurs while committing a prepared transaction (Stas Kelvich)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9e17bdb8a] 2018-03-16 16:03:45 -0400
+Branch: REL_10_STABLE [bdc7f686d] 2018-03-16 16:03:45 -0400
+Branch: REL9_6_STABLE [5149dc934] 2018-03-16 16:03:45 -0400
+Branch: REL9_5_STABLE [c17a58967] 2018-03-16 16:03:45 -0400
+Branch: REL9_4_STABLE [2709549ec] 2018-03-16 16:03:45 -0400
+Branch: REL9_3_STABLE [574386ddc] 2018-03-16 16:03:45 -0400
+-->
+     <para>
+      Fix query-lifespan memory leakage in repeatedly executed hash joins
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0b1d1a038] 2018-03-02 17:40:48 -0500
+Branch: REL_10_STABLE [76ec45756] 2018-03-02 17:40:48 -0500
+Branch: REL9_6_STABLE [96d2df840] 2018-03-02 17:40:48 -0500
+-->
+     <para>
+      Fix possible leak or double-free of visibility map buffer pins
+      (Amit Kapila)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [d2599ecfc] 2018-05-04 18:24:45 -0300
+Branch: REL_10_STABLE [e1d634758] 2018-05-04 18:23:58 -0300
+Branch: REL9_6_STABLE [3a11485a5] 2018-05-04 18:23:30 -0300
+-->
+     <para>
+      Avoid spuriously marking pages as all-visible (Dan Wood,
+      Pavan Deolasee, &Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      This could happen if some tuples were locked (but not deleted).  While
+      queries would still function correctly, vacuum would generally ignore
+      such pages, with the long-term effect that the tuples were never
+      frozen.  In recent releases this would eventually result in errors
+      such as <quote>found multixact <replaceable>nnnnn</replaceable> from
+      before relminmxid <replaceable>nnnnn</replaceable></quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [477ad05e1] 2018-03-01 18:07:46 -0300
+Branch: REL_10_STABLE [aad956ada] 2018-03-01 18:07:46 -0300
+Branch: REL9_6_STABLE [0ddaaa4cf] 2018-03-01 18:07:46 -0300
+Branch: REL9_5_STABLE [491bbc36e] 2018-03-01 18:07:46 -0300
+Branch: REL9_4_STABLE [3ee23834e] 2018-03-01 18:07:46 -0300
+Branch: REL9_3_STABLE [650f3863f] 2018-03-01 18:07:46 -0300
+-->
+     <para>
+      Fix overly strict sanity check
+      in <function>heap_prepare_freeze_tuple</function>
+      (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      This could result in incorrect <quote>cannot freeze committed
+      xmax</quote> failures in databases that have
+      been <application>pg_upgrade</application>'d from 9.2 or earlier.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [25b692568] 2018-02-27 13:28:02 -0500
+Branch: REL_10_STABLE [b45f821e2] 2018-02-27 13:27:38 -0500
+Branch: REL9_6_STABLE [06f47297e] 2018-02-27 13:27:38 -0500
+Branch: REL9_5_STABLE [2ee44e10d] 2018-02-27 13:27:38 -0500
+Branch: REL9_4_STABLE [5ccb77586] 2018-02-27 13:27:38 -0500
+Branch: REL9_3_STABLE [9bc33ef5e] 2018-02-27 13:27:38 -0500
+-->
+     <para>
+      Prevent dangling-pointer dereference when a C-coded before-update row
+      trigger returns the <quote>old</quote> tuple (Rushabh Lathia)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [38f7831d7] 2018-03-13 12:28:35 -0400
+Branch: REL_10_STABLE [4460964ae] 2018-03-13 12:28:36 -0400
+Branch: REL9_6_STABLE [4b0e71705] 2018-03-13 12:28:37 -0400
+Branch: REL9_5_STABLE [231329a17] 2018-03-13 12:28:38 -0400
+Branch: REL9_4_STABLE [95f08d32d] 2018-03-13 12:28:39 -0400
+Branch: REL9_3_STABLE [5328b6135] 2018-03-13 12:28:40 -0400
+-->
+     <para>
+      Reduce locking during autovacuum worker scheduling (Jeff Janes)
+     </para>
+
+     <para>
+      The previous behavior caused drastic loss of potential worker
+      concurrency in databases with many tables.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [a820b4c32] 2018-04-11 23:39:48 +0300
+Branch: REL_10_STABLE [89c2ab340] 2018-04-11 23:40:03 +0300
+Branch: REL9_6_STABLE [74dc05e01] 2018-04-11 23:40:13 +0300
+Branch: REL9_5_STABLE [fd2efda5d] 2018-04-11 23:40:19 +0300
+Branch: REL9_4_STABLE [310d1379d] 2018-04-11 23:40:27 +0300
+Branch: REL9_3_STABLE [dfc383cf3] 2018-04-11 23:40:31 +0300
+-->
+     <para>
+      Ensure client hostname is copied to local memory when copying
+      <structname>pg_stat_activity</structname> data (Edmund Horner)
+     </para>
+
+     <para>
+      Previously the supposedly-local snapshot contained a pointer into
+      shared memory, allowing the client hostname column to change
+      unexpectedly if any existing session disconnected.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [811969b21] 2018-04-11 23:39:49 +0300
+Branch: REL_10_STABLE [93b3d43dc] 2018-04-11 23:52:11 +0300
+-->
+     <para>
+      Handle <structname>pg_stat_activity</structname> information for
+      auxiliary processes correctly (Edmund Horner)
+     </para>
+
+     <para>
+       The <structfield>application_name</structfield>,
+       <structfield>client_hostname</structfield>,
+       and <structfield>query</structfield> fields might show incorrect
+       data for such processes.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [65a69dfa0] 2018-04-12 18:39:51 -0400
+Branch: REL_10_STABLE [40132187e] 2018-04-12 18:39:51 -0400
+Branch: REL9_6_STABLE [0f439c8dd] 2018-04-12 18:39:51 -0400
+Branch: REL9_5_STABLE [906e44d4d] 2018-04-12 18:39:51 -0400
+Branch: REL9_4_STABLE [f71d803c8] 2018-04-12 18:39:51 -0400
+Branch: REL9_3_STABLE [ac8ea0f27] 2018-04-12 18:39:52 -0400
+-->
+     <para>
+      Fix incorrect processing of multiple compound affixes
+      in <literal>ispell</literal> dictionaries (Arthur Zakirov)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b15e8f71d] 2018-04-16 16:06:58 -0400
+Branch: REL_10_STABLE [3397c6727] 2018-04-16 16:06:47 -0400
+Branch: REL9_6_STABLE [d90b2904c] 2018-04-16 16:06:47 -0400
+Branch: REL9_5_STABLE [93053aca5] 2018-04-16 16:06:47 -0400
+Branch: REL9_4_STABLE [608d1f971] 2018-04-16 16:06:47 -0400
+Branch: REL9_3_STABLE [cf73a5b34] 2018-04-16 16:06:47 -0400
+-->
+     <para>
+      Fix collation-aware searches (that is, indexscans using inequality
+      operators) in SP-GiST indexes on text columns (Tom Lane)
+     </para>
+
+     <para>
+      Such searches would return the wrong set of rows in most non-C
+      locales.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [467963c3e] 2018-03-19 23:59:30 -0400
+Branch: REL_10_STABLE [d18a88acf] 2018-03-19 23:59:17 -0400
+Branch: REL9_6_STABLE [57ef2da43] 2018-03-19 23:59:17 -0400
+-->
+     <para>
+      Prevent query-lifespan memory leakage with SP-GiST operator classes
+      that use traversal values (Anton Dignös)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [649f17925] 2018-03-22 13:24:05 -0400
+Branch: REL_10_STABLE [bf14575c8] 2018-03-22 13:23:48 -0400
+Branch: REL9_6_STABLE [db35bf507] 2018-03-22 13:23:48 -0400
+Branch: REL9_5_STABLE [eee190da7] 2018-03-22 13:23:48 -0400
+Branch: REL9_4_STABLE [7f6f8ccd9] 2018-03-22 13:23:48 -0400
+Branch: REL9_3_STABLE [46f80803a] 2018-03-22 13:23:48 -0400
+-->
+     <para>
+      Count the number of index tuples correctly during initial build of an
+      SP-GiST index (Tomas Vondra)
+     </para>
+
+     <para>
+      Previously, the tuple count was reported to be the same as that of
+      the underlying table, which is wrong if the index is partial.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [81b9b5ce4] 2018-03-02 11:22:42 -0500
+Branch: REL_10_STABLE [ccd650430] 2018-03-02 11:22:42 -0500
+Branch: REL9_6_STABLE [529137cac] 2018-03-02 11:22:42 -0500
+Branch: REL9_5_STABLE [46d98da43] 2018-03-02 11:22:42 -0500
+Branch: REL9_4_STABLE [947f06c62] 2018-03-02 11:22:42 -0500
+Branch: REL9_3_STABLE [6b56f0752] 2018-03-02 11:22:42 -0500
+-->
+     <para>
+      Count the number of index tuples correctly during vacuuming of a
+      GiST index (Andrey Borodin)
+     </para>
+
+     <para>
+      Previously it reported the estimated number of heap tuples,
+      which might be inaccurate, and is certainly wrong if the
+      index is partial.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [066871980] 2018-05-05 01:34:53 +0300
+Branch: REL_10_STABLE [ca572db22] 2018-05-05 01:35:09 +0300
+Branch: REL9_6_STABLE [7b7521d65] 2018-05-05 01:35:12 +0300
+Branch: REL9_5_STABLE [4ea8f7d45] 2018-05-05 01:35:15 +0300
+Branch: REL9_4_STABLE [c06380e97] 2018-05-05 01:35:18 +0300
+-->
+     <para>
+      Fix a corner case where a streaming standby gets stuck at a WAL
+      continuation record (Kyotaro Horiguchi)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [8aa75e138] 2018-03-06 18:34:29 -0300
+Branch: REL_10_STABLE [cee1dd1ee] 2018-03-06 16:20:54 -0300
+Branch: REL9_6_STABLE [8e5c2afa9] 2018-03-06 16:20:13 -0300
+Branch: REL9_5_STABLE [d4429d50a] 2018-03-06 16:20:03 -0300
+Branch: REL9_4_STABLE [6d30e3a2b] 2018-03-06 16:10:23 -0300
+-->
+     <para>
+      In logical decoding, avoid possible double processing of WAL data
+      when a walsender restarts (Craig Ringer)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [24c0a6c64] 2018-03-14 21:34:26 -0300
+Branch: REL_10_STABLE [3c3450e74] 2018-03-14 21:34:21 -0300
+-->
+     <para>
+      Fix logical replication to not assume that type OIDs match between
+      the local and remote servers (Masahiko Sawada)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [58d9acc18] 2018-03-03 20:31:35 -0500
+Branch: REL_10_STABLE [bfade0e51] 2018-03-03 20:31:35 -0500
+Branch: REL9_6_STABLE [e2108f581] 2018-03-03 20:31:35 -0500
+Branch: REL9_5_STABLE [ad3e3d731] 2018-03-03 20:31:35 -0500
+Branch: REL9_4_STABLE [165fa27fe] 2018-03-03 20:31:35 -0500
+Branch: REL9_3_STABLE [0bea99bd9] 2018-03-03 20:31:35 -0500
+-->
+     <para>
+      Allow <function>scalarltsel</function>
+      and <function>scalargtsel</function> to be used on non-core datatypes
+      (Tomas Vondra)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d25c2ee9c] 2018-04-13 12:53:45 -0400
+Branch: REL_10_STABLE [d014b38df] 2018-04-13 12:53:45 -0400
+Branch: REL9_6_STABLE [131f6a958] 2018-04-13 12:53:46 -0400
+Branch: REL9_5_STABLE [2278e94ae] 2018-04-13 12:53:46 -0400
+Branch: REL9_4_STABLE [3dd36aa4b] 2018-04-13 12:53:46 -0400
+Branch: REL9_3_STABLE [bbec33c2d] 2018-04-13 12:53:46 -0400
+-->
+     <para>
+      Reduce <application>libpq</application>'s memory consumption when a
+      server error is reported after a large amount of query output has
+      been collected (Tom Lane)
+     </para>
+
+     <para>
+      Discard the previous output before, not after, processing the error
+      message.  On some platforms, notably Linux, this can make a
+      difference in the application's subsequent memory footprint.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master [b32fad52e] 2018-03-13 16:22:28 +0100
+Branch: REL_10_STABLE [fe65f5931] 2018-03-13 16:23:25 +0100
+Branch: REL9_6_STABLE [44a36a8d9] 2018-03-12 23:53:39 +0100
+Branch: REL9_5_STABLE [95f026021] 2018-03-12 23:53:46 +0100
+Branch: REL9_4_STABLE [bd7eb6fe6] 2018-03-12 23:54:22 +0100
+Branch: REL9_3_STABLE [042badc37] 2018-03-12 23:54:29 +0100
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master [db2fc801f] 2018-03-14 00:51:17 +0100
+Branch: REL_10_STABLE [8559b40c5] 2018-03-14 00:50:39 +0100
+Branch: REL9_6_STABLE [8e3f3ab5b] 2018-03-14 00:51:58 +0100
+Branch: REL9_5_STABLE [837d4f739] 2018-03-14 00:52:11 +0100
+Branch: REL9_4_STABLE [fcc15bf38] 2018-03-14 00:52:21 +0100
+Branch: REL9_3_STABLE [09f4ca92b] 2018-03-14 00:52:45 +0100
+-->
+     <para>
+      Fix double-free crashes in <application>ecpg</application>
+      (Patrick Krecker, Jeevan Ladhe)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [51057feaa] 2018-02-27 16:46:52 -0500
+Branch: REL_10_STABLE [fda3e6578] 2018-02-27 16:46:52 -0500
+Branch: REL9_6_STABLE [7ee8005ce] 2018-02-27 16:46:52 -0500
+Branch: REL9_5_STABLE [f171cbe0d] 2018-02-27 16:46:52 -0500
+Branch: REL9_4_STABLE [49f9014c8] 2018-02-27 16:46:52 -0500
+Branch: REL9_3_STABLE [87b7e1e88] 2018-02-27 16:46:52 -0500
+-->
+     <para>
+      Fix <application>ecpg</application> to handle <type>long long
+      int</type> variables correctly in MSVC builds (Michael Meskes,
+      Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [742869946] 2018-03-21 20:03:28 -0400
+Branch: REL_10_STABLE [66e92878a] 2018-03-21 20:03:28 -0400
+Branch: REL9_6_STABLE [8132f0f38] 2018-03-21 20:03:28 -0400
+Branch: REL9_5_STABLE [a35d72923] 2018-03-21 20:03:28 -0400
+Branch: REL9_4_STABLE [67e02cde7] 2018-03-21 20:03:28 -0400
+Branch: REL9_3_STABLE [be677bb5a] 2018-03-21 20:03:29 -0400
+-->
+     <para>
+      Fix mis-quoting of values for list-valued GUC variables in dumps
+      (Michael Paquier, Tom Lane)
+     </para>
+
+     <para>
+      The <varname>local_preload_libraries</varname>,
+      <varname>session_preload_libraries</varname>,
+      <varname>shared_preload_libraries</varname>,
+      and <varname>temp_tablespaces</varname> variables were not correctly
+      quoted in <application>pg_dump</application> output.  This would
+      cause problems if settings for these variables appeared in
+      <command>CREATE FUNCTION ... SET</command> or <command>ALTER
+      DATABASE/ROLE ... SET</command> clauses.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Magnus Hagander <magnus@hagander.net>
+Branch: master [8d2814f27] 2018-03-18 13:08:25 +0100
+Branch: REL_10_STABLE [e7d3a37d9] 2018-03-18 13:11:27 +0100
+Branch: REL9_6_STABLE [59743deca] 2018-03-18 13:11:40 +0100
+Branch: REL9_5_STABLE [24ff0fe87] 2018-03-18 13:11:49 +0100
+Branch: REL9_4_STABLE [af5fbb128] 2018-03-18 13:11:58 +0100
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [6336b6dfc] 2018-04-25 18:50:29 -0700
+Branch: REL_10_STABLE [c7cc9b7d4] 2018-04-25 18:50:32 -0700
+Branch: REL9_6_STABLE [32c247629] 2018-04-25 18:50:33 -0700
+Branch: REL9_5_STABLE [24f1e9ca0] 2018-04-25 18:50:33 -0700
+Branch: REL9_4_STABLE [bb532859f] 2018-04-25 18:50:34 -0700
+-->
+     <para>
+      Fix <application>pg_recvlogical</application> to not fail against
+      pre-v10 <productname>PostgreSQL</productname> servers
+      (Michael Paquier)
+     </para>
+
+     <para>
+      A previous fix caused <application>pg_recvlogical</application> to
+      issue a command regardless of server version, but it should only be
+      issued to v10 and later servers.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [09e96b3f3] 2018-03-29 04:00:21 +0900
+Branch: REL_10_STABLE [f1e07d576] 2018-03-29 04:01:43 +0900
+Branch: REL9_6_STABLE [52c32d8d8] 2018-03-29 04:02:08 +0900
+Branch: REL9_5_STABLE [b33e38cb1] 2018-03-29 04:02:34 +0900
+-->
+     <para>
+      Ensure that <application>pg_rewind</application> deletes files on the
+      target server if they are deleted from the source server during the
+      run (Tsunakawa Takayuki)
+     </para>
+
+     <para>
+      Failure to do this could result in data inconsistency on the target,
+      particularly if the file in question is a WAL segment.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [2f3e2340c] 2018-03-06 02:08:18 +0900
+Branch: REL_10_STABLE [bca696ab0] 2018-03-06 02:09:12 +0900
+Branch: REL9_6_STABLE [7aba4f23f] 2018-03-06 02:10:41 +0900
+Branch: REL9_5_STABLE [cb5c141ed] 2018-03-06 02:12:06 +0900
+-->
+     <para>
+      Fix <application>pg_rewind</application> to handle tables in
+      non-default tablespaces correctly (Takayuki Tsunakawa)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [2dbee9f19] 2018-03-17 15:38:15 -0400
+Branch: REL_10_STABLE [04c76acab] 2018-03-17 15:38:15 -0400
+Branch: REL9_6_STABLE [5917297bf] 2018-03-17 15:38:15 -0400
+Branch: REL9_5_STABLE [b3fade55c] 2018-03-17 15:38:15 -0400
+Branch: REL9_4_STABLE [092401b14] 2018-03-17 15:38:15 -0400
+Branch: REL9_3_STABLE [f1f7a85d8] 2018-03-17 15:38:15 -0400
+-->
+     <para>
+      Fix overflow handling in <application>PL/pgSQL</application>
+      integer <command>FOR</command> loops (Tom Lane)
+     </para>
+
+     <para>
+      The previous coding failed to detect overflow of the loop variable
+      on some non-gcc compilers, leading to an infinite loop.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [966268c76] 2018-05-04 15:22:48 -0400
+Branch: REL_10_STABLE [56a45646d] 2018-05-04 15:32:31 -0400
+Branch: REL9_6_STABLE [a9fbf550b] 2018-05-04 15:33:06 -0400
+Branch: REL9_5_STABLE [c1f3638d2] 2018-05-04 15:33:18 -0400
+Branch: REL9_4_STABLE [134db37d2] 2018-05-04 15:51:31 -0400
+Branch: REL9_3_STABLE [af39c1da7] 2018-05-04 15:56:01 -0400
+-->
+     <para>
+      Support testing <application>PL/Python</application> and related
+      modules when building with Python 3 and MSVC (Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c35b47286] 2018-03-22 13:14:07 -0400
+Branch: REL_10_STABLE [76e2b5ae4] 2018-03-22 13:13:58 -0400
+Branch: REL9_6_STABLE [df9040155] 2018-03-22 13:13:58 -0400
+-->
+     <para>
+      Fix errors in initial build of <filename>contrib/bloom</filename>
+      indexes (Tomas Vondra, Tom Lane)
+     </para>
+
+     <para>
+      Fix possible omission of the table's last tuple from the index.
+      Count the number of index tuples correctly, in case it is a partial
+      index.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_5_STABLE [3c0e07a46] 2018-05-01 12:02:41 -0400
+-->
+     <para>
+      Support building with Microsoft Visual Studio 2015 (Michael Paquier)
+     </para>
+
+     <para>
+      Various fixes needed for VS2015 compatibility were previously
+      back-patched into the 9.5 branch, but one was missed.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [43e949086] 2018-02-28 18:33:45 -0500
+Branch: REL_10_STABLE [aac6286d8] 2018-02-28 18:33:45 -0500
+Branch: REL9_6_STABLE [11e7700e5] 2018-02-28 18:33:45 -0500
+Branch: REL9_5_STABLE [679df2b8d] 2018-02-28 18:33:45 -0500
+Branch: REL9_4_STABLE [d07f79a9c] 2018-02-28 18:33:45 -0500
+Branch: REL9_3_STABLE [10102c91e] 2018-02-28 18:33:45 -0500
+-->
+     <para>
+      Rename internal <function>b64_encode</function>
+      and <function>b64_decode</function> functions to avoid conflict with
+      Solaris 11.4 built-in functions (Rainer Orth)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [df629586e] 2018-04-29 15:50:08 -0400
+Branch: REL_10_STABLE [783e8f56d] 2018-04-29 15:50:23 -0400
+Branch: REL9_6_STABLE [2acbeea48] 2018-04-29 15:50:31 -0400
+Branch: REL9_5_STABLE [eaed0d230] 2018-04-29 15:50:37 -0400
+Branch: REL9_4_STABLE [37c02b2b0] 2018-04-29 15:50:43 -0400
+Branch: REL9_3_STABLE [adcd0c2be] 2018-04-29 15:50:50 -0400
+-->
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2018d for DST law changes in Palestine and Antarctica (Casey
+      Station), plus historical corrections for Portugal and its colonies,
+      as well as Enderbury, Jamaica, Turks &amp; Caicos Islands, and
+      Uruguay.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b45f6613e] 2018-05-04 12:26:25 -0400
+Branch: REL_10_STABLE [b49f4e69a] 2018-05-04 12:26:34 -0400
+Branch: REL9_6_STABLE [7a83323f2] 2018-05-04 12:26:39 -0400
+Branch: REL9_5_STABLE [4e0e9e59b] 2018-05-04 12:26:43 -0400
+Branch: REL9_4_STABLE [2d123b310] 2018-05-04 12:26:48 -0400
+Branch: REL9_3_STABLE [9469ebc71] 2018-05-04 12:26:52 -0400
+-->
+     <para>
+      Sync our copy of the timezone library with IANA tzcode release 2018e
+      (Tom Lane)
+     </para>
+
+     <para>
+      This fixes the <application>zic</application> timezone data compiler
+      to cope with negative daylight-savings offsets.  While
+      the <productname>PostgreSQL</productname> project will not
+      immediately ship such timezone data, <application>zic</application>
+      might be used with timezone data obtained directly from IANA, so it
+      seems prudent to update <application>zic</application> now.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-10-3">
   <title>Release 10.3</title>
 
