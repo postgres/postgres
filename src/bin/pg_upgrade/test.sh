@@ -34,7 +34,7 @@ standard_initdb() {
 testhost=`uname -s`
 
 case $testhost in
-	MINGW*)
+	MINGW*|MSYS*)
 		LISTEN_ADDRESSES="localhost"
 		PGHOST=localhost
 		;;
