@@ -27,8 +27,6 @@
 
 static bool allocate_recordbuf(XLogReaderState *state, uint32 reclength);
 
-static bool ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
-					XLogPageHeader hdr);
 static bool ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
 					  XLogRecPtr PrevRecPtr, XLogRecord *record, bool randAccess);
 static bool ValidXLogRecord(XLogReaderState *state, XLogRecord *record,
@@ -533,7 +531,6 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 	 */
 	if (targetSegNo != state->readSegNo && targetPageOff != 0)
 	{
-		XLogPageHeader hdr;
 		XLogRecPtr	targetSegmentPtr = pageptr - targetPageOff;
 
 		readLen = state->read_page(state, targetSegmentPtr, XLOG_BLCKSZ,
@@ -545,9 +542,8 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 		/* we can be sure to have enough WAL available, we scrolled back */
 		Assert(readLen == XLOG_BLCKSZ);
 
-		hdr = (XLogPageHeader) state->readBuf;
-
-		if (!ValidXLogPageHeader(state, targetSegmentPtr, hdr))
+		if (!XLogReaderValidatePageHeader(state, targetSegmentPtr,
+										  state->readBuf))
 			goto err;
 	}
 
@@ -584,7 +580,7 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 	/*
 	 * Now that we know we have the full header, validate it.
 	 */
-	if (!ValidXLogPageHeader(state, pageptr, hdr))
+	if (!XLogReaderValidatePageHeader(state, pageptr, (char *) hdr))
 		goto err;
 
 	/* update read state information */
@@ -709,15 +705,19 @@ ValidXLogRecord(XLogReaderState *state, XLogRecord *record, XLogRecPtr recptr)
 }
 
 /*
- * Validate a page header
+ * Validate a page header.
+ *
+ * Check if 'phdr' is valid as the header of the XLog page at position
+ * 'recptr'.
  */
-static bool
-ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
-					XLogPageHeader hdr)
+bool
+XLogReaderValidatePageHeader(XLogReaderState *state, XLogRecPtr recptr,
+							 char *phdr)
 {
 	XLogRecPtr	recaddr;
 	XLogSegNo	segno;
 	int32		offset;
+	XLogPageHeader hdr = (XLogPageHeader) phdr;
 
 	Assert((recptr % XLOG_BLCKSZ) == 0);
 
@@ -805,6 +805,11 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
 		return false;
 	}
 
+	/*
+	 * Check that the address on the page agrees with what we expected.
+	 * This check typically fails when an old WAL segment is recycled,
+	 * and hasn't yet been overwritten with new data yet.
+	 */
 	if (hdr->xlp_pageaddr != recaddr)
 	{
 		char		fname[MAXFNAMELEN];
