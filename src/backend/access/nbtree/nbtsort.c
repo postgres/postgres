@@ -934,7 +934,10 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 			state->btps_next = _bt_pagestate(wstate, state->btps_level + 1);
 
 		Assert(BTreeTupleGetNAtts(state->btps_minkey, wstate->index) ==
-			   IndexRelationGetNumberOfKeyAttributes(wstate->index));
+			   IndexRelationGetNumberOfKeyAttributes(wstate->index) ||
+			   P_LEFTMOST(opageop));
+		Assert(BTreeTupleGetNAtts(state->btps_minkey, wstate->index) == 0 ||
+			   !P_LEFTMOST(opageop));
 		BTreeInnerTupleSetDownLink(state->btps_minkey, oblkno);
 		_bt_buildadd(wstate, state->btps_next, state->btps_minkey);
 		pfree(state->btps_minkey);
@@ -974,24 +977,16 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	 * If the new item is the first for its page, stash a copy for later. Note
 	 * this will only happen for the first item on a level; on later pages,
 	 * the first item for a page is copied from the prior page in the code
-	 * above.
+	 * above.  Since the minimum key for an entire level is only used as a
+	 * minus infinity downlink, and never as a high key, there is no need to
+	 * truncate away non-key attributes at this point.
 	 */
 	if (last_off == P_HIKEY)
 	{
-		BTPageOpaque npageop;
-
 		Assert(state->btps_minkey == NULL);
-
-		npageop = (BTPageOpaque) PageGetSpecialPointer(npage);
-
-		/*
-		 * Truncate included attributes of the tuple that we're going to
-		 * insert into the parent page as a downlink
-		 */
-		if (indnkeyatts != indnatts && P_ISLEAF(npageop))
-			state->btps_minkey = _bt_nonkey_truncate(wstate->index, itup);
-		else
-			state->btps_minkey = CopyIndexTuple(itup);
+		state->btps_minkey = CopyIndexTuple(itup);
+		/* _bt_sortaddtup() will perform full truncation later */
+		BTreeTupleSetNAtts(state->btps_minkey, 0);
 	}
 
 	/*
@@ -1044,7 +1039,10 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 		else
 		{
 			Assert(BTreeTupleGetNAtts(s->btps_minkey, wstate->index) ==
-				   IndexRelationGetNumberOfKeyAttributes(wstate->index));
+				   IndexRelationGetNumberOfKeyAttributes(wstate->index) ||
+				   P_LEFTMOST(opaque));
+			Assert(BTreeTupleGetNAtts(s->btps_minkey, wstate->index) == 0 ||
+				   !P_LEFTMOST(opaque));
 			BTreeInnerTupleSetDownLink(s->btps_minkey, blkno);
 			_bt_buildadd(wstate, s->btps_next, s->btps_minkey);
 			pfree(s->btps_minkey);
