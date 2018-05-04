@@ -161,6 +161,51 @@ sub isolationcheck
 	exit $status if $status;
 }
 
+sub mangle_plpython3
+{
+	my $tests = shift;
+	mkdir "results" unless -d "results";
+	mkdir "sql/python3";
+	mkdir "results/python3";
+	mkdir "expected/python3";
+
+	foreach my $test (@$tests)
+	{
+		local $/ = undef;
+		foreach my $dir ('sql','expected')
+		{
+			my $extension = ($dir eq 'sql' ? 'sql' : 'out');
+
+			my @files = glob("$dir/$test.$extension $dir/${test}_[0-9].$extension");
+			foreach my $file (@files)
+			{
+				open(my $handle, "$file") || die "test file $file not found";
+				my $contents = <$handle>;
+				close($handle);
+				map
+				{
+					s/except ([[:alpha:]][[:alpha:].]*), *([[:alpha:]][[:alpha:]]*):/except $1 as $2:/g;
+					s/<type 'exceptions\.([[:alpha:]]*)'>/<class '$1'>/g;
+					s/<type 'long'>/<class 'int'>/g;
+					s/([0-9][0-9]*)L/$1/g;
+					s/([ [{])u"/$1"/g;
+					s/([ [{])u'/$1'/g;
+					s/def next/def __next__/g;
+					s/LANGUAGE plpython2?u/LANGUAGE plpython3u/g;
+					s/EXTENSION ([^ ]*_)*plpython2?u/EXTENSION $1plpython3u/g;
+					s/installing required extension "plpython2u"/installing required extension "plpython3u"/g;
+				} $contents;
+				my $base = basename $file;
+				open($handle, ">$dir/python3/$base") || die "opening python 3 file for $file";
+				print $handle $contents;
+				close($handle);
+			}
+		}
+	}
+	map { $_ =~ s!^!python3/!; } @$tests;
+	return @$tests;
+}
+
 sub plcheck
 {
 	chdir "../../pl";
@@ -171,7 +216,8 @@ sub plcheck
 		my $lang = $pl eq 'tcl' ? 'pltcl' : $pl;
 		if ($lang eq 'plpython')
 		{
-			next unless -d "../../$Config/plpython2";
+			next unless -d "$topdir/$Config/plpython2" ||
+				-d "$topdir/$Config/plpython3";
 			$lang = 'plpythonu';
 		}
 		else
@@ -181,6 +227,8 @@ sub plcheck
 		my @lang_args = ("--load-extension=$lang");
 		chdir $pl;
 		my @tests = fetchTests();
+		@tests = mangle_plpython3(\@tests)
+			if $lang eq 'plpythonu' && -d "$topdir/$Config/plpython3";
 		if ($lang eq 'plperl')
 		{
 
@@ -195,6 +243,10 @@ sub plcheck
 			{
 				push(@tests, 'plperl_plperlu');
 			}
+		}
+		elsif ($lang eq 'plpythonu' && -d "$topdir/$Config/plpython3")
+		{
+			@lang_args = ();
 		}
 		print
 		  "============================================================\n";
