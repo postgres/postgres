@@ -60,9 +60,8 @@ static int	tzdefrules_loaded = 0;
 /*
  * The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
  * Default to US rules as of 2017-05-07.
- * POSIX 1003.1 section 8.1.1 says that the default DST rules are
- * implementation dependent; for historical reasons, US rules are a
- * common default.
+ * POSIX does not specify the default DST rules;
+ * for historical reasons, US rules are a common default.
  */
 #define TZDEFRULESTRING ",M3.2.0,M11.1.0"
 
@@ -1158,10 +1157,11 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 				else
 				{
 					/*
-					 * If summer time is in effect, and the transition time
-					 * was not specified as standard time, add the summer time
-					 * offset to the transition time; otherwise, add the
-					 * standard time offset to the transition time.
+					 * If daylight saving time is in effect, and the
+					 * transition time was not specified as standard time, add
+					 * the daylight saving time offset to the transition time;
+					 * otherwise, add the standard time offset to the
+					 * transition time.
 					 */
 
 					/*
