@@ -203,7 +203,7 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 					/*
 					 * Locale modifiers of C99 and later. The sequences %Ec
 					 * %EC %Ex %EX %Ey %EY %Od %oe %OH %OI %Om %OM %OS %Ou %OU
-					 * %OV %Ow %OW %Oy are supposed to provide alternate
+					 * %OV %Ow %OW %Oy are supposed to provide alternative
 					 * representations.
 					 */
 					goto label;
