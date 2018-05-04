@@ -356,7 +356,7 @@ sub RenameTempFile
 	if (-f $final_name
 		&& compare($temp_name, $final_name) == 0)
 	{
-		unlink $temp_name || die "unlink: $temp_name: $!";
+		unlink($temp_name) || die "unlink: $temp_name: $!";
 	}
 	else
 	{
