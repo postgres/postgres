@@ -246,6 +246,51 @@ sub taptest
 	exit $status if $status;
 }
 
+sub mangle_plpython3
+{
+	my $tests = shift;
+	mkdir "results" unless -d "results";
+	mkdir "sql/python3";
+	mkdir "results/python3";
+	mkdir "expected/python3";
+
+	foreach my $test (@$tests)
+	{
+		local $/ = undef;
+		foreach my $dir ('sql','expected')
+		{
+			my $extension = ($dir eq 'sql' ? 'sql' : 'out');
+
+			my @files = glob("$dir/$test.$extension $dir/${test}_[0-9].$extension");
+			foreach my $file (@files)
+			{
+				open(my $handle, "$file") || die "test file $file not found";
+				my $contents = <$handle>;
+				close($handle);
+				map
+				{
+					s/except ([[:alpha:]][[:alpha:].]*), *([[:alpha:]][[:alpha:]]*):/except $1 as $2:/g;
+					s/<type 'exceptions\.([[:alpha:]]*)'>/<class '$1'>/g;
+					s/<type 'long'>/<class 'int'>/g;
+					s/([0-9][0-9]*)L/$1/g;
+					s/([ [{])u"/$1"/g;
+					s/([ [{])u'/$1'/g;
+					s/def next/def __next__/g;
+					s/LANGUAGE plpython2?u/LANGUAGE plpython3u/g;
+					s/EXTENSION ([^ ]*_)*plpython2?u/EXTENSION $1plpython3u/g;
+					s/installing required extension "plpython2u"/installing required extension "plpython3u"/g;
+				} $contents;
+				my $base = basename $file;
+				open($handle, ">$dir/python3/$base") || die "opening python 3 file for $file";
+				print $handle $contents;
+				close($handle);
+			}
+		}
+	}
+	map { $_ =~ s!^!python3/!; } @$tests;
+	return @$tests;
+}
+
 sub plcheck
 {
 	chdir "$topdir/src/pl";
@@ -268,7 +313,8 @@ sub plcheck
 		}
 		if ($lang eq 'plpython')
 		{
-			next unless -d "$topdir/$Config/plpython2";
+			next unless -d "$topdir/$Config/plpython2" ||
+				-d "$topdir/$Config/plpython3";
 			$lang = 'plpythonu';
 		}
 		else
@@ -278,6 +324,8 @@ sub plcheck
 		my @lang_args = ("--load-extension=$lang");
 		chdir $dir;
 		my @tests = fetchTests();
+		@tests = mangle_plpython3(\@tests)
+			if $lang eq 'plpythonu' && -d "$topdir/$Config/plpython3";
 		if ($lang eq 'plperl')
 		{
 
@@ -292,6 +340,10 @@ sub plcheck
 			{
 				push(@tests, 'plperl_plperlu');
 			}
+		}
+		elsif ($lang eq 'plpythonu' && -d "$topdir/$Config/plpython3")
+		{
+			@lang_args = ();
 		}
 		print
 		  "============================================================\n";
@@ -311,7 +363,6 @@ sub plcheck
 
 sub subdircheck
 {
-	my $subdir = shift;
 	my $module = shift;
 
 	if (   !-d "$module/sql"
@@ -325,37 +376,27 @@ sub subdircheck
 	my @tests = fetchTests();
 	my @opts  = fetchRegressOpts();
 
-	# Add some options for transform modules, see their respective
-	# Makefile for more details regarding Python-version specific
+	# Special processing for python transform modules, see their respective
+	# Makefiles for more details regarding Python-version specific
 	# dependencies.
-	if (   $module eq "hstore_plpython"
-		|| $module eq "jsonb_plpython"
-		|| $module eq "ltree_plpython")
+	if ( $module =~ /_plpython$/ )
 	{
 		die "Python not enabled in configuration"
 		  if !defined($config->{python});
 
-		# Attempt to get python version and location.
-		# Assume python.exe in specified dir.
-		my $pythonprog = "import sys;" . "print(str(sys.version_info[0]))";
-		my $prefixcmd  = $config->{python} . "\\python -c \"$pythonprog\"";
-		my $pyver      = `$prefixcmd`;
-		die "Could not query for python version!\n" if $?;
-		chomp($pyver);
-		if ($pyver eq "2")
+		@opts = grep { $_ !~ /plpythonu/ } @opts;
+
+		if (-d "$topdir/$Config/plpython2")
 		{
 			push @opts, "--load-extension=plpythonu";
 			push @opts, '--load-extension=' . $module . 'u';
 		}
 		else
 		{
-
-			# disable tests on python3 for now.
-			chdir "..";
-			return;
+			# must be python 3
+			@tests = mangle_plpython3(\@tests);
 		}
 	}
-
 
 	print "============================================================\n";
 	print "Checking $module\n";
@@ -363,6 +404,7 @@ sub subdircheck
 		"$topdir/$Config/pg_regress/pg_regress",
 		"--bindir=${topdir}/${Config}/psql",
 		"--dbname=contrib_regression", @opts, @tests);
+	print join(' ',@args),"\n";
 	system(@args);
 	chdir "..";
 }
@@ -373,19 +415,15 @@ sub contribcheck
 	my $mstat = 0;
 	foreach my $module (glob("*"))
 	{
-
 		# these configuration-based exclusions must match Install.pm
 		next if ($module eq "uuid-ossp"     && !defined($config->{uuid}));
 		next if ($module eq "sslinfo"       && !defined($config->{openssl}));
 		next if ($module eq "xml2"          && !defined($config->{xml}));
-		next if ($module eq "hstore_plperl" && !defined($config->{perl}));
-		next if ($module eq "jsonb_plperl"  && !defined($config->{perl}));
-		next if ($module eq "hstore_plpython" && !defined($config->{python}));
-		next if ($module eq "jsonb_plpython"  && !defined($config->{python}));
-		next if ($module eq "ltree_plpython"  && !defined($config->{python}));
+		next if ($module =~ /_plperl$/      && !defined($config->{perl}));
+		next if ($module =~ /_plpython$/    && !defined($config->{python}));
 		next if ($module eq "sepgsql");
 
-		subdircheck("$topdir/contrib", $module);
+		subdircheck($module);
 		my $status = $? >> 8;
 		$mstat ||= $status;
 	}
@@ -398,7 +436,7 @@ sub modulescheck
 	my $mstat = 0;
 	foreach my $module (glob("*"))
 	{
-		subdircheck("$topdir/src/test/modules", $module);
+		subdircheck($module);
 		my $status = $? >> 8;
 		$mstat ||= $status;
 	}
