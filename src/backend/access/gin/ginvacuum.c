@@ -166,7 +166,6 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	START_CRIT_SECTION();
 
 	/* Unlink the page by changing left sibling's rightlink */
-
 	page = BufferGetPage(lBuffer);
 	GinPageGetOpaque(page)->rightlink = rightlink;
 

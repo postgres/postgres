@@ -103,8 +103,6 @@ extern Datum *ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 extern OffsetNumber gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple);
 extern Datum gintuple_get_key(GinState *ginstate, IndexTuple tuple,
 				 GinNullCategory *category);
-extern void GinCheckForSerializableConflictIn(Relation relation,
-								  HeapTuple tuple, Buffer buffer);
 
 /* gininsert.c */
 extern IndexBuildResult *ginbuild(Relation heap, Relation index,
@@ -227,7 +225,6 @@ extern void ginInsertItemPointers(Relation index, BlockNumber rootBlkno,
 					  GinStatsData *buildStats);
 extern GinBtreeStack *ginScanBeginPostingTree(GinBtree btree, Relation index, BlockNumber rootBlkno, Snapshot snapshot);
 extern void ginDataFillRoot(GinBtree btree, Page root, BlockNumber lblkno, Page lpage, BlockNumber rblkno, Page rpage);
-extern void ginPrepareDataScan(GinBtree btree, Relation index, BlockNumber rootBlkno);
 
 /*
  * This is declared in ginvacuum.c, but is passed between ginVacuumItemPointers

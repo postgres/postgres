@@ -1,0 +1,15 @@
+Parsed test spec with 2 sessions
+
+starting permutation: r1 r2 w1 c1 w2 c2
+step r1: SELECT count(*) FROM gin_tbl WHERE p @> array[-1];
+count          
+
+0              
+step r2: SELECT * FROM other_tbl;
+id             
+
+step w1: INSERT INTO other_tbl VALUES (42);
+step c1: COMMIT;
+step w2: INSERT INTO gin_tbl SELECT array[-1];
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: COMMIT;

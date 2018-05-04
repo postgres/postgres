@@ -1220,7 +1220,7 @@ gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 	bool		is_split;
 
 	/*
-	 * Check for any rw conflicts (in serialisation isolation level) just
+	 * Check for any rw conflicts (in serializable isolation level) just
 	 * before we intend to modify the page
 	 */
 	CheckForSerializableConflictIn(state->r, NULL, stack->buffer);

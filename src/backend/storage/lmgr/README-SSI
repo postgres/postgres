@@ -373,28 +373,28 @@ index *leaf* pages needed to lock the appropriate index range. If,
 however, a search discovers that no root page has yet been created, a
 predicate lock on the index relation is required.
 
+    * Like a B-tree, GIN searches acquire predicate locks only on the
+leaf pages of entry tree. When performing an equality scan, and an
+entry has a posting tree, the posting tree root is locked instead, to
+lock only that key value. However, fastupdate=on postpones the
+insertion of tuples into index structure by temporarily storing them
+into pending list. That makes us unable to detect r-w conflicts using
+page-level locks. To cope with that, insertions to the pending list
+conflict with all scans.
+
     * GiST searches can determine that there are no matches at any
 level of the index, so we acquire predicate lock at each index
 level during a GiST search. An index insert at the leaf level can
 then be trusted to ripple up to all levels and locations where
 conflicting predicate locks may exist. In case there is a page split,
-we need to copy predicate lock from an original page to all new pages.
-
-    * GIN searches acquire predicate locks only on the leaf pages
-of entry tree and posting tree. During a page split, a predicate locks are
-copied from the original page to the new page. In the same way predicate locks
-are copied from entry tree leaf page to freshly created posting tree root.
-However, when fast update is enabled, a predicate lock on the whole index
-relation is required. Fast update postpones the insertion of tuples into index
-structure by temporarily storing them into pending list. That makes us unable
-to detect r-w conflicts using page-level locks.
+we need to copy predicate lock from the original page to all the new
+pages.
 
     * Hash index searches acquire predicate locks on the primary
 page of a bucket. It acquires a lock on both the old and new buckets
 for scans that happen concurrently with page splits. During a bucket
 split, a predicate lock is copied from the primary page of an old
 bucket to the primary page of a new bucket.
-
 
     * The effects of page splits, overflows, consolidations, and
 removals must be carefully reviewed to ensure that predicate locks

@@ -219,7 +219,7 @@ ginEntryInsert(GinState *ginstate,
 			return;
 		}
 
-		GinCheckForSerializableConflictIn(btree.index, NULL, stack->buffer);
+		CheckForSerializableConflictIn(ginstate->index, NULL, stack->buffer);
 		/* modify an existing leaf entry */
 		itup = addItemPointersToLeafTuple(ginstate, itup,
 										  items, nitem, buildStats, stack->buffer);
@@ -228,7 +228,7 @@ ginEntryInsert(GinState *ginstate,
 	}
 	else
 	{
-		GinCheckForSerializableConflictIn(btree.index, NULL, stack->buffer);
+		CheckForSerializableConflictIn(ginstate->index, NULL, stack->buffer);
 		/* no match, so construct a new leaf entry */
 		itup = buildFreshLeafTuple(ginstate, attnum, key, category,
 								   items, nitem, buildStats, stack->buffer);
@@ -517,18 +517,6 @@ gininsert(Relation index, Datum *values, bool *isnull,
 
 		memset(&collector, 0, sizeof(GinTupleCollector));
 
-		/*
-		 * With fastupdate on each scan and each insert begin with access to
-		 * pending list, so it effectively lock entire index. In this case we
-		 * aquire predicate lock and check for conflicts over index relation,
-		 * and hope that it will reduce locking overhead.
-		 *
-		 * Do not use GinCheckForSerializableConflictIn() here, because it
-		 * will do nothing (it does actual work only with fastupdate off).
-		 * Check for conflicts for entire index.
-		 */
-		CheckForSerializableConflictIn(index, NULL, InvalidBuffer);
-
 		for (i = 0; i < ginstate->origTupdesc->natts; i++)
 			ginHeapTupleFastCollect(ginstate, &collector,
 									(OffsetNumber) (i + 1),
@@ -539,16 +527,6 @@ gininsert(Relation index, Datum *values, bool *isnull,
 	}
 	else
 	{
-		GinStatsData stats;
-
-		/*
-		 * Fastupdate is off but if pending list isn't empty then we need to
-		 * check conflicts with PredicateLockRelation in scanPendingInsert().
-		 */
-		ginGetStats(index, &stats);
-		if (stats.nPendingPages > 0)
-			CheckForSerializableConflictIn(index, NULL, InvalidBuffer);
-
 		for (i = 0; i < ginstate->origTupdesc->natts; i++)
 			ginHeapTupleInsert(ginstate, (OffsetNumber) (i + 1),
 							   values[i], isnull[i],

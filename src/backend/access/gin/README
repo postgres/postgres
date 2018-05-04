@@ -331,6 +331,40 @@ page-deletions safe; it stamps the deleted pages with an XID and keeps the
 deleted pages around with the right-link intact until all concurrent scans
 have finished.)
 
+Predicate Locking
+-----------------
+
+GIN supports predicate locking, for serializable snapshot isolation.
+A predicate locks represent that a scan has scanned a range of values.  They
+are not concerned with physical pages as such, but the logical key values.
+A predicate lock on a page covers the key range that would belong on that
+page, whether or not there are any matching tuples there currently.  In other
+words, a predicate lock on an index page covers the "gaps" between the index
+tuples.  To minimize false positives, predicate locks are acquired at the
+finest level possible.
+
+* Like in the B-tree index, it is enough to lock only leaf pages, because all
+  insertions happen at the leaf level.
+
+* In an equality search (i.e. not a partial match search), if a key entry has
+  a posting tree, we lock the posting tree root page, to represent a lock on
+  just that key entry.  Otherwise, we lock the entry tree page.  We also lock
+  the entry tree page if no match is found, to lock the "gap" where the entry
+  would've been, had there been one.
+
+* In a partial match search, we lock all the entry leaf pages that we scan,
+  in addition to locks on posting tree roots, to represent the "gaps" between
+  values.
+
+* In addition to the locks on entry leaf pages and posting tree roots, all
+  scans grab a lock the metapage.  This is to interlock with insertions to
+  the fast update pending list.  An insertion to the pending list can really
+  belong anywhere in the tree, and the lock on the metapage represents that.
+
+The interlock for fastupdate pending lists means that with fastupdate=on,
+we effectively always grab a full-index lock, so you could get a lot of false
+positives.
+
 Compatibility
 -------------
 

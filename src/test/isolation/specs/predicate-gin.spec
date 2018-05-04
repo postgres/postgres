@@ -32,8 +32,8 @@ setup
 # enable pending list for a small subset of tests
 step "fu1"	{ alter index ginidx set (fastupdate = on);
 			  commit;
-			  begin isolation level serializable; 
-  			  set enable_seqscan=off; }
+			  begin isolation level serializable;
+			  set enable_seqscan=off; }
 
 step "rxy1"	{ select count(*) from gin_tbl where p @> array[4,5]; }
 step "wx1"	{ insert into gin_tbl select g, array[5,6] from generate_series

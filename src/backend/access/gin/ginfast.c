@@ -31,6 +31,7 @@
 #include "postmaster/autovacuum.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "utils/builtins.h"
 
 /* GUC parameter */
@@ -244,6 +245,13 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 
 	metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
 	metapage = BufferGetPage(metabuffer);
+
+	/*
+	 * An insertion to the pending list could logically belong anywhere in
+	 * the tree, so it conflicts with all serializable scans.  All scans
+	 * acquire a predicate lock on the metabuffer to represent that.
+	 */
+	CheckForSerializableConflictIn(index, NULL, metabuffer);
 
 	if (collector->sumsize + collector->ntuples * sizeof(ItemIdData) > GinListPageSize)
 	{

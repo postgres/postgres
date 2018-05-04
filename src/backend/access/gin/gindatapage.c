@@ -1812,8 +1812,8 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 	blkno = BufferGetBlockNumber(buffer);
 
 	/*
-	 * Copy a predicate lock from entry tree leaf (containing posting list) to
-	 * posting tree.
+	 * Copy any predicate locks from the entry tree leaf (containing posting
+	 * list) to the posting tree.
 	 */
 	PredicateLockPageSplit(index, BufferGetBlockNumber(entrybuffer), blkno);
 
@@ -1864,7 +1864,7 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 	return blkno;
 }
 
-void
+static void
 ginPrepareDataScan(GinBtree btree, Relation index, BlockNumber rootBlkno)
 {
 	memset(btree, 0, sizeof(GinBtreeData));
@@ -1911,7 +1911,6 @@ ginInsertItemPointers(Relation index, BlockNumber rootBlkno,
 		btree.itemptr = insertdata.items[insertdata.curitem];
 		stack = ginFindLeafPage(&btree, false, NULL);
 
-		GinCheckForSerializableConflictIn(btree.index, NULL, stack->buffer);
 		ginInsertValue(&btree, stack, &insertdata, buildStats);
 	}
 }

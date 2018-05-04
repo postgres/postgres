@@ -84,6 +84,9 @@ ginFindLeafPage(GinBtree btree, bool searchMode, Snapshot snapshot)
 	stack->parent = NULL;
 	stack->predictNumber = 1;
 
+	if (!searchMode)
+		CheckForSerializableConflictIn(btree->index, NULL, stack->buffer);
+
 	for (;;)
 	{
 		Page		page;

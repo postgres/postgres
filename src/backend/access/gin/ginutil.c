@@ -718,10 +718,3 @@ ginUpdateStats(Relation index, const GinStatsData *stats)
 
 	END_CRIT_SECTION();
 }
-
-void
-GinCheckForSerializableConflictIn(Relation relation, HeapTuple tuple, Buffer buffer)
-{
-	if (!GinGetUseFastUpdate(relation))
-		CheckForSerializableConflictIn(relation, tuple, buffer);
-}

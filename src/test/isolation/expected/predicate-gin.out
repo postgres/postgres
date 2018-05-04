@@ -737,8 +737,8 @@ step c2: commit;
 starting permutation: fu1 rxy1 rxy2fu wx1 c1 wy2fu c2
 step fu1: alter index ginidx set (fastupdate = on);
 			  commit;
-			  begin isolation level serializable; 
-  			  set enable_seqscan=off;
+			  begin isolation level serializable;
+			  set enable_seqscan=off;
 step rxy1: select count(*) from gin_tbl where p @> array[4,5];
 count          
 
