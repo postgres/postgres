@@ -1254,16 +1254,64 @@ in_range_float8_float8(PG_FUNCTION_ARGS)
 Datum
 in_range_float4_float8(PG_FUNCTION_ARGS)
 {
-	/* Doesn't seem worth duplicating code for, so just invoke float8_float8 */
-	float8		val = (float8) PG_GETARG_FLOAT4(0);
-	float8		base = (float8) PG_GETARG_FLOAT4(1);
+	float4		val = PG_GETARG_FLOAT4(0);
+	float4		base = PG_GETARG_FLOAT4(1);
+	float8		offset = PG_GETARG_FLOAT8(2);
+	bool		sub = PG_GETARG_BOOL(3);
+	bool		less = PG_GETARG_BOOL(4);
+	float8		sum;
 
-	return DirectFunctionCall5(in_range_float8_float8,
-							   Float8GetDatumFast(val),
-							   Float8GetDatumFast(base),
-							   PG_GETARG_DATUM(2),
-							   PG_GETARG_DATUM(3),
-							   PG_GETARG_DATUM(4));
+	/*
+	 * Reject negative or NaN offset.  Negative is per spec, and NaN is
+	 * because appropriate semantics for that seem non-obvious.
+	 */
+	if (isnan(offset) || offset < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				 errmsg("invalid preceding or following size in window function")));
+
+	/*
+	 * Deal with cases where val and/or base is NaN, following the rule that
+	 * NaN sorts after non-NaN (cf float8_cmp_internal).  The offset cannot
+	 * affect the conclusion.
+	 */
+	if (isnan(val))
+	{
+		if (isnan(base))
+			PG_RETURN_BOOL(true);	/* NAN = NAN */
+		else
+			PG_RETURN_BOOL(!less);	/* NAN > non-NAN */
+	}
+	else if (isnan(base))
+	{
+		PG_RETURN_BOOL(less);	/* non-NAN < NAN */
+	}
+
+	/*
+	 * Deal with infinite offset (necessarily +inf, at this point).  We must
+	 * special-case this because if base happens to be -inf, their sum would
+	 * be NaN, which is an overflow-ish condition we should avoid.
+	 */
+	if (isinf(offset))
+	{
+		PG_RETURN_BOOL(sub ? !less : less);
+	}
+
+	/*
+	 * Otherwise it should be safe to compute base +/- offset.  We trust the
+	 * FPU to cope if base is +/-inf or the true sum would overflow, and
+	 * produce a suitably signed infinity, which will compare properly against
+	 * val whether or not that's infinity.
+	 */
+	if (sub)
+		sum = base - offset;
+	else
+		sum = base + offset;
+
+	if (less)
+		PG_RETURN_BOOL(val <= sum);
+	else
+		PG_RETURN_BOOL(val >= sum);
 }
 
 
