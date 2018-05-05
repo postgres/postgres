@@ -248,6 +248,8 @@
     <listitem>
      <para>
       Null values are represented by <literal>_null_</literal>.
+      (Note that there is no way to create a value that is just that
+      string.)
      </para>
     </listitem>
 
@@ -752,13 +754,13 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
 
    <varlistentry>
     <term>
-     <literal>close</literal> <optional><replaceable class="parameter">tablename</replaceable></optional>
+     <literal>close</literal> <replaceable class="parameter">tablename</replaceable>
     </term>
 
     <listitem>
      <para>
-      Close the open table.  The name of the table can be given as a
-      cross-check, but this is not required.
+      Close the open table.  The name of the table must be given as a
+      cross-check.
      </para>
     </listitem>
    </varlistentry>
@@ -782,8 +784,8 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
 
      <para>
       NULL values can be specified using the special key word
-      <literal>_null_</literal>.  Values containing spaces must be
-      double quoted.
+      <literal>_null_</literal>.  Values that do not look like
+      identifiers or digit strings must be double quoted.
      </para>
     </listitem>
    </varlistentry>
