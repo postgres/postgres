@@ -1661,7 +1661,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 		if (fail_on_error)
 		{
 			fprintf(stderr,
-					_("%s: could not connect to database \"%s\": %s\n"),
+					_("%s: could not connect to database \"%s\": %s"),
 					progname, dbname, PQerrorMessage(conn));
 			exit_nicely(1);
 		}

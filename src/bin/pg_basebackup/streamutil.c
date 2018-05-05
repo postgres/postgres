@@ -230,7 +230,7 @@ GetConnection(void)
 		res = PQexec(tmpconn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			fprintf(stderr, _("%s: could not clear search_path: %s\n"),
+			fprintf(stderr, _("%s: could not clear search_path: %s"),
 					progname, PQerrorMessage(tmpconn));
 			PQclear(res);
 			PQfinish(tmpconn);
@@ -300,7 +300,7 @@ RetrieveWalSegSize(PGconn *conn)
 	res = PQexec(conn, "SHOW wal_segment_size");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, _("%s: could not send replication command \"%s\": %s\n"),
+		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, "SHOW wal_segment_size", PQerrorMessage(conn));
 
 		PQclear(res);
@@ -372,7 +372,7 @@ RetrieveDataDirCreatePerm(PGconn *conn)
 	res = PQexec(conn, "SHOW data_directory_mode");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, _("%s: could not send replication command \"%s\": %s\n"),
+		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, "SHOW data_directory_mode", PQerrorMessage(conn));
 
 		PQclear(res);
