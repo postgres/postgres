@@ -497,7 +497,7 @@ Branch: REL_10_STABLE [76ec45756] 2018-03-02 17:40:48 -0500
 Branch: REL9_6_STABLE [96d2df840] 2018-03-02 17:40:48 -0500
 -->
      <para>
-      Fix possible leak or double-free of visibility map buffer pins
+      Fix possible leak or double free of visibility map buffer pins
       (Amit Kapila)
      </para>
     </listitem>
@@ -516,7 +516,7 @@ Branch: REL9_6_STABLE [3a11485a5] 2018-05-04 18:23:30 -0300
 
      <para>
       This could happen if some tuples were locked (but not deleted).  While
-      queries would still function correctly, vacuum would generally ignore
+      queries would still function correctly, vacuum would normally ignore
       such pages, with the long-term effect that the tuples were never
       frozen.  In recent releases this would eventually result in errors
       such as <quote>found multixact <replaceable>nnnnn</replaceable> from
@@ -594,8 +594,9 @@ Branch: REL9_4_STABLE [310d1379d] 2018-04-11 23:40:27 +0300
 Branch: REL9_3_STABLE [dfc383cf3] 2018-04-11 23:40:31 +0300
 -->
      <para>
-      Ensure client hostname is copied to local memory when copying
-      <structname>pg_stat_activity</structname> data (Edmund Horner)
+      Ensure client hostname is copied while copying
+      <structname>pg_stat_activity</structname> data to local memory
+      (Edmund Horner)
      </para>
 
      <para>
@@ -670,7 +671,7 @@ Branch: REL9_6_STABLE [57ef2da43] 2018-03-19 23:59:17 -0400
 -->
      <para>
       Prevent query-lifespan memory leakage with SP-GiST operator classes
-      that use traversal values (Anton Dignös)
+      that use traversal values (Anton Dign&ouml;s)
      </para>
     </listitem>
 
@@ -905,7 +906,7 @@ Branch: REL9_5_STABLE [b33e38cb1] 2018-03-29 04:02:34 +0900
      <para>
       Ensure that <application>pg_rewind</application> deletes files on the
       target server if they are deleted from the source server during the
-      run (Tsunakawa Takayuki)
+      run (Takayuki Tsunakawa)
      </para>
 
      <para>
@@ -951,6 +952,23 @@ Branch: REL9_3_STABLE [f1f7a85d8] 2018-03-17 15:38:15 -0400
 
     <listitem>
 <!--
+Author: Peter Eisentraut <peter_e@gmx.net>
+Branch: master [fa03769e4] 2018-05-03 13:13:09 -0400
+Branch: master [7d8679975] 2018-05-03 20:29:54 -0400
+Branch: REL_10_STABLE [8f1787a8f] 2018-05-05 23:03:44 -0400
+Branch: REL9_6_STABLE [ab7825ead] 2018-05-05 23:34:41 -0400
+Branch: REL9_5_STABLE [b812d6372] 2018-05-05 23:48:19 -0400
+Branch: REL9_4_STABLE [af9e0d5cd] 2018-05-05 23:53:05 -0400
+Branch: REL9_3_STABLE [e7f904715] 2018-05-05 23:54:04 -0400
+-->
+     <para>
+      Adjust <application>PL/Python</application> regression tests to pass
+      under Python 3.7 (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Andrew Dunstan <andrew@dunslane.net>
 Branch: master [966268c76] 2018-05-04 15:22:48 -0400
 Branch: REL_10_STABLE [56a45646d] 2018-05-04 15:32:31 -0400
@@ -958,6 +976,13 @@ Branch: REL9_6_STABLE [a9fbf550b] 2018-05-04 15:33:06 -0400
 Branch: REL9_5_STABLE [c1f3638d2] 2018-05-04 15:33:18 -0400
 Branch: REL9_4_STABLE [134db37d2] 2018-05-04 15:51:31 -0400
 Branch: REL9_3_STABLE [af39c1da7] 2018-05-04 15:56:01 -0400
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [2b9bdda74] 2018-05-06 07:37:05 -0400
+Branch: REL_10_STABLE [0e6114be8] 2018-05-06 07:39:05 -0400
+Branch: REL9_6_STABLE [289bafdbc] 2018-05-06 07:39:37 -0400
+Branch: REL9_5_STABLE [3b17d4b9d] 2018-05-06 07:39:51 -0400
+Branch: REL9_4_STABLE [1eb24720c] 2018-05-06 07:40:04 -0400
+Branch: REL9_3_STABLE [a75b01c61] 2018-05-06 07:40:25 -0400
 -->
      <para>
       Support testing <application>PL/Python</application> and related
@@ -987,21 +1012,6 @@ Branch: REL9_6_STABLE [df9040155] 2018-03-22 13:13:58 -0400
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_5_STABLE [3c0e07a46] 2018-05-01 12:02:41 -0400
--->
-     <para>
-      Support building with Microsoft Visual Studio 2015 (Michael Paquier)
-     </para>
-
-     <para>
-      Various fixes needed for VS2015 compatibility were previously
-      back-patched into the 9.5 branch, but one was missed.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [43e949086] 2018-02-28 18:33:45 -0500
 Branch: REL_10_STABLE [aac6286d8] 2018-02-28 18:33:45 -0500
 Branch: REL9_6_STABLE [11e7700e5] 2018-02-28 18:33:45 -0500
@@ -1013,25 +1023,6 @@ Branch: REL9_3_STABLE [10102c91e] 2018-02-28 18:33:45 -0500
       Rename internal <function>b64_encode</function>
       and <function>b64_decode</function> functions to avoid conflict with
       Solaris 11.4 built-in functions (Rainer Orth)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [df629586e] 2018-04-29 15:50:08 -0400
-Branch: REL_10_STABLE [783e8f56d] 2018-04-29 15:50:23 -0400
-Branch: REL9_6_STABLE [2acbeea48] 2018-04-29 15:50:31 -0400
-Branch: REL9_5_STABLE [eaed0d230] 2018-04-29 15:50:37 -0400
-Branch: REL9_4_STABLE [37c02b2b0] 2018-04-29 15:50:43 -0400
-Branch: REL9_3_STABLE [adcd0c2be] 2018-04-29 15:50:50 -0400
--->
-     <para>
-      Update time zone data files to <application>tzdata</application>
-      release 2018d for DST law changes in Palestine and Antarctica (Casey
-      Station), plus historical corrections for Portugal and its colonies,
-      as well as Enderbury, Jamaica, Turks &amp; Caicos Islands, and
-      Uruguay.
      </para>
     </listitem>
 
@@ -1057,6 +1048,25 @@ Branch: REL9_3_STABLE [9469ebc71] 2018-05-04 12:26:52 -0400
       immediately ship such timezone data, <application>zic</application>
       might be used with timezone data obtained directly from IANA, so it
       seems prudent to update <application>zic</application> now.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [df629586e] 2018-04-29 15:50:08 -0400
+Branch: REL_10_STABLE [783e8f56d] 2018-04-29 15:50:23 -0400
+Branch: REL9_6_STABLE [2acbeea48] 2018-04-29 15:50:31 -0400
+Branch: REL9_5_STABLE [eaed0d230] 2018-04-29 15:50:37 -0400
+Branch: REL9_4_STABLE [37c02b2b0] 2018-04-29 15:50:43 -0400
+Branch: REL9_3_STABLE [adcd0c2be] 2018-04-29 15:50:50 -0400
+-->
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2018d for DST law changes in Palestine and Antarctica (Casey
+      Station), plus historical corrections for Portugal and its colonies,
+      as well as Enderbury, Jamaica, Turks &amp; Caicos Islands, and
+      Uruguay.
      </para>
     </listitem>
 

@@ -1,6 +1,538 @@
 <!-- doc/src/sgml/release-9.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-6-9">
+  <title>Release 9.6.9</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2018-05-10</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 9.6.8.
+   For information about new features in the 9.6 major release, see
+   <xref linkend="release-9-6"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.6.9</title>
+
+   <para>
+    A dump/restore is not required for those running 9.6.X.
+   </para>
+
+   <para>
+    However, if the function marking mistakes mentioned in the first two
+    changelog entries below affect you, you will want to take steps to
+    correct your database catalogs.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.6.8,
+    see <xref linkend="release-9-6-8"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix incorrect volatility markings on a few built-in functions
+      (Thomas Munro, Tom Lane)
+     </para>
+
+     <para>
+      The functions
+      <function>query_to_xml</function>,
+      <function>cursor_to_xml</function>,
+      <function>cursor_to_xmlschema</function>,
+      <function>query_to_xmlschema</function>, and
+      <function>query_to_xml_and_xmlschema</function>
+      should be marked volatile because they execute user-supplied queries
+      that might contain volatile operations.  They were not, leading to a
+      risk of incorrect query optimization.  This has been repaired for new
+      installations by correcting the initial catalog data, but existing
+      installations will continue to contain the incorrect markings.
+      Practical use of these functions seems to pose little hazard, but in
+      case of trouble, it can be fixed by manually updating these
+      functions' <structname>pg_proc</structname> entries.  (Note that that
+      will need to be done in each database of the installation.)  Another
+      option is to <application>pg_upgrade</application> the database to a
+      version containing the corrected initial data.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect parallel-safety markings on a few built-in functions
+      (Thomas Munro, Tom Lane)
+     </para>
+
+     <para>
+      The functions
+      <function>brin_summarize_new_values</function>,
+      <function>brin_summarize_range</function>,
+      <function>brin_desummarize_range</function>,
+      <function>gin_clean_pending_list</function>,
+      <function>cursor_to_xml</function>,
+      <function>cursor_to_xmlschema</function>,
+      <function>ts_rewrite</function>,
+      <function>ts_stat</function>,
+      <function>binary_upgrade_create_empty_extension</function>, and
+      <function>pg_import_system_collations</function>
+      should be marked parallel-unsafe; some because they perform database
+      modifications directly, and others because they execute user-supplied
+      queries that might do so.  They were marked parallel-restricted
+      instead, leading to a risk of unexpected query errors.  This has been
+      repaired for new installations by correcting the initial catalog
+      data, but existing installations will continue to contain the
+      incorrect markings.  Practical use of these functions seems to pose
+      little hazard unless <varname>force_parallel_mode</varname> is turned
+      on.  In case of trouble, it can be fixed by manually updating these
+      functions' <structname>pg_proc</structname> entries.  (Note that that
+      will need to be done in each database of the installation.)  Another
+      option is to <application>pg_upgrade</application> the database to a
+      version containing the corrected initial data.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid re-using TOAST value OIDs that match dead-but-not-yet-vacuumed
+      TOAST entries (Pavan Deolasee)
+     </para>
+
+     <para>
+      Once the OID counter has wrapped around, it's possible to assign a
+      TOAST value whose OID matches a previously deleted entry in the same
+      TOAST table.  If that entry were not yet vacuumed away, this resulted
+      in <quote>unexpected chunk number 0 (expected 1) for toast
+      value <replaceable>nnnnn</replaceable></quote> errors, which would
+      persist until the dead entry was removed
+      by <command>VACUUM</command>.  Fix by not selecting such OIDs when
+      creating a new TOAST entry.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change <command>ANALYZE</command>'s algorithm for updating
+      <structname>pg_class</structname>.<structfield>reltuples</structfield>
+      (David Gould)
+     </para>
+
+     <para>
+      Previously, pages not actually scanned by <command>ANALYZE</command>
+      were assumed to retain their old tuple density.  In a large table
+      where <command>ANALYZE</command> samples only a small fraction of the
+      pages, this meant that the overall tuple density estimate could not
+      change very much, so that <structfield>reltuples</structfield> would
+      change nearly proportionally to changes in the table's physical size
+      (<structfield>relpages</structfield>) regardless of what was actually
+      happening in the table.  This has been observed to result
+      in <structfield>reltuples</structfield> becoming so much larger than
+      reality as to effectively shut off autovacuuming.  To fix, assume
+      that <command>ANALYZE</command>'s sample is a statistically unbiased
+      sample of the table (as it should be), and just extrapolate the
+      density observed within those pages to the whole table.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid deadlocks in concurrent <command>CREATE INDEX
+      CONCURRENTLY</command> commands that are run
+      under <literal>SERIALIZABLE</literal> or <literal>REPEATABLE
+      READ</literal> transaction isolation (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible slow execution of <command>REFRESH MATERIALIZED VIEW
+      CONCURRENTLY</command> (Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>UPDATE/DELETE ... WHERE CURRENT OF</literal> to not fail
+      when the referenced cursor uses an index-only-scan plan (Yugo Nagata,
+      Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect planning of join clauses pushed into parameterized
+      paths (Andrew Gierth, Tom Lane)
+     </para>
+
+     <para>
+      This error could result in misclassifying a condition as
+      a <quote>join filter</quote> for an outer join when it should be a
+      plain <quote>filter</quote> condition, leading to incorrect join
+      output.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possibly incorrect generation of an index-only-scan plan when the
+      same table column appears in multiple index columns, and only some of
+      those index columns use operator classes that can return the column
+      value (Kyotaro Horiguchi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix misoptimization of <literal>CHECK</literal> constraints having
+      provably-NULL subclauses of
+      top-level <literal>AND</literal>/<literal>OR</literal> conditions
+      (Tom Lane, Dean Rasheed)
+     </para>
+
+     <para>
+      This could, for example, allow constraint exclusion to exclude a
+      child table that should not be excluded from a query.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix executor crash due to double free in some <literal>GROUPING
+      SET</literal> usages (Peter Geoghegan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid crash if a table rewrite event trigger is added concurrently
+      with a command that could call such a trigger (&Aacute;lvaro Herrera,
+      Andrew Gierth, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid failure if a query-cancel or session-termination interrupt
+      occurs while committing a prepared transaction (Stas Kelvich)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix query-lifespan memory leakage in repeatedly executed hash joins
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible leak or double free of visibility map buffer pins
+      (Amit Kapila)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid spuriously marking pages as all-visible (Dan Wood,
+      Pavan Deolasee, &Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      This could happen if some tuples were locked (but not deleted).  While
+      queries would still function correctly, vacuum would normally ignore
+      such pages, with the long-term effect that the tuples were never
+      frozen.  In recent releases this would eventually result in errors
+      such as <quote>found multixact <replaceable>nnnnn</replaceable> from
+      before relminmxid <replaceable>nnnnn</replaceable></quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix overly strict sanity check
+      in <function>heap_prepare_freeze_tuple</function>
+      (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      This could result in incorrect <quote>cannot freeze committed
+      xmax</quote> failures in databases that have
+      been <application>pg_upgrade</application>'d from 9.2 or earlier.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent dangling-pointer dereference when a C-coded before-update row
+      trigger returns the <quote>old</quote> tuple (Rushabh Lathia)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce locking during autovacuum worker scheduling (Jeff Janes)
+     </para>
+
+     <para>
+      The previous behavior caused drastic loss of potential worker
+      concurrency in databases with many tables.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure client hostname is copied while copying
+      <structname>pg_stat_activity</structname> data to local memory
+      (Edmund Horner)
+     </para>
+
+     <para>
+      Previously the supposedly-local snapshot contained a pointer into
+      shared memory, allowing the client hostname column to change
+      unexpectedly if any existing session disconnected.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect processing of multiple compound affixes
+      in <literal>ispell</literal> dictionaries (Arthur Zakirov)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix collation-aware searches (that is, indexscans using inequality
+      operators) in SP-GiST indexes on text columns (Tom Lane)
+     </para>
+
+     <para>
+      Such searches would return the wrong set of rows in most non-C
+      locales.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent query-lifespan memory leakage with SP-GiST operator classes
+      that use traversal values (Anton Dign&ouml;s)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Count the number of index tuples correctly during initial build of an
+      SP-GiST index (Tomas Vondra)
+     </para>
+
+     <para>
+      Previously, the tuple count was reported to be the same as that of
+      the underlying table, which is wrong if the index is partial.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Count the number of index tuples correctly during vacuuming of a
+      GiST index (Andrey Borodin)
+     </para>
+
+     <para>
+      Previously it reported the estimated number of heap tuples,
+      which might be inaccurate, and is certainly wrong if the
+      index is partial.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a corner case where a streaming standby gets stuck at a WAL
+      continuation record (Kyotaro Horiguchi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In logical decoding, avoid possible double processing of WAL data
+      when a walsender restarts (Craig Ringer)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <function>scalarltsel</function>
+      and <function>scalargtsel</function> to be used on non-core datatypes
+      (Tomas Vondra)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce <application>libpq</application>'s memory consumption when a
+      server error is reported after a large amount of query output has
+      been collected (Tom Lane)
+     </para>
+
+     <para>
+      Discard the previous output before, not after, processing the error
+      message.  On some platforms, notably Linux, this can make a
+      difference in the application's subsequent memory footprint.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix double-free crashes in <application>ecpg</application>
+      (Patrick Krecker, Jeevan Ladhe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</application> to handle <type>long long
+      int</type> variables correctly in MSVC builds (Michael Meskes,
+      Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix mis-quoting of values for list-valued GUC variables in dumps
+      (Michael Paquier, Tom Lane)
+     </para>
+
+     <para>
+      The <varname>local_preload_libraries</varname>,
+      <varname>session_preload_libraries</varname>,
+      <varname>shared_preload_libraries</varname>,
+      and <varname>temp_tablespaces</varname> variables were not correctly
+      quoted in <application>pg_dump</application> output.  This would
+      cause problems if settings for these variables appeared in
+      <command>CREATE FUNCTION ... SET</command> or <command>ALTER
+      DATABASE/ROLE ... SET</command> clauses.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_recvlogical</application> to not fail against
+      pre-v10 <productname>PostgreSQL</productname> servers
+      (Michael Paquier)
+     </para>
+
+     <para>
+      A previous fix caused <application>pg_recvlogical</application> to
+      issue a command regardless of server version, but it should only be
+      issued to v10 and later servers.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that <application>pg_rewind</application> deletes files on the
+      target server if they are deleted from the source server during the
+      run (Takayuki Tsunakawa)
+     </para>
+
+     <para>
+      Failure to do this could result in data inconsistency on the target,
+      particularly if the file in question is a WAL segment.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_rewind</application> to handle tables in
+      non-default tablespaces correctly (Takayuki Tsunakawa)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix overflow handling in <application>PL/pgSQL</application>
+      integer <command>FOR</command> loops (Tom Lane)
+     </para>
+
+     <para>
+      The previous coding failed to detect overflow of the loop variable
+      on some non-gcc compilers, leading to an infinite loop.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Adjust <application>PL/Python</application> regression tests to pass
+      under Python 3.7 (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support testing <application>PL/Python</application> and related
+      modules when building with Python 3 and MSVC (Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix errors in initial build of <filename>contrib/bloom</filename>
+      indexes (Tomas Vondra, Tom Lane)
+     </para>
+
+     <para>
+      Fix possible omission of the table's last tuple from the index.
+      Count the number of index tuples correctly, in case it is a partial
+      index.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Rename internal <function>b64_encode</function>
+      and <function>b64_decode</function> functions to avoid conflict with
+      Solaris 11.4 built-in functions (Rainer Orth)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Sync our copy of the timezone library with IANA tzcode release 2018e
+      (Tom Lane)
+     </para>
+
+     <para>
+      This fixes the <application>zic</application> timezone data compiler
+      to cope with negative daylight-savings offsets.  While
+      the <productname>PostgreSQL</productname> project will not
+      immediately ship such timezone data, <application>zic</application>
+      might be used with timezone data obtained directly from IANA, so it
+      seems prudent to update <application>zic</application> now.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2018d for DST law changes in Palestine and Antarctica (Casey
+      Station), plus historical corrections for Portugal and its colonies,
+      as well as Enderbury, Jamaica, Turks &amp; Caicos Islands, and
+      Uruguay.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-6-8">
   <title>Release 9.6.8</title>
 
