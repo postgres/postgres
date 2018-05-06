@@ -264,10 +264,10 @@ sub mangle_plpython3
 			my @files = glob("$dir/$test.$extension $dir/${test}_[0-9].$extension");
 			foreach my $file (@files)
 			{
-				open(my $handle, "$file") || die "test file $file not found";
+				open(my $handle, '<', $file) || die "test file $file not found";
 				my $contents = <$handle>;
 				close($handle);
-				map
+				do
 				{
 					s/except ([[:alpha:]][[:alpha:].]*), *([[:alpha:]][[:alpha:]]*):/except $1 as $2:/g;
 					s/<type 'exceptions\.([[:alpha:]]*)'>/<class '$1'>/g;
@@ -279,15 +279,16 @@ sub mangle_plpython3
 					s/LANGUAGE plpython2?u/LANGUAGE plpython3u/g;
 					s/EXTENSION ([^ ]*_)*plpython2?u/EXTENSION $1plpython3u/g;
 					s/installing required extension "plpython2u"/installing required extension "plpython3u"/g;
-				} $contents;
+				} for ($contents);
 				my $base = basename $file;
-				open($handle, ">$dir/python3/$base") || die "opening python 3 file for $file";
+				open($handle, '>', "$dir/python3/$base") ||
+				  die "opening python 3 file for $file";
 				print $handle $contents;
 				close($handle);
 			}
 		}
 	}
-	map { $_ =~ s!^!python3/!; } @$tests;
+	do { s!^!python3/!; } foreach(@$tests);
 	return @$tests;
 }
 
