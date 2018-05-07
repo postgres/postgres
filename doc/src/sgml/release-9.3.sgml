@@ -59,10 +59,12 @@
       installations will continue to contain the incorrect markings.
       Practical use of these functions seems to pose little hazard, but in
       case of trouble, it can be fixed by manually updating these
-      functions' <structname>pg_proc</structname> entries.  (Note that that
-      will need to be done in each database of the installation.)  Another
-      option is to <application>pg_upgrade</application> the database to a
-      version containing the corrected initial data.
+      functions' <structname>pg_proc</structname> entries, for example
+      <literal>ALTER FUNCTION pg_catalog.query_to_xml(text, boolean,
+      boolean, text) VOLATILE</literal>.  (Note that that will need to be
+      done in each database of the installation.)  Another option is
+      to <application>pg_upgrade</application> the database to a version
+      containing the corrected initial data.
      </para>
     </listitem>
 
