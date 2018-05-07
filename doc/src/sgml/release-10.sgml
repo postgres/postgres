@@ -23,9 +23,14 @@
    </para>
 
    <para>
-    However, if the function marking mistakes mentioned in the first two
-    changelog entries below affect you, you will want to take steps to
-    correct your database catalogs.
+    However, if you use the <filename>adminpack</filename> extension,
+    you should update it as per the first changelog entry below.
+   </para>
+
+   <para>
+    Also, if the function marking mistakes mentioned in the second and
+    third changelog entries below affect you, you will want to take steps
+    to correct your database catalogs.
    </para>
 
    <para>
@@ -38,6 +43,39 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [7b347409f] 2018-05-07 10:10:33 -0400
+Branch: REL_10_STABLE [20f01fc45] 2018-05-07 10:10:41 -0400
+Branch: REL9_6_STABLE [53b79ab4f] 2018-05-07 10:10:45 -0400
+-->
+     <para>
+      Remove public execute privilege
+      from <filename>contrib/adminpack</filename>'s
+      <function>pg_logfile_rotate()</function> function (Stephen Frost)
+     </para>
+
+     <para>
+      <function>pg_logfile_rotate()</function> is a deprecated wrapper
+      for the core function <function>pg_rotate_logfile()</function>.
+      When that function was changed to rely on SQL privileges for access
+      control rather than a hard-coded superuser
+      check, <function>pg_logfile_rotate()</function> should have been
+      updated as well, but the need for this was missed.  Hence,
+      if <filename>adminpack</filename> is installed, any user could
+      request a logfile rotation, creating a minor security issue.
+     </para>
+
+     <para>
+      After installing this update, administrators should
+      update <filename>adminpack</filename> by performing
+      <literal>ALTER EXTENSION adminpack UPDATE</literal> in each
+      database in which <filename>adminpack</filename> is installed.
+      (CVE-2018-1115)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
