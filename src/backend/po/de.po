@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-02-04 20:49+0000\n"
-"PO-Revision-Date: 2018-02-04 17:14-0500\n"
+"POT-Creation-Date: 2018-05-06 12:29+0000\n"
+"PO-Revision-Date: 2018-05-06 09:07-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -37,13 +37,13 @@ msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: konnte Datei »%s« nicht zum Lesen öffnen: %s\n"
 
 #: ../common/controldata_utils.c:66 access/transam/timeline.c:346
-#: access/transam/xlog.c:3226 access/transam/xlog.c:10468
-#: access/transam/xlog.c:10481 access/transam/xlog.c:10897
-#: access/transam/xlog.c:10940 access/transam/xlog.c:10979
-#: access/transam/xlog.c:11022 access/transam/xlogfuncs.c:660
+#: access/transam/xlog.c:3226 access/transam/xlog.c:10477
+#: access/transam/xlog.c:10490 access/transam/xlog.c:10906
+#: access/transam/xlog.c:10949 access/transam/xlog.c:10988
+#: access/transam/xlog.c:11031 access/transam/xlogfuncs.c:660
 #: access/transam/xlogfuncs.c:679 commands/extension.c:3154
 #: replication/logical/origin.c:672 replication/logical/origin.c:702
-#: replication/logical/reorderbuffer.c:3115 replication/walsender.c:504
+#: replication/logical/reorderbuffer.c:3142 replication/walsender.c:504
 #: storage/file/copydir.c:202 utils/adt/genfile.c:151
 #, c-format
 msgid "could not read file \"%s\": %m"
@@ -172,7 +172,7 @@ msgstr "konnte Verzeichnis »%s« nicht schließen: %s\n"
 #: utils/adt/varlena.c:4461 utils/fmgr/dfmgr.c:216 utils/hash/dynahash.c:429
 #: utils/hash/dynahash.c:535 utils/hash/dynahash.c:1046 utils/mb/mbutils.c:376
 #: utils/mb/mbutils.c:709 utils/misc/guc.c:3888 utils/misc/guc.c:3904
-#: utils/misc/guc.c:3917 utils/misc/guc.c:6863 utils/misc/tzparser.c:468
+#: utils/misc/guc.c:3917 utils/misc/guc.c:6887 utils/misc/tzparser.c:468
 #: utils/mmgr/aset.c:510 utils/mmgr/mcxt.c:767 utils/mmgr/mcxt.c:802
 #: utils/mmgr/mcxt.c:839 utils/mmgr/mcxt.c:876 utils/mmgr/mcxt.c:910
 #: utils/mmgr/mcxt.c:939 utils/mmgr/mcxt.c:973 utils/mmgr/mcxt.c:1055
@@ -449,7 +449,7 @@ msgstr "in Operatorklasse »%s« für Zugriffsmethode %s fehlen Operatoren"
 msgid "operator class \"%s\" of access method %s is missing support function %d"
 msgstr "in Operatorklasse »%s« für Zugriffsmethode %s fehlt Support-Funktion %d"
 
-#: access/common/heaptuple.c:708 access/common/heaptuple.c:1339
+#: access/common/heaptuple.c:708 access/common/heaptuple.c:1365
 #, c-format
 msgid "number of columns (%d) exceeds limit (%d)"
 msgstr "Anzahl der Spalten (%d) überschreitet Maximum (%d)"
@@ -560,8 +560,8 @@ msgstr "Posting-Liste ist zu lang"
 msgid "Reduce maintenance_work_mem."
 msgstr "Reduzieren Sie maintenance_work_mem."
 
-#: access/gin/ginfast.c:993 access/transam/xlog.c:9883
-#: access/transam/xlog.c:10407 access/transam/xlogfuncs.c:288
+#: access/gin/ginfast.c:993 access/transam/xlog.c:9892
+#: access/transam/xlog.c:10416 access/transam/xlogfuncs.c:288
 #: access/transam/xlogfuncs.c:315 access/transam/xlogfuncs.c:354
 #: access/transam/xlogfuncs.c:375 access/transam/xlogfuncs.c:396
 #: access/transam/xlogfuncs.c:466 access/transam/xlogfuncs.c:522
@@ -605,18 +605,18 @@ msgstr "Operatorfamilie »%s« für Zugriffsmethode %s enthält Support-Prozedur
 msgid "operator class \"%s\" of access method %s is missing support function %d or %d"
 msgstr "in Operatorklasse »%s« für Zugriffsmethode %s fehlt Support-Funktion %d oder %d"
 
-#: access/gist/gist.c:681 access/gist/gistvacuum.c:258
+#: access/gist/gist.c:681 access/gist/gistvacuum.c:257
 #, c-format
 msgid "index \"%s\" contains an inner tuple marked as invalid"
 msgstr "Index »%s« enthält ein inneres Tupel, das als ungültig markiert ist"
 
-#: access/gist/gist.c:683 access/gist/gistvacuum.c:260
+#: access/gist/gist.c:683 access/gist/gistvacuum.c:259
 #, c-format
 msgid "This is caused by an incomplete page split at crash recovery before upgrading to PostgreSQL 9.1."
 msgstr "Das kommt von einem unvollständigen Page-Split bei der Crash-Recovery vor dem Upgrade auf PostgreSQL 9.1."
 
 #: access/gist/gist.c:684 access/gist/gistutil.c:738 access/gist/gistutil.c:749
-#: access/gist/gistvacuum.c:261 access/hash/hashutil.c:172
+#: access/gist/gistvacuum.c:260 access/hash/hashutil.c:172
 #: access/hash/hashutil.c:183 access/hash/hashutil.c:195
 #: access/hash/hashutil.c:216 access/nbtree/nbtpage.c:518
 #: access/nbtree/nbtpage.c:529
@@ -740,7 +740,7 @@ msgstr "während einer parallelen Operation können keine Tupel gelöscht werden
 msgid "attempted to delete invisible tuple"
 msgstr "Versuch ein unsichtbares Tupel zu löschen"
 
-#: access/heap/heapam.c:3489 access/heap/heapam.c:6274
+#: access/heap/heapam.c:3489 access/heap/heapam.c:6282
 #, c-format
 msgid "cannot update tuples during a parallel operation"
 msgstr "während einer parallelen Operation können keine Tupel aktualisiert werden"
@@ -772,7 +772,7 @@ msgstr "konnte nicht in Datei »%s« schreiben, %d von %d geschrieben: %m"
 #: access/transam/xlog.c:3255 replication/logical/snapbuild.c:1605
 #: replication/slot.c:1105 replication/slot.c:1190 storage/file/fd.c:630
 #: storage/file/fd.c:3151 storage/smgr/md.c:1041 storage/smgr/md.c:1274
-#: storage/smgr/md.c:1447 utils/misc/guc.c:6885
+#: storage/smgr/md.c:1447 utils/misc/guc.c:6909
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht fsyncen: %m"
@@ -780,8 +780,8 @@ msgstr "konnte Datei »%s« nicht fsyncen: %m"
 #: access/heap/rewriteheap.c:1021 access/heap/rewriteheap.c:1141
 #: access/transam/timeline.c:315 access/transam/timeline.c:461
 #: access/transam/xlog.c:3049 access/transam/xlog.c:3198
-#: access/transam/xlog.c:10217 access/transam/xlog.c:10255
-#: access/transam/xlog.c:10664 postmaster/postmaster.c:4435
+#: access/transam/xlog.c:10226 access/transam/xlog.c:10264
+#: access/transam/xlog.c:10673 postmaster/postmaster.c:4435
 #: replication/logical/origin.c:546 replication/slot.c:1062
 #: storage/file/copydir.c:176 storage/smgr/md.c:327 utils/time/snapmgr.c:1275
 #, c-format
@@ -807,17 +807,16 @@ msgstr "konnte Positionszeiger nicht ans Ende der Datei »%s« setzen: %m"
 #: replication/logical/origin.c:610 replication/logical/snapbuild.c:1589
 #: replication/slot.c:1091 storage/file/copydir.c:213
 #: utils/init/miscinit.c:1228 utils/init/miscinit.c:1237
-#: utils/init/miscinit.c:1244 utils/misc/guc.c:6846 utils/misc/guc.c:6877
-#: utils/misc/guc.c:8727 utils/misc/guc.c:8741 utils/time/snapmgr.c:1280
+#: utils/init/miscinit.c:1244 utils/misc/guc.c:6870 utils/misc/guc.c:6901
+#: utils/misc/guc.c:8751 utils/misc/guc.c:8765 utils/time/snapmgr.c:1280
 #: utils/time/snapmgr.c:1287
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "konnte nicht in Datei »%s« schreiben: %m"
 
-#: access/heap/rewriteheap.c:1251 access/transam/xlog.c:10486
+#: access/heap/rewriteheap.c:1251 access/transam/xlog.c:10495
 #: access/transam/xlogarchive.c:114 access/transam/xlogarchive.c:468
-#: replication/logical/origin.c:533 replication/logical/reorderbuffer.c:2648
-#: replication/logical/reorderbuffer.c:2705
+#: replication/logical/origin.c:533 replication/logical/reorderbuffer.c:2650
 #: replication/logical/snapbuild.c:1538 replication/logical/snapbuild.c:1901
 #: replication/slot.c:1164 storage/ipc/dsm.c:326 storage/smgr/md.c:427
 #: storage/smgr/md.c:476 storage/smgr/md.c:1394
@@ -831,16 +830,16 @@ msgstr "konnte Datei »%s« nicht löschen: %m"
 #: access/transam/xlog.c:3183 access/transam/xlog.c:3456
 #: access/transam/xlog.c:3534 access/transam/xlogutils.c:701
 #: replication/basebackup.c:404 replication/basebackup.c:1151
-#: replication/logical/origin.c:665 replication/logical/reorderbuffer.c:2171
-#: replication/logical/reorderbuffer.c:2418
-#: replication/logical/reorderbuffer.c:3097
+#: replication/logical/origin.c:665 replication/logical/reorderbuffer.c:2184
+#: replication/logical/reorderbuffer.c:2425
+#: replication/logical/reorderbuffer.c:3124
 #: replication/logical/snapbuild.c:1582 replication/logical/snapbuild.c:1666
 #: replication/slot.c:1179 replication/walsender.c:479
 #: replication/walsender.c:2154 storage/file/copydir.c:169
 #: storage/file/fd.c:613 storage/file/fd.c:3063 storage/file/fd.c:3130
 #: storage/smgr/md.c:609 utils/error/elog.c:1879 utils/init/miscinit.c:1163
-#: utils/init/miscinit.c:1284 utils/init/miscinit.c:1362 utils/misc/guc.c:7105
-#: utils/misc/guc.c:7138
+#: utils/init/miscinit.c:1284 utils/init/miscinit.c:1362 utils/misc/guc.c:7129
+#: utils/misc/guc.c:7162
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
@@ -856,7 +855,7 @@ msgid "index access method \"%s\" does not have a handler"
 msgstr "Indexzugriffsmethode »%s« hat keinen Handler"
 
 #: access/index/indexam.c:155 catalog/objectaddress.c:1196
-#: commands/indexcmds.c:1803 commands/tablecmds.c:242
+#: commands/indexcmds.c:1814 commands/tablecmds.c:242
 #: commands/tablecmds.c:12194
 #, c-format
 msgid "\"%s\" is not an index"
@@ -1306,56 +1305,56 @@ msgstr "konnte Zweiphasen-Status nicht aus dem Xlog bei %X/%X lesen"
 msgid "expected two-phase state data is not present in xlog at %X/%X"
 msgstr "erwartete Zweiphasen-Status-Daten sind nicht im Xlog bei %X/%X vorhanden"
 
-#: access/transam/twophase.c:1512
+#: access/transam/twophase.c:1517
 #, c-format
 msgid "could not remove two-phase state file \"%s\": %m"
 msgstr "konnte Zweiphasen-Statusdatei »%s« nicht löschen: %m"
 
-#: access/transam/twophase.c:1542
+#: access/transam/twophase.c:1547
 #, c-format
 msgid "could not recreate two-phase state file \"%s\": %m"
 msgstr "konnte Zweiphasen-Statusdatei »%s« nicht wieder erstellen: %m"
 
-#: access/transam/twophase.c:1551 access/transam/twophase.c:1558
+#: access/transam/twophase.c:1556 access/transam/twophase.c:1563
 #, c-format
 msgid "could not write two-phase state file: %m"
 msgstr "konnte Zweiphasen-Statusdatei nicht schreiben: %m"
 
-#: access/transam/twophase.c:1570
+#: access/transam/twophase.c:1575
 #, c-format
 msgid "could not fsync two-phase state file: %m"
 msgstr "konnte Zweiphasen-Statusdatei nicht fsyncen: %m"
 
-#: access/transam/twophase.c:1576
+#: access/transam/twophase.c:1581
 #, c-format
 msgid "could not close two-phase state file: %m"
 msgstr "konnte Zweiphasen-Statusdatei nicht schließen: %m"
 
-#: access/transam/twophase.c:1649
+#: access/transam/twophase.c:1654
 #, c-format
 msgid "%u two-phase state file was written for long-running prepared transactions"
 msgid_plural "%u two-phase state files were written for long-running prepared transactions"
 msgstr[0] "%u Zweiphasen-Statusdatei wurde für lange laufende vorbereitete Transaktionen geschrieben"
 msgstr[1] "%u Zweiphasen-Statusdateien wurden für lange laufende vorbereitete Transaktionen geschrieben"
 
-#: access/transam/twophase.c:1713
+#: access/transam/twophase.c:1718
 #, c-format
 msgid "removing future two-phase state file \"%s\""
 msgstr "entferne Zweiphasen-Statusdatei aus der Zukunft »%s«"
 
-#: access/transam/twophase.c:1729 access/transam/twophase.c:1740
-#: access/transam/twophase.c:1860 access/transam/twophase.c:1871
-#: access/transam/twophase.c:1948
+#: access/transam/twophase.c:1734 access/transam/twophase.c:1745
+#: access/transam/twophase.c:1865 access/transam/twophase.c:1876
+#: access/transam/twophase.c:1953
 #, c-format
 msgid "removing corrupt two-phase state file \"%s\""
 msgstr "entferne verfälschte Zweiphasen-Statusdatei »%s«"
 
-#: access/transam/twophase.c:1849 access/transam/twophase.c:1937
+#: access/transam/twophase.c:1854 access/transam/twophase.c:1942
 #, c-format
 msgid "removing stale two-phase state file \"%s\""
 msgstr "entferne abgelaufene Zweiphasen-Statusdatei »%s«"
 
-#: access/transam/twophase.c:1955
+#: access/transam/twophase.c:1960
 #, c-format
 msgid "recovering prepared transaction %u"
 msgstr "Wiederherstellung der vorbereiteten Transaktion %u"
@@ -1830,9 +1829,9 @@ msgstr "Parameter »%s« erfordert einen Zeitwert"
 #: commands/tablecmds.c:796 commands/tablecmds.c:9556 commands/user.c:1045
 #: commands/view.c:499 libpq/auth.c:307 replication/syncrep.c:929
 #: storage/lmgr/deadlock.c:1139 storage/lmgr/proc.c:1278 utils/adt/acl.c:5286
-#: utils/misc/guc.c:5662 utils/misc/guc.c:5755 utils/misc/guc.c:9701
-#: utils/misc/guc.c:9735 utils/misc/guc.c:9769 utils/misc/guc.c:9803
-#: utils/misc/guc.c:9838
+#: utils/misc/guc.c:5662 utils/misc/guc.c:5755 utils/misc/guc.c:9725
+#: utils/misc/guc.c:9759 utils/misc/guc.c:9793 utils/misc/guc.c:9827
+#: utils/misc/guc.c:9862
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -2042,7 +2041,7 @@ msgstr "konnte symbolische Verknüpfung »%s« nicht erstellen: %m"
 msgid "ignoring file \"%s\" because no file \"%s\" exists"
 msgstr "ignoriere Datei »%s«, weil keine Datei »%s« existiert"
 
-#: access/transam/xlog.c:6231 access/transam/xlog.c:11101
+#: access/transam/xlog.c:6231 access/transam/xlog.c:11110
 #, c-format
 msgid "File \"%s\" was renamed to \"%s\"."
 msgstr "Datei »%s« wurde in »%s« umbenannt."
@@ -2297,33 +2296,33 @@ msgstr "unerwartete Zeitleisten-ID %u in Checkpoint-Datensatz, bevor der minimal
 msgid "online backup was canceled, recovery cannot continue"
 msgstr "Online-Sicherung wurde storniert, Wiederherstellung kann nicht fortgesetzt werden"
 
-#: access/transam/xlog.c:9407 access/transam/xlog.c:9454
-#: access/transam/xlog.c:9477
+#: access/transam/xlog.c:9407 access/transam/xlog.c:9463
+#: access/transam/xlog.c:9486
 #, c-format
 msgid "unexpected timeline ID %u (should be %u) in checkpoint record"
 msgstr "unerwartete Zeitleisten-ID %u (sollte %u sein) im Checkpoint-Datensatz"
 
-#: access/transam/xlog.c:9752
+#: access/transam/xlog.c:9761
 #, c-format
 msgid "could not fsync log segment %s: %m"
 msgstr "konnte Logsegment %s nicht fsyncen: %m"
 
-#: access/transam/xlog.c:9776
+#: access/transam/xlog.c:9785
 #, c-format
 msgid "could not fsync log file %s: %m"
 msgstr "konnte Logdatei %s nicht fsyncen: %m"
 
-#: access/transam/xlog.c:9784
+#: access/transam/xlog.c:9793
 #, c-format
 msgid "could not fsync write-through log file %s: %m"
 msgstr "konnte Write-Through-Logdatei %s nicht fsyncen: %m"
 
-#: access/transam/xlog.c:9793
+#: access/transam/xlog.c:9802
 #, c-format
 msgid "could not fdatasync log file %s: %m"
 msgstr "konnte Logdatei %s nicht fdatasyncen: %m"
 
-#: access/transam/xlog.c:9884 access/transam/xlog.c:10408
+#: access/transam/xlog.c:9893 access/transam/xlog.c:10417
 #: access/transam/xlogfuncs.c:289 access/transam/xlogfuncs.c:316
 #: access/transam/xlogfuncs.c:355 access/transam/xlogfuncs.c:376
 #: access/transam/xlogfuncs.c:397
@@ -2331,63 +2330,63 @@ msgstr "konnte Logdatei %s nicht fdatasyncen: %m"
 msgid "WAL control functions cannot be executed during recovery."
 msgstr "Während der Wiederherstellung können keine WAL-Kontrollfunktionen ausgeführt werden."
 
-#: access/transam/xlog.c:9893 access/transam/xlog.c:10417
+#: access/transam/xlog.c:9902 access/transam/xlog.c:10426
 #, c-format
 msgid "WAL level not sufficient for making an online backup"
 msgstr "WAL-Level nicht ausreichend, um Online-Sicherung durchzuführen"
 
-#: access/transam/xlog.c:9894 access/transam/xlog.c:10418
+#: access/transam/xlog.c:9903 access/transam/xlog.c:10427
 #: access/transam/xlogfuncs.c:322
 #, c-format
 msgid "wal_level must be set to \"replica\" or \"logical\" at server start."
 msgstr "wal_level muss beim Serverstart auf »replica« oder »logical« gesetzt werden."
 
-#: access/transam/xlog.c:9899
+#: access/transam/xlog.c:9908
 #, c-format
 msgid "backup label too long (max %d bytes)"
 msgstr "Backup-Label zu lang (maximal %d Bytes)"
 
-#: access/transam/xlog.c:9936 access/transam/xlog.c:10208
-#: access/transam/xlog.c:10246
+#: access/transam/xlog.c:9945 access/transam/xlog.c:10217
+#: access/transam/xlog.c:10255
 #, c-format
 msgid "a backup is already in progress"
 msgstr "ein Backup läuft bereits"
 
-#: access/transam/xlog.c:9937
+#: access/transam/xlog.c:9946
 #, c-format
 msgid "Run pg_stop_backup() and try again."
 msgstr "Führen Sie pg_stop_backup() aus und versuchen Sie es nochmal."
 
-#: access/transam/xlog.c:10032
+#: access/transam/xlog.c:10041
 #, c-format
 msgid "WAL generated with full_page_writes=off was replayed since last restartpoint"
 msgstr "mit full_page_writes=off erzeugtes WAL wurde seit dem letzten Restart-Punkt zurückgespielt"
 
-#: access/transam/xlog.c:10034 access/transam/xlog.c:10615
+#: access/transam/xlog.c:10043 access/transam/xlog.c:10624
 #, c-format
 msgid "This means that the backup being taken on the standby is corrupt and should not be used. Enable full_page_writes and run CHECKPOINT on the master, and then try an online backup again."
 msgstr "Das bedeutet, dass die aktuelle Datensicherung auf dem Standby-Server verfälscht ist und nicht verwendet werden sollte. Schalten Sie full_page_writes ein, führen Sie CHECKPOINT aus und versuchen Sie dann die Online-Sicherung erneut."
 
-#: access/transam/xlog.c:10101 replication/basebackup.c:1027
+#: access/transam/xlog.c:10110 replication/basebackup.c:1027
 #: utils/adt/misc.c:498
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung »%s« nicht lesen: %m"
 
-#: access/transam/xlog.c:10108 replication/basebackup.c:1032
+#: access/transam/xlog.c:10117 replication/basebackup.c:1032
 #: utils/adt/misc.c:503
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "Ziel für symbolische Verknüpfung »%s« ist zu lang"
 
-#: access/transam/xlog.c:10161 commands/tablespace.c:391
+#: access/transam/xlog.c:10170 commands/tablespace.c:391
 #: commands/tablespace.c:553 replication/basebackup.c:1048 utils/adt/misc.c:511
 #, c-format
 msgid "tablespaces are not supported on this platform"
 msgstr "Tablespaces werden auf dieser Plattform nicht unterstützt"
 
-#: access/transam/xlog.c:10202 access/transam/xlog.c:10240
-#: access/transam/xlog.c:10456 access/transam/xlogarchive.c:106
+#: access/transam/xlog.c:10211 access/transam/xlog.c:10249
+#: access/transam/xlog.c:10465 access/transam/xlogarchive.c:106
 #: access/transam/xlogarchive.c:265 commands/copy.c:1825 commands/copy.c:2861
 #: commands/extension.c:3133 commands/tablespace.c:782
 #: commands/tablespace.c:873 guc-file.l:1002 replication/basebackup.c:410
@@ -2399,128 +2398,128 @@ msgstr "Tablespaces werden auf dieser Plattform nicht unterstützt"
 msgid "could not stat file \"%s\": %m"
 msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
 
-#: access/transam/xlog.c:10209 access/transam/xlog.c:10247
+#: access/transam/xlog.c:10218 access/transam/xlog.c:10256
 #, c-format
 msgid "If you're sure there is no backup in progress, remove file \"%s\" and try again."
 msgstr "Wenn Sie sicher sind, dass noch kein Backup läuft, entfernen Sie die Datei »%s« und versuchen Sie es noch einmal."
 
-#: access/transam/xlog.c:10226 access/transam/xlog.c:10264
-#: access/transam/xlog.c:10676
+#: access/transam/xlog.c:10235 access/transam/xlog.c:10273
+#: access/transam/xlog.c:10685
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht schreiben: %m"
 
-#: access/transam/xlog.c:10433
+#: access/transam/xlog.c:10442
 #, c-format
 msgid "exclusive backup not in progress"
 msgstr "es läuft kein exklusives Backup"
 
-#: access/transam/xlog.c:10460
+#: access/transam/xlog.c:10469
 #, c-format
 msgid "a backup is not in progress"
 msgstr "es läuft kein Backup"
 
-#: access/transam/xlog.c:10550 access/transam/xlog.c:10563
-#: access/transam/xlog.c:10911 access/transam/xlog.c:10917
-#: access/transam/xlog.c:11001 access/transam/xlogfuncs.c:690
+#: access/transam/xlog.c:10559 access/transam/xlog.c:10572
+#: access/transam/xlog.c:10920 access/transam/xlog.c:10926
+#: access/transam/xlog.c:11010 access/transam/xlogfuncs.c:690
 #, c-format
 msgid "invalid data in file \"%s\""
 msgstr "ungültige Daten in Datei »%s«"
 
-#: access/transam/xlog.c:10567 replication/basebackup.c:939
+#: access/transam/xlog.c:10576 replication/basebackup.c:939
 #, c-format
 msgid "the standby was promoted during online backup"
 msgstr "der Standby-Server wurde während der Online-Sicherung zum Primärserver befördert"
 
-#: access/transam/xlog.c:10568 replication/basebackup.c:940
+#: access/transam/xlog.c:10577 replication/basebackup.c:940
 #, c-format
 msgid "This means that the backup being taken is corrupt and should not be used. Try taking another online backup."
 msgstr "Das bedeutet, dass die aktuelle Online-Sicherung verfälscht ist und nicht verwendet werden sollte. Versuchen Sie, eine neue Online-Sicherung durchzuführen."
 
-#: access/transam/xlog.c:10613
+#: access/transam/xlog.c:10622
 #, c-format
 msgid "WAL generated with full_page_writes=off was replayed during online backup"
 msgstr "mit full_page_writes=off erzeugtes WAL wurde während der Online-Sicherung zurückgespielt"
 
-#: access/transam/xlog.c:10725
+#: access/transam/xlog.c:10734
 #, c-format
 msgid "pg_stop_backup cleanup done, waiting for required WAL segments to be archived"
 msgstr "Aufräumen nach pg_stop_backup beendet, warte bis die benötigten WAL-Segmente archiviert sind"
 
-#: access/transam/xlog.c:10735
+#: access/transam/xlog.c:10744
 #, c-format
 msgid "pg_stop_backup still waiting for all required WAL segments to be archived (%d seconds elapsed)"
 msgstr "pg_stop_backup wartet immer noch, bis alle benötigten WAL-Segmente archiviert sind (%d Sekunden abgelaufen)"
 
-#: access/transam/xlog.c:10737
+#: access/transam/xlog.c:10746
 #, c-format
 msgid "Check that your archive_command is executing properly.  pg_stop_backup can be canceled safely, but the database backup will not be usable without all the WAL segments."
 msgstr "Prüfen Sie, ob das archive_command korrekt ausgeführt wird. pg_stop_backup kann gefahrlos abgebrochen werden, aber die Datenbanksicherung wird ohne die fehlenden WAL-Segmente nicht benutzbar sein."
 
-#: access/transam/xlog.c:10744
+#: access/transam/xlog.c:10753
 #, c-format
 msgid "pg_stop_backup complete, all required WAL segments have been archived"
 msgstr "pg_stop_backup abgeschlossen, alle benötigten WAL-Segmente wurden archiviert"
 
-#: access/transam/xlog.c:10748
+#: access/transam/xlog.c:10757
 #, c-format
 msgid "WAL archiving is not enabled; you must ensure that all required WAL segments are copied through other means to complete the backup"
 msgstr "WAL-Archivierung ist nicht eingeschaltet; Sie müssen dafür sorgen, dass alle benötigten WAL-Segmente auf andere Art kopiert werden, um die Sicherung abzuschließen"
 
 #. translator: %s is an XLog record description
-#: access/transam/xlog.c:11041
+#: access/transam/xlog.c:11050
 #, c-format
 msgid "xlog redo at %X/%X for %s"
 msgstr "xlog redo bei %X/%X für %s"
 
-#: access/transam/xlog.c:11090
+#: access/transam/xlog.c:11099
 #, c-format
 msgid "online backup mode was not canceled"
 msgstr "Online-Sicherungsmodus wurde nicht storniert"
 
-#: access/transam/xlog.c:11091
+#: access/transam/xlog.c:11100
 #, c-format
 msgid "File \"%s\" could not be renamed to \"%s\": %m."
 msgstr "Konnte Datei »%s« nicht in »%s« umbenennen: %m."
 
-#: access/transam/xlog.c:11100 access/transam/xlog.c:11112
-#: access/transam/xlog.c:11122
+#: access/transam/xlog.c:11109 access/transam/xlog.c:11121
+#: access/transam/xlog.c:11131
 #, c-format
 msgid "online backup mode canceled"
 msgstr "Online-Sicherungsmodus storniert"
 
-#: access/transam/xlog.c:11113
+#: access/transam/xlog.c:11122
 #, c-format
 msgid "Files \"%s\" and \"%s\" were renamed to \"%s\" and \"%s\", respectively."
 msgstr "Dateien »%s« und »%s« wurden in »%s« und »%s« umbenannt."
 
-#: access/transam/xlog.c:11123
+#: access/transam/xlog.c:11132
 #, c-format
 msgid "File \"%s\" was renamed to \"%s\", but file \"%s\" could not be renamed to \"%s\": %m."
 msgstr "Datei »%s« wurde in »%s« umbenannt, aber Datei »%s« konnte nicht in »%s« umbenannt werden: %m."
 
-#: access/transam/xlog.c:11245 access/transam/xlogutils.c:718
+#: access/transam/xlog.c:11254 access/transam/xlogutils.c:718
 #: replication/walreceiver.c:999 replication/walsender.c:2166
 #, c-format
 msgid "could not seek in log segment %s to offset %u: %m"
 msgstr "konnte Positionszeiger von Logsegment %s nicht auf %u setzen: %m"
 
-#: access/transam/xlog.c:11257
+#: access/transam/xlog.c:11266
 #, c-format
 msgid "could not read from log segment %s, offset %u: %m"
 msgstr "konnte nicht aus Logsegment %s, Position %u lesen: %m"
 
-#: access/transam/xlog.c:11731
+#: access/transam/xlog.c:11780
 #, c-format
 msgid "received promote request"
 msgstr "Anforderung zum Befördern empfangen"
 
-#: access/transam/xlog.c:11744
+#: access/transam/xlog.c:11793
 #, c-format
 msgid "trigger file found: %s"
 msgstr "Triggerdatei gefunden: %s"
 
-#: access/transam/xlog.c:11753
+#: access/transam/xlog.c:11802
 #, c-format
 msgid "could not stat trigger file \"%s\": %m"
 msgstr "konnte »stat« für Trigger-Datei »%s« nicht ausführen: %m"
@@ -2595,8 +2594,8 @@ msgstr "es läuft ein nicht-exklusives Backup"
 msgid "Did you mean to use pg_stop_backup('f')?"
 msgstr "Meinten Sie pg_stop_backup('f')?"
 
-#: access/transam/xlogfuncs.c:197 commands/event_trigger.c:1445
-#: commands/event_trigger.c:1996 commands/extension.c:1732
+#: access/transam/xlogfuncs.c:197 commands/event_trigger.c:1467
+#: commands/event_trigger.c:2018 commands/extension.c:1732
 #: commands/extension.c:1841 commands/extension.c:2034 commands/prepare.c:702
 #: executor/execQual.c:1757 executor/execQual.c:1782 executor/execQual.c:2157
 #: executor/execQual.c:5438 executor/functions.c:1031 foreign/foreign.c:492
@@ -2605,19 +2604,19 @@ msgstr "Meinten Sie pg_stop_backup('f')?"
 #: utils/adt/jsonfuncs.c:1483 utils/adt/jsonfuncs.c:1613
 #: utils/adt/jsonfuncs.c:1801 utils/adt/jsonfuncs.c:1928
 #: utils/adt/jsonfuncs.c:2694 utils/adt/pgstatfuncs.c:554
-#: utils/adt/pgstatfuncs.c:655 utils/fmgr/funcapi.c:61 utils/misc/guc.c:8436
+#: utils/adt/pgstatfuncs.c:655 utils/fmgr/funcapi.c:61 utils/misc/guc.c:8460
 #: utils/mmgr/portalmem.c:1088
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "Funktion mit Mengenergebnis in einem Zusammenhang aufgerufen, der keine Mengenergebnisse verarbeiten kann"
 
-#: access/transam/xlogfuncs.c:201 commands/event_trigger.c:1449
-#: commands/event_trigger.c:2000 commands/extension.c:1736
+#: access/transam/xlogfuncs.c:201 commands/event_trigger.c:1471
+#: commands/event_trigger.c:2022 commands/extension.c:1736
 #: commands/extension.c:1845 commands/extension.c:2038 commands/prepare.c:706
 #: foreign/foreign.c:497 replication/logical/logicalfuncs.c:179
 #: replication/logical/origin.c:1402 replication/slotfuncs.c:193
 #: replication/walsender.c:2896 utils/adt/pgstatfuncs.c:558
-#: utils/adt/pgstatfuncs.c:659 utils/misc/guc.c:8440 utils/misc/pg_config.c:44
+#: utils/adt/pgstatfuncs.c:659 utils/misc/guc.c:8464 utils/misc/pg_config.c:44
 #: utils/mmgr/portalmem.c:1092
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
@@ -2665,47 +2664,47 @@ msgstr "Wiederherstellung läuft nicht"
 msgid "Recovery control functions can only be executed during recovery."
 msgstr "Wiederherstellungskontrollfunktionen können nur während der Wiederherstellung ausgeführt werden."
 
-#: access/transam/xlogreader.c:276
+#: access/transam/xlogreader.c:274
 #, c-format
 msgid "invalid record offset at %X/%X"
 msgstr "ungültiger Datensatz-Offset bei %X/%X"
 
-#: access/transam/xlogreader.c:284
+#: access/transam/xlogreader.c:282
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "Contrecord angefordert von %X/%X"
 
-#: access/transam/xlogreader.c:325 access/transam/xlogreader.c:624
+#: access/transam/xlogreader.c:323 access/transam/xlogreader.c:620
 #, c-format
 msgid "invalid record length at %X/%X: wanted %u, got %u"
 msgstr "ungültige Datensatzlänge bei %X/%X: %u erwartet, %u erhalten"
 
-#: access/transam/xlogreader.c:340
+#: access/transam/xlogreader.c:338
 #, c-format
 msgid "record length %u at %X/%X too long"
 msgstr "Datensatzlänge %u bei %X/%X ist zu lang"
 
-#: access/transam/xlogreader.c:381
+#: access/transam/xlogreader.c:379
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "keine Contrecord-Flag bei %X/%X"
 
-#: access/transam/xlogreader.c:394
+#: access/transam/xlogreader.c:392
 #, c-format
 msgid "invalid contrecord length %u at %X/%X"
 msgstr "ungültige Contrecord-Länge %u bei %X/%X"
 
-#: access/transam/xlogreader.c:632
+#: access/transam/xlogreader.c:628
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "ungültige Resource-Manager-ID %u bei %X/%X"
 
-#: access/transam/xlogreader.c:646 access/transam/xlogreader.c:663
+#: access/transam/xlogreader.c:642 access/transam/xlogreader.c:659
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "Datensatz mit falschem Prev-Link %X/%X bei %X/%X"
 
-#: access/transam/xlogreader.c:700
+#: access/transam/xlogreader.c:696
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "ungültige Resource-Manager-Datenprüfsumme in Datensatz bei %X/%X"
@@ -2735,67 +2734,67 @@ msgstr "WAL-Datei ist von einem anderen Datenbanksystem: Falsche XLOG_SEG_SIZE i
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL-Datei ist von einem anderen Datenbanksystem: Falsche XLOG_BLCKSZ im Seitenkopf"
 
-#: access/transam/xlogreader.c:812
+#: access/transam/xlogreader.c:817
 #, c-format
 msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
 msgstr "unerwartete Pageaddr %X/%X in Logsegment %s, Offset %u"
 
-#: access/transam/xlogreader.c:837
+#: access/transam/xlogreader.c:842
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
 msgstr "Zeitleisten-ID %u außer der Reihe (nach %u) in Logsegment %s, Offset %u"
 
-#: access/transam/xlogreader.c:1081
+#: access/transam/xlogreader.c:1086
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "block_id %u außer der Reihe bei %X/%X"
 
-#: access/transam/xlogreader.c:1103
+#: access/transam/xlogreader.c:1108
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA gesetzt, aber keine Daten enthalten bei %X/%X"
 
-#: access/transam/xlogreader.c:1110
+#: access/transam/xlogreader.c:1115
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA nicht gesetzt, aber Datenlänge ist %u bei %X/%X"
 
-#: access/transam/xlogreader.c:1143
+#: access/transam/xlogreader.c:1148
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE gesetzt, aber Loch Offset %u Länge %u Block-Abbild-Länge %u bei %X/%X"
 
-#: access/transam/xlogreader.c:1159
+#: access/transam/xlogreader.c:1164
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE nicht gesetzt, aber Loch Offset %u Länge %u bei %X/%X"
 
-#: access/transam/xlogreader.c:1174
+#: access/transam/xlogreader.c:1179
 #, c-format
 msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_IS_COMPRESSED gesetzt, aber Block-Abbild-Länge %u bei %X/%X"
 
-#: access/transam/xlogreader.c:1189
+#: access/transam/xlogreader.c:1194
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "weder BKPIMAGE_HAS_HOLE noch BKPIMAGE_IS_COMPRESSED gesetzt, aber Block-Abbild-Länge ist %u bei %X/%X"
 
-#: access/transam/xlogreader.c:1205
+#: access/transam/xlogreader.c:1210
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL gesetzt, aber keine vorangehende Relation bei %X/%X"
 
-#: access/transam/xlogreader.c:1217
+#: access/transam/xlogreader.c:1222
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "ungültige block_id %u bei %X/%X"
 
-#: access/transam/xlogreader.c:1297
+#: access/transam/xlogreader.c:1302
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "Datensatz mit ungültiger Länge bei %X/%X"
 
-#: access/transam/xlogreader.c:1386
+#: access/transam/xlogreader.c:1391
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "ungültiges komprimiertes Abbild bei %X/%X, Block %d"
@@ -2993,7 +2992,7 @@ msgstr "Vorgabeprivilegien können nicht für Spalten gesetzt werden"
 #: commands/tablecmds.c:8611 commands/trigger.c:642 parser/analyze.c:2228
 #: parser/parse_relation.c:2639 parser/parse_relation.c:2701
 #: parser/parse_target.c:951 parser/parse_type.c:127 utils/adt/acl.c:2845
-#: utils/adt/ruleutils.c:1987
+#: utils/adt/ruleutils.c:2001
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
 msgstr "Spalte »%s« von Relation »%s« existiert nicht"
@@ -3487,11 +3486,11 @@ msgid "no collation was derived for column \"%s\" with collatable type %s"
 msgstr "für Spalte »%s« mit sortierbarem Typ %s wurde keine Sortierfolge abgeleitet"
 
 #: catalog/heap.c:586 commands/createas.c:204 commands/createas.c:501
-#: commands/indexcmds.c:1136 commands/view.c:103 regex/regc_pg_locale.c:262
+#: commands/indexcmds.c:1147 commands/view.c:103 regex/regc_pg_locale.c:262
 #: utils/adt/formatting.c:1513 utils/adt/formatting.c:1565
 #: utils/adt/formatting.c:1633 utils/adt/formatting.c:1685
 #: utils/adt/formatting.c:1754 utils/adt/formatting.c:1818 utils/adt/like.c:213
-#: utils/adt/selfuncs.c:5434 utils/adt/varlena.c:1421 utils/adt/varlena.c:1826
+#: utils/adt/selfuncs.c:5463 utils/adt/varlena.c:1421 utils/adt/varlena.c:1826
 #, c-format
 msgid "Use the COLLATE clause to set the collation explicitly."
 msgstr "Verwenden Sie die COLLATE-Klausel, um die Sortierfolge explizit zu setzen."
@@ -3646,12 +3645,12 @@ msgstr "DROP INDEX CONCURRENTLY muss die erste Aktion in einer Transaktion sein"
 msgid "building index \"%s\" on table \"%s\""
 msgstr "baue Index »%s« von Tabelle »%s«"
 
-#: catalog/index.c:3322
+#: catalog/index.c:3327
 #, c-format
 msgid "cannot reindex temporary tables of other sessions"
 msgstr "kann temporäre Tabellen anderer Sitzungen nicht reindizieren"
 
-#: catalog/index.c:3454
+#: catalog/index.c:3459
 #, c-format
 msgid "index \"%s\" was reindexed"
 msgstr "Index »%s« wurde neu indiziert"
@@ -3788,7 +3787,7 @@ msgid "cannot create temporary tables during a parallel operation"
 msgstr "während einer parallelen Operation können keine temporären Tabellen erzeugt werden"
 
 #: catalog/namespace.c:3932 commands/tablespace.c:1173 commands/variable.c:63
-#: utils/misc/guc.c:9868
+#: utils/misc/guc.c:9892
 #, c-format
 msgid "List syntax is invalid."
 msgstr "Die Listensyntax ist ungültig."
@@ -3848,7 +3847,7 @@ msgstr "»%s« ist keine Tabelle"
 msgid "\"%s\" is not a view"
 msgstr "»%s« ist keine Sicht"
 
-#: catalog/objectaddress.c:1224 commands/matview.c:174 commands/tablecmds.c:236
+#: catalog/objectaddress.c:1224 commands/matview.c:172 commands/tablecmds.c:236
 #: commands/tablecmds.c:12178
 #, c-format
 msgid "\"%s\" is not a materialized view"
@@ -4947,22 +4946,22 @@ msgstr "Spalte »%s« von Relation »%s« erscheint mehrmals"
 msgid "automatic analyze of table \"%s.%s.%s\" system usage: %s"
 msgstr "automatisches Analysieren von Tabelle »%s.%s.%s« Systembenutzung: %s"
 
-#: commands/analyze.c:1215
+#: commands/analyze.c:1218
 #, c-format
 msgid "\"%s\": scanned %d of %u pages, containing %.0f live rows and %.0f dead rows; %d rows in sample, %.0f estimated total rows"
 msgstr "»%s«: %d von %u Seiten gelesen, enthalten %.0f lebende Zeilen und %.0f tote Zeilen; %d Zeilen in Stichprobe, schätzungsweise %.0f Zeilen insgesamt"
 
-#: commands/analyze.c:1294
+#: commands/analyze.c:1297
 #, c-format
 msgid "skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree contains no child tables"
 msgstr "überspringe Analysieren des Vererbungsbaums »%s.%s« --- dieser Vererbungsbaum enthält keine abgeleiteten Tabellen"
 
-#: commands/analyze.c:1383
+#: commands/analyze.c:1386
 #, c-format
 msgid "skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree contains no analyzable child tables"
 msgstr "überspringe Analysieren des Vererbungsbaums »%s.%s« --- dieser Vererbungsbaum enthält keine analysierbaren abgeleiteten Tabellen"
 
-#: commands/analyze.c:1431 commands/tablecmds.c:8093 executor/execQual.c:2927
+#: commands/analyze.c:1434 commands/tablecmds.c:8093 executor/execQual.c:2927
 msgid "could not convert row type"
 msgstr "konnte Zeilentyp nicht umwandeln"
 
@@ -5119,12 +5118,12 @@ msgstr "Datenbank »%s« existiert nicht"
 msgid "\"%s\" is not a table, view, materialized view, composite type, or foreign table"
 msgstr "»%s« ist weder Tabelle, Sicht, materialisierte Sicht, zusammengesetzter Typ noch Fremdtabelle"
 
-#: commands/constraint.c:60 utils/adt/ri_triggers.c:2715
+#: commands/constraint.c:60 utils/adt/ri_triggers.c:2660
 #, c-format
 msgid "function \"%s\" was not called by trigger manager"
 msgstr "Funktion »%s« wurde nicht von Triggermanager aufgerufen"
 
-#: commands/constraint.c:67 utils/adt/ri_triggers.c:2724
+#: commands/constraint.c:67 utils/adt/ri_triggers.c:2669
 #, c-format
 msgid "function \"%s\" must be fired AFTER ROW"
 msgstr "Funktion »%s« muss AFTER ROW ausgelöst werden"
@@ -5647,7 +5646,7 @@ msgstr "ungültige Feldgröße"
 msgid "incorrect binary data format"
 msgstr "falsches Binärdatenformat"
 
-#: commands/copy.c:4485 commands/indexcmds.c:1057 commands/tablecmds.c:1464
+#: commands/copy.c:4485 commands/indexcmds.c:1068 commands/tablecmds.c:1464
 #: commands/tablecmds.c:2291 parser/parse_relation.c:3188
 #: parser/parse_relation.c:3208 utils/adt/tsvector_op.c:2559
 #, c-format
@@ -5928,7 +5927,7 @@ msgid "invalid argument for %s: \"%s\""
 msgstr "ungültiges Argument für %s: »%s«"
 
 #: commands/dropcmds.c:112 commands/functioncmds.c:1203
-#: utils/adt/ruleutils.c:2083
+#: utils/adt/ruleutils.c:2097
 #, c-format
 msgid "\"%s\" is an aggregate function"
 msgstr "»%s« ist eine Aggregatfunktion"
@@ -6117,17 +6116,17 @@ msgstr "keine Berechtigung, um Eigentümer des Ereignistriggers »%s« zu änder
 msgid "The owner of an event trigger must be a superuser."
 msgstr "Der Eigentümer eines Ereignistriggers muss ein Superuser sein."
 
-#: commands/event_trigger.c:1438
+#: commands/event_trigger.c:1460
 #, c-format
 msgid "%s can only be called in a sql_drop event trigger function"
 msgstr "%s kann nur in einer sql_drop-Ereignistriggerfunktion aufgerufen werden"
 
-#: commands/event_trigger.c:1558 commands/event_trigger.c:1579
+#: commands/event_trigger.c:1580 commands/event_trigger.c:1601
 #, c-format
 msgid "%s can only be called in a table_rewrite event trigger function"
 msgstr "%s kann nur in einer table_rewrite-Ereignistriggerfunktion aufgerufen werden"
 
-#: commands/event_trigger.c:1989
+#: commands/event_trigger.c:2011
 #, c-format
 msgid "%s can only be called in an event trigger function"
 msgstr "%s kann nur in einer Ereignistriggerfunktion aufgerufen werden"
@@ -6865,129 +6864,129 @@ msgstr "Indexerzeugung für Systemspalten wird nicht unterstützt"
 msgid "%s %s will create implicit index \"%s\" for table \"%s\""
 msgstr "%s %s erstellt implizit einen Index »%s« für Tabelle »%s«"
 
-#: commands/indexcmds.c:986
+#: commands/indexcmds.c:997
 #, c-format
 msgid "functions in index predicate must be marked IMMUTABLE"
 msgstr "Funktionen im Indexprädikat müssen als IMMUTABLE markiert sein"
 
-#: commands/indexcmds.c:1052 parser/parse_utilcmd.c:1882
+#: commands/indexcmds.c:1063 parser/parse_utilcmd.c:1882
 #, c-format
 msgid "column \"%s\" named in key does not exist"
 msgstr "Spalte »%s«, die im Schlüssel verwendet wird, existiert nicht"
 
-#: commands/indexcmds.c:1112
+#: commands/indexcmds.c:1123
 #, c-format
 msgid "functions in index expression must be marked IMMUTABLE"
 msgstr "Funktionen im Indexausdruck müssen als IMMUTABLE markiert sein"
 
-#: commands/indexcmds.c:1135
+#: commands/indexcmds.c:1146
 #, c-format
 msgid "could not determine which collation to use for index expression"
 msgstr "konnte die für den Indexausdruck zu verwendende Sortierfolge nicht bestimmen"
 
-#: commands/indexcmds.c:1143 commands/typecmds.c:827 parser/parse_expr.c:2608
+#: commands/indexcmds.c:1154 commands/typecmds.c:827 parser/parse_expr.c:2608
 #: parser/parse_type.c:550 parser/parse_utilcmd.c:2808 utils/adt/misc.c:666
 #, c-format
 msgid "collations are not supported by type %s"
 msgstr "Sortierfolgen werden von Typ %s nicht unterstützt"
 
-#: commands/indexcmds.c:1181
+#: commands/indexcmds.c:1192
 #, c-format
 msgid "operator %s is not commutative"
 msgstr "Operator %s ist nicht kommutativ"
 
-#: commands/indexcmds.c:1183
+#: commands/indexcmds.c:1194
 #, c-format
 msgid "Only commutative operators can be used in exclusion constraints."
 msgstr "In Exclusion-Constraints können nur kommutative Operatoren verwendet werden."
 
-#: commands/indexcmds.c:1209
+#: commands/indexcmds.c:1220
 #, c-format
 msgid "operator %s is not a member of operator family \"%s\""
 msgstr "Operator %s ist kein Mitglied der Operatorfamilie »%s«"
 
-#: commands/indexcmds.c:1212
+#: commands/indexcmds.c:1223
 #, c-format
 msgid "The exclusion operator must be related to the index operator class for the constraint."
 msgstr "Der Exklusionsoperator muss in Beziehung zur Indexoperatorklasse des Constraints stehen."
 
-#: commands/indexcmds.c:1247
+#: commands/indexcmds.c:1258
 #, c-format
 msgid "access method \"%s\" does not support ASC/DESC options"
 msgstr "Zugriffsmethode »%s« unterstützt die Optionen ASC/DESC nicht"
 
-#: commands/indexcmds.c:1252
+#: commands/indexcmds.c:1263
 #, c-format
 msgid "access method \"%s\" does not support NULLS FIRST/LAST options"
 msgstr "Zugriffsmethode »%s« unterstützt die Optionen NULLS FIRST/LAST nicht"
 
-#: commands/indexcmds.c:1308 commands/typecmds.c:1935
+#: commands/indexcmds.c:1319 commands/typecmds.c:1935
 #, c-format
 msgid "data type %s has no default operator class for access method \"%s\""
 msgstr "Datentyp %s hat keine Standardoperatorklasse für Zugriffsmethode »%s«"
 
-#: commands/indexcmds.c:1310
+#: commands/indexcmds.c:1321
 #, c-format
 msgid "You must specify an operator class for the index or define a default operator class for the data type."
 msgstr "Sie müssen für den Index eine Operatorklasse angeben oder eine Standardoperatorklasse für den Datentyp definieren."
 
-#: commands/indexcmds.c:1339 commands/indexcmds.c:1347
+#: commands/indexcmds.c:1350 commands/indexcmds.c:1358
 #: commands/opclasscmds.c:205
 #, c-format
 msgid "operator class \"%s\" does not exist for access method \"%s\""
 msgstr "Operatorklasse »%s« existiert nicht für Zugriffsmethode »%s«"
 
-#: commands/indexcmds.c:1360 commands/typecmds.c:1923
+#: commands/indexcmds.c:1371 commands/typecmds.c:1923
 #, c-format
 msgid "operator class \"%s\" does not accept data type %s"
 msgstr "Operatorklasse »%s« akzeptiert Datentyp %s nicht"
 
-#: commands/indexcmds.c:1450
+#: commands/indexcmds.c:1461
 #, c-format
 msgid "there are multiple default operator classes for data type %s"
 msgstr "es gibt mehrere Standardoperatorklassen für Datentyp %s"
 
-#: commands/indexcmds.c:1841
+#: commands/indexcmds.c:1852
 #, c-format
 msgid "table \"%s\" has no indexes"
 msgstr "Tabelle »%s« hat keine Indexe"
 
-#: commands/indexcmds.c:1896
+#: commands/indexcmds.c:1907
 #, c-format
 msgid "can only reindex the currently open database"
 msgstr "aktuell geöffnete Datenbank kann nicht reindiziert werden"
 
-#: commands/indexcmds.c:1996
+#: commands/indexcmds.c:2007
 #, c-format
 msgid "table \"%s.%s\" was reindexed"
 msgstr "Tabelle »%s.%s« wurde neu indiziert"
 
-#: commands/matview.c:181
+#: commands/matview.c:179
 #, c-format
 msgid "CONCURRENTLY cannot be used when the materialized view is not populated"
 msgstr "CONCURRENTLY kann nicht verwendet werden, wenn die materialisierte Sicht nicht befüllt ist"
 
-#: commands/matview.c:187
+#: commands/matview.c:185
 #, c-format
 msgid "CONCURRENTLY and WITH NO DATA options cannot be used together"
 msgstr "Optionen CONCURRENTLY und WITH NO DATA können nicht zusammen verwendet werden"
 
-#: commands/matview.c:257
+#: commands/matview.c:244
 #, c-format
 msgid "cannot refresh materialized view \"%s\" concurrently"
 msgstr "kann materialisierte Sicht »%s« nicht nebenläufig auffrischen"
 
-#: commands/matview.c:260
+#: commands/matview.c:247
 #, c-format
 msgid "Create a unique index with no WHERE clause on one or more columns of the materialized view."
 msgstr "Erzeugen Sie einen Unique Index ohne WHERE-Klausel für eine oder mehrere Spalten der materialisierten Sicht."
 
-#: commands/matview.c:657
+#: commands/matview.c:624
 #, c-format
 msgid "new data for materialized view \"%s\" contains duplicate rows without any null columns"
 msgstr "neue Daten für materialisierte Sicht »%s« enthalten doppelte Zeilen ohne Spalten mit NULL-Werten"
 
-#: commands/matview.c:659
+#: commands/matview.c:626
 #, c-format
 msgid "Row: %s"
 msgstr "Zeile: %s"
@@ -7250,7 +7249,7 @@ msgid "invalid cursor name: must not be empty"
 msgstr "ungültiger Cursorname: darf nicht leer sein"
 
 #: commands/portalcmds.c:168 commands/portalcmds.c:222
-#: executor/execCurrent.c:67 utils/adt/xml.c:2399 utils/adt/xml.c:2569
+#: executor/execCurrent.c:68 utils/adt/xml.c:2399 utils/adt/xml.c:2569
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "Cursor »%s« existiert nicht"
@@ -9251,37 +9250,37 @@ msgstr "älteste Multixact ist weit in der Vergangenheit"
 msgid "Close open transactions with multixacts soon to avoid wraparound problems."
 msgstr "Schließen Sie bald alle offenen Transaktionen mit Multixacts, um Überlaufprobleme zu vermeiden."
 
-#: commands/vacuum.c:1146
+#: commands/vacuum.c:1128
 #, c-format
 msgid "some databases have not been vacuumed in over 2 billion transactions"
 msgstr "einige Datenbanken sind seit über 2 Milliarden Transaktionen nicht gevacuumt worden"
 
-#: commands/vacuum.c:1147
+#: commands/vacuum.c:1129
 #, c-format
 msgid "You might have already suffered transaction-wraparound data loss."
 msgstr "Sie haben möglicherweise bereits Daten wegen Transaktionsnummernüberlauf verloren."
 
-#: commands/vacuum.c:1268
+#: commands/vacuum.c:1250
 #, c-format
 msgid "skipping vacuum of \"%s\" --- lock not available"
 msgstr "überspringe Vacuum von »%s« --- Sperre nicht verfügbar"
 
-#: commands/vacuum.c:1294
+#: commands/vacuum.c:1276
 #, c-format
 msgid "skipping \"%s\" --- only superuser can vacuum it"
 msgstr "überspringe »%s« --- nur Superuser kann sie vacuumen"
 
-#: commands/vacuum.c:1298
+#: commands/vacuum.c:1280
 #, c-format
 msgid "skipping \"%s\" --- only superuser or database owner can vacuum it"
 msgstr "überspringe »%s« --- nur Superuser oder Eigentümer der Datenbank kann sie vacuumen"
 
-#: commands/vacuum.c:1302
+#: commands/vacuum.c:1284
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can vacuum it"
 msgstr "überspringe »%s« --- nur Eigentümer der Tabelle oder der Datenbank kann sie vacuumen"
 
-#: commands/vacuum.c:1320
+#: commands/vacuum.c:1302
 #, c-format
 msgid "skipping \"%s\" --- cannot vacuum non-tables or special system tables"
 msgstr "überspringe »%s« --- kann Nicht-Tabellen oder besondere Systemtabellen nicht vacuumen"
@@ -9401,7 +9400,7 @@ msgstr "»%s«: von %u auf %u Seiten verkürzt"
 msgid "\"%s\": suspending truncate due to conflicting lock request"
 msgstr "»%s«: Truncate wird ausgesetzt wegen Sperrkonflikt"
 
-#: commands/variable.c:164 utils/misc/guc.c:9892
+#: commands/variable.c:164 utils/misc/guc.c:9916
 #, c-format
 msgid "Unrecognized key word: \"%s\"."
 msgstr "Unbekanntes Schlüsselwort: »%s«."
@@ -9561,42 +9560,43 @@ msgstr "Sichten können nicht ungeloggt sein, weil sie keinen Speicherplatz verw
 msgid "view \"%s\" will be a temporary view"
 msgstr "Sicht »%s« wird eine temporäre Sicht"
 
-#: executor/execCurrent.c:76
+#: executor/execCurrent.c:77
 #, c-format
 msgid "cursor \"%s\" is not a SELECT query"
 msgstr "Cursor »%s« ist keine SELECT-Anfrage"
 
-#: executor/execCurrent.c:82
+#: executor/execCurrent.c:83
 #, c-format
 msgid "cursor \"%s\" is held from a previous transaction"
 msgstr "Cursor »%s« wurde aus einer vorherigen Transaktion beibehalten"
 
-#: executor/execCurrent.c:114
+#: executor/execCurrent.c:115
 #, c-format
 msgid "cursor \"%s\" has multiple FOR UPDATE/SHARE references to table \"%s\""
 msgstr "Cursor »%s« hat mehrere FOR UPDATE/SHARE-Verweise auf Tabelle »%s«"
 
-#: executor/execCurrent.c:123
+#: executor/execCurrent.c:124
 #, c-format
 msgid "cursor \"%s\" does not have a FOR UPDATE/SHARE reference to table \"%s\""
 msgstr "Cursor »%s« hat keinen FOR UPDATE/SHARE-Verweis auf Tabelle »%s«"
 
-#: executor/execCurrent.c:133 executor/execCurrent.c:179
+#: executor/execCurrent.c:134 executor/execCurrent.c:177
 #, c-format
 msgid "cursor \"%s\" is not positioned on a row"
 msgstr "Cursor »%s« ist nicht auf eine Zeile positioniert"
 
-#: executor/execCurrent.c:166
+#: executor/execCurrent.c:164 executor/execCurrent.c:219
+#: executor/execCurrent.c:231
 #, c-format
 msgid "cursor \"%s\" is not a simply updatable scan of table \"%s\""
 msgstr "Cursor »%s« ist kein einfach aktualisierbarer Scan der Tabelle »%s«"
 
-#: executor/execCurrent.c:231 executor/execQual.c:1178
+#: executor/execCurrent.c:270 executor/execQual.c:1178
 #, c-format
 msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr "Typ von Parameter %d (%s) stimmt nicht mit dem überein, als der Plan vorbereitet worden ist (%s)"
 
-#: executor/execCurrent.c:243 executor/execQual.c:1190
+#: executor/execCurrent.c:282 executor/execQual.c:1190
 #, c-format
 msgid "no value found for parameter %d"
 msgstr "kein Wert für Parameter %d gefunden"
@@ -10257,13 +10257,13 @@ msgstr "STDIN/STDOUT sind nicht mit PROGRAM erlaubt"
 msgid "GLOBAL is deprecated in temporary table creation"
 msgstr "die Verwendung von GLOBAL beim Erzeugen einer temporären Tabelle ist veraltet"
 
-#: gram.y:3351 utils/adt/ri_triggers.c:314 utils/adt/ri_triggers.c:371
-#: utils/adt/ri_triggers.c:790 utils/adt/ri_triggers.c:1013
-#: utils/adt/ri_triggers.c:1169 utils/adt/ri_triggers.c:1350
-#: utils/adt/ri_triggers.c:1515 utils/adt/ri_triggers.c:1691
-#: utils/adt/ri_triggers.c:1871 utils/adt/ri_triggers.c:2062
-#: utils/adt/ri_triggers.c:2120 utils/adt/ri_triggers.c:2225
-#: utils/adt/ri_triggers.c:2402
+#: gram.y:3351 utils/adt/ri_triggers.c:313 utils/adt/ri_triggers.c:370
+#: utils/adt/ri_triggers.c:789 utils/adt/ri_triggers.c:1012
+#: utils/adt/ri_triggers.c:1168 utils/adt/ri_triggers.c:1349
+#: utils/adt/ri_triggers.c:1514 utils/adt/ri_triggers.c:1690
+#: utils/adt/ri_triggers.c:1870 utils/adt/ri_triggers.c:2061
+#: utils/adt/ri_triggers.c:2119 utils/adt/ri_triggers.c:2224
+#: utils/adt/ri_triggers.c:2401
 #, c-format
 msgid "MATCH PARTIAL not yet implemented"
 msgstr "MATCH PARTIAL ist noch nicht implementiert"
@@ -12115,7 +12115,7 @@ msgstr "WHERE CURRENT OF wird nicht unterstützt für Sichten mit mehr als einer
 msgid "WHERE CURRENT OF is not supported on a view with grouping or aggregation"
 msgstr "WHERE CURRENT OF wird nicht unterstützt für Sichten mit Gruppierung oder Aggregierung"
 
-#: optimizer/path/joinrels.c:802
+#: optimizer/path/joinrels.c:803
 #, c-format
 msgid "FULL JOIN is only supported with merge-joinable or hash-joinable join conditions"
 msgstr "FULL JOIN wird nur für Merge- oder Hash-Verbund-fähige Verbundbedingungen unterstützt"
@@ -14080,47 +14080,47 @@ msgstr "konnte Autovacuum-Launcher-Prozess nicht starten (fork-Fehler): %m"
 msgid "autovacuum launcher started"
 msgstr "Autovacuum-Launcher startet"
 
-#: postmaster/autovacuum.c:779
+#: postmaster/autovacuum.c:785
 #, c-format
 msgid "autovacuum launcher shutting down"
 msgstr "Autovacuum-Launcher fährt herunter"
 
-#: postmaster/autovacuum.c:1441
+#: postmaster/autovacuum.c:1447
 #, c-format
 msgid "could not fork autovacuum worker process: %m"
 msgstr "konnte Autovacuum-Worker-Prozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/autovacuum.c:1639
+#: postmaster/autovacuum.c:1653
 #, c-format
 msgid "autovacuum: processing database \"%s\""
 msgstr "Autovacuum: bearbeite Datenbank »%s«"
 
-#: postmaster/autovacuum.c:2052
+#: postmaster/autovacuum.c:2066
 #, c-format
 msgid "autovacuum: dropping orphan temp table \"%s\".\"%s\" in database \"%s\""
 msgstr "Autovacuum: lösche verwaiste temporäre Tabelle »%s.%s« in Datenbank »%s«"
 
-#: postmaster/autovacuum.c:2064
+#: postmaster/autovacuum.c:2078
 #, c-format
 msgid "autovacuum: found orphan temp table \"%s\".\"%s\" in database \"%s\""
 msgstr "Autovacuum: verwaiste temporäre Tabelle »%s.%s« in Datenbank »%s« gefunden"
 
-#: postmaster/autovacuum.c:2347
+#: postmaster/autovacuum.c:2382
 #, c-format
 msgid "automatic vacuum of table \"%s.%s.%s\""
 msgstr "automatisches Vacuum der Tabelle »%s.%s.%s«"
 
-#: postmaster/autovacuum.c:2350
+#: postmaster/autovacuum.c:2385
 #, c-format
 msgid "automatic analyze of table \"%s.%s.%s\""
 msgstr "automatisches Analysieren der Tabelle »%s.%s.%s«"
 
-#: postmaster/autovacuum.c:2899
+#: postmaster/autovacuum.c:2934
 #, c-format
 msgid "autovacuum not started because of misconfiguration"
 msgstr "Autovacuum wegen Fehlkonfiguration nicht gestartet"
 
-#: postmaster/autovacuum.c:2900
+#: postmaster/autovacuum.c:2935
 #, c-format
 msgid "Enable the \"track_counts\" option."
 msgstr "Schalten Sie die Option »track_counts« ein."
@@ -14355,52 +14355,52 @@ msgstr "unbekanntes Reset-Ziel: »%s«"
 msgid "Target must be \"archiver\" or \"bgwriter\"."
 msgstr "Das Reset-Ziel muss »archiver« oder »bgwriter« sein."
 
-#: postmaster/pgstat.c:3619
+#: postmaster/pgstat.c:3626
 #, c-format
 msgid "could not read statistics message: %m"
 msgstr "konnte Statistiknachricht nicht lesen: %m"
 
-#: postmaster/pgstat.c:3950 postmaster/pgstat.c:4107
+#: postmaster/pgstat.c:3957 postmaster/pgstat.c:4114
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
 msgstr "konnte temporäre Statistikdatei »%s« nicht öffnen: %m"
 
-#: postmaster/pgstat.c:4017 postmaster/pgstat.c:4152
+#: postmaster/pgstat.c:4024 postmaster/pgstat.c:4159
 #, c-format
 msgid "could not write temporary statistics file \"%s\": %m"
 msgstr "konnte temporäre Statistikdatei »%s« nicht schreiben: %m"
 
-#: postmaster/pgstat.c:4026 postmaster/pgstat.c:4161
+#: postmaster/pgstat.c:4033 postmaster/pgstat.c:4168
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "konnte temporäre Statistikdatei »%s« nicht schließen: %m"
 
-#: postmaster/pgstat.c:4034 postmaster/pgstat.c:4169
+#: postmaster/pgstat.c:4041 postmaster/pgstat.c:4176
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
 msgstr "konnte temporäre Statistikdatei »%s« nicht in »%s« umbenennen: %m"
 
-#: postmaster/pgstat.c:4258 postmaster/pgstat.c:4464 postmaster/pgstat.c:4617
+#: postmaster/pgstat.c:4265 postmaster/pgstat.c:4471 postmaster/pgstat.c:4624
 #, c-format
 msgid "could not open statistics file \"%s\": %m"
 msgstr "konnte Statistikdatei »%s« nicht öffnen: %m"
 
-#: postmaster/pgstat.c:4270 postmaster/pgstat.c:4280 postmaster/pgstat.c:4301
-#: postmaster/pgstat.c:4323 postmaster/pgstat.c:4338 postmaster/pgstat.c:4401
-#: postmaster/pgstat.c:4476 postmaster/pgstat.c:4496 postmaster/pgstat.c:4514
-#: postmaster/pgstat.c:4530 postmaster/pgstat.c:4548 postmaster/pgstat.c:4564
-#: postmaster/pgstat.c:4629 postmaster/pgstat.c:4641 postmaster/pgstat.c:4653
-#: postmaster/pgstat.c:4678 postmaster/pgstat.c:4700
+#: postmaster/pgstat.c:4277 postmaster/pgstat.c:4287 postmaster/pgstat.c:4308
+#: postmaster/pgstat.c:4330 postmaster/pgstat.c:4345 postmaster/pgstat.c:4408
+#: postmaster/pgstat.c:4483 postmaster/pgstat.c:4503 postmaster/pgstat.c:4521
+#: postmaster/pgstat.c:4537 postmaster/pgstat.c:4555 postmaster/pgstat.c:4571
+#: postmaster/pgstat.c:4636 postmaster/pgstat.c:4648 postmaster/pgstat.c:4660
+#: postmaster/pgstat.c:4685 postmaster/pgstat.c:4707
 #, c-format
 msgid "corrupted statistics file \"%s\""
 msgstr "verfälschte Statistikdatei »%s«"
 
-#: postmaster/pgstat.c:4829
+#: postmaster/pgstat.c:4836
 #, c-format
 msgid "using stale statistics instead of current ones because stats collector is not responding"
 msgstr "verwende veraltete Statistiken anstatt aktueller, weil der Statistiksammelprozess nicht antwortet"
 
-#: postmaster/pgstat.c:5156
+#: postmaster/pgstat.c:5163
 #, c-format
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr "Datenbank-Hash-Tabelle beim Aufräumen verfälscht --- Abbruch"
@@ -14603,7 +14603,7 @@ msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr "nicht unterstütztes Frontend-Protokoll %u.%u: Server unterstützt %u.0 bis %u.%u"
 
 #: postmaster/postmaster.c:2090 utils/misc/guc.c:5660 utils/misc/guc.c:5753
-#: utils/misc/guc.c:7051 utils/misc/guc.c:9798 utils/misc/guc.c:9832
+#: utils/misc/guc.c:7075 utils/misc/guc.c:9822 utils/misc/guc.c:9856
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "ungültiger Wert für Parameter »%s«: »%s«"
@@ -15348,24 +15348,29 @@ msgstr "Replikationsidentifikator %d ist bereits aktiv für PID %d"
 msgid "no replication origin is configured"
 msgstr "kein Replication-Origin konfiguriert"
 
-#: replication/logical/reorderbuffer.c:2346
+#: replication/logical/reorderbuffer.c:2358
 #, c-format
 msgid "could not write to data file for XID %u: %m"
 msgstr "konnte nicht in Datendatei für XID %u schreiben: %m"
 
-#: replication/logical/reorderbuffer.c:2442
-#: replication/logical/reorderbuffer.c:2462
+#: replication/logical/reorderbuffer.c:2449
+#: replication/logical/reorderbuffer.c:2469
 #, c-format
 msgid "could not read from reorderbuffer spill file: %m"
 msgstr "konnte nicht aus Reorder-Buffer-Spill-Datei lesen: %m"
 
-#: replication/logical/reorderbuffer.c:2446
-#: replication/logical/reorderbuffer.c:2466
+#: replication/logical/reorderbuffer.c:2453
+#: replication/logical/reorderbuffer.c:2473
 #, c-format
 msgid "could not read from reorderbuffer spill file: read %d instead of %u bytes"
 msgstr "konnte nicht aus Reorder-Buffer-Spill-Datei lesen: %d statt %u Bytes gelesen"
 
-#: replication/logical/reorderbuffer.c:3122
+#: replication/logical/reorderbuffer.c:2685
+#, c-format
+msgid "could not remove file \"%s\" during removal of pg_replslot/%s/*.xid: %m"
+msgstr "konnte Datei »%s« nicht entfernen, während des Entfernens von pg_replslot/%s/*.xid: %m"
+
+#: replication/logical/reorderbuffer.c:3149
 #, c-format
 msgid "could not read from file \"%s\": read %d instead of %d bytes"
 msgstr "konnte nicht aus Datei »%s« lesen: %d statt %d Bytes gelesen"
@@ -19017,7 +19022,7 @@ msgstr "Pfadelement auf Position %d ist keine ganze Zahl: »%s«"
 msgid "levenshtein argument exceeds maximum length of %d characters"
 msgstr "Levenshtein-Argument überschreitet die maximale Länge von %d Zeichen"
 
-#: utils/adt/like.c:212 utils/adt/selfuncs.c:5433
+#: utils/adt/like.c:212 utils/adt/selfuncs.c:5462
 #, c-format
 msgid "could not determine which collation to use for ILIKE"
 msgstr "konnte die für ILIKE zu verwendende Sortierfolge nicht bestimmen"
@@ -19218,22 +19223,22 @@ msgstr "konnte cidr-Wert nicht formatieren: %m"
 msgid "cannot merge addresses from different families"
 msgstr "Adressen verschiedener Familien können nicht zusammengeführt werden"
 
-#: utils/adt/network.c:1343
+#: utils/adt/network.c:1340
 #, c-format
 msgid "cannot AND inet values of different sizes"
 msgstr "binäres »Und« nicht mit »inet«-Werten unterschiedlicher Größe möglich"
 
-#: utils/adt/network.c:1375
+#: utils/adt/network.c:1372
 #, c-format
 msgid "cannot OR inet values of different sizes"
 msgstr "binäres »Oder« nicht mit »inet«-Werten unterschiedlicher Größe möglich"
 
-#: utils/adt/network.c:1436 utils/adt/network.c:1512
+#: utils/adt/network.c:1433 utils/adt/network.c:1509
 #, c-format
 msgid "result is out of range"
 msgstr "Ergebnis ist außerhalb des gültigen Bereichs"
 
-#: utils/adt/network.c:1477
+#: utils/adt/network.c:1474
 #, c-format
 msgid "cannot subtract inet values of different sizes"
 msgstr "Subtraktion von »inet«-Werten unterschiedlicher Größe nicht möglich"
@@ -19381,8 +19386,8 @@ msgstr "gewünschtes Zeichen ist nicht gültig für die Kodierung: %d"
 msgid "null character not permitted"
 msgstr "Null-Zeichen ist nicht erlaubt"
 
-#: utils/adt/orderedsetaggs.c:425 utils/adt/orderedsetaggs.c:530
-#: utils/adt/orderedsetaggs.c:669
+#: utils/adt/orderedsetaggs.c:425 utils/adt/orderedsetaggs.c:529
+#: utils/adt/orderedsetaggs.c:667
 #, c-format
 msgid "percentile value %g is not between 0 and 1"
 msgstr "Perzentilwert %g ist nicht zwischen 0 und 1"
@@ -19674,7 +19679,7 @@ msgid "more than one operator named %s"
 msgstr "es gibt mehrere Operatoren namens %s"
 
 #: utils/adt/regproc.c:780 utils/adt/regproc.c:821 utils/adt/regproc.c:2007
-#: utils/adt/ruleutils.c:8453 utils/adt/ruleutils.c:8622
+#: utils/adt/ruleutils.c:8474 utils/adt/ruleutils.c:8643
 #, c-format
 msgid "too many arguments"
 msgstr "zu viele Argumente"
@@ -19711,73 +19716,73 @@ msgstr "Typname erwartet"
 msgid "improper type name"
 msgstr "falscher Typname"
 
-#: utils/adt/ri_triggers.c:343 utils/adt/ri_triggers.c:2490
-#: utils/adt/ri_triggers.c:3315
+#: utils/adt/ri_triggers.c:342 utils/adt/ri_triggers.c:2489
+#: utils/adt/ri_triggers.c:3260
 #, c-format
 msgid "insert or update on table \"%s\" violates foreign key constraint \"%s\""
 msgstr "Einfügen oder Aktualisieren in Tabelle »%s« verletzt Fremdschlüssel-Constraint »%s«"
 
-#: utils/adt/ri_triggers.c:346 utils/adt/ri_triggers.c:2493
+#: utils/adt/ri_triggers.c:345 utils/adt/ri_triggers.c:2492
 #, c-format
 msgid "MATCH FULL does not allow mixing of null and nonnull key values."
 msgstr "MATCH FULL erlaubt das Mischen von Schlüsseln, die NULL und nicht NULL sind, nicht."
 
-#: utils/adt/ri_triggers.c:2732
+#: utils/adt/ri_triggers.c:2677
 #, c-format
 msgid "function \"%s\" must be fired for INSERT"
 msgstr "Funktion »%s« muss von INSERT ausgelöst werden"
 
-#: utils/adt/ri_triggers.c:2738
+#: utils/adt/ri_triggers.c:2683
 #, c-format
 msgid "function \"%s\" must be fired for UPDATE"
 msgstr "Funktion »%s« muss von UPDATE ausgelöst werden"
 
-#: utils/adt/ri_triggers.c:2744
+#: utils/adt/ri_triggers.c:2689
 #, c-format
 msgid "function \"%s\" must be fired for DELETE"
 msgstr "Funktion »%s« muss von DELETE ausgelöst werden"
 
-#: utils/adt/ri_triggers.c:2767
+#: utils/adt/ri_triggers.c:2712
 #, c-format
 msgid "no pg_constraint entry for trigger \"%s\" on table \"%s\""
 msgstr "kein »pg_constraint«-Eintrag für Trigger »%s« für Tabelle »%s«"
 
-#: utils/adt/ri_triggers.c:2769
+#: utils/adt/ri_triggers.c:2714
 #, c-format
 msgid "Remove this referential integrity trigger and its mates, then do ALTER TABLE ADD CONSTRAINT."
 msgstr "Entfernen Sie diesen Referentielle-Integritäts-Trigger und seine Partner und führen Sie dann ALTER TABLE ADD CONSTRAINT aus."
 
-#: utils/adt/ri_triggers.c:3225
+#: utils/adt/ri_triggers.c:3170
 #, c-format
 msgid "referential integrity query on \"%s\" from constraint \"%s\" on \"%s\" gave unexpected result"
 msgstr "RI-Anfrage in Tabelle »%s« für Constraint »%s« von Tabelle »%s« ergab unerwartetes Ergebnis"
 
-#: utils/adt/ri_triggers.c:3229
+#: utils/adt/ri_triggers.c:3174
 #, c-format
 msgid "This is most likely due to a rule having rewritten the query."
 msgstr "Das liegt höchstwahrscheinlich daran, dass eine Regel die Anfrage umgeschrieben hat."
 
-#: utils/adt/ri_triggers.c:3319
+#: utils/adt/ri_triggers.c:3264
 #, c-format
 msgid "Key (%s)=(%s) is not present in table \"%s\"."
 msgstr "Schlüssel (%s)=(%s) ist nicht in Tabelle »%s« vorhanden."
 
-#: utils/adt/ri_triggers.c:3322
+#: utils/adt/ri_triggers.c:3267
 #, c-format
 msgid "Key is not present in table \"%s\"."
 msgstr "Der Schlüssel ist nicht in Tabelle »%s« vorhanden."
 
-#: utils/adt/ri_triggers.c:3328
+#: utils/adt/ri_triggers.c:3273
 #, c-format
 msgid "update or delete on table \"%s\" violates foreign key constraint \"%s\" on table \"%s\""
 msgstr "Aktualisieren oder Löschen in Tabelle »%s« verletzt Fremdschlüssel-Constraint »%s« von Tabelle »%s«"
 
-#: utils/adt/ri_triggers.c:3333
+#: utils/adt/ri_triggers.c:3278
 #, c-format
 msgid "Key (%s)=(%s) is still referenced from table \"%s\"."
 msgstr "Auf Schlüssel (%s)=(%s) wird noch aus Tabelle »%s« verwiesen."
 
-#: utils/adt/ri_triggers.c:3336
+#: utils/adt/ri_triggers.c:3281
 #, c-format
 msgid "Key is still referenced from table \"%s\"."
 msgstr "Auf den Schlüssel wird noch aus Tabelle »%s« verwiesen."
@@ -19840,17 +19845,17 @@ msgstr "kann unterschiedliche Spaltentyp %s und %s in Record-Spalte %d nicht ver
 msgid "cannot compare record types with different numbers of columns"
 msgstr "kann Record-Typen mit unterschiedlicher Anzahl Spalten nicht vergleichen"
 
-#: utils/adt/ruleutils.c:4297
+#: utils/adt/ruleutils.c:4315
 #, c-format
 msgid "rule \"%s\" has unsupported event type %d"
 msgstr "Regel »%s« hat nicht unterstützten Ereignistyp %d"
 
-#: utils/adt/selfuncs.c:5418
+#: utils/adt/selfuncs.c:5447
 #, c-format
 msgid "case insensitive matching not supported on type bytea"
 msgstr "Mustersuche ohne Rücksicht auf Groß-/Kleinschreibung wird für Typ bytea nicht unterstützt"
 
-#: utils/adt/selfuncs.c:5521
+#: utils/adt/selfuncs.c:5550
 #, c-format
 msgid "regular-expression matching not supported on type bytea"
 msgstr "Mustersuche mit regulären Ausdrücken wird für Typ bytea nicht unterstützt"
@@ -20509,17 +20514,17 @@ msgstr "keine Ausgabefunktion verfügbar für Typ %s"
 msgid "cached plan must not change result type"
 msgstr "gecachter Plan darf den Ergebnistyp nicht ändern"
 
-#: utils/cache/relcache.c:5226
+#: utils/cache/relcache.c:5227
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "konnte Initialisierungsdatei für Relationscache »%s« nicht erzeugen: %m"
 
-#: utils/cache/relcache.c:5228
+#: utils/cache/relcache.c:5229
 #, c-format
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Setze trotzdem fort, aber irgendwas stimmt nicht."
 
-#: utils/cache/relcache.c:5502
+#: utils/cache/relcache.c:5503
 #, c-format
 msgid "could not remove cache file \"%s\": %m"
 msgstr "konnte Cache-Datei »%s« nicht löschen: %m"
@@ -20927,7 +20932,7 @@ msgstr "Die Datei ist anscheinend aus Versehen übrig geblieben, konnte aber nic
 msgid "could not write lock file \"%s\": %m"
 msgstr "konnte Sperrdatei »%s« nicht schreiben: %m"
 
-#: utils/init/miscinit.c:1172 utils/init/miscinit.c:1301 utils/misc/guc.c:8818
+#: utils/init/miscinit.c:1172 utils/init/miscinit.c:1301 utils/misc/guc.c:8842
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "konnte nicht aus Datei »%s« lesen: %m"
@@ -22730,19 +22735,19 @@ msgstr "Parameter »%s« erfordert einen numerischen Wert"
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
 msgstr "%g ist außerhalb des gültigen Bereichs für Parameter »%s« (%g ... %g)"
 
-#: utils/misc/guc.c:5851 utils/misc/guc.c:7194
+#: utils/misc/guc.c:5851 utils/misc/guc.c:7218
 #, c-format
 msgid "cannot set parameters during a parallel operation"
 msgstr "während einer parallelen Operation können keine Parameter gesetzt werden"
 
 #: utils/misc/guc.c:5858 utils/misc/guc.c:6609 utils/misc/guc.c:6661
-#: utils/misc/guc.c:7022 utils/misc/guc.c:7782 utils/misc/guc.c:7950
-#: utils/misc/guc.c:9618
+#: utils/misc/guc.c:6710 utils/misc/guc.c:7046 utils/misc/guc.c:7806
+#: utils/misc/guc.c:7974 utils/misc/guc.c:9642
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
 msgstr "unbekannter Konfigurationsparameter »%s«"
 
-#: utils/misc/guc.c:5873 utils/misc/guc.c:7034
+#: utils/misc/guc.c:5873 utils/misc/guc.c:7058
 #, c-format
 msgid "parameter \"%s\" cannot be changed"
 msgstr "Parameter »%s« kann nicht geändert werden"
@@ -22752,7 +22757,7 @@ msgstr "Parameter »%s« kann nicht geändert werden"
 msgid "parameter \"%s\" cannot be changed now"
 msgstr "Parameter »%s« kann jetzt nicht geändert werden"
 
-#: utils/misc/guc.c:5924 utils/misc/guc.c:5970 utils/misc/guc.c:9634
+#: utils/misc/guc.c:5924 utils/misc/guc.c:5970 utils/misc/guc.c:9658
 #, c-format
 msgid "permission denied to set parameter \"%s\""
 msgstr "keine Berechtigung, um Parameter »%s« zu setzen"
@@ -22767,87 +22772,87 @@ msgstr "Parameter »%s« kann nach Start der Verbindung nicht geändert werden"
 msgid "cannot set parameter \"%s\" within security-definer function"
 msgstr "Parameter »%s« kann nicht in einer Security-Definer-Funktion gesetzt werden"
 
-#: utils/misc/guc.c:6617 utils/misc/guc.c:6665 utils/misc/guc.c:7956
+#: utils/misc/guc.c:6617 utils/misc/guc.c:6665 utils/misc/guc.c:7980
 #, c-format
 msgid "must be superuser to examine \"%s\""
 msgstr "nur Superuser können »%s« ansehen"
 
-#: utils/misc/guc.c:6731
+#: utils/misc/guc.c:6755
 #, c-format
 msgid "SET %s takes only one argument"
 msgstr "SET %s darf nur ein Argument haben"
 
-#: utils/misc/guc.c:6982
+#: utils/misc/guc.c:7006
 #, c-format
 msgid "must be superuser to execute ALTER SYSTEM command"
 msgstr "nur Superuser können den Befehl ALTER SYSTEM ausführen"
 
-#: utils/misc/guc.c:7067
+#: utils/misc/guc.c:7091
 #, c-format
 msgid "parameter value for ALTER SYSTEM must not contain a newline"
 msgstr "Parameterwert für ALTER SYSTEM darf keine Newline enthalten"
 
-#: utils/misc/guc.c:7112
+#: utils/misc/guc.c:7136
 #, c-format
 msgid "could not parse contents of file \"%s\""
 msgstr "konnte Inhalt der Datei »%s« nicht parsen"
 
-#: utils/misc/guc.c:7270
+#: utils/misc/guc.c:7294
 #, c-format
 msgid "SET LOCAL TRANSACTION SNAPSHOT is not implemented"
 msgstr "SET LOCAL TRANSACTION SNAPSHOT ist nicht implementiert"
 
-#: utils/misc/guc.c:7355
+#: utils/misc/guc.c:7379
 #, c-format
 msgid "SET requires parameter name"
 msgstr "SET benötigt Parameternamen"
 
-#: utils/misc/guc.c:7479
+#: utils/misc/guc.c:7503
 #, c-format
 msgid "attempt to redefine parameter \"%s\""
 msgstr "Versuch, den Parameter »%s« zu redefinieren"
 
-#: utils/misc/guc.c:9251
+#: utils/misc/guc.c:9275
 #, c-format
 msgid "parameter \"%s\" could not be set"
 msgstr "Parameter »%s« kann nicht gesetzt werden"
 
-#: utils/misc/guc.c:9338
+#: utils/misc/guc.c:9362
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "konnte Wert von Parameter »%s« nicht lesen"
 
-#: utils/misc/guc.c:9696 utils/misc/guc.c:9730
+#: utils/misc/guc.c:9720 utils/misc/guc.c:9754
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "ungültiger Wert für Parameter »%s«: %d"
 
-#: utils/misc/guc.c:9764
+#: utils/misc/guc.c:9788
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "ungültiger Wert für Parameter »%s«: %g"
 
-#: utils/misc/guc.c:9954
+#: utils/misc/guc.c:9978
 #, c-format
 msgid "\"temp_buffers\" cannot be changed after any temporary tables have been accessed in the session."
 msgstr "»temp_buffers« kann nicht geändert werden, nachdem in der Sitzung auf temporäre Tabellen zugriffen wurde."
 
-#: utils/misc/guc.c:9966
+#: utils/misc/guc.c:9990
 #, c-format
 msgid "Bonjour is not supported by this build"
 msgstr "Bonjour wird von dieser Installation nicht unterstützt"
 
-#: utils/misc/guc.c:9979
+#: utils/misc/guc.c:10003
 #, c-format
 msgid "SSL is not supported by this build"
 msgstr "SSL wird von dieser Installation nicht unterstützt"
 
-#: utils/misc/guc.c:9991
+#: utils/misc/guc.c:10015
 #, c-format
 msgid "Cannot enable parameter when \"log_statement_stats\" is true."
 msgstr "Kann Parameter nicht einschalten, wenn »log_statement_stats« an ist."
 
-#: utils/misc/guc.c:10003
+#: utils/misc/guc.c:10027
 #, c-format
 msgid "Cannot enable \"log_statement_stats\" when \"log_parser_stats\", \"log_planner_stats\", or \"log_executor_stats\" is true."
 msgstr "Kann »log_statement_stats« nicht einschalten, wenn »log_parser_stats«, »log_planner_stats« oder »log_executor_stats« an ist."
@@ -22991,22 +22996,22 @@ msgstr "PREPARE kann nicht in einer Transaktion ausgeführt werden, die einen Cu
 msgid "could not read block %ld of temporary file: %m"
 msgstr "konnte Block %ld von temporärer Datei nicht lesen: %m"
 
-#: utils/sort/tuplesort.c:3402
+#: utils/sort/tuplesort.c:3434
 #, c-format
 msgid "cannot have more than %d runs for an external sort"
 msgstr "ein externer Sortiervorgang kann nicht mehr als %d Durchgänge haben"
 
-#: utils/sort/tuplesort.c:4479
+#: utils/sort/tuplesort.c:4511
 #, c-format
 msgid "could not create unique index \"%s\""
 msgstr "konnte Unique Index »%s« nicht erstellen"
 
-#: utils/sort/tuplesort.c:4481
+#: utils/sort/tuplesort.c:4513
 #, c-format
 msgid "Key %s is duplicated."
 msgstr "Schlüssel %s ist doppelt vorhanden."
 
-#: utils/sort/tuplesort.c:4482
+#: utils/sort/tuplesort.c:4514
 #, c-format
 msgid "Duplicate keys exist."
 msgstr "Es existieren doppelte Schlüssel."
