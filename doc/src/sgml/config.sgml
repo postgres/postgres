@@ -3212,9 +3212,9 @@ include_dir 'conf.d'
         The synchronous standbys will be those whose names appear
         in this list, and
         that are both currently connected and streaming data in real-time
-        (as shown by a state of <literal>streaming</literal> in the
-        <link linkend="pg-stat-replication-view">
-        <literal>pg_stat_replication</literal></link> view).
+        (as shown by a state of <literal>streaming</literal> in the <link
+        linkend="pg-stat-replication-view"><literal>pg_stat_replication</literal></link>
+        view).
         Specifying more than one synchronous standby can allow for very high
         availability and protection against data loss.
        </para>
@@ -3461,8 +3461,9 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        Specifies the minimum frequency for the WAL receiver
        process on the standby to send information about replication progress
        to the primary or upstream standby, where it can be seen using the
-       <link linkend="pg-stat-replication-view">
-       <literal>pg_stat_replication</literal></link> view.  The standby will report
+       <link
+       linkend="pg-stat-replication-view"><literal>pg_stat_replication</literal></link>
+       view.  The standby will report
        the last write-ahead log location it has written, the last position it
        has flushed to disk, and the last position it has applied.
        This parameter's
