@@ -51,9 +51,9 @@ sub ::encode_array_constructor
 }
 
 {
-
-	package PostgreSQL::InServer
-	  ;    ## no critic (RequireFilenameMatchesPackage);
+#<<< protect next line from perltidy so perlcritic annotation works
+	package PostgreSQL::InServer;  ## no critic (RequireFilenameMatchesPackage)
+#>>>
 	use strict;
 	use warnings;
 

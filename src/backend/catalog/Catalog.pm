@@ -250,7 +250,10 @@ sub ParseData
 
 			if ($lcnt == $rcnt)
 			{
-				eval '$hash_ref = ' . $_;
+				# We're treating the input line as a piece of Perl, so we
+				# need to use string eval here. Tell perlcritic we know what
+				# we're doing.
+				eval '$hash_ref = ' . $_; ## no critic (ProhibitStringyEval)
 				if (!ref $hash_ref)
 				{
 					die "$input_file: error parsing line $.:\n$_\n";

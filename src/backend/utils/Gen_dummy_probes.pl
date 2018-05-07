@@ -14,6 +14,9 @@
 #
 #-------------------------------------------------------------------------
 
+# turn off perlcritic for autogened code
+## no critic
+
 $0 =~ s/^.*?(\w+)[\.\w+]*$/$1/;
 
 use strict;
