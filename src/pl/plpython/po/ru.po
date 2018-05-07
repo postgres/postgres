@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-06 22:22+0000\n"
+"POT-Creation-Date: 2018-04-27 15:41+0300\n"
 "PO-Revision-Date: 2017-02-02 15:13+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -284,27 +284,27 @@ msgstr "не удалось распаковать аргументы в plpy.el
 msgid "could not parse error message in plpy.elog"
 msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
 
-#: plpy_procedure.c:210
+#: plpy_procedure.c:208
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: plpy_procedure.c:215 plpy_typeio.c:409
+#: plpy_procedure.c:213 plpy_typeio.c:409
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "функции PL/Python не могут возвращать тип %s"
 
-#: plpy_procedure.c:297
+#: plpy_procedure.c:295
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "функции PL/Python не могут принимать тип %s"
 
-#: plpy_procedure.c:393
+#: plpy_procedure.c:391
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "не удалось скомпилировать функцию PL/Python \"%s\""
 
-#: plpy_procedure.c:396
+#: plpy_procedure.c:394
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "не удалось скомпилировать анонимный блок кода PL/Python"
