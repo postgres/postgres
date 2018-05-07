@@ -10909,7 +10909,7 @@ msgstr "une valeur NULL viole la contrainte NOT NULL de la colonne « %s »"
 #: executor/execMain.c:2052
 #, c-format
 msgid "new row for relation \"%s\" violates check constraint \"%s\""
-msgstr "la nouvelle ligne viole la contrainte de vérification « %s » de la relation « %s »"
+msgstr "la nouvelle ligne de la relation « %s » viole la contrainte de vérification « %s »"
 
 #: executor/execMain.c:2163
 #, c-format
@@ -20827,7 +20827,7 @@ msgstr "La chaîne en entrée se ferme de manière inattendue."
 #: utils/adt/json.c:1150
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
-msgstr "Attendait une fin de l'entrée, mais ait trouvé « %s »."
+msgstr "Attendait une fin de l'entrée, mais a trouvé « %s »."
 
 #: utils/adt/json.c:1161
 #, c-format

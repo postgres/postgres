@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-02-02 11:15+0900\n"
-"PO-Revision-Date: 2018-02-06 09:37+0900\n"
-"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
+"POT-Creation-Date: 2018-03-05 23:14+0000\n"
+"PO-Revision-Date: 2018-03-06 16:59+0900\n"
+"Last-Translator: Kyotaro HORIGUCHI <horiguchi.kyotaro@lab.ntt.co.jp>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -129,25 +129,18 @@ msgstr "%s: テーブル空間のマッピング内に複数の\"=\"記号が存
 
 #: pg_basebackup.c:273
 #, c-format
-msgid ""
-"%s: invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"\n"
-msgstr ""
-"%s: テーブル空間のマッピング形式\"%s\"が無効です。\"旧DIR=新DIR\"でなければな"
-"りません\n"
+msgid "%s: invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"\n"
+msgstr "%s: テーブル空間のマッピング形式\"%s\"が無効です。\"旧DIR=新DIR\"でなければなりません\n"
 
 #: pg_basebackup.c:286
 #, c-format
 msgid "%s: old directory is not an absolute path in tablespace mapping: %s\n"
-msgstr ""
-"%s: テーブル空間のマッピングにおいて、旧ディレクトリが絶対パスではありませ"
-"ん: %s\n"
+msgstr "%s: テーブル空間のマッピングにおいて、旧ディレクトリが絶対パスではありません: %s\n"
 
 #: pg_basebackup.c:293
 #, c-format
 msgid "%s: new directory is not an absolute path in tablespace mapping: %s\n"
-msgstr ""
-"%s: テーブル空間のマッピングにおいて、新ディレクトリが絶対パスではありませ"
-"ん: %s\n"
+msgstr "%s: テーブル空間のマッピングにおいて、新ディレクトリが絶対パスではありません: %s\n"
 
 #: pg_basebackup.c:332
 #, c-format
@@ -180,15 +173,12 @@ msgstr ""
 #: pg_basebackup.c:337
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
-msgstr ""
-"  -D, --pgdata=DIRECTORY ディレクトリ内にベースバックアップを格納します\n"
+msgstr "  -D, --pgdata=DIRECTORY ディレクトリ内にベースバックアップを格納します\n"
 
 #: pg_basebackup.c:338
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
-msgstr ""
-"  -F, --format=p|t       出力フォーマット（プレイン(デフォルト)または"
-"tar）\n"
+msgstr "  -F, --format=p|t       出力フォーマット(プレイン(デフォルト)またはtar)\n"
 
 #: pg_basebackup.c:339
 #, c-format
@@ -215,10 +205,8 @@ msgstr "  -S, --slot=スロット名  使用するレプリケーションスロ
 
 #: pg_basebackup.c:344
 #, c-format
-msgid ""
-"      --no-slot          prevent creation of temporary replication slot\n"
-msgstr ""
-"      --no-slot          一時的なレプリケーションスロットの作成を行わない\n"
+msgid "      --no-slot          prevent creation of temporary replication slot\n"
+msgstr "      --no-slot          一時的なレプリケーションスロットの作成を抑止する\n"
 
 #: pg_basebackup.c:345
 #, c-format
@@ -236,8 +224,8 @@ msgid ""
 "                         include required WAL files with specified method\n"
 msgstr ""
 "  -X, --wal-method=none|fetch|stream\n"
-"                         要求された WAL ファイルを指定のメソッドを使ってバッ"
-"クアップに含める\n"
+"                         要求されたWALファイルを指定のメソッドを使ってバック\n"
+"                         アップに含める\n"
 
 #: pg_basebackup.c:349
 #, c-format
@@ -251,8 +239,7 @@ msgstr "  -z, --gzip             tar の出力を圧縮する\n"
 
 #: pg_basebackup.c:351
 #, c-format
-msgid ""
-"  -Z, --compress=0-9     compress tar output with given compression level\n"
+msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
 msgstr "  -Z, --compress=0-9     指定した圧縮レベルで tar の出力を圧縮する\n"
 
 #: pg_basebackup.c:352
@@ -271,8 +258,8 @@ msgid ""
 "                         set fast or spread checkpointing\n"
 msgstr ""
 "  -c, --checkpoint=fast|spread\n"
-"                         高速チェックポイント処理または分散チェックポイント"
-"処理の設定\n"
+"                         高速チェックポイント処理または分散チェックポイント処理\n"
+"                         の設定\n"
 
 #: pg_basebackup.c:355
 #, c-format
@@ -282,16 +269,12 @@ msgstr "  -l, --label=LABEL      バックアップラベルの設定\n"
 #: pg_basebackup.c:356
 #, c-format
 msgid "  -n, --no-clean         do not clean up after errors\n"
-msgstr ""
-"  -n, --noclean          エラー発生後も仕掛り中ファイルの削除を行わない\n"
+msgstr "  -n, --noclean          エラー発生後のファイルの削除を行わない\n"
 
 #: pg_basebackup.c:357
 #, c-format
-msgid ""
-"  -N, --no-sync          do not wait for changes to be written safely to "
-"disk\n"
-msgstr ""
-"  -N, --nosync           ディスクへの安全な書き込みまでの待機を行わない\n"
+msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
+msgstr "  -N, --nosync           ディスクへの安全な書き込みまでの待機を行わない\n"
 
 #: pg_basebackup.c:358
 #, c-format
@@ -330,9 +313,7 @@ msgstr "  -d, --dbname=CONNSTR   接続文字列\n"
 #: pg_basebackup.c:364 pg_receivewal.c:92 pg_recvlogical.c:103
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr ""
-"  -h, --host=HOSTNAME    データベースサーバホストまたはソケットディレクト"
-"リ\n"
+msgstr "  -h, --host=HOSTNAME    データベースサーバホストまたはソケットディレクトリ\n"
 
 #: pg_basebackup.c:365 pg_receivewal.c:93 pg_recvlogical.c:104
 #, c-format
@@ -343,11 +324,10 @@ msgstr "  -p, --port=PORT        データベースサーバのポート番号\n
 #, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
-"                         time between status packets sent to server (in "
-"seconds)\n"
+"                         time between status packets sent to server (in seconds)\n"
 msgstr ""
 "  -s, --status-interval=INTERVAL\n"
-"                         サーバへ状態パケットを送信する間隔（秒単位）\n"
+"                         サーバへ状態パケットを送信する間隔 (秒単位)\n"
 
 #: pg_basebackup.c:368 pg_receivewal.c:94 pg_recvlogical.c:105
 #, c-format
@@ -361,12 +341,8 @@ msgstr "  -w, --no-password      パスワードの入力を受け付けない\n
 
 #: pg_basebackup.c:370 pg_receivewal.c:96 pg_recvlogical.c:107
 #, c-format
-msgid ""
-"  -W, --password         force password prompt (should happen "
-"automatically)\n"
-msgstr ""
-"  -W, --password         強制的にパスワード入力を促す（自動的に行われるはず"
-"です）\n"
+msgid "  -W, --password         force password prompt (should happen automatically)\n"
+msgstr "  -W, --password         パスワードプロンプトを強制する (自動的に行われるはずです)\n"
 
 #: pg_basebackup.c:371 pg_receivewal.c:100 pg_recvlogical.c:108
 #, c-format
@@ -383,7 +359,7 @@ msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: 準備されたパイプから読み込めませんでした: %s\n"
 
 #: pg_basebackup.c:422 pg_basebackup.c:557 pg_basebackup.c:2015
-#: streamutil.c:286
+#: streamutil.c:304
 #, c-format
 msgid "%s: could not parse write-ahead log location \"%s\"\n"
 msgstr "%s: 先行書き込みログの位置 \"%s\" を解析できませんでした\n"
@@ -562,18 +538,15 @@ msgstr "%s: 互換性がないサーババージョン\"%s\"\n"
 #: pg_basebackup.c:1749
 #, c-format
 msgid "HINT: use -X none or -X fetch to disable log streaming\n"
-msgstr ""
-"ヒント: ログストリーミングを無効にするには -X none または -X fetch を使ってく"
-"ださい\n"
+msgstr "ヒント: ログストリーミングを無効にするには -X none または -X fetch を使ってください\n"
 
 #: pg_basebackup.c:1775
 #, c-format
 msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
-msgstr ""
-"%s: ベースバックアップの初期化中 - チェックポイントの完了を待機中です\n"
+msgstr "%s: ベースバックアップの初期化中 - チェックポイントの完了を待機中です\n"
 
 #: pg_basebackup.c:1793 pg_recvlogical.c:270 receivelog.c:492 receivelog.c:563
-#: receivelog.c:603 streamutil.c:256 streamutil.c:364 streamutil.c:410
+#: receivelog.c:603 streamutil.c:274 streamutil.c:382 streamutil.c:428
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: レプリケーションコマンド\"%s\"を送信できませんでした: %s"
@@ -585,12 +558,8 @@ msgstr "%s: ベースバックアップを初期化できませんでした: %s"
 
 #: pg_basebackup.c:1811
 #, c-format
-msgid ""
-"%s: server returned unexpected response to BASE_BACKUP command; got %d rows "
-"and %d fields, expected %d rows and %d fields\n"
-msgstr ""
-"%s: サーバはBASE_BACKUPコマンドに想定外の応答を返しました: %d行と%dフィールド"
-"を受信しました。期待する値は%d行と%dフィールドでした\n"
+msgid "%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: サーバはBASE_BACKUPコマンドに想定外の応答を返しました: %d行と%dフィールドを受信しました。期待する値は%d行と%dフィールドでした\n"
 
 #: pg_basebackup.c:1819
 #, c-format
@@ -615,9 +584,7 @@ msgstr "%s: サーバからデータが返されませんでした\n"
 #: pg_basebackup.c:1881
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %d\n"
-msgstr ""
-"%s: 標準出力に書き出せるテーブル空間は１つだけですが、データベースには%d個あ"
-"ります\n"
+msgstr "%s: 標準出力に書き出せるテーブル空間は１つだけですが、データベースには%d個あります\n"
 
 #: pg_basebackup.c:1893
 #, c-format
@@ -647,8 +614,7 @@ msgstr "%s: 最終受信に失敗しました: %s"
 #: pg_basebackup.c:1967
 #, c-format
 msgid "%s: waiting for background process to finish streaming ...\n"
-msgstr ""
-"%s: ストリーミング処理が終わるまでバックグランドプロセスを待機します ...\n"
+msgstr "%s: ストリーミング処理が終わるまでバックグランドプロセスを待機します ...\n"
 
 #: pg_basebackup.c:1973
 #, c-format
@@ -698,18 +664,12 @@ msgstr "%s: ベースバックアップが完了しました\n"
 #: pg_basebackup.c:2155
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
-msgstr ""
-"%s: 出力フォーマット \"%s\" は無効です。\"plain\"か\"tar\"でなければなりませ"
-"ん\n"
+msgstr "%s: 出力フォーマット \"%s\" は無効です。\"plain\"か\"tar\"でなければなりません\n"
 
 #: pg_basebackup.c:2200
 #, c-format
-msgid ""
-"%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or "
-"\"none\"\n"
-msgstr ""
-"%s: wal-method オプション \"%s\" は無効です。\"fetch\", \"stream\", \"none\" "
-"のいずれかでなければなりません\n"
+msgid "%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\"\n"
+msgstr "%s: wal-method オプション \"%s\" は無効です。\"fetch\", \"stream\", \"none\" のいずれかでなければなりません\n"
 
 #: pg_basebackup.c:2228 pg_receivewal.c:556
 #, c-format
@@ -718,11 +678,8 @@ msgstr "%s: 圧縮レベル \"%s\" は無効です\n"
 
 #: pg_basebackup.c:2240
 #, c-format
-msgid ""
-"%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
-msgstr ""
-"%s: checkpoint の引数 \"%s\" は無効です。\"fast\"または\"spreadでなければなり"
-"ません\n"
+msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "%s: checkpoint の引数 \"%s\" は無効です。\"fast\"または\"spreadでなければなりません\n"
 
 #: pg_basebackup.c:2267 pg_receivewal.c:538 pg_recvlogical.c:825
 #, c-format
@@ -759,9 +716,7 @@ msgstr "%s: tarモードのバックアップのみ圧縮することができ�
 #: pg_basebackup.c:2329
 #, c-format
 msgid "%s: cannot stream write-ahead logs in tar mode to stdout\n"
-msgstr ""
-"%s: tar モードでは書き込み先行ログを標準出力にストリームとして書き出せませ"
-"ん\n"
+msgstr "%s: tar モードでは書き込み先行ログを標準出力にストリームとして書き出せません\n"
 
 #: pg_basebackup.c:2339
 #, c-format
@@ -796,8 +751,7 @@ msgstr "%s: シンボリックリンク\"%s\"を作成できませんでした: 
 #: pg_basebackup.c:2433
 #, c-format
 msgid "%s: symlinks are not supported on this platform\n"
-msgstr ""
-"%s: シンボリックリンクはこのプラットフォームではサポートされていません\n"
+msgstr "%s: シンボリックリンクはこのプラットフォームではサポートされていません\n"
 
 #: pg_receivewal.c:74
 #, c-format
@@ -819,19 +773,13 @@ msgstr ""
 
 #: pg_receivewal.c:79
 #, c-format
-msgid ""
-"  -D, --directory=DIR    receive write-ahead log files into this directory\n"
-msgstr ""
-"  -D, --directory=DIR       受信した先行書き込みログの格納ディレクトリ\n"
+msgid "  -D, --directory=DIR    receive write-ahead log files into this directory\n"
+msgstr "  -D, --directory=DIR       受信した先行書き込みログの格納ディレクトリ\n"
 
 #: pg_receivewal.c:80 pg_recvlogical.c:88
 #, c-format
-msgid ""
-"      --if-not-exists    do not error if slot already exists when creating a "
-"slot\n"
-msgstr ""
-"　　　--if-not-exists    スロットの作成時、スロットが既に存在していてもエラー"
-"としない\n"
+msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
+msgstr "　　　--if-not-exists    スロットの作成時、スロットが既に存在していてもエラーとしない\n"
 
 #: pg_receivewal.c:81 pg_recvlogical.c:90
 #, c-format
@@ -842,19 +790,15 @@ msgstr "  -n, --no-loop            接続が失われたらループしないい
 #, c-format
 msgid ""
 "  -s, --status-interval=SECS\n"
-"                         time between status packets sent to server "
-"(default: %d)\n"
+"                         time between status packets sent to server (default: %d)\n"
 msgstr ""
 "  -s, --status-interval=SECS\n"
-"                           サーバへ状態パケットを送信する間隔（デフォルト: "
-"%d）\n"
+"                           サーバへ状態パケットを送信する間隔（デフォルト: %d）\n"
 
 #: pg_receivewal.c:85
 #, c-format
-msgid ""
-"      --synchronous      flush write-ahead log immediately after writing\n"
-msgstr ""
-"      --synchronous      先行書き込みログは書き込み後すぐにフラッシュする\n"
+msgid "      --synchronous      flush write-ahead log immediately after writing\n"
+msgstr "      --synchronous      先行書き込みログは書き込み後すぐにフラッシュする\n"
 
 #: pg_receivewal.c:88
 #, c-format
@@ -872,21 +816,13 @@ msgstr ""
 
 #: pg_receivewal.c:98 pg_recvlogical.c:80
 #, c-format
-msgid ""
-"      --create-slot      create a new replication slot (for the slot's name "
-"see --slot)\n"
-msgstr ""
-"     --create-slot     新しいレプリケーションスロットを作成する(スロット名に"
-"ついては --slot を参照)\n"
+msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
+msgstr "     --create-slot     新しいレプリケーションスロットを作成する(スロット名については --slot を参照)\n"
 
 #: pg_receivewal.c:99 pg_recvlogical.c:81
 #, c-format
-msgid ""
-"      --drop-slot        drop the replication slot (for the slot's name see "
-"--slot)\n"
-msgstr ""
-"      --drop-slotp        レプリケーションスロットを削除する (スロット名を見"
-"るには  --slot)\n"
+msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
+msgstr "      --drop-slotp        レプリケーションスロットを削除する (スロット名を見るには  --slot)\n"
 
 #: pg_receivewal.c:111
 #, c-format
@@ -930,11 +866,8 @@ msgstr "%s: 圧縮ファイル \"%s\" を読み込めませんでした: %s\n"
 
 #: pg_receivewal.c:301
 #, c-format
-msgid ""
-"%s: compressed segment file \"%s\" has incorrect uncompressed size %d, "
-"skipping\n"
-msgstr ""
-"%s: セグメントファイル\"%s\"の展開後サイズ%dが不正です。スキップします\n"
+msgid "%s: compressed segment file \"%s\" has incorrect uncompressed size %d, skipping\n"
+msgstr "%s: セグメントファイル\"%s\"の展開後サイズ%dが不正です。スキップします\n"
 
 #: pg_receivewal.c:407
 #, c-format
@@ -959,12 +892,8 @@ msgstr "%s: オプション名 %s は --slot でスロットを指定する必�
 
 #: pg_receivewal.c:674
 #, c-format
-msgid ""
-"%s: replication connection using slot \"%s\" is unexpectedly database "
-"specific\n"
-msgstr ""
-"%s: スロット \"%s\" を使用するレプリケーション接続でデータベースが指定されて"
-"おり、これは想定外です\n"
+msgid "%s: replication connection using slot \"%s\" is unexpectedly database specific\n"
+msgstr "%s: スロット \"%s\" を使用するレプリケーション接続でデータベースが指定されており、これは想定外です\n"
 
 #: pg_receivewal.c:686 pg_recvlogical.c:967
 #, c-format
@@ -1007,12 +936,8 @@ msgstr ""
 
 #: pg_recvlogical.c:82
 #, c-format
-msgid ""
-"      --start            start streaming in a replication slot (for the "
-"slot's name see --slot)\n"
-msgstr ""
-"      --start            レプリケーションスロットでストリーミングを開始する "
-"(スロット名を見るには --slot)\n"
+msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
+msgstr "      --start            レプリケーションスロットでストリーミングを開始する (スロット名を見るには --slot)\n"
 
 #: pg_recvlogical.c:84
 #, c-format
@@ -1022,27 +947,21 @@ msgstr "  -E, --endpos=LSN       指定 LSN の受信後に終了します\n"
 #: pg_recvlogical.c:85
 #, c-format
 msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
-msgstr ""
-"  -f, --file=FILE        このファイルにログを受け取ります。 - で標準出力に出"
-"力します\n"
+msgstr "  -f, --file=FILE        このファイルにログを受け取ります。 - で標準出力に出力します\n"
 
 #: pg_recvlogical.c:86
 #, c-format
 msgid ""
 "  -F  --fsync-interval=SECS\n"
-"                         time between fsyncs to the output file (default: "
-"%d)\n"
+"                         time between fsyncs to the output file (default: %d)\n"
 msgstr ""
 "  -F  --fsync-interval=SECS\n"
 "                          出力ファイルへのfsyncs 時間間隔(デフォルト: %d)\n"
 
 #: pg_recvlogical.c:89
 #, c-format
-msgid ""
-"  -I, --startpos=LSN     where in an existing slot should the streaming "
-"start\n"
-msgstr ""
-"  -I, --startpos=LSN     既存スロット内でストリーミングを回位するべき位置\n"
+msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
+msgstr "  -I, --startpos=LSN     既存スロット内でストリーミングを回位するべき位置\n"
 
 #: pg_recvlogical.c:91
 #, c-format
@@ -1052,15 +971,13 @@ msgid ""
 "                         output plugin\n"
 msgstr ""
 " -o, --option=NAME[=VALUE]\n"
-"                        オプション名 NAME とオプション値 VALUE を出力プラグイ"
-"ンに\n"
+"                        オプション名 NAME とオプション値 VALUE を出力プラグインに\n"
 "                        渡す\n"
 
 #: pg_recvlogical.c:94
 #, c-format
 msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
-msgstr ""
-"  -P, --plugin=PLUGIN    出力プラグイン PLUGIN を使う(デフォルト: %s)\n"
+msgstr "  -P, --plugin=PLUGIN    出力プラグイン PLUGIN を使う(デフォルト: %s)\n"
 
 #: pg_recvlogical.c:97
 #, c-format
@@ -1075,9 +992,7 @@ msgstr "  -d, --dbname=データベース名  接続するデータベース\n"
 #: pg_recvlogical.c:135
 #, c-format
 msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
-msgstr ""
-"%s:  %X/%Xまでの書き込みと、%X/%X (スロット %s）までのフラッシュを確認してい"
-"ます\n"
+msgstr "%s:  %X/%Xまでの書き込みと、%X/%X (スロット %s）までのフラッシュを確認しています\n"
 
 #: pg_recvlogical.c:160 receivelog.c:351
 #, c-format
@@ -1183,8 +1098,7 @@ msgstr "%s: --create-slot や --start は --drop-slot と一緒には使用で�
 #: pg_recvlogical.c:916
 #, c-format
 msgid "%s: cannot use --create-slot or --drop-slot together with --startpos\n"
-msgstr ""
-"%s: --create-slot や --drop-slot は --startpos と一緒には使用できません\n"
+msgstr "%s: --create-slot や --drop-slot は --startpos と一緒には使用できません\n"
 
 #: pg_recvlogical.c:925
 #, c-format
@@ -1204,14 +1118,12 @@ msgstr "%s: アーカイブ状態ファイル \"%s\" を作成できませんで
 #: receivelog.c:119
 #, c-format
 msgid "%s: could not get size of write-ahead log file \"%s\": %s\n"
-msgstr ""
-"%s: 先行書き込みログファイル \"%s\" のサイズを取得できませんでした: %s\n"
+msgstr "%s: 先行書き込みログファイル \"%s\" のサイズを取得できませんでした: %s\n"
 
 #: receivelog.c:130
 #, c-format
 msgid "%s: could not open existing write-ahead log file \"%s\": %s\n"
-msgstr ""
-"%s: 既存の先行書き込みログファイル \"%s\" をオープンできませんでした: %s\n"
+msgstr "%s: 既存の先行書き込みログファイル \"%s\" をオープンできませんでした: %s\n"
 
 #: receivelog.c:139
 #, c-format
@@ -1221,11 +1133,8 @@ msgstr "%s: 先行書き込みログファイル \"%s\" をfsyncできません�
 #: receivelog.c:154
 #, c-format
 msgid "%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n"
-msgid_plural ""
-"%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
-msgstr[0] ""
-"%s: 先行書き込みログファイル\"%s\"の長さが%dバイトです。これは0または%dでなけ"
-"ればなりません\n"
+msgid_plural "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr[0] "%s: 先行書き込みログファイル\"%s\"の長さが%dバイトです。これは0または%dでなければなりません\n"
 
 #: receivelog.c:169
 #, c-format
@@ -1245,9 +1154,7 @@ msgstr "%s: \"%s%s\"の名前を変更しません。セグメントが完了し
 #: receivelog.c:280
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
-msgstr ""
-"%s: サーバはタイムライン%u用の履歴ファイル名が期待しない値であることを報告し"
-"ました: %s\n"
+msgstr "%s: サーバはタイムライン%u用の履歴ファイル名が期待しない値であることを報告しました: %s\n"
 
 #: receivelog.c:288
 #, c-format
@@ -1257,44 +1164,27 @@ msgstr "%s: タイムライン履歴ファイル \"%s\" を作成できません
 #: receivelog.c:295
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
-msgstr ""
-"%s: タイムライン履歴ファイル \"%s\" に書き出すことができませんでした: %s\n"
+msgstr "%s: タイムライン履歴ファイル \"%s\" に書き出すことができませんでした: %s\n"
 
 #: receivelog.c:385
 #, c-format
-msgid ""
-"%s: incompatible server version %s; client does not support streaming from "
-"server versions older than %s\n"
-msgstr ""
-"%s: 互換性のないサーババージョン%sです。クライアントは%sより古いサーババー"
-"ジョンからのストリーミングをサポートしていません\n"
+msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
+msgstr "%s: 互換性のないサーババージョン%sです。クライアントは%sより古いサーババージョンからのストリーミングをサポートしていません\n"
 
 #: receivelog.c:395
 #, c-format
-msgid ""
-"%s: incompatible server version %s; client does not support streaming from "
-"server versions newer than %s\n"
-msgstr ""
-"%s: 互換性のないサーババージョン%sです。クライアントは%sより新しいサーババー"
-"ジョンからのストリーミングをサポートしていません\n"
+msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
+msgstr "%s: 互換性のないサーババージョン%sです。クライアントは%sより新しいサーババージョンからのストリーミングをサポートしていません\n"
 
-#: receivelog.c:500 streamutil.c:265 streamutil.c:304
+#: receivelog.c:500 streamutil.c:283 streamutil.c:322
 #, c-format
-msgid ""
-"%s: could not identify system: got %d rows and %d fields, expected %d rows "
-"and %d or more fields\n"
-msgstr ""
-"%s: システムを識別できませんでした: 受信したのは %d 行で %d フィールド、期待"
-"していたのは%d 行で %d 以上のフィールドでした\n"
+msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: システムを識別できませんでした: 受信したのは %d 行で %d フィールド、期待していたのは%d 行で %d 以上のフィールドでした\n"
 
 #: receivelog.c:508
 #, c-format
-msgid ""
-"%s: system identifier does not match between base backup and streaming "
-"connection\n"
-msgstr ""
-"%s: システム識別子がベースバックアップとストリーミング接続の間で一致しませ"
-"ん\n"
+msgid "%s: system identifier does not match between base backup and streaming connection\n"
+msgstr "%s: システム識別子がベースバックアップとストリーミング接続の間で一致しません\n"
 
 #: receivelog.c:516
 #, c-format
@@ -1308,29 +1198,18 @@ msgstr "%s: 一時的なレプリケーションスロット \"%s\" を作成で
 
 #: receivelog.c:576
 #, c-format
-msgid ""
-"%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d "
-"fields, expected %d rows and %d fields\n"
-msgstr ""
-"%s: TIMELINE_HISTORYコマンドへの想定外の応答: 受信したのは%d行で%dフィール"
-"ド、想定していたのは%d行で%dフィールドでした\n"
+msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: TIMELINE_HISTORYコマンドへの想定外の応答: 受信したのは%d行で%dフィールド、想定していたのは%d行で%dフィールドでした\n"
 
 #: receivelog.c:648
 #, c-format
-msgid ""
-"%s: server reported unexpected next timeline %u, following timeline %u\n"
-msgstr ""
-"%1$s: サーバがタイムライン%3$uの次のタイムライン%2$uが想定外であることを報告"
-"しました\n"
+msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
+msgstr "%1$s: サーバがタイムライン%3$uの次のタイムライン%2$uが想定外であることを報告しました\n"
 
 #: receivelog.c:655
 #, c-format
-msgid ""
-"%s: server stopped streaming timeline %u at %X/%X, but reported next "
-"timeline %u to begin at %X/%X\n"
-msgstr ""
-"%s: サーバはストリーミングタイムライン%uを%X%Xで停止しました。しかし次のタイ"
-"ムライン%uが%X%Xで始まりました\n"
+msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
+msgstr "%s: サーバはストリーミングタイムライン%uを%X%Xで停止しました。しかし次のタイムライン%uが%X%Xで始まりました\n"
 
 #: receivelog.c:696
 #, c-format
@@ -1339,12 +1218,8 @@ msgstr "%s: レプリケーションストリームが停止ポイントより�
 
 #: receivelog.c:745
 #, c-format
-msgid ""
-"%s: unexpected result set after end-of-timeline: got %d rows and %d fields, "
-"expected %d rows and %d fields\n"
-msgstr ""
-"%s: タイムライン終了後に想定外の結果セット: 受信したのは%d行で%dフィールド、"
-"想定していたのは%d行で%dフィールドでした\n"
+msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: タイムライン終了後に想定外の結果セット: 受信したのは%d行で%dフィールド、想定していたのは%d行で%dフィールドでした\n"
 
 #: receivelog.c:755
 #, c-format
@@ -1354,9 +1229,7 @@ msgstr "%s: 次のタイムラインの開始ポイント\"%s\"を解析でき�
 #: receivelog.c:1126
 #, c-format
 msgid "%s: received write-ahead log record for offset %u with no file open\n"
-msgstr ""
-"%s: ファイルがオープンされていない状態で、オフセット%uに対する先行書き込みロ"
-"グレコードを受信しました\n"
+msgstr "%s: ファイルがオープンされていない状態で、オフセット%uに対する先行書き込みログレコードを受信しました\n"
 
 #: receivelog.c:1137
 #, c-format
@@ -1366,55 +1239,51 @@ msgstr "%s: WALデータオフセット%08xを受信。想定値は%08xでした
 #: receivelog.c:1172
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
-msgstr ""
-"%1$s: WALファイル\"%3$s\"に%2$uバイト書き出すことができませんでした: %4$s\n"
+msgstr "%1$s: WALファイル\"%3$s\"に%2$uバイト書き出すことができませんでした: %4$s\n"
 
 #: receivelog.c:1197 receivelog.c:1238 receivelog.c:1269
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: コピーエンドパケットを送信できませんでした: %s"
 
-#: streamutil.c:149
+#: streamutil.c:150
 msgid "Password: "
 msgstr "パスワード: "
 
-#: streamutil.c:174
+#: streamutil.c:175
 #, c-format
 msgid "%s: could not connect to server\n"
 msgstr "%s: サーバに接続できませんでした\n"
 
-#: streamutil.c:192
+#: streamutil.c:193
 #, c-format
 msgid "%s: could not connect to server: %s"
 msgstr "%s: サーバに接続できませんでした: %s"
 
-#: streamutil.c:216
+#: streamutil.c:217
+#, c-format
+msgid "%s: could not clear search_path: %s\n"
+msgstr "%s: search_pathを消去できませんでした: %s\n"
+
+#: streamutil.c:234
 #, c-format
 msgid "%s: could not determine server setting for integer_datetimes\n"
 msgstr "%s: integer_datetimesのサーバ設定を決定できませんでした\n"
 
-#: streamutil.c:225
+#: streamutil.c:243
 #, c-format
 msgid "%s: integer_datetimes compile flag does not match server\n"
 msgstr "%s: integer_datetimesコンパイルフラグがサーバと一致しません\n"
 
-#: streamutil.c:376
+#: streamutil.c:394
 #, c-format
-msgid ""
-"%s: could not create replication slot \"%s\": got %d rows and %d fields, "
-"expected %d rows and %d fields\n"
-msgstr ""
-"%s: レプリケーションスロット\"%s\"を作成できませんでした。受信値：%d行と%d"
-"フィールド、期待値：%d行と%dフィールドでした\n"
+msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: レプリケーションスロット\"%s\"を作成できませんでした。受信値：%d行と%dフィールド、期待値：%d行と%dフィールドでした\n"
 
-#: streamutil.c:421
+#: streamutil.c:439
 #, c-format
-msgid ""
-"%s: could not drop replication slot \"%s\": got %d rows and %d fields, "
-"expected %d rows and %d fields\n"
-msgstr ""
-"%s: レプリケーションスロット\"%s\"を削除できませんでした。受信値 %d行と%d"
-"フィールド、期待値：%d行と%dフィールドでした\n"
+msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: レプリケーションスロット\"%s\"を削除できませんでした。受信値 %d行と%dフィールド、期待値：%d行と%dフィールドでした\n"
 
 #: walmethods.c:435 walmethods.c:904
 msgid "could not compress data"

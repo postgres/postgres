@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-03 10:36+0300\n"
-"PO-Revision-Date: 2017-05-04 10:59+0300\n"
+"POT-Creation-Date: 2017-06-04 20:46+0000\n"
+"PO-Revision-Date: 2017-06-05 07:59+0300\n"
+"Last-Translator: Michael Goldberg <mic.goldbrg@gmail.com>\n"
 "Language-Team: \n"
+"Language: he\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.0.1\n"
-"Last-Translator:  Michael Goldberg <mic.goldbrg@gmail.com>\n"
-"Language: he_IL\n"
+"X-Generator: Poedit 2.0.2\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98
@@ -71,14 +71,14 @@ msgid "invalid output format (internal error): %d"
 msgstr "תבנית הפלט לא תיקנית (שגיאה פנימית): %d"
 
 #: clusterdb.c:111 clusterdb.c:130 createdb.c:119 createdb.c:138
-#: createuser.c:171 createuser.c:186 dropdb.c:94 dropdb.c:103 dropdb.c:111
+#: createuser.c:166 createuser.c:181 dropdb.c:94 dropdb.c:103 dropdb.c:111
 #: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93 pg_isready.c:107
 #: reindexdb.c:131 reindexdb.c:150 vacuumdb.c:213 vacuumdb.c:232
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "נסה '%s - עזרה' לקבלת מידע נוסף.\n"
 
-#: clusterdb.c:128 createdb.c:136 createuser.c:184 dropdb.c:109 dropuser.c:103
+#: clusterdb.c:128 createdb.c:136 createuser.c:179 dropdb.c:109 dropuser.c:103
 #: pg_isready.c:105 reindexdb.c:148 vacuumdb.c:230
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
@@ -116,7 +116,7 @@ msgid ""
 "\n"
 msgstr "%s מקבץ את כל הטבלאות המקובצות בעבר במסד נתונים.\n"
 
-#: clusterdb.c:270 createdb.c:252 createuser.c:354 dropdb.c:155 dropuser.c:161
+#: clusterdb.c:270 createdb.c:252 createuser.c:343 dropdb.c:155 dropuser.c:161
 #: pg_isready.c:222 reindexdb.c:401 vacuumdb.c:952
 #, c-format
 msgid "Usage:\n"
@@ -125,9 +125,9 @@ msgstr "שימוש:\n"
 #: clusterdb.c:271 reindexdb.c:402 vacuumdb.c:953
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
-msgstr ""
+msgstr "  %s [OPTION]... [DBNAME]\n"
 
-#: clusterdb.c:272 createdb.c:254 createuser.c:356 dropdb.c:157 dropuser.c:163
+#: clusterdb.c:272 createdb.c:254 createuser.c:345 dropdb.c:157 dropuser.c:163
 #: pg_isready.c:225 reindexdb.c:403 vacuumdb.c:954
 #, c-format
 msgid ""
@@ -147,10 +147,9 @@ msgstr "  -a, --all                 לקבץ את כל מסדי הנתונים\n
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr " -d, --dbname=DBNAME       לקבץ את מסד הנתונים\n"
 
-#: clusterdb.c:275 createuser.c:360 dropdb.c:158 dropuser.c:164 reindexdb.c:406
+#: clusterdb.c:275 createuser.c:349 dropdb.c:158 dropuser.c:164 reindexdb.c:406
 #, c-format
-msgid ""
-"  -e, --echo                show the commands being sent to the server\n"
+msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                להציג  את הפקודות הנשלחות לשרת\n"
 
 #: clusterdb.c:276 reindexdb.c:408
@@ -168,17 +167,17 @@ msgstr "  -t, --table=TABLE         לקבץ את הטבלה(אות) ספציפ�
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             לכתוב הרבה פלט מפורט\n"
 
-#: clusterdb.c:279 createuser.c:374 dropdb.c:160 dropuser.c:167 reindexdb.c:413
+#: clusterdb.c:279 createuser.c:361 dropdb.c:160 dropuser.c:167 reindexdb.c:413
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             להציג מידע על הגירסה, ולאחר מכן לצאת\n"
 
-#: clusterdb.c:280 createuser.c:379 dropdb.c:162 dropuser.c:169 reindexdb.c:414
+#: clusterdb.c:280 createuser.c:366 dropdb.c:162 dropuser.c:169 reindexdb.c:414
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                להציג עזרה זו, ולאחר מכן לצאת\n"
 
-#: clusterdb.c:281 createdb.c:265 createuser.c:380 dropdb.c:163 dropuser.c:170
+#: clusterdb.c:281 createdb.c:265 createuser.c:367 dropdb.c:163 dropuser.c:170
 #: pg_isready.c:231 reindexdb.c:415 vacuumdb.c:970
 #, c-format
 msgid ""
@@ -188,13 +187,13 @@ msgstr ""
 "\n"
 "אפשרויות חיבור:\n"
 
-#: clusterdb.c:282 createuser.c:381 dropdb.c:164 dropuser.c:171 reindexdb.c:416
+#: clusterdb.c:282 createuser.c:368 dropdb.c:164 dropuser.c:171 reindexdb.c:416
 #: vacuumdb.c:971
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME שרת מארח של מסד הנתונים  או ספריית שקע\n"
 
-#: clusterdb.c:283 createuser.c:382 dropdb.c:165 dropuser.c:172 reindexdb.c:417
+#: clusterdb.c:283 createuser.c:369 dropdb.c:165 dropuser.c:172 reindexdb.c:417
 #: vacuumdb.c:972
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
@@ -205,13 +204,13 @@ msgstr "  -p, --port=PORT יציאת שרת מסד נתונים\n"
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USERNAME שם המשתמש להתחבר איתו\n"
 
-#: clusterdb.c:285 createuser.c:384 dropdb.c:167 dropuser.c:174 reindexdb.c:419
+#: clusterdb.c:285 createuser.c:371 dropdb.c:167 dropuser.c:174 reindexdb.c:419
 #: vacuumdb.c:974
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password לעולם לא לבקש סיסמה\n"
 
-#: clusterdb.c:286 createuser.c:385 dropdb.c:168 dropuser.c:175 reindexdb.c:420
+#: clusterdb.c:286 createuser.c:372 dropdb.c:168 dropuser.c:175 reindexdb.c:420
 #: vacuumdb.c:975
 #, c-format
 msgid "  -W, --password            force password prompt\n"
@@ -231,7 +230,7 @@ msgstr ""
 "\n"
 "תקרא את התיאור של הפקודת CLUSTER  לקבלת פרטים.\n"
 
-#: clusterdb.c:289 createdb.c:273 createuser.c:386 dropdb.c:170 dropuser.c:176
+#: clusterdb.c:289 createdb.c:273 createuser.c:373 dropdb.c:170 dropuser.c:176
 #: pg_isready.c:236 reindexdb.c:423 vacuumdb.c:978
 #, c-format
 msgid ""
@@ -268,19 +267,19 @@ msgstr "%s: שאילתה היתה: %s\n"
 #. translator: abbreviation for "yes"
 #: common.c:260
 msgid "y"
-msgstr ""
+msgstr "y"
 
 #. translator: abbreviation for "no"
 #: common.c:262
 msgid "n"
-msgstr ""
+msgstr "n"
 
 #. translator: This is a question followed by the translated options for
 #. "yes" and "no".
 #: common.c:272
 #, c-format
 msgid "%s (%s/%s) "
-msgstr ""
+msgstr "%s (%s/%s) "
 
 #: common.c:286
 #, c-format
@@ -332,18 +331,16 @@ msgstr "%s יוצר מסד נתונים PostgreSQL.\n"
 #: createdb.c:253
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
-msgstr ""
+msgstr "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 
 #: createdb.c:255
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
-msgstr ""
-" -D, --tablespace=TABLESPACE   מרחב טבלאות ברירת מחדל עבור מסד הנתונים\n"
+msgstr " -D, --tablespace=TABLESPACE   מרחב טבלאות ברירת מחדל עבור מסד הנתונים\n"
 
 #: createdb.c:256
 #, c-format
-msgid ""
-"  -e, --echo                   show the commands being sent to the server\n"
+msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                להציג  את הפקודות הנשלחות לשרת\n"
 
 #: createdb.c:257
@@ -369,8 +366,7 @@ msgstr "      --lc-ctype=LOCALE        LC_CTYPE הגדרה עבור מסד הנ�
 #: createdb.c:261
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
-msgstr ""
-"  -O, --owner=OWNER            משתמש מסד הנתונים הבעלים של מסד הנתונים החדש\n"
+msgstr "  -O, --owner=OWNER            משתמש מסד הנתונים הבעלים של מסד הנתונים החדש\n"
 
 #: createdb.c:262
 #, c-format
@@ -389,8 +385,7 @@ msgstr "  -?, --help                להציג עזרה זו, ולאחר מכן 
 
 #: createdb.c:266
 #, c-format
-msgid ""
-"  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME שרת מארח של מסד הנתונים  או ספריית שקע\n"
 
 #: createdb.c:267
@@ -427,46 +422,46 @@ msgstr ""
 "\n"
 "כברירת מחדל, מסד נתונים נוצר עם שם זהה לזה המשתמש הנוכחי.\n"
 
-#: createuser.c:194
+#: createuser.c:189
 msgid "Enter name of role to add: "
 msgstr "הזן שם של תפקיד כדי להוסיף: "
 
-#: createuser.c:211
+#: createuser.c:206
 msgid "Enter password for new role: "
 msgstr "הזן סיסמה עבור תפקיד חדש: "
 
-#: createuser.c:213
+#: createuser.c:208
 msgid "Enter it again: "
 msgstr "הזן שוב: "
 
-#: createuser.c:216
+#: createuser.c:211
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "סיסמאות אינן תואמות.\n"
 
-#: createuser.c:224
+#: createuser.c:219
 msgid "Shall the new role be a superuser?"
 msgstr "יהיה התפקיד החדש משתמש על?"
 
-#: createuser.c:239
+#: createuser.c:234
 msgid "Shall the new role be allowed to create databases?"
 msgstr "התפקיד החדש יהיה רשאי ליצור מסדי נתונים?"
 
-#: createuser.c:247
+#: createuser.c:242
 msgid "Shall the new role be allowed to create more new roles?"
 msgstr "התפקיד החדש יהיה רשאי ליצור תפקידים חדשים?"
 
-#: createuser.c:281
+#: createuser.c:272
 #, c-format
-msgid "Password encryption failed.\n"
-msgstr "הצפנת סיסמה נכשל.\n"
+msgid "%s: password encryption failed: %s"
+msgstr ",תכנית%s: סיסמת ההצפנה נכשלה: %s"
 
-#: createuser.c:338
+#: createuser.c:327
 #, c-format
 msgid "%s: creation of new role failed: %s"
 msgstr "%s: יצירת תפקיד חדש נכשלה: %s"
 
-#: createuser.c:353
+#: createuser.c:342
 #, c-format
 msgid ""
 "%s creates a new PostgreSQL role.\n"
@@ -475,42 +470,32 @@ msgstr ""
 "%s יוצר תפקיד PostgreSQL חדש.\n"
 "\n"
 
-#: createuser.c:355 dropuser.c:162
+#: createuser.c:344 dropuser.c:162
 #, c-format
 msgid "  %s [OPTION]... [ROLENAME]\n"
-msgstr ""
+msgstr "  %s [OPTION]... [ROLENAME]\n"
 
-#: createuser.c:357
+#: createuser.c:346
 #, c-format
-msgid ""
-"  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
-msgstr ""
-"  -c, --connection-limit=N  מגבלת החיבורים עבור תפקיד (ברירת מחדל: אין "
-"גבול)\n"
+msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
+msgstr "  -c, --connection-limit=N  מגבלת החיבורים עבור תפקיד (ברירת מחדל: אין גבול)\n"
 
-#: createuser.c:358
+#: createuser.c:347
 #, c-format
 msgid "  -d, --createdb            role can create new databases\n"
 msgstr "  -d, --createdb            תפקיד יכול ליצור מסדי נתונים חדשים\n"
 
-#: createuser.c:359
+#: createuser.c:348
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
-msgstr ""
-"  -D, --no-createdb         תפקיד לא יכול ליצור מסדי נתונים חדשים (ברירת "
-"מחדל)\n"
+msgstr "  -D, --no-createdb         תפקיד לא יכול ליצור מסדי נתונים חדשים (ברירת מחדל)\n"
 
-#: createuser.c:361
-#, c-format
-msgid "  -E, --encrypted           encrypt stored password\n"
-msgstr "  -E, --encrypted           להצפין סיסמה מאוחסנת\n"
-
-#: createuser.c:362
+#: createuser.c:350
 #, c-format
 msgid "  -g, --role=ROLE           new role will be a member of this role\n"
 msgstr "  -g, --role=ROLE           תפקיד חדש יהיה חבר של תפקיד זה\n"
 
-#: createuser.c:363
+#: createuser.c:351
 #, c-format
 msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
@@ -519,75 +504,68 @@ msgstr ""
 "  -i, --inherit             תפקיד יורש הרשאות מתפקידים\n"
 "                            אשר הוא חבר בהם (ברירת מחדל)\n"
 
-#: createuser.c:365
+#: createuser.c:353
 #, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
 msgstr "  -I, --no-inherit          תפקיד אינו יורש הרשאות\n"
 
-#: createuser.c:366
+#: createuser.c:354
 #, c-format
 msgid "  -l, --login               role can login (default)\n"
 msgstr "  -l, --login               תפקיד יכול להתחבר (ברירת מחדל)\n"
 
-#: createuser.c:367
+#: createuser.c:355
 #, c-format
 msgid "  -L, --no-login            role cannot login\n"
 msgstr "  -L, --no-login            תפקיד לא כול להתחבר\n"
 
-#: createuser.c:368
-#, c-format
-msgid "  -N, --unencrypted         do not encrypt stored password\n"
-msgstr "  -N, --unencrypted         לא למצפין את הסיסמה המאוחסנת\n"
-
-#: createuser.c:369
+#: createuser.c:356
 #, c-format
 msgid "  -P, --pwprompt            assign a password to new role\n"
 msgstr "  -P, --pwprompt            להקצות סיסמה לתפקיד חדש\n"
 
-#: createuser.c:370
+#: createuser.c:357
 #, c-format
 msgid "  -r, --createrole          role can create new roles\n"
 msgstr "  -r, --createrole          תפקיד יכול ליצור תפקידים חדשים\n"
 
-#: createuser.c:371
+#: createuser.c:358
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles (default)\n"
 msgstr "  -R, --no-createrole       תפקיד לא יכוך ליצור תפקידים (ברירת מחדל)\n"
 
-#: createuser.c:372
+#: createuser.c:359
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
 msgstr "  -s, --superuser           תפקיד יהיה משתמש על\n"
 
-#: createuser.c:373
+#: createuser.c:360
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser (default)\n"
 msgstr "  -S, --no-superuser        תפקיד לא יהיה משתמש על (ברירת מחדל)\n"
 
-#: createuser.c:375
+#: createuser.c:362
 #, c-format
 msgid ""
-"  --interactive             prompt for missing role name and attributes "
-"rather\n"
+"  --interactive             prompt for missing role name and attributes rather\n"
 "                            than using defaults\n"
 msgstr ""
 "  --interactive             לבקש את שם התפקיד ותכונות החסרות במקום\n"
 "                            שימוש בברירת מחדל\n"
 
-#: createuser.c:377
+#: createuser.c:364
 #, c-format
 msgid "  --replication             role can initiate replication\n"
 msgstr "  --replication             תפקיד יכול ליזום שכפול\n"
 
-#: createuser.c:378
+#: createuser.c:365
 #, c-format
 msgid "  --no-replication          role cannot initiate replication\n"
 msgstr "  --no-replication          תפקיד לא יכול ליזום שכפול\n"
 
-#: createuser.c:383
+#: createuser.c:370
 #, c-format
-msgid ""
-"  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr "  -U, --username=USERNAME שם המשתמש להתחבר איתו (לא אחד כדי ליצור)\n"
 
 #: dropdb.c:102
@@ -619,7 +597,7 @@ msgstr "%s מסיר מסד נתונים PostgreSQL.\n"
 #: dropdb.c:156
 #, c-format
 msgid "  %s [OPTION]... DBNAME\n"
-msgstr ""
+msgstr "  %s [OPTION]... DBNAME\n"
 
 #: dropdb.c:159
 #, c-format
@@ -628,10 +606,8 @@ msgstr "  -i, --interactive         לבקש אישור לפני מחיקת כל
 
 #: dropdb.c:161
 #, c-format
-msgid ""
-"  --if-exists               don't report error if database doesn't exist\n"
-msgstr ""
-"  --if-exists               לא לדווח על שגיאה אם מסד הנתונים אינו קיים\n"
+msgid "  --if-exists               don't report error if database doesn't exist\n"
+msgstr "  --if-exists               לא לדווח על שגיאה אם מסד הנתונים אינו קיים\n"
 
 #: dropuser.c:113
 msgid "Enter name of role to drop: "
@@ -677,10 +653,8 @@ msgstr "  --if-exists               לא לדווח שגיאה אם המשתמש
 
 #: dropuser.c:173
 #, c-format
-msgid ""
-"  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
-msgstr ""
-"  -U, --username=USERNAME שם המשתמש להתחבר איתו (לא אחד שצריכים למחוק)\n"
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr "  -U, --username=USERNAME שם המשתמש להתחבר איתו (לא אחד שצריכים למחוק)\n"
 
 #: pg_isready.c:142
 #, c-format
@@ -729,7 +703,7 @@ msgstr ""
 #: pg_isready.c:223
 #, c-format
 msgid "  %s [OPTION]...\n"
-msgstr ""
+msgstr "  %s [OPTION]...\n"
 
 #: pg_isready.c:226
 #, c-format
@@ -763,12 +737,8 @@ msgstr "  -p, --port=PORT יציאת שרת מסד נתונים\n"
 
 #: pg_isready.c:234
 #, c-format
-msgid ""
-"  -t, --timeout=SECS       seconds to wait when attempting connection, 0 "
-"disables (default: %s)\n"
-msgstr ""
-"  -t, --timeout=SECS       שניות שיש להמתין בעת ניסיון ההתקשרות, 0 משבית "
-"(ברירת המחדל: %s)\n"
+msgid "  -t, --timeout=SECS       seconds to wait when attempting connection, 0 disables (default: %s)\n"
+msgstr "  -t, --timeout=SECS       שניות שיש להמתין בעת ניסיון ההתקשרות, 0 משבית (ברירת המחדל: %s)\n"
 
 #: pg_isready.c:235
 #, c-format
@@ -778,58 +748,42 @@ msgstr "  -U, --username=USERNAME שם המשתמש להתחבר איתו\n"
 #: reindexdb.c:160
 #, c-format
 msgid "%s: cannot reindex all databases and a specific one at the same time\n"
-msgstr ""
-"%s: לא ניתן ליצור אינדקס מחדש עבור כל מסדי הנתונים ועבור האחד הספציפי בו "
-"זמנית\n"
+msgstr "%s: לא ניתן ליצור אינדקס מחדש עבור כל מסדי הנתונים ועבור האחד הספציפי בו זמנית\n"
 
 #: reindexdb.c:165
 #, c-format
 msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
-msgstr ""
-"%s: לא ניתן ליצור אינדקס מחדש עבור כל מסדי הנתונים וכל קטלוגים של מערכת בו "
-"זמנית\n"
+msgstr "%s: לא ניתן ליצור אינדקס מחדש עבור כל מסדי הנתונים וכל קטלוגים של מערכת בו זמנית\n"
 
 #: reindexdb.c:170
 #, c-format
 msgid "%s: cannot reindex specific schema(s) in all databases\n"
-msgstr ""
-"%s: לא ניתן ליצור אינדקס מחדש עבור סכימה(ות) ספציפית(יות) בכל מסדי הנתונים\n"
+msgstr "%s: לא ניתן ליצור אינדקס מחדש עבור סכימה(ות) ספציפית(יות) בכל מסדי הנתונים\n"
 
 #: reindexdb.c:175
 #, c-format
 msgid "%s: cannot reindex specific table(s) in all databases\n"
-msgstr ""
-"%s: לא ניתן ליצור אינדקס מחדש עבור טבלה(ות) ספציפית(יות) בכל מסדי הנתונים\n"
+msgstr "%s: לא ניתן ליצור אינדקס מחדש עבור טבלה(ות) ספציפית(יות) בכל מסדי הנתונים\n"
 
 #: reindexdb.c:180
 #, c-format
 msgid "%s: cannot reindex specific index(es) in all databases\n"
-msgstr ""
-"%s: לא ניתן ליצור אינדקס מחדש עבור אינדקס(ים) ספציפי(ים) בכל מסדי הנתונים\n"
+msgstr "%s: לא ניתן ליצור אינדקס מחדש עבור אינדקס(ים) ספציפי(ים) בכל מסדי הנתונים\n"
 
 #: reindexdb.c:191
 #, c-format
-msgid ""
-"%s: cannot reindex specific schema(s) and system catalogs at the same time\n"
-msgstr ""
-"%s: לא ניתן ליצור אינדקס מחדש עבור סכימה(ות) ספציפית(יות) וקטלוגים של מערכת "
-"בו זמנית\n"
+msgid "%s: cannot reindex specific schema(s) and system catalogs at the same time\n"
+msgstr "%s: לא ניתן ליצור אינדקס מחדש עבור סכימה(ות) ספציפית(יות) וקטלוגים של מערכת בו זמנית\n"
 
 #: reindexdb.c:196
 #, c-format
-msgid ""
-"%s: cannot reindex specific table(s) and system catalogs at the same time\n"
-msgstr ""
-"%s: לא ניתן ליצור אינדקס מחדש עבור טבלה(ות) ספציפית(יות) וקטלוגים של מערכת "
-"בו זמנית\n"
+msgid "%s: cannot reindex specific table(s) and system catalogs at the same time\n"
+msgstr "%s: לא ניתן ליצור אינדקס מחדש עבור טבלה(ות) ספציפית(יות) וקטלוגים של מערכת בו זמנית\n"
 
 #: reindexdb.c:201
 #, c-format
-msgid ""
-"%s: cannot reindex specific index(es) and system catalogs at the same time\n"
-msgstr ""
-"%s: לא ניתן ליצור אינדקס מחדש עבור אינדקס(ים) ספציפי(ים)  וקטלוגים של מערכת "
-"בו זמנית\n"
+msgid "%s: cannot reindex specific index(es) and system catalogs at the same time\n"
+msgstr "%s: לא ניתן ליצור אינדקס מחדש עבור אינדקס(ים) ספציפי(ים)  וקטלוגים של מערכת בו זמנית\n"
 
 #: reindexdb.c:307
 #, c-format
@@ -893,14 +847,12 @@ msgstr "  -s, --system              מאנדקס מחדש את קטלוגים ש
 #: reindexdb.c:410
 #, c-format
 msgid "  -S, --schema=SCHEMA       reindex specific schema(s) only\n"
-msgstr ""
-"  -S, --schema=SCHEMA       לאנדקס מחדש את הסכימה(ות) ספציפי(ות) בלבד\n"
+msgstr "  -S, --schema=SCHEMA       לאנדקס מחדש את הסכימה(ות) ספציפי(ות) בלבד\n"
 
 #: reindexdb.c:411
 #, c-format
 msgid "  -t, --table=TABLE         reindex specific table(s) only\n"
-msgstr ""
-"  -t, --table=TABLE         לאנדקס מחדש את הטבלה(אות) ספציפית(יות) בלבד\n"
+msgstr "  -t, --table=TABLE         לאנדקס מחדש את הטבלה(אות) ספציפית(יות) בלבד\n"
 
 #: reindexdb.c:422
 #, c-format
@@ -994,9 +946,7 @@ msgstr "  -d, --dbname=DBNAME             מסד נתונים לניקוי\n"
 
 #: vacuumdb.c:957
 #, c-format
-msgid ""
-"  -e, --echo                      show the commands being sent to the "
-"server\n"
+msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                להציג  את הפקודות הנשלחות לשרת\n"
 
 #: vacuumdb.c:958
@@ -1011,11 +961,8 @@ msgstr "  -F, --freeze                    להקפיא נתוני הטרנסאק
 
 #: vacuumdb.c:960
 #, c-format
-msgid ""
-"  -j, --jobs=NUM                  use this many concurrent connections to "
-"vacuum\n"
-msgstr ""
-"  -j, --jobs=NUM                  להשתמש בחיבורים מקבילים רבים לניקוי\n"
+msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
+msgstr "  -j, --jobs=NUM                  להשתמש בחיבורים מקבילים רבים לניקוי\n"
 
 #: vacuumdb.c:961
 #, c-format
@@ -1034,34 +981,26 @@ msgstr "  -v, --verbose             לכתוב הרבה פלט מפורט\n"
 
 #: vacuumdb.c:964
 #, c-format
-msgid ""
-"  -V, --version                   output version information, then exit\n"
+msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version             להציג מידע על הגירסה, ולאחר מכן לצאת\n"
 
 #: vacuumdb.c:965
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
-msgstr ""
-"  -z, --analyze                   לעדכן את הסטטיסטיקה עבור האופטימיזציה\n"
+msgstr "  -z, --analyze                   לעדכן את הסטטיסטיקה עבור האופטימיזציה\n"
 
 #: vacuumdb.c:966
 #, c-format
-msgid ""
-"  -Z, --analyze-only              only update optimizer statistics; no "
-"vacuum\n"
-msgstr ""
-"  -Z, --analyze-only              רק לעדכן את הסטטיסטיקה עובר האופטימיזציה; "
-"אין ניקוי\n"
+msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
+msgstr "  -Z, --analyze-only              רק לעדכן את הסטטיסטיקה עובר האופטימיזציה; אין ניקוי\n"
 
 #: vacuumdb.c:967
 #, c-format
 msgid ""
-"      --analyze-in-stages         only update optimizer statistics, in "
-"multiple\n"
+"      --analyze-in-stages         only update optimizer statistics, in multiple\n"
 "                                  stages for faster results; no vacuum\n"
 msgstr ""
-"      --analyze-in-stages          רק לעדכן את סטטיסטיקה עבור האופטימיזציה, "
-"בשלבים מרובים \n"
+"      --analyze-in-stages          רק לעדכן את סטטיסטיקה עבור האופטימיזציה, בשלבים מרובים \n"
 "                              עבור תוצאות מהירות יותר; אין ניקוי\n"
 
 #: vacuumdb.c:969
@@ -1077,3 +1016,9 @@ msgid ""
 msgstr ""
 "\n"
 "תקרא את התיאור של הפקודה VACUUM לפרטים.\n"
+
+#~ msgid "  -N, --unencrypted         do not encrypt stored password\n"
+#~ msgstr "  -N, --unencrypted         לא למצפין את הסיסמה המאוחסנת\n"
+
+#~ msgid "  -E, --encrypted           encrypt stored password\n"
+#~ msgstr "  -E, --encrypted           להצפין סיסמה מאוחסנת\n"

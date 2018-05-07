@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_rewind
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-07 15:45+0000\n"
-"PO-Revision-Date: 2017-09-07 22:10+0200\n"
+"POT-Creation-Date: 2018-03-08 18:46+0000\n"
+"PO-Revision-Date: 2018-03-10 08:29+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -17,8 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127
-#: parsexlog.c:179
+#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
@@ -68,7 +67,7 @@ msgstr "%s: kunde inte utvinna statuskod för underprocess: felkod %lu\n"
 msgid "could not open directory \"%s\": %s\n"
 msgstr "kunde inte öppna katalog \"%s\": %s\n"
 
-#: copy_fetch.c:91 filemap.c:111 filemap.c:266
+#: copy_fetch.c:91 filemap.c:112 filemap.c:267
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
 msgstr "kunde inte göra stat() på fil \"%s\": %s\n"
@@ -193,183 +192,188 @@ msgstr "kunde inte radera symbolisk länk \"%s\": %s\n"
 msgid "could not open file \"%s\" for reading: %s\n"
 msgstr "kunde inte öppna fil \"%s\" för läsning: %s\n"
 
-#: filemap.c:103
+#: filemap.c:104
 #, c-format
 msgid "data file \"%s\" in source is not a regular file\n"
 msgstr "datafil \"%s\" i källan är inte en vanlig fil\n"
 
-#: filemap.c:125
+#: filemap.c:126
 #, c-format
 msgid "\"%s\" is not a directory\n"
 msgstr "\"%s\" är inte en katalog\n"
 
-#: filemap.c:148
+#: filemap.c:149
 #, c-format
 msgid "\"%s\" is not a symbolic link\n"
 msgstr "\"%s\" är inte en symbolisk länk\n"
 
-#: filemap.c:160
+#: filemap.c:161
 #, c-format
 msgid "\"%s\" is not a regular file\n"
 msgstr "\"%s\" är inte en vanlig fil\n"
 
-#: filemap.c:278
+#: filemap.c:279
 #, c-format
 msgid "source file list is empty\n"
 msgstr "källfillistan är tom\n"
 
-#: filemap.c:400
+#: filemap.c:401
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr "oväntad sidmodifiering för katalog eller symbolisk länk \"%s\"\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
-#: filemap.c:536
+#: filemap.c:537
 #, c-format
 msgid "%s (%s)\n"
 msgstr "%s (%s)\n"
 
-#: libpq_fetch.c:55
+#: libpq_fetch.c:56
 #, c-format
 msgid "could not connect to server: %s"
 msgstr "kunde inte ansluta till server: %s"
 
-#: libpq_fetch.c:58
+#: libpq_fetch.c:59
 #, c-format
 msgid "connected to server\n"
 msgstr "ansluten till server\n"
 
-#: libpq_fetch.c:68
+#: libpq_fetch.c:63
+#, c-format
+msgid "could not clear search_path: %s"
+msgstr "kunde inte nollställa search_path: %s"
+
+#: libpq_fetch.c:75
 #, c-format
 msgid "source server must not be in recovery mode\n"
 msgstr "källserver får inte vara i återställningsläge\n"
 
-#: libpq_fetch.c:78
+#: libpq_fetch.c:85
 #, c-format
 msgid "full_page_writes must be enabled in the source server\n"
 msgstr "full_page_writes måste vara påslagen i källservern\n"
 
-#: libpq_fetch.c:90
+#: libpq_fetch.c:97
 #, c-format
 msgid "could not set up connection context: %s"
 msgstr "kunde inte sätta upp anslutningskontext: %s"
 
-#: libpq_fetch.c:108
+#: libpq_fetch.c:115
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "fel vid körande av fråga (%s) i källserver: %s"
 
-#: libpq_fetch.c:113
+#: libpq_fetch.c:120
 #, c-format
 msgid "unexpected result set from query\n"
 msgstr "oväntad resultatmängd från fråga\n"
 
-#: libpq_fetch.c:136
+#: libpq_fetch.c:143
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location\n"
 msgstr "oväntat resultat \"%s\" för nuvarande WAL-insättningsposition\n"
 
-#: libpq_fetch.c:186
+#: libpq_fetch.c:193
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "kunde inte hämta fillista: %s"
 
-#: libpq_fetch.c:191
+#: libpq_fetch.c:198
 #, c-format
 msgid "unexpected result set while fetching file list\n"
 msgstr "oväntad resultatmängd vid hämtning av fillista\n"
 
-#: libpq_fetch.c:261
+#: libpq_fetch.c:268
 #, c-format
 msgid "could not send query: %s"
 msgstr "kunde inte skicka fråga: %s"
 
-#: libpq_fetch.c:263
+#: libpq_fetch.c:270
 #, c-format
 msgid "getting file chunks\n"
 msgstr "hämtar fildelar\n"
 
-#: libpq_fetch.c:266
+#: libpq_fetch.c:273
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "kunde inte sätta libpq-anslutning till enradsläge\n"
 
-#: libpq_fetch.c:287
+#: libpq_fetch.c:294
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "oväntat resultat vid hämtning av extern fil: %s"
 
-#: libpq_fetch.c:293
+#: libpq_fetch.c:300
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "oväntad resultatmängdstorlek vid hämtning av externa filer\n"
 
-#: libpq_fetch.c:299
+#: libpq_fetch.c:306
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u\n"
 msgstr "oväntade datayper i resultatmängd vid hämtning av externa filer: %u %u %u\n"
 
-#: libpq_fetch.c:307
+#: libpq_fetch.c:314
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "oväntat resultatformat vid hämtning av externa filer\n"
 
-#: libpq_fetch.c:313
+#: libpq_fetch.c:320
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr "oväntade null-värden i resultat vid hämtning av externa filer\n"
 
-#: libpq_fetch.c:317
+#: libpq_fetch.c:324
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "oväntad resultatlängd vid hämtning av externa filer\n"
 
-#: libpq_fetch.c:339
+#: libpq_fetch.c:346
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "mottog null-värde som del av fil \"%s\", filen har blivit raderad\n"
 
-#: libpq_fetch.c:351
+#: libpq_fetch.c:358
 #, c-format
 msgid "received chunk for file \"%s\", offset %s, size %d\n"
 msgstr "mottog del för fil \"%s\", offset %s, storlek %d\n"
 
-#: libpq_fetch.c:380
+#: libpq_fetch.c:387
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "kunde inte hämta extern fil \"%s\": %s"
 
-#: libpq_fetch.c:385
+#: libpq_fetch.c:392
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "oväntat resultatmängd vid hämtning av extern fil \"%s\"\n"
 
-#: libpq_fetch.c:396
+#: libpq_fetch.c:403
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "hämtade fil \"%s\", längd %d\n"
 
-#: libpq_fetch.c:429
+#: libpq_fetch.c:436
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "kunde inte skicka COPY-data: %s"
 
-#: libpq_fetch.c:455
+#: libpq_fetch.c:462
 #, c-format
 msgid "could not create temporary table: %s"
 msgstr "kunde inte skapa temporär tabell: %s"
 
-#: libpq_fetch.c:463
+#: libpq_fetch.c:470
 #, c-format
 msgid "could not send file list: %s"
 msgstr "kunde inte skicka fillista: %s"
 
-#: libpq_fetch.c:505
+#: libpq_fetch.c:512
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "kunde inte skicka slut-på-COPY: %s"
 
-#: libpq_fetch.c:511
+#: libpq_fetch.c:518
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "oväntat resultat vid skickande av fillista: %s"
@@ -849,12 +853,12 @@ msgstr "BKPBLOCK_SAME_REL satt men ingen tidigare rel vid %X/%X"
 msgid "invalid block_id %u at %X/%X"
 msgstr "ogiltig block_id %u vid %X/%X"
 
-#: xlogreader.c:1291
+#: xlogreader.c:1306
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "post med ogiltig längd vid %X/%X"
 
-#: xlogreader.c:1380
+#: xlogreader.c:1395
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "ogiltig komprimerad image vid %X/%X, block %d"

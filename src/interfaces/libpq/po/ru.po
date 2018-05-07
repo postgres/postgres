@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-01-31 07:53+0300\n"
+"POT-Creation-Date: 2018-04-27 15:35+0300\n"
 "PO-Revision-Date: 2018-01-31 08:16+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -62,7 +62,7 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-connect.c:5117 fe-connect.c:5146 fe-connect.c:5218 fe-connect.c:5242
 #: fe-connect.c:5260 fe-connect.c:5361 fe-connect.c:5370 fe-connect.c:5726
 #: fe-connect.c:5876 fe-exec.c:2702 fe-exec.c:3449 fe-exec.c:3614 fe-lobj.c:896
-#: fe-protocol2.c:1206 fe-protocol3.c:992 fe-protocol3.c:1678
+#: fe-protocol2.c:1214 fe-protocol3.c:1000 fe-protocol3.c:1686
 #: fe-secure-openssl.c:514 fe-secure-openssl.c:1138
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -250,7 +250,7 @@ msgid ""
 msgstr ""
 "не удалось подключиться к серверу: %s\n"
 "\tОн действительно работает локально и принимает\n"
-"\tсоединения через доменный сокет \"%s\"?\n"
+"\tсоединения через Unix-сокет \"%s\"?\n"
 
 #: fe-connect.c:1490
 #, c-format
@@ -302,13 +302,12 @@ msgstr "не удалось разобрать сетевой адрес \"%s\":
 #: fe-connect.c:1757
 #, c-format
 msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"
-msgstr "длина пути доменного сокета \"%s\" превышает предел (%d байт)\n"
+msgstr "длина пути Unix-сокета \"%s\" превышает предел (%d байт)\n"
 
 #: fe-connect.c:1771
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
-msgstr ""
-"преобразовать путь к доменному сокету UNIX \"%s\" в адрес не удалось: %s\n"
+msgstr "преобразовать путь Unix-сокета \"%s\" в адрес не удалось: %s\n"
 
 #: fe-connect.c:2052
 msgid "invalid connection state, probably indicative of memory corruption\n"
@@ -584,13 +583,13 @@ msgstr "пароль получен из файла \"%s\"\n"
 msgid "row number %d is out of range 0..%d"
 msgstr "номер записи %d вне диапазона 0..%d"
 
-#: fe-exec.c:498 fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1049
+#: fe-exec.c:498 fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1057
 #: fe-protocol3.c:209 fe-protocol3.c:236 fe-protocol3.c:253 fe-protocol3.c:333
-#: fe-protocol3.c:728 fe-protocol3.c:951
+#: fe-protocol3.c:728 fe-protocol3.c:959
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: fe-exec.c:499 fe-protocol2.c:1395 fe-protocol3.c:1886
+#: fe-exec.c:499 fe-protocol2.c:1403 fe-protocol3.c:1894
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -661,8 +660,8 @@ msgstr "сначала должно завершиться состояние CO
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "вызов PQexec не допускается в процессе COPY BOTH\n"
 
-#: fe-exec.c:2280 fe-exec.c:2347 fe-exec.c:2437 fe-protocol2.c:1352
-#: fe-protocol3.c:1817
+#: fe-exec.c:2280 fe-exec.c:2347 fe-exec.c:2437 fe-protocol2.c:1360
+#: fe-protocol3.c:1825
 msgid "no COPY in progress\n"
 msgstr "операция COPY не выполняется\n"
 
@@ -865,12 +864,12 @@ msgstr "неожиданный ответ сервера; первый полу�
 msgid "out of memory for query result"
 msgstr "недостаточно памяти для результата запроса"
 
-#: fe-protocol2.c:1407
+#: fe-protocol2.c:1415
 #, c-format
 msgid "lost synchronization with server, resetting connection"
 msgstr "потеряна синхронизация с сервером; попытка восстановить соединение"
 
-#: fe-protocol2.c:1541 fe-protocol2.c:1573 fe-protocol3.c:2089
+#: fe-protocol2.c:1549 fe-protocol2.c:1581 fe-protocol3.c:2097
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "ошибка протокола: id=0x%x\n"
@@ -918,81 +917,81 @@ msgstr "неверное число полей в сообщении \"D\""
 msgid "extraneous data in \"D\" message"
 msgstr "лишние данные в сообщении \"D\""
 
-#: fe-protocol3.c:1005
+#: fe-protocol3.c:1013
 msgid "no error message available\n"
 msgstr "нет сообщения об ошибке\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1035 fe-protocol3.c:1054
+#: fe-protocol3.c:1043 fe-protocol3.c:1062
 #, c-format
 msgid " at character %s"
 msgstr " символ %s"
 
-#: fe-protocol3.c:1067
+#: fe-protocol3.c:1075
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "ПОДРОБНОСТИ:  %s\n"
 
-#: fe-protocol3.c:1070
+#: fe-protocol3.c:1078
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "ПОДСКАЗКА:  %s\n"
 
-#: fe-protocol3.c:1073
+#: fe-protocol3.c:1081
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "ЗАПРОС:  %s\n"
 
-#: fe-protocol3.c:1080
+#: fe-protocol3.c:1088
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "КОНТЕКСТ:  %s\n"
 
-#: fe-protocol3.c:1089
+#: fe-protocol3.c:1097
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "СХЕМА:  %s\n"
 
-#: fe-protocol3.c:1093
+#: fe-protocol3.c:1101
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "ТАБЛИЦА:  %s\n"
 
-#: fe-protocol3.c:1097
+#: fe-protocol3.c:1105
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "СТОЛБЕЦ:  %s\n"
 
-#: fe-protocol3.c:1101
+#: fe-protocol3.c:1109
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "ТИП ДАННЫХ:  %s\n"
 
-#: fe-protocol3.c:1105
+#: fe-protocol3.c:1113
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "ОГРАНИЧЕНИЕ:  %s\n"
 
-#: fe-protocol3.c:1117
+#: fe-protocol3.c:1125
 msgid "LOCATION:  "
 msgstr "ПОЛОЖЕНИЕ:  "
 
-#: fe-protocol3.c:1119
+#: fe-protocol3.c:1127
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1121
+#: fe-protocol3.c:1129
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1316
+#: fe-protocol3.c:1324
 #, c-format
 msgid "LINE %d: "
 msgstr "СТРОКА %d: "
 
-#: fe-protocol3.c:1711
+#: fe-protocol3.c:1719
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline можно вызывать только во время COPY OUT с текстом\n"
 
