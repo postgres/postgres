@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-01-31 07:59+0300\n"
+"POT-Creation-Date: 2018-04-27 15:42+0300\n"
 "PO-Revision-Date: 2018-01-31 08:19+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -177,7 +177,7 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
 
-#: ecpg.c:171 ecpg.c:323 ecpg.c:333
+#: ecpg.c:171 ecpg.c:323 ecpg.c:334
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл \"%s\": %s\n"
@@ -213,12 +213,12 @@ msgstr "конец списка поиска\n"
 msgid "%s: no input files specified\n"
 msgstr "%s: нет входных файлов\n"
 
-#: ecpg.c:456
+#: ecpg.c:457
 #, c-format
 msgid "cursor \"%s\" has been declared but not opened"
 msgstr "курсор \"%s\" был объявлен, но не открыт"
 
-#: ecpg.c:469 preproc.y:109
+#: ecpg.c:470 preproc.y:109
 #, c-format
 msgid "could not remove output file \"%s\"\n"
 msgstr "ошибка при удалении выходного файла \"%s\"\n"
@@ -463,8 +463,7 @@ msgstr "ожидалось \"://\", но на этом месте \"%s\""
 #: preproc.y:12974
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
-msgstr ""
-"Доменные сокеты Unix работают только с \"localhost\", но не с адресом \"%s\""
+msgstr "Unix-сокеты работают только с \"localhost\", но не с адресом \"%s\""
 
 #: preproc.y:13000
 #, c-format

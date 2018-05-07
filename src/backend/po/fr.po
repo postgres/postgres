@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-01-12 21:41+0000\n"
-"PO-Revision-Date: 2018-01-13 16:23+0100\n"
+"PO-Revision-Date: 2018-02-27 19:54+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -8526,7 +8526,7 @@ msgstr "La ligne en échec contient %s"
 #: executor/execMain.c:1656
 #, c-format
 msgid "new row for relation \"%s\" violates check constraint \"%s\""
-msgstr "la nouvelle ligne viole la contrainte de vérification « %s » de la relation « %s »"
+msgstr "la nouvelle ligne de la relation « %s » viole la contrainte de vérification « %s »"
 
 #: executor/execQual.c:306 executor/execQual.c:334 executor/execQual.c:3167 utils/adt/array_userfuncs.c:430 utils/adt/arrayfuncs.c:233 utils/adt/arrayfuncs.c:512 utils/adt/arrayfuncs.c:1247 utils/adt/arrayfuncs.c:2920 utils/adt/arrayfuncs.c:4939
 #, c-format
