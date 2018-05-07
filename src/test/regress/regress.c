@@ -38,7 +38,6 @@
 #include "utils/memutils.h"
 
 
-#define P_MAXDIG 12
 #define LDELIM			'('
 #define RDELIM			')'
 #define DELIM			','
