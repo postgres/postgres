@@ -381,6 +381,10 @@ SELECT	ctid, partrelid
 FROM	pg_catalog.pg_partitioned_table fk
 WHERE	partrelid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.partrelid);
+SELECT	ctid, partdefid
+FROM	pg_catalog.pg_partitioned_table fk
+WHERE	partdefid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.partdefid);
 SELECT	ctid, polrelid
 FROM	pg_catalog.pg_policy fk
 WHERE	polrelid != 0 AND

@@ -5,7 +5,7 @@ findoidjoins
 
 This program scans a database and prints oid fields (also reg* fields)
 and the tables they join to.  It is normally used to check the system
-catalog join relationships (shown below for 10devel as of 2017-05-15).
+catalog join relationships (shown below for 11devel as of 2018-05-07).
 
 Historically this has been run against an empty database such as template1,
 but there's a problem with that approach: some of the catalogs are empty
@@ -16,7 +16,7 @@ catalogs in interesting ways.
 Note that unexpected matches may indicate bogus entries in system tables;
 don't accept a peculiar match without question.  In particular, a field
 shown as joining to more than one target table is probably messed up.
-In v10, the *only* fields that should join to more than one target
+Currently, the *only* fields that should join to more than one target
 table are:
 pg_description.objoid, pg_depend.objid, pg_depend.refobjid,
 pg_shdescription.objoid, pg_shdepend.objid, pg_shdepend.refobjid,
@@ -35,7 +35,7 @@ regression test.  The oidjoins test should be updated after any
 revision in the patterns of cross-links between system tables.
 (Typically we update it at the end of each development cycle.)
 
-NOTE: as of v10, make_oidjoins_check produces two bogus join checks:
+NOTE: currently, make_oidjoins_check produces two bogus join checks:
 Join pg_catalog.pg_class.relfilenode => pg_catalog.pg_class.oid
 Join pg_catalog.pg_database.datlastsysoid => pg_catalog.pg_database.oid
 These are artifacts and should not be added to the oidjoins regression test.
@@ -106,6 +106,7 @@ Join pg_catalog.pg_constraint.connamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_constraint.conrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_constraint.contypid => pg_catalog.pg_type.oid
 Join pg_catalog.pg_constraint.conindid => pg_catalog.pg_class.oid
+Join pg_catalog.pg_constraint.conparentid => pg_catalog.pg_constraint.oid
 Join pg_catalog.pg_constraint.confrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_conversion.connamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_conversion.conowner => pg_catalog.pg_authid.oid
@@ -154,6 +155,7 @@ Join pg_catalog.pg_opfamily.opfmethod => pg_catalog.pg_am.oid
 Join pg_catalog.pg_opfamily.opfnamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_opfamily.opfowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_partitioned_table.partrelid => pg_catalog.pg_class.oid
+Join pg_catalog.pg_partitioned_table.partdefid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_policy.polrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_proc.pronamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_proc.proowner => pg_catalog.pg_authid.oid
