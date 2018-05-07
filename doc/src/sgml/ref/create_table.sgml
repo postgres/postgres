@@ -408,9 +408,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       Rows inserted into a partitioned table will be automatically routed to
       the correct partition.  If no suitable partition exists, an error will
-      occur.  Also, if updating a row in a given partition would require it
-      to move to another partition due to new partition key values, an error
-      will occur.
+      occur.
      </para>
 
      <para>
