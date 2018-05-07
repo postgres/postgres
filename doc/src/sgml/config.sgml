@@ -3033,17 +3033,17 @@ include_dir 'conf.d'
      These settings control the behavior of the built-in
      <firstterm>streaming replication</firstterm> feature (see
      <xref linkend="streaming-replication"/>).  Servers will be either a
-     Master or a Standby server.  Masters can send data, while Standby(s)
+     master or a standby server.  Masters can send data, while standbys
      are always receivers of replicated data.  When cascading replication
-     (see <xref linkend="cascading-replication"/>) is used, Standby server(s)
+     (see <xref linkend="cascading-replication"/>) is used, standby servers
      can also be senders, as well as receivers.
-     Parameters are mainly for Sending and Standby servers, though some
-     parameters have meaning only on the Master server.  Settings may vary
+     Parameters are mainly for sending and standby servers, though some
+     parameters have meaning only on the master server.  Settings may vary
      across the cluster without problems if that is required.
     </para>
 
     <sect2 id="runtime-config-replication-sender">
-     <title>Sending Server(s)</title>
+     <title>Sending Servers</title>
 
      <para>
       These parameters can be set on any server that is
