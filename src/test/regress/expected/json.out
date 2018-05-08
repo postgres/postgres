@@ -1401,7 +1401,7 @@ SELECT ia FROM json_populate_record(NULL::jsrec, '{"ia": null}') q;
 (1 row)
 
 SELECT ia FROM json_populate_record(NULL::jsrec, '{"ia": 123}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the value of key "ia".
 SELECT ia FROM json_populate_record(NULL::jsrec, '{"ia": [1, "2", null, 4]}') q;
       ia      
@@ -1416,10 +1416,10 @@ SELECT ia FROM json_populate_record(NULL::jsrec, '{"ia": [[1, 2], [3, 4]]}') q;
 (1 row)
 
 SELECT ia FROM json_populate_record(NULL::jsrec, '{"ia": [[1], 2]}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the array element [1] of key "ia".
 SELECT ia FROM json_populate_record(NULL::jsrec, '{"ia": [[1], [2, 3]]}') q;
-ERROR:  malformed json array
+ERROR:  malformed JSON array
 DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
 SELECT ia FROM json_populate_record(NULL::jsrec, '{"ia": "{1,2,3}"}') q;
    ia    
@@ -1434,7 +1434,7 @@ SELECT ia1 FROM json_populate_record(NULL::jsrec, '{"ia1": null}') q;
 (1 row)
 
 SELECT ia1 FROM json_populate_record(NULL::jsrec, '{"ia1": 123}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the value of key "ia1".
 SELECT ia1 FROM json_populate_record(NULL::jsrec, '{"ia1": [1, "2", null, 4]}') q;
      ia1      
@@ -1455,7 +1455,7 @@ SELECT ia1d FROM json_populate_record(NULL::jsrec, '{"ia1d": null}') q;
 (1 row)
 
 SELECT ia1d FROM json_populate_record(NULL::jsrec, '{"ia1d": 123}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the value of key "ia1d".
 SELECT ia1d FROM json_populate_record(NULL::jsrec, '{"ia1d": [1, "2", null, 4]}') q;
 ERROR:  value for domain js_int_array_1d violates check constraint "js_int_array_1d_check"
@@ -1484,10 +1484,10 @@ SELECT ia2 FROM json_populate_record(NULL::jsrec, '{"ia2": [[], []]}') q;
 (1 row)
 
 SELECT ia2 FROM json_populate_record(NULL::jsrec, '{"ia2": [[1, 2], [3]]}') q;
-ERROR:  malformed json array
+ERROR:  malformed JSON array
 DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
 SELECT ia2 FROM json_populate_record(NULL::jsrec, '{"ia2": [[1, 2], 3, 4]}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the array element [1] of key "ia2".
 SELECT ia2d FROM json_populate_record(NULL::jsrec, '{"ia2d": [[1, "2"], [null, 4]]}') q;
 ERROR:  value for domain js_int_array_2d violates check constraint "js_int_array_2d_check"
@@ -1528,7 +1528,7 @@ SELECT ia3 FROM json_populate_record(NULL::jsrec, '{"ia3": [ [[1, 2], [3, 4]], [
 (1 row)
 
 SELECT ia3 FROM json_populate_record(NULL::jsrec, '{"ia3": [ [[1, 2], [3, 4]], [[5, 6], [7, 8], [9, 10]] ]}') q;
-ERROR:  malformed json array
+ERROR:  malformed JSON array
 DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
 SELECT ta FROM json_populate_record(NULL::jsrec, '{"ta": null}') q;
  ta 
@@ -1537,7 +1537,7 @@ SELECT ta FROM json_populate_record(NULL::jsrec, '{"ta": null}') q;
 (1 row)
 
 SELECT ta FROM json_populate_record(NULL::jsrec, '{"ta": 123}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the value of key "ta".
 SELECT ta FROM json_populate_record(NULL::jsrec, '{"ta": [1, "2", null, 4]}') q;
       ta      
@@ -1546,7 +1546,7 @@ SELECT ta FROM json_populate_record(NULL::jsrec, '{"ta": [1, "2", null, 4]}') q;
 (1 row)
 
 SELECT ta FROM json_populate_record(NULL::jsrec, '{"ta": [[1, 2, 3], {"k": "v"}]}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the array element [1] of key "ta".
 SELECT c FROM json_populate_record(NULL::jsrec, '{"c": null}') q;
  c 
@@ -1575,7 +1575,7 @@ SELECT ca FROM json_populate_record(NULL::jsrec, '{"ca": null}') q;
 (1 row)
 
 SELECT ca FROM json_populate_record(NULL::jsrec, '{"ca": 123}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the value of key "ca".
 SELECT ca FROM json_populate_record(NULL::jsrec, '{"ca": [1, "2", null, 4]}') q;
                       ca                       
@@ -1586,7 +1586,7 @@ SELECT ca FROM json_populate_record(NULL::jsrec, '{"ca": [1, "2", null, 4]}') q;
 SELECT ca FROM json_populate_record(NULL::jsrec, '{"ca": ["aaaaaaaaaaaaaaaa"]}') q;
 ERROR:  value too long for type character(10)
 SELECT ca FROM json_populate_record(NULL::jsrec, '{"ca": [[1, 2, 3], {"k": "v"}]}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the array element [1] of key "ca".
 SELECT js FROM json_populate_record(NULL::jsrec, '{"js": null}') q;
  js 
@@ -1679,7 +1679,7 @@ SELECT jsa FROM json_populate_record(NULL::jsrec, '{"jsa": null}') q;
 (1 row)
 
 SELECT jsa FROM json_populate_record(NULL::jsrec, '{"jsa": 123}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the value of key "jsa".
 SELECT jsa FROM json_populate_record(NULL::jsrec, '{"jsa": [1, "2", null, 4]}') q;
         jsa         
@@ -1710,7 +1710,7 @@ SELECT rec FROM json_populate_record(NULL::jsrec, '{"rec": "(abc,42,01.02.2003)"
 (1 row)
 
 SELECT reca FROM json_populate_record(NULL::jsrec, '{"reca": 123}') q;
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the value of key "reca".
 SELECT reca FROM json_populate_record(NULL::jsrec, '{"reca": [1, 2]}') q;
 ERROR:  cannot call populate_composite on a scalar
@@ -2215,7 +2215,7 @@ select * from json_to_record('{"ia": null}') as x(ia _int4);
 (1 row)
 
 select * from json_to_record('{"ia": 123}') as x(ia _int4);
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the value of key "ia".
 select * from json_to_record('{"ia": [1, "2", null, 4]}') as x(ia _int4);
       ia      
@@ -2230,10 +2230,10 @@ select * from json_to_record('{"ia": [[1, 2], [3, 4]]}') as x(ia _int4);
 (1 row)
 
 select * from json_to_record('{"ia": [[1], 2]}') as x(ia _int4);
-ERROR:  expected json array
+ERROR:  expected JSON array
 HINT:  See the array element [1] of key "ia".
 select * from json_to_record('{"ia": [[1], [2, 3]]}') as x(ia _int4);
-ERROR:  malformed json array
+ERROR:  malformed JSON array
 DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
 select * from json_to_record('{"ia2": [1, 2, 3]}') as x(ia2 int[][]);
    ia2   

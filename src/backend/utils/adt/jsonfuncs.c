@@ -2326,12 +2326,12 @@ populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim)
 		if (ctx->colname)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("expected json array"),
+					 errmsg("expected JSON array"),
 					 errhint("See the value of key \"%s\".", ctx->colname)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("expected json array")));
+					 errmsg("expected JSON array")));
 	}
 	else
 	{
@@ -2348,13 +2348,13 @@ populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim)
 		if (ctx->colname)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("expected json array"),
+					 errmsg("expected JSON array"),
 					 errhint("See the array element %s of key \"%s\".",
 							 indices.data, ctx->colname)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("expected json array"),
+					 errmsg("expected JSON array"),
 					 errhint("See the array element %s.",
 							 indices.data)));
 	}
@@ -2390,7 +2390,7 @@ populate_array_check_dimension(PopulateArrayContext *ctx, int ndim)
 	else if (ctx->dims[ndim] != dim)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("malformed json array"),
+				 errmsg("malformed JSON array"),
 				 errdetail("Multidimensional arrays must have "
 						   "sub-arrays with matching dimensions.")));
 
