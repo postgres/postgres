@@ -2850,6 +2850,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 		{
 			/* heap_getnext did the time qual check */
 			tupleIsAlive = true;
+			reltuples += 1;
 		}
 
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
