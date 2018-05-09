@@ -2954,10 +2954,6 @@ perform_pruning_combine_step(PartitionPruneContext *context,
 				}
 			}
 			break;
-
-		default:
-			elog(ERROR, "invalid pruning combine op: %d",
-				 (int) cstep->combineOp);
 	}
 
 	return result;
