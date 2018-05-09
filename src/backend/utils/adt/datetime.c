@@ -1575,7 +1575,10 @@ DetermineTimeZoneOffsetInternal(struct pg_tm *tm, pg_tz *tzp, pg_time_t *tp)
 	 * fall-back transition, prefer "after".  (We used to define and implement
 	 * this test as "prefer the standard-time interpretation", but that rule
 	 * does not help to resolve the behavior when both times are reported as
-	 * standard time; which does happen, eg Europe/Moscow in Oct 2014.)
+	 * standard time; which does happen, eg Europe/Moscow in Oct 2014.  Also,
+	 * in some zones such as Europe/Dublin, there is widespread confusion
+	 * about which time offset is "standard" time, so it's fortunate that our
+	 * behavior doesn't depend on that.)
 	 */
 	if (beforetime > aftertime)
 	{
