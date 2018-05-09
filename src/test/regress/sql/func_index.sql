@@ -29,5 +29,3 @@ select pg_stat_get_xact_tuples_hot_updated('keyvalue'::regclass);
 update keyvalue set info='{"name": "smith", "data": "some more data"}' where id=1;
 select pg_stat_get_xact_tuples_hot_updated('keyvalue'::regclass);
 rollback;
-
-

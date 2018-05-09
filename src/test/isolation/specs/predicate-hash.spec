@@ -28,7 +28,7 @@ teardown
 }
 
 session "s1"
-setup		
+setup
 {
  begin isolation level serializable;
  set enable_seqscan=off;
@@ -45,7 +45,7 @@ step "c1"	{ commit; }
 
 
 session "s2"
-setup		
+setup
 {
  begin isolation level serializable;
  set enable_seqscan=off;
@@ -99,7 +99,7 @@ permutation "rxy2" "wy2" "rxy1" "wx1" "c1" "c2"
 permutation "rxy2" "wy2" "rxy1" "wx1" "c2" "c1"
 permutation "rxy2" "wy2" "rxy1" "c2" "wx1" "c1"
 
-# An index scan (from one transaction) and an index insert (from another 
+# An index scan (from one transaction) and an index insert (from another
 # transaction) try to access different buckets of the index so no r-w conflict.
 
 permutation "rxy3" "wx3" "rxy4" "c1" "wy4" "c2"

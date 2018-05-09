@@ -131,4 +131,3 @@ permutation "rxy4" "wy4" "rxy3" "c2" "wx3" "c1"
 
 permutation       "rxy1" "rxy2fu" "wx1" "c1" "wy2fu" "c2"
 permutation "fu1" "rxy1" "rxy2fu" "wx1" "c1" "wy2fu" "c2"
-

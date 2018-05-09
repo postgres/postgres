@@ -197,4 +197,3 @@ ALTER TABLE tbl ALTER c1 TYPE bigint;
 ALTER TABLE tbl ALTER c3 TYPE bigint;
 \d tbl
 DROP TABLE tbl;
-
