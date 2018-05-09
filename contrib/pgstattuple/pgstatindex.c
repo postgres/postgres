@@ -604,7 +604,6 @@ pgstathashindex(PG_FUNCTION_ARGS)
 				 errmsg("relation \"%s\" is not a hash index",
 						RelationGetRelationName(rel))));
 
-
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be
 	 * likely to get wrong data since we have no visibility into the owning

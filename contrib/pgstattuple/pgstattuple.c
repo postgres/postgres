@@ -296,6 +296,9 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 		case RELKIND_PARTITIONED_TABLE:
 			err = "partitioned table";
 			break;
+		case RELKIND_PARTITIONED_INDEX:
+			err = "partitioned index";
+			break;
 		default:
 			err = "unknown";
 			break;

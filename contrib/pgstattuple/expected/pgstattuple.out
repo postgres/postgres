@@ -152,9 +152,12 @@ select pgstatginindex('test_hashidx');
 ERROR:  relation "test_hashidx" is not a GIN index
 -- check that using any of these functions with unsupported relations will fail
 create table test_partitioned (a int) partition by range (a);
+create index test_partitioned_index on test_partitioned(a);
 -- these should all fail
 select pgstattuple('test_partitioned');
 ERROR:  "test_partitioned" (partitioned table) is not supported
+select pgstattuple('test_partitioned_index');
+ERROR:  "test_partitioned_index" (partitioned index) is not supported
 select pgstattuple_approx('test_partitioned');
 ERROR:  "test_partitioned" is not a table or materialized view
 select pg_relpages('test_partitioned');
