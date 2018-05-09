@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# src/tools/pgperlcritic/pgperlcritic
+
+test -f src/tools/pgperlcritic/perlcriticrc || {
+	echo could not find src/tools/pgperlcritic/perlcriticrc
+	exit 1
+	}
+
+set -e
+
+# set this to override default perlcritic program:
+PERLCRITIC=${PERLCRITIC:-perlcritic}
+
+# locate all Perl files in the tree
+{
+	# take all .pl and .pm files
+	find . -type f -a \( -name '*.pl' -o -name '*.pm' \) -print
+	# take executable files that file(1) thinks are perl files
+	find . -type f -perm -100 -exec file {} \; -print |
+	egrep -i ':.*perl[0-9]*\>' |
+	cut -d: -f1
+} |
+sort -u |
+xargs $PERLCRITIC \
+	  --quiet \
+	  --program-extensions .pl \
+	  --profile=src/tools/pgperlcritic/perlcriticrc

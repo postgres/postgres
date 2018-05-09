@@ -1,0 +1,14 @@
+######################################################################
+#
+# src/tools/pgperlcritic/perlcriticrc
+#
+# config  file for perlcritic for Postgres project
+#
+#####################################################################
+
+severity = 5
+
+theme = core
+
+# allow octal constants with leading zeros
+[-ValuesAndExpressions::ProhibitLeadingZeros]
