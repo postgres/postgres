@@ -118,13 +118,13 @@ IRST    Asia/Tehran  # Iran Standard Time (obsolete)
 IRT     12600    # Iran Time (not in IANA database)
 # CONFLICT! IST is not unique
 # Other timezones:
-# - IST: Irish Summer Time (Europe)
+# - IST: Irish Standard Time (Europe)
 # - IST: Israel Standard Time (Asia)
 IST     19800    # Indian Standard Time
                  #     (Asia/Calcutta)
 # CONFLICT! IST is not unique
 # Other timezones:
-# - IST: Irish Summer Time (Europe)
+# - IST: Irish Standard Time (Europe)
 # - IST: Indian Standard Time (Asia)
 IST      7200    # Israel Standard Time
                  #     (Asia/Jerusalem)
