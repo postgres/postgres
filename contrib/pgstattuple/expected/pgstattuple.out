@@ -141,11 +141,11 @@ select * from pgstathashindex('test_hashidx');
 select pgstatginindex('test_pkey');
 ERROR:  relation "test_pkey" is not a GIN index
 select pgstathashindex('test_pkey');
-ERROR:  relation "test_pkey" is not a HASH index
+ERROR:  relation "test_pkey" is not a hash index
 select pgstatindex('test_ginidx');
 ERROR:  relation "test_ginidx" is not a btree index
 select pgstathashindex('test_ginidx');
-ERROR:  relation "test_ginidx" is not a HASH index
+ERROR:  relation "test_ginidx" is not a hash index
 select pgstatindex('test_hashidx');
 ERROR:  relation "test_hashidx" is not a btree index
 select pgstatginindex('test_hashidx');

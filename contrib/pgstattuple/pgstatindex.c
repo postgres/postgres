@@ -601,7 +601,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	if (!IS_HASH(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("relation \"%s\" is not a HASH index",
+				 errmsg("relation \"%s\" is not a hash index",
 						RelationGetRelationName(rel))));
 
 
