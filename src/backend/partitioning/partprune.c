@@ -573,8 +573,9 @@ get_matching_partitions(PartitionPruneContext *context, List *pruning_steps)
  * For BoolExpr clauses, we recursively generate steps for each argument, and
  * return a PartitionPruneStepCombine of their results.
  *
- * The generated steps are added to the context's steps list.  Each step is
- * assigned a step identifier, unique even across recursive calls.
+ * The return value is a list of the steps generated, which are also added to
+ * the context's steps list.  Each step is assigned a step identifier, unique
+ * even across recursive calls.
  *
  * If we find clauses that are mutually contradictory, or a pseudoconstant
  * clause that contains false, we set *contradictory to true and return NIL
@@ -1601,6 +1602,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		List	   *elem_exprs,
 				   *elem_clauses;
 		ListCell   *lc1;
+		bool		contradictory;
 
 		if (IsA(leftop, RelabelType))
 			leftop = ((RelabelType *) leftop)->arg;
@@ -1619,7 +1621,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		 * Only allow strict operators.  This will guarantee nulls are
 		 * filtered.
 		 */
-		if (!op_strict(saop->opno))
+		if (!op_strict(saop_op))
 			return PARTCLAUSE_UNSUPPORTED;
 
 		/* Useless if the array has any volatile functions. */
@@ -1652,6 +1654,8 @@ match_clause_to_partition_key(RelOptInfo *rel,
 				if (strategy != BTEqualStrategyNumber)
 					return PARTCLAUSE_UNSUPPORTED;
 			}
+			else
+				return PARTCLAUSE_UNSUPPORTED; /* no useful negator */
 		}
 
 		/*
@@ -1692,7 +1696,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 				elem_exprs = lappend(elem_exprs, elem_expr);
 			}
 		}
-		else
+		else if (IsA(rightop, ArrayExpr))
 		{
 			ArrayExpr  *arrexpr = castNode(ArrayExpr, rightop);
 
@@ -1705,6 +1709,11 @@ match_clause_to_partition_key(RelOptInfo *rel,
 				return PARTCLAUSE_UNSUPPORTED;
 
 			elem_exprs = arrexpr->elements;
+		}
+		else
+		{
+			/* Give up on any other clause types. */
+			return PARTCLAUSE_UNSUPPORTED;
 		}
 
 		/*
@@ -1724,36 +1733,21 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		}
 
 		/*
-		 * Build a combine step as if for an OR clause or add the clauses to
-		 * the end of the list that's being processed currently.
+		 * If we have an ANY clause and multiple elements, first turn the list
+		 * of clauses into an OR expression.
 		 */
 		if (saop->useOr && list_length(elem_clauses) > 1)
-		{
-			Expr	   *orexpr;
-			bool		contradictory;
+			elem_clauses = list_make1(makeBoolExpr(OR_EXPR, elem_clauses, -1));
 
-			orexpr = makeBoolExpr(OR_EXPR, elem_clauses, -1);
-			*clause_steps =
-				gen_partprune_steps_internal(context, rel, list_make1(orexpr),
-											 &contradictory);
-			if (contradictory)
-				return PARTCLAUSE_MATCH_CONTRADICT;
-
-			Assert(list_length(*clause_steps) == 1);
-			return PARTCLAUSE_MATCH_STEPS;
-		}
-		else
-		{
-			bool		contradictory;
-
-			*clause_steps =
-				gen_partprune_steps_internal(context, rel, elem_clauses,
-											 &contradictory);
-			if (contradictory)
-				return PARTCLAUSE_MATCH_CONTRADICT;
-			Assert(list_length(*clause_steps) >= 1);
-			return PARTCLAUSE_MATCH_STEPS;
-		}
+		/* Finally, generate steps */
+		*clause_steps =
+			gen_partprune_steps_internal(context, rel, elem_clauses,
+										 &contradictory);
+		if (contradictory)
+			return PARTCLAUSE_MATCH_CONTRADICT;
+		else if (*clause_steps == NIL)
+			return PARTCLAUSE_UNSUPPORTED;	/* step generation failed */
+		return PARTCLAUSE_MATCH_STEPS;
 	}
 	else if (IsA(clause, NullTest))
 	{

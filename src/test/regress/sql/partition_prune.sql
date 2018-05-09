@@ -152,6 +152,20 @@ explain (costs off) select * from boolpart where a is not true and a is not fals
 explain (costs off) select * from boolpart where a is unknown;
 explain (costs off) select * from boolpart where a is not unknown;
 
+-- test scalar-to-array operators
+create table coercepart (a varchar) partition by list (a);
+create table coercepart_ab partition of coercepart for values in ('ab');
+create table coercepart_bc partition of coercepart for values in ('bc');
+create table coercepart_cd partition of coercepart for values in ('cd');
+
+explain (costs off) select * from coercepart where a in ('ab', to_char(125, '999'));
+explain (costs off) select * from coercepart where a ~ any ('{ab}');
+explain (costs off) select * from coercepart where a !~ all ('{ab}');
+explain (costs off) select * from coercepart where a ~ any ('{ab,bc}');
+explain (costs off) select * from coercepart where a !~ all ('{ab,bc}');
+
+drop table coercepart;
+
 --
 -- some more cases
 --

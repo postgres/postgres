@@ -1073,6 +1073,72 @@ explain (costs off) select * from boolpart where a is not unknown;
          Filter: (a IS NOT UNKNOWN)
 (7 rows)
 
+-- test scalar-to-array operators
+create table coercepart (a varchar) partition by list (a);
+create table coercepart_ab partition of coercepart for values in ('ab');
+create table coercepart_bc partition of coercepart for values in ('bc');
+create table coercepart_cd partition of coercepart for values in ('cd');
+explain (costs off) select * from coercepart where a in ('ab', to_char(125, '999'));
+                                                          QUERY PLAN                                                          
+------------------------------------------------------------------------------------------------------------------------------
+ Append
+   ->  Seq Scan on coercepart_ab
+         Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
+   ->  Seq Scan on coercepart_bc
+         Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
+   ->  Seq Scan on coercepart_cd
+         Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
+(7 rows)
+
+explain (costs off) select * from coercepart where a ~ any ('{ab}');
+                     QUERY PLAN                     
+----------------------------------------------------
+ Append
+   ->  Seq Scan on coercepart_ab
+         Filter: ((a)::text ~ ANY ('{ab}'::text[]))
+   ->  Seq Scan on coercepart_bc
+         Filter: ((a)::text ~ ANY ('{ab}'::text[]))
+   ->  Seq Scan on coercepart_cd
+         Filter: ((a)::text ~ ANY ('{ab}'::text[]))
+(7 rows)
+
+explain (costs off) select * from coercepart where a !~ all ('{ab}');
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Append
+   ->  Seq Scan on coercepart_ab
+         Filter: ((a)::text !~ ALL ('{ab}'::text[]))
+   ->  Seq Scan on coercepart_bc
+         Filter: ((a)::text !~ ALL ('{ab}'::text[]))
+   ->  Seq Scan on coercepart_cd
+         Filter: ((a)::text !~ ALL ('{ab}'::text[]))
+(7 rows)
+
+explain (costs off) select * from coercepart where a ~ any ('{ab,bc}');
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Append
+   ->  Seq Scan on coercepart_ab
+         Filter: ((a)::text ~ ANY ('{ab,bc}'::text[]))
+   ->  Seq Scan on coercepart_bc
+         Filter: ((a)::text ~ ANY ('{ab,bc}'::text[]))
+   ->  Seq Scan on coercepart_cd
+         Filter: ((a)::text ~ ANY ('{ab,bc}'::text[]))
+(7 rows)
+
+explain (costs off) select * from coercepart where a !~ all ('{ab,bc}');
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Append
+   ->  Seq Scan on coercepart_ab
+         Filter: ((a)::text !~ ALL ('{ab,bc}'::text[]))
+   ->  Seq Scan on coercepart_bc
+         Filter: ((a)::text !~ ALL ('{ab,bc}'::text[]))
+   ->  Seq Scan on coercepart_cd
+         Filter: ((a)::text !~ ALL ('{ab,bc}'::text[]))
+(7 rows)
+
+drop table coercepart;
 --
 -- some more cases
 --
