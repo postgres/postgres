@@ -180,7 +180,7 @@ GMT         0    # Greenwich Mean Time
 # Other timezones:
 # - IST: Indian Standard Time (Asia)
 # - IST: Israel Standard Time (Asia)
-IST      3600 D  # Irish Summer Time
+IST      3600    # Irish Standard Time
                  #     (Europe/Dublin)
 MEST     7200 D  # Middle Europe Summer Time
                  #     (MET)
