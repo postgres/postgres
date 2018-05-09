@@ -67,7 +67,5 @@ extern List *make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 extern Relids prune_append_rel_partitions(RelOptInfo *rel);
 extern Bitmapset *get_matching_partitions(PartitionPruneContext *context,
 						List *pruning_steps);
-extern List *gen_partprune_steps(RelOptInfo *rel, List *clauses,
-					bool *contradictory);
 
 #endif							/* PARTPRUNE_H */

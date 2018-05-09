@@ -116,6 +116,8 @@ typedef struct PruneStepResult
 } PruneStepResult;
 
 
+static List *gen_partprune_steps(RelOptInfo *rel, List *clauses,
+					bool *contradictory);
 static List *gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 							 RelOptInfo *rel, List *clauses,
 							 bool *contradictory);
@@ -355,7 +357,7 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
  * If the clauses in the input list are contradictory or there is a
  * pseudo-constant "false", *contradictory is set to true upon return.
  */
-List *
+static List *
 gen_partprune_steps(RelOptInfo *rel, List *clauses, bool *contradictory)
 {
 	GeneratePruningStepsContext context;
