@@ -29,15 +29,19 @@ $node->command_fails([ 'pg_recvlogical', '-S', 'test' ],
 $node->command_fails([ 'pg_recvlogical', '-S', 'test', '-d', 'postgres' ],
 	'pg_recvlogical needs an action');
 $node->command_fails(
-	[   'pg_recvlogical',           '-S',
+	[
+		'pg_recvlogical',           '-S',
 		'test',                     '-d',
-		$node->connstr('postgres'), '--start' ],
+		$node->connstr('postgres'), '--start'
+	],
 	'no destination file');
 
 $node->command_ok(
-	[   'pg_recvlogical',           '-S',
+	[
+		'pg_recvlogical',           '-S',
 		'test',                     '-d',
-		$node->connstr('postgres'), '--create-slot' ],
+		$node->connstr('postgres'), '--create-slot'
+	],
 	'slot created');
 
 my $slot = $node->slot('test');
@@ -51,6 +55,8 @@ my $nextlsn =
 chomp($nextlsn);
 
 $node->command_ok(
-	[   'pg_recvlogical', '-S', 'test', '-d', $node->connstr('postgres'),
-		'--start', '--endpos', "$nextlsn", '--no-loop', '-f', '-' ],
+	[
+		'pg_recvlogical', '-S', 'test', '-d', $node->connstr('postgres'),
+		'--start', '--endpos', "$nextlsn", '--no-loop', '-f', '-'
+	],
 	'replayed a transaction');

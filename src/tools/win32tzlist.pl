@@ -47,9 +47,11 @@ foreach my $keyname (@subkeys)
 	die "Incomplete timezone data for $keyname!\n"
 	  unless ($vals{Std} && $vals{Dlt} && $vals{Display});
 	push @system_zones,
-	  { 'std'     => $vals{Std}->[2],
+	  {
+		'std'     => $vals{Std}->[2],
 		'dlt'     => $vals{Dlt}->[2],
-		'display' => clean_displayname($vals{Display}->[2]), };
+		'display' => clean_displayname($vals{Display}->[2]),
+	  };
 }
 
 $basekey->Close();
@@ -75,10 +77,12 @@ while ($pgtz =~
 	m/{\s+"([^"]+)",\s+"([^"]+)",\s+"([^"]+)",?\s+},\s+\/\*(.+?)\*\//gs)
 {
 	push @file_zones,
-	  { 'std'     => $1,
+	  {
+		'std'     => $1,
 		'dlt'     => $2,
 		'match'   => $3,
-		'display' => clean_displayname($4), };
+		'display' => clean_displayname($4),
+	  };
 }
 
 #

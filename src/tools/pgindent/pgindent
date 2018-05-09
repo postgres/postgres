@@ -389,7 +389,8 @@ sub build_clean
 
 # get the list of files under code base, if it's set
 File::Find::find(
-	{   wanted => sub {
+	{
+		wanted => sub {
 			my ($dev, $ino, $mode, $nlink, $uid, $gid);
 			(($dev, $ino, $mode, $nlink, $uid, $gid) = lstat($_))
 			  && -f _

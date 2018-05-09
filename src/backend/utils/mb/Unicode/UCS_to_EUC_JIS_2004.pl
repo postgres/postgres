@@ -33,13 +33,15 @@ while (my $line = <$in>)
 		my $ucs2 = hex($u2);
 
 		push @all,
-		  { direction  => BOTH,
+		  {
+			direction  => BOTH,
 			ucs        => $ucs1,
 			ucs_second => $ucs2,
 			code       => $code,
 			comment    => $rest,
 			f          => $in_file,
-			l          => $. };
+			l          => $.
+		  };
 	}
 	elsif ($line =~ /^0x(.*)[ \t]*U\+(.*)[ \t]*#(.*)$/)
 	{
@@ -52,12 +54,14 @@ while (my $line = <$in>)
 		next if ($code < 0x80 && $ucs < 0x80);
 
 		push @all,
-		  { direction => BOTH,
+		  {
+			direction => BOTH,
 			ucs       => $ucs,
 			code      => $code,
 			comment   => $rest,
 			f         => $in_file,
-			l         => $. };
+			l         => $.
+		  };
 	}
 }
 close($in);

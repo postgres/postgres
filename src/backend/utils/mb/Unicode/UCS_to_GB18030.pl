@@ -36,11 +36,13 @@ while (<$in>)
 	if ($code >= 0x80 && $ucs >= 0x0080)
 	{
 		push @mapping,
-		  { ucs       => $ucs,
+		  {
+			ucs       => $ucs,
 			code      => $code,
 			direction => BOTH,
 			f         => $in_file,
-			l         => $. };
+			l         => $.
+		  };
 	}
 }
 close($in);

@@ -53,12 +53,14 @@ foreach my $i (@$mapping)
 	if ($origcode >= 0x12121 && $origcode <= 0x20000)
 	{
 		push @extras,
-		  { ucs       => $i->{ucs},
+		  {
+			ucs       => $i->{ucs},
 			code      => ($i->{code} + 0x8ea10000),
 			rest      => $i->{rest},
 			direction => TO_UNICODE,
 			f         => $i->{f},
-			l         => $i->{l} };
+			l         => $i->{l}
+		  };
 	}
 }
 

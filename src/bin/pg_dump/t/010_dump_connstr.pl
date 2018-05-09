@@ -34,9 +34,11 @@ $node->init(extra => [ '--locale=C', '--encoding=LATIN1' ]);
 
 # prep pg_hba.conf and pg_ident.conf
 $node->run_log(
-	[   $ENV{PG_REGRESS}, '--config-auth',
+	[
+		$ENV{PG_REGRESS}, '--config-auth',
 		$node->data_dir,  '--create-role',
-		"$dbname1,$dbname2,$dbname3,$dbname4" ]);
+		"$dbname1,$dbname2,$dbname3,$dbname4"
+	]);
 $node->start;
 
 my $backupdir = $node->backup_dir;
@@ -54,24 +56,32 @@ foreach my $dbname ($dbname1, $dbname2, $dbname3, $dbname4, 'CamelCase')
 # For these tests, pg_dumpall -r is used because it produces a short
 # dump.
 $node->command_ok(
-	[   'pg_dumpall', '-r', '-f', $discard, '--dbname',
+	[
+		'pg_dumpall', '-r', '-f', $discard, '--dbname',
 		$node->connstr($dbname1),
-		'-U', $dbname4 ],
+		'-U', $dbname4
+	],
 	'pg_dumpall with long ASCII name 1');
 $node->command_ok(
-	[   'pg_dumpall', '--no-sync', '-r', '-f', $discard, '--dbname',
+	[
+		'pg_dumpall', '--no-sync', '-r', '-f', $discard, '--dbname',
 		$node->connstr($dbname2),
-		'-U', $dbname3 ],
+		'-U', $dbname3
+	],
 	'pg_dumpall with long ASCII name 2');
 $node->command_ok(
-	[   'pg_dumpall', '--no-sync', '-r', '-f', $discard, '--dbname',
+	[
+		'pg_dumpall', '--no-sync', '-r', '-f', $discard, '--dbname',
 		$node->connstr($dbname3),
-		'-U', $dbname2 ],
+		'-U', $dbname2
+	],
 	'pg_dumpall with long ASCII name 3');
 $node->command_ok(
-	[   'pg_dumpall', '--no-sync', '-r', '-f', $discard, '--dbname',
+	[
+		'pg_dumpall', '--no-sync', '-r', '-f', $discard, '--dbname',
 		$node->connstr($dbname4),
-		'-U', $dbname1 ],
+		'-U', $dbname1
+	],
 	'pg_dumpall with long ASCII name 4');
 $node->command_ok(
 	[ 'pg_dumpall', '--no-sync', '-r', '-l', 'dbname=template1' ],
@@ -91,8 +101,10 @@ $node->safe_psql($dbname1, 'CREATE TABLE t0()');
 
 # XXX no printed message when this fails, just SIGPIPE termination
 $node->command_ok(
-	[   'pg_dump', '-Fd', '--no-sync', '-j2', '-f', $dirfmt, '-U', $dbname1,
-		$node->connstr($dbname1) ],
+	[
+		'pg_dump', '-Fd', '--no-sync', '-j2', '-f', $dirfmt, '-U', $dbname1,
+		$node->connstr($dbname1)
+	],
 	'parallel dump');
 
 # recreate $dbname1 for restore test
@@ -106,9 +118,11 @@ $node->command_ok(
 $node->run_log([ 'dropdb', $dbname1 ]);
 
 $node->command_ok(
-	[   'pg_restore', '-C',  '-v', '-d',
+	[
+		'pg_restore', '-C',  '-v', '-d',
 		'template1',  '-j2', '-U', $dbname1,
-		$dirfmt ],
+		$dirfmt
+	],
 	'parallel restore with create');
 
 
@@ -127,9 +141,11 @@ my $envar_node = get_new_node('destination_envar');
 $envar_node->init(
 	extra => [ '-U', $bootstrap_super, '--locale=C', '--encoding=LATIN1' ]);
 $envar_node->run_log(
-	[   $ENV{PG_REGRESS},      '--config-auth',
+	[
+		$ENV{PG_REGRESS},      '--config-auth',
 		$envar_node->data_dir, '--create-role',
-		"$bootstrap_super,$restore_super" ]);
+		"$bootstrap_super,$restore_super"
+	]);
 $envar_node->start;
 
 # make superuser for restore
@@ -157,16 +173,20 @@ my $cmdline_node = get_new_node('destination_cmdline');
 $cmdline_node->init(
 	extra => [ '-U', $bootstrap_super, '--locale=C', '--encoding=LATIN1' ]);
 $cmdline_node->run_log(
-	[   $ENV{PG_REGRESS},        '--config-auth',
+	[
+		$ENV{PG_REGRESS},        '--config-auth',
 		$cmdline_node->data_dir, '--create-role',
-		"$bootstrap_super,$restore_super" ]);
+		"$bootstrap_super,$restore_super"
+	]);
 $cmdline_node->start;
 $cmdline_node->run_log(
 	[ 'createuser', '-U', $bootstrap_super, '-s', $restore_super ]);
 {
 	$result = run_log(
-		[   'psql',         '-p', $cmdline_node->port, '-U',
-			$restore_super, '-X', '-f',                $plain ],
+		[
+			'psql',         '-p', $cmdline_node->port, '-U',
+			$restore_super, '-X', '-f',                $plain
+		],
 		'2>',
 		\$stderr);
 }

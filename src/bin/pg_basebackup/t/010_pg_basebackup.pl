@@ -159,8 +159,10 @@ isnt(slurp_file("$tempdir/backup/backup_label"),
 rmtree("$tempdir/backup");
 
 $node->command_ok(
-	[   'pg_basebackup', '-D', "$tempdir/backup2", '--waldir',
-		"$tempdir/xlog2" ],
+	[
+		'pg_basebackup', '-D', "$tempdir/backup2", '--waldir',
+		"$tempdir/xlog2"
+	],
 	'separate xlog directory');
 ok(-f "$tempdir/backup2/PG_VERSION", 'backup was created');
 ok(-d "$tempdir/xlog2/",             'xlog directory was created');
@@ -179,8 +181,10 @@ $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-T/foo=" ],
 	'-T with empty new directory fails');
 $node->command_fails(
-	[   'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp',
-		"-T/foo=/bar=/baz" ],
+	[
+		'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp',
+		"-T/foo=/bar=/baz"
+	],
 	'-T with multiple = fails');
 $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-Tfoo=/bar" ],
@@ -279,8 +283,10 @@ SKIP:
 		'plain format with tablespaces fails without tablespace mapping');
 
 	$node->command_ok(
-		[   'pg_basebackup', '-D', "$tempdir/backup1", '-Fp',
-			"-T$shorter_tempdir/tblspc1=$tempdir/tbackup/tblspc1" ],
+		[
+			'pg_basebackup', '-D', "$tempdir/backup1", '-Fp',
+			"-T$shorter_tempdir/tblspc1=$tempdir/tbackup/tblspc1"
+		],
 		'plain format with tablespaces succeeds with tablespace mapping');
 	ok(-d "$tempdir/tbackup/tblspc1", 'tablespace was relocated');
 	opendir(my $dh, "$pgdata/pg_tblspc") or die;
@@ -330,8 +336,10 @@ SKIP:
 	$node->safe_psql('postgres',
 		"CREATE TABLESPACE tblspc2 LOCATION '$shorter_tempdir/tbl=spc2';");
 	$node->command_ok(
-		[   'pg_basebackup', '-D', "$tempdir/backup3", '-Fp',
-			"-T$shorter_tempdir/tbl\\=spc2=$tempdir/tbackup/tbl\\=spc2" ],
+		[
+			'pg_basebackup', '-D', "$tempdir/backup3", '-Fp',
+			"-T$shorter_tempdir/tbl\\=spc2=$tempdir/tbackup/tbl\\=spc2"
+		],
 		'mapping tablespace with = sign in path');
 	ok(-d "$tempdir/tbackup/tbl=spc2",
 		'tablespace with = sign was relocated');
@@ -389,17 +397,21 @@ $node->command_ok(
 ok(-f "$tempdir/backupxst/pg_wal.tar", "tar file was created");
 rmtree("$tempdir/backupxst");
 $node->command_ok(
-	[   'pg_basebackup',         '-D',
+	[
+		'pg_basebackup',         '-D',
 		"$tempdir/backupnoslot", '-X',
-		'stream',                '--no-slot' ],
+		'stream',                '--no-slot'
+	],
 	'pg_basebackup -X stream runs with --no-slot');
 rmtree("$tempdir/backupnoslot");
 
 $node->command_fails(
-	[   'pg_basebackup',             '-D',
+	[
+		'pg_basebackup',             '-D',
 		"$tempdir/backupxs_sl_fail", '-X',
 		'stream',                    '-S',
-		'slot0' ],
+		'slot0'
+	],
 	'pg_basebackup fails with nonexistent replication slot');
 
 $node->command_fails(
@@ -407,10 +419,12 @@ $node->command_fails(
 	'pg_basebackup -C fails without slot name');
 
 $node->command_fails(
-	[   'pg_basebackup',          '-D',
+	[
+		'pg_basebackup',          '-D',
 		"$tempdir/backupxs_slot", '-C',
 		'-S',                     'slot0',
-		'--no-slot' ],
+		'--no-slot'
+	],
 	'pg_basebackup fails with -C -S --no-slot');
 
 $node->command_ok(
@@ -446,8 +460,10 @@ $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/fail", '-S', 'slot1', '-X', 'none' ],
 	'pg_basebackup with replication slot fails without WAL streaming');
 $node->command_ok(
-	[   'pg_basebackup', '-D', "$tempdir/backupxs_sl", '-X',
-		'stream',        '-S', 'slot1' ],
+	[
+		'pg_basebackup', '-D', "$tempdir/backupxs_sl", '-X',
+		'stream',        '-S', 'slot1'
+	],
 	'pg_basebackup -X stream with replication slot runs');
 $lsn = $node->safe_psql('postgres',
 	q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'}
@@ -456,8 +472,10 @@ like($lsn, qr!^0/[0-9A-Z]{7,8}$!, 'restart LSN of slot has advanced');
 rmtree("$tempdir/backupxs_sl");
 
 $node->command_ok(
-	[   'pg_basebackup', '-D', "$tempdir/backupxs_sl_R", '-X',
-		'stream',        '-S', 'slot1',                  '-R' ],
+	[
+		'pg_basebackup', '-D', "$tempdir/backupxs_sl_R", '-X',
+		'stream',        '-S', 'slot1',                  '-R'
+	],
 	'pg_basebackup with replication slot and -R runs');
 like(
 	slurp_file("$tempdir/backupxs_sl_R/recovery.conf"),

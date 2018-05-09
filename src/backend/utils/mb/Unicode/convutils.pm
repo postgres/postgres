@@ -18,7 +18,8 @@ use constant {
 	NONE         => 0,
 	TO_UNICODE   => 1,
 	FROM_UNICODE => 2,
-	BOTH         => 3 };
+	BOTH         => 3
+};
 
 #######################################################################
 # read_source - common routine to read source file
@@ -56,7 +57,8 @@ sub read_source
 			comment   => $4,
 			direction => BOTH,
 			f         => $fname,
-			l         => $. };
+			l         => $.
+		};
 
 		# Ignore pure ASCII mappings. PostgreSQL character conversion code
 		# never even passes these to the conversion code.
@@ -370,9 +372,11 @@ sub print_radix_table
 	}
 
 	unshift @segments,
-	  { header  => "Dummy map, for invalid values",
+	  {
+		header  => "Dummy map, for invalid values",
 		min_idx => 0,
-		max_idx => $widest_range };
+		max_idx => $widest_range
+	  };
 
 	###
 	### Eliminate overlapping zeros
@@ -655,12 +659,14 @@ sub build_segments_recurse
 	if ($level == $depth)
 	{
 		push @segments,
-		  { header => $header . ", leaf: ${path}xx",
+		  {
+			header => $header . ", leaf: ${path}xx",
 			label  => $label,
 			level  => $level,
 			depth  => $depth,
 			path   => $path,
-			values => $map };
+			values => $map
+		  };
 	}
 	else
 	{
@@ -678,12 +684,14 @@ sub build_segments_recurse
 		}
 
 		push @segments,
-		  { header => $header . ", byte #$level: ${path}xx",
+		  {
+			header => $header . ", byte #$level: ${path}xx",
 			label  => $label,
 			level  => $level,
 			depth  => $depth,
 			path   => $path,
-			values => \%children };
+			values => \%children
+		  };
 	}
 	return @segments;
 }
@@ -776,7 +784,8 @@ sub make_charmap_combined
 				code        => $c->{code},
 				comment     => $c->{comment},
 				f           => $c->{f},
-				l           => $c->{l} };
+				l           => $c->{l}
+			};
 			push @combined, $entry;
 		}
 	}

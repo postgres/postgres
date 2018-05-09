@@ -57,8 +57,10 @@ $primary->psql('postgres',
 
 # Stream up to the given position.
 $primary->command_ok(
-	[   'pg_receivewal', '-D',     $stream_dir,     '--verbose',
-		'--endpos',      $nextlsn, '--synchronous', '--no-loop' ],
+	[
+		'pg_receivewal', '-D',     $stream_dir,     '--verbose',
+		'--endpos',      $nextlsn, '--synchronous', '--no-loop'
+	],
 	'streaming some WAL with --synchronous');
 
 # Permissions on WAL files should be default

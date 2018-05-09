@@ -161,7 +161,8 @@ sub test_access
 		'SELECT 1',
 		extra_params => [
 			'-d', $node->connstr('postgres') . ' host=localhost',
-			'-U', $role ]);
+			'-U', $role
+		]);
 	is($res, $expected_res, $test_name);
 }
 

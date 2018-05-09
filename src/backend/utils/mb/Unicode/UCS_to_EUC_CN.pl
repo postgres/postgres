@@ -70,11 +70,13 @@ while (<$in>)
 	}
 
 	push @mapping,
-	  { ucs       => $ucs,
+	  {
+		ucs       => $ucs,
 		code      => $code,
 		direction => BOTH,
 		f         => $in_file,
-		l         => $. };
+		l         => $.
+	  };
 }
 close($in);
 

@@ -95,10 +95,12 @@ sub ParseHeader
 		elsif (/^DECLARE_(UNIQUE_)?INDEX\(\s*(\w+),\s*(\d+),\s*(.+)\)/)
 		{
 			push @{ $catalog{indexing} },
-			  { is_unique => $1 ? 1 : 0,
+			  {
+				is_unique => $1 ? 1 : 0,
 				index_name => $2,
 				index_oid  => $3,
-				index_decl => $4 };
+				index_decl => $4
+			  };
 		}
 		elsif (/^CATALOG\((\w+),(\d+),(\w+)\)/)
 		{

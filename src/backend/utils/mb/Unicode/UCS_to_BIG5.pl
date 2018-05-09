@@ -48,12 +48,14 @@ foreach my $i (@$cp950txt)
 		&& $code <= 0xf9dc)
 	{
 		push @$all,
-		  { code      => $code,
+		  {
+			code      => $code,
 			ucs       => $ucs,
 			comment   => $i->{comment},
 			direction => BOTH,
 			f         => $i->{f},
-			l         => $i->{l} };
+			l         => $i->{l}
+		  };
 	}
 }
 

@@ -35,19 +35,23 @@ EOF
 
 	$self->WriteConfiguration(
 		$f, 'Debug',
-		{   defs     => "_DEBUG;DEBUG=1",
+		{
+			defs     => "_DEBUG;DEBUG=1",
 			wholeopt => 0,
 			opt      => 0,
 			strpool  => 'false',
-			runtime  => 3 });
+			runtime  => 3
+		});
 	$self->WriteConfiguration(
 		$f,
 		'Release',
-		{   defs     => "",
+		{
+			defs     => "",
 			wholeopt => 0,
 			opt      => 3,
 			strpool  => 'true',
-			runtime  => 2 });
+			runtime  => 2
+		});
 	print $f <<EOF;
  </Configurations>
 EOF

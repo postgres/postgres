@@ -95,7 +95,8 @@ sub Install
 	my @top_dir      = ("src");
 	@top_dir = ("src\\bin", "src\\interfaces") if ($insttype eq "client");
 	File::Find::find(
-		{   wanted => sub {
+		{
+			wanted => sub {
 				/^.*\.sample\z/s
 				  && push(@$sample_files, $File::Find::name);
 
@@ -155,7 +156,8 @@ sub Install
 		push @pldirs, "src/pl/plpython" if $config->{python};
 		push @pldirs, "src/pl/tcl"      if $config->{tcl};
 		File::Find::find(
-			{   wanted => sub {
+			{
+				wanted => sub {
 					/^(.*--.*\.sql|.*\.control)\z/s
 					  && push(@$pl_extension_files, $File::Find::name);
 
@@ -686,7 +688,8 @@ sub GenerateNLSFiles
 	EnsureDirectories($target, "share/locale");
 	my @flist;
 	File::Find::find(
-		{   wanted => sub {
+		{
+			wanted => sub {
 				/^nls\.mk\z/s
 				  && !push(@flist, $File::Find::name);
 			}

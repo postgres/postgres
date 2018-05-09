@@ -149,7 +149,8 @@ foreach my $file (sort readdir DIR)
 				cmddesc     => $cmddesc,
 				cmdsynopsis => $cmdsynopsis,
 				params      => \@params,
-				nl_count    => $nl_count };
+				nl_count    => $nl_count
+			};
 			$maxlen =
 			  ($maxlen >= length $cmdname) ? $maxlen : length $cmdname;
 		}

@@ -50,7 +50,9 @@ my %pgdump_runs = (
 		restore_cmd => [
 			'pg_restore', '-Fc', '--verbose',
 			"--file=$tempdir/binary_upgrade.sql",
-			"$tempdir/binary_upgrade.dump", ], },
+			"$tempdir/binary_upgrade.dump",
+		],
+	},
 	clean => {
 		dump_cmd => [
 			'pg_dump',
@@ -58,7 +60,8 @@ my %pgdump_runs = (
 			"--file=$tempdir/clean.sql",
 			'-c',
 			'-d', 'postgres',    # alternative way to specify database
-		], },
+		],
+	},
 	clean_if_exists => {
 		dump_cmd => [
 			'pg_dump',
@@ -67,12 +70,16 @@ my %pgdump_runs = (
 			'-c',
 			'--if-exists',
 			'--encoding=UTF8',    # no-op, just tests that option is accepted
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	column_inserts => {
 		dump_cmd => [
 			'pg_dump',                            '--no-sync',
 			"--file=$tempdir/column_inserts.sql", '-a',
-			'--column-inserts',                   'postgres', ], },
+			'--column-inserts',                   'postgres',
+		],
+	},
 	createdb => {
 		dump_cmd => [
 			'pg_dump',
@@ -81,7 +88,9 @@ my %pgdump_runs = (
 			'-C',
 			'-R',    # no-op, just for testing
 			'-v',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	data_only => {
 		dump_cmd => [
 			'pg_dump',
@@ -91,78 +100,102 @@ my %pgdump_runs = (
 			'--superuser=test_superuser',
 			'--disable-triggers',
 			'-v',    # no-op, just make sure it works
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	defaults => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			'-f',      "$tempdir/defaults.sql",
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	defaults_no_public => {
 		database => 'regress_pg_dump_test',
 		dump_cmd => [
 			'pg_dump', '--no-sync', '-f', "$tempdir/defaults_no_public.sql",
-			'regress_pg_dump_test', ], },
+			'regress_pg_dump_test',
+		],
+	},
 	defaults_no_public_clean => {
 		database => 'regress_pg_dump_test',
 		dump_cmd => [
 			'pg_dump', '--no-sync', '-c', '-f',
 			"$tempdir/defaults_no_public_clean.sql",
-			'regress_pg_dump_test', ], },
+			'regress_pg_dump_test',
+		],
+	},
 
 	# Do not use --no-sync to give test coverage for data sync.
 	defaults_custom_format => {
 		test_key => 'defaults',
 		dump_cmd => [
 			'pg_dump', '-Fc', '-Z6',
-			"--file=$tempdir/defaults_custom_format.dump", 'postgres', ],
+			"--file=$tempdir/defaults_custom_format.dump", 'postgres',
+		],
 		restore_cmd => [
 			'pg_restore', '-Fc',
 			"--file=$tempdir/defaults_custom_format.sql",
-			"$tempdir/defaults_custom_format.dump", ], },
+			"$tempdir/defaults_custom_format.dump",
+		],
+	},
 
 	# Do not use --no-sync to give test coverage for data sync.
 	defaults_dir_format => {
 		test_key => 'defaults',
 		dump_cmd => [
 			'pg_dump',                             '-Fd',
-			"--file=$tempdir/defaults_dir_format", 'postgres', ],
+			"--file=$tempdir/defaults_dir_format", 'postgres',
+		],
 		restore_cmd => [
 			'pg_restore', '-Fd',
 			"--file=$tempdir/defaults_dir_format.sql",
-			"$tempdir/defaults_dir_format", ], },
+			"$tempdir/defaults_dir_format",
+		],
+	},
 
 	# Do not use --no-sync to give test coverage for data sync.
 	defaults_parallel => {
 		test_key => 'defaults',
 		dump_cmd => [
 			'pg_dump', '-Fd', '-j2', "--file=$tempdir/defaults_parallel",
-			'postgres', ],
+			'postgres',
+		],
 		restore_cmd => [
 			'pg_restore',
 			"--file=$tempdir/defaults_parallel.sql",
-			"$tempdir/defaults_parallel", ], },
+			"$tempdir/defaults_parallel",
+		],
+	},
 
 	# Do not use --no-sync to give test coverage for data sync.
 	defaults_tar_format => {
 		test_key => 'defaults',
 		dump_cmd => [
 			'pg_dump',                                 '-Ft',
-			"--file=$tempdir/defaults_tar_format.tar", 'postgres', ],
+			"--file=$tempdir/defaults_tar_format.tar", 'postgres',
+		],
 		restore_cmd => [
 			'pg_restore',
 			'--format=tar',
 			"--file=$tempdir/defaults_tar_format.sql",
-			"$tempdir/defaults_tar_format.tar", ], },
+			"$tempdir/defaults_tar_format.tar",
+		],
+	},
 	exclude_dump_test_schema => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			"--file=$tempdir/exclude_dump_test_schema.sql",
-			'--exclude-schema=dump_test', 'postgres', ], },
+			'--exclude-schema=dump_test', 'postgres',
+		],
+	},
 	exclude_test_table => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			"--file=$tempdir/exclude_test_table.sql",
-			'--exclude-table=dump_test.test_table', 'postgres', ], },
+			'--exclude-table=dump_test.test_table', 'postgres',
+		],
+	},
 	exclude_test_table_data => {
 		dump_cmd => [
 			'pg_dump',
@@ -170,39 +203,55 @@ my %pgdump_runs = (
 			"--file=$tempdir/exclude_test_table_data.sql",
 			'--exclude-table-data=dump_test.test_table',
 			'--no-unlogged-table-data',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	pg_dumpall_globals => {
 		dump_cmd => [
 			'pg_dumpall', '-v', "--file=$tempdir/pg_dumpall_globals.sql",
-			'-g', '--no-sync', ], },
+			'-g', '--no-sync',
+		],
+	},
 	pg_dumpall_globals_clean => {
 		dump_cmd => [
 			'pg_dumpall', "--file=$tempdir/pg_dumpall_globals_clean.sql",
-			'-g', '-c', '--no-sync', ], },
+			'-g', '-c', '--no-sync',
+		],
+	},
 	pg_dumpall_dbprivs => {
 		dump_cmd => [
 			'pg_dumpall', '--no-sync',
-			"--file=$tempdir/pg_dumpall_dbprivs.sql", ], },
+			"--file=$tempdir/pg_dumpall_dbprivs.sql",
+		],
+	},
 	no_blobs => {
 		dump_cmd => [
 			'pg_dump',                      '--no-sync',
 			"--file=$tempdir/no_blobs.sql", '-B',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	no_privs => {
 		dump_cmd => [
 			'pg_dump',                      '--no-sync',
 			"--file=$tempdir/no_privs.sql", '-x',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	no_owner => {
 		dump_cmd => [
 			'pg_dump',                      '--no-sync',
 			"--file=$tempdir/no_owner.sql", '-O',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	only_dump_test_schema => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			"--file=$tempdir/only_dump_test_schema.sql",
-			'--schema=dump_test', 'postgres', ], },
+			'--schema=dump_test', 'postgres',
+		],
+	},
 	only_dump_test_table => {
 		dump_cmd => [
 			'pg_dump',
@@ -210,7 +259,9 @@ my %pgdump_runs = (
 			"--file=$tempdir/only_dump_test_table.sql",
 			'--table=dump_test.test_table',
 			'--lock-wait-timeout=1000000',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	role => {
 		dump_cmd => [
 			'pg_dump',
@@ -218,7 +269,9 @@ my %pgdump_runs = (
 			"--file=$tempdir/role.sql",
 			'--role=regress_dump_test_role',
 			'--schema=dump_test_second_schema',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	role_parallel => {
 		test_key => 'role',
 		dump_cmd => [
@@ -229,39 +282,54 @@ my %pgdump_runs = (
 			"--file=$tempdir/role_parallel",
 			'--role=regress_dump_test_role',
 			'--schema=dump_test_second_schema',
-			'postgres', ],
+			'postgres',
+		],
 		restore_cmd => [
 			'pg_restore', "--file=$tempdir/role_parallel.sql",
-			"$tempdir/role_parallel", ], },
+			"$tempdir/role_parallel",
+		],
+	},
 	schema_only => {
 		dump_cmd => [
 			'pg_dump',                         '--format=plain',
 			"--file=$tempdir/schema_only.sql", '--no-sync',
-			'-s',                              'postgres', ], },
+			'-s',                              'postgres',
+		],
+	},
 	section_pre_data => {
 		dump_cmd => [
 			'pg_dump',            "--file=$tempdir/section_pre_data.sql",
 			'--section=pre-data', '--no-sync',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	section_data => {
 		dump_cmd => [
 			'pg_dump',        "--file=$tempdir/section_data.sql",
 			'--section=data', '--no-sync',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	section_post_data => {
 		dump_cmd => [
 			'pg_dump', "--file=$tempdir/section_post_data.sql",
-			'--section=post-data', '--no-sync', 'postgres', ], },
+			'--section=post-data', '--no-sync', 'postgres',
+		],
+	},
 	test_schema_plus_blobs => {
 		dump_cmd => [
 			'pg_dump', "--file=$tempdir/test_schema_plus_blobs.sql",
 
-			'--schema=dump_test', '-b', '-B', '--no-sync', 'postgres', ], },
+			'--schema=dump_test', '-b', '-B', '--no-sync', 'postgres',
+		],
+	},
 	with_oids => {
 		dump_cmd => [
 			'pg_dump',   '--oids',
 			'--no-sync', "--file=$tempdir/with_oids.sql",
-			'postgres', ], },);
+			'postgres',
+		],
+	},);
 
 ###############################################################
 # Definition of the tests to run.
@@ -338,7 +406,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_privs                 => 1, }, },
+			no_privs                 => 1,
+		},
+	},
 
 	'ALTER DEFAULT PRIVILEGES FOR ROLE regress_dump_test_role REVOKE' => {
 		create_order => 55,
@@ -351,7 +421,8 @@ my %tests = (
 			\QREVOKE ALL ON FUNCTIONS  FROM PUBLIC;\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
-		unlike => { no_privs => 1, }, },
+		unlike => { no_privs => 1, },
+	},
 
 	'ALTER DEFAULT PRIVILEGES FOR ROLE regress_dump_test_role REVOKE SELECT'
 	  => {
@@ -368,7 +439,8 @@ my %tests = (
 			\QGRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES  TO regress_dump_test_role;\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
-		unlike => { no_privs => 1, }, },
+		unlike => { no_privs => 1, },
+	  },
 
 	'ALTER ROLE regress_dump_test_role' => {
 		regexp => qr/^
@@ -379,23 +451,28 @@ my %tests = (
 		like => {
 			pg_dumpall_dbprivs       => 1,
 			pg_dumpall_globals       => 1,
-			pg_dumpall_globals_clean => 1, }, },
+			pg_dumpall_globals_clean => 1,
+		},
+	},
 
 	'ALTER COLLATION test0 OWNER TO' => {
 		regexp    => qr/^ALTER COLLATION public.test0 OWNER TO .*;/m,
 		collation => 1,
 		like      => { %full_runs, section_pre_data => 1, },
-		unlike    => { %dump_test_schema_runs, no_owner => 1, }, },
+		unlike    => { %dump_test_schema_runs, no_owner => 1, },
+	},
 
 	'ALTER FOREIGN DATA WRAPPER dummy OWNER TO' => {
 		regexp => qr/^ALTER FOREIGN DATA WRAPPER dummy OWNER TO .*;/m,
 		like   => { %full_runs, section_pre_data => 1, },
-		unlike => { no_owner => 1, }, },
+		unlike => { no_owner => 1, },
+	},
 
 	'ALTER SERVER s1 OWNER TO' => {
 		regexp => qr/^ALTER SERVER s1 OWNER TO .*;/m,
 		like   => { %full_runs, section_pre_data => 1, },
-		unlike => { no_owner => 1, }, },
+		unlike => { no_owner => 1, },
+	},
 
 	'ALTER FUNCTION dump_test.pltestlang_call_handler() OWNER TO' => {
 		regexp => qr/^
@@ -406,7 +483,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_owner                 => 1, }, },
+			no_owner                 => 1,
+		},
+	},
 
 	'ALTER OPERATOR FAMILY dump_test.op_family OWNER TO' => {
 		regexp => qr/^
@@ -417,7 +496,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_owner                 => 1, }, },
+			no_owner                 => 1,
+		},
+	},
 
 	'ALTER OPERATOR FAMILY dump_test.op_family USING btree' => {
 		create_order => 75,
@@ -442,7 +523,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'ALTER OPERATOR CLASS dump_test.op_class OWNER TO' => {
 		regexp => qr/^
@@ -453,12 +535,15 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_owner                 => 1, }, },
+			no_owner                 => 1,
+		},
+	},
 
 	'ALTER PUBLICATION pub1 OWNER TO' => {
 		regexp => qr/^ALTER PUBLICATION pub1 OWNER TO .*;/m,
 		like   => { %full_runs, section_post_data => 1, },
-		unlike => { no_owner => 1, }, },
+		unlike => { no_owner => 1, },
+	},
 
 	'ALTER LARGE OBJECT ... OWNER TO' => {
 		regexp => qr/^ALTER LARGE OBJECT \d+ OWNER TO .*;/m,
@@ -467,16 +552,20 @@ my %tests = (
 			column_inserts         => 1,
 			data_only              => 1,
 			section_pre_data       => 1,
-			test_schema_plus_blobs => 1, },
+			test_schema_plus_blobs => 1,
+		},
 		unlike => {
 			no_blobs    => 1,
 			no_owner    => 1,
-			schema_only => 1, }, },
+			schema_only => 1,
+		},
+	},
 
 	'ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO' => {
 		regexp => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .*;/m,
 		like   => { %full_runs, section_pre_data => 1, },
-		unlike => { no_owner => 1, }, },
+		unlike => { no_owner => 1, },
+	},
 
 	'ALTER SCHEMA dump_test OWNER TO' => {
 		regexp => qr/^ALTER SCHEMA dump_test OWNER TO .*;/m,
@@ -484,15 +573,19 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_owner                 => 1, }, },
+			no_owner                 => 1,
+		},
+	},
 
 	'ALTER SCHEMA dump_test_second_schema OWNER TO' => {
 		regexp => qr/^ALTER SCHEMA dump_test_second_schema OWNER TO .*;/m,
 		like   => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, },
-		unlike => { no_owner => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_owner => 1, },
+	},
 
 	'ALTER SEQUENCE test_table_col1_seq' => {
 		regexp => qr/^
@@ -502,10 +595,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'ALTER SEQUENCE test_third_table_col1_seq' => {
 		regexp => qr/^
@@ -514,7 +610,9 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, }, },
+			section_pre_data => 1,
+		},
+	},
 
 	'ALTER TABLE ONLY test_table ADD CONSTRAINT ... PRIMARY KEY' => {
 		regexp => qr/^
@@ -525,10 +623,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'ALTER TABLE ONLY test_table ALTER COLUMN col1 SET STATISTICS 90' => {
 		create_order => 93,
@@ -541,10 +642,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'ALTER TABLE ONLY test_table ALTER COLUMN col2 SET STORAGE' => {
 		create_order => 94,
@@ -557,10 +661,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'ALTER TABLE ONLY test_table ALTER COLUMN col3 SET STORAGE' => {
 		create_order => 95,
@@ -573,10 +680,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'ALTER TABLE ONLY test_table ALTER COLUMN col4 SET n_distinct' => {
 		create_order => 95,
@@ -589,10 +699,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'ALTER TABLE ONLY dump_test.measurement ATTACH PARTITION measurement_y2006m2'
 	  => {
@@ -600,7 +713,8 @@ my %tests = (
 			\QALTER TABLE ONLY dump_test.measurement ATTACH PARTITION dump_test_second_schema.measurement_y2006m2 \E
 			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
 			/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	  },
 
 	'ALTER TABLE test_table CLUSTER ON test_table_pkey' => {
 		create_order => 96,
@@ -613,10 +727,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'ALTER TABLE test_table DISABLE TRIGGER ALL' => {
 		regexp => qr/^
@@ -625,7 +742,8 @@ my %tests = (
 			\QCOPY dump_test.test_table (col1, col2, col3, col4) FROM stdin;\E
 			\n(?:\d\t\\N\t\\N\t\\N\n){9}\\\.\n\n\n
 			\QALTER TABLE dump_test.test_table ENABLE TRIGGER ALL;\E/xm,
-		like => { data_only => 1, }, },
+		like => { data_only => 1, },
+	},
 
 	'ALTER FOREIGN TABLE foreign_table ALTER COLUMN c1 OPTIONS' => {
 		regexp => qr/^
@@ -635,7 +753,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'ALTER TABLE test_table OWNER TO' => {
 		regexp => qr/^ALTER TABLE dump_test.test_table OWNER TO .*;/m,
@@ -643,11 +762,14 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table       => 1,
-			no_owner                 => 1, }, },
+			no_owner                 => 1,
+		},
+	},
 
 	'ALTER TABLE test_table ENABLE ROW LEVEL SECURITY' => {
 		create_order => 23,
@@ -659,10 +781,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'ALTER TABLE test_second_table OWNER TO' => {
 		regexp => qr/^ALTER TABLE dump_test.test_second_table OWNER TO .*;/m,
@@ -670,7 +795,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_owner                 => 1, }, },
+			no_owner                 => 1,
+		},
+	},
 
 	'ALTER TABLE test_third_table OWNER TO' => {
 		regexp =>
@@ -678,8 +805,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, },
-		unlike => { no_owner => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_owner => 1, },
+	},
 
 	'ALTER TABLE measurement OWNER TO' => {
 		regexp => qr/^ALTER TABLE dump_test.measurement OWNER TO .*;/m,
@@ -687,7 +816,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_owner                 => 1, }, },
+			no_owner                 => 1,
+		},
+	},
 
 	'ALTER TABLE measurement_y2006m2 OWNER TO' => {
 		regexp =>
@@ -695,8 +826,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, },
-		unlike => { no_owner => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_owner => 1, },
+	},
 
 	'ALTER FOREIGN TABLE foreign_table OWNER TO' => {
 		regexp =>
@@ -705,7 +838,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_owner                 => 1, }, },
+			no_owner                 => 1,
+		},
+	},
 
 	'ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 OWNER TO' => {
 		regexp =>
@@ -714,7 +849,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_owner                 => 1, }, },
+			no_owner                 => 1,
+		},
+	},
 
 	'ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 OWNER TO' => {
 		regexp =>
@@ -725,7 +862,9 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table     => 1,
 			no_owner                 => 1,
-			role                     => 1, }, },
+			role                     => 1,
+		},
+	},
 
 	'BLOB create (using lo_from_bytea)' => {
 		create_order => 50,
@@ -737,10 +876,13 @@ my %tests = (
 			column_inserts         => 1,
 			data_only              => 1,
 			section_pre_data       => 1,
-			test_schema_plus_blobs => 1, },
+			test_schema_plus_blobs => 1,
+		},
 		unlike => {
 			schema_only => 1,
-			no_blobs    => 1, }, },
+			no_blobs    => 1,
+		},
+	},
 
 	'BLOB load (using lo_from_bytea)' => {
 		regexp => qr/^
@@ -754,23 +896,28 @@ my %tests = (
 			column_inserts         => 1,
 			data_only              => 1,
 			section_data           => 1,
-			test_schema_plus_blobs => 1, },
+			test_schema_plus_blobs => 1,
+		},
 		unlike => {
 			binary_upgrade => 1,
 			no_blobs       => 1,
-			schema_only    => 1, }, },
+			schema_only    => 1,
+		},
+	},
 
 	'COMMENT ON DATABASE postgres' => {
 		regexp => qr/^COMMENT ON DATABASE postgres IS .*;/m,
 
 		# Should appear in the same tests as "CREATE DATABASE postgres"
-		like => { createdb => 1, }, },
+		like => { createdb => 1, },
+	},
 
 	'COMMENT ON EXTENSION plpgsql' => {
 		regexp => qr/^COMMENT ON EXTENSION plpgsql IS .*;/m,
 
 		# this shouldn't ever get emitted anymore
-		like => {}, },
+		like => {},
+	},
 
 	'COMMENT ON TABLE dump_test.test_table' => {
 		create_order => 36,
@@ -782,10 +929,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'COMMENT ON COLUMN dump_test.test_table.col1' => {
 		create_order => 36,
@@ -798,10 +948,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'COMMENT ON COLUMN dump_test.composite.f1' => {
 		create_order => 44,
@@ -812,7 +965,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON COLUMN dump_test.test_second_table.col1' => {
 		create_order => 63,
@@ -823,7 +977,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON COLUMN dump_test.test_second_table.col2' => {
 		create_order => 64,
@@ -834,7 +989,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON CONVERSION dump_test.test_conversion' => {
 		create_order => 79,
@@ -844,7 +1000,8 @@ my %tests = (
 		  qr/^COMMENT ON CONVERSION dump_test.test_conversion IS 'comment on test conversion';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON COLLATION test0' => {
 		create_order => 77,
@@ -853,7 +1010,8 @@ my %tests = (
 		regexp =>
 		  qr/^COMMENT ON COLLATION public.test0 IS 'comment on test0 collation';/m,
 		collation => 1,
-		like      => { %full_runs, section_pre_data => 1, }, },
+		like      => { %full_runs, section_pre_data => 1, },
+	},
 
 	'COMMENT ON LARGE OBJECT ...' => {
 		create_order => 65,
@@ -872,10 +1030,13 @@ my %tests = (
 			column_inserts         => 1,
 			data_only              => 1,
 			section_pre_data       => 1,
-			test_schema_plus_blobs => 1, },
+			test_schema_plus_blobs => 1,
+		},
 		unlike => {
 			no_blobs    => 1,
-			schema_only => 1, }, },
+			schema_only => 1,
+		},
+	},
 
 	'COMMENT ON PUBLICATION pub1' => {
 		create_order => 55,
@@ -883,7 +1044,8 @@ my %tests = (
 					   IS \'comment on publication\';',
 		regexp =>
 		  qr/^COMMENT ON PUBLICATION pub1 IS 'comment on publication';/m,
-		like => { %full_runs, section_post_data => 1, }, },
+		like => { %full_runs, section_post_data => 1, },
+	},
 
 	'COMMENT ON SUBSCRIPTION sub1' => {
 		create_order => 55,
@@ -891,7 +1053,8 @@ my %tests = (
 					   IS \'comment on subscription\';',
 		regexp =>
 		  qr/^COMMENT ON SUBSCRIPTION sub1 IS 'comment on subscription';/m,
-		like => { %full_runs, section_post_data => 1, }, },
+		like => { %full_runs, section_post_data => 1, },
+	},
 
 	'COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1' => {
 		create_order => 84,
@@ -902,7 +1065,8 @@ my %tests = (
 		  qr/^COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 IS 'comment on text search configuration';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1' => {
 		create_order => 84,
@@ -913,7 +1077,8 @@ my %tests = (
 		  qr/^COMMENT ON TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 IS 'comment on text search dictionary';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON TEXT SEARCH PARSER dump_test.alt_ts_prs1' => {
 		create_order => 84,
@@ -923,7 +1088,8 @@ my %tests = (
 		  qr/^COMMENT ON TEXT SEARCH PARSER dump_test.alt_ts_prs1 IS 'comment on text search parser';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1' => {
 		create_order => 84,
@@ -933,7 +1099,8 @@ my %tests = (
 		  qr/^COMMENT ON TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1 IS 'comment on text search template';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON TYPE dump_test.planets - ENUM' => {
 		create_order => 68,
@@ -943,7 +1110,8 @@ my %tests = (
 		  qr/^COMMENT ON TYPE dump_test.planets IS 'comment on enum type';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON TYPE dump_test.textrange - RANGE' => {
 		create_order => 69,
@@ -953,7 +1121,8 @@ my %tests = (
 		  qr/^COMMENT ON TYPE dump_test.textrange IS 'comment on range type';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON TYPE dump_test.int42 - Regular' => {
 		create_order => 70,
@@ -963,7 +1132,8 @@ my %tests = (
 		  qr/^COMMENT ON TYPE dump_test.int42 IS 'comment on regular type';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COMMENT ON TYPE dump_test.undefined - Undefined' => {
 		create_order => 71,
@@ -973,7 +1143,8 @@ my %tests = (
 		  qr/^COMMENT ON TYPE dump_test.undefined IS 'comment on undefined type';/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'COPY test_table' => {
 		create_order => 4,
@@ -988,13 +1159,16 @@ my %tests = (
 			%dump_test_schema_runs,
 			data_only            => 1,
 			only_dump_test_table => 1,
-			section_data         => 1, },
+			section_data         => 1,
+		},
 		unlike => {
 			binary_upgrade           => 1,
 			exclude_dump_test_schema => 1,
 			exclude_test_table       => 1,
 			exclude_test_table_data  => 1,
-			schema_only              => 1, }, },
+			schema_only              => 1,
+		},
+	},
 
 	'COPY fk_reference_test_table' => {
 		create_order => 22,
@@ -1010,11 +1184,14 @@ my %tests = (
 			data_only               => 1,
 			exclude_test_table      => 1,
 			exclude_test_table_data => 1,
-			section_data            => 1, },
+			section_data            => 1,
+		},
 		unlike => {
 			binary_upgrade           => 1,
 			exclude_dump_test_schema => 1,
-			schema_only              => 1, }, },
+			schema_only              => 1,
+		},
+	},
 
 	# In a data-only dump, we try to actually order according to FKs,
 	# so this check is just making sure that the referring table comes after
@@ -1026,7 +1203,8 @@ my %tests = (
 			\QCOPY dump_test.fk_reference_test_table (col1) FROM stdin;\E
 			\n(?:\d\n){5}\\\.\n
 			/xms,
-		like => { data_only => 1, }, },
+		like => { data_only => 1, },
+	},
 
 	'COPY test_second_table' => {
 		create_order => 7,
@@ -1041,11 +1219,14 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			data_only    => 1,
-			section_data => 1, },
+			section_data => 1,
+		},
 		unlike => {
 			binary_upgrade           => 1,
 			exclude_dump_test_schema => 1,
-			schema_only              => 1, }, },
+			schema_only              => 1,
+		},
+	},
 
 	'COPY test_third_table' => {
 		create_order => 12,
@@ -1060,19 +1241,23 @@ my %tests = (
 			%full_runs,
 			data_only    => 1,
 			role         => 1,
-			section_data => 1, },
+			section_data => 1,
+		},
 		unlike => {
 			binary_upgrade          => 1,
 			exclude_test_table_data => 1,
 			schema_only             => 1,
-			with_oids               => 1, }, },
+			with_oids               => 1,
+		},
+	},
 
 	'COPY test_third_table WITH OIDS' => {
 		regexp => qr/^
 			\QCOPY dump_test_second_schema.test_third_table (col1) WITH OIDS FROM stdin;\E
 			\n(?:\d+\t\d\n){9}\\\.\n
 			/xm,
-		like => { with_oids => 1, }, },
+		like => { with_oids => 1, },
+	},
 
 	'COPY test_fourth_table' => {
 		create_order => 7,
@@ -1086,11 +1271,14 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			data_only    => 1,
-			section_data => 1, },
+			section_data => 1,
+		},
 		unlike => {
 			binary_upgrade           => 1,
 			exclude_dump_test_schema => 1,
-			schema_only              => 1, }, },
+			schema_only              => 1,
+		},
+	},
 
 	'COPY test_fifth_table' => {
 		create_order => 54,
@@ -1104,11 +1292,14 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			data_only    => 1,
-			section_data => 1, },
+			section_data => 1,
+		},
 		unlike => {
 			binary_upgrade           => 1,
 			exclude_dump_test_schema => 1,
-			schema_only              => 1, }, },
+			schema_only              => 1,
+		},
+	},
 
 	'COPY test_table_identity' => {
 		create_order => 54,
@@ -1122,44 +1313,53 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			data_only    => 1,
-			section_data => 1, },
+			section_data => 1,
+		},
 		unlike => {
 			binary_upgrade           => 1,
 			exclude_dump_test_schema => 1,
-			schema_only              => 1, }, },
+			schema_only              => 1,
+		},
+	},
 
 	'INSERT INTO test_table' => {
 		regexp => qr/^
 			(?:INSERT\ INTO\ dump_test.test_table\ \(col1,\ col2,\ col3,\ col4\)\ VALUES\ \(\d,\ NULL,\ NULL,\ NULL\);\n){9}
 			/xm,
-		like => { column_inserts => 1, }, },
+		like => { column_inserts => 1, },
+	},
 
 	'INSERT INTO test_second_table' => {
 		regexp => qr/^
 			(?:INSERT\ INTO\ dump_test.test_second_table\ \(col1,\ col2\)
 			   \ VALUES\ \(\d,\ '\d'\);\n){9}/xm,
-		like => { column_inserts => 1, }, },
+		like => { column_inserts => 1, },
+	},
 
 	'INSERT INTO test_third_table' => {
 		regexp => qr/^
 			(?:INSERT\ INTO\ dump_test_second_schema.test_third_table\ \(col1\)
 			   \ VALUES\ \(\d\);\n){9}/xm,
-		like => { column_inserts => 1, }, },
+		like => { column_inserts => 1, },
+	},
 
 	'INSERT INTO test_fourth_table' => {
 		regexp =>
 		  qr/^\QINSERT INTO dump_test.test_fourth_table DEFAULT VALUES;\E/m,
-		like => { column_inserts => 1, }, },
+		like => { column_inserts => 1, },
+	},
 
 	'INSERT INTO test_fifth_table' => {
 		regexp =>
 		  qr/^\QINSERT INTO dump_test.test_fifth_table (col1, col2, col3, col4, col5) VALUES (NULL, true, false, B'11001', 'NaN');\E/m,
-		like => { column_inserts => 1, }, },
+		like => { column_inserts => 1, },
+	},
 
 	'INSERT INTO test_table_identity' => {
 		regexp =>
 		  qr/^\QINSERT INTO dump_test.test_table_identity (col1, col2) OVERRIDING SYSTEM VALUE VALUES (1, 'test');\E/m,
-		like => { column_inserts => 1, }, },
+		like => { column_inserts => 1, },
+	},
 
 	'CREATE ROLE regress_dump_test_role' => {
 		create_order => 1,
@@ -1168,7 +1368,9 @@ my %tests = (
 		like         => {
 			pg_dumpall_dbprivs       => 1,
 			pg_dumpall_globals       => 1,
-			pg_dumpall_globals_clean => 1, }, },
+			pg_dumpall_globals_clean => 1,
+		},
+	},
 
 	'CREATE ACCESS METHOD gist2' => {
 		create_order => 52,
@@ -1176,7 +1378,8 @@ my %tests = (
 		  'CREATE ACCESS METHOD gist2 TYPE INDEX HANDLER gisthandler;',
 		regexp =>
 		  qr/CREATE ACCESS METHOD gist2 TYPE INDEX HANDLER gisthandler;/m,
-		like => { %full_runs, section_pre_data => 1, }, },
+		like => { %full_runs, section_pre_data => 1, },
+	},
 
 	'CREATE COLLATION test0 FROM "C"' => {
 		create_order => 76,
@@ -1184,7 +1387,8 @@ my %tests = (
 		regexp       => qr/^
 		  \QCREATE COLLATION public.test0 (provider = libc, locale = 'C');\E/xm,
 		collation => 1,
-		like      => { %full_runs, section_pre_data => 1, }, },
+		like      => { %full_runs, section_pre_data => 1, },
+	},
 
 	'CREATE CAST FOR timestamptz' => {
 		create_order => 51,
@@ -1192,13 +1396,15 @@ my %tests = (
 		  'CREATE CAST (timestamptz AS interval) WITH FUNCTION age(timestamptz) AS ASSIGNMENT;',
 		regexp =>
 		  qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog\.age\(timestamp with time zone\) AS ASSIGNMENT;/m,
-		like => { %full_runs, section_pre_data => 1, }, },
+		like => { %full_runs, section_pre_data => 1, },
+	},
 
 	'CREATE DATABASE postgres' => {
 		regexp => qr/^
 			\QCREATE DATABASE postgres WITH TEMPLATE = template0 \E
 			.*;/xm,
-		like => { createdb => 1, }, },
+		like => { createdb => 1, },
+	},
 
 	'CREATE DATABASE dump_test' => {
 		create_order => 47,
@@ -1206,7 +1412,8 @@ my %tests = (
 		regexp       => qr/^
 			\QCREATE DATABASE dump_test WITH TEMPLATE = template0 \E
 			.*;/xm,
-		like => { pg_dumpall_dbprivs => 1, }, },
+		like => { pg_dumpall_dbprivs => 1, },
+	},
 
 	'CREATE EXTENSION ... plpgsql' => {
 		regexp => qr/^
@@ -1214,7 +1421,8 @@ my %tests = (
 			/xm,
 
 		# this shouldn't ever get emitted anymore
-		like => {}, },
+		like => {},
+	},
 
 	'CREATE AGGREGATE dump_test.newavg' => {
 		create_order => 25,
@@ -1238,8 +1446,10 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			exclude_test_table => 1,
-			section_pre_data   => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+			section_pre_data   => 1,
+		},
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE CONVERSION dump_test.test_conversion' => {
 		create_order => 78,
@@ -1249,7 +1459,8 @@ my %tests = (
 		  qr/^\QCREATE DEFAULT CONVERSION dump_test.test_conversion FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;\E/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE DOMAIN dump_test.us_postal_code' => {
 		create_order => 29,
@@ -1267,7 +1478,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE FUNCTION dump_test.pltestlang_call_handler' => {
 		create_order => 17,
@@ -1283,7 +1495,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE FUNCTION dump_test.trigger_func' => {
 		create_order => 30,
@@ -1298,7 +1511,8 @@ my %tests = (
 			\$\$;/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE FUNCTION dump_test.event_trigger_func' => {
 		create_order => 32,
@@ -1313,7 +1527,8 @@ my %tests = (
 			\$\$;/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE OPERATOR FAMILY dump_test.op_family' => {
 		create_order => 73,
@@ -1324,7 +1539,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE OPERATOR CLASS dump_test.op_class' => {
 		create_order => 74,
@@ -1351,7 +1567,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE EVENT TRIGGER test_event_trigger' => {
 		create_order => 33,
@@ -1363,7 +1580,8 @@ my %tests = (
 			\QON ddl_command_start\E
 			\n\s+\QEXECUTE PROCEDURE dump_test.event_trigger_func();\E
 			/xm,
-		like => { %full_runs, section_post_data => 1, }, },
+		like => { %full_runs, section_post_data => 1, },
+	},
 
 	'CREATE TRIGGER test_trigger' => {
 		create_order => 31,
@@ -1380,10 +1598,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_test_table       => 1,
-			exclude_dump_test_schema => 1, }, },
+			exclude_dump_test_schema => 1,
+		},
+	},
 
 	'CREATE TYPE dump_test.planets AS ENUM' => {
 		create_order => 37,
@@ -1399,7 +1620,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			binary_upgrade           => 1,
-			exclude_dump_test_schema => 1, }, },
+			exclude_dump_test_schema => 1,
+		},
+	},
 
 	'CREATE TYPE dump_test.planets AS ENUM pg_upgrade' => {
 		regexp => qr/^
@@ -1411,7 +1634,8 @@ my %tests = (
 			\n.*^
 			\QALTER TYPE dump_test.planets ADD VALUE 'mars';\E
 			\n/xms,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'CREATE TYPE dump_test.textrange AS RANGE' => {
 		create_order => 38,
@@ -1424,7 +1648,8 @@ my %tests = (
 			\n\);/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TYPE dump_test.int42' => {
 		create_order => 39,
@@ -1432,7 +1657,8 @@ my %tests = (
 		regexp       => qr/^CREATE TYPE dump_test.int42;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1' => {
 		create_order => 80,
@@ -1443,7 +1669,8 @@ my %tests = (
 			\s+\QPARSER = pg_catalog."default" );\E/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'ALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 ...' => {
 		regexp => qr/^
@@ -1507,7 +1734,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TEXT SEARCH TEMPLATE dump_test.alt_ts_temp1' => {
 		create_order => 81,
@@ -1518,7 +1746,8 @@ my %tests = (
 			\s+\QLEXIZE = dsimple_lexize );\E/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TEXT SEARCH PARSER dump_test.alt_ts_prs1' => {
 		create_order => 82,
@@ -1533,7 +1762,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1' => {
 		create_order => 83,
@@ -1545,7 +1775,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE FUNCTION dump_test.int42_in' => {
 		create_order => 40,
@@ -1559,7 +1790,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE FUNCTION dump_test.int42_out' => {
 		create_order => 41,
@@ -1573,7 +1805,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE PROCEDURE dump_test.ptest1' => {
 		create_order => 41,
@@ -1586,7 +1819,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TYPE dump_test.int42 populated' => {
 		create_order => 42,
@@ -1609,7 +1843,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TYPE dump_test.composite' => {
 		create_order => 43,
@@ -1625,7 +1860,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TYPE dump_test.undefined' => {
 		create_order => 39,
@@ -1633,19 +1869,22 @@ my %tests = (
 		regexp       => qr/^CREATE TYPE dump_test.undefined;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE FOREIGN DATA WRAPPER dummy' => {
 		create_order => 35,
 		create_sql   => 'CREATE FOREIGN DATA WRAPPER dummy;',
 		regexp       => qr/CREATE FOREIGN DATA WRAPPER dummy;/m,
-		like         => { %full_runs, section_pre_data => 1, }, },
+		like         => { %full_runs, section_pre_data => 1, },
+	},
 
 	'CREATE SERVER s1 FOREIGN DATA WRAPPER dummy' => {
 		create_order => 36,
 		create_sql   => 'CREATE SERVER s1 FOREIGN DATA WRAPPER dummy;',
 		regexp       => qr/CREATE SERVER s1 FOREIGN DATA WRAPPER dummy;/m,
-		like         => { %full_runs, section_pre_data => 1, }, },
+		like         => { %full_runs, section_pre_data => 1, },
+	},
 
 	'CREATE FOREIGN TABLE dump_test.foreign_table SERVER s1' => {
 		create_order => 88,
@@ -1663,7 +1902,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE USER MAPPING FOR regress_dump_test_role SERVER s1' => {
 		create_order => 86,
@@ -1671,7 +1911,8 @@ my %tests = (
 		  'CREATE USER MAPPING FOR regress_dump_test_role SERVER s1;',
 		regexp =>
 		  qr/CREATE USER MAPPING FOR regress_dump_test_role SERVER s1;/m,
-		like => { %full_runs, section_pre_data => 1, }, },
+		like => { %full_runs, section_pre_data => 1, },
+	},
 
 	'CREATE TRANSFORM FOR int' => {
 		create_order => 34,
@@ -1679,7 +1920,8 @@ my %tests = (
 		  'CREATE TRANSFORM FOR int LANGUAGE SQL (FROM SQL WITH FUNCTION varchar_transform(internal), TO SQL WITH FUNCTION int4recv(internal));',
 		regexp =>
 		  qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog\.varchar_transform\(internal\), TO SQL WITH FUNCTION pg_catalog\.int4recv\(internal\)\);/m,
-		like => { %full_runs, section_pre_data => 1, }, },
+		like => { %full_runs, section_pre_data => 1, },
+	},
 
 	'CREATE LANGUAGE pltestlang' => {
 		create_order => 18,
@@ -1690,7 +1932,8 @@ my %tests = (
 			\QHANDLER dump_test.pltestlang_call_handler;\E
 			/xm,
 		like => { %full_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE MATERIALIZED VIEW matview' => {
 		create_order => 20,
@@ -1704,7 +1947,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE MATERIALIZED VIEW matview_second' => {
 		create_order => 21,
@@ -1719,7 +1963,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE MATERIALIZED VIEW matview_third' => {
 		create_order => 58,
@@ -1734,7 +1979,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE MATERIALIZED VIEW matview_fourth' => {
 		create_order => 59,
@@ -1749,7 +1995,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE POLICY p1 ON test_table' => {
 		create_order => 22,
@@ -1764,10 +2011,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'CREATE POLICY p2 ON test_table FOR SELECT' => {
 		create_order => 24,
@@ -1781,10 +2031,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'CREATE POLICY p3 ON test_table FOR INSERT' => {
 		create_order => 25,
@@ -1798,10 +2051,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'CREATE POLICY p4 ON test_table FOR UPDATE' => {
 		create_order => 26,
@@ -1815,10 +2071,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'CREATE POLICY p5 ON test_table FOR DELETE' => {
 		create_order => 27,
@@ -1832,10 +2091,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'CREATE POLICY p6 ON test_table AS RESTRICTIVE' => {
 		create_order => 27,
@@ -1849,10 +2111,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_post_data    => 1, },
+			section_post_data    => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'CREATE PUBLICATION pub1' => {
 		create_order => 50,
@@ -1860,7 +2125,8 @@ my %tests = (
 		regexp       => qr/^
 			\QCREATE PUBLICATION pub1 WITH (publish = 'insert, update, delete, truncate');\E
 			/xm,
-		like => { %full_runs, section_post_data => 1, }, },
+		like => { %full_runs, section_post_data => 1, },
+	},
 
 	'CREATE PUBLICATION pub2' => {
 		create_order => 50,
@@ -1870,7 +2136,8 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE PUBLICATION pub2 FOR ALL TABLES WITH (publish = '');\E
 			/xm,
-		like => { %full_runs, section_post_data => 1, }, },
+		like => { %full_runs, section_post_data => 1, },
+	},
 
 	'CREATE SUBSCRIPTION sub1' => {
 		create_order => 50,
@@ -1880,7 +2147,8 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE SUBSCRIPTION sub1 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub1');\E
 			/xm,
-		like => { %full_runs, section_post_data => 1, }, },
+		like => { %full_runs, section_post_data => 1, },
+	},
 
 	'ALTER PUBLICATION pub1 ADD TABLE test_table' => {
 		create_order => 51,
@@ -1892,7 +2160,9 @@ my %tests = (
 		like   => { %full_runs, section_post_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'ALTER PUBLICATION pub1 ADD TABLE test_second_table' => {
 		create_order => 52,
@@ -1902,13 +2172,15 @@ my %tests = (
 			\QALTER PUBLICATION pub1 ADD TABLE ONLY dump_test.test_second_table;\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE SCHEMA public' => {
 		regexp => qr/^CREATE SCHEMA public;/m,
 
 		# this shouldn't ever get emitted anymore
-		like => {}, },
+		like => {},
+	},
 
 	'CREATE SCHEMA dump_test' => {
 		create_order => 2,
@@ -1916,7 +2188,8 @@ my %tests = (
 		regexp       => qr/^CREATE SCHEMA dump_test;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE SCHEMA dump_test_second_schema' => {
 		create_order => 9,
@@ -1925,7 +2198,9 @@ my %tests = (
 		like         => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, }, },
+			section_pre_data => 1,
+		},
+	},
 
 	'CREATE TABLE test_table' => {
 		create_order => 3,
@@ -1949,10 +2224,13 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
-			exclude_test_table       => 1, }, },
+			exclude_test_table       => 1,
+		},
+	},
 
 	'CREATE TABLE fk_reference_test_table' => {
 		create_order => 21,
@@ -1966,7 +2244,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TABLE test_second_table' => {
 		create_order => 6,
@@ -1982,7 +2261,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE UNLOGGED TABLE test_third_table WITH OIDS' => {
 		create_order => 11,
@@ -2003,11 +2283,14 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, },
+			section_pre_data => 1,
+		},
 		unlike => {
 
 			# FIXME figure out why/how binary upgrade drops OIDs.
-			binary_upgrade => 1, }, },
+			binary_upgrade => 1,
+		},
+	},
 
 	'CREATE TABLE measurement PARTITIONED BY' => {
 		create_order => 90,
@@ -2032,7 +2315,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			binary_upgrade           => 1,
-			exclude_dump_test_schema => 1, }, },
+			exclude_dump_test_schema => 1,
+		},
+	},
 
 	'CREATE TABLE measurement_y2006m2 PARTITION OF' => {
 		create_order => 91,
@@ -2049,8 +2334,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, },
-		unlike => { binary_upgrade => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { binary_upgrade => 1, },
+	},
 
 	'CREATE TABLE test_fourth_table_zero_col' => {
 		create_order => 6,
@@ -2062,7 +2349,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TABLE test_fifth_table' => {
 		create_order => 53,
@@ -2084,7 +2372,8 @@ my %tests = (
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE TABLE test_table_identity' => {
 		create_order => 3,
@@ -2109,7 +2398,8 @@ my %tests = (
 			/xms,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE STATISTICS extended_stats_no_options' => {
 		create_order => 97,
@@ -2120,7 +2410,8 @@ my %tests = (
 		    /xms,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE STATISTICS extended_stats_options' => {
 		create_order => 97,
@@ -2131,7 +2422,8 @@ my %tests = (
 		    /xms,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE SEQUENCE test_table_col1_seq' => {
 		regexp => qr/^
@@ -2147,8 +2439,10 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+			section_pre_data     => 1,
+		},
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE SEQUENCE test_third_table_col1_seq' => {
 		regexp => qr/^
@@ -2163,7 +2457,9 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, }, },
+			section_pre_data => 1,
+		},
+	},
 
 	'CREATE UNIQUE INDEX test_third_table_idx ON test_third_table' => {
 		create_order => 13,
@@ -2176,7 +2472,9 @@ my %tests = (
 		like => {
 			%full_runs,
 			role              => 1,
-			section_post_data => 1, }, },
+			section_post_data => 1,
+		},
+	},
 
 	'CREATE INDEX ON ONLY measurement' => {
 		create_order => 92,
@@ -2201,14 +2499,17 @@ my %tests = (
 			schema_only             => 1,
 			section_post_data       => 1,
 			test_schema_plus_blobs  => 1,
-			with_oids               => 1, },
+			with_oids               => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
 			only_dump_test_table     => 1,
 			pg_dumpall_globals       => 1,
 			pg_dumpall_globals_clean => 1,
 			role                     => 1,
-			section_pre_data         => 1, }, },
+			section_pre_data         => 1,
+		},
+	},
 
 	'ALTER TABLE measurement PRIMARY KEY' => {
 		all_runs     => 1,
@@ -2222,7 +2523,8 @@ my %tests = (
 		/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'CREATE INDEX ... ON measurement_y2006_m2' => {
 		regexp => qr/^
@@ -2231,7 +2533,9 @@ my %tests = (
 		like => {
 			%full_runs,
 			role              => 1,
-			section_post_data => 1, }, },
+			section_post_data => 1,
+		},
+	},
 
 	'ALTER INDEX ... ATTACH PARTITION' => {
 		regexp => qr/^
@@ -2240,7 +2544,9 @@ my %tests = (
 		like => {
 			%full_runs,
 			role              => 1,
-			section_post_data => 1, }, },
+			section_post_data => 1,
+		},
+	},
 
 	'ALTER INDEX ... ATTACH PARTITION (primary key)' => {
 		all_runs  => 1,
@@ -2264,14 +2570,17 @@ my %tests = (
 			role                     => 1,
 			schema_only              => 1,
 			section_post_data        => 1,
-			with_oids                => 1, },
+			with_oids                => 1,
+		},
 		unlike => {
 			only_dump_test_schema    => 1,
 			only_dump_test_table     => 1,
 			pg_dumpall_globals       => 1,
 			pg_dumpall_globals_clean => 1,
 			section_pre_data         => 1,
-			test_schema_plus_blobs   => 1, }, },
+			test_schema_plus_blobs   => 1,
+		},
+	},
 
 	'CREATE VIEW test_view' => {
 		create_order => 61,
@@ -2285,7 +2594,8 @@ my %tests = (
 			\n\s+\QWITH LOCAL CHECK OPTION;\E/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	'ALTER VIEW test_view SET DEFAULT' => {
 		create_order => 62,
@@ -2295,7 +2605,8 @@ my %tests = (
 			\QALTER TABLE ONLY dump_test.test_view ALTER COLUMN col1 SET DEFAULT 1;\E/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, }, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
 
 	# FIXME
 	'DROP SCHEMA public (for testing without public schema)' => {
@@ -2303,101 +2614,122 @@ my %tests = (
 		create_order => 100,
 		create_sql   => 'DROP SCHEMA public;',
 		regexp       => qr/^DROP SCHEMA public;/m,
-		like         => {}, },
+		like         => {},
+	},
 
 	'DROP SCHEMA public' => {
 		regexp => qr/^DROP SCHEMA public;/m,
 
 		# this shouldn't ever get emitted anymore
-		like => {}, },
+		like => {},
+	},
 
 	'DROP SCHEMA IF EXISTS public' => {
 		regexp => qr/^DROP SCHEMA IF EXISTS public;/m,
 
 		# this shouldn't ever get emitted anymore
-		like => {}, },
+		like => {},
+	},
 
 	'DROP EXTENSION plpgsql' => {
 		regexp => qr/^DROP EXTENSION plpgsql;/m,
 
 		# this shouldn't ever get emitted anymore
-		like => {}, },
+		like => {},
+	},
 
 	'DROP FUNCTION dump_test.pltestlang_call_handler()' => {
 		regexp => qr/^DROP FUNCTION dump_test\.pltestlang_call_handler\(\);/m,
-		like   => { clean => 1, }, },
+		like   => { clean => 1, },
+	},
 
 	'DROP LANGUAGE pltestlang' => {
 		regexp => qr/^DROP PROCEDURAL LANGUAGE pltestlang;/m,
-		like   => { clean => 1, }, },
+		like   => { clean => 1, },
+	},
 
 	'DROP SCHEMA dump_test' => {
 		regexp => qr/^DROP SCHEMA dump_test;/m,
-		like   => { clean => 1, }, },
+		like   => { clean => 1, },
+	},
 
 	'DROP SCHEMA dump_test_second_schema' => {
 		regexp => qr/^DROP SCHEMA dump_test_second_schema;/m,
-		like   => { clean => 1, }, },
+		like   => { clean => 1, },
+	},
 
 	'DROP TABLE test_table' => {
 		regexp => qr/^DROP TABLE dump_test\.test_table;/m,
-		like   => { clean => 1, }, },
+		like   => { clean => 1, },
+	},
 
 	'DROP TABLE fk_reference_test_table' => {
 		regexp => qr/^DROP TABLE dump_test\.fk_reference_test_table;/m,
-		like   => { clean => 1, }, },
+		like   => { clean => 1, },
+	},
 
 	'DROP TABLE test_second_table' => {
 		regexp => qr/^DROP TABLE dump_test\.test_second_table;/m,
-		like   => { clean => 1, }, },
+		like   => { clean => 1, },
+	},
 
 	'DROP TABLE test_third_table' => {
 		regexp => qr/^DROP TABLE dump_test_second_schema\.test_third_table;/m,
-		like   => { clean => 1, }, },
+		like   => { clean => 1, },
+	},
 
 	'DROP EXTENSION IF EXISTS plpgsql' => {
 		regexp => qr/^DROP EXTENSION IF EXISTS plpgsql;/m,
 
 		# this shouldn't ever get emitted anymore
-		like => {}, },
+		like => {},
+	},
 
 	'DROP FUNCTION IF EXISTS dump_test.pltestlang_call_handler()' => {
 		regexp => qr/^
 			\QDROP FUNCTION IF EXISTS dump_test.pltestlang_call_handler();\E
 			/xm,
-		like => { clean_if_exists => 1, }, },
+		like => { clean_if_exists => 1, },
+	},
 
 	'DROP LANGUAGE IF EXISTS pltestlang' => {
 		regexp => qr/^DROP PROCEDURAL LANGUAGE IF EXISTS pltestlang;/m,
-		like   => { clean_if_exists => 1, }, },
+		like   => { clean_if_exists => 1, },
+	},
 
 	'DROP SCHEMA IF EXISTS dump_test' => {
 		regexp => qr/^DROP SCHEMA IF EXISTS dump_test;/m,
-		like   => { clean_if_exists => 1, }, },
+		like   => { clean_if_exists => 1, },
+	},
 
 	'DROP SCHEMA IF EXISTS dump_test_second_schema' => {
 		regexp => qr/^DROP SCHEMA IF EXISTS dump_test_second_schema;/m,
-		like   => { clean_if_exists => 1, }, },
+		like   => { clean_if_exists => 1, },
+	},
 
 	'DROP TABLE IF EXISTS test_table' => {
 		regexp => qr/^DROP TABLE IF EXISTS dump_test\.test_table;/m,
-		like   => { clean_if_exists => 1, }, },
+		like   => { clean_if_exists => 1, },
+	},
 
 	'DROP TABLE IF EXISTS test_second_table' => {
 		regexp => qr/^DROP TABLE IF EXISTS dump_test\.test_second_table;/m,
-		like   => { clean_if_exists => 1, }, },
+		like   => { clean_if_exists => 1, },
+	},
 
 	'DROP TABLE IF EXISTS test_third_table' => {
 		regexp => qr/^
 			\QDROP TABLE IF EXISTS dump_test_second_schema.test_third_table;\E
 			/xm,
-		like => { clean_if_exists => 1, }, },
+		like => { clean_if_exists => 1, },
+	},
 
 	'DROP ROLE regress_dump_test_role' => {
 		regexp => qr/^
 			\QDROP ROLE regress_dump_test_role;\E
 			/xm,
-		like => { pg_dumpall_globals_clean => 1, }, },
+		like => { pg_dumpall_globals_clean => 1, },
+	},
 
 	'DROP ROLE pg_' => {
 		regexp => qr/^
@@ -2405,7 +2737,8 @@ my %tests = (
 			/xm,
 
 		# this shouldn't ever get emitted anywhere
-		like => {}, },
+		like => {},
+	},
 
 	'GRANT USAGE ON SCHEMA dump_test_second_schema' => {
 		create_order => 10,
@@ -2417,8 +2750,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_privs => 1, },
+	},
 
 	'GRANT USAGE ON FOREIGN DATA WRAPPER dummy' => {
 		create_order => 85,
@@ -2428,7 +2763,8 @@ my %tests = (
 			\QGRANT ALL ON FOREIGN DATA WRAPPER dummy TO regress_dump_test_role;\E
 			/xm,
 		like => { %full_runs, section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+		unlike => { no_privs => 1, },
+	},
 
 	'GRANT USAGE ON FOREIGN SERVER s1' => {
 		create_order => 85,
@@ -2438,7 +2774,8 @@ my %tests = (
 			\QGRANT ALL ON FOREIGN SERVER s1 TO regress_dump_test_role;\E
 			/xm,
 		like => { %full_runs, section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+		unlike => { no_privs => 1, },
+	},
 
 	'GRANT USAGE ON DOMAIN dump_test.us_postal_code' => {
 		create_order => 72,
@@ -2451,7 +2788,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_privs                 => 1, }, },
+			no_privs                 => 1,
+		},
+	},
 
 	'GRANT USAGE ON TYPE dump_test.int42' => {
 		create_order => 87,
@@ -2464,7 +2803,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_privs                 => 1, }, },
+			no_privs                 => 1,
+		},
+	},
 
 	'GRANT USAGE ON TYPE dump_test.planets - ENUM' => {
 		create_order => 66,
@@ -2477,7 +2818,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_privs                 => 1, }, },
+			no_privs                 => 1,
+		},
+	},
 
 	'GRANT USAGE ON TYPE dump_test.textrange - RANGE' => {
 		create_order => 67,
@@ -2490,7 +2833,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_privs                 => 1, }, },
+			no_privs                 => 1,
+		},
+	},
 
 	'GRANT CREATE ON DATABASE dump_test' => {
 		create_order => 48,
@@ -2499,7 +2844,8 @@ my %tests = (
 		regexp => qr/^
 			\QGRANT CREATE ON DATABASE dump_test TO regress_dump_test_role;\E
 			/xm,
-		like => { pg_dumpall_dbprivs => 1, }, },
+		like => { pg_dumpall_dbprivs => 1, },
+	},
 
 	'GRANT SELECT ON TABLE test_table' => {
 		create_order => 5,
@@ -2511,11 +2857,14 @@ my %tests = (
 			%full_runs,
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
-			section_pre_data     => 1, },
+			section_pre_data     => 1,
+		},
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table       => 1,
-			no_privs                 => 1, }, },
+			no_privs                 => 1,
+		},
+	},
 
 	'GRANT SELECT ON TABLE test_third_table' => {
 		create_order => 19,
@@ -2527,8 +2876,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_privs => 1, },
+	},
 
 	'GRANT ALL ON SEQUENCE test_third_table_col1_seq' => {
 		create_order => 28,
@@ -2541,8 +2892,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_privs => 1, },
+	},
 
 	'GRANT SELECT ON TABLE measurement' => {
 		create_order => 91,
@@ -2555,7 +2908,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_privs                 => 1, }, },
+			no_privs                 => 1,
+		},
+	},
 
 	'GRANT SELECT ON TABLE measurement_y2006m2' => {
 		create_order => 92,
@@ -2567,8 +2922,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			role             => 1,
-			section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_privs => 1, },
+	},
 
 	'GRANT ALL ON LARGE OBJECT ...' => {
 		create_order => 60,
@@ -2587,12 +2944,15 @@ my %tests = (
 			column_inserts         => 1,
 			data_only              => 1,
 			section_pre_data       => 1,
-			test_schema_plus_blobs => 1, },
+			test_schema_plus_blobs => 1,
+		},
 		unlike => {
 			binary_upgrade => 1,
 			no_blobs       => 1,
 			no_privs       => 1,
-			schema_only    => 1, }, },
+			schema_only    => 1,
+		},
+	},
 
 	'GRANT INSERT(col1) ON TABLE test_second_table' => {
 		create_order => 8,
@@ -2606,7 +2966,9 @@ my %tests = (
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
-			no_privs                 => 1, }, },
+			no_privs                 => 1,
+		},
+	},
 
 	'GRANT EXECUTE ON FUNCTION pg_sleep() TO regress_dump_test_role' => {
 		create_order => 16,
@@ -2616,7 +2978,8 @@ my %tests = (
 			\QGRANT ALL ON FUNCTION pg_catalog.pg_sleep(double precision) TO regress_dump_test_role;\E
 			/xm,
 		like => { %full_runs, section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+		unlike => { no_privs => 1, },
+	},
 
 	'GRANT SELECT (proname ...) ON TABLE pg_proc TO public' => {
 		create_order => 46,
@@ -2684,7 +3047,8 @@ my %tests = (
 		\QGRANT SELECT(proconfig) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E\n.*
 		\QGRANT SELECT(proacl) ON TABLE pg_catalog.pg_proc TO PUBLIC;\E/xms,
 		like => { %full_runs, section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+		unlike => { no_privs => 1, },
+	},
 
 	'GRANT USAGE ON SCHEMA public TO public' => {
 		regexp => qr/^
@@ -2693,7 +3057,8 @@ my %tests = (
 			/xm,
 
 		# this shouldn't ever get emitted anymore
-		like => {}, },
+		like => {},
+	},
 
 	'REFRESH MATERIALIZED VIEW matview' => {
 		regexp => qr/^REFRESH MATERIALIZED VIEW dump_test.matview;/m,
@@ -2702,7 +3067,9 @@ my %tests = (
 		unlike => {
 			binary_upgrade           => 1,
 			exclude_dump_test_schema => 1,
-			schema_only              => 1, }, },
+			schema_only              => 1,
+		},
+	},
 
 	'REFRESH MATERIALIZED VIEW matview_second' => {
 		regexp => qr/^
@@ -2715,21 +3082,25 @@ my %tests = (
 		unlike => {
 			binary_upgrade           => 1,
 			exclude_dump_test_schema => 1,
-			schema_only              => 1, }, },
+			schema_only              => 1,
+		},
+	},
 
 	# FIXME
 	'REFRESH MATERIALIZED VIEW matview_third' => {
 		regexp => qr/^
 			\QREFRESH MATERIALIZED VIEW dump_test.matview_third;\E
 			/xms,
-		like => {}, },
+		like => {},
+	},
 
 	# FIXME
 	'REFRESH MATERIALIZED VIEW matview_fourth' => {
 		regexp => qr/^
 			\QREFRESH MATERIALIZED VIEW dump_test.matview_fourth;\E
 			/xms,
-		like => {}, },
+		like => {},
+	},
 
 	'REVOKE CONNECT ON DATABASE dump_test FROM public' => {
 		create_order => 49,
@@ -2739,7 +3110,8 @@ my %tests = (
 			\QGRANT TEMPORARY ON DATABASE dump_test TO PUBLIC;\E\n
 			\QGRANT CREATE ON DATABASE dump_test TO regress_dump_test_role;\E
 			/xm,
-		like => { pg_dumpall_dbprivs => 1, }, },
+		like => { pg_dumpall_dbprivs => 1, },
+	},
 
 	'REVOKE EXECUTE ON FUNCTION pg_sleep() FROM public' => {
 		create_order => 15,
@@ -2749,7 +3121,8 @@ my %tests = (
 			\QREVOKE ALL ON FUNCTION pg_catalog.pg_sleep(double precision) FROM PUBLIC;\E
 			/xm,
 		like => { %full_runs, section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+		unlike => { no_privs => 1, },
+	},
 
 	'REVOKE SELECT ON TABLE pg_proc FROM public' => {
 		create_order => 45,
@@ -2757,7 +3130,8 @@ my %tests = (
 		regexp =>
 		  qr/^REVOKE SELECT ON TABLE pg_catalog.pg_proc FROM PUBLIC;/m,
 		like => { %full_runs, section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+		unlike => { no_privs => 1, },
+	},
 
 	'REVOKE CREATE ON SCHEMA public FROM public' => {
 		create_order => 16,
@@ -2767,7 +3141,8 @@ my %tests = (
 			\n\QGRANT USAGE ON SCHEMA public TO PUBLIC;\E
 			/xm,
 		like => { %full_runs, section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+		unlike => { no_privs => 1, },
+	},
 
 	'REVOKE USAGE ON LANGUAGE plpgsql FROM public' => {
 		create_order => 16,
@@ -2778,8 +3153,10 @@ my %tests = (
 			%dump_test_schema_runs,
 			only_dump_test_table => 1,
 			role                 => 1,
-			section_pre_data     => 1, },
-		unlike => { no_privs => 1, }, },
+			section_pre_data     => 1,
+		},
+		unlike => { no_privs => 1, },
+	},
 
 );
 

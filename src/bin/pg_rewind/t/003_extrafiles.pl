@@ -66,7 +66,8 @@ sub run_test
 	@paths = sort @paths;
 	is_deeply(
 		\@paths,
-		[   "$test_master_datadir/tst_both_dir",
+		[
+			"$test_master_datadir/tst_both_dir",
 			"$test_master_datadir/tst_both_dir/both_file1",
 			"$test_master_datadir/tst_both_dir/both_file2",
 			"$test_master_datadir/tst_both_dir/both_subdir",

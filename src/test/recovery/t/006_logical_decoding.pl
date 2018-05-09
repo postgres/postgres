@@ -112,8 +112,10 @@ SKIP:
 	skip "Test fails on Windows perl", 2 if $Config{osname} eq 'MSWin32';
 
 	my $pg_recvlogical = IPC::Run::start(
-		[   'pg_recvlogical', '-d', $node_master->connstr('otherdb'),
-			'-S', 'otherdb_slot', '-f', '-', '--start' ]);
+		[
+			'pg_recvlogical', '-d', $node_master->connstr('otherdb'),
+			'-S', 'otherdb_slot', '-f', '-', '--start'
+		]);
 	$node_master->poll_query_until('otherdb',
 		"SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NOT NULL)"
 	) or die "slot never became active";

@@ -22,7 +22,8 @@ sub _new
 		VisualStudioVersion        => undef,
 		MinimumVisualStudioVersion => undef,
 		vcver                      => undef,
-		platform                   => undef, };
+		platform                   => undef,
+	};
 	bless($self, $classname);
 
 	$self->DeterminePlatform();

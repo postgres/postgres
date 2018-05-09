@@ -36,7 +36,8 @@ else
 close $conf;
 my $ctlcmd = [
 	'pg_ctl', 'start', '-D', "$tempdir/data", '-l',
-	"$TestLib::log_path/001_start_stop_server.log" ];
+	"$TestLib::log_path/001_start_stop_server.log"
+];
 if ($Config{osname} ne 'msys')
 {
 	command_like($ctlcmd, qr/done.*server started/s, 'pg_ctl start');

@@ -92,7 +92,8 @@ sub check_query
 	my $result = run [
 		'psql', '-q', '-A', '-t', '--no-psqlrc', '-d',
 		$node_master->connstr('postgres'),
-		'-c', $query ],
+		'-c', $query
+	  ],
 	  '>', \$stdout, '2>', \$stderr;
 
 	# We don't use ok() for the exit code and stderr, because we want this
@@ -214,10 +215,12 @@ sub run_pg_rewind
 		# Stop the master and be ready to perform the rewind
 		$node_standby->stop;
 		command_ok(
-			[   'pg_rewind',
+			[
+				'pg_rewind',
 				"--debug",
 				"--source-pgdata=$standby_pgdata",
-				"--target-pgdata=$master_pgdata" ],
+				"--target-pgdata=$master_pgdata"
+			],
 			'pg_rewind local');
 	}
 	elsif ($test_mode eq "remote")
@@ -225,9 +228,11 @@ sub run_pg_rewind
 
 		# Do rewind using a remote connection as source
 		command_ok(
-			[   'pg_rewind',       "--debug",
+			[
+				'pg_rewind',       "--debug",
 				"--source-server", $standby_connstr,
-				"--target-pgdata=$master_pgdata" ],
+				"--target-pgdata=$master_pgdata"
+			],
 			'pg_rewind remote');
 	}
 	else

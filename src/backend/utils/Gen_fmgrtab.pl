@@ -97,11 +97,13 @@ foreach my $row (@{ $catalog_data{pg_proc} })
 	next if $bki_values{prolang} ne $INTERNALlanguageId;
 
 	push @fmgr,
-	  { oid    => $bki_values{oid},
+	  {
+		oid    => $bki_values{oid},
 		strict => $bki_values{proisstrict},
 		retset => $bki_values{proretset},
 		nargs  => $bki_values{pronargs},
-		prosrc => $bki_values{prosrc}, };
+		prosrc => $bki_values{prosrc},
+	  };
 }
 
 # Emit headers for both files

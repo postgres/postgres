@@ -39,8 +39,10 @@ $node->safe_psql(
 # Run psql, keeping session alive, so we have an alive backend to kill.
 my ($killme_stdin, $killme_stdout, $killme_stderr) = ('', '', '');
 my $killme = IPC::Run::start(
-	[   'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
-		$node->connstr('postgres') ],
+	[
+		'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
+		$node->connstr('postgres')
+	],
 	'<',
 	\$killme_stdin,
 	'>',
@@ -52,8 +54,10 @@ my $killme = IPC::Run::start(
 # Need a second psql to check if crash-restart happened.
 my ($monitor_stdin, $monitor_stdout, $monitor_stderr) = ('', '', '');
 my $monitor = IPC::Run::start(
-	[   'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
-		$node->connstr('postgres') ],
+	[
+		'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
+		$node->connstr('postgres')
+	],
 	'<',
 	\$monitor_stdin,
 	'>',

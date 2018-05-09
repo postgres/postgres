@@ -155,7 +155,8 @@ sub new
 		_host    => $pghost,
 		_basedir => "$TestLib::tmp_check/t_${testname}_${name}_data",
 		_name    => $name,
-		_logfile => "$TestLib::log_path/${testname}_${name}.log" };
+		_logfile => "$TestLib::log_path/${testname}_${name}.log"
+	};
 
 	bless $self, $class;
 	mkdir $self->{_basedir}

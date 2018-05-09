@@ -29,8 +29,10 @@ my ($stdin, $stdout, $stderr) = ('', '', '');
 # an xact to be in-progress when we crash and we need to know
 # its xid.
 my $tx = IPC::Run::start(
-	[   'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
-		$node->connstr('postgres') ],
+	[
+		'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
+		$node->connstr('postgres')
+	],
 	'<',
 	\$stdin,
 	'>',

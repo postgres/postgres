@@ -317,7 +317,8 @@ sub push_commit
 			'message'   => $c->{'message'},
 			'commit'    => $c->{'commit'},
 			'commits'   => [],
-			'timestamp' => $ts };
+			'timestamp' => $ts
+		};
 		push @{ $all_commits{$ht} }, $cc;
 	}
 
@@ -326,7 +327,8 @@ sub push_commit
 		'branch'   => $c->{'branch'},
 		'commit'   => $c->{'commit'},
 		'date'     => $c->{'date'},
-		'last_tag' => $c->{'last_tag'} };
+		'last_tag' => $c->{'last_tag'}
+	};
 	push @{ $cc->{'commits'} }, $smallc;
 	push @{ $all_commits_by_branch{ $c->{'branch'} } }, $cc;
 	$cc->{'branch_position'}{ $c->{'branch'} } =

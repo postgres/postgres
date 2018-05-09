@@ -43,12 +43,16 @@ my %pgdump_runs = (
 		dump_cmd => [
 			'pg_dump',                            '--no-sync',
 			"--file=$tempdir/binary_upgrade.sql", '--schema-only',
-			'--binary-upgrade',                   '--dbname=postgres', ], },
+			'--binary-upgrade',                   '--dbname=postgres',
+		],
+	},
 	clean => {
 		dump_cmd => [
 			'pg_dump', "--file=$tempdir/clean.sql",
 			'-c',      '--no-sync',
-			'--dbname=postgres', ], },
+			'--dbname=postgres',
+		],
+	},
 	clean_if_exists => {
 		dump_cmd => [
 			'pg_dump',
@@ -57,7 +61,9 @@ my %pgdump_runs = (
 			'-c',
 			'--if-exists',
 			'--encoding=UTF8',    # no-op, just tests that option is accepted
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	createdb => {
 		dump_cmd => [
 			'pg_dump',
@@ -65,7 +71,9 @@ my %pgdump_runs = (
 			"--file=$tempdir/createdb.sql",
 			'-C',
 			'-R',                 # no-op, just for testing
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	data_only => {
 		dump_cmd => [
 			'pg_dump',
@@ -73,7 +81,9 @@ my %pgdump_runs = (
 			"--file=$tempdir/data_only.sql",
 			'-a',
 			'-v',                 # no-op, just make sure it works
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	defaults => {
 		dump_cmd => [ 'pg_dump', '-f', "$tempdir/defaults.sql", 'postgres', ],
 	},
@@ -81,70 +91,96 @@ my %pgdump_runs = (
 		test_key => 'defaults',
 		dump_cmd => [
 			'pg_dump', '--no-sync', '-Fc', '-Z6',
-			"--file=$tempdir/defaults_custom_format.dump", 'postgres', ],
+			"--file=$tempdir/defaults_custom_format.dump", 'postgres',
+		],
 		restore_cmd => [
 			'pg_restore',
 			"--file=$tempdir/defaults_custom_format.sql",
-			"$tempdir/defaults_custom_format.dump", ], },
+			"$tempdir/defaults_custom_format.dump",
+		],
+	},
 	defaults_dir_format => {
 		test_key => 'defaults',
 		dump_cmd => [
 			'pg_dump', '--no-sync', '-Fd',
-			"--file=$tempdir/defaults_dir_format", 'postgres', ],
+			"--file=$tempdir/defaults_dir_format", 'postgres',
+		],
 		restore_cmd => [
 			'pg_restore',
 			"--file=$tempdir/defaults_dir_format.sql",
-			"$tempdir/defaults_dir_format", ], },
+			"$tempdir/defaults_dir_format",
+		],
+	},
 	defaults_parallel => {
 		test_key => 'defaults',
 		dump_cmd => [
 			'pg_dump', '--no-sync', '-Fd', '-j2',
-			"--file=$tempdir/defaults_parallel", 'postgres', ],
+			"--file=$tempdir/defaults_parallel", 'postgres',
+		],
 		restore_cmd => [
 			'pg_restore',
 			"--file=$tempdir/defaults_parallel.sql",
-			"$tempdir/defaults_parallel", ], },
+			"$tempdir/defaults_parallel",
+		],
+	},
 	defaults_tar_format => {
 		test_key => 'defaults',
 		dump_cmd => [
 			'pg_dump', '--no-sync', '-Ft',
-			"--file=$tempdir/defaults_tar_format.tar", 'postgres', ],
+			"--file=$tempdir/defaults_tar_format.tar", 'postgres',
+		],
 		restore_cmd => [
 			'pg_restore',
 			"--file=$tempdir/defaults_tar_format.sql",
-			"$tempdir/defaults_tar_format.tar", ], },
+			"$tempdir/defaults_tar_format.tar",
+		],
+	},
 	pg_dumpall_globals => {
 		dump_cmd => [
 			'pg_dumpall',                             '--no-sync',
-			"--file=$tempdir/pg_dumpall_globals.sql", '-g', ], },
+			"--file=$tempdir/pg_dumpall_globals.sql", '-g',
+		],
+	},
 	no_privs => {
 		dump_cmd => [
 			'pg_dump',                      '--no-sync',
 			"--file=$tempdir/no_privs.sql", '-x',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	no_owner => {
 		dump_cmd => [
 			'pg_dump',                      '--no-sync',
 			"--file=$tempdir/no_owner.sql", '-O',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	schema_only => {
 		dump_cmd => [
 			'pg_dump', '--no-sync', "--file=$tempdir/schema_only.sql",
-			'-s', 'postgres', ], },
+			'-s', 'postgres',
+		],
+	},
 	section_pre_data => {
 		dump_cmd => [
 			'pg_dump',                              '--no-sync',
 			"--file=$tempdir/section_pre_data.sql", '--section=pre-data',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	section_data => {
 		dump_cmd => [
 			'pg_dump',                          '--no-sync',
 			"--file=$tempdir/section_data.sql", '--section=data',
-			'postgres', ], },
+			'postgres',
+		],
+	},
 	section_post_data => {
 		dump_cmd => [
 			'pg_dump', '--no-sync', "--file=$tempdir/section_post_data.sql",
-			'--section=post-data', 'postgres', ], },);
+			'--section=post-data', 'postgres',
+		],
+	},);
 
 ###############################################################
 # Definition of the tests to run.
@@ -196,7 +232,8 @@ my %tests = (
 			\n\s+\Qcol1 integer NOT NULL,\E
 			\n\s+\Qcol2 integer\E
 			\n\);\n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'CREATE EXTENSION test_pg_dump' => {
 		create_order => 2,
@@ -207,14 +244,17 @@ my %tests = (
 		like => {
 			%full_runs,
 			schema_only      => 1,
-			section_pre_data => 1, },
-		unlike => { binary_upgrade => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { binary_upgrade => 1, },
+	},
 
 	'CREATE ROLE regress_dump_test_role' => {
 		create_order => 1,
 		create_sql   => 'CREATE ROLE regress_dump_test_role;',
 		regexp       => qr/^CREATE ROLE regress_dump_test_role;\n/m,
-		like         => { pg_dumpall_globals => 1, }, },
+		like         => { pg_dumpall_globals => 1, },
+	},
 
 	'CREATE SEQUENCE regress_pg_dump_table_col1_seq' => {
 		regexp => qr/^
@@ -226,7 +266,8 @@ my %tests = (
                     \n\s+\QNO MAXVALUE\E
                     \n\s+\QCACHE 1;\E
                     \n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'CREATE TABLE regress_pg_dump_table_added' => {
 		create_order => 7,
@@ -237,7 +278,8 @@ my %tests = (
 			\n\s+\Qcol1 integer NOT NULL,\E
 			\n\s+\Qcol2 integer\E
 			\n\);\n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'CREATE SEQUENCE regress_pg_dump_seq' => {
 		regexp => qr/^
@@ -248,7 +290,8 @@ my %tests = (
                     \n\s+\QNO MAXVALUE\E
                     \n\s+\QCACHE 1;\E
                     \n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'SETVAL SEQUENCE regress_seq_dumpable' => {
 		create_order => 6,
@@ -259,7 +302,9 @@ my %tests = (
 		like => {
 			%full_runs,
 			data_only    => 1,
-			section_data => 1, }, },
+			section_data => 1,
+		},
+	},
 
 	'CREATE TABLE regress_pg_dump_table' => {
 		regexp => qr/^
@@ -267,13 +312,15 @@ my %tests = (
 			\n\s+\Qcol1 integer NOT NULL,\E
 			\n\s+\Qcol2 integer\E
 			\n\);\n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'CREATE ACCESS METHOD regress_test_am' => {
 		regexp => qr/^
 			\QCREATE ACCESS METHOD regress_test_am TYPE INDEX HANDLER bthandler;\E
 			\n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'COMMENT ON EXTENSION test_pg_dump' => {
 		regexp => qr/^
@@ -283,7 +330,9 @@ my %tests = (
 		like => {
 			%full_runs,
 			schema_only      => 1,
-			section_pre_data => 1, }, },
+			section_pre_data => 1,
+		},
+	},
 
 	'GRANT SELECT regress_pg_dump_table_added pre-ALTER EXTENSION' => {
 		create_order => 8,
@@ -292,7 +341,8 @@ my %tests = (
 		regexp => qr/^
 			\QGRANT SELECT ON TABLE public.regress_pg_dump_table_added TO regress_dump_test_role;\E
 			\n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'REVOKE SELECT regress_pg_dump_table_added post-ALTER EXTENSION' => {
 		create_order => 10,
@@ -304,8 +354,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			schema_only      => 1,
-			section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_privs => 1, },
+	},
 
 	'GRANT SELECT ON TABLE regress_pg_dump_table' => {
 		regexp => qr/^
@@ -313,7 +365,8 @@ my %tests = (
 			\QGRANT SELECT ON TABLE public.regress_pg_dump_table TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'GRANT SELECT(col1) ON regress_pg_dump_table' => {
 		regexp => qr/^
@@ -321,7 +374,8 @@ my %tests = (
 			\QGRANT SELECT(col1) ON TABLE public.regress_pg_dump_table TO PUBLIC;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'GRANT SELECT(col2) ON regress_pg_dump_table TO regress_dump_test_role'
 	  => {
@@ -334,8 +388,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			schema_only      => 1,
-			section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_privs => 1, },
+	  },
 
 	'GRANT USAGE ON regress_pg_dump_table_col1_seq TO regress_dump_test_role'
 	  => {
@@ -348,14 +404,17 @@ my %tests = (
 		like => {
 			%full_runs,
 			schema_only      => 1,
-			section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_privs => 1, },
+	  },
 
 	'GRANT USAGE ON regress_pg_dump_seq TO regress_dump_test_role' => {
 		regexp => qr/^
 			\QGRANT USAGE ON SEQUENCE public.regress_pg_dump_seq TO regress_dump_test_role;\E
 			\n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'REVOKE SELECT(col1) ON regress_pg_dump_table' => {
 		create_order => 3,
@@ -367,8 +426,10 @@ my %tests = (
 		like => {
 			%full_runs,
 			schema_only      => 1,
-			section_pre_data => 1, },
-		unlike => { no_privs => 1, }, },
+			section_pre_data => 1,
+		},
+		unlike => { no_privs => 1, },
+	},
 
 	# Objects included in extension part of a schema created by this extension */
 	'CREATE TABLE regress_pg_dump_schema.test_table' => {
@@ -377,7 +438,8 @@ my %tests = (
 			\n\s+\Qcol1 integer,\E
 			\n\s+\Qcol2 integer\E
 			\n\);\n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'GRANT SELECT ON regress_pg_dump_schema.test_table' => {
 		regexp => qr/^
@@ -385,7 +447,8 @@ my %tests = (
 			\QGRANT SELECT ON TABLE regress_pg_dump_schema.test_table TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'CREATE SEQUENCE regress_pg_dump_schema.test_seq' => {
 		regexp => qr/^
@@ -396,7 +459,8 @@ my %tests = (
                     \n\s+\QNO MAXVALUE\E
                     \n\s+\QCACHE 1;\E
                     \n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'GRANT USAGE ON regress_pg_dump_schema.test_seq' => {
 		regexp => qr/^
@@ -404,14 +468,16 @@ my %tests = (
 			\QGRANT USAGE ON SEQUENCE regress_pg_dump_schema.test_seq TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'CREATE TYPE regress_pg_dump_schema.test_type' => {
 		regexp => qr/^
                     \QCREATE TYPE regress_pg_dump_schema.test_type AS (\E
                     \n\s+\Qcol1 integer\E
                     \n\);\n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'GRANT USAGE ON regress_pg_dump_schema.test_type' => {
 		regexp => qr/^
@@ -419,14 +485,16 @@ my %tests = (
 			\QGRANT ALL ON TYPE regress_pg_dump_schema.test_type TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'CREATE FUNCTION regress_pg_dump_schema.test_func' => {
 		regexp => qr/^
             \QCREATE FUNCTION regress_pg_dump_schema.test_func() RETURNS integer\E
             \n\s+\QLANGUAGE sql\E
             \n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'GRANT ALL ON regress_pg_dump_schema.test_func' => {
 		regexp => qr/^
@@ -434,7 +502,8 @@ my %tests = (
 			\QGRANT ALL ON FUNCTION regress_pg_dump_schema.test_func() TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'CREATE AGGREGATE regress_pg_dump_schema.test_agg' => {
 		regexp => qr/^
@@ -442,7 +511,8 @@ my %tests = (
             \n\s+\QSFUNC = int2_sum,\E
             \n\s+\QSTYPE = bigint\E
             \n\);\n/xm,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	'GRANT ALL ON regress_pg_dump_schema.test_agg' => {
 		regexp => qr/^
@@ -450,7 +520,8 @@ my %tests = (
 			\QGRANT ALL ON FUNCTION regress_pg_dump_schema.test_agg(smallint) TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			\n/xms,
-		like => { binary_upgrade => 1, }, },
+		like => { binary_upgrade => 1, },
+	},
 
 	# Objects not included in extension, part of schema created by extension
 	'CREATE TABLE regress_pg_dump_schema.external_tab' => {
@@ -464,7 +535,9 @@ my %tests = (
 		like => {
 			%full_runs,
 			schema_only      => 1,
-			section_pre_data => 1, }, },);
+			section_pre_data => 1,
+		},
+	},);
 
 #########################################
 # Create a PG instance to test actually dumping from

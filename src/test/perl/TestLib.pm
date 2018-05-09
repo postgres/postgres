@@ -256,7 +256,8 @@ sub check_mode_recursive
 	my $result = 1;
 
 	find(
-		{   follow_fast => 1,
+		{
+			follow_fast => 1,
 			wanted      => sub {
 				my $file_stat = stat($File::Find::name);
 
@@ -322,7 +323,8 @@ sub chmod_recursive
 	my ($dir, $dir_mode, $file_mode) = @_;
 
 	find(
-		{   follow_fast => 1,
+		{
+			follow_fast => 1,
 			wanted      => sub {
 				my $file_stat = stat($File::Find::name);
 

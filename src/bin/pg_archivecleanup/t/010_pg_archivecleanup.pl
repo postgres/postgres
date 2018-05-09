@@ -73,8 +73,10 @@ sub run_check
 	create_files();
 
 	command_ok(
-		[   'pg_archivecleanup', '-x', '.gz', $tempdir,
-			$walfiles[2] . $suffix ],
+		[
+			'pg_archivecleanup', '-x', '.gz', $tempdir,
+			$walfiles[2] . $suffix
+		],
 		"$test_name: runs");
 
 	ok(!-f "$tempdir/$walfiles[0]",

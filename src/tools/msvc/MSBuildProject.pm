@@ -65,17 +65,21 @@ EOF
 
 	$self->WriteItemDefinitionGroup(
 		$f, 'Debug',
-		{   defs    => "_DEBUG;DEBUG=1",
+		{
+			defs    => "_DEBUG;DEBUG=1",
 			opt     => 'Disabled',
 			strpool => 'false',
-			runtime => 'MultiThreadedDebugDLL' });
+			runtime => 'MultiThreadedDebugDLL'
+		});
 	$self->WriteItemDefinitionGroup(
 		$f,
 		'Release',
-		{   defs    => "",
+		{
+			defs    => "",
 			opt     => 'Full',
 			strpool => 'true',
-			runtime => 'MultiThreadedDLL' });
+			runtime => 'MultiThreadedDLL'
+		});
 }
 
 sub AddDefine

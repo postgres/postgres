@@ -43,7 +43,8 @@ sub test_connect_ok
 	my $cmd = [
 		'psql', '-X', '-A', '-t', '-c',
 		"SELECT \$\$connected with $connstr\$\$",
-		'-d', "$common_connstr $connstr" ];
+		'-d', "$common_connstr $connstr"
+	];
 
 	command_ok($cmd, $test_name);
 }
@@ -55,7 +56,8 @@ sub test_connect_fails
 	my $cmd = [
 		'psql', '-X', '-A', '-t', '-c',
 		"SELECT \$\$connected with $connstr\$\$",
-		'-d', "$common_connstr $connstr" ];
+		'-d', "$common_connstr $connstr"
+	];
 
 	command_fails_like($cmd, $expected_stderr, $test_name);
 }

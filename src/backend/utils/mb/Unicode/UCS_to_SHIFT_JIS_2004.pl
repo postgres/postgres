@@ -33,13 +33,15 @@ while (my $line = <$in>)
 		my $ucs2 = hex($u2);
 
 		push @mapping,
-		  { code       => $code,
+		  {
+			code       => $code,
 			ucs        => $ucs1,
 			ucs_second => $ucs2,
 			comment    => $rest,
 			direction  => BOTH,
 			f          => $in_file,
-			l          => $. };
+			l          => $.
+		  };
 	}
 	elsif ($line =~ /^0x(.*)[ \t]*U\+(.*)[ \t]*#(.*)$/)
 	{
@@ -68,12 +70,14 @@ while (my $line = <$in>)
 		}
 
 		push @mapping,
-		  { code      => $code,
+		  {
+			code      => $code,
 			ucs       => $ucs,
 			comment   => $rest,
 			direction => $direction,
 			f         => $in_file,
-			l         => $. };
+			l         => $.
+		  };
 	}
 }
 close($in);

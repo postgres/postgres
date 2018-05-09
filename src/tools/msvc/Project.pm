@@ -16,7 +16,8 @@ sub _new
 	my $good_types = {
 		lib => 1,
 		exe => 1,
-		dll => 1, };
+		dll => 1,
+	};
 	confess("Bad project type: $type\n") unless exists $good_types->{$type};
 	my $self = {
 		name                  => $name,
@@ -32,7 +33,8 @@ sub _new
 		solution              => $solution,
 		disablewarnings       => '4018;4244;4273;4102;4090;4267',
 		disablelinkerwarnings => '',
-		platform              => $solution->{platform}, };
+		platform              => $solution->{platform},
+	};
 
 	bless($self, $classname);
 	return $self;
