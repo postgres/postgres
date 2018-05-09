@@ -1,4 +1,4 @@
-# version 2018d
+# version 2018e
 # This zic input file is in the public domain.
 R A 1916 o - Jun 14 23s 1 S
 R A 1916 1919 - O Sun>=1 23s 0 -
@@ -213,17 +213,15 @@ Li Africa/Maputo Africa/Harare
 Li Africa/Maputo Africa/Kigali
 Li Africa/Maputo Africa/Lubumbashi
 Li Africa/Maputo Africa/Lusaka
-R G 1994 o - Mar 21 0 0 -
-R G 1994 2016 - S Sun>=1 2 1 S
-R G 1995 2017 - Ap Sun>=1 2 0 -
+R G 1994 o - Mar 21 0 -1 WAT
+R G 1994 2017 - S Sun>=1 2 0 CAT
+R G 1995 2017 - Ap Sun>=1 2 -1 WAT
 Z Africa/Windhoek 1:8:24 - LMT 1892 F 8
 1:30 - +0130 1903 Mar
 2 - SAST 1942 S 20 2
 2 1 SAST 1943 Mar 21 2
 2 - SAST 1990 Mar 21
-2 - CAT 1994 Mar 21
-1 G WA%sT 2017 S 3 2
-2 - CAT
+2 G %s
 Z Africa/Lagos 0:13:36 - LMT 1919 S
 1 - WAT
 Li Africa/Lagos Africa/Bangui
@@ -788,7 +786,8 @@ Z Asia/Pyongyang 8:23 - LMT 1908 Ap
 8:30 - KST 1912
 9 - JST 1945 Au 24
 9 - KST 2015 Au 15
-8:30 - KST
+8:30 - KST 2018 May 5
+9 - KST
 R e 1920 o - Mar 28 0 1 S
 R e 1920 o - O 25 0 0 -
 R e 1921 o - Ap 3 0 1 S
@@ -1424,6 +1423,13 @@ Z Europe/London -0:1:15 - LMT 1847 D 1 0s
 Li Europe/London Europe/Jersey
 Li Europe/London Europe/Guernsey
 Li Europe/London Europe/Isle_of_Man
+R & 1971 o - O 31 2u -1 -
+R & 1972 1980 - Mar Sun>=16 2u 0 -
+R & 1972 1980 - O Sun>=23 2u -1 -
+R & 1981 ma - Mar lastSun 1u 0 -
+R & 1981 1989 - O Sun>=23 1u -1 -
+R & 1990 1995 - O Sun>=22 1u -1 -
+R & 1996 ma - O lastSun 1u -1 -
 Z Europe/Dublin -0:25 - LMT 1880 Au 2
 -0:25:21 - DMT 1916 May 21 2s
 -0:25:21 1 IST 1916 O 1 2s
@@ -1434,38 +1440,36 @@ Z Europe/Dublin -0:25 - LMT 1880 Au 2
 0 1 IST 1947 N 2 2s
 0 - GMT 1948 Ap 18 2s
 0 % GMT/IST 1968 O 27
-1 - IST 1971 O 31 2u
-0 % GMT/IST 1996
-0 O GMT/IST
+1 & IST/GMT
 R O 1977 1980 - Ap Sun>=1 1u 1 S
 R O 1977 o - S lastSun 1u 0 -
 R O 1978 o - O 1 1u 0 -
 R O 1979 1995 - S lastSun 1u 0 -
 R O 1981 ma - Mar lastSun 1u 1 S
 R O 1996 ma - O lastSun 1u 0 -
-R & 1977 1980 - Ap Sun>=1 1s 1 S
-R & 1977 o - S lastSun 1s 0 -
-R & 1978 o - O 1 1s 0 -
-R & 1979 1995 - S lastSun 1s 0 -
-R & 1981 ma - Mar lastSun 1s 1 S
-R & 1996 ma - O lastSun 1s 0 -
-R ' 1916 o - Ap 30 23 1 S
-R ' 1916 o - O 1 1 0 -
-R ' 1917 1918 - Ap M>=15 2s 1 S
-R ' 1917 1918 - S M>=15 2s 0 -
-R ' 1940 o - Ap 1 2s 1 S
-R ' 1942 o - N 2 2s 0 -
-R ' 1943 o - Mar 29 2s 1 S
-R ' 1943 o - O 4 2s 0 -
-R ' 1944 1945 - Ap M>=1 2s 1 S
-R ' 1944 o - O 2 2s 0 -
-R ' 1945 o - S 16 2s 0 -
-R ' 1977 1980 - Ap Sun>=1 2s 1 S
-R ' 1977 o - S lastSun 2s 0 -
-R ' 1978 o - O 1 2s 0 -
-R ' 1979 1995 - S lastSun 2s 0 -
-R ' 1981 ma - Mar lastSun 2s 1 S
-R ' 1996 ma - O lastSun 2s 0 -
+R ' 1977 1980 - Ap Sun>=1 1s 1 S
+R ' 1977 o - S lastSun 1s 0 -
+R ' 1978 o - O 1 1s 0 -
+R ' 1979 1995 - S lastSun 1s 0 -
+R ' 1981 ma - Mar lastSun 1s 1 S
+R ' 1996 ma - O lastSun 1s 0 -
+R ( 1916 o - Ap 30 23 1 S
+R ( 1916 o - O 1 1 0 -
+R ( 1917 1918 - Ap M>=15 2s 1 S
+R ( 1917 1918 - S M>=15 2s 0 -
+R ( 1940 o - Ap 1 2s 1 S
+R ( 1942 o - N 2 2s 0 -
+R ( 1943 o - Mar 29 2s 1 S
+R ( 1943 o - O 4 2s 0 -
+R ( 1944 1945 - Ap M>=1 2s 1 S
+R ( 1944 o - O 2 2s 0 -
+R ( 1945 o - S 16 2s 0 -
+R ( 1977 1980 - Ap Sun>=1 2s 1 S
+R ( 1977 o - S lastSun 2s 0 -
+R ( 1978 o - O 1 2s 0 -
+R ( 1979 1995 - S lastSun 2s 0 -
+R ( 1981 ma - Mar lastSun 2s 1 S
+R ( 1996 ma - O lastSun 2s 0 -
 R W 1977 1980 - Ap Sun>=1 0 1 S
 R W 1977 o - S lastSun 0 0 -
 R W 1978 o - O 1 0 0 -
@@ -1489,387 +1493,388 @@ R M 1984 1995 - S lastSun 2s 0 -
 R M 1985 2010 - Mar lastSun 2s 1 S
 R M 1996 2010 - O lastSun 2s 0 -
 Z WET 0 O WE%sT
-Z CET 1 ' CE%sT
-Z MET 1 ' ME%sT
+Z CET 1 ( CE%sT
+Z MET 1 ( ME%sT
 Z EET 2 O EE%sT
-R ( 1940 o - Jun 16 0 1 S
-R ( 1942 o - N 2 3 0 -
-R ( 1943 o - Mar 29 2 1 S
-R ( 1943 o - Ap 10 3 0 -
-R ( 1974 o - May 4 0 1 S
-R ( 1974 o - O 2 0 0 -
-R ( 1975 o - May 1 0 1 S
-R ( 1975 o - O 2 0 0 -
-R ( 1976 o - May 2 0 1 S
-R ( 1976 o - O 3 0 0 -
-R ( 1977 o - May 8 0 1 S
-R ( 1977 o - O 2 0 0 -
-R ( 1978 o - May 6 0 1 S
-R ( 1978 o - O 1 0 0 -
-R ( 1979 o - May 5 0 1 S
-R ( 1979 o - S 30 0 0 -
-R ( 1980 o - May 3 0 1 S
-R ( 1980 o - O 4 0 0 -
-R ( 1981 o - Ap 26 0 1 S
-R ( 1981 o - S 27 0 0 -
-R ( 1982 o - May 2 0 1 S
-R ( 1982 o - O 3 0 0 -
-R ( 1983 o - Ap 18 0 1 S
-R ( 1983 o - O 1 0 0 -
-R ( 1984 o - Ap 1 0 1 S
+R ) 1940 o - Jun 16 0 1 S
+R ) 1942 o - N 2 3 0 -
+R ) 1943 o - Mar 29 2 1 S
+R ) 1943 o - Ap 10 3 0 -
+R ) 1974 o - May 4 0 1 S
+R ) 1974 o - O 2 0 0 -
+R ) 1975 o - May 1 0 1 S
+R ) 1975 o - O 2 0 0 -
+R ) 1976 o - May 2 0 1 S
+R ) 1976 o - O 3 0 0 -
+R ) 1977 o - May 8 0 1 S
+R ) 1977 o - O 2 0 0 -
+R ) 1978 o - May 6 0 1 S
+R ) 1978 o - O 1 0 0 -
+R ) 1979 o - May 5 0 1 S
+R ) 1979 o - S 30 0 0 -
+R ) 1980 o - May 3 0 1 S
+R ) 1980 o - O 4 0 0 -
+R ) 1981 o - Ap 26 0 1 S
+R ) 1981 o - S 27 0 0 -
+R ) 1982 o - May 2 0 1 S
+R ) 1982 o - O 3 0 0 -
+R ) 1983 o - Ap 18 0 1 S
+R ) 1983 o - O 1 0 0 -
+R ) 1984 o - Ap 1 0 1 S
 Z Europe/Tirane 1:19:20 - LMT 1914
 1 - CET 1940 Jun 16
-1 ( CE%sT 1984 Jul
+1 ) CE%sT 1984 Jul
 1 O CE%sT
 Z Europe/Andorra 0:6:4 - LMT 1901
 0 - WET 1946 S 30
 1 - CET 1985 Mar 31 2
 1 O CE%sT
-R ) 1920 o - Ap 5 2s 1 S
-R ) 1920 o - S 13 2s 0 -
-R ) 1946 o - Ap 14 2s 1 S
-R ) 1946 1948 - O Sun>=1 2s 0 -
-R ) 1947 o - Ap 6 2s 1 S
-R ) 1948 o - Ap 18 2s 1 S
-R ) 1980 o - Ap 6 0 1 S
-R ) 1980 o - S 28 0 0 -
+R * 1920 o - Ap 5 2s 1 S
+R * 1920 o - S 13 2s 0 -
+R * 1946 o - Ap 14 2s 1 S
+R * 1946 1948 - O Sun>=1 2s 0 -
+R * 1947 o - Ap 6 2s 1 S
+R * 1948 o - Ap 18 2s 1 S
+R * 1980 o - Ap 6 0 1 S
+R * 1980 o - S 28 0 0 -
 Z Europe/Vienna 1:5:21 - LMT 1893 Ap
-1 ' CE%sT 1920
-1 ) CE%sT 1940 Ap 1 2s
-1 ' CE%sT 1945 Ap 2 2s
+1 ( CE%sT 1920
+1 * CE%sT 1940 Ap 1 2s
+1 ( CE%sT 1945 Ap 2 2s
 1 1 CEST 1945 Ap 12 2s
 1 - CET 1946
-1 ) CE%sT 1981
+1 * CE%sT 1981
 1 O CE%sT
 Z Europe/Minsk 1:50:16 - LMT 1880
 1:50 - MMT 1924 May 2
 2 - EET 1930 Jun 21
 3 - MSK 1941 Jun 28
-1 ' CE%sT 1944 Jul 3
+1 ( CE%sT 1944 Jul 3
 3 M MSK/MSD 1990
 3 - MSK 1991 Mar 31 2s
 2 M EE%sT 2011 Mar 27 2s
 3 - +03
-R * 1918 o - Mar 9 0s 1 S
-R * 1918 1919 - O Sat>=1 23s 0 -
-R * 1919 o - Mar 1 23s 1 S
-R * 1920 o - F 14 23s 1 S
-R * 1920 o - O 23 23s 0 -
-R * 1921 o - Mar 14 23s 1 S
-R * 1921 o - O 25 23s 0 -
-R * 1922 o - Mar 25 23s 1 S
-R * 1922 1927 - O Sat>=1 23s 0 -
-R * 1923 o - Ap 21 23s 1 S
-R * 1924 o - Mar 29 23s 1 S
-R * 1925 o - Ap 4 23s 1 S
-R * 1926 o - Ap 17 23s 1 S
-R * 1927 o - Ap 9 23s 1 S
-R * 1928 o - Ap 14 23s 1 S
-R * 1928 1938 - O Sun>=2 2s 0 -
-R * 1929 o - Ap 21 2s 1 S
-R * 1930 o - Ap 13 2s 1 S
-R * 1931 o - Ap 19 2s 1 S
-R * 1932 o - Ap 3 2s 1 S
-R * 1933 o - Mar 26 2s 1 S
-R * 1934 o - Ap 8 2s 1 S
-R * 1935 o - Mar 31 2s 1 S
-R * 1936 o - Ap 19 2s 1 S
-R * 1937 o - Ap 4 2s 1 S
-R * 1938 o - Mar 27 2s 1 S
-R * 1939 o - Ap 16 2s 1 S
-R * 1939 o - N 19 2s 0 -
-R * 1940 o - F 25 2s 1 S
-R * 1944 o - S 17 2s 0 -
-R * 1945 o - Ap 2 2s 1 S
-R * 1945 o - S 16 2s 0 -
-R * 1946 o - May 19 2s 1 S
-R * 1946 o - O 7 2s 0 -
+R + 1918 o - Mar 9 0s 1 S
+R + 1918 1919 - O Sat>=1 23s 0 -
+R + 1919 o - Mar 1 23s 1 S
+R + 1920 o - F 14 23s 1 S
+R + 1920 o - O 23 23s 0 -
+R + 1921 o - Mar 14 23s 1 S
+R + 1921 o - O 25 23s 0 -
+R + 1922 o - Mar 25 23s 1 S
+R + 1922 1927 - O Sat>=1 23s 0 -
+R + 1923 o - Ap 21 23s 1 S
+R + 1924 o - Mar 29 23s 1 S
+R + 1925 o - Ap 4 23s 1 S
+R + 1926 o - Ap 17 23s 1 S
+R + 1927 o - Ap 9 23s 1 S
+R + 1928 o - Ap 14 23s 1 S
+R + 1928 1938 - O Sun>=2 2s 0 -
+R + 1929 o - Ap 21 2s 1 S
+R + 1930 o - Ap 13 2s 1 S
+R + 1931 o - Ap 19 2s 1 S
+R + 1932 o - Ap 3 2s 1 S
+R + 1933 o - Mar 26 2s 1 S
+R + 1934 o - Ap 8 2s 1 S
+R + 1935 o - Mar 31 2s 1 S
+R + 1936 o - Ap 19 2s 1 S
+R + 1937 o - Ap 4 2s 1 S
+R + 1938 o - Mar 27 2s 1 S
+R + 1939 o - Ap 16 2s 1 S
+R + 1939 o - N 19 2s 0 -
+R + 1940 o - F 25 2s 1 S
+R + 1944 o - S 17 2s 0 -
+R + 1945 o - Ap 2 2s 1 S
+R + 1945 o - S 16 2s 0 -
+R + 1946 o - May 19 2s 1 S
+R + 1946 o - O 7 2s 0 -
 Z Europe/Brussels 0:17:30 - LMT 1880
 0:17:30 - BMT 1892 May 1 12
 0 - WET 1914 N 8
 1 - CET 1916 May
-1 ' CE%sT 1918 N 11 11u
-0 * WE%sT 1940 May 20 2s
-1 ' CE%sT 1944 S 3
-1 * CE%sT 1977
+1 ( CE%sT 1918 N 11 11u
+0 + WE%sT 1940 May 20 2s
+1 ( CE%sT 1944 S 3
+1 + CE%sT 1977
 1 O CE%sT
-R + 1979 o - Mar 31 23 1 S
-R + 1979 o - O 1 1 0 -
-R + 1980 1982 - Ap Sat>=1 23 1 S
-R + 1980 o - S 29 1 0 -
-R + 1981 o - S 27 2 0 -
+R , 1979 o - Mar 31 23 1 S
+R , 1979 o - O 1 1 0 -
+R , 1980 1982 - Ap Sat>=1 23 1 S
+R , 1980 o - S 29 1 0 -
+R , 1981 o - S 27 2 0 -
 Z Europe/Sofia 1:33:16 - LMT 1880
 1:56:56 - IMT 1894 N 30
 2 - EET 1942 N 2 3
-1 ' CE%sT 1945
+1 ( CE%sT 1945
 1 - CET 1945 Ap 2 3
 2 - EET 1979 Mar 31 23
-2 + EE%sT 1982 S 26 3
-2 ' EE%sT 1991
+2 , EE%sT 1982 S 26 3
+2 ( EE%sT 1991
 2 W EE%sT 1997
 2 O EE%sT
-R , 1945 o - Ap 8 2s 1 S
-R , 1945 o - N 18 2s 0 -
-R , 1946 o - May 6 2s 1 S
-R , 1946 1949 - O Sun>=1 2s 0 -
-R , 1947 o - Ap 20 2s 1 S
-R , 1948 o - Ap 18 2s 1 S
-R , 1949 o - Ap 9 2s 1 S
+R . 1945 o - Ap M>=1 2s 1 S
+R . 1945 o - O 1 2s 0 -
+R . 1946 o - May 6 2s 1 S
+R . 1946 1949 - O Sun>=1 2s 0 -
+R . 1947 1948 - Ap Sun>=15 2s 1 S
+R . 1949 o - Ap 9 2s 1 S
 Z Europe/Prague 0:57:44 - LMT 1850
 0:57:44 - PMT 1891 O
-1 ' CE%sT 1944 S 17 2s
-1 , CE%sT 1979
+1 ( CE%sT 1945 May 9
+1 . CE%sT 1946 D 1 3
+1 -1 GMT 1947 F 23 2
+1 . CE%sT 1979
 1 O CE%sT
-R . 1916 o - May 14 23 1 S
-R . 1916 o - S 30 23 0 -
-R . 1940 o - May 15 0 1 S
-R . 1945 o - Ap 2 2s 1 S
-R . 1945 o - Au 15 2s 0 -
-R . 1946 o - May 1 2s 1 S
-R . 1946 o - S 1 2s 0 -
-R . 1947 o - May 4 2s 1 S
-R . 1947 o - Au 10 2s 0 -
-R . 1948 o - May 9 2s 1 S
-R . 1948 o - Au 8 2s 0 -
+R / 1916 o - May 14 23 1 S
+R / 1916 o - S 30 23 0 -
+R / 1940 o - May 15 0 1 S
+R / 1945 o - Ap 2 2s 1 S
+R / 1945 o - Au 15 2s 0 -
+R / 1946 o - May 1 2s 1 S
+R / 1946 o - S 1 2s 0 -
+R / 1947 o - May 4 2s 1 S
+R / 1947 o - Au 10 2s 0 -
+R / 1948 o - May 9 2s 1 S
+R / 1948 o - Au 8 2s 0 -
 Z Europe/Copenhagen 0:50:20 - LMT 1890
 0:50:20 - CMT 1894
-1 . CE%sT 1942 N 2 2s
-1 ' CE%sT 1945 Ap 2 2
-1 . CE%sT 1980
+1 / CE%sT 1942 N 2 2s
+1 ( CE%sT 1945 Ap 2 2
+1 / CE%sT 1980
 1 O CE%sT
 Z Atlantic/Faroe -0:27:4 - LMT 1908 Ja 11
 0 - WET 1981
 0 O WE%sT
-R / 1991 1992 - Mar lastSun 2 1 D
-R / 1991 1992 - S lastSun 2 0 S
-R / 1993 2006 - Ap Sun>=1 2 1 D
-R / 1993 2006 - O lastSun 2 0 S
-R / 2007 ma - Mar Sun>=8 2 1 D
-R / 2007 ma - N Sun>=1 2 0 S
+R : 1991 1992 - Mar lastSun 2 1 D
+R : 1991 1992 - S lastSun 2 0 S
+R : 1993 2006 - Ap Sun>=1 2 1 D
+R : 1993 2006 - O lastSun 2 0 S
+R : 2007 ma - Mar Sun>=8 2 1 D
+R : 2007 ma - N Sun>=1 2 0 S
 Z America/Danmarkshavn -1:14:40 - LMT 1916 Jul 28
 -3 - -03 1980 Ap 6 2
 -3 O -03/-02 1996
 0 - GMT
 Z America/Scoresbysund -1:27:52 - LMT 1916 Jul 28
 -2 - -02 1980 Ap 6 2
--2 ' -02/-01 1981 Mar 29
+-2 ( -02/-01 1981 Mar 29
 -1 O -01/+00
 Z America/Godthab -3:26:56 - LMT 1916 Jul 28
 -3 - -03 1980 Ap 6 2
 -3 O -03/-02
 Z America/Thule -4:35:8 - LMT 1916 Jul 28
--4 / A%sT
+-4 : A%sT
 Z Europe/Tallinn 1:39 - LMT 1880
 1:39 - TMT 1918 F
-1 ' CE%sT 1919 Jul
+1 ( CE%sT 1919 Jul
 1:39 - TMT 1921 May
 2 - EET 1940 Au 6
 3 - MSK 1941 S 15
-1 ' CE%sT 1944 S 22
+1 ( CE%sT 1944 S 22
 3 M MSK/MSD 1989 Mar 26 2s
 2 1 EEST 1989 S 24 2s
-2 ' EE%sT 1998 S 22
+2 ( EE%sT 1998 S 22
 2 O EE%sT 1999 O 31 4
 2 - EET 2002 F 21
 2 O EE%sT
-R : 1942 o - Ap 2 24 1 S
-R : 1942 o - O 4 1 0 -
-R : 1981 1982 - Mar lastSun 2 1 S
-R : 1981 1982 - S lastSun 3 0 -
+R ; 1942 o - Ap 2 24 1 S
+R ; 1942 o - O 4 1 0 -
+R ; 1981 1982 - Mar lastSun 2 1 S
+R ; 1981 1982 - S lastSun 3 0 -
 Z Europe/Helsinki 1:39:49 - LMT 1878 May 31
 1:39:49 - HMT 1921 May
-2 : EE%sT 1983
+2 ; EE%sT 1983
 2 O EE%sT
 Li Europe/Helsinki Europe/Mariehamn
-R ; 1916 o - Jun 14 23s 1 S
-R ; 1916 1919 - O Sun>=1 23s 0 -
-R ; 1917 o - Mar 24 23s 1 S
-R ; 1918 o - Mar 9 23s 1 S
-R ; 1919 o - Mar 1 23s 1 S
-R ; 1920 o - F 14 23s 1 S
-R ; 1920 o - O 23 23s 0 -
-R ; 1921 o - Mar 14 23s 1 S
-R ; 1921 o - O 25 23s 0 -
-R ; 1922 o - Mar 25 23s 1 S
-R ; 1922 1938 - O Sat>=1 23s 0 -
-R ; 1923 o - May 26 23s 1 S
-R ; 1924 o - Mar 29 23s 1 S
-R ; 1925 o - Ap 4 23s 1 S
-R ; 1926 o - Ap 17 23s 1 S
-R ; 1927 o - Ap 9 23s 1 S
-R ; 1928 o - Ap 14 23s 1 S
-R ; 1929 o - Ap 20 23s 1 S
-R ; 1930 o - Ap 12 23s 1 S
-R ; 1931 o - Ap 18 23s 1 S
-R ; 1932 o - Ap 2 23s 1 S
-R ; 1933 o - Mar 25 23s 1 S
-R ; 1934 o - Ap 7 23s 1 S
-R ; 1935 o - Mar 30 23s 1 S
-R ; 1936 o - Ap 18 23s 1 S
-R ; 1937 o - Ap 3 23s 1 S
-R ; 1938 o - Mar 26 23s 1 S
-R ; 1939 o - Ap 15 23s 1 S
-R ; 1939 o - N 18 23s 0 -
-R ; 1940 o - F 25 2 1 S
-R ; 1941 o - May 5 0 2 M
-R ; 1941 o - O 6 0 1 S
-R ; 1942 o - Mar 9 0 2 M
-R ; 1942 o - N 2 3 1 S
-R ; 1943 o - Mar 29 2 2 M
-R ; 1943 o - O 4 3 1 S
-R ; 1944 o - Ap 3 2 2 M
-R ; 1944 o - O 8 1 1 S
-R ; 1945 o - Ap 2 2 2 M
-R ; 1945 o - S 16 3 0 -
-R ; 1976 o - Mar 28 1 1 S
-R ; 1976 o - S 26 1 0 -
+R < 1916 o - Jun 14 23s 1 S
+R < 1916 1919 - O Sun>=1 23s 0 -
+R < 1917 o - Mar 24 23s 1 S
+R < 1918 o - Mar 9 23s 1 S
+R < 1919 o - Mar 1 23s 1 S
+R < 1920 o - F 14 23s 1 S
+R < 1920 o - O 23 23s 0 -
+R < 1921 o - Mar 14 23s 1 S
+R < 1921 o - O 25 23s 0 -
+R < 1922 o - Mar 25 23s 1 S
+R < 1922 1938 - O Sat>=1 23s 0 -
+R < 1923 o - May 26 23s 1 S
+R < 1924 o - Mar 29 23s 1 S
+R < 1925 o - Ap 4 23s 1 S
+R < 1926 o - Ap 17 23s 1 S
+R < 1927 o - Ap 9 23s 1 S
+R < 1928 o - Ap 14 23s 1 S
+R < 1929 o - Ap 20 23s 1 S
+R < 1930 o - Ap 12 23s 1 S
+R < 1931 o - Ap 18 23s 1 S
+R < 1932 o - Ap 2 23s 1 S
+R < 1933 o - Mar 25 23s 1 S
+R < 1934 o - Ap 7 23s 1 S
+R < 1935 o - Mar 30 23s 1 S
+R < 1936 o - Ap 18 23s 1 S
+R < 1937 o - Ap 3 23s 1 S
+R < 1938 o - Mar 26 23s 1 S
+R < 1939 o - Ap 15 23s 1 S
+R < 1939 o - N 18 23s 0 -
+R < 1940 o - F 25 2 1 S
+R < 1941 o - May 5 0 2 M
+R < 1941 o - O 6 0 1 S
+R < 1942 o - Mar 9 0 2 M
+R < 1942 o - N 2 3 1 S
+R < 1943 o - Mar 29 2 2 M
+R < 1943 o - O 4 3 1 S
+R < 1944 o - Ap 3 2 2 M
+R < 1944 o - O 8 1 1 S
+R < 1945 o - Ap 2 2 2 M
+R < 1945 o - S 16 3 0 -
+R < 1976 o - Mar 28 1 1 S
+R < 1976 o - S 26 1 0 -
 Z Europe/Paris 0:9:21 - LMT 1891 Mar 15 0:1
 0:9:21 - PMT 1911 Mar 11 0:1
-0 ; WE%sT 1940 Jun 14 23
-1 ' CE%sT 1944 Au 25
-0 ; WE%sT 1945 S 16 3
-1 ; CE%sT 1977
+0 < WE%sT 1940 Jun 14 23
+1 ( CE%sT 1944 Au 25
+0 < WE%sT 1945 S 16 3
+1 < CE%sT 1977
 1 O CE%sT
-R < 1946 o - Ap 14 2s 1 S
-R < 1946 o - O 7 2s 0 -
-R < 1947 1949 - O Sun>=1 2s 0 -
-R < 1947 o - Ap 6 3s 1 S
-R < 1947 o - May 11 2s 2 M
-R < 1947 o - Jun 29 3 1 S
-R < 1948 o - Ap 18 2s 1 S
-R < 1949 o - Ap 10 2s 1 S
-R = 1945 o - May 24 2 2 M
-R = 1945 o - S 24 3 1 S
-R = 1945 o - N 18 2s 0 -
+R = 1946 o - Ap 14 2s 1 S
+R = 1946 o - O 7 2s 0 -
+R = 1947 1949 - O Sun>=1 2s 0 -
+R = 1947 o - Ap 6 3s 1 S
+R = 1947 o - May 11 2s 2 M
+R = 1947 o - Jun 29 3 1 S
+R = 1948 o - Ap 18 2s 1 S
+R = 1949 o - Ap 10 2s 1 S
+R > 1945 o - May 24 2 2 M
+R > 1945 o - S 24 3 1 S
+R > 1945 o - N 18 2s 0 -
 Z Europe/Berlin 0:53:28 - LMT 1893 Ap
-1 ' CE%sT 1945 May 24 2
-1 = CE%sT 1946
-1 < CE%sT 1980
+1 ( CE%sT 1945 May 24 2
+1 > CE%sT 1946
+1 = CE%sT 1980
 1 O CE%sT
 Li Europe/Zurich Europe/Busingen
 Z Europe/Gibraltar -0:21:24 - LMT 1880 Au 2 0s
 0 % %s 1957 Ap 14 2
 1 - CET 1982
 1 O CE%sT
-R > 1932 o - Jul 7 0 1 S
-R > 1932 o - S 1 0 0 -
-R > 1941 o - Ap 7 0 1 S
-R > 1942 o - N 2 3 0 -
-R > 1943 o - Mar 30 0 1 S
-R > 1943 o - O 4 0 0 -
-R > 1952 o - Jul 1 0 1 S
-R > 1952 o - N 2 0 0 -
-R > 1975 o - Ap 12 0s 1 S
-R > 1975 o - N 26 0s 0 -
-R > 1976 o - Ap 11 2s 1 S
-R > 1976 o - O 10 2s 0 -
-R > 1977 1978 - Ap Sun>=1 2s 1 S
-R > 1977 o - S 26 2s 0 -
-R > 1978 o - S 24 4 0 -
-R > 1979 o - Ap 1 9 1 S
-R > 1979 o - S 29 2 0 -
-R > 1980 o - Ap 1 0 1 S
-R > 1980 o - S 28 0 0 -
+R ? 1932 o - Jul 7 0 1 S
+R ? 1932 o - S 1 0 0 -
+R ? 1941 o - Ap 7 0 1 S
+R ? 1942 o - N 2 3 0 -
+R ? 1943 o - Mar 30 0 1 S
+R ? 1943 o - O 4 0 0 -
+R ? 1952 o - Jul 1 0 1 S
+R ? 1952 o - N 2 0 0 -
+R ? 1975 o - Ap 12 0s 1 S
+R ? 1975 o - N 26 0s 0 -
+R ? 1976 o - Ap 11 2s 1 S
+R ? 1976 o - O 10 2s 0 -
+R ? 1977 1978 - Ap Sun>=1 2s 1 S
+R ? 1977 o - S 26 2s 0 -
+R ? 1978 o - S 24 4 0 -
+R ? 1979 o - Ap 1 9 1 S
+R ? 1979 o - S 29 2 0 -
+R ? 1980 o - Ap 1 0 1 S
+R ? 1980 o - S 28 0 0 -
 Z Europe/Athens 1:34:52 - LMT 1895 S 14
 1:34:52 - AMT 1916 Jul 28 0:1
-2 > EE%sT 1941 Ap 30
-1 > CE%sT 1944 Ap 4
-2 > EE%sT 1981
+2 ? EE%sT 1941 Ap 30
+1 ? CE%sT 1944 Ap 4
+2 ? EE%sT 1981
 2 O EE%sT
-R ? 1918 o - Ap 1 3 1 S
-R ? 1918 o - S 16 3 0 -
-R ? 1919 o - Ap 15 3 1 S
-R ? 1919 o - N 24 3 0 -
-R ? 1945 o - May 1 23 1 S
-R ? 1945 o - N 1 0 0 -
-R ? 1946 o - Mar 31 2s 1 S
-R ? 1946 1949 - O Sun>=1 2s 0 -
-R ? 1947 1949 - Ap Sun>=4 2s 1 S
-R ? 1950 o - Ap 17 2s 1 S
-R ? 1950 o - O 23 2s 0 -
-R ? 1954 1955 - May 23 0 1 S
-R ? 1954 1955 - O 3 0 0 -
-R ? 1956 o - Jun Sun>=1 0 1 S
-R ? 1956 o - S lastSun 0 0 -
-R ? 1957 o - Jun Sun>=1 1 1 S
-R ? 1957 o - S lastSun 3 0 -
-R ? 1980 o - Ap 6 1 1 S
+R @ 1918 o - Ap 1 3 1 S
+R @ 1918 o - S 16 3 0 -
+R @ 1919 o - Ap 15 3 1 S
+R @ 1919 o - N 24 3 0 -
+R @ 1945 o - May 1 23 1 S
+R @ 1945 o - N 1 0 0 -
+R @ 1946 o - Mar 31 2s 1 S
+R @ 1946 1949 - O Sun>=1 2s 0 -
+R @ 1947 1949 - Ap Sun>=4 2s 1 S
+R @ 1950 o - Ap 17 2s 1 S
+R @ 1950 o - O 23 2s 0 -
+R @ 1954 1955 - May 23 0 1 S
+R @ 1954 1955 - O 3 0 0 -
+R @ 1956 o - Jun Sun>=1 0 1 S
+R @ 1956 o - S lastSun 0 0 -
+R @ 1957 o - Jun Sun>=1 1 1 S
+R @ 1957 o - S lastSun 3 0 -
+R @ 1980 o - Ap 6 1 1 S
 Z Europe/Budapest 1:16:20 - LMT 1890 O
-1 ' CE%sT 1918
-1 ? CE%sT 1941 Ap 8
-1 ' CE%sT 1945
-1 ? CE%sT 1980 S 28 2s
+1 ( CE%sT 1918
+1 @ CE%sT 1941 Ap 8
+1 ( CE%sT 1945
+1 @ CE%sT 1980 S 28 2s
 1 O CE%sT
-R @ 1917 1919 - F 19 23 1 -
-R @ 1917 o - O 21 1 0 -
-R @ 1918 1919 - N 16 1 0 -
-R @ 1921 o - Mar 19 23 1 -
-R @ 1921 o - Jun 23 1 0 -
-R @ 1939 o - Ap 29 23 1 -
-R @ 1939 o - O 29 2 0 -
-R @ 1940 o - F 25 2 1 -
-R @ 1940 1941 - N Sun>=2 1s 0 -
-R @ 1941 1942 - Mar Sun>=2 1s 1 -
-R @ 1943 1946 - Mar Sun>=1 1s 1 -
-R @ 1942 1948 - O Sun>=22 1s 0 -
-R @ 1947 1967 - Ap Sun>=1 1s 1 -
-R @ 1949 o - O 30 1s 0 -
-R @ 1950 1966 - O Sun>=22 1s 0 -
-R @ 1967 o - O 29 1s 0 -
+R [ 1917 1919 - F 19 23 1 -
+R [ 1917 o - O 21 1 0 -
+R [ 1918 1919 - N 16 1 0 -
+R [ 1921 o - Mar 19 23 1 -
+R [ 1921 o - Jun 23 1 0 -
+R [ 1939 o - Ap 29 23 1 -
+R [ 1939 o - O 29 2 0 -
+R [ 1940 o - F 25 2 1 -
+R [ 1940 1941 - N Sun>=2 1s 0 -
+R [ 1941 1942 - Mar Sun>=2 1s 1 -
+R [ 1943 1946 - Mar Sun>=1 1s 1 -
+R [ 1942 1948 - O Sun>=22 1s 0 -
+R [ 1947 1967 - Ap Sun>=1 1s 1 -
+R [ 1949 o - O 30 1s 0 -
+R [ 1950 1966 - O Sun>=22 1s 0 -
+R [ 1967 o - O 29 1s 0 -
 Z Atlantic/Reykjavik -1:28 - LMT 1908
--1 @ -01/+00 1968 Ap 7 1s
+-1 [ -01/+00 1968 Ap 7 1s
 0 - GMT
-R [ 1916 o - Jun 3 24 1 S
-R [ 1916 1917 - S 30 24 0 -
-R [ 1917 o - Mar 31 24 1 S
-R [ 1918 o - Mar 9 24 1 S
-R [ 1918 o - O 6 24 0 -
-R [ 1919 o - Mar 1 24 1 S
-R [ 1919 o - O 4 24 0 -
-R [ 1920 o - Mar 20 24 1 S
-R [ 1920 o - S 18 24 0 -
-R [ 1940 o - Jun 14 24 1 S
-R [ 1942 o - N 2 2s 0 -
-R [ 1943 o - Mar 29 2s 1 S
-R [ 1943 o - O 4 2s 0 -
-R [ 1944 o - Ap 2 2s 1 S
-R [ 1944 o - S 17 2s 0 -
-R [ 1945 o - Ap 2 2 1 S
-R [ 1945 o - S 15 1 0 -
-R [ 1946 o - Mar 17 2s 1 S
-R [ 1946 o - O 6 2s 0 -
-R [ 1947 o - Mar 16 0s 1 S
-R [ 1947 o - O 5 0s 0 -
-R [ 1948 o - F 29 2s 1 S
-R [ 1948 o - O 3 2s 0 -
-R [ 1966 1968 - May Sun>=22 0s 1 S
-R [ 1966 o - S 24 24 0 -
-R [ 1967 1969 - S Sun>=22 0s 0 -
-R [ 1969 o - Jun 1 0s 1 S
-R [ 1970 o - May 31 0s 1 S
-R [ 1970 o - S lastSun 0s 0 -
-R [ 1971 1972 - May Sun>=22 0s 1 S
-R [ 1971 o - S lastSun 0s 0 -
-R [ 1972 o - O 1 0s 0 -
-R [ 1973 o - Jun 3 0s 1 S
-R [ 1973 1974 - S lastSun 0s 0 -
-R [ 1974 o - May 26 0s 1 S
-R [ 1975 o - Jun 1 0s 1 S
-R [ 1975 1977 - S lastSun 0s 0 -
-R [ 1976 o - May 30 0s 1 S
-R [ 1977 1979 - May Sun>=22 0s 1 S
-R [ 1978 o - O 1 0s 0 -
-R [ 1979 o - S 30 0s 0 -
+R \ 1916 o - Jun 3 24 1 S
+R \ 1916 1917 - S 30 24 0 -
+R \ 1917 o - Mar 31 24 1 S
+R \ 1918 o - Mar 9 24 1 S
+R \ 1918 o - O 6 24 0 -
+R \ 1919 o - Mar 1 24 1 S
+R \ 1919 o - O 4 24 0 -
+R \ 1920 o - Mar 20 24 1 S
+R \ 1920 o - S 18 24 0 -
+R \ 1940 o - Jun 14 24 1 S
+R \ 1942 o - N 2 2s 0 -
+R \ 1943 o - Mar 29 2s 1 S
+R \ 1943 o - O 4 2s 0 -
+R \ 1944 o - Ap 2 2s 1 S
+R \ 1944 o - S 17 2s 0 -
+R \ 1945 o - Ap 2 2 1 S
+R \ 1945 o - S 15 1 0 -
+R \ 1946 o - Mar 17 2s 1 S
+R \ 1946 o - O 6 2s 0 -
+R \ 1947 o - Mar 16 0s 1 S
+R \ 1947 o - O 5 0s 0 -
+R \ 1948 o - F 29 2s 1 S
+R \ 1948 o - O 3 2s 0 -
+R \ 1966 1968 - May Sun>=22 0s 1 S
+R \ 1966 o - S 24 24 0 -
+R \ 1967 1969 - S Sun>=22 0s 0 -
+R \ 1969 o - Jun 1 0s 1 S
+R \ 1970 o - May 31 0s 1 S
+R \ 1970 o - S lastSun 0s 0 -
+R \ 1971 1972 - May Sun>=22 0s 1 S
+R \ 1971 o - S lastSun 0s 0 -
+R \ 1972 o - O 1 0s 0 -
+R \ 1973 o - Jun 3 0s 1 S
+R \ 1973 1974 - S lastSun 0s 0 -
+R \ 1974 o - May 26 0s 1 S
+R \ 1975 o - Jun 1 0s 1 S
+R \ 1975 1977 - S lastSun 0s 0 -
+R \ 1976 o - May 30 0s 1 S
+R \ 1977 1979 - May Sun>=22 0s 1 S
+R \ 1978 o - O 1 0s 0 -
+R \ 1979 o - S 30 0s 0 -
 Z Europe/Rome 0:49:56 - LMT 1866 S 22
 0:49:56 - RMT 1893 O 31 23:49:56
-1 [ CE%sT 1943 S 10
-1 ' CE%sT 1944 Jun 4
-1 [ CE%sT 1980
+1 \ CE%sT 1943 S 10
+1 ( CE%sT 1944 Jun 4
+1 \ CE%sT 1980
 1 O CE%sT
 Li Europe/Rome Europe/Vatican
 Li Europe/Rome Europe/San_Marino
-R \ 1989 1996 - Mar lastSun 2s 1 S
-R \ 1989 1996 - S lastSun 2s 0 -
+R ] 1989 1996 - Mar lastSun 2s 1 S
+R ] 1989 1996 - S lastSun 2s 0 -
 Z Europe/Riga 1:36:34 - LMT 1880
 1:36:34 - RMT 1918 Ap 15 2
 1:36:34 1 LST 1918 S 16 3
@@ -1878,10 +1883,10 @@ Z Europe/Riga 1:36:34 - LMT 1880
 1:36:34 - RMT 1926 May 11
 2 - EET 1940 Au 5
 3 - MSK 1941 Jul
-1 ' CE%sT 1944 O 13
+1 ( CE%sT 1944 O 13
 3 M MSK/MSD 1989 Mar lastSun 2s
 2 1 EEST 1989 S lastSun 2s
-2 \ EE%sT 1997 Ja 21
+2 ] EE%sT 1997 Ja 21
 2 O EE%sT 2000 F 29
 2 - EET 2001 Ja 2
 2 O EE%sT
@@ -1893,245 +1898,245 @@ Z Europe/Vilnius 1:41:16 - LMT 1880
 2 - EET 1920 O 9
 1 - CET 1940 Au 3
 3 - MSK 1941 Jun 24
-1 ' CE%sT 1944 Au
+1 ( CE%sT 1944 Au
 3 M MSK/MSD 1989 Mar 26 2s
 2 M EE%sT 1991 S 29 2s
-2 ' EE%sT 1998
+2 ( EE%sT 1998
 2 - EET 1998 Mar 29 1u
 1 O CE%sT 1999 O 31 1u
 2 - EET 2003
 2 O EE%sT
-R ] 1916 o - May 14 23 1 S
-R ] 1916 o - O 1 1 0 -
-R ] 1917 o - Ap 28 23 1 S
-R ] 1917 o - S 17 1 0 -
-R ] 1918 o - Ap M>=15 2s 1 S
-R ] 1918 o - S M>=15 2s 0 -
-R ] 1919 o - Mar 1 23 1 S
-R ] 1919 o - O 5 3 0 -
-R ] 1920 o - F 14 23 1 S
-R ] 1920 o - O 24 2 0 -
-R ] 1921 o - Mar 14 23 1 S
-R ] 1921 o - O 26 2 0 -
-R ] 1922 o - Mar 25 23 1 S
-R ] 1922 o - O Sun>=2 1 0 -
-R ] 1923 o - Ap 21 23 1 S
-R ] 1923 o - O Sun>=2 2 0 -
-R ] 1924 o - Mar 29 23 1 S
-R ] 1924 1928 - O Sun>=2 1 0 -
-R ] 1925 o - Ap 5 23 1 S
-R ] 1926 o - Ap 17 23 1 S
-R ] 1927 o - Ap 9 23 1 S
-R ] 1928 o - Ap 14 23 1 S
-R ] 1929 o - Ap 20 23 1 S
+R ^ 1916 o - May 14 23 1 S
+R ^ 1916 o - O 1 1 0 -
+R ^ 1917 o - Ap 28 23 1 S
+R ^ 1917 o - S 17 1 0 -
+R ^ 1918 o - Ap M>=15 2s 1 S
+R ^ 1918 o - S M>=15 2s 0 -
+R ^ 1919 o - Mar 1 23 1 S
+R ^ 1919 o - O 5 3 0 -
+R ^ 1920 o - F 14 23 1 S
+R ^ 1920 o - O 24 2 0 -
+R ^ 1921 o - Mar 14 23 1 S
+R ^ 1921 o - O 26 2 0 -
+R ^ 1922 o - Mar 25 23 1 S
+R ^ 1922 o - O Sun>=2 1 0 -
+R ^ 1923 o - Ap 21 23 1 S
+R ^ 1923 o - O Sun>=2 2 0 -
+R ^ 1924 o - Mar 29 23 1 S
+R ^ 1924 1928 - O Sun>=2 1 0 -
+R ^ 1925 o - Ap 5 23 1 S
+R ^ 1926 o - Ap 17 23 1 S
+R ^ 1927 o - Ap 9 23 1 S
+R ^ 1928 o - Ap 14 23 1 S
+R ^ 1929 o - Ap 20 23 1 S
 Z Europe/Luxembourg 0:24:36 - LMT 1904 Jun
-1 ] CE%sT 1918 N 25
-0 ] WE%sT 1929 O 6 2s
-0 * WE%sT 1940 May 14 3
-1 ' WE%sT 1944 S 18 3
-1 * CE%sT 1977
+1 ^ CE%sT 1918 N 25
+0 ^ WE%sT 1929 O 6 2s
+0 + WE%sT 1940 May 14 3
+1 ( WE%sT 1944 S 18 3
+1 + CE%sT 1977
 1 O CE%sT
-R ^ 1973 o - Mar 31 0s 1 S
-R ^ 1973 o - S 29 0s 0 -
-R ^ 1974 o - Ap 21 0s 1 S
-R ^ 1974 o - S 16 0s 0 -
-R ^ 1975 1979 - Ap Sun>=15 2 1 S
-R ^ 1975 1980 - S Sun>=15 2 0 -
-R ^ 1980 o - Mar 31 2 1 S
+R _ 1973 o - Mar 31 0s 1 S
+R _ 1973 o - S 29 0s 0 -
+R _ 1974 o - Ap 21 0s 1 S
+R _ 1974 o - S 16 0s 0 -
+R _ 1975 1979 - Ap Sun>=15 2 1 S
+R _ 1975 1980 - S Sun>=15 2 0 -
+R _ 1980 o - Mar 31 2 1 S
 Z Europe/Malta 0:58:4 - LMT 1893 N 2 0s
-1 [ CE%sT 1973 Mar 31
-1 ^ CE%sT 1981
+1 \ CE%sT 1973 Mar 31
+1 _ CE%sT 1981
 1 O CE%sT
-R _ 1997 ma - Mar lastSun 2 1 S
-R _ 1997 ma - O lastSun 3 0 -
+R ` 1997 ma - Mar lastSun 2 1 S
+R ` 1997 ma - O lastSun 3 0 -
 Z Europe/Chisinau 1:55:20 - LMT 1880
 1:55 - CMT 1918 F 15
 1:44:24 - BMT 1931 Jul 24
-2 ` EE%sT 1940 Au 15
+2 { EE%sT 1940 Au 15
 2 1 EEST 1941 Jul 17
-1 ' CE%sT 1944 Au 24
+1 ( CE%sT 1944 Au 24
 3 M MSK/MSD 1990 May 6 2
 2 M EE%sT 1992
 2 W EE%sT 1997
-2 _ EE%sT
+2 ` EE%sT
 Z Europe/Monaco 0:29:32 - LMT 1891 Mar 15
 0:9:21 - PMT 1911 Mar 11
-0 ; WE%sT 1945 S 16 3
-1 ; CE%sT 1977
+0 < WE%sT 1945 S 16 3
+1 < CE%sT 1977
 1 O CE%sT
-R { 1916 o - May 1 0 1 NST
-R { 1916 o - O 1 0 0 AMT
-R { 1917 o - Ap 16 2s 1 NST
-R { 1917 o - S 17 2s 0 AMT
-R { 1918 1921 - Ap M>=1 2s 1 NST
-R { 1918 1921 - S lastM 2s 0 AMT
-R { 1922 o - Mar lastSun 2s 1 NST
-R { 1922 1936 - O Sun>=2 2s 0 AMT
-R { 1923 o - Jun F>=1 2s 1 NST
-R { 1924 o - Mar lastSun 2s 1 NST
-R { 1925 o - Jun F>=1 2s 1 NST
-R { 1926 1931 - May 15 2s 1 NST
-R { 1932 o - May 22 2s 1 NST
-R { 1933 1936 - May 15 2s 1 NST
-R { 1937 o - May 22 2s 1 NST
-R { 1937 o - Jul 1 0 1 S
-R { 1937 1939 - O Sun>=2 2s 0 -
-R { 1938 1939 - May 15 2s 1 S
-R { 1945 o - Ap 2 2s 1 S
-R { 1945 o - S 16 2s 0 -
-Z Europe/Amsterdam 0:19:32 - LMT 1835
-0:19:32 { %s 1937 Jul
-0:20 { +0020/+0120 1940 May 16
-1 ' CE%sT 1945 Ap 2 2
-1 { CE%sT 1977
-1 O CE%sT
-R | 1916 o - May 22 1 1 S
-R | 1916 o - S 30 0 0 -
+R | 1916 o - May 1 0 1 NST
+R | 1916 o - O 1 0 0 AMT
+R | 1917 o - Ap 16 2s 1 NST
+R | 1917 o - S 17 2s 0 AMT
+R | 1918 1921 - Ap M>=1 2s 1 NST
+R | 1918 1921 - S lastM 2s 0 AMT
+R | 1922 o - Mar lastSun 2s 1 NST
+R | 1922 1936 - O Sun>=2 2s 0 AMT
+R | 1923 o - Jun F>=1 2s 1 NST
+R | 1924 o - Mar lastSun 2s 1 NST
+R | 1925 o - Jun F>=1 2s 1 NST
+R | 1926 1931 - May 15 2s 1 NST
+R | 1932 o - May 22 2s 1 NST
+R | 1933 1936 - May 15 2s 1 NST
+R | 1937 o - May 22 2s 1 NST
+R | 1937 o - Jul 1 0 1 S
+R | 1937 1939 - O Sun>=2 2s 0 -
+R | 1938 1939 - May 15 2s 1 S
 R | 1945 o - Ap 2 2s 1 S
-R | 1945 o - O 1 2s 0 -
-R | 1959 1964 - Mar Sun>=15 2s 1 S
-R | 1959 1965 - S Sun>=15 2s 0 -
-R | 1965 o - Ap 25 2s 1 S
+R | 1945 o - S 16 2s 0 -
+Z Europe/Amsterdam 0:19:32 - LMT 1835
+0:19:32 | %s 1937 Jul
+0:20 | +0020/+0120 1940 May 16
+1 ( CE%sT 1945 Ap 2 2
+1 | CE%sT 1977
+1 O CE%sT
+R } 1916 o - May 22 1 1 S
+R } 1916 o - S 30 0 0 -
+R } 1945 o - Ap 2 2s 1 S
+R } 1945 o - O 1 2s 0 -
+R } 1959 1964 - Mar Sun>=15 2s 1 S
+R } 1959 1965 - S Sun>=15 2s 0 -
+R } 1965 o - Ap 25 2s 1 S
 Z Europe/Oslo 0:43 - LMT 1895
-1 | CE%sT 1940 Au 10 23
-1 ' CE%sT 1945 Ap 2 2
-1 | CE%sT 1980
+1 } CE%sT 1940 Au 10 23
+1 ( CE%sT 1945 Ap 2 2
+1 } CE%sT 1980
 1 O CE%sT
 Li Europe/Oslo Arctic/Longyearbyen
-R } 1918 1919 - S 16 2s 0 -
-R } 1919 o - Ap 15 2s 1 S
-R } 1944 o - Ap 3 2s 1 S
-R } 1944 o - O 4 2 0 -
-R } 1945 o - Ap 29 0 1 S
-R } 1945 o - N 1 0 0 -
-R } 1946 o - Ap 14 0s 1 S
-R } 1946 o - O 7 2s 0 -
-R } 1947 o - May 4 2s 1 S
-R } 1947 1949 - O Sun>=1 2s 0 -
-R } 1948 o - Ap 18 2s 1 S
-R } 1949 o - Ap 10 2s 1 S
-R } 1957 o - Jun 2 1s 1 S
-R } 1957 1958 - S lastSun 1s 0 -
-R } 1958 o - Mar 30 1s 1 S
-R } 1959 o - May 31 1s 1 S
-R } 1959 1961 - O Sun>=1 1s 0 -
-R } 1960 o - Ap 3 1s 1 S
-R } 1961 1964 - May lastSun 1s 1 S
-R } 1962 1964 - S lastSun 1s 0 -
+R ~ 1918 1919 - S 16 2s 0 -
+R ~ 1919 o - Ap 15 2s 1 S
+R ~ 1944 o - Ap 3 2s 1 S
+R ~ 1944 o - O 4 2 0 -
+R ~ 1945 o - Ap 29 0 1 S
+R ~ 1945 o - N 1 0 0 -
+R ~ 1946 o - Ap 14 0s 1 S
+R ~ 1946 o - O 7 2s 0 -
+R ~ 1947 o - May 4 2s 1 S
+R ~ 1947 1949 - O Sun>=1 2s 0 -
+R ~ 1948 o - Ap 18 2s 1 S
+R ~ 1949 o - Ap 10 2s 1 S
+R ~ 1957 o - Jun 2 1s 1 S
+R ~ 1957 1958 - S lastSun 1s 0 -
+R ~ 1958 o - Mar 30 1s 1 S
+R ~ 1959 o - May 31 1s 1 S
+R ~ 1959 1961 - O Sun>=1 1s 0 -
+R ~ 1960 o - Ap 3 1s 1 S
+R ~ 1961 1964 - May lastSun 1s 1 S
+R ~ 1962 1964 - S lastSun 1s 0 -
 Z Europe/Warsaw 1:24 - LMT 1880
 1:24 - WMT 1915 Au 5
-1 ' CE%sT 1918 S 16 3
-2 } EE%sT 1922 Jun
-1 } CE%sT 1940 Jun 23 2
-1 ' CE%sT 1944 O
-1 } CE%sT 1977
-1 & CE%sT 1988
+1 ( CE%sT 1918 S 16 3
+2 ~ EE%sT 1922 Jun
+1 ~ CE%sT 1940 Jun 23 2
+1 ( CE%sT 1944 O
+1 ~ CE%sT 1977
+1 ' CE%sT 1988
 1 O CE%sT
-R ~ 1916 o - Jun 17 23 1 S
-R ~ 1916 o - N 1 1 0 -
-R ~ 1917 o - F 28 23s 1 S
-R ~ 1917 1921 - O 14 23s 0 -
-R ~ 1918 o - Mar 1 23s 1 S
-R ~ 1919 o - F 28 23s 1 S
-R ~ 1920 o - F 29 23s 1 S
-R ~ 1921 o - F 28 23s 1 S
-R ~ 1924 o - Ap 16 23s 1 S
-R ~ 1924 o - O 14 23s 0 -
-R ~ 1926 o - Ap 17 23s 1 S
-R ~ 1926 1929 - O Sat>=1 23s 0 -
-R ~ 1927 o - Ap 9 23s 1 S
-R ~ 1928 o - Ap 14 23s 1 S
-R ~ 1929 o - Ap 20 23s 1 S
-R ~ 1931 o - Ap 18 23s 1 S
-R ~ 1931 1932 - O Sat>=1 23s 0 -
-R ~ 1932 o - Ap 2 23s 1 S
-R ~ 1934 o - Ap 7 23s 1 S
-R ~ 1934 1938 - O Sat>=1 23s 0 -
-R ~ 1935 o - Mar 30 23s 1 S
-R ~ 1936 o - Ap 18 23s 1 S
-R ~ 1937 o - Ap 3 23s 1 S
-R ~ 1938 o - Mar 26 23s 1 S
-R ~ 1939 o - Ap 15 23s 1 S
-R ~ 1939 o - N 18 23s 0 -
-R ~ 1940 o - F 24 23s 1 S
-R ~ 1940 1941 - O 5 23s 0 -
-R ~ 1941 o - Ap 5 23s 1 S
-R ~ 1942 1945 - Mar Sat>=8 23s 1 S
-R ~ 1942 o - Ap 25 22s 2 M
-R ~ 1942 o - Au 15 22s 1 S
-R ~ 1942 1945 - O Sat>=24 23s 0 -
-R ~ 1943 o - Ap 17 22s 2 M
-R ~ 1943 1945 - Au Sat>=25 22s 1 S
-R ~ 1944 1945 - Ap Sat>=21 22s 2 M
-R ~ 1946 o - Ap Sat>=1 23s 1 S
-R ~ 1946 o - O Sat>=1 23s 0 -
-R ~ 1947 1949 - Ap Sun>=1 2s 1 S
-R ~ 1947 1949 - O Sun>=1 2s 0 -
-R ~ 1951 1965 - Ap Sun>=1 2s 1 S
-R ~ 1951 1965 - O Sun>=1 2s 0 -
-R ~ 1977 o - Mar 27 0s 1 S
-R ~ 1977 o - S 25 0s 0 -
-R ~ 1978 1979 - Ap Sun>=1 0s 1 S
-R ~ 1978 o - O 1 0s 0 -
-R ~ 1979 1982 - S lastSun 1s 0 -
-R ~ 1980 o - Mar lastSun 0s 1 S
-R ~ 1981 1982 - Mar lastSun 1s 1 S
-R ~ 1983 o - Mar lastSun 2s 1 S
+R AA 1916 o - Jun 17 23 1 S
+R AA 1916 o - N 1 1 0 -
+R AA 1917 o - F 28 23s 1 S
+R AA 1917 1921 - O 14 23s 0 -
+R AA 1918 o - Mar 1 23s 1 S
+R AA 1919 o - F 28 23s 1 S
+R AA 1920 o - F 29 23s 1 S
+R AA 1921 o - F 28 23s 1 S
+R AA 1924 o - Ap 16 23s 1 S
+R AA 1924 o - O 14 23s 0 -
+R AA 1926 o - Ap 17 23s 1 S
+R AA 1926 1929 - O Sat>=1 23s 0 -
+R AA 1927 o - Ap 9 23s 1 S
+R AA 1928 o - Ap 14 23s 1 S
+R AA 1929 o - Ap 20 23s 1 S
+R AA 1931 o - Ap 18 23s 1 S
+R AA 1931 1932 - O Sat>=1 23s 0 -
+R AA 1932 o - Ap 2 23s 1 S
+R AA 1934 o - Ap 7 23s 1 S
+R AA 1934 1938 - O Sat>=1 23s 0 -
+R AA 1935 o - Mar 30 23s 1 S
+R AA 1936 o - Ap 18 23s 1 S
+R AA 1937 o - Ap 3 23s 1 S
+R AA 1938 o - Mar 26 23s 1 S
+R AA 1939 o - Ap 15 23s 1 S
+R AA 1939 o - N 18 23s 0 -
+R AA 1940 o - F 24 23s 1 S
+R AA 1940 1941 - O 5 23s 0 -
+R AA 1941 o - Ap 5 23s 1 S
+R AA 1942 1945 - Mar Sat>=8 23s 1 S
+R AA 1942 o - Ap 25 22s 2 M
+R AA 1942 o - Au 15 22s 1 S
+R AA 1942 1945 - O Sat>=24 23s 0 -
+R AA 1943 o - Ap 17 22s 2 M
+R AA 1943 1945 - Au Sat>=25 22s 1 S
+R AA 1944 1945 - Ap Sat>=21 22s 2 M
+R AA 1946 o - Ap Sat>=1 23s 1 S
+R AA 1946 o - O Sat>=1 23s 0 -
+R AA 1947 1949 - Ap Sun>=1 2s 1 S
+R AA 1947 1949 - O Sun>=1 2s 0 -
+R AA 1951 1965 - Ap Sun>=1 2s 1 S
+R AA 1951 1965 - O Sun>=1 2s 0 -
+R AA 1977 o - Mar 27 0s 1 S
+R AA 1977 o - S 25 0s 0 -
+R AA 1978 1979 - Ap Sun>=1 0s 1 S
+R AA 1978 o - O 1 0s 0 -
+R AA 1979 1982 - S lastSun 1s 0 -
+R AA 1980 o - Mar lastSun 0s 1 S
+R AA 1981 1982 - Mar lastSun 1s 1 S
+R AA 1983 o - Mar lastSun 2s 1 S
 Z Europe/Lisbon -0:36:45 - LMT 1884
 -0:36:45 - LMT 1912 Ja 1 0u
-0 ~ WE%sT 1966 Ap 3 2
+0 AA WE%sT 1966 Ap 3 2
 1 - CET 1976 S 26 1
-0 ~ WE%sT 1983 S 25 1s
-0 & WE%sT 1992 S 27 1s
+0 AA WE%sT 1983 S 25 1s
+0 ' WE%sT 1992 S 27 1s
 1 O CE%sT 1996 Mar 31 1u
 0 O WE%sT
 Z Atlantic/Azores -1:42:40 - LMT 1884
 -1:54:32 - HMT 1912 Ja 1 2u
--2 ~ -02/-01 1942 Ap 25 22s
--2 ~ +00 1942 Au 15 22s
--2 ~ -02/-01 1943 Ap 17 22s
--2 ~ +00 1943 Au 28 22s
--2 ~ -02/-01 1944 Ap 22 22s
--2 ~ +00 1944 Au 26 22s
--2 ~ -02/-01 1945 Ap 21 22s
--2 ~ +00 1945 Au 25 22s
--2 ~ -02/-01 1966 Ap 3 2
--1 ~ -01/+00 1983 S 25 1s
--1 & -01/+00 1992 S 27 1s
+-2 AA -02/-01 1942 Ap 25 22s
+-2 AA +00 1942 Au 15 22s
+-2 AA -02/-01 1943 Ap 17 22s
+-2 AA +00 1943 Au 28 22s
+-2 AA -02/-01 1944 Ap 22 22s
+-2 AA +00 1944 Au 26 22s
+-2 AA -02/-01 1945 Ap 21 22s
+-2 AA +00 1945 Au 25 22s
+-2 AA -02/-01 1966 Ap 3 2
+-1 AA -01/+00 1983 S 25 1s
+-1 ' -01/+00 1992 S 27 1s
 0 O WE%sT 1993 Mar 28 1u
 -1 O -01/+00
 Z Atlantic/Madeira -1:7:36 - LMT 1884
 -1:7:36 - FMT 1912 Ja 1 1u
--1 ~ -01/+00 1942 Ap 25 22s
--1 ~ +01 1942 Au 15 22s
--1 ~ -01/+00 1943 Ap 17 22s
--1 ~ +01 1943 Au 28 22s
--1 ~ -01/+00 1944 Ap 22 22s
--1 ~ +01 1944 Au 26 22s
--1 ~ -01/+00 1945 Ap 21 22s
--1 ~ +01 1945 Au 25 22s
--1 ~ -01/+00 1966 Ap 3 2
-0 ~ WE%sT 1983 S 25 1s
+-1 AA -01/+00 1942 Ap 25 22s
+-1 AA +01 1942 Au 15 22s
+-1 AA -01/+00 1943 Ap 17 22s
+-1 AA +01 1943 Au 28 22s
+-1 AA -01/+00 1944 Ap 22 22s
+-1 AA +01 1944 Au 26 22s
+-1 AA -01/+00 1945 Ap 21 22s
+-1 AA +01 1945 Au 25 22s
+-1 AA -01/+00 1966 Ap 3 2
+0 AA WE%sT 1983 S 25 1s
 0 O WE%sT
-R ` 1932 o - May 21 0s 1 S
-R ` 1932 1939 - O Sun>=1 0s 0 -
-R ` 1933 1939 - Ap Sun>=2 0s 1 S
-R ` 1979 o - May 27 0 1 S
-R ` 1979 o - S lastSun 0 0 -
-R ` 1980 o - Ap 5 23 1 S
-R ` 1980 o - S lastSun 1 0 -
-R ` 1991 1993 - Mar lastSun 0s 1 S
-R ` 1991 1993 - S lastSun 0s 0 -
+R { 1932 o - May 21 0s 1 S
+R { 1932 1939 - O Sun>=1 0s 0 -
+R { 1933 1939 - Ap Sun>=2 0s 1 S
+R { 1979 o - May 27 0 1 S
+R { 1979 o - S lastSun 0 0 -
+R { 1980 o - Ap 5 23 1 S
+R { 1980 o - S lastSun 1 0 -
+R { 1991 1993 - Mar lastSun 0s 1 S
+R { 1991 1993 - S lastSun 0s 0 -
 Z Europe/Bucharest 1:44:24 - LMT 1891 O
 1:44:24 - BMT 1931 Jul 24
-2 ` EE%sT 1981 Mar 29 2s
-2 ' EE%sT 1991
-2 ` EE%sT 1994
+2 { EE%sT 1981 Mar 29 2s
+2 ( EE%sT 1991
+2 { EE%sT 1994
 2 W EE%sT 1997
 2 O EE%sT
 Z Europe/Kaliningrad 1:22 - LMT 1893 Ap
-1 ' CE%sT 1945
-2 } CE%sT 1946
+1 ( CE%sT 1945
+2 ~ CE%sT 1946
 3 M MSK/MSD 1989 Mar 26 2s
 2 M EE%sT 2011 Mar 27 2s
 3 - +03 2014 O 26 2s
@@ -2151,7 +2156,7 @@ Z Europe/Simferopol 2:16:24 - LMT 1880
 2:16 - SMT 1924 May 2
 2 - EET 1930 Jun 21
 3 - MSK 1941 N
-1 ' CE%sT 1944 Ap 13
+1 ( CE%sT 1944 Ap 13
 3 M MSK/MSD 1990
 3 - MSK 1990 Jul 1 2
 2 - EET 1992
@@ -2362,7 +2367,7 @@ Z Asia/Anadyr 11:49:56 - LMT 1924 May 2
 12 - +12
 Z Europe/Belgrade 1:22 - LMT 1884
 1 - CET 1941 Ap 18 23
-1 ' CE%sT 1945
+1 ( CE%sT 1945
 1 - CET 1945 May 8 2s
 1 1 CEST 1945 S 16 2s
 1 - CET 1982 N 27
@@ -2373,55 +2378,55 @@ Li Europe/Belgrade Europe/Sarajevo
 Li Europe/Belgrade Europe/Skopje
 Li Europe/Belgrade Europe/Zagreb
 Li Europe/Prague Europe/Bratislava
-R AA 1918 o - Ap 15 23 1 S
-R AA 1918 1919 - O 6 24s 0 -
-R AA 1919 o - Ap 6 23 1 S
-R AA 1924 o - Ap 16 23 1 S
-R AA 1924 o - O 4 24s 0 -
-R AA 1926 o - Ap 17 23 1 S
-R AA 1926 1929 - O Sat>=1 24s 0 -
-R AA 1927 o - Ap 9 23 1 S
-R AA 1928 o - Ap 15 0 1 S
-R AA 1929 o - Ap 20 23 1 S
-R AA 1937 o - Jun 16 23 1 S
-R AA 1937 o - O 2 24s 0 -
-R AA 1938 o - Ap 2 23 1 S
-R AA 1938 o - Ap 30 23 2 M
-R AA 1938 o - O 2 24 1 S
-R AA 1939 o - O 7 24s 0 -
-R AA 1942 o - May 2 23 1 S
-R AA 1942 o - S 1 1 0 -
-R AA 1943 1946 - Ap Sat>=13 23 1 S
-R AA 1943 1944 - O Sun>=1 1 0 -
-R AA 1945 1946 - S lastSun 1 0 -
-R AA 1949 o - Ap 30 23 1 S
-R AA 1949 o - O 2 1 0 -
-R AA 1974 1975 - Ap Sat>=12 23 1 S
-R AA 1974 1975 - O Sun>=1 1 0 -
-R AA 1976 o - Mar 27 23 1 S
-R AA 1976 1977 - S lastSun 1 0 -
-R AA 1977 o - Ap 2 23 1 S
-R AA 1978 o - Ap 2 2s 1 S
-R AA 1978 o - O 1 2s 0 -
-R AB 1967 o - Jun 3 12 1 S
-R AB 1967 o - O 1 0 0 -
-R AB 1974 o - Jun 24 0 1 S
-R AB 1974 o - S 1 0 0 -
-R AB 1976 1977 - May 1 0 1 S
-R AB 1976 o - Au 1 0 0 -
-R AB 1977 o - S 28 0 0 -
-R AB 1978 o - Jun 1 0 1 S
-R AB 1978 o - Au 4 0 0 -
+R AB 1918 o - Ap 15 23 1 S
+R AB 1918 1919 - O 6 24s 0 -
+R AB 1919 o - Ap 6 23 1 S
+R AB 1924 o - Ap 16 23 1 S
+R AB 1924 o - O 4 24s 0 -
+R AB 1926 o - Ap 17 23 1 S
+R AB 1926 1929 - O Sat>=1 24s 0 -
+R AB 1927 o - Ap 9 23 1 S
+R AB 1928 o - Ap 15 0 1 S
+R AB 1929 o - Ap 20 23 1 S
+R AB 1937 o - Jun 16 23 1 S
+R AB 1937 o - O 2 24s 0 -
+R AB 1938 o - Ap 2 23 1 S
+R AB 1938 o - Ap 30 23 2 M
+R AB 1938 o - O 2 24 1 S
+R AB 1939 o - O 7 24s 0 -
+R AB 1942 o - May 2 23 1 S
+R AB 1942 o - S 1 1 0 -
+R AB 1943 1946 - Ap Sat>=13 23 1 S
+R AB 1943 1944 - O Sun>=1 1 0 -
+R AB 1945 1946 - S lastSun 1 0 -
+R AB 1949 o - Ap 30 23 1 S
+R AB 1949 o - O 2 1 0 -
+R AB 1974 1975 - Ap Sat>=12 23 1 S
+R AB 1974 1975 - O Sun>=1 1 0 -
+R AB 1976 o - Mar 27 23 1 S
+R AB 1976 1977 - S lastSun 1 0 -
+R AB 1977 o - Ap 2 23 1 S
+R AB 1978 o - Ap 2 2s 1 S
+R AB 1978 o - O 1 2s 0 -
+R AC 1967 o - Jun 3 12 1 S
+R AC 1967 o - O 1 0 0 -
+R AC 1974 o - Jun 24 0 1 S
+R AC 1974 o - S 1 0 0 -
+R AC 1976 1977 - May 1 0 1 S
+R AC 1976 o - Au 1 0 0 -
+R AC 1977 o - S 28 0 0 -
+R AC 1978 o - Jun 1 0 1 S
+R AC 1978 o - Au 4 0 0 -
 Z Europe/Madrid -0:14:44 - LMT 1900 D 31 23:45:16
-0 AA WE%sT 1940 Mar 16 23
-1 AA CE%sT 1979
+0 AB WE%sT 1940 Mar 16 23
+1 AB CE%sT 1979
 1 O CE%sT
 Z Africa/Ceuta -0:21:16 - LMT 1900 D 31 23:38:44
 0 - WET 1918 May 6 23
 0 1 WEST 1918 O 7 23
 0 - WET 1924
-0 AA WE%sT 1929
-0 AB WE%sT 1984 Mar 16
+0 AB WE%sT 1929
+0 AC WE%sT 1984 Mar 16
 1 - CET 1986
 1 O CE%sT
 Z Atlantic/Canary -1:1:36 - LMT 1922 Mar
@@ -2435,71 +2440,71 @@ Z Europe/Stockholm 1:12:12 - LMT 1879
 1 1 CEST 1916 O 1 1
 1 - CET 1980
 1 O CE%sT
-R AC 1941 1942 - May M>=1 1 1 S
-R AC 1941 1942 - O M>=1 2 0 -
+R AD 1941 1942 - May M>=1 1 1 S
+R AD 1941 1942 - O M>=1 2 0 -
 Z Europe/Zurich 0:34:8 - LMT 1853 Jul 16
 0:29:46 - BMT 1894 Jun
-1 AC CE%sT 1981
+1 AD CE%sT 1981
 1 O CE%sT
-R AD 1916 o - May 1 0 1 S
-R AD 1916 o - O 1 0 0 -
-R AD 1920 o - Mar 28 0 1 S
-R AD 1920 o - O 25 0 0 -
-R AD 1921 o - Ap 3 0 1 S
-R AD 1921 o - O 3 0 0 -
-R AD 1922 o - Mar 26 0 1 S
-R AD 1922 o - O 8 0 0 -
-R AD 1924 o - May 13 0 1 S
-R AD 1924 1925 - O 1 0 0 -
-R AD 1925 o - May 1 0 1 S
-R AD 1940 o - Jun 30 0 1 S
-R AD 1940 o - O 5 0 0 -
-R AD 1940 o - D 1 0 1 S
-R AD 1941 o - S 21 0 0 -
-R AD 1942 o - Ap 1 0 1 S
-R AD 1942 o - N 1 0 0 -
-R AD 1945 o - Ap 2 0 1 S
-R AD 1945 o - O 8 0 0 -
-R AD 1946 o - Jun 1 0 1 S
-R AD 1946 o - O 1 0 0 -
-R AD 1947 1948 - Ap Sun>=16 0 1 S
-R AD 1947 1950 - O Sun>=2 0 0 -
-R AD 1949 o - Ap 10 0 1 S
-R AD 1950 o - Ap 19 0 1 S
-R AD 1951 o - Ap 22 0 1 S
-R AD 1951 o - O 8 0 0 -
-R AD 1962 o - Jul 15 0 1 S
-R AD 1962 o - O 8 0 0 -
-R AD 1964 o - May 15 0 1 S
-R AD 1964 o - O 1 0 0 -
-R AD 1970 1972 - May Sun>=2 0 1 S
-R AD 1970 1972 - O Sun>=2 0 0 -
-R AD 1973 o - Jun 3 1 1 S
-R AD 1973 o - N 4 3 0 -
-R AD 1974 o - Mar 31 2 1 S
-R AD 1974 o - N 3 5 0 -
-R AD 1975 o - Mar 30 0 1 S
-R AD 1975 1976 - O lastSun 0 0 -
-R AD 1976 o - Jun 1 0 1 S
-R AD 1977 1978 - Ap Sun>=1 0 1 S
-R AD 1977 o - O 16 0 0 -
-R AD 1979 1980 - Ap Sun>=1 3 1 S
-R AD 1979 1982 - O M>=11 0 0 -
-R AD 1981 1982 - Mar lastSun 3 1 S
-R AD 1983 o - Jul 31 0 1 S
-R AD 1983 o - O 2 0 0 -
-R AD 1985 o - Ap 20 0 1 S
-R AD 1985 o - S 28 0 0 -
-R AD 1986 1993 - Mar lastSun 1s 1 S
-R AD 1986 1995 - S lastSun 1s 0 -
-R AD 1994 o - Mar 20 1s 1 S
-R AD 1995 2006 - Mar lastSun 1s 1 S
-R AD 1996 2006 - O lastSun 1s 0 -
+R AE 1916 o - May 1 0 1 S
+R AE 1916 o - O 1 0 0 -
+R AE 1920 o - Mar 28 0 1 S
+R AE 1920 o - O 25 0 0 -
+R AE 1921 o - Ap 3 0 1 S
+R AE 1921 o - O 3 0 0 -
+R AE 1922 o - Mar 26 0 1 S
+R AE 1922 o - O 8 0 0 -
+R AE 1924 o - May 13 0 1 S
+R AE 1924 1925 - O 1 0 0 -
+R AE 1925 o - May 1 0 1 S
+R AE 1940 o - Jun 30 0 1 S
+R AE 1940 o - O 5 0 0 -
+R AE 1940 o - D 1 0 1 S
+R AE 1941 o - S 21 0 0 -
+R AE 1942 o - Ap 1 0 1 S
+R AE 1942 o - N 1 0 0 -
+R AE 1945 o - Ap 2 0 1 S
+R AE 1945 o - O 8 0 0 -
+R AE 1946 o - Jun 1 0 1 S
+R AE 1946 o - O 1 0 0 -
+R AE 1947 1948 - Ap Sun>=16 0 1 S
+R AE 1947 1950 - O Sun>=2 0 0 -
+R AE 1949 o - Ap 10 0 1 S
+R AE 1950 o - Ap 19 0 1 S
+R AE 1951 o - Ap 22 0 1 S
+R AE 1951 o - O 8 0 0 -
+R AE 1962 o - Jul 15 0 1 S
+R AE 1962 o - O 8 0 0 -
+R AE 1964 o - May 15 0 1 S
+R AE 1964 o - O 1 0 0 -
+R AE 1970 1972 - May Sun>=2 0 1 S
+R AE 1970 1972 - O Sun>=2 0 0 -
+R AE 1973 o - Jun 3 1 1 S
+R AE 1973 o - N 4 3 0 -
+R AE 1974 o - Mar 31 2 1 S
+R AE 1974 o - N 3 5 0 -
+R AE 1975 o - Mar 30 0 1 S
+R AE 1975 1976 - O lastSun 0 0 -
+R AE 1976 o - Jun 1 0 1 S
+R AE 1977 1978 - Ap Sun>=1 0 1 S
+R AE 1977 o - O 16 0 0 -
+R AE 1979 1980 - Ap Sun>=1 3 1 S
+R AE 1979 1982 - O M>=11 0 0 -
+R AE 1981 1982 - Mar lastSun 3 1 S
+R AE 1983 o - Jul 31 0 1 S
+R AE 1983 o - O 2 0 0 -
+R AE 1985 o - Ap 20 0 1 S
+R AE 1985 o - S 28 0 0 -
+R AE 1986 1993 - Mar lastSun 1s 1 S
+R AE 1986 1995 - S lastSun 1s 0 -
+R AE 1994 o - Mar 20 1s 1 S
+R AE 1995 2006 - Mar lastSun 1s 1 S
+R AE 1996 2006 - O lastSun 1s 0 -
 Z Europe/Istanbul 1:55:52 - LMT 1880
 1:56:56 - IMT 1910 O
-2 AD EE%sT 1978 O 15
-3 AD +03/+04 1985 Ap 20
-2 AD EE%sT 2007
+2 AE EE%sT 1978 O 15
+3 AE +03/+04 1985 Ap 20
+2 AE EE%sT 2007
 2 O EE%sT 2011 Mar 27 1u
 2 - EET 2011 Mar 28 1u
 2 O EE%sT 2014 Mar 30 1u
@@ -2513,14 +2518,14 @@ Z Europe/Kiev 2:2:4 - LMT 1880
 2:2:4 - KMT 1924 May 2
 2 - EET 1930 Jun 21
 3 - MSK 1941 S 20
-1 ' CE%sT 1943 N 6
+1 ( CE%sT 1943 N 6
 3 M MSK/MSD 1990 Jul 1 2
 2 1 EEST 1991 S 29 3
 2 W EE%sT 1995
 2 O EE%sT
 Z Europe/Uzhgorod 1:29:12 - LMT 1890 O
 1 - CET 1940
-1 ' CE%sT 1944 O
+1 ( CE%sT 1944 O
 1 1 CEST 1944 O 26
 1 - CET 1945 Jun 29
 3 M MSK/MSD 1990
@@ -2533,143 +2538,143 @@ Z Europe/Zaporozhye 2:20:40 - LMT 1880
 2:20 - +0220 1924 May 2
 2 - EET 1930 Jun 21
 3 - MSK 1941 Au 25
-1 ' CE%sT 1943 O 25
+1 ( CE%sT 1943 O 25
 3 M MSK/MSD 1991 Mar 31 2
 2 W EE%sT 1995
 2 O EE%sT
-R AE 1918 1919 - Mar lastSun 2 1 D
-R AE 1918 1919 - O lastSun 2 0 S
-R AE 1942 o - F 9 2 1 W
-R AE 1945 o - Au 14 23u 1 P
-R AE 1945 o - S lastSun 2 0 S
-R AE 1967 2006 - O lastSun 2 0 S
-R AE 1967 1973 - Ap lastSun 2 1 D
-R AE 1974 o - Ja 6 2 1 D
-R AE 1975 o - F 23 2 1 D
-R AE 1976 1986 - Ap lastSun 2 1 D
-R AE 1987 2006 - Ap Sun>=1 2 1 D
-R AE 2007 ma - Mar Sun>=8 2 1 D
-R AE 2007 ma - N Sun>=1 2 0 S
+R AF 1918 1919 - Mar lastSun 2 1 D
+R AF 1918 1919 - O lastSun 2 0 S
+R AF 1942 o - F 9 2 1 W
+R AF 1945 o - Au 14 23u 1 P
+R AF 1945 o - S lastSun 2 0 S
+R AF 1967 2006 - O lastSun 2 0 S
+R AF 1967 1973 - Ap lastSun 2 1 D
+R AF 1974 o - Ja 6 2 1 D
+R AF 1975 o - F 23 2 1 D
+R AF 1976 1986 - Ap lastSun 2 1 D
+R AF 1987 2006 - Ap Sun>=1 2 1 D
+R AF 2007 ma - Mar Sun>=8 2 1 D
+R AF 2007 ma - N Sun>=1 2 0 S
 Z EST -5 - EST
 Z MST -7 - MST
 Z HST -10 - HST
-Z EST5EDT -5 AE E%sT
-Z CST6CDT -6 AE C%sT
-Z MST7MDT -7 AE M%sT
-Z PST8PDT -8 AE P%sT
-R AF 1920 o - Mar lastSun 2 1 D
-R AF 1920 o - O lastSun 2 0 S
-R AF 1921 1966 - Ap lastSun 2 1 D
-R AF 1921 1954 - S lastSun 2 0 S
-R AF 1955 1966 - O lastSun 2 0 S
-Z America/New_York -4:56:2 - LMT 1883 N 18 12:3:58
--5 AE E%sT 1920
--5 AF E%sT 1942
--5 AE E%sT 1946
--5 AF E%sT 1967
--5 AE E%sT
-R AG 1920 o - Jun 13 2 1 D
-R AG 1920 1921 - O lastSun 2 0 S
-R AG 1921 o - Mar lastSun 2 1 D
-R AG 1922 1966 - Ap lastSun 2 1 D
-R AG 1922 1954 - S lastSun 2 0 S
+Z EST5EDT -5 AF E%sT
+Z CST6CDT -6 AF C%sT
+Z MST7MDT -7 AF M%sT
+Z PST8PDT -8 AF P%sT
+R AG 1920 o - Mar lastSun 2 1 D
+R AG 1920 o - O lastSun 2 0 S
+R AG 1921 1966 - Ap lastSun 2 1 D
+R AG 1921 1954 - S lastSun 2 0 S
 R AG 1955 1966 - O lastSun 2 0 S
+Z America/New_York -4:56:2 - LMT 1883 N 18 12:3:58
+-5 AF E%sT 1920
+-5 AG E%sT 1942
+-5 AF E%sT 1946
+-5 AG E%sT 1967
+-5 AF E%sT
+R AH 1920 o - Jun 13 2 1 D
+R AH 1920 1921 - O lastSun 2 0 S
+R AH 1921 o - Mar lastSun 2 1 D
+R AH 1922 1966 - Ap lastSun 2 1 D
+R AH 1922 1954 - S lastSun 2 0 S
+R AH 1955 1966 - O lastSun 2 0 S
 Z America/Chicago -5:50:36 - LMT 1883 N 18 12:9:24
--6 AE C%sT 1920
--6 AG C%sT 1936 Mar 1 2
+-6 AF C%sT 1920
+-6 AH C%sT 1936 Mar 1 2
 -5 - EST 1936 N 15 2
--6 AG C%sT 1942
--6 AE C%sT 1946
--6 AG C%sT 1967
--6 AE C%sT
+-6 AH C%sT 1942
+-6 AF C%sT 1946
+-6 AH C%sT 1967
+-6 AF C%sT
 Z America/North_Dakota/Center -6:45:12 - LMT 1883 N 18 12:14:48
--7 AE M%sT 1992 O 25 2
--6 AE C%sT
+-7 AF M%sT 1992 O 25 2
+-6 AF C%sT
 Z America/North_Dakota/New_Salem -6:45:39 - LMT 1883 N 18 12:14:21
--7 AE M%sT 2003 O 26 2
--6 AE C%sT
+-7 AF M%sT 2003 O 26 2
+-6 AF C%sT
 Z America/North_Dakota/Beulah -6:47:7 - LMT 1883 N 18 12:12:53
--7 AE M%sT 2010 N 7 2
--6 AE C%sT
-R AH 1920 1921 - Mar lastSun 2 1 D
-R AH 1920 o - O lastSun 2 0 S
-R AH 1921 o - May 22 2 0 S
-R AH 1965 1966 - Ap lastSun 2 1 D
-R AH 1965 1966 - O lastSun 2 0 S
+-7 AF M%sT 2010 N 7 2
+-6 AF C%sT
+R AI 1920 1921 - Mar lastSun 2 1 D
+R AI 1920 o - O lastSun 2 0 S
+R AI 1921 o - May 22 2 0 S
+R AI 1965 1966 - Ap lastSun 2 1 D
+R AI 1965 1966 - O lastSun 2 0 S
 Z America/Denver -6:59:56 - LMT 1883 N 18 12:0:4
--7 AE M%sT 1920
--7 AH M%sT 1942
--7 AE M%sT 1946
--7 AH M%sT 1967
--7 AE M%sT
-R AI 1948 o - Mar 14 2:1 1 D
-R AI 1949 o - Ja 1 2 0 S
-R AI 1950 1966 - Ap lastSun 1 1 D
-R AI 1950 1961 - S lastSun 2 0 S
-R AI 1962 1966 - O lastSun 2 0 S
+-7 AF M%sT 1920
+-7 AI M%sT 1942
+-7 AF M%sT 1946
+-7 AI M%sT 1967
+-7 AF M%sT
+R AJ 1948 o - Mar 14 2:1 1 D
+R AJ 1949 o - Ja 1 2 0 S
+R AJ 1950 1966 - Ap lastSun 1 1 D
+R AJ 1950 1961 - S lastSun 2 0 S
+R AJ 1962 1966 - O lastSun 2 0 S
 Z America/Los_Angeles -7:52:58 - LMT 1883 N 18 12:7:2
--8 AE P%sT 1946
--8 AI P%sT 1967
--8 AE P%sT
+-8 AF P%sT 1946
+-8 AJ P%sT 1967
+-8 AF P%sT
 Z America/Juneau 15:2:19 - LMT 1867 O 19 15:33:32
 -8:57:41 - LMT 1900 Au 20 12
 -8 - PST 1942
--8 AE P%sT 1946
+-8 AF P%sT 1946
 -8 - PST 1969
--8 AE P%sT 1980 Ap 27 2
--9 AE Y%sT 1980 O 26 2
--8 AE P%sT 1983 O 30 2
--9 AE Y%sT 1983 N 30
--9 AE AK%sT
+-8 AF P%sT 1980 Ap 27 2
+-9 AF Y%sT 1980 O 26 2
+-8 AF P%sT 1983 O 30 2
+-9 AF Y%sT 1983 N 30
+-9 AF AK%sT
 Z America/Sitka 14:58:47 - LMT 1867 O 19 15:30
 -9:1:13 - LMT 1900 Au 20 12
 -8 - PST 1942
--8 AE P%sT 1946
+-8 AF P%sT 1946
 -8 - PST 1969
--8 AE P%sT 1983 O 30 2
--9 AE Y%sT 1983 N 30
--9 AE AK%sT
+-8 AF P%sT 1983 O 30 2
+-9 AF Y%sT 1983 N 30
+-9 AF AK%sT
 Z America/Metlakatla 15:13:42 - LMT 1867 O 19 15:44:55
 -8:46:18 - LMT 1900 Au 20 12
 -8 - PST 1942
--8 AE P%sT 1946
+-8 AF P%sT 1946
 -8 - PST 1969
--8 AE P%sT 1983 O 30 2
+-8 AF P%sT 1983 O 30 2
 -8 - PST 2015 N 1 2
--9 AE AK%sT
+-9 AF AK%sT
 Z America/Yakutat 14:41:5 - LMT 1867 O 19 15:12:18
 -9:18:55 - LMT 1900 Au 20 12
 -9 - YST 1942
--9 AE Y%sT 1946
+-9 AF Y%sT 1946
 -9 - YST 1969
--9 AE Y%sT 1983 N 30
--9 AE AK%sT
+-9 AF Y%sT 1983 N 30
+-9 AF AK%sT
 Z America/Anchorage 14:0:24 - LMT 1867 O 19 14:31:37
 -9:59:36 - LMT 1900 Au 20 12
 -10 - AST 1942
--10 AE A%sT 1967 Ap
+-10 AF A%sT 1967 Ap
 -10 - AHST 1969
--10 AE AH%sT 1983 O 30 2
--9 AE Y%sT 1983 N 30
--9 AE AK%sT
+-10 AF AH%sT 1983 O 30 2
+-9 AF Y%sT 1983 N 30
+-9 AF AK%sT
 Z America/Nome 12:58:22 - LMT 1867 O 19 13:29:35
 -11:1:38 - LMT 1900 Au 20 12
 -11 - NST 1942
--11 AE N%sT 1946
+-11 AF N%sT 1946
 -11 - NST 1967 Ap
 -11 - BST 1969
--11 AE B%sT 1983 O 30 2
--9 AE Y%sT 1983 N 30
--9 AE AK%sT
+-11 AF B%sT 1983 O 30 2
+-9 AF Y%sT 1983 N 30
+-9 AF AK%sT
 Z America/Adak 12:13:22 - LMT 1867 O 19 12:44:35
 -11:46:38 - LMT 1900 Au 20 12
 -11 - NST 1942
--11 AE N%sT 1946
+-11 AF N%sT 1946
 -11 - NST 1967 Ap
 -11 - BST 1969
--11 AE B%sT 1983 O 30 2
--10 AE AH%sT 1983 N 30
--10 AE H%sT
+-11 AF B%sT 1983 O 30 2
+-10 AF AH%sT 1983 N 30
+-10 AF H%sT
 Z Pacific/Honolulu -10:31:26 - LMT 1896 Ja 13 12
 -10:30 - HST 1933 Ap 30 2
 -10:30 1 HDT 1933 May 21 12
@@ -2678,61 +2683,44 @@ Z Pacific/Honolulu -10:31:26 - LMT 1896 Ja 13 12
 -10:30 - HST 1947 Jun 8 2
 -10 - HST
 Z America/Phoenix -7:28:18 - LMT 1883 N 18 11:31:42
--7 AE M%sT 1944 Ja 1 0:1
+-7 AF M%sT 1944 Ja 1 0:1
 -7 - MST 1944 Ap 1 0:1
--7 AE M%sT 1944 O 1 0:1
+-7 AF M%sT 1944 O 1 0:1
 -7 - MST 1967
--7 AE M%sT 1968 Mar 21
+-7 AF M%sT 1968 Mar 21
 -7 - MST
 Z America/Boise -7:44:49 - LMT 1883 N 18 12:15:11
--8 AE P%sT 1923 May 13 2
--7 AE M%sT 1974
+-8 AF P%sT 1923 May 13 2
+-7 AF M%sT 1974
 -7 - MST 1974 F 3 2
--7 AE M%sT
-R AJ 1941 o - Jun 22 2 1 D
-R AJ 1941 1954 - S lastSun 2 0 S
-R AJ 1946 1954 - Ap lastSun 2 1 D
+-7 AF M%sT
+R AK 1941 o - Jun 22 2 1 D
+R AK 1941 1954 - S lastSun 2 0 S
+R AK 1946 1954 - Ap lastSun 2 1 D
 Z America/Indiana/Indianapolis -5:44:38 - LMT 1883 N 18 12:15:22
--6 AE C%sT 1920
--6 AJ C%sT 1942
--6 AE C%sT 1946
--6 AJ C%sT 1955 Ap 24 2
+-6 AF C%sT 1920
+-6 AK C%sT 1942
+-6 AF C%sT 1946
+-6 AK C%sT 1955 Ap 24 2
 -5 - EST 1957 S 29 2
 -6 - CST 1958 Ap 27 2
 -5 - EST 1969
--5 AE E%sT 1971
+-5 AF E%sT 1971
 -5 - EST 2006
--5 AE E%sT
-R AK 1951 o - Ap lastSun 2 1 D
-R AK 1951 o - S lastSun 2 0 S
-R AK 1954 1960 - Ap lastSun 2 1 D
-R AK 1954 1960 - S lastSun 2 0 S
+-5 AF E%sT
+R AL 1951 o - Ap lastSun 2 1 D
+R AL 1951 o - S lastSun 2 0 S
+R AL 1954 1960 - Ap lastSun 2 1 D
+R AL 1954 1960 - S lastSun 2 0 S
 Z America/Indiana/Marengo -5:45:23 - LMT 1883 N 18 12:14:37
--6 AE C%sT 1951
--6 AK C%sT 1961 Ap 30 2
+-6 AF C%sT 1951
+-6 AL C%sT 1961 Ap 30 2
 -5 - EST 1969
--5 AE E%sT 1974 Ja 6 2
+-5 AF E%sT 1974 Ja 6 2
 -6 1 CDT 1974 O 27 2
--5 AE E%sT 1976
+-5 AF E%sT 1976
 -5 - EST 2006
--5 AE E%sT
-R AL 1946 o - Ap lastSun 2 1 D
-R AL 1946 o - S lastSun 2 0 S
-R AL 1953 1954 - Ap lastSun 2 1 D
-R AL 1953 1959 - S lastSun 2 0 S
-R AL 1955 o - May 1 0 1 D
-R AL 1956 1963 - Ap lastSun 2 1 D
-R AL 1960 o - O lastSun 2 0 S
-R AL 1961 o - S lastSun 2 0 S
-R AL 1962 1963 - O lastSun 2 0 S
-Z America/Indiana/Vincennes -5:50:7 - LMT 1883 N 18 12:9:53
--6 AE C%sT 1946
--6 AL C%sT 1964 Ap 26 2
--5 - EST 1969
--5 AE E%sT 1971
--5 - EST 2006 Ap 2 2
--6 AE C%sT 2007 N 4 2
--5 AE E%sT
+-5 AF E%sT
 R AM 1946 o - Ap lastSun 2 1 D
 R AM 1946 o - S lastSun 2 0 S
 R AM 1953 1954 - Ap lastSun 2 1 D
@@ -2742,467 +2730,484 @@ R AM 1956 1963 - Ap lastSun 2 1 D
 R AM 1960 o - O lastSun 2 0 S
 R AM 1961 o - S lastSun 2 0 S
 R AM 1962 1963 - O lastSun 2 0 S
-Z America/Indiana/Tell_City -5:47:3 - LMT 1883 N 18 12:12:57
--6 AE C%sT 1946
+Z America/Indiana/Vincennes -5:50:7 - LMT 1883 N 18 12:9:53
+-6 AF C%sT 1946
 -6 AM C%sT 1964 Ap 26 2
 -5 - EST 1969
--5 AE E%sT 1971
+-5 AF E%sT 1971
 -5 - EST 2006 Ap 2 2
--6 AE C%sT
+-6 AF C%sT 2007 N 4 2
+-5 AF E%sT
+R AN 1946 o - Ap lastSun 2 1 D
+R AN 1946 o - S lastSun 2 0 S
+R AN 1953 1954 - Ap lastSun 2 1 D
+R AN 1953 1959 - S lastSun 2 0 S
 R AN 1955 o - May 1 0 1 D
-R AN 1955 1960 - S lastSun 2 0 S
-R AN 1956 1964 - Ap lastSun 2 1 D
-R AN 1961 1964 - O lastSun 2 0 S
+R AN 1956 1963 - Ap lastSun 2 1 D
+R AN 1960 o - O lastSun 2 0 S
+R AN 1961 o - S lastSun 2 0 S
+R AN 1962 1963 - O lastSun 2 0 S
+Z America/Indiana/Tell_City -5:47:3 - LMT 1883 N 18 12:12:57
+-6 AF C%sT 1946
+-6 AN C%sT 1964 Ap 26 2
+-5 - EST 1969
+-5 AF E%sT 1971
+-5 - EST 2006 Ap 2 2
+-6 AF C%sT
+R AO 1955 o - May 1 0 1 D
+R AO 1955 1960 - S lastSun 2 0 S
+R AO 1956 1964 - Ap lastSun 2 1 D
+R AO 1961 1964 - O lastSun 2 0 S
 Z America/Indiana/Petersburg -5:49:7 - LMT 1883 N 18 12:10:53
--6 AE C%sT 1955
--6 AN C%sT 1965 Ap 25 2
+-6 AF C%sT 1955
+-6 AO C%sT 1965 Ap 25 2
 -5 - EST 1966 O 30 2
--6 AE C%sT 1977 O 30 2
+-6 AF C%sT 1977 O 30 2
 -5 - EST 2006 Ap 2 2
--6 AE C%sT 2007 N 4 2
--5 AE E%sT
-R AO 1947 1961 - Ap lastSun 2 1 D
-R AO 1947 1954 - S lastSun 2 0 S
-R AO 1955 1956 - O lastSun 2 0 S
-R AO 1957 1958 - S lastSun 2 0 S
-R AO 1959 1961 - O lastSun 2 0 S
-Z America/Indiana/Knox -5:46:30 - LMT 1883 N 18 12:13:30
--6 AE C%sT 1947
--6 AO C%sT 1962 Ap 29 2
--5 - EST 1963 O 27 2
--6 AE C%sT 1991 O 27 2
--5 - EST 2006 Ap 2 2
--6 AE C%sT
-R AP 1946 1960 - Ap lastSun 2 1 D
-R AP 1946 1954 - S lastSun 2 0 S
+-6 AF C%sT 2007 N 4 2
+-5 AF E%sT
+R AP 1947 1961 - Ap lastSun 2 1 D
+R AP 1947 1954 - S lastSun 2 0 S
 R AP 1955 1956 - O lastSun 2 0 S
-R AP 1957 1960 - S lastSun 2 0 S
-Z America/Indiana/Winamac -5:46:25 - LMT 1883 N 18 12:13:35
--6 AE C%sT 1946
--6 AP C%sT 1961 Ap 30 2
--5 - EST 1969
--5 AE E%sT 1971
+R AP 1957 1958 - S lastSun 2 0 S
+R AP 1959 1961 - O lastSun 2 0 S
+Z America/Indiana/Knox -5:46:30 - LMT 1883 N 18 12:13:30
+-6 AF C%sT 1947
+-6 AP C%sT 1962 Ap 29 2
+-5 - EST 1963 O 27 2
+-6 AF C%sT 1991 O 27 2
 -5 - EST 2006 Ap 2 2
--6 AE C%sT 2007 Mar 11 2
--5 AE E%sT
-Z America/Indiana/Vevay -5:40:16 - LMT 1883 N 18 12:19:44
--6 AE C%sT 1954 Ap 25 2
+-6 AF C%sT
+R AQ 1946 1960 - Ap lastSun 2 1 D
+R AQ 1946 1954 - S lastSun 2 0 S
+R AQ 1955 1956 - O lastSun 2 0 S
+R AQ 1957 1960 - S lastSun 2 0 S
+Z America/Indiana/Winamac -5:46:25 - LMT 1883 N 18 12:13:35
+-6 AF C%sT 1946
+-6 AQ C%sT 1961 Ap 30 2
 -5 - EST 1969
--5 AE E%sT 1973
+-5 AF E%sT 1971
+-5 - EST 2006 Ap 2 2
+-6 AF C%sT 2007 Mar 11 2
+-5 AF E%sT
+Z America/Indiana/Vevay -5:40:16 - LMT 1883 N 18 12:19:44
+-6 AF C%sT 1954 Ap 25 2
+-5 - EST 1969
+-5 AF E%sT 1973
 -5 - EST 2006
--5 AE E%sT
-R AQ 1921 o - May 1 2 1 D
-R AQ 1921 o - S 1 2 0 S
-R AQ 1941 1961 - Ap lastSun 2 1 D
-R AQ 1941 o - S lastSun 2 0 S
-R AQ 1946 o - Jun 2 2 0 S
-R AQ 1950 1955 - S lastSun 2 0 S
-R AQ 1956 1960 - O lastSun 2 0 S
+-5 AF E%sT
+R AR 1921 o - May 1 2 1 D
+R AR 1921 o - S 1 2 0 S
+R AR 1941 1961 - Ap lastSun 2 1 D
+R AR 1941 o - S lastSun 2 0 S
+R AR 1946 o - Jun 2 2 0 S
+R AR 1950 1955 - S lastSun 2 0 S
+R AR 1956 1960 - O lastSun 2 0 S
 Z America/Kentucky/Louisville -5:43:2 - LMT 1883 N 18 12:16:58
--6 AE C%sT 1921
--6 AQ C%sT 1942
--6 AE C%sT 1946
--6 AQ C%sT 1961 Jul 23 2
+-6 AF C%sT 1921
+-6 AR C%sT 1942
+-6 AF C%sT 1946
+-6 AR C%sT 1961 Jul 23 2
 -5 - EST 1968
--5 AE E%sT 1974 Ja 6 2
+-5 AF E%sT 1974 Ja 6 2
 -6 1 CDT 1974 O 27 2
--5 AE E%sT
+-5 AF E%sT
 Z America/Kentucky/Monticello -5:39:24 - LMT 1883 N 18 12:20:36
--6 AE C%sT 1946
+-6 AF C%sT 1946
 -6 - CST 1968
--6 AE C%sT 2000 O 29 2
--5 AE E%sT
-R AR 1948 o - Ap lastSun 2 1 D
-R AR 1948 o - S lastSun 2 0 S
+-6 AF C%sT 2000 O 29 2
+-5 AF E%sT
+R AS 1948 o - Ap lastSun 2 1 D
+R AS 1948 o - S lastSun 2 0 S
 Z America/Detroit -5:32:11 - LMT 1905
 -6 - CST 1915 May 15 2
 -5 - EST 1942
--5 AE E%sT 1946
--5 AR E%sT 1973
--5 AE E%sT 1975
+-5 AF E%sT 1946
+-5 AS E%sT 1973
+-5 AF E%sT 1975
 -5 - EST 1975 Ap 27 2
--5 AE E%sT
-R AS 1946 o - Ap lastSun 2 1 D
-R AS 1946 o - S lastSun 2 0 S
-R AS 1966 o - Ap lastSun 2 1 D
-R AS 1966 o - O lastSun 2 0 S
+-5 AF E%sT
+R AT 1946 o - Ap lastSun 2 1 D
+R AT 1946 o - S lastSun 2 0 S
+R AT 1966 o - Ap lastSun 2 1 D
+R AT 1966 o - O lastSun 2 0 S
 Z America/Menominee -5:50:27 - LMT 1885 S 18 12
--6 AE C%sT 1946
--6 AS C%sT 1969 Ap 27 2
+-6 AF C%sT 1946
+-6 AT C%sT 1969 Ap 27 2
 -5 - EST 1973 Ap 29 2
--6 AE C%sT
-R AT 1918 o - Ap 14 2 1 D
-R AT 1918 o - O 27 2 0 S
-R AT 1942 o - F 9 2 1 W
-R AT 1945 o - Au 14 23u 1 P
-R AT 1945 o - S 30 2 0 S
-R AT 1974 1986 - Ap lastSun 2 1 D
-R AT 1974 2006 - O lastSun 2 0 S
-R AT 1987 2006 - Ap Sun>=1 2 1 D
-R AT 2007 ma - Mar Sun>=8 2 1 D
-R AT 2007 ma - N Sun>=1 2 0 S
-R AU 1917 o - Ap 8 2 1 D
-R AU 1917 o - S 17 2 0 S
-R AU 1919 o - May 5 23 1 D
-R AU 1919 o - Au 12 23 0 S
-R AU 1920 1935 - May Sun>=1 23 1 D
-R AU 1920 1935 - O lastSun 23 0 S
-R AU 1936 1941 - May M>=9 0 1 D
-R AU 1936 1941 - O M>=2 0 0 S
-R AU 1946 1950 - May Sun>=8 2 1 D
-R AU 1946 1950 - O Sun>=2 2 0 S
-R AU 1951 1986 - Ap lastSun 2 1 D
-R AU 1951 1959 - S lastSun 2 0 S
-R AU 1960 1986 - O lastSun 2 0 S
-R AU 1987 o - Ap Sun>=1 0:1 1 D
-R AU 1987 2006 - O lastSun 0:1 0 S
-R AU 1988 o - Ap Sun>=1 0:1 2 DD
-R AU 1989 2006 - Ap Sun>=1 0:1 1 D
-R AU 2007 2011 - Mar Sun>=8 0:1 1 D
-R AU 2007 2010 - N Sun>=1 0:1 0 S
+-6 AF C%sT
+R AU 1918 o - Ap 14 2 1 D
+R AU 1918 o - O 27 2 0 S
+R AU 1942 o - F 9 2 1 W
+R AU 1945 o - Au 14 23u 1 P
+R AU 1945 o - S 30 2 0 S
+R AU 1974 1986 - Ap lastSun 2 1 D
+R AU 1974 2006 - O lastSun 2 0 S
+R AU 1987 2006 - Ap Sun>=1 2 1 D
+R AU 2007 ma - Mar Sun>=8 2 1 D
+R AU 2007 ma - N Sun>=1 2 0 S
+R AV 1917 o - Ap 8 2 1 D
+R AV 1917 o - S 17 2 0 S
+R AV 1919 o - May 5 23 1 D
+R AV 1919 o - Au 12 23 0 S
+R AV 1920 1935 - May Sun>=1 23 1 D
+R AV 1920 1935 - O lastSun 23 0 S
+R AV 1936 1941 - May M>=9 0 1 D
+R AV 1936 1941 - O M>=2 0 0 S
+R AV 1946 1950 - May Sun>=8 2 1 D
+R AV 1946 1950 - O Sun>=2 2 0 S
+R AV 1951 1986 - Ap lastSun 2 1 D
+R AV 1951 1959 - S lastSun 2 0 S
+R AV 1960 1986 - O lastSun 2 0 S
+R AV 1987 o - Ap Sun>=1 0:1 1 D
+R AV 1987 2006 - O lastSun 0:1 0 S
+R AV 1988 o - Ap Sun>=1 0:1 2 DD
+R AV 1989 2006 - Ap Sun>=1 0:1 1 D
+R AV 2007 2011 - Mar Sun>=8 0:1 1 D
+R AV 2007 2010 - N Sun>=1 0:1 0 S
 Z America/St_Johns -3:30:52 - LMT 1884
--3:30:52 AU N%sT 1918
--3:30:52 AT N%sT 1919
--3:30:52 AU N%sT 1935 Mar 30
--3:30 AU N%sT 1942 May 11
--3:30 AT N%sT 1946
--3:30 AU N%sT 2011 N
--3:30 AT N%sT
+-3:30:52 AV N%sT 1918
+-3:30:52 AU N%sT 1919
+-3:30:52 AV N%sT 1935 Mar 30
+-3:30 AV N%sT 1942 May 11
+-3:30 AU N%sT 1946
+-3:30 AV N%sT 2011 N
+-3:30 AU N%sT
 Z America/Goose_Bay -4:1:40 - LMT 1884
 -3:30:52 - NST 1918
--3:30:52 AT N%sT 1919
+-3:30:52 AU N%sT 1919
 -3:30:52 - NST 1935 Mar 30
 -3:30 - NST 1936
--3:30 AU N%sT 1942 May 11
--3:30 AT N%sT 1946
--3:30 AU N%sT 1966 Mar 15 2
--4 AU A%sT 2011 N
--4 AT A%sT
-R AV 1916 o - Ap 1 0 1 D
-R AV 1916 o - O 1 0 0 S
-R AV 1920 o - May 9 0 1 D
-R AV 1920 o - Au 29 0 0 S
-R AV 1921 o - May 6 0 1 D
-R AV 1921 1922 - S 5 0 0 S
-R AV 1922 o - Ap 30 0 1 D
-R AV 1923 1925 - May Sun>=1 0 1 D
-R AV 1923 o - S 4 0 0 S
-R AV 1924 o - S 15 0 0 S
-R AV 1925 o - S 28 0 0 S
-R AV 1926 o - May 16 0 1 D
-R AV 1926 o - S 13 0 0 S
-R AV 1927 o - May 1 0 1 D
-R AV 1927 o - S 26 0 0 S
-R AV 1928 1931 - May Sun>=8 0 1 D
-R AV 1928 o - S 9 0 0 S
-R AV 1929 o - S 3 0 0 S
-R AV 1930 o - S 15 0 0 S
-R AV 1931 1932 - S M>=24 0 0 S
-R AV 1932 o - May 1 0 1 D
-R AV 1933 o - Ap 30 0 1 D
-R AV 1933 o - O 2 0 0 S
-R AV 1934 o - May 20 0 1 D
-R AV 1934 o - S 16 0 0 S
-R AV 1935 o - Jun 2 0 1 D
-R AV 1935 o - S 30 0 0 S
-R AV 1936 o - Jun 1 0 1 D
-R AV 1936 o - S 14 0 0 S
-R AV 1937 1938 - May Sun>=1 0 1 D
-R AV 1937 1941 - S M>=24 0 0 S
-R AV 1939 o - May 28 0 1 D
-R AV 1940 1941 - May Sun>=1 0 1 D
-R AV 1946 1949 - Ap lastSun 2 1 D
-R AV 1946 1949 - S lastSun 2 0 S
-R AV 1951 1954 - Ap lastSun 2 1 D
-R AV 1951 1954 - S lastSun 2 0 S
-R AV 1956 1959 - Ap lastSun 2 1 D
-R AV 1956 1959 - S lastSun 2 0 S
-R AV 1962 1973 - Ap lastSun 2 1 D
-R AV 1962 1973 - O lastSun 2 0 S
+-3:30 AV N%sT 1942 May 11
+-3:30 AU N%sT 1946
+-3:30 AV N%sT 1966 Mar 15 2
+-4 AV A%sT 2011 N
+-4 AU A%sT
+R AW 1916 o - Ap 1 0 1 D
+R AW 1916 o - O 1 0 0 S
+R AW 1920 o - May 9 0 1 D
+R AW 1920 o - Au 29 0 0 S
+R AW 1921 o - May 6 0 1 D
+R AW 1921 1922 - S 5 0 0 S
+R AW 1922 o - Ap 30 0 1 D
+R AW 1923 1925 - May Sun>=1 0 1 D
+R AW 1923 o - S 4 0 0 S
+R AW 1924 o - S 15 0 0 S
+R AW 1925 o - S 28 0 0 S
+R AW 1926 o - May 16 0 1 D
+R AW 1926 o - S 13 0 0 S
+R AW 1927 o - May 1 0 1 D
+R AW 1927 o - S 26 0 0 S
+R AW 1928 1931 - May Sun>=8 0 1 D
+R AW 1928 o - S 9 0 0 S
+R AW 1929 o - S 3 0 0 S
+R AW 1930 o - S 15 0 0 S
+R AW 1931 1932 - S M>=24 0 0 S
+R AW 1932 o - May 1 0 1 D
+R AW 1933 o - Ap 30 0 1 D
+R AW 1933 o - O 2 0 0 S
+R AW 1934 o - May 20 0 1 D
+R AW 1934 o - S 16 0 0 S
+R AW 1935 o - Jun 2 0 1 D
+R AW 1935 o - S 30 0 0 S
+R AW 1936 o - Jun 1 0 1 D
+R AW 1936 o - S 14 0 0 S
+R AW 1937 1938 - May Sun>=1 0 1 D
+R AW 1937 1941 - S M>=24 0 0 S
+R AW 1939 o - May 28 0 1 D
+R AW 1940 1941 - May Sun>=1 0 1 D
+R AW 1946 1949 - Ap lastSun 2 1 D
+R AW 1946 1949 - S lastSun 2 0 S
+R AW 1951 1954 - Ap lastSun 2 1 D
+R AW 1951 1954 - S lastSun 2 0 S
+R AW 1956 1959 - Ap lastSun 2 1 D
+R AW 1956 1959 - S lastSun 2 0 S
+R AW 1962 1973 - Ap lastSun 2 1 D
+R AW 1962 1973 - O lastSun 2 0 S
 Z America/Halifax -4:14:24 - LMT 1902 Jun 15
--4 AV A%sT 1918
--4 AT A%sT 1919
--4 AV A%sT 1942 F 9 2s
--4 AT A%sT 1946
--4 AV A%sT 1974
--4 AT A%sT
+-4 AW A%sT 1918
+-4 AU A%sT 1919
+-4 AW A%sT 1942 F 9 2s
+-4 AU A%sT 1946
+-4 AW A%sT 1974
+-4 AU A%sT
 Z America/Glace_Bay -3:59:48 - LMT 1902 Jun 15
--4 AT A%sT 1953
--4 AV A%sT 1954
+-4 AU A%sT 1953
+-4 AW A%sT 1954
 -4 - AST 1972
--4 AV A%sT 1974
--4 AT A%sT
-R AW 1933 1935 - Jun Sun>=8 1 1 D
-R AW 1933 1935 - S Sun>=8 1 0 S
-R AW 1936 1938 - Jun Sun>=1 1 1 D
-R AW 1936 1938 - S Sun>=1 1 0 S
-R AW 1939 o - May 27 1 1 D
-R AW 1939 1941 - S Sat>=21 1 0 S
-R AW 1940 o - May 19 1 1 D
-R AW 1941 o - May 4 1 1 D
-R AW 1946 1972 - Ap lastSun 2 1 D
-R AW 1946 1956 - S lastSun 2 0 S
-R AW 1957 1972 - O lastSun 2 0 S
-R AW 1993 2006 - Ap Sun>=1 0:1 1 D
-R AW 1993 2006 - O lastSun 0:1 0 S
+-4 AW A%sT 1974
+-4 AU A%sT
+R AX 1933 1935 - Jun Sun>=8 1 1 D
+R AX 1933 1935 - S Sun>=8 1 0 S
+R AX 1936 1938 - Jun Sun>=1 1 1 D
+R AX 1936 1938 - S Sun>=1 1 0 S
+R AX 1939 o - May 27 1 1 D
+R AX 1939 1941 - S Sat>=21 1 0 S
+R AX 1940 o - May 19 1 1 D
+R AX 1941 o - May 4 1 1 D
+R AX 1946 1972 - Ap lastSun 2 1 D
+R AX 1946 1956 - S lastSun 2 0 S
+R AX 1957 1972 - O lastSun 2 0 S
+R AX 1993 2006 - Ap Sun>=1 0:1 1 D
+R AX 1993 2006 - O lastSun 0:1 0 S
 Z America/Moncton -4:19:8 - LMT 1883 D 9
 -5 - EST 1902 Jun 15
--4 AT A%sT 1933
--4 AW A%sT 1942
--4 AT A%sT 1946
--4 AW A%sT 1973
--4 AT A%sT 1993
--4 AW A%sT 2007
--4 AT A%sT
+-4 AU A%sT 1933
+-4 AX A%sT 1942
+-4 AU A%sT 1946
+-4 AX A%sT 1973
+-4 AU A%sT 1993
+-4 AX A%sT 2007
+-4 AU A%sT
 Z America/Blanc-Sablon -3:48:28 - LMT 1884
--4 AT A%sT 1970
+-4 AU A%sT 1970
 -4 - AST
-R AX 1919 o - Mar 30 23:30 1 D
-R AX 1919 o - O 26 0 0 S
-R AX 1920 o - May 2 2 1 D
-R AX 1920 o - S 26 0 0 S
-R AX 1921 o - May 15 2 1 D
-R AX 1921 o - S 15 2 0 S
-R AX 1922 1923 - May Sun>=8 2 1 D
-R AX 1922 1926 - S Sun>=15 2 0 S
-R AX 1924 1927 - May Sun>=1 2 1 D
-R AX 1927 1932 - S lastSun 2 0 S
-R AX 1928 1931 - Ap lastSun 2 1 D
-R AX 1932 o - May 1 2 1 D
-R AX 1933 1940 - Ap lastSun 2 1 D
-R AX 1933 o - O 1 2 0 S
-R AX 1934 1939 - S lastSun 2 0 S
-R AX 1945 1946 - S lastSun 2 0 S
-R AX 1946 o - Ap lastSun 2 1 D
-R AX 1947 1949 - Ap lastSun 0 1 D
-R AX 1947 1948 - S lastSun 0 0 S
-R AX 1949 o - N lastSun 0 0 S
-R AX 1950 1973 - Ap lastSun 2 1 D
-R AX 1950 o - N lastSun 2 0 S
-R AX 1951 1956 - S lastSun 2 0 S
-R AX 1957 1973 - O lastSun 2 0 S
+R AY 1919 o - Mar 30 23:30 1 D
+R AY 1919 o - O 26 0 0 S
+R AY 1920 o - May 2 2 1 D
+R AY 1920 o - S 26 0 0 S
+R AY 1921 o - May 15 2 1 D
+R AY 1921 o - S 15 2 0 S
+R AY 1922 1923 - May Sun>=8 2 1 D
+R AY 1922 1926 - S Sun>=15 2 0 S
+R AY 1924 1927 - May Sun>=1 2 1 D
+R AY 1927 1932 - S lastSun 2 0 S
+R AY 1928 1931 - Ap lastSun 2 1 D
+R AY 1932 o - May 1 2 1 D
+R AY 1933 1940 - Ap lastSun 2 1 D
+R AY 1933 o - O 1 2 0 S
+R AY 1934 1939 - S lastSun 2 0 S
+R AY 1945 1946 - S lastSun 2 0 S
+R AY 1946 o - Ap lastSun 2 1 D
+R AY 1947 1949 - Ap lastSun 0 1 D
+R AY 1947 1948 - S lastSun 0 0 S
+R AY 1949 o - N lastSun 0 0 S
+R AY 1950 1973 - Ap lastSun 2 1 D
+R AY 1950 o - N lastSun 2 0 S
+R AY 1951 1956 - S lastSun 2 0 S
+R AY 1957 1973 - O lastSun 2 0 S
 Z America/Toronto -5:17:32 - LMT 1895
--5 AT E%sT 1919
--5 AX E%sT 1942 F 9 2s
--5 AT E%sT 1946
--5 AX E%sT 1974
--5 AT E%sT
+-5 AU E%sT 1919
+-5 AY E%sT 1942 F 9 2s
+-5 AU E%sT 1946
+-5 AY E%sT 1974
+-5 AU E%sT
 Z America/Thunder_Bay -5:57 - LMT 1895
 -6 - CST 1910
 -5 - EST 1942
--5 AT E%sT 1970
--5 AX E%sT 1973
+-5 AU E%sT 1970
+-5 AY E%sT 1973
 -5 - EST 1974
--5 AT E%sT
+-5 AU E%sT
 Z America/Nipigon -5:53:4 - LMT 1895
--5 AT E%sT 1940 S 29
+-5 AU E%sT 1940 S 29
 -5 1 EDT 1942 F 9 2s
--5 AT E%sT
+-5 AU E%sT
 Z America/Rainy_River -6:18:16 - LMT 1895
--6 AT C%sT 1940 S 29
+-6 AU C%sT 1940 S 29
 -6 1 CDT 1942 F 9 2s
--6 AT C%sT
+-6 AU C%sT
 Z America/Atikokan -6:6:28 - LMT 1895
--6 AT C%sT 1940 S 29
+-6 AU C%sT 1940 S 29
 -6 1 CDT 1942 F 9 2s
--6 AT C%sT 1945 S 30 2
+-6 AU C%sT 1945 S 30 2
 -5 - EST
-R AY 1916 o - Ap 23 0 1 D
-R AY 1916 o - S 17 0 0 S
-R AY 1918 o - Ap 14 2 1 D
-R AY 1918 o - O 27 2 0 S
-R AY 1937 o - May 16 2 1 D
-R AY 1937 o - S 26 2 0 S
-R AY 1942 o - F 9 2 1 W
-R AY 1945 o - Au 14 23u 1 P
-R AY 1945 o - S lastSun 2 0 S
-R AY 1946 o - May 12 2 1 D
-R AY 1946 o - O 13 2 0 S
-R AY 1947 1949 - Ap lastSun 2 1 D
-R AY 1947 1949 - S lastSun 2 0 S
-R AY 1950 o - May 1 2 1 D
-R AY 1950 o - S 30 2 0 S
-R AY 1951 1960 - Ap lastSun 2 1 D
-R AY 1951 1958 - S lastSun 2 0 S
-R AY 1959 o - O lastSun 2 0 S
-R AY 1960 o - S lastSun 2 0 S
-R AY 1963 o - Ap lastSun 2 1 D
-R AY 1963 o - S 22 2 0 S
-R AY 1966 1986 - Ap lastSun 2s 1 D
-R AY 1966 2005 - O lastSun 2s 0 S
-R AY 1987 2005 - Ap Sun>=1 2s 1 D
-Z America/Winnipeg -6:28:36 - LMT 1887 Jul 16
--6 AY C%sT 2006
--6 AT C%sT
+R AZ 1916 o - Ap 23 0 1 D
+R AZ 1916 o - S 17 0 0 S
 R AZ 1918 o - Ap 14 2 1 D
 R AZ 1918 o - O 27 2 0 S
-R AZ 1930 1934 - May Sun>=1 0 1 D
-R AZ 1930 1934 - O Sun>=1 0 0 S
-R AZ 1937 1941 - Ap Sun>=8 0 1 D
-R AZ 1937 o - O Sun>=8 0 0 S
-R AZ 1938 o - O Sun>=1 0 0 S
-R AZ 1939 1941 - O Sun>=8 0 0 S
+R AZ 1937 o - May 16 2 1 D
+R AZ 1937 o - S 26 2 0 S
 R AZ 1942 o - F 9 2 1 W
 R AZ 1945 o - Au 14 23u 1 P
 R AZ 1945 o - S lastSun 2 0 S
-R AZ 1946 o - Ap Sun>=8 2 1 D
-R AZ 1946 o - O Sun>=8 2 0 S
-R AZ 1947 1957 - Ap lastSun 2 1 D
-R AZ 1947 1957 - S lastSun 2 0 S
-R AZ 1959 o - Ap lastSun 2 1 D
+R AZ 1946 o - May 12 2 1 D
+R AZ 1946 o - O 13 2 0 S
+R AZ 1947 1949 - Ap lastSun 2 1 D
+R AZ 1947 1949 - S lastSun 2 0 S
+R AZ 1950 o - May 1 2 1 D
+R AZ 1950 o - S 30 2 0 S
+R AZ 1951 1960 - Ap lastSun 2 1 D
+R AZ 1951 1958 - S lastSun 2 0 S
 R AZ 1959 o - O lastSun 2 0 S
-R Aa 1957 o - Ap lastSun 2 1 D
-R Aa 1957 o - O lastSun 2 0 S
-R Aa 1959 1961 - Ap lastSun 2 1 D
+R AZ 1960 o - S lastSun 2 0 S
+R AZ 1963 o - Ap lastSun 2 1 D
+R AZ 1963 o - S 22 2 0 S
+R AZ 1966 1986 - Ap lastSun 2s 1 D
+R AZ 1966 2005 - O lastSun 2s 0 S
+R AZ 1987 2005 - Ap Sun>=1 2s 1 D
+Z America/Winnipeg -6:28:36 - LMT 1887 Jul 16
+-6 AZ C%sT 2006
+-6 AU C%sT
+R Aa 1918 o - Ap 14 2 1 D
+R Aa 1918 o - O 27 2 0 S
+R Aa 1930 1934 - May Sun>=1 0 1 D
+R Aa 1930 1934 - O Sun>=1 0 0 S
+R Aa 1937 1941 - Ap Sun>=8 0 1 D
+R Aa 1937 o - O Sun>=8 0 0 S
+R Aa 1938 o - O Sun>=1 0 0 S
+R Aa 1939 1941 - O Sun>=8 0 0 S
+R Aa 1942 o - F 9 2 1 W
+R Aa 1945 o - Au 14 23u 1 P
+R Aa 1945 o - S lastSun 2 0 S
+R Aa 1946 o - Ap Sun>=8 2 1 D
+R Aa 1946 o - O Sun>=8 2 0 S
+R Aa 1947 1957 - Ap lastSun 2 1 D
+R Aa 1947 1957 - S lastSun 2 0 S
+R Aa 1959 o - Ap lastSun 2 1 D
 R Aa 1959 o - O lastSun 2 0 S
-R Aa 1960 1961 - S lastSun 2 0 S
+R Ab 1957 o - Ap lastSun 2 1 D
+R Ab 1957 o - O lastSun 2 0 S
+R Ab 1959 1961 - Ap lastSun 2 1 D
+R Ab 1959 o - O lastSun 2 0 S
+R Ab 1960 1961 - S lastSun 2 0 S
 Z America/Regina -6:58:36 - LMT 1905 S
--7 AZ M%sT 1960 Ap lastSun 2
+-7 Aa M%sT 1960 Ap lastSun 2
 -6 - CST
 Z America/Swift_Current -7:11:20 - LMT 1905 S
--7 AT M%sT 1946 Ap lastSun 2
--7 AZ M%sT 1950
--7 Aa M%sT 1972 Ap lastSun 2
+-7 AU M%sT 1946 Ap lastSun 2
+-7 Aa M%sT 1950
+-7 Ab M%sT 1972 Ap lastSun 2
 -6 - CST
-R Ab 1918 1919 - Ap Sun>=8 2 1 D
-R Ab 1918 o - O 27 2 0 S
-R Ab 1919 o - May 27 2 0 S
-R Ab 1920 1923 - Ap lastSun 2 1 D
-R Ab 1920 o - O lastSun 2 0 S
-R Ab 1921 1923 - S lastSun 2 0 S
-R Ab 1942 o - F 9 2 1 W
-R Ab 1945 o - Au 14 23u 1 P
-R Ab 1945 o - S lastSun 2 0 S
-R Ab 1947 o - Ap lastSun 2 1 D
-R Ab 1947 o - S lastSun 2 0 S
-R Ab 1967 o - Ap lastSun 2 1 D
-R Ab 1967 o - O lastSun 2 0 S
-R Ab 1969 o - Ap lastSun 2 1 D
-R Ab 1969 o - O lastSun 2 0 S
-R Ab 1972 1986 - Ap lastSun 2 1 D
-R Ab 1972 2006 - O lastSun 2 0 S
-Z America/Edmonton -7:33:52 - LMT 1906 S
--7 Ab M%sT 1987
--7 AT M%sT
-R Ac 1918 o - Ap 14 2 1 D
+R Ac 1918 1919 - Ap Sun>=8 2 1 D
 R Ac 1918 o - O 27 2 0 S
+R Ac 1919 o - May 27 2 0 S
+R Ac 1920 1923 - Ap lastSun 2 1 D
+R Ac 1920 o - O lastSun 2 0 S
+R Ac 1921 1923 - S lastSun 2 0 S
 R Ac 1942 o - F 9 2 1 W
 R Ac 1945 o - Au 14 23u 1 P
-R Ac 1945 o - S 30 2 0 S
-R Ac 1946 1986 - Ap lastSun 2 1 D
-R Ac 1946 o - O 13 2 0 S
-R Ac 1947 1961 - S lastSun 2 0 S
-R Ac 1962 2006 - O lastSun 2 0 S
+R Ac 1945 o - S lastSun 2 0 S
+R Ac 1947 o - Ap lastSun 2 1 D
+R Ac 1947 o - S lastSun 2 0 S
+R Ac 1967 o - Ap lastSun 2 1 D
+R Ac 1967 o - O lastSun 2 0 S
+R Ac 1969 o - Ap lastSun 2 1 D
+R Ac 1969 o - O lastSun 2 0 S
+R Ac 1972 1986 - Ap lastSun 2 1 D
+R Ac 1972 2006 - O lastSun 2 0 S
+Z America/Edmonton -7:33:52 - LMT 1906 S
+-7 Ac M%sT 1987
+-7 AU M%sT
+R Ad 1918 o - Ap 14 2 1 D
+R Ad 1918 o - O 27 2 0 S
+R Ad 1942 o - F 9 2 1 W
+R Ad 1945 o - Au 14 23u 1 P
+R Ad 1945 o - S 30 2 0 S
+R Ad 1946 1986 - Ap lastSun 2 1 D
+R Ad 1946 o - O 13 2 0 S
+R Ad 1947 1961 - S lastSun 2 0 S
+R Ad 1962 2006 - O lastSun 2 0 S
 Z America/Vancouver -8:12:28 - LMT 1884
--8 Ac P%sT 1987
--8 AT P%sT
+-8 Ad P%sT 1987
+-8 AU P%sT
 Z America/Dawson_Creek -8:0:56 - LMT 1884
--8 AT P%sT 1947
--8 Ac P%sT 1972 Au 30 2
+-8 AU P%sT 1947
+-8 Ad P%sT 1972 Au 30 2
 -7 - MST
 Z America/Fort_Nelson -8:10:47 - LMT 1884
--8 Ac P%sT 1946
+-8 Ad P%sT 1946
 -8 - PST 1947
--8 Ac P%sT 1987
--8 AT P%sT 2015 Mar 8 2
+-8 Ad P%sT 1987
+-8 AU P%sT 2015 Mar 8 2
 -7 - MST
 Z America/Creston -7:46:4 - LMT 1884
 -7 - MST 1916 O
 -8 - PST 1918 Jun 2
 -7 - MST
-R Ad 1918 o - Ap 14 2 1 D
-R Ad 1918 o - O 27 2 0 S
-R Ad 1919 o - May 25 2 1 D
-R Ad 1919 o - N 1 0 0 S
-R Ad 1942 o - F 9 2 1 W
-R Ad 1945 o - Au 14 23u 1 P
-R Ad 1945 o - S 30 2 0 S
-R Ad 1965 o - Ap lastSun 0 2 DD
-R Ad 1965 o - O lastSun 2 0 S
-R Ad 1980 1986 - Ap lastSun 2 1 D
-R Ad 1980 2006 - O lastSun 2 0 S
-R Ad 1987 2006 - Ap Sun>=1 2 1 D
+R Ae 1918 o - Ap 14 2 1 D
+R Ae 1918 o - O 27 2 0 S
+R Ae 1919 o - May 25 2 1 D
+R Ae 1919 o - N 1 0 0 S
+R Ae 1942 o - F 9 2 1 W
+R Ae 1945 o - Au 14 23u 1 P
+R Ae 1945 o - S 30 2 0 S
+R Ae 1965 o - Ap lastSun 0 2 DD
+R Ae 1965 o - O lastSun 2 0 S
+R Ae 1980 1986 - Ap lastSun 2 1 D
+R Ae 1980 2006 - O lastSun 2 0 S
+R Ae 1987 2006 - Ap Sun>=1 2 1 D
 Z America/Pangnirtung 0 - -00 1921
--4 Ad A%sT 1995 Ap Sun>=1 2
--5 AT E%sT 1999 O 31 2
--6 AT C%sT 2000 O 29 2
--5 AT E%sT
+-4 Ae A%sT 1995 Ap Sun>=1 2
+-5 AU E%sT 1999 O 31 2
+-6 AU C%sT 2000 O 29 2
+-5 AU E%sT
 Z America/Iqaluit 0 - -00 1942 Au
--5 Ad E%sT 1999 O 31 2
--6 AT C%sT 2000 O 29 2
--5 AT E%sT
+-5 Ae E%sT 1999 O 31 2
+-6 AU C%sT 2000 O 29 2
+-5 AU E%sT
 Z America/Resolute 0 - -00 1947 Au 31
--6 Ad C%sT 2000 O 29 2
+-6 Ae C%sT 2000 O 29 2
 -5 - EST 2001 Ap 1 3
--6 AT C%sT 2006 O 29 2
+-6 AU C%sT 2006 O 29 2
 -5 - EST 2007 Mar 11 3
--6 AT C%sT
+-6 AU C%sT
 Z America/Rankin_Inlet 0 - -00 1957
--6 Ad C%sT 2000 O 29 2
+-6 Ae C%sT 2000 O 29 2
 -5 - EST 2001 Ap 1 3
--6 AT C%sT
+-6 AU C%sT
 Z America/Cambridge_Bay 0 - -00 1920
--7 Ad M%sT 1999 O 31 2
--6 AT C%sT 2000 O 29 2
+-7 Ae M%sT 1999 O 31 2
+-6 AU C%sT 2000 O 29 2
 -5 - EST 2000 N 5
 -6 - CST 2001 Ap 1 3
--7 AT M%sT
+-7 AU M%sT
 Z America/Yellowknife 0 - -00 1935
--7 Ad M%sT 1980
--7 AT M%sT
+-7 Ae M%sT 1980
+-7 AU M%sT
 Z America/Inuvik 0 - -00 1953
--8 Ad P%sT 1979 Ap lastSun 2
--7 Ad M%sT 1980
--7 AT M%sT
+-8 Ae P%sT 1979 Ap lastSun 2
+-7 Ae M%sT 1980
+-7 AU M%sT
 Z America/Whitehorse -9:0:12 - LMT 1900 Au 20
--9 Ad Y%sT 1967 May 28
--8 Ad P%sT 1980
--8 AT P%sT
+-9 Ae Y%sT 1967 May 28
+-8 Ae P%sT 1980
+-8 AU P%sT
 Z America/Dawson -9:17:40 - LMT 1900 Au 20
--9 Ad Y%sT 1973 O 28
--8 Ad P%sT 1980
--8 AT P%sT
-R Ae 1939 o - F 5 0 1 D
-R Ae 1939 o - Jun 25 0 0 S
-R Ae 1940 o - D 9 0 1 D
-R Ae 1941 o - Ap 1 0 0 S
-R Ae 1943 o - D 16 0 1 W
-R Ae 1944 o - May 1 0 0 S
-R Ae 1950 o - F 12 0 1 D
-R Ae 1950 o - Jul 30 0 0 S
-R Ae 1996 2000 - Ap Sun>=1 2 1 D
-R Ae 1996 2000 - O lastSun 2 0 S
-R Ae 2001 o - May Sun>=1 2 1 D
-R Ae 2001 o - S lastSun 2 0 S
-R Ae 2002 ma - Ap Sun>=1 2 1 D
-R Ae 2002 ma - O lastSun 2 0 S
+-9 Ae Y%sT 1973 O 28
+-8 Ae P%sT 1980
+-8 AU P%sT
+R Af 1939 o - F 5 0 1 D
+R Af 1939 o - Jun 25 0 0 S
+R Af 1940 o - D 9 0 1 D
+R Af 1941 o - Ap 1 0 0 S
+R Af 1943 o - D 16 0 1 W
+R Af 1944 o - May 1 0 0 S
+R Af 1950 o - F 12 0 1 D
+R Af 1950 o - Jul 30 0 0 S
+R Af 1996 2000 - Ap Sun>=1 2 1 D
+R Af 1996 2000 - O lastSun 2 0 S
+R Af 2001 o - May Sun>=1 2 1 D
+R Af 2001 o - S lastSun 2 0 S
+R Af 2002 ma - Ap Sun>=1 2 1 D
+R Af 2002 ma - O lastSun 2 0 S
 Z America/Cancun -5:47:4 - LMT 1922 Ja 1 0:12:56
 -6 - CST 1981 D 23
--5 Ae E%sT 1998 Au 2 2
--6 Ae C%sT 2015 F 1 2
+-5 Af E%sT 1998 Au 2 2
+-6 Af C%sT 2015 F 1 2
 -5 - EST
 Z America/Merida -5:58:28 - LMT 1922 Ja 1 0:1:32
 -6 - CST 1981 D 23
 -5 - EST 1982 D 2
--6 Ae C%sT
+-6 Af C%sT
 Z America/Matamoros -6:40 - LMT 1921 D 31 23:20
 -6 - CST 1988
--6 AE C%sT 1989
--6 Ae C%sT 2010
--6 AE C%sT
+-6 AF C%sT 1989
+-6 Af C%sT 2010
+-6 AF C%sT
 Z America/Monterrey -6:41:16 - LMT 1921 D 31 23:18:44
 -6 - CST 1988
--6 AE C%sT 1989
--6 Ae C%sT
+-6 AF C%sT 1989
+-6 Af C%sT
 Z America/Mexico_City -6:36:36 - LMT 1922 Ja 1 0:23:24
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
 -7 - MST 1931 May 1 23
 -6 - CST 1931 O
 -7 - MST 1932 Ap
--6 Ae C%sT 2001 S 30 2
+-6 Af C%sT 2001 S 30 2
 -6 - CST 2002 F 20
--6 Ae C%sT
+-6 Af C%sT
 Z America/Ojinaga -6:57:40 - LMT 1922 Ja 1 0:2:20
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
@@ -3210,10 +3215,10 @@ Z America/Ojinaga -6:57:40 - LMT 1922 Ja 1 0:2:20
 -6 - CST 1931 O
 -7 - MST 1932 Ap
 -6 - CST 1996
--6 Ae C%sT 1998
+-6 Af C%sT 1998
 -6 - CST 1998 Ap Sun>=1 3
--7 Ae M%sT 2010
--7 AE M%sT
+-7 Af M%sT 2010
+-7 AF M%sT
 Z America/Chihuahua -7:4:20 - LMT 1921 D 31 23:55:40
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
@@ -3221,9 +3226,9 @@ Z America/Chihuahua -7:4:20 - LMT 1921 D 31 23:55:40
 -6 - CST 1931 O
 -7 - MST 1932 Ap
 -6 - CST 1996
--6 Ae C%sT 1998
+-6 Af C%sT 1998
 -6 - CST 1998 Ap Sun>=1 3
--7 Ae M%sT
+-7 Af M%sT
 Z America/Hermosillo -7:23:52 - LMT 1921 D 31 23:36:8
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
@@ -3233,7 +3238,7 @@ Z America/Hermosillo -7:23:52 - LMT 1921 D 31 23:36:8
 -6 - CST 1942 Ap 24
 -7 - MST 1949 Ja 14
 -8 - PST 1970
--7 Ae M%sT 1999
+-7 Af M%sT 1999
 -7 - MST
 Z America/Mazatlan -7:5:40 - LMT 1921 D 31 23:54:20
 -7 - MST 1927 Jun 10 23
@@ -3244,7 +3249,7 @@ Z America/Mazatlan -7:5:40 - LMT 1921 D 31 23:54:20
 -6 - CST 1942 Ap 24
 -7 - MST 1949 Ja 14
 -8 - PST 1970
--7 Ae M%sT
+-7 Af M%sT
 Z America/Bahia_Banderas -7:1 - LMT 1921 D 31 23:59
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
@@ -3254,8 +3259,8 @@ Z America/Bahia_Banderas -7:1 - LMT 1921 D 31 23:59
 -6 - CST 1942 Ap 24
 -7 - MST 1949 Ja 14
 -8 - PST 1970
--7 Ae M%sT 2010 Ap 4 2
--6 Ae C%sT
+-7 Af M%sT 2010 Ap 4 2
+-6 Af C%sT
 Z America/Tijuana -7:48:4 - LMT 1922 Ja 1 0:11:56
 -7 - MST 1924
 -8 - PST 1927 Jun 10 23
@@ -3268,315 +3273,315 @@ Z America/Tijuana -7:48:4 - LMT 1922 Ja 1 0:11:56
 -8 - PST 1948 Ap 5
 -8 1 PDT 1949 Ja 14
 -8 - PST 1954
--8 AI P%sT 1961
+-8 AJ P%sT 1961
 -8 - PST 1976
--8 AE P%sT 1996
--8 Ae P%sT 2001
--8 AE P%sT 2002 F 20
--8 Ae P%sT 2010
--8 AE P%sT
-R Af 1964 1975 - O lastSun 2 0 S
-R Af 1964 1975 - Ap lastSun 2 1 D
+-8 AF P%sT 1996
+-8 Af P%sT 2001
+-8 AF P%sT 2002 F 20
+-8 Af P%sT 2010
+-8 AF P%sT
+R Ag 1964 1975 - O lastSun 2 0 S
+R Ag 1964 1975 - Ap lastSun 2 1 D
 Z America/Nassau -5:9:30 - LMT 1912 Mar 2
--5 Af E%sT 1976
--5 AE E%sT
-R Ag 1977 o - Jun 12 2 1 D
-R Ag 1977 1978 - O Sun>=1 2 0 S
-R Ag 1978 1980 - Ap Sun>=15 2 1 D
-R Ag 1979 o - S 30 2 0 S
-R Ag 1980 o - S 25 2 0 S
+-5 Ag E%sT 1976
+-5 AF E%sT
+R Ah 1977 o - Jun 12 2 1 D
+R Ah 1977 1978 - O Sun>=1 2 0 S
+R Ah 1978 1980 - Ap Sun>=15 2 1 D
+R Ah 1979 o - S 30 2 0 S
+R Ah 1980 o - S 25 2 0 S
 Z America/Barbados -3:58:29 - LMT 1924
 -3:58:29 - BMT 1932
--4 Ag A%sT
-R Ah 1918 1942 - O Sun>=2 0 0:30 -0530
-R Ah 1919 1943 - F Sun>=9 0 0 CST
-R Ah 1973 o - D 5 0 1 CDT
-R Ah 1974 o - F 9 0 0 CST
-R Ah 1982 o - D 18 0 1 CDT
-R Ah 1983 o - F 12 0 0 CST
+-4 Ah A%sT
+R Ai 1918 1942 - O Sun>=2 0 0:30 -0530
+R Ai 1919 1943 - F Sun>=9 0 0 CST
+R Ai 1973 o - D 5 0 1 CDT
+R Ai 1974 o - F 9 0 0 CST
+R Ai 1982 o - D 18 0 1 CDT
+R Ai 1983 o - F 12 0 0 CST
 Z America/Belize -5:52:48 - LMT 1912 Ap
--6 Ah %s
+-6 Ai %s
 Z Atlantic/Bermuda -4:19:18 - LMT 1930 Ja 1 2
 -4 - AST 1974 Ap 28 2
--4 AT A%sT 1976
--4 AE A%sT
-R Ai 1979 1980 - F lastSun 0 1 D
-R Ai 1979 1980 - Jun Sun>=1 0 0 S
-R Ai 1991 1992 - Ja Sat>=15 0 1 D
-R Ai 1991 o - Jul 1 0 0 S
-R Ai 1992 o - Mar 15 0 0 S
+-4 AU A%sT 1976
+-4 AF A%sT
+R Aj 1979 1980 - F lastSun 0 1 D
+R Aj 1979 1980 - Jun Sun>=1 0 0 S
+R Aj 1991 1992 - Ja Sat>=15 0 1 D
+R Aj 1991 o - Jul 1 0 0 S
+R Aj 1992 o - Mar 15 0 0 S
 Z America/Costa_Rica -5:36:13 - LMT 1890
 -5:36:13 - SJMT 1921 Ja 15
--6 Ai C%sT
-R Aj 1928 o - Jun 10 0 1 D
-R Aj 1928 o - O 10 0 0 S
-R Aj 1940 1942 - Jun Sun>=1 0 1 D
-R Aj 1940 1942 - S Sun>=1 0 0 S
-R Aj 1945 1946 - Jun Sun>=1 0 1 D
-R Aj 1945 1946 - S Sun>=1 0 0 S
-R Aj 1965 o - Jun 1 0 1 D
-R Aj 1965 o - S 30 0 0 S
-R Aj 1966 o - May 29 0 1 D
-R Aj 1966 o - O 2 0 0 S
-R Aj 1967 o - Ap 8 0 1 D
-R Aj 1967 1968 - S Sun>=8 0 0 S
-R Aj 1968 o - Ap 14 0 1 D
-R Aj 1969 1977 - Ap lastSun 0 1 D
-R Aj 1969 1971 - O lastSun 0 0 S
-R Aj 1972 1974 - O 8 0 0 S
-R Aj 1975 1977 - O lastSun 0 0 S
-R Aj 1978 o - May 7 0 1 D
-R Aj 1978 1990 - O Sun>=8 0 0 S
-R Aj 1979 1980 - Mar Sun>=15 0 1 D
-R Aj 1981 1985 - May Sun>=5 0 1 D
-R Aj 1986 1989 - Mar Sun>=14 0 1 D
-R Aj 1990 1997 - Ap Sun>=1 0 1 D
-R Aj 1991 1995 - O Sun>=8 0s 0 S
-R Aj 1996 o - O 6 0s 0 S
-R Aj 1997 o - O 12 0s 0 S
-R Aj 1998 1999 - Mar lastSun 0s 1 D
-R Aj 1998 2003 - O lastSun 0s 0 S
-R Aj 2000 2003 - Ap Sun>=1 0s 1 D
-R Aj 2004 o - Mar lastSun 0s 1 D
-R Aj 2006 2010 - O lastSun 0s 0 S
-R Aj 2007 o - Mar Sun>=8 0s 1 D
-R Aj 2008 o - Mar Sun>=15 0s 1 D
-R Aj 2009 2010 - Mar Sun>=8 0s 1 D
-R Aj 2011 o - Mar Sun>=15 0s 1 D
-R Aj 2011 o - N 13 0s 0 S
-R Aj 2012 o - Ap 1 0s 1 D
-R Aj 2012 ma - N Sun>=1 0s 0 S
-R Aj 2013 ma - Mar Sun>=8 0s 1 D
+-6 Aj C%sT
+R Ak 1928 o - Jun 10 0 1 D
+R Ak 1928 o - O 10 0 0 S
+R Ak 1940 1942 - Jun Sun>=1 0 1 D
+R Ak 1940 1942 - S Sun>=1 0 0 S
+R Ak 1945 1946 - Jun Sun>=1 0 1 D
+R Ak 1945 1946 - S Sun>=1 0 0 S
+R Ak 1965 o - Jun 1 0 1 D
+R Ak 1965 o - S 30 0 0 S
+R Ak 1966 o - May 29 0 1 D
+R Ak 1966 o - O 2 0 0 S
+R Ak 1967 o - Ap 8 0 1 D
+R Ak 1967 1968 - S Sun>=8 0 0 S
+R Ak 1968 o - Ap 14 0 1 D
+R Ak 1969 1977 - Ap lastSun 0 1 D
+R Ak 1969 1971 - O lastSun 0 0 S
+R Ak 1972 1974 - O 8 0 0 S
+R Ak 1975 1977 - O lastSun 0 0 S
+R Ak 1978 o - May 7 0 1 D
+R Ak 1978 1990 - O Sun>=8 0 0 S
+R Ak 1979 1980 - Mar Sun>=15 0 1 D
+R Ak 1981 1985 - May Sun>=5 0 1 D
+R Ak 1986 1989 - Mar Sun>=14 0 1 D
+R Ak 1990 1997 - Ap Sun>=1 0 1 D
+R Ak 1991 1995 - O Sun>=8 0s 0 S
+R Ak 1996 o - O 6 0s 0 S
+R Ak 1997 o - O 12 0s 0 S
+R Ak 1998 1999 - Mar lastSun 0s 1 D
+R Ak 1998 2003 - O lastSun 0s 0 S
+R Ak 2000 2003 - Ap Sun>=1 0s 1 D
+R Ak 2004 o - Mar lastSun 0s 1 D
+R Ak 2006 2010 - O lastSun 0s 0 S
+R Ak 2007 o - Mar Sun>=8 0s 1 D
+R Ak 2008 o - Mar Sun>=15 0s 1 D
+R Ak 2009 2010 - Mar Sun>=8 0s 1 D
+R Ak 2011 o - Mar Sun>=15 0s 1 D
+R Ak 2011 o - N 13 0s 0 S
+R Ak 2012 o - Ap 1 0s 1 D
+R Ak 2012 ma - N Sun>=1 0s 0 S
+R Ak 2013 ma - Mar Sun>=8 0s 1 D
 Z America/Havana -5:29:28 - LMT 1890
 -5:29:36 - HMT 1925 Jul 19 12
--5 Aj C%sT
-R Ak 1966 o - O 30 0 1 EDT
-R Ak 1967 o - F 28 0 0 EST
-R Ak 1969 1973 - O lastSun 0 0:30 -0430
-R Ak 1970 o - F 21 0 0 EST
-R Ak 1971 o - Ja 20 0 0 EST
-R Ak 1972 1974 - Ja 21 0 0 EST
+-5 Ak C%sT
+R Al 1966 o - O 30 0 1 EDT
+R Al 1967 o - F 28 0 0 EST
+R Al 1969 1973 - O lastSun 0 0:30 -0430
+R Al 1970 o - F 21 0 0 EST
+R Al 1971 o - Ja 20 0 0 EST
+R Al 1972 1974 - Ja 21 0 0 EST
 Z America/Santo_Domingo -4:39:36 - LMT 1890
 -4:40 - SDMT 1933 Ap 1 12
--5 Ak %s 1974 O 27
+-5 Al %s 1974 O 27
 -4 - AST 2000 O 29 2
--5 AE E%sT 2000 D 3 1
+-5 AF E%sT 2000 D 3 1
 -4 - AST
-R Al 1987 1988 - May Sun>=1 0 1 D
-R Al 1987 1988 - S lastSun 0 0 S
+R Am 1987 1988 - May Sun>=1 0 1 D
+R Am 1987 1988 - S lastSun 0 0 S
 Z America/El_Salvador -5:56:48 - LMT 1921
--6 Al C%sT
-R Am 1973 o - N 25 0 1 D
-R Am 1974 o - F 24 0 0 S
-R Am 1983 o - May 21 0 1 D
-R Am 1983 o - S 22 0 0 S
-R Am 1991 o - Mar 23 0 1 D
-R Am 1991 o - S 7 0 0 S
-R Am 2006 o - Ap 30 0 1 D
-R Am 2006 o - O 1 0 0 S
-Z America/Guatemala -6:2:4 - LMT 1918 O 5
 -6 Am C%sT
-R An 1983 o - May 8 0 1 D
-R An 1984 1987 - Ap lastSun 0 1 D
-R An 1983 1987 - O lastSun 0 0 S
-R An 1988 1997 - Ap Sun>=1 1s 1 D
-R An 1988 1997 - O lastSun 1s 0 S
-R An 2005 2006 - Ap Sun>=1 0 1 D
-R An 2005 2006 - O lastSun 0 0 S
-R An 2012 2015 - Mar Sun>=8 2 1 D
-R An 2012 2015 - N Sun>=1 2 0 S
-R An 2017 ma - Mar Sun>=8 2 1 D
-R An 2017 ma - N Sun>=1 2 0 S
+R An 1973 o - N 25 0 1 D
+R An 1974 o - F 24 0 0 S
+R An 1983 o - May 21 0 1 D
+R An 1983 o - S 22 0 0 S
+R An 1991 o - Mar 23 0 1 D
+R An 1991 o - S 7 0 0 S
+R An 2006 o - Ap 30 0 1 D
+R An 2006 o - O 1 0 0 S
+Z America/Guatemala -6:2:4 - LMT 1918 O 5
+-6 An C%sT
+R Ao 1983 o - May 8 0 1 D
+R Ao 1984 1987 - Ap lastSun 0 1 D
+R Ao 1983 1987 - O lastSun 0 0 S
+R Ao 1988 1997 - Ap Sun>=1 1s 1 D
+R Ao 1988 1997 - O lastSun 1s 0 S
+R Ao 2005 2006 - Ap Sun>=1 0 1 D
+R Ao 2005 2006 - O lastSun 0 0 S
+R Ao 2012 2015 - Mar Sun>=8 2 1 D
+R Ao 2012 2015 - N Sun>=1 2 0 S
+R Ao 2017 ma - Mar Sun>=8 2 1 D
+R Ao 2017 ma - N Sun>=1 2 0 S
 Z America/Port-au-Prince -4:49:20 - LMT 1890
 -4:49 - PPMT 1917 Ja 24 12
--5 An E%sT
-R Ao 1987 1988 - May Sun>=1 0 1 D
-R Ao 1987 1988 - S lastSun 0 0 S
-R Ao 2006 o - May Sun>=1 0 1 D
-R Ao 2006 o - Au M>=1 0 0 S
+-5 Ao E%sT
+R Ap 1987 1988 - May Sun>=1 0 1 D
+R Ap 1987 1988 - S lastSun 0 0 S
+R Ap 2006 o - May Sun>=1 0 1 D
+R Ap 2006 o - Au M>=1 0 0 S
 Z America/Tegucigalpa -5:48:52 - LMT 1921 Ap
--6 Ao C%sT
+-6 Ap C%sT
 Z America/Jamaica -5:7:10 - LMT 1890
 -5:7:10 - KMT 1912 F
 -5 - EST 1974
--5 AE E%sT 1984
+-5 AF E%sT 1984
 -5 - EST
 Z America/Martinique -4:4:20 - LMT 1890
 -4:4:20 - FFMT 1911 May
 -4 - AST 1980 Ap 6
 -4 1 ADT 1980 S 28
 -4 - AST
-R Ap 1979 1980 - Mar Sun>=16 0 1 D
-R Ap 1979 1980 - Jun M>=23 0 0 S
-R Ap 2005 o - Ap 10 0 1 D
-R Ap 2005 o - O Sun>=1 0 0 S
-R Ap 2006 o - Ap 30 2 1 D
-R Ap 2006 o - O Sun>=1 1 0 S
+R Aq 1979 1980 - Mar Sun>=16 0 1 D
+R Aq 1979 1980 - Jun M>=23 0 0 S
+R Aq 2005 o - Ap 10 0 1 D
+R Aq 2005 o - O Sun>=1 0 0 S
+R Aq 2006 o - Ap 30 2 1 D
+R Aq 2006 o - O Sun>=1 1 0 S
 Z America/Managua -5:45:8 - LMT 1890
 -5:45:12 - MMT 1934 Jun 23
 -6 - CST 1973 May
 -5 - EST 1975 F 16
--6 Ap C%sT 1992 Ja 1 4
+-6 Aq C%sT 1992 Ja 1 4
 -5 - EST 1992 S 24
 -6 - CST 1993
 -5 - EST 1997
--6 Ap C%sT
+-6 Aq C%sT
 Z America/Panama -5:18:8 - LMT 1890
 -5:19:36 - CMT 1908 Ap 22
 -5 - EST
 Li America/Panama America/Cayman
 Z America/Puerto_Rico -4:24:25 - LMT 1899 Mar 28 12
 -4 - AST 1942 May 3
--4 AE A%sT 1946
+-4 AF A%sT 1946
 -4 - AST
 Z America/Miquelon -3:44:40 - LMT 1911 May 15
 -4 - AST 1980 May
 -3 - -03 1987
--3 AT -03/-02
+-3 AU -03/-02
 Z America/Grand_Turk -4:44:32 - LMT 1890
 -5:7:10 - KMT 1912 F
 -5 - EST 1979
--5 AE E%sT 2015 N Sun>=1 2
+-5 AF E%sT 2015 N Sun>=1 2
 -4 - AST 2018 Mar 11 3
--5 AE E%sT
-R Aq 1930 o - D 1 0 1 -
-R Aq 1931 o - Ap 1 0 0 -
-R Aq 1931 o - O 15 0 1 -
-R Aq 1932 1940 - Mar 1 0 0 -
-R Aq 1932 1939 - N 1 0 1 -
-R Aq 1940 o - Jul 1 0 1 -
-R Aq 1941 o - Jun 15 0 0 -
-R Aq 1941 o - O 15 0 1 -
-R Aq 1943 o - Au 1 0 0 -
-R Aq 1943 o - O 15 0 1 -
-R Aq 1946 o - Mar 1 0 0 -
-R Aq 1946 o - O 1 0 1 -
-R Aq 1963 o - O 1 0 0 -
-R Aq 1963 o - D 15 0 1 -
-R Aq 1964 1966 - Mar 1 0 0 -
-R Aq 1964 1966 - O 15 0 1 -
-R Aq 1967 o - Ap 2 0 0 -
-R Aq 1967 1968 - O Sun>=1 0 1 -
-R Aq 1968 1969 - Ap Sun>=1 0 0 -
-R Aq 1974 o - Ja 23 0 1 -
-R Aq 1974 o - May 1 0 0 -
-R Aq 1988 o - D 1 0 1 -
-R Aq 1989 1993 - Mar Sun>=1 0 0 -
-R Aq 1989 1992 - O Sun>=15 0 1 -
-R Aq 1999 o - O Sun>=1 0 1 -
-R Aq 2000 o - Mar 3 0 0 -
-R Aq 2007 o - D 30 0 1 -
-R Aq 2008 2009 - Mar Sun>=15 0 0 -
-R Aq 2008 o - O Sun>=15 0 1 -
+-5 AF E%sT
+R Ar 1930 o - D 1 0 1 -
+R Ar 1931 o - Ap 1 0 0 -
+R Ar 1931 o - O 15 0 1 -
+R Ar 1932 1940 - Mar 1 0 0 -
+R Ar 1932 1939 - N 1 0 1 -
+R Ar 1940 o - Jul 1 0 1 -
+R Ar 1941 o - Jun 15 0 0 -
+R Ar 1941 o - O 15 0 1 -
+R Ar 1943 o - Au 1 0 0 -
+R Ar 1943 o - O 15 0 1 -
+R Ar 1946 o - Mar 1 0 0 -
+R Ar 1946 o - O 1 0 1 -
+R Ar 1963 o - O 1 0 0 -
+R Ar 1963 o - D 15 0 1 -
+R Ar 1964 1966 - Mar 1 0 0 -
+R Ar 1964 1966 - O 15 0 1 -
+R Ar 1967 o - Ap 2 0 0 -
+R Ar 1967 1968 - O Sun>=1 0 1 -
+R Ar 1968 1969 - Ap Sun>=1 0 0 -
+R Ar 1974 o - Ja 23 0 1 -
+R Ar 1974 o - May 1 0 0 -
+R Ar 1988 o - D 1 0 1 -
+R Ar 1989 1993 - Mar Sun>=1 0 0 -
+R Ar 1989 1992 - O Sun>=15 0 1 -
+R Ar 1999 o - O Sun>=1 0 1 -
+R Ar 2000 o - Mar 3 0 0 -
+R Ar 2007 o - D 30 0 1 -
+R Ar 2008 2009 - Mar Sun>=15 0 0 -
+R Ar 2008 o - O Sun>=15 0 1 -
 Z America/Argentina/Buenos_Aires -3:53:48 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
--3 Aq -03/-02
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
+-3 Ar -03/-02
 Z America/Argentina/Cordoba -4:16:48 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1991 Mar 3
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1991 Mar 3
 -4 - -04 1991 O 20
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
--3 Aq -03/-02
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
+-3 Ar -03/-02
 Z America/Argentina/Salta -4:21:40 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1991 Mar 3
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1991 Mar 3
 -4 - -04 1991 O 20
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
--3 Aq -03/-02 2008 O 18
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
+-3 Ar -03/-02 2008 O 18
 -3 - -03
 Z America/Argentina/Tucuman -4:20:52 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1991 Mar 3
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1991 Mar 3
 -4 - -04 1991 O 20
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
 -3 - -03 2004 Jun
 -4 - -04 2004 Jun 13
--3 Aq -03/-02
+-3 Ar -03/-02
 Z America/Argentina/La_Rioja -4:27:24 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1991 Mar
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1991 Mar
 -4 - -04 1991 May 7
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
 -3 - -03 2004 Jun
 -4 - -04 2004 Jun 20
--3 Aq -03/-02 2008 O 18
+-3 Ar -03/-02 2008 O 18
 -3 - -03
 Z America/Argentina/San_Juan -4:34:4 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1991 Mar
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1991 Mar
 -4 - -04 1991 May 7
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
 -3 - -03 2004 May 31
 -4 - -04 2004 Jul 25
--3 Aq -03/-02 2008 O 18
+-3 Ar -03/-02 2008 O 18
 -3 - -03
 Z America/Argentina/Jujuy -4:21:12 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1990 Mar 4
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1990 Mar 4
 -4 - -04 1990 O 28
 -4 1 -03 1991 Mar 17
 -4 - -04 1991 O 6
 -3 1 -02 1992
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
--3 Aq -03/-02 2008 O 18
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
+-3 Ar -03/-02 2008 O 18
 -3 - -03
 Z America/Argentina/Catamarca -4:23:8 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1991 Mar 3
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1991 Mar 3
 -4 - -04 1991 O 20
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
 -3 - -03 2004 Jun
 -4 - -04 2004 Jun 20
--3 Aq -03/-02 2008 O 18
+-3 Ar -03/-02 2008 O 18
 -3 - -03
 Z America/Argentina/Mendoza -4:35:16 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1990 Mar 4
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1990 Mar 4
 -4 - -04 1990 O 15
 -4 1 -03 1991 Mar
 -4 - -04 1991 O 15
 -4 1 -03 1992 Mar
 -4 - -04 1992 O 18
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
 -3 - -03 2004 May 23
 -4 - -04 2004 S 26
--3 Aq -03/-02 2008 O 18
+-3 Ar -03/-02 2008 O 18
 -3 - -03
-R Ar 2008 2009 - Mar Sun>=8 0 0 -
-R Ar 2007 2008 - O Sun>=8 0 1 -
+R As 2008 2009 - Mar Sun>=8 0 0 -
+R As 2007 2008 - O Sun>=8 0 1 -
 Z America/Argentina/San_Luis -4:25:24 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1990
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1990
 -3 1 -02 1990 Mar 14
 -4 - -04 1990 O 15
 -4 1 -03 1991 Mar
@@ -3585,286 +3590,286 @@ Z America/Argentina/San_Luis -4:25:24 - LMT 1894 O 31
 -4 1 -03 2000 Mar 3
 -3 - -03 2004 May 31
 -4 - -04 2004 Jul 25
--3 Aq -03/-02 2008 Ja 21
--4 Ar -04/-03 2009 O 11
+-3 Ar -03/-02 2008 Ja 21
+-4 As -04/-03 2009 O 11
 -3 - -03
 Z America/Argentina/Rio_Gallegos -4:36:52 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
 -3 - -03 2004 Jun
 -4 - -04 2004 Jun 20
--3 Aq -03/-02 2008 O 18
+-3 Ar -03/-02 2008 O 18
 -3 - -03
 Z America/Argentina/Ushuaia -4:33:12 - LMT 1894 O 31
 -4:16:48 - CMT 1920 May
 -4 - -04 1930 D
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1999 O 3
--4 Aq -04/-03 2000 Mar 3
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1999 O 3
+-4 Ar -04/-03 2000 Mar 3
 -3 - -03 2004 May 30
 -4 - -04 2004 Jun 20
--3 Aq -03/-02 2008 O 18
+-3 Ar -03/-02 2008 O 18
 -3 - -03
 Li America/Curacao America/Aruba
 Z America/La_Paz -4:32:36 - LMT 1890
 -4:32:36 - CMT 1931 O 15
 -4:32:36 1 BST 1932 Mar 21
 -4 - -04
-R As 1931 o - O 3 11 1 -
-R As 1932 1933 - Ap 1 0 0 -
-R As 1932 o - O 3 0 1 -
-R As 1949 1952 - D 1 0 1 -
-R As 1950 o - Ap 16 1 0 -
-R As 1951 1952 - Ap 1 0 0 -
-R As 1953 o - Mar 1 0 0 -
-R As 1963 o - D 9 0 1 -
-R As 1964 o - Mar 1 0 0 -
-R As 1965 o - Ja 31 0 1 -
-R As 1965 o - Mar 31 0 0 -
-R As 1965 o - D 1 0 1 -
-R As 1966 1968 - Mar 1 0 0 -
-R As 1966 1967 - N 1 0 1 -
-R As 1985 o - N 2 0 1 -
-R As 1986 o - Mar 15 0 0 -
-R As 1986 o - O 25 0 1 -
-R As 1987 o - F 14 0 0 -
-R As 1987 o - O 25 0 1 -
-R As 1988 o - F 7 0 0 -
-R As 1988 o - O 16 0 1 -
-R As 1989 o - Ja 29 0 0 -
-R As 1989 o - O 15 0 1 -
-R As 1990 o - F 11 0 0 -
-R As 1990 o - O 21 0 1 -
-R As 1991 o - F 17 0 0 -
-R As 1991 o - O 20 0 1 -
-R As 1992 o - F 9 0 0 -
-R As 1992 o - O 25 0 1 -
-R As 1993 o - Ja 31 0 0 -
-R As 1993 1995 - O Sun>=11 0 1 -
-R As 1994 1995 - F Sun>=15 0 0 -
-R As 1996 o - F 11 0 0 -
-R As 1996 o - O 6 0 1 -
-R As 1997 o - F 16 0 0 -
-R As 1997 o - O 6 0 1 -
-R As 1998 o - Mar 1 0 0 -
-R As 1998 o - O 11 0 1 -
-R As 1999 o - F 21 0 0 -
-R As 1999 o - O 3 0 1 -
-R As 2000 o - F 27 0 0 -
-R As 2000 2001 - O Sun>=8 0 1 -
-R As 2001 2006 - F Sun>=15 0 0 -
-R As 2002 o - N 3 0 1 -
-R As 2003 o - O 19 0 1 -
-R As 2004 o - N 2 0 1 -
-R As 2005 o - O 16 0 1 -
-R As 2006 o - N 5 0 1 -
-R As 2007 o - F 25 0 0 -
-R As 2007 o - O Sun>=8 0 1 -
-R As 2008 2017 - O Sun>=15 0 1 -
-R As 2008 2011 - F Sun>=15 0 0 -
-R As 2012 o - F Sun>=22 0 0 -
-R As 2013 2014 - F Sun>=15 0 0 -
-R As 2015 o - F Sun>=22 0 0 -
-R As 2016 2022 - F Sun>=15 0 0 -
-R As 2018 ma - N Sun>=1 0 1 -
-R As 2023 o - F Sun>=22 0 0 -
-R As 2024 2025 - F Sun>=15 0 0 -
-R As 2026 o - F Sun>=22 0 0 -
-R As 2027 2033 - F Sun>=15 0 0 -
-R As 2034 o - F Sun>=22 0 0 -
-R As 2035 2036 - F Sun>=15 0 0 -
-R As 2037 o - F Sun>=22 0 0 -
-R As 2038 ma - F Sun>=15 0 0 -
+R At 1931 o - O 3 11 1 -
+R At 1932 1933 - Ap 1 0 0 -
+R At 1932 o - O 3 0 1 -
+R At 1949 1952 - D 1 0 1 -
+R At 1950 o - Ap 16 1 0 -
+R At 1951 1952 - Ap 1 0 0 -
+R At 1953 o - Mar 1 0 0 -
+R At 1963 o - D 9 0 1 -
+R At 1964 o - Mar 1 0 0 -
+R At 1965 o - Ja 31 0 1 -
+R At 1965 o - Mar 31 0 0 -
+R At 1965 o - D 1 0 1 -
+R At 1966 1968 - Mar 1 0 0 -
+R At 1966 1967 - N 1 0 1 -
+R At 1985 o - N 2 0 1 -
+R At 1986 o - Mar 15 0 0 -
+R At 1986 o - O 25 0 1 -
+R At 1987 o - F 14 0 0 -
+R At 1987 o - O 25 0 1 -
+R At 1988 o - F 7 0 0 -
+R At 1988 o - O 16 0 1 -
+R At 1989 o - Ja 29 0 0 -
+R At 1989 o - O 15 0 1 -
+R At 1990 o - F 11 0 0 -
+R At 1990 o - O 21 0 1 -
+R At 1991 o - F 17 0 0 -
+R At 1991 o - O 20 0 1 -
+R At 1992 o - F 9 0 0 -
+R At 1992 o - O 25 0 1 -
+R At 1993 o - Ja 31 0 0 -
+R At 1993 1995 - O Sun>=11 0 1 -
+R At 1994 1995 - F Sun>=15 0 0 -
+R At 1996 o - F 11 0 0 -
+R At 1996 o - O 6 0 1 -
+R At 1997 o - F 16 0 0 -
+R At 1997 o - O 6 0 1 -
+R At 1998 o - Mar 1 0 0 -
+R At 1998 o - O 11 0 1 -
+R At 1999 o - F 21 0 0 -
+R At 1999 o - O 3 0 1 -
+R At 2000 o - F 27 0 0 -
+R At 2000 2001 - O Sun>=8 0 1 -
+R At 2001 2006 - F Sun>=15 0 0 -
+R At 2002 o - N 3 0 1 -
+R At 2003 o - O 19 0 1 -
+R At 2004 o - N 2 0 1 -
+R At 2005 o - O 16 0 1 -
+R At 2006 o - N 5 0 1 -
+R At 2007 o - F 25 0 0 -
+R At 2007 o - O Sun>=8 0 1 -
+R At 2008 2017 - O Sun>=15 0 1 -
+R At 2008 2011 - F Sun>=15 0 0 -
+R At 2012 o - F Sun>=22 0 0 -
+R At 2013 2014 - F Sun>=15 0 0 -
+R At 2015 o - F Sun>=22 0 0 -
+R At 2016 2022 - F Sun>=15 0 0 -
+R At 2018 ma - N Sun>=1 0 1 -
+R At 2023 o - F Sun>=22 0 0 -
+R At 2024 2025 - F Sun>=15 0 0 -
+R At 2026 o - F Sun>=22 0 0 -
+R At 2027 2033 - F Sun>=15 0 0 -
+R At 2034 o - F Sun>=22 0 0 -
+R At 2035 2036 - F Sun>=15 0 0 -
+R At 2037 o - F Sun>=22 0 0 -
+R At 2038 ma - F Sun>=15 0 0 -
 Z America/Noronha -2:9:40 - LMT 1914
--2 As -02/-01 1990 S 17
+-2 At -02/-01 1990 S 17
 -2 - -02 1999 S 30
--2 As -02/-01 2000 O 15
+-2 At -02/-01 2000 O 15
 -2 - -02 2001 S 13
--2 As -02/-01 2002 O
+-2 At -02/-01 2002 O
 -2 - -02
 Z America/Belem -3:13:56 - LMT 1914
--3 As -03/-02 1988 S 12
+-3 At -03/-02 1988 S 12
 -3 - -03
 Z America/Santarem -3:38:48 - LMT 1914
--4 As -04/-03 1988 S 12
+-4 At -04/-03 1988 S 12
 -4 - -04 2008 Jun 24
 -3 - -03
 Z America/Fortaleza -2:34 - LMT 1914
--3 As -03/-02 1990 S 17
+-3 At -03/-02 1990 S 17
 -3 - -03 1999 S 30
--3 As -03/-02 2000 O 22
+-3 At -03/-02 2000 O 22
 -3 - -03 2001 S 13
--3 As -03/-02 2002 O
+-3 At -03/-02 2002 O
 -3 - -03
 Z America/Recife -2:19:36 - LMT 1914
--3 As -03/-02 1990 S 17
+-3 At -03/-02 1990 S 17
 -3 - -03 1999 S 30
--3 As -03/-02 2000 O 15
+-3 At -03/-02 2000 O 15
 -3 - -03 2001 S 13
--3 As -03/-02 2002 O
+-3 At -03/-02 2002 O
 -3 - -03
 Z America/Araguaina -3:12:48 - LMT 1914
--3 As -03/-02 1990 S 17
+-3 At -03/-02 1990 S 17
 -3 - -03 1995 S 14
--3 As -03/-02 2003 S 24
+-3 At -03/-02 2003 S 24
 -3 - -03 2012 O 21
--3 As -03/-02 2013 S
+-3 At -03/-02 2013 S
 -3 - -03
 Z America/Maceio -2:22:52 - LMT 1914
--3 As -03/-02 1990 S 17
+-3 At -03/-02 1990 S 17
 -3 - -03 1995 O 13
--3 As -03/-02 1996 S 4
+-3 At -03/-02 1996 S 4
 -3 - -03 1999 S 30
--3 As -03/-02 2000 O 22
+-3 At -03/-02 2000 O 22
 -3 - -03 2001 S 13
--3 As -03/-02 2002 O
+-3 At -03/-02 2002 O
 -3 - -03
 Z America/Bahia -2:34:4 - LMT 1914
--3 As -03/-02 2003 S 24
+-3 At -03/-02 2003 S 24
 -3 - -03 2011 O 16
--3 As -03/-02 2012 O 21
+-3 At -03/-02 2012 O 21
 -3 - -03
 Z America/Sao_Paulo -3:6:28 - LMT 1914
--3 As -03/-02 1963 O 23
+-3 At -03/-02 1963 O 23
 -3 1 -02 1964
--3 As -03/-02
+-3 At -03/-02
 Z America/Campo_Grande -3:38:28 - LMT 1914
--4 As -04/-03
+-4 At -04/-03
 Z America/Cuiaba -3:44:20 - LMT 1914
--4 As -04/-03 2003 S 24
+-4 At -04/-03 2003 S 24
 -4 - -04 2004 O
--4 As -04/-03
+-4 At -04/-03
 Z America/Porto_Velho -4:15:36 - LMT 1914
--4 As -04/-03 1988 S 12
+-4 At -04/-03 1988 S 12
 -4 - -04
 Z America/Boa_Vista -4:2:40 - LMT 1914
--4 As -04/-03 1988 S 12
+-4 At -04/-03 1988 S 12
 -4 - -04 1999 S 30
--4 As -04/-03 2000 O 15
+-4 At -04/-03 2000 O 15
 -4 - -04
 Z America/Manaus -4:0:4 - LMT 1914
--4 As -04/-03 1988 S 12
+-4 At -04/-03 1988 S 12
 -4 - -04 1993 S 28
--4 As -04/-03 1994 S 22
+-4 At -04/-03 1994 S 22
 -4 - -04
 Z America/Eirunepe -4:39:28 - LMT 1914
--5 As -05/-04 1988 S 12
+-5 At -05/-04 1988 S 12
 -5 - -05 1993 S 28
--5 As -05/-04 1994 S 22
+-5 At -05/-04 1994 S 22
 -5 - -05 2008 Jun 24
 -4 - -04 2013 N 10
 -5 - -05
 Z America/Rio_Branco -4:31:12 - LMT 1914
--5 As -05/-04 1988 S 12
+-5 At -05/-04 1988 S 12
 -5 - -05 2008 Jun 24
 -4 - -04 2013 N 10
 -5 - -05
-R At 1927 1931 - S 1 0 1 -
-R At 1928 1932 - Ap 1 0 0 -
-R At 1968 o - N 3 4u 1 -
-R At 1969 o - Mar 30 3u 0 -
-R At 1969 o - N 23 4u 1 -
-R At 1970 o - Mar 29 3u 0 -
-R At 1971 o - Mar 14 3u 0 -
-R At 1970 1972 - O Sun>=9 4u 1 -
-R At 1972 1986 - Mar Sun>=9 3u 0 -
-R At 1973 o - S 30 4u 1 -
-R At 1974 1987 - O Sun>=9 4u 1 -
-R At 1987 o - Ap 12 3u 0 -
-R At 1988 1990 - Mar Sun>=9 3u 0 -
-R At 1988 1989 - O Sun>=9 4u 1 -
-R At 1990 o - S 16 4u 1 -
-R At 1991 1996 - Mar Sun>=9 3u 0 -
-R At 1991 1997 - O Sun>=9 4u 1 -
-R At 1997 o - Mar 30 3u 0 -
-R At 1998 o - Mar Sun>=9 3u 0 -
-R At 1998 o - S 27 4u 1 -
-R At 1999 o - Ap 4 3u 0 -
-R At 1999 2010 - O Sun>=9 4u 1 -
-R At 2000 2007 - Mar Sun>=9 3u 0 -
-R At 2008 o - Mar 30 3u 0 -
-R At 2009 o - Mar Sun>=9 3u 0 -
-R At 2010 o - Ap Sun>=1 3u 0 -
-R At 2011 o - May Sun>=2 3u 0 -
-R At 2011 o - Au Sun>=16 4u 1 -
-R At 2012 2014 - Ap Sun>=23 3u 0 -
-R At 2012 2014 - S Sun>=2 4u 1 -
-R At 2016 ma - May Sun>=9 3u 0 -
-R At 2016 ma - Au Sun>=9 4u 1 -
+R Au 1927 1931 - S 1 0 1 -
+R Au 1928 1932 - Ap 1 0 0 -
+R Au 1968 o - N 3 4u 1 -
+R Au 1969 o - Mar 30 3u 0 -
+R Au 1969 o - N 23 4u 1 -
+R Au 1970 o - Mar 29 3u 0 -
+R Au 1971 o - Mar 14 3u 0 -
+R Au 1970 1972 - O Sun>=9 4u 1 -
+R Au 1972 1986 - Mar Sun>=9 3u 0 -
+R Au 1973 o - S 30 4u 1 -
+R Au 1974 1987 - O Sun>=9 4u 1 -
+R Au 1987 o - Ap 12 3u 0 -
+R Au 1988 1990 - Mar Sun>=9 3u 0 -
+R Au 1988 1989 - O Sun>=9 4u 1 -
+R Au 1990 o - S 16 4u 1 -
+R Au 1991 1996 - Mar Sun>=9 3u 0 -
+R Au 1991 1997 - O Sun>=9 4u 1 -
+R Au 1997 o - Mar 30 3u 0 -
+R Au 1998 o - Mar Sun>=9 3u 0 -
+R Au 1998 o - S 27 4u 1 -
+R Au 1999 o - Ap 4 3u 0 -
+R Au 1999 2010 - O Sun>=9 4u 1 -
+R Au 2000 2007 - Mar Sun>=9 3u 0 -
+R Au 2008 o - Mar 30 3u 0 -
+R Au 2009 o - Mar Sun>=9 3u 0 -
+R Au 2010 o - Ap Sun>=1 3u 0 -
+R Au 2011 o - May Sun>=2 3u 0 -
+R Au 2011 o - Au Sun>=16 4u 1 -
+R Au 2012 2014 - Ap Sun>=23 3u 0 -
+R Au 2012 2014 - S Sun>=2 4u 1 -
+R Au 2016 ma - May Sun>=9 3u 0 -
+R Au 2016 ma - Au Sun>=9 4u 1 -
 Z America/Santiago -4:42:46 - LMT 1890
 -4:42:46 - SMT 1910 Ja 10
 -5 - -05 1916 Jul
 -4:42:46 - SMT 1918 S 10
 -4 - -04 1919 Jul
 -4:42:46 - SMT 1927 S
--5 At -05/-04 1932 S
+-5 Au -05/-04 1932 S
 -4 - -04 1942 Jun
 -5 - -05 1942 Au
 -4 - -04 1946 Jul 15
 -4 1 -03 1946 S
 -4 - -04 1947 Ap
 -5 - -05 1947 May 21 23
--4 At -04/-03
+-4 Au -04/-03
 Z America/Punta_Arenas -4:43:40 - LMT 1890
 -4:42:46 - SMT 1910 Ja 10
 -5 - -05 1916 Jul
 -4:42:46 - SMT 1918 S 10
 -4 - -04 1919 Jul
 -4:42:46 - SMT 1927 S
--5 At -05/-04 1932 S
+-5 Au -05/-04 1932 S
 -4 - -04 1942 Jun
 -5 - -05 1942 Au
 -4 - -04 1947 Ap
 -5 - -05 1947 May 21 23
--4 At -04/-03 2016 D 4
+-4 Au -04/-03 2016 D 4
 -3 - -03
 Z Pacific/Easter -7:17:28 - LMT 1890
 -7:17:28 - EMT 1932 S
--7 At -07/-06 1982 Mar 14 3u
--6 At -06/-05
+-7 Au -07/-06 1982 Mar 14 3u
+-6 Au -06/-05
 Z Antarctica/Palmer 0 - -00 1965
--4 Aq -04/-03 1969 O 5
--3 Aq -03/-02 1982 May
--4 At -04/-03 2016 D 4
+-4 Ar -04/-03 1969 O 5
+-3 Ar -03/-02 1982 May
+-4 Au -04/-03 2016 D 4
 -3 - -03
-R Au 1992 o - May 3 0 1 -
-R Au 1993 o - Ap 4 0 0 -
+R Av 1992 o - May 3 0 1 -
+R Av 1993 o - Ap 4 0 0 -
 Z America/Bogota -4:56:16 - LMT 1884 Mar 13
 -4:56:16 - BMT 1914 N 23
--5 Au -05/-04
+-5 Av -05/-04
 Z America/Curacao -4:35:47 - LMT 1912 F 12
 -4:30 - -0430 1965
 -4 - AST
 Li America/Curacao America/Lower_Princes
 Li America/Curacao America/Kralendijk
-R Av 1992 o - N 28 0 1 -
-R Av 1993 o - F 5 0 0 -
+R Aw 1992 o - N 28 0 1 -
+R Aw 1993 o - F 5 0 0 -
 Z America/Guayaquil -5:19:20 - LMT 1890
 -5:14 - QMT 1931
--5 Av -05/-04
+-5 Aw -05/-04
 Z Pacific/Galapagos -5:58:24 - LMT 1931
 -5 - -05 1986
--6 Av -06/-05
-R Aw 1937 1938 - S lastSun 0 1 -
-R Aw 1938 1942 - Mar Sun>=19 0 0 -
-R Aw 1939 o - O 1 0 1 -
-R Aw 1940 1942 - S lastSun 0 1 -
-R Aw 1943 o - Ja 1 0 0 -
-R Aw 1983 o - S lastSun 0 1 -
-R Aw 1984 1985 - Ap lastSun 0 0 -
-R Aw 1984 o - S 16 0 1 -
-R Aw 1985 2000 - S Sun>=9 0 1 -
-R Aw 1986 2000 - Ap Sun>=16 0 0 -
-R Aw 2001 2010 - Ap Sun>=15 2 0 -
-R Aw 2001 2010 - S Sun>=1 2 1 -
+-6 Aw -06/-05
+R Ax 1937 1938 - S lastSun 0 1 -
+R Ax 1938 1942 - Mar Sun>=19 0 0 -
+R Ax 1939 o - O 1 0 1 -
+R Ax 1940 1942 - S lastSun 0 1 -
+R Ax 1943 o - Ja 1 0 0 -
+R Ax 1983 o - S lastSun 0 1 -
+R Ax 1984 1985 - Ap lastSun 0 0 -
+R Ax 1984 o - S 16 0 1 -
+R Ax 1985 2000 - S Sun>=9 0 1 -
+R Ax 1986 2000 - Ap Sun>=16 0 0 -
+R Ax 2001 2010 - Ap Sun>=15 2 0 -
+R Ax 2001 2010 - S Sun>=1 2 1 -
 Z Atlantic/Stanley -3:51:24 - LMT 1890
 -3:51:24 - SMT 1912 Mar 12
--4 Aw -04/-03 1983 May
--3 Aw -03/-02 1985 S 15
--4 Aw -04/-03 2010 S 5 2
+-4 Ax -04/-03 1983 May
+-3 Ax -03/-02 1985 S 15
+-4 Ax -04/-03 2010 S 5 2
 -3 - -03
 Z America/Cayenne -3:29:20 - LMT 1911 Jul
 -4 - -04 1967 O
@@ -3873,46 +3878,46 @@ Z America/Guyana -3:52:40 - LMT 1915 Mar
 -3:45 - -0345 1975 Jul 31
 -3 - -03 1991
 -4 - -04
-R Ax 1975 1988 - O 1 0 1 -
-R Ax 1975 1978 - Mar 1 0 0 -
-R Ax 1979 1991 - Ap 1 0 0 -
-R Ax 1989 o - O 22 0 1 -
-R Ax 1990 o - O 1 0 1 -
-R Ax 1991 o - O 6 0 1 -
-R Ax 1992 o - Mar 1 0 0 -
-R Ax 1992 o - O 5 0 1 -
-R Ax 1993 o - Mar 31 0 0 -
-R Ax 1993 1995 - O 1 0 1 -
-R Ax 1994 1995 - F lastSun 0 0 -
-R Ax 1996 o - Mar 1 0 0 -
-R Ax 1996 2001 - O Sun>=1 0 1 -
-R Ax 1997 o - F lastSun 0 0 -
-R Ax 1998 2001 - Mar Sun>=1 0 0 -
-R Ax 2002 2004 - Ap Sun>=1 0 0 -
-R Ax 2002 2003 - S Sun>=1 0 1 -
-R Ax 2004 2009 - O Sun>=15 0 1 -
-R Ax 2005 2009 - Mar Sun>=8 0 0 -
-R Ax 2010 ma - O Sun>=1 0 1 -
-R Ax 2010 2012 - Ap Sun>=8 0 0 -
-R Ax 2013 ma - Mar Sun>=22 0 0 -
+R Ay 1975 1988 - O 1 0 1 -
+R Ay 1975 1978 - Mar 1 0 0 -
+R Ay 1979 1991 - Ap 1 0 0 -
+R Ay 1989 o - O 22 0 1 -
+R Ay 1990 o - O 1 0 1 -
+R Ay 1991 o - O 6 0 1 -
+R Ay 1992 o - Mar 1 0 0 -
+R Ay 1992 o - O 5 0 1 -
+R Ay 1993 o - Mar 31 0 0 -
+R Ay 1993 1995 - O 1 0 1 -
+R Ay 1994 1995 - F lastSun 0 0 -
+R Ay 1996 o - Mar 1 0 0 -
+R Ay 1996 2001 - O Sun>=1 0 1 -
+R Ay 1997 o - F lastSun 0 0 -
+R Ay 1998 2001 - Mar Sun>=1 0 0 -
+R Ay 2002 2004 - Ap Sun>=1 0 0 -
+R Ay 2002 2003 - S Sun>=1 0 1 -
+R Ay 2004 2009 - O Sun>=15 0 1 -
+R Ay 2005 2009 - Mar Sun>=8 0 0 -
+R Ay 2010 ma - O Sun>=1 0 1 -
+R Ay 2010 2012 - Ap Sun>=8 0 0 -
+R Ay 2013 ma - Mar Sun>=22 0 0 -
 Z America/Asuncion -3:50:40 - LMT 1890
 -3:50:40 - AMT 1931 O 10
 -4 - -04 1972 O
 -3 - -03 1974 Ap
--4 Ax -04/-03
-R Ay 1938 o - Ja 1 0 1 -
-R Ay 1938 o - Ap 1 0 0 -
-R Ay 1938 1939 - S lastSun 0 1 -
-R Ay 1939 1940 - Mar Sun>=24 0 0 -
-R Ay 1986 1987 - Ja 1 0 1 -
-R Ay 1986 1987 - Ap 1 0 0 -
-R Ay 1990 o - Ja 1 0 1 -
-R Ay 1990 o - Ap 1 0 0 -
-R Ay 1994 o - Ja 1 0 1 -
-R Ay 1994 o - Ap 1 0 0 -
+-4 Ay -04/-03
+R Az 1938 o - Ja 1 0 1 -
+R Az 1938 o - Ap 1 0 0 -
+R Az 1938 1939 - S lastSun 0 1 -
+R Az 1939 1940 - Mar Sun>=24 0 0 -
+R Az 1986 1987 - Ja 1 0 1 -
+R Az 1986 1987 - Ap 1 0 0 -
+R Az 1990 o - Ja 1 0 1 -
+R Az 1990 o - Ap 1 0 0 -
+R Az 1994 o - Ja 1 0 1 -
+R Az 1994 o - Ap 1 0 0 -
 Z America/Lima -5:8:12 - LMT 1890
 -5:8:36 - LMT 1908 Jul 28
--5 Ay -05/-04
+-5 Az -05/-04
 Z Atlantic/South_Georgia -2:26:8 - LMT 1890
 -2 - -02
 Z America/Paramaribo -3:40:40 - LMT 1911
@@ -3935,65 +3940,65 @@ Li America/Port_of_Spain America/St_Lucia
 Li America/Port_of_Spain America/St_Thomas
 Li America/Port_of_Spain America/St_Vincent
 Li America/Port_of_Spain America/Tortola
-R Az 1923 1925 - O 1 0 0:30 -
-R Az 1924 1926 - Ap 1 0 0 -
-R Az 1933 1938 - O lastSun 0 0:30 -
-R Az 1934 1941 - Mar lastSat 24 0 -
-R Az 1939 o - O 1 0 0:30 -
-R Az 1940 o - O 27 0 0:30 -
-R Az 1941 o - Au 1 0 0:30 -
-R Az 1942 o - D 14 0 0:30 -
-R Az 1943 o - Mar 14 0 0 -
-R Az 1959 o - May 24 0 0:30 -
-R Az 1959 o - N 15 0 0 -
-R Az 1960 o - Ja 17 0 1 -
-R Az 1960 o - Mar 6 0 0 -
-R Az 1965 o - Ap 4 0 1 -
-R Az 1965 o - S 26 0 0 -
-R Az 1968 o - May 27 0 0:30 -
-R Az 1968 o - D 1 0 0 -
-R Az 1970 o - Ap 25 0 1 -
-R Az 1970 o - Jun 14 0 0 -
-R Az 1972 o - Ap 23 0 1 -
-R Az 1972 o - Jul 16 0 0 -
-R Az 1974 o - Ja 13 0 1:30 -
-R Az 1974 o - Mar 10 0 0:30 -
-R Az 1974 o - S 1 0 0 -
-R Az 1974 o - D 22 0 1 -
-R Az 1975 o - Mar 30 0 0 -
-R Az 1976 o - D 19 0 1 -
-R Az 1977 o - Mar 6 0 0 -
-R Az 1977 o - D 4 0 1 -
-R Az 1978 1979 - Mar Sun>=1 0 0 -
-R Az 1978 o - D 17 0 1 -
-R Az 1979 o - Ap 29 0 1 -
-R Az 1980 o - Mar 16 0 0 -
-R Az 1987 o - D 14 0 1 -
-R Az 1988 o - F 28 0 0 -
-R Az 1988 o - D 11 0 1 -
-R Az 1989 o - Mar 5 0 0 -
-R Az 1989 o - O 29 0 1 -
-R Az 1990 o - F 25 0 0 -
-R Az 1990 1991 - O Sun>=21 0 1 -
-R Az 1991 1992 - Mar Sun>=1 0 0 -
-R Az 1992 o - O 18 0 1 -
-R Az 1993 o - F 28 0 0 -
-R Az 2004 o - S 19 0 1 -
-R Az 2005 o - Mar 27 2 0 -
-R Az 2005 o - O 9 2 1 -
-R Az 2006 2015 - Mar Sun>=8 2 0 -
-R Az 2006 2014 - O Sun>=1 2 1 -
+R A! 1923 1925 - O 1 0 0:30 -
+R A! 1924 1926 - Ap 1 0 0 -
+R A! 1933 1938 - O lastSun 0 0:30 -
+R A! 1934 1941 - Mar lastSat 24 0 -
+R A! 1939 o - O 1 0 0:30 -
+R A! 1940 o - O 27 0 0:30 -
+R A! 1941 o - Au 1 0 0:30 -
+R A! 1942 o - D 14 0 0:30 -
+R A! 1943 o - Mar 14 0 0 -
+R A! 1959 o - May 24 0 0:30 -
+R A! 1959 o - N 15 0 0 -
+R A! 1960 o - Ja 17 0 1 -
+R A! 1960 o - Mar 6 0 0 -
+R A! 1965 o - Ap 4 0 1 -
+R A! 1965 o - S 26 0 0 -
+R A! 1968 o - May 27 0 0:30 -
+R A! 1968 o - D 1 0 0 -
+R A! 1970 o - Ap 25 0 1 -
+R A! 1970 o - Jun 14 0 0 -
+R A! 1972 o - Ap 23 0 1 -
+R A! 1972 o - Jul 16 0 0 -
+R A! 1974 o - Ja 13 0 1:30 -
+R A! 1974 o - Mar 10 0 0:30 -
+R A! 1974 o - S 1 0 0 -
+R A! 1974 o - D 22 0 1 -
+R A! 1975 o - Mar 30 0 0 -
+R A! 1976 o - D 19 0 1 -
+R A! 1977 o - Mar 6 0 0 -
+R A! 1977 o - D 4 0 1 -
+R A! 1978 1979 - Mar Sun>=1 0 0 -
+R A! 1978 o - D 17 0 1 -
+R A! 1979 o - Ap 29 0 1 -
+R A! 1980 o - Mar 16 0 0 -
+R A! 1987 o - D 14 0 1 -
+R A! 1988 o - F 28 0 0 -
+R A! 1988 o - D 11 0 1 -
+R A! 1989 o - Mar 5 0 0 -
+R A! 1989 o - O 29 0 1 -
+R A! 1990 o - F 25 0 0 -
+R A! 1990 1991 - O Sun>=21 0 1 -
+R A! 1991 1992 - Mar Sun>=1 0 0 -
+R A! 1992 o - O 18 0 1 -
+R A! 1993 o - F 28 0 0 -
+R A! 2004 o - S 19 0 1 -
+R A! 2005 o - Mar 27 2 0 -
+R A! 2005 o - O 9 2 1 -
+R A! 2006 2015 - Mar Sun>=8 2 0 -
+R A! 2006 2014 - O Sun>=1 2 1 -
 Z America/Montevideo -3:44:51 - LMT 1908 Jun 10
 -3:44:51 - MMT 1920 May
 -4 - -04 1923 O
--3:30 Az -0330/-03 1942 D 14
--3 Az -03/-0230 1960
--3 Az -03/-02 1968
--3 Az -03/-0230 1970
--3 Az -03/-02 1974
--3 Az -03/-0130 1974 Mar 10
--3 Az -03/-0230 1974 D 22
--3 Az -03/-02
+-3:30 A! -0330/-03 1942 D 14
+-3 A! -03/-0230 1960
+-3 A! -03/-02 1968
+-3 A! -03/-0230 1970
+-3 A! -03/-02 1974
+-3 A! -03/-0130 1974 Mar 10
+-3 A! -03/-0230 1974 D 22
+-3 A! -03/-02
 Z America/Caracas -4:27:44 - LMT 1890
 -4:27:40 - CMT 1912 F 12
 -4:30 - -0430 1965
