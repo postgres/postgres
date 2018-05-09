@@ -1840,7 +1840,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <literal>m</literal> = materialized view,
        <literal>c</literal> = composite type,
        <literal>f</literal> = foreign table,
-       <literal>p</literal> = partitioned table
+       <literal>p</literal> = partitioned table,
+       <literal>I</literal> = partitioned index
       </entry>
      </row>
 
