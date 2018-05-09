@@ -236,7 +236,7 @@ IRKT    Asia/Irkutsk  # Irkutsk Time (obsolete)
 IRT     12600    # Iran Time (not in IANA database)
 # CONFLICT! IST is not unique
 # Other timezones:
-# - IST: Irish Summer Time (Europe)
+# - IST: Irish Standard Time (Europe)
 # - IST: Indian Standard Time (Asia)
 IST      7200    # Israel Standard Time
                  #     (Asia/Jerusalem)
