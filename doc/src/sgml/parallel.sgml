@@ -473,7 +473,13 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
     <listitem>
       <para>
-        Access to an <literal>InitPlan</literal> or correlated <literal>SubPlan</literal>.
+        Plan nodes to which an <literal>InitPlan</literal> is attached.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+        Plan nodes which reference a correlated <literal>SubPlan</literal>.
       </para>
     </listitem>
   </itemizedlist>
