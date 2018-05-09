@@ -4321,7 +4321,7 @@ select 'true'::jsonb::bool;
 (1 row)
 
 select '[]'::jsonb::bool;
-ERROR:  jsonb value must be boolean
+ERROR:  cannot cast jsonb array to type boolean
 select '1.0'::jsonb::float;
  float8 
 --------
@@ -4329,7 +4329,7 @@ select '1.0'::jsonb::float;
 (1 row)
 
 select '[1.0]'::jsonb::float;
-ERROR:  jsonb value must be numeric
+ERROR:  cannot cast jsonb array to type double precision
 select '12345'::jsonb::int4;
  int4  
 -------
@@ -4337,7 +4337,7 @@ select '12345'::jsonb::int4;
 (1 row)
 
 select '"hello"'::jsonb::int4;
-ERROR:  jsonb value must be numeric
+ERROR:  cannot cast jsonb string to type integer
 select '12345'::jsonb::numeric;
  numeric 
 ---------
@@ -4345,7 +4345,7 @@ select '12345'::jsonb::numeric;
 (1 row)
 
 select '{}'::jsonb::numeric;
-ERROR:  jsonb value must be numeric
+ERROR:  cannot cast jsonb object to type numeric
 select '12345.05'::jsonb::numeric;
  numeric  
 ----------

@@ -1857,7 +1857,7 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 /*
  * Extract scalar value from raw-scalar pseudo-array jsonb.
  */
-static JsonbValue *
+static bool
 JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res)
 {
 	JsonbIterator *it;
@@ -1865,7 +1865,11 @@ JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res)
 	JsonbValue	tmp;
 
 	if (!JsonContainerIsArray(jbc) || !JsonContainerIsScalar(jbc))
-		return NULL;
+	{
+		/* inform caller about actual type of container */
+		res->type = (JsonContainerIsArray(jbc)) ? jbvArray : jbvObject;
+		return false;
+	}
 
 	/*
 	 * A root scalar is stored as an array of one element, so we get the array
@@ -1887,7 +1891,40 @@ JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res)
 	tok = JsonbIteratorNext(&it, &tmp, true);
 	Assert(tok == WJB_DONE);
 
-	return res;
+	return true;
+}
+
+/*
+ * Emit correct, translatable cast error message
+ */
+static void
+cannotCastJsonbValue(enum jbvType type, const char *sqltype)
+{
+	static const struct
+	{
+		enum jbvType	type;
+		const char	   *msg;
+	}
+		messages[] =
+	{
+		{ jbvNull,		gettext_noop("cannot cast jsonb null to type %s") },
+		{ jbvString,	gettext_noop("cannot cast jsonb string to type %s") },
+		{ jbvNumeric,	gettext_noop("cannot cast jsonb numeric to type %s") },
+		{ jbvBool,		gettext_noop("cannot cast jsonb boolean to type %s") },
+		{ jbvArray,		gettext_noop("cannot cast jsonb array to type %s") },
+		{ jbvObject,	gettext_noop("cannot cast jsonb object to type %s") },
+		{ jbvBinary,	gettext_noop("cannot cast jsonb array or object to type %s") }
+	};
+	int i;
+
+	for(i=0; i<lengthof(messages); i++)
+		if (messages[i].type == type)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg(messages[i].msg, sqltype)));
+
+	/* should be unreachable */
+	elog(ERROR, "unknown jsonb type: %d", (int)type);
 }
 
 Datum
@@ -1897,9 +1934,7 @@ jsonb_bool(PG_FUNCTION_ARGS)
 	JsonbValue	v;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvBool)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("jsonb value must be boolean")));
+		cannotCastJsonbValue(v.type, "boolean");
 
 	PG_FREE_IF_COPY(in, 0);
 
@@ -1914,9 +1949,7 @@ jsonb_numeric(PG_FUNCTION_ARGS)
 	Numeric		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("jsonb value must be numeric")));
+		cannotCastJsonbValue(v.type, "numeric");
 
 	/*
 	 * v.val.numeric points into jsonb body, so we need to make a copy to
@@ -1937,9 +1970,7 @@ jsonb_int2(PG_FUNCTION_ARGS)
 	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("jsonb value must be numeric")));
+		cannotCastJsonbValue(v.type, "smallint");
 
 	retValue = DirectFunctionCall1(numeric_int2,
 								   NumericGetDatum(v.val.numeric));
@@ -1957,9 +1988,7 @@ jsonb_int4(PG_FUNCTION_ARGS)
 	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("jsonb value must be numeric")));
+		cannotCastJsonbValue(v.type, "integer");
 
 	retValue = DirectFunctionCall1(numeric_int4,
 								   NumericGetDatum(v.val.numeric));
@@ -1977,9 +2006,7 @@ jsonb_int8(PG_FUNCTION_ARGS)
 	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("jsonb value must be numeric")));
+		cannotCastJsonbValue(v.type, "bigint");
 
 	retValue = DirectFunctionCall1(numeric_int8,
 								   NumericGetDatum(v.val.numeric));
@@ -1997,9 +2024,7 @@ jsonb_float4(PG_FUNCTION_ARGS)
 	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("jsonb value must be numeric")));
+		cannotCastJsonbValue(v.type, "real");
 
 	retValue = DirectFunctionCall1(numeric_float4,
 								   NumericGetDatum(v.val.numeric));
@@ -2017,9 +2042,7 @@ jsonb_float8(PG_FUNCTION_ARGS)
 	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("jsonb value must be numeric")));
+		cannotCastJsonbValue(v.type, "double precision");
 
 	retValue = DirectFunctionCall1(numeric_float8,
 								   NumericGetDatum(v.val.numeric));
