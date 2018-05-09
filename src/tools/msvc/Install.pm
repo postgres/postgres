@@ -462,11 +462,11 @@ sub CopyContribFiles
 		while (my $d = readdir($D))
 		{
 			# These configuration-based exclusions must match vcregress.pl
-			next if ($d eq "uuid-ossp"       && !defined($config->{uuid}));
-			next if ($d eq "sslinfo"         && !defined($config->{openssl}));
-			next if ($d eq "xml2"            && !defined($config->{xml}));
-			next if ($d =~ /_plperl$/        && !defined($config->{perl}));
-			next if ($d =~ /_plpython$/      && !defined($config->{python}));
+			next if ($d eq "uuid-ossp"  && !defined($config->{uuid}));
+			next if ($d eq "sslinfo"    && !defined($config->{openssl}));
+			next if ($d eq "xml2"       && !defined($config->{xml}));
+			next if ($d =~ /_plperl$/   && !defined($config->{perl}));
+			next if ($d =~ /_plpython$/ && !defined($config->{python}));
 			next if ($d eq "sepgsql");
 
 			CopySubdirFiles($subdir, $d, $config, $target);
