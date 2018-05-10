@@ -189,7 +189,7 @@ _bt_update_meta_cleanup_info(Relation rel, TransactionId oldestBtpoXact,
 	if (metad->btm_version < BTREE_VERSION)
 		_bt_upgrademetapage(metapg);
 
-	/* update cleanup-related infromation */
+	/* update cleanup-related information */
 	metad->btm_oldest_btpo_xact = oldestBtpoXact;
 	metad->btm_last_cleanup_num_heap_tuples = numHeapTuples;
 	MarkBufferDirty(metabuf);

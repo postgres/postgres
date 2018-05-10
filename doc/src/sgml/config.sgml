@@ -1893,15 +1893,34 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        When no tuples were deleted from the heap, B-tree indexes might still
-        be scanned during <command>VACUUM</command> cleanup stage by two
-        reasons.  The first reason is that B-tree index contains deleted pages
-        which can be recycled during cleanup.  The second reason is that B-tree
-        index statistics is stalled.  The criterion of stalled index statistics
-        is number of inserted tuples since previous statistics collection
-        is greater than <varname>vacuum_cleanup_index_scale_factor</varname>
-        fraction of total number of heap tuples.
+        Specifies the fraction of the total number of heap tuples counted in
+        the previous statistics collection that can be inserted without
+        incurring an index scan at the <command>VACUUM</command> cleanup stage.
+        This setting currently applies to B-tree indexes only.
        </para>
+
+       <para>
+        If no tuples were deleted from the heap, B-tree indexes are still
+        scanned at the <command>VACUUM</command> cleanup stage when at least one
+        of the following conditions is met: the index statistics are stale, or
+        the index contains deleted pages that can be recycled during cleanup.
+        Index statistics are considered to be stale if the number of newly
+        inserted tuples exceeds the <varname>vacuum_cleanup_index_scale_factor</varname>
+        fraction of the total number of heap tuples detected by the previous
+        statistics collection. The total number of heap tuples is stored in
+        the index meta-page. Note that the meta-page does not include this data
+        until <command>VACUUM</command> finds no dead tuples, so B-tree index
+        scan at the cleanup stage can only be skipped if the second and
+        subsequent <command>VACUUM</command> cycles detect no dead tuples.
+       </para>
+
+       <para>
+        The value can range from <literal>0</literal> to <literal>100</literal>.
+        When <varname>vacuum_cleanup_index_scale_factor</varname> is set to
+        <literal>0</literal>, index scans are never skipped during
+        <command>VACUUM</command> cleanup. The default value is <literal>0.1</literal>.
+       </para>
+
       </listitem>
      </varlistentry>
      </variablelist>

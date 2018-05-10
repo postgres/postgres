@@ -818,10 +818,11 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 		float8		cleanup_scale_factor;
 
 		/*
-		 * If table receives large enough amount of insertions and no cleanup
-		 * was performed, then index might appear to have stalled statistics.
-		 * In order to evade that, we perform cleanup when table receives
-		 * vacuum_cleanup_index_scale_factor fractions of insertions.
+		 * If table receives enough insertions and no cleanup was performed,
+		 * then index would appear have stale statistics.  If scale factor
+		 * is set, we avoid that by performing cleanup if the number of
+		 * inserted tuples exceeds vacuum_cleanup_index_scale_factor fraction
+		 * of original tuples count.
 		 */
 		relopts = (StdRdOptions *) info->index->rd_options;
 		cleanup_scale_factor = (relopts &&
@@ -829,7 +830,7 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 			? relopts->vacuum_cleanup_index_scale_factor
 			: vacuum_cleanup_index_scale_factor;
 
-		if (cleanup_scale_factor < 0 ||
+		if (cleanup_scale_factor <= 0 ||
 			metad->btm_last_cleanup_num_heap_tuples < 0 ||
 			info->num_heap_tuples > (1.0 + cleanup_scale_factor) *
 			metad->btm_last_cleanup_num_heap_tuples)
@@ -870,8 +871,8 @@ btbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 					 &oldestBtpoXact);
 
 		/*
-		 * Update cleanup-related information in metapage. These information
-		 * is used only for cleanup but keeping up them to date can avoid
+		 * Update cleanup-related information in metapage. This information
+		 * is used only for cleanup but keeping them up to date can avoid
 		 * unnecessary cleanup even after bulkdelete.
 		 */
 		_bt_update_meta_cleanup_info(info->index, oldestBtpoXact,
@@ -899,8 +900,8 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 * If btbulkdelete was called, we need not do anything, just return the
 	 * stats from the latest btbulkdelete call.  If it wasn't called, we might
 	 * still need to do a pass over the index, to recycle any newly-recyclable
-	 * pages and to obtain index statistics.  _bt_vacuum_needs_cleanup checks
-	 * is there are newly-recyclable or stalled index statistics.
+	 * pages or to obtain index statistics.  _bt_vacuum_needs_cleanup
+	 * determines if either are needed.
 	 *
 	 * Since we aren't going to actually delete any leaf items, there's no
 	 * need to go through all the vacuum-cycle-ID pushups.
