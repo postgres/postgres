@@ -54,19 +54,21 @@
 -->
 
        <para>
-        Have <application>pg_dump</application> dump all aspects of a
-        database (Haribabu Kommi)
+        Have <link
+        linkend="app-pgdump"><application>pg_dump</application></link>
+        dump all aspects of a database (Haribabu Kommi)
        </para>
 
        <para>
         Previously database attributes like
-        <command>GRANT</command>/<command>REVOKE</command> permissions
-        and <command>ALTER DATABASE SET</command> and <command>ALTER
-        ROLE IN DATABASE SET</command> variable settings were only dumped
-        by <application>pg_dumpall</application>.  Now <command>pg_dump
-        --create</command> and <command>pg_restore --create</command> will
-        restore all database aspects.  <command>pg_dumpall -g</command>
-        will now only output role and tablespace-related attributes.
+        <command>GRANT</command>/<command>REVOKE</command> permissions and
+        <command>ALTER DATABASE SET</command> and <command>ALTER ROLE IN
+        DATABASE SET</command> variable settings were only dumped by <link
+        linkend="app-pg-dumpall"><application>pg_dumpall</application></link>.
+        Now <command>pg_dump --create</command> and
+        <command>pg_restore --create</command> will restore all
+        database aspects.  <command>pg_dumpall -g</command> will
+        now only output role and tablespace-related attributes.
         <application>pg_dumpall</application>'s output (without
         <option>-g</option>) is unchanged.
        </para>
@@ -103,8 +105,8 @@
 -->
 
        <para>
-        Correct information schema column
-        <structname>tables</structname>.<structfield>table_type</structfield>
+        Correct information schema column <link
+        linkend="infoschema-tables"><structname>tables</structname>.<structfield>table_type</structfield></link>
         to return <literal>FOREIGN</literal> instead of <literal>FOREIGN
         TABLE</literal> (Peter Eisentraut)
        </para>
@@ -120,8 +122,8 @@
 -->
 
        <para>
-        Change the ps process display labels to match the
-        <structname>pg_stat_activity</structname>.<structfield>backend_type</structfield>
+        Change the ps process display labels to match the <link
+        linkend="pg-stat-activity-view"><structname>pg_stat_activity</structname>.<structfield>backend_type</structfield></link>
         labels (Peter Eisentraut)
        </para>
       </listitem>
@@ -132,8 +134,10 @@
 -->
 
        <para>
-        Prevent <function>to_number()</function> from consuming characters
-        when the template separator does not match (Oliver Ford)
+        Prevent <link
+        linkend="functions-formatting-numeric-table"><function>to_number()</function></link>
+        from consuming characters when the template separator does not
+        match (Oliver Ford)
        </para>
 
        <para>
@@ -151,7 +155,8 @@
 -->
 
        <para>
-        Fix <function>to_date()</function>,
+        Fix <link
+        linkend="functions-formatting"><function>to_date()</function></link>,
         <function>to_number()</function>, and
         <function>to_timestamp()</function> to skip a character for each
         template character (Tom Lane)
@@ -186,8 +191,9 @@
 -->
 
        <para>
-        Have libpq's <function>PQhost()</function> always return the
-        actual connected host (Hari Babu)
+        Have libpq's <link
+        linkend="libpq-pqhost"><function>PQhost()</function></link>
+        always return the actual connected host (Hari Babu)
        </para>
 
        <para>
@@ -205,8 +211,8 @@
 -->
 
        <para>
-        Remove relhaspkey column from system table
-        <structname>pg_class</structname> (Peter Eisentraut)
+        Remove <structfield>relhaspkey</structfield> column from system
+        table <structname>pg_class</structname> (Peter Eisentraut)
        </para>
 
        <para>
@@ -240,8 +246,10 @@
 -->
 
        <para>
-        Cause large object permission checks to happen on large object
-        open, <function>lo_open()</function>, not read/write (Tom Lane)
+        Cause large object permission checks
+        to happen on large object open, <link
+        linkend="lo-open"><function>lo_open()</function></link>, not
+        read/write (Tom Lane)
        </para>
       </listitem>
 
@@ -258,9 +266,10 @@
        </para>
 
        <para>
-        These function are now present by default.  Old adminpack installs
-        will continue to have access to these functions until they are
-        updated via <command>ALTER EXTENSION ... UPDATE</command>.
+        These function are now present by default.  Old <link
+        linkend="adminpack"><application>adminpack</application></link>
+        installs will continue to have access to these functions until
+        they are updated via <command>ALTER EXTENSION ... UPDATE</command>.
        </para>
       </listitem>
 
@@ -283,12 +292,29 @@
 
       <listitem>
 <!--
+2017-09-29 [8b304b8b7] Remove replacement selection sort.
+-->
+
+       <para>
+        Remove server variable <varname>replacement_sort_tuples</varname>
+        (Peter Geoghegan)
+       </para>
+
+       <para>
+        Replacement sorts were determined to be no longer useful.
+       </para>
+
+      </listitem>
+
+      <listitem>
+<!--
 2018-01-26 [4971d2a32] Remove the obsolete WITH clause of CREATE FUNCTION.
 -->
 
        <para>
-        Remove <literal>WITH</literal> clause in <command>CREATE
-        FUNCTION</command> (Michael Paquier)
+        Remove <literal>WITH</literal> clause in <link
+        linkend="sql-createfunction"><command>CREATE
+        FUNCTION</command></link> (Michael Paquier)
        </para>
 
        <para>
@@ -416,10 +442,11 @@
        </para>
 
        <para>
-        The new command <command>ALTER INDEX ATTACH PARTITION</command>
-        allows indexes to be attached to partitions.  This does not behave
-        as a global index since the contents are private to each index.
-        WARN WHEN USING AN EXISTING INDEX?
+        The new command <link linkend="sql-alterindex"><command>ALTER
+        INDEX ATTACH PARTITION</command></link> allows indexes to be
+        attached to partitions.  This does not behave as a global index
+        since the contents are private to each index.  WARN WHEN USING
+        AN EXISTING INDEX?
        </para>
       </listitem>
 
@@ -481,8 +508,9 @@
        </para>
 
        <para>
-        This features is disabled by default but can be enabled by changing
-        <varname>enable_partitionwise_join</varname>.
+        This features is disabled by default
+        but can be enabled by changing <link
+        linkend="guc-enable-partitionwise-join"><varname>enable_partitionwise_join</varname></link>.
        </para>
       </listitem>
 
@@ -498,8 +526,9 @@
        </para>
 
        <para>
-        This features is disabled by default but can be enabled by changing
-        <varname>enable_partitionwise_aggregate</varname>.
+        This features is disabled by default
+        but can be enabled by changing <link
+        linkend="guc-enable-partitionwise-aggregate"><varname>enable_partitionwise_aggregate</varname></link>.
        </para>
       </listitem>
 
@@ -509,8 +538,10 @@
 -->
 
        <para>
-        Allow <application>postgres_fdw</application> to push down
-        aggregates to foreign tables that are partitions (Jeevan Chalke)
+        Allow <link
+        linkend="postgres-fdw"><application>postgres_fdw</application></link>
+        to push down aggregates to foreign tables that are partitions
+        (Jeevan Chalke)
        </para>
 
       </listitem>
@@ -530,8 +561,8 @@
 -->
 
        <para>
-        Allow indexes to be built in parallel (Peter Geoghegan, Rushabh
-        Lathia, Heikki Linnakangas)
+        Allow btree indexes to be built in parallel (Peter Geoghegan,
+        Rushabh Lathia, Heikki Linnakangas)
        </para>
       </listitem>
 
@@ -595,7 +626,8 @@ same commits as above
 -->
 
        <para>
-        Add server option <varname>parallel_leader_participation</varname>
+        Add server option <link
+        linkend="guc-parallel-leader-participation"><varname>parallel_leader_participation</varname></link>
         to control if the leader executes subplans (Thomas Munro)
        </para>
 
@@ -643,9 +675,11 @@ same commits as above
 -->
 
        <para>
-        Allow indexes to <literal>INCLUDE</literal> columns that are not
-        part of the unique constraint but are available for index-only
-        scans (Anastasia Lubennikova, Alexander Korotkov, Teodor Sigaev)
+        Allow indexes to <link
+        linkend="sql-createindex"><literal>INCLUDE</literal></link> columns
+        that are not part of the unique constraint but are available
+        for index-only scans (Anastasia Lubennikova, Alexander Korotkov,
+        Teodor Sigaev)
        </para>
 
        <para>
@@ -690,7 +724,7 @@ same commits as above
 -->
 
        <para>
-        Add predicate locking for Hash, GiST and GIN indexes (Shubham
+        Add predicate locking for hash, GiST and GIN indexes (Shubham
         Barai)
        </para>
 
@@ -715,7 +749,7 @@ same commits as above
      </itemizedlist>
 
      <sect5>
-      <title>SP-Gist</title>
+      <title><link linkend="spgist">SP-Gist</link></title>
 
       <itemizedlist>
 
@@ -864,9 +898,9 @@ same commits as above
 -->
 
        <para>
-        Add Just-In-Time (<acronym>JIT</acronym>) compilation of plans
-        run the by the executor
-(Andres Freund)
+        Add <link linkend="jit">Just-In-Time</link>
+        (<acronym>JIT</acronym>) compilation of some parts of query plans
+        to improve execution speed (Andres Freund)
        </para>
       </listitem>
 
@@ -898,6 +932,17 @@ same commits as above
 
       <listitem>
 <!--
+2018-04-04 [857f9c36c] Skip full index scan during cleanup of B-tree indexes wh
+-->
+
+       <para>
+        Allow vacuum to avoid unnecesary index scans (Masahiko Sawada,
+        Alexander Korotkov)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2017-09-01 [baaf272ac] Use group updates when setting transaction status in clo
 -->
 
@@ -924,9 +969,10 @@ same commits as above
 -->
 
        <para>
-        Allow <application>postgres_fdw</application> to push
-        <command>UPDATE</command>s and <command>DELETE</command>s using
-        joins to foreign servers (Etsuro Fujita)
+        Allow <link
+        linkend="postgres-fdw"><application>postgres_fdw</application></link>
+        to push <command>UPDATE</command>s and <command>DELETE</command>s
+        using joins to foreign servers (Etsuro Fujita)
        </para>
 
        <para>
@@ -951,7 +997,8 @@ same commits as above
 -->
 
        <para>
-        Show memory usage in <varname>log_statement_stats</varname>,
+        Show memory usage in <link
+        linkend="runtime-config-statistics-monitor"><varname>log_statement_stats</varname></link>,
         <varname>log_parser_stats</varname>,
         <varname>log_planner_stats</varname>,
         <varname>log_executor_stats</varname> (Justin Pryzby, Peter
@@ -965,8 +1012,8 @@ same commits as above
 -->
 
        <para>
-        Add
-        <structname>pg_stat_activity</structname>.<structfield>backend_type</structfield>
+        Add <link
+        linkend="pg-stat-activity-view"><structname>pg_stat_activity</structname>.<structfield>backend_type</structfield></link>
         now shows the type of background worker (Peter Eisentraut)
        </para>
 
@@ -988,8 +1035,10 @@ same commits as above
 -->
 
        <para>
-        Have <varname>log_autovacuum_min_duration</varname> log skipped
-        tables that are concurrently being dropped (Nathan Bossart)
+        Have <link
+        linkend="guc-log-autovacuum-min-duration"><varname>log_autovacuum_min_duration</varname></link>
+        log skipped tables that are concurrently being dropped (Nathan
+        Bossart)
        </para>
 
       </listitem>
@@ -997,7 +1046,7 @@ same commits as above
      </itemizedlist>
 
      <sect5>
-      <title>Information Schema</title>
+      <title><link linkend="infoschema-tables">Information Schema</link></title>
 
       <itemizedlist>
 
@@ -1040,16 +1089,17 @@ same commits as above
 -->
 
        <para>
-        Add libpq option to support channel binding when using
-        <acronym>SCRAM</acronym> authentication (Michael Paquier)
+        Add libpq option to support channel binding when using <link
+        linkend="auth-password"><acronym>SCRAM</acronym></link>
+        authentication (Michael Paquier)
        </para>
 
        <para>
-        Channel binding requires the server end of
-        the <acronym>TLS</acronym> connection to prove
-        that it knows the password.  The options are
-        <option>scram_channel_binding=tls-unique</option> and
-        <option>scram_channel_binding=tls-server-end-point</option>.
+        Channel binding requires the server end
+        of the <acronym>TLS</acronym> connection to
+        prove that it knows the password.  The options are <link
+        linkend="libpq-scram-channel-binding"><option>scram_channel_binding=tls-unique</option></link>
+        and <option>scram_channel_binding=tls-server-end-point</option>.
        </para>
 
        <para>
@@ -1065,8 +1115,9 @@ same commits as above
 -->
 
        <para>
-        Allow the server to specify more complex <acronym>LDAP</acronym>
-        specifications in search+bind mode (Thomas Munro)
+        Allow the server to specify more complex <link
+        linkend="auth-ldap"><acronym>LDAP</acronym></link> specifications
+        in search+bind mode (Thomas Munro)
        </para>
 
        <para>
@@ -1126,13 +1177,14 @@ same commits as above
        </para>
 
        <para>
-        Specifically, the new roles are:
-        <literal>pg_read_server_files</literal>,
+        Specifically, the new roles are: <link
+        linkend="default-roles-table"><literal>pg_read_server_files</literal></link>,
         <literal>pg_write_server_files</literal>,
-        <literal>pg_execute_server_program</literal>.  These roles now
-        also control who can use <command>COPY</command> and extension
-        <application>file_fdw</application>.  Previously only super-users
-        could use these functions, and that is still the default behavior.
+        <literal>pg_execute_server_program</literal>.  These roles now also
+        control who can use <command>COPY</command> and extension <link
+        linkend="file-fdw"><application>file_fdw</application></link>.
+        Previously only super-users could use these functions, and that
+        is still the default behavior.
        </para>
       </listitem>
 
@@ -1148,8 +1200,8 @@ same commits as above
        </para>
 
        <para>
-        Specifically, these functions were
-        modified:  <function>pg_ls_dir()</function>,
+        Specifically, these functions were modified:  <link
+        linkend="functions-admin-genfile-table"><function>pg_ls_dir()</function></link>,
         <function>pg_read_file()</function>,
         <function>pg_read_binary_file()</function>,
         <function>pg_stat_file()</function>.
@@ -1164,8 +1216,9 @@ same commits as above
 
        <para>
         Use <command>GRANT</command>/<command>REVOKE</command>
-        to control access to <function>lo_import()</function> and
-        <function>lo_export()</function> (Michael Paquier)
+        to control access to <link
+        linkend="lo-import"><function>lo_import()</function></link>
+        and <function>lo_export()</function> (Michael Paquier)
        </para>
 
        <para>
@@ -1174,7 +1227,8 @@ same commits as above
        </para>
 
        <para>
-        Compile-time option ALLOW_DANGEROUS_LO_FUNCTIONS has been removed.
+        Compile-time option <literal>ALLOW_DANGEROUS_LO_FUNCTIONS</literal>
+        has been removed.
        </para>
       </listitem>
 
@@ -1184,17 +1238,18 @@ same commits as above
 -->
 
        <para>
-        Use view owner not session owner when preventing non-password
-        access to <application>postgres_fdw</application> tables
-        (Robert Haas)
+        Use view owner not session owner when
+        preventing non-password access to <link
+        linkend="postgres-fdw"><application>postgres_fdw</application></link>
+        tables (Robert Haas)
        </para>
 
        <para>
         <productname>PostgreSQL</productname> only allows super-users to
         access <application>postgres_fdw</application> tables without
-        passwords, e.g. via peer.  Previously the session owner had to
-        be a super-user to allow such access;  now the view owner is
-        checked instead.
+        passwords, e.g. via <literal>peer</literal>.  Previously the
+        session owner had to be a super-user to allow such access;  now
+        the view owner is checked instead.
        </para>
       </listitem>
 
@@ -1225,13 +1280,15 @@ same commits as above
 -->
 
        <para>
-        Add server setting <varname>ssl_passphrase_command</varname> to
-        allow supplying of the the passphrase for <acronym>SSL</acronym>
+        Add server setting <link
+        linkend="guc-ssl-passphrase-command"><varname>ssl_passphrase_command</varname></link>
+        to allow supplying of the the passphrase for <acronym>SSL</acronym>
         key files (Peter Eisentraut)
        </para>
 
        <para>
-        Also add <varname>ssl_passphrase_command_supports_reload</varname>
+        Also add <link
+        linkend="guc-ssl-passphrase-command-supports-reload"><varname>ssl_passphrase_command_supports_reload</varname></link>
         to specify whether the the <acronym>SSL</acronym> configuration
         should be reloaded and <varname>ssl_passphrase_command</varname>
         called during a server configuration reload.
@@ -1244,7 +1301,8 @@ same commits as above
 -->
 
        <para>
-        Add server variable <varname>toast_tuple_target</varname>
+        Add storage parameter <link
+        linkend="sql-createtable-storage-parameters"><varname>toast_tuple_target</varname></link>
         to control the minimum length before <acronym>TOAST</acronym>
         storage will be considered for new rows (Simon Riggs)
        </para>
@@ -1408,7 +1466,8 @@ same commits as above
 -->
 
        <para>
-        Add timeline information to the <filename>backup_label</filename>
+        Add timeline information to the <link
+        linkend="backup-lowlevel-base-backup"><filename>backup_label</filename></link>
         file (Simon Riggs)
        </para>
 
@@ -1447,7 +1506,7 @@ same commits as above
    </sect3>
 
    <sect3>
-    <title>Window Functions</title>
+    <title><link linkend="sql-window">Window Functions</link></title>
 
     <itemizedlist>
 
@@ -1623,7 +1682,7 @@ same commits as above
 
        <para>
         Add casts from jsonb scalars to numeric and boolean data types
-(Anastasia Lubennikova)
+        (Anastasia Lubennikova)
        </para>
 
       </listitem>
@@ -1643,12 +1702,13 @@ same commits as above
 -->
 
        <para>
-        Add <acronym>SHA</acronym>-2 family of hash functions (Peter
+        Add <acronym>SHA-2</acronym> family of hash functions (Peter
         Eisentraut)
        </para>
 
        <para>
-        Specifically, <function>sha224()</function>,
+        Specifically, <link
+        linkend="functions-binarystring-other"><function>sha224()</function></link>,
         <function>sha256()</function>, <function>sha384()</function>,
         <function>sha512()</function> were added.
        </para>
@@ -1678,7 +1738,8 @@ same commits as above
        </para>
 
        <para>
-        This is done with format specifications <literal>TZH</literal>
+        This is done with format specifications <link
+        linkend="functions-formatting-datetime-table"><literal>TZH</literal></link>
         and <literal>TZM</literal>.
        </para>
       </listitem>
@@ -1699,10 +1760,10 @@ same commits as above
 -->
 
        <para>
-        Add text search function
-        <function>websearch_to_tsquery()</function> that supports a queries
-        syntax similar to that used by web search engines (Victor Drobny,
-        Dmitry Ivanov)
+        Add text search function <link
+        linkend="textsearch-functions-table"><function>websearch_to_tsquery()</function></link>
+        that supports a queries syntax similar to that used by web search
+        engines (Victor Drobny, Dmitry Ivanov)
        </para>
       </listitem>
 
@@ -1712,9 +1773,10 @@ same commits as above
 -->
 
        <para>
-        Add function <function>json(b)_to_tsvector()</function> to create
-        text search query for matching <type>JSON</type>/<type>JSONB
-        </type>values (Dmitry Dolgov)
+        Add function <link
+        linkend="textsearch-functions-table"><function>json(b)_to_tsvector()</function></link>
+        to create text search query for matching
+        <type>JSON</type>/<type>JSONB </type>values (Dmitry Dolgov)
        </para>
 
       </listitem>
@@ -1738,13 +1800,14 @@ same commits as above
 
        <para>
         Add SQL procedures, which can start and commit their own
-        transactions
-(Peter Eisentraut)
+        transactions (Peter Eisentraut)
        </para>
 
        <para>
-        They are created with the new <command>CREATE PROCEDURE</command>
-        command and invoked via <command>CALL</command>.  The new
+        They are created with the new <link
+        linkend="sql-createprocedure"><command>CREATE
+        PROCEDURE</command></link> command and invoked via <link
+        linkend="sql-call"><command>CALL</command></link>.  The new
         <command>ALTER</command>/<command>DROP ROUTINE</command> commands
         allows altering/dropping of procedures, functions, and aggregates.
        </para>
@@ -1801,8 +1864,8 @@ same commits as above
 -->
 
        <para>
-        Add extension <application>jsonb_plperl</application> to
-        transform <type>JSONB </type>to/from PL/Perl types (Anthony Bykov)
+        Add extension <application>jsonb_plperl</application> to transform
+        <type>JSONB </type>to/from PL/Perl types (Anthony Bykov)
        </para>
 
       </listitem>
@@ -1827,7 +1890,8 @@ same commits as above
        </para>
 
        <para>
-        The libpq connection parameter is called replication.
+        The libpq connection parameter is called <link
+        linkend="libpq-connect-replication"><option>replication</option></link>.
        </para>
       </listitem>
 
@@ -1993,13 +2057,15 @@ same commits as above
 -->
 
        <para>
-        Allow 'quit' and 'exit' to exit <application>psql</application>
-        when used in an empty buffer (Bruce Momjian)
+        Allow <command>quit</command> and <command>exit</command> to
+        exit <application>psql</application> when used in an empty buffer
+        (Bruce Momjian)
        </para>
 
        <para>
-        Also add hints of how to exit when 'quit' and 'exit' are used alone
-        on a line in a non-empty buffer.  Add a similar hint for 'help'.
+        Also add hints of how to exit when <command>quit</command> and
+        <command>exit</command> are used alone on a line in a non-empty
+        buffer.  Add a similar hint for <command>help</command>.
        </para>
       </listitem>
 
@@ -2009,12 +2075,14 @@ same commits as above
 -->
 
        <para>
-        Have <application>psql</application> hint at using control-D when
-        \q is entered alone on a line but ignored (Bruce Momjian)
+        Have <application>psql</application> hint at using control-D
+        when <command>\q</command> is entered alone on a line but ignored
+        (Bruce Momjian)
        </para>
 
        <para>
-        For example, \q does not exit when supplied in character strings.
+        For example, <command>\q</command> does not exit when supplied
+        in character strings.
        </para>
       </listitem>
 
@@ -2051,7 +2119,7 @@ same commits as above
     </sect4>
 
     <sect4>
-     <title><xref linkend="pgbench"/></title>
+     <title><link linkend="pgbench"><xref linkend="pgbench"/></link></title>
 
      <itemizedlist>
 
@@ -2061,8 +2129,8 @@ same commits as above
 -->
 
        <para>
-        Add pgbench expressions support for NULLs, booleans, and some
-        functions and operators (Fabien Coelho)
+        Add <application>pgbench</application> expressions support for
+        NULLs, booleans, and some functions and operators (Fabien Coelho)
        </para>
       </listitem>
 
@@ -2072,7 +2140,8 @@ same commits as above
 -->
 
        <para>
-        Add \if conditional support to pgbench (Fabien Coelho)
+        Add <literal>\if</literal> conditional support to
+        <application>pgbench</application> (Fabien Coelho)
        </para>
       </listitem>
 
@@ -2083,7 +2152,7 @@ same commits as above
 
        <para>
         Allow the use of non-<acronym>ASCII</acronym> characters in
-        pgbench variable names (Fabien Coelho)
+        <application>pgbench</application> variable names (Fabien Coelho)
        </para>
       </listitem>
 
@@ -2093,8 +2162,9 @@ same commits as above
 -->
 
        <para>
-        Add pgbench option <option>--init-steps</option> to control the
-        initialization steps performed (Masahiko Sawada)
+        Add <application>pgbench</application> option
+        <option>--init-steps</option> to control the initialization steps
+        performed (Masahiko Sawada)
        </para>
       </listitem>
 
@@ -2104,8 +2174,8 @@ same commits as above
 -->
 
        <para>
-        Add approximated Zipfian-distributed random generator to pgbench
-        (Alik Khilazhev)
+        Add approximated Zipfian-distributed random generator to
+        <application>pgbench</application> (Alik Khilazhev)
        </para>
       </listitem>
 
@@ -2115,7 +2185,8 @@ same commits as above
 -->
 
        <para>
-        Allow the random seed to be set in pgbench (Fabien Coelho)
+        Allow the random seed to be set in
+        <application>pgbench</application> (Fabien Coelho)
        </para>
       </listitem>
 
@@ -2125,9 +2196,9 @@ same commits as above
 -->
 
        <para>
-        Allow pgbench to do exponentiation with <function>pow()</function>
-        and  <function>power()</function> (Ra&uacute;l Mar&iacute;n
-        Rodr&iacute;guez)
+        Allow <application>pgbench</application> to do exponentiation
+        with <function>pow()</function> and  <function>power()</function>
+        (Ra&uacute;l Mar&iacute;n Rodr&iacute;guez)
        </para>
       </listitem>
 
@@ -2137,7 +2208,8 @@ same commits as above
 -->
 
        <para>
-        Add hashing functions to pgbench (Ildar Musin)
+        Add hashing functions to <application>pgbench</application>
+        (Ildar Musin)
        </para>
       </listitem>
 
@@ -2148,9 +2220,9 @@ same commits as above
 -->
 
        <para>
-        Make pgbench statistics more accurate when using
-        <option>--latency-limit</option> and <option>--rate</option>
-        (Fabien Coelho)
+        Make <application>pgbench</application> statistics more
+        accurate when using <option>--latency-limit</option> and
+        <option>--rate</option> (Fabien Coelho)
        </para>
 
       </listitem>
@@ -2172,8 +2244,9 @@ same commits as above
 -->
 
        <para>
-        Add <application>pg_basebackup</application> option to create a
-        named replication slot (Michael Banck)
+        Add <link
+        linkend="app-pgbasebackup"><application>pg_basebackup</application></link>
+        option to create a named replication slot (Michael Banck)
        </para>
 
        <para>
@@ -2195,17 +2268,18 @@ same commits as above
 -->
 
        <para>
-        Allow initdb to set group read access to the data directory
-        (David Steele)
+        Allow <link
+        linkend="app-initdb"><application>initdb</application></link>
+        to set group read access to the data directory (David Steele)
        </para>
 
        <para>
         This is accomplished with the initdb
         <option>--allow-group-access</option> flag.  Administrators
         can also set group permissions on the empty data
-        directory before running initdb.  Server variable
-        <varname>data_directory_mode</varname> allows reading of data
-        directory group permissions.
+        directory before running initdb.  Server variable <link
+        linkend="guc-data-directory"><varname>data_directory_mode</varname></link>
+        allows reading of data directory group permissions.
        </para>
       </listitem>
 
@@ -2216,8 +2290,9 @@ same commits as above
 -->
 
        <para>
-        Add <application>pg_verify_checksums</application> tool to verify
-        database checksums while offline (Magnus Hagander)
+        Add <link
+        linkend="pgverifychecksums"><application>pg_verify_checksums</application></link>
+        tool to verify database checksums while offline (Magnus Hagander)
        </para>
       </listitem>
 
@@ -2227,8 +2302,9 @@ same commits as above
 -->
 
        <para>
-        Allow <application>pg_resetwal</application> to
-        change the <acronym>WAL</acronym> segment size via
+        Allow <link
+        linkend="app-pgresetwal"><application>pg_resetwal</application></link>
+        to change the <acronym>WAL</acronym> segment size via
         <option>--wal-segsize</option> (Nathan Bossart)
        </para>
       </listitem>
@@ -2251,8 +2327,9 @@ same commits as above
 -->
 
        <para>
-        Add <application>pg_receivewal</application> option
-        <option>--no-sync</option> to prevent synchronous
+        Add <link
+        linkend="app-pgreceivewal"><application>pg_receivewal</application></link>
+        option <option>--no-sync</option> to prevent synchronous
         <acronym>WAL</acronym> writes (Michael Paquier)
        </para>
       </listitem>
@@ -2275,8 +2352,10 @@ same commits as above
 -->
 
        <para>
-        Allow <application>pg_ctl</application> to send the
-        <literal>SIGKILL</literal> signal to processes (Andres Freund)
+        Allow <link
+        linkend="app-pg-ctl"><application>pg_ctl</application></link>
+        to send the <literal>SIGKILL</literal> signal to processes
+        (Andres Freund)
        </para>
 
        <para>
@@ -2290,8 +2369,9 @@ same commits as above
 -->
 
        <para>
-        Reduce the number of files copied by
-        <application>pg_rewind</application> (Michael Paquier)
+        Reduce the number of files copied by <link
+        linkend="app-pgrewind"><application>pg_rewind</application></link>
+        (Michael Paquier)
        </para>
       </listitem>
 
@@ -2405,28 +2485,6 @@ same commits as above
 
       <listitem>
 <!--
-2018-03-20 [5b2526c83] Add configure infrastructure (- -with-llvm) to enable LLV
--->
-
-       <para>
-        Add configure flag <option>--with-llvm</option> to test for
-        <acronym>LLVM</acronym> support (Andres Freund)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2018-03-20 [6869b4f25] Add C++ support to configure.
--->
-
-       <para>
-        Have configure check for the availability of a C++ compiler
-        (Andres Freund)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2017-09-06 [1c53f612b] Escape &lt; and &amp; in SGML
 2017-10-17 [c29c57890] Don't use SGML empty tags
 2017-10-20 [1ff01b390] Convert SGML IDs to lower case
@@ -2439,8 +2497,8 @@ same commits as above
        </para>
 
        <para>
-        The file names still use an 'sgml' extension for compatibility
-        with back branches.
+        The file names still use an <filename>sgml</filename> extension
+        for compatibility with back branches.
        </para>
       </listitem>
 
@@ -2526,8 +2584,7 @@ same commits as above
        <para>
         Make the computation of system column
         <structname>pg_class</structname>.<structfield>reltuples</structfield>
-        consistent
-(Tomas Vondra)
+        consistent (Tomas Vondra)
        </para>
       </listitem>
 
@@ -2537,24 +2594,9 @@ same commits as above
 -->
 
        <para>
-        Update to use perltidy version 20170521 (Tom Lane)
+        Update to use <application>perltidy</application> version
+        <literal>20170521</literal> (Tom Lane)
        </para>
-      </listitem>
-
-      <listitem>
-<!--
-2017-09-29 [8b304b8b7] Remove replacement selection sort.
--->
-
-       <para>
-        Remove the ability to perform replacement sorts (Peter Geoghegan)
-       </para>
-
-       <para>
-        Replacement sorts were determined to be no longer useful.
-        Also remove server variable replacement sorts.
-       </para>
-
       </listitem>
 
     </itemizedlist>
@@ -2572,9 +2614,10 @@ same commits as above
 -->
 
        <para>
-        Allow extension <application>pg_prewarm</application> to restore
-        the previous shared buffer contents on startup (Mithun Cy,
-        Robert Haas)
+        Allow extension <link
+        linkend="pgprewarm"><application>pg_prewarm</application></link>
+        to restore the previous shared buffer contents on startup (Mithun
+        Cy, Robert Haas)
        </para>
 
        <para>
@@ -2591,8 +2634,9 @@ same commits as above
 -->
 
        <para>
-        Add pgtrgm function <function>strict_word_similarity()</function>
-        to compute the similarity of whole words (Alexander Korotkov)
+        Add <link linkend="pgtrgm"><application>pgtrgm</application></link>
+        function <function>strict_word_similarity()</function> to compute
+        the similarity of whole words (Alexander Korotkov)
        </para>
 
        <para>
@@ -2609,8 +2653,10 @@ same commits as above
 -->
 
        <para>
-        Allow creation of indexes on citext-extension columns that can
-        be used by <literal>LIKE</literal> comparisons (Alexey Chernyshov)
+        Allow creation of indexes on <link
+        linkend="citext"><application>citext</application></link> extension
+        columns that can be used by <literal>LIKE</literal> comparisons
+        (Alexey Chernyshov)
        </para>
 
        <para>
@@ -2625,9 +2671,10 @@ same commits as above
 -->
 
        <para>
-        Allow <application>btree_gin</application> to index
-        <type>bool</type>, <type>bpchar</type>, <type>name</type> and
-        <type>uuid</type> data types (Matheus Oliveira)
+        Allow <link
+        linkend="btree-gin"><application>btree_gin</application></link>
+        to index <type>bool</type>, <type>bpchar</type>, <type>name</type>
+        and <type>uuid</type> data types (Matheus Oliveira)
        </para>
       </listitem>
 
@@ -2637,8 +2684,10 @@ same commits as above
 -->
 
        <para>
-        Allow cube and seg extensions using GiST indexes to perform
-        index-only scans (Andrey Borodin)
+        Allow <link linkend="cube"><application>cube</application></link>
+        and <link linkend="seg"><application>seg</application></link>
+        extensions using GiST indexes to perform index-only scans
+        (Andrey Borodin)
        </para>
       </listitem>
 
@@ -2653,7 +2702,7 @@ same commits as above
        </para>
 
        <para>
-        This is useful for knn-gist searches.  HOW?
+        This is useful for KNN-GiST searches.  HOW?
        </para>
       </listitem>
 
@@ -2663,8 +2712,9 @@ same commits as above
 -->
 
        <para>
-        Add Vietnamese letter detection to the unaccent extension (Dang
-        Minh Huong, Michael Paquier)
+        Add Vietnamese letter detection to the <link
+        linkend="unaccent"><application>unaccent</application></link>
+        extension (Dang Minh Huong, Michael Paquier)
        </para>
       </listitem>
 
@@ -2674,9 +2724,9 @@ same commits as above
 -->
 
        <para>
-        Enhance contrib/amcheck to check that each heap tuple has an
-        index entry
-(Peter Geoghegan)
+        Enhance <link
+        linkend="amcheck"><application>amcheck</application></link>
+        to check that each heap tuple has an index entry (Peter Geoghegan)
        </para>
       </listitem>
 
@@ -2686,8 +2736,9 @@ same commits as above
 -->
 
        <para>
-        Have contrib/adminpack use the new default file system access roles
-        (Stephen Frost)
+        Have <link
+        linkend="adminpack"><application>adminpack</application></link>
+        use the new default file system access roles (Stephen Frost)
        </para>
 
        <para>
@@ -2718,8 +2769,9 @@ same commits as above
 -->
 
        <para>
-        Install errcodes.txt to provide access to the error codes reported
-        by <productname>PostgreSQL</productname> (Thomas Munro)
+        Install <filename>errcodes.txt</filename> to provide access to
+        the error codes reported by <productname>PostgreSQL</productname>
+        (Thomas Munro)
        </para>
       </listitem>
 
@@ -2744,8 +2796,8 @@ same commits as above
 -->
 
        <para>
-        Remove contrib/start-scripts/osx since they are no longer
-        recommended (Tom Lane)
+        Remove <filename>contrib/start-scripts/osx</filename> since they
+        are no longer recommended (Tom Lane)
        </para>
       </listitem>
 
