@@ -101,7 +101,7 @@
 
       <listitem>
 <!--
-2017-08-16 [9b5140fb5] Correct representation of foreign tables in information 
+2017-08-16 [9b5140fb5] Correct representation of foreign tables in information
 -->
 
        <para>
@@ -690,7 +690,7 @@ same commits as above
 
       <listitem>
 <!--
-2018-03-26 [2b2727343] Optimize btree insertions for common case of increasing 
+2018-03-26 [2b2727343] Optimize btree insertions for common case of increasing
 2018-04-10 [074251db6] Adjustments to the btree fastpath optimization.
 -->
 
@@ -2000,7 +2000,7 @@ same commits as above
 
       <listitem>
 <!--
-2017-09-05 [5e8304fdc] In psql, use PSQL_PAGER in preference to PAGER, if it's 
+2017-09-05 [5e8304fdc] In psql, use PSQL_PAGER in preference to PAGER, if it's
 -->
 
        <para>
@@ -2119,7 +2119,7 @@ same commits as above
     </sect4>
 
     <sect4>
-     <title><link linkend="pgbench"><xref linkend="pgbench"/></link></title>
+     <title><link linkend="pgbench"><application>pgbench</application></link></title>
 
      <itemizedlist>
 
@@ -2216,7 +2216,7 @@ same commits as above
       <listitem>
 <!--
 2017-09-04 [c23bb6bad] Fix some subtle problems in pgbench transaction stats co
-2017-11-21 [16827d442] pgbench: fix stats reporting when some transactions are 
+2017-11-21 [16827d442] pgbench: fix stats reporting when some transactions are
 -->
 
        <para>
@@ -2708,7 +2708,7 @@ same commits as above
 
       <listitem>
 <!--
-2017-08-16 [ec0a69e49] Extend the default rules file for contrib/unaccent with 
+2017-08-16 [ec0a69e49] Extend the default rules file for contrib/unaccent with
 -->
 
        <para>
@@ -2720,7 +2720,7 @@ same commits as above
 
       <listitem>
 <!--
-2018-03-31 [7f563c09f] Add amcheck verification of heap relations belonging to 
+2018-03-31 [7f563c09f] Add amcheck verification of heap relations belonging to
 -->
 
        <para>
