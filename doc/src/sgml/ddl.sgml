@@ -2946,7 +2946,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
     divide a table into pieces called partitions.  The table that is divided
     is referred to as a <firstterm>partitioned table</firstterm>.  The
     specification consists of the <firstterm>partitioning method</firstterm>
-    and a list of columns or expressions to be used as the 
+    and a list of columns or expressions to be used as the
     <firstterm>partition key</firstterm>.
    </para>
 
@@ -3759,6 +3759,156 @@ ANALYZE measurement;
    </sect3>
   </sect2>
 
+  <sect2 id="ddl-partition-pruning">
+   <title>Partition Pruning</title>
+
+   <indexterm>
+    <primary>partition pruning</primary>
+   </indexterm>
+
+   <para>
+    <firstterm>Partition pruning</firstterm> is a query optimization technique
+    that improves performance for partitioned tables.  As an example:
+
+<programlisting>
+SET enable_partition_pruning = on;                 -- the default
+SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
+</programlisting>
+
+    Without partition pruning, the above query would scan each of the
+    partitions of the <structname>measurement</structname> table. With
+    partition pruning enabled, the planner will examine the definition
+    of each partition and prove that the partition need not
+    be scanned because it could not contain any rows meeting the query's
+    <literal>WHERE</literal> clause.  When the planner can prove this, it
+    excludes (<firstterm>prunes</firstterm>) the partition from the query
+    plan.
+   </para>
+
+   <para>
+    You can use the <command>EXPLAIN</command> command to show the
+    difference between a plan whose partitions have been pruned from one
+    whose partitions haven't, by using the
+    <xref linkend="guc-enable-partition-pruning"/> configuration
+    parameter.  A typical unoptimized plan for this type of table setup
+    is:
+<programlisting>
+SET enable_partition_pruning = off;
+EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
+                                    QUERY PLAN
+───────────────────────────────────────────────────────────────────────────────────
+ Aggregate  (cost=188.76..188.77 rows=1 width=8)
+   -&gt;  Append  (cost=0.00..181.05 rows=3085 width=0)
+         -&gt;  Seq Scan on measurement_y2006m02  (cost=0.00..33.12 rows=617 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2006m03  (cost=0.00..33.12 rows=617 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+...
+         -&gt;  Seq Scan on measurement_y2007m11  (cost=0.00..33.12 rows=617 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2007m12  (cost=0.00..33.12 rows=617 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2008m01  (cost=0.00..33.12 rows=617 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+</programlisting>
+
+    Some or all of the partitions might use index scans instead of
+    full-table sequential scans, but the point here is that there
+    is no need to scan the older partitions at all to answer this query.
+    When we enable partition pruning, we get a significantly
+    cheaper plan that will deliver the same answer:
+<programlisting>
+SET enable_partition_pruning = on;
+EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
+                                    QUERY PLAN
+───────────────────────────────────────────────────────────────────────────────────
+ Aggregate  (cost=37.75..37.76 rows=1 width=8)
+   -&gt;  Append  (cost=0.00..36.21 rows=617 width=0)
+         -&gt;  Seq Scan on measurement_y2008m01  (cost=0.00..33.12 rows=617 width=0)
+               Filter: (logdate &gt;= '2008-01-01'::date)
+</programlisting>
+   </para>
+
+   <para>
+    Note that partition pruning is driven only by the constraints defined
+    implicitly by the partition keys, not by the presence of indexes.
+    Therefore it isn't necessary to define indexes on the key columns.
+    Whether an index needs to be created for a given partition depends on
+    whether you expect that queries that scan the partition will
+    generally scan a large part of the partition or just a small part.
+    An index will be helpful in the latter case but not the former.
+   </para>
+
+   <para>
+    Partition pruning can be performed not only during the planning of a
+    given query, but also during its execution.  This is useful as it can
+    allow more partitions to be pruned when clauses contain expressions
+    whose values are not known at query planning time; for example,
+    parameters defined in a <command>PREPARE</command> statement, using a
+    value obtained from a subquery or using a parameterized value on the
+    inner side of a nested loop join.  Partition pruning during execution
+    can be performed at any of the following times:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       During initialization of the query plan.  Partition pruning can be
+       performed here for parameter values which are known during the
+       initialization phase of execution.  Partitions which are pruned
+       during this stage will not show up in the query's
+       <command>EXPLAIN</command> or <command>EXPLAIN ANALYZE</command>.
+       It is possible to determine the number of partitions which were
+       removed during this phase by observing the
+       <quote>Subplans Removed</quote> property in the
+       <command>EXPLAIN</command> output.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       During actual execution of the query plan.  Partition pruning may
+       also be performed here to remove partitions using values which are
+       only known during actual query execution.  This includes values
+       from subqueries and values from execution-time parameters such as
+       those from parameterized nested loop joins.  Since the value of
+       these parameters may change many times during the execution of the
+       query, partition pruning is performed whenever one of the
+       execution parameters being used by partition pruning changes.
+       Determining if partitions were pruned during this phase requires
+       careful inspection of the <literal>nloops</literal> property in
+       the <command>EXPLAIN ANALYZE</command> output.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    Partition pruning can be disabled using the
+    <xref linkend="guc-enable-partition-pruning"/> setting.
+   </para>
+
+   <note>
+    <para>
+     Currently, pruning of partitions during the planning of an
+     <command>UPDATE</command> or <command>DELETE</command> command is
+     implemented using the constraint exclusion method (however, it is
+     still ruled by the <literal>enable_partition_pruning</literal>
+     setting instead of <literal>constraint_exclusion</literal>) &mdash;
+     see the next section for details and caveats that apply.
+    </para>
+
+    <para>
+     Also, execution-time partition pruning currently only occurs for the
+     <literal>Append</literal> node type, not <literal>MergeAppend</literal>.
+    </para>
+
+    <para>
+     Both of these behaviors are likely to be changed in a future release
+     of <productname>PostgreSQL</productname>.
+    </para>
+   </note>
+  </sect2>
+
   <sect2 id="ddl-partitioning-constraint-exclusion">
    <title>Partitioning and Constraint Exclusion</title>
 
@@ -3767,97 +3917,53 @@ ANALYZE measurement;
    </indexterm>
 
    <para>
-    <firstterm>Constraint exclusion</firstterm> is a query optimization technique
-    that improves performance for partitioned tables defined in the
-    fashion described above (both declaratively partitioned tables and those
-    implemented using inheritance).  As an example:
-
-<programlisting>
-SET constraint_exclusion = on;
-SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
-</programlisting>
-
-    Without constraint exclusion, the above query would scan each of
-    the partitions of the <structname>measurement</structname> table. With constraint
-    exclusion enabled, the planner will examine the constraints of each
-    partition and try to prove that the partition need not
-    be scanned because it could not contain any rows meeting the query's
-    <literal>WHERE</literal> clause.  When the planner can prove this, it
-    excludes the partition from the query plan.
+    <firstterm>Constraint exclusion</firstterm> is a query optimization
+    technique similar to partition pruning.  While it is primarily used
+    for partitioned tables using the legacy inheritance method, it can be
+    used for other purposes, including with declarative partitioning.
    </para>
 
    <para>
-    You can use the <command>EXPLAIN</command> command to show the difference
-    between a plan with <varname>constraint_exclusion</varname> on and a plan
-    with it off.  A typical unoptimized plan for this type of table setup is:
-
-<programlisting>
-SET constraint_exclusion = off;
-EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
-
-                                          QUERY PLAN
------------------------------------------------------------------------------------------------
- Aggregate  (cost=158.66..158.68 rows=1 width=0)
-   -&gt;  Append  (cost=0.00..151.88 rows=2715 width=0)
-         -&gt;  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2008-01-01'::date)
-         -&gt;  Seq Scan on measurement_y2006m02 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2008-01-01'::date)
-         -&gt;  Seq Scan on measurement_y2006m03 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2008-01-01'::date)
-...
-         -&gt;  Seq Scan on measurement_y2007m12 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2008-01-01'::date)
-         -&gt;  Seq Scan on measurement_y2008m01 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2008-01-01'::date)
-</programlisting>
-
-    Some or all of the partitions might use index scans instead of
-    full-table sequential scans, but the point here is that there
-    is no need to scan the older partitions at all to answer this query.
-    When we enable constraint exclusion, we get a significantly
-    cheaper plan that will deliver the same answer:
-
-<programlisting>
-SET constraint_exclusion = on;
-EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
-                                          QUERY PLAN
------------------------------------------------------------------------------------------------
- Aggregate  (cost=63.47..63.48 rows=1 width=0)
-   -&gt;  Append  (cost=0.00..60.75 rows=1086 width=0)
-         -&gt;  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2008-01-01'::date)
-         -&gt;  Seq Scan on measurement_y2008m01 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate &gt;= '2008-01-01'::date)
-</programlisting>
+    Constraint exclusion works in a very similar way to partition
+    pruning, except that it uses each table's <literal>CHECK</literal>
+    constraints &mdash; which gives it its name &mdash; whereas partition
+    pruning uses the table's partitioning constraint, which exists only in
+    the case of declarative partitioning.  Another difference is that it
+    is only applied at plan time; there is no attempt to remove
+    partitions at execution time.
    </para>
 
    <para>
-    Note that constraint exclusion is driven only by <literal>CHECK</literal>
-    constraints, not by the presence of indexes.  Therefore it isn't
-    necessary to define indexes on the key columns.  Whether an index
-    needs to be created for a given partition depends on whether you
-    expect that queries that scan the partition will generally scan
-    a large part of the partition or just a small part.  An index will
-    be helpful in the latter case but not the former.
+    The fact that constraint exclusion uses <literal>CHECK</literal>
+    constraints, which makes it slow compared to partition pruning, can
+    sometimes be used as an advantage: because constraints can be defined
+    even on declaratively-partitioned tables, in addition to the internal
+    partitioning constraints, and only constraint exclusion would be able
+    to elide certain partitions from the query plan using those.
    </para>
 
    <para>
     The default (and recommended) setting of
-    <xref linkend="guc-constraint-exclusion"/> is actually neither
+    <xref linkend="guc-constraint-exclusion"/> is neither
     <literal>on</literal> nor <literal>off</literal>, but an intermediate setting
     called <literal>partition</literal>, which causes the technique to be
-    applied only to queries that are likely to be working on partitioned
+    applied only to queries that are likely to be working on inheritance partitioned
     tables.  The <literal>on</literal> setting causes the planner to examine
     <literal>CHECK</literal> constraints in all queries, even simple ones that
     are unlikely to benefit.
    </para>
 
    <para>
-    The following caveats apply to constraint exclusion, which is used by
-    both inheritance and partitioned tables:
+    The following caveats apply to constraint exclusion:
 
    <itemizedlist>
+    <listitem>
+     <para>
+      Constraint exclusion is only applied during query planning; it is
+      not applied at execution time like partition pruning does.
+     </para>
+    </listitem>
+
     <listitem>
      <para>
       Constraint exclusion only works when the query's <literal>WHERE</literal>
@@ -3877,11 +3983,8 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
       range tests for range partitioning, as illustrated in the preceding
       examples.  A good rule of thumb is that partitioning constraints should
       contain only comparisons of the partitioning column(s) to constants
-      using B-tree-indexable operators, which applies even to partitioned
-      tables, because only B-tree-indexable column(s) are allowed in the
-      partition key.  (This is not a problem when using declarative
-      partitioning, since the automatically generated constraints are simple
-      enough to be understood by the planner.)
+      using B-tree-indexable operators, because only B-tree-indexable
+      column(s) are allowed in the partition key.
      </para>
     </listitem>
 
@@ -3889,9 +3992,9 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
      <para>
       All constraints on all partitions of the master table are examined
       during constraint exclusion, so large numbers of partitions are likely
-      to increase query planning time considerably.  Partitioning using
-      these techniques will work well with up to perhaps a hundred partitions;
-      don't try to use many thousands of partitions.
+      to increase query planning time considerably.  So the legacy
+      inheritance based partitioning will work well with up to perhaps a
+      hundred partitions; don't try to use many thousands of partitions.
      </para>
     </listitem>
 

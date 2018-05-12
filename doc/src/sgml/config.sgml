@@ -3859,6 +3859,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         the planner's ability to generate query plans which allow the query
         executor to remove (ignore) partitions during query execution.  The
         default is <literal>on</literal>.
+        See <xref linkend="ddl-partition-pruning"/> for details.
        </para>
       </listitem>
      </varlistentry>
