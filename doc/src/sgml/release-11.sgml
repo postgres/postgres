@@ -1546,8 +1546,8 @@ same commits as above
 -->
 
        <para>
-        Allow <literal>NOT NULL</literal> to be added to columns without
-        requiring a table rewrite (Andrew Dunstan, Serge Rielau)
+        Allow <command>ALTER TABLE</command> to add a non-null default
+        column without a table rewrite (Andrew Dunstan, Serge Rielau)
        </para>
       </listitem>
 
