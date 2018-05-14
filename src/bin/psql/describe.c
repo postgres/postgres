@@ -2311,8 +2311,13 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result);
 		}
 
-		/* print foreign-key constraints (there are none if no triggers) */
-		if (tableinfo.hastriggers)
+		/*
+		 * Print foreign-key constraints (there are none if no triggers,
+		 * except if the table is partitioned, in which case the triggers
+		 * appear in the partitions)
+		 */
+		if (tableinfo.hastriggers ||
+			tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT conname,\n"
