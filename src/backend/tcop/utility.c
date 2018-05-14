@@ -67,6 +67,7 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/guc.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/rel.h"
 
@@ -1287,7 +1288,6 @@ ProcessUtilitySlow(ParseState *pstate,
 					IndexStmt  *stmt = (IndexStmt *) parsetree;
 					Oid			relid;
 					LOCKMODE	lockmode;
-					List	   *inheritors = NIL;
 
 					if (stmt->concurrent)
 						PreventInTransactionBlock(isTopLevel,
@@ -1314,17 +1314,33 @@ ProcessUtilitySlow(ParseState *pstate,
 					 * CREATE INDEX on partitioned tables (but not regular
 					 * inherited tables) recurses to partitions, so we must
 					 * acquire locks early to avoid deadlocks.
+					 *
+					 * We also take the opportunity to verify that all
+					 * partitions are something we can put an index on,
+					 * to avoid building some indexes only to fail later.
 					 */
-					if (stmt->relation->inh)
+					if (stmt->relation->inh &&
+						get_rel_relkind(relid) == RELKIND_PARTITIONED_TABLE)
 					{
-						Relation	rel;
+						ListCell   *lc;
+						List	   *inheritors = NIL;
 
-						/* already locked by RangeVarGetRelidExtended */
-						rel = heap_open(relid, NoLock);
-						if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-							inheritors = find_all_inheritors(relid, lockmode,
-															 NULL);
-						heap_close(rel, NoLock);
+						inheritors = find_all_inheritors(relid, lockmode, NULL);
+						foreach(lc, inheritors)
+						{
+							char	relkind = get_rel_relkind(lfirst_oid(lc));
+
+							if (relkind != RELKIND_RELATION &&
+								relkind != RELKIND_MATVIEW &&
+								relkind != RELKIND_PARTITIONED_TABLE)
+								ereport(ERROR,
+										(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+										 errmsg("cannot create index on partitioned table \"%s\"",
+												stmt->relation->relname),
+										 errdetail("Table \"%s\" contains partitions that are foreign tables.",
+												   stmt->relation->relname)));
+						}
+						list_free(inheritors);
 					}
 
 					/* Run parse analysis ... */
@@ -1353,8 +1369,6 @@ ProcessUtilitySlow(ParseState *pstate,
 													 parsetree);
 					commandCollected = true;
 					EventTriggerAlterTableEnd();
-
-					list_free(inheritors);
 				}
 				break;
 

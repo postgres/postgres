@@ -749,6 +749,13 @@ SELECT * FROM ft1;                                              -- ERROR
 ERROR:  foreign-data wrapper "dummy" has no handler
 EXPLAIN SELECT * FROM ft1;                                      -- ERROR
 ERROR:  foreign-data wrapper "dummy" has no handler
+CREATE TABLE lt1 (a INT) PARTITION BY RANGE (a);
+CREATE FOREIGN TABLE ft_part1
+  PARTITION OF lt1 FOR VALUES FROM (0) TO (1000) SERVER s0;
+CREATE INDEX ON lt1 (a);                                        -- ERROR
+ERROR:  cannot create index on partitioned table "lt1"
+DETAIL:  Table "lt1" contains partitions that are foreign tables.
+DROP TABLE lt1;
 -- ALTER FOREIGN TABLE
 COMMENT ON FOREIGN TABLE ft1 IS 'foreign table';
 COMMENT ON FOREIGN TABLE ft1 IS NULL;
