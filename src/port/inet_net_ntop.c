@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- *	  src/backend/utils/adt/inet_net_ntop.c
+ *	  src/port/inet_net_ntop.c
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
