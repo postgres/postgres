@@ -469,7 +469,7 @@ Branch: REL9_5_STABLE [e4ff71158] 2018-03-28 13:26:43 -0400
 -->
      <para>
       Fix executor crash due to double free in some <literal>GROUPING
-      SET</literal> usages (Peter Geoghegan)
+      SETS</literal> usages (Peter Geoghegan)
      </para>
     </listitem>
 
