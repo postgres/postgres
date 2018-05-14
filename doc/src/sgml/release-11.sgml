@@ -249,7 +249,7 @@
         Cause large object permission checks
         to happen on large object open, <link
         linkend="lo-open"><function>lo_open()</function></link>, not
-        read/write (Tom Lane)
+        read/write (Tom Lane, Michael Paquier)
        </para>
       </listitem>
 
@@ -320,6 +320,18 @@
        <para>
         <productname>PostgreSQL</productname> has long supported a more
         standard-compliant syntax for this capability.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+Branch: master [6bdf1303b] Avoid wrong results for power() with NaN
+-->
+
+       <para>
+        Consistently return <literal>NaN</literal> for
+        <literal>NaN</literal> inputs to <function>power()</function>
+        on older platforms (Dang Minh Huong)
        </para>
 
       </listitem>
@@ -711,8 +723,8 @@ same commits as above
        </para>
 
        <para>
-        Previously each hash index entry has to be locked and scanned
-        separately.
+        Previously for each hash index entry, we need to refind the scan
+        position within the page.  This cuts down on lock/unlock traffic.
        </para>
       </listitem>
 
@@ -1057,7 +1069,7 @@ same commits as above
 
        <para>
         Add information_schema columns related to table constraints and
-        triggers (Michael Paquier)
+        triggers (Peter Eisentraut)
        </para>
 
        <para>
@@ -1091,21 +1103,16 @@ same commits as above
        <para>
         Add libpq option to support channel binding when using <link
         linkend="auth-password"><acronym>SCRAM</acronym></link>
-        authentication (Michael Paquier)
+        authentication (Peter Eisentraut)
        </para>
 
        <para>
-        Channel binding requires the server end
-        of the <acronym>TLS</acronym> connection to
-        prove that it knows the password.  The options are <link
+        While <acronym>SCRAM</acronym> always prevents the
+        replay of transmitted hashed passwords in a later
+        session, <acronym>SCRAM</acronym> with channel binding
+        also prevents man-in-the-middle attacks.  The options are <link
         linkend="libpq-scram-channel-binding"><option>scram_channel_binding=tls-unique</option></link>
         and <option>scram_channel_binding=tls-server-end-point</option>.
-       </para>
-
-       <para>
-        WHAT DOES THIS DOC TEXT MEAN?  "An empty value specifies that
-        the client will not use channel binding.  The default value
-        is tls-unique."
        </para>
       </listitem>
 
@@ -1196,7 +1203,7 @@ same commits as above
        <para>
         Allow access to file system functions to be controlled by
         <command>GRANT</command>/<command>REVOKE</command> permissions,
-        rather than super-user checks (Michael Paquier)
+        rather than super-user checks (Stephen Frost)
        </para>
 
        <para>
@@ -1218,7 +1225,7 @@ same commits as above
         Use <command>GRANT</command>/<command>REVOKE</command>
         to control access to <link
         linkend="lo-import"><function>lo_import()</function></link>
-        and <function>lo_export()</function> (Michael Paquier)
+        and <function>lo_export()</function> (Michael Paquier, Tom Lane)
        </para>
 
        <para>
@@ -1420,11 +1427,13 @@ same commits as above
 <!--
 2018-03-23 [8694cc96b] Exclude unlogged tables from base backups
 2018-03-27 [920a5e500] Skip temp tables from basebackup.
+2017-11-07 [98267ee83] Exclude pg_internal.init from BASE_BACKUP
 -->
 
        <para>
-        Exclude unlogged and temporary tables from streaming base backups
-        (David Steele)
+        Exclude unlogged, temporary tables, and
+        <filename>pg_internal.init</filename> files from streaming base
+        backups (David Steele)
        </para>
 
        <para>
@@ -1468,7 +1477,7 @@ same commits as above
        <para>
         Add timeline information to the <link
         linkend="backup-lowlevel-base-backup"><filename>backup_label</filename></link>
-        file (Simon Riggs)
+        file (Michael Paquier)
        </para>
 
        <para>
@@ -1487,18 +1496,6 @@ same commits as above
         <structname>pg_stat_wal_receiver</structname> system view
         (Haribabu Kommi)
        </para>
-      </listitem>
-
-      <listitem>
-<!--
-2017-11-07 [98267ee83] Exclude pg_internal.init from BASE_BACKUP
--->
-
-       <para>
-        Document that <filename>pg_internal.init</filename> files do not
-        need to be included in the base backup (David Steele)
-       </para>
-
       </listitem>
 
     </itemizedlist>
@@ -1546,8 +1543,9 @@ same commits as above
 -->
 
        <para>
-        Allow <command>ALTER TABLE</command> to add a non-null default
-        column without a table rewrite (Andrew Dunstan, Serge Rielau)
+        Allow <command>ALTER TABLE</command> to add a column with
+        a non-null default without a table rewrite (Andrew Dunstan,
+        Serge Rielau)
        </para>
       </listitem>
 
@@ -1881,22 +1879,6 @@ same commits as above
 
       <listitem>
 <!--
-2018-03-06 [0c2c81b40] doc: Add replication parameter to libpq documentation
--->
-
-       <para>
-        Add libpq parameter to allow physical and logical replication
-        connections (Michael Paquier)
-       </para>
-
-       <para>
-        The libpq connection parameter is called <link
-        linkend="libpq-connect-replication"><option>replication</option></link>.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2018-03-17 [e3bdb2d92] Set libpq sslcompression to off by default
 -->
 
@@ -2022,14 +2004,14 @@ same commits as above
 -->
 
        <para>
-        Have <application>psql</application> \d+ show a partition count
-        of zero (Amit Langote)
+        Have psql \d+ always show the partition information (Amit Langote,
+        Ashutosh Bapat)
        </para>
 
        <para>
-        Previously no partition information would be displayed for such
-        tables.  Also indicate which partitions are themselves partitioned.
-        ACCURATE?
+        Previously partition information would not be displayed for a
+        partitioned table if it had no partitions.  Also indicate which
+        partitions are themselves partitioned.
        </para>
       </listitem>
 
@@ -2330,7 +2312,7 @@ same commits as above
         Add <link
         linkend="app-pgreceivewal"><application>pg_receivewal</application></link>
         option <option>--no-sync</option> to prevent synchronous
-        <acronym>WAL</acronym> writes (Michael Paquier)
+        <acronym>WAL</acronym> writes, for testing (Michael Paquier)
        </para>
       </listitem>
 
@@ -2382,7 +2364,7 @@ same commits as above
 
        <para>
         Prevent <application>pg_rewind</application> from running as
-        <literal>root</literal> (Magnus Hagander)
+        <literal>root</literal> (Michael Paquier)
        </para>
 
       </listitem>
