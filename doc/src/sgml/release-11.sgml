@@ -207,6 +207,20 @@
 
       <listitem>
 <!--
+2017-09-18 [f8e5f156b] Rearm statement_timeout after each executed query.
+
+-->
+
+       <para>
+        In the <link linkend="protocol-query-concepts">Extended Query
+        Protocol</link>, have <varname>statement_timeout</varname> apply
+        to each <literal>Execute</literal> message, not to all commands
+        before <literal>Sync</literal> (Tatsuo Ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2018-03-14 [f66e8bf87] Remove pg_class.relhaspkey
 -->
 
@@ -331,7 +345,7 @@ Branch: master [6bdf1303b] Avoid wrong results for power() with NaN
        <para>
         Consistently return <literal>NaN</literal> for
         <literal>NaN</literal> inputs to <function>power()</function>
-        on older platforms (Dang Minh Huong)
+        on older platforms (Tom Lane, Dang Minh Huong)
        </para>
 
       </listitem>
@@ -345,7 +359,7 @@ Branch: master [6bdf1303b] Avoid wrong results for power() with NaN
 
    <para>
     Below you will find a detailed account of the changes between
-    <productname>PostgreSQL</productname> 10 and the previous major
+    <productname>PostgreSQL</productname> 11 and the previous major
     release.
    </para>
 
@@ -634,6 +648,20 @@ same commits as above
 
       <listitem>
 <!--
+2017-11-16 [e89a71fb4] Pass InitPlan values to workers via Gather (Merge).
+2018-03-29 [3f90ec859] Postpone generate_gather_paths for topmost scan/join rel
+2018-03-29 [11cf92f6e] Rewrite the code that applies scan/join targets to paths
+-->
+
+       <para>
+        Allow single-evaluation queries, e.g. <literal>FROM</literal>
+        clause queries, and functions in the target list to be
+        parallelized (Amit Kapila, Robert Haas)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2017-11-15 [e5253fdc4] Add parallel_leader_participation GUC.
 -->
 
@@ -657,6 +685,18 @@ same commits as above
         Allow parallelization of commands <command>CREATE TABLE
         .. AS</command>, <command>SELECT INTO</command>, and
         <command>CREATE MATERIALIZED VIEW</command> (Haribabu Kommi)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2017-08-16 [3cda10f41] Use atomic ops to hand out pages to scan in parallel sca
+
+-->
+
+       <para>
+        Improve performance of sequential scans with many parallel workers
+        (David Rowley)
        </para>
       </listitem>
 
