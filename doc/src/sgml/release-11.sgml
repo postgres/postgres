@@ -213,9 +213,9 @@
 
        <para>
         In the <link linkend="protocol-query-concepts">Extended Query
-        Protocol</link>, have <varname>statement_timeout</varname> apply
-        to each <literal>Execute</literal> message, not to all commands
-        before <literal>Sync</literal> (Tatsuo Ishii)
+        Protocol</link>, have <varname>statement_timeout</varname>
+        apply to each Execute message, not to all commands before Sync
+        (Tatsuo Ishii, Andres Freund)
        </para>
       </listitem>
 
