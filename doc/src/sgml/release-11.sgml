@@ -122,7 +122,8 @@
 -->
 
        <para>
-        Change the ps process display labels to match the <link
+        Change the ps process display
+        labels for background workers to match the <link
         linkend="pg-stat-activity-view"><structname>pg_stat_activity</structname>.<structfield>backend_type</structfield></link>
         labels (Peter Eisentraut)
        </para>
