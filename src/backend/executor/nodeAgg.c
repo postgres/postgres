@@ -2940,8 +2940,8 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		if (pertrans->transfn.fn_strict && aggtranstype == INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("combine function for aggregate %u must be declared as STRICT",
-							aggref->aggfnoid)));
+					 errmsg("combine function with transition type %s must not be declared STRICT",
+							format_type_be(aggtranstype))));
 	}
 	else
 	{
