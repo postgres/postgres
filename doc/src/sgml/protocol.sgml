@@ -1584,6 +1584,33 @@ should use <literal>tls-unique</literal> if they can support it.
 that cannot support <literal>tls-unique</literal> for some reason.
   </para>
 
+  <para>
+   In <acronym>SCRAM</acronym> without channel binding, the server chooses
+   a random number that is transmitted to the client to be mixed with the
+   user-supplied password in the transmitted password hash.  While this
+   prevents the password hash from being successfully retransmitted in
+   a later session, it does not prevent a fake server between the real
+   server and client from passing through the server's random value 
+   and successfully authenticating.
+  </para>
+
+  <para>
+   <acronym>SCRAM</acronym> with channel binding prevents such
+   man-in-the-middle attacks by mixing a value into the transmitted
+   password hash that cannot be retransmitted by a fake server.
+   In <acronym>SCRAM</acronym> with <literal>tls-unique</literal>
+   channel binding, the shared secret negotiated during the SSL session
+   is mixed into the user-supplied password hash.  The shared secret
+   is partly chosen by the server, but not directly transmitted, making
+   it impossible for a fake server to create an SSL connection with the
+   client that has the same shared secret it has with the real server.
+   <acronym>SCRAM</acronym> with <literal>tls-server-end-point</literal>
+   mixes a hash of the server's certificate into the user-supplied password
+   hash.  While a fake server can retransmit the real server's certificate,
+   it doesn't have access to the private key matching that certificate, and
+   therefore cannot prove it is the owner, causing SSL connection failure.
+  </para>
+
 <procedure>
 <title>Example</title>
   <step id="scram-begin">

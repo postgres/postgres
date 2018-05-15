@@ -1242,14 +1242,18 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>scram_channel_binding</literal></term>
       <listitem>
        <para>
-        Specifies the channel binding type to use with SCRAM authentication.
-        The list of channel binding types supported by server are listed in
-        <xref linkend="sasl-authentication"/>.  An empty value specifies that
-        the client will not use channel binding.  The default value is
-        <literal>tls-unique</literal>.
+        Specifies the channel binding type to use with SCRAM
+        authentication.  While <acronym>SCRAM</acronym> alone prevents
+        the replay of transmitted hashed passwords, channel binding also
+        prevents man-in-the-middle attacks.
        </para>
 
        <para>
+        The list of channel binding types supported by the server are
+        listed in <xref linkend="sasl-authentication"/>.  An empty value
+        specifies that the client will not use channel binding.  If this
+        parameter is not specified, <literal>tls-unique</literal> is used,
+        if supported by both server and client.
         Channel binding is only supported on SSL connections.  If the
         connection is not using SSL, then this setting is ignored.
        </para>
