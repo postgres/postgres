@@ -2490,7 +2490,7 @@ same commits as above
 -->
 
        <para>
-        Add support for with huge(large) pages on Windows (Takayuki
+        Add support for with huge (large) pages on Windows (Takayuki
         Tsunakawa, Thomas Munro)
        </para>
       </listitem>
