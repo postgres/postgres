@@ -497,8 +497,9 @@ canonicalize_ec_expression(Expr *expr, Oid req_type, Oid req_collation)
 
 	/*
 	 * For a polymorphic-input-type opclass, just keep the same exposed type.
+	 * RECORD opclasses work like polymorphic-type ones for this purpose.
 	 */
-	if (IsPolymorphicType(req_type))
+	if (IsPolymorphicType(req_type) || req_type == RECORDOID)
 		req_type = expr_type;
 
 	/*
