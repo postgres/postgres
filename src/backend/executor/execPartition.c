@@ -970,20 +970,14 @@ get_partition_dispatch_recurse(Relation rel, Relation parent,
 	 * partitions are processed as well and a corresponding PartitionDispatch
 	 * object gets added to *pds.
 	 *
-	 * About the values in pd->indexes: for a leaf partition, it contains the
-	 * leaf partition's position in the global list *leaf_part_oids minus 1,
-	 * whereas for a partitioned table partition, it contains the partition's
-	 * position in the global list *pds multiplied by -1.  The latter is
-	 * multiplied by -1 to distinguish partitioned tables from leaf partitions
-	 * when going through the values in pd->indexes.  So, for example, when
-	 * using it during tuple-routing, encountering a value >= 0 means we found
-	 * a leaf partition.  It is immediately returned as the index in the array
-	 * of ResultRelInfos of all the leaf partitions, using which we insert the
-	 * tuple into that leaf partition.  A negative value means we found a
-	 * partitioned table.  The value multiplied by -1 is returned as the index
-	 * in the array of PartitionDispatch objects of all partitioned tables in
-	 * the tree.  This value is used to continue the search in the next level
-	 * of the partition tree.
+	 * The 'indexes' array is used when searching for a partition matching a
+	 * given tuple.  The actual value we store here depends on whether the
+	 * array element belongs to a leaf partition or a subpartitioned table.
+	 * For leaf partitions we store the 0-based index into *leaf_part_oids,
+	 * and for sub-partitioned tables we store a negative version of the
+	 * 1-based index into the *pds list.  When searching, if we see a negative
+	 * value, the search must continue in the corresponding sub-partition;
+	 * otherwise, we've identified the correct partition.
 	 */
 	pd->indexes = (int *) palloc(partdesc->nparts * sizeof(int));
 	for (i = 0; i < partdesc->nparts; i++)
