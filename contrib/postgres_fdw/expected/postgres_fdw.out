@@ -7370,6 +7370,81 @@ drop table bar cascade;
 NOTICE:  drop cascades to foreign table bar2
 drop table loct1;
 drop table loct2;
+-- Test pushing down UPDATE/DELETE joins to the remote server
+create table parent (a int, b text);
+create table loct1 (a int, b text);
+create table loct2 (a int, b text);
+create foreign table remt1 (a int, b text)
+  server loopback options (table_name 'loct1');
+create foreign table remt2 (a int, b text)
+  server loopback options (table_name 'loct2');
+alter foreign table remt1 inherit parent;
+insert into remt1 values (1, 'foo');
+insert into remt1 values (2, 'bar');
+insert into remt2 values (1, 'foo');
+insert into remt2 values (2, 'bar');
+analyze remt1;
+analyze remt2;
+explain (verbose, costs off)
+update parent set b = parent.b || remt2.b from remt2 where parent.a = remt2.a returning *;
+                                                                  QUERY PLAN                                                                   
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Update on public.parent
+   Output: parent.a, parent.b, remt2.a, remt2.b
+   Update on public.parent
+   Foreign Update on public.remt1
+   ->  Nested Loop
+         Output: parent.a, (parent.b || remt2.b), parent.ctid, remt2.*, remt2.a, remt2.b
+         Join Filter: (parent.a = remt2.a)
+         ->  Seq Scan on public.parent
+               Output: parent.a, parent.b, parent.ctid
+         ->  Foreign Scan on public.remt2
+               Output: remt2.b, remt2.*, remt2.a
+               Remote SQL: SELECT a, b FROM public.loct2
+   ->  Foreign Update
+         Remote SQL: UPDATE public.loct1 r4 SET b = (r4.b || r2.b) FROM public.loct2 r2 WHERE ((r4.a = r2.a)) RETURNING r4.a, r4.b, r2.a, r2.b
+(14 rows)
+
+update parent set b = parent.b || remt2.b from remt2 where parent.a = remt2.a returning *;
+ a |   b    | a |  b  
+---+--------+---+-----
+ 1 | foofoo | 1 | foo
+ 2 | barbar | 2 | bar
+(2 rows)
+
+explain (verbose, costs off)
+delete from parent using remt2 where parent.a = remt2.a returning parent;
+                                                    QUERY PLAN                                                    
+------------------------------------------------------------------------------------------------------------------
+ Delete on public.parent
+   Output: parent.*
+   Delete on public.parent
+   Foreign Delete on public.remt1
+   ->  Nested Loop
+         Output: parent.ctid, remt2.*
+         Join Filter: (parent.a = remt2.a)
+         ->  Seq Scan on public.parent
+               Output: parent.ctid, parent.a
+         ->  Foreign Scan on public.remt2
+               Output: remt2.*, remt2.a
+               Remote SQL: SELECT a, b FROM public.loct2
+   ->  Foreign Delete
+         Remote SQL: DELETE FROM public.loct1 r4 USING public.loct2 r2 WHERE ((r4.a = r2.a)) RETURNING r4.a, r4.b
+(14 rows)
+
+delete from parent using remt2 where parent.a = remt2.a returning parent;
+   parent   
+------------
+ (1,foofoo)
+ (2,barbar)
+(2 rows)
+
+-- cleanup
+drop foreign table remt1;
+drop foreign table remt2;
+drop table loct1;
+drop table loct2;
+drop table parent;
 -- ===================================================================
 -- test tuple routing for foreign-table partitions
 -- ===================================================================
