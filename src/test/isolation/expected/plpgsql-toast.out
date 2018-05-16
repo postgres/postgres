@@ -1,0 +1,189 @@
+Parsed test spec with 2 sessions
+
+starting permutation: lock assign1 vacuum unlock
+pg_advisory_unlock_all
+
+               
+pg_advisory_unlock_all
+
+               
+step lock: 
+    SELECT pg_advisory_lock(1);
+
+pg_advisory_lock
+
+               
+step assign1: 
+do $$
+  declare
+    x text;
+  begin
+    select test1.b into x from test1;
+    delete from test1;
+    commit;
+    perform pg_advisory_lock(1);
+    raise notice 'x = %', x;
+  end;
+$$;
+ <waiting ...>
+step vacuum: 
+    VACUUM test1;
+
+step unlock: 
+    SELECT pg_advisory_unlock(1);
+
+pg_advisory_unlock
+
+t              
+step assign1: <... completed>
+
+starting permutation: lock assign2 vacuum unlock
+pg_advisory_unlock_all
+
+               
+pg_advisory_unlock_all
+
+               
+step lock: 
+    SELECT pg_advisory_lock(1);
+
+pg_advisory_lock
+
+               
+step assign2: 
+do $$
+  declare
+    x text;
+  begin
+    x := (select test1.b from test1);
+    delete from test1;
+    commit;
+    perform pg_advisory_lock(1);
+    raise notice 'x = %', x;
+  end;
+$$;
+ <waiting ...>
+step vacuum: 
+    VACUUM test1;
+
+step unlock: 
+    SELECT pg_advisory_unlock(1);
+
+pg_advisory_unlock
+
+t              
+step assign2: <... completed>
+
+starting permutation: lock assign3 vacuum unlock
+pg_advisory_unlock_all
+
+               
+pg_advisory_unlock_all
+
+               
+step lock: 
+    SELECT pg_advisory_lock(1);
+
+pg_advisory_lock
+
+               
+step assign3: 
+do $$
+  declare
+    r record;
+  begin
+    select * into r from test1;
+    r.b := (select test1.b from test1);
+    delete from test1;
+    commit;
+    perform pg_advisory_lock(1);
+    raise notice 'r = %', r;
+  end;
+$$;
+ <waiting ...>
+step vacuum: 
+    VACUUM test1;
+
+step unlock: 
+    SELECT pg_advisory_unlock(1);
+
+pg_advisory_unlock
+
+t              
+step assign3: <... completed>
+
+starting permutation: lock assign4 vacuum unlock
+pg_advisory_unlock_all
+
+               
+pg_advisory_unlock_all
+
+               
+step lock: 
+    SELECT pg_advisory_lock(1);
+
+pg_advisory_lock
+
+               
+step assign4: 
+do $$
+  declare
+    r test2;
+  begin
+    select * into r from test1;
+    delete from test1;
+    commit;
+    perform pg_advisory_lock(1);
+    raise notice 'r = %', r;
+  end;
+$$;
+ <waiting ...>
+step vacuum: 
+    VACUUM test1;
+
+step unlock: 
+    SELECT pg_advisory_unlock(1);
+
+pg_advisory_unlock
+
+t              
+step assign4: <... completed>
+
+starting permutation: lock assign5 vacuum unlock
+pg_advisory_unlock_all
+
+               
+pg_advisory_unlock_all
+
+               
+step lock: 
+    SELECT pg_advisory_lock(1);
+
+pg_advisory_lock
+
+               
+step assign5: 
+do $$
+  declare
+    r record;
+  begin
+    for r in select test1.b from test1 loop
+      null;
+    end loop;
+    delete from test1;
+    commit;
+    perform pg_advisory_lock(1);
+    raise notice 'r = %', r;
+  end;
+$$;
+ <waiting ...>
+step vacuum: 
+    VACUUM test1;
+
+step unlock: 
+    SELECT pg_advisory_unlock(1);
+
+pg_advisory_unlock
+
+t              
+step assign5: <... completed>

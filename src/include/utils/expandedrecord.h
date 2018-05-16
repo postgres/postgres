@@ -127,8 +127,10 @@ typedef struct ExpandedRecordHeader
 	char	   *fstartptr;		/* start of its data area */
 	char	   *fendptr;		/* end+1 of its data area */
 
+	/* Some operations on the expanded record need a short-lived context */
+	MemoryContext er_short_term_cxt;	/* short-term memory context */
+
 	/* Working state for domain checking, used if ER_FLAG_IS_DOMAIN is set */
-	MemoryContext er_domain_check_cxt;	/* short-term memory context */
 	struct ExpandedRecordHeader *er_dummy_header;	/* dummy record header */
 	void	   *er_domaininfo;	/* cache space for domain_check() */
 
@@ -171,7 +173,7 @@ extern ExpandedRecordHeader *make_expanded_record_from_tupdesc(TupleDesc tupdesc
 extern ExpandedRecordHeader *make_expanded_record_from_exprecord(ExpandedRecordHeader *olderh,
 									MemoryContext parentcontext);
 extern void expanded_record_set_tuple(ExpandedRecordHeader *erh,
-						  HeapTuple tuple, bool copy);
+						  HeapTuple tuple, bool copy, bool expand_external);
 extern Datum make_expanded_record_from_datum(Datum recorddatum,
 								MemoryContext parentcontext);
 extern TupleDesc expanded_record_fetch_tupdesc(ExpandedRecordHeader *erh);
@@ -186,13 +188,15 @@ extern Datum expanded_record_fetch_field(ExpandedRecordHeader *erh, int fnumber,
 extern void expanded_record_set_field_internal(ExpandedRecordHeader *erh,
 								   int fnumber,
 								   Datum newValue, bool isnull,
+								   bool expand_external,
 								   bool check_constraints);
 extern void expanded_record_set_fields(ExpandedRecordHeader *erh,
-						   const Datum *newValues, const bool *isnulls);
+						   const Datum *newValues, const bool *isnulls,
+						   bool expand_external);
 
 /* outside code should never call expanded_record_set_field_internal as such */
-#define expanded_record_set_field(erh, fnumber, newValue, isnull) \
-	expanded_record_set_field_internal(erh, fnumber, newValue, isnull, true)
+#define expanded_record_set_field(erh, fnumber, newValue, isnull, expand_external) \
+	expanded_record_set_field_internal(erh, fnumber, newValue, isnull, expand_external, true)
 
 /*
  * Inline-able fast cases.  The expanded_record_fetch_xxx functions above

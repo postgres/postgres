@@ -19,6 +19,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/tuptoaster.h"
 #include "catalog/heap.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
@@ -41,7 +42,7 @@ static const ExpandedObjectMethods ER_methods =
 
 /* Other local functions */
 static void ER_mc_callback(void *arg);
-static MemoryContext get_domain_check_cxt(ExpandedRecordHeader *erh);
+static MemoryContext get_short_term_cxt(ExpandedRecordHeader *erh);
 static void build_dummy_expanded_header(ExpandedRecordHeader *main_erh);
 static pg_noinline void check_domain_for_new_field(ExpandedRecordHeader *erh,
 						   int fnumber,
@@ -57,8 +58,9 @@ static pg_noinline void check_domain_for_new_tuple(ExpandedRecordHeader *erh,
  *
  * The expanded record is initially "empty", having a state logically
  * equivalent to a NULL composite value (not ROW(NULL, NULL, ...)).
- * Note that this might not be a valid state for a domain type; if the
- * caller needs to check that, call expanded_record_set_tuple(erh, NULL).
+ * Note that this might not be a valid state for a domain type;
+ * if the caller needs to check that, call
+ * expanded_record_set_tuple(erh, NULL, false, false).
  *
  * The expanded object will be a child of parentcontext.
  */
@@ -424,8 +426,11 @@ make_expanded_record_from_exprecord(ExpandedRecordHeader *olderh,
  *
  * The tuple is physically copied into the expanded record's local storage
  * if "copy" is true, otherwise it's caller's responsibility that the tuple
- * will live as long as the expanded record does.  In any case, out-of-line
- * fields in the tuple are not automatically inlined.
+ * will live as long as the expanded record does.
+ *
+ * Out-of-line field values in the tuple are automatically inlined if
+ * "expand_external" is true, otherwise not.  (The combination copy = false,
+ * expand_external = true is not sensible and not supported.)
  *
  * Alternatively, tuple can be NULL, in which case we just set the expanded
  * record to be empty.
@@ -433,7 +438,8 @@ make_expanded_record_from_exprecord(ExpandedRecordHeader *olderh,
 void
 expanded_record_set_tuple(ExpandedRecordHeader *erh,
 						  HeapTuple tuple,
-						  bool copy)
+						  bool copy,
+						  bool expand_external)
 {
 	int			oldflags;
 	HeapTuple	oldtuple;
@@ -453,6 +459,25 @@ expanded_record_set_tuple(ExpandedRecordHeader *erh,
 		check_domain_for_new_tuple(erh, tuple);
 
 	/*
+	 * If we need to get rid of out-of-line field values, do so, using the
+	 * short-term context to avoid leaking whatever cruft the toast fetch
+	 * might generate.
+	 */
+	if (expand_external && tuple)
+	{
+		/* Assert caller didn't ask for unsupported case */
+		Assert(copy);
+		if (HeapTupleHasExternal(tuple))
+		{
+			oldcxt = MemoryContextSwitchTo(get_short_term_cxt(erh));
+			tuple = toast_flatten_tuple(tuple, erh->er_tupdesc);
+			MemoryContextSwitchTo(oldcxt);
+		}
+		else
+			expand_external = false;	/* need not clean up below */
+	}
+
+	/*
 	 * Initialize new flags, keeping only non-data status bits.
 	 */
 	oldflags = erh->flags;
@@ -468,6 +493,10 @@ expanded_record_set_tuple(ExpandedRecordHeader *erh,
 		newtuple = heap_copytuple(tuple);
 		newflags |= ER_FLAG_FVALUE_ALLOCED;
 		MemoryContextSwitchTo(oldcxt);
+
+		/* We can now flush anything that detoasting might have leaked. */
+		if (expand_external)
+			MemoryContextReset(erh->er_short_term_cxt);
 	}
 	else
 		newtuple = tuple;
@@ -676,23 +705,13 @@ ER_get_flat_size(ExpandedObjectHeader *eohptr)
 				VARATT_IS_EXTERNAL(DatumGetPointer(erh->dvalues[i])))
 			{
 				/*
-				 * It's an external toasted value, so we need to dereference
-				 * it so that the flat representation will be self-contained.
-				 * Do this step in the caller's context because the TOAST
-				 * fetch might leak memory.  That means making an extra copy,
-				 * which is a tad annoying, but repetitive leaks in the
-				 * record's context would be worse.
+				 * expanded_record_set_field_internal can do the actual work
+				 * of detoasting.  It needn't recheck domain constraints.
 				 */
-				Datum		newValue;
-
-				newValue = PointerGetDatum(PG_DETOAST_DATUM(erh->dvalues[i]));
-				/* expanded_record_set_field can do the rest */
-				/* ... and we don't need it to recheck domain constraints */
 				expanded_record_set_field_internal(erh, i + 1,
-												   newValue, false,
+												   erh->dvalues[i], false,
+												   true,
 												   false);
-				/* Might as well free the detoasted value */
-				pfree(DatumGetPointer(newValue));
 			}
 		}
 
@@ -1087,12 +1106,16 @@ expanded_record_fetch_field(ExpandedRecordHeader *erh, int fnumber,
  * (without changing the record's state) if the domain's constraints would
  * be violated.
  *
+ * If expand_external is true and newValue is an out-of-line value, we'll
+ * forcibly detoast it so that the record does not depend on external storage.
+ *
  * Internal callers can pass check_constraints = false to skip application
  * of domain constraints.  External callers should never do that.
  */
 void
 expanded_record_set_field_internal(ExpandedRecordHeader *erh, int fnumber,
 								   Datum newValue, bool isnull,
+								   bool expand_external,
 								   bool check_constraints)
 {
 	TupleDesc	tupdesc;
@@ -1124,23 +1147,46 @@ expanded_record_set_field_internal(ExpandedRecordHeader *erh, int fnumber,
 		elog(ERROR, "cannot assign to field %d of expanded record", fnumber);
 
 	/*
-	 * Copy new field value into record's context, if needed.
+	 * Copy new field value into record's context, and deal with detoasting,
+	 * if needed.
 	 */
 	attr = TupleDescAttr(tupdesc, fnumber - 1);
 	if (!isnull && !attr->attbyval)
 	{
 		MemoryContext oldcxt;
 
+		/* If requested, detoast any external value */
+		if (expand_external)
+		{
+			if (attr->attlen == -1 &&
+				VARATT_IS_EXTERNAL(DatumGetPointer(newValue)))
+			{
+				/* Detoasting should be done in short-lived context. */
+				oldcxt = MemoryContextSwitchTo(get_short_term_cxt(erh));
+				newValue = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *) DatumGetPointer(newValue)));
+				MemoryContextSwitchTo(oldcxt);
+			}
+			else
+				expand_external = false;	/* need not clean up below */
+		}
+
+		/* Copy value into record's context */
 		oldcxt = MemoryContextSwitchTo(erh->hdr.eoh_context);
 		newValue = datumCopy(newValue, false, attr->attlen);
 		MemoryContextSwitchTo(oldcxt);
+
+		/* We can now flush anything that detoasting might have leaked */
+		if (expand_external)
+			MemoryContextReset(erh->er_short_term_cxt);
 
 		/* Remember that we have field(s) that may need to be pfree'd */
 		erh->flags |= ER_FLAG_DVALUES_ALLOCED;
 
 		/*
 		 * While we're here, note whether it's an external toasted value,
-		 * because that could mean we need to inline it later.
+		 * because that could mean we need to inline it later.  (Think not to
+		 * merge this into the previous expand_external logic: datumCopy could
+		 * by itself have made the value non-external.)
 		 */
 		if (attr->attlen == -1 &&
 			VARATT_IS_EXTERNAL(DatumGetPointer(newValue)))
@@ -1193,14 +1239,20 @@ expanded_record_set_field_internal(ExpandedRecordHeader *erh, int fnumber,
  * Caller must ensure that the provided datums are of the right types
  * to match the record's previously assigned rowtype.
  *
+ * If expand_external is true, we'll forcibly detoast out-of-line field values
+ * so that the record does not depend on external storage.
+ *
  * Unlike repeated application of expanded_record_set_field(), this does not
  * guarantee to leave the expanded record in a non-corrupt state in event
  * of an error.  Typically it would only be used for initializing a new
- * expanded record.
+ * expanded record.  Also, because we expect this to be applied at most once
+ * in the lifespan of an expanded record, we do not worry about any cruft
+ * that detoasting might leak.
  */
 void
 expanded_record_set_fields(ExpandedRecordHeader *erh,
-						   const Datum *newValues, const bool *isnulls)
+						   const Datum *newValues, const bool *isnulls,
+						   bool expand_external)
 {
 	TupleDesc	tupdesc;
 	Datum	   *dvalues;
@@ -1245,22 +1297,37 @@ expanded_record_set_fields(ExpandedRecordHeader *erh,
 		if (!attr->attbyval)
 		{
 			/*
-			 * Copy new field value into record's context, if needed.
+			 * Copy new field value into record's context, and deal with
+			 * detoasting, if needed.
 			 */
 			if (!isnull)
 			{
-				newValue = datumCopy(newValue, false, attr->attlen);
+				/* Is it an external toasted value? */
+				if (attr->attlen == -1 &&
+					VARATT_IS_EXTERNAL(DatumGetPointer(newValue)))
+				{
+					if (expand_external)
+					{
+						/* Detoast as requested while copying the value */
+						newValue = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *) DatumGetPointer(newValue)));
+					}
+					else
+					{
+						/* Just copy the value */
+						newValue = datumCopy(newValue, false, -1);
+						/* If it's still external, remember that */
+						if (VARATT_IS_EXTERNAL(DatumGetPointer(newValue)))
+							erh->flags |= ER_FLAG_HAVE_EXTERNAL;
+					}
+				}
+				else
+				{
+					/* Not an external value, just copy it */
+					newValue = datumCopy(newValue, false, attr->attlen);
+				}
 
 				/* Remember that we have field(s) that need to be pfree'd */
 				erh->flags |= ER_FLAG_DVALUES_ALLOCED;
-
-				/*
-				 * While we're here, note whether it's an external toasted
-				 * value, because that could mean we need to inline it later.
-				 */
-				if (attr->attlen == -1 &&
-					VARATT_IS_EXTERNAL(DatumGetPointer(newValue)))
-					erh->flags |= ER_FLAG_HAVE_EXTERNAL;
 			}
 
 			/*
@@ -1291,7 +1358,7 @@ expanded_record_set_fields(ExpandedRecordHeader *erh,
 	if (erh->flags & ER_FLAG_IS_DOMAIN)
 	{
 		/* We run domain_check in a short-lived context to limit cruft */
-		MemoryContextSwitchTo(get_domain_check_cxt(erh));
+		MemoryContextSwitchTo(get_short_term_cxt(erh));
 
 		domain_check(ExpandedRecordGetRODatum(erh), false,
 					 erh->er_decltypeid,
@@ -1303,25 +1370,26 @@ expanded_record_set_fields(ExpandedRecordHeader *erh,
 }
 
 /*
- * Construct (or reset) working memory context for domain checks.
+ * Construct (or reset) working memory context for short-term operations.
  *
- * If we don't have a working memory context for domain checking, make one;
- * if we have one, reset it to get rid of any leftover cruft.  (It is a tad
- * annoying to need a whole context for this, since it will often go unused
- * --- but it's hard to avoid memory leaks otherwise.  We can make the
- * context small, at least.)
+ * This context is used for domain check evaluation and for detoasting.
+ *
+ * If we don't have a short-lived memory context, make one; if we have one,
+ * reset it to get rid of any leftover cruft.  (It is a tad annoying to need a
+ * whole context for this, since it will often go unused --- but it's hard to
+ * avoid memory leaks otherwise.  We can make the context small, at least.)
  */
 static MemoryContext
-get_domain_check_cxt(ExpandedRecordHeader *erh)
+get_short_term_cxt(ExpandedRecordHeader *erh)
 {
-	if (erh->er_domain_check_cxt == NULL)
-		erh->er_domain_check_cxt =
+	if (erh->er_short_term_cxt == NULL)
+		erh->er_short_term_cxt =
 			AllocSetContextCreate(erh->hdr.eoh_context,
-								  "expanded record domain checks",
+								  "expanded record short-term context",
 								  ALLOCSET_SMALL_SIZES);
 	else
-		MemoryContextReset(erh->er_domain_check_cxt);
-	return erh->er_domain_check_cxt;
+		MemoryContextReset(erh->er_short_term_cxt);
+	return erh->er_short_term_cxt;
 }
 
 /*
@@ -1340,8 +1408,8 @@ build_dummy_expanded_header(ExpandedRecordHeader *main_erh)
 	ExpandedRecordHeader *erh;
 	TupleDesc	tupdesc = expanded_record_get_tupdesc(main_erh);
 
-	/* Ensure we have a domain_check_cxt */
-	(void) get_domain_check_cxt(main_erh);
+	/* Ensure we have a short-lived context */
+	(void) get_short_term_cxt(main_erh);
 
 	/*
 	 * Allocate dummy header on first time through, or in the unlikely event
@@ -1372,7 +1440,7 @@ build_dummy_expanded_header(ExpandedRecordHeader *main_erh)
 		 * nothing else is authorized to delete or transfer ownership of the
 		 * object's context, so it should be safe enough.
 		 */
-		EOH_init_header(&erh->hdr, &ER_methods, main_erh->er_domain_check_cxt);
+		EOH_init_header(&erh->hdr, &ER_methods, main_erh->er_short_term_cxt);
 		erh->er_magic = ER_MAGIC;
 
 		/* Set up dvalues/dnulls, with no valid contents as yet */
@@ -1488,7 +1556,7 @@ check_domain_for_new_field(ExpandedRecordHeader *erh, int fnumber,
 	 * We call domain_check in the short-lived context, so that any cruft
 	 * leaked by expression evaluation can be reclaimed.
 	 */
-	oldcxt = MemoryContextSwitchTo(erh->er_domain_check_cxt);
+	oldcxt = MemoryContextSwitchTo(erh->er_short_term_cxt);
 
 	/*
 	 * And now we can apply the check.  Note we use main header's domain cache
@@ -1502,7 +1570,7 @@ check_domain_for_new_field(ExpandedRecordHeader *erh, int fnumber,
 	MemoryContextSwitchTo(oldcxt);
 
 	/* We might as well clean up cruft immediately. */
-	MemoryContextReset(erh->er_domain_check_cxt);
+	MemoryContextReset(erh->er_short_term_cxt);
 }
 
 /*
@@ -1518,7 +1586,7 @@ check_domain_for_new_tuple(ExpandedRecordHeader *erh, HeapTuple tuple)
 	if (tuple == NULL)
 	{
 		/* We run domain_check in a short-lived context to limit cruft */
-		oldcxt = MemoryContextSwitchTo(get_domain_check_cxt(erh));
+		oldcxt = MemoryContextSwitchTo(get_short_term_cxt(erh));
 
 		domain_check((Datum) 0, true,
 					 erh->er_decltypeid,
@@ -1528,7 +1596,7 @@ check_domain_for_new_tuple(ExpandedRecordHeader *erh, HeapTuple tuple)
 		MemoryContextSwitchTo(oldcxt);
 
 		/* We might as well clean up cruft immediately. */
-		MemoryContextReset(erh->er_domain_check_cxt);
+		MemoryContextReset(erh->er_short_term_cxt);
 
 		return;
 	}
@@ -1551,7 +1619,7 @@ check_domain_for_new_tuple(ExpandedRecordHeader *erh, HeapTuple tuple)
 	 * We call domain_check in the short-lived context, so that any cruft
 	 * leaked by expression evaluation can be reclaimed.
 	 */
-	oldcxt = MemoryContextSwitchTo(erh->er_domain_check_cxt);
+	oldcxt = MemoryContextSwitchTo(erh->er_short_term_cxt);
 
 	/*
 	 * And now we can apply the check.  Note we use main header's domain cache
@@ -1565,5 +1633,5 @@ check_domain_for_new_tuple(ExpandedRecordHeader *erh, HeapTuple tuple)
 	MemoryContextSwitchTo(oldcxt);
 
 	/* We might as well clean up cruft immediately. */
-	MemoryContextReset(erh->er_domain_check_cxt);
+	MemoryContextReset(erh->er_short_term_cxt);
 }

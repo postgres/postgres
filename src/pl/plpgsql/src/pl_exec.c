@@ -20,6 +20,7 @@
 #include "access/htup_details.h"
 #include "access/transam.h"
 #include "access/tupconvert.h"
+#include "access/tuptoaster.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -912,16 +913,20 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	}
 	else if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 	{
-		expanded_record_set_tuple(rec_new->erh, trigdata->tg_trigtuple, false);
+		expanded_record_set_tuple(rec_new->erh, trigdata->tg_trigtuple,
+								  false, false);
 	}
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
-		expanded_record_set_tuple(rec_new->erh, trigdata->tg_newtuple, false);
-		expanded_record_set_tuple(rec_old->erh, trigdata->tg_trigtuple, false);
+		expanded_record_set_tuple(rec_new->erh, trigdata->tg_newtuple,
+								  false, false);
+		expanded_record_set_tuple(rec_old->erh, trigdata->tg_trigtuple,
+								  false, false);
 	}
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 	{
-		expanded_record_set_tuple(rec_old->erh, trigdata->tg_trigtuple, false);
+		expanded_record_set_tuple(rec_old->erh, trigdata->tg_trigtuple,
+								  false, false);
 	}
 	else
 		elog(ERROR, "unrecognized trigger action: not INSERT, DELETE, or UPDATE");
@@ -5061,7 +5066,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/* And assign it. */
 				expanded_record_set_field(erh, recfield->finfo.fnumber,
-										  value, isNull);
+										  value, isNull, !estate->atomic);
 				break;
 			}
 
@@ -5875,7 +5880,8 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 					tupdescs_match)
 				{
 					/* Only need to assign a new tuple value */
-					expanded_record_set_tuple(rec->erh, tuptab->vals[i], true);
+					expanded_record_set_tuple(rec->erh, tuptab->vals[i],
+											  true, !estate->atomic);
 				}
 				else
 				{
@@ -6647,7 +6653,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 				 */
 				newerh = make_expanded_record_for_rec(estate, rec,
 													  NULL, rec->erh);
-				expanded_record_set_tuple(newerh, NULL, false);
+				expanded_record_set_tuple(newerh, NULL, false, false);
 				assign_record_var(estate, rec, newerh);
 			}
 			else
@@ -6689,7 +6695,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 			else
 			{
 				/* No coercion is needed, so just assign the row value */
-				expanded_record_set_tuple(newerh, tup, true);
+				expanded_record_set_tuple(newerh, tup, true, !estate->atomic);
 			}
 
 			/* Complete the assignment */
@@ -6927,7 +6933,7 @@ exec_move_row_from_fields(PLpgSQL_execstate *estate,
 		}
 
 		/* Insert the coerced field values into the new expanded record */
-		expanded_record_set_fields(newerh, values, nulls);
+		expanded_record_set_fields(newerh, values, nulls, !estate->atomic);
 
 		/* Complete the assignment */
 		assign_record_var(estate, rec, newerh);
@@ -7194,7 +7200,8 @@ exec_move_row_from_datum(PLpgSQL_execstate *estate,
 				 (erh->er_typmod == rec->erh->er_typmod &&
 				  erh->er_typmod >= 0)))
 			{
-				expanded_record_set_tuple(rec->erh, erh->fvalue, true);
+				expanded_record_set_tuple(rec->erh, erh->fvalue,
+										  true, !estate->atomic);
 				return;
 			}
 
@@ -7216,7 +7223,8 @@ exec_move_row_from_datum(PLpgSQL_execstate *estate,
 				(rec->rectypeid == RECORDOID ||
 				 rec->rectypeid == erh->er_typeid))
 			{
-				expanded_record_set_tuple(newerh, erh->fvalue, true);
+				expanded_record_set_tuple(newerh, erh->fvalue,
+										  true, !estate->atomic);
 				assign_record_var(estate, rec, newerh);
 				return;
 			}
@@ -7306,7 +7314,8 @@ exec_move_row_from_datum(PLpgSQL_execstate *estate,
 				 (tupTypmod == rec->erh->er_typmod &&
 				  tupTypmod >= 0)))
 			{
-				expanded_record_set_tuple(rec->erh, &tmptup, true);
+				expanded_record_set_tuple(rec->erh, &tmptup,
+										  true, !estate->atomic);
 				return;
 			}
 
@@ -7323,7 +7332,8 @@ exec_move_row_from_datum(PLpgSQL_execstate *estate,
 
 				newerh = make_expanded_record_from_typeid(tupType, tupTypmod,
 														  mcontext);
-				expanded_record_set_tuple(newerh, &tmptup, true);
+				expanded_record_set_tuple(newerh, &tmptup,
+										  true, !estate->atomic);
 				assign_record_var(estate, rec, newerh);
 				return;
 			}
@@ -8051,7 +8061,8 @@ plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
  * assign_simple_var --- assign a new value to any VAR datum.
  *
  * This should be the only mechanism for assignment to simple variables,
- * lest we do the release of the old value incorrectly.
+ * lest we do the release of the old value incorrectly (not to mention
+ * the detoasting business).
  */
 static void
 assign_simple_var(PLpgSQL_execstate *estate, PLpgSQL_var *var,
@@ -8059,6 +8070,41 @@ assign_simple_var(PLpgSQL_execstate *estate, PLpgSQL_var *var,
 {
 	Assert(var->dtype == PLPGSQL_DTYPE_VAR ||
 		   var->dtype == PLPGSQL_DTYPE_PROMISE);
+
+	/*
+	 * In non-atomic contexts, we do not want to store TOAST pointers in
+	 * variables, because such pointers might become stale after a commit.
+	 * Forcibly detoast in such cases.  We don't want to detoast (flatten)
+	 * expanded objects, however; those should be OK across a transaction
+	 * boundary since they're just memory-resident objects.  (Elsewhere in
+	 * this module, operations on expanded records likewise need to request
+	 * detoasting of record fields when !estate->atomic.  Expanded arrays are
+	 * not a problem since all array entries are always detoasted.)
+	 */
+	if (!estate->atomic && !isnull && var->datatype->typlen == -1 &&
+		VARATT_IS_EXTERNAL_NON_EXPANDED(DatumGetPointer(newvalue)))
+	{
+		MemoryContext oldcxt;
+		Datum		detoasted;
+
+		/*
+		 * Do the detoasting in the eval_mcontext to avoid long-term leakage
+		 * of whatever memory toast fetching might leak.  Then we have to copy
+		 * the detoasted datum to the function's main context, which is a
+		 * pain, but there's little choice.
+		 */
+		oldcxt = MemoryContextSwitchTo(get_eval_mcontext(estate));
+		detoasted = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *) DatumGetPointer(newvalue)));
+		MemoryContextSwitchTo(oldcxt);
+		/* Now's a good time to not leak the input value if it's freeable */
+		if (freeable)
+			pfree(DatumGetPointer(newvalue));
+		/* Once we copy the value, it's definitely freeable */
+		newvalue = datumCopy(detoasted, false, -1);
+		freeable = true;
+		/* Can't clean up eval_mcontext here, but it'll happen before long */
+	}
+
 	/* Free the old value if needed */
 	if (var->freeval)
 	{

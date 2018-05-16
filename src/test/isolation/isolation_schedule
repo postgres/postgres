@@ -74,3 +74,4 @@ test: predicate-gin-nomatch
 test: partition-key-update-1
 test: partition-key-update-2
 test: partition-key-update-3
+test: plpgsql-toast
