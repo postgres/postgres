@@ -655,8 +655,8 @@ same commits as above
 -->
 
        <para>
-        Allow single-evaluation queries, e.g. <literal>FROM</literal>
-        clause queries, and functions in the target list to be
+        Allow single-evaluation queries, e.g. <literal>WHERE</literal>
+        clause aggregate queries, and functions in the target list to be
         parallelized (Amit Kapila, Robert Haas)
        </para>
       </listitem>
@@ -1367,12 +1367,13 @@ same commits as above
 -->
 
        <para>
-        Allow bytes to be specified for server variable sizes (Beena
-        Emerson)
+        Allow server options related to memory and file sizes to be
+        specified as number of bytes (Beena Emerson)
        </para>
 
        <para>
-        The specification is "B".
+        The new unit is "B".  This is in addition to "kB", "MB", "GB"
+        and "TB", which were accepted previously.
        </para>
 
       </listitem>
@@ -2490,8 +2491,14 @@ same commits as above
 -->
 
        <para>
-        Add support for with huge (large) pages on Windows (Takayuki
-        Tsunakawa, Thomas Munro)
+        Add support for <firstterm>large pages</firstterm> on Windows
+        (Takayuki Tsunakawa, Thomas Munro)
+       </para>
+
+       <para>
+        This is controlled by the <link
+        linkend="guc-huge-pages">huge_pages</link> configuration
+        parameter.
        </para>
       </listitem>
 
