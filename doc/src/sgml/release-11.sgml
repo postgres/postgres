@@ -1144,7 +1144,7 @@ same commits as above
        <para>
         Add libpq option to support channel binding when using <link
         linkend="auth-password"><acronym>SCRAM</acronym></link>
-        authentication (Peter Eisentraut)
+        authentication (Michael Paquier)
        </para>
 
        <para>
