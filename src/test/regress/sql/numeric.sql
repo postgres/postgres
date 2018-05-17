@@ -911,6 +911,13 @@ select (-12.34) ^ 0.0;
 select 12.34 ^ 0.0;
 select 0.0 ^ 12.34;
 
+-- NaNs
+select 'NaN'::numeric ^ 'NaN'::numeric;
+select 'NaN'::numeric ^ 0;
+select 'NaN'::numeric ^ 1;
+select 0 ^ 'NaN'::numeric;
+select 1 ^ 'NaN'::numeric;
+
 -- invalid inputs
 select 0.0 ^ (-12.34);
 select (-12.34) ^ 1.2;

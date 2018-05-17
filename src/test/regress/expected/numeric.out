@@ -1664,6 +1664,37 @@ select 0.0 ^ 12.34;
  0.0000000000000000
 (1 row)
 
+-- NaNs
+select 'NaN'::numeric ^ 'NaN'::numeric;
+ ?column? 
+----------
+      NaN
+(1 row)
+
+select 'NaN'::numeric ^ 0;
+ ?column? 
+----------
+        1
+(1 row)
+
+select 'NaN'::numeric ^ 1;
+ ?column? 
+----------
+      NaN
+(1 row)
+
+select 0 ^ 'NaN'::numeric;
+ ?column? 
+----------
+      NaN
+(1 row)
+
+select 1 ^ 'NaN'::numeric;
+ ?column? 
+----------
+        1
+(1 row)
+
 -- invalid inputs
 select 0.0 ^ (-12.34);
 ERROR:  zero raised to a negative power is undefined
