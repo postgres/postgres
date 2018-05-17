@@ -16840,7 +16840,9 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
      </row>
      <row>
       <entry><literal>backward_scan</literal></entry>
-      <entry>Can the index be scanned backwards?
+      <entry>Can the scan direction be changed in mid-scan (to
+             support <literal>FETCH BACKWARD</literal> on a cursor without
+             needing materialization)?
       </entry>
      </row>
     </tbody>
