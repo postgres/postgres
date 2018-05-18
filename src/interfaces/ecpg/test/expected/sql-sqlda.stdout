@@ -4,45 +4,53 @@ name sqlda descriptor: 't' value 'a'
 name sqlda descriptor: 'd1' value NUMERIC '1.0'
 name sqlda descriptor: 'd2' value 1.000000
 name sqlda descriptor: 'c' value 'a         '
+name sqlda descriptor: 'big' value 1111111111111111111
 FETCH RECORD 2
 name sqlda descriptor: 'id' value 2
 name sqlda descriptor: 't' value NULL'
 name sqlda descriptor: 'd1' value NULL'
 name sqlda descriptor: 'd2' value NULL'
 name sqlda descriptor: 'c' value NULL'
+name sqlda descriptor: 'big' value NULL'
 FETCH RECORD 3
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
 name sqlda descriptor: 'd1' value NUMERIC '4.0'
 name sqlda descriptor: 'd2' value 4.000000
 name sqlda descriptor: 'c' value 'd         '
+name sqlda descriptor: 'big' value 4444444444444444444
 FETCH RECORD 1
 name sqlda descriptor: 'id' value 1
 name sqlda descriptor: 't' value 'a'
 name sqlda descriptor: 'd1' value NUMERIC '1.0'
 name sqlda descriptor: 'd2' value 1.000000
 name sqlda descriptor: 'c' value 'a         '
+name sqlda descriptor: 'big' value 1111111111111111111
 FETCH RECORD 2
 name sqlda descriptor: 'id' value 2
 name sqlda descriptor: 't' value NULL'
 name sqlda descriptor: 'd1' value NULL'
 name sqlda descriptor: 'd2' value NULL'
 name sqlda descriptor: 'c' value NULL'
+name sqlda descriptor: 'big' value NULL'
 FETCH RECORD 3
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
 name sqlda descriptor: 'd1' value NUMERIC '4.0'
 name sqlda descriptor: 'd2' value 4.000000
 name sqlda descriptor: 'c' value 'd         '
+name sqlda descriptor: 'big' value 4444444444444444444
 EXECUTE RECORD 4
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
 name sqlda descriptor: 'd1' value NUMERIC '4.0'
 name sqlda descriptor: 'd2' value 4.000000
 name sqlda descriptor: 'c' value 'd         '
+name sqlda descriptor: 'big' value 4444444444444444444
 EXECUTE RECORD 4
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
 name sqlda descriptor: 'd1' value NUMERIC '4.0'
 name sqlda descriptor: 'd2' value 4.000000
 name sqlda descriptor: 'c' value 'd         '
+name sqlda descriptor: 'big' value 4444444444444444444
