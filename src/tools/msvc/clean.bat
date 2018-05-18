@@ -49,6 +49,7 @@ if exist src\include\storage\lwlocknames.h del /q src\include\storage\lwlockname
 if exist src\include\utils\probes.h del /q src\include\utils\probes.h
 if exist src\include\catalog\schemapg.h del /q src\include\catalog\schemapg.h
 if exist src\include\catalog\pg_*_d.h del /q src\include\catalog\pg_*_d.h
+if exist src\include\catalog\header-stamp del /q src\include\catalog\header-stamp
 if exist doc\src\sgml\version.sgml del /q doc\src\sgml\version.sgml
 
 if %DIST%==1 if exist src\backend\utils\fmgroids.h del /q src\backend\utils\fmgroids.h

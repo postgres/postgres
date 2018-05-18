@@ -501,7 +501,12 @@ EOF
 		  || confess "Could not touch bki-stamp";
 		close($f);
 		chdir('../../..');
+	}
 
+	if (IsNewer(
+			'src/include/catalog/header-stamp',
+			'src/backend/catalog/bki-stamp'))
+	{
 		# Copy generated headers to include directory.
 		opendir(my $dh, 'src/backend/catalog/')
 		  || die "Can't opendir src/backend/catalog/ $!";
@@ -516,6 +521,9 @@ EOF
 		copyFile(
 			'src/backend/catalog/schemapg.h',
 			'src/include/catalog/schemapg.h');
+		open(my $chs, '>', 'src/include/catalog/header-stamp')
+		  || confess "Could not touch header-stamp";
+		close($chs);
 	}
 
 	open(my $o, '>', "doc/src/sgml/version.sgml")
