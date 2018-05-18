@@ -3582,6 +3582,7 @@ ReadControlFile(void)
 {
 	pg_crc32	crc;
 	int			fd;
+	int			r;
 
 	/*
 	 * Read data...
@@ -3595,10 +3596,17 @@ ReadControlFile(void)
 				 errmsg("could not open control file \"%s\": %m",
 						XLOG_CONTROL_FILE)));
 
-	if (read(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
-		ereport(PANIC,
-				(errcode_for_file_access(),
-				 errmsg("could not read from control file: %m")));
+	r = read(fd, ControlFile, sizeof(ControlFileData));
+	if (r != sizeof(ControlFileData))
+	{
+		if (r < 0)
+			ereport(PANIC,
+					(errcode_for_file_access(),
+					 errmsg("could not read from control file: %m")));
+		else
+			ereport(PANIC,
+					 (errmsg("could not read from control file: read %d bytes, expected %d", r, (int) sizeof(ControlFileData))));
+	}
 
 	close(fd);
 
