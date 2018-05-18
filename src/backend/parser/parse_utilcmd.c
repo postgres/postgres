@@ -2098,7 +2098,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					index_rel->rd_indoption[i] != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("index \"%s\" does not have default sorting behavior", index_name),
+							 errmsg("index \"%s\" column number %d does not have default sorting behavior", index_name, i + 1),
 							 errdetail("Cannot create a primary key or unique constraint using such an index."),
 							 parser_errposition(cxt->pstate, constraint->location)));
 

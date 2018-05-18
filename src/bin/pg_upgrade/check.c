@@ -382,8 +382,10 @@ check_new_cluster_is_empty(void)
 		{
 			/* pg_largeobject and its index should be skipped */
 			if (strcmp(rel_arr->rels[relnum].nspname, "pg_catalog") != 0)
-				pg_fatal("New cluster database \"%s\" is not empty\n",
-						 new_cluster.dbarr.dbs[dbnum].db_name);
+				pg_fatal("New cluster database \"%s\" is not empty: found relation \"%s.%s\"\n",
+						 new_cluster.dbarr.dbs[dbnum].db_name,
+						 rel_arr->rels[relnum].nspname,
+						 rel_arr->rels[relnum].relname);
 		}
 	}
 }
