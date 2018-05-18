@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include "ecpg_config.h"
 
 exec sql include ../regression;
-
 exec sql include sqlda.h;
 exec sql include pgtypes_numeric.h;
 
