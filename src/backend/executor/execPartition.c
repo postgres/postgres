@@ -973,11 +973,13 @@ get_partition_dispatch_recurse(Relation rel, Relation parent,
 	 * The 'indexes' array is used when searching for a partition matching a
 	 * given tuple.  The actual value we store here depends on whether the
 	 * array element belongs to a leaf partition or a subpartitioned table.
-	 * For leaf partitions we store the 0-based index into *leaf_part_oids,
-	 * and for sub-partitioned tables we store a negative version of the
-	 * 1-based index into the *pds list.  When searching, if we see a negative
-	 * value, the search must continue in the corresponding sub-partition;
-	 * otherwise, we've identified the correct partition.
+	 * For leaf partitions we store the index into *leaf_part_oids, and for
+	 * sub-partitioned tables we store a negative version of the index into
+	 * the *pds list.  Both indexes are 0-based, but the first element of the
+	 * *pds list is the root partition, so 0 always means the first leaf. When
+	 * searching, if we see a negative value, the search must continue in the
+	 * corresponding sub-partition; otherwise, we've identified the correct
+	 * partition.
 	 */
 	pd->indexes = (int *) palloc(partdesc->nparts * sizeof(int));
 	for (i = 0; i < partdesc->nparts; i++)
