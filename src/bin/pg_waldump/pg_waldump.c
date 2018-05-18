@@ -218,7 +218,9 @@ search_directory(const char *directory, const char *fname)
 			WalSegSz = longhdr->xlp_seg_size;
 
 			if (!IsValidWalSegSize(WalSegSz))
-				fatal_error("WAL segment size must be a power of two between 1MB and 1GB, but the WAL file \"%s\" header specifies %d bytes",
+				fatal_error(ngettext("WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte",
+									 "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes",
+									 WalSegSz),
 							fname, WalSegSz);
 		}
 		else

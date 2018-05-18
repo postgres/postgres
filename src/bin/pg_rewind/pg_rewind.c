@@ -189,8 +189,8 @@ main(int argc, char **argv)
 	/* Set mask based on PGDATA permissions */
 	if (!GetDataDirectoryCreatePerm(datadir_target))
 	{
-		fprintf(stderr, _("%s: unable to read permissions from \"%s\"\n"),
-				progname, datadir_target);
+		fprintf(stderr, _("%s: could not read permissions of directory \"%s\": %s\n"),
+				progname, datadir_target, strerror(errno));
 		exit(1);
 	}
 
@@ -648,7 +648,9 @@ digestControlFile(ControlFileData *ControlFile, char *src, size_t size)
 	WalSegSz = ControlFile->xlog_seg_size;
 
 	if (!IsValidWalSegSize(WalSegSz))
-		pg_fatal("WAL segment size must be a power of two between 1MB and 1GB, but the control file specifies %d bytes\n",
+		pg_fatal(ngettext("WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte\n",
+						  "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes\n",
+						  WalSegSz),
 				 WalSegSz);
 
 	/* Additional checks on control file */

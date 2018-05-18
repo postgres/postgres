@@ -2418,8 +2418,8 @@ main(int argc, char **argv)
 		if (!replication_slot)
 		{
 			fprintf(stderr,
-					_("%s: --create-slot needs a slot to be specified using --slot\n"),
-					progname);
+					_("%s: %s needs a slot to be specified using --slot\n"),
+					progname, "--create-slot");
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 					progname);
 			exit(1);

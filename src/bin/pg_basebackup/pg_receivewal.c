@@ -120,7 +120,7 @@ stop_streaming(XLogRecPtr xlogpos, uint32 timeline, bool segment_finished)
 	if (!XLogRecPtrIsInvalid(endpos) && endpos < xlogpos)
 	{
 		if (verbose)
-			fprintf(stderr, _("%s: stopped streaming at %X/%X (timeline %u)\n"),
+			fprintf(stderr, _("%s: stopped log streaming at %X/%X (timeline %u)\n"),
 					progname, (uint32) (xlogpos >> 32), (uint32) xlogpos,
 					timeline);
 		time_to_stop = true;

@@ -103,8 +103,8 @@ main(int argc, char **argv)
 	/* Set mask based on PGDATA permissions */
 	if (!GetDataDirectoryCreatePerm(new_cluster.pgdata))
 	{
-		pg_log(PG_FATAL, "unable to read permissions from \"%s\"\n",
-			   new_cluster.pgdata);
+		pg_log(PG_FATAL, "could not read permissions of directory \"%s\": %s\n",
+			   new_cluster.pgdata, strerror(errno));
 		exit(1);
 	}
 

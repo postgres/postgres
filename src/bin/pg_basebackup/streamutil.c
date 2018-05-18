@@ -336,7 +336,9 @@ RetrieveWalSegSize(PGconn *conn)
 	if (!IsValidWalSegSize(WalSegSz))
 	{
 		fprintf(stderr,
-				_("%s: WAL segment size must be a power of two between 1MB and 1GB, but the remote server reported a value of %d bytes\n"),
+				ngettext("%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d byte\n",
+						 "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d bytes\n",
+						 WalSegSz),
 				progname, WalSegSz);
 		return false;
 	}

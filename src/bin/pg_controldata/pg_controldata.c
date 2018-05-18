@@ -35,9 +35,9 @@ usage(const char *progname)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION] [DATADIR]\n"), progname);
 	printf(_("\nOptions:\n"));
-	printf(_(" [-D,--pgdata=]DATADIR  data directory\n"));
-	printf(_("  -V, --version         output version information, then exit\n"));
-	printf(_("  -?, --help            show this help, then exit\n"));
+	printf(_(" [-D, --pgdata=]DATADIR  data directory\n"));
+	printf(_("  -V, --version          output version information, then exit\n"));
+	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("\nIf no data directory (DATADIR) is specified, "
 			 "the environment variable PGDATA\nis used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
@@ -174,11 +174,17 @@ main(int argc, char *argv[])
 	WalSegSz = ControlFile->xlog_seg_size;
 
 	if (!IsValidWalSegSize(WalSegSz))
-		printf(_("WARNING: invalid WAL segment size\n"
-				 "The WAL segment size stored in the file, %d bytes, is not a power of two\n"
-				 "between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
-				 "untrustworthy.\n\n"),
+	{
+		printf(_("WARNING: invalid WAL segment size\n"));
+		printf(ngettext("The WAL segment size stored in the file, %d byte, is not a power of two\n"
+						"between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
+						"untrustworthy.\n\n",
+						"The WAL segment size stored in the file, %d bytes, is not a power of two\n"
+						"between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
+						"untrustworthy.\n\n",
+						WalSegSz),
 			   WalSegSz);
+	}
 
 	/*
 	 * This slightly-chintzy coding will work as long as the control file

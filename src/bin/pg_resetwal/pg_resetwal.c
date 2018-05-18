@@ -366,8 +366,8 @@ main(int argc, char *argv[])
 	/* Set mask based on PGDATA permissions */
 	if (!GetDataDirectoryCreatePerm(DataDir))
 	{
-		fprintf(stderr, _("%s: unable to read permissions from \"%s\"\n"),
-				progname, DataDir);
+		fprintf(stderr, _("%s: could not read permissions of directory \"%s\": %s\n"),
+				progname, DataDir, strerror(errno));
 		exit(1);
 	}
 
@@ -655,7 +655,9 @@ ReadControlFile(void)
 		if (!IsValidWalSegSize(ControlFile.xlog_seg_size))
 		{
 			fprintf(stderr,
-					_("%s: pg_control specifies invalid WAL segment size (%d bytes); proceed with caution \n"),
+					ngettext("%s: pg_control specifies invalid WAL segment size (%d byte); proceed with caution\n",
+							 "%s: pg_control specifies invalid WAL segment size (%d bytes); proceed with caution\n",
+							 ControlFile.xlog_seg_size),
 					progname, ControlFile.xlog_seg_size);
 			return false;
 		}
