@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include "ecpg_config.h"
 
 
 #line 1 "regression.h"
@@ -19,8 +20,7 @@
 
 
 
-#line 5 "sqlda.pgc"
-
+#line 6 "sqlda.pgc"
 
 
 #line 1 "sqlda.h"
