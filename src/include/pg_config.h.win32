@@ -385,13 +385,25 @@
 #define HAVE_STRONG_RANDOM 1
 
 /* Define to 1 if you have the `strtoll' function. */
-//#define HAVE_STRTOLL 1
+#ifdef HAVE_LONG_LONG_INT_64
+#define HAVE_STRTOLL 1
+/* Before VS2013, use Microsoft's nonstandard equivalent function */
+#if (_MSC_VER < 1800)
+#define strtoll _strtoi64
+#endif
+#endif
 
 /* Define to 1 if you have the `strtoq' function. */
 /* #undef HAVE_STRTOQ */
 
 /* Define to 1 if you have the `strtoull' function. */
-//#define HAVE_STRTOULL 1
+#ifdef HAVE_LONG_LONG_INT_64
+#define HAVE_STRTOULL 1
+/* Before VS2013, use Microsoft's nonstandard equivalent function */
+#if (_MSC_VER < 1800)
+#define strtoull _strtoui64
+#endif
+#endif
 
 /* Define to 1 if you have the `strtouq' function. */
 /* #undef HAVE_STRTOUQ */
