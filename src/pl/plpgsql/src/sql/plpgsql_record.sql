@@ -274,9 +274,12 @@ alter table mutable drop column f1;
 alter table mutable add column f1 float8;
 
 -- currently, this fails due to cached plan for "r.f1 + 1" expression
+-- (but we can't actually show that, because a CLOBBER_CACHE_ALWAYS build
+-- will succeed)
 -- select sillyaddone(42);
-\c -
--- but it's OK after a reconnect
+
+-- but it's OK if we force plan rebuilding
+discard plans;
 select sillyaddone(42);
 
 alter table mutable drop column f1;
