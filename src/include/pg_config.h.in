@@ -750,6 +750,12 @@
 /* Define to 1 if your compiler understands __VA_ARGS__ in macros. */
 #undef HAVE__VA_ARGS
 
+/* Define to 1 if you have the `__strtoll' function. */
+#undef HAVE___STRTOLL
+
+/* Define to 1 if you have the `__strtoull' function. */
+#undef HAVE___STRTOULL
+
 /* Define to the appropriate snprintf length modifier for 64-bit ints. */
 #undef INT64_MODIFIER
 
