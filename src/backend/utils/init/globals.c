@@ -16,9 +16,9 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/stat.h>
-
 #include "postgres.h"
+
+#include <sys/stat.h>
 
 #include "common/file_perm.h"
 #include "libpq/libpq-be.h"
