@@ -1546,6 +1546,8 @@ fi
 
 AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
+# strto[u]ll may exist but not be declared
+AC_CHECK_DECLS([strtoll, strtoull])
 
 AC_CACHE_CHECK([for builtin locking functions], pgac_cv_gcc_int_atomics,
 [AC_TRY_LINK([],
