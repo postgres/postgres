@@ -1751,6 +1751,8 @@ fi
 
 AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
+# strto[u]ll may exist but not be declared
+AC_CHECK_DECLS([strtoll, strtoull])
 
 if test "$with_icu" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS

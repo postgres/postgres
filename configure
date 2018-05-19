@@ -15734,6 +15734,28 @@ _ACEOF
 fi
 done
 
+# strto[u]ll may exist but not be declared
+ac_fn_c_check_decl "$LINENO" "strtoll" "ac_cv_have_decl_strtoll" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strtoll" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOLL $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strtoull" "ac_cv_have_decl_strtoull" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strtoull" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOULL $ac_have_decl
+_ACEOF
+
 
 if test "$with_icu" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS

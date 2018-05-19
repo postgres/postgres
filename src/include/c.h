@@ -1096,6 +1096,14 @@ extern int	snprintf(char *str, size_t count, const char *fmt,...) pg_attribute_p
 extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 #endif
 
+#if defined(HAVE_LONG_LONG_INT) && defined(HAVE_STRTOLL) && !HAVE_DECL_STRTOLL
+extern long long strtoll(const char *str, char **endptr, int base);
+#endif
+
+#if defined(HAVE_LONG_LONG_INT) && defined(HAVE_STRTOULL) && !HAVE_DECL_STRTOULL
+extern unsigned long long strtoull(const char *str, char **endptr, int base);
+#endif
+
 #if !defined(HAVE_MEMMOVE) && !defined(memmove)
 #define memmove(d, s, c)		bcopy(s, d, c)
 #endif
