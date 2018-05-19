@@ -357,8 +357,7 @@ EOM
 		}
 
 		# Emit Anum_* constants
-		print $def
-		  sprintf("#define Anum_%s_%s %s\n", $catname, $attname, $attnum);
+		printf $def "#define Anum_%s_%s %s\n", $catname, $attname, $attnum;
 	}
 	print $bki "\n )\n";
 
@@ -493,7 +492,7 @@ EOM
 	}
 
 	print $bki "close $catname\n";
-	print $def sprintf("\n#endif\t\t\t\t\t\t\t/* %s_D_H */\n", uc $catname);
+	printf $def "\n#endif\t\t\t\t\t\t\t/* %s_D_H */\n", uc $catname;
 
 	# Close and rename definition header
 	close $def;

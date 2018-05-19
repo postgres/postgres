@@ -198,7 +198,7 @@ sub ParseHeader
 					else
 					{
 						die
-						  "unknown column option $attopt on column $attname";
+						  "unknown or misformatted column option $attopt on column $attname";
 					}
 
 					if ($column{forcenull} and $column{forcenotnull})
@@ -370,34 +370,30 @@ sub RenameTempFile
 }
 
 # Find a symbol defined in a particular header file and extract the value.
-#
-# The include path has to be passed as a reference to an array.
+# include_path should be the path to src/include/.
 sub FindDefinedSymbol
 {
 	my ($catalog_header, $include_path, $symbol) = @_;
+	my $value;
 
-	for my $path (@$include_path)
+	# Make sure include path ends in a slash.
+	if (substr($include_path, -1) ne '/')
 	{
-
-		# Make sure include path ends in a slash.
-		if (substr($path, -1) ne '/')
-		{
-			$path .= '/';
-		}
-		my $file = $path . $catalog_header;
-		next if !-f $file;
-		open(my $find_defined_symbol, '<', $file) || die "$file: $!";
-		while (<$find_defined_symbol>)
-		{
-			if (/^#define\s+\Q$symbol\E\s+(\S+)/)
-			{
-				return $1;
-			}
-		}
-		close $find_defined_symbol;
-		die "$file: no definition found for $symbol\n";
+		$include_path .= '/';
 	}
-	die "$catalog_header: not found in any include directory\n";
+	my $file = $include_path . $catalog_header;
+	open(my $find_defined_symbol, '<', $file) || die "$file: $!";
+	while (<$find_defined_symbol>)
+	{
+		if (/^#define\s+\Q$symbol\E\s+(\S+)/)
+		{
+			$value = $1;
+			last;
+		}
+	}
+	close $find_defined_symbol;
+	return $value if defined $value;
+	die "$file: no definition found for $symbol\n";
 }
 
 # Similar to FindDefinedSymbol, but looks in the bootstrap metadata.

@@ -125,7 +125,6 @@ foreach my $catname (@catnames)
 	open my $dat, '>', $datfile
 	  or die "can't open $datfile: $!";
 
-	# Write the data.
 	foreach my $data (@{ $catalog_data{$catname} })
 	{
 

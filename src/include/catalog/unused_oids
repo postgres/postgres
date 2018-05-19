@@ -34,7 +34,7 @@ my $oids = Catalog::FindAllOidsFromHeaders(@input_files);
 
 # Also push FirstBootstrapObjectId to serve as a terminator for the last gap.
 my $FirstBootstrapObjectId =
-  Catalog::FindDefinedSymbol('access/transam.h', [".."],
+  Catalog::FindDefinedSymbol('access/transam.h', '..',
 	'FirstBootstrapObjectId');
 push @{$oids}, $FirstBootstrapObjectId;
 
