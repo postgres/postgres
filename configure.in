@@ -1686,6 +1686,8 @@ fi
 
 AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
+# strto[u]ll may exist but not be declared
+AC_CHECK_DECLS([strtoll, strtoull])
 
 # Lastly, restore full LIBS list and check for readline/libedit symbols
 LIBS="$LIBS_including_readline"
