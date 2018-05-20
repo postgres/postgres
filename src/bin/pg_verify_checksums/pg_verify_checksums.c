@@ -85,7 +85,8 @@ scan_file(char *fn, int segmentno)
 	f = open(fn, 0);
 	if (f < 0)
 	{
-		fprintf(stderr, _("%s: could not open file \"%s\": %m\n"), progname, fn);
+		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
+				progname, fn, strerror(errno));
 		exit(1);
 	}
 
@@ -137,8 +138,8 @@ scan_directory(char *basedir, char *subdir)
 	dir = opendir(path);
 	if (!dir)
 	{
-		fprintf(stderr, _("%s: could not open directory \"%s\": %m\n"),
-				progname, path);
+		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
+				progname, path, strerror(errno));
 		exit(1);
 	}
 	while ((de = readdir(dir)) != NULL)
@@ -152,8 +153,8 @@ scan_directory(char *basedir, char *subdir)
 		snprintf(fn, sizeof(fn), "%s/%s", path, de->d_name);
 		if (lstat(fn, &st) < 0)
 		{
-			fprintf(stderr, _("%s: could not stat file \"%s\": %m\n"),
-					progname, fn);
+			fprintf(stderr, _("%s: could not stat file \"%s\": %s\n"),
+					progname, fn, strerror(errno));
 			exit(1);
 		}
 		if (S_ISREG(st.st_mode))
