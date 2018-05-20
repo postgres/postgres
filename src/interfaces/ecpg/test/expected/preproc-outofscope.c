@@ -337,7 +337,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 		get_record1();
 		if (sqlca.sqlcode == ECPG_NOT_FOUND)
 			break;
-		printf("id=%d%s t='%s'%s d1=%lf%s d2=%lf%s c = '%s'%s\n",
+		printf("id=%d%s t='%s'%s d1=%f%s d2=%f%s c = '%s'%s\n",
 			myvar->id, mynullvar->id ? " (NULL)" : "",
 			myvar->t, mynullvar->t ? " (NULL)" : "",
 			myvar->d1, mynullvar->d1 ? " (NULL)" : "",
