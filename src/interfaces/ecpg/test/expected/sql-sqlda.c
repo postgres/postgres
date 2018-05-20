@@ -158,7 +158,7 @@ dump_sqlda(sqlda_t *sqlda)
 			break;
 #endif
 		case ECPGt_double:
-			printf("name sqlda descriptor: '%s' value %lf\n", sqlda->sqlvar[i].sqlname.data, *(double *)sqlda->sqlvar[i].sqldata);
+			printf("name sqlda descriptor: '%s' value %f\n", sqlda->sqlvar[i].sqlname.data, *(double *)sqlda->sqlvar[i].sqldata);
 			break;
 		case ECPGt_numeric:
 			{

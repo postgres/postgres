@@ -1678,7 +1678,7 @@ while (1)
     <para>
      Here is an example using the data type <type>complex</type> from
      the example in <xref linkend="xtypes"/>.  The external string
-     representation of that type is <literal>(%lf,%lf)</literal>,
+     representation of that type is <literal>(%f,%f)</literal>,
      which is defined in the
      functions <function>complex_in()</function>
      and <function>complex_out()</function> functions

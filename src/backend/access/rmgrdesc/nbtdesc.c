@@ -100,7 +100,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_metadata *xlrec = (xl_btree_metadata *) rec;
 
-				appendStringInfo(buf, "oldest_btpo_xact %u; last_cleanup_num_heap_tuples: %lf",
+				appendStringInfo(buf, "oldest_btpo_xact %u; last_cleanup_num_heap_tuples: %f",
 								 xlrec->oldest_btpo_xact,
 								 xlrec->last_cleanup_num_heap_tuples);
 				break;
