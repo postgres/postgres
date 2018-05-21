@@ -451,7 +451,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <node>	fetch_args limit_clause select_limit_value
 				offset_clause select_offset_value
-				select_offset_value2 opt_select_fetch_first_value
+				select_fetch_first_value I_or_F_const
 %type <ival>	row_or_rows first_or_next
 
 %type <list>	OptSeqOptList SeqOptList OptParenthesizedSeqOptList
@@ -11570,15 +11570,23 @@ limit_clause:
 							 parser_errposition(@1)));
 				}
 			/* SQL:2008 syntax */
-			| FETCH first_or_next opt_select_fetch_first_value row_or_rows ONLY
+			/* to avoid shift/reduce conflicts, handle the optional value with
+			 * a separate production rather than an opt_ expression.  The fact
+			 * that ONLY is fully reserved means that this way, we defer any
+			 * decision about what rule reduces ROW or ROWS to the point where
+			 * we can see the ONLY token in the lookahead slot.
+			 */
+			| FETCH first_or_next select_fetch_first_value row_or_rows ONLY
 				{ $$ = $3; }
+			| FETCH first_or_next row_or_rows ONLY
+				{ $$ = makeIntConst(1, -1); }
 		;
 
 offset_clause:
 			OFFSET select_offset_value
 				{ $$ = $2; }
 			/* SQL:2008 syntax */
-			| OFFSET select_offset_value2 row_or_rows
+			| OFFSET select_fetch_first_value row_or_rows
 				{ $$ = $2; }
 		;
 
@@ -11597,22 +11605,31 @@ select_offset_value:
 
 /*
  * Allowing full expressions without parentheses causes various parsing
- * problems with the trailing ROW/ROWS key words.  SQL only calls for
- * constants, so we allow the rest only with parentheses.  If omitted,
- * default to 1.
+ * problems with the trailing ROW/ROWS key words.  SQL spec only calls for
+ * <simple value specification>, which is either a literal or a parameter (but
+ * an <SQL parameter reference> could be an identifier, bringing up conflicts
+ * with ROW/ROWS). We solve this by leveraging the presence of ONLY (see above)
+ * to determine whether the expression is missing rather than trying to make it
+ * optional in this rule.
+ *
+ * c_expr covers almost all the spec-required cases (and more), but it doesn't
+ * cover signed numeric literals, which are allowed by the spec. So we include
+ * those here explicitly. We need FCONST as well as ICONST because values that
+ * don't fit in the platform's "long", but do fit in bigint, should still be
+ * accepted here. (This is possible in 64-bit Windows as well as all 32-bit
+ * builds.)
  */
-opt_select_fetch_first_value:
-			SignedIconst						{ $$ = makeIntConst($1, @1); }
-			| '(' a_expr ')'					{ $$ = $2; }
-			| /*EMPTY*/							{ $$ = makeIntConst(1, -1); }
+select_fetch_first_value:
+			c_expr									{ $$ = $1; }
+			| '+' I_or_F_const
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, $2, @1); }
+			| '-' I_or_F_const
+				{ $$ = doNegate($2, @1); }
 		;
 
-/*
- * Again, the trailing ROW/ROWS in this case prevent the full expression
- * syntax.  c_expr is the best we can do.
- */
-select_offset_value2:
-			c_expr									{ $$ = $1; }
+I_or_F_const:
+			Iconst									{ $$ = makeIntConst($1,@1); }
+			| FCONST								{ $$ = makeFloatConst($1,@1); }
 		;
 
 /* noise words */
