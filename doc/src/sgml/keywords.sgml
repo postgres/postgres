@@ -519,7 +519,7 @@
    </row>
    <row>
     <entry><token>CALL</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry></entry>
@@ -2059,7 +2059,7 @@
    </row>
    <row>
     <entry><token>GROUPS</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry></entry>
     <entry></entry>
@@ -2196,6 +2196,13 @@
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>INCLUDE</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>INCLUDING</token></entry>
@@ -3200,7 +3207,7 @@
    </row>
    <row>
     <entry><token>OTHERS</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry></entry>
@@ -3570,6 +3577,13 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>PROCEDURES</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>PROGRAM</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
@@ -3935,9 +3949,16 @@
    </row>
    <row>
     <entry><token>ROUTINE</token></entry>
+    <entry>non-reserved</entry>
+    <entry>non-reserved</entry>
+    <entry>non-reserved</entry>
     <entry></entry>
+   </row>
+   <row>
+    <entry><token>ROUTINES</token></entry>
     <entry>non-reserved</entry>
-    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
     <entry></entry>
    </row>
    <row>
@@ -4614,7 +4635,7 @@
    </row>
    <row>
     <entry><token>TIES</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry></entry>
