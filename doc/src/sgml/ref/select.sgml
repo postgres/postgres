@@ -1349,12 +1349,14 @@ OFFSET <replaceable class="parameter">start</replaceable>
 OFFSET <replaceable class="parameter">start</replaceable> { ROW | ROWS }
 FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { ROW | ROWS } ONLY
 </synopsis>
-    In this syntax, to write anything except a simple integer constant for
-    <replaceable class="parameter">start</> or <replaceable
-    class="parameter">count</replaceable>, you must write parentheses
-    around it.
-    If <replaceable class="parameter">count</> is
-    omitted in a <literal>FETCH</> clause, it defaults to 1.
+    In this syntax, the <replaceable class="parameter">start</replaceable>
+    or <replaceable class="parameter">count</replaceable> value is required by
+    the standard to be a literal constant, a parameter, or a variable name;
+    as a <productname>PostgreSQL</productname> extension, other expressions
+    are allowed, but will generally need to be enclosed in parentheses to avoid
+    ambiguity.
+    If <replaceable class="parameter">count</replaceable> is
+    omitted in a <literal>FETCH</literal> clause, it defaults to 1.
     <literal>ROW</literal>
     and <literal>ROWS</literal> as well as <literal>FIRST</literal>
     and <literal>NEXT</literal> are noise words that don't influence
