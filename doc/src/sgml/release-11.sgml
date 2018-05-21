@@ -20,7 +20,100 @@
 
    <itemizedlist>
 
-   <listitem><para>XXX</para></listitem>
+    <listitem>
+     <para>
+      Major improvements to partitioning:
+      <itemizedlist>
+       <listitem>
+        <para>
+         Partitioning by a hash key
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <command>UPDATE</command> statements that change a partition key
+         now move affected rows to the appropriate partitions
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Improved <command>SELECT</command> query performance due to
+         enhanced partition elimination during query processing and
+         execution
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Support for <literal>PRIMARY KEY</literal>, <literal>FOREIGN
+         KEY</literal>, indexes, and triggers on partitioned tables
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improvements to parallelism:
+      <itemizedlist>
+       <listitem>
+        <para>
+         Parallelized hash joins
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Parallelized <command>CREATE INDEX</command> for B-tree indexes
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Parallelized <command>CREATE TABLE .. AS</command>,
+         <command>CREATE MATERIALIZED VIEW</command>, and certain
+         queries using <literal>UNION</literal>
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      SQL stored procedures, with support for embedded transactions
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      JIT compilation of some SQL code, including support for fast evaluation
+      of expressions
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Window functions now support all options shown in the SQL:2011
+      standard, including <literal>RANGE <replaceable>distance</replaceable>
+      PRECEDING/FOLLOWING</literal>, <literal>GROUPS</literal> mode, and
+      frame exclusion options
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Channel binding for SCRAM authentication, to prevent potential
+      man-in-the-middle attacks on database connections
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Many other useful performance improvements, including making
+      <command>ALTER TABLE .. ADD COLUMN</command> with a
+      non-null column default faster
+     </para>
+    </listitem>
+
    </itemizedlist>
 
    <para>
