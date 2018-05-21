@@ -4788,7 +4788,7 @@ EXEC SQL WHENEVER <replaceable>condition</replaceable> <replaceable>action</repl
       <listitem>
        <para>
         Execute the C statement <literal>continue</literal>.  This should
-        only be used in loops statements.  if executed, will cause the flow 
+        only be used in loops statements.  if executed, will cause the flow
         of control to return to the top of the loop.
        </para>
       </listitem>

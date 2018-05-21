@@ -2457,7 +2457,7 @@ openssl x509 -req -in server.csr -text -days 365 \
     <filename>server.crt</filename> and <filename>server.key</filename>
     should be stored on the server, and <filename>root.crt</filename> should
     be stored on the client so the client can verify that the server's leaf
-    certificate was signed by its trusted root certificate. 
+    certificate was signed by its trusted root certificate.
     <filename>root.key</filename> should be stored offline for use in
     creating future certificates.
    </para>

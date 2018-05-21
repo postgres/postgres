@@ -134,7 +134,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
       subsequent <xref linkend="sql-analyze"/> operations, though can
       be used only on index columns that are defined as an expression.
       Since expressions lack a unique name, we refer to them using the
-      ordinal number of the index column. 
+      ordinal number of the index column.
       The target can be set in the range 0 to 10000; alternatively, set it
       to -1 to revert to using the system default statistics
       target (<xref linkend="guc-default-statistics-target"/>).
