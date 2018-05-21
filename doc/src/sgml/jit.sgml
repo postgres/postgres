@@ -149,7 +149,7 @@
    <xref linkend="sql-explain"/> can be used to see whether
    <acronym>JIT</acronym> is used or not.  As an example, here is a query that
    is not using <acronym>JIT</acronym>:
-   <programlisting>
+<screen>
 =# EXPLAIN ANALYZE SELECT SUM(relpages) FROM pg_class;
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                 QUERY PLAN                                                  │
@@ -160,12 +160,12 @@
 │ Execution Time: 0.365 ms                                                                                    │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 (4 rows)
-   </programlisting>
+</screen>
    Given the cost of the plan, it is entirely reasonable that no
    <acronym>JIT</acronym> was used, the cost of <acronym>JIT</acronym> would
    have been bigger than the savings. Adjusting the cost limits will lead to
    <acronym>JIT</acronym> use:
-   <programlisting>
+<screen>
 =# SET jit_above_cost = 10;
 SET
 =# EXPLAIN ANALYZE SELECT SUM(relpages) FROM pg_class;
@@ -185,7 +185,7 @@ SET
 │   Emission Time: 5.048 ms                                                                                   │
 │ Execution Time: 7.416 ms                                                                                    │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-   </programlisting>
+</screen>
    As visible here, <acronym>JIT</acronym> was used, but inlining and
    expensive optimization were not. If <xref
    linkend="guc-jit-optimize-above-cost"/>, <xref
@@ -283,7 +283,7 @@ SET
      <function>_PG_jit_provider_init</function>. This function is passed a
      struct that needs to be filled with the callback function pointers for
      individual actions.
-     <programlisting>
+<programlisting>
 struct JitProviderCallbacks
 {
     JitProviderResetAfterErrorCB reset_after_error;
@@ -291,7 +291,7 @@ struct JitProviderCallbacks
     JitProviderCompileExprCB compile_expr;
 };
 extern void _PG_jit_provider_init(JitProviderCallbacks *cb);
-     </programlisting>
+</programlisting>
     </para>
    </sect3>
   </sect2>

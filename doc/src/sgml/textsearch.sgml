@@ -1010,41 +1010,37 @@ websearch_to_tsquery(<optional> <replaceable class="parameter">config</replaceab
    </para>
    <para>
     Examples:
-    <screen>
-      select websearch_to_tsquery('english', 'The fat rats');
+<screen>
+SELECT websearch_to_tsquery('english', 'The fat rats');
+ websearch_to_tsquery
+----------------------
+ 'fat' &amp; 'rat'
+(1 row)
+
+SELECT websearch_to_tsquery('english', '"supernovae stars" -crab');
        websearch_to_tsquery
-      -----------------
-       'fat' &amp; 'rat'
-      (1 row)
-    </screen>
-    <screen>
-      select websearch_to_tsquery('english', '"supernovae stars" -crab');
-             websearch_to_tsquery
-      ----------------------------------
-       'supernova' &lt;-&gt; 'star' &amp; !'crab'
-      (1 row)
-    </screen>
-    <screen>
-      select websearch_to_tsquery('english', '"sad cat" or "fat rat"');
-             websearch_to_tsquery
-      -----------------------------------
-       'sad' &lt;-&gt; 'cat' | 'fat' &lt;-&gt; 'rat'
-      (1 row)
-    </screen>
-    <screen>
-      select websearch_to_tsquery('english', 'signal -"segmentation fault"');
-               websearch_to_tsquery
-      ---------------------------------------
-       'signal' &amp; !( 'segment' &lt;-&gt; 'fault' )
-      (1 row)
-    </screen>
-    <screen>
-      select websearch_to_tsquery('english', '""" )( dummy \\ query &lt;-&gt;');
+----------------------------------
+ 'supernova' &lt;-&gt; 'star' &amp; !'crab'
+(1 row)
+
+SELECT websearch_to_tsquery('english', '"sad cat" or "fat rat"');
        websearch_to_tsquery
-      ----------------------
-       'dummi' &amp; 'queri'
-      (1 row)
-    </screen>
+-----------------------------------
+ 'sad' &lt;-&gt; 'cat' | 'fat' &lt;-&gt; 'rat'
+(1 row)
+
+SELECT websearch_to_tsquery('english', 'signal -"segmentation fault"');
+         websearch_to_tsquery
+---------------------------------------
+ 'signal' &amp; !( 'segment' &lt;-&gt; 'fault' )
+(1 row)
+
+SELECT websearch_to_tsquery('english', '""" )( dummy \\ query &lt;-&gt;');
+ websearch_to_tsquery
+----------------------
+ 'dummi' &amp; 'queri'
+(1 row)
+</screen>
     </para>
   </sect2>
 
