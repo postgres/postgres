@@ -285,8 +285,7 @@ REINDEX INDEX distributors;
 <programlisting>
 CREATE INDEX coord_idx ON measured (x, y, (z + t));
 ALTER INDEX coord_idx ALTER COLUMN 3 SET STATISTICS 1000;
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

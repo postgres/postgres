@@ -681,8 +681,7 @@ PostgreSQL documentation
 <computeroutput>
 pg_ctl: server is running (PID: 13718)
 /usr/local/pgsql/bin/postgres "-D" "/usr/local/pgsql/data" "-p" "5433" "-B" "128"
-</computeroutput>
-</screen>
+</computeroutput></screen>
     The second line is the command that would be invoked in restart mode.
    </para>
   </refsect2>
