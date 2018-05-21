@@ -452,9 +452,9 @@ T301	Functional dependencies			NO	partially supported
 T312	OVERLAY function			YES	
 T321	Basic SQL-invoked routines			NO	
 T321	Basic SQL-invoked routines	01	User-defined functions with no overloading	YES	
-T321	Basic SQL-invoked routines	02	User-defined stored procedures with no overloading	NO	
+T321	Basic SQL-invoked routines	02	User-defined stored procedures with no overloading	YES	
 T321	Basic SQL-invoked routines	03	Function invocation	YES	
-T321	Basic SQL-invoked routines	04	CALL statement	NO	
+T321	Basic SQL-invoked routines	04	CALL statement	YES	
 T321	Basic SQL-invoked routines	05	RETURN statement	NO	
 T321	Basic SQL-invoked routines	06	ROUTINES view	YES	
 T321	Basic SQL-invoked routines	07	PARAMETERS view	YES	
@@ -480,7 +480,7 @@ T495	Combined data change and retrieval			NO	different syntax
 T501	Enhanced EXISTS predicate			YES	
 T502	Period predicates			NO	
 T511	Transaction counts			NO	
-T521	Named arguments in CALL statement			NO	
+T521	Named arguments in CALL statement			YES	
 T522	Default values for IN parameters of SQL-invoked procedures			NO	supported except DEFAULT key word in invocation
 T551	Optional key words for default syntax			YES	
 T561	Holdable locators			NO	
