@@ -875,8 +875,7 @@ data. Empty in ordinary tables.</entry>
   <filename>src/include/storage/bufpage.h</filename>.
  </para>
 
- <para id="heaptuple">
-
+ <para>
   Following the page header are item identifiers
   (<type>ItemIdData</type>), each requiring four bytes.
   An item identifier contains a byte-offset to
@@ -909,13 +908,17 @@ data. Empty in ordinary tables.</entry>
  <para>
 
   The final section is the <quote>special section</quote> which can
- contain anything the access method wishes to store.  For example,
+  contain anything the access method wishes to store.  For example,
   b-tree indexes store links to the page's left and right siblings,
   as well as some other data relevant to the index structure.
   Ordinary tables do not use a special section at all (indicated by setting
   <structfield>pd_special</structfield> to equal the page size).
 
  </para>
+
+ <sect2 id="storage-tuple-layout">
+
+ <title>Table Row Layout</title>
 
  <para>
 
@@ -1040,6 +1043,7 @@ data. Empty in ordinary tables.</entry>
   it might be compressed, too (see <xref linkend="storage-toast"/>).
 
  </para>
+ </sect2>
 </sect1>
 
 </chapter>

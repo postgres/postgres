@@ -58,9 +58,9 @@
    </para>
    <para>
     Tuple deforming is the process of transforming an on-disk tuple (see <xref
-    linkend="heaptuple"/>) into its in-memory representation. It can be
-    accelerated by creating a function specific to the table layout and the
-    number of columns to be extracted.
+    linkend="storage-tuple-layout"/>) into its in-memory representation.
+    It can be accelerated by creating a function specific to the table layout
+    and the number of columns to be extracted.
    </para>
   </sect2>
 
