@@ -1,0 +1,1665 @@
+# Swedish message translation file for pg_upgrade
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-05-18 17:16+0000\n"
+"PO-Revision-Date: 2018-05-18 22:45+0200\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: check.c:66
+#, c-format
+msgid ""
+"Performing Consistency Checks on Old Live Server\n"
+"------------------------------------------------\n"
+msgstr ""
+"Utför konsistenskontroller på gamla live-servern\n"
+"------------------------------------------------\n"
+
+#: check.c:72
+#, c-format
+msgid ""
+"Performing Consistency Checks\n"
+"-----------------------------\n"
+msgstr ""
+"Utför konsistenskontroller\n"
+"--------------------------\n"
+
+#: check.c:166
+#, c-format
+msgid ""
+"\n"
+"*Clusters are compatible*\n"
+msgstr ""
+"\n"
+"*Klustren är kompatibla*\n"
+
+#: check.c:172
+#, c-format
+msgid ""
+"\n"
+"If pg_upgrade fails after this point, you must re-initdb the\n"
+"new cluster before continuing.\n"
+msgstr ""
+"\n"
+"Om pg_upgrade misslyckas efter denna punkt så måste du\n"
+"köra om initdb på nya klustret innan du fortsätter.\n"
+
+#: check.c:208
+#, c-format
+msgid ""
+"Optimizer statistics are not transferred by pg_upgrade so,\n"
+"once you start the new server, consider running:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"Optimeringsstatistik överförs inte av pg_upgrade så\n"
+"när du startar nya servern så vill du nog köra:\n"
+"    %s\n"
+"\n"
+
+#: check.c:213
+#, c-format
+msgid ""
+"Optimizer statistics and free space information are not transferred\n"
+"by pg_upgrade so, once you start the new server, consider running:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"Optimeringsstatistik och information om ledigt utrymme överförs\n"
+"inte av pg_upgrade så när du startar nya servern så vill du nog köra:\n"
+"    %s\n"
+
+#: check.c:220
+#, c-format
+msgid ""
+"Running this script will delete the old cluster's data files:\n"
+"    %s\n"
+msgstr ""
+"När detta skript körs så raderas gamla klustrets datafiler:\n"
+"    %s\n"
+
+#: check.c:225
+#, c-format
+msgid ""
+"Could not create a script to delete the old cluster's data files\n"
+"because user-defined tablespaces or the new cluster's data directory\n"
+"exist in the old cluster directory.  The old cluster's contents must\n"
+"be deleted manually.\n"
+msgstr ""
+"Kunde inte skapa ett script som raderar gamla klustrets datafiler\n"
+"då användardefinierade tabellutrymmen eller nya klustrets datakatalog\n"
+"ligger i gamla klusterkatalogen. Det gamla klustrets innehåll\n"
+"måste raderas för hand.\n"
+
+#: check.c:235
+#, c-format
+msgid "Checking cluster versions"
+msgstr "Kontrollerar klustrets versioner"
+
+#: check.c:247
+#, c-format
+msgid "This utility can only upgrade from PostgreSQL version 8.4 and later.\n"
+msgstr "Detta verktyg kan bara uppgradera från PostgreSQL version 8.4 eller nyare.\n"
+
+#: check.c:251
+#, c-format
+msgid "This utility can only upgrade to PostgreSQL version %s.\n"
+msgstr "Detta verktyg kan bara uppgradera till PostgreSQL version %s.\n"
+
+#: check.c:260
+#, c-format
+msgid "This utility cannot be used to downgrade to older major PostgreSQL versions.\n"
+msgstr "Detta verktyg kan inte användas för att nergradera till äldre major-versioner av PostgreSQL.\n"
+
+#: check.c:265
+#, c-format
+msgid "Old cluster data and binary directories are from different major versions.\n"
+msgstr "Gammal klusterdata och binära kataloger är från olika major-versioner.\n"
+
+#: check.c:268
+#, c-format
+msgid "New cluster data and binary directories are from different major versions.\n"
+msgstr "Nya klusterdata och binära kataloger är från olika major-versioner.\n"
+
+#: check.c:285
+#, c-format
+msgid "When checking a pre-PG 9.1 live old server, you must specify the old server's port number.\n"
+msgstr "Vid kontroll av en gammal live-server före PG 9.1 så måste den gamla serverns portnummer anges.\n"
+
+#: check.c:289
+#, c-format
+msgid "When checking a live server, the old and new port numbers must be different.\n"
+msgstr "Vid kontroll av en live-server så måste gamla och nya portnumren vara olika.\n"
+
+#: check.c:304
+#, c-format
+msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
+msgstr "kodning för databasen \"%s\" matchar inte:  gammal \"%s\", ny \"%s\"\n"
+
+#: check.c:309
+#, c-format
+msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
+msgstr "lc_collate-värden för databasen \"%s\" matchar inte:  gammal \"%s\", ny \"%s\"\n"
+
+#: check.c:312
+#, c-format
+msgid "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
+msgstr "lc_ctype-värden för databasen \"%s\" matchar inte:  gammal \"%s\", ny \"%s\"\n"
+
+#: check.c:385
+#, c-format
+msgid "New cluster database \"%s\" is not empty\n"
+msgstr "Nya databasklustret \"%s\" är inte tomt\n"
+
+#: check.c:432
+#, c-format
+msgid "Creating script to analyze new cluster"
+msgstr "Skapar skript för att analysera nya klustret"
+
+#: check.c:446 check.c:574 check.c:838 check.c:941 check.c:1032 function.c:253
+#: option.c:480 version.c:57 version.c:156 version.c:257 version.c:339
+#, c-format
+msgid "could not open file \"%s\": %s\n"
+msgstr "kan inte öppna fil \"%s\": %s\n"
+
+#: check.c:501 check.c:630
+#, c-format
+msgid "could not add execute permission to file \"%s\": %s\n"
+msgstr "kan inte sätta rättigheten \"körbar\" på filen \"%s\": %s\n"
+
+#: check.c:537
+#, c-format
+msgid ""
+"\n"
+"WARNING:  new data directory should not be inside the old data directory, e.g. %s\n"
+msgstr ""
+"\n"
+"VARNING:  nya datakatalogen skall inte ligga inuti den gamla datakatalogen, dvs. %s\n"
+
+#: check.c:561
+#, c-format
+msgid ""
+"\n"
+"WARNING:  user-defined tablespace locations should not be inside the data directory, e.g. %s\n"
+msgstr ""
+"\n"
+"VARNING:  användardefinierade tabellutrymmens position skall inte vara i datakatalogen, dvs. %s\n"
+
+#: check.c:571
+#, c-format
+msgid "Creating script to delete old cluster"
+msgstr "Skapar skript för att radera gamla klustret"
+
+#: check.c:650
+#, c-format
+msgid "Checking database user is the install user"
+msgstr "Kontrollerar att databasanvändaren är installationsanvändaren"
+
+#: check.c:666
+#, c-format
+msgid "database user \"%s\" is not the install user\n"
+msgstr "databasanvändare \"%s\" är inte installationsanvändaren\n"
+
+#: check.c:677
+#, c-format
+msgid "could not determine the number of users\n"
+msgstr "kunde inte bestämma antalet användare\n"
+
+#: check.c:685
+#, c-format
+msgid "Only the install user can be defined in the new cluster.\n"
+msgstr "Bara installationsanvändaren får finnas i nya klustret.\n"
+
+#: check.c:705
+#, c-format
+msgid "Checking database connection settings"
+msgstr "Kontrollerar databasens anslutningsinställningar"
+
+#: check.c:727
+#, c-format
+msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false\n"
+msgstr "template0 får inte tillåta anslutningar, dvs dess pg_database.datallowconn måste vara false\n"
+
+#: check.c:737
+#, c-format
+msgid "All non-template0 databases must allow connections, i.e. their pg_database.datallowconn must be true\n"
+msgstr "Alla icke-template0-databaser måste tillåta anslutningar, dvs. deras pg_database.datallowconn måste vara true\n"
+
+#: check.c:762
+#, c-format
+msgid "Checking for prepared transactions"
+msgstr "Letar efter förberedda transaktioner"
+
+#: check.c:771
+#, c-format
+msgid "The source cluster contains prepared transactions\n"
+msgstr "Källklustret innehåller förberedda transaktioner\n"
+
+#: check.c:773
+#, c-format
+msgid "The target cluster contains prepared transactions\n"
+msgstr "Målklustret innehåller förberedda transaktioner\n"
+
+#: check.c:799
+#, c-format
+msgid "Checking for contrib/isn with bigint-passing mismatch"
+msgstr "Letar efter contrib/isn med bigint-anropsfel"
+
+#: check.c:860 check.c:964 check.c:1055 function.c:268 version.c:179
+#: version.c:280
+#, c-format
+msgid "fatal\n"
+msgstr "fatalt\n"
+
+#: check.c:861
+#, c-format
+msgid ""
+"Your installation contains \"contrib/isn\" functions which rely on the\n"
+"bigint data type.  Your old and new clusters pass bigint values\n"
+"differently so this cluster cannot currently be upgraded.  You can\n"
+"manually upgrade databases that use \"contrib/isn\" facilities and remove\n"
+"\"contrib/isn\" from the old cluster and restart the upgrade.  A list of\n"
+"the problem functions is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"Din installation innehåller \"contrib/isn\"-funktioner sin beror på\n"
+"datatypen bigint.  Ditt gamla och nya kluster skickar bigint-värden\n"
+"på olika sätt så detta kluster kan för närvarande inte uppgraderas. Du\n"
+"kan manuellt uppgradera databaser som använder \"contrib/isn\"-finesser\n"
+"genom att radera \"contrib/isn\" från gamla klustret och återstarta\n"
+"uppgraderingen. En lista med problemfunktionerna finns i filen:\n"
+"    %s\n"
+"\n"
+
+# FIXME: is this msgid correct?
+#: check.c:893
+#, c-format
+msgid "Checking for reg* data types in user tables"
+msgstr "Letar efter reg*-datatyper i användartabeller"
+
+#: check.c:965
+#, c-format
+msgid ""
+"Your installation contains one of the reg* data types in user tables.\n"
+"These data types reference system OIDs that are not preserved by\n"
+"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
+"remove the problem tables and restart the upgrade.  A list of the problem\n"
+"columns is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"Din installation använder en av reg*-datatyperna i en användartabell.\n"
+"Dessa datatyper refererar system-OID:er som inte bevaras av pg_upgrade\n"
+"så detta kluster kan för närvarande inte uppgraderas. Du kan ta bort\n"
+"problemtabellerna och starta om uppgraderingen. En lista med\n"
+"problemkolumnerna finns i filen:\n"
+"    %s\n"
+"\n"
+
+# FIXME: is this msgid correct?
+#: check.c:990
+#, c-format
+msgid "Checking for incompatible \"jsonb\" data type"
+msgstr "Letar efter inkompatibel \"jsonb\"-datatyp"
+
+#: check.c:1056
+#, c-format
+msgid ""
+"Your installation contains the \"jsonb\" data type in user tables.\n"
+"The internal format of \"jsonb\" changed during 9.4 beta so this cluster cannot currently\n"
+"be upgraded.  You can remove the problem tables and restart the upgrade.  A list\n"
+"of the problem columns is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"Din installation innehåller \"jsonb\"-datatypen i användartabeller.\n"
+"Interna formatet för \"jsonb\" ändrades under 9.4-betan så detta kluster kan\n"
+"för närvarande inte uppgraderas. Du kan ta bort problemtabellerna och\n"
+"starta om uppgraderingen. En lista med problemkolumnerna finns i filen:\n"
+"    %s\n"
+"\n"
+
+#: check.c:1077
+#, c-format
+msgid "Checking for roles starting with \"pg_\""
+msgstr "Letar efter roller som startar med \"pg_\""
+
+#: check.c:1087
+#, c-format
+msgid "The source cluster contains roles starting with \"pg_\"\n"
+msgstr "Källklustret innehåller roller som startar med \"pg_\"\n"
+
+#: check.c:1089
+#, c-format
+msgid "The target cluster contains roles starting with \"pg_\"\n"
+msgstr "Målklustret innehåller roller som startar med \"pg_\"\n"
+
+#: check.c:1115
+#, c-format
+msgid "failed to get the current locale\n"
+msgstr "misslyckades med att hämta aktuell lokal\n"
+
+#: check.c:1124
+#, c-format
+msgid "failed to get system locale name for \"%s\"\n"
+msgstr "misslyckades med att hämta systemlokalnamn för \"%s\"\n"
+
+#: check.c:1130
+#, c-format
+msgid "failed to restore old locale \"%s\"\n"
+msgstr "misslyckades med att återställa gamla lokalen \"%s\"\n"
+
+#: controldata.c:128
+#, c-format
+msgid "could not get control data using %s: %s\n"
+msgstr "kunde inte hämta kontrolldata med %s: %s\n"
+
+#: controldata.c:141 dump.c:51 pg_upgrade.c:332 pg_upgrade.c:369
+#: relfilenode.c:244 util.c:80
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: controldata.c:148
+#, c-format
+msgid "%d: pg_resetwal problem\n"
+msgstr "%d: pg_resetwal-problem\n"
+
+#: controldata.c:158 controldata.c:168 controldata.c:179 controldata.c:190
+#: controldata.c:201 controldata.c:220 controldata.c:231 controldata.c:242
+#: controldata.c:253 controldata.c:264 controldata.c:275 controldata.c:278
+#: controldata.c:282 controldata.c:292 controldata.c:304 controldata.c:315
+#: controldata.c:326 controldata.c:337 controldata.c:348 controldata.c:359
+#: controldata.c:370 controldata.c:381 controldata.c:392 controldata.c:403
+#: controldata.c:414
+#, c-format
+msgid "%d: controldata retrieval problem\n"
+msgstr "%d: problem vid hämtning av kontrolldata\n"
+
+#: controldata.c:479
+#, c-format
+msgid "The source cluster lacks some required control information:\n"
+msgstr "Källklustret saknar lite kontrolldata som krävs:\n"
+
+#: controldata.c:482
+#, c-format
+msgid "The target cluster lacks some required control information:\n"
+msgstr "Målklustret saknar lite kontrolldata som krävs:\n"
+
+#: controldata.c:485
+#, c-format
+msgid "  checkpoint next XID\n"
+msgstr "  checkpoint nästa-XID\n"
+
+#: controldata.c:488
+#, c-format
+msgid "  latest checkpoint next OID\n"
+msgstr "  senaste checkpoint nästa-OID\n"
+
+#: controldata.c:491
+#, c-format
+msgid "  latest checkpoint next MultiXactId\n"
+msgstr "  senaster checkpoint nästa-MultiXactId\n"
+
+#: controldata.c:495
+#, c-format
+msgid "  latest checkpoint oldest MultiXactId\n"
+msgstr "  senaste checkpoint äldsta-MultiXactId\n"
+
+#: controldata.c:498
+#, c-format
+msgid "  latest checkpoint next MultiXactOffset\n"
+msgstr "  senaste checkpoint nästa-MultiXactOffset\n"
+
+#: controldata.c:501
+#, c-format
+msgid "  first WAL segment after reset\n"
+msgstr "  första WAL-segmentet efter reset\n"
+
+#: controldata.c:504
+#, c-format
+msgid "  float8 argument passing method\n"
+msgstr "  float8 argumentöverföringsmetod\n"
+
+#: controldata.c:507
+#, c-format
+msgid "  maximum alignment\n"
+msgstr "  maximal alignment\n"
+
+#: controldata.c:510
+#, c-format
+msgid "  block size\n"
+msgstr "  blockstorlek\n"
+
+#: controldata.c:513
+#, c-format
+msgid "  large relation segment size\n"
+msgstr "  stora relationers segmentstorlek\n"
+
+#: controldata.c:516
+#, c-format
+msgid "  WAL block size\n"
+msgstr "  WAL-blockstorlek\n"
+
+#: controldata.c:519
+#, c-format
+msgid "  WAL segment size\n"
+msgstr "  WAL-segmentstorlek\n"
+
+#: controldata.c:522
+#, c-format
+msgid "  maximum identifier length\n"
+msgstr "  maximal identifierarlängd\n"
+
+#: controldata.c:525
+#, c-format
+msgid "  maximum number of indexed columns\n"
+msgstr "  maximalt antal indexerade kolumner\n"
+
+#: controldata.c:528
+#, c-format
+msgid "  maximum TOAST chunk size\n"
+msgstr "  maximal TOAST-chunkstorlek\n"
+
+#: controldata.c:532
+#, c-format
+msgid "  large-object chunk size\n"
+msgstr "  stora-objekt chunkstorlek\n"
+
+#: controldata.c:535
+#, c-format
+msgid "  dates/times are integers?\n"
+msgstr "  datum/tid är heltal?\n"
+
+#: controldata.c:539
+#, c-format
+msgid "  data checksum version\n"
+msgstr "  datachecksumversion\n"
+
+#: controldata.c:541
+#, c-format
+msgid "Cannot continue without required control information, terminating\n"
+msgstr "Kan inte fortsätta utan kontrollinformation som krävs, avslutar\n"
+
+#: controldata.c:556
+#, c-format
+msgid ""
+"old and new pg_controldata alignments are invalid or do not match\n"
+"Likely one cluster is a 32-bit install, the other 64-bit\n"
+msgstr ""
+"gamla och nya pg_controldata-alignments är ogiltiga eller matchar inte.\n"
+"Troligen är ett kluster en 32-bitars-installation och den andra 64-bitars\n"
+
+#: controldata.c:560
+#, c-format
+msgid "old and new pg_controldata block sizes are invalid or do not match\n"
+msgstr "gamla och nya pg_controldata-blockstorlekar är ogiltiga eller matchar inte\n"
+
+#: controldata.c:563
+#, c-format
+msgid "old and new pg_controldata maximum relation segment sizes are invalid or do not match\n"
+msgstr "gamla och nya pg_controldata maximala relationssegmentstorlekar är ogiltiga eller matchar inte\n"
+
+#: controldata.c:566
+#, c-format
+msgid "old and new pg_controldata WAL block sizes are invalid or do not match\n"
+msgstr "gamla och nya pg_controldata WAL-blockstorlekar är ogiltiga eller matchar inte\n"
+
+#: controldata.c:569
+#, c-format
+msgid "old and new pg_controldata WAL segment sizes are invalid or do not match\n"
+msgstr "gamla och nya pg_controldata WAL-segmentstorlekar är ogiltiga eller matchar inte\n"
+
+#: controldata.c:572
+#, c-format
+msgid "old and new pg_controldata maximum identifier lengths are invalid or do not match\n"
+msgstr "gamla och nya pg_controldata maximal identifierarlängder är ogiltiga eller matchar inte\n"
+
+#: controldata.c:575
+#, c-format
+msgid "old and new pg_controldata maximum indexed columns are invalid or do not match\n"
+msgstr "gamla och nya pg_controldata maxilmalt indexerade kolumner ogiltiga eller matchar inte\n"
+
+#: controldata.c:578
+#, c-format
+msgid "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n"
+msgstr "gamla och nya pg_controldata maximal TOAST-chunkstorlek ogiltiga eller matchar inte\n"
+
+#: controldata.c:583
+#, c-format
+msgid "old and new pg_controldata large-object chunk sizes are invalid or do not match\n"
+msgstr "gamla och nya pg_controldata stora-objekt-chunkstorlekar är ogiltiga eller matchar inte\n"
+
+#: controldata.c:586
+#, c-format
+msgid "old and new pg_controldata date/time storage types do not match\n"
+msgstr "gamla och nya pg_controldata datum/tid-lagringstyper matchar inte\n"
+
+#: controldata.c:599
+#, c-format
+msgid "old cluster does not use data checksums but the new one does\n"
+msgstr "gamla klustret använder inte datachecksummor men nya gör det\n"
+
+#: controldata.c:602
+#, c-format
+msgid "old cluster uses data checksums but the new one does not\n"
+msgstr "gamla klustret använder datachecksummor men nya gör inte det\n"
+
+#: controldata.c:604
+#, c-format
+msgid "old and new cluster pg_controldata checksum versions do not match\n"
+msgstr "gamla och nya klustrets pg_controldata checksumversioner matchar inte\n"
+
+#: controldata.c:615
+#, c-format
+msgid "Adding \".old\" suffix to old global/pg_control"
+msgstr "Lägger till \".old\"-suffix till gamla global/pg_control"
+
+#: controldata.c:620
+#, c-format
+msgid "Unable to rename %s to %s.\n"
+msgstr "Kan inte byta namn på %s till %s.\n"
+
+#: controldata.c:623
+#, c-format
+msgid ""
+"\n"
+"If you want to start the old cluster, you will need to remove\n"
+"the \".old\" suffix from %s/global/pg_control.old.\n"
+"Because \"link\" mode was used, the old cluster cannot be safely\n"
+"started once the new cluster has been started.\n"
+"\n"
+msgstr ""
+"\n"
+"Om du vill starta gamla klustret så måste du ta bort\n"
+"\".old\"-suffixet från %s/global/pg_control.old.\n"
+"Detta då \"link\"-läge användes och gamla klustret kan inte\n"
+"startas på ett säkert sätt efter att nya klustret startats.\n"
+"\n"
+
+#: dump.c:22
+#, c-format
+msgid "Creating dump of global objects"
+msgstr "Skapar dump med globala objekt"
+
+#: dump.c:33
+#, c-format
+msgid "Creating dump of database schemas\n"
+msgstr "Skapar dump med databasscheman\n"
+
+#: exec.c:44
+#, c-format
+msgid "could not get pg_ctl version data using %s: %s\n"
+msgstr "kunde inte hämta pg_ctl versionsdata med %s: %s\n"
+
+#: exec.c:50
+#, c-format
+msgid "could not get pg_ctl version output from %s\n"
+msgstr "kunde inte läsa versionutdata för pg_ctl från %s\n"
+
+#: exec.c:104 exec.c:108
+#, c-format
+msgid "command too long\n"
+msgstr "kommandot för långt\n"
+
+#: exec.c:110 util.c:38 util.c:226
+#, c-format
+msgid "%s\n"
+msgstr "%s\n"
+
+#: exec.c:149 exec.c:204 option.c:101 option.c:217
+#, c-format
+msgid "could not write to log file \"%s\"\n"
+msgstr "kunde inte skriva till loggfil: \"%s\"\n"
+
+#: exec.c:178
+#, c-format
+msgid ""
+"\n"
+"*failure*"
+msgstr ""
+"\n"
+"*misslyckande*"
+
+#: exec.c:181
+#, c-format
+msgid "There were problems executing \"%s\"\n"
+msgstr "Det var problem med att köra \"%s\"\n"
+
+#: exec.c:184
+#, c-format
+msgid ""
+"Consult the last few lines of \"%s\" or \"%s\" for\n"
+"the probable cause of the failure.\n"
+msgstr ""
+"Se de sista raderna i \"%s\" eller \"%s\" för\n"
+"en trolig orsak till misslyckandet.\n"
+
+#: exec.c:189
+#, c-format
+msgid ""
+"Consult the last few lines of \"%s\" for\n"
+"the probable cause of the failure.\n"
+msgstr ""
+"Se de sista raderna i \"%s\" för\n"
+"en trolig orsak till misslyckandet.\n"
+
+#: exec.c:230
+#, c-format
+msgid "could not open file \"%s\" for reading: %s\n"
+msgstr "kunde inte öppna fil \"%s\" för läsning: %s\n"
+
+#: exec.c:257
+#, c-format
+msgid "You must have read and write access in the current directory.\n"
+msgstr "Du måste ha läs och skrivrättigheter till den aktuella katalogen.\n"
+
+#: exec.c:310 exec.c:372 exec.c:427
+#, c-format
+msgid "check for \"%s\" failed: %s\n"
+msgstr "kontroll av \"%s\" misslyckades: %s\n"
+
+#: exec.c:313 exec.c:375
+#, c-format
+msgid "\"%s\" is not a directory\n"
+msgstr "\"%s\" är inte en katalog\n"
+
+#: exec.c:430
+#, c-format
+msgid "check for \"%s\" failed: not a regular file\n"
+msgstr "kontroll av \"%s\" misslyckades: inte en vanlig fil\n"
+
+#: exec.c:442
+#, c-format
+msgid "check for \"%s\" failed: cannot read file (permission denied)\n"
+msgstr "kontroll av \"%s\" misslyckades: kan inte läsa filen (rättighet saknas)\n"
+
+#: exec.c:450
+#, c-format
+msgid "check for \"%s\" failed: cannot execute (permission denied)\n"
+msgstr "kontroll av \"%s\" misslyckades: kan inte exekvera (rättighet saknas)\n"
+
+#: file.c:44 file.c:147
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not open file \"%s\": %s\n"
+msgstr "fel vid kopiering av relation \"%s.%s\": kunde inte öppna filen \"%s\": %s\n"
+
+#: file.c:49 file.c:156
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not create file \"%s\": %s\n"
+msgstr "fel vid kopiering av relation \"%s.%s\": kunde inte skapa filen \"%s\": %s\n"
+
+#: file.c:63 file.c:187
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not read file \"%s\": %s\n"
+msgstr "fel vid kopiering av relation \"%s.%s\": kunde inte läsa filen \"%s\": %s\n"
+
+#: file.c:75 file.c:265
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not write file \"%s\": %s\n"
+msgstr "fel vid kopiering av relation \"%s.%s\": kunde inte skriva filen \"%s\": %s\n"
+
+#: file.c:89
+#, c-format
+msgid "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
+msgstr "fel vid kopiering av relation \"%s.%s\" (\"%s\" till \"%s\"): %s\n"
+
+#: file.c:108
+#, c-format
+msgid "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
+msgstr "fel vid skapande av länk för relation \"%s.%s\" (\"%s\" till \"%s\"): %s\n"
+
+#: file.c:151
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not stat file \"%s\": %s\n"
+msgstr "fel vid kopiering av relation \"%s.%s\": kunde inte göra stat på file \"%s\": %s\n"
+
+#: file.c:190
+#, c-format
+msgid "error while copying relation \"%s.%s\": partial page found in file \"%s\"\n"
+msgstr "fel vid kopiering av relation \"%s.%s\": partiell sida hittad i fil \"%s\"\n"
+
+#: file.c:293
+#, c-format
+msgid ""
+"could not create hard link between old and new data directories: %s\n"
+"In link mode the old and new data directories must be on the same file system.\n"
+msgstr ""
+"kunde inte skapa hård länk mellan gamla och nya datakatalogerna: %s\n"
+"I länk-läge måste gamla och nya datakatalogerna vara i samma filsystem.\n"
+
+#: function.c:110
+#, c-format
+msgid ""
+"\n"
+"The old cluster has a \"plpython_call_handler\" function defined\n"
+"in the \"public\" schema which is a duplicate of the one defined\n"
+"in the \"pg_catalog\" schema.  You can confirm this by executing\n"
+"in psql:\n"
+"\n"
+"    \\df *.plpython_call_handler\n"
+"\n"
+"The \"public\" schema version of this function was created by a\n"
+"pre-8.1 install of plpython, and must be removed for pg_upgrade\n"
+"to complete because it references a now-obsolete \"plpython\"\n"
+"shared object file.  You can remove the \"public\" schema version\n"
+"of this function by running the following command:\n"
+"\n"
+"    DROP FUNCTION public.plpython_call_handler()\n"
+"\n"
+"in each affected database:\n"
+"\n"
+msgstr ""
+"\n"
+"Det gamla klustret har en \"plpython_call_handler\"-funktion definierad\n"
+"i \"public\"-schemat vilket är en kopia på den som definierats\n"
+"i \"pg_catalog\"-schemat.  Du kan verifiera detta genom att i\n"
+"psql köra:\n"
+"\n"
+"    \\df *.plpython_call_handler\n"
+"\n"
+"\"public\"-schema-versionen av denna funktion har skapats av en\n"
+"pre-8.1-installation av plpython och måste raderas för att pg_upgrade\n"
+"skall kunna gå klart då den referar till en nu föråldrad\n"
+"\"plpython\" delad objektfil.  Du kan ta bort \"public\"-schemaversionen\n"
+"av denna funktion genom att köra följande kommando:\n"
+"\n"
+"    DROP FUNCTION public.plpython_call_handler()\n"
+"\n"
+"i varje inblandad databas:\n"
+"\n"
+
+#: function.c:128
+#, c-format
+msgid "    %s\n"
+msgstr "    %s\n"
+
+#: function.c:138
+#, c-format
+msgid "Remove the problem functions from the old cluster to continue.\n"
+msgstr "Ta bort problemfunktionerna från gamla klustret för att fortsätta.\n"
+
+#: function.c:211
+#, c-format
+msgid "Checking for presence of required libraries"
+msgstr "Kontrollerar att krävda länkbibliotek finns"
+
+#: function.c:255
+#, c-format
+msgid "could not load library \"%s\": %s"
+msgstr "kunde inte ladda länkbibliotek \"%s\": %s"
+
+#: function.c:269
+#, c-format
+msgid ""
+"Your installation references loadable libraries that are missing from the\n"
+"new installation.  You can add these libraries to the new installation,\n"
+"or remove the functions using them from the old installation.  A list of\n"
+"problem libraries is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"Din installation refererar till laddbara bibliotek som saknas i nya\n"
+"installationen. Du kan lägga till dessa itll nya installationen eller\n"
+"ta bort funktionerna som använder dem i gamla installationen. En lista\n"
+"med problembiblioteken finns i filen:\n"
+"    %s\n"
+"\n"
+
+#: info.c:133
+#, c-format
+msgid "Relation names for OID %u in database \"%s\" do not match: old name \"%s.%s\", new name \"%s.%s\"\n"
+msgstr "Relationsname för OID %u i databas \"%s\" matchar inte: gammalt namn \"%s.%s\", nytt namn \"%s.%s\"\n"
+
+#: info.c:153
+#, c-format
+msgid "Failed to match up old and new tables in database \"%s\"\n"
+msgstr "Misslyckades med att matcha ihop gamla och nya tabeller i databas \"%s\"\n"
+
+#: info.c:242
+#, c-format
+msgid " which is an index on \"%s.%s\""
+msgstr " vilket är ett index för \"%s.%s\""
+
+#: info.c:252
+#, c-format
+msgid " which is an index on OID %u"
+msgstr " vilket är ett index för OID %u"
+
+#: info.c:264
+#, c-format
+msgid " which is the TOAST table for \"%s.%s\""
+msgstr " vilket är TOAST-tabellen för \"%s.%s\""
+
+#: info.c:272
+#, c-format
+msgid " which is the TOAST table for OID %u"
+msgstr " vilket är TOAST-tabellen för OID %u"
+
+#: info.c:276
+#, c-format
+msgid "No match found in old cluster for new relation with OID %u in database \"%s\": %s\n"
+msgstr "Ingen träff hittad i gamla klustret för ny relation med OID %u i databas \"%s\": %s\n"
+
+#: info.c:279
+#, c-format
+msgid "No match found in new cluster for old relation with OID %u in database \"%s\": %s\n"
+msgstr "Ingen träff hittad i nya klustret för gammal relation med OID %u i databas \"%s\": %s\n"
+
+#: info.c:291
+#, c-format
+msgid "mappings for database \"%s\":\n"
+msgstr "avbildningar för databasen \"%s\":\n"
+
+#: info.c:294
+#, c-format
+msgid "%s.%s: %u to %u\n"
+msgstr "%s.%s: %u till %u\n"
+
+#: info.c:299 info.c:638
+#, c-format
+msgid ""
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+
+#: info.c:324
+#, c-format
+msgid ""
+"\n"
+"source databases:\n"
+msgstr ""
+"\n"
+"källdatabaser:\n"
+
+#: info.c:326
+#, c-format
+msgid ""
+"\n"
+"target databases:\n"
+msgstr ""
+"\n"
+"måldatabaser:\n"
+
+#: info.c:636
+#, c-format
+msgid "Database: %s\n"
+msgstr "Databas: %s\n"
+
+#: info.c:649
+#, c-format
+msgid "relname: %s.%s: reloid: %u reltblspace: %s\n"
+msgstr "relnamn: %s.%s: reloid: %u reltblutrymme: %s\n"
+
+#: option.c:98
+#, c-format
+msgid "%s: cannot be run as root\n"
+msgstr "%s: kan inte köras som root\n"
+
+#: option.c:172
+#, c-format
+msgid "invalid old port number\n"
+msgstr "ogiltigt gammalt portnummer\n"
+
+#: option.c:180
+#, c-format
+msgid "invalid new port number\n"
+msgstr "ogiltigt nytt portnummer\n"
+
+#: option.c:202
+#, c-format
+msgid "Running in verbose mode\n"
+msgstr "Kör i utförligt läge\n"
+
+#: option.c:207
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Försök med \"%s --help\" för mer information.\n"
+
+# FIXME: the source code need to be fixed here. it paste words together
+#: option.c:242
+msgid "old cluster binaries reside"
+msgstr "gamla klusterbinärer är i"
+
+#: option.c:244
+msgid "new cluster binaries reside"
+msgstr "nya klusterbinärer är i"
+
+#: option.c:246
+msgid "old cluster data resides"
+msgstr "gamla klusterdatan är i"
+
+#: option.c:248
+msgid "new cluster data resides"
+msgstr "nya klusterdatan är i"
+
+#: option.c:265 option.c:462
+#, c-format
+msgid "could not determine current directory\n"
+msgstr "kunde inte bestämma aktuell katalog\n"
+
+#: option.c:268
+#, c-format
+msgid "cannot run pg_upgrade from inside the new cluster data directory on Windows\n"
+msgstr "kan inte köra pg_upgrade inifrån nya klusterdatakatalogen i Windows\n"
+
+#: option.c:277
+#, c-format
+msgid ""
+"pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n"
+"\n"
+msgstr ""
+"pg_upgrade uppgraderar ett PostgreSQL-kluster till en annan major-version.\n"
+"\n"
+
+#: option.c:278
+#, c-format
+msgid "Usage:\n"
+msgstr "Användning:\n"
+
+#: option.c:279
+#, c-format
+msgid ""
+"  pg_upgrade [OPTION]...\n"
+"\n"
+msgstr ""
+"  pg_upgrade [FLAGGA]...\n"
+"\n"
+
+#: option.c:280
+#, c-format
+msgid "Options:\n"
+msgstr "Flaggor:\n"
+
+#: option.c:281
+#, c-format
+msgid "  -b, --old-bindir=BINDIR       old cluster executable directory\n"
+msgstr "  -b, --old-bindir=BINKAT       gamla klustrets katalog för körbara filer\n"
+
+#: option.c:282
+#, c-format
+msgid "  -B, --new-bindir=BINDIR       new cluster executable directory\n"
+msgstr "  -B, --new-bindir=BINKAT       nya klustrets katalog för körbara filer\n"
+
+#: option.c:283
+#, c-format
+msgid "  -c, --check                   check clusters only, don't change any data\n"
+msgstr "  -c, --check                   testa klustren bara, ändra ingen data\n"
+
+#: option.c:284
+#, c-format
+msgid "  -d, --old-datadir=DATADIR     old cluster data directory\n"
+msgstr "  -d, --old-datadir=DATAKAT     gamla klustrets datakatalog\n"
+
+#: option.c:285
+#, c-format
+msgid "  -D, --new-datadir=DATADIR     new cluster data directory\n"
+msgstr "  -D, --new-datadir=DATAKAT     nya klustrets datakatalog\n"
+
+#: option.c:286
+#, c-format
+msgid "  -j, --jobs                    number of simultaneous processes or threads to use\n"
+msgstr "  -j, --jobs                    antal samtidiga processer eller trådar att använda\n"
+
+#: option.c:287
+#, c-format
+msgid "  -k, --link                    link instead of copying files to new cluster\n"
+msgstr "  -k, --link                    länka istället för att kopiera filer till nya klustret\n"
+
+#: option.c:288
+#, c-format
+msgid "  -o, --old-options=OPTIONS     old cluster options to pass to the server\n"
+msgstr "  -o, --old-options=FLAGGOR     serverflaggor för gamla klustret\n"
+
+#: option.c:289
+#, c-format
+msgid "  -O, --new-options=OPTIONS     new cluster options to pass to the server\n"
+msgstr "  -O, --new-options=FLAGGOR     serverflaggor för nya klustret\n"
+
+#: option.c:290
+#, c-format
+msgid "  -p, --old-port=PORT           old cluster port number (default %d)\n"
+msgstr "  -p, --old-port=PORT           gamla klustrets portnummer (standard %d)\n"
+
+#: option.c:291
+#, c-format
+msgid "  -P, --new-port=PORT           new cluster port number (default %d)\n"
+msgstr "  -P, --new-port=PORT           nya klustrets portnummer (standard %d)\n"
+
+#: option.c:292
+#, c-format
+msgid "  -r, --retain                  retain SQL and log files after success\n"
+msgstr "  -r, --retain                  behåll SQL och loggfiler efter lyckad uppgradering\n"
+
+#: option.c:293
+#, c-format
+msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
+msgstr "  -U, --username=NAMN           klustrets superanvändare (standard \"%s\")\n"
+
+#: option.c:294
+#, c-format
+msgid "  -v, --verbose                 enable verbose internal logging\n"
+msgstr "  -v, --verbose                 slå på utförligt intern loggning\n"
+
+#: option.c:295
+#, c-format
+msgid "  -V, --version                 display version information, then exit\n"
+msgstr "  -V, --version                 visa versionsinformation, avsluta sedan\n"
+
+#: option.c:296
+#, c-format
+msgid "  -?, --help                    show this help, then exit\n"
+msgstr "  -?, --help                    visa denns hjälp, avsluta sedan\n"
+
+#: option.c:297
+#, c-format
+msgid ""
+"\n"
+"Before running pg_upgrade you must:\n"
+"  create a new database cluster (using the new version of initdb)\n"
+"  shutdown the postmaster servicing the old cluster\n"
+"  shutdown the postmaster servicing the new cluster\n"
+msgstr ""
+"\n"
+"Innan du kör pg_upgrade måste du:\n"
+"  skapa ett nytt databaskluster (med nya versionens initdb)\n"
+"  stänga ner den postmaster som hanterar gamla klustret\n"
+"  stänga ner den postmaster som hanterar nya klustret\n"
+
+#: option.c:302
+#, c-format
+msgid ""
+"\n"
+"When you run pg_upgrade, you must provide the following information:\n"
+"  the data directory for the old cluster  (-d DATADIR)\n"
+"  the data directory for the new cluster  (-D DATADIR)\n"
+"  the \"bin\" directory for the old version (-b BINDIR)\n"
+"  the \"bin\" directory for the new version (-B BINDIR)\n"
+msgstr ""
+"\n"
+"När du kör pg_upgrade måste du ange följande information:\n"
+"  datakatalogen för gamla klustret  (-d DATAKAT)\n"
+"  datakatalogen för nya klustret  (-D DATAKAT)\n"
+"  \"bin\"-katalogen för gamla versionen (-b BINKAT)\n"
+"  \"bin\"-katalogen för nya versionen (-B BINKAT)\n"
+
+#: option.c:308
+#, c-format
+msgid ""
+"\n"
+"For example:\n"
+"  pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n"
+"or\n"
+msgstr ""
+"\n"
+"Till exempel:\n"
+"  pg_upgrade -d gammaltKluster/data -D nyttKluster/data -b gammaltKluster/bin -B nyttKluster/bin\n"
+"eller\n"
+
+#: option.c:313
+#, c-format
+msgid ""
+"  $ export PGDATAOLD=oldCluster/data\n"
+"  $ export PGDATANEW=newCluster/data\n"
+"  $ export PGBINOLD=oldCluster/bin\n"
+"  $ export PGBINNEW=newCluster/bin\n"
+"  $ pg_upgrade\n"
+msgstr ""
+"  $ export PGDATAOLD=gammaltKluster/data\n"
+"  $ export PGDATANEW=nyttKluster/data\n"
+"  $ export PGBINOLD=gammaltKluster/bin\n"
+"  $ export PGBINNEW=nyttKluster/bin\n"
+"  $ pg_upgrade\n"
+
+#: option.c:319
+#, c-format
+msgid ""
+"  C:\\> set PGDATAOLD=oldCluster/data\n"
+"  C:\\> set PGDATANEW=newCluster/data\n"
+"  C:\\> set PGBINOLD=oldCluster/bin\n"
+"  C:\\> set PGBINNEW=newCluster/bin\n"
+"  C:\\> pg_upgrade\n"
+msgstr ""
+"  C:\\> set PGDATAOLD=gammaltKluster/data\n"
+"  C:\\> set PGDATANEW=nyttKluster/data\n"
+"  C:\\> set PGBINOLD=gammaltKluster/bin\n"
+"  C:\\> set PGBINNEW=nyttKluster/bin\n"
+"  C:\\> pg_upgrade\n"
+
+#: option.c:325
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
+
+#: option.c:358
+#, c-format
+msgid ""
+"You must identify the directory where the %s.\n"
+"Please use the %s command-line option or the %s environment variable.\n"
+msgstr ""
+"Du måste identifiera katalogen där %s.\n"
+"Använd kommandoradsflaggan %s eller omgivningsvariabeln %s.\n"
+
+#: option.c:409
+#, c-format
+msgid "Finding the real data directory for the source cluster"
+msgstr "Letar efter den riktiga datakatalogen i källklustret"
+
+#: option.c:411
+#, c-format
+msgid "Finding the real data directory for the target cluster"
+msgstr "Letar efter den riktiga datakatalogen för målklustret"
+
+#: option.c:423
+#, c-format
+msgid "could not get data directory using %s: %s\n"
+msgstr "kunde inte hämta datakatalogen med %s: %s\n"
+
+#: option.c:488
+#, c-format
+msgid "could not read line %d from file \"%s\": %s\n"
+msgstr "kunde inte läsa rad %d från fil \"%s\": %s\n"
+
+#: option.c:506
+#, c-format
+msgid "user-supplied old port number %hu corrected to %hu\n"
+msgstr "användarangivet gammalt portnummer %hu korrigerat till %hu\n"
+
+#: parallel.c:128 parallel.c:241
+#, c-format
+msgid "could not create worker process: %s\n"
+msgstr "kunde inte skapa arbetsprocess: %s\n"
+
+#: parallel.c:147 parallel.c:262
+#, c-format
+msgid "could not create worker thread: %s\n"
+msgstr "kunde inte skapa arbetstråd: %s\n"
+
+#: parallel.c:310 parallel.c:325
+#, c-format
+msgid "child worker exited abnormally: %s\n"
+msgstr "barnarbetare avslutade felaktigt: %s\n"
+
+#: pg_upgrade.c:106
+#, c-format
+msgid "could not read permissions of directory \"%s\": %s\n"
+msgstr "kunde inte läsa rättigheter på katalog \"%s\": %s\n"
+
+#: pg_upgrade.c:123
+#, c-format
+msgid ""
+"\n"
+"Performing Upgrade\n"
+"------------------\n"
+msgstr ""
+"\n"
+"Utför uppgradering\n"
+"------------------\n"
+
+#: pg_upgrade.c:166
+#, c-format
+msgid "Setting next OID for new cluster"
+msgstr "Sätter nästa OID för nya klustret"
+
+#: pg_upgrade.c:173
+#, c-format
+msgid "Sync data directory to disk"
+msgstr "Synkar datakatalog till disk"
+
+#: pg_upgrade.c:185
+#, c-format
+msgid ""
+"\n"
+"Upgrade Complete\n"
+"----------------\n"
+msgstr ""
+"\n"
+"Uppgradering klar\n"
+"-----------------\n"
+
+#: pg_upgrade.c:230
+#, c-format
+msgid ""
+"There seems to be a postmaster servicing the old cluster.\n"
+"Please shutdown that postmaster and try again.\n"
+msgstr ""
+"Det verkar vara en postmaster igång som hanterar gamla klustret.\n"
+"Stänga ner den postmastern och försök igen.\n"
+
+#: pg_upgrade.c:243
+#, c-format
+msgid ""
+"There seems to be a postmaster servicing the new cluster.\n"
+"Please shutdown that postmaster and try again.\n"
+msgstr ""
+"Det verkar vara en postmaster igång som hanterar nya klustret.\n"
+"Stänga ner den postmastern och försök igen.\n"
+
+#: pg_upgrade.c:249
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: kunde inte hitta det egna programmets körbara fil\n"
+
+#: pg_upgrade.c:266
+#, c-format
+msgid "Analyzing all rows in the new cluster"
+msgstr "Analyserar alla rader i nya klustret"
+
+#: pg_upgrade.c:279
+#, c-format
+msgid "Freezing all rows in the new cluster"
+msgstr "Fryser alla rader i nya klustret"
+
+#: pg_upgrade.c:299
+#, c-format
+msgid "Restoring global objects in the new cluster"
+msgstr "Återställer globala objekt i nya klustret"
+
+#: pg_upgrade.c:314
+#, c-format
+msgid "Restoring database schemas in the new cluster\n"
+msgstr "Återställer databasscheman i nya klustret\n"
+
+#: pg_upgrade.c:420
+#, c-format
+msgid "Deleting files from new %s"
+msgstr "Raderar filer från ny %s"
+
+#: pg_upgrade.c:424
+#, c-format
+msgid "could not delete directory \"%s\"\n"
+msgstr "kunde inte ta bort katalog \"%s\"\n"
+
+#: pg_upgrade.c:443
+#, c-format
+msgid "Copying old %s to new server"
+msgstr "Kopierar gammal %s till ny server"
+
+#: pg_upgrade.c:470
+#, c-format
+msgid "Setting next transaction ID and epoch for new cluster"
+msgstr "Sätter nästa transaktions-ID och epoch för nytt kluster"
+
+#: pg_upgrade.c:500
+#, c-format
+msgid "Setting next multixact ID and offset for new cluster"
+msgstr "Sätter nästa multixact-ID och offset för nytt kluster"
+
+#: pg_upgrade.c:524
+#, c-format
+msgid "Setting oldest multixact ID in new cluster"
+msgstr "Sätter äldsta multixact-ID i nytt kluster"
+
+#: pg_upgrade.c:544
+#, c-format
+msgid "Resetting WAL archives"
+msgstr "Resettar WAL-arkiv"
+
+#: pg_upgrade.c:587
+#, c-format
+msgid "Setting frozenxid and minmxid counters in new cluster"
+msgstr "Sätter räknarna frozenxid och minmxid för nytt kluster"
+
+#: pg_upgrade.c:589
+#, c-format
+msgid "Setting minmxid counter in new cluster"
+msgstr "Sätter räknarenm minmxid för nytt kluster"
+
+#: relfilenode.c:34
+#, c-format
+msgid "Linking user relation files\n"
+msgstr "Länkar användares relationsfiler\n"
+
+#: relfilenode.c:36
+#, c-format
+msgid "Copying user relation files\n"
+msgstr "Kopierar användares relationsfiler\n"
+
+#: relfilenode.c:110
+#, c-format
+msgid "old database \"%s\" not found in the new cluster\n"
+msgstr "gamla databasen \"%s\" kan inte hittas i nya klustret\n"
+
+#: relfilenode.c:231
+#, c-format
+msgid "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
+msgstr "fel vid kontroll av filexistens \"%s.%s\" (\"%s\" till \"%s\"): %s\n"
+
+#: relfilenode.c:249
+#, c-format
+msgid "rewriting \"%s\" to \"%s\"\n"
+msgstr "skriver om \"%s\" till \"%s\"\n"
+
+#: relfilenode.c:255
+#, c-format
+msgid "copying \"%s\" to \"%s\"\n"
+msgstr "kopierar \"%s\" till \"%s\"\n"
+
+#: relfilenode.c:261
+#, c-format
+msgid "linking \"%s\" to \"%s\"\n"
+msgstr "länkar \"%s\" till \"%s\"\n"
+
+#: server.c:34
+#, c-format
+msgid "connection to database failed: %s"
+msgstr "anslutning till databas misslyckades: %s"
+
+#: server.c:40 server.c:142 util.c:136 util.c:166
+#, c-format
+msgid "Failure, exiting\n"
+msgstr "Misslyckades, avslutar\n"
+
+#: server.c:132
+#, c-format
+msgid "executing: %s\n"
+msgstr "kör: %s\n"
+
+#: server.c:138
+#, c-format
+msgid ""
+"SQL command failed\n"
+"%s\n"
+"%s"
+msgstr ""
+"SQL-kommando misslyckades\n"
+"%s\n"
+"%s"
+
+#: server.c:168
+#, c-format
+msgid "could not open version file: %s\n"
+msgstr "kunde inte öppna versionsfil: %s\n"
+
+#: server.c:172
+#, c-format
+msgid "could not parse PG_VERSION file from %s\n"
+msgstr "kunde inte parsa PG_VERSION-fil från %s\n"
+
+#: server.c:295
+#, c-format
+msgid ""
+"\n"
+"connection to database failed: %s"
+msgstr ""
+"\n"
+"anslutning till databas misslyckades: %s"
+
+#: server.c:300
+#, c-format
+msgid ""
+"could not connect to source postmaster started with the command:\n"
+"%s\n"
+msgstr ""
+"kunde inte ansluta till käll-postmaster som startats med kommandot:\n"
+"%s\n"
+
+#: server.c:304
+#, c-format
+msgid ""
+"could not connect to target postmaster started with the command:\n"
+"%s\n"
+msgstr ""
+"kunde inte ansluta till mål-postmaster som startats med kommandot:\n"
+"%s\n"
+
+#: server.c:318
+#, c-format
+msgid "pg_ctl failed to start the source server, or connection failed\n"
+msgstr "pg_ctl misslyckades att start källservern eller så misslyckades anslutningen\n"
+
+#: server.c:320
+#, c-format
+msgid "pg_ctl failed to start the target server, or connection failed\n"
+msgstr "pg_ctl misslyckades att start målservern eller så misslyckades anslutningen\n"
+
+#: server.c:365
+#, c-format
+msgid "out of memory\n"
+msgstr "slut på minne\n"
+
+#: server.c:378
+#, c-format
+msgid "libpq environment variable %s has a non-local server value: %s\n"
+msgstr "libpq:s omgivningsvariabel %s har ett icke-lokalt servervärde: %s\n"
+
+#: tablespace.c:28
+#, c-format
+msgid ""
+"Cannot upgrade to/from the same system catalog version when\n"
+"using tablespaces.\n"
+msgstr ""
+"Kan inte uppgradera till/från samma systemkatalogversion när\n"
+"man använder tablespace.\n"
+
+#: tablespace.c:87
+#, c-format
+msgid "tablespace directory \"%s\" does not exist\n"
+msgstr "tablespace-katalogen \"%s\" finns inte\n"
+
+#: tablespace.c:91
+#, c-format
+msgid "could not stat tablespace directory \"%s\": %s\n"
+msgstr "kunde inte göra stat på tablespace-katalog \"%s\": %s\n"
+
+#: tablespace.c:96
+#, c-format
+msgid "tablespace path \"%s\" is not a directory\n"
+msgstr "tablespace-sökväg \"%s\" är inte en katalog\n"
+
+#: util.c:50
+#, c-format
+msgid " "
+msgstr " "
+
+#: util.c:83
+#, c-format
+msgid "%-*s"
+msgstr "%-*s"
+
+#: util.c:175
+#, c-format
+msgid "ok"
+msgstr "ok"
+
+#: version.c:32
+#, c-format
+msgid "Checking for large objects"
+msgstr "Letar efter stora objekt"
+
+#: version.c:80 version.c:382
+#, c-format
+msgid "warning"
+msgstr "varning"
+
+#: version.c:82
+#, c-format
+msgid ""
+"\n"
+"Your installation contains large objects.  The new database has an\n"
+"additional large object permission table.  After upgrading, you will be\n"
+"given a command to populate the pg_largeobject_metadata table with\n"
+"default permissions.\n"
+"\n"
+msgstr ""
+"\n"
+"Din installation innehåller stora objekt. Den nya databasen\n"
+"har en extra rättighetstabell för stora objekt. Efter uppgradering\n"
+"kommer du ges ett kommando för att populera rättighetstabellen\n"
+"pg_largeobject_metadata med standardrättigheter.\n"
+"\n"
+
+#: version.c:88
+#, c-format
+msgid ""
+"\n"
+"Your installation contains large objects.  The new database has an\n"
+"additional large object permission table, so default permissions must be\n"
+"defined for all large objects.  The file\n"
+"    %s\n"
+"when executed by psql by the database superuser will set the default\n"
+"permissions.\n"
+"\n"
+msgstr ""
+"\n"
+"Din installation innehåller stora objekt. Den nya databasen har en extra\n"
+"rättighetstabell för stora onbjekt så standardrättigheter måste ges för\n"
+"alla stora objekt. Filen\n"
+"    %s\n"
+"kan köras med psql av databasens superanvändare för att sätta\n"
+"standardrättigheter.\n"
+"\n"
+
+# FIXME: is this msgid correct?
+#: version.c:118
+#, c-format
+msgid "Checking for incompatible \"line\" data type"
+msgstr "Letar efter inkompatibel \"line\"-datatyp"
+
+#: version.c:180
+#, c-format
+msgid ""
+"Your installation contains the \"line\" data type in user tables.  This\n"
+"data type changed its internal and input/output format between your old\n"
+"and new clusters so this cluster cannot currently be upgraded.  You can\n"
+"remove the problem tables and restart the upgrade.  A list of the problem\n"
+"columns is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"Din installation innehåller datatypen \"line\" i användartabeller. Denna\n"
+"datatype har ändrat sitt interna format samt sitt in/ut-format mellan ditt\n"
+"gamla och nya kluster så detta kluster kan för närvarande inte uppgraderas.\n"
+"Du kan radera problemtabellerna och återstarta uppgraderingen. En lista\n"
+"med problemkolumner finns i filen:\n"
+"    %s\n"
+"\n"
+
+#: version.c:215
+#, c-format
+msgid "Checking for invalid \"unknown\" user columns"
+msgstr "Letar efter ogiltiga användarkolumner av typen \"unknown\""
+
+#: version.c:281
+#, c-format
+msgid ""
+"Your installation contains the \"unknown\" data type in user tables.  This\n"
+"data type is no longer allowed in tables, so this cluster cannot currently\n"
+"be upgraded.  You can remove the problem tables and restart the upgrade.\n"
+"A list of the problem columns is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"Din installation innehåller användartabeller med datatypen \"unknown\".\n"
+"Denna typ tillåts inte längre i tabeller så detta kluster kan\n"
+"för närvarande inte uppgraderas. Du kan radera problemtabellerna och\n"
+"återstarta uppgraderingen. En lista med problemkolumnerna finns i filen:\n"
+"    %s\n"
+"\n"
+
+#: version.c:304
+#, c-format
+msgid "Checking for hash indexes"
+msgstr "Letar efter hash-index"
+
+#: version.c:384
+#, c-format
+msgid ""
+"\n"
+"Your installation contains hash indexes.  These indexes have different\n"
+"internal formats between your old and new clusters, so they must be\n"
+"reindexed with the REINDEX command.  After upgrading, you will be given\n"
+"REINDEX instructions.\n"
+"\n"
+msgstr ""
+"\n"
+"Din installation innehåller hash-index. Dessa index har olika internt\n"
+"format i ditt gamla och nya kluster så de måste omindexeras med\n"
+"kommandot REINDEX. Efter uppgraderingen så kommer du få\n"
+"REINDEX-instruktioner.\n"
+"\n"
+
+#: version.c:390
+#, c-format
+msgid ""
+"\n"
+"Your installation contains hash indexes.  These indexes have different\n"
+"internal formats between your old and new clusters, so they must be\n"
+"reindexed with the REINDEX command.  The file\n"
+"    %s\n"
+"when executed by psql by the database superuser will recreate all invalid\n"
+"indexes; until then, none of these indexes will be used.\n"
+"\n"
+msgstr ""
+"\n"
+"Din installation innehåller hash-index. Dessa index har olika internt\n"
+"format i ditt gamla och nya kluster så de måste omindexeras med\n"
+"kommandot REINDEX. Filen\n"
+"    %s\n"
+"kan köras med psql av databasens superanvändare och kommer återskapa\n"
+"alla ogiltiga index; innan dess så kommer inget av dess index användas.\n"
+"\n"
+
+#~ msgid "------------------------------------------------\n"
+#~ msgstr "------------------------------------------------\n"
+
+#~ msgid "-----------------------------\n"
+#~ msgstr "-----------------------------\n"
+
+#~ msgid ""
+#~ "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
+#~ "because of backend API changes made during development.\n"
+#~ msgstr ""
+#~ "Detta verktyg kan bara uppgradera till PostgreSQL version 9.0 efter 2010-01-11\n"
+#~ "då backend-API-ändringar gjorts under utvecklingen.\n"
+
+#~ msgid "%s is not a directory\n"
+#~ msgstr "%s är inte en katalog\n"
+
+#~ msgid ""
+#~ "could not load library \"%s\":\n"
+#~ "%s\n"
+#~ msgstr ""
+#~ "kunde inte ladda bibliotek \"%s\":\n"
+#~ "%s\n"
+
+#~ msgid "------------------\n"
+#~ msgstr "------------------\n"
+
+#~ msgid "----------------\n"
+#~ msgstr "----------------\n"
+
+#~ msgid "Checking for invalid \"line\" user columns"
+#~ msgstr "Letar efter ogiltiga användarkolumner av typen \"line\""
+
+#~ msgid "Cannot read line %d from %s: %m\n"
+#~ msgstr "Kan inte läsa rad %d från %s: %m\n"
+
+#~ msgid "Cannot open file %s: %m\n"
+#~ msgstr "Kan inte öppna fil %s: %m\n"
+
+#~ msgid "cannot find current directory\n"
+#~ msgstr "kan inte hitta aktuell katalog\n"
+
+#~ msgid "cannot write to log file %s\n"
+#~ msgstr "kan inte skriva till loggfil %s\n"
+
+#~ msgid "unable to read permissions from \"%s\"\n"
+#~ msgstr "kunde inte läsa rättigheter från \"%s\"\n"

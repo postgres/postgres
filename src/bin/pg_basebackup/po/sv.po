@@ -1,0 +1,1398 @@
+# SWEDISH message translation file for pg_basebackup
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_basebackup (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-05-18 17:15+0000\n"
+"PO-Revision-Date: 2018-05-18 22:39+0200\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"Language-Team: SWEDISH <sv@li.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98
+#, c-format
+msgid "out of memory\n"
+msgstr "slut på minne\n"
+
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "kan inte duplicera null-pekare (internt fel)\n"
+
+#: ../../common/file_utils.c:82 ../../common/file_utils.c:186
+#: pg_receivewal.c:268 pg_recvlogical.c:354
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s: kunde ta status på filen \"%s\": %s\n"
+
+#: ../../common/file_utils.c:162 pg_receivewal.c:169
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s: kunde inte öppna katalog \"%s\": %s\n"
+
+#: ../../common/file_utils.c:198 pg_receivewal.c:336
+#, c-format
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "%s: kunde inte läsa katalog \"%s\": %s\n"
+
+#: ../../common/file_utils.c:231 ../../common/file_utils.c:291
+#: ../../common/file_utils.c:367
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: kunde inte öppna fil \"%s\": %s\n"
+
+#: ../../common/file_utils.c:304 ../../common/file_utils.c:376 receivelog.c:788
+#: receivelog.c:1045
+#, c-format
+msgid "%s: could not fsync file \"%s\": %s\n"
+msgstr "%s: kunde inte utföra fsync på filen \"%s\": %s\n"
+
+#: ../../common/file_utils.c:387
+#, c-format
+msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
+msgstr "%s: kunde inte döpa om fil \"%s\" till \"%s\": %s\n"
+
+#: pg_basebackup.c:166
+#, c-format
+msgid "%s: removing data directory \"%s\"\n"
+msgstr "%s: tar bort datakatalog \"%s\".\n"
+
+#: pg_basebackup.c:169
+#, c-format
+msgid "%s: failed to remove data directory\n"
+msgstr "%s: misslyckades med att ta bort datakatalog.\n"
+
+#: pg_basebackup.c:175
+#, c-format
+msgid "%s: removing contents of data directory \"%s\"\n"
+msgstr "%s: tömmer innehållet i datakatalog \"%s\".\n"
+
+#: pg_basebackup.c:178
+#, c-format
+msgid "%s: failed to remove contents of data directory\n"
+msgstr "%s: misslyckades med att tömma datakatalog.\n"
+
+#: pg_basebackup.c:184
+#, c-format
+msgid "%s: removing WAL directory \"%s\"\n"
+msgstr "%s: tar bort WAL-katalog \"%s\"\n"
+
+#: pg_basebackup.c:187
+#, c-format
+msgid "%s: failed to remove WAL directory\n"
+msgstr "%s: misslyckades med att ta bort WAL-katalog.\n"
+
+#: pg_basebackup.c:193
+#, c-format
+msgid "%s: removing contents of WAL directory \"%s\"\n"
+msgstr "%s: tömmer innehållet i WAL-katalog \"%s\"\n"
+
+#: pg_basebackup.c:196
+#, c-format
+msgid "%s: failed to remove contents of WAL directory\n"
+msgstr "%s: misslyckades med att tömma WAL-katalog\n"
+
+#: pg_basebackup.c:204
+#, c-format
+msgid "%s: data directory \"%s\" not removed at user's request\n"
+msgstr "%s: Datakatalog \"%s\" ej borttagen på användares begäran.\n"
+
+#: pg_basebackup.c:209
+#, c-format
+msgid "%s: WAL directory \"%s\" not removed at user's request\n"
+msgstr "%s: WAL-katalog \"%s\" ej borttagen på användares begäran.\n"
+
+#: pg_basebackup.c:215
+#, c-format
+msgid "%s: changes to tablespace directories will not be undone\n"
+msgstr "%s: ändringar av tablespace-kataloger kan inte backas\n"
+
+#: pg_basebackup.c:257
+#, c-format
+msgid "%s: directory name too long\n"
+msgstr "%s: katalognamn för långt\n"
+
+#: pg_basebackup.c:267
+#, c-format
+msgid "%s: multiple \"=\" signs in tablespace mapping\n"
+msgstr "%s: multipla \"=\"-tecken i tablespace-mappning\n"
+
+#: pg_basebackup.c:280
+#, c-format
+msgid "%s: invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"\n"
+msgstr "%s: ogiltigt tablespace-mappningsformat \"%s\", måste vara \"OLDDIR=NEWDIR\"\n"
+
+#: pg_basebackup.c:293
+#, c-format
+msgid "%s: old directory is not an absolute path in tablespace mapping: %s\n"
+msgstr "%s: gammal katalog är inte en absolut sökväg i tablespace-mappning: %s\n"
+
+#: pg_basebackup.c:300
+#, c-format
+msgid "%s: new directory is not an absolute path in tablespace mapping: %s\n"
+msgstr "%s: ny katalog är inte en absolut sökväg i tablespace-mappning: %s\n"
+
+#: pg_basebackup.c:339
+#, c-format
+msgid ""
+"%s takes a base backup of a running PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s tar en basbackup av en körande PostgreSQL-server.\n"
+"\n"
+
+#: pg_basebackup.c:341 pg_receivewal.c:79 pg_recvlogical.c:78
+#, c-format
+msgid "Usage:\n"
+msgstr "Användning:\n"
+
+#: pg_basebackup.c:342 pg_receivewal.c:80 pg_recvlogical.c:79
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [FLAGGA]...\n"
+
+#: pg_basebackup.c:343
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output:\n"
+msgstr ""
+"\n"
+"Flaggor som styr utmatning:\n"
+
+#: pg_basebackup.c:344
+#, c-format
+msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
+msgstr "  -D, --pgdata=KATALOG ta emot basbackup till katalog\n"
+
+#: pg_basebackup.c:345
+#, c-format
+msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
+msgstr "  -F, --format=p|t       utdataformat (plain (standard), tar)\n"
+
+#: pg_basebackup.c:346
+#, c-format
+msgid ""
+"  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
+"                         (in kB/s, or use suffix \"k\" or \"M\")\n"
+msgstr ""
+"  -r, --max-rate=RATE    maximal överföringshastighet för att överföra datakatalog\n"
+"                         (i kB/s, eller använd suffix \"k\" resp. \"M\")\n"
+
+#: pg_basebackup.c:348
+#, c-format
+msgid ""
+"  -R, --write-recovery-conf\n"
+"                         write recovery.conf for replication\n"
+msgstr ""
+"  -R, --write-recovery-conf\n"
+"                         skriv recovery.conf för replikering\n"
+
+#: pg_basebackup.c:350
+#, c-format
+msgid ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                         relocate tablespace in OLDDIR to NEWDIR\n"
+msgstr ""
+"  -T, --tablespace-mapping=GAMMALKAT=NYKAT\n"
+"                         flytta tablespace i GAMMALKAT till NYKAT\n"
+
+#: pg_basebackup.c:352
+#, c-format
+msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
+msgstr "      --waldir=WALKAT    plats för write-ahead-logg-katalog\n"
+
+#: pg_basebackup.c:353
+#, c-format
+msgid ""
+"  -X, --wal-method=none|fetch|stream\n"
+"                         include required WAL files with specified method\n"
+msgstr ""
+"  -X, --wal-method=none|fetch|stream\n"
+"                         inkludera behövda WAL-filer med angiven metod\n"
+
+#: pg_basebackup.c:355
+#, c-format
+msgid "  -z, --gzip             compress tar output\n"
+msgstr "  -z, --gzip             komprimera tar-utdata\n"
+
+#: pg_basebackup.c:356
+#, c-format
+msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
+msgstr "  -Z, --compress=0-9     komprimera tar-utdata med given komprimeringsnivå\n"
+
+#: pg_basebackup.c:357
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"Allmänna flaggor:\n"
+
+#: pg_basebackup.c:358
+#, c-format
+msgid ""
+"  -c, --checkpoint=fast|spread\n"
+"                         set fast or spread checkpointing\n"
+msgstr ""
+"  -c, --checkpoint=fast|spread\n"
+"                         ställ in \"fast\" eller \"spread\" checkpoint-metod\n"
+
+#: pg_basebackup.c:360
+#, c-format
+msgid "  -C, --create-slot      create replication slot\n"
+msgstr "      --create-slot      skapa en replikeringsslot\n"
+
+#: pg_basebackup.c:361
+#, c-format
+msgid "  -l, --label=LABEL      set backup label\n"
+msgstr "  -l, --label=ETIKETT    sätt backup-etikett\n"
+
+#: pg_basebackup.c:362
+#, c-format
+msgid "  -n, --no-clean         do not clean up after errors\n"
+msgstr "  -n, --no-clean         städa inte upp efter fel\n"
+
+#: pg_basebackup.c:363
+#, c-format
+msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
+msgstr "  -N, --no-sync          vänta inte på att ändringar skall skrivas säkert till disk\n"
+
+#: pg_basebackup.c:364
+#, c-format
+msgid "  -P, --progress         show progress information\n"
+msgstr "  -P, --progress         visa förloppsinformation\n"
+
+#: pg_basebackup.c:365 pg_receivewal.c:89
+#, c-format
+msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
+msgstr "  -S, --slot=SLOTNAMN    replikerings-slot att använda\n"
+
+#: pg_basebackup.c:366
+#, c-format
+msgid "      --no-slot          prevent creation of temporary replication slot\n"
+msgstr "      --no-slot          förhindra skapande av temporär replikerings-slot\n"
+
+#: pg_basebackup.c:367
+#, c-format
+msgid ""
+"  -k, --no-verify-checksums\n"
+"                         do not verify checksums\n"
+msgstr ""
+"  -k, --no-verify-checksums\n"
+"                         verifiera inte checksummor\n"
+
+#: pg_basebackup.c:369 pg_receivewal.c:91 pg_recvlogical.c:99
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr "  -v, --verbose          mata ut utförliga meddelanden\n"
+
+#: pg_basebackup.c:370 pg_receivewal.c:92 pg_recvlogical.c:100
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          visa versionsinformation, avsluta sedan\n"
+
+#: pg_basebackup.c:371 pg_receivewal.c:94 pg_recvlogical.c:101
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             visa den här hjälpen, avsluta sedan\n"
+
+#: pg_basebackup.c:372 pg_receivewal.c:95 pg_recvlogical.c:102
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Flaggor för anslutning:\n"
+
+#: pg_basebackup.c:373 pg_receivewal.c:96
+#, c-format
+msgid "  -d, --dbname=CONNSTR   connection string\n"
+msgstr "  -d, --dbname=CONNSTR   anslutningssträng\n"
+
+#: pg_basebackup.c:374 pg_receivewal.c:97 pg_recvlogical.c:104
+#, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAMN    databasserverns värdnamn eller socket-katalog\n"
+
+#: pg_basebackup.c:375 pg_receivewal.c:98 pg_recvlogical.c:105
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr "  -p, --port=PORT        databasserverns postnummer\n"
+
+#: pg_basebackup.c:376
+#, c-format
+msgid ""
+"  -s, --status-interval=INTERVAL\n"
+"                         time between status packets sent to server (in seconds)\n"
+msgstr ""
+"  -s, --status-interval=INTERVAL\n"
+"                         tid mellan att statuspaket skickas till servern (i sekunder)\n"
+
+#: pg_basebackup.c:378 pg_receivewal.c:99 pg_recvlogical.c:106
+#, c-format
+msgid "  -U, --username=NAME    connect as specified database user\n"
+msgstr "  -U, --username=NAMN    ansluta som angiven databasanvändare\n"
+
+#: pg_basebackup.c:379 pg_receivewal.c:100 pg_recvlogical.c:107
+#, c-format
+msgid "  -w, --no-password      never prompt for password\n"
+msgstr "  -w, --no-password      fråga aldrig efter lösenord\n"
+
+#: pg_basebackup.c:380 pg_receivewal.c:101 pg_recvlogical.c:108
+#, c-format
+msgid "  -W, --password         force password prompt (should happen automatically)\n"
+msgstr "  -W, --password         tvinga fram lösenordsfråga (skall ske automatiskt)\n"
+
+#: pg_basebackup.c:381 pg_receivewal.c:105 pg_recvlogical.c:109
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_basebackup.c:424
+#, c-format
+msgid "%s: could not read from ready pipe: %s\n"
+msgstr "%s: kunde inte läsa från klart rör (pipe): %s\n"
+
+#: pg_basebackup.c:432 pg_basebackup.c:563 pg_basebackup.c:2064
+#: streamutil.c:460
+#, c-format
+msgid "%s: could not parse write-ahead log location \"%s\"\n"
+msgstr "%s: kunde inte parsa write-ahead-logg-plats \"%s\"\n"
+
+#: pg_basebackup.c:526 pg_receivewal.c:443
+#, c-format
+msgid "%s: could not finish writing WAL files: %s\n"
+msgstr "%s: kunde inte slutföra skrivning av WAL-filer: %s\n"
+
+#: pg_basebackup.c:576
+#, c-format
+msgid "%s: could not create pipe for background process: %s\n"
+msgstr "%s: kunde inte skapa rör (pipe) för bakgrundsprocess: %s\n"
+
+#: pg_basebackup.c:612
+#, c-format
+msgid "%s: created temporary replication slot \"%s\"\n"
+msgstr "%s: skapade en temporär replikeringsslot \"%s\"\n"
+
+#: pg_basebackup.c:615
+#, c-format
+msgid "%s: created replication slot \"%s\"\n"
+msgstr "%s: skapade en replikeringsslot \"%s\"\n"
+
+#: pg_basebackup.c:636 pg_basebackup.c:692 pg_basebackup.c:1462
+#, c-format
+msgid "%s: could not create directory \"%s\": %s\n"
+msgstr "%s: kunde inte skapa katalogen \"%s\": %s\n"
+
+#: pg_basebackup.c:655
+#, c-format
+msgid "%s: could not create background process: %s\n"
+msgstr "%s: kunde inte skapa bakgrundsprocess: %s\n"
+
+#: pg_basebackup.c:667
+#, c-format
+msgid "%s: could not create background thread: %s\n"
+msgstr "%s: kunde inte skapa bakgrundstråd: %s\n"
+
+#: pg_basebackup.c:715
+#, c-format
+msgid "%s: directory \"%s\" exists but is not empty\n"
+msgstr "%s: katalogen \"%s\" existerar men är inte tom.\n"
+
+#: pg_basebackup.c:723
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s: kunde inte komma åt katalogen \"%s\": %s\n"
+
+#: pg_basebackup.c:785
+#, c-format
+msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
+msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
+msgstr[0] "%*s/%s kB (100%%), %d/%d tablespace %*s"
+msgstr[1] "%*s/%s kB (100%%), %d/%d tablespace %*s"
+
+#: pg_basebackup.c:797
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+
+#: pg_basebackup.c:813
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace"
+msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespace"
+
+#: pg_basebackup.c:838
+#, c-format
+msgid "%s: transfer rate \"%s\" is not a valid value\n"
+msgstr "%s: överföringshastighet \"%s\" är inte ett giltigt värde\n"
+
+#: pg_basebackup.c:845
+#, c-format
+msgid "%s: invalid transfer rate \"%s\": %s\n"
+msgstr "%s: ogiltig överföringshastighet \"%s\": %s\n"
+
+#: pg_basebackup.c:855
+#, c-format
+msgid "%s: transfer rate must be greater than zero\n"
+msgstr "%s: överföringshastigheten måste vara större än noll\n"
+
+#: pg_basebackup.c:889
+#, c-format
+msgid "%s: invalid --max-rate unit: \"%s\"\n"
+msgstr "%s: ogiltig enhet för --max-rate: \"%s\"\n"
+
+#: pg_basebackup.c:898
+#, c-format
+msgid "%s: transfer rate \"%s\" exceeds integer range\n"
+msgstr "%s: överföringshastighet \"%s\" överskrider heltalsintervall\n"
+
+#: pg_basebackup.c:910
+#, c-format
+msgid "%s: transfer rate \"%s\" is out of range\n"
+msgstr "%s: överföringshastighet \"%s\" är utanför sitt intervall\n"
+
+#: pg_basebackup.c:934
+#, c-format
+msgid "%s: could not write to compressed file \"%s\": %s\n"
+msgstr "%s: kunde inte skriva till komprimerad fil \"%s\": %s\n"
+
+#: pg_basebackup.c:944 pg_basebackup.c:1556 pg_basebackup.c:1722
+#, c-format
+msgid "%s: could not write to file \"%s\": %s\n"
+msgstr "%s: kunde inte skriva till fil \"%s\": %s\n"
+
+#: pg_basebackup.c:1003 pg_basebackup.c:1024 pg_basebackup.c:1052
+#, c-format
+msgid "%s: could not set compression level %d: %s\n"
+msgstr "%s: kunde inte sätta komprimeringsnivå %d: %s\n"
+
+#: pg_basebackup.c:1073
+#, c-format
+msgid "%s: could not create compressed file \"%s\": %s\n"
+msgstr "%s: kunde inte skapa komprimerad fil \"%s\": %s\n"
+
+#: pg_basebackup.c:1084 pg_basebackup.c:1516 pg_basebackup.c:1715
+#, c-format
+msgid "%s: could not create file \"%s\": %s\n"
+msgstr "%s: kunde inte skapa fil \"%s\": %s\n"
+
+#: pg_basebackup.c:1096 pg_basebackup.c:1369
+#, c-format
+msgid "%s: could not get COPY data stream: %s"
+msgstr "%s: kunde inte hämta COPY-data-ström: %s"
+
+#: pg_basebackup.c:1153
+#, c-format
+msgid "%s: could not close compressed file \"%s\": %s\n"
+msgstr "%s: kunde inte stänga komprimerad fil \"%s\": %s\n"
+
+#: pg_basebackup.c:1166 pg_recvlogical.c:632 receivelog.c:224 receivelog.c:309
+#: receivelog.c:698
+#, c-format
+msgid "%s: could not close file \"%s\": %s\n"
+msgstr "%s: kunde inte stänga fil \"%s\": %s\n"
+
+#: pg_basebackup.c:1177 pg_basebackup.c:1398 pg_recvlogical.c:454
+#: receivelog.c:993
+#, c-format
+msgid "%s: could not read COPY data: %s"
+msgstr "%s: kunde inte läsa COPY-data: %s"
+
+#: pg_basebackup.c:1412
+#, c-format
+msgid "%s: invalid tar block header size: %d\n"
+msgstr "%s: ogiltig tar-block-header-storlek: %d\n"
+
+#: pg_basebackup.c:1470
+#, c-format
+msgid "%s: could not set permissions on directory \"%s\": %s\n"
+msgstr "%s: kunde inte sätta rättigheter på katalog \"%s\": %s\n"
+
+#: pg_basebackup.c:1494
+#, c-format
+msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
+msgstr "%s: kunde inte skapa symbolisk länk från \"%s\" till \"%s\": %s\n"
+
+#: pg_basebackup.c:1503
+#, c-format
+msgid "%s: unrecognized link indicator \"%c\"\n"
+msgstr "%s: okänd länkindikator \"%c\"\n"
+
+#: pg_basebackup.c:1523
+#, c-format
+msgid "%s: could not set permissions on file \"%s\": %s\n"
+msgstr "%s: kunde inte sätta rättigheter på fil \"%s\": %s\n"
+
+#: pg_basebackup.c:1582
+#, c-format
+msgid "%s: COPY stream ended before last file was finished\n"
+msgstr "%s: COPY-ström avslutade innan sista filen var klar\n"
+
+#: pg_basebackup.c:1610 pg_basebackup.c:1630 pg_basebackup.c:1637
+#: pg_basebackup.c:1690
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: slut på minne\n"
+
+#: pg_basebackup.c:1763
+#, c-format
+msgid "%s: incompatible server version %s\n"
+msgstr "%s: inkompatibel serverversion %s\n"
+
+#: pg_basebackup.c:1778
+#, c-format
+msgid "HINT: use -X none or -X fetch to disable log streaming\n"
+msgstr "TIPS: använd -X none eller -X fetch för att stänga av logg-strömning\n"
+
+#: pg_basebackup.c:1804
+#, c-format
+msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
+msgstr "%s: initierar basbackup, väntar på att checkpoint skall gå klart\n"
+
+#: pg_basebackup.c:1829 pg_recvlogical.c:271 receivelog.c:493 receivelog.c:546
+#: receivelog.c:586 streamutil.c:303 streamutil.c:377 streamutil.c:430
+#: streamutil.c:544 streamutil.c:590
+#, c-format
+msgid "%s: could not send replication command \"%s\": %s"
+msgstr "%s: kunde inte skicka replikeringskommando \"%s\": %s"
+
+#: pg_basebackup.c:1840
+#, c-format
+msgid "%s: could not initiate base backup: %s"
+msgstr "%s: kunde inte initiera basbackup: %s"
+
+#: pg_basebackup.c:1847
+#, c-format
+msgid "%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: servern retunerade ett oväntat svar på BASE_BACKUP-kommandot; fick %d rader och %d fält, förväntade %d rader och %d fält\n"
+
+#: pg_basebackup.c:1855
+#, c-format
+msgid "%s: checkpoint completed\n"
+msgstr "%s: checkpoint klar\n"
+
+#: pg_basebackup.c:1870
+#, c-format
+msgid "%s: write-ahead log start point: %s on timeline %u\n"
+msgstr "%s: write-ahead-loggen startposition: %s på tidslinje %u\n"
+
+#: pg_basebackup.c:1879
+#, c-format
+msgid "%s: could not get backup header: %s"
+msgstr "%s: kunde inte hämta backup-header: %s"
+
+#: pg_basebackup.c:1885
+#, c-format
+msgid "%s: no data returned from server\n"
+msgstr "%s: ingen data returnerades från servern\n"
+
+#: pg_basebackup.c:1917
+#, c-format
+msgid "%s: can only write single tablespace to stdout, database has %d\n"
+msgstr "%s: kunde bara skriva en endaste tablespace till stdout, databasen har %d\n"
+
+#: pg_basebackup.c:1929
+#, c-format
+msgid "%s: starting background WAL receiver\n"
+msgstr "%s: startar bakgrunds-WAL-mottagare\n"
+
+#: pg_basebackup.c:1961
+#, c-format
+msgid "%s: could not get write-ahead log end position from server: %s"
+msgstr "%s: kunde inte hämta write-ahead-loggens slutposition från servern: %s"
+
+#: pg_basebackup.c:1968
+#, c-format
+msgid "%s: no write-ahead log end position returned from server\n"
+msgstr "%s: ingen write-ahead-logg-slutposition returnerad från servern\n"
+
+#: pg_basebackup.c:1974
+#, c-format
+msgid "%s: write-ahead log end point: %s\n"
+msgstr "%s: write-ahead-logg-slutposition: %s\n"
+
+#: pg_basebackup.c:1985
+#, c-format
+msgid "%s: checksum error occured\n"
+msgstr "%s: felaktig checksumma upptäcktes\n"
+
+#: pg_basebackup.c:1991
+#, c-format
+msgid "%s: final receive failed: %s"
+msgstr "%s: sista mottagning misslyckades: %s"
+
+#: pg_basebackup.c:2016
+#, c-format
+msgid "%s: waiting for background process to finish streaming ...\n"
+msgstr "%s: väntat på att bakgrundsprocess skall avsluta strömmande ...\n"
+
+#: pg_basebackup.c:2022
+#, c-format
+msgid "%s: could not send command to background pipe: %s\n"
+msgstr "%s: kunde inte skicka kommando till bakgrundsrör (pipe): %s\n"
+
+#: pg_basebackup.c:2031
+#, c-format
+msgid "%s: could not wait for child process: %s\n"
+msgstr "%s: kunde inte vänta på barnprocess: %s\n"
+
+#: pg_basebackup.c:2037
+#, c-format
+msgid "%s: child %d died, expected %d\n"
+msgstr "%s: barn %d dog, förväntade %d\n"
+
+#: pg_basebackup.c:2043
+#, c-format
+msgid "%s: child process did not exit normally\n"
+msgstr "%s: barnprocess avslutade inte normalt\n"
+
+#: pg_basebackup.c:2049
+#, c-format
+msgid "%s: child process exited with error %d\n"
+msgstr "%s: barnprocess avslutade med fel %d\n"
+
+#: pg_basebackup.c:2076
+#, c-format
+msgid "%s: could not wait for child thread: %s\n"
+msgstr "%s: kunde inte vänta på barntråd: %s\n"
+
+#: pg_basebackup.c:2083
+#, c-format
+msgid "%s: could not get child thread exit status: %s\n"
+msgstr "%s: kunde inte hämta barntrådens slutstatus: %s\n"
+
+#: pg_basebackup.c:2089
+#, c-format
+msgid "%s: child thread exited with error %u\n"
+msgstr "%s: barntråd avslutade med fel %u\n"
+
+#: pg_basebackup.c:2127
+#, c-format
+msgid "%s: base backup completed\n"
+msgstr "%s: basbackup klar\n"
+
+#: pg_basebackup.c:2208
+#, c-format
+msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
+msgstr "%s: ogiltigt utdataformat \"%s\", måste vara \"plain\" eller \"tar\"\n"
+
+#: pg_basebackup.c:2253
+#, c-format
+msgid "%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\"\n"
+msgstr "%s: ogiltig wal-metod-flagga \"%s\", måste vara \"fetch\", \"stream\" eller \"none\"\n"
+
+#: pg_basebackup.c:2281 pg_receivewal.c:585
+#, c-format
+msgid "%s: invalid compression level \"%s\"\n"
+msgstr "%s: ogiltig komprimeringsnivå \"%s\"\n"
+
+#: pg_basebackup.c:2293
+#, c-format
+msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "%s: ogiltigt checkpoint-argument \"%s\", måste vara \"fast\" eller \"spread\"\n"
+
+#: pg_basebackup.c:2320 pg_receivewal.c:557 pg_recvlogical.c:826
+#, c-format
+msgid "%s: invalid status interval \"%s\"\n"
+msgstr "%s: ogiltigt status-intervall \"%s\"\n"
+
+#: pg_basebackup.c:2339 pg_basebackup.c:2353 pg_basebackup.c:2364
+#: pg_basebackup.c:2377 pg_basebackup.c:2387 pg_basebackup.c:2397
+#: pg_basebackup.c:2409 pg_basebackup.c:2423 pg_basebackup.c:2433
+#: pg_basebackup.c:2446 pg_basebackup.c:2457 pg_receivewal.c:611
+#: pg_receivewal.c:625 pg_receivewal.c:633 pg_receivewal.c:643
+#: pg_receivewal.c:651 pg_receivewal.c:662 pg_recvlogical.c:853
+#: pg_recvlogical.c:867 pg_recvlogical.c:878 pg_recvlogical.c:886
+#: pg_recvlogical.c:894 pg_recvlogical.c:902 pg_recvlogical.c:910
+#: pg_recvlogical.c:918 pg_recvlogical.c:928
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Försök med \"%s --help\" för mer information.\n"
+
+#: pg_basebackup.c:2351 pg_receivewal.c:623 pg_recvlogical.c:865
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
+
+#: pg_basebackup.c:2363 pg_receivewal.c:661
+#, c-format
+msgid "%s: no target directory specified\n"
+msgstr "%s: ingen målkatalog angiven\n"
+
+#: pg_basebackup.c:2375
+#, c-format
+msgid "%s: only tar mode backups can be compressed\n"
+msgstr "%s: bara backupper i tar-läge kan komprimeras\n"
+
+#: pg_basebackup.c:2385
+#, c-format
+msgid "%s: cannot stream write-ahead logs in tar mode to stdout\n"
+msgstr "%s: kan inte strömma write-ahead-logg i tar-läge till stdout\n"
+
+#: pg_basebackup.c:2395
+#, c-format
+msgid "%s: replication slots can only be used with WAL streaming\n"
+msgstr "%s: replikerings-slot kan bara användas med WAL-strömning\n"
+
+#: pg_basebackup.c:2407
+#, c-format
+msgid "%s: --no-slot cannot be used with slot name\n"
+msgstr "%s: --no-slot kan inte användas tillsammans med slot-namn\n"
+
+#. translator: second %s is an option name
+#: pg_basebackup.c:2421 pg_receivewal.c:641
+#, c-format
+msgid "%s: %s needs a slot to be specified using --slot\n"
+msgstr "%s: %s kräver att en slot anges med --slot\n"
+
+#: pg_basebackup.c:2431
+#, c-format
+msgid "%s: --create-slot and --no-slot are incompatible options\n"
+msgstr "%s: --create-slot och --no-slot är inkompatibla flaggor\n"
+
+#: pg_basebackup.c:2444
+#, c-format
+msgid "%s: WAL directory location can only be specified in plain mode\n"
+msgstr "%s: WAL-katalogplats kan bara anges i läget \"plain\"\n"
+
+#: pg_basebackup.c:2455
+#, c-format
+msgid "%s: WAL directory location must be an absolute path\n"
+msgstr "%s: WAL-katalogen måste vara en absolut sökväg.\n"
+
+#: pg_basebackup.c:2467 pg_receivewal.c:671
+#, c-format
+msgid "%s: this build does not support compression\n"
+msgstr "%s: detta bygge stöder inte komprimering\n"
+
+#: pg_basebackup.c:2521
+#, c-format
+msgid "%s: could not create symbolic link \"%s\": %s\n"
+msgstr "%s: kunde inte skapa symbolisk länk \"%s\": %s\n"
+
+#: pg_basebackup.c:2526
+#, c-format
+msgid "%s: symlinks are not supported on this platform\n"
+msgstr "%s: symlänkar stöds inte på denna plattform\n"
+
+#: pg_receivewal.c:77
+#, c-format
+msgid ""
+"%s receives PostgreSQL streaming write-ahead logs.\n"
+"\n"
+msgstr ""
+"%s tar emot PostgreSQL-strömning-write-ahead-logg.\n"
+"\n"
+
+#: pg_receivewal.c:81 pg_recvlogical.c:84
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Flaggor:\n"
+
+#: pg_receivewal.c:82
+#, c-format
+msgid "  -D, --directory=DIR    receive write-ahead log files into this directory\n"
+msgstr "  -D, --directory=KAT    ta emot write-ahead-logg-filer till denna katalog\n"
+
+#: pg_receivewal.c:83 pg_recvlogical.c:85
+#, c-format
+msgid "  -E, --endpos=LSN       exit after receiving the specified LSN\n"
+msgstr "  -E, --endpos=LSN       avsluta efter att ha taget emot den angivna LSN\n"
+
+#: pg_receivewal.c:84 pg_recvlogical.c:89
+#, c-format
+msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
+msgstr "      --if-not-exists    inget fel om slot:en redan finns när vi skapar slot:en\n"
+
+#: pg_receivewal.c:85 pg_recvlogical.c:91
+#, c-format
+msgid "  -n, --no-loop          do not loop on connection lost\n"
+msgstr "  -n, --no-loop          loopa inte om anslutning tappas\n"
+
+#: pg_receivewal.c:86
+#, c-format
+msgid "      --no-sync          do not wait for changes to be written safely to disk\n"
+msgstr "      --no-sync          vänta inte på att ändringar skall skrivas säkert till disk\n"
+
+#: pg_receivewal.c:87 pg_recvlogical.c:96
+#, c-format
+msgid ""
+"  -s, --status-interval=SECS\n"
+"                         time between status packets sent to server (default: %d)\n"
+msgstr ""
+"  -s, --status-interval=SEKS\n"
+"                         tid mellan att statuspaket skickas till serverb (standard: %d)\n"
+
+#: pg_receivewal.c:90
+#, c-format
+msgid "      --synchronous      flush write-ahead log immediately after writing\n"
+msgstr "      --synchronous      flush:a write-ahead-logg direkt efter skrivning\n"
+
+#: pg_receivewal.c:93
+#, c-format
+msgid "  -Z, --compress=0-9     compress logs with given compression level\n"
+msgstr "  -Z, --compress=0-9     komprimera loggar med angiven komprimeringsnivå\n"
+
+#: pg_receivewal.c:102
+#, c-format
+msgid ""
+"\n"
+"Optional actions:\n"
+msgstr ""
+"\n"
+"Valfria handlingar:\n"
+
+#: pg_receivewal.c:103 pg_recvlogical.c:81
+#, c-format
+msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
+msgstr "      --create-slot      skapa en ny replikeringsslot (angående slot:ens namn, se --slot)\n"
+
+#: pg_receivewal.c:104 pg_recvlogical.c:82
+#, c-format
+msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
+msgstr "      --drop-slot        släng replikeringsslot (angående slot:ens namn, se --slot)\n"
+
+#: pg_receivewal.c:116
+#, c-format
+msgid "%s: finished segment at %X/%X (timeline %u)\n"
+msgstr "%s: slutförde segment vid %X/%X (tidslinje %u)\n"
+
+#: pg_receivewal.c:123
+#, c-format
+msgid "%s: stopped log streaming at %X/%X (timeline %u)\n"
+msgstr "%s: stoppade logg-strömning vid %X/%X (tidslinje %u)\n"
+
+#: pg_receivewal.c:139
+#, c-format
+msgid "%s: switched to timeline %u at %X/%X\n"
+msgstr "%s: bytte till tidslinje %u vid %X/%X\n"
+
+#: pg_receivewal.c:149
+#, c-format
+msgid "%s: received interrupt signal, exiting\n"
+msgstr "%s: mottog avbrottsignal, avslutar\n"
+
+#: pg_receivewal.c:187
+#, c-format
+msgid "%s: could not close directory \"%s\": %s\n"
+msgstr "%s: kunde inte stänga katalog \"%s\": %s\n"
+
+#: pg_receivewal.c:276
+#, c-format
+msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
+msgstr "%s: segmentfil \"%s\" har inkorrekt storlek %d, hoppar över\n"
+
+#: pg_receivewal.c:293
+#, c-format
+msgid "%s: could not open compressed file \"%s\": %s\n"
+msgstr "%s: kunde inte öppna komprimerad fil \"%s\": %s\n"
+
+#: pg_receivewal.c:299
+#, c-format
+msgid "%s: could not seek in compressed file \"%s\": %s\n"
+msgstr "%s: kunde inte söka i komprimerad fil \"%s\": %s\n"
+
+#: pg_receivewal.c:305
+#, c-format
+msgid "%s: could not read compressed file \"%s\": %s\n"
+msgstr "%s: kunde inte läsa komprimerad fil \"%s\": %s\n"
+
+#: pg_receivewal.c:317
+#, c-format
+msgid "%s: compressed segment file \"%s\" has incorrect uncompressed size %d, skipping\n"
+msgstr "%s: komprimerad segmentfil \"%s\" har inkorrekt okomprimerad storlek %d, hoppar över\n"
+
+#: pg_receivewal.c:423
+#, c-format
+msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
+msgstr "%s: startar logg-strömning vid %X/%X (tidslinje %u)\n"
+
+#: pg_receivewal.c:538 pg_recvlogical.c:763
+#, c-format
+msgid "%s: invalid port number \"%s\"\n"
+msgstr "%s: ogiltigt portnummer \"%s\"\n"
+
+#: pg_receivewal.c:569 pg_recvlogical.c:793
+#, c-format
+msgid "%s: could not parse end position \"%s\"\n"
+msgstr "%s: kunde inte parsa slutposition \"%s\"\n"
+
+#: pg_receivewal.c:632
+#, c-format
+msgid "%s: cannot use --create-slot together with --drop-slot\n"
+msgstr "%s: kan inte använda --create-slot tillsammans med --drop-slot\n"
+
+#: pg_receivewal.c:650
+#, c-format
+msgid "%s: cannot use --synchronous together with --no-sync\n"
+msgstr "%s: kan inte använda --synchronous tillsammans med --no-sync\n"
+
+#: pg_receivewal.c:728
+#, c-format
+msgid "%s: replication connection using slot \"%s\" is unexpectedly database specific\n"
+msgstr "%s: replikeringsanslutning som använder slot \"%s\" är oväntat databasspecifik\n"
+
+#: pg_receivewal.c:740 pg_recvlogical.c:978
+#, c-format
+msgid "%s: dropping replication slot \"%s\"\n"
+msgstr "%s: slänger replikeringsslot \"%s\"\n"
+
+#: pg_receivewal.c:753 pg_recvlogical.c:990
+#, c-format
+msgid "%s: creating replication slot \"%s\"\n"
+msgstr "%s: skapar replikeringsslot \"%s\"\n"
+
+#: pg_receivewal.c:780 pg_recvlogical.c:1016
+#, c-format
+msgid "%s: disconnected\n"
+msgstr "%s: nerkopplad\n"
+
+#. translator: check source for value for %d
+#: pg_receivewal.c:787 pg_recvlogical.c:1023
+#, c-format
+msgid "%s: disconnected; waiting %d seconds to try again\n"
+msgstr "%s: nerkopplad; väntar %d sekunder för att försöka igen\n"
+
+#: pg_recvlogical.c:76
+#, c-format
+msgid ""
+"%s controls PostgreSQL logical decoding streams.\n"
+"\n"
+msgstr ""
+"%s styr PostgreSQL:s logiskt avkodade strömmar.\n"
+"\n"
+
+#: pg_recvlogical.c:80
+#, c-format
+msgid ""
+"\n"
+"Action to be performed:\n"
+msgstr ""
+"\n"
+"Handling att utföra:\n"
+
+#: pg_recvlogical.c:83
+#, c-format
+msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
+msgstr "      --start            starta strömning i en replikeringsslot (angående slot:ens namn, se --slot)\n"
+
+#: pg_recvlogical.c:86
+#, c-format
+msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
+msgstr "  -f, --file=FIL         ta emot logg till denna fil, - för stdout\n"
+
+#: pg_recvlogical.c:87
+#, c-format
+msgid ""
+"  -F  --fsync-interval=SECS\n"
+"                         time between fsyncs to the output file (default: %d)\n"
+msgstr ""
+"  -F  --fsync-interval=SEK\n"
+"                         tid mellan fsync av utdatafil (standard: %d)\n"
+
+#: pg_recvlogical.c:90
+#, c-format
+msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
+msgstr "  -I, --startpos=LSN     var i en existerande slot skall strömningen starta\n"
+
+#: pg_recvlogical.c:92
+#, c-format
+msgid ""
+"  -o, --option=NAME[=VALUE]\n"
+"                         pass option NAME with optional value VALUE to the\n"
+"                         output plugin\n"
+msgstr ""
+"  -o, --option=NAMN[=VÄRDE]\n"
+"                         skicka vidare flaggan NAMN med ev. värde VÄRDE till\n"
+"                         utmatnings-plugin:en\n"
+
+#: pg_recvlogical.c:95
+#, c-format
+msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
+msgstr "  -P, --plugin=PLUGIN    använd utmatnings-plugin:en PLUGIN (standard: %s)\n"
+
+#: pg_recvlogical.c:98
+#, c-format
+msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
+msgstr "  -S, --slot=SLOTNAMN    namn på den logiska replikerings-slotten\n"
+
+#: pg_recvlogical.c:103
+#, c-format
+msgid "  -d, --dbname=DBNAME    database to connect to\n"
+msgstr "  -d, --dbname=DBNAMN    databas att ansluta till\n"
+
+#: pg_recvlogical.c:136
+#, c-format
+msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
+msgstr "%s: bekräftar skrivning fram till %X/%X, flush till %X/%X (slot %s)\n"
+
+#: pg_recvlogical.c:161 receivelog.c:352
+#, c-format
+msgid "%s: could not send feedback packet: %s"
+msgstr "%s: kunde inte skicka feedback-paket: %s"
+
+#: pg_recvlogical.c:200
+#, c-format
+msgid "%s: could not fsync log file \"%s\": %s\n"
+msgstr "%s: kunde inte fsync:a loggfil \"%s\": %s\n"
+
+#: pg_recvlogical.c:239
+#, c-format
+msgid "%s: starting log streaming at %X/%X (slot %s)\n"
+msgstr "%s: startar logg-strömning vid %X/%X (slot %s)\n"
+
+#: pg_recvlogical.c:281
+#, c-format
+msgid "%s: streaming initiated\n"
+msgstr "%s: strömning initierad\n"
+
+#: pg_recvlogical.c:347
+#, c-format
+msgid "%s: could not open log file \"%s\": %s\n"
+msgstr "%s: kunde inte öppna logg-fil \"%s\": %s\n"
+
+#: pg_recvlogical.c:377 receivelog.c:898
+#, c-format
+msgid "%s: invalid socket: %s"
+msgstr "%s: ogiltigt uttag: %s"
+
+#: pg_recvlogical.c:431 receivelog.c:927
+#, c-format
+msgid "%s: select() failed: %s\n"
+msgstr "%s: select() misslyckades: %s\n"
+
+#: pg_recvlogical.c:440 receivelog.c:979
+#, c-format
+msgid "%s: could not receive data from WAL stream: %s"
+msgstr "%s: kunde inte ta emot data från WAL-ström: %s"
+
+#: pg_recvlogical.c:482 pg_recvlogical.c:534 receivelog.c:1024
+#: receivelog.c:1091
+#, c-format
+msgid "%s: streaming header too small: %d\n"
+msgstr "%s: strömningsheader för liten: %d\n"
+
+#: pg_recvlogical.c:518 receivelog.c:858
+#, c-format
+msgid "%s: unrecognized streaming header: \"%c\"\n"
+msgstr "%s: okänd strömningsheader: \"%c\"\n"
+
+#: pg_recvlogical.c:574 pg_recvlogical.c:588
+#, c-format
+msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
+msgstr "%s: kunde inte skriva %u byte till loggfil \"%s\": %s\n"
+
+#: pg_recvlogical.c:618 receivelog.c:650 receivelog.c:689
+#, c-format
+msgid "%s: unexpected termination of replication stream: %s"
+msgstr "%s: oväntad terminering av replikeringsström: %s"
+
+#: pg_recvlogical.c:742
+#, c-format
+msgid "%s: invalid fsync interval \"%s\"\n"
+msgstr "%s: ogiltigt fsync-intervall \"%s\"\n"
+
+#: pg_recvlogical.c:783
+#, c-format
+msgid "%s: could not parse start position \"%s\"\n"
+msgstr "%s: kunde inte parsa startposition \"%s\"\n"
+
+#: pg_recvlogical.c:877
+#, c-format
+msgid "%s: no slot specified\n"
+msgstr "%s: ingen slot angiven\n"
+
+#: pg_recvlogical.c:885
+#, c-format
+msgid "%s: no target file specified\n"
+msgstr "%s: ingen målfil angiven\n"
+
+#: pg_recvlogical.c:893
+#, c-format
+msgid "%s: no database specified\n"
+msgstr "%s: ingen databas angiven\n"
+
+#: pg_recvlogical.c:901
+#, c-format
+msgid "%s: at least one action needs to be specified\n"
+msgstr "%s: minst en handling måste anges\n"
+
+#: pg_recvlogical.c:909
+#, c-format
+msgid "%s: cannot use --create-slot or --start together with --drop-slot\n"
+msgstr "%s: kan inte använda --create-slot eller --start tillsammans med --drop-slot\n"
+
+#: pg_recvlogical.c:917
+#, c-format
+msgid "%s: cannot use --create-slot or --drop-slot together with --startpos\n"
+msgstr "%s: kan inte använda --create-slot eller --drop-slot tillsammans med --startpos\n"
+
+#: pg_recvlogical.c:926
+#, c-format
+msgid "%s: --endpos may only be specified with --start\n"
+msgstr "%s: --endpos får bara anges tillsammans med --start\n"
+
+#: pg_recvlogical.c:958
+#, c-format
+msgid "%s: could not establish database-specific replication connection\n"
+msgstr "%s: kunde inte upprätta databasspecifik replikeringsanslutning\n"
+
+#: receivelog.c:71
+#, c-format
+msgid "%s: could not create archive status file \"%s\": %s\n"
+msgstr "%s: kunde inte skapa arkivstatusfil \"%s\": %s\n"
+
+#: receivelog.c:119
+#, c-format
+msgid "%s: could not get size of write-ahead log file \"%s\": %s\n"
+msgstr "%s: kunde inte hämta storleken på write-ahead-logg-fil \"%s\": %s\n"
+
+#: receivelog.c:130
+#, c-format
+msgid "%s: could not open existing write-ahead log file \"%s\": %s\n"
+msgstr "%s: kunde inte öppna existerande write-ahead-logg-fil \"%s\": %s\n"
+
+#: receivelog.c:139
+#, c-format
+msgid "%s: could not fsync existing write-ahead log file \"%s\": %s\n"
+msgstr "%s: kunde inte fsync:a befintlig write-ahead-logg-fil \"%s\": %s\n"
+
+#: receivelog.c:154
+#, c-format
+msgid "%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n"
+msgid_plural "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr[0] "%s: write-ahead-logg-fil \"%s\" har %d byte, skall vara 0 eller %d\n"
+msgstr[1] "%s: write-ahead-logg-fil \"%s\" har %d byte, skall vara 0 eller %d\n"
+
+#: receivelog.c:170
+#, c-format
+msgid "%s: could not open write-ahead log file \"%s\": %s\n"
+msgstr "%s: kunde inte öppna write-ahead-logg-fil \"%s\": %s\n"
+
+#: receivelog.c:197
+#, c-format
+msgid "%s: could not determine seek position in file \"%s\": %s\n"
+msgstr "%s: kunde inte fastställa sökposition i fil \"%s\": %s\n"
+
+#: receivelog.c:212
+#, c-format
+msgid "%s: not renaming \"%s%s\", segment is not complete\n"
+msgstr "%s: byter inte namn på \"%s%s\", segmentet är inte komplett\n"
+
+#: receivelog.c:281
+#, c-format
+msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
+msgstr "%s: servern rapporterade oväntat historikfilnamn för tidslinje %u: %s\n"
+
+#: receivelog.c:289
+#, c-format
+msgid "%s: could not create timeline history file \"%s\": %s\n"
+msgstr "%s: kunde inte skapa tidslinjehistorikfil \"%s\": %s\n"
+
+#: receivelog.c:296
+#, c-format
+msgid "%s: could not write timeline history file \"%s\": %s\n"
+msgstr "%s: kunde inte skriva tidslinjehistorikfil \"%s\": %s\n"
+
+#: receivelog.c:386
+#, c-format
+msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
+msgstr "%s: inkompatibel serverversion %s; klienten stöder inte stömning från serverversioner äldre än %s\n"
+
+#: receivelog.c:396
+#, c-format
+msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
+msgstr "%s: inkompatibel serverversion %s; klienten stöder inte stömning från serverversioner nyare än %s\n"
+
+#: receivelog.c:501 streamutil.c:439 streamutil.c:478
+#, c-format
+msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: kunde inte identifiera systemet: fick %d rader och %d fält, förväntade %d rader och %d eller fler fält\n"
+
+#: receivelog.c:509
+#, c-format
+msgid "%s: system identifier does not match between base backup and streaming connection\n"
+msgstr "%s: systemidentifieraren matchar inte mellan basbackup och strömningsanslutning\n"
+
+#: receivelog.c:517
+#, c-format
+msgid "%s: starting timeline %u is not present in the server\n"
+msgstr "%s: starttidslinje %u finns inte tillgänglig i servern\n"
+
+#: receivelog.c:559
+#, c-format
+msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: oväntat svar på TIMELINE_HISTORY-kommando: fick %d rader och %d fält, förväntade %d rader och %d fält\n"
+
+#: receivelog.c:631
+#, c-format
+msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
+msgstr "%s: servern rapporterade oväntad nästa tidslinje %u, följer på tidslinje %u\n"
+
+#: receivelog.c:638
+#, c-format
+msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
+msgstr "%s: servern stoppade strömning av tidslinje %u vid %X/%X men rapporterade nästa tidslinje %u skulle börja vid %X/%X\n"
+
+#: receivelog.c:680
+#, c-format
+msgid "%s: replication stream was terminated before stop point\n"
+msgstr "%s: replikeringsström avslutades innan stoppunkt\n"
+
+#: receivelog.c:729
+#, c-format
+msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: oväntad resultatmängd efter slut-på-tidslinje: fick %d rader och %d fält, förväntade %d rader och %d fält\n"
+
+#: receivelog.c:739
+#, c-format
+msgid "%s: could not parse next timeline's starting point \"%s\"\n"
+msgstr "%s: kunde inte parsa nästa tidslinjens startpunkt \"%s\"\n"
+
+#: receivelog.c:1110
+#, c-format
+msgid "%s: received write-ahead log record for offset %u with no file open\n"
+msgstr "%s: tog emot write-ahead-logg-post för offset %u utan att ha någon öppen fil\n"
+
+#: receivelog.c:1121
+#, c-format
+msgid "%s: got WAL data offset %08x, expected %08x\n"
+msgstr "%s: fick WAL-data-offset %08x, förväntade %08x\n"
+
+#: receivelog.c:1156
+#, c-format
+msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
+msgstr "%s: kunde inte skriva %u byte till WAL-fil \"%s\": %s\n"
+
+#: receivelog.c:1181 receivelog.c:1222 receivelog.c:1253
+#, c-format
+msgid "%s: could not send copy-end packet: %s"
+msgstr "%s: kunde inte skicka \"copy-end\"-paket: %s"
+
+#: streamutil.c:161
+msgid "Password: "
+msgstr "Lösenord: "
+
+#: streamutil.c:186
+#, c-format
+msgid "%s: could not connect to server\n"
+msgstr "%s: kunde inte ansluta till server\n"
+
+#: streamutil.c:204
+#, c-format
+msgid "%s: could not connect to server: %s"
+msgstr "%s: kunde inte ansluta till server: %s"
+
+#: streamutil.c:233
+#, c-format
+msgid "%s: could not clear search_path: %s"
+msgstr "%s: kunde inte nollställa search_path: %s"
+
+#: streamutil.c:250
+#, c-format
+msgid "%s: could not determine server setting for integer_datetimes\n"
+msgstr "%s: kunde inte lista ut serverns inställning för integer_datetimes\n"
+
+#: streamutil.c:259
+#, c-format
+msgid "%s: integer_datetimes compile flag does not match server\n"
+msgstr "%s: kompileringsflaggan integer_datetimes matchar inte servern\n"
+
+#: streamutil.c:312
+#, c-format
+msgid "%s: could not fetch WAL segment size: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: kunde inte hämta WAL-segmentstorlek: fick %d rader och %d fält, förväntade %d rader och %d eller fler fält\n"
+
+#: streamutil.c:322
+#, c-format
+msgid "%s: WAL segment size could not be parsed\n"
+msgstr "%s: WAL-segment-storlek kunde inte parsas\n"
+
+#: streamutil.c:339
+#, c-format
+msgid "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d byte\n"
+msgid_plural "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d bytes\n"
+msgstr[0] "%s: WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men fjärrservern rapporterade värdet %d byte\n"
+msgstr[1] "%s: WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men fjärrservern rapporterade värdet %d byte\n"
+
+#: streamutil.c:386
+#, c-format
+msgid "%s: could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: kunde inte hämta gruppaccessflagga: fick %d rader och %d fält, förväntade %d rader och %d eller fler fält\n"
+
+#: streamutil.c:395
+#, c-format
+msgid "%s: group access flag could not be parsed: %s\n"
+msgstr "%s: gruppaccessflagga kunde inte parsas: %s\n"
+
+#: streamutil.c:556
+#, c-format
+msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: kunde inte skapa replikeringsslot \"%s\": fick %d rader och %d fält, förväntade %d rader och %d fält\n"
+
+#: streamutil.c:601
+#, c-format
+msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: kunde inte slänga replikeringsslot \"%s\": fick %d rader och %d fält, förväntade %d rader och %d fält\n"
+
+#: walmethods.c:436 walmethods.c:906
+msgid "could not compress data"
+msgstr "kunde inte komprimera data"
+
+#: walmethods.c:460
+msgid "could not reset compression stream"
+msgstr "kunde inte nollställa komprimeringsström"
+
+#: walmethods.c:562
+msgid "could not initialize compression library"
+msgstr "kunde inte initierar komprimeringsbibliotek"
+
+#: walmethods.c:574
+msgid "implementation error: tar files can't have more than one open file"
+msgstr "implementationsfel: tar-filer kan inte ha mer än en öppen fil"
+
+#: walmethods.c:588
+msgid "could not create tar header"
+msgstr "kunde inte skapa tar-header"
+
+#: walmethods.c:602 walmethods.c:640 walmethods.c:829 walmethods.c:840
+msgid "could not change compression parameters"
+msgstr "kunde inte ändra komprimeringsparametrar"
+
+#: walmethods.c:722
+msgid "unlink not supported with compression"
+msgstr "unlink stöds inte med komprimering"
+
+#: walmethods.c:922
+msgid "could not close compression stream"
+msgstr "kunde inte stänga komprimeringsström"
+
+#~ msgid "%s: could not send replication command \"%s\": %s\n"
+#~ msgstr "%s: kunde inte skicka replikeringskommando \"%s\": %s\n"
+
+#~ msgid "%s: --create-slot needs a slot to be specified using --slot\n"
+#~ msgstr "%s: --create-slot kräver att en slot angivits med flaggan --slot\n"

@@ -1,59 +1,92 @@
 # Swedish message translation file for pg_waldump
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-20 20:15+0000\n"
-"PO-Revision-Date: 2017-07-20 22:49+0200\n"
+"POT-Creation-Date: 2018-05-18 17:15+0000\n"
+"PO-Revision-Date: 2018-05-18 22:45+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: pg_waldump.c:82
+#: pg_waldump.c:85
 #, c-format
 msgid "%s: FATAL:  "
 msgstr "%s: FATALT:  "
 
-#: pg_waldump.c:288
+#: pg_waldump.c:166
+#, c-format
+msgid "could not open file \"%s\": %s"
+msgstr "kunde inte öppna fil \"%s\": %s"
+
+#: pg_waldump.c:221
+#, c-format
+msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
+msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
+msgstr[0] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men headern i WAL-filen \"%s\" anger %d byte"
+msgstr[1] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men headern i WAL-filen \"%s\" anger %d byte"
+
+#: pg_waldump.c:229
+#, c-format
+msgid "could not read file \"%s\": %s"
+msgstr "kunde inte läsa fil \"%s\": %s"
+
+#: pg_waldump.c:232
+#, c-format
+msgid "not enough data in file \"%s\""
+msgstr "otillräckligt med data i fil \"%s\""
+
+#: pg_waldump.c:309
+#, c-format
+msgid "could not locate WAL file \"%s\""
+msgstr "kunde inte lokalisera WAL-fil \"%s\""
+
+#: pg_waldump.c:311
+#, c-format
+msgid "could not find any WAL file"
+msgstr "kunde inte hitta några WAL-filer"
+
+#: pg_waldump.c:382
 #, c-format
 msgid "could not find file \"%s\": %s"
 msgstr "kunde inte hitta filen \"%s\": %s"
 
-#: pg_waldump.c:303
+#: pg_waldump.c:397
 #, c-format
-msgid "could not seek in log segment %s to offset %u: %s"
-msgstr "kunde inte söka i loggsegment %s till offset %u: %s"
+msgid "could not seek in log file %s to offset %u: %s"
+msgstr "kunde inte söka i loggfil %s till offset %u: %s"
 
-#: pg_waldump.c:323
+#: pg_waldump.c:417
 #, c-format
-msgid "could not read from log segment %s, offset %d, length %d: %s"
-msgstr "kunde inte läsa från loggsegment %s, offset %d, längd %d: %s"
+msgid "could not read from log file %s, offset %u, length %d: %s"
+msgstr "kunde inte läsa från loggfil %s, offset %u, längd %d: %s"
 
-#: pg_waldump.c:702
+#: pg_waldump.c:796
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
 "\n"
 msgstr "%s avkodar och visar PostgreSQLs write-ahead-logg för debuggning.\n"
 
-#: pg_waldump.c:704
+#: pg_waldump.c:798
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: pg_waldump.c:705
+#: pg_waldump.c:799
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 msgstr "  %s [FLAGGA]... [STARTSEG [SLUTSEG]]\n"
 
-#: pg_waldump.c:706
+#: pg_waldump.c:800
 #, c-format
 msgid ""
 "\n"
@@ -62,52 +95,52 @@ msgstr ""
 "\n"
 "Flaggor:\n"
 
-#: pg_waldump.c:707
+#: pg_waldump.c:801
 #, c-format
 msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
 msgstr "  -b, --bkp-details      skriv detaljerad information om backupblock\n"
 
-#: pg_waldump.c:708
+#: pg_waldump.c:802
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
 msgstr "  -e, --end=RECPTR       stoppa läsning vid WAL-position RECPTR\n"
 
-#: pg_waldump.c:709
+#: pg_waldump.c:803
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
 msgstr "  -f, --follow           fortsätt försök efter att ha nått slutet av WAL\n"
 
-#: pg_waldump.c:710
+#: pg_waldump.c:804
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N          antal poster att visa\n"
 
-#: pg_waldump.c:711
+#: pg_waldump.c:805
 #, c-format
 msgid ""
 "  -p, --path=PATH        directory in which to find log segment files or a\n"
 "                         directory with a ./pg_wal that contains such files\n"
-"                         (default: current directory, ./pg_wal, PGDATA/pg_wal)\n"
+"                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
 msgstr ""
 "  -p, --path=SÖKVÄG      katalog där man hittar loggsegmentfiler eller en\n"
 "                         katalog med en ./pg_wal som innehåller sådana filer\n"
-"                         (standard: aktuell katalog, ./pg_wal, PGDATA/pg_wal)\n"
+"                         (standard: aktuell katalog, ./pg_wal, $PGDATA/pg_wal)\n"
 
-#: pg_waldump.c:714
+#: pg_waldump.c:808
 #, c-format
 msgid ""
-"  -r, --rmgr=RMGR        only show records generated by resource manager RMGR\n"
+"  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
 "                         use --rmgr=list to list valid resource manager names\n"
 msgstr ""
-"  -r, --rmgr=RMGR        visa bara poster skapade av resurshanteraren RMGR\n"
+"  -r, --rmgr=RMGR        visa bara poster skapade av resurshanteraren RMGR;\n"
 "                         använd --rmgr=list för att lista giltiga resurshanterarnamn\n"
 
-#: pg_waldump.c:716
+#: pg_waldump.c:810
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
 msgstr "  -s, --start=RECPTR     börja läsning vid WAL-position RECPTR\n"
 
-#: pg_waldump.c:717
+#: pg_waldump.c:811
 #, c-format
 msgid ""
 "  -t, --timeline=TLI     timeline from which to read log records\n"
@@ -116,17 +149,17 @@ msgstr ""
 "  -t, --timeline=TLI     tidslinje från vilken vi läser loggposter\n"
 "                         (standard: 1 eller värdet som används i STARTSEG)\n"
 
-#: pg_waldump.c:719
+#: pg_waldump.c:813
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          visa versionsinformation, avsluta sedan\n"
 
-#: pg_waldump.c:720
+#: pg_waldump.c:814
 #, c-format
-msgid "  -x, --xid=XID          only show records with TransactionId XID\n"
-msgstr "  -x, --xid=XID          visa baras poster med TransactionId XID\n"
+msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
+msgstr "  -x, --xid=XID          visa baras poster med transaktions-ID XID\n"
 
-#: pg_waldump.c:721
+#: pg_waldump.c:815
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
@@ -135,112 +168,120 @@ msgstr ""
 "  -z, --stats[=post]     visa statistik istället för poster\n"
 "                         (alternativt, visa statistik per post)\n"
 
-#: pg_waldump.c:723
+#: pg_waldump.c:817
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             visa den här hjälpen, avsluta sedan\n"
 
-#: pg_waldump.c:782
+#: pg_waldump.c:876
 #, c-format
 msgid "%s: no arguments specified\n"
 msgstr "%s: inga argument angivna\n"
 
-#: pg_waldump.c:797
+#: pg_waldump.c:891
 #, c-format
 msgid "%s: could not parse end WAL location \"%s\"\n"
 msgstr "%s: kunde inte parsa slut-WAL-position \"%s\"\n"
 
-#: pg_waldump.c:813
+#: pg_waldump.c:907
 #, c-format
 msgid "%s: could not parse limit \"%s\"\n"
 msgstr "%s: kunde inte parsa gränsen \"%s\"\n"
 
-#: pg_waldump.c:842
+#: pg_waldump.c:936
 #, c-format
 msgid "%s: resource manager \"%s\" does not exist\n"
 msgstr "%s: resurshanterare \"%s\" finns inte\n"
 
-#: pg_waldump.c:851
+#: pg_waldump.c:945
 #, c-format
 msgid "%s: could not parse start WAL location \"%s\"\n"
 msgstr "%s: kunde inte parsa start-WAL-position \"%s\"\n"
 
-#: pg_waldump.c:861
+#: pg_waldump.c:955
 #, c-format
 msgid "%s: could not parse timeline \"%s\"\n"
 msgstr "%s: kunde inte parsa tidlinjen \"%s\"\n"
 
-#: pg_waldump.c:873
+#: pg_waldump.c:967
 #, c-format
-msgid "%s: could not parse \"%s\" as a valid xid\n"
-msgstr "%s: kunde inte parsa \"%s\" som en giltig xid\n"
+msgid "%s: could not parse \"%s\" as a transaction ID\n"
+msgstr "%s: kunde inte parsa \"%s\" som ett transaktions-ID\n"
 
-#: pg_waldump.c:888
+#: pg_waldump.c:982
 #, c-format
 msgid "%s: unrecognized argument to --stats: %s\n"
 msgstr "%s: okänt argument till --stats: %s\n"
 
-#: pg_waldump.c:902
+#: pg_waldump.c:996
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
 
-#: pg_waldump.c:913
+#: pg_waldump.c:1007
 #, c-format
-msgid "%s: path \"%s\" cannot be opened: %s\n"
-msgstr "%s: sökvägen \"%s\" kan inte öppnas: %s\n"
+msgid "%s: path \"%s\" could not be opened: %s\n"
+msgstr "%s: sökvägen \"%s\" kunde inte öppnas: %s\n"
 
-#: pg_waldump.c:934
+#: pg_waldump.c:1028
 #, c-format
-msgid "cannot open directory \"%s\": %s"
-msgstr "kan inte öppna katalogen \"%s\": %s"
+msgid "could not open directory \"%s\": %s"
+msgstr "kunde inte öppna katalog \"%s\": %s"
 
-#: pg_waldump.c:940 pg_waldump.c:973
+#: pg_waldump.c:1035 pg_waldump.c:1068
 #, c-format
 msgid "could not open file \"%s\""
 msgstr "kunde inte öppna filen \"%s\""
 
-#: pg_waldump.c:951
+#: pg_waldump.c:1046
 #, c-format
 msgid "%s: start WAL location %X/%X is not inside file \"%s\"\n"
 msgstr "%s: start-WAL-position %X/%X är inte i filen \"%s\"\n"
 
-#: pg_waldump.c:980
+#: pg_waldump.c:1075
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "SLUTSEG %s är före STARTSEG %s"
 
-#: pg_waldump.c:995
+#: pg_waldump.c:1091
 #, c-format
 msgid "%s: end WAL location %X/%X is not inside file \"%s\"\n"
 msgstr "%s: slut-WAL-position %X/%X är inte i filen \"%s\"\n"
 
-#: pg_waldump.c:1007
+#: pg_waldump.c:1105
 #, c-format
 msgid "%s: no start WAL location given\n"
 msgstr "%s: ingen start-WAL-position angiven\n"
 
-#: pg_waldump.c:1016
+#: pg_waldump.c:1115
 #, c-format
 msgid "out of memory"
 msgstr "slut på minne"
 
-#: pg_waldump.c:1022
+#: pg_waldump.c:1121
 #, c-format
 msgid "could not find a valid record after %X/%X"
 msgstr "kunde inte hitta en giltig post efter %X/%X"
 
-#: pg_waldump.c:1032
+#: pg_waldump.c:1132
 #, c-format
-msgid "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
-msgstr "första posten efter %X/%X, vid %X/%X, hoppar över %u byte\n"
+msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
+msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
+msgstr[0] "första posten efter %X/%X, vid %X/%X, hoppar över %u byte\n"
+msgstr[1] "första posten efter %X/%X, vid %X/%X, hoppar över %u byte\n"
 
-#: pg_waldump.c:1081
+#: pg_waldump.c:1183
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
 msgstr "fel i WAL-post vid %X/%X: %s"
 
-#: pg_waldump.c:1091
+#: pg_waldump.c:1193
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
+
+#~ msgid "cannot open directory \"%s\": %s"
+#~ msgstr "kan inte öppna katalogen \"%s\": %s"
+
+#~ msgid "could not seek in log segment %s to offset %u: %s"
+#~ msgstr "kunde inte söka i loggsegment %s till offset %u: %s"

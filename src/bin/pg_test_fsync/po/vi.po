@@ -1,0 +1,195 @@
+# LANGUAGE message translation file for pg_test_fsync
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_test_fsync (PostgreSQL) package.
+# FIRST AUTHOR <kakalot49@gmail.com>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_test_fsync (PostgreSQL) 11\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-04-22 12:17+0000\n"
+"PO-Revision-Date: 2018-04-30 00:47+0900\n"
+"Language-Team: <pgvn_translators@postgresql.vn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 2.0.6\n"
+"Last-Translator: Dang Minh Huong <kakalot49@gmail.com>\n"
+"Language: vi_VN\n"
+
+#. translator: maintain alignment with NA_FORMAT
+#: pg_test_fsync.c:30
+#, c-format
+msgid "%13.3f ops/sec  %6.0f usecs/op\n"
+msgstr "%13.3f thao tác/giây  %6.0f micro giây/thao tác\n"
+
+#: pg_test_fsync.c:49
+#, c-format
+msgid "Could not create thread for alarm\n"
+msgstr "Không thể tạo luồng sử dụng cho alarm\n"
+
+#: pg_test_fsync.c:154
+#, c-format
+msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
+msgstr "Cách sử dụng: %s [-f TÊN FILE] [-s SỐ GIÂY CHO MỘT KIỂM TRA]\n"
+
+#: pg_test_fsync.c:178 pg_test_fsync.c:190
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Hãy thử \"%s --help\" để biết thêm thông tin.\n"
+
+#: pg_test_fsync.c:188
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: quá nhiều đối số cho câu lệnh (đầu tiên là \"%s\")\n"
+
+#: pg_test_fsync.c:195
+#, c-format
+msgid "%d second per test\n"
+msgid_plural "%d seconds per test\n"
+msgstr[0] "%d giây cho mỗi kiểm tra\n"
+
+#: pg_test_fsync.c:200
+#, c-format
+msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
+msgstr "O_DIRECT được hỗ trợ trên hệ điều hành này cho open_datasync và open_sync.\n"
+
+#: pg_test_fsync.c:202
+#, c-format
+msgid "Direct I/O is not supported on this platform.\n"
+msgstr "I/O trực tiếp không được hỗ trợ trên hệ điều hành này.\n"
+
+#: pg_test_fsync.c:227 pg_test_fsync.c:292 pg_test_fsync.c:316
+#: pg_test_fsync.c:339 pg_test_fsync.c:480 pg_test_fsync.c:492
+#: pg_test_fsync.c:508 pg_test_fsync.c:514 pg_test_fsync.c:539
+msgid "could not open output file"
+msgstr "không thể mở tập tin đầu ra"
+
+#: pg_test_fsync.c:231 pg_test_fsync.c:273 pg_test_fsync.c:298
+#: pg_test_fsync.c:322 pg_test_fsync.c:345 pg_test_fsync.c:383
+#: pg_test_fsync.c:441 pg_test_fsync.c:482 pg_test_fsync.c:510
+#: pg_test_fsync.c:541
+msgid "write failed"
+msgstr "viết không thành công"
+
+#: pg_test_fsync.c:235 pg_test_fsync.c:324 pg_test_fsync.c:347
+#: pg_test_fsync.c:484 pg_test_fsync.c:516
+msgid "fsync failed"
+msgstr "đồng bộ không thành công"
+
+#: pg_test_fsync.c:249
+#, c-format
+msgid ""
+"\n"
+"Compare file sync methods using one %dkB write:\n"
+msgstr ""
+"\n"
+"So sánh các phương pháp đồng bộ hóa tệp sử dụng viết một %dkB:\n"
+
+#: pg_test_fsync.c:251
+#, c-format
+msgid ""
+"\n"
+"Compare file sync methods using two %dkB writes:\n"
+msgstr ""
+"\n"
+"So sánh các phương pháp đồng bộ hóa tệp sử dụng viết hai %dkB:\n"
+
+#: pg_test_fsync.c:252
+#, c-format
+msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
+msgstr "(theo thứ tự ưu tiên tham số wal_sync_method, ngoại trừ fdatasync là mặc định của Linux)\n"
+
+#: pg_test_fsync.c:263 pg_test_fsync.c:366 pg_test_fsync.c:432
+msgid "n/a*"
+msgstr "không khả dụng*"
+
+#: pg_test_fsync.c:275 pg_test_fsync.c:301 pg_test_fsync.c:326
+#: pg_test_fsync.c:349 pg_test_fsync.c:385 pg_test_fsync.c:443
+msgid "seek failed"
+msgstr "seek lỗi"
+
+#: pg_test_fsync.c:281 pg_test_fsync.c:306 pg_test_fsync.c:354
+#: pg_test_fsync.c:391 pg_test_fsync.c:449
+msgid "n/a"
+msgstr "không khả dụng"
+
+#: pg_test_fsync.c:396
+#, c-format
+msgid ""
+"* This file system and its mount options do not support direct\n"
+"  I/O, e.g. ext4 in journaled mode.\n"
+msgstr ""
+"* Hệ thống tệp này và tùy chọn mount không hỗ trợ I/O trực tiếp\n"
+"  ví dụ: ext4 trong chế độ journaled.\n"
+
+#: pg_test_fsync.c:404
+#, c-format
+msgid ""
+"\n"
+"Compare open_sync with different write sizes:\n"
+msgstr ""
+"\n"
+"So sánh open_sync với các kích thước ghi khác nhau:\n"
+
+#: pg_test_fsync.c:405
+#, c-format
+msgid ""
+"(This is designed to compare the cost of writing 16kB in different write\n"
+"open_sync sizes.)\n"
+msgstr ""
+"(Điều này được thiết kế để so sánh cost của việc viết 16kB trong các \n"
+"kích thước open_sync khác nhau.)\n"
+
+#: pg_test_fsync.c:408
+msgid " 1 * 16kB open_sync write"
+msgstr " 1 * 16kB open_sync write"
+
+#: pg_test_fsync.c:409
+msgid " 2 *  8kB open_sync writes"
+msgstr " 2 *  8kB open_sync writes"
+
+#: pg_test_fsync.c:410
+msgid " 4 *  4kB open_sync writes"
+msgstr " 4 *  4kB open_sync writes"
+
+#: pg_test_fsync.c:411
+msgid " 8 *  2kB open_sync writes"
+msgstr " 8 *  2kB open_sync writes"
+
+#: pg_test_fsync.c:412
+msgid "16 *  1kB open_sync writes"
+msgstr "16 *  1kB open_sync writes"
+
+#: pg_test_fsync.c:465
+#, c-format
+msgid ""
+"\n"
+"Test if fsync on non-write file descriptor is honored:\n"
+msgstr ""
+"\n"
+"Kiểm tra xem fsync trên tệp descrtiptor không ghi có tốt không:\n"
+
+#: pg_test_fsync.c:466
+#, c-format
+msgid ""
+"(If the times are similar, fsync() can sync data written on a different\n"
+"descriptor.)\n"
+msgstr ""
+"(Nếu số lần là tương đương, fsync() có thể đồng bộ dữ liệu được ghi ở \n"
+"descriptor khác.)\n"
+
+#: pg_test_fsync.c:531
+#, c-format
+msgid ""
+"\n"
+"Non-sync'ed %dkB writes:\n"
+msgstr ""
+"\n"
+"Viết %dkB không sync:\n"
+
+#: pg_test_fsync.c:608
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"

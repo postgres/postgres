@@ -1,0 +1,174 @@
+# LANGUAGE message translation file for pg_archivecleanup
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-01-30 15:01+0900\n"
+"PO-Revision-Date: 2018-01-30 16:08+0900\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.0.6\n"
+
+#: pg_archivecleanup.c:72
+#, c-format
+msgid "%s: archive location \"%s\" does not exist\n"
+msgstr "%s: アーカイブの場所 \"%s\" が存在しません\n"
+
+#: pg_archivecleanup.c:148
+#, c-format
+msgid "%s: file \"%s\" would be removed\n"
+msgstr "%s: ファイル \"%s\" は削除されます\n"
+
+#: pg_archivecleanup.c:154
+#, c-format
+msgid "%s: removing file \"%s\"\n"
+msgstr "%s: ファイル \"%s\" を削除しています\n"
+
+#: pg_archivecleanup.c:160
+#, c-format
+msgid "%s: ERROR: could not remove file \"%s\": %s\n"
+msgstr "%s: エラー: ファイル \"%s\" を削除できませんでした: %s\n"
+
+#: pg_archivecleanup.c:168
+#, c-format
+msgid "%s: could not read archive location \"%s\": %s\n"
+msgstr "%s: アーカイブの場所 \"%s\" を読み込めませんでした: %s\n"
+
+#: pg_archivecleanup.c:171
+#, c-format
+msgid "%s: could not close archive location \"%s\": %s\n"
+msgstr "%s: アーカイブの場所 \"%s\" をクローズできませんでした: %s\n"
+
+#: pg_archivecleanup.c:175
+#, c-format
+msgid "%s: could not open archive location \"%s\": %s\n"
+msgstr "%s: アーカイブの場所 \"%s\" をオープンできませんでした: %s\n"
+
+#: pg_archivecleanup.c:248
+#, c-format
+msgid "%s: invalid file name argument\n"
+msgstr "%s: ファイル名引数が無効です\n"
+
+#: pg_archivecleanup.c:249 pg_archivecleanup.c:321 pg_archivecleanup.c:342
+#: pg_archivecleanup.c:354 pg_archivecleanup.c:361
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "\"%s --help\" で詳細を参照してください。\n"
+
+#: pg_archivecleanup.c:262
+#, c-format
+msgid ""
+"%s removes older WAL files from PostgreSQL archives.\n"
+"\n"
+msgstr ""
+"%s は PostgreSQL のアーカイブから古い WAL ファイルを削除します。\n"
+"\n"
+
+#: pg_archivecleanup.c:263
+#, c-format
+msgid "Usage:\n"
+msgstr "使用法:\n"
+
+#: pg_archivecleanup.c:264
+#, c-format
+msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+msgstr "%s [オプション] ... {アーカイブの場所} {保存されている最古の WAL ファイル名}\n"
+
+#: pg_archivecleanup.c:265
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"オプション:\n"
+
+#: pg_archivecleanup.c:266
+#, c-format
+msgid "  -d             generate debug output (verbose mode)\n"
+msgstr "  -d             デバッグ情報を生成します（冗長出力モード）\n"
+
+#: pg_archivecleanup.c:267
+#, c-format
+msgid "  -n             dry run, show the names of the files that would be removed\n"
+msgstr "  -n             リハーサル。削除対象のファイル名を表示します\n"
+
+#: pg_archivecleanup.c:268
+#, c-format
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version  バージョン情報を出力して終了します\n"
+
+#: pg_archivecleanup.c:269
+#, c-format
+msgid "  -x EXT         clean up files if they have this extension\n"
+msgstr "  -x EXT         この拡張がある場合はファイルをクリーンアップします\n"
+
+#: pg_archivecleanup.c:270
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help     このヘルプを表示して終了します\n"
+
+#: pg_archivecleanup.c:271
+#, c-format
+msgid ""
+"\n"
+"For use as archive_cleanup_command in recovery.conf when standby_mode = on:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+"e.g.\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+msgstr ""
+"\n"
+"standby_mode = on の場合、recovery.conf で archive_cleanup_command を利用します。\n"
+"  archive_cleanup_command = 'pg_archivecleanup [オプション]... アーカイブの場所 %%r'\n"
+"使用例\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+
+#: pg_archivecleanup.c:276
+#, c-format
+msgid ""
+"\n"
+"Or for use as a standalone archive cleaner:\n"
+"e.g.\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+msgstr ""
+"\n"
+"もしくはスタンドアロンのアーカイブクリーナーとして使います:\n"
+"使用例\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+
+#: pg_archivecleanup.c:280
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"バグがあれば <pgsql-bugs@postgresql.org> に報告してください。\n"
+
+#: pg_archivecleanup.c:341
+#, c-format
+msgid "%s: must specify archive location\n"
+msgstr "%s: アーカイブの場所を指定しなければなりません\n"
+
+#: pg_archivecleanup.c:353
+#, c-format
+msgid "%s: must specify oldest kept WAL file\n"
+msgstr "%s: 保存された最古の WAL ファイルを指定しなければなりません\n"
+
+#: pg_archivecleanup.c:360
+#, c-format
+msgid "%s: too many command-line arguments\n"
+msgstr "%s: コマンドライン引数が多すぎます\n"
+
+#: pg_archivecleanup.c:379
+#, c-format
+msgid "%s: keeping WAL file \"%s\" and later\n"
+msgstr "%s: WAL file \"%s\" とそれ以降の分を保存しています\n"

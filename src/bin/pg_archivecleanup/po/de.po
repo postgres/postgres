@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-04 21:16+0000\n"
-"PO-Revision-Date: 2017-08-04 18:13-0400\n"
+"POT-Creation-Date: 2017-08-17 00:16+0000\n"
+"PO-Revision-Date: 2017-08-17 00:20-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -53,8 +53,8 @@ msgstr "%s: konnte Archivverzeichnis »%s« nicht öffnen: %s\n"
 
 #: pg_archivecleanup.c:248
 #, c-format
-msgid "%s: invalid filename input\n"
-msgstr "%s: ungültiger Dateiname\n"
+msgid "%s: invalid file name argument\n"
+msgstr "%s: ungültiges Dateinamenargument\n"
 
 #: pg_archivecleanup.c:249 pg_archivecleanup.c:321 pg_archivecleanup.c:342
 #: pg_archivecleanup.c:354 pg_archivecleanup.c:361
@@ -159,15 +159,15 @@ msgstr "%s: Archivverzeichnis muss angegeben werden\n"
 
 #: pg_archivecleanup.c:353
 #, c-format
-msgid "%s: must specify restartfilename\n"
-msgstr "%s: Restart-Dateiname muss angegeben werden\n"
+msgid "%s: must specify oldest kept WAL file\n"
+msgstr "%s: älteste zu behaltene WAL-Datei muss angegeben werden\n"
 
 #: pg_archivecleanup.c:360
 #, c-format
-msgid "%s: too many parameters\n"
-msgstr "%s: zu viele Parameter\n"
+msgid "%s: too many command-line arguments\n"
+msgstr "%s: zu viele Kommandozeilenargumente\n"
 
 #: pg_archivecleanup.c:379
 #, c-format
-msgid "%s: keep WAL file \"%s\" and later\n"
+msgid "%s: keeping WAL file \"%s\" and later\n"
 msgstr "%s: WAL-Datei »%s« und spätere werden behalten\n"

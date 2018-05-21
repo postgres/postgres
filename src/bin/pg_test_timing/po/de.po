@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-10 21:45+0000\n"
-"PO-Revision-Date: 2017-02-10 21:46-0500\n"
+"POT-Creation-Date: 2017-08-26 15:45+0000\n"
+"PO-Revision-Date: 2017-08-26 12:30-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -61,19 +61,20 @@ msgstr "Zeitdifferenz: %d ms\n"
 msgid "Per loop time including overhead: %0.2f ns\n"
 msgstr "Zeit pro Durchlauf einschließlich Overhead: %0.2f ns\n"
 
-#: pg_test_timing.c:180
-#, c-format
-msgid "Histogram of timing durations:\n"
-msgstr "Histogramm der Dauern der Zeitmessungen:\n"
+#: pg_test_timing.c:175
+msgid "< us"
+msgstr "< µs"
 
-#: pg_test_timing.c:181
+#: pg_test_timing.c:176
+#, no-c-format
 msgid "% of total"
 msgstr "% von gesamt"
 
-#: pg_test_timing.c:181
-msgid "< us"
-msgstr "< us"
-
-#: pg_test_timing.c:181
+#: pg_test_timing.c:177
 msgid "count"
 msgstr "Anzahl"
+
+#: pg_test_timing.c:186
+#, c-format
+msgid "Histogram of timing durations:\n"
+msgstr "Histogramm der Dauern der Zeitmessungen:\n"

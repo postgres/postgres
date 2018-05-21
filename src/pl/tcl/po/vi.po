@@ -1,0 +1,107 @@
+# LANGUAGE message translation file for pltcl
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pltcl (PostgreSQL) package.
+# FIRST AUTHOR <kakalot49@gmail.com>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pltcl (PostgreSQL) 11\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-04-22 12:08+0000\n"
+"PO-Revision-Date: 2018-04-29 22:56+0900\n"
+"Language-Team: <pgvn_translators@postgresql.vn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.6\n"
+"Last-Translator: Dang Minh Huong <kakalot49@gmail.com>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: vi_VN\n"
+
+#: pltcl.c:466
+msgid "PL/Tcl function to call once when pltcl is first used."
+msgstr "Chỉ định hàm PL/Tcl được gọi một lần khi pltcl sử dụng lần đầu tiên."
+
+#: pltcl.c:473
+msgid "PL/TclU function to call once when pltclu is first used."
+msgstr "Chỉ định hàm PL/TclU được gọi một lần khi pltclu sử dụng lần đầu tiên."
+
+#: pltcl.c:640
+#, c-format
+msgid "function \"%s\" is in the wrong language"
+msgstr "hàm \"%s\" không đúng ngôn ngữ"
+
+#: pltcl.c:651
+#, c-format
+msgid "function \"%s\" must not be SECURITY DEFINER"
+msgstr "hàm \"%s\" không được là SECURITY DEFINER"
+
+#. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
+#: pltcl.c:685
+#, c-format
+msgid "processing %s parameter"
+msgstr "xử lý tham số %s"
+
+#: pltcl.c:846
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "hàm thiết lập giá trị được gọi trong ngữ cảnh không thể chấp nhận một tập hợp"
+
+#: pltcl.c:1019
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr "hàm trả về bản ghi được gọi trong ngữ cảnh không thể chấp nhận kiểu bản ghi"
+
+#: pltcl.c:1296
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "không thể tách giá trị trả về khỏi trigger: %s"
+
+#: pltcl.c:1376 pltcl.c:1806
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1377
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"trong hàm PL/Tcl \"%s\""
+
+#: pltcl.c:1541
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "hàm trigger chỉ có thể được goi như những triggers."
+
+#: pltcl.c:1545
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "Hàm PL/Tcl không thể trả về kiểu %s"
+
+#: pltcl.c:1584
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "Hàm PL/Tcl không thể chấp nhận kiểu %s"
+
+#: pltcl.c:1698
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "không thể tạo procedure nội bộ \"%s\": %s"
+
+#: pltcl.c:3219
+#, c-format
+msgid "column name/value list must have even number of elements"
+msgstr "danh sách cột tên/giá trị phải có giá trị chẵn cho số phần tử"
+
+#: pltcl.c:3237
+#, c-format
+msgid "column name/value list contains nonexistent column name \"%s\""
+msgstr "danh sách cột tên/giá trị chứa tên cột không tồn tại \"%s\""
+
+#: pltcl.c:3244
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "không thể thiết lập attribute hệ thống \"%s\""

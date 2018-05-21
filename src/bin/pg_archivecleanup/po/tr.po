@@ -1,0 +1,173 @@
+# LANGUAGE message translation file for pg_archivecleanup
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2017-12-15 02:45+0000\n"
+"PO-Revision-Date: 2017-12-20 12:15+0300\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"X-Generator: Poedit 1.8.7.1\n"
+
+#: pg_archivecleanup.c:72
+#, c-format
+msgid "%s: archive location \"%s\" does not exist\n"
+msgstr "%s: \"%s\" arşiv lokasyonu mevcut değil\n"
+
+#: pg_archivecleanup.c:148
+#, c-format
+msgid "%s: file \"%s\" would be removed\n"
+msgstr "%s: \"%s\" dosyası kaldırılacak\n"
+
+#: pg_archivecleanup.c:154
+#, c-format
+msgid "%s: removing file \"%s\"\n"
+msgstr "%s: \"%s\" dosyası kaldırılıyor\n"
+
+#: pg_archivecleanup.c:160
+#, c-format
+msgid "%s: ERROR: could not remove file \"%s\": %s\n"
+msgstr "%s: HATA: \"%s\" dosyası kaldırılamadı: %s\n"
+
+#: pg_archivecleanup.c:168
+#, c-format
+msgid "%s: could not read archive location \"%s\": %s\n"
+msgstr "%s: \"%s\" arşiv lokasyonu okunamadı: %s\n"
+
+#: pg_archivecleanup.c:171
+#, c-format
+msgid "%s: could not close archive location \"%s\": %s\n"
+msgstr "%s: \"%s\" arşiv lokasyonu kapatılamadı: %s\n"
+
+#: pg_archivecleanup.c:175
+#, c-format
+msgid "%s: could not open archive location \"%s\": %s\n"
+msgstr "%s: \"%s\" arşiv lokasyonu açılamadı: %s\n"
+
+#: pg_archivecleanup.c:248
+#, c-format
+msgid "%s: invalid file name argument\n"
+msgstr "%s: geçersiz dosya adı argümanı\n"
+
+#: pg_archivecleanup.c:249 pg_archivecleanup.c:321 pg_archivecleanup.c:342
+#: pg_archivecleanup.c:354 pg_archivecleanup.c:361
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Daha fazla bilgi için \"%s --help\" yazın\n"
+
+#: pg_archivecleanup.c:262
+#, c-format
+msgid ""
+"%s removes older WAL files from PostgreSQL archives.\n"
+"\n"
+msgstr "%s daha eski WAL dosyalarını PostgreSQL arşivlerinden kaldırır.\n"
+
+#: pg_archivecleanup.c:263
+#, c-format
+msgid "Usage:\n"
+msgstr "Kullanımı:\n"
+
+#: pg_archivecleanup.c:264
+#, c-format
+msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+msgstr " %s [SECENEK]... ARSIVLOKASYONU TUTULANENESKIWALDOSYASI\n"
+
+#: pg_archivecleanup.c:265
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Seçenekler:\n"
+
+#: pg_archivecleanup.c:266
+#, c-format
+msgid "  -d             generate debug output (verbose mode)\n"
+msgstr "  -d             hata ayıklama çıktısı oluştur (ayrıntılı açıklamalı mod)\n"
+
+#: pg_archivecleanup.c:267
+#, c-format
+msgid "  -n             dry run, show the names of the files that would be removed\n"
+msgstr "  -n             tatbikat modu, sadece kaldırılacak dosyaların adlarını göster\n"
+
+#: pg_archivecleanup.c:268
+#, c-format
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version  sürüm bilgisini göster, sonra çık\n"
+
+#: pg_archivecleanup.c:269
+#, c-format
+msgid "  -x EXT         clean up files if they have this extension\n"
+msgstr "  -x EXT             bu uzantıya sahip dosyaları temizle\n"
+
+#: pg_archivecleanup.c:270
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help     bu yardımı göster, sonra çık\n"
+
+#: pg_archivecleanup.c:271
+#, c-format
+msgid ""
+"\n"
+"For use as archive_cleanup_command in recovery.conf when standby_mode = on:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+"e.g.\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+msgstr ""
+"\n"
+"standby_mode = on iken recovery.conf'da archive_cleanup_command olarak kullanmak için:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [SECENEK]... ARSIVELOKASYONU %%r'\n"
+"örnek:\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+"\n"
+
+#: pg_archivecleanup.c:276
+#, c-format
+msgid ""
+"\n"
+"Or for use as a standalone archive cleaner:\n"
+"e.g.\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+msgstr ""
+"\n"
+"Veya bağımsız bir arşiv temizleyici olarak kullanmak için: \n"
+"örnek:\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+
+#: pg_archivecleanup.c:280
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Hataları <pgsql-bugs@postgresql.org> adresine bildirebilirsiniz.\n"
+
+#: pg_archivecleanup.c:341
+#, c-format
+msgid "%s: must specify archive location\n"
+msgstr "%s: arşiv lokasyonu belirtilmeli\n"
+
+#: pg_archivecleanup.c:353
+#, c-format
+msgid "%s: must specify oldest kept WAL file\n"
+msgstr "%s: tutulan en eski WAL dosyası belirtilmeli\n"
+
+#: pg_archivecleanup.c:360
+#, c-format
+msgid "%s: too many command-line arguments\n"
+msgstr "%s: çok fazla komut-satırı argümanı\n"
+
+#: pg_archivecleanup.c:379
+#, c-format
+msgid "%s: keeping WAL file \"%s\" and later\n"
+msgstr "%s: \"%s\" ve sonrasındaki WAl dosyaları tutuluyor\n"

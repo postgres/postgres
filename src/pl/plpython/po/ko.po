@@ -1,14 +1,14 @@
 # LANGUAGE message translation file for plpython
 # Copyright (C) 2015 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+# Ioseph Kim <ioseph@uri.sarang.net>, 2015.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plpython (PostgreSQL) 9.6\n"
+"Project-Id-Version: plpython (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-26 14:02+0900\n"
-"PO-Revision-Date: 2016-09-26 19:31+0900\n"
+"POT-Creation-Date: 2017-08-16 10:59+0900\n"
+"PO-Revision-Date: 2017-08-17 13:22+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -17,24 +17,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: plpy_cursorobject.c:101
+#: plpy_cursorobject.c:100
 #, c-format
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor 객체는 쿼리나 plpy.prepare 객체를 인자로 사용합니다"
 
-#: plpy_cursorobject.c:177
+#: plpy_cursorobject.c:176
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr ""
 "plpy.cursor 객체의 인자로 plpy.prepare 객체를 사용한 경우 두번째 인자는 "
 "prepare 객체의 매개변수가 있어야 합니다."
 
-#: plpy_cursorobject.c:193 plpy_spi.c:227
+#: plpy_cursorobject.c:192 plpy_spi.c:226
 #, c-format
 msgid "could not execute plan"
 msgstr "plpy.prepare 객체를 실행할 수 없음"
 
-#: plpy_cursorobject.c:196 plpy_spi.c:230
+#: plpy_cursorobject.c:195 plpy_spi.c:229
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
@@ -65,7 +65,7 @@ msgstr "쿼리 결과가 Python 리스트로 담기에는 너무 많습니다"
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "중지된 서브트랜잭션에서 커서를 닫고 있음"
 
-#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:527
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:548
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -104,70 +104,70 @@ msgid "PL/Python function with return type \"void\" did not return None"
 msgstr ""
 "반환 자료형이 \"void\"인 PL/Python 함수가 return None으로 끝나지 않았음"
 
-#: plpy_exec.c:374 plpy_exec.c:400
+#: plpy_exec.c:379 plpy_exec.c:405
 #, c-format
 msgid "unexpected return value from trigger procedure"
 msgstr "트리거 프로시져가 예상치 못한 값을 반환했습니다"
 
-#: plpy_exec.c:375
+#: plpy_exec.c:380
 #, c-format
 msgid "Expected None or a string."
 msgstr "None 이나 문자열이 있어야합니다."
 
-#: plpy_exec.c:390
+#: plpy_exec.c:395
 #, c-format
 msgid ""
 "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
 msgstr ""
 "PL/Python 트리거 함수가 DELETE 트리거에서 \"MODIFY\"를 반환했음 -- 무시함"
 
-#: plpy_exec.c:401
+#: plpy_exec.c:406
 #, c-format
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "None, \"OK\", \"SKIP\", 또는 \"MODIFY\"를 사용해야 함."
 
-#: plpy_exec.c:482
+#: plpy_exec.c:487
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "PyList_SetItem() 함수가 인자 설정하는 중 실패"
 
-#: plpy_exec.c:486
+#: plpy_exec.c:491
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "PyDict_SetItemString() 함수가 인자 설정하는 중 실패"
 
-#: plpy_exec.c:498
+#: plpy_exec.c:503
 #, c-format
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr "반환 자료형이 record인데 함수가 그 자료형으로 반환하지 않음"
 
-#: plpy_exec.c:714
+#: plpy_exec.c:719
 #, c-format
 msgid "while creating return value"
 msgstr "반환값을 만들고 있은 중"
 
-#: plpy_exec.c:738
+#: plpy_exec.c:743
 #, c-format
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "트리거 인자를 구성하는 중 새 딕션너리를 만들 수 없음"
 
-#: plpy_exec.c:927
+#: plpy_exec.c:931
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] 변수가 삭제되었음, 로우를 수정할 수 없음"
 
-#: plpy_exec.c:932
+#: plpy_exec.c:936
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] 변수가 딕션너리 형태가 아님"
 
-#: plpy_exec.c:957
+#: plpy_exec.c:963
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "%d 번째 TD[\"new\"] 딕션너리 키가 문자열이 아님"
 
-#: plpy_exec.c:964
+#: plpy_exec.c:970
 #, c-format
 msgid ""
 "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
@@ -175,12 +175,17 @@ msgid ""
 msgstr ""
 "로우 트리거 작업에서 칼럼으로 사용되는 \"%s\" 키가 TD[\"new\"] 변수에 없음."
 
-#: plpy_exec.c:1044
+#: plpy_exec.c:975
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "\"%s\" 시스템 속성을 지정할 수 없음"
+
+#: plpy_exec.c:1046
 #, c-format
 msgid "while modifying trigger row"
 msgstr "로우 변경 트리거 작업 도중"
 
-#: plpy_exec.c:1105
+#: plpy_exec.c:1107
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "서브트랜잭션이 중지됨으로 강제로 중지됨"
@@ -225,51 +230,51 @@ msgstr "\"%s\" PL/Python 함수"
 msgid "PL/Python anonymous code block"
 msgstr "PL/Python 익명 코드 블럭"
 
-#: plpy_planobject.c:123
-#, c-format
-msgid "plan.status takes no arguments"
-msgstr "plan.status의 인자가 없습니다."
-
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "\"plpy\" 모듈을 임포트 할 수 없음"
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "spiexceptions 모듈을 만들 수 없음"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "spiexceptions 모듈을 추가할 수 없음"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:236
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "기본 SPI 예외처리를 만들 수 없음"
+msgid "could not create exception \"%s\""
+msgstr "\"%s\" 예외처리를 생성할 수 없음"
 
-#: plpy_plpymodule.c:252 plpy_plpymodule.c:256
+#: plpy_plpymodule.c:271 plpy_plpymodule.c:275
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "SPI 예외처리를 생성할 수 없음"
 
-#: plpy_plpymodule.c:422
+#: plpy_plpymodule.c:443
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "잘못된 인자로 구성된 plpy.elog"
 
-#: plpy_plpymodule.c:431
+#: plpy_plpymodule.c:452
 msgid "could not parse error message in plpy.elog"
 msgstr "plpy.elog 에서 오류 메시지를 분석할 수 없음"
 
-#: plpy_plpymodule.c:448
+#: plpy_plpymodule.c:469
 #, c-format
-msgid "Argument 'message' given by name and position"
+msgid "argument 'message' given by name and position"
 msgstr "'message' 인자는 이름과 위치가 있어야 함"
 
-#: plpy_plpymodule.c:475
+#: plpy_plpymodule.c:496
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' 값은 이 함수에서 잘못된 예약어 인자입니다"
 
-#: plpy_plpymodule.c:486 plpy_plpymodule.c:492
+#: plpy_plpymodule.c:507 plpy_plpymodule.c:513
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "잘못된 SQLSTATE 코드"
@@ -304,22 +309,22 @@ msgstr "anonymous PL/Python 코드 블록을 컴파일 할 수 없음"
 msgid "command did not produce a result set"
 msgstr "명령의 결과값이 없음"
 
-#: plpy_spi.c:60
+#: plpy_spi.c:59
 #, c-format
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "plpy.prepare 함수의 두번째 인자는 Python 시퀀스형이어야 함"
 
-#: plpy_spi.c:116
+#: plpy_spi.c:115
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: %d 번째 인자의 자료형이 문자열이 아님"
 
-#: plpy_spi.c:192
+#: plpy_spi.c:191
 #, c-format
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute 함수의 인자는 쿼리문이나 plpy.prepare 객체여야 함"
 
-#: plpy_spi.c:211
+#: plpy_spi.c:210
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execut 함수의 두번째 인자는 python 시퀀스형이 와야함"
@@ -334,27 +339,27 @@ msgstr "SPI_execute_plan 실패: %s"
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute 실패: %s"
 
-#: plpy_subxactobject.c:123
+#: plpy_subxactobject.c:122
 #, c-format
 msgid "this subtransaction has already been entered"
 msgstr "이 서브트랜잭션은 이미 시작되었음"
 
-#: plpy_subxactobject.c:129 plpy_subxactobject.c:187
+#: plpy_subxactobject.c:128 plpy_subxactobject.c:186
 #, c-format
 msgid "this subtransaction has already been exited"
 msgstr "이 서브트랜잭션은 이미 끝났음"
 
-#: plpy_subxactobject.c:181
+#: plpy_subxactobject.c:180
 #, c-format
 msgid "this subtransaction has not been entered"
 msgstr "이 서브트랜잭션이 시작되지 않았음"
 
-#: plpy_subxactobject.c:193
+#: plpy_subxactobject.c:192
 #, c-format
 msgid "there is no subtransaction to exit from"
 msgstr "종료할 서브트랜잭션이 없음, 위치:"
 
-#: plpy_typeio.c:286
+#: plpy_typeio.c:292
 #, c-format
 msgid "could not create new dictionary"
 msgstr "새 디렉터리를 만들 수 없음"
@@ -374,32 +379,17 @@ msgstr "모듈안에 Decimal 속성이 없음"
 msgid "conversion from numeric to Decimal failed"
 msgstr "numeric 형을 Decimal 형으로 변환할 수 없음"
 
-#: plpy_typeio.c:645
-#, c-format
-msgid "cannot convert multidimensional array to Python list"
-msgstr "다중 차원 배열은 Python 리스트로 변환할 수 없음"
-
-#: plpy_typeio.c:646
-#, c-format
-msgid "PL/Python only supports one-dimensional arrays."
-msgstr "PL/Python에서는 1차원 배열만 지원함"
-
-#: plpy_typeio.c:652
-#, c-format
-msgid "could not create new Python list"
-msgstr "새 Python 리스트를 만들 수 없음"
-
-#: plpy_typeio.c:711
+#: plpy_typeio.c:773
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "Python 객체를 bytea 자료형으로 변환할 수 없음"
 
-#: plpy_typeio.c:820
+#: plpy_typeio.c:882
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "Python 객체를 문자열 자료형으로 변환할 수 없음"
 
-#: plpy_typeio.c:831
+#: plpy_typeio.c:893
 #, c-format
 msgid ""
 "could not convert Python object into cstring: Python string representation "
@@ -408,43 +398,91 @@ msgstr ""
 "Python 객체를 cstring 형으로 변환할 수 없음: Python string 변수에 null문자열"
 "이 포함되어 있음"
 
-#: plpy_typeio.c:877
+#: plpy_typeio.c:950
+#, c-format
+msgid "malformed record literal: \"%s\""
+msgstr "잘못된 레코드 표현: \"%s\""
+
+#: plpy_typeio.c:951
+#, c-format
+msgid "Missing left parenthesis."
+msgstr "왼쪽 괄호가 없음."
+
+#: plpy_typeio.c:952 plpy_typeio.c:1390
+#, c-format
+msgid ""
+"To return a composite type in an array, return the composite type as a "
+"Python tuple, e.g., \"[('foo',)]\"."
+msgstr ""
+"배열에서 복합 자료형을 반환하려면, Python 튜플 형을 사용하세요. 예: "
+"\"[('foo',)]\"."
+
+#: plpy_typeio.c:1001
+#, c-format
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "배열 차원이 최대치 (%d)를 초과 했습니다."
+
+#: plpy_typeio.c:1005
+#, c-format
+msgid "could not determine sequence length for function return value"
+msgstr "함수 반환 값으로 시퀀스 길이를 결정할 수 없음"
+
+#: plpy_typeio.c:1008 plpy_typeio.c:1012
+#, c-format
+msgid "array size exceeds the maximum allowed"
+msgstr "배열 최대 크기를 초과함"
+
+#: plpy_typeio.c:1038
 #, c-format
 msgid ""
 "return value of function with array return type is not a Python sequence"
 msgstr "배열형으로 넘길 자료형이 Python 시퀀스형이 아님"
 
-#: plpy_typeio.c:996
+#: plpy_typeio.c:1091
+#, c-format
+msgid "wrong length of inner sequence: has length %d, but %d was expected"
+msgstr "잘못된 내부 시퀀스 길이, 길이 %d, %d 초과했음"
+
+#: plpy_typeio.c:1093
+#, c-format
+msgid ""
+"To construct a multidimensional array, the inner sequences must all have the "
+"same length."
+msgstr ""
+"다차원 배열을 사용하려면, 그 하위 배열의 차원이 모두 같아야합니다."
+
+#: plpy_typeio.c:1213
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "맵 안에 \"%s\" 키가 없음"
 
-#: plpy_typeio.c:997
+#: plpy_typeio.c:1214
 #, c-format
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
 msgstr ""
-"칼럼값으로 null을 반환하려면, 칼럼 다음에 해당 키 이름과 맵핑 되는 None값을 지정하세요"
+"칼럼값으로 null을 반환하려면, 칼럼 다음에 해당 키 이름과 맵핑 되는 None값을 "
+"지정하세요"
 
-#: plpy_typeio.c:1048
+#: plpy_typeio.c:1265
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "반환되는 시퀀스형 변수의 길이가 로우의 칼럼수와 일치하지 않음"
 
-#: plpy_typeio.c:1159
+#: plpy_typeio.c:1388
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "Python 객체 가운데 \"%s\" 속성이 없음"
 
-#: plpy_typeio.c:1160
+#: plpy_typeio.c:1391
 #, c-format
 msgid ""
 "To return null in a column, let the returned object have an attribute named "
 "after column with value None."
 msgstr ""
-"칼럼 값으로 null 을 반환하려면, 값으로 None 값을 가지는 칼럼 뒤에, "
-"속성 이름이 있는 객체를 반환하세요"
+"칼럼 값으로 null 을 반환하려면, 값으로 None 값을 가지는 칼럼 뒤에, 속성 이름"
+"이 있는 객체를 반환하세요"
 
 #: plpy_util.c:36
 #, c-format
@@ -455,12 +493,3 @@ msgstr "Python 유니코드 객체를 UTF-8 문자열로 변환할 수 없음"
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "해당 인코드 문자열을 Python에서 사용할 수 없음"
-
-#~ msgid "Start a new session to use a different Python major version."
-#~ msgstr "Python 메이져 버전을 달리 사용하려면 새 세션으로 시작하세요."
-
-#~ msgid ""
-#~ "This session has previously used Python major version %d, and it is now "
-#~ "attempting to use Python major version %d."
-#~ msgstr ""
-#~ "이 세션은 이전에 %d 버전을 사용했는데, 지금은 %d 버전을 사용하려고 합니다."

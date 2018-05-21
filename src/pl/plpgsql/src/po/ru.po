@@ -2,13 +2,12 @@
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-04-02 23:37+0000\n"
-"PO-Revision-Date: 2016-11-24 11:24+0300\n"
+"POT-Creation-Date: 2017-10-30 19:30+0300\n"
+"PO-Revision-Date: 2017-10-11 10:10+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -79,38 +78,38 @@ msgstr "неоднозначная ссылка на столбец \"%s\""
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "Подразумевается ссылка на переменную PL/pgSQL или столбец таблицы."
 
-#: pl_comp.c:1258 pl_comp.c:1286 pl_exec.c:4624 pl_exec.c:4953 pl_exec.c:5038
-#: pl_exec.c:5129
+#: pl_comp.c:1258 pl_comp.c:1286 pl_exec.c:4584 pl_exec.c:4913 pl_exec.c:4998
+#: pl_exec.c:5089
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "в записи \"%s\" нет поля \"%s\""
 
-#: pl_comp.c:1817
+#: pl_comp.c:1818
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "отношение \"%s\" не существует"
 
-#: pl_comp.c:1926
+#: pl_comp.c:1927
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "переменная \"%s\" имеет псевдотип %s"
 
-#: pl_comp.c:1993
+#: pl_comp.c:1995
 #, c-format
 msgid "relation \"%s\" is not a table"
 msgstr "отношение \"%s\" не является таблицей"
 
-#: pl_comp.c:2153
+#: pl_comp.c:2155
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "тип \"%s\" - лишь пустышка"
 
-#: pl_comp.c:2247 pl_comp.c:2300
+#: pl_comp.c:2249 pl_comp.c:2302
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "нераспознанное условие исключения \"%s\""
 
-#: pl_comp.c:2508
+#: pl_comp.c:2510
 #, c-format
 msgid ""
 "could not determine actual argument type for polymorphic function \"%s\""
@@ -118,7 +117,7 @@ msgstr ""
 "не удалось определить фактический тип аргумента для полиморфной функции \"%s"
 "\""
 
-#: pl_exec.c:355 pl_exec.c:644 pl_exec.c:951
+#: pl_exec.c:355 pl_exec.c:644 pl_exec.c:914
 msgid "during initialization of execution state"
 msgstr "в процессе инициализации состояния выполнения"
 
@@ -126,7 +125,7 @@ msgstr "в процессе инициализации состояния вып
 msgid "while storing call arguments into local variables"
 msgstr "при сохранении аргументов вызова в локальных переменных"
 
-#: pl_exec.c:447 pl_exec.c:833
+#: pl_exec.c:447 pl_exec.c:796
 msgid "during function entry"
 msgstr "при входе в функцию"
 
@@ -139,31 +138,31 @@ msgstr "конец функции достигнут без RETURN"
 msgid "while casting return value to function's return type"
 msgstr "при приведении возвращаемого значения к типу результата функции"
 
-#: pl_exec.c:492 pl_exec.c:3138
+#: pl_exec.c:492 pl_exec.c:3101
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
 "функция, возвращающая множество, вызвана в контексте, где ему нет места"
 
-#: pl_exec.c:530 pl_exec.c:2985
+#: pl_exec.c:530 pl_exec.c:2948
 msgid "returned record type does not match expected record type"
 msgstr "возвращаемый тип записи не соответствует ожидаемому"
 
-#: pl_exec.c:585 pl_exec.c:862 pl_exec.c:986
+#: pl_exec.c:585 pl_exec.c:825 pl_exec.c:949
 msgid "during function exit"
 msgstr "при выходе из функции"
 
-#: pl_exec.c:858 pl_exec.c:982
+#: pl_exec.c:821 pl_exec.c:945
 #, c-format
 msgid "control reached end of trigger procedure without RETURN"
 msgstr "конец триггерной процедуры достигнут без RETURN"
 
-#: pl_exec.c:867
+#: pl_exec.c:830
 #, c-format
 msgid "trigger procedure cannot return a set"
 msgstr "триггерная процедура не может возвращать множество"
 
-#: pl_exec.c:889
+#: pl_exec.c:852
 msgid ""
 "returned row structure does not match the structure of the triggering table"
 msgstr ""
@@ -173,7 +172,7 @@ msgstr ""
 #. translator: last %s is a phrase such as "during statement block
 #. local variable initialization"
 #.
-#: pl_exec.c:1034
+#: pl_exec.c:997
 #, c-format
 msgid "PL/pgSQL function %s line %d %s"
 msgstr "функция PL/pgSQL %s, строка %d, %s"
@@ -181,250 +180,250 @@ msgstr "функция PL/pgSQL %s, строка %d, %s"
 #. translator: last %s is a phrase such as "while storing call
 #. arguments into local variables"
 #.
-#: pl_exec.c:1045
+#: pl_exec.c:1008
 #, c-format
 msgid "PL/pgSQL function %s %s"
 msgstr "функция PL/pgSQL %s, %s"
 
 #. translator: last %s is a plpgsql statement type name
-#: pl_exec.c:1053
+#: pl_exec.c:1016
 #, c-format
 msgid "PL/pgSQL function %s line %d at %s"
 msgstr "функция PL/pgSQL %s, строка %d, оператор %s"
 
-#: pl_exec.c:1059
+#: pl_exec.c:1022
 #, c-format
 msgid "PL/pgSQL function %s"
 msgstr "функция PL/pgSQL %s"
 
-#: pl_exec.c:1224
+#: pl_exec.c:1187
 msgid "during statement block local variable initialization"
 msgstr "при инициализации локальной переменной в блоке операторов"
 
-#: pl_exec.c:1263
+#: pl_exec.c:1226
 #, c-format
 msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
 msgstr ""
 "переменная \"%s\", объявленная NOT NULL, не может иметь значение по "
 "умолчанию NULL"
 
-#: pl_exec.c:1314
+#: pl_exec.c:1277
 msgid "during statement block entry"
 msgstr "при входе в блок операторов"
 
-#: pl_exec.c:1346
+#: pl_exec.c:1309
 msgid "during statement block exit"
 msgstr "при выходе из блока операторов"
 
-#: pl_exec.c:1388
+#: pl_exec.c:1351
 msgid "during exception cleanup"
 msgstr "при очистке после исключения"
 
-#: pl_exec.c:1754
+#: pl_exec.c:1717
 #, c-format
 msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
 msgstr ""
 "GET STACKED DIAGNOSTICS нельзя использовать вне блока обработчика исключения"
 
-#: pl_exec.c:1959
+#: pl_exec.c:1922
 #, c-format
 msgid "case not found"
 msgstr "неправильный CASE"
 
-#: pl_exec.c:1960
+#: pl_exec.c:1923
 #, c-format
 msgid "CASE statement is missing ELSE part."
 msgstr "В операторе CASE не хватает части ELSE."
 
-#: pl_exec.c:2114
+#: pl_exec.c:2077
 #, c-format
 msgid "lower bound of FOR loop cannot be null"
 msgstr "нижняя граница цикла FOR не может быть равна NULL"
 
-#: pl_exec.c:2130
+#: pl_exec.c:2093
 #, c-format
 msgid "upper bound of FOR loop cannot be null"
 msgstr "верхняя граница цикла FOR не может быть равна NULL"
 
-#: pl_exec.c:2148
+#: pl_exec.c:2111
 #, c-format
 msgid "BY value of FOR loop cannot be null"
 msgstr "значение BY в цикле FOR не может быть равно NULL"
 
-#: pl_exec.c:2154
+#: pl_exec.c:2117
 #, c-format
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "значение BY в цикле FOR должно быть больше нуля"
 
-#: pl_exec.c:2331 pl_exec.c:4125
+#: pl_exec.c:2294 pl_exec.c:4085
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "курсор \"%s\" уже используется"
 
-#: pl_exec.c:2354 pl_exec.c:4190
+#: pl_exec.c:2317 pl_exec.c:4150
 #, c-format
 msgid "arguments given for cursor without arguments"
 msgstr "курсору без аргументов были переданы аргументы"
 
-#: pl_exec.c:2373 pl_exec.c:4209
+#: pl_exec.c:2336 pl_exec.c:4169
 #, c-format
 msgid "arguments required for cursor"
 msgstr "курсору требуются аргументы"
 
-#: pl_exec.c:2460
+#: pl_exec.c:2423
 #, c-format
 msgid "FOREACH expression must not be null"
 msgstr "выражение FOREACH не может быть равно NULL"
 
-#: pl_exec.c:2475
+#: pl_exec.c:2438
 #, c-format
 msgid "FOREACH expression must yield an array, not type %s"
 msgstr "выражение в FOREACH должно быть массивом, но не типом %s"
 
-#: pl_exec.c:2492
+#: pl_exec.c:2455
 #, c-format
 msgid "slice dimension (%d) is out of the valid range 0..%d"
 msgstr "размерность среза (%d) вне допустимого диапазона 0..%d"
 
-#: pl_exec.c:2519
+#: pl_exec.c:2482
 #, c-format
 msgid "FOREACH ... SLICE loop variable must be of an array type"
 msgstr "переменная цикла FOREACH ... SLICE должна быть массивом"
 
-#: pl_exec.c:2523
+#: pl_exec.c:2486
 #, c-format
 msgid "FOREACH loop variable must not be of an array type"
 msgstr "переменная цикла FOREACH не должна быть массивом"
 
-#: pl_exec.c:2726 pl_exec.c:2808 pl_exec.c:2978
+#: pl_exec.c:2689 pl_exec.c:2771 pl_exec.c:2941
 #, c-format
 msgid ""
 "cannot return non-composite value from function returning composite type"
 msgstr ""
 "функция, возвращающая составной тип, не может вернуть несоставное значение"
 
-#: pl_exec.c:2852 pl_gram.y:3199
+#: pl_exec.c:2815 pl_gram.y:3199
 #, c-format
 msgid "cannot use RETURN NEXT in a non-SETOF function"
 msgstr ""
 "RETURN NEXT можно использовать только в функциях, возвращающих множества"
 
-#: pl_exec.c:2886 pl_exec.c:3013
+#: pl_exec.c:2849 pl_exec.c:2976
 #, c-format
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "в RETURN NEXT передан неправильный тип результата"
 
-#: pl_exec.c:2915 pl_exec.c:4612 pl_exec.c:4920 pl_exec.c:4946 pl_exec.c:5012
-#: pl_exec.c:5031 pl_exec.c:5099 pl_exec.c:5122
+#: pl_exec.c:2878 pl_exec.c:4572 pl_exec.c:4880 pl_exec.c:4906 pl_exec.c:4972
+#: pl_exec.c:4991 pl_exec.c:5059 pl_exec.c:5082
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "записи \"%s\" не присвоено значение"
 
-#: pl_exec.c:2917 pl_exec.c:4614 pl_exec.c:4922 pl_exec.c:4948 pl_exec.c:5014
-#: pl_exec.c:5033 pl_exec.c:5101 pl_exec.c:5124
+#: pl_exec.c:2880 pl_exec.c:4574 pl_exec.c:4882 pl_exec.c:4908 pl_exec.c:4974
+#: pl_exec.c:4993 pl_exec.c:5061 pl_exec.c:5084
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr ""
 "Для записи, которой не присвоено значение, структура кортежа не определена."
 
-#: pl_exec.c:2924 pl_exec.c:2943
+#: pl_exec.c:2887 pl_exec.c:2906
 #, c-format
 msgid "wrong record type supplied in RETURN NEXT"
 msgstr "в RETURN NEXT передан неправильный тип записи"
 
-#: pl_exec.c:3032
+#: pl_exec.c:2995
 #, c-format
 msgid "RETURN NEXT must have a parameter"
 msgstr "у оператора RETURN NEXT должен быть параметр"
 
-#: pl_exec.c:3058 pl_gram.y:3261
+#: pl_exec.c:3021 pl_gram.y:3261
 #, c-format
 msgid "cannot use RETURN QUERY in a non-SETOF function"
 msgstr ""
 "RETURN QUERY можно использовать только в функциях, возвращающих множества"
 
-#: pl_exec.c:3082
+#: pl_exec.c:3045
 msgid "structure of query does not match function result type"
 msgstr "структура запроса не соответствует типу результата функции"
 
-#: pl_exec.c:3166 pl_exec.c:3304
+#: pl_exec.c:3129 pl_exec.c:3267
 #, c-format
 msgid "RAISE option already specified: %s"
 msgstr "этот параметр RAISE уже указан: %s"
 
-#: pl_exec.c:3200
+#: pl_exec.c:3163
 #, c-format
 msgid "RAISE without parameters cannot be used outside an exception handler"
 msgstr ""
 "RAISE без параметров нельзя использовать вне блока обработчика исключения"
 
-#: pl_exec.c:3294
+#: pl_exec.c:3257
 #, c-format
 msgid "RAISE statement option cannot be null"
 msgstr "параметром оператора RAISE не может быть NULL"
 
-#: pl_exec.c:3364
+#: pl_exec.c:3327
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pl_exec.c:3419
+#: pl_exec.c:3382
 #, c-format
 msgid "assertion failed"
 msgstr "нарушение истинности"
 
-#: pl_exec.c:3623 pl_exec.c:3769 pl_exec.c:3959
+#: pl_exec.c:3583 pl_exec.c:3729 pl_exec.c:3919
 #, c-format
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "в PL/pgSQL нельзя выполнить COPY с участием клиента"
 
-#: pl_exec.c:3627 pl_exec.c:3773 pl_exec.c:3963
+#: pl_exec.c:3587 pl_exec.c:3733 pl_exec.c:3923
 #, c-format
 msgid "cannot begin/end transactions in PL/pgSQL"
 msgstr "в PL/pgSQL нельзя начинать/заканчивать транзакции"
 
-#: pl_exec.c:3628 pl_exec.c:3774 pl_exec.c:3964
+#: pl_exec.c:3588 pl_exec.c:3734 pl_exec.c:3924
 #, c-format
 msgid "Use a BEGIN block with an EXCEPTION clause instead."
 msgstr "Используйте блок BEGIN с предложением EXCEPTION."
 
-#: pl_exec.c:3797 pl_exec.c:3988
+#: pl_exec.c:3757 pl_exec.c:3948
 #, c-format
 msgid "INTO used with a command that cannot return data"
 msgstr "INTO с командой не может возвращать данные"
 
-#: pl_exec.c:3825 pl_exec.c:4016
+#: pl_exec.c:3785 pl_exec.c:3976
 #, c-format
 msgid "query returned no rows"
 msgstr "запрос не вернул строк"
 
-#: pl_exec.c:3844 pl_exec.c:4035
+#: pl_exec.c:3804 pl_exec.c:3995
 #, c-format
 msgid "query returned more than one row"
 msgstr "запрос вернул несколько строк"
 
-#: pl_exec.c:3861
+#: pl_exec.c:3821
 #, c-format
 msgid "query has no destination for result data"
 msgstr "в запросе нет назначения для данных результата"
 
-#: pl_exec.c:3862
+#: pl_exec.c:3822
 #, c-format
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Если вам нужно отбросить результаты SELECT, используйте PERFORM."
 
-#: pl_exec.c:3895 pl_exec.c:7332
+#: pl_exec.c:3855 pl_exec.c:7317
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "в качестве текста запроса в EXECUTE передан NULL"
 
-#: pl_exec.c:3951
+#: pl_exec.c:3911
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "возможность выполнения SELECT ... INTO в EXECUTE не реализована"
 
 # skip-rule: space-before-ellipsis
-#: pl_exec.c:3952
+#: pl_exec.c:3912
 #, c-format
 msgid ""
 "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS "
@@ -433,70 +432,70 @@ msgstr ""
 "Альтернативой может стать EXECUTE ... INTO или EXECUTE CREATE TABLE ... "
 "AS ..."
 
-#: pl_exec.c:4273 pl_exec.c:4369
+#: pl_exec.c:4233 pl_exec.c:4329
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "переменная курсора \"%s\" равна NULL"
 
-#: pl_exec.c:4284 pl_exec.c:4380
+#: pl_exec.c:4244 pl_exec.c:4340
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "курсор \"%s\" не существует"
 
-#: pl_exec.c:4297
+#: pl_exec.c:4257
 #, c-format
 msgid "relative or absolute cursor position is null"
 msgstr "относительная или абсолютная позиция курсора равна NULL"
 
-#: pl_exec.c:4488
+#: pl_exec.c:4448
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "значение NULL нельзя присвоить переменной \"%s\", объявленной NOT NULL"
 
-#: pl_exec.c:4557
+#: pl_exec.c:4517
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "переменной типа кортеж можно присвоить только составное значение"
 
-#: pl_exec.c:4581
+#: pl_exec.c:4541
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "переменной типа запись можно присвоить только составное значение"
 
-#: pl_exec.c:4701
+#: pl_exec.c:4661
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "число размерностей массива (%d) превышает предел (%d)"
 
-#: pl_exec.c:4733
+#: pl_exec.c:4693
 #, c-format
 msgid "subscripted object is not an array"
 msgstr "для объекта указан индекс, но этот объект - не массив"
 
-#: pl_exec.c:4771
+#: pl_exec.c:4731
 #, c-format
 msgid "array subscript in assignment must not be null"
 msgstr "индекс элемента массива в присваивании не может быть NULL"
 
-#: pl_exec.c:5238
+#: pl_exec.c:5198
 #, c-format
 msgid "query \"%s\" did not return data"
 msgstr "запрос \"%s\" не вернул данные"
 
-#: pl_exec.c:5246
+#: pl_exec.c:5206
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
-msgstr[0] "запрос \"%s\" вернул %d строку"
-msgstr[1] "запрос \"%s\" вернул %d строки"
-msgstr[2] "запрос \"%s\" вернул %d строк"
+msgstr[0] "запрос \"%s\" вернул %d столбец"
+msgstr[1] "запрос \"%s\" вернул %d столбца"
+msgstr[2] "запрос \"%s\" вернул %d столбцов"
 
-#: pl_exec.c:5273
+#: pl_exec.c:5233
 #, c-format
 msgid "query \"%s\" returned more than one row"
 msgstr "запрос \"%s\" вернул несколько строк"
 
-#: pl_exec.c:5341
+#: pl_exec.c:5301
 #, c-format
 msgid "query \"%s\" is not a SELECT"
 msgstr "запрос \"%s\" - не SELECT"

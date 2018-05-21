@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpglib (PostgreSQL) 9.6\n"
+"Project-Id-Version: ecpglib (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-09-26 14:02+0900\n"
-"PO-Revision-Date: 2016-09-26 15:37+0900\n"
+"PO-Revision-Date: 2017-08-17 13:20+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"

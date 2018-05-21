@@ -1,0 +1,2883 @@
+# Hebrew message translation file for pg_dump
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Michael Goldberg <mic.goldberg@gmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_dump (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2017-05-17 03:16+0000\n"
+"PO-Revision-Date: 2017-08-15 10:37-0400\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Last-Translator: Michael Goldberg <mic.goldberg@gmail.com>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.0.2\n"
+
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "לא יוכל לזהות את הספריה הנוכחית: %s"
+
+#: ../../common/exec.c:146
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "בינארי לא חוקי \"%s\""
+
+#: ../../common/exec.c:195
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "לא ניתן לקרוא בינארי \"%s\""
+
+#: ../../common/exec.c:202
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "לא ניתן למצוא \"%s\" לביצוע"
+
+#: ../../common/exec.c:257 ../../common/exec.c:293
+#, c-format
+msgid "could not change directory to \"%s\": %s"
+msgstr "לא לשנות לשנות ספריות ל \"%s\": %s"
+
+#: ../../common/exec.c:272
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "לא ניתן לקרוא את הקישור הסימבולי \"%s\""
+
+#: ../../common/exec.c:523
+#, c-format
+msgid "pclose failed: %s"
+msgstr "נכשלpclose : %s"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98
+#, c-format
+msgid "out of memory\n"
+msgstr "אין זיכרון פנוי\n"
+
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "לא ניתן לשכפל מצביע ריק (שגיאה פנימית)\n"
+
+#: ../../common/wait_error.c:45
+#, c-format
+msgid "command not executable"
+msgstr "לא ניתן לבצע את הפקודה"
+
+#: ../../common/wait_error.c:49
+#, c-format
+msgid "command not found"
+msgstr "הפקודה לא נמצאה"
+
+#: ../../common/wait_error.c:54
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "תהליך צאצא יצא עם %d"
+
+#: ../../common/wait_error.c:61
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "תהליך צאצא הופסק על ידי חריגה 0 0x %X"
+
+#: ../../common/wait_error.c:71
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "תהליך צאצא הופסק על ידי האות %s"
+
+#: ../../common/wait_error.c:75
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "תהליך צאצא הופסק על ידי האות %d"
+
+#: ../../common/wait_error.c:80
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "תהליך צאצא יצא עם מצב לא מזוהה %d"
+
+#: common.c:121
+#, c-format
+msgid "reading extensions\n"
+msgstr "קריאה הרחבות\n"
+
+#: common.c:126
+#, c-format
+msgid "identifying extension members\n"
+msgstr "זיהוי חברי הרחבה\n"
+
+#: common.c:130
+#, c-format
+msgid "reading schemas\n"
+msgstr "קריאה סכימות\n"
+
+#: common.c:141
+#, c-format
+msgid "reading user-defined tables\n"
+msgstr "קריאת טבלאות המשתמש\n"
+
+#: common.c:149
+#, c-format
+msgid "reading user-defined functions\n"
+msgstr "קריאה פונקציות המוגדרות על-ידי המשתמש\n"
+
+#: common.c:155
+#, c-format
+msgid "reading user-defined types\n"
+msgstr "קריאה טיפוסים המוגדרים על-ידי המשתמש\n"
+
+#: common.c:161
+#, c-format
+msgid "reading procedural languages\n"
+msgstr "קריאה שפות פרוצדוראליות\n"
+
+#: common.c:165
+#, c-format
+msgid "reading user-defined aggregate functions\n"
+msgstr "קריאה פונקציות צבירה המוגדרות על-ידי המשתמש\n"
+
+#: common.c:169
+#, c-format
+msgid "reading user-defined operators\n"
+msgstr "קריאה אופרטורים המוגדרים על-ידי המשתמש\n"
+
+#: common.c:174
+#, c-format
+msgid "reading user-defined access methods\n"
+msgstr "קריאה שיטות גישה המוגדרות על-ידי המשתמש\n"
+
+#: common.c:178
+#, c-format
+msgid "reading user-defined operator classes\n"
+msgstr "קריאת מחלקות אופרטור המוגדרות על ידי המשתמש\n"
+
+#: common.c:182
+#, c-format
+msgid "reading user-defined operator families\n"
+msgstr "קריאת משפחות אופרטור המוגדרות על ידי המשתמש\n"
+
+#: common.c:186
+#, c-format
+msgid "reading user-defined text search parsers\n"
+msgstr "קריאת מנתחי מבנה החיפוש טקסט המוגדרים על-ידי המשתמש\n"
+
+#: common.c:190
+#, c-format
+msgid "reading user-defined text search templates\n"
+msgstr "קריאת תבניות החיפוש טקסט המוגדרות על-ידי המשתמש\n"
+
+#: common.c:194
+#, c-format
+msgid "reading user-defined text search dictionaries\n"
+msgstr "קריאת מילוני חיפוש טקסט המגדרים על-ידי המשתמש חיפוש\n"
+
+#: common.c:198
+#, c-format
+msgid "reading user-defined text search configurations\n"
+msgstr "קריאת תצורות חיפוש טקסט המוגדרות על-ידי המשתמש\n"
+
+#: common.c:202
+#, c-format
+msgid "reading user-defined foreign-data wrappers\n"
+msgstr "קריאה עטיפות נתונים זרים המוגדרות על-ידי המשתמש\n"
+
+#: common.c:206
+#, c-format
+msgid "reading user-defined foreign servers\n"
+msgstr "הקריאה שרתים זרים המוגדרים על-ידי המשתמש\n"
+
+#: common.c:210
+#, c-format
+msgid "reading default privileges\n"
+msgstr "קריאת הרשאות ברירת מחדל\n"
+
+#: common.c:214
+#, c-format
+msgid "reading user-defined collations\n"
+msgstr "הקריאה זרים המוגדרים על-ידי המשתמש\n"
+
+#: common.c:219
+#, c-format
+msgid "reading user-defined conversions\n"
+msgstr "הקריאה המרות המוגדרות על-ידי המשתמש\n"
+
+#: common.c:223
+#, c-format
+msgid "reading type casts\n"
+msgstr "קריאות סוגי הטלות\n"
+
+#: common.c:227
+#, c-format
+msgid "reading transforms\n"
+msgstr "קריאה שינויי צורה\n"
+
+#: common.c:231
+#, c-format
+msgid "reading table inheritance information\n"
+msgstr "קריאת המידע על ירושת הטבלה\n"
+
+#: common.c:235
+#, c-format
+msgid "reading event triggers\n"
+msgstr "קריאה טריגרים של אירוע\n"
+
+#: common.c:240
+#, c-format
+msgid "finding extension tables\n"
+msgstr "מציאת טבלאות ההרחבה\n"
+
+#: common.c:245
+#, c-format
+msgid "finding inheritance relationships\n"
+msgstr "מציאת יחסי ירושה\n"
+
+#: common.c:249
+#, c-format
+msgid "reading column info for interesting tables\n"
+msgstr "קריאה מידע על עמודה של טבלאות מעניינות\n"
+
+#: common.c:253
+#, c-format
+msgid "flagging inherited columns in subtables\n"
+msgstr "סימון עמודות מורשות בתת טבלאות\n"
+
+#: common.c:257
+#, c-format
+msgid "reading indexes\n"
+msgstr "קריאה אינדקסים\n"
+
+#: common.c:261
+#, c-format
+msgid "reading extended statistics\n"
+msgstr "קריאה סטטיסטיקה מורחבת\n"
+
+#: common.c:265
+#, c-format
+msgid "reading constraints\n"
+msgstr "קריאה אילוצים\n"
+
+#: common.c:269
+#, c-format
+msgid "reading triggers\n"
+msgstr "קריאה טריגירים\n"
+
+#: common.c:273
+#, c-format
+msgid "reading rewrite rules\n"
+msgstr "קריאה חוקים לשכתב\n"
+
+#: common.c:277
+#, c-format
+msgid "reading policies\n"
+msgstr "קריאה מדיניות\n"
+
+#: common.c:281
+#, c-format
+msgid "reading publications\n"
+msgstr "קריאה פרסומים\n"
+
+#: common.c:285
+#, c-format
+msgid "reading publication membership\n"
+msgstr "קריאה לחברות פרסום\n"
+
+#: common.c:289
+#, c-format
+msgid "reading subscriptions\n"
+msgstr "קריאה מנויים\n"
+
+#: common.c:924
+#, c-format
+msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
+msgstr "בדיקת שפיות נכשלה, אובייקט האבOID  %u של טבלה '%s' (OID %u) לא נמצא\n"
+
+#: common.c:966
+#, c-format
+msgid "could not parse numeric array \"%s\": too many numbers\n"
+msgstr "לא היתה אפשרות לנתח את מערך מספרי \"%s\": מספרים רבים מדי\n"
+
+#: common.c:981
+#, c-format
+msgid "could not parse numeric array \"%s\": invalid character in number\n"
+msgstr "לא היתה אפשרות לנתח את מערך מספרי \"%s\": תו לא חוקי במספר\n"
+
+#. translator: this is a module name
+#: compress_io.c:78
+msgid "compress_io"
+msgstr "compress_io"
+
+#: compress_io.c:114
+#, c-format
+msgid "invalid compression code: %d\n"
+msgstr "קוד דחיסה לא חוקי: %d\n"
+
+#: compress_io.c:138 compress_io.c:174 compress_io.c:192 compress_io.c:519
+#: compress_io.c:562
+#, c-format
+msgid "not built with zlib support\n"
+msgstr "לא בנוי עם תמיכה zlib\n"
+
+#: compress_io.c:242 compress_io.c:344
+#, c-format
+msgid "could not initialize compression library: %s\n"
+msgstr "לא היתה אפשרות לאתחל את ספריית דחיסה: %s\n"
+
+#: compress_io.c:263
+#, c-format
+msgid "could not close compression stream: %s\n"
+msgstr "לא היתה אפשרות לסגור זרם דחיסה: %s\n"
+
+#: compress_io.c:281
+#, c-format
+msgid "could not compress data: %s\n"
+msgstr "לא היתה אפשרות לדחוס נתונים: %s\n"
+
+#: compress_io.c:361 compress_io.c:377
+#, c-format
+msgid "could not uncompress data: %s\n"
+msgstr "לא היתה אפשרות לבטל את דחיסת הנתונים: %s\n"
+
+#: compress_io.c:385
+#, c-format
+msgid "could not close compression library: %s\n"
+msgstr "לא היתה אפשרות לסגור את הספרייה דחיסה: %s\n"
+
+#: compress_io.c:596 compress_io.c:632 pg_backup_custom.c:587
+#: pg_backup_tar.c:559
+#, c-format
+msgid "could not read from input file: %s\n"
+msgstr "לא ניתן לקרוא מתוך קובץ הקלט: %s\n"
+
+#: compress_io.c:635 pg_backup_custom.c:584 pg_backup_directory.c:543
+#: pg_backup_tar.c:795 pg_backup_tar.c:819
+#, c-format
+msgid "could not read from input file: end of file\n"
+msgstr "לא היתה אפשרות לקרוא מתוך קובץ הקלט: סוף הקובץ\n"
+
+#: parallel.c:198
+msgid "parallel archiver"
+msgstr "ארכיבר מקבילי"
+
+#: parallel.c:265
+#, c-format
+msgid "%s: WSAStartup failed: %d\n"
+msgstr "תכנית %s: נכשל WSAStartup  : %d\n"
+
+#: parallel.c:971
+#, c-format
+msgid "could not create communication channels: %s\n"
+msgstr "לא היתה אפשרות ליצור ערוצי תקשורת: %s\n"
+
+#: parallel.c:1036
+#, c-format
+msgid "could not create worker process: %s\n"
+msgstr "לא היתה אפשרות ליצור תהליך עובד: %s\n"
+
+#: parallel.c:1167
+#, c-format
+msgid "unrecognized command received from master: \"%s\"\n"
+msgstr "פקודה לא מזוהה נתקבלה מהמאסטר: \"%s\"\n"
+
+#: parallel.c:1211 parallel.c:1451
+#, c-format
+msgid "invalid message received from worker: \"%s\"\n"
+msgstr "הודעה לא חוקית נתקבלה מתהליך העובד: \"%s\"\n"
+
+#: parallel.c:1344
+#, c-format
+msgid ""
+"could not obtain lock on relation \"%s\"\n"
+"This usually means that someone requested an ACCESS EXCLUSIVE lock on the table after the pg_dump parent process had gotten the initial ACCESS SHARE lock on the table.\n"
+msgstr ""
+"לא היתה אפשרות להשיג נעילה על היחס \"%s\"\n"
+"זה בדרך כלל אומר כי מישהו ביקש נעילת גישה בלעדית על הטבלה לאחר שתהליך האב pg_dump קיבל נעילת גישה המשותפת הראשונית על הטבלה.\n"
+
+#: parallel.c:1433
+#, c-format
+msgid "a worker process died unexpectedly\n"
+msgstr "תהליך עובד נעצר באופן בלתי צפוי\n"
+
+#: parallel.c:1557 parallel.c:1675
+#, c-format
+msgid "could not write to the communication channel: %s\n"
+msgstr "לא היתה אפשרות לכתוב לערוץ תקשורת: %s\n"
+
+#: parallel.c:1635
+#, c-format
+msgid "select() failed: %s\n"
+msgstr "נכשל select(): %s\n"
+
+#: parallel.c:1760
+#, c-format
+msgid "pgpipe: could not create socket: error code %d\n"
+msgstr "תכנית pgpipe: לא היתה אפשרות ליצור שקע: קוד שגיאה %d\n"
+
+#: parallel.c:1771
+#, c-format
+msgid "pgpipe: could not bind: error code %d\n"
+msgstr "תכנית pgpipe: לא היתה אפשרות לקשור: קוד שגיאה %d\n"
+
+#: parallel.c:1778
+#, c-format
+msgid "pgpipe: could not listen: error code %d\n"
+msgstr "תכנית pgpipe: לא היתה אפשרות להאזין: קוד שגיאה %d\n"
+
+#: parallel.c:1785
+#, c-format
+msgid "pgpipe: getsockname() failed: error code %d\n"
+msgstr "תכנית pgpipe: נכשל getsockname() : קוד שגיאה %d\n"
+
+#: parallel.c:1796
+#, c-format
+msgid "pgpipe: could not create second socket: error code %d\n"
+msgstr "תכנית pgpipe: לא היתה אפשרות ליצור שקע שני: קוד שגיאה %d\n"
+
+#: parallel.c:1805
+#, c-format
+msgid "pgpipe: could not connect socket: error code %d\n"
+msgstr "תכנית pgpipe: לא היתה אפשרות לחבר שקע: קוד שגיאה %d\n"
+
+#: parallel.c:1814
+#, c-format
+msgid "pgpipe: could not accept connection: error code %d\n"
+msgstr "תכנית pgpipe: לא היתה אפשרות לקבל חיבור: קוד שגיאה %d\n"
+
+#. translator: this is a module name
+#: pg_backup_archiver.c:53
+msgid "archiver"
+msgstr "ארכיבר"
+
+#: pg_backup_archiver.c:243 pg_backup_archiver.c:1573
+#, c-format
+msgid "could not close output file: %s\n"
+msgstr "לא היתה אפשרות לסגור קובץ הפלט: %s\n"
+
+#: pg_backup_archiver.c:289 pg_backup_archiver.c:294
+#, c-format
+msgid "WARNING: archive items not in correct section order\n"
+msgstr "אזהרה: פריטי ארכיון לא בסדר נכון במחלקה\n"
+
+#: pg_backup_archiver.c:300
+#, c-format
+msgid "unexpected section code %d\n"
+msgstr "קוד סעיף לא צפוי %d\n"
+
+#: pg_backup_archiver.c:336
+#, c-format
+msgid "-C and -1 are incompatible options\n"
+msgstr "האופציות לא תואמות -C ו-1\n"
+
+#: pg_backup_archiver.c:346
+#, c-format
+msgid "parallel restore is not supported with this archive file format\n"
+msgstr "שחזור מקבילי אינו נתמך עם פורמט קובץ ארכיון זה\n"
+
+#: pg_backup_archiver.c:350
+#, c-format
+msgid "parallel restore is not supported with archives made by pre-8.0 pg_dump\n"
+msgstr "שחזור מקבילי אינה נתמך עם ארכיון שנעשו על ידי pg_dump טרום-8.0\n"
+
+#: pg_backup_archiver.c:368
+#, c-format
+msgid "cannot restore from compressed archive (compression not supported in this installation)\n"
+msgstr "אין אפשרות לשחזר מארכיון דחוס (דחיסה נתמכות בהתקנה זו)\n"
+
+#: pg_backup_archiver.c:385
+#, c-format
+msgid "connecting to database for restore\n"
+msgstr "התחברות למסד נתונים עבור שחזור\n"
+
+#: pg_backup_archiver.c:387
+#, c-format
+msgid "direct database connections are not supported in pre-1.3 archives\n"
+msgstr "חיבורים ישירים למסד נתונים אינם נתמכים בארכיונים טרום-1.3\n"
+
+#: pg_backup_archiver.c:432
+#, c-format
+msgid "implied data-only restore\n"
+msgstr "שחזור נתונים בלבד משתמע\n"
+
+#: pg_backup_archiver.c:502
+#, c-format
+msgid "dropping %s %s\n"
+msgstr "משחרר %s %s\n"
+
+#: pg_backup_archiver.c:595
+#, c-format
+msgid "WARNING: could not find where to insert IF EXISTS in statement \"%s\"\n"
+msgstr "אזהרה: לא היתה אפשרות למצוא היכן להוסיף אם  IF EXISTS במשפט \"%s\"\n"
+
+#: pg_backup_archiver.c:671
+#, c-format
+msgid "setting owner and privileges for %s \"%s.%s\"\n"
+msgstr "הגדרת הבעלים והרשאות עבור %s \"%s.%s\"\n"
+
+#: pg_backup_archiver.c:674
+#, c-format
+msgid "setting owner and privileges for %s \"%s\"\n"
+msgstr "הגדרת הבעלים והרשאות עבור %s \"%s\"\n"
+
+#: pg_backup_archiver.c:740 pg_backup_archiver.c:742
+#, c-format
+msgid "warning from original dump file: %s\n"
+msgstr "אזהרה מקובץ dump המקורי: %s\n"
+
+#: pg_backup_archiver.c:751
+#, c-format
+msgid "creating %s \"%s.%s\"\n"
+msgstr "יצירת %s \"%s.%s\"\n"
+
+#: pg_backup_archiver.c:754
+#, c-format
+msgid "creating %s \"%s\"\n"
+msgstr "יצירת %s \"%s\"\n"
+
+#: pg_backup_archiver.c:806
+#, c-format
+msgid "connecting to new database \"%s\"\n"
+msgstr "התחברות למסד נתונים חדש \"%s\"\n"
+
+#: pg_backup_archiver.c:834
+#, c-format
+msgid "processing %s\n"
+msgstr "עיבוד %s\n"
+
+#: pg_backup_archiver.c:854
+#, c-format
+msgid "processing data for table \"%s.%s\"\n"
+msgstr "עיבוד נתונים עבור טבלה \"%s.%s\"\n"
+
+#: pg_backup_archiver.c:916
+#, c-format
+msgid "executing %s %s\n"
+msgstr "ביצוע %s %s\n"
+
+#: pg_backup_archiver.c:955
+#, c-format
+msgid "disabling triggers for %s\n"
+msgstr "נטרול טריגרים עבור %s\n"
+
+#: pg_backup_archiver.c:983
+#, c-format
+msgid "enabling triggers for %s\n"
+msgstr "הפעלת טריגרים עבור %s\n"
+
+#: pg_backup_archiver.c:1013
+#, c-format
+msgid "internal error -- WriteData cannot be called outside the context of a DataDumper routine\n"
+msgstr "שגיאה פנימית - אין אפשרות לקרוא לWriteData מחוץ להקשר של שיגרה DataDumper\n"
+
+#: pg_backup_archiver.c:1211
+#, c-format
+msgid "large-object output not supported in chosen format\n"
+msgstr "אין תמיכה בתבנית שבחרת בפלט large-object\n"
+
+#: pg_backup_archiver.c:1269
+#, c-format
+msgid "restored %d large object\n"
+msgid_plural "restored %d large objects\n"
+msgstr[0] "משוחזר %d אובייקט גדול\n"
+msgstr[1] "משוחזרים %d אובייקטים גדולים\n"
+
+#: pg_backup_archiver.c:1290 pg_backup_tar.c:737
+#, c-format
+msgid "restoring large object with OID %u\n"
+msgstr "שחזור אובייקט גדול עם OID %u\n"
+
+#: pg_backup_archiver.c:1302
+#, c-format
+msgid "could not create large object %u: %s"
+msgstr "לא היתה אפשרות ליצור אובייקט גדול % u: %s"
+
+#: pg_backup_archiver.c:1307 pg_dump.c:3085
+#, c-format
+msgid "could not open large object %u: %s"
+msgstr "לא היתה אפשרות לפתוח את אובייקט גדול % u: %s"
+
+#: pg_backup_archiver.c:1365
+#, c-format
+msgid "could not open TOC file \"%s\": %s\n"
+msgstr "לא ניתן לפתוח קובץ TOC \"%s\": %s\n"
+
+#: pg_backup_archiver.c:1406
+#, c-format
+msgid "WARNING: line ignored: %s\n"
+msgstr "אזהרה: התעלמות מהשורה: %s\n"
+
+#: pg_backup_archiver.c:1413
+#, c-format
+msgid "could not find entry for ID %d\n"
+msgstr "לא היתה אפשרות למצוא רשומה עבור מזהה %d\n"
+
+#: pg_backup_archiver.c:1434 pg_backup_directory.c:225
+#: pg_backup_directory.c:592
+#, c-format
+msgid "could not close TOC file: %s\n"
+msgstr "לא היתה אפשרות לסגור קובץ TOC: %s\n"
+
+#: pg_backup_archiver.c:1543 pg_backup_custom.c:158 pg_backup_directory.c:336
+#: pg_backup_directory.c:578 pg_backup_directory.c:643
+#: pg_backup_directory.c:663
+#, c-format
+msgid "could not open output file \"%s\": %s\n"
+msgstr "לא היתה אפשרות לפתוח קובץ פלט \"%s\": %s\n"
+
+#: pg_backup_archiver.c:1546 pg_backup_custom.c:165
+#, c-format
+msgid "could not open output file: %s\n"
+msgstr "לא היתה אפשרות לפתוח את קובץ הפלט: %s\n"
+
+#: pg_backup_archiver.c:1652
+#, c-format
+msgid "wrote %lu byte of large object data (result = %lu)\n"
+msgid_plural "wrote %lu bytes of large object data (result = %lu)\n"
+msgstr[0] "נכתב % lu בית של נתוני האובייקט הגדול (תוצאה = % lu)\n"
+msgstr[1] "נכתבו % lu בתים של נתוני האובייקט הגדול (תוצאה = % lu)\n"
+
+#: pg_backup_archiver.c:1658
+#, c-format
+msgid "could not write to large object (result: %lu, expected: %lu)\n"
+msgstr "לא מצליח לכתוב על אובייקט גדול (תוצאה: % lu, צפוי: % lu)\n"
+
+#: pg_backup_archiver.c:1751
+#, c-format
+msgid "Error while INITIALIZING:\n"
+msgstr "אירעה שגיאה בעת מאתחל:\n"
+
+#: pg_backup_archiver.c:1756
+#, c-format
+msgid "Error while PROCESSING TOC:\n"
+msgstr "אירעה שגיאה בעת עיבוד TOC:\n"
+
+#: pg_backup_archiver.c:1761
+#, c-format
+msgid "Error while FINALIZING:\n"
+msgstr "אירעה שגיאה בעת סיום:\n"
+
+#: pg_backup_archiver.c:1766
+#, c-format
+msgid "Error from TOC entry %d; %u %u %s %s %s\n"
+msgstr "שגיאת מערך TOC %d; %u %u %s %s %s\n"
+
+#: pg_backup_archiver.c:1839
+#, c-format
+msgid "bad dumpId\n"
+msgstr "מזהה dump לא חוקי\n"
+
+#: pg_backup_archiver.c:1860
+#, c-format
+msgid "bad table dumpId for TABLE DATA item\n"
+msgstr "מזהה dump לא חוקי עבור פריט נתונים בטבלה\n"
+
+#: pg_backup_archiver.c:1952
+#, c-format
+msgid "unexpected data offset flag %d\n"
+msgstr "דגל היסט בלתי צפוי %d\n"
+
+#: pg_backup_archiver.c:1965
+#, c-format
+msgid "file offset in dump file is too large\n"
+msgstr "היסט הקובץ בקובץ ב dump גדול מדי\n"
+
+#: pg_backup_archiver.c:2078
+#, c-format
+msgid "attempting to ascertain archive format\n"
+msgstr "ניסיון לברר תבנית ארכיון\n"
+
+#: pg_backup_archiver.c:2104 pg_backup_archiver.c:2114
+#, c-format
+msgid "directory name too long: \"%s\"\n"
+msgstr "שם הספריה ארוך מדי: \"%s\"\n"
+
+#: pg_backup_archiver.c:2122
+#, c-format
+msgid "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not exist)\n"
+msgstr "תיקייה '%s' אינה מופיעה כי ארכיון תקין (\"toc.dat\" אינו קיים)\n"
+
+#: pg_backup_archiver.c:2130 pg_backup_custom.c:177 pg_backup_custom.c:770
+#: pg_backup_directory.c:209 pg_backup_directory.c:394
+#, c-format
+msgid "could not open input file \"%s\": %s\n"
+msgstr "לא היתה אפשרות לפתוח קובץ קלט \"%s\": %s\n"
+
+#: pg_backup_archiver.c:2138 pg_backup_custom.c:184
+#, c-format
+msgid "could not open input file: %s\n"
+msgstr "לא היתה אפשרות לפתוח את קובץ קלט: %s\n"
+
+#: pg_backup_archiver.c:2145
+#, c-format
+msgid "could not read input file: %s\n"
+msgstr "לא היתה אפשרות לקרוא מתוך קובץ הקלט: %s\n"
+
+#: pg_backup_archiver.c:2147
+#, c-format
+msgid "input file is too short (read %lu, expected 5)\n"
+msgstr "קובץ הקלט קצר מדי (לקרוא % lu, מצופה 5)\n"
+
+#: pg_backup_archiver.c:2232
+#, c-format
+msgid "input file appears to be a text format dump. Please use psql.\n"
+msgstr "קובץ הקלט נראה כקובץ בתבנית טקסט. אנא השתמש psql.\n"
+
+#: pg_backup_archiver.c:2238
+#, c-format
+msgid "input file does not appear to be a valid archive (too short?)\n"
+msgstr "קובץ הקלט אינו נראה כקובץ ארכיון חוקי (קצר מדי?)\n"
+
+#: pg_backup_archiver.c:2244
+#, c-format
+msgid "input file does not appear to be a valid archive\n"
+msgstr "קובץ הקלט אינו נראה כקובץ ארכיון חוקי\n"
+
+#: pg_backup_archiver.c:2264
+#, c-format
+msgid "could not close input file: %s\n"
+msgstr "לא ניתן לסגור קובץ הקלט: %s\n"
+
+#: pg_backup_archiver.c:2282
+#, c-format
+msgid "allocating AH for %s, format %d\n"
+msgstr "הקצאת AH עבור %s, תבנית %d\n"
+
+#: pg_backup_archiver.c:2383
+#, c-format
+msgid "unrecognized file format \"%d\"\n"
+msgstr "תבנית קובץ לא מזוהה \"%d\"\n"
+
+#: pg_backup_archiver.c:2438 pg_backup_archiver.c:4204
+#, c-format
+msgid "finished item %d %s %s\n"
+msgstr "פריט מוגמר %d %s %s\n"
+
+#: pg_backup_archiver.c:2442 pg_backup_archiver.c:4217
+#, c-format
+msgid "worker process failed: exit code %d\n"
+msgstr "תהליך עובד נכשל: יציאה קוד %d\n"
+
+#: pg_backup_archiver.c:2562
+#, c-format
+msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
+msgstr "מזהה כניסה% d מחוץ לטווח - אולי TOC מושחת\n"
+
+#: pg_backup_archiver.c:2678
+#, c-format
+msgid "read TOC entry %d (ID %d) for %s %s\n"
+msgstr "קרוא ערך מתוך TOC %d (מזהה %d) עבור %s %s\n"
+
+#: pg_backup_archiver.c:2712
+#, c-format
+msgid "unrecognized encoding \"%s\"\n"
+msgstr "קידוד לא מזוהה \"%s\"\n"
+
+#: pg_backup_archiver.c:2717
+#, c-format
+msgid "invalid ENCODING item: %s\n"
+msgstr "פריט ENCODING לא חוקית: %s\n"
+
+#: pg_backup_archiver.c:2735
+#, c-format
+msgid "invalid STDSTRINGS item: %s\n"
+msgstr "פריט STDSTRINGS לא חוקית: %s\n"
+
+#: pg_backup_archiver.c:2750
+#, c-format
+msgid "schema \"%s\" not found\n"
+msgstr "סכימת \"%s\" לא נמצאה\n"
+
+#: pg_backup_archiver.c:2757
+#, c-format
+msgid "table \"%s\" not found\n"
+msgstr "טבלה '%s' לא נמצאה\n"
+
+#: pg_backup_archiver.c:2764
+#, c-format
+msgid "index \"%s\" not found\n"
+msgstr "אינדקס \"%s\" לא נמצא\n"
+
+#: pg_backup_archiver.c:2771
+#, c-format
+msgid "function \"%s\" not found\n"
+msgstr "פונקציית \"%s\" לא נמצאה\n"
+
+#: pg_backup_archiver.c:2778
+#, c-format
+msgid "trigger \"%s\" not found\n"
+msgstr "טריגר \"%s\" לא נמצא\n"
+
+#: pg_backup_archiver.c:3034
+#, c-format
+msgid "could not set session user to \"%s\": %s"
+msgstr "לא היתה אפשרות להגדיר את הפעלת המשתמש \"%s\": %s"
+
+#: pg_backup_archiver.c:3066
+#, c-format
+msgid "could not set default_with_oids: %s"
+msgstr "לא היתה אפשרות להגדיר את default_with_oids: %s"
+
+#: pg_backup_archiver.c:3211
+#, c-format
+msgid "could not set search_path to \"%s\": %s"
+msgstr "לא היתה אפשרות להגדיר את search_path ל \"%s\": %s"
+
+#: pg_backup_archiver.c:3273
+#, c-format
+msgid "could not set default_tablespace to %s: %s"
+msgstr "לא היתה אפשרות להגדיר default_tablespace ל %s: %s"
+
+#: pg_backup_archiver.c:3362 pg_backup_archiver.c:3559
+#, c-format
+msgid "WARNING: don't know how to set owner for object type %s\n"
+msgstr "אזהרה: לא יודע איך להגדיר בעלים עבור סוג האובייקט %s\n"
+
+#: pg_backup_archiver.c:3646
+#, c-format
+msgid "did not find magic string in file header\n"
+msgstr "לא מצא מחרוזת הקסם בכותרת הקובץ\n"
+
+#: pg_backup_archiver.c:3659
+#, c-format
+msgid "unsupported version (%d.%d) in file header\n"
+msgstr "גירסה לא נתמכת (% d.%d) בכותרת הקובץ\n"
+
+#: pg_backup_archiver.c:3664
+#, c-format
+msgid "sanity check on integer size (%lu) failed\n"
+msgstr "בדיקת שפיות על גודל מספר שלם (% lu) נכשלה\n"
+
+#: pg_backup_archiver.c:3668
+#, c-format
+msgid "WARNING: archive was made on a machine with larger integers, some operations might fail\n"
+msgstr "אזהרה: הארכיון בוצע על מכונה עם מספרים שלמים גדולים יותר, פעולות מסוימות עשוי להיכשל\n"
+
+#: pg_backup_archiver.c:3678
+#, c-format
+msgid "expected format (%d) differs from format found in file (%d)\n"
+msgstr "תבנית הצפוי (%d) שונה מתבנית הנמצאה בקובץ (%d)\n"
+
+#: pg_backup_archiver.c:3694
+#, c-format
+msgid "WARNING: archive is compressed, but this installation does not support compression -- no data will be available\n"
+msgstr "אזהרה: ארכיון דחוס, אבל התקנה זו אינה תומכת דחיסה - לא יהיו נתונים זמינים\n"
+
+#: pg_backup_archiver.c:3712
+#, c-format
+msgid "WARNING: invalid creation date in header\n"
+msgstr "אזהרה: תאריך יצירה לא חוקי בכותרת\n"
+
+#: pg_backup_archiver.c:3787
+#, c-format
+msgid "entering restore_toc_entries_prefork\n"
+msgstr "כניסה ל restore_toc_entries_prefork\n"
+
+#: pg_backup_archiver.c:3831
+#, c-format
+msgid "processing item %d %s %s\n"
+msgstr "עיבוד פריט %d %s %s\n"
+
+#: pg_backup_archiver.c:3881
+#, c-format
+msgid "entering restore_toc_entries_parallel\n"
+msgstr "כניסה ל restore_toc_entries_parallel\n"
+
+#: pg_backup_archiver.c:3929
+#, c-format
+msgid "entering main parallel loop\n"
+msgstr "הכניסה ללולאה מקבילה ראשית \n"
+
+#: pg_backup_archiver.c:3940
+#, c-format
+msgid "skipping item %d %s %s\n"
+msgstr "דילוג על פריט %d %s %s\n"
+
+#: pg_backup_archiver.c:3950
+#, c-format
+msgid "launching item %d %s %s\n"
+msgstr "השקת פריט %d %s %s\n"
+
+#: pg_backup_archiver.c:3981
+#, c-format
+msgid "finished main parallel loop\n"
+msgstr "סיום לולאה מקבילה ראשית\n"
+
+#: pg_backup_archiver.c:3990
+#, c-format
+msgid "entering restore_toc_entries_postfork\n"
+msgstr "כניסה ל restore_toc_entries_postfork\n"
+
+#: pg_backup_archiver.c:4009
+#, c-format
+msgid "processing missed item %d %s %s\n"
+msgstr "עיבוד פריט שפוספס %d %s %s\n"
+
+#: pg_backup_archiver.c:4160
+#, c-format
+msgid "no item ready\n"
+msgstr "אין פריט מוכן\n"
+
+#: pg_backup_archiver.c:4379
+#, c-format
+msgid "transferring dependency %d -> %d to %d\n"
+msgstr "העברת תלות %d-> %d עד %d\n"
+
+#: pg_backup_archiver.c:4452
+#, c-format
+msgid "reducing dependencies for %d\n"
+msgstr "צמצום יחסי התלות עבור %d\n"
+
+#: pg_backup_archiver.c:4491
+#, c-format
+msgid "table \"%s\" could not be created, will not restore its data\n"
+msgstr "לא היתה אפשרות ליצור טבלה '%s', הנתונים שלה לא ישוחזרו\n"
+
+#. translator: this is a module name
+#: pg_backup_custom.c:93
+msgid "custom archiver"
+msgstr "ארכיבר מותאם אישית"
+
+#: pg_backup_custom.c:380 pg_backup_null.c:150
+#, c-format
+msgid "invalid OID for large object\n"
+msgstr "מזהה האובייקט OID לא חוקי עבור אובייקט גדול\n"
+
+#: pg_backup_custom.c:451
+#, c-format
+msgid "unrecognized data block type (%d) while searching archive\n"
+msgstr "סוג בלוק נתונים לא מזוהה (% d) בעת חיפוש בארכיון\n"
+
+#: pg_backup_custom.c:462
+#, c-format
+msgid "error during file seek: %s\n"
+msgstr "שגיאה בעת חיפוש קובץ: %s\n"
+
+#: pg_backup_custom.c:472
+#, c-format
+msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to lack of data offsets in archive\n"
+msgstr "לא יכול למצוא את מזהה הבלוק % d בארכיון - אולי בשל בקשת שחזור שאינה מסודרת, שלא ניתן לטפל בה עקב חוסר קיזוז נתונים בארכיון\n"
+
+#: pg_backup_custom.c:477
+#, c-format
+msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to non-seekable input file\n"
+msgstr "לא יכול למצוא את מזהה הבלוק% d בארכיון - אולי בשל בקשת שחזור שאינה מסודרת, שלא ניתן לטפל בה עקב קובץ קלט שאינו ניתן לחיפוש בו\n"
+
+#: pg_backup_custom.c:482
+#, c-format
+msgid "could not find block ID %d in archive -- possibly corrupt archive\n"
+msgstr "לא יכול למצוא את מזהה הבלוק% d בארכיון - אולי בשל בקשת שחזור שאינה מסודרת, שלא ניתן לטפל בה עקב קובץ ארכיון מושחת\n"
+
+#: pg_backup_custom.c:489
+#, c-format
+msgid "found unexpected block ID (%d) when reading data -- expected %d\n"
+msgstr "נמצא מזהה בלוק לא צפוי (%d) בעת קריאת הנתונים - %d הצפוי\n"
+
+#: pg_backup_custom.c:503
+#, c-format
+msgid "unrecognized data block type %d while restoring archive\n"
+msgstr "סוג בלוק נתונים לא מזוהה %d תוך שחזור הארכיון\n"
+
+#: pg_backup_custom.c:705 pg_backup_custom.c:759 pg_backup_custom.c:844
+#: pg_backup_tar.c:1090
+#, c-format
+msgid "could not determine seek position in archive file: %s\n"
+msgstr "לא יכול לקבוע את המיקום לחפש בקובץ הארכיון: %s\n"
+
+#: pg_backup_custom.c:723 pg_backup_custom.c:764
+#, c-format
+msgid "could not close archive file: %s\n"
+msgstr "לא יכול לסגור את קובץ הארכיון: %s\n"
+
+#: pg_backup_custom.c:746
+#, c-format
+msgid "can only reopen input archives\n"
+msgstr "יכול רק לפתוח מחדש את ארכיוני הקלט\n"
+
+#: pg_backup_custom.c:753
+#, c-format
+msgid "parallel restore from standard input is not supported\n"
+msgstr "שחזור מקבילי מקלט סטנדרטי אינו נתמך\n"
+
+#: pg_backup_custom.c:755
+#, c-format
+msgid "parallel restore from non-seekable file is not supported\n"
+msgstr "שחזור מקבילי מקובץ שאינו ניתן לחיפוש אינו נתמך\n"
+
+#: pg_backup_custom.c:774
+#, c-format
+msgid "could not set seek position in archive file: %s\n"
+msgstr "לא יכול לקבוע את המיקום לחפש בקובץ הארכיון: %s\n"
+
+#: pg_backup_custom.c:792
+#, c-format
+msgid "compressor active\n"
+msgstr "מדחס פעיל\n"
+
+#: pg_backup_custom.c:848
+#, c-format
+msgid "WARNING: ftell mismatch with expected position -- ftell used\n"
+msgstr "אזהרה: אי התאמה ב ftell עם המיקום הצפוי -- ftell בשימוש\n"
+
+#. translator: this is a module name
+#: pg_backup_db.c:29
+msgid "archiver (db)"
+msgstr "ארכיבר (db)"
+
+#: pg_backup_db.c:45
+#, c-format
+msgid "could not get server_version from libpq\n"
+msgstr "לא היתה אפשרות לקבל server_version מ- libpq\n"
+
+#: pg_backup_db.c:56 pg_dumpall.c:2057
+#, c-format
+msgid "server version: %s; %s version: %s\n"
+msgstr "גירסת שרת: %s; %s גירסה: %s\n"
+
+#: pg_backup_db.c:58 pg_dumpall.c:2059
+#, c-format
+msgid "aborting because of server version mismatch\n"
+msgstr "ביטול עקב אי-התאמה של גירסת השרת\n"
+
+#: pg_backup_db.c:148
+#, c-format
+msgid "connecting to database \"%s\" as user \"%s\"\n"
+msgstr "התחברות למסד הנתונים \"%s\" כמשתמש \"%s\"\n"
+
+#: pg_backup_db.c:155 pg_backup_db.c:204 pg_backup_db.c:265 pg_backup_db.c:306
+#: pg_dumpall.c:1880 pg_dumpall.c:1994
+msgid "Password: "
+msgstr "סיסמה: "
+
+#: pg_backup_db.c:187
+#, c-format
+msgid "failed to reconnect to database\n"
+msgstr "לא הצליח להתחבר למסד נתונים\n"
+
+#: pg_backup_db.c:192
+#, c-format
+msgid "could not reconnect to database: %s"
+msgstr "יכולתי להתחבר למסד נתונים: %s"
+
+#: pg_backup_db.c:208
+#, c-format
+msgid "connection needs password\n"
+msgstr "החיבור צריך סיסמה\n"
+
+#: pg_backup_db.c:259
+#, c-format
+msgid "already connected to a database\n"
+msgstr "כבר מחובר למסד נתונים\n"
+
+#: pg_backup_db.c:298
+#, c-format
+msgid "failed to connect to database\n"
+msgstr "לא הצליח להתחבר אל מסד נתונים\n"
+
+#: pg_backup_db.c:314
+#, c-format
+msgid "connection to database \"%s\" failed: %s"
+msgstr "חיבור מסד הנתונים '%s' נכשל: %s"
+
+#: pg_backup_db.c:382
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_backup_db.c:389
+#, c-format
+msgid "query failed: %s"
+msgstr "שאילתה נכשלה: %s"
+
+#: pg_backup_db.c:391
+#, c-format
+msgid "query was: %s\n"
+msgstr ""
+"שאילתה הייתה: %s\n"
+"\n"
+
+#: pg_backup_db.c:433
+#, c-format
+msgid "query returned %d row instead of one: %s\n"
+msgid_plural "query returned %d rows instead of one: %s\n"
+msgstr[0] "השאילתה החזירה שורה %d במקום אחד: %s\n"
+msgstr[1] "השאילתה החזירה %d שורות במקום אחד: %s\n"
+
+#: pg_backup_db.c:469
+#, c-format
+msgid "%s: %s    Command was: %s\n"
+msgstr "תכנית %s: %s הפקודה היתה: %s\n"
+
+#: pg_backup_db.c:525 pg_backup_db.c:599 pg_backup_db.c:606
+msgid "could not execute query"
+msgstr "לא היתה אפשרות לבצע שאילתה"
+
+#: pg_backup_db.c:578
+#, c-format
+msgid "error returned by PQputCopyData: %s"
+msgstr "השגיאה שהחזיר PQputCopyData: %s"
+
+#: pg_backup_db.c:627
+#, c-format
+msgid "error returned by PQputCopyEnd: %s"
+msgstr "השגיאה שהחזיר PQputCopyEnd: %s"
+
+#: pg_backup_db.c:633
+#, c-format
+msgid "COPY failed for table \"%s\": %s"
+msgstr "נכשל COPY עבור טבלה '%s': %s"
+
+#: pg_backup_db.c:639 pg_dump.c:1842
+#, c-format
+msgid "WARNING: unexpected extra results during COPY of table \"%s\"\n"
+msgstr "אזהרה: תוצאות בלתי צפויות נוספות במהלך COPY של הטבלה \"%s\"\n"
+
+#: pg_backup_db.c:651
+msgid "could not start database transaction"
+msgstr "לא היתה אפשרות לאתחל טרנזאקציה"
+
+#: pg_backup_db.c:659
+msgid "could not commit database transaction"
+msgstr "לא היתה אפשרות לסיים טרנזאקציה"
+
+#. translator: this is a module name
+#: pg_backup_directory.c:65
+msgid "directory archiver"
+msgstr "ארכיבר של ספרייה"
+
+#: pg_backup_directory.c:157
+#, c-format
+msgid "no output directory specified\n"
+msgstr "לא צויינה ספריית פלט\n"
+
+#: pg_backup_directory.c:186
+#, c-format
+msgid "could not read directory \"%s\": %s\n"
+msgstr "לא ניתן לקרוא מתיקייה \"%s\": %s\n"
+
+#: pg_backup_directory.c:190
+#, c-format
+msgid "could not close directory \"%s\": %s\n"
+msgstr "לא ניתן לסגור את מדריך \"%s\": %s\n"
+
+#: pg_backup_directory.c:196
+#, c-format
+msgid "could not create directory \"%s\": %s\n"
+msgstr "לא היתה אפשרות ליצור תיקייה \"%s\": %s\n"
+
+#: pg_backup_directory.c:407
+#, c-format
+msgid "could not close data file: %s\n"
+msgstr "לא היתה אפשרות לסגור קובץ הנתונים: %s\n"
+
+#: pg_backup_directory.c:448
+#, c-format
+msgid "could not open large object TOC file \"%s\" for input: %s\n"
+msgstr "לא היתה אפשרות לפתוח קובץ TOC של אובייקט גדול \"%s\" עבור קלט: %s\n"
+
+#: pg_backup_directory.c:459
+#, c-format
+msgid "invalid line in large object TOC file \"%s\": \"%s\"\n"
+msgstr "שורה לא חוקית בקובץ TOC של אובייקט גדול \"%s\": \"%s\"\n"
+
+#: pg_backup_directory.c:468
+#, c-format
+msgid "error reading large object TOC file \"%s\"\n"
+msgstr "שגיאה בקריאת הקובץ TOC של אובייקט גדול \"%s\"\n"
+
+#: pg_backup_directory.c:472
+#, c-format
+msgid "could not close large object TOC file \"%s\": %s\n"
+msgstr "לא היתה אפשרות לסגור קובץ TOC של אובייקט גדול \"%s\": %s\n"
+
+#: pg_backup_directory.c:686
+#, c-format
+msgid "could not write to blobs TOC file\n"
+msgstr "לא היתה אפשרות לכתוב לblobs של קובץ TOC\n"
+
+#: pg_backup_directory.c:718
+#, c-format
+msgid "file name too long: \"%s\"\n"
+msgstr "שם קובץ ארוך מדי: \"%s\"\n"
+
+#: pg_backup_null.c:75
+#, c-format
+msgid "this format cannot be read\n"
+msgstr "תבנית זו לא ניתן לקרוא\n"
+
+#. translator: this is a module name
+#: pg_backup_tar.c:103
+msgid "tar archiver"
+msgstr "ארכיבר tar"
+
+#: pg_backup_tar.c:181
+#, c-format
+msgid "could not open TOC file \"%s\" for output: %s\n"
+msgstr "לא היתה אפשרות לפתוח את קובץ TOC \"%s\" עבור פלט: %s\n"
+
+#: pg_backup_tar.c:189
+#, c-format
+msgid "could not open TOC file for output: %s\n"
+msgstr "לא היתה אפשרות לפתוח את קובץ TOC עבור פלט: %s\n"
+
+#: pg_backup_tar.c:210 pg_backup_tar.c:366
+#, c-format
+msgid "compression is not supported by tar archive format\n"
+msgstr "דחיסה אינה נתמכת על-ידי ארכיון מפורמט tar\n"
+
+#: pg_backup_tar.c:218
+#, c-format
+msgid "could not open TOC file \"%s\" for input: %s\n"
+msgstr "לא היתה אפשרות לפתוח קובץ TOC \"%s\" עבור קלט: %s\n"
+
+#: pg_backup_tar.c:225
+#, c-format
+msgid "could not open TOC file for input: %s\n"
+msgstr "לא היתה אפשרות לפתוח את קובץ TOC עבור קלט: %s\n"
+
+#: pg_backup_tar.c:352
+#, c-format
+msgid "could not find file \"%s\" in archive\n"
+msgstr "לא היתה אפשרות למצוא קובץ \"%s\" בארכיון\n"
+
+#: pg_backup_tar.c:418
+#, c-format
+msgid "could not generate temporary file name: %s\n"
+msgstr "לא היתה אפשרות להפיק שם הקובץ הזמני: %s\n"
+
+#: pg_backup_tar.c:429
+#, c-format
+msgid "could not open temporary file\n"
+msgstr "לא היתה אפשרות לפתוח את הקובץ הזמני\n"
+
+#: pg_backup_tar.c:456
+#, c-format
+msgid "could not close tar member\n"
+msgstr "לא יכול לסגור חבר בקובץ tar\n"
+
+#: pg_backup_tar.c:569
+#, c-format
+msgid "internal error -- neither th nor fh specified in tarReadRaw()\n"
+msgstr "שגיאה פנימית - לא צויינו לא th ולא fh ב- tarReadRaw()\n"
+
+#: pg_backup_tar.c:692
+#, c-format
+msgid "unexpected COPY statement syntax: \"%s\"\n"
+msgstr "תחביר משפט COPY בלתי צפוי: \"%s\"\n"
+
+#: pg_backup_tar.c:962
+#, c-format
+msgid "invalid OID for large object (%u)\n"
+msgstr "מזהה האובייקט OID לא חוקי עבור אובייקט גדול (%u)\n"
+
+#: pg_backup_tar.c:1106
+#, c-format
+msgid "could not close temporary file: %s\n"
+msgstr "לא היתה אפשרות לסגור קובץ זמני: %s\n"
+
+#: pg_backup_tar.c:1116
+#, c-format
+msgid "actual file length (%s) does not match expected (%s)\n"
+msgstr "אורך הקובץ בפועל (%s) אינו תואם לאורך הצפוי (%s)\n"
+
+#: pg_backup_tar.c:1153
+#, c-format
+msgid "moving from position %s to next member at file position %s\n"
+msgstr "הזזת ממקום %s לחבר הבא במיקום בקובץ %s\n"
+
+#: pg_backup_tar.c:1164
+#, c-format
+msgid "now at file position %s\n"
+msgstr "עכשיו במיקום בקובץ %s\n"
+
+#: pg_backup_tar.c:1173 pg_backup_tar.c:1203
+#, c-format
+msgid "could not find header for file \"%s\" in tar archive\n"
+msgstr "לא היתה אפשרות למצוא כותרת עבור הקובץ \"%s\" בארכיון tar\n"
+
+#: pg_backup_tar.c:1187
+#, c-format
+msgid "skipping tar member %s\n"
+msgstr "דילוג על חבר בקובץ tar %s\n"
+
+#: pg_backup_tar.c:1191
+#, c-format
+msgid "restoring data out of order is not supported in this archive format: \"%s\" is required, but comes before \"%s\" in the archive file.\n"
+msgstr "שחזור נתונים אשר לא בסדר אינו נתמך בתבנית ארכיון זו: \"%s\" נדרש, אך מגיע לפני \"%s\" בקובץ הארכיון.\n"
+
+#: pg_backup_tar.c:1237
+#, c-format
+msgid "incomplete tar header found (%lu byte)\n"
+msgid_plural "incomplete tar header found (%lu bytes)\n"
+msgstr[0] "כותרת tar לא שלמה נמצאה (% lu בית)\n"
+msgstr[1] "כותרת tar לא שלמה נמצאה (% lu בתים)\n"
+
+#: pg_backup_tar.c:1278
+#, c-format
+msgid "TOC Entry %s at %s (length %s, checksum %d)\n"
+msgstr "ערך TOC %s ב- %s (אורך %s, checksum של %d)\n"
+
+#: pg_backup_tar.c:1289
+#, c-format
+msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
+msgstr "כותרת tar מושחתת נמצאה ב %s (צפוי%d, מחושב%d) מיקום הקובץ %s\n"
+
+#: pg_backup_utils.c:54
+#, c-format
+msgid "%s: unrecognized section name: \"%s\"\n"
+msgstr "תכנית %s: סעיף לא מזוהה שם: \"%s\"\n"
+
+#: pg_backup_utils.c:56 pg_dump.c:546 pg_dump.c:563 pg_dumpall.c:313
+#: pg_dumpall.c:323 pg_dumpall.c:333 pg_dumpall.c:342 pg_dumpall.c:358
+#: pg_dumpall.c:430 pg_restore.c:283 pg_restore.c:299 pg_restore.c:311
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "נסה '%s --help' לקבלת מידע נוסף.\n"
+
+#: pg_backup_utils.c:118
+#, c-format
+msgid "out of on_exit_nicely slots\n"
+msgstr "מחוץ לחריצי on_exit_nicely\n"
+
+#: pg_dump.c:512
+#, c-format
+msgid "compression level must be in range 0..9\n"
+msgstr "רמת הדחיסה חייבת להיות בטווח 0..9\n"
+
+#: pg_dump.c:561 pg_dumpall.c:321 pg_restore.c:297
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "תכנית %s:  יותר מדי ארגומנטים של שורת הפקודה (הראשון הוא \"%s\")\n"
+
+#: pg_dump.c:582
+#, c-format
+msgid "options -s/--schema-only and -a/--data-only cannot be used together\n"
+msgstr "אפשרויות  -s/--schema-only ו -a/--data-only לא יכולים לשמש ביחד\n"
+
+#: pg_dump.c:588
+#, c-format
+msgid "options -c/--clean and -a/--data-only cannot be used together\n"
+msgstr "אפשרויות -c/--clean ו -a/--data-only לא יכול לשמש ביחד\n"
+
+#: pg_dump.c:594
+#, c-format
+msgid "options --inserts/--column-inserts and -o/--oids cannot be used together\n"
+msgstr "אפשרויות --inserts/--column-inserts ו  -o/--oids לא יכול לשמש יחד\n"
+
+#: pg_dump.c:595
+#, c-format
+msgid "(The INSERT command cannot set OIDs.)\n"
+msgstr "(לפקודת ההוספה אין אפשרות להגדיר OID).\n"
+
+#: pg_dump.c:600
+#, c-format
+msgid "option --if-exists requires option -c/--clean\n"
+msgstr "אפשרות --if-exists מחייבת אפשרות -c/--clean\n"
+
+#: pg_dump.c:622
+#, c-format
+msgid "WARNING: requested compression not available in this installation -- archive will be uncompressed\n"
+msgstr "אזהרה: דחיסה הנדרשת אינה זמינה בהתקנה זו - ארכיון לא יידחס\n"
+
+#: pg_dump.c:637
+#, c-format
+msgid "invalid number of parallel jobs\n"
+msgstr "מספר לא חוקי של משימות במקבילות\n"
+
+#: pg_dump.c:641
+#, c-format
+msgid "parallel backup only supported by the directory format\n"
+msgstr "גיבוי במקביל נתמך רק תבנית התיקייה\n"
+
+#: pg_dump.c:696
+#, c-format
+msgid ""
+"Synchronized snapshots are not supported by this server version.\n"
+"Run with --no-synchronized-snapshots instead if you do not need\n"
+"synchronized snapshots.\n"
+msgstr ""
+"תמונות מצב מסונכרנות אינן נתמכות בגירסת שרת זו.\n"
+"תריץ עם --no-synchronized-snapshots במקום,\n"
+"אם אתה לא צריך לסנכרן תמונות.\n"
+
+#: pg_dump.c:703
+#, c-format
+msgid "Exported snapshots are not supported by this server version.\n"
+msgstr "תמונות מצב המיוצאות אינן נתמכות בגירסת שרת זו.\n"
+
+#: pg_dump.c:717
+#, c-format
+msgid "last built-in OID is %u\n"
+msgstr "מזהה OID מובנה האחרון הוא %u\n"
+
+#: pg_dump.c:726
+#, c-format
+msgid "no matching schemas were found\n"
+msgstr "לא נמצאו סכימות תואמות\n"
+
+#: pg_dump.c:740
+#, c-format
+msgid "no matching tables were found\n"
+msgstr "לא נמצאו טבלאות תואמות\n"
+
+#: pg_dump.c:914
+#, c-format
+msgid ""
+"%s dumps a database as a text file or to other formats.\n"
+"\n"
+msgstr ""
+"תכנית %s מרוקן מאגר כקובץ טקסט או לפורמטים אחרים.\n"
+"\n"
+
+#: pg_dump.c:915 pg_dumpall.c:575 pg_restore.c:449
+#, c-format
+msgid "Usage:\n"
+msgstr "שימוש:\n"
+
+#: pg_dump.c:916
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [OPTION]... [DBNAME]\n"
+
+#: pg_dump.c:918 pg_dumpall.c:578 pg_restore.c:452
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"אפשרויות כלליות:\n"
+
+#: pg_dump.c:919
+#, c-format
+msgid "  -f, --file=FILENAME          output file or directory name\n"
+msgstr ""
+"  -f\n"
+"  --file=FILENAME\n"
+"שם קובץ פלט או ספרייה\n"
+
+#: pg_dump.c:920
+#, c-format
+msgid ""
+"  -F, --format=c|d|t|p         output file format (custom, directory, tar,\n"
+"                               plain text (default))\n"
+msgstr ""
+"  -F\n"
+"  --format=c|d|t|p\n"
+"תבנית של קובץ הפלט (מותאמת אישית, ספריה, tar, טקסט רגיל (ברירת מחדל))\n"
+
+#: pg_dump.c:922
+#, c-format
+msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
+msgstr ""
+"  -j\n"
+"  --jobs=NUM\n"
+"תשתמש במשימות מקבילות רבות על מנת לבצע dump\n"
+
+#: pg_dump.c:923 pg_dumpall.c:580
+#, c-format
+msgid "  -v, --verbose                verbose mode\n"
+msgstr ""
+"  -v\n"
+"  --verbose\n"
+"מבצ מילולי מפורט\n"
+
+#: pg_dump.c:924 pg_dumpall.c:581
+#, c-format
+msgid "  -V, --version                output version information, then exit\n"
+msgstr "  -V, --version             להציג מידע על הגירסה, ולאחר מכן לצאת\n"
+
+#: pg_dump.c:925
+#, c-format
+msgid "  -Z, --compress=0-9           compression level for compressed formats\n"
+msgstr ""
+"  -Z\n"
+"  --compress=0-9\n"
+"רמת דחיסה עבור פורמטים דחוסים\n"
+
+#: pg_dump.c:926 pg_dumpall.c:582
+#, c-format
+msgid "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
+msgstr ""
+"  --lock-wait-timeout=TIMEOUT\n"
+"להיכשל לאחר המתנה ל TIMEOUT לנעילה של הטבלה\n"
+
+#: pg_dump.c:927 pg_dumpall.c:604
+#, c-format
+msgid "  --no-sync                    do not wait for changes to be written safely to disk\n"
+msgstr ""
+"  --no-sync\n"
+"לא לחכות עד אשר השינויים ייכתבו בבטחה לדיסק\n"
+
+#: pg_dump.c:928 pg_dumpall.c:583
+#, c-format
+msgid "  -?, --help                   show this help, then exit\n"
+msgstr "  -?, --help                להציג עזרה זו, ולאחר מכן לצאת\n"
+
+#: pg_dump.c:930 pg_dumpall.c:584
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output content:\n"
+msgstr ""
+"\n"
+"אפשרויות שליטה בפלט:\n"
+
+#: pg_dump.c:931 pg_dumpall.c:585
+#, c-format
+msgid "  -a, --data-only              dump only the data, not the schema\n"
+msgstr ""
+"  -a\n"
+"  --data-only\n"
+"לבצע dump עבור הנתונים בלבד, לא הסכימה\n"
+
+#: pg_dump.c:932
+#, c-format
+msgid "  -b, --blobs                  include large objects in dump\n"
+msgstr ""
+"  -b\n"
+"  --blobs\n"
+"לכלול אובייקטים גדולים בdump\n"
+
+#: pg_dump.c:933
+#, c-format
+msgid "  -B, --no-blobs               exclude large objects in dump\n"
+msgstr ""
+"  -B\n"
+"  --no-blobs\n"
+"לא לכלול אובייקטים גדולים בdump\n"
+
+#: pg_dump.c:934 pg_restore.c:463
+#, c-format
+msgid "  -c, --clean                  clean (drop) database objects before recreating\n"
+msgstr ""
+"  -c\n"
+"  --clean\n"
+"לנקות (למחוק) אובייקטים של מסד נתונים לפני יצירה מחדש\n"
+
+#: pg_dump.c:935
+#, c-format
+msgid "  -C, --create                 include commands to create database in dump\n"
+msgstr ""
+"  -C\n"
+"  --create \n"
+"לכלול פקודות ליצירת מסד נתונים ב- dump\n"
+
+#: pg_dump.c:936
+#, c-format
+msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
+msgstr ""
+"  -E\n"
+"  --encoding=ENCODING\n"
+"לבצע dump עבור הנתונים בקידוד ENCODING\n"
+
+#: pg_dump.c:937
+#, c-format
+msgid "  -n, --schema=SCHEMA          dump the named schema(s) only\n"
+msgstr ""
+"  -n\n"
+"  --schema=SCHEMA\n"
+"לבצע dump עבור סכימה (ות) שצוינו בלבד\n"
+
+#: pg_dump.c:938
+#, c-format
+msgid "  -N, --exclude-schema=SCHEMA  do NOT dump the named schema(s)\n"
+msgstr ""
+"  -N\n"
+"  --exclude-schema=SCHEMA\n"
+"לא לכלול ב dump סכימה (ות) שצוינו בלבד\n"
+
+#: pg_dump.c:939 pg_dumpall.c:588
+#, c-format
+msgid "  -o, --oids                   include OIDs in dump\n"
+msgstr ""
+"  -o\n"
+"  --oids\n"
+"לכלול Oid ב dump\n"
+
+#: pg_dump.c:940
+#, c-format
+msgid ""
+"  -O, --no-owner               skip restoration of object ownership in\n"
+"                               plain-text format\n"
+msgstr ""
+"  -O\n"
+"  --no-owner\n"
+"לדלג על השחזור בעלות אובייקט בפורמט טקסט רגיל\n"
+
+#: pg_dump.c:942 pg_dumpall.c:591
+#, c-format
+msgid "  -s, --schema-only            dump only the schema, no data\n"
+msgstr ""
+"  -s\n"
+"  --schema-only\n"
+"לבצע dump עבור סכימה בלבד, לא נתונים\n"
+
+#: pg_dump.c:943
+#, c-format
+msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
+msgstr ""
+"  -S\n"
+"  --superuser=NAME\n"
+"שם משתמש על להשתמש בתבנית טקסט רגיל\n"
+
+#: pg_dump.c:944
+#, c-format
+msgid "  -t, --table=TABLE            dump the named table(s) only\n"
+msgstr ""
+"  -t\n"
+"  --table=TABLE\n"
+"לבצע dump עבור טבלה(ות) לפי השם בלבד\n"
+
+#: pg_dump.c:945
+#, c-format
+msgid "  -T, --exclude-table=TABLE    do NOT dump the named table(s)\n"
+msgstr ""
+"  -T\n"
+"  --exclude-table=TABLE\n"
+"לא לבצע dump עבור טבלה(ות) לפי השם בלבד\n"
+
+#: pg_dump.c:946 pg_dumpall.c:594
+#, c-format
+msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
+msgstr ""
+"  -x\n"
+"  --no-privileges\n"
+"לא לכלול בdump את הרשאות (מענק/ביטול)\n"
+
+#: pg_dump.c:947 pg_dumpall.c:595
+#, c-format
+msgid "  --binary-upgrade             for use by upgrade utilities only\n"
+msgstr ""
+"  --binary-upgrade\n"
+"לשימוש על-ידי כלי עזר של שדרוג בלבד\n"
+
+#: pg_dump.c:948 pg_dumpall.c:596
+#, c-format
+msgid "  --column-inserts             dump data as INSERT commands with column names\n"
+msgstr ""
+"  --column-inserts \n"
+"לבצע dump עבור הנתונים כפקודות INSERT עם שמות עמודות\n"
+
+#: pg_dump.c:949 pg_dumpall.c:597
+#, c-format
+msgid "  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"
+msgstr ""
+"  --disable-dollar-quoting\n"
+"ביטול של ציטוט ע\"י דולר, שימוש במצטט סטנדרטי של SQL \n"
+
+#: pg_dump.c:950 pg_dumpall.c:598 pg_restore.c:480
+#, c-format
+msgid "  --disable-triggers           disable triggers during data-only restore\n"
+msgstr ""
+"  --disable-triggers\n"
+"לנטרל טריגרים במהלך שחזור של נתונים בלבד\n"
+
+#: pg_dump.c:951
+#, c-format
+msgid ""
+"  --enable-row-security        enable row security (dump only content user has\n"
+"                               access to)\n"
+msgstr ""
+"  --enable-row-security\n"
+"לאפשר אבטחה שורה (לבצע dump עבור רק התוכן שלמשתמש יש גישה)\n"
+
+#: pg_dump.c:953
+#, c-format
+msgid "  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"
+msgstr ""
+"  --exclude-table-data=TABLE\n"
+"לא לכלול בdump את טבלה (ות) שצוינה (ות)\n"
+
+#: pg_dump.c:954 pg_dumpall.c:599 pg_restore.c:482
+#, c-format
+msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
+msgstr ""
+"  --if-exists\n"
+"שימוש ב IF EXISTS בעת הטלת האובייקטים\n"
+
+#: pg_dump.c:955 pg_dumpall.c:600
+#, c-format
+msgid "  --inserts                    dump data as INSERT commands, rather than COPY\n"
+msgstr ""
+"  --inserts\n"
+"לבצע dump עבור הנתונים לפי פקודות INSERT  ולא COPY\n"
+
+#: pg_dump.c:956 pg_dumpall.c:601
+#, c-format
+msgid "  --no-publications            do not dump publications\n"
+msgstr ""
+"  --no-publications\n"
+"לא לכלול בdump את הפרסומים\n"
+
+#: pg_dump.c:957 pg_dumpall.c:602
+#, c-format
+msgid "  --no-security-labels         do not dump security label assignments\n"
+msgstr ""
+"  --no-security-labels\n"
+"לא לכלול בdump את הקצאות תווית אבטחה\n"
+
+#: pg_dump.c:958 pg_dumpall.c:603
+#, c-format
+msgid "  --no-subscriptions           do not dump subscriptions\n"
+msgstr ""
+"  --no-subscriptions\n"
+"לא לכלול בdump את מנויים\n"
+
+#: pg_dump.c:959
+#, c-format
+msgid "  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"
+msgstr ""
+"  --no-synchronized-snapshots\n"
+"אל תשתמש בתמונות מצב מסונכרנות במשימות מקבילות\n"
+
+#: pg_dump.c:960 pg_dumpall.c:605
+#, c-format
+msgid "  --no-tablespaces             do not dump tablespace assignments\n"
+msgstr ""
+"  --no-tablespaces\n"
+"לא לכלול בdump את הקצאות מרחב טבלאות\n"
+
+#: pg_dump.c:961 pg_dumpall.c:606
+#, c-format
+msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
+msgstr ""
+"  --no-unlogged-table-data\n"
+"לא לכלול בdump את נתוני הטבלה אשר לא נרשמו ביומן\n"
+
+#: pg_dump.c:962 pg_dumpall.c:608
+#, c-format
+msgid "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
+msgstr ""
+"  --quote-all-identifiers\n"
+"לצטט כל מזהים, אפילו אם לא מילות מפתח\n"
+
+#: pg_dump.c:963
+#, c-format
+msgid "  --section=SECTION            dump named section (pre-data, data, or post-data)\n"
+msgstr ""
+"  --section=SECTION\n"
+"לבצע dump עבור מקטע שצוינה בשם (pre-data, data או post-data)\n"
+
+#: pg_dump.c:964
+#, c-format
+msgid "  --serializable-deferrable    wait until the dump can run without anomalies\n"
+msgstr ""
+"  --serializable-deferrable\n"
+"לחכות עד dump יכול לרוץ בלי חריגות\n"
+
+#: pg_dump.c:965
+#, c-format
+msgid "  --snapshot=SNAPSHOT          use given snapshot for the dump\n"
+msgstr ""
+"  --snapshot=SNAPSHOT\n"
+"להשתמש בתמונת מצב נתונה עבור ה-dump\n"
+
+#: pg_dump.c:966 pg_restore.c:490
+#, c-format
+msgid ""
+"  --strict-names               require table and/or schema include patterns to\n"
+"                               match at least one entity each\n"
+msgstr ""
+"  --strict-names\n"
+"לדרוש טבלה ו/או סכימה לכלול דפוסים על מנת להתאים לערך אחד לפחות כל אחד\n"
+
+#: pg_dump.c:968 pg_dumpall.c:609 pg_restore.c:492
+#, c-format
+msgid ""
+"  --use-set-session-authorization\n"
+"                               use SET SESSION AUTHORIZATION commands instead of\n"
+"                               ALTER OWNER commands to set ownership\n"
+msgstr ""
+"  --use-set-session-authorization\n"
+"להשתמש בפקודות SET SESSION AUTHORIZATION במקום\n"
+"הפקודות ALTER OWNER להגדרת הבעלות\n"
+
+#: pg_dump.c:972 pg_dumpall.c:613 pg_restore.c:496
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"אפשרויות חיבור:\n"
+
+#: pg_dump.c:973
+#, c-format
+msgid "  -d, --dbname=DBNAME      database to dump\n"
+msgstr ""
+"  -d\n"
+"  --dbname=DBNAME\n"
+"מסד נתונים לבצע עליו dump\n"
+
+#: pg_dump.c:974 pg_dumpall.c:615 pg_restore.c:497
+#, c-format
+msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME שרת מארח של מסד הנתונים  או ספריית שקע\n"
+
+#: pg_dump.c:975 pg_dumpall.c:617 pg_restore.c:498
+#, c-format
+msgid "  -p, --port=PORT          database server port number\n"
+msgstr ""
+"  -p\n"
+"  --port=PORT\n"
+"פורט שרת מסד נתונים\n"
+
+#: pg_dump.c:976 pg_dumpall.c:618 pg_restore.c:499
+#, c-format
+msgid "  -U, --username=NAME      connect as specified database user\n"
+msgstr ""
+"  -U\n"
+"  --username=NAME\n"
+"להתחבר כמשתמש מסד הנתונים המצוין\n"
+
+#: pg_dump.c:977 pg_dumpall.c:619 pg_restore.c:500
+#, c-format
+msgid "  -w, --no-password        never prompt for password\n"
+msgstr "  -w, --no-password        לעולם לא לבקש סיסמה\n"
+
+#: pg_dump.c:978 pg_dumpall.c:620 pg_restore.c:501
+#, c-format
+msgid "  -W, --password           force password prompt (should happen automatically)\n"
+msgstr "  -W, --password           נדרשת בקשת סיסמה  (צריך לקרות באופן אוטומטי)\n"
+
+#: pg_dump.c:979 pg_dumpall.c:621
+#, c-format
+msgid "  --role=ROLENAME          do SET ROLE before dump\n"
+msgstr ""
+" --role=ROLENAME\n"
+"לעשות SET ROLE לפני ה-dump\n"
+
+#: pg_dump.c:981
+#, c-format
+msgid ""
+"\n"
+"If no database name is supplied, then the PGDATABASE environment\n"
+"variable value is used.\n"
+"\n"
+msgstr ""
+"\n"
+"אם לא סופק שם של מסד הנתונים, אז הערך משתנה הסביבה PGDATABASE.\n"
+"יהיה בשימוש\n"
+"\n"
+"\n"
+
+#: pg_dump.c:983 pg_dumpall.c:625 pg_restore.c:508
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "לדווח על באגים ל <pgsql-bugs@postgresql.org>\n"
+
+#: pg_dump.c:1000
+#, c-format
+msgid "invalid client encoding \"%s\" specified\n"
+msgstr "צוין קידוד לקוח לא חוקי \"% s\"\n"
+
+#: pg_dump.c:1137
+#, c-format
+msgid ""
+"Synchronized snapshots are not supported on standby servers.\n"
+"Run with --no-synchronized-snapshots instead if you do not need\n"
+"synchronized snapshots.\n"
+msgstr ""
+"תמונות מצב מסונכרנות אינם נתמכות בשרתים בהמתנה.\n"
+"תריץ עם --no-synchronized-snapshots במקום,\n"
+"אם אתה לא צריך לסנכרן תמונות מצב.\n"
+
+#: pg_dump.c:1206
+#, c-format
+msgid "invalid output format \"%s\" specified\n"
+msgstr "תבנית הפלט לא חוקי \"%s\" צויינה\n"
+
+#: pg_dump.c:1244
+#, c-format
+msgid "no matching schemas were found for pattern \"%s\"\n"
+msgstr "לא נמצאו סכימות תואמות עבור תבנית '%s'\n"
+
+#: pg_dump.c:1298
+#, c-format
+msgid "no matching tables were found for pattern \"%s\"\n"
+msgstr "לא נמצאו טבלאות תואמות עבור תבנית '%s'\n"
+
+#: pg_dump.c:1702
+#, c-format
+msgid "dumping contents of table \"%s.%s\"\n"
+msgstr "העברת התוכן של הטבלה \"%s.%s\"\n"
+
+#: pg_dump.c:1823
+#, c-format
+msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n"
+msgstr "העברת התוכן של הטבלה \"%s\" נכשלה: PQgetCopyData() נכשל.\n"
+
+#: pg_dump.c:1824 pg_dump.c:1834
+#, c-format
+msgid "Error message from server: %s"
+msgstr "הודעת שגיאה משרת: %s"
+
+#: pg_dump.c:1825 pg_dump.c:1835
+#, c-format
+msgid "The command was: %s\n"
+msgstr "הפקודה היתה: %s\n"
+
+#: pg_dump.c:1833
+#, c-format
+msgid "Dumping the contents of table \"%s\" failed: PQgetResult() failed.\n"
+msgstr "העברת התוכן של הטבלה \"%s\" נכשלה: PQgetResult() נכשל.\n"
+
+#: pg_dump.c:2482
+#, c-format
+msgid "saving database definition\n"
+msgstr "שמירת הגדרת מסד הנתונים\n"
+
+#: pg_dump.c:2788
+#, c-format
+msgid "saving encoding = %s\n"
+msgstr "שמירת קידוד = %s\n"
+
+#: pg_dump.c:2815
+#, c-format
+msgid "saving standard_conforming_strings = %s\n"
+msgstr "שמירת standard_conforming_strings = %s\n"
+
+#: pg_dump.c:2855
+#, c-format
+msgid "reading large objects\n"
+msgstr "קריאה אובייקטים גדולים\n"
+
+#: pg_dump.c:3050
+#, c-format
+msgid "saving large objects\n"
+msgstr "שמירת אובייקטים גדולים\n"
+
+#: pg_dump.c:3095
+#, c-format
+msgid "error reading large object %u: %s"
+msgstr "שגיאה בעת קריאת אובייקט גדול % u: %s"
+
+#: pg_dump.c:3148
+#, c-format
+msgid "reading row security enabled for table \"%s.%s\"\n"
+msgstr "אבטחת שורה בקריאה זמינה עבור טבלה \"%s.%s\"\n"
+
+#: pg_dump.c:3180
+#, c-format
+msgid "reading policies for table \"%s.%s\"\n"
+msgstr "קריאה מדיניות עבור טבלה \"%s.%s\"\n"
+
+#: pg_dump.c:3330
+#, c-format
+msgid "unexpected policy command type: %c\n"
+msgstr "סוג מדיניות הפקודה בלתי צפוי: %c\n"
+
+#: pg_dump.c:3446
+#, c-format
+msgid "WARNING: owner of publication \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של פרסום \"%s\" נראה כלא חוקי\n"
+
+#: pg_dump.c:3576
+#, c-format
+msgid "reading publication membership for table \"%s.%s\"\n"
+msgstr "קריאה חברות הפרסום עבור טבלה \"%s.%s\"\n"
+
+#: pg_dump.c:3723
+#, c-format
+msgid "WARNING: subscriptions not dumped because current user is not a superuser\n"
+msgstr "אזהרה: מנויים לא נזרקו כי משתמש נוכחי אינו משתמש על\n"
+
+#: pg_dump.c:3774
+#, c-format
+msgid "WARNING: owner of subscription \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של פרסום \"%s\" נראה כלא חוקי\n"
+
+#: pg_dump.c:3818
+#, c-format
+msgid "WARNING: could not parse subpublications array\n"
+msgstr "אזהרה: לא היתה אפשרות לנתח מערך subpublications\n"
+
+#: pg_dump.c:4048
+#, c-format
+msgid "could not find parent extension for %s\n"
+msgstr "לא היתה אפשרות למצוא סיומת האב עבור %s\n"
+
+#: pg_dump.c:4197
+#, c-format
+msgid "WARNING: owner of schema \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של הסכימה \"%s\" נראה כלא חוקי\n"
+
+#: pg_dump.c:4220
+#, c-format
+msgid "schema with OID %u does not exist\n"
+msgstr "הסכימה עם OID %u לא קיימת\n"
+
+#: pg_dump.c:4551
+#, c-format
+msgid "WARNING: owner of data type \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של סוג הנתונים '%s' נראה כלא חוקי\n"
+
+#: pg_dump.c:4639
+#, c-format
+msgid "WARNING: owner of operator \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של אופרטור \"%s\" נראה כלא חוקי\n"
+
+#: pg_dump.c:4953
+#, c-format
+msgid "WARNING: owner of operator class \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של מחלקת האופרטור \"%s\" נראה כלא חוקי\n"
+
+#: pg_dump.c:5040
+#, c-format
+msgid "WARNING: owner of operator family \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של המשפחה אופרטור \"%s\" נראה כלא חוקי\n"
+
+#: pg_dump.c:5207
+#, c-format
+msgid "WARNING: owner of aggregate function \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של פונקציית צבירה \"%s\" נראה כלא חוקי\n"
+
+#: pg_dump.c:5466
+#, c-format
+msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של הפונקציה \"%s\" נראה כלא חוקי\n"
+
+#: pg_dump.c:6248
+#, c-format
+msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
+msgstr "אזהרה: הבעלים של טבלה '%s' נראה כלא חוקי\n"
+
+#: pg_dump.c:6290 pg_dump.c:16504
+#, c-format
+msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found\n"
+msgstr "בדיקת שפיות נכשלה, טבלת האב בעלת OID %u של רצף עם OID %u לא נמצאה\n"
+
+#: pg_dump.c:6421
+#, c-format
+msgid "reading indexes for table \"%s.%s\"\n"
+msgstr "קריאה אינדקסים עבור טבלה \"%s.%s\"\n"
+
+#: pg_dump.c:6702
+#, c-format
+msgid "reading extended statistics for table \"%s.%s\"\n"
+msgstr "קריאה סטטיסטיקה מורחבת עבור טבלה \"%s.%s\"\n"
+
+#: pg_dump.c:6785
+#, c-format
+msgid "reading foreign key constraints for table \"%s.%s\"\n"
+msgstr "קריאה אילוצי מפתח זר עבור טבלה '%s.%s\"\n"
+
+#: pg_dump.c:7009
+#, c-format
+msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found\n"
+msgstr "בדיקת שפיות נכשלה, טבלת האב בעלת OID %u עם ערך pg_rewrite בעל OID %u לא נמצאה\n"
+
+#: pg_dump.c:7093
+#, c-format
+msgid "reading triggers for table \"%s.%s\"\n"
+msgstr "קריאה טריגרים עבור טבלה \"%s.%s\"\n"
+
+#: pg_dump.c:7231
+#, c-format
+msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n"
+msgstr "השאילתה יצרה שם הטבלה אשר מוצבע עם מצביע ריק עבור טריגר מפתח זר \"%s\" על הטבלה \"%s\" (OID של הטבלה: %u)\n"
+
+#: pg_dump.c:7803
+#, c-format
+msgid "finding the columns and types of table \"%s.%s\"\n"
+msgstr "מציאת העמודות והסוגים של הטבלה \"%s.%s\"\n"
+
+#: pg_dump.c:7968
+#, c-format
+msgid "invalid column numbering in table \"%s\"\n"
+msgstr "מספור העמודות לא חוקי בטבלה '%s'\n"
+
+#: pg_dump.c:8004
+#, c-format
+msgid "finding default expressions of table \"%s.%s\"\n"
+msgstr "מציאת ביטוי ברירת המחדל של הטבלה \"%s.%s\"\n"
+
+#: pg_dump.c:8027
+#, c-format
+msgid "invalid adnum value %d for table \"%s\"\n"
+msgstr "ערך adnum לא חוקי %d עבור טבלה '%s'\n"
+
+#: pg_dump.c:8093
+#, c-format
+msgid "finding check constraints for table \"%s.%s\"\n"
+msgstr "מציאת אילוצים עבור טבלה \"%s.%s\"\n"
+
+#: pg_dump.c:8142
+#, c-format
+msgid "expected %d check constraint on table \"%s\" but found %d\n"
+msgid_plural "expected %d check constraints on table \"%s\" but found %d\n"
+msgstr[0] "צפי ל%d בדיקת אילוצים עבור הטבלה \"%s\" אך נמצאו %d\n"
+msgstr[1] "צפי ל%d בדיקות אילוצים עבור הטבלה \"%s\" אך נמצאו %d\n"
+
+#: pg_dump.c:8146
+#, c-format
+msgid "(The system catalogs might be corrupted.)\n"
+msgstr "(הקטלוגים של המערכת עלול להיות פגום.)\n"
+
+#: pg_dump.c:9704
+#, c-format
+msgid "WARNING: typtype of data type \"%s\" appears to be invalid\n"
+msgstr "אזהרה: typtype של סוג הנתונים '%s' מופיע כי אינו חוקי\n"
+
+#: pg_dump.c:11133
+#, c-format
+msgid "WARNING: bogus value in proargmodes array\n"
+msgstr "אזהרה: ערך מזויף במערך proargmodes\n"
+
+#: pg_dump.c:11459
+#, c-format
+msgid "WARNING: could not parse proallargtypes array\n"
+msgstr "אזהרה: לא היתה אפשרות לנתח מערך proallargtypes\n"
+
+#: pg_dump.c:11475
+#, c-format
+msgid "WARNING: could not parse proargmodes array\n"
+msgstr "אזהרה: לא היתה אפשרות לנתח מערך proargmodes\n"
+
+#: pg_dump.c:11489
+#, c-format
+msgid "WARNING: could not parse proargnames array\n"
+msgstr "אזהרה: לא היתה אפשרות לנתח מערך proargnames\n"
+
+#: pg_dump.c:11500
+#, c-format
+msgid "WARNING: could not parse proconfig array\n"
+msgstr "אזהרה: לא היתה אפשרות לנתח מערך proconfig\n"
+
+#: pg_dump.c:11571
+#, c-format
+msgid "unrecognized provolatile value for function \"%s\"\n"
+msgstr "ערך provolatile לא מזוהה עבור פונקציה \"%s\"\n"
+
+#: pg_dump.c:11615 pg_dump.c:13598
+#, c-format
+msgid "unrecognized proparallel value for function \"%s\"\n"
+msgstr "ערך proparallel לא מזוהה עבור פונקציה \"%s\"\n"
+
+#: pg_dump.c:11723 pg_dump.c:11833 pg_dump.c:11840
+#, c-format
+msgid "could not find function definition for function with OID %u\n"
+msgstr "לא היתה אפשרות למצוא את הגדרת הפונקציה עבור הפונקציה עם OID %u\n"
+
+#: pg_dump.c:11768
+#, c-format
+msgid "WARNING: bogus value in pg_cast.castfunc or pg_cast.castmethod field\n"
+msgstr "אזהרה: הערך מזויף בשדה pg_cast.castfunc או pg_cast.castmethod\n"
+
+#: pg_dump.c:11771
+#, c-format
+msgid "WARNING: bogus value in pg_cast.castmethod field\n"
+msgstr "אזהרה: הערך מזויף בשדה pg_cast.castmethod\n"
+
+#: pg_dump.c:11861
+#, c-format
+msgid "WARNING: bogus transform definition, at least one of trffromsql and trftosql should be nonzero\n"
+msgstr "אזהרה: הגדרת צורה מזויפת, לפחות אחת מ trffromsql ו- trftosql צריך להיות שונה מאפס\n"
+
+#: pg_dump.c:11878
+#, c-format
+msgid "WARNING: bogus value in pg_transform.trffromsql field\n"
+msgstr "אזהרה: הערך מזויף בשדה pg_transform.trffromsql\n"
+
+#: pg_dump.c:11899
+#, c-format
+msgid "WARNING: bogus value in pg_transform.trftosql field\n"
+msgstr "אזהרה: הערך מזויף בשדה pg_transform.trftosql\n"
+
+#: pg_dump.c:12295
+#, c-format
+msgid "WARNING: invalid type \"%c\" of access method \"%s\"\n"
+msgstr "אזהרה: סוג לא חוקי '%c' של שיטת גישה \"%s\"\n"
+
+#: pg_dump.c:13061
+#, c-format
+msgid "unrecognized collation provider: %s\n"
+msgstr "ספק איסוף מוכר: %s\n"
+
+#: pg_dump.c:13508
+#, c-format
+msgid "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n"
+msgstr "אזהרה: פונקציית צבירה %s לא ניתן היה לעשות dump כראוי עבור גירסה זו של מסד הנתונים; התעלמות\n"
+
+#: pg_dump.c:14364
+#, c-format
+msgid "unrecognized object type in default privileges: %d\n"
+msgstr "סוג אובייקט לא מזוהה בהרשאות ברירת מחדל: %d\n"
+
+#: pg_dump.c:14382
+#, c-format
+msgid "could not parse default ACL list (%s)\n"
+msgstr "לא היתה אפשרות לנתח את רשימת ה-ACL ברירת המחדל (%s)\n"
+
+#: pg_dump.c:14453
+#, c-format
+msgid "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)\n"
+msgstr "לא היתה אפשרות לנתח את רשימת ה-ACL ראשונית (%s) או רשימת REVOKE ACL (%s) ראשונית עבור אובייקט \"%s\" (%s)\n"
+
+#: pg_dump.c:14461
+#, c-format
+msgid "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object \"%s\" (%s)\n"
+msgstr "לא היתה אפשרות לנתח את רשימת ה-ACL ברירת המחדל (%s) או רשימת REVOKE ACL (%s) עבור אובייקט \"%s\" (%s)\n"
+
+#: pg_dump.c:14936
+#, c-format
+msgid "query to obtain definition of view \"%s\" returned no data\n"
+msgstr "שאילתה כדי לקבל הגדרה של תצוגת \"%s\" לא החזירה נתונים\n"
+
+#: pg_dump.c:14939
+#, c-format
+msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
+msgstr "שאילתה כדי לקבל הגדרה של תצוגה \"%s\" החזירה יותר מאשר הגדרת אחת\n"
+
+#: pg_dump.c:14946
+#, c-format
+msgid "definition of view \"%s\" appears to be empty (length zero)\n"
+msgstr "ההגדרה של תצוגה \"%s\" נראה ריק (אורך אפס)\n"
+
+#: pg_dump.c:15175
+#, c-format
+msgid "invalid number of parents %d for table \"%s\"\n"
+msgstr "מספר לא נכון של הורים %d עבור טבלה '%s'\n"
+
+#: pg_dump.c:15822
+#, c-format
+msgid "invalid column number %d for table \"%s\"\n"
+msgstr "מספר העמודה לא חוקי %d עבור טבלה '%s'\n"
+
+#: pg_dump.c:16006
+#, c-format
+msgid "missing index for constraint \"%s\"\n"
+msgstr "אינדקס חסר עבור האילוץ \"%s\"\n"
+
+#: pg_dump.c:16209
+#, c-format
+msgid "unrecognized constraint type: %c\n"
+msgstr "סוג אילוץ לא מזוהה: %c\n"
+
+#: pg_dump.c:16346 pg_dump.c:16572
+#, c-format
+msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
+msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
+msgstr[0] "שאילתא כדי לקבל נתונים של רצף \"%s\"החזירה שורה %d (הצפוי 1)\n"
+msgstr[1] "שאילתא כדי לקבל נתונים של רצף \"%s\"החזירה שורות %d (הצפוי 1)\n"
+
+#: pg_dump.c:16670
+#, c-format
+msgid "unexpected tgtype value: %d\n"
+msgstr "ערך tgtype בלתי צפוי: %d\n"
+
+#: pg_dump.c:16744
+#, c-format
+msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
+msgstr "ארגומנט מסוג מחרוזת לא חוקי (%s) עבור טריגר \"%s\" בטבלה \"%s\"\n"
+
+#: pg_dump.c:16965
+#, c-format
+msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n"
+msgstr "שאילתה כדי לקבל כלל \"%s\" עבור טבלה '%s' נכשלה: חזר מספר שגוי של השורות\n"
+
+#: pg_dump.c:17360
+#, c-format
+msgid "reading dependency data\n"
+msgstr "קריאת נתוני תלות\n"
+
+#: pg_dump.c:17825
+#, c-format
+msgid "WARNING: could not parse reloptions array\n"
+msgstr "אזהרה: לא היתה אפשרות לנתח מערך reloptions\n"
+
+#. translator: this is a module name
+#: pg_dump_sort.c:25
+msgid "sorter"
+msgstr "ממין"
+
+#: pg_dump_sort.c:413
+#, c-format
+msgid "invalid dumpId %d\n"
+msgstr "ערך dumpId לא חוקי %d\n"
+
+#: pg_dump_sort.c:419
+#, c-format
+msgid "invalid dependency %d\n"
+msgstr "תלות לא חוקי %d\n"
+
+#: pg_dump_sort.c:652
+#, c-format
+msgid "could not identify dependency loop\n"
+msgstr "לא יוכל לזהות את לולאת התלות \n"
+
+#: pg_dump_sort.c:1175
+#, c-format
+msgid "NOTICE: there are circular foreign-key constraints on this table:\n"
+msgid_plural "NOTICE: there are circular foreign-key constraints among these tables:\n"
+msgstr[0] "שים לב: יש אילוצי מפתח זר מעגליים על הטבלה זה:\n"
+msgstr[1] "שים לב: יש אילוצי מפתח זר מעגליים על הטבלאות אלו:\n"
+
+#: pg_dump_sort.c:1179 pg_dump_sort.c:1199
+#, c-format
+msgid "  %s\n"
+msgstr " %s\n"
+
+#: pg_dump_sort.c:1180
+#, c-format
+msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.\n"
+msgstr "אתה לא יוכל לשחזר את dump ללא שימוש ב --disable-triggers או שחרור אילוצים זמני.\n"
+
+#: pg_dump_sort.c:1181
+#, c-format
+msgid "Consider using a full dump instead of a --data-only dump to avoid this problem.\n"
+msgstr "שקול שימוש ב dump מלא במקום --data-only בכדי להימנע מבעיה זו.\n"
+
+#: pg_dump_sort.c:1193
+#, c-format
+msgid "WARNING: could not resolve dependency loop among these items:\n"
+msgstr "אזהרה: לא יכולה לפתור את תלות בלולאה בין פריטים אלה:\n"
+
+#: pg_dumpall.c:189
+#, c-format
+msgid ""
+"The program \"pg_dump\" is needed by %s but was not found in the\n"
+"same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"התוכנית \"pg_dump\" נדרשת על-ידי %s אבל לא נמצאה\n"
+"באותה ספריה כמו \"%s\".\n"
+"בדוק את ההתקנה.\n"
+
+#: pg_dumpall.c:196
+#, c-format
+msgid ""
+"The program \"pg_dump\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation.\n"
+msgstr ""
+"התוכנית \"pg_dump\" נמצאה על ידי \"%s\"\n"
+"אבל היתה לא מגירסה זהה כמו %s.\n"
+"ודא ההתקנה שלך.\n"
+
+#: pg_dumpall.c:331
+#, c-format
+msgid "%s: options -g/--globals-only and -r/--roles-only cannot be used together\n"
+msgstr "תכנית %s: אפשרויות -g/--globals-only ו -r/--roles-only לא ניתן לשמש ביחד\n"
+
+#: pg_dumpall.c:340
+#, c-format
+msgid "%s: options -g/--globals-only and -t/--tablespaces-only cannot be used together\n"
+msgstr "תכנית %s: אפשרויות  -g/--globals-only ו -t/--tablespaces-only לא ניתן לשמש ביחד\n"
+
+#: pg_dumpall.c:349 pg_restore.c:367
+#, c-format
+msgid "%s: option --if-exists requires option -c/--clean\n"
+msgstr "תכנתי %s: אפשרות --if-exists מחייבת אפשרות -c/--clean\n"
+
+#: pg_dumpall.c:356
+#, c-format
+msgid "%s: options -r/--roles-only and -t/--tablespaces-only cannot be used together\n"
+msgstr "תכנית %s: אפשרויות -r/--roles-only ו -t/--tablespaces-only לא ניתן לשמש ביחד\n"
+
+#: pg_dumpall.c:412 pg_dumpall.c:1983
+#, c-format
+msgid "%s: could not connect to database \"%s\"\n"
+msgstr "תכנית %s: לא ניתן להתחבר אל מסד נתונים: \"%s\"\n"
+
+#: pg_dumpall.c:427
+#, c-format
+msgid ""
+"%s: could not connect to databases \"postgres\" or \"template1\"\n"
+"Please specify an alternative database.\n"
+msgstr ""
+"תכנתי %s: לא היתה אפשרות להתחבר למסדי נתונים \"postgres\" או \"template1\"\n"
+"נא ציין מסד נתונים חלופי.\n"
+
+#: pg_dumpall.c:444
+#, c-format
+msgid "%s: could not open the output file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לפתוח את קובץ הפלט \"%s\": %s\n"
+
+#: pg_dumpall.c:574
+#, c-format
+msgid ""
+"%s extracts a PostgreSQL database cluster into an SQL script file.\n"
+"\n"
+msgstr ""
+"תכנתי %s מחלץ אשכול מסד נתונים PostgreSQL לקובץ סקריפט של SQL\n"
+"\n"
+
+#: pg_dumpall.c:576
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [OPTION]...\n"
+
+#: pg_dumpall.c:579
+#, c-format
+msgid "  -f, --file=FILENAME          output file name\n"
+msgstr ""
+"-f\n"
+"  --file=FILENAM\n"
+"שם קובץ פלט\n"
+
+#: pg_dumpall.c:586
+#, c-format
+msgid "  -c, --clean                  clean (drop) databases before recreating\n"
+msgstr ""
+"-c\n"
+"  --clean\n"
+"לנקות (למחוק) מסדי הנתונים לפני יצירה מחדש\n"
+
+#: pg_dumpall.c:587
+#, c-format
+msgid "  -g, --globals-only           dump only global objects, no databases\n"
+msgstr ""
+"  -g\n"
+"  --globals-only\n"
+"לבצע dump עבור אובייקטים גלובליים, לא עבור מסדי נתונים\n"
+
+#: pg_dumpall.c:589 pg_restore.c:472
+#, c-format
+msgid "  -O, --no-owner               skip restoration of object ownership\n"
+msgstr ""
+"-O\n"
+"  --no-owner\n"
+"לדלג על השחזור בעלות על האובייקט\n"
+
+#: pg_dumpall.c:590
+#, c-format
+msgid "  -r, --roles-only             dump only roles, no databases or tablespaces\n"
+msgstr ""
+"  -r\n"
+"  --roles-only\n"
+"לבצע dump עבור תפקידים בלבד, לא עבור מסדי הנתונים או מרחבי טבלאות\n"
+
+#: pg_dumpall.c:592
+#, c-format
+msgid "  -S, --superuser=NAME         superuser user name to use in the dump\n"
+msgstr ""
+"  -S\n"
+"  --superuser=NAME\n"
+"שם משתמש על להשתמש ב dump\n"
+
+#: pg_dumpall.c:593
+#, c-format
+msgid "  -t, --tablespaces-only       dump only tablespaces, no databases or roles\n"
+msgstr ""
+"  -t\n"
+"  --tablespaces-only\n"
+"לבצי dump עבור מרחבי טבלאות, לא עובר מסדי נתונים או תפקידים\n"
+
+#: pg_dumpall.c:607
+#, c-format
+msgid "  --no-role-passwords          do not dump passwords for roles\n"
+msgstr ""
+"  --no-role-passwords\n"
+"לא לבצע dump עבור הסיסמאות של תפקידים\n"
+
+#: pg_dumpall.c:614
+#, c-format
+msgid "  -d, --dbname=CONNSTR     connect using connection string\n"
+msgstr ""
+"  -d\n"
+"  --dbname=CONNSTR\n"
+"להתחבר באמצעות מחרוזת החיבור\n"
+
+#: pg_dumpall.c:616
+#, c-format
+msgid "  -l, --database=DBNAME    alternative default database\n"
+msgstr ""
+"  -l\n"
+"  --database=DBNAME\n"
+"מסד נתונים ברירת המחדל החלופי\n"
+
+#: pg_dumpall.c:623
+#, c-format
+msgid ""
+"\n"
+"If -f/--file is not used, then the SQL script will be written to the standard\n"
+"output.\n"
+"\n"
+msgstr ""
+"\n"
+"אם לא נעשה שימוש ב -f/--file, אז סקריפט של SQL ייכתב\n"
+"לפלט סטנדרטי.\n"
+"\n"
+"\n"
+
+#: pg_dumpall.c:828
+#, c-format
+msgid "%s: role name starting with \"pg_\" skipped (%s)\n"
+msgstr "תכנית %s: דילוג על שם תפקיד אשר מתחיל עם \"pg_\" (%s)\n"
+
+#: pg_dumpall.c:1208
+#, c-format
+msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
+msgstr "תכנית %s: לא היתה אפשרות לנתח את רשימת ACL (%s) עבור מרחב הטבלאות \"%s\"\n"
+
+#: pg_dumpall.c:1525
+#, c-format
+msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
+msgstr "תכנית %s: לא היתה אפשרות לנתח את רשימת ACL (%s) עבור מסד הנתונים \"%s\"\n"
+
+#: pg_dumpall.c:1739
+#, c-format
+msgid "%s: dumping database \"%s\"...\n"
+msgstr "תכנית %s: ביצוע dump של מסד הנתונים '%s'...\n"
+
+#: pg_dumpall.c:1763
+#, c-format
+msgid "%s: pg_dump failed on database \"%s\", exiting\n"
+msgstr "תכנית %s: נכשל pg_dump על מסד הנתונים '%s', יוצא\n"
+
+#: pg_dumpall.c:1772
+#, c-format
+msgid "%s: could not re-open the output file \"%s\": %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לפתוח את קובץ הפלט \"%s\": %s\n"
+
+#: pg_dumpall.c:1817
+#, c-format
+msgid "%s: running \"%s\"\n"
+msgstr "תכנית %s: הפעלת \"%s\"\n"
+
+#: pg_dumpall.c:2006
+#, c-format
+msgid "%s: could not connect to database \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן להתחבר אל מסד נתונים\"%s\": %s\n"
+
+#: pg_dumpall.c:2036
+#, c-format
+msgid "%s: could not get server version\n"
+msgstr "תכנית %s: לא היתה אפשרות לקבל גירסת שרת\n"
+
+#: pg_dumpall.c:2042
+#, c-format
+msgid "%s: could not parse server version \"%s\"\n"
+msgstr "תכנית %s: לא היתה אפשרות לנתח גירסת שרת \"%s\"\n"
+
+#: pg_dumpall.c:2118 pg_dumpall.c:2144
+#, c-format
+msgid "%s: executing %s\n"
+msgstr "תכנית %s: ביצוע %s\n"
+
+#: pg_dumpall.c:2124 pg_dumpall.c:2150
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "תכנית %s: שאילתה נכשלה: %s"
+
+#: pg_dumpall.c:2126 pg_dumpall.c:2152
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "תכנית %s: שאילתה היתה: %s\n"
+
+#: pg_restore.c:309
+#, c-format
+msgid "%s: options -d/--dbname and -f/--file cannot be used together\n"
+msgstr "תכנית %s: אפשרויות -d/--dbname ו -f/--file לא ניתן לשמש ביחד\n"
+
+#: pg_restore.c:320
+#, c-format
+msgid "%s: options -s/--schema-only and -a/--data-only cannot be used together\n"
+msgstr "תכנית %s: אפשרויות -s/--schema-only ו -a/--data-only לא ניתן לשמש ביחד\n"
+
+#: pg_restore.c:327
+#, c-format
+msgid "%s: options -c/--clean and -a/--data-only cannot be used together\n"
+msgstr "תכנית %s: אפשרויות -c/--clean ו -a/--data-only לא ניתן לשמש ביחד\n"
+
+#: pg_restore.c:334
+#, c-format
+msgid "%s: invalid number of parallel jobs\n"
+msgstr "תכנית %s: מספר לא חוקי של משימות מקבילות\n"
+
+#: pg_restore.c:342
+#, c-format
+msgid "%s: maximum number of parallel jobs is %d\n"
+msgstr "תכנית %s: מספר מרבי של משרות מקבילות הוא %d\n"
+
+#: pg_restore.c:351
+#, c-format
+msgid "%s: cannot specify both --single-transaction and multiple jobs\n"
+msgstr "תכנית %s: לא ניתן לציין גם  --single-transaction וגם משימות מרובות\n"
+
+#: pg_restore.c:394
+#, c-format
+msgid "unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\"\n"
+msgstr "תבנית ארכיון לא מזוהה \"%s\"; נא ציין \"c\", \"d\" או \"t\"\n"
+
+#: pg_restore.c:434
+#, c-format
+msgid "WARNING: errors ignored on restore: %d\n"
+msgstr "אזהרה: התעלמות משגיאות בשחזור: %d\n"
+
+#: pg_restore.c:448
+#, c-format
+msgid ""
+"%s restores a PostgreSQL database from an archive created by pg_dump.\n"
+"\n"
+msgstr ""
+"תכנית %s משחזרת את מסד הנתונים PostgreSQL מהארכיון שנוצרו על-ידי pg_dump.\n"
+"\n"
+
+#: pg_restore.c:450
+#, c-format
+msgid "  %s [OPTION]... [FILE]\n"
+msgstr "  %s [OPTION]... [FILE]\n"
+
+#: pg_restore.c:453
+#, c-format
+msgid "  -d, --dbname=NAME        connect to database name\n"
+msgstr ""
+"  -d\n"
+"  --dbname=NAME\n"
+"שם להתחבר שם מסד הנתונים\n"
+
+#: pg_restore.c:454
+#, c-format
+msgid "  -f, --file=FILENAME      output file name\n"
+msgstr ""
+"  -f\n"
+"  --file=FILENAM\n"
+"שם קובץ פלט\n"
+
+#: pg_restore.c:455
+#, c-format
+msgid "  -F, --format=c|d|t       backup file format (should be automatic)\n"
+msgstr ""
+"  -F\n"
+"  --format=c|d|t\n"
+"תבנית קובץ גיבוי (צריך להיות אוטומטי)\n"
+
+#: pg_restore.c:456
+#, c-format
+msgid "  -l, --list               print summarized TOC of the archive\n"
+msgstr ""
+"  -l\n"
+"  --list\n"
+"הדפס סיכום TOC של הארכיון\n"
+
+#: pg_restore.c:457
+#, c-format
+msgid "  -v, --verbose            verbose mode\n"
+msgstr ""
+"  -v\n"
+"  --verbose\n"
+"מבצ מילולי מפורט\n"
+
+#: pg_restore.c:458
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            להציג מידע על הגירסה, ולאחר מכן לצאת\n"
+
+#: pg_restore.c:459
+#, c-format
+msgid "  -?, --help               show this help, then exit\n"
+msgstr "  -?, --help                להציג עזרה זו, ולאחר מכן לצאת\n"
+
+#: pg_restore.c:461
+#, c-format
+msgid ""
+"\n"
+"Options controlling the restore:\n"
+msgstr ""
+"\n"
+"אפשרויות שליטה בשחזור:\n"
+
+#: pg_restore.c:462
+#, c-format
+msgid "  -a, --data-only              restore only the data, no schema\n"
+msgstr ""
+"  -a\n"
+"  --data-only\n"
+"שחזור נתונים בלבד, לא הסכימה\n"
+
+#: pg_restore.c:464
+#, c-format
+msgid "  -C, --create                 create the target database\n"
+msgstr ""
+"  -C\n"
+"  --create \n"
+"ליצור את מסד הנתונים היעד\n"
+"\n"
+
+#: pg_restore.c:465
+#, c-format
+msgid "  -e, --exit-on-error          exit on error, default is to continue\n"
+msgstr ""
+"  -e\n"
+"  --exit-on-error\n"
+"יציאה cשגיאה, ברירת המחדל היא להמשיך\n"
+
+#: pg_restore.c:466
+#, c-format
+msgid "  -I, --index=NAME             restore named index\n"
+msgstr ""
+"  -I\n"
+"  --index=NAME\n"
+"שחזור אינדקס אשר צוין ב NAME\n"
+
+#: pg_restore.c:467
+#, c-format
+msgid "  -j, --jobs=NUM               use this many parallel jobs to restore\n"
+msgstr ""
+"-j\n"
+"  --jobs=NUM\n"
+"תשתמש במשימות מקבילות רבות לשיחזור\n"
+
+#: pg_restore.c:468
+#, c-format
+msgid ""
+"  -L, --use-list=FILENAME      use table of contents from this file for\n"
+"                               selecting/ordering output\n"
+msgstr ""
+"  -L\n"
+"  --use-list=FILENAME\n"
+"להשתמש בתוכן עניינים מקובצים זה על מנת לבחור/לבדר את הפלט\n"
+
+#: pg_restore.c:470
+#, c-format
+msgid "  -n, --schema=NAME            restore only objects in this schema\n"
+msgstr ""
+"  -n\n"
+"  --schema=NAME\n"
+"לשחזר רק אובייקטים מסכימה זו\n"
+
+#: pg_restore.c:471
+#, c-format
+msgid "  -N, --exclude-schema=NAME    do not restore objects in this schema\n"
+msgstr ""
+"  -N\n"
+"  --exclude-schema=NAME\n"
+"לא לשחזר את האובייקטים מסכימה זו\n"
+
+#: pg_restore.c:473
+#, c-format
+msgid "  -P, --function=NAME(args)    restore named function\n"
+msgstr ""
+"  -P\n"
+"  --function=NAME(args)\n"
+"שחזורפונקציה שצוינה\n"
+
+#: pg_restore.c:474
+#, c-format
+msgid "  -s, --schema-only            restore only the schema, no data\n"
+msgstr ""
+"  -s\n"
+"  --schema-only\n"
+"שחזור של הסכימה בלבד, לא נתונים\n"
+
+#: pg_restore.c:475
+#, c-format
+msgid "  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"
+msgstr ""
+"  -S\n"
+"  --superuser=NAME\n"
+"שם משתמש על עבור נטרול טריגרים\n"
+
+#: pg_restore.c:476
+#, c-format
+msgid "  -t, --table=NAME             restore named relation (table, view, etc.)\n"
+msgstr ""
+"  -t\n"
+"  --table=NAME\n"
+"שחזור שם הקשר (טבלה, תצוגה, וכו '.)\n"
+
+#: pg_restore.c:477
+#, c-format
+msgid "  -T, --trigger=NAME           restore named trigger\n"
+msgstr ""
+"  -T\n"
+"  --trigger=NAME\n"
+"שחזור טריגר שצוין\n"
+
+#: pg_restore.c:478
+#, c-format
+msgid "  -x, --no-privileges          skip restoration of access privileges (grant/revoke)\n"
+msgstr ""
+"  -x\n"
+"  --no-privileges\n"
+"דלג על שחזור הרשאות גישה (מענק / שלילה)\n"
+
+#: pg_restore.c:479
+#, c-format
+msgid "  -1, --single-transaction     restore as a single transaction\n"
+msgstr ""
+"  -1, --single-transaction\n"
+"שחזור כטרנזקציה יחידה\n"
+
+#: pg_restore.c:481
+#, c-format
+msgid "  --enable-row-security        enable row security\n"
+msgstr ""
+"  --enable-row-security\n"
+"לאפשר אבטחה שורה\n"
+
+#: pg_restore.c:483
+#, c-format
+msgid ""
+"  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
+"                               created\n"
+msgstr ""
+"  --no-data-for-failed-tables\n"
+"לא לשחזר נתונים של טבלאות שלא היתה אשפרות ליצוא אותן\n"
+
+#: pg_restore.c:485
+#, c-format
+msgid "  --no-publications            do not restore publications\n"
+msgstr ""
+"--no-publications\n"
+"לא לשחזר את הפרסומים\n"
+
+#: pg_restore.c:486
+#, c-format
+msgid "  --no-security-labels         do not restore security labels\n"
+msgstr ""
+"  --no-security-labels\n"
+"לא לשחזר את תווית אבטחה\n"
+
+#: pg_restore.c:487
+#, c-format
+msgid "  --no-subscriptions           do not restore subscriptions\n"
+msgstr ""
+"--no-subscriptions\n"
+"לא לשחזר את מנויים\n"
+
+#: pg_restore.c:488
+#, c-format
+msgid "  --no-tablespaces             do not restore tablespace assignments\n"
+msgstr ""
+"--no-tablespaces\n"
+"לא לשחזר את הקצאות מרחב טבלאות\n"
+
+#: pg_restore.c:489
+#, c-format
+msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
+msgstr ""
+"--section=SECTION\n"
+"לבצע שחזור עבור מקטע שצוין בשם (pre-data, data או post-data)\n"
+
+#: pg_restore.c:502
+#, c-format
+msgid "  --role=ROLENAME          do SET ROLE before restore\n"
+msgstr ""
+"  --role=ROLENAME \n"
+"להגדיר תפקיד לפני השחזור\n"
+
+#: pg_restore.c:504
+#, c-format
+msgid ""
+"\n"
+"The options -I, -n, -P, -t, -T, and --section can be combined and specified\n"
+"multiple times to select multiple objects.\n"
+msgstr ""
+"\n"
+"אפשר לציין ולשלב בין האפשרויות -I, -n, -P, -t, -T ו --section \n"
+"כמה פעמים על מנת לבחור אובייקטים מרובים.\n"
+
+#: pg_restore.c:507
+#, c-format
+msgid ""
+"\n"
+"If no input file name is supplied, then standard input is used.\n"
+"\n"
+msgstr ""
+"\n"
+"אם לא צויין קובץ הקלט, יהיה שימוש בקלט סטנדרטי.\n"
+"\n"

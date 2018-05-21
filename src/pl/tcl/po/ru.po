@@ -2,13 +2,13 @@
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-03-27 12:37+0000\n"
+"POT-Creation-Date: 2017-05-22 07:37+0000\n"
 "PO-Revision-Date: 2017-03-29 14:01+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -16,7 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: pltcl.c:459
 msgid "PL/Tcl function to call once when pltcl is first used."
@@ -55,17 +54,17 @@ msgid ""
 msgstr ""
 "функция, возвращающая запись, вызвана в контексте, не допускающем этот тип"
 
-#: pltcl.c:1258
+#: pltcl.c:1263
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "разложить возвращаемое из триггера значение не удалось: %s"
 
-#: pltcl.c:1338 pltcl.c:1766
+#: pltcl.c:1343 pltcl.c:1771
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1339
+#: pltcl.c:1344
 #, c-format
 msgid ""
 "%s\n"
@@ -74,38 +73,38 @@ msgstr ""
 "%s\n"
 "в функции PL/Tcl \"%s\""
 
-#: pltcl.c:1504
+#: pltcl.c:1509
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: pltcl.c:1508
+#: pltcl.c:1513
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "функции PL/Tcl не могут возвращать тип %s"
 
-#: pltcl.c:1544
+#: pltcl.c:1549
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "функции PL/Tcl не могут принимать тип %s"
 
-#: pltcl.c:1658
+#: pltcl.c:1663
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "не удалось создать внутреннюю процедуру \"%s\": %s"
 
-#: pltcl.c:3095
+#: pltcl.c:3100
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "в списке имён/значений столбцов должно быть чётное число элементов"
 
-#: pltcl.c:3113
+#: pltcl.c:3118
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr ""
 "список имён/значений столбцов содержит имя несуществующего столбца \"%s\""
 
-#: pltcl.c:3120
+#: pltcl.c:3125
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "установить системный атрибут \"%s\" нельзя"

@@ -1,0 +1,684 @@
+# LANGUAGE message translation file for ecpg
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the ecpg (PostgreSQL) package.
+# FIRST AUTHOR <kakalot49@gmail.com>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ecpg (PostgreSQL) 11\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-04-22 12:08+0000\n"
+"PO-Revision-Date: 2018-05-04 22:20+0900\n"
+"Language-Team: <pgvn_translators@postgresql.vn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 2.0.6\n"
+"Last-Translator: Dang Minh Huong <kakalot49@gmail.com>\n"
+"Language: vi_VN\n"
+
+#: descriptor.c:64
+#, c-format
+msgid "variable \"%s\" must have a numeric type"
+msgstr "biến \"%s\" phải là kiểu numeric"
+
+#: descriptor.c:124 descriptor.c:146
+#, c-format
+msgid "descriptor \"%s\" does not exist"
+msgstr "descriptor \"%s\" không tồn tại"
+
+#: descriptor.c:161 descriptor.c:213
+#, c-format
+msgid "descriptor header item \"%d\" does not exist"
+msgstr "descriptor header item \"%d\" không tồn tại"
+
+#: descriptor.c:183
+#, c-format
+msgid "nullable is always 1"
+msgstr "giá trị có thể là NULL luôn là 1"
+
+#: descriptor.c:186
+#, c-format
+msgid "key_member is always 0"
+msgstr "key_member luôn là 0"
+
+#: descriptor.c:280
+#, c-format
+msgid "descriptor item \"%s\" is not implemented"
+msgstr "descriptor item \"%s\" chưa được thực thi"
+
+#: descriptor.c:290
+#, c-format
+msgid "descriptor item \"%s\" cannot be set"
+msgstr "descriptor item \"%s\" không thể thiết lập được"
+
+#: ecpg.c:35
+#, c-format
+msgid ""
+"%s is the PostgreSQL embedded SQL preprocessor for C programs.\n"
+"\n"
+msgstr ""
+"%s là tiền xử lý nhúng SQL của PostgreSQL cho ngôn ngữ C.\n"
+"\n"
+
+#: ecpg.c:37
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... FILE...\n"
+"\n"
+msgstr ""
+"Cách sử dụng:\n"
+"  %s [TÙY CHỌN]... TỆP...\n"
+"\n"
+
+#: ecpg.c:40
+#, c-format
+msgid "Options:\n"
+msgstr "Tùy chọn:\n"
+
+#: ecpg.c:41
+#, c-format
+msgid ""
+"  -c             automatically generate C code from embedded SQL code;\n"
+"                 this affects EXEC SQL TYPE\n"
+msgstr ""
+"  -c             tự động sinh mã C từ mã SQL nhúng;\n"
+"                 điều này ảnh hưởng tới EXEC SQL TYPE\n"
+
+#: ecpg.c:43
+#, c-format
+msgid ""
+"  -C MODE        set compatibility mode; MODE can be one of\n"
+"                 \"INFORMIX\", \"INFORMIX_SE\", \"ORACLE\"\n"
+msgstr ""
+"  -C MODE        thiết lập chế độ tương thích; MODE có thể là \n"
+"                 \"INFORMIX\", \"INFORMIX_SE\" hoặc \"ORACLE\"\n"
+
+#: ecpg.c:46
+#, c-format
+msgid "  -d             generate parser debug output\n"
+msgstr "  -d             xuất debug log cho trình phân tích cú pháp\n"
+
+#: ecpg.c:48
+#, c-format
+msgid "  -D SYMBOL      define SYMBOL\n"
+msgstr "  -D SYMBOL      định nghĩa SYMBOL\n"
+
+#: ecpg.c:49
+#, c-format
+msgid ""
+"  -h             parse a header file, this option includes option \"-c\"\n"
+msgstr ""
+"  -h             phân tích cú pháp tệp header, tùy chọn này bao gồm \n"
+"                 cả tùy chọn \"-c\"\n"
+
+#: ecpg.c:50
+#, c-format
+msgid "  -i             parse system include files as well\n"
+msgstr "  -i             phân tích cả cú pháp của các tệp include files\n"
+
+#: ecpg.c:51
+#, c-format
+msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
+msgstr "  -I DIRECTORY   tìm kiếm THƯ MỤC cho các include files\n"
+
+#: ecpg.c:52
+#, c-format
+msgid "  -o OUTFILE     write result to OUTFILE\n"
+msgstr "  -o OUTFILE     ghi kết quả ra OUTFILE\n"
+
+#: ecpg.c:53
+#, c-format
+msgid ""
+"  -r OPTION      specify run-time behavior; OPTION can be:\n"
+"                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
+msgstr ""
+"  -r OPTION      chỉ định cách thức run-time; OPTION có thể là:\n"
+"                 \"no_indicator\", \"prepare\" hay \"questionmarks\"\n"
+
+#: ecpg.c:55
+#, c-format
+msgid "  --regression   run in regression testing mode\n"
+msgstr "  --regression   chạy trong chế độ regression test\n"
+
+#: ecpg.c:56
+#, c-format
+msgid "  -t             turn on autocommit of transactions\n"
+msgstr ""
+"  -t             thiết lập autocommit sang on trong các transactions\n"
+
+#: ecpg.c:57
+#, c-format
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version  xuât thông tin phiên bản, sau đó thoát\n"
+
+#: ecpg.c:58
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help     hiển thị nội dung hướng dẫn này, sau đó thoát\n"
+
+#: ecpg.c:59
+#, c-format
+msgid ""
+"\n"
+"If no output file is specified, the name is formed by adding .c to the\n"
+"input file name, after stripping off .pgc if present.\n"
+msgstr ""
+"\n"
+"Nếu tệp xuất ra (OUTFILE) không được chỉ định, tên của tệp .c sẽ được \n"
+"lấy từ tên tệp .pgc đầu vào sau khi đã bỏ đi phần mở rộng .pgc\n"
+
+#: ecpg.c:61
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Báo cáo lỗi tới <pgsql-bugs@postgresql.org>.\n"
+
+#: ecpg.c:139
+#, c-format
+msgid "%s: could not locate my own executable path\n"
+msgstr "%s: không thể xác định ví trí đường dẫn để thực thi\n"
+
+#: ecpg.c:174 ecpg.c:331 ecpg.c:342
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: không thể mở file \"%s\": %s\n"
+
+#: ecpg.c:217 ecpg.c:230 ecpg.c:246 ecpg.c:272
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Thử \"%s --help\" để biết thêm thông tin.\n"
+
+#: ecpg.c:241
+#, c-format
+msgid "%s: parser debug support (-d) not available\n"
+msgstr ""
+"%s: chế độ hỗ trợ debug (-d) cho trình phân tích cú pháp chưa sẵn sàng\n"
+
+#: ecpg.c:260
+#, c-format
+msgid "%s, the PostgreSQL embedded C preprocessor, version %s\n"
+msgstr "%s, tiền xử lý nhúng ngôn ngữ C cho PostgreSQL, phiên bản %s\n"
+
+#: ecpg.c:262
+#, c-format
+msgid "EXEC SQL INCLUDE ... search starts here:\n"
+msgstr "EXEC SQL INCLUDE ... tìm kiếm bắt đầu từ đây:\n"
+
+#: ecpg.c:265
+#, c-format
+msgid "end of search list\n"
+msgstr "cuối danh sách tìm kiếm\n"
+
+#: ecpg.c:271
+#, c-format
+msgid "%s: no input files specified\n"
+msgstr "%s: không có tệp đầu vào nào được chỉ định\n"
+
+#: ecpg.c:465
+#, c-format
+msgid "cursor \"%s\" has been declared but not opened"
+msgstr "con trỏ \"%s\" đã được định nghĩa nhưng chưa được open"
+
+#: ecpg.c:478 preproc.y:127
+#, c-format
+msgid "could not remove output file \"%s\"\n"
+msgstr "không thể xóa tệp đầu ra \"%s\"\n"
+
+#: pgc.l:435
+#, c-format
+msgid "unterminated /* comment"
+msgstr "dấu bình luận /* chưa được kết thúc"
+
+#: pgc.l:448
+#, c-format
+msgid "invalid bit string literal"
+msgstr "chuỗi ký tự bit không hợp lệ"
+
+#: pgc.l:457
+#, c-format
+msgid "unterminated bit string literal"
+msgstr "chuỗi bít ký tự chưa hoàn chỉnh"
+
+#: pgc.l:473
+#, c-format
+msgid "unterminated hexadecimal string literal"
+msgstr "chuỗi ký tự thập lục phân chưa hoàn chỉnh"
+
+#: pgc.l:551
+#, c-format
+msgid "unterminated quoted string"
+msgstr "chuỗi trích dẫn chưa hoàn chỉnh"
+
+#: pgc.l:609 pgc.l:622
+#, c-format
+msgid "zero-length delimited identifier"
+msgstr "ký tự phân cách có độ dài bằng 0"
+
+#: pgc.l:630
+#, c-format
+msgid "unterminated quoted identifier"
+msgstr "identifier trích dẫn chưa hoàn chỉnh"
+
+#: pgc.l:880
+#, c-format
+msgid "nested /* ... */ comments"
+msgstr "dấu bình luận /* ... */ lồng nhau"
+
+#: pgc.l:973
+#, c-format
+msgid "missing identifier in EXEC SQL UNDEF command"
+msgstr "thiếu identifier trong câu lệnh EXEC SQL UNDEF"
+
+#: pgc.l:1019 pgc.l:1033
+#, c-format
+msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+msgstr "không khớp giữa \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+
+#: pgc.l:1022 pgc.l:1035 pgc.l:1211
+#, c-format
+msgid "missing \"EXEC SQL ENDIF;\""
+msgstr "thiếu câu lệnh \"EXEC SQL ENDIF;\""
+
+#: pgc.l:1051 pgc.l:1070
+#, c-format
+msgid "more than one EXEC SQL ELSE"
+msgstr "có nhiều hơn một câu lệnh EXEC SQL ELSE"
+
+#: pgc.l:1092 pgc.l:1106
+#, c-format
+msgid "unmatched EXEC SQL ENDIF"
+msgstr "câu lệnh EXEC SQL ENDIF không khớp"
+
+#: pgc.l:1126
+#, c-format
+msgid "too many nested EXEC SQL IFDEF conditions"
+msgstr "quá nhiều điều kiện lồng EXEC SQL IFDEF"
+
+#: pgc.l:1159
+#, c-format
+msgid "missing identifier in EXEC SQL IFDEF command"
+msgstr "thiếu identifier trong câu lệnh EXEC SQL IFDEF"
+
+#: pgc.l:1168
+#, c-format
+msgid "missing identifier in EXEC SQL DEFINE command"
+msgstr "thiếu identifier trong câu lệnh EXEC SQL DEFINE"
+
+#: pgc.l:1201
+#, c-format
+msgid "syntax error in EXEC SQL INCLUDE command"
+msgstr "lỗi cú pháp trong câu lệnh EXEC SQL INCLUDE"
+
+#: pgc.l:1250
+#, c-format
+msgid ""
+"internal error: unreachable state; please report this to <pgsql-"
+"bugs@postgresql.org>"
+msgstr ""
+"lỗi nội bộ: trạng thái không thể truy cập; vui lòng báo cáo điều này với "
+"<pgsql-bugs@postgresql.org>"
+
+#: pgc.l:1379
+#, c-format
+msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
+msgstr "Lỗi: đường dẫn include \"%s/%s\" quá dài trên dòng %d, bỏ qua\n"
+
+#: pgc.l:1402
+#, c-format
+msgid "could not open include file \"%s\" on line %d"
+msgstr "không thể mở tệp include \"%s\" trên dòng %d"
+
+#: preproc.y:31
+msgid "syntax error"
+msgstr "lỗi cú pháp"
+
+#: preproc.y:81
+#, c-format
+msgid "WARNING: "
+msgstr "CẢNH BÁO: "
+
+#: preproc.y:84
+#, c-format
+msgid "ERROR: "
+msgstr "LỖI: "
+
+#: preproc.y:508
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "on trỏ \"%s\" không tồn tại"
+
+#: preproc.y:537
+#, c-format
+msgid "initializer not allowed in type definition"
+msgstr "initializer không được cho phép trong định nghĩa kiểu"
+
+#: preproc.y:539
+#, c-format
+msgid "type name \"string\" is reserved in Informix mode"
+msgstr "kiểu \"string\" được dành riêng trong chế độ Informix"
+
+#: preproc.y:546 preproc.y:15714
+#, c-format
+msgid "type \"%s\" is already defined"
+msgstr "kiểu \"%s\" đã được định nghĩa"
+
+#: preproc.y:570 preproc.y:16372 preproc.y:16697 variable.c:620
+#, c-format
+msgid "multidimensional arrays for simple data types are not supported"
+msgstr "mảng đa chiều cho các kiểu dữ liệu đơn giản không được hỗ trợ"
+
+#: preproc.y:1693
+#, c-format
+msgid "AT option not allowed in CLOSE DATABASE statement"
+msgstr "Tùy chọn AT không được phép trong câu lệnh CLOSE DATABASE"
+
+#: preproc.y:1902
+#, c-format
+msgid "AT option not allowed in CONNECT statement"
+msgstr "Tùy chọn AT không được phép trong câu lệnh CONNECT"
+
+#: preproc.y:1936
+#, c-format
+msgid "AT option not allowed in DISCONNECT statement"
+msgstr "Tùy chọn AT không được phép trong câu lệnh DISCONNECT"
+
+#: preproc.y:1991
+#, c-format
+msgid "AT option not allowed in SET CONNECTION statement"
+msgstr "Tùy chọn AT không được cho phép trong câu lệnh SET CONNECTION"
+
+#: preproc.y:2013
+#, c-format
+msgid "AT option not allowed in TYPE statement"
+msgstr "Tùy chọn AT không được phép trong câu lệnh TYPE"
+
+#: preproc.y:2022
+#, c-format
+msgid "AT option not allowed in VAR statement"
+msgstr "Tùy chọn AT không được phép trong câu lệnh VAR"
+
+#: preproc.y:2029
+#, c-format
+msgid "AT option not allowed in WHENEVER statement"
+msgstr "Tùy chọn AT không được phép trong câu lệnh WHENEVER"
+
+#: preproc.y:2106 preproc.y:2278 preproc.y:2283 preproc.y:2399 preproc.y:4036
+#: preproc.y:5594 preproc.y:5603 preproc.y:5903 preproc.y:7502 preproc.y:8995
+#: preproc.y:9000 preproc.y:11782
+#, c-format
+msgid "unsupported feature will be passed to server"
+msgstr "tính năng không được hỗ trợ sẽ được chuyển đến server"
+
+#: preproc.y:2657
+#, c-format
+msgid "SHOW ALL is not implemented"
+msgstr "Lệnh SHOW ALL chưa được thực thi"
+
+#: preproc.y:3377
+#, c-format
+msgid "COPY FROM STDIN is not implemented"
+msgstr "Lệnh COPY FROM STDIN chưa được thực thi"
+
+#: preproc.y:9948 preproc.y:15303
+#, c-format
+msgid "using variable \"%s\" in different declare statements is not supported"
+msgstr ""
+"sử dụng biến \"%s\" trong các câu lệnh khai báo khác nhau không được hỗ trợ"
+
+#: preproc.y:9950 preproc.y:15305
+#, c-format
+msgid "cursor \"%s\" is already defined"
+msgstr "con trỏ \"%s\" đã được định nghĩa"
+
+#: preproc.y:10380
+#, c-format
+msgid "no longer supported LIMIT #,# syntax passed to server"
+msgstr "cú pháp không còn được hỗ trợ LIMIT #, # được chuyển đến server"
+
+#: preproc.y:10696 preproc.y:10703
+#, c-format
+msgid "subquery in FROM must have an alias"
+msgstr "truy vấn phụ trong FROM phải có bí danh"
+
+#: preproc.y:15033
+#, c-format
+msgid "CREATE TABLE AS cannot specify INTO"
+msgstr "Không thể sử dụng INTO trong câu lệnh CREATE TABLE AS"
+
+#: preproc.y:15069
+#, c-format
+msgid "expected \"@\", found \"%s\""
+msgstr "kì vọng \"@\", tìm thấy \"%s\""
+
+#: preproc.y:15081
+#, c-format
+msgid ""
+"only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are "
+"supported"
+msgstr ""
+"chỉ các giao thức \"tcp\" và \"unix\" và kiểu cơ sở dữ liệu \"postgresql\" "
+"được hỗ trợ"
+
+#: preproc.y:15084
+#, c-format
+msgid "expected \"://\", found \"%s\""
+msgstr "kỳ vọng \"://\", tìm thấy \"%s\""
+
+#: preproc.y:15089
+#, c-format
+msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
+msgstr ""
+"Unix-domain sockets chỉ hoạt động trên \"localhost\" nhưng không hoạt động "
+"trên \"%s\""
+
+#: preproc.y:15115
+#, c-format
+msgid "expected \"postgresql\", found \"%s\""
+msgstr "kỳ vọng \"postgresql\", tìm thấy \"%s\""
+
+#: preproc.y:15118
+#, c-format
+msgid "invalid connection type: %s"
+msgstr "loại kết nối không hợp lệ: %s"
+
+#: preproc.y:15127
+#, c-format
+msgid "expected \"@\" or \"://\", found \"%s\""
+msgstr "kỳ vọng \"@\" or \"://\", tìm được \"%s\""
+
+#: preproc.y:15202 preproc.y:15220
+#, c-format
+msgid "invalid data type"
+msgstr "kiểu dữ liệu không hợp lệ"
+
+#: preproc.y:15231 preproc.y:15248
+#, c-format
+msgid "incomplete statement"
+msgstr "câu lệnh chưa hoàn chỉnh"
+
+#: preproc.y:15234 preproc.y:15251
+#, c-format
+msgid "unrecognized token \"%s\""
+msgstr "không nhận ra token \"%s\""
+
+#: preproc.y:15525
+#, c-format
+msgid "only data types numeric and decimal have precision/scale argument"
+msgstr "chỉ các kiểu dữ liệu numeric và decimal có đối số precision và scale"
+
+#: preproc.y:15537
+#, c-format
+msgid "interval specification not allowed here"
+msgstr "chỉ định interval không được phép ở đây"
+
+#: preproc.y:15689 preproc.y:15741
+#, c-format
+msgid "too many levels in nested structure/union definition"
+msgstr "quá nhiều cấp độ lồng nhau trong định nghĩa structure/union"
+
+#: preproc.y:15880
+#, c-format
+msgid "pointers to varchar are not implemented"
+msgstr "con trỏ đến kiểu varchar chưa được thực thi"
+
+#: preproc.y:16067 preproc.y:16092
+#, c-format
+msgid "using unsupported DESCRIBE statement"
+msgstr "sử dụng câu lệnh chưa được hỗ trợ DESCRIBE"
+
+#: preproc.y:16339
+#, c-format
+msgid "initializer not allowed in EXEC SQL VAR command"
+msgstr "initializer không được phép trong câu lệnh EXEC SQL VAR"
+
+#: preproc.y:16655
+#, c-format
+msgid "arrays of indicators are not allowed on input"
+msgstr "đầu vào là mảng của các indicators không được cho phép"
+
+#: preproc.y:16876
+#, c-format
+msgid "operator not allowed in variable definition"
+msgstr "toán tử không được phép trong định nghĩa biến"
+
+#. translator: %s is typically the translation of "syntax error"
+#: preproc.y:16917
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s tại hoặc gần \"%s\""
+
+#: type.c:18 type.c:30
+#, c-format
+msgid "out of memory"
+msgstr "hết bộ nhớ"
+
+#: type.c:212 type.c:674
+#, c-format
+msgid "unrecognized variable type code %d"
+msgstr "không nhận ra kiểu mã biến %d"
+
+#: type.c:261
+#, c-format
+msgid "variable \"%s\" is hidden by a local variable of a different type"
+msgstr "biến \"%s\" bị ẩn bởi biến cục bộ thuộc một kiểu khác"
+
+#: type.c:263
+#, c-format
+msgid "variable \"%s\" is hidden by a local variable"
+msgstr "biến \"%s\" bị ẩn bởi biến cục bộ"
+
+#: type.c:275
+#, c-format
+msgid ""
+"indicator variable \"%s\" is hidden by a local variable of a different type"
+msgstr "biến indicator \"%s\" bị ẩn bởi một biến cục bộ thuộc một kiểu khác"
+
+#: type.c:277
+#, c-format
+msgid "indicator variable \"%s\" is hidden by a local variable"
+msgstr "biến indicator \"%s\" bị ẩn bởi biến cục bộ"
+
+#: type.c:285
+#, c-format
+msgid "indicator for array/pointer has to be array/pointer"
+msgstr "mảng/con trỏ cho indicator phải là mảng/con trỏ"
+
+#: type.c:289
+#, c-format
+msgid "nested arrays are not supported (except strings)"
+msgstr "mảng lồng nhau không được hỗ trợ (ngoại trừ chuỗi)"
+
+#: type.c:331
+#, c-format
+msgid "indicator for struct has to be a struct"
+msgstr "indicator cho structure phải là một structure"
+
+#: type.c:351 type.c:372 type.c:392
+#, c-format
+msgid "indicator for simple data type has to be simple"
+msgstr "indicator cho kiểu dữ liệu đơn giản phải đơn giản"
+
+#: type.c:615
+#, c-format
+msgid "indicator struct \"%s\" has too few members"
+msgstr "cấu trúc của indicator \"%s\" có quá ít thành viên"
+
+#: type.c:622
+#, c-format
+msgid "indicator struct \"%s\" has too many members"
+msgstr "cấu trúc của indicator \"%s\" có quá nhiều thành viên"
+
+#: type.c:733
+#, c-format
+msgid "unrecognized descriptor item code %d"
+msgstr "không nhận ra mã descriptor item %d"
+
+#: variable.c:89 variable.c:116
+#, c-format
+msgid "incorrectly formed variable \"%s\""
+msgstr "biến được định dạng không chính xác \"%s\""
+
+#: variable.c:139
+#, c-format
+msgid "variable \"%s\" is not a pointer"
+msgstr "biến \"%s\" không phải là con trỏ"
+
+#: variable.c:142 variable.c:167
+#, c-format
+msgid "variable \"%s\" is not a pointer to a structure or a union"
+msgstr "biến \"%s\" không phải là con trỏ trỏ tới structure hoặc union"
+
+#: variable.c:154
+#, c-format
+msgid "variable \"%s\" is neither a structure nor a union"
+msgstr "biến \"%s\" không phải là kiểu structure hay union"
+
+#: variable.c:164
+#, c-format
+msgid "variable \"%s\" is not an array"
+msgstr "biến \"%s\" không phải là mảng"
+
+#: variable.c:233 variable.c:255
+#, c-format
+msgid "variable \"%s\" is not declared"
+msgstr "biến \"%s\" chưa được định nghĩa"
+
+#: variable.c:494
+#, c-format
+msgid "indicator variable must have an integer type"
+msgstr "biến indicator phải có kiểu integer"
+
+#: variable.c:506
+#, c-format
+msgid "unrecognized data type name \"%s\""
+msgstr "không nhận ra kiểu dữ liệu \"%s\""
+
+#: variable.c:517 variable.c:525 variable.c:542 variable.c:545
+#, c-format
+msgid "multidimensional arrays are not supported"
+msgstr "mảng đa chiều không được hỗ trợ"
+
+#: variable.c:534
+#, c-format
+msgid ""
+"multilevel pointers (more than 2 levels) are not supported; found %d level"
+msgid_plural ""
+"multilevel pointers (more than 2 levels) are not supported; found %d levels"
+msgstr[0] ""
+"các con trỏ đa cấp (nhiều hơn 2 cấp) không được hỗ trợ; đã tìm thấy %d cấp"
+
+#: variable.c:539
+#, c-format
+msgid "pointer to pointer is not supported for this data type"
+msgstr "con trỏ đến con trỏ không được hỗ trợ cho kiểu dữ liệu này"
+
+#: variable.c:559
+#, c-format
+msgid "multidimensional arrays for structures are not supported"
+msgstr "mảng đa chiều cho kiểu cấu trúc không được hỗ trợ"

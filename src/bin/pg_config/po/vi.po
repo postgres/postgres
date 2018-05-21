@@ -1,0 +1,300 @@
+# LANGUAGE message translation file for pg_config
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_config (PostgreSQL) package.
+# FIRST AUTHOR <kakalot49@gmail.com>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_config (PostgreSQL) 11\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-04-22 12:15+0000\n"
+"PO-Revision-Date: 2018-05-04 22:18+0900\n"
+"Language-Team: <pgvn_translators@postgresql.vn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.6\n"
+"Last-Translator: Dang Minh Huong <kakalot49@gmail.com>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: vi_VN\n"
+
+#: ../../common/config_info.c:130 ../../common/config_info.c:138
+#: ../../common/config_info.c:146 ../../common/config_info.c:154
+#: ../../common/config_info.c:162 ../../common/config_info.c:170
+#: ../../common/config_info.c:178 ../../common/config_info.c:186
+#: ../../common/config_info.c:194
+msgid "not recorded"
+msgstr "không được ghi lại"
+
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "không thể xác định thư mục hiện tại: %s"
+
+#: ../../common/exec.c:146
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "tệp nhị phân không hợp lệ \"%s\""
+
+#: ../../common/exec.c:195
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "không thể đọc tệp nhị phân \"%s\""
+
+#: ../../common/exec.c:202
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "không thể tìm thấy tệp \"%s\" để thực thi"
+
+#: ../../common/exec.c:257 ../../common/exec.c:293
+#, c-format
+msgid "could not change directory to \"%s\": %s"
+msgstr "không thể thay đổi thư mục thành \"%s\": %s"
+
+#: ../../common/exec.c:272
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "không thể đọc symbolic link \"%s\""
+
+#: ../../common/exec.c:523
+#, c-format
+msgid "pclose failed: %s"
+msgstr "pclose lỗi: %s"
+
+#: pg_config.c:74
+#, c-format
+msgid ""
+"\n"
+"%s provides information about the installed version of PostgreSQL.\n"
+"\n"
+msgstr ""
+"\n"
+"%s cung cấp thông tin về phiên bản đã cài đặt của PostgreSQL.\n"
+"\n"
+
+#: pg_config.c:75
+#, c-format
+msgid "Usage:\n"
+msgstr "Cách sử dụng:\n"
+
+#: pg_config.c:76
+#, c-format
+msgid ""
+"  %s [OPTION]...\n"
+"\n"
+msgstr ""
+"  %s [TÙY CHỌN]...\n"
+"\n"
+
+#: pg_config.c:77
+#, c-format
+msgid "Options:\n"
+msgstr "Tùy chọn:\n"
+
+#: pg_config.c:78
+#, c-format
+msgid "  --bindir              show location of user executables\n"
+msgstr ""
+"  --bindir              hiển thị vị trí thư mục tệp thực thi của người "
+"dùng\n"
+
+#: pg_config.c:79
+#, c-format
+msgid "  --docdir              show location of documentation files\n"
+msgstr "  --docdir              hiển thị vị trí của các tệp tài liệu\n"
+
+#: pg_config.c:80
+#, c-format
+msgid "  --htmldir             show location of HTML documentation files\n"
+msgstr "  --htmldir             hiển thị vị trí của các tệp tài liệu HTML\n"
+
+#: pg_config.c:81
+#, c-format
+msgid ""
+"  --includedir          show location of C header files of the client\n"
+"                        interfaces\n"
+msgstr ""
+"  --includedir          hiển thị vị trí của tệp header ngôn ngữ C của\n"
+"                        giao diện phía client\n"
+
+#: pg_config.c:83
+#, c-format
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr ""
+"  --pkgincludedir       hiện thị vị trí của các tệp header cho ngôn ngữ C "
+"khác\n"
+
+#: pg_config.c:84
+#, c-format
+msgid ""
+"  --includedir-server   show location of C header files for the server\n"
+msgstr ""
+"  --includedir-server   hiện thị vị trí của các tệp header ngôn ngữ C "
+"phía server\n"
+
+#: pg_config.c:85
+#, c-format
+msgid "  --libdir              show location of object code libraries\n"
+msgstr ""
+"  --libdir              hiện thị ví trí của các tệp thư viện chương "
+"trình\n"
+
+#: pg_config.c:86
+#, c-format
+msgid ""
+"  --pkglibdir           show location of dynamically loadable modules\n"
+msgstr ""
+"  --pkglibdir           hiển thị vị trí của các mô-đun có thể nạp động\n"
+
+#: pg_config.c:87
+#, c-format
+msgid "  --localedir           show location of locale support files\n"
+msgstr "  --localedir           hiển thị vị trí của tệp hỗ trợ ngôn ngữ\n"
+
+#: pg_config.c:88
+#, c-format
+msgid "  --mandir              show location of manual pages\n"
+msgstr "  --mandir              hiển thị vị trí của các trang hướng dẫn\n"
+
+#: pg_config.c:89
+#, c-format
+msgid ""
+"  --sharedir            show location of architecture-independent support "
+"files\n"
+msgstr ""
+"  --sharedir            hiển thị vị trí của các tệp hỗ trợ kiến trúc độc "
+"lập\n"
+
+#: pg_config.c:90
+#, c-format
+msgid ""
+"  --sysconfdir          show location of system-wide configuration files\n"
+msgstr ""
+"  --sysconfdir          hiển thị vị trí của tệp cấu hình trên toàn hệ "
+"thống\n"
+
+#: pg_config.c:91
+#, c-format
+msgid "  --pgxs                show location of extension makefile\n"
+msgstr ""
+"  --pgxs                hiển thị vị trí tệp makefile của extension\n"
+
+#: pg_config.c:92
+#, c-format
+msgid ""
+"  --configure           show options given to \"configure\" script when\n"
+"                        PostgreSQL was built\n"
+msgstr ""
+"  --configure           hiện thị tùy chọn chỉ định trong script "
+"\"configure\" \n"
+"                        khi built PostgreSQL\n"
+
+#: pg_config.c:94
+#, c-format
+msgid ""
+"  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr ""
+"  --cc                  hiển thị giá trị CC được sử dụng khi built "
+"PostgreSQL\n"
+
+#: pg_config.c:95
+#, c-format
+msgid ""
+"  --cppflags            show CPPFLAGS value used when PostgreSQL was "
+"built\n"
+msgstr ""
+"  --cppflags            hiện thị giá trị CPPFLAGS được sử dụng khi built "
+"PostgreSQL\n"
+
+#: pg_config.c:96
+#, c-format
+msgid ""
+"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr ""
+"  --cflags              hiện thị giá trị CFLAGS được sử dụng khi built "
+"PostgreSQL\n"
+
+#: pg_config.c:97
+#, c-format
+msgid ""
+"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was "
+"built\n"
+msgstr ""
+"  --cflags_sl           hiện thị giá trị CFLAGS_SL được sử dụng khi built "
+"PostgreSQL\n"
+
+#: pg_config.c:98
+#, c-format
+msgid ""
+"  --ldflags             show LDFLAGS value used when PostgreSQL was "
+"built\n"
+msgstr ""
+"  --ldflags             hiện thị giá trị LDFLAGS được sử dụng khi built "
+"PostgreSQL\n"
+
+#: pg_config.c:99
+#, c-format
+msgid ""
+"  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was "
+"built\n"
+msgstr ""
+"  --ldflags_ex          hiện thị giá trị LDFLAGS_EX được sử dụng khi "
+"built PostgreSQL\n"
+
+#: pg_config.c:100
+#, c-format
+msgid ""
+"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
+"built\n"
+msgstr ""
+"  --ldflags_sl          hiện thị giá trị LDFLAGS_SL được sử dụng khi "
+"built PostgreSQL\n"
+
+#: pg_config.c:101
+#, c-format
+msgid ""
+"  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr ""
+"  --libs                hiện thị giá trị LIBS được sử dụng khi built "
+"PostgreSQL\n"
+
+#: pg_config.c:102
+#, c-format
+msgid "  --version             show the PostgreSQL version\n"
+msgstr "  --version             hiển thị phiên bản PostgreSQL\n"
+
+#: pg_config.c:103
+#, c-format
+msgid "  -?, --help            show this help, then exit\n"
+msgstr "  -?, --help            hiển thị trợ giúp này, sau đó thoát\n"
+
+#: pg_config.c:104
+#, c-format
+msgid ""
+"\n"
+"With no arguments, all known items are shown.\n"
+"\n"
+msgstr ""
+"\n"
+"Nếu không có đối số, tất cả các mục sẽ được hiện thị.\n"
+"\n"
+
+#: pg_config.c:105
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Báo cáo lỗi tới <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_config.c:111
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Hãy thử \"%s --help\" để biết thêm thông tin.\n"
+
+#: pg_config.c:153
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: không thể tìm thấy chương trình có thể thực thi\n"
+
+#: pg_config.c:180
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: đối số không hợp lệ: %s\n"

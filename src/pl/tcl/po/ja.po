@@ -1,58 +1,71 @@
 # LANGUAGE message translation file for pltcl
-# Copyright (C) 2009 PostgreSQL Global Development Group
+# Copyright (C) 2018 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+# KOIZUMI Satoru <koizumistr@minos.ocn.ne.jp>, 2015.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 9.5\n"
+"Project-Id-Version: pltcl (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-21 01:07+0000\n"
-"PO-Revision-Date: 2015-10-04 18:15+0900\n"
-"Last-Translator: KOIZUMI Satoru <koizumistr@minos.ocn.ne.jp>\n"
+"POT-Creation-Date: 2018-01-26 10:21+0900\n"
+"PO-Revision-Date: 2018-01-29 10:39+0900\n"
+"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 2.0.6\n"
 
-#: pltcl.c:555
+#: pltcl.c:459
+msgid "PL/Tcl function to call once when pltcl is first used."
+msgstr "pltcl が最初に使用される際に一度だけ呼び出される PL/Tcl 関数。"
+
+#: pltcl.c:466
+msgid "PL/TclU function to call once when pltclu is first used."
+msgstr "pltclu が最初に使用される際に一度だけ呼び出される PL/TclU 関数。"
+
+#: pltcl.c:629
 #, c-format
-msgid "module \"unknown\" not found in pltcl_modules"
-msgstr "pltcl_modulesにモジュール\"unknown\"が見つかりません"
+msgid "function \"%s\" is in the wrong language"
+msgstr "関数 \"%s\" は言語が異なります"
 
-#: pltcl.c:591
+#: pltcl.c:640
 #, c-format
-msgid "could not load module \"unknown\": %s"
-msgstr "モジュール\"unknown\"をロードできませんでした: %s"
+msgid "function \"%s\" must not be SECURITY DEFINER"
+msgstr "関数 \"%s\" は SECURITY DEFINER であってはなりません"
 
-#: pltcl.c:1047
+#. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
+#: pltcl.c:674
+#, c-format
+msgid "processing %s parameter"
+msgstr "%s パラメーターを処理しています"
+
+#: pltcl.c:830
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "このコンテキストでは、集合値の関数は集合を受け付けられません"
+
+#: pltcl.c:994
+#, c-format
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr ""
+"レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されま"
+"した"
+
+#: pltcl.c:1263
 #, c-format
 msgid "could not split return value from trigger: %s"
-msgstr "トリガからの戻り値を分割できませんでした: %s"
+msgstr "トリガーからの戻り値を分割できませんでした: %s"
 
-#: pltcl.c:1058
-#, c-format
-msgid "trigger's return list must have even number of elements"
-msgstr "トリガが返すリストの要素は偶数個でなければなりません"
-
-#: pltcl.c:1094
-#, c-format
-msgid "unrecognized attribute \"%s\""
-msgstr "未知の属性 \"%s\""
-
-#: pltcl.c:1099
-#, c-format
-msgid "cannot set system attribute \"%s\""
-msgstr "システム属性\"%s\"を設定できません"
-
-#: pltcl.c:1222 pltcl.c:1648
+#: pltcl.c:1343 pltcl.c:1771
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1223
+#: pltcl.c:1344
 #, c-format
 msgid ""
 "%s\n"
@@ -61,32 +74,37 @@ msgstr ""
 "%s\n"
 "PL/Tcl 関数 \"%s\""
 
-#: pltcl.c:1331 pltcl.c:1338
-#, c-format
-msgid "out of memory"
-msgstr "メモリ不足です"
-
-#: pltcl.c:1386
+#: pltcl.c:1509
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "トリガ関数はトリガとしてのみコールできます"
+msgstr "トリガー関数はトリガーとしてのみコールできます"
 
-#: pltcl.c:1395
+#: pltcl.c:1513
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
-msgstr "PL/Tcl 関数は戻り値の型 %s を返せません"
+msgstr "PL/Tcl 関数は %s 型の戻り値を返せません"
 
-#: pltcl.c:1407
-#, c-format
-msgid "PL/Tcl functions cannot return composite types"
-msgstr "PL/Tcl 関数は戻り値の型として複合型を返せません"
-
-#: pltcl.c:1446
+#: pltcl.c:1549
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
-msgstr "PL/Tcl 関数は型 %s を受け付けません"
+msgstr "PL/Tcl 関数は %s 型を受け付けません"
 
-#: pltcl.c:1564
+#: pltcl.c:1663
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "内部プロシージャ \"%s\" を作成できませんでした: %s"
+
+#: pltcl.c:3100
+#, c-format
+msgid "column name/value list must have even number of elements"
+msgstr "列名/値のリストの要素は偶数個でなければなりません"
+
+#: pltcl.c:3118
+#, c-format
+msgid "column name/value list contains nonexistent column name \"%s\""
+msgstr "列名/値のリストの中に、存在しない列名 \"%s\" が含まれています"
+
+#: pltcl.c:3125
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "システム属性 \"%s\" を設定できません"

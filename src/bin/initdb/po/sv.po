@@ -1,5 +1,5 @@
 # Swedish message translation file for initdb
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018.
 # Magnus Hagander <magnus@hagander.net>, 2007.
 # Peter Eisentraut <peter_e@gmx.net>, 2009.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-13 23:46+0000\n"
-"PO-Revision-Date: 2017-07-20 21:33+0200\n"
+"POT-Creation-Date: 2018-04-28 22:16+0000\n"
+"PO-Revision-Date: 2018-04-29 12:34+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -215,82 +215,82 @@ msgstr "kunde inte sätta en knutpunkt (junction) för \"%s\": %s\n"
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "kunde inte få en knutpunkt (junction) för \"%s\": %s\n"
 
-#: initdb.c:331
+#: initdb.c:339
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: slut på minne\n"
 
-#: initdb.c:441 initdb.c:1442
+#: initdb.c:495 initdb.c:1538
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: kunde inte öppna fil \"%s\" för läsning: %s\n"
 
-#: initdb.c:497 initdb.c:813 initdb.c:841
+#: initdb.c:551 initdb.c:867 initdb.c:895
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s: kunde inte öppna fil \"%s\" för skrivning: %s\n"
 
-#: initdb.c:505 initdb.c:513 initdb.c:820 initdb.c:847
+#: initdb.c:559 initdb.c:567 initdb.c:874 initdb.c:901
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: kunde inte skriva fil \"%s\": %s\n"
 
-#: initdb.c:532
+#: initdb.c:586
 #, c-format
 msgid "%s: could not execute command \"%s\": %s\n"
 msgstr "%s: kunde inte utföra kommandot \"%s\": %s\n"
 
-#: initdb.c:548
+#: initdb.c:602
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
 msgstr "%s: tar bort datakatalog \"%s\".\n"
 
-#: initdb.c:551
+#: initdb.c:605
 #, c-format
 msgid "%s: failed to remove data directory\n"
 msgstr "%s: misslyckades med att ta bort datakatalog.\n"
 
-#: initdb.c:557
+#: initdb.c:611
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
 msgstr "%s: tömmer innehållet i datakatalog \"%s\".\n"
 
-#: initdb.c:560
+#: initdb.c:614
 #, c-format
 msgid "%s: failed to remove contents of data directory\n"
 msgstr "%s: misslyckades med att tömma datakatalog.\n"
 
-#: initdb.c:566
+#: initdb.c:620
 #, c-format
 msgid "%s: removing WAL directory \"%s\"\n"
 msgstr "%s: tar bort WAL-katalog \"%s\"\n"
 
-#: initdb.c:569
+#: initdb.c:623
 #, c-format
 msgid "%s: failed to remove WAL directory\n"
 msgstr "%s: misslyckades med att ta bort WAL-katalog.\n"
 
-#: initdb.c:575
+#: initdb.c:629
 #, c-format
 msgid "%s: removing contents of WAL directory \"%s\"\n"
 msgstr "%s: tömmer innehållet i WAL-katalog \"%s\"\n"
 
-#: initdb.c:578
+#: initdb.c:632
 #, c-format
 msgid "%s: failed to remove contents of WAL directory\n"
 msgstr "%s: misslyckades med att tömma WAL-katalog\n"
 
-#: initdb.c:587
+#: initdb.c:641
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
 msgstr "%s: Datakatalog \"%s\" ej borttagen på användares begäran.\n"
 
-#: initdb.c:592
+#: initdb.c:646
 #, c-format
 msgid "%s: WAL directory \"%s\" not removed at user's request\n"
 msgstr "%s: WAL-katalog \"%s\" ej borttagen på användares begäran.\n"
 
-#: initdb.c:613
+#: initdb.c:667
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -301,17 +301,17 @@ msgstr ""
 "Logga in (t.ex. med \"su\") som den (opriviligerade) användare\n"
 "vilken skall äga serverprocessen.\n"
 
-#: initdb.c:649
+#: initdb.c:703
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s: \"%s\" är inte en giltig teckenkodning för servern.\n"
 
-#: initdb.c:769
+#: initdb.c:823
 #, c-format
 msgid "%s: file \"%s\" does not exist\n"
 msgstr "%s: Filen \"%s\" existerar inte.\n"
 
-#: initdb.c:771 initdb.c:780 initdb.c:790
+#: initdb.c:825 initdb.c:834 initdb.c:844
 #, c-format
 msgid ""
 "This might mean you have a corrupted installation or identified\n"
@@ -320,41 +320,41 @@ msgstr ""
 "Detta kan betyda att du har en korrupt installation eller att du har\n"
 "angivit felaktig katalog till flaggan -L.\n"
 
-#: initdb.c:777
+#: initdb.c:831
 #, c-format
 msgid "%s: could not access file \"%s\": %s\n"
 msgstr "%s: kunde inte komma åt filen \"%s\": %s\n"
 
-#: initdb.c:788
+#: initdb.c:842
 #, c-format
 msgid "%s: file \"%s\" is not a regular file\n"
 msgstr "%s: \"%s\" är inte en normal fil.\n"
 
-#: initdb.c:933
+#: initdb.c:987
 #, c-format
 msgid "selecting default max_connections ... "
 msgstr "sätter förvalt värde för max_connections ... "
 
-#: initdb.c:963
+#: initdb.c:1017
 #, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "sätter förvalt värde för shared_buffers ... "
 
-#: initdb.c:996
+#: initdb.c:1050
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
 msgstr "väljer mekanism för dynamiskt, delat minne ... "
 
-#: initdb.c:1014
+#: initdb.c:1085
 msgid "creating configuration files ... "
 msgstr "skapar konfigurationsfiler ... "
 
-#: initdb.c:1146 initdb.c:1166 initdb.c:1253 initdb.c:1269
+#: initdb.c:1239 initdb.c:1259 initdb.c:1346 initdb.c:1362
 #, c-format
 msgid "%s: could not change permissions of \"%s\": %s\n"
 msgstr "%s: kunde inte ändra rättigheter på \"%s\": %s\n"
 
-#: initdb.c:1293
+#: initdb.c:1385
 #, c-format
 msgid "running bootstrap script ... "
 msgstr "kör uppsättningsskript..."
@@ -363,7 +363,7 @@ msgstr "kör uppsättningsskript..."
 # with a standard directory "/usr/local/pgsql", is such that
 # the translated message string produces a reasonable output.
 #
-#: initdb.c:1309
+#: initdb.c:1398
 #, c-format
 msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
@@ -372,70 +372,70 @@ msgstr ""
 "%s: Indatafilen \"%s\" hör inte till PostgreSQL %s.\n"
 "Kontrollera din installation eller ange korrekt sökväg med flaggan -L.\n"
 
-#: initdb.c:1419
+#: initdb.c:1515
 msgid "Enter new superuser password: "
 msgstr "Mata in ett nytt lösenord för superanvändaren: "
 
-#: initdb.c:1420
+#: initdb.c:1516
 msgid "Enter it again: "
 msgstr "Mata in det igen: "
 
-#: initdb.c:1423
+#: initdb.c:1519
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Lösenorden stämde inte överens.\n"
 
-#: initdb.c:1449
+#: initdb.c:1545
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s: kunde inte läsa lösenord i filen \"%s\": %s\n"
 
-#: initdb.c:1452
+#: initdb.c:1548
 #, c-format
 msgid "%s: password file \"%s\" is empty\n"
 msgstr "%s: lösenordsfilen \"%s\" är tom\n"
 
-#: initdb.c:2027
+#: initdb.c:2123
 #, c-format
 msgid "caught signal\n"
 msgstr "mottog signal\n"
 
-#: initdb.c:2033
+#: initdb.c:2129
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "kunde inte skriva till barnprocess: %s\n"
 
-#: initdb.c:2041
+#: initdb.c:2137
 #, c-format
 msgid "ok\n"
 msgstr "ok\n"
 
-#: initdb.c:2131
+#: initdb.c:2227
 #, c-format
 msgid "%s: setlocale() failed\n"
 msgstr "%s: setlocale() misslyckades\n"
 
-#: initdb.c:2149
+#: initdb.c:2249
 #, c-format
 msgid "%s: failed to restore old locale \"%s\"\n"
 msgstr "%s: misslyckades att återställa lokalspråk \"%s\"\n"
 
-#: initdb.c:2159
+#: initdb.c:2259
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s: okänt lokalnamn \"%s\".\n"
 
-#: initdb.c:2171
+#: initdb.c:2271
 #, c-format
 msgid "%s: invalid locale settings; check LANG and LC_* environment variables\n"
 msgstr "%s: ogiltigt språkval. Kontrollera miljövariablerna LANG, LC_*.\n"
 
-#: initdb.c:2199
+#: initdb.c:2299
 #, c-format
 msgid "%s: encoding mismatch\n"
 msgstr "%s: Oförenliga teckenkodningar.\n"
 
-#: initdb.c:2201
+#: initdb.c:2301
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the\n"
@@ -450,7 +450,7 @@ msgstr ""
 "undgås genom att utföra %s igen och då låta bli bli att\n"
 "sätta kodning, eller i annat fall att välja bättre teckensats.\n"
 
-#: initdb.c:2273
+#: initdb.c:2373
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -459,54 +459,61 @@ msgstr ""
 "%s initierar ett databaskluster för PostgreSQL.\n"
 "\n"
 
-#: initdb.c:2274
+#: initdb.c:2374
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: initdb.c:2275
+#: initdb.c:2375
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [FLAGGA]... [DATAKATALOG]\n"
 
-#: initdb.c:2276
+#: initdb.c:2376
 #, c-format
 msgid ""
 "\n"
 "Options:\n"
-msgstr "\nFlaggor:\n"
+msgstr ""
+"\n"
+"Flaggor:\n"
 
-#: initdb.c:2277
+#: initdb.c:2377
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=METOD          förvald autentiseringsmetod för alla förbindelser\n"
 
-#: initdb.c:2278
+#: initdb.c:2378
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
 msgstr "      --auth-host=METOD     autentiseringsmetod för TCP/IP-förbindelser\n"
 
-#: initdb.c:2279
+#: initdb.c:2379
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
 msgstr "      --auth-local=METOD    autentiseringsmetod för förbindelser via unix-uttag\n"
 
-#: initdb.c:2280
+#: initdb.c:2380
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DATAKATALOG läge för detta databaskluster\n"
 
-#: initdb.c:2281
+#: initdb.c:2381
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=KODNING    sätter teckenkodning för nya databaser\n"
 
-#: initdb.c:2282
+#: initdb.c:2382
+#, c-format
+msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
+msgstr "  -g, --allow-group-access  tillåt läs/kör för grupp på datakatalogen\n"
+
+#: initdb.c:2383
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "      --locale=LOKAL        sätter standardlokal för nya databaser\n"
 
-#: initdb.c:2283
+#: initdb.c:2384
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -519,17 +526,17 @@ msgstr ""
 "                            sätter standardlokal i utvald kategori för\n"
 "                            nya databaser (förval hämtas ur omgivningen)\n"
 
-#: initdb.c:2287
+#: initdb.c:2388
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           samma som --locale=C\n"
 
-#: initdb.c:2288
+#: initdb.c:2389
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr "      --pwfile=FIL          läser lösenord för superanvändare från fil\n"
 
-#: initdb.c:2289
+#: initdb.c:2390
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -538,81 +545,90 @@ msgstr ""
 "  -T, --text-search-config=CFG\n"
 "                            standardkonfiguration för textsökning\n"
 
-#: initdb.c:2291
+#: initdb.c:2392
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAMN       namn på databasens superanvändare\n"
 
-#: initdb.c:2292
+#: initdb.c:2393
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            efterfråga lösenord för superanvändare\n"
 
-#: initdb.c:2293
+#: initdb.c:2394
 #, c-format
 msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
 msgstr "  -X, --waldir=WALDIR       katalog för write-ahead-log (WAL)\n"
 
-#: initdb.c:2294
+#: initdb.c:2395
+#, c-format
+msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
+msgstr "      --wal-segsize=STORLEK storlek på WAL-segment i megabyte\n"
+
+#: initdb.c:2396
 #, c-format
 msgid ""
 "\n"
 "Less commonly used options:\n"
-msgstr "\nMindre vanliga flaggor:\n"
+msgstr ""
+"\n"
+"Mindre vanliga flaggor:\n"
 
-#: initdb.c:2295
+#: initdb.c:2397
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               generera massor med debug-utskrifter\n"
 
-#: initdb.c:2296
+#: initdb.c:2398
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
 msgstr "  -k, --data-checksums      använd checksummor på datablock\n"
 
-#: initdb.c:2297
+#: initdb.c:2399
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L KATALOG                katalog där indatafiler skall sökas\n"
 
-#: initdb.c:2298
+#: initdb.c:2400
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
 msgstr "  -n, --no-clean            städa inte upp efter fel\n"
 
-#: initdb.c:2299
+#: initdb.c:2401
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync             vänta inte på att ändingar säkert skrivits till disk\n"
 
-#: initdb.c:2300
+#: initdb.c:2402
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                visa interna inställningar\n"
 
-#: initdb.c:2301
+#: initdb.c:2403
 #, c-format
 msgid "  -S, --sync-only           only sync data directory\n"
 msgstr "  -S, --sync-only           synkning endast av datakatalog\n"
 
-#: initdb.c:2302
+#: initdb.c:2404
 #, c-format
 msgid ""
 "\n"
 "Other options:\n"
-msgstr "\nAndra flaggor:\n"
+msgstr ""
+"\n"
+"Andra flaggor:\n"
 
-#: initdb.c:2303
+#: initdb.c:2405
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             visa versionsinformation, avsluta sedan\n"
 
-#: initdb.c:2304
+#: initdb.c:2406
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                visa denna hjälp, avsluta sedan\n"
 
-#: initdb.c:2305
+#: initdb.c:2407
 #, c-format
 msgid ""
 "\n"
@@ -622,7 +638,7 @@ msgstr ""
 "\n"
 "Om datakatalogen inte anges så tas den från omgivningsvariabeln PGDATA.\n"
 
-#: initdb.c:2307
+#: initdb.c:2409
 #, c-format
 msgid ""
 "\n"
@@ -631,7 +647,7 @@ msgstr ""
 "\n"
 "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
 
-#: initdb.c:2315
+#: initdb.c:2417
 msgid ""
 "\n"
 "WARNING: enabling \"trust\" authentication for local connections\n"
@@ -643,19 +659,19 @@ msgstr ""
 "Du kan ändra detta genom att redigera \"pg_hba.conf\" eller genom att sätta\n"
 "flaggor -A eller --auth-local och --auth-host nästa gång du kör initdb.\n"
 
-#: initdb.c:2337
+#: initdb.c:2439
 #, c-format
 msgid "%s: invalid authentication method \"%s\" for \"%s\" connections\n"
 msgstr "%s: Ogiltig autentiseringsmetod \"%s\" vid förbindelseslag \"%s\".\n"
 
-#: initdb.c:2353
+#: initdb.c:2455
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
 msgstr ""
 "%s: Du måste ange ett lösenord för superanvändaren för att\n"
 "kunna slå på autentisering \"%s\".\n"
 
-#: initdb.c:2381
+#: initdb.c:2483
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -668,7 +684,7 @@ msgstr ""
 "skall lagras. Gör det antingen med flaggan -D eller genom att\n"
 "sätta omgivningsvariabeln PGDATA.\n"
 
-#: initdb.c:2419
+#: initdb.c:2521
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -679,7 +695,7 @@ msgstr ""
 "i samma katalog som \"%s\".\n"
 "Kontrollera din installation.\n"
 
-#: initdb.c:2426
+#: initdb.c:2528
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -690,17 +706,17 @@ msgstr ""
 "men det är inte byggt i samma version som %s.\n"
 "Kontrollera din installation.\n"
 
-#: initdb.c:2445
+#: initdb.c:2547
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr "%s: plats för indatafiler måste vara en absolut sökväg.\n"
 
-#: initdb.c:2464
+#: initdb.c:2564
 #, c-format
 msgid "The database cluster will be initialized with locale \"%s\".\n"
 msgstr "Databasklustret kommer att skapas med lokalnamn \"%s\".\n"
 
-#: initdb.c:2467
+#: initdb.c:2567
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -719,22 +735,22 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2491
+#: initdb.c:2591
 #, c-format
 msgid "%s: could not find suitable encoding for locale \"%s\"\n"
 msgstr "%s: kunde inte välja en lämplig kodning för lokalnamn \"%s\".\n"
 
-#: initdb.c:2493
+#: initdb.c:2593
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "Upprepa %s, men nu med flaggan -E.\n"
 
-#: initdb.c:2494 initdb.c:3123 initdb.c:3144
+#: initdb.c:2594 initdb.c:3235 initdb.c:3256
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: initdb.c:2506
+#: initdb.c:2607
 #, c-format
 msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
@@ -743,12 +759,12 @@ msgstr ""
 "Teckenkodning \"%s\", tagen ur lokalnamnet, är inte godtagbar för servern.\n"
 "I dess ställe sättes databasens förvalda teckenkodning till \"%s\".\n"
 
-#: initdb.c:2514
+#: initdb.c:2613
 #, c-format
 msgid "%s: locale \"%s\" requires unsupported encoding \"%s\"\n"
 msgstr "%s: Lokalnamn \"%s\" kräver otillgänglig teckenkodning \"%s\".\n"
 
-#: initdb.c:2517
+#: initdb.c:2616
 #, c-format
 msgid ""
 "Encoding \"%s\" is not allowed as a server-side encoding.\n"
@@ -757,59 +773,59 @@ msgstr ""
 "Teckenkodning \"%s\" är inte godtagbar för servern.\n"
 "Upprepa %s med annat lokalnamn.\n"
 
-#: initdb.c:2526
+#: initdb.c:2625
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr "Förvald teckenkodning för databaser är satt till \"%s\".\n"
 
-#: initdb.c:2597
+#: initdb.c:2695
 #, c-format
 msgid "%s: could not find suitable text search configuration for locale \"%s\"\n"
 msgstr "%s: kunde inte hitta en lämplig textsökningskonfiguration för lokalnamn \"%s\".\n"
 
-#: initdb.c:2608
+#: initdb.c:2706
 #, c-format
 msgid "%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"
 msgstr "%s: Varning: Ingen lämplig textsökningskonfiguration för lokalnamn \"%s\".\n"
 
-#: initdb.c:2613
+#: initdb.c:2711
 #, c-format
 msgid "%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"
 msgstr ""
 "%s: Varning: Uppgiven textsökningskonfiguration \"%s\" passar\n"
 "kanske inte till lokalnamn \"%s\".\n"
 
-#: initdb.c:2618
+#: initdb.c:2716
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "Förvald textsökningskonfiguration för databaser är satt till \"%s\".\n"
 
-#: initdb.c:2662 initdb.c:2748
+#: initdb.c:2760 initdb.c:2846
 #, c-format
 msgid "creating directory %s ... "
 msgstr "skapar katalog %s ... "
 
-#: initdb.c:2668 initdb.c:2754 initdb.c:2822 initdb.c:2878
+#: initdb.c:2766 initdb.c:2852 initdb.c:2920 initdb.c:2982
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: kunde inte skapa katalogen \"%s\": %s\n"
 
-#: initdb.c:2680 initdb.c:2766
+#: initdb.c:2778 initdb.c:2864
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "sätter rättigheter på existerande katalog %s ... "
 
-#: initdb.c:2686 initdb.c:2772
+#: initdb.c:2784 initdb.c:2870
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
 msgstr "%s: kunde inte ändra rättigheter på katalogen \"%s\": %s\n"
 
-#: initdb.c:2701 initdb.c:2787
+#: initdb.c:2799 initdb.c:2885
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: katalogen \"%s\" existerar men är inte tom.\n"
 
-#: initdb.c:2707
+#: initdb.c:2805
 #, c-format
 msgid ""
 "If you want to create a new database system, either remove or empty\n"
@@ -820,17 +836,17 @@ msgstr ""
 "eller töm katalogen \"%s\" eller kör %s\n"
 "med annat argument än \"%s\".\n"
 
-#: initdb.c:2715 initdb.c:2800 initdb.c:3157
+#: initdb.c:2813 initdb.c:2898 initdb.c:3269
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: kunde inte komma åt katalogen \"%s\": %s\n"
 
-#: initdb.c:2739
+#: initdb.c:2837
 #, c-format
 msgid "%s: WAL directory location must be an absolute path\n"
 msgstr "%s: WAL-katalogen måste vara en absolut sökväg.\n"
 
-#: initdb.c:2793
+#: initdb.c:2891
 #, c-format
 msgid ""
 "If you want to store the WAL there, either remove or empty the directory\n"
@@ -839,27 +855,27 @@ msgstr ""
 "Om du vill spara WAL där, antingen radera eller töm\n"
 "katalogen \"%s\".\n"
 
-#: initdb.c:2808
+#: initdb.c:2906
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: kunde inte skapa symbolisk länk \"%s\": %s\n"
 
-#: initdb.c:2813
+#: initdb.c:2911
 #, c-format
 msgid "%s: symlinks are not supported on this platform"
 msgstr "%s: symboliska länkar stöds inte på denna plattform"
 
-#: initdb.c:2837
+#: initdb.c:2935
 #, c-format
 msgid "It contains a dot-prefixed/invisible file, perhaps due to it being a mount point.\n"
 msgstr "Den innehåller en gömd fil, med inledande punkt i namnet; kanske är detta en monteringspunkt.\n"
 
-#: initdb.c:2840
+#: initdb.c:2938
 #, c-format
 msgid "It contains a lost+found directory, perhaps due to it being a mount point.\n"
 msgstr "Den innehåller \"lost+found\"; kanske är detta en monteringspunkt.\n"
 
-#: initdb.c:2843
+#: initdb.c:2941
 #, c-format
 msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
@@ -868,45 +884,55 @@ msgstr ""
 "Att använda en monteringspunkt som datakatalog rekommenderas inte.\n"
 "Skapa först en underkatalog under monteringspunkten.\n"
 
-#: initdb.c:2863
+#: initdb.c:2967
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "Skapar underkataloger ... "
 
-#: initdb.c:2910
+#: initdb.c:3014
 msgid "performing post-bootstrap initialization ... "
 msgstr "utför initiering efter uppstättning..."
 
-#: initdb.c:3067
+#: initdb.c:3173
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Kör i debug-läge.\n"
 
-#: initdb.c:3071
+#: initdb.c:3177
 #, c-format
 msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Kör i no-clean-läge. Misstag kommer inte städas bort.\n"
 
-#: initdb.c:3142
+#: initdb.c:3254
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
 
-#: initdb.c:3162 initdb.c:3228
+#: initdb.c:3274 initdb.c:3367
 msgid "syncing data to disk ... "
 msgstr "synkar data till disk ... "
 
-#: initdb.c:3171
+#: initdb.c:3283
 #, c-format
 msgid "%s: password prompt and password file cannot be specified together\n"
 msgstr "%s: lösenordsfråga och lösenordsfil kan inte anges samtidigt.\n"
 
-#: initdb.c:3195
+#: initdb.c:3309
+#, c-format
+msgid "%s: argument of --wal-segsize must be a number\n"
+msgstr "%s: argumentet till --wal-segsize måste vara ett tal\n"
+
+#: initdb.c:3316
+#, c-format
+msgid "%s: argument of --wal-segsize must be a power of 2 between 1 and 1024\n"
+msgstr "%s: argumentet till --wal-segsize måste vara en tvåpotens mellan 1 och 1024\n"
+
+#: initdb.c:3334
 #, c-format
 msgid "%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"\n"
 msgstr "%s: superuser-namn \"%s\" tillåts inte; rollnamn får inte börja på \"pg_\"\n"
 
-#: initdb.c:3199
+#: initdb.c:3338
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -917,17 +943,17 @@ msgstr ""
 "Denna användare måste också vara ägare av server-processen.\n"
 "\n"
 
-#: initdb.c:3215
+#: initdb.c:3354
 #, c-format
 msgid "Data page checksums are enabled.\n"
 msgstr "Checksummor för datablock är aktiva.\n"
 
-#: initdb.c:3217
+#: initdb.c:3356
 #, c-format
 msgid "Data page checksums are disabled.\n"
 msgstr "Checksummor för datablock är avstängda.\n"
 
-#: initdb.c:3234
+#: initdb.c:3373
 #, c-format
 msgid ""
 "\n"
@@ -939,11 +965,11 @@ msgstr ""
 "Datakatalogen kan komma att fördärvas om operativsystemet störtar.\n"
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3260
+#: initdb.c:3399
 msgid "logfile"
 msgstr "loggfil"
 
-#: initdb.c:3262
+#: initdb.c:3401
 #, c-format
 msgid ""
 "\n"
@@ -958,86 +984,86 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#~ msgid "%s: could not to allocate SIDs: error code %lu\n"
-#~ msgstr "%s: kunde inte tilldela SID: felkod %lu\n"
-
-#~ msgid "copying template1 to postgres ... "
-#~ msgstr "Kopierar template1 till postgres ... "
-
-#~ msgid "copying template1 to template0 ... "
-#~ msgstr "Kopierar template1 till template0 ... "
-
-#~ msgid "vacuuming database template1 ... "
-#~ msgstr "Kör vacuum på databasen template1 ... "
-
-#~ msgid "loading PL/pgSQL server-side language ... "
-#~ msgstr "Aktiverar serverspråket PL/pgSQL ... "
-
-#~ msgid "creating information schema ... "
-#~ msgstr "Skapar informationsschema ... "
-
-#~ msgid "setting privileges on built-in objects ... "
-#~ msgstr "Sätter rättigheter för inbyggda objekt ... "
-
-#~ msgid "creating dictionaries ... "
-#~ msgstr "Skapar kataloger ... "
-
-#~ msgid "creating conversions ... "
-#~ msgstr "Skapar konverteringar ... "
-
-#~ msgid "not supported on this platform\n"
-#~ msgstr "stöds icke för denna systemplattform\n"
-
-#~ msgid "Use the option \"--debug\" to see details.\n"
-#~ msgstr "Nyttja flaggan \"--debug\" för fler detaljer.\n"
-
-#~ msgid "No usable system locales were found.\n"
-#~ msgstr "Inga tjänliga lokalnamn kunde uppdagas.\n"
-
-#~ msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
-#~ msgstr "%s: lokalnamnet innehåller annat än ASCII, förkastas: \"%s\"\n"
-
-#~ msgid "%s: locale name too long, skipped: \"%s\"\n"
-#~ msgstr "%s: lokalnamnet är alltför långt, förkastas: \"%s\"\n"
-
-#~ msgid "creating collations ... "
-#~ msgstr "Skapar sorteringsregler ... "
-
-#~ msgid "loading system objects' descriptions ... "
-#~ msgstr "Laddar systemobjektens beskrivningar ... "
-
-#~ msgid "creating system views ... "
-#~ msgstr "Skapar systemvyer ... "
-
-#~ msgid "initializing dependencies ... "
-#~ msgstr "Initierar beroenden ... "
-
-#~ msgid "setting password ... "
-#~ msgstr "Sparar lösenord ... "
-
-#~ msgid "initializing pg_authid ... "
-#~ msgstr "Initierar pg_authid ... "
-
-#~ msgid "creating template1 database in %s/base/1 ... "
-#~ msgstr "Skapar databasen template1 i %s/base/1 ... "
-
-#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-#~ msgstr "%s: Katalogen för transaktionsloggar \"%s\" ej borttagen på användares begäran.\n"
-
-#~ msgid "%s: failed to remove contents of transaction log directory\n"
-#~ msgstr "%s: Misslyckades med att tömma katalogen för transaktionsloggar.\n"
-
-#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
-#~ msgstr "%s: Tömmer innehållet ur katalogen för transaktionsloggar \"%s\".\n"
-
-#~ msgid "%s: failed to remove transaction log directory\n"
-#~ msgstr "%s: Misslyckades med att ta bort katalog för transaktionslogg.\n"
-
-#~ msgid "%s: removing transaction log directory \"%s\"\n"
-#~ msgstr "%s: Tar bort transaktionsloggskatalog \"%s\".\n"
+#~ msgid "user name lookup failure: %s"
+#~ msgstr "misslyckad sökning efter användarnamn: %s"
 
 #~ msgid "%s: could not close directory \"%s\": %s\n"
 #~ msgstr "%s: kunde inte stänga katalog \"%s\": %s\n"
 
-#~ msgid "user name lookup failure: %s"
-#~ msgstr "misslyckad sökning efter användarnamn: %s"
+#~ msgid "%s: removing transaction log directory \"%s\"\n"
+#~ msgstr "%s: Tar bort transaktionsloggskatalog \"%s\".\n"
+
+#~ msgid "%s: failed to remove transaction log directory\n"
+#~ msgstr "%s: Misslyckades med att ta bort katalog för transaktionslogg.\n"
+
+#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
+#~ msgstr "%s: Tömmer innehållet ur katalogen för transaktionsloggar \"%s\".\n"
+
+#~ msgid "%s: failed to remove contents of transaction log directory\n"
+#~ msgstr "%s: Misslyckades med att tömma katalogen för transaktionsloggar.\n"
+
+#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
+#~ msgstr "%s: Katalogen för transaktionsloggar \"%s\" ej borttagen på användares begäran.\n"
+
+#~ msgid "creating template1 database in %s/base/1 ... "
+#~ msgstr "Skapar databasen template1 i %s/base/1 ... "
+
+#~ msgid "initializing pg_authid ... "
+#~ msgstr "Initierar pg_authid ... "
+
+#~ msgid "setting password ... "
+#~ msgstr "Sparar lösenord ... "
+
+#~ msgid "initializing dependencies ... "
+#~ msgstr "Initierar beroenden ... "
+
+#~ msgid "creating system views ... "
+#~ msgstr "Skapar systemvyer ... "
+
+#~ msgid "loading system objects' descriptions ... "
+#~ msgstr "Laddar systemobjektens beskrivningar ... "
+
+#~ msgid "creating collations ... "
+#~ msgstr "Skapar sorteringsregler ... "
+
+#~ msgid "%s: locale name too long, skipped: \"%s\"\n"
+#~ msgstr "%s: lokalnamnet är alltför långt, förkastas: \"%s\"\n"
+
+#~ msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
+#~ msgstr "%s: lokalnamnet innehåller annat än ASCII, förkastas: \"%s\"\n"
+
+#~ msgid "No usable system locales were found.\n"
+#~ msgstr "Inga tjänliga lokalnamn kunde uppdagas.\n"
+
+#~ msgid "Use the option \"--debug\" to see details.\n"
+#~ msgstr "Nyttja flaggan \"--debug\" för fler detaljer.\n"
+
+#~ msgid "not supported on this platform\n"
+#~ msgstr "stöds icke för denna systemplattform\n"
+
+#~ msgid "creating conversions ... "
+#~ msgstr "Skapar konverteringar ... "
+
+#~ msgid "creating dictionaries ... "
+#~ msgstr "Skapar kataloger ... "
+
+#~ msgid "setting privileges on built-in objects ... "
+#~ msgstr "Sätter rättigheter för inbyggda objekt ... "
+
+#~ msgid "creating information schema ... "
+#~ msgstr "Skapar informationsschema ... "
+
+#~ msgid "loading PL/pgSQL server-side language ... "
+#~ msgstr "Aktiverar serverspråket PL/pgSQL ... "
+
+#~ msgid "vacuuming database template1 ... "
+#~ msgstr "Kör vacuum på databasen template1 ... "
+
+#~ msgid "copying template1 to template0 ... "
+#~ msgstr "Kopierar template1 till template0 ... "
+
+#~ msgid "copying template1 to postgres ... "
+#~ msgstr "Kopierar template1 till postgres ... "
+
+#~ msgid "%s: could not to allocate SIDs: error code %lu\n"
+#~ msgstr "%s: kunde inte tilldela SID: felkod %lu\n"

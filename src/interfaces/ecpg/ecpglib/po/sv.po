@@ -1,0 +1,198 @@
+# SWEDISH message translation file for ecpglib
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Dennis Björklund <db@zigo.dhs.org>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ecpglib (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2017-09-08 23:08+0000\n"
+"PO-Revision-Date: 2017-09-10 11:27+0200\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>, 2017\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: connect.c:237
+msgid "empty message text"
+msgstr "tom meddelandetext"
+
+#: connect.c:401 connect.c:430 connect.c:638
+msgid "<DEFAULT>"
+msgstr "<DEFAULT>"
+
+#: descriptor.c:833 misc.c:120
+msgid "NULL"
+msgstr "NULL"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:33
+#, c-format
+msgid "no data found on line %d"
+msgstr "ingen data hittad på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:40
+#, c-format
+msgid "out of memory on line %d"
+msgstr "slut på minne på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:47
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "ej stöd för typ \"%s\" på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:54
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "för många argument på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:61
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "för få argument på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:68
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "ogiltig inputsyntax för typ int: \"%s\", på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:75
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "ogiltig inputsyntax för typ unsigned int: \"%s\", på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:82
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "ogiltig inputsyntaxc för flyttalstyp: \"%s\", på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:90
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "ogiltig syntax för typ boolean: \"%s\", på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:95
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "kunde inte konvertera booleanskt värde: storlekarna matchar inte, på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:102
+#, c-format
+msgid "empty query on line %d"
+msgstr "tom fråga på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:109
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "null-värde utan indikator på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:116
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "variabel har inte array-typ på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:123
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "data inläst från servern är inte en array på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:130
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "sätta in en array med variabler stöds inte på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:137
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "anslutning \"%s\" funns inte på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "ej ansluten till anslutning \"%s\" på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:151
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "ogiltigt satsnamn \"%s\" på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:158
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "deskriptor \"%s\" hittades inte på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:165
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "deskriptor-index utanför sitt intervall på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:172
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "okänd deskriptor-post \"%s\" på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:179
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "variabel har ej numerisk typ på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:186
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "variabel har ej character-typ på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:193
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "fel i transaktionsprocessande på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:200
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "kunde inte ansluta till databas \"%s\" på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:207
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "SQL-fel %d på rad %d"
+
+#: error.c:254
+msgid "the connection to the server was lost"
+msgstr "anslutningen till servern tappades"
+
+#: error.c:347
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "SQL-fel: %s\n"
+
+#: execute.c:1961
+msgid "<empty>"
+msgstr "<tom>"

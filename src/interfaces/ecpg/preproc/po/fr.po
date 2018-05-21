@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-02 04:38+0000\n"
-"PO-Revision-Date: 2017-07-02 17:45+0200\n"
+"POT-Creation-Date: 2018-02-05 14:08+0000\n"
+"PO-Revision-Date: 2018-02-10 17:46+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.8.12\n"
+"X-Generator: Poedit 2.0.3\n"
 
 #: descriptor.c:64
 #, c-format
@@ -320,14 +320,14 @@ msgstr ""
 "erreur interne : l'état ne peut être atteint ; merci de rapporter ceci à\n"
 "<pgsql-bugs@postgresql.org>"
 
-#: pgc.l:1375
+#: pgc.l:1376
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr ""
 "Erreur : le chemin d'en-tête « %s/%s » est trop long sur la ligne %d,\n"
 "ignoré\n"
 
-#: pgc.l:1398
+#: pgc.l:1399
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "n'a pas pu ouvrir le fichier d'en-tête « %s » sur la ligne %d"
@@ -361,193 +361,193 @@ msgstr "initialiseur non autorisé dans la définition du type"
 msgid "type name \"string\" is reserved in Informix mode"
 msgstr "le nom du type « string » est réservé dans le mode Informix"
 
-#: preproc.y:546 preproc.y:15412
+#: preproc.y:546 preproc.y:15393
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "le type « %s » est déjà défini"
 
-#: preproc.y:570 preproc.y:16070 preproc.y:16390 variable.c:620
+#: preproc.y:570 preproc.y:16051 preproc.y:16371 variable.c:620
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr ""
 "les tableaux multi-dimensionnels pour les types de données simples ne sont\n"
 "pas supportés"
 
-#: preproc.y:1681
+#: preproc.y:1674
 #, c-format
 msgid "AT option not allowed in CLOSE DATABASE statement"
 msgstr "option AT non autorisée dans une instruction CLOSE DATABASE"
 
-#: preproc.y:1894
+#: preproc.y:1883
 #, c-format
 msgid "AT option not allowed in CONNECT statement"
 msgstr "option AT non autorisée dans une instruction CONNECT"
 
-#: preproc.y:1928
+#: preproc.y:1917
 #, c-format
 msgid "AT option not allowed in DISCONNECT statement"
 msgstr "option AT non autorisée dans une instruction DISCONNECT"
 
-#: preproc.y:1983
+#: preproc.y:1972
 #, c-format
 msgid "AT option not allowed in SET CONNECTION statement"
 msgstr "option AT non autorisée dans une instruction SET CONNECTION"
 
-#: preproc.y:2005
+#: preproc.y:1994
 #, c-format
 msgid "AT option not allowed in TYPE statement"
 msgstr "option AT non autorisée dans une instruction TYPE"
 
-#: preproc.y:2014
+#: preproc.y:2003
 #, c-format
 msgid "AT option not allowed in VAR statement"
 msgstr "option AT non autorisée dans une instruction VAR"
 
-#: preproc.y:2021
+#: preproc.y:2010
 #, c-format
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "option AT non autorisée dans une instruction WHENEVER"
 
-#: preproc.y:2090 preproc.y:2274 preproc.y:2279 preproc.y:2395 preproc.y:3969 preproc.y:5519
-#: preproc.y:5528 preproc.y:5828 preproc.y:7364 preproc.y:8801 preproc.y:8806 preproc.y:11538
-#: preproc.y:12159
+#: preproc.y:2079 preproc.y:2251 preproc.y:2256 preproc.y:2372 preproc.y:3950 preproc.y:5500
+#: preproc.y:5509 preproc.y:5809 preproc.y:7345 preproc.y:8782 preproc.y:8787 preproc.y:11519
+#: preproc.y:12140
 #, c-format
 msgid "unsupported feature will be passed to server"
 msgstr "la fonctionnalité non supportée sera passée au serveur"
 
-#: preproc.y:2653
+#: preproc.y:2630
 #, c-format
 msgid "SHOW ALL is not implemented"
 msgstr "SHOW ALL n'est pas implanté"
 
-#: preproc.y:3325
+#: preproc.y:3306
 #, c-format
 msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDIN n'est pas implanté"
 
-#: preproc.y:9704 preproc.y:15001
+#: preproc.y:9685 preproc.y:14982
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
 msgstr ""
 "l'utilisation de la variable « %s » dans différentes instructions de déclaration\n"
 "n'est pas supportée"
 
-#: preproc.y:9706 preproc.y:15003
+#: preproc.y:9687 preproc.y:14984
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "le curseur « %s » est déjà défini"
 
-#: preproc.y:10136
+#: preproc.y:10117
 #, c-format
 msgid "no longer supported LIMIT #,# syntax passed to server"
 msgstr "la syntaxe obsolète LIMIT #,# a été passée au serveur"
 
-#: preproc.y:10452 preproc.y:10459
+#: preproc.y:10433 preproc.y:10440
 #, c-format
 msgid "subquery in FROM must have an alias"
 msgstr "la sous-requête du FROM doit avoir un alias"
 
-#: preproc.y:14731
+#: preproc.y:14712
 #, c-format
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "CREATE TABLE AS ne peut pas indiquer INTO"
 
-#: preproc.y:14767
+#: preproc.y:14748
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "« @ » attendu, « %s » trouvé"
 
-#: preproc.y:14779
+#: preproc.y:14760
 #, c-format
 msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
 msgstr ""
 "seuls les protocoles « tcp » et « unix » et les types de base de données\n"
 "« postgresql » sont supportés"
 
-#: preproc.y:14782
+#: preproc.y:14763
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "« :// » attendu, « %s » trouvé"
 
-#: preproc.y:14787
+#: preproc.y:14768
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
 msgstr "les sockets de domaine Unix fonctionnent seulement sur « localhost », mais pas sur « %s »"
 
-#: preproc.y:14813
+#: preproc.y:14794
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "« postgresql » attendu, « %s » trouvé"
 
-#: preproc.y:14816
+#: preproc.y:14797
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "type de connexion invalide : %s"
 
-#: preproc.y:14825
+#: preproc.y:14806
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "« @ » ou « :// » attendu, « %s » trouvé"
 
-#: preproc.y:14900 preproc.y:14918
+#: preproc.y:14881 preproc.y:14899
 #, c-format
 msgid "invalid data type"
 msgstr "type de données invalide"
 
-#: preproc.y:14929 preproc.y:14946
+#: preproc.y:14910 preproc.y:14927
 #, c-format
 msgid "incomplete statement"
 msgstr "instruction incomplète"
 
-#: preproc.y:14932 preproc.y:14949
+#: preproc.y:14913 preproc.y:14930
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "jeton « %s » non reconnu"
 
-#: preproc.y:15223
+#: preproc.y:15204
 #, c-format
 msgid "only data types numeric and decimal have precision/scale argument"
 msgstr ""
 "seuls les types de données numeric et decimal ont des arguments de\n"
 "précision et d'échelle"
 
-#: preproc.y:15235
+#: preproc.y:15216
 #, c-format
 msgid "interval specification not allowed here"
 msgstr "interval de spécification non autorisé ici"
 
-#: preproc.y:15387 preproc.y:15439
+#: preproc.y:15368 preproc.y:15420
 #, c-format
 msgid "too many levels in nested structure/union definition"
 msgstr "trop de niveaux dans la définition de structure/union imbriquée"
 
-#: preproc.y:15578
+#: preproc.y:15559
 #, c-format
 msgid "pointers to varchar are not implemented"
 msgstr "les pointeurs sur des chaînes de caractères (varchar) ne sont pas implantés"
 
-#: preproc.y:15765 preproc.y:15790
+#: preproc.y:15746 preproc.y:15771
 #, c-format
 msgid "using unsupported DESCRIBE statement"
 msgstr "utilisation de l'instruction DESCRIBE non supporté"
 
-#: preproc.y:16037
+#: preproc.y:16018
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "initialiseur non autorisé dans la commande EXEC SQL VAR"
 
-#: preproc.y:16348
+#: preproc.y:16329
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "les tableaux d'indicateurs ne sont pas autorisés en entrée"
 
-#: preproc.y:16569
+#: preproc.y:16550
 #, c-format
 msgid "operator not allowed in variable definition"
 msgstr "opérateur non autorisé dans la définition de la variable"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:16607
+#: preproc.y:16591
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s sur ou près de « %s »"
@@ -557,7 +557,7 @@ msgstr "%s sur ou près de « %s »"
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
-#: type.c:212 type.c:664
+#: type.c:212 type.c:674
 #, c-format
 msgid "unrecognized variable type code %d"
 msgstr "code %d du type de variable non reconnu"
@@ -606,7 +606,17 @@ msgstr "l'indicateur d'un struct doit être un struct"
 msgid "indicator for simple data type has to be simple"
 msgstr "l'indicateur d'un type de données simple doit être simple"
 
-#: type.c:723
+#: type.c:615
+#, c-format
+msgid "indicator struct \"%s\" has too few members"
+msgstr "le struct indicateur « %s » a trop peu de membres"
+
+#: type.c:622
+#, c-format
+msgid "indicator struct \"%s\" has too many members"
+msgstr "le struct indicateur « %s » a trop de membres"
+
+#: type.c:733
 #, c-format
 msgid "unrecognized descriptor item code %d"
 msgstr "code %d de l'élément du descripteur non reconnu"
@@ -677,23 +687,23 @@ msgstr "ce type de données ne supporte pas les pointeurs de pointeur"
 msgid "multidimensional arrays for structures are not supported"
 msgstr "les tableaux multidimensionnels ne sont pas supportés pour les structures"
 
-#~ msgid "  --version      output version information, then exit\n"
-#~ msgstr "  --version      affiche la version et quitte\n"
-
-#~ msgid "AT option not allowed in DEALLOCATE statement"
-#~ msgstr "option AT non autorisée dans une instruction DEALLOCATE"
-
-#~ msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
-#~ msgstr "une contrainte déclarée INITIALLY DEFERRED doit être DEFERRABLE"
-
-#~ msgid "OLD used in query that is not in a rule"
-#~ msgstr "OLD utilisé dans une requête qui n'est pas dans une règle"
-
-#~ msgid "NEW used in query that is not in a rule"
-#~ msgstr "NEW utilisé dans une requête qui n'est pas dans une règle"
+#~ msgid "COPY TO STDIN is not possible"
+#~ msgstr "COPY TO STDIN n'est pas possible"
 
 #~ msgid "COPY FROM STDOUT is not possible"
 #~ msgstr "COPY FROM STDOUT n'est pas possible"
 
-#~ msgid "COPY TO STDIN is not possible"
-#~ msgstr "COPY TO STDIN n'est pas possible"
+#~ msgid "NEW used in query that is not in a rule"
+#~ msgstr "NEW utilisé dans une requête qui n'est pas dans une règle"
+
+#~ msgid "OLD used in query that is not in a rule"
+#~ msgstr "OLD utilisé dans une requête qui n'est pas dans une règle"
+
+#~ msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
+#~ msgstr "une contrainte déclarée INITIALLY DEFERRED doit être DEFERRABLE"
+
+#~ msgid "AT option not allowed in DEALLOCATE statement"
+#~ msgstr "option AT non autorisée dans une instruction DEALLOCATE"
+
+#~ msgid "  --version      output version information, then exit\n"
+#~ msgstr "  --version      affiche la version et quitte\n"
