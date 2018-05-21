@@ -1431,7 +1431,7 @@ my %tests = (
 						  basetype = int4,
 						  stype = _int8,
 						  finalfunc = int8_avg,
-						  finalfunc_modify = sharable,
+						  finalfunc_modify = shareable,
 						  initcond1 = \'{0,0}\'
 					   );',
 		regexp => qr/^
@@ -1440,7 +1440,7 @@ my %tests = (
 			\n\s+\QSTYPE = bigint[],\E
 			\n\s+\QINITCOND = '{0,0}',\E
 			\n\s+\QFINALFUNC = int8_avg,\E
-			\n\s+\QFINALFUNC_MODIFY = SHARABLE\E
+			\n\s+\QFINALFUNC_MODIFY = SHAREABLE\E
 			\n\);/xm,
 		like => {
 			%full_runs,

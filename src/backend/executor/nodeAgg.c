@@ -288,7 +288,7 @@ static void build_pertrans_for_aggref(AggStatePerTrans pertrans,
 static int find_compatible_peragg(Aggref *newagg, AggState *aggstate,
 					   int lastaggno, List **same_input_transnos);
 static int find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
-						 bool sharable,
+						 bool shareable,
 						 Oid aggtransfn, Oid aggtranstype,
 						 Oid aggserialfn, Oid aggdeserialfn,
 						 Datum initValue, bool initValueIsNull,
@@ -2522,7 +2522,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		AclResult	aclresult;
 		Oid			transfn_oid,
 					finalfn_oid;
-		bool		sharable;
+		bool		shareable;
 		Oid			serialfn_oid,
 					deserialfn_oid;
 		Expr	   *finalfnexpr;
@@ -2597,12 +2597,12 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		/*
 		 * If finalfn is marked read-write, we can't share transition states;
-		 * but it is okay to share states for AGGMODIFY_SHARABLE aggs.  Also,
+		 * but it is okay to share states for AGGMODIFY_SHAREABLE aggs.  Also,
 		 * if we're not executing the finalfn here, we can share regardless.
 		 */
-		sharable = (aggform->aggfinalmodify != AGGMODIFY_READ_WRITE) ||
+		shareable = (aggform->aggfinalmodify != AGGMODIFY_READ_WRITE) ||
 			(finalfn_oid == InvalidOid);
-		peragg->sharable = sharable;
+		peragg->shareable = shareable;
 
 		serialfn_oid = InvalidOid;
 		deserialfn_oid = InvalidOid;
@@ -2746,12 +2746,12 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * 2. Build working state for invoking the transition function, or
 		 * look up previously initialized working state, if we can share it.
 		 *
-		 * find_compatible_peragg() already collected a list of sharable
+		 * find_compatible_peragg() already collected a list of shareable
 		 * per-Trans's with the same inputs. Check if any of them have the
 		 * same transition function and initial value.
 		 */
 		existing_transno = find_compatible_pertrans(aggstate, aggref,
-													sharable,
+													shareable,
 													transfn_oid, aggtranstype,
 													serialfn_oid, deserialfn_oid,
 													initValue, initValueIsNull,
@@ -3170,7 +3170,7 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
  * with this one, with the same input parameters. If no compatible aggregate
  * can be found, returns -1.
  *
- * As a side-effect, this also collects a list of existing, sharable per-Trans
+ * As a side-effect, this also collects a list of existing, shareable per-Trans
  * structs with matching inputs. If no identical Aggref is found, the list is
  * passed later to find_compatible_pertrans, to see if we can at least reuse
  * the state value of another aggregate.
@@ -3237,7 +3237,7 @@ find_compatible_peragg(Aggref *newagg, AggState *aggstate,
 		 * we might report a transno more than once.  find_compatible_pertrans
 		 * is cheap enough that it's not worth spending cycles to avoid that.)
 		 */
-		if (peragg->sharable)
+		if (peragg->shareable)
 			*same_input_transnos = lappend_int(*same_input_transnos,
 											   peragg->transno);
 	}
@@ -3254,7 +3254,7 @@ find_compatible_peragg(Aggref *newagg, AggState *aggstate,
  * verified to match.)
  */
 static int
-find_compatible_pertrans(AggState *aggstate, Aggref *newagg, bool sharable,
+find_compatible_pertrans(AggState *aggstate, Aggref *newagg, bool shareable,
 						 Oid aggtransfn, Oid aggtranstype,
 						 Oid aggserialfn, Oid aggdeserialfn,
 						 Datum initValue, bool initValueIsNull,
@@ -3263,7 +3263,7 @@ find_compatible_pertrans(AggState *aggstate, Aggref *newagg, bool sharable,
 	ListCell   *lc;
 
 	/* If this aggregate can't share transition states, give up */
-	if (!sharable)
+	if (!shareable)
 		return -1;
 
 	foreach(lc, transnos)

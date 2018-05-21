@@ -134,7 +134,7 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
  * transfn cannot be applied anymore after the first finalfn call.
  */
 #define AGGMODIFY_READ_ONLY			'r'
-#define AGGMODIFY_SHARABLE			's'
+#define AGGMODIFY_SHAREABLE			's'
 #define AGGMODIFY_READ_WRITE		'w'
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */

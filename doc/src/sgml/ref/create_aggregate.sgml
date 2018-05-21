@@ -27,7 +27,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="parameter">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
-    [ , FINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
+    [ , FINALFUNC_MODIFY = { READ_ONLY | SHAREABLE | READ_WRITE } ]
     [ , COMBINEFUNC = <replaceable class="parameter">combinefunc</replaceable> ]
     [ , SERIALFUNC = <replaceable class="parameter">serialfunc</replaceable> ]
     [ , DESERIALFUNC = <replaceable class="parameter">deserialfunc</replaceable> ]
@@ -38,7 +38,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , MSSPACE = <replaceable class="parameter">mstate_data_size</replaceable> ]
     [ , MFINALFUNC = <replaceable class="parameter">mffunc</replaceable> ]
     [ , MFINALFUNC_EXTRA ]
-    [ , MFINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
+    [ , MFINALFUNC_MODIFY = { READ_ONLY | SHAREABLE | READ_WRITE } ]
     [ , MINITCOND = <replaceable class="parameter">minitial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="parameter">sort_operator</replaceable> ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
@@ -51,7 +51,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
     [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="parameter">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
-    [ , FINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
+    [ , FINALFUNC_MODIFY = { READ_ONLY | SHAREABLE | READ_WRITE } ]
     [ , INITCOND = <replaceable class="parameter">initial_condition</replaceable> ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
     [ , HYPOTHETICAL ]
@@ -66,7 +66,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
     [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="parameter">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
-    [ , FINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
+    [ , FINALFUNC_MODIFY = { READ_ONLY | SHAREABLE | READ_WRITE } ]
     [ , COMBINEFUNC = <replaceable class="parameter">combinefunc</replaceable> ]
     [ , SERIALFUNC = <replaceable class="parameter">serialfunc</replaceable> ]
     [ , DESERIALFUNC = <replaceable class="parameter">deserialfunc</replaceable> ]
@@ -77,7 +77,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
     [ , MSSPACE = <replaceable class="parameter">mstate_data_size</replaceable> ]
     [ , MFINALFUNC = <replaceable class="parameter">mffunc</replaceable> ]
     [ , MFINALFUNC_EXTRA ]
-    [ , MFINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
+    [ , MFINALFUNC_MODIFY = { READ_ONLY | SHAREABLE | READ_WRITE } ]
     [ , MINITCOND = <replaceable class="parameter">minitial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="parameter">sort_operator</replaceable> ]
 )
@@ -419,7 +419,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><literal>FINALFUNC_MODIFY</literal> = { <literal>READ_ONLY</literal> | <literal>SHARABLE</literal> | <literal>READ_WRITE</literal> }</term>
+    <term><literal>FINALFUNC_MODIFY</literal> = { <literal>READ_ONLY</literal> | <literal>SHAREABLE</literal> | <literal>READ_WRITE</literal> }</term>
     <listitem>
      <para>
       This option specifies whether the final function is a pure function
@@ -585,7 +585,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><literal>MFINALFUNC_MODIFY</literal> = { <literal>READ_ONLY</literal> | <literal>SHARABLE</literal> | <literal>READ_WRITE</literal> }</term>
+    <term><literal>MFINALFUNC_MODIFY</literal> = { <literal>READ_ONLY</literal> | <literal>SHAREABLE</literal> | <literal>READ_WRITE</literal> }</term>
     <listitem>
      <para>
       This option is like <literal>FINALFUNC_MODIFY</literal>, but it describes
@@ -678,12 +678,13 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     Likewise, while an aggregate final function is normally expected not to
     modify its input values, sometimes it is impractical to avoid modifying
     the transition-state argument.  Such behavior must be declared using
-    the <literal>FINALFUNC_MODIFY</literal> parameter.  The <literal>READ_WRITE</literal>
+    the <literal>FINALFUNC_MODIFY</literal> parameter.
+    The <literal>READ_WRITE</literal>
     value indicates that the final function modifies the transition state in
     unspecified ways.  This value prevents use of the aggregate as a window
     function, and it also prevents merging of transition states for aggregate
     calls that share the same input values and transition functions.
-    The <literal>SHARABLE</literal> value indicates that the transition function
+    The <literal>SHAREABLE</literal> value indicates that the transition function
     cannot be applied after the final function, but multiple final-function
     calls can be performed on the ending transition state value.  This value
     prevents use of the aggregate as a window function, but it allows merging

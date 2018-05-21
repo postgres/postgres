@@ -148,7 +148,7 @@ CREATE AGGREGATE myavg (numeric)
 	serialfunc = numeric_avg_serialize,
 	deserialfunc = numeric_avg_deserialize,
 	combinefunc = numeric_avg_combine,
-	finalfunc_modify = sharable  -- just to test a non-default setting
+	finalfunc_modify = shareable  -- just to test a non-default setting
 );
 -- Ensure all these functions made it into the catalog
 SELECT aggfnoid, aggtransfn, aggcombinefn, aggtranstype::regtype,

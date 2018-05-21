@@ -491,8 +491,8 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
    to continue adding input rows by executing the transition function again
    later.  This means the final function is not <literal>READ_ONLY</literal>;
    it must be declared in <xref linkend="sql-createaggregate"/>
-   as <literal>READ_WRITE</literal>, or as <literal>SHARABLE</literal> if it's
-   possible for additional final-function calls to make use of the
+   as <literal>READ_WRITE</literal>, or as <literal>SHAREABLE</literal> if
+   it's possible for additional final-function calls to make use of the
    already-sorted state.
   </para>
 

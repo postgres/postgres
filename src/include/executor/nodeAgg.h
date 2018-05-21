@@ -216,10 +216,10 @@ typedef struct AggStatePerAggData
 	bool		resulttypeByVal;
 
 	/*
-	 * "sharable" is false if this agg cannot share state values with other
+	 * "shareable" is false if this agg cannot share state values with other
 	 * aggregates because the final function is read-write.
 	 */
-	bool		sharable;
+	bool		shareable;
 }			AggStatePerAggData;
 
 /*

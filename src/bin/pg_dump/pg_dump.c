@@ -13833,8 +13833,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 				case AGGMODIFY_READ_ONLY:
 					appendPQExpBufferStr(details, ",\n    FINALFUNC_MODIFY = READ_ONLY");
 					break;
-				case AGGMODIFY_SHARABLE:
-					appendPQExpBufferStr(details, ",\n    FINALFUNC_MODIFY = SHARABLE");
+				case AGGMODIFY_SHAREABLE:
+					appendPQExpBufferStr(details, ",\n    FINALFUNC_MODIFY = SHAREABLE");
 					break;
 				case AGGMODIFY_READ_WRITE:
 					appendPQExpBufferStr(details, ",\n    FINALFUNC_MODIFY = READ_WRITE");
@@ -13889,8 +13889,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 				case AGGMODIFY_READ_ONLY:
 					appendPQExpBufferStr(details, ",\n    MFINALFUNC_MODIFY = READ_ONLY");
 					break;
-				case AGGMODIFY_SHARABLE:
-					appendPQExpBufferStr(details, ",\n    MFINALFUNC_MODIFY = SHARABLE");
+				case AGGMODIFY_SHAREABLE:
+					appendPQExpBufferStr(details, ",\n    MFINALFUNC_MODIFY = SHAREABLE");
 					break;
 				case AGGMODIFY_READ_WRITE:
 					appendPQExpBufferStr(details, ",\n    MFINALFUNC_MODIFY = READ_WRITE");
