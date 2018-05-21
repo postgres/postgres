@@ -154,8 +154,8 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
     an additional connection.
    </para>
 <programlisting>
-$ pg_recvlogical -d postgres --slot test --create-slot
-$ pg_recvlogical -d postgres --slot test --start -f -
+$ pg_recvlogical -d postgres --slot=test --create-slot
+$ pg_recvlogical -d postgres --slot=test --start -f -
 <keycombo action="simul"><keycap>Control</keycap><keycap>Z</keycap></keycombo>
 $ psql -d postgres -c "INSERT INTO data(data) VALUES('4');"
 $ fg
@@ -163,7 +163,7 @@ BEGIN 693
 table public.data: INSERT: id[integer]:4 data[text]:'4'
 COMMIT 693
 <keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>
-$ pg_recvlogical -d postgres --slot test --drop-slot
+$ pg_recvlogical -d postgres --slot=test --drop-slot
 </programlisting>
   </sect1>
 
