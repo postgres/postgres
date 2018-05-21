@@ -363,11 +363,11 @@ usage(void)
 	printf(_("  -N, --no-sync          do not wait for changes to be written safely to disk\n"));
 	printf(_("  -P, --progress         show progress information\n"));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
-	printf(_("      --no-slot          prevent creation of temporary replication slot\n"));
-	printf(_("  -k, --no-verify-checksums\n"
-			 "                         do not verify checksums\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
+	printf(_("      --no-slot          prevent creation of temporary replication slot\n"));
+	printf(_("      --no-verify-checksums\n"
+			 "                         do not verify checksums\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -d, --dbname=CONNSTR   connection string\n"));
@@ -2159,7 +2159,7 @@ main(int argc, char **argv)
 		{"progress", no_argument, NULL, 'P'},
 		{"waldir", required_argument, NULL, 1},
 		{"no-slot", no_argument, NULL, 2},
-		{"no-verify-checksums", no_argument, NULL, 'k'},
+		{"no-verify-checksums", no_argument, NULL, 3},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
@@ -2328,7 +2328,7 @@ main(int argc, char **argv)
 			case 'P':
 				showprogress = true;
 				break;
-			case 'k':
+			case 3:
 				verify_checksums = false;
 				break;
 			default:

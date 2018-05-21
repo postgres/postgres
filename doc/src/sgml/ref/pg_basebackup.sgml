@@ -487,6 +487,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-v</option></term>
+      <term><option>--verbose</option></term>
+      <listitem>
+       <para>
+        Enables verbose mode. Will output some extra steps during startup and
+        shutdown, as well as show the exact file name that is currently being
+        processed if progress reporting is also enabled.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-slot</option></term>
       <listitem>
        <para>
@@ -507,33 +519,20 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-k</option></term>
       <term><option>--no-verify-checksums</option></term>
       <listitem>
        <para>
         Disables verification of checksums, if they are enabled on the server
-        the base backup is taken from. 
+        the base backup is taken from.
        </para>
        <para>
-        By default, checksums are verified and checksum failures will result in
-        a non-zero exit status. However, the base backup will not be removed in
-        this case, as if the <literal>--no-clean</literal> option was used.
+        By default, checksums are verified and checksum failures will result
+        in a non-zero exit status. However, the base backup will not be
+        removed in such a case, as if the <option>--no-clean</option> option
+        had been used.
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><option>-v</option></term>
-      <term><option>--verbose</option></term>
-      <listitem>
-       <para>
-        Enables verbose mode. Will output some extra steps during startup and
-        shutdown, as well as show the exact file name that is currently being
-        processed if progress reporting is also enabled.
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
    </para>
 
