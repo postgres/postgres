@@ -3,15 +3,21 @@ in the backend:
 
 binaryheap.c - a binary heap
 
+bipartite_match.c - Hopcroft-Karp maximum cardinality algorithm for bipartite graphs
+
 bloomfilter.c - probabilistic, space-efficient set membership testing
 
+dshash.c - concurrent hash tables backed by dynamic shared memory areas
+
 hyperloglog.c - a streaming cardinality estimator
+
+ilist.c - single and double-linked lists
+
+knapsack.c - knapsack problem solver
 
 pairingheap.c - a pairing heap
 
 rbtree.c - a red-black tree
-
-ilist.c - single and double-linked lists.
 
 stringinfo.c - an extensible string type
 
