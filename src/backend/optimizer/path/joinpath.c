@@ -498,7 +498,7 @@ try_partial_nestloop_path(PlannerInfo *root,
 		/*
 		 * The inner and outer paths are parameterized, if at all, by the top
 		 * level parents, not the child relations, so we must use those relids
-		 * for our paramaterization tests.
+		 * for our parameterization tests.
 		 */
 		if (outerrel->top_parent_relids)
 			outerrelids = outerrel->top_parent_relids;
