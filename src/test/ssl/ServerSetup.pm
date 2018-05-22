@@ -38,6 +38,8 @@ our @EXPORT = qw(
 # The second argument is a complementary connection string.
 sub test_connect_ok
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($common_connstr, $connstr, $test_name) = @_;
 
 	my $cmd = [
@@ -52,6 +54,8 @@ sub test_connect_ok
 
 sub test_connect_fails
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($common_connstr, $connstr, $expected_stderr, $test_name) = @_;
 
 	my $cmd = [

@@ -87,6 +87,8 @@ sub standby_psql
 # expected
 sub check_query
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($query, $expected_stdout, $test_name) = @_;
 	my ($stdout, $stderr);
 
