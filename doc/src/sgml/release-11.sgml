@@ -293,9 +293,10 @@
        <para>
         Previously <function>PQhost()</function> often returned the
         supplied host parameters, which could contain several hosts.
-        The same is true of <function>PQport()</function>, which now
-        returns the actual port number, not the multiple supplied port
-        numbers.  ACCURATE?
+        It will now also return the host's IP address if the host name was
+        not supplied.  The same is true of <function>PQport()</function>,
+        which now returns the actual port number, not the multiple supplied
+        port numbers.
        </para>
       </listitem>
 
@@ -374,7 +375,7 @@
        </para>
 
        <para>
-        These function are now present by default.  Old <link
+        These functions are now present by default.  Old <link
         linkend="adminpack"><application>adminpack</application></link>
         installs will continue to have access to these functions until
         they are updated via <command>ALTER EXTENSION ... UPDATE</command>.
