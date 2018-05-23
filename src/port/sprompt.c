@@ -42,14 +42,12 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	FILE	   *termin,
 			   *termout;
 
-#ifdef HAVE_TERMIOS_H
+#if defined(HAVE_TERMIOS_H)
 	struct termios t_orig,
 				t;
-#else
-#ifdef WIN32
+#elif defined(WIN32)
 	HANDLE		t = NULL;
-	LPDWORD		t_orig = NULL;
-#endif
+	DWORD		t_orig = 0;
 #endif
 
 	destination = (char *) malloc(maxlen + 1);
@@ -72,8 +70,11 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	 *
 	 * XXX fgets() still receives text in the console's input code page.  This
 	 * makes non-ASCII credentials unportable.
+	 *
+	 * Unintuitively, we also open termin in mode "w+", even though we only
+	 * read it; that's needed for SetConsoleMode() to succeed.
 	 */
-	termin = fopen("CONIN$", "r");
+	termin = fopen("CONIN$", "w+");
 	termout = fopen("CONOUT$", "w+");
 #else
 
@@ -105,30 +106,25 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		termout = stderr;
 	}
 
-#ifdef HAVE_TERMIOS_H
 	if (!echo)
 	{
+#if defined(HAVE_TERMIOS_H)
+		/* disable echo via tcgetattr/tcsetattr */
 		tcgetattr(fileno(termin), &t);
 		t_orig = t;
 		t.c_lflag &= ~ECHO;
 		tcsetattr(fileno(termin), TCSAFLUSH, &t);
-	}
-#else
-#ifdef WIN32
-	if (!echo)
-	{
-		/* get a new handle to turn echo off */
-		t_orig = (LPDWORD) malloc(sizeof(DWORD));
-		t = GetStdHandle(STD_INPUT_HANDLE);
+#elif defined(WIN32)
+		/* need the file's HANDLE to turn echo off */
+		t = (HANDLE) _get_osfhandle(_fileno(termin));
 
 		/* save the old configuration first */
-		GetConsoleMode(t, t_orig);
+		GetConsoleMode(t, &t_orig);
 
 		/* set to the new mode */
 		SetConsoleMode(t, ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
+#endif
 	}
-#endif
-#endif
 
 	if (prompt)
 	{
@@ -158,25 +154,19 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		/* remove trailing newline */
 		destination[length - 1] = '\0';
 
-#ifdef HAVE_TERMIOS_H
 	if (!echo)
 	{
+		/* restore previous echo behavior, then echo \n */
+#if defined(HAVE_TERMIOS_H)
 		tcsetattr(fileno(termin), TCSAFLUSH, &t_orig);
 		fputs("\n", termout);
 		fflush(termout);
-	}
-#else
-#ifdef WIN32
-	if (!echo)
-	{
-		/* reset to the original console mode */
-		SetConsoleMode(t, *t_orig);
+#elif defined(WIN32)
+		SetConsoleMode(t, t_orig);
 		fputs("\n", termout);
 		fflush(termout);
-		free(t_orig);
+#endif
 	}
-#endif
-#endif
 
 	if (termin != stdin)
 	{
