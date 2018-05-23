@@ -169,7 +169,7 @@
        <para>
         <application>pg_dump</application> and
         <application>pg_restore</application>, without
-        <option>--clean</option>, no longer dump/restore database comments
+        <option>--create</option>, no longer dump/restore database comments
         and security labels.
        </para>
 
@@ -287,7 +287,7 @@
        <para>
         Have libpq's <link
         linkend="libpq-pqhost"><function>PQhost()</function></link>
-        always return the actual connected host (Hari Babu)
+        always return the actual connected host (Haribabu Kommi)
        </para>
 
        <para>
