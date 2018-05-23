@@ -356,13 +356,6 @@ main(int argc, char *argv[])
 
 	get_restricted_token(progname);
 
-	if (chdir(DataDir) < 0)
-	{
-		fprintf(stderr, _("%s: could not change directory to \"%s\": %s\n"),
-				progname, DataDir, strerror(errno));
-		exit(1);
-	}
-
 	/* Set mask based on PGDATA permissions */
 	if (!GetDataDirectoryCreatePerm(DataDir))
 	{
@@ -372,6 +365,13 @@ main(int argc, char *argv[])
 	}
 
 	umask(pg_mode_mask);
+
+	if (chdir(DataDir) < 0)
+	{
+		fprintf(stderr, _("%s: could not change directory to \"%s\": %s\n"),
+				progname, DataDir, strerror(errno));
+		exit(1);
+	}
 
 	/* Check that data directory matches our server version */
 	CheckDataVersion();

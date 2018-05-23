@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * File and directory permission constants
+ * File and directory permission definitions
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -12,6 +12,8 @@
  */
 #ifndef FILE_PERM_H
 #define FILE_PERM_H
+
+#include <sys/stat.h>
 
 /*
  * Mode mask for data directory permissions that only allows the owner to

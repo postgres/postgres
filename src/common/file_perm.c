@@ -10,9 +10,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/stat.h>
-
 #include "c.h"
+
 #include "common/file_perm.h"
 
 /* Modes for creating directories and files in the data directory */

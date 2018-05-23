@@ -3552,8 +3552,8 @@ fsync_parent_path(const char *fname, int elevel)
 /*
  * Create a PostgreSQL data sub-directory
  *
- * The data directory itself, along with most other directories, are created at
- * initdb-time, but we do have some occations where we create directories from
+ * The data directory itself, and most of its sub-directories, are created at
+ * initdb time, but we do have some occasions when we create directories in
  * the backend (CREATE TABLESPACE, for example).  In those cases, we want to
  * make sure that those directories are created consistently.  Today, that means
  * making sure that the created directory has the correct permissions, which is
@@ -3562,8 +3562,8 @@ fsync_parent_path(const char *fname, int elevel)
  * Note that we also set the umask() based on what we understand the correct
  * permissions to be (see file_perm.c).
  *
- * For permissions other than the default mkdir() can be used directly, but be
- * sure to consider carefully such cases -- a directory with incorrect
+ * For permissions other than the default, mkdir() can be used directly, but
+ * be sure to consider carefully such cases -- a sub-directory with incorrect
  * permissions in a PostgreSQL data directory could cause backups and other
  * processes to fail.
  */
