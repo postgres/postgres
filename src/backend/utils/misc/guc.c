@@ -705,7 +705,7 @@ typedef struct
 	char		unit[MAX_UNIT_LEN + 1]; /* unit, as a string, like "kB" or
 										 * "min" */
 	int			base_unit;		/* GUC_UNIT_XXX */
-	int			multiplier;		/* If positive, multiply the value with this
+	int64		multiplier;		/* If positive, multiply the value with this
 								 * for unit -> base_unit conversion.  If
 								 * negative, divide (with the absolute value) */
 } unit_conversion;
@@ -718,10 +718,16 @@ typedef struct
 #error XLOG_BLCKSZ must be between 1KB and 1MB
 #endif
 
-static const char *memory_units_hint = gettext_noop("Valid units for this parameter are \"kB\", \"MB\", \"GB\", and \"TB\".");
+static const char *memory_units_hint = gettext_noop("Valid units for this parameter are \"B\", \"kB\", \"MB\", \"GB\", and \"TB\".");
 
 static const unit_conversion memory_unit_conversion_table[] =
 {
+	/*
+	 * TB -> bytes conversion always overflows 32-bit integer, so this always
+	 * produces an error.  Include it nevertheless for completeness, and so
+	 * that you get an "out of range" error, rather than "invalid unit".
+	 */
+	{"TB", GUC_UNIT_BYTE, INT64CONST(1024) * 1024 * 1024 * 1024},
 	{"GB", GUC_UNIT_BYTE, 1024 * 1024 * 1024},
 	{"MB", GUC_UNIT_BYTE, 1024 * 1024},
 	{"kB", GUC_UNIT_BYTE, 1024},
@@ -731,21 +737,25 @@ static const unit_conversion memory_unit_conversion_table[] =
 	{"GB", GUC_UNIT_KB, 1024 * 1024},
 	{"MB", GUC_UNIT_KB, 1024},
 	{"kB", GUC_UNIT_KB, 1},
+	{"B", GUC_UNIT_KB, -1024},
 
 	{"TB", GUC_UNIT_MB, 1024 * 1024},
 	{"GB", GUC_UNIT_MB, 1024},
 	{"MB", GUC_UNIT_MB, 1},
 	{"kB", GUC_UNIT_MB, -1024},
+	{"B", GUC_UNIT_MB, -(1024 * 1024)},
 
 	{"TB", GUC_UNIT_BLOCKS, (1024 * 1024 * 1024) / (BLCKSZ / 1024)},
 	{"GB", GUC_UNIT_BLOCKS, (1024 * 1024) / (BLCKSZ / 1024)},
 	{"MB", GUC_UNIT_BLOCKS, 1024 / (BLCKSZ / 1024)},
 	{"kB", GUC_UNIT_BLOCKS, -(BLCKSZ / 1024)},
+	{"B", GUC_UNIT_BLOCKS, -BLCKSZ},
 
 	{"TB", GUC_UNIT_XBLOCKS, (1024 * 1024 * 1024) / (XLOG_BLCKSZ / 1024)},
 	{"GB", GUC_UNIT_XBLOCKS, (1024 * 1024) / (XLOG_BLCKSZ / 1024)},
 	{"MB", GUC_UNIT_XBLOCKS, 1024 / (XLOG_BLCKSZ / 1024)},
 	{"kB", GUC_UNIT_XBLOCKS, -(XLOG_BLCKSZ / 1024)},
+	{"B", GUC_UNIT_XBLOCKS, -XLOG_BLCKSZ},
 
 	{""}						/* end of table marker */
 };
