@@ -1601,7 +1601,7 @@ if test "$PORTNAME" = "win32"; then
   #   strings, replacements are provided through <libintl.h>.
   #
   # We could use libintl >= 0.13's *printf() if we were sure that we had
-  # a litint >= 0.13 at runtime, but seeing that there is no clean way
+  # a libintl >= 0.13 at runtime, but seeing that there is no clean way
   # to guarantee that, it is best to just use our own, so we are sure to
   # get %$ support. In include/port.h we disable the *printf() macros
   # that might have been defined by libintl.
@@ -1804,20 +1804,9 @@ fi
 
 
 dnl Check to see if we have a working 64-bit integer type.
-dnl This breaks down into two steps:
-dnl (1) figure out if the compiler has a 64-bit int type with working
-dnl arithmetic, and if so
-dnl (2) see whether snprintf() can format the type correctly.  (Currently,
-dnl snprintf is the only library routine we really need for int8 support.)
-dnl It's entirely possible to have a compiler that handles a 64-bit type
-dnl when the C library doesn't; this is fairly likely when using gcc on
-dnl an older platform, for example.
-dnl If there is no native snprintf() or it does not handle the 64-bit type,
-dnl we force our own version of snprintf() to be used instead.
-dnl Note this test must be run after our initial check for snprintf/vsnprintf.
-
-dnl As of Postgres 8.4, we no longer support compilers without a working
-dnl 64-bit type.  But we still handle the case of snprintf being broken.
+dnl Since Postgres 8.4, we no longer support compilers without a working
+dnl 64-bit type; but we have to determine whether that type is called
+dnl "long int" or "long long int".
 
 PGAC_TYPE_64BIT_INT([long int])
 
@@ -1835,34 +1824,20 @@ fi
 AC_DEFINE_UNQUOTED(PG_INT64_TYPE, $pg_int64_type,
   [Define to the name of a signed 64-bit integer type.])
 
-# If we found "long int" is 64 bits, assume snprintf handles it.  If
-# we found we need to use "long long int", better check.  We cope with
-# snprintfs that use %lld, %qd, or %I64d as the format.  If none of these
-# work, fall back to our own snprintf emulation (which we know uses %lld).
-
-if test "$HAVE_LONG_LONG_INT_64" = yes ; then
-  if test $pgac_need_repl_snprintf = no; then
-    PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER
-    if test "$LONG_LONG_INT_MODIFIER" = ""; then
-      # Force usage of our own snprintf, since system snprintf is broken
-      pgac_need_repl_snprintf=yes
-      LONG_LONG_INT_MODIFIER='ll'
-    fi
-  else
-    # Here if we previously decided we needed to use our own snprintf
-    LONG_LONG_INT_MODIFIER='ll'
-  fi
+# Select the printf length modifier that goes with that, too.
+# (This used to be bound up with replacement-snprintf selection, but now
+# we assume that the native *printf functions use standard length modifiers.)
+if test x"$pg_int64_type" = x"long long int" ; then
+  INT64_MODIFIER='"ll"'
 else
-  # Here if we are not using 'long long int' at all
-  LONG_LONG_INT_MODIFIER='l'
+  INT64_MODIFIER='"l"'
 fi
 
-INT64_MODIFIER="\"$LONG_LONG_INT_MODIFIER\""
-
 AC_DEFINE_UNQUOTED(INT64_MODIFIER, $INT64_MODIFIER,
-                   [Define to the appropriate snprintf length modifier for 64-bit ints.])
+                   [Define to the appropriate printf length modifier for 64-bit ints.])
 
-# Also force use of our snprintf if the system's doesn't support the %z flag.
+# Force use of our snprintf if the system's doesn't support the %z flag.
+# (Note this test uses PG_INT64_TYPE and INT64_MODIFIER.)
 if test "$pgac_need_repl_snprintf" = no; then
   PGAC_FUNC_SNPRINTF_SIZE_T_SUPPORT
   if test "$pgac_cv_snprintf_size_t_support" != yes; then

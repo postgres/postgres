@@ -756,7 +756,7 @@
 /* Define to 1 if you have the `__strtoull' function. */
 #undef HAVE___STRTOULL
 
-/* Define to the appropriate snprintf length modifier for 64-bit ints. */
+/* Define to the appropriate printf length modifier for 64-bit ints. */
 #undef INT64_MODIFIER
 
 /* Define to 1 if `locale_t' requires <xlocale.h>. */

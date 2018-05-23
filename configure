@@ -15092,7 +15092,7 @@ if test "$PORTNAME" = "win32"; then
   #   strings, replacements are provided through <libintl.h>.
   #
   # We could use libintl >= 0.13's *printf() if we were sure that we had
-  # a litint >= 0.13 at runtime, but seeing that there is no clean way
+  # a libintl >= 0.13 at runtime, but seeing that there is no clean way
   # to guarantee that, it is best to just use our own, so we are sure to
   # get %$ support. In include/port.h we disable the *printf() macros
   # that might have been defined by libintl.
@@ -15924,7 +15924,6 @@ fi
 
 
 
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether long int is 64 bits" >&5
 $as_echo_n "checking whether long int is 64 bits... " >&6; }
 if ${pgac_cv_type_long_int_64+:} false; then :
@@ -16102,88 +16101,14 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-# If we found "long int" is 64 bits, assume snprintf handles it.  If
-# we found we need to use "long long int", better check.  We cope with
-# snprintfs that use %lld, %qd, or %I64d as the format.  If none of these
-# work, fall back to our own snprintf emulation (which we know uses %lld).
-
-if test "$HAVE_LONG_LONG_INT_64" = yes ; then
-  if test $pgac_need_repl_snprintf = no; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking snprintf length modifier for long long int" >&5
-$as_echo_n "checking snprintf length modifier for long long int... " >&6; }
-if ${pgac_cv_snprintf_long_long_int_modifier+:} false; then :
-  $as_echo_n "(cached) " >&6
+# Select the printf length modifier that goes with that, too.
+# (This used to be bound up with replacement-snprintf selection, but now
+# we assume that the native *printf functions use standard length modifiers.)
+if test x"$pg_int64_type" = x"long long int" ; then
+  INT64_MODIFIER='"ll"'
 else
-  for pgac_modifier in 'll' 'q' 'I64'; do
-if test "$cross_compiling" = yes; then :
-  pgac_cv_snprintf_long_long_int_modifier=cross; break
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdio.h>
-#include <string.h>
-typedef long long int ac_int64;
-#define INT64_FORMAT "%${pgac_modifier}d"
-
-ac_int64 a = 20000001;
-ac_int64 b = 40000005;
-
-int does_int64_snprintf_work()
-{
-  ac_int64 c;
-  char buf[100];
-
-  if (sizeof(ac_int64) != 8)
-    return 0;			/* doesn't look like the right size */
-
-  c = a * b;
-  snprintf(buf, 100, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;			/* either multiply or snprintf is busted */
-  return 1;
-}
-
-int
-main() {
-  return (! does_int64_snprintf_work());
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  pgac_cv_snprintf_long_long_int_modifier=$pgac_modifier; break
+  INT64_MODIFIER='"l"'
 fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-done
-fi
-
-LONG_LONG_INT_MODIFIER=''
-
-case $pgac_cv_snprintf_long_long_int_modifier in
-  cross) { $as_echo "$as_me:${as_lineno-$LINENO}: result: cannot test (not on host machine)" >&5
-$as_echo "cannot test (not on host machine)" >&6; };;
-  ?*)    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_snprintf_long_long_int_modifier" >&5
-$as_echo "$pgac_cv_snprintf_long_long_int_modifier" >&6; }
-         LONG_LONG_INT_MODIFIER=$pgac_cv_snprintf_long_long_int_modifier;;
-  *)     { $as_echo "$as_me:${as_lineno-$LINENO}: result: none" >&5
-$as_echo "none" >&6; };;
-esac
-    if test "$LONG_LONG_INT_MODIFIER" = ""; then
-      # Force usage of our own snprintf, since system snprintf is broken
-      pgac_need_repl_snprintf=yes
-      LONG_LONG_INT_MODIFIER='ll'
-    fi
-  else
-    # Here if we previously decided we needed to use our own snprintf
-    LONG_LONG_INT_MODIFIER='ll'
-  fi
-else
-  # Here if we are not using 'long long int' at all
-  LONG_LONG_INT_MODIFIER='l'
-fi
-
-INT64_MODIFIER="\"$LONG_LONG_INT_MODIFIER\""
 
 
 cat >>confdefs.h <<_ACEOF
@@ -16191,7 +16116,8 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-# Also force use of our snprintf if the system's doesn't support the %z flag.
+# Force use of our snprintf if the system's doesn't support the %z flag.
+# (Note this test uses PG_INT64_TYPE and INT64_MODIFIER.)
 if test "$pgac_need_repl_snprintf" = no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether snprintf supports the %z modifier" >&5
 $as_echo_n "checking whether snprintf supports the %z modifier... " >&6; }

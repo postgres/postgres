@@ -579,7 +579,7 @@
 /* Define to 1 if your compiler understands __VA_ARGS__ in macros. */
 #define HAVE__VA_ARGS 1
 
-/* Define to the appropriate snprintf length modifier for 64-bit ints. */
+/* Define to the appropriate printf length modifier for 64-bit ints. */
 #define INT64_MODIFIER "ll"
 
 /* Define to 1 if `locale_t' requires <xlocale.h>. */

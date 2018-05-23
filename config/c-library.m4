@@ -171,61 +171,6 @@ AC_DEFUN([PGAC_STRUCT_ADDRINFO],
 ])])# PGAC_STRUCT_ADDRINFO
 
 
-# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER
-# ---------------------------------------
-# Determine which length modifier snprintf uses for long long int.  We
-# handle ll, q, and I64.  The result is in shell variable
-# LONG_LONG_INT_MODIFIER.
-#
-# MinGW uses '%I64d', though gcc throws a warning with -Wall,
-# while '%lld' doesn't generate a warning, but doesn't work.
-#
-AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER],
-[AC_MSG_CHECKING([snprintf length modifier for long long int])
-AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_modifier,
-[for pgac_modifier in 'll' 'q' 'I64'; do
-AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
-#include <string.h>
-typedef long long int ac_int64;
-#define INT64_FORMAT "%${pgac_modifier}d"
-
-ac_int64 a = 20000001;
-ac_int64 b = 40000005;
-
-int does_int64_snprintf_work()
-{
-  ac_int64 c;
-  char buf[100];
-
-  if (sizeof(ac_int64) != 8)
-    return 0;			/* doesn't look like the right size */
-
-  c = a * b;
-  snprintf(buf, 100, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;			/* either multiply or snprintf is busted */
-  return 1;
-}
-
-int
-main() {
-  return (! does_int64_snprintf_work());
-}]])],
-[pgac_cv_snprintf_long_long_int_modifier=$pgac_modifier; break],
-[],
-[pgac_cv_snprintf_long_long_int_modifier=cross; break])
-done])dnl AC_CACHE_VAL
-
-LONG_LONG_INT_MODIFIER=''
-
-case $pgac_cv_snprintf_long_long_int_modifier in
-  cross) AC_MSG_RESULT([cannot test (not on host machine)]);;
-  ?*)    AC_MSG_RESULT([$pgac_cv_snprintf_long_long_int_modifier])
-         LONG_LONG_INT_MODIFIER=$pgac_cv_snprintf_long_long_int_modifier;;
-  *)     AC_MSG_RESULT(none);;
-esac])# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER
-
-
 # PGAC_FUNC_SNPRINTF_ARG_CONTROL
 # ---------------------------------------
 # Determine if snprintf supports %1$ argument selection, e.g. %5$ selects
