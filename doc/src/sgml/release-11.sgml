@@ -2603,7 +2603,8 @@ same commits as above
 
        <para>
         Add support for <productname>ARMv8</productname> hardware
-        <acronym>CRC</acronym> calculations (Yuqi Gu, Heikki Linnakangas)
+        <acronym>CRC</acronym> calculations (Yuqi Gu, Heikki
+        Linnakangas, Thomas Munro)
        </para>
       </listitem>
 
