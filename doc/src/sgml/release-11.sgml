@@ -1982,6 +1982,23 @@ same commits as above
 
       <listitem>
 <!--
+2018-02-13 [4b93f5799] Make plpgsql use its DTYPE_REC code paths for composite-
+
+-->
+
+       <para>
+        Allow PL/pgSQL to handle changes to composite types (e.g. record,
+        row) that happen between the first and later function executions
+        in the same session (Tom Lane)
+       </para>
+
+       <para>
+        Previously such circumstances generated errors.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2018-03-28 [3f44e3db7] Transforms for jsonb to PL/Python
 -->
 
