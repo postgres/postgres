@@ -631,7 +631,7 @@ DROP COLLATION mycoll1;
 CREATE TABLE collate_test23 (f1 text collate mycoll2);
 DROP COLLATION mycoll2;  -- fail
 ERROR:  cannot drop collation mycoll2 because other objects depend on it
-DETAIL:  table collate_test23 column f1 depends on collation mycoll2
+DETAIL:  column f1 of table collate_test23 depends on collation mycoll2
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 -- invalid: non-lowercase quoted identifiers
 CREATE COLLATION case_coll ("Lc_Collate" = "POSIX", "Lc_Ctype" = "POSIX");

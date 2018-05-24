@@ -557,10 +557,10 @@ LINE 2: FOR EACH STATEMENT WHEN (OLD.* IS DISTINCT FROM NEW.*)
                                  ^
 -- check dependency restrictions
 ALTER TABLE main_table DROP COLUMN b;
-ERROR:  cannot drop table main_table column b because other objects depend on it
-DETAIL:  trigger after_upd_b_row_trig on table main_table depends on table main_table column b
-trigger after_upd_a_b_row_trig on table main_table depends on table main_table column b
-trigger after_upd_b_stmt_trig on table main_table depends on table main_table column b
+ERROR:  cannot drop column b of table main_table because other objects depend on it
+DETAIL:  trigger after_upd_b_row_trig on table main_table depends on column b of table main_table
+trigger after_upd_a_b_row_trig on table main_table depends on column b of table main_table
+trigger after_upd_b_stmt_trig on table main_table depends on column b of table main_table
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 -- this should succeed, but we'll roll it back to keep the triggers around
 begin;

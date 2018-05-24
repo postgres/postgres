@@ -2681,12 +2681,23 @@ getObjectDescription(const ObjectAddress *object)
 	switch (getObjectClass(object))
 	{
 		case OCLASS_CLASS:
-			getRelationDescription(&buffer, object->objectId);
-			if (object->objectSubId != 0)
-				appendStringInfo(&buffer, _(" column %s"),
+			if (object->objectSubId == 0)
+				getRelationDescription(&buffer, object->objectId);
+			else
+			{
+				/* column, not whole relation */
+				StringInfoData rel;
+
+				initStringInfo(&rel);
+				getRelationDescription(&rel, object->objectId);
+				/* translator: second %s is, e.g., "table %s" */
+				appendStringInfo(&buffer, _("column %s of %s"),
 								 get_attname(object->objectId,
 											 object->objectSubId,
-											 false));
+											 false),
+								 rel.data);
+				pfree(rel.data);
+			}
 			break;
 
 		case OCLASS_PROC:
@@ -2850,7 +2861,8 @@ getObjectDescription(const ObjectAddress *object)
 				colobject.objectId = attrdef->adrelid;
 				colobject.objectSubId = attrdef->adnum;
 
-				appendStringInfo(&buffer, _("default for %s"),
+				/* translator: %s is typically "column %s of table %s" */
+				appendStringInfo(&buffer, _("default value for %s"),
 								 getObjectDescription(&colobject));
 
 				systable_endscan(adscan);

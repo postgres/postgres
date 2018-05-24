@@ -298,8 +298,8 @@ ERROR:  operator does not exist: character varying > double precision
 HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 alter type comptype alter attribute r type bigint;
 alter type comptype drop attribute r;  -- fail
-ERROR:  cannot drop composite type comptype column r because other objects depend on it
-DETAIL:  constraint c1 depends on composite type comptype column r
+ERROR:  cannot drop column r of composite type comptype because other objects depend on it
+DETAIL:  constraint c1 depends on column r of composite type comptype
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 alter type comptype drop attribute i;
 select conname, obj_description(oid, 'pg_constraint') from pg_constraint
@@ -645,8 +645,8 @@ alter domain dnotnulltest drop not null;
 update domnotnull set col1 = null;
 drop domain dnotnulltest cascade;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to table domnotnull column col1
-drop cascades to table domnotnull column col2
+DETAIL:  drop cascades to column col1 of table domnotnull
+drop cascades to column col2 of table domnotnull
 -- Test ALTER DOMAIN .. DEFAULT ..
 create table domdeftest (col1 ddef1);
 insert into domdeftest default values;

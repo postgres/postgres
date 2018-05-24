@@ -985,7 +985,7 @@ HINT:  You can drop extension cube instead.
 create table foo (f1 cube, f2 int);
 drop extension cube;  -- fail, foo.f1 requires it
 ERROR:  cannot drop extension cube because other objects depend on it
-DETAIL:  table foo column f1 depends on type cube
+DETAIL:  column f1 of table foo depends on type cube
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 drop table foo;
 drop extension cube;
@@ -1039,15 +1039,15 @@ create extension cube with schema c;
 create table foo (f1 c.cube, f2 int);
 drop extension cube;  -- fail, foo.f1 requires it
 ERROR:  cannot drop extension cube because other objects depend on it
-DETAIL:  table foo column f1 depends on type c.cube
+DETAIL:  column f1 of table foo depends on type c.cube
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 drop schema c;  -- fail, cube requires it
 ERROR:  cannot drop schema c because other objects depend on it
 DETAIL:  extension cube depends on schema c
-table foo column f1 depends on type c.cube
+column f1 of table foo depends on type c.cube
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 drop extension cube cascade;
-NOTICE:  drop cascades to table foo column f1
+NOTICE:  drop cascades to column f1 of table foo
 \d foo
                 Table "public.foo"
  Column |  Type   | Collation | Nullable | Default 

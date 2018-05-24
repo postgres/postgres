@@ -1844,7 +1844,7 @@ select * from foo;
 (1 row)
 
 drop domain mytype cascade;
-NOTICE:  drop cascades to table foo column f2
+NOTICE:  drop cascades to column f2 of table foo
 select * from foo;
  f1 | f3 
 ----+----
@@ -2870,8 +2870,8 @@ DROP TABLE test_tbl2_subclass;
 CREATE TYPE test_typex AS (a int, b text);
 CREATE TABLE test_tblx (x int, y test_typex check ((y).a > 0));
 ALTER TYPE test_typex DROP ATTRIBUTE a; -- fails
-ERROR:  cannot drop composite type test_typex column a because other objects depend on it
-DETAIL:  constraint test_tblx_y_check on table test_tblx depends on composite type test_typex column a
+ERROR:  cannot drop column a of composite type test_typex because other objects depend on it
+DETAIL:  constraint test_tblx_y_check on table test_tblx depends on column a of composite type test_typex
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 ALTER TYPE test_typex DROP ATTRIBUTE a CASCADE;
 NOTICE:  drop cascades to constraint test_tblx_y_check on table test_tblx
