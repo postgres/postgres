@@ -1056,17 +1056,17 @@ CREATE TABLE collate_dep_test4t (a int, b text);
 CREATE INDEX collate_dep_test4i ON collate_dep_test4t (b COLLATE test0);
 DROP COLLATION test0 RESTRICT; -- fail
 ERROR:  cannot drop collation test0 because other objects depend on it
-DETAIL:  table collate_dep_test1 column b depends on collation test0
+DETAIL:  column b of table collate_dep_test1 depends on collation test0
 type collate_dep_dom1 depends on collation test0
-composite type collate_dep_test2 column y depends on collation test0
+column y of composite type collate_dep_test2 depends on collation test0
 view collate_dep_test3 depends on collation test0
 index collate_dep_test4i depends on collation test0
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP COLLATION test0 CASCADE;
 NOTICE:  drop cascades to 5 other objects
-DETAIL:  drop cascades to table collate_dep_test1 column b
+DETAIL:  drop cascades to column b of table collate_dep_test1
 drop cascades to type collate_dep_dom1
-drop cascades to composite type collate_dep_test2 column y
+drop cascades to column y of composite type collate_dep_test2
 drop cascades to view collate_dep_test3
 drop cascades to index collate_dep_test4i
 \d collate_dep_test1
