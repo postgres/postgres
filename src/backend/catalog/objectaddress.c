@@ -3467,6 +3467,7 @@ getObjectDescription(const ObjectAddress *object)
 				HeapTuple	tup;
 				char	   *pubname;
 				Form_pg_publication_rel prform;
+				StringInfoData rel;
 
 				tup = SearchSysCache1(PUBLICATIONREL,
 									  ObjectIdGetDatum(object->objectId));
@@ -3477,8 +3478,13 @@ getObjectDescription(const ObjectAddress *object)
 				prform = (Form_pg_publication_rel) GETSTRUCT(tup);
 				pubname = get_publication_name(prform->prpubid);
 
-				appendStringInfo(&buffer, _("publication table %s in publication %s"),
-								 get_rel_name(prform->prrelid), pubname);
+				initStringInfo(&rel);
+				getRelationDescription(&rel, prform->prrelid);
+
+				/* translator: first %s is, e.g., "table %s" */
+				appendStringInfo(&buffer, _("publication of %s in publication %s"),
+								 rel.data, pubname);
+				pfree(rel.data);
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3537,6 +3543,8 @@ getObjectDescriptionOids(Oid classid, Oid objid)
 
 /*
  * subroutine for getObjectDescription: describe a relation
+ *
+ * The result is appended to "buffer".
  */
 static void
 getRelationDescription(StringInfo buffer, Oid relid)
@@ -5007,14 +5015,11 @@ getObjectIdentityParts(const ObjectAddress *object,
 				prform = (Form_pg_publication_rel) GETSTRUCT(tup);
 				pubname = get_publication_name(prform->prpubid);
 
-				appendStringInfo(&buffer, _("%s in publication %s"),
-								 get_rel_name(prform->prrelid), pubname);
+				getRelationIdentity(&buffer, prform->prrelid, objname);
+				appendStringInfo(&buffer, " in publication %s", pubname);
 
-				if (objname)
-				{
-					getRelationIdentity(&buffer, prform->prrelid, objname);
+				if (objargs)
 					*objargs = list_make1(pubname);
-				}
 
 				ReleaseSysCache(tup);
 				break;

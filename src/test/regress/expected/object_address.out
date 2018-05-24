@@ -477,7 +477,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
  subscription              |            | addr_sub          | addr_sub                                                             | t
  publication               |            | addr_pub          | addr_pub                                                             | t
- publication relation      |            |                   | gentable in publication addr_pub                                     | t
+ publication relation      |            |                   | addr_nsp.gentable in publication addr_pub                            | t
 (47 rows)
 
 ---
