@@ -2778,6 +2778,7 @@ getObjectDescription(const ObjectAddress *object)
 
 					initStringInfo(&rel);
 					getRelationDescription(&rel, con->conrelid);
+					/* translator: second %s is, e.g., "table %s" */
 					appendStringInfo(&buffer, _("constraint %s on %s"),
 									 NameStr(con->conname), rel.data);
 					pfree(rel.data);
@@ -3036,6 +3037,7 @@ getObjectDescription(const ObjectAddress *object)
 				SysScanDesc rcscan;
 				HeapTuple	tup;
 				Form_pg_rewrite rule;
+				StringInfoData rel;
 
 				ruleDesc = heap_open(RewriteRelationId, AccessShareLock);
 
@@ -3052,13 +3054,15 @@ getObjectDescription(const ObjectAddress *object)
 				if (!HeapTupleIsValid(tup))
 					elog(ERROR, "could not find tuple for rule %u",
 						 object->objectId);
-
 				rule = (Form_pg_rewrite) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, _("rule %s on "),
-								 NameStr(rule->rulename));
-				getRelationDescription(&buffer, rule->ev_class);
+				initStringInfo(&rel);
+				getRelationDescription(&rel, rule->ev_class);
 
+				/* translator: second %s is, e.g., "table %s" */
+				appendStringInfo(&buffer, _("rule %s on %s"),
+								 NameStr(rule->rulename), rel.data);
+				pfree(rel.data);
 				systable_endscan(rcscan);
 				heap_close(ruleDesc, AccessShareLock);
 				break;
@@ -3071,6 +3075,7 @@ getObjectDescription(const ObjectAddress *object)
 				SysScanDesc tgscan;
 				HeapTuple	tup;
 				Form_pg_trigger trig;
+				StringInfoData rel;
 
 				trigDesc = heap_open(TriggerRelationId, AccessShareLock);
 
@@ -3087,13 +3092,15 @@ getObjectDescription(const ObjectAddress *object)
 				if (!HeapTupleIsValid(tup))
 					elog(ERROR, "could not find tuple for trigger %u",
 						 object->objectId);
-
 				trig = (Form_pg_trigger) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, _("trigger %s on "),
-								 NameStr(trig->tgname));
-				getRelationDescription(&buffer, trig->tgrelid);
+				initStringInfo(&rel);
+				getRelationDescription(&rel, trig->tgrelid);
 
+				/* translator: second %s is, e.g., "table %s" */
+				appendStringInfo(&buffer, _("trigger %s on %s"),
+								 NameStr(trig->tgname), rel.data);
+				pfree(rel.data);
 				systable_endscan(tgscan);
 				heap_close(trigDesc, AccessShareLock);
 				break;
@@ -3327,6 +3334,8 @@ getObjectDescription(const ObjectAddress *object)
 				SysScanDesc rcscan;
 				HeapTuple	tup;
 				Form_pg_default_acl defacl;
+				char	   *rolename;
+				char	   *nspname;
 
 				defaclrel = heap_open(DefaultAclRelationId, AccessShareLock);
 
@@ -3346,46 +3355,72 @@ getObjectDescription(const ObjectAddress *object)
 
 				defacl = (Form_pg_default_acl) GETSTRUCT(tup);
 
+				rolename = GetUserNameFromId(defacl->defaclrole, false);
+
+				if (OidIsValid(defacl->defaclnamespace))
+					nspname = get_namespace_name(defacl->defaclnamespace);
+				else
+					nspname = NULL;
+
 				switch (defacl->defaclobjtype)
 				{
 					case DEFACLOBJ_RELATION:
-						appendStringInfo(&buffer,
-										 _("default privileges on new relations belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole, false));
+						if (nspname)
+							appendStringInfo(&buffer,
+											 _("default privileges on new relations belonging to role %s in schema %s"),
+											 rolename, nspname);
+						else
+							appendStringInfo(&buffer,
+											 _("default privileges on new relations belonging to role %s"),
+											 rolename);
 						break;
 					case DEFACLOBJ_SEQUENCE:
-						appendStringInfo(&buffer,
-										 _("default privileges on new sequences belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole, false));
+						if (nspname)
+							appendStringInfo(&buffer,
+											 _("default privileges on new sequences belonging to role %s in schema %s"),
+											 rolename, nspname);
+						else
+							appendStringInfo(&buffer,
+											 _("default privileges on new sequences belonging to role %s"),
+											 rolename);
 						break;
 					case DEFACLOBJ_FUNCTION:
-						appendStringInfo(&buffer,
-										 _("default privileges on new functions belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole, false));
+						if (nspname)
+							appendStringInfo(&buffer,
+											 _("default privileges on new functions belonging to role %s in schema %s"),
+											 rolename, nspname);
+						else
+							appendStringInfo(&buffer,
+											 _("default privileges on new functions belonging to role %s"),
+											 rolename);
 						break;
 					case DEFACLOBJ_TYPE:
-						appendStringInfo(&buffer,
-										 _("default privileges on new types belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole, false));
+						if (nspname)
+							appendStringInfo(&buffer,
+											 _("default privileges on new types belonging to role %s in schema %s"),
+											 rolename, nspname);
+						else
+							appendStringInfo(&buffer,
+											 _("default privileges on new types belonging to role %s"),
+											 rolename);
 						break;
 					case DEFACLOBJ_NAMESPACE:
+						Assert(!nspname);
 						appendStringInfo(&buffer,
 										 _("default privileges on new schemas belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole, false));
+										 rolename);
 						break;
 					default:
 						/* shouldn't get here */
-						appendStringInfo(&buffer,
-										 _("default privileges belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole, false));
+						if (nspname)
+							appendStringInfo(&buffer,
+											 _("default privileges belonging to role %s in schema %s"),
+											 rolename, nspname);
+						else
+							appendStringInfo(&buffer,
+											 _("default privileges belonging to role %s"),
+											 rolename);
 						break;
-				}
-
-				if (OidIsValid(defacl->defaclnamespace))
-				{
-					appendStringInfo(&buffer,
-									 _(" in schema %s"),
-									 get_namespace_name(defacl->defaclnamespace));
 				}
 
 				systable_endscan(rcscan);
@@ -3427,6 +3462,7 @@ getObjectDescription(const ObjectAddress *object)
 				SysScanDesc sscan;
 				HeapTuple	tuple;
 				Form_pg_policy form_policy;
+				StringInfoData rel;
 
 				policy_rel = heap_open(PolicyRelationId, AccessShareLock);
 
@@ -3443,13 +3479,15 @@ getObjectDescription(const ObjectAddress *object)
 				if (!HeapTupleIsValid(tuple))
 					elog(ERROR, "could not find tuple for policy %u",
 						 object->objectId);
-
 				form_policy = (Form_pg_policy) GETSTRUCT(tuple);
 
-				appendStringInfo(&buffer, _("policy %s on "),
-								 NameStr(form_policy->polname));
-				getRelationDescription(&buffer, form_policy->polrelid);
+				initStringInfo(&rel);
+				getRelationDescription(&rel, form_policy->polrelid);
 
+				/* translator: second %s is, e.g., "table %s" */
+				appendStringInfo(&buffer, _("policy %s on %s"),
+								 NameStr(form_policy->polname), rel.data);
+				pfree(rel.data);
 				systable_endscan(sscan);
 				heap_close(policy_rel, AccessShareLock);
 				break;
