@@ -670,13 +670,13 @@ DROP SCHEMA alt_nsp2 CASCADE;
 NOTICE:  drop cascades to 9 other objects
 DETAIL:  drop cascades to function alt_nsp2.alt_func2(integer)
 drop cascades to function alt_nsp2.alt_agg2(integer)
-drop cascades to conversion alt_conv2
+drop cascades to conversion alt_nsp2.alt_conv2
 drop cascades to operator alt_nsp2.@-@(integer,integer)
 drop cascades to operator family alt_nsp2.alt_opf2 for access method hash
-drop cascades to text search dictionary alt_ts_dict2
-drop cascades to text search configuration alt_ts_conf2
-drop cascades to text search template alt_ts_temp2
-drop cascades to text search parser alt_ts_prs2
+drop cascades to text search dictionary alt_nsp2.alt_ts_dict2
+drop cascades to text search configuration alt_nsp2.alt_ts_conf2
+drop cascades to text search template alt_nsp2.alt_ts_temp2
+drop cascades to text search parser alt_nsp2.alt_ts_prs2
 DROP USER regress_alter_user1;
 DROP USER regress_alter_user2;
 DROP USER regress_alter_user3;
