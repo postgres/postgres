@@ -3465,20 +3465,20 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		foreach(l, SPI_plan_get_plan_sources(expr->plan))
 		{
 			CachedPlanSource *plansource = (CachedPlanSource *) lfirst(l);
-			ListCell   *l2;
 
-			foreach(l2, plansource->query_list)
+			/*
+			 * We could look at the raw_parse_tree, but it seems simpler to
+			 * check the command tag.  Note we should *not* look at the Query
+			 * tree(s), since those are the result of rewriting and could have
+			 * been transmogrified into something else entirely.
+			 */
+			if (plansource->commandTag &&
+				(strcmp(plansource->commandTag, "INSERT") == 0 ||
+				 strcmp(plansource->commandTag, "UPDATE") == 0 ||
+				 strcmp(plansource->commandTag, "DELETE") == 0))
 			{
-				Query	   *q = (Query *) lfirst(l2);
-
-				Assert(IsA(q, Query));
-				if (q->canSetTag)
-				{
-					if (q->commandType == CMD_INSERT ||
-						q->commandType == CMD_UPDATE ||
-						q->commandType == CMD_DELETE)
-						stmt->mod_stmt = true;
-				}
+				stmt->mod_stmt = true;
+				break;
 			}
 		}
 	}
@@ -3543,12 +3543,12 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			break;
 
 		case SPI_OK_REWRITTEN:
-			Assert(!stmt->mod_stmt);
 
 			/*
 			 * The command was rewritten into another kind of command. It's
 			 * not clear what FOUND would mean in that case (and SPI doesn't
-			 * return the row count either), so just set it to false.
+			 * return the row count either), so just set it to false.  Note
+			 * that we can't assert anything about mod_stmt here.
 			 */
 			exec_set_found(estate, false);
 			break;
