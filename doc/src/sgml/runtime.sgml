@@ -959,16 +959,9 @@ option        SYSVSEM
 option        SEMMNI=256
 option        SEMMNS=512
 option        SEMMNU=256
-option        SEMMAP=256
 </programlisting>
        </para>
 
-       <para>
-        You might also want to configure your kernel to lock shared
-        memory into RAM and prevent it from being paged out to swap.
-        This can be accomplished using the <command>sysctl</command>
-        setting <literal>kern.ipc.shm_use_phys</literal>.
-       </para>
       </listitem>
      </varlistentry>
 
