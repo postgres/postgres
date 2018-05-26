@@ -59,8 +59,8 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	 * this type by value or by reference.  typbyval had better be false if
 	 * the length is not 1, 2, or 4 (or 8 on 8-byte-Datum machines).
 	 * Variable-length types are always passed by reference. Note that
-	 * typbyval can be false even if the length would allow pass-by-value;
-	 * this is currently true for type float4, for example.
+	 * typbyval can be false even if the length would allow pass-by-value; for
+	 * example, type macaddr8 is pass-by-ref even when Datum is 8 bytes.
 	 */
 	bool		typbyval;
 
@@ -88,7 +88,8 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 
 	/*
 	 * If typisdefined is false, the entry is only a placeholder (forward
-	 * reference).  We know the type name, but not yet anything else about it.
+	 * reference).  We know the type's name and owner, but not yet anything
+	 * else about it.
 	 */
 	bool		typisdefined BKI_DEFAULT(t);
 
