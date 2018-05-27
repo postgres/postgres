@@ -260,18 +260,18 @@ sub print_radix_table
 	{
 		my $out = $c->{$in};
 
-		if ($in < 0x100)
+		if ($in <= 0xff)
 		{
 			$b1map{$in} = $out;
 		}
-		elsif ($in < 0x10000)
+		elsif ($in <= 0xffff)
 		{
 			my $b1 = $in >> 8;
 			my $b2 = $in & 0xff;
 
 			$b2map{$b1}{$b2} = $out;
 		}
-		elsif ($in < 0x1000000)
+		elsif ($in <= 0xffffff)
 		{
 			my $b1 = $in >> 16;
 			my $b2 = ($in >> 8) & 0xff;
@@ -279,7 +279,7 @@ sub print_radix_table
 
 			$b3map{$b1}{$b2}{$b3} = $out;
 		}
-		elsif ($in < 0x100000000)
+		elsif ($in <= 0xffffffff)
 		{
 			my $b1 = $in >> 24;
 			my $b2 = ($in >> 16) & 0xff;
