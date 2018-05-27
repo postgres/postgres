@@ -62,6 +62,7 @@ sub wanted
 		$line =~ s/$cc (\d{4}), $pgdg/$ccliteral $1-$year, $pgdg/i;
 	}
 	untie @lines;
+	return;
 }
 
 print "Manually update:\n";

@@ -111,6 +111,7 @@ sub installcheck
 	system(@args);
 	my $status = $? >> 8;
 	exit $status if $status;
+	return;
 }
 
 sub check
@@ -132,6 +133,7 @@ sub check
 	system(@args);
 	my $status = $? >> 8;
 	exit $status if $status;
+	return;
 }
 
 sub ecpgcheck
@@ -157,6 +159,7 @@ sub ecpgcheck
 	system(@args);
 	$status = $? >> 8;
 	exit $status if $status;
+	return;
 }
 
 sub isolationcheck
@@ -173,6 +176,7 @@ sub isolationcheck
 	system(@args);
 	my $status = $? >> 8;
 	exit $status if $status;
+	return;
 }
 
 sub tap_check
@@ -224,6 +228,7 @@ sub bincheck
 		$mstat ||= $status;
 	}
 	exit $mstat if $mstat;
+	return;
 }
 
 sub taptest
@@ -244,6 +249,7 @@ sub taptest
 	InstallTemp();
 	my $status = tap_check(@args);
 	exit $status if $status;
+	return;
 }
 
 sub mangle_plpython3
@@ -365,6 +371,7 @@ sub plcheck
 	}
 
 	chdir "$topdir";
+	return;
 }
 
 sub subdircheck
@@ -413,6 +420,7 @@ sub subdircheck
 	print join(' ', @args), "\n";
 	system(@args);
 	chdir "..";
+	return;
 }
 
 sub contribcheck
@@ -434,6 +442,7 @@ sub contribcheck
 		$mstat ||= $status;
 	}
 	exit $mstat if $mstat;
+	return;
 }
 
 sub modulescheck
@@ -447,6 +456,7 @@ sub modulescheck
 		$mstat ||= $status;
 	}
 	exit $mstat if $mstat;
+	return;
 }
 
 sub recoverycheck
@@ -457,6 +467,7 @@ sub recoverycheck
 	my $dir    = "$topdir/src/test/recovery";
 	my $status = tap_check($dir);
 	exit $status if $status;
+	return;
 }
 
 # Run "initdb", then reconfigure authentication.
@@ -501,6 +512,7 @@ sub generate_db
 	system('createdb', quote_system_arg($dbname));
 	my $status = $? >> 8;
 	exit $status if $status;
+	return;
 }
 
 sub upgradecheck
@@ -586,6 +598,7 @@ sub upgradecheck
 		print "dumps not identical!\n";
 		exit(1);
 	}
+	return;
 }
 
 sub fetchRegressOpts
@@ -680,6 +693,7 @@ sub InstallTemp
 		Install("$tmp_installdir", "all", $config);
 	}
 	$ENV{PATH} = "$tmp_installdir/bin;$ENV{PATH}";
+	return;
 }
 
 sub usage

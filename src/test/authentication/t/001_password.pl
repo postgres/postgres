@@ -31,6 +31,7 @@ sub reset_pg_hba
 	unlink($node->data_dir . '/pg_hba.conf');
 	$node->append_conf('pg_hba.conf', "local all all $hba_method");
 	$node->reload;
+	return;
 }
 
 # Test access for a single role, useful to wrap all tests into one.
@@ -47,6 +48,7 @@ sub test_role
 	my $res = $node->psql('postgres', undef, extra_params => [ '-U', $role ]);
 	is($res, $expected_res,
 		"authentication $status_string for method $method, role $role");
+	return;
 }
 
 # Initialize master node

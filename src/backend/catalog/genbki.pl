@@ -649,6 +649,7 @@ sub gen_pg_attribute
 			}
 		}
 	}
+	return;
 }
 
 # Given $pgattr_schema (the pg_attribute schema for a catalog sufficient for
@@ -706,6 +707,7 @@ sub morph_row_for_pgattr
 	}
 
 	Catalog::AddDefaultValues($row, $pgattr_schema, 'pg_attribute');
+	return;
 }
 
 # Write an entry to postgres.bki.
@@ -744,6 +746,7 @@ sub print_bki_insert
 		push @bki_values, $bki_value;
 	}
 	printf $bki "insert %s( %s )\n", $oid, join(' ', @bki_values);
+	return;
 }
 
 # Given a row reference, modify it so that it becomes a valid entry for
@@ -786,6 +789,7 @@ sub morph_row_for_schemapg
 		# Only the fixed-size portions of the descriptors are ever used.
 		delete $row->{$attname} if $column->{is_varlen};
 	}
+	return;
 }
 
 # Perform OID lookups on an array of OID names.

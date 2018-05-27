@@ -194,6 +194,7 @@ sub system_or_bail
 	{
 		BAIL_OUT("system $_[0] failed");
 	}
+	return;
 }
 
 sub run_log
@@ -244,6 +245,7 @@ sub append_to_file
 	  or die "could not write \"$filename\": $!";
 	print $fh $str;
 	close $fh;
+	return;	
 }
 
 # Check that all file/dir modes in a directory match the expected values,
@@ -338,6 +340,7 @@ sub chmod_recursive
 			}
 		},
 		$dir);
+	return;
 }
 
 # Check presence of a given regexp within pg_config.h for the installation
@@ -366,6 +369,7 @@ sub command_ok
 	my ($cmd, $test_name) = @_;
 	my $result = run_log($cmd);
 	ok($result, $test_name);
+	return;
 }
 
 sub command_fails
@@ -373,6 +377,7 @@ sub command_fails
 	my ($cmd, $test_name) = @_;
 	my $result = run_log($cmd);
 	ok(!$result, $test_name);
+	return;
 }
 
 sub command_exit_is
@@ -394,6 +399,7 @@ sub command_exit_is
 	  ? ($h->full_results)[0]
 	  : $h->result(0);
 	is($result, $expected, $test_name);
+	return;
 }
 
 sub program_help_ok
@@ -406,6 +412,7 @@ sub program_help_ok
 	ok($result, "$cmd --help exit code 0");
 	isnt($stdout, '', "$cmd --help goes to stdout");
 	is($stderr, '', "$cmd --help nothing to stderr");
+	return;
 }
 
 sub program_version_ok
@@ -418,6 +425,7 @@ sub program_version_ok
 	ok($result, "$cmd --version exit code 0");
 	isnt($stdout, '', "$cmd --version goes to stdout");
 	is($stderr, '', "$cmd --version nothing to stderr");
+	return;
 }
 
 sub program_options_handling_ok
@@ -430,6 +438,7 @@ sub program_options_handling_ok
 	  '2>', \$stderr;
 	ok(!$result, "$cmd with invalid option nonzero exit code");
 	isnt($stderr, '', "$cmd with invalid option prints error message");
+	return;
 }
 
 sub command_like
@@ -441,6 +450,7 @@ sub command_like
 	ok($result, "$test_name: exit code 0");
 	is($stderr, '', "$test_name: no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
+	return;
 }
 
 sub command_like_safe
@@ -460,6 +470,7 @@ sub command_like_safe
 	ok($result, "$test_name: exit code 0");
 	is($stderr, '', "$test_name: no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
+	return;
 }
 
 sub command_fails_like
@@ -470,6 +481,7 @@ sub command_fails_like
 	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
 	ok(!$result, "$test_name: exit code not 0");
 	like($stderr, $expected_stderr, "$test_name: matches");
+	return;
 }
 
 # Run a command and check its status and outputs.
@@ -509,6 +521,8 @@ sub command_checks_all
 	{
 		like($stderr, $re, "$test_name stderr /$re/");
 	}
+	
+	return;
 }
 
 1;

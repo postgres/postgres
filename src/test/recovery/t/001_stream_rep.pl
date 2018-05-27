@@ -97,6 +97,8 @@ sub test_target_session_attrs
 		1,
 		"connect to node $target_name if mode \"$mode\" and $node1_name,$node2_name listed"
 	);
+
+	return;
 }
 
 # Connect to master in "read-write" mode with master,standby1 list.
@@ -195,6 +197,7 @@ sub replay_check
 	$node_standby_2->safe_psql('postgres',
 		qq[SELECT 1 FROM replayed WHERE val = $newval])
 	  or die "standby_2 didn't replay standby_1 value $newval";
+	return;
 }
 
 replay_check();

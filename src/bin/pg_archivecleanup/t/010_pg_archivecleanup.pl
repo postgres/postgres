@@ -21,6 +21,7 @@ sub create_files
 		print $file 'CONTENT';
 		close $file;
 	}
+	return;
 }
 
 create_files();
@@ -89,6 +90,7 @@ sub run_check
 		"$test_name: newer WAL file was not cleaned up");
 	ok(-f "$tempdir/unrelated_file",
 		"$test_name: unrelated file was not cleaned up");
+	return;
 }
 
 run_check('',                 'pg_archivecleanup');

@@ -42,6 +42,8 @@ sub pgbench
 
 	# cleanup?
 	#unlink @filenames or die "cannot unlink files (@filenames): $!";
+
+	return;
 }
 
 # Test concurrent insertion into table with UNIQUE oid column.  DDL expects
@@ -817,6 +819,7 @@ sub check_pgbench_logs
 		};
 	}
 	ok(unlink(@logs), "remove log files");
+	return;
 }
 
 my $bdir = $node->basedir;

@@ -20,6 +20,7 @@ sub configure_and_reload
 	));
 	$node->psql('postgres', "SELECT pg_reload_conf()", stdout => \$psql_out);
 	is($psql_out, 't', "reload node $name with $parameter");
+	return;
 }
 
 # Set up two nodes, which will alternately be master and replication standby.

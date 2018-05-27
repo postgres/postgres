@@ -81,6 +81,7 @@ sub run_test
 		"file lists match");
 
 	RewindTest::clean_rewind_test();
+	return;
 }
 
 # Run the test in both modes.

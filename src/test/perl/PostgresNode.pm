@@ -372,6 +372,7 @@ sub dump_info
 {
 	my ($self) = @_;
 	print $self->info;
+	return;
 }
 
 
@@ -393,6 +394,7 @@ sub set_replication_conf
 		  "host replication all $test_localhost/32 sspi include_realm=1 map=regress\n";
 	}
 	close $hba;
+	return;
 }
 
 =pod
@@ -487,6 +489,7 @@ sub init
 
 	$self->set_replication_conf if $params{allows_streaming};
 	$self->enable_archiving     if $params{has_archiving};
+	return;
 }
 
 =pod
@@ -512,6 +515,8 @@ sub append_conf
 
 	chmod($self->group_access() ? 0640 : 0600, $conffile)
 	  or die("unable to set permissions for $conffile");
+
+	return;
 }
 
 =pod
@@ -538,6 +543,7 @@ sub backup
 	TestLib::system_or_bail('pg_basebackup', '-D', $backup_path, '-p', $port,
 		'--no-sync');
 	print "# Backup finished\n";
+	return;
 }
 
 =item $node->backup_fs_hot(backup_name)
@@ -556,6 +562,7 @@ sub backup_fs_hot
 {
 	my ($self, $backup_name) = @_;
 	$self->_backup_fs($backup_name, 1);
+	return;
 }
 
 =item $node->backup_fs_cold(backup_name)
@@ -572,6 +579,7 @@ sub backup_fs_cold
 {
 	my ($self, $backup_name) = @_;
 	$self->_backup_fs($backup_name, 0);
+	return;
 }
 
 
@@ -612,6 +620,7 @@ sub _backup_fs
 	}
 
 	print "# Backup finished\n";
+	return;
 }
 
 
@@ -672,6 +681,7 @@ port = $port
 ));
 	$self->enable_streaming($root_node) if $params{has_streaming};
 	$self->enable_restoring($root_node) if $params{has_restoring};
+	return;
 }
 
 =pod
@@ -703,6 +713,7 @@ sub start
 	}
 
 	$self->_update_pid(1);
+	return;
 }
 
 =pod
@@ -728,6 +739,7 @@ sub stop
 	print "### Stopping node \"$name\" using mode $mode\n";
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
 	$self->_update_pid(0);
+	return;
 }
 
 =pod
@@ -746,6 +758,7 @@ sub reload
 	my $name   = $self->name;
 	print "### Reloading node \"$name\"\n";
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, 'reload');
+	return;
 }
 
 =pod
@@ -767,6 +780,7 @@ sub restart
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
 		'restart');
 	$self->_update_pid(1);
+	return;
 }
 
 =pod
@@ -787,6 +801,7 @@ sub promote
 	print "### Promoting node \"$name\"\n";
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
 		'promote');
+	return;
 }
 
 # Internal routine to enable streaming replication on a standby node.
@@ -802,6 +817,7 @@ sub enable_streaming
 primary_conninfo='$root_connstr application_name=$name'
 standby_mode=on
 ));
+	return;
 }
 
 # Internal routine to enable archive recovery command on a standby node
@@ -830,6 +846,7 @@ sub enable_restoring
 restore_command = '$copy_command'
 standby_mode = on
 ));
+	return;
 }
 
 # Internal routine to enable archiving
@@ -859,6 +876,7 @@ sub enable_archiving
 archive_mode = on
 archive_command = '$copy_command'
 ));
+	return;
 }
 
 # Internal method
@@ -885,6 +903,7 @@ sub _update_pid
 
 	# Complain if we expected to find a pidfile.
 	BAIL_OUT("postmaster.pid unexpectedly not present") if $is_running;
+	return;
 }
 
 =pod
@@ -1014,7 +1033,7 @@ sub teardown_node
 	my $self = shift;
 
 	$self->stop('immediate');
-
+	return;
 }
 
 =pod
@@ -1030,6 +1049,7 @@ sub clean_node
 	my $self = shift;
 
 	rmtree $self->{_basedir} unless defined $self->{_pid};
+	return;
 }
 
 =pod
@@ -1351,6 +1371,7 @@ sub command_ok
 	local $ENV{PGPORT} = $self->port;
 
 	TestLib::command_ok(@_);
+	return;
 }
 
 =pod
@@ -1368,6 +1389,7 @@ sub command_fails
 	local $ENV{PGPORT} = $self->port;
 
 	TestLib::command_fails(@_);
+	return;
 }
 
 =pod
@@ -1385,6 +1407,7 @@ sub command_like
 	local $ENV{PGPORT} = $self->port;
 
 	TestLib::command_like(@_);
+	return;
 }
 
 =pod
@@ -1402,6 +1425,7 @@ sub command_checks_all
 	local $ENV{PGPORT} = $self->port;
 
 	TestLib::command_checks_all(@_);
+	return;
 }
 
 =pod
@@ -1427,6 +1451,7 @@ sub issues_sql_like
 	ok($result, "@$cmd exit code 0");
 	my $log = TestLib::slurp_file($self->logfile);
 	like($log, $expected_sql, "$test_name: SQL found in server log");
+	return;
 }
 
 =pod
@@ -1445,6 +1470,7 @@ sub run_log
 	local $ENV{PGPORT} = $self->port;
 
 	TestLib::run_log(@_);
+	return;
 }
 
 =pod
@@ -1548,6 +1574,7 @@ sub wait_for_catchup
 	$self->poll_query_until('postgres', $query)
 	  or croak "timed out waiting for catchup";
 	print "done\n";
+	return;
 }
 
 =pod
@@ -1590,6 +1617,7 @@ sub wait_for_slot_catchup
 	$self->poll_query_until('postgres', $query)
 	  or croak "timed out waiting for catchup";
 	print "done\n";
+	return;
 }
 
 =pod

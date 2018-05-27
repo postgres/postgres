@@ -45,6 +45,7 @@ sub AddFile
 	my ($self, $filename) = @_;
 
 	$self->{files}->{$filename} = 1;
+	return;
 }
 
 sub AddFiles
@@ -56,6 +57,7 @@ sub AddFiles
 	{
 		$self->{files}->{ $dir . "/" . $f } = 1;
 	}
+	return;
 }
 
 sub ReplaceFile
@@ -110,6 +112,7 @@ sub RelocateFiles
 			$self->AddFile($targetdir . '/' . basename($f));
 		}
 	}
+	return;
 }
 
 sub AddReference
@@ -122,6 +125,7 @@ sub AddReference
 		$self->AddLibrary(
 			"__CFGNAME__/" . $ref->{name} . "/" . $ref->{name} . ".lib");
 	}
+	return;
 }
 
 sub AddLibrary
@@ -138,6 +142,7 @@ sub AddLibrary
 	{
 		push @{ $self->{suffixlib} }, $lib;
 	}
+	return;
 }
 
 sub AddIncludeDir
@@ -149,6 +154,7 @@ sub AddIncludeDir
 		$self->{includes} .= ';';
 	}
 	$self->{includes} .= $inc;
+	return;
 }
 
 sub AddPrefixInclude
@@ -156,6 +162,7 @@ sub AddPrefixInclude
 	my ($self, $inc) = @_;
 
 	$self->{prefixincludes} = $inc . ';' . $self->{prefixincludes};
+	return;
 }
 
 sub AddDefine
@@ -164,6 +171,7 @@ sub AddDefine
 
 	$def =~ s/"/&quot;&quot;/g;
 	$self->{defines} .= $def . ';';
+	return;
 }
 
 sub FullExportDLL
@@ -173,6 +181,7 @@ sub FullExportDLL
 	$self->{builddef} = 1;
 	$self->{def}      = "./__CFGNAME__/$self->{name}/$self->{name}.def";
 	$self->{implib}   = "__CFGNAME__/$self->{name}/$libname";
+	return;
 }
 
 sub UseDef
@@ -180,6 +189,7 @@ sub UseDef
 	my ($self, $def) = @_;
 
 	$self->{def} = $def;
+	return;
 }
 
 sub AddDir
@@ -284,6 +294,7 @@ sub AddDir
 	}
 
 	$self->AddDirResourceFile($reldir);
+	return;
 }
 
 # If the directory's Makefile bears a description string, add a resource file.
@@ -299,6 +310,7 @@ sub AddDirResourceFile
 		if ($mf =~ /^PGAPPICON\s*=\s*(.*)$/m) { $ico = $1; }
 		$self->AddResourceFile($reldir, $desc, $ico);
 	}
+	return;
 }
 
 sub AddResourceFile
@@ -332,6 +344,7 @@ sub AddResourceFile
 		close($i);
 	}
 	$self->AddFile("$dir/win32ver.rc");
+	return;
 }
 
 sub DisableLinkerWarnings
@@ -341,6 +354,7 @@ sub DisableLinkerWarnings
 	$self->{disablelinkerwarnings} .= ','
 	  unless ($self->{disablelinkerwarnings} eq '');
 	$self->{disablelinkerwarnings} .= $warnings;
+	return;
 }
 
 sub Save
@@ -366,6 +380,7 @@ sub Save
 	$self->WriteFiles($f);
 	$self->Footer($f);
 	close($f);
+	return;
 }
 
 sub GetAdditionalLinkerDependencies

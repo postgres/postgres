@@ -41,6 +41,8 @@ sub test_recovery_standby
 
 	# Stop standby node
 	$node_standby->teardown_node;
+
+	return;
 }
 
 # Initialize master node

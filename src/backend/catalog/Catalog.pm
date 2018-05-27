@@ -367,6 +367,7 @@ sub RenameTempFile
 	{
 		rename($temp_name, $final_name) || die "rename: $temp_name: $!";
 	}
+	return;
 }
 
 # Find a symbol defined in a particular header file and extract the value.

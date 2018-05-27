@@ -13,7 +13,7 @@ use strict;
 sub TIEHANDLE
 {
 	my $self = shift;
-	bless \@_, $self;
+	return bless \@_, $self;
 }
 
 sub PRINT

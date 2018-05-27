@@ -99,6 +99,7 @@ sub print_conversion_tables
 		$charset);
 	print_conversion_tables_direction($this_script, $csname, TO_UNICODE,
 		$charset);
+	return;
 }
 
 #############################################################################
@@ -160,6 +161,7 @@ sub print_conversion_tables_direction
 	}
 
 	close($out);
+	return;
 }
 
 sub print_from_utf8_combined_map
@@ -194,6 +196,7 @@ sub print_from_utf8_combined_map
 	}
 	print $out "\t/* $last_comment */" if ($verbose && $last_comment ne "");
 	print $out "\n};\n";
+	return;
 }
 
 sub print_to_utf8_combined_map
@@ -230,6 +233,7 @@ sub print_to_utf8_combined_map
 	}
 	print $out "\t/* $last_comment */" if ($verbose && $last_comment ne "");
 	print $out "\n};\n";
+	return;
 }
 
 #######################################################################
@@ -625,6 +629,7 @@ sub print_radix_table
 	if ($off != $tblsize) { die "table size didn't match!"; }
 
 	print $out "};\n";
+	return;
 }
 
 ###

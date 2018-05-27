@@ -207,6 +207,7 @@ sub strip_default_values
 	{
 		delete $row->{pronargs} if defined $row->{proargtypes};
 	}
+	return;
 }
 
 # Format the individual elements of a Perl hash into a valid string

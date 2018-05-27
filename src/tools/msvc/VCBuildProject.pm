@@ -56,6 +56,7 @@ EOF
  </Configurations>
 EOF
 	$self->WriteReferences($f);
+	return;
 }
 
 sub WriteFiles
@@ -152,6 +153,7 @@ EOF
 	print $f <<EOF;
  </Files>
 EOF
+	return;
 }
 
 sub Footer
@@ -162,6 +164,7 @@ sub Footer
  <Globals/>
 </VisualStudioProject>
 EOF
+	return;
 }
 
 sub WriteConfiguration
@@ -227,6 +230,7 @@ EOF
 	print $f <<EOF;
   </Configuration>
 EOF
+	return;
 }
 
 sub WriteReferences
@@ -239,6 +243,7 @@ sub WriteReferences
 		  "  <ProjectReference ReferencedProjectIdentifier=\"$ref->{guid}\" Name=\"$ref->{name}\" />\n";
 	}
 	print $f " </References>\n";
+	return;
 }
 
 sub GenerateCustomTool

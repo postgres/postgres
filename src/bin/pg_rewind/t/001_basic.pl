@@ -97,6 +97,7 @@ in master, before promotion
 	}
 
 	RewindTest::clean_rewind_test();
+	return;
 }
 
 # Run the test in both modes

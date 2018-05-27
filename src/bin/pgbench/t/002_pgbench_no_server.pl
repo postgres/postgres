@@ -24,6 +24,7 @@ sub pgbench
 	print STDERR "opts=$opts, stat=$stat, out=$out, err=$err, name=$name";
 	command_checks_all([ 'pgbench', split(/\s+/, $opts) ],
 		$stat, $out, $err, $name);
+	return;
 }
 
 # invoke pgbench with scripts
@@ -48,6 +49,7 @@ sub pgbench_scripts
 		}
 	}
 	command_checks_all(\@cmd, $stat, $out, $err, $name);
+	return;
 }
 
 #

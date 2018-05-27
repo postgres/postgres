@@ -80,6 +80,7 @@ EOF
 			strpool => 'true',
 			runtime => 'MultiThreadedDLL'
 		});
+	return;
 }
 
 sub AddDefine
@@ -87,6 +88,7 @@ sub AddDefine
 	my ($self, $def) = @_;
 
 	$self->{defines} .= $def . ';';
+	return;
 }
 
 sub WriteReferences
@@ -112,6 +114,7 @@ EOF
   </ItemGroup>
 EOF
 	}
+	return;
 }
 
 sub WriteFiles
@@ -223,6 +226,7 @@ EOF
   </ItemGroup>
 EOF
 	}
+	return;
 }
 
 sub WriteConfigurationHeader
@@ -234,6 +238,7 @@ sub WriteConfigurationHeader
       <Platform>$self->{platform}</Platform>
     </ProjectConfiguration>
 EOF
+	return;
 }
 
 sub WriteConfigurationPropertyGroup
@@ -252,6 +257,7 @@ sub WriteConfigurationPropertyGroup
     <WholeProgramOptimization>$p->{wholeopt}</WholeProgramOptimization>
   </PropertyGroup>
 EOF
+	return;
 }
 
 sub WritePropertySheetsPropertyGroup
@@ -262,6 +268,7 @@ sub WritePropertySheetsPropertyGroup
     <Import Project="\$(UserRootDir)\\Microsoft.Cpp.\$(Platform).user.props" Condition="exists('\$(UserRootDir)\\Microsoft.Cpp.\$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
 EOF
+	return;
 }
 
 sub WriteAdditionalProperties
@@ -272,6 +279,7 @@ sub WriteAdditionalProperties
     <IntDir Condition="'\$(Configuration)|\$(Platform)'=='$cfgname|$self->{platform}'">.\\$cfgname\\$self->{name}\\</IntDir>
     <LinkIncremental Condition="'\$(Configuration)|\$(Platform)'=='$cfgname|$self->{platform}'">false</LinkIncremental>
 EOF
+	return;
 }
 
 sub WriteItemDefinitionGroup
@@ -364,6 +372,7 @@ EOF
 	print $f <<EOF;
   </ItemDefinitionGroup>
 EOF
+	return;
 }
 
 sub Footer
@@ -377,6 +386,7 @@ sub Footer
   </ImportGroup>
 </Project>
 EOF
+	return;
 }
 
 package VC2010Project;
@@ -441,6 +451,7 @@ sub WriteConfigurationPropertyGroup
     <PlatformToolset>$self->{PlatformToolset}</PlatformToolset>
   </PropertyGroup>
 EOF
+	return;
 }
 
 package VC2013Project;

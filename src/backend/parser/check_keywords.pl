@@ -18,6 +18,7 @@ sub error
 {
 	print STDERR @_;
 	$errors = 1;
+	return;
 }
 
 $, = ' ';     # set output field separator

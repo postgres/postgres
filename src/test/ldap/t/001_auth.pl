@@ -144,6 +144,7 @@ sub test_access
 	my $res =
 	  $node->psql('postgres', 'SELECT 1', extra_params => [ '-U', $role ]);
 	is($res, $expected_res, $test_name);
+	return;
 }
 
 note "simple bind";

@@ -36,6 +36,7 @@ SELECT * FROM tst WHERE i = 7 AND t = 'e';
 	my $standby_result = $node_standby->safe_psql("postgres", $queries);
 
 	is($master_result, $standby_result, "$test_name: query result matches");
+	return;
 }
 
 # Initialize master node

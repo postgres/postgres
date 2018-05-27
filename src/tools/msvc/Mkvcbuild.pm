@@ -964,6 +964,7 @@ sub AddContrib
 
 	# Are there any output data files to build?
 	GenerateContribSqlFiles($n, $mf);
+	return;
 }
 
 sub GenerateContribSqlFiles
@@ -1010,6 +1011,7 @@ sub GenerateContribSqlFiles
 			}
 		}
 	}
+	return;
 }
 
 sub AdjustContribProj
@@ -1020,6 +1022,7 @@ sub AdjustContribProj
 		\@contrib_uselibpq,       \@contrib_uselibpgport,
 		\@contrib_uselibpgcommon, $contrib_extralibs,
 		$contrib_extrasource,     $contrib_extraincludes);
+	return;
 }
 
 sub AdjustFrontendProj
@@ -1030,6 +1033,7 @@ sub AdjustFrontendProj
 		\@frontend_uselibpq,       \@frontend_uselibpgport,
 		\@frontend_uselibpgcommon, $frontend_extralibs,
 		$frontend_extrasource,     $frontend_extraincludes);
+	return;
 }
 
 sub AdjustModule
@@ -1086,6 +1090,7 @@ sub AdjustModule
 			$proj->AddFile($i);
 		}
 	}
+	return;
 }
 
 END

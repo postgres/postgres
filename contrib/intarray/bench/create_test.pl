@@ -83,4 +83,5 @@ sub copytable
 	while (<$fff>) { print; }
 	close $fff;
 	print "\\.\n";
+	return;
 }

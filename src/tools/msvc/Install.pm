@@ -40,6 +40,7 @@ sub lcopy
 	copy($src, $target)
 	  || confess "Could not copy $src to $target\n";
 
+	return;
 }
 
 sub Install
@@ -173,6 +174,7 @@ sub Install
 	GenerateNLSFiles($target, $config->{nls}, $majorver) if ($config->{nls});
 
 	print "Installation complete.\n";
+	return;
 }
 
 sub EnsureDirectories
@@ -183,6 +185,7 @@ sub EnsureDirectories
 	{
 		mkdir $target . '/' . $d unless -d ($target . '/' . $d);
 	}
+	return;
 }
 
 sub CopyFiles
@@ -200,6 +203,7 @@ sub CopyFiles
 		lcopy($f, $target . basename($f));
 	}
 	print "\n";
+	return;
 }
 
 sub CopySetOfFiles
@@ -215,6 +219,7 @@ sub CopySetOfFiles
 		lcopy($_, $tgt) || croak "Could not copy $_: $!\n";
 	}
 	print "\n";
+	return;
 }
 
 sub CopySolutionOutput
@@ -340,6 +345,7 @@ sub CopySolutionOutput
 		print ".";
 	}
 	print "\n";
+	return;
 }
 
 sub GenerateConversionScript
@@ -377,6 +383,7 @@ sub GenerateConversionScript
 	print $F $sql;
 	close($F);
 	print "\n";
+	return;
 }
 
 sub GenerateTimezoneFiles
@@ -408,6 +415,7 @@ sub GenerateTimezoneFiles
 
 	system(@args);
 	print "\n";
+	return;
 }
 
 sub GenerateTsearchFiles
@@ -449,6 +457,7 @@ sub GenerateTsearchFiles
 	}
 	close($F);
 	print "\n";
+	return;
 }
 
 sub CopyContribFiles
@@ -475,6 +484,7 @@ sub CopyContribFiles
 		}
 	}
 	print "\n";
+	return;
 }
 
 sub CopySubdirFiles
@@ -561,6 +571,7 @@ sub CopySubdirFiles
 			print '.';
 		}
 	}
+	return;
 }
 
 sub ParseAndCleanRule
@@ -676,6 +687,7 @@ sub CopyIncludeFiles
 		$target . '/include/informix/esql/',
 		'src/interfaces/ecpg/include/',
 		split /\s+/, $1);
+	return;
 }
 
 sub GenerateNLSFiles
@@ -719,6 +731,7 @@ sub GenerateNLSFiles
 		}
 	}
 	print "\n";
+	return;
 }
 
 sub DetermineMajorVersion

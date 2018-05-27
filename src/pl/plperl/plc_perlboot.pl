@@ -62,6 +62,7 @@ sub ::encode_array_constructor
 		(my $msg = shift) =~ s/\(eval \d+\) //g;
 		chomp $msg;
 		&::elog(&::WARNING, $msg);
+		return;
 	}
 	$SIG{__WARN__} = \&plperl_warn;
 

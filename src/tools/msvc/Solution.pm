@@ -75,6 +75,7 @@ sub DeterminePlatform
 	$? >> 8 == 0 or die "cl command not found";
 	$self->{platform} = ($output =~ /^\/favor:<.+AMD64/m) ? 'x64' : 'Win32';
 	print "Detected hardware platform: $self->{platform}\n";
+	return;
 }
 
 # Return 1 if $oldfile is newer than $newfile, or if $newfile doesn't exist.
@@ -112,6 +113,7 @@ sub copyFile
 	}
 	close($i);
 	close($o);
+	return;
 }
 
 sub GenerateFiles
@@ -533,6 +535,7 @@ EOF
 <!ENTITY majorversion "$self->{majorver}">
 EOF
 	close($o);
+	return;
 }
 
 sub GenerateDefFile
@@ -555,6 +558,7 @@ sub GenerateDefFile
 		close($of);
 		close($if);
 	}
+	return;
 }
 
 sub AddProject
@@ -727,6 +731,7 @@ EOF
 EndGlobal
 EOF
 	close($sln);
+	return;
 }
 
 sub GetFakeConfigure

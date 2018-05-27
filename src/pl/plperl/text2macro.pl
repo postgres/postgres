@@ -99,4 +99,5 @@ sub selftest
 	warn "Test string: $string\n";
 	warn "Result     : $result";
 	die "Failed!" if $result ne "$string\n";
+	return;
 }

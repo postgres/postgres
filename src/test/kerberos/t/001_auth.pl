@@ -164,6 +164,7 @@ sub test_access
 			'-U', $role
 		]);
 	is($res, $expected_res, $test_name);
+	return;
 }
 
 unlink($node->data_dir . '/pg_hba.conf');

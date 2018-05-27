@@ -107,7 +107,7 @@ sub renamefiles
 		move $f, $nf;
 	}
 	chdir $savedir;
-
+  return;
 }
 
 sub missing

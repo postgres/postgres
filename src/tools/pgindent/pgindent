@@ -93,6 +93,8 @@ sub check_indent
 		  "You appear to have GNU indent rather than BSD indent.\n";
 		exit 1;
 	}
+
+	return;
 }
 
 
@@ -162,6 +164,7 @@ sub process_exclude
 		}
 		close($eh);
 	}
+	return;
 }
 
 
@@ -189,6 +192,7 @@ sub write_source
 	  || die "cannot open file \"$source_filename\": $!\n";
 	print $src_fh $source;
 	close($src_fh);
+	return;
 }
 
 
@@ -316,6 +320,7 @@ sub diff
 		  . $pre_fh->filename . " "
 		  . $post_fh->filename
 		  . " >&2");
+	return;
 }
 
 
@@ -361,6 +366,7 @@ sub run_build
 	$ENV{PGINDENT} = abs_path('pg_bsd_indent');
 
 	chdir $save_dir;
+	return;
 }
 
 
@@ -382,6 +388,7 @@ sub build_clean
 
 	system("rm -rf src/tools/pgindent/pg_bsd_indent");
 	system("rm -f src/tools/pgindent/tmp_typedefs.list");
+	return;
 }
 
 

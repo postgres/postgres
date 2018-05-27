@@ -297,4 +297,6 @@ sub checkit
 	print "$file references $symbol, defined in @places\n";
 
 	# print "includes: @includes\n";
+
+	return;
 }

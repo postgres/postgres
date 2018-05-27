@@ -141,4 +141,5 @@ sub sed_file
 	  or die "mv failed: $?";
 
 	$fixedfiles .= "\t$filename\n";
+	return;
 }

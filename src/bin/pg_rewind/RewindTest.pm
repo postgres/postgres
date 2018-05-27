@@ -71,6 +71,7 @@ sub master_psql
 
 	system_or_bail 'psql', '-q', '--no-psqlrc', '-d',
 	  $node_master->connstr('postgres'), '-c', "$cmd";
+	return;
 }
 
 sub standby_psql
@@ -79,6 +80,7 @@ sub standby_psql
 
 	system_or_bail 'psql', '-q', '--no-psqlrc', '-d',
 	  $node_standby->connstr('postgres'), '-c', "$cmd";
+	return;
 }
 
 # Run a query against the master, and check that the output matches what's
@@ -112,6 +114,7 @@ sub check_query
 		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
 		is($stdout, $expected_stdout, "$test_name: query result matches");
 	}
+	return;
 }
 
 sub setup_cluster
@@ -130,6 +133,7 @@ sub setup_cluster
 		'postgresql.conf', qq(
 wal_keep_segments = 20
 ));
+	return;
 }
 
 sub start_master
@@ -138,6 +142,8 @@ sub start_master
 
 	#### Now run the test-specific parts to initialize the master before setting
 	# up standby
+
+	return;
 }
 
 sub create_standby
@@ -162,6 +168,8 @@ recovery_target_timeline='latest'
 
 	# The standby may have WAL to apply before it matches the primary.  That
 	# is fine, because no test examines the standby before promotion.
+
+	return;
 }
 
 sub promote_standby
@@ -183,6 +191,8 @@ sub promote_standby
 	# after promotion so quickly that when pg_rewind runs, the standby has not
 	# performed a checkpoint after promotion yet.
 	standby_psql("checkpoint");
+
+	return;
 }
 
 sub run_pg_rewind
@@ -266,6 +276,8 @@ recovery_target_timeline='latest'
 	$node_master->start;
 
 	#### Now run the test-specific parts to check the result
+
+	return;
 }
 
 # Clean up after the test. Stop both servers, if they're still running.
@@ -273,6 +285,7 @@ sub clean_rewind_test
 {
 	$node_master->teardown_node  if defined $node_master;
 	$node_standby->teardown_node if defined $node_standby;
+	return;
 }
 
 1;

@@ -333,6 +333,7 @@ sub push_commit
 	push @{ $all_commits_by_branch{ $c->{'branch'} } }, $cc;
 	$cc->{'branch_position'}{ $c->{'branch'} } =
 	  -1 + @{ $all_commits_by_branch{ $c->{'branch'} } };
+	return;
 }
 
 sub hash_commit
@@ -355,6 +356,7 @@ sub parse_datetime
 sub output_str
 {
 	($oldest_first) ? ($output_line .= sprintf(shift, @_)) : printf(@_);
+	return;
 }
 
 sub output_details
@@ -395,6 +397,7 @@ sub output_details
 		}
 	}
 	output_str("\n");
+	return;
 }
 
 sub usage

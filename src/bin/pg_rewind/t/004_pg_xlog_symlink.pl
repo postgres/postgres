@@ -72,6 +72,7 @@ in standby, after promotion
 		'table content');
 
 	RewindTest::clean_rewind_test();
+	return;
 }
 
 # Run the test in both modes

@@ -415,6 +415,7 @@ sub main
 			}
 		}
 	}
+	return;
 }
 
 
@@ -431,6 +432,7 @@ sub include_file
 		add_to_buffer($buffer, $_);
 	}
 	close($fh);
+	return;
 }
 
 sub include_addon
@@ -472,6 +474,7 @@ sub include_addon
 sub add_to_buffer
 {
 	push(@{ $buff{ $_[0] } }, "$_[1]\n");
+	return;
 }
 
 sub dump_buffer
@@ -480,6 +483,7 @@ sub dump_buffer
 	print '/* ', $buffer, ' */', "\n";
 	my $ref = $buff{$buffer};
 	print @$ref;
+	return;
 }
 
 sub dump_fields
@@ -582,6 +586,7 @@ sub dump_fields
 			add_to_buffer('rules', ' { $$ = NULL; }');
 		}
 	}
+	return;
 }
 
 
@@ -673,4 +678,5 @@ sub preload_addons
 			push(@{ $x->{lines} }, @code);
 		}
 	}
+	return;
 }

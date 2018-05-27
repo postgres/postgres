@@ -20,6 +20,7 @@ sub dumpsyms
 	system("dumpbin /symbols /out:$tmpfile $_ >NUL")
 	  && die "Could not call dumpbin";
 	rename($tmpfile, $symfile);
+	return;
 }
 
 # Given a symbol file path, loops over its contents
@@ -116,6 +117,7 @@ sub extract_syms
 		$def->{ $pieces[6] } = $pieces[3];
 	}
 	close($f);
+	return;
 }
 
 sub writedef
@@ -143,6 +145,7 @@ sub writedef
 		}
 	}
 	close($fh);
+	return;
 }
 
 
