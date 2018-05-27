@@ -13,3 +13,4 @@
 --paren-tightness=2
 --paren-vertical-tightness=2
 --paren-vertical-tightness-closing=2
+--noblanks-before-comments
