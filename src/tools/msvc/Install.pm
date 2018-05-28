@@ -37,10 +37,10 @@ sub lcopy
 		unlink $target || confess "Could not delete $target\n";
 	}
 
-	copy($src, $target)
+	(my $retval = copy($src, $target))
 	  || confess "Could not copy $src to $target\n";
 
-	return;
+	return $retval;
 }
 
 sub Install
@@ -200,7 +200,7 @@ sub CopyFiles
 		print ".";
 		$f = $basedir . $f;
 		die "No file $f\n" if (!-f $f);
-		lcopy($f, $target . basename($f));
+		lcopy($f, $target . basename($f)) || croak "Could not copy $f: $!\n";
 	}
 	print "\n";
 	return;
