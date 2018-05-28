@@ -271,7 +271,8 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
      and not use grouping or <literal>ORDER BY</literal>).  Cursors
      that are not simply updatable might work, or might not, depending on plan
      choice details; so in the worst case, an application might work in testing
-     and then fail in production.
+     and then fail in production.  If <literal>FOR UPDATE</literal> is
+     specified, the cursor is guaranteed to be updatable.
     </para>
 
     <para>
