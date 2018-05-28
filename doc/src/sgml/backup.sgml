@@ -141,7 +141,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     behavior and have <application>psql</application> exit with an
     exit status of 3 if an SQL error occurs:
 <programlisting>
-psql --set ON_ERROR_STOP=on dbname &lt; dumpfile
+psql --set ON_ERROR_STOP=on <replaceable>dbname</replaceable> &lt; <replaceable>dumpfile</replaceable>
 </programlisting>
     Either way, you will only have a partially restored database.
     Alternatively, you can specify that the whole dump should be
