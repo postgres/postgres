@@ -901,7 +901,7 @@ iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent)
 {
 	JsonbIterator *it;
 
-	it = palloc(sizeof(JsonbIterator));
+	it = palloc0(sizeof(JsonbIterator));
 	it->container = container;
 	it->parent = parent;
 	it->nElems = JsonContainerSize(container);
