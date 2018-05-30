@@ -1236,7 +1236,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>ClientWrite</literal></entry>
-         <entry>Waiting to write data from the client.</entry>
+         <entry>Waiting to write data to the client.</entry>
         </row>
         <row>
          <entry><literal>LibPQWalReceiverConnect</literal></entry>
