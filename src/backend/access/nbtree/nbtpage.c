@@ -341,10 +341,6 @@ _bt_getroot(Relation rel, int access)
 		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 		LockBuffer(metabuf, BT_WRITE);
 
-		/* upgrade metapage if needed */
-		if (metad->btm_version < BTREE_VERSION)
-			_bt_upgrademetapage(metapg);
-
 		/*
 		 * Race condition:	if someone else initialized the metadata between
 		 * the time we released the read lock and acquired the write lock, we
@@ -378,6 +374,10 @@ _bt_getroot(Relation rel, int access)
 
 		/* NO ELOG(ERROR) till meta is updated */
 		START_CRIT_SECTION();
+
+		/* upgrade metapage if needed */
+		if (metad->btm_version < BTREE_VERSION)
+			_bt_upgrademetapage(metapg);
 
 		metad->btm_root = rootblkno;
 		metad->btm_level = 0;

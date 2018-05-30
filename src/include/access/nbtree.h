@@ -103,7 +103,7 @@ typedef struct BTMetaPageData
 	BlockNumber btm_fastroot;	/* current "fast" root location */
 	uint32		btm_fastlevel;	/* tree level of the "fast" root page */
 	/* following fields are available since page version 3 */
-	TransactionId btm_oldest_btpo_xact; /* oldest btpo_xact among of deleted
+	TransactionId btm_oldest_btpo_xact; /* oldest btpo_xact among all deleted
 										 * pages */
 	float8		btm_last_cleanup_num_heap_tuples;	/* number of heap tuples
 													 * during last cleanup */

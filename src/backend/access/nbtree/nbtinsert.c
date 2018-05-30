@@ -2150,10 +2150,6 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 
-	/* upgrade metapage if needed */
-	if (metad->btm_version < BTREE_VERSION)
-		_bt_upgrademetapage(metapg);
-
 	/*
 	 * Create downlink item for left page (old root).  Since this will be the
 	 * first item in a non-leaf page, it implicitly has minus-infinity key
@@ -2177,6 +2173,10 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 	/* NO EREPORT(ERROR) from here till newroot op is logged */
 	START_CRIT_SECTION();
+
+	/* upgrade metapage if needed */
+	if (metad->btm_version < BTREE_VERSION)
+		_bt_upgrademetapage(metapg);
 
 	/* set btree special data */
 	rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
