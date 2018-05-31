@@ -11,6 +11,8 @@ use strict;
 use warnings;
 use base qw(Project);
 
+no warnings qw(redefine); ## no critic
+
 sub _new
 {
 	my $classname = shift;
@@ -268,6 +270,8 @@ use strict;
 use warnings;
 use base qw(VCBuildProject);
 
+no warnings qw(redefine); ## no critic
+
 sub new
 {
 	my $classname = shift;
@@ -288,6 +292,8 @@ package VC2008Project;
 use strict;
 use warnings;
 use base qw(VCBuildProject);
+
+no warnings qw(redefine); ## no critic
 
 sub new
 {

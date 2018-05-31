@@ -1,0 +1,13 @@
+
+src/tools/msvc/dummylib
+
+This directory contains just enough of a dummy library to allow checking of
+the programs in src/tools/msvc and src/tools/win32tzlist.pl with
+perl -cw, even on machines that lack the Win32 perl infrastructure.
+
+invoke via:
+
+PERL5LIB=src/tools/msvc/dummylib perl -cw $file
+
+This is the only use that should be made of this directory. Attempting actually
+running of any programs using this library will result in a lot of grief.

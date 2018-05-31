@@ -10,6 +10,8 @@ use strict;
 use warnings;
 use VSObjectFactory;
 
+no warnings qw(redefine); ## no critic
+
 sub _new
 {
 	my $classname = shift;
@@ -768,6 +770,8 @@ use strict;
 use warnings;
 use base qw(Solution);
 
+no warnings qw(redefine); ## no critic
+
 sub new
 {
 	my $classname = shift;
@@ -790,6 +794,8 @@ package VS2008Solution;
 use strict;
 use warnings;
 use base qw(Solution);
+
+no warnings qw(redefine); ## no critic
 
 sub new
 {
@@ -815,6 +821,8 @@ use strict;
 use warnings;
 use base qw(Solution);
 
+no warnings qw(redefine); ## no critic
+
 sub new
 {
 	my $classname = shift;
@@ -839,6 +847,8 @@ use strict;
 use warnings;
 use base qw(Solution);
 
+no warnings qw(redefine); ## no critic
+
 sub new
 {
 	my $classname = shift;
@@ -862,6 +872,8 @@ use Carp;
 use strict;
 use warnings;
 use base qw(Solution);
+
+no warnings qw(redefine); ## no critic
 
 sub new
 {
@@ -889,6 +901,8 @@ use strict;
 use warnings;
 use base qw(Solution);
 
+no warnings qw(redefine); ## no critic
+
 sub new
 {
 	my $classname = shift;
@@ -914,6 +928,8 @@ use Carp;
 use strict;
 use warnings;
 use base qw(Solution);
+
+no warnings qw(redefine); ## no critic
 
 sub new
 {

@@ -11,6 +11,8 @@ use strict;
 use warnings;
 use base qw(Project);
 
+no warnings qw(redefine); ## no critic
+
 sub _new
 {
 	my $classname = shift;
@@ -399,6 +401,8 @@ use strict;
 use warnings;
 use base qw(MSBuildProject);
 
+no warnings qw(redefine); ## no critic
+
 sub new
 {
 	my $classname = shift;
@@ -419,6 +423,8 @@ package VC2012Project;
 use strict;
 use warnings;
 use base qw(MSBuildProject);
+
+no warnings qw(redefine); ## no critic
 
 sub new
 {
@@ -464,6 +470,8 @@ use strict;
 use warnings;
 use base qw(VC2012Project);
 
+no warnings qw(redefine); ## no critic
+
 sub new
 {
 	my $classname = shift;
@@ -487,6 +495,8 @@ use strict;
 use warnings;
 use base qw(VC2012Project);
 
+no warnings qw(redefine); ## no critic
+
 sub new
 {
 	my $classname = shift;
@@ -509,6 +519,8 @@ package VC2017Project;
 use strict;
 use warnings;
 use base qw(VC2012Project);
+
+no warnings qw(redefine); ## no critic
 
 sub new
 {
