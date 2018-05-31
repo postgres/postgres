@@ -1920,6 +1920,7 @@ _outAppendPath(StringInfo str, const AppendPath *node)
 
 	WRITE_NODE_FIELD(partitioned_rels);
 	WRITE_NODE_FIELD(subpaths);
+	WRITE_INT_FIELD(first_partial_path);
 }
 
 static void
@@ -2224,6 +2225,7 @@ _outHashPath(StringInfo str, const HashPath *node)
 
 	WRITE_NODE_FIELD(path_hashclauses);
 	WRITE_INT_FIELD(num_batches);
+	WRITE_FLOAT_FIELD(inner_rows_total, "%.0f");
 }
 
 static void
