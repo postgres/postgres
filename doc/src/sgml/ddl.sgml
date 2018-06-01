@@ -2979,15 +2979,16 @@ VALUES ('Albany', NULL, NULL, 'NY');
    <para>
     Individual partitions are linked to the partitioned table with inheritance
     behind-the-scenes; however, it is not possible to use some of the
-    inheritance features discussed in the previous section with partitioned
-    tables and partitions.  For example, a partition cannot have any parents
-    other than the partitioned table it is a partition of, nor can a regular
-    table inherit from a partitioned table making the latter its parent.
-    That means partitioned tables and partitions do not participate in
-    inheritance with regular tables.  Since a partition hierarchy consisting
-    of the partitioned table and its partitions is still an inheritance
-    hierarchy, all the normal rules of inheritance apply as described in
-    <xref linkend="ddl-inherit"/> with some exceptions, most notably:
+    generic features of inheritance (discussed below) with declaratively
+    partitioned tables or their partitions.  For example, a partition
+    cannot have any parents other than the partitioned table it is a
+    partition of, nor can a regular table inherit from a partitioned table
+    making the latter its parent.  That means partitioned tables and their
+    partitions do not participate in inheritance with regular tables.
+    Since a partition hierarchy consisting of the partitioned table and its
+    partitions is still an inheritance hierarchy, all the normal rules of
+    inheritance apply as described in <xref linkend="ddl-inherit"/> with
+    some exceptions, most notably:
 
     <itemizedlist>
      <listitem>
@@ -3003,23 +3004,28 @@ VALUES ('Albany', NULL, NULL, 'NY');
      <listitem>
       <para>
        Using <literal>ONLY</literal> to add or drop a constraint on only the
-       partitioned table is supported when there are no partitions.  Once
+       partitioned table is supported as long as there are no partitions.  Once
        partitions exist, using <literal>ONLY</literal> will result in an error
        as adding or dropping constraints on only the partitioned table, when
-       partitions exist, is not supported.  Instead, constraints can be added
-       or dropped, when they are not present in the parent table, directly on
-       the partitions.  As a partitioned table does not have any data
-       directly, attempts to use <command>TRUNCATE</command>
-       <literal>ONLY</literal> on a partitioned table will always return an
-       error.
+       partitions exist, is not supported.  Instead, constraints on the
+       partitions themselves can be added and (if they are not present in the
+       parent table) dropped.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       As a partitioned table does not have any data directly, attempts to use
+       <command>TRUNCATE</command> <literal>ONLY</literal> on a partitioned
+       table will always return an error.
       </para>
      </listitem>
 
      <listitem>
       <para>
        Partitions cannot have columns that are not present in the parent.  It
-       is neither possible to specify columns when creating partitions with
-       <command>CREATE TABLE</command> nor is it possible to add columns to
+       is not possible to specify columns when creating partitions with
+       <command>CREATE TABLE</command>, nor is it possible to add columns to
        partitions after-the-fact using <command>ALTER TABLE</command>.  Tables may be
        added as a partition with <command>ALTER TABLE ... ATTACH PARTITION</command>
        only if their columns exactly match the parent, including any
@@ -3044,7 +3050,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
    <para>
     Updating the partition key of a row might cause it to be moved into a
-    different partition where this row satisfies its partition constraint.
+    different partition where this row satisfies the partition bounds.
    </para>
 
    <sect3 id="ddl-partitioning-declarative-example">
@@ -3358,15 +3364,15 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      While the built-in declarative partitioning is suitable for most
      common use cases, there are some circumstances where a more flexible
      approach may be useful.  Partitioning can be implemented using table
-     inheritance, which allows for several features which are not supported
+     inheritance, which allows for several features not supported
      by declarative partitioning, such as:
 
      <itemizedlist>
       <listitem>
        <para>
-        Partitioning enforces a rule that all partitions must have exactly
-        the same set of columns as the parent, but table inheritance allows
-        children to have extra columns not present in the parent.
+        For declarative partitioning, partitions must have exactly the same set
+        of columns as the partitioned table, whereas with table inheritance,
+        child tables may have extra columns not present in the parent.
        </para>
       </listitem>
 
@@ -3768,7 +3774,8 @@ ANALYZE measurement;
 
    <para>
     <firstterm>Partition pruning</firstterm> is a query optimization technique
-    that improves performance for partitioned tables.  As an example:
+    that improves performance for declaratively partitioned tables.
+    As an example:
 
 <programlisting>
 SET enable_partition_pruning = on;                 -- the default
@@ -3786,12 +3793,11 @@ SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    </para>
 
    <para>
-    You can use the <command>EXPLAIN</command> command to show the
-    difference between a plan whose partitions have been pruned from one
-    whose partitions haven't, by using the
-    <xref linkend="guc-enable-partition-pruning"/> configuration
-    parameter.  A typical unoptimized plan for this type of table setup
-    is:
+    By using the EXPLAIN command and the <xref
+    linkend="guc-enable-partition-pruning"/> configuration parameter, it's
+    possible to show the difference between a plan for which partitions have
+    been pruned and one for which they have not.  A typical unoptimized
+    plan for this type of table setup is:
 <programlisting>
 SET enable_partition_pruning = off;
 EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
@@ -3892,9 +3898,9 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
      Currently, pruning of partitions during the planning of an
      <command>UPDATE</command> or <command>DELETE</command> command is
      implemented using the constraint exclusion method (however, it is
-     still ruled by the <literal>enable_partition_pruning</literal>
-     setting instead of <literal>constraint_exclusion</literal>) &mdash;
-     see the next section for details and caveats that apply.
+     controlled by the <literal>enable_partition_pruning</literal> rather than
+     <literal>constraint_exclusion</literal>) &mdash; see the following section
+     for details and caveats that apply.
     </para>
 
     <para>
@@ -3927,10 +3933,10 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     Constraint exclusion works in a very similar way to partition
     pruning, except that it uses each table's <literal>CHECK</literal>
     constraints &mdash; which gives it its name &mdash; whereas partition
-    pruning uses the table's partitioning constraint, which exists only in
-    the case of declarative partitioning.  Another difference is that it
-    is only applied at plan time; there is no attempt to remove
-    partitions at execution time.
+    pruning uses the table's partition bounds, which exists only in the
+    case of declarative partitioning.  Another difference is that
+    constraint exclusion is only applied at plan time; there is no attempt
+    to remove partitions at execution time.
    </para>
 
    <para>
@@ -3959,8 +3965,8 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    <itemizedlist>
     <listitem>
      <para>
-      Constraint exclusion is only applied during query planning; it is
-      not applied at execution time like partition pruning does.
+      Constraint exclusion is only applied during query planning; unlike
+      partition pruning, it cannot be applied during query execution.
      </para>
     </listitem>
 
@@ -3970,7 +3976,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
       clause contains constants (or externally supplied parameters).
       For example, a comparison against a non-immutable function such as
       <function>CURRENT_TIMESTAMP</function> cannot be optimized, since the
-      planner cannot know which partition the function value might fall
+      planner cannot know which partition the function's value might fall
       into at run time.
      </para>
     </listitem>
