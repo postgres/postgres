@@ -3406,7 +3406,7 @@ RemovePartitionKeyByRelId(Oid relid)
  * pg_partitioned_table.
  *
  * Also, invalidate the parent's relcache, so that the next rebuild will load
- * the new partition's info into its partition descriptor.  If there is a
+ * the new partition's info into its partition descriptor.  If there is a
  * default partition, we must invalidate its relcache entry as well.
  */
 void
