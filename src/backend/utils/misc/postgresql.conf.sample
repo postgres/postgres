@@ -141,7 +141,7 @@
 #temp_file_limit = -1			# limits per-process temp file space
 					# in kB, or -1 for no limit
 
-# - Kernel Resource -
+# - Kernel Resources -
 
 #max_files_per_process = 1000		# min 25
 					# (change requires restart)
