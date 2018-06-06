@@ -614,7 +614,7 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
 
 	if ((endpos = lseek(fd, 0, SEEK_END)) < 0)
 	{
-		slru_errcause = SLRU_OPEN_FAILED;
+		slru_errcause = SLRU_SEEK_FAILED;
 		slru_errno = errno;
 		SlruReportIOError(ctl, pageno, 0);
 	}
