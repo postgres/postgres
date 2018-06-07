@@ -1907,7 +1907,7 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
  * GetRunningTransactionData -- returns information about running transactions.
  *
  * Similar to GetSnapshotData but returns more information. We include
- * all PGXACTs with an assigned TransactionId, even VACUUM processes.
+ * all PGXACTs with an assigned TransactionId, but not VACUUM processes.
  *
  * We acquire XidGenLock and ProcArrayLock, but the caller is responsible for
  * releasing them. Acquiring XidGenLock ensures that no new XIDs enter the proc
@@ -1994,6 +1994,10 @@ GetRunningTransactionData(void)
 		int			pgprocno = arrayP->pgprocnos[index];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		TransactionId xid;
+
+		/* Ignore procs running LAZY VACUUM */
+		if (pgxact->vacuumFlags & PROC_IN_VACUUM)
+			continue;
 
 		/* Fetch xid just once - see GetNewTransactionId */
 		xid = pgxact->xid;
