@@ -320,7 +320,7 @@ set up for recursive handling of subqueries
    split up the qual into restrictions (a=1) and joins (b=c)
    find qual clauses that enable merge and hash joins
 ----make_one_rel()
-     set_base_rel_pathlist()
+     set_base_rel_pathlists()
       find seqscan and all index paths for each base relation
       find selectivity of columns used in joins
      make_rel_from_joinlist()
