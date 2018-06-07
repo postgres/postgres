@@ -1162,13 +1162,10 @@ lreplace:;
 		}
 
 		/*
-		 * Check the constraints of the tuple.  Note that we pass the same
-		 * slot for the orig_slot argument, because unlike ExecInsert(), no
-		 * tuple-routing is performed here, hence the slot remains unchanged.
-		 * We've already checked the partition constraint above; however, we
-		 * must still ensure the tuple passes all other constraints, so we
-		 * will call ExecConstraints() and have it validate all remaining
-		 * checks.
+		 * Check the constraints of the tuple.  We've already checked the
+		 * partition constraint above; however, we must still ensure the tuple
+		 * passes all other constraints, so we will call ExecConstraints() and
+		 * have it validate all remaining checks.
 		 */
 		if (resultRelationDesc->rd_att->constr)
 			ExecConstraints(resultRelInfo, slot, estate, false);
