@@ -79,8 +79,8 @@ PostgreSQL documentation
      <listitem>
       <para>
        Set a compatibility mode.  <replaceable>mode</replaceable> can
-       be <literal>INFORMIX</literal> or
-       <literal>INFORMIX_SE</literal>.
+       be <literal>INFORMIX</literal>,
+       <literal>INFORMIX_SE</literal>, or <literal>ORACLE</literal>.
       </para>
      </listitem>
     </varlistentry>
