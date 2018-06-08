@@ -790,21 +790,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--lock-wait-timeout=<replaceable class="parameter">timeout</replaceable></option></term>
-      <listitem>
-       <para>
-        Do not wait forever to acquire shared table locks at the beginning of
-        the dump. Instead fail if unable to lock a table within the specified
-        <replaceable class="parameter">timeout</replaceable>. The timeout may be
-        specified in any of the formats accepted by <command>SET
-        statement_timeout</command>.  (Allowed formats vary depending on the server
-        version you are dumping from, but an integer number of milliseconds
-        is accepted by all versions.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>--load-via-partition-root</option></term>
       <listitem>
        <para>
@@ -815,6 +800,21 @@ PostgreSQL documentation
         they did on the original server.  This could happen, for example, if
         the partitioning column is of type text and the two system have
         different definitions of the collation used to partition the data.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--lock-wait-timeout=<replaceable class="parameter">timeout</replaceable></option></term>
+      <listitem>
+       <para>
+        Do not wait forever to acquire shared table locks at the beginning of
+        the dump. Instead fail if unable to lock a table within the specified
+        <replaceable class="parameter">timeout</replaceable>. The timeout may be
+        specified in any of the formats accepted by <command>SET
+        statement_timeout</command>.  (Allowed formats vary depending on the server
+        version you are dumping from, but an integer number of milliseconds
+        is accepted by all versions.)
        </para>
       </listitem>
      </varlistentry>

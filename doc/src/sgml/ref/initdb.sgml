@@ -334,27 +334,6 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-       <term><option>--wal-segsize=<replaceable>size</replaceable></option></term>
-       <listitem>
-        <para>
-         Set the <firstterm>WAL segment size</firstterm>, in megabytes.  This
-         is the size of each individual file in the WAL log.  The default size
-         is 16 megabytes.  The value must be a power of 2 between 1 and 1024
-         (megabytes).  This option can only be set during initialization, and
-         cannot be changed later.
-        </para>
-
-        <para>
-         It may be useful to adjust this size to control the granularity of
-         WAL log shipping or archiving.  Also, in databases with a high volume
-         of WAL, the sheer number of WAL files per directory can become a
-         performance and management problem.  Increasing the WAL file size
-         will reduce the number of WAL files.
-        </para>
-       </listitem>
-      </varlistentry>
-
       <varlistentry>
       <term><option>-X <replaceable class="parameter">directory</replaceable></option></term>
       <term><option>--waldir=<replaceable class="parameter">directory</replaceable></option></term>
@@ -366,6 +345,26 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>--wal-segsize=<replaceable>size</replaceable></option></term>
+      <listitem>
+       <para>
+        Set the <firstterm>WAL segment size</firstterm>, in megabytes.  This
+        is the size of each individual file in the WAL log.  The default size
+        is 16 megabytes.  The value must be a power of 2 between 1 and 1024
+        (megabytes).  This option can only be set during initialization, and
+        cannot be changed later.
+       </para>
+
+       <para>
+        It may be useful to adjust this size to control the granularity of
+        WAL log shipping or archiving.  Also, in databases with a high volume
+        of WAL, the sheer number of WAL files per directory can become a
+        performance and management problem.  Increasing the WAL file size
+        will reduce the number of WAL files.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 
