@@ -2456,7 +2456,7 @@ select json_to_tsvector('null'::json, '"all"');
 
 select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '""');
 ERROR:  wrong flag in flag array: ""
-HINT:  Possible values are: "string", "numeric", "boolean", "key" and "all"
+HINT:  Possible values are: "string", "numeric", "boolean", "key", and "all"
 select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '{}');
 ERROR:  wrong flag type, only arrays and scalars are allowed
 select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '[]');
@@ -2467,10 +2467,10 @@ select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d":
 
 select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, 'null');
 ERROR:  flag array element is not a string
-HINT:  Possible values are: "string", "numeric", "boolean", "key" and "all"
+HINT:  Possible values are: "string", "numeric", "boolean", "key", and "all"
 select json_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::json, '["all", null]');
 ERROR:  flag array element is not a string
-HINT:  Possible values are: "string", "numeric", "boolean", "key" and "all"
+HINT:  Possible values are: "string", "numeric", "boolean", "key", and "all"
 -- ts_headline for json
 select ts_headline('{"a": "aaa bbb", "b": {"c": "ccc ddd fff", "c1": "ccc1 ddd1"}, "d": ["ggg hhh", "iii jjj"]}'::json, tsquery('bbb & ddd & hhh'));
                                                ts_headline                                               
