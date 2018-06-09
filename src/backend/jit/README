@@ -11,10 +11,10 @@ is possible to generate a function than can be natively executed by
 the CPU that just handles that expression, yielding a speedup.
 
 That this is done at query execution time, possibly even only in cases
-the relevant task is done a number of times, makes it JIT, rather than
-ahead-of-time (AOT). Given the way JIT compilation is used in
-PostgreSQL, the lines between interpretation, AOT and JIT are somewhat
-blurry.
+where the relevant task is done a number of times, makes it JIT,
+rather than ahead-of-time (AOT). Given the way JIT compilation is used
+in PostgreSQL, the lines between interpretation, AOT and JIT are
+somewhat blurry.
 
 Note that the interpreted program turned into a native program does
 not necessarily have to be a program in the classical sense. E.g. it
