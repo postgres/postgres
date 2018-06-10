@@ -348,8 +348,8 @@ execute ab_q1 (1, 8);
 explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2);
 explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 4);
 
--- Ensure a mix of external and exec params work together at different
--- levels of partitioning.
+-- Ensure a mix of PARAM_EXTERN and PARAM_EXEC Params work together at
+-- different levels of partitioning.
 prepare ab_q2 (int, int) as
 select a from ab where a between $1 and $2 and b < (select 3);
 
@@ -361,7 +361,7 @@ execute ab_q2 (1, 8);
 
 explain (analyze, costs off, summary off, timing off) execute ab_q2 (2, 2);
 
--- As above, but with swap the exec param to the first partition level
+-- As above, but swap the PARAM_EXEC Param to the first partition level
 prepare ab_q3 (int, int) as
 select a from ab where b between $1 and $2 and a < (select 3);
 
@@ -395,6 +395,22 @@ move 3 from cur;
 fetch backward all from cur;
 
 commit;
+
+begin;
+
+-- Test run-time pruning using stable functions
+create function list_part_fn(int) returns int as $$ begin return $1; end;$$ language plpgsql stable;
+
+-- Ensure pruning works using a stable function containing no Vars
+explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1);
+
+-- Ensure pruning does not take place when the function has a Var parameter
+explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(a);
+
+-- Ensure pruning does not take place when the expression contains a Var.
+explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1) + a;
+
+rollback;
 
 drop table list_part;
 
@@ -458,7 +474,7 @@ select explain_parallel_append('execute ab_q5 (2, 3, 3)');
 -- We'll still get a single subplan in this case, but it should not be scanned.
 select explain_parallel_append('execute ab_q5 (33, 44, 55)');
 
--- Test Parallel Append with exec params
+-- Test Parallel Append with PARAM_EXEC Params
 select explain_parallel_append('select count(*) from ab where (a = (select 1) or a = (select 3)) and b = 2');
 
 -- Test pruning during parallel nested loop query
@@ -485,6 +501,10 @@ set enable_hashjoin = 0;
 set enable_mergejoin = 0;
 
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(0, 0, 1)');
+
+-- Ensure the same partitions are pruned when we make the nested loop
+-- parameter an Expr rather than a plain Param.
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a + 0 where a.a in(0, 0, 1)');
 
 insert into lprt_a values(3),(3);
 

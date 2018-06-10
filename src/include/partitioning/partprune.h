@@ -40,16 +40,10 @@ typedef struct PartitionPruneContext
 	PartitionBoundInfo boundinfo;
 
 	/*
-	 * Can be set when the context is used from the executor to allow params
-	 * found matching the partition key to be evaluated.
+	 * This will be set when the context is used from the executor, to allow
+	 * Params to be evaluated.
 	 */
 	PlanState  *planstate;
-
-	/*
-	 * Parameters that are safe to be used for partition pruning. execparams
-	 * are not safe to use until the executor is running.
-	 */
-	Bitmapset  *safeparams;
 
 	/*
 	 * Array of ExprStates, indexed as per PruneCtxStateIdx; one for each
@@ -57,6 +51,16 @@ typedef struct PartitionPruneContext
 	 * otherwise NULL.
 	 */
 	ExprState **exprstates;
+
+	/*
+	 * Similar array of flags, each true if corresponding 'exprstate'
+	 * expression contains any PARAM_EXEC Params.  (Can be NULL if planstate
+	 * is NULL.)
+	 */
+	bool	   *exprhasexecparam;
+
+	/* true if it's safe to evaluate PARAM_EXEC Params */
+	bool		evalexecparams;
 } PartitionPruneContext;
 
 #define PruneCxtStateIdx(partnatts, step_id, keyno) \

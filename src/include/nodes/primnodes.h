@@ -1597,11 +1597,17 @@ typedef struct PartitionPruneInfo
 	List	   *pruning_steps;	/* List of PartitionPruneStep */
 	Bitmapset  *present_parts;	/* Indexes of all partitions which subnodes
 								 * are present for. */
-	int			nparts;			/* The length of the following two arrays */
+	int			nparts;			/* Length of subnode_map[] and subpart_map[] */
+	int			nexprs;			/* Length of hasexecparam[] */
 	int		   *subnode_map;	/* subnode index by partition id, or -1 */
 	int		   *subpart_map;	/* subpart index by partition id, or -1 */
-	Bitmapset  *extparams;		/* All external paramids seen in prunesteps */
-	Bitmapset  *execparams;		/* All exec paramids seen in prunesteps */
+	bool	   *hasexecparam;	/* true if corresponding pruning_step contains
+								 * any PARAM_EXEC Params. */
+	bool		do_initial_prune;	/* true if pruning should be performed
+									 * during executor startup. */
+	bool		do_exec_prune;	/* true if pruning should be performed during
+								 * executor run. */
+	Bitmapset  *execparamids;	/* All PARAM_EXEC Param IDs in pruning_steps */
 } PartitionPruneInfo;
 
 #endif							/* PRIMNODES_H */

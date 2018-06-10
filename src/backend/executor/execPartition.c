@@ -48,10 +48,10 @@ static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
 									 bool *isnull,
 									 int maxfieldlen);
 static List *adjust_partition_tlist(List *tlist, TupleConversionMap *map);
-static void find_subplans_for_params_recurse(PartitionPruneState *prunestate,
-								 PartitionPruningData *pprune,
-								 bool allparams,
-								 Bitmapset **validsubplans);
+static void find_matching_subplans_recurse(PartitionPruneState *prunestate,
+							   PartitionPruningData *pprune,
+							   bool initial_prune,
+							   Bitmapset **validsubplans);
 
 
 /*
@@ -1338,25 +1338,23 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
  * here are designed to work with any node type which supports an arbitrary
  * number of subnodes, e.g. Append, MergeAppend.
  *
- * Normally this pruning work is performed by the query planner's partition
- * pruning code, however, the planner is limited to only being able to prune
- * away unneeded partitions using quals which compare the partition key to a
- * value which is known to be Const during planning.  To allow the same
- * pruning to be performed for values which are only determined during
- * execution, we must make an additional pruning attempt during execution.
+ * When pruning involves comparison of a partition key to a constant, it's
+ * done by the planner.  However, if we have a comparison to a non-constant
+ * but not volatile expression, that presents an opportunity for run-time
+ * pruning by the executor, allowing irrelevant partitions to be skipped
+ * dynamically.
  *
- * Here we support pruning using both external and exec Params.  The main
- * difference between these that we need to concern ourselves with is the
- * time when the values of the Params are known.  External Param values are
- * known at any time of execution, including executor startup, but exec Param
- * values are only known when the executor is running.
+ * We must distinguish expressions containing PARAM_EXEC Params from
+ * expressions that don't contain those.  Even though a PARAM_EXEC Param is
+ * considered to be a stable expression, it can change value from one node
+ * scan to the next during query execution.  Stable comparison expressions
+ * that don't involve such Params allow partition pruning to be done once
+ * during executor startup.  Expressions that do involve such Params require
+ * us to prune separately for each scan of the parent plan node.
  *
- * For external Params we may be able to prune away unneeded partitions
- * during executor startup.  This has the added benefit of not having to
- * initialize the unneeded subnodes at all.  This is useful as it can save
- * quite a bit of effort during executor startup.
+ * Note that pruning away unneeded subnodes during executor startup has the
+ * added benefit of not having to initialize the unneeded subnodes at all.
  *
- * For exec Params, we must delay pruning until the executor is running.
  *
  * Functions:
  *
@@ -1369,19 +1367,20 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
  *		planner's partition prune function into subnode indexes.
  *
  * ExecFindInitialMatchingSubPlans:
- *		Returns indexes of matching subnodes utilizing only external Params
- *		to eliminate subnodes.  The function must only be called during
- *		executor startup for the given node before the subnodes themselves
- *		are initialized.  Subnodes which are found not to match by this
- *		function must not be included in the node's list of subnodes as this
- *		function performs a remap of the partition index to subplan index map
- *		and the newly created map provides indexes only for subnodes which
- *		remain after calling this function.
+ *		Returns indexes of matching subnodes.  Partition pruning is attempted
+ *		without any evaluation of expressions containing PARAM_EXEC Params.
+ *		This function must be called during executor startup for the given
+ *		node before the subnodes themselves are initialized.  Subnodes which
+ *		are found not to match by this function must not be included in the
+ *		node's list of subnodes as this function performs a remap of the
+ *		partition index to subplan index map and the newly created map
+ *		provides indexes only for subnodes which remain after calling this
+ *		function.
  *
  * ExecFindMatchingSubPlans:
- *		Returns indexes of matching subnodes utilizing all Params to eliminate
- *		subnodes which can't possibly contain matching tuples.  This function
- *		can only be called while the executor is running.
+ *		Returns indexes of matching subnodes after evaluating all available
+ *		expressions.  This function can only be called while the executor is
+ *		running.
  *-------------------------------------------------------------------------
  */
 
@@ -1416,8 +1415,9 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 	 */
 	prunestate->partprunedata = prunedata;
 	prunestate->num_partprunedata = list_length(partitionpruneinfo);
-	prunestate->extparams = NULL;
-	prunestate->execparams = NULL;
+	prunestate->do_initial_prune = false;	/* may be set below */
+	prunestate->do_exec_prune = false;	/* may be set below */
+	prunestate->execparamids = NULL;
 
 	/*
 	 * Create a sub memory context which we'll use when making calls to the
@@ -1444,18 +1444,19 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 		int			partnatts;
 		int			n_steps;
 
-		pprune->present_parts = bms_copy(pinfo->present_parts);
-		pprune->subnode_map = palloc(sizeof(int) * pinfo->nparts);
-
 		/*
 		 * We must make a copy of this rather than pointing directly to the
 		 * plan's version as we may end up making modifications to it later.
 		 */
+		pprune->subnode_map = palloc(sizeof(int) * pinfo->nparts);
 		memcpy(pprune->subnode_map, pinfo->subnode_map,
 			   sizeof(int) * pinfo->nparts);
 
 		/* We can use the subpart_map verbatim, since we never modify it */
 		pprune->subpart_map = pinfo->subpart_map;
+
+		/* present_parts is also subject to later modification */
+		pprune->present_parts = bms_copy(pinfo->present_parts);
 
 		/*
 		 * Grab some info from the table's relcache; lock was already obtained
@@ -1465,7 +1466,6 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 
 		partkey = RelationGetPartitionKey(rel);
 		partdesc = RelationGetPartitionDesc(rel);
-		n_steps = list_length(pinfo->pruning_steps);
 
 		context->strategy = partkey->strategy;
 		context->partnatts = partnatts = partkey->partnatts;
@@ -1476,10 +1476,11 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 		context->nparts = pinfo->nparts;
 		context->boundinfo = partition_bounds_copy(partdesc->boundinfo, partkey);
 		context->planstate = planstate;
-		context->safeparams = NULL; /* empty for now */
-		context->exprstates = palloc0(sizeof(ExprState *) * n_steps * partnatts);
 
-		/* Initialize expression states for each expression */
+		/* Initialize expression state for each expression we need */
+		n_steps = list_length(pinfo->pruning_steps);
+		context->exprstates = (ExprState **)
+			palloc0(sizeof(ExprState *) * n_steps * partnatts);
 		foreach(lc2, pinfo->pruning_steps)
 		{
 			PartitionPruneStepOp *step = (PartitionPruneStepOp *) lfirst(lc2);
@@ -1496,13 +1497,14 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 			foreach(lc3, step->exprs)
 			{
 				Expr	   *expr = (Expr *) lfirst(lc3);
-				int			stateidx;
 
 				/* not needed for Consts */
 				if (!IsA(expr, Const))
 				{
-					stateidx = PruneCxtStateIdx(partnatts,
-												step->step.step_id, keyno);
+					int			stateidx = PruneCxtStateIdx(partnatts,
+															step->step.step_id,
+															keyno);
+
 					context->exprstates[stateidx] =
 						ExecInitExpr(expr, context->planstate);
 				}
@@ -1510,31 +1512,28 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 			}
 		}
 
+		/* Array is not modified at runtime, so just point to plan's copy */
+		context->exprhasexecparam = pinfo->hasexecparam;
+
 		pprune->pruning_steps = pinfo->pruning_steps;
-		pprune->extparams = bms_copy(pinfo->extparams);
-		pprune->allparams = bms_union(pinfo->extparams, pinfo->execparams);
+		pprune->do_initial_prune = pinfo->do_initial_prune;
+		pprune->do_exec_prune = pinfo->do_exec_prune;
+
+		/* Record if pruning would be useful at any level */
+		prunestate->do_initial_prune |= pinfo->do_initial_prune;
+		prunestate->do_exec_prune |= pinfo->do_exec_prune;
 
 		/*
-		 * Accumulate the paramids which match the partitioned keys of all
-		 * partitioned tables.
+		 * Accumulate the IDs of all PARAM_EXEC Params affecting the
+		 * partitioning decisions at this node.
 		 */
-		prunestate->extparams = bms_add_members(prunestate->extparams,
-												pinfo->extparams);
-
-		prunestate->execparams = bms_add_members(prunestate->execparams,
-												 pinfo->execparams);
+		prunestate->execparamids = bms_add_members(prunestate->execparamids,
+												   pinfo->execparamids);
 
 		relation_close(rel, NoLock);
 
 		i++;
 	}
-
-	/*
-	 * Cache the union of the paramids of both types.  This saves having to
-	 * recalculate it everytime we need to know what they are.
-	 */
-	prunestate->allparams = bms_union(prunestate->extparams,
-									  prunestate->execparams);
 
 	return prunestate;
 }
@@ -1543,9 +1542,8 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
  * ExecFindInitialMatchingSubPlans
  *		Determine which subset of subplan nodes we need to initialize based
  *		on the details stored in 'prunestate'.  Here we only determine the
- *		matching partitions using values known during plan startup, which is
- *		only external Params.  Exec Params will be unknown at this time.  We
- *		must delay pruning using exec Params until the actual executor run.
+ *		matching partitions using values known during plan startup, which
+ *		excludes any expressions containing PARAM_EXEC Params.
  *
  * It is expected that callers of this function do so only once during their
  * init plan.  The caller must only initialize the subnodes which are returned
@@ -1553,8 +1551,6 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
  * function has been called, future calls to ExecFindMatchingSubPlans will
  * return its matching subnode indexes assuming that the caller discarded
  * the original non-matching subnodes.
- *
- * This function must only be called if 'prunestate' has any extparams.
  *
  * 'nsubnodes' must be passed as the total number of unpruned subnodes.
  */
@@ -1565,11 +1561,7 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubnodes)
 	MemoryContext oldcontext;
 	Bitmapset  *result = NULL;
 
-	/*
-	 * Ensure there's actually external params, or we've not been called
-	 * already.
-	 */
-	Assert(!bms_is_empty(prunestate->extparams));
+	Assert(prunestate->do_initial_prune);
 
 	pprune = prunestate->partprunedata;
 
@@ -1579,27 +1571,17 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubnodes)
 	 */
 	oldcontext = MemoryContextSwitchTo(prunestate->prune_context);
 
-	/* Determine which subnodes match the external params */
-	find_subplans_for_params_recurse(prunestate, pprune, false, &result);
+	/* Perform pruning without using PARAM_EXEC Params */
+	find_matching_subplans_recurse(prunestate, pprune, true, &result);
 
 	MemoryContextSwitchTo(oldcontext);
 
-	/* Move to the correct memory context */
+	/* Copy result out of the temp context before we reset it */
 	result = bms_copy(result);
 
 	MemoryContextReset(prunestate->prune_context);
-
-	/*
-	 * Record that partition pruning has been performed for external params.
-	 * These are not required again afterwards, and nullifying them helps
-	 * ensure nothing accidentally calls this function twice on the same
-	 * PartitionPruneState.
-	 *
-	 * (Note we keep prunestate->allparams, because we do use that one
-	 * repeatedly in ExecFindMatchingSubPlans).
-	 */
-	bms_free(prunestate->extparams);
-	prunestate->extparams = NULL;
+	/* Expression eval may have used space in node's ps_ExprContext too */
+	ResetExprContext(pprune->context.planstate->ps_ExprContext);
 
 	/*
 	 * If any subnodes were pruned, we must re-sequence the subnode indexes so
@@ -1669,6 +1651,41 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubnodes)
 			}
 		}
 
+		/*
+		 * Now we must determine which sub-partitioned tables still have
+		 * unpruned partitions.  The easiest way to do this is to simply loop
+		 * over each PartitionPruningData again checking if there are any
+		 * 'present_parts' in the sub-partitioned table.  We needn't bother
+		 * doing this if there are no sub-partitioned tables.
+		 */
+		if (prunestate->num_partprunedata > 1)
+		{
+			for (i = 0; i < prunestate->num_partprunedata; i++)
+			{
+				int			nparts;
+				int			j;
+
+				pprune = &prunestate->partprunedata[i];
+				nparts = pprune->context.nparts;
+
+				for (j = 0; j < nparts; j++)
+				{
+					int			subidx = pprune->subpart_map[j];
+
+					if (subidx >= 0)
+					{
+						PartitionPruningData *subprune;
+
+						subprune = &prunestate->partprunedata[subidx];
+
+						if (!bms_is_empty(subprune->present_parts))
+							pprune->present_parts =
+								bms_add_member(pprune->present_parts, j);
+					}
+				}
+			}
+		}
+
 		pfree(new_subnode_indexes);
 	}
 
@@ -1678,9 +1695,9 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubnodes)
 /*
  * ExecFindMatchingSubPlans
  *		Determine which subplans match the pruning steps detailed in
- *		'pprune' for the current Param values.
+ *		'pprune' for the current comparison expression values.
  *
- * Here we utilize both external and exec Params for pruning.
+ * Here we assume we may evaluate PARAM_EXEC Params.
  */
 Bitmapset *
 ExecFindMatchingSubPlans(PartitionPruneState *prunestate)
@@ -1697,63 +1714,58 @@ ExecFindMatchingSubPlans(PartitionPruneState *prunestate)
 	 */
 	oldcontext = MemoryContextSwitchTo(prunestate->prune_context);
 
-	find_subplans_for_params_recurse(prunestate, pprune, true, &result);
+	find_matching_subplans_recurse(prunestate, pprune, false, &result);
 
 	MemoryContextSwitchTo(oldcontext);
 
-	/* Move to the correct memory context */
+	/* Copy result out of the temp context before we reset it */
 	result = bms_copy(result);
 
 	MemoryContextReset(prunestate->prune_context);
+	/* Expression eval may have used space in node's ps_ExprContext too */
+	ResetExprContext(pprune->context.planstate->ps_ExprContext);
 
 	return result;
 }
 
 /*
- * find_subplans_for_params_recurse
+ * find_matching_subplans_recurse
  *		Recursive worker function for ExecFindMatchingSubPlans and
  *		ExecFindInitialMatchingSubPlans
+ *
+ * Adds valid (non-prunable) subplan IDs to *validsubplans
  */
 static void
-find_subplans_for_params_recurse(PartitionPruneState *prunestate,
-								 PartitionPruningData *pprune,
-								 bool allparams,
-								 Bitmapset **validsubplans)
+find_matching_subplans_recurse(PartitionPruneState *prunestate,
+							   PartitionPruningData *pprune,
+							   bool initial_prune,
+							   Bitmapset **validsubplans)
 {
-	PartitionPruneContext *context = &pprune->context;
 	Bitmapset  *partset;
-	Bitmapset  *pruneparams;
 	int			i;
 
 	/* Guard against stack overflow due to overly deep partition hierarchy. */
 	check_stack_depth();
 
-	/*
-	 * Use only external params unless we've been asked to also use exec
-	 * params too.
-	 */
-	if (allparams)
-		pruneparams = pprune->allparams;
-	else
-		pruneparams = pprune->extparams;
-
-	/*
-	 * We only need to determine the matching partitions if there are any
-	 * params matching the partition key at this level.  If there are no
-	 * matching params, then we can simply return all subnodes which belong to
-	 * this parent partition.  The planner should have already determined
-	 * these to be the minimum possible set.  We must still recursively visit
-	 * any subpartitioned tables as we may find their partition keys match
-	 * some Params at their level.
-	 */
-	if (!bms_is_empty(pruneparams))
+	/* Only prune if pruning would be useful at this level. */
+	if (initial_prune ? pprune->do_initial_prune : pprune->do_exec_prune)
 	{
-		context->safeparams = pruneparams;
+		PartitionPruneContext *context = &pprune->context;
+
+		/* Set whether we can evaluate PARAM_EXEC Params or not */
+		context->evalexecparams = !initial_prune;
+
 		partset = get_matching_partitions(context,
 										  pprune->pruning_steps);
 	}
 	else
+	{
+		/*
+		 * If no pruning is to be done, just include all partitions at this
+		 * level.
+		 */
 		partset = pprune->present_parts;
+	}
 
 	/* Translate partset into subnode indexes */
 	i = -1;
@@ -1767,9 +1779,9 @@ find_subplans_for_params_recurse(PartitionPruneState *prunestate,
 			int			partidx = pprune->subpart_map[i];
 
 			if (partidx != -1)
-				find_subplans_for_params_recurse(prunestate,
-												 &prunestate->partprunedata[partidx],
-												 allparams, validsubplans);
+				find_matching_subplans_recurse(prunestate,
+											   &prunestate->partprunedata[partidx],
+											   initial_prune, validsubplans);
 			else
 			{
 				/*

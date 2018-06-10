@@ -2175,10 +2175,13 @@ _copyPartitionPruneInfo(const PartitionPruneInfo *from)
 	COPY_NODE_FIELD(pruning_steps);
 	COPY_BITMAPSET_FIELD(present_parts);
 	COPY_SCALAR_FIELD(nparts);
+	COPY_SCALAR_FIELD(nexprs);
 	COPY_POINTER_FIELD(subnode_map, from->nparts * sizeof(int));
 	COPY_POINTER_FIELD(subpart_map, from->nparts * sizeof(int));
-	COPY_BITMAPSET_FIELD(extparams);
-	COPY_BITMAPSET_FIELD(execparams);
+	COPY_POINTER_FIELD(hasexecparam, from->nexprs * sizeof(bool));
+	COPY_SCALAR_FIELD(do_initial_prune);
+	COPY_SCALAR_FIELD(do_exec_prune);
+	COPY_BITMAPSET_FIELD(execparamids);
 
 	return newnode;
 }

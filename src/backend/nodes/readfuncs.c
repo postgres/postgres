@@ -1363,10 +1363,13 @@ _readPartitionPruneInfo(void)
 	READ_NODE_FIELD(pruning_steps);
 	READ_BITMAPSET_FIELD(present_parts);
 	READ_INT_FIELD(nparts);
+	READ_INT_FIELD(nexprs);
 	READ_INT_ARRAY(subnode_map, local_node->nparts);
 	READ_INT_ARRAY(subpart_map, local_node->nparts);
-	READ_BITMAPSET_FIELD(extparams);
-	READ_BITMAPSET_FIELD(execparams);
+	READ_BOOL_ARRAY(hasexecparam, local_node->nexprs);
+	READ_BOOL_FIELD(do_initial_prune);
+	READ_BOOL_FIELD(do_exec_prune);
+	READ_BITMAPSET_FIELD(execparamids);
 
 	READ_DONE();
 }

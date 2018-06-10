@@ -1742,6 +1742,7 @@ _outPartitionPruneInfo(StringInfo str, const PartitionPruneInfo *node)
 	WRITE_NODE_FIELD(pruning_steps);
 	WRITE_BITMAPSET_FIELD(present_parts);
 	WRITE_INT_FIELD(nparts);
+	WRITE_INT_FIELD(nexprs);
 
 	appendStringInfoString(str, " :subnode_map");
 	for (i = 0; i < node->nparts; i++)
@@ -1751,8 +1752,13 @@ _outPartitionPruneInfo(StringInfo str, const PartitionPruneInfo *node)
 	for (i = 0; i < node->nparts; i++)
 		appendStringInfo(str, " %d", node->subpart_map[i]);
 
-	WRITE_BITMAPSET_FIELD(extparams);
-	WRITE_BITMAPSET_FIELD(execparams);
+	appendStringInfoString(str, " :hasexecparam");
+	for (i = 0; i < node->nexprs; i++)
+		appendStringInfo(str, " %s", booltostr(node->hasexecparam[i]));
+
+	WRITE_BOOL_FIELD(do_initial_prune);
+	WRITE_BOOL_FIELD(do_exec_prune);
+	WRITE_BITMAPSET_FIELD(execparamids);
 }
 
 /*****************************************************************************

@@ -53,6 +53,7 @@
 #include "optimizer/planner.h"
 #include "optimizer/predtest.h"
 #include "optimizer/prep.h"
+#include "optimizer/var.h"
 #include "partitioning/partprune.h"
 #include "partitioning/partbounds.h"
 #include "rewrite/rewriteManip.h"
@@ -162,7 +163,10 @@ static PruneStepResult *get_matching_list_bounds(PartitionPruneContext *context,
 static PruneStepResult *get_matching_range_bounds(PartitionPruneContext *context,
 						  StrategyNumber opstrategy, Datum *values, int nvalues,
 						  FmgrInfo *partsupfunc, Bitmapset *nullkeys);
-static bool pull_partkey_params(PartitionPruneInfo *pinfo, List *steps);
+static Bitmapset *pull_exec_paramids(Expr *expr);
+static bool pull_exec_paramids_walker(Node *node, Bitmapset **context);
+static bool analyze_partkey_exprs(PartitionPruneInfo *pinfo, List *steps,
+					  int partnatts);
 static PruneStepResult *perform_pruning_base_step(PartitionPruneContext *context,
 						  PartitionPruneStepOp *opstep);
 static PruneStepResult *perform_pruning_combine_step(PartitionPruneContext *context,
@@ -180,12 +184,12 @@ static bool partkey_datum_from_expr(PartitionPruneContext *context,
  *		pruning to take place.
  *
  * Here we generate partition pruning steps for 'prunequal' and also build a
- * data stucture which allows mapping of partition indexes into 'subpaths'
+ * data structure which allows mapping of partition indexes into 'subpaths'
  * indexes.
  *
- * If no Params were found to match the partition key in any of the
- * 'partitioned_rels', then we return NIL.  In such a case run-time partition
- * pruning would be useless.
+ * If no non-Const expressions are being compared to the partition key in any
+ * of the 'partitioned_rels', then we return NIL.  In such a case run-time
+ * partition pruning would be useless, since the planner did it already.
  */
 List *
 make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
@@ -197,7 +201,7 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 	int		   *relid_subnode_map;
 	int		   *relid_subpart_map;
 	int			i;
-	bool		gotparam = false;
+	bool		doruntimeprune = false;
 
 	/*
 	 * Allocate two arrays to store the 1-based indexes of the 'subpaths' and
@@ -229,7 +233,7 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 		relid_subpart_map[rti] = i++;
 	}
 
-	/* We now build a PartitionPruneInfo for each partition_rels */
+	/* We now build a PartitionPruneInfo for each rel in partition_rels */
 	foreach(lc, partition_rels)
 	{
 		Index		rti = lfirst_int(lc);
@@ -238,6 +242,7 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 		RangeTblEntry *rte;
 		Bitmapset  *present_parts;
 		int			nparts = subpart->nparts;
+		int			partnatts = subpart->part_scheme->partnatts;
 		int		   *subnode_map;
 		int		   *subpart_map;
 		List	   *partprunequal;
@@ -320,17 +325,11 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 		pinfo->pruning_steps = pruning_steps;
 		pinfo->present_parts = present_parts;
 		pinfo->nparts = nparts;
-		pinfo->extparams = NULL;
-		pinfo->execparams = NULL;
 		pinfo->subnode_map = subnode_map;
 		pinfo->subpart_map = subpart_map;
 
-		/*
-		 * Extract Params matching partition key and record if we got any.
-		 * We'll not bother enabling run-time pruning if no params matched the
-		 * partition key at any level of partitioning.
-		 */
-		gotparam |= pull_partkey_params(pinfo, pruning_steps);
+		/* Determine which pruning types should be enabled at this level */
+		doruntimeprune |= analyze_partkey_exprs(pinfo, pruning_steps, partnatts);
 
 		pinfolist = lappend(pinfolist, pinfo);
 	}
@@ -338,14 +337,10 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 	pfree(relid_subnode_map);
 	pfree(relid_subpart_map);
 
-	if (gotparam)
+	if (doruntimeprune)
 		return pinfolist;
 
-	/*
-	 * If no Params were found to match the partition key on any of the
-	 * partitioned relations then there's no point doing any run-time
-	 * partition pruning.
-	 */
+	/* No run-time pruning required. */
 	return NIL;
 }
 
@@ -443,10 +438,11 @@ prune_append_rel_partitions(RelOptInfo *rel)
 	context.nparts = rel->nparts;
 	context.boundinfo = rel->boundinfo;
 
-	/* Not valid when being called from the planner */
+	/* These are not valid when being called from the planner */
 	context.planstate = NULL;
-	context.safeparams = NULL;
 	context.exprstates = NULL;
+	context.exprhasexecparam = NULL;
+	context.evalexecparams = false;
 
 	/* Actual pruning happens here. */
 	partindexes = get_matching_partitions(&context, pruning_steps);
@@ -1478,6 +1474,10 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		if (contain_volatile_functions((Node *) expr))
 			return PARTCLAUSE_UNSUPPORTED;
 
+		/* We can't prune using an expression with Vars. */
+		if (contain_var_clause((Node *) expr))
+			return PARTCLAUSE_UNSUPPORTED;
+
 		/*
 		 * Determine the input types of the operator we're considering.
 		 *
@@ -1624,8 +1624,12 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		if (!op_strict(saop_op))
 			return PARTCLAUSE_UNSUPPORTED;
 
-		/* Useless if the array has any volatile functions. */
+		/* We can't use any volatile expressions to prune partitions. */
 		if (contain_volatile_functions((Node *) rightop))
+			return PARTCLAUSE_UNSUPPORTED;
+
+		/* We can't prune using an expression with Vars. */
+		if (contain_var_clause((Node *) rightop))
 			return PARTCLAUSE_UNSUPPORTED;
 
 		/*
@@ -1655,7 +1659,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 					return PARTCLAUSE_UNSUPPORTED;
 			}
 			else
-				return PARTCLAUSE_UNSUPPORTED; /* no useful negator */
+				return PARTCLAUSE_UNSUPPORTED;	/* no useful negator */
 		}
 
 		/*
@@ -2683,54 +2687,102 @@ get_matching_range_bounds(PartitionPruneContext *context,
 }
 
 /*
- * pull_partkey_params
- *		Loop through each pruning step and record each external and exec
- *		Params being compared to the partition keys.
+ * pull_exec_paramids
+ *		Returns a Bitmapset containing the paramids of all Params with
+ *		paramkind = PARAM_EXEC in 'expr'.
+ */
+static Bitmapset *
+pull_exec_paramids(Expr *expr)
+{
+	Bitmapset  *result = NULL;
+
+	(void) pull_exec_paramids_walker((Node *) expr, &result);
+
+	return result;
+}
+
+static bool
+pull_exec_paramids_walker(Node *node, Bitmapset **context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Param))
+	{
+		Param	   *param = (Param *) node;
+
+		if (param->paramkind == PARAM_EXEC)
+			*context = bms_add_member(*context, param->paramid);
+		return false;
+	}
+	return expression_tree_walker(node, pull_exec_paramids_walker,
+								  (void *) context);
+}
+
+/*
+ * analyze_partkey_exprs
+ *		Loop through all pruning steps and identify which ones require
+ *		executor startup-time or executor run-time pruning.
+ *
+ * Returns true if any executor partition pruning should be attempted at this
+ * level.  Also fills fields of *pinfo to record how to process each step.
  */
 static bool
-pull_partkey_params(PartitionPruneInfo *pinfo, List *steps)
+analyze_partkey_exprs(PartitionPruneInfo *pinfo, List *steps, int partnatts)
 {
+	bool		doruntimeprune = false;
 	ListCell   *lc;
-	bool		gotone = false;
+
+	/*
+	 * Steps require run-time pruning if they contain EXEC_PARAM Params.
+	 * Otherwise, if their expressions aren't simple Consts, they require
+	 * startup-time pruning.
+	 */
+	pinfo->nexprs = list_length(steps) * partnatts;
+	pinfo->hasexecparam = (bool *) palloc0(sizeof(bool) * pinfo->nexprs);
+	pinfo->do_initial_prune = false;
+	pinfo->do_exec_prune = false;
+	pinfo->execparamids = NULL;
 
 	foreach(lc, steps)
 	{
-		PartitionPruneStepOp *stepop = lfirst(lc);
+		PartitionPruneStepOp *step = (PartitionPruneStepOp *) lfirst(lc);
 		ListCell   *lc2;
+		int			keyno;
 
-		if (!IsA(stepop, PartitionPruneStepOp))
+		if (!IsA(step, PartitionPruneStepOp))
 			continue;
 
-		foreach(lc2, stepop->exprs)
+		keyno = 0;
+		foreach(lc2, step->exprs)
 		{
 			Expr	   *expr = lfirst(lc2);
 
-			if (IsA(expr, Param))
+			if (!IsA(expr, Const))
 			{
-				Param	   *param = (Param *) expr;
+				Bitmapset  *execparamids = pull_exec_paramids(expr);
+				bool		hasexecparams;
+				int			stateidx = PruneCxtStateIdx(partnatts,
+														step->step.step_id,
+														keyno);
 
-				switch (param->paramkind)
-				{
-					case PARAM_EXTERN:
-						pinfo->extparams = bms_add_member(pinfo->extparams,
-														  param->paramid);
-						break;
-					case PARAM_EXEC:
-						pinfo->execparams = bms_add_member(pinfo->execparams,
-														   param->paramid);
-						break;
+				Assert(stateidx < pinfo->nexprs);
+				hasexecparams = !bms_is_empty(execparamids);
+				pinfo->hasexecparam[stateidx] = hasexecparams;
+				pinfo->execparamids = bms_join(pinfo->execparamids,
+											   execparamids);
 
-					default:
-						elog(ERROR, "unrecognized paramkind: %d",
-							 (int) param->paramkind);
-						break;
-				}
-				gotone = true;
+				if (hasexecparams)
+					pinfo->do_exec_prune = true;
+				else
+					pinfo->do_initial_prune = true;
+
+				doruntimeprune = true;
 			}
+			keyno++;
 		}
 	}
 
-	return gotone;
+	return doruntimeprune;
 }
 
 /*
@@ -3026,42 +3078,47 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
  * Evaluate 'expr', whose ExprState is stateidx of the context exprstate
  * array; set *value to the resulting Datum.  Return true if evaluation was
  * possible, otherwise false.
+ *
+ * Note that the evaluated result may be in the per-tuple memory context of
+ * context->planstate->ps_ExprContext, and we may have leaked other memory
+ * there too.  This memory must be recovered by resetting that ExprContext
+ * after we're done with the pruning operation (see execPartition.c).
  */
 static bool
 partkey_datum_from_expr(PartitionPruneContext *context,
 						Expr *expr, int stateidx, Datum *value)
 {
-	switch (nodeTag(expr))
+	if (IsA(expr, Const))
 	{
-		case T_Const:
-			*value = ((Const *) expr)->constvalue;
+		*value = ((Const *) expr)->constvalue;
+		return true;
+	}
+	else
+	{
+		/*
+		 * When called from the executor we'll have a valid planstate so we
+		 * may be able to evaluate an expression which could not be folded to
+		 * a Const during planning.  Since run-time pruning can occur both
+		 * during initialization of the executor or while it's running, we
+		 * must be careful here to evaluate expressions containing PARAM_EXEC
+		 * Params only when told it's OK.
+		 */
+		if (context->planstate &&
+			(context->evalexecparams ||
+			 !context->exprhasexecparam[stateidx]))
+		{
+			ExprState  *exprstate;
+			ExprContext *ectx;
+			bool		isNull;
+
+			exprstate = context->exprstates[stateidx];
+			ectx = context->planstate->ps_ExprContext;
+			*value = ExecEvalExprSwitchContext(exprstate, ectx, &isNull);
+			if (isNull)
+				return false;
+
 			return true;
-
-		case T_Param:
-
-			/*
-			 * When being called from the executor we may be able to evaluate
-			 * the Param's value.
-			 */
-			if (context->planstate &&
-				bms_is_member(((Param *) expr)->paramid, context->safeparams))
-			{
-				ExprState  *exprstate;
-				ExprContext *ectx;
-				bool		isNull;
-
-				exprstate = context->exprstates[stateidx];
-				ectx = context->planstate->ps_ExprContext;
-				*value = ExecEvalExprSwitchContext(exprstate, ectx, &isNull);
-				if (isNull)
-					return false;
-
-				return true;
-			}
-			break;
-
-		default:
-			break;
+		}
 	}
 
 	return false;

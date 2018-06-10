@@ -1726,8 +1726,8 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 4);
          Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
 (10 rows)
 
--- Ensure a mix of external and exec params work together at different
--- levels of partitioning.
+-- Ensure a mix of PARAM_EXTERN and PARAM_EXEC Params work together at
+-- different levels of partitioning.
 prepare ab_q2 (int, int) as
 select a from ab where a between $1 and $2 and b < (select 3);
 execute ab_q2 (1, 8);
@@ -1770,7 +1770,7 @@ explain (analyze, costs off, summary off, timing off) execute ab_q2 (2, 2);
          Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
 (10 rows)
 
--- As above, but with swap the exec param to the first partition level
+-- As above, but swap the PARAM_EXEC Param to the first partition level
 prepare ab_q3 (int, int) as
 select a from ab where b between $1 and $2 and a < (select 3);
 execute ab_q3 (1, 8);
@@ -1835,6 +1835,54 @@ fetch backward all from cur;
 (2 rows)
 
 commit;
+begin;
+-- Test run-time pruning using stable functions
+create function list_part_fn(int) returns int as $$ begin return $1; end;$$ language plpgsql stable;
+-- Ensure pruning works using a stable function containing no Vars
+explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1);
+                      QUERY PLAN                      
+------------------------------------------------------
+ Append (actual rows=1 loops=1)
+   Subplans Removed: 3
+   ->  Seq Scan on list_part1 (actual rows=1 loops=1)
+         Filter: (a = list_part_fn(1))
+(4 rows)
+
+-- Ensure pruning does not take place when the function has a Var parameter
+explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(a);
+                      QUERY PLAN                      
+------------------------------------------------------
+ Append (actual rows=4 loops=1)
+   ->  Seq Scan on list_part1 (actual rows=1 loops=1)
+         Filter: (a = list_part_fn(a))
+   ->  Seq Scan on list_part2 (actual rows=1 loops=1)
+         Filter: (a = list_part_fn(a))
+   ->  Seq Scan on list_part3 (actual rows=1 loops=1)
+         Filter: (a = list_part_fn(a))
+   ->  Seq Scan on list_part4 (actual rows=1 loops=1)
+         Filter: (a = list_part_fn(a))
+(9 rows)
+
+-- Ensure pruning does not take place when the expression contains a Var.
+explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1) + a;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Append (actual rows=0 loops=1)
+   ->  Seq Scan on list_part1 (actual rows=0 loops=1)
+         Filter: (a = (list_part_fn(1) + a))
+         Rows Removed by Filter: 1
+   ->  Seq Scan on list_part2 (actual rows=0 loops=1)
+         Filter: (a = (list_part_fn(1) + a))
+         Rows Removed by Filter: 1
+   ->  Seq Scan on list_part3 (actual rows=0 loops=1)
+         Filter: (a = (list_part_fn(1) + a))
+         Rows Removed by Filter: 1
+   ->  Seq Scan on list_part4 (actual rows=0 loops=1)
+         Filter: (a = (list_part_fn(1) + a))
+         Rows Removed by Filter: 1
+(13 rows)
+
+rollback;
 drop table list_part;
 -- Parallel append
 -- Suppress the number of loops each parallel node runs for.  This is because
@@ -2007,7 +2055,7 @@ select explain_parallel_append('execute ab_q5 (33, 44, 55)');
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
 (9 rows)
 
--- Test Parallel Append with exec params
+-- Test Parallel Append with PARAM_EXEC Params
 select explain_parallel_append('select count(*) from ab where (a = (select 1) or a = (select 3)) and b = 2');
                          explain_parallel_append                         
 -------------------------------------------------------------------------
@@ -2077,6 +2125,40 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                                  Index Cond: (a = a.a)
                            ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 (never executed)
                                  Index Cond: (a = a.a)
+(27 rows)
+
+-- Ensure the same partitions are pruned when we make the nested loop
+-- parameter an Expr rather than a plain Param.
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a + 0 where a.a in(0, 0, 1)');
+                                      explain_parallel_append                                      
+---------------------------------------------------------------------------------------------------
+ Finalize Aggregate (actual rows=1 loops=1)
+   ->  Gather (actual rows=2 loops=1)
+         Workers Planned: 1
+         Workers Launched: 1
+         ->  Partial Aggregate (actual rows=1 loops=2)
+               ->  Nested Loop (actual rows=0 loops=2)
+                     ->  Parallel Seq Scan on lprt_a a (actual rows=51 loops=N)
+                           Filter: (a = ANY ('{0,0,1}'::integer[]))
+                     ->  Append (actual rows=0 loops=102)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=0 loops=2)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 (actual rows=0 loops=2)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 (actual rows=0 loops=2)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 (never executed)
+                                 Index Cond: (a = (a.a + 0))
 (27 rows)
 
 insert into lprt_a values(3),(3);
