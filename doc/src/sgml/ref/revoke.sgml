@@ -188,7 +188,7 @@ REVOKE [ ADMIN OPTION FOR ]
   <para>
    A user can only revoke privileges that were granted directly by
    that user.  If, for example, user A has granted a privilege with
-   grant option to user B, and user B has in turned granted it to user
+   grant option to user B, and user B has in turn granted it to user
    C, then user A cannot revoke the privilege directly from C.
    Instead, user A could revoke the grant option from user B and use
    the <literal>CASCADE</literal> option so that the privilege is
