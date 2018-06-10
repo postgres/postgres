@@ -1434,7 +1434,7 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 	i = 0;
 	foreach(lc, partitionpruneinfo)
 	{
-		PartitionPruneInfo *pinfo = (PartitionPruneInfo *) lfirst(lc);
+		PartitionPruneInfo *pinfo = castNode(PartitionPruneInfo, lfirst(lc));
 		PartitionPruningData *pprune = &prunedata[i];
 		PartitionPruneContext *context = &pprune->context;
 		PartitionDesc partdesc;

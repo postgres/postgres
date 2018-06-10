@@ -5426,9 +5426,9 @@ make_append(List *appendplans, int first_partial_plan,
 	plan->qual = NIL;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
-	node->partitioned_rels = partitioned_rels;
 	node->appendplans = appendplans;
 	node->first_partial_plan = first_partial_plan;
+	node->partitioned_rels = partitioned_rels;
 	node->part_prune_infos = partpruneinfos;
 	return node;
 }

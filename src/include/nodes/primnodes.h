@@ -18,7 +18,6 @@
 #define PRIMNODES_H
 
 #include "access/attnum.h"
-#include "access/stratnum.h"
 #include "nodes/bitmapset.h"
 #include "nodes/pg_list.h"
 
@@ -1506,108 +1505,5 @@ typedef struct OnConflictExpr
 	int			exclRelIndex;	/* RT index of 'excluded' relation */
 	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
 } OnConflictExpr;
-
-
-/*
- * Node types to represent a partition pruning step.
- */
-
-/*
- * The base Node type.  step_id is the global identifier of a given step
- * within a given pruning context.
- */
-typedef struct PartitionPruneStep
-{
-	NodeTag		type;
-	int			step_id;
-} PartitionPruneStep;
-
-/*----------
- * PartitionPruneStepOp - Information to prune using a set of mutually AND'd
- *							OpExpr clauses
- *
- * This contains information extracted from up to partnatts OpExpr clauses,
- * where partnatts is the number of partition key columns.  'opstrategy' is the
- * strategy of the operator in the clause matched to the last partition key.
- * 'exprs' contains expressions which comprise the lookup key to be passed to
- * the partition bound search function.  'cmpfns' contains the OIDs of
- * comparison function used to compare aforementioned expressions with
- * partition bounds.  Both 'exprs' and 'cmpfns' contain the same number of
- * items up to partnatts items.
- *
- * Once we find the offset of a partition bound using the lookup key, we
- * determine which partitions to include in the result based on the value of
- * 'opstrategy'.  For example, if it were equality, we'd return just the
- * partition that would contain that key or a set of partitions if the key
- * didn't consist of all partitioning columns.  For non-equality strategies,
- * we'd need to include other partitions as appropriate.
- *
- * 'nullkeys' is the set containing the offset of the partition keys (0 to
- * partnatts - 1) that were matched to an IS NULL clause.  This is only
- * considered for hash partitioning as we need to pass which keys are null
- * to the hash partition bound search function.  It is never possible to
- * have an expression be present in 'exprs' for a given partition key and
- * the corresponding bit set in 'nullkeys'.
- *----------
- */
-typedef struct PartitionPruneStepOp
-{
-	PartitionPruneStep step;
-
-	StrategyNumber opstrategy;
-	List	   *exprs;
-	List	   *cmpfns;
-	Bitmapset  *nullkeys;
-} PartitionPruneStepOp;
-
-/*----------
- * PartitionPruneStepCombine - Information to prune using a BoolExpr clause
- *
- * For BoolExpr clauses, we combine the set of partitions determined for each
- * of its argument clauses.
- *----------
- */
-typedef enum PartitionPruneCombineOp
-{
-	PARTPRUNE_COMBINE_UNION,
-	PARTPRUNE_COMBINE_INTERSECT
-} PartitionPruneCombineOp;
-
-typedef struct PartitionPruneStepCombine
-{
-	PartitionPruneStep step;
-
-	PartitionPruneCombineOp combineOp;
-	List	   *source_stepids;
-} PartitionPruneStepCombine;
-
-/*----------
- * PartitionPruneInfo - Details required to allow the executor to prune
- * partitions.
- *
- * Here we store mapping details to allow translation of a partitioned table's
- * index into subnode indexes for node types which support arbitrary numbers
- * of sub nodes, such as Append.
- *----------
- */
-typedef struct PartitionPruneInfo
-{
-	NodeTag		type;
-	Oid			reloid;			/* Oid of partition rel */
-	List	   *pruning_steps;	/* List of PartitionPruneStep */
-	Bitmapset  *present_parts;	/* Indexes of all partitions which subnodes
-								 * are present for. */
-	int			nparts;			/* Length of subnode_map[] and subpart_map[] */
-	int			nexprs;			/* Length of hasexecparam[] */
-	int		   *subnode_map;	/* subnode index by partition id, or -1 */
-	int		   *subpart_map;	/* subpart index by partition id, or -1 */
-	bool	   *hasexecparam;	/* true if corresponding pruning_step contains
-								 * any PARAM_EXEC Params. */
-	bool		do_initial_prune;	/* true if pruning should be performed
-									 * during executor startup. */
-	bool		do_exec_prune;	/* true if pruning should be performed during
-								 * executor run. */
-	Bitmapset  *execparamids;	/* All PARAM_EXEC Param IDs in pruning_steps */
-} PartitionPruneInfo;
 
 #endif							/* PRIMNODES_H */

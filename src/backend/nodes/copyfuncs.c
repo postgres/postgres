@@ -242,9 +242,9 @@ _copyAppend(const Append *from)
 	/*
 	 * copy remainder of node
 	 */
-	COPY_NODE_FIELD(partitioned_rels);
 	COPY_NODE_FIELD(appendplans);
 	COPY_SCALAR_FIELD(first_partial_plan);
+	COPY_NODE_FIELD(partitioned_rels);
 	COPY_NODE_FIELD(part_prune_infos);
 
 	return newnode;
@@ -1172,6 +1172,58 @@ _copyPlanRowMark(const PlanRowMark *from)
 	COPY_SCALAR_FIELD(strength);
 	COPY_SCALAR_FIELD(waitPolicy);
 	COPY_SCALAR_FIELD(isParent);
+
+	return newnode;
+}
+
+static PartitionPruneInfo *
+_copyPartitionPruneInfo(const PartitionPruneInfo *from)
+{
+	PartitionPruneInfo *newnode = makeNode(PartitionPruneInfo);
+
+	COPY_SCALAR_FIELD(reloid);
+	COPY_NODE_FIELD(pruning_steps);
+	COPY_BITMAPSET_FIELD(present_parts);
+	COPY_SCALAR_FIELD(nparts);
+	COPY_SCALAR_FIELD(nexprs);
+	COPY_POINTER_FIELD(subnode_map, from->nparts * sizeof(int));
+	COPY_POINTER_FIELD(subpart_map, from->nparts * sizeof(int));
+	COPY_POINTER_FIELD(hasexecparam, from->nexprs * sizeof(bool));
+	COPY_SCALAR_FIELD(do_initial_prune);
+	COPY_SCALAR_FIELD(do_exec_prune);
+	COPY_BITMAPSET_FIELD(execparamids);
+
+	return newnode;
+}
+
+/*
+ * _copyPartitionPruneStepOp
+ */
+static PartitionPruneStepOp *
+_copyPartitionPruneStepOp(const PartitionPruneStepOp *from)
+{
+	PartitionPruneStepOp *newnode = makeNode(PartitionPruneStepOp);
+
+	COPY_SCALAR_FIELD(step.step_id);
+	COPY_SCALAR_FIELD(opstrategy);
+	COPY_NODE_FIELD(exprs);
+	COPY_NODE_FIELD(cmpfns);
+	COPY_BITMAPSET_FIELD(nullkeys);
+
+	return newnode;
+}
+
+/*
+ * _copyPartitionPruneStepCombine
+ */
+static PartitionPruneStepCombine *
+_copyPartitionPruneStepCombine(const PartitionPruneStepCombine *from)
+{
+	PartitionPruneStepCombine *newnode = makeNode(PartitionPruneStepCombine);
+
+	COPY_SCALAR_FIELD(step.step_id);
+	COPY_SCALAR_FIELD(combineOp);
+	COPY_NODE_FIELD(source_stepids);
 
 	return newnode;
 }
@@ -2130,58 +2182,6 @@ _copyOnConflictExpr(const OnConflictExpr *from)
 	COPY_NODE_FIELD(onConflictWhere);
 	COPY_SCALAR_FIELD(exclRelIndex);
 	COPY_NODE_FIELD(exclRelTlist);
-
-	return newnode;
-}
-
-/*
- * _copyPartitionPruneStepOp
- */
-static PartitionPruneStepOp *
-_copyPartitionPruneStepOp(const PartitionPruneStepOp *from)
-{
-	PartitionPruneStepOp *newnode = makeNode(PartitionPruneStepOp);
-
-	COPY_SCALAR_FIELD(step.step_id);
-	COPY_SCALAR_FIELD(opstrategy);
-	COPY_NODE_FIELD(exprs);
-	COPY_NODE_FIELD(cmpfns);
-	COPY_BITMAPSET_FIELD(nullkeys);
-
-	return newnode;
-}
-
-/*
- * _copyPartitionPruneStepCombine
- */
-static PartitionPruneStepCombine *
-_copyPartitionPruneStepCombine(const PartitionPruneStepCombine *from)
-{
-	PartitionPruneStepCombine *newnode = makeNode(PartitionPruneStepCombine);
-
-	COPY_SCALAR_FIELD(step.step_id);
-	COPY_SCALAR_FIELD(combineOp);
-	COPY_NODE_FIELD(source_stepids);
-
-	return newnode;
-}
-
-static PartitionPruneInfo *
-_copyPartitionPruneInfo(const PartitionPruneInfo *from)
-{
-	PartitionPruneInfo *newnode = makeNode(PartitionPruneInfo);
-
-	COPY_SCALAR_FIELD(reloid);
-	COPY_NODE_FIELD(pruning_steps);
-	COPY_BITMAPSET_FIELD(present_parts);
-	COPY_SCALAR_FIELD(nparts);
-	COPY_SCALAR_FIELD(nexprs);
-	COPY_POINTER_FIELD(subnode_map, from->nparts * sizeof(int));
-	COPY_POINTER_FIELD(subpart_map, from->nparts * sizeof(int));
-	COPY_POINTER_FIELD(hasexecparam, from->nexprs * sizeof(bool));
-	COPY_SCALAR_FIELD(do_initial_prune);
-	COPY_SCALAR_FIELD(do_exec_prune);
-	COPY_BITMAPSET_FIELD(execparamids);
 
 	return newnode;
 }
@@ -4904,6 +4904,15 @@ copyObjectImpl(const void *from)
 		case T_PlanRowMark:
 			retval = _copyPlanRowMark(from);
 			break;
+		case T_PartitionPruneInfo:
+			retval = _copyPartitionPruneInfo(from);
+			break;
+		case T_PartitionPruneStepOp:
+			retval = _copyPartitionPruneStepOp(from);
+			break;
+		case T_PartitionPruneStepCombine:
+			retval = _copyPartitionPruneStepCombine(from);
+			break;
 		case T_PlanInvalItem:
 			retval = _copyPlanInvalItem(from);
 			break;
@@ -5064,12 +5073,6 @@ copyObjectImpl(const void *from)
 		case T_OnConflictExpr:
 			retval = _copyOnConflictExpr(from);
 			break;
-		case T_PartitionPruneStepOp:
-			retval = _copyPartitionPruneStepOp(from);
-			break;
-		case T_PartitionPruneStepCombine:
-			retval = _copyPartitionPruneStepCombine(from);
-			break;
 
 			/*
 			 * RELATION NODES
@@ -5091,9 +5094,6 @@ copyObjectImpl(const void *from)
 			break;
 		case T_PlaceHolderInfo:
 			retval = _copyPlaceHolderInfo(from);
-			break;
-		case T_PartitionPruneInfo:
-			retval = _copyPartitionPruneInfo(from);
 			break;
 
 			/*
