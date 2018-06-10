@@ -2818,9 +2818,12 @@ ExecParallelHashTupleAlloc(HashJoinTable hashtable, size_t size,
 		{
 			hashtable->batches[0].shared->ntuples += hashtable->batches[0].ntuples;
 			hashtable->batches[0].ntuples = 0;
+			/* Guard against integer overflow and alloc size overflow */
 			if (hashtable->batches[0].shared->ntuples + 1 >
 				hashtable->nbuckets * NTUP_PER_BUCKET &&
-				hashtable->nbuckets < (INT_MAX / 2))
+				hashtable->nbuckets < (INT_MAX / 2) &&
+				hashtable->nbuckets * 2 <=
+				MaxAllocSize / sizeof(dsa_pointer_atomic))
 			{
 				pstate->growth = PHJ_GROWTH_NEED_MORE_BUCKETS;
 				LWLockRelease(&pstate->lock);
