@@ -114,21 +114,21 @@ typedef struct PartitionTupleRouting
 
 /*-----------------------
  * PartitionPruningData - Encapsulates all information required to support
- * elimination of partitions in node types which support arbitrary Lists of
- * subplans.  Information stored here allows the planner's partition pruning
- * functions to be called and the return value of partition indexes translated
- * into the subpath indexes of node types such as Append, thus allowing us to
- * bypass certain subnodes when we have proofs that indicate that no tuple
- * matching the 'pruning_steps' will be found within.
+ * elimination of partitions in plan types which support arbitrary Lists of
+ * subplans.  Information stored here allows the partition pruning functions
+ * to be called and the return value of partition indexes translated into the
+ * subpath indexes of plan types such as Append, thus allowing us to bypass a
+ * subplan when we can prove that no tuple matching the 'pruning_steps' will
+ * be found within.
  *
- * subnode_map					An array containing the subnode index which
+ * subplan_map					An array containing the subplan index which
  *								matches this partition index, or -1 if the
- *								subnode has been pruned already.
- * subpart_map					An array containing the offset into the
- *								'partprunedata' array in PartitionPruning, or
+ *								subplan has been pruned already.
+ * subpart_map					An array containing the index into the
+ *								partprunedata array in PartitionPruneState, or
  *								-1 if there is no such element in that array.
  * present_parts				A Bitmapset of the partition indexes that we
- *								have subnodes mapped for.
+ *								have subplans mapped for.
  * context						Contains the context details required to call
  *								the partition pruning code.
  * pruning_steps				List of PartitionPruneSteps used to
@@ -141,7 +141,7 @@ typedef struct PartitionTupleRouting
  */
 typedef struct PartitionPruningData
 {
-	int		   *subnode_map;
+	int		   *subplan_map;
 	int		   *subpart_map;
 	Bitmapset  *present_parts;
 	PartitionPruneContext context;
@@ -151,15 +151,15 @@ typedef struct PartitionPruningData
 } PartitionPruningData;
 
 /*-----------------------
- * PartitionPruneState - State object required for executor nodes to perform
- * partition pruning elimination of their subnodes.  This encapsulates a
+ * PartitionPruneState - State object required for plan nodes to perform
+ * partition pruning elimination of their subplans.  This encapsulates a
  * flattened hierarchy of PartitionPruningData structs.
- * This struct can be attached to node types which support arbitrary Lists of
- * subnodes containing partitions to allow subnodes to be eliminated due to
- * the clauses being unable to match to any tuple that the subnode could
+ * This struct can be attached to plan types which support arbitrary Lists of
+ * subplans containing partitions to allow subplans to be eliminated due to
+ * the clauses being unable to match to any tuple that the subplan could
  * possibly produce.
  *
- * partprunedata		Array of PartitionPruningData for the node's target
+ * partprunedata		Array of PartitionPruningData for the plan's target
  *						partitioned relation. First element contains the
  *						details for the target partitioned table.
  * num_partprunedata	Number of items in 'partprunedata' array.
@@ -167,10 +167,12 @@ typedef struct PartitionPruningData
  *						startup (at any hierarchy level).
  * do_exec_prune		true if pruning should be performed during
  *						executor run (at any hierarchy level).
- * prune_context		A memory context which can be used to call the query
- *						planner's partition prune functions.
  * execparamids			Contains paramids of PARAM_EXEC Params found within
- *						any of the partprunedata structs.
+ *						any of the partprunedata structs.  Pruning must be
+ *						done again each time the value of one of these
+ *						parameters changes.
+ * prune_context		A short-lived memory context in which to execute the
+ *						partition pruning functions.
  *-----------------------
  */
 typedef struct PartitionPruneState
@@ -179,8 +181,8 @@ typedef struct PartitionPruneState
 	int			num_partprunedata;
 	bool		do_initial_prune;
 	bool		do_exec_prune;
-	MemoryContext prune_context;
 	Bitmapset  *execparamids;
+	MemoryContext prune_context;
 } PartitionPruneState;
 
 extern PartitionTupleRouting *ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
@@ -211,6 +213,6 @@ extern PartitionPruneState *ExecSetupPartitionPruneState(PlanState *planstate,
 							 List *partitionpruneinfo);
 extern Bitmapset *ExecFindMatchingSubPlans(PartitionPruneState *prunestate);
 extern Bitmapset *ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate,
-								int nsubnodes);
+								int nsubplans);
 
 #endif							/* EXECPARTITION_H */

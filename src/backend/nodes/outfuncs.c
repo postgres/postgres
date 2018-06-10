@@ -1023,9 +1023,9 @@ _outPartitionPruneInfo(StringInfo str, const PartitionPruneInfo *node)
 	WRITE_INT_FIELD(nparts);
 	WRITE_INT_FIELD(nexprs);
 
-	appendStringInfoString(str, " :subnode_map");
+	appendStringInfoString(str, " :subplan_map");
 	for (i = 0; i < node->nparts; i++)
-		appendStringInfo(str, " %d", node->subnode_map[i]);
+		appendStringInfo(str, " %d", node->subplan_map[i]);
 
 	appendStringInfoString(str, " :subpart_map");
 	for (i = 0; i < node->nparts; i++)

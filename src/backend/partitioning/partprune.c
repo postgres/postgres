@@ -4,28 +4,24 @@
  *		Support for partition pruning during query planning and execution
  *
  * This module implements partition pruning using the information contained in
- * table's partition descriptor, query clauses, and run-time parameters.
+ * a table's partition descriptor, query clauses, and run-time parameters.
  *
  * During planning, clauses that can be matched to the table's partition key
  * are turned into a set of "pruning steps", which are then executed to
- * produce a set of partitions (as indexes of the RelOptInfo->part_rels array)
- * that satisfy the constraints in the step.  Partitions not in the set are said
- * to have been pruned.
+ * identify a set of partitions (as indexes in the RelOptInfo->part_rels
+ * array) that satisfy the constraints in the step.  Partitions not in the set
+ * are said to have been pruned.
  *
- * A base pruning step may also consist of expressions whose values are only
- * known during execution, such as Params, in which case pruning cannot occur
+ * A base pruning step may involve expressions whose values are only known
+ * during execution, such as Params, in which case pruning cannot occur
  * entirely during planning.  In that case, such steps are included alongside
  * the plan, so that they can be used by the executor for further pruning.
  *
- * There are two kinds of pruning steps: a "base" pruning step, which contains
- * information extracted from one or more clauses that are matched to the
- * (possibly multi-column) partition key, such as the expressions whose values
- * to match against partition bounds and operator strategy to associate to
- * each expression.  The other kind is a "combine" pruning step, which combines
- * the outputs of some other steps using the appropriate combination method.
- * All steps that are constructed are executed in succession such that for any
- * "combine" step, all of the steps whose output it depends on are executed
- * first and their ouput preserved.
+ * There are two kinds of pruning steps.  A "base" pruning step represents
+ * tests on partition key column(s), typically comparisons to expressions.
+ * A "combine" pruning step represents a Boolean connector (AND/OR), and
+ * combines the outputs of some previous steps using the appropriate
+ * combination method.
  *
  * See gen_partprune_steps_internal() for more details on step generation.
  *
@@ -65,19 +61,18 @@
  */
 typedef struct PartClauseInfo
 {
-	int			keyno;			/* Partition key number (0 to partnatts - 1)  */
-	Oid			opno;			/* operator used to compare partkey to 'expr' */
+	int			keyno;			/* Partition key number (0 to partnatts - 1) */
+	Oid			opno;			/* operator used to compare partkey to expr */
 	bool		op_is_ne;		/* is clause's original operator <> ? */
 	Expr	   *expr;			/* expr the partition key is compared to */
 	Oid			cmpfn;			/* Oid of function to compare 'expr' to the
 								 * partition key */
-	int			op_strategy;	/* cached info. */
+	int			op_strategy;	/* btree strategy identifying the operator */
 } PartClauseInfo;
 
 /*
  * PartClauseMatchStatus
- *		Describes the result match_clause_to_partition_key produces for a
- *		given clause and the partition key to match with that are passed to it
+ *		Describes the result of match_clause_to_partition_key()
  */
 typedef enum PartClauseMatchStatus
 {
@@ -177,6 +172,7 @@ static bool match_boolean_partition_clause(Oid partopfamily, Expr *clause,
 static bool partkey_datum_from_expr(PartitionPruneContext *context,
 						Expr *expr, int stateidx, Datum *value);
 
+
 /*
  * make_partition_pruneinfo
  *		Build List of PartitionPruneInfos, one for each 'partitioned_rels'.
@@ -196,18 +192,18 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 						 List *subpaths, List *prunequal)
 {
 	RelOptInfo *targetpart = NULL;
-	ListCell   *lc;
 	List	   *pinfolist = NIL;
-	int		   *relid_subnode_map;
-	int		   *relid_subpart_map;
-	int			i;
 	bool		doruntimeprune = false;
+	int		   *relid_subplan_map;
+	int		   *relid_subpart_map;
+	ListCell   *lc;
+	int			i;
 
 	/*
 	 * Allocate two arrays to store the 1-based indexes of the 'subpaths' and
 	 * 'partitioned_rels' by relid.
 	 */
-	relid_subnode_map = palloc0(sizeof(int) * root->simple_rel_array_size);
+	relid_subplan_map = palloc0(sizeof(int) * root->simple_rel_array_size);
 	relid_subpart_map = palloc0(sizeof(int) * root->simple_rel_array_size);
 
 	i = 1;
@@ -219,7 +215,7 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 		Assert(IS_SIMPLE_REL(pathrel));
 		Assert(pathrel->relid < root->simple_rel_array_size);
 
-		relid_subnode_map[pathrel->relid] = i++;
+		relid_subplan_map[pathrel->relid] = i++;
 	}
 
 	/* Likewise for the partition_rels */
@@ -243,7 +239,7 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 		Bitmapset  *present_parts;
 		int			nparts = subpart->nparts;
 		int			partnatts = subpart->part_scheme->partnatts;
-		int		   *subnode_map;
+		int		   *subplan_map;
 		int		   *subpart_map;
 		List	   *partprunequal;
 		List	   *pruning_steps;
@@ -289,7 +285,7 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 			return NIL;
 		}
 
-		subnode_map = (int *) palloc(nparts * sizeof(int));
+		subplan_map = (int *) palloc(nparts * sizeof(int));
 		subpart_map = (int *) palloc(nparts * sizeof(int));
 		present_parts = NULL;
 
@@ -302,19 +298,18 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 		for (i = 0; i < nparts; i++)
 		{
 			RelOptInfo *partrel = subpart->part_rels[i];
-			int			subnodeidx = relid_subnode_map[partrel->relid] - 1;
+			int			subplanidx = relid_subplan_map[partrel->relid] - 1;
 			int			subpartidx = relid_subpart_map[partrel->relid] - 1;
 
-			subnode_map[i] = subnodeidx;
+			subplan_map[i] = subplanidx;
 			subpart_map[i] = subpartidx;
 
 			/*
 			 * Record the indexes of all the partition indexes that we have
-			 * subnodes or subparts for.  This allows an optimization to skip
-			 * attempting any run-time pruning when no Params are found
-			 * matching the partition key at this level.
+			 * subplans or subparts for.  This allows an optimization to skip
+			 * attempting any run-time pruning when it's irrelevant.
 			 */
-			if (subnodeidx >= 0 || subpartidx >= 0)
+			if (subplanidx >= 0 || subpartidx >= 0)
 				present_parts = bms_add_member(present_parts, i);
 		}
 
@@ -325,16 +320,17 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 		pinfo->pruning_steps = pruning_steps;
 		pinfo->present_parts = present_parts;
 		pinfo->nparts = nparts;
-		pinfo->subnode_map = subnode_map;
+		pinfo->subplan_map = subplan_map;
 		pinfo->subpart_map = subpart_map;
 
 		/* Determine which pruning types should be enabled at this level */
-		doruntimeprune |= analyze_partkey_exprs(pinfo, pruning_steps, partnatts);
+		doruntimeprune |= analyze_partkey_exprs(pinfo, pruning_steps,
+												partnatts);
 
 		pinfolist = lappend(pinfolist, pinfo);
 	}
 
-	pfree(relid_subnode_map);
+	pfree(relid_subplan_map);
 	pfree(relid_subpart_map);
 
 	if (doruntimeprune)

@@ -1186,7 +1186,7 @@ _copyPartitionPruneInfo(const PartitionPruneInfo *from)
 	COPY_BITMAPSET_FIELD(present_parts);
 	COPY_SCALAR_FIELD(nparts);
 	COPY_SCALAR_FIELD(nexprs);
-	COPY_POINTER_FIELD(subnode_map, from->nparts * sizeof(int));
+	COPY_POINTER_FIELD(subplan_map, from->nparts * sizeof(int));
 	COPY_POINTER_FIELD(subpart_map, from->nparts * sizeof(int));
 	COPY_POINTER_FIELD(hasexecparam, from->nexprs * sizeof(bool));
 	COPY_SCALAR_FIELD(do_initial_prune);

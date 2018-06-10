@@ -1055,19 +1055,21 @@ typedef struct PlanRowMark
  * partitions.
  *
  * Here we store mapping details to allow translation of a partitioned table's
- * index into subnode indexes for node types which support arbitrary numbers
- * of sub nodes, such as Append.
+ * index as returned by the partition pruning code into subplan indexes for
+ * plan types which support arbitrary numbers of subplans, such as Append.
+ * We also store various details to tell the executor when it should be
+ * performing partition pruning.
  */
 typedef struct PartitionPruneInfo
 {
 	NodeTag		type;
 	Oid			reloid;			/* Oid of partition rel */
 	List	   *pruning_steps;	/* List of PartitionPruneStep, see below */
-	Bitmapset  *present_parts;	/* Indexes of all partitions which subnodes
+	Bitmapset  *present_parts;	/* Indexes of all partitions which subplans
 								 * are present for. */
-	int			nparts;			/* Length of subnode_map[] and subpart_map[] */
+	int			nparts;			/* Length of subplan_map[] and subpart_map[] */
 	int			nexprs;			/* Length of hasexecparam[] */
-	int		   *subnode_map;	/* subnode index by partition id, or -1 */
+	int		   *subplan_map;	/* subplan index by partition id, or -1 */
 	int		   *subpart_map;	/* subpart index by partition id, or -1 */
 	bool	   *hasexecparam;	/* true if corresponding pruning_step contains
 								 * any PARAM_EXEC Params. */
@@ -1099,9 +1101,9 @@ typedef struct PartitionPruneStep
  * strategy of the operator in the clause matched to the last partition key.
  * 'exprs' contains expressions which comprise the lookup key to be passed to
  * the partition bound search function.  'cmpfns' contains the OIDs of
- * comparison function used to compare aforementioned expressions with
+ * comparison functions used to compare aforementioned expressions with
  * partition bounds.  Both 'exprs' and 'cmpfns' contain the same number of
- * items up to partnatts items.
+ * items, up to partnatts items.
  *
  * Once we find the offset of a partition bound using the lookup key, we
  * determine which partitions to include in the result based on the value of

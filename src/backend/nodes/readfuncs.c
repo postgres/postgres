@@ -2333,7 +2333,7 @@ _readPartitionPruneInfo(void)
 	READ_BITMAPSET_FIELD(present_parts);
 	READ_INT_FIELD(nparts);
 	READ_INT_FIELD(nexprs);
-	READ_INT_ARRAY(subnode_map, local_node->nparts);
+	READ_INT_ARRAY(subplan_map, local_node->nparts);
 	READ_INT_ARRAY(subpart_map, local_node->nparts);
 	READ_BOOL_ARRAY(hasexecparam, local_node->nexprs);
 	READ_BOOL_FIELD(do_initial_prune);
