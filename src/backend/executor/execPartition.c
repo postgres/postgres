@@ -1442,8 +1442,8 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 		int			n_steps;
 
 		/*
-		 * We must make a copy of this rather than pointing directly to the
-		 * plan's version as we may end up making modifications to it later.
+		 * We must copy the subplan_map rather than pointing directly to the
+		 * plan's version, as we may end up making modifications to it later.
 		 */
 		pprune->subplan_map = palloc(sizeof(int) * pinfo->nparts);
 		memcpy(pprune->subplan_map, pinfo->subplan_map,
@@ -1589,8 +1589,8 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubplans)
 		int			newidx;
 
 		/*
-		 * First we must build an array which we can use to adjust the
-		 * existing subplan_map so that it contains the new subplan indexes.
+		 * First we must build a temporary array which maps old subplan
+		 * indexes to new ones.
 		 */
 		new_subplan_indexes = (int *) palloc(sizeof(int) * nsubplans);
 		newidx = 0;
@@ -1603,79 +1603,55 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubplans)
 		}
 
 		/*
-		 * Now we can re-sequence each PartitionPruneInfo's subplan_map so
-		 * that they point to the new index of the subplan.
+		 * Now we can update each PartitionPruneInfo's subplan_map with new
+		 * subplan indexes.  We must also recompute its present_parts bitmap.
+		 * We perform this loop in back-to-front order so that we determine
+		 * present_parts for the lowest-level partitioned tables first.  This
+		 * way we can tell whether a sub-partitioned table's partitions were
+		 * entirely pruned so we can exclude that from 'present_parts'.
 		 */
-		for (i = 0; i < prunestate->num_partprunedata; i++)
+		for (i = prunestate->num_partprunedata - 1; i >= 0; i--)
 		{
 			int			nparts;
 			int			j;
 
 			pprune = &prunestate->partprunedata[i];
 			nparts = pprune->context.nparts;
-
-			/*
-			 * We also need to reset the present_parts field so that it only
-			 * contains partition indexes that we actually still have subplans
-			 * for.  It seems easier to build a fresh one, rather than trying
-			 * to update the existing one.
-			 */
+			/* We just rebuild present_parts from scratch */
 			bms_free(pprune->present_parts);
 			pprune->present_parts = NULL;
 
 			for (j = 0; j < nparts; j++)
 			{
 				int			oldidx = pprune->subplan_map[j];
+				int			subidx;
 
 				/*
 				 * If this partition existed as a subplan then change the old
 				 * subplan index to the new subplan index.  The new index may
 				 * become -1 if the partition was pruned above, or it may just
 				 * come earlier in the subplan list due to some subplans being
-				 * removed earlier in the list.
+				 * removed earlier in the list.  If it's a subpartition, add
+				 * it to present_parts unless it's entirely pruned.
 				 */
 				if (oldidx >= 0)
 				{
+					Assert(oldidx < nsubplans);
 					pprune->subplan_map[j] = new_subplan_indexes[oldidx];
 
 					if (new_subplan_indexes[oldidx] >= 0)
 						pprune->present_parts =
 							bms_add_member(pprune->present_parts, j);
 				}
-			}
-		}
-
-		/*
-		 * Now we must determine which sub-partitioned tables still have
-		 * unpruned partitions.  The easiest way to do this is to simply loop
-		 * over each PartitionPruningData again checking if there are any
-		 * 'present_parts' in the sub-partitioned table.  We needn't bother
-		 * doing this if there are no sub-partitioned tables.
-		 */
-		if (prunestate->num_partprunedata > 1)
-		{
-			for (i = 0; i < prunestate->num_partprunedata; i++)
-			{
-				int			nparts;
-				int			j;
-
-				pprune = &prunestate->partprunedata[i];
-				nparts = pprune->context.nparts;
-
-				for (j = 0; j < nparts; j++)
+				else if ((subidx = pprune->subpart_map[j]) >= 0)
 				{
-					int			subidx = pprune->subpart_map[j];
+					PartitionPruningData *subprune;
 
-					if (subidx >= 0)
-					{
-						PartitionPruningData *subprune;
+					subprune = &prunestate->partprunedata[subidx];
 
-						subprune = &prunestate->partprunedata[subidx];
-
-						if (!bms_is_empty(subprune->present_parts))
-							pprune->present_parts =
-								bms_add_member(pprune->present_parts, j);
-					}
+					if (!bms_is_empty(subprune->present_parts))
+						pprune->present_parts =
+							bms_add_member(pprune->present_parts, j);
 				}
 			}
 		}
