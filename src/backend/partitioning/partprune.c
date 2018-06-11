@@ -170,7 +170,8 @@ static PruneStepResult *perform_pruning_combine_step(PartitionPruneContext *cont
 static bool match_boolean_partition_clause(Oid partopfamily, Expr *clause,
 							   Expr *partkey, Expr **outconst);
 static bool partkey_datum_from_expr(PartitionPruneContext *context,
-						Expr *expr, int stateidx, Datum *value);
+						Expr *expr, int stateidx,
+						Datum *value, bool *isnull);
 
 
 /*
@@ -184,8 +185,9 @@ static bool partkey_datum_from_expr(PartitionPruneContext *context,
  * indexes.
  *
  * If no non-Const expressions are being compared to the partition key in any
- * of the 'partitioned_rels', then we return NIL.  In such a case run-time
- * partition pruning would be useless, since the planner did it already.
+ * of the 'partitioned_rels', then we return NIL to indicate no run-time
+ * pruning should be performed.  Run-time pruning would be useless, since the
+ * pruning done during planning will have pruned everything that can be.
  */
 List *
 make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
@@ -2835,13 +2837,32 @@ perform_pruning_base_step(PartitionPruneContext *context,
 			Expr	   *expr;
 			int			stateidx;
 			Datum		datum;
+			bool		isnull;
 
 			expr = lfirst(lc1);
 			stateidx = PruneCxtStateIdx(context->partnatts,
 										opstep->step.step_id, keyno);
-			if (partkey_datum_from_expr(context, expr, stateidx, &datum))
+			if (partkey_datum_from_expr(context, expr, stateidx,
+										&datum, &isnull))
 			{
 				Oid			cmpfn;
+
+				/*
+				 * Since we only allow strict operators in pruning steps, any
+				 * null-valued comparison value must cause the comparison to
+				 * fail, so that no partitions could match.
+				 */
+				if (isnull)
+				{
+					PruneStepResult *result;
+
+					result = (PruneStepResult *) palloc(sizeof(PruneStepResult));
+					result->bound_offsets = NULL;
+					result->scan_default = false;
+					result->scan_null = false;
+
+					return result;
+				}
 
 				/*
 				 * If we're going to need a different comparison function than
@@ -3072,8 +3093,8 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
  *		Evaluate expression for potential partition pruning
  *
  * Evaluate 'expr', whose ExprState is stateidx of the context exprstate
- * array; set *value to the resulting Datum.  Return true if evaluation was
- * possible, otherwise false.
+ * array; set *value and *isnull to the resulting Datum and nullflag.
+ * Return true if evaluation was possible, otherwise false.
  *
  * Note that the evaluated result may be in the per-tuple memory context of
  * context->planstate->ps_ExprContext, and we may have leaked other memory
@@ -3082,11 +3103,16 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
  */
 static bool
 partkey_datum_from_expr(PartitionPruneContext *context,
-						Expr *expr, int stateidx, Datum *value)
+						Expr *expr, int stateidx,
+						Datum *value, bool *isnull)
 {
 	if (IsA(expr, Const))
 	{
-		*value = ((Const *) expr)->constvalue;
+		/* We can always determine the value of a constant */
+		Const	   *con = (Const *) expr;
+
+		*value = con->constvalue;
+		*isnull = con->constisnull;
 		return true;
 	}
 	else
@@ -3105,14 +3131,10 @@ partkey_datum_from_expr(PartitionPruneContext *context,
 		{
 			ExprState  *exprstate;
 			ExprContext *ectx;
-			bool		isNull;
 
 			exprstate = context->exprstates[stateidx];
 			ectx = context->planstate->ps_ExprContext;
-			*value = ExecEvalExprSwitchContext(exprstate, ectx, &isNull);
-			if (isNull)
-				return false;
-
+			*value = ExecEvalExprSwitchContext(exprstate, ectx, isnull);
 			return true;
 		}
 	}

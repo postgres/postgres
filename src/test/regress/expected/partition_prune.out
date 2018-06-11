@@ -2731,6 +2731,20 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,1);
          Filter: ((b = ANY (ARRAY[$1, $2])) AND ($3 <> b) AND ($4 <> b))
 (4 rows)
 
+-- Ensure Params that evaluate to NULL properly prune away all partitions
+explain (analyze, costs off, summary off, timing off)
+select * from listp where a = (select null::int);
+                  QUERY PLAN                  
+----------------------------------------------
+ Append (actual rows=0 loops=1)
+   InitPlan 1 (returns $0)
+     ->  Result (actual rows=1 loops=1)
+   ->  Seq Scan on listp_1_1 (never executed)
+         Filter: (a = $0)
+   ->  Seq Scan on listp_2_1 (never executed)
+         Filter: (a = $0)
+(7 rows)
+
 drop table listp;
 -- Ensure runtime pruning works with initplans params with boolean types
 create table boolvalues (value bool not null);

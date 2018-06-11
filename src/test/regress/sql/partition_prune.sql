@@ -685,6 +685,10 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,0);
 -- One subplan will remain in this case, but it should not be executed.
 explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,1);
 
+-- Ensure Params that evaluate to NULL properly prune away all partitions
+explain (analyze, costs off, summary off, timing off)
+select * from listp where a = (select null::int);
+
 drop table listp;
 
 -- Ensure runtime pruning works with initplans params with boolean types
