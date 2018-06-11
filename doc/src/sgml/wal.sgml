@@ -551,8 +551,8 @@
    flushed to disk after a configurable number of bytes.  Otherwise, these
    pages may be kept in the OS's page cache, inducing a stall when
    <literal>fsync</literal> is issued at the end of a checkpoint.  This setting will
-   often help to reduce transaction latency, but it also can an adverse effect
-   on performance; particularly for workloads that are bigger than
+   often help to reduce transaction latency, but it also can have an adverse
+   effect on performance; particularly for workloads that are bigger than
    <xref linkend="guc-shared-buffers"/>, but smaller than the OS's page cache.
   </para>
 
