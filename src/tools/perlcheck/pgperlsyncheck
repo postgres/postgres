@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# script to detect compile time errors and warnings in all perl files
+
+INCLUDES="-I src/tools/msvc -I src/tools/msvc/dummylib -I src/backend/catalog"
+INCLUDES="-I src/test/perl -I src/backend/utils/mb/Unicode $INCLUDES"
+INCLUDES="-I src/bin/pg_rewind -I src/test/ssl $INCLUDES"
+
+set -e
+
+. src/tools/perlcheck/find_perl_files
+
+# for zsh
+setopt shwordsplit 2>/dev/null || true
+
+find_perl_files | xargs -L 1 perl $INCLUDES -cw 2>&1 | grep -v OK

@@ -7,14 +7,6 @@ set -e
 # set this to override default perltidy program:
 PERLTIDY=${PERLTIDY:-perltidy}
 
-# locate all Perl files in the tree
-(
-	# take all .pl and .pm files
-	find . -type f -a \( -name '*.pl' -o -name '*.pm' \)
-	# take executable files that file(1) thinks are perl files
-	find . -type f -perm -100 -exec file {} \; |
-	egrep -i ':.*perl[0-9]*\>' |
-	cut -d: -f1
-) |
-sort -u |
-xargs $PERLTIDY --profile=src/tools/pgindent/perltidyrc
+. src/tools/perlcheck/find_perl_files
+
+find_perl_files | xargs $PERLTIDY --profile=src/tools/pgindent/perltidyrc
