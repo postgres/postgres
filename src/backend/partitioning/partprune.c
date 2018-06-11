@@ -202,12 +202,17 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 	int			i;
 
 	/*
-	 * Allocate two arrays to store the 1-based indexes of the 'subpaths' and
-	 * 'partitioned_rels' by relid.
+	 * Construct two temporary arrays to map from planner relids to subplan
+	 * and sub-partition indexes.  For convenience, we use 1-based indexes
+	 * here, so that zero can represent an un-filled array entry.
 	 */
 	relid_subplan_map = palloc0(sizeof(int) * root->simple_rel_array_size);
 	relid_subpart_map = palloc0(sizeof(int) * root->simple_rel_array_size);
 
+	/*
+	 * relid_subplan_map maps relid of a leaf partition to the index in
+	 * 'subpaths' of the scan plan for that partition.
+	 */
 	i = 1;
 	foreach(lc, subpaths)
 	{
@@ -216,17 +221,27 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 
 		Assert(IS_SIMPLE_REL(pathrel));
 		Assert(pathrel->relid < root->simple_rel_array_size);
+		/* No duplicates please */
+		Assert(relid_subplan_map[pathrel->relid] == 0);
 
 		relid_subplan_map[pathrel->relid] = i++;
 	}
 
-	/* Likewise for the partition_rels */
+	/*
+	 * relid_subpart_map maps relid of a non-leaf partition to the index in
+	 * 'partition_rels' of that rel (which will also be the index in the
+	 * returned PartitionPruneInfo list of the info for that partition).
+	 */
 	i = 1;
 	foreach(lc, partition_rels)
 	{
 		Index		rti = lfirst_int(lc);
 
 		Assert(rti < root->simple_rel_array_size);
+		/* No duplicates please */
+		Assert(relid_subpart_map[rti] == 0);
+		/* Same rel cannot be both leaf and non-leaf */
+		Assert(relid_subplan_map[rti] == 0);
 
 		relid_subpart_map[rti] = i++;
 	}
@@ -287,16 +302,16 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 			return NIL;
 		}
 
+		/*
+		 * Construct the subplan and subpart maps for this partitioning level.
+		 * Here we convert to zero-based indexes, with -1 for empty entries.
+		 * Also construct a Bitmapset of all partitions that are present (that
+		 * is, not pruned already).
+		 */
 		subplan_map = (int *) palloc(nparts * sizeof(int));
 		subpart_map = (int *) palloc(nparts * sizeof(int));
 		present_parts = NULL;
 
-		/*
-		 * Loop over each partition of the partitioned rel and record the
-		 * subpath index for each.  Any partitions which are not present in
-		 * the subpaths List will be set to -1, and any sub-partitioned table
-		 * which is not present will also be set to -1.
-		 */
 		for (i = 0; i < nparts; i++)
 		{
 			RelOptInfo *partrel = subpart->part_rels[i];
@@ -305,12 +320,6 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 
 			subplan_map[i] = subplanidx;
 			subpart_map[i] = subpartidx;
-
-			/*
-			 * Record the indexes of all the partition indexes that we have
-			 * subplans or subparts for.  This allows an optimization to skip
-			 * attempting any run-time pruning when it's irrelevant.
-			 */
 			if (subplanidx >= 0 || subpartidx >= 0)
 				present_parts = bms_add_member(present_parts, i);
 		}

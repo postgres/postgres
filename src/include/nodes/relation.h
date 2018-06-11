@@ -552,8 +552,8 @@ typedef struct PartitionSchemeData *PartitionScheme;
  *		part_rels - RelOptInfos for each partition
  *		partexprs, nullable_partexprs - Partition key expressions
  *		partitioned_child_rels - RT indexes of unpruned partitions of
- *								 relation that are partitioned tables
- *								 themselves
+ *								 this relation that are partitioned tables
+ *								 themselves, in hierarchical order
  *
  * Note: A base relation always has only one set of partition keys, but a join
  * relation may have as many sets of partition keys as the number of relations

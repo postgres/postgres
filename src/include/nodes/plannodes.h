@@ -1059,18 +1059,35 @@ typedef struct PlanRowMark
  * plan types which support arbitrary numbers of subplans, such as Append.
  * We also store various details to tell the executor when it should be
  * performing partition pruning.
+ *
+ * Each PartitionPruneInfo describes the partitioning rules for a single
+ * partitioned table (a/k/a level of partitioning).  For a multilevel
+ * partitioned table, we have a List of PartitionPruneInfos, where the
+ * first entry represents the topmost partitioned table and additional
+ * entries represent non-leaf child partitions, ordered such that parents
+ * appear before their children.
+ *
+ * subplan_map[] and subpart_map[] are indexed by partition index (where
+ * zero is the topmost partition, and non-leaf partitions must come before
+ * their children).  For a leaf partition p, subplan_map[p] contains the
+ * zero-based index of the partition's subplan in the parent plan's subplan
+ * list; it is -1 if the partition is non-leaf or has been pruned.  For a
+ * non-leaf partition p, subpart_map[p] contains the zero-based index of
+ * that sub-partition's PartitionPruneInfo in the plan's PartitionPruneInfo
+ * list; it is -1 if the partition is a leaf or has been pruned.  All these
+ * indexes are global across the whole partitioned table and Append plan node.
  */
 typedef struct PartitionPruneInfo
 {
 	NodeTag		type;
-	Oid			reloid;			/* Oid of partition rel */
+	Oid			reloid;			/* OID of partition rel for this level */
 	List	   *pruning_steps;	/* List of PartitionPruneStep, see below */
-	Bitmapset  *present_parts;	/* Indexes of all partitions which subplans
-								 * are present for. */
+	Bitmapset  *present_parts;	/* Indexes of all partitions which subplans or
+								 * subparts are present for. */
 	int			nparts;			/* Length of subplan_map[] and subpart_map[] */
 	int			nexprs;			/* Length of hasexecparam[] */
-	int		   *subplan_map;	/* subplan index by partition id, or -1 */
-	int		   *subpart_map;	/* subpart index by partition id, or -1 */
+	int		   *subplan_map;	/* subplan index by partition index, or -1 */
+	int		   *subpart_map;	/* subpart index by partition index, or -1 */
 	bool	   *hasexecparam;	/* true if corresponding pruning_step contains
 								 * any PARAM_EXEC Params. */
 	bool		do_initial_prune;	/* true if pruning should be performed

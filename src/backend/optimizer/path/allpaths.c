@@ -1451,7 +1451,8 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * If we need to build partitioned_rels, accumulate the partitioned
-		 * rels for this child.
+		 * rels for this child.  We must ensure that parents are always listed
+		 * before their child partitioned tables.
 		 */
 		if (build_partitioned_rels)
 		{

@@ -113,30 +113,27 @@ typedef struct PartitionTupleRouting
 } PartitionTupleRouting;
 
 /*-----------------------
- * PartitionPruningData - Encapsulates all information required to support
- * elimination of partitions in plan types which support arbitrary Lists of
- * subplans.  Information stored here allows the partition pruning functions
- * to be called and the return value of partition indexes translated into the
- * subpath indexes of plan types such as Append, thus allowing us to bypass a
- * subplan when we can prove that no tuple matching the 'pruning_steps' will
- * be found within.
+ * PartitionPruningData - Per-partitioned-table data for run-time pruning
+ * of partitions.  For a multilevel partitioned table, we have one of these
+ * for the topmost partition plus one for each non-leaf child partition,
+ * ordered such that parents appear before their children.
  *
- * subplan_map					An array containing the subplan index which
- *								matches this partition index, or -1 if the
- *								subplan has been pruned already.
- * subpart_map					An array containing the index into the
- *								partprunedata array in PartitionPruneState, or
- *								-1 if there is no such element in that array.
+ * subplan_map[] and subpart_map[] have the same definitions as in
+ * PartitionPruneInfo (see plannodes.h); though note that here,
+ * subpart_map contains indexes into PartitionPruneState.partprunedata[].
+ *
+ * subplan_map					Subplan index by partition index, or -1.
+ * subpart_map					Subpart index by partition index, or -1.
  * present_parts				A Bitmapset of the partition indexes that we
- *								have subplans mapped for.
+ *								have subplans or subparts for.
  * context						Contains the context details required to call
  *								the partition pruning code.
  * pruning_steps				List of PartitionPruneSteps used to
  *								perform the actual pruning.
  * do_initial_prune				true if pruning should be performed during
- *								executor startup.
+ *								executor startup (for this partitioning level).
  * do_exec_prune				true if pruning should be performed during
- *								executor run.
+ *								executor run (for this partitioning level).
  *-----------------------
  */
 typedef struct PartitionPruningData
@@ -152,16 +149,18 @@ typedef struct PartitionPruningData
 
 /*-----------------------
  * PartitionPruneState - State object required for plan nodes to perform
- * partition pruning elimination of their subplans.  This encapsulates a
- * flattened hierarchy of PartitionPruningData structs.
+ * run-time partition pruning.
+ *
  * This struct can be attached to plan types which support arbitrary Lists of
  * subplans containing partitions to allow subplans to be eliminated due to
  * the clauses being unable to match to any tuple that the subplan could
- * possibly produce.
+ * possibly produce.  Note that we currently support only one partitioned
+ * table per parent plan node, hence partprunedata[] need describe only one
+ * partitioning hierarchy.
  *
- * partprunedata		Array of PartitionPruningData for the plan's target
- *						partitioned relation. First element contains the
- *						details for the target partitioned table.
+ * partprunedata		Array of PartitionPruningData for the plan's
+ *						partitioned relation, ordered such that parent tables
+ *						appear before children (hence, topmost table is first).
  * num_partprunedata	Number of items in 'partprunedata' array.
  * do_initial_prune		true if pruning should be performed during executor
  *						startup (at any hierarchy level).
