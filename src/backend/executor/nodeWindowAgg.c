@@ -2056,7 +2056,7 @@ ExecWindowAgg(PlanState *pstate)
 
 				if (offset < 0)
 					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+							(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
 							 errmsg("frame starting offset must not be negative")));
 			}
 		}
@@ -2081,7 +2081,7 @@ ExecWindowAgg(PlanState *pstate)
 
 				if (offset < 0)
 					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+							(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
 							 errmsg("frame ending offset must not be negative")));
 			}
 		}

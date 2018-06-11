@@ -344,7 +344,7 @@ returns bool
   </itemizedlist>
   Before doing so, the function should check the sign
   of <replaceable>offset</replaceable>: if it is less than zero, raise
-  error <literal>ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE</literal> (22013)
+  error <literal>ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE</literal> (22013)
   with error text like <quote>invalid preceding or following size in window
   function</quote>.  (This is required by the SQL standard, although
   nonstandard operator families might perhaps choose to ignore this

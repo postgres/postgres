@@ -3280,7 +3280,7 @@ in_range_timestamptz_interval(PG_FUNCTION_ARGS)
 
 	if (int128_compare(interval_cmp_value(offset), int64_to_int128(0)) < 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
 				 errmsg("invalid preceding or following size in window function")));
 
 	/* We don't currently bother to avoid overflow hazards here */
@@ -3311,7 +3311,7 @@ in_range_timestamp_interval(PG_FUNCTION_ARGS)
 
 	if (int128_compare(interval_cmp_value(offset), int64_to_int128(0)) < 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
 				 errmsg("invalid preceding or following size in window function")));
 
 	/* We don't currently bother to avoid overflow hazards here */
@@ -3342,7 +3342,7 @@ in_range_interval_interval(PG_FUNCTION_ARGS)
 
 	if (int128_compare(interval_cmp_value(offset), int64_to_int128(0)) < 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
 				 errmsg("invalid preceding or following size in window function")));
 
 	/* We don't currently bother to avoid overflow hazards here */

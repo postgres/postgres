@@ -1198,7 +1198,7 @@ in_range_float8_float8(PG_FUNCTION_ARGS)
 	 */
 	if (isnan(offset) || offset < 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
 				 errmsg("invalid preceding or following size in window function")));
 
 	/*
@@ -1267,7 +1267,7 @@ in_range_float4_float8(PG_FUNCTION_ARGS)
 	 */
 	if (isnan(offset) || offset < 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PRECEDING_FOLLOWING_SIZE),
+				(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
 				 errmsg("invalid preceding or following size in window function")));
 
 	/*
