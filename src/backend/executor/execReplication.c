@@ -413,7 +413,9 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 
 		/* Check the constraints of the tuple */
 		if (rel->rd_att->constr)
-			ExecConstraints(resultRelInfo, slot, estate, true);
+			ExecConstraints(resultRelInfo, slot, estate);
+		if (resultRelInfo->ri_PartitionCheck)
+			ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
 		/* Store the slot into tuple that we can inspect. */
 		tuple = ExecMaterializeSlot(slot);
@@ -478,7 +480,9 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 
 		/* Check the constraints of the tuple */
 		if (rel->rd_att->constr)
-			ExecConstraints(resultRelInfo, slot, estate, true);
+			ExecConstraints(resultRelInfo, slot, estate);
+		if (resultRelInfo->ri_PartitionCheck)
+			ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
 		/* Store the slot into tuple that we can write. */
 		tuple = ExecMaterializeSlot(slot);
