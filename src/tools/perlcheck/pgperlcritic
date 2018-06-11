@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# src/tools/pgperlcritic/pgperlcritic
+# src/tools/perlcheck/pgperlcritic
 
-test -f src/tools/pgperlcritic/perlcriticrc || {
-	echo could not find src/tools/pgperlcritic/perlcriticrc
+test -f src/tools/perlcheck/perlcriticrc || {
+	echo could not find src/tools/perlcheck/perlcriticrc
 	exit 1
 	}
 
@@ -17,4 +17,4 @@ PERLCRITIC=${PERLCRITIC:-perlcritic}
 find_perl_files | xargs $PERLCRITIC \
 	  --quiet \
 	  --program-extensions .pl \
-	  --profile=src/tools/pgperlcritic/perlcriticrc
+	  --profile=src/tools/perlcheck/perlcriticrc

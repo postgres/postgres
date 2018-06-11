@@ -1,6 +1,6 @@
 ######################################################################
 #
-# src/tools/pgperlcritic/perlcriticrc
+# src/tools/perlcheck/perlcriticrc
 #
 # config  file for perlcritic for Postgres project
 #
