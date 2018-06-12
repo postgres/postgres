@@ -11,5 +11,5 @@ find_perl_files () {
 		find . -type f -perm -100 -exec file {} \; -print |
 		egrep -i ':.*perl[0-9]*\>' |
 		cut -d: -f1
-	} | sort -u
+	} | sort -u | grep -v '^\./\.git/' 
 }
