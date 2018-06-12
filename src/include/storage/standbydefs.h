@@ -64,7 +64,7 @@ typedef struct xl_invalidations
 {
 	Oid			dbId;			/* MyDatabaseId */
 	Oid			tsId;			/* MyDatabaseTableSpace */
-	bool		relcacheInitFileInval;	/* invalidate relcache init file */
+	bool		relcacheInitFileInval;	/* invalidate relcache init files */
 	int			nmsgs;			/* number of shared inval msgs */
 	SharedInvalidationMessage msgs[FLEXIBLE_ARRAY_MEMBER];
 } xl_invalidations;
