@@ -1946,9 +1946,9 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <title>Upgrading Data via Replication</title>
 
    <para>
-    It is also possible to use certain replication methods, such as
-    <productname>Slony</productname>, to create a standby server with the updated version of
-    <productname>PostgreSQL</productname>.  This is possible because Slony supports
+    It is also possible to use logical replication methods to create a standby
+    server with the updated version of <productname>PostgreSQL</productname>.
+    This is possible because logical replication supports
     replication between different major versions of
     <productname>PostgreSQL</productname>.  The standby can be on the same computer or
     a different computer.  Once it has synced up with the master server
@@ -1958,6 +1958,13 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
     of downtime for an upgrade.
    </para>
 
+   <para>
+    This method of upgrading can be performed using the built-in logical
+    replication facilities as well as using external logical replication
+    systems such as <productname>pglogical</productname>,
+    <productname>Slony</productname>, <productname>Londiste</productname>, and
+    <productname>Bucardo</productname>.
+   </para>
   </sect2>
  </sect1>
 
