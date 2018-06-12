@@ -869,10 +869,10 @@ apply_handle_delete(StringInfo s)
 	else
 	{
 		/* The tuple to be deleted could not be found. */
-		ereport(DEBUG1,
-				(errmsg("logical replication could not find row for delete "
-						"in replication target relation \"%s\"",
-						RelationGetRelationName(rel->localrel))));
+		elog(DEBUG1,
+			 "logical replication could not find row for delete "
+			 "in replication target relation \"%s\"",
+			 RelationGetRelationName(rel->localrel));
 	}
 
 	/* Cleanup. */
