@@ -208,8 +208,9 @@ extern HeapTuple ConvertPartitionTupleSlot(TupleConversionMap *map,
 						  TupleTableSlot **p_my_slot);
 extern void ExecCleanupTupleRouting(ModifyTableState *mtstate,
 						PartitionTupleRouting *proute);
-extern PartitionPruneState *ExecSetupPartitionPruneState(PlanState *planstate,
-							 List *partitionpruneinfo);
+extern PartitionPruneState *ExecCreatePartitionPruneState(PlanState *planstate,
+							  List *partitionpruneinfo);
+extern void ExecDestroyPartitionPruneState(PartitionPruneState *prunestate);
 extern Bitmapset *ExecFindMatchingSubPlans(PartitionPruneState *prunestate);
 extern Bitmapset *ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate,
 								int nsubplans);

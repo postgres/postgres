@@ -436,16 +436,20 @@ prune_append_rel_partitions(RelOptInfo *rel)
 	if (contradictory)
 		return NULL;
 
+	/* Set up PartitionPruneContext */
 	context.strategy = rel->part_scheme->strategy;
 	context.partnatts = rel->part_scheme->partnatts;
-	context.partopfamily = rel->part_scheme->partopfamily;
-	context.partopcintype = rel->part_scheme->partopcintype;
-	context.partcollation = rel->part_scheme->partcollation;
-	context.partsupfunc = rel->part_scheme->partsupfunc;
 	context.nparts = rel->nparts;
 	context.boundinfo = rel->boundinfo;
+	context.partcollation = rel->part_scheme->partcollation;
+	context.partsupfunc = rel->part_scheme->partsupfunc;
+	context.stepcmpfuncs = (FmgrInfo *) palloc0(sizeof(FmgrInfo) *
+												context.partnatts *
+												list_length(pruning_steps));
+	context.ppccontext = CurrentMemoryContext;
 
 	/* These are not valid when being called from the planner */
+	context.partrel = NULL;
 	context.planstate = NULL;
 	context.exprstates = NULL;
 	context.exprhasexecparam = NULL;
@@ -2809,7 +2813,8 @@ perform_pruning_base_step(PartitionPruneContext *context,
 	int			keyno,
 				nvalues;
 	Datum		values[PARTITION_MAX_KEYS];
-	FmgrInfo	partsupfunc[PARTITION_MAX_KEYS];
+	FmgrInfo   *partsupfunc;
+	int			stateidx;
 
 	/*
 	 * There better be the same number of expressions and compare functions.
@@ -2844,7 +2849,6 @@ perform_pruning_base_step(PartitionPruneContext *context,
 		if (lc1 != NULL)
 		{
 			Expr	   *expr;
-			int			stateidx;
 			Datum		datum;
 			bool		isnull;
 
@@ -2873,19 +2877,25 @@ perform_pruning_base_step(PartitionPruneContext *context,
 					return result;
 				}
 
-				/*
-				 * If we're going to need a different comparison function than
-				 * the one cached in the PartitionKey, we'll need to look up
-				 * the FmgrInfo.
-				 */
+				/* Set up the stepcmpfuncs entry, unless we already did */
 				cmpfn = lfirst_oid(lc2);
 				Assert(OidIsValid(cmpfn));
-				if (cmpfn != context->partsupfunc[keyno].fn_oid)
-					fmgr_info(cmpfn, &partsupfunc[keyno]);
-				else
-					fmgr_info_copy(&partsupfunc[keyno],
-								   &context->partsupfunc[keyno],
-								   CurrentMemoryContext);
+				if (cmpfn != context->stepcmpfuncs[stateidx].fn_oid)
+				{
+					/*
+					 * If the needed support function is the same one cached
+					 * in the relation's partition key, copy the cached
+					 * FmgrInfo.  Otherwise (i.e., when we have a cross-type
+					 * comparison), an actual lookup is required.
+					 */
+					if (cmpfn == context->partsupfunc[keyno].fn_oid)
+						fmgr_info_copy(&context->stepcmpfuncs[stateidx],
+									   &context->partsupfunc[keyno],
+									   context->ppccontext);
+					else
+						fmgr_info_cxt(cmpfn, &context->stepcmpfuncs[stateidx],
+									  context->ppccontext);
+				}
 
 				values[keyno] = datum;
 				nvalues++;
@@ -2895,6 +2905,13 @@ perform_pruning_base_step(PartitionPruneContext *context,
 			lc2 = lnext(lc2);
 		}
 	}
+
+	/*
+	 * Point partsupfunc to the entry for the 0th key of this step; the
+	 * additional support functions, if any, follow consecutively.
+	 */
+	stateidx = PruneCxtStateIdx(context->partnatts, opstep->step.step_id, 0);
+	partsupfunc = &context->stepcmpfuncs[stateidx];
 
 	switch (context->strategy)
 	{

@@ -1357,10 +1357,13 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
  *
  * Functions:
  *
- * ExecSetupPartitionPruneState:
+ * ExecCreatePartitionPruneState:
  *		Creates the PartitionPruneState required by each of the two pruning
  *		functions.  Details stored include how to map the partition index
  *		returned by the partition pruning code into subplan indexes.
+ *
+ * ExecDestroyPartitionPruneState:
+ *		Deletes a PartitionPruneState. Must be called during executor shutdown.
  *
  * ExecFindInitialMatchingSubPlans:
  *		Returns indexes of matching subplans.  Partition pruning is attempted
@@ -1382,8 +1385,8 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
  */
 
 /*
- * ExecSetupPartitionPruneState
- *		Set up the data structure required for calling
+ * ExecCreatePartitionPruneState
+ *		Build the data structure required for calling
  *		ExecFindInitialMatchingSubPlans and ExecFindMatchingSubPlans.
  *
  * 'planstate' is the parent plan node's execution state.
@@ -1395,7 +1398,7 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
  * in each PartitionPruneInfo.
  */
 PartitionPruneState *
-ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
+ExecCreatePartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 {
 	PartitionPruneState *prunestate;
 	PartitionPruningData *prunedata;
@@ -1435,11 +1438,10 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 		PartitionPruningData *pprune = &prunedata[i];
 		PartitionPruneContext *context = &pprune->context;
 		PartitionDesc partdesc;
-		Relation	rel;
 		PartitionKey partkey;
-		ListCell   *lc2;
 		int			partnatts;
 		int			n_steps;
+		ListCell   *lc2;
 
 		/*
 		 * We must copy the subplan_map rather than pointing directly to the
@@ -1456,26 +1458,33 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 		pprune->present_parts = bms_copy(pinfo->present_parts);
 
 		/*
-		 * Grab some info from the table's relcache; lock was already obtained
-		 * by ExecLockNonLeafAppendTables.
+		 * We need to hold a pin on the partitioned table's relcache entry so
+		 * that we can rely on its copies of the table's partition key and
+		 * partition descriptor.  We need not get a lock though; one should
+		 * have been acquired already by InitPlan or
+		 * ExecLockNonLeafAppendTables.
 		 */
-		rel = relation_open(pinfo->reloid, NoLock);
+		context->partrel = relation_open(pinfo->reloid, NoLock);
 
-		partkey = RelationGetPartitionKey(rel);
-		partdesc = RelationGetPartitionDesc(rel);
+		partkey = RelationGetPartitionKey(context->partrel);
+		partdesc = RelationGetPartitionDesc(context->partrel);
+		n_steps = list_length(pinfo->pruning_steps);
 
 		context->strategy = partkey->strategy;
 		context->partnatts = partnatts = partkey->partnatts;
-		context->partopfamily = partkey->partopfamily;
-		context->partopcintype = partkey->partopcintype;
+		context->nparts = pinfo->nparts;
+		context->boundinfo = partdesc->boundinfo;
 		context->partcollation = partkey->partcollation;
 		context->partsupfunc = partkey->partsupfunc;
-		context->nparts = pinfo->nparts;
-		context->boundinfo = partition_bounds_copy(partdesc->boundinfo, partkey);
+
+		/* We'll look up type-specific support functions as needed */
+		context->stepcmpfuncs = (FmgrInfo *)
+			palloc0(sizeof(FmgrInfo) * n_steps * partnatts);
+
+		context->ppccontext = CurrentMemoryContext;
 		context->planstate = planstate;
 
 		/* Initialize expression state for each expression we need */
-		n_steps = list_length(pinfo->pruning_steps);
 		context->exprstates = (ExprState **)
 			palloc0(sizeof(ExprState *) * n_steps * partnatts);
 		foreach(lc2, pinfo->pruning_steps)
@@ -1527,12 +1536,30 @@ ExecSetupPartitionPruneState(PlanState *planstate, List *partitionpruneinfo)
 		prunestate->execparamids = bms_add_members(prunestate->execparamids,
 												   pinfo->execparamids);
 
-		relation_close(rel, NoLock);
-
 		i++;
 	}
 
 	return prunestate;
+}
+
+/*
+ * ExecDestroyPartitionPruneState
+ *		Release resources at plan shutdown.
+ *
+ * We don't bother to free any memory here, since the whole executor context
+ * will be going away shortly.  We do need to release our relcache pins.
+ */
+void
+ExecDestroyPartitionPruneState(PartitionPruneState *prunestate)
+{
+	int			i;
+
+	for (i = 0; i < prunestate->num_partprunedata; i++)
+	{
+		PartitionPruningData *pprune = &prunestate->partprunedata[i];
+
+		relation_close(pprune->context.partrel, NoLock);
+	}
 }
 
 /*

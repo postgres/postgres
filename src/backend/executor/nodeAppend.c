@@ -136,8 +136,10 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 		/* We may need an expression context to evaluate partition exprs */
 		ExecAssignExprContext(estate, &appendstate->ps);
 
-		prunestate = ExecSetupPartitionPruneState(&appendstate->ps,
-												  node->part_prune_infos);
+		/* Create the working data structure for pruning. */
+		prunestate = ExecCreatePartitionPruneState(&appendstate->ps,
+												   node->part_prune_infos);
+		appendstate->as_prune_state = prunestate;
 
 		/* Perform an initial partition prune, if required. */
 		if (prunestate->do_initial_prune)
@@ -178,8 +180,6 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 		 */
 		if (!prunestate->do_exec_prune)
 			appendstate->as_valid_subplans = bms_add_range(NULL, 0, nplans - 1);
-
-		appendstate->as_prune_state = prunestate;
 	}
 	else
 	{
@@ -330,6 +330,12 @@ ExecEndAppend(AppendState *node)
 	 */
 	for (i = 0; i < nplans; i++)
 		ExecEndNode(appendplans[i]);
+
+	/*
+	 * release any resources associated with run-time pruning
+	 */
+	if (node->as_prune_state)
+		ExecDestroyPartitionPruneState(node->as_prune_state);
 }
 
 void

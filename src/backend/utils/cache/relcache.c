@@ -2471,6 +2471,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att);
 		keep_rules = equalRuleLocks(relation->rd_rules, newrel->rd_rules);
 		keep_policies = equalRSDesc(relation->rd_rsdesc, newrel->rd_rsdesc);
+		/* partkey is immutable once set up, so we can always keep it */
 		keep_partkey = (relation->rd_partkey != NULL);
 		keep_partdesc = equalPartitionDescs(relation->rd_partkey,
 											relation->rd_partdesc,
@@ -2515,7 +2516,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		SWAPFIELD(Form_pg_class, rd_rel);
 		/* ... but actually, we don't have to update newrel->rd_rel */
 		memcpy(relation->rd_rel, newrel->rd_rel, CLASS_TUPLE_SIZE);
-		/* preserve old tupledesc and rules if no logical change */
+		/* preserve old tupledesc, rules, policies if no logical change */
 		if (keep_tupdesc)
 			SWAPFIELD(TupleDesc, rd_att);
 		if (keep_rules)
@@ -2529,13 +2530,12 @@ RelationClearRelation(Relation relation, bool rebuild)
 		SWAPFIELD(Oid, rd_toastoid);
 		/* pgstat_info must be preserved */
 		SWAPFIELD(struct PgStat_TableStatus *, pgstat_info);
-		/* partition key must be preserved, if we have one */
+		/* preserve old partitioning info if no logical change */
 		if (keep_partkey)
 		{
 			SWAPFIELD(PartitionKey, rd_partkey);
 			SWAPFIELD(MemoryContext, rd_partkeycxt);
 		}
-		/* preserve old partdesc if no logical change */
 		if (keep_partdesc)
 		{
 			SWAPFIELD(PartitionDesc, rd_partdesc);
