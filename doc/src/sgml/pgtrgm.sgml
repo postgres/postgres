@@ -113,7 +113,10 @@
       <entry><type>real</type></entry>
       <entry>
        Same as <function>word_similarity(text, text)</function>, but forces
-       extent boundaries to match word boundaries.
+       extent boundaries to match word boundaries.  Since we don't have
+       cross-word trigrams, this function actually returns greatest similarity
+       between first string and any continuous extent of words of the second
+       string.
       </entry>
      </row>
      <row>
@@ -164,16 +167,16 @@
    This function returns a value that can be approximately understood as the
    greatest similarity between the first string and any substring of the second
    string.  However, this function does not add padding to the boundaries of
-   the extent.  Thus, a whole word match gets a higher score than a match with
-   a part of the word.
+   the extent.  Thus, the number of additional characters present in the
+   second string is not considered, except for the mismatched word boundry.
   </para>
 
   <para>
    At the same time, <function>strict_word_similarity(text, text)</function>
-   has to select an extent that matches word boundaries.  In the example above,
+   selects extent of words in the second string.  In the example above,
    <function>strict_word_similarity(text, text)</function> would select the
-   extent <literal>{"  w"," wo","wor","ord","rds","ds "}</literal>, which
-   corresponds to the whole word <literal>'words'</literal>.
+   extent of single word <literal>'words'</literal>, whose set of trigrams is
+   <literal>{"  w"," wo","wor","ord","rds","ds "}</literal>
 
 <programlisting>
 # SELECT strict_word_similarity('word', 'two words'), similarity('word', 'words');
@@ -186,9 +189,9 @@
 
   <para>
    Thus, the <function>strict_word_similarity(text, text)</function> function
-   is useful for finding similar subsets of whole words, while
+   is useful for finding the similarity to whole words, while
    <function>word_similarity(text, text)</function> is more suitable for
-   searching similar parts of words.
+   finding the similarity for parts of words.
   </para>
 
   <table id="pgtrgm-op-table">
