@@ -499,10 +499,10 @@ RelationBuildPartitionDesc(Relation rel)
 					continue;
 				}
 
-				lower = make_one_range_bound(key, i, spec->lowerdatums,
-											 true);
-				upper = make_one_range_bound(key, i, spec->upperdatums,
-											 false);
+				lower = make_one_partition_rbound(key, i, spec->lowerdatums,
+												  true);
+				upper = make_one_partition_rbound(key, i, spec->upperdatums,
+												  false);
 				all_bounds[ndatums++] = lower;
 				all_bounds[ndatums++] = upper;
 				i++;

@@ -105,8 +105,8 @@ typedef struct PartitionRangeBound
 } PartitionRangeBound;
 
 extern int	get_hash_partition_greatest_modulus(PartitionBoundInfo b);
-extern uint64 compute_hash_value(int partnatts, FmgrInfo *partsupfunc,
-				   Datum *values, bool *isnull);
+extern uint64 compute_partition_hash_value(int partnatts, FmgrInfo *partsupfunc,
+							 Datum *values, bool *isnull);
 extern List *get_qual_from_partbound(Relation rel, Relation parent,
 						PartitionBoundSpec *spec);
 extern bool partition_bounds_equal(int partnatts, int16 *parttyplen,
@@ -116,11 +116,12 @@ extern PartitionBoundInfo partition_bounds_copy(PartitionBoundInfo src,
 					  PartitionKey key);
 extern void check_new_partition_bound(char *relname, Relation parent,
 						  PartitionBoundSpec *spec);
-extern void check_default_allows_bound(Relation parent, Relation defaultRel,
-						   PartitionBoundSpec *new_spec);
+extern void check_default_partition_contents(Relation parent,
+								 Relation defaultRel,
+								 PartitionBoundSpec *new_spec);
 
-extern PartitionRangeBound *make_one_range_bound(PartitionKey key, int index,
-					 List *datums, bool lower);
+extern PartitionRangeBound *make_one_partition_rbound(PartitionKey key, int index,
+						  List *datums, bool lower);
 extern int32 partition_hbound_cmp(int modulus1, int remainder1, int modulus2,
 					 int remainder2);
 extern int32 partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,

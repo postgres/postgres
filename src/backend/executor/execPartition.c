@@ -1085,17 +1085,20 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 	int			part_index = -1;
 	PartitionKey key = RelationGetPartitionKey(relation);
 	PartitionDesc partdesc = RelationGetPartitionDesc(relation);
+	PartitionBoundInfo boundinfo = partdesc->boundinfo;
 
 	/* Route as appropriate based on partitioning strategy. */
 	switch (key->strategy)
 	{
 		case PARTITION_STRATEGY_HASH:
 			{
-				PartitionBoundInfo boundinfo = partdesc->boundinfo;
-				int			greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
-				uint64		rowHash = compute_hash_value(key->partnatts,
-														 key->partsupfunc,
-														 values, isnull);
+				int			greatest_modulus;
+				uint64		rowHash;
+
+				greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
+				rowHash = compute_partition_hash_value(key->partnatts,
+													   key->partsupfunc,
+													   values, isnull);
 
 				part_index = boundinfo->indexes[rowHash % greatest_modulus];
 			}
@@ -1104,8 +1107,8 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 		case PARTITION_STRATEGY_LIST:
 			if (isnull[0])
 			{
-				if (partition_bound_accepts_nulls(partdesc->boundinfo))
-					part_index = partdesc->boundinfo->null_index;
+				if (partition_bound_accepts_nulls(boundinfo))
+					part_index = boundinfo->null_index;
 			}
 			else
 			{
@@ -1113,10 +1116,10 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 
 				bound_offset = partition_list_bsearch(key->partsupfunc,
 													  key->partcollation,
-													  partdesc->boundinfo,
+													  boundinfo,
 													  values[0], &equal);
 				if (bound_offset >= 0 && equal)
-					part_index = partdesc->boundinfo->indexes[bound_offset];
+					part_index = boundinfo->indexes[bound_offset];
 			}
 			break;
 
@@ -1143,7 +1146,7 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 				{
 					bound_offset = partition_range_datum_bsearch(key->partsupfunc,
 																 key->partcollation,
-																 partdesc->boundinfo,
+																 boundinfo,
 																 key->partnatts,
 																 values,
 																 &equal);
@@ -1154,7 +1157,7 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 					 * bound of the partition we're looking for, if there
 					 * actually exists one.
 					 */
-					part_index = partdesc->boundinfo->indexes[bound_offset + 1];
+					part_index = boundinfo->indexes[bound_offset + 1];
 				}
 			}
 			break;
@@ -1169,7 +1172,7 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 	 * the default partition, if there is one.
 	 */
 	if (part_index < 0)
-		part_index = partdesc->boundinfo->default_index;
+		part_index = boundinfo->default_index;
 
 	return part_index;
 }

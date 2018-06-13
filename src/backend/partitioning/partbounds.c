@@ -470,8 +470,8 @@ check_new_partition_bound(char *relname, Relation parent,
 						   *upper;
 
 				Assert(spec->strategy == PARTITION_STRATEGY_RANGE);
-				lower = make_one_range_bound(key, -1, spec->lowerdatums, true);
-				upper = make_one_range_bound(key, -1, spec->upperdatums, false);
+				lower = make_one_partition_rbound(key, -1, spec->lowerdatums, true);
+				upper = make_one_partition_rbound(key, -1, spec->upperdatums, false);
 
 				/*
 				 * First check if the resulting range would be empty with
@@ -589,15 +589,15 @@ check_new_partition_bound(char *relname, Relation parent,
 }
 
 /*
- * check_default_allows_bound
+ * check_default_partition_contents
  *
  * This function checks if there exists a row in the default partition that
  * would properly belong to the new partition being added.  If it finds one,
  * it throws an error.
  */
 void
-check_default_allows_bound(Relation parent, Relation default_rel,
-						   PartitionBoundSpec *new_spec)
+check_default_partition_contents(Relation parent, Relation default_rel,
+								 PartitionBoundSpec *new_spec)
 {
 	List	   *new_part_constraints;
 	List	   *def_part_constraints;
@@ -757,14 +757,14 @@ get_hash_partition_greatest_modulus(PartitionBoundInfo bound)
 }
 
 /*
- * make_one_range_bound
+ * make_one_partition_rbound
  *
  * Return a PartitionRangeBound given a list of PartitionRangeDatum elements
  * and a flag telling whether the bound is lower or not.  Made into a function
  * because there are multiple sites that want to use this facility.
  */
 PartitionRangeBound *
-make_one_range_bound(PartitionKey key, int index, List *datums, bool lower)
+make_one_partition_rbound(PartitionKey key, int index, List *datums, bool lower)
 {
 	PartitionRangeBound *bound;
 	ListCell   *lc;
@@ -2052,13 +2052,13 @@ get_range_nulltest(PartitionKey key)
 }
 
 /*
- * compute_hash_value
+ * compute_partition_hash_value
  *
- * Compute the hash value for given not null partition key values.
+ * Compute the hash value for given partition key values.
  */
 uint64
-compute_hash_value(int partnatts, FmgrInfo *partsupfunc,
-				   Datum *values, bool *isnull)
+compute_partition_hash_value(int partnatts, FmgrInfo *partsupfunc,
+							 Datum *values, bool *isnull)
 {
 	int			i;
 	uint64		rowHash = 0;
@@ -2066,6 +2066,7 @@ compute_hash_value(int partnatts, FmgrInfo *partsupfunc,
 
 	for (i = 0; i < partnatts; i++)
 	{
+		/* Nulls are just ignored */
 		if (!isnull[i])
 		{
 			Datum		hash;

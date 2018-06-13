@@ -2018,7 +2018,8 @@ get_matching_hash_bounds(PartitionPruneContext *context,
 			isnull[i] = bms_is_member(i, nullkeys);
 
 		greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
-		rowHash = compute_hash_value(partnatts, partsupfunc, values, isnull);
+		rowHash = compute_partition_hash_value(partnatts, partsupfunc,
+											   values, isnull);
 
 		if (partindices[rowHash % greatest_modulus] >= 0)
 			result->bound_offsets =

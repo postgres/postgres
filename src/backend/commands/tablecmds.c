@@ -855,7 +855,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		 */
 		if (OidIsValid(defaultPartOid))
 		{
-			check_default_allows_bound(parent, defaultRel, bound);
+			check_default_partition_contents(parent, defaultRel, bound);
 			/* Keep the lock until commit. */
 			heap_close(defaultRel, NoLock);
 		}
