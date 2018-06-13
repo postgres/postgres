@@ -153,8 +153,8 @@
    This function returns a value that can be approximately understood as the
    greatest similarity between the first string and any substring of the second
    string.  However, this function does not add padding to the boundaries of
-   the extent.  Thus, a whole word match gets a higher score than a match with
-   a part of the word.
+   the extent.  Thus, the number of additional characters present in the
+   second string is not considered, except for the mismatched word boundry.
   </para>
 
   <table id="pgtrgm-op-table">
