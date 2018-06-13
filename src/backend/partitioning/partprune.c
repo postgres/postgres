@@ -613,18 +613,17 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 		Expr	   *clause = (Expr *) lfirst(lc);
 		int			i;
 
+		/* Look through RestrictInfo, if any */
 		if (IsA(clause, RestrictInfo))
-		{
-			RestrictInfo *rinfo = (RestrictInfo *) clause;
+			clause = ((RestrictInfo *) clause)->clause;
 
-			clause = rinfo->clause;
-			if (rinfo->pseudoconstant &&
-				IsA(rinfo->clause, Const) &&
-				!DatumGetBool(((Const *) clause)->constvalue))
-			{
-				*contradictory = true;
-				return NIL;
-			}
+		/* Constant-false-or-null is contradictory */
+		if (IsA(clause, Const) &&
+			(((Const *) clause)->constisnull ||
+			 !DatumGetBool(((Const *) clause)->constvalue)))
+		{
+			*contradictory = true;
+			return NIL;
 		}
 
 		/* Get the BoolExpr's out of the way. */
@@ -1378,13 +1377,13 @@ gen_prune_steps_from_opexps(PartitionScheme part_scheme,
  *   Output arguments: *clause_steps is set to a list of PartitionPruneStep
  *   generated for the clause.
  *
- * * PARTCLAUSE_MATCH_CONTRADICT if the clause is self-contradictory.  This can
- *   only happen if it's a BoolExpr whose arguments are self-contradictory.
+ * * PARTCLAUSE_MATCH_CONTRADICT if the clause is self-contradictory, ie
+ *   it provably returns FALSE or NULL.
  *   Output arguments: none set.
  *
- * * PARTCLAUSE_UNSUPPORTED if the clause cannot be used for pruning at all
- *   due to one of its properties, such as argument volatility, even if it may
- *   have been matched with a key.
+ * * PARTCLAUSE_UNSUPPORTED if the clause doesn't match this partition key
+ *   and couldn't possibly match any other one either, due to its form or
+ *   properties (such as containing a volatile function).
  *   Output arguments: none set.
  */
 static PartClauseMatchStatus
@@ -1395,9 +1394,9 @@ match_clause_to_partition_key(RelOptInfo *rel,
 							  List **clause_steps)
 {
 	PartitionScheme part_scheme = rel->part_scheme;
-	Expr	   *expr;
 	Oid			partopfamily = part_scheme->partopfamily[partkeyidx],
 				partcoll = part_scheme->partcollation[partkeyidx];
+	Expr	   *expr;
 
 	/*
 	 * Recognize specially shaped clauses that match with the Boolean
@@ -1427,9 +1426,9 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		OpExpr	   *opclause = (OpExpr *) clause;
 		Expr	   *leftop,
 				   *rightop;
-		Oid			op_lefttype,
+		Oid			opno,
+					op_lefttype,
 					op_righttype,
-					commutator = InvalidOid,
 					negator = InvalidOid;
 		Oid			cmpfn;
 		int			op_strategy;
@@ -1442,79 +1441,88 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		rightop = (Expr *) get_rightop(clause);
 		if (IsA(rightop, RelabelType))
 			rightop = ((RelabelType *) rightop)->arg;
+		opno = opclause->opno;
 
 		/* check if the clause matches this partition key */
 		if (equal(leftop, partkey))
 			expr = rightop;
 		else if (equal(rightop, partkey))
 		{
-			expr = leftop;
-			commutator = get_commutator(opclause->opno);
-
-			/* nothing we can do unless we can swap the operands */
-			if (!OidIsValid(commutator))
+			/*
+			 * It's only useful if we can commute the operator to put the
+			 * partkey on the left.  If we can't, the clause can be deemed
+			 * UNSUPPORTED.  Even if its leftop matches some later partkey, we
+			 * now know it has Vars on the right, so it's no use.
+			 */
+			opno = get_commutator(opno);
+			if (!OidIsValid(opno))
 				return PARTCLAUSE_UNSUPPORTED;
+			expr = leftop;
 		}
 		else
 			/* clause does not match this partition key, but perhaps next. */
 			return PARTCLAUSE_NOMATCH;
 
 		/*
-		 * Partition key also consists of a collation that's specified for it,
-		 * so try to match it too.  There may be multiple keys with the same
-		 * expression but different collations.
+		 * Partition key match also requires collation match.  There may be
+		 * multiple partkeys with the same expression but different
+		 * collations, so failure is NOMATCH.
 		 */
 		if (!PartCollMatchesExprColl(partcoll, opclause->inputcollid))
 			return PARTCLAUSE_NOMATCH;
 
 		/*
 		 * Matched with this key.  Now check various properties of the clause
-		 * to see if it's sane to use it for pruning.  If any of the
-		 * properties makes it unsuitable for pruning, then the clause is
-		 * useless no matter which key it's matched to.
+		 * to see if it's sane to use it for pruning.  In most of these cases,
+		 * we can return UNSUPPORTED because the same failure would occur no
+		 * matter which partkey it's matched to.
 		 */
+
+		/*
+		 * We can't prune using an expression with Vars.  (Report failure as
+		 * UNSUPPORTED, not NOMATCH: as in the no-commutator case above, we
+		 * now know there are Vars on both sides, so it's no good.)
+		 */
+		if (contain_var_clause((Node *) expr))
+			return PARTCLAUSE_UNSUPPORTED;
 
 		/*
 		 * Only allow strict operators.  This will guarantee nulls are
 		 * filtered.
 		 */
-		if (!op_strict(opclause->opno))
+		if (!op_strict(opno))
 			return PARTCLAUSE_UNSUPPORTED;
 
 		/* We can't use any volatile expressions to prune partitions. */
 		if (contain_volatile_functions((Node *) expr))
 			return PARTCLAUSE_UNSUPPORTED;
 
-		/* We can't prune using an expression with Vars. */
-		if (contain_var_clause((Node *) expr))
-			return PARTCLAUSE_UNSUPPORTED;
-
 		/*
-		 * Determine the input types of the operator we're considering.
+		 * See if the operator is relevant to the partitioning opfamily.
 		 *
 		 * Normally we only care about operators that are listed as being part
 		 * of the partitioning operator family.  But there is one exception:
 		 * the not-equals operators are not listed in any operator family
 		 * whatsoever, but their negators (equality) are.  We can use one of
 		 * those if we find it, but only for list partitioning.
+		 *
+		 * Note: we report NOMATCH on failure, in case a later partkey has the
+		 * same expression but different opfamily.  That's unlikely, but not
+		 * much more so than duplicate expressions with different collations.
 		 */
-		if (op_in_opfamily(opclause->opno, partopfamily))
+		if (op_in_opfamily(opno, partopfamily))
 		{
-			Oid			oper;
-
-			oper = OidIsValid(commutator) ? commutator : opclause->opno;
-			get_op_opfamily_properties(oper, partopfamily, false,
+			get_op_opfamily_properties(opno, partopfamily, false,
 									   &op_strategy, &op_lefttype,
 									   &op_righttype);
 		}
 		else
 		{
-			/* Not good unless list partitioning */
 			if (part_scheme->strategy != PARTITION_STRATEGY_LIST)
-				return PARTCLAUSE_UNSUPPORTED;
+				return PARTCLAUSE_NOMATCH;
 
 			/* See if the negator is equality */
-			negator = get_negator(opclause->opno);
+			negator = get_negator(opno);
 			if (OidIsValid(negator) && op_in_opfamily(negator, partopfamily))
 			{
 				get_op_opfamily_properties(negator, partopfamily, false,
@@ -1524,9 +1532,9 @@ match_clause_to_partition_key(RelOptInfo *rel,
 					is_opne_listp = true;	/* bingo */
 			}
 
-			/* Operator isn't really what we were hoping it'd be. */
+			/* Nope, it's not <> either. */
 			if (!is_opne_listp)
-				return PARTCLAUSE_UNSUPPORTED;
+				return PARTCLAUSE_NOMATCH;
 		}
 
 		/*
@@ -1534,7 +1542,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		 * other argument is of the same type as the partitioning opclass's
 		 * declared input type, we can use the procedure cached in
 		 * PartitionKey.  If not, search for a cross-type one in the same
-		 * opfamily; if one doesn't exist, give up on pruning for this clause.
+		 * opfamily; if one doesn't exist, report no match.
 		 */
 		if (op_righttype == part_scheme->partopcintype[partkeyidx])
 			cmpfn = part_scheme->partsupfunc[partkeyidx].fn_oid;
@@ -1569,16 +1577,16 @@ match_clause_to_partition_key(RelOptInfo *rel,
 				default:
 					elog(ERROR, "invalid partition strategy: %c",
 						 part_scheme->strategy);
+					cmpfn = InvalidOid; /* keep compiler quiet */
 					break;
 			}
 
-			/* If we couldn't find one, we cannot use this expression. */
 			if (!OidIsValid(cmpfn))
-				return PARTCLAUSE_UNSUPPORTED;
+				return PARTCLAUSE_NOMATCH;
 		}
 
 		/*
-		 * Build the clause, passing the negator or commutator if applicable.
+		 * Build the clause, passing the negator if applicable.
 		 */
 		partclause = (PartClauseInfo *) palloc(sizeof(PartClauseInfo));
 		partclause->keyno = partkeyidx;
@@ -1591,8 +1599,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		}
 		else
 		{
-			partclause->opno = OidIsValid(commutator) ?
-				commutator : opclause->opno;
+			partclause->opno = opno;
 			partclause->op_is_ne = false;
 			partclause->op_strategy = op_strategy;
 		}
@@ -1625,8 +1632,13 @@ match_clause_to_partition_key(RelOptInfo *rel,
 
 		/*
 		 * Matched with this key.  Check various properties of the clause to
-		 * see if it can sanely be used for partition pruning.
+		 * see if it can sanely be used for partition pruning (this is mostly
+		 * the same as for a plain OpExpr).
 		 */
+
+		/* We can't prune using an expression with Vars. */
+		if (contain_var_clause((Node *) rightop))
+			return PARTCLAUSE_UNSUPPORTED;
 
 		/*
 		 * Only allow strict operators.  This will guarantee nulls are
@@ -1639,22 +1651,18 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		if (contain_volatile_functions((Node *) rightop))
 			return PARTCLAUSE_UNSUPPORTED;
 
-		/* We can't prune using an expression with Vars. */
-		if (contain_var_clause((Node *) rightop))
-			return PARTCLAUSE_UNSUPPORTED;
-
 		/*
 		 * In case of NOT IN (..), we get a '<>', which we handle if list
 		 * partitioning is in use and we're able to confirm that it's negator
 		 * is a btree equality operator belonging to the partitioning operator
-		 * family.
+		 * family.  As above, report NOMATCH for non-matching operator.
 		 */
 		if (!op_in_opfamily(saop_op, partopfamily))
 		{
 			Oid			negator;
 
 			if (part_scheme->strategy != PARTITION_STRATEGY_LIST)
-				return PARTCLAUSE_UNSUPPORTED;
+				return PARTCLAUSE_NOMATCH;
 
 			negator = get_negator(saop_op);
 			if (OidIsValid(negator) && op_in_opfamily(negator, partopfamily))
@@ -1667,10 +1675,10 @@ match_clause_to_partition_key(RelOptInfo *rel,
 										   false, &strategy,
 										   &lefttype, &righttype);
 				if (strategy != BTEqualStrategyNumber)
-					return PARTCLAUSE_UNSUPPORTED;
+					return PARTCLAUSE_NOMATCH;
 			}
 			else
-				return PARTCLAUSE_UNSUPPORTED;	/* no useful negator */
+				return PARTCLAUSE_NOMATCH;	/* no useful negator */
 		}
 
 		/*
@@ -1680,7 +1688,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		elem_exprs = NIL;
 		if (IsA(rightop, Const))
 		{
-			Const	   *arr = castNode(Const, rightop);
+			Const	   *arr = (Const *) rightop;
 			ArrayType  *arrval = DatumGetArrayTypeP(arr->constvalue);
 			int16		elemlen;
 			bool		elembyval;
@@ -1701,9 +1709,17 @@ match_clause_to_partition_key(RelOptInfo *rel,
 			{
 				Const	   *elem_expr;
 
-				/* Only consider non-null values. */
+				/*
+				 * A null array element must lead to a null comparison result,
+				 * since saop_op is known strict.  We can ignore it in the
+				 * useOr case, but otherwise it implies self-contradiction.
+				 */
 				if (elem_nulls[i])
-					continue;
+				{
+					if (saop->useOr)
+						continue;
+					return PARTCLAUSE_MATCH_CONTRADICT;
+				}
 
 				elem_expr = makeConst(ARR_ELEMTYPE(arrval), -1,
 									  arr->constcollid, elemlen,
@@ -1748,7 +1764,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		}
 
 		/*
-		 * If we have an ANY clause and multiple elements, first turn the list
+		 * If we have an ANY clause and multiple elements, now turn the list
 		 * of clauses into an OR expression.
 		 */
 		if (saop->useOr && list_length(elem_clauses) > 1)
@@ -1776,7 +1792,7 @@ match_clause_to_partition_key(RelOptInfo *rel,
 		if (!equal(arg, partkey))
 			return PARTCLAUSE_NOMATCH;
 
-		*clause_is_not_null = nulltest->nulltesttype == IS_NOT_NULL;
+		*clause_is_not_null = (nulltest->nulltesttype == IS_NOT_NULL);
 
 		return PARTCLAUSE_MATCH_NULLNESS;
 	}
