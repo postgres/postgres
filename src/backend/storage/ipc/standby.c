@@ -1050,11 +1050,6 @@ LogAccessExclusiveLock(Oid dbOid, Oid relOid)
 
 	xlrec.xid = GetCurrentTransactionId();
 
-	/*
-	 * Decode the locktag back to the original values, to avoid sending lots
-	 * of empty bytes with every message.  See lock.h to check how a locktag
-	 * is defined for LOCKTAG_RELATION
-	 */
 	xlrec.dbOid = dbOid;
 	xlrec.relOid = relOid;
 

@@ -1926,9 +1926,7 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
  * that bookkeeping.
  *
  * Note that if any transaction has overflowed its cached subtransactions
- * then there is no real need include any subtransactions. That isn't a
- * common enough case to worry about optimising the size of the WAL record,
- * and we may wish to see that data for diagnostic purposes anyway.
+ * then there is no real need include any subtransactions.
  */
 RunningTransactions
 GetRunningTransactionData(void)
