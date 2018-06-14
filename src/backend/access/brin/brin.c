@@ -871,6 +871,12 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 	Relation	heapRel;
 	double		numSummarized = 0;
 
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("BRIN control functions cannot be executed during recovery.")));
+
 	if (heapBlk64 > BRIN_ALL_BLOCKRANGES || heapBlk64 < 0)
 	{
 		char	   *blk = psprintf(INT64_FORMAT, heapBlk64);
@@ -941,6 +947,12 @@ brin_desummarize_range(PG_FUNCTION_ARGS)
 	Relation	heapRel;
 	Relation	indexRel;
 	bool		done;
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("BRIN control functions cannot be executed during recovery.")));
 
 	if (heapBlk64 > MaxBlockNumber || heapBlk64 < 0)
 	{
