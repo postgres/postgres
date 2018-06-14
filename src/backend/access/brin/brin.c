@@ -788,6 +788,12 @@ brin_summarize_new_values(PG_FUNCTION_ARGS)
 	Relation	heapRel;
 	double		numSummarized = 0;
 
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("BRIN control functions cannot be executed during recovery.")));
+
 	/*
 	 * We must lock table before index to avoid deadlocks.  However, if the
 	 * passed indexoid isn't an index then IndexGetRelation() will fail.
