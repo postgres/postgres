@@ -1907,7 +1907,7 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
  * GetRunningTransactionData -- returns information about running transactions.
  *
  * Similar to GetSnapshotData but returns more information. We include
- * all PGXACTs with an assigned TransactionId, but not VACUUM processes.
+ * all PGXACTs with an assigned TransactionId, even VACUUM processes.
  *
  * We acquire XidGenLock and ProcArrayLock, but the caller is responsible for
  * releasing them. Acquiring XidGenLock ensures that no new XIDs enter the proc
@@ -1995,10 +1995,6 @@ GetRunningTransactionData(void)
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		TransactionId xid;
 
-		/* Ignore procs running LAZY VACUUM */
-		if (pgxact->vacuumFlags & PROC_IN_VACUUM)
-			continue;
-
 		/* Fetch xid just once - see GetNewTransactionId */
 		xid = pgxact->xid;
 
@@ -2009,13 +2005,26 @@ GetRunningTransactionData(void)
 		if (!TransactionIdIsValid(xid))
 			continue;
 
-		xids[count++] = xid;
-
+		/*
+		 * Be careful not to exclude any xids before calculating the values of
+		 * oldestRunningXid and suboverflowed, since these are used to clean
+		 * up transaction information held on standbys.
+		 */
 		if (TransactionIdPrecedes(xid, oldestRunningXid))
 			oldestRunningXid = xid;
 
 		if (pgxact->overflowed)
 			suboverflowed = true;
+
+		/*
+		 * If we wished to exclude xids this would be the right place for it.
+		 * Procs with the PROC_IN_VACUUM flag set don't usually assign xids,
+		 * but they do during truncation at the end when they get the lock
+		 * and truncate, so it is not much of a problem to include them if they
+		 * are seen and it is cleaner to include them.
+		 */
+
+		xids[count++] = xid;
 	}
 
 	/*
