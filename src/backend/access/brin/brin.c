@@ -20,6 +20,7 @@
 #include "access/brin_page.h"
 #include "access/brin_pageops.h"
 #include "access/brin_xlog.h"
+#include "access/xlog.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"
 #include "access/xact.h"
@@ -791,6 +792,12 @@ brin_summarize_new_values(PG_FUNCTION_ARGS)
 	Relation	indexRel;
 	Relation	heapRel;
 	double		numSummarized = 0;
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("BRIN control functions cannot be executed during recovery.")));
 
 	/*
 	 * We must lock table before index to avoid deadlocks.  However, if the
