@@ -308,6 +308,8 @@ PLySequence_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state)
 		PyObject   *value = PySequence_GetItem(obj, i);
 
 		(void) PLyObject_ToJsonbValue(value, jsonb_state, true);
+
+		Py_XDECREF(value);
 	}
 
 	return pushJsonbValue(jsonb_state, WJB_END_ARRAY, NULL);
