@@ -277,10 +277,10 @@ BufFileCreateShared(SharedFileSet *fileset, const char *name)
 BufFile *
 BufFileOpenShared(SharedFileSet *fileset, const char *name)
 {
-	BufFile    *file = (BufFile *) palloc(sizeof(BufFile));
+	BufFile    *file;
 	char		segment_name[MAXPGPATH];
 	Size		capacity = 16;
-	File	   *files = palloc(sizeof(File) * capacity);
+	File	   *files;
 	int			nfiles = 0;
 
 	file = (BufFile *) palloc(sizeof(BufFile));
