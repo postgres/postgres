@@ -10446,17 +10446,13 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 			list_free(index_oid_list);
 		}
 
-		if (tuple_class->relkind == RELKIND_RELATION ||
-			tuple_class->relkind == RELKIND_MATVIEW)
-		{
-			/* If it has a toast table, recurse to change its ownership */
-			if (tuple_class->reltoastrelid != InvalidOid)
-				ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerId,
-								  true, lockmode);
+		/* If it has a toast table, recurse to change its ownership */
+		if (tuple_class->reltoastrelid != InvalidOid)
+			ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerId,
+							  true, lockmode);
 
-			/* If it has dependent sequences, recurse to change them too */
-			change_owner_recurse_to_sequences(relationOid, newOwnerId, lockmode);
-		}
+		/* If it has dependent sequences, recurse to change them too */
+		change_owner_recurse_to_sequences(relationOid, newOwnerId, lockmode);
 	}
 
 	InvokeObjectPostAlterHook(RelationRelationId, relationOid, 0);
