@@ -498,9 +498,21 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # We want to suppress clang's unhelpful unused-command-line-argument warnings
   # but gcc won't complain about unrecognized -Wno-foo switches, so we have to
   # test for the positive form and if that works, add the negative form
+  NOT_THE_CFLAGS=""
   PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wunused-command-line-argument])
   if test -n "$NOT_THE_CFLAGS"; then
     CFLAGS="$CFLAGS -Wno-unused-command-line-argument"
+  fi
+  # Similarly disable useless truncation warnings from gcc 8+
+  NOT_THE_CFLAGS=""
+  PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wformat-truncation])
+  if test -n "$NOT_THE_CFLAGS"; then
+    CFLAGS="$CFLAGS -Wno-format-truncation"
+  fi
+  NOT_THE_CFLAGS=""
+  PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wstringop-truncation])
+  if test -n "$NOT_THE_CFLAGS"; then
+    CFLAGS="$CFLAGS -Wno-stringop-truncation"
   fi
 elif test "$ICC" = yes; then
   # Intel's compiler has a bug/misoptimization in checking for
