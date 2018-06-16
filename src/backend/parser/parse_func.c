@@ -68,6 +68,9 @@ static Node *ParseComplexProjection(ParseState *pstate, const char *funcname,
  *	last_srf should be a copy of pstate->p_last_srf from just before we
  *	started transforming fargs.  If the caller knows that fargs couldn't
  *	contain any SRF calls, last_srf can just be pstate->p_last_srf.
+ *
+ *	proc_call is true if we are considering a CALL statement, so that the
+ *	name must resolve to a procedure name, not anything else.
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
@@ -204,7 +207,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * the "function call" could be a projection.  We also check that there
 	 * wasn't any aggregate or variadic decoration, nor an argument name.
 	 */
-	if (nargs == 1 && agg_order == NIL && agg_filter == NULL && !agg_star &&
+	if (nargs == 1 && !proc_call &&
+		agg_order == NIL && agg_filter == NULL && !agg_star &&
 		!agg_distinct && over == NULL && !func_variadic && argnames == NIL &&
 		list_length(funcname) == 1)
 	{
@@ -253,21 +257,42 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	cancel_parser_errposition_callback(&pcbstate);
 
-	if (fdresult == FUNCDETAIL_COERCION)
+	/*
+	 * Check for various wrong-kind-of-routine cases.
+	 */
+
+	/* If this is a CALL, reject things that aren't procedures */
+	if (proc_call &&
+		(fdresult == FUNCDETAIL_NORMAL ||
+		 fdresult == FUNCDETAIL_AGGREGATE ||
+		 fdresult == FUNCDETAIL_WINDOWFUNC ||
+		 fdresult == FUNCDETAIL_COERCION))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("%s is not a procedure",
+						func_signature_string(funcname, nargs,
+											  argnames,
+											  actual_arg_types)),
+				 errhint("To call a function, use SELECT."),
+				 parser_errposition(pstate, location)));
+	/* Conversely, if not a CALL, reject procedures */
+	if (fdresult == FUNCDETAIL_PROCEDURE && !proc_call)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("%s is a procedure",
+						func_signature_string(funcname, nargs,
+											  argnames,
+											  actual_arg_types)),
+				 errhint("To call a procedure, use CALL."),
+				 parser_errposition(pstate, location)));
+
+	if (fdresult == FUNCDETAIL_NORMAL ||
+		fdresult == FUNCDETAIL_PROCEDURE ||
+		fdresult == FUNCDETAIL_COERCION)
 	{
 		/*
-		 * We interpreted it as a type coercion. coerce_type can handle these
-		 * cases, so why duplicate code...
-		 */
-		return coerce_type(pstate, linitial(fargs),
-						   actual_arg_types[0], rettype, -1,
-						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL, location);
-	}
-	else if (fdresult == FUNCDETAIL_NORMAL || fdresult == FUNCDETAIL_PROCEDURE)
-	{
-		/*
-		 * Normal function found; was there anything indicating it must be an
-		 * aggregate?
+		 * In these cases, complain if there was anything indicating it must
+		 * be an aggregate or window function.
 		 */
 		if (agg_star)
 			ereport(ERROR,
@@ -306,26 +331,14 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("OVER specified, but %s is not a window function nor an aggregate function",
 							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
+	}
 
-		if (fdresult == FUNCDETAIL_NORMAL && proc_call)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("%s is not a procedure",
-							func_signature_string(funcname, nargs,
-												  argnames,
-												  actual_arg_types)),
-					 errhint("To call a function, use SELECT."),
-					 parser_errposition(pstate, location)));
-
-		if (fdresult == FUNCDETAIL_PROCEDURE && !proc_call)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("%s is a procedure",
-							func_signature_string(funcname, nargs,
-												  argnames,
-												  actual_arg_types)),
-					 errhint("To call a procedure, use CALL."),
-					 parser_errposition(pstate, location)));
+	/*
+	 * So far so good, so do some routine-type-specific processing.
+	 */
+	if (fdresult == FUNCDETAIL_NORMAL || fdresult == FUNCDETAIL_PROCEDURE)
+	{
+		/* Nothing special to do for these cases. */
 	}
 	else if (fdresult == FUNCDETAIL_AGGREGATE)
 	{
@@ -335,15 +348,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		HeapTuple	tup;
 		Form_pg_aggregate classForm;
 		int			catDirectArgs;
-
-		if (proc_call)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("%s is not a procedure",
-							func_signature_string(funcname, nargs,
-												  argnames,
-												  actual_arg_types)),
-					 parser_errposition(pstate, location)));
 
 		tup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(funcid));
 		if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -509,6 +513,16 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("window function %s cannot have WITHIN GROUP",
 							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
+	}
+	else if (fdresult == FUNCDETAIL_COERCION)
+	{
+		/*
+		 * We interpreted it as a type coercion. coerce_type can handle these
+		 * cases, so why duplicate code...
+		 */
+		return coerce_type(pstate, linitial(fargs),
+						   actual_arg_types[0], rettype, -1,
+						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL, location);
 	}
 	else
 	{

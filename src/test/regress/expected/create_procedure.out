@@ -126,6 +126,7 @@ CALL sum(1);  -- error: not a procedure
 ERROR:  sum(integer) is not a procedure
 LINE 1: CALL sum(1);
              ^
+HINT:  To call a function, use SELECT.
 CREATE PROCEDURE ptestx() LANGUAGE SQL WINDOW AS $$ INSERT INTO cp_test VALUES (1, 'a') $$;
 ERROR:  invalid attribute in procedure definition
 LINE 1: CREATE PROCEDURE ptestx() LANGUAGE SQL WINDOW AS $$ INSERT I...
