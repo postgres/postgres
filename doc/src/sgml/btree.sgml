@@ -433,23 +433,6 @@ returns bool
 
 </sect1>
 
-<sect1 id="btree-included-attributes">
- <title>Included attributes in B-tree indexes</title>
-
- <para>
-  As of <productname>PostgreSQL</productname> 11.0 there is an optional
-  INCLUDE clause, which allows to add non-key (included) attributes to index.
-  Those included attributes allow more queries to benefit from index-only scans.
-  We never use included attributes in ScanKeys for search.  That allows us to
-  include into B-tree any datatypes, even those which don't have suitable
-  operator classes.  Included columns only stored in regular tuples on leaf
-  pages.  All pivot tuples on non-leaf pages and highkey tuples are truncated
-  to contain only key attributes.  That helps to slightly reduce the size of
-  index.
- </para>
-
-</sect1>
-
 <sect1 id="btree-implementation">
  <title>Implementation</title>
 
