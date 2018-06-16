@@ -42,10 +42,8 @@ pgtypes_fmt_replace(union un_fmt_comb replace_val, int replace_type, char **outp
 			i = strlen(replace_val.str_val);
 			if (i + 1 <= *pstr_len)
 			{
-				/*
-				 * copy over i + 1 bytes, that includes the tailing terminator
-				 */
-				strncpy(*output, replace_val.str_val, i + 1);
+				/* include trailing terminator in what we copy */
+				memcpy(*output, replace_val.str_val, i + 1);
 				*pstr_len -= i;
 				*output += i;
 				if (replace_type == PGTYPES_TYPE_STRING_MALLOCED)
