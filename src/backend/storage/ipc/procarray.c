@@ -684,11 +684,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 	/*
 	 * Remove stale locks, if any.
-	 *
-	 * Locks are always assigned to the toplevel xid so we don't need to care
-	 * about subxcnt/subxids (and by extension not about ->suboverflowed).
 	 */
-	StandbyReleaseOldLocks(running->xcnt, running->xids);
+	StandbyReleaseOldLocks(running->oldestRunningXid);
 
 	/*
 	 * If our snapshot is already valid, nothing else to do...

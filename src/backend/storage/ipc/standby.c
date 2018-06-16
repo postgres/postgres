@@ -722,7 +722,7 @@ StandbyReleaseAllLocks(void)
  *		as long as they're not prepared transactions.
  */
 void
-StandbyReleaseOldLocks(int nxids, TransactionId *xids)
+StandbyReleaseOldLocks(TransactionId oldxid)
 {
 	ListCell   *cell,
 			   *prev,
@@ -741,26 +741,8 @@ StandbyReleaseOldLocks(int nxids, TransactionId *xids)
 
 		if (StandbyTransactionIdIsPrepared(lock->xid))
 			remove = false;
-		else
-		{
-			int			i;
-			bool		found = false;
-
-			for (i = 0; i < nxids; i++)
-			{
-				if (lock->xid == xids[i])
-				{
-					found = true;
-					break;
-				}
-			}
-
-			/*
-			 * If its not a running transaction, remove it.
-			 */
-			if (!found)
-				remove = true;
-		}
+		else if (TransactionIdPrecedes(lock->xid, oldxid))
+			remove = true;
 
 		if (remove)
 		{

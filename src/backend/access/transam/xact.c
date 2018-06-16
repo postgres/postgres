@@ -5602,12 +5602,10 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		/*
 		 * Release locks, if any. We do this for both two phase and normal one
 		 * phase transactions. In effect we are ignoring the prepare phase and
-		 * just going straight to lock release. At commit we release all locks
-		 * via their top-level xid only, so no need to provide subxact list,
-		 * which will save time when replaying commits.
+		 * just going straight to lock release.
 		 */
 		if (parsed->xinfo & XACT_XINFO_HAS_AE_LOCKS)
-			StandbyReleaseLockTree(xid, 0, NULL);
+			StandbyReleaseLockTree(xid, parsed->nsubxacts, parsed->subxacts);
 	}
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)

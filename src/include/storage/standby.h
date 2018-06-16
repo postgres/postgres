@@ -50,7 +50,7 @@ extern void StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid 
 extern void StandbyReleaseLockTree(TransactionId xid,
 					   int nsubxids, TransactionId *subxids);
 extern void StandbyReleaseAllLocks(void);
-extern void StandbyReleaseOldLocks(int nxids, TransactionId *xids);
+extern void StandbyReleaseOldLocks(TransactionId oldxid);
 
 #define MinSizeOfXactRunningXacts offsetof(xl_running_xacts, xids)
 
