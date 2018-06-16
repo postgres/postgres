@@ -58,7 +58,8 @@ timestamptz_to_str(TimestampTz dt)
 	strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", ltime);
 	strftime(zone, sizeof(zone), "%Z", ltime);
 
-	sprintf(buf, "%s.%06d %s", ts, (int) (dt % USECS_PER_SEC), zone);
+	snprintf(buf, sizeof(buf), "%s.%06d %s",
+			 ts, (int) (dt % USECS_PER_SEC), zone);
 
 	return buf;
 }
