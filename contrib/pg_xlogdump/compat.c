@@ -64,9 +64,11 @@ timestamptz_to_str(TimestampTz dt)
 	strftime(zone, sizeof(zone), "%Z", ltime);
 
 #ifdef HAVE_INT64_TIMESTAMP
-	sprintf(buf, "%s.%06d %s", ts, (int) (dt % USECS_PER_SEC), zone);
+	snprintf(buf, sizeof(buf),
+			 "%s.%06d %s", ts, (int) (dt % USECS_PER_SEC), zone);
 #else
-	sprintf(buf, "%s.%.6f %s", ts, fabs(dt - floor(dt)), zone);
+	snprintf(buf, sizeof(buf),
+			 "%s.%.6f %s", ts, fabs(dt - floor(dt)), zone);
 #endif
 
 	return buf;
