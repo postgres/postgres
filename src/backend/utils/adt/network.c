@@ -1486,7 +1486,7 @@ inetmi(PG_FUNCTION_ARGS)
 		 * have to do proper sign extension.
 		 */
 		if (carry == 0 && byte < sizeof(int64))
-			res |= ((int64) -1) << (byte * 8);
+			res |= ((uint64) (int64) -1) << (byte * 8);
 	}
 
 	PG_RETURN_INT64(res);

@@ -1539,11 +1539,11 @@ bitfromint4(PG_FUNCTION_ARGS)
 	/* store first fractional byte */
 	if (destbitsleft > srcbitsleft)
 	{
-		int			val = (int) (a >> (destbitsleft - 8));
+		unsigned int val = (unsigned int) (a >> (destbitsleft - 8));
 
 		/* Force sign-fill in case the compiler implements >> as zero-fill */
 		if (a < 0)
-			val |= (-1) << (srcbitsleft + 8 - destbitsleft);
+			val |= ((unsigned int) -1) << (srcbitsleft + 8 - destbitsleft);
 		*r++ = (bits8) (val & BITMASK);
 		destbitsleft -= 8;
 	}
@@ -1619,11 +1619,11 @@ bitfromint8(PG_FUNCTION_ARGS)
 	/* store first fractional byte */
 	if (destbitsleft > srcbitsleft)
 	{
-		int			val = (int) (a >> (destbitsleft - 8));
+		unsigned int val = (unsigned int) (a >> (destbitsleft - 8));
 
 		/* Force sign-fill in case the compiler implements >> as zero-fill */
 		if (a < 0)
-			val |= (-1) << (srcbitsleft + 8 - destbitsleft);
+			val |= ((unsigned int) -1) << (srcbitsleft + 8 - destbitsleft);
 		*r++ = (bits8) (val & BITMASK);
 		destbitsleft -= 8;
 	}
