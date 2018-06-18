@@ -3,6 +3,7 @@
 #ifndef PGTYPES_DATETIME
 #define PGTYPES_DATETIME
 
+#include <pgtypes.h>
 #include <pgtypes_timestamp.h>
 
 typedef long date;

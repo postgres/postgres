@@ -3,6 +3,7 @@
 #include "postgres_fe.h"
 
 #include "extern.h"
+#include "pgtypes.h"
 
 /* Return value is zero-filled. */
 char *
@@ -135,4 +136,13 @@ pgtypes_fmt_replace(union un_fmt_comb replace_val, int replace_type, char **outp
 			break;
 	}
 	return 0;
+}
+
+/* Functions declared in pgtypes.h. */
+
+/* Just frees memory (mostly needed for Windows) */
+void
+PGTYPESchar_free(char *ptr)
+{
+	free(ptr);
 }

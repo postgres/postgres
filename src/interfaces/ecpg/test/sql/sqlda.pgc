@@ -53,7 +53,7 @@ dump_sqlda(sqlda_t *sqlda)
 
 				val = PGTYPESnumeric_to_asc((numeric*)sqlda->sqlvar[i].sqldata, -1);
 				printf("name sqlda descriptor: '%s' value NUMERIC '%s'\n", sqlda->sqlvar[i].sqlname.data, val);
-				free(val);
+				PGTYPESchar_free(val);
 				break;
 			}
 		}

@@ -110,14 +110,14 @@ main(void)
 	text = PGTYPEStimestamp_to_asc(ts1);
 
 	printf("timestamp: %s\n", text);
-	free(text);
+	PGTYPESchar_free(text);
 
 	date1 = PGTYPESdate_from_timestamp(ts1);
 	dc = PGTYPESdate_new();
 	*dc = date1;
 	text = PGTYPESdate_to_asc(*dc);
 	printf("Date of timestamp: %s\n", text);
-	free(text);
+	PGTYPESchar_free(text);
 	PGTYPESdate_free(dc);
 
 	for (i = 0; dates[i]; i++)
@@ -132,7 +132,7 @@ main(void)
 					i, err ? "-" : text,
 					endptr ? 'N' : 'Y',
 					err ? 'T' : 'F');
-		free(text);
+		PGTYPESchar_free(text);
 		if (!err)
 		{
 			for (j = 0; times[j]; j++)
@@ -147,7 +147,7 @@ main(void)
 				text = PGTYPEStimestamp_to_asc(ts1);
 				printf("TS[%d,%d]: %s\n",
 				       i, j, errno ? "-" : text);
-				free(text);
+				PGTYPESchar_free(text);
 				free(t);
 			}
 		}
@@ -171,13 +171,13 @@ main(void)
 			continue;
 		text = PGTYPESinterval_to_asc(i1);
 		printf("interval[%d]: %s\n", i, text ? text : "-");
-		free(text);
+		PGTYPESchar_free(text);
 
 		ic = PGTYPESinterval_new();
 		PGTYPESinterval_copy(i1, ic);
 		text = PGTYPESinterval_to_asc(i1);
 		printf("interval_copy[%d]: %s\n", i, text ? text : "-");
-		free(text);
+		PGTYPESchar_free(text);
 		PGTYPESinterval_free(ic);
 		PGTYPESinterval_free(i1);
 	}

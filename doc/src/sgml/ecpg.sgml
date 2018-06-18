@@ -1951,10 +1951,22 @@ EXEC SQL SELECT started, duration INTO :ts1, :iv1 FROM datetbl WHERE d=:date1;
 PGTYPEStimestamp_add_interval(&ts1, &iv1, &tsout);
 out = PGTYPEStimestamp_to_asc(&tsout);
 printf("Started + duration: %s\n", out);
-free(out);
+PGTYPESchar_free(out);
 ]]>
 </programlisting>
   </para>
+
+  <sect2 id="ecpg-pgtypes-cstrings">
+   <title>Character Strings</title>
+   <para>
+   Some functions such as <function>PGTYPESnumeric_to_asc</function> return
+   a pointer to a freshly allocated character string. These results should be
+   freed with <function>PGTYPESchar_free</function> instead of
+   <function>free</function>. (This is important only on Windows, where
+   memory allocation and release sometimes need to be done by the same
+   library.)
+   </para>
+  </sect2>
 
   <sect2 id="ecpg-pgtypes-numeric">
    <title>The numeric Type</title>
@@ -2029,6 +2041,7 @@ char *PGTYPESnumeric_to_asc(numeric *num, int dscale);
 </synopsis>
        The numeric value will be printed with <literal>dscale</literal> decimal
        digits, with rounding applied if necessary.
+       The result must be freed with <function>PGTYPESchar_free()</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -2419,6 +2432,7 @@ char *PGTYPESdate_to_asc(date dDate);
         The function receives the date <literal>dDate</literal> as its only parameter.
         It will output the date in the form <literal>1999-01-18</literal>, i.e., in the
         <literal>YYYY-MM-DD</literal> format.
+        The result must be freed with <function>PGTYPESchar_free()</function>.
        </para>
       </listitem>
      </varlistentry>
@@ -2841,6 +2855,7 @@ char *PGTYPEStimestamp_to_asc(timestamp tstamp);
         The function receives the timestamp <literal>tstamp</literal> as
         its only argument and returns an allocated string that contains the
         textual representation of the timestamp.
+        The result must be freed with <function>PGTYPESchar_free()</function>.
        </para>
       </listitem>
      </varlistentry>
@@ -3349,6 +3364,7 @@ char *PGTYPESinterval_to_asc(interval *span);
         The function converts the interval variable that <literal>span</literal>
         points to into a C char*. The output looks like this example:
         <literal>@ 1 day 12 hours 59 mins 10 secs</literal>.
+        The result must be freed with <function>PGTYPESchar_free()</function>.
        </para>
       </listitem>
      </varlistentry>
