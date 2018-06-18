@@ -101,13 +101,25 @@ Datum
 plperl_to_hstore(PG_FUNCTION_ARGS)
 {
 	dTHX;
-	HV		   *hv = (HV *) SvRV((SV *) PG_GETARG_POINTER(0));
+	SV		   *in = (SV *) PG_GETARG_POINTER(0);
+	HV		   *hv;
 	HE		   *he;
 	int32		buflen;
 	int32		i;
 	int32		pcount;
 	HStore	   *out;
 	Pairs	   *pairs;
+
+	/* Dereference references recursively. */
+	while (SvROK(in))
+		in = SvRV(in);
+
+	/* Now we must have a hash. */
+	if (SvTYPE(in) != SVt_PVHV)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 (errmsg("cannot transform non-hash Perl value to hstore"))));
+	hv = (HV *) in;
 
 	pcount = hv_iterinit(hv);
 
