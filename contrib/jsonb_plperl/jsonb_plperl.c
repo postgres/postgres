@@ -198,7 +198,24 @@ SV_to_JsonbValue(SV *in, JsonbParseState **jsonb_state, bool is_elem)
 			break;
 
 		default:
-			if (SvIOK(in))
+			if (SvUOK(in))
+			{
+				/*
+				 * If UV is >=64 bits, we have no better way to make this
+				 * happen than converting to text and back.  Given the low
+				 * usage of UV in Perl code, it's not clear it's worth working
+				 * hard to provide alternate code paths.
+				 */
+				const char *strval = SvPV_nolen(in);
+
+				out.type = jbvNumeric;
+				out.val.numeric =
+					DatumGetNumeric(DirectFunctionCall3(numeric_in,
+														CStringGetDatum(strval),
+														ObjectIdGetDatum(InvalidOid),
+														Int32GetDatum(-1)));
+			}
+			else if (SvIOK(in))
 			{
 				IV			ival = SvIV(in);
 

@@ -39,6 +39,20 @@ SELECT testSVToJsonb();
  1
 (1 row)
 
+CREATE FUNCTION testUVToJsonb() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+as $$
+$val = ~0;
+return $val;
+$$;
+-- this might produce either 18446744073709551615 or 4294967295
+SELECT testUVToJsonb() IN ('18446744073709551615'::jsonb, '4294967295'::jsonb);
+ ?column? 
+----------
+ t
+(1 row)
+
 -- this revealed a bug in the original implementation
 CREATE FUNCTION testRegexpResultToJsonb() RETURNS jsonb
 LANGUAGE plperlu
@@ -243,4 +257,4 @@ INFO:  $VAR1 = {'1' => {'2' => ['3','4','5']},'2' => '3'};
 
 \set VERBOSITY terse \\ -- suppress cascade details
 DROP EXTENSION plperlu CASCADE;
-NOTICE:  drop cascades to 6 other objects
+NOTICE:  drop cascades to 7 other objects

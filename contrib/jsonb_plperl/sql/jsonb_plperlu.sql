@@ -34,6 +34,18 @@ $$;
 SELECT testSVToJsonb();
 
 
+CREATE FUNCTION testUVToJsonb() RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+as $$
+$val = ~0;
+return $val;
+$$;
+
+-- this might produce either 18446744073709551615 or 4294967295
+SELECT testUVToJsonb() IN ('18446744073709551615'::jsonb, '4294967295'::jsonb);
+
+
 -- this revealed a bug in the original implementation
 CREATE FUNCTION testRegexpResultToJsonb() RETURNS jsonb
 LANGUAGE plperlu
