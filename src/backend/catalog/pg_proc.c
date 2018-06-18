@@ -108,7 +108,6 @@ ProcedureCreate(const char *procedureName,
 	bool		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
 	bool		replaces[Natts_pg_proc];
-	Oid			relid;
 	NameData	procname;
 	TupleDesc	tupDesc;
 	bool		is_update;
@@ -253,20 +252,6 @@ ProcedureCreate(const char *procedureName,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("unsafe use of pseudo-type \"internal\""),
 				 errdetail("A function returning \"internal\" must have at least one \"internal\" argument.")));
-
-	/*
-	 * don't allow functions of complex types that have the same name as
-	 * existing attributes of the type
-	 */
-	if (parameterCount == 1 &&
-		OidIsValid(parameterTypes->values[0]) &&
-		(relid = typeOrDomainTypeRelid(parameterTypes->values[0])) != InvalidOid &&
-		get_attnum(relid, procedureName) != InvalidAttrNumber)
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_COLUMN),
-				 errmsg("\"%s\" is already an attribute of type %s",
-						procedureName,
-						format_type_be(parameterTypes->values[0]))));
 
 	if (paramModes != NULL)
 	{
