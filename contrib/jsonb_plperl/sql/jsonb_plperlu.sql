@@ -61,7 +61,8 @@ $$;
 
 SELECT roundtrip('null') is null;
 SELECT roundtrip('1');
-SELECT roundtrip('1E+131071');
+-- skip because Data::Dumper produces a platform-dependent spelling of infinity
+-- SELECT roundtrip('1E+131071');
 SELECT roundtrip('-1');
 SELECT roundtrip('1.2');
 SELECT roundtrip('-1.2');

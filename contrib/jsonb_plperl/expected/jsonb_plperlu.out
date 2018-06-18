@@ -78,10 +78,8 @@ INFO:  $VAR1 = '1';
  1
 (1 row)
 
-SELECT roundtrip('1E+131071');
-INFO:  $VAR1 = 'inf';
-ERROR:  cannot convert infinity to jsonb
-CONTEXT:  PL/Perl function "roundtrip"
+-- skip because Data::Dumper produces a platform-dependent spelling of infinity
+-- SELECT roundtrip('1E+131071');
 SELECT roundtrip('-1');
 INFO:  $VAR1 = '-1';
  roundtrip 
