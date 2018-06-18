@@ -41,6 +41,25 @@ SELECT test2arr();
  {"\"a\"=>\"1\", \"b\"=>\"boo\", \"c\"=>NULL","\"d\"=>\"2\""}
 (1 row)
 
+-- check error cases
+CREATE OR REPLACE FUNCTION test2() RETURNS hstore
+LANGUAGE plperl
+TRANSFORM FOR TYPE hstore
+AS $$
+return 42;
+$$;
+SELECT test2();
+ERROR:  cannot transform non-hash Perl value to hstore
+CONTEXT:  PL/Perl function "test2"
+CREATE OR REPLACE FUNCTION test2() RETURNS hstore
+LANGUAGE plperl
+TRANSFORM FOR TYPE hstore
+AS $$
+return [1, 2];
+$$;
+SELECT test2();
+ERROR:  cannot transform non-hash Perl value to hstore
+CONTEXT:  PL/Perl function "test2"
 DROP FUNCTION test2();
 DROP FUNCTION test2arr();
 DROP EXTENSION hstore_plperl;
