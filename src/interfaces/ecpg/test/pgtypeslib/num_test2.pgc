@@ -59,21 +59,21 @@ main(void)
 
 		text = PGTYPESnumeric_to_asc(num, -1);
 		if (!text) check_errno();
-		printf("num[%d,1]: %s\n", i, text); free(text);
+		printf("num[%d,1]: %s\n", i, text); PGTYPESchar_free(text);
 		text = PGTYPESnumeric_to_asc(num, 0);
 		if (!text) check_errno();
-		printf("num[%d,2]: %s\n", i, text); free(text);
+		printf("num[%d,2]: %s\n", i, text); PGTYPESchar_free(text);
 		text = PGTYPESnumeric_to_asc(num, 1);
 		if (!text) check_errno();
-		printf("num[%d,3]: %s\n", i, text); free(text);
+		printf("num[%d,3]: %s\n", i, text); PGTYPESchar_free(text);
 		text = PGTYPESnumeric_to_asc(num, 2);
 		if (!text) check_errno();
-		printf("num[%d,4]: %s\n", i, text); free(text);
+		printf("num[%d,4]: %s\n", i, text); PGTYPESchar_free(text);
 
 		nin = PGTYPESnumeric_new();
 		text = PGTYPESnumeric_to_asc(nin, 2);
 		if (!text) check_errno();
-		printf("num[%d,5]: %s\n", i, text); free(text);
+		printf("num[%d,5]: %s\n", i, text); PGTYPESchar_free(text);
 
 		r = PGTYPESnumeric_to_long(num, &l);
 		if (r) check_errno();
@@ -85,7 +85,7 @@ main(void)
 			text = PGTYPESnumeric_to_asc(nin, 2);
 			q = PGTYPESnumeric_cmp(num, nin);
 			printf("num[%d,7]: %s (r: %d - cmp: %d)\n", i, text, r, q);
-			free(text);
+			PGTYPESchar_free(text);
 		}
 
 		r = PGTYPESnumeric_to_int(num, &k);
@@ -98,7 +98,7 @@ main(void)
 			text = PGTYPESnumeric_to_asc(nin, 2);
 			q = PGTYPESnumeric_cmp(num, nin);
 			printf("num[%d,9]: %s (r: %d - cmp: %d)\n", i, text, r, q);
-			free(text);
+			PGTYPESchar_free(text);
 		}
 
 		if (i != 6)
@@ -129,7 +129,7 @@ main(void)
 			text = PGTYPESnumeric_to_asc(nin, 2);
 			q = PGTYPESnumeric_cmp(num, nin);
 			printf("num[%d,12]: %s (r: %d - cmp: %d)\n", i, text, r, q);
-			free(text);
+			PGTYPESchar_free(text);
 		}
 
 		PGTYPESdecimal_free(dec);
@@ -155,7 +155,7 @@ main(void)
 			{
 				text = PGTYPESnumeric_to_asc(a, 10);
 				printf("num[a,%d,%d]: %s\n", i, j, text);
-				free(text);
+				PGTYPESchar_free(text);
 			}
 			r = PGTYPESnumeric_sub(numarr[i], numarr[j], s);
 			if (r)
@@ -167,7 +167,7 @@ main(void)
 			{
 				text = PGTYPESnumeric_to_asc(s, 10);
 				printf("num[s,%d,%d]: %s\n", i, j, text);
-				free(text);
+				PGTYPESchar_free(text);
 			}
 			r = PGTYPESnumeric_mul(numarr[i], numarr[j], m);
 			if (r)
@@ -179,7 +179,7 @@ main(void)
 			{
 				text = PGTYPESnumeric_to_asc(m, 10);
 				printf("num[m,%d,%d]: %s\n", i, j, text);
-				free(text);
+				PGTYPESchar_free(text);
 			}
 			r = PGTYPESnumeric_div(numarr[i], numarr[j], d);
 			if (r)
@@ -191,7 +191,7 @@ main(void)
 			{
 				text = PGTYPESnumeric_to_asc(d, 10);
 				printf("num[d,%d,%d]: %s\n", i, j, text);
-				free(text);
+				PGTYPESchar_free(text);
 			}
 
 			PGTYPESnumeric_free(a);
@@ -205,7 +205,7 @@ main(void)
 	{
 		text = PGTYPESnumeric_to_asc(numarr[i], -1);
 		printf("%d: %s\n", i, text);
-		free(text);
+		PGTYPESchar_free(text);
 		PGTYPESnumeric_free(numarr[i]);
 	}
 	free(numarr);
