@@ -504,7 +504,7 @@ $$ LANGUAGE plperl;
 
 SELECT text_obj();
 
------ make sure we can't return a scalar ref
+-- test looking through a scalar ref
 CREATE OR REPLACE FUNCTION text_scalarref() RETURNS text AS $$
 	my $str = 'str';
 	return \$str;

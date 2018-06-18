@@ -1402,11 +1402,13 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 			return ret;
 		}
 
-		/* Reference, but not reference to hash or array ... */
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("PL/Perl function must return reference to hash or array")));
-		return (Datum) 0;		/* shut up compiler */
+		/*
+		 * If it's a reference to something else, such as a scalar, just
+		 * recursively look through the reference.
+		 */
+		return plperl_sv_to_datum(SvRV(sv), typid, typmod,
+								  fcinfo, finfo, typioparam,
+								  isnull);
 	}
 	else
 	{

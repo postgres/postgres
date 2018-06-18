@@ -763,14 +763,17 @@ $$ LANGUAGE plperl;
 SELECT text_obj();
 ERROR:  cannot convert Perl hash to non-composite type text
 CONTEXT:  PL/Perl function "text_obj"
------ make sure we can't return a scalar ref
+-- test looking through a scalar ref
 CREATE OR REPLACE FUNCTION text_scalarref() RETURNS text AS $$
 	my $str = 'str';
 	return \$str;
 $$ LANGUAGE plperl;
 SELECT text_scalarref();
-ERROR:  PL/Perl function must return reference to hash or array
-CONTEXT:  PL/Perl function "text_scalarref"
+ text_scalarref 
+----------------
+ str
+(1 row)
+
 -- check safe behavior when a function body is replaced during execution
 CREATE OR REPLACE FUNCTION self_modify(INTEGER) RETURNS INTEGER AS $$
    spi_exec_query('CREATE OR REPLACE FUNCTION self_modify(INTEGER) RETURNS INTEGER AS \'return $_[0] * 3;\' LANGUAGE plperl;');
