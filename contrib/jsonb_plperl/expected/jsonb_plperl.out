@@ -52,16 +52,19 @@ SELECT testRegexpResultToJsonb();
  0
 (1 row)
 
-CREATE FUNCTION roundtrip(val jsonb) RETURNS jsonb
+CREATE FUNCTION roundtrip(val jsonb, ref text = '') RETURNS jsonb
 LANGUAGE plperl
 TRANSFORM FOR TYPE jsonb
 AS $$
+# can't use Data::Dumper, but let's at least check for unexpected ref type
+die 'unexpected '.(ref($_[0]) || 'not a').' reference'
+    if ref($_[0]) ne $_[1];
 return $_[0];
 $$;
-SELECT roundtrip('null');
- roundtrip 
------------
- null
+SELECT roundtrip('null') is null;
+ ?column? 
+----------
+ t
 (1 row)
 
 SELECT roundtrip('1');
@@ -115,91 +118,97 @@ SELECT roundtrip('false');
  0
 (1 row)
 
-SELECT roundtrip('[]');
+SELECT roundtrip('[]', 'ARRAY');
  roundtrip 
 -----------
  []
 (1 row)
 
-SELECT roundtrip('[null, null]');
+SELECT roundtrip('[null, null]', 'ARRAY');
   roundtrip   
 --------------
  [null, null]
 (1 row)
 
-SELECT roundtrip('[1, 2, 3]');
+SELECT roundtrip('[1, 2, 3]', 'ARRAY');
  roundtrip 
 -----------
  [1, 2, 3]
 (1 row)
 
-SELECT roundtrip('[-1, 2, -3]');
+SELECT roundtrip('[-1, 2, -3]', 'ARRAY');
   roundtrip  
 -------------
  [-1, 2, -3]
 (1 row)
 
-SELECT roundtrip('[1.2, 2.3, 3.4]');
+SELECT roundtrip('[1.2, 2.3, 3.4]', 'ARRAY');
     roundtrip    
 -----------------
  [1.2, 2.3, 3.4]
 (1 row)
 
-SELECT roundtrip('[-1.2, 2.3, -3.4]');
+SELECT roundtrip('[-1.2, 2.3, -3.4]', 'ARRAY');
      roundtrip     
 -------------------
  [-1.2, 2.3, -3.4]
 (1 row)
 
-SELECT roundtrip('["string1", "string2"]');
+SELECT roundtrip('["string1", "string2"]', 'ARRAY');
        roundtrip        
 ------------------------
  ["string1", "string2"]
 (1 row)
 
-SELECT roundtrip('{}');
+SELECT roundtrip('[["string1", "string2"]]', 'ARRAY');
+        roundtrip         
+--------------------------
+ [["string1", "string2"]]
+(1 row)
+
+SELECT roundtrip('{}', 'HASH');
  roundtrip 
 -----------
  {}
 (1 row)
 
-SELECT roundtrip('{"1": null}');
+SELECT roundtrip('{"1": null}', 'HASH');
   roundtrip  
 -------------
  {"1": null}
 (1 row)
 
-SELECT roundtrip('{"1": 1}');
+SELECT roundtrip('{"1": 1}', 'HASH');
  roundtrip 
 -----------
  {"1": 1}
 (1 row)
 
-SELECT roundtrip('{"1": -1}');
+SELECT roundtrip('{"1": -1}', 'HASH');
  roundtrip 
 -----------
  {"1": -1}
 (1 row)
 
-SELECT roundtrip('{"1": 1.1}');
+SELECT roundtrip('{"1": 1.1}', 'HASH');
  roundtrip  
 ------------
  {"1": 1.1}
 (1 row)
 
-SELECT roundtrip('{"1": -1.1}');
+SELECT roundtrip('{"1": -1.1}', 'HASH');
   roundtrip  
 -------------
  {"1": -1.1}
 (1 row)
 
-SELECT roundtrip('{"1": "string1"}');
+SELECT roundtrip('{"1": "string1"}', 'HASH');
     roundtrip     
 ------------------
  {"1": "string1"}
 (1 row)
 
-SELECT roundtrip('{"1": {"2": [3, 4, 5]}, "2": 3}');
+SELECT roundtrip('{"1": {"2": [3, 4, 5]}, "2": 3}', 'HASH');
             roundtrip            
 ---------------------------------
  {"1": {"2": [3, 4, 5]}, "2": 3}

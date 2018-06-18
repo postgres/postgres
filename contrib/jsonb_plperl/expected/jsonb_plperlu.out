@@ -52,154 +52,192 @@ SELECT testRegexpResultToJsonb();
  0
 (1 row)
 
-CREATE FUNCTION roundtrip(val jsonb) RETURNS jsonb
+CREATE FUNCTION roundtrip(val jsonb, ref text = '') RETURNS jsonb
 LANGUAGE plperlu
 TRANSFORM FOR TYPE jsonb
 AS $$
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Indent = 0;
+elog(INFO, Dumper($_[0]));
+die 'unexpected '.(ref($_[0]) || 'not a').' reference'
+    if ref($_[0]) ne $_[1];
 return $_[0];
 $$;
-SELECT roundtrip('null');
- roundtrip 
------------
- null
+SELECT roundtrip('null') is null;
+INFO:  $VAR1 = undef;
+ ?column? 
+----------
+ t
 (1 row)
 
 SELECT roundtrip('1');
+INFO:  $VAR1 = '1';
  roundtrip 
 -----------
  1
 (1 row)
 
 SELECT roundtrip('1E+131071');
+INFO:  $VAR1 = 'inf';
 ERROR:  cannot convert infinity to jsonb
 CONTEXT:  PL/Perl function "roundtrip"
 SELECT roundtrip('-1');
+INFO:  $VAR1 = '-1';
  roundtrip 
 -----------
  -1
 (1 row)
 
 SELECT roundtrip('1.2');
+INFO:  $VAR1 = '1.2';
  roundtrip 
 -----------
  1.2
 (1 row)
 
 SELECT roundtrip('-1.2');
+INFO:  $VAR1 = '-1.2';
  roundtrip 
 -----------
  -1.2
 (1 row)
 
 SELECT roundtrip('"string"');
+INFO:  $VAR1 = 'string';
  roundtrip 
 -----------
  "string"
 (1 row)
 
 SELECT roundtrip('"NaN"');
+INFO:  $VAR1 = 'NaN';
  roundtrip 
 -----------
  "NaN"
 (1 row)
 
 SELECT roundtrip('true');
+INFO:  $VAR1 = '1';
  roundtrip 
 -----------
  1
 (1 row)
 
 SELECT roundtrip('false');
+INFO:  $VAR1 = '0';
  roundtrip 
 -----------
  0
 (1 row)
 
-SELECT roundtrip('[]');
+SELECT roundtrip('[]', 'ARRAY');
+INFO:  $VAR1 = [];
  roundtrip 
 -----------
  []
 (1 row)
 
-SELECT roundtrip('[null, null]');
+SELECT roundtrip('[null, null]', 'ARRAY');
+INFO:  $VAR1 = [undef,undef];
   roundtrip   
 --------------
  [null, null]
 (1 row)
 
-SELECT roundtrip('[1, 2, 3]');
+SELECT roundtrip('[1, 2, 3]', 'ARRAY');
+INFO:  $VAR1 = ['1','2','3'];
  roundtrip 
 -----------
  [1, 2, 3]
 (1 row)
 
-SELECT roundtrip('[-1, 2, -3]');
+SELECT roundtrip('[-1, 2, -3]', 'ARRAY');
+INFO:  $VAR1 = ['-1','2','-3'];
   roundtrip  
 -------------
  [-1, 2, -3]
 (1 row)
 
-SELECT roundtrip('[1.2, 2.3, 3.4]');
+SELECT roundtrip('[1.2, 2.3, 3.4]', 'ARRAY');
+INFO:  $VAR1 = ['1.2','2.3','3.4'];
     roundtrip    
 -----------------
  [1.2, 2.3, 3.4]
 (1 row)
 
-SELECT roundtrip('[-1.2, 2.3, -3.4]');
+SELECT roundtrip('[-1.2, 2.3, -3.4]', 'ARRAY');
+INFO:  $VAR1 = ['-1.2','2.3','-3.4'];
      roundtrip     
 -------------------
  [-1.2, 2.3, -3.4]
 (1 row)
 
-SELECT roundtrip('["string1", "string2"]');
+SELECT roundtrip('["string1", "string2"]', 'ARRAY');
+INFO:  $VAR1 = ['string1','string2'];
        roundtrip        
 ------------------------
  ["string1", "string2"]
 (1 row)
 
-SELECT roundtrip('{}');
+SELECT roundtrip('[["string1", "string2"]]', 'ARRAY');
+INFO:  $VAR1 = [['string1','string2']];
+        roundtrip         
+--------------------------
+ [["string1", "string2"]]
+(1 row)
+
+SELECT roundtrip('{}', 'HASH');
+INFO:  $VAR1 = {};
  roundtrip 
 -----------
  {}
 (1 row)
 
-SELECT roundtrip('{"1": null}');
+SELECT roundtrip('{"1": null}', 'HASH');
+INFO:  $VAR1 = {'1' => undef};
   roundtrip  
 -------------
  {"1": null}
 (1 row)
 
-SELECT roundtrip('{"1": 1}');
+SELECT roundtrip('{"1": 1}', 'HASH');
+INFO:  $VAR1 = {'1' => '1'};
  roundtrip 
 -----------
  {"1": 1}
 (1 row)
 
-SELECT roundtrip('{"1": -1}');
+SELECT roundtrip('{"1": -1}', 'HASH');
+INFO:  $VAR1 = {'1' => '-1'};
  roundtrip 
 -----------
  {"1": -1}
 (1 row)
 
-SELECT roundtrip('{"1": 1.1}');
+SELECT roundtrip('{"1": 1.1}', 'HASH');
+INFO:  $VAR1 = {'1' => '1.1'};
  roundtrip  
 ------------
  {"1": 1.1}
 (1 row)
 
-SELECT roundtrip('{"1": -1.1}');
+SELECT roundtrip('{"1": -1.1}', 'HASH');
+INFO:  $VAR1 = {'1' => '-1.1'};
   roundtrip  
 -------------
  {"1": -1.1}
 (1 row)
 
-SELECT roundtrip('{"1": "string1"}');
+SELECT roundtrip('{"1": "string1"}', 'HASH');
+INFO:  $VAR1 = {'1' => 'string1'};
     roundtrip     
 ------------------
  {"1": "string1"}
 (1 row)
 
-SELECT roundtrip('{"1": {"2": [3, 4, 5]}, "2": 3}');
+SELECT roundtrip('{"1": {"2": [3, 4, 5]}, "2": 3}', 'HASH');
+INFO:  $VAR1 = {'1' => {'2' => ['3','4','5']},'2' => '3'};
             roundtrip            
 ---------------------------------
  {"1": {"2": [3, 4, 5]}, "2": 3}

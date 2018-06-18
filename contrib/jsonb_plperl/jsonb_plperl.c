@@ -26,7 +26,7 @@ JsonbValue_to_SV(JsonbValue *jbv)
 	switch (jbv->type)
 	{
 		case jbvBinary:
-			return newRV(Jsonb_to_SV(jbv->val.binary.data));
+			return Jsonb_to_SV(jbv->val.binary.data);
 
 		case jbvNumeric:
 			{
@@ -83,7 +83,7 @@ Jsonb_to_SV(JsonbContainer *jsonb)
 					(r = JsonbIteratorNext(&it, &tmp, true)) != WJB_DONE)
 					elog(ERROR, "unexpected jsonb token: %d", r);
 
-				return newRV(JsonbValue_to_SV(&v));
+				return JsonbValue_to_SV(&v);
 			}
 			else
 			{
@@ -95,7 +95,7 @@ Jsonb_to_SV(JsonbContainer *jsonb)
 						av_push(av, JsonbValue_to_SV(&v));
 				}
 
-				return (SV *) av;
+				return newRV((SV *) av);
 			}
 
 		case WJB_BEGIN_OBJECT:
@@ -120,7 +120,7 @@ Jsonb_to_SV(JsonbContainer *jsonb)
 					}
 				}
 
-				return (SV *) hv;
+				return newRV((SV *) hv);
 			}
 
 		default:
@@ -268,7 +268,7 @@ jsonb_to_plperl(PG_FUNCTION_ARGS)
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	SV		   *sv = Jsonb_to_SV(&in->root);
 
-	return PointerGetDatum(newRV(sv));
+	return PointerGetDatum(sv);
 }
 
 
