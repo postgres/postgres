@@ -1,6 +1,8 @@
 #ifndef PGTYPES_NUMERIC
 #define PGTYPES_NUMERIC
 
+#include <pgtypes.h>
+
 #define NUMERIC_POS						0x0000
 #define NUMERIC_NEG						0x4000
 #define NUMERIC_NAN						0xC000

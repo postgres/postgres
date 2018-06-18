@@ -50,6 +50,8 @@ typedef struct sqlda_struct sqlda_t;
 #ifndef PGTYPES_NUMERIC
 #define PGTYPES_NUMERIC
 
+#include <pgtypes.h>
+
 #define NUMERIC_POS						0x0000
 #define NUMERIC_NEG						0x4000
 #define NUMERIC_NAN						0xC000
@@ -166,7 +168,7 @@ dump_sqlda(sqlda_t *sqlda)
 
 				val = PGTYPESnumeric_to_asc((numeric*)sqlda->sqlvar[i].sqldata, -1);
 				printf("name sqlda descriptor: '%s' value NUMERIC '%s'\n", sqlda->sqlvar[i].sqlname.data, val);
-				free(val);
+				PGTYPESchar_free(val);
 				break;
 			}
 		}

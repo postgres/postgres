@@ -45,3 +45,4 @@ PGTYPEStimestamp_from_asc       42
 PGTYPEStimestamp_sub            43
 PGTYPEStimestamp_sub_interval   44
 PGTYPEStimestamp_to_asc         45
+PGTYPESchar_free                46
