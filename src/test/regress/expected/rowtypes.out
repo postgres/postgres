@@ -798,6 +798,50 @@ ERROR:  could not identify column "text" in record data type
 LINE 1: select (row('Jim', 'Beam')).text;
                 ^
 --
+-- Check the equivalence of functional and column notation
+--
+insert into fullname values ('Joe', 'Blow');
+select f.last from fullname f;
+ last 
+------
+ Blow
+(1 row)
+
+select last(f) from fullname f;
+ last 
+------
+ Blow
+(1 row)
+
+create function longname(fullname) returns text language sql
+as $$select $1.first || ' ' || $1.last$$;
+select f.longname from fullname f;
+ longname 
+----------
+ Joe Blow
+(1 row)
+
+select longname(f) from fullname f;
+ longname 
+----------
+ Joe Blow
+(1 row)
+
+-- Starting in v11, the notational form does matter if there's ambiguity
+alter table fullname add column longname text;
+select f.longname from fullname f;
+ longname 
+----------
+ 
+(1 row)
+
+select longname(f) from fullname f;
+ longname 
+----------
+ Joe Blow
+(1 row)
+
+--
 -- Test that composite values are seen to have the correct column names
 -- (bug #11210 and other reports)
 --

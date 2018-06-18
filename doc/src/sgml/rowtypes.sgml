@@ -441,9 +441,12 @@ SELECT c.somefunc FROM inventory_item c;
     Because of this behavior, it's unwise to give a function that takes a
     single composite-type argument the same name as any of the fields of
     that composite type.  If there is ambiguity, the field-name
-    interpretation will be preferred, so that such a function could not be
-    called without tricks.  One way to force the function interpretation is
-    to schema-qualify the function name, that is, write
+    interpretation will be chosen if field-name syntax is used, while the
+    function will be chosen if function-call syntax is used.  However,
+    <productname>PostgreSQL</productname> versions before 11 always chose the
+    field-name interpretation, unless the syntax of the call required it to
+    be a function call.  One way to force the function interpretation in
+    older versions is to schema-qualify the function name, that is, write
     <literal><replaceable>schema</replaceable>.<replaceable>func</replaceable>(<replaceable>compositevalue</replaceable>)</literal>.
    </para>
   </tip>

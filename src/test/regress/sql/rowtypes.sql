@@ -346,6 +346,26 @@ select text(row('Jim', 'Beam'));  -- error
 select (row('Jim', 'Beam')).text;  -- error
 
 --
+-- Check the equivalence of functional and column notation
+--
+insert into fullname values ('Joe', 'Blow');
+
+select f.last from fullname f;
+select last(f) from fullname f;
+
+create function longname(fullname) returns text language sql
+as $$select $1.first || ' ' || $1.last$$;
+
+select f.longname from fullname f;
+select longname(f) from fullname f;
+
+-- Starting in v11, the notational form does matter if there's ambiguity
+alter table fullname add column longname text;
+
+select f.longname from fullname f;
+select longname(f) from fullname f;
+
+--
 -- Test that composite values are seen to have the correct column names
 -- (bug #11210 and other reports)
 --
