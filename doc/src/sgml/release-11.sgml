@@ -629,7 +629,7 @@ Branch: master [6bdf1303b] Avoid wrong results for power() with NaN
        </para>
 
        <para>
-        This features is disabled by default
+        This feature is disabled by default
         but can be enabled by changing <link
         linkend="guc-enable-partitionwise-join"><varname>enable_partitionwise_join</varname></link>.
        </para>
@@ -647,7 +647,7 @@ Branch: master [6bdf1303b] Avoid wrong results for power() with NaN
        </para>
 
        <para>
-        This features is disabled by default
+        This feature is disabled by default
         but can be enabled by changing <link
         linkend="guc-enable-partitionwise-aggregate"><varname>enable_partitionwise_aggregate</varname></link>.
        </para>
