@@ -11997,13 +11997,27 @@ table2-mapping
 
   <note>
     <para>
-      In <function>json_populate_record</function>, <function>json_populate_recordset</function>,
-      <function>json_to_record</function> and <function>json_to_recordset</function>,
-      type coercion from the JSON is <quote>best effort</quote> and may not result
-      in desired values for some types.  JSON keys are matched to
-      identical column names in the target row type.  JSON fields that do not
-      appear in the target row type will be omitted from the output, and
-      target columns that do not match any JSON field will simply be NULL.
+      While the examples for the functions
+      <function>json_populate_record</function>,
+      <function>json_populate_recordset</function>,
+      <function>json_to_record</function> and
+      <function>json_to_recordset</function> use constants, the typical use
+      would be to reference a table in the <literal>FROM</literal> clause
+      and use one of its <type>json</type> or <type>jsonb</type> columns
+      as an argument to the function.  Extracted key values can then be
+      referenced in other parts of the query, like <literal>WHERE</literal>
+      clauses and target lists.  Extracting multiple values in this
+      way can improve performance over extracting them separately with
+      per-key operators.
+    </para>
+
+    <para>
+      JSON keys are matched to identical column names in the target
+      row type.  JSON type coercion for these functions is <quote>best
+      effort</quote> and may not result in desired values for some types.
+      JSON fields that do not appear in the target row type will be
+      omitted from the output, and target columns that do not match any
+      JSON field will simply be NULL.
     </para>
   </note>
 
