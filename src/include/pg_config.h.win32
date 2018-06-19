@@ -72,6 +72,15 @@
 # define gettimeofday(a,b) gettimeofday(a)
 #endif
 
+/* Define to 1 if you have the `ASN1_STRING_get0_data' function. */
+/* #undef HAVE_ASN1_STRING_GET0_DATA */
+
+/* Define to 1 if you have the `BIO_get_data' function. */
+/* #undef HAVE_BIO_GET_DATA */
+
+/* Define to 1 if you have the `BIO_meth_new' function. */
+/* #undef HAVE_BIO_METH_NEW */
+
 /* Define to 1 if you have the `cbrt' function. */
 //#define HAVE_CBRT 1
 
@@ -233,6 +242,9 @@
 /* Define to 1 if you have the <ldap.h> header file. */
 /* #undef HAVE_LDAP_H */
 
+/* Define to 1 if you have the `ldap_initialize' function. */
+/* #undef HAVE_LDAP_INITIALIZE */
+
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 /* #undef HAVE_LIBCRYPTO */
 
@@ -287,6 +299,9 @@
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 /* #undef HAVE_NETINET_TCP_H */
+
+/* Define to 1 if you have the `OPENSSL_init_ssl' function. */
+/* #undef HAVE_OPENSSL_INIT_SSL */
 
 /* Define to 1 if you have the <pam/pam_appl.h> header file. */
 /* #undef HAVE_PAM_PAM_APPL_H */
@@ -360,6 +375,9 @@
 
 /* Define to 1 if you have the `srandom' function. */
 /* #undef HAVE_SRANDOM */
+
+/* Define to 1 if you have the `SSL_clear_options' function. */
+#define HAVE_SSL_CLEAR_OPTIONS 1
 
 /* Define to 1 if you have the `SSL_get_current_compression' function. */
 #define HAVE_SSL_GET_CURRENT_COMPRESSION 1
@@ -542,6 +560,9 @@
 
 /* Define to 1 if you have the <winldap.h> header file. */
 /* #undef HAVE_WINLDAP_H */
+
+/* Define to 1 if you have the `X509_get_signature_nid' function. */
+#define HAVE_X509_GET_SIGNATURE_NID 1
 
 /* Define to 1 if the system has the type `_Bool'. */
 /* #undef HAVE__BOOL */
