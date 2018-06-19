@@ -8,14 +8,16 @@ This directory contains a test suite for recovery and replication.
 Running the tests
 =================
 
+NOTE: You must have given the --enable-tap-tests argument to configure.
+
+Run
     make check
-
 or
-
     make installcheck
+You can use "make installcheck" if you previously did "make install".
+In that case, the code in the installation tree is tested.  With
+"make check", a temporary installation tree is built from the current
+sources and then tested.
 
-NOTE: This creates a temporary installation (in the case of "check"),
-and some tests may create one or multiple nodes, be they master or
-standby(s) for the purpose of the tests.
-
-NOTE: This requires the --enable-tap-tests argument to configure.
+Either way, this test initializes, starts, and stops several test Postgres
+clusters.

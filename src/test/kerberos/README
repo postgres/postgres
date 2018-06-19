@@ -16,11 +16,19 @@ users.
 Running the tests
 =================
 
+NOTE: You must have given the --enable-tap-tests argument to configure.
+
+Run
     make check
-
 or
-
     make installcheck
+You can use "make installcheck" if you previously did "make install".
+In that case, the code in the installation tree is tested.  With
+"make check", a temporary installation tree is built from the current
+sources and then tested.
+
+Either way, this test initializes, starts, and stops a test Postgres
+cluster, as well as a test KDC server.
 
 Requirements
 ============
@@ -30,6 +38,6 @@ supported.
 
 Debian/Ubuntu packages: krb5-admin-server krb5-kdc krb5-user
 
-RHEL/CentOS packages: krb5-server krb5-workstation
+RHEL/CentOS/Fedora packages: krb5-server krb5-workstation
 
 FreeBSD port: krb5 (base system has Heimdal)
