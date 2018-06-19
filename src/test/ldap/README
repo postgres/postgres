@@ -22,3 +22,14 @@ Running the tests
 or
 
     make installcheck
+
+Requirements
+============
+
+LDAP server and client tools are required.
+
+Debian/Ubuntu packages: slapd ldap-utils
+
+RHEL/CentOS packages: openldap openldap-clients openldap-servers
+
+FreeBSD: openldap24-server openldap24-client
