@@ -176,7 +176,7 @@ static bool partkey_datum_from_expr(PartitionPruneContext *context,
 
 /*
  * make_partition_pruneinfo
- *		Build List of PartitionPruneInfos, one for each 'partitioned_rels'.
+ *		Build List of PartitionPruneInfos, one for each partitioned rel.
  *		These can be used in the executor to allow additional partition
  *		pruning to take place.
  *
@@ -190,7 +190,7 @@ static bool partkey_datum_from_expr(PartitionPruneContext *context,
  * pruning done during planning will have pruned everything that can be.
  */
 List *
-make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
+make_partition_pruneinfo(PlannerInfo *root, List *partitioned_rels,
 						 List *subpaths, List *prunequal)
 {
 	RelOptInfo *targetpart = NULL;
@@ -229,11 +229,11 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 
 	/*
 	 * relid_subpart_map maps relid of a non-leaf partition to the index in
-	 * 'partition_rels' of that rel (which will also be the index in the
+	 * 'partitioned_rels' of that rel (which will also be the index in the
 	 * returned PartitionPruneInfo list of the info for that partition).
 	 */
 	i = 1;
-	foreach(lc, partition_rels)
+	foreach(lc, partitioned_rels)
 	{
 		Index		rti = lfirst_int(lc);
 
@@ -246,8 +246,8 @@ make_partition_pruneinfo(PlannerInfo *root, List *partition_rels,
 		relid_subpart_map[rti] = i++;
 	}
 
-	/* We now build a PartitionPruneInfo for each rel in partition_rels */
-	foreach(lc, partition_rels)
+	/* We now build a PartitionPruneInfo for each partitioned rel */
+	foreach(lc, partitioned_rels)
 	{
 		Index		rti = lfirst_int(lc);
 		RelOptInfo *subpart = find_base_rel(root, rti);
