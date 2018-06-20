@@ -13,6 +13,7 @@
 #include "postgres.h"
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
+#include "getopt_long.h"
 #include "storage/bufpage.h"
 #include "storage/checksum.h"
 #include "storage/checksum_impl.h"
