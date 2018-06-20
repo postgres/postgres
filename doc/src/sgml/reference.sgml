@@ -255,7 +255,6 @@
    &pgReceivewal;
    &pgRecvlogical;
    &pgRestore;
-   &pgVerifyChecksums;
    &psqlRef;
    &reindexdb;
    &vacuumdb;
@@ -284,6 +283,7 @@
    &pgtestfsync;
    &pgtesttiming;
    &pgupgrade;
+   &pgVerifyChecksums;
    &pgwaldump;
    &postgres;
    &postmaster;
