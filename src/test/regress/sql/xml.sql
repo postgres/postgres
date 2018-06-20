@@ -349,7 +349,7 @@ SELECT  xmltable.*
                          PASSING data
                          COLUMNS id int PATH '@id',
                                   _id FOR ORDINALITY,
-                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_name text PATH 'COUNTRY_NAME/text()' NOT NULL,
                                   country_id text PATH 'COUNTRY_ID',
                                   region_id int PATH 'REGION_ID',
                                   size float PATH 'SIZE',
@@ -362,7 +362,7 @@ CREATE VIEW xmltableview1 AS SELECT  xmltable.*
                          PASSING data
                          COLUMNS id int PATH '@id',
                                   _id FOR ORDINALITY,
-                                  country_name text PATH 'COUNTRY_NAME' NOT NULL,
+                                  country_name text PATH 'COUNTRY_NAME/text()' NOT NULL,
                                   country_id text PATH 'COUNTRY_ID',
                                   region_id int PATH 'REGION_ID',
                                   size float PATH 'SIZE',
