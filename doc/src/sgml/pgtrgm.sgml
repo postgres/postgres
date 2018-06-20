@@ -168,15 +168,15 @@
    greatest similarity between the first string and any substring of the second
    string.  However, this function does not add padding to the boundaries of
    the extent.  Thus, the number of additional characters present in the
-   second string is not considered, except for the mismatched word boundry.
+   second string is not considered, except for the mismatched word boundaries.
   </para>
 
   <para>
    At the same time, <function>strict_word_similarity(text, text)</function>
-   selects extent of words in the second string.  In the example above,
+   selects an extent of words in the second string.  In the example above,
    <function>strict_word_similarity(text, text)</function> would select the
-   extent of single word <literal>'words'</literal>, whose set of trigrams is
-   <literal>{"  w"," wo","wor","ord","rds","ds "}</literal>
+   extent of a single word <literal>'words'</literal>, whose set of trigrams is
+   <literal>{"  w"," wo","wor","ord","rds","ds "}</literal>.
 
 <programlisting>
 # SELECT strict_word_similarity('word', 'two words'), similarity('word', 'words');

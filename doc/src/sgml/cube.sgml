@@ -190,7 +190,7 @@
         n = 2 * k - 1 means lower bound of <replaceable>k</replaceable>-th
         dimension, n = 2 * k means upper bound of
         <replaceable>k</replaceable>-th dimension.  Negative
-        <replaceable>n</replaceable> denotes inversed value of corresponding
+        <replaceable>n</replaceable> denotes the inverse value of the corresponding
         positive coordinate.  This operator is designed for KNN-GiST support.
       </entry>
      </row>

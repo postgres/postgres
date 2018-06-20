@@ -1215,7 +1215,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </row>
      <row>
       <entry><literal>-</literal></entry>
-      <entry>substraction</entry>
+      <entry>subtraction</entry>
       <entry><literal>3 - 2.0</literal></entry>
       <entry><literal>1.0</literal></entry>
      </row>

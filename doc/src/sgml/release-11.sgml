@@ -1083,7 +1083,7 @@ same commits as above
 -->
 
        <para>
-        Allow vacuum to avoid unnecesary index scans (Masahiko Sawada,
+        Allow vacuum to avoid unnecessary index scans (Masahiko Sawada,
         Alexander Korotkov)
        </para>
       </listitem>
@@ -1594,7 +1594,7 @@ same commits as above
 -->
 
        <para>
-        Allow replication slots to be advanced programatically, rather
+        Allow replication slots to be advanced programmatically, rather
         than be consumed by subscribers (Petr Jelinek)
        </para>
 
@@ -1704,7 +1704,7 @@ same commits as above
 
        <para>
         Allow <command>ALTER INDEX</command> to set statistics-gathering
-        targets for expression indexes (Alexander Korotkov, Adrien nayrat)
+        targets for expression indexes (Alexander Korotkov, Adrien Nayrat)
        </para>
 
        <para>
