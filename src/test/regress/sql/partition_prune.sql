@@ -813,3 +813,11 @@ drop table inh_lp cascade;
 
 reset enable_partition_pruning;
 reset constraint_exclusion;
+
+-- Check pruning for a partition tree containing only temporary relations
+create temp table pp_temp_parent (a int) partition by list (a);
+create temp table pp_temp_part_1 partition of pp_temp_parent for values in (1);
+create temp table pp_temp_part_def partition of pp_temp_parent default;
+explain (costs off) select * from pp_temp_parent where true;
+explain (costs off) select * from pp_temp_parent where a = 2;
+drop table pp_temp_parent;

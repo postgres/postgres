@@ -2573,3 +2573,15 @@ alter table defpart_attach_test_d add check (a > 1);
 alter table defpart_attach_test attach partition defpart_attach_test_d default;
 
 drop table defpart_attach_test;
+
+-- check combinations of temporary and permanent relations when attaching
+-- partitions.
+create table perm_part_parent (a int) partition by list (a);
+create temp table temp_part_parent (a int) partition by list (a);
+create table perm_part_child (a int);
+create temp table temp_part_child (a int);
+alter table temp_part_parent attach partition perm_part_child default; -- error
+alter table perm_part_parent attach partition temp_part_child default; -- error
+alter table temp_part_parent attach partition temp_part_child default; -- ok
+drop table perm_part_parent cascade;
+drop table temp_part_parent cascade;

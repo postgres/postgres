@@ -3353,6 +3353,16 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
        on individual partitions, not the partitioned table.
       </para>
      </listitem>
+
+     <listitem>
+      <para>
+       Mixing temporary and permanent relations in the same partition tree is
+       not allowed.  Hence, if the partitioned table is permanent, so must be
+       its partitions and likewise if the partitioned table is temporary.  When
+       using temporary relations, all members of the partition tree have to be
+       from the same session.
+      </para>
+     </listitem>
     </itemizedlist>
     </para>
     </sect3>

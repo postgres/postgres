@@ -805,6 +805,16 @@ TRUNCATE fd_pt2;  -- ERROR
 DROP FOREIGN TABLE fd_pt2_1;
 DROP TABLE fd_pt2;
 
+-- foreign table cannot be part of partition tree made of temporary
+-- relations.
+CREATE TEMP TABLE temp_parted (a int) PARTITION BY LIST (a);
+CREATE FOREIGN TABLE foreign_part PARTITION OF temp_parted DEFAULT
+  SERVER s0;  -- ERROR
+CREATE FOREIGN TABLE foreign_part (a int) SERVER s0;
+ALTER TABLE temp_parted ATTACH PARTITION foreign_part DEFAULT;  -- ERROR
+DROP FOREIGN TABLE foreign_part;
+DROP TABLE temp_parted;
+
 -- Cleanup
 DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
