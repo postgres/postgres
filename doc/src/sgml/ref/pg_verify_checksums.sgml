@@ -44,6 +44,15 @@ PostgreSQL documentation
     <variablelist>
 
      <varlistentry>
+      <term><option>-D <replaceable>directory</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the directory where the database cluster is stored.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-r <replaceable>relfilenode</replaceable></option></term>
       <listitem>
        <para>
@@ -83,6 +92,23 @@ PostgreSQL documentation
       </varlistentry>
     </variablelist>
    </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGDATA</envar></term>
+
+    <listitem>
+     <para>
+      Specifies the directory where the database cluster is 
+      stored; can be overridden using the <option>-D</option> option.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1>
