@@ -112,7 +112,7 @@ INSERT INTO products (product_no, name, price)
 
   <tip>
    <para>
-    When inserting a lot of data at the same time, considering using
+    When inserting a lot of data at the same time, consider using
     the <xref linkend="sql-copy"/> command.
     It is not as flexible as the <xref linkend="sql-insert"/>
     command, but is more efficient. Refer
