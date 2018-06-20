@@ -23,7 +23,7 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_verify_checksums</command>
    <arg choice="opt"><replaceable class="parameter">option</replaceable></arg>
-   <arg choice="opt"><arg choice="opt"><option>-D</option></arg> <replaceable class="parameter">datadir</replaceable></arg>
+   <arg choice="opt"><arg choice="opt"><option>-D</option></arg><arg choice="opt"><option>--pgdata</option></arg> <replaceable class="parameter">datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -45,6 +45,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-D <replaceable>directory</replaceable></option></term>
+      <term><option>--pgdata=<replaceable>directory</replaceable></option></term>
       <listitem>
        <para>
         Specifies the directory where the database cluster is stored.
