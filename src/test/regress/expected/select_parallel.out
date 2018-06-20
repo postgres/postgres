@@ -132,6 +132,32 @@ select sp_test_func() order by 1;
  foo
 (2 rows)
 
+-- Parallel Append is not to be used when the subpath depends on the outer param
+create table part_pa_test(a int, b int) partition by range(a);
+create table part_pa_test_p1 partition of part_pa_test for values from (minvalue) to (0);
+create table part_pa_test_p2 partition of part_pa_test for values from (0) to (maxvalue);
+explain (costs off)
+	select (select max((select pa1.b from part_pa_test pa1 where pa1.a = pa2.a)))
+	from part_pa_test pa2;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Aggregate
+   ->  Gather
+         Workers Planned: 3
+         ->  Parallel Append
+               ->  Parallel Seq Scan on part_pa_test_p1 pa2
+               ->  Parallel Seq Scan on part_pa_test_p2 pa2_1
+   SubPlan 2
+     ->  Result
+   SubPlan 1
+     ->  Append
+           ->  Seq Scan on part_pa_test_p1 pa1
+                 Filter: (a = pa2.a)
+           ->  Seq Scan on part_pa_test_p2 pa1_1
+                 Filter: (a = pa2.a)
+(14 rows)
+
+drop table part_pa_test;
 -- test with leader participation disabled
 set parallel_leader_participation = off;
 explain (costs off)
