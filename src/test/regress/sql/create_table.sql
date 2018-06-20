@@ -675,3 +675,12 @@ create table boolspart_t partition of boolspart for values in (true);
 create table boolspart_f partition of boolspart for values in (false);
 \d+ boolspart
 drop table boolspart;
+
+-- partitions mixing temporary and permanent relations
+create table perm_parted (a int) partition by list (a);
+create temporary table temp_parted (a int) partition by list (a);
+create table perm_part partition of temp_parted for values in (1, 2); -- error
+create temp table temp_part partition of perm_parted for values in (1, 2); -- error
+create temp table temp_part partition of temp_parted for values in (1, 2); -- ok
+drop table perm_parted cascade;
+drop table temp_parted cascade;

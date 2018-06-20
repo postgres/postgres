@@ -2373,3 +2373,18 @@ create table parted_validate_test_1 partition of parted_validate_test for values
 alter table parted_validate_test add constraint parted_validate_test_chka check (a > 0) not valid;
 alter table parted_validate_test validate constraint parted_validate_test_chka;
 drop table parted_validate_test;
+
+-- check combinations of temporary and permanent relations when attaching
+-- partitions.
+create table perm_part_parent (a int) partition by list (a);
+create temp table temp_part_parent (a int) partition by list (a);
+create table perm_part_child (a int);
+create temp table temp_part_child (a int);
+alter table temp_part_parent attach partition perm_part_child
+  for values in (1, 2); -- error
+alter table perm_part_parent attach partition temp_part_child
+  for values in (1, 2); -- error
+alter table temp_part_parent attach partition temp_part_child
+  for values in (1, 2); -- ok
+drop table perm_part_parent cascade;
+drop table temp_part_parent cascade;
