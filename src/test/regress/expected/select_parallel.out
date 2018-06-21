@@ -659,6 +659,68 @@ explain (costs off, verbose)
 (11 rows)
 
 drop function sp_simple_func(integer);
+-- test handling of SRFs in targetlist (bug in 10.0)
+explain (costs off)
+   select count(*), generate_series(1,2) from tenk1 group by twenty;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ ProjectSet
+   ->  Finalize GroupAggregate
+         Group Key: twenty
+         ->  Gather Merge
+               Workers Planned: 4
+               ->  Partial GroupAggregate
+                     Group Key: twenty
+                     ->  Sort
+                           Sort Key: twenty
+                           ->  Parallel Seq Scan on tenk1
+(10 rows)
+
+select count(*), generate_series(1,2) from tenk1 group by twenty;
+ count | generate_series 
+-------+-----------------
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+   500 |               1
+   500 |               2
+(40 rows)
+
 -- test gather merge with parallel leader participation disabled
 set parallel_leader_participation = off;
 explain (costs off)

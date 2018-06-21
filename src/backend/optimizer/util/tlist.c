@@ -25,20 +25,38 @@
 	((IsA(node, FuncExpr) && ((FuncExpr *) (node))->funcretset) || \
 	 (IsA(node, OpExpr) && ((OpExpr *) (node))->opretset))
 
-/* Workspace for split_pathtarget_walker */
+/*
+ * Data structures for split_pathtarget_at_srfs().  To preserve the identity
+ * of sortgroupref items even if they are textually equal(), what we track is
+ * not just bare expressions but expressions plus their sortgroupref indexes.
+ */
 typedef struct
 {
+	Node	   *expr;			/* some subexpression of a PathTarget */
+	Index		sortgroupref;	/* its sortgroupref, or 0 if none */
+} split_pathtarget_item;
+
+typedef struct
+{
+	/* This is a List of bare expressions: */
 	List	   *input_target_exprs; /* exprs available from input */
-	List	   *level_srfs;		/* list of lists of SRF exprs */
-	List	   *level_input_vars;	/* vars needed by SRFs of each level */
-	List	   *level_input_srfs;	/* SRFs needed by SRFs of each level */
+	/* These are Lists of Lists of split_pathtarget_items: */
+	List	   *level_srfs;		/* SRF exprs to evaluate at each level */
+	List	   *level_input_vars;	/* input vars needed at each level */
+	List	   *level_input_srfs;	/* input SRFs needed at each level */
+	/* These are Lists of split_pathtarget_items: */
 	List	   *current_input_vars; /* vars needed in current subexpr */
 	List	   *current_input_srfs; /* SRFs needed in current subexpr */
+	/* Auxiliary data for current split_pathtarget_walker traversal: */
 	int			current_depth;	/* max SRF depth in current subexpr */
+	Index		current_sgref;	/* current subexpr's sortgroupref, or 0 */
 } split_pathtarget_context;
 
 static bool split_pathtarget_walker(Node *node,
 						split_pathtarget_context *context);
+static void add_sp_item_to_pathtarget(PathTarget *target,
+						  split_pathtarget_item *item);
+static void add_sp_items_to_pathtarget(PathTarget *target, List *items);
 
 
 /*****************************************************************************
@@ -822,6 +840,9 @@ apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
  * already meant as a reference to a lower subexpression).  So, don't expand
  * any tlist expressions that appear in input_target, if that's not NULL.
  *
+ * It's also important that we preserve any sortgroupref annotation appearing
+ * in the given target, especially on expressions matching input_target items.
+ *
  * The outputs of this function are two parallel lists, one a list of
  * PathTargets and the other an integer list of bool flags indicating
  * whether the corresponding PathTarget contains any evaluatable SRFs.
@@ -845,6 +866,7 @@ split_pathtarget_at_srfs(PlannerInfo *root,
 	int			max_depth;
 	bool		need_extra_projection;
 	List	   *prev_level_tlist;
+	int			lci;
 	ListCell   *lc,
 			   *lc1,
 			   *lc2,
@@ -884,9 +906,14 @@ split_pathtarget_at_srfs(PlannerInfo *root,
 	need_extra_projection = false;
 
 	/* Scan each expression in the PathTarget looking for SRFs */
+	lci = 0;
 	foreach(lc, target->exprs)
 	{
 		Node	   *node = (Node *) lfirst(lc);
+
+		/* Tell split_pathtarget_walker about this expr's sortgroupref */
+		context.current_sgref = get_pathtarget_sortgroupref(target, lci);
+		lci++;
 
 		/*
 		 * Find all SRFs and Vars (and Var-like nodes) in this expression, and
@@ -981,16 +1008,14 @@ split_pathtarget_at_srfs(PlannerInfo *root,
 			 * This target should actually evaluate any SRFs of the current
 			 * level, and it needs to propagate forward any Vars needed by
 			 * later levels, as well as SRFs computed earlier and needed by
-			 * later levels.  We rely on add_new_columns_to_pathtarget() to
-			 * remove duplicate items.  Also, for safety, make a separate copy
-			 * of each item for each PathTarget.
+			 * later levels.
 			 */
-			add_new_columns_to_pathtarget(ntarget, copyObject(level_srfs));
+			add_sp_items_to_pathtarget(ntarget, level_srfs);
 			for_each_cell(lc, lnext(lc2))
 			{
 				List	   *input_vars = (List *) lfirst(lc);
 
-				add_new_columns_to_pathtarget(ntarget, copyObject(input_vars));
+				add_sp_items_to_pathtarget(ntarget, input_vars);
 			}
 			for_each_cell(lc, lnext(lc3))
 			{
@@ -999,10 +1024,10 @@ split_pathtarget_at_srfs(PlannerInfo *root,
 
 				foreach(lcx, input_srfs)
 				{
-					Expr	   *srf = (Expr *) lfirst(lcx);
+					split_pathtarget_item *item = lfirst(lcx);
 
-					if (list_member(prev_level_tlist, srf))
-						add_new_column_to_pathtarget(ntarget, copyObject(srf));
+					if (list_member(prev_level_tlist, item->expr))
+						add_sp_item_to_pathtarget(ntarget, item);
 				}
 			}
 			set_pathtarget_cost_width(root, ntarget);
@@ -1037,12 +1062,17 @@ split_pathtarget_walker(Node *node, split_pathtarget_context *context)
 	 * input_target can be treated like a Var (which indeed it will be after
 	 * setrefs.c gets done with it), even if it's actually a SRF.  Record it
 	 * as being needed for the current expression, and ignore any
-	 * substructure.
+	 * substructure.  (Note in particular that this preserves the identity of
+	 * any expressions that appear as sortgrouprefs in input_target.)
 	 */
 	if (list_member(context->input_target_exprs, node))
 	{
+		split_pathtarget_item *item = palloc(sizeof(split_pathtarget_item));
+
+		item->expr = node;
+		item->sortgroupref = context->current_sgref;
 		context->current_input_vars = lappend(context->current_input_vars,
-											  node);
+											  item);
 		return false;
 	}
 
@@ -1057,8 +1087,12 @@ split_pathtarget_walker(Node *node, split_pathtarget_context *context)
 		IsA(node, GroupingFunc) ||
 		IsA(node, WindowFunc))
 	{
+		split_pathtarget_item *item = palloc(sizeof(split_pathtarget_item));
+
+		item->expr = node;
+		item->sortgroupref = context->current_sgref;
 		context->current_input_vars = lappend(context->current_input_vars,
-											  node);
+											  item);
 		return false;
 	}
 
@@ -1068,15 +1102,20 @@ split_pathtarget_walker(Node *node, split_pathtarget_context *context)
 	 */
 	if (IS_SRF_CALL(node))
 	{
+		split_pathtarget_item *item = palloc(sizeof(split_pathtarget_item));
 		List	   *save_input_vars = context->current_input_vars;
 		List	   *save_input_srfs = context->current_input_srfs;
 		int			save_current_depth = context->current_depth;
 		int			srf_depth;
 		ListCell   *lc;
 
+		item->expr = node;
+		item->sortgroupref = context->current_sgref;
+
 		context->current_input_vars = NIL;
 		context->current_input_srfs = NIL;
 		context->current_depth = 0;
+		context->current_sgref = 0; /* subexpressions are not sortgroup items */
 
 		(void) expression_tree_walker(node, split_pathtarget_walker,
 									  (void *) context);
@@ -1094,7 +1133,7 @@ split_pathtarget_walker(Node *node, split_pathtarget_context *context)
 
 		/* Record this SRF as needing to be evaluated at appropriate level */
 		lc = list_nth_cell(context->level_srfs, srf_depth);
-		lfirst(lc) = lappend(lfirst(lc), node);
+		lfirst(lc) = lappend(lfirst(lc), item);
 
 		/* Record its inputs as being needed at the same level */
 		lc = list_nth_cell(context->level_input_vars, srf_depth);
@@ -1108,7 +1147,7 @@ split_pathtarget_walker(Node *node, split_pathtarget_context *context)
 		 * surrounding expression.
 		 */
 		context->current_input_vars = save_input_vars;
-		context->current_input_srfs = lappend(save_input_srfs, node);
+		context->current_input_srfs = lappend(save_input_srfs, item);
 		context->current_depth = Max(save_current_depth, srf_depth);
 
 		/* We're done here */
@@ -1119,6 +1158,79 @@ split_pathtarget_walker(Node *node, split_pathtarget_context *context)
 	 * Otherwise, the node is a scalar (non-set) expression, so recurse to
 	 * examine its inputs.
 	 */
+	context->current_sgref = 0; /* subexpressions are not sortgroup items */
 	return expression_tree_walker(node, split_pathtarget_walker,
 								  (void *) context);
+}
+
+/*
+ * Add a split_pathtarget_item to the PathTarget, unless a matching item is
+ * already present.  This is like add_new_column_to_pathtarget, but allows
+ * for sortgrouprefs to be handled.  An item having zero sortgroupref can
+ * be merged with one that has a sortgroupref, acquiring the latter's
+ * sortgroupref.
+ *
+ * Note that we don't worry about possibly adding duplicate sortgrouprefs
+ * to the PathTarget.  That would be bad, but it should be impossible unless
+ * the target passed to split_pathtarget_at_srfs already had duplicates.
+ * As long as it didn't, we can have at most one split_pathtarget_item with
+ * any particular nonzero sortgroupref.
+ */
+static void
+add_sp_item_to_pathtarget(PathTarget *target, split_pathtarget_item *item)
+{
+	int			lci;
+	ListCell   *lc;
+
+	/*
+	 * Look for a pre-existing entry that is equal() and does not have a
+	 * conflicting sortgroupref already.
+	 */
+	lci = 0;
+	foreach(lc, target->exprs)
+	{
+		Node	   *node = (Node *) lfirst(lc);
+		Index		sgref = get_pathtarget_sortgroupref(target, lci);
+
+		if ((item->sortgroupref == sgref ||
+			 item->sortgroupref == 0 ||
+			 sgref == 0) &&
+			equal(item->expr, node))
+		{
+			/* Found a match.  Assign item's sortgroupref if it has one. */
+			if (item->sortgroupref)
+			{
+				if (target->sortgrouprefs == NULL)
+				{
+					target->sortgrouprefs = (Index *)
+						palloc0(list_length(target->exprs) * sizeof(Index));
+				}
+				target->sortgrouprefs[lci] = item->sortgroupref;
+			}
+			return;
+		}
+		lci++;
+	}
+
+	/*
+	 * No match, so add item to PathTarget.  Copy the expr for safety.
+	 */
+	add_column_to_pathtarget(target, (Expr *) copyObject(item->expr),
+							 item->sortgroupref);
+}
+
+/*
+ * Apply add_sp_item_to_pathtarget to each element of list.
+ */
+static void
+add_sp_items_to_pathtarget(PathTarget *target, List *items)
+{
+	ListCell   *lc;
+
+	foreach(lc, items)
+	{
+		split_pathtarget_item *item = lfirst(lc);
+
+		add_sp_item_to_pathtarget(target, item);
+	}
 }

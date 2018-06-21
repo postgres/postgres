@@ -261,6 +261,13 @@ explain (costs off, verbose)
 
 drop function sp_simple_func(integer);
 
+-- test handling of SRFs in targetlist (bug in 10.0)
+
+explain (costs off)
+   select count(*), generate_series(1,2) from tenk1 group by twenty;
+
+select count(*), generate_series(1,2) from tenk1 group by twenty;
+
 -- test gather merge with parallel leader participation disabled
 set parallel_leader_participation = off;
 
