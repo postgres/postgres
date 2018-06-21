@@ -933,7 +933,7 @@ same commits as above
 -->
 
        <para>
-        Allow SP-GiST indexes to optionally use compression (Teodor Sigaev,
+        Allow SP-GiST to use lossy representation of leaf keys (Teodor Sigaev,
         Heikki Linnakangas, Alexander Korotkov, Nikita Glukhov)
        </para>
 
