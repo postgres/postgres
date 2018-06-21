@@ -38,6 +38,15 @@ LDAP server and client tools are required.
 
 Debian/Ubuntu packages: slapd ldap-utils
 
-RHEL/CentOS packages: openldap openldap-clients openldap-servers
+RHEL/CentOS/Fedora packages: openldap-clients openldap-servers
+(You will already have needed openldap and openldap-devel to build.)
 
-FreeBSD: openldap24-server openldap24-client
+FreeBSD: openldap-server
+(You will already have needed openldap-client to build.  If building
+from the ports source tree, you want to build net/openldap24-client
+and net/openldap24-server.)
+
+macOS: We do not recommend trying to use the Apple-provided version of
+OpenLDAP; it's very old, plus Apple seem to have changed the launching
+conventions for slapd.  The paths in the test file are set on the
+assumption that you installed OpenLDAP using Homebrew.
