@@ -3934,10 +3934,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 		if (xpathctx == NULL || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate XPath context");
-		xpathctx->node = xmlDocGetRootElement(doc);
-		if (xpathctx->node == NULL || xmlerrcxt->err_occurred)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not find root XML element");
+		xpathctx->node = (xmlNodePtr) doc;
 
 		/* register namespaces, if any */
 		if (ns_count > 0)
@@ -4276,10 +4273,7 @@ XmlTableSetDocument(TableFuncScanState *state, Datum value)
 		if (xpathcxt == NULL || xtCxt->xmlerrcxt->err_occurred)
 			xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate XPath context");
-		xpathcxt->node = xmlDocGetRootElement(doc);
-		if (xpathcxt->node == NULL || xtCxt->xmlerrcxt->err_occurred)
-			xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not find root XML element");
+		xpathcxt->node = (xmlNodePtr) doc;
 	}
 	PG_CATCH();
 	{
