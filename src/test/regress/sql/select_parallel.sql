@@ -151,6 +151,13 @@ explain (costs off)
 
 select count(*) from tenk1 group by twenty;
 
+-- test handling of SRFs in targetlist (bug in 10.0)
+
+explain (costs off)
+   select count(*), generate_series(1,2) from tenk1 group by twenty;
+
+select count(*), generate_series(1,2) from tenk1 group by twenty;
+
 --test rescan behavior of gather merge
 set enable_material = false;
 
