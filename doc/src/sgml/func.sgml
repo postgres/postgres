@@ -10903,7 +10903,7 @@ SELECT xmltable.*
     <para>
      The following example illustrates how
      the <literal>XMLNAMESPACES</literal> clause can be used to specify
-     the default namespace, and a list of additional namespaces
+     a list of namespaces
      used in the XML document as well as in the XPath expressions:
 
   <screen><![CDATA[
