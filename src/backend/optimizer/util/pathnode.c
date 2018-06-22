@@ -1274,7 +1274,7 @@ create_append_path(PlannerInfo *root,
 	pathnode->first_partial_path = list_length(subpaths);
 	pathnode->subpaths = list_concat(subpaths, partial_subpaths);
 
-	foreach(l, subpaths)
+	foreach(l, pathnode->subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(l);
 
