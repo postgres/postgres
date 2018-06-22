@@ -3248,7 +3248,7 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-		{"vacuum_cleanup_index_scale_factor", PGC_USERSET, AUTOVACUUM,
+		{"vacuum_cleanup_index_scale_factor", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Number of tuple inserts prior to index cleanup as a fraction of reltuples."),
 			NULL
 		},

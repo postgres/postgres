@@ -575,6 +575,9 @@
 #vacuum_freeze_table_age = 150000000
 #vacuum_multixact_freeze_min_age = 5000000
 #vacuum_multixact_freeze_table_age = 150000000
+#vacuum_cleanup_index_scale_factor = 0.1	# fraction of total number of tuples
+						# before index cleanup, 0 always performs
+						# index cleanup
 #bytea_output = 'hex'			# hex, escape
 #xmlbinary = 'base64'
 #xmloption = 'content'
