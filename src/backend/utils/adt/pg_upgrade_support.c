@@ -12,6 +12,7 @@
 #include "postgres.h"
 
 #include "catalog/binary_upgrade.h"
+#include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/extension.h"
@@ -189,6 +190,21 @@ binary_upgrade_set_record_init_privs(PG_FUNCTION_ARGS)
 
 	CHECK_IS_BINARY_UPGRADE;
 	binary_upgrade_record_init_privs = record_init_privs;
+
+	PG_RETURN_VOID();
+}
+
+Datum
+binary_upgrade_set_missing_value(PG_FUNCTION_ARGS)
+{
+	Oid			table_id = PG_GETARG_OID(0);
+	text	   *attname = PG_GETARG_TEXT_P(1);
+	text	   *value = PG_GETARG_TEXT_P(2);
+	char	   *cattname = text_to_cstring(attname);
+	char	   *cvalue = text_to_cstring(value);
+
+	CHECK_IS_BINARY_UPGRADE;
+	SetAttrMissing(table_id, cattname, cvalue);
 
 	PG_RETURN_VOID();
 }

@@ -8103,6 +8103,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	int			i_attoptions;
 	int			i_attcollation;
 	int			i_attfdwoptions;
+	int			i_attmissingval;
 	PGresult   *res;
 	int			ntups;
 	bool		hasdefaults;
@@ -8132,7 +8133,34 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 
 		resetPQExpBuffer(q);
 
-		if (fout->remoteVersion >= 100000)
+		if (fout->remoteVersion >= 110000)
+		{
+			/* atthasmissing and attmissingval are new in 11 */
+			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
+							  "a.attstattarget, a.attstorage, t.typstorage, "
+							  "a.attnotnull, a.atthasdef, a.attisdropped, "
+							  "a.attlen, a.attalign, a.attislocal, "
+							  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
+							  "array_to_string(a.attoptions, ', ') AS attoptions, "
+							  "CASE WHEN a.attcollation <> t.typcollation "
+							  "THEN a.attcollation ELSE 0 END AS attcollation, "
+							  "a.attidentity, "
+							  "pg_catalog.array_to_string(ARRAY("
+							  "SELECT pg_catalog.quote_ident(option_name) || "
+							  "' ' || pg_catalog.quote_literal(option_value) "
+							  "FROM pg_catalog.pg_options_to_table(attfdwoptions) "
+							  "ORDER BY option_name"
+							  "), E',\n    ') AS attfdwoptions ,"
+							  "CASE WHEN a.atthasmissing AND NOT a.attisdropped "
+							  "THEN a.attmissingval ELSE null END AS attmissingval "
+							  "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
+							  "ON a.atttypid = t.oid "
+							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
+							  "AND a.attnum > 0::pg_catalog.int2 "
+							  "ORDER BY a.attnum",
+							  tbinfo->dobj.catId.oid);
+		}
+		else if (fout->remoteVersion >= 100000)
 		{
 			/*
 			 * attidentity is new in version 10.
@@ -8151,7 +8179,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "' ' || pg_catalog.quote_literal(option_value) "
 							  "FROM pg_catalog.pg_options_to_table(attfdwoptions) "
 							  "ORDER BY option_name"
-							  "), E',\n    ') AS attfdwoptions "
+							  "), E',\n    ') AS attfdwoptions ,"
+							  "NULL as attmissingval "
 							  "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -8177,7 +8206,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "' ' || pg_catalog.quote_literal(option_value) "
 							  "FROM pg_catalog.pg_options_to_table(attfdwoptions) "
 							  "ORDER BY option_name"
-							  "), E',\n    ') AS attfdwoptions "
+							  "), E',\n    ') AS attfdwoptions, "
+							  "NULL as attmissingval "
 							  "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -8201,7 +8231,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "array_to_string(a.attoptions, ', ') AS attoptions, "
 							  "CASE WHEN a.attcollation <> t.typcollation "
 							  "THEN a.attcollation ELSE 0 END AS attcollation, "
-							  "NULL AS attfdwoptions "
+							  "NULL AS attfdwoptions, "
+							  "NULL as attmissingval "
 							  "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -8219,7 +8250,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
 							  "array_to_string(a.attoptions, ', ') AS attoptions, "
 							  "0 AS attcollation, "
-							  "NULL AS attfdwoptions "
+							  "NULL AS attfdwoptions, "
+							  "NULL as attmissingval "
 							  "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -8236,7 +8268,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "a.attlen, a.attalign, a.attislocal, "
 							  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
 							  "'' AS attoptions, 0 AS attcollation, "
-							  "NULL AS attfdwoptions "
+							  "NULL AS attfdwoptions, "
+							  "NULL as attmissingval "
 							  "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -8266,6 +8299,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		i_attoptions = PQfnumber(res, "attoptions");
 		i_attcollation = PQfnumber(res, "attcollation");
 		i_attfdwoptions = PQfnumber(res, "attfdwoptions");
+		i_attmissingval = PQfnumber(res, "attmissingval");
 
 		tbinfo->numatts = ntups;
 		tbinfo->attnames = (char **) pg_malloc(ntups * sizeof(char *));
@@ -8282,6 +8316,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		tbinfo->attoptions = (char **) pg_malloc(ntups * sizeof(char *));
 		tbinfo->attcollation = (Oid *) pg_malloc(ntups * sizeof(Oid));
 		tbinfo->attfdwoptions = (char **) pg_malloc(ntups * sizeof(char *));
+		tbinfo->attmissingval = (char **) pg_malloc(ntups * sizeof(char *));
 		tbinfo->notnull = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->inhNotNull = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(ntups * sizeof(AttrDefInfo *));
@@ -8309,6 +8344,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			tbinfo->attoptions[j] = pg_strdup(PQgetvalue(res, j, i_attoptions));
 			tbinfo->attcollation[j] = atooid(PQgetvalue(res, j, i_attcollation));
 			tbinfo->attfdwoptions[j] = pg_strdup(PQgetvalue(res, j, i_attfdwoptions));
+			tbinfo->attmissingval[j] = pg_strdup(PQgetvalue(res, j, i_attmissingval));
 			tbinfo->attrdefs[j] = NULL; /* fix below */
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 				hasdefaults = true;
@@ -15657,6 +15693,29 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		}
 		else
 			appendPQExpBufferStr(q, ";\n");
+
+		/*
+		 * in binary upgrade mode, update the catalog with any missing values
+		 * that might be present.
+		 */
+		if (dopt->binary_upgrade)
+		{
+			for (j = 0; j < tbinfo->numatts; j++)
+			{
+				if (tbinfo->attmissingval[j][0] != '\0')
+				{
+					appendPQExpBufferStr(q, "\n-- set missing value.\n");
+					appendPQExpBufferStr(q,
+										 "SELECT pg_catalog.binary_upgrade_set_missing_value(");
+					appendStringLiteralAH(q, qualrelname, fout);
+					appendPQExpBufferStr(q, "::pg_catalog.regclass,");
+					appendStringLiteralAH(q, tbinfo->attnames[j], fout);
+					appendPQExpBufferStr(q, ",");
+					appendStringLiteralAH(q, tbinfo->attmissingval[j], fout);
+					appendPQExpBufferStr(q, ");\n\n");
+				}
+			}
+		}
 
 		/*
 		 * To create binary-compatible heap files, we have to ensure the same

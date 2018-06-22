@@ -369,3 +369,10 @@ DROP TABLE has_volatile;
 DROP EVENT TRIGGER has_volatile_rewrite;
 DROP FUNCTION log_rewrite;
 DROP SCHEMA fast_default;
+
+-- Leave a table with an active fast default in place, for pg_upgrade testing
+set search_path = public;
+create table has_fast_default(f1 int);
+insert into has_fast_default values(1);
+alter table has_fast_default add column f2 int default 42;
+table has_fast_default;

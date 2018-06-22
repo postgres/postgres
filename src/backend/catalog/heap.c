@@ -1613,6 +1613,29 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 				 "........pg.dropped.%d........", attnum);
 		namestrcpy(&(attStruct->attname), newattname);
 
+		/* clear the missing value if any */
+		if (attStruct->atthasmissing)
+		{
+			Datum		valuesAtt[Natts_pg_attribute];
+			bool		nullsAtt[Natts_pg_attribute];
+			bool		replacesAtt[Natts_pg_attribute];
+
+			/* update the tuple - set atthasmissing and attmissingval */
+			MemSet(valuesAtt, 0, sizeof(valuesAtt));
+			MemSet(nullsAtt, false, sizeof(nullsAtt));
+			MemSet(replacesAtt, false, sizeof(replacesAtt));
+
+			valuesAtt[Anum_pg_attribute_atthasmissing - 1] =
+				BoolGetDatum(false);
+			replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
+			valuesAtt[Anum_pg_attribute_attmissingval - 1] = (Datum) 0;
+			nullsAtt[Anum_pg_attribute_attmissingval - 1] = true;
+			replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
+
+			tuple = heap_modify_tuple(tuple, RelationGetDescr(attr_rel),
+									  valuesAtt, nullsAtt, replacesAtt);
+		}
+
 		CatalogTupleUpdate(attr_rel, &tuple->t_self, tuple);
 	}
 
@@ -1999,6 +2022,63 @@ RelationClearMissing(Relation rel)
 	 * there's nothing else to do here.
 	 */
 	heap_close(attr_rel, RowExclusiveLock);
+}
+
+/*
+ * SetAttrMissing
+ *
+ * Set the missing value of a single attribute. This should only be used by
+ * binary upgrade. Takes an AccessExclusive lock on the relation owning the
+ * attribute.
+ */
+void
+SetAttrMissing(Oid relid, char *attname, char *value)
+{
+	Datum		valuesAtt[Natts_pg_attribute];
+	bool		nullsAtt[Natts_pg_attribute];
+	bool		replacesAtt[Natts_pg_attribute];
+	Datum		missingval;
+	Form_pg_attribute attStruct;
+	Relation	attrrel,
+				tablerel;
+	HeapTuple	atttup,
+				newtup;
+
+	/* lock the table the attribute belongs to */
+	tablerel = heap_open(relid, AccessExclusiveLock);
+
+	/* Lock the attribute row and get the data */
+	attrrel = heap_open(AttributeRelationId, RowExclusiveLock);
+	atttup = SearchSysCacheAttName(relid, attname);
+	if (!HeapTupleIsValid(atttup))
+		elog(ERROR, "cache lookup failed for attribute %s of relation %u",
+			 attname, relid);
+	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
+
+	/* get an array value from the value string */
+	missingval = OidFunctionCall3(F_ARRAY_IN,
+								  CStringGetDatum(value),
+								  ObjectIdGetDatum(attStruct->atttypid),
+								  Int32GetDatum(attStruct->atttypmod));
+
+	/* update the tuple - set atthasmissing and attmissingval */
+	MemSet(valuesAtt, 0, sizeof(valuesAtt));
+	MemSet(nullsAtt, false, sizeof(nullsAtt));
+	MemSet(replacesAtt, false, sizeof(replacesAtt));
+
+	valuesAtt[Anum_pg_attribute_atthasmissing - 1] = BoolGetDatum(true);
+	replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
+	valuesAtt[Anum_pg_attribute_attmissingval - 1] = missingval;
+	replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
+
+	newtup = heap_modify_tuple(atttup, RelationGetDescr(attrrel),
+							   valuesAtt, nullsAtt, replacesAtt);
+	CatalogTupleUpdate(attrrel, &newtup->t_self, newtup);
+
+	/* clean up */
+	ReleaseSysCache(atttup);
+	heap_close(attrrel, RowExclusiveLock);
+	heap_close(tablerel, AccessExclusiveLock);
 }
 
 /*

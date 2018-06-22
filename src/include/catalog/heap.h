@@ -105,6 +105,7 @@ extern List *AddRelationNewConstraints(Relation rel,
 						  bool is_internal);
 
 extern void RelationClearMissing(Relation rel);
+extern void SetAttrMissing(Oid relid, char *attname, char *value);
 
 extern Oid StoreAttrDefault(Relation rel, AttrNumber attnum,
 				 Node *expr, bool is_internal,
