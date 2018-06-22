@@ -884,7 +884,8 @@ AdvanceOldestCommitTsXid(TransactionId oldestXact)
 
 
 /*
- * Decide which of two CLOG page numbers is "older" for truncation purposes.
+ * Decide which of two commitTS page numbers is "older" for truncation
+ * purposes.
  *
  * We need to use comparison of TransactionIds here in order to do the right
  * thing with wraparound XID arithmetic.  However, if we are asked about
