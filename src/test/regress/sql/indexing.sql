@@ -326,6 +326,7 @@ alter table idxpart2 drop column col1, drop column col2;
 create index on idxpart2 (abs(b));
 alter table idxpart attach partition idxpart2 for values from (0) to (1);
 create index on idxpart (abs(b));
+create index on idxpart ((b + 1));
 alter table idxpart attach partition idxpart1 for values from (1) to (2);
 select c.relname, pg_get_indexdef(indexrelid)
   from pg_class c join pg_index i on c.oid = i.indexrelid

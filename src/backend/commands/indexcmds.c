@@ -993,7 +993,32 @@ DefineIndex(Oid relationId,
 				{
 					IndexStmt  *childStmt = copyObject(stmt);
 					bool		found_whole_row;
+					ListCell   *lc;
 
+					/*
+					 * Adjust any Vars (both in expressions and in the index's
+					 * WHERE clause) to match the partition's column numbering
+					 * in case it's different from the parent's.
+					 */
+					foreach(lc, childStmt->indexParams)
+					{
+						IndexElem *ielem = lfirst(lc);
+
+						/*
+						 * If the index parameter is an expression, we must
+						 * translate it to contain child Vars.
+						 */
+						if (ielem->expr)
+						{
+							ielem->expr =
+								map_variable_attnos((Node *) ielem->expr,
+													1, 0, attmap, maplen,
+													InvalidOid,
+													&found_whole_row);
+							if (found_whole_row)
+								elog(ERROR, "cannot convert whole-row table reference");
+						}
+					}
 					childStmt->whereClause =
 						map_variable_attnos(stmt->whereClause, 1, 0,
 											attmap, maplen,
