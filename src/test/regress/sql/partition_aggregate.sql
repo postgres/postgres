@@ -294,3 +294,27 @@ SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) <
 EXPLAIN (COSTS OFF)
 SELECT y, sum(x), avg(x), count(*) FROM pagg_tab_para GROUP BY y HAVING avg(x) < 12 ORDER BY 1, 2, 3;
 SELECT y, sum(x), avg(x), count(*) FROM pagg_tab_para GROUP BY y HAVING avg(x) < 12 ORDER BY 1, 2, 3;
+
+-- Test when parent can produce parallel paths but not any (or some) of its children
+ALTER TABLE pagg_tab_para_p1 SET (parallel_workers = 0);
+ALTER TABLE pagg_tab_para_p3 SET (parallel_workers = 0);
+ANALYZE pagg_tab_para;
+
+EXPLAIN (COSTS OFF)
+SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
+SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
+
+ALTER TABLE pagg_tab_para_p2 SET (parallel_workers = 0);
+ANALYZE pagg_tab_para;
+
+EXPLAIN (COSTS OFF)
+SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
+SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
+
+-- Reset parallelism parameters to get partitionwise aggregation plan.
+RESET min_parallel_table_scan_size;
+RESET parallel_setup_cost;
+
+EXPLAIN (COSTS OFF)
+SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
+SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;

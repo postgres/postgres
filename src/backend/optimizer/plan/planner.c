@@ -7012,6 +7012,7 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 	List	   *grouped_live_children = NIL;
 	List	   *partially_grouped_live_children = NIL;
 	PathTarget *target = grouped_rel->reltarget;
+	bool		partial_grouping_valid = true;
 
 	Assert(patype != PARTITIONWISE_AGGREGATE_NONE);
 	Assert(patype != PARTITIONWISE_AGGREGATE_PARTIAL ||
@@ -7091,6 +7092,8 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 				lappend(partially_grouped_live_children,
 						child_partially_grouped_rel);
 		}
+		else
+			partial_grouping_valid = false;
 
 		if (patype == PARTITIONWISE_AGGREGATE_FULL)
 		{
@@ -7103,20 +7106,18 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 	}
 
 	/*
-	 * All children can't be dummy at this point. If they are, then the parent
-	 * too marked as dummy.
-	 */
-	Assert(grouped_live_children != NIL ||
-		   partially_grouped_live_children != NIL);
-
-	/*
 	 * Try to create append paths for partially grouped children. For full
 	 * partitionwise aggregation, we might have paths in the partial_pathlist
 	 * if parallel aggregation is possible.  For partial partitionwise
 	 * aggregation, we may have paths in both pathlist and partial_pathlist.
+	 *
+	 * NB: We must have a partially grouped path for every child in order to
+	 * generate a partially grouped path for this relation.
 	 */
-	if (partially_grouped_rel)
+	if (partially_grouped_rel && partial_grouping_valid)
 	{
+		Assert(partially_grouped_live_children != NIL);
+
 		add_paths_to_append_rel(root, partially_grouped_rel,
 								partially_grouped_live_children);
 
@@ -7130,7 +7131,11 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 
 	/* If possible, create append paths for fully grouped children. */
 	if (patype == PARTITIONWISE_AGGREGATE_FULL)
+	{
+		Assert(grouped_live_children != NIL);
+
 		add_paths_to_append_rel(root, grouped_rel, grouped_live_children);
+	}
 }
 
 /*
