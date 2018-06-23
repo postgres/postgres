@@ -10039,7 +10039,7 @@
   prosrc => 'binary_upgrade_set_record_init_privs' },
 { oid => '4101', descr => 'for use by pg_upgrade',
   proname => 'binary_upgrade_set_missing_value', provolatile => 'v',
-  proparallel => 'r', prorettype => 'void', proargtypes => 'oid text text',
+  proparallel => 'u', prorettype => 'void', proargtypes => 'oid text text',
   prosrc => 'binary_upgrade_set_missing_value' },
 
 # replication/origin.h
