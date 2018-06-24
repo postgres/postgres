@@ -515,14 +515,13 @@
 
     <para>
      We use the following terms below:  The
-     <firstterm>scale</firstterm> of a <type>numeric</type> is the
-     count of decimal digits in the fractional part, to the right of
-     the decimal point.  The <firstterm>precision</firstterm> of a
-     <type>numeric</type> is the total count of significant digits in
-     the whole number, that is, the number of digits to both sides of
-     the decimal point.  So the number 23.5141 has a precision of 6
-     and a scale of 4.  Integers can be considered to have a scale of
-     zero.
+     <firstterm>precision</firstterm> of a <type>numeric</type>
+     is the total count of significant digits in the whole number,
+     that is, the number of digits to both sides of the decimal point.
+     The <firstterm>scale</firstterm> of a <type>numeric</type> is the
+     count of decimal digits in the fractional part, to the right of the
+     decimal point.  So the number 23.5141 has a precision of 6 and a
+     scale of 4.  Integers can be considered to have a scale of zero.
     </para>
 
     <para>
