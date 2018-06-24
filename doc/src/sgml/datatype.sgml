@@ -2671,19 +2671,6 @@ P <optional> <replaceable>years</replaceable>-<replaceable>months</replaceable>-
     </para>
 
     <para>
-     Internally <type>interval</type> values are stored as months, days,
-     and seconds. This is done because the number of days in a month
-     varies, and a day can have 23 or 25 hours if a daylight savings
-     time adjustment is involved.  The months and days fields are integers
-     while the seconds field can store fractions.  Because intervals are
-     usually created from constant strings or <type>timestamp</type> subtraction,
-     this storage method works well in most cases. Functions
-     <function>justify_days</function> and <function>justify_hours</function> are
-     available for adjusting days and hours that overflow their normal
-     ranges.
-    </para>
-
-    <para>
      In the verbose input format, and in some fields of the more compact
      input formats, field values can have fractional parts; for example
      <literal>'1.5 week'</literal> or <literal>'01:02:03.45'</literal>.  Such input is
@@ -2733,6 +2720,33 @@ P <optional> <replaceable>years</replaceable>-<replaceable>months</replaceable>-
        </tbody>
       </tgroup>
      </table>
+
+    <para>
+     Internally <type>interval</type> values are stored as months, days,
+     and seconds. This is done because the number of days in a month
+     varies, and a day can have 23 or 25 hours if a daylight savings
+     time adjustment is involved.  The months and days fields are integers
+     while the seconds field can store fractions.  Because intervals are
+     usually created from constant strings or <type>timestamp</type> subtraction,
+     this storage method works well in most cases, but can cause unexpected
+     results:
+
+<programlisting>
+SELECT EXTRACT(hours from '80 minutes'::interval);
+ date_part
+-----------
+         1
+
+SELECT EXTRACT(days from '80 hours'::interval);
+ date_part
+-----------
+         0
+</programlisting>
+
+     Functions <function>justify_days</function> and
+     <function>justify_hours</function> are available for adjusting days
+     and hours that overflow their normal ranges.
+    </para>
 
    </sect2>
 
