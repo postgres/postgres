@@ -18,7 +18,7 @@ msgstr ""
 "Project-Id-Version: postgres (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-11-07 19:08+0000\n"
-"PO-Revision-Date: 2017-11-07 22:06+0100\n"
+"PO-Revision-Date: 2018-06-25 08:51+0200\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -18378,7 +18378,7 @@ msgstr "il messaggio di bind ha %d formati di parametri ma %d parametri"
 #: tcop/postgres.c:1549
 #, c-format
 msgid "bind message supplies %d parameters, but prepared statement \"%s\" requires %d"
-msgstr "il messaggio di bind fornisce %d paramatri, ma l'istruzione preparata \"%s\" ne richiede %d"
+msgstr "il messaggio di bind fornisce %d parametri, ma l'istruzione preparata \"%s\" ne richiede %d"
 
 #: tcop/postgres.c:1719
 #, c-format

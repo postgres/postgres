@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-18 04:17+0000\n"
-"PO-Revision-Date: 2018-05-18 10:14-0400\n"
+"POT-Creation-Date: 2018-06-11 23:47+0000\n"
+"PO-Revision-Date: 2018-06-11 20:25-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -17,21 +17,26 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../common/controldata_utils.c:61
+#: ../../common/controldata_utils.c:62
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: konnte Datei »%s« nicht zum Lesen öffnen: %s\n"
 
-#: ../../common/controldata_utils.c:74
+#: ../../common/controldata_utils.c:78
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: konnte Datei »%s« nicht lesen: %s\n"
 
-#: ../../common/controldata_utils.c:95
+#: ../../common/controldata_utils.c:90
+#, c-format
+msgid "%s: could not read file \"%s\": read %d of %d\n"
+msgstr "%s: konnte Datei »%s« nicht lesen: %d von %d gelesen\n"
+
+#: ../../common/controldata_utils.c:112
 msgid "byte ordering mismatch"
 msgstr "falsche Byte-Reihenfolge"
 
-#: ../../common/controldata_utils.c:97
+#: ../../common/controldata_utils.c:114
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"

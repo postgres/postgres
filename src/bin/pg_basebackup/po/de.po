@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-18 04:16+0000\n"
-"PO-Revision-Date: 2018-05-18 10:31-0400\n"
+"POT-Creation-Date: 2018-06-25 02:46+0000\n"
+"PO-Revision-Date: 2018-06-25 09:34+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -282,28 +282,29 @@ msgstr "  -P, --progress         Fortschrittsinformationen zeigen\n"
 msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
 msgstr "  -S, --slot=SLOTNAME    zu verwendender Replikations-Slot\n"
 
-#: pg_basebackup.c:366
-#, c-format
-msgid "      --no-slot          prevent creation of temporary replication slot\n"
-msgstr "      --no-slot          keinen temporären Replikations-Slot erzeugen\n"
-
-#: pg_basebackup.c:367
-#, fuzzy, c-format
-#| msgid "  -k, --data-checksums      use data page checksums\n"
-msgid ""
-"  -k, --no-verify-checksums\n"
-"                         do not verify checksums\n"
-msgstr "  -k, --data-checksums      Datenseitenprüfsummen verwenden\n"
-
-#: pg_basebackup.c:369 pg_receivewal.c:91 pg_recvlogical.c:99
+#: pg_basebackup.c:366 pg_receivewal.c:91 pg_recvlogical.c:99
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose          »Verbose«-Modus\n"
 
-#: pg_basebackup.c:370 pg_receivewal.c:92 pg_recvlogical.c:100
+#: pg_basebackup.c:367 pg_receivewal.c:92 pg_recvlogical.c:100
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          Versionsinformationen anzeigen, dann beenden\n"
+
+#: pg_basebackup.c:368
+#, c-format
+msgid "      --no-slot          prevent creation of temporary replication slot\n"
+msgstr "      --no-slot          keinen temporären Replikations-Slot erzeugen\n"
+
+#: pg_basebackup.c:369
+#, c-format
+msgid ""
+"      --no-verify-checksums\n"
+"                         do not verify checksums\n"
+msgstr ""
+"      --no-verify-checksums\n"
+"                         Prüfsummen nicht überprüfen\n"
 
 #: pg_basebackup.c:371 pg_receivewal.c:94 pg_recvlogical.c:101
 #, c-format
@@ -1366,34 +1367,34 @@ msgstr "%s: konnte Replikations-Slot »%s« nicht erzeugen: %d Zeilen und %d Fel
 msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: konnte Replikations-Slot »%s« nicht löschen: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
 
-#: walmethods.c:436 walmethods.c:906
+#: walmethods.c:440 walmethods.c:928
 msgid "could not compress data"
 msgstr "konnte Daten nicht komprimieren"
 
-#: walmethods.c:460
+#: walmethods.c:471
 msgid "could not reset compression stream"
 msgstr "konnte Komprimierungsstrom nicht zurücksetzen"
 
-#: walmethods.c:562
+#: walmethods.c:573
 msgid "could not initialize compression library"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren"
 
-#: walmethods.c:574
+#: walmethods.c:585
 msgid "implementation error: tar files can't have more than one open file"
 msgstr "Implementierungsfehler: Tar-Dateien können nicht mehr als eine offene Datei haben"
 
-#: walmethods.c:588
+#: walmethods.c:599
 msgid "could not create tar header"
 msgstr "konnte Tar-Dateikopf nicht erzeugen"
 
-#: walmethods.c:602 walmethods.c:640 walmethods.c:829 walmethods.c:840
+#: walmethods.c:613 walmethods.c:652 walmethods.c:846 walmethods.c:857
 msgid "could not change compression parameters"
 msgstr "konnte Komprimierungsparameter nicht ändern"
 
-#: walmethods.c:722
+#: walmethods.c:734
 msgid "unlink not supported with compression"
 msgstr "Unlink wird bei Komprimierung nicht unterstützt"
 
-#: walmethods.c:922
+#: walmethods.c:952
 msgid "could not close compression stream"
 msgstr "konnte Komprimierungsstrom nicht schließen"

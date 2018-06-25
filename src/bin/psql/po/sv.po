@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-04-29 20:15+0000\n"
-"PO-Revision-Date: 2018-04-30 00:07+0200\n"
+"PO-Revision-Date: 2018-06-25 08:42+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -5939,7 +5939,7 @@ msgstr "hämta rader från en tabell eller vy"
 
 #: sql_help.c:5584
 msgid "change a run-time parameter"
-msgstr "ändra en körningsparamter"
+msgstr "ändra en körningsparameter"
 
 #: sql_help.c:5589
 msgid "set constraint check timing for the current transaction"

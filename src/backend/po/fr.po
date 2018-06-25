@@ -13546,7 +13546,7 @@ msgstr "%s n'est pas autorisé avec UNION/INTERSECT/EXCEPT"
 #: optimizer/plan/planner.c:2166 optimizer/plan/planner.c:4124
 #, c-format
 msgid "could not implement GROUP BY"
-msgstr "n'a pas pu implanté GROUP BY"
+msgstr "n'a pas pu implanter GROUP BY"
 
 #: optimizer/plan/planner.c:2167 optimizer/plan/planner.c:4125 optimizer/plan/planner.c:4865 optimizer/prep/prepunion.c:935
 #, c-format
@@ -13558,7 +13558,7 @@ msgstr ""
 #: optimizer/plan/planner.c:4864
 #, c-format
 msgid "could not implement DISTINCT"
-msgstr "n'a pas pu implanté DISTINCT"
+msgstr "n'a pas pu implanter DISTINCT"
 
 #: optimizer/plan/planner.c:5544
 #, c-format
@@ -13590,7 +13590,7 @@ msgstr "trop d'enregistrements dans la table range"
 #: optimizer/prep/prepunion.c:496
 #, c-format
 msgid "could not implement recursive UNION"
-msgstr "n'a pas pu implanté le UNION récursif"
+msgstr "n'a pas pu implanter le UNION récursif"
 
 #: optimizer/prep/prepunion.c:497
 #, c-format
@@ -13601,7 +13601,7 @@ msgstr "Tous les types de données colonnes doivent être hachables."
 #: optimizer/prep/prepunion.c:934
 #, c-format
 msgid "could not implement %s"
-msgstr "n'a pas pu implanté %s"
+msgstr "n'a pas pu implanter %s"
 
 #: optimizer/util/clauses.c:4693
 #, c-format

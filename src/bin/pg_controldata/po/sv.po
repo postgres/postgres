@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-18 17:17+0000\n"
-"PO-Revision-Date: 2018-05-18 22:39+0200\n"
+"POT-Creation-Date: 2018-06-13 20:47+0000\n"
+"PO-Revision-Date: 2018-06-14 06:56+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -31,8 +31,8 @@ msgstr "%s: kunde inte läsa fil \"%s\": %s\n"
 
 #: ../../common/controldata_utils.c:90
 #, c-format
-msgid "%s: could not read file \"%s\": read %d bytes, expected %d\n"
-msgstr "%s: kunde inte läsa fil \"%s\": läste %d byte, förväntade %d\n"
+msgid "%s: could not read file \"%s\": read %d of %d\n"
+msgstr "%s: kunde inte läsa fil \"%s\": läste %d av %d\n"
 
 #: ../../common/controldata_utils.c:112
 msgid "byte ordering mismatch"
@@ -492,20 +492,3 @@ msgstr "Checksummaversion för datasidor:            %u\n"
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Fejkat authentiseringsvärde:                %s\n"
 
-#~ msgid "  -V, --version  output version information, then exit\n"
-#~ msgstr "  -V, --version  visa versionsinformation, avsluta sedan\n"
-
-#~ msgid "  -?, --help     show this help, then exit\n"
-#~ msgstr "  -?, --help     visa denna hjälp, avsluta sedan\n"
-
-#~ msgid "Prior checkpoint location:            %X/%X\n"
-#~ msgstr "Närmast föregående checkpoint:              %X/%X\n"
-
-#~ msgid "floating-point numbers"
-#~ msgstr "flyttal"
-
-#~ msgid "  -?, --help            show this help, then exit\n"
-#~ msgstr "  -?, --help            visa denna hjälp, avsluta sedan\n"
-
-#~ msgid "  -V, --version         output version information, then exit\n"
-#~ msgstr "  -V, --version         visa versionsinformation, avsluta sedan\n"

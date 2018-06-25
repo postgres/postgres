@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-18 17:15+0000\n"
-"PO-Revision-Date: 2018-05-18 22:39+0200\n"
+"POT-Creation-Date: 2018-05-23 18:47+0000\n"
+"PO-Revision-Date: 2018-05-23 22:43+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: SWEDISH <sv@li.org>\n"
 "Language: sv\n"
@@ -278,29 +278,29 @@ msgstr "  -P, --progress         visa förloppsinformation\n"
 msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
 msgstr "  -S, --slot=SLOTNAMN    replikerings-slot att använda\n"
 
-#: pg_basebackup.c:366
-#, c-format
-msgid "      --no-slot          prevent creation of temporary replication slot\n"
-msgstr "      --no-slot          förhindra skapande av temporär replikerings-slot\n"
-
-#: pg_basebackup.c:367
-#, c-format
-msgid ""
-"  -k, --no-verify-checksums\n"
-"                         do not verify checksums\n"
-msgstr ""
-"  -k, --no-verify-checksums\n"
-"                         verifiera inte checksummor\n"
-
-#: pg_basebackup.c:369 pg_receivewal.c:91 pg_recvlogical.c:99
+#: pg_basebackup.c:366 pg_receivewal.c:91 pg_recvlogical.c:99
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose          mata ut utförliga meddelanden\n"
 
-#: pg_basebackup.c:370 pg_receivewal.c:92 pg_recvlogical.c:100
+#: pg_basebackup.c:367 pg_receivewal.c:92 pg_recvlogical.c:100
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          visa versionsinformation, avsluta sedan\n"
+
+#: pg_basebackup.c:368
+#, c-format
+msgid "      --no-slot          prevent creation of temporary replication slot\n"
+msgstr "      --no-slot          förhindra skapande av temporär replikerings-slot\n"
+
+#: pg_basebackup.c:369
+#, c-format
+msgid ""
+"      --no-verify-checksums\n"
+"                         do not verify checksums\n"
+msgstr ""
+"  --no-verify-checksums\n"
+"                         verifiera inte checksummor\n"
 
 #: pg_basebackup.c:371 pg_receivewal.c:94 pg_recvlogical.c:101
 #, c-format
@@ -1391,8 +1391,8 @@ msgstr "unlink stöds inte med komprimering"
 msgid "could not close compression stream"
 msgstr "kunde inte stänga komprimeringsström"
 
-#~ msgid "%s: could not send replication command \"%s\": %s\n"
-#~ msgstr "%s: kunde inte skicka replikeringskommando \"%s\": %s\n"
-
 #~ msgid "%s: --create-slot needs a slot to be specified using --slot\n"
 #~ msgstr "%s: --create-slot kräver att en slot angivits med flaggan --slot\n"
+
+#~ msgid "%s: could not send replication command \"%s\": %s\n"
+#~ msgstr "%s: kunde inte skicka replikeringskommando \"%s\": %s\n"
