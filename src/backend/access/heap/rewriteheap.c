@@ -1163,9 +1163,14 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 
 	/* write out tail end of mapping file (again) */
 	if (write(fd, data, len) != len)
+	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", path)));
+	}
 
 	/*
 	 * Now fsync all previously written data. We could improve things and only

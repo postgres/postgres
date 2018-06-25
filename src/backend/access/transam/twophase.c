@@ -1171,12 +1171,17 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 	 */
 	if (fstat(fd, &stat))
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
 		if (give_warnings)
+		{
+			errno = save_errno;
 			ereport(WARNING,
 					(errcode_for_file_access(),
 					 errmsg("could not stat two-phase state file \"%s\": %m",
 							path)));
+		}
 		return NULL;
 	}
 
@@ -1203,12 +1208,17 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 
 	if (read(fd, buf, stat.st_size) != stat.st_size)
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
 		if (give_warnings)
+		{
+			errno = save_errno;
 			ereport(WARNING,
 					(errcode_for_file_access(),
 					 errmsg("could not read two-phase state file \"%s\": %m",
 							path)));
+		}
 		pfree(buf);
 		return NULL;
 	}
@@ -1550,14 +1560,24 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	/* Write content and CRC */
 	if (write(fd, content, len) != len)
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+
+		/* if write didn't set errno, assume problem is no disk space */
+		errno = save_errno ? save_errno : ENOSPC;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write two-phase state file: %m")));
 	}
 	if (write(fd, &statefile_crc, sizeof(pg_crc32c)) != sizeof(pg_crc32c))
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+
+		/* if write didn't set errno, assume problem is no disk space */
+		errno = save_errno ? save_errno : ENOSPC;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write two-phase state file: %m")));
@@ -1569,7 +1589,10 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	 */
 	if (pg_fsync(fd) != 0)
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync two-phase state file: %m")));
