@@ -1606,7 +1606,12 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	pgstat_report_wait_start(WAIT_EVENT_SNAPBUILD_WRITE);
 	if ((write(fd, ondisk, needed_length)) != needed_length)
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+
+		/* if write didn't set errno, assume problem is no disk space */
+		errno = save_errno ? save_errno : ENOSPC;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", tmppath)));
@@ -1624,7 +1629,10 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	pgstat_report_wait_start(WAIT_EVENT_SNAPBUILD_SYNC);
 	if (pg_fsync(fd) != 0)
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
@@ -1709,7 +1717,10 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	pgstat_report_wait_end();
 	if (readBytes != SnapBuildOnDiskConstantSize)
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\", read %d of %d: %m",
@@ -1737,7 +1748,10 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	pgstat_report_wait_end();
 	if (readBytes != sizeof(SnapBuild))
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\", read %d of %d: %m",
@@ -1754,7 +1768,10 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	pgstat_report_wait_end();
 	if (readBytes != sz)
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\", read %d of %d: %m",
@@ -1770,7 +1787,10 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	pgstat_report_wait_end();
 	if (readBytes != sz)
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\", read %d of %d: %m",

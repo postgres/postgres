@@ -463,6 +463,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			fp = AllocateFile(pathbuf, "rb");
 			if (fp == NULL)
 			{
+				int			save_errno = errno;
+
 				/*
 				 * Most likely reason for this is that the file was already
 				 * removed by a checkpoint, so check for that to get a better
@@ -470,6 +472,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				 */
 				CheckXLogRemoved(segno, tli);
 
+				errno = save_errno;
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not open file \"%s\": %m", pathbuf)));
