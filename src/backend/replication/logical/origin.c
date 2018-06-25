@@ -578,7 +578,12 @@ CheckPointReplicationOrigin(void)
 	/* write magic */
 	if ((write(tmpfd, &magic, sizeof(magic))) != sizeof(magic))
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(tmpfd);
+
+		/* if write didn't set errno, assume problem is no disk space */
+		errno = save_errno ? save_errno : ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m",
@@ -617,7 +622,12 @@ CheckPointReplicationOrigin(void)
 		if ((write(tmpfd, &disk_state, sizeof(disk_state))) !=
 			sizeof(disk_state))
 		{
+			int			save_errno = errno;
+
 			CloseTransientFile(tmpfd);
+
+			/* if write didn't set errno, assume problem is no disk space */
+			errno = save_errno ? save_errno : ENOSPC;
 			ereport(PANIC,
 					(errcode_for_file_access(),
 					 errmsg("could not write to file \"%s\": %m",
@@ -633,7 +643,12 @@ CheckPointReplicationOrigin(void)
 	FIN_CRC32C(crc);
 	if ((write(tmpfd, &crc, sizeof(crc))) != sizeof(crc))
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(tmpfd);
+
+		/* if write didn't set errno, assume problem is no disk space */
+		errno = save_errno ? save_errno : ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m",

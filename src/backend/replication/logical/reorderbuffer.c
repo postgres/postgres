@@ -2304,7 +2304,9 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-		errno = save_errno;
+
+		/* if write didn't set errno, assume problem is no disk space */
+		errno = save_errno ? save_errno : ENOSPC;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to data file for XID %u: %m",

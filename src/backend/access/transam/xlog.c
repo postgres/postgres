@@ -3268,7 +3268,10 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	pgstat_report_wait_start(WAIT_EVENT_WAL_INIT_SYNC);
 	if (pg_fsync(fd) != 0)
 	{
+		int			save_errno = errno;
+
 		close(fd);
+		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
@@ -11675,8 +11678,10 @@ retry:
 	if (lseek(readFile, (off_t) readOff, SEEK_SET) < 0)
 	{
 		char		fname[MAXFNAMELEN];
+		int			save_errno = errno;
 
 		XLogFileName(fname, curFileTLI, readSegNo, wal_segment_size);
+		errno = save_errno;
 		ereport(emode_for_corrupt_record(emode, targetPagePtr + reqLen),
 				(errcode_for_file_access(),
 				 errmsg("could not seek in log segment %s to offset %u: %m",
@@ -11688,9 +11693,11 @@ retry:
 	if (read(readFile, readBuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 	{
 		char		fname[MAXFNAMELEN];
+		int			save_errno = errno;
 
 		pgstat_report_wait_end();
 		XLogFileName(fname, curFileTLI, readSegNo, wal_segment_size);
+		errno = save_errno;
 		ereport(emode_for_corrupt_record(emode, targetPagePtr + reqLen),
 				(errcode_for_file_access(),
 				 errmsg("could not read from log segment %s, offset %u: %m",
