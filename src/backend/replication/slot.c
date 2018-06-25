@@ -1033,7 +1033,9 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-		errno = save_errno;
+
+		/* if write didn't set errno, assume problem is no disk space */
+		errno = save_errno ? save_errno : ENOSPC;
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m",
@@ -1136,7 +1138,10 @@ RestoreSlotFromDisk(const char *name)
 	 */
 	if (pg_fsync(fd) != 0)
 	{
+		int			save_errno = errno;
+
 		CloseTransientFile(fd);
+		errno = save_errno;
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m",
