@@ -322,9 +322,6 @@ ReorderBufferGetTXN(ReorderBuffer *rb)
 
 /*
  * Free a ReorderBufferTXN.
- *
- * Deallocation might be delayed for efficiency purposes, for details check
- * the comments above max_cached_changes's definition.
  */
 static void
 ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
@@ -354,7 +351,7 @@ ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 }
 
 /*
- * Get an unused, possibly preallocated, ReorderBufferChange.
+ * Get an fresh ReorderBufferChange.
  */
 ReorderBufferChange *
 ReorderBufferGetChange(ReorderBuffer *rb)
@@ -370,9 +367,6 @@ ReorderBufferGetChange(ReorderBuffer *rb)
 
 /*
  * Free an ReorderBufferChange.
- *
- * Deallocation might be delayed for efficiency purposes, for details check
- * the comments above max_cached_changes's definition.
  */
 void
 ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change)
@@ -423,8 +417,8 @@ ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change)
 }
 
 /*
- * Get an unused, possibly preallocated, ReorderBufferTupleBuf fitting at
- * least a tuple of size tuple_len (excluding header overhead).
+ * Get a fresh ReorderBufferTupleBuf fitting at least a tuple of size
+ * tuple_len (excluding header overhead).
  */
 ReorderBufferTupleBuf *
 ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
@@ -446,9 +440,6 @@ ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
 
 /*
  * Free an ReorderBufferTupleBuf.
- *
- * Deallocation might be delayed for efficiency purposes, for details check
- * the comments above max_cached_changes's definition.
  */
 void
 ReorderBufferReturnTupleBuf(ReorderBuffer *rb, ReorderBufferTupleBuf *tuple)
