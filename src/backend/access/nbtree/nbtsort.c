@@ -14,15 +14,6 @@
  * its parent level.  When we have only one page on a level, it must be
  * the root -- it can be attached to the btree metapage and we are done.
  *
- * This code is moderately slow (~10% slower) compared to the regular
- * btree (insertion) build code on sorted or well-clustered data.  On
- * random data, however, the insertion build code is unusable -- the
- * difference on a 60MB heap is a factor of 15 because the random
- * probes into the btree thrash the buffer pool.  (NOTE: the above
- * "10%" estimate is probably obsolete, since it refers to an old and
- * not very good external sort implementation that used to exist in
- * this module.  tuplesort.c is almost certainly faster.)
- *
  * It is not wise to pack the pages entirely full, since then *any*
  * insertion would cause a split (and not only of the leaf page; the need
  * for a split would cascade right up the tree).  The steady-state load
