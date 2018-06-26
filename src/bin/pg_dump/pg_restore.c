@@ -483,7 +483,7 @@ usage(const char *progname)
 	printf(_("  --disable-triggers           disable triggers during data-only restore\n"));
 	printf(_("  --enable-row-security        enable row security\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
-	printf(_("  --no-comments                do not dump comments\n"));
+	printf(_("  --no-comments                do not restore comments\n"));
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 			 "                               created\n"));
 	printf(_("  --no-publications            do not restore publications\n"));

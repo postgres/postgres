@@ -579,7 +579,8 @@
       <term><option>--no-comments</option></term>
       <listitem>
        <para>
-        Do not dump comments.
+        Do not output commands to restore comments, even if the archive
+        contains them.
        </para>
       </listitem>
      </varlistentry>
