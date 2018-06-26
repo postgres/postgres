@@ -125,6 +125,12 @@ query_planner(PlannerInfo *root, List *tlist,
 	setup_simple_rel_arrays(root);
 
 	/*
+	 * Populate append_rel_array with each AppendRelInfo to allow direct
+	 * lookups by child relid.
+	 */
+	setup_append_rel_array(root);
+
+	/*
 	 * Construct RelOptInfo nodes for all base relations in query, and
 	 * indirectly for all appendrel member relations ("other rels").  This
 	 * will give us a RelOptInfo for every "simple" (non-join) rel involved in

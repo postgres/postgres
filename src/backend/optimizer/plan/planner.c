@@ -1163,6 +1163,7 @@ inheritance_planner(PlannerInfo *root)
 	List	   *final_rtable = NIL;
 	int			save_rel_array_size = 0;
 	RelOptInfo **save_rel_array = NULL;
+	AppendRelInfo **save_append_rel_array = NULL;
 	List	   *subpaths = NIL;
 	List	   *subroots = NIL;
 	List	   *resultRelations = NIL;
@@ -1529,6 +1530,7 @@ inheritance_planner(PlannerInfo *root)
 		}
 		save_rel_array_size = subroot->simple_rel_array_size;
 		save_rel_array = subroot->simple_rel_array;
+		save_append_rel_array = subroot->append_rel_array;
 
 		/* Make sure any initplans from this rel get into the outer list */
 		root->init_plans = subroot->init_plans;
@@ -1579,6 +1581,8 @@ inheritance_planner(PlannerInfo *root)
 	parse->rtable = final_rtable;
 	root->simple_rel_array_size = save_rel_array_size;
 	root->simple_rel_array = save_rel_array;
+	root->append_rel_array = save_append_rel_array;
+
 	/* Must reconstruct master's simple_rte_array, too */
 	root->simple_rte_array = (RangeTblEntry **)
 		palloc0((list_length(final_rtable) + 1) * sizeof(RangeTblEntry *));

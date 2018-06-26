@@ -167,6 +167,12 @@ plan_set_operations(PlannerInfo *root)
 	setup_simple_rel_arrays(root);
 
 	/*
+	 * Populate append_rel_array with each AppendRelInfo to allow direct
+	 * lookups by child relid.
+	 */
+	setup_append_rel_array(root);
+
+	/*
 	 * Find the leftmost component Query.  We need to use its column names for
 	 * all generated tlists (else SELECT INTO won't work right).
 	 */
@@ -2617,29 +2623,22 @@ build_child_join_sjinfo(PlannerInfo *root, SpecialJoinInfo *parent_sjinfo,
 AppendRelInfo **
 find_appinfos_by_relids(PlannerInfo *root, Relids relids, int *nappinfos)
 {
-	ListCell   *lc;
 	AppendRelInfo **appinfos;
 	int			cnt = 0;
+	int			i;
 
 	*nappinfos = bms_num_members(relids);
 	appinfos = (AppendRelInfo **) palloc(sizeof(AppendRelInfo *) * *nappinfos);
 
-	foreach(lc, root->append_rel_list)
+	i = -1;
+	while ((i = bms_next_member(relids, i)) >= 0)
 	{
-		AppendRelInfo *appinfo = lfirst(lc);
+		AppendRelInfo *appinfo = root->append_rel_array[i];
 
-		if (bms_is_member(appinfo->child_relid, relids))
-		{
-			appinfos[cnt] = appinfo;
-			cnt++;
+		if (!appinfo)
+			elog(ERROR, "child rel %d not found in append_rel_array", i);
 
-			/* Stop when we have gathered all the AppendRelInfos. */
-			if (cnt == *nappinfos)
-				return appinfos;
-		}
+		appinfos[cnt++] = appinfo;
 	}
-
-	/* Should have found the entries ... */
-	elog(ERROR, "did not find all requested child rels in append_rel_list");
-	return NULL;				/* not reached */
+	return appinfos;
 }

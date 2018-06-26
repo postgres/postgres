@@ -89,6 +89,43 @@ setup_simple_rel_arrays(PlannerInfo *root)
 }
 
 /*
+ * setup_append_rel_array
+ *		Populate the append_rel_array to allow direct lookups of
+ *		AppendRelInfos by child relid.
+ *
+ * The array remains unallocated if there are no AppendRelInfos.
+ */
+void
+setup_append_rel_array(PlannerInfo *root)
+{
+	ListCell   *lc;
+	int			size = list_length(root->parse->rtable) + 1;
+
+	if (root->append_rel_list == NIL)
+	{
+		root->append_rel_array = NULL;
+		return;
+	}
+
+	root->append_rel_array = (AppendRelInfo **)
+		palloc0(size * sizeof(AppendRelInfo *));
+
+	foreach(lc, root->append_rel_list)
+	{
+		AppendRelInfo *appinfo = lfirst_node(AppendRelInfo, lc);
+		int			child_relid = appinfo->child_relid;
+
+		/* Sanity check */
+		Assert(child_relid < size);
+
+		if (root->append_rel_array[child_relid])
+			elog(ERROR, "child relation already exists");
+
+		root->append_rel_array[child_relid] = appinfo;
+	}
+}
+
+/*
  * build_simple_rel
  *	  Construct a new RelOptInfo for a base relation or 'other' relation.
  */
@@ -1185,36 +1222,6 @@ fetch_upper_rel(PlannerInfo *root, UpperRelationKind kind, Relids relids)
 
 
 /*
- * find_childrel_appendrelinfo
- *		Get the AppendRelInfo associated with an appendrel child rel.
- *
- * This search could be eliminated by storing a link in child RelOptInfos,
- * but for now it doesn't seem performance-critical.  (Also, it might be
- * difficult to maintain such a link during mutation of the append_rel_list.)
- */
-AppendRelInfo *
-find_childrel_appendrelinfo(PlannerInfo *root, RelOptInfo *rel)
-{
-	Index		relid = rel->relid;
-	ListCell   *lc;
-
-	/* Should only be called on child rels */
-	Assert(rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
-
-	foreach(lc, root->append_rel_list)
-	{
-		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
-
-		if (appinfo->child_relid == relid)
-			return appinfo;
-	}
-	/* should have found the entry ... */
-	elog(ERROR, "child rel %d not found in append_rel_list", relid);
-	return NULL;				/* not reached */
-}
-
-
-/*
  * find_childrel_parents
  *		Compute the set of parent relids of an appendrel child rel.
  *
@@ -1228,10 +1235,11 @@ find_childrel_parents(PlannerInfo *root, RelOptInfo *rel)
 	Relids		result = NULL;
 
 	Assert(rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+	Assert(rel->relid > 0 && rel->relid < root->simple_rel_array_size);
 
 	do
 	{
-		AppendRelInfo *appinfo = find_childrel_appendrelinfo(root, rel);
+		AppendRelInfo *appinfo = root->append_rel_array[rel->relid];
 		Index		prelid = appinfo->parent_relid;
 
 		result = bms_add_member(result, prelid);
