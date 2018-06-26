@@ -22,6 +22,9 @@ CREATE TEXT SEARCH PARSER addr_ts_prs
 CREATE TABLE addr_nsp.gentable (
 	a serial primary key CONSTRAINT a_chk CHECK (a > 0),
 	b text DEFAULT 'hello');
+CREATE TABLE addr_nsp.parttable (
+	a int PRIMARY KEY
+) PARTITION BY RANGE (a);
 CREATE VIEW addr_nsp.genview AS SELECT * from addr_nsp.gentable;
 CREATE MATERIALIZED VIEW addr_nsp.genmatview AS SELECT * FROM addr_nsp.gentable;
 CREATE TYPE addr_nsp.gencomptype AS (a int);
@@ -138,7 +141,9 @@ SELECT pg_get_object_address('subscription', '{one,two}', '{}');
 -- test successful cases
 WITH objects (type, name, args) AS (VALUES
 				('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),
+				('table', '{addr_nsp, parttable}'::text[], '{}'::text[]),
 				('index', '{addr_nsp, gentable_pkey}', '{}'),
+				('index', '{addr_nsp, parttable_pkey}', '{}'),
 				('sequence', '{addr_nsp, gentable_a_seq}', '{}'),
 				-- toast table
 				('view', '{addr_nsp, genview}', '{}'),

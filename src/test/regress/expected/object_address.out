@@ -19,6 +19,9 @@ CREATE TEXT SEARCH PARSER addr_ts_prs
 CREATE TABLE addr_nsp.gentable (
 	a serial primary key CONSTRAINT a_chk CHECK (a > 0),
 	b text DEFAULT 'hello');
+CREATE TABLE addr_nsp.parttable (
+	a int PRIMARY KEY
+) PARTITION BY RANGE (a);
 CREATE VIEW addr_nsp.genview AS SELECT * from addr_nsp.gentable;
 CREATE MATERIALIZED VIEW addr_nsp.genmatview AS SELECT * FROM addr_nsp.gentable;
 CREATE TYPE addr_nsp.gencomptype AS (a int);
@@ -368,7 +371,9 @@ ERROR:  name list length must be exactly 1
 -- test successful cases
 WITH objects (type, name, args) AS (VALUES
 				('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),
+				('table', '{addr_nsp, parttable}'::text[], '{}'::text[]),
 				('index', '{addr_nsp, gentable_pkey}', '{}'),
+				('index', '{addr_nsp, parttable_pkey}', '{}'),
 				('sequence', '{addr_nsp, gentable_a_seq}', '{}'),
 				-- toast table
 				('view', '{addr_nsp, genview}', '{}'),
@@ -444,6 +449,8 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
  table                     | addr_nsp   | gentable          | addr_nsp.gentable                                                    | t
  table column              | addr_nsp   | gentable          | addr_nsp.gentable.b                                                  | t
  index                     | addr_nsp   | gentable_pkey     | addr_nsp.gentable_pkey                                               | t
+ table                     | addr_nsp   | parttable         | addr_nsp.parttable                                                   | t
+ index                     | addr_nsp   | parttable_pkey    | addr_nsp.parttable_pkey                                              | t
  view                      | addr_nsp   | genview           | addr_nsp.genview                                                     | t
  materialized view         | addr_nsp   | genmatview        | addr_nsp.genmatview                                                  | t
  foreign table             | addr_nsp   | genftable         | addr_nsp.genftable                                                   | t
@@ -478,7 +485,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
  subscription              |            | addr_sub          | addr_sub                                                             | t
  publication               |            | addr_pub          | addr_pub                                                             | t
  publication relation      |            |                   | addr_nsp.gentable in publication addr_pub                            | t
-(47 rows)
+(49 rows)
 
 ---
 --- Cleanup resources
@@ -489,6 +496,6 @@ NOTICE:  drop cascades to 4 other objects
 DROP PUBLICATION addr_pub;
 DROP SUBSCRIPTION addr_sub;
 DROP SCHEMA addr_nsp CASCADE;
-NOTICE:  drop cascades to 13 other objects
+NOTICE:  drop cascades to 14 other objects
 DROP OWNED BY regress_addr_user;
 DROP USER regress_addr_user;

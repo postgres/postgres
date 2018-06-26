@@ -5248,6 +5248,7 @@ get_relkind_objtype(char relkind)
 		case RELKIND_PARTITIONED_TABLE:
 			return OBJECT_TABLE;
 		case RELKIND_INDEX:
+		case RELKIND_PARTITIONED_INDEX:
 			return OBJECT_INDEX;
 		case RELKIND_SEQUENCE:
 			return OBJECT_SEQUENCE;
