@@ -1524,7 +1524,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     processing would request a file from the WAL archive, reporting failure
     if the file was unavailable.  For standby processing it is normal for
     the next WAL file to be unavailable, so the standby must wait for
-    it to appear. For files ending in <literal>.backup</literal> or
+    it to appear. For files ending in 
     <literal>.history</literal> there is no need to wait, and a non-zero return
     code must be returned. A waiting <varname>restore_command</varname> can be
     written as a custom script that loops after polling for the existence of

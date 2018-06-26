@@ -1288,7 +1288,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
    <para>
     Not all of the requested files will be WAL segment
     files; you should also expect requests for files with a suffix of
-    <literal>.backup</literal> or <literal>.history</literal>. Also be aware that
+    <literal>.history</literal>. Also be aware that
     the base name of the <literal>%p</literal> path will be different from
     <literal>%f</literal>; do not expect them to be interchangeable.
    </para>
