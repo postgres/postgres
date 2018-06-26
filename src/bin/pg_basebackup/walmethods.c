@@ -865,7 +865,8 @@ tar_close(Walfile f, WalCloseMethod method)
 		return -1;
 
 	/* Always fsync on close, so the padding gets fsynced */
-	tar_sync(f);
+	if (tar_sync(f) < 0)
+		return -1;
 
 	/* Clean up and done */
 	pg_free(tf->pathname);
@@ -896,7 +897,7 @@ tar_finish(void)
 			return false;
 	}
 
-	/* A tarfile always ends with two empty  blocks */
+	/* A tarfile always ends with two empty blocks */
 	MemSet(zerobuf, 0, sizeof(zerobuf));
 	if (!tar_data->compression)
 	{
@@ -957,7 +958,10 @@ tar_finish(void)
 
 	/* sync the empty blocks as well, since they're after the last file */
 	if (tar_data->sync)
-		fsync(tar_data->fd);
+	{
+		if (fsync(tar_data->fd) != 0)
+			return false;
+	}
 
 	if (close(tar_data->fd) != 0)
 		return false;
