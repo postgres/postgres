@@ -816,6 +816,7 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 	{
 		StdRdOptions *relopts;
 		float8		cleanup_scale_factor;
+		float8		prev_num_heap_tuples;
 
 		/*
 		 * If table receives enough insertions and no cleanup was performed,
@@ -829,11 +830,12 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 								relopts->vacuum_cleanup_index_scale_factor >= 0)
 			? relopts->vacuum_cleanup_index_scale_factor
 			: vacuum_cleanup_index_scale_factor;
+		prev_num_heap_tuples = metad->btm_last_cleanup_num_heap_tuples;
 
 		if (cleanup_scale_factor <= 0 ||
-			metad->btm_last_cleanup_num_heap_tuples < 0 ||
-			info->num_heap_tuples > (1.0 + cleanup_scale_factor) *
-			metad->btm_last_cleanup_num_heap_tuples)
+			prev_num_heap_tuples < 0 ||
+			(info->num_heap_tuples - prev_num_heap_tuples) /
+			prev_num_heap_tuples >= cleanup_scale_factor)
 			result = true;
 	}
 
