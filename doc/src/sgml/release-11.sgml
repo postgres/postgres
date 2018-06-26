@@ -101,13 +101,6 @@
 
     <listitem>
      <para>
-      Channel binding for SCRAM authentication, to prevent potential
-      man-in-the-middle attacks on database connections
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       Many other useful performance improvements, including making
       <command>ALTER TABLE .. ADD COLUMN</command> with a
       non-null column default faster
@@ -1227,29 +1220,6 @@ same commits as above
      <title><acronym>Authentication</acronym></title>
 
      <itemizedlist>
-
-      <listitem>
-<!--
-2017-11-18 [9288d62bb] Support channel binding 'tls-unique' in SCRAM
-2017-12-19 [4bbf110d2] Add libpq connection parameter "scram_channel_binding"
-2018-01-04 [d3fb72ea6] Implement channel binding tls-server-end-point for SCRAM
--->
-
-       <para>
-        Add libpq option to support channel binding when using <link
-        linkend="auth-password"><acronym>SCRAM</acronym></link>
-        authentication (Michael Paquier)
-       </para>
-
-       <para>
-        While <acronym>SCRAM</acronym> always prevents the
-        replay of transmitted hashed passwords in a later
-        session, <acronym>SCRAM</acronym> with channel binding
-        also prevents man-in-the-middle attacks.  The options are <link
-        linkend="libpq-scram-channel-binding"><option>scram_channel_binding=tls-unique</option></link>
-        and <option>scram_channel_binding=tls-server-end-point</option>.
-       </para>
-      </listitem>
 
       <listitem>
 <!--
@@ -2641,6 +2611,35 @@ same commits as above
        <para>
         The file names still use an <filename>sgml</filename> extension
         for compatibility with back branches.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2017-11-18 [9288d62bb] Support channel binding 'tls-unique' in SCRAM
+2017-12-19 [4bbf110d2] Add libpq connection parameter "scram_channel_binding"
+2018-01-04 [d3fb72ea6] Implement channel binding tls-server-end-point for SCRAM
+-->
+
+       <para>
+        Add ability to use channel binding when using <link
+        linkend="auth-password"><acronym>SCRAM</acronym></link>
+        authentication (Michael Paquier)
+       </para>
+
+       <para>
+        While <acronym>SCRAM</acronym> always prevents the
+        replay of transmitted hashed passwords in a later session,
+        <acronym>SCRAM</acronym> with channel binding can also prevent
+        man-in-the-middle attacks.  However, since there is no way
+        to <emphasis>force</emphasis> channel binding in libpq,
+        the feature currently does not prevent man-in-the-middle
+        attacks when using libpq and interfaces built using it.  It is
+        expected that future versions of libpq and interfaces not built
+        using libpq, e.g. JDBC, will allow this capability.  The libpq
+        options to control the optional channel binding type are <link
+        linkend="libpq-scram-channel-binding"><option>scram_channel_binding=tls-unique</option></link>
+        and <option>scram_channel_binding=tls-server-end-point</option>.
        </para>
       </listitem>
 
