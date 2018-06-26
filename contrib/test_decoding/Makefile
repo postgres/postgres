@@ -50,7 +50,8 @@ regresscheck-install-force: | submake-regress submake-test_decoding temp-install
 	$(pg_regress_installcheck) \
 	    $(REGRESSCHECKS)
 
-ISOLATIONCHECKS=mxact delayed_startup ondisk_startup concurrent_ddl_dml
+ISOLATIONCHECKS=mxact delayed_startup ondisk_startup concurrent_ddl_dml \
+	oldest_xmin snapshot_transfer
 
 isolationcheck: | submake-isolation submake-test_decoding temp-install
 	$(pg_isolation_regress_check) \
