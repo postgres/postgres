@@ -1341,7 +1341,7 @@ primary_slot_name = 'node_a_slot'
     processing would request a file from the WAL archive, reporting failure
     if the file was unavailable.  For standby processing it is normal for
     the next WAL file to be unavailable, so the standby must wait for
-    it to appear. For files ending in <literal>.backup</> or
+    it to appear. For files ending in 
     <literal>.history</> there is no need to wait, and a non-zero return
     code must be returned. A waiting <varname>restore_command</> can be
     written as a custom script that loops after polling for the existence of
