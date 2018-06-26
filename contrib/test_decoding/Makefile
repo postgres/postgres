@@ -54,7 +54,8 @@ regresscheck-install-force: | submake-regress submake-test_decoding
 	    --extra-install=contrib/test_decoding \
 	    $(REGRESSCHECKS)
 
-ISOLATIONCHECKS=mxact delayed_startup ondisk_startup concurrent_ddl_dml
+ISOLATIONCHECKS=mxact delayed_startup ondisk_startup concurrent_ddl_dml \
+	oldest_xmin snapshot_transfer
 
 isolationcheck: all | submake-isolation submake-test_decoding
 	$(MKDIR_P) isolation_output
