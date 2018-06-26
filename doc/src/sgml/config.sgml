@@ -8401,6 +8401,22 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-ssl-library" xreflabel="ssl_library">
+      <term><varname>ssl_library</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>ssl_library</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports the name of the SSL library that this PostgreSQL server was
+        built with (even if SSL is not currently configured or in use on this
+        instance), for example <literal>OpenSSL</literal>, or an empty string
+        if none.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-wal-block-size" xreflabel="wal_block_size">
       <term><varname>wal_block_size</varname> (<type>integer</type>)
       <indexterm>

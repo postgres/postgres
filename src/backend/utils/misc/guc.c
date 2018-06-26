@@ -3724,6 +3724,21 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"ssl_library", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Name of the SSL library."),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&ssl_library,
+#ifdef USE_SSL
+		"OpenSSL",
+#else
+		"",
+#endif
+		NULL, NULL, NULL
+	},
+
+	{
 		{"ssl_cert_file", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Location of the SSL server certificate file."),
 			NULL

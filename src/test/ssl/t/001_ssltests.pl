@@ -8,7 +8,7 @@ use File::Copy;
 
 if ($ENV{with_openssl} eq 'yes')
 {
-	plan tests => 64;
+	plan tests => 65;
 }
 else
 {
@@ -49,6 +49,11 @@ $node->init;
 $ENV{PGHOST} = $node->host;
 $ENV{PGPORT} = $node->port;
 $node->start;
+
+# Run this before we lock down access below.
+my $result = $node->safe_psql('postgres', "SHOW ssl_library");
+is($result, 'OpenSSL', 'ssl_library parameter');
+
 configure_test_server_for_ssl($node, $SERVERHOSTADDR, 'trust');
 
 note "testing password-protected keys";
