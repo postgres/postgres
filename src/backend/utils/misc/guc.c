@@ -3253,7 +3253,7 @@ static struct config_real ConfigureNamesReal[] =
 			NULL
 		},
 		&vacuum_cleanup_index_scale_factor,
-		0.1, 0.0, DBL_MAX,
+		0.1, 0.0, 1e10,
 		NULL, NULL, NULL
 	},
 

@@ -6989,7 +6989,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
-        The value should be non-negative.
+        The value can range from <literal>0</literal> to
+        <literal>10000000000</literal>.
         When <varname>vacuum_cleanup_index_scale_factor</varname> is set to
         <literal>0</literal>, index scans are never skipped during
         <command>VACUUM</command> cleanup. The default value is <literal>0.1</literal>.
