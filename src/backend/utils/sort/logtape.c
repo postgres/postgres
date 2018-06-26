@@ -471,7 +471,7 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 	 * Compute number of hole blocks so that we can later work backwards, and
 	 * instrument number of physical blocks.  We don't simply use physical
 	 * blocks directly for instrumentation because this would break if we ever
-	 * subsequently wrote to worker tape.
+	 * subsequently wrote to the leader tape.
 	 *
 	 * Working backwards like this keeps our options open.  If shared BufFiles
 	 * ever support being written to post-export, logtape.c can automatically
