@@ -335,10 +335,22 @@ BEGIN
 END;
 $$;
 
--- error case
+-- error cases
 DO LANGUAGE plpgsql $$
 BEGIN
     SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+END;
+$$;
+
+DO LANGUAGE plpgsql $$
+BEGIN
+    SAVEPOINT foo;
+END;
+$$;
+
+DO LANGUAGE plpgsql $$
+BEGIN
+    EXECUTE 'COMMIT';
 END;
 $$;
 

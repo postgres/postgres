@@ -3965,27 +3965,8 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 							  (void *) expr,
 							  cursorOptions);
 	if (plan == NULL)
-	{
-		/* Some SPI errors deserve specific error messages */
-		switch (SPI_result)
-		{
-			case SPI_ERROR_COPY:
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot COPY to/from client in PL/pgSQL")));
-				break;
-			case SPI_ERROR_TRANSACTION:
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot begin/end transactions in PL/pgSQL"),
-						 errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
-				break;
-			default:
-				elog(ERROR, "SPI_prepare_params failed for \"%s\": %s",
-					 expr->query, SPI_result_code_string(SPI_result));
-				break;
-		}
-	}
+		elog(ERROR, "SPI_prepare_params failed for \"%s\": %s",
+			 expr->query, SPI_result_code_string(SPI_result));
 	if (keepplan)
 		SPI_keepplan(plan);
 	expr->plan = plan;
@@ -4129,8 +4110,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		case SPI_ERROR_TRANSACTION:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot begin/end transactions in PL/pgSQL"),
-					 errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
+					 errmsg("unsupported transaction command in PL/pgSQL")));
 			break;
 
 		default:
@@ -4317,8 +4297,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 		case SPI_ERROR_TRANSACTION:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot begin/end transactions in PL/pgSQL"),
-					 errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
+					 errmsg("EXECUTE of transaction commands is not implemented")));
 			break;
 
 		default:
