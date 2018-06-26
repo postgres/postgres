@@ -160,10 +160,9 @@ typedef struct ReorderBufferTXN
 	/* did the TX have catalog changes */
 	bool		has_catalog_changes;
 
-	/*
-	 * Do we know this is a subxact?
-	 */
+	/* Do we know this is a subxact?  Xid of top-level txn if so */
 	bool		is_known_as_subxact;
+	TransactionId toplevel_xid;
 
 	/*
 	 * LSN of the first data carrying, WAL record with knowledge about this
@@ -209,10 +208,13 @@ typedef struct ReorderBufferTXN
 	TimestampTz commit_time;
 
 	/*
-	 * Base snapshot or NULL.
+	 * The base snapshot is used to decode all changes until either this
+	 * transaction modifies the catalog, or another catalog-modifying
+	 * transaction commits.
 	 */
 	Snapshot	base_snapshot;
 	XLogRecPtr	base_snapshot_lsn;
+	dlist_node	base_snapshot_node;	/* link in txns_by_base_snapshot_lsn */
 
 	/*
 	 * How many ReorderBufferChange's do we have in this txn.
@@ -279,7 +281,7 @@ typedef struct ReorderBufferTXN
 	 * Position in one of three lists:
 	 * * list of subtransactions if we are *known* to be subxact
 	 * * list of toplevel xacts (can be an as-yet unknown subxact)
-	 * * list of preallocated ReorderBufferTXNs
+	 * * list of preallocated ReorderBufferTXNs (if unused)
 	 * ---
 	 */
 	dlist_node	node;
@@ -336,6 +338,15 @@ struct ReorderBuffer
 	 * record bearing that xid.
 	 */
 	dlist_head	toplevel_by_lsn;
+
+	/*
+	 * Transactions and subtransactions that have a base snapshot, ordered by
+	 * LSN of the record which caused us to first obtain the base snapshot.
+	 * This is not the same as toplevel_by_lsn, because we only set the base
+	 * snapshot on the first logical-decoding-relevant record (eg. heap
+	 * writes), whereas the initial LSN could be set by other operations.
+	 */
+	dlist_head	txns_by_base_snapshot_lsn;
 
 	/*
 	 * one-entry sized cache for by_txn. Very frequently the same txn gets
@@ -422,6 +433,7 @@ bool		ReorderBufferXidHasCatalogChanges(ReorderBuffer *, TransactionId xid);
 bool		ReorderBufferXidHasBaseSnapshot(ReorderBuffer *, TransactionId xid);
 
 ReorderBufferTXN *ReorderBufferGetOldestTXN(ReorderBuffer *);
+TransactionId ReorderBufferGetOldestXmin(ReorderBuffer *rb);
 
 void		ReorderBufferSetRestartPoint(ReorderBuffer *, XLogRecPtr ptr);
 
