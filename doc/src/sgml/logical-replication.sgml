@@ -373,6 +373,22 @@
 
    <listitem>
     <para>
+     Replication of <command>TRUNCATE</command> commands is supported, but
+     some care must be taken when truncating groups of tables connected by
+     foreign keys.  When replicating a truncate action, the subscriber will
+     truncate the same group of tables that was truncated on the publisher,
+     either explictly specified or implicitly collected via
+     <literal>CASCADE</literal>, minus tables that are not part of the
+     subscription.  This will work correctly if all affected tables are part
+     of the same subscription.  But if some tables to be truncated on the
+     subscriber have foreign-key links to tables that are not part of the same
+     (or any) subscription, then the application of the truncate action on the
+     subscriber will fail.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
      Large objects (see <xref linkend="largeobjects"/>) are not replicated.
      There is no workaround for that, other than storing data in normal
      tables.
