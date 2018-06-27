@@ -245,7 +245,7 @@ sub append_to_file
 	  or die "could not write \"$filename\": $!";
 	print $fh $str;
 	close $fh;
-	return;	
+	return;
 }
 
 # Check that all file/dir modes in a directory match the expected values,
@@ -521,7 +521,7 @@ sub command_checks_all
 	{
 		like($stderr, $re, "$test_name stderr /$re/");
 	}
-	
+
 	return;
 }
 
