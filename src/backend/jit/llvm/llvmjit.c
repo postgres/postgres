@@ -394,7 +394,6 @@ llvm_function_reference(LLVMJitContext *context,
 		LLVMSetGlobalConstant(v_fn, true);
 
 		return LLVMBuildLoad(builder, v_fn, "");
-		return v_fn;
 	}
 
 	/* check if function already has been added */
