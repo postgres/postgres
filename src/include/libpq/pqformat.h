@@ -35,7 +35,7 @@ extern void pq_sendfloat4(StringInfo buf, float4 f);
 extern void pq_sendfloat8(StringInfo buf, float8 f);
 
 /*
- * Append an int8 to a StringInfo buffer, which already has enough space
+ * Append a [u]int8 to a StringInfo buffer, which already has enough space
  * preallocated.
  *
  * The use of pg_restrict allows the compiler to optimize the code based on
@@ -47,55 +47,55 @@ extern void pq_sendfloat8(StringInfo buf, float8 f);
  * overly picky and demanding a * before a restrict.
  */
 static inline void
-pq_writeint8(StringInfoData *pg_restrict buf, int8 i)
+pq_writeint8(StringInfoData *pg_restrict buf, uint8 i)
 {
-	int8		ni = i;
+	uint8		ni = i;
 
-	Assert(buf->len + (int) sizeof(int8) <= buf->maxlen);
-	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int8));
-	buf->len += sizeof(int8);
+	Assert(buf->len + (int) sizeof(uint8) <= buf->maxlen);
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(uint8));
+	buf->len += sizeof(uint8);
 }
 
 /*
- * Append an int16 to a StringInfo buffer, which already has enough space
+ * Append a [u]int16 to a StringInfo buffer, which already has enough space
  * preallocated.
  */
 static inline void
-pq_writeint16(StringInfoData *pg_restrict buf, int16 i)
+pq_writeint16(StringInfoData *pg_restrict buf, uint16 i)
 {
-	int16		ni = pg_hton16(i);
+	uint16		ni = pg_hton16(i);
 
-	Assert(buf->len + (int) sizeof(int16) <= buf->maxlen);
-	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int16));
-	buf->len += sizeof(int16);
+	Assert(buf->len + (int) sizeof(uint16) <= buf->maxlen);
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(uint16));
+	buf->len += sizeof(uint16);
 }
 
 /*
- * Append an int32 to a StringInfo buffer, which already has enough space
+ * Append a [u]int32 to a StringInfo buffer, which already has enough space
  * preallocated.
  */
 static inline void
-pq_writeint32(StringInfoData *pg_restrict buf, int32 i)
+pq_writeint32(StringInfoData *pg_restrict buf, uint32 i)
 {
-	int32		ni = pg_hton32(i);
+	uint32		ni = pg_hton32(i);
 
-	Assert(buf->len + (int) sizeof(int32) <= buf->maxlen);
-	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int32));
-	buf->len += sizeof(int32);
+	Assert(buf->len + (int) sizeof(uint32) <= buf->maxlen);
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(uint32));
+	buf->len += sizeof(uint32);
 }
 
 /*
- * Append an int64 to a StringInfo buffer, which already has enough space
+ * Append a [u]int64 to a StringInfo buffer, which already has enough space
  * preallocated.
  */
 static inline void
-pq_writeint64(StringInfoData *pg_restrict buf, int64 i)
+pq_writeint64(StringInfoData *pg_restrict buf, uint64 i)
 {
-	int64		ni = pg_hton64(i);
+	uint64		ni = pg_hton64(i);
 
-	Assert(buf->len + (int) sizeof(int64) <= buf->maxlen);
-	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int64));
-	buf->len += sizeof(int64);
+	Assert(buf->len + (int) sizeof(uint64) <= buf->maxlen);
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(uint64));
+	buf->len += sizeof(uint64);
 }
 
 /*
@@ -127,41 +127,41 @@ pq_writestring(StringInfoData *pg_restrict buf, const char *pg_restrict str)
 		pfree(p);
 }
 
-/* append a binary int8 to a StringInfo buffer */
+/* append a binary [u]int8 to a StringInfo buffer */
 static inline void
-pq_sendint8(StringInfo buf, int8 i)
+pq_sendint8(StringInfo buf, uint8 i)
 {
-	enlargeStringInfo(buf, sizeof(int8));
+	enlargeStringInfo(buf, sizeof(uint8));
 	pq_writeint8(buf, i);
 }
 
-/* append a binary int16 to a StringInfo buffer */
+/* append a binary [u]int16 to a StringInfo buffer */
 static inline void
-pq_sendint16(StringInfo buf, int16 i)
+pq_sendint16(StringInfo buf, uint16 i)
 {
-	enlargeStringInfo(buf, sizeof(int16));
+	enlargeStringInfo(buf, sizeof(uint16));
 	pq_writeint16(buf, i);
 }
 
-/* append a binary int32 to a StringInfo buffer */
+/* append a binary [u]int32 to a StringInfo buffer */
 static inline void
-pq_sendint32(StringInfo buf, int32 i)
+pq_sendint32(StringInfo buf, uint32 i)
 {
-	enlargeStringInfo(buf, sizeof(int32));
+	enlargeStringInfo(buf, sizeof(uint32));
 	pq_writeint32(buf, i);
 }
 
-/* append a binary int64 to a StringInfo buffer */
+/* append a binary [u]int64 to a StringInfo buffer */
 static inline void
-pq_sendint64(StringInfo buf, int64 i)
+pq_sendint64(StringInfo buf, uint64 i)
 {
-	enlargeStringInfo(buf, sizeof(int64));
+	enlargeStringInfo(buf, sizeof(uint64));
 	pq_writeint64(buf, i);
 }
 
 /* append a binary byte to a StringInfo buffer */
 static inline void
-pq_sendbyte(StringInfo buf, int8 byt)
+pq_sendbyte(StringInfo buf, uint8 byt)
 {
 	pq_sendint8(buf, byt);
 }
@@ -172,18 +172,18 @@ pq_sendbyte(StringInfo buf, int8 byt)
  * This function is deprecated; prefer use of the functions above.
  */
 static inline void
-pq_sendint(StringInfo buf, int i, int b)
+pq_sendint(StringInfo buf, uint32 i, int b)
 {
 	switch (b)
 	{
 		case 1:
-			pq_sendint8(buf, (int8) i);
+			pq_sendint8(buf, (uint8) i);
 			break;
 		case 2:
-			pq_sendint16(buf, (int16) i);
+			pq_sendint16(buf, (uint16) i);
 			break;
 		case 4:
-			pq_sendint32(buf, (int32) i);
+			pq_sendint32(buf, (uint32) i);
 			break;
 		default:
 			elog(ERROR, "unsupported integer size %d", b);
