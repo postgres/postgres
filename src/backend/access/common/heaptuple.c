@@ -100,10 +100,10 @@ getmissingattr(TupleDesc tupleDesc,
 
 		attrmiss = tupleDesc->constr->missing + (attnum - 1);
 
-		if (attrmiss->ammissingPresent)
+		if (attrmiss->am_present)
 		{
 			*isnull = false;
-			return attrmiss->ammissing;
+			return attrmiss->am_value;
 		}
 	}
 
@@ -142,9 +142,8 @@ slot_getmissingattrs(TupleTableSlot *slot, int startAttNum, int lastAttNum)
 			 missattnum < lastAttNum;
 			 missattnum++)
 		{
-			slot->tts_values[missattnum] = attrmiss[missattnum].ammissing;
-			slot->tts_isnull[missattnum] =
-				!attrmiss[missattnum].ammissingPresent;
+			slot->tts_values[missattnum] = attrmiss[missattnum].am_value;
+			slot->tts_isnull[missattnum] = !attrmiss[missattnum].am_present;
 		}
 	}
 }
@@ -822,7 +821,7 @@ expand_tuple(HeapTuple *targetHeapTuple,
 			 firstmissingnum < natts;
 			 firstmissingnum++)
 		{
-			if (attrmiss[firstmissingnum].ammissingPresent)
+			if (attrmiss[firstmissingnum].am_present)
 				break;
 		}
 
@@ -844,18 +843,18 @@ expand_tuple(HeapTuple *targetHeapTuple,
 				 attnum < natts;
 				 attnum++)
 			{
-				if (attrmiss[attnum].ammissingPresent)
+				if (attrmiss[attnum].am_present)
 				{
 					Form_pg_attribute att = TupleDescAttr(tupleDesc, attnum);
 
 					targetDataLen = att_align_datum(targetDataLen,
 													att->attalign,
 													att->attlen,
-													attrmiss[attnum].ammissing);
+													attrmiss[attnum].am_value);
 
 					targetDataLen = att_addlength_pointer(targetDataLen,
 														  att->attlen,
-														  attrmiss[attnum].ammissing);
+														  attrmiss[attnum].am_value);
 				}
 				else
 				{
@@ -981,14 +980,14 @@ expand_tuple(HeapTuple *targetHeapTuple,
 
 		Form_pg_attribute attr = TupleDescAttr(tupleDesc, attnum);
 
-		if (attrmiss && attrmiss[attnum].ammissingPresent)
+		if (attrmiss && attrmiss[attnum].am_present)
 		{
 			fill_val(attr,
 					 nullBits ? &nullBits : NULL,
 					 &bitMask,
 					 &targetData,
 					 infoMask,
-					 attrmiss[attnum].ammissing,
+					 attrmiss[attnum].am_value,
 					 false);
 		}
 		else

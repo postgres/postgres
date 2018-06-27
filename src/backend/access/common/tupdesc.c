@@ -185,13 +185,13 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 			memcpy(cpy->missing, constr->missing, tupdesc->natts * sizeof(AttrMissing));
 			for (i = tupdesc->natts - 1; i >= 0; i--)
 			{
-				if (constr->missing[i].ammissingPresent)
+				if (constr->missing[i].am_present)
 				{
 					Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
-					cpy->missing[i].ammissing = datumCopy(constr->missing[i].ammissing,
-														  attr->attbyval,
-														  attr->attlen);
+					cpy->missing[i].am_value = datumCopy(constr->missing[i].am_value,
+														 attr->attbyval,
+														 attr->attlen);
 				}
 			}
 		}
@@ -337,9 +337,9 @@ FreeTupleDesc(TupleDesc tupdesc)
 
 			for (i = tupdesc->natts - 1; i >= 0; i--)
 			{
-				if (attrmiss[i].ammissingPresent
+				if (attrmiss[i].am_present
 					&& !TupleDescAttr(tupdesc, i)->attbyval)
-					pfree(DatumGetPointer(attrmiss[i].ammissing));
+					pfree(DatumGetPointer(attrmiss[i].am_value));
 			}
 			pfree(attrmiss);
 		}
@@ -512,13 +512,13 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 				AttrMissing *missval1 = constr1->missing + i;
 				AttrMissing *missval2 = constr2->missing + i;
 
-				if (missval1->ammissingPresent != missval2->ammissingPresent)
+				if (missval1->am_present != missval2->am_present)
 					return false;
-				if (missval1->ammissingPresent)
+				if (missval1->am_present)
 				{
 					Form_pg_attribute missatt1 = TupleDescAttr(tupdesc1, i);
 
-					if (!datumIsEqual(missval1->ammissing, missval2->ammissing,
+					if (!datumIsEqual(missval1->am_value, missval2->am_value,
 									  missatt1->attbyval, missatt1->attlen))
 						return false;
 				}

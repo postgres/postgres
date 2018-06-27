@@ -614,18 +614,18 @@ RelationBuildTupleDesc(Relation relation)
 				if (attp->attbyval)
 				{
 					/* for copy by val just copy the datum direct */
-					attrmiss[attnum - 1].ammissing = missval;
+					attrmiss[attnum - 1].am_value = missval;
 				}
 				else
 				{
 					/* otherwise copy in the correct context */
 					oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-					attrmiss[attnum - 1].ammissing = datumCopy(missval,
-															   attp->attbyval,
-															   attp->attlen);
+					attrmiss[attnum - 1].am_value = datumCopy(missval,
+															  attp->attbyval,
+															  attp->attlen);
 					MemoryContextSwitchTo(oldcxt);
 				}
-				attrmiss[attnum - 1].ammissingPresent = true;
+				attrmiss[attnum - 1].am_present = true;
 			}
 		}
 		need--;
