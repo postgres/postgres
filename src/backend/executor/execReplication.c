@@ -403,7 +403,7 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 		if (rel->rd_att->constr)
 			ExecConstraints(resultRelInfo, slot, estate);
 
-		/* Store the slot into tuple that we can inspect. */
+		/* Materialize slot into a tuple that we can scribble upon. */
 		tuple = ExecMaterializeSlot(slot);
 
 		/* OK, store the tuple and create index entries for it */
@@ -468,7 +468,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 		if (rel->rd_att->constr)
 			ExecConstraints(resultRelInfo, slot, estate);
 
-		/* Store the slot into tuple that we can write. */
+		/* Materialize slot into a tuple that we can scribble upon. */
 		tuple = ExecMaterializeSlot(slot);
 
 		/* OK, update the tuple and index entries for it */
