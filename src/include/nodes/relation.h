@@ -204,7 +204,7 @@ typedef struct PlannerInfo
 	RangeTblEntry **simple_rte_array;	/* rangetable as an array */
 
 	/*
-	 * append_rel_list is the same length as the above arrays, and holds
+	 * append_rel_array is the same length as the above arrays, and holds
 	 * pointers to the corresponding AppendRelInfo entry indexed by
 	 * child_relid, or NULL if none.  The array itself is not allocated if
 	 * append_rel_list is empty.
