@@ -2065,7 +2065,7 @@ Branch: REL9_4_STABLE [23a2b818f] 2017-08-05 14:56:40 -0700
 
     <listitem>
      <para>
-      In MSVC builds, handle the case where the <application>openssl</application>
+      In MSVC builds, handle the case where the <application>OpenSSL</application>
       library is not within a <filename>VC</filename> subdirectory (Andrew Dunstan)
      </para>
     </listitem>

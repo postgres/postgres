@@ -293,11 +293,11 @@ $ENV{MSBFLAGS}="/m";
     </varlistentry>
 
     <varlistentry>
-     <term><productname>openssl</productname></term>
+     <term><productname>OpenSSL</productname></term>
      <listitem><para>
       Required for SSL support. Binaries can be downloaded from
       <ulink url="http://www.slproweb.com/products/Win32OpenSSL.html"></ulink>
-      or source from <ulink url="http://www.openssl.org"></ulink>.
+      or source from <ulink url="https://www.openssl.org"></ulink>.
      </para></listitem>
     </varlistentry>
 
@@ -348,7 +348,7 @@ $ENV{MSBFLAGS}="/m";
 
   <para>
    To use a server-side third party library such as <productname>python</productname> or
-   <productname>openssl</productname>, this library <emphasis>must</emphasis> also be
+   <productname>OpenSSL</productname>, this library <emphasis>must</emphasis> also be
    64-bit. There is no support for loading a 32-bit library in a 64-bit
    server. Several of the third party libraries that PostgreSQL supports may
    only be available in 32-bit versions, in which case they cannot be used with

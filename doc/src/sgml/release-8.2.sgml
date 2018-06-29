@@ -1705,7 +1705,7 @@
 
      <para>
       This is reportedly possible with some Windows versions of
-      <application>openssl</application>.
+      <application>OpenSSL</application>.
      </para>
     </listitem>
 

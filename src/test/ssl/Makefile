@@ -32,7 +32,7 @@ SSLFILES := $(CERTIFICATES:%=ssl/%.key) $(CERTIFICATES:%=ssl/%.crt) \
 # This target generates all the key and certificate files.
 sslfiles: $(SSLFILES)
 
-# Openssl requires a directory to put all generated certificates in. We don't
+# OpenSSL requires a directory to put all generated certificates in. We don't
 # use this for anything, but we need a location.
 ssl/new_certs_dir:
 	mkdir ssl/new_certs_dir

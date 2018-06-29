@@ -1813,7 +1813,7 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
 
     <listitem>
      <para>
-      In MSVC builds, handle the case where the <application>openssl</application>
+      In MSVC builds, handle the case where the <application>OpenSSL</application>
       library is not within a <filename>VC</filename> subdirectory (Andrew Dunstan)
      </para>
     </listitem>
