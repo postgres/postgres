@@ -473,7 +473,7 @@ $ENV{CONFIG}="Debug";
       ActiveState Perl installation, nor in the ActiveState Perl Package
       Manager (PPM) library. To install, download the
       <filename>IPC-Run-&lt;version&gt;.tar.gz</filename> source archive from CPAN,
-      at <ulink url="http://search.cpan.org/dist/IPC-Run/"></ulink>, and
+      at <ulink url="https://metacpan.org/release/IPC-Run/"></ulink>, and
       uncompress. Edit the <filename>buildenv.pl</filename> file, and add a PERL5LIB
       variable to point to the <filename>lib</filename> subdirectory from the
       extracted archive. For example:

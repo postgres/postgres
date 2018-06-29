@@ -65,7 +65,7 @@
       <entry>DBD::Pg</entry>
       <entry>Perl</entry>
       <entry>Perl DBI driver</entry>
-      <entry><ulink url="http://search.cpan.org/dist/DBD-Pg/"></ulink></entry>
+      <entry><ulink url="https://metacpan.org/release/DBD-Pg/"></ulink></entry>
      </row>
 
      <row>

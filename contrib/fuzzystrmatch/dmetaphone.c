@@ -52,7 +52,7 @@
 /***************************** COPYRIGHT NOTICES ***********************
 
 Most of this code is directly from the Text::DoubleMetaphone perl module
-version 0.05 available from http://www.cpan.org.
+version 0.05 available from https://www.cpan.org/.
 It bears this copyright notice:
 
 
