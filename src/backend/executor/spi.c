@@ -228,8 +228,13 @@ SPI_commit(void)
 
 	_SPI_current->internal_xact = true;
 
-	if (ActiveSnapshotSet())
+	/*
+	 * Before committing, pop all active snapshots to avoid error about
+	 * "snapshot %p still active".
+	 */
+	while (ActiveSnapshotSet())
 		PopActiveSnapshot();
+
 	CommitTransactionCommand();
 	MemoryContextSwitchTo(oldcontext);
 

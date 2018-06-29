@@ -432,6 +432,25 @@ END;
 $$;
 ERROR:  EXECUTE of transaction commands is not implemented
 CONTEXT:  PL/pgSQL function inline_code_block line 3 at EXECUTE
+-- snapshot handling test
+TRUNCATE test2;
+CREATE PROCEDURE transaction_test9()
+LANGUAGE SQL
+AS $$
+INSERT INTO test2 VALUES (42);
+$$;
+DO LANGUAGE plpgsql $$
+BEGIN
+  ROLLBACK;
+  CALL transaction_test9();
+END
+$$;
+SELECT * FROM test2;
+ x  
+----
+ 42
+(1 row)
+
 DROP TABLE test1;
 DROP TABLE test2;
 DROP TABLE test3;
