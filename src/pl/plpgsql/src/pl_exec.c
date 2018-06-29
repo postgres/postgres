@@ -2075,6 +2075,7 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 	ParamListInfo paramLI;
 	LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
+	bool		pushed_active_snap = false;
 	int			rc;
 
 	if (expr->plan == NULL)
@@ -2090,6 +2091,7 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 		/*
 		 * The procedure call could end transactions, which would upset the
 		 * snapshot management in SPI_execute*, so don't let it do it.
+		 * Instead, we set the snapshots ourselves below.
 		 */
 		expr->plan->no_snapshots = true;
 	}
@@ -2097,6 +2099,16 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 	paramLI = setup_param_list(estate, expr);
 
 	before_lxid = MyProc->lxid;
+
+	/*
+	 * Set snapshot only for non-read-only procedures, similar to SPI
+	 * behavior.
+	 */
+	if (!estate->readonly_func)
+	{
+		PushActiveSnapshot(GetTransactionSnapshot());
+		pushed_active_snap = true;
+	}
 
 	PG_TRY();
 	{
@@ -2126,12 +2138,22 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
 			 expr->query, SPI_result_code_string(rc));
 
-	/*
-	 * If we are in a new transaction after the call, we need to reset some
-	 * internal state.
-	 */
-	if (before_lxid != after_lxid)
+	if (before_lxid == after_lxid)
 	{
+		/*
+		 * If we are still in the same transaction after the call, pop the
+		 * snapshot that we might have pushed.  (If it's a new transaction,
+		 * then all the snapshots are gone already.)
+		 */
+		if (pushed_active_snap)
+			PopActiveSnapshot();
+	}
+	else
+	{
+		/*
+		 * If we are in a new transaction after the call, we need to reset
+		 * some internal state.
+		 */
 		estate->simple_eval_estate = NULL;
 		plpgsql_create_econtext(estate);
 	}
