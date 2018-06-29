@@ -2148,7 +2148,7 @@ include_dir 'conf.d'
          pool of processes established by <xref
          linkend="guc-max-worker-processes"/>, limited by <xref
          linkend="guc-max-parallel-workers"/>.  Note that the requested
-         number of workers may not actually be available at runtime.
+         number of workers may not actually be available at run time.
          If this occurs, the utility operation will run with fewer
          workers than expected.  The default value is 2.  Setting this
          value to 0 disables the use of parallel workers by utility
@@ -8856,7 +8856,7 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       <listitem>
        <para>
         Writes the generated <productname>LLVM</productname> IR out to the
-        filesystem, inside <xref linkend="guc-data-directory"/>. This is only
+        file system, inside <xref linkend="guc-data-directory"/>. This is only
         useful for working on the internals of the JIT implementation.
 
         The default setting is <literal>off</literal>, and it can only be

@@ -23,7 +23,7 @@
   <para>
    Just-in-time compilation (<acronym>JIT</acronym>) is the process of turning
    some form of interpreted program evaluation into a native program, and
-   doing so at runtime.
+   doing so at run time.
 
    For example, instead of using a facility that can evaluate arbitrary SQL
    expressions to evaluate an SQL predicate like <literal>WHERE a.col =
@@ -81,7 +81,7 @@
    <title>Inlining</title>
    <para>
     <productname>PostgreSQL</productname> is very extensible and allows new
-    datatypes, functions, operators and other database objects to be defined;
+    data types, functions, operators and other database objects to be defined;
     see <xref linkend="extend"/>. In fact the built-in ones are implemented
     using nearly the same mechanisms.  This extensibility implies some
     overhead, for example due to function calls (see <xref linkend="xfunc"/>).
@@ -110,18 +110,18 @@
   </para>
 
   <para>
-   The cost of the query will be compared with <xref
-   linkend="guc-jit-above-cost"/> GUC. If the cost is higher,
+   The cost of the query will be compared with the setting of <xref
+   linkend="guc-jit-above-cost"/>. If the cost is higher,
    <acronym>JIT</acronym> compilation will be performed.
   </para>
 
   <para>
    If the planner, based on the above criterion, decided that
    <acronym>JIT</acronym> compilation is beneficial, two further decisions are
-   made. Firstly, if the query is more costly than the <xref
-   linkend="guc-jit-optimize-above-cost"/> GUC, expensive optimizations are
+   made. Firstly, if the query is more costly than the setting of <xref
+   linkend="guc-jit-optimize-above-cost"/>, expensive optimizations are
    used to improve the generated code. Secondly, if the query is more costly
-   than the <xref linkend="guc-jit-inline-above-cost"/> GUC, short functions
+   than the setting of <xref linkend="guc-jit-inline-above-cost"/>, short functions
    and operators used in the query will be inlined.  Both of these operations
    increase the <acronym>JIT</acronym> overhead, but can reduce query
    execution time considerably.
@@ -131,7 +131,7 @@
    This cost based decision will be made at plan time, not execution
    time. This means that when prepared statements are in use, and the generic
    plan is used (see <xref linkend="sql-prepare-notes"/>), the values of the
-   GUCs set at prepare time take effect, not the settings at execution time.
+   configuration parameters set at prepare time take effect, not the settings at execution time.
   </para>
 
   <note>
@@ -208,7 +208,7 @@ SET
   </para>
 
   <para>
-   For development and debugging purposes a few additional GUCs exist. <xref
+   For development and debugging purposes a few additional configuration parameters exist. <xref
    linkend="guc-jit-dump-bitcode"/> allows the generated bitcode to be
    inspected. <xref linkend="guc-jit-debugging-support"/> allows GDB to see
    generated functions. <xref linkend="guc-jit-profiling-support"/> emits
@@ -245,7 +245,7 @@ SET
     to <filename>$pkglibdir/bitcode/$extension.index.bc</filename>, where
     <literal>$pkglibdir</literal> is the directory returned by
     <literal>pg_config --pkglibdir</literal> and <literal>$extension</literal>
-    the basename of the extension's shared library.
+    the base name of the extension's shared library.
 
     <note>
      <para>
@@ -264,8 +264,8 @@ SET
     <productname>PostgreSQL</productname> provides a <acronym>JIT</acronym>
     implementation based on <productname>LLVM</productname>.  The interface to
     the <acronym>JIT</acronym> provider is pluggable and the provider can be
-    changed without recompiling. The provider is chosen via the <xref
-    linkend="guc-jit-provider"/> <acronym>GUC</acronym>.
+    changed without recompiling. The provider is chosen via the setting <xref
+    linkend="guc-jit-provider"/>.
    </para>
 
    <sect3>

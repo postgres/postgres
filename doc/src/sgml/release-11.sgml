@@ -1233,7 +1233,7 @@ same commits as above
        </para>
 
        <para>
-        Specifically, "ldapsearchfilter" allows pattern matching using
+        Specifically, <literal>ldapsearchfilter</literal> allows pattern matching using
         combinations of <acronym>LDAP</acronym> attributes.
        </para>
       </listitem>
@@ -2673,7 +2673,7 @@ same commits as above
 -->
 
        <para>
-        Speed up lookups of builtin function names matching oids (Andres
+        Speed up lookups of built-in function names matching OIDs (Andres
         Freund)
        </para>
 

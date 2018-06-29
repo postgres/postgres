@@ -511,7 +511,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       <listitem>
        <para>
         Show progress report every <replaceable>sec</replaceable> seconds.  The report
-        includes the time since the beginning of the run, the tps since the
+        includes the time since the beginning of the run, the TPS since the
         last report, and the transaction latency average and standard
         deviation since the last report.  Under throttling (<option>-R</option>),
         the latency is computed with respect to the transaction scheduled
@@ -727,9 +727,9 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        </para>
        <para>
         Remember to take the sampling rate into account when processing the
-        log file. For example, when computing tps values, you need to multiply
+        log file. For example, when computing TPS values, you need to multiply
         the numbers accordingly (e.g. with 0.01 sample rate, you'll only get
-        1/100 of the actual tps).
+        1/100 of the actual TPS).
        </para>
       </listitem>
      </varlistentry>
@@ -967,7 +967,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       Sets variable <replaceable>varname</replaceable> to a value calculated
       from <replaceable>expression</replaceable>.
       The expression may contain the <literal>NULL</literal> constant,
-      boolean constants <literal>TRUE</literal> and <literal>FALSE</literal>,
+      Boolean constants <literal>TRUE</literal> and <literal>FALSE</literal>,
       integer constants such as <literal>5432</literal>,
       double constants such as <literal>3.14159</literal>,
       references to variables <literal>:</literal><replaceable>variablename</replaceable>,
@@ -1485,7 +1485,7 @@ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
     </listitem>
     <listitem>
      <para>
-      <literal>random_zipfian</literal> generates an approximated bounded zipfian
+      <literal>random_zipfian</literal> generates an approximated bounded Zipfian
       distribution. For <replaceable>parameter</replaceable> in (0, 1), an
       approximated algorithm is taken from
       "Quickly Generating Billion-Record Synthetic Databases",

@@ -565,7 +565,7 @@ DROP ROLE doomed_role;
   <literal>pg_execute_server_program</literal> roles are intended to allow administrators to have
   trusted, but non-superuser, roles which are able to access files and run programs on the
   database server as the user the database runs as.  As these roles are able to access any file on
-  the server filesystem, they bypass all database-level permission checks when accessing files
+  the server file system, they bypass all database-level permission checks when accessing files
   directly and they could be used to gain superuser-level access, therefore care should be taken
   when granting these roles to users.
   </para>

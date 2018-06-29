@@ -9737,10 +9737,10 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>
           reduce each value in the document, specified by <replaceable class="parameter">filter</replaceable> to a <type>tsvector</type>,
           and then concatenate those in document order to produce a single <type>tsvector</type>.
-          <replaceable class="parameter">filter</replaceable> is a jsonb array, that enumerates what kind of elements need to be included
+          <replaceable class="parameter">filter</replaceable> is a <type>jsonb</type> array, that enumerates what kind of elements need to be included
           into the resulting <type>tsvector</type>. Possible values for <replaceable class="parameter">filter</replaceable> are
           <literal>"string"</literal> (to include all string values), <literal>"numeric"</literal> (to include all numeric values in the string format),
-          <literal>"boolean"</literal> (to include all boolean values in the string format "true"/"false"),
+          <literal>"boolean"</literal> (to include all Boolean values in the string format <literal>"true"</literal>/<literal>"false"</literal>),
           <literal>"key"</literal> (to include all keys) or <literal>"all"</literal> (to include all above). These values
           can be combined together to include, e.g. all string and numeric values.
         </entry>

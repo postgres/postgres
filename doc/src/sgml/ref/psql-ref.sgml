@@ -558,7 +558,7 @@ EOF
       <listitem>
       <para>
       Set the field separator for unaligned output to a zero byte.  This is
-      equvalent to <command>\pset fieldsep_zero</command>.
+      equivalent to <command>\pset fieldsep_zero</command>.
       </para>
       </listitem>
     </varlistentry>

@@ -923,12 +923,12 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
      <para>
        In the connection URI format, you can list multiple <literal>host:port</literal> pairs
        separated by commas, in the <literal>host</literal> component of the URI. In either
-       format, a single hostname can also translate to multiple network addresses. A
+       format, a single host name can also translate to multiple network addresses. A
        common example of this is a host that has both an IPv4 and an IPv6 address.
      </para>
 
      <para>
-       When multiple hosts are specified, or when a single hostname is
+       When multiple hosts are specified, or when a single host name is
        translated to multiple addresses,  all the hosts and addresses will be
        tried in order, until one succeeds. If none of the hosts can be reached,
        the connection fails. If a connection is established successfully, but

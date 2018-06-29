@@ -161,7 +161,7 @@ EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 0);
    multiply their selectivities together to arrive at a much-too-small
    row count estimate.
    With such statistics, the planner recognizes that the <literal>WHERE</literal>
-   conditions are redundant and does not underestimate the rowcount.
+   conditions are redundant and does not underestimate the row count.
   </para>
 
  </refsect1>
