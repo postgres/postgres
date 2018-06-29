@@ -2713,7 +2713,11 @@ describeOneTableDetails(const char *schemaname,
 						   pset.sversion >= 80300 ?
 						   "t.tgconstraint <> 0 AS tgisinternal" :
 						   "false AS tgisinternal"), oid);
-		if (pset.sversion >= 90000)
+		if (pset.sversion >= 110000)
+			appendPQExpBuffer(&buf, "(NOT t.tgisinternal OR (t.tgisinternal AND t.tgenabled = 'D') \n"
+							  "    OR EXISTS (SELECT 1 FROM pg_catalog.pg_depend WHERE objid = t.oid \n"
+							  "        AND refclassid = 'pg_catalog.pg_trigger'::regclass))");
+		else if (pset.sversion >= 90000)
 			/* display/warn about disabled internal triggers */
 			appendPQExpBuffer(&buf, "(NOT t.tgisinternal OR (t.tgisinternal AND t.tgenabled = 'D'))");
 		else if (pset.sversion >= 80300)
