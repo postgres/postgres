@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use VSObjectFactory;
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub _new
 {
@@ -770,7 +770,7 @@ use strict;
 use warnings;
 use base qw(Solution);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -795,7 +795,7 @@ use strict;
 use warnings;
 use base qw(Solution);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -821,7 +821,7 @@ use strict;
 use warnings;
 use base qw(Solution);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -847,7 +847,7 @@ use strict;
 use warnings;
 use base qw(Solution);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -873,7 +873,7 @@ use strict;
 use warnings;
 use base qw(Solution);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -901,7 +901,7 @@ use strict;
 use warnings;
 use base qw(Solution);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -929,7 +929,7 @@ use strict;
 use warnings;
 use base qw(Solution);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {

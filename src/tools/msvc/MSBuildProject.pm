@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use base qw(Project);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub _new
 {
@@ -401,7 +401,7 @@ use strict;
 use warnings;
 use base qw(MSBuildProject);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -424,7 +424,7 @@ use strict;
 use warnings;
 use base qw(MSBuildProject);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -470,7 +470,7 @@ use strict;
 use warnings;
 use base qw(VC2012Project);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -495,7 +495,7 @@ use strict;
 use warnings;
 use base qw(VC2012Project);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {
@@ -520,7 +520,7 @@ use strict;
 use warnings;
 use base qw(VC2012Project);
 
-no warnings qw(redefine); ## no critic
+no warnings qw(redefine);    ## no critic
 
 sub new
 {

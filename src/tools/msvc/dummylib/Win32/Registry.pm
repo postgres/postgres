@@ -6,7 +6,7 @@ use warnings;
 use vars qw($HKEY_LOCAL_MACHINE);
 
 use Exporter ();
-our (@EXPORT,@ISA);
+our (@EXPORT, @ISA);
 @ISA    = qw(Exporter);
 @EXPORT = qw($HKEY_LOCAL_MACHINE);
 

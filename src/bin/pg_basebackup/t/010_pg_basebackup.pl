@@ -552,7 +552,10 @@ rmtree("$tempdir/backup_corrupt3");
 
 # do not verify checksums, should return ok
 $node->command_ok(
-	[ 'pg_basebackup', '-D', "$tempdir/backup_corrupt4", '--no-verify-checksums' ],
+	[
+		'pg_basebackup',            '-D',
+		"$tempdir/backup_corrupt4", '--no-verify-checksums'
+	],
 	'pg_basebackup with -k does not report checksum mismatch');
 rmtree("$tempdir/backup_corrupt4");
 
