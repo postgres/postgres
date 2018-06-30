@@ -1865,7 +1865,7 @@ ExecPartitionCheck(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 				   EState *estate, bool emitError)
 {
 	ExprContext *econtext;
-	bool	success;
+	bool		success;
 
 	/*
 	 * If first time through, build expression state tree for the partition

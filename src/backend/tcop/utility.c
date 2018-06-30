@@ -1316,8 +1316,8 @@ ProcessUtilitySlow(ParseState *pstate,
 					 * acquire locks early to avoid deadlocks.
 					 *
 					 * We also take the opportunity to verify that all
-					 * partitions are something we can put an index on,
-					 * to avoid building some indexes only to fail later.
+					 * partitions are something we can put an index on, to
+					 * avoid building some indexes only to fail later.
 					 */
 					if (stmt->relation->inh &&
 						get_rel_relkind(relid) == RELKIND_PARTITIONED_TABLE)
@@ -1328,7 +1328,7 @@ ProcessUtilitySlow(ParseState *pstate,
 						inheritors = find_all_inheritors(relid, lockmode, NULL);
 						foreach(lc, inheritors)
 						{
-							char	relkind = get_rel_relkind(lfirst_oid(lc));
+							char		relkind = get_rel_relkind(lfirst_oid(lc));
 
 							if (relkind != RELKIND_RELATION &&
 								relkind != RELKIND_MATVIEW &&

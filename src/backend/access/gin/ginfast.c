@@ -247,9 +247,9 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	metapage = BufferGetPage(metabuffer);
 
 	/*
-	 * An insertion to the pending list could logically belong anywhere in
-	 * the tree, so it conflicts with all serializable scans.  All scans
-	 * acquire a predicate lock on the metabuffer to represent that.
+	 * An insertion to the pending list could logically belong anywhere in the
+	 * tree, so it conflicts with all serializable scans.  All scans acquire a
+	 * predicate lock on the metabuffer to represent that.
 	 */
 	CheckForSerializableConflictIn(index, NULL, metabuffer);
 

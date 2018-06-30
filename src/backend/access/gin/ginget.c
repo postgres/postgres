@@ -235,8 +235,8 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			LockBuffer(stack->buffer, GIN_UNLOCK);
 
 			/*
-			 * Acquire predicate lock on the posting tree.  We already hold
-			 * a lock on the entry page, but insertions to the posting tree
+			 * Acquire predicate lock on the posting tree.  We already hold a
+			 * lock on the entry page, but insertions to the posting tree
 			 * don't check for conflicts on that level.
 			 */
 			PredicateLockPage(btree->index, rootPostingTree, snapshot);
@@ -1766,8 +1766,8 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 	*ntids = 0;
 
 	/*
-	 * Acquire predicate lock on the metapage, to conflict with any
-	 * fastupdate insertions.
+	 * Acquire predicate lock on the metapage, to conflict with any fastupdate
+	 * insertions.
 	 */
 	PredicateLockPage(scan->indexRelation, GIN_METAPAGE_BLKNO, scan->xs_snapshot);
 

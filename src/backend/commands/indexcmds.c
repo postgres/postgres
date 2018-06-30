@@ -1002,7 +1002,7 @@ DefineIndex(Oid relationId,
 					 */
 					foreach(lc, childStmt->indexParams)
 					{
-						IndexElem *ielem = lfirst(lc);
+						IndexElem  *ielem = lfirst(lc);
 
 						/*
 						 * If the index parameter is an expression, we must

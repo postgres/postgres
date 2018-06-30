@@ -754,9 +754,9 @@ ReorderBufferAssignChild(ReorderBuffer *rb, TransactionId xid,
 		else
 		{
 			/*
-			 * We already saw this transaction, but initially added it to the list
-			 * of top-level txns.  Now that we know it's not top-level, remove
-			 * it from there.
+			 * We already saw this transaction, but initially added it to the
+			 * list of top-level txns.  Now that we know it's not top-level,
+			 * remove it from there.
 			 */
 			dlist_delete(&subtxn->node);
 		}

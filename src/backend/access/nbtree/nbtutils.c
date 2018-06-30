@@ -2196,8 +2196,8 @@ _bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
 			 * non-zero, or when there is no explicit representation and the
 			 * tuple is evidently not a pre-pg_upgrade tuple.
 			 *
-			 * Prior to v11, downlinks always had P_HIKEY as their offset.
-			 * Use that to decide if the tuple is a pre-v11 tuple.
+			 * Prior to v11, downlinks always had P_HIKEY as their offset. Use
+			 * that to decide if the tuple is a pre-v11 tuple.
 			 */
 			return BTreeTupleGetNAtts(itup, rel) == 0 ||
 				((itup->t_info & INDEX_ALT_TID_MASK) == 0 &&

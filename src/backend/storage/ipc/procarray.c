@@ -2014,8 +2014,8 @@ GetRunningTransactionData(void)
 		/*
 		 * If we wished to exclude xids this would be the right place for it.
 		 * Procs with the PROC_IN_VACUUM flag set don't usually assign xids,
-		 * but they do during truncation at the end when they get the lock
-		 * and truncate, so it is not much of a problem to include them if they
+		 * but they do during truncation at the end when they get the lock and
+		 * truncate, so it is not much of a problem to include them if they
 		 * are seen and it is cleaner to include them.
 		 */
 

@@ -214,7 +214,7 @@ typedef struct ReorderBufferTXN
 	 */
 	Snapshot	base_snapshot;
 	XLogRecPtr	base_snapshot_lsn;
-	dlist_node	base_snapshot_node;	/* link in txns_by_base_snapshot_lsn */
+	dlist_node	base_snapshot_node; /* link in txns_by_base_snapshot_lsn */
 
 	/*
 	 * How many ReorderBufferChange's do we have in this txn.

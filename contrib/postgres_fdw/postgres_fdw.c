@@ -2020,12 +2020,11 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 	/*
 	 * If the foreign table is a partition, we need to create a new RTE
 	 * describing the foreign table for use by deparseInsertSql and
-	 * create_foreign_modify() below, after first copying the parent's
-	 * RTE and modifying some fields to describe the foreign partition to
-	 * work on. However, if this is invoked by UPDATE, the existing RTE
-	 * may already correspond to this partition if it is one of the
-	 * UPDATE subplan target rels; in that case, we can just use the
-	 * existing RTE as-is.
+	 * create_foreign_modify() below, after first copying the parent's RTE and
+	 * modifying some fields to describe the foreign partition to work on.
+	 * However, if this is invoked by UPDATE, the existing RTE may already
+	 * correspond to this partition if it is one of the UPDATE subplan target
+	 * rels; in that case, we can just use the existing RTE as-is.
 	 */
 	rte = list_nth(estate->es_range_table, resultRelation - 1);
 	if (rte->relid != RelationGetRelid(rel))
@@ -2035,10 +2034,10 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 		rte->relkind = RELKIND_FOREIGN_TABLE;
 
 		/*
-		 * For UPDATE, we must use the RT index of the first subplan
-		 * target rel's RTE, because the core code would have built
-		 * expressions for the partition, such as RETURNING, using that
-		 * RT index as varno of Vars contained in those expressions.
+		 * For UPDATE, we must use the RT index of the first subplan target
+		 * rel's RTE, because the core code would have built expressions for
+		 * the partition, such as RETURNING, using that RT index as varno of
+		 * Vars contained in those expressions.
 		 */
 		if (plan && plan->operation == CMD_UPDATE &&
 			resultRelation == plan->nominalRelation)

@@ -53,8 +53,8 @@ static void LogAccessExclusiveLocks(int nlocks, xl_standby_lock *locks);
  */
 typedef struct RecoveryLockListsEntry
 {
-	TransactionId	xid;
-	List		   *locks;
+	TransactionId xid;
+	List	   *locks;
 } RecoveryLockListsEntry;
 
 /*
@@ -73,7 +73,7 @@ void
 InitRecoveryTransactionEnvironment(void)
 {
 	VirtualTransactionId vxid;
-	HASHCTL			hash_ctl;
+	HASHCTL		hash_ctl;
 
 	/*
 	 * Initialize the hash table for tracking the list of locks held by each
@@ -671,6 +671,7 @@ StandbyReleaseLockList(List *locks)
 	{
 		xl_standby_lock *lock = (xl_standby_lock *) linitial(locks);
 		LOCKTAG		locktag;
+
 		elog(trace_recovery(DEBUG4),
 			 "releasing recovery lock: xid %u db %u rel %u",
 			 lock->xid, lock->dbOid, lock->relOid);
@@ -728,7 +729,7 @@ StandbyReleaseLockTree(TransactionId xid, int nsubxids, TransactionId *subxids)
 void
 StandbyReleaseAllLocks(void)
 {
-	HASH_SEQ_STATUS	status;
+	HASH_SEQ_STATUS status;
 	RecoveryLockListsEntry *entry;
 
 	elog(trace_recovery(DEBUG2), "release all standby locks");
@@ -749,7 +750,7 @@ StandbyReleaseAllLocks(void)
 void
 StandbyReleaseOldLocks(TransactionId oldxid)
 {
-	HASH_SEQ_STATUS	status;
+	HASH_SEQ_STATUS status;
 	RecoveryLockListsEntry *entry;
 
 	hash_seq_init(&status, RecoveryLockLists);

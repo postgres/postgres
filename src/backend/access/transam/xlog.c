@@ -4512,7 +4512,7 @@ ReadControlFile(void)
 					 errmsg("could not read from control file: %m")));
 		else
 			ereport(PANIC,
-					 (errmsg("could not read from control file: read %d bytes, expected %d", r, (int) sizeof(ControlFileData))));
+					(errmsg("could not read from control file: read %d bytes, expected %d", r, (int) sizeof(ControlFileData))));
 	}
 	pgstat_report_wait_end();
 
