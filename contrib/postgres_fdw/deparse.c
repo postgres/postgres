@@ -1076,7 +1076,7 @@ deparseFromExpr(List *quals, deparse_expr_cxt *context)
 	/* Construct FROM clause */
 	appendStringInfoString(buf, " FROM ");
 	deparseFromExprForRel(buf, context->root, scanrel,
-						  (bms_num_members(scanrel->relids) > 1),
+						  (bms_membership(scanrel->relids) == BMS_MULTIPLE),
 						  (Index) 0, NULL, context->params_list);
 
 	/* Construct WHERE clause */
@@ -1262,7 +1262,7 @@ deparseLockingClause(deparse_expr_cxt *context)
 				}
 
 				/* Add the relation alias if we are here for a join relation */
-				if (bms_num_members(rel->relids) > 1 &&
+				if (bms_membership(rel->relids) == BMS_MULTIPLE &&
 					rc->strength != LCS_NONE)
 					appendStringInfo(buf, " OF %s%d", REL_ALIAS_PREFIX, relid);
 			}
@@ -2328,7 +2328,7 @@ deparseVar(Var *node, deparse_expr_cxt *context)
 	int			colno;
 
 	/* Qualify columns when multiple relations are involved. */
-	bool		qualify_col = (bms_num_members(relids) > 1);
+	bool		qualify_col = (bms_membership(relids) == BMS_MULTIPLE);
 
 	/*
 	 * If the Var belongs to the foreign relation that is deparsed as a
