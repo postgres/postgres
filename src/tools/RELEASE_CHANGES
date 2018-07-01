@@ -73,9 +73,11 @@ Starting a New Development Cycle
 * Create a branch in git for maintenance of the previous release
 	o on master branch, do:
 		git pull           # be sure you have the latest "master"
-		git push origin master:refs/heads/"new-branch-name"
+		git branch "new-branch-name"
+		git push -u origin  "new-branch-name"
 	  for example,
-		git push origin master:refs/heads/REL_10_STABLE
+		git branch REL_11_STABLE
+		git push -u origin REL_11_STABLE
 
 * Add new branch's name to list in src/tools/git_changelog
 
@@ -83,6 +85,8 @@ Starting a New Development Cycle
 
 * Run "src/tools/version_stamp.pl devel", then run autoconf
 
+* Get the buildfarm's 'branches_of_interest.txt' file updated with the new
+  branch.
 
 Creating Back-Branch Release Notes
 ==================================
