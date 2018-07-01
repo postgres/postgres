@@ -636,6 +636,23 @@ select * from cnullparent where f1 = 2;
 drop table cnullparent cascade;
 
 --
+-- Check use of temporary tables with inheritance trees
+--
+create table inh_perm_parent (a1 int);
+create temp table inh_temp_parent (a1 int);
+create temp table inh_temp_child () inherits (inh_perm_parent); -- ok
+create table inh_perm_child () inherits (inh_temp_parent); -- error
+create temp table inh_temp_child_2 () inherits (inh_temp_parent); -- ok
+insert into inh_perm_parent values (1);
+insert into inh_temp_parent values (2);
+insert into inh_temp_child values (3);
+insert into inh_temp_child_2 values (4);
+select tableoid::regclass, a1 from inh_perm_parent;
+select tableoid::regclass, a1 from inh_temp_parent;
+drop table inh_perm_parent cascade;
+drop table inh_temp_parent cascade;
+
+--
 -- Check that constraint exclusion works correctly with partitions using
 -- implicit constraints generated from the partition bound information.
 --
