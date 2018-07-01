@@ -37,7 +37,7 @@ check_prepare_conn(PGconn *conn, const char *dbName)
 	/* Set always-secure search path, so malicous users can't take control. */
 	res = PQexec(conn,
 				 "SELECT pg_catalog.set_config('search_path', '', false)");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
 		PQclear(res);
