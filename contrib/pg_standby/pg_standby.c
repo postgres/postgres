@@ -94,7 +94,6 @@ int			restoreCommandType;
 
 #define XLOG_DATA			 0
 #define XLOG_HISTORY		 1
-#define XLOG_BACKUP_LABEL	 2
 int			nextWALFileType;
 
 #define SET_RESTORE_COMMAND(cmd, arg1, arg2) \
@@ -211,15 +210,9 @@ CustomizableNextWALFileReady(void)
 		}
 
 		/*
-		 * If it's a backup file, return immediately. If it's a regular file
-		 * return only if it's the right size already.
+		 * Return only if it's the right size already.
 		 */
-		if (IsBackupHistoryFileName(nextWALFileName))
-		{
-			nextWALFileType = XLOG_BACKUP_LABEL;
-			return true;
-		}
-		else if (WalSegSz > 0 && stat_buf.st_size == WalSegSz)
+		if (WalSegSz > 0 && stat_buf.st_size == WalSegSz)
 		{
 #ifdef WIN32
 
