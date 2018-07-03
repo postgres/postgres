@@ -528,7 +528,7 @@ pgbench(
 # trigger many expression errors
 my @errors = (
 
-	# [ test name, script number, status, stderr match ]
+	# [ test name, expected status, expected stderr, script ]
 	# SQL
 	[
 		'sql syntax error',
