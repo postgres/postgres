@@ -13,6 +13,8 @@ $node->start;
 # invoke pgbench
 sub pgbench
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($opts, $stat, $out, $err, $name, $files) = @_;
 	my @cmd = ('pgbench', split /\s+/, $opts);
 	my @filenames = ();
@@ -798,6 +800,8 @@ pgbench(
 # check log contents and cleanup
 sub check_pgbench_logs
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($prefix, $nb, $min, $max, $re) = @_;
 
 	my @logs = glob "$prefix.*";

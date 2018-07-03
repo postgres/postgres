@@ -20,6 +20,8 @@ mkdir $testdir
 # invoke pgbench
 sub pgbench
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($opts, $stat, $out, $err, $name) = @_;
 	print STDERR "opts=$opts, stat=$stat, out=$out, err=$err, name=$name";
 	command_checks_all([ 'pgbench', split(/\s+/, $opts) ],
@@ -30,6 +32,8 @@ sub pgbench
 # invoke pgbench with scripts
 sub pgbench_scripts
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($opts, $stat, $out, $err, $name, $files) = @_;
 	my @cmd = ('pgbench', split /\s+/, $opts);
 	my @filenames = ();
