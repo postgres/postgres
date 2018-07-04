@@ -26,6 +26,7 @@
 #include <sys/file.h>
 
 #include "miscadmin.h"
+#include "access/xlogutils.h"
 #include "access/xlog.h"
 #include "pgstat.h"
 #include "portability/instr_time.h"
@@ -1701,6 +1702,43 @@ ForgetDatabaseFsyncRequests(Oid dbid)
 									FORGET_DATABASE_FSYNC))
 			pg_usleep(10000L);	/* 10 msec seems a good number */
 	}
+}
+
+/*
+ * DropRelationFiles -- drop files of all given relations
+ */
+void
+DropRelationFiles(RelFileNode *delrels, int ndelrels, bool isRedo)
+{
+	SMgrRelation *srels;
+	int			i;
+
+	srels = palloc(sizeof(SMgrRelation) * ndelrels);
+	for (i = 0; i < ndelrels; i++)
+	{
+		SMgrRelation srel = smgropen(delrels[i], InvalidBackendId);
+
+		if (isRedo)
+		{
+			ForkNumber	fork;
+
+			for (fork = 0; fork <= MAX_FORKNUM; fork++)
+				XLogDropRelation(delrels[i], fork);
+		}
+		srels[i] = srel;
+	}
+
+	smgrdounlinkall(srels, ndelrels, isRedo);
+
+	/*
+	 * Call smgrclose() in reverse order as when smgropen() is called.
+	 * This trick enables remove_from_unowned_list() in smgrclose()
+	 * to search the SMgrRelation from the unowned list,
+	 * with O(1) performance.
+	 */
+	for (i = ndelrels - 1; i >= 0; i--)
+		smgrclose(srels[i]);
+	pfree(srels);
 }
 
 
