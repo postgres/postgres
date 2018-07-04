@@ -139,6 +139,7 @@ extern void RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum,
 					 BlockNumber segno);
 extern void ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum);
 extern void ForgetDatabaseFsyncRequests(Oid dbid);
+extern void DropRelationFiles(RelFileNode *delrels, int ndelrels, bool isRedo);
 
 /* smgrtype.c */
 extern Datum smgrout(PG_FUNCTION_ARGS);
