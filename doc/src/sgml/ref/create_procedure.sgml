@@ -203,6 +203,12 @@ CREATE [ OR REPLACE ] PROCEDURE
       conformance, but it is optional since, unlike in SQL, this feature
       applies to all procedures not only external ones.
      </para>
+
+     <para>
+      A <literal>SECURITY DEFINER</literal> procedure cannot execute
+      transaction control statements (for example, <command>COMMIT</command>
+      and <command>ROLLBACK</command>, depending on the language).
+     </para>
     </listitem>
    </varlistentry>
 
