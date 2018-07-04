@@ -1443,6 +1443,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 		rightsib_empty = false;
 		while (P_ISHALFDEAD(opaque))
 		{
+			/* will check for interrupts, once lock is released */
 			if (!_bt_unlink_halfdead_page(rel, buf, &rightsib_empty))
 			{
 				/* _bt_unlink_halfdead_page already released buffer */
@@ -1454,6 +1455,12 @@ _bt_pagedel(Relation rel, Buffer buf)
 		rightsib = opaque->btpo_next;
 
 		_bt_relbuf(rel, buf);
+
+		/*
+		 * Check here, as calling loops will have locks held, preventing
+		 * interrupts from being processed.
+		 */
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * The page has now been deleted. If its right sibling is completely
@@ -1708,6 +1715,12 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	LockBuffer(leafbuf, BUFFER_LOCK_UNLOCK);
 
 	/*
+	 * Check here, as calling loops will have locks held, preventing
+	 * interrupts from being processed.
+	 */
+	CHECK_FOR_INTERRUPTS();
+
+	/*
 	 * If the leaf page still has a parent pointing to it (or a chain of
 	 * parents), we don't unlink the leaf page yet, but the topmost remaining
 	 * parent in the branch.  Set 'target' and 'buf' to reference the page
@@ -1766,6 +1779,14 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 			/* step right one page */
 			leftsib = opaque->btpo_next;
 			_bt_relbuf(rel, lbuf);
+
+			/*
+			 * It'd be good to check for interrupts here, but it's not easy to
+			 * do so because a lock is always held. This block isn't
+			 * frequently reached, so hopefully the consequences of not
+			 * checking interrupts aren't too bad.
+			 */
+
 			if (leftsib == P_NONE)
 			{
 				elog(LOG, "no left sibling (concurrent deletion?) of block %u in \"%s\"",
