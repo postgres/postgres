@@ -116,6 +116,19 @@ $$;
 CALL transaction_test5();
 
 
+-- SECURITY DEFINER currently disallow transaction statements
+CREATE PROCEDURE transaction_test5b()
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    COMMIT;
+END;
+$$;
+
+CALL transaction_test5b();
+
+
 TRUNCATE test1;
 
 -- nested procedure calls

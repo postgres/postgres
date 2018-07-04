@@ -130,6 +130,18 @@ $$;
 CALL transaction_test5();
 ERROR:  invalid transaction termination
 CONTEXT:  PL/pgSQL function transaction_test5() line 3 at COMMIT
+-- SECURITY DEFINER currently disallow transaction statements
+CREATE PROCEDURE transaction_test5b()
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    COMMIT;
+END;
+$$;
+CALL transaction_test5b();
+ERROR:  invalid transaction termination
+CONTEXT:  PL/pgSQL function transaction_test5b() line 3 at COMMIT
 TRUNCATE test1;
 -- nested procedure calls
 CREATE PROCEDURE transaction_test6(c text)

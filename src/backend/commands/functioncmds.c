@@ -2246,6 +2246,15 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 		callcontext->atomic = true;
 
 	/*
+	 * In security definer procedures, we can't allow transaction commands.
+	 * StartTransaction() insists that the security context stack is empty,
+	 * and AbortTransaction() resets the security context.  This could be
+	 * reorganized, but right now it doesn't work.
+	 */
+	if (((Form_pg_proc )GETSTRUCT(tp))->prosecdef)
+		callcontext->atomic = true;
+
+	/*
 	 * Expand named arguments, defaults, etc.
 	 */
 	fexpr->args = expand_function_arguments(fexpr->args, fexpr->funcresulttype, tp);
