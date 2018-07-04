@@ -4642,7 +4642,6 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 						  uint32 xinfo)
 {
 	TransactionId max_xid;
-	int			i;
 
 	max_xid = TransactionIdLatest(xid, nsubxacts, sub_xids);
 
@@ -4737,16 +4736,8 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 		 */
 		XLogFlush(lsn);
 
-		for (i = 0; i < nrels; i++)
-		{
-			SMgrRelation srel = smgropen(xnodes[i], InvalidBackendId);
-			ForkNumber	fork;
-
-			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-				XLogDropRelation(xnodes[i], fork);
-			smgrdounlink(srel, true);
-			smgrclose(srel);
-		}
+		/* Make sure files supposed to be dropped are dropped */
+		DropRelationFiles(xnodes, nrels, true);
 	}
 
 	/*
@@ -4818,7 +4809,6 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 {
 	TransactionId *sub_xids;
 	TransactionId max_xid;
-	int			i;
 
 	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
 	max_xid = TransactionIdLatest(xid, xlrec->nsubxacts, sub_xids);
@@ -4877,16 +4867,7 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	}
 
 	/* Make sure files supposed to be dropped are dropped */
-	for (i = 0; i < xlrec->nrels; i++)
-	{
-		SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
-		ForkNumber	fork;
-
-		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			XLogDropRelation(xlrec->xnodes[i], fork);
-		smgrdounlink(srel, true);
-		smgrclose(srel);
-	}
+	DropRelationFiles(xlrec->xnodes, xlrec->nrels, true);
 }
 
 void

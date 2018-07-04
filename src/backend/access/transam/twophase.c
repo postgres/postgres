@@ -1361,7 +1361,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	RelFileNode *delrels;
 	int			ndelrels;
 	SharedInvalidationMessage *invalmsgs;
-	int			i;
 
 	/*
 	 * Validate the GID, and lock the GXACT to ensure that two backends do not
@@ -1451,13 +1450,9 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 		delrels = abortrels;
 		ndelrels = hdr->nabortrels;
 	}
-	for (i = 0; i < ndelrels; i++)
-	{
-		SMgrRelation srel = smgropen(delrels[i], InvalidBackendId);
 
-		smgrdounlink(srel, false);
-		smgrclose(srel);
-	}
+	/* Make sure files supposed to be dropped are dropped */
+	DropRelationFiles(delrels, ndelrels, false);
 
 	/*
 	 * Handle cache invalidation messages.
