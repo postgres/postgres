@@ -1681,7 +1681,6 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 	int			i;
 	RangeTblEntry *childrte;
 	Index		childRTindex;
-	bool		has_child = false;
 	PartitionDesc partdesc = RelationGetPartitionDesc(parentrel);
 
 	check_stack_depth();
@@ -1707,6 +1706,16 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 									top_parentrc, parentrel,
 									appinfos, &childrte, &childRTindex);
 
+	/*
+	 * If the partitioned table has no partitions, treat this as the
+	 * non-inheritance case.
+	 */
+	if (partdesc->nparts == 0)
+	{
+		parentrte->inh = false;
+		return;
+	}
+
 	for (i = 0; i < partdesc->nparts; i++)
 	{
 		Oid			childOID = partdesc->oids[i];
@@ -1715,15 +1724,13 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 		/* Open rel; we already have required locks */
 		childrel = heap_open(childOID, NoLock);
 
-		/* As in expand_inherited_rtentry, skip non-local temp tables */
+		/*
+		 * Temporary partitions belonging to other sessions should have been
+		 * disallowed at definition, but for paranoia's sake, let's double
+		 * check.
+		 */
 		if (RELATION_IS_OTHER_TEMP(childrel))
-		{
-			heap_close(childrel, lockmode);
-			continue;
-		}
-
-		/* We have a real partition. */
-		has_child = true;
+			elog(ERROR, "temporary relation from another session found as partition");
 
 		expand_single_inheritance_child(root, parentrte, parentRTindex,
 										parentrel, top_parentrc, childrel,
@@ -1738,14 +1745,6 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 		/* Close child relation, but keep locks */
 		heap_close(childrel, NoLock);
 	}
-
-	/*
-	 * If the partitioned table has no partitions or all the partitions are
-	 * temporary tables from other backends, treat this as non-inheritance
-	 * case.
-	 */
-	if (!has_child)
-		parentrte->inh = false;
 }
 
 /*
