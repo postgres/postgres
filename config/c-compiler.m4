@@ -635,7 +635,7 @@ AC_DEFUN([PGAC_HAVE_GCC__ATOMIC_INT64_CAS],
   [pgac_cv_gcc_atomic_int64_cas="yes"],
   [pgac_cv_gcc_atomic_int64_cas="no"])])
 if test x"$pgac_cv_gcc_atomic_int64_cas" = x"yes"; then
-  AC_DEFINE(HAVE_GCC__ATOMIC_INT64_CAS, 1, [Define to 1 if you have __atomic_compare_exchange_n(int64 *, int *, int64).])
+  AC_DEFINE(HAVE_GCC__ATOMIC_INT64_CAS, 1, [Define to 1 if you have __atomic_compare_exchange_n(int64 *, int64 *, int64).])
 fi])# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
 
 # PGAC_SSE42_CRC32_INTRINSICS
