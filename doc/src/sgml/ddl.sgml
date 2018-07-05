@@ -3431,7 +3431,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
          define any check constraints on this table, unless you intend them
          to be applied equally to all partitions.  There is no point in
          defining any indexes or unique constraints on it, either.  For our
-         example, master table is the <structname>measurement</structname>
+         example, the master table is the <structname>measurement</structname>
          table as originally defined.
         </para>
        </listitem>
@@ -3943,7 +3943,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     Constraint exclusion works in a very similar way to partition
     pruning, except that it uses each table's <literal>CHECK</literal>
     constraints &mdash; which gives it its name &mdash; whereas partition
-    pruning uses the table's partition bounds, which exists only in the
+    pruning uses the table's partition bounds, which exist only in the
     case of declarative partitioning.  Another difference is that
     constraint exclusion is only applied at plan time; there is no attempt
     to remove partitions at execution time.
