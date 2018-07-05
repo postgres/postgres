@@ -3415,7 +3415,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
          define any check constraints on this table, unless you intend them
          to be applied equally to all partitions.  There is no point in
          defining any indexes or unique constraints on it, either.  For our
-         example, master table is the <structname>measurement</structname>
+         example, the master table is the <structname>measurement</structname>
          table as originally defined.
         </para>
        </listitem>
