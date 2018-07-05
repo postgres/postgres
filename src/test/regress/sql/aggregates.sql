@@ -925,3 +925,6 @@ EXPLAIN (COSTS OFF)
 SELECT variance(unique1::int4), sum(unique1::int8) FROM tenk1;
 
 ROLLBACK;
+
+-- test coverage for dense_rank
+SELECT dense_rank(x) WITHIN GROUP (ORDER BY x) FROM (VALUES (1),(1),(2),(2),(3),(3)) v(x) GROUP BY (x) ORDER BY 1;

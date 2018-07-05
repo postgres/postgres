@@ -1310,7 +1310,15 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
 	econtext = osastate->qstate->econtext;
 	if (!econtext)
-		osastate->qstate->econtext = econtext = CreateStandaloneExprContext();
+	{
+		MemoryContext oldcontext;
+
+		/* Make sure to we create econtext under correct parent context. */
+		oldcontext = MemoryContextSwitchTo(osastate->qstate->qcontext);
+		osastate->qstate->econtext = CreateStandaloneExprContext();
+		econtext = osastate->qstate->econtext;
+		MemoryContextSwitchTo(oldcontext);
+	}
 
 	/* Adjust nargs to be the number of direct (or aggregated) args */
 	if (nargs % 2 != 0)
