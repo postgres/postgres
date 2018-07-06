@@ -1328,6 +1328,76 @@ SELECT avg(t1.a), avg(t2.b), avg(t3.a + t3.b), t1.c, t2.c, t3.c FROM pht1 t1, ph
  273.0000000000000000 | 273.0000000000000000 | 548.0000000000000000 | 0005 | 0005 | A0005
 (6 rows)
 
+-- test default partition behavior for range
+ALTER TABLE prt1 DETACH PARTITION prt1_p3;
+ALTER TABLE prt1 ATTACH PARTITION prt1_p3 DEFAULT;
+ANALYZE prt1;
+ALTER TABLE prt2 DETACH PARTITION prt2_p3;
+ALTER TABLE prt2 ATTACH PARTITION prt2_p3 DEFAULT;
+ANALYZE prt2;
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.b = 0 ORDER BY t1.a, t2.b;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Sort
+   Sort Key: t1.a
+   ->  Append
+         ->  Hash Join
+               Hash Cond: (t2.b = t1.a)
+               ->  Seq Scan on prt2_p1 t2
+               ->  Hash
+                     ->  Seq Scan on prt1_p1 t1
+                           Filter: (b = 0)
+         ->  Hash Join
+               Hash Cond: (t2_1.b = t1_1.a)
+               ->  Seq Scan on prt2_p2 t2_1
+               ->  Hash
+                     ->  Seq Scan on prt1_p2 t1_1
+                           Filter: (b = 0)
+         ->  Hash Join
+               Hash Cond: (t2_2.b = t1_2.a)
+               ->  Seq Scan on prt2_p3 t2_2
+               ->  Hash
+                     ->  Seq Scan on prt1_p3 t1_2
+                           Filter: (b = 0)
+(21 rows)
+
+-- test default partition behavior for list
+ALTER TABLE plt1 DETACH PARTITION plt1_p3;
+ALTER TABLE plt1 ATTACH PARTITION plt1_p3 DEFAULT;
+ANALYZE plt1;
+ALTER TABLE plt2 DETACH PARTITION plt2_p3;
+ALTER TABLE plt2 ATTACH PARTITION plt2_p3 DEFAULT;
+ANALYZE plt2;
+EXPLAIN (COSTS OFF)
+SELECT avg(t1.a), avg(t2.b), t1.c, t2.c FROM plt1 t1 RIGHT JOIN plt2 t2 ON t1.c = t2.c WHERE t1.a % 25 = 0 GROUP BY t1.c, t2.c ORDER BY t1.c, t2.c;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Sort
+   Sort Key: t1.c
+   ->  HashAggregate
+         Group Key: t1.c, t2.c
+         ->  Append
+               ->  Hash Join
+                     Hash Cond: (t2.c = t1.c)
+                     ->  Seq Scan on plt2_p1 t2
+                     ->  Hash
+                           ->  Seq Scan on plt1_p1 t1
+                                 Filter: ((a % 25) = 0)
+               ->  Hash Join
+                     Hash Cond: (t2_1.c = t1_1.c)
+                     ->  Seq Scan on plt2_p2 t2_1
+                     ->  Hash
+                           ->  Seq Scan on plt1_p2 t1_1
+                                 Filter: ((a % 25) = 0)
+               ->  Hash Join
+                     Hash Cond: (t2_2.c = t1_2.c)
+                     ->  Seq Scan on plt2_p3 t2_2
+                     ->  Hash
+                           ->  Seq Scan on plt1_p3 t1_2
+                                 Filter: ((a % 25) = 0)
+(23 rows)
+
 --
 -- multiple levels of partitioning
 --
@@ -1856,4 +1926,31 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_n t1 FULL JOIN prt1 t2 ON (t1.c = t2.c);
                ->  Seq Scan on prt1_n_p1 t1
                ->  Seq Scan on prt1_n_p2 t1_1
 (10 rows)
+
+-- partitionwise join can not be applied if only one of joining table has
+-- default partition
+ALTER TABLE prt2 DETACH PARTITION prt2_p3;
+ALTER TABLE prt2 ATTACH PARTITION prt2_p3 FOR VALUES FROM (500) TO (600);
+ANALYZE prt2;
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.b = 0 ORDER BY t1.a, t2.b;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Sort
+   Sort Key: t1.a
+   ->  Hash Join
+         Hash Cond: (t2.b = t1.a)
+         ->  Append
+               ->  Seq Scan on prt2_p1 t2
+               ->  Seq Scan on prt2_p2 t2_1
+               ->  Seq Scan on prt2_p3 t2_2
+         ->  Hash
+               ->  Append
+                     ->  Seq Scan on prt1_p1 t1
+                           Filter: (b = 0)
+                     ->  Seq Scan on prt1_p2 t1_1
+                           Filter: (b = 0)
+                     ->  Seq Scan on prt1_p3 t1_2
+                           Filter: (b = 0)
+(16 rows)
 
