@@ -116,6 +116,13 @@ SELECT * FROM cp_test;
  100 | Hello
 (8 rows)
 
+-- polymorphic types
+CREATE PROCEDURE ptest6(a int, b anyelement)
+LANGUAGE SQL
+AS $$
+SELECT NULL::int;
+$$;
+CALL ptest6(1, 2);
 -- various error cases
 CALL version();  -- error: not a procedure
 ERROR:  version() is not a procedure
