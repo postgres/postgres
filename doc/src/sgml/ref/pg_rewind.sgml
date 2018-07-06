@@ -95,6 +95,26 @@ PostgreSQL documentation
    are currently on by default.  <xref linkend="guc-full-page-writes"/>
    must also be set to <literal>on</literal>, but is enabled by default.
   </para>
+
+  <warning>
+   <para>
+    If <application>pg_rewind</application> fails while processing, then
+    the data folder of the target is likely not in a state that can be
+    recovered.  In such a case, taking a new fresh backup is recommended.
+   </para>
+
+   <para>
+    <application>pg_rewind</application> will fail immediately if it finds
+    files it cannot write directly to.  This can happen for example when
+    the source and the target server use the same file mapping for read-only
+    SSL keys and certificates.  If such files are present on the target server
+    it is recommended to remove them before running
+    <application>pg_rewind</application>.  After doing the rewind, some of
+    those files may have been copied from the source, in which case it may
+    be necessary to remove the data copied and restore back the set of links
+    used before the rewind.
+   </para>
+  </warning>
  </refsect1>
 
  <refsect1>
