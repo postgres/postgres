@@ -542,14 +542,24 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (is_column)
 			return NULL;
 
-		ereport(ERROR,
-				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-				 errmsg("function %s is not unique",
-						func_signature_string(funcname, nargs, argnames,
-											  actual_arg_types)),
-				 errhint("Could not choose a best candidate function. "
-						 "You might need to add explicit type casts."),
-				 parser_errposition(pstate, location)));
+		if (proc_call)
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("procedure %s is not unique",
+							func_signature_string(funcname, nargs, argnames,
+												  actual_arg_types)),
+					 errhint("Could not choose a best candidate procedure. "
+							 "You might need to add explicit type casts."),
+					 parser_errposition(pstate, location)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("function %s is not unique",
+							func_signature_string(funcname, nargs, argnames,
+												  actual_arg_types)),
+					 errhint("Could not choose a best candidate function. "
+							 "You might need to add explicit type casts."),
+					 parser_errposition(pstate, location)));
 	}
 	else
 	{
@@ -591,6 +601,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							 "after all regular arguments of the aggregate."),
 					 parser_errposition(pstate, location)));
 		}
+		else if (proc_call)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("procedure %s does not exist",
+							func_signature_string(funcname, nargs, argnames,
+												  actual_arg_types)),
+					 errhint("No procedure matches the given name and argument types. "
+							 "You might need to add explicit type casts."),
+					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
