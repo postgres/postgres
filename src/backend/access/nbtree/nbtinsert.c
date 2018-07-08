@@ -247,7 +247,7 @@ top:
 	 * inserter can be making the check at one time.  Furthermore, once we are
 	 * past the check we hold write locks continuously until we have performed
 	 * our insertion, so no later inserter can fail to see our insertion.
-	 * (This requires some care in _bt_insertonpg.)
+	 * (This requires some care in _bt_findinsertloc.)
 	 *
 	 * If we must wait for another xact, we release the lock while waiting,
 	 * and then must start over completely.
