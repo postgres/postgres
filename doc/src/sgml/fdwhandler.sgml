@@ -573,12 +573,14 @@ ExecForeignInsert(EState *estate,
 
     <para>
      The data in the returned slot is used only if the <command>INSERT</command>
-     query has a <literal>RETURNING</literal> clause or the foreign table has
-     an <literal>AFTER ROW</literal> trigger.  Triggers require all columns, but the
-     FDW could choose to optimize away returning some or all columns depending
-     on the contents of the <literal>RETURNING</literal> clause.  Regardless, some
-     slot must be returned to indicate success, or the query's reported row
-     count will be wrong.
+     statement has a <literal>RETURNING</literal> clause or involves a view
+     <literal>WITH CHECK OPTION</literal>; or if the foreign table has
+     an <literal>AFTER ROW</literal> trigger.  Triggers require all columns,
+     but the FDW could choose to optimize away returning some or all columns
+     depending on the contents of the <literal>RETURNING</literal> clause or
+     <literal>WITH CHECK OPTION</literal> constraints.  Regardless, some slot
+     must be returned to indicate success, or the query's reported row count
+     will be wrong.
     </para>
 
     <para>
@@ -619,12 +621,14 @@ ExecForeignUpdate(EState *estate,
 
     <para>
      The data in the returned slot is used only if the <command>UPDATE</command>
-     query has a <literal>RETURNING</literal> clause or the foreign table has
-     an <literal>AFTER ROW</literal> trigger.  Triggers require all columns, but the
-     FDW could choose to optimize away returning some or all columns depending
-     on the contents of the <literal>RETURNING</literal> clause.  Regardless, some
-     slot must be returned to indicate success, or the query's reported row
-     count will be wrong.
+     statement has a <literal>RETURNING</literal> clause or involves a view
+     <literal>WITH CHECK OPTION</literal>; or if the foreign table has
+     an <literal>AFTER ROW</literal> trigger.  Triggers require all columns,
+     but the FDW could choose to optimize away returning some or all columns
+     depending on the contents of the <literal>RETURNING</literal> clause or
+     <literal>WITH CHECK OPTION</literal> constraints.  Regardless, some slot
+     must be returned to indicate success, or the query's reported row count
+     will be wrong.
     </para>
 
     <para>
