@@ -129,7 +129,7 @@ typedef struct Latch
 #ifdef WIN32
 #define WL_SOCKET_CONNECTED  (1 << 5)
 #else
-/* avoid having to to deal with case on platforms not requiring it */
+/* avoid having to deal with case on platforms not requiring it */
 #define WL_SOCKET_CONNECTED  WL_SOCKET_WRITEABLE
 #endif
 

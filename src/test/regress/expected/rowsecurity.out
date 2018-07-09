@@ -2108,7 +2108,7 @@ SET SESSION AUTHORIZATION regress_rls_bob;
 INSERT INTO document VALUES (79, (SELECT cid from category WHERE cname = 'technology'), 1, 'regress_rls_bob', 'technology book, can only insert')
     ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle RETURNING *;
 ERROR:  new row violates row-level security policy for table "document"
--- UPDATE path is taken here.  Existing tuple passes, since it's cid
+-- UPDATE path is taken here.  Existing tuple passes, since its cid
 -- corresponds to "novel", but default USING qual is enforced against
 -- post-UPDATE tuple too (as always when updating with a policy that lacks an
 -- explicit WCO), and so this fails:
