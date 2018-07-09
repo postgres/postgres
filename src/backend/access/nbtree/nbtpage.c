@@ -782,9 +782,14 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 					/*
 					 * If we are generating WAL for Hot Standby then create a
 					 * WAL record that will allow us to conflict with queries
-					 * running on standby.
+					 * running on standby, in case they have snapshots older
+					 * than btpo.xact.  This can only apply if the page does
+					 * have a valid btpo.xact value, ie not if it's new.  (We
+					 * must check that because an all-zero page has no special
+					 * space.)
 					 */
-					if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
+					if (XLogStandbyInfoActive() && RelationNeedsWAL(rel) &&
+						!PageIsNew(page))
 					{
 						BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -897,7 +902,10 @@ _bt_pageinit(Page page, Size size)
  *	_bt_page_recyclable() -- Is an existing page recyclable?
  *
  * This exists to make sure _bt_getbuf and btvacuumscan have the same
- * policy about whether a page is safe to re-use.
+ * policy about whether a page is safe to re-use.  But note that _bt_getbuf
+ * knows enough to distinguish the PageIsNew condition from the other one.
+ * At some point it might be appropriate to redesign this to have a three-way
+ * result value.
  */
 bool
 _bt_page_recyclable(Page page)
