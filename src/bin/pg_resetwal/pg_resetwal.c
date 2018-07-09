@@ -933,8 +933,8 @@ RewriteControlFile(void)
 	 * Adjust fields as needed to force an empty XLOG starting at
 	 * newXlogSegNo.
 	 */
-	XLogSegNoOffsetToRecPtr(newXlogSegNo, SizeOfXLogLongPHD,
-							ControlFile.checkPointCopy.redo, WalSegSz);
+	XLogSegNoOffsetToRecPtr(newXlogSegNo, SizeOfXLogLongPHD, WalSegSz,
+							ControlFile.checkPointCopy.redo);
 	ControlFile.checkPointCopy.time = (pg_time_t) time(NULL);
 
 	ControlFile.state = DB_SHUTDOWNED;

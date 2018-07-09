@@ -248,7 +248,7 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 	XLogSegNo	targetSegNo;
 
 	XLByteToSeg(targetPagePtr, targetSegNo, WalSegSz);
-	XLogSegNoOffsetToRecPtr(targetSegNo + 1, 0, targetSegEnd, WalSegSz);
+	XLogSegNoOffsetToRecPtr(targetSegNo + 1, 0, WalSegSz, targetSegEnd);
 	targetPageOff = XLogSegmentOffset(targetPagePtr, WalSegSz);
 
 	/*

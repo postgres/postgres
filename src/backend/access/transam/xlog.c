@@ -1971,7 +1971,7 @@ XLogBytePosToRecPtr(uint64 bytepos)
 		seg_offset += fullpages * XLOG_BLCKSZ + bytesleft + SizeOfXLogShortPHD;
 	}
 
-	XLogSegNoOffsetToRecPtr(fullsegs, seg_offset, result, wal_segment_size);
+	XLogSegNoOffsetToRecPtr(fullsegs, seg_offset, wal_segment_size, result);
 
 	return result;
 }
@@ -2017,7 +2017,7 @@ XLogBytePosToEndRecPtr(uint64 bytepos)
 			seg_offset += fullpages * XLOG_BLCKSZ + bytesleft + SizeOfXLogShortPHD;
 	}
 
-	XLogSegNoOffsetToRecPtr(fullsegs, seg_offset, result, wal_segment_size);
+	XLogSegNoOffsetToRecPtr(fullsegs, seg_offset, wal_segment_size, result);
 
 	return result;
 }

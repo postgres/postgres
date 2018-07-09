@@ -352,7 +352,7 @@ FindStreamingStart(uint32 *tli)
 		if (!high_ispartial)
 			high_segno++;
 
-		XLogSegNoOffsetToRecPtr(high_segno, 0, high_ptr, WalSegSz);
+		XLogSegNoOffsetToRecPtr(high_segno, 0, WalSegSz, high_ptr);
 
 		*tli = high_tli;
 		return high_ptr;

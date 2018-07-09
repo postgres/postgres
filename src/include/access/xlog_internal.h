@@ -101,7 +101,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 #define XLogSegmentsPerXLogId(wal_segsz_bytes)	\
 	(UINT64CONST(0x100000000) / (wal_segsz_bytes))
 
-#define XLogSegNoOffsetToRecPtr(segno, offset, dest, wal_segsz_bytes) \
+#define XLogSegNoOffsetToRecPtr(segno, offset, wal_segsz_bytes, dest) \
 		(dest) = (segno) * (wal_segsz_bytes) + (offset)
 
 #define XLogSegmentOffset(xlogptr, wal_segsz_bytes)	\

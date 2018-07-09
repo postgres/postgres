@@ -2782,7 +2782,7 @@ ReorderBufferSerializedPath(char *path, ReplicationSlot *slot, TransactionId xid
 {
 	XLogRecPtr	recptr;
 
-	XLogSegNoOffsetToRecPtr(segno, 0, recptr, wal_segment_size);
+	XLogSegNoOffsetToRecPtr(segno, 0, wal_segment_size, recptr);
 
 	snprintf(path, MAXPGPATH, "pg_replslot/%s/xid-%u-lsn-%X-%X.snap",
 			 NameStr(MyReplicationSlot->data.name),
