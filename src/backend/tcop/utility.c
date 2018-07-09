@@ -1744,6 +1744,12 @@ UtilityReturnsTuples(Node *parsetree)
 {
 	switch (nodeTag(parsetree))
 	{
+		case T_CallStmt:
+			{
+				CallStmt   *stmt = (CallStmt *) parsetree;
+
+				return (stmt->funcexpr->funcresulttype == RECORDOID);
+			}
 		case T_FetchStmt:
 			{
 				FetchStmt  *stmt = (FetchStmt *) parsetree;
@@ -1794,6 +1800,9 @@ UtilityTupleDescriptor(Node *parsetree)
 {
 	switch (nodeTag(parsetree))
 	{
+		case T_CallStmt:
+			return CallStmtResultDesc((CallStmt *) parsetree);
+
 		case T_FetchStmt:
 			{
 				FetchStmt  *stmt = (FetchStmt *) parsetree;
