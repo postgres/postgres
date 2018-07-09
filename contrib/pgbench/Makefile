@@ -7,7 +7,8 @@ PROGRAM = pgbench
 OBJS	= pgbench.o
 
 PG_CPPFLAGS = -I$(libpq_srcdir)
-PG_LIBS = $(libpq_pgport) $(PTHREAD_LIBS)
+PG_LIBS_INTERNAL = $(libpq_pgport)
+PG_LIBS = $(PTHREAD_LIBS)
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

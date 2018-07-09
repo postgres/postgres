@@ -3,7 +3,7 @@
 MODULE_big = dblink
 OBJS	= dblink.o
 PG_CPPFLAGS = -I$(libpq_srcdir)
-SHLIB_LINK = $(libpq)
+SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_PREREQS = submake-libpq
 
 EXTENSION = dblink
