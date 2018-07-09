@@ -1347,7 +1347,7 @@ lreplace:;
  * (but still lock row, even though it may not satisfy estate's
  * snapshot).
  *
- * Returns true if if we're done (with or without an update), or false if
+ * Returns true if we're done (with or without an update), or false if
  * the caller must retry the INSERT from scratch.
  */
 static bool

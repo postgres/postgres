@@ -2762,7 +2762,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
-	 * If there was a argtype list on preparation, we need
+	 * If there was an argtype list on preparation, we need
 	 * an argument value list now
 	 ************************************************************/
 	if (qdesc->nargs > 0)

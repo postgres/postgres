@@ -2818,7 +2818,7 @@ Rules:
  NOTIFY rules_src_deletion
 
 --
--- Ensure a aliased target relation for insert is correctly deparsed.
+-- Ensure an aliased target relation for insert is correctly deparsed.
 --
 create rule r4 as on insert to rules_src do instead insert into rules_log AS trgt SELECT NEW.* RETURNING trgt.f1, trgt.f2;
 create rule r5 as on update to rules_src do instead UPDATE rules_log AS trgt SET tag = 'updated' WHERE trgt.f1 = new.f1;

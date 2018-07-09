@@ -1448,7 +1448,7 @@ pg_show_replication_origin_status(PG_FUNCTION_ARGS)
 	int			i;
 #define REPLICATION_ORIGIN_PROGRESS_COLS 4
 
-	/* we we want to return 0 rows if slot is set to zero */
+	/* we want to return 0 rows if slot is set to zero */
 	replorigin_check_prerequisites(false, true);
 
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))

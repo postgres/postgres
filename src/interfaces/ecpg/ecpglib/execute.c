@@ -1309,8 +1309,8 @@ ecpg_build_params(struct statement *stmt)
 		if ((position = next_insert(stmt->command, position, stmt->questionmarks, std_strings) + 1) == 0)
 		{
 			/*
-			 * We have an argument but we dont have the matched up placeholder
-			 * in the string
+			 * We have an argument but we don't have the matched up
+			 * placeholder in the string
 			 */
 			ecpg_raise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS,
 					   ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS,
