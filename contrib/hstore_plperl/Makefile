@@ -27,16 +27,18 @@ endif
 # dependency.  This does preclude pgxs builds.
 ifeq ($(PORTNAME), aix)
 rpathdir = $(pkglibdir):$(perl_archlibexp)/CORE
-SHLIB_LINK += ../hstore/libhstore.exp $(perl_embed_ldflags)
+SHLIB_LINK_INTERNAL += ../hstore/libhstore.exp
+SHLIB_LINK += $(perl_embed_ldflags)
 endif
 ifeq ($(PORTNAME), win32)
 # these settings are the same as for plperl
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID -Wno-comment
-SHLIB_LINK += ../hstore/libhstore.a $(sort $(wildcard ../../src/pl/plperl/libperl*.a))
+SHLIB_LINK_INTERNAL += ../hstore/libhstore.a $(sort $(wildcard ../../src/pl/plperl/libperl*.a))
 endif
 
 ifeq ($(PORTNAME), cygwin)
-SHLIB_LINK += -L../hstore -l hstore $(perl_embed_ldflags)
+SHLIB_LINK_INTERNAL += -L../hstore -l hstore
+SHLIB_LINK += $(perl_embed_ldflags)
 endif
 
 # As with plperl we need to make sure that the CORE directory is included

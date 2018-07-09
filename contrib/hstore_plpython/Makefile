@@ -27,15 +27,17 @@ endif
 # dependency.  This does preclude pgxs builds.
 ifeq ($(PORTNAME), aix)
 rpathdir = $(pkglibdir):$(python_libdir)
-SHLIB_LINK += ../hstore/libhstore.exp $(python_libspec) $(python_additional_libs) $(sort $(wildcard ../../src/pl/plpython/libplpython*.exp))
+SHLIB_LINK_INTERNAL += ../hstore/libhstore.exp $(sort $(wildcard ../../src/pl/plpython/libplpython*.exp))
+SHLIB_LINK += $(python_libspec) $(python_additional_libs)
 endif
 ifeq ($(PORTNAME), win32)
-SHLIB_LINK += ../hstore/libhstore.a $(sort $(wildcard ../../src/pl/plpython/libpython*.a)) $(sort $(wildcard ../../src/pl/plpython/libplpython*.a))
+SHLIB_LINK_INTERNAL += ../hstore/libhstore.a $(sort $(wildcard ../../src/pl/plpython/libplpython*.a)) $(sort $(wildcard ../../src/pl/plpython/libpython*.a))
 endif
 
 ifeq ($(PORTNAME), cygwin)
-SHLIB_LINK += -L../hstore -lhstore -L../../src/pl/plpython \
-	-lplpython$(python_majorversion) $(python_libspec)
+SHLIB_LINK_INTERNAL += -L../hstore -lhstore -L../../src/pl/plpython \
+	-lplpython$(python_majorversion)
+SHLIB_LINK += $(python_libspec)
 endif
 
 REGRESS_OPTS += --load-extension=hstore

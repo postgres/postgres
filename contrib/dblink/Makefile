@@ -3,7 +3,7 @@
 MODULE_big = dblink
 OBJS	= dblink.o $(WIN32RES)
 PG_CPPFLAGS = -I$(libpq_srcdir)
-SHLIB_LINK = $(libpq)
+SHLIB_LINK_INTERNAL = $(libpq)
 
 EXTENSION = dblink
 DATA = dblink--1.2.sql dblink--1.1--1.2.sql dblink--1.0--1.1.sql \
