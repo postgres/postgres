@@ -36,7 +36,7 @@ init_tablespaces(void)
  * get_tablespace_paths()
  *
  * Scans pg_tablespace and returns a malloc'ed array of all tablespace
- * paths. Its the caller's responsibility to free the array.
+ * paths. It's the caller's responsibility to free the array.
  */
 static void
 get_tablespace_paths(void)
