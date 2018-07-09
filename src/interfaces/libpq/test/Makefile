@@ -3,11 +3,11 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 ifeq ($(PORTNAME), win32)
-LDLIBS += -lws2_32
+LDFLAGS += -lws2_32
 endif
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
-override LDLIBS := $(libpq_pgport) $(LDLIBS)
+LDFLAGS_INTERNAL += $(libpq_pgport)
 
 PROGS = uri-regress
 
