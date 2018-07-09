@@ -13,7 +13,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
-override LDFLAGS := $(libpq_pgport) $(LDFLAGS)
+LDFLAGS_INTERNAL += $(libpq_pgport)
 
 OBJS= findoidjoins.o
 

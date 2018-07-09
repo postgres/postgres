@@ -25,7 +25,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 # Need to recompile any libpgport object files
 LIBS := $(filter-out -lpgport, $(LIBS))
 
-SHLIB_LINK += -lm
+SHLIB_LINK += $(filter -lm, $(LIBS))
 
 SHLIB_EXPORTS = exports.txt
 
