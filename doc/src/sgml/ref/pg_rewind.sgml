@@ -172,6 +172,22 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-N</option></term>
+      <term><option>--no-sync</option></term>
+      <listitem>
+       <para>
+        By default, <command>pg_rewind</command> will wait for all files
+        to be written safely to disk.  This option causes
+        <command>pg_rewind</command> to return without waiting, which is
+        faster, but means that a subsequent operating system crash can leave
+        the synchronized data folder corrupt.  Generally, this option is
+        useful for testing but should not be used when creating a production
+        installation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-P</option></term>
       <term><option>--progress</option></term>
       <listitem>
