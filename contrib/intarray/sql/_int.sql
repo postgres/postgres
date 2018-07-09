@@ -30,6 +30,10 @@ SELECT '{123,623,445}'::int[] | 1623;
 SELECT '{123,623,445}'::int[] | '{1623,623}';
 SELECT '{123,623,445}'::int[] & '{1623,623}';
 SELECT '{-1,3,1}'::int[] & '{1,2}';
+SELECT '{1}'::int[] & '{2}'::int[];
+SELECT array_dims('{1}'::int[] & '{2}'::int[]);
+SELECT ('{1}'::int[] & '{2}'::int[]) = '{}'::int[];
+SELECT ('{}'::int[] & '{}'::int[]) = '{}'::int[];
 
 
 --test query_int
