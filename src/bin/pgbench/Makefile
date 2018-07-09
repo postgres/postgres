@@ -19,7 +19,7 @@ endif
 all: pgbench
 
 pgbench: $(OBJS) | submake-libpq submake-libpgport
-	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(PTHREAD_LIBS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(PTHREAD_LIBS) $(LIBS) -o $@$(X)
 
 # exprscan is compiled as part of exprparse
 exprparse.o: exprscan.c
