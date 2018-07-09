@@ -102,7 +102,7 @@ pg_bswap64(uint64 x)
 
 
 /*
- * Portable and fast equivalents for for ntohs, ntohl, htons, htonl,
+ * Portable and fast equivalents for ntohs, ntohl, htons, htonl,
  * additionally extended to 64 bits.
  */
 #ifdef WORDS_BIGENDIAN

@@ -6908,8 +6908,8 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 							  scanjoin_targets_contain_srfs);
 
 	/*
-	 * If the relation is partitioned, recurseively apply the same changes to
-	 * all partitions and generate new Append paths. Since Append is not
+	 * If the relation is partitioned, recursively apply the same changes to
+	 * all partitions and generate new Append paths.  Since Append is not
 	 * projection-capable, that might save a separate Result node, and it also
 	 * is important for partitionwise aggregate.
 	 */

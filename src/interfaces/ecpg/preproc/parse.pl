@@ -144,7 +144,7 @@ sub main
 		# flds are the fields to use. These may start with a '$' - in
 		# which case they are the result of a previous non-terminal
 		#
-		# if they dont start with a '$' then they are token name
+		# if they don't start with a '$' then they are token name
 		#
 		# len is the number of fields in flds...
 		# leadin is the padding to apply at the beginning (just use for formatting)
@@ -223,7 +223,7 @@ sub main
 			next line;
 		}
 
-		# Dont worry about anything if we're not in the right section of gram.y
+		# Don't worry about anything if we're not in the right section of gram.y
 		if ($yaccmode != 1)
 		{
 			next line;

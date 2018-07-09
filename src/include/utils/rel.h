@@ -218,7 +218,7 @@ typedef struct ForeignKeyCacheInfo
 } ForeignKeyCacheInfo;
 
 /*
- * Options common for all all indexes
+ * Options common for all indexes
  */
 typedef struct GenericIndexOpts
 {

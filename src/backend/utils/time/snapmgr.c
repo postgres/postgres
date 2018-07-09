@@ -1087,8 +1087,8 @@ AtEOXact_Snapshot(bool isCommit, bool resetXmin)
 		 * it's too late to abort the transaction, and (2) leaving a leaked
 		 * file around has little real consequence anyway.
 		 *
-		 * We also also need to remove the snapshots from RegisteredSnapshots
-		 * to prevent a warning below.
+		 * We also need to remove the snapshots from RegisteredSnapshots to
+		 * prevent a warning below.
 		 *
 		 * As with the FirstXactSnapshot, we don't need to free resources of
 		 * the snapshot iself as it will go away with the memory context.

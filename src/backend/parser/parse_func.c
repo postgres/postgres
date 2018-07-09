@@ -2195,7 +2195,7 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool noError)
 			else if (func->args_unspecified)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("could not find a aggregate named \"%s\"",
+						 errmsg("could not find an aggregate named \"%s\"",
 								NameListToString(func->objname))));
 			else if (argcount == 0)
 				ereport(ERROR,

@@ -676,7 +676,7 @@ typedef struct TupleHashTableData
 	/* The following fields are set transiently for each table search: */
 	TupleTableSlot *inputslot;	/* current input tuple's slot */
 	FmgrInfo   *in_hash_funcs;	/* hash functions for input datatype(s) */
-	ExprState  *cur_eq_func;	/* comparator for for input vs. table */
+	ExprState  *cur_eq_func;	/* comparator for input vs. table */
 	uint32		hash_iv;		/* hash-function IV */
 	ExprContext *exprcontext;	/* expression context */
 }			TupleHashTableData;

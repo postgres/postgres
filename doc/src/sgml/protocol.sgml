@@ -6773,7 +6773,7 @@ Delete
 <listitem>
 <para>
                 Identifies the following TupleData message as a old tuple.
-                This field is is present if the table in which the delete has
+                This field is present if the table in which the delete has
                 happened has REPLICA IDENTITY set to FULL.
 </para>
 </listitem>

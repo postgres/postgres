@@ -3341,7 +3341,7 @@ ExplainPropertyListNested(const char *qlabel, List *data, ExplainState *es)
  * If "numeric" is true, the value is a number (or other value that
  * doesn't need quoting in JSON).
  *
- * If unit is is non-NULL the text format will display it after the value.
+ * If unit is non-NULL the text format will display it after the value.
  *
  * This usually should not be invoked directly, but via one of the datatype
  * specific routines ExplainPropertyText, ExplainPropertyInteger, etc.
