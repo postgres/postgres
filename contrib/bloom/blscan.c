@@ -76,7 +76,7 @@ blendscan(IndexScanDesc scan)
 }
 
 /*
- * Insert all matching tuples into to a bitmap.
+ * Insert all matching tuples into a bitmap.
  */
 int64
 blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)

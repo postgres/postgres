@@ -1,4 +1,4 @@
-# To test successful data directory creation with a additional feature, first
+# To test successful data directory creation with an additional feature, first
 # try to elaborate the "successful creation" test instead of adding a test.
 # Successful initdb consumes much time and I/O.
 
