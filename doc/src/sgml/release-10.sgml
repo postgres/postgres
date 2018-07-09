@@ -4065,6 +4065,17 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
        </para>
       </listitem>
 
+      <listitem>
+<!--
+This was disabled in the PG 9.6 branch so there is no commit here.
+-->
+       <para>
+        Enable parallelism by default by changing the default setting
+        of <xref linkend="guc-max-parallel-workers-per-gather"/> to
+        <literal>2</literal>.
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
