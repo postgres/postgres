@@ -151,6 +151,30 @@ SELECT '{-1,3,1}'::int[] & '{1,2}';
  {1}
 (1 row)
 
+SELECT '{1}'::int[] & '{2}'::int[];
+ ?column? 
+----------
+ {}
+(1 row)
+
+SELECT array_dims('{1}'::int[] & '{2}'::int[]);
+ array_dims 
+------------
+ 
+(1 row)
+
+SELECT ('{1}'::int[] & '{2}'::int[]) = '{}'::int[];
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT ('{}'::int[] & '{}'::int[]) = '{}'::int[];
+ ?column? 
+----------
+ t
+(1 row)
+
 --test query_int
 SELECT '1'::query_int;
  query_int 
