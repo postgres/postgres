@@ -483,6 +483,12 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 	/* Acquire the slot so we "own" it */
 	ReplicationSlotAcquire(NameStr(*slotname), true);
 
+	/* A slot whose restart_lsn has never been reserved cannot be advanced */
+	if (XLogRecPtrIsInvalid(MyReplicationSlot->data.restart_lsn))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot advance replication slot that has not previously reserved WAL")));
+
 	/*
 	 * Check if the slot is not moving backwards.  Physical slots rely simply
 	 * on restart_lsn as a minimum point, while logical slots have confirmed
@@ -495,14 +501,11 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 		minlsn = MyReplicationSlot->data.restart_lsn;
 
 	if (moveto < minlsn)
-	{
-		ReplicationSlotRelease();
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot move slot to %X/%X, minimum is %X/%X",
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot advance replication slot to %X/%X, minimum is %X/%X",
 						(uint32) (moveto >> 32), (uint32) moveto,
 						(uint32) (minlsn >> 32), (uint32) minlsn)));
-	}
 
 	/* Do the actual slot update, depending on the slot type */
 	if (OidIsValid(MyReplicationSlot->data.database))

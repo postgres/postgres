@@ -9867,7 +9867,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry></entry>
       <entry>The address (<literal>LSN</literal>) of oldest WAL which still
       might be required by the consumer of this slot and thus won't be
-      automatically removed during checkpoints.
+      automatically removed during checkpoints.  <literal>NULL</literal>
+      if the <literal>LSN</literal> of this slot has never been reserved.
       </entry>
      </row>
 

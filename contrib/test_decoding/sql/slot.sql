@@ -68,3 +68,9 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot1', 'test_
 -- both should error as they should be dropped on error
 SELECT pg_drop_replication_slot('regression_slot1');
 SELECT pg_drop_replication_slot('regression_slot2');
+
+-- slot advance with physical slot, error with non-reserved slot
+SELECT slot_name FROM pg_create_physical_replication_slot('regression_slot3');
+SELECT pg_replication_slot_advance('regression_slot3', '0/0'); -- invalid LSN
+SELECT pg_replication_slot_advance('regression_slot3', '0/1'); -- error
+SELECT pg_drop_replication_slot('regression_slot3');

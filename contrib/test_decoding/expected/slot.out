@@ -131,3 +131,20 @@ SELECT pg_drop_replication_slot('regression_slot1');
 ERROR:  replication slot "regression_slot1" does not exist
 SELECT pg_drop_replication_slot('regression_slot2');
 ERROR:  replication slot "regression_slot2" does not exist
+-- slot advance with physical slot, error with non-reserved slot
+SELECT slot_name FROM pg_create_physical_replication_slot('regression_slot3');
+    slot_name     
+------------------
+ regression_slot3
+(1 row)
+
+SELECT pg_replication_slot_advance('regression_slot3', '0/0'); -- invalid LSN
+ERROR:  invalid target wal lsn
+SELECT pg_replication_slot_advance('regression_slot3', '0/1'); -- error
+ERROR:  cannot advance replication slot that has not previously reserved WAL
+SELECT pg_drop_replication_slot('regression_slot3');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
