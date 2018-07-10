@@ -291,6 +291,16 @@ DROP TRIGGER delete_a ON main_table;
 DROP TRIGGER insert_when ON main_table;
 DROP TRIGGER delete_when ON main_table;
 
+-- Test WHEN condition accessing system columns.
+create table table_with_oids(a int) with oids;
+insert into table_with_oids values (1);
+create trigger oid_unchanged_trig after update on table_with_oids
+	for each row
+	when (new.oid = old.oid AND new.oid <> 0)
+	execute procedure trigger_func('after_upd_oid_unchanged');
+update table_with_oids set a = a + 1;
+drop table table_with_oids;
+
 -- Test column-level triggers
 DROP TRIGGER after_upd_row_trig ON main_table;
 
