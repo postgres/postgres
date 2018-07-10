@@ -588,7 +588,7 @@ AC_DEFUN([PGAC_HAVE_GCC__SYNC_INT32_CAS],
   [pgac_cv_gcc_sync_int32_cas="yes"],
   [pgac_cv_gcc_sync_int32_cas="no"])])
 if test x"$pgac_cv_gcc_sync_int32_cas" = x"yes"; then
-  AC_DEFINE(HAVE_GCC__SYNC_INT32_CAS, 1, [Define to 1 if you have __sync_compare_and_swap(int *, int, int).])
+  AC_DEFINE(HAVE_GCC__SYNC_INT32_CAS, 1, [Define to 1 if you have __sync_val_compare_and_swap(int *, int, int).])
 fi])# PGAC_HAVE_GCC__SYNC_INT32_CAS
 
 # PGAC_HAVE_GCC__SYNC_INT64_CAS
@@ -603,7 +603,7 @@ AC_DEFUN([PGAC_HAVE_GCC__SYNC_INT64_CAS],
   [pgac_cv_gcc_sync_int64_cas="yes"],
   [pgac_cv_gcc_sync_int64_cas="no"])])
 if test x"$pgac_cv_gcc_sync_int64_cas" = x"yes"; then
-  AC_DEFINE(HAVE_GCC__SYNC_INT64_CAS, 1, [Define to 1 if you have __sync_compare_and_swap(int64 *, int64, int64).])
+  AC_DEFINE(HAVE_GCC__SYNC_INT64_CAS, 1, [Define to 1 if you have __sync_val_compare_and_swap(int64 *, int64, int64).])
 fi])# PGAC_HAVE_GCC__SYNC_INT64_CAS
 
 # PGAC_HAVE_GCC__ATOMIC_INT32_CAS
