@@ -235,13 +235,14 @@
 /* Define to 1 if you have __sync_lock_test_and_set(char *) and friends. */
 #undef HAVE_GCC__SYNC_CHAR_TAS
 
-/* Define to 1 if you have __sync_compare_and_swap(int *, int, int). */
+/* Define to 1 if you have __sync_val_compare_and_swap(int *, int, int). */
 #undef HAVE_GCC__SYNC_INT32_CAS
 
 /* Define to 1 if you have __sync_lock_test_and_set(int *) and friends. */
 #undef HAVE_GCC__SYNC_INT32_TAS
 
-/* Define to 1 if you have __sync_compare_and_swap(int64 *, int64, int64). */
+/* Define to 1 if you have __sync_val_compare_and_swap(int64 *, int64, int64).
+   */
 #undef HAVE_GCC__SYNC_INT64_CAS
 
 /* Define to 1 if you have the `getaddrinfo' function. */
