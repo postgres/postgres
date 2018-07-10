@@ -150,10 +150,6 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 
 	Assert(!IsUnderPostmaster);
 
-	/* If dynamic shared memory is disabled, there's nothing to do. */
-	if (dynamic_shared_memory_type == DSM_IMPL_NONE)
-		return;
-
 	/*
 	 * If we're using the mmap implementations, clean up any leftovers.
 	 * Cleanup isn't needed on Windows, and happens earlier in startup for
@@ -218,10 +214,6 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 	uint32		nitems;
 	uint32		i;
 	dsm_control_header *old_control;
-
-	/* If dynamic shared memory is disabled, there's nothing to do. */
-	if (dynamic_shared_memory_type == DSM_IMPL_NONE)
-		return;
 
 	/*
 	 * Try to attach the segment.  If this fails, it probably just means that
@@ -391,13 +383,6 @@ dsm_postmaster_shutdown(int code, Datum arg)
 static void
 dsm_backend_startup(void)
 {
-	/* If dynamic shared memory is disabled, reject this. */
-	if (dynamic_shared_memory_type == DSM_IMPL_NONE)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("dynamic shared memory is disabled"),
-				 errhint("Set dynamic_shared_memory_type to a value other than \"none\".")));
-
 #ifdef EXEC_BACKEND
 	{
 		void	   *control_address = NULL;

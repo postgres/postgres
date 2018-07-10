@@ -124,14 +124,6 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         configured via <varname>max_parallel_workers_per_gather</varname>.
       </para>
     </listitem>
-
-    <listitem>
-      <para>
-        <xref linkend="guc-dynamic-shared-memory-type"/> must be set to a
-        value other than <literal>none</literal>.  Parallel query requires dynamic
-        shared memory in order to pass data between cooperating processes.
-      </para>
-    </listitem>
   </itemizedlist>
 
   <para>

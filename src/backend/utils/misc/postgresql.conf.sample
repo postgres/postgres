@@ -133,7 +133,6 @@
 					#   sysv
 					#   windows
 					#   mmap
-					# use none to disable dynamic shared memory
 					# (change requires restart)
 
 # - Disk -

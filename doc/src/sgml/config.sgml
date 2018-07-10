@@ -1662,9 +1662,9 @@ include_dir 'conf.d'
         should use.  Possible values are <literal>posix</literal> (for POSIX shared
         memory allocated using <literal>shm_open</literal>), <literal>sysv</literal>
         (for System V shared memory allocated via <literal>shmget</literal>),
-        <literal>windows</literal> (for Windows shared memory), <literal>mmap</literal>
-        (to simulate shared memory using memory-mapped files stored in the
-        data directory), and <literal>none</literal> (to disable this feature).
+        <literal>windows</literal> (for Windows shared memory),
+        and <literal>mmap</literal> (to simulate shared memory using
+        memory-mapped files stored in the data directory).
         Not all values are supported on all platforms; the first supported
         option is the default for that platform.  The use of the
         <literal>mmap</literal> option, which is not the default on any platform,

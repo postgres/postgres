@@ -106,7 +106,6 @@ const struct config_enum_entry dynamic_shared_memory_options[] = {
 #ifdef USE_DSM_MMAP
 	{"mmap", DSM_IMPL_MMAP, false},
 #endif
-	{"none", DSM_IMPL_NONE, false},
 	{NULL, 0, false}
 };
 
@@ -210,8 +209,6 @@ dsm_impl_can_resize(void)
 {
 	switch (dynamic_shared_memory_type)
 	{
-		case DSM_IMPL_NONE:
-			return false;
 		case DSM_IMPL_POSIX:
 			return true;
 		case DSM_IMPL_SYSV:

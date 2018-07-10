@@ -162,13 +162,6 @@ CreateParallelContext(const char *library_name, const char *function_name,
 	Assert(nworkers >= 0);
 
 	/*
-	 * If dynamic shared memory is not available, we won't be able to use
-	 * background workers.
-	 */
-	if (dynamic_shared_memory_type == DSM_IMPL_NONE)
-		nworkers = 0;
-
-	/*
 	 * If we are running under serializable isolation, we can't use parallel
 	 * workers, at least not until somebody enhances that mechanism to be
 	 * parallel-aware.  Utility statement callers may ask us to ignore this

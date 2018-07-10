@@ -335,7 +335,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 */
 	if ((cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
 		IsUnderPostmaster &&
-		dynamic_shared_memory_type != DSM_IMPL_NONE &&
 		parse->commandType == CMD_SELECT &&
 		!parse->hasModifyingCTE &&
 		max_parallel_workers_per_gather > 0 &&
@@ -6050,8 +6049,7 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 	double		allvisfrac;
 
 	/* Return immediately when parallelism disabled */
-	if (dynamic_shared_memory_type == DSM_IMPL_NONE ||
-		max_parallel_maintenance_workers == 0)
+	if (max_parallel_maintenance_workers == 0)
 		return 0;
 
 	/* Set up largely-dummy planner state */
