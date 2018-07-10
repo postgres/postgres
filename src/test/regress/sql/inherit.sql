@@ -683,3 +683,48 @@ insert into parted_minmax values (1,'12345');
 explain (costs off) select min(a), max(a) from parted_minmax where b = '12345';
 select min(a), max(a) from parted_minmax where b = '12345';
 drop table parted_minmax;
+
+
+--
+-- check that pruning works properly when the partition key is of a
+-- pseudotype
+--
+
+-- array type list partition key
+create table pp_arrpart (a int[]) partition by list (a);
+create table pp_arrpart1 partition of pp_arrpart for values in ('{1}');
+create table pp_arrpart2 partition of pp_arrpart for values in ('{2, 3}', '{4, 5}');
+explain (costs off) select * from pp_arrpart where a = '{1}';
+explain (costs off) select * from pp_arrpart where a = '{1, 2}';
+explain (costs off) select * from pp_arrpart where a in ('{4, 5}', '{1}');
+explain (costs off) update pp_arrpart set a = a where a = '{1}';
+explain (costs off) delete from pp_arrpart where a = '{1}';
+drop table pp_arrpart;
+
+-- enum type list partition key
+create type pp_colors as enum ('green', 'blue', 'black');
+create table pp_enumpart (a pp_colors) partition by list (a);
+create table pp_enumpart_green partition of pp_enumpart for values in ('green');
+create table pp_enumpart_blue partition of pp_enumpart for values in ('blue');
+explain (costs off) select * from pp_enumpart where a = 'blue';
+explain (costs off) select * from pp_enumpart where a = 'black';
+drop table pp_enumpart;
+drop type pp_colors;
+
+-- record type as partition key
+create type pp_rectype as (a int, b int);
+create table pp_recpart (a pp_rectype) partition by list (a);
+create table pp_recpart_11 partition of pp_recpart for values in ('(1,1)');
+create table pp_recpart_23 partition of pp_recpart for values in ('(2,3)');
+explain (costs off) select * from pp_recpart where a = '(1,1)'::pp_rectype;
+explain (costs off) select * from pp_recpart where a = '(1,2)'::pp_rectype;
+drop table pp_recpart;
+drop type pp_rectype;
+
+-- range type partition key
+create table pp_intrangepart (a int4range) partition by list (a);
+create table pp_intrangepart12 partition of pp_intrangepart for values in ('[1,2]');
+create table pp_intrangepart2inf partition of pp_intrangepart for values in ('[2,)');
+explain (costs off) select * from pp_intrangepart where a = '[1,2]'::int4range;
+explain (costs off) select * from pp_intrangepart where a = '(1,2)'::int4range;
+drop table pp_intrangepart;
