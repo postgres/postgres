@@ -2817,6 +2817,24 @@ explain (costs off) select * from pp_arrpart where a in ('{4, 5}', '{1}');
          Filter: ((a = '{4,5}'::integer[]) OR (a = '{1}'::integer[]))
 (5 rows)
 
+explain (costs off) update pp_arrpart set a = a where a = '{1}';
+               QUERY PLAN               
+----------------------------------------
+ Update on pp_arrpart
+   Update on pp_arrpart1
+   ->  Seq Scan on pp_arrpart1
+         Filter: (a = '{1}'::integer[])
+(4 rows)
+
+explain (costs off) delete from pp_arrpart where a = '{1}';
+               QUERY PLAN               
+----------------------------------------
+ Delete on pp_arrpart
+   Delete on pp_arrpart1
+   ->  Seq Scan on pp_arrpart1
+         Filter: (a = '{1}'::integer[])
+(4 rows)
+
 drop table pp_arrpart;
 -- array type hash partition key
 create table pph_arrpart (a int[]) partition by hash (a);
