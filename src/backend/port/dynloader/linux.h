@@ -15,12 +15,7 @@
 #define PORT_PROTOS_H
 
 #include "utils/dynamic_loader.h"	/* pgrminclude ignore */
-#ifdef HAVE_DLOPEN
 #include <dlfcn.h>
-#endif
-
-
-#ifdef HAVE_DLOPEN
 
 /*
  * In some older systems, the RTLD_NOW flag isn't defined and the mode
@@ -39,6 +34,5 @@
 #define pg_dlsym		dlsym
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
-#endif							/* HAVE_DLOPEN */
 
 #endif							/* PORT_PROTOS_H */
