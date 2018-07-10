@@ -721,6 +721,8 @@ create table pp_arrpart2 partition of pp_arrpart for values in ('{2, 3}', '{4, 5
 explain (costs off) select * from pp_arrpart where a = '{1}';
 explain (costs off) select * from pp_arrpart where a = '{1, 2}';
 explain (costs off) select * from pp_arrpart where a in ('{4, 5}', '{1}');
+explain (costs off) update pp_arrpart set a = a where a = '{1}';
+explain (costs off) delete from pp_arrpart where a = '{1}';
 drop table pp_arrpart;
 
 -- array type hash partition key

@@ -1144,8 +1144,12 @@ get_partition_bound_num_indexes(PartitionBoundInfo bound)
 /*
  * get_partition_operator
  *
- * Return oid of the operator of given strategy for a given partition key
- * column.
+ * Return oid of the operator of the given strategy for the given partition
+ * key column.  It is assumed that the partitioning key is of the same type as
+ * the chosen partitioning opclass, or at least binary-compatible.  In the
+ * latter case, *need_relabel is set to true if the opclass is not of a
+ * polymorphic type (indicating a RelabelType node needed on top), otherwise
+ * false.
  */
 static Oid
 get_partition_operator(PartitionKey key, int col, StrategyNumber strategy,
@@ -1154,40 +1158,26 @@ get_partition_operator(PartitionKey key, int col, StrategyNumber strategy,
 	Oid			operoid;
 
 	/*
-	 * First check if there exists an operator of the given strategy, with
-	 * this column's type as both its lefttype and righttype, in the
-	 * partitioning operator family specified for the column.
+	 * Get the operator in the partitioning opfamily using the opclass'
+	 * declared input type as both left- and righttype.
 	 */
 	operoid = get_opfamily_member(key->partopfamily[col],
-								  key->parttypid[col],
-								  key->parttypid[col],
+								  key->partopcintype[col],
+								  key->partopcintype[col],
 								  strategy);
+	if (!OidIsValid(operoid))
+		elog(ERROR, "missing operator %d(%u,%u) in partition opfamily %u",
+			 strategy, key->partopcintype[col], key->partopcintype[col],
+			 key->partopfamily[col]);
 
 	/*
-	 * If one doesn't exist, we must resort to using an operator in the same
-	 * operator family but with the operator class declared input type.  It is
-	 * OK to do so, because the column's type is known to be binary-coercible
-	 * with the operator class input type (otherwise, the operator class in
-	 * question would not have been accepted as the partitioning operator
-	 * class).  We must however inform the caller to wrap the non-Const
-	 * expression with a RelabelType node to denote the implicit coercion. It
-	 * ensures that the resulting expression structurally matches similarly
-	 * processed expressions within the optimizer.
+	 * If the partition key column is not of the same type as the operator
+	 * class and not polymorphic, tell caller to wrap the non-Const expression
+	 * in a RelabelType.  This matches what parse_coerce.c does.
 	 */
-	if (!OidIsValid(operoid))
-	{
-		operoid = get_opfamily_member(key->partopfamily[col],
-									  key->partopcintype[col],
-									  key->partopcintype[col],
-									  strategy);
-		if (!OidIsValid(operoid))
-			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
-				 strategy, key->partopcintype[col], key->partopcintype[col],
-				 key->partopfamily[col]);
-		*need_relabel = true;
-	}
-	else
-		*need_relabel = false;
+	*need_relabel = (key->parttypid[col] != key->partopcintype[col] &&
+					 key->partopcintype[col] != RECORDOID &&
+					 !IsPolymorphicType(key->partopcintype[col]));
 
 	return operoid;
 }
