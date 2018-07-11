@@ -579,10 +579,10 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 			tlist = copyObject(((IndexPath *) best_path)->indexinfo->indextlist);
 
 			/*
-			 * Transfer any sortgroupref data to the replacement tlist, unless
-			 * we don't care because the gating Result will handle it.
+			 * Transfer sortgroupref data to the replacement tlist, if
+			 * requested (use_physical_tlist checked that this will work).
 			 */
-			if (!gating_clauses)
+			if (flags & CP_LABEL_TLIST)
 				apply_pathtarget_labeling_to_tlist(tlist, best_path->pathtarget);
 		}
 		else
@@ -596,7 +596,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 			else
 			{
 				/* As above, transfer sortgroupref data to replacement tlist */
-				if (!gating_clauses)
+				if (flags & CP_LABEL_TLIST)
 					apply_pathtarget_labeling_to_tlist(tlist, best_path->pathtarget);
 			}
 		}
@@ -1639,7 +1639,7 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 		 */
 		subplan = create_plan_recurse(root, best_path->subpath, 0);
 		tlist = subplan->targetlist;
-		if ((flags & CP_LABEL_TLIST) != 0)
+		if (flags & CP_LABEL_TLIST)
 			apply_pathtarget_labeling_to_tlist(tlist,
 											   best_path->path.pathtarget);
 	}
