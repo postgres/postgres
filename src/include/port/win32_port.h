@@ -502,7 +502,14 @@ typedef unsigned short mode_t;
 #define W_OK 2
 #define R_OK 4
 
+/*
+ * isinf() and isnan() should per spec be in <math.h>, but MSVC older than
+ * 2013 does not have them there.  It does have _fpclass() and _isnan(), but
+ * they're in <float.h>, so include that here even though it means float.h
+ * percolates to our whole tree.  Recent versions don't require any of this.
+ */
 #if (_MSC_VER < 1800)
+#include <float.h>
 #define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) || (_fpclass(x) == _FPCLASS_NINF))
 #define isnan(x) _isnan(x)
 #endif

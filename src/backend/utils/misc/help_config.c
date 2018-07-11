@@ -16,7 +16,6 @@
  */
 #include "postgres.h"
 
-#include <float.h>
 #include <limits.h>
 #include <unistd.h>
 

@@ -16,7 +16,6 @@
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
-#include <float.h>
 #include <math.h>
 
 #include "catalog/pg_type_d.h"

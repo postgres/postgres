@@ -13,7 +13,6 @@
  */
 #include "postgres.h"
 
-#include <float.h>
 #include <math.h>
 
 #include "access/gist_private.h"

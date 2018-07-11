@@ -1,6 +1,5 @@
 #include "postgres.h"
 
-#include <float.h>
 #include <math.h>
 
 /* Defined by Perl */

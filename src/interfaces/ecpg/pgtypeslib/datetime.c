@@ -4,7 +4,6 @@
 
 #include <time.h>
 #include <ctype.h>
-#include <float.h>
 #include <limits.h>
 
 #include "extern.h"

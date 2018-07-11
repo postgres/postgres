@@ -33,9 +33,6 @@
 #include "c.h"
 
 #include <ctype.h>
-#ifdef _MSC_VER
-#include <float.h>				/* for _isnan */
-#endif
 #include <limits.h>
 #include <math.h>
 #ifndef WIN32
