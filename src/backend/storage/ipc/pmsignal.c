@@ -379,6 +379,9 @@ PostmasterDeathSignalInit(void)
 #if defined(PR_SET_PDEATHSIG)
 	if (prctl(PR_SET_PDEATHSIG, signum) < 0)
 		elog(ERROR, "could not request parent death signal: %m");
+#elif defined(PROC_PDEATHSIG_CTL)
+	if (procctl(P_PID, 0, PROC_PDEATHSIG_CTL, &signum) < 0)
+		elog(ERROR, "could not request parent death signal: %m");
 #else
 #error "USE_POSTMASTER_DEATH_SIGNAL set, but there is no mechanism to request the signal"
 #endif
