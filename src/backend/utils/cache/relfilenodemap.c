@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/backend/utils/cache/relfilenode.c
+ *	  src/backend/utils/cache/relfilenodemap.c
  *
  *-------------------------------------------------------------------------
  */

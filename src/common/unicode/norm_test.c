@@ -5,7 +5,7 @@
  * Portions Copyright (c) 2017-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/common/unicode_norm.c
+ *	  src/common/unicode/norm_test.c
  *
  *-------------------------------------------------------------------------
  */

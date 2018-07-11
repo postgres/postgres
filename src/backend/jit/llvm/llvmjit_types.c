@@ -19,7 +19,7 @@
  * Copyright (c) 2016-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/lib/llvmjit_types.c
+ *	  src/backend/jit/llvm/llvmjit_types.c
  *
  *-------------------------------------------------------------------------
  */

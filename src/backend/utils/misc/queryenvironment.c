@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/backend/utils/misc/queryenvironment.c
+ *	  src/backend/utils/misc/queryenvironment.c
  *
  *-------------------------------------------------------------------------
  */

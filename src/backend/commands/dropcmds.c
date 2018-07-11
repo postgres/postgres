@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/catalog/dropcmds.c
+ *	  src/backend/commands/dropcmds.c
  *
  *-------------------------------------------------------------------------
  */

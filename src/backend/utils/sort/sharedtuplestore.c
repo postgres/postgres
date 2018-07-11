@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/backend/util/sort/sharedtuplestore.c
+ *	  src/backend/utils/sort/sharedtuplestore.c
  *
  *-------------------------------------------------------------------------
  */
