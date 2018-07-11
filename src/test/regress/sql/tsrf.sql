@@ -88,6 +88,11 @@ SELECT dataa, datab b, generate_series(1,2) g, count(*) FROM few GROUP BY CUBE(d
 SELECT dataa, datab b, generate_series(1,2) g, count(*) FROM few GROUP BY CUBE(dataa, datab, g) ORDER BY g;
 reset enable_hashagg;
 
+-- case with degenerate ORDER BY
+explain (verbose, costs off)
+select 'foo' as f, generate_series(1,2) as g from few order by 1;
+select 'foo' as f, generate_series(1,2) as g from few order by 1;
+
 -- data modification
 CREATE TABLE fewmore AS SELECT generate_series(1,3) AS data;
 INSERT INTO fewmore VALUES(generate_series(4,5));
