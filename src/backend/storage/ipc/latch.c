@@ -1112,7 +1112,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			 * WL_POSTMASTER_DEATH event would be painful. Re-checking doesn't
 			 * cost much.
 			 */
-			if (!PostmasterIsAlive())
+			if (!PostmasterIsAliveInternal())
 			{
 				occurred_events->fd = PGINVALID_SOCKET;
 				occurred_events->events = WL_POSTMASTER_DEATH;
@@ -1230,7 +1230,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			 * WL_POSTMASTER_DEATH event would be painful. Re-checking doesn't
 			 * cost much.
 			 */
-			if (!PostmasterIsAlive())
+			if (!PostmasterIsAliveInternal())
 			{
 				occurred_events->fd = PGINVALID_SOCKET;
 				occurred_events->events = WL_POSTMASTER_DEATH;
@@ -1390,7 +1390,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 		 * even though there is no known reason to think that the event could
 		 * be falsely set on Windows.
 		 */
-		if (!PostmasterIsAlive())
+		if (!PostmasterIsAliveInternal())
 		{
 			occurred_events->fd = PGINVALID_SOCKET;
 			occurred_events->events = WL_POSTMASTER_DEATH;

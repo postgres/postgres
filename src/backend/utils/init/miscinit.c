@@ -43,6 +43,7 @@
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pg_shmem.h"
+#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
@@ -304,6 +305,9 @@ InitPostmasterChild(void)
 	if (setsid() < 0)
 		elog(FATAL, "setsid() failed: %m");
 #endif
+
+	/* Request a signal if the postmaster dies, if possible. */
+	PostmasterDeathSignalInit();
 }
 
 /*
