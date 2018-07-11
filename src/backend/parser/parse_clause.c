@@ -2795,6 +2795,16 @@ transformWindowDefinitions(ParseState *pstate,
 			wc->inRangeNullsFirst = sortcl->nulls_first;
 		}
 
+		/* Per spec, GROUPS mode requires an ORDER BY clause */
+		if (wc->frameOptions & FRAMEOPTION_GROUPS)
+		{
+			if (wc->orderClause == NIL)
+				ereport(ERROR,
+						(errcode(ERRCODE_WINDOWING_ERROR),
+						 errmsg("GROUPS mode requires an ORDER BY clause"),
+						 parser_errposition(pstate, windef->location)));
+		}
+
 		/* Process frame offset expressions */
 		wc->startOffset = transformFrameOffset(pstate, wc->frameOptions,
 											   rangeopfamily, rangeopcintype,

@@ -4603,8 +4603,7 @@ create_one_window_path(PlannerInfo *root,
 		path = (Path *)
 			create_windowagg_path(root, window_rel, path, window_target,
 								  wflists->windowFuncs[wc->winref],
-								  wc,
-								  window_pathkeys);
+								  wc);
 	}
 
 	add_path(window_rel, path);
@@ -5465,8 +5464,6 @@ make_window_input_target(PlannerInfo *root,
  * The required ordering is first the PARTITION keys, then the ORDER keys.
  * In the future we might try to implement windowing using hashing, in which
  * case the ordering could be relaxed, but for now we always sort.
- *
- * Caution: if you change this, see createplan.c's get_column_info_for_window!
  */
 static List *
 make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,

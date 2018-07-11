@@ -1079,6 +1079,7 @@ begin_partition(WindowAggState *winstate)
 {
 	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
 	PlanState  *outerPlan = outerPlanState(winstate);
+	int			frameOptions = winstate->frameOptions;
 	int			numfuncs = winstate->numfuncs;
 	int			i;
 
@@ -1143,8 +1144,8 @@ begin_partition(WindowAggState *winstate)
 		 * If the frame head is potentially movable, or we have an EXCLUSION
 		 * clause, we might need to restart aggregation ...
 		 */
-		if (!(winstate->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING) ||
-			(winstate->frameOptions & FRAMEOPTION_EXCLUSION))
+		if (!(frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING) ||
+			(frameOptions & FRAMEOPTION_EXCLUSION))
 		{
 			/* ... so create a mark pointer to track the frame head */
 			agg_winobj->markptr = tuplestore_alloc_read_pointer(winstate->buffer, 0);
@@ -1182,21 +1183,24 @@ begin_partition(WindowAggState *winstate)
 
 	/*
 	 * If we are in RANGE or GROUPS mode, then determining frame boundaries
-	 * requires physical access to the frame endpoint rows, except in
+	 * requires physical access to the frame endpoint rows, except in certain
 	 * degenerate cases.  We create read pointers to point to those rows, to
 	 * simplify access and ensure that the tuplestore doesn't discard the
-	 * endpoint rows prematurely.  (Must match logic in update_frameheadpos
-	 * and update_frametailpos.)
+	 * endpoint rows prematurely.  (Must create pointers in exactly the same
+	 * cases that update_frameheadpos and update_frametailpos need them.)
 	 */
 	winstate->framehead_ptr = winstate->frametail_ptr = -1; /* if not used */
 
-	if ((winstate->frameOptions & (FRAMEOPTION_RANGE | FRAMEOPTION_GROUPS)) &&
-		node->ordNumCols != 0)
+	if (frameOptions & (FRAMEOPTION_RANGE | FRAMEOPTION_GROUPS))
 	{
-		if (!(winstate->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING))
+		if (((frameOptions & FRAMEOPTION_START_CURRENT_ROW) &&
+			 node->ordNumCols != 0) ||
+			(frameOptions & FRAMEOPTION_START_OFFSET))
 			winstate->framehead_ptr =
 				tuplestore_alloc_read_pointer(winstate->buffer, 0);
-		if (!(winstate->frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING))
+		if (((frameOptions & FRAMEOPTION_END_CURRENT_ROW) &&
+			 node->ordNumCols != 0) ||
+			(frameOptions & FRAMEOPTION_END_OFFSET))
 			winstate->frametail_ptr =
 				tuplestore_alloc_read_pointer(winstate->buffer, 0);
 	}
@@ -1210,8 +1214,8 @@ begin_partition(WindowAggState *winstate)
 	 */
 	winstate->grouptail_ptr = -1;
 
-	if ((winstate->frameOptions & (FRAMEOPTION_EXCLUDE_GROUP |
-								   FRAMEOPTION_EXCLUDE_TIES)) &&
+	if ((frameOptions & (FRAMEOPTION_EXCLUDE_GROUP |
+						 FRAMEOPTION_EXCLUDE_TIES)) &&
 		node->ordNumCols != 0)
 	{
 		winstate->grouptail_ptr =
@@ -1563,6 +1567,9 @@ update_frameheadpos(WindowAggState *winstate)
 			bool		sub,
 						less;
 
+			/* We must have an ordering column */
+			Assert(node->ordNumCols == 1);
+
 			/* Precompute flags for in_range checks */
 			if (frameOptions & FRAMEOPTION_START_OFFSET_PRECEDING)
 				sub = true;		/* subtract startOffset from current row */
@@ -1813,6 +1820,9 @@ update_frametailpos(WindowAggState *winstate)
 			int			sortCol = node->ordColIdx[0];
 			bool		sub,
 						less;
+
+			/* We must have an ordering column */
+			Assert(node->ordNumCols == 1);
 
 			/* Precompute flags for in_range checks */
 			if (frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING)
@@ -2318,16 +2328,21 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	winstate->temp_slot_2 = ExecInitExtraTupleSlot(estate, scanDesc);
 
 	/*
-	 * create frame head and tail slots only if needed (must match logic in
-	 * update_frameheadpos and update_frametailpos)
+	 * create frame head and tail slots only if needed (must create slots in
+	 * exactly the same cases that update_frameheadpos and update_frametailpos
+	 * need them)
 	 */
 	winstate->framehead_slot = winstate->frametail_slot = NULL;
 
 	if (frameOptions & (FRAMEOPTION_RANGE | FRAMEOPTION_GROUPS))
 	{
-		if (!(frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING))
+		if (((frameOptions & FRAMEOPTION_START_CURRENT_ROW) &&
+			 node->ordNumCols != 0) ||
+			(frameOptions & FRAMEOPTION_START_OFFSET))
 			winstate->framehead_slot = ExecInitExtraTupleSlot(estate, scanDesc);
-		if (!(frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING))
+		if (((frameOptions & FRAMEOPTION_END_CURRENT_ROW) &&
+			 node->ordNumCols != 0) ||
+			(frameOptions & FRAMEOPTION_END_OFFSET))
 			winstate->frametail_slot = ExecInitExtraTupleSlot(estate, scanDesc);
 	}
 

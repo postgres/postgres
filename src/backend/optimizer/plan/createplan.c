@@ -107,15 +107,6 @@ static WindowAgg *create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_p
 static SetOp *create_setop_plan(PlannerInfo *root, SetOpPath *best_path,
 				  int flags);
 static RecursiveUnion *create_recursiveunion_plan(PlannerInfo *root, RecursiveUnionPath *best_path);
-static void get_column_info_for_window(PlannerInfo *root, WindowClause *wc,
-						   List *tlist,
-						   int numSortCols, AttrNumber *sortColIdx,
-						   int *partNumCols,
-						   AttrNumber **partColIdx,
-						   Oid **partOperators,
-						   int *ordNumCols,
-						   AttrNumber **ordColIdx,
-						   Oid **ordOperators);
 static LockRows *create_lockrows_plan(PlannerInfo *root, LockRowsPath *best_path,
 					 int flags);
 static ModifyTable *create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path);
@@ -2160,19 +2151,17 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 {
 	WindowAgg  *plan;
 	WindowClause *wc = best_path->winclause;
+	int			numPart = list_length(wc->partitionClause);
+	int			numOrder = list_length(wc->orderClause);
 	Plan	   *subplan;
 	List	   *tlist;
-	int			numsortkeys;
-	AttrNumber *sortColIdx;
-	Oid		   *sortOperators;
-	Oid		   *collations;
-	bool	   *nullsFirst;
 	int			partNumCols;
 	AttrNumber *partColIdx;
 	Oid		   *partOperators;
 	int			ordNumCols;
 	AttrNumber *ordColIdx;
 	Oid		   *ordOperators;
+	ListCell   *lc;
 
 	/*
 	 * WindowAgg can project, so no need to be terribly picky about child
@@ -2183,32 +2172,43 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 	tlist = build_path_tlist(root, &best_path->path);
 
 	/*
-	 * We shouldn't need to actually sort, but it's convenient to use
-	 * prepare_sort_from_pathkeys to identify the input's sort columns.
+	 * Convert SortGroupClause lists into arrays of attr indexes and equality
+	 * operators, as wanted by executor.  (Note: in principle, it's possible
+	 * to drop some of the sort columns, if they were proved redundant by
+	 * pathkey logic.  However, it doesn't seem worth going out of our way to
+	 * optimize such cases.  In any case, we must *not* remove the ordering
+	 * column for RANGE OFFSET cases, as the executor needs that for in_range
+	 * tests even if it's known to be equal to some partitioning column.)
 	 */
-	subplan = prepare_sort_from_pathkeys(subplan,
-										 best_path->winpathkeys,
-										 NULL,
-										 NULL,
-										 false,
-										 &numsortkeys,
-										 &sortColIdx,
-										 &sortOperators,
-										 &collations,
-										 &nullsFirst);
+	partColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numPart);
+	partOperators = (Oid *) palloc(sizeof(Oid) * numPart);
 
-	/* Now deconstruct that into partition and ordering portions */
-	get_column_info_for_window(root,
-							   wc,
-							   subplan->targetlist,
-							   numsortkeys,
-							   sortColIdx,
-							   &partNumCols,
-							   &partColIdx,
-							   &partOperators,
-							   &ordNumCols,
-							   &ordColIdx,
-							   &ordOperators);
+	partNumCols = 0;
+	foreach(lc, wc->partitionClause)
+	{
+		SortGroupClause *sgc = (SortGroupClause *) lfirst(lc);
+		TargetEntry *tle = get_sortgroupclause_tle(sgc, subplan->targetlist);
+
+		Assert(OidIsValid(sgc->eqop));
+		partColIdx[partNumCols] = tle->resno;
+		partOperators[partNumCols] = sgc->eqop;
+		partNumCols++;
+	}
+
+	ordColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numOrder);
+	ordOperators = (Oid *) palloc(sizeof(Oid) * numOrder);
+
+	ordNumCols = 0;
+	foreach(lc, wc->orderClause)
+	{
+		SortGroupClause *sgc = (SortGroupClause *) lfirst(lc);
+		TargetEntry *tle = get_sortgroupclause_tle(sgc, subplan->targetlist);
+
+		Assert(OidIsValid(sgc->eqop));
+		ordColIdx[ordNumCols] = tle->resno;
+		ordOperators[ordNumCols] = sgc->eqop;
+		ordNumCols++;
+	}
 
 	/* And finally we can make the WindowAgg node */
 	plan = make_windowagg(tlist,
@@ -2232,112 +2232,6 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
 	return plan;
-}
-
-/*
- * get_column_info_for_window
- *		Get the partitioning/ordering column numbers and equality operators
- *		for a WindowAgg node.
- *
- * This depends on the behavior of planner.c's make_pathkeys_for_window!
- *
- * We are given the target WindowClause and an array of the input column
- * numbers associated with the resulting pathkeys.  In the easy case, there
- * are the same number of pathkey columns as partitioning + ordering columns
- * and we just have to copy some data around.  However, it's possible that
- * some of the original partitioning + ordering columns were eliminated as
- * redundant during the transformation to pathkeys.  (This can happen even
- * though the parser gets rid of obvious duplicates.  A typical scenario is a
- * window specification "PARTITION BY x ORDER BY y" coupled with a clause
- * "WHERE x = y" that causes the two sort columns to be recognized as
- * redundant.)	In that unusual case, we have to work a lot harder to
- * determine which keys are significant.
- *
- * The method used here is a bit brute-force: add the sort columns to a list
- * one at a time and note when the resulting pathkey list gets longer.  But
- * it's a sufficiently uncommon case that a faster way doesn't seem worth
- * the amount of code refactoring that'd be needed.
- */
-static void
-get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
-						   int numSortCols, AttrNumber *sortColIdx,
-						   int *partNumCols,
-						   AttrNumber **partColIdx,
-						   Oid **partOperators,
-						   int *ordNumCols,
-						   AttrNumber **ordColIdx,
-						   Oid **ordOperators)
-{
-	int			numPart = list_length(wc->partitionClause);
-	int			numOrder = list_length(wc->orderClause);
-
-	if (numSortCols == numPart + numOrder)
-	{
-		/* easy case */
-		*partNumCols = numPart;
-		*partColIdx = sortColIdx;
-		*partOperators = extract_grouping_ops(wc->partitionClause);
-		*ordNumCols = numOrder;
-		*ordColIdx = sortColIdx + numPart;
-		*ordOperators = extract_grouping_ops(wc->orderClause);
-	}
-	else
-	{
-		List	   *sortclauses;
-		List	   *pathkeys;
-		int			scidx;
-		ListCell   *lc;
-
-		/* first, allocate what's certainly enough space for the arrays */
-		*partNumCols = 0;
-		*partColIdx = (AttrNumber *) palloc(numPart * sizeof(AttrNumber));
-		*partOperators = (Oid *) palloc(numPart * sizeof(Oid));
-		*ordNumCols = 0;
-		*ordColIdx = (AttrNumber *) palloc(numOrder * sizeof(AttrNumber));
-		*ordOperators = (Oid *) palloc(numOrder * sizeof(Oid));
-		sortclauses = NIL;
-		pathkeys = NIL;
-		scidx = 0;
-		foreach(lc, wc->partitionClause)
-		{
-			SortGroupClause *sgc = (SortGroupClause *) lfirst(lc);
-			List	   *new_pathkeys;
-
-			sortclauses = lappend(sortclauses, sgc);
-			new_pathkeys = make_pathkeys_for_sortclauses(root,
-														 sortclauses,
-														 tlist);
-			if (list_length(new_pathkeys) > list_length(pathkeys))
-			{
-				/* this sort clause is actually significant */
-				(*partColIdx)[*partNumCols] = sortColIdx[scidx++];
-				(*partOperators)[*partNumCols] = sgc->eqop;
-				(*partNumCols)++;
-				pathkeys = new_pathkeys;
-			}
-		}
-		foreach(lc, wc->orderClause)
-		{
-			SortGroupClause *sgc = (SortGroupClause *) lfirst(lc);
-			List	   *new_pathkeys;
-
-			sortclauses = lappend(sortclauses, sgc);
-			new_pathkeys = make_pathkeys_for_sortclauses(root,
-														 sortclauses,
-														 tlist);
-			if (list_length(new_pathkeys) > list_length(pathkeys))
-			{
-				/* this sort clause is actually significant */
-				(*ordColIdx)[*ordNumCols] = sortColIdx[scidx++];
-				(*ordOperators)[*ordNumCols] = sgc->eqop;
-				(*ordNumCols)++;
-				pathkeys = new_pathkeys;
-			}
-		}
-		/* complain if we didn't eat exactly the right number of sort cols */
-		if (scidx != numSortCols)
-			elog(ERROR, "failed to deconstruct sort operators into partitioning/ordering operators");
-	}
 }
 
 /*
