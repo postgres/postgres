@@ -3196,6 +3196,10 @@ FETCH <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> 
      <literal>BACKWARD</literal>.
      Omitting <replaceable>direction</replaceable> is the same
      as specifying <literal>NEXT</literal>.
+     In the forms using a <replaceable>count</replaceable>,
+     the <replaceable>count</replaceable> can be any integer-valued
+     expression (unlike the SQL <command>FETCH</command> command,
+     which only allows an integer constant).
      <replaceable>direction</replaceable> values that require moving
      backward are likely to fail unless the cursor was declared or opened
      with the <literal>SCROLL</literal> option.
@@ -3231,26 +3235,6 @@ MOVE <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> <
      cursor and does not return the row moved to. As with <command>SELECT
      INTO</command>, the special variable <literal>FOUND</literal> can
      be checked to see whether there was a next row to move to.
-    </para>
-
-    <para>
-     The <replaceable>direction</replaceable> clause can be any of the
-     variants allowed in the SQL <xref linkend="sql-fetch"/>
-     command, namely
-     <literal>NEXT</literal>,
-     <literal>PRIOR</literal>,
-     <literal>FIRST</literal>,
-     <literal>LAST</literal>,
-     <literal>ABSOLUTE</literal> <replaceable>count</replaceable>,
-     <literal>RELATIVE</literal> <replaceable>count</replaceable>,
-     <literal>ALL</literal>,
-     <literal>FORWARD</literal> <optional> <replaceable>count</replaceable> | <literal>ALL</literal> </optional>, or
-     <literal>BACKWARD</literal> <optional> <replaceable>count</replaceable> | <literal>ALL</literal> </optional>.
-     Omitting <replaceable>direction</replaceable> is the same
-     as specifying <literal>NEXT</literal>.
-     <replaceable>direction</replaceable> values that require moving
-     backward are likely to fail unless the cursor was declared or opened
-     with the <literal>SCROLL</literal> option.
     </para>
 
     <para>
