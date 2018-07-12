@@ -92,7 +92,7 @@
 
     <listitem>
      <para>
-      Window functions now support all options shown in the SQL:2011
+      Window functions now support all framing options shown in the SQL:2011
       standard, including <literal>RANGE <replaceable>distance</replaceable>
       PRECEDING/FOLLOWING</literal>, <literal>GROUPS</literal> mode, and
       frame exclusion options
