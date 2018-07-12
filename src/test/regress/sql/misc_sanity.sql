@@ -72,3 +72,18 @@ loop
   end if;
 end loop;
 end$$;
+
+-- **************** pg_class ****************
+
+-- Look for system tables with varlena columns but no toast table.  At
+-- the moment, the result just records the status quo so that changes
+-- are deliberate.  Which system tables have toast tables is a bit
+-- arbitrary at the moment.
+
+SELECT relname, attname, atttypid::regtype
+FROM pg_class c JOIN pg_attribute a ON c.oid = attrelid
+WHERE c.oid < 16384 AND
+      reltoastrelid = 0 AND
+      relkind = 'r' AND
+      attstorage != 'p'
+ORDER BY 1, 2;

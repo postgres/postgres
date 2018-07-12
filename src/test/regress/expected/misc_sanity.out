@@ -76,3 +76,70 @@ NOTICE:  pg_database contains unpinned initdb-created object(s)
 NOTICE:  pg_extension contains unpinned initdb-created object(s)
 NOTICE:  pg_rewrite contains unpinned initdb-created object(s)
 NOTICE:  pg_tablespace contains unpinned initdb-created object(s)
+-- **************** pg_class ****************
+-- Look for system tables with varlena columns but no toast table.  At
+-- the moment, the result just records the status quo so that changes
+-- are deliberate.  Which system tables have toast tables is a bit
+-- arbitrary at the moment.
+SELECT relname, attname, atttypid::regtype
+FROM pg_class c JOIN pg_attribute a ON c.oid = attrelid
+WHERE c.oid < 16384 AND
+      reltoastrelid = 0 AND
+      relkind = 'r' AND
+      attstorage != 'p'
+ORDER BY 1, 2;
+         relname         |     attname     |   atttypid   
+-------------------------+-----------------+--------------
+ pg_aggregate            | agginitval      | text
+ pg_aggregate            | aggminitval     | text
+ pg_attribute            | attacl          | aclitem[]
+ pg_attribute            | attfdwoptions   | text[]
+ pg_attribute            | attmissingval   | anyarray
+ pg_attribute            | attoptions      | text[]
+ pg_authid               | rolpassword     | text
+ pg_class                | relacl          | aclitem[]
+ pg_class                | reloptions      | text[]
+ pg_class                | relpartbound    | pg_node_tree
+ pg_collation            | collversion     | text
+ pg_database             | datacl          | aclitem[]
+ pg_default_acl          | defaclacl       | aclitem[]
+ pg_event_trigger        | evttags         | text[]
+ pg_extension            | extcondition    | text[]
+ pg_extension            | extconfig       | oid[]
+ pg_extension            | extversion      | text
+ pg_foreign_data_wrapper | fdwacl          | aclitem[]
+ pg_foreign_data_wrapper | fdwoptions      | text[]
+ pg_foreign_server       | srvacl          | aclitem[]
+ pg_foreign_server       | srvoptions      | text[]
+ pg_foreign_server       | srvtype         | text
+ pg_foreign_server       | srvversion      | text
+ pg_foreign_table        | ftoptions       | text[]
+ pg_index                | indexprs        | pg_node_tree
+ pg_index                | indpred         | pg_node_tree
+ pg_init_privs           | initprivs       | aclitem[]
+ pg_language             | lanacl          | aclitem[]
+ pg_largeobject          | data            | bytea
+ pg_largeobject_metadata | lomacl          | aclitem[]
+ pg_namespace            | nspacl          | aclitem[]
+ pg_partitioned_table    | partexprs       | pg_node_tree
+ pg_pltemplate           | tmplacl         | aclitem[]
+ pg_pltemplate           | tmplhandler     | text
+ pg_pltemplate           | tmplinline      | text
+ pg_pltemplate           | tmpllibrary     | text
+ pg_pltemplate           | tmplvalidator   | text
+ pg_policy               | polqual         | pg_node_tree
+ pg_policy               | polroles        | oid[]
+ pg_policy               | polwithcheck    | pg_node_tree
+ pg_replication_origin   | roname          | text
+ pg_subscription         | subconninfo     | text
+ pg_subscription         | subpublications | text[]
+ pg_subscription         | subsynccommit   | text
+ pg_tablespace           | spcacl          | aclitem[]
+ pg_tablespace           | spcoptions      | text[]
+ pg_ts_dict              | dictinitoption  | text
+ pg_type                 | typacl          | aclitem[]
+ pg_type                 | typdefault      | text
+ pg_type                 | typdefaultbin   | pg_node_tree
+ pg_user_mapping         | umoptions       | text[]
+(51 rows)
+
