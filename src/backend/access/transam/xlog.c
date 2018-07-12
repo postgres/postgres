@@ -887,6 +887,7 @@ static bool WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 static int	emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static void XLogFileClose(void);
 static void PreallocXlogFiles(XLogRecPtr endptr);
+static void RemoveTempXlogFiles(void);
 static void RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr);
 static void RemoveXlogFile(const char *segname, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr);
 static void UpdateLastRemovedPtr(char *filename);
@@ -3864,6 +3865,35 @@ UpdateLastRemovedPtr(char *filename)
 }
 
 /*
+ * Remove all temporary log files in pg_wal
+ *
+ * This is called at the beginning of recovery after a previous crash,
+ * at a point where no other processes write fresh WAL data.
+ */
+static void
+RemoveTempXlogFiles(void)
+{
+	DIR		   *xldir;
+	struct dirent *xlde;
+
+	elog(DEBUG2, "removing all temporary WAL segments");
+
+	xldir = AllocateDir(XLOGDIR);
+	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
+	{
+		char		path[MAXPGPATH];
+
+		if (strncmp(xlde->d_name, "xlogtemp.", 9) != 0)
+			continue;
+
+		snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlde->d_name);
+		unlink(path);
+		elog(DEBUG2, "removed temporary WAL segment \"%s\"", path);
+	}
+	FreeDir(xldir);
+}
+
+/*
  * Recycle or remove all log files older or equal to passed segno.
  *
  * endptr is current (or recent) end of xlog, and PriorRedoRecPtr is the
@@ -6379,17 +6409,25 @@ StartupXLOG(void)
 	 */
 	ValidateXLOGDirectoryStructure();
 
-	/*
-	 * If we previously crashed, there might be data which we had written,
-	 * intending to fsync it, but which we had not actually fsync'd yet.
-	 * Therefore, a power failure in the near future might cause earlier
-	 * unflushed writes to be lost, even though more recent data written to
-	 * disk from here on would be persisted.  To avoid that, fsync the entire
-	 * data directory.
+	/*----------
+	 * If we previously crashed, perform a couple of actions:
+	 *	- The pg_wal directory may still include some temporary WAL segments
+	 * used when creating a new segment, so perform some clean up to not
+	 * bloat this path.  This is done first as there is no point to sync this
+	 * temporary data.
+	 *	- There might be data which we had written, intending to fsync it,
+	 * but which we had not actually fsync'd yet. Therefore, a power failure
+	 * in the near future might cause earlier unflushed writes to be lost,
+	 * even though more recent data written to disk from here on would be
+	 * persisted.  To avoid that, fsync the entire data directory.
+	 *---------
 	 */
 	if (ControlFile->state != DB_SHUTDOWNED &&
 		ControlFile->state != DB_SHUTDOWNED_IN_RECOVERY)
+	{
+		RemoveTempXlogFiles();
 		SyncDataDirectory();
+	}
 
 	/*
 	 * Initialize on the assumption we want to recover to the latest timeline
