@@ -1917,8 +1917,8 @@ EXCLUDE NO OTHERS
        ends the specified number of <firstterm>peer groups</firstterm>
        before or after the current row's peer group, where a peer group is a
        set of rows that are equivalent in the <literal>ORDER BY</literal>
-       ordering.  (If there is no <literal>ORDER BY</literal>, the whole
-       partition is one peer group.)
+       ordering.  (There must be an <literal>ORDER BY</literal> clause
+       in the window definition to use <literal>GROUPS</literal> mode.)
       </para>
      </listitem>
      <listitem>

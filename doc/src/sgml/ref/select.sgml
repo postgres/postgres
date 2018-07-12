@@ -901,8 +901,8 @@ EXCLUDE NO OTHERS
     CURRENT ROW</literal>; it sets the frame to be all rows from the partition start
     up through the current row's last <firstterm>peer</firstterm> (a row
     that the window's <literal>ORDER BY</literal> clause considers
-    equivalent to the current row), or all rows if there
-    is no <literal>ORDER BY</literal>.
+    equivalent to the current row; all rows are peers if there
+    is no <literal>ORDER BY</literal>).
     In general, <literal>UNBOUNDED PRECEDING</literal> means that the frame
     starts with the first row of the partition, and similarly
     <literal>UNBOUNDED FOLLOWING</literal> means that the frame ends with the last
@@ -924,7 +924,7 @@ EXCLUDE NO OTHERS
     is an integer indicating that the frame starts or ends that many peer
     groups before or after the current row's peer group, where
     a <firstterm>peer group</firstterm> is a group of rows that are
-    equivalent according to <literal>ORDER BY</literal>.
+    equivalent according to the window's <literal>ORDER BY</literal> clause.
     In <literal>RANGE</literal> mode, use of
     an <replaceable>offset</replaceable> option requires that there be
     exactly one <literal>ORDER BY</literal> column in the window definition.
