@@ -3181,13 +3181,16 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 	 * Build a list of OIDs of the interesting relations.
 	 *
 	 * If a relation has no triggers, then it can neither have FKs nor be
-	 * referenced by a FK from another table, so we can ignore it.
+	 * referenced by a FK from another table, so we can ignore it.  For
+	 * partitioned tables, FKs have no triggers, so we must include them
+	 * anyway.
 	 */
 	foreach(cell, relations)
 	{
 		Relation	rel = lfirst(cell);
 
-		if (rel->rd_rel->relhastriggers)
+		if (rel->rd_rel->relhastriggers ||
+			rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 			oids = lappend_oid(oids, RelationGetRelid(rel));
 	}
 

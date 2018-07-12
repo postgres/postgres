@@ -1421,7 +1421,7 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 	Oid		   *logrelids;
 
 	/*
-	 * Open, exclusive-lock, and check all the explicitly-specified relations
+	 * Check the explicitly-specified relations.
 	 *
 	 * In CASCADE mode, suck in all referencing relations as well.  This
 	 * requires multiple iterations to find indirectly-dependent relations. At
