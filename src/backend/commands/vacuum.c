@@ -444,6 +444,12 @@ expand_vacuum_rel(VacuumRelation *vrel)
 		bool		include_parts;
 
 		/*
+		 * Since autovacuum workers supply OIDs when calling vacuum(), no
+		 * autovacuum worker should reach this code.
+		 */
+		Assert(!IsAutoVacuumWorkerProcess());
+
+		/*
 		 * We transiently take AccessShareLock to protect the syscache lookup
 		 * below, as well as find_all_inheritors's expectation that the caller
 		 * holds some lock on the starting relation.
