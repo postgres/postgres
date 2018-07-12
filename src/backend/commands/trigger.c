@@ -2726,11 +2726,19 @@ ExecASDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 							  false, NULL, NULL, NIL, NULL, transition_capture);
 }
 
+/*
+ * Execute BEFORE ROW DELETE triggers.
+ *
+ * True indicates caller can proceed with the delete.  False indicates caller
+ * need to suppress the delete and additionally if requested, we need to pass
+ * back the concurrently updated tuple if any.
+ */
 bool
 ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
-					 HeapTuple fdw_trigtuple)
+					 HeapTuple fdw_trigtuple,
+					 TupleTableSlot **epqslot)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 	bool		result = true;
@@ -2747,6 +2755,18 @@ ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 									   LockTupleExclusive, &newSlot);
 		if (trigtuple == NULL)
 			return false;
+
+		/*
+		 * If the tuple was concurrently updated and the caller of this
+		 * function requested for the updated tuple, skip the trigger
+		 * execution.
+		 */
+		if (newSlot != NULL && epqslot != NULL)
+		{
+			*epqslot = newSlot;
+			heap_freetuple(trigtuple);
+			return false;
+		}
 	}
 	else
 		trigtuple = fdw_trigtuple;

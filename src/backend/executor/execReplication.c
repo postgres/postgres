@@ -531,7 +531,7 @@ ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
 	{
 		skip_tuple = !ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
 										   &searchslot->tts_tuple->t_self,
-										   NULL);
+										   NULL, NULL);
 	}
 
 	if (!skip_tuple)
