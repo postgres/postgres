@@ -1,0 +1,60 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1b s2b s2u1 s1u s2c s1c s1s
+step s1b: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2b: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2u1: UPDATE foo SET b = b || ' update2' WHERE a = 1;
+step s1u: UPDATE foo SET a = a + 1, b = b || ' update1' WHERE b like '%ABC%'; <waiting ...>
+step s2c: COMMIT;
+step s1u: <... completed>
+step s1c: COMMIT;
+step s1s: SELECT tableoid::regclass, * FROM foo ORDER BY a;
+tableoid       a              b              
+
+foo2           2              ABC update2 update1
+
+starting permutation: s1b s2b s2ut1 s1ut s2c s1c s1st s1stl
+step s1b: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2b: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2ut1: UPDATE footrg SET b = b || ' update2' WHERE a = 1;
+step s1ut: UPDATE footrg SET a = a + 1, b = b || ' update1' WHERE b like '%ABC%'; <waiting ...>
+step s2c: COMMIT;
+step s1ut: <... completed>
+step s1c: COMMIT;
+step s1st: SELECT tableoid::regclass, * FROM footrg ORDER BY a;
+tableoid       a              b              
+
+footrg2        2              ABC update2 update1
+step s1stl: SELECT * FROM triglog ORDER BY a;
+a              b              
+
+1              ABC update2 trigger
+
+starting permutation: s1b s2b s2u2 s1u s2c s1c s1s
+step s1b: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2b: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2u2: UPDATE foo SET b = 'EFG' WHERE a = 1;
+step s1u: UPDATE foo SET a = a + 1, b = b || ' update1' WHERE b like '%ABC%'; <waiting ...>
+step s2c: COMMIT;
+step s1u: <... completed>
+step s1c: COMMIT;
+step s1s: SELECT tableoid::regclass, * FROM foo ORDER BY a;
+tableoid       a              b              
+
+foo1           1              EFG            
+
+starting permutation: s1b s2b s2ut2 s1ut s2c s1c s1st s1stl
+step s1b: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2b: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2ut2: UPDATE footrg SET b = 'EFG' WHERE a = 1;
+step s1ut: UPDATE footrg SET a = a + 1, b = b || ' update1' WHERE b like '%ABC%'; <waiting ...>
+step s2c: COMMIT;
+step s1ut: <... completed>
+step s1c: COMMIT;
+step s1st: SELECT tableoid::regclass, * FROM footrg ORDER BY a;
+tableoid       a              b              
+
+footrg1        1              EFG            
+step s1stl: SELECT * FROM triglog ORDER BY a;
+a              b              
+
