@@ -1377,7 +1377,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 * If we've been asked not to wait for the relation lock, acquire it first
 	 * in non-blocking mode, before calling try_relation_open().
 	 */
-	if (!(options & VACOPT_NOWAIT))
+	if (!(options & VACOPT_SKIP_LOCKED))
 		onerel = try_relation_open(relid, lmode);
 	else if (ConditionalLockRelationOid(relid, lmode))
 		onerel = try_relation_open(relid, NoLock);

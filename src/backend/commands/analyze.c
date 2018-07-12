@@ -143,7 +143,7 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	 * matter if we ever try to accumulate stats on dead tuples.) If the rel
 	 * has been dropped since we last saw it, we don't need to process it.
 	 */
-	if (!(options & VACOPT_NOWAIT))
+	if (!(options & VACOPT_SKIP_LOCKED))
 		onerel = try_relation_open(relid, ShareUpdateExclusiveLock);
 	else if (ConditionalLockRelationOid(relid, ShareUpdateExclusiveLock))
 		onerel = try_relation_open(relid, NoLock);
