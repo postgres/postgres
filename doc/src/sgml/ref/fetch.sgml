@@ -99,7 +99,7 @@ FETCH [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <
     This page describes usage of cursors at the SQL command level.
     If you are trying to use cursors inside a <application>PL/pgSQL</>
     function, the rules are different &mdash;
-    see <xref linkend="plpgsql-cursors">.
+    see <xref linkend="plpgsql-cursor-using">.
    </para>
   </note>
  </refsect1>
