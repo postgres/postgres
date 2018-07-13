@@ -172,6 +172,7 @@ typedef struct _dumpOptions
 	char	   *outputSuperuser;
 
 	int			sequence_data;	/* dump sequence data even in schema-only mode */
+	int			do_nothing;
 } DumpOptions;
 
 /*

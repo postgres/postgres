@@ -378,6 +378,7 @@ main(int argc, char **argv)
 		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
 		{"no-subscriptions", no_argument, &dopt.no_subscriptions, 1},
 		{"no-sync", no_argument, NULL, 7},
+		{"on-conflict-do-nothing", no_argument, &dopt.do_nothing, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -618,6 +619,9 @@ main(int argc, char **argv)
 
 	if (dopt.if_exists && !dopt.outputClean)
 		exit_horribly(NULL, "option --if-exists requires option -c/--clean\n");
+
+	if (dopt.do_nothing && !(dopt.dump_inserts || dopt.column_inserts))
+		exit_horribly(NULL, "option --on-conflict-do-nothing requires option --inserts or --column-inserts\n");
 
 	/* Identify archive format to emit */
 	archiveFormat = parseArchiveFormat(format, &archiveMode);
@@ -989,6 +993,7 @@ help(const char *progname)
 	printf(_("  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
+	printf(_("  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
 	printf(_("  --section=SECTION            dump named section (pre-data, data, or post-data)\n"));
 	printf(_("  --serializable-deferrable    wait until the dump can run without anomalies\n"));
@@ -2047,7 +2052,11 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 						break;
 				}
 			}
-			archputs(");\n", fout);
+
+			if (!dopt->do_nothing)
+				archputs(");\n", fout);
+			else
+				archputs(") ON CONFLICT DO NOTHING;\n", fout);
 		}
 
 		if (PQntuples(res) <= 0)

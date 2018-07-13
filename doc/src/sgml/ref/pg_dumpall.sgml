@@ -447,6 +447,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--on-conflict-do-nothing</option></term>
+      <listitem>
+       <para>
+        Add <literal>ON CONFLICT DO NOTHING</literal> to
+        <command>INSERT</command> commands.
+        This option is not valid unless <option>--inserts</option> or 
+        <option>--column-inserts</option> is also specified.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--quote-all-identifiers</option></term>
       <listitem>
        <para>
