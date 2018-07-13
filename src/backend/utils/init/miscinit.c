@@ -48,6 +48,7 @@
 #include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/pidfile.h"
 #include "utils/syscache.h"
@@ -593,6 +594,13 @@ InitializeSessionUserId(const char *rolename, Oid roleid)
 
 	/* call only once */
 	AssertState(!OidIsValid(AuthenticatedUserId));
+
+	/*
+	 * Make sure syscache entries are flushed for recent catalog changes.
+	 * This allows us to find roles that were created on-the-fly during
+	 * authentication.
+	 */
+	AcceptInvalidationMessages();
 
 	if (rolename != NULL)
 	{
