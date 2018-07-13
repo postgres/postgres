@@ -486,52 +486,5 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
   </para>
  </sect2>
 
- <sect2>
-  <title>Building the Documentation</title>
-
-  <para>
-   Building the PostgreSQL documentation in HTML format requires several tools
-   and files. Create a root directory for all these files, and store them
-   in the subdirectories in the list below.
-   <variablelist>
-    <varlistentry>
-     <term>OpenJade 1.3.1-2</term>
-     <listitem><para>
-      Download from
-      <ulink url="http://sourceforge.net/projects/openjade/files/openjade/1.3.1/openjade-1_3_1-2-bin.zip/download"></ulink>
-      and uncompress in the subdirectory <filename>openjade-1.3.1</filename>.
-     </para></listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>DocBook DTD 4.2</term>
-     <listitem><para>
-      Download from
-      <ulink url="http://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip"></ulink>
-      and uncompress in the subdirectory <filename>docbook</filename>.
-     </para></listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>ISO character entities</term>
-     <listitem><para>
-      Download from
-      <ulink url="http://www.oasis-open.org/cover/ISOEnts.zip"></ulink> and
-      uncompress in the subdirectory <filename>docbook</filename>.
-     </para></listitem>
-    </varlistentry>
-   </variablelist>
-   Edit the <filename>buildenv.pl</filename> file, and add a variable for the
-   location of the root directory, for example:
-<programlisting>
-$ENV{DOCROOT}='c:\docbook';
-</programlisting>
-   To build the documentation, run the command
-   <filename>builddoc.bat</filename>. Note that this will actually run the
-   build twice, in order to generate the indexes. The generated HTML files
-   will be in <filename>doc\src\sgml</filename>.
-  </para>
- </sect2>
-
  </sect1>
 </chapter>
