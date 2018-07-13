@@ -78,7 +78,7 @@
      <row>
       <entry>libpqxx</entry>
       <entry>C++</entry>
-      <entry>New-style C++ interface</entry>
+      <entry>C++ interface</entry>
       <entry><ulink url="http://pqxx.org/"></ulink></entry>
      </row>
 
