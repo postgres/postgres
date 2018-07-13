@@ -62,12 +62,23 @@
 
 ;;; documentation files
 
-(add-hook 'sgml-mode-hook
-          (defun postgresql-sgml-mode-hook ()
+;; *.sgml files are actually XML
+(add-to-list 'auto-mode-alist '("/postgres\\(ql\\)?/.*\\.sgml\\'" . nxml-mode))
+
+(add-hook 'nxml-mode-hook
+          (defun postgresql-xml-mode-hook ()
              (when (string-match "/postgres\\(ql\\)?/" buffer-file-name)
                (setq fill-column 78)
-               (setq indent-tabs-mode nil)
-               (setq sgml-basic-offset 1))))
+               (setq indent-tabs-mode nil))))
+
+;; The *.xsl files use 2-space indent, which is consistent with
+;; docbook-xsl sources and also the nxml-mode default.  But the *.sgml
+;; files use 1-space indent, mostly for historical reasons at this
+;; point.
+(add-hook 'nxml-mode-hook
+          (defun postgresql-xml-src-mode-hook ()
+             (when (string-match "/postgres\\(ql\\)?/.*\\.sgml\\'" buffer-file-name)
+               (setq nxml-child-indent 1))))
 
 
 ;;; Makefiles

@@ -393,112 +393,36 @@ ADDITIONAL_FLAGS='-Xmx1500m'
   <title>Documentation Authoring</title>
 
    <para>
-    <acronym>SGML</acronym> and <productname>DocBook</productname> do
-    not suffer from an oversupply of open-source authoring tools. The
-    most common tool set is the
-    <productname>Emacs</productname>/<productname>XEmacs</productname>
-    editor with appropriate editing mode.  On some systems
-    these tools are provided in a typical full installation.
+    The documentation sources are most conveniently modified with an editor
+    that has a mode for editing XML, and even more so if it has some awareness
+    of XML schema languages so that it can know about
+    <productname>DocBook</productname> syntax specifically.
+   </para>
+
+   <para>
+    Note that for historical reasons the documentation source files are named
+    with an extension <filename>.sgml</filename> even though they are now XML
+    files.  So you might need to adjust your editor configuration to set the
+    correct mode.
    </para>
 
    <sect2>
-    <title>Emacs/PSGML</title>
+    <title>Emacs</title>
 
     <para>
-     <productname>PSGML</productname> is the most common and most
-     powerful mode for editing <acronym>SGML</acronym> documents.
-     When properly configured, it will allow you to use
-     <application>Emacs</application> to insert tags and check markup
-     consistency.  You could use it for <acronym>HTML</acronym> as
-     well.  Check the <ulink url="http://www.lysator.liu.se/projects/about_psgml.html">
-     PSGML web site</ulink> for downloads, installation instructions, and
-     detailed documentation.
+     <productname>nXML Mode</productname>, which ships with
+     <productname>Emacs</productname>, is the most common mode for editing
+     <acronym>XML</acronym> documents with <productname>Emacs</productname>.
+     It will allow you to use <application>Emacs</application> to insert tags
+     and check markup consistency, and it supports
+     <productname>DocBook</productname> out of the box.  Check the <ulink
+     url="https://www.gnu.org/software/emacs/manual/html_mono/nxml-mode.html">
+     nXML manual</ulink> for detailed documentation.
     </para>
 
     <para>
-     There is one important thing to note with
-     <productname>PSGML</productname>: its author assumed that your
-     main <acronym>SGML</acronym> <acronym>DTD</acronym> directory
-     would be <filename>/usr/local/lib/sgml</filename>.  If, as in the
-     examples in this chapter, you use
-     <filename>/usr/local/share/sgml</filename>, you have to
-     compensate for this, either by setting
-     <envar>SGML_CATALOG_FILES</envar> environment variable, or you
-     can customize your <productname>PSGML</productname> installation
-     (its manual tells you how).
-    </para>
-
-    <para>
-     Put the following in your <filename>~/.emacs</filename>
-     environment file (adjusting the path names to be appropriate for
-     your system):
-
-<programlisting>
-; ********** for SGML mode (psgml)
-
-(setq sgml-omittag t)
-(setq sgml-shorttag t)
-(setq sgml-minimize-attributes nil)
-(setq sgml-always-quote-attributes t)
-(setq sgml-indent-step 1)
-(setq sgml-indent-data t)
-(setq sgml-parent-document nil)
-(setq sgml-exposed-tags nil)
-(setq sgml-catalog-files '("/usr/local/share/sgml/catalog"))
-
-(autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t )
-</programlisting>
-
-     and in the same file add an entry for <acronym>SGML</acronym>
-     into the (existing) definition for
-     <varname>auto-mode-alist</varname>:
-<programlisting>
-(setq
-  auto-mode-alist
-  '(("\\.sgml$" . sgml-mode)
-   ))
-</programlisting>
-    </para>
-
-    <para>
-     You might find that when using <productname>PSGML</productname>, a
-     comfortable way of working with these separate files of book
-     parts is to insert a proper <literal>DOCTYPE</literal>
-     declaration while you're editing them.  If you are working on
-     this source, for instance, it is an appendix chapter, so you
-     would specify the document as an <quote>appendix</quote> instance
-     of a DocBook document by making the first line look like this:
-
-<programlisting>
-&lt;!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook V4.2//EN"&gt;
-</programlisting>
-
-     This means that anything and everything that reads
-     <acronym>SGML</acronym> will get it right, and I can verify the
-     document with <command>nsgmls -s docguide.sgml</command>.  (But
-     you need to take out that line before building the entire
-     documentation set.)
-    </para>
-   </sect2>
-
-   <sect2>
-    <title>Other Emacs Modes</title>
-
-    <para>
-     <productname>GNU Emacs</productname> ships with a different
-     <acronym>SGML</acronym> mode, which is not quite as powerful as
-     <productname>PSGML</productname>, but it's less confusing and
-     lighter weight.  Also, it offers syntax highlighting (font lock),
-     which can be very helpful.
      <filename>src/tools/editors/emacs.samples</filename> contains
-     sample settings for this mode.
-    </para>
-
-    <para>
-     Norm Walsh offers a
-     <ulink url="http://nwalsh.com/emacs/docbookide/index.html">major mode</ulink>
-     specifically for DocBook which also has font-lock and a number of features to
-     reduce typing.
+     recommended settings for this mode.
     </para>
    </sect2>
 
