@@ -142,7 +142,7 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 	/* build initial snapshot, might take a while */
 	DecodingContextFindStartpoint(ctx);
 
-	values[0] = CStringGetTextDatum(NameStr(MyReplicationSlot->data.name));
+	values[0] = NameGetDatum(&MyReplicationSlot->data.name);
 	values[1] = LSNGetDatum(MyReplicationSlot->data.confirmed_flush);
 
 	/* don't need the decoding context anymore */

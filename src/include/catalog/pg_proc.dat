@@ -9803,7 +9803,7 @@
 { oid => '3786', descr => 'set up a logical replication slot',
   proname => 'pg_create_logical_replication_slot', provolatile => 'v',
   proparallel => 'u', prorettype => 'record', proargtypes => 'name name bool',
-  proallargtypes => '{name,name,bool,text,pg_lsn}',
+  proallargtypes => '{name,name,bool,name,pg_lsn}',
   proargmodes => '{i,i,i,o,o}',
   proargnames => '{slot_name,plugin,temporary,slot_name,lsn}',
   prosrc => 'pg_create_logical_replication_slot' },
