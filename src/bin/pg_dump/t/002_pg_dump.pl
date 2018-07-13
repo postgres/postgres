@@ -631,6 +631,25 @@ my %tests = (
 		},
 	},
 
+	'ALTER TABLE (partitioned) ADD CONSTRAINT ... FOREIGN KEY' => {
+		create_order => 4,
+		create_sql   => 'CREATE TABLE dump_test.test_table_fk (
+							col1 int references dump_test.test_table)
+							PARTITION BY RANGE (col1);
+							CREATE TABLE dump_test.test_table_fk_1
+							PARTITION OF dump_test.test_table_fk
+							FOR VALUES FROM (0) TO (10);',
+		regexp => qr/
+			\QADD CONSTRAINT test_table_fk_col1_fkey FOREIGN KEY (col1) REFERENCES dump_test.test_table\E
+			/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_post_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+		},
+	},
+
 	'ALTER TABLE ONLY test_table ALTER COLUMN col1 SET STATISTICS 90' => {
 		create_order => 93,
 		create_sql =>
