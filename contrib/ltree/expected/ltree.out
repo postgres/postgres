@@ -259,6 +259,24 @@ SELECT lca('{1.2.3,1.2.3.4.5.6}');
  1.2
 (1 row)
 
+SELECT lca('{1.2.3}');
+ lca 
+-----
+ 1.2
+(1 row)
+
+SELECT lca('{1}'), lca('{1}') IS NULL;
+ lca | ?column? 
+-----+----------
+     | f
+(1 row)
+
+SELECT lca('{}') IS NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
 SELECT lca('1.la.2.3','1.2.3.4.5.6');
  lca 
 -----
