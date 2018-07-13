@@ -295,12 +295,16 @@ convert_tuples_by_name_map(TupleDesc indesc,
 						   const char *msg)
 {
 	AttrNumber *attrMap;
-	int			n;
+	int			outnatts;
+	int			innatts;
 	int			i;
+	int			nextindesc = -1;
 
-	n = outdesc->natts;
-	attrMap = (AttrNumber *) palloc0(n * sizeof(AttrNumber));
-	for (i = 0; i < n; i++)
+	outnatts = outdesc->natts;
+	innatts = indesc->natts;
+
+	attrMap = (AttrNumber *) palloc0(outnatts * sizeof(AttrNumber));
+	for (i = 0; i < outnatts; i++)
 	{
 		Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
 		char	   *attname;
@@ -313,10 +317,27 @@ convert_tuples_by_name_map(TupleDesc indesc,
 		attname = NameStr(outatt->attname);
 		atttypid = outatt->atttypid;
 		atttypmod = outatt->atttypmod;
-		for (j = 0; j < indesc->natts; j++)
-		{
-			Form_pg_attribute inatt = TupleDescAttr(indesc, j);
 
+		/*
+		 * Now search for an attribute with the same name in the indesc. It
+		 * seems likely that a partitioned table will have the attributes in
+		 * the same order as the partition, so the search below is optimized
+		 * for that case.  It is possible that columns are dropped in one of
+		 * the relations, but not the other, so we use the 'nextindesc'
+		 * counter to track the starting point of the search.  If the inner
+		 * loop encounters dropped columns then it will have to skip over
+		 * them, but it should leave 'nextindesc' at the correct position for
+		 * the next outer loop.
+		 */
+		for (j = 0; j < innatts; j++)
+		{
+			Form_pg_attribute inatt;
+
+			nextindesc++;
+			if (nextindesc >= innatts)
+				nextindesc = 0;
+
+			inatt = TupleDescAttr(indesc, nextindesc);
 			if (inatt->attisdropped)
 				continue;
 			if (strcmp(attname, NameStr(inatt->attname)) == 0)
@@ -330,7 +351,7 @@ convert_tuples_by_name_map(TupleDesc indesc,
 									   attname,
 									   format_type_be(outdesc->tdtypeid),
 									   format_type_be(indesc->tdtypeid))));
-				attrMap[i] = (AttrNumber) (j + 1);
+				attrMap[i] = inatt->attnum;
 				break;
 			}
 		}
@@ -343,7 +364,6 @@ convert_tuples_by_name_map(TupleDesc indesc,
 							   format_type_be(outdesc->tdtypeid),
 							   format_type_be(indesc->tdtypeid))));
 	}
-
 	return attrMap;
 }
 

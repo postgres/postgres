@@ -51,6 +51,7 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
+#include "utils/syscache.h"
 
 
 typedef struct
@@ -1895,9 +1896,11 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 	List	   *vars = NIL;
 	TupleDesc	old_tupdesc = RelationGetDescr(oldrelation);
 	TupleDesc	new_tupdesc = RelationGetDescr(newrelation);
+	Oid			new_relid = RelationGetRelid(newrelation);
 	int			oldnatts = old_tupdesc->natts;
 	int			newnatts = new_tupdesc->natts;
 	int			old_attno;
+	int			new_attno = 0;
 
 	for (old_attno = 0; old_attno < oldnatts; old_attno++)
 	{
@@ -1906,7 +1909,6 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 		Oid			atttypid;
 		int32		atttypmod;
 		Oid			attcollation;
-		int			new_attno;
 
 		att = TupleDescAttr(old_tupdesc, old_attno);
 		if (att->attisdropped)
@@ -1939,29 +1941,25 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 		 * Otherwise we have to search for the matching column by name.
 		 * There's no guarantee it'll have the same column position, because
 		 * of cases like ALTER TABLE ADD COLUMN and multiple inheritance.
-		 * However, in simple cases it will be the same column number, so try
-		 * that before we go groveling through all the columns.
-		 *
-		 * Note: the test for (att = ...) != NULL cannot fail, it's just a
-		 * notational device to include the assignment into the if-clause.
+		 * However, in simple cases, the relative order of columns is mostly
+		 * the same in both relations, so try the column of newrelation that
+		 * follows immediately after the one that we just found, and if that
+		 * fails, let syscache handle it.
 		 */
-		if (old_attno < newnatts &&
-			(att = TupleDescAttr(new_tupdesc, old_attno)) != NULL &&
-			!att->attisdropped &&
-			strcmp(attname, NameStr(att->attname)) == 0)
-			new_attno = old_attno;
-		else
+		if (new_attno >= newnatts ||
+			(att = TupleDescAttr(new_tupdesc, new_attno))->attisdropped ||
+			strcmp(attname, NameStr(att->attname)) != 0)
 		{
-			for (new_attno = 0; new_attno < newnatts; new_attno++)
-			{
-				att = TupleDescAttr(new_tupdesc, new_attno);
-				if (!att->attisdropped &&
-					strcmp(attname, NameStr(att->attname)) == 0)
-					break;
-			}
-			if (new_attno >= newnatts)
+			HeapTuple	newtup;
+
+			newtup = SearchSysCacheAttName(new_relid, attname);
+			if (!newtup)
 				elog(ERROR, "could not find inherited attribute \"%s\" of relation \"%s\"",
 					 attname, RelationGetRelationName(newrelation));
+			new_attno = ((Form_pg_attribute) GETSTRUCT(newtup))->attnum - 1;
+			ReleaseSysCache(newtup);
+
+			att = TupleDescAttr(new_tupdesc, new_attno);
 		}
 
 		/* Found it, check type and collation match */
@@ -1978,6 +1976,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 									 atttypmod,
 									 attcollation,
 									 0));
+		new_attno++;
 	}
 
 	*translated_vars = vars;
