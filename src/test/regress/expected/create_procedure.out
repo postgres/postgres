@@ -15,14 +15,6 @@ LANGUAGE SQL
 AS $$
 INSERT INTO cp_test VALUES (1, x);
 $$;
-SELECT ptest1('x');  -- error
-ERROR:  ptest1(unknown) is a procedure
-LINE 1: SELECT ptest1('x');
-               ^
-HINT:  To call a procedure, use CALL.
-CALL ptest1('a');  -- ok
-CALL ptest1('xy' || 'zzy');  -- ok, constant-folded arg
-CALL ptest1(substring(random()::numeric(20,15)::text, 1, 1));  -- ok, volatile arg
 \df ptest1
                         List of functions
  Schema |  Name  | Result data type | Argument data types | Type 
@@ -41,6 +33,30 @@ SELECT pg_get_functiondef('ptest1'::regproc);
  
 (1 row)
 
+-- show only normal functions
+\dfn public.*test*1
+                           List of functions
+ Schema |     Name     | Result data type | Argument data types | Type 
+--------+--------------+------------------+---------------------+------
+ public | cp_testfunc1 | integer          | a integer           | func
+(1 row)
+
+-- show only procedures
+\dfp public.*test*1
+                        List of functions
+ Schema |  Name  | Result data type | Argument data types | Type 
+--------+--------+------------------+---------------------+------
+ public | ptest1 |                  | x text              | proc
+(1 row)
+
+SELECT ptest1('x');  -- error
+ERROR:  ptest1(unknown) is a procedure
+LINE 1: SELECT ptest1('x');
+               ^
+HINT:  To call a procedure, use CALL.
+CALL ptest1('a');  -- ok
+CALL ptest1('xy' || 'zzy');  -- ok, constant-folded arg
+CALL ptest1(substring(random()::numeric(20,15)::text, 1, 1));  -- ok, volatile arg
 SELECT * FROM cp_test ORDER BY b COLLATE "C";
  a |   b   
 ---+-------

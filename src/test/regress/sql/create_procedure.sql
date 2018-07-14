@@ -11,13 +11,19 @@ AS $$
 INSERT INTO cp_test VALUES (1, x);
 $$;
 
+\df ptest1
+SELECT pg_get_functiondef('ptest1'::regproc);
+
+-- show only normal functions
+\dfn public.*test*1
+
+-- show only procedures
+\dfp public.*test*1
+
 SELECT ptest1('x');  -- error
 CALL ptest1('a');  -- ok
 CALL ptest1('xy' || 'zzy');  -- ok, constant-folded arg
 CALL ptest1(substring(random()::numeric(20,15)::text, 1, 1));  -- ok, volatile arg
-
-\df ptest1
-SELECT pg_get_functiondef('ptest1'::regproc);
 
 SELECT * FROM cp_test ORDER BY b COLLATE "C";
 

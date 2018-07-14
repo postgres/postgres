@@ -312,6 +312,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 {
 	bool		showAggregate = strchr(functypes, 'a') != NULL;
 	bool		showNormal = strchr(functypes, 'n') != NULL;
+	bool		showProcedure = strchr(functypes, 'p') != NULL;
 	bool		showTrigger = strchr(functypes, 't') != NULL;
 	bool		showWindow = strchr(functypes, 'w') != NULL;
 	bool		have_where;
@@ -323,9 +324,20 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 	/* No "Parallel" column before 9.6 */
 	static const bool translate_columns_pre_96[] = {false, false, false, false, true, true, false, true, false, false, false, false};
 
-	if (strlen(functypes) != strspn(functypes, "antwS+"))
+	if (strlen(functypes) != strspn(functypes, "anptwS+"))
 	{
-		psql_error("\\df only takes [antwS+] as options\n");
+		psql_error("\\df only takes [anptwS+] as options\n");
+		return true;
+	}
+
+	if (showProcedure && pset.sversion < 110000)
+	{
+		char		sverbuf[32];
+
+		psql_error("\\df does not take a \"%c\" option with server version %s\n",
+				   'p',
+				   formatPGVersionNumber(pset.sversion, false,
+										 sverbuf, sizeof(sverbuf)));
 		return true;
 	}
 
@@ -333,15 +345,18 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 	{
 		char		sverbuf[32];
 
-		psql_error("\\df does not take a \"w\" option with server version %s\n",
+		psql_error("\\df does not take a \"%c\" option with server version %s\n",
+				   'w',
 				   formatPGVersionNumber(pset.sversion, false,
 										 sverbuf, sizeof(sverbuf)));
 		return true;
 	}
 
-	if (!showAggregate && !showNormal && !showTrigger && !showWindow)
+	if (!showAggregate && !showNormal && !showProcedure && !showTrigger && !showWindow)
 	{
 		showAggregate = showNormal = showTrigger = true;
+		if (pset.sversion >= 110000)
+			showProcedure = true;
 		if (pset.sversion >= 80400)
 			showWindow = true;
 	}
@@ -505,7 +520,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 	have_where = false;
 
 	/* filter by function type, if requested */
-	if (showNormal && showAggregate && showTrigger && showWindow)
+	if (showNormal && showAggregate && showProcedure && showTrigger && showWindow)
 		 /* Do nothing */ ;
 	else if (showNormal)
 	{
@@ -522,6 +537,17 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 				appendPQExpBufferStr(&buf, "p.prokind <> 'a'\n");
 			else
 				appendPQExpBufferStr(&buf, "NOT p.proisagg\n");
+		}
+		if (!showProcedure && pset.sversion >= 110000)
+		{
+			if (have_where)
+				appendPQExpBufferStr(&buf, "      AND ");
+			else
+			{
+				appendPQExpBufferStr(&buf, "WHERE ");
+				have_where = true;
+			}
+			appendPQExpBufferStr(&buf, "p.prokind <> 'p'\n");
 		}
 		if (!showTrigger)
 		{
@@ -570,6 +596,13 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 				appendPQExpBufferStr(&buf, "       OR ");
 			appendPQExpBufferStr(&buf,
 								 "p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype\n");
+			needs_or = true;
+		}
+		if (showProcedure)
+		{
+			if (needs_or)
+				appendPQExpBufferStr(&buf, "       OR ");
+			appendPQExpBufferStr(&buf, "p.prokind = 'p'\n");
 			needs_or = true;
 		}
 		if (showWindow)

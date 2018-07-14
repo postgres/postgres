@@ -1423,16 +1423,16 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\df[antwS+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\df[anptwS+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
         Lists functions, together with their result data types, argument data
         types, and function types, which are classified as <quote>agg</quote>
-        (aggregate), <quote>normal</quote>, <quote>trigger</quote>, or <quote>window</quote>.
+        (aggregate), <quote>normal</quote>, <quote>procedure</quote>, <quote>trigger</quote>, or <quote>window</quote>.
         To display only functions
         of specific type(s), add the corresponding letters <literal>a</literal>,
-        <literal>n</literal>, <literal>t</literal>, or <literal>w</literal> to the command.
+        <literal>n</literal>, <literal>p</literal>, <literal>t</literal>, or <literal>w</literal> to the command.
         If <replaceable
         class="parameter">pattern</replaceable> is specified, only
         functions whose names match the pattern are shown.
