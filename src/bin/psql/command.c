@@ -754,6 +754,7 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 					case 'S':
 					case 'a':
 					case 'n':
+					case 'p':
 					case 't':
 					case 'w':
 						success = describeFunctions(&cmd[2], pattern, show_verbose, show_system);
