@@ -4233,18 +4233,21 @@ explain (verbose, costs off) select * from ft3 where f2 = 'foo' COLLATE "C";
 
 explain (verbose, costs off) select * from ft3 f, loct3 l
   where f.f3 = l.f3 COLLATE "POSIX" and l.f1 = 'foo';
-                       QUERY PLAN                        
----------------------------------------------------------
- Nested Loop
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Hash Join
    Output: f.f1, f.f2, f.f3, l.f1, l.f2, l.f3
-   Join Filter: ((f.f3)::text = (l.f3)::text)
-   ->  Index Scan using loct3_f1_key on public.loct3 l
-         Output: l.f1, l.f2, l.f3
-         Index Cond: (l.f1 = 'foo'::text)
+   Inner Unique: true
+   Hash Cond: ((f.f3)::text = (l.f3)::text)
    ->  Foreign Scan on public.ft3 f
          Output: f.f1, f.f2, f.f3
          Remote SQL: SELECT f1, f2, f3 FROM public.loct3
-(9 rows)
+   ->  Hash
+         Output: l.f1, l.f2, l.f3
+         ->  Index Scan using loct3_f1_key on public.loct3 l
+               Output: l.f1, l.f2, l.f3
+               Index Cond: (l.f1 = 'foo'::text)
+(12 rows)
 
 -- ===================================================================
 -- test writable foreign table stuff
