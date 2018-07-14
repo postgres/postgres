@@ -2336,8 +2336,8 @@ SELECT *
   WHERE t.id IS NULL OR m.id IS NULL;
  id | name | id | name 
 ----+------+----+------
-  2 | two  |    | 
     |      |  2 | Two
+  2 | two  |    | 
 (2 rows)
 
 REFRESH MATERIALIZED VIEW CONCURRENTLY citext_matview;
