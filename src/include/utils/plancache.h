@@ -182,4 +182,15 @@ extern CachedPlan *GetCachedPlan(CachedPlanSource *plansource,
 			  QueryEnvironment *queryEnv);
 extern void ReleaseCachedPlan(CachedPlan *plan, bool useResOwner);
 
+/* possible values for plan_cache_mode */
+typedef enum
+{
+	PLAN_CACHE_MODE_AUTO,
+	PLAN_CACHE_MODE_FORCE_GENERIC_PLAN,
+	PLAN_CACHE_MODE_FORCE_CUSTOM_PLAN
+}			PlanCacheMode;
+
+/* GUC parameter */
+extern int plan_cache_mode;
+
 #endif							/* PLANCACHE_H */

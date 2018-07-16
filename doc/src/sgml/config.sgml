@@ -4616,6 +4616,36 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-plan-cache_mode" xreflabel="plan_cache_mode">
+      <term><varname>plan_cache_mode</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>plan_cache_mode</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Prepared statements (either explicitly prepared or implicitly
+        generated, for example in PL/pgSQL) can be executed using custom or
+        generic plans.  A custom plan is replanned for a new parameter value,
+        a generic plan is reused for repeated executions of the prepared
+        statement.  The choice between them is normally made automatically.
+        This setting overrides the default behavior and forces either a custom
+        or a generic plan.  This can be used to work around performance
+        problems in specific cases.  Note, however, that the plan cache
+        behavior is subject to change, so this setting, like all settings that
+        force the planner's hand, should be reevaluated regularly.
+       </para>
+
+       <para>
+        The allowed values are <literal>auto</literal>,
+        <literal>force_custom_plan</literal> and
+        <literal>force_generic_plan</literal>.  The default value is
+        <literal>auto</literal>.  The setting is applied when a cached plan is
+        to be executed, not when it is prepared.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
    </sect1>

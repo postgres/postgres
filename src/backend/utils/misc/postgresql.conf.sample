@@ -350,6 +350,7 @@
 #join_collapse_limit = 8		# 1 disables collapsing of explicit
 					# JOIN clauses
 #force_parallel_mode = off
+#plan_cache_mode = auto
 
 
 #------------------------------------------------------------------------------
