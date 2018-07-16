@@ -13,7 +13,7 @@
     <term><acronym>ANSI</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/American_National_Standards_Institute">
+      <ulink url="https://en.wikipedia.org/wiki/American_National_Standards_Institute">
       American National Standards Institute</ulink>
      </para>
     </listitem>
@@ -23,7 +23,7 @@
     <term><acronym>API</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/API">Application Programming Interface</ulink>
+      <ulink url="https://en.wikipedia.org/wiki/API">Application Programming Interface</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -32,7 +32,7 @@
     <term><acronym>ASCII</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Ascii">American Standard
+      <ulink url="https://en.wikipedia.org/wiki/Ascii">American Standard
       Code for Information Interchange</ulink>
      </para>
     </listitem>
@@ -51,7 +51,7 @@
     <term><acronym>CA</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Certificate_authority">Certificate Authority</ulink>
+      <ulink url="https://en.wikipedia.org/wiki/Certificate_authority">Certificate Authority</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -61,7 +61,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing">Classless
+      url="https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing">Classless
       Inter-Domain Routing</ulink>
      </para>
     </listitem>
@@ -81,7 +81,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Certificate_revocation_list">Certificate
+      url="https://en.wikipedia.org/wiki/Certificate_revocation_list">Certificate
       Revocation List</ulink>
      </para>
     </listitem>
@@ -92,7 +92,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Comma-separated_values">Comma
+      url="https://en.wikipedia.org/wiki/Comma-separated_values">Comma
       Separated Values</ulink>
      </para>
     </listitem>
@@ -121,7 +121,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Database_administrator">Database
+      url="https://en.wikipedia.org/wiki/Database_administrator">Database
       Administrator</ulink>
      </para>
     </listitem>
@@ -131,7 +131,7 @@
     <term><acronym>DBI</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://dbi.perl.org/">Database Interface (Perl)</ulink>
+      <ulink url="https://dbi.perl.org/">Database Interface (Perl)</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -140,7 +140,7 @@
     <term><acronym>DBMS</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Dbms">Database Management
+      <ulink url="https://en.wikipedia.org/wiki/Dbms">Database Management
       System</ulink>
      </para>
     </listitem>
@@ -151,7 +151,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Data_Definition_Language">Data
+      url="https://en.wikipedia.org/wiki/Data_Definition_Language">Data
       Definition Language</ulink>, SQL commands such as <command>CREATE
       TABLE</command>, <command>ALTER USER</command>
      </para>
@@ -163,7 +163,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Data_Manipulation_Language">Data
+      url="https://en.wikipedia.org/wiki/Data_Manipulation_Language">Data
       Manipulation Language</ulink>, SQL commands such as <command>INSERT</command>,
       <command>UPDATE</command>, <command>DELETE</command>
      </para>
@@ -175,7 +175,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Daylight_saving_time">Daylight
+      url="https://en.wikipedia.org/wiki/Daylight_saving_time">Daylight
       Saving Time</ulink>
      </para>
     </listitem>
@@ -194,7 +194,7 @@
     <term><acronym>ESQL</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Embedded_SQL">Embedded
+      <ulink url="https://en.wikipedia.org/wiki/Embedded_SQL">Embedded
       SQL</ulink>
      </para>
     </listitem>
@@ -204,7 +204,7 @@
     <term><acronym>FAQ</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/FAQ">Frequently Asked
+      <ulink url="https://en.wikipedia.org/wiki/FAQ">Frequently Asked
       Questions</ulink>
      </para>
     </listitem>
@@ -251,7 +251,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Git_(software)">Git</ulink>
+      url="https://en.wikipedia.org/wiki/Git_(software)">Git</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -260,7 +260,7 @@
     <term><acronym>GMT</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/GMT">Greenwich Mean Time</ulink>
+      <ulink url="https://en.wikipedia.org/wiki/GMT">Greenwich Mean Time</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -270,7 +270,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Generic_Security_Services_Application_Program_Interface">Generic
+      url="https://en.wikipedia.org/wiki/Generic_Security_Services_Application_Program_Interface">Generic
       Security Services Application Programming Interface</ulink>
      </para>
     </listitem>
@@ -300,7 +300,7 @@
     <listitem>
      <para>
       <ulink
-      url="https://git.postgresql.org/gitweb?p=postgresql.git;a=blob;f=src/backend/access/heap/README.HOT;hb=HEAD">Heap-Only
+      url="https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/backend/access/heap/README.HOT;hb=HEAD">Heap-Only
       Tuples</ulink>
      </para>
     </listitem>
@@ -311,7 +311,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/International_Electrotechnical_Commission">International
+      url="https://en.wikipedia.org/wiki/International_Electrotechnical_Commission">International
       Electrotechnical Commission</ulink>
      </para>
     </listitem>
@@ -332,7 +332,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Inter-process_communication">Inter-Process
+      url="https://en.wikipedia.org/wiki/Inter-process_communication">Inter-Process
       Communication</ulink>
      </para>
     </listitem>
@@ -342,7 +342,7 @@
     <term><acronym>ISO</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://www.iso.org/iso/home.htm">International Organization for
+      <ulink url="https://www.iso.org/home.html">International Organization for
       Standardization</ulink>
      </para>
     </listitem>
@@ -352,7 +352,7 @@
     <term><acronym>ISSN</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Issn">International Standard
+      <ulink url="https://en.wikipedia.org/wiki/Issn">International Standard
       Serial Number</ulink>
      </para>
     </listitem>
@@ -363,7 +363,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Java_Database_Connectivity">Java
+      url="https://en.wikipedia.org/wiki/Java_Database_Connectivity">Java
       Database Connectivity</ulink>
      </para>
     </listitem>
@@ -394,7 +394,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol">Lightweight
+      url="https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol">Lightweight
       Directory Access Protocol</ulink>
      </para>
     </listitem>
@@ -415,7 +415,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Visual_C++"><productname>Microsoft
+      url="https://en.wikipedia.org/wiki/Visual_C++"><productname>Microsoft
       Visual C</productname></ulink>
      </para>
     </listitem>
@@ -435,7 +435,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Internationalization_and_localization">National
+      url="https://en.wikipedia.org/wiki/Internationalization_and_localization">National
       Language Support</ulink>
      </para>
     </listitem>
@@ -446,7 +446,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Open_Database_Connectivity">Open
+      url="https://en.wikipedia.org/wiki/Open_Database_Connectivity">Open
       Database Connectivity</ulink>
      </para>
     </listitem>
@@ -465,7 +465,7 @@
     <term><acronym>OLAP</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Olap">Online Analytical
+      <ulink url="https://en.wikipedia.org/wiki/Olap">Online Analytical
       Processing</ulink>
      </para>
     </listitem>
@@ -475,7 +475,7 @@
     <term><acronym>OLTP</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/OLTP">Online Transaction
+      <ulink url="https://en.wikipedia.org/wiki/OLTP">Online Transaction
       Processing</ulink>
      </para>
     </listitem>
@@ -485,7 +485,7 @@
     <term><acronym>ORDBMS</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/ORDBMS">Object-Relational
+      <ulink url="https://en.wikipedia.org/wiki/ORDBMS">Object-Relational
       Database Management System</ulink>
      </para>
     </listitem>
@@ -496,7 +496,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Pluggable_Authentication_Modules">Pluggable
+      url="https://en.wikipedia.org/wiki/Pluggable_Authentication_Modules">Pluggable
       Authentication Modules</ulink>
      </para>
     </listitem>
@@ -524,7 +524,7 @@
     <term><acronym>PID</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Process_identifier">Process Identifier</ulink>
+      <ulink url="https://en.wikipedia.org/wiki/Process_identifier">Process Identifier</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -552,7 +552,7 @@
     <term><acronym>POSIX</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/POSIX">Portable Operating
+      <ulink url="https://en.wikipedia.org/wiki/POSIX">Portable Operating
       System Interface</ulink>
      </para>
     </listitem>
@@ -563,7 +563,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Relational_database_management_system">Relational
+      url="https://en.wikipedia.org/wiki/Relational_database_management_system">Relational
       Database Management System</ulink>
      </para>
     </listitem>
@@ -574,7 +574,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Request_for_Comments">Request For
+      url="https://en.wikipedia.org/wiki/Request_for_Comments">Request For
       Comments</ulink>
      </para>
     </listitem>
@@ -584,7 +584,7 @@
     <term><acronym>SGML</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/SGML">Standard Generalized
+      <ulink url="https://en.wikipedia.org/wiki/SGML">Standard Generalized
       Markup Language</ulink>
      </para>
     </listitem>
@@ -612,7 +612,7 @@
     <term><acronym>SQL</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/SQL">Structured Query Language</ulink>
+      <ulink url="https://en.wikipedia.org/wiki/SQL">Structured Query Language</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -630,7 +630,7 @@
     <term><acronym>SSH</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Secure_Shell">Secure
+      <ulink url="https://en.wikipedia.org/wiki/Secure_Shell">Secure
       Shell</ulink>
      </para>
     </listitem>
@@ -640,7 +640,7 @@
     <term><acronym>SSL</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Secure_Sockets_Layer">Secure Sockets Layer</ulink>
+      <ulink url="https://en.wikipedia.org/wiki/Secure_Sockets_Layer">Secure Sockets Layer</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -649,7 +649,7 @@
     <term><acronym>SSPI</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://msdn.microsoft.com/en-us/library/aa380493%28VS.85%29.aspx">Security
+      <ulink url="https://msdn.microsoft.com/en-us/library/aa380493%28VS.85%29.aspx">Security
       Support Provider Interface</ulink>
      </para>
     </listitem>
@@ -659,7 +659,7 @@
     <term><acronym>SYSV</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/System_V">Unix System V</ulink>
+      <ulink url="https://en.wikipedia.org/wiki/System_V">Unix System V</ulink>
      </para>
     </listitem>
    </varlistentry>
@@ -669,7 +669,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Transmission_Control_Protocol">Transmission
+      url="https://en.wikipedia.org/wiki/Transmission_Control_Protocol">Transmission
       Control Protocol (TCP) / Internet Protocol (IP)</ulink>
      </para>
     </listitem>
@@ -707,7 +707,7 @@
     <term><acronym>URL</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/URL">Uniform Resource
+      <ulink url="https://en.wikipedia.org/wiki/URL">Uniform Resource
       Locator</ulink>
      </para>
     </listitem>
@@ -718,7 +718,7 @@
     <listitem>
      <para>
       <ulink
-      url="http://en.wikipedia.org/wiki/Coordinated_Universal_Time">Coordinated
+      url="https://en.wikipedia.org/wiki/Coordinated_Universal_Time">Coordinated
       Universal Time</ulink>
      </para>
     </listitem>
@@ -738,7 +738,7 @@
     <term><acronym>UTF8</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Utf8">Eight-Bit Unicode
+      <ulink url="https://en.wikipedia.org/wiki/Utf8">Eight-Bit Unicode
       Transformation Format</ulink>
      </para>
     </listitem>
@@ -775,7 +775,7 @@
     <term><acronym>XML</acronym></term>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/XML">Extensible Markup
+      <ulink url="https://en.wikipedia.org/wiki/XML">Extensible Markup
       Language</ulink>
      </para>
     </listitem>

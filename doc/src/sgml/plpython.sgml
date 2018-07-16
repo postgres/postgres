@@ -9,7 +9,7 @@
  <para>
   The <application>PL/Python</application> procedural language allows
   <productname>PostgreSQL</productname> functions to be written in the
-  <ulink url="http://www.python.org">Python language</ulink>.
+  <ulink url="https://www.python.org">Python language</ulink>.
  </para>
 
  <para>
@@ -89,7 +89,7 @@
    </itemizedlist>
 
    This scheme is analogous to the recommendations in <ulink
-   url="http://www.python.org/dev/peps/pep-0394/">PEP 394</ulink> regarding the
+   url="https://www.python.org/dev/peps/pep-0394/">PEP 394</ulink> regarding the
    naming and transitioning of the <command>python</command> command.
   </para>
 
@@ -165,7 +165,7 @@
 
   <para>
    See also the
-   document <ulink url="http://docs.python.org/py3k/whatsnew/3.0.html">What's
+   document <ulink url="https://docs.python.org/3/whatsnew/3.0.html">What's
    New In Python 3.0</ulink> for more information about porting to
    Python 3.
   </para>
@@ -1116,7 +1116,7 @@ $$ LANGUAGE plpythonu;
       batch of rows, never larger than the parameter value.  Once all rows are
       exhausted, <literal>fetch</literal> starts returning an empty result
       object.  Cursor objects also provide an
-      <ulink url="http://docs.python.org/library/stdtypes.html#iterator-types">iterator
+      <ulink url="https://docs.python.org/library/stdtypes.html#iterator-types">iterator
       interface</ulink>, yielding one row at a time until all rows are
       exhausted.  Data fetched that way is not returned as result objects, but
       rather as dictionaries, each dictionary corresponding to a single result
@@ -1167,7 +1167,7 @@ $$ LANGUAGE plpythonu;
       <para>
         Do not confuse objects created by <literal>plpy.cursor</literal> with
         DB-API cursors as defined by
-        the <ulink url="http://www.python.org/dev/peps/pep-0249/">Python
+        the <ulink url="https://www.python.org/dev/peps/pep-0249/">Python
         Database API specification</ulink>.  They don't have anything in common
         except for the name.
       </para>
@@ -1297,7 +1297,7 @@ $$ LANGUAGE plpythonu;
     helper object to manage explicit subtransactions that gets created
     with the <literal>plpy.subtransaction()</literal> function.
     Objects created by this function implement the
-    <ulink url="http://docs.python.org/library/stdtypes.html#context-manager-types">
+    <ulink url="https://docs.python.org/library/stdtypes.html#context-manager-types">
     context manager interface</ulink>.  Using explicit subtransactions
     we can rewrite our function as:
 <programlisting>
@@ -1373,7 +1373,7 @@ $$ LANGUAGE plpythonu;
      Although context managers were implemented in Python 2.5, to use
      the <literal>with</literal> syntax in that version you need to
      use a <ulink
-     url="http://docs.python.org/release/2.5/ref/future.html">future
+     url="https://docs.python.org/release/2.5/ref/future.html">future
      statement</ulink>.  Because of implementation details, however,
      you cannot use future statements in PL/Python functions.
     </para>

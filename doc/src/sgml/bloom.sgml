@@ -9,7 +9,7 @@
 
  <para>
   <literal>bloom</literal> provides an index access method based on
-  <ulink url="http://en.wikipedia.org/wiki/Bloom_filter">Bloom filters</ulink>.
+  <ulink url="https://en.wikipedia.org/wiki/Bloom_filter">Bloom filters</ulink>.
  </para>
 
  <para>

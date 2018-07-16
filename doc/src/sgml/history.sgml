@@ -64,9 +64,9 @@
    <productname>POSTGRES</productname> has also been used as an
    educational tool at several universities.  Finally, Illustra
    Information Technologies (later merged into
-   <ulink url="http://www.informix.com/"><productname>Informix</productname></ulink>,
+   <ulink url="https://www.ibm.com/analytics/informix"><productname>Informix</productname></ulink>,
    which is now owned by <ulink
-   url="http://www.ibm.com/">IBM</ulink>) picked up the code and
+   url="https://www.ibm.com/">IBM</ulink>) picked up the code and
    commercialized it.  In late 1992,
    <productname>POSTGRES</productname> became the primary data manager
    for the

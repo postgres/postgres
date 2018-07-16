@@ -763,7 +763,7 @@ getGaussianRand(TState *thread, int64 min, int64 max, double parameter)
 		 * pg_erand48 generates [0,1), but for the basic version of the
 		 * Box-Muller transform the two uniformly distributed random numbers
 		 * are expected in (0, 1] (see
-		 * http://en.wikipedia.org/wiki/Box_muller)
+		 * https://en.wikipedia.org/wiki/Box-Muller_transform)
 		 */
 		double		rand1 = 1.0 - pg_erand48(thread->random_state);
 		double		rand2 = 1.0 - pg_erand48(thread->random_state);

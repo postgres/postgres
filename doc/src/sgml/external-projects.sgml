@@ -65,7 +65,7 @@
       <entry>DBD::Pg</entry>
       <entry>Perl</entry>
       <entry>Perl DBI driver</entry>
-      <entry><ulink url="https://metacpan.org/release/DBD-Pg/"></ulink></entry>
+      <entry><ulink url="https://metacpan.org/release/DBD-Pg"></ulink></entry>
      </row>
 
      <row>
@@ -107,7 +107,7 @@
       <entry>pgtclng</entry>
       <entry>Tcl</entry>
       <entry></entry>
-      <entry><ulink url="http://sourceforge.net/projects/pgtclng/"></ulink></entry>
+      <entry><ulink url="https://sourceforge.net/projects/pgtclng/"></ulink></entry>
      </row>
 
      <row>
@@ -146,7 +146,7 @@
   <para>
    There are several administration tools available for
    <productname>PostgreSQL</productname>. The most popular is
-   <application><ulink url="http://www.pgadmin.org/">pgAdmin</ulink></application>,
+   <application><ulink url="https://www.pgadmin.org/">pgAdmin</ulink></application>,
    and there are several commercially available ones as well.
   </para>
  </sect1>

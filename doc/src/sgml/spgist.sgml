@@ -43,7 +43,7 @@
  <para>
   Some of the information here is derived from Purdue University's
   SP-GiST Indexing Project
-  <ulink url="http://www.cs.purdue.edu/spgist/">web site</ulink>.
+  <ulink url="https://www.cs.purdue.edu/spgist/">web site</ulink>.
   The <acronym>SP-GiST</acronym> implementation in
   <productname>PostgreSQL</productname> is primarily maintained by Teodor
   Sigaev and Oleg Bartunov, and there is more information on their

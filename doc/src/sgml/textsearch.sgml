@@ -2871,12 +2871,12 @@ SELECT plainto_tsquery('supernova star');
     The standard <productname>PostgreSQL</productname> distribution does
     not include any <application>Ispell</application> configuration files.
     Dictionaries for a large number of languages are available from <ulink
-    url="http://ficus-www.cs.ucla.edu/geoff/ispell.html">Ispell</ulink>.
+    url="https://www.cs.hmc.edu/~geoff/ispell.html">Ispell</ulink>.
     Also, some more modern dictionary file formats are supported &mdash; <ulink
-    url="http://en.wikipedia.org/wiki/MySpell">MySpell</ulink> (OO &lt; 2.0.1)
-    and <ulink url="http://sourceforge.net/projects/hunspell/">Hunspell</ulink>
+    url="https://en.wikipedia.org/wiki/MySpell">MySpell</ulink> (OO &lt; 2.0.1)
+    and <ulink url="https://sourceforge.net/projects/hunspell/">Hunspell</ulink>
     (OO &gt;= 2.0.2).  A large list of dictionaries is available on the <ulink
-    url="http://wiki.services.openoffice.org/wiki/Dictionaries">OpenOffice
+    url="https://wiki.openoffice.org/wiki/Dictionaries">OpenOffice
     Wiki</ulink>.
    </para>
 

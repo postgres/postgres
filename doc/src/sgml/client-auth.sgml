@@ -1889,7 +1889,7 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
     connected remote host name or IP address. Therefore the user must already
     exist in the database before PAM can be used for authentication.  For more
     information about PAM, please read the
-    <ulink url="http://www.kernel.org/pub/linux/libs/pam/">
+    <ulink url="https://www.kernel.org/pub/linux/libs/pam/">
     <productname>Linux-PAM</productname> Page</ulink>.
    </para>
 

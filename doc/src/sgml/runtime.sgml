@@ -248,7 +248,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
     If the client or server <acronym>NFS</acronym> implementation does not
     provide standard file system semantics, this can
     cause reliability problems (see <ulink
-    url="http://www.time-travellers.org/shane/papers/NFS_considered_harmful.html"></ulink>).
+    url="https://www.time-travellers.org/shane/papers/NFS_considered_harmful.html"></ulink>).
     Specifically, delayed (asynchronous) writes to the <acronym>NFS</acronym>
     server can cause data corruption problems.  If possible, mount the
     <acronym>NFS</acronym> file system synchronously (without caching) to avoid
@@ -1400,7 +1400,7 @@ Out of Memory: Killed process 12345 (postgres).
     On Linux 2.6 and later, it is possible to modify the
     kernel's behavior so that it will not <quote>overcommit</quote> memory.
     Although this setting will not prevent the <ulink
-    url="http://lwn.net/Articles/104179/">OOM killer</ulink> from being invoked
+    url="https://lwn.net/Articles/104179/">OOM killer</ulink> from being invoked
     altogether, it will lower the chances significantly and will therefore
     lead to more robust system behavior.  This is done by selecting strict
     overcommit mode via <command>sysctl</command>:

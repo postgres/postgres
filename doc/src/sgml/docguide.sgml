@@ -57,13 +57,13 @@
    structure and content of a technical document without worrying
    about presentation details.  A document style defines how that
    content is rendered into one of several final forms.  DocBook is
-   maintained by the <ulink url="http://www.oasis-open.org">
-   OASIS group</ulink>.  The <ulink url="http://www.oasis-open.org/docbook/">
+   maintained by the <ulink url="https://www.oasis-open.org">
+   OASIS group</ulink>.  The <ulink url="https://www.oasis-open.org/docbook/">
    official DocBook site</ulink> has good introductory and reference documentation and
    a complete O'Reilly book for your online reading pleasure.  The
    <ulink url="http://newbiedoc.sourceforge.net/metadoc/docbook-guide.html">
    NewbieDoc Docbook Guide</ulink> is very helpful for beginners.
-   The <ulink url="http://www.freebsd.org/docproj/docproj.html">
+   The <ulink url="https://www.freebsd.org/docproj/docproj.html">
    FreeBSD Documentation Project</ulink> also uses DocBook and has some good
    information, including a number of style guidelines that might be
    worth considering.
@@ -187,12 +187,6 @@ pkg install docbook-xml docbook-xsl fop libxslt
     directory you'll need to use <command>gmake</command>, because the
     makefile provided is not suitable for FreeBSD's <command>make</command>.
    </para>
-
-   <para>
-    More information about the FreeBSD documentation tools can be
-    found in the <ulink url="http://www.freebsd.org/doc/en_US.ISO8859-1/books/fdp-primer/tools.html">
-    FreeBSD Documentation Project's instructions</ulink>.
-   </para>
   </sect2>
 
   <sect2>
@@ -276,7 +270,7 @@ checking for fop... fop
 
    <para>
     To produce HTML documentation with the stylesheet used on <ulink
-    url="https://www.postgresql.org/docs/current">postgresql.org</ulink> instead of the
+    url="https://www.postgresql.org/docs/current/">postgresql.org</ulink> instead of the
     default simple style use:
 <screen>
 <prompt>doc/src/sgml$ </prompt><userinput>make STYLE=website html</userinput>
