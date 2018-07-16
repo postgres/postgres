@@ -180,7 +180,6 @@ BuildIndexValueDescription(Relation indexRelation,
 {
 	StringInfoData buf;
 	Form_pg_index idxrec;
-	HeapTuple	ht_idx;
 	int			indnkeyatts;
 	int			i;
 	int			keyno;
@@ -200,24 +199,13 @@ BuildIndexValueDescription(Relation indexRelation,
 	 * Next we need to check table-level SELECT access and then, if there is
 	 * no access there, check column-level permissions.
 	 */
-
-	/*
-	 * Fetch the pg_index tuple by the Oid of the index
-	 */
-	ht_idx = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexrelid));
-	if (!HeapTupleIsValid(ht_idx))
-		elog(ERROR, "cache lookup failed for index %u", indexrelid);
-	idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
-
+	idxrec = indexRelation->rd_index;
 	indrelid = idxrec->indrelid;
 	Assert(indexrelid == idxrec->indexrelid);
 
 	/* RLS check- if RLS is enabled then we don't return anything. */
 	if (check_enable_rls(indrelid, InvalidOid, true) == RLS_ENABLED)
-	{
-		ReleaseSysCache(ht_idx);
 		return NULL;
-	}
 
 	/* Table-level SELECT is enough, if the user has it */
 	aclresult = pg_class_aclcheck(indrelid, GetUserId(), ACL_SELECT);
@@ -227,7 +215,7 @@ BuildIndexValueDescription(Relation indexRelation,
 		 * No table-level access, so step through the columns in the index and
 		 * make sure the user has SELECT rights on all of them.
 		 */
-		for (keyno = 0; keyno < idxrec->indnkeyatts; keyno++)
+		for (keyno = 0; keyno < indnkeyatts; keyno++)
 		{
 			AttrNumber	attnum = idxrec->indkey.values[keyno];
 
@@ -242,12 +230,10 @@ BuildIndexValueDescription(Relation indexRelation,
 									  ACL_SELECT) != ACLCHECK_OK)
 			{
 				/* No access, so clean up and return */
-				ReleaseSysCache(ht_idx);
 				return NULL;
 			}
 		}
 	}
-	ReleaseSysCache(ht_idx);
 
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "(%s)=(",
