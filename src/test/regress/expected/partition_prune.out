@@ -993,6 +993,47 @@ explain (costs off) select * from mc2p where a = 1 and b > 1;
          Filter: ((b > 1) AND (a = 1))
 (3 rows)
 
+-- all partitions but the default one should be pruned
+explain (costs off) select * from mc2p where a = 1 and b is null;
+                QUERY PLAN                 
+-------------------------------------------
+ Append
+   ->  Seq Scan on mc2p_default
+         Filter: ((b IS NULL) AND (a = 1))
+(3 rows)
+
+explain (costs off) select * from mc2p where a is null and b is null;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Append
+   ->  Seq Scan on mc2p_default
+         Filter: ((a IS NULL) AND (b IS NULL))
+(3 rows)
+
+explain (costs off) select * from mc2p where a is null and b = 1;
+                QUERY PLAN                 
+-------------------------------------------
+ Append
+   ->  Seq Scan on mc2p_default
+         Filter: ((a IS NULL) AND (b = 1))
+(3 rows)
+
+explain (costs off) select * from mc2p where a is null;
+           QUERY PLAN           
+--------------------------------
+ Append
+   ->  Seq Scan on mc2p_default
+         Filter: (a IS NULL)
+(3 rows)
+
+explain (costs off) select * from mc2p where b is null;
+           QUERY PLAN           
+--------------------------------
+ Append
+   ->  Seq Scan on mc2p_default
+         Filter: (b IS NULL)
+(3 rows)
+
 -- boolean partitioning
 create table boolpart (a bool) partition by list (a);
 create table boolpart_default partition of boolpart default;

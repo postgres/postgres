@@ -137,6 +137,13 @@ explain (costs off) select * from mc2p where a = 2 and b < 1;
 explain (costs off) select * from mc2p where a > 1;
 explain (costs off) select * from mc2p where a = 1 and b > 1;
 
+-- all partitions but the default one should be pruned
+explain (costs off) select * from mc2p where a = 1 and b is null;
+explain (costs off) select * from mc2p where a is null and b is null;
+explain (costs off) select * from mc2p where a is null and b = 1;
+explain (costs off) select * from mc2p where a is null;
+explain (costs off) select * from mc2p where b is null;
+
 -- boolean partitioning
 create table boolpart (a bool) partition by list (a);
 create table boolpart_default partition of boolpart default;
