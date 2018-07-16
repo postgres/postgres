@@ -316,7 +316,7 @@ su - postgres
   <para>
    If you need to get a <acronym>GNU</acronym> package, you can find
    it at your local <acronym>GNU</acronym> mirror site (see <ulink
-   url="http://www.gnu.org/order/ftp.html"></ulink>
+   url="https://www.gnu.org/prep/ftp"></ulink>
    for a list) or at <ulink
    url="ftp://ftp.gnu.org/gnu/"></ulink>.
   </para>
@@ -1805,7 +1805,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
     <filename>/etc/profile</filename> or <filename>~/.bash_profile</filename>.  Some
     good information about the caveats associated with this method can
     be found at <ulink
-    url="http://xahlee.org/UnixResource_dir/_/ldpath.html"></ulink>.
+    url="http://xahlee.info/UnixResource_dir/_/ldpath.html"></ulink>.
    </para>
 
    <para>
@@ -2534,7 +2534,7 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
 
    <para>
      To build 64 bit binaries using MinGW, install the 64 bit tool set
-     from <ulink url="http://mingw-w64.sourceforge.net/"></ulink>, put its bin
+     from <ulink url="https://mingw-w64.org/"></ulink>, put its bin
      directory in the <envar>PATH</envar>, and run
      <command>configure</command> with the
      <command>--host=x86_64-w64-mingw32</command> option.
@@ -2593,14 +2593,14 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
 
     <para>
      You can download Sun Studio
-     from <ulink url="http://www.oracle.com/technetwork/server-storage/solarisstudio/downloads/"></ulink>.
+     from <ulink url="https://www.oracle.com/technetwork/server-storage/solarisstudio/downloads/"></ulink>.
      Many of GNU tools are integrated into Solaris 10, or they are
      present on the Solaris companion CD.  If you like packages for
      older version of Solaris, you can find these tools
      at <ulink url="http://www.sunfreeware.com"></ulink>.
      If you prefer
      sources, look
-     at <ulink url="http://www.gnu.org/order/ftp.html"></ulink>.
+     at <ulink url="https://www.gnu.org/prep/ftp"></ulink>.
     </para>
    </sect3>
 

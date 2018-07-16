@@ -182,7 +182,7 @@ $ENV{MSBFLAGS}="/m";
       ActiveState Perl is required to run the build generation scripts. MinGW
       or Cygwin Perl will not work. It must also be present in the PATH.
       Binaries can be downloaded from
-      <ulink url="http://www.activestate.com"></ulink>
+      <ulink url="https://www.activestate.com"></ulink>
       (Note: version 5.8.3 or later is required,
       the free Standard Distribution is sufficient).
      </para></listitem>
@@ -296,7 +296,7 @@ $ENV{MSBFLAGS}="/m";
      <term><productname>OpenSSL</productname></term>
      <listitem><para>
       Required for SSL support. Binaries can be downloaded from
-      <ulink url="http://www.slproweb.com/products/Win32OpenSSL.html"></ulink>
+      <ulink url="https://slproweb.com/products/Win32OpenSSL.html"></ulink>
       or source from <ulink url="https://www.openssl.org"></ulink>.
      </para></listitem>
     </varlistentry>
@@ -314,7 +314,7 @@ $ENV{MSBFLAGS}="/m";
      <term><productname>Python</productname></term>
      <listitem><para>
       Required for building <application>PL/Python</application>. Binaries can
-      be downloaded from <ulink url="http://www.python.org"></ulink>.
+      be downloaded from <ulink url="https://www.python.org"></ulink>.
      </para></listitem>
     </varlistentry>
 
@@ -473,7 +473,7 @@ $ENV{CONFIG}="Debug";
       ActiveState Perl installation, nor in the ActiveState Perl Package
       Manager (PPM) library. To install, download the
       <filename>IPC-Run-&lt;version&gt;.tar.gz</filename> source archive from CPAN,
-      at <ulink url="https://metacpan.org/release/IPC-Run/"></ulink>, and
+      at <ulink url="https://metacpan.org/release/IPC-Run"></ulink>, and
       uncompress. Edit the <filename>buildenv.pl</filename> file, and add a PERL5LIB
       variable to point to the <filename>lib</filename> subdirectory from the
       extracted archive. For example:
@@ -498,7 +498,7 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
      <term>OpenJade 1.3.1-2</term>
      <listitem><para>
       Download from
-      <ulink url="http://sourceforge.net/projects/openjade/files/openjade/1.3.1/openjade-1_3_1-2-bin.zip/download"></ulink>
+      <ulink url="https://sourceforge.net/projects/openjade/files/openjade/1.3.1/openjade-1_3_1-2-bin.zip/download"></ulink>
       and uncompress in the subdirectory <filename>openjade-1.3.1</filename>.
      </para></listitem>
     </varlistentry>
@@ -507,7 +507,7 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
      <term>DocBook DTD 4.2</term>
      <listitem><para>
       Download from
-      <ulink url="http://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip"></ulink>
+      <ulink url="https://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip"></ulink>
       and uncompress in the subdirectory <filename>docbook</filename>.
      </para></listitem>
     </varlistentry>
@@ -516,7 +516,7 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
      <term>ISO character entities</term>
      <listitem><para>
       Download from
-      <ulink url="http://www.oasis-open.org/cover/ISOEnts.zip"></ulink> and
+      <ulink url="https://www.oasis-open.org/cover/ISOEnts.zip"></ulink> and
       uncompress in the subdirectory <filename>docbook</filename>.
      </para></listitem>
     </varlistentry>

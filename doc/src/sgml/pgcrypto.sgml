@@ -956,9 +956,9 @@ gpg -a --export-secret-keys KEYID > secret.key
   </para>
   <para>
    For more details see <literal>man gpg</literal>,
-   <ulink url="http://www.gnupg.org/gph/en/manual.html">The GNU
+   <ulink url="https://www.gnupg.org/gph/en/manual.html">The GNU
    Privacy Handbook</ulink> and other documentation on
-   <ulink url="http://www.gnupg.org"></ulink>.
+   <ulink url="https://www.gnupg.org/"></ulink>.
   </para>
  </sect3>
 
@@ -1274,7 +1274,7 @@ gen_random_uuid() returns uuid
 
    <para>
     The implementation does not resist
-    <ulink url="http://en.wikipedia.org/wiki/Side-channel_attack">side-channel
+    <ulink url="https://en.wikipedia.org/wiki/Side-channel_attack">side-channel
     attacks</ulink>.  For example, the time required for
     a <filename>pgcrypto</filename> decryption function to complete varies among
     ciphertexts of a given size.
@@ -1286,7 +1286,7 @@ gen_random_uuid() returns uuid
 
    <itemizedlist>
     <listitem>
-     <para><ulink url="http://www.gnupg.org/gph/en/manual.html"></ulink></para>
+     <para><ulink url="https://www.gnupg.org/gph/en/manual.html"></ulink></para>
      <para>The GNU Privacy Handbook.</para>
     </listitem>
     <listitem>
@@ -1295,7 +1295,7 @@ gen_random_uuid() returns uuid
     </listitem>
     <listitem>
      <para>
-      <ulink url="http://www.stack.nl/~galactus/remailers/passphrase-faq.html"></ulink>
+      <ulink url="http://www.iusmentis.com/security/passphrasefaq/"></ulink>
      </para>
      <para>How to choose a good password.</para>
     </listitem>
@@ -1330,13 +1330,13 @@ gen_random_uuid() returns uuid
     </listitem>
     <listitem>
      <para>
-      <ulink url="http://www.usenix.org/events/usenix99/provos.html"></ulink>
+      <ulink url="https://www.usenix.org/legacy/events/usenix99/provos.html"></ulink>
      </para>
      <para>Comparison of crypt-des, crypt-md5 and bcrypt algorithms.</para>
     </listitem>
     <listitem>
      <para>
-      <ulink url="http://en.wikipedia.org/wiki/Fortuna_(PRNG)"></ulink>
+      <ulink url="https://en.wikipedia.org/wiki/Fortuna_(PRNG)"></ulink>
      </para>
      <para>Description of Fortuna CSPRNG.</para>
     </listitem>

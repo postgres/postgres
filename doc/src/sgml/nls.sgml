@@ -153,7 +153,7 @@ msgstr "another translated"
     can also be named
     <filename><replaceable>language</replaceable>_<replaceable>region</replaceable>.po</filename>
     where <replaceable>region</replaceable> is the
-    <ulink url="http://www.iso.org/iso/country_names_and_code_elements">
+    <ulink url="https://www.iso.org/iso-3166-country-codes.html">
     ISO 3166-1 two-letter country code (in upper case)</ulink>,
     e.g.,
     <filename>pt_BR.po</filename> for Portuguese in Brazil.  If you

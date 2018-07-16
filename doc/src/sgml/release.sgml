@@ -24,7 +24,7 @@ non-ASCII characters            find using grep -P '[\x80-\xFF]'
         one page:      http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
         other lists:   http://www.zipcon.net/~swhite/docs/computers/browsers/entities.html
                        http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
-                       http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
+                       https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
 
         We cannot use UTF8 because back branches still use SGML Docbook,
         which does not support it.  Also, rendering engines have to
@@ -58,9 +58,9 @@ For new features, add links to the documentation sections.
    A complete list of changes for each release can be obtained by
    viewing the <link linkend="git">Git</link> logs for each release.
    The <ulink
-   url="https://archives.postgresql.org/pgsql-committers/"><literal>pgsql-committers</literal>
+   url="https://www.postgresql.org/list/pgsql-committers/"><literal>pgsql-committers</literal>
    email list</ulink> records all source code changes as well.  There is also
-   a <ulink url="https://git.postgresql.org/gitweb?p=postgresql.git;a=summary">web
+   a <ulink url="https://git.postgresql.org/gitweb/?p=postgresql.git;a=summary">web
    interface</ulink> that shows changes to specific files.
   </para>
 
