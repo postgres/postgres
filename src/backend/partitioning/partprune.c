@@ -853,53 +853,59 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 		}
 	}
 
-	/*
-	 * If generate_opsteps is set to false it means no OpExprs were directly
-	 * present in the input list.
+	/*-----------
+	 * Now generate some (more) pruning steps.  We have three strategies:
+	 *
+	 * 1) Generate pruning steps based on IS NULL clauses:
+	 *   a) For list partitioning, null partition keys can only be found in
+	 *      the designated null-accepting partition, so if there are IS NULL
+	 *      clauses containing partition keys we should generate a pruning
+	 *      step that gets rid of all partitions but that one.  We can
+	 *      disregard any OpExpr we may have found.
+	 *   b) For range partitioning, only the default partition can contain
+	 *      NULL values, so the same rationale applies.
+	 *   c) For hash partitioning, we only apply this strategy if we have
+	 *      IS NULL clauses for all the keys.  Strategy 2 below will take
+	 *      care of the case where some keys have OpExprs and others have
+	 *      IS NULL clauses.
+	 *
+	 * 2) If not, generate steps based on OpExprs we have (if any).
+	 *
+	 * 3) If this doesn't work either, we may be able to generate steps to
+	 *    prune just the null-accepting partition (if one exists), if we have
+	 *    IS NOT NULL clauses for all partition keys.
 	 */
-	if (!generate_opsteps)
-	{
-		/*
-		 * Generate one prune step for the information derived from IS NULL,
-		 * if any.  To prune hash partitions, we must have found IS NULL
-		 * clauses for all partition keys.
-		 */
-		if (!bms_is_empty(nullkeys) &&
-			(part_scheme->strategy != PARTITION_STRATEGY_HASH ||
-			 bms_num_members(nullkeys) == part_scheme->partnatts))
-		{
-			PartitionPruneStep *step;
-
-			step = gen_prune_step_op(context, InvalidStrategy,
-									 false, NIL, NIL, nullkeys);
-			result = lappend(result, step);
-		}
-
-		/*
-		 * Note that for IS NOT NULL clauses, simply having step suffices;
-		 * there is no need to propagate the exact details of which keys are
-		 * required to be NOT NULL.  Hash partitioning expects to see actual
-		 * values to perform any pruning.
-		 */
-		if (!bms_is_empty(notnullkeys) &&
-			part_scheme->strategy != PARTITION_STRATEGY_HASH)
-		{
-			PartitionPruneStep *step;
-
-			step = gen_prune_step_op(context, InvalidStrategy,
-									 false, NIL, NIL, NULL);
-			result = lappend(result, step);
-		}
-	}
-	else
+	if (!bms_is_empty(nullkeys) &&
+		(part_scheme->strategy == PARTITION_STRATEGY_LIST ||
+		 part_scheme->strategy == PARTITION_STRATEGY_RANGE ||
+		 (part_scheme->strategy == PARTITION_STRATEGY_HASH &&
+		  bms_num_members(nullkeys) == part_scheme->partnatts)))
 	{
 		PartitionPruneStep *step;
 
-		/* Generate pruning steps from OpExpr clauses in keyclauses. */
+		/* Strategy 1 */
+		step = gen_prune_step_op(context, InvalidStrategy,
+								 false, NIL, NIL, nullkeys);
+		result = lappend(result, step);
+	}
+	else if (generate_opsteps)
+	{
+		PartitionPruneStep *step;
+
+		/* Strategy 2 */
 		step = gen_prune_steps_from_opexps(part_scheme, context,
 										   keyclauses, nullkeys);
 		if (step != NULL)
 			result = lappend(result, step);
+	}
+	else if (bms_num_members(notnullkeys) == part_scheme->partnatts)
+	{
+		PartitionPruneStep *step;
+
+		/* Strategy 3 */
+		step = gen_prune_step_op(context, InvalidStrategy,
+								 false, NIL, NIL, NULL);
+		result = lappend(result, step);
 	}
 
 	/*
