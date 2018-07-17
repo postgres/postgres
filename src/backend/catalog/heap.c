@@ -592,8 +592,8 @@ CheckAttributeType(const char *attname,
  *		Construct and insert a new tuple in pg_attribute.
  *
  * Caller has already opened and locked pg_attribute.  new_attribute is the
- * attribute to insert (but we ignore attacl and attoptions, which are always
- * initialized to NULL).
+ * attribute to insert.  attcacheoff is always initialized to -1, attacl and
+ * attoptions are always initialized to NULL.
  *
  * indstate is the index state for CatalogTupleInsertWithInfo.  It can be
  * passed as NULL, in which case we'll fetch the necessary info.  (Don't do
@@ -620,7 +620,7 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	values[Anum_pg_attribute_attlen - 1] = Int16GetDatum(new_attribute->attlen);
 	values[Anum_pg_attribute_attnum - 1] = Int16GetDatum(new_attribute->attnum);
 	values[Anum_pg_attribute_attndims - 1] = Int32GetDatum(new_attribute->attndims);
-	values[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(new_attribute->attcacheoff);
+	values[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(-1);
 	values[Anum_pg_attribute_atttypmod - 1] = Int32GetDatum(new_attribute->atttypmod);
 	values[Anum_pg_attribute_attbyval - 1] = BoolGetDatum(new_attribute->attbyval);
 	values[Anum_pg_attribute_attstorage - 1] = CharGetDatum(new_attribute->attstorage);
@@ -689,9 +689,8 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		attr = TupleDescAttr(tupdesc, i);
 		/* Fill in the correct relation OID */
 		attr->attrelid = new_rel_oid;
-		/* Make sure these are OK, too */
+		/* Make sure this is OK, too */
 		attr->attstattarget = -1;
-		attr->attcacheoff = -1;
 
 		InsertPgAttributeTuple(rel, attr, indstate);
 

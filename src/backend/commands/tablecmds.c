@@ -5522,7 +5522,6 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	attribute.atttypid = typeOid;
 	attribute.attstattarget = (newattnum > 0) ? -1 : 0;
 	attribute.attlen = tform->typlen;
-	attribute.attcacheoff = -1;
 	attribute.atttypmod = typmod;
 	attribute.attnum = newattnum;
 	attribute.attbyval = tform->typbyval;
