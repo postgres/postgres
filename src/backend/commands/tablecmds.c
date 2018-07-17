@@ -6504,14 +6504,21 @@ ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newVa
 				 errmsg("cannot alter system column \"%s\"",
 						colName)));
 
-	if ((rel->rd_rel->relkind == RELKIND_INDEX ||
-		 rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX) &&
-		rel->rd_index->indkey.values[attnum - 1] != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot alter statistics on non-expression column \"%s\" of index \"%s\"",
-						NameStr(attrtuple->attname), RelationGetRelationName(rel)),
-				 errhint("Alter statistics on table column instead.")));
+	if (rel->rd_rel->relkind == RELKIND_INDEX ||
+		rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
+	{
+		if (attnum > rel->rd_index->indnkeyatts)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot alter statistics on included column \"%s\" of index \"%s\"",
+							NameStr(attrtuple->attname), RelationGetRelationName(rel))));
+		else if (rel->rd_index->indkey.values[attnum - 1] != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot alter statistics on non-expression column \"%s\" of index \"%s\"",
+							NameStr(attrtuple->attname), RelationGetRelationName(rel)),
+					 errhint("Alter statistics on table column instead.")));
+	}
 
 	attrtuple->attstattarget = newtarget;
 
