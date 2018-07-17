@@ -245,6 +245,20 @@ SELECT indexdef FROM pg_indexes WHERE tablename = 'tbl' ORDER BY indexname;
 
 DROP TABLE tbl;
 /*
+ * 3.3 Test ALTER TABLE SET STATISTICS
+ */
+CREATE TABLE tbl (c1 int, c2 int);
+CREATE INDEX tbl_idx ON tbl (c1, (c1+0)) INCLUDE (c2);
+ALTER INDEX tbl_idx ALTER COLUMN 1 SET STATISTICS 1000;
+ERROR:  cannot alter statistics on non-expression column "c1" of index "tbl_idx"
+HINT:  Alter statistics on table column instead.
+ALTER INDEX tbl_idx ALTER COLUMN 2 SET STATISTICS 1000;
+ALTER INDEX tbl_idx ALTER COLUMN 3 SET STATISTICS 1000;
+ERROR:  cannot alter statistics on included column "c2" of index "tbl_idx"
+ALTER INDEX tbl_idx ALTER COLUMN 4 SET STATISTICS 1000;
+ERROR:  column number 4 of relation "tbl_idx" does not exist
+DROP TABLE tbl;
+/*
  * 4. CREATE INDEX CONCURRENTLY
  */
 CREATE TABLE tbl (c1 int,c2 int, c3 int, c4 box, UNIQUE(c1, c2) INCLUDE(c3,c4));
