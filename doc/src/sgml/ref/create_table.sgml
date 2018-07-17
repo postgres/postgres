@@ -251,6 +251,145 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><replaceable class="parameter">column_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a column to be created in the new table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">data_type</replaceable></term>
+    <listitem>
+     <para>
+      The data type of the column. This can include array
+      specifiers. For more information on the data types supported by
+      <productname>PostgreSQL</productname>, refer to <xref
+      linkend="datatype"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>COLLATE <replaceable>collation</replaceable></literal></term>
+    <listitem>
+     <para>
+      The <literal>COLLATE</literal> clause assigns a collation to
+      the column (which must be of a collatable data type).
+      If not specified, the column data type's default collation is used.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>INHERITS ( <replaceable>parent_table</replaceable> [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      The optional <literal>INHERITS</literal> clause specifies a list of
+      tables from which the new table automatically inherits all
+      columns.  Parent tables can be plain tables or foreign tables.
+     </para>
+
+     <para>
+      Use of <literal>INHERITS</literal> creates a persistent relationship
+      between the new child table and its parent table(s).  Schema
+      modifications to the parent(s) normally propagate to children
+      as well, and by default the data of the child table is included in
+      scans of the parent(s).
+     </para>
+
+     <para>
+      If the same column name exists in more than one parent
+      table, an error is reported unless the data types of the columns
+      match in each of the parent tables.  If there is no conflict,
+      then the duplicate columns are merged to form a single column in
+      the new table.  If the column name list of the new table
+      contains a column name that is also inherited, the data type must
+      likewise match the inherited column(s), and the column
+      definitions are merged into one.  If the
+      new table explicitly specifies a default value for the column,
+      this default overrides any defaults from inherited declarations
+      of the column.  Otherwise, any parents that specify default
+      values for the column must all specify the same default, or an
+      error will be reported.
+     </para>
+
+     <para>
+      <literal>CHECK</literal> constraints are merged in essentially the same way as
+      columns: if multiple parent tables and/or the new table definition
+      contain identically-named <literal>CHECK</literal> constraints, these
+      constraints must all have the same check expression, or an error will be
+      reported.  Constraints having the same name and expression will
+      be merged into one copy.  A constraint marked <literal>NO INHERIT</literal> in a
+      parent will not be considered.  Notice that an unnamed <literal>CHECK</literal>
+      constraint in the new table will never be merged, since a unique name
+      will always be chosen for it.
+     </para>
+
+     <para>
+      Column <literal>STORAGE</literal> settings are also copied from parent tables.
+     </para>
+
+     <para>
+      If a column in the parent table is an identity column, that property is
+      not inherited.  A column in the child table can be declared identity
+      column if desired.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PARTITION BY { RANGE | LIST | HASH } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [, ...] ) </literal></term>
+    <listitem>
+     <para>
+      The optional <literal>PARTITION BY</literal> clause specifies a strategy
+      of partitioning the table.  The table thus created is called a
+      <firstterm>partitioned</firstterm> table.  The parenthesized list of
+      columns or expressions forms the <firstterm>partition key</firstterm>
+      for the table.  When using range or hash partitioning, the partition key
+      can include multiple columns or expressions (up to 32, but this limit can
+      be altered when building <productname>PostgreSQL</productname>), but for
+      list partitioning, the partition key must consist of a single column or
+      expression.
+     </para>
+
+     <para>
+      Range and list partitioning require a btree operator class, while hash
+      partitioning requires a hash operator class.  If no operator class is
+      specified explicitly, the default operator class of the appropriate
+      type will be used; if no default operator class exists, an error will
+      be raised.  When hash partitioning is used, the operator class used
+      must implement support function 2 (see <xref linkend="xindex-support"/>
+      for details).
+     </para>
+
+     <para>
+      A partitioned table is divided into sub-tables (called partitions),
+      which are created using separate <literal>CREATE TABLE</literal> commands.
+      The partitioned table is itself empty.  A data row inserted into the
+      table is routed to a partition based on the value of columns or
+      expressions in the partition key.  If no existing partition matches
+      the values in the new row, an error will be reported.
+     </para>
+
+     <para>
+      Partitioned tables do not support <literal>EXCLUDE</literal> constraints;
+      however, you can define these constraints on individual partitions.
+      Also, while it's possible to define <literal>PRIMARY KEY</literal>
+      constraints on partitioned tables, creating foreign keys that
+      reference a partitioned table is not yet supported.
+     </para>
+
+     <para>
+      See <xref linkend="ddl-partitioning"/> for more discussion on table
+      partitioning.
+     </para>
+
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="sql-createtable-partition">
     <term><literal>PARTITION OF <replaceable class="parameter">parent_table</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }</literal></term>
     <listitem>
@@ -418,140 +557,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       with <literal>DROP TABLE</literal> requires taking an <literal>ACCESS
       EXCLUSIVE</literal> lock on the parent table.
      </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="parameter">column_name</replaceable></term>
-    <listitem>
-     <para>
-      The name of a column to be created in the new table.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="parameter">data_type</replaceable></term>
-    <listitem>
-     <para>
-      The data type of the column. This can include array
-      specifiers. For more information on the data types supported by
-      <productname>PostgreSQL</productname>, refer to <xref
-      linkend="datatype"/>.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>COLLATE <replaceable>collation</replaceable></literal></term>
-    <listitem>
-     <para>
-      The <literal>COLLATE</literal> clause assigns a collation to
-      the column (which must be of a collatable data type).
-      If not specified, the column data type's default collation is used.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>INHERITS ( <replaceable>parent_table</replaceable> [, ... ] )</literal></term>
-    <listitem>
-     <para>
-      The optional <literal>INHERITS</literal> clause specifies a list of
-      tables from which the new table automatically inherits all
-      columns.  Parent tables can be plain tables or foreign tables.
-     </para>
-
-     <para>
-      Use of <literal>INHERITS</literal> creates a persistent relationship
-      between the new child table and its parent table(s).  Schema
-      modifications to the parent(s) normally propagate to children
-      as well, and by default the data of the child table is included in
-      scans of the parent(s).
-     </para>
-
-     <para>
-      If the same column name exists in more than one parent
-      table, an error is reported unless the data types of the columns
-      match in each of the parent tables.  If there is no conflict,
-      then the duplicate columns are merged to form a single column in
-      the new table.  If the column name list of the new table
-      contains a column name that is also inherited, the data type must
-      likewise match the inherited column(s), and the column
-      definitions are merged into one.  If the
-      new table explicitly specifies a default value for the column,
-      this default overrides any defaults from inherited declarations
-      of the column.  Otherwise, any parents that specify default
-      values for the column must all specify the same default, or an
-      error will be reported.
-     </para>
-
-     <para>
-      <literal>CHECK</literal> constraints are merged in essentially the same way as
-      columns: if multiple parent tables and/or the new table definition
-      contain identically-named <literal>CHECK</literal> constraints, these
-      constraints must all have the same check expression, or an error will be
-      reported.  Constraints having the same name and expression will
-      be merged into one copy.  A constraint marked <literal>NO INHERIT</literal> in a
-      parent will not be considered.  Notice that an unnamed <literal>CHECK</literal>
-      constraint in the new table will never be merged, since a unique name
-      will always be chosen for it.
-     </para>
-
-     <para>
-      Column <literal>STORAGE</literal> settings are also copied from parent tables.
-     </para>
-
-     <para>
-      If a column in the parent table is an identity column, that property is
-      not inherited.  A column in the child table can be declared identity
-      column if desired.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>PARTITION BY { RANGE | LIST | HASH } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [, ...] ) </literal></term>
-    <listitem>
-     <para>
-      The optional <literal>PARTITION BY</literal> clause specifies a strategy
-      of partitioning the table.  The table thus created is called a
-      <firstterm>partitioned</firstterm> table.  The parenthesized list of
-      columns or expressions forms the <firstterm>partition key</firstterm>
-      for the table.  When using range or hash partitioning, the partition key
-      can include multiple columns or expressions (up to 32, but this limit can
-      be altered when building <productname>PostgreSQL</productname>), but for
-      list partitioning, the partition key must consist of a single column or
-      expression.
-     </para>
-
-     <para>
-      Range and list partitioning require a btree operator class, while hash
-      partitioning requires a hash operator class.  If no operator class is
-      specified explicitly, the default operator class of the appropriate
-      type will be used; if no default operator class exists, an error will
-      be raised.  When hash partitioning is used, the operator class used
-      must implement support function 2 (see <xref linkend="xindex-support"/>
-      for details).
-     </para>
-
-     <para>
-      A partitioned table is divided into sub-tables (called partitions),
-      which are created using separate <literal>CREATE TABLE</literal> commands.
-      The partitioned table is itself empty.  A data row inserted into the
-      table is routed to a partition based on the value of columns or
-      expressions in the partition key.  If no existing partition matches
-      the values in the new row, an error will be reported.
-     </para>
-
-     <para>
-      Partitioned tables do not support <literal>EXCLUDE</literal> constraints;
-      however, you can define these constraints on individual partitions.
-      Also, while it's possible to define <literal>PRIMARY KEY</literal>
-      constraints on partitioned tables, creating foreign keys that
-      reference a partitioned table is not yet supported.
-     </para>
-
     </listitem>
    </varlistentry>
 
