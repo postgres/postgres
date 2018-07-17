@@ -3408,21 +3408,24 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 
 		if (nread > 0)
 		{
+			int			r;
+
 			if (nread > sizeof(buffer))
 				nread = sizeof(buffer);
 			errno = 0;
 			pgstat_report_wait_start(WAIT_EVENT_WAL_COPY_READ);
-			if (read(srcfd, buffer, nread) != nread)
+			r = read(srcfd, buffer, nread);
+			if (r != nread)
 			{
-				if (errno != 0)
+				if (r < 0)
 					ereport(ERROR,
 							(errcode_for_file_access(),
 							 errmsg("could not read file \"%s\": %m",
 									path)));
 				else
 					ereport(ERROR,
-							(errmsg("not enough data in file \"%s\"",
-									path)));
+							(errmsg("could not read file \"%s\": read %d of %zu",
+									path, r, (Size) nread)));
 			}
 			pgstat_report_wait_end();
 		}
@@ -4544,7 +4547,7 @@ ReadControlFile(void)
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not open control file \"%s\": %m",
+				 errmsg("could not open file \"%s\": %m",
 						XLOG_CONTROL_FILE)));
 
 	pgstat_report_wait_start(WAIT_EVENT_CONTROL_FILE_READ);
@@ -4554,10 +4557,12 @@ ReadControlFile(void)
 		if (r < 0)
 			ereport(PANIC,
 					(errcode_for_file_access(),
-					 errmsg("could not read from control file: %m")));
+					 errmsg("could not read file \"%s\": %m",
+							XLOG_CONTROL_FILE)));
 		else
 			ereport(PANIC,
-					(errmsg("could not read from control file: read %d bytes, expected %d", r, (int) sizeof(ControlFileData))));
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							XLOG_CONTROL_FILE, r, sizeof(ControlFileData))));
 	}
 	pgstat_report_wait_end();
 
@@ -11689,6 +11694,7 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 	int			emode = private->emode;
 	uint32		targetPageOff;
 	XLogSegNo	targetSegNo PG_USED_FOR_ASSERTS_ONLY;
+	int			r;
 
 	XLByteToSeg(targetPagePtr, targetSegNo, wal_segment_size);
 	targetPageOff = XLogSegmentOffset(targetPagePtr, wal_segment_size);
@@ -11782,18 +11788,26 @@ retry:
 	}
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_READ);
-	if (read(readFile, readBuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+	r = read(readFile, readBuf, XLOG_BLCKSZ);
+	if (r != XLOG_BLCKSZ)
 	{
 		char		fname[MAXFNAMELEN];
 		int			save_errno = errno;
 
 		pgstat_report_wait_end();
 		XLogFileName(fname, curFileTLI, readSegNo, wal_segment_size);
-		errno = save_errno;
-		ereport(emode_for_corrupt_record(emode, targetPagePtr + reqLen),
-				(errcode_for_file_access(),
-				 errmsg("could not read from log segment %s, offset %u: %m",
-						fname, readOff)));
+		if (r < 0)
+		{
+			errno = save_errno;
+			ereport(emode_for_corrupt_record(emode, targetPagePtr + reqLen),
+					(errcode_for_file_access(),
+					 errmsg("could not read from log segment %s, offset %u: %m",
+							fname, readOff)));
+		}
+		else
+			ereport(emode_for_corrupt_record(emode, targetPagePtr + reqLen),
+					(errmsg("could not read from log segment %s, offset %u: read %d of %zu",
+							fname, readOff, r, (Size) XLOG_BLCKSZ)));
 		goto next_record_is_invalid;
 	}
 	pgstat_report_wait_end();

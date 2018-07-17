@@ -629,6 +629,7 @@ load_relmap_file(bool shared)
 	char		mapfilename[MAXPGPATH];
 	pg_crc32c	crc;
 	int			fd;
+	int			r;
 
 	if (shared)
 	{
@@ -648,7 +649,7 @@ load_relmap_file(bool shared)
 	if (fd < 0)
 		ereport(FATAL,
 				(errcode_for_file_access(),
-				 errmsg("could not open relation mapping file \"%s\": %m",
+				 errmsg("could not open file \"%s\": %m",
 						mapfilename)));
 
 	/*
@@ -659,11 +660,18 @@ load_relmap_file(bool shared)
 	 * are able to access any relation that's affected by the change.
 	 */
 	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_READ);
-	if (read(fd, map, sizeof(RelMapFile)) != sizeof(RelMapFile))
-		ereport(FATAL,
-				(errcode_for_file_access(),
-				 errmsg("could not read relation mapping file \"%s\": %m",
-						mapfilename)));
+	r = read(fd, map, sizeof(RelMapFile));
+	if (r != sizeof(RelMapFile))
+	{
+		if (r < 0)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", mapfilename)));
+		else
+			ereport(FATAL,
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							mapfilename, r, sizeof(RelMapFile))));
+	}
 	pgstat_report_wait_end();
 
 	CloseTransientFile(fd);
@@ -748,7 +756,7 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not open relation mapping file \"%s\": %m",
+				 errmsg("could not open file \"%s\": %m",
 						mapfilename)));
 
 	if (write_wal)
@@ -782,7 +790,7 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 			errno = ENOSPC;
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write to relation mapping file \"%s\": %m",
+				 errmsg("could not write file \"%s\": %m",
 						mapfilename)));
 	}
 	pgstat_report_wait_end();
@@ -797,14 +805,14 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	if (pg_fsync(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not fsync relation mapping file \"%s\": %m",
+				 errmsg("could not fsync file \"%s\": %m",
 						mapfilename)));
 	pgstat_report_wait_end();
 
 	if (CloseTransientFile(fd))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not close relation mapping file \"%s\": %m",
+				 errmsg("could not close file \"%s\": %m",
 						mapfilename)));
 
 	/*

@@ -1414,11 +1414,15 @@ RestoreSlotFromDisk(const char *name)
 
 		CloseTransientFile(fd);
 		errno = saved_errno;
-		ereport(PANIC,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %u: %m",
-						path, readBytes,
-						(uint32) ReplicationSlotOnDiskConstantSize)));
+		if (readBytes < 0)
+			ereport(PANIC,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", path)));
+		else
+			ereport(PANIC,
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							path, readBytes,
+							ReplicationSlotOnDiskConstantSize)));
 	}
 
 	/* verify magic */
@@ -1454,10 +1458,14 @@ RestoreSlotFromDisk(const char *name)
 
 		CloseTransientFile(fd);
 		errno = saved_errno;
-		ereport(PANIC,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %u: %m",
-						path, readBytes, cp.length)));
+		if (readBytes < 0)
+			ereport(PANIC,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", path)));
+		else
+			ereport(PANIC,
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							path, readBytes, (Size) cp.length)));
 	}
 
 	CloseTransientFile(fd);

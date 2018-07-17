@@ -1726,11 +1726,18 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-		errno = save_errno;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %d: %m",
-						path, readBytes, (int) SnapBuildOnDiskConstantSize)));
+
+		if (readBytes < 0)
+		{
+			errno = save_errno;
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", path)));
+		}
+		else
+			ereport(ERROR,
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							path, readBytes, SnapBuildOnDiskConstantSize)));
 	}
 
 	if (ondisk.magic != SNAPBUILD_MAGIC)
@@ -1757,11 +1764,18 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-		errno = save_errno;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %d: %m",
-						path, readBytes, (int) sizeof(SnapBuild))));
+
+		if (readBytes < 0)
+		{
+			errno = save_errno;
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", path)));
+		}
+		else
+			ereport(ERROR,
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							path, readBytes, sizeof(SnapBuild))));
 	}
 	COMP_CRC32C(checksum, &ondisk.builder, sizeof(SnapBuild));
 
@@ -1777,11 +1791,18 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-		errno = save_errno;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %d: %m",
-						path, readBytes, (int) sz)));
+
+		if (readBytes < 0)
+		{
+			errno = save_errno;
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", path)));
+		}
+		else
+			ereport(ERROR,
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							path, readBytes, sz)));
 	}
 	COMP_CRC32C(checksum, ondisk.builder.was_running.was_xip, sz);
 
@@ -1796,11 +1817,18 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-		errno = save_errno;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %d: %m",
-						path, readBytes, (int) sz)));
+
+		if (readBytes < 0)
+		{
+			errno = save_errno;
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", path)));
+		}
+		else
+			ereport(ERROR,
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							path, readBytes, sz)));
 	}
 	COMP_CRC32C(checksum, ondisk.builder.committed.xip, sz);
 

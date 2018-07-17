@@ -712,9 +712,16 @@ StartupReplicationOrigin(void)
 	/* verify magic, that is written even if nothing was active */
 	readBytes = read(fd, &magic, sizeof(magic));
 	if (readBytes != sizeof(magic))
-		ereport(PANIC,
-				(errmsg("could not read file \"%s\": %m",
-						path)));
+	{
+		if (readBytes < 0)
+			ereport(PANIC,
+					(errmsg("could not read file \"%s\": %m",
+							path)));
+		else
+			ereport(PANIC,
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							path, readBytes, sizeof(magic))));
+	}
 	COMP_CRC32C(crc, &magic, sizeof(magic));
 
 	if (magic != REPLICATION_STATE_MAGIC)

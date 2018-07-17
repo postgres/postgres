@@ -83,12 +83,12 @@ get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p)
 		else
 #ifndef FRONTEND
 			ereport(ERROR,
-					(errmsg("could not read file \"%s\": read %d of %d",
-							ControlFilePath, r, (int) sizeof(ControlFileData))));
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							ControlFilePath, r, sizeof(ControlFileData))));
 #else
 		{
-			fprintf(stderr, _("%s: could not read file \"%s\": read %d of %d\n"),
-					progname, ControlFilePath, r, (int) sizeof(ControlFileData));
+			fprintf(stderr, _("%s: could not read file \"%s\": read %d of %zu\n"),
+					progname, ControlFilePath, r, sizeof(ControlFileData));
 			exit(EXIT_FAILURE);
 		}
 #endif

@@ -289,6 +289,7 @@ slurpFile(const char *datadir, const char *path, size_t *filesize)
 	struct stat statbuf;
 	char		fullpath[MAXPGPATH];
 	int			len;
+	int			r;
 
 	snprintf(fullpath, sizeof(fullpath), "%s/%s", datadir, path);
 
@@ -304,9 +305,16 @@ slurpFile(const char *datadir, const char *path, size_t *filesize)
 
 	buffer = pg_malloc(len + 1);
 
-	if (read(fd, buffer, len) != len)
-		pg_fatal("could not read file \"%s\": %s\n",
-				 fullpath, strerror(errno));
+	r = read(fd, buffer, len);
+	if (r != len)
+	{
+		if (r < 0)
+			pg_fatal("could not read file \"%s\": %s\n",
+					 fullpath, strerror(errno));
+		else
+			pg_fatal("could not read file \"%s\": read %d of %zu\n",
+					 fullpath, r, (Size) len);
+	}
 	close(fd);
 
 	/* Zero-terminate the buffer. */

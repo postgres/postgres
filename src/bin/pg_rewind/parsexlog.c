@@ -246,6 +246,7 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 	uint32		targetPageOff;
 	XLogRecPtr	targetSegEnd;
 	XLogSegNo	targetSegNo;
+	int			r;
 
 	XLByteToSeg(targetPagePtr, targetSegNo, WalSegSz);
 	XLogSegNoOffsetToRecPtr(targetSegNo + 1, 0, WalSegSz, targetSegEnd);
@@ -309,10 +310,17 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 		return -1;
 	}
 
-	if (read(xlogreadfd, readBuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+
+	r = read(xlogreadfd, readBuf, XLOG_BLCKSZ);
+	if (r != XLOG_BLCKSZ)
 	{
-		printf(_("could not read from file \"%s\": %s\n"), xlogfpath,
-			   strerror(errno));
+		if (r < 0)
+			printf(_("could not read file \"%s\": %s\n"), xlogfpath,
+				   strerror(errno));
+		else
+			printf(_("could not read file \"%s\": read %d of %zu\n"),
+				   xlogfpath, r, (Size) XLOG_BLCKSZ);
+
 		return -1;
 	}
 
