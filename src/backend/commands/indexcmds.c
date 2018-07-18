@@ -369,11 +369,6 @@ DefineIndex(Oid relationId,
 	Snapshot	snapshot;
 	int			i;
 
-	if (list_intersection(stmt->indexParams, stmt->indexIncludingParams) != NIL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("included columns must not intersect with key columns")));
-
 	/*
 	 * count key attributes in index
 	 */
@@ -596,7 +591,7 @@ DefineIndex(Oid relationId,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("access method \"%s\" does not support unique indexes",
 						accessMethodName)));
-	if (list_length(stmt->indexIncludingParams) > 0 && !amRoutine->amcaninclude)
+	if (stmt->indexIncludingParams != NIL && !amRoutine->amcaninclude)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("access method \"%s\" does not support included columns",
