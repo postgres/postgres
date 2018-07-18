@@ -6361,6 +6361,15 @@ StartupXLOG(void)
 	struct stat st;
 
 	/*
+	 * We should have an aux process resource owner to use, and we should not
+	 * be in a transaction that's installed some other resowner.
+	 */
+	Assert(AuxProcessResourceOwner != NULL);
+	Assert(CurrentResourceOwner == NULL ||
+		   CurrentResourceOwner == AuxProcessResourceOwner);
+	CurrentResourceOwner = AuxProcessResourceOwner;
+
+	/*
 	 * Verify XLOG status looks valid.
 	 */
 	if (ControlFile->state < DB_SHUTDOWNED ||
@@ -8472,6 +8481,15 @@ GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch)
 void
 ShutdownXLOG(int code, Datum arg)
 {
+	/*
+	 * We should have an aux process resource owner to use, and we should not
+	 * be in a transaction that's installed some other resowner.
+	 */
+	Assert(AuxProcessResourceOwner != NULL);
+	Assert(CurrentResourceOwner == NULL ||
+		   CurrentResourceOwner == AuxProcessResourceOwner);
+	CurrentResourceOwner = AuxProcessResourceOwner;
+
 	/* Don't be chatty in standalone mode */
 	ereport(IsPostmasterEnvironment ? LOG : NOTICE,
 			(errmsg("shutting down")));

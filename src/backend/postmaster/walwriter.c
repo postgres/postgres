@@ -130,12 +130,6 @@ WalWriterMain(void)
 	sigdelset(&BlockSig, SIGQUIT);
 
 	/*
-	 * Create a resource owner to keep track of our resources (not clear that
-	 * we need this, but may as well have one).
-	 */
-	CurrentResourceOwner = ResourceOwnerCreate(NULL, "Wal Writer");
-
-	/*
 	 * Create a memory context that we will do all our work in.  We do this so
 	 * that we can reset the context during error recovery and thereby avoid
 	 * possible memory leaks.  Formerly this code just ran in
@@ -172,11 +166,7 @@ WalWriterMain(void)
 		pgstat_report_wait_end();
 		AbortBufferIO();
 		UnlockBuffers();
-		/* buffer pins are released here: */
-		ResourceOwnerRelease(CurrentResourceOwner,
-							 RESOURCE_RELEASE_BEFORE_LOCKS,
-							 false, true);
-		/* we needn't bother with the other ResourceOwnerRelease phases */
+		ReleaseAuxProcessResources(false);
 		AtEOXact_Buffers(false);
 		AtEOXact_SMgr();
 		AtEOXact_Files(false);

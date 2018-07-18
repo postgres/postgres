@@ -90,7 +90,6 @@
 #include "utils/pg_lsn.h"
 #include "utils/portal.h"
 #include "utils/ps_status.h"
-#include "utils/resowner.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 
@@ -264,8 +263,10 @@ InitWalSender(void)
 	/* Create a per-walsender data structure in shared memory */
 	InitWalSenderSlot();
 
-	/* Set up resource owner */
-	CurrentResourceOwner = ResourceOwnerCreate(NULL, "walsender top-level resource owner");
+	/*
+	 * We don't currently need any ResourceOwner in a walsender process, but
+	 * if we did, we could call CreateAuxProcessResourceOwner here.
+	 */
 
 	/*
 	 * Let postmaster know that we're a WAL sender. Once we've declared us as

@@ -365,9 +365,6 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 									logical_read_local_xlog_page,
 									NULL, NULL, NULL);
 
-		CurrentResourceOwner = ResourceOwnerCreate(CurrentResourceOwner,
-												   "logical decoding");
-
 		/* invalidate non-timetravel entries */
 		InvalidateSystemCaches();
 
@@ -402,6 +399,11 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 			CHECK_FOR_INTERRUPTS();
 		}
 
+		/*
+		 * Logical decoding could have clobbered CurrentResourceOwner during
+		 * transaction management, so restore the executor's value.  (This is
+		 * a kluge, but it's not worth cleaning up right now.)
+		 */
 		CurrentResourceOwner = old_resowner;
 
 		if (ctx->reader->EndRecPtr != InvalidXLogRecPtr)

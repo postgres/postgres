@@ -24,7 +24,6 @@
 #include "storage/procarray.h"
 #include "storage/shm_mq.h"
 #include "storage/shm_toc.h"
-#include "utils/resowner.h"
 
 #include "test_shm_mq.h"
 
@@ -69,13 +68,16 @@ test_shm_mq_main(Datum main_arg)
 	 * Connect to the dynamic shared memory segment.
 	 *
 	 * The backend that registered this worker passed us the ID of a shared
-	 * memory segment to which we must attach for further instructions.  In
-	 * order to attach to dynamic shared memory, we need a resource owner.
-	 * Once we've mapped the segment in our address space, attach to the table
-	 * of contents so we can locate the various data structures we'll need to
+	 * memory segment to which we must attach for further instructions.  Once
+	 * we've mapped the segment in our address space, attach to the table of
+	 * contents so we can locate the various data structures we'll need to
 	 * find within the segment.
+	 *
+	 * Note: at this point, we have not created any ResourceOwner in this
+	 * process.  This will result in our DSM mapping surviving until process
+	 * exit, which is fine.  If there were a ResourceOwner, it would acquire
+	 * ownership of the mapping, but we have no need for that.
 	 */
-	CurrentResourceOwner = ResourceOwnerCreate(NULL, "test_shm_mq worker");
 	seg = dsm_attach(DatumGetInt32(main_arg));
 	if (seg == NULL)
 		ereport(ERROR,
@@ -133,10 +135,8 @@ test_shm_mq_main(Datum main_arg)
 	copy_messages(inqh, outqh);
 
 	/*
-	 * We're done.  Explicitly detach the shared memory segment so that we
-	 * don't get a resource leak warning at commit time.  This will fire any
-	 * on_dsm_detach callbacks we've registered, as well.  Once that's done,
-	 * we can go ahead and exit.
+	 * We're done.  For cleanliness, explicitly detach from the shared memory
+	 * segment (that would happen anyway during process exit, though).
 	 */
 	dsm_detach(seg);
 	proc_exit(1);

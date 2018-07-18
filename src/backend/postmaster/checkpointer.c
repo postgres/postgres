@@ -232,12 +232,6 @@ CheckpointerMain(void)
 	last_checkpoint_time = last_xlog_switch_time = (pg_time_t) time(NULL);
 
 	/*
-	 * Create a resource owner to keep track of our resources (currently only
-	 * buffer pins).
-	 */
-	CurrentResourceOwner = ResourceOwnerCreate(NULL, "Checkpointer");
-
-	/*
 	 * Create a memory context that we will do all our work in.  We do this so
 	 * that we can reset the context during error recovery and thereby avoid
 	 * possible memory leaks.  Formerly this code just ran in
@@ -275,11 +269,7 @@ CheckpointerMain(void)
 		pgstat_report_wait_end();
 		AbortBufferIO();
 		UnlockBuffers();
-		/* buffer pins are released here: */
-		ResourceOwnerRelease(CurrentResourceOwner,
-							 RESOURCE_RELEASE_BEFORE_LOCKS,
-							 false, true);
-		/* we needn't bother with the other ResourceOwnerRelease phases */
+		ReleaseAuxProcessResources(false);
 		AtEOXact_Buffers(false);
 		AtEOXact_SMgr();
 		AtEOXact_Files(false);

@@ -292,12 +292,6 @@ WalReceiverMain(void)
 	if (WalReceiverFunctions == NULL)
 		elog(ERROR, "libpqwalreceiver didn't initialize correctly");
 
-	/*
-	 * Create a resource owner to keep track of our resources (not clear that
-	 * we need this, but may as well have one).
-	 */
-	CurrentResourceOwner = ResourceOwnerCreate(NULL, "Wal Receiver");
-
 	/* Unblock signals (they were blocked when the postmaster forked us) */
 	PG_SETMASK(&UnBlockSig);
 

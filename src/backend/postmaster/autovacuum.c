@@ -522,13 +522,9 @@ AutoVacLauncherMain(int argc, char *argv[])
 		pgstat_report_wait_end();
 		AbortBufferIO();
 		UnlockBuffers();
-		if (CurrentResourceOwner)
-		{
-			ResourceOwnerRelease(CurrentResourceOwner,
-								 RESOURCE_RELEASE_BEFORE_LOCKS,
-								 false, true);
-			/* we needn't bother with the other ResourceOwnerRelease phases */
-		}
+		/* this is probably dead code, but let's be safe: */
+		if (AuxProcessResourceOwner)
+			ReleaseAuxProcessResources(false);
 		AtEOXact_Buffers(false);
 		AtEOXact_SMgr();
 		AtEOXact_Files(false);

@@ -403,6 +403,13 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		/* finish setting up bufmgr.c */
 		InitBufferPoolBackend();
 
+		/*
+		 * Auxiliary processes don't run transactions, but they may need a
+		 * resource owner anyway to manage buffer pins acquired outside
+		 * transactions (and, perhaps, other things in future).
+		 */
+		CreateAuxProcessResourceOwner();
+
 		/* Initialize backend status information */
 		pgstat_initialize();
 		pgstat_bestart();

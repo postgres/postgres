@@ -632,8 +632,19 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		 * We are either a bootstrap process or a standalone backend. Either
 		 * way, start up the XLOG machinery, and register to have it closed
 		 * down at exit.
+		 *
+		 * We don't yet have an aux-process resource owner, but StartupXLOG
+		 * and ShutdownXLOG will need one.  Hence, create said resource owner
+		 * (and register a callback to clean it up after ShutdownXLOG runs).
 		 */
+		CreateAuxProcessResourceOwner();
+
 		StartupXLOG();
+		/* Release (and warn about) any buffer pins leaked in StartupXLOG */
+		ReleaseAuxProcessResources(true);
+		/* Reset CurrentResourceOwner to nothing for the moment */
+		CurrentResourceOwner = NULL;
+
 		on_shmem_exit(ShutdownXLOG, 0);
 	}
 

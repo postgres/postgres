@@ -142,12 +142,6 @@ BackgroundWriterMain(void)
 	sigdelset(&BlockSig, SIGQUIT);
 
 	/*
-	 * Create a resource owner to keep track of our resources (currently only
-	 * buffer pins).
-	 */
-	CurrentResourceOwner = ResourceOwnerCreate(NULL, "Background Writer");
-
-	/*
 	 * We just started, assume there has been either a shutdown or
 	 * end-of-recovery snapshot.
 	 */
@@ -191,11 +185,7 @@ BackgroundWriterMain(void)
 		ConditionVariableCancelSleep();
 		AbortBufferIO();
 		UnlockBuffers();
-		/* buffer pins are released here: */
-		ResourceOwnerRelease(CurrentResourceOwner,
-							 RESOURCE_RELEASE_BEFORE_LOCKS,
-							 false, true);
-		/* we needn't bother with the other ResourceOwnerRelease phases */
+		ReleaseAuxProcessResources(false);
 		AtEOXact_Buffers(false);
 		AtEOXact_SMgr();
 		AtEOXact_Files(false);

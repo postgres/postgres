@@ -279,8 +279,6 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		 */
 		startptr = MyReplicationSlot->data.restart_lsn;
 
-		CurrentResourceOwner = ResourceOwnerCreate(CurrentResourceOwner, "logical decoding");
-
 		/* invalidate non-timetravel entries */
 		InvalidateSystemCaches();
 
@@ -320,6 +318,11 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 
 		tuplestore_donestoring(tupstore);
 
+		/*
+		 * Logical decoding could have clobbered CurrentResourceOwner during
+		 * transaction management, so restore the executor's value.  (This is
+		 * a kluge, but it's not worth cleaning up right now.)
+		 */
 		CurrentResourceOwner = old_resowner;
 
 		/*

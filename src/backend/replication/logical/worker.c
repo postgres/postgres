@@ -1595,16 +1595,17 @@ ApplyWorkerMain(Datum main_arg)
 	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 
+	/*
+	 * We don't currently need any ResourceOwner in a walreceiver process, but
+	 * if we did, we could call CreateAuxProcessResourceOwner here.
+	 */
+
 	/* Initialise stats to a sanish value */
 	MyLogicalRepWorker->last_send_time = MyLogicalRepWorker->last_recv_time =
 		MyLogicalRepWorker->reply_time = GetCurrentTimestamp();
 
 	/* Load the libpq-specific functions */
 	load_file("libpqwalreceiver", false);
-
-	Assert(CurrentResourceOwner == NULL);
-	CurrentResourceOwner = ResourceOwnerCreate(NULL,
-											   "logical replication apply");
 
 	/* Run as replica session replication role. */
 	SetConfigOption("session_replication_role", "replica",
