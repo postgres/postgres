@@ -1295,7 +1295,7 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 			else
 				ereport(WARNING,
 						(errmsg("could not read file \"%s\": read %d of %zu",
-								path, r, stat.st_size)));
+								path, r, (Size) stat.st_size)));
 		}
 		pfree(buf);
 		return NULL;
