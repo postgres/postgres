@@ -1737,7 +1737,8 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		else
 			ereport(ERROR,
 					(errmsg("could not read file \"%s\": read %d of %zu",
-							path, readBytes, SnapBuildOnDiskConstantSize)));
+							path, readBytes,
+							(Size) SnapBuildOnDiskConstantSize)));
 	}
 
 	if (ondisk.magic != SNAPBUILD_MAGIC)

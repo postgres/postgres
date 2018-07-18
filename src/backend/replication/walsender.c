@@ -509,7 +509,7 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 		else if (nread == 0)
 			ereport(ERROR,
 					(errmsg("could not read file \"%s\": read %d of %zu",
-							path, nread, bytesleft)));
+							path, nread, (Size) bytesleft)));
 
 		pq_sendbytes(&buf, rbuf, nread);
 		bytesleft -= nread;

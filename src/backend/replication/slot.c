@@ -1422,7 +1422,7 @@ RestoreSlotFromDisk(const char *name)
 			ereport(PANIC,
 					(errmsg("could not read file \"%s\": read %d of %zu",
 							path, readBytes,
-							ReplicationSlotOnDiskConstantSize)));
+							(Size) ReplicationSlotOnDiskConstantSize)));
 	}
 
 	/* verify magic */
