@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 28;
+use Test::More tests => 26;
 
 # Initialize master node
 my $node_master = get_new_node('master');
@@ -282,27 +282,3 @@ is($catalog_xmin, '',
 is($xmin, '', 'xmin of cascaded slot null with hs feedback reset');
 is($catalog_xmin, '',
 	'catalog xmin of cascaded slot still null with hs_feedback reset');
-
-note "re-enabling hot_standby_feedback and disabling while stopped";
-$node_standby_2->safe_psql('postgres',
-	'ALTER SYSTEM SET hot_standby_feedback = on;');
-$node_standby_2->reload;
-
-$node_master->safe_psql('postgres', qq[INSERT INTO tab_int VALUES (11000);]);
-replay_check();
-
-$node_standby_2->safe_psql('postgres',
-	'ALTER SYSTEM SET hot_standby_feedback = off;');
-$node_standby_2->stop;
-
-($xmin, $catalog_xmin) =
-  get_slot_xmins($node_standby_1, $slotname_2, "xmin IS NOT NULL");
-isnt($xmin, '', 'xmin of cascaded slot non-null with postgres shut down');
-
-# Xmin from a previous run should be cleared on startup.
-$node_standby_2->start;
-
-($xmin, $catalog_xmin) =
-  get_slot_xmins($node_standby_1, $slotname_2, "xmin IS NULL");
-is($xmin, '',
-	'xmin of cascaded slot reset after startup with hs feedback reset');
