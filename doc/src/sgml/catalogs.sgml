@@ -3753,15 +3753,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>The total number of columns in the index (duplicates
-      <literal>pg_class.relnatts</literal>). This number includes both key and included attributes.</entry>
+      <literal>pg_class.relnatts</literal>); this number includes both key and included attributes</entry>
      </row>
 
       <row>
       <entry><structfield>indnkeyatts</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>The number of key columns in the index. "Key columns" are ordinary
-      index columns (as opposed to "included" columns).</entry>
+      <entry>The number of <firstterm>key columns</firstterm> in the index,
+       not counting any <firstterm>included columns</firstterm>, which are
+       merely stored and do not participate in the index semantics</entry>
      </row>
 
      <row>
@@ -3867,7 +3868,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        This is an array of <structfield>indnatts</structfield> values that
        indicate which table columns this index indexes.  For example a value
        of <literal>1 3</literal> would mean that the first and the third table
-       columns make up the index key.  A zero in this array indicates that the
+       columns make up the index entries.  Key columns come before non-key
+       (included) columns.  A zero in this array indicates that the
        corresponding index attribute is an expression over the table columns,
        rather than a simple column reference.
       </entry>
@@ -3878,9 +3880,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>oidvector</type></entry>
       <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
       <entry>
-       For each column in the index key, this contains the OID of the
-       collation to use for the index, or zero if the column is not
-       of a collatable data type.
+       For each column in the index key
+       (<structfield>indnkeyatts</structfield> values), this contains the OID
+       of the collation to use for the index, or zero if the column is not of
+       a collatable data type.
       </entry>
      </row>
 
@@ -3889,8 +3892,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>oidvector</type></entry>
       <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
       <entry>
-       For each column in the index key, this contains the OID of
-       the operator class to use.  See
+       For each column in the index key
+       (<structfield>indnkeyatts</structfield> values), this contains the OID
+       of the operator class to use.  See
        <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link> for details.
       </entry>
      </row>
@@ -3900,7 +3904,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>int2vector</type></entry>
       <entry></entry>
       <entry>
-       This is an array of <structfield>indnatts</structfield> values that
+       This is an array of <structfield>indnkeyatts</structfield> values that
        store per-column flag bits.  The meaning of the bits is defined by
        the index's access method.
       </entry>

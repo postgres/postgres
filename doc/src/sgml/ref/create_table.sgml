@@ -811,9 +811,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       one or more columns on which the uniqueness is not enforced.
       Note that although the constraint is not enforced on the included columns,
       it still depends on them.  Consequently, some operations on these columns
-      (e.g. <literal>DROP COLUMN</literal>) can cause cascade constraint and
-      index deletion.  See paragraph about <literal>INCLUDE</literal> in
-      <xref linkend="sql-createindex"/> for more information.
+      (e.g. <literal>DROP COLUMN</literal>) can cause cascaded constraint and
+      index deletion.
      </para>
     </listitem>
    </varlistentry>
@@ -858,9 +857,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       of columns to be specified which will be included in the non-key portion
       of the index.  Although uniqueness is not enforced on the included columns,
       the constraint still depends on them. Consequently, some operations on the
-      included columns (e.g. <literal>DROP COLUMN</literal>) can cause cascade
-      constraint and index deletion. See paragraph about <literal>INCLUDE</literal>
-      in <xref linkend="sql-createindex"/> for more information.
+      included columns (e.g. <literal>DROP COLUMN</literal>) can cause cascaded
+      constraint and index deletion.
      </para>
     </listitem>
    </varlistentry>

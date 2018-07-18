@@ -149,25 +149,28 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
       <listitem>
        <para>
         The optional <literal>INCLUDE</literal> clause specifies a
-        list of columns which will be included as a non-key part in the index.
-        Columns listed in this clause cannot also be present as index key columns.
-        The <literal>INCLUDE</literal> columns exist solely to
-        allow more queries to benefit from <firstterm>index-only scans</firstterm>
-        by including the values of the specified columns in the index.  These values
-        would otherwise have to be obtained by reading the table's heap.
+        list of columns which will be included in the index
+        as <firstterm>non-key</firstterm> columns.  A non-key column cannot
+        be used in an index scan search qualification, and it is disregarded
+        for purposes of any uniqueness or exclusion constraint enforced by
+        the index.  However, an index-only scan can return the contents of
+        non-key columns without having to visit the index's table, since
+        they are available directly from the index entry.  Thus, addition of
+        non-key columns allows index-only scans to be used for queries that
+        otherwise could not use them.
        </para>
 
        <para>
-        In <literal>UNIQUE</literal> indexes, uniqueness is only enforced
-        for key columns.  Columns listed in the <literal>INCLUDE</literal>
-        clause have no effect on uniqueness enforcement.  Other constraints
-        (<literal>PRIMARY KEY</literal> and <literal>EXCLUDE</literal>) work
-        the same way.
+        It's wise to be conservative about adding non-key columns to an
+        index, especially wide columns.  If an index tuple exceeds the
+        maximum size allowed for the index type, data insertion will fail.
+        In any case, non-key columns duplicate data from the index's table
+        and bloat the size of the index, thus potentially slowing searches.
        </para>
 
        <para>
         Columns listed in the <literal>INCLUDE</literal> clause don't need
-        appropriate operator classes; the clause can contain non-key index
+        appropriate operator classes; the clause can include
         columns whose data types don't have operator classes defined for
         a given access method.
        </para>
@@ -181,15 +184,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
         Currently, only the B-tree index access method supports this feature.
         In B-tree indexes, the values of columns listed in the
         <literal>INCLUDE</literal> clause are included in leaf tuples which
-        are linked to the heap tuples, but are not included into pivot tuples
-        used for tree navigation.  Therefore, moving columns from the list of
-        key columns to the <literal>INCLUDE</literal> clause can slightly
-        reduce index size and improve the tree branching factor.
-       </para>
-
-       <para>
-        Indexes with columns listed in the <literal>INCLUDE</literal> clause
-        are also called <quote>covering indexes</quote>.
+        correspond to heap tuples, but are not included in upper-level
+        index entries used for tree navigation.
        </para>
       </listitem>
      </varlistentry>
@@ -376,7 +372,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        columns is updated and so the recheck is not worth the additional cost
        of executing the function.
      </para>
-       
+
      <para>
        Functional indexes are used frequently for the case where the function
        returns a subset of the argument. Examples of this would be accessing
@@ -789,8 +785,8 @@ CREATE UNIQUE INDEX title_idx ON films (title);
 
   <para>
    To create a unique B-tree index on the column <literal>title</literal>
-   and included columns <literal>director</literal> and <literal>rating</literal>
-   in the table <literal>films</literal>:
+   with included columns <literal>director</literal>
+   and <literal>rating</literal> in the table <literal>films</literal>:
 <programlisting>
 CREATE UNIQUE INDEX title_idx ON films (title) INCLUDE (director, rating);
 </programlisting>
