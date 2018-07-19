@@ -1751,7 +1751,7 @@ connectDBStart(PGconn *conn)
 				if (ret || !ch->addrlist)
 					appendPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("could not parse network address \"%s\": %s\n"),
-									  ch->host, gai_strerror(ret));
+									  ch->hostaddr, gai_strerror(ret));
 				break;
 
 			case CHT_UNIX_SOCKET:
