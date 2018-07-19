@@ -84,8 +84,8 @@ IndexOnlyNext(IndexOnlyScanState *node)
 	{
 		/*
 		 * We reach here if the index only scan is not parallel, or if we're
-		 * executing a index only scan that was intended to be parallel
-		 * serially.
+		 * serially executing an index only scan that was planned to be
+		 * parallel.
 		 */
 		scandesc = index_beginscan(node->ss.ss_currentRelation,
 								   node->ioss_RelationDesc,
