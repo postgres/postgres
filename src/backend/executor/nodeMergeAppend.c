@@ -111,7 +111,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 			/*
 			 * The case where no subplans survive pruning must be handled
 			 * specially.  The problem here is that code in explain.c requires
-			 * an Append to have at least one subplan in order for it to
+			 * a MergeAppend to have at least one subplan in order for it to
 			 * properly determine the Vars in that subplan's targetlist.  We
 			 * sidestep this issue by just initializing the first subplan and
 			 * setting ms_noopscan to true to indicate that we don't really

@@ -151,7 +151,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 			/*
 			 * The case where no subplans survive pruning must be handled
 			 * specially.  The problem here is that code in explain.c requires
-			 * a MergeAppend to have at least one subplan in order for it to
+			 * an Append to have at least one subplan in order for it to
 			 * properly determine the Vars in that subplan's targetlist.  We
 			 * sidestep this issue by just initializing the first subplan and
 			 * setting as_whichplan to NO_MATCHING_SUBPLANS to indicate that
