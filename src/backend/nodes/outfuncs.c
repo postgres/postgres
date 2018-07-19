@@ -434,6 +434,8 @@ _outMergeAppend(StringInfo str, const MergeAppend *node)
 	appendStringInfoString(str, " :nullsFirst");
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %s", booltostr(node->nullsFirst[i]));
+
+	WRITE_NODE_FIELD(part_prune_infos);
 }
 
 static void

@@ -1068,6 +1068,11 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 		subplans = lappend(subplans, subplan);
 	}
 
+	/*
+	 * If any quals exist, they may be useful to perform further partition
+	 * pruning during execution.  Gather information needed by the executor
+	 * to do partition pruning.
+	 */
 	if (enable_partition_pruning &&
 		rel->reloptkind == RELOPT_BASEREL &&
 		best_path->partitioned_rels != NIL)
@@ -1078,7 +1083,6 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 
 		if (best_path->path.param_info)
 		{
-
 			List	   *prmquals = best_path->path.param_info->ppi_clauses;
 
 			prmquals = extract_actual_clauses(prmquals, false);
@@ -1088,12 +1092,6 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 			prunequal = list_concat(prunequal, prmquals);
 		}
 
-		/*
-		 * If any quals exist, they may be useful to perform further partition
-		 * pruning during execution.  Generate a PartitionPruneInfo for each
-		 * partitioned rel to store these quals and allow translation of
-		 * partition indexes into subpath indexes.
-		 */
 		if (prunequal != NIL)
 			partpruneinfos =
 				make_partition_pruneinfo(root,
@@ -1133,6 +1131,8 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 	List	   *pathkeys = best_path->path.pathkeys;
 	List	   *subplans = NIL;
 	ListCell   *subpaths;
+	RelOptInfo *rel = best_path->path.parent;
+	List	   *partpruneinfos = NIL;
 
 	/*
 	 * We don't have the actual creation of the MergeAppend node split out
@@ -1218,8 +1218,40 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 		subplans = lappend(subplans, subplan);
 	}
 
+	/*
+	 * If any quals exist, they may be useful to perform further partition
+	 * pruning during execution.  Gather information needed by the executor
+	 * to do partition pruning.
+	 */
+	if (enable_partition_pruning &&
+		rel->reloptkind == RELOPT_BASEREL &&
+		best_path->partitioned_rels != NIL)
+	{
+		List	   *prunequal;
+
+		prunequal = extract_actual_clauses(rel->baserestrictinfo, false);
+
+		if (best_path->path.param_info)
+		{
+
+			List	   *prmquals = best_path->path.param_info->ppi_clauses;
+
+			prmquals = extract_actual_clauses(prmquals, false);
+			prmquals = (List *) replace_nestloop_params(root,
+														(Node *) prmquals);
+
+			prunequal = list_concat(prunequal, prmquals);
+		}
+
+		if (prunequal != NIL)
+			partpruneinfos = make_partition_pruneinfo(root,
+													  best_path->partitioned_rels,
+													  best_path->subpaths, prunequal);
+	}
+
 	node->partitioned_rels = best_path->partitioned_rels;
 	node->mergeplans = subplans;
+	node->part_prune_infos = partpruneinfos;
 
 	return (Plan *) node;
 }

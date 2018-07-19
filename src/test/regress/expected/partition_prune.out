@@ -2824,6 +2824,143 @@ select * from boolp where a = (select value from boolvalues where not value);
 (9 rows)
 
 drop table boolp;
+--
+-- Test run-time pruning of MergeAppend subnodes
+--
+set enable_seqscan = off;
+set enable_sort = off;
+create table ma_test (a int) partition by range (a);
+create table ma_test_p1 partition of ma_test for values from (0) to (10);
+create table ma_test_p2 partition of ma_test for values from (10) to (20);
+create table ma_test_p3 partition of ma_test for values from (20) to (30);
+insert into ma_test select x from generate_series(0,29) t(x);
+create index on ma_test (a);
+analyze ma_test;
+prepare mt_q1 (int) as select * from ma_test where a >= $1 and a % 10 = 5 order by a;
+-- Execute query 5 times to allow choose_custom_plan
+-- to start considering a generic plan.
+execute mt_q1(0);
+ a  
+----
+  5
+ 15
+ 25
+(3 rows)
+
+execute mt_q1(0);
+ a  
+----
+  5
+ 15
+ 25
+(3 rows)
+
+execute mt_q1(0);
+ a  
+----
+  5
+ 15
+ 25
+(3 rows)
+
+execute mt_q1(0);
+ a  
+----
+  5
+ 15
+ 25
+(3 rows)
+
+execute mt_q1(0);
+ a  
+----
+  5
+ 15
+ 25
+(3 rows)
+
+explain (analyze, costs off, summary off, timing off) execute mt_q1(15);
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Merge Append (actual rows=2 loops=1)
+   Sort Key: ma_test_p2.a
+   Subplans Removed: 1
+   ->  Index Scan using ma_test_p2_a_idx on ma_test_p2 (actual rows=1 loops=1)
+         Index Cond: (a >= $1)
+         Filter: ((a % 10) = 5)
+         Rows Removed by Filter: 4
+   ->  Index Scan using ma_test_p3_a_idx on ma_test_p3 (actual rows=1 loops=1)
+         Index Cond: (a >= $1)
+         Filter: ((a % 10) = 5)
+         Rows Removed by Filter: 9
+(11 rows)
+
+execute mt_q1(15);
+ a  
+----
+ 15
+ 25
+(2 rows)
+
+explain (analyze, costs off, summary off, timing off) execute mt_q1(25);
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Merge Append (actual rows=1 loops=1)
+   Sort Key: ma_test_p3.a
+   Subplans Removed: 2
+   ->  Index Scan using ma_test_p3_a_idx on ma_test_p3 (actual rows=1 loops=1)
+         Index Cond: (a >= $1)
+         Filter: ((a % 10) = 5)
+         Rows Removed by Filter: 4
+(7 rows)
+
+execute mt_q1(25);
+ a  
+----
+ 25
+(1 row)
+
+-- Ensure MergeAppend behaves correctly when no subplans match
+explain (analyze, costs off, summary off, timing off) execute mt_q1(35);
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Merge Append (actual rows=0 loops=1)
+   Sort Key: ma_test_p1.a
+   Subplans Removed: 2
+   ->  Index Scan using ma_test_p1_a_idx on ma_test_p1 (never executed)
+         Index Cond: (a >= $1)
+         Filter: ((a % 10) = 5)
+(6 rows)
+
+execute mt_q1(35);
+ a 
+---
+(0 rows)
+
+deallocate mt_q1;
+-- ensure initplan params properly prune partitions
+explain (analyze, costs off, summary off, timing off) select * from ma_test where a >= (select min(a) from ma_test_p2) order by a;
+                                                 QUERY PLAN                                                 
+------------------------------------------------------------------------------------------------------------
+ Merge Append (actual rows=20 loops=1)
+   Sort Key: ma_test_p1.a
+   InitPlan 2 (returns $1)
+     ->  Result (actual rows=1 loops=1)
+           InitPlan 1 (returns $0)
+             ->  Limit (actual rows=1 loops=1)
+                   ->  Index Scan using ma_test_p2_a_idx on ma_test_p2 ma_test_p2_1 (actual rows=1 loops=1)
+                         Index Cond: (a IS NOT NULL)
+   ->  Index Scan using ma_test_p1_a_idx on ma_test_p1 (never executed)
+         Index Cond: (a >= $1)
+   ->  Index Scan using ma_test_p2_a_idx on ma_test_p2 (actual rows=10 loops=1)
+         Index Cond: (a >= $1)
+   ->  Index Scan using ma_test_p3_a_idx on ma_test_p3 (actual rows=10 loops=1)
+         Index Cond: (a >= $1)
+(14 rows)
+
+reset enable_seqscan;
+reset enable_sort;
+drop table ma_test;
 reset enable_indexonlyscan;
 --
 -- check that pruning works properly when the partition key is of a

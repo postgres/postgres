@@ -281,6 +281,9 @@ typedef struct MergeAppend
 	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
 	Oid		   *collations;		/* OIDs of collations */
 	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
+
+	/* Info for run-time subplan pruning, one entry per partitioned_rels */
+	List	   *part_prune_infos;	/* List of PartitionPruneInfo */
 } MergeAppend;
 
 /* ----------------

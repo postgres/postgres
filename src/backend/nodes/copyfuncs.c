@@ -273,6 +273,7 @@ _copyMergeAppend(const MergeAppend *from)
 	COPY_POINTER_FIELD(sortOperators, from->numCols * sizeof(Oid));
 	COPY_POINTER_FIELD(collations, from->numCols * sizeof(Oid));
 	COPY_POINTER_FIELD(nullsFirst, from->numCols * sizeof(bool));
+	COPY_NODE_FIELD(part_prune_infos);
 
 	return newnode;
 }

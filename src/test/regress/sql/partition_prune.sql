@@ -714,6 +714,47 @@ select * from boolp where a = (select value from boolvalues where not value);
 
 drop table boolp;
 
+--
+-- Test run-time pruning of MergeAppend subnodes
+--
+set enable_seqscan = off;
+set enable_sort = off;
+create table ma_test (a int) partition by range (a);
+create table ma_test_p1 partition of ma_test for values from (0) to (10);
+create table ma_test_p2 partition of ma_test for values from (10) to (20);
+create table ma_test_p3 partition of ma_test for values from (20) to (30);
+insert into ma_test select x from generate_series(0,29) t(x);
+create index on ma_test (a);
+
+analyze ma_test;
+prepare mt_q1 (int) as select * from ma_test where a >= $1 and a % 10 = 5 order by a;
+
+-- Execute query 5 times to allow choose_custom_plan
+-- to start considering a generic plan.
+execute mt_q1(0);
+execute mt_q1(0);
+execute mt_q1(0);
+execute mt_q1(0);
+execute mt_q1(0);
+
+explain (analyze, costs off, summary off, timing off) execute mt_q1(15);
+execute mt_q1(15);
+explain (analyze, costs off, summary off, timing off) execute mt_q1(25);
+execute mt_q1(25);
+-- Ensure MergeAppend behaves correctly when no subplans match
+explain (analyze, costs off, summary off, timing off) execute mt_q1(35);
+execute mt_q1(35);
+
+deallocate mt_q1;
+
+-- ensure initplan params properly prune partitions
+explain (analyze, costs off, summary off, timing off) select * from ma_test where a >= (select min(a) from ma_test_p2) order by a;
+
+reset enable_seqscan;
+reset enable_sort;
+
+drop table ma_test;
+
 reset enable_indexonlyscan;
 
 --
