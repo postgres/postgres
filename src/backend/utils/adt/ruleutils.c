@@ -320,7 +320,8 @@ static void decompile_column_index_array(Datum column_index_array, Oid relId,
 static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
 static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   const Oid *excludeOps,
-					   bool attrsOnly, bool showTblSpc, bool inherits,
+					   bool attrsOnly, bool keysOnly,
+					   bool showTblSpc, bool inherits,
 					   int prettyFlags, bool missing_ok);
 static char *pg_get_statisticsobj_worker(Oid statextid, bool missing_ok);
 static char *pg_get_partkeydef_worker(Oid relid, int prettyFlags,
@@ -1097,7 +1098,9 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 
 	prettyFlags = PRETTYFLAG_INDENT;
 
-	res = pg_get_indexdef_worker(indexrelid, 0, NULL, false, false, false,
+	res = pg_get_indexdef_worker(indexrelid, 0, NULL,
+								 false, false,
+								 false, false,
 								 prettyFlags, true);
 
 	if (res == NULL)
@@ -1117,8 +1120,10 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
 
-	res = pg_get_indexdef_worker(indexrelid, colno, NULL, colno != 0, false,
-								 false, prettyFlags, true);
+	res = pg_get_indexdef_worker(indexrelid, colno, NULL,
+								 colno != 0, false,
+								 false, false,
+								 prettyFlags, true);
 
 	if (res == NULL)
 		PG_RETURN_NULL();
@@ -1134,10 +1139,13 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 char *
 pg_get_indexdef_string(Oid indexrelid)
 {
-	return pg_get_indexdef_worker(indexrelid, 0, NULL, false, true, true, 0, false);
+	return pg_get_indexdef_worker(indexrelid, 0, NULL,
+								  false, false,
+								  true, true,
+								  0, false);
 }
 
-/* Internal version that just reports the column definitions */
+/* Internal version that just reports the key-column definitions */
 char *
 pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 {
@@ -1145,7 +1153,9 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 
 	prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
 
-	return pg_get_indexdef_worker(indexrelid, 0, NULL, true, false, false,
+	return pg_get_indexdef_worker(indexrelid, 0, NULL,
+								  true, true,
+								  false, false,
 								  prettyFlags, false);
 }
 
@@ -1158,7 +1168,8 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 static char *
 pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   const Oid *excludeOps,
-					   bool attrsOnly, bool showTblSpc, bool inherits,
+					   bool attrsOnly, bool keysOnly,
+					   bool showTblSpc, bool inherits,
 					   int prettyFlags, bool missing_ok)
 {
 	/* might want a separate isConstraint parameter later */
@@ -1297,15 +1308,13 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 		Oid			keycolcollation;
 
 		/*
-		 * attrsOnly flag is used for building unique-constraint and
-		 * exclusion-constraint error messages. Included attrs are meaningless
-		 * there, so do not include them in the message.
+		 * Ignore non-key attributes if told to.
 		 */
-		if (attrsOnly && keyno >= idxrec->indnkeyatts)
+		if (keysOnly && keyno >= idxrec->indnkeyatts)
 			break;
 
-		/* Report the INCLUDED attributes, if any. */
-		if ((!attrsOnly) && keyno == idxrec->indnkeyatts)
+		/* Otherwise, print INCLUDE to divide key and non-key attrs. */
+		if (!colno && keyno == idxrec->indnkeyatts)
 		{
 			appendStringInfoString(&buf, ") INCLUDE (");
 			sep = "";
@@ -1352,12 +1361,11 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			keycolcollation = exprCollation(indexkey);
 		}
 
-		if (!attrsOnly && (!colno || colno == keyno + 1))
+		/* Print additional decoration for (selected) key columns */
+		if (!attrsOnly && keyno < idxrec->indnkeyatts &&
+			(!colno || colno == keyno + 1))
 		{
 			Oid			indcoll;
-
-			if (keyno >= idxrec->indnkeyatts)
-				continue;
 
 			/* Add collation, if not default for column */
 			indcoll = indcollation->values[keyno];
@@ -2194,6 +2202,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 									   pg_get_indexdef_worker(indexOid,
 															  0,
 															  operators,
+															  false,
 															  false,
 															  false,
 															  false,

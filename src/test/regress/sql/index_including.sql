@@ -14,6 +14,7 @@ CREATE INDEX ON tbl_include_reg (c1, c2) INCLUDE (c1, c3);
 SELECT pg_get_indexdef(i.indexrelid)
 FROM pg_index i JOIN pg_class c ON i.indexrelid = c.oid
 WHERE i.indrelid = 'tbl_include_reg'::regclass ORDER BY c.relname;
+\d tbl_include_reg_idx
 
 -- Unique index and unique constraint
 CREATE TABLE tbl_include_unique1 (c1 int, c2 int, c3 int, c4 box);
