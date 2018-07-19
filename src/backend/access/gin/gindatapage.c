@@ -1394,7 +1394,8 @@ disassembleLeaf(Page page)
 	{
 		/*
 		 * A pre-9.4 format uncompressed page is represented by a single
-		 * segment, with an array of items.
+		 * segment, with an array of items.  The corner case is uncompressed
+		 * page containing no items, which is represented as no segments.
 		 */
 		ItemPointer uncompressed;
 		int			nuncompressed;
@@ -1402,15 +1403,18 @@ disassembleLeaf(Page page)
 
 		uncompressed = dataLeafPageGetUncompressed(page, &nuncompressed);
 
-		seginfo = palloc(sizeof(leafSegmentInfo));
+		if (nuncompressed > 0)
+		{
+			seginfo = palloc(sizeof(leafSegmentInfo));
 
-		seginfo->action = GIN_SEGMENT_REPLACE;
-		seginfo->seg = NULL;
-		seginfo->items = palloc(nuncompressed * sizeof(ItemPointerData));
-		memcpy(seginfo->items, uncompressed, nuncompressed * sizeof(ItemPointerData));
-		seginfo->nitems = nuncompressed;
+			seginfo->action = GIN_SEGMENT_REPLACE;
+			seginfo->seg = NULL;
+			seginfo->items = palloc(nuncompressed * sizeof(ItemPointerData));
+			memcpy(seginfo->items, uncompressed, nuncompressed * sizeof(ItemPointerData));
+			seginfo->nitems = nuncompressed;
 
-		dlist_push_tail(&leaf->segments, &seginfo->node);
+			dlist_push_tail(&leaf->segments, &seginfo->node);
+		}
 
 		leaf->oldformat = true;
 	}
