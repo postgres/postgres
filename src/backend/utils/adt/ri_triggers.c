@@ -745,20 +745,6 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 			}
 
 			/*
-			 * In UPDATE, no need to do anything if old and new keys are equal
-			 */
-			if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-			{
-				HeapTuple	new_row = trigdata->tg_newtuple;
-
-				if (ri_KeysEqual(pk_rel, old_row, new_row, riinfo, true))
-				{
-					heap_close(fk_rel, RowShareLock);
-					return PointerGetDatum(NULL);
-				}
-			}
-
-			/*
 			 * If another PK row now exists providing the old key values, we
 			 * should not do anything.  However, this check should only be
 			 * made in the NO ACTION case; in RESTRICT cases we don't wish to
@@ -1098,15 +1084,6 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 					break;
 			}
 
-			/*
-			 * No need to do anything if old and new keys are equal
-			 */
-			if (ri_KeysEqual(pk_rel, old_row, new_row, riinfo, true))
-			{
-				heap_close(fk_rel, RowExclusiveLock);
-				return PointerGetDatum(NULL);
-			}
-
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(ERROR, "SPI_connect failed");
 
@@ -1316,20 +1293,6 @@ ri_setnull(TriggerData *trigdata)
 					break;
 			}
 
-			/*
-			 * In UPDATE, no need to do anything if old and new keys are equal
-			 */
-			if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-			{
-				HeapTuple	new_row = trigdata->tg_newtuple;
-
-				if (ri_KeysEqual(pk_rel, old_row, new_row, riinfo, true))
-				{
-					heap_close(fk_rel, RowExclusiveLock);
-					return PointerGetDatum(NULL);
-				}
-			}
-
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(ERROR, "SPI_connect failed");
 
@@ -1534,20 +1497,6 @@ ri_setdefault(TriggerData *trigdata)
 					 * Have a full qualified key - continue below
 					 */
 					break;
-			}
-
-			/*
-			 * In UPDATE, no need to do anything if old and new keys are equal
-			 */
-			if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-			{
-				HeapTuple	new_row = trigdata->tg_newtuple;
-
-				if (ri_KeysEqual(pk_rel, old_row, new_row, riinfo, true))
-				{
-					heap_close(fk_rel, RowExclusiveLock);
-					return PointerGetDatum(NULL);
-				}
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
