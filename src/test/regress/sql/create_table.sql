@@ -303,11 +303,6 @@ CREATE TABLE partitioned (
 	EXCLUDE USING gist (a WITH &&)
 ) PARTITION BY RANGE (a);
 
--- prevent column from being used twice in the partition key
-CREATE TABLE partitioned (
-	a int
-) PARTITION BY RANGE (a, a);
-
 -- prevent using prohibited expressions in the key
 CREATE FUNCTION retset (a int) RETURNS SETOF int AS $$ SELECT 1; $$ LANGUAGE SQL IMMUTABLE;
 CREATE TABLE partitioned (
