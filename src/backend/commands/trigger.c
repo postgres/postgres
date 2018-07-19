@@ -5950,12 +5950,12 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		 * certain cases where we can skip queueing the event because we can
 		 * tell by inspection that the FK constraint will still pass.
 		 */
-		if (TRIGGER_FIRED_BY_UPDATE(event))
+		if (TRIGGER_FIRED_BY_UPDATE(event) || TRIGGER_FIRED_BY_DELETE(event))
 		{
 			switch (RI_FKey_trigger_type(trigger->tgfoid))
 			{
 				case RI_TRIGGER_PK:
-					/* Update on trigger's PK table */
+					/* Update or delete on trigger's PK table */
 					if (!RI_FKey_pk_upd_check_required(trigger, rel,
 													   oldtup, newtup))
 					{
