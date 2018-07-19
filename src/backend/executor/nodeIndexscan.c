@@ -108,7 +108,7 @@ IndexNext(IndexScanState *node)
 	{
 		/*
 		 * We reach here if the index scan is not parallel, or if we're
-		 * executing a index scan that was intended to be parallel serially.
+		 * serially executing an index scan that was planned to be parallel.
 		 */
 		scandesc = index_beginscan(node->ss.ss_currentRelation,
 								   node->iss_RelationDesc,
@@ -214,7 +214,7 @@ IndexNextWithReorder(IndexScanState *node)
 	{
 		/*
 		 * We reach here if the index scan is not parallel, or if we're
-		 * executing a index scan that was intended to be parallel serially.
+		 * serially executing an index scan that was planned to be parallel.
 		 */
 		scandesc = index_beginscan(node->ss.ss_currentRelation,
 								   node->iss_RelationDesc,
