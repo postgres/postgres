@@ -19,6 +19,16 @@ WHERE i.indrelid = 'tbl_include_reg'::regclass ORDER BY c.relname;
  CREATE INDEX tbl_include_reg_idx ON public.tbl_include_reg USING btree (c1, c2) INCLUDE (c3, c4)
 (2 rows)
 
+\d tbl_include_reg_idx
+Index "public.tbl_include_reg_idx"
+ Column |  Type   | Definition 
+--------+---------+------------
+ c1     | integer | c1
+ c2     | integer | c2
+ c3     | integer | c3
+ c4     | box     | c4
+btree, for table "public.tbl_include_reg"
+
 -- Unique index and unique constraint
 CREATE TABLE tbl_include_unique1 (c1 int, c2 int, c3 int, c4 box);
 INSERT INTO tbl_include_unique1 SELECT x, 2*x, 3*x, box('4,4,4,4') FROM generate_series(1,10) AS x;
