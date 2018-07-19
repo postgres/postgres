@@ -1410,6 +1410,7 @@ describeOneTableDetails(const char *schemaname,
 						const char *oid,
 						bool verbose)
 {
+	bool		retval = false;
 	PQExpBufferData buf;
 	PGresult   *res = NULL;
 	printTableOpt myopt = pset.popt.topt;
@@ -1421,7 +1422,19 @@ describeOneTableDetails(const char *schemaname,
 	PQExpBufferData title;
 	PQExpBufferData tmpbuf;
 	int			cols;
-	int			numrows = 0;
+	int			attname_col = -1,	/* column indexes in "res" */
+				atttype_col = -1,
+				attrdef_col = -1,
+				attnotnull_col = -1,
+				attcoll_col = -1,
+				attidentity_col = -1,
+				isindexkey_col = -1,
+				indexdef_col = -1,
+				fdwopts_col = -1,
+				attstorage_col = -1,
+				attstattarget_col = -1,
+				attdescr_col = -1;
+	int			numrows;
 	struct
 	{
 		int16		checks;
@@ -1439,9 +1452,6 @@ describeOneTableDetails(const char *schemaname,
 		char		relreplident;
 	}			tableinfo;
 	bool		show_column_details = false;
-	bool		retval;
-
-	retval = false;
 
 	myopt.default_footer = false;
 	/* This output looks confusing in expanded mode. */
@@ -1720,42 +1730,88 @@ describeOneTableDetails(const char *schemaname,
 		goto error_return;		/* not an error, just return early */
 	}
 
+	/* Identify whether we should print collation, nullable, default vals */
+	if (tableinfo.relkind == RELKIND_RELATION ||
+		tableinfo.relkind == RELKIND_VIEW ||
+		tableinfo.relkind == RELKIND_MATVIEW ||
+		tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
+		tableinfo.relkind == RELKIND_COMPOSITE_TYPE ||
+		tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
+		show_column_details = true;
+
 	/*
-	 * Get column info
+	 * Get per-column info
 	 *
-	 * You need to modify value of "firstvcol" which will be defined below if
-	 * you are adding column(s) preceding to verbose-only columns.
+	 * Since the set of query columns we need varies depending on relkind and
+	 * server version, we compute all the column numbers on-the-fly.  Column
+	 * number variables for columns not fetched are left as -1; this avoids
+	 * duplicative test logic below.
 	 */
-	printfPQExpBuffer(&buf, "SELECT a.attname,");
-	appendPQExpBufferStr(&buf, "\n  pg_catalog.format_type(a.atttypid, a.atttypmod),"
-						 "\n  (SELECT substring(pg_catalog.pg_get_expr(d.adbin, d.adrelid) for 128)"
-						 "\n   FROM pg_catalog.pg_attrdef d"
-						 "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef),"
-						 "\n  a.attnotnull, a.attnum,");
-	if (pset.sversion >= 90100)
-		appendPQExpBufferStr(&buf, "\n  (SELECT c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type t\n"
-							 "   WHERE c.oid = a.attcollation AND t.oid = a.atttypid AND a.attcollation <> t.typcollation) AS attcollation");
-	else
-		appendPQExpBufferStr(&buf, "\n  NULL AS attcollation");
-	if (pset.sversion >= 100000)
-		appendPQExpBufferStr(&buf, ",\n  a.attidentity");
-	else
-		appendPQExpBufferStr(&buf, ",\n  ''::pg_catalog.char AS attidentity");
+	cols = 0;
+	printfPQExpBuffer(&buf, "SELECT a.attname");
+	attname_col = cols++;
+	appendPQExpBufferStr(&buf, ",\n  pg_catalog.format_type(a.atttypid, a.atttypmod)");
+	atttype_col = cols++;
+
+	if (show_column_details)
+	{
+		appendPQExpBufferStr(&buf,
+							 ",\n  (SELECT substring(pg_catalog.pg_get_expr(d.adbin, d.adrelid) for 128)"
+							 "\n   FROM pg_catalog.pg_attrdef d"
+							 "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef)"
+							 ",\n  a.attnotnull");
+		attrdef_col = cols++;
+		attnotnull_col = cols++;
+		if (pset.sversion >= 90100)
+			appendPQExpBufferStr(&buf, ",\n  (SELECT c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type t\n"
+								 "   WHERE c.oid = a.attcollation AND t.oid = a.atttypid AND a.attcollation <> t.typcollation) AS attcollation");
+		else
+			appendPQExpBufferStr(&buf, ",\n  NULL AS attcollation");
+		attcoll_col = cols++;
+		if (pset.sversion >= 100000)
+			appendPQExpBufferStr(&buf, ",\n  a.attidentity");
+		else
+			appendPQExpBufferStr(&buf, ",\n  ''::pg_catalog.char AS attidentity");
+		attidentity_col = cols++;
+	}
 	if (tableinfo.relkind == RELKIND_INDEX ||
 		tableinfo.relkind == RELKIND_PARTITIONED_INDEX)
+	{
+		if (pset.sversion >= 110000)
+		{
+			appendPQExpBuffer(&buf, ",\n  CASE WHEN a.attnum <= (SELECT i.indnkeyatts FROM pg_catalog.pg_index i WHERE i.indexrelid = '%s') THEN '%s' ELSE '%s' END AS is_key",
+							  oid,
+							  gettext_noop("yes"),
+							  gettext_noop("no"));
+			isindexkey_col = cols++;
+		}
 		appendPQExpBufferStr(&buf, ",\n  pg_catalog.pg_get_indexdef(a.attrelid, a.attnum, TRUE) AS indexdef");
-	else
-		appendPQExpBufferStr(&buf, ",\n  NULL AS indexdef");
+		indexdef_col = cols++;
+	}
+	/* FDW options for foreign table column, only for 9.2 or later */
 	if (tableinfo.relkind == RELKIND_FOREIGN_TABLE && pset.sversion >= 90200)
+	{
 		appendPQExpBufferStr(&buf, ",\n  CASE WHEN attfdwoptions IS NULL THEN '' ELSE "
 							 "  '(' || pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(option_name) || ' ' || pg_catalog.quote_literal(option_value)  FROM "
 							 "  pg_catalog.pg_options_to_table(attfdwoptions)), ', ') || ')' END AS attfdwoptions");
-	else
-		appendPQExpBufferStr(&buf, ",\n  NULL AS attfdwoptions");
+		fdwopts_col = cols++;
+	}
 	if (verbose)
 	{
 		appendPQExpBufferStr(&buf, ",\n  a.attstorage");
-		appendPQExpBufferStr(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
+		attstorage_col = cols++;
+
+		/* stats target, if relevant to relkind */
+		if (tableinfo.relkind == RELKIND_RELATION ||
+			tableinfo.relkind == RELKIND_INDEX ||
+			tableinfo.relkind == RELKIND_PARTITIONED_INDEX ||
+			tableinfo.relkind == RELKIND_MATVIEW ||
+			tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
+			tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
+		{
+			appendPQExpBufferStr(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
+			attstattarget_col = cols++;
+		}
 
 		/*
 		 * In 9.0+, we have column comments for: relations, views, composite
@@ -1767,7 +1823,10 @@ describeOneTableDetails(const char *schemaname,
 			tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
 			tableinfo.relkind == RELKIND_COMPOSITE_TYPE ||
 			tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
-			appendPQExpBufferStr(&buf, ", pg_catalog.col_description(a.attrelid, a.attnum)");
+		{
+			appendPQExpBufferStr(&buf, ",\n  pg_catalog.col_description(a.attrelid, a.attnum)");
+			attdescr_col = cols++;
+		}
 	}
 
 	appendPQExpBufferStr(&buf, "\nFROM pg_catalog.pg_attribute a");
@@ -1843,50 +1902,30 @@ describeOneTableDetails(const char *schemaname,
 			break;
 	}
 
-	/* Set the number of columns, and their names */
-	headers[0] = gettext_noop("Column");
-	headers[1] = gettext_noop("Type");
-	cols = 2;
-
-	if (tableinfo.relkind == RELKIND_RELATION ||
-		tableinfo.relkind == RELKIND_VIEW ||
-		tableinfo.relkind == RELKIND_MATVIEW ||
-		tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
-		tableinfo.relkind == RELKIND_COMPOSITE_TYPE ||
-		tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
+	/* Fill headers[] with the names of the columns we will output */
+	cols = 0;
+	headers[cols++] = gettext_noop("Column");
+	headers[cols++] = gettext_noop("Type");
+	if (show_column_details)
 	{
 		headers[cols++] = gettext_noop("Collation");
 		headers[cols++] = gettext_noop("Nullable");
 		headers[cols++] = gettext_noop("Default");
-		show_column_details = true;
 	}
-
-	if (tableinfo.relkind == RELKIND_INDEX ||
-		tableinfo.relkind == RELKIND_PARTITIONED_INDEX)
+	if (isindexkey_col >= 0)
+		headers[cols++] = gettext_noop("Key?");
+	if (indexdef_col >= 0)
 		headers[cols++] = gettext_noop("Definition");
-
-	if (tableinfo.relkind == RELKIND_FOREIGN_TABLE && pset.sversion >= 90200)
+	if (fdwopts_col >= 0)
 		headers[cols++] = gettext_noop("FDW options");
-
-	if (verbose)
-	{
+	if (attstorage_col >= 0)
 		headers[cols++] = gettext_noop("Storage");
-		if (tableinfo.relkind == RELKIND_RELATION ||
-			tableinfo.relkind == RELKIND_INDEX ||
-			tableinfo.relkind == RELKIND_PARTITIONED_INDEX ||
-			tableinfo.relkind == RELKIND_MATVIEW ||
-			tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
-			tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
-			headers[cols++] = gettext_noop("Stats target");
-		/* Column comments, if the relkind supports this feature. */
-		if (tableinfo.relkind == RELKIND_RELATION ||
-			tableinfo.relkind == RELKIND_VIEW ||
-			tableinfo.relkind == RELKIND_MATVIEW ||
-			tableinfo.relkind == RELKIND_COMPOSITE_TYPE ||
-			tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
-			tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
-			headers[cols++] = gettext_noop("Description");
-	}
+	if (attstattarget_col >= 0)
+		headers[cols++] = gettext_noop("Stats target");
+	if (attdescr_col >= 0)
+		headers[cols++] = gettext_noop("Description");
+
+	Assert(cols <= lengthof(headers));
 
 	printTableInit(&cont, &myopt, title.data, cols, numrows);
 	printTableInitialized = true;
@@ -1894,33 +1933,14 @@ describeOneTableDetails(const char *schemaname,
 	for (i = 0; i < cols; i++)
 		printTableAddHeader(&cont, headers[i], true, 'l');
 
-	/* Get view_def if table is a view or materialized view */
-	if ((tableinfo.relkind == RELKIND_VIEW ||
-		 tableinfo.relkind == RELKIND_MATVIEW) && verbose)
-	{
-		PGresult   *result;
-
-		printfPQExpBuffer(&buf,
-						  "SELECT pg_catalog.pg_get_viewdef('%s'::pg_catalog.oid, true);",
-						  oid);
-		result = PSQLexec(buf.data);
-		if (!result)
-			goto error_return;
-
-		if (PQntuples(result) > 0)
-			view_def = pg_strdup(PQgetvalue(result, 0, 0));
-
-		PQclear(result);
-	}
-
 	/* Generate table cells to be printed */
 	for (i = 0; i < numrows; i++)
 	{
 		/* Column */
-		printTableAddCell(&cont, PQgetvalue(res, i, 0), false, false);
+		printTableAddCell(&cont, PQgetvalue(res, i, attname_col), false, false);
 
 		/* Type */
-		printTableAddCell(&cont, PQgetvalue(res, i, 1), false, false);
+		printTableAddCell(&cont, PQgetvalue(res, i, atttype_col), false, false);
 
 		/* Collation, Nullable, Default */
 		if (show_column_details)
@@ -1928,15 +1948,17 @@ describeOneTableDetails(const char *schemaname,
 			char	   *identity;
 			char	   *default_str = "";
 
-			printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
+			printTableAddCell(&cont, PQgetvalue(res, i, attcoll_col), false, false);
 
-			printTableAddCell(&cont, strcmp(PQgetvalue(res, i, 3), "t") == 0 ? "not null" : "", false, false);
+			printTableAddCell(&cont,
+							  strcmp(PQgetvalue(res, i, attnotnull_col), "t") == 0 ? "not null" : "",
+							  false, false);
 
-			identity = PQgetvalue(res, i, 6);
+			identity = PQgetvalue(res, i, attidentity_col);
 
 			if (!identity[0])
 				/* (note: above we cut off the 'default' string at 128) */
-				default_str = PQgetvalue(res, i, 2);
+				default_str = PQgetvalue(res, i, attrdef_col);
 			else if (identity[0] == ATTRIBUTE_IDENTITY_ALWAYS)
 				default_str = "generated always as identity";
 			else if (identity[0] == ATTRIBUTE_IDENTITY_BY_DEFAULT)
@@ -1945,20 +1967,20 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddCell(&cont, default_str, false, false);
 		}
 
-		/* Expression for index column */
-		if (tableinfo.relkind == RELKIND_INDEX ||
-			tableinfo.relkind == RELKIND_PARTITIONED_INDEX)
-			printTableAddCell(&cont, PQgetvalue(res, i, 7), false, false);
+		/* Info for index columns */
+		if (isindexkey_col >= 0)
+			printTableAddCell(&cont, PQgetvalue(res, i, isindexkey_col), true, false);
+		if (indexdef_col >= 0)
+			printTableAddCell(&cont, PQgetvalue(res, i, indexdef_col), false, false);
 
-		/* FDW options for foreign table column, only for 9.2 or later */
-		if (tableinfo.relkind == RELKIND_FOREIGN_TABLE && pset.sversion >= 90200)
-			printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false);
+		/* FDW options for foreign table columns */
+		if (fdwopts_col >= 0)
+			printTableAddCell(&cont, PQgetvalue(res, i, fdwopts_col), false, false);
 
 		/* Storage and Description */
-		if (verbose)
+		if (attstorage_col >= 0)
 		{
-			int			firstvcol = 9;
-			char	   *storage = PQgetvalue(res, i, firstvcol);
+			char	   *storage = PQgetvalue(res, i, attstorage_col);
 
 			/* these strings are literal in our syntax, so not translated. */
 			printTableAddCell(&cont, (storage[0] == 'p' ? "plain" :
@@ -1967,29 +1989,17 @@ describeOneTableDetails(const char *schemaname,
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
 							  false, false);
-
-			/* Statistics target, if the relkind supports this feature */
-			if (tableinfo.relkind == RELKIND_RELATION ||
-				tableinfo.relkind == RELKIND_INDEX ||
-				tableinfo.relkind == RELKIND_PARTITIONED_INDEX ||
-				tableinfo.relkind == RELKIND_MATVIEW ||
-				tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
-				tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
-			{
-				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
-								  false, false);
-			}
-
-			/* Column comments, if the relkind supports this feature. */
-			if (tableinfo.relkind == RELKIND_RELATION ||
-				tableinfo.relkind == RELKIND_VIEW ||
-				tableinfo.relkind == RELKIND_MATVIEW ||
-				tableinfo.relkind == RELKIND_COMPOSITE_TYPE ||
-				tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
-				tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
-				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 2),
-								  false, false);
 		}
+
+		/* Statistics target, if the relkind supports this feature */
+		if (attstattarget_col >= 0)
+			printTableAddCell(&cont, PQgetvalue(res, i, attstattarget_col),
+							  false, false);
+
+		/* Column comments, if the relkind supports this feature */
+		if (attdescr_col >= 0)
+			printTableAddCell(&cont, PQgetvalue(res, i, attdescr_col),
+							  false, false);
 	}
 
 	/* Make footers */
@@ -2652,6 +2662,25 @@ describeOneTableDetails(const char *schemaname,
 			}
 			PQclear(result);
 		}
+	}
+
+	/* Get view_def if table is a view or materialized view */
+	if ((tableinfo.relkind == RELKIND_VIEW ||
+		 tableinfo.relkind == RELKIND_MATVIEW) && verbose)
+	{
+		PGresult   *result;
+
+		printfPQExpBuffer(&buf,
+						  "SELECT pg_catalog.pg_get_viewdef('%s'::pg_catalog.oid, true);",
+						  oid);
+		result = PSQLexec(buf.data);
+		if (!result)
+			goto error_return;
+
+		if (PQntuples(result) > 0)
+			view_def = pg_strdup(PQgetvalue(result, 0, 0));
+
+		PQclear(result);
 	}
 
 	if (view_def)
