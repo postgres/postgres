@@ -111,12 +111,12 @@ ERROR:  cannot alter statistics on non-expression column "a" of index "attmp_idx
 HINT:  Alter statistics on table column instead.
 ALTER INDEX attmp_idx ALTER COLUMN 2 SET STATISTICS 1000;
 \d+ attmp_idx
-                    Index "public.attmp_idx"
- Column |       Type       | Definition | Storage | Stats target 
---------+------------------+------------+---------+--------------
- a      | integer          | a          | plain   | 
- expr   | double precision | (d + e)    | plain   | 1000
- b      | cstring          | b          | plain   | 
+                        Index "public.attmp_idx"
+ Column |       Type       | Key? | Definition | Storage | Stats target 
+--------+------------------+------+------------+---------+--------------
+ a      | integer          | yes  | a          | plain   | 
+ expr   | double precision | yes  | (d + e)    | plain   | 1000
+ b      | cstring          | yes  | b          | plain   | 
 btree, for table "public.attmp"
 
 ALTER INDEX attmp_idx ALTER COLUMN 3 SET STATISTICS 1000;

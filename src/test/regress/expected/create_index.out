@@ -2362,10 +2362,10 @@ DROP TABLE array_gin_test;
 CREATE INDEX gin_relopts_test ON array_index_op_test USING gin (i)
   WITH (FASTUPDATE=on, GIN_PENDING_LIST_LIMIT=128);
 \d+ gin_relopts_test
-            Index "public.gin_relopts_test"
- Column |  Type   | Definition | Storage | Stats target 
---------+---------+------------+---------+--------------
- i      | integer | i          | plain   | 
+                Index "public.gin_relopts_test"
+ Column |  Type   | Key? | Definition | Storage | Stats target 
+--------+---------+------+------------+---------+--------------
+ i      | integer | yes  | i          | plain   | 
 gin, for table "public.array_index_op_test"
 Options: fastupdate=on, gin_pending_list_limit=128
 
@@ -2582,11 +2582,11 @@ Indexes:
     "cwi_uniq_idx" PRIMARY KEY, btree (a, b)
 
 \d cwi_uniq_idx
-         Index "public.cwi_uniq_idx"
- Column |         Type          | Definition 
---------+-----------------------+------------
- a      | integer               | a
- b      | character varying(10) | b
+            Index "public.cwi_uniq_idx"
+ Column |         Type          | Key? | Definition 
+--------+-----------------------+------+------------
+ a      | integer               | yes  | a
+ b      | character varying(10) | yes  | b
 primary key, btree, for table "public.cwi_test"
 
 CREATE UNIQUE INDEX cwi_uniq2_idx ON cwi_test(b , a);
@@ -2605,11 +2605,11 @@ Indexes:
     "cwi_replaced_pkey" PRIMARY KEY, btree (b, a)
 
 \d cwi_replaced_pkey
-      Index "public.cwi_replaced_pkey"
- Column |         Type          | Definition 
---------+-----------------------+------------
- b      | character varying(10) | b
- a      | integer               | a
+          Index "public.cwi_replaced_pkey"
+ Column |         Type          | Key? | Definition 
+--------+-----------------------+------+------------
+ b      | character varying(10) | yes  | b
+ a      | integer               | yes  | a
 primary key, btree, for table "public.cwi_test"
 
 DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it

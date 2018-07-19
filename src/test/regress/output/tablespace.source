@@ -67,17 +67,17 @@ INSERT INTO testschema.test_default_tab VALUES (1);
 CREATE INDEX test_index1 on testschema.test_default_tab (id);
 CREATE INDEX test_index2 on testschema.test_default_tab (id) TABLESPACE regress_tblspace;
 \d testschema.test_index1
-Index "testschema.test_index1"
- Column |  Type  | Definition 
---------+--------+------------
- id     | bigint | id
+   Index "testschema.test_index1"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 
 \d testschema.test_index2
-Index "testschema.test_index2"
- Column |  Type  | Definition 
---------+--------+------------
- id     | bigint | id
+   Index "testschema.test_index2"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
@@ -86,17 +86,17 @@ SET default_tablespace TO regress_tblspace;
 -- tablespace should not change if no rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
 \d testschema.test_index1
-Index "testschema.test_index1"
- Column |  Type  | Definition 
---------+--------+------------
- id     | bigint | id
+   Index "testschema.test_index1"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 
 \d testschema.test_index2
-Index "testschema.test_index2"
- Column |  Type  | Definition 
---------+--------+------------
- id     | bigint | id
+   Index "testschema.test_index2"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
@@ -109,17 +109,17 @@ SELECT * FROM testschema.test_default_tab;
 -- tablespace should not change even if there is an index rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
 \d testschema.test_index1
-Index "testschema.test_index1"
- Column |  Type   | Definition 
---------+---------+------------
- id     | integer | id
+    Index "testschema.test_index1"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
 btree, for table "testschema.test_default_tab"
 
 \d testschema.test_index2
-Index "testschema.test_index2"
- Column |  Type   | Definition 
---------+---------+------------
- id     | integer | id
+    Index "testschema.test_index2"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
 btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
@@ -134,34 +134,34 @@ SET default_tablespace TO '';
 -- tablespace should not change if no rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
 \d testschema.test_index1
-Index "testschema.test_index1"
- Column |  Type   | Definition 
---------+---------+------------
- id     | integer | id
+    Index "testschema.test_index1"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
 btree, for table "testschema.test_default_tab"
 
 \d testschema.test_index2
-Index "testschema.test_index2"
- Column |  Type   | Definition 
---------+---------+------------
- id     | integer | id
+    Index "testschema.test_index2"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
 btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
 -- tablespace should not change even if there is an index rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
 \d testschema.test_index1
-Index "testschema.test_index1"
- Column |  Type  | Definition 
---------+--------+------------
- id     | bigint | id
+   Index "testschema.test_index1"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 
 \d testschema.test_index2
-Index "testschema.test_index2"
- Column |  Type  | Definition 
---------+--------+------------
- id     | bigint | id
+   Index "testschema.test_index2"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
@@ -174,18 +174,18 @@ ALTER TABLE testschema.test_tab ADD CONSTRAINT test_tab_unique UNIQUE (id);
 SET default_tablespace TO '';
 ALTER TABLE testschema.test_tab ADD CONSTRAINT test_tab_pkey PRIMARY KEY (id);
 \d testschema.test_tab_unique
-Index "testschema.test_tab_unique"
- Column |  Type   | Definition 
---------+---------+------------
- id     | integer | id
+  Index "testschema.test_tab_unique"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
 unique, btree, for table "testschema.test_tab"
 Tablespace: "regress_tblspace"
 
 \d testschema.test_tab_pkey
-Index "testschema.test_tab_pkey"
- Column |  Type   | Definition 
---------+---------+------------
- id     | integer | id
+   Index "testschema.test_tab_pkey"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
 primary key, btree, for table "testschema.test_tab"
 
 SELECT * FROM testschema.test_tab;

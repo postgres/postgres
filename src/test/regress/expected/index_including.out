@@ -20,13 +20,13 @@ WHERE i.indrelid = 'tbl_include_reg'::regclass ORDER BY c.relname;
 (2 rows)
 
 \d tbl_include_reg_idx
-Index "public.tbl_include_reg_idx"
- Column |  Type   | Definition 
---------+---------+------------
- c1     | integer | c1
- c2     | integer | c2
- c3     | integer | c3
- c4     | box     | c4
+  Index "public.tbl_include_reg_idx"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ c1     | integer | yes  | c1
+ c2     | integer | yes  | c2
+ c3     | integer | no   | c3
+ c4     | box     | no   | c4
 btree, for table "public.tbl_include_reg"
 
 -- Unique index and unique constraint
