@@ -288,11 +288,6 @@ CREATE TABLE partitioned (
 ERROR:  exclusion constraints are not supported on partitioned tables
 LINE 3:  EXCLUDE USING gist (a WITH &&)
          ^
--- prevent column from being used twice in the partition key
-CREATE TABLE partitioned (
-	a int
-) PARTITION BY RANGE (a, a);
-ERROR:  column "a" appears more than once in partition key
 -- prevent using prohibited expressions in the key
 CREATE FUNCTION retset (a int) RETURNS SETOF int AS $$ SELECT 1; $$ LANGUAGE SQL IMMUTABLE;
 CREATE TABLE partitioned (
