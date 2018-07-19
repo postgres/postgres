@@ -75,10 +75,14 @@ end$$;
 
 -- **************** pg_class ****************
 
--- Look for system tables with varlena columns but no toast table.  At
--- the moment, the result just records the status quo so that changes
--- are deliberate.  Which system tables have toast tables is a bit
--- arbitrary at the moment.
+-- Look for system tables with varlena columns but no toast table. All
+-- system tables with toastable columns should have toast tables, with
+-- the following exceptions:
+-- 1. pg_class, pg_attribute, and pg_index, due to fear of recursive
+-- dependencies as toast tables depend on them.
+-- 2. pg_largeobject and pg_largeobject_metadata.  Large object catalogs
+-- and toast tables are mutually exclusive and large object data is handled
+-- as user data by pg_upgrade, which would cause failures.
 
 SELECT relname, attname, atttypid::regtype
 FROM pg_class c JOIN pg_attribute a ON c.oid = attrelid
