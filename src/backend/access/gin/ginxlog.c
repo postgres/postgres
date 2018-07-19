@@ -153,15 +153,30 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 		ItemPointer uncompressed = (ItemPointer) GinDataPageGetData(page);
 		int			nuncompressed = GinPageGetOpaque(page)->maxoff;
 		int			npacked;
-		GinPostingList *plist;
 
-		plist = ginCompressPostingList(uncompressed, nuncompressed,
-									   BLCKSZ, &npacked);
-		Assert(npacked == nuncompressed);
+		/*
+		 * Empty leaf pages are deleted as part of vacuum, but leftmost and
+		 * rightmost pages are never deleted.  So, pg_upgrade'd from pre-9.4
+		 * instances might contain empty leaf pages, and we need to handle
+		 * them correctly.
+		 */
+		if (nuncompressed > 0)
+		{
+			GinPostingList *plist;
 
-		totalsize = SizeOfGinPostingList(plist);
+			plist = ginCompressPostingList(uncompressed, nuncompressed,
+										   BLCKSZ, &npacked);
+			totalsize = SizeOfGinPostingList(plist);
 
-		memcpy(GinDataLeafPageGetPostingList(page), plist, totalsize);
+			Assert(npacked == nuncompressed);
+
+			memcpy(GinDataLeafPageGetPostingList(page), plist, totalsize);
+		}
+		else
+		{
+			totalsize = 0;
+		}
+
 		GinDataPageSetDataSize(page, totalsize);
 		GinPageSetCompressed(page);
 		GinPageGetOpaque(page)->maxoff = InvalidOffsetNumber;
