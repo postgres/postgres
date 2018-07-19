@@ -65,8 +65,8 @@ SeqNext(SeqScanState *node)
 	if (scandesc == NULL)
 	{
 		/*
-		 * We reach here if the scan is not parallel, or if we're executing a
-		 * scan that was intended to be parallel serially.
+		 * We reach here if the scan is not parallel, or if we're serially
+		 * executing a scan that was planned to be parallel.
 		 */
 		scandesc = heap_beginscan(node->ss.ss_currentRelation,
 								  estate->es_snapshot,
