@@ -234,7 +234,7 @@ pg_upgrade $PG_UPGRADE_OPTS -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B
 # Windows hosts don't support Unix-y permissions.
 case $testhost in
 	MINGW*) ;;
-	*)	if [ $(find ${PGDATA} -type f ! -perm 640 | wc -l) -ne 0 ]; then
+	*)	if [ `find ${PGDATA} -type f ! -perm 640 | wc -l` -ne 0 ]; then
 			echo "files in PGDATA with permission != 640";
 			exit 1;
 		fi ;;
@@ -242,7 +242,7 @@ esac
 
 case $testhost in
 	MINGW*) ;;
-	*)	if [ $(find ${PGDATA} -type d ! -perm 750 | wc -l) -ne 0 ]; then
+	*)	if [ `find ${PGDATA} -type d ! -perm 750 | wc -l` -ne 0 ]; then
 			echo "directories in PGDATA with permission != 750";
 			exit 1;
 		fi ;;
