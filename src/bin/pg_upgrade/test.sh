@@ -65,7 +65,7 @@ case $testhost in
 		;;
 esac
 
-POSTMASTER_OPTS="-F -c listen_addresses=$LISTEN_ADDRESSES -k \"$PGHOST\""
+POSTMASTER_OPTS="-F -c listen_addresses=\"$LISTEN_ADDRESSES\" -k \"$PGHOST\""
 export PGHOST
 
 # don't rely on $PWD here, as old shells don't set it
@@ -107,8 +107,8 @@ newsrc=`cd ../../.. && pwd`
 PATH=$bindir:$PATH
 export PATH
 
-BASE_PGDATA=$temp_root/data
-PGDATA="$BASE_PGDATA.old"
+BASE_PGDATA="$temp_root/data"
+PGDATA="${BASE_PGDATA}.old"
 export PGDATA
 rm -rf "$BASE_PGDATA" "$PGDATA"
 
@@ -224,17 +224,17 @@ if [ -n "$pg_dumpall1_status" ]; then
 	exit 1
 fi
 
-PGDATA=$BASE_PGDATA
+PGDATA="$BASE_PGDATA"
 
 standard_initdb 'initdb'
 
-pg_upgrade $PG_UPGRADE_OPTS -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir" -p "$PGPORT" -P "$PGPORT"
+pg_upgrade $PG_UPGRADE_OPTS -d "${PGDATA}.old" -D "$PGDATA" -b "$oldbindir" -B "$bindir" -p "$PGPORT" -P "$PGPORT"
 
 # make sure all directories and files have group permissions, on Unix hosts
 # Windows hosts don't support Unix-y permissions.
 case $testhost in
 	MINGW*) ;;
-	*)	if [ `find ${PGDATA} -type f ! -perm 640 | wc -l` -ne 0 ]; then
+	*)	if [ `find "$PGDATA" -type f ! -perm 640 | wc -l` -ne 0 ]; then
 			echo "files in PGDATA with permission != 640";
 			exit 1;
 		fi ;;
@@ -242,7 +242,7 @@ esac
 
 case $testhost in
 	MINGW*) ;;
-	*)	if [ `find ${PGDATA} -type d ! -perm 750 | wc -l` -ne 0 ]; then
+	*)	if [ `find "$PGDATA" -type d ! -perm 750 | wc -l` -ne 0 ]; then
 			echo "directories in PGDATA with permission != 750";
 			exit 1;
 		fi ;;
