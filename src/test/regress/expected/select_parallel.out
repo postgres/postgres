@@ -975,7 +975,7 @@ ROLLBACK TO SAVEPOINT settings;
 SAVEPOINT settings;
 SET LOCAL force_parallel_mode = 1;
 select stringu1::int2 from tenk1 where unique1 = 1;
-ERROR:  invalid input syntax for type integer: "BAAAAA"
+ERROR:  invalid input syntax for type smallint: "BAAAAA"
 CONTEXT:  parallel worker
 ROLLBACK TO SAVEPOINT settings;
 -- test interaction with set-returning functions

@@ -101,6 +101,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 
 	if (!neg)
 	{
+		/* could fail if input is most negative number */
 		if (unlikely(tmp == PG_INT64_MIN))
 			goto out_of_range;
 		tmp = -tmp;

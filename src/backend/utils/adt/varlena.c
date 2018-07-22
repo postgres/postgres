@@ -5155,8 +5155,8 @@ text_format(PG_FUNCTION_ARGS)
 
 				str = OutputFunctionCall(&typoutputinfo_width, value);
 
-				/* pg_atoi will complain about bad data or overflow */
-				width = pg_atoi(str, sizeof(int), '\0');
+				/* pg_strtoint32 will complain about bad data or overflow */
+				width = pg_strtoint32(str);
 
 				pfree(str);
 			}

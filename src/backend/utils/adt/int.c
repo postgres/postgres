@@ -60,7 +60,7 @@ int2in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_INT16(pg_atoi(num, sizeof(int16), '\0'));
+	PG_RETURN_INT16(pg_strtoint16(num));
 }
 
 /*
@@ -265,7 +265,7 @@ int4in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_INT32(pg_atoi(num, sizeof(int32), '\0'));
+	PG_RETURN_INT32(pg_strtoint32(num));
 }
 
 /*
