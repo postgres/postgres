@@ -1154,7 +1154,7 @@ FROM dblink_fetch('myconn','error_cursor', 1) AS t(i int);
 
 SELECT *
 FROM dblink_fetch('myconn','error_cursor', 1) AS t(i int);
-ERROR:  invalid input syntax for integer: "not an int"
+ERROR:  invalid input syntax for type integer: "not an int"
 -- Make sure that the local settings have retained their values in spite
 -- of shenanigans on the connection.
 SHOW datestyle;

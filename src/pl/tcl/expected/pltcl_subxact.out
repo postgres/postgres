@@ -71,9 +71,9 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT pltcl_wrapper('SELECT subtransaction_ctx_test(''SPI'')');
-                  pltcl_wrapper                  
--------------------------------------------------
- ERROR: invalid input syntax for integer: "oops"
+                    pltcl_wrapper                     
+------------------------------------------------------
+ ERROR: invalid input syntax for type integer: "oops"
 (1 row)
 
 SELECT * FROM subtransaction_tbl;

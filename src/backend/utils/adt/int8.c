@@ -121,8 +121,8 @@ invalid_syntax:
 	if (!errorOK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for integer: \"%s\"",
-						str)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"bigint", str)));
 	return false;
 }
 

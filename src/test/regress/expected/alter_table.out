@@ -1113,7 +1113,7 @@ select * from def_test;
 
 -- set defaults to an incorrect type: this should fail
 alter table def_test alter column c1 set default 'wrong_datatype';
-ERROR:  invalid input syntax for integer: "wrong_datatype"
+ERROR:  invalid input syntax for type integer: "wrong_datatype"
 alter table def_test alter column c2 set default 20;
 -- set defaults on a non-existent column: this should fail
 alter table def_test alter column c3 set default 30;

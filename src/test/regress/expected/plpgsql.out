@@ -3782,7 +3782,7 @@ begin
 end;
 $$ language plpgsql;
 select compos();
-ERROR:  invalid input syntax for integer: "(1,hello)"
+ERROR:  invalid input syntax for type integer: "(1,hello)"
 CONTEXT:  PL/pgSQL function compos() while casting return value to function's return type
 -- test: invalid use of composite expression in scalar-returning function
 create or replace function compos() returns int as $$
@@ -3791,7 +3791,7 @@ begin
 end;
 $$ language plpgsql;
 select compos();
-ERROR:  invalid input syntax for integer: "(1,hello)"
+ERROR:  invalid input syntax for type integer: "(1,hello)"
 CONTEXT:  PL/pgSQL function compos() while casting return value to function's return type
 drop function compos();
 drop type compostype;

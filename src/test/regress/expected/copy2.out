@@ -33,7 +33,7 @@ COPY x (a, b, c, d, e, d, c) from stdin;
 ERROR:  column "d" specified more than once
 -- missing data: should fail
 COPY x from stdin;
-ERROR:  invalid input syntax for integer: ""
+ERROR:  invalid input syntax for type integer: ""
 CONTEXT:  COPY x, line 1, column a: ""
 COPY x from stdin;
 ERROR:  missing data for column "e"
