@@ -2228,6 +2228,28 @@ llvm_compile_expr(ExprState *state)
 
 					{
 						LLVMValueRef params[3];
+						LLVMValueRef v_curaggcontext;
+						LLVMValueRef v_current_set;
+						LLVMValueRef v_aggcontext;
+
+						v_aggcontext = l_ptr_const(op->d.agg_init_trans.aggcontext,
+												   l_ptr(StructExprContext));
+
+						v_current_set =
+							LLVMBuildStructGEP(b,
+											   v_aggstatep,
+											   FIELDNO_AGGSTATE_CURRENT_SET,
+											   "aggstate.current_set");
+						v_curaggcontext =
+							LLVMBuildStructGEP(b,
+											   v_aggstatep,
+											   FIELDNO_AGGSTATE_CURAGGCONTEXT,
+											   "aggstate.curaggcontext");
+
+						LLVMBuildStore(b, l_int32_const(op->d.agg_init_trans.setno),
+									   v_current_set);
+						LLVMBuildStore(b, v_aggcontext,
+									   v_curaggcontext);
 
 						params[0] = v_aggstatep;
 						params[1] = v_pertransp;
