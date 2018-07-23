@@ -34,6 +34,9 @@
 #include <llvm-c/Transforms/IPO.h>
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 #include <llvm-c/Transforms/Scalar.h>
+#if LLVM_VERSION_MAJOR > 6
+#include <llvm-c/Transforms/Utils.h>
+#endif
 
 
 /* Handle of a module emitted via ORC JIT */
