@@ -2499,6 +2499,8 @@ llvm_compile_expr(ExprState *state)
 						/* store trans value */
 						LLVMBuildStore(b, v_newval, v_transvaluep);
 						LLVMBuildStore(b, v_fcinfo_isnull, v_transnullp);
+
+						l_mcxt_switch(mod, b, v_oldcontext);
 						LLVMBuildBr(b, opblocks[i + 1]);
 
 						/* returned datum passed datum, no need to reparent */
