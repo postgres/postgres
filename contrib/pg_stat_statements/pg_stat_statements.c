@@ -642,19 +642,19 @@ pgss_shmem_startup(void)
 read_error:
 	ereport(LOG,
 			(errcode_for_file_access(),
-			 errmsg("could not read pg_stat_statement file \"%s\": %m",
+			 errmsg("could not read file \"%s\": %m",
 					PGSS_DUMP_FILE)));
 	goto fail;
 data_error:
 	ereport(LOG,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("ignoring invalid data in pg_stat_statement file \"%s\"",
+			 errmsg("ignoring invalid data in file \"%s\"",
 					PGSS_DUMP_FILE)));
 	goto fail;
 write_error:
 	ereport(LOG,
 			(errcode_for_file_access(),
-			 errmsg("could not write pg_stat_statement file \"%s\": %m",
+			 errmsg("could not write file \"%s\": %m",
 					PGSS_TEXT_FILE)));
 fail:
 	if (buffer)
@@ -761,7 +761,7 @@ pgss_shmem_shutdown(int code, Datum arg)
 error:
 	ereport(LOG,
 			(errcode_for_file_access(),
-			 errmsg("could not write pg_stat_statement file \"%s\": %m",
+			 errmsg("could not write file \"%s\": %m",
 					PGSS_DUMP_FILE ".tmp")));
 	if (qbuffer)
 		free(qbuffer);
@@ -1871,7 +1871,7 @@ qtext_store(const char *query, int query_len,
 error:
 	ereport(LOG,
 			(errcode_for_file_access(),
-			 errmsg("could not write pg_stat_statement file \"%s\": %m",
+			 errmsg("could not write file \"%s\": %m",
 					PGSS_TEXT_FILE)));
 
 	if (fd >= 0)
@@ -1913,7 +1913,7 @@ qtext_load_file(Size *buffer_size)
 		if (errno != ENOENT)
 			ereport(LOG,
 					(errcode_for_file_access(),
-					 errmsg("could not read pg_stat_statement file \"%s\": %m",
+					 errmsg("could not read file \"%s\": %m",
 							PGSS_TEXT_FILE)));
 		return NULL;
 	}
@@ -1923,7 +1923,7 @@ qtext_load_file(Size *buffer_size)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not stat pg_stat_statement file \"%s\": %m",
+				 errmsg("could not stat file \"%s\": %m",
 						PGSS_TEXT_FILE)));
 		CloseTransientFile(fd);
 		return NULL;
@@ -1939,7 +1939,7 @@ qtext_load_file(Size *buffer_size)
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory"),
-				 errdetail("Could not allocate enough memory to read pg_stat_statement file \"%s\".",
+				 errdetail("Could not allocate enough memory to read file \"%s\".",
 						   PGSS_TEXT_FILE)));
 		CloseTransientFile(fd);
 		return NULL;
@@ -1958,7 +1958,7 @@ qtext_load_file(Size *buffer_size)
 		if (errno)
 			ereport(LOG,
 					(errcode_for_file_access(),
-					 errmsg("could not read pg_stat_statement file \"%s\": %m",
+					 errmsg("could not read file \"%s\": %m",
 							PGSS_TEXT_FILE)));
 		free(buf);
 		CloseTransientFile(fd);
@@ -2088,7 +2088,7 @@ gc_qtexts(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not write pg_stat_statement file \"%s\": %m",
+				 errmsg("could not write file \"%s\": %m",
 						PGSS_TEXT_FILE)));
 		goto gc_fail;
 	}
@@ -2118,7 +2118,7 @@ gc_qtexts(void)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-					 errmsg("could not write pg_stat_statement file \"%s\": %m",
+					 errmsg("could not write file \"%s\": %m",
 							PGSS_TEXT_FILE)));
 			hash_seq_term(&hash_seq);
 			goto gc_fail;
@@ -2136,14 +2136,14 @@ gc_qtexts(void)
 	if (ftruncate(fileno(qfile), extent) != 0)
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not truncate pg_stat_statement file \"%s\": %m",
+				 errmsg("could not truncate file \"%s\": %m",
 						PGSS_TEXT_FILE)));
 
 	if (FreeFile(qfile))
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not write pg_stat_statement file \"%s\": %m",
+				 errmsg("could not write file \"%s\": %m",
 						PGSS_TEXT_FILE)));
 		qfile = NULL;
 		goto gc_fail;
@@ -2203,7 +2203,7 @@ gc_fail:
 	if (qfile == NULL)
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not write new pg_stat_statement file \"%s\": %m",
+				 errmsg("could not recreate file \"%s\": %m",
 						PGSS_TEXT_FILE)));
 	else
 		FreeFile(qfile);
@@ -2255,7 +2255,7 @@ entry_reset(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not create pg_stat_statement file \"%s\": %m",
+				 errmsg("could not create file \"%s\": %m",
 						PGSS_TEXT_FILE)));
 		goto done;
 	}
@@ -2264,7 +2264,7 @@ entry_reset(void)
 	if (ftruncate(fileno(qfile), 0) != 0)
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not truncate pg_stat_statement file \"%s\": %m",
+				 errmsg("could not truncate file \"%s\": %m",
 						PGSS_TEXT_FILE)));
 
 	FreeFile(qfile);

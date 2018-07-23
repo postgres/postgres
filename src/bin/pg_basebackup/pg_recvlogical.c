@@ -197,7 +197,7 @@ OutputFsync(TimestampTz now)
 	if (fsync(outfd) != 0)
 	{
 		fprintf(stderr,
-				_("%s: could not fsync log file \"%s\": %s\n"),
+				_("%s: could not fsync file \"%s\": %s\n"),
 				progname, outfile, strerror(errno));
 		return false;
 	}

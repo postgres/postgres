@@ -3569,7 +3569,7 @@ XLogFileOpen(XLogSegNo segno)
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not open write-ahead log file \"%s\": %m", path)));
+				 errmsg("could not open file \"%s\": %m", path)));
 
 	return fd;
 }
@@ -3758,7 +3758,7 @@ XLogFileClose(void)
 	if (close(openLogFile))
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not close log file %s: %m",
+				 errmsg("could not close file \"%s\": %m",
 						XLogFileNameP(ThisTimeLineID, openLogSegNo))));
 	openLogFile = -1;
 }
@@ -4092,7 +4092,7 @@ RemoveXlogFile(const char *segname, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-					 errmsg("could not rename old write-ahead log file \"%s\": %m",
+					 errmsg("could not rename file \"%s\": %m",
 							path)));
 			return;
 		}
@@ -4502,7 +4502,7 @@ WriteControlFile(void)
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not create control file \"%s\": %m",
+				 errmsg("could not create file \"%s\": %m",
 						XLOG_CONTROL_FILE)));
 
 	errno = 0;
@@ -4514,7 +4514,8 @@ WriteControlFile(void)
 			errno = ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not write to control file: %m")));
+				 errmsg("could not write to file \"%s\": %m",
+						XLOG_CONTROL_FILE)));
 	}
 	pgstat_report_wait_end();
 
@@ -4522,13 +4523,15 @@ WriteControlFile(void)
 	if (pg_fsync(fd) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not fsync control file: %m")));
+				 errmsg("could not fsync file \"%s\": %m",
+						XLOG_CONTROL_FILE)));
 	pgstat_report_wait_end();
 
 	if (close(fd))
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not close control file: %m")));
+				 errmsg("could not close file \"%s\": %m",
+						XLOG_CONTROL_FILE)));
 }
 
 static void
@@ -4758,8 +4761,7 @@ UpdateControlFile(void)
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not open control file \"%s\": %m",
-						XLOG_CONTROL_FILE)));
+				 errmsg("could not open file \"%s\": %m", XLOG_CONTROL_FILE)));
 
 	errno = 0;
 	pgstat_report_wait_start(WAIT_EVENT_CONTROL_FILE_WRITE_UPDATE);
@@ -4770,7 +4772,8 @@ UpdateControlFile(void)
 			errno = ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not write to control file: %m")));
+				 errmsg("could not write to file \"%s\": %m",
+						XLOG_CONTROL_FILE)));
 	}
 	pgstat_report_wait_end();
 
@@ -4778,13 +4781,15 @@ UpdateControlFile(void)
 	if (pg_fsync(fd) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not fsync control file: %m")));
+				 errmsg("could not fsync file \"%s\": %m",
+						XLOG_CONTROL_FILE)));
 	pgstat_report_wait_end();
 
 	if (close(fd))
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not close control file: %m")));
+				 errmsg("could not close file \"%s\": %m",
+						XLOG_CONTROL_FILE)));
 }
 
 /*
@@ -5684,7 +5689,7 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 		if (close(fd))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not close log file %s: %m",
+					 errmsg("could not close file \"%s\": %m",
 							XLogFileNameP(ThisTimeLineID, startLogSegNo))));
 	}
 
@@ -10250,7 +10255,7 @@ assign_xlog_sync_method(int new_sync_method, void *extra)
 			if (pg_fsync(openLogFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("could not fsync log segment %s: %m",
+						 errmsg("could not fsync file \"%s\": %m",
 								XLogFileNameP(ThisTimeLineID, openLogSegNo))));
 			pgstat_report_wait_end();
 			if (get_sync_bit(sync_method) != get_sync_bit(new_sync_method))
@@ -10276,7 +10281,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 			if (pg_fsync_no_writethrough(fd) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("could not fsync log file %s: %m",
+						 errmsg("could not fsync file \"%s\": %m",
 								XLogFileNameP(ThisTimeLineID, segno))));
 			break;
 #ifdef HAVE_FSYNC_WRITETHROUGH
@@ -10284,7 +10289,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 			if (pg_fsync_writethrough(fd) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("could not fsync write-through log file %s: %m",
+						 errmsg("could not fsync write-through file \"%s\": %m",
 								XLogFileNameP(ThisTimeLineID, segno))));
 			break;
 #endif
@@ -10293,7 +10298,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 			if (pg_fdatasync(fd) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("could not fdatasync log file %s: %m",
+						 errmsg("could not fdatasync file \"%s\": %m",
 								XLogFileNameP(ThisTimeLineID, segno))));
 			break;
 #endif
