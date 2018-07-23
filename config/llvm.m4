@@ -94,8 +94,9 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
   # Check which functionality is present
   SAVE_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS $LLVM_CPPFLAGS"
-  AC_CHECK_DECLS([LLVMOrcGetSymbolAddressIn, LLVMOrcRegisterGDB, LLVMOrcRegisterPerf], [], [], [[#include <llvm-c/OrcBindings.h>]])
+  AC_CHECK_DECLS([LLVMOrcGetSymbolAddressIn], [], [], [[#include <llvm-c/OrcBindings.h>]])
   AC_CHECK_DECLS([LLVMGetHostCPUName], [], [], [[#include <llvm-c/TargetMachine.h>]])
+  AC_CHECK_DECLS([LLVMCreateGDBRegistrationListener, LLVMCreatePerfJITEventListener], [], [], [[#include <llvm-c/ExecutionEngine.h>]])
   CPPFLAGS="$SAVE_CPPFLAGS"
 
   # LLVM_CONFIG, CLANG are already output via AC_ARG_VAR

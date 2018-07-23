@@ -5008,28 +5008,6 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN $ac_have_decl
 _ACEOF
-ac_fn_c_check_decl "$LINENO" "LLVMOrcRegisterGDB" "ac_cv_have_decl_LLVMOrcRegisterGDB" "#include <llvm-c/OrcBindings.h>
-"
-if test "x$ac_cv_have_decl_LLVMOrcRegisterGDB" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMORCREGISTERGDB $ac_have_decl
-_ACEOF
-ac_fn_c_check_decl "$LINENO" "LLVMOrcRegisterPerf" "ac_cv_have_decl_LLVMOrcRegisterPerf" "#include <llvm-c/OrcBindings.h>
-"
-if test "x$ac_cv_have_decl_LLVMOrcRegisterPerf" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMORCREGISTERPERF $ac_have_decl
-_ACEOF
 
   ac_fn_c_check_decl "$LINENO" "LLVMGetHostCPUName" "ac_cv_have_decl_LLVMGetHostCPUName" "#include <llvm-c/TargetMachine.h>
 "
@@ -5041,6 +5019,29 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_LLVMGETHOSTCPUNAME $ac_have_decl
+_ACEOF
+
+  ac_fn_c_check_decl "$LINENO" "LLVMCreateGDBRegistrationListener" "ac_cv_have_decl_LLVMCreateGDBRegistrationListener" "#include <llvm-c/ExecutionEngine.h>
+"
+if test "x$ac_cv_have_decl_LLVMCreateGDBRegistrationListener" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "LLVMCreatePerfJITEventListener" "ac_cv_have_decl_LLVMCreatePerfJITEventListener" "#include <llvm-c/ExecutionEngine.h>
+"
+if test "x$ac_cv_have_decl_LLVMCreatePerfJITEventListener" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER $ac_have_decl
 _ACEOF
 
   CPPFLAGS="$SAVE_CPPFLAGS"
