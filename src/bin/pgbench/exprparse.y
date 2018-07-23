@@ -366,15 +366,6 @@ static const struct
 	{
 		"hash_fnv1a", PGBENCH_NARGS_HASH, PGBENCH_HASH_FNV1A
 	},
-	{
-		"hash", PGBENCH_NARGS_HASH, PGBENCH_HASH_MURMUR2
-	},
-	{
-		"hash_murmur2", PGBENCH_NARGS_HASH, PGBENCH_HASH_MURMUR2
-	},
-	{
-		"hash_fnv1a", PGBENCH_NARGS_HASH, PGBENCH_HASH_FNV1A
-	},
 	/* keep as last array element */
 	{
 		NULL, 0, 0
