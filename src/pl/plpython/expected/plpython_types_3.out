@@ -684,7 +684,7 @@ CREATE FUNCTION test_type_conversion_array_mixed2() RETURNS int[] AS $$
 return [123, 'abc']
 $$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_mixed2();
-ERROR:  invalid input syntax for integer: "abc"
+ERROR:  invalid input syntax for type integer: "abc"
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_array_mixed2"
 CREATE FUNCTION test_type_conversion_mdarray_malformed() RETURNS int[] AS $$

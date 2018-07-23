@@ -43,7 +43,7 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_test('SPI');
-ERROR:  spiexceptions.InvalidTextRepresentation: invalid input syntax for integer: "oops"
+ERROR:  spiexceptions.InvalidTextRepresentation: invalid input syntax for type integer: "oops"
 LINE 1: INSERT INTO subtransaction_tbl VALUES ('oops')
                                                ^
 QUERY:  INSERT INTO subtransaction_tbl VALUES ('oops')
