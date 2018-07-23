@@ -134,6 +134,14 @@
    don't. */
 #undef HAVE_DECL_F_FULLFSYNC
 
+/* Define to 1 if you have the declaration of
+   `LLVMCreateGDBRegistrationListener', and to 0 if you don't. */
+#undef HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER
+
+/* Define to 1 if you have the declaration of
+   `LLVMCreatePerfJITEventListener', and to 0 if you don't. */
+#undef HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER
+
 /* Define to 1 if you have the declaration of `LLVMGetHostCPUName', and to 0
    if you don't. */
 #undef HAVE_DECL_LLVMGETHOSTCPUNAME
@@ -141,14 +149,6 @@
 /* Define to 1 if you have the declaration of `LLVMOrcGetSymbolAddressIn', and
    to 0 if you don't. */
 #undef HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN
-
-/* Define to 1 if you have the declaration of `LLVMOrcRegisterGDB', and to 0
-   if you don't. */
-#undef HAVE_DECL_LLVMORCREGISTERGDB
-
-/* Define to 1 if you have the declaration of `LLVMOrcRegisterPerf', and to 0
-   if you don't. */
-#undef HAVE_DECL_LLVMORCREGISTERPERF
 
 /* Define to 1 if you have the declaration of `posix_fadvise', and to 0 if you
    don't. */
