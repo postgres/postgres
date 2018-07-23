@@ -3412,7 +3412,6 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 
 			if (nread > sizeof(buffer))
 				nread = sizeof(buffer);
-			errno = 0;
 			pgstat_report_wait_start(WAIT_EVENT_WAL_COPY_READ);
 			r = read(srcfd, buffer, nread);
 			if (r != nread)
@@ -3424,7 +3423,8 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 									path)));
 				else
 					ereport(ERROR,
-							(errmsg("could not read file \"%s\": read %d of %zu",
+							(errcode(ERRCODE_DATA_CORRUPTED),
+							 errmsg("could not read file \"%s\": read %d of %zu",
 									path, r, (Size) nread)));
 			}
 			pgstat_report_wait_end();
@@ -4564,7 +4564,8 @@ ReadControlFile(void)
 							XLOG_CONTROL_FILE)));
 		else
 			ereport(PANIC,
-					(errmsg("could not read file \"%s\": read %d of %zu",
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("could not read file \"%s\": read %d of %zu",
 							XLOG_CONTROL_FILE, r, sizeof(ControlFileData))));
 	}
 	pgstat_report_wait_end();
@@ -11829,7 +11830,8 @@ retry:
 		}
 		else
 			ereport(emode_for_corrupt_record(emode, targetPagePtr + reqLen),
-					(errmsg("could not read from log segment %s, offset %u: read %d of %zu",
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("could not read from log segment %s, offset %u: read %d of %zu",
 							fname, readOff, r, (Size) XLOG_BLCKSZ)));
 		goto next_record_is_invalid;
 	}

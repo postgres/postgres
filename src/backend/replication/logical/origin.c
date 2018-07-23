@@ -715,11 +715,13 @@ StartupReplicationOrigin(void)
 	{
 		if (readBytes < 0)
 			ereport(PANIC,
-					(errmsg("could not read file \"%s\": %m",
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m",
 							path)));
 		else
 			ereport(PANIC,
-					(errmsg("could not read file \"%s\": read %d of %zu",
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, readBytes, sizeof(magic))));
 	}
 	COMP_CRC32C(crc, &magic, sizeof(magic));

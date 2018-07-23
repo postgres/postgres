@@ -1420,7 +1420,8 @@ RestoreSlotFromDisk(const char *name)
 					 errmsg("could not read file \"%s\": %m", path)));
 		else
 			ereport(PANIC,
-					(errmsg("could not read file \"%s\": read %d of %zu",
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, readBytes,
 							(Size) ReplicationSlotOnDiskConstantSize)));
 	}
@@ -1464,7 +1465,8 @@ RestoreSlotFromDisk(const char *name)
 					 errmsg("could not read file \"%s\": %m", path)));
 		else
 			ereport(PANIC,
-					(errmsg("could not read file \"%s\": read %d of %zu",
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, readBytes, (Size) cp.length)));
 	}
 

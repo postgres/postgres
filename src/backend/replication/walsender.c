@@ -509,7 +509,8 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 							path)));
 		else if (nread == 0)
 			ereport(ERROR,
-					(errmsg("could not read file \"%s\": read %d of %zu",
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, nread, (Size) bytesleft)));
 
 		pq_sendbytes(&buf, rbuf, nread);
@@ -2442,7 +2443,8 @@ retry:
 		else if (readbytes == 0)
 		{
 			ereport(ERROR,
-					(errmsg("could not read from log segment %s, offset %u: read %d of %zu",
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("could not read from log segment %s, offset %u: read %d of %zu",
 							XLogFileNameP(curFileTimeLine, sendSegNo),
 							sendOff, readbytes, (Size) segbytes)));
 		}

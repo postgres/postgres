@@ -669,7 +669,8 @@ load_relmap_file(bool shared)
 					 errmsg("could not read file \"%s\": %m", mapfilename)));
 		else
 			ereport(FATAL,
-					(errmsg("could not read file \"%s\": read %d of %zu",
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("could not read file \"%s\": read %d of %zu",
 							mapfilename, r, sizeof(RelMapFile))));
 	}
 	pgstat_report_wait_end();

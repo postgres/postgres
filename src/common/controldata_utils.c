@@ -83,7 +83,8 @@ get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p)
 		else
 #ifndef FRONTEND
 			ereport(ERROR,
-					(errmsg("could not read file \"%s\": read %d of %zu",
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("could not read file \"%s\": read %d of %zu",
 							ControlFilePath, r, sizeof(ControlFileData))));
 #else
 		{
