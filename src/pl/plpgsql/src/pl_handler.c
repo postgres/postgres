@@ -92,6 +92,10 @@ plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source)
 
 			if (pg_strcasecmp(tok, "shadowed_variables") == 0)
 				extrachecks |= PLPGSQL_XCHECK_SHADOWVAR;
+			else if (pg_strcasecmp(tok, "too_many_rows") == 0)
+				extrachecks |= PLPGSQL_XCHECK_TOOMANYROWS;
+			else if (pg_strcasecmp(tok, "strict_multi_assignment") == 0)
+				extrachecks |= PLPGSQL_XCHECK_STRICTMULTIASSIGNMENT;
 			else if (pg_strcasecmp(tok, "all") == 0 || pg_strcasecmp(tok, "none") == 0)
 			{
 				GUC_check_errdetail("Key word \"%s\" cannot be combined with other key words.", tok);

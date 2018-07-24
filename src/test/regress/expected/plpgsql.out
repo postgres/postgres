@@ -2778,6 +2778,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
+HINT:  Make sure the query returns a single row, or use LIMIT 1
 CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
 create or replace function stricttest() returns void as $$
 declare x record;
@@ -2851,6 +2852,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
+HINT:  Make sure the query returns a single row, or use LIMIT 1
 CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
 create or replace function stricttest() returns void as $$
 declare x record;
@@ -2916,6 +2918,7 @@ end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
+HINT:  Make sure the query returns a single row, or use LIMIT 1
 CONTEXT:  PL/pgSQL function stricttest() line 8 at SQL statement
 create or replace function stricttest() returns void as $$
 declare x record;
@@ -2926,6 +2929,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
+HINT:  Make sure the query returns a single row, or use LIMIT 1
 CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
 create or replace function stricttest() returns void as $$
 declare x record;
@@ -2973,6 +2977,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
+HINT:  Make sure the query returns a single row, or use LIMIT 1
 CONTEXT:  PL/pgSQL function stricttest() line 10 at SQL statement
 reset plpgsql.print_strict_params;
 create or replace function stricttest() returns void as $$
@@ -2990,6 +2995,7 @@ end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
+HINT:  Make sure the query returns a single row, or use LIMIT 1
 CONTEXT:  PL/pgSQL function stricttest() line 10 at SQL statement
 -- test warnings and errors
 set plpgsql.extra_warnings to 'all';
@@ -3113,6 +3119,107 @@ select shadowtest(1);
  t
 (1 row)
 
+-- runtime extra checks
+set plpgsql.extra_warnings to 'too_many_rows';
+do $$
+declare x int;
+begin
+  select v from generate_series(1,2) g(v) into x;
+end;
+$$;
+WARNING:  query returned more than one row
+HINT:  Make sure the query returns a single row, or use LIMIT 1
+set plpgsql.extra_errors to 'too_many_rows';
+do $$
+declare x int;
+begin
+  select v from generate_series(1,2) g(v) into x;
+end;
+$$;
+ERROR:  query returned more than one row
+HINT:  Make sure the query returns a single row, or use LIMIT 1
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at SQL statement
+reset plpgsql.extra_errors;
+reset plpgsql.extra_warnings;
+set plpgsql.extra_warnings to 'strict_multi_assignment';
+do $$
+declare
+  x int;
+  y int;
+begin
+  select 1 into x, y;
+  select 1,2 into x, y;
+  select 1,2,3 into x, y;
+end
+$$;
+WARNING:  number of source and target fields in assignment do not match
+DETAIL:  strict_multi_assignment check of extra_warnings is active.
+HINT:  Make sure the query returns the exact list of columns.
+WARNING:  number of source and target fields in assignment do not match
+DETAIL:  strict_multi_assignment check of extra_warnings is active.
+HINT:  Make sure the query returns the exact list of columns.
+set plpgsql.extra_errors to 'strict_multi_assignment';
+do $$
+declare
+  x int;
+  y int;
+begin
+  select 1 into x, y;
+  select 1,2 into x, y;
+  select 1,2,3 into x, y;
+end
+$$;
+ERROR:  number of source and target fields in assignment do not match
+DETAIL:  strict_multi_assignment check of extra_errors is active.
+HINT:  Make sure the query returns the exact list of columns.
+CONTEXT:  PL/pgSQL function inline_code_block line 6 at SQL statement
+create table test_01(a int, b int, c int);
+alter table test_01 drop column a;
+-- the check is active only when source table is not empty
+insert into test_01 values(10,20);
+do $$
+declare
+  x int;
+  y int;
+begin
+  select * from test_01 into x, y; -- should be ok
+  raise notice 'ok';
+  select * from test_01 into x;    -- should to fail
+end;
+$$;
+NOTICE:  ok
+ERROR:  number of source and target fields in assignment do not match
+DETAIL:  strict_multi_assignment check of extra_errors is active.
+HINT:  Make sure the query returns the exact list of columns.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at SQL statement
+do $$
+declare
+  t test_01;
+begin
+  select 1, 2 into t;  -- should be ok
+  raise notice 'ok';
+  select 1, 2, 3 into t; -- should fail;
+end;
+$$;
+NOTICE:  ok
+ERROR:  number of source and target fields in assignment do not match
+DETAIL:  strict_multi_assignment check of extra_errors is active.
+HINT:  Make sure the query returns the exact list of columns.
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at SQL statement
+do $$
+declare
+  t test_01;
+begin
+  select 1 into t; -- should fail;
+end;
+$$;
+ERROR:  number of source and target fields in assignment do not match
+DETAIL:  strict_multi_assignment check of extra_errors is active.
+HINT:  Make sure the query returns the exact list of columns.
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at SQL statement
+drop table test_01;
+reset plpgsql.extra_errors;
+reset plpgsql.extra_warnings;
 -- test scrollable cursor support
 create function sc_test() returns setof integer as $$
 declare

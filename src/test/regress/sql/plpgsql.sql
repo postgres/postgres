@@ -2627,6 +2627,95 @@ declare f1 int; begin return 1; end $$ language plpgsql;
 
 select shadowtest(1);
 
+-- runtime extra checks
+set plpgsql.extra_warnings to 'too_many_rows';
+
+do $$
+declare x int;
+begin
+  select v from generate_series(1,2) g(v) into x;
+end;
+$$;
+
+set plpgsql.extra_errors to 'too_many_rows';
+
+do $$
+declare x int;
+begin
+  select v from generate_series(1,2) g(v) into x;
+end;
+$$;
+
+reset plpgsql.extra_errors;
+reset plpgsql.extra_warnings;
+
+set plpgsql.extra_warnings to 'strict_multi_assignment';
+
+do $$
+declare
+  x int;
+  y int;
+begin
+  select 1 into x, y;
+  select 1,2 into x, y;
+  select 1,2,3 into x, y;
+end
+$$;
+
+set plpgsql.extra_errors to 'strict_multi_assignment';
+
+do $$
+declare
+  x int;
+  y int;
+begin
+  select 1 into x, y;
+  select 1,2 into x, y;
+  select 1,2,3 into x, y;
+end
+$$;
+
+create table test_01(a int, b int, c int);
+
+alter table test_01 drop column a;
+
+-- the check is active only when source table is not empty
+insert into test_01 values(10,20);
+
+do $$
+declare
+  x int;
+  y int;
+begin
+  select * from test_01 into x, y; -- should be ok
+  raise notice 'ok';
+  select * from test_01 into x;    -- should to fail
+end;
+$$;
+
+do $$
+declare
+  t test_01;
+begin
+  select 1, 2 into t;  -- should be ok
+  raise notice 'ok';
+  select 1, 2, 3 into t; -- should fail;
+end;
+$$;
+
+do $$
+declare
+  t test_01;
+begin
+  select 1 into t; -- should fail;
+end;
+$$;
+
+drop table test_01;
+
+reset plpgsql.extra_errors;
+reset plpgsql.extra_warnings;
+
 -- test scrollable cursor support
 
 create function sc_test() returns setof integer as $$
