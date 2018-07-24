@@ -38,6 +38,9 @@ bool		update_process_title = true;
 /*
  * Alternative ways of updating ps display:
  *
+ * PS_USE_SETPROCTITLE_FAST
+ *	   use the function setproctitle_fast(const char *, ...)
+ *	   (newer FreeBSD systems)
  * PS_USE_SETPROCTITLE
  *	   use the function setproctitle(const char *, ...)
  *	   (newer BSD systems)
@@ -59,7 +62,9 @@ bool		update_process_title = true;
  *	   don't update ps display
  *	   (This is the default, as it is safest.)
  */
-#if defined(HAVE_SETPROCTITLE)
+#if defined(HAVE_SETPROCTITLE_FAST)
+#define PS_USE_SETPROCTITLE_FAST
+#elif defined(HAVE_SETPROCTITLE)
 #define PS_USE_SETPROCTITLE
 #elif defined(HAVE_PSTAT) && defined(PSTAT_SETCMD)
 #define PS_USE_PSTAT
@@ -286,7 +291,7 @@ init_ps_display(const char *username, const char *dbname,
 	 * Make fixed prefix of ps display.
 	 */
 
-#ifdef PS_USE_SETPROCTITLE
+#if defined(PS_USE_SETPROCTITLE) || defined(PS_USE_SETPROCTITLE_FAST)
 
 	/*
 	 * apparently setproctitle() already adds a `progname:' prefix to the ps
@@ -349,6 +354,8 @@ set_ps_display(const char *activity, bool force)
 
 #ifdef PS_USE_SETPROCTITLE
 	setproctitle("%s", ps_buffer);
+#elif defined(PS_USE_SETPROCTITLE_FAST)
+	setproctitle_fast("%s", ps_buffer);
 #endif
 
 #ifdef PS_USE_PSTAT

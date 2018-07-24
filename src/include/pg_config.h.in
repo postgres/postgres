@@ -489,6 +489,9 @@
 /* Define to 1 if you have the `setproctitle' function. */
 #undef HAVE_SETPROCTITLE
 
+/* Define to 1 if you have the `setproctitle_fast' function. */
+#undef HAVE_SETPROCTITLE_FAST
+
 /* Define to 1 if you have the `setsid' function. */
 #undef HAVE_SETSID
 
