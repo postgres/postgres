@@ -330,6 +330,7 @@ ClosePortalStmt
 ClosePtrType
 Clump
 ClusterInfo
+ClusterOption
 ClusterStmt
 CmdType
 CoalesceExpr

@@ -3284,7 +3284,7 @@ _copyClusterStmt(const ClusterStmt *from)
 
 	COPY_NODE_FIELD(relation);
 	COPY_STRING_FIELD(indexname);
-	COPY_SCALAR_FIELD(verbose);
+	COPY_SCALAR_FIELD(options);
 
 	return newnode;
 }

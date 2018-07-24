@@ -3112,12 +3112,18 @@ typedef struct AlterSystemStmt
  *		Cluster Statement (support pbrown's cluster index implementation)
  * ----------------------
  */
+typedef enum ClusterOption
+{
+	CLUOPT_RECHECK,				/* recheck relation state */
+	CLUOPT_VERBOSE				/* print progress info */
+} ClusterOption;
+
 typedef struct ClusterStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* relation being indexed, or NULL if all */
 	char	   *indexname;		/* original index defined */
-	bool		verbose;		/* print progress info */
+	int			options;		/* OR of ClusterOption flags */
 } ClusterStmt;
 
 /* ----------------------

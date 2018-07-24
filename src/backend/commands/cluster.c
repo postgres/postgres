@@ -186,7 +186,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		heap_close(rel, NoLock);
 
 		/* Do the job. */
-		cluster_rel(tableOid, indexOid, false, stmt->verbose);
+		cluster_rel(tableOid, indexOid, stmt->options);
 	}
 	else
 	{
@@ -234,7 +234,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
 			/* Do the job. */
-			cluster_rel(rvtc->tableOid, rvtc->indexOid, true, stmt->verbose);
+			cluster_rel(rvtc->tableOid, rvtc->indexOid,
+						stmt->options | CLUOPT_RECHECK);
 			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
@@ -265,9 +266,11 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  * and error messages should refer to the operation as VACUUM not CLUSTER.
  */
 void
-cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
+cluster_rel(Oid tableOid, Oid indexOid, int options)
 {
 	Relation	OldHeap;
+	bool		verbose = ((options & CLUOPT_VERBOSE) != 0);
+	bool		recheck = ((options & CLUOPT_RECHECK) != 0);
 
 	/* Check for user-requested abort. */
 	CHECK_FOR_INTERRUPTS();

@@ -10478,7 +10478,9 @@ ClusterStmt:
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = $3;
 					n->indexname = $4;
-					n->verbose = $2;
+					n->options = 0;
+					if ($2)
+						n->options |= CLUOPT_VERBOSE;
 					$$ = (Node*)n;
 				}
 			| CLUSTER opt_verbose
@@ -10486,7 +10488,9 @@ ClusterStmt:
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = NULL;
 					n->indexname = NULL;
-					n->verbose = $2;
+					n->options = 0;
+					if ($2)
+						n->options |= CLUOPT_VERBOSE;
 					$$ = (Node*)n;
 				}
 			/* kept for pre-8.3 compatibility */
@@ -10495,7 +10499,9 @@ ClusterStmt:
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = $5;
 					n->indexname = $3;
-					n->verbose = $2;
+					n->options = 0;
+					if ($2)
+						n->options |= CLUOPT_VERBOSE;
 					$$ = (Node*)n;
 				}
 		;
