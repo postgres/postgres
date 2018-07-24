@@ -181,6 +181,8 @@ invalid_syntax:
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"smallint", s)));
+
+	return 0;			/* keep compiler quiet */
 }
 
 /*
@@ -255,6 +257,8 @@ invalid_syntax:
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"integer", s)));
+
+	return 0;			/* keep compiler quiet */
 }
 
 /*
