@@ -41,13 +41,19 @@
 #error cannot use named POSIX semaphores with EXEC_BACKEND
 #endif
 
+typedef union SemTPadded
+{
+	sem_t		pgsem;
+	char		pad[PG_CACHE_LINE_SIZE];
+} SemTPadded;
+
 /* typedef PGSemaphore is equivalent to pointer to sem_t */
 typedef struct PGSemaphoreData
 {
-	sem_t		pgsem;
+	SemTPadded	sem_padded;
 } PGSemaphoreData;
 
-#define PG_SEM_REF(x)	(&(x)->pgsem)
+#define PG_SEM_REF(x)	(&(x)->sem_padded.pgsem)
 
 #define IPCProtection	(0600)	/* access/modify by user only */
 
