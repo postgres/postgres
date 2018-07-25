@@ -45,6 +45,7 @@
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "executor/executor.h"
+#include "jit/jit.h"
 #include "mb/pg_wchar.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
@@ -174,11 +175,11 @@ CreateExecutorState(void)
  *
  *		Release an EState along with all remaining working storage.
  *
- * Note: this is not responsible for releasing non-memory resources,
- * such as open relations or buffer pins.  But it will shut down any
- * still-active ExprContexts within the EState.  That is sufficient
- * cleanup for situations where the EState has only been used for expression
- * evaluation, and not to run a complete Plan.
+ * Note: this is not responsible for releasing non-memory resources, such as
+ * open relations or buffer pins.  But it will shut down any still-active
+ * ExprContexts within the EState and deallocate associated JITed expressions.
+ * That is sufficient cleanup for situations where the EState has only been
+ * used for expression evaluation, and not to run a complete Plan.
  *
  * This can be called in any memory context ... so long as it's not one
  * of the ones to be freed.
@@ -202,6 +203,13 @@ FreeExecutorState(EState *estate)
 		FreeExprContext((ExprContext *) linitial(estate->es_exprcontexts),
 						true);
 		/* FreeExprContext removed the list link for us */
+	}
+
+	/* release JIT context, if allocated */
+	if (estate->es_jit)
+	{
+		jit_release_context(estate->es_jit);
+		estate->es_jit = NULL;
 	}
 
 	/*
