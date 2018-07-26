@@ -1,0 +1,67 @@
+--
+-- Cache-behavior-dependent test cases
+--
+-- These tests logically belong in plpgsql_record.sql, and perhaps someday
+-- can be merged back into it.  For now, however, their results are different
+-- between regular and CLOBBER_CACHE_ALWAYS builds, so we must have two
+-- expected-output files to cover both cases.  To minimize the maintenance
+-- effort resulting from that, this file should contain only tests that
+-- do have different results under CLOBBER_CACHE_ALWAYS.
+--
+-- check behavior with changes of a named rowtype
+create table c_mutable(f1 int, f2 text);
+create function c_sillyaddone(int) returns int language plpgsql as
+$$ declare r c_mutable; begin r.f1 := $1; return r.f1 + 1; end $$;
+select c_sillyaddone(42);
+ c_sillyaddone 
+---------------
+            43
+(1 row)
+
+alter table c_mutable drop column f1;
+alter table c_mutable add column f1 float8;
+-- currently, this fails due to cached plan for "r.f1 + 1" expression
+-- (but a CLOBBER_CACHE_ALWAYS build will succeed)
+select c_sillyaddone(42);
+ERROR:  type of parameter 4 (double precision) does not match that when preparing the plan (integer)
+CONTEXT:  PL/pgSQL function c_sillyaddone(integer) line 1 at RETURN
+-- but it's OK if we force plan rebuilding
+discard plans;
+select c_sillyaddone(42);
+ c_sillyaddone 
+---------------
+            43
+(1 row)
+
+-- check behavior with changes in a record rowtype
+create function show_result_type(text) returns text language plpgsql as
+$$
+    declare
+        r record;
+        t text;
+    begin
+        execute $1 into r;
+        select pg_typeof(r.a) into t;
+        return format('type %s value %s', t, r.a::text);
+    end;
+$$;
+select show_result_type('select 1 as a');
+   show_result_type   
+----------------------
+ type integer value 1
+(1 row)
+
+-- currently this fails due to cached plan for pg_typeof expression
+-- (but a CLOBBER_CACHE_ALWAYS build will succeed)
+select show_result_type('select 2.0 as a');
+ERROR:  type of parameter 5 (numeric) does not match that when preparing the plan (integer)
+CONTEXT:  SQL statement "select pg_typeof(r.a)"
+PL/pgSQL function show_result_type(text) line 7 at SQL statement
+-- but it's OK if we force plan rebuilding
+discard plans;
+select show_result_type('select 2.0 as a');
+    show_result_type    
+------------------------
+ type numeric value 2.0
+(1 row)
+

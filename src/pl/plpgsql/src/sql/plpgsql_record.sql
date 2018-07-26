@@ -270,17 +270,8 @@ create function sillyaddone(int) returns int language plpgsql as
 $$ declare r mutable; begin r.f1 := $1; return r.f1 + 1; end $$;
 select sillyaddone(42);
 
-alter table mutable drop column f1;
-alter table mutable add column f1 float8;
-
--- currently, this fails due to cached plan for "r.f1 + 1" expression
--- (but we can't actually show that, because a CLOBBER_CACHE_ALWAYS build
--- will succeed)
--- select sillyaddone(42);
-
--- but it's OK if we force plan rebuilding
-discard plans;
-select sillyaddone(42);
+-- test for change of type of column f1 should be here someday;
+-- for now see plpgsql_cache test
 
 alter table mutable drop column f1;
 select sillyaddone(42);  -- fail
