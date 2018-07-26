@@ -2567,7 +2567,14 @@ eval_const_expressions_mutator(Node *node,
 					else
 						prm = &paramLI->params[param->paramid - 1];
 
-					if (OidIsValid(prm->ptype))
+					/*
+					 * We don't just check OidIsValid, but insist that the
+					 * fetched type match the Param, just in case the hook did
+					 * something unexpected.  No need to throw an error here
+					 * though; leave that for runtime.
+					 */
+					if (OidIsValid(prm->ptype) &&
+						prm->ptype == param->paramtype)
 					{
 						/* OK to substitute parameter value? */
 						if (context->estimate ||
@@ -2583,7 +2590,6 @@ eval_const_expressions_mutator(Node *node,
 							bool		typByVal;
 							Datum		pval;
 
-							Assert(prm->ptype == param->paramtype);
 							get_typlenbyval(param->paramtype,
 											&typLen, &typByVal);
 							if (prm->isnull || typByVal)
