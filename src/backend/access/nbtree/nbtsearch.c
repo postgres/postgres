@@ -1497,17 +1497,19 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 			/* nope, keep going */
 			if (scan->parallel_scan != NULL)
 			{
+				_bt_relbuf(rel, so->currPos.buf);
 				status = _bt_parallel_seize(scan, &blkno);
 				if (!status)
 				{
-					_bt_relbuf(rel, so->currPos.buf);
 					BTScanPosInvalidate(so->currPos);
 					return false;
 				}
 			}
 			else
+			{
 				blkno = opaque->btpo_next;
-			_bt_relbuf(rel, so->currPos.buf);
+				_bt_relbuf(rel, so->currPos.buf);
+			}
 		}
 	}
 	else
