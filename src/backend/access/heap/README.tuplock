@@ -45,10 +45,10 @@ and modifications which might alter the tuple's key. This is the lock that is
 implicitly taken by UPDATE operations which leave all key fields unchanged.
 SELECT FOR SHARE obtains a shared lock which prevents any kind of tuple
 modification. Finally, SELECT FOR KEY SHARE obtains a shared lock which only
-prevents tuple removal and modifications of key fields. This last mode
-implements a mode just strong enough to implement RI checks, i.e. it ensures
-that tuples do not go away from under a check, without blocking when some
-other transaction that want to update the tuple without changing its key.
+prevents tuple removal and modifications of key fields. This lock level is
+just strong enough to implement RI checks, i.e. it ensures that tuples do not
+go away from under a check, without blocking transactions that want to update
+the tuple without changing its key.
 
 The conflict table is:
 
