@@ -270,6 +270,26 @@ my @script_tests = (
 		'endif syntax error',
 		[qr{unexpected argument in command "endif"}],
 		{ 'endif-bad.sql' => "\\if 0\n\\endif BAD\n" }
+	],
+	[
+		'not enough arguments for least',
+		[qr{at least one argument expected \(least\)}],
+		{ 'bad-least.sql' => "\\set i least()\n" }
+	],
+	[
+		'not enough arguments for greatest',
+		[qr{at least one argument expected \(greatest\)}],
+		{ 'bad-greatest.sql' => "\\set i greatest()\n" }
+	],
+	[
+		'not enough arguments for hash',
+		[qr{unexpected number of arguments \(hash\)}],
+		{ 'bad-hash-1.sql' => "\\set i hash()\n" }
+	],
+	[
+		'too many arguments for hash',
+		[qr{unexpected number of arguments \(hash\)}],
+		{ 'bad-hash-2.sql' => "\\set i hash(1,2,3)\n" }
 	],);
 
 for my $t (@script_tests)
