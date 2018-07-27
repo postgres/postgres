@@ -87,17 +87,18 @@ _bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp)
  * place during the descent through the tree.  This is not needed when
  * positioning for an insert or delete, so NULL is used for those cases.
  *
- * NOTE that the returned buffer is read-locked regardless of the access
- * parameter.  However, access = BT_WRITE will allow an empty root page
- * to be created and returned.  When access = BT_READ, an empty index
- * will result in *bufP being set to InvalidBuffer.  Also, in BT_WRITE mode,
- * any incomplete splits encountered during the search will be finished.
+ * The returned buffer is locked according to access parameter.  Additionally,
+ * access = BT_WRITE will allow an empty root page to be created and returned.
+ * When access = BT_READ, an empty index will result in *bufP being set to
+ * InvalidBuffer.  Also, in BT_WRITE mode, any incomplete splits encountered
+ * during the search will be finished.
  */
 BTStack
 _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		   Buffer *bufP, int access, Snapshot snapshot)
 {
 	BTStack		stack_in = NULL;
+	int			page_access = BT_READ;
 
 	/* Get the root page to start with */
 	*bufP = _bt_getroot(rel, access);
@@ -132,7 +133,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		 */
 		*bufP = _bt_moveright(rel, *bufP, keysz, scankey, nextkey,
 							  (access == BT_WRITE), stack_in,
-							  BT_READ, snapshot);
+							  page_access, snapshot);
 
 		/* if this is a leaf page, we're done */
 		page = BufferGetPage(*bufP);
@@ -166,11 +167,40 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		new_stack->bts_btentry = blkno;
 		new_stack->bts_parent = stack_in;
 
+		/*
+		 * Page level 1 is lowest non-leaf page level prior to leaves.  So,
+		 * if we're on the level 1 and asked to lock leaf page in write mode,
+		 * then lock next page in write mode, because it must be a leaf.
+		 */
+		if (opaque->btpo.level == 1 && access == BT_WRITE)
+			page_access = BT_WRITE;
+
 		/* drop the read lock on the parent page, acquire one on the child */
-		*bufP = _bt_relandgetbuf(rel, *bufP, blkno, BT_READ);
+		*bufP = _bt_relandgetbuf(rel, *bufP, blkno, page_access);
 
 		/* okay, all set to move down a level */
 		stack_in = new_stack;
+	}
+
+	/*
+	 * If we're asked to lock leaf in write mode, but didn't manage to, then
+	 * relock.  That may happend when root page appears to be leaf.
+	 */
+	if (access == BT_WRITE && page_access == BT_READ)
+	{
+		/* trade in our read lock for a write lock */
+		LockBuffer(*bufP, BUFFER_LOCK_UNLOCK);
+		LockBuffer(*bufP, BT_WRITE);
+
+		/*
+		 * If the page was split between the time that we surrendered our read
+		 * lock and acquired our write lock, then this page may no longer be
+		 * the right place for the key we want to insert.  In this case, we
+		 * need to move right in the tree.  See Lehman and Yao for an
+		 * excruciatingly precise description.
+		 */
+		*bufP = _bt_moveright(rel, *bufP, keysz, scankey, nextkey,
+							  true, stack_in, BT_WRITE, snapshot);
 	}
 
 	return stack_in;
