@@ -41,7 +41,7 @@ static void FormPartitionKeyDatum(PartitionDispatch pd,
 					  EState *estate,
 					  Datum *values,
 					  bool *isnull);
-static int get_partition_for_tuple(Relation relation, Datum *values,
+static int get_partition_for_tuple(PartitionDispatch pd, Datum *values,
 						bool *isnull);
 static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
 									 Datum *values,
@@ -208,13 +208,11 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 	parent = pd[0];
 	while (true)
 	{
-		PartitionDesc partdesc;
 		TupleTableSlot *myslot = parent->tupslot;
 		TupleConversionMap *map = parent->tupmap;
 		int			cur_index = -1;
 
 		rel = parent->reldesc;
-		partdesc = RelationGetPartitionDesc(rel);
 
 		/*
 		 * Convert the tuple to this parent's layout so that we can do certain
@@ -245,13 +243,13 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		 * Nothing for get_partition_for_tuple() to do if there are no
 		 * partitions to begin with.
 		 */
-		if (partdesc->nparts == 0)
+		if (parent->partdesc->nparts == 0)
 		{
 			result = -1;
 			break;
 		}
 
-		cur_index = get_partition_for_tuple(rel, values, isnull);
+		cur_index = get_partition_for_tuple(parent, values, isnull);
 
 		/*
 		 * cur_index < 0 means we failed to find a partition of this parent.
@@ -1079,12 +1077,12 @@ FormPartitionKeyDatum(PartitionDispatch pd,
  * found or -1 if none found.
  */
 static int
-get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
+get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
 {
 	int			bound_offset;
 	int			part_index = -1;
-	PartitionKey key = RelationGetPartitionKey(relation);
-	PartitionDesc partdesc = RelationGetPartitionDesc(relation);
+	PartitionKey key = pd->key;
+	PartitionDesc partdesc = pd->partdesc;
 	PartitionBoundInfo boundinfo = partdesc->boundinfo;
 
 	/* Route as appropriate based on partitioning strategy. */
