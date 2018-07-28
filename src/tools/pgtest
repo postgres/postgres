@@ -23,9 +23,14 @@ then	PGCLEAN=clean
 else	shift
 fi
 
+rm -f tmp_install/log/install.log
+
 # Run "make check" and store return code in $TMP/ret.
 # Display output but also capture it in $TMP/0.
 ($MAKE "$@" $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) | tee  $TMP/0
+
+# Grab possible warnings from install.log
+[ -e tmp_install/log/install.log ] && cat tmp_install/log/install.log >> $TMP/0
 
 # If success, display warnings
 if [ $(cat $TMP/ret) -eq 0 ]
