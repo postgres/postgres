@@ -19,15 +19,25 @@ mkdir /tmp/$$
 TMP="/tmp/$$"
 
 if [ "X$1" != "X-n" ]
-then	PGCLEAN=clean
-else	shift
+then	CLEAN="Y"
+else	CLEAN=""
+	shift
 fi
 
 rm -f tmp_install/log/install.log
 
 # Run "make check" and store return code in $TMP/ret.
 # Display output but also capture it in $TMP/0.
-($MAKE "$@" $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) | tee  $TMP/0
+(
+	if [ "$CLEAN" ]
+	then	$MAKE "$@" clean 2>&1
+		echo "$?" > $TMP/ret
+	fi
+	if [ $(cat $TMP/ret) -eq 0 ]
+	then	$MAKE "$@" 2>&1 && $MAKE "$@" check 2>&1
+		echo "$?" > $TMP/ret
+	fi
+) | tee  $TMP/0
 
 # Grab possible warnings from install.log
 [ -e tmp_install/log/install.log ] && cat tmp_install/log/install.log >> $TMP/0
