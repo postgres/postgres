@@ -2112,6 +2112,9 @@ BaseBackup(void)
 	 */
 	if (do_sync)
 	{
+		if (verbose)
+			fprintf(stderr,
+					_("%s: syncing data to disk ...\n"), progname);
 		if (format == 't')
 		{
 			if (strcmp(basedir, "-") != 0)
