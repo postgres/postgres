@@ -18,24 +18,30 @@
 /*
  * qsort comparator for pointers to library names
  *
- * We sort first by name length, then alphabetically for names of the same
- * length.  This is to ensure that, eg, "hstore_plpython" sorts after both
- * "hstore" and "plpython"; otherwise transform modules will probably fail
- * their LOAD tests.  (The backend ought to cope with that consideration,
- * but it doesn't yet, and even when it does it'll still be a good idea
- * to have a predictable order of probing here.)
+ * We sort first by name length, then alphabetically for names of the
+ * same length, then database array index.  This is to ensure that, eg,
+ * "hstore_plpython" sorts after both "hstore" and "plpython"; otherwise
+ * transform modules will probably fail their LOAD tests.  (The backend
+ * ought to cope with that consideration, but it doesn't yet, and even
+ * when it does it'll still be a good idea to have a predictable order of
+ * probing here.)
  */
 static int
 library_name_compare(const void *p1, const void *p2)
 {
-	const char *str1 = *(const char *const *) p1;
-	const char *str2 = *(const char *const *) p2;
+	const char *str1 = ((const LibraryInfo *) p1)->name;
+	const char *str2 = ((const LibraryInfo *) p2)->name;
 	int			slen1 = strlen(str1);
 	int			slen2 = strlen(str2);
-
+	int			cmp = strcmp(str1, str2);
+	
 	if (slen1 != slen2)
 		return slen1 - slen2;
-	return strcmp(str1, str2);
+	if (cmp != 0)
+		return cmp;
+	else
+		return ((const LibraryInfo *) p1)->dbnum -
+			   ((const LibraryInfo *) p2)->dbnum;
 }
 
 
@@ -137,18 +143,7 @@ get_loadable_libraries(void)
 	if (found_public_plpython_handler)
 		pg_fatal("Remove the problem functions from the old cluster to continue.\n");
 
-	/*
-	 * Now we want to remove duplicates across DBs and sort the library names
-	 * into order.  This avoids multiple probes of the same library, and
-	 * ensures that libraries are probed in a consistent order, which is
-	 * important for reproducible behavior if one library depends on another.
-	 *
-	 * First transfer all the names into one array, then sort, then remove
-	 * duplicates.  Note: we strdup each name in the first loop so that we can
-	 * safely clear the PGresults in the same loop.  This is a bit wasteful
-	 * but it's unlikely there are enough names to matter.
-	 */
-	os_info.libraries = (char **) pg_malloc(totaltups * sizeof(char *));
+	os_info.libraries = (LibraryInfo *) pg_malloc(totaltups * sizeof(LibraryInfo));
 	totaltups = 0;
 
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
@@ -162,31 +157,15 @@ get_loadable_libraries(void)
 		{
 			char	   *lib = PQgetvalue(res, rowno, 0);
 
-			os_info.libraries[totaltups++] = pg_strdup(lib);
+			os_info.libraries[totaltups].name = pg_strdup(lib);
+			os_info.libraries[totaltups].dbnum = dbnum;
+
+			totaltups++;
 		}
 		PQclear(res);
 	}
 
 	pg_free(ress);
-
-	if (totaltups > 1)
-	{
-		int			i,
-					lastnondup;
-
-		qsort((void *) os_info.libraries, totaltups, sizeof(char *),
-			  library_name_compare);
-
-		for (i = 1, lastnondup = 0; i < totaltups; i++)
-		{
-			if (strcmp(os_info.libraries[i],
-					   os_info.libraries[lastnondup]) != 0)
-				os_info.libraries[++lastnondup] = os_info.libraries[i];
-			else
-				pg_free(os_info.libraries[i]);
-		}
-		totaltups = lastnondup + 1;
-	}
 
 	os_info.num_libraries = totaltups;
 }
@@ -204,6 +183,7 @@ check_loadable_libraries(void)
 {
 	PGconn	   *conn = connectToServer(&new_cluster, "template1");
 	int			libnum;
+	int			was_load_failure = false;
 	FILE	   *script = NULL;
 	bool		found = false;
 	char		output_path[MAXPGPATH];
@@ -212,52 +192,72 @@ check_loadable_libraries(void)
 
 	snprintf(output_path, sizeof(output_path), "loadable_libraries.txt");
 
+	/*
+	 * Now we want to sort the library names into order.  This avoids multiple
+	 * probes of the same library, and ensures that libraries are probed in a
+	 * consistent order, which is important for reproducible behavior if one
+	 * library depends on another.
+	 */
+	qsort((void *) os_info.libraries, os_info.num_libraries,
+		  sizeof(LibraryInfo), library_name_compare);
+
 	for (libnum = 0; libnum < os_info.num_libraries; libnum++)
 	{
-		char	   *lib = os_info.libraries[libnum];
+		char	   *lib = os_info.libraries[libnum].name;
 		int			llen = strlen(lib);
 		char		cmd[7 + 2 * MAXPGPATH + 1];
 		PGresult   *res;
 
-		/*
-		 * In Postgres 9.0, Python 3 support was added, and to do that, a
-		 * plpython2u language was created with library name plpython2.so as a
-		 * symbolic link to plpython.so.  In Postgres 9.1, only the
-		 * plpython2.so library was created, and both plpythonu and plpython2u
-		 * pointing to it.  For this reason, any reference to library name
-		 * "plpython" in an old PG <= 9.1 cluster must look for "plpython2" in
-		 * the new cluster.
-		 *
-		 * For this case, we could check pg_pltemplate, but that only works
-		 * for languages, and does not help with function shared objects, so
-		 * we just do a general fix.
-		 */
-		if (GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
-			strcmp(lib, "$libdir/plpython") == 0)
+		/* Did the library name change?  Probe it. */
+		if (libnum == 0 || strcmp(lib, os_info.libraries[libnum - 1].name) != 0)
 		{
-			lib = "$libdir/plpython2";
-			llen = strlen(lib);
+			/*
+			 * In Postgres 9.0, Python 3 support was added, and to do that, a
+			 * plpython2u language was created with library name plpython2.so as a
+			 * symbolic link to plpython.so.  In Postgres 9.1, only the
+			 * plpython2.so library was created, and both plpythonu and plpython2u
+			 * pointing to it.  For this reason, any reference to library name
+			 * "plpython" in an old PG <= 9.1 cluster must look for "plpython2" in
+			 * the new cluster.
+			 *
+			 * For this case, we could check pg_pltemplate, but that only works
+			 * for languages, and does not help with function shared objects, so
+			 * we just do a general fix.
+			 */
+			if (GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
+				strcmp(lib, "$libdir/plpython") == 0)
+			{
+				lib = "$libdir/plpython2";
+				llen = strlen(lib);
+			}
+	
+			strcpy(cmd, "LOAD '");
+			PQescapeStringConn(conn, cmd + strlen(cmd), lib, llen, NULL);
+			strcat(cmd, "'");
+	
+			res = PQexec(conn, cmd);
+	
+			if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			{
+				found = true;
+				was_load_failure = true;
+	
+				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+					pg_fatal("could not open file \"%s\": %s\n",
+							 output_path, strerror(errno));
+				fprintf(script, _("could not load library \"%s\": %s"),
+						lib,
+						PQerrorMessage(conn));
+			}
+			else
+				was_load_failure = false;
+	
+			PQclear(res);
 		}
 
-		strcpy(cmd, "LOAD '");
-		PQescapeStringConn(conn, cmd + strlen(cmd), lib, llen, NULL);
-		strcat(cmd, "'");
-
-		res = PQexec(conn, cmd);
-
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			found = true;
-
-			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s\n",
-						 output_path, strerror(errno));
-			fprintf(script, _("could not load library \"%s\": %s"),
-					lib,
-					PQerrorMessage(conn));
-		}
-
-		PQclear(res);
+		if (was_load_failure)
+			fprintf(script, _("Database: %s\n"),
+				old_cluster.dbarr.dbs[os_info.libraries[libnum].dbnum].db_name);
 	}
 
 	PQfinish(conn);

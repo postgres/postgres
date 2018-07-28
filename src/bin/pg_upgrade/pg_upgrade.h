@@ -300,6 +300,11 @@ typedef struct
 	int			jobs;
 } UserOpts;
 
+typedef struct
+{
+	char	   *name;
+	int			dbnum;
+} LibraryInfo;
 
 /*
  * OSInfo
@@ -312,7 +317,7 @@ typedef struct
 	bool		user_specified; /* user specified on command-line */
 	char	  **old_tablespaces;	/* tablespaces */
 	int			num_old_tablespaces;
-	char	  **libraries;		/* loadable libraries */
+	LibraryInfo *libraries;		/* loadable libraries */
 	int			num_libraries;
 	ClusterInfo *running_cluster;
 } OSInfo;
