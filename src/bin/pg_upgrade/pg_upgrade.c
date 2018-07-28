@@ -220,7 +220,8 @@ setup(char *argv0, bool *live_check)
 		 * start, assume the server is running.  If the pid file is left over
 		 * from a server crash, this also allows any committed transactions
 		 * stored in the WAL to be replayed so they are not lost, because WAL
-		 * files are not transferred from old to new servers.
+		 * files are not transferred from old to new servers.  We later check
+		 * for a clean shutdown.
 		 */
 		if (start_postmaster(&old_cluster, false))
 			stop_postmaster(false);
