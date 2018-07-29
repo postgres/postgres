@@ -10761,16 +10761,11 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 	 * Determine whether VARIADIC should be printed.  We must do this first
 	 * since it affects the lookup rules in func_get_detail().
 	 *
-	 * Currently, we always print VARIADIC if the function has a merged
-	 * variadic-array argument.  Note that this is always the case for
-	 * functions taking a VARIADIC argument type other than VARIADIC ANY.
-	 *
-	 * In principle, if VARIADIC wasn't originally specified and the array
-	 * actual argument is deconstructable, we could print the array elements
-	 * separately and not print VARIADIC, thus more nearly reproducing the
-	 * original input.  For the moment that seems like too much complication
-	 * for the benefit, and anyway we do not know whether VARIADIC was
-	 * originally specified if it's a non-ANY type.
+	 * We always print VARIADIC if the function has a merged variadic-array
+	 * argument.  Note that this is always the case for functions taking a
+	 * VARIADIC argument type other than VARIADIC ANY.  If we omitted VARIADIC
+	 * and printed the array elements as separate arguments, the call could
+	 * match a newer non-VARIADIC function.
 	 */
 	if (use_variadic_p)
 	{
