@@ -16,7 +16,8 @@
 
 #include "access/gist.h"
 #include "access/stratnum.h"
-#include "utils/builtins.h"
+#include "utils/float.h"
+#include "utils/fmgrprotos.h"
 #include "utils/datum.h"
 #include "utils/rangetypes.h"
 

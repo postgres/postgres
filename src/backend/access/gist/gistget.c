@@ -22,7 +22,7 @@
 #include "storage/predicate.h"
 #include "pgstat.h"
 #include "lib/pairingheap.h"
-#include "utils/builtins.h"
+#include "utils/float.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 

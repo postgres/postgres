@@ -33,6 +33,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
+#include "utils/float.h"
 
 /*
  * gcc's -ffast-math switch breaks routines that expect exact results from

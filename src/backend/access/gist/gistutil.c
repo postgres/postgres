@@ -21,7 +21,7 @@
 #include "catalog/pg_opclass.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
-#include "utils/builtins.h"
+#include "utils/float.h"
 #include "utils/syscache.h"
 
 

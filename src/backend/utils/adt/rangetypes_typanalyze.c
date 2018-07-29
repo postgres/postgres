@@ -26,7 +26,8 @@
 
 #include "catalog/pg_operator.h"
 #include "commands/vacuum.h"
-#include "utils/builtins.h"
+#include "utils/float.h"
+#include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
 

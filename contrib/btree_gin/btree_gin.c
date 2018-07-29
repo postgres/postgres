@@ -10,6 +10,7 @@
 #include "utils/bytea.h"
 #include "utils/cash.h"
 #include "utils/date.h"
+#include "utils/float.h"
 #include "utils/inet.h"
 #include "utils/numeric.h"
 #include "utils/timestamp.h"

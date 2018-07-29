@@ -52,20 +52,6 @@ extern char *pg_ltostr_zeropad(char *str, int32 value, int32 minwidth);
 extern char *pg_ltostr(char *str, int32 value);
 extern uint64 pg_strtouint64(const char *str, char **endptr, int base);
 
-/* float.c */
-extern PGDLLIMPORT int extra_float_digits;
-
-extern double get_float8_infinity(void);
-extern float get_float4_infinity(void);
-extern double get_float8_nan(void);
-extern float get_float4_nan(void);
-extern int	is_infinite(double val);
-extern double float8in_internal(char *num, char **endptr_p,
-				  const char *type_name, const char *orig_string);
-extern char *float8out_internal(double num);
-extern int	float4_cmp_internal(float4 a, float4 b);
-extern int	float8_cmp_internal(float8 a, float8 b);
-
 /* oid.c */
 extern oidvector *buildoidvector(const Oid *oids, int n);
 extern Oid	oidparse(Node *node);

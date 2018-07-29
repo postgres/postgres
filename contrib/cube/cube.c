@@ -13,7 +13,7 @@
 #include "access/gist.h"
 #include "access/stratnum.h"
 #include "utils/array.h"
-#include "utils/builtins.h"
+#include "utils/float.h"
 
 #include "cubedata.h"
 

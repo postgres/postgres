@@ -22,6 +22,7 @@
 #include "access/gist.h"
 #include "access/stratnum.h"
 #include "utils/builtins.h"
+#include "utils/float.h"
 #include "utils/geo_decls.h"
 
 
@@ -32,15 +33,6 @@ static bool rtree_internal_consistent(BOX *key, BOX *query,
 
 /* Minimum accepted ratio of split */
 #define LIMIT_RATIO 0.3
-
-/* Convenience macros for NaN-aware comparisons */
-#define FLOAT8_EQ(a,b)	(float8_cmp_internal(a, b) == 0)
-#define FLOAT8_LT(a,b)	(float8_cmp_internal(a, b) < 0)
-#define FLOAT8_LE(a,b)	(float8_cmp_internal(a, b) <= 0)
-#define FLOAT8_GT(a,b)	(float8_cmp_internal(a, b) > 0)
-#define FLOAT8_GE(a,b)	(float8_cmp_internal(a, b) >= 0)
-#define FLOAT8_MAX(a,b)  (FLOAT8_GT(a, b) ? (a) : (b))
-#define FLOAT8_MIN(a,b)  (FLOAT8_LT(a, b) ? (a) : (b))
 
 
 /**************************************************
@@ -53,10 +45,10 @@ static bool rtree_internal_consistent(BOX *key, BOX *query,
 static void
 rt_box_union(BOX *n, const BOX *a, const BOX *b)
 {
-	n->high.x = FLOAT8_MAX(a->high.x, b->high.x);
-	n->high.y = FLOAT8_MAX(a->high.y, b->high.y);
-	n->low.x = FLOAT8_MIN(a->low.x, b->low.x);
-	n->low.y = FLOAT8_MIN(a->low.y, b->low.y);
+	n->high.x = float8_max(a->high.x, b->high.x);
+	n->high.y = float8_max(a->high.y, b->high.y);
+	n->low.x = float8_min(a->low.x, b->low.x);
+	n->low.y = float8_min(a->low.y, b->low.y);
 }
 
 /*
@@ -73,8 +65,8 @@ size_box(const BOX *box)
 	 *
 	 * The less-than cases should not happen, but if they do, say "zero".
 	 */
-	if (FLOAT8_LE(box->high.x, box->low.x) ||
-		FLOAT8_LE(box->high.y, box->low.y))
+	if (float8_le(box->high.x, box->low.x) ||
+		float8_le(box->high.y, box->low.y))
 		return 0.0;
 
 	/*
@@ -143,13 +135,13 @@ gist_box_consistent(PG_FUNCTION_ARGS)
 static void
 adjustBox(BOX *b, const BOX *addon)
 {
-	if (FLOAT8_LT(b->high.x, addon->high.x))
+	if (float8_lt(b->high.x, addon->high.x))
 		b->high.x = addon->high.x;
-	if (FLOAT8_GT(b->low.x, addon->low.x))
+	if (float8_gt(b->low.x, addon->low.x))
 		b->low.x = addon->low.x;
-	if (FLOAT8_LT(b->high.y, addon->high.y))
+	if (float8_lt(b->high.y, addon->high.y))
 		b->high.y = addon->high.y;
-	if (FLOAT8_GT(b->low.y, addon->low.y))
+	if (float8_gt(b->low.y, addon->low.y))
 		b->low.y = addon->low.y;
 }
 
@@ -615,9 +607,9 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			 * Find next lower bound of right group.
 			 */
 			while (i1 < nentries &&
-				   FLOAT8_EQ(rightLower, intervalsLower[i1].lower))
+				   float8_eq(rightLower, intervalsLower[i1].lower))
 			{
-				if (FLOAT8_LT(leftUpper, intervalsLower[i1].upper))
+				if (float8_lt(leftUpper, intervalsLower[i1].upper))
 					leftUpper = intervalsLower[i1].upper;
 				i1++;
 			}
@@ -630,7 +622,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			 * left group.
 			 */
 			while (i2 < nentries &&
-				   FLOAT8_LE(intervalsUpper[i2].upper, leftUpper))
+				   float8_le(intervalsUpper[i2].upper, leftUpper))
 				i2++;
 
 			/*
@@ -652,9 +644,9 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			/*
 			 * Find next upper bound of left group.
 			 */
-			while (i2 >= 0 && FLOAT8_EQ(leftUpper, intervalsUpper[i2].upper))
+			while (i2 >= 0 && float8_eq(leftUpper, intervalsUpper[i2].upper))
 			{
-				if (FLOAT8_GT(rightLower, intervalsUpper[i2].lower))
+				if (float8_gt(rightLower, intervalsUpper[i2].lower))
 					rightLower = intervalsUpper[i2].lower;
 				i2--;
 			}
@@ -666,7 +658,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			 * Find count of intervals which anyway should be placed to the
 			 * right group.
 			 */
-			while (i1 >= 0 && FLOAT8_GE(intervalsLower[i1].lower, rightLower))
+			while (i1 >= 0 && float8_ge(intervalsLower[i1].lower, rightLower))
 				i1--;
 
 			/*
@@ -754,10 +746,10 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			upper = box->high.y;
 		}
 
-		if (FLOAT8_LE(upper, context.leftUpper))
+		if (float8_le(upper, context.leftUpper))
 		{
 			/* Fits to the left group */
-			if (FLOAT8_GE(lower, context.rightLower))
+			if (float8_ge(lower, context.rightLower))
 			{
 				/* Fits also to the right group, so "common entry" */
 				commonEntries[commonEntriesCount++].index = i;
@@ -775,7 +767,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			 * entry didn't fit on the left group, it better fit in the right
 			 * group.
 			 */
-			Assert(FLOAT8_GE(lower, context.rightLower));
+			Assert(float8_ge(lower, context.rightLower));
 
 			/* Doesn't fit to the left group, so join to the right group */
 			PLACE_RIGHT(box, i);
@@ -859,10 +851,10 @@ gist_box_same(PG_FUNCTION_ARGS)
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
 	if (b1 && b2)
-		*result = (FLOAT8_EQ(b1->low.x, b2->low.x) &&
-				   FLOAT8_EQ(b1->low.y, b2->low.y) &&
-				   FLOAT8_EQ(b1->high.x, b2->high.x) &&
-				   FLOAT8_EQ(b1->high.y, b2->high.y));
+		*result = (float8_eq(b1->low.x, b2->low.x) &&
+				   float8_eq(b1->low.y, b2->low.y) &&
+				   float8_eq(b1->high.x, b2->high.x) &&
+				   float8_eq(b1->high.y, b2->high.y));
 	else
 		*result = (b1 == NULL && b2 == NULL);
 	PG_RETURN_POINTER(result);

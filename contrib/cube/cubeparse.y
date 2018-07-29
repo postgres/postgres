@@ -7,7 +7,7 @@
 #include "postgres.h"
 
 #include "cubedata.h"
-#include "utils/builtins.h"
+#include "utils/float.h"
 
 /* All grammar constructs return strings */
 #define YYSTYPE char *

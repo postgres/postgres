@@ -91,6 +91,7 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/float.h"
 #include "utils/formatting.h"
 #include "utils/int8.h"
 #include "utils/numeric.h"
