@@ -1519,6 +1519,12 @@ sqrt(2)
    </para>
 
    <para>
+    When issuing queries in a database where some users mistrust other users,
+    observe security precautions from <xref linkend="typeconv-func"/> when
+    writing function calls.
+   </para>
+
+   <para>
     The arguments can optionally have names attached.
     See <xref linkend="sql-syntax-calling-funcs"/> for details.
    </para>
@@ -2590,6 +2596,8 @@ SELECT CASE WHEN min(employees) > 0
     its argument values in the same order as they are defined in the function
     declaration.  In named notation, the arguments are matched to the
     function parameters by name and can be written in any order.
+    For each notation, also consider the effect of function argument types,
+    documented in <xref linkend="typeconv-func"/>.
    </para>
 
    <para>

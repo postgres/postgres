@@ -246,7 +246,19 @@ search path position.
 <para>
 Check for an operator accepting exactly the input argument types.
 If one exists (there can be only one exact match in the set of
-operators considered), use it.
+operators considered), use it.  Lack of an exact match creates a security
+hazard when calling, via qualified name
+  <footnote id="op-qualified-security">
+   <!-- If you edit this, consider editing func-qualified-security. -->
+   <para>
+    The hazard does not arise with a non-schema-qualified name, because a
+    search path containing schemas that permit untrusted users to create
+    objects is not a <link linkend="ddl-schemas-patterns">secure schema usage
+    pattern</link>.
+   </para>
+  </footnote>
+(not typical), any operator found in a schema that permits untrusted users to
+create objects.  In such situations, cast arguments to force an exact match.
 </para>
 
 <substeps>
@@ -589,6 +601,26 @@ function.  In that case the function appearing earlier in the search path is
 used, or if the two functions are in the same schema, the non-variadic one is
 preferred.
 </para>
+<para>
+This creates a security hazard when calling, via qualified name
+  <footnote id="func-qualified-security">
+   <!-- If you edit this, consider editing op-qualified-security. -->
+   <para>
+    The hazard does not arise with a non-schema-qualified name, because a
+    search path containing schemas that permit untrusted users to create
+    objects is not a <link linkend="ddl-schemas-patterns">secure schema usage
+    pattern</link>.
+   </para>
+  </footnote>,
+a variadic function found in a schema that permits untrusted users to create
+objects.  A malicious user can take control and execute arbitrary SQL
+functions as though you executed them.  Substitute a call bearing
+the <literal>VARIADIC</literal> keyword, which bypasses this hazard.  Calls
+populating <literal>VARIADIC "any"</literal> parameters often have no
+equivalent formulation containing the <literal>VARIADIC</literal> keyword.  To
+issue those calls safely, the function's schema must permit only trusted users
+to create objects.
+</para>
 </step>
 <step performance="optional">
 <para>
@@ -602,6 +634,15 @@ will not be able to determine which to prefer, and so an <quote>ambiguous
 function call</quote> error will result if no better match to the call can be
 found.
 </para>
+<para>
+This creates an availability hazard when calling, via qualified
+name<footnoteref linkend="func-qualified-security"/>, any function found in a
+schema that permits untrusted users to create objects.  A malicious user can
+create a function with the name of an existing function, replicating that
+function's parameters and appending novel parameters having default values.
+This precludes new calls to the original function.  To forestall this hazard,
+place functions in schemas that permit only trusted users to create objects.
+</para>
 </step>
 </substeps>
 </step>
@@ -610,9 +651,12 @@ found.
 <para>
 Check for a function accepting exactly the input argument types.
 If one exists (there can be only one exact match in the set of
-functions considered), use it.
-(Cases involving <type>unknown</type> will never find a match at
-this step.)
+functions considered), use it.  Lack of an exact match creates a security
+hazard when calling, via qualified
+name<footnoteref linkend="func-qualified-security"/>, a function found in a
+schema that permits untrusted users to create objects.  In such situations,
+cast arguments to force an exact match.  (Cases involving <type>unknown</type>
+will never find a match at this step.)
 </para>
 </step>
 
@@ -747,6 +791,57 @@ conversion and therefore might be slightly more efficient:
 <screen>
 SELECT round(4.0, 4);
 </screen>
+</para>
+</example>
+
+<example>
+<title>Variadic Function Resolution</title>
+
+<para>
+<screen>
+CREATE FUNCTION public.variadic_example(VARIADIC numeric[]) RETURNS int
+  LANGUAGE sql AS 'SELECT 1';
+CREATE FUNCTION
+</screen>
+
+This function accepts, but does not require, the VARIADIC keyword.  It
+tolerates both integer and numeric arguments:
+
+<screen>
+SELECT public.variadic_example(0),
+       public.variadic_example(0.0),
+       public.variadic_example(VARIADIC array[0.0]);
+ variadic_example | variadic_example | variadic_example
+------------------+------------------+------------------
+                1 |                1 |                1
+(1 row)
+</screen>
+
+However, the first and second calls will prefer more-specific functions, if
+available:
+
+<screen>
+CREATE FUNCTION public.variadic_example(numeric) RETURNS int
+  LANGUAGE sql AS 'SELECT 2';
+CREATE FUNCTION
+
+CREATE FUNCTION public.variadic_example(int) RETURNS int
+  LANGUAGE sql AS 'SELECT 3';
+CREATE FUNCTION
+
+SELECT public.variadic_example(0),
+       public.variadic_example(0.0),
+       public.variadic_example(VARIADIC array[0.0]);
+ variadic_example | variadic_example | variadic_example
+------------------+------------------+------------------
+                3 |                2 |                1
+(1 row)
+</screen>
+
+Given the default configuration and only the first function existing, the
+first and second calls are insecure.  Any user could intercept them by
+creating the second or third function.  By matching the argument type exactly
+and using the <literal>VARIADIC</literal> keyword, the third call is secure.
 </para>
 </example>
 

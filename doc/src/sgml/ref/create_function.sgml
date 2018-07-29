@@ -545,8 +545,11 @@ CREATE [ OR REPLACE ] FUNCTION
        as for the <xref linkend="sql-load"/> command.  The string
        <replaceable class="parameter">link_symbol</replaceable> is the
        function's link symbol, that is, the name of the function in the C
-       language source code.  If the link symbol is omitted, it is assumed
-       to be the same as the name of the SQL function being defined.
+       language source code.  If the link symbol is omitted, it is assumed to
+       be the same as the name of the SQL function being defined.  The C names
+       of all functions must be different, so you must give overloaded C
+       functions different C names (for example, use the argument types as
+       part of the C names).
       </para>
 
       <para>
@@ -575,10 +578,9 @@ CREATE [ OR REPLACE ] FUNCTION
     <productname>PostgreSQL</productname> allows function
     <firstterm>overloading</firstterm>; that is, the same name can be
     used for several different functions so long as they have distinct
-    input argument types.  However, the C names of all functions must be
-    different, so you must give overloaded C functions different C
-    names (for example, use the argument types as part of the C
-    names).
+    input argument types.  Whether or not you use it, this capability entails
+    security precautions when calling functions in databases where some users
+    mistrust other users; see <xref linkend="typeconv-func"/>.
    </para>
 
    <para>
