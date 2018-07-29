@@ -3114,8 +3114,8 @@ typedef struct AlterSystemStmt
  */
 typedef enum ClusterOption
 {
-	CLUOPT_RECHECK,				/* recheck relation state */
-	CLUOPT_VERBOSE				/* print progress info */
+	CLUOPT_RECHECK = 1 << 0,	/* recheck relation state */
+	CLUOPT_VERBOSE = 1 << 1		/* print progress info */
 } ClusterOption;
 
 typedef struct ClusterStmt

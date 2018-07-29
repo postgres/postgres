@@ -1551,17 +1551,17 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 */
 	if (options & VACOPT_FULL)
 	{
-		int			options = 0;
+		int			cluster_options = 0;
 
 		/* close relation before vacuuming, but hold lock until commit */
 		relation_close(onerel, NoLock);
 		onerel = NULL;
 
 		if ((options & VACOPT_VERBOSE) != 0)
-			options |= CLUOPT_VERBOSE;
+			cluster_options |= CLUOPT_VERBOSE;
 
 		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
-		cluster_rel(relid, InvalidOid, options);
+		cluster_rel(relid, InvalidOid, cluster_options);
 	}
 	else
 		lazy_vacuum_rel(onerel, options, params, vac_strategy);
