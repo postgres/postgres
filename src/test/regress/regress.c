@@ -176,8 +176,13 @@ pt_in_widget(PG_FUNCTION_ARGS)
 {
 	Point	   *point = PG_GETARG_POINT_P(0);
 	WIDGET	   *widget = (WIDGET *) PG_GETARG_POINTER(1);
+	float8		distance;
 
-	PG_RETURN_BOOL(point_dt(point, &widget->center) < widget->radius);
+	distance = DatumGetFloat8(DirectFunctionCall2(point_distance,
+												  PointPGetDatum(point),
+											PointPGetDatum(&widget->center)));
+
+	PG_RETURN_BOOL(distance < widget->radius);
 }
 
 PG_FUNCTION_INFO_V1(reverse_name);

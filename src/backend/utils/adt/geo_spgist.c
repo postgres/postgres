@@ -793,7 +793,8 @@ spg_poly_quad_compress(PG_FUNCTION_ARGS)
 	POLYGON    *polygon = PG_GETARG_POLYGON_P(0);
 	BOX		   *box;
 
-	box = box_copy(&polygon->boundbox);
+	box = (BOX *) palloc(sizeof(BOX));
+	*box = polygon->boundbox;
 
 	PG_RETURN_BOX_P(box);
 }
