@@ -1024,6 +1024,9 @@ line_construct(LINE *result, Point *pt, float8 m)
 		result->A = m;
 		result->B = -1.0;
 		result->C = pt->y - m * pt->x;
+		/* on some platforms, the preceding expression tends to produce -0 */
+		if (result->C == 0.0)
+			result->C = 0.0;
 	}
 }
 
