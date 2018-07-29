@@ -429,7 +429,7 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pageinspect functions"))));
+				 (errmsg("must be superuser to use raw page functions"))));
 
 	if (SRF_IS_FIRSTCALL())
 	{

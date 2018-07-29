@@ -102,7 +102,7 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use raw functions"))));
+				 (errmsg("must be superuser to use raw page functions"))));
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
