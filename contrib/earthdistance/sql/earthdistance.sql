@@ -282,19 +282,19 @@ SELECT earth_box(ll_to_earth(90,180),
 -- Test the recommended constraints.
 --
 
-SELECT is_point(ll_to_earth(0,0));
+SELECT cube_is_point(ll_to_earth(0,0));
 SELECT cube_dim(ll_to_earth(0,0)) <= 3;
 SELECT abs(cube_distance(ll_to_earth(0,0), '(0)'::cube) / earth() - 1) <
        '10e-12'::float8;
-SELECT is_point(ll_to_earth(30,60));
+SELECT cube_is_point(ll_to_earth(30,60));
 SELECT cube_dim(ll_to_earth(30,60)) <= 3;
 SELECT abs(cube_distance(ll_to_earth(30,60), '(0)'::cube) / earth() - 1) <
        '10e-12'::float8;
-SELECT is_point(ll_to_earth(60,90));
+SELECT cube_is_point(ll_to_earth(60,90));
 SELECT cube_dim(ll_to_earth(60,90)) <= 3;
 SELECT abs(cube_distance(ll_to_earth(60,90), '(0)'::cube) / earth() - 1) <
        '10e-12'::float8;
-SELECT is_point(ll_to_earth(-30,-90));
+SELECT cube_is_point(ll_to_earth(-30,-90));
 SELECT cube_dim(ll_to_earth(-30,-90)) <= 3;
 SELECT abs(cube_distance(ll_to_earth(-30,-90), '(0)'::cube) / earth() - 1) <
        '10e-12'::float8;
