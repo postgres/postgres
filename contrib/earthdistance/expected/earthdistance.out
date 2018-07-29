@@ -882,11 +882,12 @@ SELECT earth_box(ll_to_earth(90,180),
 --
 -- Test the recommended constraints.
 --
-SELECT is_point(ll_to_earth(0,0));
-ERROR:  function is_point(earth) does not exist
-LINE 1: SELECT is_point(ll_to_earth(0,0));
-               ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT cube_is_point(ll_to_earth(0,0));
+ cube_is_point 
+---------------
+ t
+(1 row)
+
 SELECT cube_dim(ll_to_earth(0,0)) <= 3;
  ?column? 
 ----------
@@ -900,11 +901,12 @@ SELECT abs(cube_distance(ll_to_earth(0,0), '(0)'::cube) / earth() - 1) <
  t
 (1 row)
 
-SELECT is_point(ll_to_earth(30,60));
-ERROR:  function is_point(earth) does not exist
-LINE 1: SELECT is_point(ll_to_earth(30,60));
-               ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT cube_is_point(ll_to_earth(30,60));
+ cube_is_point 
+---------------
+ t
+(1 row)
+
 SELECT cube_dim(ll_to_earth(30,60)) <= 3;
  ?column? 
 ----------
@@ -918,11 +920,12 @@ SELECT abs(cube_distance(ll_to_earth(30,60), '(0)'::cube) / earth() - 1) <
  t
 (1 row)
 
-SELECT is_point(ll_to_earth(60,90));
-ERROR:  function is_point(earth) does not exist
-LINE 1: SELECT is_point(ll_to_earth(60,90));
-               ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT cube_is_point(ll_to_earth(60,90));
+ cube_is_point 
+---------------
+ t
+(1 row)
+
 SELECT cube_dim(ll_to_earth(60,90)) <= 3;
  ?column? 
 ----------
@@ -936,11 +939,12 @@ SELECT abs(cube_distance(ll_to_earth(60,90), '(0)'::cube) / earth() - 1) <
  t
 (1 row)
 
-SELECT is_point(ll_to_earth(-30,-90));
-ERROR:  function is_point(earth) does not exist
-LINE 1: SELECT is_point(ll_to_earth(-30,-90));
-               ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT cube_is_point(ll_to_earth(-30,-90));
+ cube_is_point 
+---------------
+ t
+(1 row)
+
 SELECT cube_dim(ll_to_earth(-30,-90)) <= 3;
  ?column? 
 ----------
