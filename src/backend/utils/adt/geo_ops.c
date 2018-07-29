@@ -2528,14 +2528,15 @@ lseg_interpt_line(Point *result, LSEG *lseg, LINE *line)
 static float8
 line_closept_point(Point *result, LINE *line, Point *point)
 {
-	bool		retval;
+	bool		retval PG_USED_FOR_ASSERTS_ONLY;
 	Point       closept;
 	LINE		tmp;
 
 	/* We drop a perpendicular to find the intersection point. */
 	line_construct(&tmp, point, line_invsl(line));
 	retval = line_interpt_line(&closept, line, &tmp);
-	Assert(retval);		/* XXX: We need something better. */
+
+	Assert(retval);	/* perpendicular lines always intersect */
 
 	if (result != NULL)
 		*result = closept;
