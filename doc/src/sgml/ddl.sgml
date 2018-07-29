@@ -2380,9 +2380,12 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
        using <literal>ALTER ROLE <replaceable>user</replaceable> SET
        search_path = "$user"</literal>.  Everyone retains the ability to
        create objects in the public schema, but only qualified names will
-       choose those objects.  A user holding the <literal>CREATEROLE</literal>
-       privilege can undo this setting and issue arbitrary queries under the
-       identity of users relying on the setting.  If you
+       choose those objects.  While qualified table references are fine, calls
+       to functions in the public schema <link linkend="typeconv-func">will be
+       unsafe or unreliable</link>.  Also, a user holding
+       the <literal>CREATEROLE</literal> privilege can undo this setting and
+       issue arbitrary queries under the identity of users relying on the
+       setting.  If you create functions or extensions in the public schema or
        grant <literal>CREATEROLE</literal> to users not warranting this
        almost-superuser ability, use the first pattern instead.
       </para>
@@ -2393,8 +2396,10 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
        Remove the public schema from <varname>search_path</varname> in
        <link linkend="config-setting-configuration-file"><filename>postgresql.conf</filename></link>.
        The ensuing user experience matches the previous pattern.  In addition
-       to that pattern's implications for <literal>CREATEROLE</literal>, this
-       trusts database owners the same way.  If you assign
+       to that pattern's implications for functions
+       and <literal>CREATEROLE</literal>, this trusts database owners
+       like <literal>CREATEROLE</literal>.  If you create functions or
+       extensions in the public schema or assign
        the <literal>CREATEROLE</literal>
        privilege, <literal>CREATEDB</literal> privilege or individual database
        ownership to users not warranting almost-superuser access, use the
