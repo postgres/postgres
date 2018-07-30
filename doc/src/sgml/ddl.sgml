@@ -1624,9 +1624,20 @@ CREATE POLICY account_managers ON accounts TO managers
 </programlisting>
 
   <para>
+   The policy above implicitly provides a <literal>WITH CHECK</literal>
+   clause identical to its <literal>USING</literal> clause, so that the
+   constraint applies both to rows selected by a command (so a manager
+   cannot <command>SELECT</command>, <command>UPDATE</command>,
+   or <command>DELETE</command> existing rows belonging to a different
+   manager) and to rows modified by a command (so rows belonging to a
+   different manager cannot be created via <command>INSERT</command>
+   or <command>UPDATE</command>).
+  </para>
+
+  <para>
    If no role is specified, or the special user name
    <literal>PUBLIC</literal> is used, then the policy applies to all
-   users on the system.  To allow all users to access their own row in
+   users on the system.  To allow all users to access only their own row in
    a <literal>users</literal> table, a simple policy can be used:
   </para>
 
@@ -1636,17 +1647,30 @@ CREATE POLICY user_policy ON users
 </programlisting>
 
   <para>
+   This works similarly to the previous example.
+  </para>
+
+  <para>
    To use a different policy for rows that are being added to the table
-   compared to those rows that are visible, the <literal>WITH CHECK</literal>
-   clause can be used.  This policy would allow all users to view all rows
+   compared to those rows that are visible, multiple policies can be
+   combined.  This pair of policies would allow all users to view all rows
    in the <literal>users</literal> table, but only modify their own:
   </para>
 
 <programlisting>
-CREATE POLICY user_policy ON users
-    USING (true)
-    WITH CHECK (user_name = current_user);
+CREATE POLICY user_sel_policy ON users
+    FOR SELECT
+    USING (true);
+CREATE POLICY user_mod_policy ON users
+    USING (user_name = current_user);
 </programlisting>
+
+  <para>
+   In a <command>SELECT</command> command, these two policies are combined
+   using <literal>OR</literal>, with the net effect being that all rows
+   can be selected.  In other command types, only the second policy applies,
+   so that the effects are the same as before.
+  </para>
 
   <para>
    Row security can also be disabled with the <command>ALTER TABLE</command>
