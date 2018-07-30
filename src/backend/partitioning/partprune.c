@@ -486,7 +486,10 @@ get_matching_partitions(PartitionPruneContext *context, List *pruning_steps)
 
 	/* If there are no pruning steps then all partitions match. */
 	if (num_steps == 0)
+	{
+		Assert(context->nparts > 0);
 		return bms_add_range(NULL, 0, context->nparts - 1);
+	}
 
 	/*
 	 * Allocate space for individual pruning steps to store its result.  Each
@@ -2048,8 +2051,12 @@ get_matching_hash_bounds(PartitionPruneContext *context,
 				bms_make_singleton(rowHash % greatest_modulus);
 	}
 	else
+	{
+		/* Getting here means at least one hash partition exists. */
+		Assert(boundinfo->ndatums > 0);
 		result->bound_offsets = bms_add_range(NULL, 0,
 											  boundinfo->ndatums - 1);
+	}
 
 	/*
 	 * There is neither a special hash null partition or the default hash
@@ -2128,6 +2135,7 @@ get_matching_list_bounds(PartitionPruneContext *context,
 	 */
 	if (nvalues == 0)
 	{
+		Assert(boundinfo->ndatums > 0);
 		result->bound_offsets = bms_add_range(NULL, 0,
 											  boundinfo->ndatums - 1);
 		result->scan_default = partition_bound_has_default(boundinfo);
@@ -2140,6 +2148,7 @@ get_matching_list_bounds(PartitionPruneContext *context,
 		/*
 		 * First match to all bounds.  We'll remove any matching datums below.
 		 */
+		Assert(boundinfo->ndatums > 0);
 		result->bound_offsets = bms_add_range(NULL, 0,
 											  boundinfo->ndatums - 1);
 
@@ -2250,6 +2259,7 @@ get_matching_list_bounds(PartitionPruneContext *context,
 			break;
 	}
 
+	Assert(minoff >= 0 && maxoff >= 0);
 	result->bound_offsets = bms_add_range(NULL, minoff, maxoff);
 	return result;
 }
@@ -2327,6 +2337,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 			maxoff--;
 
 		result->scan_default = partition_bound_has_default(boundinfo);
+		Assert(minoff >= 0 && maxoff >= 0);
 		result->bound_offsets = bms_add_range(NULL, minoff, maxoff);
 
 		return result;
