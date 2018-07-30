@@ -173,6 +173,13 @@ explain (costs off) select * from coercepart where a !~ all ('{ab,bc}');
 
 drop table coercepart;
 
+CREATE TABLE part (a INT, b INT) PARTITION BY LIST (a);
+CREATE TABLE part_p1 PARTITION OF part FOR VALUES IN (-2,-1,0,1,2);
+CREATE TABLE part_p2 PARTITION OF part DEFAULT PARTITION BY RANGE(a);
+CREATE TABLE part_p2_p1 PARTITION OF part_p2 DEFAULT;
+INSERT INTO part VALUES (-1,-1), (1,1), (2,NULL), (NULL,-2),(NULL,NULL);
+EXPLAIN (COSTS OFF) SELECT tableoid::regclass as part, a, b FROM part WHERE a IS NULL ORDER BY 1, 2, 3;
+
 --
 -- some more cases
 --
