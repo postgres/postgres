@@ -871,10 +871,8 @@ bms_add_range(Bitmapset *a, int lower, int upper)
 	if (upper < lower)
 		return a;
 
-	if (lower < 0 || upper < 0)
+	if (lower < 0)
 		elog(ERROR, "negative bitmapset member not allowed");
-	if (lower > upper)
-		elog(ERROR, "lower range must not be above upper range");
 	uwordnum = WORDNUM(upper);
 
 	if (a == NULL)
