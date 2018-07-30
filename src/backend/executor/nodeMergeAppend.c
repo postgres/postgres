@@ -131,6 +131,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		{
 			/* We'll need to initialize all subplans */
 			nplans = list_length(node->mergeplans);
+			Assert(nplans > 0);
 			validsubplans = bms_add_range(NULL, 0, nplans - 1);
 		}
 
@@ -139,7 +140,10 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		 * immediately, preventing later calls to ExecFindMatchingSubPlans.
 		 */
 		if (!prunestate->do_exec_prune)
+		{
+			Assert(nplans > 0);
 			mergestate->ms_valid_subplans = bms_add_range(NULL, 0, nplans - 1);
+		}
 	}
 	else
 	{
@@ -149,6 +153,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		 * When run-time partition pruning is not enabled we can just mark all
 		 * subplans as valid; they must also all be initialized.
 		 */
+		Assert(nplans > 0);
 		mergestate->ms_valid_subplans = validsubplans =
 			bms_add_range(NULL, 0, nplans - 1);
 		mergestate->ms_prune_state = NULL;
