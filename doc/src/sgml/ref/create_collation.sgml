@@ -163,6 +163,13 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
   <title>Notes</title>
 
   <para>
+   <command>CREATE COLLATION</command> takes a <literal>SHARE ROW
+   EXCLUSIVE</literal> lock, which is self-conflicting, on the
+   <structname>pg_collation</structname> system catalog, so only one
+   <command>CREATE COLLATION</command> command can run at a time.
+  </para>
+
+  <para>
    Use <command>DROP COLLATION</command> to remove user-defined collations.
   </para>
 
