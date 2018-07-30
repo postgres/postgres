@@ -610,13 +610,15 @@ apply_handle_insert(StringInfo s)
 	remoteslot = ExecInitExtraTupleSlot(estate,
 										RelationGetDescr(rel->localrel));
 
+	/* Input functions may need an active snapshot, so get one */
+	PushActiveSnapshot(GetTransactionSnapshot());
+
 	/* Process and store remote tuple in the slot */
 	oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 	slot_store_cstrings(remoteslot, rel, newtup.values);
 	slot_fill_defaults(rel, estate, remoteslot);
 	MemoryContextSwitchTo(oldctx);
 
-	PushActiveSnapshot(GetTransactionSnapshot());
 	ExecOpenIndices(estate->es_result_relation_info, false);
 
 	/* Do the insert. */

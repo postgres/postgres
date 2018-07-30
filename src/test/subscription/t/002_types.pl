@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 # Initialize publisher node
 my $node_publisher = get_new_node('publisher');
@@ -90,7 +90,13 @@ my $ddl = qq(
 	CREATE TABLE public.tst_hstore (
 		a INTEGER PRIMARY KEY,
 		b public.hstore
-	););
+	);
+
+	SET check_function_bodies=off;
+	CREATE FUNCTION public.monot_incr(int) RETURNS bool LANGUAGE sql
+		AS ' select \$1 > max(a) from public.tst_dom_constr; ';
+	CREATE DOMAIN monot_int AS int CHECK (monot_incr(VALUE));
+	CREATE TABLE public.tst_dom_constr (a monot_int););
 
 # Setup structure on both nodes
 $node_publisher->safe_psql('postgres', $ddl);
@@ -240,6 +246,9 @@ $node_publisher->safe_psql(
 		(2, '"zzz"=>"foo"'),
 		(3, '"123"=>"321"'),
 		(4, '"yellow horse"=>"moaned"');
+
+	-- tst_dom_constr
+	INSERT INTO tst_dom_constr VALUES (10);
 ));
 
 $node_publisher->wait_for_catchup($appname);
@@ -540,6 +549,17 @@ e|{e,d}
 3|"also"=>"updated"
 4|"yellow horse"=>"moaned"',
 	'check replicated deletes on subscriber');
+
+# Test a domain with a constraint backed by a SQL-language function,
+# which needs an active snapshot in order to operate.
+$node_publisher->safe_psql('postgres', "INSERT INTO tst_dom_constr VALUES (11)");
+
+$node_subscriber->poll_query_until('postgres', $synced_query)
+  or die "Timed out while waiting for subscriber to synchronize data";
+
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT sum(a) FROM tst_dom_constr");
+is($result, '21', 'sql-function constraint on domain');
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
