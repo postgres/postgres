@@ -7141,8 +7141,8 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 		TableInfo  *tbinfo = &tblinfo[i];
 
 		/*
-		 * For partitioned tables, foreign keys have no triggers so they
-		 * must be included anyway in case some foreign keys are defined.
+		 * For partitioned tables, foreign keys have no triggers so they must
+		 * be included anyway in case some foreign keys are defined.
 		 */
 		if ((!tbinfo->hastriggers &&
 			 tbinfo->relkind != RELKIND_PARTITIONED_TABLE) ||
@@ -16220,6 +16220,12 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 		/* Plain secondary index */
 		appendPQExpBuffer(q, "%s;\n", indxinfo->indexdef);
 
+		/*
+		 * Append ALTER TABLE commands as needed to set properties that we
+		 * only have ALTER TABLE syntax for.  Keep this in sync with the
+		 * similar code in dumpConstraint!
+		 */
+
 		/* If the index is clustered, we need to record that. */
 		if (indxinfo->indisclustered)
 		{
@@ -16469,6 +16475,12 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 			appendPQExpBufferStr(q, ";\n");
 		}
 
+		/*
+		 * Append ALTER TABLE commands as needed to set properties that we
+		 * only have ALTER TABLE syntax for.  Keep this in sync with the
+		 * similar code in dumpIndex!
+		 */
+
 		/* If the index is clustered, we need to record that. */
 		if (indxinfo->indisclustered)
 		{
@@ -16476,6 +16488,16 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 							  fmtQualifiedDumpable(tbinfo));
 			/* index name is not qualified in this syntax */
 			appendPQExpBuffer(q, " ON %s;\n",
+							  fmtId(indxinfo->dobj.name));
+		}
+
+		/* If the index defines identity, we need to record that. */
+		if (indxinfo->indisreplident)
+		{
+			appendPQExpBuffer(q, "\nALTER TABLE ONLY %s REPLICA IDENTITY USING",
+							  fmtQualifiedDumpable(tbinfo));
+			/* index name is not qualified in this syntax */
+			appendPQExpBuffer(q, " INDEX %s;\n",
 							  fmtId(indxinfo->dobj.name));
 		}
 
