@@ -355,11 +355,11 @@ BZIP2	= bzip2
 # available before building, but we don't want parallel makes all trying
 # to build the same headers.  These rules, together with the recursion rules
 # below, ensure that we update the generated headers once, if needed,
-# at the top level of any "make all/install/check" request.  If a particular
-# subdirectory knows this isn't needed in itself or its children, it can set
-# NO_GENERATED_HEADERS.
+# at the top level of any "make all/install/check/installcheck" request.
+# If a particular subdirectory knows this isn't needed in itself or its
+# children, it can set NO_GENERATED_HEADERS.
 
-all install check: submake-generated-headers
+all install check installcheck: submake-generated-headers
 
 .PHONY: submake-generated-headers
 
@@ -806,8 +806,8 @@ $(error GNU make 3.80 or newer is required.  You are using version $(MAKE_VERSIO
 endif
 
 # This function is only for internal use below.  It should be called
-# using $(eval).  It will set up a target so that it recurses into
-# a given subdirectory.  For the tree-wide all/install/check cases,
+# using $(eval).  It will set up a target so that it recurses into a
+# given subdirectory.  For the tree-wide all/install/check/installcheck cases,
 # ensure we do our one-time tasks before recursing (see targets above).
 # Note that to avoid a nasty bug in make 3.80,
 # this function has to avoid using any complicated constructs (like
@@ -820,7 +820,7 @@ endif
 define _create_recursive_target
 .PHONY: $(1)-$(2)-recurse
 $(1): $(1)-$(2)-recurse
-$(1)-$(2)-recurse: $(if $(filter all install check, $(3)), submake-generated-headers) $(if $(filter check, $(3)), temp-install)
+$(1)-$(2)-recurse: $(if $(filter all install check installcheck, $(3)), submake-generated-headers) $(if $(filter check, $(3)), temp-install)
 	$$(MAKE) -C $(2) $(3)
 endef
 # Note that the use of $$ on the last line above is important; we want
