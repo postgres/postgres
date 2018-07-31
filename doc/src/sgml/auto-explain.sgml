@@ -191,7 +191,7 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.log_level</varname> (<type>enum</type>)
      <indexterm>
-      <primary><varname>auto_explain.log_level</> configuration parameter</primary>
+      <primary><varname>auto_explain.log_level</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
