@@ -117,7 +117,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	if (!live_check || cluster == &new_cluster)
 	{
 		/* only pg_controldata outputs the cluster state */
-		snprintf(cmd, sizeof(cmd), "\"%s/pg_controldata\" \"%s\"",
+		snprintf(cmd, sizeof(cmd), SYSTEMQUOTE "\"%s/pg_controldata\" \"%s\"" SYSTEMQUOTE,
 				 cluster->bindir, cluster->pgdata);
 		fflush(stdout);
 		fflush(stderr);
