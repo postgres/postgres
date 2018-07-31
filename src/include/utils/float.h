@@ -3,12 +3,12 @@
  * float.h
  *	  Definitions for the built-in floating-point types
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  src/include/utils/float.c
+ *	  src/include/utils/float.h
  *
  *-------------------------------------------------------------------------
  */
