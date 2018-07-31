@@ -11,6 +11,8 @@ DATA = hstore--1.4.sql hstore--1.4--1.5.sql \
 	hstore--unpackaged--1.0.sql
 PGFILEDESC = "hstore - key/value pair data type"
 
+HEADERS = hstore.h
+
 REGRESS = hstore
 
 ifdef USE_PGXS

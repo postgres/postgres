@@ -9,6 +9,8 @@ EXTENSION = ltree
 DATA = ltree--1.1.sql ltree--1.0--1.1.sql ltree--unpackaged--1.0.sql
 PGFILEDESC = "ltree - hierarchical label data type"
 
+HEADERS = ltree.h
+
 REGRESS = ltree
 
 ifdef USE_PGXS
