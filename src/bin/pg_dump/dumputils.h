@@ -58,4 +58,7 @@ extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 
 extern bool variable_is_guc_list_quote(const char *name);
 
+extern bool SplitGUCList(char *rawstring, char separator,
+			 char ***namelist);
+
 #endif   /* DUMPUTILS_H */

@@ -860,6 +860,8 @@ extern bool SplitIdentifierString(char *rawstring, char separator,
 					  List **namelist);
 extern bool SplitDirectoriesString(char *rawstring, char separator,
 					   List **namelist);
+extern bool SplitGUCList(char *rawstring, char separator,
+			 List **namelist);
 extern Datum replace_text(PG_FUNCTION_ARGS);
 extern text *replace_text_regexp(text *src_text, void *regexp,
 					text *replace_text, bool glob);

@@ -1721,14 +1721,35 @@ makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 	/*
 	 * Variables that are marked GUC_LIST_QUOTE were already fully quoted by
 	 * flatten_set_variable_args() before they were put into the setconfig
-	 * array; we mustn't re-quote them or we'll make a mess.  Variables that
-	 * are not so marked should just be emitted as simple string literals.  If
-	 * the variable is not known to variable_is_guc_list_quote(), we'll do the
-	 * latter; this makes it unsafe to use GUC_LIST_QUOTE for extension
-	 * variables.
+	 * array.  However, because the quoting rules used there aren't exactly
+	 * like SQL's, we have to break the list value apart and then quote the
+	 * elements as string literals.  (The elements may be double-quoted as-is,
+	 * but we can't just feed them to the SQL parser; it would do the wrong
+	 * thing with elements that are zero-length or longer than NAMEDATALEN.)
+	 *
+	 * Variables that are not so marked should just be emitted as simple
+	 * string literals.  If the variable is not known to
+	 * variable_is_guc_list_quote(), we'll do that; this makes it unsafe to
+	 * use GUC_LIST_QUOTE for extension variables.
 	 */
 	if (variable_is_guc_list_quote(mine))
-		appendPQExpBufferStr(buf, pos + 1);
+	{
+		char	  **namelist;
+		char	  **nameptr;
+
+		/* Parse string into list of identifiers */
+		/* this shouldn't fail really */
+		if (SplitGUCList(pos + 1, ',', &namelist))
+		{
+			for (nameptr = namelist; *nameptr; nameptr++)
+			{
+				if (nameptr != namelist)
+					appendPQExpBufferStr(buf, ", ");
+				appendStringLiteralConn(buf, *nameptr, conn);
+			}
+		}
+		pg_free(namelist);
+	}
 	else
 		appendStringLiteralConn(buf, pos + 1, conn);
 	appendPQExpBufferStr(buf, ";\n");
