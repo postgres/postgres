@@ -58,6 +58,9 @@ extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 
 extern bool variable_is_guc_list_quote(const char *name);
 
+extern bool SplitGUCList(char *rawstring, char separator,
+			 char ***namelist);
+
 extern void makeAlterConfigCommand(PGconn *conn, const char *configitem,
 					   const char *type, const char *name,
 					   const char *type2, const char *name2,
