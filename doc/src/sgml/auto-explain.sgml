@@ -189,6 +189,27 @@ LOAD 'auto_explain';
 
    <varlistentry>
     <term>
+     <varname>auto_explain.log_level</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_level</> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <varname>auto_explain.log_level</varname> selects the log level at which
+      auto_explain will log the query plan.
+      Valid values are <literal>DEBUG5</literal>, <literal>DEBUG4</literal>,
+      <literal>DEBUG3</literal>, <literal>DEBUG2</literal>,
+      <literal>DEBUG1</literal>, <literal>INFO</literal>,
+      <literal>NOTICE</literal>, <literal>WARNING</literal>,
+      and <literal>LOG</literal>. The default is <literal>LOG</literal>.
+      Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
      <varname>auto_explain.log_nested_statements</varname> (<type>boolean</type>)
      <indexterm>
       <primary><varname>auto_explain.log_nested_statements</varname> configuration parameter</primary>
