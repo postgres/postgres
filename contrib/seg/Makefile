@@ -8,6 +8,8 @@ DATA = seg--1.1.sql seg--1.1--1.2.sql seg--1.2--1.3.sql \
 	seg--1.0--1.1.sql seg--unpackaged--1.0.sql
 PGFILEDESC = "seg - line segment data type"
 
+HEADERS = segdata.h
+
 REGRESS = seg
 
 EXTRA_CLEAN = y.tab.c y.tab.h

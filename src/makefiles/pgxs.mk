@@ -38,6 +38,10 @@
 #   SCRIPTS -- script files (not binaries) to install into $PREFIX/bin
 #   SCRIPTS_built -- script files (not binaries) to install into $PREFIX/bin,
 #     which need to be built first
+#   HEADERS -- files to install into $(includedir_server)/$MODULEDIR/$MODULE_big
+#   HEADERS_$(MODULE) -- files to install into
+#     $(includedir_server)/$MODULEDIR/$MODULE; the value of $MODULE must be
+#     listed in MODULES or MODULE_big
 #   REGRESS -- list of regression test cases (without suffix)
 #   REGRESS_OPTS -- additional switches to pass to pg_regress
 #   NO_INSTALLCHECK -- don't define an installcheck target, useful e.g. if
@@ -94,19 +98,59 @@ endif
 ifdef MODULEDIR
 datamoduledir := $(MODULEDIR)
 docmoduledir := $(MODULEDIR)
+incmoduledir := $(MODULEDIR)
 else
 ifdef EXTENSION
 datamoduledir := extension
 docmoduledir := extension
+incmoduledir := extension
 else
 datamoduledir := contrib
 docmoduledir := contrib
+incmoduledir := contrib
 endif
 endif
 
 ifdef PG_CPPFLAGS
 override CPPFLAGS := $(PG_CPPFLAGS) $(CPPFLAGS)
 endif
+
+HEADER_alldirs := $(patsubst HEADERS_%,%,$(filter HEADERS_%, $(.VARIABLES)))
+
+# HEADERS is an error in the absence of MODULE_big to provide a dir name
+ifdef MODULE_big
+ifdef HEADERS
+HEADER_dirs := $(MODULE_big)
+HEADERS_$(MODULE_big) = $(HEADERS)
+else
+HEADER_dirs := $(filter $(MODULE_big),$(HEADER_alldirs))
+endif
+else
+ifdef HEADERS
+$(error HEADERS requires MODULE_big to be set)
+endif
+HEADER_dirs := $(filter $(MODULES),$(HEADER_alldirs))
+endif
+
+# HEADERS_foo requires that "foo" is in MODULES as a sanity check
+ifneq ($(filter-out $(HEADER_dirs),$(HEADER_alldirs)),)
+$(error $(patsubst %,HEADERS_%,$(filter-out $(HEADER_dirs),$(HEADER_alldirs))) defined with no module)
+endif
+
+# Functions for generating install/uninstall commands; the blank lines
+# before the "endef" are required, don't lose them
+# $(call install_headers,dir,headers)
+define install_headers
+$(MKDIR_P) '$(DESTDIR)$(includedir_server)/$(incmoduledir)/$(1)/'
+$(INSTALL_DATA) $(addprefix $(srcdir)/, $(2)) '$(DESTDIR)$(includedir_server)/$(incmoduledir)/$(1)/'
+
+endef
+# $(call uninstall_headers,dir,headers)
+define uninstall_headers
+rm -f $(addprefix '$(DESTDIR)$(includedir_server)/$(incmoduledir)/$(1)'/, $(notdir $(2)))
+
+endef
+
 
 all: $(PROGRAM) $(DATA_built) $(SCRIPTS_built) $(addsuffix $(DLSUFFIX), $(MODULES)) $(addsuffix .control, $(EXTENSION))
 
@@ -154,6 +198,9 @@ endif # SCRIPTS
 ifdef SCRIPTS_built
 	$(INSTALL_SCRIPT) $(SCRIPTS_built) '$(DESTDIR)$(bindir)/'
 endif # SCRIPTS_built
+ifneq ($(strip $(HEADER_dirs)),)
+	$(foreach dir,$(HEADER_dirs),$(if $(HEADERS_$(dir)),$(call install_headers,$(dir),$(HEADERS_$(dir)))))
+endif # HEADERS
 ifdef MODULE_big
 ifeq ($(with_llvm), yes)
 	$(call install_llvm_module,$(MODULE_big),$(OBJS))
@@ -218,6 +265,9 @@ endif
 ifdef SCRIPTS_built
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(SCRIPTS_built))
 endif
+ifneq ($(strip $(HEADER_dirs)),)
+	$(foreach dir,$(HEADER_dirs),$(if $(HEADERS_$(dir)),$(call uninstall_headers,$(dir),$(HEADERS_$(dir)))))
+endif # HEADERS
 
 ifdef MODULE_big
 ifeq ($(with_llvm), yes)

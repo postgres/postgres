@@ -9,6 +9,8 @@ DATA = cube--1.2.sql cube--1.2--1.3.sql cube--1.3--1.4.sql \
 	cube--unpackaged--1.0.sql
 PGFILEDESC = "cube - multidimensional cube data type"
 
+HEADERS = cubedata.h
+
 REGRESS = cube
 
 EXTRA_CLEAN = y.tab.c y.tab.h

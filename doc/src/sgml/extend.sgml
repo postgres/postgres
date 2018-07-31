@@ -1100,13 +1100,15 @@ include $(PGXS)
     and include the global <acronym>PGXS</acronym> makefile.
     Here is an example that builds an extension module named
     <literal>isbn_issn</literal>, consisting of a shared library containing
-    some C code, an extension control file, a SQL script, and a documentation
-    text file:
+    some C code, an extension control file, a SQL script, an include file
+    (only needed if other modules might need to access the extension functions
+    without going via SQL), and a documentation text file:
 <programlisting>
 MODULES = isbn_issn
 EXTENSION = isbn_issn
 DATA = isbn_issn--1.0.sql
 DOCS = README.isbn_issn
+HEADERS_isbn_issn = isbn_issn.h
 
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -1216,6 +1218,28 @@ include $(PGXS)
        <para>
         random files to install under
         <literal><replaceable>prefix</replaceable>/doc/$MODULEDIR</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>HEADERS</varname></term>
+      <listitem>
+       <para>
+        files to install under
+        <literal><replaceable>prefix</replaceable>/include/server/$MODULEDIR/$MODULE_big</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>HEADERS_$MODULE</varname></term>
+      <listitem>
+       <para>
+        files to install under
+        <literal><replaceable>prefix</replaceable>/include/server/$MODULEDIR/$MODULE</literal>,
+        where <literal>$MODULE</literal> must be a module name used
+        in <literal>MODULES</literal> or <literal>MODULE_big</literal>
        </para>
       </listitem>
      </varlistentry>
