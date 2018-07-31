@@ -77,4 +77,7 @@ extern bool simple_string_list_member(SimpleStringList *list, const char *val);
 
 extern bool variable_is_guc_list_quote(const char *name);
 
+extern bool SplitGUCList(char *rawstring, char separator,
+			 char ***namelist);
+
 #endif   /* DUMPUTILS_H */
