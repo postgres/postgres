@@ -3160,21 +3160,21 @@ CREATE FUNCTION func_with_set_params() RETURNS integer
     SET extra_float_digits TO 2
     SET work_mem TO '4MB'
     SET datestyle to iso, mdy
-    SET local_preload_libraries TO "Mixed/Case", 'c:/"a"/path'
+    SET local_preload_libraries TO "Mixed/Case", 'c:/''a"/path', '', '0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789'
     IMMUTABLE STRICT;
 SELECT pg_get_functiondef('func_with_set_params()'::regprocedure);
-                      pg_get_functiondef                       
----------------------------------------------------------------
- CREATE OR REPLACE FUNCTION public.func_with_set_params()     +
-  RETURNS integer                                             +
-  LANGUAGE sql                                                +
-  IMMUTABLE STRICT                                            +
-  SET search_path TO pg_catalog                               +
-  SET extra_float_digits TO '2'                               +
-  SET work_mem TO '4MB'                                       +
-  SET "DateStyle" TO 'iso, mdy'                               +
-  SET local_preload_libraries TO "Mixed/Case", "c:/""a""/path"+
- AS $function$select 1;$function$                             +
+                                                                            pg_get_functiondef                                                                            
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION public.func_with_set_params()                                                                                                                +
+  RETURNS integer                                                                                                                                                        +
+  LANGUAGE sql                                                                                                                                                           +
+  IMMUTABLE STRICT                                                                                                                                                       +
+  SET search_path TO 'pg_catalog'                                                                                                                                        +
+  SET extra_float_digits TO '2'                                                                                                                                          +
+  SET work_mem TO '4MB'                                                                                                                                                  +
+  SET "DateStyle" TO 'iso, mdy'                                                                                                                                          +
+  SET local_preload_libraries TO 'Mixed/Case', 'c:/''a"/path', '', '0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789'+
+ AS $function$select 1;$function$                                                                                                                                        +
  
 (1 row)
 

@@ -2640,14 +2640,39 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 				/*
 				 * Variables that are marked GUC_LIST_QUOTE were already fully
 				 * quoted by flatten_set_variable_args() before they were put
-				 * into the proconfig array; we mustn't re-quote them or we'll
-				 * make a mess.  Variables that are not so marked should just
-				 * be emitted as simple string literals.  If the variable is
-				 * not known to guc.c, we'll do the latter; this makes it
-				 * unsafe to use GUC_LIST_QUOTE for extension variables.
+				 * into the proconfig array.  However, because the quoting
+				 * rules used there aren't exactly like SQL's, we have to
+				 * break the list value apart and then quote the elements as
+				 * string literals.  (The elements may be double-quoted as-is,
+				 * but we can't just feed them to the SQL parser; it would do
+				 * the wrong thing with elements that are zero-length or
+				 * longer than NAMEDATALEN.)
+				 *
+				 * Variables that are not so marked should just be emitted as
+				 * simple string literals.  If the variable is not known to
+				 * guc.c, we'll do that; this makes it unsafe to use
+				 * GUC_LIST_QUOTE for extension variables.
 				 */
 				if (GetConfigOptionFlags(configitem, true) & GUC_LIST_QUOTE)
-					appendStringInfoString(&buf, pos);
+				{
+					List	   *namelist;
+					ListCell   *lc;
+
+					/* Parse string into list of identifiers */
+					if (!SplitGUCList(pos, ',', &namelist))
+					{
+						/* this shouldn't fail really */
+						elog(ERROR, "invalid list syntax in proconfig item");
+					}
+					foreach(lc, namelist)
+					{
+						char	   *curname = (char *) lfirst(lc);
+
+						simple_quote_literal(&buf, curname);
+						if (lnext(lc))
+							appendStringInfoString(&buf, ", ");
+					}
+				}
 				else
 					simple_quote_literal(&buf, pos);
 				appendStringInfoChar(&buf, '\n');
