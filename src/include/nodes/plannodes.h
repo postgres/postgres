@@ -241,6 +241,8 @@ typedef struct ModifyTable
 	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
 } ModifyTable;
 
+struct PartitionPruneInfo;		/* forward reference to struct below */
+
 /* ----------------
  *	 Append node -
  *		Generate the concatenation of the results of sub-plans.
@@ -260,8 +262,8 @@ typedef struct Append
 	/* RT indexes of non-leaf tables in a partition tree */
 	List	   *partitioned_rels;
 
-	/* Info for run-time subplan pruning, one entry per partitioned_rels */
-	List	   *part_prune_infos;	/* List of PartitionPruneInfo */
+	/* Info for run-time subplan pruning; NULL if we're not doing that */
+	struct PartitionPruneInfo *part_prune_info;
 } Append;
 
 /* ----------------
@@ -1060,12 +1062,32 @@ typedef struct PlanRowMark
  * We also store various details to tell the executor when it should be
  * performing partition pruning.
  *
- * Each PartitionPruneInfo describes the partitioning rules for a single
- * partitioned table (a/k/a level of partitioning).  For a multilevel
- * partitioned table, we have a List of PartitionPruneInfos, where the
- * first entry represents the topmost partitioned table and additional
- * entries represent non-leaf child partitions, ordered such that parents
- * appear before their children.
+ * Each PartitionedRelPruneInfo describes the partitioning rules for a single
+ * partitioned table (a/k/a level of partitioning).  Since a partitioning
+ * hierarchy could contain multiple levels, we represent it by a List of
+ * PartitionedRelPruneInfos, where the first entry represents the topmost
+ * partitioned table and additional entries represent non-leaf child
+ * partitions, ordered such that parents appear before their children.
+ * Then, since an Append-type node could have multiple partitioning
+ * hierarchies among its children, we have an unordered List of those Lists.
+ *
+ * prune_infos			List of Lists containing PartitionedRelPruneInfo nodes,
+ *						one sublist per run-time-prunable partition hierarchy
+ *						appearing in the parent plan node's subplans.
+ * other_subplans		Indexes of any subplans that are not accounted for
+ *						by any of the PartitionedRelPruneInfo nodes in
+ *						"prune_infos".  These subplans must not be pruned.
+ */
+typedef struct PartitionPruneInfo
+{
+	NodeTag		type;
+	List	   *prune_infos;
+	Bitmapset  *other_subplans;
+} PartitionPruneInfo;
+
+/*
+ * PartitionedRelPruneInfo - Details required to allow the executor to prune
+ * partitions for a single partitioned table.
  *
  * subplan_map[] and subpart_map[] are indexed by partition index (where
  * zero is the topmost partition, and non-leaf partitions must come before
@@ -1073,11 +1095,12 @@ typedef struct PlanRowMark
  * zero-based index of the partition's subplan in the parent plan's subplan
  * list; it is -1 if the partition is non-leaf or has been pruned.  For a
  * non-leaf partition p, subpart_map[p] contains the zero-based index of
- * that sub-partition's PartitionPruneInfo in the plan's PartitionPruneInfo
- * list; it is -1 if the partition is a leaf or has been pruned.  All these
- * indexes are global across the whole partitioned table and Append plan node.
+ * that sub-partition's PartitionedRelPruneInfo in the hierarchy's
+ * PartitionedRelPruneInfo list; it is -1 if the partition is a leaf or has
+ * been pruned.  Note that subplan indexes are global across the parent plan
+ * node, but partition indexes are valid only within a particular hierarchy.
  */
-typedef struct PartitionPruneInfo
+typedef struct PartitionedRelPruneInfo
 {
 	NodeTag		type;
 	Oid			reloid;			/* OID of partition rel for this level */
@@ -1095,7 +1118,7 @@ typedef struct PartitionPruneInfo
 	bool		do_exec_prune;	/* true if pruning should be performed during
 								 * executor run. */
 	Bitmapset  *execparamids;	/* All PARAM_EXEC Param IDs in pruning_steps */
-} PartitionPruneInfo;
+} PartitionedRelPruneInfo;
 
 /*
  * Abstract Node type for partition pruning steps (there are no concrete

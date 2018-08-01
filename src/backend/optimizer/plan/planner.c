@@ -1617,6 +1617,7 @@ inheritance_planner(PlannerInfo *root)
 		 * contain at least one member, that is, the root parent's index.
 		 */
 		Assert(list_length(partitioned_rels) >= 1);
+		partitioned_rels = list_make1(partitioned_rels);
 	}
 
 	/* Create Path representing a ModifyTable to do the UPDATE/DELETE work */

@@ -129,7 +129,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	appendstate->as_whichplan = INVALID_SUBPLAN_INDEX;
 
 	/* If run-time partition pruning is enabled, then set that up now */
-	if (node->part_prune_infos != NIL)
+	if (node->part_prune_info != NULL)
 	{
 		PartitionPruneState *prunestate;
 
@@ -138,7 +138,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 
 		/* Create the working data structure for pruning. */
 		prunestate = ExecCreatePartitionPruneState(&appendstate->ps,
-												   node->part_prune_infos);
+												   node->part_prune_info);
 		appendstate->as_prune_state = prunestate;
 
 		/* Perform an initial partition prune, if required. */

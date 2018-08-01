@@ -88,6 +88,7 @@ typedef enum NodeTag
 	T_NestLoopParam,
 	T_PlanRowMark,
 	T_PartitionPruneInfo,
+	T_PartitionedRelPruneInfo,
 	T_PartitionPruneStepOp,
 	T_PartitionPruneStepCombine,
 	T_PlanInvalItem,

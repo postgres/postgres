@@ -1388,7 +1388,6 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	List	   *all_child_outers = NIL;
 	ListCell   *l;
 	List	   *partitioned_rels = NIL;
-	bool		build_partitioned_rels = false;
 	double		partial_rows = -1;
 
 	/* If appropriate, consider parallel append */
@@ -1413,10 +1412,11 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	if (rel->part_scheme != NULL)
 	{
 		if (IS_SIMPLE_REL(rel))
-			partitioned_rels = rel->partitioned_child_rels;
+			partitioned_rels = list_make1(rel->partitioned_child_rels);
 		else if (IS_JOIN_REL(rel))
 		{
 			int			relid = -1;
+			List	   *partrels = NIL;
 
 			/*
 			 * For a partitioned joinrel, concatenate the component rels'
@@ -1430,16 +1430,16 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 				component = root->simple_rel_array[relid];
 				Assert(component->part_scheme != NULL);
 				Assert(list_length(component->partitioned_child_rels) >= 1);
-				partitioned_rels =
-					list_concat(partitioned_rels,
+				partrels =
+					list_concat(partrels,
 								list_copy(component->partitioned_child_rels));
 			}
+
+			partitioned_rels = list_make1(partrels);
 		}
 
 		Assert(list_length(partitioned_rels) >= 1);
 	}
-	else if (rel->rtekind == RTE_SUBQUERY)
-		build_partitioned_rels = true;
 
 	/*
 	 * For every non-dummy child, remember the cheapest path.  Also, identify
@@ -1453,17 +1453,12 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		Path	   *cheapest_partial_path = NULL;
 
 		/*
-		 * If we need to build partitioned_rels, accumulate the partitioned
-		 * rels for this child.  We must ensure that parents are always listed
-		 * before their child partitioned tables.
+		 * For UNION ALLs with non-empty partitioned_child_rels, accumulate
+		 * the Lists of child relations.
 		 */
-		if (build_partitioned_rels)
-		{
-			List	   *cprels = childrel->partitioned_child_rels;
-
-			partitioned_rels = list_concat(partitioned_rels,
-										   list_copy(cprels));
-		}
+		if (rel->rtekind == RTE_SUBQUERY && childrel->partitioned_child_rels != NIL)
+			partitioned_rels = lappend(partitioned_rels,
+									   childrel->partitioned_child_rels);
 
 		/*
 		 * If child has an unparameterized cheapest-total path, add that to

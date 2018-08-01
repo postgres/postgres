@@ -540,6 +540,14 @@ reset max_parallel_workers_per_gather;
 explain (analyze, costs off, summary off, timing off)
 select * from ab where a = (select max(a) from lprt_a) and b = (select max(a)-1 from lprt_a);
 
+-- Test run-time partition pruning with UNION ALL parents
+explain (analyze, costs off, summary off, timing off)
+select * from (select * from ab where a = 1 union all select * from ab) ab where b = (select 1);
+
+-- A case containing a UNION ALL with a non-partitioned child.
+explain (analyze, costs off, summary off, timing off)
+select * from (select * from ab where a = 1 union all (values(10,5)) union all select * from ab) ab where b = (select 1);
+
 deallocate ab_q1;
 deallocate ab_q2;
 deallocate ab_q3;
@@ -837,3 +845,40 @@ create temp table pp_temp_part_def partition of pp_temp_parent default;
 explain (costs off) select * from pp_temp_parent where true;
 explain (costs off) select * from pp_temp_parent where a = 2;
 drop table pp_temp_parent;
+
+-- Stress run-time partition pruning a bit more, per bug reports
+create temp table p (a int, b int, c int) partition by list (a);
+create temp table p1 partition of p for values in (1);
+create temp table p2 partition of p for values in (2);
+create temp table q (a int, b int, c int) partition by list (a);
+create temp table q1 partition of q for values in (1) partition by list (b);
+create temp table q11 partition of q1 for values in (1) partition by list (c);
+create temp table q111 partition of q11 for values in (1);
+create temp table q2 partition of q for values in (2) partition by list (b);
+create temp table q21 partition of q2 for values in (1);
+create temp table q22 partition of q2 for values in (2);
+
+insert into q22 values (2, 2, 3);
+
+explain (costs off)
+select *
+from (
+      select * from p
+      union all
+      select * from q1
+      union all
+      select 1, 1, 1
+     ) s(a, b, c)
+where s.a = 1 and s.b = 1 and s.c = (select 1);
+
+select *
+from (
+      select * from p
+      union all
+      select * from q1
+      union all
+      select 1, 1, 1
+     ) s(a, b, c)
+where s.a = 1 and s.b = 1 and s.c = (select 1);
+
+drop table p, q;
