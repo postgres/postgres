@@ -193,9 +193,15 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 	Datum		values[PARTITION_MAX_KEYS];
 	bool		isnull[PARTITION_MAX_KEYS];
 	Relation	rel;
-	PartitionDispatch parent;
+	PartitionDispatch dispatch;
 	ExprContext *ecxt = GetPerTupleExprContext(estate);
 	TupleTableSlot *ecxt_scantuple_old = ecxt->ecxt_scantuple;
+	TupleTableSlot *myslot = NULL;
+	MemoryContext	oldcxt;
+	HeapTuple		tuple;
+
+	/* use per-tuple context here to avoid leaking memory */
+	oldcxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
 	/*
 	 * First check the root table's partition constraint, if any.  No point in
@@ -205,24 +211,23 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
 	/* start with the root partitioned table */
-	parent = pd[0];
+	tuple = ExecFetchSlotTuple(slot);
+	dispatch = pd[0];
 	while (true)
 	{
-		TupleTableSlot *myslot = parent->tupslot;
-		TupleConversionMap *map = parent->tupmap;
+		TupleTableSlot *myslot = dispatch->tupslot;
+		TupleConversionMap *map = dispatch->tupmap;
 		int			cur_index = -1;
 
-		rel = parent->reldesc;
+		rel = dispatch->reldesc;
 
 		/*
-		 * Convert the tuple to this parent's layout so that we can do certain
-		 * things we do below.
+		 * Convert the tuple to this parent's layout, if different from the
+		 * current relation.
 		 */
+		myslot = dispatch->tupslot;
 		if (myslot != NULL && map != NULL)
 		{
-			HeapTuple	tuple = ExecFetchSlotTuple(slot);
-
-			ExecClearTuple(myslot);
 			tuple = do_convert_tuple(tuple, map);
 			ExecStoreTuple(tuple, myslot, InvalidBuffer, true);
 			slot = myslot;
@@ -237,19 +242,19 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		 * So update ecxt_scantuple accordingly.
 		 */
 		ecxt->ecxt_scantuple = slot;
-		FormPartitionKeyDatum(parent, slot, estate, values, isnull);
+		FormPartitionKeyDatum(dispatch, slot, estate, values, isnull);
 
 		/*
 		 * Nothing for get_partition_for_tuple() to do if there are no
 		 * partitions to begin with.
 		 */
-		if (parent->partdesc->nparts == 0)
+		if (dispatch->partdesc->nparts == 0)
 		{
 			result = -1;
 			break;
 		}
 
-		cur_index = get_partition_for_tuple(parent, values, isnull);
+		cur_index = get_partition_for_tuple(dispatch, values, isnull);
 
 		/*
 		 * cur_index < 0 means we failed to find a partition of this parent.
@@ -261,14 +266,32 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 			result = -1;
 			break;
 		}
-		else if (parent->indexes[cur_index] >= 0)
+		else if (dispatch->indexes[cur_index] >= 0)
 		{
-			result = parent->indexes[cur_index];
+			result = dispatch->indexes[cur_index];
+			/* success! */
 			break;
 		}
 		else
-			parent = pd[-parent->indexes[cur_index]];
+		{
+			/* move down one level */
+			dispatch = pd[-dispatch->indexes[cur_index]];
+
+			/*
+			 * Release the dedicated slot, if it was used.  Create a copy of
+			 * the tuple first, for the next iteration.
+			 */
+			if (slot == myslot)
+			{
+				tuple = ExecCopySlotTuple(myslot);
+				ExecClearTuple(myslot);
+			}
+		}
 	}
+
+	/* Release the tuple in the lowest parent's dedicated slot. */
+	if (slot == myslot)
+		ExecClearTuple(myslot);
 
 	/* A partition was not found. */
 	if (result < 0)
@@ -285,7 +308,9 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 				 val_desc ? errdetail("Partition key of the failing row contains %s.", val_desc) : 0));
 	}
 
+	MemoryContextSwitchTo(oldcxt);
 	ecxt->ecxt_scantuple = ecxt_scantuple_old;
+
 	return result;
 }
 
