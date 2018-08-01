@@ -95,3 +95,30 @@ copy copytest3 to stdout csv header;
 c1,"col with , comma","col with "" quote"
 1,a,1
 2,b,2
+-- test copy from with a partitioned table
+create table parted_copytest (
+	a int,
+	b int,
+	c text
+) partition by list (b);
+create table parted_copytest_a1 (c text, b int, a int);
+create table parted_copytest_a2 (a int, c text, b int);
+alter table parted_copytest attach partition parted_copytest_a1 for values in(1);
+alter table parted_copytest attach partition parted_copytest_a2 for values in(2);
+-- We must insert enough rows to trigger multi-inserts.  These are only
+-- enabled adaptively when there are few enough partition changes.
+insert into parted_copytest select x,1,'One' from generate_series(1,1000) x;
+insert into parted_copytest select x,2,'Two' from generate_series(1001,1010) x;
+insert into parted_copytest select x,1,'One' from generate_series(1011,1020) x;
+copy (select * from parted_copytest order by a) to '@abs_builddir@/results/parted_copytest.csv';
+truncate parted_copytest;
+copy parted_copytest from '@abs_builddir@/results/parted_copytest.csv';
+select tableoid::regclass,count(*),sum(a) from parted_copytest
+group by tableoid order by tableoid::regclass::name;
+      tableoid      | count |  sum   
+--------------------+-------+--------
+ parted_copytest_a1 |  1010 | 510655
+ parted_copytest_a2 |    10 |  10055
+(2 rows)
+
+drop table parted_copytest;

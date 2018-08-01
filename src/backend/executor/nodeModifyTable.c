@@ -1164,7 +1164,8 @@ lreplace:;
 			tuple = ConvertPartitionTupleSlot(tupconv_map,
 											  tuple,
 											  proute->root_tuple_slot,
-											  &slot);
+											  &slot,
+											  true);
 
 			/*
 			 * Prepare for tuple routing, making it look like we're inserting
@@ -1792,7 +1793,8 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	ConvertPartitionTupleSlot(proute->parent_child_tupconv_maps[partidx],
 							  tuple,
 							  proute->partition_tuple_slot,
-							  &slot);
+							  &slot,
+							  true);
 
 	/* Initialize information needed to handle ON CONFLICT DO UPDATE. */
 	Assert(mtstate != NULL);

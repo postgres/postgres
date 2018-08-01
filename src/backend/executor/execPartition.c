@@ -774,7 +774,8 @@ HeapTuple
 ConvertPartitionTupleSlot(TupleConversionMap *map,
 						  HeapTuple tuple,
 						  TupleTableSlot *new_slot,
-						  TupleTableSlot **p_my_slot)
+						  TupleTableSlot **p_my_slot,
+						  bool shouldFree)
 {
 	if (!map)
 		return tuple;
@@ -787,7 +788,7 @@ ConvertPartitionTupleSlot(TupleConversionMap *map,
 	*p_my_slot = new_slot;
 	Assert(new_slot != NULL);
 	ExecSetSlotDescriptor(new_slot, map->outdesc);
-	ExecStoreTuple(tuple, new_slot, InvalidBuffer, true);
+	ExecStoreTuple(tuple, new_slot, InvalidBuffer, shouldFree);
 
 	return tuple;
 }

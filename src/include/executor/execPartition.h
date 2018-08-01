@@ -205,7 +205,8 @@ extern TupleConversionMap *TupConvMapForLeaf(PartitionTupleRouting *proute,
 extern HeapTuple ConvertPartitionTupleSlot(TupleConversionMap *map,
 						  HeapTuple tuple,
 						  TupleTableSlot *new_slot,
-						  TupleTableSlot **p_my_slot);
+						  TupleTableSlot **p_my_slot,
+						  bool shouldFree);
 extern void ExecCleanupTupleRouting(ModifyTableState *mtstate,
 						PartitionTupleRouting *proute);
 extern PartitionPruneState *ExecCreatePartitionPruneState(PlanState *planstate,
