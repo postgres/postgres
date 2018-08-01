@@ -938,8 +938,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
      <para>
        If a password file is used, you can have different passwords for
        different hosts. All the other connection options are the same for every
-       host, it is not possible to e.g. specify a different username for
-       different hosts.
+       host in the list; it is not possible to e.g. specify different
+       usernames for different hosts.
      </para>
    </sect3>
   </sect2>
@@ -961,7 +961,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         name of the directory in which the socket file is stored.  If
         multiple host names are specified, each will be tried in turn in
         the order given.  The default behavior when <literal>host</literal> is
-        not specified is to connect to a Unix-domain
+        not specified, or is empty, is to connect to a Unix-domain
         socket<indexterm><primary>Unix domain socket</primary></indexterm> in
         <filename>/tmp</filename> (or whatever socket directory was specified
         when <productname>PostgreSQL</productname> was built). On machines without
@@ -969,7 +969,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        </para>
        <para>
         A comma-separated list of host names is also accepted, in which case
-        each host name in the list is tried in order. See
+        each host name in the list is tried in order; an empty item in the
+        list selects the default behavior as explained above. See
         <xref linkend="libpq-multiple-hosts"/> for details.
        </para>
       </listitem>
@@ -1020,14 +1021,17 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         </itemizedlist>
         Note that authentication is likely to fail if <literal>host</literal>
         is not the name of the server at network address <literal>hostaddr</literal>.
-        Also, note that <literal>host</literal> rather than <literal>hostaddr</literal>
+        Also, when both <literal>host</literal> and <literal>hostaddr</literal>
+        are specified, <literal>host</literal>
         is used to identify the connection in a password file (see
         <xref linkend="libpq-pgpass"/>).
        </para>
 
        <para>
         A comma-separated list of <literal>hostaddr</literal> values is also
-        accepted, in which case each host in the list is tried in order. See
+        accepted, in which case each host in the list is tried in order.
+        An empty item in the list causes the corresponding host name to be
+        used, or the default host name if that is empty as well. See
         <xref linkend="libpq-multiple-hosts"/> for details.
        </para>
        <para>
@@ -1047,9 +1051,12 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         name extension for Unix-domain
         connections.<indexterm><primary>port</primary></indexterm>
         If multiple hosts were given in the <literal>host</literal> or
-        <literal>hostaddr</literal> parameters, this parameter may specify a list
-        of ports of equal length, or it may specify a single port number to
-        be used for all hosts.
+        <literal>hostaddr</literal> parameters, this parameter may specify a
+        comma-separated list of ports of the same length as the host list, or
+        it may specify a single port number to be used for all hosts.
+        An empty string, or an empty item in a comma-separated list,
+        specifies the default port number established
+        when <productname>PostgreSQL</productname> was built.
        </para>
       </listitem>
      </varlistentry>
@@ -1682,6 +1689,17 @@ char *PQuser(const PGconn *conn);
 <synopsis>
 char *PQpass(const PGconn *conn);
 </synopsis>
+      </para>
+
+      <para>
+       <function>PQpass</function> will return either the password specified
+       in the connection parameters, or if there was none and the password
+       was obtained from the <link linkend="libpq-pgpass">password
+       file</link>, it will return that.  In the latter case,
+       if multiple hosts were specified in the connection parameters, it is
+       not possible to rely on the result of <function>PQpass</function> until
+       the connection is established.  The status of the connection can be
+       checked using the function <function>PQstatus</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -7521,13 +7539,18 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    used.  (Therefore, put more-specific entries first when you are using
    wildcards.) If an entry needs to contain <literal>:</literal> or
    <literal>\</literal>, escape this character with <literal>\</literal>.
-   A host name of <literal>localhost</literal> matches both TCP (host name
-   <literal>localhost</literal>) and Unix domain socket (<literal>pghost</literal> empty
-   or the default socket directory) connections coming from the local
-   machine. In a standby server, a database name of <literal>replication</literal>
+   The host name field is matched to the <literal>host</literal> connection
+   parameter if that is specified, otherwise to
+   the <literal>hostaddr</literal> parameter if that is specified; if neither
+   are given then the host name <literal>localhost</literal> is searched for.
+   The host name <literal>localhost</literal> is also searched for when
+   the connection is a Unix-domain socket connection and
+   the <literal>host</literal> parameter
+   matches <application>libpq</application>'s default socket directory path.
+   In a standby server, a database field of <literal>replication</literal>
    matches streaming replication connections made to the master server.
-   The <literal>database</literal> field is of limited usefulness because
-   users have the same password for all databases in the same cluster.
+   The database field is of limited usefulness otherwise, because users have
+   the same password for all databases in the same cluster.
   </para>
 
   <para>
