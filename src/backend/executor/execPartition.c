@@ -215,7 +215,6 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 	dispatch = pd[0];
 	while (true)
 	{
-		TupleTableSlot *myslot = dispatch->tupslot;
 		TupleConversionMap *map = dispatch->tupmap;
 		int			cur_index = -1;
 
