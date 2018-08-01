@@ -2382,6 +2382,96 @@ select * from ab where a = (select max(a) from lprt_a) and b = (select max(a)-1 
                Index Cond: (a = $0)
 (52 rows)
 
+-- Test run-time partition pruning with UNION ALL parents
+explain (analyze, costs off, summary off, timing off)
+select * from (select * from ab where a = 1 union all select * from ab) ab where b = (select 1);
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Append (actual rows=0 loops=1)
+   InitPlan 1 (returns $0)
+     ->  Result (actual rows=1 loops=1)
+   ->  Append (actual rows=0 loops=1)
+         ->  Bitmap Heap Scan on ab_a1_b1 ab_a1_b1_1 (actual rows=0 loops=1)
+               Recheck Cond: (a = 1)
+               Filter: (b = $0)
+               ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
+                     Index Cond: (a = 1)
+         ->  Bitmap Heap Scan on ab_a1_b2 ab_a1_b2_1 (never executed)
+               Recheck Cond: (a = 1)
+               Filter: (b = $0)
+               ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
+                     Index Cond: (a = 1)
+         ->  Bitmap Heap Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
+               Recheck Cond: (a = 1)
+               Filter: (b = $0)
+               ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
+                     Index Cond: (a = 1)
+   ->  Seq Scan on ab_a1_b1 (actual rows=0 loops=1)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a1_b2 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a1_b3 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a2_b1 (actual rows=0 loops=1)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a2_b2 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a2_b3 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a3_b1 (actual rows=0 loops=1)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a3_b2 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a3_b3 (never executed)
+         Filter: (b = $0)
+(37 rows)
+
+-- A case containing a UNION ALL with a non-partitioned child.
+explain (analyze, costs off, summary off, timing off)
+select * from (select * from ab where a = 1 union all (values(10,5)) union all select * from ab) ab where b = (select 1);
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Append (actual rows=0 loops=1)
+   InitPlan 1 (returns $0)
+     ->  Result (actual rows=1 loops=1)
+   ->  Append (actual rows=0 loops=1)
+         ->  Bitmap Heap Scan on ab_a1_b1 ab_a1_b1_1 (actual rows=0 loops=1)
+               Recheck Cond: (a = 1)
+               Filter: (b = $0)
+               ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
+                     Index Cond: (a = 1)
+         ->  Bitmap Heap Scan on ab_a1_b2 ab_a1_b2_1 (never executed)
+               Recheck Cond: (a = 1)
+               Filter: (b = $0)
+               ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
+                     Index Cond: (a = 1)
+         ->  Bitmap Heap Scan on ab_a1_b3 ab_a1_b3_1 (never executed)
+               Recheck Cond: (a = 1)
+               Filter: (b = $0)
+               ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
+                     Index Cond: (a = 1)
+   ->  Result (actual rows=0 loops=1)
+         One-Time Filter: (5 = $0)
+   ->  Seq Scan on ab_a1_b1 (actual rows=0 loops=1)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a1_b2 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a1_b3 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a2_b1 (actual rows=0 loops=1)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a2_b2 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a2_b3 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a3_b1 (actual rows=0 loops=1)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a3_b2 (never executed)
+         Filter: (b = $0)
+   ->  Seq Scan on ab_a3_b3 (never executed)
+         Filter: (b = $0)
+(39 rows)
+
 deallocate ab_q1;
 deallocate ab_q2;
 deallocate ab_q3;
@@ -3318,3 +3408,86 @@ explain (costs off) select * from pp_temp_parent where a = 2;
 (3 rows)
 
 drop table pp_temp_parent;
+-- Stress run-time partition pruning a bit more, per bug reports
+create temp table p (a int, b int, c int) partition by list (a);
+create temp table p1 partition of p for values in (1);
+create temp table p2 partition of p for values in (2);
+create temp table q (a int, b int, c int) partition by list (a);
+create temp table q1 partition of q for values in (1) partition by list (b);
+create temp table q11 partition of q1 for values in (1) partition by list (c);
+create temp table q111 partition of q11 for values in (1);
+create temp table q2 partition of q for values in (2) partition by list (b);
+create temp table q21 partition of q2 for values in (1);
+create temp table q22 partition of q2 for values in (2);
+insert into q22 values (2, 2, 3);
+explain (costs off)
+select *
+from (
+      select * from p
+      union all
+      select * from q1
+      union all
+      select 1, 1, 1
+     ) s(a, b, c)
+where s.a = 1 and s.b = 1 and s.c = (select 1);
+                     QUERY PLAN                     
+----------------------------------------------------
+ Append
+   InitPlan 1 (returns $0)
+     ->  Result
+   ->  Seq Scan on p1
+         Filter: ((a = 1) AND (b = 1) AND (c = $0))
+   ->  Seq Scan on q111
+         Filter: ((a = 1) AND (b = 1) AND (c = $0))
+   ->  Result
+         One-Time Filter: (1 = $0)
+(9 rows)
+
+select *
+from (
+      select * from p
+      union all
+      select * from q1
+      union all
+      select 1, 1, 1
+     ) s(a, b, c)
+where s.a = 1 and s.b = 1 and s.c = (select 1);
+ a | b | c 
+---+---+---
+ 1 | 1 | 1
+(1 row)
+
+prepare q (int, int) as
+select *
+from (
+      select * from p
+      union all
+      select * from q1
+      union all
+      select 1, 1, 1
+     ) s(a, b, c)
+where s.a = $1 and s.b = $2 and s.c = (select 1);
+set plan_cache_mode to force_generic_plan;
+explain (costs off) execute q (1, 1);
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Append
+   InitPlan 1 (returns $0)
+     ->  Result
+   Subplans Removed: 1
+   ->  Seq Scan on p1
+         Filter: ((a = $1) AND (b = $2) AND (c = $0))
+   ->  Seq Scan on q111
+         Filter: ((a = $1) AND (b = $2) AND (c = $0))
+   ->  Result
+         One-Time Filter: ((1 = $1) AND (1 = $2) AND (1 = $0))
+(10 rows)
+
+execute q (1, 1);
+ a | b | c 
+---+---+---
+ 1 | 1 | 1
+(1 row)
+
+reset plan_cache_mode;
+drop table p, q;

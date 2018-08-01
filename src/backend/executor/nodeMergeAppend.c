@@ -90,7 +90,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	mergestate->ms_noopscan = false;
 
 	/* If run-time partition pruning is enabled, then set that up now */
-	if (node->part_prune_infos != NIL)
+	if (node->part_prune_info != NULL)
 	{
 		PartitionPruneState *prunestate;
 
@@ -98,7 +98,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		ExecAssignExprContext(estate, &mergestate->ps);
 
 		prunestate = ExecCreatePartitionPruneState(&mergestate->ps,
-												   node->part_prune_infos);
+												   node->part_prune_info);
 		mergestate->ms_prune_state = prunestate;
 
 		/* Perform an initial partition prune, if required. */

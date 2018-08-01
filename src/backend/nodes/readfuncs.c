@@ -1612,7 +1612,7 @@ _readAppend(void)
 	READ_NODE_FIELD(appendplans);
 	READ_INT_FIELD(first_partial_plan);
 	READ_NODE_FIELD(partitioned_rels);
-	READ_NODE_FIELD(part_prune_infos);
+	READ_NODE_FIELD(part_prune_info);
 
 	READ_DONE();
 }
@@ -1634,7 +1634,7 @@ _readMergeAppend(void)
 	READ_OID_ARRAY(sortOperators, local_node->numCols);
 	READ_OID_ARRAY(collations, local_node->numCols);
 	READ_BOOL_ARRAY(nullsFirst, local_node->numCols);
-	READ_NODE_FIELD(part_prune_infos);
+	READ_NODE_FIELD(part_prune_info);
 
 	READ_DONE();
 }
@@ -2329,6 +2329,17 @@ _readPartitionPruneInfo(void)
 {
 	READ_LOCALS(PartitionPruneInfo);
 
+	READ_NODE_FIELD(prune_infos);
+	READ_BITMAPSET_FIELD(other_subplans);
+
+	READ_DONE();
+}
+
+static PartitionedRelPruneInfo *
+_readPartitionedRelPruneInfo(void)
+{
+	READ_LOCALS(PartitionedRelPruneInfo);
+
 	READ_OID_FIELD(reloid);
 	READ_NODE_FIELD(pruning_steps);
 	READ_BITMAPSET_FIELD(present_parts);
@@ -2726,6 +2737,8 @@ parseNodeString(void)
 		return_value = _readPlanRowMark();
 	else if (MATCH("PARTITIONPRUNEINFO", 18))
 		return_value = _readPartitionPruneInfo();
+	else if (MATCH("PARTITIONEDRELPRUNEINFO", 23))
+		return_value = _readPartitionedRelPruneInfo();
 	else if (MATCH("PARTITIONPRUNESTEPOP", 20))
 		return_value = _readPartitionPruneStepOp();
 	else if (MATCH("PARTITIONPRUNESTEPCOMBINE", 25))

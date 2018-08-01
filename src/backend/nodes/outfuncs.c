@@ -402,7 +402,7 @@ _outAppend(StringInfo str, const Append *node)
 	WRITE_NODE_FIELD(appendplans);
 	WRITE_INT_FIELD(first_partial_plan);
 	WRITE_NODE_FIELD(partitioned_rels);
-	WRITE_NODE_FIELD(part_prune_infos);
+	WRITE_NODE_FIELD(part_prune_info);
 }
 
 static void
@@ -435,7 +435,7 @@ _outMergeAppend(StringInfo str, const MergeAppend *node)
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %s", booltostr(node->nullsFirst[i]));
 
-	WRITE_NODE_FIELD(part_prune_infos);
+	WRITE_NODE_FIELD(part_prune_info);
 }
 
 static void
@@ -1015,9 +1015,18 @@ _outPlanRowMark(StringInfo str, const PlanRowMark *node)
 static void
 _outPartitionPruneInfo(StringInfo str, const PartitionPruneInfo *node)
 {
+	WRITE_NODE_TYPE("PARTITIONPRUNEINFO");
+
+	WRITE_NODE_FIELD(prune_infos);
+	WRITE_BITMAPSET_FIELD(other_subplans);
+}
+
+static void
+_outPartitionedRelPruneInfo(StringInfo str, const PartitionedRelPruneInfo *node)
+{
 	int			i;
 
-	WRITE_NODE_TYPE("PARTITIONPRUNEINFO");
+	WRITE_NODE_TYPE("PARTITIONEDRELPRUNEINFO");
 
 	WRITE_OID_FIELD(reloid);
 	WRITE_NODE_FIELD(pruning_steps);
@@ -3830,6 +3839,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_PartitionPruneInfo:
 				_outPartitionPruneInfo(str, obj);
+				break;
+			case T_PartitionedRelPruneInfo:
+				_outPartitionedRelPruneInfo(str, obj);
 				break;
 			case T_PartitionPruneStepOp:
 				_outPartitionPruneStepOp(str, obj);
