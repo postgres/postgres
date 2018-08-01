@@ -1068,6 +1068,19 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 		got_STOPPING = true;
 	}
 
+	/*
+	 * Create our decoding context, making it start at the previously ack'ed
+	 * position.
+	 *
+	 * Do this before sending CopyBoth, so that any errors are reported early.
+	 */
+	logical_decoding_ctx =
+		CreateDecodingContext(cmd->startpoint, cmd->options, false,
+							  logical_read_xlog_page,
+							  WalSndPrepareWrite, WalSndWriteData,
+							  WalSndUpdateProgress);
+
+
 	WalSndSetState(WALSNDSTATE_CATCHUP);
 
 	/* Send a CopyBothResponse message, and start streaming */
@@ -1077,16 +1090,6 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	pq_endmessage(&buf);
 	pq_flush();
 
-	/*
-	 * Initialize position to the last ack'ed one, then the xlog records begin
-	 * to be shipped from that position.
-	 */
-	logical_decoding_ctx = CreateDecodingContext(cmd->startpoint, cmd->options,
-												 false,
-												 logical_read_xlog_page,
-												 WalSndPrepareWrite,
-												 WalSndWriteData,
-												 WalSndUpdateProgress);
 
 	/* Start reading WAL from the oldest required WAL. */
 	logical_startptr = MyReplicationSlot->data.restart_lsn;
