@@ -393,6 +393,54 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
  </sect2>
 
+ <sect2 id="parallel-append">
+  <title>Parallel Append</title>
+
+  <para>
+    Whenever <productname>PostgreSQL</productname> needs to combine rows
+    from multiple sources into a single result set, it uses an
+    <literal>Append</literal> or <literal>MergeAppend</literal> plan node.
+    This commonly happens when implementing <literal>UNION ALL</literal> or
+    when scanning a partitioned table.  Such nodes can be used in parallel
+    plans just as they can in any other plan.  However, in a parallel plan,
+    the planner may instead use a <literal>Parallel Append</literal> node.
+  </para>
+
+  <para>
+    When an <literal>Append</literal> node is used in a parallel plan, each
+    process will execute the child plans in the order in which they appear,
+    so that all participating processes cooperate to execute the first child
+    plan until it is complete and then move to the second plan at around the
+    same time.  When a <literal>Parallel Append</literal> is used instead, the
+    executor will instead spread out the participating processes as evenly as
+    possible across its child plans, so that multiple child plans are executed
+    simultaneously.  This avoids contention, and also avoids paying the startup
+    cost of a child plan in those processes that never execute it.
+  </para>
+
+  <para>
+    Also, unlike a regular <literal>Append</literal> node, which can only have
+    partial children when used within a parallel plan, a <literal>Parallel
+    Append</literal> node can have both partial and non-partial child plans.
+    Non-partial children will be scanned by only a single process, since
+    scanning them more than once would produce duplicate results.  Plans that
+    involve appending multiple results sets can therefore achieve
+    coarse-grained parallelism even when efficient partial plans are not
+    available.  For example, consider a query against a partitioned table
+    which can be only be implemented efficiently by using an index that does
+    not support parallel scans.  The planner might choose a <literal>Parallel
+    Append</literal> of regular <literal>Index Scan</literal> plans; each
+    individual index scan would have to be executed to completion by a single
+    process, but different scans could be performed at the same time by
+    different processes.
+  </para>
+
+  <para>
+    <xref linkend="guc-enable-parallel-append" /> can be used to disable
+    this feature.
+  </para>
+ </sect2>
+
  <sect2 id="parallel-plan-tips">
   <title>Parallel Plan Tips</title>
 
