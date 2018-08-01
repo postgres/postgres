@@ -901,6 +901,8 @@ parse_comma_separated_list(char **startptr, bool *more)
 static bool
 connectOptions2(PGconn *conn)
 {
+	int			i;
+
 	/*
 	 * Allocate memory for details about each host to which we might possibly
 	 * try to connect.  For that, count the number of elements in the hostaddr
@@ -920,11 +922,10 @@ connectOptions2(PGconn *conn)
 
 	/*
 	 * We now have one pg_conn_host structure per possible host.  Fill in the
-	 * host details for each one.
+	 * host and hostaddr fields for each, by splitting the parameter strings.
 	 */
 	if (conn->pghostaddr != NULL && conn->pghostaddr[0] != '\0')
 	{
-		int			i;
 		char	   *s = conn->pghostaddr;
 		bool		more = true;
 
@@ -933,8 +934,6 @@ connectOptions2(PGconn *conn)
 			conn->connhost[i].hostaddr = parse_comma_separated_list(&s, &more);
 			if (conn->connhost[i].hostaddr == NULL)
 				goto oom_error;
-
-			conn->connhost[i].type = CHT_HOST_ADDRESS;
 		}
 
 		/*
@@ -948,7 +947,6 @@ connectOptions2(PGconn *conn)
 
 	if (conn->pghost != NULL && conn->pghost[0] != '\0')
 	{
-		int			i;
 		char	   *s = conn->pghost;
 		bool		more = true;
 
@@ -957,17 +955,9 @@ connectOptions2(PGconn *conn)
 			conn->connhost[i].host = parse_comma_separated_list(&s, &more);
 			if (conn->connhost[i].host == NULL)
 				goto oom_error;
-
-			/* Identify the type of host. */
-			if (conn->pghostaddr == NULL || conn->pghostaddr[0] == '\0')
-			{
-				conn->connhost[i].type = CHT_HOST_NAME;
-#ifdef HAVE_UNIX_SOCKETS
-				if (is_absolute_path(conn->connhost[i].host))
-					conn->connhost[i].type = CHT_UNIX_SOCKET;
-#endif
-			}
 		}
+
+		/* Check for wrong number of host items. */
 		if (more || i != conn->nconnhost)
 		{
 			conn->status = CONNECTION_BAD;
@@ -979,29 +969,48 @@ connectOptions2(PGconn *conn)
 	}
 
 	/*
-	 * If neither host or hostaddr options was given, connect to default host.
+	 * Now, for each host slot, identify the type of address spec, and fill in
+	 * the default address if nothing was given.
 	 */
-	if ((conn->pghostaddr == NULL || conn->pghostaddr[0] == '\0') &&
-		(conn->pghost == NULL || conn->pghost[0] == '\0'))
+	for (i = 0; i < conn->nconnhost; i++)
 	{
-		Assert(conn->nconnhost == 1);
+		pg_conn_host *ch = &conn->connhost[i];
+
+		if (ch->hostaddr != NULL && ch->hostaddr[0] != '\0')
+			ch->type = CHT_HOST_ADDRESS;
+		else if (ch->host != NULL && ch->host[0] != '\0')
+		{
+			ch->type = CHT_HOST_NAME;
 #ifdef HAVE_UNIX_SOCKETS
-		conn->connhost[0].host = strdup(DEFAULT_PGSOCKET_DIR);
-		conn->connhost[0].type = CHT_UNIX_SOCKET;
-#else
-		conn->connhost[0].host = strdup(DefaultHost);
-		conn->connhost[0].type = CHT_HOST_NAME;
+			if (is_absolute_path(ch->host))
+				ch->type = CHT_UNIX_SOCKET;
 #endif
-		if (conn->connhost[0].host == NULL)
-			goto oom_error;
+		}
+		else
+		{
+			if (ch->host)
+				free(ch->host);
+#ifdef HAVE_UNIX_SOCKETS
+			ch->host = strdup(DEFAULT_PGSOCKET_DIR);
+			ch->type = CHT_UNIX_SOCKET;
+#else
+			ch->host = strdup(DefaultHost);
+			ch->type = CHT_HOST_NAME;
+#endif
+			if (ch->host == NULL)
+				goto oom_error;
+		}
 	}
 
 	/*
 	 * Next, work out the port number corresponding to each host name.
+	 *
+	 * Note: unlike the above for host names, this could leave the port fields
+	 * as null or empty strings.  We will substitute DEF_PGPORT whenever we
+	 * read such a port field.
 	 */
 	if (conn->pgport != NULL && conn->pgport[0] != '\0')
 	{
-		int			i;
 		char	   *s = conn->pgport;
 		bool		more = true;
 
@@ -1065,8 +1074,8 @@ connectOptions2(PGconn *conn)
 	}
 
 	/*
-	 * Supply default password if none given.  Note that the password might be
-	 * different for each host/port pair.
+	 * If password was not given, try to look it up in password file.  Note
+	 * that the result might be different for each host/port pair.
 	 */
 	if (conn->pgpass == NULL || conn->pgpass[0] == '\0')
 	{
@@ -1089,20 +1098,16 @@ connectOptions2(PGconn *conn)
 
 		if (conn->pgpassfile != NULL && conn->pgpassfile[0] != '\0')
 		{
-			int			i;
-
 			for (i = 0; i < conn->nconnhost; i++)
 			{
 				/*
-				 * Try to get a password for this host from pgpassfile. We use
-				 * host name rather than host address in the same manner as
-				 * PQhost().
+				 * Try to get a password for this host from file.  We use host
+				 * for the hostname search key if given, else hostaddr (at
+				 * least one of them is guaranteed nonempty by now).
 				 */
-				char	   *pwhost = conn->connhost[i].host;
+				const char *pwhost = conn->connhost[i].host;
 
-				if (conn->connhost[i].type == CHT_HOST_ADDRESS &&
-					conn->connhost[i].host != NULL &&
-					conn->connhost[i].host[0] != '\0')
+				if (pwhost == NULL || pwhost[0] == '\0')
 					pwhost = conn->connhost[i].hostaddr;
 
 				conn->connhost[i].password =
@@ -6385,14 +6390,14 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 #define LINELEN NAMEDATALEN*5
 	char		buf[LINELEN];
 
-	if (dbname == NULL || strlen(dbname) == 0)
+	if (dbname == NULL || dbname[0] == '\0')
 		return NULL;
 
-	if (username == NULL || strlen(username) == 0)
+	if (username == NULL || username[0] == '\0')
 		return NULL;
 
 	/* 'localhost' matches pghost of '' or the default socket directory */
-	if (hostname == NULL)
+	if (hostname == NULL || hostname[0] == '\0')
 		hostname = DefaultHost;
 	else if (is_absolute_path(hostname))
 
@@ -6403,7 +6408,7 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 		if (strcmp(hostname, DEFAULT_PGSOCKET_DIR) == 0)
 			hostname = DefaultHost;
 
-	if (port == NULL)
+	if (port == NULL || port[0] == '\0')
 		port = DEF_PGPORT_STR;
 
 	/* If password file cannot be opened, ignore it. */
