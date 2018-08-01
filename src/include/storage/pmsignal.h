@@ -14,6 +14,8 @@
 #ifndef PMSIGNAL_H
 #define PMSIGNAL_H
 
+#include <signal.h>
+
 #ifdef HAVE_SYS_PRCTL_H
 #include "sys/prctl.h"
 #endif
