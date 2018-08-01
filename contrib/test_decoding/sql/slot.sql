@@ -9,6 +9,8 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_p', 'test
 
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_t2', 'test_decoding', true);
 
+SELECT pg_create_logical_replication_slot('foo', 'nonexistent');
+
 -- here we want to start a new session and wait till old one is gone
 select pg_backend_pid() as oldpid \gset
 \c -

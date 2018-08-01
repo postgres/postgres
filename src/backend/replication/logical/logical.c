@@ -312,7 +312,7 @@ CreateInitDecodingContext(char *plugin,
 	ReplicationSlotSave();
 
 	ctx = StartupDecodingContext(NIL, InvalidXLogRecPtr, xmin_horizon,
-								 need_full_snapshot, true,
+								 need_full_snapshot, false,
 								 read_page, prepare_write, do_write,
 								 update_progress);
 
