@@ -134,6 +134,8 @@ ExecLimit(PlanState *pstate)
 					node->position - node->offset >= node->count)
 				{
 					node->lstate = LIMIT_WINDOWEND;
+					/* Allow nodes to release or shut down resources. */
+					(void) ExecShutdownNode(outerPlan);
 					return NULL;
 				}
 
