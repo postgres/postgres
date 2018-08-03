@@ -88,9 +88,16 @@ pq_verify_peer_name_matches_certificate_name(PGconn *conn,
 {
 	char	   *name;
 	int			result;
-	char	   *host = PQhost(conn);
+	char	   *host = conn->connhost[conn->whichhost].host;
 
 	*store_name = NULL;
+
+	if (!(host && host[0] != '\0'))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("host name must be specified\n"));
+		return -1;
+	}
 
 	/*
 	 * There is no guarantee the string returned from the certificate is
@@ -145,7 +152,7 @@ pq_verify_peer_name_matches_certificate_name(PGconn *conn,
 bool
 pq_verify_peer_name_matches_certificate(PGconn *conn)
 {
-	char	   *host = PQhost(conn);
+	char	   *host = conn->connhost[conn->whichhost].host;
 	int			rc;
 	int			names_examined = 0;
 	char	   *first_name = NULL;
