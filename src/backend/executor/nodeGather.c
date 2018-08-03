@@ -324,7 +324,10 @@ gather_readnext(GatherState *gatherstate)
 			Assert(!tup);
 			--gatherstate->nreaders;
 			if (gatherstate->nreaders == 0)
+			{
+				ExecShutdownGatherWorkers(gatherstate);
 				return NULL;
+			}
 			memmove(&gatherstate->reader[gatherstate->nextreader],
 					&gatherstate->reader[gatherstate->nextreader + 1],
 					sizeof(TupleQueueReader *)
