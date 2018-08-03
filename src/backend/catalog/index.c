@@ -978,6 +978,12 @@ index_create(Relation heapRelation,
 						!concurrent && !invalid,
 						!concurrent);
 
+	/*
+	 * Register relcache invalidation on the indexes' heap relation, to
+	 * maintain consistency of its index list
+	 */
+	CacheInvalidateRelcache(heapRelation);
+
 	/* update pg_inherits, if needed */
 	if (OidIsValid(parentIndexRelid))
 		StoreSingleInheritance(indexRelationId, parentIndexRelid, 1);
