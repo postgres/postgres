@@ -979,9 +979,6 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	/* Report workers' query for monitoring purposes */
 	pgstat_report_activity(STATE_RUNNING, debug_query_string);
 
-	/* Prepare to track buffer usage during query execution. */
-	InstrStartParallelQuery();
-
 	/* Attach to the dynamic shared memory area. */
 	area_space = shm_toc_lookup(toc, PARALLEL_KEY_DSA, false);
 	area = dsa_attach_in_place(area_space, seg);
@@ -992,6 +989,15 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	/* Special executor initialization steps for parallel workers */
 	queryDesc->planstate->state->es_query_dsa = area;
 	ExecParallelInitializeWorker(queryDesc->planstate, toc);
+
+	/*
+	 * Prepare to track buffer usage during query execution.
+	 *
+	 * We do this after starting up the executor to match what happens in the
+	 * leader, which also doesn't count buffer accesses that occur during
+	 * executor startup.
+	 */
+	InstrStartParallelQuery();
 
 	/* Run the plan */
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
