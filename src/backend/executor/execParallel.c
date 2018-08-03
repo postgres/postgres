@@ -735,12 +735,19 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 		instrument_options = instrumentation->instrument_options;
 	queryDesc = ExecParallelGetQueryDesc(toc, receiver, instrument_options);
 
-	/* Prepare to track buffer usage during query execution. */
-	InstrStartParallelQuery();
-
 	/* Start up the executor, have it run the plan, and then shut it down. */
 	ExecutorStart(queryDesc, 0);
 	ExecParallelInitializeWorker(queryDesc->planstate, toc);
+
+	/*
+	 * Prepare to track buffer usage during query execution.
+	 *
+	 * We do this after starting up the executor to match what happens in the
+	 * leader, which also doesn't count buffer accesses that occur during
+	 * executor startup.
+	 */
+	InstrStartParallelQuery();
+
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 	ExecutorFinish(queryDesc);
 
