@@ -199,7 +199,7 @@ pg_GSS_startup(PGconn *conn, int payloadlen)
 				min_stat;
 	int			maxlen;
 	gss_buffer_desc temp_gbuf;
-	char	   *host = PQhost(conn);
+	char	   *host = conn->connhost[conn->whichhost].host;
 
 	if (!(host && host[0] != '\0'))
 	{
@@ -414,7 +414,7 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate, int payloadlen)
 {
 	SECURITY_STATUS r;
 	TimeStamp	expire;
-	char	   *host = PQhost(conn);
+	char	   *host = conn->connhost[conn->whichhost].host;
 
 	if (conn->sspictx)
 	{

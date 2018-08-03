@@ -483,9 +483,16 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 	char	   *name;
 	const unsigned char *namedata;
 	int			result;
-	char	   *host = PQhost(conn);
+	char	   *host = conn->connhost[conn->whichhost].host;
 
 	*store_name = NULL;
+
+	if (!(host && host[0] != '\0'))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("host name must be specified\n"));
+		return -1;
+	}
 
 	/* Should not happen... */
 	if (name_entry == NULL)
@@ -564,7 +571,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	STACK_OF(GENERAL_NAME) *peer_san;
 	int			i;
 	int			rc;
-	char	   *host = PQhost(conn);
+	char	   *host = conn->connhost[conn->whichhost].host;
 
 	/*
 	 * If told not to verify the peer name, don't do it. Return true
