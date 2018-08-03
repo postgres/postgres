@@ -2783,7 +2783,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        <literal>r</> = relation (table, view),
        <literal>S</> = sequence,
        <literal>f</> = function,
-       <literal>T</> = type
+       <literal>T</> = type,
+       <literal>n</> = schema
       </entry>
      </row>
 
