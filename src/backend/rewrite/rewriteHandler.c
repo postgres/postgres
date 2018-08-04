@@ -29,6 +29,7 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
@@ -1771,6 +1772,17 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 			continue;
 
 		/*
+		 * In INSERT ... ON CONFLICT, ignore the EXCLUDED pseudo-relation;
+		 * even if it points to a view, we needn't expand it, and should not
+		 * because we want the RTE to remain of RTE_RELATION type.  Otherwise,
+		 * it would get changed to RTE_SUBQUERY type, which is an
+		 * untested/unsupported situation.
+		 */
+		if (parsetree->onConflict &&
+			rt_index == parsetree->onConflict->exclRelIndex)
+			continue;
+
+		/*
 		 * If the table is not referenced in the query, then we ignore it.
 		 * This prevents infinite expansion loop due to new rtable entries
 		 * inserted by expansion of a rule. A table is referenced if it is
@@ -2875,8 +2887,6 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 */
 	base_rte->relkind = base_rel->rd_rel->relkind;
 
-	heap_close(base_rel, NoLock);
-
 	/*
 	 * If the view query contains any sublink subqueries then we need to also
 	 * acquire locks on any relations they refer to.  We know that there won't
@@ -3035,6 +3045,93 @@ rewriteTargetView(Query *parsetree, Relation view)
 	}
 
 	/*
+	 * For INSERT .. ON CONFLICT .. DO UPDATE, we must also update assorted
+	 * stuff in the onConflict data structure.
+	 */
+	if (parsetree->onConflict &&
+		parsetree->onConflict->action == ONCONFLICT_UPDATE)
+	{
+		Index		old_exclRelIndex,
+					new_exclRelIndex;
+		RangeTblEntry *new_exclRte;
+		List	   *tmp_tlist;
+
+		/*
+		 * Like the INSERT/UPDATE code above, update the resnos in the
+		 * auxiliary UPDATE targetlist to refer to columns of the base
+		 * relation.
+		 */
+		foreach(lc, parsetree->onConflict->onConflictSet)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			TargetEntry *view_tle;
+
+			if (tle->resjunk)
+				continue;
+
+			view_tle = get_tle_by_resno(view_targetlist, tle->resno);
+			if (view_tle != NULL && !view_tle->resjunk && IsA(view_tle->expr, Var))
+				tle->resno = ((Var *) view_tle->expr)->varattno;
+			else
+				elog(ERROR, "attribute number %d not found in view targetlist",
+					 tle->resno);
+		}
+
+		/*
+		 * Also, create a new RTE for the EXCLUDED pseudo-relation, using the
+		 * query's new base rel (which may well have a different column list
+		 * from the view, hence we need a new column alias list).  This should
+		 * match transformOnConflictClause.  In particular, note that the
+		 * relkind is set to composite to signal that we're not dealing with
+		 * an actual relation, and no permissions checks are wanted.
+		 */
+		old_exclRelIndex = parsetree->onConflict->exclRelIndex;
+
+		new_exclRte = addRangeTableEntryForRelation(make_parsestate(NULL),
+													base_rel,
+													makeAlias("excluded",
+															  NIL),
+													false, false);
+		new_exclRte->relkind = RELKIND_COMPOSITE_TYPE;
+		new_exclRte->requiredPerms = 0;
+		/* other permissions fields in new_exclRte are already empty */
+
+		parsetree->rtable = lappend(parsetree->rtable, new_exclRte);
+		new_exclRelIndex = parsetree->onConflict->exclRelIndex =
+			list_length(parsetree->rtable);
+
+		/*
+		 * Replace the targetlist for the EXCLUDED pseudo-relation with a new
+		 * one, representing the columns from the new base relation.
+		 */
+		parsetree->onConflict->exclRelTlist =
+			BuildOnConflictExcludedTargetlist(base_rel, new_exclRelIndex);
+
+		/*
+		 * Update all Vars in the ON CONFLICT clause that refer to the old
+		 * EXCLUDED pseudo-relation.  We want to use the column mappings
+		 * defined in the view targetlist, but we need the outputs to refer to
+		 * the new EXCLUDED pseudo-relation rather than the new target RTE.
+		 * Also notice that "EXCLUDED.*" will be expanded using the view's
+		 * rowtype, which seems correct.
+		 */
+		tmp_tlist = copyObject(view_targetlist);
+
+		ChangeVarNodes((Node *) tmp_tlist, new_rt_index,
+					   new_exclRelIndex, 0);
+
+		parsetree->onConflict = (OnConflictExpr *)
+			ReplaceVarsFromTargetList((Node *) parsetree->onConflict,
+									  old_exclRelIndex,
+									  0,
+									  view_rte,
+									  tmp_tlist,
+									  REPLACEVARS_REPORT_ERROR,
+									  0,
+									  &parsetree->hasSubLinks);
+	}
+
+	/*
 	 * For UPDATE/DELETE, pull up any WHERE quals from the view.  We know that
 	 * any Vars in the quals must reference the one base relation, so we need
 	 * only adjust their varnos to reference the new target (just the same as
@@ -3160,6 +3257,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 			}
 		}
 	}
+
+	heap_close(base_rel, NoLock);
 
 	return parsetree;
 }
