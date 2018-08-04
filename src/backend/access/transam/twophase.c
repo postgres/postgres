@@ -1565,6 +1565,7 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 						path)));
 
 	/* Write content and CRC */
+	errno = 0;
 	if (write(fd, content, len) != len)
 	{
 		int			save_errno = errno;
