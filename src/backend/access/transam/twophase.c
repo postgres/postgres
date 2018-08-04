@@ -1669,6 +1669,7 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 				 errmsg("could not recreate file \"%s\": %m", path)));
 
 	/* Write content and CRC */
+	errno = 0;
 	pgstat_report_wait_start(WAIT_EVENT_TWOPHASE_FILE_WRITE);
 	if (write(fd, content, len) != len)
 	{

@@ -122,6 +122,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		zerobuf = pg_malloc0(XLOG_BLCKSZ);
 		for (bytes = 0; bytes < pad_to_size; bytes += XLOG_BLCKSZ)
 		{
+			errno = 0;
 			if (write(fd, zerobuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 			{
 				int			save_errno = errno;
@@ -445,6 +446,7 @@ tar_write_compressed_data(void *buf, size_t count, bool flush)
 		{
 			size_t		len = ZLIB_OUT_SIZE - tar_data->zp->avail_out;
 
+			errno = 0;
 			if (write(tar_data->fd, tar_data->zlibOut, len) != len)
 			{
 				/*
@@ -629,6 +631,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 
 	if (!tar_data->compression)
 	{
+		errno = 0;
 		if (write(tar_data->fd, tar_data->currentfile->header, 512) != 512)
 		{
 			save_errno = errno;
@@ -829,6 +832,7 @@ tar_close(Walfile f, WalCloseMethod method)
 		return -1;
 	if (!tar_data->compression)
 	{
+		errno = 0;
 		if (write(tar_data->fd, tf->header, 512) != 512)
 		{
 			/* if write didn't set errno, assume problem is no disk space */
@@ -901,6 +905,7 @@ tar_finish(void)
 	MemSet(zerobuf, 0, sizeof(zerobuf));
 	if (!tar_data->compression)
 	{
+		errno = 0;
 		if (write(tar_data->fd, zerobuf, sizeof(zerobuf)) != sizeof(zerobuf))
 		{
 			/* if write didn't set errno, assume problem is no disk space */
@@ -933,6 +938,7 @@ tar_finish(void)
 			{
 				size_t		len = ZLIB_OUT_SIZE - tar_data->zp->avail_out;
 
+				errno = 0;
 				if (write(tar_data->fd, tar_data->zlibOut, len) != len)
 				{
 					/*
