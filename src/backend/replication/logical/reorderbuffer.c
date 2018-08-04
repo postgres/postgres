@@ -2369,6 +2369,7 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 	ondisk->size = sz;
 
+	errno = 0;
 	if (write(fd, rb->outbuf, ondisk->size) != ondisk->size)
 	{
 		int save_errno = errno;

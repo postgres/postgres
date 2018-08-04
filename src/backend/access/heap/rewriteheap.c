@@ -1164,6 +1164,7 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 	len = xlrec->num_mappings * sizeof(LogicalRewriteMappingData);
 
 	/* write out tail end of mapping file (again) */
+	errno = 0;
 	if (write(fd, data, len) != len)
 	{
 		/* if write didn't set errno, assume problem is no disk space */

@@ -157,6 +157,7 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir,
 	zerobuf = pg_malloc0(XLOG_BLCKSZ);
 	for (bytes = 0; bytes < XLogSegSize; bytes += XLOG_BLCKSZ)
 	{
+		errno = 0;
 		if (write(f, zerobuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 		{
 			/* if write didn't set errno, assume problem is no disk space */
@@ -1217,6 +1218,7 @@ ProcessXLogDataMsg(PGconn *conn, char *copybuf, int len,
 			}
 		}
 
+		errno = 0;
 		if (write(walfile,
 				  copybuf + hdr_len + bytes_written,
 				  bytes_to_write) != bytes_to_write)

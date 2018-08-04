@@ -1028,6 +1028,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 				SnapBuildOnDiskChecksummedSize);
 	FIN_CRC32C(cp.checksum);
 
+	errno = 0;
 	if ((write(fd, &cp, sizeof(cp))) != sizeof(cp))
 	{
 		int			save_errno = errno;
