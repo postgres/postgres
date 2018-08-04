@@ -1571,6 +1571,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 		ereport(ERROR,
 				(errmsg("could not open file \"%s\": %m", path)));
 
+	errno = 0;
 	if ((write(fd, ondisk, needed_length)) != needed_length)
 	{
 		int			save_errno = errno;
