@@ -1022,9 +1022,6 @@ transformOnConflictClause(ParseState *pstate,
 	if (onConflictClause->action == ONCONFLICT_UPDATE)
 	{
 		Relation	targetrel = pstate->p_target_relation;
-		Var		   *var;
-		TargetEntry *te;
-		int			attno;
 
 		/*
 		 * All INSERT expressions have been parsed, get ready for potentially
@@ -1033,75 +1030,36 @@ transformOnConflictClause(ParseState *pstate,
 		pstate->p_is_insert = false;
 
 		/*
-		 * Add range table entry for the EXCLUDED pseudo relation; relkind is
+		 * Add range table entry for the EXCLUDED pseudo relation.  relkind is
 		 * set to composite to signal that we're not dealing with an actual
-		 * relation.
+		 * relation, and no permission checks are required on it.  (We'll
+		 * check the actual target relation, instead.)
 		 */
 		exclRte = addRangeTableEntryForRelation(pstate,
 												targetrel,
 												makeAlias("excluded", NIL),
 												false, false);
 		exclRte->relkind = RELKIND_COMPOSITE_TYPE;
+		exclRte->requiredPerms = 0;
+		/* other permissions fields in exclRte are already empty */
+
 		exclRelIndex = list_length(pstate->p_rtable);
 
-		/*
-		 * Build a targetlist representing the columns of the EXCLUDED pseudo
-		 * relation.  Have to be careful to use resnos that correspond to
-		 * attnos of the underlying relation.
-		 */
-		for (attno = 0; attno < RelationGetNumberOfAttributes(targetrel); attno++)
-		{
-			Form_pg_attribute attr = TupleDescAttr(targetrel->rd_att, attno);
-			char	   *name;
-
-			if (attr->attisdropped)
-			{
-				/*
-				 * can't use atttypid here, but it doesn't really matter what
-				 * type the Const claims to be.
-				 */
-				var = (Var *) makeNullConst(INT4OID, -1, InvalidOid);
-				name = "";
-			}
-			else
-			{
-				var = makeVar(exclRelIndex, attno + 1,
-							  attr->atttypid, attr->atttypmod,
-							  attr->attcollation,
-							  0);
-				name = pstrdup(NameStr(attr->attname));
-			}
-
-			te = makeTargetEntry((Expr *) var,
-								 attno + 1,
-								 name,
-								 false);
-
-			/* don't require select access yet */
-			exclRelTlist = lappend(exclRelTlist, te);
-		}
-
-		/*
-		 * Add a whole-row-Var entry to support references to "EXCLUDED.*".
-		 * Like the other entries in exclRelTlist, its resno must match the
-		 * Var's varattno, else the wrong things happen while resolving
-		 * references in setrefs.c.  This is against normal conventions for
-		 * targetlists, but it's okay since we don't use this as a real tlist.
-		 */
-		var = makeVar(exclRelIndex, InvalidAttrNumber,
-					  targetrel->rd_rel->reltype,
-					  -1, InvalidOid, 0);
-		te = makeTargetEntry((Expr *) var, InvalidAttrNumber, NULL, true);
-		exclRelTlist = lappend(exclRelTlist, te);
+		/* Create EXCLUDED rel's targetlist for use by EXPLAIN */
+		exclRelTlist = BuildOnConflictExcludedTargetlist(targetrel,
+														 exclRelIndex);
 
 		/*
 		 * Add EXCLUDED and the target RTE to the namespace, so that they can
-		 * be used in the UPDATE statement.
+		 * be used in the UPDATE subexpressions.
 		 */
 		addRTEtoQuery(pstate, exclRte, false, true, true);
 		addRTEtoQuery(pstate, pstate->p_target_rangetblentry,
 					  false, true, true);
 
+		/*
+		 * Now transform the UPDATE subexpressions.
+		 */
 		onConflictSet =
 			transformUpdateTargetList(pstate, onConflictClause->targetList);
 
@@ -1121,6 +1079,74 @@ transformOnConflictClause(ParseState *pstate,
 	result->onConflictWhere = onConflictWhere;
 	result->exclRelIndex = exclRelIndex;
 	result->exclRelTlist = exclRelTlist;
+
+	return result;
+}
+
+
+/*
+ * BuildOnConflictExcludedTargetlist
+ *		Create target list for the EXCLUDED pseudo-relation of ON CONFLICT,
+ *		representing the columns of targetrel with varno exclRelIndex.
+ *
+ * Note: Exported for use in the rewriter.
+ */
+List *
+BuildOnConflictExcludedTargetlist(Relation targetrel,
+								  Index exclRelIndex)
+{
+	List	   *result = NIL;
+	int			attno;
+	Var		   *var;
+	TargetEntry *te;
+
+	/*
+	 * Note that resnos of the tlist must correspond to attnos of the
+	 * underlying relation, hence we need entries for dropped columns too.
+	 */
+	for (attno = 0; attno < RelationGetNumberOfAttributes(targetrel); attno++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(targetrel->rd_att, attno);
+		char	   *name;
+
+		if (attr->attisdropped)
+		{
+			/*
+			 * can't use atttypid here, but it doesn't really matter what type
+			 * the Const claims to be.
+			 */
+			var = (Var *) makeNullConst(INT4OID, -1, InvalidOid);
+			name = "";
+		}
+		else
+		{
+			var = makeVar(exclRelIndex, attno + 1,
+						  attr->atttypid, attr->atttypmod,
+						  attr->attcollation,
+						  0);
+			name = pstrdup(NameStr(attr->attname));
+		}
+
+		te = makeTargetEntry((Expr *) var,
+							 attno + 1,
+							 name,
+							 false);
+
+		result = lappend(result, te);
+	}
+
+	/*
+	 * Add a whole-row-Var entry to support references to "EXCLUDED.*".  Like
+	 * the other entries in the EXCLUDED tlist, its resno must match the Var's
+	 * varattno, else the wrong things happen while resolving references in
+	 * setrefs.c.  This is against normal conventions for targetlists, but
+	 * it's okay since we don't use this as a real tlist.
+	 */
+	var = makeVar(exclRelIndex, InvalidAttrNumber,
+				  targetrel->rd_rel->reltype,
+				  -1, InvalidOid, 0);
+	te = makeTargetEntry((Expr *) var, InvalidAttrNumber, NULL, true);
+	result = lappend(result, te);
 
 	return result;
 }
