@@ -349,7 +349,6 @@ struct pg_conn
 										 * retransmits */
 	char	   *keepalives_count;	/* maximum number of TCP keepalive
 									 * retransmits */
-	char	   *scram_channel_binding;	/* SCRAM channel binding type */
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
 	char	   *sslcompression; /* SSL compression (0 or 1) */
 	char	   *sslkey;			/* client key filename */
@@ -716,21 +715,19 @@ extern bool pgtls_read_pending(PGconn *conn);
 extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);
 
 /*
- * Get the TLS finish message sent during last handshake.
- *
- * This information is useful for callers doing channel binding during
- * authentication.
- */
-extern char *pgtls_get_finished(PGconn *conn, size_t *len);
-
-/*
  * Get the hash of the server certificate, for SCRAM channel binding type
  * tls-server-end-point.
  *
  * NULL is sent back to the caller in the event of an error, with an
  * error message for the caller to consume.
+ *
+ * This is not supported with old versions of OpenSSL that don't have
+ * the X509_get_signature_nid() function.
  */
+#if defined(USE_OPENSSL) && defined(HAVE_X509_GET_SIGNATURE_NID)
+#define HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
 extern char *pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len);
+#endif
 
 /*
  * Verify that the server certificate matches the host name we connected to.
