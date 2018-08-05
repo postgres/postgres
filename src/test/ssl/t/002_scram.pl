@@ -18,10 +18,6 @@ my $number_of_tests = 1;
 # This is the hostname used to connect to the server.
 my $SERVERHOSTADDR = '127.0.0.1';
 
-# Determine whether build supports tls-server-end-point.
-my $supports_tls_server_end_point =
-  check_pg_config("#define HAVE_X509_GET_SIGNATURE_NID 1");
-
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
 
