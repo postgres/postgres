@@ -63,7 +63,7 @@ $$ LANGUAGE SQL STRICT IMMUTABLE;
 
 <synopsis>
 hmac(data text, key text, type text) returns bytea
-hmac(data bytea, key text, type text) returns bytea
+hmac(data bytea, key bytea, type text) returns bytea
 </synopsis>
 
    <para>
