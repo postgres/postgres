@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2018-??-?? (CURRENT AS OF 2018-05-01)</para>
+   <para>2018-??-?? (CURRENT AS OF 2018-07-30)</para>
   </formalpara>
 
   <sect2>
@@ -217,6 +217,60 @@
 
       <listitem>
 <!--
+2018-06-18 [b97a3465d] Consider syntactic form when disambiguating function vs
+2018-06-18 [45e98ee73] Remove obsolete prohibition on function name matching a
+-->
+
+       <para>
+        Consider syntactic form when disambiguating function versus column
+        references (Tom Lane)
+       </para>
+
+       <para>
+        When <replaceable>x</replaceable> is a table name or composite
+        column, <productname>PostgreSQL</productname> has traditionally
+        considered the syntactic
+        forms <literal><replaceable>f</replaceable>(<replaceable>x</replaceable>)</literal>
+        and <literal><replaceable>x</replaceable>.<replaceable>f</replaceable></literal>
+        to be equivalent, allowing tricks such as writing a function and
+        then using it as though it were a computed-on-demand column.
+        However, if both interpretations are feasible, the column
+        interpretation was always chosen, leading to surprising results if
+        the user intended the function interpretation.  Now, if there is
+        ambiguity, the interpretation that matches the syntactic form is
+        chosen.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2018-04-29 [61b200e2f] Avoid wrong results for power() with NaN input on some p
+2018-04-29 [6bdf1303b] Avoid wrong results for power() with NaN input on more p
+2018-05-17 [d1fc750b5] Make numeric power() handle NaNs according to the modern
+-->
+
+       <para>
+        Make <function>power(numeric, numeric)</function>
+        and <function>power(float8, float8)</function>
+        handle <literal>NaN</literal> inputs according to the POSIX standard
+        (Tom Lane, Dang Minh Huong)
+       </para>
+
+       <para>
+        POSIX says that <literal>NaN ^ 0 = 1</literal> and <literal>1 ^ NaN
+        = 1</literal>, but all other cases with <literal>NaN</literal>
+        input(s) should return <literal>NaN</literal>.
+        <function>power(numeric, numeric)</function> just
+        returned <literal>NaN</literal> in all such cases; now it honors the
+        two exceptions.  <function>power(float8, float8)</function> followed
+        the standard if the C library does; but on some old Unix platforms
+        the library doesn't, and there were also problems on some versions
+        of Windows.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2017-11-17 [e87d4965b] Prevent to_number() from losing data when template doesn
 -->
 
@@ -274,22 +328,19 @@
 
       <listitem>
 <!--
-2018-03-27 [1944cdc98] libpq: PQhost to return active connected host or hostadd
+2018-06-21 [e474c2b7e] Set correct context for XPath evaluation
 -->
 
        <para>
-        Have libpq's <link
-        linkend="libpq-pqhost"><function>PQhost()</function></link>
-        always return the actual connected host (Haribabu Kommi)
+        Correctly handle relative path expressions
+        in <function>xmltable()</function>, <function>xpath()</function>,
+        and other XML-handling functions (Markus Winand)
        </para>
 
        <para>
-        Previously <function>PQhost()</function> often returned the
-        supplied host parameters, which could contain several hosts.
-        It will now also return the host's IP address if the host name was
-        not supplied.  The same is true of <function>PQport()</function>,
-        which now returns the actual port number, not the multiple supplied
-        port numbers.
+        Per the SQL standard, relative paths start from the document node of
+        the XML input document, not the root node as these functions
+        formerly did it.
        </para>
       </listitem>
 
@@ -423,19 +474,6 @@
         <productname>PostgreSQL</productname> has long supported a more
         standard-compliant syntax for this capability.
        </para>
-      </listitem>
-
-      <listitem>
-<!--
-Branch: master [6bdf1303b] Avoid wrong results for power() with NaN
--->
-
-       <para>
-        Consistently return <literal>NaN</literal> for
-        <literal>NaN</literal> inputs to <function>power()</function>
-        on older platforms (Tom Lane, Dang Minh Huong)
-       </para>
-
       </listitem>
 
    </itemizedlist>
@@ -1428,6 +1466,7 @@ same commits as above
       <listitem>
 <!--
 2017-09-12 [6e7baa322] Introduce BYTES unit for GUCs.
+2018-05-23 [b06d8e58b] Accept "B" in all memory-unit GUCs, and improve error me
 -->
 
        <para>
@@ -2616,6 +2655,24 @@ same commits as above
 
       <listitem>
 <!--
+2018-03-22 [9a95a77d9] Use stdbool.h if suitable
+2018-03-23 [7ba7986fb] Fix interaction of Perl and stdbool.h
+2018-05-02 [6fe25c135] Change SIZEOF_BOOL to 1 for Windows.
+-->
+
+       <para>
+        Use <filename>stdbool.h</filename> to define type <type>bool</type>
+        on platforms where it's suitable, which is most (Peter Eisentraut)
+       </para>
+
+       <para>
+        This eliminates a coding hazard for extension modules that need
+        to include <filename>stdbool.h</filename>.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2017-11-18 [9288d62bb] Support channel binding 'tls-unique' in SCRAM
 2017-12-19 [4bbf110d2] Add libpq connection parameter "scram_channel_binding"
 2018-01-04 [d3fb72ea6] Implement channel binding tls-server-end-point for SCRAM
@@ -2647,7 +2704,12 @@ same commits as above
 <!--
 2018-03-03 [a351679c8] Trivial adjustments in preparation for bootstrap data co
 2018-04-08 [372728b0d] Replace our traditional initial-catalog-data format with
+2018-04-17 [e90d4ddc6] Simplify genbki.pl's data quoting rules.
+2018-04-17 [9ffcccdb9] Rationalize handling of array type names in bootstrap da
+2018-04-17 [55d26ff63] Rationalize handling of single and double quotes in boot
+2018-04-18 [5372c2c84] Improve error detection/reporting in Catalog.pm and genb
 2018-04-26 [a0854f107] Avoid parsing catalog data twice during BKI file constru
+2018-05-05 [d160882a1] Fix bootstrap parser so that its keywords are unreserved
 -->
 
        <para>
@@ -2732,11 +2794,12 @@ same commits as above
       <listitem>
 <!--
 2018-04-25 [46cda5bf7] Change pgindent/README to specify that we use perltidy v
+2018-04-27 [a2ada08d4] perltidy: Don't write backup files
 -->
 
        <para>
         Update to use <application>perltidy</application> version
-        <literal>20170521</literal> (Tom Lane)
+        <literal>20170521</literal> (Tom Lane, Peter Eisentraut)
        </para>
       </listitem>
 
