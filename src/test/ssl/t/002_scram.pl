@@ -13,7 +13,7 @@ if ($ENV{with_openssl} ne 'yes')
 	plan skip_all => 'SSL not supported by this build';
 }
 
-my $number_of_tests = 6;
+my $number_of_tests = 1;
 
 # This is the hostname used to connect to the server.
 my $SERVERHOSTADDR = '127.0.0.1';
@@ -47,35 +47,6 @@ $common_connstr =
 
 # Default settings
 test_connect_ok($common_connstr, '',
-	"SCRAM authentication with default channel binding");
-
-# Channel binding settings
-test_connect_ok(
-	$common_connstr,
-	"scram_channel_binding=tls-unique",
-	"SCRAM authentication with tls-unique as channel binding");
-test_connect_ok($common_connstr, "scram_channel_binding=''",
-	"SCRAM authentication without channel binding");
-if ($supports_tls_server_end_point)
-{
-	test_connect_ok(
-		$common_connstr,
-		"scram_channel_binding=tls-server-end-point",
-		"SCRAM authentication with tls-server-end-point as channel binding");
-}
-else
-{
-	test_connect_fails(
-		$common_connstr,
-		"scram_channel_binding=tls-server-end-point",
-		qr/channel binding type "tls-server-end-point" is not supported by this build/,
-		"SCRAM authentication with tls-server-end-point as channel binding");
-	$number_of_tests++;
-}
-test_connect_fails(
-	$common_connstr,
-	"scram_channel_binding=not-exists",
-	qr/unsupported SCRAM channel-binding type/,
-	"SCRAM authentication with invalid channel binding");
+	"Basic SCRAM authentication with SSL");
 
 done_testing($number_of_tests);

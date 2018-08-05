@@ -1576,12 +1576,8 @@ the password is in.
   <para>
 <firstterm>Channel binding</firstterm> is supported in PostgreSQL builds with
 SSL support. The SASL mechanism name for SCRAM with channel binding is
-<literal>SCRAM-SHA-256-PLUS</literal>.  Two channel binding types are
-supported: <literal>tls-unique</literal> and
-<literal>tls-server-end-point</literal>, both defined in RFC 5929.  Clients
-should use <literal>tls-unique</literal> if they can support it.
-<literal>tls-server-end-point</literal> is intended for third-party clients
-that cannot support <literal>tls-unique</literal> for some reason.
+<literal>SCRAM-SHA-256-PLUS</literal>.  The channel binding type used by
+PostgreSQL is <literal>tls-server-end-point</literal>.
   </para>
 
   <para>
@@ -1596,19 +1592,11 @@ that cannot support <literal>tls-unique</literal> for some reason.
 
   <para>
    <acronym>SCRAM</acronym> with channel binding prevents such
-   man-in-the-middle attacks by mixing a value into the transmitted
-   password hash that cannot be retransmitted by a fake server.
-   In <acronym>SCRAM</acronym> with <literal>tls-unique</literal>
-   channel binding, the shared secret negotiated during the SSL session
-   is mixed into the user-supplied password hash.  The shared secret
-   is partly chosen by the server, but not directly transmitted, making
-   it impossible for a fake server to create an SSL connection with the
-   client that has the same shared secret it has with the real server.
-   <acronym>SCRAM</acronym> with <literal>tls-server-end-point</literal>
-   mixes a hash of the server's certificate into the user-supplied password
-   hash.  While a fake server can retransmit the real server's certificate,
-   it doesn't have access to the private key matching that certificate, and
-   therefore cannot prove it is the owner, causing SSL connection failure.
+   man-in-the-middle attacks by mixing the signature of the server's
+   certificate into the transmitted password hash. While a fake server can
+   retransmit the real server's certificate, it doesn't have access to the
+   private key matching that certificate, and therefore cannot prove it is
+   the owner, causing SSL connection failure.
   </para>
 
 <procedure>

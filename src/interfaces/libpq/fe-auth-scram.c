@@ -352,17 +352,9 @@ build_client_first_message(fe_scram_state *state)
 	if (strcmp(state->sasl_mechanism, SCRAM_SHA_256_PLUS_NAME) == 0)
 	{
 		Assert(conn->ssl_in_use);
-		appendPQExpBuffer(&buf, "p=%s", conn->scram_channel_binding);
+		appendPQExpBuffer(&buf, "p=tls-server-end-point");
 	}
-	else if (conn->scram_channel_binding == NULL ||
-			 strlen(conn->scram_channel_binding) == 0)
-	{
-		/*
-		 * Client has chosen to not show to server that it supports channel
-		 * binding.
-		 */
-		appendPQExpBuffer(&buf, "n");
-	}
+#ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
 	else if (conn->ssl_in_use)
 	{
 		/*
@@ -370,6 +362,7 @@ build_client_first_message(fe_scram_state *state)
 		 */
 		appendPQExpBuffer(&buf, "y");
 	}
+#endif
 	else
 	{
 		/*
@@ -432,60 +425,28 @@ build_client_final_message(fe_scram_state *state)
 	 */
 	if (strcmp(state->sasl_mechanism, SCRAM_SHA_256_PLUS_NAME) == 0)
 	{
+#ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
 		char	   *cbind_data = NULL;
 		size_t		cbind_data_len = 0;
 		size_t		cbind_header_len;
 		char	   *cbind_input;
 		size_t		cbind_input_len;
 
-		if (strcmp(conn->scram_channel_binding, SCRAM_CHANNEL_BINDING_TLS_UNIQUE) == 0)
+		/* Fetch hash data of server's SSL certificate */
+		cbind_data =
+			pgtls_get_peer_certificate_hash(state->conn,
+											&cbind_data_len);
+		if (cbind_data == NULL)
 		{
-#ifdef USE_SSL
-			cbind_data = pgtls_get_finished(state->conn, &cbind_data_len);
-			if (cbind_data == NULL)
-				goto oom_error;
-#endif
-		}
-		else if (strcmp(conn->scram_channel_binding,
-						SCRAM_CHANNEL_BINDING_TLS_END_POINT) == 0)
-		{
-			/* Fetch hash data of server's SSL certificate */
-#ifdef USE_SSL
-			cbind_data =
-				pgtls_get_peer_certificate_hash(state->conn,
-												&cbind_data_len);
-			if (cbind_data == NULL)
-			{
-				/* error message is already set on error */
-				return NULL;
-			}
-#endif
-		}
-		else
-		{
-			/* should not happen */
+			/* error message is already set on error */
 			termPQExpBuffer(&buf);
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("invalid channel binding type\n"));
-			return NULL;
-		}
-
-		/* should not happen */
-		if (cbind_data == NULL || cbind_data_len == 0)
-		{
-			if (cbind_data != NULL)
-				free(cbind_data);
-			termPQExpBuffer(&buf);
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("empty channel binding data for channel binding type \"%s\"\n"),
-							  conn->scram_channel_binding);
 			return NULL;
 		}
 
 		appendPQExpBuffer(&buf, "c=");
 
 		/* p=type,, */
-		cbind_header_len = 4 + strlen(conn->scram_channel_binding);
+		cbind_header_len = strlen("p=tls-server-end-point,,");
 		cbind_input_len = cbind_header_len + cbind_data_len;
 		cbind_input = malloc(cbind_input_len);
 		if (!cbind_input)
@@ -493,8 +454,7 @@ build_client_final_message(fe_scram_state *state)
 			free(cbind_data);
 			goto oom_error;
 		}
-		snprintf(cbind_input, cbind_input_len, "p=%s,,",
-				 conn->scram_channel_binding);
+		memcpy(cbind_input, "p=tls-server-end-point,,", cbind_header_len);
 		memcpy(cbind_input + cbind_header_len, cbind_data, cbind_data_len);
 
 		if (!enlargePQExpBuffer(&buf, pg_b64_enc_len(cbind_input_len)))
@@ -508,12 +468,21 @@ build_client_final_message(fe_scram_state *state)
 
 		free(cbind_data);
 		free(cbind_input);
+#else
+		/*
+		 * Chose channel binding, but the SSL library doesn't support it.
+		 * Shouldn't happen.
+		 */
+		termPQExpBuffer(&buf);
+		printfPQExpBuffer(&conn->errorMessage,
+						  "channel binding not supported by this build\n");
+		return NULL;
+#endif	/* HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH */
 	}
-	else if (conn->scram_channel_binding == NULL ||
-			 strlen(conn->scram_channel_binding) == 0)
-		appendPQExpBuffer(&buf, "c=biws");	/* base64 of "n,," */
+#ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
 	else if (conn->ssl_in_use)
 		appendPQExpBuffer(&buf, "c=eSws");	/* base64 of "y,," */
+#endif
 	else
 		appendPQExpBuffer(&buf, "c=biws");	/* base64 of "n,," */
 

@@ -369,30 +369,10 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 	return n;
 }
 
-char *
-pgtls_get_finished(PGconn *conn, size_t *len)
-{
-	char		dummy[1];
-	char	   *result;
-
-	/*
-	 * OpenSSL does not offer an API to get directly the length of the TLS
-	 * Finished message sent, so first do a dummy call to grab this
-	 * information and then do an allocation with the correct size.
-	 */
-	*len = SSL_get_finished(conn->ssl, dummy, sizeof(dummy));
-	result = malloc(*len);
-	if (result == NULL)
-		return NULL;
-	(void) SSL_get_finished(conn->ssl, result, *len);
-
-	return result;
-}
-
+#ifdef HAVE_X509_GET_SIGNATURE_NID
 char *
 pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 {
-#ifdef HAVE_X509_GET_SIGNATURE_NID
 	X509	   *peer_cert;
 	const EVP_MD *algo_type;
 	unsigned char hash[EVP_MAX_MD_SIZE];	/* size for SHA-512 */
@@ -462,12 +442,8 @@ pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 	*len = hash_size;
 
 	return cert_hash;
-#else
-	printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("channel binding type \"tls-server-end-point\" is not supported by this build\n"));
-	return NULL;
-#endif
 }
+#endif /* HAVE_X509_GET_SIGNATURE_NID */
 
 /* ------------------------------------------------------------ */
 /*						OpenSSL specific code					*/

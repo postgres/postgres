@@ -2693,10 +2693,7 @@ same commits as above
         the feature currently does not prevent man-in-the-middle
         attacks when using libpq and interfaces built using it.  It is
         expected that future versions of libpq and interfaces not built
-        using libpq, e.g. JDBC, will allow this capability.  The libpq
-        options to control the optional channel binding type are <link
-        linkend="libpq-scram-channel-binding"><option>scram_channel_binding=tls-unique</option></link>
-        and <option>scram_channel_binding=tls-server-end-point</option>.
+        using libpq, e.g. JDBC, will allow this capability.
        </para>
       </listitem>
 

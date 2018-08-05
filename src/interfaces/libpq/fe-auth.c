@@ -530,11 +530,26 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		 * nothing else has already been picked.  If we add more mechanisms, a
 		 * more refined priority mechanism might become necessary.
 		 */
-		if (conn->ssl_in_use &&
-			conn->scram_channel_binding &&
-			strlen(conn->scram_channel_binding) > 0 &&
-			strcmp(mechanism_buf.data, SCRAM_SHA_256_PLUS_NAME) == 0)
-			selected_mechanism = SCRAM_SHA_256_PLUS_NAME;
+		if (strcmp(mechanism_buf.data, SCRAM_SHA_256_PLUS_NAME) == 0)
+		{
+			if (conn->ssl_in_use)
+				selected_mechanism = SCRAM_SHA_256_PLUS_NAME;
+			else
+			{
+				/*
+				 * The server offered SCRAM-SHA-256-PLUS, but the connection
+				 * is not SSL-encrypted. That's not sane. Perhaps SSL was
+				 * stripped by a proxy? There's no point in continuing,
+				 * because the server will reject the connection anyway if we
+				 * try authenticate without channel binding even though both
+				 * the client and server supported it. The SCRAM exchange
+				 * checks for that, to prevent downgrade attacks.
+				 */
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("server offered SCRAM-SHA-256-PLUS authentication over a non-SSL connection\n"));
+				goto error;
+			}
+		}
 		else if (strcmp(mechanism_buf.data, SCRAM_SHA_256_NAME) == 0 &&
 				 !selected_mechanism)
 			selected_mechanism = SCRAM_SHA_256_NAME;
