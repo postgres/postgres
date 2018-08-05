@@ -260,6 +260,51 @@ Branch: REL_10_STABLE [4beb25c63] 2018-07-16 17:55:13 -0400
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b8a1247a3] 2018-08-04 19:38:58 -0400
+Branch: REL_11_STABLE [e7154b6ac] 2018-08-04 19:38:58 -0400
+Branch: REL_10_STABLE [f6a124d01] 2018-08-04 19:38:58 -0400
+Branch: REL9_6_STABLE [b484bffe7] 2018-08-04 19:38:58 -0400
+Branch: REL9_5_STABLE [5ad143cda] 2018-08-04 19:38:59 -0400
+-->
+     <para>
+      Fix <literal>INSERT ... ON CONFLICT UPDATE</literal> through a view
+      that isn't just <literal>SELECT * FROM ...</literal>
+      (Dean Rasheed, Amit Langote)
+     </para>
+
+     <para>
+      Erroneous expansion of an updatable view could lead to crashes
+      or <quote>attribute ... has the wrong type</quote> errors, if the
+      view's <literal>SELECT</literal> list doesn't match one-to-one with
+      the underlying table's columns.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+Branch: master [b3f919da0] 2018-08-03 15:11:31 -0700
+Branch: REL_11_STABLE [b9612e5cf] 2018-08-03 14:45:02 -0700
+Branch: REL_10_STABLE [c83408aa7] 2018-08-03 14:44:56 -0700
+Branch: REL9_6_STABLE [0a60a291c] 2018-08-03 14:44:44 -0700
+Branch: REL9_5_STABLE [aca225741] 2018-08-03 14:44:38 -0700
+Branch: REL9_4_STABLE [250528cec] 2018-08-03 14:44:33 -0700
+Branch: REL9_3_STABLE [0229e087d] 2018-08-03 14:44:26 -0700
+-->
+     <para>
+      Ensure a table's cached index list is correctly rebuilt after an index
+      creation fails partway through (Peter Geoghegan)
+     </para>
+
+     <para>
+      Previously, the failed index's OID could remain in the list, causing
+      problems later in the same session.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Alexander Korotkov <akorotkov@postgresql.org>
 Branch: master [309765fa1] 2018-07-19 21:04:17 +0300
 Branch: REL_11_STABLE [608793266] 2018-07-19 23:26:15 +0300
@@ -332,7 +377,7 @@ Branch: REL9_4_STABLE [8c8c9f37c] 2018-07-04 14:58:26 -0700
 
      <para>
       Corrupted btree indexes could result in an infinite loop here, and
-      that previously wasn't interruptable without forcing a crash.
+      that previously wasn't interruptible without forcing a crash.
      </para>
     </listitem>
 
@@ -819,7 +864,7 @@ Branch: REL9_4_STABLE [addf9e1bd] 2018-07-30 12:35:49 -0400
      </para>
 
      <para>
-      Manually-created unique indexes were properly marked, but not those
+      Manually created unique indexes were properly marked, but not those
       created by declaring <literal>UNIQUE</literal> or <literal>PRIMARY
       KEY</literal> constraints.
      </para>
@@ -902,6 +947,14 @@ Branch: REL9_6_STABLE [7fdf56b0a] 2018-06-25 11:20:50 +0900
 Branch: REL9_5_STABLE [910e2aca1] 2018-06-25 11:21:49 +0900
 Branch: REL9_4_STABLE [79b5b101f] 2018-06-25 11:22:02 +0900
 Branch: REL9_3_STABLE [f53ed82b7] 2018-06-25 11:22:24 +0900
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [5a23c74b6] 2018-08-05 05:31:18 +0900
+Branch: REL_11_STABLE [58673b4a5] 2018-08-05 05:31:56 +0900
+Branch: REL_10_STABLE [7124e6452] 2018-08-05 05:32:12 +0900
+Branch: REL9_6_STABLE [f5b4bb881] 2018-08-05 05:32:27 +0900
+Branch: REL9_5_STABLE [afd5fde85] 2018-08-05 05:32:37 +0900
+Branch: REL9_4_STABLE [e69a3ac4a] 2018-08-05 05:32:44 +0900
+Branch: REL9_3_STABLE [69599cc49] 2018-08-05 05:32:54 +0900
 Author: Magnus Hagander <magnus@hagander.net>
 Branch: master Release: REL_11_BR [cfb758b6d] 2018-05-18 17:54:18 +0200
 Branch: REL_10_STABLE [29ce50091] 2018-05-18 17:53:12 +0200

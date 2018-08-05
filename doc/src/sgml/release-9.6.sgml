@@ -1,6 +1,418 @@
 <!-- doc/src/sgml/release-9.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-6-10">
+  <title>Release 9.6.10</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2018-08-09</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 9.6.9.
+   For information about new features in the 9.6 major release, see
+   <xref linkend="release-9-6"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.6.10</title>
+
+   <para>
+    A dump/restore is not required for those running 9.6.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.6.9,
+    see <xref linkend="release-9-6-9"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Ensure that updates to the <structfield>relfrozenxid</structfield>
+      and <structfield>relminmxid</structfield> values
+      for <quote>nailed</quote> system catalogs are processed in a timely
+      fashion (Andres Freund)
+     </para>
+
+     <para>
+      Overoptimistic caching rules could prevent these updates from being
+      seen by other sessions, leading to spurious errors and/or data
+      corruption.  The problem was significantly worse for shared catalogs,
+      such as <structname>pg_authid</structname>, because the stale cache
+      data could persist into new sessions as well as existing ones.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix case where a freshly-promoted standby crashes before having
+      completed its first post-recovery checkpoint (Michael Paquier, Kyotaro
+      Horiguchi, Pavan Deolasee, &Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      This led to a situation where the server did not think it had reached
+      a consistent database state during subsequent WAL replay, preventing
+      restart.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid emitting a bogus WAL record when recycling an all-zero btree
+      page (Amit Kapila)
+     </para>
+
+     <para>
+      This mistake has been seen to cause assertion failures, and
+      potentially it could result in unnecessary query cancellations on hot
+      standby servers.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      During WAL replay, guard against corrupted record lengths exceeding
+      1GB (Michael Paquier)
+     </para>
+
+     <para>
+      Treat such a case as corrupt data.  Previously, the code would try to
+      allocate space and get a hard error, making recovery impossible.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      When ending recovery, delay writing the timeline history file as long
+      as possible (Heikki Linnakangas)
+     </para>
+
+     <para>
+      This avoids some situations where a failure during recovery cleanup
+      (such as a problem with a two-phase state file) led to inconsistent
+      timeline state on-disk.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve performance of WAL replay for transactions that drop many
+      relations (Fujii Masao)
+     </para>
+
+     <para>
+      This change reduces the number of times that shared buffers are
+      scanned, so that it is of most benefit when that setting is large.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve performance of lock releasing in standby server WAL replay
+      (Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make logical WAL senders report streaming state correctly (Simon
+      Riggs, Sawada Masahiko)
+     </para>
+
+     <para>
+      The code previously mis-detected whether or not it had caught up with
+      the upstream server.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bugs in snapshot handling during logical decoding, allowing wrong
+      decoding results in rare cases (Arseny Sher, &Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>INSERT ... ON CONFLICT UPDATE</literal> through a view
+      that isn't just <literal>SELECT * FROM ...</literal>
+      (Dean Rasheed, Amit Langote)
+     </para>
+
+     <para>
+      Erroneous expansion of an updatable view could lead to crashes
+      or <quote>attribute ... has the wrong type</quote> errors, if the
+      view's <literal>SELECT</literal> list doesn't match one-to-one with
+      the underlying table's columns.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure a table's cached index list is correctly rebuilt after an index
+      creation fails partway through (Peter Geoghegan)
+     </para>
+
+     <para>
+      Previously, the failed index's OID could remain in the list, causing
+      problems later in the same session.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix mishandling of empty uncompressed posting list pages in GIN
+      indexes (Sivasubramanian Ramasubramanian, Alexander Korotkov)
+     </para>
+
+     <para>
+      This could result in an assertion failure after pg_upgrade of a
+      pre-9.4 GIN index (9.4 and later will not create such pages).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that <command>VACUUM</command> will respond to signals
+      within btree page deletion loops (Andres Freund)
+     </para>
+
+     <para>
+      Corrupted btree indexes could result in an infinite loop here, and
+      that previously wasn't interruptible without forcing a crash.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix misoptimization of equivalence classes involving composite-type
+      columns (Tom Lane)
+     </para>
+
+     <para>
+      This resulted in failure to recognize that an index on a composite
+      column could provide the sort order needed for a mergejoin on that
+      column.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner to avoid <quote>ORDER/GROUP BY expression not found in
+      targetlist</quote> errors in some queries with set-returning functions
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix SQL-standard <literal>FETCH FIRST</literal> syntax to allow
+      parameters (<literal>$<replaceable>n</replaceable></literal>), as the
+      standard expects (Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>EXPLAIN</command>'s accounting for resource usage,
+      particularly buffer accesses, in parallel workers
+      (Amit Kapila, Robert Haas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix failure to schema-qualify some object names
+      in <function>getObjectDescription</function> output
+      (Kyotaro Horiguchi, Tom Lane)
+     </para>
+
+     <para>
+      Names of collations, conversions, and text search objects
+      were not schema-qualified when they should be.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>CREATE AGGREGATE</command> type checking so that
+      parallelism support functions can be attached to variadic aggregates
+      (Alexey Bashtanov)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Widen <command>COPY FROM</command>'s current-line-number counter
+      from 32 to 64 bits (David Rowley)
+     </para>
+
+     <para>
+      This avoids two problems with input exceeding 4G lines: <literal>COPY
+      FROM WITH HEADER</literal> would drop a line every 4G lines, not only
+      the first line, and error reports could show a wrong line number.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add a string freeing function
+      to <application>ecpg</application>'s <filename>pgtypes</filename>
+      library, so that cross-module memory management problems can be
+      avoided on Windows (Takayuki Tsunakawa)
+     </para>
+
+     <para>
+      On Windows, crashes can ensue if the <function>free</function> call
+      for a given chunk of memory is not made from the same DLL
+      that <function>malloc</function>'ed the memory.
+      The <filename>pgtypes</filename> library sometimes returns strings
+      that it expects the caller to free, making it impossible to follow
+      this rule.  Add a <function>PGTYPESchar_free()</function> function
+      that just wraps <function>free</function>, allowing applications
+      to follow this rule.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</application>'s support for <type>long
+      long</type> variables on Windows, as well as other platforms that
+      declare <function>strtoll</function>/<function>strtoull</function>
+      nonstandardly or not at all (Dang Minh Huong, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix misidentification of SQL statement type in PL/pgSQL, when a rule
+      change causes a change in the semantics of a statement intra-session
+      (Tom Lane)
+     </para>
+
+     <para>
+      This error led to assertion failures, or in rare cases, failure to
+      enforce the <literal>INTO STRICT</literal> option as expected.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix password prompting in client programs so that echo is properly
+      disabled on Windows when <literal>stdin</literal> is not the
+      terminal (Matthew Stickney)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Further fix mis-quoting of values for list-valued GUC variables in
+      dumps (Tom Lane)
+     </para>
+
+     <para>
+      The previous fix for quoting of <varname>search_path</varname> and
+      other list-valued variables in <application>pg_dump</application>
+      output turned out to misbehave for empty-string list elements, and it
+      risked truncation of long file paths.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</application>'s failure to
+      dump <literal>REPLICA IDENTITY</literal> properties for constraint
+      indexes (Tom Lane)
+     </para>
+
+     <para>
+      Manually created unique indexes were properly marked, but not those
+      created by declaring <literal>UNIQUE</literal> or <literal>PRIMARY
+      KEY</literal> constraints.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_upgrade</application> check that the old server
+      was shut down cleanly (Bruce Momjian)
+     </para>
+
+     <para>
+      The previous check could be fooled by an immediate-mode shutdown.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/hstore_plperl</filename> to look through Perl
+      scalar references, and to not crash if it doesn't find a hash
+      reference where it expects one (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash in <filename>contrib/ltree</filename>'s
+      <function>lca()</function> function when the input array is empty
+      (Pierre Ducroquet)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix various error-handling code paths in which an incorrect error code
+      might be reported (Michael Paquier, Tom Lane, Magnus Hagander)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Rearrange makefiles to ensure that programs link to freshly-built
+      libraries (such as <filename>libpq.so</filename>) rather than ones
+      that might exist in the system library directories (Tom Lane)
+     </para>
+
+     <para>
+      This avoids problems when building on platforms that supply old copies
+      of <productname>PostgreSQL</productname> libraries.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2018e for DST law changes in North Korea, plus historical
+      corrections for Czechoslovakia.
+     </para>
+
+     <para>
+      This update includes a redefinition of <quote>daylight savings</quote>
+      in Ireland, as well as for some past years in Namibia and
+      Czechoslovakia.  In those jurisdictions, legally standard time is
+      observed in summer, and daylight savings time in winter, so that the
+      daylight savings offset is one hour behind standard time not one hour
+      ahead.  This does not affect either the actual UTC offset or the
+      timezone abbreviations in use; the only known effect is that
+      the <structfield>is_dst</structfield> column in
+      the <structname>pg_timezone_names</structname> view will now be true
+      in winter and false in summer in these cases.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-6-9">
   <title>Release 9.6.9</title>
 
