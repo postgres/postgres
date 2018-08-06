@@ -41,6 +41,34 @@
 
     <listitem>
      <para>
+      Fix failure to reset <application>libpq</application>'s state fully
+      between connection attempts (Tom Lane)
+     </para>
+
+     <para>
+      An unprivileged user of <filename>dblink</filename>
+      or <filename>postgres_fdw</filename> could bypass the checks intended
+      to prevent use of server-side credentials, such as
+      a <filename>~/.pgpass</filename> file owned by the operating-system
+      user running the server.  Servers allowing peer authentication on
+      local connections are particularly vulnerable.  Other attacks such
+      as SQL injection into a <filename>postgres_fdw</filename> session
+      are also possible.
+      Attacking <filename>postgres_fdw</filename> in this way requires the
+      ability to create a foreign server object with selected connection
+      parameters, but any user with access to <filename>dblink</filename>
+      could exploit the problem.
+      In general, an attacker with the ability to select the connection
+      parameters for a <application>libpq</application>-using application
+      could cause mischief, though other plausible attack scenarios are
+      harder to think of.
+      Our thanks to Andrew Krasichkov for reporting this issue.
+      (CVE-2018-10915)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Ensure that updates to the <structfield>relfrozenxid</structfield>
       and <structfield>relminmxid</structfield> values
       for <quote>nailed</quote> system catalogs are processed in a timely
